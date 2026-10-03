@@ -1033,7 +1033,17 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     clearInterval(salle.timer);
     const d = salle.duel;
     salles.delete(d.id);
-    for (const userId of salle.membres.keys()) salleDe.delete(userId);
+    /* **On ne retire que ce qui pointe encore ici.** Un joueur dont la place a
+       été reprise — sa grâce épuisée — reçoit « slot_lost » à sa reprise, la
+       page lui rouvre la préparation, et il peut repartir en file pendant que
+       ce duel-ci continue sans lui. Un second duel le réinscrit alors dans
+       `salleDe`. Effacer son entrée sans regarder effaçait celle de ce
+       **second** duel à la fermeture du premier : ses chants et ses cartes y
+       étaient refusés pour « aucun duel », et une page rechargée ne l'y
+       remettait plus. */
+    for (const userId of salle.membres.keys()) {
+      if (salleDe.get(userId) === d.id) salleDe.delete(userId);
+    }
 
     // Un duel rapporte toujours quelque chose, classé ou non.
     //

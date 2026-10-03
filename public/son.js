@@ -163,7 +163,7 @@
     contre: 5,                    // −14,3 · −23,5 · 0,15 s
     chant: 4.47,                  // −14,5 · −22,0 · 0,18 s
     parfait: 1.77,                // −15,1 · −20,5 · 0,32 s
-    dechirure: 1.88,              // −17,5 · −22,0 · 0,27 s (à 1,4 : −13,2 · −17,9)
+    dechirure: 1.99,              // estimé (voir la banque) : −21,5 à 1 ; 0,22 → −23,9 · 1,4 → −20,9
     carillon: 1.17,               // −17,4 · −21,0 · 0,67 s
     'accord-epique': 0.623,       // −16,6 · −21,0 · 1,06 s
     gong: 0.776,                  // −14,3 · −21,0 · 1,62 s
@@ -311,6 +311,25 @@
      filtré. Ils prennent le contexte et la sortie en paramètres : le même
      son se joue dans le contexte vivant et dans un rendu hors ligne. */
 
+  /**
+   * Fait partir une source, et la retient tant qu'elle sonne si elle joue
+   * dans le contexte vivant (pas dans un rendu du banc).
+   *
+   * **Pourquoi la retenir.** L'onglet caché et le calme suspendaient le
+   * contexte sans rien arrêter : une ovation de cinq secondes, une corne, un
+   * gong restaient en pause au milieu, et reprenaient là où ils étaient au
+   * retour de l'onglet ou à la levée du calme — parfois des minutes plus
+   * tard, sur un écran passé à autre chose (le coup de sifflet final). Un
+   * son ponctuel appartient à son instant : « couperPonctuels » arrête tout
+   * ce qui est retenu ici avant de suspendre.
+   */
+  function lancer(c, src, quand, ...reste) {
+    src.start(quand, ...reste);
+    if (c !== ctx) return;
+    enCours.add(src);
+    src.addEventListener('ended', () => enCours.delete(src), { once: true });
+  }
+
   /** Une note, avec une hauteur qui peut glisser. */
   function ton(c, sortie, t, { freq = 220, vers = null, duree = 0.18, type = 'sine', vol = 0.16,
                                delai = 0 }) {
@@ -325,7 +344,7 @@
     g.gain.linearRampToValueAtTime(vol, t0 + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
     o.connect(g).connect(sortie);
-    o.start(t0);
+    lancer(c, o, t0);
     o.stop(t0 + duree + 0.03);
   }
 
@@ -358,7 +377,7 @@
     g.gain.setValueCurveAtTime(courbe ?? enveloppe(vol), t0, duree);
     src.connect(f).connect(g).connect(sortie);
     const marge = b.duration - duree - 0.01;
-    src.start(t0, marge > 0 ? alea() * marge : 0, Math.min(duree, b.duration));
+    lancer(c, src, t0, marge > 0 ? alea() * marge : 0, Math.min(duree, b.duration));
     return f;
   }
 
@@ -402,7 +421,7 @@
       fin = p;
     }
     fin.connect(sortie);
-    o.start(t);
+    lancer(c, o, t);
     o.stop(t + d + 0.05);
   }
   /** Quelques voix ensemble, à peine décalées : un groupe qui crie. */
@@ -431,7 +450,7 @@
     g.gain.linearRampToValueAtTime(0.9 * force, t + 0.004);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
     o.connect(g).connect(s);
-    o.start(t);
+    lancer(c, o, t);
     o.stop(t + 0.52);
     bruit(c, s, t, { duree: 0.05, freq: 900, filtre: 'lowpass', q: 0.7, vol: 0.5 * force });
     ton(c, s, t, { freq: 240, vers: 100, duree: 0.12, type: 'triangle', vol: 0.22 * force });
@@ -459,7 +478,7 @@
     });
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
     src.connect(f).connect(g).connect(s);
-    src.start(t, alea() * (b.duration - 0.3), 0.25);
+    lancer(c, src, t, alea() * (b.duration - 0.3), 0.25);
   }
 
   /* ============================================================ la banque
@@ -516,16 +535,41 @@
           ton(c, s, t, { freq: f, duree: 0.3, type: 'sine', vol: 0.09, delai: i * 0.05 }));
       } },
     /* Le papier alu qu'on déchire (« audio.rip » de cartes.js). L'intensité
-       suit le geste : le doigt qui tire le fait monter (0,22 à 0,72), la
-       déchirure finale vaut 1,4. Le banc mesure à 1 et essaie les deux
-       bouts. */
-    dechirure: { famille: 'jeu', duree: 0.45, variantes: [{ intensite: 0.22 }, { intensite: 1.4 }],
+       suit le geste : le doigt qui tire la fait monter (0,22 à 0,72, un cran
+       tous les neuf pour cent du glissé), la déchirure finale vaut 1,4. Les
+       variantes sont ces intensités-là, celles que le kiosque joue vraiment,
+       et le banc juge chacune contre la fenêtre du jeu.
+
+       **Toutes dans la fenêtre du jeu.** L'amplitude et la durée suivaient
+       l'intensité en droite ligne, et la sonie avec elles, de −44,7 LUFS à
+       0,22 — sous le plancher de l'interface, plus bas qu'un tic — à −17,9 à
+       1,4, dans la fenêtre des moments, plus fort que le but encaissé (mesures
+       du relecteur, le 3 octobre 2026 : 0,22 → −44,7 · 0,4 → −35,0 ·
+       0,58 → −29,4 · 0,72 → −26,4 · 1 → −22,0 · 1,4 → −17,9). Le banc ne
+       jugeait que l'intensité 1, qu'aucune page ne joue. Désormais la montée
+       tient en trois décibels : la durée d'un cran va de 0,21 s (0,22) à
+       0,32 s (1,4) et l'amplitude ne suit l'intensité que de loin (puissance
+       0,08). Un cran trop court perd sa sonie bien plus vite que son
+       amplitude — sur cent millisecondes, un bruit de six centièmes n'en
+       remplit que la moitié, et il s'éteint en route —, c'est donc la durée
+       qui porte l'élan, et l'amplitude ne fait que l'appuyer.
+
+       Le gain (MIX) et les sonies visées en sont **calculés**, pas encore
+       mesurés : la sonie suit l'amplitude au décibel près, et l'effet de la
+       durée se lit, point par point, sur les mesures ci-dessus (la forme de
+       l'enveloppe et le balayage du filtre n'ont pas changé). Visé : 0,22 →
+       −23,9 · 0,47 → −23,0 · 0,72 → −22,2 · 1 → −21,5 · 1,4 → −20,9, à
+       près d'un décibel des bords de la fenêtre. Le banc le confirme, et sa
+       mesure remplace alors l'estimation dans le commentaire de MIX. */
+    dechirure: { famille: 'jeu', duree: 0.45,
+      variantes: [{ intensite: 0.22 }, { intensite: 0.47 }, { intensite: 0.72 }, { intensite: 1.4 }],
       jouer: (c, s, t, { intensite = 1 } = {}) => {
         const i = borner(Number(intensite) || 0, 0.05, 1.6);
-        const d = 0.28 * i;
+        const d = 0.19 + 0.09 * i;
+        const a = 0.22 * i ** 0.08;
         const courbe = new Float32Array(24);
         for (let k = 0; k < courbe.length; k++) {
-          courbe[k] = 0.22 * i * (1 - k / (courbe.length - 1)) ** 1.6;
+          courbe[k] = a * (1 - k / (courbe.length - 1)) ** 1.6;
         }
         const f = bruit(c, s, t, { duree: d, freq: 1400, q: 0.8, courbe });
         f.frequency.setValueAtTime(1400, t);
@@ -631,7 +675,9 @@
     /* L'ovation du but : la tribune qui explose. Le bruit rose de la rumeur
        qui enfle en un quart de seconde, s'éclaircit (les voix montent quand
        on crie) et retombe en quatre secondes, des cris dessus. Elle passe par
-       le bus de l'ambiance : le calme et l'onglet caché la coupent avec elle. */
+       le bus de l'ambiance. Le calme et l'onglet caché l'arrêtent net, comme
+       tout son en cours (« couperPonctuels ») : suspendue au milieu, elle
+       reprenait au retour, cinq secondes de tribune sur un autre écran. */
     ovation: { famille: 'moment', bus: 'ambiance', duree: 5.4,
       jouer: (c, s, t) => {
         const [r] = deuxRoses(c);
@@ -658,7 +704,7 @@
         g2.gain.exponentialRampToValueAtTime(0.0001, t + 3);
         src.connect(bp).connect(g1).connect(s);
         src.connect(hp).connect(g2).connect(s);
-        src.start(t, alea() * r.duration);
+        lancer(c, src, t, alea() * r.duration);
         src.stop(t + 5.1);
         for (let i = 0; i < 7; i++) eclats(c, s, t + 0.1 + alea() * 1.8, 1, 0.8);
       } },
@@ -680,7 +726,7 @@
       g.gain.linearRampToValueAtTime(0.16, t0 + 0.02);
       g.gain.exponentialRampToValueAtTime(0.001, t0 + 1.1);
       o.connect(g).connect(s);
-      o.start(t0);
+      lancer(c, o, t0);
       o.stop(t0 + 1.2);
     });
   }
@@ -704,16 +750,50 @@
      navigateur compte pour un geste : sur un téléphone, ce n'est pas le
      doigt posé (pointerdown) mais le doigt levé (pointerup, touchend). Tant
      qu'aucun n'est venu, un son demandé ne crée rien — il ne pourrait pas
-     jouer. */
+     jouer.
+
+     **Un geste, c'est le joueur, et c'est le navigateur qui le dit.** Le
+     moteur comptait pour « premier geste » n'importe quel événement de la
+     liste, et le Virage en lance un lui-même au chargement : l'entrée par un
+     lien (/virage?match=…) déplie la carte du match par un clic de script.
+     Le contexte naissait alors sans activation, suspendu ; chaque son
+     demandé ensuite s'y posait sur une horloge arrêtée — la fanfare de
+     niveau, la corne, l'ovation, la rumeur —, chaque appel relançait une
+     reprise refusée (un avertissement en console par seconde de Virage), et
+     au premier vrai toucher tout partait d'un coup. Échap, que Chrome ne
+     compte pas comme une activation, faisait de même. Désormais : un
+     événement lancé par script (« isTrusted » faux) ne compte pas, et le
+     contexte ne naît que pendant une activation en cours, celle que le
+     navigateur tient (« navigator.userActivation ») — sans quoi il ne
+     pourrait pas démarrer. */
   let ctx = null;
   let chaine = null;
   let vuGeste = false;
+  let dernierGeste = -Infinity;
+
+  /**
+   * Le joueur est-il en train d'agir, au sens du navigateur ? C'est la seule
+   * condition sous laquelle un contexte démarre partout (Safari demande que
+   * la création ou la reprise tombe dans un geste). Sans l'API — un Safari
+   * d'avant 16.4 —, le dernier geste reconnu ici, il y a moins d'une
+   * seconde : la fenêtre la plus courte que tiennent les navigateurs.
+   */
+  function activationEnCours() {
+    const ua = navigator.userActivation;
+    if (ua && typeof ua.isActive === 'boolean') return ua.isActive;
+    return performance.now() - dernierGeste < 1000;
+  }
+
+  /* Les sources ponctuelles qui sonnent en ce moment dans le contexte
+     vivant (voir « lancer » et « couperPonctuels »). */
+  const enCours = new Set();
 
   function ouvrir() {
     if (calme()) return null;
-    if (ctx && ctx.state === 'closed') { ctx = null; chaine = null; }
+    if (ctx && ctx.state === 'closed') { ctx = null; chaine = null; enCours.clear(); }
     if (!ctx) {
-      if (!vuGeste) return null;
+      // Hors d'un geste, un contexte naîtrait suspendu : on attend le suivant.
+      if (!vuGeste || !activationEnCours()) return null;
       const C = window.AudioContext ?? window.webkitAudioContext;
       if (typeof C !== 'function') return null;
       try {
@@ -728,10 +808,23 @@
     return ctx;
   }
 
+  /* Les touches qu'aucun navigateur ne compte pour une activation : lues
+     seulement sans « navigator.userActivation », qui sait le dire lui-même. */
+  const PAS_UN_GESTE = new Set(['Escape', 'Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock']);
+
   function geste(e) {
+    // Un clic ou une touche lancés par un script ne sont pas le joueur.
+    if (!e.isTrusted) return;
     // La souris compte au bouton enfoncé ; le doigt, au doigt levé.
     if (e.type === 'pointerdown' && e.pointerType && e.pointerType !== 'mouse') return;
+    /* Et un événement que le navigateur ne compte pas pour une activation
+       (Échap, une touche de modification seule) n'ouvre rien : le
+       navigateur l'a déjà décidé avant que l'événement n'arrive ici. */
+    const ua = navigator.userActivation;
+    if (ua && typeof ua.isActive === 'boolean' ? !ua.isActive
+      : e.type === 'keydown' && PAS_UN_GESTE.has(e.key)) return;
     vuGeste = true;
+    dernierGeste = performance.now();
     if (!ouvrir()) return;   // sous le calme, rien : voir « ouvrir »
     poserVolume();
     appliquer();
@@ -765,6 +858,16 @@
   const derniers = new Map();
   const ANTI_DOUBLON = 30;
 
+  /* **Rien ne se pose sur une horloge arrêtée.** Un contexte qui ne tourne
+     pas — suspendu par le navigateur, ou pas encore repris au retour de
+     l'onglet — ne joue rien, mais il garde ce qu'on lui confie : tout
+     partirait d'un coup à sa reprise, sur un écran passé à autre chose. On
+     ne lui confie donc un son que s'il tourne, ou si le joueur est en train
+     d'agir : un contexte qui vient de naître dans un geste n'est pas encore
+     « running » (il le devient un instant plus tard), et son premier son,
+     celui du toucher même, doit partir. */
+  const pretAJouer = (c) => c.state === 'running' || activationEnCours();
+
   /**
    * Joue un son de la banque.
    * @param {string} nom
@@ -777,6 +880,7 @@
     if (!existe(nom) || document.hidden) return false;
     const c = ouvrir();
     if (!c || !chaine) return false;
+    if (!pretAJouer(c)) return false;
     const maintenant = performance.now();
     const cle = options ? `${nom} ${JSON.stringify(options)}` : nom;
     if (maintenant - (derniers.get(cle) ?? -1e9) < ANTI_DOUBLON) return false;
@@ -810,17 +914,49 @@
      le contexte est suspendu : plus aucun calcul audio. */
   /* Chaque niveau : le gain de ses trois couches, la profondeur de sa
      respiration, la hauteur de la rumeur (elle monte quand on crie), l'écart
-     moyen entre deux éclats de voix (ms), et la fenêtre de sa sonie moyenne
-     (LUFS, mesurée sur huit secondes). Mesures du banc, le 2 octobre 2026 :
-     1 → −37,1 · 2 → −32,4 · 3 → −27,5. Cinq décibels d'un niveau à l'autre :
-     assez pour qu'une poussée s'entende, et la rumeur reste toujours sous
-     l'interface (−29 à −27), qu'elle ne doit jamais couvrir, sauf au but. */
+     moyen entre deux éclats de voix (ms) et leur force, la fenêtre de sa
+     sonie moyenne (LUFS, mesurée sur huit secondes), et s'il doit rester
+     sous l'interface.
+
+     **Sous l'interface, crête comprise.** La rumeur ne doit jamais couvrir
+     un tic, sauf au but. Le banc ne le vérifiait que sur la moyenne de huit
+     secondes ; sur cent millisecondes, au niveau 2 — la règle du Virage,
+     cinq secondes après chaque chant et toute la minute double —, la rumeur
+     montait à −30,3 LUFS, dans la fenêtre de l'interface et à un décibel du
+     tic (−29,5), son formant de voix posé sur la fondamentale du tic
+     (1 150 contre 1 200 Hz). Ce qui faisait la crête : la respiration
+     (au niveau 2, un tiers de la couche des voix, qui culmine au bout de
+     trois secondes) bien plus que les éclats. Désormais, aux niveaux 1 et 2,
+     la sonie sur cent millisecondes se tient sous le plancher de
+     l'interface moins MARGE_RUMEUR (−33 LUFS), et le banc le juge : la
+     respiration du niveau 2 passe d'un tiers à un huitième (une tribune qui
+     pousse pousse sans relâche), les couches des niveaux 1 et 2 baissent
+     d'environ trois décibels et leurs éclats autant. Le formant, lui, reste
+     où il est : déplacé sans que le banc puisse le rendre, il changerait la
+     sonie de la rumeur d'une quantité qu'aucun calcul ne donne, et c'est
+     l'écart de niveau — plus de quatre décibels sous le tic — qui protège
+     l'interface.
+
+     Mesures du banc avant ce changement, le 2 octobre 2026 (moyenne ·
+     sonie) : 1 → −37,1 · −34,8 ; 2 → −32,4 · −30,3 ; 3 → −27,5 · −26,2.
+     Visé après, **calculé** à partir d'elles (le gain est exact en
+     décibels, la respiration se calcule sur la fenêtre du banc), à
+     remesurer : 1 → −40 · −37,7 ; 2 → −35,1 · −34 ; 3 inchangé. Quatre à
+     cinq décibels du niveau 1 au niveau 2, assez pour qu'une poussée
+     s'entende ; huit du 2 au but, qui seul passe au-dessus de l'interface. */
   const NIVEAUX_AMBIANCE = [
-    { grave: 0, voix: 0, clair: 0, souffle: 0, voixHz: 450, eclats: 0, fenetre: null },
-    { grave: 0.3, voix: 0.22, clair: 0, souffle: 0.3, voixHz: 480, eclats: 9000, fenetre: [-40, -35] },
-    { grave: 0.43, voix: 0.4, clair: 0.08, souffle: 0.35, voixHz: 600, eclats: 4500, fenetre: [-35, -30] },
-    { grave: 0.64, voix: 0.64, clair: 0.32, souffle: 0.15, voixHz: 760, eclats: 1600, fenetre: [-30, -25] },
+    { grave: 0, voix: 0, clair: 0, souffle: 0, voixHz: 450, eclats: 0, eclat: 0, fenetre: null,
+      sousInterface: false },
+    { grave: 0.215, voix: 0.158, clair: 0, souffle: 0.3, voixHz: 480, eclats: 9000, eclat: 0.7,
+      fenetre: [-42.5, -37.5], sousInterface: true },
+    { grave: 0.329, voix: 0.306, clair: 0.061, souffle: 0.12, voixHz: 600, eclats: 4500, eclat: 0.7,
+      fenetre: [-37.5, -32.5], sousInterface: true },
+    { grave: 0.64, voix: 0.64, clair: 0.32, souffle: 0.15, voixHz: 760, eclats: 1600, eclat: 1,
+      fenetre: [-30, -25], sousInterface: false },
   ];
+  /** La marge de la rumeur sous le plancher de l'interface, en décibels :
+      deux décibels d'écart se lisent « plus bas », un seul « pareil ». */
+  const MARGE_RUMEUR = 2;
   /** Le gain de sortie de la rumeur. */
   const MIX_AMBIANCE = 0.3;
   /* Les transitions : on monte vite (une poussée s'entend tout de suite), on
@@ -970,7 +1106,7 @@
       amb.eclats = 0;
       if (!amb.lit || !ctx || ctx.state !== 'running' || document.hidden || calme()) return;
       const voix = 1 + Math.floor(alea() * (amb.joue >= 2 ? 3 : 1.6));
-      eclats(ctx, amb.lit.eclats, ctx.currentTime + 0.02, voix);
+      eclats(ctx, amb.lit.eclats, ctx.currentTime + 0.02, voix, NIVEAUX_AMBIANCE[amb.joue].eclat);
       planifierEclats();
     }, N.eclats * (0.5 + alea()));
   }
@@ -1131,7 +1267,7 @@
     if (!plan) return sansChant();
     if (document.hidden) return sansChant(plan.duree);
     const c = ouvrir();
-    if (!c || !chaine) return sansChant(plan.duree);
+    if (!c || !chaine || !pretAJouer(c)) return sansChant(plan.duree);
     let voix;
     try { voix = voixDuChant(c, chaine.bus.effets); } catch { return sansChant(plan.duree); }
     const t0 = c.currentTime + 0.03;
@@ -1163,18 +1299,36 @@
 
   /* ===================================================== calme et onglet
 
-     Le calme coupe tout, tout de suite : la sortie à zéro, le contexte
-     suspendu (plus aucun calcul), la rumeur démontée, le chant arrêté. On
-     l'apprend en observant l'attribut lui-même : le tiroir, le bouton du
-     duel, un autre onglet (par fx.js et menu.js) l'écrivent tous là. */
+     Le calme coupe tout, tout de suite : la sortie à zéro, les sons en
+     cours arrêtés, le contexte suspendu (plus aucun calcul), la rumeur
+     démontée, le chant arrêté. On l'apprend en observant l'attribut
+     lui-même : le tiroir, le bouton du duel, un autre onglet (par fx.js et
+     menu.js) l'écrivent tous là. */
+
+  /** Arrête net chaque son ponctuel en cours (voir « lancer »). */
+  function couperPonctuels() {
+    for (const s of enCours) {
+      try { s.stop(); } catch { /* jamais parti, ou déjà arrêté */ }
+    }
+    enCours.clear();
+  }
+
+  /* Ce qui se tait, au calme comme à l'onglet caché, et dans cet ordre : on
+     arrête avant de suspendre, pour que rien ne reste en pause au milieu. */
+  function taire() {
+    arreterChant();
+    eteindreLit(0);
+    couperPonctuels();
+    poserVolume();
+    if (ctx?.state === 'running') ctx.suspend().catch(() => {});
+  }
+
   function surCalme() {
-    if (calme()) {
-      arreterChant();
-      eteindreLit(0);
-      poserVolume();
-      if (ctx?.state === 'running') ctx.suspend().catch(() => {});
-    } else if (ctx && !document.hidden) {
-      ctx.resume().catch(() => {});
+    if (calme()) taire();
+    /* Le calme levé : « ouvrir » reprend le contexte suspendu — ou le crée,
+       si le joueur vient de lever le calme d'un toucher et qu'aucun son
+       n'avait encore pu naître. */
+    else if (!document.hidden && ouvrir()) {
       poserVolume();
       appliquer();
     }
@@ -1185,14 +1339,13 @@
   }
 
   /* L'onglet caché se tait : la rumeur s'arrête (démontée), le chant aussi,
-     et le contexte est suspendu. Au retour, la rumeur revient en fondu au
-     niveau voulu — ce que la page a demandé pendant l'absence compris. */
+     les sons en cours sont arrêtés et le contexte est suspendu. Au retour,
+     la rumeur revient en fondu au niveau voulu — ce que la page a demandé
+     pendant l'absence compris ; les sons ponctuels, eux, ne reviennent
+     pas : ils appartenaient à leur instant. */
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      arreterChant();
-      eteindreLit(0);
-      poserVolume();
-      if (ctx?.state === 'running') ctx.suspend().catch(() => {});
+      taire();
     } else if (ctx && !calme()) {
       ctx.resume().catch(() => {});
       poserVolume();
@@ -1285,7 +1438,7 @@
       // Les éclats, au rythme du niveau, comme le jeu les tire.
       const pas = NIVEAUX_AMBIANCE[n].eclats / 1000;
       for (let x = t + pas * (0.5 + alea()); x < duree - 0.7; x += pas * (0.5 + alea())) {
-        eclats(c, lit.eclats, x, 1 + Math.floor(alea() * (n >= 2 ? 3 : 1.6)));
+        eclats(c, lit.eclats, x, 1 + Math.floor(alea() * (n >= 2 ? 3 : 1.6)), NIVEAUX_AMBIANCE[n].eclat);
       }
     }
     if (quoi.chant) {
@@ -1305,6 +1458,8 @@
   const etat = () => ({
     contexte: ctx ? ctx.state : 'absent',
     geste: vuGeste,
+    /** Les sons ponctuels qui sonnent encore (rumeur et chants à part). */
+    enCours: enCours.size,
     ambiance: { base: amb.base, passager: amb.passe?.niveau ?? 0, voulu: voulu(), joue: amb.lit ? amb.joue : 0 },
     chant: Boolean(chantEnCours),
     volume: volumeJoueur,
@@ -1336,6 +1491,11 @@
         { famille: s.famille, bus: s.bus ?? FAMILLES[s.famille].bus, duree: s.duree,
           variantes: s.variantes ?? [], gain: MIX[nom] ?? 1 }])),
       ambiance: NIVEAUX_AMBIANCE.map((N) => N.fenetre),
+      /* La sonie la plus forte (100 ms) permise à chaque niveau : sous le
+         plancher de l'interface moins la marge, ou rien (le niveau 3, le but,
+         passe au-dessus : c'est le seul). */
+      ambiancePlafonds: NIVEAUX_AMBIANCE.map((N) => (N.sousInterface
+        ? FAMILLES.interface.fenetre[0] - MARGE_RUMEUR : null)),
       creteSeule: CRETE_SEULE,
       creteMax: CRETE_MAX,
       limiteur: { ...LIMITEUR },

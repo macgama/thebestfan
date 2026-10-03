@@ -29,7 +29,11 @@
  *     plus (`CONTRATS.md`, § 3) ; sans catalogue, ils n'ont pas de visage du
  *     tout, plutôt qu'un visage « nul » qui dirait « pas de Fanzzy » ;
  *   - **mes KOP portent les couleurs de leur club** (`couleurs`), pour la
- *     bâche de la page, et rien quand elles ne sont pas connues.
+ *     bâche de la page, et rien quand elles ne sont pas connues ; **la carte
+ *     d'un club sans KOP aussi** (`GET /api/kop/club/:id`) ;
+ *   - **le KOP ne vend que ce que le Virage applique** (`SERVEUR.md`,
+ *     § 11.3) : « La quête » promettait des écharpes que rien ne verse, et
+ *     « Mur de bâches » des contres que le Virage ne connaît pas.
  *
  * La suite tourne aussi sous un autre fuseau que celui de la base. Sous
  * Windows, depuis PowerShell — Git Bash ne transmet pas `TZ` à Node, et la
@@ -39,12 +43,14 @@
  *
  * Usage : node scripts/kop-smoke.mjs
  */
-import { readFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { createKop, couleursDuClub } from '../src/server/kop/index.js';
-import { BONUS_PAR_ID, VOIX_CREATEUR, depouiller, nomValide, DUREE_VOTE_MS }
+import { createKop, couleursDuClub, MODS_DU_VIRAGE, EN_VENTE, agit }
+  from '../src/server/kop/index.js';
+import { BONUS, BONUS_PAR_ID, VOIX_CREATEUR, depouiller, nomValide, DUREE_VOTE_MS }
   from '../src/shared/kop.js';
 import { seuil } from '../src/shared/niveau.js';
 import { AVATAR_PUBLIC } from '../src/server/fanzzy/avatar.js';
@@ -115,6 +121,44 @@ check('la seconde seule si la première est illisible',
 check('deux teintes égales n’en font qu’une',
   memes(couleursDuClub('#FFFFFF', '#ffffff'), ['#ffffff']));
 check('et aucune quand le club n’en a pas', memes(couleursDuClub(null, null), []));
+
+/* ============================================ ce que le Virage applique
+
+   Un bonus de KOP n'arrive qu'au Virage, et le serveur ne vend que ceux dont
+   le Virage lit chaque clé (`MODS_DU_VIRAGE`). Cette liste est écrite à la
+   main, faute d'être publiée par le Virage : on la confronte donc à son code,
+   dans les deux sens. Une lecture, c'est la clé prise sur un objet
+   (`mods.pushMult`, `(…).breathBonus ??`), commentaires ôtés : une clé citée
+   dans une phrase ne s'applique pas.                                        */
+
+console.log('\n— ce que le Virage applique —');
+const codeDuVirage = (() => {
+  const dossier = path.join(RACINE, 'src', 'server', 'ferveur');
+  return readdirSync(dossier).filter((f) => f.endsWith('.js'))
+    .map((f) => readFileSync(path.join(dossier, f), 'utf8'))
+    .join('\n')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    // Une adresse (`http://`) n'ouvre pas un commentaire.
+    .replace(/(^|[^:])\/\/.*$/gm, (_, avant) => avant);
+})();
+const lue = (cle) => new RegExp(`\\.${cle}\\b`).test(codeDuVirage);
+
+const sansLecture = [...MODS_DU_VIRAGE].filter((k) => !lue(k));
+check(`le Virage lit encore les ${MODS_DU_VIRAGE.size} clés que le KOP vend`,
+  sansLecture.length === 0 || (console.log('        plus lues :', sansLecture.join(', ')), false));
+const clesDuCatalogue = new Set(BONUS.flatMap((b) => Object.keys(b.mods ?? {})));
+const luesHorsListe = [...clesDuCatalogue].filter((k) => !MODS_DU_VIRAGE.has(k) && lue(k));
+check('et aucune autre clé du catalogue (sinon, l’ajouter à MODS_DU_VIRAGE)',
+  luesHorsListe.length === 0
+  || (console.log('        lues sans être vendues :', luesHorsListe.join(', ')), false));
+check(`le KOP vend ${EN_VENTE.length} bonus sur ${BONUS.length}, et chacun agit`,
+  EN_VENTE.length > 0 && EN_VENTE.every(agit)
+  && BONUS.filter(agit).length === EN_VENTE.length);
+check('« La quête » n’est vendue que si le Virage lit scarvesBonus',
+  EN_VENTE.some((b) => b.id === 'echarpes') === lue('scarvesBonus'));
+check('« Mur de bâches » que s’il lit parryBonus et parryResist',
+  EN_VENTE.some((b) => b.id === 'contres') === (lue('parryBonus') && lue('parryResist')));
+check('un identifiant inconnu n’agit pas', agit(undefined) === false && agit({ mods: {} }) === false);
 
 /* ============================================================== en base */
 
@@ -215,11 +259,19 @@ check('le créateur est marqué',
    des gens quand le champ manque. Le premier joueur a deux KOP : Sion, dont
    on connaît le blason (en majuscules, comme une saisie à la main), et Bâle,
    dont on ne sait rien encore. Lu par la vraie route, pour que le nom du
-   champ soit éprouvé là où la page le lit.                                  */
+   champ soit éprouvé là où la page le lit.
+
+   La carte d'un club suivi **sans** KOP — l'état de la plupart des joueurs —
+   porte la même bâche, et la page lit ses couleurs sur
+   `GET /api/kop/club/:id`, à la racine de la réponse. Lugano en est le cas :
+   un blason connu et aucun KOP, donc aucune ligne dans `kops` d'où joindre
+   `teams`. C'est précisément le cas qu'une jointure depuis `kops` aurait
+   manqué.                                                                   */
 
 console.log('\n— les couleurs du club —');
 {
   await pool.query(`UPDATE teams SET color1 = '#D7141A', color2 = '#FFFFFF' WHERE id = 85`);
+  await pool.query(`INSERT INTO teams (id,name,color1,color2) VALUES (87,'Lugano','#000000','#FFFFFF')`);
 
   const app = express();
   app.use((req, _res, next) => { req.user = { id: U[0] }; next(); });
@@ -230,6 +282,13 @@ console.log('\n— les couleurs du club —');
     const r = await fetch(`http://127.0.0.1:${serveur.address().port}/api/kop/miens`);
     return r.ok ? (await r.json()).kops : { statut: r.status, corps: await r.text() };
   };
+  const lireClub = async (id) => {
+    const r = await fetch(`http://127.0.0.1:${serveur.address().port}/api/kop/club/${id}`);
+    return r.ok ? r.json() : { statut: r.status, corps: await r.text() };
+  };
+  /* Rien d'autre que `kops` et `couleurs` : ni les colonnes de travail, ni
+     un champ vide (R1). */
+  const horsForme = (j) => Object.keys(j ?? {}).filter((c) => c !== 'kops' && c !== 'couleurs');
 
   try {
     let kops = await lireMiens();
@@ -246,6 +305,24 @@ console.log('\n— les couleurs du club —');
     check('les colonnes de travail ne partent pas dans la réponse',
       enTrop.length === 0 || (console.log('        en trop :', enTrop.join(',')), false));
 
+    let club = await lireClub(87);
+    check('un club sans KOP sert ses couleurs, à la racine, en minuscules',
+      (memes(club?.kops, []) && memes(club?.couleurs, ['#000000', '#ffffff'])
+        && horsForme(club).length === 0)
+      || (console.log('        elle répond :', JSON.stringify(club)), false));
+    club = await lireClub(85);
+    check('un club qui a un KOP aussi, les mêmes que sur /miens',
+      (club?.kops?.length === 1 && memes(club?.couleurs, ['#d7141a', '#ffffff'])
+        && memes(club?.couleurs, sion?.couleurs) && horsForme(club).length === 0)
+      || (console.log('        elle répond :', JSON.stringify(club)), false));
+    club = await lireClub(91);
+    check('un club sans couleur connue n’a pas de champ couleurs',
+      (club?.kops?.length === 1 && !('couleurs' in club) && horsForme(club).length === 0)
+      || (console.log('        elle répond :', JSON.stringify(club)), false));
+    club = await lireClub(4242);
+    check('un club inconnu non plus, et la liste reste vide',
+      memes(club, { kops: [] }) || (console.log('        elle répond :', JSON.stringify(club)), false));
+
     /* Une colonne de sept caractères accepte ce qu'on y pose : une valeur qui
        n'est pas une teinte ne part pas, l'autre reste. */
     await pool.query(`UPDATE teams SET color1 = 'rouge', color2 = '#0047AB' WHERE id = 91`);
@@ -261,8 +338,13 @@ console.log('\n— les couleurs du club —');
     check('sans les colonnes de couleur, mes KOP se lisent quand même',
       (Array.isArray(kops) && kops.length === 2 && kops.every((k) => !('couleurs' in k)))
       || (console.log('        elle répond :', JSON.stringify(kops)), false));
+    const [clubSans, clubAvec] = [await lireClub(87), await lireClub(85)];
+    check('et la carte d’un club aussi, sans couleurs mais avec ses KOP',
+      (memes(clubSans, { kops: [] }) && clubAvec?.kops?.length === 1 && !('couleurs' in clubAvec))
+      || (console.log('        elle répond :', JSON.stringify([clubSans, clubAvec])), false));
     await pool.query('ALTER TABLE teams ADD COLUMN IF NOT EXISTS color2 CHAR(7) NULL AFTER color1');
     await pool.query(`UPDATE teams SET color1 = NULL, color2 = NULL WHERE id = 91`);
+    await pool.query(`DELETE FROM teams WHERE id = 87`);
   } finally {
     await new Promise((ok) => serveur.close(ok));
   }
@@ -410,6 +492,105 @@ check('un vote adopté sur un pot vide est rejeté',
   faits2[0].issue === 'rejete' && faits2[0].potInsuffisant === true);
 check('et le pot ne devient jamais négatif',
   (await K.etat(kop.id, U[0])).pot === 0);
+
+/* ========================================= le KOP ne vend que ce qui agit
+
+   « La quête » promettait 25 % d'écharpes en plus que rien ne verse, et
+   « Mur de bâches » des contres que le Virage ne connaît pas : un KOP qui les
+   votait perdait 900 ou 500 écharpes pour rien (`SERVEUR.md`, § 11.3). Le
+   serveur ne les sert plus au catalogue — la page en tire la liste des
+   dépenses **et** les crans du pot —, refuse de les mettre aux voix, ne paie
+   pas un vote ouvert avant de cesser de les vendre, et ne compte pas parmi
+   les bonus actifs une ligne achetée avant. Si le Virage branche un jour
+   leurs clés, ils reviennent en vente, et ces contrôles se taisent.        */
+
+console.log('\n— ce qui est en vente —');
+{
+  const ids = (liste) => (Array.isArray(liste) ? liste.map((b) => b.id).sort().join(',') : '?');
+  const app = express();
+  app.use((req, _res, next) => { req.user = { id: U[0] }; next(); });
+  app.use('/api/kop', K.router);
+  const serveur = app.listen(0);
+  await new Promise((ok) => serveur.once('listening', ok));
+  const lire = async (chemin) => {
+    const r = await fetch(`http://127.0.0.1:${serveur.address().port}/api/kop${chemin}`);
+    return r.ok ? r.json() : { statut: r.status };
+  };
+  try {
+    const mes = await lire('/miens');
+    check('la page lit un catalogue où chaque bonus agit',
+      (ids(mes.catalogue) === ids(EN_VENTE) && mes.catalogue.every(agit))
+      || (console.log('        elle lit :', ids(mes.catalogue)), false));
+    const sien = await lire(`/${kop.id}`);
+    check('et l’état d’un KOP sert le même',
+      ids(sien.catalogue) === ids(EN_VENTE) || (console.log('        il sert :', ids(sien.catalogue)), false));
+  } finally {
+    await new Promise((ok) => serveur.close(ok));
+  }
+
+  const HORS = BONUS.filter((b) => !agit(b));
+  const Q = HORS.find((b) => b.id === 'echarpes') ?? HORS[0] ?? null;
+  if (!Q) console.log('  (tout le catalogue agit : il n’y a plus de bonus hors vente à refuser)');
+
+  if (Q) {
+    await pool.query('UPDATE kops SET pot = ? WHERE id = ?', [Q.prix * 2, kop.id]);
+    const code = await refus(() => K.proposer(U[0], kop.id, Q.id));
+    check(`« ${Q.nom} » ne se met pas aux voix, même avec le pot pour`,
+      code === 'kop.error.bonus_inconnu' || (console.log('        il répond :', code || 'accepté'), false));
+    const [[{ n }]] = await pool.query(
+      'SELECT COUNT(*) n FROM kop_votes WHERE kop_id = ? AND bonus_id = ?', [kop.id, Q.id]);
+    check('et aucun vote ne s’est ouvert', n === 0);
+  }
+
+  /* Un vote ouvert avant (le déploiement tombe pendant ses trois minutes), et
+     un identifiant que le catalogue partagé ne connaît plus : adoptés par le
+     créateur, échus, sur un pot qui les couvre. Le pot ne paie ni l'un ni
+     l'autre — et le second faisait tomber toute lecture du KOP. */
+  for (const bonusId of [...(Q ? [Q.id] : []), 'disparu']) {
+    await pool.query('UPDATE kops SET pot = 5000 WHERE id = ?', [kop.id]);
+    const id = randomUUID();
+    await pool.query(
+      `INSERT INTO kop_votes (id, kop_id, bonus_id, prix, ouvert_par, ferme)
+       VALUES (?, ?, ?, 900, ?, NOW(3) - INTERVAL 1 SECOND)`, [id, kop.id, bonusId, U[0]]);
+    await pool.query('INSERT INTO kop_bulletins (vote_id, user_id, pour) VALUES (?, ?, 1)',
+      [id, U[0]]);
+    let fait = null;
+    let erreur = '';
+    try {
+      fait = (await K.depouillerEchus(kop.id)).find((f) => f.id === id) ?? null;
+    } catch (e) { erreur = e.message; }
+    check(`un vote adopté sur « ${bonusId} », hors vente, est rejeté et dit pourquoi`,
+      (fait?.issue === 'rejete' && fait.horsVente === true && fait.potInsuffisant === false)
+      || (console.log('        il rend :', erreur || JSON.stringify(fait)), false));
+    const [[{ pot }]] = await pool.query('SELECT pot FROM kops WHERE id = ?', [kop.id]);
+    const [[{ n }]] = await pool.query(
+      'SELECT COUNT(*) n FROM kop_bonus WHERE kop_id = ? AND bonus_id = ?', [kop.id, bonusId]);
+    check('sans débiter le pot ni inscrire de bonus', (pot === 5000 && n === 0)
+      || (console.log('        pot :', pot, '· lignes :', n), false));
+  }
+
+  /* Acheté avant que le serveur cesse de le vendre : il n'agit pas, il ne
+     s'affiche donc pas comme actif, ni dans la page ni dans le panneau du
+     Virage, et il ne se décompte pas — si sa clé est branchée un jour, il
+     agira pour les matchs qu'il avait encore. */
+  if (Q) {
+    const restant = Q.portee === 'charges' ? (Q.charges ?? 3) : Q.portee === 'match' ? 1 : null;
+    await pool.query(
+      `INSERT INTO kop_bonus (id, kop_id, bonus_id, portee, restant) VALUES (?, ?, ?, ?, ?)`,
+      [randomUUID(), kop.id, Q.id, Q.portee, restant]);
+    check('acheté avant, il ne s’affiche pas parmi les bonus actifs',
+      !(await K.etat(kop.id, U[0])).bonus.some((b) => b.bonusId === Q.id));
+    const m = await K.modsDe(U[1], 85, 7101);
+    check('le Virage ne le reçoit pas',
+      (Object.keys(Q.mods).every((k) => !(k in m)) && !(m.kopBonus ?? []).includes(Q.id))
+      || (console.log('        il reçoit :', JSON.stringify(m)), false));
+    const [[b]] = await pool.query(
+      'SELECT restant, fixture_id FROM kop_bonus WHERE kop_id = ? AND bonus_id = ?', [kop.id, Q.id]);
+    check('et il ne se décompte pas : ses matchs restent',
+      (b?.restant === restant && b?.fixture_id === null)
+      || (console.log('        ligne :', JSON.stringify(b)), false));
+  }
+}
 
 /* ============================================== la clôture se juge en base
 

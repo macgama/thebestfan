@@ -329,13 +329,22 @@
   const DUREE_HUD = 30_000;
 
   /* **Les écrans qui lisent l'état eux-mêmes en arrivant**, et l'annoncent :
-     le kiosque et le classeur, par `load()` de cartes.js. Le HUD n'y relit
-     pas l'état quand ce qu'il a retenu est vieux : il attend l'annonce, qui
-     porte la même réponse. Si elle ne vient pas — la page n'a pas pu se
-     charger —, il relit au bout de `REPLI_ANNONCE`, comme ailleurs : une
-     route qui cesserait d'annoncer retarderait le HUD, elle ne l'éteindrait
-     pas. */
-  const ANNONCENT_LEUR_ETAT = ['/boosters', '/fanzzy'];
+     le kiosque et le classeur, par `load()` de cartes.js ; la boutique, par
+     sa propre lecture de `/api/fanzzy/state` (`annoncer`, boutique.html,
+     depuis le lot 3). Le HUD n'y relit pas l'état quand ce qu'il a retenu
+     est vieux : il attend l'annonce, qui porte la même réponse, et ne
+     demande que le niveau, une fois. Si elle ne vient pas — la page n'a pas
+     pu se charger —, il relit au bout de `REPLI_ANNONCE`, comme ailleurs :
+     une route qui cesserait d'annoncer retarderait le HUD, elle ne
+     l'éteindrait pas.
+
+     **Un écran qui se met à annoncer en arrivant s'inscrit ici.** Sans
+     cela, le HUD relit l'état et le niveau de son côté, puis l'annonce
+     arrive pendant que sa lecture est en route : elle la recouvre (voir
+     `tour`) et redemande le niveau. La boutique faisait ainsi deux
+     `/api/niveau` et deux `/api/fanzzy/state` à chaque arrivée sans HUD
+     retenu de moins d'une demi-minute. */
+  const ANNONCENT_LEUR_ETAT = ['/boosters', '/fanzzy', '/boutique'];
   const REPLI_ANNONCE = 6000;
 
   /* **Les écrans qui ont déjà leur bourse.** La boutique et le kiosque

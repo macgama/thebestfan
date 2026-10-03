@@ -299,6 +299,10 @@
      place et à sa taille ; elle ne s'anime jamais elle-même. */
   .fx-ceremonie{position:fixed;inset:0;z-index:96;pointer-events:none;overflow:hidden}
   .fx-rev{position:absolute;left:0;top:0;width:0;height:0}
+  /* La pluie de confettis de l'épique : une boîte de la taille du calque,
+     posée sur lui et non sur l'objet (le papier lancé ne suit pas la carte),
+     que la fin de la cérémonie retire avec tout ce qu'elle porte. */
+  .fx-rev-pluie{position:absolute;inset:0}
   /* Le liseré : un anneau de la couleur de la rareté qui s'allume et
      s'éteint autour de l'objet. C'est une information et non un décor : il
      reste sans mouvement, en fondu sur place (voir plus bas). */
@@ -1098,15 +1102,32 @@
 
     const minuteries = [];
     const plusTard = (ms, f) => { if (ms > 0) minuteries.push(setTimeout(f, ms)); else f(); };
+    /* **La cérémonie retire ses confettis elle-même.** Chacun part à la fin
+       de son animation, et celle-ci tient dans l'épique (900 ms × 1,25 au
+       plus, contre 1 200) ; mais cette fin arrive à une image, et quand les
+       images s'espacent — un téléphone chargé, un navigateur qui ralentit
+       le rendu — le papier survivait à la promesse : une page qui enchaîne
+       dessus (la carte suivante du booster) le voyait encore (mesuré : cinq
+       à neuf morceaux à 1 505 ms, sur une épique avec retournement, le
+       dernier parti à 1 610). Ils tombent donc dans une boîte à elle, que
+       « finir » retire avec le reste : en fin de vol, ils sont déjà
+       transparents. */
+    let pluie = null;
     plusTard(decal, () => {
       if (d === 'rare') jouerSon('tic');
       if (d === 'epique') {
         jouerSon('carillon');
         buzz(14);
         const c = b;
-        particules({ x: c.left + c.width / 2, y: c.top + c.height / 2, n: 24, papier: true,
-          couleurs: ['#B98CFF', COULEURS.craie, COULEURS.violet],
-          distance: Math.max(130, Math.max(c.width, c.height) * 0.8), duree: 900, dans: calque });
+        // Relu ici et non au départ : le réglage a pu changer pendant le retournement.
+        if (!doux()) {
+          pluie = document.createElement('i');
+          pluie.className = 'fx-rev-pluie';
+          calque.appendChild(pluie);
+          particules({ x: c.left + c.width / 2, y: c.top + c.height / 2, n: 24, papier: true,
+            couleurs: ['#B98CFF', COULEURS.craie, COULEURS.violet],
+            distance: Math.max(130, Math.max(c.width, c.height) * 0.8), duree: 900, dans: pluie });
+        }
       }
       if (d === 'legendaire') {
         jouerSon('rugissement');
@@ -1127,6 +1148,7 @@
         minuteries.forEach(clearTimeout);
         g.remove();
         eclair?.remove();
+        pluie?.remove();
         resoudre();
       };
       /* La boîte suit l'objet : la secousse le fait trembler, la page peut le

@@ -321,6 +321,12 @@ async function load() {
      serait une copie du réglage, qui mentirait au premier changement depuis
      l'administration. */
   S.cadenceMs = Number(st.wallet.cadenceMs) > 0 ? Number(st.wallet.cadenceMs) : null;
+  /* **Le plafond de la réserve, pour ce joueur-là** (abonnement compris),
+     lu s'il est servi et rien sinon. `maxPacks`, à la racine de la même
+     réponse, est celui du joueur gratuit : il ferait dessiner douze places
+     à un abonné qui en a vingt-quatre. Sans lui, la réserve écrit son
+     compte au lieu de dessiner des places (voir `reserveHTML`). */
+  S.packMax = Number(st.wallet.packMax) > 0 ? Number(st.wallet.packMax) : null;
   S.packPrice = st.packPrice;
   /* La saison en cours, et celle que ce joueur a déjà vue annoncée.
      `S.series` — les séries que ce joueur-là avait débloquées, tirées de son
@@ -352,22 +358,141 @@ const save = () => {};
 let uid = 0;
 const { seeded, ILLUSTRES, illustration, art, artFond, artProcedural } = FZART;
 
+/**
+ * Le sachet d'une série qui n'a pas encore son visuel dessiné.
+ *
+ * **Il se lit comme un paquet, et non comme une carte.** Le repli d'avant
+ * remplissait tout le cadre d'un dégradé, avec « FANZZY » et le nom de la
+ * série en tête : une carte plate, sans dentelure. Or c'est l'objet central
+ * du kiosque, sur son socle et sous les projecteurs — et la seule série
+ * ouverte en production, LA REPRISE, n'a pas encore de visuel : le joueur
+ * voyait trois cartes identiques là où il venait chercher un sachet.
+ *
+ * Il prend donc le dessin des sachets dessinés (`ART`) : un fond sombre de
+ * scène, et dedans le sachet scellé — dentelure en haut et en bas, ses deux
+ * couleurs, la bande diagonale de la série, le nom au milieu. La soudure du
+ * haut finit avant la ligne de la déchirure (`--bande`, 20 % de la hauteur,
+ * dans boosters.html) : la bande qu'on arrache emporte le haut du sachet,
+ * pas du vide.
+ *
+ * Le nom part en deux ou trois lignes plutôt que de rapetisser : à la
+ * largeur d'un sachet du carrousel, une ligne de vingt capitales tombait à
+ * sept pixels. Il est échappé — c'est du texte du catalogue posé dans du
+ * balisage.
+ */
 function packArt(set) {
   const r = seeded(set.id), u = 'p' + uid++;
+  const c1 = esc(set.c1 ?? '#C2CAD6'), c2 = esc(set.c2 ?? '#1A1F27');
+  /* La dentelure : vingt-cinq dents sur la largeur du sachet (de 12 à 88),
+     vers l'extérieur — en haut de gauche à droite, en bas de droite à
+     gauche, pour que le contour se referme. */
+  const G = 12, D = 88, N = 25, pas = (D - G) / N;
+  const dents = (y, sens, versLaDroite) => {
+    let d = '';
+    for (let i = 0; i < N; i++) {
+      const a = versLaDroite ? G + i * pas : D - i * pas;
+      const k = versLaDroite ? 1 : -1;
+      d += `L${(a + k * pas / 2).toFixed(2)} ${(y + sens * 2.4).toFixed(1)}L${(a + k * pas).toFixed(2)} ${y}`;
+    }
+    return d;
+  };
+  const corps = `M${G} 16${dents(16, -1, true)}L${D} 150${dents(150, 1, false)}Z`;
+  /* Les mots du nom, rangés en lignes de onze signes au plus, en onze
+     unités — le plancher du jeu, que l'audit lit sur la police déclarée.
+     Une ligne plus longue que la largeur du sachet (un mot de douze signes)
+     se resserre à sa largeur plutôt que d'en sortir. */
+  const lignes = [];
+  for (const mot of String(set.nom ?? '').toUpperCase().split(/\s+/).filter(Boolean)) {
+    const der = lignes.length - 1;
+    if (der >= 0 && (lignes[der] + ' ' + mot).length <= 11) lignes[der] += ' ' + mot;
+    else lignes.push(mot);
+  }
+  const noms = lignes.slice(0, 3).map((l, i) =>
+    `<text x="50" y="${62 + i * 13}" text-anchor="middle" font-family="Oswald,Impact,sans-serif"
+      font-weight="700" font-size="11" fill="#F2EEE4" letter-spacing=".4"${l.length > 10
+        ? ' textLength="70" lengthAdjust="spacingAndGlyphs"' : ''}>${esc(l)}</text>`).join('');
   let s = `<svg viewBox="0 0 100 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-   <defs><linearGradient id="pg${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${set.c2}"/>
-     <stop offset=".55" stop-color="${set.c1}" stop-opacity=".5"/><stop offset="1" stop-color="${set.c2}"/></linearGradient>
-   <filter id="pb${u}"><feGaussianBlur stdDeviation="6"/></filter></defs>
-   <rect width="100" height="160" fill="url(#pg${u})"/>
-   <polygon points="10,0 24,0 46,96 -6,96" fill="#F5C33B" opacity=".11"/>
-   <polygon points="76,0 90,0 106,96 54,96" fill="#F5C33B" opacity=".11"/>`;
-  for (let i = 0; i < 5; i++) s += `<ellipse cx="${(14 + r() * 72).toFixed(1)}" cy="${(90 + r() * 50).toFixed(1)}" rx="${(18 + r() * 22).toFixed(1)}" ry="${(14 + r() * 16).toFixed(1)}" fill="${set.c1}" opacity=".28" filter="url(#pb${u})"/>`;
-  let st = 'M0 160'; for (let i = 0; i < 7; i++) st += `L${i * 15} ${160 - i * 7}L${(i + 1) * 15} ${160 - i * 7}`;
-  s += `<path d="${st}L100 160Z" fill="#05080C" opacity=".9"/>
-   <text x="50" y="34" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="13" fill="#F2EEE4" letter-spacing="3">FANZZY</text>
-   <line x1="26" y1="40" x2="74" y2="40" stroke="#F2EEE4" stroke-width=".8" opacity=".5"/>
-   <text x="50" y="55" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="7.5" fill="${set.c1}" letter-spacing="1.4">${set.nom}</text></svg>`;
+   <defs>
+     <radialGradient id="pf${u}" cx=".5" cy=".35" r=".8"><stop offset="0" stop-color="#232A33"/>
+       <stop offset="1" stop-color="#07090C"/></radialGradient>
+     <linearGradient id="pg${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c2}"/>
+       <stop offset=".5" stop-color="${c1}" stop-opacity=".55"/><stop offset="1" stop-color="${c2}"/></linearGradient>
+     <linearGradient id="pl${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".35"/>
+       <stop offset=".18" stop-color="#fff" stop-opacity=".12"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+       <stop offset=".85" stop-color="#000" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+     <clipPath id="pc${u}"><path d="${corps}"/></clipPath>
+   </defs>
+   <rect width="100" height="160" fill="url(#pf${u})"/>
+   <g clip-path="url(#pc${u})">
+     <rect width="100" height="160" fill="url(#pg${u})"/>`;
+  // Le grain du sachet : quelques taches de sa couleur, tirées de son code.
+  for (let i = 0; i < 4; i++) {
+    s += `<circle cx="${(18 + r() * 64).toFixed(1)}" cy="${(30 + r() * 100).toFixed(1)}" r="${(10 + r() * 14).toFixed(1)}"
+      fill="${c1}" opacity=".12"/>`;
+  }
+  s += `<polygon points="0,112 100,84 100,104 0,132" fill="${c1}"/>
+     <polygon points="0,112 100,84 100,87 0,115" fill="#F2EEE4" opacity=".35"/>
+     <rect x="0" y="12" width="100" height="12" fill="#000" opacity=".28"/>
+     <rect x="0" y="140" width="100" height="14" fill="#000" opacity=".28"/>
+     <rect width="100" height="160" fill="url(#pl${u})"/>
+   </g>
+   <path d="${corps}" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="1"/>
+   <path d="M12 24H88M12 140H88" stroke="#F2EEE4" stroke-opacity=".3" stroke-width=".6" stroke-dasharray="1.5 1.5"/>
+   <text x="50" y="45" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-weight="700"
+     font-size="11" fill="#F2EEE4" letter-spacing="2.2">FANZZY</text>
+   ${noms}</svg>`;
   return s;
+}
+
+/**
+ * **La réserve de boosters, dessinée d'une seule façon.**
+ *
+ * Le même objet se dessinait de trois façons : au kiosque, cinq fentes
+ * écrites en dur, qui faisaient croire à un plafond de cinq quand il est de
+ * douze, puis un sachet seul avec son compte dans un sticker rond —
+ * presque celui du niveau de l'avatar, cinquante pixels plus haut ; à la
+ * boutique, un compte derrière un pictogramme de paquet cadeau, avec un
+ * seuil de sept places ; dans la barre, un troisième pictogramme. Trois
+ * dessins se lisent comme trois choses.
+ *
+ * La règle, ici et une fois : **une fente par place quand le plafond de ce
+ * joueur est connu et qu'elles tiennent** (`PLACES_EN_FENTES` au plus, la
+ * réserve débordée par un cadeau comprise) ; sinon, **le sachet seul et son
+ * compte** dans un sticker craie rectangulaire, jamais rond — le rond est
+ * celui du niveau. Sans plafond servi, on ne dessine pas de places qu'on ne
+ * sait pas compter : on écrit le compte.
+ *
+ * **Cinq places, mesuré.** À côté de « PROCHAIN » et d'un solde à quatre
+ * chiffres, six fentes font déborder la réserve de quinze pixels à 320 px
+ * de large (la page glisse de côté), sept de deux pixels à 360. La boutique
+ * en dessinait jusqu'à sept.
+ *
+ * Elle ne dépend de rien d'autre dans ce fichier : la boutique et la barre,
+ * qui ne le chargent pas, peuvent la reprendre telle quelle.
+ *
+ * @param {{ packs: number, max?: number|null, recharge?: boolean }} r
+ *   `max` : le plafond de ce joueur (abonnement compris), ou rien ;
+ *   `recharge` : un booster est en route (la réserve n'est pas pleine).
+ * @returns {{ enFentes: boolean, html: string }} le contenu de `.tbf-fentes`.
+ *   En compte, la page pose `.tbf-fentes--compte` sur le conteneur, et
+ *   l'anneau de recharge hors des fentes.
+ */
+const PLACES_EN_FENTES = 5;
+function reserveHTML({ packs, max = null, recharge = false }) {
+  const n = Math.max(0, Math.floor(Number(packs) || 0));
+  const plafond = Number(max) > 0 ? Math.floor(Number(max)) : null;
+  const places = plafond === null ? Infinity : Math.max(plafond, n + (recharge ? 1 : 0));
+  if (places <= PLACES_EN_FENTES) {
+    const html = Array.from({ length: places }, (_, i) =>
+      (i < n ? '<span class="tbf-fente"></span>'
+        : i === n && recharge
+          ? '<span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" aria-hidden="true"></span></span>'
+          : '<span class="tbf-fente tbf-fente--vide"></span>')).join('');
+    return { enFentes: true, html };
+  }
+  return { enFentes: false,
+    html: `<span class="tbf-fente${n ? '' : ' tbf-fente--vide'}"></span>`
+      + `<b class="tbf-sticker" aria-hidden="true">${n}</b>` };
 }
 
 /* --------------------------------------------------------- rendu carte */
@@ -758,5 +883,5 @@ function carteDuPaquet(c) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, illustration, load, modsText, objetHTML, packArt, rarMark, reserveHTML, save, seeded, src, uid };
 })();

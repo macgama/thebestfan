@@ -8,7 +8,8 @@ import { createFanzzy, MAX_PACKS, PACKS_DEPART, PACK_PRICE, CHEMINS_NOUVEAUTES,
 import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
-import { charger as chargerCatalogue, obtenables, chargerSeries } from '../src/server/fanzzy/catalogue.js';
+import { charger as chargerCatalogue, obtenables, chargerSeries, lignee } from '../src/server/fanzzy/catalogue.js';
+import { createOnboarding } from '../src/server/onboarding/index.js';
 import { chargerTenues, tenuesPubliees } from '../src/server/fanzzy/tenues.js';
 import * as moduleSaisons from '../src/server/fanzzy/saisons.js';
 import { verser } from '../src/server/recompenses.js';
@@ -811,31 +812,39 @@ check('le module livre recharger(conn, userId)',
     || (console.log('        rendu :', JSON.stringify(r)), false));
 }
 
-/* ----------------------------------------- la durée d'une recharge (cadenceMs)
+/* --------------------- la durée d'une recharge et le plafond (cadenceMs, packMax)
 
-   L'anneau du kiosque tire sa part écoulée de `1 − reste ⁄ durée`. La durée
-   est **celle de ce joueur** : un abonné recharge plus vite, et un réglage
-   changé depuis l'administration vaut tout de suite. Une page qui l'approche
-   avec dix minutes ment aux deux. */
-console.log('\n  la durée d’une recharge, dans le portefeuille');
+   L'anneau du kiosque tire sa part écoulée de `1 − reste ⁄ durée`, et ses
+   fentes du plafond (une place par booster, s'il tient en cinq). L'une et
+   l'autre sont **celles de ce joueur** : un abonné recharge plus vite et plus
+   haut, et un réglage changé depuis l'administration vaut tout de suite. Une
+   page qui approche la durée avec dix minutes, ou le plafond avec le
+   `maxPacks` du joueur gratuit (la racine de `/state`), ment à l'abonné. */
+console.log('\n  la durée d’une recharge et le plafond, dans le portefeuille');
 {
   const A = await joueur('Cadence');
   const s = await call('/api/fanzzy/state', { qui: A });
   check(`/state la sert, en millisecondes (${s.json.wallet?.cadenceMs})`,
     s.json.wallet?.cadenceMs === cadence());
+  check(`/state sert le plafond de ce joueur (${s.json.wallet?.packMax})`,
+    s.json.wallet?.packMax === reglage('pack.max'));
   const o = await ouvrir(A);
   check('/open aussi, dans le portefeuille de sa réponse',
     Array.isArray(o.json.cards) && o.json.wallet?.cadenceMs === cadence()
+    && o.json.wallet?.packMax === reglage('pack.max')
     || (console.log('        rendu :', JSON.stringify(o.json.wallet)), false));
   await poserReserve(A, reglage('pack.max'), 0);
   const plein = await call('/api/fanzzy/state', { qui: A });
-  check('réserve pleine : pas de minuterie, mais la durée reste — la même forme pour tous',
-    plein.json.wallet?.nextPackInMs === null && plein.json.wallet?.cadenceMs === cadence());
+  check('réserve pleine : pas de minuterie, mais la durée et le plafond restent — la même forme pour tous',
+    plein.json.wallet?.nextPackInMs === null && plein.json.wallet?.cadenceMs === cadence()
+    && plein.json.wallet?.packMax === reglage('pack.max'));
   try {
-    poserReglages({ 'pack.regen_min': 7 });
+    poserReglages({ 'pack.regen_min': 7, 'pack.max': 5 });
     const r = await call('/api/fanzzy/state', { qui: A });
     check('un réglage changé depuis l’administration vaut tout de suite',
       r.json.wallet?.cadenceMs === 7 * 60_000);
+    check('le plafond aussi (cinq places : le kiosque les dessine en fentes)',
+      r.json.wallet?.packMax === 5);
   } finally {
     poserReglages({});
   }
@@ -853,6 +862,50 @@ console.log('\n  la durée d’une recharge, dans le portefeuille');
   const attendue = reglage('abo.pack_regen_min') * 60_000;
   check(`un abonné reçoit sa cadence à lui (${wAbo.cadenceMs} contre ${wLibre.cadenceMs})`,
     attendue !== cadence() && wAbo.cadenceMs === attendue && wLibre.cadenceMs === cadence());
+  check(`et son plafond à lui (${wAbo.packMax} contre ${wLibre.packMax})`,
+    reglage('abo.pack_max') !== reglage('pack.max')
+    && wAbo.packMax === reglage('abo.pack_max') && wLibre.packMax === reglage('pack.max'));
+}
+
+/* ------------------------------------------- ce qu'une ouverture a prélevé (paye)
+
+   Le kiosque déduisait le ticket « −45 » de l'écart entre un solde relu au
+   chargement et le solde rendu : un achat fait dans un autre onglet le
+   faisait annoncer pour un booster gratuit. Le serveur dit ce qu'il a pris,
+   et zéro quand la réserve a payé — même pour un paquet demandé à l'achat. */
+console.log('\n  ce qu’une ouverture a prélevé');
+{
+  const P = await joueur('Paye');
+  const acheter = () => call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR', buy: true }, qui: P });
+  const solde = (n) => pool.execute('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [n, P]);
+  await solde(500);
+  const gratuit = await ouvrir(P);
+  check('un booster de la réserve : rien de prélevé (paye à 0, pas absent)',
+    Array.isArray(gratuit.json.cards) && gratuit.json.paye === 0
+    || (console.log('        rendu :', gratuit.json.paye), false));
+  await solde(500);
+  const demande = await acheter();
+  check('demandé à l’achat, payé par la réserve : rien de prélevé non plus',
+    Array.isArray(demande.json.cards) && demande.json.paye === 0
+    && demande.json.wallet.scarves === 500 + demande.json.scarvesGained
+    || (console.log('        rendu :', demande.json.paye, demande.json.wallet?.scarves), false));
+  await poserReserve(P, 0, 0);
+  await solde(500);
+  const achete = await acheter();
+  check(`réserve vide, à l’achat : le prix du booster (${achete.json.paye})`,
+    achete.json.paye === reglage('pack.prix_echarpes')
+    && achete.json.wallet.scarves === 500 - achete.json.paye + achete.json.scarvesGained);
+  try {
+    poserReglages({ 'pack.prix_echarpes': 60 });
+    await poserReserve(P, 0, 0);
+    await solde(500);
+    const cher = await acheter();
+    check('un prix changé depuis l’administration : le prix rendu est celui débité',
+      cher.json.paye === 60 && cher.json.wallet.scarves === 440 + cher.json.scarvesGained
+      || (console.log('        rendu :', cher.json.paye, cher.json.wallet?.scarves), false));
+  } finally {
+    poserReglages({});
+  }
 }
 
 /* ------------------------------------------------------- les nouveautés (§ 2) */
@@ -1238,7 +1291,15 @@ const P = await joueur('Cran');
   const b = await biblio(P);
   const p = b.paliers;
   check('la bibliothèque sert ses paliers', Boolean(p));
-  check('« gagnes » est le total de la même réponse', p?.gagnes === b.total?.gagnes);
+  /* Le total de la même réponse, tenues mises à part : elles se
+     collectionnent, elles ne paient pas (voir « ce que l'abonnement ouvre ne
+     paie pas », plus bas). */
+  check('« gagnes » et « possibles » : le total de la même réponse, sans les tenues',
+    p?.gagnes === b.total?.gagnes - b.types?.tenues?.gagnes
+    && p.possibles === b.total.possibles - b.types.tenues.possibles
+    && b.types.tenues.possibles > 0
+    || (console.log('        paliers :', p?.gagnes, '/', p?.possibles, '· total :',
+      JSON.stringify(b.total), '· tenues :', JSON.stringify(b.types?.tenues)), false));
   check('un cran tous les 25 objets', p?.cran === 25);
   check(`rien à réclamer à ${b.total?.gagnes} objets`, Array.isArray(p?.aReclamer) && p.aReclamer.length === 0);
   check('le prochain cran est chiffré, avec son gain',
@@ -1398,6 +1459,76 @@ try {
   check(`un corps invalide : 400 nommé, sous ses ${invalides.length} formes`,
     rendus.every((x) => x.status === 400 && x.json.error === 'fanzzy.error.palier_requete')
     || (console.log('        rendus :', rendus.map((x) => `${x.status}:${x.json.error}`).join(' ')), false));
+}
+{
+  /* **Ce que l'abonnement ouvre ne paie pas.** Un abonné porte n'importe
+     quelle tenue publiée, et la porter l'inscrit dans `user_skins` comme une
+     tenue gagnée : il la garde à l'échéance (`wearSkin`). Comptées dans les
+     crans, les tenues changeaient l'abonnement, payé en argent réel, en
+     écharpes et en boosters (`CONTRATS.md`, R9). Le chemin est le vrai — la
+     route de l'avatar, sous un abonnement simulé : une ligne posée à la main
+     prouverait la règle du compte, pas que le geste de l'abonné y tombe. */
+  console.log('\n  ce que l’abonnement ouvre ne paie pas');
+  const O = createOnboarding({ pool, requireAuth: authentifier,
+    abonnement: { estAbonne: async () => true, clubsEnPlus: () => 0 } });
+  app.use('/api/onboarding', O.router);
+  const tenues = tenuesPubliees().filter((t) => t.id !== 'base');
+  const cran = reglage('collection.cran');
+  /* Assez de personnages pour que leurs tenues passent deux crans, et jamais
+     toute la série : la série complète ne doit pas se mêler aux crans. */
+  const habilles = [];
+  let attendu = 0;
+  for (const f of RP.slice(0, -1)) {
+    if (attendu >= 2 * cran) break;
+    habilles.push(f);
+    attendu += lignee(f.id).length * tenues.length;
+  }
+  /* Deux joueurs aux mêmes personnages, à tous leurs âges : l'abonné, et un
+     joueur gratuit qui ne porte rien. */
+  const A = await joueur('Abonne');
+  const L = await joueur('Libre');
+  for (const id of [A, L]) {
+    for (const f of habilles) {
+      await pool.execute('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, ?)',
+        [id, f.id, lignee(f.id).length]);
+    }
+  }
+  const avant = await biblio(A);
+  const bourseAvant = await bourse(A);
+  const refus = [];
+  for (const f of habilles) {
+    for (let s = 1; s <= lignee(f.id).length; s++) {
+      for (const t of tenues) {
+        const r = await call('/api/onboarding/avatar', { method: 'POST', qui: A,
+          body: { fanzzyId: f.id, stade: s, skinId: t.id } });
+        if (r.status !== 200) refus.push(`${f.id}:${s}:${t.id} → ${r.status} ${r.json.error ?? ''}`);
+      }
+    }
+  }
+  const apres = await biblio(A);
+  /* Le contrôle du contrôle : sans tenues inscrites, « rien ne bouge »
+     passerait sans rien prouver. */
+  check(`l’abonné a pris ${attendu} tenues en les portant, et la jauge les montre`,
+    tenues.length > 0 && attendu >= 2 * cran && refus.length === 0
+    && apres.types?.tenues?.gagnes === avant.types.tenues.gagnes + attendu
+    && apres.total.gagnes === avant.total.gagnes + attendu
+    || (console.log('        tenues :', JSON.stringify(avant.types?.tenues), '→', JSON.stringify(apres.types?.tenues),
+      '· refus :', refus.slice(0, 3).join(' | ')), false));
+  check('ses crans ne bougent pas : ni compte, ni cran à réclamer, ni prochain',
+    Boolean(apres.paliers) && JSON.stringify(apres.paliers) === JSON.stringify(avant.paliers)
+    || (console.log('        avant :', JSON.stringify(avant.paliers), '\n        après :', JSON.stringify(apres.paliers)), false));
+  /* Le recompte du versement, et non la seule jauge : un client qui demande
+     un seuil que seules ses tenues atteignent est refusé. */
+  const seuil = Math.floor(apres.total.gagnes / cran) * cran;
+  const demande = await palier(A, { sorte: 'cran', cle: String(seuil) });
+  const bourseApres = await bourse(A);
+  check(`le cran ${seuil}, que seules ses tenues atteignent, ne se paie pas`,
+    seuil > apres.paliers?.gagnes && demande.json.verse === false && demande.json.raison === 'incomplet'
+    && (await crans(A)).length === 0
+    && bourseApres.scarves === bourseAvant.scarves && bourseApres.packs === bourseAvant.packs
+    || (console.log('        rendu :', JSON.stringify(demande.json)), false));
+  check('abonné habillé et joueur gratuit, mêmes personnages : mêmes paliers',
+    JSON.stringify(apres.paliers) === JSON.stringify((await biblio(L)).paliers));
 }
 
 /* ----------------------------------------- la saison en cours, servie (§ 7.1)

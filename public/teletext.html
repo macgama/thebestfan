@@ -157,8 +157,19 @@ th:nth-child(2){text-align:left}
 td{padding:8px 4px;text-align:right;border-top:1px solid rgba(242,238,228,.07)}
 td:nth-child(2){text-align:left}
 td.club{display:flex;align-items:center;gap:7px;min-width:0}
-td.club img{width:17px;height:17px;object-fit:contain;flex:none}
-td.club span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Le blason et le nom, enfants directs de la cellule : le buste d'un
+   supporter (`.tbf-buste`, plus bas) est aussi un `span` qui porte une
+   image, et ces deux règles l'auraient réduit à dix-sept pixels et rogné. */
+td.club>img{width:17px;height:17px;object-fit:contain;flex:none}
+td.club>span:not(.tbf-buste){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* **Le visage d'un supporter**, dans l'échelle SUPPORTERS de la ferveur : le
+   buste de son Fanzzy, ou son initiale (`CONTRATS.md`, § 3), à la taille
+   d'une ligne de classement — la brique est celle de `/classement`.
+   L'initiale est dessinée par la feuille et non écrite dans la cellule : le
+   texte de la cellule reste le nom du supporter, celui que lit une suite ou
+   que copie un doigt. Un dessin qui ne répond pas est retiré, et la même
+   initiale paraît à sa place. */
+td.club>.tbf-buste:empty::before{content:attr(data-initiale)}
 /* Le club d'un buteur, d'un supporter ou d'un KOP, sous son nom. Un « small »
    dans une cellule de douze pixels et demi tombait à dix et demi. */
 td.club small{font-size:11px;opacity:.88}
@@ -281,6 +292,12 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <!-- Le nom des pays dans la langue du lecteur, partagé avec la page des
      matchs. Classique et sans « defer » : le rendu s'en sert tout de suite. -->
 <script src="/pays.js"></script>
+<!-- Les bustes des supporters, sous l'onglet FERVEUR seulement : le dessin de
+     chacun (`FZART.dessinAvatar`) et son âge et sa tenue exacts (le manifeste
+     de `fanzzy-etats.js`, demandé à l'ouverture de cet onglet). Différés : le
+     sommaire n'en a pas besoin, et ils ne retardent pas son premier rendu. -->
+<script src="/fanzzy-art.js" defer></script>
+<script src="/fanzzy-etats.js" defer></script>
 <script>
 /* =======================================================================
    Toutes les compétitions.
@@ -799,11 +816,47 @@ let SAISON = null;
 
 const rangTexte = (n) => (n === 1 ? '1er' : `${n}e`);
 
+/* ------------------------------------------------- le visage des supporters
+
+   Le classement d'une compétition sert, sur chaque ligne de `joueurs[]`,
+   l'avatar public et le niveau (`CONTRATS.md`, § 3), comme les classements
+   de `/classement`. La page les montre de la même façon : le buste du Fanzzy
+   équipé, ou l'initiale du pseudo quand il n'en a pas (`avatar: null`), que
+   le serveur ne sert rien (un serveur d'avant le contrat) ou que le dessin
+   ne répond pas ; « niv. 7 » devant le club, et rien du tout quand le niveau
+   manque — jamais un « niv. 1 » par défaut. */
+const initiale = (pseudo) => esc([...String(pseudo ?? '').trim()][0] ?? '?');
+function buste(avatar, pseudo) {
+  const src = avatar?.id ? window.FZART?.dessinAvatar?.(avatar, 'buste') : null;
+  return `<span class="tbf-buste" style="--taille:28px" aria-hidden="true" data-initiale="${
+    initiale(pseudo)}">${src ? `<img src="${esc(src)}" alt="">` : ''}</span>`;
+}
+/* Un dessin qui ne répond pas : retiré, et l'initiale reparaît (la feuille de
+   cette page la dessine dans un buste vide), jamais l'image cassée du
+   navigateur. `error` ne remonte pas : on l'écoute à la descente. */
+$('list').addEventListener('error', (e) => {
+  const img = e.target;
+  if (img instanceof HTMLImageElement && img.parentElement?.classList.contains('tbf-buste')) img.remove();
+}, true);
+
+/* Le manifeste des dessins, qui donne l'âge et la tenue exacts de chacun. On
+   ne l'attend pas plus d'une seconde : sans lui, le buste de l'âge servi
+   suffit. Il ne se demande qu'une fois pour la vie de la page, et seulement
+   quand on ouvre la ferveur — le sommaire et les onglets du football n'en
+   ont pas l'usage. */
+const dessins = () => Promise.race([
+  window.TBF_ETATS?.charger?.() ?? Promise.resolve(),
+  new Promise((r) => setTimeout(r, 1000)),
+]);
+
 async function chargerFerveur() {
   const quelle = ligue;
+  // En même temps que le classement, pas après lui : l'attente ne s'ajoute pas.
+  const dessinsP = dessins();
   let d;
   try { d = await rang(`/competition/${ligue}${SAISON ? `?saison=${SAISON}` : ''}`); }
   catch (e) { return panne(e); }
+  await dessinsP;
   if (quelle !== ligue || vue !== 'ligue' || onglet !== 'ferveur') return;
   FERVEUR = d;
   rendreFerveur();
@@ -880,13 +933,18 @@ function rendreFerveur() {
  */
 function tableFerveur(liste) {
   if (echelle === 'joueurs') {
+    /* Sous le pseudo, le niveau puis le club, comme une ligne de
+       `/classement` ; ce qui manque se retire avec son séparateur, et la
+       ligne entière quand il ne reste rien. */
+    const sous = (p) => [Number(p.niveau) >= 1 ? `niv. ${Number(p.niveau)}` : null, p.club]
+      .filter(Boolean).join(' · ');
     return `<table>
       <thead><tr><th>#</th><th>SUPPORTER</th><th>SÉANCES</th><th>FERVEUR</th></tr></thead>
       <tbody>${liste.map((p, i) => `
         <tr class="${i < 3 ? 'top3' : ''}">
           <td>${i + 1}</td>
-          <td class="club"><span>${esc(p.pseudo)}${p.club ? `<br>
-            <small>${esc(p.club)}</small>` : ''}</span></td>
+          <td class="club">${buste(p.avatar, p.pseudo)}<span>${esc(p.pseudo)}${sous(p) ? `<br>
+            <small>${esc(sous(p))}</small>` : ''}</span></td>
           <td>${p.seances}</td>
           <td class="pts">${p.ferveur}</td>
         </tr>`).join('')}</tbody></table>`;

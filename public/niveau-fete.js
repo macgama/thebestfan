@@ -48,6 +48,27 @@
  * —, et jamais un âge plus jeune que celui qu'il a payé. Aucun chemin d'image
  * n'est deviné ici : une page qui ne charge ni l'un ni l'autre a la rosette.
  *
+ * ## Une case de BD, pas une boîte de luxe
+ *
+ * (Correction des lots 3 et 5, 3 octobre 2026.) La fête était restée dans
+ * l'ancien langage « premium » : une boîte en dégradé radial doré avec halo,
+ * des coins arrondis, un chiffre en or avec une lueur de vingt-six pixels,
+ * une rosette en ombre portée lumineuse, les gains dans des pilules sombres,
+ * « TU MONTES » en onze pixels espacés et un bouton en dégradé brillant.
+ * Rien du FAIT MAIN, alors qu'elle suit souvent le butin du kiosque et la
+ * cérémonie d'achat, qui en sont faits. Elle est maintenant **la case de BD
+ * du moment fort** (`.tbf-vignette`, variante or) posée sur le fond : le
+ * Fanzzy en pose victoire dans la case, « NIVEAU 5 » au lettrage de la case
+ * (la craie et son ombre dure), « TU MONTES » en sticker flare, le gain en
+ * sticker de prix avec son jeton (le « +50 » compte), ce que le palier ouvre
+ * en stickers craie dont le cadenas saute, le prochain palier en sticker de
+ * promesse (cerné d'or), la bouffée derrière la case, les confettis de
+ * papier dans la scène, et CONTINUER en bâche or. Plus un dégradé, plus une
+ * lueur, plus un arrondi : ce sont les briques de `ui.css`, telles quelles.
+ *
+ * Les classes que les suites lisent restent : `.tbf-niv-fond`,
+ * `.tbf-niv-n b` (le chiffre), `[data-fermer]`, le rôle `alertdialog`.
+ *
  * ## « Depuis ta dernière visite »
  *
  * Une montée n'était fêtée que là où le serveur la renvoie — l'ouverture d'un
@@ -134,9 +155,11 @@
   }
 
   /* La rosette. Un ruban et une étoile, dessinés — voir l'en-tête pour
-     pourquoi ce n'est pas une image. `currentColor` partout : elle se teinte
-     avec le panneau, et il n'y a qu'un endroit où changer la couleur. */
-  const ROSETTE = `<svg class="tbf-niv-rosette" viewBox="0 0 64 64" aria-hidden="true">
+     pourquoi ce n'est pas une image. `currentColor` partout : il n'y a
+     qu'un endroit où changer la couleur. **Elle s'appelle « cocarde » dans
+     la page** : la classe d'avant (`.tbf-niv-rosette`) porte encore dans
+     `ui.css` une lueur dorée et un tour sans fin, que la case n'a plus. */
+  const ROSETTE = `<svg class="tbf-niv-cocarde" viewBox="0 0 64 64" aria-hidden="true">
     <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
       <path d="M24 38 L18 60 L32 53 L46 60 L40 38"/>
       <circle cx="32" cy="24" r="19"/>
@@ -146,38 +169,65 @@
     </g>
   </svg>`;
 
-  /* ------------------------------------------- la feuille des pièces neuves
+  /* Le cadenas ouvert, au trait, dans un sticker de ce que le palier ouvre :
+     l'anse levée d'un côté. La brique du sticker lui donne sa taille et son
+     trait (quatorze pixels, l'encre du sticker). */
+  const CADENAS = `<svg viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="5" y="11" width="14" height="10" rx="1.5"/><path d="M8.5 11V7.5a3.5 3.5 0 0 1 6.6-1.6"/>
+    <path d="M12 15v2"/></svg>`;
 
-     La scène du Fanzzy et la ligne du prochain palier. **Provisoire** : leur
-     place est dans ui.css, section « la montée de niveau », à côté du reste
-     de la fête — c'est un besoin écrit pour la feuille commune. Posées ici en
-     attendant, pour que la fête soit juste dès aujourd'hui sur toutes les
-     pages qui la chargent, et sous le préfixe de la fête pour ne rien
-     toucher d'autre. Aucune animation dans cette feuille : les entrées sont
-     jouées par le script, qui ne les joue pas sans mouvement. Les couleurs
-     sont héritées du panneau : il passera un jour à la bâche craie de la
-     direction, et ces pièces doivent le suivre sans qu'on les reprenne. */
+  /* ------------------------------------------------- la feuille de la case
+
+     **Provisoire, et seulement la place.** La fête est faite des briques de
+     ui.css (la case .tbf-vignette en or, son lettrage, les stickers, la
+     bâche, la bouffée) ; cette feuille ne dit que leur place dans la case —
+     la colonne, les marges, les corps — et le repli de la scène quand
+     l'écran est court. Sa place à elle est dans ui.css, section « la montée
+     de niveau », où elle remplacera la boîte « premium » d'avant (dégradés,
+     lueurs, arrondis, pilules) : c'est un besoin écrit pour la feuille
+     commune. Posée ici en attendant, pour que la fête soit juste dès
+     aujourd'hui sur toutes les pages qui la chargent, sous le préfixe de la
+     fête pour ne rien toucher d'autre.
+
+     Deux règles seulement ne sont pas une place : la teinte de la cocarde
+     (un dessin propre à la fête, pas une brique), et la neutralisation de
+     la règle dorée qui vise encore le chiffre dans ui.css (.tbf-niv-n b :
+     or, lueur de vingt-six pixels, autre corps) — le chiffre prend le
+     lettrage de la case, et la suite du kiosque lit toujours .tbf-niv-n b.
+     Aucune animation ici : les entrées sont jouées par le script, qui ne
+     les joue pas sans mouvement, et celles des briques (.tbf-colle, la
+     bouffée) ont leurs doubles dans ui.css. */
   const FEUILLE = `
-  .tbf-niv-scene{position:relative;height:74px;margin:-6px 0 6px;overflow:hidden;
-    display:grid;place-items:center}
-  .tbf-niv-scene .tbf-niv-rosette{position:relative;z-index:2;margin:0}
-  /* Avec le personnage : il se tient au milieu, coupé à la taille, la tête
-     et les bras levés dans la scène ; le bas s'efface dans le panneau au
-     lieu d'être tranché net. La rosette est épinglée devant lui, sur le
-     côté : elle ne cache ni le visage ni les mains. */
-  .tbf-niv-scene--perso{height:156px;margin:-12px -8px 4px}
-  .tbf-niv-perso{position:absolute;z-index:1;left:0;right:0;top:-10px;margin:0 auto;
-    width:auto;height:310px;max-width:none;pointer-events:none;
-    -webkit-mask-image:linear-gradient(180deg,#000 118px,transparent 166px);
-    mask-image:linear-gradient(180deg,#000 118px,transparent 166px)}
-  .tbf-niv-scene--perso .tbf-niv-rosette{position:absolute;left:calc(50% + 30px);bottom:8px;
-    width:56px;height:56px}
-  /* La ligne du prochain palier : douze pixels pleins, la teinte du panneau. */
-  .tbf-niv-proch{margin-top:10px;padding:8px 10px;border-radius:11px;
-    background:rgba(0,0,0,.34);box-shadow:inset 0 0 0 1px rgba(242,238,228,.1);
-    font-family:var(--banner);font-size:12px;line-height:1.4;letter-spacing:.08em;
-    text-transform:uppercase}
-  .tbf-niv-proch b{display:block;font-weight:700}`;
+  /* La case : une colonne, jamais plus haute que l'écran. Quand il est
+     court, la scène cède sa hauteur la première, puis le corps défile ; le
+     bouton reste toujours au bas de la case, sous le doigt. */
+  .tbf-niv-case{display:flex;flex-direction:column;align-items:center;
+    width:min(400px,100%);max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);
+    padding:16px 16px 14px;color:var(--craie)}
+  .tbf-niv-case>.tbf-niv-scene{align-self:stretch;flex:0 1000 auto;min-height:0}
+  .tbf-niv-corps{align-self:stretch;flex:0 1 auto;min-height:0;overflow:hidden auto;
+    margin:0 -10px;padding:8px 10px 10px;display:flex;flex-direction:column;align-items:center}
+  .tbf-niv-case>.tbf-plaque{flex:none;margin-top:12px}
+  /* Le lettrage de la case porte « NIVEAU 5 » : son corps, et le chiffre
+     qui en prend tout le reste. */
+  .tbf-niv-case .tbf-niv-n{display:block;margin:10px 0 0;font-size:clamp(36px,13vw,52px)}
+  .tbf-niv-case .tbf-niv-n b{font:inherit;color:inherit;text-shadow:inherit;letter-spacing:inherit}
+  .tbf-niv-case .tbf-niv-de{margin-top:8px;font-size:12px}
+  /* Le butin et ce que le palier ouvre : des stickers en colonne, chacun à
+     sa largeur, avec l'air qu'il leur faut autour (cinq pixels). */
+  .tbf-niv-butin{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:16px}
+  .tbf-niv-libelle{font-family:var(--banner);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  .tbf-niv-cles{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
+    align-items:center;gap:12px}
+  .tbf-niv-cles small{display:block;margin-top:7px;font-size:12px}
+  .tbf-niv-case .tbf-niv-rien{margin:0;padding:0;font-size:12px;line-height:1.5}
+  .tbf-niv-promesse{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:8px}
+  /* La cocarde : un dessin à plat, sans lueur ni tour sans fin. Seule, au
+     milieu de la scène ; avec le Fanzzy, épinglée sur le côté, sans cacher
+     ni le visage ni les mains. */
+  .tbf-niv-cocarde{display:block;width:58px;height:58px;color:var(--projo)}
+  .tbf-niv-scene--perso .tbf-niv-cocarde{position:absolute;z-index:2;left:calc(50% + 30px);
+    bottom:8px;width:52px;height:52px}`;
 
   function poserFeuille() {
     if (document.getElementById('tbf-niv-feuille')) return;
@@ -313,61 +363,78 @@
     const proch = prochain(o.chemin, n);
     const src = dessinVictoire(o.avatar !== undefined ? o.avatar : window.TBF_CARTES?.S?.avatar);
     const sans = doux();
+    const quoi = bonds > 1 ? `${bonds} NIVEAUX D’UN COUP` : 'TU MONTES !';
+    // Ce qu'un lecteur d'écran annonce : le chiffre final, pas celui qui compte.
+    const nomDeLaFete = `${bonds > 1 ? `${bonds} niveaux d’un coup` : 'Tu montes'} : niveau ${n}`;
 
-    const gains = (ecarpes
-      ? `<div class="g tbf-niv-ech"><b>+${esc(ecarpes)}</b><span>ÉCHARPES</span></div>` : '')
-      + (paliers.length
-        ? `<div class="tbf-niv-ouvre">CE QUE ÇA T’OUVRE</div>`
-          + paliers.map((p) => `<div class="g ouvre">
-              <b>${esc(p.quoi)}</b><span>${esc(p.sous)}</span></div>`).join('')
-        /* Un palier sur cinq ouvre quelque chose. Les autres montées ne
-           doivent pas se terminer sur un blanc : elles rapportent des
-           écharpes, et c'est déjà une raison de sourire. Quand la page a
-           donné le chemin, la ligne du prochain palier dit mieux la même
-           chose : elle nomme ce qui vient. */
-        : (proch ? '' : `<div class="tbf-niv-rien">Ce palier n’ouvre rien de neuf —
-             le prochain, si.</div>`));
+    /* Les stickers se collent l'un après l'autre (.tbf-colle et son délai,
+       la brique du lot 1), dans l'ordre où on les lit : le titre, le gain,
+       puis ce que le palier ouvre. Sans mouvement, ils sont déjà là. */
+    const colle = (ms) => (sans ? '' : ` tbf-colle" style="--d:${ms}ms`);
+    const ouvre = paliers.length
+      ? `<div class="tbf-niv-libelle">ÇA T’OUVRE</div>
+         <ul class="tbf-niv-cles">${paliers.map((p, k) => `<li>
+           <span class="tbf-sticker${colle(900 + k * 160)}">${CADENAS}${esc(p.quoi)}</span>
+           <small>${esc(p.sous)}</small></li>`).join('')}</ul>`
+      /* Un palier sur cinq ouvre quelque chose. Les autres montées ne
+         doivent pas se terminer sur un blanc : elles rapportent des
+         écharpes, et c'est déjà une raison de sourire. Quand la page a
+         donné le chemin, le prochain palier dit mieux la même chose : il
+         nomme ce qui vient. */
+      : (proch ? '' : `<div class="tbf-niv-rien">Ce palier n’ouvre rien de neuf —
+           le prochain, si.</div>`);
+    /* Le gain : le sticker de prix et son jeton, craie (un gain, pas un
+       achat), avec son signe. Son chiffre compte depuis zéro. */
+    const butin = (ecarpes
+      ? `<span class="tbf-sticker tbf-sticker--prix tbf-niv-ech${colle(620)}"><img
+           src="/img/gains/echarpes.webp" alt="" decoding="async"><b>+${esc(ecarpes)}</b> ÉCHARPES</span>`
+      : '') + ouvre;
 
     const fond = document.createElement('div');
     fond.className = 'tbf-niv-fond';
-    /* La bouffée de fumigène (la brique de ui.css) gonfle derrière le
-       personnage et se dissipe ; la feuille commune la retire d'elle-même
-       sans mouvement, et elle n'est même pas posée ici dans ce cas.
-       **En ellipse**, par sa largeur et sa hauteur (sa place, que la page a
-       le droit d'écrire) : ronde et assez grande pour déborder du
-       personnage — il fait cent quatre-vingts pixels de large et la
-       cacherait tout entière —, elle était coupée net par la scène, en
-       rectangle. Taillée ainsi, elle s'éteint avant les bords, même gonflée
-       de 40 %. */
-    const bouffee = src ? '--y:60%;width:300px;height:100px' : '--y:50%;width:240px;height:56px';
+    /* La bouffée de fumigène (la brique de ui.css) gonfle **derrière la
+       case**, sur le fond, et se dissipe — comme celle du moment fort ; la
+       feuille commune la retire d'elle-même sans mouvement, et elle n'est
+       même pas posée ici dans ce cas. En ellipse, par sa largeur et sa
+       hauteur (sa place, que la page a le droit d'écrire) : elle déborde de
+       la case de chaque côté sans couvrir l'écran entier. La case vient
+       après elle et se peint devant. */
     fond.innerHTML = `
-      <div class="tbf-niv" role="alertdialog" aria-modal="true"
-           aria-labelledby="tbf-niv-t">
+      ${sans ? '' : `<i class="tbf-bouffee" aria-hidden="true" style="--x:50%;--y:40%;
+        width:min(150vw,620px);height:min(110vw,440px);--c1:var(--projo);--c2:var(--flare)"></i>`}
+      <div class="tbf-vignette tbf-niv-case" data-ton="or" role="alertdialog" aria-modal="true"
+           aria-label="${esc(nomDeLaFete)}">
         <div class="tbf-niv-scene${src ? ' tbf-niv-scene--perso' : ''}" aria-hidden="true">
-          ${sans ? '' : `<i class="tbf-bouffee" style="--x:50%;${bouffee};
-            --c1:var(--projo);--c2:var(--flare)"></i>`}
           ${src ? `<img class="tbf-niv-perso" alt="" decoding="async" src="${esc(src)}">` : ''}
           ${ROSETTE}
         </div>
-        <div class="tbf-niv-quoi">${bonds > 1 ? `${bonds} NIVEAUX D’UN COUP` : 'TU MONTES'}</div>
-        <div class="tbf-niv-n" id="tbf-niv-t">
-          <span>NIVEAU</span><b>${esc(n)}</b>
+        <div class="tbf-niv-corps">
+          <span class="tbf-sticker${colle(200)}" data-ton="flare">${esc(quoi)}</span>
+          <h2 class="tbf-vignette-mot tbf-niv-n" id="tbf-niv-t">NIVEAU <b>${esc(n)}</b></h2>
+          ${bonds > 1 ? `<div class="tbf-niv-de">tu étais au niveau ${esc(m.avant)}</div>` : ''}
+          ${butin ? `<div class="tbf-niv-butin">${butin}</div>` : ''}
+          ${proch ? `<div class="tbf-niv-promesse"><div class="tbf-niv-libelle">PROCHAIN PALIER</div>
+            <span class="tbf-sticker tbf-sticker--jalon">NIV. ${esc(proch.niveau)} →
+              ${esc(proch.quoi)}</span></div>` : ''}
         </div>
-        ${bonds > 1 ? `<div class="tbf-niv-de">tu étais au niveau ${esc(m.avant)}</div>` : ''}
-        ${gains ? `<div class="tbf-niv-gains">${gains}</div>` : ''}
-        ${proch ? `<div class="tbf-niv-proch">PROCHAIN : NIV. ${esc(proch.niveau)}
-          <b>→ ${esc(proch.quoi)}</b></div>` : ''}
-        <button type="button" class="tbf-niv-bt" data-fermer>CONTINUER</button>
+        <button type="button" class="tbf-plaque tbf-bloc" data-ton="or" data-fermer>CONTINUER</button>
       </div>`;
 
     document.body.appendChild(fond);
 
     const F = window.FX;
     const minuteries = [];
+    const kase = fond.querySelector('.tbf-niv-case');
     const scene = fond.querySelector('.tbf-niv-scene');
-    const rosette = scene.querySelector('.tbf-niv-rosette');
+    const rosette = scene.querySelector('.tbf-niv-cocarde');
     const nombre = fond.querySelector('.tbf-niv-n b');
     const somme = fond.querySelector('.tbf-niv-ech b');
+    /* .tbf-colle se retire à la fin de son entrée, comme le veut la brique :
+       un sticker qui vibrera ensuite (le chiffre qui change) ne doit pas
+       rejouer son collage. */
+    fond.addEventListener('animationend', (e) => {
+      if (e.animationName === 'tbf-colle') e.target.classList.remove('tbf-colle');
+    });
 
     /* Le personnage n'entre qu'une fois son dessin décodé : une entrée jouée
        sur une image encore vide ne montrerait rien, puis un saut. Le format
@@ -419,13 +486,30 @@
           { ms: 700, format: (v) => `+${Math.round(v)}` }), 760));
       }
       if (sans) return;
+      /* La case tombe et se cale, comme celle du moment fort : la propriété
+         « scale » se compose avec son inclinaison de repos (−1,6°) sans
+         l'écraser, et l'animation finit où la case se tient. */
+      try {
+        kase.animate([{ opacity: 0, scale: '.6' }, { opacity: 1, scale: '1.06', offset: 0.6 },
+          { opacity: 1, scale: '1' }],
+        { duration: 420, easing: 'cubic-bezier(.2,1.3,.35,1)', fill: 'backwards' });
+      } catch { /* sans animations de script : elle est là */ }
       /* La rosette se serre d'un coup, avec un rebond — le nœud de plus sur
-         l'écharpe, dit la direction —, puis tourne doucement (ui.css). La
-         propriété « scale » se compose avec sa rotation sans l'écraser. */
+         l'écharpe, dit la direction —, puis se tient immobile : elle ne
+         tourne plus sans fin. */
       try {
         rosette.animate([{ scale: '0' }, { scale: '1.18', offset: 0.6 }, { scale: '1' }],
           { duration: 440, delay: 160, easing: 'cubic-bezier(.2,1.3,.35,1)', fill: 'backwards' });
       } catch { /* elle est là, sans rebond */ }
+      /* **Le cadenas saute** quand son sticker est collé : ce que le palier
+         ouvre s'ouvre sous les yeux. Il monte, bascule et retombe ouvert. */
+      fond.querySelectorAll('.tbf-niv-cles svg').forEach((cadenas, k) => {
+        try {
+          cadenas.animate([{ translate: '0 0', rotate: '0deg' },
+            { translate: '0 -6px', rotate: '-16deg', offset: 0.45 }, { translate: '0 0', rotate: '0deg' }],
+          { duration: 420, delay: 1180 + k * 160, easing: 'cubic-bezier(.3,1.4,.4,1)' });
+        } catch { /* il est ouvert, sans sauter */ }
+      });
       /* Les confettis de papier jaillissent de la scène et y restent : elle
          les rogne, ils ne passent jamais sur ce qu'on lit. */
       minuteries.push(setTimeout(() => F?.particules?.({
@@ -433,13 +517,13 @@
         distance: 120, duree: 1000, dans: scene,
         couleurs: [F.couleurs?.craie ?? '#F2EEE4', '#E4D3B5', F.couleurs?.or ?? '#F5C33B'] }), 200));
       // La bouffée a fini en 840 ms : on la retire, comme le dit sa brique.
-      minuteries.push(setTimeout(() => scene.querySelector('.tbf-bouffee')?.remove(), 1000));
+      minuteries.push(setTimeout(() => fond.querySelector('.tbf-bouffee')?.remove(), 1000));
     });
 
     /* Le son et la vibration. Le flash, l'onde et la secousse qu'on lançait
        ici jouaient **sous** le fond de la fête, opaque à 94 % (ui.css) : on
        ne les voyait pas, et la secousse faisait trembler une page cachée.
-       La fête se joue maintenant dans son panneau — la bouffée, les
+       La fête se joue maintenant dans sa case — la bouffée, les
        confettis, le personnage, le chiffre. Le son passe par FX.son, donc
        par le moteur commun (son.js) : il obéit au mode calme et au volume du
        joueur, et il est mixé avec les autres moments. C'est le sien,

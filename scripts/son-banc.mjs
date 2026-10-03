@@ -220,9 +220,15 @@ export function travaux(mix) {
   sup('butReel+ovation+pousse', ['butReel', 'ovation', 'pousse'], 5.9);
   sup('legendaire', ['rugissement', 'accord-legendaire', 'grondement', 'bache'], 2.4);
   sup('tous-les-moments', Object.keys(mix.sons).filter((n) => mix.sons[n].famille === 'moment'), 5.9);
-  // L'ambiance, niveau par niveau, assez longtemps pour respirer.
+  /* L'ambiance, niveau par niveau, assez longtemps pour respirer. Avec sa
+     fenêtre (la moyenne) et, aux niveaux qui restent sous l'interface, son
+     plafond : la sonie sur cent millisecondes, celle d'une crête de la
+     respiration ou d'un éclat, qui couvrirait un tic. */
   mix.ambiance.forEach((fenetre, n) => {
-    if (n > 0) t.push({ id: `ambiance-${n}`, sorte: 'ambiance', niveau: n, quoi: { ambiance: n }, duree: 8, fenetre });
+    if (n > 0) {
+      t.push({ id: `ambiance-${n}`, sorte: 'ambiance', niveau: n, quoi: { ambiance: n }, duree: 8, fenetre,
+        plafond: mix.ambiancePlafonds?.[n] ?? null });
+    }
   });
   // Les chants, aux tempos des gestes du serveur (gestures.js).
   const chant = (id, quoi, duree) => t.push({ id, sorte: 'chant', famille: 'jeu', quoi, duree });
@@ -262,11 +268,23 @@ export function juger({ mix, mesures }) {
       if (!dans(m.sonie, f)) fautes.push(`sonie ${m.sonie} hors de [${f.join(', ')}]`);
       if (m.crete > mix.creteSeule) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteSeule}`);
     } else if (m.sorte === 'variante') {
+      /* **Une variante est un son que le jeu joue** : la déchirure à
+         l'intensité du doigt, à celle de la finale. Elle tient la fenêtre de
+         sa famille comme le son lui-même. Jugée sur sa seule crête, la
+         déchirure passait « ok » à −44,7 LUFS (sous un tic) comme à −17,9
+         (dans les moments). */
+      const f = mix.familles[m.famille].fenetre;
+      if (!dans(m.sonie, f)) fautes.push(`sonie ${m.sonie} hors de [${f.join(', ')}]`);
       if (m.crete > mix.creteSeule) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteSeule}`);
     } else if (m.sorte === 'superposition') {
       if (m.crete > mix.creteMax) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteMax}`);
     } else if (m.sorte === 'ambiance') {
       if (!dans(m.moyen, m.fenetre)) fautes.push(`moyen ${m.moyen} hors de [${m.fenetre.join(', ')}]`);
+      /* La moyenne de huit secondes ne dit pas qu'une crête de la rumeur
+         passe sur un tic : la sonie sur cent millisecondes, si. */
+      if (m.plafond != null && m.sonie > m.plafond) {
+        fautes.push(`sonie ${m.sonie} au-dessus de ${m.plafond} : la rumeur couvrirait l'interface`);
+      }
       if (m.crete > mix.creteSeule) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteSeule}`);
     } else if (m.sorte === 'chaine') {
       if (m.attendu != null && Math.abs(m.crete - m.attendu) > 0.3) {
@@ -324,13 +342,13 @@ function rapport({ mix, mesures }, jugees) {
   bloc('La banque', 'son', ['son', 'famille', 'gain', 'crête', 'sonie', 'moyen', 'durée (s)', 'verdict'],
     (j) => [j.id, j.famille, String(mix.sons[j.id].gain).replace('.', ','), nombre(j.crete),
       nombre(j.sonie), nombre(j.moyen), secondes(j.duree), verdict(j)]);
-  bloc('Les variantes', 'variante', ['son', 'options', 'crête', 'sonie', 'verdict'],
-    (j) => [j.id, `\`${JSON.stringify(j.options)}\``, nombre(j.crete), nombre(j.sonie), verdict(j)]);
+  bloc('Les variantes', 'variante', ['son', 'options', 'famille', 'crête', 'sonie', 'verdict'],
+    (j) => [j.id, `\`${JSON.stringify(j.options)}\``, j.famille, nombre(j.crete), nombre(j.sonie), verdict(j)]);
   bloc('Les superpositions', 'superposition', ['ensemble', 'crête', 'sonie', 'verdict'],
     (j) => [j.id, nombre(j.crete), nombre(j.sonie), verdict(j)]);
-  bloc('L’ambiance', 'ambiance', ['niveau', 'fenêtre (moyen)', 'moyen', 'sonie', 'crête', 'verdict'],
+  bloc('L’ambiance', 'ambiance', ['niveau', 'fenêtre (moyen)', 'moyen', 'plafond (sonie)', 'sonie', 'crête', 'verdict'],
     (j) => [String(j.niveau), `${nombre(j.fenetre[0])} à ${nombre(j.fenetre[1])}`, nombre(j.moyen),
-      nombre(j.sonie), nombre(j.crete), verdict(j)]);
+      j.plafond == null ? 'aucun (le but)' : nombre(j.plafond), nombre(j.sonie), nombre(j.crete), verdict(j)]);
   bloc('Les deux voix d’un chant', 'voix', ['voix', 'crête', 'sonie', 'moyen'],
     (j) => [j.id, nombre(j.crete), nombre(j.sonie), nombre(j.moyen)]);
   bloc('Les chants', 'chant', ['chant', 'crête', 'sonie', 'moyen', 'durée (s)', 'verdict'],

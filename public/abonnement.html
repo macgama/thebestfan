@@ -21,15 +21,24 @@
 
    ## Ce qu'il doit faire, dans cet ordre
 
-   1. **Dire ce qui reste libre.** C'est la première chose, avant le prix et
-      avant la liste de ce qui s'ouvre. Un joueur qui arrive ici se demande ce
-      qu'on lui retire s'il ne paie pas ; tant qu'il n'a pas la réponse, il ne
-      lit pas le reste. La réponse est « rien de ce qui se joue », et elle est
-      assez rare dans ce genre de jeu pour valoir la place d'honneur.
+   0. **Montrer ce qu'on vend** — le PASS DE TRIBUNE, sa bâche or et ce qu'il
+      donne le jour du paiement —, **sans prix ni bouton**, juste sous le
+      chapeau. Le premier écran ne montrait qu'une liste à coches, un
+      paragraphe et un tableau : un écran de conditions générales, pas un
+      écran de jeu, et l'objet de la page attendait à 970 px sur 1 503 à
+      360 px de large (critique du lot 3). Ce n'est pas encore une offre :
+      rien ne s'y paie, rien ne s'y touche.
+   1. **Dire ce qui reste libre.** Avant le prix et avant la liste de ce qui
+      s'ouvre. Un joueur qui arrive ici se demande ce qu'on lui retire s'il ne
+      paie pas ; tant qu'il n'a pas la réponse, il ne lit pas le reste. La
+      réponse est « rien de ce qui se joue », et elle est assez rare dans ce
+      genre de jeu pour valoir la place d'honneur : le chapeau la dit dès le
+      haut de l'écran, le bloc qui suit le PASS la détaille.
    2. **Dire ce qui s'ouvre**, en chiffres et non en adjectifs. « Plus de
       boosters » ne veut rien dire ; « 24 en réserve au lieu de 10 » se compare.
-   3. **Proposer.** Le bouton vient en dernier, quand les deux questions sont
-      réglées.
+   3. **Proposer.** Les formules, leur prix et leur bouton viennent en
+      dernier, quand les deux questions sont réglées : le gratuit passe
+      toujours avant le prix.
 
    ## Pourquoi la liste des chiffres vient du serveur
 
@@ -98,8 +107,10 @@ main [hidden]{display:none}
 
    L'offre, en une bâche or à écharpe — l'or dit « on achète » (la règle de
    l'or : une face, jamais un petit texte) — tenue au mur par deux scotchs :
-   son nom en grand, et le cadeau du jour du paiement avec ses sachets.
-   Dessous, les formules en bâches côte à côte : la mensuelle en parpaing,
+   son nom en grand, et le cadeau du jour du paiement avec ses sachets. Elle
+   est **en tête de page**, sous le chapeau, sans prix ni bouton : c'est
+   l'objet qu'on vient voir. Les formules, elles, sont en bas, en bâches côte
+   à côte après ce qui reste libre et le tableau : la mensuelle en parpaing,
    celle que le catalogue met en avant en or, son ruban en sticker.
 
    **Il ne promet rien que le serveur ne fasse.** Le nombre de boosters est
@@ -137,9 +148,15 @@ main [hidden]{display:none}
 .pass-formule>.tbf-sticker{position:absolute;top:-19px;right:-6px;--rot:5deg}
 .pass-beta{margin:10px 0 0;padding:10px 13px;border-radius:8px;background:var(--panneau);
   font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.35;letter-spacing:.04em}
+/* En bas de page, les formules n'ont plus la bâche du PASS au-dessus d'elles
+   pour les annoncer : elles ont leur titre cousu, comme les deux rubriques
+   qui les précèdent. Sous lui, la place du ruban de la formule mise en avant,
+   qui monte de dix-neuf pixels au-dessus de sa bâche. */
+.prendre h2{margin:24px 0 30px}
 
-/* **Ce qui reste libre** — le bloc le plus haut et le plus lisible de l'écran.
-   Il porte la promesse du jeu, et il doit tenir sans qu'on fasse défiler. */
+/* **Ce qui reste libre** — le bloc le plus lisible de l'écran, le premier
+   après le PASS, et avant tout prix. Il porte la promesse du jeu, que le
+   chapeau annonce déjà au premier écran. */
 .libre{padding:15px 16px;border-radius:14px;margin-bottom:22px;
   background:linear-gradient(168deg,rgba(255,255,255,.07),rgba(0,0,0,.3)),var(--panneau);
   border:1px solid rgba(242,238,228,.14)}
@@ -416,8 +433,10 @@ function toast(texte) {
 const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
 
 /**
- * Le PASS DE TRIBUNE : la bâche or, et — pour qui n'est pas abonné — les
- * formules en bâches dessous. Voir la feuille, « le PASS DE TRIBUNE ».
+ * Le PASS DE TRIBUNE : la bâche or, en tête de page. Voir la feuille, « le
+ * PASS DE TRIBUNE ». **Ni prix ni bouton** : abonné, l'état de l'abonnement ;
+ * sinon, ce que le paiement donne et, en vitrine, BIENTÔT. Les formules qu'on
+ * paie sont en bas de page (`formulesHTML`), après ce qui reste libre.
  *
  * `ouvert` vient du catalogue de la boutique : `false` veut dire « vitrine »
  * (le paiement n'est pas branché), `undefined` qu'on ne sait pas — et alors
@@ -448,6 +467,23 @@ function passHTML(d, { ouvert } = {}) {
       ${max <= 7 ? `<span class="tbf-fentes" aria-hidden="true">${'<span class="tbf-fente"></span>'.repeat(max)}</span>` : ''}
       <span><b>${esc(`${nombres.every((n) => n === max) ? '' : 'JUSQU’À '}${pluriel(max, 'BOOSTER', 'BOOSTERS')}`)}</b>
       <small>DÈS LE PAIEMENT</small></span></span>` : '';
+  return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
+      <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
+      <b class="pass-titre">PASS DE TRIBUNE</b>
+      ${cadeau}
+      ${vitrine ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
+    </div>`;
+}
+
+/**
+ * Les formules du PASS, en bâches côte à côte, pour qui n'est pas abonné :
+ * le bas de la page, l'offre qu'on paie. En vitrine, elles sont hors service
+ * et la phrase de la bêta les suit.
+ */
+function formulesHTML(d, { ouvert } = {}) {
+  const formules = d.formules ?? [];
+  const vitrine = ouvert === false;
+  if (d.abonne || !formules.length) return '';
   const bache = (f) => {
     const mois = Number(f.mois) || null;
     const periode = mois === 1 ? ' / MOIS' : mois === 12 ? ' / AN' : mois ? ` / ${mois} MOIS` : '';
@@ -460,12 +496,7 @@ function passHTML(d, { ouvert } = {}) {
       ${packs ? `<small>${esc(`+${pluriel(packs, 'booster', 'boosters')} au paiement`)}</small>` : ''}
       ${f.marque ? `<span class="tbf-sticker">${esc(f.marque)}</span>` : ''}</button>`;
   };
-  return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
-      <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
-      <b class="pass-titre">PASS DE TRIBUNE</b>
-      ${cadeau}
-      ${vitrine ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
-    </div>
+  return `<h2 class="tbf-cousu">Les formules</h2>
     <div class="pass-formules">${formules.map(bache).join('')}</div>
     ${vitrine ? '<p class="pass-beta">Pendant la bêta, l’abonnement s’offre depuis l’administration : demande-le.</p>' : ''}`;
 }
@@ -475,22 +506,35 @@ function passHTML(d, { ouvert } = {}) {
      chose : savoir si le paiement est branché (`ouvert`). Le catalogue est
      public et sans base ; une panne de sa part ne coûte que le sticker
      BIENTÔT. */
-  let d;
   const catalogue = fetch('/api/boutique/catalogue')
     .then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  try {
-    d = await fetch('/api/abonnement', { credentials: 'same-origin' }).then((r) => r.json());
-  } catch {
-    $('corps').innerHTML = '<div class="vide">Serveur injoignable.</div>';
+  /* **Une seule question à l'abonnement par page.** Le tiroir la pose aussi
+     (sa marque ABONNÉ) : la réponse se partage par la promesse posée sur la
+     fenêtre, `window.TBF_ABO` — comme `TBF_MOI` pour le compte, comme la
+     boutique et le KOP —, le premier qui passe la pose, l'autre la reprend.
+     Cette page passe la première : son script n'est pas différé, ceux de la
+     barre le sont.
+
+     Sa forme est celle de tous ses lecteurs : le corps d'une réponse
+     réussie, ou `null`, sans jamais lever. Un refus n'a donc pas de corps à
+     lire ici ; c'est le statut, retenu au passage, qui en dit la cause —
+     401, pas connecté ; aucun statut, serveur injoignable (ou une réponse
+     illisible, comme avant). Si un autre script avait posé la promesse
+     avant la page, le statut resterait inconnu, et le refus se dirait sans
+     sa cause plutôt que d'en inventer une. L'objet rendu est commun : on le
+     lit, on n'y écrit pas. */
+  let statut;
+  const d = await (window.TBF_ABO ??= fetch('/api/abonnement', { credentials: 'same-origin' })
+    .then((r) => { statut = r.status; return r.ok ? r.json() : null; })
+    .catch(() => { statut = 0; return null; }));
+  if (!d || d.error) {
+    $('corps').innerHTML = statut === 0 ? '<div class="vide">Serveur injoignable.</div>'
+      : statut === 401
+        ? '<div class="vide">Connecte-toi pour voir ton abonnement.<br><a href="/compte">Se connecter</a></div>'
+        : '<div class="vide">L’abonnement n’est pas disponible pour le moment.</div>';
     return;
   }
   const ouvert = (await catalogue)?.ouvert;
-  if (d.error) {
-    $('corps').innerHTML = d.error === 'auth.error.unauthenticated'
-      ? '<div class="vide">Connecte-toi pour voir ton abonnement.<br><a href="/compte">Se connecter</a></div>'
-      : '<div class="vide">L’abonnement n’est pas disponible pour le moment.</div>';
-    return;
-  }
 
   /* **Les deux côtés viennent du serveur.** Cette page en avait recopié un —
      « au lieu de 10 boosters » — et le réglage en disait douze. Un barème
@@ -503,16 +547,18 @@ function passHTML(d, { ouvert } = {}) {
   const libre = (d.libre ?? []).map((x) => `<li><i class="tbf-ico tbf-ico-coche"
     aria-hidden="true"></i><span>${esc(x)}</span></li>`).join('');
 
-  /* Abonné : le PASS porte le tampon et l'échéance, en tête — c'est la
-     réponse à la question qu'on vient poser. */
-  const etat = d.abonne ? passHTML(d) : '';
+  /* **Le PASS en tête**, sous le chapeau. Abonné, il porte le tampon et
+     l'échéance — la réponse à la question qu'on vient poser. Sinon, ce que
+     le paiement donne, sans prix ni bouton : l'objet de la page se voit au
+     premier écran, et ce qui se paie attend en bas. */
+  const pass = passHTML(d, { ouvert });
 
   /* **Ce qui reste libre, avant ce qui s'ouvre.** Un joueur qui arrive ici se
      demande d'abord ce qu'on lui retire s'il ne paie pas. Tant qu'il n'a pas la
      réponse, il ne lit pas le reste — et la réponse est « rien de ce qui se
      joue ». */
   $('corps').innerHTML = `
-    ${etat}
+    ${pass ? `<div id="pass">${pass}</div>` : ''}
     <div class="libre">
       <h2 class="tbf-cousu">Ce que tu gardes sans payer</h2>
       <ul>${libre}</ul>
@@ -555,14 +601,14 @@ function passHTML(d, { ouvert } = {}) {
     </div>
 
     ${d.abonne ? '' : `<div class="prendre" id="prendre">
-      <!-- Le PASS DE TRIBUNE et ses formules, en dernier : ce qui reste libre
-           et ce qui s'élargit sont réglés, on peut proposer. Les formules sont
-           côte à côte — une seule mènerait au mensuel sans jamais dire que
-           l'annuel existe. Chaque bâche porte sa durée, son prix ramené au
-           mois et ses boosters du jour du paiement : sur deux boutons voisins,
-           c'est ce qu'on lit qui dit lequel on choisit. Tout vient du serveur,
-           le nom, le prix, le ruban, la durée et le nombre de boosters. -->
-      ${passHTML(d, { ouvert })}
+      <!-- Les formules du PASS, en dernier : ce qui reste libre et ce qui
+           s'élargit sont réglés, on peut proposer. Les formules sont côte à
+           côte — une seule mènerait au mensuel sans jamais dire que l'annuel
+           existe. Chaque bâche porte sa durée, son prix ramené au mois et ses
+           boosters du jour du paiement : sur deux boutons voisins, c'est ce
+           qu'on lit qui dit lequel on choisit. Tout vient du serveur, le nom,
+           le prix, le ruban, la durée et le nombre de boosters. -->
+      ${formulesHTML(d, { ouvert })}
       <!-- Un serveur d'avant cette route ne rend pas « formules ». Plutôt que
            de recopier ici les prix qu'on vient d'en sortir, on envoie là où
            ils vivent : la boutique vend les mêmes articles. -->
@@ -600,13 +646,16 @@ function passHTML(d, { ouvert } = {}) {
       if (!r.ok || !j.url) {
         /* Le cas de la vitrine : la boutique se monte sans clé Stripe et
            refuse alors la commande. Si le catalogue ne l'avait pas dit, le
-           refus le dit : le PASS passe en vitrine — bâches hors service,
-           sticker BIENTÔT, la phrase de la bêta —, plutôt que de laisser un
-           bouton qui ne fait rien. Toute autre panne se dit dans la pile. */
+           refus le dit : le PASS passe en vitrine — sticker BIENTÔT sur la
+           bâche du haut, formules hors service et phrase de la bêta en
+           bas —, plutôt que de laisser un bouton qui ne fait rien. Toute
+           autre panne se dit dans la pile. */
         if (j.error === 'boutique.error.non_configuree' && !d.abonne) {
+          const haut = document.getElementById('pass');
+          if (haut) haut.innerHTML = passHTML(d, { ouvert: false });
           const p = document.getElementById('prendre');
           const garde = p?.querySelector('.fin-mot')?.outerHTML ?? '';
-          if (p) p.innerHTML = passHTML(d, { ouvert: false }) + garde;
+          if (p) p.innerHTML = formulesHTML(d, { ouvert: false }) + garde;
           return;
         }
         bouton.disabled = false;

@@ -39,38 +39,38 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 #vue .tbf-cousu i{font-style:normal;font-family:var(--ui);font-weight:600;font-size:12px;
   letter-spacing:.04em;text-transform:none;white-space:nowrap}
 #vue>.tbf-ticket:first-child,#vue>.tbf-cousu:first-child{margin-top:16px}
+/* La précision des MISSIONS porte deux choses (« nouvelles dans 20 h 21 ·
+   1 changement ») : à 360 px elles ne tiennent pas sur la ligne du titre.
+   Chacune reste entière, et la seconde passe dessous plutôt que de faire
+   déborder le titre ; le mot du titre, lui, ne se coupe jamais. */
+#vue .tbf-cousu>.mot{flex:none;white-space:nowrap}
+#vue .tbf-cousu i:has(>span){white-space:normal}
+#vue .tbf-cousu i>span{white-space:nowrap}
 
-/* PROVISOIRE — besoin « feuilles-css ». Le ticket de mission range ses
-   gains sur la ligne du titre (« v t g »). Un gain du contrat porte souvent
-   trois valeurs (écharpes, XP, tampons) : trois stickers font deux cent
-   vingt pixels, et à 360 px il ne restait au titre qu'une vingtaine de
-   pixels. En attendant que la brique le prévoie, sous 560 px seulement, le
-   titre prend toute la ligne, la jauge partage la sienne avec le geste, et
-   les gains passent sur une troisième ligne, de bord à bord. Seule la
-   grille change : le dessin reste celui de la brique. */
-@media (max-width:559px){
-  #vue .tbf-mission:has(>.tbf-mission-gain){grid-template-areas:"v t t" "v j a" "g g g"}
-  #vue .tbf-mission-gain{justify-self:start;flex-wrap:wrap;row-gap:8px;min-width:0}
-}
-/* PROVISOIRE — besoin « feuilles-css ». Quatre onglets à parts égales
-   laissent soixante et onze pixels à chaque mot à 360 px : PREMIERS PAS
-   (soixante-dix-neuf) se coupait, et DU JOUR avec son compte aussi. Chaque
-   onglet prend la place de son mot, et ce qui reste se partage : les quatre
-   tiennent entiers. Seule la répartition change, pas l'onglet. */
-.tabs .tbf-onglet{flex:1 1 auto}
+/* Le gain sur sa ligne sous 560 px et le rail ajusté (`data-ajuste`) sont
+   passés dans les briques (ui.css) : la page n'en garde pas de copie. */
 /* Un ticket qui mène où la mission se fait est un lien : pas de soulignement
    sous son titre. */
 #vue a.tbf-mission{text-decoration:none}
 .liste{margin-top:14px}
 
-/* Une mission du jour et son changement : le bouton sous le ticket, à
-   droite, comme un détour offert — pas une seconde bâche. Quarante-quatre
-   pixels de haut, la craie pleine du mur. */
-.une{display:flex;flex-direction:column}
-.relancer{align-self:flex-end;display:flex;align-items:center;min-height:44px;margin:2px 0 -10px;
-  padding:0 2px;border:0;background:none;color:var(--craie);cursor:pointer;
-  font-family:var(--banner);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
-.relancer:disabled{cursor:default}
+/* **Changer une mission du jour.** Le compte des changements s'écrit une
+   fois, dans la précision du titre ; chaque mission qu'on peut changer
+   porte dans son coin haut-droit une plaque ronde ↻ (la brique
+   `.tbf-plaque--rond`, quarante-quatre pixels pour le doigt). Elle répétait
+   avant, sous chaque ticket, « CHANGER DE MISSION (1) » : on croyait avoir
+   trois changements quand il n'y en avait qu'un, et le lien, aligné entre
+   deux tickets, semblait appartenir aussi bien à celui du dessous.
+
+   La plaque est une sœur du ticket et non son enfant : le ticket en cours
+   est un lien, et un bouton ne se pose pas dans un lien. Posée à cheval sur
+   le coin, elle ne déborde que de quatre pixels dans la gouttière. Le titre
+   (sous 560 px) ou les gains (au-delà, sur la ligne du titre) lui laissent
+   la place, pour qu'aucun mot ne passe sous elle. */
+.une{position:relative}
+.une>.relancer{position:absolute;z-index:2;top:-6px;right:-4px}
+@media (max-width:559px){ .une>.tbf-mission .tbf-mission-titre{padding-right:34px} }
+@media (min-width:560px){ .une>.tbf-mission>.tbf-mission-gain{margin-right:36px} }
 
 /* Ce que « fait » compte, dit une fois sous les missions du jour. */
 .regle{margin-top:18px;padding:12px 14px 13px}
@@ -104,6 +104,44 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .entete .pied .tbf-mission-note{flex:1}
 .phrase{margin:8px 6px 0;padding:11px 14px 12px;font-size:12.5px;line-height:1.55}
 
+/* ================================================================ le carnet
+
+   Un seul cadre kraft : « 37 TAMPONS » écrit une fois, puis le chemin de
+   MON NIVEAU (la brique `.tbf-chemin`), un nœud par palier — atteint et
+   versé : le rond de craie coché et le tampon FAIT ; atteint et pas encore
+   récupéré : la bâche or du nœud, son seuil dessus, PRÊT dessous ; à venir :
+   le pointillé, son seuil dedans, ce qu'il donne en stickers dessous.
+   L'écharpe avance sur la corde depuis le dernier palier atteint. Seuls les
+   paliers prêts gardent un ticket, au-dessus, avec leur RÉCUPÉRER. Avant,
+   chacun des cinq paliers était un ticket qui redisait 37/100, 37/180,
+   37/260 sous la même vignette : un mur de cinq tickets presque pareils.
+
+   Le chemin prend la largeur du ticket, moins huit pixels de chaque côté
+   (cinq nœuds de soixante pixels à 360) ; la tête et le pied gardent le
+   retrait du papier. */
+.carnet{padding-left:8px;padding-right:8px}
+.carnet>.haut,.carnet>.pied{padding:0 8px}
+.carnet .tbf-chemin{margin-top:14px}
+.carnet .tbf-noeud>.tbf-tampon{--rot:-6deg}
+/* PROVISOIRE — besoin « feuilles-css ». La brique ne tend l'écharpe que
+   depuis le nœud courant (`data-etat=ici`, la bâche or). Sur le carnet, le
+   dernier palier atteint est souvent déjà versé — un rond coché — et c'est
+   pourtant de lui que part la marche suivante. En attendant que la brique
+   tende l'écharpe depuis tout nœud qui porte `data-avance` et `--p`, la
+   page recopie son trait, règle pour règle ; le dessin reste celui de la
+   brique. */
+.carnet .tbf-noeud[data-avance]:not(:last-child)::after{
+  content:"";position:absolute;left:50%;width:var(--p,0%);top:calc(var(--k) / 2 - 4.5px);height:9px;
+  border-radius:0 5px 5px 0;box-shadow:0 0 0 1.5px var(--encre);pointer-events:none;
+  background:repeating-linear-gradient(115deg,var(--e1,var(--projo)) 0 7px,var(--encre) 7px 8px,
+    var(--e2,var(--flare)) 8px 15px,var(--encre) 15px 16px);
+}
+
+/* La case de BD d'un palier du carnet : le tampon d'un titre gagné, posé
+   sous la ligne de la case. Il peut passer à la ligne : un titre saisi dans
+   l'administration peut être plus long que celui de la saison 1. */
+#moment .tbf-tampon{margin-top:14px;max-width:100%;white-space:normal}
+
 /* ================================================== une étape des premiers pas
 
    Le ticket de l'étape (la brique), et sous lui, posé comme une feuille
@@ -121,11 +159,28 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .pas .texte summary::-webkit-details-marker{display:none}
 .pas .texte summary::after{content:'+';margin-left:auto;font-size:17px;line-height:1}
 .pas .texte[open] summary::after{content:'–'}
-/* Le bouton n'existe que sur une étape qui reste à faire, et il n'est pas
-   seulement caché : une plaque en `display:none` reste dans le document, et la
-   tentation serait de la rallumer un jour « pour ceux qui veulent y retourner ».
-   Une étape faite est un résumé, pas une invitation — et le menu mène partout. */
-.pas .aller{margin-top:10px;display:block;width:100%}
+/* Le bouton n'existe que sur **l'étape suivante**, et il n'est pas
+   seulement caché ailleurs : une plaque en `display:none` reste dans le
+   document, et la tentation serait de la rallumer un jour « pour ceux qui
+   veulent y retourner ». Une étape faite est un résumé, pas une invitation —
+   et le menu mène partout. Les quatre bâches parpaing d'avant, toutes
+   pareilles, ne disaient pas laquelle faire maintenant.
+
+   La bâche prend le ton de sa destination (bleu pour ce qu'on possède, flare
+   pour ce qu'on joue, or pour le kiosque : les tons du tiroir), et la
+   brique centre son mot. La page la posait en `display:block`, qui défaisait
+   le centrage : le mot collé à gauche, sur du gris, se lisait comme un titre
+   de rubrique et non comme un geste. */
+.pas .aller{margin-top:10px}
+/* **Les étapes d'après** : le ticket fermé de la brique (`verrouillee` : la
+   vignette au parpaing sous le scotch en croix), le mot ENSUITE dans sa case
+   d'action, et rien d'autre. Leur explication dort dessous : le ticket est
+   le sommaire d'un pli, qu'on ouvre pour lire ce qui vient. Le cerne du
+   focus est celui du ticket qui mène quelque part, dessiné dedans : la
+   déchirure couperait un anneau posé autour. */
+.pas .plie>summary{list-style:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pas .plie>summary::-webkit-details-marker{display:none}
+.pas .plie>summary:focus-visible{outline:2.5px solid var(--encre-kraft);outline-offset:-6px}
 /* Les deux étapes qui demandent un geste proposent de le répéter avant. Un
    lien sous la plaque, et pas une seconde plaque : c'est un détour offert, pas
    une marche à monter — l'étape se coche au Virage ou en duel, jamais ici.
@@ -206,13 +261,21 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
   <!-- Le rail à la craie de ce qui te concerne, le ton de cet écran sur
        l'accueil. DU JOUR et DE LA SAISON s'y ajoutent quand le serveur les
        sert : jamais d'onglet vide. -->
-  <div class="tabs tbf-onglets" data-ton="craie">
+  <div class="tabs tbf-onglets" data-ton="craie" data-ajuste>
     <button type="button" data-t="pas" class="tbf-onglet on" aria-pressed="true">PREMIERS PAS</button>
     <button type="button" data-t="faq" class="tbf-onglet" aria-pressed="false">QUESTIONS</button>
   </div>
 
   <div id="vue"><div class="tbf-spin"></div></div>
 </main>
+<!-- Le moment fort de la page : la case de BD unifiée de ui.css, posée sur le
+     document comme l'accueil et les amis la posent, hors de la colonne que la
+     page réécrit. Elle fête un palier du carnet (« DANS LE BAIN ! ») : un
+     palier arrive au mieux une fois par semaine et paie des boosters, il ne
+     se fête pas comme une mission du jour. Invisible tant qu'elle ne porte
+     pas `.on`, et elle ne prend jamais le doigt. -->
+<div class="tbf-moment" id="moment" data-ton="or" aria-live="polite"><div class="tbf-vignette"
+  ><b class="tbf-vignette-mot" id="momentMot"></b><small id="momentSous"></small></div></div>
 <!-- Les bibliothèques de dessin, **sans `defer`** : la page lit le portrait
      du premier Fanzzy et le dos de sa série de façon synchrone, au moment où
      elle écrit la vignette des premières étapes. Différées, elles arriveraient
@@ -318,6 +381,9 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     carte: 'M5 3h14v18H5zM9 8h6M9 12h6M9 16h3',
     tampon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7.5l1.4 2.9 3.1.4-2.3 2.2.6 3.1-2.8-1.5-2.8 1.5.6-3.1-2.3-2.2 3.1-.4z',
     cible: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 11.5v1',
+    // Le palier versé du carnet, et le changement d'une mission (↻).
+    coche: 'M5 12.5l4.5 4.5L19 7.5',
+    relance: 'M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4v4.5H15',
   };
   const embleme = (cle) =>
     `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${EMBLEMES[cle] ?? EMBLEMES.carte}"/></svg>`;
@@ -500,15 +566,21 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
           <small class="tbf-mission-note">${esc(x.bouton || 'Y aller').toUpperCase()} ›</small></a>`
       : `<article class="tbf-ticket tbf-mission${colleSi(cle)}" data-etat="en_cours" data-cle="${esc(cle)}">${corps}</article>`;
     /* Le changement : seulement aujourd'hui, seulement si le serveur dit
-       qu'il est possible pour cette ligne, et qu'il en reste. */
-    const relances = entier(Q.missions?.relances);
-    if (!duJour || x.relancable !== true || !relances || eteintes.has('relance')) return ticket;
+       qu'il est possible pour cette ligne, et qu'il en reste. Le compte ne
+       s'écrit pas ici : une seule fois, dans le titre de la liste. */
+    if (!duJour || !changeable(x)) return ticket;
     return `<div class="une">${ticket}
-        <button type="button" class="relancer" data-geste="relance" data-rang="${entier(x.rang)}"
-          data-id="${esc(x.id)}" data-titre="${esc(x.titre)}" data-difficulte="${esc(x.difficulte)}"
-          aria-label="Changer cette mission : ${relances} changement${relances > 1 ? 's' : ''} possible${relances > 1 ? 's' : ''} aujourd’hui"
-          >CHANGER DE MISSION (${relances})</button></div>`;
+        <button type="button" class="tbf-plaque tbf-plaque--rond relancer" data-geste="relance"
+          data-rang="${entier(x.rang)}" data-id="${esc(x.id)}" data-titre="${esc(x.titre)}"
+          data-difficulte="${esc(x.difficulte)}" title="Changer de mission"
+          aria-label="Changer la mission « ${esc(x.titre)} »">${embleme('relance')}</button></div>`;
   }
+
+  /** Une mission du jour qu'on peut changer maintenant : le serveur le dit
+      pour la ligne (`relancable`), il reste un changement, et il n'a pas
+      coupé la source. */
+  const changeable = (x) => x?.etat === 'en_cours' && x.relancable === true
+    && entier(Q?.missions?.relances) > 0 && !eteintes.has('relance');
 
   /**
    * Le sachet : il se gagne quand toutes les missions du jour sont
@@ -554,7 +626,18 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     const m = Q.missions;
     const liste = listeDe(m.liste);
     const reste = resteDuJour();
-    const quand = reste > 0 ? `<i id="finJour">nouvelles dans ${duree(reste)}</i>` : '';
+    /* La précision du titre : quand viennent les nouvelles, et combien de
+       changements restent — écrit une fois pour toute la liste, et
+       seulement si une mission affichée peut encore changer. */
+    const relances = entier(m.relances);
+    const precision = [
+      reste > 0 ? `<span id="finJour">nouvelles dans ${duree(reste)}</span>` : '',
+      liste.some(changeable)
+        ? `<span>${relances} changement${relances > 1 ? 's' : ''}</span>` : '',
+    ].filter(Boolean);
+    /* Les espaces autour du point sont hors des morceaux insécables : c'est
+       là, et seulement là, que la précision passe à la ligne. */
+    const quand = precision.length ? `<i>${precision.join(' <span aria-hidden="true">·</span> ')}</i>` : '';
     const hier = m.hier ?? null;
     const hierListe = pretsDe(hier?.liste);
     const hierSachet = hier?.sachet?.etat === 'pret' ? hier.sachet : null;
@@ -572,7 +655,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     }
 
     return `${Q.bonus && typeof Q.bonus === 'object' ? ticketBonus() : ''}
-      ${liste.length ? `<h2 class="tbf-cousu">LES MISSIONS${quand}</h2>
+      ${liste.length ? `<h2 class="tbf-cousu"><span class="mot">LES MISSIONS</span>${quand}</h2>
       <div class="tbf-missions">
         ${liste.map((x) => ticketMission(x, m.jour, true)).join('')}
         ${m.sachet ? ticketSachet(m.sachet, m.jour, true) : ''}
@@ -587,27 +670,107 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
 
   /* ============================================================ DE LA SAISON */
 
-  /** Un palier du carnet : son seuil en tampons, ce qu'il donne, son état. */
-  function ticketPalier(p, saisonId, tampons) {
+  /**
+   * Ce que donne un palier du carnet, en stickers.
+   *
+   * **Le titre**, oui : `/api/rank/moi` le sert et le profil l'affiche, pour
+   * toujours. **L'insigne** (`insigne` : le liseré autour de l'avatar, le
+   * tampon sur la carte de supporter), non : aucune route ne dit encore qu'un
+   * joueur le porte, et aucun écran ne le dessine. L'écrire ici serait
+   * promettre une chose que le jeu ne montrera pas ; il s'écrira — « LISERÉ
+   * S1 », « TAMPON S1 », avec son petit dessin — le jour où le profil le
+   * montrera.
+   */
+  function honneurHTML(p) {
+    return typeof p?.titre === 'string' && p.titre ? '<span class="tbf-sticker">TITRE</span>' : '';
+  }
+
+  /**
+   * Un palier prêt du carnet : le seul qui garde un ticket, avec son
+   * RÉCUPÉRER. Son seuil s'écrit en tampons (« 40 TAMPONS ») — le chiffre que
+   * porte, dessous, la bâche or de son nœud sur le chemin. Un palier versé ou
+   * à venir ne se lit que sur le chemin.
+   */
+  function ticketPalier(p, saisonId) {
     const cle = `carnet:${saisonId}:${entier(p.n)}`;
-    const seuil = Math.max(1, entier(p.tampons));
-    const recu = p.etat === 'pret' || p.etat === 'reclame' ? seuil : Math.min(entier(tampons), seuil);
-    const extra = (p.titre ? '<span class="tbf-sticker">TITRE</span>' : '')
-      + (p.insigne ? '<span class="tbf-sticker">INSIGNE</span>' : '');
-    const corps = `<span class="tbf-mission-vignette">${embleme('tampon')}</span>
+    const seuil = entier(p.tampons);
+    const geste = eteintes.has('carnet') ? ''
+      : `<button type="button" class="tbf-plaque" data-ton="or" data-geste="carnet"
+          data-saison="${entier(saisonId)}" data-n="${entier(p.n)}" data-titre="${esc(p.nom)}"
+          ${typeof p.titre === 'string' && p.titre ? `data-honneur="${esc(p.titre)}"` : ''}>RÉCUPÉRER</button>`;
+    return `<article class="tbf-ticket tbf-mission" data-etat="pret" data-cle="${esc(cle)}">
+        <span class="tbf-mission-vignette">${embleme('tampon')}</span>
         <b class="tbf-mission-titre">${esc(p.nom)}</b>
-        ${jaugeHTML(recu, seuil)}
-        <span class="tbf-mission-gain">${gainHTML(p.gain)}${extra}</span>`;
-    if (p.etat === 'pret') {
-      const geste = eteintes.has('carnet') ? ''
-        : `<button type="button" class="tbf-plaque" data-ton="or" data-geste="carnet"
-            data-saison="${entier(saisonId)}" data-n="${entier(p.n)}" data-titre="${esc(p.nom)}">RÉCUPÉRER</button>`;
-      return `<article class="tbf-ticket tbf-mission" data-etat="pret" data-cle="${esc(cle)}">${corps}${geste}</article>`;
-    }
-    if (p.etat === 'reclame') {
-      return `<article class="tbf-ticket tbf-mission" data-etat="reclamee" data-cle="${esc(cle)}">${corps}${fait(cle)}</article>`;
-    }
-    return `<article class="tbf-ticket tbf-mission" data-etat="en_cours" data-cle="${esc(cle)}">${corps}</article>`;
+        ${seuil ? `<span class="tbf-mission-jauge">${seuil} TAMPONS</span>` : ''}
+        <span class="tbf-mission-gain">${gainHTML(p.gain)}${honneurHTML(p)}</span>${geste}</article>`;
+  }
+
+  /**
+   * Le carnet en chemin (la brique de MON NIVEAU) : un nœud par palier.
+   *
+   * Cinq nœuds au plus, comme au profil — soixante pixels chacun à 360 :
+   * un carnet saisi dans l'administration peut en avoir huit. Au-delà de
+   * cinq, le chemin part du dernier palier versé avant le premier qui ne
+   * l'est pas ; la suite paraît à mesure qu'on avance.
+   *
+   * Chaque nœud dit son état par sa forme, et le lecteur d'écran l'entend
+   * par une phrase cachée : le palier, son nom, et ce qu'il en est.
+   */
+  function carnetHTML(c, saisonId, tampons) {
+    const tous = c.paliers.filter((p) => p && typeof p === 'object');
+    if (!tous.length) return '';
+    const ouvert = tous.findIndex((p) => p.etat !== 'reclame');
+    const debut = tous.length <= 5 ? 0
+      : Math.max(0, Math.min((ouvert < 0 ? tous.length : ouvert) - 1, tous.length - 5));
+    const vus = tous.slice(debut, debut + 5);
+    /* L'écharpe part du dernier palier atteint (versé ou prêt) et avance
+       vers le suivant, de la part des tampons gagnés entre leurs deux
+       seuils. Rien d'atteint encore : pas d'écharpe, le pied dit combien il
+       manque. */
+    let dernier = -1;
+    vus.forEach((p, i) => { if (p.etat === 'pret' || p.etat === 'reclame') dernier = i; });
+
+    const noeuds = vus.map((p, i) => {
+      const n = entier(p.n);
+      const seuil = entier(p.tampons);
+      const nom = esc(p.nom);
+      let avance = '';
+      if (i === dernier && i < vus.length - 1) {
+        const a = entier(vus[i + 1].tampons);
+        const part = a > seuil ? Math.round(((tampons - seuil) / (a - seuil)) * 100) : 0;
+        avance = ` data-avance style="--p:${Math.min(100, Math.max(0, part))}%"`;
+      }
+      if (p.etat === 'reclame') {
+        return `<li class="tbf-noeud" data-etat="fait"${avance}><span class="tbf-vh">Palier ${n}, ${nom} :</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${embleme('coche')}</span>${fait(`carnet:${saisonId}:${n}`)}</li>`;
+      }
+      /* Prêt : la bâche or du nœud — celle du « TU Y ES » de MON NIVEAU, ici
+         l'un des trois sens de l'or, une récompense prête. Le geste est sur
+         le ticket au-dessus : un nœud de quarante pixels n'est pas une cible. */
+      if (p.etat === 'pret') {
+        return `<li class="tbf-noeud" data-etat="ici"${avance}><span class="tbf-vh">Palier ${n}, ${nom} : prêt à récupérer</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${seuil}</span><span class="tbf-noeud-l" aria-hidden="true">PRÊT</span></li>`;
+      }
+      const e = entier(p.gain?.echarpes);
+      const k = entier(p.gain?.packs);
+      const x = entier(p.gain?.xp);
+      return `<li class="tbf-noeud"><span class="tbf-vh">Palier ${n}, ${nom}, à ${seuil} tampons :</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${seuil}</span>${e
+            ? `<span class="tbf-sticker tbf-sticker--prix"><img src="/img/gains/echarpes.webp" alt="">+${e}<span class="tbf-vh"> écharpes</span></span>` : ''}${k
+            ? `<span class="tbf-sticker">${embleme('dos')}+${k}<span class="tbf-vh"> booster${k > 1 ? 's' : ''}</span></span>` : ''}${x
+            ? `<span class="tbf-sticker">+${x} XP</span>` : ''}${honneurHTML(p)}</li>`;
+    });
+
+    const prochain = c.prochain ? tous.find((p) => entier(p.n) === entier(c.prochain.n)) : null;
+    const manque = entier(c.prochain?.manque);
+    return `<div class="tbf-ticket entete carnet">
+        <div class="haut">
+          <b class="compte">${tampons}<small> TAMPON${tampons > 1 ? 'S' : ''}</small></b>
+          <span class="quoi">Le carnet</span>
+        </div>
+        <ol class="tbf-chemin" aria-label="Le carnet de la saison : ${tampons} tampon${tampons > 1 ? 's' : ''}">${noeuds.join('')}</ol>
+        ${prochain && manque ? `<div class="pied"><small class="tbf-mission-note">ENCORE ${manque} AVANT « ${esc(prochain.nom).toUpperCase()} »</small></div>` : ''}
+      </div>`;
   }
 
   const nomSaison = (s) => [s?.numero ? `SAISON ${entier(s.numero)}` : '', esc(s?.nom ?? '').toUpperCase()]
@@ -645,29 +808,12 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
         quand = j > 1 ? `${j} jours` : j === 1 ? 'dernier jour' : '';
       }
       const tampons = entier(c.tampons);
-      const prochain = c.prochain ? c.paliers.find((p) => entier(p.n) === entier(c.prochain.n)) : null;
-      /* La jauge va du palier atteint au suivant : c'est la marche qu'on
-         monte, pas la saison entière. Tout atteint, elle est pleine. */
-      let part = 100;
-      if (prochain) {
-        const seuil = entier(prochain.tampons);
-        const avant = Math.max(0, ...c.paliers.map((p) => entier(p.tampons)).filter((t) => t < seuil));
-        part = seuil > avant ? Math.round(((tampons - avant) / (seuil - avant)) * 100) : 0;
-        part = Math.min(100, Math.max(0, part));
-      }
-      const manque = entier(c.prochain?.manque);
+      /* Les paliers prêts d'abord, en tickets, au-dessus du carnet : ce qu'on
+         peut prendre maintenant. Puis le carnet, une fois. */
+      const prets = pretsDe(c.paliers);
       out.push(`<h2 class="tbf-cousu">${nomSaison(s) || 'LA SAISON'}${quand ? `<i>${esc(quand)}</i>` : ''}</h2>
-        <div class="tbf-ticket entete">
-          <div class="haut">
-            <b class="compte">${tampons}<small> TAMPON${tampons > 1 ? 'S' : ''}</small></b>
-            <span class="quoi">Le carnet</span>
-          </div>
-          <div class="tbf-jauge"><i style="width:${part}%"></i></div>
-          ${prochain && manque ? `<div class="pied"><small class="tbf-mission-note">ENCORE ${manque} AVANT « ${esc(prochain.nom).toUpperCase()} »</small></div>` : ''}
-        </div>
-        <div class="tbf-missions liste">
-          ${c.paliers.map((p) => ticketPalier(p, s.id, tampons)).join('')}
-        </div>`);
+        ${prets.length ? `<div class="tbf-missions">${prets.map((p) => ticketPalier(p, s.id)).join('')}</div>` : ''}
+        ${carnetHTML(c, s.id, tampons)}`);
     }
 
     const passee = Q.saisonPassee;
@@ -675,7 +821,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     if (restes.length) {
       out.push(`<h2 class="tbf-cousu">${nomSaison(passee.saison) || 'LA SAISON PASSÉE'}<i>encore à récupérer</i></h2>
         <div class="tbf-missions">
-          ${restes.map((p) => ticketPalier(p, passee.saison?.id, 0)).join('')}
+          ${restes.map((p) => ticketPalier(p, passee.saison?.id)).join('')}
         </div>`);
     }
 
@@ -688,26 +834,55 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
 
   /* ============================================================ PREMIERS PAS */
 
-  /* Une étape : son ticket (la brique), FAIT en tampon ou À FAIRE en
-     sticker, puis l'explication sur un panneau, le geste qui y mène et, pour
-     les deux étapes de geste, la répétition. Une étape n'a pas de récompense
-     à elle : le booster est celui du parcours entier, dans l'en-tête. */
-  const PAS = (e) => {
-    const etat = e.fait
-      ? '<span class="etat tbf-tampon" data-ton="vert">FAIT</span>'
-      : '<span class="tbf-sticker etat">À FAIRE</span>';
+  /* Le ton de la bâche d'une étape : celui de sa destination, tel que le
+     tiroir le donne (menu.js) — bleu ce qu'on possède, flare ce qu'on joue,
+     or le kiosque. Une destination inconnue garde le parpaing. */
+  const TON_DE = { '/fanzzy': 'bleu', '/collection': 'bleu', '/deck': 'bleu',
+    '/virage': 'flare', '/duel-nvn': 'flare', '/boosters': 'or' };
+
+  /* Une étape, selon sa place dans le parcours.
+
+     — **Faite** : son ticket et le tampon FAIT ; l'explication se replie
+       derrière RELIRE.
+     — **La suivante**, la première qui reste : son ticket et À FAIRE,
+       l'explication ouverte, **la seule bâche de l'écran**, au ton de sa
+       destination, et pour les deux étapes de geste, la répétition.
+     — **Les d'après** : le ticket fermé de la brique (le cadenas : vignette
+       au parpaing sous le scotch en croix) et ENSUITE, sans bâche ;
+       l'explication dort dans le pli dont le ticket est le sommaire.
+
+     L'ordre est celui où l'on fait les choses, pas une serrure : une étape
+     d'après faite en avance se coche comme les autres, et la suivante reste
+     la première qui manque. Une étape n'a pas de récompense à elle : le
+     booster est celui du parcours entier, dans l'en-tête. */
+  const PAS = (e, place) => {
     const texte = `<p>${esc(e.quoi)}</p><p class="pourquoi">${esc(e.pourquoi)}</p>`;
+    if (place === 'ensuite') {
+      return `<article class="pas" data-cle="${esc(e.cle)}">
+          <details class="plie">
+            <summary class="tbf-ticket tbf-mission" data-etat="verrouillee">
+              <span class="tbf-mission-vignette">${vignettePas(e)}<span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span></span>
+              <b class="tbf-mission-titre nom">${esc(e.titre)}</b>
+              <span class="tbf-sticker etat">ENSUITE</span>
+            </summary>
+            <div class="texte pan">${texte}</div>
+          </details>
+        </article>`;
+    }
+    const ton = TON_DE[chemin(e.ou)];
     return `<article class="pas${e.fait ? ' ok' : ''}" data-cle="${esc(e.cle)}">
         <div class="tbf-ticket tbf-mission" data-etat="${e.fait ? 'reclamee' : 'en_cours'}">
           <span class="tbf-mission-vignette">${vignettePas(e)}</span>
           <b class="tbf-mission-titre nom">${esc(e.titre)}</b>
-          ${etat}
+          ${e.fait
+            ? '<span class="etat tbf-tampon" data-ton="vert">FAIT</span>'
+            : '<span class="tbf-sticker etat">À FAIRE</span>'}
         </div>
         ${e.fait
           ? `<details class="texte pan"><summary>Relire</summary>${texte}</details>`
           : `<div class="texte pan">${texte}</div>`}
-        ${e.fait ? '' : `<a class="tbf-plaque tbf-bloc aller" href="${esc(chemin(e.ou) ?? '/')}"
-          >${esc(e.bouton).toUpperCase()}</a>`}
+        ${e.fait ? '' : `<a class="tbf-plaque tbf-bloc aller"${ton ? ` data-ton="${ton}"` : ''}
+          href="${esc(chemin(e.ou) ?? '/')}">${esc(e.bouton).toUpperCase()}</a>`}
         ${e.fait || !e.repeter ? '' : `<a class="repet" href="/repetition"
           >${esc(e.repeter).toUpperCase()} ›</a>`}
       </article>`;
@@ -720,6 +895,8 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     }
     const { faites, total, etapes } = parcours;
     const reste = total - faites;
+    /* L'étape à faire maintenant : la première qui reste, dans l'ordre. */
+    const suivante = etapes.find((e) => !e.fait) ?? null;
     const phrase = reste === 0
       ? (parcours.paye ? 'Tu as fait le tour, et ton booster t’attend au kiosque. Le reste, c’est du jeu.'
         : 'Tu as fait le tour. Le reste, c’est du jeu.')
@@ -753,7 +930,8 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
         ${pied ? `<div class="pied">${pied}</div>` : ''}
       </div>
       <p class="phrase pan">${esc(phrase)}</p>
-      <div class="tbf-missions liste">${etapes.map(PAS).join('')}</div>`;
+      <div class="tbf-missions liste">${etapes.map((e) => PAS(e,
+        e.fait ? 'faite' : e === suivante ? 'suivante' : 'ensuite')).join('')}</div>`;
   }
 
   /* ================================================================ la FAQ */
@@ -970,13 +1148,63 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     return hud.querySelector('.tbf-avatar');
   }
 
+  const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /**
+   * Fêter un palier du carnet.
+   *
+   * Un palier arrive au mieux une fois par semaine et paie jusqu'à quatre
+   * boosters : il ne se fête pas comme une mission du jour, d'un ticket de
+   * trois secondes. La case de BD or d'abord (« DANS LE BAIN ! », la brique
+   * du moment fort : bouffée et confettis viennent avec elle), avec le
+   * carillon ; puis les boosters volent de la case vers leur compteur ; le
+   * ticket de gain vient après (l'appelant). Un palier qui donne un titre —
+   * pour toujours, le profil le montre — fait claquer son tampon dans la
+   * case.
+   *
+   * Le vol attend que la case se retire : il passe sous elle (le vol est à
+   * 94, la case à 95), et un booster qui partirait de dessous un voile ne
+   * dirait pas d'où il vient. Au calme, la case paraît sans tomber, sans
+   * bouffée ni confettis, le tampon est posé sans claquer, et rien ne vole :
+   * la feuille et `FX` s'en chargent ; la case reste le temps de se lire.
+   */
+  const MOMENT_MS = 2200;
+  async function feterPalier(d, g) {
+    const m = $('moment');
+    const caseBD = m?.querySelector('.tbf-vignette');
+    if (!m || !caseBD) return;
+    const honneur = d.honneur || '';
+    $('momentMot').textContent = honneur ? 'Un titre à vie\u00A0!' : `${d.titre || 'Le carnet'}\u00A0!`;
+    $('momentSous').textContent = entier(d.n) ? `Palier ${entier(d.n)} du carnet` : '';
+    caseBD.querySelector('.tbf-tampon')?.remove();
+    if (honneur) {
+      const t = document.createElement('span');
+      t.className = 'tbf-tampon tbf-clac';
+      t.dataset.ton = 'or';
+      t.style.setProperty('--d', '650ms');
+      t.textContent = honneur;
+      caseBD.appendChild(t);
+    }
+    m.style.setProperty('--mt', `${MOMENT_MS}ms`);
+    m.classList.remove('on');
+    void m.offsetWidth;
+    m.classList.add('on');
+    window.FX?.son?.('carillon');
+    if (honneur) setTimeout(() => window.FX?.son?.('bache'), 650);
+    await attendre(MOMENT_MS);
+    m.classList.remove('on');
+    const packs = entier(g?.packs);
+    if (packs) await window.FX?.voler?.(caseBD, cibleCompteur('packs'), { texte: `+${packs}` });
+  }
+
   /**
    * Le ticket de gain (brique « le ticket de gain ») : le jeton, le chiffre
    * qui compte, le nom de la monnaie, d'où elle vient, le tampon. Le reste
    * du gain suit l'origine (« Gagne un duel · +40 XP »), seulement ce qui
-   * n'est pas nul. Le jeton vole ensuite vers son compteur.
+   * n'est pas nul. Le jeton vole ensuite vers son compteur — sauf s'il a
+   * déjà volé (`volees` : les boosters d'un palier partent de sa case).
    */
-  async function ticketGain(g, origine) {
+  async function ticketGain(g, origine, volees = []) {
     const v = { echarpes: entier(g?.echarpes), packs: entier(g?.packs), xp: entier(g?.xp), tampons: entier(g?.tampons) };
     const MOTS = {
       echarpes: () => 'ÉCHARPES',
@@ -1001,7 +1229,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     window.FX?.compter?.(chiffre, 0, v[sorte], { format: (n) => `+${Math.round(n)}` });
     /* Le vol part du jeton (le premier enfant) et dit d'où vient le gain ;
        le compteur de la barre dit combien, quand la page annonce la bourse. */
-    if (sorte === 'tampons') return;
+    if (sorte === 'tampons' || volees.includes(sorte)) return;
     const cible = cibleCompteur(sorte);
     const depart = t.firstElementChild;
     await window.FX?.voler?.(depart, cible,
@@ -1070,9 +1298,11 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     if (j.verse === true) {
       clac = cle;
       rendre();
-      window.FX?.son?.('bache');
       if (j.reste) toast(RAISONS.plafond);
-      await ticketGain(j.gain, origine);
+      /* Un palier du carnet a sa case de BD ; le reste, le clac de la bâche. */
+      if (sorte === 'carnet') await feterPalier(b.dataset, j.gain);
+      else window.FX?.son?.('bache');
+      await ticketGain(j.gain, origine, sorte === 'carnet' ? ['packs'] : []);
       window.dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet: j.wallet, niveau: j.niveau } }));
       if (j.niveau?.monte === true) window.TBF_NIVEAU?.feter?.(j.niveau);
       return;

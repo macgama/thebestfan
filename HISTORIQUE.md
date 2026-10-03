@@ -4662,3 +4662,931 @@ Puis :
 fiche, le profil, le classement, le KOP et les arènes — les lots 3 à 6.
 
 ---
+
+## 4 quadragies ter. L'économie et le social FAIT MAIN, le quotidien du serveur, et le son de tribune
+
+Du soir du 2 octobre 2026 au matin du 3, un seul atelier a mené quatre
+chantiers ensemble : les **trois arbitrages de palette** que Gaël venait de
+trancher ; les **lots 3 et 5** de la refonte — l'économie (le kiosque,
+l'ouverture d'un booster, le butin, la boutique, l'abonnement) et le social
+(le profil, le classement, le KOP, les amis, les missions, la fête de niveau)
+— ; la **première vague du chantier serveur**, c'est-à-dire tout ce que ces
+écrans dessinaient et que le serveur ne savait pas dire : missions du jour,
+bonus de présence, saison datée, paliers, XP dans les résultats, visages dans
+les classements ; et le **son de tribune**. Ce qui se voit à la fin tient en
+quatre phrases : le papier se lit au soleil, l'économie et le social sont des
+écrans de jeu, le jeu verse chaque jour quelque chose qu'on vient chercher, et
+la tribune s'entend.
+
+Le travail a été partagé comme aux lots précédents, sur des clés de périmètre
+fermées aux fichiers disjoints : onze pour les écrans (`mesure`,
+`feuilles-css`, `fx`, `kiosque`, `boutique`, `profil-classement`, `kop-amis`,
+`missions`, `barre-tiroir`, `accueil`, `pages-autres`) et neuf pour le serveur
+(`socle`, `niveau`, `duel`, `fanzzy`, `saison`, `classement`, `social`,
+`virage`, `quotidien`). La mesure d'abord, seule avec la base ; puis deux
+chaînes en parallèle — d'un côté les arbitrages, les briques et la cérémonie,
+puis les écrans et le son ; de l'autre les périmètres du serveur, par vagues —,
+les uns et les autres codant contre un **contrat écrit à l'avance**. Quatre
+tours de vérification, avec des corrections par périmètre entre eux ; puis le
+regard : deux critiques visuelles, une par lot, notées chacune 6,5 sur 10, et
+trois relectures adverses — le code des écrans, le serveur, le son ; leurs
+constats importants ont été corrigés, et deux tours ont suivi. Le sixième n'a
+trouvé qu'une faute, de documentation (voir « Ce qui reste »).
+
+**Les documents du chantier serveur ne sont pas dans le dépôt.** `SERVEUR.md`
+(le contenu et ses raisons, écrit pour Gaël), `CONTRATS.md` (la forme exacte de
+chaque réponse, qui faisait foi pour les écrans), `PLAN.md` (pour l'atelier) et
+`ECARTS.md` (ce que chaque périmètre a fait autrement que le plan, et pourquoi)
+ont été écrits dans le bac à sable de l'atelier, avec les études qui les
+précédaient (`ECONOMIE.md`, `DONNEES.md`, `RISQUES.md`). Le code y renvoie
+pourtant : vingt-six fichiers citent `CONTRATS.md` par son paragraphe, dix-sept
+les trois autres. Cette section en reprend l'essentiel ; les verser dans le
+dépôt est en tête de « Ce qui reste ».
+
+### Trois arbitrages, tranchés par Gaël le 2 octobre 2026
+
+Les lots 0 à 2 avaient buté trois fois sur la même chose : une teinte de la
+direction qui ne passait pas le seuil au soleil, et qu'aucun lot n'avait le droit
+de changer seul. Ils l'avaient laissée en hypothèse, mesurée, avec la façon de
+la défaire. Gaël a tranché les trois le 2 octobre, avant que ces lots ne
+commencent, et ce sont des règles, plus des hypothèses : elles valent **partout**,
+pas seulement sur les écrans de ces lots. Elles sont écrites en tête de
+`public/ui.css`, et leurs contrastes en tête de la section « les tons », avec la
+formule de l'audit (la luminance des WCAG ; au soleil, chaque canal mêlé à 40 %
+de blanc, sur le texte comme sur le fond).
+
+**Les faces vives foncées restent** — c'était H1. Flare `#B8321F`, vert
+`#197450`, bleu `#2F63B4`, violet `#6545AE` : la craie y tient 5,16, 4,96, 5,08
+et 6,01:1 à l'intérieur, au lieu de 2,95 à 4,19 sur les faces vives d'avant le
+lot 1. Au soleil, elle n'y tient que 2,39 à 2,61, et aucune face qui garde sa
+couleur ne fait mieux : c'est le prix décidé. La face dit la destination,
+l'intérieur tient le seuil, et ce qui doit se lire dehors se pose sur l'encre —
+le gaffer du titre de la barre et des noms du tiroir. La proposition de la
+critique du lot 1, éclaircir ces faces jusqu'à 4,6:1, n'est pas retenue.
+
+**Le kraft s'éclaircit, et ce qu'on écrit dessus est noir pur.** `--kraft`
+passe de `#C9A66B` à `#E4D3B5`, et tout texte posé sur le papier — le ticket, la
+bâche du jour, la feuille de match, la page d'album, le pied du tiroir, l'astuce
+du rideau — s'écrit dans un jeton à part, `--encre-kraft` (`#000`) : 14,28:1
+dedans, **4,58 au soleil**, 14,07 et 4,55 sous le grain du papier. Sur le kraft
+d'avant, l'encre du marqueur tenait 3,31 au soleil et le noir pur 3,58 : aucune
+encre n'y passait. Un jeton à part, parce que l'encre du marqueur (`--encre`,
+`#07090C`) ne tient que 4,24 au soleil sur le papier éclairci : c'est la seule
+surface où elle ne suffit pas, et le cerne, l'ombre et la déchirure d'un ticket
+restent à `--encre`. Deux lettres de tampon plein ont foncé avec lui, à la même
+teinte, pour tenir 4,5:1 sur le nouveau papier : `--gris-encre`, `#59616C` →
+`#555C67` (4,26 → 4,59), et `--or-encre`, `#8A6508` → `#765607` (3,62 → 4,60) ;
+le vert et le rouge foncés tenaient déjà (5,32 et 5,37). Au soleil, seul le noir
+passe 4,5 sur ce papier : les lettres d'un tampon plein y descendent entre 2,2
+et 3,0, et c'est le mot et la forme du tampon qui portent le verdict dehors. La
+craie et le kraft ne sont plus qu'à 1,27:1 l'un de l'autre (1,98 avant) : un
+sticker craie posé sur le papier s'en détache par son cerne, jamais par sa
+couleur. Et **pas de paragraphe sur le kraft** : un ticket porte un titre, un
+chiffre et un tampon.
+
+**L'or ne s'écrit plus qu'en grand.** Au moins 18,66 px en gras, ou 24 px, où
+3:1 suffit ; un petit texte en or passe à la craie, et l'or reste une **face** —
+une bâche d'achat, un sticker de prix, une récompense prête, le légendaire. Sur
+les fonds du jeu, l'or tient 12,31 et 4,03:1 sur le noir, 11,55 et 3,69 sur le
+panneau, mais 8,91 et 2,99 sur le parpaing : même un grand texte d'or s'y pose
+mal. La craie qui le remplace tient 17,50 et 4,99 sur le noir, 16,42 et 4,57 sur
+le panneau. Les trois ors laissés en attente depuis le lot 0 sont réglés : le
+halo doré de `/deck` devient neutre, le jalon du deck (« le troisième
+emplacement s'ouvre au niveau 5 ») devient un sticker craie cerné d'or —
+`.tbf-sticker--jalon`, la brique de la promesse —, et la série choisie du
+kiosque reste or, parce que le kiosque est l'écran où l'on achète. La face d'or
+elle-même ne bouge pas : c'était H2.
+
+Un ton de plus est venu, pour la même raison que le bleu et le vert clairs du
+lot 1 : `--violet-clair` (`#C2A3FF`). Le violet des gens ne tenait que 3,9:1 sur
+le panneau, et le social l'écrit en petit ; éclairci, il y tient 9,06 (3,26 au
+soleil, comme le bleu clair). Jamais sur la craie ni sur le kraft.
+
+Ce que les trois règles ont fait tomber, à 360 × 640 et états compris : **les
+textes sur le kraft, de 14 à 0, et le petit texte en or, de 42 à 0** (2 et 27 sur
+les pages, 12 et 15 dans les états). L'audit a gagné un relevé pour que le
+second ne revienne pas, « petit or », qui vaut zéro partout. Restent en attente
+H4 à H9 et H11.
+
+### Mesurer d'abord : ce que le lot 2 avait laissé à l'audit
+
+La mesure est passée avant tout, comme aux lots 0 à 2, et elle a commencé par les
+trois défauts que le lot 2 lui avait laissés (`scripts/audit-ui.mjs`).
+
+**Le contraste se mesure sur tout texte à soi.** Il ne se lisait que sur un
+élément sans enfant : PRENDRE MA PLACE, qui porte son sous-libellé dans un
+`<small>`, était sorti du compte sans être corrigé. Il se lit maintenant sur
+tout élément qui porte directement une lettre ou un chiffre — la règle que le
+petit texte et l'opacité suivaient déjà —, et l'ancien relevé en est un
+**sous-ensemble exact** : ce que seule la nouvelle règle voit est compté à part
+(`horsFeuille`) et marqué dans chaque trouvaille, si bien qu'un relevé d'avant
+vaut le nouveau moins eux. À 360 × 640, la règle a ouvert **190 textes, dont 38
+pâles au soleil** que rien ne voyait : PRENDRE MA PLACE (2,6:1), les liens du
+pied kraft du tiroir (3,3), tous les rangs et toutes les ferveurs d'un
+classement rempli, les chiffres des stats du profil. Ce qui échappe encore —
+le mot d'un pseudo-élément, la valeur d'un champ, l'option choisie d'une liste —
+est relevé sans être mesuré (`horsContraste`) : la pastille « 6 » du bouton de
+menu sur dix-neuf écrans, par exemple. Le JSON passe au schéma `audit-ui/3`.
+
+**Œ n'est plus une police de repli.** `document.fonts.check()` rendait faux sur
+« LE COUP D'ŒIL » alors que Chrome, interrogé par son protocole de débogage,
+dessinait les treize glyphes en Oswald : la tranche latin-ext d'Oswald couvre
+aussi Œ, elle n'est jamais chargée puisque la tranche latine suffit, et
+`check()` exige toutes les faces qui touchent le texte. Quand il dit non, l'audit
+juge maintenant caractère par caractère, sur les faces chargées de la famille,
+du poids retenu par la règle CSS et du style. Une police dont le fichier manque
+reste relevée.
+
+**Une face tournée de dos ne se lit pas.** Défaut trouvé en ajoutant l'ouverture
+d'un booster : les quatre cartes encore à retourner portent leur face sous leur
+dos (`backface-visibility:hidden`), et l'audit relevait leurs « ÉVO 1 » sous
+onze pixels. La face dont la normale, composée des `transform` et `rotate` de son
+contexte 3D, regarde vers le fond est écartée ; aucune page visitée n'en
+portait.
+
+**Quatre écrans de plus.** `--etats` photographiait l'ouverture du hub et le
+tiroir ; il photographie et mesure aussi la bande du HUD dépliée sur
+`/classement` (`hud@/classement`, à 360 et 400 pixels — au-delà de 560, c'est une
+rangée de la barre), une carte révélée, le ticket du gain et le butin d'un
+booster (`booster@carte`, `booster@ticket`, `booster@butin` : un joueur neuf par
+format, le geste d'un joueur, l'accès clavier de la déchirure), et un classement
+rempli (`classement@classé` : treize supporters semés, le joueur de l'audit
+neuvième, le serveur redémarré pour vider sa mémoire de cinq minutes, les
+pseudos vérifiés à l'écran). Le tirage du booster est au hasard, comme pour un
+joueur — le serveur ne prend pas de graine, et lui répondre à sa place
+mesurerait une reconstitution — : il est relevé avec l'état. L'audit sait aussi
+dire où est la barre sur chaque page (« barre décalée »), la hauteur du tiroir
+au-delà d'un écran et demi, et une fête de niveau posée par surprise. Il passe à
+sept minutes et demie avec `--etats`. Un état `bonus@/` a vécu quelques heures,
+le temps que le hub posait le bonus du jour dans la pile des tickets ; il est
+parti avec elle.
+
+**Le départ s'est contrôlé lui-même.** Pris le 2 octobre de 20 h 07 à 20 h 14,
+au commit `7dc5464`, sans une modification de `public/`, il a été comparé case
+par case au dernier relevé du lot 2 : tous les comptes égaux, ceux du contraste
+nets de `horsFeuille`, les listes pâles et au soleil égales trouvaille par
+trouvaille ; seules les trois fausses alertes Œ de `/repetition` ont disparu. Les
+comptes bruts au soleil montent donc parce que la mesure s'est ouverte, pas
+parce que les pages ont bougé : **127 → 165** à 360 × 640, hors `/admin` et
+`/diagnostic`. Rangés par arbitrage, il fallait faire tomber 29 textes sur les
+pages et 27 dans les états. Et ce qu'aucun arbitrage ne visait pesait le plus :
+la craie à 0,88–0,9 d'opacité sur le panneau, entre 4,0 et 4,1:1 au soleil (62
+textes sur les pages, dont 30 sur `/profil` et 18 sur `/aide`, 40 dans un
+classement rempli), que le seuil d'opacité de l'audit (0,85) laissait passer.
+
+### Ce qui a changé
+
+#### Le kiosque
+
+Le kiosque devient un étal sous les projecteurs, et il est beau avec **une
+seule série ouverte**, celle de la production, sans s'effondrer avec les
+treize de la base de test.
+
+**La réserve, sous la barre** (`.tbf-reserve`) : les sachets en fentes, l'anneau
+de recharge sur la première vide, « PROCHAIN 9:55 », le solde en sticker. Elle
+se dessine d'une seule règle, `reserveHTML` dans `cartes.js` : une fente par
+place quand le plafond **de ce joueur** est servi et qu'elles tiennent en cinq,
+sinon le sachet et son compte sur une étiquette rectangulaire. Le kiosque
+écrivait cinq fentes en dur et faisait croire à un plafond de cinq, quand la
+réserve en tient douze, vingt-quatre pour un abonné : le plafond vient
+maintenant du serveur (`wallet.packMax`). **Sans avatar**, contre la maquette :
+la barre porte déjà le même visage avec le même anneau, cinquante pixels plus
+haut. Le « + » du solde mène au Virage, où l'on gagne des écharpes — il menait à
+la boutique, où on les dépense.
+
+**La scène** : la banderole de la saison, une bâche craie de travers avec ses
+deux scotchs, le temps qui reste et « 4 / 35 COLLECTÉS » en sticker —
+seulement si le serveur ou le catalogue les donnent — ; le sachet choisi sur
+son socle, sous deux cônes de projecteur, dans la fumée de sa couleur, son nom
+en sticker ; les séries ouvertes en rail qui défile de côté, la choisie en or ;
+les séries fermées sur un seul rang, sous une seule croix de scotch, avec « N
+SÉRIES ATTENDENT UNE SAISON », et « SAISON 2 » et le nom de la série annoncée
+seulement quand le serveur l'annonce (`sets[].prochaine`). La hauteur de la
+scène suit le nombre de rangées : avec treize séries, la bâche OUVRIR sortait de
+l'écran de 640.
+
+**Un seul geste d'achat.** La minuterie est devenue un objet, une bâche parpaing
+« PRÊT DANS 9:55 » qui devient « PRÊT », or et qui respire. À côté, réserve vide
+et solde suffisant, la bâche or « TOUT DE SUITE · +1 BOOSTER · 45 » est le seul
+achat — l'écran le proposait deux fois, en or et en flare, pour le même appel ;
+à PRÊT, elle disparaît. À court d'écharpes, la flare cède sa place à une bâche
+verte GAGNER DES ÉCHARPES, vers le Virage : une bâche éteinte « IL TE FAUT 45
+ÉCHARPES » ne menait nulle part. Le ticket « −45 » ne se pose plus que pour un
+paquet demandé à l'achat, au prix réellement prélevé (`paye`) : il se déduisait
+de l'écart entre deux soldes, et un achat fait dans un autre onglet le faisait
+annoncer pour un booster gratuit.
+
+#### L'ouverture et le butin
+
+**La déchirure n'a pas bougé d'un caractère.** Le compteur « 1 / 5 » devient cinq
+fentes de dos de carte qui se vident en gardant la barre de leur rareté
+(`.tbf-fentes--cartes`). Chaque carte retournée reçoit sa forme de rareté collée
+au-dessus d'elle et sa cérémonie, celle de l'échelle commune (`FX.reveler`,
+plus bas), qui remplace la suite d'effets écrite à la main ; NOUVEAU claque en
+tampon plein ; TOUT RÉVÉLER est une bâche craie, FERMER du parpaing.
+
+**NOUVEAU se compte par carte servie, pas par identifiant.** La page retenait la
+nouveauté dans un ensemble d'identifiants : un booster qui contenait deux
+exemplaires d'une même carte neuve marquait les deux NOUVEAU, alors que le
+serveur avait rendu le second en doublon, payé en écharpes — la même carte
+portait NOUVEAU et « +1 », et le titre comptait quatre nouvelles pour trois.
+La nouveauté se lit maintenant au rang, sur le `new` de chaque carte.
+
+**Le butin** se colle sur une page d'album kraft (`.tbf-album`) : les cartes de
+travers, une à une, NOUVEAU en sticker, la forme de rareté au coin — l'ancien
+emblème en image, qui dessinait autrement la rareté que la révélation une
+seconde plus tôt, est parti —, et la ligne vivante de la série, « LA REPRISE
+4 → 6 / 32 », dont l'écharpe avance (`series`, servi par le serveur à
+l'ouverture). Les écharpes des doublons volent vers le compteur, qui compte ;
+l'anneau d'XP n'avance que si le serveur sert la jauge. La fin tient en trois
+bâches — ENCORE UN en flare, LE CLASSEUR et MON DECK en bleu —, et le toast est
+devenu un ticket de gain. À 768 pixels, le titre, l'album et la fin forment un
+seul bloc, et les cartes prennent la taille d'une tablette.
+
+#### La boutique et l'abonnement
+
+**Deux écrans au lieu de vingt.** L'étal empilait quarante-neuf pièces ; à
+360 × 640, la page faisait 7 588 pixels de haut, elle en fait 1 625, et l'étal
+1 031. Elle se range en échoppe : la réserve sous la barre, un seul objet
+**À LA UNE** — le légendaire le plus proche du solde, sur sa plaque de rareté,
+sous les projecteurs, dans un cadre kraft à écharpe —, des rayons en onglets or
+(l'équipement, les tenues, l'abonnement), des filtres de rareté, l'interrupteur
+« à portée d'abord », trois rangées d'étiquettes, puis « VOIR LES 42 AUTRES ».
+Toucher la une ouvre toujours sa boîte, où sa phrase d'effet se lit : elle était
+un lien vers le Virage quand le solde ne suffisait pas, la seule pièce du
+magasin dont on ne pouvait pas lire l'effet.
+
+**L'étiquette de marché** (`.tbf-marche`) : l'objet détouré sur un sticker
+craie, ou sa silhouette au pochoir s'il n'est pas dessiné ; le nom, la phrase
+d'effet entière, le prix en sticker rond ; « à portée », un cerne or qui
+respire, sur un seul objet à la fois ; « DÉJÀ À TOI » en tampon. Hors de portée,
+une écharpe fine dit le solde sur le prix, et **une seule** bâche verte GAGNER
+DES ÉCHARPES se pose sous les filtres : sept stickers GAGNER par écran, c'était
+le mur de stickers que la direction désigne comme le défaut à éviter. La
+commune ne porte plus de forme : à seize pixels, son rectangle gris se lisait
+comme une case à cocher.
+
+**La cérémonie d'achat** se joue sur un calque fixe, hors de l'étal que la page
+réécrit après l'achat : l'objet au centre, la bouffée de sa rareté, `FX.reveler`
+qui l'ouvre lui-même, le tampon « À TOI ! », le ticket « −520 » qui descend du
+HUD pendant que le solde décompte, puis la bâche violette L'ÉQUIPER. La cabine
+d'essayage montre la tenue sur un Fanzzy du joueur qui la porte vraiment, sur un
+socle, avec un interrupteur avant/après.
+
+**L'abonnement** s'ouvre sur le **PASS DE TRIBUNE** : une bâche or, six sachets,
+« JUSQU'À 6 BOOSTERS DÈS LE PAIEMENT » tiré des formules servies, BIENTÔT tant que
+les paiements ne sont pas branchés, sans prix ni bouton — puis ce qu'on garde
+sans payer, le tableau, et les formules en bas : le gratuit avant le prix. À la
+critique, il était posé à 970 pixels sur 1 503, et le premier écran était resté
+celui d'avant le lot, à la couleur d'une colonne près. Le tiroir, la boutique, `/abonnement` et le KOP lisent `/api/abonnement`
+une seule fois par page, par une promesse posée sur la fenêtre
+(`window.TBF_ABO`), comme `TBF_MOI` pour le compte.
+
+#### Le profil
+
+**La carte de supporter** : le buste dans l'anneau d'XP, le pseudo en Oswald, le
+club, « dans la tribune depuis » au marqueur et la date en Oswald — jamais un
+chiffre au marqueur —, le tampon VÉRIFIÉ, le niveau au coin, et l'écharpe aux
+couleurs du club principal, que le serveur sert maintenant (`tribune.couleurs`
+sur `/api/rank/moi`) : elle était toujours or et rouge. Les quatre stats sont des
+stickers craie qu'on touche, cernés au ton de leur destination.
+
+**MON NIVEAU en chemin** (`.tbf-chemin`) : une corde, un nœud par palier, le
+passé coché, la bâche or « TU Y ES », les paliers à venir en pointillé avec un
+cadenas et ce qu'ils ouvrent (« 3ᵉ FANZZY », « +60 »), lus sur `/api/niveau`.
+C'est la pièce que la critique a jugée la meilleure du lot.
+
+**MA SAISON** dit la division et ce qui manque pour la suivante ; PORTER
+L'INSIGNE, la seule récompense d'une division, se terminait par un toast
+« Insigne posé » : le tampon claque maintenant sur l'insigne, dans une bouffée
+aux couleurs de la division. **MON PARCOURS** est une feuille de match, un ticket
+kraft par partie, l'issue en tampon plein, le gain en sticker, et les agrégats
+en stickers au lieu d'une grille de quatre cartes de tableau de bord. **MON
+FANZZY** montre la carte du titulaire, dessinée par `cardHTML` à l'âge que son
+avatar montre, avec le catalogue public (`/api/fanzzy/dex`). Tous les réglages
+sont rangés derrière une bâche RÉGLAGES qui se déplie (`details`), sans script.
+Et la fête de niveau se déclenche au retour sur le profil quand le niveau a
+monté depuis la dernière visite.
+
+#### Le classement
+
+**Le mur d'honneur** : le podium en trois bâches — or, craie, parpaing — avec
+leurs bustes (l'initiale quand l'avatar manque), le rang en grand chiffre sur la
+bâche (il était un second sticker rond à côté de celui du niveau, sur le même
+buste) ; des lignes calmes de cinquante-deux pixels — le rang, le buste, le nom,
+l'insigne de division et le club, le delta, la valeur —, le mot FERVEUR une seule
+fois en tête de colonne, le niveau, les matchs et les vécus dans une bulle qui
+s'ouvre au toucher, un compte nul jamais écrit. Elles en faisaient soixante-
+quinze. **Ma ligne est épinglée** en bas, en ticket kraft, et ne disparaît jamais
+au défilement (`position:sticky`), avec le nom de ma division : l'insigne seul
+ne disait FERVENT à personne. Le delta de ma ligne vient du serveur
+(`evolution`), celui des autres de la mémoire de l'appareil. La période SAISON
+compte la fenêtre de la saison en cours, TOUJOURS le cumul. L'état vide, « TA
+PLACE EST LÀ » au marqueur sur la photo d'une place vide, mène au Virage par une
+bâche flare.
+
+#### Le KOP et les amis
+
+**Le KOP déplié** : sa bâche aux couleurs du club tenue par deux scotchs, les
+stickers POT, MEMBRES et VERSÉ PAR TOI, le pot en écharpe épaisse
+(`.tbf-jauge--epaisse`) avec ses crans et son jalon craie cerné d'or, les
+membres assis en gradins (bustes, CAPO, un siège INVITER), le vote en case de BD —
+le chrono, la balance en écharpe, POUR en vert et CONTRE en flare, le tampon
+ADOPTÉ ou REFUSÉ à la clôture —, et l'entrée fêtée par « TE VOILÀ ! ». La page se
+relit toutes les trente secondes : le pot, les jalons et le vote vivent dans des
+nœuds stables. **Un club suivi sans KOP**, l'état que verront la plupart des
+joueurs, n'avait pas changé : il reprend la carte d'un KOP, la bâche aux couleurs
+du club (que `/api/kop/club/:id` sert maintenant), ce qu'un KOP apporte en trois
+stickers et ce que coûte sa création — elle demande le PASS DE TRIBUNE.
+
+**Les amis** repassent au violet, chacun en buste avec son niveau ; un nouvel
+ami est fêté en case de BD. Le geste visible d'une ligne était RETIRER, en bâche
+flare, sous chaque nom : c'est maintenant « INVITER AU KOP », et retirer passe
+derrière « ⋯ », en parpaing, avec confirmation. KOP et amis tiennent une colonne
+de six cents pixels sur une tablette, comme le profil et le classement.
+
+#### Les missions
+
+`/aide` devient **MISSIONS** — la route ne change pas —, et le tiroir le met dans
+sa tête, en bâche avec sa pastille, à côté de l'accueil : il était dans le pied,
+sous la ligne de flottaison à 360 × 640. La pastille se lit dans
+`sessionStorage` (`tbf-quotidien`), écrite par le hub, les missions et le profil
+après chaque lecture : la barre et le tiroir n'appellent jamais la route
+eux-mêmes.
+
+Quatre onglets, dont deux n'existent que si le serveur les sert : **DU JOUR** —
+le bonus de présence et sa carte de sept cases, les trois missions en tickets
+kraft avec leur vignette, leur écharpe de progression, leur gain en stickers et
+leur geste RÉCUPÉRER, le sachet, et celles d'hier encore à récupérer — ;
+**SAISON** — le carnet sur la corde de MON NIVEAU, un nœud par palier, atteint,
+prêt ou à venir, au lieu de cinq tickets qui redisaient le même chiffre — ;
+**PREMIERS PAS** — l'étape suivante seule en bâche, au ton de sa destination,
+les autres repliées sous un cadenas, « ENSUITE » — ; **QUESTIONS**. Changer de
+mission est un « ↻ » dans le coin du ticket, et le compte des changements
+s'écrit une fois, dans l'en-tête : « CHANGER DE MISSION (1) » sous chaque ticket
+laissait croire à trois changements. Un palier du carnet, qui vient au mieux une
+fois par semaine, est fêté en case de BD or, ses boosters volant vers le HUD,
+avant son ticket. L'insigne d'un palier (le liseré et le tampon S1) n'est pas
+écrit : le serveur l'inscrit au grand livre, mais aucune route ne dit qu'un
+joueur le porte et aucun écran ne le dessine.
+
+#### Le hub, avec ses données
+
+Le hub n'a reçu que les données nouvelles. **La bâche du jour** dit d'abord le
+bonus du jour tant qu'il est prêt — BONUS DU JOUR, la bâche or RÉCUPÉRER, l'écharpe
+de la semaine et « J3 » —, puis, comme avant, le direct et le prochain coup
+d'envoi, puis la mission du jour, puis les premiers pas. Deux corrections après
+la critique : le bonus montait d'abord en ticket dans la pile et couvrait, à
+360 pixels, tout le bouton PRENDRE MA PLACE ; et la mission du jour chassait les
+premiers pas d'un joueur neuf — « JOUE UN DUEL JUSQU'AU BOUT » à quelqu'un qui
+n'avait pas de Fanzzy. Les premiers pas passent maintenant devant tant que leurs
+fondations manquent (un Fanzzy, un booster ouvert), et la mission ensuite
+seulement si elle est faisable.
+
+**Le ticket « depuis ta dernière visite »**, dessiné au lot 2 et caché faute de
+route, vit : la lecture du quotidien porte le ticket (`?retour=1`), et la marque
+de visite n'avance que par un `POST`. Le « +N » de FANZZY vient du serveur
+(`nouveautes`), et s'éteint au retour pour les seules cartes que le joueur est
+allé voir. La collection lit ses crans sur `paliers`. Le reliquat du lot 2 est
+traité : le but rend sa secousse par `FX.but({ pour: true, vignette: true })`, la
+bulle ne couvre plus la tuile DUEL à 320 × 568 — elle s'y plie aussitôt en
+« ! » —, et le direct dit LIVE sur le bouton de menu.
+
+#### La cérémonie et la fête de niveau
+
+**`FX.reveler(rarete, el, { son, retourner })`**, dans `fx.js`, est l'échelle
+unique de tout ce qui se révèle — le booster et l'achat aujourd'hui, la
+collection et l'évolution demain : la commune se retourne ; la rare reçoit un
+balayage plastifié et un tic ; l'épique une nappe, une bouffée violette, des
+confettis de papier, un carillon et une vibration de 14 ms ; la légendaire un
+flash, des rayons d'or au pochoir, une secousse, un rugissement, le tampon
+« LÉGENDAIRE » et une vibration `[40, 30, 90]`. Elle joue sur son propre calque, à
+z 96, attend la fin du retournement de la page, s'arrête si l'objet quitte
+l'écran, et rend une promesse résolue quand c'est fini. Sans mouvement, le
+liseré de la rareté s'allume sur place et le tampon se pose sans claquer :
+l'information reste.
+
+**La fête de niveau** (`niveau-fete.js`) est devenue une case de BD or : le
+Fanzzy en pose victoire, « NIVEAU 5 » qui compte depuis l'ancien, ce que le
+palier ouvre et le prochain. Elle jouait son flash, son onde et sa secousse sous
+un fond opaque à 94 % : on ne les voyait pas. Elle se déclenche aussi au retour
+sur `/profil` et `/virage` quand le niveau a monté depuis la dernière visite
+(`TBF_NIVEAU.depuisVisite`, mémoire `tbf-niveau-vu` signée du joueur), une seule
+fois, jamais au rechargement. Sa place dans la case est écrite dans une feuille
+que le script pose lui-même, en attendant `ui.css`.
+
+#### Les briques
+
+Écrites dans `public/ui.css`, section « les pièces des lots 3 et 5 », chacune
+avec son balisage exact et ses doubles mouvement réduit et calme, et posées sur
+un banc avant qu'un écran ne s'en serve : la réserve, les fentes et l'anneau de
+recharge (`--part` est une part de 0 à 1, pas un pourcentage), la minuterie, les
+projecteurs et le socle, le calque d'une cérémonie (z 92), la page d'album, le
+ticket de gain, l'objet sur son sticker, l'étal et l'étiquette de marché, le
+buste d'un autre joueur, la stat, le chemin de niveau, la feuille de match, le
+podium, la ligne épinglée et le delta, l'insigne de division (une écharpe de un
+à cinq nœuds, jamais aux couleurs de la rareté), les gradins, la case de vote,
+le ticket de mission et le compte d'onglet, le bonus et sa série, la bâche
+RÉGLAGES, l'interrupteur scotch, et quatre variantes (`.tbf-jauge--fine`,
+`--epaisse`, `.tbf-sticker--prix`, `--jalon`). Une page n'écrit que la place
+d'une brique. Sur le banc, tout texte posé sur le kraft tient 14,28 et 4,58:1.
+Le vocabulaire du lot 1 est maintenant posé presque en entier : le tampon, le
+scotch, la bouffée, la forme de rareté, `.tbf-clac` et le marqueur, que trois
+pages chargent (l'accueil, le profil, le classement), pour cinq emplois.
+
+### Le son de tribune
+
+Décidé par Gaël le 2 octobre, mené dans la même vague. Il y avait **deux banques
+de sons synthétisés qui s'ignoraient** : celle de `fx.js` (`FX.son`) et l'objet
+`audio` de `cartes.js`, chacune avec son propre contexte audio, chaque son
+branché droit sur la sortie, et des volumes réglés à l'oreille un par un. Trois
+sons superposés s'additionnaient sans garde-fou.
+
+**Un seul moteur**, `public/son.js` : un seul `AudioContext`, créé au premier
+geste — jamais avant, les navigateurs le refusent —, trois bus (effets,
+interface, ambiance), un limiteur sur le maître (−6 dB, ratio 20, attaque 2 ms)
+et un plafond doux. `fx.js` le charge lui-même : une page qui a les effets a le
+son, sans balise de plus. `FX.son(nom)` et l'objet `audio` du kiosque y passent
+sans que leurs appelants changent. Le mode calme coupe tout, ambiance comprise,
+et le contexte n'est même pas créé tant qu'il dure ; le volume du joueur, un
+curseur dans le tiroir à côté du mode calme (`tbf-volume`), s'applique après le
+limiteur et au carré — un curseur à mi-course doit sonner à mi-course.
+
+**Un mixage mesuré, pas réglé à l'oreille.** `scripts/son-banc.mjs` rend chaque
+son hors ligne, dans Chrome, à travers la chaîne complète, et mesure sa crête,
+sa sonie pondérée K (BS.1770) sur ses cent millisecondes les plus fortes, sa
+sonie moyenne et sa durée. Trois familles, trois fenêtres qui ne se chevauchent
+pas : l'interface entre −31 et −27 LUFS, le jeu entre −25 et −20, les moments
+entre −19 et −14 ; aucun son seul au-dessus de −6,5 dBFS, sous le seuil du
+limiteur, qui ne sert qu'aux superpositions. Les volumes sont des constantes
+nommées, chacune avec sa mesure en commentaire. Ce que la mesure a trouvé avant
+d'y toucher : le tic à −44,4 LUFS et la bâche à −32,6 dans la même interface ; la
+corne de but (−27,4) plus faible que l'accord d'une carte épique (−16,9) ;
+l'évolution (−21,3) plus forte que le but ; et deux sons que les pages
+appelaient et que la banque n'avait pas, le gong du duel et le « ok » de
+l'accueil, qui ne sonnaient pas du tout. Au dernier passage, les quarante-quatre
+rendus sont dans leur fenêtre, et les dix moments joués ensemble sortent à
+−4,5 dBFS.
+
+**L'ambiance**, une rumeur de foule — du bruit filtré en couches, des
+respirations lentes, de rares éclats de voix —, monte et descend avec le match
+par une seule commande, `TBF_SON.ambiance(niveau)` : 0 la tribune vide, 1 la
+rumeur, 2 la tribune qui pousse, 3 le but, avec son ovation. Elle ne joue que sur
+les écrans de match, après le premier geste, s'éteint quand l'onglet se cache, et
+ne recrée aucun nœud à chaque image. Réglée d'abord à l'oreille, elle sortait à
+−22 LUFS en moyenne et aurait couvert toute l'interface ; elle tient maintenant
+autour de −40, −35 et −27,5 LUFS. `/virage` et `/duel-nvn` l'appellent aux
+moments que leurs événements donnaient déjà : l'entrée, la poussée, le but de
+son camp, la fin, la sortie de la page.
+
+**Les chants**, `TBF_SON.chant(type, { tempo })` : des frappes de tambour et des
+claps de foule calés sur la pulsation du geste — `tempo`, `contretemps`,
+`marche`, `roulement`, `frappes` —, **sans mélodie**. `/repetition` les joue sous
+le geste qu'on apprend ; le calage fin dans les arènes est au lot 6.
+
+**Pourquoi tout est synthétisé.** Un son téléchargé se joue en retard la première
+fois, exactement quand il compte ; et les chants de supporters
+reprennent souvent des airs protégés : on joue du rythme, des accords tenus, des
+bruits, jamais un air, aucun hymne, aucun chant de club. Un enregistrement libre
+de droits pourra venir, fichier par fichier, avec l'accord de Gaël. Et le son ne
+porte jamais seul une information : ce qu'il dit, l'écran le dit aussi.
+
+`son:smoke`, sans base, garde le tout : chaque nom appelé par une page existe
+dans la banque, le calme coupe tout, aucun son ne sort de sa fenêtre ni ne
+sature, tout marche sans `AudioContext`, l'onglet caché arrête la rumeur et le
+chant ; quatorze mutations du moteur et une de `fx.js` ont chacune fait rougir
+le contrôle qui la surveille. Le rapport des niveaux, `NIVEAUX.md`, et les WAV
+s'écrivent hors du dépôt (`npm run son:banc [dossier]`).
+
+### Le chantier serveur : le quotidien
+
+Gaël a délégué le **contenu** — quelles missions, quel bonus, quelle saison,
+quels montants. Le chantier a commencé par trois études (l'économie, les
+données, les risques), une synthèse pour Gaël, un contrat pour les écrans et un
+plan pour l'atelier, puis une relecture adverse du plan, faite dans le code de
+la copie principale, qui l'a changé sur dix-neuf points.
+
+**Le constat qui guide le contenu.** Une simulation qui rejoue le tirage du
+serveur sur la seule série ouverte en production dit que les écharpes ne sont
+plus rares — un booster en rend en moyenne 45,8 pour un prix de 45 —, que le jeu
+paie l'ouverture et pas le jeu — le Grand Virage, le cœur du jeu, ne rapporte
+rien —, et que ce qui reste rare, c'est l'XP, les tampons de saison et l'honneur.
+D'où la règle : **les missions récompensent le Virage, le duel et le geste**, en
+XP, en tampons et en insignes ; les écharpes restent modestes.
+
+**Les missions du jour.** Trois par jour, une facile, une moyenne, une
+difficile, **les mêmes pour tout le monde** — tirées du jour, chaque joueur
+prenant la première faisable pour lui —, parmi treize : ouvrir 3 boosters, jouer
+un duel jusqu'au bout, chanter 10 fois au Virage, faire grandir un Fanzzy ;
+chanter 40 fois, gagner un duel, jouer 2 duels classés, chanter 20 fois pour son
+club, jouer un duel pour son club ; gagner 3 duels, jouer 5 duels, chanter 10
+fois dans chaque mi-temps d'un match, chanter dans deux compétitions. Elles
+paient 30, 60 et 100 écharpes, 20, 40 et 60 XP, et 1, 1 et 2 tampons ; les trois
+récupérées, **le sachet**, un booster, qui entre dans la réserve même pleine. Une
+relance par jour. Le serveur compte, le joueur ne déclare rien : un booster
+ouvert, un duel joué, un chant au Virage. Une mission finie reste récupérable
+jusqu'à la fin du lendemain. Écartées exprès : répéter un geste (la répétition
+ne paie pas), suivre un club ou ajouter un ami (cela se fait et se défait chaque
+jour), acheter, et les missions de qualité, qui pousseraient à automatiser le
+geste.
+
+**Le bonus de présence** est une carte de sept cases qui **ne recule jamais** :
+20, 25, 30, 35, 40, 45 et 50 écharpes, et un booster à la septième. Un jour
+manqué ne la fait pas reculer ; la série de jours s'affiche à partir de trois, à
+titre d'information, et rien n'en dépend — la règle « aucune série qu'on perd ».
+
+**La saison datée.** La saison 1, « La reprise », est proposée pour finir le
+dimanche 20 décembre 2026, dernier week-end avant la trêve — à vérifier sur
+`/matchs` avant de la saisir. Sa fin ne ferme rien ; elle arrête le carnet, les
+divisions et le classement « saison », et éteint les bonus de KOP de saison, qui
+ne s'éteignaient jamais. Une saison 2 lancée plus tôt l'arrête aussi. Le
+**carnet de tampons** a cinq paliers : 10 tampons, 100 écharpes ; 40, un booster,
+150 écharpes et le liseré S1 ; 100, deux boosters, 250 écharpes et le tampon S1 ;
+180, trois boosters et 400 écharpes ; 260, quatre boosters, 600 écharpes et le
+titre « Revenu pour de bon ». Il suppose soixante-trois jours de missions, donc
+une mise en ligne au plus tard le 19 octobre ; au-delà, il se recale dans
+l'onglet Saisons **avant** le premier palier versé, puis il se fige. Au
+lancement de la saison 2, qui a gagné dix tampons reçoit deux boosters, « les
+sachets de la trêve ».
+
+**Les paliers.** Un cran de collection tous les 25 objets : 25 écharpes, un
+booster tous les quatre crans, et une série complète paie un booster et 100
+écharpes. **Les tenues n'y comptent pas** (voir les pièges). Cinq divisions de
+saison sur la ferveur classée — Sympathisant, Habitué à 5 000, Fervent à 30 000,
+Ultra à 100 000, Capo à 300 000 — **ne paient que l'honneur** : l'insigne, et le
+titre « Capo de la saison 1 ». La ferveur classée n'a pas de plafond pour un
+abonné : une division payée en boosters se serait gagnée en partie en payant.
+Les seuils sont incertains d'un facteur deux, et se recalent sur la ferveur des
+joueurs **sans abonnement**.
+
+**Abonné et non-abonné reçoivent exactement la même chose** : aucune mission ne
+demande ce que l'abonnement vend, le module des missions ne sait pas qui est
+abonné, aucune tenue n'est donnée en récompense. L'effet estimé, sur six
+semaines : +15 % d'écharpes et +26 % d'XP pour un joueur assidu, +31 % et +50 %
+pour un occasionnel ; les boosters ne bougent que de 3 à 4 %.
+
+#### Les montants de départ, et où les régler
+
+Tout se règle dans `/admin`, RÉGLAGES, sans livraison : trois sections
+nouvelles du registre (`src/shared/reglages.js`), que l'écran dessine seul.
+
+| Section | Réglages, valeur de départ |
+|---|---|
+| LE QUOTIDIEN | `bonus.actif` oui ; `bonus.base` 20, `bonus.pas` 5, `bonus.j7_packs` 1 ; `missions.actif` oui ; `missions.relances` 1 ; `missions.facile_echarpes` / `moyenne_` / `difficile_` 30 / 60 / 100 ; `missions.*_xp` 20 / 40 / 60 ; `missions.sachet_packs` 1 ; `quotidien.retour_heures` 3 ; le disjoncteur, `recompenses.plafond_echarpes_jour` 2 500 et `recompenses.plafond_packs_jour` 15 |
+| LES MISSIONS DU JOUR | une bascule par mission, `mission.boosters` … `mission.ailleurs`, toutes allumées |
+| LA SAISON ET SES PALIERS | `saison.carnet_actif` oui ; `saison.tampons_facile` / `moyenne` / `difficile` / `sachet` 1 / 1 / 2 / 1 ; `saison.relais_packs` 2, `saison.relais_seuil` 10 ; `collection.actif` oui, `collection.cran` 25, `collection.cran_echarpes` 25, `collection.cran_booster_tous` 4, `collection.serie_echarpes` 100, `collection.serie_packs` 1 ; `rang.actif` oui, `rang.habitue` / `fervent` / `ultra` / `capo` 5 000 / 30 000 / 100 000 / 300 000 |
+
+Les montants d'une mission sont **figés au tirage**, le matin : un changement à
+midi vaut pour le lendemain, et le joueur reçoit ce qu'on lui a promis. Le bonus
+fait exception, il se calcule à la réclamation. Un interrupteur coupé arrête le
+neuf **et** refuse les réclamations de sa source. Ne se règlent pas, exprès : les
+cibles des missions, qui sont des règles et pourraient passer au-dessus du
+plafond gratuit ; le nombre de cases de la carte, qui est dessiné ; et aucun
+montant de division — le registre refuse une clé `rang.*` en écharpes ou en
+boosters. L'onglet Saisons gagne la date de fin, la date d'ouverture annoncée et
+le carnet d'une saison.
+
+#### Les tables et les routes
+
+**Un seul fichier de schéma**, `sql/quotidien.sql`, additif et rejouable, en
+dernier dans `scripts/ordre-schema.mjs` : quatre tables et neuf colonnes, 47
+tables au bout. `recompenses` est **le grand livre** — une ligne par versement,
+clé primaire `(user_id, source, cle)`, et c'est elle qui empêche un double clic,
+deux onglets ou un réseau qui rejoue de payer deux fois ; `missions_jour` (le
+contrat du jour, gains copiés au tirage, et le sachet au rang 3),
+`compteurs_jour` (boosters ouverts, évolutions) et `user_nouveautes` (ce que le
+joueur n'a pas regardé). `saisons` gagne `fin_le`, `ouvre_le` et `carnet` ;
+`user_wallet`, `rangs_vus`, `visite_a` et `instantane` ; `virage_presence`,
+`chants`, `chants_mt1` et `chants_mt2`.
+
+**Le grand livre est la seule porte des versements** (`src/server/recompenses.js`,
+`verser` et `verserTout`). Dans une seule transaction : le verrou de la bourse,
+« déjà versé » **avant** le disjoncteur, le recompte de l'appelant, le
+disjoncteur quotidien, la ligne, la recharge due **avant** un booster offert, l'XP
+**dans** la transaction (`niveau.gagnerDans`). Un versement est entier ou n'est
+pas. Le démarrage vérifie la clé primaire du grand livre et ferme les versements
+s'il ne la trouve pas ; sans le fichier, rien ne casse, les missions
+disparaissent de l'écran et le démarrage nomme `sql/quotidien.sql`.
+
+| Module | Routes et champs |
+|---|---|
+| `src/server/quotidien/` (`index.js`, `missions.js`, `depuis.js`), `src/shared/quotidien.js` | `GET /api/quotidien` (`?retour=1` porte le ticket « depuis ta visite ») ; `POST /api/quotidien/bonus`, `/mission`, `/sachet`, `/relance`, `/carnet`, `/relais`, `/tout`, `/visite` ; la sonde du jour de jeu dans `/healthz` (`jourDeJeu`) |
+| `src/server/fanzzy/` | `POST /api/fanzzy/vu`, `POST /api/fanzzy/palier` ; `nouveautes` sur `/state`, `paliers` sur `/bibliotheque`, `cle` et `series` sur `/open`, `prochaine` et `sets[].prochaine` sur `/dex` ; `wallet.packMax`, `wallet.cadenceMs`, `paye` ; `recharger(conn, userId)` exporté |
+| `src/server/classements/`, `src/server/fanzzy/avatar.js` | `POST /api/rank/division` ; `avatar` et `niveau` sur toutes les lignes, `division` sous `?periode=saison` (qui compte enfin la fenêtre de la saison) ; `saison`, `saisonPassee`, `titres`, `evolution` et `tribune.couleurs` sur `/api/rank/moi` |
+| `src/server/kop/`, `src/server/amis/` | `avatar` et `niveau` des membres et des amis ; `couleurs` sur `/api/kop/club/:id` |
+| `src/server/niveau/`, `src/server/nvn/` | un gain d'XP atomique et la jauge (`niveau`) dans les résultats ; `gains.cote` avant et après un duel classé |
+| `src/shared/saison.js`, `src/server/fanzzy/saisons.js` | la saison datée (`fin`, `finDansMs`, `joursRestants`, `finie`), la saison annoncée, le carnet, les divisions, la fenêtre d'une saison écrite en SQL |
+| `src/server/ferveur/virage.js`, `src/server/souvenirs/` | les chants comptés dans l'upsert de présence qui existait, par mi-temps, sans requête de plus |
+
+**Sept défauts en ligne, corrigés avant de bâtir dessus**, parce que le chantier
+ajoutait des versements exactement à ces endroits. Ils avaient été établis en
+lisant le code ; chacun a reçu son test, et deux courses ont été rendues
+certaines par un crochet posé entre la lecture et l'écriture — dix ouvertures
+de booster simultanées ne suffisaient pas à faire voir E3. Un forfait
+payait deux fois le joueur resté — écharpes, XP et part du KOP —, la fin d'un
+duel s'exécutant deux fois (E1). Deux gains d'XP simultanés lisaient la même XP
+et payaient un palier deux fois, ou jamais (E2). La recharge des boosters
+pouvait écraser un débit fait au même instant (E3), un vote de KOP échu débiter
+le pot deux fois (E4), et le compte à rebours d'un vote durait deux heures et
+trois minutes de trop après un rechargement sur une base à l'heure de Zurich
+(E5). Le classement « saison » additionnait tout depuis toujours (E6). Et la
+suppression d'un compte ne touchait pas les tables neuves, et visait
+l'identifiant interne au lieu du public (M8).
+
+Les documents qui le disent : `DEPLOIEMENT.md` (le fichier de schéma, la
+manœuvre après le Manager, la requête de détection en lecture seule sur le grand
+livre, le recalage des seuils), `CONFIDENTIALITE.md` (ce qui devient public — le
+Fanzzy équipé, le niveau, la division — et ce qui est gardé : l'activité du jour
+quatre cents jours, les nouveautés soixante jours), `JURIDIQUE.md` (un fait
+corrigé — l'abonnement livre des boosters, alors que le dossier disait le
+contraire — et trois questions : la carte de présence pour un public qui compte
+des mineurs, les crans, les boosters offerts).
+
+### Les pièges de l'atelier
+
+**Une clé étrangère vers `users` faisait tomber des suites que personne ne
+pouvait corriger.** Le plan posait la cascade sur les trois tables du joueur.
+Chaque suite vide la base avec sa propre liste de `DROP TABLE`, et une fille de
+`users` absente de cette liste fait échouer le `DROP` de `users` : quinze suites
+d'aucun périmètre de la vague seraient tombées avant leur premier contrôle. Les
+tables n'ont pas de clé étrangère — le grand livre n'en avait déjà pas —, la
+suppression d'un compte retire nommément leurs lignes, et `schema:smoke` rougit
+si on en remet une.
+
+**MariaDB 11.6 signale la course autrement.** L'isolation par instantané,
+allumée par défaut depuis cette version (le poste tourne en 12.3), signale par
+`ER_CHECKREAD` la course que les versions d'avant signalaient par
+`ER_DUP_ENTRY`. La version de la production n'est pas connue d'ici : `verser`
+rejoue une fois la transaction perdue, qui voit alors la ligne de l'autre et rend
+« déjà ». Conséquence pour tout appelant : son recompte et son gain peuvent être
+appelés deux fois, et ne doivent que lire.
+
+**Un verrou tenu et une lecture par le pool affament le serveur.** Le grand livre
+appelle la recharge en tenant le verrou de la bourse, et la recharge lisait
+l'abonnement par le pool. Huit réclamations simultanées du même joueur — le pool
+de production en a huit — auraient tenu toutes les connexions en attente de ce
+verrou, et celle qui le tient n'en aurait plus trouvé : tout le serveur aurait
+attendu cinquante secondes. La recharge lit l'abonnement dans un souvenir de
+moins de deux minutes, posé avant de prendre une connexion. Même famille, plus
+petite : un `INSERT IGNORE` sur une bourse existante, dans la transaction, pose
+un verrou partagé, et deux versements du même joueur s'interbloquaient ; la
+bourse s'ouvre avant.
+
+**Le hub allait déclencher des appels à l'API sportive, et la suite ne le voyait
+pas.** Pour dire si une mission peut encore changer (`relancable`), chaque
+lecture du quotidien parcourait l'ordre du jour, et une mission du Virage
+suffisait à lire la journée du football — une fois le cache de quarante-cinq
+secondes expiré, un appel `/fixtures` à chaque arrivée au hub, de jour comme de
+nuit. Le budget de
+requêtes mesuré par la suite le taisait : la doublure de la journée ne passait
+pas par le pool. Seuls le tirage et la relance lisent maintenant la journée, et
+notent leur relevé une minute ; sans relevé valable, la condition est présumée
+remplie, et une relance présumée à tort coûte un « aucune autre mission », jamais
+une relance. La doublure passe par le pool, comme en production.
+
+**Ce que l'abonnement ouvre payait.** Un abonné porte n'importe quelle tenue
+publiée, et la porter l'inscrit dans `user_skins` comme une tenue gagnée ; les
+crans comptaient les tenues : porter les tenues de l'amorce à chaque âge donnait
+des écharpes et des boosters, de l'argent réel changé en récompenses. Rien dans
+une ligne ne distingue une tenue tirée, achetée ou prise par l'abonnement : la
+seule règle qui tienne sans colonne nouvelle est de ne payer **aucune** tenue. Les
+crans comptent la bibliothèque sans elles (`paliers.gagnes`, `paliers.possibles`),
+pour tout le monde : l'univers des crans passe de 635 objets à 445, de 25 crans à
+17 ; `collection.cran` à 18 rendrait le rythme d'avant. Rien n'était versé en
+production.
+
+**Le KOP vendait deux bonus qu'aucun moteur ne lit.** « La quête » (`scarvesBonus`,
+900 écharpes) et « Mur de bâches » (`parryBonus`, `parryResist`, 500) : un KOP
+qui les votait payait pour rien. Le serveur ne vend plus que les bonus dont le
+Virage lit chaque clé, et la suite confronte cette liste au code du Virage dans
+les deux sens. Le même défaut vit hors du KOP : `parryBonus` et `parryResist`
+sont portés par des dizaines de Fanzzy, par des pièces d'équipement et par une
+carte d'action épique, « Filet de chantier », que rien ne lit.
+
+**Un match à cheval sur minuit, et une victoire en trois secondes.** La présence
+au Virage est une ligne par match, datée de sa dernière poussée : un match
+commencé à 23 h 30 faisait fondre la mission de la veille au moment de la
+réclamer. Les chants comptent pour le jour du **coup d'envoi**. Et un second
+compte qui entre en file et abandonne aussitôt offrait une victoire, payée en
+entier : un duel ne compte que s'il a duré une minute et n'a pas été quitté.
+
+**Un duel fermé effaçait le duel suivant.** `fermer` retirait de la table des
+salles tous les membres, sans regarder où chacun pointait : un joueur dont la
+place avait été reprise et qui était reparti en file perdait son **second** duel
+à la fermeture du premier. Elle ne retire plus que ce qui pointe encore sur la
+salle qu'elle ferme.
+
+**La cérémonie prenait un objet plat pour un objet parti.** Avec `retourner`,
+`FX.reveler` ouvre l'objet en partant d'une largeur nulle ; elle guettait aussi
+l'objet qui quitte l'écran, le voyait sans largeur à la première image, et se
+résolvait en cinquante millisecondes sans rien jouer. Elle ne s'arrête plus que
+sur un objet retiré du document ou sans boîte. Et une vibration demandée avant
+le premier toucher du joueur sur la page, Chrome la refuse et l'écrit en erreur :
+`FX` n'en demande plus avant.
+
+**La pastille « +N » ne s'éteignait plus.** Le lot 2 l'éteignait au toucher, en
+mémoire locale ; servie par le serveur, elle n'avait plus personne pour
+l'éteindre, puisque le classeur ne le fait pas encore (lot 4), et le « +5 » d'un
+premier booster serait resté soixante jours. Toucher FANZZY met de côté les clés
+comptées ; le hub les éteint à son retour, par clés et non « tout », pour qu'une
+carte arrivée entre-temps garde son « +N ».
+
+**Un commit pris pendant l'atelier est parti en ligne sans son schéma.** Voir
+« En ligne », plus bas. C'est le piège du 8 septembre une troisième fois, et
+cette fois rien n'a cassé : parce que chaque lecteur tolère l'absence de ce qui
+suit, et que le démarrage le dit.
+
+**Deux outils, deux oublis.** Le banc du son, en régénérant `NIVEAUX.md`, avait
+effacé la section écrite à la main sur le mixage d'avant : elle a été remise.
+Et `accueil-ui-smoke` ne vide pas la table `saisons` : une table laissée par une
+autre suite peut lui faire lire « 10 / 25 » au lieu de « 14 / 25 ».
+
+### Ce que la mesure dit après
+
+L'état de départ est celui du commit `7dc5464`, mesuré le 2 octobre au soir avec
+la mesure ouverte (`audit-ui/3`) ; la fin, le sixième tour, le 3 octobre de
+7 h 39 à 7 h 47, sur la copie de travail.
+
+| Relevé, hors `/admin` et `/diagnostic` (360 × 640 / 400 × 800 / 768 × 1024) | départ | fin |
+|---|---|---|
+| texte sous 11 px, opacité sous 0,85, flou, débordement, hors écran, cible sous 44 px, coupé, police de repli, petit or | 0 / 0 / 0 | 0 / 0 / 0 |
+| pâle à l'intérieur, sur fond uni et sous le grain | 0 / 0 / 0 | 0 / 0 / 0 |
+| pâle au soleil, sur fond uni | 101 / 101 / 101 | 20 / 20 / 20 |
+| pâle au soleil, sous le grain | 64 / 64 / 63 | 67 / 67 / 67 |
+| textes lus sous le grain | 160 / 160 / 161 | 225 / 225 / 244 |
+| textes encore non mesurables | 667 / 665 / 673 | 427 / 425 / 433 |
+| textes | 1 067 / 1 065 / 1 120 | 877 / 875 / 944 |
+| dont textes à soi, hors des feuilles | 190 / 190 / 206 | 153 / 153 / 187 |
+| coupé (lignes) | 15 / 3 / 45 | 15 / 3 / 45 |
+
+**Au soleil, 165 → 87 sur les pages, 79 → 21 dans les états** à 360 × 640 ; 768
+× 1024 donne la même chose. Écran par écran : `/profil` 42 → 9, `/aide` 32 → 2,
+la vitrine 8 → 2, `/collection` 6 → 1, `/carnet` 9 → 6, `/teletext` 4 → 3, le hub
+14 → 13, `/abonnement` 2 → 1, `/virage` 1 → 0 ; `/boosters` (15), `/classement`
+(2), `/kop` (1) et `/amis` (2) ne bougent pas. Ce qui reste est fait de faces
+décidées — la craie sur les faces vives, l'encre sur l'or —, de la craie sur le
+parpaing (3,7:1 : les douze séries de la base de test au kiosque) et de quelques
+tampons pleins. La craie voilée du profil et des missions est partie avec leur
+réécriture. Les textes baissent de 1 067 à 877 surtout parce que la boutique en
+montrait 238, et 45 depuis qu'elle tient en deux écrans.
+
+**Trois comptes montent, et seulement parce que la mesure voit plus** :
+`/boutique` 3 → 6 (ses étiquettes, posées maintenant sur un sticker uni, sont
+mesurables : les prix or à 3,9, GAGNER à 2,4, l'onglet or), `booster@carte`
+2 → 4 (le sticker COMMUNE, le tampon NOUVEAU) et `booster@butin` 6 → 12 (NOUVEAU
+sur la flare, ENCORE UN, LE CLASSEUR, MON DECK). Ce sont, pour l'essentiel, des
+faces décidées.
+
+| État (360 × 640) | textes | au soleil |
+|---|---|---|
+| l'ouverture à 2 s | 8 → 8 | 3 → 0 |
+| le tiroir de `/classement` | 30 → 30 | 10 → 2 |
+| la bande du HUD | 2 → 2 | 0 → 0 |
+| une carte révélée | 8 → 7 | 2 → 4 |
+| le ticket du gain | — → 3 | — → 0 |
+| le butin | 17 → 25 | 6 → 12 |
+| un classement rempli | 83 → 93 | 58 → 3 |
+
+Mesuré à part, sur la copie de travail : l'étal tient en 1 031 pixels ; la ligne
+épinglée est visible à 0, 400 et 610 pixels de défilement et en bout de liste ;
+le kiosque est propre à 320, 400 et 768 pixels avec une série comme avec treize ;
+la cérémonie suit ses quatre degrés — la rare en 608 ms avec son tic, l'épique en
+1 206 avec son carillon et sa vibration, la légendaire en 1 628 avec son
+rugissement, sa vibration, son tampon et sa secousse —, et sous le calme rien ne
+sonne, ne vibre ni ne tremble ; un bonus ou une
+mission envoyés deux ou trois fois à la fois, par l'API comme par deux onglets
+et un double clic, sont versés une fois, avec une seule ligne au grand livre ; au
+plus deux animations infinies par écran, aucune en mouvement réduit ; le
+marqueur, cinq emplois. Les requêtes `/api` de chaque écran, avant et après : le
+hub gagne la lecture du quotidien et la marque de visite, `/profil` celles de
+`/api/rank/moi`, du quotidien et du catalogue, `/abonnement` le catalogue de la
+boutique ; les autres sont égaux. **Aucun appel à l'API sportive** au journal.
+Le tiroir fait 957 pixels à 360 : un écran et demi, juste à la limite.
+
+### Éprouvé
+
+Les contrôles statiques sont verts : `npm run pages` (soixante-dix-neuf
+contrôles), `npm run cablage` (le quotidien monté, la sonde du jour de jeu dans
+`/healthz`, cinq paquets de production), `npm run promesses` (soixante-deux
+adresses appelées depuis vingt-quatre pages et vingt-cinq scripts, toutes
+servies), `npm run pages:navigateur`, et `npm run schema:smoke` — trente-quatre
+contrôles, le schéma appliqué dans l'ordre puis une seconde fois au même état,
+47 tables.
+
+Le dernier passage de `tout-tester`, le 3 octobre de 6 h 43 à 7 h 05, compte
+**soixante et une suites et 4 343 contrôles** en vingt et une minutes et demie,
+contre cinquante-huit et 3 376 à la fin du lot 2. Trois suites sont nouvelles :
+`recompenses:smoke` (89), `quotidien:smoke` (205) et `son:smoke` (110), sans
+base. `deck:ui` (un rouge) et `nvn:ui` (trois) restent rouges à l'identique,
+comme avant le lot 0. **`fanzzy:smoke` est vert** pour la première fois depuis
+le lot 0, 214 contrôles : son scénario habillait un Fanzzy sans l'équiper, alors
+que `tenuesParAge` est la garde-robe du Fanzzy équipé. `accueil:ui` est une
+intermittence, non attribuée : rouge dans `tout-tester`, verte seule au sixième
+passage (214), trois contrôles différents tombés selon les passages, dont un
+causé par la table `saisons` qu'elle ne vide pas. `abo:smoke` est vert, lancé à
+6 h 44.
+
+Le contrat a été vérifié sur un vrai serveur et la base de test, champ par
+champ, avec une série ouverte et une saison 2 annoncée, puis avec treize
+séries : aucun écart réel sur environ cent dix contrôles, et une faute de
+documentation (« Ce qui reste »). Les suites des neuf périmètres serveur ont
+chacune été cassées exprès sur leurs correctifs, contrôle par contrôle.
+
+Quatre suites d'interface ont suivi un comportement voulu par l'atelier, et
+chacune garde son sens : `boosters:ui` (la minuterie, la bâche or), `profil:ui`
+(la feuille de match, la corde), `aide:ui` (une seule bâche, l'étape suivante)
+et `accueil:ui` (le « +N » servi par le serveur, éteint au retour, et son repli
+sur la mémoire de l'appareil).
+
+### En ligne
+
+**Le commit `e21a923` (« Maj V03102026.0112 ») est en ligne depuis 1 h 13 environ
+le 3 octobre.** Gaël l'a pris pendant l'atelier, entre le deuxième tour de
+vérification (fini à 1 h 04) et le troisième, avec les documents du lot 2 ; il
+est poussé, et la production le sert : relevé à 8 h 25, `son.js`, `fx.js`,
+`ui.css`, `boosters.html`, `profil.html` et `aide.html` sont ceux du commit, octet
+pour octet, et `uptime_s` dit un redémarrage vers 1 h 13. **Mais `sql/quotidien.sql`
+n'a pas été appliqué** : `/healthz` répond `ok: false`, la panne « SCHÉMA
+INCOMPLET » ne nommant que ce fichier — ses quatre tables et ses neuf colonnes.
+Rien n'est cassé pour un joueur : le quotidien répond « inactif », les missions
+n'apparaissent pas, le reste du jeu tourne. La sonde du jour de jeu, elle, a parlé :
+le jour change à 00:00, heure de Zurich.
+
+Trente-six fichiers ont changé depuis ce commit, et ne sont pas en ligne : les
+corrections des tours 3 à 6 et du regard, dont trois côté serveur qui comptent
+— la lecture de la journée du football à chaque arrivée au hub, les crans qui
+payaient les tenues, les deux bonus de KOP vendus pour rien. **Appliquer le schéma sur le code en
+ligne seul les allumerait** : la livraison se fait avec eux. `A-DEPLOYER.md` dit
+l'ordre.
+
+### Ce qui reste
+
+D'abord, hors du code :
+
+- **verser dans le dépôt** les documents du chantier serveur — `SERVEUR.md`,
+  `CONTRATS.md`, `PLAN.md`, `ECARTS.md` —, que le code cite et que personne ne
+  peut ouvrir hors de l'atelier ;
+- **les décisions rendues à Gaël** par le chantier : l'inflation des écharpes
+  avant la saison 2 ; l'XP du Virage (quinze par match poussé, avec le bilan du
+  lot 6) ; brancher ou retirer « La quête » et « Mur de bâches », et que faire
+  des KOP qui les ont déjà payés (une requête en lecture seule est dans
+  `ECARTS.md`) ; la ferveur arrondie à zéro dans une tribune de plus de
+  trente-quatre personnes ; la saison 2, proposée « La trêve », du 21 décembre au
+  28 février, avec LES HÉROS DU CANAPÉ ; payer ou non les divisions ; le dossier
+  du juriste ; un bonus de KOP voté après la fin d'une saison, payé et sans
+  effet ; le rang de la racine de `/api/rank/moi`, qui compte encore les comptes
+  supprimés ; les tenues prises par l'abonnement, qui pèsent aussi sur le tirage
+  — l'abonné qui les a portées reçoit une poignée d'écharpes là où un joueur
+  gratuit tire une tenue, de l'ordre de cinq écharpes par booster ;
+  `parryBonus` et `parryResist`, lus par aucun moteur ; et le nom de la saison 1,
+  « Le premier virage » dans `sql/saisons.sql`, « La reprise » partout ailleurs ;
+- après la mise en ligne : la fin de la saison 1, le carnet recalé si les
+  missions arrivent après le 19 octobre, les seuils de division (`DEPLOIEMENT.md`,
+  « Après la livraison du quotidien »).
+
+Puis, relevé au dernier tour et non corrigé : `/api/rank/moi` sert des champs
+que le contrat ne déclare pas — `avatar` et `niveau` à la racine, `saison.fin`,
+`saison.joursRestants` et `saison.finie` — dont les écrans dépendent
+(« SAISON 1 · 31 JOURS », l'âge de l'avatar du profil) ; le contrat doit les
+déclarer, `classement-smoke` voir `joursRestants`, et un commentaire de
+`classement.html` qui dit qu'il les lira « le jour où » est périmé.
+
+Puis :
+
+- **le sachet de LA REPRISE n'a pas de visuel** (`pack-la-reprise`, absent de
+  la table `ART` de `cartes.js`) : au centre du kiosque de production, sous les
+  projecteurs, c'est le repli dessiné par le code, une carte plate ;
+- la réserve est encore dessinée de trois façons : en fentes jusqu'à cinq places
+  au kiosque, jusqu'à sept à la boutique, par son propre code, et sous un autre
+  pictogramme dans la barre ;
+- les insignes du carnet (le liseré et le tampon S1), versés mais ni servis ni
+  dessinés ; `JURIDIQUE.md`, qui ne dit pas encore que les crans ne comptent pas
+  les tenues ; le booster des premiers pas, qui mange lui aussi la recharge en
+  attente (`src/server/aide/index.js`, hors de la vague) ; `estAbonne` sur la
+  connexion de l'appelant ; le booster de l'abonnement, livré à la souscription
+  et non à chaque échéance ; l'`ALTER` à trois colonnes de `sql/couleurs.sql`,
+  dont le démarrage ne contrôle que la première ;
+- la place de la fête de niveau dans `ui.css`, où l'ancienne boîte « premium »
+  est encore écrite ;
+- les constats de détail des critiques, laissés en l'état : l'étoile et l'éclat
+  des formes épique et légendaire, que leur mot cache presque en entier ; le
+  scotch de l'album, invisible sur le kraft éclairci ; le ticket du butin, qui
+  couvre LE CLASSEUR et MON DECK trois secondes ; le ticket de gain des missions,
+  qui écrit « +40 xp » en minuscules et se coupe à 360 ; cinq RÉCUPÉRER sur un
+  même écran sans TOUT RÉCUPÉRER, que le serveur sait faire ; le classement vide
+  qui le dit trois fois ; la carte de présence, sans « J1 / 7 » ni le booster
+  écrit sous la septième case ; les descriptions des bonus du KOP, qui coupent
+  « 15 / % » en fin de ligne (`src/shared/kop.js`) ; « Supprimer définitivement
+  mon compte », 2,6:1 au soleil ;
+- l'audit : le tirage du booster, au hasard ; un état qui ouvrirait LA REPRISE
+  plutôt que la première des treize séries ; le contraste d'un pseudo-élément ou
+  d'un champ ; un texte couvert par un autre élément ;
+- `accueil-ui-smoke`, qui ne vide pas la table `saisons` ;
+- resté du lot 1 : `data-economie` sous `saveData`, que ni `fx.js` ni `menu.js` ne
+  posent.
+
+**Hors de cet atelier, et c'est la suite :** la collection, le classeur, la fiche
+et la carte elle-même (lot 4), les arènes, le bilan de tribune et la présence
+(lot 6).
+
+---

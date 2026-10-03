@@ -130,10 +130,11 @@
  * (« barre décalée ») — le lot 2 en avait laissé quatre décalées sans que
  * rien ne le dise. Et le tiroir ouvert dit combien d'écrans il fait de haut.
  *
- * **Ce qui couvre un écran à l'arrivée** : le ticket du bonus du jour sur le
- * hub, le ticket d'un gain, une fête de niveau, la cérémonie d'une carte. La
- * visite les range, les attend ou les ferme avant de mesurer, et le dit ;
- * le ticket du bonus et celui du butin sont mesurés à part, comme des états.
+ * **Ce qui couvre un écran à l'arrivée** : le ticket d'un gain ou d'un
+ * retour, une fête de niveau, la cérémonie d'une carte. La visite les
+ * attend ou les ferme avant de mesurer, et le dit ; le ticket du butin est
+ * mesuré à part, comme un état. Le bonus du jour ne couvre plus rien : il
+ * est dans la bâche du hub, que la visite attend et mesure avec la page.
  *
  * Usage :
  *   node scripts/audit-ui.mjs                  toutes les pages, trois formats
@@ -145,8 +146,8 @@
  *   node scripts/audit-ui.mjs --captures dos   une capture par page et par format
  *   node scripts/audit-ui.mjs --pleine         captures de la page entière
  *   node scripts/audit-ui.mjs --etats          et l'ouverture, le tiroir ouvert, la
- *                                              bande du HUD, le bonus du jour, un
- *                                              booster et son ticket, un classement
+ *                                              bande du HUD, un booster et son
+ *                                              ticket, un classement
  *
  * (Sous Git Bash, « /virage » est réécrit en chemin Windows avant d'arriver
  * ici : préfixer la commande de MSYS_NO_PATHCONV=1, ou la lancer depuis
@@ -1462,9 +1463,17 @@ const git = (...a) => {
 
    Ajouts du même lot, sans rien changer au sens des champs d'avant :
    `petitOr` et `orLegendaire` dans chaque relevé, `barre` dans chaque page et la synthèse
-   `rapport.barre`, la hauteur du tiroir ouvert (`tiroir`) dans son état, deux
-   états (`bonus@/`, `booster@ticket`), et ce qu'une visite a rangé ou fermé
-   avant de mesurer (`pile`, `fete`). */
+   `rapport.barre`, la hauteur du tiroir ouvert (`tiroir`) dans son état, un
+   état (`booster@ticket`), ce qu'une visite a attendu ou fermé avant de
+   mesurer (`pile`, `fete`), et, sur le hub d'un joueur, ce que disait sa
+   bâche du jour (`bache`).
+
+   **Retiré le 3 octobre 2026, avant la fin du lot** : l'état `bonus@/`, et
+   le bonus dans `pile` (« bonus rangé », « bonus attendu, pas monté »). Le
+   hub a quitté la pile pour poser le bonus dans sa bâche du jour : la
+   visite du hub le mesure avec la page, et `bache` dit qu'il y était (voir
+   « Le bonus du jour, dans la bâche »). Un relevé d'avant ce jour qui
+   porte `etats['bonus@/']` mesurait un ticket que le hub ne pose plus. */
 const rapport = {
   schema: 'audit-ui/3',
   date: new Date().toISOString(),
@@ -1788,21 +1797,40 @@ async function fermerLaFete(page, cle, largeur) {
   return vue ? 'fermée' : 'restée';
 }
 
-/* **Le bonus du jour, sur le hub.** À la première arrivée du jour, le hub
-   pose dans la pile (`.tbf-pile`, en bas de l'écran) le ticket du bonus,
-   qui passe par-dessus le bouton d'entrée tant qu'on ne l'a ni pris ni
-   rangé — et chaque visite de l'audit est une première arrivée. Mesurer le
-   hub avec lui, c'est mesurer un ticket posé sur un hub caché. Le ticket a
-   donc son état (`bonus@/`), et la visite du hub le **range** d'abord, par
-   Échap, comme un joueur qui ne le prend pas : le prendre écrirait en base
-   et changerait le solde de toutes les pages suivantes.
+/* **Le bonus du jour, dans la bâche.** À la première arrivée du jour — et
+   chaque visite de l'audit en est une —, le hub pose le bonus dans sa bâche
+   du jour (`#direct`, le ticket kraft de la bande du bas) : « BONUS DU
+   JOUR », la bâche or RÉCUPÉRER, la carte de la semaine. Il ne couvre rien :
+   la visite du hub le mesure avec la page, et ne le touche pas — le prendre
+   écrirait en base et changerait le solde de toutes les pages suivantes.
 
-   Il monte une demi-seconde après le rideau, ou après le ticket de retour
-   (trois secondes et demie) : on ne l'attend que si le serveur l'a servi
-   prêt (`bonus.pret` de GET /api/quotidien, lu au passage), sinon on
-   attendrait pour rien. Le ticket de retour, lui, ne vient qu'après trois
-   heures d'absence (contrat § 8) — jamais pendant un audit ; s'il vient,
-   on attend qu'il parte, comme le ticket d'un gain. */
+   **Il montait dans la pile** (`.tbf-pile`), par-dessus le bouton d'entrée :
+   la visite le rangeait par Échap, et un état (`bonus@/`) le mesurait à
+   part. Depuis que le hub le pose dans la bâche (révisé le 3 octobre 2026),
+   l'audit qui l'attendait encore dans la pile notait sur chaque format un
+   bonus « pas monté » que la capture montrait, attendait six secondes pour
+   rien, et l'état ne mesurait plus rien. L'état est retiré plutôt que
+   déplacé : il aurait remesuré la bâche que la visite du hub mesure déjà,
+   et compté deux fois chacun de ses défauts.
+
+   **Attendu, pas supposé.** La bâche se recolle sur le bonus une demi-
+   seconde après le rideau, ou après le ticket de retour (trois secondes et
+   demie), et ce recollage (`tbf-colle`) fait monter son opacité de 0 à 1 :
+   mesurée au vol, elle se lirait pâle. Si le serveur l'a servi prêt
+   (`bonus.pret` de GET /api/quotidien, lu au passage), on attend donc que la
+   bâche le dise (`data-quoi="bonus"`), puis la fin de son mouvement ; s'il
+   ne vient pas, c'est relevé (genre « bonus du jour »). Ce que la bâche
+   disait au moment de la mesure est rangé avec le relevé (`bache`) : tant
+   que le bonus est prêt, ses autres états — la mission, les premiers pas —
+   ne sont pas ceux qu'on mesure sur le hub du joueur de l'audit, et un
+   écart avec un relevé d'avant peut venir de là.
+
+   **La pile ne porte plus que des tickets qui passent** : sur le hub, le
+   ticket de retour, qui ne vient qu'après trois heures d'absence (contrat
+   § 8) — jamais pendant un audit. Tout ticket qui y est, on attend qu'il
+   parte ; un ticket qui y reste couvre le bouton d'entrée, et c'est relevé
+   (« ticket resté ») — un bonus qui reviendrait dans la pile le serait
+   ainsi, sans que l'audit ait à le connaître. */
 const BONUS_MAX = 6000;
 function guetterQuotidien(page) {
   const q = { lu: false, bonusPret: false };
@@ -1815,43 +1843,44 @@ function guetterQuotidien(page) {
   });
   return q;
 }
-const BONUS_MONTE = `() => Boolean(document.querySelector('.tbf-pile .tbf-bonus'))`;
-const TICKETS_QUI_PASSENT = '.tbf-pile > .tbf-ticket--retour, .tbf-pile > .tbf-ticket--gain';
+const BACHE_DU_JOUR = '#direct';
+const BONUS_DANS_LA_BACHE = `() => document.querySelector(${
+  JSON.stringify(BACHE_DU_JOUR)})?.dataset.quoi === 'bonus'`;
+const TICKETS_DE_LA_PILE = '.tbf-pile > .tbf-ticket';
 
-/** Range le ticket du bonus et attend ceux qui passent. Rend ce qui a été fait. */
-async function rangerLaPile(page, q, cle, largeur) {
-  const fait = [];
-  if (q?.bonusPret) {
-    const monte = await page.evaluate(`(async () => (${ATTENDRE})(${BONUS_MONTE}, ${BONUS_MAX}))()`)
-      .catch(() => false);
-    if (!monte) {
-      note(cle, largeur, 'bonus du jour', `le serveur sert un bonus prêt, et son ticket n’est pas monté en ${
-        BONUS_MAX / 1000} s`);
-      fait.push('bonus attendu, pas monté');
-    } else {
-      await page.keyboard.press('Escape');
-      const range = await page.evaluate(`(async () => {
-        const monte = ${BONUS_MONTE};
-        return (${ATTENDRE})(() => !monte(), 1500);
-      })()`).catch(() => false);
-      if (!range) note(cle, largeur, 'bonus du jour', 'le ticket du bonus n’est pas parti à Échap : la mesure le voit');
-      fait.push(range ? 'bonus rangé' : 'bonus resté');
-    }
-  }
+/** Attend que les tickets de la pile partent. Rend ce qui est passé. */
+async function attendreLaPile(page, cle, largeur) {
   const passes = await page.evaluate(`(async () => {
-    const sel = ${JSON.stringify(TICKETS_QUI_PASSENT)};
+    const sel = ${JSON.stringify(TICKETS_DE_LA_PILE)};
     const vus = [...document.querySelectorAll(sel)].map((t) => t.className.replace(/\\s+/g, '.'));
     if (!vus.length) return null;
     return { vus, partis: await (${ATTENDRE})(() => !document.querySelector(sel), 4000) };
   })()`).catch(() => null);
-  if (passes) {
-    if (!passes.partis) note(cle, largeur, 'ticket resté', `un ticket qui passe est resté dans la pile : ${passes.vus[0]}`);
-    fait.push(...passes.vus.map((v) => `${v} ${passes.partis ? 'parti' : 'resté'}`));
+  if (!passes) return [];
+  if (!passes.partis) {
+    note(cle, largeur, 'ticket resté', `un ticket est resté dans la pile, sur le bouton d’entrée : ${passes.vus[0]}`);
   }
-  /* Ce qui vient d'être rangé laisse sa place à ce qui la reprend — la
-     bulle du Fanzzy rappelle le bonus : on la laisse finir d'entrer. */
-  if (fait.length) await finDesMouvements(page, 'body', 1500);
-  return fait;
+  /* Le ticket parti, ce qui reprend sa place finit d'entrer avant la mesure. */
+  await finDesMouvements(page, 'body', 1500);
+  return passes.vus.map((v) => `${v} ${passes.partis ? 'parti' : 'resté'}`);
+}
+
+/** Attend le bonus dans la bâche du jour s'il est servi prêt, puis la fin
+    de son recollage. Rend ce que dit la bâche, et ce que le serveur a servi
+    (`null` : GET /api/quotidien n'a pas été lu). */
+async function attendreLaBache(page, q, cle, largeur) {
+  if (q.bonusPret) {
+    const dedans = await page.evaluate(`(async () => (${ATTENDRE})(${BONUS_DANS_LA_BACHE}, ${BONUS_MAX}))()`)
+      .catch(() => false);
+    if (!dedans) {
+      note(cle, largeur, 'bonus du jour', `le serveur sert un bonus prêt, et la bâche du jour ne le montre pas en ${
+        BONUS_MAX / 1000} s (${BACHE_DU_JOUR}[data-quoi="bonus"])`);
+    }
+  }
+  await finDesMouvements(page, BACHE_DU_JOUR, 1000);
+  const quoi = await page.evaluate((sel) => document.querySelector(sel)?.dataset.quoi ?? null, BACHE_DU_JOUR)
+    .catch(() => null);
+  return { quoi, bonusServi: q.lu ? q.bonusPret : null };
 }
 
 for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
@@ -1859,7 +1888,8 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
   for (const format of FORMATS) {
     const { largeur, hauteur } = format;
     const { contexte, page, erreurs, refus } = await nouvelleVisite(format, qui);
-    /* Le hub d'un joueur : son bonus du jour (voir « Le bonus du jour »). */
+    /* Le hub d'un joueur : son bonus du jour (voir « Le bonus du jour, dans
+       la bâche »). */
     const quotidien = chemin === '/' && qui ? guetterQuotidien(page) : null;
     /* **Une seconde chance, et une seule.** La vitrine, visitée sans compte et
        sans cache, n'a pas trouvé son calme réseau en vingt secondes une fois
@@ -1896,11 +1926,14 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
     await page.waitForFunction(() => !document.getElementById('ouverture'), { timeout: 12_000 })
       .catch(() => note(cle, largeur, 'chargement', 'l’écran d’ouverture était encore là après 12 s'));
     await new Promise((r) => setTimeout(r, 1800));
-    /* Ce qui couvre l'écran à l'arrivée, fermé ou rangé avant la mesure, et
-       écrit dans le relevé : voir « Une fête de niveau » et « Le bonus du
-       jour ». La fête d'abord : elle passe devant la pile. */
+    /* Ce qui couvre l'écran à l'arrivée, fermé ou attendu avant la mesure,
+       et écrit dans le relevé : voir « Une fête de niveau » et « Le bonus du
+       jour, dans la bâche ». La fête d'abord : elle passe devant la pile.
+       Puis la pile, avant la bâche : le bonus ne s'y recolle qu'une fois le
+       ticket de retour parti. */
     const fete = await fermerLaFete(page, cle, largeur);
-    const pile = quotidien ? await rangerLaPile(page, quotidien, cle, largeur) : [];
+    const pile = quotidien ? await attendreLaPile(page, cle, largeur) : [];
+    const bache = quotidien ? await attendreLaBache(page, quotidien, cle, largeur) : null;
 
     const m = await mesurer(page);
     /* La place de la barre, comparée aux autres pages après les visites. */
@@ -1936,7 +1969,7 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
 
     rapport.pages[cle][cleFormat(format)] = {
       largeur, hauteur, charge: true, essais, capture, qui: qui ?? 'sans compte', arrivee,
-      barre, ...(fete ? { fete } : {}), ...(pile.length ? { pile } : {}),
+      barre, ...(fete ? { fete } : {}), ...(pile.length ? { pile } : {}), ...(bache ? { bache } : {}),
       compte: compter(m, erreurs, refus),
       releves: { ...m, scripts: erreurs, refus },
     };
@@ -2234,10 +2267,6 @@ async function etatTiroir(format) {
        barre, touché sur une page ordinaire. Sous 560 px seulement : au-delà,
        la bande est une rangée de la barre, toujours visible, et la visite de
        la page la mesure déjà. Mesurée sous sa portée.
-     — **le bonus du jour** (`bonus@/`) : le ticket que le hub pose dans la
-       pile à la première arrivée du jour, et que la visite du hub range
-       avant de mesurer (voir « Le bonus du jour »). Mesuré sous la portée
-       de la pile, fixée à la fenêtre.
      — **l'ouverture d'un booster**, à trois moments : une carte révélée
        (`booster@carte`), le ticket du gain qui passe trois secondes dans la
        pile (`booster@ticket`), puis le butin (`booster@butin`). Mesurés sous
@@ -2249,9 +2278,12 @@ async function etatTiroir(format) {
    **Rien de ce qu'ils sèment ne touche aux relevés d'avant.** Ils passent
    après les pages, l'ouverture et le tiroir, et chacun sème au moment où il
    passe : le kiosque, un joueur neuf par format ; le classement, sa ferveur,
-   à la toute fin. Le bonus ne sème rien : il est rangé, jamais pris. Le
-   relevé des pages et des trois premiers états se compare donc tel quel à
-   celui d'un audit qui ne les avait pas. */
+   à la toute fin. Le relevé des pages et des trois premiers états se
+   compare donc tel quel à celui d'un audit qui ne les avait pas.
+
+   (Le bonus du jour a eu son état, `bonus@/`, tant qu'il montait dans la
+   pile du hub : il est dans la bâche du jour depuis le 3 octobre 2026, et
+   la visite du hub le mesure — voir « Le bonus du jour, dans la bâche ».) */
 /* nav.js et ui.css : à partir de 560 px, la bande ne se déplie plus. */
 const BANDE_EN_RANGEE = 560;
 const FORMATS_HUD = FORMATS.filter((f) => f.largeur < BANDE_EN_RANGEE);
@@ -2312,48 +2344,6 @@ async function etatHud(format) {
       return;
     }
     rangerEtat(cle, PAGE_TIROIR, format, { ...polices, capture }, m, erreurs, refus);
-  } finally {
-    await contexte.close();
-  }
-}
-
-/* **Le bonus du jour** (`bonus@/`) : le ticket kraft que le hub monte dans
-   la pile à la première arrivée du jour — l'arbitrage du kraft s'y lit (le
-   noir pur sur le kraft éclairci), et la visite du hub, qui le range, ne le
-   mesure pas. Le même joueur que les pages : il n'a rien pris de la journée,
-   et chaque contexte neuf est une première arrivée (la mémoire « déjà
-   proposé » est dans l'onglet). Mesuré sous la portée de la pile, une fois
-   fini son glissement d'entrée ; jamais touché — le prendre écrirait en
-   base. Sans bonus prêt servi par le serveur, il n'y a rien à mesurer, et
-   on le dit. */
-async function etatBonus(format) {
-  const cle = 'bonus@/';
-  const { contexte, page, erreurs, refus } = await nouvelleVisite(format, 'joueur');
-  const quotidien = guetterQuotidien(page);
-  try {
-    try {
-      await page.goto(`${base}/`, { waitUntil: 'networkidle0', timeout: 20_000 });
-    } catch {
-      note(cle, format.largeur, 'chargement', 'l’accueil n’a pas fini de charger en 20 s');
-      return;
-    }
-    await page.waitForFunction(() => !document.getElementById('ouverture'), { timeout: 12_000 })
-      .catch(() => {});
-    const faute = !quotidien.lu ? 'le hub n’a pas lu /api/quotidien : pas de bonus à mesurer'
-      : !quotidien.bonusPret ? 'le serveur ne sert pas de bonus prêt (bonus.pret) : rien à mesurer'
-        : !await page.evaluate(`(async () => (${ATTENDRE})(${BONUS_MONTE}, ${BONUS_MAX}))()`).catch(() => false)
-          ? `le serveur sert un bonus prêt, et son ticket n’est pas monté en ${BONUS_MAX / 1000} s` : null;
-    if (faute) {
-      note(cle, format.largeur, 'état', faute);
-      rangerEtat(cle, '/', format, { capture: null });
-      return;
-    }
-    await finDesMouvements(page, '.tbf-pile', 1000);
-    await new Promise((r) => setTimeout(r, 200));
-    const m = await mesurer(page, '.tbf-pile');
-    const polices = await page.evaluate(POLICES);
-    const capture = await photographier(page, 'bonus-accueil', format, cle);
-    rangerEtat(cle, '/', format, { ...polices, capture }, m, erreurs, refus);
   } finally {
     await contexte.close();
   }
@@ -2672,15 +2662,13 @@ if (etats) {
   /* Les formats de chaque état, dans le JSON : celui de 320 n'est pas dans
      « formats », qui reste la liste des pages. */
   rapport.formatsEtats = { ouverture: FORMATS_OUVERTURE.map(cleFormat), tiroir: FORMATS.map(cleFormat),
-    hud: FORMATS_HUD.map(cleFormat), bonus: FORMATS.map(cleFormat), booster: FORMATS.map(cleFormat),
-    classement: FORMATS.map(cleFormat) };
+    hud: FORMATS_HUD.map(cleFormat), booster: FORMATS.map(cleFormat), classement: FORMATS.map(cleFormat) };
   for (const format of FORMATS_OUVERTURE) {
     await etatOuverture(format);
     if (FORMATS.includes(format)) await etatTiroir(format);
   }
   /* Les états des lots 3 et 5, après : voir « les écrans de plus ». */
   for (const format of FORMATS_HUD) await etatHud(format);
-  for (const format of FORMATS) await etatBonus(format);
   for (const format of FORMATS) await etatBooster(format);
   rapport.classementSeme = await semerClassement();
   if (await redemarrer()) {

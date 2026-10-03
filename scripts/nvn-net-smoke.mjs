@@ -1100,6 +1100,89 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
     E2.socket.disconnect(); F2.socket.disconnect();
   }
 
+  /* ------------------------------- la place reprise, puis un second duel
+
+     Le chemin que la page du duel ouvre sur « slot_lost » : la grâce épuisée,
+     le joueur revenu reçoit ce refus, retrouve la préparation et repart en
+     file pendant que son premier duel continue sans lui. Deux choses sont
+     éprouvées ici.
+
+     - **Les deux refus que la page lit pour quitter l'écran de jeu** :
+       « slot_lost » tant que le premier duel court, « not_in_duel » une fois
+       sa salle fermée — c'est aussi ce que reçoit un joueur coupé au coup de
+       sifflet, qui n'a pas eu de bilan.
+     - **La fermeture du premier duel ne le sort pas du second.** `fermer`
+       retirait de `salleDe` tous les membres de la salle sans regarder où
+       chacun pointait : le joueur reparti perdait son second duel au coup de
+       sifflet du premier, ses chants y étaient refusés pour « aucun duel », et
+       sa reprise ne l'y remettait plus. */
+  {
+    const E3 = co(V[2], url2), F3 = co(V[3], url2);
+    await until(() => E3.socket.connected && F3.socket.connected);
+    // Les mêmes camps qu'au forfait : V[2] suit Sion, V[3] prend l'autre.
+    E3.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900 });
+    F3.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900, camp: 1 });
+    const forme = await until(() => E3.state && F3.state, 8000);
+    check('banc de la reprise : le premier duel est formé', forme);
+
+    if (forme) {
+      const premier = N2.salles.get(E3.state.id);
+      F3.socket.disconnect();
+      await until(() => premier.membres.get(V[3])?.coupeA);
+      /* La grâce épuisée sans attendre ses quatre-vingt-dix secondes : la
+         prochaine horloge de la salle, une demi-seconde au plus, le retire. */
+      premier.membres.get(V[3]).coupeA = 1;
+      check('la grâce épuisée retire le joueur',
+        await until(() => E3.events.some((e) => e.t === 'left' && e.userId === V[3])));
+
+      const F4 = co(V[3], url2);
+      await until(() => F4.socket.connected);
+      F4.socket.emit('nvn:resume');
+      check('sa reprise répond « place reprise », sans lui rendre la partie',
+        await until(() => F4.errors.includes('nvn.error.slot_lost')) && F4.starts === 0
+        || (console.log('        refus :', F4.errors.join(', ') || '(aucun)'), false));
+
+      /* Il repart en file, contre un autre supporter, pendant que le premier
+         duel court toujours. V[1] ne suit personne : il choisit le camp 1. */
+      const G = co(V[1], url2);
+      await until(() => G.socket.connected);
+      F4.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900 });
+      G.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900, camp: 1 });
+      const second = await until(() => F4.state && G.state, 8000);
+      const secondId = F4.state?.id;
+      check('il entre dans un second duel', second && secondId !== premier.duel.id);
+
+      if (second) {
+        // Le premier finit sans lui.
+        premier.duel.finir(0, 'buts', []);
+        await N2.pourLesTests.fermer(premier);
+
+        F4.errors.length = 0;
+        const departs = F4.starts;
+        F4.socket.emit('nvn:resume');
+        check('la fermeture du premier ne le sort pas du second : sa reprise l’y remet',
+          await until(() => F4.starts > departs) && F4.state?.id === secondId
+          && !F4.errors.includes('nvn.error.not_in_duel')
+          || (console.log('        refus :', F4.errors.join(', ') || '(aucun)'), false));
+
+        // Son adversaire du premier, lui, n'a plus de duel : la salle est fermée.
+        E3.errors.length = 0;
+        E3.socket.emit('nvn:resume');
+        check('une reprise après la fermeture répond « aucun duel »',
+          await until(() => E3.errors.includes('nvn.error.not_in_duel'))
+          || (console.log('        refus :', E3.errors.join(', ') || '(aucun)'), false));
+
+        const salle2 = N2.salles.get(secondId);
+        if (salle2) {
+          salle2.duel.finir(0, 'buts', []);
+          await N2.pourLesTests.fermer(salle2);
+        }
+      }
+      F4.socket.disconnect(); G.socket.disconnect();
+    }
+    E3.socket.disconnect(); F3.socket.disconnect();
+  }
+
   /* --------------------------------- l'entraînement : jauge, pas de cote */
   {
     const sA = fausse(), sB = fausse();

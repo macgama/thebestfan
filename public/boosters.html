@@ -45,15 +45,22 @@
    replié de `nav.js`, sur tous les écrans). Le même visage deux fois l'un
    sous l'autre ne dit rien de plus, et prend la place du solde à 360 px.
 
-   **Au-delà de cinq fentes, le compte.** La réserve tient douze boosters
-   (vingt-quatre pour un abonné), et sept fentes ne tiennent plus avec le
-   compte à rebours et le solde sur un écran de 360 : le sachet seul, son
-   nombre en sticker rond sur le coin. L'anneau de recharge sort alors de la
-   fente et se pose devant « PROCHAIN » (`#recharge`). */
+   **Une seule règle pour la dessiner** (`reserveHTML`, dans cartes.js) :
+   une fente par place quand le plafond de ce joueur est servi et qu'elles
+   tiennent ; sinon le sachet seul et son compte. Le kiosque écrivait cinq
+   fentes en dur — trois pleines, l'anneau, une vide — et faisait croire à
+   un plafond de cinq quand la réserve en tient douze (vingt-quatre pour un
+   abonné). L'anneau de recharge sort alors de la fente et se pose devant
+   « PROCHAIN » (`#recharge`).
+
+   **Le compte est un sticker craie rectangulaire**, collé sur le bas du
+   sachet comme une étiquette : il était rond, au coin, presque le sticker
+   de niveau de l'avatar de la barre, cinquante pixels plus haut. Quinze
+   pixels, tabulaire : c'est le chiffre qu'on vient lire. */
 #reserve{margin-bottom:8px}
-#fentes.kq-compte{margin-right:12px}
-#fentes .tbf-sticker--rond{position:absolute;z-index:2;right:-13px;bottom:-7px;
-  --taille:22px;font-size:12px}
+#fentes.tbf-fentes--compte{margin-right:6px}
+#fentes.tbf-fentes--compte>.tbf-sticker{align-self:flex-end;margin:0 0 -4px -9px;--rot:-4deg;
+  height:24px;padding:0 6px;font-size:15px}
 
 /* Les séries ouvertes, en pastilles. Seules celles qu'on peut ouvrir y
    figurent : les autres se disent plus bas, dans leur rail.
@@ -167,6 +174,42 @@
   .kscene>.tbf-socle{top:236px;width:196px}
 }
 
+/* **La scène se resserre quand le bouton OUVRIR n'a plus la place.**
+
+   Trois rangées peuvent s'ajouter entre la barre et lui : le rail des
+   séries (la base de test les ouvre toutes les treize), le texte de la
+   saison tant qu'il n'a pas été lu, et la minuterie quand la réserve est
+   vide. Une seule, et tout tient dans 640 pixels de haut ; deux, et la
+   bâche passait sous le bas de l'écran — en production même, le jour où
+   une saison commence et que la réserve est vide. La page compte ces
+   rangées (`data-rangees`, voir `rangerLaScene`), et sur un écran court la
+   scène se resserre : deux rangées, le sachet passe de 124 à 96 pixels de
+   large (la scène perd 48 pixels) ; trois, à 84, et le texte de la saison
+   attend un écran où il tient — il reste à lire, et sa croix ne ferme rien
+   qu'on n'ait vu. Le socle et les flèches suivent le sachet. Mesuré au
+   banc à 360 × 640, avec les treize séries de la base de test. */
+@media (max-height:719px){
+  #s-kiosque[data-rangees="2"] .kscene{height:204px}
+  #s-kiosque[data-rangees="2"] .slide{width:96px}
+  #s-kiosque[data-rangees="2"] .kscene>.tbf-socle{top:149px;width:136px}
+  #s-kiosque[data-rangees="2"] .kscene>.tbf-plaque--rond{top:61px}
+  #s-kiosque[data-rangees="3"] .kscene{height:182px}
+  #s-kiosque[data-rangees="3"] .slide{width:84px}
+  #s-kiosque[data-rangees="3"] .kscene>.tbf-socle{top:129px;width:120px}
+  #s-kiosque[data-rangees="3"] .kscene>.tbf-plaque--rond{top:51px}
+  #s-kiosque[data-rangees="3"] :is(#saisonTxt,#saisonVu){display:none}
+}
+/* Un écran plus court encore (320 × 568) : une rangée suffit à pousser la
+   bâche dehors. La scène prend le resserrement le plus fort dès la
+   première, et le texte de la saison attend dès la deuxième. */
+@media (max-height:599px){
+  #s-kiosque:is([data-rangees="1"],[data-rangees="2"],[data-rangees="3"]) .kscene{height:182px}
+  #s-kiosque:is([data-rangees="1"],[data-rangees="2"],[data-rangees="3"]) .slide{width:84px}
+  #s-kiosque:is([data-rangees="1"],[data-rangees="2"],[data-rangees="3"]) .kscene>.tbf-socle{top:129px;width:120px}
+  #s-kiosque:is([data-rangees="1"],[data-rangees="2"],[data-rangees="3"]) .kscene>.tbf-plaque--rond{top:51px}
+  #s-kiosque:is([data-rangees="2"],[data-rangees="3"]) :is(#saisonTxt,#saisonVu){display:none}
+}
+
 /* Une série verrouillée se regarde sans se toucher : le paquet s'éteint, mais
    il reste visible. C'est ce qui donne envie d'y arriver. */
 .carousel.verrou .slide.center{filter:grayscale(.85) brightness(.5)}
@@ -195,12 +238,27 @@
    qu'il reste un booster gratuit, le serveur le consomme et ne prélève rien
    — proposer d'acheter ferait croire à un choix qui n'existe pas, et le
    prochain booster se lit déjà dans la réserve, juste sous la barre. */
-/* Chacune prend la largeur de ce qu'elle porte, et elles se partagent le
-   reste : à parts égales, l'achat repliait « TOUT DE SUITE » sur deux lignes
-   et son prix mordait « +1 BOOSTER », pendant que la minuterie gardait du
-   vide. Seule, la minuterie prend toute la rangée. */
-.minut{display:flex;gap:12px;margin:14px 0 0}
-.minut>*{flex:1 1 auto;min-width:0}
+/* **À parts égales, mais jamais sous ce que chacune porte.** Les deux
+   bâches partent de zéro et se partagent la rangée (`flex: 1 1 0`) ; aucune
+   ne descend sous sa largeur la plus étroite, parce que `min-width` reste
+   `auto`. Pour l'achat, c'est toute sa largeur : « +1 BOOSTER » ne se coupe
+   pas (la brique le tient sur une ligne) et le sticker de prix non plus —
+   la moitié ne lui suffit pas sur un téléphone, il prend ce qu'il lui faut
+   et la minuterie le reste. La minuterie, elle, sait replier « PRÊT DANS »
+   sur deux lignes : c'est elle qui cède, jusqu'à son plus long mot ou son
+   compte. Quand même cela ne tient pas — à 320 px, un compte de dix heures
+   et plus, ou un prix à trois chiffres à côté de « 1 h 02 » ou de « PRÊT »
+   —, l'achat passe sous la minuterie, sur toute la rangée (`flex-wrap`), au
+   lieu de se faire mordre. Avec la cadence et le prix par défaut (dix
+   minutes, 45), la rangée ne se coupe jamais.
+
+   Avant, un `min-width: 0` laissait l'achat descendre sous son contenu : à
+   parts égales, il repliait « TOUT DE SUITE » et son prix mordait « +1
+   BOOSTER » ; à la largeur de leur contenu, les deux rétrécissaient au
+   prorata, et à 320 px le mot dépassait encore de onze pixels, le prix posé
+   sur son R. Seule, la minuterie prend toute la rangée. */
+.minut{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0 0}
+.minut>*{flex:1 1 0}
 
 /* Ouvrir un booster : l'action principale de l'écran, la bâche grande
    (`.tbf-grande`), en flare — le rouge d'un acte de jeu. Quatorze pixels au
@@ -217,28 +275,47 @@
   letter-spacing:.04em;text-transform:none;text-shadow:0 1px 0 var(--encre)}
 
 /* Les séries fermées, en rail : leurs sachets en gris sous un scotch en
-   croix, et la raison en sticker — « SAISON 2 » quand le serveur annonce la
-   saison qui les ouvrira (`sets[].prochaine`), « FERMÉE » sinon : on
-   n'annonce jamais une date qu'on n'a pas. Un rail par raison.
+   croix. **Un seul rail, une seule croix.** Il y en avait un par raison,
+   chacun sous sa grande croix : un sachet seul, entièrement caché, sous
+   « SAISON 2 » — on ne savait pas quelle série ouvrirait —, puis onze
+   sachets de vingt-huit pixels tassés en une pellicule illisible sous
+   « FERMÉE ». Deux X géants pour dire « pas encore ».
 
-   **Un rail de sachets plutôt qu'une liste de noms.** Au lancement, douze
-   séries attendent : leurs douze noms en une ligne faisaient un paragraphe.
-   Les sachets disent la même chose d'un coup d'œil, et leur nom reste à
-   l'écoute (`aria-label` de chacun). Sur un panneau (`.pan`) : rien ne
+   Les sachets ont maintenant la taille d'un sachet (40 × 62), espacés, et
+   le rail défile de côté. **La série annoncée vient en premier**, avec son
+   nom et sa saison en étiquette (« LES HÉROS DU CANAPÉ · SAISON 2 ») : il
+   est connu dès qu'elle est annoncée (`sets[].prochaine`). Les autres n'ont
+   pas de sticker : « 12 SÉRIES ATTENDENT UNE SAISON » le dit pour elles, et
+   on n'annonce jamais une date qu'on n'a pas. Leur nom reste à l'écoute
+   (`aria-label` de chaque sachet). Sur un panneau (`.pan`) : rien ne
    s'écrit à même la photo de la tribune. */
-.fermees{margin:16px 0 8px;padding:12px 12px 14px}
-.fermees-lab{margin:0;font-family:var(--banner);font-weight:600;font-size:11px;line-height:1.3;
+.fermees{margin:16px 0 8px;padding:12px 0 6px}
+.fermees-lab{margin:0 12px;font-family:var(--banner);font-weight:600;font-size:11px;line-height:1.3;
   letter-spacing:.1em;text-transform:uppercase;text-align:center}
-/* Les sachets d'un rail se chevauchent, comme une pile qu'on étale : douze
-   tiennent sur une ligne de 360 px, et le scotch en croix ne couvre qu'eux
-   — tendu sur toute la largeur du panneau, il barrait du vide. */
-.fermees-rang{position:relative;display:flex;justify-content:center;width:fit-content;max-width:100%;
-  margin:20px auto 0;padding:8px 16px}
-.fermees-s{position:relative;flex:none;width:28px;height:44px;border-radius:3px;overflow:hidden;
-  background:var(--encre) center/cover no-repeat;filter:grayscale(1) brightness(.6);
-  box-shadow:0 0 0 1.5px rgba(242,238,228,.4),2px 0 4px rgba(7,9,12,.55)}
-.fermees-s+.fermees-s{margin-left:-9px}
-.fermees-rang>.tbf-sticker{position:absolute;z-index:5;right:-10px;top:-14px;--rot:5deg}
+/* L'étiquette de la série annoncée, au-dessus du rail, collée sur le coin
+   de son sachet (le premier). Un nom long (« LA GASTRONOMIE DE COMPTOIR ·
+   SAISON 2 ») passe sur deux lignes plutôt que de sortir du panneau à
+   320 px. */
+.fermees-annonce{display:flex;margin:12px 12px -6px;position:relative;z-index:6}
+.fermees-annonce>.tbf-sticker{--rot:-2deg;max-width:100%;height:auto;min-height:24px;padding:4px 7px;
+  white-space:normal;line-height:1.15}
+/* Le rail défile ; la croix, elle, est posée sur sa fenêtre et ne défile
+   pas avec lui — une seule, au milieu, sur la largeur de trois sachets. Le
+   rembourrage garde l'air des ombres, qu'un défilement rogne. */
+.fermees-rail{position:relative;margin-top:8px}
+.fermees-rang{display:flex;gap:12px;overflow-x:auto;padding:10px 12px 12px;
+  scroll-snap-type:x proximity;scroll-padding-inline:12px;scrollbar-width:none}
+.fermees-rang::-webkit-scrollbar{display:none}
+.fermees-rang>:first-child{margin-left:auto}
+.fermees-rang>:last-child{margin-right:auto}
+.fermees-rang:focus-visible{outline:3px solid var(--projo);outline-offset:-3px}
+.fermees-s{position:relative;flex:none;width:40px;height:62px;border-radius:4px;overflow:hidden;
+  scroll-snap-align:start;background:var(--encre) center/cover no-repeat;filter:grayscale(1) brightness(.6);
+  box-shadow:0 0 0 1.5px rgba(242,238,228,.4),2px 2px 5px rgba(7,9,12,.55)}
+/* La série annoncée garde un peu de sa lumière : c'est la prochaine. */
+.fermees-s[data-annoncee]{filter:grayscale(.6) brightness(.8)}
+.fermees-rail>.tbf-scotch--croix{left:50%;right:auto;width:min(156px,60%);translate:-50% 0;
+  top:4px;bottom:6px;pointer-events:none;z-index:4}
 
 /* --------------------------------------------------- geste d'ouverture
 
@@ -434,18 +511,6 @@
 /* « TOUT RÉVÉLER » : une bâche craie — une commande de la cérémonie, pas un
    achat ni un acte de jeu. Il ne reste ici que sa taille. */
 #oAction{min-height:44px;padding:10px 18px;font-size:13px}
-/* Le pin de rareté, posé en coin de la carte du butin. `pointer-events:none`
-   parce que la carte entière ouvre la fiche : un pin qui avale le clic
-   ferait un trou dans la seule zone qu'on a envie de toucher.
-
-   **`pinButin` et non `pinRar`** : la fiche du personnage se monte sur
-   cette page-ci aussi, et elle porte son propre pin de rareté. Deux écrans
-   différents, un seul nom, et le pin de la fiche serait parti se coller
-   dans un coin. Ce dépôt a payé exactement cette faute la semaine passée
-   avec une classe `ok` qui rendait invisible tout ce qu'on possédait. */
-.pinButin{position:absolute;right:-7px;top:-7px;width:28px;height:28px;z-index:6;
-  object-fit:contain;pointer-events:none;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 
 /* ------------------------------------------------------------- le butin
 
@@ -455,18 +520,82 @@
    se replie, et le butin prend la place — s'il ne tient pas (un écran court,
    une série en plus), il défile seul, la tête et les bâches du bas restent.
 
-   **Ce qui est neuf** porte le sticker NOUVEAU au coin haut-gauche ; **ce qui
-   a rapporté des écharpes** (un doublon, une poignée d'écharpes), son prix
-   en sticker. Le coin haut-droit est celui de la rareté. */
+   **Ce qui est neuf** porte le sticker NOUVEAU sur le flanc gauche ; **ce
+   qui a rapporté des écharpes** (un doublon, une poignée d'écharpes), son
+   prix en sticker sur le flanc droit. Le coin haut-droit est celui de la
+   rareté, la bande du haut celle de l'âge (voir plus bas). */
 .summary{display:none;flex:1 1 auto;min-height:0;overflow-y:auto;position:relative;z-index:2;
   padding:6px 14px 10px}
-/* La page d'album se centre dans la hauteur qu'elle a : sur une tablette, collée en
-   haut, elle laissait cinq cents pixels de noir avant la fin du butin. Des
-   marges automatiques et non un centrage : si elle déborde, elles tombent à
-   zéro, et le haut de la page reste lisible au lieu d'être rogné. */
 .summary.on{display:flex;flex-direction:column}
-.summary>.tbf-album{margin-block:auto}
 .tbf-album-pied>.tbf-tampon{grid-column:1/-1;justify-self:end;margin-top:2px}
+
+/* **Le butin se lit d'un bloc** : le titre, la page d'album et les trois
+   bâches de la fin, ensemble, au milieu de la hauteur. Seule la page
+   d'album se centrait : sur une tablette, le titre restait collé en haut,
+   les bâches en bas, et la page flottait entre sept cents pixels de noir —
+   trois îlots, et la récompense avait l'air d'une vignette perdue. Des
+   marges automatiques sur le premier et le dernier du bloc, et non un
+   centrage : s'il déborde, elles tombent à zéro, et c'est la page d'album
+   qui défile, le titre et les bâches restent. */
+#opener.kq-butin>.butintitre{margin-top:auto}
+#opener.kq-butin>.summary{flex:0 1 auto}
+#opener.kq-butin>.ofoot{margin-bottom:auto}
+
+/* La forme de rareté au coin haut-droit de la case, **au-dessus** de la
+   pastille d'âge de la carte et non sur elle : l'emblème d'avant la
+   couvrait, on lisait « ÉVO » sans son chiffre. La pastille commence à
+   quatre pixels du haut de la carte ; la forme, vingt pixels, finit là. Le
+   haut de la page d'album lui laisse la place (vingt-quatre pixels sous la
+   déchirure). `pointer-events:none` : la carte entière ouvre la fiche, et
+   la forme ne doit pas y faire un trou.
+
+   **Rien ne déborde dans la gouttière.** La forme et le NOUVEAU de la carte
+   voisine sortaient chacun de leur carte — six et huit pixels — et se
+   mordaient dans les quatorze pixels qui les séparent, d'autant plus que
+   la rangée est longue. La forme s'aligne sur le bord de sa carte. */
+.tbf-album-case>.tbf-forme{position:absolute;z-index:6;top:-16px;right:0;--taille:20px;
+  pointer-events:none}
+/* **Les stickers de la case se collent sur l'illustration, jamais sur
+   l'étiquette de la carte** (la règle du scotch, amendement 19 : ce qui
+   recouvre va sur l'image, le libellé reste net). La brique les pose au
+   coin haut-gauche, et c'est la bande où `cardHTML` écrit l'âge de la carte
+   — « ÉVO 2 », ou « LÉGENDAIRE » d'un bord à l'autre. Sur une carte de
+   quatre-vingt-onze pixels (360 px d'écran), NOUVEAU en cachait de la
+   moitié aux trois quarts : il restait « 2 », ou le « E » final de
+   LÉGENDAIRE, sur la carte qui compte le plus ; le prix d'une légendaire en
+   doublon (« +45 ») en mangeait autant. Plus haut, au-dessus de la carte,
+   il n'y a pas la place : la forme, le scotch et NOUVEAU ne tiennent pas
+   ensemble sur quatre-vingt-onze pixels, et la rangée du dessous n'en a que
+   vingt-quatre.
+
+   **NOUVEAU descend donc sur le flanc gauche, à 40 % de la hauteur** : là
+   où l'ouverture vient de le tamponner, une seconde plus tôt
+   (`.kq-nouveau`) — le butin colle à la même place —, sous l'âge et
+   au-dessus du nom, même écrit sur trois lignes. À la taille de la
+   maquette pour une carte de grille (22 px, Oswald 12) : il couvre moins
+   d'image. Il dépasse du bord de deux pixels, sept avec son bord craie et
+   sa pente : il est collé sur la carte, pas imprimé dedans. **Le prix, sur
+   le flanc droit**, à la même hauteur (comme le « ×3 » d'un doublon de la
+   maquette), rentré de deux pixels : seul son bord craie passe le bord de
+   la carte. Un prix et le NOUVEAU de la case suivante se partagent ainsi
+   les quatorze pixels de la gouttière, et il en reste cinq et demi entre
+   eux (mesuré de 320 à 768 px) ; NOUVEAU dépassant de quatre pixels et le
+   prix au ras du bord, il n'en restait qu'un et demi à 320, 360 et 400,
+   moins que l'ombre dure du prix. Une même case ne porte jamais les deux :
+   une carte neuve n'a rien rapporté (`estNeuve`, `rapporte`). */
+.summary .tbf-album-case>.tbf-sticker[data-ton=flare]{left:-2px;top:40%;
+  height:22px;padding:0 6px;font-size:12px}
+.summary .tbf-album-case>.tbf-sticker.tbf-sticker--prix{left:auto;right:2px;top:40%;bottom:auto;
+  --rot:5deg}
+
+/* **Sur une tablette, des cartes de tablette.** À 768 px, la page d'album
+   rangeait les cinq cartes sur une bande de quatre-vingt-quinze pixels de
+   large — la taille d'un téléphone — au milieu de l'écran. Des colonnes de
+   cent vingt au moins (trois par rangée), la case jusqu'à cent cinquante. */
+@media (min-width:600px){
+  .summary .tbf-album{--carte:120px}
+  .summary .tbf-album-case{max-width:150px}
+}
 
 /* **Une carte qu'on ne lit pas ne bouge pas.** La carte (`cardHTML`, lot 4)
    respire, se balance et fait briller son holo, sans fin : cinq cartes
@@ -481,12 +610,23 @@
 
 /* Le titre du butin. Il dit ce qu'on a eu avant qu'on ait compté.
 
-   Le compte des nouvelles était en or, à 13 px : du petit texte, et l'or ne
-   s'écrit plus qu'en grand (arbitrage du 2 octobre 2026). Il reste en craie,
-   et c'est la graisse qui le détache de la phrase. */
-.butintitre{position:relative;z-index:2;text-align:center;font-family:var(--banner);letter-spacing:.18em;
-  font-size:13px;padding:2px 0 8px}
-.butintitre b{font-weight:700}
+   **C'est l'information qu'on vient chercher**, et elle était le plus petit
+   texte de l'écran : treize pixels. « 2 NOUVELLES » en grand — Oswald 700
+   à vingt et un pixels —, « SUR 5 » en petit à côté, sur la même ligne de
+   base. En craie : l'or ne s'écrit plus en petit (arbitrage du 2 octobre
+   2026), et le grand n'a pas à porter la couleur d'un achat.
+
+   Le corps et les espacements sont comptés : à 360 px, la plus longue des
+   quatre phrases (« TOUTES NOUVELLES · DANS LE CLASSEUR ») tient sur une
+   ligne — à vingt-deux pixels, elle passait sur deux —, et à 360 × 640 la
+   page d'album tient tout juste entre la tête et les bâches : chaque pixel
+   pris ici cachait le bas de la jauge de la série. */
+.butintitre{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;
+  align-items:baseline;gap:2px 8px;padding:0 12px 6px;text-align:center;
+  font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.1;letter-spacing:.1em}
+.butintitre b{font-weight:700;font-size:21px;letter-spacing:.04em}
+.butintitre small{font-size:13px}
+#opener.kq-butin>.ofoot{padding-top:10px}
 
 /* La fin du butin en trois bâches : ENCORE UN, en flare, si la réserve ou le
    solde le permettent ; LE CLASSEUR et MON DECK, en bleu — ce qu'on possède.
@@ -548,7 +688,9 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
     <div class="tbf-fentes" id="fentes" role="img" aria-label="Boosters en réserve"></div>
     <span class="tbf-recharge" id="recharge" aria-hidden="true" hidden></span>
     <span class="tbf-reserve-prochain" id="prochain" hidden>PROCHAIN<b id="prochainT"></b></span>
-    <a class="tbf-monnaie" id="monnaie" href="/boutique" aria-label="Écharpes — où en gagner"><img
+    <!-- Le « + » mène où l'on gagne des écharpes : le Virage, comme à la
+         boutique. Il menait à la boutique, qui les fait dépenser. -->
+    <a class="tbf-monnaie" id="monnaie" href="/virage" aria-label="Écharpes — où en gagner"><img
       src="/img/gains/echarpes.webp" alt=""><b id="kEch">0</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>
   </div>
   <div class="annonce" id="annonce" hidden></div>
@@ -581,6 +723,10 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
     <!-- La minuterie et l'achat immédiat, quand la réserve est vide. -->
     <div class="minut" id="minut" hidden></div>
     <button class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="flare" id="openBtn">OUVRIR LE BOOSTER</button>
+    <!-- À sa place quand la réserve est vide et le solde court : un bouton
+         éteint ne mène nulle part, celui-ci mène où en gagner. -->
+    <a class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="vert" id="gagner" href="/virage" hidden>GAGNER DES
+      ÉCHARPES<small id="gagnerManque"></small></a>
     <!-- Ce qui vient : les séries fermées, en rail. Le kiosque montrait les
          huit séries verrouillées dans le carrousel : on glissait au milieu de
          ce qu'on ne peut pas ouvrir pour retrouver ce qu'on peut. Un jeu
@@ -664,7 +810,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 /* Les aides communes viennent de /cartes.js — l'état, le catalogue, le dessin
    d'une carte. On les réalias ici pour que le code du kiosque soit exactement
    celui qu'il était quand il vivait dans la page des Fanzzy. */
-const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid } = window.TBF_CARTES;
+const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, reserveHTML, save, seeded, src, uid } = window.TBF_CARTES;
 
 /** Le jeton des écharpes : le même dessin dans la réserve, sur les prix, les
     tickets et ce qui vole vers le compteur. Une monnaie dessinée de deux
@@ -844,9 +990,11 @@ function enMots(ms) {
     relire à chaque seconde. Elle annonce `tbf:bourse`, qui redessine. */
 let relecture = null;
 let derniereRelecture = -Infinity;
-function relire() {
+/* `force` : un geste du joueur (PRÊT touché) relit même dans les dix
+   secondes — c'est lui qui attend, pas une minuterie. */
+function relire({ force = false } = {}) {
   if (relecture) return relecture;
-  if (performance.now() - derniereRelecture < 10_000) return Promise.resolve();
+  if (!force && performance.now() - derniereRelecture < 10_000) return Promise.resolve();
   derniereRelecture = performance.now();
   relecture = load().catch(() => {}).finally(() => { relecture = null; });
   return relecture;
@@ -854,12 +1002,15 @@ function relire() {
 
 /* ------------------------------------------------------------ la réserve */
 
-/** Combien de fentes la réserve montre avant de passer au compte. */
-const FENTES = 5;
 let signatureFentes = '';
 
 /**
  * La réserve, sous la barre : les fentes de sachets, le prochain, le solde.
+ *
+ * **Dessinée par la règle commune** (`reserveHTML`, dans cartes.js) : des
+ * places seulement si l'on sait combien ce joueur en a, le compte sinon. Le
+ * plafond est celui que le serveur sert pour ce joueur (`S.packMax`), jamais
+ * un nombre écrit ici.
  *
  * Les fentes ne se reconstruisent que si ce qu'elles montrent change — le
  * nombre, la recharge, la série — : chaque seconde, seuls l'anneau et le
@@ -882,21 +1033,16 @@ function rendreReserve() {
   const recharge = reste != null;
   const set = SETS[S.set];
   const sachet = set && ART[set.id] ? `url("/${src(ART[set.id])}")` : '';
-  const enFentes = n + (recharge ? 1 : 0) <= FENTES;
-  const sig = [n, recharge, sachet, enFentes].join('|');
+  const max = Number(S.packMax) > 0 ? Number(S.packMax) : null;
+  const sig = [n, recharge, sachet, max].join('|');
   const f = $('fentes');
   if (sig !== signatureFentes) {
     signatureFentes = sig;
     if (sachet) f.style.setProperty('--sachet', sachet);
     else f.style.removeProperty('--sachet');
-    f.classList.toggle('kq-compte', !enFentes);
-    f.innerHTML = enFentes
-      ? Array.from({ length: Math.max(FENTES, n + (recharge ? 1 : 0)) }, (_, i) =>
-        (i < n ? '<span class="tbf-fente"></span>'
-          : i === n && recharge
-            ? '<span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" aria-hidden="true"></span></span>'
-            : '<span class="tbf-fente tbf-fente--vide"></span>')).join('')
-      : `<span class="tbf-fente"><b class="tbf-sticker tbf-sticker--rond" aria-hidden="true">${n}</b></span>`;
+    const { enFentes, html } = reserveHTML({ packs: n, max, recharge });
+    f.classList.toggle('tbf-fentes--compte', !enFentes);
+    f.innerHTML = html;
     $('recharge').hidden = enFentes || !recharge;
     f.dataset.mots = '';
   }
@@ -913,15 +1059,21 @@ function rendreReserve() {
 function tickReserve() {
   if ($('reserve').hidden) return;
   const reste = restantMs();
-  $('prochain').hidden = reste == null;
-  if (reste != null) $('prochainT').textContent = quand(reste);
+  /* Pas de « PROCHAIN 0:00 » : à zéro, le booster est arrivé (la page relit
+     l'état pour le prendre), et la minuterie dit PRÊT juste en dessous. Une
+     ligne sans donnée disparaît. */
+  $('prochain').hidden = reste == null || reste === 0;
+  if (reste) $('prochainT').textContent = quand(reste);
   const part = reste == null ? 1 : clamp(1 - reste / cadence(), 0, 1);
   for (const a of $('reserve').querySelectorAll('.tbf-recharge')) a.style.setProperty('--part', part.toFixed(3));
   /* L'étiquette des fentes ne change qu'à la minute : elle est lue par qui
-     l'écoute, et une phrase qui change chaque seconde ne se lit jamais. */
+     l'écoute, et une phrase qui change chaque seconde ne se lit jamais. Le
+     plafond ne s'y dit que s'il est servi. */
   const n = Math.max(0, Math.floor(Number(S.packs) || 0));
-  const mots = `${pluriel(n, 'booster', 'boosters')} en réserve`
-    + (reste == null ? ' — la réserve est pleine' : ` — le prochain dans ${enMots(reste)}`);
+  const max = Number(S.packMax) > 0 ? Number(S.packMax) : null;
+  const mots = `${n || max ? pluriel(n, 'booster', 'boosters') : 'Aucun booster'}${max ? ` sur ${max}` : ''} en réserve`
+    + (reste == null ? ' — la réserve est pleine'
+      : reste === 0 ? ' — le prochain est arrivé' : ` — le prochain dans ${enMots(reste)}`);
   const f = $('fentes');
   if (f.dataset.mots !== mots) { f.dataset.mots = mots; f.setAttribute('aria-label', mots); }
 }
@@ -1048,6 +1200,97 @@ const peutOuvrir = () => serieDebloquee(SETS[S.set] ?? {})
   && (S.packs > 0 || Number(S.scarves ?? 0) >= Number(S.packPrice ?? 45));
 
 /**
+ * **Un seul geste d'achat à l'écran.**
+ *
+ * Réserve vide et solde suffisant, l'écran proposait deux fois le même achat
+ * de 45 : la bâche or « TOUT DE SUITE · +1 BOOSTER » et, juste dessous, la
+ * bâche flare « OUVRIR · 45 ÉCHARPES ». Les deux appelaient `startTear`. Le
+ * joueur cherchait une différence qui n'existait pas, et l'achat s'écrivait
+ * en flare quand l'or dit « acheter ». Réserve vide et solde court, la
+ * flare devenait une bâche éteinte, « IL TE FAUT 45 ÉCHARPES », qui ne
+ * menait nulle part.
+ *
+ * Ce que dit la bâche principale (`#openBtn`, et `#gagner` à sa place) :
+ *
+ * - `ouvrir`  : un booster en réserve — OUVRIR LE BOOSTER, gratuit ;
+ * - `pret`    : la minuterie est à zéro, le booster est arrivé — OUVRIR LE
+ *   BOOSTER, qui relit d'abord l'état pour le prendre (jamais un achat) ;
+ * - `attendre` : réserve vide, la minuterie compte et la bâche or vend le
+ *   booster — la flare s'éteint, l'or est le **seul** achat ;
+ * - `acheter` : réserve vide sans minuterie (une réserve sans recharge) et
+ *   solde suffisant — la flare porte le prix, puisque l'or n'est pas là ;
+ * - `gagner`  : réserve vide et solde court — la flare cède la place à la
+ *   bâche verte GAGNER DES ÉCHARPES, qui mène au Virage ;
+ * - `fermee`  : une série qu'aucune saison n'a ouverte.
+ *
+ * Le sachet du carrousel, touché, fait ce que fait la bâche : il ne vend
+ * rien en douce quand elle est éteinte.
+ */
+function geste() {
+  if (!serieDebloquee(SETS[S.set] ?? {})) return 'fermee';
+  if (Number(S.packs) > 0) return 'ouvrir';
+  const reste = restantMs();
+  if (reste === 0) return 'pret';
+  const paie = Number(S.scarves ?? 0) >= Number(S.packPrice ?? 45);
+  if (!paie) return 'gagner';
+  return reste == null ? 'acheter' : 'attendre';
+}
+
+/** La bâche principale, selon le geste. Réécrite seulement quand ce qu'elle
+    dit change : chaque seconde, `tickRegen` la repasse. */
+function rendreGeste() {
+  /* Avant `load()`, l'état porte des valeurs de départ (la réserve pleine) :
+     la bâche garde son libellé d'origine plutôt que d'annoncer « 12 en
+     réserve » qui ne sont pas ceux du joueur. */
+  if (!('avatar' in S)) return;
+  const g = geste();
+  const b = $('openBtn');
+  const px = Number(S.packPrice ?? 45);
+  const n = Math.max(0, Math.floor(Number(S.packs) || 0));
+  const manque = Math.max(0, px - Number(S.scarves ?? 0));
+  const libelle = {
+    fermee: 'PAS ENCORE OUVERTE',
+    ouvrir: `OUVRIR LE BOOSTER<small>${n} en réserve</small>`,
+    pret: 'OUVRIR LE BOOSTER<small>le prochain est arrivé</small>',
+    attendre: 'OUVRIR LE BOOSTER<small>aucun en réserve</small>',
+    acheter: `OUVRIR · ${px} ÉCHARPES`,
+    gagner: 'OUVRIR LE BOOSTER',
+  }[g];
+  if (b.dataset.libelle !== libelle) { b.dataset.libelle = libelle; b.innerHTML = libelle; }
+  b.disabled = g === 'fermee' || g === 'attendre' || g === 'gagner';
+  b.hidden = g === 'gagner';
+  $('gagner').hidden = g !== 'gagner';
+  const m = `il t’en manque ${manque}`;
+  if ($('gagnerManque').textContent !== m) {
+    $('gagnerManque').textContent = m;
+    $('gagner').setAttribute('aria-label', `Gagner des écharpes : ${m} pour un booster`);
+  }
+}
+
+/** Ce que fait la bâche principale, et le sachet touché. */
+function ouvrirDepuisLaBache() {
+  if (!('avatar' in S) || !SETS[S.set]) return;
+  const g = geste();
+  if (g === 'pret') ouvrirLArrive();
+  else if (g === 'ouvrir' || g === 'acheter') startTear();
+}
+
+/**
+ * Le booster que la minuterie vient d'annoncer : on relit l'état, qui le
+ * contient, et on ne l'ouvre que s'il y est.
+ *
+ * La relecture est forcée — celle de la minuterie à zéro a pu partir il y a
+ * moins de dix secondes. Et l'on n'ouvre **que** si la réserve le contient :
+ * sans ce garde, un serveur encore à quelques secondes de la recharge
+ * renvoyait une réserve vide, et `startTear` passait à l'achat — le joueur
+ * touchait PRÊT, un booster gratuit, et payait 45 écharpes. Sinon, la
+ * minuterie repart du temps servi, sous ses yeux.
+ */
+function ouvrirLArrive() {
+  relire({ force: true }).then(() => { if (Number(S.packs) > 0) startTear(); });
+}
+
+/**
  * Chaque seconde : le bouton, la réserve, la minuterie — et la relecture à
  * zéro.
  *
@@ -1056,13 +1299,27 @@ const peutOuvrir = () => serieDebloquee(SETS[S.set] ?? {})
  * Le bouton se fermait dès `packs <= 0`, et le client n'envoie `buy` que
  * dans ce cas précis : la seule situation où l'on paie était donc la seule
  * où le bouton ne répondait pas. Le serveur, lui, savait acheter depuis le
- * premier jour. Il n'a jamais reçu la demande.
+ * premier jour. Il n'a jamais reçu la demande. L'achat a maintenant sa
+ * bâche, l'or de la minuterie (voir `geste`).
  */
 function tickRegen() {
-  $('openBtn').disabled = !peutOuvrir();
+  rendreGeste();
   tickReserve();
   rendreMinuterie();
+  rangerLaScene();
   if (restantMs() === 0) relire();
+}
+
+/** Combien de rangées s'ajoutent au-dessus du bouton OUVRIR — le rail des
+    séries, le texte de la saison, la minuterie —, pour que la feuille
+    resserre la scène quand il n'aurait plus la place (voir `.kscene`). Les
+    sachets se replacent : leur écart suit leur largeur. */
+function rangerLaScene() {
+  const n = [!$('series').hidden, !$('saisonTxt').hidden, !$('minut').hidden].filter(Boolean).length;
+  const ecran = $('s-kiosque');
+  if (ecran.dataset.rangees === String(n)) return;
+  ecran.dataset.rangees = String(n);
+  placeCarousel(0);
 }
 
 /**
@@ -1070,12 +1327,15 @@ function tickRegen() {
  *
  * Deux objets : la bâche de parpaing « PRÊT DANS 9:55 », qui se lit et ne se
  * touche pas (un `div`), et à côté la bâche or « TOUT DE SUITE · +1 BOOSTER »
- * avec son prix — l'or dit « acheter ». Le temps écoulé, la minuterie devient
- * une bâche or qui pulse, « PRÊT », et un bouton : elle ouvre le booster qui
- * vient d'arriver (la page relit d'abord l'état, qui le contient).
+ * avec son prix — l'or dit « acheter », et c'est **le seul achat de
+ * l'écran** : la flare, dessous, s'éteint (voir `geste`). Le temps écoulé,
+ * la minuterie devient une bâche or qui pulse, « PRÊT », et un bouton : elle
+ * ouvre le booster qui vient d'arriver (`ouvrirLArrive`).
  *
- * L'achat ne se propose que s'il se paie : sans les écharpes, le bouton
- * OUVRIR dit déjà ce qui manque, et la minuterie reste seule.
+ * L'achat ne se propose que s'il se paie — sans les écharpes, la bâche verte
+ * GAGNER DES ÉCHARPES prend la place de la flare, et la minuterie reste
+ * seule — et **jamais à PRÊT** : le booster gratuit est là, vendre le même
+ * à côté pour 45 ferait croire qu'il faut payer.
  *
  * Elle ne se reconstruit que si son état change : chaque seconde, seuls le
  * compte et l'anneau bougent — un bouton recréé sous le doigt perdrait le
@@ -1101,7 +1361,7 @@ function rendreMinuterie() {
       : `<div class="tbf-plaque tbf-minuterie" id="minuterie" role="timer"><span class="tbf-recharge"
           style="--taille:28px" aria-hidden="true"></span><span class="tbf-lib2"><small>PRÊT DANS</small><b
           id="minuterieT"></b></span></div>`)
-      + (paie
+      + (paie && !pret
         ? `<button type="button" class="tbf-plaque tbf-minuterie" data-ton="or" id="achat"
             aria-label="Acheter un booster tout de suite : ${prix} écharpes"><span class="tbf-lib2"><small>TOUT DE
             SUITE</small><b>+1 BOOSTER</b></span><span class="tbf-sticker tbf-sticker--prix"><img
@@ -1118,8 +1378,18 @@ function rendreMinuterie() {
 }
 $('minut').onclick = (e) => {
   if (e.target.closest('#achat')) { startTear(); return; }
-  if (e.target.closest('#minuteriePrete')) relire().then(() => startTear());
+  if (e.target.closest('#minuteriePrete')) ouvrirLArrive();
 };
+
+/** Les séries de la saison en cours : la liste du serveur, ou celles du
+    catalogue qui disent être arrivées par elle. Sans saison, aucune. */
+function idsDeSaison() {
+  const s = S.saison;
+  if (!s || !s.nom) return [];
+  return Array.isArray(s.series) && s.series.length ? s.series
+    : SETS_TOUTES.filter((x) => x.saison && (x.saison.id === s.id || x.saison.numero === s.numero))
+      .map((x) => x.id);
+}
 
 /**
  * La banderole de la saison.
@@ -1160,12 +1430,8 @@ function rendreSaison() {
   $('saisonTxt').hidden = !nouvelle;
   $('saisonVu').hidden = !nouvelle;
   n.classList.toggle('avec-x', nouvelle);
-  /* Les séries de la saison : la liste du serveur, ou celles du catalogue qui
-     disent être arrivées par elle. L'écharpe prend la couleur de la
-     première. */
-  const ids = Array.isArray(s.series) && s.series.length ? s.series
-    : SETS_TOUTES.filter((x) => x.saison && (x.saison.id === s.id || x.saison.numero === s.numero))
-      .map((x) => x.id);
+  /* L'écharpe prend la couleur de la première série de la saison. */
+  const ids = idsDeSaison();
   const premiere = SETS_TOUTES.find((x) => x.id === ids[0]);
   if (premiere?.c1) n.style.setProperty('--e1', premiere.c1);
   else n.style.removeProperty('--e1');
@@ -1193,42 +1459,52 @@ $('saisonVu').onclick = async () => {
     sachet de ses deux couleurs, et non le paquet composé de `packArt` : son
     nom y serait écrit à deux pixels — un texte que personne ne lit, et que
     l'audit compterait sous onze. Le nom est à l'écoute (`aria-label`). */
-const sachetFerme = (x) => (ART[x.id]
-  ? `<span class="fermees-s" role="img" aria-label="${esc(x.nom)}"
-      style="background-image:url('/${esc(src(ART[x.id]))}')"></span>`
-  : `<span class="fermees-s" role="img" aria-label="${esc(x.nom)}"
-      style="background-image:linear-gradient(160deg,${esc(x.c2 ?? '#1A1F27')} 0 32%,${esc(x.c1 ?? '#C2CAD6')} 58%,${esc(x.c2 ?? '#1A1F27')})"></span>`);
+const saisonDe = (x) => (Number.isInteger(x.prochaine) && x.prochaine > 0 ? x.prochaine : 0);
+const sachetFerme = (x) => {
+  const k = saisonDe(x);
+  const nom = esc(k ? `${x.nom} — saison ${k}` : x.nom);
+  const fond = ART[x.id] ? `url('/${esc(src(ART[x.id]))}')`
+    : `linear-gradient(160deg,${esc(x.c2 ?? '#1A1F27')} 0 32%,${esc(x.c1 ?? '#C2CAD6')} 58%,${esc(x.c2 ?? '#1A1F27')})`;
+  return `<span class="fermees-s" role="img" aria-label="${nom}"${k ? ' data-annoncee' : ''}
+      style="background-image:${fond}"></span>`;
+};
 
 /**
- * Ce qui vient : les séries fermées, en rails de sachets gris sous scotch.
+ * Ce qui vient : les séries fermées, en un rail de sachets gris sous une
+ * croix de scotch.
  *
  * Elle disait « au niveau 12 ». Elle ne le dit plus, et pas seulement parce
  * que le niveau n'ouvre plus rien : **on ne connaît pas toujours la date**.
  * Une saison se lance quand l'administration la lance ; le serveur ne dit
  * quelle saison ouvrira une série que si elle a été annoncée
  * (`sets[].prochaine`, contrat § 7.2), et annoncer une échéance qu'on ne
- * tiendra peut-être pas est pire que de n'en annoncer aucune. Un rail par
- * raison : « SAISON 2 » pour les séries annoncées, « FERMÉE » pour les
- * autres.
+ * tiendra peut-être pas est pire que de n'en annoncer aucune. Les séries
+ * annoncées viennent en tête du rail, leur nom et leur saison en étiquette
+ * (« SAISON 2 » n'est écrit que si la saison est servie) ; les autres n'en
+ * ont pas.
  */
 function rendreFermees() {
   const fermees = SETS_TOUTES.filter((x) => !serieDebloquee(x));
   const av = $('avenir');
   if (!fermees.length) { av.hidden = true; av.innerHTML = ''; return; }
   av.hidden = false;
-  const raisons = new Map();
-  for (const x of fermees) {
-    const k = Number.isInteger(x.prochaine) && x.prochaine > 0 ? x.prochaine : 0;
-    if (!raisons.has(k)) raisons.set(k, []);
-    raisons.get(k).push(x);
-  }
-  // Les saisons annoncées d'abord, de la plus proche à la plus lointaine.
-  const ordre = [...raisons.keys()].sort((a, b) => (a || Infinity) - (b || Infinity));
+  // Les séries annoncées d'abord, de la saison la plus proche à la plus
+  // lointaine ; l'ordre du catalogue sinon (le tri est stable).
+  const rang = [...fermees].sort((a, b) => (saisonDe(a) || Infinity) - (saisonDe(b) || Infinity));
+  const annoncees = rang.filter((x) => saisonDe(x));
+  const k = annoncees.length ? saisonDe(annoncees[0]) : 0;
+  const memeSaison = annoncees.filter((x) => saisonDe(x) === k);
+  /* Une série annoncée : son nom. Plusieurs pour la même saison : leur
+     nombre — une étiquette de trois noms ne tiendrait pas sur un sachet. */
+  const etiquette = !k ? ''
+    : memeSaison.length === 1 ? `${memeSaison[0].nom} · SAISON ${k}`
+      : `${memeSaison.length} SÉRIES · SAISON ${k}`;
   const n = fermees.length;
   av.innerHTML = `<p class="fermees-lab">${n} série${n > 1 ? 's attendent' : ' attend'} une saison</p>`
-    + ordre.map((k) => `<div class="fermees-rang">${raisons.get(k).map(sachetFerme).join('')}
-        <span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span>
-        <span class="tbf-sticker">${k ? `SAISON ${k}` : 'FERMÉE'}</span></div>`).join('');
+    + (etiquette ? `<div class="fermees-annonce"><span class="tbf-sticker">${esc(etiquette)}</span></div>` : '')
+    + `<div class="fermees-rail"><div class="fermees-rang" tabindex="0" role="group"
+        aria-label="Les séries à venir">${rang.map(sachetFerme).join('')}</div>
+        <span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span></div>`;
 }
 
 /** Les pastilles des séries ouvertes, la choisie ramenée au milieu du rail. */
@@ -1274,10 +1550,18 @@ function renderKiosque() {
      distinction, le joueur en choisissait une, appuyait, et découvrait le
      refus après coup — sous la forme d'un code. Un jeu ne cache pas ce qui
      vient, il le montre verrouillé. */
+  /* **Le compte ne s'écrit qu'une fois.** Quand la saison se réduit à la
+     série affichée — en production, LA REPRISE seule —, la banderole dit
+     déjà « 4 / 35 COLLECTÉS » : le sticker du sachet redisait « 35 FANZZY »
+     deux cents pixels plus bas. Il ne garde alors que le nom. Avec plusieurs
+     séries, les deux nombres ne disent pas la même chose (la saison, la
+     série) et restent. */
   const lignees = PERSOS.filter((f) => f.set === s.id).length;
+  const ids = idsDeSaison();
+  const dejaCompte = !$('saisonCompte').hidden && ids.length === 1 && ids[0] === s.id;
   $('setName').textContent = s.nom;
   $('setCompte').textContent = !ouvrable ? ' · pas encore ouverte'
-    : lignees ? ` · ${lignees} Fanzzy` : '';
+    : lignees && !dejaCompte ? ` · ${lignees} Fanzzy` : '';
   $('carousel').classList.toggle('verrou', !ouvrable);
   /* La fumée de la série : sa couleur, éclaircie pour qu'elle se voie sur le
      béton (la fumée éclaire ce qui est derrière elle, une couleur sombre n'y
@@ -1286,14 +1570,9 @@ function renderKiosque() {
   f.style.setProperty('--e1', s.c1 ?? '');
   f.style.setProperty('--e2', window.FX?.lisible?.(s.c1) ?? s.c1 ?? '');
 
-  /* Le prix est **sur le bouton**, pas à côté : c'est au moment d'appuyer qu'on
-     décide de dépenser, et une ligne d'aide sous le pouce ne se lit pas. */
-  const px = Number(S.packPrice ?? 45);
-  const n = Math.max(0, Math.floor(Number(S.packs) || 0));
-  $('openBtn').innerHTML = !ouvrable ? 'PAS ENCORE OUVERTE'
-    : n > 0 ? `OUVRIR LE BOOSTER<small>${n} en réserve</small>`
-    : Number(S.scarves ?? 0) >= px ? `OUVRIR · ${px} ÉCHARPES`
-    : `IL TE FAUT ${px} ÉCHARPES`;
+  /* La bâche principale (et sa remplaçante verte) : `rendreGeste`, appelé
+     par `tickRegen` juste après — le prix n'y est écrit que si elle est le
+     seul achat de l'écran. */
   placeCarousel(0);
   rendreReserve();
   tickRegen();
@@ -1340,13 +1619,13 @@ $('series').onclick = (e) => {
     x0 = null;
     if (d < -0.28) goPaquet(1);
     else if (d > 0.28) goPaquet(-1);
-    else { placeCarousel(0); if (!dragging) startTear(); }
+    else { placeCarousel(0); if (!dragging) ouvrirDepuisLaBache(); }
   };
   c.addEventListener('pointerup', end);
   c.addEventListener('pointercancel', () => { x0 = null; placeCarousel(0); });
 })();
 
-$('openBtn').onclick = () => startTear();
+$('openBtn').onclick = () => ouvrirDepuisLaBache();
 
 /* ------------------------------------------------- le geste d'ouverture
 
@@ -1524,7 +1803,20 @@ function doOpen() {
   }, 320);
 }
 
-let pull = [], idx = 0, fresh = new Set();
+let pull = [], idx = 0;
+
+/* Pour chaque carte, dans l'ordre de `pull` : est-elle neuve ?
+
+   **Par rang, et non par identifiant.** La nouveauté était retenue dans un
+   ensemble d'identifiants : un booster qui contenait deux exemplaires d'une
+   même carte neuve les marquait NOUVEAU tous les deux, alors que le serveur
+   rend le second comme un doublon (`new: false`, payé en écharpes). La même
+   carte portait NOUVEAU et « +1 », le titre comptait quatre nouvelles pour
+   trois, et la révélation tamponnait deux fois. Le serveur dit carte par
+   carte ce qui est neuf : on le lit carte par carte. Une poignée d'écharpes
+   n'est neuve pour personne. */
+let neuf = [];
+const estNeuve = (c) => c?.new === true && c.type !== 'echarpes' && c.type !== 'scarves';
 
 /* Pour chaque carte du paquet, dans l'ordre de `pull` : a-t-elle rapporté des
    écharpes ? C'est **d'où** partent celles qui volent vers le compteur à la
@@ -1599,11 +1891,14 @@ async function openPack() {
      ligne de série se compte depuis là. */
   const echAvant = Number(S.scarves ?? 0);
   const colAvant = { ...S.col };
+  /* Ce qu'on demande au serveur, retenu : seul un paquet **demandé à
+     l'achat** peut avoir été payé (voir le ticket, plus bas). */
+  const achete = !(Number(S.packs) > 0);
   let res;
   try {
     // `buy` autorise le serveur à prélever des écharpes s'il ne reste aucun
     // booster gratuit. Il refuse proprement si le solde ne suffit pas.
-    res = await api('/open', { set: setId, buy: S.packs <= 0 });
+    res = await api('/open', { set: setId, buy: achete });
   } catch (e) {
     // Un message vague fait perdre des heures. Quand le serveur sait pourquoi,
     // on le dit.
@@ -1634,6 +1929,7 @@ async function openPack() {
   pull = res.cards.map(carteDuPaquet);
   rapportent = res.cards.map(rapporte);
   montants = res.cards.map(montantDe);
+  neuf = res.cards.map(estNeuve);
   doublonsAVerser = true;
 
   // Une carte que le serveur tire mais que cette page ne connaît pas arrivait
@@ -1652,6 +1948,7 @@ async function openPack() {
     // Les listes vont ensemble : on retire les mêmes rangs de toutes.
     rapportent = rapportent.filter((_, i) => Boolean(pull[i]));
     montants = montants.filter((_, i) => Boolean(pull[i]));
+    neuf = neuf.filter((_, i) => Boolean(pull[i]));
     pull = pull.filter(Boolean);
     console.error('[fanzzy] catalogue de la page en retard sur le serveur :', inconnues);
     toast(`Carte inconnue de cette version : ${inconnues.join(', ')}. Recharge la page.`);
@@ -1684,20 +1981,17 @@ async function openPack() {
     if (!liste.includes(f.id)) liste.push(f.id);
   }
   window.TBF_ETATS?.possedes?.(S.etats);
-  idx = 0; fresh.clear();
+  idx = 0;
   for (const c of res.cards) {
-    if (c.new) fresh.add(c.id);
     // La collection ne compte que des supporters. Une pièce d'équipement rangée
     // ici gonflait la progression du classeur d'une case qui n'existe pas.
     if (c.type === 'fanzzy') S.col[c.id] = (S.col[c.id] ?? 0) + 1;
-    // Une poignée d'écharpes n'est « neuve » pour personne : la marquer
-    // ferait clignoter un NOUVEAU sur de la monnaie.
-    if (c.type === 'echarpes') fresh.delete('echarpes');
   }
   S.scarves = res.wallet.scarves;
   S.packs = res.wallet.packs;
   S.nextIn = res.wallet.nextPackInMs;
   if (Number(res.wallet.cadenceMs) > 0) S.cadenceMs = Number(res.wallet.cadenceMs);
+  if (Number(res.wallet.packMax) > 0) S.packMax = Number(res.wallet.packMax);
   noterRecharge(S.nextIn);
   /* Le portefeuille rendu porte l'avatar : au tout premier paquet, le serveur
      équipe d'office le premier Fanzzy tiré, et la fête de niveau comme
@@ -1722,10 +2016,23 @@ async function openPack() {
   S.ecarpesPalier = res.niveau?.monte ? Number(res.niveau.ecarpes) || 0 : 0;
   S.serie = ligneDeSerie(res, setId, colAvant);
 
-  /* Le solde d'après la dépense, avant les doublons et les paliers. L'écart
-     avec celui d'avant est ce que le booster a coûté. */
+  /* Le solde d'après la dépense, avant les doublons et les paliers : le
+     compteur du butin part de là.
+
+     **Ce que le booster a coûté ne se déduit plus de l'écart seul.** Le
+     solde d'avant (`S.scarves`) n'est relu qu'au chargement, à la recharge
+     ou au retour d'un onglet caché : un achat fait ailleurs entre-temps
+     creusait l'écart, et le ticket annonçait « −120 · le booster acheté »
+     pour un booster gratuit. Le prix servi par le serveur (`paye`) fait
+     foi ; sans lui, seul un paquet **demandé à l'achat** peut avoir été
+     payé, et il l'a été au prix du booster ou pas du tout — jamais d'un
+     montant entre les deux. Un écart plus court que le prix (des écharpes
+     gagnées ailleurs entre-temps) ne se devine pas : pas de ticket plutôt
+     qu'un ticket faux. */
   const base = Number(S.scarves ?? 0) - S.lastGain - S.ecarpesPalier;
-  const paye = Math.max(0, echAvant - base);
+  const prix = Number(S.packPrice ?? 45);
+  const paye = res.paye != null && Number.isFinite(Number(res.paye)) ? Math.max(0, Number(res.paye))
+    : achete && echAvant - base >= prix ? prix : 0;
 
   paquet += 1;
   enCeremonie = false;
@@ -1779,6 +2086,7 @@ async function openPack() {
     butin. */
 function phase(p) {
   const butin = p === 'butin';
+  $('opener').classList.toggle('kq-butin', butin);
   $('oFentes').hidden = butin;
   $('oProj').hidden = butin;
   $('oBourse').hidden = !butin;
@@ -1839,7 +2147,7 @@ $('ostage').onclick = () => {
        une rare n'avait pas le même poids d'un écran à l'autre. */
     audio.flip();
     collerRarete(cur, rar);
-    if (fresh.has(f.id)) tamponner(cur);
+    if (neuf[idx]) tamponner(cur);
     marquerFente(idx, rar);
     /* **Une cérémonie à la fois** : la suivante ne part qu'une fois finie
        celle-ci (fx.js le demande — cinq légendaires lancées ensemble feraient
@@ -1873,8 +2181,14 @@ function fermerOpener() {
 }
 $('oClose').onclick = () => fermerOpener();
 /* ENCORE UN : le kiosque, et tout de suite la déchirure du suivant — la même
-   règle que le bouton (`peutOuvrir`, dans `startTear`). */
-$('oEncore').onclick = () => { fermerOpener(); startTear(); };
+   règle que le bouton (`peutOuvrir`, dans `startTear`). Un booster arrivé
+   pendant qu'on regardait le butin se prend comme à PRÊT : relu, jamais
+   acheté. */
+$('oEncore').onclick = () => {
+  const g = geste();
+  fermerOpener();
+  if (g === 'pret') ouvrirLArrive(); else startTear();
+};
 
 function finishPack() {
   enCeremonie = false;
@@ -1888,34 +2202,40 @@ function finishPack() {
 
   /* Ce qu'on n'avait pas encore. C'est ce que le joueur cherche en premier, et
      ce n'était écrit nulle part : cinq cartes rangées, sans savoir lesquelles
-     étaient neuves. `fresh` est rempli à l'ouverture, carte par carte. */
-  const neuves = pull.filter((f) => fresh.has(f.id)).length;
+     étaient neuves. `neuf` est rempli à l'ouverture, carte par carte. */
+  const neuves = neuf.filter(Boolean).length;
   const t = $('butinTitre');
   /* Quatre cas, quatre phrases. Coller un « TOUT » invariable devant un accord
      au féminin pluriel donnait « TOUT NOUVELLES DANS LE CLASSEUR » — et une
      phrase bancale sur l'écran le plus regardé du jeu se remarque tout de
-     suite. */
-  t.innerHTML =
-    neuves === 0 ? 'AUCUNE NOUVELLE — QUE DES DOUBLONS'
-      : neuves === pull.length ? 'TOUTES NOUVELLES DANS LE CLASSEUR'
-        : neuves === 1 ? `<b>1</b> NOUVELLE SUR ${pull.length}`
-          : `<b>${neuves}</b> NOUVELLES SUR ${pull.length}`;
+     suite. Ce qu'on vient chercher en grand, le reste en petit (voir la
+     feuille, `.butintitre`). */
+  const [grand, petit] =
+    neuves === 0 ? ['AUCUNE NOUVELLE', 'QUE DES DOUBLONS']
+      : neuves === pull.length ? ['TOUTES NOUVELLES', 'DANS LE CLASSEUR']
+        : [`${neuves} NOUVELLE${neuves > 1 ? 'S' : ''}`, `SUR ${pull.length}`];
+  t.innerHTML = `<b>${grand}</b> <small>${petit}</small>`;
 
   /* **La page d'album.** Chaque carte collée de travers sous son scotch, une
      à une (`.tbf-colle`, soixante millisecondes d'écart) ; NOUVEAU en sticker
-     sur ce qui est neuf, le prix en écharpes sur ce qui en a rapporté, et
-     l'emblème de rareté en coin, là où l'œil arrive.
+     sur ce qui est neuf, le prix en écharpes sur ce qui en a rapporté, et la
+     forme de rareté au coin haut-droit, là où l'œil arrive.
 
-     L'emblème ne remplace pas le losange de la carte : celui-ci ne peut pas
-     manquer, l'emblème si — `TBF_LOGO` retire son image, et il reste ce qu'il
-     y avait hier. */
+     **La même forme qu'à la révélation**, une seconde plus tôt (`.tbf-forme`,
+     le rectangle, le rond, l'étoile, l'éclat), sans le mot : vingt pixels
+     n'en portent pas, la forme et la couleur le disent, et le mot part à
+     l'écoute. C'était l'ancien emblème en image (`TBF_LOGO.rarete`) :
+     un bouton gris pour la commune, un bouton de métal à deux cabochons
+     bleus pour la rare — deux signes pour une rareté dans la même
+     cérémonie. */
   const cases = pull.map((f, i) => {
     const rar = rareteDe(f);
     const m = montantsSurs && rapportent[i] ? montants[i] : 0;
     return `<div class="tbf-album-case tbf-colle ${rar}" data-i="${i}" style="--d:${i * 60}ms">`
       + cardHTML(f, { mini: true })
-      + (window.TBF_LOGO?.rarete?.(rar, 'pinButin') ?? '')
-      + (fresh.has(f.id) ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : '')
+      + `<span class="tbf-forme tbf-forme--coin" data-rar="${rar}" role="img"
+          aria-label="${MOT[rar].toLowerCase()}"><i></i></span>`
+      + (neuf[i] ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : '')
       + (m > 0 ? `<span class="tbf-sticker tbf-sticker--prix"><img src="${esc(JETON)}" alt="">+${m}</span>` : '')
       + '</div>';
   }).join('');
@@ -1938,10 +2258,11 @@ function finishPack() {
   };
 
   /* La fin : ENCORE UN si la réserve ou le solde le permettent, et ce qu'il
-     coûte s'il se paie. */
+     coûte s'il se paie — c'est alors le seul achat de l'écran. */
   const px = Number(S.packPrice ?? 45);
-  $('oEncore').hidden = !peutOuvrir();
-  $('oEncore').textContent = S.packs > 0 ? 'ENCORE UN' : `ENCORE UN · ${px} ÉCHARPES`;
+  const g = geste();
+  $('oEncore').hidden = !['ouvrir', 'pret', 'attendre', 'acheter'].includes(g);
+  $('oEncore').textContent = g === 'ouvrir' || g === 'pret' ? 'ENCORE UN' : `ENCORE UN · ${px} ÉCHARPES`;
 
   /* Les écharpes des doublons partent des cartes vers le compteur, l'anneau
      d'XP avance à côté ; puis le ticket du gain. */

@@ -800,20 +800,99 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
    Le serveur savait acheter depuis le premier jour. Il n'a jamais reçu la
    demande, et aucun contrôle ne s'en est aperçu parce qu'ils partaient tous
    d'une réserve pleine. Celui-ci part d'une réserve vide, qui est l'état dans
-   lequel se trouve n'importe quel joueur au bout de quelques ouvertures. */
+   lequel se trouve n'importe quel joueur au bout de quelques ouvertures.
+
+   **Depuis le lot 3, l'achat a sa bâche à lui.** Réserve vide, la recharge
+   compte, et la bâche or « TOUT DE SUITE · +1 BOOSTER » se pose à côté de la
+   minuterie (`#achat`, dans `#minut`) : c'est le seul achat de l'écran. La
+   flare (`#openBtn`) s'éteint sur « aucun en réserve » au lieu de vendre une
+   seconde fois le même booster au même prix — deux bâches pour un seul achat
+   faisaient chercher au joueur une différence qui n'existait pas. Sans les
+   écharpes, la flare cède la place à la bâche GAGNER DES ÉCHARPES
+   (`#gagner`), qui dit combien il en manque. La flare ne porte le prix que
+   dans le seul cas où l'or n'est pas là : une réserve vide **sans**
+   recharge. On éprouve les trois états, et dans chacun on appuie sur le
+   geste d'achat : il doit ouvrir le paquet, pas seulement être bien
+   libellé. */
 {
   const p2 = await ouvrir();
-  await p2.evaluate(() => { S.packs = 0; S.scarves = 900; renderKiosque(); tickRegen(); });
+  /* Ce que montre le bas du kiosque : la flare, la bâche verte qui la
+     remplace, la minuterie et l'or de l'achat. « Visible » se mesure (une
+     boîte dessinée) et ne se lit pas sur l'attribut : une bâche `hidden`
+     qu'une règle de feuille rallumerait se verrait quand même. */
+  const lireGestes = () => p2.evaluate(() => {
+    const voit = (e) => Boolean(e) && e.getClientRects().length > 0;
+    const mots = (e) => (e ? e.textContent.replace(/\s+/g, ' ').trim() : null);
+    const b = document.getElementById('openBtn');
+    const achat = document.getElementById('achat');
+    const g = document.getElementById('gagner');
+    const m = document.getElementById('minuterie');
+    return {
+      prix: Number(S.packPrice ?? 45),
+      flare: voit(b), ferme: b.disabled, libelle: mots(b),
+      minuterie: voit(m) ? mots(m) : null,
+      achat: voit(achat) ? {
+        ton: achat.dataset.ton ?? null,
+        texte: mots(achat),
+        prix: mots(achat.querySelector('.tbf-sticker--prix')),
+        nom: achat.getAttribute('aria-label') ?? '',
+      } : null,
+      gagner: voit(g) ? {
+        texte: mots(g),
+        href: g.getAttribute('href') ?? '',
+        manque: mots(document.getElementById('gagnerManque')),
+        nom: g.getAttribute('aria-label') ?? '',
+      } : null,
+    };
+  });
+  const paquetOuvert = () => p2.evaluate(() =>
+    document.getElementById('tearzone')?.classList.contains('on') ?? false);
+
+  /* La réserve est vidée côté page : celle du serveur ne l'est pas. Or une
+     réserve vide se recharge, et le serveur sert alors le temps qui reste ;
+     on le pose donc aussi (9:55), par la fonction même qui retient celui du
+     serveur. Sans lui, l'écran tomberait dans l'un ou l'autre état selon ce
+     que les ouvertures d'avant ont laissé en base. */
+  await p2.evaluate(() => {
+    S.packs = 0; S.scarves = 900; noterRecharge(595_000); renderKiosque(); tickRegen();
+  });
   await dodo(250);
 
-  const vu = await p2.evaluate(() => ({
-    ferme: document.getElementById('openBtn').disabled,
-    libelle: document.getElementById('openBtn').textContent.trim(),
-  }));
-  check('réserve vide et écharpes en poche : le bouton reste ouvert', !vu.ferme
-    || (console.log('        il est fermé · libellé :', vu.libelle), false));
-  check('et il dit ce que ça coûte', /ÉCHARPES/.test(vu.libelle)
-    || (console.log('        il dit :', vu.libelle), false));
+  const vu = await lireGestes();
+  check('réserve vide : la minuterie compte le prochain booster gratuit',
+    /^PRÊT DANS\s*\d+:\d\d$/.test(vu.minuterie ?? '')
+    || (console.log('        elle dit :', vu.minuterie), false));
+  check('écharpes en poche : l’or vend le booster tout de suite, à son prix',
+    vu.achat?.ton === 'or' && /TOUT DE SUITE/.test(vu.achat.texte) && /\+1 BOOSTER/.test(vu.achat.texte)
+    && vu.achat.prix === String(vu.prix) && vu.achat.nom.includes(`${vu.prix} écharpes`)
+    || (console.log('        il montre :', JSON.stringify(vu.achat), '· prix', vu.prix), false));
+  check('et la flare s’éteint : l’or est le seul achat de l’écran',
+    vu.flare && vu.ferme && /aucun en réserve/.test(vu.libelle ?? '') && !/ÉCHARPES/.test(vu.libelle ?? '')
+    || (console.log('        elle dit :', vu.libelle, '· fermée', vu.ferme), false));
+
+  /* Appuyer sur l'or ouvre vraiment le paquet. Le clic remonte jusqu'à
+     `#minut`, qui reconnaît `#achat` : c'est le chemin du doigt. */
+  await p2.evaluate(() => document.getElementById('achat')?.click());
+  await dodo(300);
+  check('et toucher l’or ouvre vraiment le paquet', await paquetOuvert()
+    || (console.log('        l’or répond, mais rien ne s’ouvre'), false));
+  /* On referme par la fonction de la page, faute de bouton : la zone de
+     déchirure se quitte en tirant la bande ou en s'en allant, et laisser le
+     paquet ouvert fausserait les contrôles qui suivent. */
+  await p2.evaluate(() => fermerTear());
+  await dodo(150);
+
+  /* Une réserve vide **sans** recharge — le serveur ne sert aucun temps :
+     pas de minuterie, donc pas d'or, et c'est la flare qui porte le prix.
+     Elle doit alors rester vive, dire ce que ça coûte, et ouvrir. C'est le
+     contrôle d'avant le lot 3, gardé pour le seul état où il vaut encore. */
+  await p2.evaluate(() => { noterRecharge(null); renderKiosque(); tickRegen(); });
+  await dodo(250);
+  const seule = await lireGestes();
+  check('réserve vide sans recharge : la flare porte le prix, puisque l’or n’est pas là',
+    seule.flare && !seule.ferme && seule.libelle === `OUVRIR · ${seule.prix} ÉCHARPES`
+    && seule.achat === null && seule.minuterie === null
+    || (console.log('        il montre :', JSON.stringify(seule)), false));
 
   /* **Et surtout : appuyer dessus fait quelque chose.**
    *
@@ -828,27 +907,34 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
    * On appuie donc, et on regarde si le paquet s'ouvre. */
   await p2.evaluate(() => document.getElementById('openBtn').click());
   await dodo(300);
-  const parti = await p2.evaluate(() =>
-    document.getElementById('tearzone')?.classList.contains('on') ?? false);
-  check('et appuyer dessus ouvre vraiment le paquet', parti
+  check('et appuyer dessus ouvre vraiment le paquet', await paquetOuvert()
     || (console.log('        le bouton répond, mais rien ne s’ouvre'), false));
-  /* On referme par la fonction de la page, faute de bouton : la zone de
-     déchirure se quitte en tirant la bande ou en s'en allant, et laisser le
-     paquet ouvert fausserait les contrôles qui suivent. */
   await p2.evaluate(() => fermerTear());
   await dodo(150);
 
-  /* Sans écharpes, le bouton se ferme — mais en disant pourquoi. « Rien ne se
-     passe » et « il te manque quelque chose » demandent deux gestes différents. */
-  await p2.evaluate(() => { S.scarves = 0; renderKiosque(); tickRegen(); });
+  /* Sans écharpes, on ne vend rien — mais on dit pourquoi, et où aller.
+     « Rien ne se passe » et « il te manque quelque chose » demandent deux
+     gestes différents. Avant le lot 3, la flare se fermait sur « IL TE
+     FAUT 45 ÉCHARPES », une bâche éteinte qui ne menait nulle part ; elle
+     cède maintenant la place à la bâche verte GAGNER DES ÉCHARPES, qui est
+     un lien. La recharge court toujours : la minuterie reste, seule. */
+  await p2.evaluate(() => { S.scarves = 0; noterRecharge(595_000); renderKiosque(); tickRegen(); });
   await dodo(250);
-  const sans = await p2.evaluate(() => ({
-    ferme: document.getElementById('openBtn').disabled,
-    libelle: document.getElementById('openBtn').textContent.trim(),
-  }));
-  check('sans écharpes, il se ferme', sans.ferme);
-  check('et il nomme ce qui manque', /IL TE FAUT/.test(sans.libelle)
-    || (console.log('        il dit :', sans.libelle), false));
+  const sans = await lireGestes();
+  check('sans écharpes, la flare se ferme et cède la place', !sans.flare && sans.ferme
+    || (console.log('        elle montre :', sans.libelle, '· visible', sans.flare, '· fermée', sans.ferme), false));
+  check('à GAGNER DES ÉCHARPES, qui mène quelque part',
+    /GAGNER DES ÉCHARPES/.test(sans.gagner?.texte ?? '') && /^\/[a-z]/.test(sans.gagner.href)
+    && sans.gagner.href !== '/boosters'
+    || (console.log('        il montre :', JSON.stringify(sans.gagner)), false));
+  /* Le solde est à zéro : ce qui manque est le prix entier, écrit et dit. */
+  check('et qui nomme ce qui manque',
+    Number(sans.gagner?.manque?.match(/manque (\d+)$/)?.[1]) === sans.prix
+    && sans.gagner.nom.includes(`manque ${sans.prix} `)
+    || (console.log('        il dit :', sans.gagner?.manque, '·', sans.gagner?.nom, '· prix', sans.prix), false));
+  check('sans écharpes, l’or ne vend rien : la minuterie reste seule',
+    sans.achat === null && /^PRÊT DANS/.test(sans.minuterie ?? '')
+    || (console.log('        il montre :', JSON.stringify(sans.achat), '·', sans.minuterie), false));
 
   await p2.close();
 }

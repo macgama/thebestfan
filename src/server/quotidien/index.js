@@ -42,7 +42,9 @@ import {
   DIFFICULTES, RANG_SACHET, MISSION_PAR_ID, rangDe, montantsCarte, caseDuJour, serieDe,
   gainMission, gainSachet, choisir, remplacante, faitPour,
 } from '../../shared/quotidien.js';
-import { lireDuels, lirePresences, lireCompteurs, recompter, contexte, suivisDe } from './missions.js';
+import {
+  lireDuels, lirePresences, lireCompteurs, recompter, contexte, suivisDe, memoireDeJournee,
+} from './missions.js';
 import { lireDepuis, marquerVisite } from './depuis.js';
 
 const JOUR = /^\d{4}-\d{2}-\d{2}$/;
@@ -214,12 +216,19 @@ export function phraseJourDeJeu(s) {
  *                      appelé dans la transaction d'une relance, entre ses
  *                      contrôles et son écriture. Il rend la course entre une
  *                      relance et une réclamation **certaine** au lieu de
- *                      probable.
+ *                      probable. Et `horloge`, l'instant en millisecondes
+ *                      auquel se mesure l'âge du relevé de la journée : la
+ *                      suite l'avance d'une minute au lieu de l'attendre.
  */
 export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = null,
   jourDuFoot = null, crochets = {} }) {
   const q = async (sql, params = []) => (await pool.execute(sql, params))[0];
   const sur = (conn) => async (sql, params = []) => (await conn.execute(sql, params))[0];
+
+  /* Le dernier relevé de la journée du football, noté par un tirage ou une
+     relance, et seulement relu par la lecture de l'état : celle-ci ne lit
+     jamais la journée elle-même (`missions.js`, les conditions). */
+  const memoire = memoireDeJournee({ horloge: () => (crochets.horloge ?? Date.now)() });
 
   /* Les deux portes du grand livre, lues au moment du versement : le module
      fanzzy est monté avant celui-ci dans `server.js`, mais une suite peut les
@@ -392,21 +401,29 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
     }
     const tamponsDe = (id) => tampons.get(Number(id)) ?? 0;
 
+    let auj = contrat.filter((l) => Number(l.k) === 0);
+    const veille = contrat.filter((l) => Number(l.k) === 1);
+    const aTirer = reglage('missions.actif') === true && !auj.length;
+
     /* Le contexte des conditions, nourri de ce qu'on vient de lire. Les
        classés du jour se comptent comme le quota : toutes les lignes
-       classées depuis minuit, quittées comprises. */
-    const ctx = contexte({ lire: q, userId, jourDuFoot, base: {
+       classées depuis minuit, quittées comprises.
+
+       **Seul le tirage lit la journée du football**, une fois par jour et
+       par joueur. Hors tirage, le contexte ne la lit pas (`presumer`) :
+       « relançable » se juge sur le dernier relevé du jour de jeu, ou la
+       présume. Le hub fait cette lecture à chaque arrivée ; elle ne doit
+       ni décoder la journée du monde, ni réveiller l'API sportive. */
+    const ctx = contexte({ lire: q, userId, jourDuFoot, memoire, presumer: !aTirer, base: {
       debut: Number(b.debut), fin: Number(b.fin), scarves: Number(b.scarves ?? 0),
       suivis: suivisDe(b.suivis),
       classes: duels.filter((d) => Number(d.k) === 0 && d.mode === 'classe').length,
     } });
 
-    let auj = contrat.filter((l) => Number(l.k) === 0);
-    const veille = contrat.filter((l) => Number(l.k) === 1);
     /* La saison de ce tirage : la saison en cours si sa fenêtre n'est pas
        close. Une mission jouée entre deux saisons ne remplit aucun carnet. */
     const saisonDuTirage = courante && b.close != null && !vrai(b.close) ? Number(courante.id) : null;
-    if (reglage('missions.actif') === true && !auj.length) {
+    if (aTirer) {
       auj = await tirer(userId, { jour, veille, ctx, saisonId: saisonDuTirage });
     }
 
@@ -526,9 +543,12 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
       const etat = reclamee ? 'reclamee' : fait >= cible ? 'pret' : 'en_cours';
       /* « Relançable » : une relance reste, la mission n'est pas finie, et une
          autre mission de la même difficulté est faisable. La question suit
-         l'ordre du jour et s'arrête à la première réponse ; la journée du
-         football et les Fanzzy du joueur ne se lisent que si elle y arrive,
-         et une seule fois par lecture (le contexte les garde). */
+         l'ordre du jour et s'arrête à la première réponse ; les Fanzzy du
+         joueur ne se lisent que si elle y arrive, une seule fois par lecture
+         (le contexte les garde). La journée du football, jamais hors tirage :
+         une mission du Virage se juge sur le dernier relevé du jour de jeu,
+         ou se présume faisable — la relance lit, tranche, et répond
+         « aucune » s'il le faut (`ECARTS.md`, quotidien § 10). */
       const relancable = relances > 0 && etat === 'en_cours'
         && Boolean(await remplacante({ jour, difficulte: mi.difficulte, actuelle: mi.id,
           faisable: ctx.faisable }));
@@ -900,8 +920,10 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
       }
 
       /* Tout le contexte se lit sur cette connexion, sous le verrou, sauf la
-         journée du football, déjà lue : rien ne passe plus par le pool ici. */
-      const ctx = contexte({ lire, userId, jourDuFoot: journee });
+         journée du football, déjà lue : rien ne passe plus par le pool ici.
+         Son relevé est noté : l'état que la relance rend, et les lectures de
+         la minute qui suit, savent déjà ce qu'elle a appris. */
+      const ctx = contexte({ lire, userId, jourDuFoot: journee, memoire });
       const autre = await remplacante({ jour: l.jour, difficulte: mi.difficulte,
         actuelle: mi.id, faisable: ctx.faisable });
       if (!autre) return refus('aucune');

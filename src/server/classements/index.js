@@ -1,6 +1,7 @@
 import express from 'express';
 import { parIdentifiant } from '../fanzzy/catalogue.js';
 import { habillerJoueurs } from '../fanzzy/avatar.js';
+import { couleursDuClub } from '../kop/index.js';
 import { verser, verserTout, GAIN_NUL } from '../recompenses.js';
 import { reglage } from '../../shared/reglages.js';
 import { DIVISIONS, divisionPour, seuilsDivisions, titreDivision, finDeFenetre }
@@ -704,9 +705,23 @@ export function createClassements({ pool, requireAuth,
     /* **À quelle tribune va ta ferveur.** C'est la question que pose l'onglet
        TRIBUNES à quelqu'un qui s'y cherche — et un supporter en neutre, ou qui
        ne suit aucun club, n'y figure jamais. Sans cette ligne, il ne pouvait
-       pas savoir pourquoi. Voir la même règle dite dans `teletext.html`. */
-    const [tribune] = await q(
-      `SELECT t.id, t.name AS nom, COALESCE(SUM(x.ferveur), 0) AS ferveur
+       pas savoir pourquoi. Voir la même règle dite dans `teletext.html`.
+
+       **Avec les couleurs de son club.** La carte de supporter du profil en
+       peint son écharpe de tête ; sans elles, la bande restait or et rouge
+       pour tous les clubs, Sion compris, qui est rouge et blanc. C'est le club
+       que cette requête choisit déjà, principal d'abord : la jointure sur
+       `teams` est faite, les deux teintes ne coûtent pas une lecture. Elles
+       partent sous la forme de `/api/kop/miens` (`couleursDuClub`), et pas du
+       tout sans teinte valide (`CONTRATS.md`, R1).
+
+       Une teinte par club : `MAX` ne choisit rien, il garde les colonnes hors
+       du `GROUP BY`, que la lecture de repli ne peut pas nommer. Ce repli sert
+       une base où `sql/couleurs.sql` n'est pas passé : la place répond sans
+       couleurs plutôt que de tomber pour une teinte, et le journal le dit une
+       fois. Toute autre colonne absente reste une panne. */
+    const lireTribune = (couleurs) => q(
+      `SELECT t.id, t.name AS nom, ${couleurs}, COALESCE(SUM(x.ferveur), 0) AS ferveur
          FROM user_follows f
          JOIN teams t ON t.id = f.team_id
          LEFT JOIN (${FERVEUR}) x
@@ -715,6 +730,16 @@ export function createClassements({ pool, requireAuth,
         GROUP BY t.id, t.name
         ORDER BY MAX(f.is_main) DESC, ferveur DESC
         LIMIT 1`, [userId]);
+    let tribune;
+    try {
+      [tribune] = await lireTribune('MAX(t.color1) AS couleur1, MAX(t.color2) AS couleur2');
+    } catch (e) {
+      if (e?.code !== 'ER_BAD_FIELD_ERROR' || !/color[12]/.test(e.sqlMessage ?? e.message)) throw e;
+      [tribune] = await lireTribune('NULL AS couleur1, NULL AS couleur2');
+      direUneFois('couleurs', `[classement] tribune servie sans les couleurs du club : ${
+        e.sqlMessage ?? e.message} (applique sql/couleurs.sql)`);
+    }
+    const couleurs = tribune ? couleursDuClub(tribune.couleur1, tribune.couleur2) : [];
 
     const place = {
       ferveur: Number(ferveur.f), matchs: ferveur.m,
@@ -733,7 +758,8 @@ export function createClassements({ pool, requireAuth,
         sur: Number(entrClasses.n),
       },
       tribune: tribune
-        ? { id: tribune.id, nom: tribune.nom, ferveur: Number(tribune.ferveur) }
+        ? { id: tribune.id, nom: tribune.nom, ferveur: Number(tribune.ferveur),
+            ...(couleurs.length ? { couleurs } : {}) }
         : null,
     };
 

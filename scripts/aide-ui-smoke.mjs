@@ -133,7 +133,16 @@ const lire = () => page.evaluate(() => ({
     etat: p.querySelector('.etat')?.textContent.trim(),
     bouton: p.querySelector('.aller')?.getAttribute('href') ?? null,
     quoi: p.querySelector('.texte p')?.textContent.trim() ?? '',
+    /* Le cadenas des étapes d'après (lot 5) : le ticket fermé de la brique
+       (`data-etat="verrouillee"`), la vignette sous le scotch en croix, et
+       l'explication qui dort dans un pli fermé dont le ticket est le
+       sommaire. On lit les trois, pour qu'aucun ne parte sans qu'on le voie. */
+    ticket: p.querySelector('.tbf-mission')?.dataset.etat ?? null,
+    croix: Boolean(p.querySelector('.tbf-mission-vignette .tbf-scotch--croix')),
+    plie: Boolean(p.querySelector('details:not([open]) > .texte')),
   })),
+  /* Les bâches de l'écran, toutes étapes confondues : il n'en faut qu'une. */
+  allers: document.querySelectorAll('.pas .aller').length,
   compte: document.querySelector('.entete .compte')?.textContent.replace(/\s+/g, '') ?? null,
   jauge: document.getElementById('jauge')?.style.width ?? null,
   vide: document.querySelector('.vide')?.textContent.trim() ?? null,
@@ -167,12 +176,45 @@ check('et rien ne s’allume, puisque rien n’a été franchi',
   || (console.log('        allumées :', un.pas.filter((p) => p.neuf).map((p) => p.cle)), false));
 
 /* Une étape faite ne propose plus d'y aller : le bouton disparaît. Une étape
-   qui reste ne dit pas « à faire » sans dire **où**. */
+   qui reste ne dit pas « à faire » sans dire **où**.
+
+   **Depuis le lot 5, une seule étape porte la bâche : la prochaine**, la
+   première qui reste dans l'ordre du parcours. Une bâche par étape restante,
+   toutes pareilles, ne disait pas laquelle faire maintenant. Les étapes
+   d'après sont des tickets sous cadenas, marqués ENSUITE, sans bâche — le
+   menu mène partout. L'exigence d'avant vaut donc pour la prochaine, et à la lettre :
+   elle mène à l'écran où l'étape se fait (`ou`, dans la table partagée), et
+   pas seulement « quelque part ». Les autres doivent dire qu'elles viennent
+   ensuite. `prochaineEtape` sert aussi au retour, plus bas : la bâche doit
+   suivre le parcours, pas rester sur la première étape manquée. */
+const OU = Object.fromEntries(ETAPES.map((e) => [e.cle, e.ou]));
+function prochaineEtape(vue, attendue) {
+  const restent = vue.pas.filter((p) => !p.ok);
+  const [prochaine, ...ensuite] = restent;
+  check(`la prochaine étape est « ${attendue} »`, prochaine?.cle === attendue
+    || (console.log('        restent :', restent.map((p) => p.cle).join(' ')), false));
+  check('elle mène là où elle se fait',
+    Boolean(prochaine?.bouton) && prochaine.bouton.startsWith('/')
+    && prochaine.bouton === OU[prochaine.cle]
+    || (console.log('        elle mène à', prochaine?.bouton, '· attendu', OU[prochaine?.cle]), false));
+  check('elle dit À FAIRE, explication ouverte, sans cadenas',
+    prochaine?.etat === 'À FAIRE' && prochaine.ticket === 'en_cours'
+    && !prochaine.croix && !prochaine.plie
+    || (console.log('        elle montre :', JSON.stringify(prochaine)), false));
+  check('c’est la seule bâche de l’écran', vue.allers === 1
+    || (console.log('        bâches :', vue.allers), false));
+  check(`les ${ensuite.length} d’après disent ENSUITE, sous le cadenas, sans bâche`,
+    ensuite.length >= 1 && ensuite.every((p) => p.bouton === null && p.etat === 'ENSUITE'
+      && p.ticket === 'verrouillee' && p.croix && p.plie)
+    || (console.log('        elles montrent :', JSON.stringify(ensuite.map(({ cle, bouton, etat, ticket, croix, plie }) =>
+      ({ cle, bouton, etat, ticket, croix, plie })))), false));
+}
+
 check('une étape faite ne propose plus d’y aller',
   un.pas.find((p) => p.cle === 'fanzzy')?.bouton === null);
-check('et chacune des cinq autres mène quelque part',
-  un.pas.filter((p) => !p.ok).every((p) => p.bouton && p.bouton.startsWith('/'))
-  || (console.log('        ', un.pas.filter((p) => !p.ok).map((p) => p.bouton)), false));
+/* À la première visite, seule l'étape du premier Fanzzy est faite : la
+   prochaine est la deuxième de la table, et les quatre d'après attendent. */
+prochaineEtape(un, ETAPES[1].cle);
 check('les textes des étapes sont rendus',
   un.pas.every((p) => p.quoi.length > 40));
 
@@ -200,6 +242,11 @@ check('et celle qui était déjà faite ne se rallume pas',
   || (console.log('        elle se rallume'), false));
 check(`la jauge a monté (${deux.compte} · ${deux.jauge})`,
   deux.compte === '3/6' && deux.jauge === '50%');
+/* La bâche suit le parcours : les trois premières étapes faites, elle passe
+   à la quatrième, et les deux dernières restent sous cadenas. Une bâche
+   restée sur l'étape du booster enverrait le joueur refaire ce qu'il vient
+   de faire. */
+prochaineEtape(deux, ETAPES[3].cle);
 
 /* Et une troisième visite sans rien faire entre les deux n'allume plus rien :
    c'est la contrepartie, et c'est elle qui rend l'allumage signifiant. */

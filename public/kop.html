@@ -29,6 +29,13 @@ html,body{margin:0;min-height:100dvh}
 body{background:radial-gradient(120% 50% at 50% -8%,rgba(130,87,218,.13),transparent 60%),var(--beton);
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:0 16px 80px}
 main{width:100%;max-width:var(--colonne)}
+/* Une colonne de lecture de six cents pixels au plus, comme le profil et le
+   classement : à 768 px, le KOP s'étalait de bord à bord (sept cents pixels),
+   et le panneau d'un club sans KOP laissait un bouton de six cents pixels sous
+   un nom de quatre lettres. La barre du jeu se monte en tête de `main`, hors
+   de cette colonne : elle garde la largeur commune, au même endroit que sur
+   les autres écrans. */
+.colonne{width:100%;max-width:600px;margin:0 auto}
 /* Le titre de rubrique est cousu (`.tbf-cousu`, dans ui.css) : il ne reste
    ici que sa place. */
 h2{margin:24px 2px 9px}
@@ -134,12 +141,9 @@ h2{margin:24px 2px 9px}
 /* ---------------------------------------------------- le KOP déplié */
 
 .kop-tribune{margin:20px 2px 0}
-/* PROVISOIRE, en attendant ui.css (besoin « feuilles-css ») : un buste dont
-   le dessin est en pied — un avatar avec une expression, 560 × 960 —
-   débordait de son rond de trente-sept pixels sur le nom du siège. Le buste
-   est une grille, et la hauteur de 100 % de l'image ne s'y résout pas : elle
-   prenait sa hauteur naturelle. Posée sur toute la boîte, elle s'y recadre. */
-.tbf-buste>img{position:absolute;inset:0}
+/* Le buste dont le dessin est en pied (un avatar avec une expression) se
+   recadre désormais dans ui.css (`.tbf-buste>img`) : la règle provisoire
+   que cette page posait en l'attendant est retirée. */
 /* La place libre : le siège en pointillé est un lien vers les amis, d'où
    l'on invite quelqu'un dans le KOP. Il n'y a pas de nombre de places : un
    KOP n'a pas de plafond, et « 3 places » serait inventé. */
@@ -175,12 +179,33 @@ h2{margin:24px 2px 9px}
    de sa boîte : la marge droite les lui laisse. */
 .bonus>.tbf-sticker{margin-right:5px}
 
-/* ------------------------------------------------- les clubs sans KOP */
+/* ------------------------------------------------- les clubs sans KOP
 
-.club{padding:14px;margin-bottom:12px}
-.club-tete{display:flex;align-items:center;gap:12px;padding-right:5px}
-.club-tete b{font-family:var(--banner);font-size:16px;letter-spacing:.03em;flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+   L'état que verront la plupart des joueurs : un club suivi, pas encore de
+   KOP. Il disait « Sion · SANS KOP · CRÉER UN KOP », sans un mot de ce
+   qu'est un KOP, de ce qu'il rapporte ni de ce qu'il coûte, et « sans KOP »
+   deux fois (le titre de la rubrique, puis un sticker).
+
+   La carte d'un club reprend celle d'un KOP : le cadre à écharpe, la tête
+   (`.kop-tete`, `.kop-nom`) avec le nom du club en banderole, et la bâche
+   aux couleurs du club quand le serveur les sert — sans elles, la page ne
+   la pose pas, comme pour un KOP. La première carte de qui n'a encore aucun
+   KOP dit en une phrase et trois stickers ce qu'un KOP apporte ; chaque
+   carte dit ce que coûte la création. « Sans KOP » n'est plus écrit que
+   par le titre de la rubrique. */
+.club{display:block;padding:16px 12px 14px;margin:0 0 22px}
+.club-titre{margin:16px 2px 0;font-family:var(--banner);font-weight:600;font-size:16px;
+  line-height:1.3;letter-spacing:.08em}
+.club-dit{margin:8px 2px 0;font-size:12.5px;line-height:1.65}
+/* Les trois stickers de ce qu'un KOP apporte. Ils se rangent sur deux
+   lignes à 360 px : dix pixels de marge entre deux lignes pour leur bord
+   découpé et leur rotation. */
+.club-apports{display:flex;flex-wrap:wrap;gap:12px 10px;margin:14px 4px 2px;padding:0;list-style:none}
+.club .note{margin-top:12px}
+/* Le prix de la création, sous le geste qui la lance : c'est au moment de
+   toucher qu'on se demande ce qu'il en coûte. */
+.club-prix{margin:10px 2px 0;font-size:11.5px;line-height:1.6}
+.club-prix b{font-family:var(--banner);font-weight:600;letter-spacing:.04em}
 .rejoindre{display:flex;align-items:center;gap:12px;padding:12px 0 2px;border-top:1px dashed var(--trait);
   margin-top:12px}
 .rejoindre .n{flex:1;min-width:0}
@@ -236,10 +261,10 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
 </head>
 <body>
-<main id="app">
+<main id="app"><div class="colonne">
   <p class="tbf-sous">La caisse du virage</p>
   <div id="corps"><div class="charge" id="charge">Chargement…</div></div>
-</main>
+</div></main>
 
 <!-- Le moment fort de la page : la case de BD unifiée de ui.css, posée sur le
      document comme l'accueil la pose — hors de la colonne, dont le contexte
@@ -320,6 +345,7 @@ const S = {
   erreurDeLecture: false,
   creation: null,      // teamId pour lequel on saisit un nom
   propose: null,       // { kopId, t } : le vote qu'on vient d'ouvrir soi-même
+  abo: undefined,      // abonné ? true, false, ou null si on ne sait pas (pas encore lu : undefined)
 };
 
 async function api(path, { method = 'GET', body } = {}) {
@@ -368,6 +394,7 @@ function charger() {
 }
 
 let etatsDemandes = false;
+let aboDemande = false;
 async function lire() {
   try {
     const [mes, clubs] = await Promise.all([
@@ -380,6 +407,18 @@ async function lire() {
          le premier rendu de la tribune retomberait sur la carte de l’âge et
          perdrait la tenue et l’expression de chacun. Il ne lève jamais. */
       etatsDemandes ? null : (etatsDemandes = true, window.TBF_ETATS?.charger?.()),
+      /* **Créer un KOP est un geste d'abonné** (rejoindre reste libre) : la
+         carte d'un club sans KOP dit ce que coûte la création, et un joueur
+         qui n'a pas le PASS l'apprend avant d'avoir tapé un nom, plus après.
+         Lu une fois, pas à chaque relecture des trente secondes, par une
+         promesse posée sur la fenêtre (`window.TBF_ABO`, comme `TBF_MOI`
+         pour le compte) que le tiroir peut reprendre au lieu de reposer la
+         même question. Une route muette laisse « on ne sait pas » (`null`),
+         et la création suit alors son chemin d'avant — le refus du serveur
+         dit sa cause. */
+      aboDemande ? null : (aboDemande = true, (window.TBF_ABO ??= fetch('/api/abonnement',
+        { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null)).catch(() => null))
+        .then((a) => { S.abo = typeof a?.abonne === 'boolean' ? a.abonne : null; })),
     ]);
     S.kops = mes.kops ?? [];
     S.catalogue = mes.catalogue ?? [];
@@ -390,9 +429,13 @@ async function lire() {
     const avecKop = new Set(S.kops.map((k) => Number(k.team_id)));
     const sans = (clubs?.follows ?? []).map((f) => ({ id: Number(f.team_id ?? f.id), nom: f.name }))
       .filter((f) => !avecKop.has(f.id));
+    /* Les couleurs du club, si la route les sert (`couleurs`, la forme de
+       `/miens`) : la carte du club en peint sa bâche. Absentes, pas de
+       bâche — la page n'invente pas les couleurs d'un club. */
     S.clubs = await Promise.all(sans.map(async (f) => {
       const dispo = await api(`/club/${f.id}`).catch(() => ({ kops: [] }));
-      return { id: f.id, nom: f.nom ?? `Club ${f.id}`, kops: dispo.kops ?? [] };
+      return { id: f.id, nom: f.nom ?? `Club ${f.id}`, kops: dispo.kops ?? [],
+        couleurs: couleursDe(dispo) };
     }));
 
     // L'état détaillé du KOP déplié : membres, vote, bonus actifs.
@@ -915,9 +958,41 @@ function majCatalogue(v, e) {
 
 /* ------------------------------------------------- les clubs sans KOP */
 
-function clubHTML(c) {
-  const out = [`<div class="club pan" data-club="${c.id}">
-    <div class="club-tete"><b>${esc(c.nom)}</b><span class="tbf-sticker">sans KOP</span></div>`];
+/**
+ * La carte d'un club suivi où je n'ai pas de KOP.
+ *
+ * La tête est celle d'un KOP : le nom du club en banderole, sur la bâche à
+ * ses couleurs quand le serveur les sert. Puis, selon le club :
+ *
+ *   - **personne n'y a encore de KOP** : « LANCE LE PREMIER KOP » ;
+ *   - **des KOP existent** : « REJOINS UN KOP », et on les propose avant
+ *     d'en créer un de plus.
+ *
+ * `pitch` : la première carte de qui n'a encore aucun KOP dit ce qu'un KOP
+ * apporte — une phrase, trois stickers. Une fois par page : sur chaque
+ * carte, ce serait trois fois le même discours. Le prix de la création suit
+ * le geste qui la lance, sur chaque carte.
+ */
+function clubHTML(c, pitch) {
+  const peinte = c.couleurs.length > 0;
+  // Des teintes déjà vérifiées (`couleursDe`) : rien d'autre n'entre dans le style.
+  const style = peinte ? ` style="--e1:${c.couleurs[0]};--e2:${c.couleurs[1] ?? c.couleurs[0]}"` : '';
+  const out = [`<article class="club tbf-cadre" data-echarpe data-club="${c.id}"${style}>
+    <header class="kop-tete${peinte ? ' peinte' : ''}">${
+      peinte ? '<div class="tbf-bache-club" aria-hidden="true"></div>' : ''}
+      <h3 class="kop-nom"><b class="tbf-banderole"${String(c.nom).length > 20 ? ' data-long' : ''}>${
+        esc(c.nom)}</b></h3>
+    </header>`];
+
+  out.push(`<p class="club-titre">${c.kops.length ? 'REJOINS UN KOP' : 'LANCE LE PREMIER KOP'}</p>`);
+  if (pitch) {
+    out.push(`<p class="club-dit">La caisse commune des supporters du club : pousser pendant un duel
+        la remplit, et le KOP vote les bonus qu’elle offre à ses membres dans le VIRAGE.</p>
+      <ul class="club-apports" aria-label="Ce qu’un KOP apporte">
+        <li class="tbf-sticker">LE POT COMMUN</li><li class="tbf-sticker">LES BONUS VOTÉS</li><li
+          class="tbf-sticker">TA BANDE EN TRIBUNE</li>
+      </ul>`);
+  }
 
   if (c.kops.length) {
     out.push('<div class="note">Des KOP existent déjà pour ce club :</div>');
@@ -943,7 +1018,13 @@ function clubHTML(c) {
     out.push(`<button class="gros tbf-plaque" ${c.kops.length ? '' : 'data-ton="violet"'}
       data-nouveau="${c.id}">CRÉER UN KOP</button>`);
   }
-  out.push('</div>');
+  /* Ce que coûte la création : le PASS DE TRIBUNE (le serveur refuse la
+     création à qui ne l'a pas), jamais des écharpes. Rejoindre est libre,
+     et c'est dit aussi : c'est la porte qui reste ouverte à tous. */
+  out.push(S.abo === true
+    ? '<p class="club-prix"><b>CRÉER :</b> compris dans ton PASS DE TRIBUNE.</p>'
+    : '<p class="club-prix"><b>CRÉER :</b> avec le PASS DE TRIBUNE. <b>REJOINDRE :</b> libre.</p>');
+  out.push('</article>');
   return out.join('');
 }
 
@@ -1003,14 +1084,20 @@ function rendre() {
   /* Les clubs sans KOP : réécrits seulement si leurs données ont bougé. Une
      relecture des trente secondes effaçait le nom qu'on était en train de
      taper ; la saisie est gardée, et le curseur avec, si la carte change. */
-  const clubs = section('clubs', '<h2 class="tbf-cousu">MES CLUBS SANS KOP</h2><div class="clubs-liste"></div>');
-  const sig = JSON.stringify([S.clubs, S.creation]);
+  /* Le titre est écrit en minuscules et mis en capitales par le titre cousu :
+     c'est la seule ligne de la page qui dise « sans KOP » (la carte ne le
+     répète plus), et la suite du KOP l'y lit. */
+  const clubs = section('clubs', '<h2 class="tbf-cousu">Mes clubs sans KOP</h2><div class="clubs-liste"></div>');
+  // Le discours d'un KOP n'est tenu qu'à qui n'en a aucun ; le prix dépend du PASS.
+  const pitch = S.kops.length === 0;
+  const sig = JSON.stringify([S.clubs, S.creation, pitch, S.abo]);
   if (sig !== sigClubs) {
     sigClubs = sig;
     const champ = clubs.querySelector('input.champ');
     const garde = champ ? { id: champ.id, valeur: champ.value, focus: document.activeElement === champ }
       : null;
-    clubs.querySelector('.clubs-liste').innerHTML = S.clubs.map(clubHTML).join('');
+    clubs.querySelector('.clubs-liste').innerHTML = S.clubs.map((c, i) => clubHTML(c, pitch && i === 0))
+      .join('');
     const neuf = garde && clubs.querySelector(`#${CSS.escape(garde.id)}`);
     if (neuf) { neuf.value = garde.valeur; if (garde.focus) neuf.focus(); }
   }
@@ -1053,6 +1140,19 @@ $('corps').addEventListener('click', async (ev) => {
       S.ouvert = S.ouvert === d.ouvrir ? null : d.ouvrir;
       rendre();
       return charger();
+    }
+    /* Sans le PASS, la création serait refusée **après** qu'on a cherché et
+       tapé un nom. La modale le dit avant, et mène au PASS ; rejoindre reste
+       libre, elle le rappelle. Quand on ne sait pas (`S.abo` nul, ou pas de
+       modale), la création suit son chemin et le refus du serveur parle. */
+    if (d.nouveau && S.abo === false && window.TBF_DIALOGUE) {
+      if (await window.TBF_DIALOGUE.confirmer({
+        titre: 'LE PASS DE TRIBUNE',
+        texte: 'Créer un KOP fait partie du PASS DE TRIBUNE. Rejoindre un KOP reste libre : '
+          + 'un ami qui lance celui de ton club peut t’y inviter.',
+        oui: 'VOIR LE PASS', non: 'PLUS TARD', ton: 'or',
+      })) location.href = '/abonnement';
+      return undefined;
     }
     if (d.nouveau) { S.creation = Number(d.nouveau); rendre();
       return $(`nom-${d.nouveau}`)?.focus(); }

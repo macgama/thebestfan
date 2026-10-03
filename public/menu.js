@@ -40,9 +40,10 @@
  * L'apparence vit dans `ui.css` (`.tbf-tiroir`, `.tbf-tiroir-tete`,
  * `.tbf-rubrique`, `.tbf-tiroir-grille`, `.tbf-case`, `.tbf-tiroir-pied`,
  * `.tbf-voile`).
- * Seuls les interrupteurs, le curseur du volume, l'entrée d'installation et
- * le sticker d'une entrée du pied, qui n'existent qu'ici, ont leur feuille à
- * eux, posée par ce fichier — voir `CSS_REGLAGES`.
+ * Seuls les interrupteurs, le curseur du volume, l'entrée d'installation, et
+ * la place et le sticker de la bâche des MISSIONS dans la tête, qui
+ * n'existent qu'ici, ont leur feuille à eux, posée par ce fichier — voir
+ * `CSS_REGLAGES`.
  */
 (() => {
   const chemin = location.pathname.replace(/\/$/, '') || '/';
@@ -54,11 +55,14 @@
      racine du document, où les feuilles de style la lisent
      (html[data-calme~="animations"]) et où `FX.calme()` la consulte.
 
-     **fx.js fait exactement la même recopie**, et c'est voulu : /boutique
-     charge ce fichier sans fx.js, /bienvenue fx.js sans ce fichier. Les deux
-     copies écrivent la même valeur au même endroit ; la seconde qui passe ne
-     change rien. Qui modifie l'une modifie l'autre — normalisation et reprise
-     de l'ancienne clé du son comprises.
+     **fx.js fait exactement la même recopie**, et c'est voulu : /bienvenue
+     charge fx.js sans ce fichier, et là où les deux sont chargés, l'ordre
+     change d'une page à l'autre — fx.js est différé partout, et ce
+     fichier, lu sans attendre sur l'accueil, l'administration et la
+     boutique, y passe avant lui. Les deux copies écrivent la même valeur
+     au même endroit ; la seconde qui passe ne change rien. Qui modifie
+     l'une modifie l'autre — normalisation et reprise de l'ancienne clé du
+     son comprises.
 
      Pendant la visite, c'est l'attribut qui fait foi : un stockage fermé
      (navigation privée) laisse le réglage valoir au moins pour la page. */
@@ -338,8 +342,9 @@
      Ce qui manque à ui.css pour ce que seul le tiroir porte, et seulement
      ça : la ligne-bouton reprend exactement la ligne-lien (.tbf-tiroir a),
      qu'un sélecteur de lien ne peut pas atteindre ; l'interrupteur, le
-     curseur du volume et le sticker d'une entrée du pied n'existent nulle
-     part ailleurs. Posée une fois, par le premier tiroir monté.
+     curseur du volume, la place et le sticker de la bâche des MISSIONS
+     n'existent nulle part ailleurs. Posée une fois, par le premier tiroir
+     monté.
 
      Quarante-quatre pixels de haut : la pulpe d'un doigt, et le plancher du
      socle pour toute cible. Les liens du tiroir en font autant (ui.css), et
@@ -429,24 +434,56 @@
     background:var(--craie);box-shadow:0 0 0 2px var(--encre-kraft,#000),1px 2px 0 2px rgba(7,9,12,.45)}
   .tbf-volume input:focus-visible{outline:3px solid var(--encre-kraft,#000);outline-offset:2px}
   .tbf-volume input:disabled{opacity:.45;cursor:not-allowed}
-  /* **Le sticker d'une entrée du pied** : la pastille des MISSIONS (contrat
-     du serveur, R10). Le sticker des tuiles et du bouton de menu — son
-     chiffre, sa face, son bord craie cerné d'encre —, rangé au bout de la
-     ligne au lieu de mordre sur un coin : une ligne calme n'a pas de coin à
-     déborder, et il couvrirait le pointillé de la ligne du dessus. Il ne
-     respire pas, comme tout sticker du tiroir. menu.js le pose comme sur une
-     tuile, par data-etat et data-pastille (voir poser). L'or est une face,
-     celle d'une récompense prête, l'encre dessus : 11,7:1. */
-  .tbf-tiroir-pied a[data-etat]::after,
-  .tbf-tiroir-pied a[data-pastille]::after{
-    content:attr(data-pastille);flex:none;margin:0 4px 0 auto;
+  /* **La bâche des MISSIONS, dans la tête** (lots 3 et 5). Elle prend la
+     matière de celle de l'accueil, dont elle porte la classe ; cette feuille
+     n'en décide que la place et le sticker.
+
+     La place : contre l'accueil, et la croix seule au bord droit. ui.css
+     pousse le reste à droite depuis le premier élément de la tête qui n'est
+     pas suivi du mot MENU : c'était l'accueil, ce sont maintenant les
+     MISSIONS. Leur marge est écrite sans :has, pour qu'un navigateur qui ne
+     le lit pas garde la croix au bord.
+
+     Le sticker : la pastille des MISSIONS (contrat du serveur, R10), celui
+     des tuiles et du bouton de menu — son chiffre, sa face, son bord craie
+     cerné d'encre —, au bout du mot et non sur le coin. Sur le coin, il
+     sortirait de la bâche de dix pixels, et le lien passerait pour rogné
+     aux suites qui comparent sa largeur à son contenu ; il ne pourrait pas
+     non plus monter de ses huit pixels, la tête n'en ayant que huit
+     au-dessus d'elle avant le bord du tiroir, qui rogne. Il prend la place
+     de l'icône, qui part quand il paraît : la bâche garde sa largeur à
+     deux pixels près, et la récompense se lit mieux qu'une case cochée. Il
+     ne respire pas, comme tout sticker du tiroir. menu.js le pose comme
+     sur une tuile, par data-etat et data-pastille (voir poser). L'or est
+     une face, celle d'une récompense prête, l'encre dessus : 11,7:1.
+
+     **Sous 350 px, la bâche se serre.** À 320, la tête a deux cent
+     quatre-vingt-douze pixels : l'accueil, les MISSIONS avec leur icône et
+     la croix les prennent tous, au pixel près, et avec « 12 » au lieu de
+     l'icône, deux de plus. La bâche y perd donc son icône, toujours, et
+     avec son sticker, un peu de rembourrage et d'espacement : il reste
+     huit pixels. Le mot reste — c'est lui qu'on cherche. Tant qu'Oswald
+     n'est pas arrivée, une police de repli aussi large qu'Arial déborde
+     encore d'une dizaine de pixels à 320 quand le sticker est là ; à 360,
+     tout tient, même en Arial. */
+  .tbf-tiroir .tbf-tiroir-tete>.tbf-tiroir-ici:has(+ .tbf-tiroir-missions){margin-right:0}
+  .tbf-tiroir .tbf-tiroir-tete>.tbf-tiroir-missions{margin-right:auto}
+  .tbf-tiroir-tete>.tbf-tiroir-missions[data-etat]::after,
+  .tbf-tiroir-tete>.tbf-tiroir-missions[data-pastille]::after{
+    content:attr(data-pastille);flex:none;
     box-sizing:border-box;min-width:22px;height:22px;padding:0 5px;border-radius:5px;
     background:var(--pf,var(--craie));color:var(--pl,var(--encre));
     font-family:var(--banner);font-size:13px;font-weight:700;line-height:22px;
-    text-align:center;letter-spacing:.02em;font-variant-numeric:tabular-nums;white-space:nowrap;
+    text-align:center;letter-spacing:.02em;text-shadow:none;
+    font-variant-numeric:tabular-nums;white-space:nowrap;
     box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6);
     rotate:4deg;pointer-events:none}
-  .tbf-tiroir-pied a[data-etat=pret]::after{--pf:var(--projo);--pl:var(--encre)}
+  .tbf-tiroir-tete>.tbf-tiroir-missions[data-etat=pret]::after{--pf:var(--projo);--pl:var(--encre)}
+  .tbf-tiroir-tete>.tbf-tiroir-missions[data-etat] svg{display:none}
+  @media (max-width:349px){
+    .tbf-tiroir-tete>.tbf-tiroir-missions svg{display:none}
+    .tbf-tiroir .tbf-tiroir-tete>.tbf-tiroir-missions[data-etat]{padding:0 9px;letter-spacing:.06em}
+  }
   /* La consigne de l'iPhone, sous son entrée. Un texte qu'on lit pour agir :
      treize pixels. Elle vit sur le ticket kraft du pied depuis le lot 2, et
      y est peinte par ui.css, au noir pur du kraft éclairci (arbitrage du
@@ -501,10 +538,16 @@
   /* --------------------------------------------------------- le volume
 
      Le réglage du joueur, de 0 à 1, sous « tbf-volume » : un nombre écrit
-     en texte. Il appartient au moteur du son (son.js, TBF_SON.volume) ; une
-     page qui ne le charge pas — la boutique, qui n'a pas fx.js — écrit la
-     clé elle-même, sous la même forme, et le moteur la relira au prochain
-     écran. Une valeur illisible vaut le volume plein, comme dans son.js. */
+     en texte. Il appartient au moteur du son (son.js, TBF_SON.volume), que
+     toutes les pages du tiroir reçoivent par fx.js — mais fx.js est différé
+     et l'ajoute après coup, en script qui arrive quand il arrive. Le tiroir
+     peut donc être monté avant lui : sur l'accueil, l'administration et la
+     boutique, ce fichier est lu avant fx.js, et nav.js monte le tiroir dès
+     que le joueur est connu. Et le moteur peut ne jamais arriver (script
+     bloqué, réseau coupé). Sans moteur, le tiroir lit et écrit la clé
+     lui-même, sous la même forme : le moteur la relit en se chargeant, et
+     les autres onglets à l'événement « storage ». Une valeur illisible vaut
+     le volume plein, comme dans son.js. */
   const CLE_VOLUME = 'tbf-volume';
   const borner = (v) => Math.min(1, Math.max(0, v));
   function volumeRetenu() {
@@ -532,9 +575,9 @@
    *   lit pas, et c'est la page qui pose l'état (le hub le fait).
    * @returns {{tiroir: HTMLElement, voile: HTMLElement, ouvrir: (oui:boolean)=>void,
    *   poser: (href:string, etat:?string, pastille?:(string|number)) => void}}
-   *   `poser` : l'état d'une destination — une tuile, ou une entrée du pied
-   *   comme `/aide` — (`direct`, `pret`, `attend`, `nouveau`, ou rien pour
-   *   l'éteindre), et le bouton prend le plus urgent.
+   *   `poser` : l'état d'une destination — une tuile, ou la bâche des
+   *   MISSIONS dans la tête (`/aide`) — (`direct`, `pret`, `attend`,
+   *   `nouveau`, ou rien pour l'éteindre), et le bouton prend le plus urgent.
    */
   function monter(bouton, { qui = null } = {}) {
     if (!document.getElementById('tbf-menu-css')) {
@@ -563,13 +606,38 @@
        on ne pouvait plus refermer le menu qu'avec Échap — c'est-à-dire pas
        du tout sur un téléphone.
 
-       Le mot MENU, sur son scotch, est pour l'œil seul : le tiroir s'annonce
-       déjà par son `aria-label`. */
+       **Les MISSIONS, juste à côté de l'accueil** (lots 3 et 5). Elles
+       ouvraient le pied, sur le ticket kraft, comme dans la maquette (écran
+       2, « le tiroir »). Mais la maquette range neuf tuiles, et le tiroir en
+       porte seize : à 360 × 640, le format de référence, le pied commence
+       sous le bord de l'écran, et les MISSIONS avec lui (à 695 px du haut,
+       pour 640). C'est pourtant sur elles qu'une récompense attend, et le
+       bouton de menu la montre avant celle des boosters (voir `porteurs`) :
+       on ouvrait le tiroir sur un sticker « 2 » pour n'y trouver que le
+       « 6 » des boosters. Dans la tête, elles se voient en ouvrant, à tous
+       les formats, et sans un pixel de hauteur de plus.
+
+       Une bâche de la tête, la même que celle de l'accueil
+       (`.tbf-tiroir-ici` : sa matière, son appui, son anneau de focus, sa
+       toile craie quand on est sur la page), et pas une tuile : on y vient
+       chercher quelque chose, ce n'est pas un endroit où jouer. Son sticker
+       se pose au bout du mot, à la place de l'icône (voir `CSS_REGLAGES`).
+       C'était « Aide et premiers pas » ; l'écran est devenu MISSIONS au
+       lot 5, l'adresse reste `/aide`, et les premiers pas et les questions
+       y sont restés — quelqu'un de perdu les trouve maintenant tout en haut.
+
+       Elle prend la place du mot MENU sur son scotch, qui était pour l'œil
+       seul (le tiroir s'annonce par son `aria-label`) : à 360 px, la tête
+       n'a pas la place des quatre — l'accueil, les MISSIONS et la croix
+       laissent trente pixels au mot, qui en demande cinquante-six, et le
+       scotch se serait coupé en « M… ». */
     const tete = '<div class="tbf-tiroir-tete">'
       + `<a class="tbf-tiroir-ici${chemin === '/' ? ' on' : ''}" href="/"`
       + `${chemin === '/' ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path`
       + ` d="${ICONES.accueil}"/></svg>L’accueil</a>`
-      + '<span class="tbf-tiroir-titre" aria-hidden="true">Menu</span>'
+      + `<a class="tbf-tiroir-ici tbf-tiroir-missions${ici('/aide') ? ' on' : ''}" href="/aide"`
+      + `${ici('/aide') ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path`
+      + ` d="${ICONES.missions}"/></svg>Missions</a>`
       + '<button type="button" class="tbf-tiroir-fermer" aria-label="Fermer le menu">'
       + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.fermer}"/></svg></button>`
       + '</div>';
@@ -620,17 +688,6 @@
        kraft (`--encre-kraft`, arbitrage du 2 octobre 2026). */
     tiroir.innerHTML = tete + rubriques
       + '<div class="tbf-ticket tbf-tiroir-pied">'
-      /* En tête du pied, avant le profil et le compte, pour deux raisons. Les
-         MISSIONS sont l'entrée qu'on cherche **parce qu'on est perdu** — les
-         premiers pas et les questions y sont restés, et quelqu'un de perdu
-         ne lit pas un menu jusqu'au bout. Et c'est là qu'une récompense
-         attend : son sticker (`poser`, et la clé R10 plus bas) se voit en
-         ouvrant, sans descendre. Elle ne rejoint pas les rubriques du
-         dessus, qui disent où l'on joue — la maquette la garde dans le pied
-         (écran 2, « le tiroir »).
-
-         C'était « Aide et premiers pas » ; l'écran est devenu MISSIONS au
-         lot 5, et l'adresse reste `/aide`. */
       /* **Rien ne disait nulle part qu'on est abonné.**
        *
        * On paie, on est débité, et l'application ne change pas d'un pixel :
@@ -643,7 +700,6 @@
        * marque s'y pose donc, et elle est remplie après coup : le tiroir ne
        * doit pas attendre une requête pour s'ouvrir. */
       + '<div class="tbf-abo" id="tbf-abo" hidden></div>'
-      + item('/aide', 'missions', 'Missions', ici('/aide') ? 'on' : '')
       /* **Installer l'application.** Elle était sur l'accueil, en bas de
          l'écran de jeu, où elle prenait une ligne à chaque visite pour un geste
          qu'on ne fait qu'une fois. Ici elle est à portée sur toutes les pages,
@@ -652,10 +708,13 @@
          Née cachée, et elle ne paraît que si elle a quelque chose à faire :
          voir « proposerInstallation », plus bas.
 
-         **Après les MISSIONS, jamais avant.** Posée au-dessus, c'est elle qui
-         ouvrirait le pied du tiroir les jours où elle paraît, et cette place
-         revient aux MISSIONS : voir le commentaire en tête du pied, plus
-         haut. */
+         Elle suivait l'Aide, devenue les MISSIONS, qui ouvrait le pied parce
+         que c'est l'entrée qu'on cherche quand on est perdu. Les MISSIONS
+         sont montées dans la tête (voir `tete`, plus haut) : les jours où
+         elle paraît, c'est elle qui ouvre le pied, avant le profil — et sa
+         place ne bouge pas, pour que le focus qu'elle rend en se cachant
+         tombe toujours sur le profil et jamais sur la déconnexion (voir
+         « proposerInstallation »). */
       + '<button type="button" class="tbf-tiroir-bt" id="tbf-installer" hidden>'
       + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.installer}"/></svg>`
       + 'Installer l’application</button>'
@@ -908,12 +967,6 @@
         e.preventDefault(); premier.focus();
       }
     });
-    /* L'état de l'abonnement, demandé une fois et sans bloquer.
-       *
-       * Sous garde entière : cette route peut ne pas être montée, la table
-       * peut manquer, le joueur peut ne pas être connecté. Dans tous ces cas
-       * la marque reste cachée — c'est exactement ce qu'elle doit faire, et
-       * un menu ne tombe pas parce qu'un abonnement est injoignable. */
     /* Le numéro de version. Une seule requête par page, mise en cache une
        heure par le serveur — et si elle échoue, la ligne reste vide plutôt
        que de mentir : un menu ne tombe pas parce qu'un numéro manque. */
@@ -927,11 +980,30 @@
       } catch { /* pas de numéro : le menu marche quand même */ }
     })();
 
+    /* L'état de l'abonnement, demandé une fois et sans bloquer.
+       *
+       * Sous garde entière : cette route peut ne pas être montée, la table
+       * peut manquer, le joueur peut ne pas être connecté. Dans tous ces cas
+       * la marque reste cachée — c'est exactement ce qu'elle doit faire, et
+       * un menu ne tombe pas parce qu'un abonnement est injoignable.
+       *
+       * **Une seule question par page** (`window.TBF_ABO`, comme `TBF_MOI`
+       * pour « qui es-tu ? », nav.js). Le KOP la pose pour savoir si la
+       * création d'un KOP lui est ouverte, la boutique pour son rayon du
+       * PASS, la page de l'abonnement pour tout dire ; le tiroir la reposait
+       * de son côté, et elle partait deux fois sur ces écrans. Le premier
+       * script qui passe pose la promesse, les autres la reprennent — ici,
+       * c'est presque toujours la page, le tiroir attendant le compte avant
+       * de se monter. **Sa forme est un contrat entre eux** : le corps d'une
+       * réponse réussie (`r.ok`), `null` sinon — refus, panne, route
+       * absente —, et elle ne rejette jamais. Une page qui veut la cause
+       * d'un refus la retient à part, au passage (`/abonnement`, son
+       * statut), sans changer cette forme. L'objet rendu est commun : on le
+       * lit, on n'y écrit pas. */
     void (async () => {
       try {
-        const r = await fetch('/api/abonnement', { credentials: 'same-origin' });
-        if (!r.ok) return;
-        const a = await r.json();
+        const a = await (window.TBF_ABO ??= fetch('/api/abonnement', { credentials: 'same-origin' })
+          .then((r) => (r.ok ? r.json() : null)).catch(() => null));
         const n = document.getElementById('tbf-abo');
         if (!n || !a?.abonne) return;
         const fin = a.fin
@@ -1056,9 +1128,9 @@
        attribut, le bouton est recalculé depuis les tuiles. Un état sans donnée
        ne se pose pas — l'attribut est retiré, jamais un tiret.
 
-       **Une entrée du pied aussi** (lot 5) : les MISSIONS restent une ligne
-       calme du ticket kraft (la maquette, écran 2), et leur sticker or s'y
-       pose par le même chemin, au bout de la ligne (voir `CSS_REGLAGES`).
+       **La bâche des MISSIONS aussi** (lots 3 et 5) : dans la tête, à côté
+       de l'accueil (voir `tete`), et leur sticker or s'y pose par le même
+       chemin, au bout du mot (voir `CSS_REGLAGES`).
 
        `poser` est rendue à l'appelant : `nav.js` y pose les boosters, qu'il
        connaît par le HUD de la barre, et l'accueil peut y poser ce qu'il sait
@@ -1073,12 +1145,13 @@
        bouton, tel qu'il était — jusqu'au HUD de match, qui accueillera ces
        deux boutons. */
     const enJeu = Boolean(bouton.closest('.tbf-haut-jeu'));
-    /* Les porteurs d'état : les entrées du pied **d'abord**, puis les tuiles.
-       Pour deux récompenses prêtes, le bouton prend donc les MISSIONS avant
-       les boosters : une mission prête ne se récupère que jusqu'à la fin du
-       jour suivant, quand un booster attend dans la réserve — et la réserve
-       se lit déjà dans le HUD de la barre, pas les missions. */
-    const porteurs = () => [...tiroir.querySelectorAll('.tbf-tiroir-pied a[data-etat]'),
+    /* Les porteurs d'état : la bâche des MISSIONS **d'abord**, puis les
+       tuiles. Pour deux récompenses prêtes, le bouton prend donc les
+       MISSIONS avant les boosters : une mission prête ne se récupère que
+       jusqu'à la fin du jour suivant, quand un booster attend dans la
+       réserve — et la réserve se lit déjà dans le HUD de la barre, pas les
+       missions. */
+    const porteurs = () => [...tiroir.querySelectorAll('.tbf-tiroir-missions[data-etat]'),
       ...tiroir.querySelectorAll('.tbf-case[data-etat]')];
     function urgence() {
       const etats = porteurs();
@@ -1110,7 +1183,7 @@
       delete bouton.dataset.pastille;
     }
     function poser(href, etat, pastilleTexte) {
-      const t = tiroir.querySelector(`.tbf-case[href="${href}"], .tbf-tiroir-pied a[href="${href}"]`);
+      const t = tiroir.querySelector(`.tbf-case[href="${href}"], .tbf-tiroir-missions[href="${href}"]`);
       if (!t) return;
       if (etat) t.dataset.etat = etat; else delete t.dataset.etat;
       if (etat && pastilleTexte != null && pastilleTexte !== '') {

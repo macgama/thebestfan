@@ -267,6 +267,32 @@ check('ma ferveur', r.ferveur === 6000
 check('mon rang', r.rang === 1 && r.sur === 6);
 check('mes duels comptés', r.duels.joues === 3);
 
+/* ------------------------------------ les couleurs de la tribune, sur /moi
+
+   La carte de supporter du profil peint son écharpe de tête aux couleurs du
+   club principal, et c'est d'ici qu'elle les lit. Elle restait or et rouge
+   pour tous les clubs : `/moi` ne les servait pas. Trois cas, ceux qu'un
+   club rencontre vraiment : pas encore extraites, extraites, et une valeur
+   posée à la main qui n'est pas une teinte. La forme est celle de
+   `/api/kop/miens` ; `couleursDuClub` elle-même est éprouvée par `kop:smoke`,
+   on éprouve ici qu'elle est branchée. */
+{
+  check('sans couleurs connues, la tribune n’en porte pas (R1)',
+    r.tribune?.nom === 'Petit Club' && !('couleurs' in r.tribune)
+    || (console.log('        tribune :', JSON.stringify(r.tribune)), false));
+  await pool.query(`UPDATE teams SET color1 = '#C8102E', color2 = '#FFFFFF' WHERE id = 85`);
+  const c = await get('/api/rank/moi');
+  check('extraites, elles partent avec la tribune, comme au KOP',
+    JSON.stringify(c.tribune?.couleurs) === '["#c8102e","#ffffff"]'
+    || (console.log('        tribune :', JSON.stringify(c.tribune)), false));
+  await pool.query(`UPDATE teams SET color1 = 'rouge', color2 = NULL WHERE id = 85`);
+  const v = await get('/api/rank/moi');
+  check('une valeur qui n’est pas une teinte ne part pas, et la clé non plus',
+    v.tribune?.nom === 'Petit Club' && !('couleurs' in v.tribune)
+    || (console.log('        tribune :', JSON.stringify(v.tribune)), false));
+  await pool.query(`UPDATE teams SET color1 = NULL, color2 = NULL WHERE id = 85`);
+}
+
 moi = 'u60000-0000-0000-0000-000000000006'.slice(0,36);
 r = await get('/api/rank/moi');
 check('le dernier est bien dernier', r.rang === 6);
@@ -1415,8 +1441,18 @@ const BUD = ID(12);
   check('sans la colonne xp, les visages restent et le niveau se tait',
     m?.avatar?.age === 'TR32B' && !('niveau' in m));
 
+  /* Une base où `sql/couleurs.sql` n'est pas passé : la colonne inconnue se
+     lève à la préparation de la requête, avant toute ligne, et faisait tomber
+     toute la place pour une teinte. Momo, parce qu'il a une tribune. */
+  await pool.query('ALTER TABLE teams DROP COLUMN color1, DROP COLUMN color2, DROP COLUMN colors_at');
+  moi = MOMO;
+  r = await lire('/api/rank/moi');
+  check('sans les couleurs des clubs, /moi répond, la tribune sans couleurs',
+    r.status === 200 && r.json.tribune?.nom === 'Petit Club' && !('couleurs' in r.json.tribune)
+    || (console.log('        il rend :', r.status, JSON.stringify(r.json?.tribune ?? r.json)), false));
+
   /* La base rendue comme on l'a trouvée, pour la suite d'après. */
-  await appliquer('niveau', 'quotidien');
+  await appliquer('niveau', 'quotidien', 'couleurs');
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
