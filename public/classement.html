@@ -69,20 +69,65 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .tbf-podium-nom{white-space:normal;overflow:visible;text-overflow:clip;text-align:center;
   overflow-wrap:anywhere;text-wrap:balance;
   display:flex;flex-direction:column;justify-content:center;min-height:calc(var(--nom-lignes,1) * 1.2em)}
-.tbf-podium>li>.tbf-podium-bache{min-height:calc(68px + (var(--nom-lignes,1) - 1) * 16.8px)}
-.tbf-podium>li[data-rang="1"]>.tbf-podium-bache{min-height:calc(96px + (var(--nom-lignes,1) - 1) * 16.8px)}
-.tbf-podium>li[data-rang="2"]>.tbf-podium-bache{min-height:calc(80px + (var(--nom-lignes,1) - 1) * 16.8px)}
+/* **Le rang est le grand chiffre de la marche**, peint sur la bâche comme
+   sur la face d'un vrai podium. La brique le posait en sticker rond au coin
+   haut-gauche, juste à côté du sticker rond du niveau, collé au buste : « 2 »
+   et « 19 », deux ronds chiffrés côte à côte, et l'on ne savait plus lequel
+   donnait la place. Le niveau reste le petit rond du buste ; la place
+   devient un chiffre en Oswald 26, à la lettre de la bâche — l'encre sur
+   l'or et la craie (12 et 17:1), la craie sur le parpaing — avec une ombre
+   dure décalée. Il ouvre la bâche, sous le buste, avant le nom. Sans
+   ordinal : un « ᵉʳ » de treize pixels tombait sous 4,5:1 au soleil sur l'or
+   et le parpaing, et le chiffre seul, en grand, sur une marche, se lit
+   comme une place.
+
+   Trois choses, recopiées ici en attendant que la brique de `ui.css` porte
+   elle-même ce chiffre : la classe garde son nom (`.tbf-podium-rang`) mais
+   perd la position absolue du sticker ; et les trois marches grandissent de
+   la hauteur du chiffre (`--rang-h` : vingt-quatre pixels de ligne, moins
+   trois de marges, plus les six de l'écart de la brique, plus deux pour
+   que la marche du troisième, la plus courte, reste tenue par sa hauteur
+   et non par son contenu), de sorte que leurs écarts — 96, 80, 68 —
+   restent ceux d'un podium. */
+.tbf-podium{--rang-h:30px}
+.tbf-podium-rang{position:static;display:block;margin:-1px 0 -2px;
+  font-family:var(--banner);font-weight:700;font-size:26px;line-height:24px;letter-spacing:0;
+  font-variant-numeric:tabular-nums;white-space:nowrap;rotate:-3deg;
+  text-shadow:2px 2px 0 rgba(7,9,12,.24)}
+.tbf-podium>li[data-rang="3"] .tbf-podium-rang{text-shadow:2px 2px 0 var(--encre)}
+.tbf-podium>li>.tbf-podium-bache{min-height:calc(68px + var(--rang-h) + (var(--nom-lignes,1) - 1) * 16.8px)}
+.tbf-podium>li[data-rang="1"]>.tbf-podium-bache{min-height:calc(96px + var(--rang-h) + (var(--nom-lignes,1) - 1) * 16.8px)}
+.tbf-podium>li[data-rang="2"]>.tbf-podium-bache{min-height:calc(80px + var(--rang-h) + (var(--nom-lignes,1) - 1) * 16.8px)}
 /* Le blason d'une tribune dans le rond du buste : un écusson ne se recadre
    pas comme un visage. Provisoire, en attendant une variante du buste dans
    la feuille commune. */
 .blason>img{object-fit:contain;padding:14%;border-radius:0}
 
 /* La liste est un panneau calme : les rangs, les noms et la note du bas
-   étaient posés directement sur la photo. */
+   étaient posés directement sur la photo.
+
+   **Une ligne calme tient sur cinquante-deux pixels** : le rang, le buste,
+   le nom, puis une seule ligne dessous — l'insigne de la division et le
+   club —, le delta et la valeur. Elle portait aussi le niveau, les matchs
+   et les vécus, à onze pixels sur trois étages à 360 px, et le mot FERVEUR
+   sous chaque valeur : soixante-quinze pixels par joueur, six joueurs par
+   écran. Le mot de la valeur s'écrit une fois, en tête de colonne
+   (`.tete-col`) ; le reste s'ouvre au toucher, dans une bulle (voir plus
+   bas). */
 .lignes{padding:2px 12px}
+.tete-col{display:flex;justify-content:flex-end;padding:9px 2px 1px;font-family:var(--banner);
+  font-weight:600;font-size:11px;line-height:1.2;letter-spacing:.12em}
 .row{display:flex;align-items:center;gap:10px;padding:10px 2px;font-size:13px;min-height:52px;
   border-top:1px solid rgba(242,238,228,.07)}
-.row:first-child{border-top:0}
+.row:first-child,.tete-col+.row{border-top:0}
+/* Une ligne qui a quelque chose de plus à dire est un bouton : toute la
+   ligne, cinquante-deux pixels de haut, se touche. Elle n'a de bouton que le
+   comportement — ni fond, ni cerne, ni police du système. */
+button.row{width:100%;margin:0;background:none;border-left:0;border-right:0;border-bottom:0;
+  border-radius:0;color:inherit;font:inherit;font-size:13px;text-align:left;cursor:pointer;
+  -webkit-appearance:none;appearance:none}
+button.row:active{background:rgba(242,238,228,.05)}
+button.row:focus-visible{outline:2px solid var(--craie);outline-offset:-2px}
 /* **Tout à la craie pleine.** Le rang, la précision, l'unité et la note
    étaient à 88 % : 3,9:1 au soleil sur le panneau, sous le seuil de 4,5. La
    hiérarchie tient au corps, à la graisse et à la police, plus à la pâleur. */
@@ -94,12 +139,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    laisse quelque cent soixante-dix pixels, et vingt lettres larges les
    dépassent — elles finissaient sous une ellipse. Il passe à la ligne, par
    les mêmes brèches que sur le podium. */
-.row .n b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.02em;
+.row .n b{display:block;font-family:var(--banner);font-size:13.5px;line-height:1.2;letter-spacing:.02em;
   overflow-wrap:anywhere}
-/* La précision passe à la ligne plutôt que de se couper : le club, les
-   matchs et les vécus d'un joueur sont ce qui le distingue de ses voisins,
-   et une ligne de classement peut prendre deux étages. */
-.row .n small{display:block;margin-top:2px;font-size:11px;line-height:1.45}
+/* La précision tient en une ligne courte — l'insigne et le club — et passe
+   à la ligne plutôt que de se couper, si un nom de club très long l'exige. */
+.row .n small{display:block;margin-top:2px;font-size:11px;line-height:1.3}
 .row .n small .tbf-division{margin:-1px 6px 0 1px}
 /* Ma propre ligne, si elle est dans la liste : un filet de craie au bord,
    rien de plus — la ligne épinglée dit le reste. */
@@ -113,13 +157,47 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    donnait ; le ton de l'écran est sur le rail des onglets. */
 .row .v{font-family:var(--banner);font-size:16px;font-weight:700;color:var(--craie);
   text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
-/* En Oswald : « PAR TÊTE » à onze pixels prend moins de place dans la
-   condensée du jeu que dans la police du système, et c'est le nom qui cède. */
-.row .v small{display:block;font-size:11px;letter-spacing:.06em;font-family:var(--banner);
-  font-weight:400;color:var(--craie);text-align:right}
+
+/* ------------------------------------------------------ la bulle d'une ligne
+
+   Toucher une ligne ouvre sous elle une bulle de BD (`.tbf-bulle`, la
+   brique) : la division en clair et son seuil (« FERVENT · dès 30 000 de
+   ferveur »), puis le niveau, les matchs et les vécus — ce que la ligne ne
+   porte plus. Une seule à la fois ; elle se referme d'un second toucher,
+   d'un toucher ailleurs ou d'Échap.
+
+   Deux écarts à la brique, locaux à cette page. **L'Oswald et non le
+   marqueur** : la bulle porte des chiffres, et le marqueur n'en écrit jamais
+   (amendement 6). **La queue en haut**, vers la ligne qu'on a touchée : la
+   bulle est posée dans le fil de la liste, sous sa ligne, et pousse les
+   suivantes plutôt que de les recouvrir — elle ne se coupe ni au bord du
+   panneau ni sous le podium. La queue est la même, retournée. */
+.bulle-ligne{display:block;width:fit-content;max-width:min(270px,calc(100% - 40px));
+  margin:14px 0 12px 38px;padding:10px 14px;min-height:44px;border-radius:6px 16px 16px 16px;
+  font-family:var(--banner);font-weight:500;font-size:13px;line-height:19px;letter-spacing:.03em}
+.bulle-ligne b{font-weight:700;letter-spacing:.06em}
+.bulle-ligne>span{display:block}
+.bulle-ligne::before{top:-17px;bottom:auto;clip-path:polygon(0 0,100% 100%,0 100%)}
+.bulle-ligne::after{top:-11px;bottom:auto;clip-path:polygon(0 0,100% 100%,0 100%)}
 
 /* Ma ligne épinglée : la brique fait tout, et pose sa valeur au bout. */
 .tbf-epingle .tbf-buste{flex:none}
+/* **Ma division se lit en mots**, sous son insigne : l'écharpe à nœuds ne
+   disait FERVENT ou ULTRA qu'au lecteur d'écran. Le nom en Oswald 12, au
+   noir du kraft, empilé sous l'insigne pour que la ligne garde sa largeur à
+   360 px — un « SYMPATHISANT » posé à côté la faisait déborder. */
+.moi-div{display:inline-flex;flex-direction:column;align-items:center;gap:4px;flex:none}
+.moi-div>b{font-family:var(--banner);font-weight:600;font-size:12px;line-height:1;letter-spacing:.03em;
+  white-space:nowrap}
+/* Avec sa division, la ligne serre : les écarts tombent à huit pixels et,
+   sur un téléphone, la valeur passe sur deux étages (le chiffre, son mot
+   dessous). Un rang à quatre chiffres et « SYMPATHISANT » — le cas le plus
+   courant en bas de liste — tiennent ainsi à 360 px ; au-delà, la valeur
+   passe à la ligne plutôt que d'être coupée par la déchirure du ticket. */
+.tbf-epingle[data-div]{flex-wrap:wrap;column-gap:8px;row-gap:2px}
+@media (max-width:480px){
+  .tbf-epingle[data-div] .tbf-epingle-val{flex-direction:column;align-items:flex-end;gap:2px}
+}
 
 /* ------------------------------------------------------ la place vide
 
@@ -270,6 +348,19 @@ let place = null;     // ma place, toutes échelles (`/api/rank/moi`)
 let liste = null;     // la liste affichée : { onglet, periode, classement, plancher }
 let jeton = 0;        // la dernière demande : une réponse plus ancienne ne réécrit rien
 let premierRendu = true;
+let hudRecu = null;   // la dernière annonce `tbf:hud` de la barre (voir `monBuste`)
+let busteVu = null;   // le buste posé sur ma ligne, pour ne le reposer que s'il change
+
+/* **La barre annonce ce qu'elle retient du joueur** (`tbf:hud`, nav.js), et
+   c'est le seul chemin par lequel cette page apprend mon visage quand le
+   stockage de l'onglet est fermé — ou quand la barre lit le portefeuille
+   après que ma ligne est posée. Écouté dès le départ : la barre est un
+   script différé, elle parle après celui-ci. Ma ligne se repose seulement
+   si son buste change. */
+window.addEventListener('tbf:hud', (e) => {
+  hudRecu = e.detail && typeof e.detail === 'object' ? e.detail : null;
+  if (place && liste && monBuste() !== busteVu) maPlace();
+});
 
 /* Le dessin de chacun. Le manifeste des états donne l'âge et la tenue
    exacts ; s'il tarde, le buste de l'âge suffit — on ne l'attend pas plus
@@ -359,6 +450,13 @@ function nomDivision(n) {
   const d = [...(s?.paliers ?? []), s?.division, s?.prochaine].find((x) => Number(x?.n) === n);
   return d?.nom ?? null;
 }
+/** Le seuil d'une division, tel que ma place le sert (paliers, prochaine), ou null. */
+function seuilDivision(n) {
+  const s = place?.saison;
+  const d = [...(s?.paliers ?? []), s?.prochaine].find((x) => Number(x?.n) === n);
+  const v = Number(d?.seuil);
+  return Number.isFinite(v) && v > 0 ? v : null;
+}
 function insigne(n) {
   const k = Number(n);
   if (!Number.isInteger(k) || k < 1 || k > 5) return '';
@@ -369,26 +467,43 @@ function insigne(n) {
 
 /* ------------------------------------------------------------- la liste */
 
-/** Ce qu'une ligne dit, par onglet : le nom, la précision, la valeur. */
-const LECTURES = {
-  supporters: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
-    sous: [x.club, `${x.matchs} matchs`, `${x.vecus} vécus`],
-    val: nombre(x.ferveur), unite: 'FERVEUR', mot: 'de ferveur' }),
-  tribunes: (x) => ({ cle: `t:${x.id}`, nom: x.name, logo: x.logo,
-    sous: [x.country, `${x.supporters} supporters`],
-    val: nombre(x.moyenne), unite: 'PAR TÊTE', mot: 'par tête' }),
-  /* Le grand chiffre est **la cote**, sur laquelle on est classé ; les
-     victoires et le taux passent en dessous. L'inverse ferait lire un
-     classement de victoires rangé dans un ordre qui n'est pas le leur. */
-  duellistes: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
-    sous: [x.club, `${x.joues} duels`, `${x.gagnes} gagnés`, `${x.taux}%`],
-    val: nombre(x.cote ?? 1000), unite: 'COTE', mot: 'de cote' }),
-  entrainements: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
-    sous: [x.club, `${x.gagnes} gagné${x.gagnes > 1 ? 's' : ''}`],
-    val: nombre(x.joues), unite: 'JOUÉS', mot: 'parties' }),
+/** Un compte, avec son mot accordé — ou rien s'il est nul : « 0 vécus »
+    s'écrivait sur toutes les lignes d'une base neuve. */
+const compte = (n, un, plusieurs) => {
+  const k = Number(n);
+  return Number.isFinite(k) && k > 0 ? `${nombre(k)}\u00a0${k > 1 ? plusieurs : un}` : null;
 };
 
-/* Le podium : trois bâches, le visage de chacun posé dessus. */
+/**
+ * Ce qu'une ligne dit, par onglet : le nom, la précision (`sous`, une ligne
+ * courte), la valeur et son mot — et ce qui ne s'ouvre qu'au toucher
+ * (`plus`, dans la bulle de la ligne, avec le niveau et la division).
+ */
+const LECTURES = {
+  supporters: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
+    sous: [x.club], plus: [compte(x.matchs, 'match', 'matchs'), compte(x.vecus, 'vécu', 'vécus')],
+    val: nombre(x.ferveur), unite: 'FERVEUR', mot: 'de ferveur' }),
+  /* Le nombre de supporters reste sur la ligne d'une tribune : c'est ce qui
+     explique sa moyenne, et la note du bas le dit. */
+  tribunes: (x) => ({ cle: `t:${x.id}`, nom: x.name, logo: x.logo,
+    sous: [x.country, compte(x.supporters, 'supporter', 'supporters')], plus: [],
+    val: nombre(x.moyenne), unite: 'PAR TÊTE', mot: 'par tête' }),
+  /* Le grand chiffre est **la cote**, sur laquelle on est classé ; les
+     victoires et le taux s'ouvrent au toucher. Les écrire sous le nom
+     faisait lire un classement de victoires rangé dans un ordre qui n'est
+     pas le leur. */
+  duellistes: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
+    sous: [x.club], plus: [compte(x.joues, 'duel', 'duels'), compte(x.gagnes, 'gagné', 'gagnés'),
+      Number(x.joues) > 0 && Number.isFinite(Number(x.taux)) ? `${Number(x.taux)}\u00a0% de victoires` : null],
+    val: nombre(x.cote ?? 1000), unite: 'COTE', mot: 'de cote' }),
+  entrainements: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
+    sous: [x.club], plus: [compte(x.gagnes, 'gagné', 'gagnés')],
+    val: nombre(x.joues), unite: 'PARTIES', mot: 'parties' }),
+};
+
+/* Le podium : trois bâches, le visage de chacun posé dessus, et le rang
+   peint en grand sur sa marche (voir la feuille de cette page). Le niveau,
+   s'il est servi, reste le petit sticker rond du buste. */
 function marche(x, i, L) {
   const colle = premierRendu ? ` class="tbf-colle" style="--d:${i * 120}ms"` : '';
   const visage = L.logo
@@ -397,7 +512,7 @@ function marche(x, i, L) {
     : buste(x.avatar, L.nom, { niveau: x.niveau });
   return `<li data-rang="${i + 1}"${colle}>${visage}
     <div class="tbf-podium-bache">
-      <b class="tbf-sticker tbf-sticker--rond tbf-podium-rang">${i + 1}</b>
+      <b class="tbf-podium-rang">${i + 1}</b>
       <b class="tbf-podium-nom"><span>${nomSecable(L.nom)}</span></b>
       <span class="tbf-podium-val">${L.val}<span class="vh"> ${L.mot}</span></span>
     </div></li>`;
@@ -425,22 +540,97 @@ function alignerPodium() {
   noms.forEach((s) => podiumVu.observe(s));
 }
 
+/* La division d'une ligne, seulement sur la liste de la saison (le contrat,
+   § 5.2 : les autres périodes ne la portent pas). */
+const divisionDe = (x) => {
+  const n = Number(x?.division);
+  return liste?.periode === 'saison' && Number.isInteger(n) && n >= 1 && n <= 5 ? n : null;
+};
+
+/**
+ * Ce que la bulle d'une ligne dit, en deux lignes au plus : la division en
+ * clair et son seuil, puis le niveau et ce que la ligne ne porte plus. Le
+ * nom et le seuil d'une division viennent de ma place ; un visiteur n'en a
+ * pas, et lit « DIVISION 3 SUR 5 ». Rien de nul, rien de deviné.
+ */
+function bulleDe(x, L) {
+  const morceaux = [];
+  const n = divisionDe(x);
+  if (n) {
+    const seuil = seuilDivision(n);
+    const des = seuil === 1 ? ' · dès la première ferveur'
+      : seuil > 1 ? ` · dès ${nombre(seuil)} de ferveur` : '';
+    morceaux.push(`<b>${esc(nomDivision(n) ?? `DIVISION ${n} SUR 5`)}</b>${des}`);
+  }
+  const reste = [Number(x.niveau) >= 1 ? `Niveau ${Number(x.niveau)}` : null, ...(L.plus ?? [])]
+    .filter(Boolean);
+  if (reste.length) morceaux.push(esc(reste.join(' · ')));
+  return morceaux;
+}
+
 /* Une ligne calme : rang, visage, nom, précision, delta, valeur. La ligne
    du dessous se passe de séparateur orphelin : ce qui manque se retire avec
-   le sien. */
+   le sien. Le mot de la valeur est en tête de colonne, et dit ici au seul
+   lecteur d'écran. Une ligne qui a une bulle à ouvrir est un bouton. */
 function ligne(x, i, L, ecart) {
   const rang = i + 1;
   const visage = L.logo ? `<img src="${esc(L.logo)}" alt="">` : buste(x.avatar, L.nom, { taille: 28 });
-  const sous = [Number(x.niveau) >= 1 ? `niv. ${Number(x.niveau)}` : null, ...L.sous]
-    .filter(Boolean).map(esc).join(' · ');
-  const division = liste?.periode === 'saison' && x.division ? insigne(x.division) : '';
+  const sous = L.sous.filter(Boolean).map(esc).join(' · ');
+  const n = divisionDe(x);
+  const division = n ? insigne(n) : '';
   const moi = qui && x.public_id && x.public_id === qui.id ? ' moi' : '';
-  return `<div class="row${moi}">
-    <span class="rk">${rang}</span>${visage}
-    <span class="n"><b>${nomSecable(L.nom)}</b><small>${division}${sous}</small></span>
+  const pid = x.public_id ? ` data-pid="${esc(x.public_id)}"` : '';
+  const corps = `<span class="rk">${rang}</span>${visage}
+    <span class="n"><b>${nomSecable(L.nom)}</b>${division || sous ? `<small>${division}${sous}</small>` : ''}</span>
     ${delta(ecart(L.cle, rang), 'depuis ta dernière visite')}
-    <span class="v">${L.val}<small>${L.unite}</small></span></div>`;
+    <span class="v">${L.val}<span class="vh"> ${L.mot}</span></span>`;
+  return L.joueur && bulleDe(x, L).length
+    ? `<button type="button" class="row${moi}"${pid} data-i="${i}" aria-expanded="false">${corps}</button>`
+    : `<div class="row${moi}"${pid}>${corps}</div>`;
 }
+
+/* ------------------------------------------------------------- la bulle */
+
+/** Referme la bulle ouverte ; rend la ligne qui la portait, ou null. */
+function fermerBulle({ rendre = false } = {}) {
+  const b = $('bulleLigne');
+  const r = $('list').querySelector('button.row[aria-expanded="true"]');
+  b?.remove();
+  if (r) {
+    r.setAttribute('aria-expanded', 'false');
+    r.removeAttribute('aria-controls');
+    if (rendre) r.focus();
+  }
+  return r;
+}
+
+/** Ouvre la bulle d'une ligne sous elle, ou la referme si c'est déjà la sienne. */
+function basculerBulle(r) {
+  const ouverte = r.getAttribute('aria-expanded') === 'true';
+  fermerBulle();
+  if (ouverte || !liste) return;
+  const x = liste.classement?.[Number(r.dataset.i)];
+  const morceaux = x ? bulleDe(x, LECTURES[liste.onglet](x)) : [];
+  if (!morceaux.length) return;
+  const b = document.createElement('p');
+  b.className = 'tbf-bulle bulle-ligne';
+  b.id = 'bulleLigne';
+  b.innerHTML = morceaux.map((m) => `<span>${m}</span>`).join('');
+  r.after(b);
+  r.setAttribute('aria-expanded', 'true');
+  r.setAttribute('aria-controls', 'bulleLigne');
+}
+
+$('list').addEventListener('click', (e) => {
+  const r = e.target.closest('button.row');
+  if (r) basculerBulle(r);
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest?.('button.row, #bulleLigne')) fermerBulle();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && $('bulleLigne')) fermerBulle({ rendre: true });
+});
 
 /* Personne au classement : la place vide. **Un tableau vide a deux causes**,
    et elles n'appellent pas le même geste : personne n'a encore joué, ou des
@@ -499,11 +689,12 @@ async function charger() {
   rendreListe();
 }
 
-function rendreListe() {
-  const c = liste.classement ?? [];
-  $('note').textContent = c.length ? NOTES[onglet] : '';
+/* « SAISON 1 — LA REPRISE », sous le sous-titre : la liste SUPPORTERS de la
+   saison, quand ma place la nomme. Vide sinon. */
+function poserSaison() {
   const s = place?.saison;
-  if (onglet === 'supporters' && liste.periode === 'saison' && s?.numero) {
+  let t = '';
+  if (liste?.onglet === 'supporters' && liste.periode === 'saison' && s?.numero) {
     /* Les jours qui restent, seulement si le serveur les compte : aucune
        page ne calcule une fin de saison avec l'horloge du téléphone (R3).
        Le contrat ne les sert qu'au dex (§ 7.1), une lecture trop lourde
@@ -511,8 +702,26 @@ function rendreListe() {
     const j = Number(s.joursRestants);
     const jours = s.finie || j === 0 ? ' · TERMINÉE'
       : j === 1 ? ' · DERNIER JOUR' : j > 1 ? ` · ${j} JOURS` : '';
-    $('saisonNom').textContent = `SAISON ${s.numero}${s.nom ? ` — ${s.nom}` : ''}${jours}`;
+    t = `SAISON ${s.numero}${s.nom ? ` — ${s.nom}` : ''}${jours}`;
   }
+  $('saisonNom').textContent = t;
+}
+
+/* La note du bas, et une phrase de plus quand la liste porte des
+   divisions : l'écharpe à nœuds n'était nommée nulle part à l'écran. */
+function noteDe() {
+  const c = liste?.classement ?? [];
+  if (!c.length) return '';
+  const divisions = liste.periode === 'saison'
+    && (c.some((x) => divisionDe(x)) || Number(place?.saison?.division?.n) > 0);
+  return NOTES[liste.onglet] + (divisions
+    ? ' L’écharpe à nœuds dit la division de la saison : touche une ligne pour la lire.' : '');
+}
+
+function rendreListe() {
+  const c = liste.classement ?? [];
+  $('note').textContent = noteDe();
+  poserSaison();
   const epingle = '<div class="tbf-ticket tbf-epingle" id="moi" role="group" hidden></div>';
   if (!c.length) {
     $('list').innerHTML = placeVide(liste) + epingle;
@@ -520,14 +729,43 @@ function rendreListe() {
     maPlace();
     return;
   }
-  const L = c.map(LECTURES[onglet]);
-  const ecart = photographier(`${onglet}:${liste.periode ?? ''}`, L.map((x) => x.cle));
+  const L = c.map(LECTURES[liste.onglet]);
+  const ecart = photographier(`${liste.onglet}:${liste.periode ?? ''}`, L.map((x) => x.cle));
   const podium = c.slice(0, 3).map((x, i) => marche(x, i, L[i])).join('');
   const lignes = c.slice(3).map((x, i) => ligne(x, i + 3, L[i + 3], ecart)).join('');
+  /* Le mot de la valeur, une fois, en tête de la colonne : il se répétait
+     sous chaque valeur. Les lecteurs d'écran l'entendent sur chaque ligne. */
+  const tete = `<div class="tete-col" aria-hidden="true"><span>${L[3]?.unite ?? ''}</span></div>`;
   $('list').innerHTML = `<ol class="tbf-podium" aria-label="Le podium">${podium}</ol>`
-    + (lignes ? `<div class="pan lignes">${lignes}</div>` : '') + epingle;
+    + (lignes ? `<div class="pan lignes">${tete}${lignes}</div>` : '') + epingle;
   alignerPodium();
   premierRendu = false;
+  maPlace();
+}
+
+/**
+ * **Ma place est arrivée — ou mon identité — après la liste.** On ne
+ * réécrit pas la liste : le podium serait remplacé pendant que ses bâches se
+ * collent, la seconde passe se ferait sans colle, et la mémoire des rangs
+ * serait réécrite une seconde fois. On pose seulement ce que la liste ne
+ * savait pas : ma ligne épinglée, le filet de ma ligne dans la liste, le nom
+ * des divisions, la saison sous le sous-titre et la note du bas.
+ */
+function apresMaPlace() {
+  if (!liste || !$('moi')) return;
+  poserSaison();
+  $('note').textContent = noteDe();
+  for (const r of $('list').querySelectorAll('.row[data-pid]')) {
+    r.classList.toggle('moi', Boolean(qui?.id) && r.dataset.pid === qui.id);
+  }
+  for (const d of $('list').querySelectorAll('.row .tbf-division[data-n]')) {
+    const n = Number(d.dataset.n);
+    const nom = nomDivision(n);
+    d.setAttribute('aria-label', nom ? `Division ${nom}` : `Division ${n} sur 5`);
+  }
+  /* Une bulle ouverte se redit avec les noms qu'elle n'avait pas. */
+  const ouverte = fermerBulle();
+  if (ouverte) basculerBulle(ouverte);
   maPlace();
 }
 
@@ -576,15 +814,26 @@ function monBuste() {
     avatar = (liste?.classement ?? []).find((x) => x.public_id === qui.id)?.avatar;
   }
   if (avatar === undefined && qui) {
-    /* Provisoire : ce que `nav.js` retient pour la barre, au nom du même
-       joueur, tant que ma place ne sert pas mon avatar. */
-    try {
-      const d = JSON.parse(sessionStorage.getItem('tbf-hud') || 'null');
-      if (d?.qui === qui.id && d.avatar?.id) avatar = d.avatar;
-    } catch { /* rien de retenu */ }
+    /* Le repli d'un serveur qui ne sert pas encore mon avatar avec ma
+       place : ce que `nav.js` retient pour la barre au nom du même joueur,
+       dans l'onglet — ou, d'abord, ce qu'elle vient d'annoncer (`tbf:hud`),
+       plus frais, et le seul chemin quand le stockage est fermé. */
+    let d = null;
+    try { d = JSON.parse(sessionStorage.getItem('tbf-hud') || 'null'); } catch { /* fermé */ }
+    for (const x of [hudRecu, d]) {
+      if (avatar === undefined && x?.qui === qui.id && x.avatar?.id) avatar = x.avatar;
+    }
   }
   if (!avatar && !qui?.pseudo) return '';
   return buste(avatar, qui?.pseudo, { taille: 30 });
+}
+
+/* Ma division sur ma ligne : l'insigne, et son nom en clair dessous. */
+function maDivision(d) {
+  const n = Number(d?.n);
+  if (!Number.isInteger(n) || n < 1 || n > 5) return '';
+  const nom = d.nom ?? nomDivision(n);
+  return `<span class="moi-div">${insigne(n)}${nom ? `<b aria-hidden="true">${esc(nom)}</b>` : ''}</span>`;
 }
 
 function maPlace() {
@@ -641,28 +890,31 @@ function maPlace() {
     if (liste?.periode === 'saison' && !s) return;
     const rang = s ? s.rang : m.rang;
     if (rang) {
-      corps = rangDe(rang) + (s?.division?.n ? insigne(s.division.n) : '')
+      const nomDiv = s?.division?.n ? (s.division.nom ?? nomDivision(Number(s.division.n))) : null;
+      corps = rangDe(rang) + (s?.division?.n ? maDivision(s.division) : '')
         + (s ? delta(evo.ferveur?.rang, 'depuis ta dernière visite') : '')
         + valeur(nombre(s ? s.ferveur : m.ferveur), 'de ferveur');
-      dit = `Ta place : ${rang}e sur ${s ? s.sur : m.sur} supporters classés`;
+      dit = `Ta place : ${rang}e sur ${s ? s.sur : m.sur} supporters classés${
+        nomDiv ? `, division ${nomDiv}` : ''}`;
     } else {
       corps = quoi(s ? 'Pas encore classé cette saison' : 'Pas encore classé');
       dit = 'Pas encore classé';
     }
   }
-  el.innerHTML = monBuste() + toi + corps;
+  busteVu = monBuste();
+  el.innerHTML = busteVu + toi + corps;
+  el.toggleAttribute('data-div', Boolean(el.querySelector('.moi-div')));
   el.setAttribute('aria-label', dit);
   el.hidden = false;
 }
 
-(async () => {
-  charger();
-  [qui, place] = await Promise.all([quiP, placeP]);
-  /* Ma place arrive après la liste, ou avant : la ligne épinglée est posée
-     vide par la liste, et remplie ici ; le nom de ma division et ma saison
-     aussi, que la liste ne connaissait pas encore. */
-  if (liste && $('moi')) rendreListe();
-})();
+/* Ma place et mon identité arrivent avant la liste, ou après : chacune se
+   pose à son arrivée, sans réécrire la liste (`apresMaPlace`). Les deux
+   écouteurs passent avant la suite de `charger`, qui attend aussi ma place
+   pour choisir la liste SUPPORTERS : la liste se dessine donc déjà avec. */
+placeP.then((m) => { place = m; apresMaPlace(); });
+quiP.then((q) => { qui = q; apresMaPlace(); });
+charger();
 </script>
 <script src="/pwa.js" defer></script>
 </body>

@@ -179,6 +179,30 @@ const prixPack = () => reglage('pack.prix_echarpes');
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 /**
+ * **Ce que les crans de collection ne comptent pas : les tenues.**
+ *
+ * Un abonné porte n'importe quelle tenue publiée, et la porter l'inscrit dans
+ * `user_skins` comme une tenue gagnée : il la garde à l'échéance (`wearSkin`,
+ * `onboarding/index.js`). Rien dans la ligne ne dit si la tenue a été tirée,
+ * achetée à l'étal ou prise par l'abonnement. Comptées, les tenues faisaient
+ * de l'abonnement des écharpes et des boosters : trente-cinq lignées, jusqu'à
+ * trois âges, trois tenues publiées, c'est de l'ordre de trois cents objets,
+ * une douzaine de crans, obtenus par des clics d'abonné — une récompense
+ * achetée en argent réel.
+ *
+ * Elles sortent donc du compte qui paie, **pour tout le monde** : abonné et
+ * non-abonné reçoivent les mêmes montants (`CONTRATS.md`, R9). C'est la règle
+ * des divisions (`SERVEUR.md`, § 1, point 8) : ce que l'abonnement ouvre ne
+ * paie pas. La jauge de la bibliothèque, elle, les garde — une tenue se
+ * collectionne, elle ne se monnaie pas.
+ *
+ * Un ensemble de types de `compter()`, et non une soustraction écrite dans
+ * `paliersDe` et dans le recompte du versement : la route et le grand livre
+ * comptent avec la même liste.
+ */
+const HORS_CRANS = new Set(['tenues']);
+
+/**
  * Quelle saison a ouvert chaque série.
  *
  * Remplace `NIVEAU_DE_SERIE`, qui disait à quel niveau une série se débloquait :
@@ -360,6 +384,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          premier changement du réglage. Toujours présente, réserve pleine
          comprise : la même forme pour tous (`CONTRATS.md`, R9). */
       cadenceMs: cadence,
+      /* **Le plafond de la réserve, pour ce joueur-là** (`CONTRATS.md`,
+         § 13.1) : celui qui vient de borner la recharge, abonnement compris.
+         `maxPacks`, à la racine de `/state`, est celui du joueur gratuit : lu
+         pour la réserve, il dessinerait douze places à un abonné qui en a
+         vingt-quatre ; sans plafond du tout, le kiosque ne sait jamais
+         dessiner les fentes d'une réserve de cinq. Un entier ≥ 1 (les
+         réglages le bornent) ; absent sinon (R1), plutôt qu'un plafond qui
+         ferait dessiner zéro place. */
+      ...(Number.isInteger(plafond) && plafond >= 1 ? { packMax: plafond } : {}),
       active: w.active_fanzzy,
       avatar,
       avatarEnJeu: enJeu,
@@ -886,6 +919,13 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     await assurerBourse(q, userId);
 
     let resultat;
+    /* **Ce que cette ouverture a prélevé**, rendu tel quel (`paye`,
+       `CONTRATS.md` § 13.2) : le kiosque ne le déduit plus d'un solde qu'il
+       n'a relu qu'au chargement,
+       qui lui faisait annoncer « −45 » pour un booster gratuit après un achat
+       fait dans un autre onglet. Zéro quand la réserve a payé, y compris
+       pour un paquet demandé à l'achat. */
+    let paye = 0;
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
@@ -906,10 +946,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
            boosters sur un plafond plus haut. */
         await conn.query(`UPDATE user_wallet SET packs = packs - 1 WHERE user_id = ?`, [userId]);
       } else if (buy) {
+        /* Le prix lu une fois : celui qu'on débite est celui qu'on rend, même
+           si l'administration change le réglage entre les deux lectures. */
+        const prix = prixPack();
         const [d] = await conn.query(
           `UPDATE user_wallet SET scarves = scarves - ? WHERE user_id = ? AND scarves >= ?`,
-          [prixPack(), userId, prixPack()]);
+          [prix, userId, prix]);
         if (!d.affectedRows) throw fail('fanzzy.error.not_enough_scarves');
+        paye = prix;
       } else {
         throw fail('fanzzy.error.no_packs');
       }
@@ -1046,7 +1090,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const cle = cleDeCarte(c);
         if (cle) c.cle = cle;
       }
-      resultat = { cards, scarvesGained: scarves, series: progressionSeries(avant, had, cards) };
+      resultat = { cards, scarvesGained: scarves, paye, series: progressionSeries(avant, had, cards) };
     } catch (e) {
       await conn.rollback().catch(() => {});
       throw e;
@@ -1551,8 +1595,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * finiraient par ne pas compter la même chose, et un palier se paierait sur
    * un nombre que l'écran ne montre pas.
    *
+   * **Les crans ne comptent pas les tenues** (`crans`, plus bas) : la jauge
+   * les montre, les crans ne les paient pas. Voir `HORS_CRANS`.
+   *
    * @param lire  `(sql, params) => rows` — le pool par défaut
-   * @returns { biblio: { total, types, parFanzzy }, series: [{ id, possedes, total }] }
+   * @returns { biblio: { total, types, parFanzzy }, series: [{ id, possedes, total }],
+   *            crans: { gagnes, possibles } }
    */
   async function compter(userId, lecteur = q) {
     /* Les tables facultatives ne font pas tomber la page : un joueur sans
@@ -1621,9 +1669,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         possede: a.rar === 'commune' || tirees.has(a.id) })) };
     T.actions.gagnes = T.actions.items.filter((a) => a.possede).length;
 
-    const total = Object.values(T).reduce((s, t) => ({
+    const somme = (types) => types.reduce((s, t) => ({
       gagnes: s.gagnes + t.gagnes, possibles: s.possibles + t.possibles }),
     { gagnes: 0, possibles: 0 });
+    const total = somme(Object.values(T));
+    /* Le compte qui paie, tiré des mêmes `T` que la jauge, dans la même
+       fonction : la route et le recompte du versement ne peuvent pas en
+       avoir deux versions. */
+    const crans = somme(Object.entries(T).filter(([type]) => !HORS_CRANS.has(type)).map(([, t]) => t));
     parFanzzy.sort((a, b) => a.nom.localeCompare(b.nom));
 
     /* Les personnages possédés, série par série, pour la série complète
@@ -1634,20 +1687,24 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       return { id: s.id, total: dans.length, possedes: dans.filter((f) => atteint.has(f.id)).length };
     }).filter((s) => s.total > 0);
 
-    return { biblio: { total, types: T, parFanzzy }, series };
+    return { biblio: { total, types: T, parFanzzy }, series, crans };
   }
 
   /* ------------------------------------------------ les paliers de collection
 
      Un cran tous les `collection.cran` objets gagnés, et une récompense pour
-     chaque série complète (`SERVEUR.md`, § 6 ; `CONTRATS.md`, § 5.1).
+     chaque série complète (`SERVEUR.md`, § 6 ; `CONTRATS.md`, § 5.1). Les
+     objets gagnés sont ceux de la bibliothèque, **tenues mises à part**
+     (`HORS_CRANS`) : `paliers.gagnes` vaut `total.gagnes` moins
+     `types.tenues.gagnes` (`ECARTS.md`, fanzzy).
 
      **Un cran est payé une fois, au seuil franchi le plus haut.** Le grand
      livre garde les seuils payés (`cran`, clé = le seuil en chiffres). Ce qui
      se paie est au-dessus du plus haut d'entre eux : si la taille du cran
      change (25 → 20), les seuils de l'ancienne taille déjà couverts (20, 40
-     sous un 50 payé) ne se repaient pas ; si le compte baisse (une tenue
-     retirée), rien n'est repris, et rien ne se repaie en remontant. */
+     sous un 50 payé) ne se repaient pas ; si le compte baisse (une pièce ou
+     un personnage dépublié), rien n'est repris, et rien ne se repaie en
+     remontant. */
 
   /** Le plus haut seuil payé, 0 sinon. */
   const plusHautCran = (lignes) => lignes.reduce((m, l) => {
@@ -1685,7 +1742,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const cran = reglage('collection.cran');
     const haut = plusHautCran(payes.filter((l) => l.source === 'cran'));
     const seriesPayees = new Set(payes.filter((l) => l.source === 'serie').map((l) => l.cle));
-    const { gagnes, possibles } = compte.biblio.total;
+    const { gagnes, possibles } = compte.crans;
 
     const aReclamer = [];
     for (let a = (Math.floor(haut / cran) + 1) * cran; a <= gagnes; a += cran) {
@@ -1702,7 +1759,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        objectif. Absent quand l'univers n'en contient plus. */
     const a = (Math.floor(Math.max(haut, gagnes) / cran) + 1) * cran;
     const prochain = a <= possibles ? { a, manque: a - gagnes, gain: gainCran(a, cran) } : null;
-    return { cran, gagnes, ...(prochain ? { prochain } : {}), aReclamer,
+    /* `possibles` en plus du contrat : depuis que les tenues sortent du
+       compte, `gagnes` n'est plus `total.gagnes`, et une page qui mettrait
+       l'un sur l'autre (« 400 / 275 ») mélangerait deux comptes. Le bloc se
+       suffit : `gagnes / possibles`, et `prochain.a` entre les deux. */
+    return { cran, gagnes, possibles, ...(prochain ? { prochain } : {}), aReclamer,
       series: series.map(({ id, possedes, total, etat, gain }) => ({ id, possedes, total, etat, gain })) };
   }
 
@@ -1754,8 +1815,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
             `SELECT cle FROM recompenses WHERE user_id = ? AND source = 'cran'`, [userId]);
           /* Sous le plus haut seuil payé : couvert, et non dû. */
           if (seuil <= plusHautCran(payes)) return 'inconnu';
+          /* Le compte des crans, tenues mises à part (`HORS_CRANS`) : le même
+             que `paliersDe`, sans quoi un client qui demande un seuil que
+             seules ses tenues atteignent serait payé sans que la page l'ait
+             jamais proposé. */
           const compte = await compter(userId, lire);
-          return seuil <= compte.biblio.total.gagnes ? true : 'incomplet';
+          return seuil <= compte.crans.gagnes ? true : 'incomplet';
         },
         gain: () => gainCran(seuil, reglage('collection.cran')) };
     }

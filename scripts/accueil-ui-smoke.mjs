@@ -138,15 +138,31 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
+/* `user_nouveautes` part avec les autres, bien que cette suite ne la crée
+   pas au démarrage : depuis les lots 3 et 5, le hub suit les nouveautés que
+   le serveur sert, et une table laissée là par la suite précédente — avec
+   ou sans lignes — décidait en silence du « +N » de FANZZY. La suite
+   démarre donc sans elle (le repli, l'accueil que le reste de la suite a
+   toujours vu), et le bloc des nouveautés la pose et la retire lui-même. */
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
-  team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
+  team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, user_nouveautes, users`);
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
+/* La table des nouveautés, **lue dans `sql/quotidien.sql`** et non recopiée :
+   une colonne ajoutée là-bas doit arriver ici sans qu'on y pense. On n'en
+   extrait que cette instruction, parce que le fichier ajoute aussi des
+   colonnes à des tables que ce banc ne pose pas (`saisons`), et qu'il
+   échouerait joué entier. Même extraction que `boutique-smoke`. */
+const TABLE_NOUVEAUTES = readFileSync(path.join(RACINE, 'sql', 'quotidien.sql'), 'utf8')
+  .match(/CREATE TABLE IF NOT EXISTS user_nouveautes \([\s\S]*?\)[^;]*;/)?.[0];
+if (!TABLE_NOUVEAUTES) throw new Error(
+  'sql/quotidien.sql ne déclare plus user_nouveautes : le « +N » de FANZZY ne peut plus être '
+  + 'éprouvé sur le chemin du serveur.');
 
 const U = 'aaaaaaaa-0000-0000-0000-0000000000a1';
 await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
@@ -2222,17 +2238,32 @@ const couleurs = {};
     || (console.log('        direct', couleurs.direct, '· prêt', couleurs.pret,
       '· attend', couleurs.attend), false));
 
-  /* **« +N » sur FANZZY** : les cartes arrivées depuis la dernière visite
-     sur cet appareil (`localStorage`, `tbf.vus`). La première visite n'en
-     montre aucune — tout ce qu'on possède n'est pas nouveau — et vient de
-     tout marquer comme vu ; on ajoute donc une carte, et on revient **dans
-     le même navigateur**, là où ce souvenir vit. Une carte que le compte n'a
-     pas encore, choisie dans le catalogue publié : écrite en dur, elle
-     finirait par être déjà possédée. */
+  /* **« +N » sur FANZZY : deux chemins, et la suite éprouve les deux.**
+
+     Depuis les lots 3 et 5, le hub compte les nouveautés **du serveur** :
+     `nouveautes` de `/api/fanzzy/state` (CONTRATS § 2.1), écrites au moment
+     du gain, les mêmes sur tous les appareils, et éteintes par la page qui
+     les montre (§ 2.2). Le hub en éteint une part, et une seule : les clés
+     que sa pastille comptait quand on a touché FANZZY, au retour et jamais
+     au toucher (ECARTS, accueil n° 2, révisé le 3 octobre 2026 — un écart
+     documenté au « jamais au chargement » du § 2.2). La mémoire de
+     l'appareil (`tbf.vus`) n'est plus que le **repli** d'un serveur qui ne
+     sert pas le champ : table absente, ou serveur d'avant le contrat.
+
+     Ces contrôles ne lisaient que le repli, et sans le savoir : la suite ne
+     posait ni ne vidait `user_nouveautes`, si bien que leur verdict dépendait
+     de la suite passée avant elle — la table laissée là, le serveur servait
+     `[]` et le « +1 » de la mémoire locale ne venait jamais. La table est
+     donc retirée au démarrage (voir la liste des `DROP`) : on éprouve d'abord
+     le repli, puis on la pose pour le chemin du serveur, et on la retire en
+     partant.
+
+     Les cartes ajoutées sont des cartes que le compte n'a pas encore,
+     choisies dans le catalogue publié : écrites en dur, elles finiraient par
+     être déjà possédées. */
   const [lignes] = await pool.query('SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?', [U]);
   const deja = new Set(lignes.map((l) => l.fanzzy_id));
-  const NEUVE = PUB.find((f) => !AGE_SUP.has(f.id) && !deja.has(f.id))?.id;
-  await pool.query('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)', [U, NEUVE]);
+  const [NEUVE, NEUVE2] = PUB.filter((f) => !AGE_SUP.has(f.id) && !deja.has(f.id)).map((f) => f.id);
   await pool.query('UPDATE user_wallet SET packs = 2, packs_at = ? WHERE user_id = ?',
     [new Date(), U]);
   const revenir = async () => {
@@ -2242,47 +2273,195 @@ const couleurs = {};
     // BOOSTERS en « prêt » dit que les états ont été posés, avec ou sans « +N ».
     await jusqua(async () => (await lireEtats(page)).rail['/boosters']?.etat === 'pret');
   };
+  /* L'état tel que la vraie route le sert à ce joueur — l'attendu du « +N »,
+     lu à la source plutôt que supposé. Depuis Node, et non depuis la page :
+     ce banc authentifie toute requête, et la page ne doit rien envoyer que
+     le hub n'aurait envoyé lui-même. */
+  const etatServi = () => fetch(`${base}/api/fanzzy/state`).then((r) => r.json()).catch(() => null);
+  /* Les demandes d'extinction parties de la page, sur tout le bloc, gardées
+     entières pour en lire le corps. Le hub n'en envoie qu'une, sur le chemin
+     du serveur, au retour d'un toucher ; aucune dans le repli, aucune au
+     chargement d'une visite sans toucher, aucune au toucher lui-même. La
+     liste dit **quand** elles partent (on la mesure avant et après le
+     retour), et **quoi** : une demande `{ tout: true }` ferait tomber la
+     pastille aussi bien, en éteignant ce que le joueur n'a pas vu. */
+  const extinctions = [];
+  page.on('request', (r) => {
+    if (r.method() === 'POST' && new URL(r.url()).pathname === '/api/fanzzy/vu') extinctions.push(r);
+  });
+  const corpsDe = (r) => { try { return JSON.parse(r.postData() ?? 'null'); } catch { return null; } };
+  /* Un vrai clic sur FANZZY, et la preuve qu'il est bien parti vers le
+     classeur — sans quoi on éprouverait un clic tombé ailleurs. On guette
+     **la demande de navigation**, et non l'adresse d'arrivée : ce banc ne
+     sert pas le classeur, et une page d'erreur du navigateur n'aurait pas
+     d'adresse à lire. Pour la même raison, rien de ce qu'on retrouve au
+     retour n'est l'œuvre du classeur : c'est celle du hub seul. */
+  const toucherFanzzy = async () => {
+    const versClasseur = page.waitForRequest((r) => r.isNavigationRequest()
+      && new URL(r.url()).pathname === '/fanzzy', { timeout: 4000 }).then(() => true, () => false);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 4000 }).catch(() => {}),
+      page.click('#caseFanzzy'),
+    ]);
+    return versClasseur;
+  };
+
+  /* ---- le repli : la mémoire de l'appareil ----
+
+     Sans la table, le serveur ne sait pas, et sa réponse n'a pas de champ
+     `nouveautes` — ce qui n'est pas « rien de nouveau ». Le hub compte alors
+     les cartes arrivées depuis la dernière visite **sur cet appareil**. La
+     première visite (l'ouverture de ce bloc) n'en a montré aucune — tout ce
+     qu'on possède n'est pas nouveau — et a tout marqué comme vu ; on ajoute
+     donc une carte, et on revient **dans le même navigateur**, là où ce
+     souvenir vit. Un « +1 » et pas davantage dit aussi que la première visite
+     a bien tout retenu. */
+  await pool.query('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)', [U, NEUVE]);
   await revenir();
   e = await lireEtats(page);
-  check('une carte arrivée depuis la visite d’avant : FANZZY dit « +1 »',
-    e.rail['/fanzzy']?.etat === 'nouveau' && e.rail['/fanzzy'].pastille === '+1'
-    || (console.log('        carte', NEUVE, '· FANZZY :', JSON.stringify(e.rail['/fanzzy'])), false));
+  let servi = await etatServi();
+  check('sans nouveautés servies, une carte arrivée depuis la visite d’avant : FANZZY dit « +1 »',
+    servi?.collection && !('nouveautes' in servi)
+      && e.rail['/fanzzy']?.etat === 'nouveau' && e.rail['/fanzzy'].pastille === '+1'
+    || (console.log('        carte', NEUVE, '· nouveautes servies :', JSON.stringify(servi?.nouveautes),
+      '· FANZZY :', JSON.stringify(e.rail['/fanzzy'])), false));
+
+  /* Dans le repli, toucher FANZZY marque tout comme vu **sur l'appareil** :
+     au retour, le « +1 » ne revient pas, et rien n'est parti au serveur — il
+     n'a rien servi, il n'y a rien à lui éteindre. Ce « rien » se lisait
+     autrefois au compte final du bloc, qui exigeait zéro demande ; le chemin
+     du serveur en envoie une désormais, il se lit donc ici. */
+  let parti = await toucherFanzzy();
+  await revenir();
+  e = await lireEtats(page);
+  check('sans nouveautés servies, toucher FANZZY marque tout comme vu : le « +1 » ne revient pas',
+    parti && extinctions.length === 0
+      && e.rail['/fanzzy']?.etat === null && e.rail['/boosters']?.etat === 'pret'
+    || (console.log('        parti vers le classeur :', parti, '· extinctions envoyées :',
+      extinctions.length, '· FANZZY :', JSON.stringify(e.rail['/fanzzy'])), false));
+
+  /* ---- le chemin du serveur ----
+
+     La table posée, un booster a donné une carte et une expression : deux
+     nouveautés, écrites avec les clés que le serveur écrit au gain
+     (`noterNouveautes`, CONTRATS § 2.1). La carte rejoint aussi la
+     collection, et la mémoire de l'appareil, qui la voit arriver, dirait
+     « +1 » : le « +2 » attendu ne peut venir que du serveur. C'est ce qui
+     départage les deux chemins — avec une seule nouveauté, un hub resté sur
+     sa mémoire locale passerait le contrôle. */
+  await pool.query(TABLE_NOUVEAUTES);
+  await pool.query('DELETE FROM user_nouveautes WHERE user_id = ?', [U]);
+  await pool.query('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)', [U, NEUVE2]);
+  await pool.query(
+    'INSERT INTO user_nouveautes (user_id, cle, sorte) VALUES (?, ?, ?), (?, ?, ?)',
+    [U, `fanzzy:${NEUVE2}`, 'fanzzy', U, `etat:${NEUVE2}:1:joie`, 'etat']);
+  await revenir();
+  await jusqua(async () => (await lireEtats(page)).rail['/fanzzy']?.etat === 'nouveau', 3000);
+  e = await lireEtats(page);
+  servi = await etatServi();
+  check('nouveautés servies : FANZZY dit « +N », N = nouveautes.length',
+    Array.isArray(servi?.nouveautes) && servi.nouveautes.length === 2
+      && e.rail['/fanzzy']?.etat === 'nouveau'
+      && e.rail['/fanzzy'].pastille === `+${servi.nouveautes.length}`
+    || (console.log('        carte', NEUVE2, '· nouveautes servies :', JSON.stringify(servi?.nouveautes),
+      '· FANZZY :', JSON.stringify(e.rail['/fanzzy'])), false));
 
   /* Le direct, la récompense et la nouveauté ensemble : les trois tuiles
      les portent, chacune à sa place, et rien d'autre n'est en état. C'est
-     le plafond de l'amendement 7 tenu à son maximum. */
+     le plafond de l'amendement 7 tenu à son maximum — sur le chemin du
+     serveur, celui de la production. */
   direct = { ...LIVE };
   await page.evaluate(() => TBF.veiller());
   await jusqua(async () => (await lireEtats(page)).rail['/virage']?.etat === 'direct', 3000);
   e = await lireEtats(page);
   check('direct, prêt et nouveau tiennent ensemble, et rien de plus',
     e.enEtat.join(' ') === ['/boosters=pret', '/fanzzy=nouveau', '/virage=direct'].sort().join(' ')
-      && e.rail['/boosters'].pastille === '2' && e.rail['/fanzzy'].pastille === '+1'
+      && e.rail['/boosters'].pastille === '2' && e.rail['/fanzzy'].pastille === '+2'
     || (console.log('        en état :', e.enEtat.join(' ')), false));
   direct = null;
   await page.evaluate(() => TBF.veiller());
 
-  /* Toucher FANZZY marque tout comme vu : au retour, le « +1 » ne revient
-     pas. Un vrai clic, et on vérifie qu'il est bien parti vers le classeur —
-     sans quoi on éprouverait un clic tombé ailleurs. On guette **la demande
-     de navigation**, et non l'adresse d'arrivée : ce banc ne sert pas le
-     classeur, et une page d'erreur du navigateur n'aurait pas d'adresse à
-     lire. */
-  const versClasseur = page.waitForRequest((r) => r.isNavigationRequest()
-    && new URL(r.url()).pathname === '/fanzzy', { timeout: 4000 }).then(() => true, () => false);
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 4000 }).catch(() => {}),
-    page.click('#caseFanzzy'),
-  ]);
-  const parti = await versClasseur;
+  /* **Toucher FANZZY éteint, mais au retour** (ECARTS, accueil n° 2, révisé
+     le 3 octobre 2026). La première version n'éteignait rien, et ce
+     contrôle l'exigeait : comme ni le classeur, ni la collection, ni la
+     fiche n'éteignent encore (lot 4), le « +5 » d'un premier booster restait
+     allumé jusqu'à la purge des soixante jours — une pastille permanente,
+     qu'on cesse de lire, là où celle du lot 2 tombait au toucher. Le hub met
+     donc de côté, au toucher, les clés que sa pastille comptait, et les
+     éteint à la lecture suivante de l'état. **Pas au toucher** : le
+     classeur vers lequel on part doit encore pouvoir coller son NOUVEAU.
+     **Par leurs clés**, pas `{ tout: true }` : ce qui arrive entre-temps
+     garde son « +N ».
+
+     Pour que ce dernier point se voie, une nouveauté arrive **entre le
+     toucher et le retour** — un booster ouvert depuis le classeur. Cinq
+     preuves, parce que chacune laisse passer un hub fautif que les autres
+     arrêtent :
+       - aucune demande partie avant le retour : ni au chargement d'une
+         visite sans toucher, ni au toucher lui-même ;
+       - une seule après, dont le corps nomme exactement les deux clés que la
+         pastille comptait — ni `tout`, ni `sorte`, ni la clé arrivée après ;
+       - la base n'a plus que la ligne arrivée après : la demande est allée
+         au bout (une demande refusée laisserait les trois) ;
+       - FANZZY dit « +1 » : le « +2 » est tombé, et la nouveauté que le
+         joueur n'a pas vue est comptée ;
+       - le départ vers le classeur, sans quoi on éprouverait un clic tombé
+         ailleurs.
+     L'extinction part en `keepalive` après la lecture de l'état : on attend
+     que la base l'ait reçue plutôt que de supposer qu'elle est arrivée. */
+  const COMPTEES = [`fanzzy:${NEUVE2}`, `etat:${NEUVE2}:1:joie`];
+  const ARRIVEE = `etat:${NEUVE2}:1:colere`;
+  const lignesRestantes = async () => (await pool.query(
+    'SELECT cle FROM user_nouveautes WHERE user_id = ? ORDER BY cle', [U]))[0].map((l) => l.cle);
+  parti = await toucherFanzzy();
+  const avantRetour = extinctions.length;
+  await pool.query('INSERT INTO user_nouveautes (user_id, cle, sorte) VALUES (?, ?, ?)',
+    [U, ARRIVEE, 'etat']);
+  await revenir();
+  await jusqua(async () => (await lignesRestantes()).length === 1, 3000);
+  await jusqua(async () => (await lireEtats(page)).rail['/fanzzy']?.pastille === '+1', 3000);
+  e = await lireEtats(page);
+  const gardees = await lignesRestantes();
+  const envoyees = extinctions.slice(avantRetour).map(corpsDe);
+  const parSesCles = envoyees.length === 1 && envoyees[0] !== null
+    && Object.keys(envoyees[0]).join() === 'cles' && Array.isArray(envoyees[0].cles)
+    && envoyees[0].cles.length === COMPTEES.length
+    && COMPTEES.every((k) => envoyees[0].cles.includes(k));
+  check('nouveautés servies : toucher FANZZY les éteint au retour, par leurs clés — le « +2 » tombe, '
+    + 'celle d’après reste',
+    parti && avantRetour === 0 && parSesCles
+      && gardees.length === 1 && gardees[0] === ARRIVEE
+      && e.rail['/fanzzy']?.etat === 'nouveau' && e.rail['/fanzzy'].pastille === '+1'
+    || (console.log('        parti vers le classeur :', parti, '· extinctions avant le retour :',
+      avantRetour, '· après :', JSON.stringify(envoyees), '· lignes gardées :', JSON.stringify(gardees),
+      '· FANZZY :', JSON.stringify(e.rail['/fanzzy'])), false));
+
+  /* Ce que le toucher n'a pas compté — la nouveauté arrivée après — reste
+     à la page qui la montre (§ 2.2) : ici par la vraie route, comme le
+     classeur le fera au lot 4. À la lecture suivante de l'état, le « +1 »
+     tombe, et le hub n'envoie rien de plus : une visite sans toucher n'a
+     rien à éteindre — c'est le « jamais au chargement » du § 2.2, tenu hors
+     du seul écart. */
+  const eteint = await fetch(`${base}/api/fanzzy/vu`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tout: true }),
+  }).then((r) => r.json()).catch(() => null);
   await revenir();
   e = await lireEtats(page);
-  check('toucher FANZZY marque tout comme vu : le « +1 » ne revient pas',
-    parti && e.rail['/fanzzy']?.etat === null && e.rail['/boosters']?.etat === 'pret'
-    || (console.log('        parti vers le classeur :', parti, '· FANZZY :',
-      JSON.stringify(e.rail['/fanzzy'])), false));
+  servi = await etatServi();
+  check('nouveautés éteintes par la page qui les montre : le « +N » tombe au retour',
+    eteint?.restantes === 0 && Array.isArray(servi?.nouveautes) && servi.nouveautes.length === 0
+      && extinctions.length === avantRetour + 1
+      && e.rail['/fanzzy']?.etat === null && e.rail['/boosters']?.etat === 'pret'
+    || (console.log('        extinction :', JSON.stringify(eteint), '· nouveautes servies :',
+      JSON.stringify(servi?.nouveautes), '· extinctions envoyées par la page :', extinctions.length,
+      '· FANZZY :', JSON.stringify(e.rail['/fanzzy'])), false));
   await page.close();
-  await pool.query('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?', [U, NEUVE]);
+  /* La base rendue telle qu'on l'a trouvée : sans ces deux cartes, et sans
+     la table, que le reste de la suite n'a jamais vue. */
+  await pool.query('DROP TABLE IF EXISTS user_nouveautes');
+  await pool.query('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id IN (?, ?)',
+    [U, NEUVE, NEUVE2]);
 }
 
 /* ---- la bâche du jour : le prochain rendez-vous, sinon la suite du parcours ----

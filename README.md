@@ -15,8 +15,9 @@ Les documents, et lequel ouvrir :
 | Fichier | Ce qu'il répond |
 |---|---|
 | `ETAT.md` | où en est le projet, et quels pièges sont connus |
-| `HISTORIQUE.md` | **pourquoi** le code est écrit ainsi — quarante sessions, à consulter, jamais à lire d'affilée |
+| `HISTORIQUE.md` | **pourquoi** le code est écrit ainsi — quarante et une sessions, à consulter, jamais à lire d'affilée |
 | `IDEES.md` | ce qui n'est pas encore écrit, rangé par valeur |
+| `serveur/` | le chantier serveur de la refonte : le contenu choisi (`SERVEUR.md`), les contrats d'API que lisent les écrans (`CONTRATS.md`, cité par le code), le plan, les écarts au contrat, les risques et l'étude d'économie avec sa simulation |
 | `DEPLOIEMENT.md` | comment mettre en ligne, et les pièges de l'hébergeur |
 | `A-DEPLOYER.md` | le lot en attente de mise en ligne, et comment le vérifier |
 | `VISUELS.md` | les règles de toute image produite, et qui les fait respecter |
@@ -58,7 +59,7 @@ public/                 les pages, une par écran, script en ligne
 public/fanzzy-art.js    le dessin des Fanzzy — source unique, partagée
 public/nav.js           la barre commune
 public/fx.js            les effets et les personnages vivants
-sql/                    le schéma, 32 fichiers appliqués dans l'ordre, 43 tables
+sql/                    le schéma, 33 fichiers appliqués dans l'ordre, 47 tables
 scripts/                les tests, un par module — et les chaînes de production
 ```
 
@@ -83,17 +84,17 @@ voit exactement la pulsation sur laquelle il est noté.
 
 ## Les tests
 
-`npm test` lance les **cinquante-huit** suites. Elles se divisent en deux
+`npm test` lance les **soixante et une** suites. Elles se divisent en deux
 groupes, et il faut le savoir avant de s'alarmer :
 
-- **vingt-deux ne demandent rien** et tournent tout de suite, sur n'importe
+- **vingt-trois ne demandent rien** et tournent tout de suite, sur n'importe
   quelle machine ;
-- **trente-six demandent MySQL** — une base *locale*, sur le port 3307, jamais
+- **trente-huit demandent MySQL** — une base *locale*, sur le port 3307, jamais
   celle de production : elles effacent les tables au démarrage. Sans base, elles
   ne rougissent pas, elles s'arrêtent, et `npm test` les compte comme « la suite
   s'est arrêtée ».
 
-**Un premier `npm test` sur une machine sans base affiche donc trente-six
+**Un premier `npm test` sur une machine sans base affiche donc trente-huit
 échecs, et c'est normal.** Voir `ETAT.md` § 2 pour la base attendue et § 4 pour
 le détail des deux groupes.
 

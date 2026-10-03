@@ -68,19 +68,35 @@ a.tbf-fentes:focus-visible{outline:3px solid var(--projo);outline-offset:2px;bor
    et, à droite, ce qu'un ticket porte : un sur-titre, un nom, sa forme de
    rareté et un prix. **Pas de paragraphe sur le kraft** : la phrase d'effet
    ne s'y écrit pas. Elle ne se lit pas non plus sur l'étal, qui ne répète
-   pas l'objet à la une : elle se lit dans la boîte qui confirme l'achat
-   (voir `acheter`), le seul chemin par où il se prend, et dans le nom
-   accessible du ticket.
+   pas l'objet à la une : elle se lit dans la boîte qui s'ouvre quand on
+   touche la une (voir `acheter`), et dans le nom accessible du ticket.
 
-   C'est un bouton (l'achat) quand le solde suffit, un lien vers le Virage
-   quand il ne suffit pas : la même règle que l'étiquette de marché. */
+   **Toucher la une ouvre toujours sa boîte**, jamais le Virage. Elle était
+   un lien vers le Virage quand le solde ne suffisait pas : on la touchait
+   pour savoir ce que fait l'objet, et l'on se retrouvait dans une autre page
+   — la seule pièce du magasin dont on ne pouvait pas lire l'effet, celle
+   qu'on met en vitrine pour la faire désirer (relevé à la critique du
+   lot 3). La boîte montre l'objet, sa phrase et son prix ; elle propose
+   d'acheter quand le solde suffit, sinon d'aller gagner ce qui manque.
+
+   Le ticket est donc un cadre et non un bouton : **le bouton est le texte**
+   (le sur-titre, le nom, la forme, le prix), la scène et l'écharpe s'ouvrent
+   au même geste par le clic délégué de `#une`, et le sticker GAGNER est un
+   lien à part, dans sa propre zone de quarante-quatre pixels — un lien dans
+   un bouton est une faute de HTML, et le doigt ne saurait pas lequel il
+   touche. */
 #une{margin:14px 0 2px}
-#une:has(.une:focus-visible){outline:3px solid var(--projo);outline-offset:3px;border-radius:4px}
+#une:has(.une-lire:focus-visible){outline:3px solid var(--projo);outline-offset:3px;border-radius:4px}
 .une{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:center;
-  box-sizing:border-box;width:100%;margin:0;border:0;padding:21px 14px 14px;
+  box-sizing:border-box;width:100%;margin:0;padding:21px 14px 14px;
+  text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* Le bouton ne dessine rien : il porte le texte du ticket, à sa place, dans
+   l'encre du kraft. */
+.une-lire{display:flex;flex-direction:column;align-items:flex-start;gap:10px;box-sizing:border-box;
+  width:100%;min-width:0;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;
   text-align:left;cursor:pointer;-webkit-appearance:none;appearance:none;
   -webkit-tap-highlight-color:transparent}
-.une:focus-visible{outline:none}
+.une-lire:focus-visible{outline:none}
 /* La scène est un trou sombre dans le papier : les projecteurs sont de la
    craie à 13 %, et sur le kraft ils ne se verraient pas. */
 .une-scene{position:relative;display:block;height:168px;overflow:hidden;border-radius:6px;
@@ -91,13 +107,19 @@ a.tbf-fentes:focus-visible{outline:3px solid var(--projo);outline-offset:2px;bor
 .une-texte{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0;padding-right:4px}
 /* L'étiquette du mot traverse le bas de l'éclat et déborde de part et
    d'autre de la forme (BRIQUES, la forme) : la page lui laisse cet air. */
-.une-texte>.tbf-forme{margin:0 0 6px 28px}
+.une-lire>.tbf-forme{margin:0 0 6px 28px}
 .une-nom{display:block;max-width:100%;font-family:var(--banner);font-weight:700;font-size:19px;
   line-height:1.12;letter-spacing:.04em;text-transform:uppercase;overflow-wrap:anywhere}
-/* Hors de portée : l'écharpe fine du solde contre le prix, et GAGNER au bout
-   — la ligne de l'étiquette de marché, à la même place sous le prix. */
-.une-manque{display:flex;align-items:center;gap:10px;width:100%}
+/* Hors de portée : l'écharpe fine du solde contre le prix, et GAGNER au bout,
+   à la même place sous le prix. C'est lui, et lui seul, qui mène de la une
+   au Virage. Sa zone de touche fait quarante-quatre pixels sans que le
+   sticker grandisse. */
+.une-manque{display:flex;align-items:center;gap:6px;width:100%}
 .une-manque>.tbf-jauge{flex:1;min-width:30px}
+.une-gagner{display:inline-grid;place-items:center;flex:none;min-width:44px;min-height:44px;
+  margin:-6px -4px -10px 0;padding:0 4px;color:inherit;text-decoration:none;
+  -webkit-tap-highlight-color:transparent}
+.une-gagner:focus-visible{outline:3px solid var(--projo);outline-offset:0;border-radius:6px}
 @media (min-width:600px){
   .une{grid-template-columns:184px minmax(0,1fr);gap:20px;padding:22px 18px 16px}
   .une-scene{height:196px}
@@ -129,6 +151,31 @@ a.tbf-fentes:focus-visible{outline:3px solid var(--projo);outline-offset:2px;bor
 .filtre[aria-pressed=true]{background:rgba(242,238,228,.12);box-shadow:inset 0 0 0 1.5px var(--craie)}
 
 #etal .tbf-etal+.tbf-plaque{margin-top:18px}
+
+/* Rien de ce qu'on voit n'est à portée : une seule bâche, sous les filtres,
+   qui dit où gagner — au lieu d'un sticker GAGNER sur chaque étiquette, sept
+   au premier écran à 360 px quand le solde est court, le « mur de stickers »
+   que la direction désigne comme le défaut à éviter (critique du lot 3). */
+#etal .etal-gagner{margin:0 0 16px}
+
+/* Le dernier mot du nom et sa forme de rareté ne se séparent pas : seule, la
+   forme partait à la ligne sous le nom (« BILLET DE LA PREMIÈRE JOURNÉE »,
+   « LA LANTERNE DU 31 »), et une forme seule sur sa ligne a l'air d'un champ
+   de formulaire. La place de la forme est celle que la brique lui donne
+   quand elle est l'enfant direct du nom (`.tbf-marche-nom>.tbf-forme`), que
+   le segment qui la tient ne laisse plus jouer. */
+.nom-fin{white-space:nowrap}
+.nom-fin>.tbf-forme{margin-left:5px;vertical-align:-2px}
+
+/* Hors de portée, ce qui manque, au bout de l'écharpe fine : « −15 ». Un
+   chiffre et pas une phrase, en chiffres de même largeur, à la craie de
+   l'étiquette (le panneau est sombre : l'encre ne s'y lirait pas). La brique
+   range la ligne en grille, le prix sur toute la largeur, l'écharpe dessous ;
+   le chiffre prend la case au bout de l'écharpe, celle du sticker GAGNER
+   d'avant. */
+#etal .tbf-marche[data-etat=cher] .tbf-marche-pied>.manque{grid-area:2/2;align-self:center;margin:0}
+.manque{font-family:var(--banner);font-weight:700;font-size:13px;line-height:1;letter-spacing:.03em;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* **La phrase d'effet se lit en entier.** La brique la rogne à deux lignes,
    puis « … » ; mais chaque phrase de l'inventaire est un marché — ce que
@@ -265,7 +312,11 @@ a.tbf-fentes:focus-visible{outline:3px solid var(--projo);outline-offset:2px;bor
 /* La phrase d'effet dans la boîte qui confirme l'achat, sous l'objet : sa
    légende. La boîte lui donne déjà sa taille et sa craie pleine
    (`.tbf-dial p`) ; la page la centre sous l'objet. */
+.tbf-dial .achat-objet{display:grid;place-items:center;margin-top:16px}
 .tbf-dial .achat-effet{margin-top:10px;text-align:center}
+/* Hors de portée, la même boîte se lit : le prix y est posé sous la phrase,
+   puisque le geste n'est plus de payer. */
+.tbf-dial .achat-prix{display:flex;justify-content:center;margin-top:12px}
 
 /* tbf-degagement */
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
@@ -631,22 +682,51 @@ function objetHTML(o, taille) {
   return `<span class="tbf-objet tbf-objet--vide" data-rar="${rar}"${style} role="img" aria-label="${esc(o.nom)}"></span>`;
 }
 
-const formePetite = (r) => `<span class="tbf-forme" data-rar="${r}" style="--taille:16px" role="img"
-  aria-label="${RAR_NOM[r]}"><i></i></span>`;
+/* La forme de rareté collée au nom, dans une liste : seize pixels, sans son
+   mot (la brique le dit trop petit pour le porter). **Rien pour la
+   commune.** Sans mot, son rectangle gris cerné de craie et d'encre, collé
+   au nom d'un objet qu'on touche, se lisait comme une case à cocher vide —
+   dans une boutique, une invitation à cocher, six par écran quand le solde
+   est court (critique du lot 3). La commune est la rareté par défaut :
+   l'absence de forme la dit, le filtre COMMUNE l'écrit en toutes lettres,
+   et le nom accessible de l'étiquette la nomme. Le rond, l'étoile et
+   l'éclat, eux, ne ressemblent à aucun champ. */
+const formePetite = (r) => (r === 'commune' ? '' : `<span class="tbf-forme" data-rar="${r}" style="--taille:16px"
+  role="img" aria-label="${RAR_NOM[r]}"><i></i></span>`);
+/** Le nom d'un objet et sa forme, le dernier mot lié à la forme (`.nom-fin`). */
+function nomHTML(nom, rar) {
+  const n = String(nom ?? '');
+  const forme = formePetite(rar);
+  if (!forme) return esc(n);
+  const i = n.lastIndexOf(' ');
+  return `${esc(n.slice(0, i + 1))}<span class="nom-fin">${esc(n.slice(i + 1))}${forme}</span>`;
+}
 const prixHTML = (prix, or = false) => `<span class="tbf-sticker tbf-sticker--prix"${or ? ' data-ton="or"' : ''}><img
   src="${JETON()}" alt="">${esc(prix)}</span>`;
-/* L'écharpe fine du solde contre le prix : où l'on en est, pas ce qui manque. */
+/* L'écharpe fine du solde contre le prix : où l'on en est. */
 const ecartHTML = (prix) => `<span class="tbf-jauge tbf-jauge--fine"><i style="width:${
   Math.max(4, Math.min(100, Math.round((S.echarpes / Math.max(1, prix)) * 100)))}%"></i></span>`;
+/* Le sticker GAGNER : sur la une, et dans la cabine d'essayage, qui montre
+   une tenue à la fois. L'étal n'en porte plus (voir l'étiquette). */
 const GAGNER = '<span class="tbf-sticker" data-ton="vert">GAGNER</span>';
 
 /**
  * Une étiquette de marché (`.tbf-marche`, BRIQUES § 10).
  *
- * **Hors de portée, elle mène où gagner** — un lien vers le Virage, pas un
- * bouton éteint : un bouton éteint ne mène nulle part, et « il te manque
- * 120 » écrit en rouge rangeait le téléphone. L'écharpe fine dit l'écart, le
- * sticker GAGNER dit où aller.
+ * **Hors de portée, elle dit ce qui manque** : sous le prix, l'écharpe fine
+ * du solde contre le prix, et au bout le chiffre de l'écart (« −15 »). Pas
+ * de « il te manque 120 » écrit en rouge, qui rangeait le téléphone ; plus de
+ * sticker GAGNER non plus — un sur chaque étiquette, c'était sept au premier
+ * écran, le même ordre répété sept fois (critique du lot 3). Quand rien de
+ * ce qu'on voit n'est à portée, l'étal pose une seule bâche qui mène où
+ * gagner (voir `rendreEtal`).
+ *
+ * **Elle reste un bouton**, et le même geste que la une : la toucher ouvre
+ * la boîte de l'objet (voir `acheter`) — acheter quand le solde suffit,
+ * sinon lire l'objet et aller gagner ce qui manque. Elle était un lien vers
+ * le Virage : le Virage s'ouvrait au doigt sans qu'aucun mot de l'étiquette
+ * l'annonce, maintenant que GAGNER n'y est plus. Jamais un bouton éteint :
+ * il ne mène nulle part, et le navigateur grise son texte.
  *
  * Une pièce **déjà à soi** reste en vente : un second exemplaire se porte sur
  * un second Fanzzy (le serveur compte les copies). Le tampon le dit avant le
@@ -655,28 +735,25 @@ const GAGNER = '<span class="tbf-sticker" data-ton="vert">GAGNER</span>';
 function etiquetteHTML(o, { portee = false, colle = -1 } = {}) {
   const rar = rarDe(o.rar);
   const assez = S.echarpes >= o.prix;
+  const manque = Math.max(0, o.prix - S.echarpes);
   const etat = o.possede ? 'possede' : (!assez ? 'cher' : (portee ? 'portee' : ''));
-  const pied = etat === 'cher'
-    ? prixHTML(o.prix) + GAGNER + ecartHTML(o.prix)
-    : prixHTML(o.prix) + (assez ? '' : GAGNER);
+  const pied = prixHTML(o.prix)
+    + (etat === 'cher' ? `${ecartHTML(o.prix)}<b class="manque">−${manque}</b>` : '');
   const dedans = `${objetHTML(o)}
     ${o.possede ? '<span class="tbf-tampon" data-ton="vert">DÉJÀ À TOI</span>' : ''}
-    <span class="tbf-marche-nom">${esc(o.nom)}${formePetite(rar)}</span>
+    <span class="tbf-marche-nom">${nomHTML(o.nom, rar)}</span>
     ${o.texte ? `<span class="tbf-marche-effet">${esc(o.texte)}</span>` : ''}
     <span class="tbf-marche-pied">${pied}</span>`;
   const attrs = `class="tbf-marche${colle >= 0 ? ' tbf-colle' : ''}"${etat ? ` data-etat="${etat}"` : ''}
     data-type="${esc(o.type)}" data-id="${esc(o.id)}"${colle >= 0 ? ` style="--d:${colle * 60}ms"` : ''}`;
-  if (!assez) {
-    const manque = o.prix - S.echarpes;
-    /* Le nom accessible remplace tout ce que l'étiquette écrit : sans la
-       phrase d'effet, un lecteur d'écran ne l'entendait jamais hors de
-       portée, quand le bouton la dit. */
-    return `<a ${attrs} href="/virage" aria-label="${esc(`${o.nom}, ${RAR_NOM[rar].toLowerCase()}. ${
-      o.texte ? `${o.texte} ` : ''}${o.prix} écharpes${
-      o.possede ? ', déjà à toi' : ''} — il t’en manque ${manque} : où en gagner`)}">${dedans}</a>`;
-  }
-  return `<button type="button" ${attrs} aria-label="${esc(`${o.possede ? 'Un autre exemplaire : ' : ''}${o.nom}, ${
-    RAR_NOM[rar].toLowerCase()}. ${o.texte ?? ''} ${o.prix} écharpes`)}">${dedans}</button>`;
+  /* Le nom accessible remplace tout ce que l'étiquette écrit : il porte donc
+     la phrase d'effet, et hors de portée ce qui manque. */
+  const nomAcc = assez
+    ? `${o.possede ? 'Un autre exemplaire : ' : ''}${o.nom}, ${RAR_NOM[rar].toLowerCase()}. ${
+      o.texte ? `${o.texte} ` : ''}${o.prix} écharpes`
+    : `${o.nom}, ${RAR_NOM[rar].toLowerCase()}. ${o.texte ? `${o.texte} ` : ''}${o.prix} écharpes${
+      o.possede ? ', déjà à toi' : ''} — il t’en manque ${manque}`;
+  return `<button type="button" ${attrs} aria-label="${esc(nomAcc)}">${dedans}</button>`;
 }
 
 /* ------------------------------------------------------------ À LA UNE
@@ -694,31 +771,37 @@ function laUne() {
 /* La scène pose l'objet sur la plaque légendaire de LA REPRISE — la série en
    production, celle que la direction nomme (« RP-legendaire ») —, sous les
    projecteurs. Sans l'image, la scène reste un trou sombre : rien ne manque
-   à la lecture. */
+   à la lecture.
+
+   Le ticket est un cadre ; le bouton y est le texte, et toucher la scène ou
+   l'écharpe revient à le toucher (le clic délégué, plus bas). Hors de
+   portée, GAGNER est un lien à côté du bouton, jamais dedans. */
 function rendreUne() {
   const o = laUne();
   const el = $('une');
   if (!o) { el.innerHTML = ''; return; }
   const assez = S.echarpes >= o.prix;
-  const dedans = `<span class="une-scene" aria-hidden="true">
+  const manque = Math.max(0, o.prix - S.echarpes);
+  el.innerHTML = `<div class="tbf-cadre tbf-cadre--ticket une" data-echarpe>
+    <span class="une-scene" aria-hidden="true">
       <img class="une-plaque" src="/img/fonds/RP-legendaire.webp" alt="" onerror="this.remove()">
       <span class="tbf-projecteurs"></span>
       <span class="tbf-socle"></span>
       ${objetHTML(o)}
     </span>
     <span class="une-texte">
-      <span class="tbf-sticker">À LA UNE</span>
-      <b class="une-nom">${esc(o.nom)}</b>
-      <span class="tbf-forme" data-rar="legendaire"><i></i><b>LÉGENDAIRE</b></span>
-      ${prixHTML(o.prix, true)}
-      ${assez ? '' : `<span class="une-manque">${ecartHTML(o.prix)}${GAGNER}</span>`}
-    </span>`;
-  el.innerHTML = assez
-    ? `<button type="button" class="tbf-cadre tbf-cadre--ticket une" data-echarpe data-type="stuff"
-        data-id="${esc(o.id)}" aria-label="${esc(`À la une : ${o.nom}, légendaire. ${o.texte ?? ''} ${o.prix} écharpes`)}">${dedans}</button>`
-    : `<a class="tbf-cadre tbf-cadre--ticket une" data-echarpe href="/virage"
-        aria-label="${esc(`À la une : ${o.nom}, légendaire. ${o.texte ? `${o.texte} ` : ''}${
-          o.prix} écharpes — il t’en manque ${o.prix - S.echarpes} : où en gagner`)}">${dedans}</a>`;
+      <button type="button" class="une-lire" data-type="stuff" data-id="${esc(o.id)}"
+        aria-label="${esc(`À la une : ${o.nom}, légendaire. ${o.texte ? `${o.texte} ` : ''}${o.prix} écharpes${
+          assez ? '' : ` — il t’en manque ${manque}`}`)}">
+        <span class="tbf-sticker">À LA UNE</span>
+        <b class="une-nom">${esc(o.nom)}</b>
+        <span class="tbf-forme" data-rar="legendaire"><i></i><b>LÉGENDAIRE</b></span>
+        ${prixHTML(o.prix, true)}
+      </button>
+      ${assez ? '' : `<span class="une-manque">${ecartHTML(o.prix)}<a class="une-gagner" href="/virage"
+        aria-label="${esc(`Il t’en manque ${manque} : où gagner des écharpes`)}">${GAGNER}</a></span>`}
+    </span>
+  </div>`;
 }
 
 /* --------------------------------------------------------------- l'étal
@@ -771,6 +854,10 @@ function rendreEtal({ colle = false } = {}) {
   const prenables = montres.filter((o) => !o.possede && S.echarpes >= o.prix);
   const allume = prenables.length
     ? prenables.reduce((m, o) => (o.prix > m.prix ? o : m)) : null;
+  /* Rien de ce qu'on voit ne se paie avec ce qu'on a : la bâche qui mène où
+     gagner, une fois, sous les filtres. Dès qu'un objet est à portée, elle
+     part — le cerne d'or de cet objet est alors ce qu'il y a à regarder. */
+  const gagner = montres.length > 0 && !montres.some((o) => S.echarpes >= o.prix);
 
   /* Les filtres : une forme par rareté présente dans l'étal, rien pour une
      rareté qui n'a rien à montrer. Un seul à la fois ; le retoucher l'éteint. */
@@ -786,6 +873,7 @@ function rendreEtal({ colle = false } = {}) {
       <button type="button" class="tbf-interrupteur" role="switch" aria-checked="${S.portee}"
         data-portee><i aria-hidden="true"></i>À portée d’abord</button>
     </div>
+    ${gagner ? '<a class="tbf-plaque tbf-bloc etal-gagner" data-ton="vert" href="/virage">GAGNER DES ÉCHARPES</a>' : ''}
     <div class="tbf-etal">${montres.map((o, i) => etiquetteHTML(o, {
       portee: o === allume, colle: colle && i < 12 ? i : -1 })).join('')}</div>
     ${reste > 0 ? `<button type="button" class="tbf-plaque tbf-bloc" data-tout>${
@@ -818,8 +906,13 @@ $('etal').addEventListener('click', (e) => {
   const b = e.target.closest('button.tbf-marche');
   if (b) acheter(b.dataset.id, b);
 });
+/* La une se touche partout — la scène, le texte, l'écharpe —, sauf sur le
+   lien GAGNER, qui mène au Virage par lui-même. Le bouton reste le seul
+   élément qu'on atteint au clavier : la scène n'est qu'une plus grande
+   surface pour le même geste. */
 $('une').addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-id]');
+  if (e.target.closest('a[href]')) return;
+  const b = e.target.closest('.une')?.querySelector('.une-lire');
   if (b) acheter(b.dataset.id, b);
 });
 
@@ -834,17 +927,41 @@ $('une').addEventListener('click', (e) => {
    l'étal ne répète pas. */
 let enAchat = false;
 
+/* Le corps de la boîte : l'objet, puis sa phrase d'effet ; hors de portée,
+   son prix dessous, puisque le geste de la boîte n'est plus de payer. */
+const boiteObjet = (o, { prix = false } = {}) => `<div class="achat-objet">${objetHTML(o, 96)}</div>${
+  o.texte ? `<p class="achat-effet">${esc(o.texte)}</p>` : ''}${
+  prix ? `<div class="achat-prix">${prixHTML(o.prix)}</div>` : ''}`;
+
+/**
+ * Hors de portée, la boîte **se lit** : l'objet, sa phrase, son prix, ce qui
+ * manque. Le geste n'est plus ACHETER mais une bâche verte, GAGNER
+ * 490 ÉCHARPES, qui mène au Virage ; FERMER laisse le joueur où il était.
+ * C'est ce qu'on venait chercher en touchant un objet qu'on ne peut pas
+ * encore payer : savoir ce qu'il fait, et ce qu'il faut pour l'avoir.
+ */
+async function lireObjet(o) {
+  const manque = Math.max(0, (Number(o.prix) || 0) - S.echarpes);
+  if (await window.TBF_DIALOGUE?.confirmer({
+    titre: String(o.nom).toUpperCase(),
+    texte: (o.possede ? 'Tu en as déjà un ; un second se porterait sur un autre Fanzzy. ' : '')
+      + `Il t’en manque ${manque} : les écharpes se gagnent en jouant, dans le Virage ou en duel.`,
+    corps: boiteObjet(o, { prix: true }),
+    oui: `GAGNER ${pluriel(manque, 'ÉCHARPE', 'ÉCHARPES')}`, non: 'FERMER', ton: 'vert',
+  })) location.href = '/virage';
+}
+
 async function acheter(id, bouton) {
   const o = (S.etal?.stuff ?? []).find((x) => x.id === id);
   if (!o || enAchat) return;
   const prix = Number(o.prix) || 0;
+  if (S.echarpes < prix) { await lireObjet(o); return; }
   const ecr = pluriel(prix, 'écharpe', 'écharpes');
   if (!(await window.TBF_DIALOGUE?.confirmer({
     titre: `ACHETER ${String(o.nom).toUpperCase()} ?`,
     texte: (o.possede ? 'Tu en as déjà un : celui-ci se portera sur un autre Fanzzy. ' : '')
       + `${ecr} seront débitées. Une écharpe dépensée ne revient pas — mais elle se regagne en jouant.`,
-    corps: `<div style="display:grid;place-items:center;margin-top:16px">${objetHTML(o, 96)}</div>${
-      o.texte ? `<p class="achat-effet">${esc(o.texte)}</p>` : ''}`,
+    corps: boiteObjet(o),
     oui: 'ACHETER', sousOui: ecr, ton: 'or',
   }))) return;
 
@@ -908,8 +1025,8 @@ const MESSAGES = {
  * La cérémonie d'achat, sur le calque (`.tbf-calque`, posé sur `body`).
  *
  * Dans l'ordre de la direction : l'objet vient au centre sur son socle, la
- * bouffée de fumigène de sa rareté gonfle derrière lui, il se retourne, et
- * `FX.reveler` joue l'échelle commune de sa rareté ; puis le tampon « À TOI ! » claque, le
+ * bouffée de fumigène de sa rareté gonfle derrière lui, `FX.reveler` le
+ * retourne et joue l'échelle commune de sa rareté ; puis le tampon « À TOI ! » claque, le
  * ticket « −45 » descend de la réserve dans la pile — le jeton vole du
  * compteur jusqu'à lui pendant que le compteur décompte —, et les deux bâches
  * paraissent. Le calque reste jusqu'au geste du joueur : il vient d'acheter,
@@ -970,7 +1087,7 @@ function ceremonie(o, prix, apres) {
          s'il n'y a plus de une. */
       const ici = document.querySelector(`#etal [data-id="${CSS.escape(o.id)}"]`)
         ?? (avant?.isConnected ? avant : null)
-        ?? document.querySelector('#une .une, #etal .tbf-marche');
+        ?? document.querySelector('#une .une-lire, #etal .tbf-marche');
       try { ici?.focus?.({ preventScroll: true }); } catch { /* parti */ }
       resoudre();
     };
@@ -992,30 +1109,21 @@ function ceremonie(o, prix, apres) {
     calque.tabIndex = -1;
     calque.focus({ preventScroll: true });
 
-    /* **Le retournement est fait ici, puis la cérémonie l'attend.** Le
-       contrat offre `retourner: true` pour un objet sans retournement à lui,
-       mais la cérémonie y suit l'objet image par image et le prend pour
-       parti au premier instant, quand la propriété `scale` le tient encore à
-       zéro de large : elle se résout en une centaine de millisecondes, sans
-       rien jouer (mesuré deux fois au banc, la seconde sur le `fx.js` du
-       2 octobre au soir : 90 ms en rare, 101 en épique, 105 en légendaire,
-       quand la cérémonie dure 600, 1 200 et 1 600 ms après le retournement
-       par ce chemin-ci ; signalé au périmètre fx).
-       L'autre chemin du contrat est celui du booster : la page lance son
-       geste, `FX.reveler` attend qu'il finisse (`attendrePose`) et se joue
-       sur la face. Le son du geste est à la page sur ce chemin-là. Sans
-       mouvement, l'objet est simplement là. Le jour où `retourner` tiendra,
-       passer `{ retourner: true }` et retirer d'ici le son et l'animation
-       suffira : le reste ne change pas. */
-    window.FX?.son?.('carte');
-    const calmeAnim = /(^|\s)animations(\s|$)/.test(document.documentElement.dataset.calme ?? '');
-    if (!calmeAnim && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      try {
-        objet.animate([{ scale: '0 1' }, { scale: '1.06 1', offset: 0.7 }, { scale: '1 1' }],
-          { duration: 300, easing: 'cubic-bezier(.3,.9,.3,1)' });
-      } catch { /* sans animations de script : l'objet est déjà là */ }
-    }
-    const revele = window.FX?.reveler?.(rar, objet) ?? Promise.resolve();
+    /* **Le retournement est celui de la cérémonie** (`retourner: true`, le
+       chemin que le contrat donne à un objet qui n'a pas de geste à lui) :
+       elle joue le son « carte », ouvre l'objet de rien à sa largeur en
+       300 ms, puis l'échelle de sa rareté — et tient elle-même le calme et
+       le mouvement réduit (sans mouvement, l'objet est là, le son reste
+       selon le calme). La page le faisait à sa place tant que la cérémonie
+       prenait l'objet plat de la première image pour un objet parti ; elle
+       ne s'arrête plus que sur un objet retiré ou sans boîte (« parti »,
+       dans fx.js, corrigé le 2 octobre au soir). Mesuré au banc par ce
+       chemin : la bâche paraît à 0,3 s en commune, 1,0 en rare, 1,5 en
+       épique, 1,9 en légendaire ; sans mouvement à 0, 0,6, 0,6 et 1,4. On
+       lui passe le sticker de l'objet à sa taille (`--taille`), qui a sa
+       boîte dès qu'il est posé, et non son image, qui peut ne pas être
+       décodée encore. */
+    const revele = window.FX?.reveler?.(rar, objet, { retourner: true }) ?? Promise.resolve();
     Promise.resolve(revele).catch(() => {}).then(() => {
       if (fini) return;
       const tampon = calque.querySelector('.achat-tampon');
@@ -1348,7 +1456,15 @@ async function monter() {
   const [catalogue, etat, abo] = await Promise.all([
     lire('/api/boutique/catalogue'),
     lire('/api/fanzzy/state'),
-    lire('/api/abonnement'),
+    /* **Une seule question à l'abonnement par page.** Le tiroir la pose
+       aussi (sa marque ABONNÉ) : la réponse se partage par la promesse
+       posée sur la fenêtre, `window.TBF_ABO` — comme `TBF_MOI` pour le
+       compte, et comme le KOP —, le premier qui passe la pose, l'autre la
+       reprend. Cette page passe la première (le tiroir attend le compte
+       avant de se monter). Sa forme est celle de tous ses lecteurs, celle
+       de `lire` : le corps d'une réponse réussie, ou `null`, sans jamais
+       lever. L'objet est commun : on le lit, on n'y écrit pas. */
+    (window.TBF_ABO ??= lire('/api/abonnement')),
   ]);
   S.catalogue = catalogue;
   S.etat = etat?.wallet ? etat : null;

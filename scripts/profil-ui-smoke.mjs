@@ -146,17 +146,28 @@ await page.goto(`${base}/profil`, { waitUntil: 'networkidle0' });
 check('le profil s’affiche', await jusqua(async () =>
   page.evaluate(() => document.getElementById('page')?.style.display !== 'none')));
 
-/* ------------------------------------------------------- le parcours */
+/* ------------------------------------------------------- le parcours
+
+   **Depuis le lot 5, l'en-tête du parcours n'est plus un tableau de bord.**
+   Les cinq cases d'avant (« CLASSÉ · 1v1 », « GRAND VIRAGE » et son
+   « 240 ferveur »…) sont devenues trois stickers au plus, un par sorte de
+   partie jouée — le duel classé, le Virage, l'entraînement, dans l'ordre de
+   ce qui compte au classement (`.agregats > .tbf-sticker[data-sorte]`). Le
+   détail par format n'a pas disparu : il est passé dans l'`aria-label` du
+   sticker, et dans la ligne de précision de chaque ticket (« Classé 1v1 ») —
+   la feuille de match ne redit pas deux fois la même chose. On lit donc ces
+   deux endroits, et l'on exige d'eux ce qu'on exigeait des cinq cases. */
 
 check('la section du parcours arrive', await jusqua(async () =>
-  page.evaluate(() => document.querySelectorAll('#parcours .sorte').length > 0)));
+  page.evaluate(() => document.querySelectorAll('#parcours .agregats [data-sorte]').length > 0)));
 
 const vu = await page.evaluate(() => ({
   titres: [...document.querySelectorAll('h2')].map((h) => h.textContent.trim()),
-  sortes: [...document.querySelectorAll('#parcours .sorte')].map((s) => ({
-    q: s.querySelector('.q')?.textContent.trim(),
-    n: s.querySelector('.n')?.textContent.replace(/\s+/g, ' ').trim(),
-    f: s.querySelector('.f')?.textContent.trim(),
+  agregats: [...document.querySelectorAll('#parcours .agregats [data-sorte]')].map((s) => ({
+    sorte: s.dataset.sorte,
+    texte: s.textContent.replace(/\s+/g, ' ').trim(),
+    role: s.getAttribute('role'),
+    nom: s.getAttribute('aria-label') ?? '',
   })),
   /* Depuis le lot 5, MON PARCOURS est une feuille de match : un ticket kraft
      par partie (`.tbf-partie`, qui garde la classe `part`), le sujet en titre
@@ -185,19 +196,60 @@ const vu = await page.evaluate(() => ({
 check('le profil annonce le parcours', vu.titres.includes('MON PARCOURS')
   || (console.log('        titres :', vu.titres.join(', ')), false));
 
-/* Les cinq sortes de partie doivent être **séparées** : un 2v2 d'entraînement
-   n'est pas un 1v1 classé, et les additionner effacerait la seule chose que le
-   joueur vient chercher ici. */
-const sortesVues = vu.sortes.map((s) => s.q);
-for (const attendu of ['CLASSÉ · 1v1', 'CLASSÉ · 2v2',
-                       'ENTRAÎNEMENT · 1v1', 'ENTRAÎNEMENT · 2v2', 'GRAND VIRAGE']) {
-  check(`« ${attendu} » est compté à part`, sortesVues.includes(attendu)
+/* Une sorte jouée, un sticker, et les trois dans l'ordre de ce qui compte au
+   classement. Le banc a joué des trois : il en faut donc trois, ni quatre ni
+   cinq — un sticker par format redirait ce que les tickets disent déjà. */
+const agg = Object.fromEntries(vu.agregats.map((a) => [a.sorte, a]));
+check('un sticker par sorte jouée : le classé, le Virage, l’entraînement',
+  JSON.stringify(vu.agregats.map((a) => a.sorte)) === JSON.stringify(['classe', 'virage', 'entrainement'])
+  || (console.log('        stickers :', JSON.stringify(vu.agregats)), false));
+
+/* Le classé et l'entraînement doivent rester **séparés** : un 2v2
+   d'entraînement n'est pas un 1v1 classé, et les additionner effacerait la
+   seule chose que le joueur vient chercher ici. Les comptes attendus sont
+   ceux du banc : `p1` gagné et `p2` perdu en classé, `p3` nul et `p4` gagné
+   à l'entraînement — deux et deux, une victoire chacun, et non « 4 duels ». */
+check('le duel classé est compté à part', agg.classe?.texte === '2 DUELS CLASSÉS · 1 V'
+  || (console.log('        il dit :', agg.classe?.texte), false));
+check('l’entraînement aussi', agg.entrainement?.texte === '2 ENTRAÎNEMENTS · 1 V'
+  || (console.log('        il dit :', agg.entrainement?.texte), false));
+
+/* Le détail par format, au lecteur d'écran : c'est l'`aria-label` qui le
+   porte, et il n'est lu que si le sticker a un rôle — un `span` nommé sans
+   rôle est passé sous silence. L'ordre des formats suit celui des lignes du
+   serveur (`GROUP BY` sans `ORDER BY`) : on exige chacun, pas leur ordre. */
+for (const [cle, nom] of [['classe', 'Duels classés'], ['entrainement', 'Entraînements']]) {
+  const a = agg[cle];
+  check(`« ${nom} » dit chaque format à part, à qui écoute`,
+    a?.role === 'img' && a.nom.startsWith(`${nom} : 2 parties`)
+    && a.nom.includes('1 en 1v1') && a.nom.includes('1 en 2v2') && a.nom.includes('1 gagnée')
+    || (console.log('        il dit :', a?.role, '·', a?.nom), false));
+}
+
+/* Le Virage compte des matchs poussés, pas des victoires : son sticker n'en
+   porte pas. */
+check('le Virage compte ses matchs, sans victoire inventée',
+  agg.virage?.texte === '1 MATCH AU VIRAGE' && agg.virage.role === 'img'
+  && agg.virage.nom === 'Grand Virage : 1 match poussé'
+  || (console.log('        il dit :', agg.virage?.texte, '·', agg.virage?.nom), false));
+
+/* Les cinq sortes restent séparées, mais sur les tickets : chaque partie
+   ouvre sa ligne de précision par sa sorte et son format. C'est là que le
+   joueur les lit désormais, et c'est là qu'on exige les cinq. */
+const sortesVues = vu.lignes.map((l) => l.sorte);
+for (const attendu of ['Classé 1v1', 'Classé 2v2',
+                       'Entraînement 1v1', 'Entraînement 2v2', 'Grand Virage']) {
+  check(`« ${attendu} » se lit à part sur son ticket`, sortesVues.includes(attendu)
     || (console.log('        vues :', sortesVues.join(' | ')), false));
 }
 
-const virage = vu.sortes.find((s) => s.q === 'GRAND VIRAGE');
-check('le virage dit ce qu’il a rapporté', virage?.f === '240 ferveur'
-  || (console.log('        il dit :', virage?.f), false));
+/* Ce que le Virage a rapporté ne s'écrit plus en total (choix du lot 5, voir
+   plus haut) : il se lit sur le ticket du match, en sticker. Le banc n'a
+   qu'un match au Virage, à 240 de ferveur : c'est donc ce que son ticket
+   doit porter. */
+const virage = vu.lignes.find((l) => l.sorte === 'Grand Virage');
+check('le virage dit ce qu’il a rapporté', virage?.gain === '+240'
+  || (console.log('        il dit :', virage?.gain), false));
 
 /* La liste mêle les deux jeux, la plus récente d'abord. */
 check('la liste montre les parties', vu.lignes.length >= 5

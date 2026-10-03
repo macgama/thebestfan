@@ -30,6 +30,12 @@
  * d'une relance (lue avant). Sinon huit réclamations simultanées gèlent les
  * huit connexions de la production.
  *
+ * **La lecture de l'état ne lit jamais la journée du football** hors tirage :
+ * le hub la fait à chaque arrivée, et chaque lecture de la journée peut
+ * réveiller l'API sportive. « Relançable » se juge sur le relevé d'une
+ * minute qu'un tirage ou une relance a noté pour ce jour de jeu, ou se
+ * présume ; la relance tranche.
+ *
  * **Les vraies portes d'entrée** : un booster ouvert par la route du module
  * fanzzy, et un chant poussé par la socket de la salle du Virage, font
  * avancer leurs missions.
@@ -197,7 +203,11 @@ console.log(`\n  gagnerDans : ${niveau === niveauVrai ? 'la vraie (niveau)' : 'l
    par le pool (le cache du télétexte est une table) : la lire sous ce verrou,
    c'est demander une connexion en en tenant une, et huit relances simultanées
    gèlent le serveur. Une connexion à part tente le verrou sans attendre
-   (`NOWAIT`) ; un refus veut dire qu'il était tenu. */
+   (`NOWAIT`) ; un refus veut dire qu'il était tenu.
+
+   Comme en production, chaque lecture passe par le pool : là-bas, au moins
+   deux requêtes (le cache du télétexte, puis les compétitions activées),
+   ici une, assez pour que le budget d'une lecture de l'état la compte. */
 let maintenant = 0;          // secondes Unix de l'horloge figée
 let matchs = [];
 let journeeLue = 0;
@@ -205,6 +215,7 @@ let surveille = null;
 let journeeSousVerrou = 0;
 const jourDuFoot = async () => {
   journeeLue++;
+  await pool.query("SELECT 'journée du football' AS doublure");
   if (surveille) {
     try {
       await pool.query('SELECT user_id FROM user_wallet WHERE user_id = ? FOR UPDATE NOWAIT', [surveille]);
@@ -1096,6 +1107,63 @@ titre('la relance');
   check('et jamais relancée et payée à la fois', doubles === 0 || voir(doubles));
 }
 
+/* ================================== « relançable », sans lire la journée */
+
+titre('« relançable » se juge sans lire la journée du football');
+{
+  /* Un jour sans match. « Duel » et « Fais grandir » éteintes : les seules
+     remplaçantes de « boosters » sont du Virage. Pour « victoire », un joueur
+     sans club n'a que le Virage et les classés, qui demandent un match eux
+     aussi. Seule la journée peut dire qu'il n'y en a pas — et le hub lit
+     l'état à chaque arrivée : la lire là, c'était réveiller l'API sportive à
+     chaque expiration de son cache. Avant la correction, la première
+     vérification rougit. */
+  await figer('2027-01-06 12:00:00');
+  matchs = [];
+  poserReglages({ 'mission.duel': false, 'mission.grandir': false });
+  const V = await joueur();
+  await contrat(V, ['boosters', 'victoire', 'endurance']);
+  const lues = journeeLue;
+  await lire(V);
+  let e = await lire(V);
+  check('deux lectures de l’état hors tirage : la journée n’est pas lue',
+    journeeLue === lues || voir(journeeLue - lues));
+  check('sans relevé de ce jour de jeu, une remplaçante du Virage est présumée possible',
+    mission(e, 0)?.relancable === true && mission(e, 1)?.relancable === true
+    && mission(e, 2)?.relancable === true || voir(e?.missions?.liste));
+
+  const r = await poster(V, 'relance', { rang: 0, id: 'boosters' });
+  check('la relance, elle, lit la journée une fois et tranche : « aucune »',
+    r?.relancee === false && r.raison === 'aucune' && journeeLue === lues + 1
+    || voir(r?.relancee ?? r?.raison, journeeLue - lues));
+  check('l’état qu’elle rend le sait déjà : « boosters » et « victoire » ne sont plus relançables',
+    mission(r?.quotidien, 0)?.relancable === false && mission(r?.quotidien, 1)?.relancable === false
+    && mission(r?.quotidien, 2)?.relancable === true && r.quotidien.missions.relances === 1
+    || voir(r?.quotidien?.missions));
+  e = await lire(V);
+  check('la lecture suivante aussi, sans relire la journée',
+    mission(e, 0)?.relancable === false && journeeLue === lues + 1
+    || voir(mission(e, 0), journeeLue - lues));
+
+  /* Le relevé ne vaut qu'une minute : au-delà, la présomption revient. */
+  crochets.horloge = () => Date.now() + 61_000;
+  e = await lire(V);
+  delete crochets.horloge;
+  check('une minute plus tard, le relevé est oublié : présumée possible, toujours sans lire',
+    mission(e, 0)?.relancable === true && journeeLue === lues + 1
+    || voir(mission(e, 0), journeeLue - lues));
+
+  /* Et il ne vaut que pour son jour de jeu, même encore frais. */
+  await figer('2027-01-08 12:00:00');
+  const W = await joueur();
+  await contrat(W, ['boosters', 'victoire', 'endurance']);
+  e = await lire(W);
+  check('le relevé d’un autre jour de jeu ne dit rien d’aujourd’hui : présumée possible, sans lire',
+    mission(e, 0)?.relancable === true && journeeLue === lues + 1
+    || voir(mission(e, 0), journeeLue - lues));
+  reglagesDeDepart();
+}
+
 /* ============================================= abonné et non-abonné, plafonds */
 
 titre('abonné et non-abonné, et les plafonds gratuits');
@@ -1312,8 +1380,11 @@ titre('depuis ta dernière visite');
     r?.ok === true && m0.v === '2027-03-15 10:00:00' && photo?.[KOP]?.pot === 120 && photo[KOP].verse === 500
     || voir(r, m0));
 
-  /* Le budget : une marque récente ne coûte rien de plus. */
+  /* Le budget : une marque récente ne coûte rien de plus. Et la journée du
+     football n'en fait jamais partie hors tirage : le hub lit l'état à
+     chaque arrivée. */
   await lire(T);
+  const luesAvant = journeeLue;
   compte = [];
   await lire(T);
   const sans = compte.length;
@@ -1322,6 +1393,8 @@ titre('depuis ta dernière visite');
   const avec = compte.length;
   compte = null;
   check(`au plus 7 requêtes par lecture (${sans})`, sans <= 7);
+  check('aucune lecture de la journée du football dans ces lectures',
+    journeeLue === luesAvant || voir(journeeLue - luesAvant));
   check(`?retour=1 avec une marque récente : le même nombre (${avec})`, avec === sans && !('depuis' in e));
 
   await figer('2027-03-15 10:00:10');

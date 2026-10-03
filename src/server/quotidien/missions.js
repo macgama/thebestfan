@@ -132,10 +132,50 @@ export async function recompter(lire, userId, mission, cible, k) {
 
 /* ============================================================ les conditions
 
-   Elles ne se lisent qu'au tirage et à la relance. Chacune ne coûte que ce
-   qu'elle demande, et seulement si l'ordre du jour y arrive : la journée du
-   football n'est lue que si une mission du Virage se présente, les Fanzzy
-   du joueur que si « Fais grandir » se présente. */
+   La journée du football ne se lit qu'au tirage et à la relance. Chaque
+   condition ne coûte que ce qu'elle demande, et seulement si l'ordre du jour
+   y arrive : la journée n'est lue que si une mission du Virage se présente,
+   les Fanzzy du joueur que si « Fais grandir » se présente.
+
+   **La lecture de l'état ne la lit jamais** (`presumer`). Le hub demande
+   l'état à chaque arrivée, et « relançable » y pose la question des
+   conditions : lire la journée là, c'était une requête sur le cache du
+   télétexte, le décodage de tous les matchs du monde et une requête sur les
+   compétitions à chaque arrivée — et, le cache expiré, un appel à l'API
+   sportive déclenché par le hub, de jour comme de nuit. */
+
+/* Le relevé de la journée vaut une minute : un peu plus que le cache du
+   télétexte (45 s), assez pour que l'état rendu par une relance dise déjà
+   ce qu'elle vient d'apprendre. */
+const DUREE_DU_RELEVE_MS = 60_000;
+
+/**
+ * La mémoire du dernier relevé : les matchs du jour **déjà filtrés** sur le
+ * jour de jeu, notés par la dernière lecture de la journée qu'un tirage ou
+ * une relance a faite, pour tous les joueurs (la journée est la même pour
+ * tous ; le club de chacun se juge après).
+ *
+ * Elle ne vaut que pour **le même jour de jeu** — ses bornes en secondes
+ * Unix, lues en SQL — et pour une minute. L'âge se mesure à l'horloge de ce
+ * processus : c'est une durée, pas un jour, et aucun jour n'est calculé ici.
+ * Elle ne fait jamais lire la journée : elle sert ce qui a déjà été lu.
+ *
+ * @param horloge  l'instant en millisecondes ; les suites l'avancent
+ */
+export function memoireDeJournee({ dureeMs = DUREE_DU_RELEVE_MS, horloge = () => Date.now() } = {}) {
+  let releve = null;
+  return {
+    noter(debut, fin, matchs) {
+      releve = { debut, fin, matchs, a: horloge() };
+    },
+    /** Les matchs du jour de jeu `[debut, fin[`, ou `null` sans relevé valable. */
+    relire(debut, fin) {
+      if (!releve || releve.debut !== debut || releve.fin !== fin) return null;
+      const age = horloge() - releve.a;
+      return age >= 0 && age <= dureeMs ? releve.matchs : null;
+    },
+  };
+}
 
 /* « Se joue encore » : à venir à une heure fixée, ou en cours. `TBD` n'y est
    pas — son heure est provisoire, souvent minuit — ni les reportés, arrêtés
@@ -150,14 +190,26 @@ let catalogueMuet = false;
 /**
  * Le contexte des conditions d'un joueur pour aujourd'hui.
  *
- * @param base  ce que l'appelant a déjà lu, pour ne pas le relire :
- *              `{ debut, fin, suivis, scarves, classes }` (`debut` et `fin` en
- *              secondes Unix, le jour de jeu lu en SQL). Ce qui manque est lu
- *              une fois, à la première question qui en a besoin.
+ * @param base      ce que l'appelant a déjà lu, pour ne pas le relire :
+ *                  `{ debut, fin, suivis, scarves, classes }` (`debut` et `fin`
+ *                  en secondes Unix, le jour de jeu lu en SQL). Ce qui manque
+ *                  est lu une fois, à la première question qui en a besoin.
+ * @param memoire   la mémoire du relevé (`memoireDeJournee`) : une lecture de
+ *                  la journée y est notée ; une question sans lecture s'y sert
+ * @param presumer  vrai pour une question qui ne doit **rien lire** de la
+ *                  journée (la lecture de l'état). Elle se sert du relevé du
+ *                  même jour de jeu s'il a moins d'une minute ; sinon, une
+ *                  condition qui dépend de la journée est **présumée
+ *                  remplie** une fois ses autres prérequis vérifiés (bascule,
+ *                  XP du duel, plafond des classés, club suivi). Jamais pour
+ *                  un tirage ni une relance : eux lisent, et tranchent.
  */
-export function contexte({ lire, userId, jourDuFoot = null, base = null }) {
+export function contexte({ lire, userId, jourDuFoot = null, base = null, memoire = null,
+  presumer = false }) {
   let socle = base;
-  let journee = null;
+  /* `undefined` : pas encore demandée ; `null` : inconnue (présumée) ; un
+     tableau : les matchs du jour de jeu. */
+  let journee;
   let grandir = null;
 
   async function lireSocle() {
@@ -187,17 +239,38 @@ export function contexte({ lire, userId, jourDuFoot = null, base = null }) {
      jouera. On l'accepte — le tirage se fait en général plus tard, et une
      mission qu'on ne propose pas ne promet rien. La comparaison se fait en
      instants absolus : la date ISO de l'API contre les bornes en secondes
-     Unix lues dans la base. Aucun jour n'est calculé ici. */
+     Unix lues dans la base. Aucun jour n'est calculé ici.
+
+     Sans lecture permise (`presumer`), c'est le relevé de la mémoire, ou
+     `null` : la journée est inconnue. Une lecture faite est notée, même
+     vide — sans télétexte ou l'API en panne, aucune mission du Virage ne se
+     ferait, et la relance le dirait aussi. */
   async function matchsDuJour() {
-    if (journee) return journee;
+    if (journee !== undefined) return journee;
     const { debut, fin } = await lireSocle();
+    if (presumer) {
+      journee = memoire?.relire(debut, fin) ?? null;
+      return journee;
+    }
     const parId = await journeeParId(jourDuFoot);
     journee = [...parId.values()].filter((x) => {
       const t = Date.parse(x.date ?? '');
       return Number.isFinite(t) && t >= debut * 1000 && t < fin * 1000;
     });
+    memoire?.noter(debut, fin, journee);
     return journee;
   }
+
+  /* Une condition qui se juge sur la journée : `juger` reçoit les matchs du
+     jour. Journée inconnue (une question qui ne lit rien, sans relevé
+     valable) : présumée remplie. Une relance présumée à tort répond
+     « aucune », et l'état qu'elle rend le sait déjà — elle vient de noter
+     son relevé. */
+  async function surLaJournee(juger) {
+    const matchs = await matchsDuJour();
+    return matchs === null ? true : juger(matchs);
+  }
+  const seJoue = (matchs) => matchs.some((x) => SE_JOUE.has(x.status));
 
   async function unFanzzyPeutGrandir() {
     if (grandir !== null) return grandir;
@@ -250,24 +323,22 @@ export function contexte({ lire, userId, jourDuFoot = null, base = null }) {
         if (!(reglage('xp.duel_classe') > 0)) return false;
         const plafond = reglage('abo.duels_classes_jour');
         if (plafond > 0 && (await lireSocle()).classes + mission.cible > plafond) return false;
-        return (await matchsDuJour()).some((x) => SE_JOUE.has(x.status));
+        return surLaJournee(seJoue);
       }
       case 'match_du_jour':
-        return (await matchsDuJour()).some((x) => SE_JOUE.has(x.status));
+        return surLaJournee(seJoue);
       case 'club_joue': {
         const { suivis } = await lireSocle();
         if (!suivis.size) return false;
-        return (await matchsDuJour()).some((x) => SE_JOUE.has(x.status)
-          && (suivis.has(Number(x.home?.id)) || suivis.has(Number(x.away?.id))));
+        return surLaJournee((matchs) => matchs.some((x) => SE_JOUE.has(x.status)
+          && (suivis.has(Number(x.home?.id)) || suivis.has(Number(x.away?.id)))));
       }
       case 'avant_seconde_mi_temps':
-        return (await matchsDuJour()).some((x) => AVANT_MT2.has(x.status));
-      case 'deux_competitions': {
-        const ligues = new Set((await matchsDuJour())
+        return surLaJournee((matchs) => matchs.some((x) => AVANT_MT2.has(x.status)));
+      case 'deux_competitions':
+        return surLaJournee((matchs) => new Set(matchs
           .filter((x) => SE_JOUE.has(x.status) && x.leagueId != null)
-          .map((x) => x.leagueId));
-        return ligues.size >= 2;
-      }
+          .map((x) => x.leagueId)).size >= 2);
       case 'grandir': return unFanzzyPeutGrandir();
       default: return false;
     }

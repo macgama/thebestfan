@@ -9,6 +9,9 @@
      marqueur). Le fichier de la police ne se charge que si un mot l'emploie. -->
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<!-- La feuille des cartes : MON FANZZY montre la carte du titulaire, dessinée
+     par `cardHTML` comme au classeur. Sans elle, la carte rend sa structure nue. -->
+<link rel="stylesheet" href="/cartes.css">
 <script src="/dialogue.js" defer></script>
 <style>
 
@@ -188,10 +191,20 @@ h2{margin:26px 2px 10px}
    SAISON et ce qu'elle a fait depuis hier, la division suivante, le geste
    « porter l'insigne » d'une division atteinte, et les titres gagnés. Un
    panneau calme : on le lit, il ne se touche que par sa bâche. */
-.saison{padding:14px 14px 12px}
-.saison-tete{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
+.saison{position:relative;padding:14px 14px 12px}
+.saison-tete{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
+.saison-tete>:not(.tbf-bouffee){position:relative;z-index:1}
 .saison-tete .tbf-division{margin-right:2px}
 .saison-div{font-family:var(--banner);font-weight:700;font-size:18px;letter-spacing:.06em;line-height:1.1}
+/* **La division portée est un tampon.** Atteinte, elle s'écrit en clair et
+   la bâche or invite à la porter ; portée, son nom devient un tampon vert —
+   l'acquis — en contour, vingt pixels, sur le panneau sombre (le vert
+   clair, 8,5:1). Au versement, il claque (`.tbf-clac`) dans une bouffée aux
+   couleurs de l'écharpe de la division (`.tbf-bouffee`, ses deux teintes
+   lues sur l'insigne lui-même), avec le son « parfait » ; au calme, le
+   tampon seul, posé. Un tampon reste : la division se lit portée à chaque
+   visite. */
+.saison-tete>.tbf-tampon{--rot:-6deg;margin:2px 2px 2px 0}
 .saison-rang{margin-left:auto;display:flex;align-items:center;gap:8px;
   font-family:var(--banner);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .saison-rang sup{font-size:11px;line-height:0;vertical-align:6px}
@@ -206,46 +219,63 @@ h2{margin:26px 2px 10px}
 
 /* ------------------------------------------------------- le parcours
 
-   Ce qu'un joueur a joué, et ce que ça lui a rapporté. Deux blocs : le
-   compte par sorte de partie, sur un panneau calme, puis la feuille de
-   match — un ticket kraft déchiré par partie (`.tbf-partie`), empilés.
+   Ce qu'un joueur a joué, et ce que ça lui a rapporté : la feuille de match
+   — un ticket kraft déchiré par partie (`.tbf-partie`), empilés —, et en
+   tête, trois stickers craie au plus, un par sorte de partie jouée
+   (`.agregats`) : « 16 DUELS CLASSÉS · 8 V », « 23 MATCHS AU VIRAGE ».
 
-   Le compte est une grille de deux colonnes plutôt qu'un tableau : il faut
-   qu'elle tienne sur un téléphone. */
+   Il y avait là l'ancien tableau de bord : quatre cartes sombres à filet de
+   couleur, des comptes qui passaient à la ligne (« 7 gagnés · 2 nuls · 3 /
+   perdus »), une ligne morte (« 0 ferveur » sous l'entraînement, qui n'en
+   donne jamais) et un doublon (« 23 parties » au-dessus de « 23 matchs
+   poussés »). Une valeur nulle ne s'écrit plus, et le détail par format
+   (1v1, 2v2) se lit sur chaque ticket — et sur le sticker, au lecteur
+   d'écran. */
 .serie{display:flex;flex-wrap:wrap;gap:12px 14px;margin:0 6px 14px}
 .serie:empty{display:none}
-.sortes{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;padding:12px}
-/* `--c` est le ton de la sorte de partie : l'or du virage, le violet du
-   classé, le gris de l'entraînement. **Il passe du titre au bord.** Un
-   titre de onze pixels en violet tenait 4:1 sur le panneau, et 2,1 au
-   soleil ; l'or n'y avait déjà plus droit. Le ton se lit maintenant dans le
-   filet de gauche, le même que le bandeau de chaque feuille de match, et le
-   titre est à la craie pleine. */
-.sorte{border:1px solid rgba(242,238,228,.1);border-left:3px solid var(--c,var(--gris));
-  border-radius:10px;padding:10px 11px;background:rgba(0,0,0,.22)}
-.sorte .q{font-family:var(--banner);font-size:11px;letter-spacing:.08em;font-weight:700;color:var(--craie)}
-.sorte .n{font-family:var(--banner);font-size:20px;line-height:1.1;margin-top:5px}
-/* Le texte secondaire à la craie pleine : à 88 %, il tombait à 4,1:1 au
-   soleil sur le panneau. La hiérarchie tient au corps et à la police. */
-.sorte .n small{font-family:var(--ui);font-size:11px;letter-spacing:.06em}
-.sorte .d{font-size:11px;margin-top:5px;line-height:1.45}
-.sorte .f{font-family:var(--banner);font-size:11.5px;color:var(--craie);font-weight:700;
-  margin-top:6px}
+.agregats{display:flex;flex-wrap:wrap;gap:12px 14px;margin:2px 6px 14px}
+.agregats:empty{display:none}
 .parcours{display:flex;flex-direction:column;gap:11px;margin:12px 0 0}
+.agregats+.parcours{margin-top:0}
 /* « VOIR PLUS » est une bâche de parpaing, comme tout ce qui se touche ;
    « UN INSTANT… » passe par le `disabled` de la plaque, que ui.css éteint. */
 .encore{width:100%;margin:14px 0 5px}
 
 /* --------------------------------------------- le Fanzzy, le sac, le deck
 
-   Le Fanzzy équipé et sa bâche bleue CHANGER (posséder, c'est le bleu) ; le
-   sac, chaque pièce sur son sticker (`.tbf-objet`, cinquante-six pixels) ;
-   le deck en bâche bleue — c'est là qu'on équipe, deux pièces par Fanzzy.
-   L'équipement qui compte est attaché à chaque Fanzzy du deck, et c'est
-   celui-là que le Virage et le duel lisent : cette page dit ce qu'on
-   possède, le deck dit ce qu'on porte. */
-.ligne .changer{flex:none;margin:0 0 5px;padding:9px 14px;min-height:44px;font-size:13px}
-.cri{display:block;margin-top:3px;font-size:11.5px;white-space:normal}
+   Le Fanzzy équipé **en carte**, celle du jeu (`cardHTML`, cartes.js et
+   cartes.css), à l'âge qu'il montre, et sa bâche bleue CHANGER (posséder,
+   c'est le bleu) ; le sac, chaque pièce sur son sticker (`.tbf-objet`,
+   cinquante-six pixels) ; le deck en bâche bleue — c'est là qu'on équipe,
+   deux pièces par Fanzzy. L'équipement qui compte est attaché à chaque
+   Fanzzy du deck, et c'est celui-là que le Virage et le duel lisent : cette
+   page dit ce qu'on possède, le deck dit ce qu'on porte.
+
+   La rubrique ne montrait qu'une ligne de texte — « Le Meneur / Cri : … » —
+   sur le profil d'un jeu de cartes : la carte du titulaire manquait, et le
+   buste de l'en-tête ne disait ni sa rareté, ni son âge. La carte est
+   collée de travers comme un sticker, à gauche, cent trente-deux pixels de
+   large ; le nom, le cri et CHANGER à droite. Sans Fanzzy, sa place est
+   dessinée en pointillé, et la bâche mène au kiosque.
+
+   La place de la carte est réservée dès le premier rendu (`aspect-ratio` de
+   la carte) : le catalogue arrive après la page, et la carte ne pousse rien
+   en arrivant. S'il ne vient pas, la place se retire et la rubrique garde
+   son texte. */
+.mon-fz{display:flex;align-items:center;gap:16px;padding:16px 14px 16px 16px}
+.mon-fz-carte{flex:none;width:132px;aspect-ratio:63/88;rotate:-2.5deg}
+.mon-fz-carte .fz{--u:1.32px;box-shadow:3px 4px 0 1px rgba(7,9,12,.7)}
+/* Sa place vide : le pointillé d'un emplacement, la silhouette au pochoir. */
+.mon-fz-vide{width:112px;display:grid;place-items:center;border:2px dashed rgba(242,238,228,.5);
+  border-radius:7px;background:rgba(0,0,0,.18)}
+.mon-fz-vide svg{width:46%;height:auto;fill:none;stroke:rgba(242,238,228,.55);stroke-width:1.6}
+.mon-fz-txt{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.mon-fz-txt>b{font-family:var(--banner);font-weight:700;font-size:18px;line-height:1.15;letter-spacing:.04em;
+  text-transform:uppercase;overflow-wrap:anywhere}
+.mon-fz-txt>span{font-size:12.5px;line-height:1.45}
+/* Le geste tient sur une ligne : la place vide est plus étroite que la carte
+   pour laisser à « OUVRIR UN BOOSTER » sa largeur à 360 px. */
+.mon-fz .changer{margin:4px 0 5px;padding:9px 14px;min-height:44px;font-size:13px;white-space:nowrap}
 .sac{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:16px 10px;padding:16px 12px 14px}
 .piece{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
 .piece .tbf-objet{--taille:56px}
@@ -383,6 +413,9 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
       </div>
     </div>
   </details>
+  <!-- Ce que la page fait sans le dire avec des mots — l'insigne posé —,
+       dit aux lecteurs d'écran. -->
+  <p class="vh" role="status" id="annonce"></p>
 </div></main>
 <!-- Sans « defer » : le script de la page lit TBF_STUFF, FZART et TBF_FOND
      dès son premier rendu. Les états (`fanzzy-etats.js`) donnent au buste et
@@ -391,6 +424,13 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<!-- `cardHTML` et le catalogue (`/api/fanzzy/dex`, servi de mémoire, sans
+     base, et gardé une minute par le navigateur), pour la carte de MON
+     FANZZY. Après fanzzy-art.js, qu'il lit dès son chargement. Et les trois
+     bibliothèques de dessin d'une carte, comme toute page qui en dessine
+     (verif-pages) : `stuff-art.js` est déjà là, `action-art.js` suit. -->
+<script src="/cartes.js"></script>
+<script src="/action-art.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/niveau-fete.js" defer></script>
 <script src="/menu.js" defer></script>
@@ -529,6 +569,9 @@ let place = null;        // la réponse de /api/rank/moi, si le serveur la sert
 let quotidien = null;    // la réponse de /api/quotidien, si le serveur la sert
 let monAvatar = null;    // l'avatar résolu du joueur : { id, age, evo, skin, … }
 let portraitRetenu = null;
+let hudRecu = null;      // la dernière annonce `tbf:hud` de la barre (voir `avatarDeLaBarre`)
+let pagePrete = false;   // le premier rendu est fait : on peut redessiner une rubrique
+let cartesPretes = null; // le catalogue des cartes : null tant qu'il arrive, puis vrai ou faux
 
 /* ------------------------------------------------------- qui montrer
 
@@ -545,14 +588,31 @@ let portraitRetenu = null;
    l'onglet (`tbf-hud`, voir `nav.js`), sans sa rareté — la plaque d'une
    légendaire y retombe alors sur celle de son âge. Sans aucun des deux, le
    buste reste la silhouette du sticker sans photo : un visage faux est pire
-   qu'un visage absent. */
+   qu'un visage absent.
+
+   **Ce que la barre retient, elle l'annonce** (`tbf:hud`, la valeur écrite
+   en `detail`) : c'est par là que la page apprend le visage du joueur quand
+   la barre lit le portefeuille après le premier rendu, ou quand le stockage
+   de l'onglet est fermé. La page relisait la clé deux fois à l'aveugle, à
+   1,2 et 3,5 s : une barre plus lente, ou un stockage fermé, laissaient la
+   carte sans buste ni plaque. L'annonce, la plus fraîche, passe avant la
+   clé. */
 function avatarDeLaBarre() {
-  try {
-    const d = JSON.parse(sessionStorage.getItem('tbf-hud') || 'null');
-    if (!d || !user || d.qui !== user.id || !d.avatar?.id) return null;
-    return { avatar: d.avatar, portrait: typeof d.portrait === 'string' ? d.portrait : null };
-  } catch { return null; }
+  let d = null;
+  try { d = JSON.parse(sessionStorage.getItem('tbf-hud') || 'null'); } catch { /* fermé */ }
+  for (const x of [hudRecu, d]) {
+    if (x && user && x.qui === user.id && x.avatar?.id) {
+      return { avatar: x.avatar, portrait: typeof x.portrait === 'string' ? x.portrait : null };
+    }
+  }
+  return null;
 }
+/* Écoutée dès le départ : la barre est un script différé, elle parle après
+   celui-ci — parfois avant que la page sache qui est connecté. */
+window.addEventListener('tbf:hud', (e) => {
+  hudRecu = e.detail && typeof e.detail === 'object' ? e.detail : null;
+  if (pagePrete && resoudreAvatar()) poserBuste();
+});
 
 function resoudreAvatar() {
   const servi = place && 'avatar' in place ? place.avatar : undefined;
@@ -599,6 +659,36 @@ function poserBuste() {
     : null;
   fond.classList.toggle('plaque', Boolean(plaque));
   fond.style.setProperty('--img', plaque ? `url("${plaque}")` : 'none');
+
+  /* MON FANZZY montre la carte de l'âge que ce visage montre. */
+  rendreFanzzy();
+}
+
+/* **L'écharpe de la carte aux couleurs du club principal.** La bande était
+   toujours or et rouge, la teinte par défaut de la brique, même pour Sion,
+   qui est rouge et blanc. Les teintes viennent du serveur — sur le club
+   suivi si un jour il les porte, sinon sur la tribune de ma place
+   (`/api/rank/moi`, `tribune.couleurs`) quand c'est bien ce club —, et ne
+   se posent que si ce sont des teintes (`#` et six chiffres), comme au KOP.
+   Sans elles, la bande garde son or et son rouge. L'anneau du buste en
+   hérite, sauf quand une division portée lui donne la sienne. */
+const teintes = (c) => (Array.isArray(c) ? c : []).map(String)
+  .filter((t) => /^#[0-9a-f]{6}$/i.test(t)).slice(0, 2);
+const clubPrincipal = () => etat?.follows?.find((f) => f.is_main) ?? etat?.follows?.[0] ?? null;
+function poserCouleurs() {
+  const p = clubPrincipal();
+  let c = teintes(p?.couleurs);
+  if (!c.length && p && place?.tribune && String(place.tribune.id) === String(p.team_id)) {
+    c = teintes(place.tribune.couleurs);
+  }
+  const carte = $('carte');
+  if (c.length) {
+    carte.style.setProperty('--e1', c[0]);
+    carte.style.setProperty('--e2', c[1] ?? c[0]);
+  } else {
+    carte.style.removeProperty('--e1');
+    carte.style.removeProperty('--e2');
+  }
 }
 
 /* Un portrait qui ne répond pas : l'adresse retenue par la barre, puis la
@@ -630,7 +720,8 @@ function rendreCarte() {
   badge.textContent = user.verified ? 'VÉRIFIÉ' : 'À VÉRIFIER';
   badge.hidden = false;
 
-  const principal = etat.follows?.find((f) => f.is_main) ?? etat.follows?.[0];
+  const principal = clubPrincipal();
+  poserCouleurs();
   $('clubline').innerHTML = principal
     ? `${principal.logo ? `<img src="${esc(principal.logo)}" alt="">` : ''}<span>${
       esc(principal.name ?? `club ${principal.team_id}`)}${principal.is_main ? ' · CLUB PRINCIPAL' : ''}</span>`
@@ -958,11 +1049,52 @@ function delta(rang, sens) {
     monte ? 'monté' : 'descendu'} de ${k} place${k > 1 ? 's' : ''}${sens ? ` ${sens}` : ''}">${k}</span>`;
 }
 
+/** La division que je porte : la plus haute récupérée de la saison en cours, ou null. */
+function divisionPortee() {
+  const p = (place?.saison?.paliers ?? []).filter((x) => x?.etat === 'reclame' && Number(x.n) > 0);
+  return p.length ? p.reduce((a, b) => (Number(b.n) > Number(a.n) ? b : a)) : null;
+}
+
+/**
+ * Les deux teintes de l'écharpe d'une division, lues sur l'insigne lui-même
+ * (`.tbf-division[data-n]`, ui.css) : la table des couleurs n'est écrite
+ * qu'une fois, dans la feuille. Null hors de un à cinq.
+ */
+function teintesDivision(n) {
+  const k = Number(n);
+  if (!Number.isInteger(k) || k < 1 || k > 5) return null;
+  const el = document.createElement('span');
+  el.className = 'tbf-division';
+  el.dataset.n = String(k);
+  el.hidden = true;
+  document.body.append(el);
+  const cs = getComputedStyle(el);
+  const t = [cs.getPropertyValue('--e1').trim(), cs.getPropertyValue('--e2').trim()];
+  el.remove();
+  return t[0] && t[1] ? t : null;
+}
+
+/* **L'anneau du buste prend l'écharpe de la division portée** : l'honneur
+   d'une division se voit sur la carte, pas seulement dans sa rubrique. Sans
+   division portée, l'anneau reprend celle de la carte (le club). */
+function poserAnneauInsigne() {
+  const anneau = $('buste').querySelector('.tbf-anneau');
+  const t = teintesDivision(divisionPortee()?.n);
+  if (t) {
+    anneau.style.setProperty('--e1', t[0]);
+    anneau.style.setProperty('--e2', t[1]);
+  } else {
+    anneau.style.removeProperty('--e1');
+    anneau.style.removeProperty('--e2');
+  }
+}
+
 function rendreSaison() {
   const s = place?.saison;
   const passee = place?.saisonPassee?.paliers?.length ? place.saisonPassee : null;
   const titres = Array.isArray(place?.titres) ? place.titres : [];
   const hote = $('saison');
+  poserAnneauInsigne();
   if (!s && !passee && !titres.length) {
     hote.hidden = true;
     $('saisonTitre').hidden = true;
@@ -972,10 +1104,12 @@ function rendreSaison() {
   if (s) {
     const d = s.division;
     const rang = Number(s.rang);
+    const portee = d?.n && d.nom && Number(divisionPortee()?.n) === Number(d.n);
     if (d?.n || rang > 0) {
       morceaux.push(`<div class="saison-tete">
         ${d?.n ? `<span class="tbf-division" data-n="${Number(d.n)}" role="img" aria-label="Division ${esc(d.nom ?? d.n)}"></span>
-          <b class="saison-div">${esc(d.nom ?? '')}</b>` : ''}
+          ${portee ? `<span class="tbf-tampon" data-ton="vert">${esc(d.nom)}</span>`
+            : `<b class="saison-div">${esc(d.nom ?? '')}</b>`}` : ''}
         ${rang > 0 ? `<span class="saison-rang"><span>${nombre(rang)}<sup>e</sup></span>${
           s.sur ? `<small>&nbsp;sur ${nombre(s.sur)}</small>` : ''}${
           delta(place?.evolution?.ferveur?.rang, 'depuis ta dernière visite')}</span>` : ''}
@@ -1017,6 +1151,52 @@ function rendreSaison() {
   $('saisonTitre').hidden = false;
 }
 
+/**
+ * **Porter l'insigne, c'est un honneur, et il se met en scène.** Une
+ * division ne verse rien de matériel (le contrat, § 5.2) : ce geste se
+ * terminait par un toast « Insigne posé », sans rien qui change à l'écran.
+ * Maintenant, le nom de la division devient un tampon qui claque sur son
+ * insigne, dans une bouffée de fumigène aux deux couleurs de son écharpe,
+ * avec le son « parfait » ; l'anneau du buste de la carte a déjà pris
+ * l'écharpe (`rendreSaison`). Au calme, la feuille éteint le claquement et
+ * la bouffée, et `FX.son` se tait : il reste le tampon, posé. Les lecteurs
+ * d'écran l'entendent dans la région d'annonce de la page.
+ */
+function feterInsigne(prets) {
+  const haut = prets.reduce((a, b) => (Number(b?.n) > Number(a?.n ?? 0) ? b : a), null);
+  $('annonce').textContent = prets.length > 1 ? `${prets.length} insignes posés`
+    : haut?.nom ? `Insigne ${haut.nom} posé` : 'Insigne posé';
+  const tete = $('saison').querySelector('.saison-tete');
+  const tampon = tete?.querySelector('.tbf-tampon');
+  if (tampon) {
+    tampon.classList.add('tbf-clac');
+    tampon.addEventListener('animationend', () => tampon.classList.remove('tbf-clac'), { once: true });
+  }
+  /* La bouffée derrière l'insigne (ou le panneau entier, pour une saison
+     passée dont l'insigne n'est pas à l'écran) : le panneau la coupe à ses
+     bords, et elle ne fait jamais défiler la page de côté. */
+  const parent = tete ?? $('saison');
+  if (!parent.hidden) {
+    const cible = tampon ?? tete?.querySelector('.tbf-division') ?? parent;
+    const r0 = parent.getBoundingClientRect();
+    const r1 = cible.getBoundingClientRect();
+    const b = document.createElement('div');
+    b.className = 'tbf-bouffee';
+    b.setAttribute('aria-hidden', 'true');
+    b.style.setProperty('--x', `${Math.round(r1.left + r1.width / 2 - r0.left)}px`);
+    b.style.setProperty('--y', `${Math.round(r1.top + r1.height / 2 - r0.top)}px`);
+    b.style.setProperty('--taille', '200px');
+    const t = teintesDivision(haut?.n);
+    if (t) {
+      b.style.setProperty('--c1', t[0]);
+      b.style.setProperty('--c2', t[1]);
+    }
+    parent.prepend(b);
+    setTimeout(() => b.remove(), 900);
+  }
+  window.FX?.son?.('parfait');
+}
+
 document.addEventListener('click', async (e) => {
   const bt = e.target.closest('#porter');
   if (!bt) return;
@@ -1031,17 +1211,17 @@ document.addEventListener('click', async (e) => {
     return;
   }
   if (r.verse) {
-    const titre = [...(place?.saison?.paliers ?? []), ...(place?.saisonPassee?.paliers ?? [])]
-      .some((x) => x.etat === 'pret' && x.titre);
-    dire('Insigne posé');
+    const prets = [...(place?.saison?.paliers ?? []), ...(place?.saisonPassee?.paliers ?? [])]
+      .filter((x) => x?.etat === 'pret');
     /* Un titre gagné (Capo) n'est pas dans la réponse : on relit ma place,
        une fois, pour l'afficher. Sinon la réponse suffit. */
-    if (titre) await chargerMoi();
+    if (prets.some((x) => x.titre)) await chargerMoi();
     else {
       place = { ...place, saison: r.saison ?? place?.saison };
       if ('saisonPassee' in r) place.saisonPassee = r.saisonPassee; else delete place.saisonPassee;
       rendreSaison();
     }
+    feterInsigne(prets);
     return;
   }
   if (RAISONS[r.raison]) dire(RAISONS[r.raison]);
@@ -1052,6 +1232,7 @@ document.addEventListener('click', async (e) => {
 async function chargerMoi() {
   place = await lire('/api/rank/moi');
   rendreSaison();
+  if (etat) poserCouleurs();
   if (resoudreAvatar()) poserBuste();
   return place;
 }
@@ -1062,18 +1243,6 @@ async function chargerMoi() {
    écrits ici et les nombres viennent du serveur : le jour où l'entraînement
    cessera de compter au classement, c'est une règle du serveur qui
    changera, et cette page ne doit pas en porter une copie. */
-
-const NOM_SORTE = { entrainement: 'ENTRAÎNEMENT', classe: 'CLASSÉ' };
-
-/** Le titre d'une sorte de partie : « CLASSÉ · 2v2 », « GRAND VIRAGE ». */
-function titreSorte(s) {
-  if (s.jeu === 'virage') return 'GRAND VIRAGE';
-  const mode = NOM_SORTE[s.mode] ?? String(s.mode ?? '').toUpperCase();
-  /* Le format manque sur les parties d'avant qu'on l'écrive. On dit « DUEL »
-     plutôt que d'inventer un format : une case vide est une vérité, un « 1v1 »
-     supposé est un mensonge qui a l'air d'une donnée. */
-  return s.format ? `${mode} · ${s.format}` : `${mode} · DUEL`;
-}
 
 /* Les tampons de l'issue : verts, rouges, gris — pleins d'eux-mêmes sur le kraft. */
 const ISSUE = { win: ['vert', 'GAGNÉ'], loss: ['flare', 'PERDU'], draw: ['gris', 'NUL'] };
@@ -1148,25 +1317,49 @@ function ligneDePartie(l) {
     <span class="tbf-partie-q"><b>${esc(contre)}</b><small>${esc(sous)}</small></span>${score}${issue}${gain}</div>`;
 }
 
+/**
+ * Les stickers d'en-tête de la feuille de match : un par sorte de partie
+ * jouée — le duel classé, le Virage, l'entraînement, dans l'ordre de ce qui
+ * compte au classement —, trois au plus. Le compte de chaque sorte réunit
+ * ses formats (1v1, 2v2), que le lecteur d'écran entend en détail et que
+ * chaque ticket redit ; le format qui manque aux parties d'avant qu'on
+ * l'écrive n'est pas deviné — un « 1v1 » supposé serait un mensonge qui a
+ * l'air d'une donnée. Une sorte jamais jouée n'a pas de sticker, une
+ * victoire nulle ne s'écrit pas, et la ferveur de l'entraînement — toujours
+ * nulle — non plus.
+ */
+const AGREGATS = [
+  ['classe', (n) => `${nombre(n)} DUEL${n > 1 ? 'S' : ''} CLASSÉ${n > 1 ? 'S' : ''}`, 'Duels classés'],
+  ['virage', (n) => `${nombre(n)} MATCH${n > 1 ? 'S' : ''} AU VIRAGE`, 'Grand Virage'],
+  ['entrainement', (n) => `${nombre(n)} ENTRAÎNEMENT${n > 1 ? 'S' : ''}`, 'Entraînements'],
+];
+function agregats(sortes) {
+  const par = new Map();
+  for (const s of sortes ?? []) {
+    const cle = s.jeu === 'virage' ? 'virage'
+      : s.mode === 'classe' || s.mode === 'entrainement' ? s.mode : null;
+    const joues = Number(s.joues) || 0;
+    if (!cle || joues <= 0) continue;
+    const a = par.get(cle) ?? { joues: 0, gagnes: 0, formats: [] };
+    a.joues += joues;
+    a.gagnes += Number(s.gagnes) || 0;
+    if (s.format) a.formats.push(`${joues} en ${s.format}`);
+    par.set(cle, a);
+  }
+  return AGREGATS.filter(([cle]) => par.has(cle)).map(([cle, mot, dit]) => {
+    const a = par.get(cle);
+    const v = cle === 'virage' ? 0 : a.gagnes;
+    const detail = cle === 'virage'
+      ? `${a.joues} match${a.joues > 1 ? 's' : ''} poussé${a.joues > 1 ? 's' : ''}`
+      : `${a.joues} partie${a.joues > 1 ? 's' : ''}${a.formats.length ? ` (${a.formats.join(', ')})` : ''}${
+        v > 0 ? `, ${v} gagnée${v > 1 ? 's' : ''}` : ''}`;
+    return `<span class="tbf-sticker" data-sorte="${cle}" role="img" aria-label="${esc(`${dit} : ${detail}`)}">${
+      mot(a.joues)}${v > 0 ? ` · ${nombre(v)} V` : ''}</span>`;
+  }).join('');
+}
+
 function rendreParcours(p, { ajouter = false } = {}) {
   const hote = $('parcours');
-
-  const sortes = (p.sortes ?? []).map((s) => {
-    const couleur = s.jeu === 'virage' ? 'var(--projo)'
-      : s.mode === 'classe' ? 'var(--violet)' : 'var(--gris,#C2CAD6)';
-    /* Un virage ne se gagne ni ne se perd : on y pousse. */
-    const bilan = s.jeu === 'virage'
-      ? `${s.joues} match${s.joues > 1 ? 's' : ''} poussé${s.joues > 1 ? 's' : ''}`
-      : `${s.gagnes} gagné${s.gagnes > 1 ? 's' : ''} · ${s.nuls} nul${s.nuls > 1 ? 's' : ''}`
-        + ` · ${s.perdus} perdu${s.perdus > 1 ? 's' : ''}`;
-    return `<div class="sorte" style="--c:${couleur}">
-      <div class="q">${esc(titreSorte(s))}</div>
-      <div class="n">${s.joues}<small> partie${s.joues > 1 ? 's' : ''}</small></div>
-      <div class="d">${esc(bilan)}</div>
-      <div class="f">${s.ferveur} ferveur</div>
-    </div>`;
-  }).join('');
-
   const lignes = (p.lignes ?? []).map(ligneDePartie).join('');
 
   if (ajouter) {
@@ -1177,7 +1370,7 @@ function rendreParcours(p, { ajouter = false } = {}) {
     return;
   } else {
     hote.innerHTML = `
-      <div class="pan bloc"><div class="sortes">${sortes}</div></div>
+      <div class="agregats" id="agregats">${agregats(p.sortes)}</div>
       <div class="parcours" id="parcoursListe">${lignes}</div>
       <button class="encore tbf-plaque" id="encore">VOIR PLUS</button>`;
   }
@@ -1251,15 +1444,67 @@ function rendreClubs() {
           ${prix === null ? 'ACHETER' : `${prix} écharpes`}</button></div>` : '');
 }
 
+/**
+ * L'entrée du catalogue à dessiner pour mon Fanzzy : **l'âge qu'il montre**,
+ * celui de l'avatar résolu par le serveur (`age`), s'il est de la lignée
+ * équipée. Sans avatar connu, l'âge n'est sûr que si la lignée n'en a qu'un
+ * — c'est le cas de la plupart — ; sinon, pas de carte plutôt qu'une carte
+ * « ÉVO 1 » pour un Fanzzy qui a grandi.
+ */
+function carteDuFanzzy() {
+  const C = window.TBF_CARTES;
+  if (cartesPretes !== true || !C?.BY_ID?.size) return null;
+  const lignee = loadout?.fanzzy?.id ?? monAvatar?.id ?? null;
+  if (!lignee) return null;
+  if (monAvatar?.age && monAvatar.id === lignee) {
+    const f = C.BY_ID.get(monAvatar.age);
+    if (f) return f;
+  }
+  const ages = (C.DEX ?? []).filter((x) => (x.racine ?? x.id) === lignee);
+  return ages.length === 1 ? ages[0] : null;
+}
+
+let fanzzyVu = null;
 function rendreFanzzy() {
+  const f = loadout?.fanzzy;
+  /* Sans Fanzzy : sa place en pointillé, et la bâche qui mène au kiosque. */
+  if (!f && !monAvatar) {
+    if (fanzzyVu === 'vide') return;
+    fanzzyVu = 'vide';
+    $('fanzzy').innerHTML = `<div class="mon-fz">
+      <div class="mon-fz-carte mon-fz-vide" aria-hidden="true">${svg('fanzzy')}</div>
+      <div class="mon-fz-txt"><b>Aucun Fanzzy</b><span>Le premier sort d’un booster.</span>
+        <a class="tbf-plaque changer" data-ton="bleu" href="/boosters">OUVRIR UN BOOSTER</a></div></div>`;
+    return;
+  }
+  const carte = carteDuFanzzy();
+  const nom = carte?.nom ?? monAvatar?.nom ?? f?.nom ?? '';
   /* La ligne du cri ne paraît que si le cri a un nom : « Cri : » suivi de
      rien se lit comme une donnée perdue. */
-  const cri = loadout?.fanzzy?.cri?.label;
-  $('fanzzy').innerHTML = loadout?.fanzzy
-    ? `<div class="ligne"><span class="n"><b style="font-family:var(--banner)">${esc(loadout.fanzzy.nom)}</b>
-         ${cri ? `<span class="cri">Cri : ${esc(cri)}</span>` : ''}</span>
-         <a class="tbf-plaque changer" data-ton="bleu" href="/fanzzy">CHANGER</a></div>`
-    : `<div class="vide">Aucun Fanzzy équipé.<br><a href="/fanzzy">Ouvre un booster</a></div>`;
+  const cri = f?.cri?.label;
+  /* La même carte déjà posée ne se repose pas : elle clignoterait. */
+  const sig = JSON.stringify([carte?.id ?? null, cartesPretes, nom, cri ?? null]);
+  if (sig === fanzzyVu) return;
+  fanzzyVu = sig;
+  const emplacement = carte
+    ? `<div class="mon-fz-carte" aria-hidden="true">${window.TBF_CARTES.cardHTML(carte, { mini: true })}</div>`
+    : cartesPretes === null ? '<div class="mon-fz-carte" aria-hidden="true"></div>' : '';
+  $('fanzzy').innerHTML = `<div class="mon-fz">${emplacement}
+    <div class="mon-fz-txt"><b>${esc(nom)}</b>${cri ? `<span>Cri : ${esc(cri)}</span>` : ''}
+      <a class="tbf-plaque changer" data-ton="bleu" href="/fanzzy">CHANGER</a></div></div>`;
+}
+
+/* Le catalogue des cartes, pour dessiner celle de MON FANZZY : une lecture
+   publique, sans base, que le navigateur garde une minute. Il ne retient
+   rien de la page ; s'il ne vient pas, la rubrique garde son texte. */
+async function chargerCartes() {
+  try {
+    await window.TBF_CARTES.chargerCatalogue();
+    cartesPretes = true;
+  } catch {
+    cartesPretes = false;
+  }
+  rendreFanzzy();
 }
 
 function rendreSac() {
@@ -1442,9 +1687,11 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     const pNiveau = chargerNiveau();
     const pMoi = chargerMoi();
     chargerQuotidien();
+    if (window.TBF_CARTES?.chargerCatalogue) chargerCartes(); else cartesPretes = false;
 
     resoudreAvatar();
     rendre();
+    pagePrete = true;
     $('spin').style.display = 'none';
     $('page').style.display = 'block';
 
@@ -1452,15 +1699,9 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
        exactes ; sans lui, c'est le buste de l'âge. Il ne lève jamais. */
     window.TBF_ETATS?.charger?.()?.then?.(() => { if (monAvatar) poserBuste(); });
 
-    /* La barre lit le portefeuille en même temps que cette page : si elle
-       n'avait encore rien retenu pour ce joueur, son avatar arrive un peu
-       plus tard. Deux relectures, sans requête — provisoire, tant que le
-       serveur ne sert pas l'avatar dans `/api/rank/moi`. */
-    if (!monAvatar && loadout?.fanzzy) {
-      for (const ms of [1200, 3500]) {
-        setTimeout(() => { if (!monAvatar && resoudreAvatar()) poserBuste(); }, ms);
-      }
-    }
+    /* Si la barre lit le portefeuille après ce rendu, son avatar arrive par
+       son annonce (`tbf:hud`, écoutée en tête) — plus par des relectures à
+       l'aveugle. */
 
     /* **La fête de niveau, depuis la dernière visite.** Après le premier
        rendu : elle passe devant la carte de supporter. Elle attend aussi

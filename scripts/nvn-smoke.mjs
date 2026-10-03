@@ -701,6 +701,61 @@ check('un entraînement ne compte pas',
     || (console.log('        main :', jD.main.length), false));
 }
 
+/* ============================================== le retour de flamme
+
+   Un Fanzzy à `backfire` qui rate son geste pousse **pour l'adversaire**. La
+   page du duel ne l'écrivait nulle part : elle lisait le drapeau du chant pour
+   jouer un son, et la poussée offerte s'affichait comme une poussée adverse
+   ordinaire — alors que le son ne porte jamais seul une information (chantier
+   du son, 2 octobre 2026). Pour l'écrire, elle n'a besoin de rien de neuf :
+   le chant porte `backfire`, et la poussée qui le suit garde l'identifiant du
+   chanteur sous le camp d'en face. C'est la seule poussée dont l'auteur n'est
+   pas du camp qu'elle sert. Ces contrôles épinglent cette forme : si le moteur
+   rattachait un jour cette poussée à un autre joueur, ou au camp du chanteur,
+   la page retomberait sans bruit dans la poussée adverse ordinaire. */
+{
+  const tR = 4_000_000;
+  /* Un duel neuf par chant : le motif tourne d'un chant à l'autre, et l'on
+     éprouve le retour de flamme, pas la notation du motif suivant. */
+  const chanteur = (frappes) => {
+    const dR = duel(1, 'entrainement', tR, 'dR');
+    /* Sans lieu : un stade qui élargit la fenêtre du tempo ou décale sa
+       pulsation rend un geste « raté » passable, et le contrôle mesurerait
+       alors le stade tiré, pas le retour de flamme. */
+    dR.stade = null;
+    const jR = dR.joueurs.get('0-0');
+    jR.breath = 100;
+    /* Le drapeau est posé à la main plutôt que pris au catalogue : ce qui est
+       éprouvé est la forme des événements, pas le personnage qui le porte
+       cette saison. */
+    jR.fanzzy[jR.actif].mods = { ...jR.fanzzy[jR.actif].mods, backfire: true };
+    const ferveur = jR.ferveur;
+    const ev = chante(dR, '0-0', 'tempo', { taps: frappes() }, tR);
+    return { dR, jR, ev, ferveur,
+      chant: ev.find((e) => e.t === 'chant'), poussee: ev.find((e) => e.t === 'push') };
+  };
+
+  const rate = chanteur(tempoRate);
+  check('un geste raté sous retour de flamme est marqué au chant',
+    rate.chant?.backfire === true && rate.chant.userId === '0-0' && rate.chant.side === 0
+    || (console.log('        chant :', JSON.stringify(rate.chant)), false));
+  check('la poussée qui suit garde le chanteur, sous le camp d’en face',
+    rate.poussee?.userId === '0-0' && rate.poussee.side === 1 && rate.poussee.valeur > 0
+    && rate.ev.indexOf(rate.poussee) > rate.ev.indexOf(rate.chant)
+    || (console.log('        événements :', JSON.stringify(rate.ev)), false));
+  check('la corde penche vers l’adversaire', rate.dR.rope > 0);
+  check('et le chanteur n’en tire aucune ferveur', rate.jR.ferveur === rate.ferveur);
+
+  /* Le même Fanzzy, geste réussi : pas de drapeau, et sa poussée sert son
+     propre camp. C'est ce contraste qui rend sûre la règle de la page —
+     « une poussée dont l'auteur est d'en face est un retour de flamme ». */
+  const reussi = chanteur(tempoParfait);
+  check('réussi, le même chant ne porte pas le drapeau et pousse pour son camp',
+    reussi.chant?.backfire === false
+    && reussi.poussee?.userId === '0-0' && reussi.poussee.side === 0
+    || (console.log('        événements :', JSON.stringify(reussi.ev)), false));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 /* `process.exitCode` et non `process.exit()` (PLAN.md § 2, règle 13) : rien
    ne reste ouvert ici, et Node part de lui-même. */

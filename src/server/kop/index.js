@@ -41,6 +41,54 @@ export function couleursDuClub(c1, c2) {
 }
 
 /**
+ * Les modificateurs que le VIRAGE applique vraiment.
+ *
+ * Un bonus de KOP n'arrive qu'au Virage : `ferveur/index.js` mêle ce que rend
+ * `modsDe` aux modificateurs du Fanzzy, et le duel ne le reçoit pas. Or le
+ * Virage ne lit pas tout le vocabulaire du moteur, seulement :
+ *
+ *   - `pushMult`     — la corde (`virage.js`, le chant et les cartes) ;
+ *   - `breathBonus`  — le souffle qui revient (`virage.js`, `regen`) ;
+ *   - `tempoWindow`  — les fenêtres de rythme (`gestures.js`, `epreuves.js`) ;
+ *   - `ferveurBonus` — la ferveur créditée (`virage.js`, `crediter`).
+ *
+ * Deux bonus du catalogue partagé portaient une clé que rien ne lit :
+ * « La quête » (`scarvesBonus`) et « Mur de bâches » (`parryBonus`,
+ * `parryResist`). Un KOP qui les votait payait 900 ou 500 écharpes pour rien,
+ * sur la promesse écrite d'un écran (`SERVEUR.md`, § 11.3). Les brancher ou
+ * les retirer du catalogue est une décision de Gaël ; en attendant, **le
+ * serveur ne vend que ce qu'il applique**.
+ *
+ * La liste est écrite à la main parce que le Virage ne la publie pas, et
+ * `scripts/kop-smoke.mjs` la confronte au code du Virage dans les deux sens :
+ * une clé de la liste qu'il ne lit plus, ou une clé du catalogue qu'il
+ * s'est mis à lire, la font rougir. Brancher `scarvesBonus` demain (le
+ * Virage ne verse aujourd'hui aucune écharpe, et le duel, qui en verse, ne
+ * reçoit pas les bonus de KOP) se termine en l'ajoutant ici : « La quête »
+ * revient alors en vente d'elle-même.
+ */
+export const MODS_DU_VIRAGE = new Set(['pushMult', 'breathBonus', 'tempoWindow', 'ferveurBonus']);
+
+/**
+ * Un bonus agit si le Virage applique **chacun** de ses modificateurs : une
+ * promesse tenue à moitié reste une promesse que l'écran ne peut pas faire.
+ * Un identifiant inconnu (retiré du catalogue partagé depuis) n'agit pas.
+ */
+export function agit(def) {
+  const cles = Object.keys(def?.mods ?? {});
+  return cles.length > 0 && cles.every((k) => MODS_DU_VIRAGE.has(k));
+}
+
+/**
+ * Ce que le KOP vend : le catalogue partagé, moins ce qui n'agirait pas.
+ *
+ * C'est lui que les deux routes servent sous `catalogue` : la page du KOP en
+ * tire la liste PROPOSER UNE DÉPENSE **et** la fenêtre de crans du pot, si
+ * bien qu'un bonus retiré ici disparaît des deux à la fois.
+ */
+export const EN_VENTE = BONUS.filter(agit);
+
+/**
  * Le KOP, côté serveur.
  *
  * **Le dépouillement se fait à la lecture, jamais par une minuterie.** Un vote
@@ -82,6 +130,17 @@ export function createKop({ pool, requireAuth, io = null,
     console.warn(message);
   };
 
+  /* Sur une base où `sql/couleurs.sql` n'est pas passé, la colonne absente
+     ferait tomber toute la page du KOP pour une teinte. Les deux lectures qui
+     en ont besoin (`miens`, `couleursPour`) servent alors sans couleurs, et
+     le journal le dit une fois pour les deux : c'est le même schéma à
+     compléter. Toute autre erreur remonte telle quelle. */
+  const sansCouleurs = (e) => {
+    if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+    direUneFois('couleurs', `[kop] KOP et clubs servis sans les couleurs du club : ${
+      e.sqlMessage ?? e.message} (applique sql/couleurs.sql)`);
+  };
+
   /* --------------------------------------------------------- appartenance */
 
   /**
@@ -95,9 +154,7 @@ export function createKop({ pool, requireAuth, io = null,
    * pas encore extraites n'a simplement pas de bâche, et la page retombe
    * sur le violet des gens.
    *
-   * Sur une base où `sql/couleurs.sql` n'est pas passé, la colonne absente
-   * ferait tomber toute la page du KOP pour une teinte. La liste se lit
-   * alors sans couleurs, et le journal le dit une fois.
+   * Sans `sql/couleurs.sql`, la liste se lit sans couleurs (`sansCouleurs`).
    */
   async function miens(userId) {
     const lire = (couleurs) => q(
@@ -114,9 +171,7 @@ export function createKop({ pool, requireAuth, io = null,
     try {
       lignes = await lire('t.color1 AS couleur1, t.color2 AS couleur2');
     } catch (e) {
-      if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
-      direUneFois('couleurs', `[kop] KOP servis sans les couleurs du club : ${
-        e.sqlMessage ?? e.message} (applique sql/couleurs.sql)`);
+      sansCouleurs(e);
       lignes = await lire('NULL AS couleur1, NULL AS couleur2');
     }
 
@@ -143,6 +198,34 @@ export function createKop({ pool, requireAuth, io = null,
               (SELECT COUNT(*) FROM kop_membres x WHERE x.kop_id = k.id) AS membres
          FROM kops k WHERE k.team_id = ?
         ORDER BY membres DESC, k.cree`, [teamId]);
+  }
+
+  /**
+   * Les couleurs d'un club, qu'il ait un KOP ou non.
+   *
+   * La carte d'un club suivi **sans** KOP — l'état de la plupart des joueurs —
+   * reprend la tête d'un KOP : le nom du club en banderole, sur la bâche aux
+   * couleurs du club. Ce club n'a justement aucune ligne dans `kops` : une
+   * jointure depuis `kops` ne rendrait rien, et ses couleurs se lisent donc
+   * sur `teams` seul, par sa clé. Mêmes colonnes et même règle
+   * (`couleursDuClub`) que `miens`, pour que les deux cartes d'un même club
+   * aient la même bâche.
+   *
+   * Un club inconnu, dont le blason n'est pas encore lu, ou un identifiant
+   * qui n'est pas un entier n'a pas de couleurs : la page ne pose pas de
+   * bâche, elle n'invente pas les couleurs d'un club.
+   *
+   * @returns {Promise<string[]>} zéro, une ou deux teintes, la principale d'abord.
+   */
+  async function couleursPour(teamId) {
+    if (!Number.isSafeInteger(teamId)) return [];
+    try {
+      const [t] = await q(`SELECT color1, color2 FROM teams WHERE id = ?`, [teamId]);
+      return couleursDuClub(t?.color1, t?.color2);
+    } catch (e) {
+      sansCouleurs(e);
+      return [];
+    }
   }
 
   /** On ne crée ni ne rejoint le KOP d'un club qu'on ne suit pas. */
@@ -317,10 +400,19 @@ export function createKop({ pool, requireAuth, io = null,
       const r = depouiller(bulletins.map((b) => ({ userId: b.userId, pour: Boolean(b.pour) })),
         k?.createur);
 
+      /* Adopté, mais le bonus n'est plus en vente : un vote ouvert avant que
+         le serveur cesse de le vendre (le déploiement tombe au milieu de ses
+         trois minutes), ou un identifiant retiré du catalogue partagé depuis.
+         Le pot ne paie pas un bonus qui n'agirait pas ; et sans cette garde,
+         un identifiant inconnu faisait tomber le dépouillement sur
+         `def.portee`, donc toute lecture de ce KOP, à chaque regard. */
+      const def = BONUS_PAR_ID.get(v.bonus_id);
+      const enVente = agit(def);
       // Adopté, mais le pot a fondu entre-temps — un autre vote est passé
       // avant. On rejette plutôt que de creuser un pot négatif, et le KOP
       // pourra revoter.
-      const payable = r.adopte && (k?.pot ?? 0) >= v.prix;
+      const couvert = (k?.pot ?? 0) >= v.prix;
+      const payable = r.adopte && enVente && couvert;
 
       const [maj] = await conn.execute(
         `UPDATE kop_votes SET issue = ? WHERE id = ? AND issue = 'en_cours'`,
@@ -332,7 +424,6 @@ export function createKop({ pool, requireAuth, io = null,
       }
 
       if (payable) {
-        const def = BONUS_PAR_ID.get(v.bonus_id);
         await conn.execute(`UPDATE kops SET pot = pot - ? WHERE id = ?`, [v.prix, v.kop_id]);
         await conn.execute(
           `INSERT INTO kop_bonus (id, kop_id, bonus_id, portee, restant)
@@ -343,9 +434,10 @@ export function createKop({ pool, requireAuth, io = null,
       await conn.commit();
       return { id: v.id, bonusId: v.bonus_id, ...r,
         issue: payable ? 'adopte' : 'rejete',
-        // On distingue les deux : « rejeté » et « pot insuffisant » ne se
-        // corrigent pas de la même façon.
-        potInsuffisant: r.adopte && !payable };
+        // On distingue les trois : « rejeté », « pot insuffisant » et « hors
+        // vente » ne se corrigent pas de la même façon.
+        potInsuffisant: r.adopte && enVente && !couvert,
+        horsVente: r.adopte && !enVente };
     } catch (e) {
       try { await conn.rollback(); } catch { /* la connexion est déjà perdue */ }
       throw e;
@@ -356,7 +448,11 @@ export function createKop({ pool, requireAuth, io = null,
 
   async function proposer(userId, kopId, bonusId) {
     const def = BONUS_PAR_ID.get(String(bonusId));
-    if (!def) throw fail('kop.error.bonus_inconnu');
+    /* Un bonus qui n'agirait pas n'est pas en vente (`EN_VENTE`) : pour qui
+       le propose quand même — une page restée ouverte d'avant, une requête
+       écrite à la main —, il n'existe pas. Le code est celui que la page sait
+       déjà dire. */
+    if (!agit(def)) throw fail('kop.error.bonus_inconnu');
 
     const m = await q(`SELECT 1 FROM kop_membres WHERE kop_id = ? AND user_id = ?`,
       [kopId, userId]);
@@ -445,8 +541,21 @@ export function createKop({ pool, requireAuth, io = null,
    * passé (pas de `fin_le`) ou sans `sql/saisons.sql`, la lecture retombe
    * sur celle d'avant, et le journal le dit une fois : un bonus qui ne
    * s'éteint pas vaut mieux qu'un Virage où l'on ne peut plus entrer.
+   *
+   * **Un bonus qui n'agit pas n'est pas actif** (`agit`) : « La quête » ou
+   * « Mur de bâches » achetés avant que le serveur cesse de les vendre ne
+   * s'affichent pas parmi les bonus actifs de la page, ne s'annoncent pas
+   * dans le panneau du Virage, et ne se décomptent pas. Leur ligne reste
+   * telle quelle : si la clé est branchée un jour, le bonus agit pour les
+   * matchs qu'il avait encore, et c'est ce que le KOP avait payé.
    */
   async function bonusActifs(kopId) {
+    const lignes = await lireActifs(kopId);
+    return lignes.filter((a) => agit(BONUS_PAR_ID.get(a.bonus_id)));
+  }
+
+  /** La règle de saison ci-dessus, en base, avec ses replis. */
+  async function lireActifs(kopId) {
     try {
       /* La saison « s » est la saison en cours si aucune n'a été lancée
          après elle. */
@@ -639,7 +748,7 @@ export function createKop({ pool, requireAuth, io = null,
       } : null,
       bonus: actifs.map((a) => ({ id: a.id, bonusId: a.bonus_id, portee: a.portee,
         restant: a.restant })),
-      catalogue: BONUS,
+      catalogue: EN_VENTE,
     };
   }
 
@@ -657,11 +766,19 @@ export function createKop({ pool, requireAuth, io = null,
   router.get('/miens', requireAuth, safe(async (req, res) => {
     const liste = await miens(req.user.id);
     for (const k of liste) await depouillerEchus(k.id);
-    res.json({ kops: liste, catalogue: BONUS, dureeVoteMs: DUREE_VOTE_MS });
+    res.json({ kops: liste, catalogue: EN_VENTE, dureeVoteMs: DUREE_VOTE_MS });
   }));
 
-  router.get('/club/:teamId', requireAuth, safe(async (req, res) =>
-    res.json({ kops: await pourClub(Number(req.params.teamId)) })));
+  /* Les KOP d'un club, et ses couleurs quand elles sont connues, de la forme
+     de `/miens` : la page en peint la bâche de la carte du club. `couleurs`
+     est absent plutôt que vide (`CONTRATS.md`, R1). Les deux lectures
+     partent ensemble : la seconde est une lecture par clé, la page n'attend
+     pas davantage. */
+  router.get('/club/:teamId', requireAuth, safe(async (req, res) => {
+    const teamId = Number(req.params.teamId);
+    const [kops, couleurs] = await Promise.all([pourClub(teamId), couleursPour(teamId)]);
+    res.json(couleurs.length ? { kops, couleurs } : { kops });
+  }));
 
   router.get('/:id', requireAuth, safe(async (req, res) =>
     res.json(await etat(req.params.id, req.user.id))));

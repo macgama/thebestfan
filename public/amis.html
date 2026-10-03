@@ -21,6 +21,12 @@ body{background:radial-gradient(120% 50% at 50% -8%,rgba(130,87,218,.13),transpa
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
      padding:0 0 calc(var(--nav-h,62px) + 26px)}
 main{width:100%;max-width:var(--colonne);padding:0 15px}
+/* Une colonne de lecture de six cents pixels au plus, comme le profil et le
+   classement : à 768 px, une ligne d'ami s'étalait de bord à bord et
+   laissait six cents pixels de vide entre le nom et ses boutons. La barre du
+   jeu se monte en tête de `main`, hors de cette colonne : elle garde la
+   largeur commune, au même endroit que sur les autres écrans. */
+.colonne{width:100%;max-width:600px;margin:0 auto}
 h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:18px 0 3px;
   text-align:center}
 
@@ -62,12 +68,9 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
    pseudo. `.pastille-nom` reste posé sur le buste : c'est par lui que la
    suite des amis trouve le dessin de chacun. */
 .gars>.tbf-buste{--taille:52px}
-/* PROVISOIRE, en attendant ui.css (besoin « feuilles-css ») : un ami qui
-   s'est choisi une expression a un dessin en pied (560 × 960), qui débordait
-   du rond de trente-sept pixels. Le buste est une grille, et la hauteur de
-   100 % de l'image ne s'y résout pas : elle prenait sa hauteur naturelle.
-   Posée sur toute la boîte, elle s'y recadre. */
-.tbf-buste>img{position:absolute;inset:0}
+/* Le dessin en pied d'un ami qui s'est choisi une expression se recadre
+   désormais dans ui.css (`.tbf-buste>img`) : la règle provisoire que cette
+   page posait en l'attendant est retirée. */
 .gars .qui{flex:1;min-width:0}
 .gars .qui b{display:block;font-family:var(--banner);font-size:14.5px;letter-spacing:.02em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -86,6 +89,47 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
 .bt{padding:9px 12px;min-height:44px;font-size:11.5px;letter-spacing:.06em;--epaisseur:3px}
 .bt.plein{width:100%;margin-top:4px}
 
+/* ------------------------------------------------------------ un ami
+
+   **Le geste visible d'un ami est de l'emmener, pas de le retirer.** La
+   ligne portait « KOP » en parpaing, qui ne disait pas ce qu'il faisait, et
+   « RETIRER » en bâche flare, répétée sous chaque nom : sur la page des
+   gens, le geste le plus voyant était d'en supprimer un. Le geste de la
+   ligne est maintenant violet et dit ce qu'il fait — « INVITER AU KOP »,
+   sous le nom, et rien du tout pour qui n'a pas de KOP — ; retirer passe
+   derrière « ⋯ », en parpaing, et se confirme dans la modale-bâche. */
+.gars.ami .qui{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.gars.ami .qui b{max-width:100%}
+.gars.ami .qui .bt{max-width:100%}
+/* « ⋯ » : un carré de quarante-quatre, la pulpe d'un doigt. Les trois points
+   sont dessinés (un masque, comme les icônes de ui.css) : le caractère « ⋯ »
+   n'est pas dans Oswald, et la police de repli l'aurait posé trop bas. */
+.bt.plus{flex:none;width:44px;padding:0;font-size:20px}
+.ico-plus{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='4.5' cy='12' r='2.5'/%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3Ccircle cx='19.5' cy='12' r='2.5'/%3E%3C/svg%3E")}
+/* La ligne dont un choix est déplié s'y raccorde : son bas devient droit. */
+.gars.deplie{border-radius:12px 12px 0 0}
+
+/* **En largeur, les amis sont une tribune de bustes**, plus une pile de
+   barres : à partir de 560 px, la colonne tient trois cartes de front (deux
+   vers 560), le buste au milieu en soixante-quatre pixels — la taille que la
+   direction donne aux cartes d'amis —, le nom dessous, le geste sous le
+   nom, « ⋯ » dans le coin. Les demandes et les suggestions restent en
+   lignes : ce sont des listes de décisions, qu'on parcourt de haut en bas.
+   Un choix déplié prend toute la largeur, sous la rangée de la carte, qui
+   s'entoure de violet ; `dense` laisse les cartes suivantes remplir la
+   rangée au lieu d'y laisser un trou. */
+@media (min-width:560px){
+  .gens--amis{grid-template-columns:repeat(auto-fill,minmax(172px,1fr));grid-auto-flow:row dense;
+    gap:14px 12px}
+  .gens--amis>.gars{position:relative;flex-direction:column;justify-content:flex-start;gap:12px;
+    padding:20px 12px 14px;text-align:center}
+  .gens--amis>.gars>.tbf-buste{--taille:64px}
+  .gens--amis>.gars .qui{align-items:center;width:100%}
+  .gens--amis>.gars>.plus{position:absolute;top:4px;right:4px}
+  .gens--amis>.gars.deplie{border-radius:12px;border-color:rgba(130,87,218,.75)}
+  .gens--amis>.dessous{grid-column:1/-1;margin-top:0;border-top:1px solid var(--trait);border-radius:12px}
+}
+
 /* ------------------------------------------------------ l'invitation KOP */
 
 /* Les deux blocs dépliés ci-dessous se posent sur la photo de tribune : leur
@@ -100,12 +144,13 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
 .invit .quoi{display:flex;gap:7px}
 .invit .quoi .bt{flex:1;text-align:center}
 
-/* Le choix du KOP où emmener quelqu'un, déplié sous sa ligne. */
-.kops{display:grid;gap:6px;padding:10px 12px 12px;border:1px solid var(--trait);border-top:0;
+/* Ce qui se déplie sous un ami : le choix du KOP où l'emmener (`.kops`), ou
+   ce que cache « ⋯ » (`.plus-menu`). Un seul à la fois. */
+.dessous{display:grid;gap:6px;padding:10px 12px 12px;border:1px solid var(--trait);border-top:0;
   border-radius:0 0 12px 12px;margin-top:-9px;
   background:linear-gradient(rgba(0,0,0,.25),rgba(0,0,0,.25)),var(--panneau)}
-.kops .bt{width:100%;text-align:left}
-.kops p{margin:0;font-size:11px;opacity:.88;line-height:1.6}
+.dessous .bt{width:100%;text-align:left}
+.dessous p{margin:0;font-size:11px;opacity:.88;line-height:1.6}
 
 /* Le titre de rubrique est cousu (`.tbf-cousu`, dans ui.css) : il ne reste
    ici que sa place. */
@@ -148,7 +193,7 @@ h2{margin:22px 2px 9px}
 <meta name="theme-color" content="#0A0D11">
 </head>
 <body>
-<main id="app">
+<main id="app"><div class="colonne">
   <p class="tbf-sous">Ceux qui poussent avec toi</p>
 
   <!-- Le rail au violet des gens, le ton de cet écran sur l'accueil. -->
@@ -159,7 +204,7 @@ h2{margin:22px 2px 9px}
   </div>
 
   <div id="corps"><div class="vide">Chargement…</div></div>
-</main>
+</div></main>
 <!-- La pile commune des messages (lot 2), sur le document : hors de la
      colonne que la page réécrit. Le toast garde son identifiant. -->
 <div class="tbf-pile"><div class="tbf-toast" id="toast" role="status" hidden></div></div>
@@ -259,7 +304,7 @@ const S = {
   amis: [], recues: [], envoyees: [], invitations: [],
   gens: [],            // les suggestions
   kops: [],            // mes KOP, pour pouvoir y inviter
-  deplie: null,        // l'ami dont on choisit le KOP
+  deplie: null,        // { id, quoi } : l'ami dont on choisit le KOP ('kop') ou ouvre « ⋯ » ('plus')
 };
 
 /* Un message : une information, ou une erreur — qui s'écrit au rouge, avec
@@ -426,18 +471,47 @@ function convier() {
   </div>`;
 }
 
+/** Ce qui est déplié sous cet ami, s'il y a quelque chose : 'kop', 'plus' ou null. */
+const deplie = (g) => (S.deplie && S.deplie.id === String(g.id) ? S.deplie.quoi : null);
+
+/**
+ * Un ami : son buste, son nom, et sous le nom le geste qui le concerne —
+ * l'emmener dans un de mes KOP, si j'en ai un (violet : les gens). Le reste
+ * est derrière « ⋯ ». Voir « un ami », dans la feuille.
+ */
+function carteAmi(g) {
+  const ouvert = deplie(g);
+  const inviter = S.kops.length
+    ? `<button class="bt tbf-plaque" data-ton="violet" data-kop="${esc(g.id)}"
+        aria-expanded="${ouvert === 'kop'}">INVITER AU KOP</button>` : '';
+  return `
+  <div class="gars ami${ouvert ? ' deplie' : ''}" data-id="${esc(g.id)}">
+    ${avatar(g)}
+    <span class="qui"><b>${esc(g.pseudo)}</b>${inviter}</span>
+    <button class="bt tbf-plaque plus" data-plus="${esc(g.id)}" aria-expanded="${ouvert === 'plus'}"
+      aria-label="Plus d’options pour ${esc(g.pseudo)}"><i class="tbf-ico ico-plus" aria-hidden="true"></i></button>
+  </div>`;
+}
+
 function vueAmis() {
   if (!S.amis.length) {
     return convier() + `<div class="vide">Tu n’as encore personne.<br>
       Ouvre <b>TROUVER</b> : les supporters de tes clubs t’y attendent.</div>`;
   }
-  return `<div class="gens">${S.amis.map((g) => {
-    const choix = S.deplie === g.id ? kopsPour(g) : '';
-    return ligne(g,
-      `${S.kops.length ? `<button class="bt tbf-plaque" data-kop="${esc(g.id)}">KOP</button>` : ''}
-       <button class="bt tbf-plaque" data-ton="flare" data-retirer="${esc(g.id)}">RETIRER</button>`)
-      + choix;
+  return `<div class="gens gens--amis">${S.amis.map((g) => {
+    const ouvert = deplie(g);
+    return carteAmi(g) + (ouvert === 'kop' ? kopsPour(g) : ouvert === 'plus' ? plusPour(g) : '');
   }).join('')}</div>`;
+}
+
+/**
+ * Ce que cache « ⋯ » : retirer cet ami, en parpaing. Le geste ne retire
+ * rien tout seul — la modale-bâche le demande d'abord (`data-confirmer`).
+ */
+function plusPour(g) {
+  return `<div class="dessous plus-menu">
+    <button class="bt tbf-plaque" data-retirer="${esc(g.id)}" data-confirmer>RETIRER DE MES AMIS</button>
+  </div>`;
 }
 
 /**
@@ -451,8 +525,8 @@ const joindre = (...bouts) => bouts.filter(Boolean).map(esc).join(' · ');
 
 /** Le choix du KOP où emmener quelqu'un. */
 function kopsPour(g) {
-  return `<div class="kops">
-    <p>Dans quel KOP ?</p>
+  return `<div class="dessous kops">
+    <p>Dans quel KOP emmener ${esc(g.pseudo)} ?</p>
     ${S.kops.map((k) => `<button class="bt tbf-plaque" data-inviter="${esc(g.id)}"
         data-kopid="${esc(k.id)}">${joindre(k.nom, k.team_nom)}</button>`).join('')}
   </div>`;
@@ -538,13 +612,22 @@ $('onglets').onclick = (e) => {
  */
 $('corps').onclick = async (e) => {
   const b = e.target.closest('button[data-oui],button[data-non],button[data-demander],'
-    + 'button[data-retirer],button[data-kop],button[data-inviter],'
+    + 'button[data-retirer],button[data-kop],button[data-plus],button[data-inviter],'
     + 'button[data-kopoui],button[data-kopnon],button[data-convier]');
   if (!b) return;
   const d = b.dataset;
 
-  // Le dépliage du choix de KOP ne touche pas au serveur.
-  if (d.kop) { S.deplie = S.deplie === d.kop ? null : d.kop; rendre(); return; }
+  /* Les dépliages — le choix du KOP, « ⋯ » — ne touchent pas au serveur. Un
+     seul à la fois : ouvrir l'un sous un ami referme l'autre. Le focus revient
+     sur le bouton touché, que le rendu vient de refaire. */
+  const quoi = d.kop ? 'kop' : d.plus ? 'plus' : null;
+  if (quoi) {
+    const id = d.kop ?? d.plus;
+    S.deplie = deplie({ id }) === quoi ? null : { id, quoi };
+    rendre();
+    $('corps').querySelector(`button[data-${quoi}="${CSS.escape(id)}"]`)?.focus();
+    return;
+  }
 
   /* L’invitation ne change rien à la page : elle sort du jeu. Elle ne passe
      donc pas par le `charger()` commun, qui referait les trois listes pour
@@ -582,7 +665,23 @@ $('corps').onclick = async (e) => {
        `feterLesNouveaux`). Deux messages pour un geste, c'est un de trop. */
     else if (d.oui) { await api('/reponse', { method:'POST', body:{ id: d.oui, ok:true } }); }
     else if (d.non) { await api('/reponse', { method:'POST', body:{ id: d.non, ok:false } }); }
-    else if (d.retirer) { await api(`/${encodeURIComponent(d.retirer)}`, { method:'DELETE' }); }
+    else if (d.retirer) {
+      /* Retirer un ami se confirme ; annuler une demande partie, non : elle
+         se refait d'un geste, alors qu'une amitié retirée attend que l'autre
+         accepte de nouveau. */
+      if (d.confirmer !== undefined) {
+        const g = S.amis.find((x) => String(x.id) === String(d.retirer));
+        const oui = await window.TBF_DIALOGUE?.confirmer({
+          titre: 'RETIRER DE TES AMIS ?',
+          texte: `${g?.pseudo ?? 'Ce joueur'} ne sera plus dans tes amis. Tu pourras lui redemander `
+            + 'quand tu voudras.',
+          oui: 'RETIRER', ton: 'flare',
+        });
+        if (!oui) { b.disabled = false; return; }
+      }
+      await api(`/${encodeURIComponent(d.retirer)}`, { method:'DELETE' });
+      S.deplie = null;
+    }
     else if (d.inviter) {
       await api('/kop/inviter', { method:'POST', body:{ id: d.inviter, kopId: d.kopid } });
       toast('Invitation envoyée.');
