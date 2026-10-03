@@ -91,7 +91,15 @@
      jeu. Les effets de ce fichier n'ont pas à savoir laquelle joue. */
   const doux = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
     || calme('animations');
-  const racine = () => document.getElementById('app') ?? document.body;
+  /* Ce que la secousse fait trembler : la colonne de la page (« #app »), ou
+     la vitrine commune quand elle est ouverte par-dessus (ui.css). Son voile
+     est plein : la page tremblait derrière sans que personne la voie, et une
+     légendaire ouverte dans la vitrine ne se sentait plus que sous le doigt.
+     C'est son carton qui tremble — la carte et ce qui est écrit autour —,
+     comme tout l'écran d'ouverture du booster tremble autour de la sienne. */
+  const racine = () => (document.documentElement.classList.contains('tbf-vitrine-ouverte')
+    && document.querySelector('.tbf-vitrine.on .tbf-vitrine-carton'))
+    || document.getElementById('app') || document.body;
   /* Une vibration avant le premier toucher du joueur sur la page, Chrome la
      refuse et l'écrit en erreur dans la console (« Blocked call to
      navigator.vibrate ») : un but reçu par le réseau, un vote qui s'ouvre au
@@ -180,15 +188,27 @@
 
      La propriété will-change est posée sur les deux : la charge dure une
      seconde entière sur une image de six cents pixels, et sans elle le
-     mouvement saccade sur un téléphone. */
-  .fx-charge{animation:fxcharge 1s cubic-bezier(.5,0,.8,.3) forwards;
+     mouvement saccade sur un téléphone.
+
+     **Elles passent devant la respiration** (« .fz-vivant », plus bas) et
+     devant les arrêts de la carte (cartes.css : une carte de grille, figée
+     ou d'album ne respire pas, « animation:none »). Depuis le lot 4, le
+     portrait qu'on fait évoluer est le dessin même de la carte (« .illu »,
+     que ce fichier fait respirer) : à poids égal, la respiration venait
+     après et l'emportait, et ni la charge ni l'arrivée ne jouaient — au
+     banc, « fzsouffle » à la place de « fxcharge » sur la grande carte,
+     « none » sur une carte figée et au calme. « :not(#fx-nul) » leur donne
+     le poids d'un identifiant, et rien d'autre : aucun élément ne porte cet
+     id. L'arrivée se retire à sa fin (voir « evolution »), sans quoi le
+     nouveau dessin ne respirerait plus jamais. */
+  .fx-charge:not(#fx-nul){animation:fxcharge 1s cubic-bezier(.5,0,.8,.3) forwards;
     transform-origin:50% 60%;will-change:transform,filter}
   @keyframes fxcharge{
     0%{transform:scale(1);filter:brightness(1)}
     55%{transform:scale(1.06) translateY(-4px);filter:brightness(1.5) saturate(.7)}
     78%{transform:scale(1.03) translateY(-2px);filter:brightness(2.4) saturate(.3)}
     100%{transform:scale(1.14) translateY(-8px);filter:brightness(6) saturate(0)}}
-  .fx-arrive{animation:fxarrive .72s cubic-bezier(.2,1.5,.4,1) backwards;
+  .fx-arrive:not(#fx-nul){animation:fxarrive .72s cubic-bezier(.2,1.5,.4,1) backwards;
     transform-origin:50% 60%;will-change:transform,filter}
   @keyframes fxarrive{
     0%{transform:scale(1.2);filter:brightness(5) saturate(0);opacity:.2}
@@ -291,7 +311,9 @@
      Le calque où se joue « FX.reveler », posé sur le document : au-dessus du
      moment fort (95), sous la boîte de confirmation (160) et sous la fête de
      niveau (170). Un calque de page qui veut sa cérémonie par-dessus lui
-     reste donc sous 96. Il ne prend jamais le doigt.
+     reste donc sous 96. La vitrine commune (120) est l'exception : ouverte,
+     elle fait monter ce calque au-dessus d'elle (voir « la vitrine », plus
+     bas). Il ne prend jamais le doigt.
 
      Rien de ce qui suit ne se pose sur l'objet révélé lui-même : la page en
      reste maîtresse — sa classe, ses enfants, sa rotation. La boîte qui suit
@@ -369,6 +391,29 @@
     --d:calc(var(--fx-d,0ms) + 180ms)}
   @keyframes fxsceau{0%,86%{opacity:1}100%{opacity:0}}
 
+  /* ------------------------------------------------- la vitrine
+
+     La vitrine commune (ui.css, « .tbf-vitrine », z 120) est un calque
+     plein, voile opaque compris, au-dessus du HUD, du moment fort et de la
+     cérémonie. Ouverte, c'est elle qu'on regarde, et c'est en elle que se
+     jouent la cérémonie de la carte qu'on y pose (FX.reveler) et la gerbe
+     d'une planche complète (FX.particules). Sous elle, à 96 et à 90, on ne
+     les voyait pas : une légendaire ne s'y entendait et ne s'y sentait que
+     par le son et la vibration. Tant que la vitrine est ouverte
+     (« tbf-vitrine-ouverte » sur la racine, que la page pose et retire avec
+     elle), les calques d'ici montent donc de quarante, dans le même ordre :
+     au-dessus d'elle, toujours sous la boîte de confirmation (160) et sous
+     la fête de niveau (170). Rien à demander à la page : une option à
+     passer à chaque appel aurait été oubliée au suivant. Ils ne prennent
+     toujours pas le doigt : la vitrine reste à toucher. */
+  html.tbf-vitrine-ouverte .fx-onde{z-index:129}
+  html.tbf-vitrine-ouverte .fx-layer{z-index:130}
+  html.tbf-vitrine-ouverte .fx-flash{z-index:131}
+  html.tbf-vitrine-ouverte .fx-nombre{z-index:132}
+  html.tbf-vitrine-ouverte :is(.fx-titre,.fx-carton,.fx-bandeau,.fx-points){z-index:133}
+  html.tbf-vitrine-ouverte .fx-vol{z-index:134}
+  html.tbf-vitrine-ouverte .fx-ceremonie{z-index:136}
+
   /* Sans mouvement : la préférence du système, ou le mode calme du joueur
      (html[data-calme~="animations"], posé par ce fichier et par menu.js). Les
      deux listes sont identiques, et doivent le rester.
@@ -393,16 +438,16 @@
     .fx-titre.go{animation:fxdoux 1.6s ease}
     .fx-carton.go{animation:fxdoux 1.5s ease}
     .fx-bandeau.go{animation:fxbandeaudoux 3s ease}
-    .fx-charge{animation:fxchargedoux 1s ease forwards}
-    .fx-arrive{animation:fxarrivedoux .5s ease backwards}
+    .fx-charge:not(#fx-nul){animation:fxchargedoux 1s ease forwards}
+    .fx-arrive:not(#fx-nul){animation:fxarrivedoux .5s ease backwards}
     .fx-rev-plastique,.fx-rev-nappe,.fx-rev-halo,.fx-rev-flash,.fx-rev-rayons{display:none}
   }
   html[data-calme~="animations"] .fx-shake{animation:none}
   html[data-calme~="animations"] .fx-titre.go{animation:fxdoux 1.6s ease}
   html[data-calme~="animations"] .fx-carton.go{animation:fxdoux 1.5s ease}
   html[data-calme~="animations"] .fx-bandeau.go{animation:fxbandeaudoux 3s ease}
-  html[data-calme~="animations"] .fx-charge{animation:fxchargedoux 1s ease forwards}
-  html[data-calme~="animations"] .fx-arrive{animation:fxarrivedoux .5s ease backwards}
+  html[data-calme~="animations"] .fx-charge:not(#fx-nul){animation:fxchargedoux 1s ease forwards}
+  html[data-calme~="animations"] .fx-arrive:not(#fx-nul){animation:fxarrivedoux .5s ease backwards}
   html[data-calme~="animations"] .fx-rev-plastique,html[data-calme~="animations"] .fx-rev-nappe,
   html[data-calme~="animations"] .fx-rev-halo,html[data-calme~="animations"] .fx-rev-flash,
   html[data-calme~="animations"] .fx-rev-rayons{display:none}`;
@@ -720,6 +765,7 @@
 
   const comptes = new WeakMap();   // l'élément → de quoi arrêter son compte en cours
   const eclats = new WeakMap();    // l'élément → la minuterie de son éclat
+  const arrivees = new WeakMap();  // le dessin → de quoi retirer l'arrivée d'une évolution
 
   /** Le bref éclat de fin de compte. Sa peinture vit dans ui.css. */
   function eclater(el) {
@@ -862,9 +908,9 @@
   /* ======================================================== la cérémonie
 
      **Une seule échelle pour tout ce qui se révèle.** L'ouverture d'un
-     booster, l'achat à l'étal, demain la collection et l'évolution : chaque
-     écran inventait sa fête — `FX.rare` ici, une gerbe, une vidéo et un
-     tremblement écrits à la main dans la page là. Une rare n'avait pas le
+     booster, l'achat à l'étal, la vitrine de la collection : chaque écran
+     inventait sa fête — `FX.rare` ici (parti au lot 4), une gerbe, une vidéo
+     et un tremblement écrits à la main dans la page là. Une rare n'avait pas le
      même poids d'un écran à l'autre, et le joueur ne pouvait pas apprendre à
      reconnaître une légendaire avant de l'avoir lue. Quatre degrés, qui se
      jouent pareil partout (l'échelle de la Vitrine, greffée par l'amendement
@@ -913,7 +959,7 @@
   function degre(rarete) {
     const r = String(rarete ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .trim().toLowerCase();
-    if (r === 'crown') return 'legendaire';   // le nom que lisait FX.rare
+    if (r === 'crown') return 'legendaire';   // l'ancien nom de la légendaire (dex.js)
     return ECHELLE.includes(r) ? r : 'commune';
   }
 
@@ -971,14 +1017,28 @@
      respiration d'un personnage), et jamais plus de neuf cents
      millisecondes. « getAnimations » remet le style à jour avant de
      répondre : la transition que la page vient de déclencher en posant sa
-     classe est déjà comptée. */
+     classe est déjà comptée.
+
+     **Et celles de ce qui le porte.** La vitrine fait arriver la carte par
+     son support (« .tbf-vitrine-tilt », « tbf-vitrine-pose », 500 ms), et
+     non par la carte : la cérémonie partait sur une carte encore
+     transparente, à mi-chemin de sa place (au banc : 9 ms après
+     l'ouverture). Les pseudo-éléments d'un porteur sont un décor à côté de
+     l'objet (les rayons de la vitrine), pas un geste qui le déplace : on ne
+     les attend pas. */
   function attendrePose(el) {
     let enCours = [];
     try {
-      enCours = (el?.getAnimations?.({ subtree: true }) ?? []).filter((a) => {
+      const finie = (a) => {
         const t = a.effect?.getComputedTiming?.();
         return a.playState === 'running' && t && Number.isFinite(t.endTime);
-      });
+      };
+      const siennes = el?.getAnimations?.({ subtree: true }) ?? [];
+      const porteurs = el ? (document.getAnimations?.() ?? []).filter((a) => {
+        const cible = a.effect?.target;
+        return cible && cible !== el && !a.effect.pseudoElement && cible.contains?.(el);
+      }) : [];
+      enCours = [...siennes, ...porteurs].filter(finie);
     } catch { /* un navigateur sans getAnimations : on n'attend pas */ }
     if (!enCours.length) return Promise.resolve();
     return Promise.race([
@@ -1009,7 +1069,8 @@
    * @param {boolean} [o.retourner=false]  « true » : la cérémonie retourne
    *   l'objet elle-même avant le reste — pour un objet qui n'a pas de
    *   retournement à lui (l'objet de l'étal). La carte du booster a le sien :
-   *   la page l'appelle sans, et la cérémonie attend qu'il ait fini.
+   *   la page l'appelle sans, et la cérémonie attend qu'il ait fini — le sien,
+   *   ou celui de ce qui la porte (la vitrine qui la pose).
    * @returns {Promise<void>} résolue quand la cérémonie est finie — tout de
    *   suite pour une commune sans retournement, ou dans un onglet caché
    */
@@ -1421,26 +1482,10 @@
       }
     },
 
-    /**
-     * Une carte rare qui se pose.
-     *
-     * **Remplacée par « reveler »**, l'échelle commune de cérémonie. Le
-     * kiosque y est passé et ne l'appelle plus ; il reste un appelant, la
-     * fiche de carte de la collection (`fanfare`, dans `collection.html`),
-     * qui passera à « reveler » avec elle (hors des lots 3 et 5). Elle partira
-     * alors. Ne pas l'employer ailleurs.
-     */
-    rare(rarete = 'd3', element) {
-      const { x, y } = centre(element);
-      const palette = { epique: [COULEURS.bleu, COULEURS.craie],
-        legendaire: [COULEURS.or, COULEURS.feu, '#FFF3D0'] }[rarete]
-        ?? [COULEURS.craie];
-      onde({ x, y, couleur: palette[0], taille: rarete === 'crown' ? 560 : 340 });
-      particules({ x, y, couleurs: palette, distance: rarete === 'crown' ? 260 : 170,
-        n: rarete === 'crown' ? 70 : 30, taille: 6, duree: 1200 });
-      if (rarete === 'crown') { flash(); secousse(1.2); }
-      buzz(rarete === 'crown' ? [40, 50, 40, 50, 120] : 20);
-    },
+    /* « FX.rare », la gerbe d'une carte rare qui se pose, est partie au lot 4
+       avec son dernier appelant : la vitrine de la collection passe par
+       « reveler », comme le kiosque et l'étal, et sa planche complète par
+       « particules ». Une rare a désormais le même poids partout. */
 
     /**
      * **L'évolution d'un Fanzzy.**
@@ -1519,9 +1564,30 @@
                reconstruit entièrement, l'ancien n'existe plus. */
             arrivee(neuf) {
               if (neuf) {
-                neuf.classList.remove('fx-arrive');
+                /* Le même élément que l'ancien, quand la page n'a rien
+                   redessiné (une fiche qui n'a pas pu se relire) : sa
+                   charge, figée sur le blanc, part avec l'arrivée. */
+                arrivees.get(neuf)?.();
+                neuf.classList.remove('fx-charge', 'fx-arrive');
                 void neuf.offsetWidth;
                 neuf.classList.add('fx-arrive');
+                /* **Retirée à sa fin** : elle pèse plus que la respiration
+                   (voir la feuille), et un dessin resté « fx-arrive » ne
+                   respirerait plus jamais. Le filet, comme pour « refus » :
+                   un onglet caché ne finit pas ses animations. Une seconde
+                   arrivée sur le même dessin retire d'abord la première,
+                   sans quoi le filet de celle-ci couperait l'autre. */
+                let filet = 0;
+                const fin = (e) => {
+                  if (e && (e.target !== neuf || !e.animationName.startsWith('fxarrive'))) return;
+                  clearTimeout(filet);
+                  neuf.removeEventListener('animationend', fin);
+                  arrivees.delete(neuf);
+                  neuf.classList.remove('fx-arrive');
+                };
+                arrivees.set(neuf, fin);
+                neuf.addEventListener('animationend', fin);
+                filet = setTimeout(fin, 1200);
               }
               if (nom) setTimeout(() => titre(nom, 'A GRANDI', couleur, 34), 180);
             },

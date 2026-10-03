@@ -136,6 +136,28 @@
  * mesuré à part, comme un état. Le bonus du jour ne couvre plus rien : il
  * est dans la bâche du hub, que la visite attend et mesure avec la page.
  *
+ * ## Une collection en partie remplie (lot 4)
+ *
+ * Le joueur de l'audit n'a pas une carte, et c'est très bien pour les pages :
+ * c'est ce que tout relevé d'avant a mesuré. Mais une collection vide ne
+ * montre ni doublon, ni légendaire, ni une carte à soi à côté d'une carte qui
+ * manque — exactement ce que le lot 4 redessine. `--etats` sème donc un
+ * collectionneur par format et regarde six écrans de plus : le classeur, la
+ * fiche d'un Fanzzy possédé et celle d'un manquant, la vitrine sur l'un et
+ * sur l'autre, et l'album de /collection quand il existe. Voir « La
+ * collection ».
+ *
+ * Il ne porte pas non plus d'insigne du carnet de saison, et le lot 4 les
+ * dessine sur le profil : le tampon « S1 » sur la carte de supporter, le
+ * liseré autour de l'anneau du buste, les stickers de MA SAISON. Un état de
+ * plus les lui coud le temps de trois visites de /profil. Voir « Les
+ * insignes du carnet ».
+ *
+ * Et un mot pour le lecteur d'écran seul, une boîte d'un pixel découpée à
+ * rien, se comptait comme un texte qu'on lit, pâle au soleil compris : il
+ * est écarté de tout relevé, et nommé à part (`rognes`) avec tout texte
+ * qu'une découpe efface. Voir « Rogné à rien ».
+ *
  * Usage :
  *   node scripts/audit-ui.mjs                  toutes les pages, trois formats
  *   node scripts/audit-ui.mjs /virage          une seule page
@@ -147,7 +169,10 @@
  *   node scripts/audit-ui.mjs --pleine         captures de la page entière
  *   node scripts/audit-ui.mjs --etats          et l'ouverture, le tiroir ouvert, la
  *                                              bande du HUD, un booster et son
- *                                              ticket, un classement
+ *                                              ticket, un classement, et la
+ *                                              collection (classeur, fiches,
+ *                                              vitrine, album), et le profil
+ *                                              avec ses insignes
  *
  * (Sous Git Bash, « /virage » est réécrit en chemin Windows avant d'arriver
  * ici : préfixer la commande de MSYS_NO_PATHCONV=1, ou la lancer depuis
@@ -155,7 +180,8 @@
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { ORDRE } from './ordre-schema.mjs';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer';
@@ -193,6 +219,35 @@ const sortieJson = opt('--json') ? path.resolve(opt('--json')) : null;
 const dossierCaptures = opt('--captures') ? path.resolve(opt('--captures')) : null;
 
 const DB = baseDeTest();
+
+/* **Le verrou de la base, tenu à jour.** `base-de-test.mjs` date le verrou
+   à sa prise et le tient pour périmé au bout de dix minutes : au-delà, la
+   suite suivante le reprend et vide la base. L'audit avec `--etats` en
+   prenait déjà huit et demie au départ du lot 4, et ses états du lot (la
+   collection, le profil et ses insignes) en ajoutent : passé dix minutes,
+   une autre suite viderait la base au milieu d'une mesure, qui rougirait
+   sans rien dire des pages. Tant que l'audit vit, il redate donc **son
+   propre** verrou chaque minute (même pid ; jamais celui d'un autre).
+   Écrit à part puis renommé par-dessus : un lecteur ne voit jamais le
+   fichier vide, qu'il prendrait pour périmé. Le brouillon vit dans le
+   dossier temporaire du système, pas dans le dépôt (que `.gitignore` ne
+   couvre que pour le verrou lui-même), et il est effacé si le renommage
+   échoue. Rien à redater sans verrou (`TBF_SANS_VERROU`) ; un échec ne
+   coûte que ce battement-là. */
+const VERROU = path.join(RACINE, '.tbf-suite.lock');
+setInterval(() => {
+  const brouillon = path.join(tmpdir(), `tbf-suite-lock-${process.pid}.json`);
+  try {
+    const tenu = JSON.parse(readFileSync(VERROU, 'utf8'));
+    if (tenu?.pid !== process.pid) return;
+    writeFileSync(brouillon, JSON.stringify({ ...tenu, a: Date.now() }));
+    renameSync(brouillon, VERROU);
+  } catch {
+    /* Pas de verrou, illisible, tenu ouvert, ou un autre disque : au
+       prochain battement. */
+    try { unlinkSync(brouillon); } catch { /* rien n'a été écrit */ }
+  }
+}, 60_000).unref();
 
 /* Les trois formats qui décident. 360 est le téléphone le plus étroit encore
    courant, 400 le téléphone ordinaire, 768 la tablette en portrait — et c'est
@@ -827,11 +882,76 @@ const mesure = (portee = null) => `(() => {
     memoDeDos.set(el, r);
     return r;
   };
-  const visible = (el) => {
+  /* **Rogné à rien.** Un mot pour le lecteur d'écran seul (« .tbf-vh » de
+     ui.css, « .vh » du profil et du classement, « .long » du virage) garde
+     une boîte d'un pixel, sans « display: none » ni « visibility: hidden »
+     (le lecteur ne le dirait plus), et c'est sa propre découpe qui l'efface :
+     « clip-path: inset(50%) ». Rien ici ne la lisait, et « cache », plus
+     bas, ne regarde que les ancêtres qui coupent : le prix « 25 écharpes »
+     de la vitrine était relevé deux fois, la seconde par « écharpes », un
+     mot que personne ne voit, compté parmi les textes et pâle au soleil.
+
+     Est rogné à rien ce que sa découpe, ou celle d'un ancêtre, ne laisse pas
+     peint sur plus d'un pixel dans un sens : un « clip-path: inset() » dont
+     les retraits se rejoignent, un « clip: rect() » vide sur une boîte
+     positionnée, ou une boîte d'un pixel sur un qui coupe ce qui la dépasse
+     (la forme ancienne du même mot ; d'un pixel dans les deux sens, pour
+     qu'un tiroir replié à hauteur nulle reste à « cache » : le contraste
+     relève encore ce qu'un ancêtre coupe ainsi, et le changer déplacerait
+     tous les relevés d'avant). La découpe se pose sur la boîte de mise en
+     page, avant toute transformation : c'est là qu'on lit sa taille. Une
+     autre forme, une autre boîte de référence, une longueur en calc() ne se
+     calculent pas ici : tenues pour visibles, comme avant. Une boîte
+     « display: contents » n'existe pas, elle ne découpe rien. */
+  const enPixels = (v, tout) => (/^-?[\\d.]+%$/.test(v) ? (parseFloat(v) / 100) * tout
+    : /^-?[\\d.]+(?:px)?$/.test(v) ? parseFloat(v) : NaN);
+  const rogneSoi = (el) => {
+    const s = getComputedStyle(el);
+    if (s.display === 'contents') return false;
+    const html = el instanceof HTMLElement;
+    const b = html ? null : el.getBoundingClientRect();
+    const W = html ? el.offsetWidth : b.width;
+    const H = html ? el.offsetHeight : b.height;
+    const ip = /^inset\\((.*)\\)(?:\\s+border-box)?$/.exec(s.clipPath ?? '');
+    if (ip) {
+      /* Un à quatre retraits, dans l'ordre haut, droite, bas, gauche, comme
+         une marge ; l'arrondi qui suit « round » ne retire rien. */
+      const [h, d = h, bas = h, g = d] = ip[1].split(/\\s+round\\s+/)[0].trim().split(/\\s+/);
+      const n = [enPixels(h, H), enPixels(d, W), enPixels(bas, H), enPixels(g, W)];
+      if (n.every(Number.isFinite) && (W - n[1] - n[3] <= 1 || H - n[0] - n[2] <= 1)) return true;
+    }
+    const cl = /^rect\\((.*)\\)$/.exec(s.clip ?? '');
+    if (cl && /^(?:absolute|fixed)$/.test(s.position)) {
+      /* Haut et bas depuis le bord haut, droite et gauche depuis le bord
+         gauche ; « auto » est le bord de la boîte. */
+      const [h, d, bas, g] = cl[1].split(/[\\s,]+/).filter(Boolean)
+        .map((v, i) => (v === 'auto' ? [0, W, H, 0][i] : enPixels(v, NaN)));
+      if ([h, d, bas, g].every(Number.isFinite) && (d - g <= 1 || bas - h <= 1)) return true;
+    }
+    if (html && s.display !== 'inline' && /^(?:hidden|clip)$/.test(s.overflowX)
+        && /^(?:hidden|clip)$/.test(s.overflowY) && el.clientWidth <= 1 && el.clientHeight <= 1) return true;
+    return false;
+  };
+  /* Lui ou un ancêtre : une découpe vaut pour tout ce que la boîte peint.
+     Mémorisé, comme « deDos ». */
+  const memoRogne = new Map();
+  const rogne = (el) => {
+    if (!el || el.nodeType !== 1 || el === document.documentElement) return false;
+    if (memoRogne.has(el)) return memoRogne.get(el);
+    const r = rogneSoi(el) || rogne(el.parentElement);
+    memoRogne.set(el, r);
+    return r;
+  };
+  /* Une boîte qui a une taille, ni « display: none » ni « visibility:
+     hidden », ni de dos : ce que « visible » voulait dire avant « Rogné à
+     rien ». Gardé à part pour nommer ce que la découpe seule écarte
+     (« rognes », dans la boucle). */
+  const boiteVue = (el) => {
     const r = el.getBoundingClientRect();
     const s = getComputedStyle(el);
     return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && !deDos(el);
   };
+  const visible = (el) => boiteVue(el) && !rogne(el);
   /* Le conteneur qui défile au-dessus d'un élément, s'il y en a un. Ce qui sort
      d'un carrousel n'est pas « hors écran » : il est **plus loin dans le
      carrousel**, et c'est exactement à ça qu'il sert. La bande des jours de
@@ -890,7 +1010,9 @@ const mesure = (portee = null) => `(() => {
      n'est ni « display: none » ni « visibility: hidden », et personne ne peut
      le lire. Le compter enverrait corriger un texte que personne ne voit. Un
      conteneur qui défile, lui, ne cache rien : on y fait venir le texte au
-     doigt, donc il reste compté. */
+     doigt, donc il reste compté. Ce qui se découpe lui-même à rien (un mot
+     pour le lecteur d'écran seul) n'arrive pas jusqu'ici : « visible »
+     l'écarte de tout relevé, voir « Rogné à rien ». */
   const cache = (el) => {
     const r = el.getBoundingClientRect();
     for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) {
@@ -1128,6 +1250,8 @@ const mesure = (portee = null) => `(() => {
     horsContraste: [],
     /* Voir « Le petit or », plus haut. */
     petitOr: [], orLegendaire: [],
+    /* Voir « Rogné à rien », plus haut, et la boucle. */
+    rognes: [],
     ...(FIXE ? { horsFenetre: [] } : {}) };
 
   /* **Le décor peut passer devant le texte, et rien ne le disait.**
@@ -1198,7 +1322,23 @@ const mesure = (portee = null) => `(() => {
       }
     }
 
-    if (!visible(el)) continue;
+    /* « visible », en deux temps : la boîte, puis la découpe. */
+    const vue = boiteVue(el);
+    if (!vue || rogne(el)) {
+      /* **Les textes rognés à rien** (voir plus haut) : les mots pour le
+         lecteur d'écran seul, ou ce qu'une découpe efface à cet instant.
+         Nommés, pour qu'un relevé d'avant se retrouve. On n'y range que ce
+         que « textes » comptait, à la même règle (plus bas) : le « textes »
+         d'avant vaut le nouveau plus eux. Les trouvailles qu'ils faisaient
+         (au soleil surtout) sortent des listes sous ces noms, avec celles
+         d'un mot posé dedans, que leur boîte d'un pixel coupait déjà
+         (« cache ») mais que le contraste relevait. */
+      if (vue && texteDirect(el) && !cache(el)
+          && opacites(el) * lire(getComputedStyle(el).color)[3] >= 0.02) {
+        out.rognes.push({ q: nom(el) });
+      }
+      continue;
+    }
     const r = el.getBoundingClientRect();
 
     /* Hors écran à gauche ou à droite. On tolère un pixel : les bordures et les
@@ -1473,7 +1613,25 @@ const git = (...a) => {
    hub a quitté la pile pour poser le bonus dans sa bâche du jour : la
    visite du hub le mesure avec la page, et `bache` dit qu'il y était (voir
    « Le bonus du jour, dans la bâche »). Un relevé d'avant ce jour qui
-   porte `etats['bonus@/']` mesurait un ticket que le hub ne pose plus. */
+   porte `etats['bonus@/']` mesurait un ticket que le hub ne pose plus.
+
+   **Ajouts du lot 4**, toujours sans rien changer au sens des champs
+   d'avant : six états (`classeur@/fanzzy`, `fiche@possédé`,
+   `fiche@manquant`, `vitrine@possédée`, `vitrine@manquante`,
+   `album@/collection`), leurs formats dans `formatsEtats.collection`, et ce
+   qui a été semé pour eux dans `collectionSemee` ; puis un septième,
+   `profil@insignes`, ses formats dans `formatsEtats.profil` et ce qui a été
+   semé pour lui dans `insignesSemes`. Un relevé d'avant ce lot se compare
+   page à page et état à état, ces sept-là mis à part.
+
+   **Une correction du même lot**, qui retire une lecture fausse sans
+   changer le sens d'aucun champ : tout relevé perd les textes rognés à
+   rien, les mots pour le lecteur d'écran seul d'abord (« Rogné à rien »),
+   comme il avait perdu les faces de dos. Là où il y en a, `releves.rognes`
+   les nomme et `compte.rognes` les compte ; ailleurs, ni l'un ni l'autre.
+   Le `textes` d'avant vaut le nouveau plus `rognes`, et les trouvailles
+   qu'ils faisaient (au soleil surtout) sortent des listes sous ces mêmes
+   noms, avec celles des mots posés dedans. Le schéma reste `audit-ui/3`. */
 const rapport = {
   schema: 'audit-ui/3',
   date: new Date().toISOString(),
@@ -1573,8 +1731,49 @@ async function nouvelleVisite({ largeur, hauteur }, qui) {
   if (qui) {
     await page.setCookie({ name: 'tbf_session', value: SESSIONS[qui], domain: 'localhost', path: '/' });
   }
-  return { contexte, page, erreurs, refus };
+  return { contexte, page, erreurs, refus, enVol: suivreNosRequetes(page) };
 }
+
+/* **Le calme de notre serveur, quand Chrome ne le dit plus.** « networkidle0 »
+   attend le signal de Chrome (le cycle de vie « networkIdle »). Sur le
+   classeur ouvert — 733 cartes, 573 images paresseuses —, ce signal vient
+   au premier contexte du navigateur et **plus jamais aux suivants** : vu à
+   la sonde le 3 octobre 2026, trois contextes de suite, avec et sans
+   l'interception des requêtes, polices bloquées ou non, alors que ni
+   puppeteer ni CDP (Network.*) ne voyaient une seule requête en vol. La
+   page attendait vingt secondes, deux fois, et la case restait vide.
+
+   On suit donc nous-mêmes les requêtes **de notre serveur** — les données
+   et les fichiers du jeu —, et la page est chargée quand aucune n'est en
+   vol depuis une demi-seconde (la règle de « networkidle0 »). Les polices
+   de Google n'y sont pas : `mesurer` les attend à part, bornées, et dit ce
+   qui a été lu en police de secours (« enRepli »). Une requête dont aucun
+   événement ne dit la fin — la police d'Oswald, sous l'interception, en
+   est une — ne bloque donc plus rien. */
+function suivreNosRequetes(page) {
+  const enVol = new Set();
+  const origine = new URL(base).origin;
+  const notre = (r) => { try { return new URL(r.url()).origin === origine; } catch { return false; } };
+  page.on('request', (r) => { if (notre(r)) enVol.add(r); });
+  page.on('requestfinished', (r) => enVol.delete(r));
+  page.on('requestfailed', (r) => enVol.delete(r));
+  return enVol;
+}
+/** Vrai quand aucune requête de notre serveur n'est en vol depuis 500 ms ;
+    faux au-delà du plafond. */
+async function calmeDeNotreServeur(enVol, plafond = 15_000) {
+  const depart = Date.now();
+  let calme = null;
+  while (Date.now() - depart < plafond) {
+    if (enVol.size) calme = null;
+    else if (calme === null) calme = Date.now();
+    else if (Date.now() - calme >= 500) return true;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return false;
+}
+/** Ce qui est encore en vol, nommé pour le rapport. */
+const enAttente = (enVol) => [...enVol].slice(0, 3).map((r) => r.url().replace(base, '')).join(' ');
 
 /** Les polices, les voiles (MESURE ne peut attendre ni l'une ni l'autre),
     puis la mesure.
@@ -1704,6 +1903,10 @@ function compter(m, erreurs, refus) {
   }
   /* Même règle pour la coupe à la ligne quand son témoin a échoué. */
   if (!coupeLignesMesurable) delete m.coupesLignes;
+  /* Les textes rognés à rien (voir « Rogné à rien ») : absents quand il n'y
+     en a pas. Ce n'est pas un défaut, et une case qui n'en a aucun se
+     compare ainsi à un relevé d'avant sans une ligne de plus. */
+  if (!m.rognes?.length) delete m.rognes;
   return {
     deborde: m.deborde, horsEcran: m.horsEcran.length, coupes: m.coupes.length,
     petits: m.petits.length, pales: m.pales.length, surDegrade: m.surDegrade,
@@ -1723,6 +1926,9 @@ function compter(m, erreurs, refus) {
        un défaut : ils disent jusqu'où la mesure voit. */
     horsFeuille: m.horsFeuille.textes,
     horsContraste: m.horsContraste.length,
+    /* Ce que « textes » ne compte plus : le « textes » d'avant « Rogné à
+       rien » vaut « textes » plus lui. */
+    ...(m.rognes ? { rognes: m.rognes.length } : {}),
     /* Un défaut, lui : l'arbitrage de l'or qui recule (voir DORE). Et, à
        part, l'or que l'arbitrage laisse à la légendaire : pas un défaut, un
        compte qui doit rester petit. */
@@ -1887,7 +2093,7 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
   rapport.pages[cle] = {};
   for (const format of FORMATS) {
     const { largeur, hauteur } = format;
-    const { contexte, page, erreurs, refus } = await nouvelleVisite(format, qui);
+    const { contexte, page, erreurs, refus, enVol } = await nouvelleVisite(format, qui);
     /* Le hub d'un joueur : son bonus du jour (voir « Le bonus du jour, dans
        la bâche »). */
     const quotidien = chemin === '/' && qui ? guetterQuotidien(page) : null;
@@ -1906,8 +2112,22 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
         charge = true;
       } catch { /* on retente une fois */ }
     }
+    /* **Un troisième essai, sans le signal de Chrome** (voir « Le calme de
+       notre serveur ») : la page chargée, puis notre serveur tu. Il ne joue
+       qu'après deux échecs — aucun relevé qui chargeait avant ne change de
+       méthode —, et il est noté. */
     if (!charge) {
-      note(cle, largeur, 'chargement', 'la page n’a pas fini de charger en 20 s, deux fois');
+      try {
+        await page.goto(base + chemin, { waitUntil: 'load', timeout: 20_000 });
+        const calme = await calmeDeNotreServeur(enVol);
+        charge = true;
+        essais = 3;
+        note(cle, largeur, 'chargement', `chargée au troisième essai, sans le calme réseau de Chrome : ${calme
+          ? 'notre serveur s’est tu' : `notre serveur ne s’est pas tu en 15 s (en attente : ${enAttente(enVol)})`}`);
+      } catch { /* deux échecs et demi : la case reste vide */ }
+    }
+    if (!charge) {
+      note(cle, largeur, 'chargement', 'la page n’a pas fini de charger en 20 s, deux fois, ni chargé au troisième essai');
       rapport.pages[cle][cleFormat(format)] = { largeur, hauteur, charge: false, essais };
       await contexte.close();
       continue;
@@ -2136,7 +2356,10 @@ function rangerEtat(cle, chemin, format, donnees, m = null, erreurs = [], refus 
       : n === 0 ? 'rien à signaler' : `${n} chose(s)`}${
     entree.instant !== undefined ? `   (à ${entree.instant} ms${
       entree.instantMesure ? `, mesuré à ${entree.instantMesure}` : ''})` : ''}${
-    entree.tiroir ? `   (${String(entree.tiroir.ecrans).replace('.', ',')} écran(s) de haut)` : ''}`);
+    entree.tiroir ? `   (${String(entree.tiroir.ecrans).replace('.', ',')} écran(s) de haut)` : ''}${
+    /* Un état absent dit pourquoi, sur sa ligne : « rien à montrer » seul ne
+       distingue pas un écran qui n'existe pas encore d'une panne. */
+    entree.absent ? `   (${entree.absent})` : ''}`);
 }
 
 async function etatOuverture(format) {
@@ -2657,12 +2880,753 @@ async function etatClassement(format) {
   }
 }
 
+/* ------------------------------------------------- la collection (lot 4)
+
+   Le lot 4 refait les écrans de la collection, et le joueur de l'audit n'en
+   a pas : c'est ce que les pages mesurent, et ce que tout relevé d'avant a
+   mesuré — on n'y touche pas. Six états la montrent en partie remplie :
+
+     — **le classeur** (`classeur@/fanzzy`) : l'onglet CLASSEUR de /fanzzy,
+       que `?ecran=dex` ouvre (l'adresse où renvoie la barre du deck), et le
+       bouton `[data-go="dex"]` à défaut. Mesuré comme une page.
+     — **la fiche d'un Fanzzy possédé et celle d'un manquant**
+       (`fiche@possédé`, `fiche@manquant`) : /fanzzy/<id>, mesurées comme
+       des pages. La visite ordinaire de /fanzzy/RP1 voit un manquant chez
+       un joueur qui n'a rien : ni la fiche de ce qu'on a, ni un manquant à
+       côté de ce qu'on a.
+     — **la vitrine**, ouverte sur une carte possédée et sur une manquante
+       (`vitrine@possédée`, `vitrine@manquante`) : /collection, la case
+       touchée comme au doigt, la vitrine mesurée sous sa propre portée — le
+       dialogue ouvert —, comme le tiroir : la page qu'elle couvre a déjà son
+       relevé.
+     — **la sous-vue de l'album** (`album@/collection`) : la tuile qui l'ouvre
+       touchée, l'album mesuré. Elle n'existe qu'une fois le lot fait ;
+       avant, l'état le dit (`absent`) et ne relève rien.
+
+   **Un collectionneur par format**, comme le kiosque : chacun part du même
+   point, et un format ne voit pas ce que le précédent a écrit. Sa bourse est
+   celle du joueur de l'audit (500 écharpes, 6 boosters, 400 XP, Sion). Sa
+   collection est tirée du catalogue servi (/api/fanzzy/dex), dans la
+   première série ouverte, dans l'ordre du catalogue, qui a tout ce qu'il
+   faut — sur la base de test, LA TRIBUNE : LE VIRAGE IMPOSSIBLE, qui la
+   précède, n'a que deux lignées. Le classeur et l'album l'amènent à l'écran
+   comme un joueur, par le rail des séries ou en faisant défiler (voir
+   `allerALaSerie`) :
+
+     avatar     la première lignée de deux âges ou plus, au deuxième âge,
+                équipée (TON AVATAR) — c'est la fiche du possédé ;
+     doublon    la lignée suivante, en trois exemplaires (« ×3 ») — c'est
+                la vitrine du possédé ;
+     manquant   la suivante, absente — la fiche et la vitrine du manquant ;
+     nouveau    la suivante, possédée et marquée NOUVEAU ;
+     legendaire la première légendaire de la série, possédée et NOUVEAU.
+
+   Tout le reste de la série manque, et les autres séries aussi.
+
+   **Les nouveautés sont resemées avant chaque visite.** Le classeur éteint
+   ce qu'il a montré et la fiche éteint sa clé à l'ouverture (contrat § 2) :
+   sans cela, chaque état hériterait de ce que le précédent a éteint, et un
+   NOUVEAU ne paraîtrait qu'au premier.
+
+   **Ce qu'ils lisent de la page, et rien d'autre** : la carte de cardHTML
+   (`.fz[data-id]`, que lisent déjà les suites du classeur), `[data-open]`
+   et `[data-id]` à défaut ; `[data-serie="<série>"]` pour aller à la page
+   de la série semée quand un album ne s'ouvre pas sur elle ;
+   `[data-vue="fanzzy"]`, la tuile qui ouvre l'album de /collection, et
+   `.tbf-album`, l'album ; un `[role="dialog"]` ouvert pour la vitrine.
+   (Avant le lot, la case de /collection n'était pas une carte et se
+   trouvait par son nom, `.vig[data-liste="fanzzy"]` : la vignette est
+   partie avec l'accordéon, le repli aussi. Le relevé de départ,
+   `lot4/audit-avant.json`, l'a employé ; aucun relevé d'après ne le
+   peut.) Un identifiant qui manque fait écrire une panne nommée (genre
+   « état ») au lieu d'arrêter l'audit, et chaque relevé dit ce qu'il a vu
+   (`vus`).
+
+   **L'album de /collection est une sous-vue qui remplace le contenu de la
+   page** (`#vue`), pas un calque fixé : il se mesure comme une page. La
+   recherche d'un ancêtre `position: fixed` reste pour un album qu'on
+   poserait un jour par-dessus la page.
+
+   **Rien n'est forcé.** Un classeur qui ne montre aucune carte semée n'est
+   pas mesuré (photographié seulement : la capture dit ce qu'il montrait), une
+   fiche qui ne nomme pas son personnage non plus ; une vitrine qui montre une
+   autre carte que celle touchée est mesurée, et c'est relevé.
+
+   Semés **après** le classement d'un joueur classé, qui redémarre le
+   serveur : les collectionneurs n'existent pas encore quand les pages et les
+   autres états sont mesurés, et aucun relevé d'avant ne peut donc les
+   voir. */
+const PAGE_CLASSEUR = '/fanzzy?ecran=dex';
+const PAGE_COLLECTION = '/collection';
+/* Les rôles semés, dans l'ordre où le classeur les range. */
+const ROLES_SEMES = ['avatar', 'doublon', 'manquant', 'nouveau', 'legendaire'];
+const POSSEDES = ['avatar', 'doublon', 'nouveau', 'legendaire'];
+
+/** La collection à semer, lue dans le catalogue que le serveur sert. */
+async function planDeCollection() {
+  const r = await fetch(`${base}/api/fanzzy/dex`, { headers: { 'x-forwarded-for': '10.78.0.1' } });
+  if (!r.ok) throw new Error(`/api/fanzzy/dex a répondu ${r.status}`);
+  const d = await r.json();
+  const numero = (id) => Number(/^[A-Z]+(\d+)/.exec(id)?.[1] ?? 0);
+  for (const s of (d.sets ?? []).filter((x) => x.ouverte !== false)) {
+    const cartes = (d.dex ?? []).filter((f) => f.set === s.id);
+    const lignee = (id) => cartes.filter((f) => (f.racine ?? f.id) === id)
+      .sort((a, b) => (a.stade ?? 1) - (b.stade ?? 1));
+    const racines = cartes.filter((f) => (f.racine ?? f.id) === f.id && f.rar !== 'legendaire')
+      .sort((a, b) => numero(a.id) - numero(b.id));
+    const i = racines.findIndex((f) => lignee(f.id).length >= 2);
+    const suite = i >= 0 ? racines.slice(i + 1, i + 4) : [];
+    const legendaire = cartes.filter((f) => f.rar === 'legendaire')
+      .sort((a, b) => numero(a.id) - numero(b.id))[0];
+    if (suite.length < 3 || !legendaire) continue;
+    /* Les noms de tous les âges : une fiche au deuxième âge peut porter le
+       nom du deuxième, et c'est par eux qu'on vérifie qu'elle est la bonne. */
+    const role = (f) => ({ id: f.id, nom: f.nom, noms: lignee(f.id).map((x) => x.nom), rar: f.rar });
+    return { serie: s.id, nomSerie: s.nom, avatar: { ...role(racines[i]), copies: 1, stade: 2 },
+      doublon: { ...role(suite[0]), copies: 3, stade: 1 }, manquant: role(suite[1]),
+      nouveau: { ...role(suite[2]), copies: 1, stade: 1 }, legendaire: { ...role(legendaire), copies: 1, stade: 1 } };
+  }
+  return null;
+}
+
+/** Un collectionneur pour ce format, semé selon le plan. */
+async function collectionneur(format, plan) {
+  const qui = `collection-${cleFormat(format)}`;
+  const id = `aud00000-0000-0000-0003-${String(format.largeur).padStart(4, '0')}${
+    String(format.hauteur).padStart(8, '0')}`;
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash,status,email_verified_at)
+                    VALUES (?,?,?,'x','active',NOW(3))`, [id, `${qui}@ex.fr`, `Collection${format.largeur}`]);
+  await pool.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,onboarded_at,active_fanzzy)
+                    VALUES (?,500,6,400,NOW(3),?)`, [id, plan.avatar.id]);
+  await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)', [id]);
+  for (const r of POSSEDES) {
+    await pool.query('INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,?,?,?)',
+      [id, plan[r].id, plan[r].copies, plan[r].stade]);
+  }
+  const j = `audit-session-${qui}`.padEnd(44, '0');
+  await pool.query(
+    `INSERT INTO sessions (token_hash, user_id, expires_at)
+     SELECT ?, id, NOW(3) + INTERVAL 1 DAY FROM users WHERE public_id = ?`,
+    [createHash('sha256').update(j).digest('hex'), id]);
+  SESSIONS[qui] = j;
+  return { qui, id };
+}
+
+/** Les nouveautés du collectionneur, remises telles quelles (voir plus haut).
+    Faux si la table manque : l'écran n'a alors rien de nouveau à montrer, et
+    le relevé le dit. */
+async function resemerNouveautes(id, plan) {
+  try {
+    await pool.query('DELETE FROM user_nouveautes WHERE user_id = ?', [id]);
+    for (const r of ['nouveau', 'legendaire']) {
+      await pool.query('INSERT INTO user_nouveautes (user_id,cle,sorte) VALUES (?,?,?)',
+        [id, `fanzzy:${plan[r].id}`, 'fanzzy']);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* Où sont les cartes semées : à l'écran, rendues plus loin (sous le pli, sur
+   la page voisine d'un album), dans le document sans boîte (un écran caché),
+   ou absentes. */
+const OU_SONT_LES_CARTES = (ids) => {
+  const out = {};
+  for (const [role, id] of Object.entries(ids)) {
+    const q = CSS.escape(id);
+    const els = [...document.querySelectorAll(`.fz[data-id="${q}"], [data-open="${q}"]`)];
+    const rendus = els.filter((e) => {
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+    });
+    const ecran = rendus.some((e) => {
+      const r = e.getBoundingClientRect();
+      return r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
+    });
+    out[role] = ecran ? 'écran' : rendus.length ? 'plus loin' : els.length ? 'caché' : 'absent';
+  }
+  return out;
+};
+const idsDuPlan = (plan) => Object.fromEntries(ROLES_SEMES.map((r) => [r, plan[r].id]));
+
+/* Touche, comme un doigt, un élément visible qui répond à ce sélecteur. */
+const TOUCHER = (sel) => {
+  const e = [...document.querySelectorAll(sel)].find((x) => {
+    const r = x.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(x).visibility !== 'hidden';
+  });
+  if (!e) return false;
+  e.scrollIntoView({ block: 'nearest', inline: 'center' });
+  e.click();
+  return true;
+};
+
+/* Fait défiler jusqu'à la première carte semée rendue, dans l'ordre du
+   document, comme un doigt : la grille qui défile en hauteur, ou l'album qui
+   tourne ses pages en largeur. */
+const DEFILER_JUSQU_A = (ids) => {
+  const sel = ids.map((id) => `.fz[data-id="${CSS.escape(id)}"]`).join(', ');
+  const e = [...document.querySelectorAll(sel)].find((x) => {
+    const r = x.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(x).visibility !== 'hidden';
+  });
+  if (!e) return false;
+  e.scrollIntoView({ block: 'start', inline: 'start' });
+  return true;
+};
+
+/** Amène la série semée à l'écran si aucune carte semée n'y est : par le
+    rail d'un album (`[data-serie]`), sinon en faisant défiler jusqu'à elle
+    (LA TRIBUNE vient après LE VIRAGE IMPOSSIBLE dans le catalogue de test,
+    qui n'a que deux lignées et ne suffit pas au plan). Rend ce qui a été
+    fait, et où sont les cartes ensuite. */
+async function allerALaSerie(page, plan) {
+  const vus = await page.evaluate(OU_SONT_LES_CARTES, idsDuPlan(plan));
+  if (Object.values(vus).includes('écran')) return { serie: 'arrivée', vus };
+  let serie = null;
+  if (await page.evaluate(TOUCHER, `[data-serie="${plan.serie}"]`).catch(() => false)) {
+    serie = 'par le rail des séries';
+  } else if (await page.evaluate(DEFILER_JUSQU_A, ROLES_SEMES.map((r) => plan[r].id)).catch(() => false)) {
+    serie = 'en faisant défiler jusqu’à elle';
+  } else {
+    return { serie: 'pas à l’écran, ni rail [data-serie] ni carte rendue où aller', vus };
+  }
+  await finDesMouvements(page, 'body', 2000);
+  await new Promise((r) => setTimeout(r, 300));
+  return { serie, vus: await page.evaluate(OU_SONT_LES_CARTES, idsDuPlan(plan)) };
+}
+
+/** Arrive sur une page avec un joueur semé (le collectionneur, ou le joueur
+    de l'audit et ses insignes), comme les autres visites : le réseau tu, le
+    rideau parti, une fête fermée si elle est venue. Rend la visite, ou null
+    si la page n'a pas chargé (et c'est noté). Sans `plan` (le profil des
+    insignes), aucune nouveauté à resemer. */
+async function arriver(format, joueur, plan, chemin, cle) {
+  const nouveautes = plan ? await resemerNouveautes(joueur.id, plan) : null;
+  const visite = await nouvelleVisite(format, joueur.qui);
+  /* La page chargée, puis notre serveur tu — et non « networkidle0 », que
+     le classeur ne donne plus après le premier contexte : voir « Le calme
+     de notre serveur ». Une seconde chance, comme pour les pages. */
+  let charge = false;
+  for (let essai = 1; essai <= 2 && !charge; essai += 1) {
+    try {
+      await visite.page.goto(base + chemin, { waitUntil: 'load', timeout: 20_000 });
+      charge = true;
+      if (essai > 1) note(cle, format.largeur, 'chargement', 'chargée au second essai');
+    } catch { /* on retente une fois */ }
+  }
+  if (!charge) {
+    note(cle, format.largeur, 'chargement', `la page n’a pas fini de charger en 20 s, deux fois${
+      visite.enVol.size ? ` (en attente : ${enAttente(visite.enVol)})` : ''}`);
+    await visite.contexte.close();
+    return null;
+  }
+  if (!await calmeDeNotreServeur(visite.enVol)) {
+    note(cle, format.largeur, 'chargement', `notre serveur ne s’est pas tu en 15 s (en attente : ${
+      enAttente(visite.enVol)}) : mesurée quand même`);
+  }
+  await visite.page.waitForFunction(() => !document.getElementById('ouverture'), { timeout: 12_000 })
+    .catch(() => {});
+  await new Promise((r) => setTimeout(r, 1800));
+  const fete = await fermerLaFete(visite.page, cle, format.largeur);
+  await finDesMouvements(visite.page, 'body', 2500);
+  await new Promise((r) => setTimeout(r, 300));
+  /* Les polices dès l'arrivée, bornées comme dans `mesurer` : un état qui
+     n'est que photographié (une panne) doit l'être dans la police du joueur,
+     sans quoi sa capture ferait chercher un défaut de plus. */
+  await visite.page.evaluate(() => Promise.race([document.fonts?.ready.then(() => true),
+    new Promise((r) => { setTimeout(() => r(false), 5000); })])).catch(() => {});
+  return { ...visite, ...(plan ? { nouveautes } : {}), ...(fete ? { fete } : {}) };
+}
+
+async function etatClasseur(format, plan, joueur) {
+  const cle = 'classeur@/fanzzy';
+  const v = await arriver(format, joueur, plan, PAGE_CLASSEUR, cle);
+  if (!v) return;
+  const { contexte, page, erreurs, refus } = v;
+  try {
+    /* L'onglet, si l'adresse ne l'a pas ouvert. */
+    let ouvert = 'par l’adresse';
+    let vus = await page.evaluate(OU_SONT_LES_CARTES, idsDuPlan(plan));
+    if (!Object.values(vus).some((x) => x === 'écran' || x === 'plus loin')) {
+      ouvert = await page.evaluate(TOUCHER, '[data-go="dex"]') ? 'par l’onglet [data-go="dex"]' : 'ni l’un ni l’autre';
+      await finDesMouvements(page, 'body', 2500);
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    const allee = await allerALaSerie(page, plan);
+    vus = allee.vus;
+    const polices = await page.evaluate(POLICES);
+    const donnees = { ...polices, ouvert, serie: allee.serie, vus, nouveautes: v.nouveautes,
+      ...(v.fete ? { fete: v.fete } : {}) };
+    if (!Object.values(vus).some((x) => x === 'écran' || x === 'plus loin')) {
+      note(cle, format.largeur, 'état', `le classeur ne montre aucune des cartes semées (série ${plan.serie}) : `
+        + 'photographié, pas mesuré');
+      rangerEtat(cle, PAGE_CLASSEUR, format, { ...donnees,
+        capture: await photographier(page, 'classeur-fanzzy', format, cle) });
+      return;
+    }
+    const m = await mesurer(page);
+    const capture = await photographier(page, 'classeur-fanzzy', format, cle);
+    rangerEtat(cle, PAGE_CLASSEUR, format, { ...donnees, capture }, m, erreurs, refus);
+  } finally {
+    await contexte.close();
+  }
+}
+
+/** La fiche, d'un possédé (l'avatar) ou d'un manquant. */
+async function etatFiche(format, plan, joueur, sorte) {
+  const cle = `fiche@${sorte}`;
+  const carte = sorte === 'possédé' ? plan.avatar : plan.manquant;
+  const chemin = `/fanzzy/${carte.id}`;
+  const v = await arriver(format, joueur, plan, chemin, cle);
+  if (!v) return;
+  const { contexte, page, erreurs, refus } = v;
+  try {
+    /* La bonne fiche : elle nomme le personnage, à l'un de ses âges. Dans le
+       texte rendu (capitales comprises), sans rien supposer du balisage. */
+    const nomVu = await page.evaluate((noms) => {
+      const t = document.body.innerText.toLocaleUpperCase('fr');
+      return noms.some((n) => t.includes(n.toLocaleUpperCase('fr')));
+    }, carte.noms);
+    const nomCapture = `fiche-${sorte === 'possédé' ? 'possede' : 'manquant'}`;
+    const donnees = { carte: carte.id, nomVu, nouveautes: v.nouveautes, ...(v.fete ? { fete: v.fete } : {}) };
+    if (!nomVu) {
+      note(cle, format.largeur, 'état', `la fiche de ${carte.id} ne nomme pas ${carte.noms.join(' / ')} : `
+        + 'photographiée, pas mesurée');
+      rangerEtat(cle, chemin, format, { ...donnees, ...await page.evaluate(POLICES),
+        capture: await photographier(page, nomCapture, format, cle) });
+      return;
+    }
+    const m = await mesurer(page);
+    const polices = await page.evaluate(POLICES);
+    const capture = await photographier(page, nomCapture, format, cle);
+    rangerEtat(cle, chemin, format, { ...polices, capture, ...donnees }, m, erreurs, refus);
+  } finally {
+    await contexte.close();
+  }
+}
+
+/** Ouvre l'album de /collection s'il existe : sa tuile, puis l'album lui-même.
+    Rend comment, ou null quand il n'y a ni tuile ni album. */
+async function ouvrirAlbum(page) {
+  return page.evaluate(`(async () => {
+    const vu = (e) => { const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; };
+    const album = () => [...document.querySelectorAll('.tbf-album')].some(vu);
+    if (album()) return 'déjà ouvert';
+    if (!(${TOUCHER})('[data-vue="fanzzy"]')) return null;
+    return (await (${ATTENDRE})(album, 3000)) ? 'par sa tuile' : 'tuile touchée, et pas d’album';
+  })()`).catch(() => null);
+}
+
+/* La case d'une carte, touchée comme au doigt. La carte de cardHTML
+   d'abord, puis ce qui l'ouvre : la case de l'album (`[data-open]`), ou sa
+   pochette quand la carte manque. Rend par quoi elle a été trouvée, ou
+   null. */
+const TOUCHER_UNE_CASE = (id) => {
+  const rendu = (e) => {
+    const r = e.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+  };
+  const q = CSS.escape(id);
+  let par = null;
+  let carte = null;
+  for (const [sel, dit] of [[`.fz[data-id="${q}"]`, 'sa carte (.fz[data-id])'],
+    [`[data-open="${q}"]`, '[data-open]'], [`[data-id="${q}"]`, '[data-id]']]) {
+    carte = [...document.querySelectorAll(sel)].find(rendu) ?? null;
+    if (carte) { par = dit; break; }
+  }
+  if (!carte) return null;
+  const cible = carte.closest('button, a[href], [data-open], [role="button"]') ?? carte;
+  cible.scrollIntoView({ block: 'center', inline: 'center' });
+  cible.click();
+  return par;
+};
+
+/* Le dialogue ouvert — la vitrine —, désigné par un sélecteur que MESURE
+   retrouve : son identifiant, ou son chemin depuis le premier ancêtre qui en
+   a un. Le plus grand s'il y en a deux. Rien posé sur la page. */
+const VITRINE_OUVERTE = () => {
+  const ouverte = (e) => {
+    const s = getComputedStyle(e);
+    const r = e.getBoundingClientRect();
+    return s.display !== 'none' && s.visibility !== 'hidden' && Number(s.opacity) > 0
+      && r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
+  };
+  const aire = (e) => { const r = e.getBoundingClientRect(); return r.width * r.height; };
+  const d = [...document.querySelectorAll('[role="dialog"], dialog[open]')].filter(ouverte)
+    .sort((a, b) => aire(b) - aire(a))[0];
+  if (!d) return null;
+  const chemin = [];
+  for (let n = d; n && n !== document.body; n = n.parentElement) {
+    if (n.id) { chemin.unshift(`#${CSS.escape(n.id)}`); return chemin.join(' > '); }
+    const memes = [...n.parentElement.children].filter((x) => x.tagName === n.tagName);
+    chemin.unshift(`${n.tagName.toLowerCase()}:nth-of-type(${memes.indexOf(n) + 1})`);
+  }
+  return ['body', ...chemin].join(' > ');
+};
+
+/** La vitrine de /collection, sur une carte possédée (le doublon) ou une
+    manquante. */
+async function etatVitrine(format, plan, joueur, sorte) {
+  const cle = `vitrine@${sorte}`;
+  const carte = sorte === 'possédée' ? plan.doublon : plan.manquant;
+  const v = await arriver(format, joueur, plan, PAGE_COLLECTION, cle);
+  if (!v) return;
+  const { contexte, page, erreurs, refus } = v;
+  /* Une panne est photographiée : la capture dit ce que l'écran montrait à la
+     place de la vitrine. Pas mesurée : ce n'est pas l'état qu'on nomme. */
+  const nomCapture = `vitrine-${sorte === 'possédée' ? 'possedee' : 'manquante'}`;
+  const echec = async (quoi, en = {}) => {
+    note(cle, format.largeur, 'état', quoi);
+    const capture = await photographier(page, nomCapture, format, cle).catch(() => null);
+    rangerEtat(cle, PAGE_COLLECTION, format, { capture, carte: carte.id, ...en });
+  };
+  try {
+    const album = await ouvrirAlbum(page);
+    if (album) await finDesMouvements(page, 'body', 2000);
+    let touche = await page.evaluate(TOUCHER_UNE_CASE, carte.id);
+    if (!touche && album) {
+      await allerALaSerie(page, plan);
+      touche = await page.evaluate(TOUCHER_UNE_CASE, carte.id);
+    }
+    if (!touche) { await echec(`la case de ${carte.id} (${carte.nom}) n’a pas été trouvée`, { album }); return; }
+    const portee = await page.waitForFunction(VITRINE_OUVERTE, { polling: 50, timeout: 4000 })
+      .then((h) => h.jsonValue(), () => null);
+    if (!portee) {
+      await echec(`la case de ${carte.id} touchée (${touche}), aucune vitrine ([role="dialog"]) ne s’est ouverte en 4 s`,
+        { album, touche });
+      return;
+    }
+    /* La fanfare d'une carte qu'on a (FX.rare), l'entrée de la carte : ce
+       qui finit, pas ce qui respire. */
+    await finDesMouvements(page, 'body', 2500);
+    await new Promise((r) => setTimeout(r, 300));
+    const carteVue = await page.evaluate((sel, id, noms) => {
+      const z = document.querySelector(sel);
+      if (!z) return false;
+      if (z.querySelector(`.fz[data-id="${CSS.escape(id)}"]`)) return true;
+      const t = z.innerText.toLocaleUpperCase('fr');
+      return noms.some((n) => t.includes(n.toLocaleUpperCase('fr')));
+    }, portee, carte.id, carte.noms);
+    if (!carteVue) {
+      note(cle, format.largeur, 'état', `la vitrine (${portee}) ne montre pas ${carte.id} : mesurée quand même`);
+    }
+    const m = await mesurer(page, portee);
+    const polices = await page.evaluate(POLICES);
+    const capture = await photographier(page, nomCapture, format, cle);
+    rangerEtat(cle, PAGE_COLLECTION, format, { ...polices, capture, carte: carte.id, portee, touche, carteVue,
+      ...(album ? { album } : {}), nouveautes: v.nouveautes, ...(v.fete ? { fete: v.fete } : {}) },
+    m, erreurs, refus);
+  } catch (e) {
+    await echec(`l’étape a levé : ${String(e?.message ?? e).slice(0, 80)}`);
+  } finally {
+    await contexte.close();
+  }
+}
+
+/** L'album Fanzzy de /collection, quand il existe. Mesuré sous la portée du
+    calque fixé qui le porte s'il en a un (une sous-vue posée par-dessus la
+    page), sinon comme une page (une sous-vue qui remplace le contenu). */
+async function etatAlbum(format, plan, joueur) {
+  const cle = 'album@/collection';
+  const v = await arriver(format, joueur, plan, PAGE_COLLECTION, cle);
+  if (!v) return;
+  const { contexte, page, erreurs, refus } = v;
+  try {
+    const album = await ouvrirAlbum(page);
+    if (!album) {
+      rangerEtat(cle, PAGE_COLLECTION, format, { capture: null,
+        absent: 'pas d’album sur /collection : ni tuile [data-vue="fanzzy"] ni .tbf-album' });
+      return;
+    }
+    if (album !== 'déjà ouvert' && album !== 'par sa tuile') {
+      /* Une tuile qui n'ouvre rien : photographiée, pour qu'on voie ce
+         qu'elle a ouvert à la place. */
+      note(cle, format.largeur, 'état', album);
+      rangerEtat(cle, PAGE_COLLECTION, format, { album,
+        capture: await photographier(page, 'album-collection', format, cle) });
+      return;
+    }
+    await finDesMouvements(page, 'body', 2500);
+    const allee = await allerALaSerie(page, plan);
+    const portee = await page.evaluate(() => {
+      const a = [...document.querySelectorAll('.tbf-album')].find((e) => e.getBoundingClientRect().width > 0);
+      let n = a;
+      while (n && n !== document.body && getComputedStyle(n).position !== 'fixed') n = n.parentElement;
+      if (!n || n === document.body) return null;
+      const chemin = [];
+      for (let x = n; x && x !== document.body; x = x.parentElement) {
+        if (x.id) { chemin.unshift(`#${CSS.escape(x.id)}`); return chemin.join(' > '); }
+        const memes = [...x.parentElement.children].filter((y) => y.tagName === x.tagName);
+        chemin.unshift(`${x.tagName.toLowerCase()}:nth-of-type(${memes.indexOf(x) + 1})`);
+      }
+      return ['body', ...chemin].join(' > ');
+    });
+    const m = await mesurer(page, portee);
+    const polices = await page.evaluate(POLICES);
+    const capture = await photographier(page, 'album-collection', format, cle);
+    rangerEtat(cle, PAGE_COLLECTION, format, { ...polices, capture, album, portee, serie: allee.serie,
+      vus: allee.vus, nouveautes: v.nouveautes, ...(v.fete ? { fete: v.fete } : {}) }, m, erreurs, refus);
+  } finally {
+    await contexte.close();
+  }
+}
+
+/** Les six états, format après format, chacun avec son collectionneur. */
+async function etatsDeLaCollection() {
+  const CLES = ['classeur@/fanzzy', 'fiche@possédé', 'fiche@manquant', 'vitrine@possédée',
+    'vitrine@manquante', 'album@/collection'];
+  let plan = null;
+  let faute = null;
+  try { plan = await planDeCollection(); } catch (e) { faute = String(e?.message ?? e).slice(0, 80); }
+  if (!plan) {
+    for (const format of FORMATS) {
+      for (const cle of CLES) {
+        note(cle, format.largeur, 'état', faute ? `pas de collection à semer : ${faute}`
+          : 'aucune série ouverte n’a une lignée de deux âges, trois lignées après elle et une légendaire');
+      }
+    }
+    return null;
+  }
+  for (const format of FORMATS) {
+    const joueur = await collectionneur(format, plan);
+    /* Chaque état nomme sa panne au lieu d'arrêter les suivants : une page
+       qui lève ne doit pas coûter les cinq autres relevés. */
+    const etapes = [[CLES[0], () => etatClasseur(format, plan, joueur)],
+      [CLES[1], () => etatFiche(format, plan, joueur, 'possédé')],
+      [CLES[2], () => etatFiche(format, plan, joueur, 'manquant')],
+      [CLES[3], () => etatVitrine(format, plan, joueur, 'possédée')],
+      [CLES[4], () => etatVitrine(format, plan, joueur, 'manquante')],
+      [CLES[5], () => etatAlbum(format, plan, joueur)]];
+    for (const [cle, etape] of etapes) {
+      try { await etape(); } catch (e) {
+        note(cle, format.largeur, 'état', `l’étape a levé : ${String(e?.message ?? e).slice(0, 80)}`);
+      }
+    }
+  }
+  return { serie: plan.serie, nomSerie: plan.nomSerie,
+    cartes: Object.fromEntries(ROLES_SEMES.map((r) => [r, { id: plan[r].id, nom: plan[r].nom, rar: plan[r].rar,
+      ...(plan[r].copies ? { copies: plan[r].copies, stade: plan[r].stade } : { possede: false }) }])),
+    nouveautes: ['nouveau', 'legendaire'].map((r) => `fanzzy:${plan[r].id}`) };
+}
+
+/* ---------------------------------------- les insignes du carnet (lot 4)
+
+   Le carnet de saison donne à porter un liseré et un tampon. Le lot 4 les
+   sert (`GET /api/quotidien`, `insignes` : CONTRATS.md, § 6.1) et le profil
+   les dessine : le tampon « S1 » sur la carte de supporter, le liseré
+   autour de l'anneau du buste, les stickers « LISERÉ S1 » et « TAMPON S1 »
+   de MA SAISON. Le joueur de l'audit n'en porte aucun : sa visite de
+   /profil ne voit rien de tout cela — c'est ce que tout relevé d'avant a
+   mesuré, et on n'y touche pas.
+
+   **Un état de plus, `profil@insignes`** : le même joueur, la même page,
+   avec ses insignes. Le carnet que le serveur sert dit quels paliers les
+   donnent (`carnet.paliers[].insigne` : le liseré, puis le tampon) ; on
+   écrit pour chacun la ligne `carnet` du grand livre qu'une réclamation
+   aurait écrite — la clé `S<saison>:<palier>`, la saison lancée, le gain du
+   palier, l'insigne —, datée de trois jours : rien ne tombe dans le
+   disjoncteur du jour. **Aucun tampon de mission** : le carnet compte zéro
+   tampon, aucun palier ne devient « prêt », et ni RÉCUPÉRER ni pastille ne
+   s'ajoutent. L'écran ne diffère de la visite de /profil que par ce qu'on
+   veut y lire.
+
+   Semé **après** le booster et **avant** le classement d'un joueur classé :
+   le profil se lit alors comme à sa visite (même bourse, pas encore de
+   ferveur de saison). Les lignes semées — et elles seules — sont
+   **retirées** après les trois formats : le classement, et tout ce qui
+   suit, revoit le joueur sans insigne.
+
+   **Ce qu'il lit de la page, et rien d'autre** : un `.tbf-tampon` qui dit
+   « S<numéro> » (la brique du tampon) ; un `[data-lisere]` rendu (la page
+   le pose sur le buste, et ui.css le reprendra sur `.tbf-avatar`) ; un
+   `.tbf-sticker` qui dit « LISERÉ S<numéro> » ou « TAMPON S<numéro> ». Rien
+   de tout cela à l'écran : photographié, pas mesuré, et la panne nommée —
+   comme une fiche qui ne nomme pas son personnage ; une partie seulement :
+   mesuré, et ce qui manque est relevé. Le serveur est relu après les
+   semailles : s'il ne sert pas les insignes semés, la panne est la sienne,
+   et l'état le dit avant de regarder la page. */
+const PAGE_PROFIL = '/profil';
+const CLE_INSIGNES = 'profil@insignes';
+/* Le mot que MA SAISON écrit pour chaque insigne (profil.html, `MOTS_INSIGNE`). */
+const MOT_INSIGNE = { lisere: 'LISERÉ', tampon: 'TAMPON' };
+
+/** L'état du jour du joueur de l'audit, tel que le serveur le sert. */
+async function quotidienDuJoueur() {
+  const r = await fetch(`${base}/api/quotidien`,
+    { headers: { cookie: `tbf_session=${jeton}`, 'x-forwarded-for': '10.78.0.2' } });
+  if (!r.ok) throw new Error(`/api/quotidien a répondu ${r.status}`);
+  return r.json();
+}
+
+/** Les insignes à semer, lus dans le carnet servi. Lève, en nommant la
+    cause, quand il n'y a rien à semer. */
+async function planDesInsignes() {
+  const q = await quotidienDuJoueur();
+  if (q?.actif !== true) throw new Error('le quotidien est éteint ({ actif: false })');
+  const s = q.carnet?.saison;
+  if (!s) throw new Error('aucun carnet servi (saison.carnet_actif coupé, ou aucune saison lancée)');
+  const paliers = Object.keys(MOT_INSIGNE).flatMap((insigne) => {
+    const p = (q.carnet.paliers ?? []).find((x) => x.insigne === insigne);
+    return p ? [{ insigne, n: p.n, gain: p.gain ?? {} }] : [];
+  });
+  if (!paliers.length) throw new Error('aucun palier du carnet servi ne donne d’insigne');
+  return { saison: { id: s.id, numero: s.numero, nom: s.nom }, paliers };
+}
+
+/** Écrit les lignes du grand livre, et range dans `semees`, au fur et à
+    mesure, les clés de celles qu'on a écrites : une ligne déjà là (une
+    réclamation d'un autre état) n'est ni réécrite ni, plus tard, retirée,
+    et une faute à la seconde ligne laisse la première à retirer. */
+async function semerInsignes(plan, semees) {
+  for (const p of plan.paliers) {
+    const cle = `S${plan.saison.id}:${p.n}`;
+    const [r] = await pool.query(
+      `INSERT IGNORE INTO recompenses (user_id,source,cle,saison_id,echarpes,packs,xp,tampons,insigne,verse_a)
+       VALUES (?,'carnet',?,?,?,?,?,0,?,NOW(3) - INTERVAL 3 DAY)`,
+      [U, cle, plan.saison.id, p.gain.echarpes ?? 0, p.gain.packs ?? 0, p.gain.xp ?? 0, p.insigne]);
+    if (r.affectedRows) semees.push(cle);
+  }
+}
+
+/* Ce que le profil montre des insignes de la saison `numero`. Le numéro
+   suivi d'autre chose qu'un chiffre : « S1 » ne se lit pas dans « S12 ». */
+const INSIGNES_VUS = (numero) => {
+  const vu = (e) => {
+    const r = e.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+  };
+  const texte = (e) => e.textContent.replace(/\s+/g, ' ').trim().toLocaleUpperCase('fr');
+  const s = `S${numero}`;
+  const stickers = [...document.querySelectorAll('.tbf-sticker')].filter(vu).map(texte);
+  return {
+    tampon: [...document.querySelectorAll('.tbf-tampon')].some((e) => vu(e) && texte(e) === s),
+    lisere: [...document.querySelectorAll('[data-lisere]')].some(vu),
+    stickers: ['LISERÉ', 'TAMPON'].filter((m) =>
+      stickers.some((t) => new RegExp(`${m} ${s}(?![0-9])`).test(t))),
+  };
+};
+
+/* Amène à l'écran le premier sticker d'insigne de MA SAISON, sous le pli
+   au téléphone. Rend « écran » s'il y était déjà, « amené », ou null. */
+const AMENER_MA_SAISON = (numero) => {
+  const e = [...document.querySelectorAll('.tbf-sticker')].find((x) => {
+    const r = x.getBoundingClientRect();
+    return r.width > 0 && r.height > 0
+      && new RegExp(`(LISERÉ|TAMPON) S${numero}(?![0-9])`).test(x.textContent.toLocaleUpperCase('fr'));
+  });
+  if (!e) return null;
+  const r = e.getBoundingClientRect();
+  if (r.top >= 0 && r.bottom <= innerHeight) return 'écran';
+  e.scrollIntoView({ block: 'center' });
+  return 'amené';
+};
+
+async function etatProfilInsignes(format, plan) {
+  const cle = CLE_INSIGNES;
+  const v = await arriver(format, { qui: 'joueur', id: U }, null, PAGE_PROFIL, cle);
+  if (!v) return;
+  const { contexte, page, erreurs, refus } = v;
+  try {
+    const numero = plan.saison.numero;
+    const vus = await page.evaluate(INSIGNES_VUS, numero);
+    const portes = plan.paliers.map((p) => p.insigne);
+    const manque = [
+      ...(portes.includes('tampon') && !vus.tampon ? [`le tampon S${numero} sur la carte`] : []),
+      ...(portes.includes('lisere') && !vus.lisere ? ['le liseré du buste ([data-lisere])'] : []),
+      ...portes.map((x) => MOT_INSIGNE[x]).filter((m) => !vus.stickers.includes(m))
+        .map((m) => `le sticker « ${m} S${numero} » de MA SAISON`),
+    ];
+    const donnees = { saison: numero, vus, ...(v.fete ? { fete: v.fete } : {}) };
+    if (!vus.tampon && !vus.lisere && !vus.stickers.length) {
+      note(cle, format.largeur, 'état', `le profil ne montre aucun des insignes semés (${
+        portes.map((x) => `${MOT_INSIGNE[x]} S${numero}`).join(', ')}) : photographié, pas mesuré`);
+      rangerEtat(cle, PAGE_PROFIL, format, { ...donnees, ...await page.evaluate(POLICES),
+        capture: await photographier(page, 'profil-insignes', format, cle) });
+      return;
+    }
+    if (manque.length) {
+      note(cle, format.largeur, 'état', `le profil ne montre pas ${manque.join(', ')} : mesuré quand même`);
+    }
+    const m = await mesurer(page);
+    const polices = await page.evaluate(POLICES);
+    const capture = await photographier(page, 'profil-insignes', format, cle);
+    /* MA SAISON est sous le pli au téléphone : une seconde capture l'amène à
+       l'écran, après la mesure — qui a lu la page telle qu'on y arrive. */
+    const saison = await page.evaluate(AMENER_MA_SAISON, numero).catch(() => null);
+    let captureSaison = null;
+    if (saison === 'amené') {
+      await new Promise((r) => setTimeout(r, 400));
+      captureSaison = await photographier(page, 'profil-insignes-saison', format, cle);
+    }
+    rangerEtat(cle, PAGE_PROFIL, format, { ...polices, capture, ...(captureSaison ? { captureSaison } : {}),
+      ...donnees }, m, erreurs, refus);
+  } finally {
+    await contexte.close();
+  }
+}
+
+/** Les insignes semés, le profil regardé dans chaque format, puis les
+    lignes retirées. Rend ce qui a été semé et ce que le serveur en a servi,
+    ou la cause quand rien ne l'a été. */
+async function etatsDesInsignes() {
+  const cle = CLE_INSIGNES;
+  let plan;
+  try { plan = await planDesInsignes(); } catch (e) {
+    const faute = String(e?.message ?? e).slice(0, 100);
+    for (const format of FORMATS) note(cle, format.largeur, 'état', `pas d’insigne à semer : ${faute}`);
+    return { faute };
+  }
+  const semees = [];
+  try {
+    /* Une faute d'écriture nomme sa panne au lieu d'arrêter l'audit : le
+       classement et la collection viennent encore. */
+    try { await semerInsignes(plan, semees); } catch (e) {
+      const faute = `insignes non semés : ${String(e?.message ?? e).slice(0, 80)}`;
+      for (const format of FORMATS) note(cle, format.largeur, 'état', faute);
+      return { saison: plan.saison, faute };
+    }
+    const servis = await quotidienDuJoueur()
+      .then((q) => (q.insignes ?? []).map((x) => `${x.id} S${x.saison?.numero}`), () => []);
+    const attendus = plan.paliers.map((p) => `${p.insigne} S${plan.saison.numero}`);
+    const absents = attendus.filter((x) => !servis.includes(x));
+    if (absents.length) {
+      for (const format of FORMATS) {
+        note(cle, format.largeur, 'état', `le serveur ne sert pas ${absents.join(', ')} (insignes de /api/quotidien) `
+          + 'après les semailles : ce que le profil n’en montre pas n’est pas sa faute');
+      }
+    }
+    for (const format of FORMATS) {
+      try { await etatProfilInsignes(format, plan); } catch (e) {
+        note(cle, format.largeur, 'état', `l’étape a levé : ${String(e?.message ?? e).slice(0, 80)}`);
+      }
+    }
+    return { saison: plan.saison,
+      lignes: plan.paliers.map((p) => ({ cle: `S${plan.saison.id}:${p.n}`, insigne: p.insigne, gain: p.gain,
+        semee: semees.includes(`S${plan.saison.id}:${p.n}`) })),
+      servis };
+  } finally {
+    if (semees.length) {
+      await pool.query(`DELETE FROM recompenses WHERE user_id = ? AND source = 'carnet' AND cle IN (?)`, [U, semees])
+        .catch((e) => {
+          for (const format of FORMATS) {
+            note(cle, format.largeur, 'état', `lignes semées non retirées (${semees.join(', ')}) : ${
+              String(e?.message ?? e).slice(0, 60)} — le classement verra le joueur avec ses insignes`);
+          }
+        });
+    }
+  }
+}
+
 if (etats) {
   console.log('');
   /* Les formats de chaque état, dans le JSON : celui de 320 n'est pas dans
      « formats », qui reste la liste des pages. */
   rapport.formatsEtats = { ouverture: FORMATS_OUVERTURE.map(cleFormat), tiroir: FORMATS.map(cleFormat),
-    hud: FORMATS_HUD.map(cleFormat), booster: FORMATS.map(cleFormat), classement: FORMATS.map(cleFormat) };
+    hud: FORMATS_HUD.map(cleFormat), booster: FORMATS.map(cleFormat), classement: FORMATS.map(cleFormat),
+    collection: FORMATS.map(cleFormat), profil: FORMATS.map(cleFormat) };
   for (const format of FORMATS_OUVERTURE) {
     await etatOuverture(format);
     if (FORMATS.includes(format)) await etatTiroir(format);
@@ -2670,12 +3634,18 @@ if (etats) {
   /* Les états des lots 3 et 5, après : voir « les écrans de plus ». */
   for (const format of FORMATS_HUD) await etatHud(format);
   for (const format of FORMATS) await etatBooster(format);
+  /* Le profil et ses insignes (lot 4), avant le classement : voir « les
+     insignes du carnet ». */
+  rapport.insignesSemes = await etatsDesInsignes();
   rapport.classementSeme = await semerClassement();
   if (await redemarrer()) {
     for (const format of FORMATS) await etatClassement(format);
+    /* La collection du lot 4, en dernier : voir « la collection ». */
+    rapport.collectionSemee = await etatsDeLaCollection();
   } else {
     for (const format of FORMATS) {
       note('classement@classé', format.largeur, 'état', 'le serveur n’a pas redémarré : classement non mesuré');
+      note('(la collection)', format.largeur, 'état', 'le serveur n’a pas redémarré : collection non mesurée');
     }
   }
 }

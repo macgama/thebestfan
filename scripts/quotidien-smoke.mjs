@@ -36,6 +36,10 @@
  * minute qu'un tirage ou une relance a noté pour ce jour de jeu, ou se
  * présume ; la relance tranche.
  *
+ * **Un insigne du carnet se porte pour toujours** : servi dès le palier
+ * récupéré, sous les saisons suivantes et carnet éteint, sans requête de
+ * plus, et jamais pour un palier seulement atteint.
+ *
  * **Les vraies portes d'entrée** : un booster ouvert par la route du module
  * fanzzy, et un chant poussé par la socket de la salle du Virage, font
  * avancer leurs missions.
@@ -1456,6 +1460,11 @@ titre('depuis ta dernière visite');
 
 /* ============================================ le carnet, sa fin, le relais */
 
+/* Le joueur qui récupère le liseré et le tampon de la saison 1 : on le relit
+   sous la saison 3, pour voir qu'un insigne se porte pour toujours. */
+let porteur = null;
+const S1_NOMMEE = () => ({ id: S1, numero: 1, nom: 'La reprise' });
+
 titre('le carnet de la saison');
 {
   await figer('2027-03-20 12:00:00');
@@ -1492,19 +1501,51 @@ titre('le carnet de la saison');
     r10.filter((r) => r?.verse).length === 1 && r10.filter((r) => r?.raison === 'deja').length === 9
     && (await bourse(C10)).scarves === c0.scarves + 100 || voir(r10.map((r) => r?.raison ?? r?.verse)));
   check('un palier qui n’existe pas : « inconnu »', (await poster(C, 'carnet', { saison: 999, n: 1 }))?.raison === 'inconnu');
+  check('le palier 1 ne donne pas d’insigne : « insignes » absent (R1)', !('insignes' in (await lire(C))));
 
   const C5 = await joueur();
+  porteur = C5;
   await tampons(C5, S1, 260);
   const r5 = await poster(C5, 'carnet', { saison: S1, n: 5 });
   const [l5] = await livre(C5, 'carnet', `S${S1}:5`);
   check('le palier 5 copie son titre dans le grand livre', r5?.verse === true && l5?.titre === 'Revenu pour de bon'
     || voir(r5, l5));
+  /* Un titre n'est pas un insigne, et un palier atteint ne fait rien
+     porter tant qu'il n'est pas récupéré (`CONTRATS.md`, § 6.1). */
+  check('les paliers 2 et 3 atteints, pas récupérés, et le titre du 5 : aucun insigne',
+    r5?.quotidien?.carnet?.paliers?.[1]?.etat === 'pret' && r5.quotidien.carnet.paliers[2].etat === 'pret'
+    && !('insignes' in r5.quotidien) || voir(r5?.quotidien?.insignes));
+  /* Le budget de la lecture, mesuré sans insigne puis avec : la colonne
+     vient de la lecture du grand livre que l'état fait déjà. */
+  await lire(C5);
+  compte = [];
+  await lire(C5);
+  const sansInsigne = compte.length;
+  compte = null;
   appelsRecharge.length = 0;
   const r2 = await poster(C5, 'carnet', { saison: S1, n: 2 });
   const [l2] = await livre(C5, 'carnet', `S${S1}:2`);
   check('le palier 2 y copie son insigne (liseré)', r2?.verse === true && l2?.insigne === 'lisere');
   check('son booster : la recharge comptée avant le verrou, puis dessous',
     JSON.stringify(appelsRecharge) === '["pool","connexion"]' || voir(appelsRecharge));
+  const liseree = JSON.stringify([{ id: 'lisere', saison: S1_NOMMEE() }]);
+  check('la réponse de la réclamation porte déjà le liseré de la saison 1 (§ 6.1, R6)',
+    JSON.stringify(r2?.quotidien?.insignes) === liseree || voir(r2?.quotidien?.insignes));
+  compte = [];
+  const e2 = await lire(C5);
+  const avecInsigne = compte.length;
+  compte = null;
+  check(`et la lecture le sert sans requête de plus (${sansInsigne} puis ${avecInsigne})`,
+    avecInsigne === sansInsigne && JSON.stringify(e2.insignes) === liseree
+    || voir(sansInsigne, avecInsigne, e2.insignes));
+  const r3 = await poster(C5, 'carnet', { saison: S1, n: 3 });
+  check('le palier 3 ajoute le tampon, après le liseré : l’ordre des paliers',
+    r3?.verse === true && JSON.stringify(r3.quotidien?.insignes)
+      === JSON.stringify([{ id: 'lisere', saison: S1_NOMMEE() }, { id: 'tampon', saison: S1_NOMMEE() }])
+    || voir(r3?.raison, r3?.quotidien?.insignes));
+  check('un insigne ne se compte pas : aReclamer perd le palier récupéré, et rien d’autre',
+    r2?.quotidien?.aReclamer - r3?.quotidien?.aReclamer === 1
+    || voir(r2?.quotidien?.aReclamer, r3?.quotidien?.aReclamer));
 }
 
 titre('la fin de la saison 1, et les missions de son dernier jour');
@@ -1600,9 +1641,53 @@ titre('la saison 2, le relais et la saison passée');
   e = await lire(W);
   check('vidée, la saison 2 laisse sa place à la 1', e.saisonPassee?.saison?.id === S1 || voir(e.saisonPassee));
   check('le relais de la saison 3 se lit sur la saison 2', e.relais?.saison?.id === S2);
-  await q('DELETE FROM saisons WHERE id IN (?, ?)', [S2, S3]);
+
+  /* Les insignes se portent pour toujours (`CONTRATS.md`, § 6.1) : ceux de
+     la saison 1 restent servis sous la saison 3. Ceux de la saison 2 sont
+     écrits comme le grand livre les inscrit, deux paliers donnant le même
+     liseré : il n'en reste qu'un, et la saison 2 vient après la 1.
+
+     Une quatrième saison, lancée puis remise en brouillon par
+     l'administration, garde le liseré qu'elle a donné. Son identifiant est
+     choisi pour que sa clé (« S10000:2 ») passe **avant** celles de la
+     saison 1 dans l'ordre du grand livre : l'ordre servi est celui des
+     numéros de saison, pas celui des clés — à la dixième saison, « S10 »
+     passerait avant « S9 ». */
+  const SX = 10000;
+  await q(`INSERT INTO saisons (id, numero, nom, series, tenues, lancee_a)
+           VALUES (?, 4, 'Le dégel', JSON_ARRAY(), JSON_ARRAY(), NULL)`, [SX]);
+  await chargerSaisons(pool);
+  await q(`INSERT INTO recompenses (user_id, source, cle, saison_id, insigne)
+           VALUES (?, 'carnet', ?, ?, 'tampon'), (?, 'carnet', ?, ?, 'lisere'),
+                  (?, 'carnet', ?, ?, 'lisere'), (?, 'carnet', ?, ?, 'lisere')`,
+  [porteur, `S${S2}:4`, S2, porteur, `S${S2}:3`, S2, porteur, `S${S2}:1`, S2, porteur, `S${SX}:2`, SX]);
+  const nommee = (id, numero, nom) => ({ id, numero, nom });
+  const portes = [{ id: 'lisere', saison: S1_NOMMEE() }, { id: 'tampon', saison: S1_NOMMEE() },
+    { id: 'lisere', saison: nommee(S2, 2, 'La trêve') }, { id: 'tampon', saison: nommee(S2, 2, 'La trêve') },
+    { id: 'lisere', saison: nommee(SX, 4, 'Le dégel') }];
+  e = await lire(porteur);
+  check('sous la saison 3 : les insignes des saisons 1, 2 et 4, par numéro de saison puis par palier',
+    e.carnet?.saison?.id === S3 && JSON.stringify(e.insignes) === JSON.stringify(portes) || voir(e.insignes));
+  check('deux paliers de la saison 2 donnent le liseré : un seul est servi',
+    e.insignes?.filter((x) => x.id === 'lisere' && x.saison?.id === S2).length === 1);
+  check('la saison 4, remise en brouillon : son liseré reste servi',
+    e.insignes?.some((x) => x.saison?.id === SX) || voir(e.insignes));
+  poserReglages({ 'saison.carnet_actif': false });
+  e = await lire(porteur);
+  reglagesDeDepart();
+  check('le carnet éteint : plus de carnet, les insignes restent (comme un titre)',
+    !('carnet' in e) && JSON.stringify(e.insignes) === JSON.stringify(portes) || voir(Object.keys(e), e.insignes));
+
+  /* Supprimées : sans numéro à écrire, leurs insignes ne sont plus servis,
+     et les lignes du grand livre restent. */
+  await q('DELETE FROM saisons WHERE id IN (?, ?, ?)', [S2, S3, SX]);
   await q('UPDATE saisons SET fin_le = NULL WHERE id = ?', [S1]);
   await chargerSaisons(pool);
+  e = await lire(porteur);
+  check('les saisons 2 et 4 supprimées : leurs insignes ne sont plus servis, ceux de la 1 restent',
+    JSON.stringify(e.insignes) === JSON.stringify(portes.slice(0, 2))
+    && Number((await q(`SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ? AND saison_id IN (?, ?)`,
+      [porteur, S2, SX]))[0].n) === 4 || voir(e.insignes));
 }
 
 /* ======================================================== le Virage à minuit */

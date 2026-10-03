@@ -1,7 +1,8 @@
 /**
  * Le quotidien : les missions du jour et leur sachet, la carte de présence, la
- * série de jours, le carnet de tampons de la saison, le passage de relais, et
- * le ticket « depuis ta dernière visite » (`CONTRATS.md`, § 6 et § 8).
+ * série de jours, le carnet de tampons de la saison et les insignes qu'il fait
+ * porter, le passage de relais, et le ticket « depuis ta dernière visite »
+ * (`CONTRATS.md`, § 6 et § 8).
  *
  * ## Tout est décidé et versé par le serveur
  *
@@ -36,7 +37,7 @@ import express from 'express';
 import { verser, verserTout } from '../recompenses.js';
 import { assurerBourse } from '../bourse.js';
 import { reglage } from '../../shared/reglages.js';
-import { saisonsLancees, saisonEnCours } from '../fanzzy/saisons.js';
+import { toutesLesSaisons, saisonEnCours } from '../fanzzy/saisons.js';
 import { carnetDe, finDeFenetre } from '../../shared/saison.js';
 import {
   DIFFICULTES, RANG_SACHET, MISSION_PAR_ID, rangDe, montantsCarte, caseDuJour, serieDe,
@@ -80,13 +81,18 @@ const resume = (s) => ({ id: Number(s.id), numero: Number(s.numero), nom: s.nom 
 /* Les saisons lancées, de la plus ancienne à la plus récente **par
    lancement** — la même règle que `saisonEnCours()`, qui prend la dernière
    lancée. Ce n'est qu'un ordre : aucune durée ne se calcule sur `lanceeA`,
-   dont le fuseau n'est pas garanti (`CONTRATS.md`, R4). */
+   dont le fuseau n'est pas garanti (`CONTRATS.md`, R4).
+
+   `toutes` garde aussi les brouillons : un insigne se porte pour toujours,
+   y compris celui d'une saison que l'administration a remise en brouillon
+   après coup, et il faut encore pouvoir la nommer. */
 let saisonsMuettes = false;
 function lesSaisons() {
   try {
-    const lancees = [...saisonsLancees()];
+    const toutes = toutesLesSaisons();
+    const lancees = toutes.filter((s) => s.lancee);
     lancees.sort((a, b) => (new Date(a.lanceeA) - new Date(b.lanceeA)) || (a.numero - b.numero));
-    return { lancees, courante: saisonEnCours() };
+    return { toutes, lancees, courante: saisonEnCours() };
   } catch (e) {
     /* Les saisons n'ont pas été chargées : c'est une faute de montage
        (`chargerCatalogue` les charge au démarrage). Sans elles, pas de carnet
@@ -95,8 +101,40 @@ function lesSaisons() {
       saisonsMuettes = true;
       console.error('[quotidien] saisons illisibles, carnet et relais éteints :', e.message);
     }
-    return { lancees: [], courante: null };
+    return { toutes: [], lancees: [], courante: null };
   }
+}
+
+/**
+ * Les insignes du carnet que le joueur porte (`CONTRATS.md`, § 6.1,
+ * `insignes`), tirés des lignes `carnet` du grand livre qui en portent un.
+ *
+ * **La ligne fait foi, pas le carnet d'aujourd'hui.** Le palier copie son
+ * insigne dans sa ligne au versement (`versementCarnet`) : un carnet recalé
+ * depuis dans l'onglet Saisons ne retire rien à qui l'a déjà récupéré, et
+ * n'en donne pas à qui ne l'a pas.
+ *
+ * Une saison qu'on ne sait plus nommer (supprimée par l'administration) ne
+ * sert pas son insigne : l'écran écrit « LISERÉ S1 », et sans numéro il
+ * n'aurait rien à écrire. Deux paliers d'un même carnet qui donneraient le
+ * même insigne n'en font qu'un : c'est une chose portée, pas un compte.
+ */
+function insignesPortes(lignes, saisons) {
+  const parId = new Map(saisons.map((s) => [Number(s.id), s]));
+  const palier = (cle) => Number(/^S\d+:(\d+)$/.exec(String(cle))?.[1] ?? 0);
+  const vus = new Set();
+  return lignes
+    .map((l) => ({ l, s: parId.get(Number(l.saison_id)) }))
+    .filter(({ l, s }) => s && typeof l.insigne === 'string' && l.insigne)
+    .sort((a, b) => (a.s.numero - b.s.numero) || (a.s.id - b.s.id)
+      || (palier(a.l.cle) - palier(b.l.cle)))
+    .filter(({ l, s }) => {
+      const cle = `${s.id}:${l.insigne}`;
+      if (vus.has(cle)) return false;
+      vus.add(cle);
+      return true;
+    })
+    .map(({ l, s }) => ({ id: l.insigne, saison: resume(s) }));
 }
 
 /* ======================================================= la lecture du jour
@@ -139,19 +177,25 @@ const SQL_CONTRAT = `
    s'en déduisent), les missions et sachets d'hier et d'aujourd'hui, les
    paliers du carnet et les relais versés, et les tampons de chaque saison.
    Les clés des missions commencent par le jour : `cle >= <hier>` les trouve
-   par l'index de la clé primaire. */
+   par l'index de la clé primaire.
+
+   Les lignes du carnet y portent leur insigne : c'est ce que le profil
+   dessine (`insignes`), et la même lecture le donne sans requête de plus. La
+   colonne est dans le CREATE de `sql/quotidien.sql` depuis le premier jour :
+   une base qui a la table l'a. */
 const SQL_LIVRE = `
-  SELECT source, cle, saison_id, DATEDIFF(CURDATE(), cle) AS ecart, NULL AS somme
+  SELECT source, cle, saison_id, DATEDIFF(CURDATE(), cle) AS ecart, NULL AS somme,
+         NULL AS insigne
     FROM recompenses WHERE user_id = ? AND source = 'bonus'
   UNION ALL
-  SELECT source, cle, saison_id, NULL, NULL
+  SELECT source, cle, saison_id, NULL, NULL, NULL
     FROM recompenses WHERE user_id = ? AND source IN ('mission', 'sachet')
      AND cle >= DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, '%Y-%m-%d')
   UNION ALL
-  SELECT source, cle, saison_id, NULL, NULL
+  SELECT source, cle, saison_id, NULL, NULL, insigne
     FROM recompenses WHERE user_id = ? AND source IN ('carnet', 'relais')
   UNION ALL
-  SELECT 'tampons', NULL, saison_id, NULL, SUM(tampons)
+  SELECT 'tampons', NULL, saison_id, NULL, SUM(tampons), NULL
     FROM recompenses WHERE user_id = ? AND source IN ('mission', 'sachet') AND saison_id IS NOT NULL
    GROUP BY saison_id`;
 
@@ -376,7 +420,7 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
    * groupées ont besoin de savoir en plus (`interne`).
    */
   async function lireEtat(userId, { retour = false } = {}) {
-    const { lancees, courante } = lesSaisons();
+    const { toutes, lancees, courante } = lesSaisons();
     const [b] = await q(SQL_JOUR,
       [reglage('quotidien.retour_heures'), userId, courante?.id ?? null, userId]);
     const { jour, hier } = b;
@@ -394,10 +438,14 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
     const ecarts = [];
     const deja = { mission: new Set(), sachet: new Set(), carnet: new Set(), relais: new Set() };
     const tampons = new Map();
+    const lignesInsignes = [];
     for (const r of livre) {
       if (r.source === 'bonus') ecarts.push(Number(r.ecart));
       else if (r.source === 'tampons') tampons.set(Number(r.saison_id), Number(r.somme));
-      else deja[r.source]?.add(r.cle);
+      else {
+        deja[r.source]?.add(r.cle);
+        if (r.source === 'carnet' && r.insigne != null) lignesInsignes.push(r);
+      }
     }
     const tamponsDe = (id) => tampons.get(Number(id)) ?? 0;
 
@@ -505,6 +553,12 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
         break;
       }
     }
+
+    /* ------------------------------------------ les insignes portés
+       Hors de l'interrupteur du carnet, exprès : un insigne récupéré se
+       porte pour toujours, comme un titre. Absent s'il n'y en a aucun (R1). */
+    const insignes = insignesPortes(lignesInsignes, toutes);
+    if (insignes.length) pub.insignes = insignes;
 
     pub.aReclamer = aReclamer;
 

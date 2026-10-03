@@ -228,6 +228,18 @@ input:focus{outline:none;border-color:var(--projo)}
    plancher de lecture du socle. */
 .hint small{display:block;margin-top:8px;font-family:var(--ui);font-size:12px;
   letter-spacing:.04em}
+/* **Pendant la révélation, la consigne passe sous la pile.** Le paquet parti,
+   elle restait seule dans la colonne, donc centrée — exactement sous les
+   cartes, qui la couvraient : « TOUCHE POUR RETOURNER » ne se lisait jamais.
+   Elle se pose donc sous la pile : la carte est centrée dans la scène et
+   haute de 349 pixels au plus, la dernière de la pile descend de 56 pixels
+   en rapetissant d'un quart, donc la pile finit à 190 pixels sous le
+   milieu ; 250 pixels sous le milieu, la consigne garde une vingtaine de
+   pixels d'air au-dessus d'elle. Sur un écran court, le pied de la scène
+   (le rembourrage de 26) la retient : à 320 × 568, la pile, plus petite,
+   finit avant. */
+.hint.sous-pile{position:absolute;left:0;right:0;bottom:max(26px, calc(50% - 250px));
+  width:max-content;max-width:calc(100% - 40px);margin:0 auto}
 
 /* ------------------------------------------------------ révélation */
 .reveal{position:absolute;width:min(70%,250px);transition:transform .45s cubic-bezier(.2,.8,.25,1),opacity .3s}
@@ -245,6 +257,15 @@ input:focus{outline:none;border-color:var(--projo)}
    d'où la classe — sans elle, la bordure et le dégradé de cet écran se
    superposaient au cadre de la carte. */
 .face.front{transform:rotateY(180deg)}
+/* **La carte du jeu déborde de sa face, et la face la laisse faire.** Depuis
+   le lot 4, c'est un sticker collé : le pin et la forme de rareté passent son
+   coin, la bande du nom passe ses deux bords, l'ombre dure tombe en bas à
+   droite (`cartes.css`, « ce que les écrans doivent savoir »). La face
+   rognait tout ça à son arrondi de quatorze pixels — le rond RARE et l'étoile
+   ÉPIQUE coupés en deux, le pin entamé, la banderole tranchée net. La carte
+   porte son propre arrondi : la face n'en a plus besoin. Le dos et le repli
+   gardent les leurs. */
+.face.front:not(.repli){overflow:visible;border-radius:0}
 .face.front.repli{border:2px solid var(--c);
   background:linear-gradient(155deg,#1C222B,#0C1015);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:9px;padding:20px;text-align:center}
@@ -858,7 +879,15 @@ function reveler() {
   const dos = window.FZART?.dos?.(cartes.find((c) => c.set)?.set);
   cartes.forEach((c, i) => {
     const el = document.createElement('div');
-    el.className = 'reveal';
+    /* **Figée tant qu'elle n'est pas retournée** (`.fz-fige`, cartes.css).
+       Une carte révélée est une grande carte, donc animée : l'holo de
+       l'épique, le liseré d'or de la légendaire, la respiration du
+       personnage. Les neuf de la pile l'étaient toutes à la fois, face
+       cachée — vingt et une animations sans fin pour une seule carte
+       visible, quand la règle en permet trois cartes au plus. Seule celle
+       qu'on vient de retourner bouge ; `suivante` la fige de nouveau quand
+       elle s'en va. */
+    el.className = 'reveal fz-fige';
     el.style.zIndex = 20 - i;
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
     el.innerHTML = `<div class="flip">
@@ -868,6 +897,7 @@ function reveler() {
       ${faceCarte(c)}</div>`;
     s.appendChild(el);
   });
+  $('hint').classList.add('sous-pile');
   $('hint').innerHTML = 'TOUCHE POUR RETOURNER';
   $('prog').textContent = `1 / ${cartes.length}`;
   s.addEventListener('click', suivante);
@@ -879,6 +909,7 @@ function suivante() {
   if (!cur) return;
   if (!cur.classList.contains('flipped')) {
     cur.classList.add('flipped');
+    cur.classList.remove('fz-fige');
     const c = cartes[idx];
     buzz(14);
     etincelles(couleurDe(c), c.type === 'fanzzy' ? 26 : 16);
@@ -897,6 +928,7 @@ function suivante() {
   }
   cur.style.transform = 'translateX(-130%) rotate(-14deg)';
   cur.style.opacity = '0';
+  cur.classList.add('fz-fige');
   if (++idx >= cartes.length) return final();
   $('prog').textContent = `${idx + 1} / ${cartes.length}`;
   els.forEach((el, i) => { if (i >= idx) el.style.transform =

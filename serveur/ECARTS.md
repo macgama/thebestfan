@@ -391,7 +391,8 @@ valeur, et le commentaire de la colonne cite `lisere | tampon` (le carnet).
 **Fait** : `insigne` vaut `habitue`, `fervent`, `ultra` ou `capo` ; `titre`
 vaut « Capo de la saison N » pour Capo seulement ; gain à quatre zéros
 (`GAIN_NUL` du grand livre). **Pour `quotidien`** : lire les insignes du
-carnet (liseré, tampon S1) en filtrant `source = 'carnet'`.
+carnet (liseré, tampon S1) en filtrant `source = 'carnet'`. *Fait le
+3 octobre 2026 (quotidien § 11).*
 
 ### 5. `evolution` : précisions
 
@@ -453,7 +454,8 @@ correction tient en une condition dans trois requêtes de `maPlace`.
 
 Réponse au besoin rendu par `profil-classement` (§ 1 de sa section, plus
 bas). **Un champ de plus que le contrat**, aucun de changé : `tribune` porte
-`couleurs` à côté de `id`, `nom` et `ferveur`.
+`couleurs` à côté de `id`, `nom` et `ferveur`. *Déclaré au contrat depuis
+(`CONTRATS.md`, § 14.2 ; § 11 ci-dessous).*
 
 ```json
 "tribune": { "id": 85, "nom": "Sion", "ferveur": 9860,
@@ -478,6 +480,54 @@ bas). **Un champ de plus que le contrat**, aucun de changé : `tribune` porte
   la tribune se relit sans couleurs (une lecture de plus, dans ce cas
   seulement) et le journal le dit une fois ; `/moi` ne tombe plus pour une
   teinte. Une autre colonne absente reste une panne.
+
+### 11. Le contrat de `/moi` mis d'accord avec ce qui est servi (serveur-carnet, lot 4, 3 octobre 2026)
+
+**L'écart** : `GET /api/rank/moi` servait des champs que `CONTRATS.md` ne
+déclarait pas, et dont deux écrans dépendent — le profil (le buste et la
+plaque de la carte de supporter, l'écharpe de tête, « SAISON 1 · 31 JOURS »)
+et la ligne épinglée du classement :
+
+| champ | servi par | au contrat avant ce jour |
+|---|---|---|
+| `avatar`, `niveau` à la racine | `monVisage` (`habillerJoueurs`, § 8) | nulle part : le § 3 ne nommait que les listes |
+| `saison.fin`, `saison.joursRestants`, `saison.finie` | `blocSaison` (au sens du § 7.1) | nulle part : l'exemple du § 5.2 ne les portait pas |
+| `tribune.couleurs` | § 10 ci-dessus | ici seulement |
+
+Et les champs d'avant le chantier (`ferveur`, `matchs`, `rang`, `sur`,
+`plancher`, `duels`, `entrainements`, `tribune`), que le contrat ne citait
+que pour dire que `rang` et `sur` « gardent leur sens », sans leurs `null`.
+
+**Fait** : le code n'est pas touché (`src/server/classements/index.js`
+n'est pas de ce périmètre, et ce qu'il sert est juste). Le contrat le
+déclare, sans rien renommer :
+
+- **`CONTRATS.md`, § 14** : la réponse entière de `/moi` — la racine et ses
+  `null` (§ 14.1), `tribune` et ses `couleurs` (§ 14.2), `avatar` et
+  `niveau` avec leurs trois cas, objet, `null` ou absent (§ 14.3), la fin de
+  la saison (§ 14.4) ;
+- **§ 3** : une ligne de plus au tableau « Où », `GET /api/rank/moi` à la
+  racine ;
+- **§ 5.2** : `fin`, `joursRestants` et `finie` dans l'exemple et dans le
+  tableau de `saison` ;
+- **§ 10** : `profil.html` et `classement.html` lisent le § 14.
+
+**Ce que le contrat dit, à relire par les écrans** :
+
+- `avatar` **absent** (le serveur ne sait pas) n'est pas `avatar: null`
+  (pas de Fanzzy) : le profil fait déjà la différence (`'avatar' in place`)
+  et retombe sur la barre dans le premier cas seulement ;
+- `/moi` ne sert pas `finDansMs` : le décompte à la seconde reste `/dex` ;
+- `saisonPassee` ne porte ni `fin`, ni `joursRestants`, ni `finie` ;
+- les insignes du carnet ne sont pas dans `/moi` : `GET /api/quotidien`,
+  `insignes` (quotidien § 11).
+
+**Restent ouverts**, hors de ce périmètre : le `rang` et le `sur` de la
+racine comptent encore les comptes supprimés (§ 9, à trancher par Gaël) ;
+deux commentaires des pages disent encore qu'elles liront `fin` et
+`joursRestants` « le jour où ma place les portera »
+(`classement.html` et `profil.html`) : ils les lisent déjà, et le serveur
+les sert (besoin rendu à `profil-classement`).
 
 ---
 
@@ -778,6 +828,70 @@ vérifie aussi `journeeLue`. Quatre mutations rougissent : le calcul d'avant,
 le relevé sans durée, le relevé sans jour de jeu, et la relance qui ne note
 rien.
 
+### 11. `insignes` : les insignes du carnet, servis (serveur-carnet, lot 4, 3 octobre 2026)
+
+**Contrat** : un champ de plus à la racine de `GET /api/quotidien`, et donc
+dans le `quotidien` de chaque réponse du § 6.2 ; sa forme est écrite au
+§ 6.1 (`insignes`). Aucun autre champ ne change.
+
+```json
+"insignes": [{ "id": "lisere", "saison": { "id": 1, "numero": 1, "nom": "La reprise" } }]
+```
+
+**Le défaut** : le liseré et le tampon de la saison 1 (paliers 2 et 3 du
+carnet) étaient versés — copiés dans `recompenses.insigne` au versement —
+mais aucune route ne disait qu'un joueur les portait : ni le profil ni
+`/aide` ne pouvaient les dessiner (`missions` § 1, plus bas).
+
+**Fait** :
+
+- **Où** : dans `GET /api/quotidien`, que le profil lit déjà
+  (`chargerQuotidien`), plutôt que dans `/api/rank/moi`, qui n'est pas de ce
+  périmètre et dont le budget est tenu par `classement-smoke`. **Aucune
+  lecture de plus** : la lecture du grand livre que l'état fait déjà
+  (`SQL_LIVRE`) prend la colonne `insigne` sur les lignes `carnet` et
+  `relais` qu'elle lisait. Mesuré : six requêtes avant le liseré, six après.
+- **Forme** : un objet par insigne, `{ id, saison: { id, numero, nom } }`,
+  et non une chaîne `"S1:lisere"` comme l'esquissait la note de `missions` :
+  l'écran écrit « S1 » à partir de `numero`, sans rien découper (R7). La
+  saison a la forme de `carnet.saison`.
+- **La ligne fait foi** : l'insigne est celui que la ligne `carnet` a copié
+  au versement, pas celui du carnet d'aujourd'hui. Un carnet recalé dans
+  l'onglet Saisons ne retire rien à qui a récupéré, et ne donne rien à qui
+  n'a pas récupéré.
+- **Porté pour toujours** : servi hors de l'interrupteur
+  `saison.carnet_actif`, comme les titres de `/moi` hors de `rang.actif`.
+  Les saisons se nomment par `toutesLesSaisons()` (brouillons compris) et non
+  par les seules lancées : une saison remise en brouillon garde ses insignes.
+  Une saison **supprimée** ne se nomme plus : ses insignes ne sont plus
+  servis, la ligne du grand livre reste. L'administration ne supprime pas
+  une saison lancée : il faut d'abord la remettre en brouillon.
+- **Ordre et doublons** : par numéro de saison, puis par palier (lu dans la
+  clé `S<saison>:<n>`), et non dans l'ordre des clés du grand livre — à la
+  dixième saison, « S10 » passerait avant « S9 ». Un carnet saisi peut
+  donner deux fois le même insigne (`validerCarnet` ne l'interdit pas) : il
+  n'en est servi qu'un par saison.
+- **Pas de liste fermée dans ce module** : les valeurs viennent de
+  `carnet.paliers[].insigne`, déjà fermée par `validerCarnet`
+  (`src/shared/saison.js`, qui ne l'exporte pas). Le contrat dit à l'écran
+  de ne rien dessiner pour un `id` inconnu.
+- `aReclamer` ne change pas : il compte le palier tant qu'il est `pret`,
+  jamais l'insigne.
+
+**Suite** : `quotidien-smoke`, sections « le carnet de la saison » et « la
+saison 2, le relais et la saison passée » — absent sans insigne (palier 1,
+titre du palier 5, paliers 2 et 3 seulement atteints) ; le liseré dans la
+réponse de la réclamation, puis dans la lecture, au même nombre de
+requêtes ; le tampon après le liseré ; `aReclamer` qui ne bouge que du
+palier ; sous la saison 3, les insignes des saisons 1, 2 et 4 dans l'ordre
+des numéros (la 4 a l'identifiant 10 000, pour que sa clé passe avant les
+autres), un seul liseré pour deux paliers ; carnet éteint, toujours servis ;
+une saison en brouillon, servie ; supprimée, plus servie, ses lignes
+gardées. Vue rouge sans le code (sept contrôles), verte avec, sous Zurich
+et sous Montréal. Cinq mutations rougissent : sans dédoublonnage, sans tri,
+les saisons lancées seulement, sous l'interrupteur du carnet, et un tableau
+vide servi.
+
 ---
 
 ## `fanzzy` (2 octobre 2026)
@@ -800,6 +914,24 @@ recompte si la ligne a bougé). `wallet()` et `openPack` s'en servent ;
 `openPack` recharge maintenant **sous son verrou**, dans la transaction du
 débit, et ne passe plus par `wallet()` avant.
 
+**Ses appelants** (relevé le 3 octobre 2026) : toute **récompense** du jeu
+qui porte un booster passe par elle avant d'entrer dans la réserve.
+
+| appelant | où | comment |
+|---|---|---|
+| le grand livre | `recompenses.js`, `verser`, étape 7 | sous le `FOR UPDATE` de la bourse, pour tout gain qui porte des boosters : le sachet, le relais, les paliers du carnet et le bonus du quotidien, les crans et les séries complètes de la collection (`reclamerPalier`) |
+| le quotidien | `quotidien/index.js`, `avantUnBooster` | sur le pool, hors transaction, **avant** de prendre le verrou, pour poser le souvenir de l'abonnement (l'écart ci-dessous) ; le grand livre recompte ensuite sous le verrou |
+| l'aide | `aide/index.js`, `recompenser` | le booster de fin des premiers pas, qui ne passe pas par le grand livre (son drapeau est `user_wallet.parcours_paye`, pas une ligne de `recompenses`) : d'abord sur le pool, comme le quotidien, puis **sous le `FOR UPDATE` de son propre versement**, avant le cadeau. Depuis le 3 octobre 2026 (lot 4, plus bas) |
+
+**Ne passent pas par elle**, faits trouvés en chemin, hors de tout périmètre
+de l'atelier : les boosters d'un abonnement acheté (`boutique/index.js`,
+`livrer` : `packs = packs + ?` dans la transaction de l'encaissement, 1 au
+mensuel, 6 à l'annuel), qui entrent sans compter d'abord la recharge due —
+quand ils remplissent la réserve, la lecture suivante remet la minuterie à
+zéro et la recharge se perd, comme le faisait l'aide ; et l'ajustement de
+l'administration (`admin/index.js`, borné à 0–99), qui est un geste à la
+main. À aiguiller.
+
 **Écart** : le plan dit qu'elle « lit l'abonnement comme `wallet()` ». Elle
 le lit dans **un souvenir de moins de deux minutes**, que `wallet()`,
 l'ouverture d'un booster et la réclamation d'un palier posent en relisant
@@ -811,11 +943,16 @@ huit) tiendraient toutes les connexions en attente de ce verrou, et celle qui
 le tient n'en trouverait plus pour lire l'abonnement : tout le serveur
 attendrait l'expiration du verrou (cinquante secondes). Le prix : une
 recharge comptée au rythme d'avant pendant deux minutes, le jour où l'on
-s'abonne ou se désabonne. **Pour `quotidien`** : ses réclamations
-n'échauffent pas ce souvenir ; il l'est presque toujours par la barre, qui lit
-`/api/fanzzy/state`. Le remède définitif serait un `estAbonne` sur la
-connexion de l'appelant dans `abonnement/index.js`, fichier d'aucun
-périmètre.
+s'abonne ou se désabonne. **Le quotidien et l'aide posent ce souvenir
+eux-mêmes** (*révisé le 3 octobre 2026* : cette ligne disait que les
+réclamations du quotidien ne l'échauffaient pas, ce qui n'est plus vrai
+depuis `avantUnBooster`) : avant de prendre le verrou, ils appellent la même
+porte sur le pool, hors transaction, où son écriture est conditionnelle et ne
+peut pas écraser un débit. Une panne de cet appel n'empêche rien, le
+versement recompte sous le verrou ; un souvenir qui expire entre les deux
+appels ramène le cas d'avant pour ce seul versement. Le remède définitif
+serait un `estAbonne` sur la connexion de l'appelant dans
+`abonnement/index.js`, fichier d'aucun périmètre.
 
 **Et un défaut voisin corrigé en passant** : le débit d'un booster remettait
 la minuterie à zéro quand la réserve valait le plafond **du joueur gratuit**
@@ -823,6 +960,37 @@ la minuterie à zéro quand la réserve valait le plafond **du joueur gratuit**
 haut, au milieu de sa recharge. Le débit ne touche plus `packs_at` : la
 recharge faite juste avant, sous le même verrou, l'a déjà fait repartir si la
 réserve était pleine.
+
+**Les premiers pas (`aide`, lot 4, 3 octobre 2026).** Le booster de fin du
+parcours (`POST /api/aide/recompense`) entrait dans la réserve par un
+`UPDATE … packs = packs + ?` sans compter la recharge en attente, alors que
+son commentaire affirmait l'inverse : à 11 sur 12 avec une recharge due, le
+cadeau menait à 12, et la lecture suivante, voyant la réserve pleine,
+remettait la minuterie à zéro — le joueur finissait à 12 au lieu de 13, sans
+que rien ne lève. `recompenser` appelle maintenant `recharger(conn, userId)`
+sur la connexion de son versement, sous le `FOR UPDATE` de la bourse, avant
+le cadeau : une annulation défait les deux. Sans porte, elle **lève avant
+toute écriture**, comme le grand livre (socle § 3) — ni booster, ni drapeau
+`parcours_paye`, qui fermerait la récompense pour toujours : la route répond
+`aide.error.server` et le joueur peut réessayer.
+
+**Écart temporaire** : la porte se lit sur l'option `fanzzy` de
+`createAide`, **sinon sur `globalThis.fanzzy`**, au moment du versement.
+`server.js` ne passe pas encore `fanzzy` à l'aide (fichier d'aucun périmètre
+du lot 4), mais pose `globalThis.fanzzy` en montant le module fanzzy, avant
+l'aide et dans le même bloc : sans ce repli, le correctif ne vaudrait que
+dans la suite. Si le montage de fanzzy échoue, aucune route `/api` n'est
+montée, l'aide non plus : la porte ne manque donc jamais en production
+d'aujourd'hui. Le jour où `server.js` construit l'aide avec `fanzzy`, comme
+le quotidien, le repli ne sert plus et peut partir.
+
+**Suite** : `aide-smoke`, « la recharge due entre avant le booster de fin » :
+à 11 sur 12 avec une recharge due, le booster de fin mène à 13, et la lecture
+suivante ne reprend rien ; l'appel préalable cassé exprès, la recharge entre
+quand même, par la connexion du versement qui tient la ligne (une autre
+connexion est refusée en `NOWAIT` à cet instant) ; câblée comme `server.js`
+aujourd'hui (`globalThis.fanzzy`), elle compte aussi ; sans porte, rien
+n'est écrit.
 
 ### 2. Les nouveautés
 
@@ -951,7 +1119,9 @@ crans se lit `paliers.gagnes / paliers.possibles` avec `prochain.a`, jamais
 (`palierDe`, chargement de la tuile COLLECTION) prend `total.gagnes` pour
 numérateur : chez un joueur qui a des tenues, la tuile vise un seuil décalé
 d'autant (besoin rendu au périmètre `accueil`). `collection.html` ne lit pas
-encore `paliers` (lot 4).
+encore `paliers` (lot 4). *Les deux le font depuis, la tuile du hub et
+l'anneau de la collection (lot 4), tous deux décrits à `accueil` § 5 ; le
+contrat déclare `possibles` au § 5.1 (3 octobre 2026).*
 
 **Effet sur l'économie** (à partir d'`ECONOMIE.md` § 7.1, LA REPRISE à deux
 thèmes de tenues) : l'univers des crans passe de 635 à 445 objets, soit de 25
@@ -959,7 +1129,11 @@ thèmes de tenues) : l'univers des crans passe de 635 à 445 objets, soit de 25
 joueur, abonné ou non. Si Gaël veut le rythme d'avant, `collection.cran` à 18
 (réglage d'administration, sans livraison) rend environ 24 crans. Rien n'est
 encore versé en production (`sql/quotidien.sql` est à déployer) : aucun cran
-déjà payé n'est concerné.
+déjà payé n'est concerné. *Le 3 octobre 2026, Gaël a appliqué
+`sql/quotidien.sql` à la base : le grand livre peut désormais payer des crans.
+La règle sans tenues est dans le commit 2ff45f9 ; un serveur d'avant ce
+commit les paierait encore tenues comprises, et ces crans-là ne se
+reprendraient pas.*
 
 **Non retenu : marquer les tenues prises par l'abonnement** (une colonne
 `user_skins.par_abonnement`, écrite par `wearSkin`). Il faudrait le socle
@@ -1145,14 +1319,28 @@ montre `paliers.gagnes / prochain.a` (le total `paliers.possibles` sans
 - `paliers.gagnes` sans `possibles` (serveur d'avant l'écart, où `gagnes`
   valait `total.gagnes`) : l'univers est `total.possibles`.
 - L'étiquette pour les lecteurs d'écran dit les deux comptes : « 23 sur 25
-  au prochain cran, sans les tenues ; 24 gagnés sur 788 en tout ». La page
-  de la collection affiche `total` : sans cela, 23 ici et 24 là-bas se
-  contrediraient sans explication.
+  au prochain cran, sans les tenues ; 24 gagnés sur 788 en tout ».
+
+**La page de la collection** (*révisé le 3 octobre 2026, lot 4* : ce
+paragraphe disait qu'elle affichait `total`, ce qui n'est plus vrai). Son
+anneau de collectionneur montre `paliers.gagnes / paliers.possibles` quand
+`paliers` est servi avec un `gagnes` entier : **le même numérateur que la
+tuile**, sur l'univers des crans plutôt que sur le prochain cran. `total` n'y
+est plus que dans l'étiquette de l'anneau (« 23 sur 760 au compte des
+paliers, tenues à part ; 24 sur 788 en tout »). Les replis sont ceux de la
+tuile : sans `paliers` lisible, l'anneau montre `total.gagnes /
+total.possibles` ; sans `possibles`, l'univers est `total.possibles`. Les deux
+écrans affichent donc le même compte gagné, et disent le même total aux
+lecteurs d'écran : 23 ici et 23 là-bas, 24 dans les deux étiquettes.
 
 **Pour les suites** : chez un joueur qui a une tenue, avec `paliers` servi,
 le chiffre de la tuile n'est plus `total.gagnes`. `tour-ui-smoke` (« et
-l'accueil dit le même total qu'elle ») compare ce chiffre au « gagnés » de
-`/collection`. L'étiquette porte toujours `total.gagnes` et
+l'accueil dit le même total qu'elle ») lisait le « gagnés/possibles » de
+`/collection` dans `.total .n`, et ses cinq types dans `.type` et `.vig`,
+que la page du lot 4 ne pose plus : ce contrôle se relit sur l'anneau
+(`#collectionneur .tbf-cercle`, son `<b>` contre le premier chiffre de la
+tuile, son étiquette contre celle de la tuile pour `total.gagnes` et
+`total.possibles`). L'étiquette de la tuile porte toujours `total.gagnes` et
 `total.possibles`.
 
 ---
@@ -1268,6 +1456,14 @@ ou `/api/rank/moi`, absent si aucun ; la forme est à fixer ici) ;
 la carte de supporter. Alors `/aide` écrira « LISERÉ S1 » et « TAMPON S1 »,
 avec leur petit dessin, sur le nœud du palier.
 
+**Servi** (quotidien § 11, 3 octobre 2026) : `insignes` à la racine de
+`GET /api/quotidien`, sous la forme d'objets `{ id, saison: { id, numero,
+nom } }` et non de chaînes (`CONTRATS.md`, § 6.1). **Dessiné** (lot 4) : le
+profil coud le liseré autour de l'anneau du buste et pose le tampon sur la
+carte de supporter ; `/aide` écrit de nouveau « LISERÉ S1 » et « TAMPON S1 »,
+avec leur petit dessin, sur les paliers qui les donnent, et ne montre posé
+que l'insigne servi dans `insignes`.
+
 ---
 
 ## `profil-classement` — écran (3 octobre 2026)
@@ -1292,6 +1488,9 @@ Absent : la bande garde l'or et le rouge du jeu, comme avant. Besoin rendu au
 périmètre `classement` : `couleursDuClub(t.color1, t.color2)` (kop/index.js)
 dans la requête de la tribune de `maPlace`, une jointure déjà faite sur
 `teams`, R1 tenu (pas de clé vide, pas de clé si aucune teinte valide).
+
+**Servi** (classement § 10) **et déclaré** (`CONTRATS.md`, § 14.2, le
+3 octobre 2026), sous la forme décrite ici.
 
 ### 2. `GET /api/fanzzy/dex` lu par le profil (route existante, publique)
 

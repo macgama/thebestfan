@@ -35,8 +35,8 @@
 
 /* ------------------------------------------------------------ la réserve
 
-   La brique `.tbf-reserve` : les fentes de sachets, le compte à rebours du
-   prochain, le solde. Collée sous la barre, d'un bord à l'autre de l'écran
+   La planche `.tbf-reserve` : les boosters du joueur à gauche, ses écharpes
+   à droite. Collée sous la barre, d'un bord à l'autre de l'écran
    (`.tbf-pleine-largeur`), hors de tout ce que la page réécrit, et relue à
    chaque `tbf:bourse`.
 
@@ -45,22 +45,23 @@
    replié de `nav.js`, sur tous les écrans). Le même visage deux fois l'un
    sous l'autre ne dit rien de plus, et prend la place du solde à 360 px.
 
-   **Une seule règle pour la dessiner** (`reserveHTML`, dans cartes.js) :
-   une fente par place quand le plafond de ce joueur est servi et qu'elles
-   tiennent ; sinon le sachet seul et son compte. Le kiosque écrivait cinq
-   fentes en dur — trois pleines, l'anneau, une vide — et faisait croire à
-   un plafond de cinq quand la réserve en tient douze (vingt-quatre pour un
-   abonné). L'anneau de recharge sort alors de la fente et se pose devant
-   « PROCHAIN » (`#recharge`).
+   **Les boosters sont la brique commune** (lot 4, « la réserve de boosters,
+   une seule brique », dans ui.css) : un compteur de monnaie craie qui porte
+   ses sachets — le même objet qu'à la boutique et dans la bande du HUD. Le
+   kiosque les dessinait à sa façon, à même la planche : des fentes, un
+   anneau et un PROCHAIN posés côte à côte, et un compte en sticker
+   rectangulaire collé au bas du sachet. Trois dessins du même stock se
+   lisaient comme trois choses. La page n'écrit plus ici que la marge de la
+   planche : la brique a son dessin, et le premier sticker de la planche se
+   range seul à gauche.
 
-   **Le compte est un sticker craie rectangulaire**, collé sur le bas du
-   sachet comme une étiquette : il était rond, au coin, presque le sticker
-   de niveau de l'avatar de la barre, cinquante pixels plus haut. Quinze
-   pixels, tabulaire : c'est le chiffre qu'on vient lire. */
+   Ce qu'il dit n'a pas changé : une place par sachet quand le plafond de ce
+   joueur est servi et tient en cinq (`reserveHTML`, dans cartes.js), sinon
+   le sachet seul et son compte ; l'anneau de la recharge en cours et
+   PROCHAIN avec son temps, tant qu'un booster est en route ; le compte en
+   chiffres, toujours. Au kiosque, il ne mène nulle part (on y est) : un
+   `div` sans « + ». */
 #reserve{margin-bottom:8px}
-#fentes.tbf-fentes--compte{margin-right:6px}
-#fentes.tbf-fentes--compte>.tbf-sticker{align-self:flex-end;margin:0 0 -4px -9px;--rot:-4deg;
-  height:24px;padding:0 6px;font-size:15px}
 
 /* Les séries ouvertes, en pastilles. Seules celles qu'on peut ouvrir y
    figurent : les autres se disent plus bas, dans leur rail.
@@ -493,6 +494,10 @@
    retourne : le sticker en forme (`.tbf-forme`, 34 px comme dans une
    vitrine), le mot dedans ou en travers. Sans mouvement, la cérémonie ne joue
    plus : c'est lui qui porte la rareté, par la forme, la couleur et le mot.
+   La carte du lot 4 porte aussi la sienne, à son coin haut-droit : celle-ci
+   est le geste de l'ouverture — collée au-dessus de la carte, hors d'elle,
+   au moment où elle se retourne (CARTE.md : elle reste juste). Mesuré au
+   banc, de 360 à 768 px : les deux formes ne se touchent pas.
 
    **« NOUVEAU » en tampon, sur la carte** : l'ouverture tamponne, le butin
    colle. Le tampon plein — fond craie, lettres rouge foncé —, parce qu'il se
@@ -523,7 +528,8 @@
    **Ce qui est neuf** porte le sticker NOUVEAU sur le flanc gauche ; **ce
    qui a rapporté des écharpes** (un doublon, une poignée d'écharpes), son
    prix en sticker sur le flanc droit. Le coin haut-droit est celui de la
-   rareté, la bande du haut celle de l'âge (voir plus bas). */
+   forme de rareté, le coin haut-gauche celui du pin et de l'âge : la carte
+   les porte elle-même (lot 4), la case n'y colle rien (voir plus bas). */
 .summary{display:none;flex:1 1 auto;min-height:0;overflow-y:auto;position:relative;z-index:2;
   padding:6px 14px 10px}
 .summary.on{display:flex;flex-direction:column}
@@ -541,32 +547,23 @@
 #opener.kq-butin>.summary{flex:0 1 auto}
 #opener.kq-butin>.ofoot{margin-bottom:auto}
 
-/* La forme de rareté au coin haut-droit de la case, **au-dessus** de la
-   pastille d'âge de la carte et non sur elle : l'emblème d'avant la
-   couvrait, on lisait « ÉVO » sans son chiffre. La pastille commence à
-   quatre pixels du haut de la carte ; la forme, vingt pixels, finit là. Le
-   haut de la page d'album lui laisse la place (vingt-quatre pixels sous la
-   déchirure). `pointer-events:none` : la carte entière ouvre la fiche, et
-   la forme ne doit pas y faire un trou.
+/* **La forme de rareté est sur la carte** (lot 4 : `cardHTML` la pose au
+   coin haut-droit, avec son mot, grille comprise). La case en collait une
+   seconde, sans mot, au-dessus de ce coin : deux signes pour une rareté au
+   même endroit. Elle est partie, et sa règle avec elle.
 
-   **Rien ne déborde dans la gouttière.** La forme et le NOUVEAU de la carte
-   voisine sortaient chacun de leur carte — six et huit pixels — et se
-   mordaient dans les quatorze pixels qui les séparent, d'autant plus que
-   la rangée est longue. La forme s'aligne sur le bord de sa carte. */
-.tbf-album-case>.tbf-forme{position:absolute;z-index:6;top:-16px;right:0;--taille:20px;
-  pointer-events:none}
-/* **Les stickers de la case se collent sur l'illustration, jamais sur
+   **Les stickers de la case se collent sur l'illustration, jamais sur
    l'étiquette de la carte** (la règle du scotch, amendement 19 : ce qui
    recouvre va sur l'image, le libellé reste net). La brique les pose au
-   coin haut-gauche, et c'est la bande où `cardHTML` écrit l'âge de la carte
-   — « ÉVO 2 », ou « LÉGENDAIRE » d'un bord à l'autre. Sur une carte de
-   quatre-vingt-onze pixels (360 px d'écran), NOUVEAU en cachait de la
-   moitié aux trois quarts : il restait « 2 », ou le « E » final de
-   LÉGENDAIRE, sur la carte qui compte le plus ; le prix d'une légendaire en
-   doublon (« +45 ») en mangeait autant. Plus haut, au-dessus de la carte,
-   il n'y a pas la place : la forme, le scotch et NOUVEAU ne tiennent pas
-   ensemble sur quatre-vingt-onze pixels, et la rangée du dessous n'en a que
-   vingt-quatre.
+   coin haut-gauche, et c'est là que la carte colle son pin et son âge
+   (« ÉVO 2 », en badge sous le pin sur une vignette) ; le coin haut-droit
+   est celui de la forme et de son mot (« LÉGENDAIRE » d'un bord à
+   l'autre de la forme). Sur une carte de quatre-vingt-onze pixels (360 px
+   d'écran), NOUVEAU y cachait l'âge ou la rareté de la carte qui compte le
+   plus ; le prix d'une légendaire en doublon (« +45 ») en mangeait autant.
+   Plus haut, au-dessus de la carte, il n'y a pas la place : le scotch et
+   NOUVEAU ne tiennent pas ensemble sur quatre-vingt-onze pixels, et la
+   rangée du dessous n'en a que vingt-quatre.
 
    **NOUVEAU descend donc sur le flanc gauche, à 40 % de la hauteur** : là
    où l'ouverture vient de le tamponner, une seconde plus tôt
@@ -597,16 +594,18 @@
   .summary .tbf-album-case{max-width:150px}
 }
 
-/* **Une carte qu'on ne lit pas ne bouge pas.** La carte (`cardHTML`, lot 4)
-   respire, se balance et fait briller son holo, sans fin : cinq cartes
-   empilées face cachée et cinq cartes d'album en faisaient douze animations
-   à la fois sur l'écran de l'ouverture, pour trois au plus. On les fige là
-   où elles ne se regardent pas : de dos, écartées, et sur la page d'album —
-   une grille, où la direction veut la carte statique. La carte qu'on vient
-   de retourner, elle, vit. Le dessin de la carte n'est pas touché, seulement
-   son mouvement ici. */
-.kq-fige .fz,.kq-fige .fz::before,.kq-fige .fz::after,
-.kq-fige .fz *,.kq-fige .fz *::before,.kq-fige .fz *::after{animation:none}
+/* **Une carte qu'on ne lit pas ne bouge pas.** La carte de la révélation
+   (`cardHTML` sans `mini`) respire et fait tourner sa matière — la dérive
+   de l'épique, le liseré d'or de la légendaire —, sans fin : cinq cartes
+   empilées face cachée en faisaient jusqu'à dix à la fois sur l'écran
+   de l'ouverture, pour trois au plus. On les fige là où elles ne se
+   regardent pas, de dos et écartées, par l'arrêt de la carte elle-même
+   (`.fz-fige`, cartes.css) posé sur la `.reveal` ; la carte qu'on vient de
+   retourner, elle, vit. La page d'album du butin porte le même arrêt — ses
+   cartes sont des vignettes (`mini`), statiques, et `.tbf-album` les fige
+   déjà. **Le figement de la page (`.kq-fige`) est parti** : ses règles
+   pesaient moins que celles de la matière du lot 4, et l'épique dérivait
+   encore face cachée. */
 
 /* Le titre du butin. Il dit ce qu'on a eu avant qu'on ait compté.
 
@@ -685,9 +684,11 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
        hors de tout conteneur réécrit. Cachée jusqu'à ce que l'état soit
        arrivé, pour ne jamais afficher un zéro qui n'est pas le vrai solde. -->
   <div class="tbf-reserve tbf-pleine-largeur" id="reserve" hidden>
-    <div class="tbf-fentes" id="fentes" role="img" aria-label="Boosters en réserve"></div>
-    <span class="tbf-recharge" id="recharge" aria-hidden="true" hidden></span>
-    <span class="tbf-reserve-prochain" id="prochain" hidden>PROCHAIN<b id="prochainT"></b></span>
+    <!-- Les boosters : la brique commune (ui.css). Ses sachets, l'anneau et
+         PROCHAIN sont posés par `dessinerBoosters` autour du compte, qui
+         reste le même élément : c'est lui que `FX.compter` fait défiler. -->
+    <div class="tbf-monnaie tbf-boosters" id="kBoosters" role="img" aria-label="Boosters en réserve"><b
+      id="kBoost">0</b></div>
     <!-- Le « + » mène où l'on gagne des écharpes : le Virage, comme à la
          boutique. Il menait à la boutique, qui les fait dépenser. -->
     <a class="tbf-monnaie" id="monnaie" href="/virage" aria-label="Écharpes — où en gagner"><img
@@ -960,6 +961,9 @@ const restantMs = () => (lu.ms == null ? null : Math.max(0, lu.ms - (performance
 const DIX_MINUTES = 10 * 60 * 1000;
 const cadence = () => (Number(S.cadenceMs) > 0 ? Number(S.cadenceMs)
   : Math.max(DIX_MINUTES, plusLongueAttente));
+/** La part de la recharge écoulée, de 0 à 1 : ce que l'anneau montre. Pleine
+    quand rien n'est en route (`reste` nul : la réserve est pleine). */
+const partEcoulee = (reste) => (reste == null ? 1 : clamp(1 - reste / cadence(), 0, 1));
 
 /** « 9:55 », ou « 1 h 04 » au-delà d'une heure. */
 function quand(ms) {
@@ -1002,25 +1006,94 @@ function relire({ force = false } = {}) {
 
 /* ------------------------------------------------------------ la réserve */
 
-let signatureFentes = '';
+let signatureBoosters = '';
+
+/** Le sticker frémit quand sa valeur change sous les yeux (`.tbf-vibre`,
+    ui.css) ; la classe part à la fin de son animation, pour que la
+    suivante reparte. Sans mouvement, elle ne se pose pas : la brique y
+    coupe l'animation, et une classe dont l'animation ne finit jamais
+    resterait posée. */
+function vibrer(el) {
+  if (sansMouvement()) return;
+  el.classList.remove('tbf-vibre');
+  void el.offsetWidth;
+  el.classList.add('tbf-vibre');
+  aLaFin(el, 'tbf-vibre', 'tbf-vibre');
+}
 
 /**
- * La réserve, sous la barre : les fentes de sachets, le prochain, le solde.
+ * Le sticker des boosters : ses sachets, l'anneau de la recharge en cours et
+ * PROCHAIN, posés autour du compte (la brique « la réserve de boosters, une
+ * seule brique », ui.css).
  *
- * **Dessinée par la règle commune** (`reserveHTML`, dans cartes.js) : des
- * places seulement si l'on sait combien ce joueur en a, le compte sinon. Le
- * plafond est celui que le serveur sert pour ce joueur (`S.packMax`), jamais
- * un nombre écrit ici.
+ * **Dessiné par la règle commune** (`reserveHTML`, dans cartes.js) : une
+ * place par sachet seulement si l'on sait combien ce joueur en a et qu'elles
+ * tiennent en cinq, sinon le sachet seul. Le plafond est celui que le serveur
+ * sert pour ce joueur (`S.packMax`), jamais un nombre écrit ici. Dans la
+ * forme du compte, l'anneau sort de la fente et se pose à côté du chiffre.
  *
- * Les fentes ne se reconstruisent que si ce qu'elles montrent change — le
- * nombre, la recharge, la série — : chaque seconde, seuls l'anneau et le
- * compte à rebours bougent (`tickReserve`).
+ * **Le compte reste le même élément** (`#kBoost`, le premier `<b>` du
+ * sticker) : on reconstruit ce qui l'entoure, jamais lui. C'est ce qui le
+ * laisse compter (`FX.compter`, par `poserSolde`) quand le booster ouvert le
+ * fait descendre.
  *
- * **Le solde ne bouge pas pendant la cérémonie** : l'écran d'ouverture le
- * recouvre, et un compte qui se jouerait dessous serait fini avant qu'on le
- * voie. Il se met à jour au retour — `renderKiosque` est rappelé à chaque
- * fermeture — et c'est là que le booster ouvert le fait descendre, sous les
- * yeux.
+ * Ce qui l'entoure ne se reconstruit que si ce qu'il montre change — le
+ * nombre, la recharge, PROCHAIN, la série, le plafond — : chaque seconde,
+ * seuls l'anneau et le compte à rebours bougent (`tickReserve`). **PROCHAIN
+ * ne s'écrit que s'il a un temps à dire** : réserve pleine, ni anneau ni
+ * compte à rebours ; à zéro, le booster est arrivé (la page relit l'état
+ * pour le prendre) et la minuterie dit PRÊT juste en dessous — jamais
+ * « PROCHAIN 0:00 ».
+ *
+ * **Rien ne bouge pendant la cérémonie** : l'écran d'ouverture couvre le
+ * kiosque, et un compte qui se jouerait dessous serait fini avant qu'on le
+ * voie. Tout se pose au retour — `renderKiosque` est rappelé à chaque
+ * fermeture —, et c'est là que le booster ouvert fait descendre le compte et
+ * vider sa place, sous les yeux.
+ */
+function dessinerBoosters() {
+  if ($('opener').classList.contains('on')) return;
+  const k = $('kBoosters');
+  const compte = $('kBoost');
+  const n = Math.max(0, Math.floor(Number(S.packs) || 0));
+  const reste = restantMs();
+  const recharge = reste != null;
+  const avecProchain = Boolean(reste);
+  const set = SETS[S.set];
+  const sachet = set && ART[set.id] ? `url("/${src(ART[set.id])}")` : '';
+  const max = Number(S.packMax) > 0 ? Number(S.packMax) : null;
+  const sig = [n, recharge, avecProchain, sachet, max].join('|');
+  if (sig !== signatureBoosters) {
+    signatureBoosters = sig;
+    if (sachet) k.style.setProperty('--sachet', sachet);
+    else k.style.removeProperty('--sachet');
+    /* **Le contenu est celui de la règle commune**, au balisage de la
+       brique (`brique` : ce qui précède le compte, ce qui le suit), et pas
+       le compte lui-même — c'est lui qu'on garde. PROCHAIN au mot, comme à
+       la boutique (on a la place) ; posé seulement s'il a un temps à dire.
+       Le premier anneau et le premier temps sont écrits tout de suite :
+       pas une seconde d'anneau vide ni de PROCHAIN sans chiffre. */
+    const { brique } = reserveHTML({ packs: n, max, recharge,
+      part: recharge ? partEcoulee(reste) : null,
+      prochain: avecProchain ? 'mot' : false, temps: avecProchain ? quand(reste) : '' });
+    k.replaceChildren(compte);
+    compte.insertAdjacentHTML('beforebegin', brique.avant);
+    compte.insertAdjacentHTML('afterend', brique.apres);
+    k.dataset.mots = '';
+  }
+  /* Le chiffre : il compte s'il change sous les yeux, et le sticker
+     frémit ; la première pose ne compte pas. */
+  const avantN = compte.dataset.v;
+  poserSolde(compte, n);
+  if (avantN !== undefined && Number(avantN) !== n) vibrer(k);
+}
+
+/**
+ * La réserve, sous la barre : les boosters, puis les écharpes.
+ *
+ * **Le solde ne bouge pas pendant la cérémonie**, pour la même raison que
+ * les boosters (voir `dessinerBoosters`) : il descend au retour, sous les
+ * yeux, et son sticker frémit.
  */
 function rendreReserve() {
   /* `avatar` n'est posé que par `load()` : avant, l'état porte des valeurs de
@@ -1029,24 +1102,13 @@ function rendreReserve() {
   if (!('avatar' in S)) return;
   $('reserve').hidden = false;
   const n = Math.max(0, Math.floor(Number(S.packs) || 0));
-  const reste = restantMs();
-  const recharge = reste != null;
-  const set = SETS[S.set];
-  const sachet = set && ART[set.id] ? `url("/${src(ART[set.id])}")` : '';
-  const max = Number(S.packMax) > 0 ? Number(S.packMax) : null;
-  const sig = [n, recharge, sachet, max].join('|');
-  const f = $('fentes');
-  if (sig !== signatureFentes) {
-    signatureFentes = sig;
-    if (sachet) f.style.setProperty('--sachet', sachet);
-    else f.style.removeProperty('--sachet');
-    const { enFentes, html } = reserveHTML({ packs: n, max, recharge });
-    f.classList.toggle('tbf-fentes--compte', !enFentes);
-    f.innerHTML = html;
-    $('recharge').hidden = enFentes || !recharge;
-    f.dataset.mots = '';
+  dessinerBoosters();
+  if (!$('opener').classList.contains('on')) {
+    const e = $('kEch');
+    const avant = e.dataset.v;
+    poserSolde(e, S.scarves ?? 0);
+    if (avant !== undefined && Number(avant) !== Number(S.scarves ?? 0)) vibrer($('monnaie'));
   }
-  if (!$('opener').classList.contains('on')) poserSolde($('kEch'), S.scarves ?? 0);
   const ech = Number(S.scarves ?? 0);
   $('monnaie').setAttribute('aria-label', `${pluriel(ech, 'écharpe', 'écharpes')} — où en gagner`);
   /* Le solde dit qu'il manque, là où il manque : la réserve est vide et il
@@ -1058,24 +1120,26 @@ function rendreReserve() {
 /** Chaque seconde : l'anneau, le compte à rebours, et ce qu'on en dit. */
 function tickReserve() {
   if ($('reserve').hidden) return;
+  /* PROCHAIN paraît et s'en va avec son temps : la forme se repose quand il
+     change (la signature le compte), et pas autrement. */
+  dessinerBoosters();
+  const k = $('kBoosters');
   const reste = restantMs();
-  /* Pas de « PROCHAIN 0:00 » : à zéro, le booster est arrivé (la page relit
-     l'état pour le prendre), et la minuterie dit PRÊT juste en dessous. Une
-     ligne sans donnée disparaît. */
-  $('prochain').hidden = reste == null || reste === 0;
-  if (reste) $('prochainT').textContent = quand(reste);
-  const part = reste == null ? 1 : clamp(1 - reste / cadence(), 0, 1);
-  for (const a of $('reserve').querySelectorAll('.tbf-recharge')) a.style.setProperty('--part', part.toFixed(3));
-  /* L'étiquette des fentes ne change qu'à la minute : elle est lue par qui
+  const temps = k.querySelector('.tbf-reserve-prochain b');
+  if (reste && temps) temps.textContent = quand(reste);
+  const part = partEcoulee(reste);
+  for (const a of k.querySelectorAll('.tbf-recharge')) a.style.setProperty('--part', part.toFixed(3));
+  /* L'étiquette du sticker ne change qu'à la minute : elle est lue par qui
      l'écoute, et une phrase qui change chaque seconde ne se lit jamais. Le
-     plafond ne s'y dit que s'il est servi. */
+     plafond ne s'y dit que s'il est servi. C'est elle qui dit le temps en
+     mots : le sticker est une image (`role="img"`), et son compte à rebours
+     ne s'écoute pas chiffre par chiffre. */
   const n = Math.max(0, Math.floor(Number(S.packs) || 0));
   const max = Number(S.packMax) > 0 ? Number(S.packMax) : null;
-  const mots = `${n || max ? pluriel(n, 'booster', 'boosters') : 'Aucun booster'}${max ? ` sur ${max}` : ''} en réserve`
+  const mots = `${n ? pluriel(n, 'booster', 'boosters') : 'Aucun booster'}${max ? ` sur ${max}` : ''} en réserve`
     + (reste == null ? ' — la réserve est pleine'
       : reste === 0 ? ' — le prochain est arrivé' : ` — le prochain dans ${enMots(reste)}`);
-  const f = $('fentes');
-  if (f.dataset.mots !== mots) { f.dataset.mots = mots; f.setAttribute('aria-label', mots); }
+  if (k.dataset.mots !== mots) { k.dataset.mots = mots; k.setAttribute('aria-label', mots); }
 }
 
 /* ------------------------------------------------------------ kiosque */
@@ -1373,7 +1437,7 @@ function rendreMinuterie() {
     const m = $('minuterie');
     const mots = `Prochain booster gratuit dans ${enMots(reste)}`;
     if (m.getAttribute('aria-label') !== mots) m.setAttribute('aria-label', mots);
-    m.querySelector('.tbf-recharge').style.setProperty('--part', clamp(1 - reste / cadence(), 0, 1).toFixed(3));
+    m.querySelector('.tbf-recharge').style.setProperty('--part', partEcoulee(reste).toFixed(3));
   }
 }
 $('minut').onclick = (e) => {
@@ -2045,7 +2109,9 @@ async function openPack() {
   const dosDuSachet = window.FZART?.dos?.((SETS[S.set] ?? {}).id);
   pull.forEach((f, i) => {
     const el = document.createElement('div');
-    el.className = 'reveal kq-fige'; el.style.zIndex = 20 - i;
+    /* Face cachée, elle ne se lit pas : figée (`.fz-fige`, cartes.css)
+       jusqu'à ce qu'on la retourne. */
+    el.className = 'reveal fz-fige'; el.style.zIndex = 20 - i;
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
     el.innerHTML = `<div class="flip">
       <div class="face back${dosDuSachet ? ' dessine' : ''}"${dosDuSachet
@@ -2135,7 +2201,7 @@ $('ostage').onclick = () => {
   if (!cur) return;
   if (!cur.classList.contains('flipped')) {
     cur.classList.add('flipped');
-    cur.classList.remove('kq-fige');
+    cur.classList.remove('fz-fige');
     const f = pull[idx];
     const rar = rareteDe(f);
     /* Le son du retournement reste à la page ; tout le reste — le reflet de
@@ -2162,8 +2228,8 @@ $('ostage').onclick = () => {
     $('oAction').hidden = derniere;
   } else {
     if (enCeremonie) return;
-    // Partie de côté, elle ne se lit plus : elle se fige (voir .kq-fige).
-    cur.classList.add('kq-fige');
+    // Partie de côté, elle ne se lit plus : elle se fige (voir .fz-fige).
+    cur.classList.add('fz-fige');
     cur.style.transform = 'translateX(-130%) rotate(-14deg)';
     cur.style.opacity = '0';
     if (++idx >= pull.length) return finishPack();
@@ -2218,29 +2284,28 @@ function finishPack() {
 
   /* **La page d'album.** Chaque carte collée de travers sous son scotch, une
      à une (`.tbf-colle`, soixante millisecondes d'écart) ; NOUVEAU en sticker
-     sur ce qui est neuf, le prix en écharpes sur ce qui en a rapporté, et la
-     forme de rareté au coin haut-droit, là où l'œil arrive.
+     sur ce qui est neuf, le prix en écharpes sur ce qui en a rapporté.
 
-     **La même forme qu'à la révélation**, une seconde plus tôt (`.tbf-forme`,
-     le rectangle, le rond, l'étoile, l'éclat), sans le mot : vingt pixels
-     n'en portent pas, la forme et la couleur le disent, et le mot part à
-     l'écoute. C'était l'ancien emblème en image (`TBF_LOGO.rarete`) :
-     un bouton gris pour la commune, un bouton de métal à deux cabochons
-     bleus pour la rare — deux signes pour une rareté dans la même
-     cérémonie. */
+     **La rareté, c'est la carte qui la dit** (lot 4) : la forme et son mot au
+     coin haut-droit, là où l'œil arrive — la même forme qu'à la révélation,
+     une seconde plus tôt. La case en collait une seconde, sans mot, au même
+     coin ; deux signes pour une rareté, elle est partie. La classe de rareté
+     reste sur la case : rien ne la peint, la suite du kiosque la lit. */
   const cases = pull.map((f, i) => {
     const rar = rareteDe(f);
     const m = montantsSurs && rapportent[i] ? montants[i] : 0;
     return `<div class="tbf-album-case tbf-colle ${rar}" data-i="${i}" style="--d:${i * 60}ms">`
       + cardHTML(f, { mini: true })
-      + `<span class="tbf-forme tbf-forme--coin" data-rar="${rar}" role="img"
-          aria-label="${MOT[rar].toLowerCase()}"><i></i></span>`
       + (neuf[i] ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : '')
       + (m > 0 ? `<span class="tbf-sticker tbf-sticker--prix"><img src="${esc(JETON)}" alt="">+${m}</span>` : '')
       + '</div>';
   }).join('');
   const sum = $('summary');
-  sum.innerHTML = `<div class="tbf-ticket tbf-album kq-fige"><div class="tbf-album-cartes">${cases}</div>${piedDeSerie()}</div>`;
+  /* Une grille ne bouge pas : `.fz-fige` (cartes.css) arrête ses cartes, comme
+     la pile de la révélation. La page d'album le fait déjà d'elle-même
+     (cartes.css fige toute carte d'une `.tbf-album`) ; le dire ici garde le
+     butin figé si sa brique change de nom. */
+  sum.innerHTML = `<div class="tbf-ticket tbf-album fz-fige"><div class="tbf-album-cartes">${cases}</div>${piedDeSerie()}</div>`;
   for (const c of sum.querySelectorAll('.tbf-album-case')) aLaFin(c, 'tbf-colle', 'tbf-colle');
   sum.classList.add('on');
   sum.scrollTop = 0;

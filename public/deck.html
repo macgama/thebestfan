@@ -169,8 +169,15 @@ h2{margin:20px 16px 9px}
    vient de `ui.css`. Une couleur apprise une fois vaut pour tout le jeu, et
    elle était recopiée dans trois pages. */
 .rang .id{flex:1;min-width:0;position:relative}
-.rang .id b{display:block;font-family:var(--banner);font-size:15px;letter-spacing:.03em;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Le nom et sa forme de rareté sur une ligne : c'est le nom qui cède (ses
+   points de suspension), jamais la forme. Quand l'ellipse portait sur la
+   ligne entière, la marque de rareté était posée au bout et partait la
+   première — « La Clé du Loca… » perdait sa couronne, donc ce qui la
+   distingue. Le nom seul rogne ; la forme garde son bord craie et son cerne,
+   qui débordent de sa boîte. */
+.rang .id b{display:flex;align-items:center;gap:8px;min-width:0;
+  font-family:var(--banner);font-size:15px;letter-spacing:.03em}
+.rang .id b .nom{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Onze pixels au moins, et 88 % : tout ce qui renseigne se lit en plein jour.
    La hiérarchie tient par la taille et la police, plus par la transparence —
    une précision à 55 % sur un panneau sombre disparaît au soleil. */
@@ -451,11 +458,20 @@ h2{margin:20px 16px 9px}
    remplace un tiret : un tiret dit « rien », le cadenas dit « pas encore à
    toi », et c'est la seconde phrase qui est vraie. */
 .compte .tbf-ico,.gcChiffres .tbf-ico{vertical-align:-.12em}
-.dots{display:inline-flex;gap:2px;vertical-align:middle;margin-left:6px}
-.dots i{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.55;display:block}
-/* L'étoile de l'épique et la couronne du légendaire disent la rareté : c'est
-   un texte qui renseigne, en onze pixels comme le reste, et non plus en neuf. */
-.dots .s{font-style:normal;font-size:11px;line-height:1;opacity:.9}
+/* **La rareté d'une ligne : la forme, plus les pastilles ni ★/♛** (lot 4).
+   Le rectangle de la commune, le rond de la rare, l'étoile de l'épique,
+   l'éclat de la légendaire (`.tbf-forme`, ui.css) — les mêmes que sur la
+   carte, au coin de laquelle ils ont pris la place des losanges. Les points
+   ne se distinguaient pas à quatre pixels, et l'étoile et la couronne
+   étaient deux caractères que la police du téléphone dessinait à sa façon,
+   ou pas du tout (un carré vide).
+
+   Seize pixels et sans son mot, comme dans l'étal de la boutique : à côté
+   d'un nom, le mot doublerait la ligne, et une forme trop petite pour lui le
+   garde pour le lecteur d'écran (`aria-label`). Une carte d'action qu'on
+   ouvre l'écrit en entier (`.gcRar`). Il ne reste ici que sa place. */
+.rarete{margin-left:6px}
+.rang .id b .rarete{margin-left:0}
 
 /* --------------------------------------------------------- barre du bas */
 
@@ -608,17 +624,18 @@ h2{margin:20px 16px 9px}
 .gcRang{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.14em;
   text-transform:uppercase}
 .gcFam{color:var(--fc,#8257DA);font-weight:700}
-.gcRar{margin-left:auto;padding:3px 9px;border-radius:20px;border:1px solid currentColor;
-  font-family:var(--banner);letter-spacing:.1em}
-.gcRar.r-commune{color:#C2CAD6}
-.gcRar.r-rare{color:#5FA8FF}
-.gcRar.r-epique{color:#B98CFF}
-/* Le légendaire est une **face** d'or, l'encre dessus : en onze pixels, le
-   mot écrit en or ne tenait pas au soleil, et l'or reste une face pour le
-   légendaire (arbitrage du 2 octobre 2026). Les trois autres raretés gardent
-   leur mot en couleur. */
-.gcRar.r-legendaire{color:var(--encre);background:var(--projo);border-color:var(--projo);
-  font-weight:700;box-shadow:0 0 12px rgba(245,195,59,.3)}
+/* **La rareté de la carte ouverte : la forme et son mot** (`.tbf-forme`,
+   ui.css), à la place de la pastille de couleur — la carte du jeu la porte
+   ainsi à son coin depuis le lot 4, et une rareté se dit d'une seule façon :
+   sa couleur, sa forme et son mot. Le mot est écrit en minuscules dans le
+   balisage (« Épique ») et la forme le met en capitales.
+
+   Rangée à droite, en variante de coin : l'étiquette de l'étoile et de
+   l'éclat court vers l'intérieur au lieu de sortir du panneau, et elle pend
+   sous la forme de neuf pixels (plus son ombre) — la ligne lui garde cet air
+   avant le texte de la carte. */
+.gcRar{margin-left:auto}
+.gcRang:has(>.gcRar:is([data-rar=epique],[data-rar=legendaire])){margin-bottom:8px}
 
 .gcTexte{margin:0;font-size:13.5px;line-height:1.6}
 
@@ -898,18 +915,31 @@ function combiner(base = {}, pieces = []) {
 const modsTexte = (m) => window.TBF_MODS?.lignes(m) ?? [];
 
 /**
- * La rareté chiffrée.
+ * La rareté d'une ligne : **la forme de rareté** (`.tbf-forme`, ui.css),
+ * seize pixels, son mot gardé pour le lecteur d'écran — voir `.rarete` dans
+ * la feuille de cette page.
  *
- * La seconde ligne testait `legendaire` une deuxième fois : elle était morte,
- * et l'épique retombait sur les pastilles. Faute muette — trois pastilles
- * restent une réponse plausible, personne ne cherche l'étoile qui manque. La
- * même faute vivait dans `fanzzy.html`, d'où elle a été recopiée.
+ * Elle remplace les pastilles, l'étoile ★ et la couronne ♛ (lot 4), qui
+ * avaient déjà trompé une fois : une seconde ligne testait `legendaire` à la
+ * place d'`epique`, et l'épique retombait sur trois pastilles sans que rien
+ * ne le signale. Le même balisage pour les quatre raretés, que la feuille
+ * commune dessine : il n'y a plus de branche à rater.
+ *
+ * Le balisage est écrit ici et non pris à `formeHTML` (cartes.js) : cette
+ * page ne charge pas cartes.js, et le charger pour quatre lignes ferait une
+ * requête de plus. Une rareté absente ou inconnue n'écrit rien — une ligne
+ * sans donnée disparaît.
  */
 function rangHTML(rar) {
-  if (rar === 'legendaire') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">♛</i></span>';
-  if (rar === 'epique') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">★</i></span>';
-  return `<span class="dots">${'<i></i>'.repeat(RANG[rar] ?? 1)}</span>`;
+  const mot = motRarete(rar);
+  return mot ? `<span class="tbf-forme rarete" data-rar="${rar}" style="--taille:16px" role="img"
+    aria-label="${mot}"><i></i></span>` : '';
 }
+
+/** Le mot d'une des quatre raretés, ou `null` : la clé vient du serveur, et
+    `RARETE[cle]` seul répondrait aussi pour « constructor ». Pas
+    `Object.hasOwn`, qui manque aux Safari d'iOS 15.0 à 15.3 (voir son.js). */
+const motRarete = (rar) => (Object.prototype.hasOwnProperty.call(RARETE, rar ?? '') ? RARETE[rar] : null);
 
 /* --------------------------------------------------------- chargement */
 
@@ -1117,7 +1147,7 @@ function tribuneHTML() {
       <div class="tete" data-choisir-fanzzy="${i}">
         ${tete}
         <div class="id">
-          <b>${esc(f.nom)}${rangHTML(f.rar)}</b>
+          <b><span class="nom">${esc(f.nom)}</span>${rangHTML(f.rar)}</b>
           <div class="sous">${esc(t.nom)} · étage ${f.stage}</div>
           <div class="cri">${esc(f.cri?.label ?? '')}</div>
         </div>
@@ -1422,7 +1452,8 @@ function panneauCarte(id) {
 
     <div class="gcRang">
       <span class="gcFam">${esc(fam.nom ?? a.fam)}</span>
-      <span class="gcRar r-${esc(a.rar)}">${esc(RARETE[a.rar] ?? a.rar)}</span>
+      ${motRarete(a.rar) ? `<span class="tbf-forme tbf-forme--coin gcRar" data-rar="${a.rar}"><i></i><b>${
+        motRarete(a.rar)}</b></span>` : ''}
     </div>
 
     <p class="gcTexte">${esc(a.texte)}</p>

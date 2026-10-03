@@ -431,23 +431,52 @@
   ]);
 
   /**
-   * **Le palier du décor : l'âge, sauf pour une légende.**
+   * **Le palier du décor : la rareté de la carte** (lot 4).
    *
-   * Premier âge, commune ; deuxième, rare ; troisième, épique. Un Fanzzy
-   * légendaire a la légendaire à tous ses âges. Le décor suivait la rareté
-   * de la carte, et le personnage qu'on faisait grandir restait donc dans le
-   * même lieu du premier au troisième âge : l'évolution changeait le
-   * personnage, jamais l'endroit où il se tient. C'est l'âge qu'on paie ;
-   * c'est lui qui monte le lieu d'un cran.
+   * Il a suivi l'âge un temps — premier âge commune, deuxième rare,
+   * troisième épique —, pour que le personnage qu'on fait grandir change de
+   * lieu. Mais la plaque est le fond de la **carte**, et la carte dit sa
+   * rareté par sa couleur, sa forme, son mot et sa matière. Tout ce qui n'est
+   * pas un âge de lignée se contredisait : un état (rare) tiré au premier
+   * âge, une tenue épique, une pièce ou une action rares — toutes au « stade
+   * 1 » — se tenaient dans le gradin gris d'une commune, sous un liseré bleu
+   * ou violet. Deux codes pour une seule information.
    *
-   * L'aura, elle, reste à la rareté : voir `aura`. Les deux se lisent
-   * ensemble — une épique au premier âge garde son aura violette dans le
-   * gradin ordinaire.
+   * La plaque suit donc la rareté. Dans une lignée, rien ne change — ses
+   * trois âges sont commune, rare et épique, dans l'ordre (mesuré sur le
+   * catalogue : aucun premier âge n'est épique) —, et c'est exactement ce
+   * qu'on voulait garder.
+   *
+   * **L'âge reste le repli**, pour qui ne connaît pas la rareté : le profil
+   * peut demander la plaque d'un avatar dont il n'a que l'âge. Un palier
+   * inventé vaut mieux qu'une plaque absente, et c'est le même qu'avant.
    */
+  const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
   function palierDecor(f = {}) {
-    if (f.rar === 'legendaire') return 'legendaire';
+    if (RARETES.includes(f.rar)) return f.rar;
     const n = Math.min(3, Math.max(1, Number(f.stage) || 1));
     return ['commune', 'rare', 'epique'][n - 1];
+  }
+
+  /**
+   * **La plaque d'une carte : la plaque de rareté, et rien d'autre** (lot 4).
+   *
+   * Quatre plaques peintes (`RP-<rareté>`), une par rareté, pour toutes les
+   * cartes du jeu, quelles que soient leur série et leur tenue. Les seize
+   * plaques de tenue (`base-`, `prehistorique-`, `apocalyptique-`,
+   * `halloween-` × quatre raretés) restent au **vestiaire** — la scène où l'on
+   * regarde son Fanzzy habillé, que `plaque()` sert toujours : une tenue fait
+   * basculer tout un lieu, et c'est là qu'on le regarde.
+   *
+   * Sur une carte, au contraire, le fond doit dire la même chose d'une carte
+   * à l'autre : la rareté. Une grille où chaque tenue repeint son gradin se
+   * lisait comme quatre collections. `null` si la plaque manque : le décor
+   * dessiné reprend alors la main, comme partout.
+   */
+  function plaqueCarte(f = {}) {
+    const ext = window.TBF_ETATS?.EXT ?? '.webp';
+    const cle = `RP-${palierDecor(f)}`;
+    return FONDS.has(cle) ? `/img/fonds/${cle}${ext}` : null;
   }
 
   /**
@@ -579,9 +608,14 @@
    * @param {number} f.stage  l'âge, 1 à 3 — la lumière
    * @param {string} f.rar    la rareté ; `legendaire` a sa propre lumière
    * @param {string} [f.skin] la tenue — l'époque, donc la palette
+   * @param {object} [o]
+   * @param {boolean} [o.carte] le fond d'une **carte** : la plaque de rareté
+   *   (`plaqueCarte`) au lieu de celle de la tenue (`plaque`) — voir
+   *   `plaqueCarte`. `cardHTML` le demande ; le vestiaire, le hub et le
+   *   profil ne le demandent pas.
    * @returns {string} un SVG complet, prêt à poser dans un conteneur
    */
-  function fond(f = {}) {
+  function fond(f = {}, o = {}) {
     const p = EPOQUES[f.skin || 'base'] ?? EPOQUES.base;
     const accent = FAMILLE[f.type] ?? '#F5C33B';
     const u = 'fd' + (uid++);
@@ -591,7 +625,7 @@
        lumière de l'âge et l'aura de rareté se posent par-dessus comme avant :
        c'est ce qui garde une carte peinte et une carte dessinée dans le même
        jeu, au lieu d'en faire deux collections. */
-    const peint = plaque(f);
+    const peint = o.carte ? plaqueCarte(f) : plaque(f);
 
     /* **Le cadre est en portrait, et c'est la correction la plus importante du
        module.**
@@ -680,5 +714,5 @@
     n.innerHTML = fond(f);
   }
 
-  window.TBF_FOND = { fond, poser, plaque, palierDecor, EPOQUES, FAMILLE, LIEUX };
+  window.TBF_FOND = { fond, poser, plaque, plaqueCarte, palierDecor, EPOQUES, FAMILLE, LIEUX };
 })();

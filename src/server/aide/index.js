@@ -42,11 +42,59 @@ import { faq, etapes, RECOMPENSE } from '../../shared/aide.js';
  */
 const SCHEMA_INCOMPLET = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR']);
 
-export function createAide({ pool, requireAuth }) {
+/**
+ * @param o.fanzzy  le module fanzzy : `recharger(conn, userId)` compte la
+ *                  recharge due avant le booster de fin (voir `recompenser`).
+ *                  Lu au moment du versement, et non à la construction : une
+ *                  suite peut le poser après, comme pour le quotidien.
+ */
+export function createAide({ pool, requireAuth, fanzzy = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
   };
+
+  /**
+   * La porte de la recharge, cherchée au moment du versement.
+   *
+   * L'injection d'abord. À défaut, `globalThis.fanzzy`, que `server.js` pose
+   * dès que le module fanzzy est monté — avant celui-ci : `server.js` ne
+   * passe pas encore `fanzzy` à l'aide, et sans ce repli le correctif
+   * n'existerait que dans la suite, la production continuant de perdre la
+   * recharge. Le jour où `server.js` le passe, le repli ne sert plus.
+   */
+  const porteRecharge = () => {
+    const f = fanzzy ?? globalThis.fanzzy;
+    return typeof f?.recharger === 'function' ? f.recharger : null;
+  };
+
+  /**
+   * **La recharge due, comptée avant de prendre le verrou** — la même
+   * précaution que le quotidien (`avantUnBooster`). `recharger` lit
+   * l'abonnement (le rythme de la réserve) dans un souvenir de deux minutes,
+   * et sans souvenir elle passe par le pool. Sous le verrou, c'est le cas
+   * qu'il faut éviter : huit demandes simultanées du même joueur tiennent les
+   * huit connexions de la production en attente du verrou, et celle qui le
+   * tient n'en trouve plus pour lire l'abonnement — tout le serveur attend
+   * cinquante secondes (`ECARTS.md`, fanzzy § 1).
+   *
+   * Appelée ici sur le pool, hors transaction, elle pose ce souvenir et
+   * compte déjà la recharge : son écriture est conditionnelle, elle ne peut
+   * pas écraser un débit. Une panne ici n'empêche rien, le versement
+   * recompte sous le verrou.
+   */
+  let prechauffeMuette = false;
+  async function prechauffer(recharger, userId) {
+    try {
+      await recharger(pool, userId);
+    } catch (e) {
+      if (!prechauffeMuette) {
+        prechauffeMuette = true;
+        console.error('[aide] recharge préalable impossible, le versement la refera sous '
+          + 'le verrou :', e.message);
+      }
+    }
+  }
 
   /**
    * Une question posée à la base dont la réponse « non » est acceptable.
@@ -175,11 +223,26 @@ export function createAide({ pool, requireAuth }) {
    * Le drapeau se pose **dans la transaction**, et le `FOR UPDATE` en est la
    * moitié utile : deux onglets ouverts sur l'écran d'aide, c'est deux appels
    * simultanés, et sans verrou les deux liraient « pas encore payé ».
+   *
+   * **La recharge due entre avant le cadeau**, sous le même verrou : c'est la
+   * règle du grand livre (`recompenses.js`, étape 7), et la raison est la
+   * même — voir plus bas.
    */
   async function recompenser(userId) {
     const etat = await faits(userId);
     const complet = Object.values(etat).every(Boolean);
     if (!complet) return { verse: false, raison: 'incomplet' };
+
+    /* Sans la porte, on refuse **avant toute écriture**, comme le grand
+       livre : verser quand même, ce serait reproduire en silence le défaut
+       qu'elle corrige. C'est une faute de câblage, pas un refus à rendre au
+       joueur — d'où l'erreur et non une `raison`. */
+    const recharger = porteRecharge();
+    if (!recharger) {
+      throw new Error('aide : verser le booster de fin demande « recharger » '
+        + '(fanzzy.recharger) — sans elle, le cadeau effacerait la recharge en attente');
+    }
+    await prechauffer(recharger, userId);
 
     const conn = await pool.getConnection();
     try {
@@ -190,11 +253,19 @@ export function createAide({ pool, requireAuth }) {
       if (!w) { await conn.rollback(); return { verse: false, raison: 'sans_bourse' }; }
       if (Number(w.p) === 1) { await conn.rollback(); return { verse: false, raison: 'deja' }; }
 
-      /* Un cadeau peut pousser la réserve un cran au-dessus de son plafond, et
-         c'est voulu : on ne va pas retirer au joueur ce qu'on vient de lui
-         promettre parce qu'il avait rangé ses paquets. La régénération, elle,
-         ne s'ajoute qu'en dessous du plafond — elle attendra donc simplement
-         qu'il redescende. */
+      /* **La recharge due d'abord, sur cette connexion.** On croirait que la
+         régénération attend simplement que la réserve redescende : non. La
+         lecture suivante, voyant la réserve pleine, remet le compte à rebours
+         à zéro — un booster offert à 11 sur 12 avec une recharge due
+         laisserait le joueur à 12 au lieu de 13, la recharge perdue. Ici,
+         sous le `FOR UPDATE`, elle entre dans la transaction : une annulation
+         la défait avec le reste.
+
+         Le cadeau entre ensuite, même au-dessus du plafond, et c'est voulu :
+         on ne retire pas au joueur ce qu'on vient de lui promettre parce
+         qu'il avait rangé ses paquets. C'est un cadeau, pas une réserve plus
+         grande — la régénération, elle, attend qu'il redescende. */
+      await recharger(conn, userId);
       await conn.query(
         `UPDATE user_wallet SET packs = packs + ?, parcours_paye = 1 WHERE user_id = ?`,
         [RECOMPENSE, userId]);
