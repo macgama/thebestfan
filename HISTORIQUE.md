@@ -5624,8 +5624,10 @@ trois fautes mineures, laissées en l'état (voir « Ce qui reste »).
 
 **Gaël a commité le travail en cours pendant la vérification** : `60fe268`
 (« Maj V03102026.1747 »), le 3 octobre à 17 h 47, poussé sur `origin/main` et
-pas mis en ligne. Seize fichiers ont changé depuis, qui ne sont pas commités :
-ce sont eux que le dernier tour a vérifiés (« En ligne », plus bas).
+pas mis en ligne. Seize fichiers ont changé depuis, ceux que le dernier tour a
+vérifiés ; il les a commités le 4 octobre à 17 h 05 (`7450c03`, « Maj
+V04102026.1624 »), avec cette section, et mis en ligne aussitôt (« En ligne »,
+plus bas).
 
 **Les trois documents de l'atelier sont restés dans son bac à sable** :
 `CARTE.md` (ce que `cardHTML` rend, ses options, ce que les écrans doivent
@@ -6133,10 +6135,15 @@ sur la machine : `virage:ui` s'est arrêtée sur un délai de navigation dépass
 contrôles verts. Un rouge de délai pendant qu'un autre Chrome tourne ne s'attribue
 à personne : il se relance seul.
 
-**Un commit pris pendant l'atelier.** `60fe268` est parti sur `origin/main` au
-milieu de la vérification. Cette fois rien n'est parti en ligne, et aucun schéma
-n'était en jeu ; mais il ne porte pas les corrections des tours suivants ni
-celles du regard, et la branche du lot 6 en part.
+**Deux commits pris pendant l'atelier.** `60fe268` est parti sur `origin/main`
+au milieu de la vérification ; il n'a pas été mis en ligne, aucun schéma n'était
+en jeu, mais il ne porte ni les corrections des tours suivants ni celles du
+regard, et la branche du lot 6 en part. `7450c03` est venu à la fin, pendant
+que cette trace s'écrivait : le code vérifié, cette section, une partie
+seulement des changements d'`ETAT.md`, rien d'`A-DEPLOYER.md` ni de
+`README.md` ; il a été mis en ligne deux minutes après. Le code en ligne est
+bien celui que le sixième tour a vérifié ; les documents, eux, sont à
+recommiter.
 
 ### Ce que la mesure dit après
 
@@ -6223,18 +6230,23 @@ cassé ni illisible.
 
 ### En ligne
 
-**La production sert `2ff45f9`** (la vague précédente), relevé le 4 octobre à
-16 h 46 : `cartes.js`, `nav.js`, `fx.js`, `niveau-fete.js`, `fanzzy-fiche.css` et
-`ui.css` sont ceux du commit, octet pour octet, et les pages aussi, une fois
-retirés les `?v=` que le serveur ajoute ; `uptime_s` dit un redémarrage le
-3 octobre vers 10 h 33. **`/healthz` répond `ok: true`** : Gaël a appliqué
-`sql/quotidien.sql`, et le quotidien est en ligne depuis. L'épisode de
+**La vague précédente était en ligne avec son schéma.** Relevé le 4 octobre à
+16 h 46 : la production servait `2ff45f9`, octet pour octet (`cartes.js`,
+`nav.js`, `fx.js`, `niveau-fete.js`, `fanzzy-fiche.css`, `ui.css`, et les pages
+une fois retirés les `?v=` que le serveur ajoute), depuis un redémarrage le
+3 octobre vers 10 h 33 ; **`/healthz` répondait `ok: true`** : Gaël avait
+appliqué `sql/quotidien.sql`, et le quotidien était en ligne. L'épisode de
 `e21a923` sans son schéma (4 quadragies ter, « En ligne ») est clos.
 
-**Le lot 4 n'est pas en ligne** : ni `60fe268`, poussé, ni les seize fichiers
-modifiés depuis. Il ne demande aucun schéma ; deux fichiers du serveur changent
-(`src/server/aide/index.js`, `src/server/quotidien/index.js`), il faut donc un
-redémarrage. `A-DEPLOYER.md` dit l'ordre.
+**Le lot 4 est en ligne depuis le 4 octobre vers 17 h 07.** Gaël a commité les
+seize fichiers à 17 h 05 (`7450c03`), poussé, et mis en ligne par le Manager
+(`"version": null`). Relevé à 17 h 09 : `uptime_s` à deux minutes, `ok: true`,
+les onze scripts et feuilles comparés et neuf pages (`/fanzzy`, `/collection`,
+`/boosters`, `/boutique`, `/profil`, `/aide`, `/bienvenue`, `/deck`,
+`/classement`) sont ceux de `7450c03`, octet pour octet, et les marques
+d'`A-DEPLOYER.md` rendent leurs valeurs attendues. Aucun schéma n'était à
+appliquer. Restent à commiter la fin de cette trace — une partie d'`ETAT.md`,
+`A-DEPLOYER.md`, `README.md`, et ce paragraphe — : des documents seulement.
 
 ### Ce qui reste
 

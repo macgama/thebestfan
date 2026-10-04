@@ -40,6 +40,11 @@ const ART = {
   RV: 'img/pack-les-revenants',
   EP: 'img/pack-les-epoques',
   IM: 'img/pack-virage-impossible',
+  /* LA REPRISE, la série de la saison (`SET_SAISON`, dex-saison.js). La clé
+     est son code de série, tel que les pages le lisent (`ART[set.id]`) :
+     une clé qui ne le recopie pas exactement ne lève rien, elle rend le
+     repli de `packArt` sous les projecteurs. */
+  RP: 'img/pack-la-reprise',
   /* La gerbe filmée (`video/gerbe.mp4`) n'est plus ici : elle ne servait
      qu'à la révélation d'une légendaire au kiosque, qui passe maintenant par
      l'échelle commune de cérémonie (`FX.reveler`, dans fx.js). La bienvenue
@@ -371,8 +376,11 @@ const { seeded, ILLUSTRES, illustration, art, artFond, artProcedural } = FZART;
  * remplissait tout le cadre d'un dégradé, avec « FANZZY » et le nom de la
  * série en tête : une carte plate, sans dentelure. Or c'est l'objet central
  * du kiosque, sur son socle et sous les projecteurs — et la seule série
- * ouverte en production, LA REPRISE, n'a pas encore de visuel : le joueur
- * voyait trois cartes identiques là où il venait chercher un sachet.
+ * ouverte en production, LA REPRISE, a d'abord été servie sans visuel : le
+ * joueur voyait trois cartes identiques là où il venait chercher un sachet.
+ * Elle a maintenant le sien (`ART.RP`). Le repli reste celui des séries qui
+ * attendent leur dessin — cinq sur treize quand celui de LA REPRISE est
+ * arrivé —, partout où l'une d'elles montre son paquet.
  *
  * Il prend donc le dessin des sachets dessinés (`ART`) : un fond sombre de
  * scène, et dedans le sachet scellé — dentelure en haut et en bas, ses deux

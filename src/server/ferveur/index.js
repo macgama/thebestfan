@@ -46,7 +46,32 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
                                jourDuFoot = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
   const enCours = new Map();        // créations en vol, pour n'en faire qu'une
-  const roomOfUser = new Map();     // userId -> fixtureId
+  /* **Une socket, pas un joueur.**
+
+     La salle d'un supporter était rangée par joueur (`userId -> fixtureId`),
+     et la déconnexion de n'importe laquelle de ses sockets la vidait : fermer
+     un onglet KOP, Équipes ou duel — qui ouvrent tous une socket sur le même
+     espace de noms — ou perdre l'ancienne socket d'un téléphone qui change de
+     réseau après que la neuve est déjà entrée, et chaque chant de l'onglet
+     resté ouvert recevait `not_in_virage` jusqu'au rechargement. Avec deux
+     onglets sur deux matchs, le membre restait même pour toujours dans la
+     première salle, qui continuait de payer son relevé à l'API.
+
+     On tient donc ce que **chaque socket** a rejoint, et pour chaque salle les
+     sockets de chaque joueur. On ne quitte la salle qu'à la dernière ; une
+     socket qui n'a jamais rejoint ne fait rien en partant. */
+  const salleDeSocket = new WeakMap(); // socket -> { fixtureId, userId }
+  const socketsDe = new Map();      // fixtureId -> Map(userId -> Set de sockets)
+  /* La dernière demande de chaque socket, entrée ou sortie, numérotée. Une
+     entrée lit la base pendant de longues millisecondes : si la page est
+     ressortie entre-temps, ou repartie vers un autre match, l'entrée qui
+     arrive n'est plus celle qu'on attend, et elle ne doit pas s'asseoir. */
+  const demandes = new WeakMap();   // socket -> numéro de la dernière demande
+  const demander = (socket) => {
+    const n = (demandes.get(socket) ?? 0) + 1;
+    demandes.set(socket, n);
+    return n;
+  };
   const buckets = new WeakMap();    // socket -> horodatages des chants
   const seauxCartes = new WeakMap();// socket -> horodatages des cartes jouées
 
@@ -236,20 +261,165 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     }
   }
 
+  /* ------------------------------------------- ce qu'un statut dit d'un match
+
+     Lu par la libération, juste en dessous, et par le relevé, plus bas. */
+
+  /* Les statuts d'un match qui ne bougera plus : les trois fins, l'annulation,
+     le tapis vert et le forfait. */
+  const TERMINES = new Set(['FT', 'AET', 'PEN', 'CANC', 'AWD', 'WO']);
+  /* Le report et l'arrêt : le match ne bouge plus aujourd'hui, mais l'API peut
+     le reprogrammer sous le même numéro, qui repasse alors « à venir ». */
+  const REPORTES = new Set(['PST', 'ABD']);
+  /* En attente d'un coup d'envoi ou d'une reprise. `TBD` est un `NS` dont
+     l'heure est provisoire ; `SUSP`, un match interrompu qui reprendra
+     peut-être, peut-être un autre jour. */
+  const EN_ATTENTE = new Set(['NS', 'TBD', 'SUSP']);
+  /* La demi-heure d'avant : la règle de `open`, plus bas. */
+  const AVANT_COUP_D_ENVOI_MS = 30 * 60_000;
+  /* Quatre heures d'après : la borne de `dueToStartIds`, celle qui arrête de
+     guetter le coup d'envoi d'un club suivi. */
+  const APRES_COUP_D_ENVOI_MS = 4 * 3600_000;
+  /* Au-delà, un coup d'œil par demi-heure : de quoi ne jamais figer un match
+     joué plus tard que prévu, pour quarante-huit appels par jour et par salle
+     occupée au pire, au lieu de mille quatre cent quarante. */
+  const RELEVE_LENT_MS = 30 * 60_000;
+  /* Un match « en jeu » dont rien n'a bougé depuis une heure — ni statut, ni
+     minute, ni temps additionnel, ni score — est un match que l'API a laissé
+     en jeu : un vrai match change de minute à chaque tour, et la mi-temps dure
+     un quart d'heure. Il passe au coup d'œil du quart d'heure. Voir
+     `aRelever`. */
+  const IMMOBILE_MS = 60 * 60_000;
+  const COUP_D_OEIL_IMMOBILE_MS = 15 * 60_000;
+
+  /* --------------------------------------------------------- la libération */
+
+  /**
+   * Une salle se libère quand plus personne n'y est — ni membre, ni socket —
+   * et que ce qu'elle garde ne peut plus servir.
+   *
+   * **Cette ligne n'avait jamais rien libéré.** Elle lisait `room.last`, que
+   * `tick()` pose à chaque battement juste avant elle : l'écart valait zéro,
+   * toujours, et chaque match où quelqu'un était entré depuis le démarrage
+   * gardait sa salle en mémoire jusqu'au redémarrage — comptée par le bilan de
+   * santé et par l'administration comme une salle en vie. Elle lit maintenant
+   * `occupeeA`, que le battement n'avance que s'il y a quelqu'un.
+   *
+   * **Mais une salle garde ce que la base n'a pas** : le score de la tribune,
+   * la corde, le fil, et les partis — le souffle, la main, les recharges de
+   * qui est sorti. La libérer une minute après le dernier départ rendait tout
+   * ça au premier téléphone verrouillé : seul en tribune, sorti à la
+   * mi-temps, on revenait à 40 de souffle, une main neuve et un 0–0 de
+   * tribune, quand la salle d'avant attendait au 3–1. Repartir à neuf
+   * redevenait gratuit, au prix d'une minute. Le délai suit donc le match :
+   *
+   *   - **fini ou reporté**, une minute : il ne bougera plus, et qui revient
+   *     voir le bilan trouve une salle ressemée depuis la base ;
+   *   - **sinon, tant qu'il peut encore se jouer** — de la demi-heure d'avant
+   *     le coup d'envoi à trois heures après, prolongation et tirs au but
+   *     compris —, la salle reste, vide ou non ; hors de cette fenêtre, une
+   *     demi-heure de vide.
+   *
+   * La fenêtre a une fin, et elle compte : une salle vide n'est plus relevée,
+   * et n'apprend donc jamais le coup de sifflet d'un match qu'aucun club suivi
+   * ne joue. Attendre son « FT » serait attendre pour toujours — la fuite
+   * d'avant. Une salle vide ne coûte aucun appel : `sallesOccupees` ne rend
+   * que celles où quelqu'un est assis.
+   */
+  const LIBERATION_FINI_MS = 60_000;
+  const LIBERATION_MS = 30 * 60_000;
+  const MATCH_JOUABLE_MS = 3 * 3600_000;
+  function libre(id, room, now) {
+    if (room.size > 0 || socketsDe.has(id)) return false;
+    const vide = now - room.occupeeA;
+    if (TERMINES.has(room.statut) || REPORTES.has(room.statut)) return vide > LIBERATION_FINI_MS;
+    if (vide <= LIBERATION_MS) return false;
+    const coupDEnvoi = new Date(room.fixture.kickoffAt).getTime();
+    return !(Number.isFinite(coupDEnvoi) && now >= coupDEnvoi - AVANT_COUP_D_ENVOI_MS
+      && now <= coupDEnvoi + MATCH_JOUABLE_MS);
+  }
+
   /** Une seule horloge pour toutes les salles : dix battements par seconde. */
   const timer = setInterval(() => {
     const now = Date.now();
     for (const [id, room] of rooms) {
       try {
         room.tick(now);
-        // Salle vide depuis un moment : on la libère.
-        if (room.size === 0 && now - room.last > 60_000) rooms.delete(id);
+        if (libre(id, room, now)) rooms.delete(id);
       } catch (e) {
         console.error(`[virage ${id}]`, e.message);
       }
     }
   }, RULES.tickMs);
   timer.unref?.();
+
+  /* -------------------------------------------- les sockets d'une salle */
+
+  /** Range une socket dans la salle qu'elle vient de rejoindre. */
+  function attacher(socket, fixtureId, userId) {
+    salleDeSocket.set(socket, { fixtureId, userId });
+    let parJoueur = socketsDe.get(fixtureId);
+    if (!parJoueur) socketsDe.set(fixtureId, (parJoueur = new Map()));
+    let siennes = parJoueur.get(userId);
+    if (!siennes) parJoueur.set(userId, (siennes = new Set()));
+    siennes.add(socket);
+    socket.join(`virage:${fixtureId}`);
+  }
+
+  /**
+   * Retire une socket de sa salle — à la déconnexion, au `virage:leave`, ou
+   * quand elle part pour un autre match.
+   *
+   * Une socket qui n'a jamais rejoint ne fait rien : c'est ce qui protège le
+   * Virage ouvert à côté d'un onglet KOP qu'on ferme. Et le joueur ne quitte
+   * la salle qu'avec sa **dernière** socket : l'ancienne socket d'un téléphone
+   * qui a changé de réseau meurt souvent après que la neuve est entrée, et la
+   * laisser vider la salle coupait celle qui vit.
+   */
+  function detacher(socket) {
+    const prise = salleDeSocket.get(socket);
+    if (!prise) return;
+    salleDeSocket.delete(socket);
+    const { fixtureId, userId } = prise;
+    socket.leave(`virage:${fixtureId}`);
+    const parJoueur = socketsDe.get(fixtureId);
+    const siennes = parJoueur?.get(userId);
+    siennes?.delete(socket);
+    if (siennes?.size) return;
+    parJoueur?.delete(userId);
+    if (parJoueur && !parJoueur.size) socketsDe.delete(fixtureId);
+    rooms.get(fixtureId)?.leave(userId);
+  }
+
+  /** La salle que cette socket a rejointe, s'il y en a une. */
+  const salleDe = (socket) => {
+    const prise = salleDeSocket.get(socket);
+    return prise ? { fixtureId: prise.fixtureId, room: rooms.get(prise.fixtureId) } : {};
+  };
+
+  /**
+   * Les Virages classés qu'un joueur tient sans les avoir encore consommés :
+   * présent dans une autre salle au rang « classé », sans y avoir poussé.
+   *
+   * Le compteur de l'abonnement ne les voit pas — il lit les lignes de
+   * présence, et une ligne n'existe qu'à la première poussée. Deux onglets
+   * ouverts sur deux matchs avant tout chant se réserveraient donc chacun la
+   * dernière place, et les deux compteraient.
+   *
+   * Les partis n'y sont pas : qui a regardé une tribune et en est ressorti
+   * sans chanter ne doit pas perdre sa place dans celle où il va vraiment
+   * jouer. S'il revient dans la première, sa réservation s'y refait contre le
+   * compteur, qui voit alors la seconde.
+   */
+  function reservees(userId, saufFixture) {
+    let n = 0;
+    for (const [id, room] of rooms) {
+      if (id === saufFixture) continue;
+      const m = room.members.get(userId);
+      if (m && m.classe !== false && !m.presenceEcrite) n++;
+    }
+    return n;
+  }
 
   /* ------------------------------------------------------------- socket */
 
@@ -273,19 +443,50 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
      * l'endroit où l'on ne peut pas l'oublier, et il répond au joueur au lieu
      * de le laisser devant un écran qui ne réagit pas.
      */
-    const sur = (nom, fn) => socket.on(nom, (...args) => {
+    const filet = (nom, fn) => (...args) => {
       Promise.resolve().then(() => fn(...args)).catch((e) => {
         console.error(`[virage] ${nom}`, e);
         socket.emit('virage:error', { code: 'ferveur.error.server' });
       });
-    });
+    };
+    const sur = (nom, fn) => socket.on(nom, filet(nom, fn));
 
-    sur('virage:join', async ({ fixtureId, camp } = {}) => {
+    /* L'entrée prend son numéro **à la réception**, hors du filet : celui-ci
+       lance le corps au tour suivant de la boucle, et un `virage:leave` arrivé
+       dans le même paquet passerait sinon devant elle — la page ressortie
+       aurait quand même été assise. Voir `demandes`. */
+    const entrer = filet('virage:join', async ({ fixtureId, camp } = {}, demande) => {
       const u = me();
       if (!u) return socket.emit('virage:error', { code: 'auth.error.unauthenticated' });
 
-      const room = await roomFor(Number(fixtureId));
+      let room = await roomFor(Number(fixtureId));
       if (!room) return socket.emit('virage:error', { code: 'ferveur.error.no_fixture' });
+      /* Les lectures qui suivent prennent du temps, et une salle vide finit
+         par se libérer — une minute suffit, une fois le match fini : elle ne
+         doit pas l'être sous les pieds de celui qui est en train d'y entrer. */
+      room.occupeeA = Date.now();
+
+      /* **Ce que le relevé a vu peut avoir vieilli.** Il survit à la salle,
+         pour ne pas repayer un statut relu en base à chaque visite. Mais un
+         match regardé par un lien à la veille, puis avancé à aujourd'hui,
+         rouvrait sa salle sur la ligne de ce regard — « à venir demain » — et
+         le relevé, qui l'avait vu, ne le regardait plus avant la demi-heure
+         d'un coup d'envoi qui n'arriverait jamais : ni score, ni minute, ni
+         but, ni carte, tout le match. La journée, elle, le sait : c'est le
+         cache que la liste vient de remplir, et la lire ne coûte rien de plus.
+         Quand elle contredit la salle sur le statut ou l'heure d'un match que
+         le relevé laisserait de côté, on oublie ce regard, et le tour suivant
+         le relève. */
+      if (vusA.has(room.fixture.id) && !TERMINES.has(room.statut)
+          && !aRelever(room, Date.now())) {
+        const duJour = (await journeeParId(jourDuFoot)).get(room.fixture.id);
+        const coupDEnvoi = new Date(room.fixture.kickoffAt).getTime();
+        const annonce = Date.parse(duJour?.date ?? '');
+        if (duJour && ((duJour.status && duJour.status !== room.statut)
+            || (Number.isFinite(annonce) && annonce !== coupDEnvoi))) {
+          oublierLeRegard(room.fixture.id);
+        }
+      }
 
       /* Le camp.
        *
@@ -303,8 +504,27 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
        * ne se bâtit une réputation que chez soi. */
       const { teamId, neutre } = await clubSoutenu(q, u.userId,
         room.fixture.homeId, room.fixture.awayId);
-      const side = neutre
-        ? (camp === 'exterieur' || camp === 1 ? 1 : 0)
+      /* **Et sans demande, le neutre garde le sien.** La page qui se
+         reconnecte renvoie `virage:join` sans camp : un neutre parti pousser
+         à l'extérieur était remis à domicile par le réseau, au milieu de sa
+         tribune et de son rang. Un neutre déjà connu de la salle — présent
+         dans un autre onglet, ou parti et revenu — retrouve donc le sien
+         quand la page n'en demande aucun.
+
+         Mais **un camp demandé est un camp choisi**, et il l'emporte : la page
+         repose la question à chaque entrée depuis la liste, et « je me suis
+         trompé de camp, je ressors et je rechoisis » est un geste normal. Le
+         garder en silence rendrait l'ancien camp pour toute la vie de la
+         salle, pendant que la page dessinerait l'autre.
+
+         Chez soi, rien ne change : le camp découle du club suivi à chaque
+         entrée, revenant ou non. Un neutre qui se met à suivre le club d'en
+         face en cours de match ne pousse donc pas contre lui en revenant.
+         Le KOP, plus bas, se lit sur ce camp-là. */
+      const connu = room.members.get(u.userId) ?? room.partis.get(u.userId);
+      const choisi = neutre && ['domicile', 'exterieur', 0, 1].includes(camp);
+      const side = choisi ? (camp === 'exterieur' || camp === 1 ? 1 : 0)
+        : neutre ? (connu?.side ?? 0)
         : (teamId === room.fixture.awayId ? 1 : 0);
 
       const hero = await fanzzy.activeFanzzy(u.userId);
@@ -394,10 +614,6 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         }
       }
 
-      socket.join(`virage:${room.fixture.id}`);
-      roomOfUser.set(u.userId, room.fixture.id);
-      if (process.env.VIRAGE_DEBUG) console.log('[virage] join', u.userId, '->', room.fixture.id);
-
       /* **Ce Virage comptera-t-il au classement ?**
 
          La question se pose ici, une seule fois, à l'entrée : au-delà de
@@ -407,18 +623,26 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          classement. **Aucune porte ne se ferme**, c'est le compteur qui
          s'arrête.
 
-         La salle ne recalcule jamais : rejoindre à nouveau reprend la
-         décision déjà posée sur le membre, sinon un match commencé compté
-         cesserait de l'être parce qu'un tunnel a coupé le réseau.
+         **Une fois la présence écrite, la salle ne recalcule plus** :
+         rejoindre à nouveau reprend la décision posée sur le membre — ou sur
+         le parti, que la salle garde tant que le match peut se jouer —,
+         sinon un match commencé compté cesserait de l'être parce qu'un
+         tunnel a coupé le réseau.
+
+         **Avant, ce n'est qu'une réservation, et elle se refait.** Le compteur
+         lit les lignes de présence, et une ligne n'existe qu'à la première
+         poussée. Garder au parti une décision jamais consommée laisserait
+         regarder trois tribunes au coup d'envoi, ressortir, puis revenir
+         chanter dans les trois — trois Virages classés sur un plafond d'un.
+         Voir aussi `reservees`, plus bas, pour deux onglets ouverts à la fois.
 
          Une panne de ce compte **ne ferme rien** : on compte au classement,
          comme avant. Un plafond qui se déclenche sur une erreur de base
          punirait sans raison et ne se verrait nulle part. */
-      let classe = true;
-      if (abonnement && !room.members.has(u.userId)) {
+      let reste = null;
+      if (abonnement && !connu?.presenceEcrite) {
         try {
-          const reste = await abonnement.viragesClassesRestants(u.userId);
-          classe = reste === null || reste > 0;
+          reste = await abonnement.viragesClassesRestants(u.userId);
         } catch (e) {
           console.warn('[virage] plafond illisible pour', u.userId, '·', e.message);
         }
@@ -435,21 +659,61 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         kop: bonusKop,
       });
 
+      /* **D'ici à la fin, plus aucune attente** : ce qui suit doit voir la
+         salle et la socket telles qu'elles sont, pas telles qu'elles étaient
+         avant les lectures.
+
+         La socket a pu se fermer pendant ces lectures. Son départ a déjà été
+         traité, sur une socket qui n'était encore nulle part : la faire entrer
+         maintenant laisserait dans la salle un membre que plus rien n'en
+         sortirait — le fantôme qui gardait une salle « occupée » et son
+         relevé payé jusqu'au redémarrage. */
+      if (socket.connected === false) return;
+      /* La page a pu ressortir pendant ces lectures (`virage:leave`), ou
+         demander un autre match : celle-ci n'est plus l'entrée attendue. La
+         laisser s'asseoir gardait dans la salle, et au relevé, quelqu'un qui
+         regardait déjà la liste. */
+      if (demandes.get(socket) !== demande) return;
+      /* La salle a pu être libérée pendant ces lectures, si elles ont duré
+         plus que son délai — une minute, pour un match fini. Y entrer
+         enfermerait le joueur dans une salle qu'aucune horloge ne fait plus
+         battre : on prend celle qu'un autre a rouverte entre-temps, ou l'on
+         remet celle-ci en place. */
+      const vive = rooms.get(room.fixture.id);
+      if (!vive) rooms.set(room.fixture.id, room);
+      else room = vive;
+
+      /* Une socket ne tient qu'une salle. Partir pour un autre match quitte
+         le premier — sans quoi elle chanterait dans l'un en étant comptée
+         dans l'autre. Rejoindre la même salle ne détache rien. */
+      if (salleDeSocket.get(socket)?.fixtureId !== room.fixture.id) detacher(socket);
+      attacher(socket, room.fixture.id, u.userId);
+      if (process.env.VIRAGE_DEBUG) console.log('[virage] join', u.userId, '->', room.fixture.id);
+
+      /* La réservation se pèse ici, sans plus rien attendre, et après le
+         détachement : deux entrées en vol sur deux matchs liraient sinon le
+         même compteur et se réserveraient chacune la dernière place, et une
+         socket qui change de match se compterait elle-même dans la salle
+         qu'elle quitte. */
+      const classe = reste === null || reste - reservees(u.userId, room.fixture.id) > 0;
+
       socket.emit('virage:state',
         room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions,
           classe, apports }));
       io.to(`virage:${room.fixture.id}`).emit('virage:crowd', { crowd: room.crowd() });
     });
+    socket.on('virage:join', (charge) => entrer(charge, demander(socket)));
 
     sur('virage:chant', async ({ cardId, taps } = {}) => {
       const u = me();
       if (!u) return;
-      const fixtureId = roomOfUser.get(u.userId);
-      const room = fixtureId ? rooms.get(fixtureId) : null;
+      /* La salle de **cette socket**, et non celle du joueur : deux onglets
+         sur deux matchs chantent chacun dans le leur. */
+      const { fixtureId, room } = salleDe(socket);
       if (!room) {
         if (process.env.VIRAGE_DEBUG) {
           console.log('[virage] chant refusé pour', u.userId, '· salle', fixtureId,
-            '· connus', [...roomOfUser.keys()]);
+            '· salles ouvertes', [...rooms.keys()]);
         }
         return socket.emit('virage:error', { code: 'ferveur.error.not_in_virage' });
       }
@@ -487,8 +751,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     sur('virage:jouer', async ({ cardId } = {}) => {
       const u = me();
       if (!u) return;
-      const fixtureId = roomOfUser.get(u.userId);
-      const room = fixtureId ? rooms.get(fixtureId) : null;
+      const { fixtureId, room } = salleDe(socket);
       if (!room) return socket.emit('virage:error', { code: 'ferveur.error.not_in_virage' });
 
       /* Sa propre cadence, séparée de celle des chants. Une carte coûte du
@@ -515,24 +778,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       }
     });
 
-    socket.on('virage:leave', () => {
-      const u = me();
-      if (!u) return;
-      const fixtureId = roomOfUser.get(u.userId);
-      const room = fixtureId ? rooms.get(fixtureId) : null;
-      if (!room) return;
-      room.leave(u.userId);
-      roomOfUser.delete(u.userId);
-      socket.leave(`virage:${fixtureId}`);
-    });
-
-    socket.on('disconnect', () => {
-      const u = me();
-      if (!u) return;
-      const fixtureId = roomOfUser.get(u.userId);
-      rooms.get(fixtureId)?.leave(u.userId);
-      roomOfUser.delete(u.userId);
-    });
+    /* Les deux sorties passent par `detacher` : c'est la socket qui part, et
+       le joueur ne quitte la salle qu'avec la dernière des siennes. Il y passe
+       alors parmi les partis, qui lui rendront son état s'il revient. */
+    socket.on('virage:leave', () => { demander(socket); detacher(socket); });
+    socket.on('disconnect', () => detacher(socket));
   });
 
   /* ---------------------------------------------- but réel, venu du worker */
@@ -568,11 +818,81 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     return room.matchEvents(events).length;
   }
 
+  /* **Ce que le relevé a vu, au-delà de la vie des salles.**
+
+     Une salle libérée puis rouverte repartait sans rien savoir, et le relevé
+     « une fois » d'un statut lu en base se refaisait à chaque ouverture :
+     trente matchs lointains visités trois minutes par heure coûtaient sept
+     cent vingt appels par jour, pour relire un statut que le relevé venait
+     lui-même d'écrire en base. La salle rouverte relit bien ce statut et
+     cette heure ; il ne lui manquait que de savoir qu'un relevé les avait
+     vus, et quand. C'est tenu ici, par match, et non dans la salle.
+
+     Ce regard peut vieillir — un match avancé ou reprogrammé depuis — : à
+     l'entrée, la journée le corrige. Voir `virage:join`.
+
+     Bornée, comme les mémoires du relevé, par les matchs vus depuis le
+     démarrage. */
+  const vusA = new Map();           // fixtureId -> instant du dernier relevé qui l'a vu
+  /* **Et ce qu'il a demandé sans réponse.** Un match que l'API ne rend pas, ou
+     ne rend plus — supprimé, renuméroté, dont la ligne reste en base et
+     qu'un lien ouvre encore — était relevé à chaque tour tant que sa salle
+     était occupée : sept cent vingt appels par jour pour une salle sur un
+     match qui n'existe plus. Jamais vu, rien ne l'arrêtait. Vu une fois, puis
+     plus rendu, son regard ne se rafraîchissait plus, et chaque règle qui le
+     compare à maintenant restait vraie à chaque tour — même pour une salle
+     rouverte par un lien des heures plus tard. L'absence compte donc comme un
+     regard : voir `aRelever`.
+
+     **C'est le relevé qui la date, sur un lot qui a répondu** : voir
+     `matchAbsent`. Dater chaque demande faisait passer une panne de l'API
+     pour une disparition : au retour, une salle en jeu attendait sa
+     demi-heure. Effacé dès que l'API rend le match. */
+  const sansReponse = new Map();    // fixtureId -> { premier, dernier } instants d'absence
+  /* **Et depuis quand il n'a pas bougé.** Un match que l'API laisse « en jeu »
+     des heures après la fin — l'onglet resté ouvert sur le bilan est celui de
+     D1, seul le statut ment — payait le direct à vingt secondes et ses
+     événements chaque minute, cinq mille sept cent soixante appels par jour,
+     de quoi épuiser le quota et figer le direct de tout le site. La borne
+     porte sur l'immobilité, et non sur l'heure : une borne sur le coup
+     d'envoi ralentirait une reprise après suspension, dont l'heure reste
+     celle d'origine. */
+  const mouvements = new Map();     // fixtureId -> { cle, bougeA }
+
+  /**
+   * Ce que le relevé a vu d'un match ne vaut plus : la journée le contredit.
+   * Le tour suivant le relève, comme un match jamais vu. Voir `virage:join`.
+   */
+  function oublierLeRegard(fixtureId) {
+    vusA.delete(fixtureId);
+    sansReponse.delete(fixtureId);
+  }
+
   /** Le score, la minute et la période, à chaque tour du relevé du direct. */
   function matchStatus(fixtureId, etat) {
+    // Retenu même sans salle : celle qui s'ouvrira saura qu'il a été vu.
+    if (etat?.status) {
+      const vu = Date.now();
+      vusA.set(fixtureId, vu);
+      sansReponse.delete(fixtureId);
+      const cle = [etat.status, etat.elapsed, etat.elapsedExtra,
+        etat.homeGoals, etat.awayGoals].join('|');
+      if (mouvements.get(fixtureId)?.cle !== cle) mouvements.set(fixtureId, { cle, bougeA: vu });
+    }
     const room = rooms.get(fixtureId);
     if (!room) return 0;
     return room.matchStatus(etat).length;
+  }
+
+  /**
+   * Un lot du relevé du direct a répondu sans ce match : l'API ne le rend
+   * pas, ou plus. Retenu même sans salle, comme ce qu'il a vu. Voir
+   * `sansReponse`.
+   */
+  function matchAbsent(fixtureId) {
+    const now = Date.now();
+    const premier = sansReponse.get(fixtureId)?.premier ?? now;
+    sansReponse.set(fixtureId, { premier, dernier: now });
   }
 
   /**
@@ -582,9 +902,91 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
    * événements — un appel par match — que pour ceux-là. Une salle vide ne
    * coûte donc pas un appel de plus qu'avant le fil, et un samedi où personne
    * ne joue ne coûte rien du tout.
+   *
+   * **Une salle occupée n'est pas une salle à relever.** La liste rendait
+   * toute salle qui avait un membre, quel que soit le match : un onglet resté
+   * ouvert sur un Virage fini — et le bilan garde les gens sur la page après
+   * le coup de sifflet — payait un relevé du direct et un relevé d'événements
+   * à chaque tour, jour et nuit, soit 1 440 appels par jour et par salle, le
+   * cinquième de l'enveloppe. Neuf salles dépassaient le budget, et le quota
+   * épuisé figeait alors le direct de tout le site.
+   *
+   * Voir `aRelever` pour ce qui reste, et à quelle cadence. Le tour qui voit
+   * le coup de sifflet a déjà calculé cette liste : le dernier relevé part
+   * quand même, puis la salle sort.
    */
-  function sallesOccupees() {
-    return [...rooms.values()].filter((r) => r.size > 0).map((r) => r.fixture.id);
+  function sallesOccupees(now = Date.now()) {
+    return [...rooms.values()]
+      .filter((r) => r.size > 0 && aRelever(r, now))
+      .map((r) => r.fixture.id);
+  }
+
+  /**
+   * Une salle occupée mérite-t-elle le relevé de ce tour ?
+   *
+   *   - **un match terminé, jamais** : il ne bougera plus ;
+   *   - **un statut qu'aucun relevé n'a vu, toujours, une fois** : pour un
+   *     match qu'aucun club suivi ne relève, la ligne en base peut dater de
+   *     semaines. Un report resté « PST » alors que le match se rejoue
+   *     aujourd'hui sous le même numéro aurait sinon figé la salle pour tout
+   *     le match — ni minute, ni score, ni but, ni carte. Le premier relevé
+   *     tranche, pour un appel partagé dans le lot du direct ;
+   *   - **un match que l'API ne rend pas, ou plus** — jamais rendu, ou vu
+   *     puis disparu —, les règles ordinaires pendant la première demi-heure
+   *     d'absence, puis un coup d'œil par demi-heure, compté sur la dernière
+   *     absence. Seul un lot qui a répondu sans lui la compte : une panne ne
+   *     ralentit rien. Voir `sansReponse` ;
+   *   - **un report ou un arrêt vu par le relevé, un coup d'œil par
+   *     demi-heure** : sans lui, un report reprogrammé aujourd'hui sous le
+   *     même numéro resterait figé tant que le processus vit, puisque ce que
+   *     le relevé a vu survit désormais aux salles ;
+   *   - **un match en jeu, à chaque tour** — tant qu'il bouge. Rien n'ayant
+   *     bougé depuis une heure, l'API l'a laissé en jeu : un coup d'œil par
+   *     quart d'heure, et le premier mouvement le rend à chaque tour ;
+   *   - **un match en attente** — à venir, heure provisoire, suspendu — dans
+   *     la demi-heure qui précède son coup d'envoi et les quatre heures qui
+   *     le suivent, à chaque tour : pour un match qu'aucun club suivi ne
+   *     relève, la salle est le seul chemin de rafraîchissement, et l'écarter
+   *     le laisserait « à venir » pour toujours. Plus tôt, rien ; plus tard,
+   *     un coup d'œil par demi-heure. Sans ce plafond, une salle sur un match
+   *     suspendu, ou sur une ligue sans direct que l'API laisse « à venir »
+   *     toute la journée, coûtait ce que coûtait une salle finie.
+   *
+   * Le statut et l'heure sont ceux que le relevé a vus en dernier : voir
+   * `matchStatus` dans la salle — et une salle rouverte les relit en base, où
+   * ce même relevé les a écrits. Ce qui a été vu, et quand, se lit sur
+   * `vusA`, qui survit à la salle — et que la journée corrige à l'entrée :
+   * voir `virage:join`. Pas d'effet de bord ici : l'entrée l'interroge aussi.
+   */
+  function aRelever(room, now) {
+    const st = room.statut;
+    if (TERMINES.has(st)) return false;
+    const id = room.fixture.id;
+    /* L'absence passe avant le regard. Un match vu, puis que l'API ne rend
+       plus, garde un regard qui ne se rafraîchit plus : chaque règle qui suit
+       le dirait à relever à chaque tour, pour toujours. La première
+       demi-heure d'absence ne change rien — une réponse incomplète, un numéro
+       qui revient —, puis un coup d'œil par demi-heure. */
+    const absent = sansReponse.get(id);
+    if (absent && now - absent.premier >= RELEVE_LENT_MS) {
+      return now - absent.dernier >= RELEVE_LENT_MS;
+    }
+    const vu = vusA.get(id);
+    if (vu === undefined) return true;
+    const coupDOeil = now - vu >= RELEVE_LENT_MS;
+    if (REPORTES.has(st)) return coupDOeil;
+    if (!EN_ATTENTE.has(st)) {
+      const m = mouvements.get(id);
+      if (!m || now - m.bougeA <= IMMOBILE_MS) return true;
+      return now - vu >= COUP_D_OEIL_IMMOBILE_MS;
+    }
+    /* Une date illisible ne ferme rien : mieux vaut un appel de trop qu'un
+       match figé avant son coup d'envoi. */
+    const coupDEnvoi = new Date(room.fixture.kickoffAt).getTime();
+    if (!Number.isFinite(coupDEnvoi)) return true;
+    if (coupDEnvoi - now > AVANT_COUP_D_ENVOI_MS) return false;
+    if (now - coupDEnvoi <= APRES_COUP_D_ENVOI_MS) return true;
+    return coupDOeil;
   }
 
   /* -------------------------------------------------------------- routes */
@@ -786,6 +1188,6 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     });
   });
 
-  return { router, realGoal, matchEvents, matchStatus, sallesOccupees,
+  return { router, realGoal, matchEvents, matchStatus, matchAbsent, sallesOccupees,
            rooms, roomFor, stop: () => clearInterval(timer) };
 }

@@ -554,14 +554,17 @@ if (process.env.DATABASE_URL) {
         },
 
         /* ---------------------------------------------- le fil du match
-           Trois branchements, et deux d'entre eux ne coûtent aucun appel.
+           Quatre branchements, et trois d'entre eux ne coûtent aucun appel.
 
            `onStatus` part à chaque tour du relevé du direct : le score, la
-           minute et la période sont déjà dans la réponse. `onEvents` porte
-           les cartons et les remplacements, qui eux se paient — d'où
-           `fixturesAuFil`, qui répond « seulement pour les matchs dont une
-           salle est occupée ». */
+           minute et la période sont déjà dans la réponse. `onAbsent` lit la
+           même réponse, pour les matchs demandés qu'elle omet : une salle sur
+           un match que l'API ne rend plus cesse de le redemander à chaque
+           tour. `onEvents` porte les cartons et les remplacements, qui eux se
+           paient — d'où `fixturesAuFil`, qui répond « seulement pour les
+           matchs dont une salle est occupée ». */
         onStatus: (fixtureId, etat) => virage.matchStatus(fixtureId, etat),
+        onAbsent: (fixtureId) => virage.matchAbsent(fixtureId),
         onEvents: (fixtureId, events) => virage.matchEvents(fixtureId, events),
         fixturesAuFil: () => virage.sallesOccupees(),
         onGoal: async (g) => {

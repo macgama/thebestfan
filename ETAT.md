@@ -107,8 +107,8 @@ Le projet suit une méthode constante, à conserver :
   **Le Manager d'Infomaniak, lui, ne l'applique jamais.** Le 3 octobre 2026, le
   commit `e21a923` est parti en ligne par lui sans `sql/quotidien.sql` : cette
   fois rien n'a cassé — chaque module du quotidien tolère l'absence de ses
-  tables —, mais `/healthz` répond `ok: false` en nommant le fichier
-  (`A-DEPLOYER.md`). Par le Manager : `npm run schema:appliquer` en SSH après la
+  tables —, mais `/healthz` a répondu `ok: false` en nommant le fichier, jusqu'à
+  ce que Gaël l'applique avec `2ff45f9`, le jour même. Par le Manager : `npm run schema:appliquer` en SSH après la
   construction, **puis un redémarrage** — le contrôle de démarrage ne relit la
   base qu'au lancement (`DEPLOIEMENT.md`, étape 4).
 - **`node scripts/verif-pages.mjs` avant chaque livraison front.** Il compile
@@ -2644,10 +2644,12 @@ aussi intermittente sur la bulle et la frise du rideau, sans cause trouvée.
 fait (`9e90c90`) ; le 3 octobre 2026, `e21a923` est parti par le Manager au
 milieu de la vérification, avec du code serveur qui attendait un fichier de
 schéma que le Manager n'applique pas. Avant de prendre un commit pendant un
-atelier : le dire, et savoir quel schéma il demande. Le lot 4 l'a revu
-(`60fe268`, le 3 octobre à 17 h 47) : poussé, pas mis en ligne cette fois, et
-sans schéma ; mais il n'a pas les corrections des tours suivants, et une
-branche qui en part (celle du lot 6) ne les a pas non plus.
+atelier : le dire, et savoir quel schéma il demande. Le lot 4 l'a revu deux
+fois : `60fe268` (le 3 octobre à 17 h 47), poussé sans être mis en ligne, n'a
+pas les corrections des tours suivants — et la branche du lot 6 en part — ;
+`7450c03` (le 4 octobre à 17 h 05), mis en ligne deux minutes après, a pris le
+code vérifié mais la trace en cours d'écriture. Sans schéma en jeu, rien n'a
+cassé ; les documents sont à recommiter.
 
 **Les pièges du lot 4** (octobre 2026 ; le récit est dans `HISTORIQUE.md`,
 4 quadragies quater).
@@ -2767,40 +2769,44 @@ sous `.claude/worktrees/` a son propre verrou des suites et la même base, sauf
 
 ## 7 bis. À faire sur le serveur, en attente
 
-0. **`sql/quotidien.sql` n'est pas appliqué en production.** Relevé le
-   3 octobre 2026 à 8 h 25 : la production sert le commit `e21a923`, et
-   `/healthz` répond `ok: false`, sa panne « SCHÉMA INCOMPLET » ne nommant que ce
-   fichier — quatre tables, neuf colonnes. Les cinq migrations que cette ligne
-   citait jusqu'ici (`minutes`, `couleurs`, `amis`, `boutique`, `billets`) n'y
-   sont plus nommées. **Ne pas l'appliquer seul sur le code en ligne** : il
-   allumerait un quotidien dont les corrections ne sont pas en ligne (la
-   journée du football lue à chaque arrivée au hub, des crans qui paient les
-   tenues). La manœuvre, dans l'ordre, est dans `A-DEPLOYER.md`. Par GitHub, le
-   schéma est appliqué **avant** le redémarrage ; par le Manager, il faut
-   `npm run schema:appliquer` en SSH, **puis redémarrer** — le contrôle de
-   démarrage ne relit la base qu'au lancement. `npm run schema:appliquer`
-   refuse proprement si `DATABASE_URL` est absent.
+0. **Le quotidien et le lot 4 sont en ligne.** Gaël a appliqué
+   `sql/quotidien.sql` le 3 octobre, avec `2ff45f9` ; puis il a mis en ligne le
+   lot 4 (`7450c03`) le 4 octobre vers 17 h 07. Relevé à 17 h 09 : `/healthz`
+   répond `ok: true`, sans panne, et les fichiers servis sont ceux de
+   `7450c03`. Aucun schéma n'attend ; ce qui n'est pas commité n'est que
+   documentaire (`A-DEPLOYER.md`). Pour la prochaine livraison qui en
+   apporterait un : par GitHub, le schéma est appliqué **avant** le
+   redémarrage ; par le Manager, `npm run schema:appliquer` en SSH, **puis
+   redémarrer** — le contrôle de démarrage ne relit la base qu'au lancement.
 
-   **Après cette livraison, à faire par Gaël** (`DEPLOIEMENT.md`, « Après la
-   livraison du quotidien ») : saisir la fin de la saison 1 dans l'onglet
-   Saisons (proposée : le 20 décembre 2026, à vérifier sur `/matchs`) ; recaler
-   le carnet de la saison 1 si les missions arrivent après le 19 octobre,
-   **avant** le premier palier versé ; recaler les seuils de division sur la
-   ferveur des joueurs **sans abonnement**. La ligne du jour de jeu est déjà
-   lue : `jourDeJeu.changeA` vaut `00:00`, rien à faire.
+   **Après la livraison du quotidien, à faire par Gaël** (`DEPLOIEMENT.md`,
+   « Après la livraison du quotidien ») : **saisir la fin de la saison 1** dans
+   l'onglet Saisons (proposée : le 20 décembre 2026, à vérifier sur `/matchs`)
+   — au 4 octobre, `/api/fanzzy/dex` en production ne sert aucune `fin` : elle
+   n'est pas saisie ; recaler les seuils de division sur la ferveur des joueurs
+   **sans abonnement**. Le carnet de la saison 1 n'a pas à être recalé : les
+   missions sont en ligne depuis le 3 octobre, avant le 19. La ligne du jour de
+   jeu est lue : `jourDeJeu.changeA` vaut `00:00`.
 
    **Les décisions que le chantier rend à Gaël** (`HISTORIQUE.md`, 4 quadragies
-   ter, « Ce qui reste ») : l'inflation des écharpes avant la saison 2 ; l'XP du
-   Virage ; brancher ou retirer « La quête » et « Mur de bâches », et que faire
-   des KOP qui les ont payés ; la ferveur arrondie à zéro dans une grande
-   tribune ; la saison 2 et sa série ; payer ou non les divisions ; le dossier du
-   juriste ; un bonus de KOP voté après la fin d'une saison ; le rang de la racine
-   de `/api/rank/moi`, qui compte les comptes supprimés ; les tenues prises par
-   l'abonnement ; le nom de la saison 1 (« Le premier virage » en base, « La
-   reprise » partout ailleurs). Et deux défauts voisins hors de la vague : le
-   booster des premiers pas mange la recharge en attente
-   (`src/server/aide/index.js`), et le démarrage ne contrôle que la première des
-   trois colonnes de `sql/couleurs.sql`.
+   ter, « Ce qui reste ») : l'inflation des écharpes avant la saison 2 ;
+   brancher ou retirer « La quête » et « Mur de bâches », et que faire des KOP
+   qui les ont payés ; la ferveur arrondie à zéro dans une grande tribune ; la
+   saison 2 et sa série ; payer ou non les divisions ; le dossier du juriste ;
+   un bonus de KOP voté après la fin d'une saison ; le rang de la racine de
+   `/api/rank/moi`, qui compte les comptes supprimés ; les tenues prises par
+   l'abonnement ; le nom de la saison 1 (« Le premier virage » dans
+   `sql/saisons.sql`, « La reprise » partout ailleurs — et en production,
+   relevé le 4 octobre). L'XP du Virage est tranchée pour le lot 6 (le
+   3 octobre : quinze par match poussé). Et des défauts voisins, hors des
+   périmètres faits : le démarrage ne contrôle que la première des trois
+   colonnes de `sql/couleurs.sql` ; les boosters d'un abonnement acheté
+   (`boutique/index.js`, `livrer`) entrent dans la réserve sans compter la
+   recharge due, comme le faisait le booster des premiers pas avant le lot 4
+   (`serveur/ECARTS.md`) ; `server.js` ne passe pas `fanzzy` à `createAide`
+   (l'aide le lit sur `globalThis.fanzzy`, § 6) ; et deux données que les
+   écrans du lot 4 attendent — `paliers.series` avec `/api/fanzzy/state`, et la
+   chance de tirer une carte (§ 5, point 10).
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
    peut-être encore l'ancienne règle, qui classait 117 compétitions comme

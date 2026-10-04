@@ -95,6 +95,8 @@
     "epreuves:ui": "node scripts/epreuves-ui-smoke.mjs",
     "gestes:test": "node scripts/gestes-smoke.mjs",
     "appels:test": "node scripts/appels-smoke.mjs",
+    "salles:test": "node scripts/salles-smoke.mjs",
+    "releve:test": "node scripts/releve-smoke.mjs",
     "boutique:smoke": "node scripts/boutique-smoke.mjs",
     "stripe:diag": "node --env-file-if-exists=.env scripts/stripe-diag.mjs",
     "boosters:ui": "node scripts/boosters-ui-smoke.mjs",

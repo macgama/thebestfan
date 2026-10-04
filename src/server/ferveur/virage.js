@@ -207,13 +207,33 @@ export class VirageRoom {
     this.goals = [0, 0];
     this.realGoals = [0, 0];
     this.surgeUntil = 0;
+    /* La minute double telle que la salle l'a annoncée pour la dernière fois.
+       Voir `tick` : sa fin doit partir, même quand rien d'autre ne bouge. */
+    this.surgeDiffusee = false;
     this.members = new Map();         // userId -> état du supporter
+    /* **Les partis, gardés autant que la salle.** Un départ supprimait le
+       membre, et le retour le recréait à neuf : 40 de souffle, une main
+       neuve, les recharges et la fatigue effacées. Recharger la page valait
+       donc un « Nouveau souffle » et un « Changement de chant » gratuits — et
+       la ferveur ainsi gagnée s'écrit au classement —, pendant que le joueur
+       honnête perdait à chaque coupure de réseau son rang et son souffle
+       au-delà de 40. Un parti ne compte ni dans la foule, ni dans le rang, ni
+       dans le battement ; il retrouve tout à son retour.
+
+       La salle, elle, vit tant que son match peut encore se jouer, vide ou
+       non, et une minute après le coup de sifflet : voir la libération, dans
+       `ferveur/index.js`. C'est ce qui fait durer les partis tout le match. */
+    this.partis = new Map();          // userId -> état du supporter parti
     this.rallies = [];                // fenêtres collectives ouvertes, par camp
     this.differes = [];               // poussées armées, qui frapperont plus tard
     this.geleeJusqua = 0;             // l’Ancre : la corde cesse de retomber
     this.rangChangeA = 0;             // quand le répertoire a tourné pour la dernière fois
     this.seq = 0;
     this.last = Date.now();
+    /* `last` est l'horloge du battement : il avance à chaque tour, salle vide
+       ou pleine, et ne peut donc pas dire depuis quand la salle est vide. La
+       libération lit ceci : le dernier instant où quelqu'un était là. */
+    this.occupeeA = Date.now();
     this.dirty = false;
 
     /* Le fil, et le vrai match derrière lui.
@@ -334,14 +354,39 @@ export class VirageRoom {
   /**
    * @param {object} opt
    * @param {boolean} [opt.classe] ce Virage compte-t-il au classement pour lui ?
-   *   Décidé par `ferveur/index.js` à la première entrée, et **posé une seule
-   *   fois** : rejoindre à nouveau — un réseau qui saute, un onglet rouvert —
-   *   ne doit pas rouvrir la question, sinon un match commencé compté
-   *   cesserait de l'être au milieu.
+   *   Décidé par `ferveur/index.js` à l'entrée, et **posé jusqu'à la première
+   *   poussée** : c'est elle qui écrit la ligne de présence, et la ligne ne
+   *   change plus de `classe` ensuite. Rejoindre à nouveau — un réseau qui
+   *   saute, un onglet rouvert — ne rouvre donc pas la question une fois la
+   *   ligne écrite, sinon un match commencé compté cesserait de l'être au
+   *   milieu. Avant, la décision n'est qu'une réservation : la garder au parti
+   *   laisserait regarder trois tribunes au coup d'envoi, ressortir, et revenir
+   *   chanter dans les trois au rang « classé » d'un plafond à une.
    */
   join(userId, { side, name, mods = {}, neutre = false, perso = null, actions = [],
                  classe = true, apports = [] }) {
-    const m = this.members.get(userId) ?? {
+    /* Présent dans un autre onglet, parti et revenu, ou tout neuf — dans cet
+       ordre. Celui qui revient reprend **son** état : souffle, main, pioche,
+       recharges, fatigue, effets, ferveur.
+
+       Le camp, lui, est celui que l'entrée décide, et la salle le pose tel
+       quel : c'est `ferveur/index.js` qui sait si le joueur l'a choisi, s'il
+       revient sans rien demander — la page qui se reconnecte renvoie
+       `virage:join` sans camp, et on lui rend alors le sien — ou s'il suit un
+       des deux clubs, auquel cas le camp ne se choisit pas.
+
+       Les recharges, la fatigue et la carte suivante sont des instants : elles
+       ont couru pendant l'absence, comme elles courent pour qui reste assis.
+       Le souffle, lui, ne remonte pas pendant qu'on n'est pas là — `regen`
+       lit son multiplicateur au moment où il calcule, et une absence comptée
+       au retour effacerait la fatigue ou le revers d'une carte qu'on aurait
+       fuis en sortant. */
+    const revenu = this.partis.get(userId);
+    if (revenu) {
+      this.partis.delete(userId);
+      revenu.regenAt = Date.now();
+    }
+    const m = this.members.get(userId) ?? revenu ?? {
       side: side ? 1 : 0, name, mods, neutre, perso,
       classe,
       userId,
@@ -352,6 +397,9 @@ export class VirageRoom {
       dernierChant: 0,
     };
     m.side = side ? 1 : 0;
+    /* La réservation se refait tant qu'aucune présence n'est écrite : voir
+       `classe`, plus haut, et `crediter`. */
+    if (!m.presenceEcrite) m.classe = classe;
     m.name = name;
     m.mods = mods;
     /* **Le lieu, composé une fois pour toutes.**
@@ -372,7 +420,12 @@ export class VirageRoom {
 
     /* Le deck n'est monté qu'à la première entrée. Rejoindre à nouveau — un
        réseau qui saute, un onglet rouvert — ne doit pas redistribuer la main :
-       ce serait un moyen gratuit de se débarrasser d'un temps de recharge. */
+       ce serait un moyen gratuit de se débarrasser d'un temps de recharge.
+
+       **Ce commentaire disait vrai pour un second onglet, et faux pour tout
+       le reste** : un départ supprimait le membre, et le retour arrivait ici
+       avec une main vide. Il ne tient que parce que `leave` garde le parti et
+       que le haut de `join` le lui rend. */
     if (!m.main.length && !m.pioche.length && !m.defausse.length && actions.length) {
       const ids = actions.map((a) => (typeof a === 'string' ? a : a?.id));
       const jouables = ids.filter((id) => dansLeVirage(ACTION_BY_ID.get(id)));
@@ -392,12 +445,27 @@ export class VirageRoom {
     }
 
     this.members.set(userId, m);
+    this.occupeeA = Date.now();
     this.dirty = true;
     return this.snapshotFor(userId);
   }
 
-  leave(userId) {
+  /**
+   * Le supporter quitte la tribune : il passe parmi les partis.
+   *
+   * Hors de `members`, il sort de tout ce qui se compte en direct — la foule,
+   * le rang, le battement, la Collecte d'un coéquipier. Son souffle est arrêté
+   * à l'instant du départ ; le reste attend son retour. Les partis vivent
+   * autant que la salle — tant que le match peut se jouer, puis une minute
+   * après le coup de sifflet — et la libération les emporte avec elle.
+   */
+  leave(userId, now = Date.now()) {
+    const m = this.members.get(userId);
+    if (!m) return;
+    this.regen(m, now);
     this.members.delete(userId);
+    this.partis.set(userId, m);
+    this.occupeeA = now;
     this.dirty = true;
   }
 
@@ -714,7 +782,11 @@ export class VirageRoom {
     this.dirty = true;
 
     /* Présence : c'est ce que consulteront les cartes-souvenirs au prochain
-       but, et les classements bien après le match. */
+       but, et les classements bien après le match.
+
+       La première écrit la ligne, et `classe` avec elle, pour de bon : la
+       décision prise à l'entrée cesse d'être une réservation. Voir `join`. */
+    m.presenceEcrite = true;
     this.onPush?.({
       userId: m.userId, fixtureId: this.fixture.id, side: m.side,
       teamId: m.neutre ? null : (m.side ? this.fixture.awayId : this.fixture.homeId),
@@ -810,10 +882,16 @@ export class VirageRoom {
     /* « Mené d'au moins un but » se lit sur le **vrai match**, pas sur la
        corde. La Remontada raconte une équipe qui court après le score : la
        jouer parce que la corde penche n'aurait aucun sens dans une salle où
-       la corde bouge dix fois par seconde. */
+       la corde bouge dix fois par seconde.
+
+       **Sur `scoreReel`, et non sur `realGoals`.** Ce second compteur ne
+       compte que les buts vus tomber depuis l'ouverture de la salle : une
+       tribune ouverte à la soixantième minute d'un 0–2 y lisait 0–0 et
+       refusait la Remontada à ceux qui la jouaient à bon droit. `scoreReel`
+       est semé depuis la base et recalé à chaque tour du relevé. */
     if (c.mene) {
-      const mien = this.realGoals[m.side] ?? 0;
-      const autre = this.realGoals[m.side ^ 1] ?? 0;
+      const mien = this.scoreReel[m.side] ?? 0;
+      const autre = this.scoreReel[m.side ^ 1] ?? 0;
       if (mien + c.mene > autre) throw new Cheat('condition_not_met');
     }
     if (c.minuteReelle && (this.minute ?? 0) < c.minuteReelle) {
@@ -1141,6 +1219,10 @@ export class VirageRoom {
       realGoals: this.realGoals,
       scoreReel: this.scoreReel,
       surgeUntil: this.surgeUntil,
+      /* La durée qui reste, à côté de l'instant : un téléphone dont l'horloge
+         avance d'une demi-minute lirait l'instant de travers. Un compte à
+         rebours part de la réception plus `surgeMs`. */
+      surgeMs: RULES.surgeAfterRealGoalMs,
     });
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
   }
@@ -1168,7 +1250,15 @@ export class VirageRoom {
    * mettre à jour, sinon chaque tour d'horloge produirait une entrée.
    */
   matchStatus({ status = null, elapsed = null, elapsedExtra = null,
-                homeGoals = null, awayGoals = null } = {}) {
+                homeGoals = null, awayGoals = null, kickoffAt = null } = {}) {
+    /* Le relevé vient de voir le match : son heure vaut désormais mieux que
+       celle de la base. Un match avancé ou reculé gardait sinon dans sa salle
+       l'heure lue à l'ouverture, et `sallesOccupees` décidait de son relevé —
+       la libération, de sa durée de vie — sur une heure fausse. */
+    if (kickoffAt != null && Number.isFinite(new Date(kickoffAt).getTime())) {
+      this.fixture.kickoffAt = new Date(kickoffAt);
+    }
+
     /* Le score et la minute se diffusent **dès qu'ils bougent**, et pas
        seulement quand la période change.
 
@@ -1223,6 +1313,8 @@ export class VirageRoom {
   tick(now = Date.now()) {
     const dt = (now - this.last) / 1000;
     this.last = now;
+    // Le battement ne repousse la libération que s'il y a quelqu'un.
+    if (this.members.size) this.occupeeA = now;
 
     /* L’Ancre suspend la décroissance, pour toute la salle. La corde est
        commune aux deux tribunes : un gel qui ne vaudrait que d’un côté
@@ -1237,14 +1329,20 @@ export class VirageRoom {
        téléphone. */
     this.entretenirCartes(now);
 
-    if (!this.dirty) return;
+    /* **La fin de la minute double part aussi.** La diffusion ne partait que
+       si quelque chose avait bougé, et l'expiration ne bouge rien : dans une
+       salle calme, la page gardait « TOUT COMPTE DOUBLE » après les soixante
+       secondes, jusqu'au chant suivant — qui comptait alors simple. */
+    const surge = now < this.surgeUntil;
+    if (!this.dirty && surge === this.surgeDiffusee) return;
     this.dirty = false;
+    this.surgeDiffusee = surge;
     const n = this.crowd();
     this.push('virage:tick', {
       rope: Math.round(this.rope),
       goals: this.goals,
       crowd: n,
-      surge: now < this.surgeUntil,
+      surge,
     });
   }
 
@@ -1274,6 +1372,8 @@ export class VirageRoom {
       crowd: n,
       surge: Date.now() < this.surgeUntil,
       surgeUntil: this.surgeUntil,
+      // Ce qui reste de la minute double : voir `realGoal`.
+      surgeMs: Math.max(0, this.surgeUntil - Date.now()),
       seq: this.seq,
       // Le fil part avec l'état : entrer à la soixantième minute doit donner
       // ce qui s'est passé avant, pas un écran vide qui ne se remplira qu'au
