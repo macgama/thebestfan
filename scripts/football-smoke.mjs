@@ -9,6 +9,7 @@ import { createServer } from 'node:http';
 import express from 'express';
 import { createClient } from '../src/server/football/client.js';
 import { createFootball } from '../src/server/football/routes.js';
+import { createPoller } from '../src/server/football/poller.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -59,7 +60,13 @@ const fixturePayload = () => ({
   goals: { home: state.home, away: state.away },
 });
 fakeApi.get('/fixtures', (_req, res) => res.json({ errors: [], response: [fixturePayload()] }));
-fakeApi.get('/fixtures/events', (_req, res) => res.json({ errors: [], response: state.events }));
+/* Les relevés d'événements, comptés à part : c'est l'appel que la ceinture de
+   D1 doit empêcher sur un match fini. */
+let appelsEvenements = 0;
+fakeApi.get('/fixtures/events', (_req, res) => {
+  appelsEvenements++;
+  res.json({ errors: [], response: state.events });
+});
 /* Quand il est allume, le faux serveur glisse une ligne sans equipe devant
    les deux bonnes — exactement ce que rend parfois l’API. */
 let standingsAbime = false;
@@ -366,6 +373,14 @@ const [evRows] = await pool.query(
   `SELECT * FROM fixture_events WHERE fixture_id = 5001 AND type = 'Goal'`);
 check('un seul but en base', evRows.length === 1);
 
+/* Un penalty manqué d'abord. L'API le range sous le type `Goal`, avec le
+   détail `Missed Penalty`, et le score ne bouge pas : il frappait une carte
+   « Morel 60' 2–0 », secouait la corde du côté qui venait de rater, et
+   décalait d'un cran le rang et le score de tous les buts suivants. */
+state.events.push({
+  time: { elapsed: 60, extra: null }, team: TEAM,
+  player: { name: 'Morel' }, type: 'Goal', detail: 'Missed Penalty',
+});
 // Deuxième but, cette fois pour l'adversaire.
 state.away = 1; state.elapsed = 67;
 state.events.push({
@@ -376,6 +391,10 @@ goals.length = 0;
 await foot.poller.pollLive();
 check('deuxième but détecté', goals.length === 1 && goals[0].teamId === 91);
 check('but adverse attribué au bon club', goals[0].followers.length === 0);
+check('un penalty manqué n’est pas un but, et ne décale pas le score du suivant',
+  !goals.some((g) => g.player === 'Morel') && JSON.stringify(goals[0]?.score) === '[1,1]'
+  && goals[0]?.seq === 2
+  || (console.log('        annoncés :', goals.map((g) => `${g.minute}' ${g.player} [${g.score}]`).join(' · ')), false));
 
 /* ------------------------------------- le relevé qui se décale en cours de route
 
@@ -431,13 +450,84 @@ await foot.poller.pollLive();
     || (console.log(`        ${rows[0].n} en base pour ${state.events.length} annoncés`), false));
 }
 
-// Fin du match.
-state.status = 'FT'; state.elapsed = 90;
-await foot.poller.pollLive();
-live = await foot.poller.pollLive();
-check('match terminé : plus de direct', live === 0);
-check('la fin du match est annoncée une fois et une seule',
-  finis.filter((id) => id === 5001).length === 1);
+/* -------------------------------------- l'horloge de la porte d'une minute
+
+   Les trois blocs qui suivent ont besoin que la minute entre deux relevés
+   d'événements soit passée. On avance l'horloge, et **on ne la ramène
+   jamais** : le client de l'API retient l'instant de son dernier appel, et
+   une horloge qui reculerait le ferait attendre d'autant avant le suivant. */
+const vraiNow = Date.now;
+let avance = 0;
+const avancer = (ms) => { avance += ms; Date.now = () => vraiNow() + avance; };
+
+/* ---------------------------------- le premier relevé d'un match ancré
+
+   Un match qu'aucun club suivi ne joue n'a rien dans `fixture_events` quand
+   le premier supporter entre dans sa salle : tous les buts déjà marqués
+   passaient pour neufs — corde secouée, minute double, cartes de présence
+   pour qui n'y était pas, score du duel doublé. On rejoue ce cas sur le match
+   en cours : le relevé effacé, la salle occupée, et **un relevé qui n'a
+   jamais vu ce match** — celui d'un match ancré, que le relevé découvre à
+   l'entrée du premier supporter. Le relevé de la suite, lui, le suit depuis
+   le coup d'envoi : il sait que ces buts ont déjà été annoncés, et ce qu'il
+   dirait d'une base vidée sous ses pieds n'éprouverait rien de réel. */
+{
+  await pool.query('DELETE FROM fixture_events WHERE fixture_id = 5001');
+  auFil = [5001];
+  const decouvre = [];
+  const neuf = createPoller({ client, store: foot.store, fixturesAuFil: () => [5001],
+    onGoal: (g) => { decouvre.push(g); }, log: { error() {}, warn() {} } });
+  avancer(61_000);
+  await neuf.pollLive();
+  const [rows] = await pool.query(
+    'SELECT COUNT(*) AS n FROM fixture_events WHERE fixture_id = 5001');
+  check('un premier relevé ne rejoue pas les buts marqués avant lui (23e et 67e, à la 78e)',
+    decouvre.length === 0
+    || (console.log('        rejoués :', decouvre.map((g) => `${g.minute}' ${g.player}`).join(' · ')), false));
+  check('mais il range tout le relevé', rows[0].n === state.events.length
+    || (console.log(`        ${rows[0].n} rangés pour ${state.events.length}`), false));
+}
+
+/* --------------------------------------------- la séance de tirs au but
+
+   Chaque tir arrive en `Goal`, à la 120e, marqué ou manqué ; seul le
+   commentaire `Penalty Shootout` le distingue d'un penalty du match. Avec une
+   salle occupée, chacun devenait un « but de la 120e », avec sa carte. */
+{
+  state.status = 'P'; state.elapsed = 120;
+  state.events.push(
+    { time: { elapsed: 120, extra: null }, team: TEAM, player: { name: 'Diallo' },
+      type: 'Goal', detail: 'Penalty', comments: 'Penalty Shootout' },
+    { time: { elapsed: 120, extra: null }, team: OPPO, player: { name: 'Roth' },
+      type: 'Goal', detail: 'Missed Penalty', comments: 'Penalty Shootout' });
+  goals.length = 0;
+  const avantTirs = appelsEvenements;
+  avancer(61_000);
+  await foot.poller.pollLive();
+  check('la séance est relevée, la salle étant occupée', appelsEvenements - avantTirs === 1);
+  check('mais aucun tir n’est annoncé comme un but', goals.length === 0
+    || (console.log('        annoncés :', goals.map((g) => `${g.minute}' ${g.player}`).join(' · ')), false));
+}
+
+/* Fin du match, aux tirs au but, la salle encore au relevé (`auFil`). Le tour
+   qui voit le coup de sifflet relève une dernière fois ; les suivants, plus :
+   une salle restée ouverte sur un match fini payait un relevé d'événements
+   chaque minute, jour et nuit. */
+state.status = 'PEN';
+{
+  const avantFin = appelsEvenements;
+  /* Vingt secondes après le relevé de la séance : la cadence du direct. La
+     porte d'une minute est encore fermée, et ce dernier relevé doit passer
+     quand même — au tour suivant, la salle finie n'est plus au relevé. */
+  avancer(20_000); live = await foot.poller.pollLive();
+  for (let i = 0; i < 3; i++) { avancer(120_000); live = await foot.poller.pollLive(); }
+  check('match terminé : plus de direct', live === 0);
+  check('la fin du match est annoncée une fois et une seule',
+    finis.filter((id) => id === 5001).length === 1);
+  check('au coup de sifflet, un relevé d’événements et un seul, même vingt secondes après le précédent',
+    appelsEvenements - avantFin === 1
+    || (console.log(`        ${appelsEvenements - avantFin} relevés`), false));
+}
 
 r = await call('/api/football/feed');
 check('le match passe dans les résultats', r.json.feed?.[0]?.last?.[0]?.id === 5001);

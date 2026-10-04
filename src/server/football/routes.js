@@ -10,7 +10,7 @@ import { createPoller, isLive } from './poller.js';
  * inconnu déclenche un appel, et seulement si la base ne sait pas répondre.
  */
 export function createFootball({ pool, client, io, requireAuth, onGoal, onFinished,
-                                 onEvents, onStatus, fixturesAuFil }) {
+                                 onEvents, onStatus, onAbsent, fixturesAuFil }) {
   const store = createFootballStore(pool);
   client.attachStore?.(store);
 
@@ -29,7 +29,7 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
   };
 
   const poller = createPoller({ client, store, broadcast, onGoal, onFinished,
-                                onEvents, onStatus, fixturesAuFil });
+                                onEvents, onStatus, onAbsent, fixturesAuFil });
 
   /* -------------------------------------------------------------- socket */
 

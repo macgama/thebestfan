@@ -16,7 +16,7 @@ import { createVirage } from '../src/server/ferveur/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
-import { VirageRoom } from '../src/server/ferveur/virage.js';
+import { VirageRoom, RULES } from '../src/server/ferveur/virage.js';
 import { poserReglages, reglagesVivants } from '../src/shared/reglages.js';
 import { resoudreGeste, GESTES } from '../src/server/ferveur/gestures.js';
 import { ORDRE } from '../src/shared/duel/chants.js';
@@ -542,6 +542,10 @@ virage.realGoal({ fixtureId: 7001, teamId: 85, minute: 23, player: 'Diallo' });
 check('but réel diffusé à toute la salle',
   await until(() => A.realGoals.length === 1 && C.realGoals.length === 1));
 check('le but secoue la corde du bon côté', A.realGoals[0].side === 0);
+/* La durée part à côté de l'instant : une horloge de téléphone en avance
+   lirait `surgeUntil` de travers, et le compte à rebours part de `surgeMs`. */
+check('et dit combien de temps dure la minute double',
+  A.realGoals[0].surgeMs > 0 && A.realGoals[0].surgeMs <= 60_000);
 check('la minute double s\u2019ouvre', A.realGoals[0].surgeUntil > Date.now());
 
 /* --------------------------------------------------- le fil, en direct */
@@ -660,6 +664,31 @@ check('la minute double s\u2019ouvre', A.realGoals[0].surgeUntil > Date.now());
      interroge avant de payer un appel d'\u00e9v\u00e9nements. */
   check('la salle occup\u00e9e se d\u00e9clare au relev\u00e9',
     virage.sallesOccupees().includes(7001));
+
+  /* D1 \u2014 **mais pas une salle dont le match est fini.** Elle restait au
+     relev\u00e9 tant qu'un onglet \u00e9tait ouvert, et payait un relev\u00e9 du direct et
+     un relev\u00e9 d'\u00e9v\u00e9nements \u00e0 chaque tour, jour et nuit : 1 440 appels par
+     jour et par salle. Le vrai chemin, celui du relev\u00e9 qui apprend le coup de
+     sifflet ; puis on rend \u00e0 la salle son statut, la suite rejoue un match en
+     cours. */
+  const statutAvant = salle.statut;
+  virage.matchStatus(7001, { status: 'FT' });
+  check('une salle dont le match est fini sort du relev\u00e9',
+    !virage.sallesOccupees().includes(7001));
+  check('sans que personne en soit chass\u00e9', salle.members.has(U[0]));
+  /* \u00c0 venir, elle n'y entre que dans la demi-heure d'avant \u2014 et y reste
+     ensuite : pour un match qu'aucun club suivi ne rel\u00e8ve, elle est le seul
+     chemin qui le rafra\u00eechit. */
+  const coupDEnvoi = salle.fixture.kickoffAt;
+  salle.statut = 'NS';
+  salle.fixture.kickoffAt = new Date(Date.now() + 2 * 3600_000);
+  check('un match \u00e0 deux heures de son coup d\u2019envoi n\u2019est pas relev\u00e9',
+    !virage.sallesOccupees().includes(7001));
+  salle.fixture.kickoffAt = new Date(Date.now() - 5 * 60_000);
+  check('mais l\u2019heure pass\u00e9e, il l\u2019est, m\u00eame encore \u00ab \u00e0 venir \u00bb',
+    virage.sallesOccupees().includes(7001));
+  salle.fixture.kickoffAt = coupDEnvoi;
+  salle.statut = statutAvant;
 }
 
 const r = await souvenirs.mintGoal({
@@ -795,9 +824,10 @@ check('la foule compte les deux tribunes', crowd[0] === 2 && crowd[1] === 1);
      Une liste qui propose plus large que la porte n'ouvre est pire qu'une
      liste courte : elle promet, et elle referme sans le dire. Voir
      `poserDepuisLaJournee`. */
-  /* Un supporter à lui, et non `U[0]` : `roomOfUser` est indexé par joueur,
-     donc réutiliser A l'aurait déplacé de salle — et le contrôle du départ,
-     cent lignes plus bas, serait devenu rouge pour une raison sans rapport. */
+  /* Un supporter à lui, et non `U[0]` : une socket ne tient qu'une salle,
+     donc faire entrer A ici l'aurait fait sortir de 7001 — et le contrôle du
+     départ, cent lignes plus bas, serait devenu rouge pour une raison sans
+     rapport. */
   const E = connect('bbbbbbbb-0000-0000-0000-000000000008');
   await until(() => E.socket.connected);
   E.socket.emit('virage:join', { fixtureId: 9100, camp: 'exterieur' });
@@ -906,6 +936,85 @@ for (const m of room.members.values()) m.lastPush = Date.now() - 120_000;
 check('après 90 s sans chanter, on ne compte plus dans la foule',
   room.crowd()[0] === 0 && room.crowd()[1] === 0);
 for (const m of room.members.values()) m.lastPush = Date.now();
+
+/* ------------------------------------- deux onglets, puis un retour
+
+ * **D3.** La salle d'un supporter était rangée par joueur : la déconnexion de
+ * n'importe laquelle de ses sockets la vidait. Fermer un onglet KOP — qui ouvre
+ * sa propre socket — ou perdre l'ancienne socket d'un téléphone qui change de
+ * réseau, et l'onglet resté ouvert recevait `not_in_virage` à chaque chant
+ * jusqu'au rechargement.
+ *
+ * **D2.** Et ce rechargement rendait un supporter neuf : 40 de souffle, une
+ * main neuve, les recharges effacées. On éprouve le vrai chemin — la dernière
+ * socket coupée, une socket neuve qui rejoint sans camp, comme la page qui se
+ * reconnecte. */
+{
+  const QUI = 'bbbbbbbb-0000-0000-0000-000000000007';
+  const vous = [];
+  const P1 = connect(QUI), P2 = connect(QUI);
+  P2.socket.on('virage:vous', (v) => vous.push(v));
+  await until(() => P1.socket.connected && P2.socket.connected);
+  P1.socket.emit('virage:join', { fixtureId: 7001, camp: 'exterieur' });
+  await until(() => P1.state);
+  P2.socket.emit('virage:join', { fixtureId: 7001 });
+  await until(() => P2.state);
+  check('un second onglet sans camp ne change pas celui du supporter',
+    P1.state?.you?.side === 1 && P2.state?.you?.side === 1);
+
+  P1.socket.disconnect();
+  await wait(200);
+  check('fermer le premier onglet ne vide pas la place', room.members.has(QUI));
+  P2.socket.emit('virage:chant', { cardId: offrir('reprise'), taps: tempoParfait() });
+  check('et le second chante encore', await until(() => P2.results.length === 1)
+    || (console.log('        refus :', P2.errors.join(', ') || '(silence)'), false));
+
+  /* Un onglet KOP, Équipes ou duel : une socket du même joueur, qui n'a
+     jamais rejoint le Virage. */
+  const K = connect(QUI);
+  await until(() => K.socket.connected);
+  K.socket.disconnect();
+  await wait(200);
+  check('une socket qui n’a jamais rejoint ne fait rien en partant', room.members.has(QUI));
+
+  /* Une carte jouée avant de partir : elle doit se recharger encore au retour. */
+  const x = room.members.get(QUI);
+  x.main = ['a-fumigene']; x.breath = 100; x.cooldowns = {};
+  P2.socket.emit('virage:jouer', { cardId: 'a-fumigene' });
+  await until(() => vous.length === 1);
+  P2.socket.disconnect();
+  check('à la dernière socket, il part', await until(() => !room.members.has(QUI)));
+  check('et la salle le garde parmi les partis', room.partis.has(QUI));
+  // Lus au départ : le souffle s'y arrête, il remontait jusque-là.
+  const souffle = x.breath, ferveur = x.ferveur;
+
+  const P3 = connect(QUI);
+  await until(() => P3.socket.connected);
+  P3.socket.emit('virage:join', { fixtureId: 7001 });
+  await until(() => P3.state);
+  check('il revient dans son camp', P3.state?.you?.side === 1);
+  check('avec le souffle qu’il avait laissé', Math.abs((P3.state?.you?.breath ?? -99) - souffle) <= 1
+    || (console.log(`        ${Math.round(souffle)} laissé, ${P3.state?.you?.breath} rendu`), false));
+  check('et sa ferveur', P3.state?.you?.ferveur === ferveur);
+  check('la recharge de sa carte court toujours', (P3.state?.you?.cooldowns?.['a-fumigene'] ?? 0) > 0);
+  room.members.get(QUI).main = ['a-fumigene'];
+  P3.socket.emit('virage:jouer', { cardId: 'a-fumigene' });
+  check('et la rejouer aussitôt est refusé',
+    await until(() => P3.errors.includes('ferveur.error.card_on_cooldown')));
+
+  /* Mais un camp demandé est un camp choisi : « je me suis trompé de camp,
+     je ressors et je rechoisis ». La page repose la question à chaque entrée
+     depuis la liste, et dessine tout d'après la réponse du serveur. */
+  P3.socket.emit('virage:leave');
+  await until(() => !room.members.has(QUI));
+  P3.state = null;
+  P3.socket.emit('virage:join', { fixtureId: 7001, camp: 'domicile' });
+  await until(() => P3.state);
+  check('un neutre qui ressort et rechoisit obtient le camp demandé',
+    P3.state?.you?.side === 0 && room.members.get(QUI)?.side === 0);
+  P3.socket.disconnect();
+  await until(() => !room.members.has(QUI));
+}
 
 /* ------------------------------------------------------------ départ */
 
@@ -1218,16 +1327,39 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
     check('mais elle arrive', m.main.length === 2 && m.main.includes('a-torche'));
   }
 
-  /* Rejoindre à nouveau ne redistribue pas la main : ce serait un moyen gratuit
-     de se débarrasser d'une recharge. */
+  /* Partir puis revenir ne redistribue pas la main : ce serait un moyen gratuit
+     de se débarrasser d'une recharge.
+
+     **Ce contrôle rejoignait sans partir**, et il était vert pour cette
+     raison-là : le départ supprimait le membre, et le vrai retour — une
+     reconnexion, un rechargement — arrivait avec une main neuve, 40 de souffle
+     et les recharges effacées. Il passe maintenant par `leave`, qui est ce que
+     font la déconnexion et `virage:leave`. Le témoin sans départ reste. */
   {
     const avant = [...m.main];
     const cd = { ...m.cooldowns };
+    const foule = salle.crowd()[0];
+    m.regenAt = Date.now(); m.breath = 63;
+    salle.leave('c1');
+    check('parti, il sort de la foule de sa tribune', salle.crowd()[0] === foule - 1);
+    check('et du rang', salle.rankOf('c1') === null);
+    // Dans son camp : c'est l'entrée qui le décide, voir « deux onglets ».
     salle.join('c1', { side: 0, name: 'Un', actions: toutes });
     check('revenir dans la salle ne redistribue pas la main',
       JSON.stringify(salle.members.get('c1').main) === JSON.stringify(avant));
     check('et n’efface pas les recharges',
       JSON.stringify(salle.members.get('c1').cooldowns) === JSON.stringify(cd));
+    check('ni ne rend du souffle', Math.abs(salle.members.get('c1').breath - 63) < 1);
+    const garde = [...m.main];
+    m.main = ['a-fumigene']; m.breath = 100;
+    refus = null;
+    try { salle.jouer('c1', 'a-fumigene'); } catch (e) { refus = e.code; }
+    check('la carte jouée avant de partir se recharge encore',
+      refus === 'ferveur.error.card_on_cooldown');
+    m.main = garde;
+    salle.join('c1', { side: 0, name: 'Un', actions: toutes });
+    check('rejoindre sans partir ne redistribue rien non plus',
+      JSON.stringify(salle.members.get('c1').main) === JSON.stringify(garde));
   }
 
   /* Changement de chant : on jette la main et on en reprend cinq. Ce qu'on
@@ -1363,8 +1495,67 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
     || (console.log(`        à la pose ${pose} · au dépli`, JSON.stringify(recues)), false));
 }
 
+/* ================================== la fin de la minute double
+
+   La diffusion de la corde ne partait que si quelque chose avait bougé, et
+   l'expiration de la minute double ne bouge rien : dans une salle calme, la
+   page gardait « TOUT COMPTE DOUBLE » après les soixante secondes, jusqu'au
+   chant suivant — qui comptait alors simple. La salle seule, sur son horloge,
+   sans un geste après le but. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9011, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('s1', { side: 0, name: 'Un' });
+  salle.realGoal({ teamId: 1, minute: 10, player: 'Diallo' });
+  const reste = salle.snapshotFor('s1').surgeMs;
+  check('l’état dit ce qui reste de la minute double', reste > 0 && reste <= 60_000);
+  emis.length = 0;
+  for (let t = Date.now() + 100; t <= salle.surgeUntil + 1000; t += RULES.tickMs) salle.tick(t);
+  const ticks = emis.filter((x) => x.e === 'virage:tick');
+  check('la fin de la minute double est diffusée, même quand rien ne bouge',
+    ticks.at(-1)?.p.surge === false && ticks.filter((x) => x.p.surge === false).length === 1
+    || (console.log('        ticks :', ticks.map((x) => x.p.surge).join(' ')), false));
+}
+
+/* ================================== une salle vide se libère
+
+   `tick()` posait `last` juste avant que l'horloge commune teste
+   `now - room.last > 60 s` : l'écart valait zéro, toujours, et aucune salle
+   n'a jamais été libérée. C'est le seul endroit où la vraie horloge de
+   `ferveur/index.js` tourne : on la laisse battre, puis on l'avance d'une
+   minute.
+
+   **Mais pas tant que le match se joue** : la salle garde ce que la base n'a
+   pas — le score de la tribune, les partis et leur souffle —, et la libérer
+   au premier téléphone verrouillé rendait un supporter neuf à qui était seul
+   en tribune. Une minute suffit une fois le match fini. */
+{
+  const salle = virage.rooms.get(7001);
+  for (const p of [B, C]) p.socket.disconnect();
+  check('les derniers partis, la salle est vide', await until(() => salle.size === 0, 2000)
+    || (console.log('        encore là :', [...salle.members.keys()].join(', ')), false));
+  await wait(RULES.tickMs * 3);
+  check('une salle vide reste ouverte', virage.rooms.has(7001));
+  const tribune = JSON.stringify(salle.goals);
+  const vrai = Date.now;
+  const uneMinutePlusTard = async () => {
+    Date.now = () => vrai() + 61_000;          // même ruse que virage-ui-smoke.mjs:202
+    try { await wait(RULES.tickMs * 3); } finally { Date.now = vrai; }
+  };
+  await uneMinutePlusTard();
+  check('le match en jeu, une minute plus tard, elle l’est encore, partis et score de tribune compris',
+    virage.rooms.get(7001) === salle && salle.partis.size > 0 && JSON.stringify(salle.goals) === tribune);
+  /* Le coup de sifflet, par le vrai chemin du relevé. */
+  virage.matchStatus(7001, { status: 'FT', elapsed: 90 });
+  await uneMinutePlusTard();
+  check('le match fini, elle est libérée une minute après, malgré le battement',
+    !virage.rooms.has(7001));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-for (const p of [B, C]) p.socket.disconnect();
 virage.stop(); io.close();
 /* `exitCode` et non `process.exit()` : sous Windows, couper la boucle pendant
    que le pool rend ses sockets fait échouer la suite une fois sur cinq quand

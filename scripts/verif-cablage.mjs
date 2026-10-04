@@ -80,12 +80,18 @@ check('server.js branche le fil du match sur le virage',
   /onStatus:\s*\(/.test(serveur) && /onEvents:\s*\(/.test(serveur)
   && /fixturesAuFil:\s*\(/.test(serveur));
 
+/* Même panne muette : sans ce crochet, une salle sur un match que l'API ne
+   rend plus le redemande à chaque tour, sept cent vingt appels par jour, et
+   rien ne le dit. */
+check('server.js dit au virage les matchs que l’API ne rend plus',
+  /onAbsent:\s*\([^)]*\)\s*=>\s*virage\.matchAbsent\(/.test(serveur));
+
 /* ------------------------- les crochets du suivi atteignent-ils le relevé ? */
 
 /**
- * `server.js` confie cinq crochets à `createFootball` : `onGoal`,
- * `onFinished`, `onStatus`, `onEvents` et `fixturesAuFil`. Aucun ne sert à
- * quoi que ce soit tant que `createFootball` ne les fait pas suivre à
+ * `server.js` confie six crochets à `createFootball` : `onGoal`,
+ * `onFinished`, `onStatus`, `onAbsent`, `onEvents` et `fixturesAuFil`. Aucun
+ * ne sert à quoi que ce soit tant que `createFootball` ne les fait pas suivre à
  * `createPoller` — et il n'y a pas d'erreur à la clé, seulement un objet
  * qu'on lit et dont on ignore la moitié des clés.
  *
@@ -137,8 +143,10 @@ check('server.js branche le fil du match sur le virage',
     onGoal: () => appels.push('onGoal'),
     onFinished: () => appels.push('onFinished'),
     onStatus: () => appels.push('onStatus'),
+    onAbsent: (id) => appels.push(`onAbsent:${id}`),
     onEvents: () => appels.push('onEvents'),
-    fixturesAuFil: () => { appels.push('fixturesAuFil'); return [5001]; },
+    // 5002 : une salle sur un match que l'API ne rend plus.
+    fixturesAuFil: () => { appels.push('fixturesAuFil'); return [5001, 5002]; },
   });
 
   await foot.poller.pollLive();
@@ -146,6 +154,9 @@ check('server.js branche le fil du match sur le virage',
   check('le relevé demande quelles salles attendent leur fil',
     appels.includes('fixturesAuFil'));
   check('il annonce le score et la période à chaque tour', appels.includes('onStatus'));
+  check('il dit le match que l’API n’a pas rendu, et lui seul',
+    appels.includes('onAbsent:5002') && !appels.includes('onAbsent:5001')
+    || (console.log('        appels :', appels.join(', ')), false));
   check('il fait suivre les événements du terrain', appels.includes('onEvents'));
   check('et il annonce la fin du match, même sans un seul but',
     appels.includes('onFinished') || (console.log('        appels :', appels.join(', ')), false));
