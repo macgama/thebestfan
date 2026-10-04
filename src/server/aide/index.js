@@ -62,6 +62,8 @@ export function createAide({ pool, requireAuth, fanzzy = null }) {
    * passe pas encore `fanzzy` à l'aide, et sans ce repli le correctif
    * n'existerait que dans la suite, la production continuant de perdre la
    * recharge. Le jour où `server.js` le passe, le repli ne sert plus.
+   * `aide-smoke` lit `server.js` et exige l'un ou l'autre : `fanzzy` passé à
+   * `createAide`, ou la globale posée avant elle, après `createFanzzy`.
    */
   const porteRecharge = () => {
     const f = fanzzy ?? globalThis.fanzzy;
@@ -236,7 +238,10 @@ export function createAide({ pool, requireAuth, fanzzy = null }) {
     /* Sans la porte, on refuse **avant toute écriture**, comme le grand
        livre : verser quand même, ce serait reproduire en silence le défaut
        qu'elle corrige. C'est une faute de câblage, pas un refus à rendre au
-       joueur — d'où l'erreur et non une `raison`. */
+       joueur — d'où l'erreur et non une `raison`. Son message nomme la
+       cause, et la route l'écrit au journal avant de répondre 503 (`safe`) :
+       réessayer relancerait la même erreur, c'est le journal qui doit la
+       montrer. */
     const recharger = porteRecharge();
     if (!recharger) {
       throw new Error('aide : verser le booster de fin demande « recharger » '
@@ -286,8 +291,21 @@ export function createAide({ pool, requireAuth, fanzzy = null }) {
 
   const router = express.Router();
   router.use(express.json({ limit: '4kb' }));
+
+  /* **Une panne imprévue part au journal, et répond 503.** Elle répondait
+     400, sans une ligne nulle part, avec le code brut de MySQL quand il y en
+     avait un : la page se tait devant une erreur (R2), si bien qu'une faute
+     de câblage — verser le booster de fin sans « recharger » — ne se voyait
+     ni à l'écran, ni au journal, et le joueur ne touchait jamais son cadeau
+     sans que personne le sache. Le journal porte la pile, donc la cause ; la
+     page reçoit un code stable qui dit « bloc absent » (`CONTRATS.md`, R2),
+     comme le quotidien et les classements.
+
+     Aucun 400 ici : aucune route de l'aide ne lit d'entrée, et un corps
+     illisible est refusé par `express.json` avant d'atteindre une route. */
   const safe = (fn) => (req, res) => Promise.resolve(fn(req, res)).catch((e) => {
-    if (!res.headersSent) res.status(400).json({ error: e.code ?? 'aide.error.server' });
+    console.error('[aide]', e?.stack ?? e);
+    if (!res.headersSent) res.status(503).json({ error: 'aide.error.indisponible' });
   });
 
   /* Publique, et mise en cache une heure : la FAQ ne dépend d'aucun joueur, et

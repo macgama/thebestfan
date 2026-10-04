@@ -62,6 +62,13 @@
     const t = window.TBF_CARTES?.TYPES?.[type];
     return { nom: t?.nom || NOMTYPE[type] || '', c: t?.c || COUL[type] || '#C2CAD6' };
   };
+  /* **Le pin de la famille** (`.tbf-pin`, ui.css) : un rond de sa couleur,
+     son emblème à l'encre. Le même signe partout où la fiche dit la
+     famille — dans le sticker sous le nom, au coin des tuiles d'effet —
+     pour qu'elle se reconnaisse d'un coup d'œil, et pour que sa couleur
+     reste un signe, jamais une face. */
+  const pinFamille = (type) => `<span class="tbf-pin" style="--fam:${esc(famille(type).c)}" aria-hidden="true">${
+    window.TBF_LOGO?.type?.(type, '') ?? ''}</span>`;
   const rareteDe = (r) => (NOMRAR[r] ? r : 'commune');
   const JETON = () => window.TBF_STUFF?.gain?.('echarpes') ?? '/img/gains/echarpes.webp';
 
@@ -272,7 +279,6 @@
        C'est elle qui donne envie de continuer. */
     function batir() {
       const liste = [];
-      const fam = famille(d.fanzzy.type);
       const n = vu();
 
       /* L'évolution est calculée **une fois pour la lignée** : elle est
@@ -307,13 +313,13 @@
       const brut = new Map(lireMods(d.fanzzy.mods).map(([nom, v]) => [nom, v]));
       for (const [nom, valeur, icone] of reel) {
         liste.push({ cle: `effet:${nom}`, rang: 'EFFETS', titre: nom, ok: true, valeur, icone,
-          brut: brut.get(nom) ?? null, couleur: fam.c });
+          brut: brut.get(nom) ?? null });
       }
       if (evoluer) {
         for (const [nom, valeur, icone] of lireMods(evoluer.vers.mods)) {
           if (reel.some(([x]) => x === nom)) continue;
           liste.push({ cle: `effet:${nom}`, rang: 'EFFETS', titre: nom, ok: false, valeur, icone,
-            prix: evoluer.cout, age: evoluer.vers, couleur: fam.c });
+            prix: evoluer.cout, age: evoluer.vers });
         }
       }
 
@@ -348,7 +354,6 @@
     /* --------------------------------------------------------------- rendu */
 
     function rendre() {
-      const f = d.fanzzy;
       /* Au premier rendu, on part de ce que l'avatar montre. S'il montre
          quelqu'un d'autre, de l'âge atteint et de ce qui y est porté. */
       if (!voulu) {
@@ -376,8 +381,7 @@
         : '';
 
       hote.innerHTML = `
-        <div class="fiche${aMoi() ? '' : ' pas-a-moi'}" style="--pin-type:url('${
-          esc(window.TBF_LOGO?.adresse?.('type', f.type) ?? '')}')">
+        <div class="fiche${aMoi() ? '' : ' pas-a-moi'}">
           <div class="head">
             ${sortie}
             <h1><span class="nom" id="fiche-nom"></span><small class="galons" id="fiche-galons"></small></h1>
@@ -449,8 +453,7 @@
          des autres âges de la lignée, cachés (`.galon-mot`, fanzzy-fiche.css) :
          la place est celle du plus long, quel que soit l'âge regardé. */
       const mots = [...new Set([rar, ...lignee().map((x) => rareteDe(x.rar))])];
-      g.innerHTML = (fam.nom ? `<span class="tbf-sticker"><span class="tbf-pin" style="--fam:${esc(fam.c)}" aria-hidden="true">${
-        window.TBF_LOGO?.type?.(d.fanzzy.type, '') ?? ''}</span>${esc(fam.nom)}</span>` : '')
+      g.innerHTML = (fam.nom ? `<span class="tbf-sticker">${pinFamille(d.fanzzy.type)}${esc(fam.nom)}</span>` : '')
         + `<span class="galon"><span class="tbf-forme" data-rar="${rar}" aria-hidden="true"><i></i></span><span class="galon-mot">${
           mots.map((r, i) => `<span${i ? ' aria-hidden="true"' : ''}>${esc(NOMRAR[r])}</span>`).join('')}</span></span>`;
       ajusterNom(n);
@@ -531,16 +534,26 @@
 
       if (!C?.cardHTML) { tilt.innerHTML = ''; return; }
       /* La famille de la carte, quand le catalogue n'est pas là : son nom
-         et sa couleur, que la fiche connaît. Sans le tracé du pictogramme —
-         voir le pin provisoire, dans fanzzy-fiche.css. */
+         et sa couleur, que la fiche connaît. Sans le tracé du pictogramme :
+         `cardHTML` pose alors dans son pin l'emblème de la famille
+         (`TBF_LOGO`, cartes.js). */
       if (C.TYPES && !C.TYPES[d.fanzzy.type] && NOMTYPE[d.fanzzy.type]) {
         C.TYPES[d.fanzzy.type] = { nom: NOMTYPE[d.fanzzy.type], c: COUL[d.fanzzy.type], ico: '' };
       }
       const carte = { id: a.id, nom: a.nom, type: d.fanzzy.type, set: d.fanzzy.set,
         stage: Number(a.stage) || 1, rar, cri: a.cri ?? d.fanzzy.cri, mods: a.mods ?? {} };
+      /* **La fiche montre le personnage en pied.** `cardHTML` ne le pose plus
+         d'office sur une carte non `mini` (une pile ou une grille garde le
+         buste, quatre fois plus léger) : la carte regardée seule le demande.
+         Sans lui, à l'âge regardé, en tenue de base et au repos, la carte
+         n'était plus qu'un visage de sa largeur, le haut du crâne fondu dans
+         la plaque ; seules une tenue ou une pose le rendaient, plus bas. Une
+         seule carte ici : le plein-pied ne coûte qu'une image. L'âge à venir
+         le prend aussi, pour que la silhouette floue soit celle qu'on aura ;
+         le verrou prend déjà l'image détourée. */
       const options = !aMoi() ? { verrou: true, anime: false }
-        : atteint ? { flip: true, titulaire: siege(d) === 0, doublons: d.possede }
-          : { secret: true, prix: prochain ? a.cout : null };
+        : atteint ? { pied: true, flip: true, titulaire: siege(d) === 0, doublons: d.possede }
+          : { pied: true, secret: true, prix: prochain ? a.cout : null };
       tilt.innerHTML = C.cardHTML(carte, options) + '<i class="tbf-vitrine-lustre" aria-hidden="true"></i>';
 
       /* **L'apparence composée.** La carte sait dessiner un âge ; la tenue et
@@ -691,10 +704,11 @@
 
     /**
      * Une tuile : vert pour un état, **bleu pour une tenue** (posséder ; le
-     * violet reste aux gens), la couleur de la famille pour un effet. La
-     * pièce montrée dans le détail reste enfoncée (`aria-current`) ; celles
-     * qui composent l'apparence sont pressées (`aria-pressed`) ; celles qu'on
-     * n'a pas sont sous scotch, avec la raison.
+     * violet reste aux gens), **craie pour un effet**, le pin de sa famille
+     * au coin. La pièce montrée dans le détail reste enfoncée
+     * (`aria-current`) ; celles qui composent l'apparence sont pressées
+     * (`aria-pressed`) ; celles qu'on n'a pas sont sous scotch, avec la
+     * raison.
      */
     function tuileHTML(x) {
       const etat = x.rang === 'ÉTATS';
@@ -703,8 +717,16 @@
       const choisi = x.cle === choisie;
       const retenu = aMoi() && x.ok && voulu
         && ((etat && x.id === (voulu.etat ?? 'neutre')) || (tenue && x.id === voulu.skin));
-      const ton = !aMoi() || !x.ok ? '' : etat ? ' data-ton="vert"' : tenue ? ' data-ton="bleu"' : '';
-      const face = effet && x.ok && aMoi() ? ` style="--face:${esc(x.couleur)};--lettre:var(--encre)"` : '';
+      /* **Un effet n'est pas peint de sa famille.** La face pleine à la
+         couleur de la famille heurtait le sens de la palette : la Voix posait
+         l'or d'ÉVOLUER — acheter — juste au-dessus de la bâche or, la
+         Fidélité un gris qu'on lisait éteint, le Tifo aurait mis le violet
+         des gens sur la fiche (amendement 4) et la Percussion le bleu des
+         tenues. L'effet prend donc la craie, son pictogramme l'encre, et la
+         famille se dit par son pin, collé au coin. Les faces pleines restent
+         aux rangées qu'elles nomment : le vert aux états, le bleu aux
+         tenues. */
+      const ton = !aMoi() || !x.ok ? '' : etat ? ' data-ton="vert"' : tenue ? ' data-ton="bleu"' : ' data-ton="craie"';
       const dedans = x.image
         ? `<img src="${esc(x.image)}" alt="" loading="lazy" onerror="this.remove()">`
         : trait(effet ? x.icone : etat ? 'etat' : 'tenue');
@@ -721,11 +743,13 @@
         colle = '<span class="tbf-sticker" aria-hidden="true">PORTÉE</span>';
       } else if (aMoi() && x.ok && etat) {
         colle = '<span class="tbf-sticker tbf-sticker--rond" data-ton="vert" aria-hidden="true"><i class="tbf-ico tbf-ico-coche"></i></span>';
+      } else if (aMoi() && x.ok && effet) {
+        colle = pinFamille(d.fanzzy.type);
       }
       const nom = !x.ok ? `${x.titre} — ${x.prix != null ? `${x.prix} écharpes` : 'dans les boosters'}`
         : tenue && x.porte ? `${x.titre}, portée` : x.titre;
       return `<button type="button" class="tbf-plaque tbf-tuile${tenue ? ' tbf-tuile--pied' : ''} case ${
-        x.ok ? 'ok' : 'verrou'}${choisi ? ' choisie' : ''}"${ton}${face}${!x.ok || !aMoi() ? ' data-verrou' : ''}
+        x.ok ? 'ok' : 'verrou'}${choisi ? ' choisie' : ''}"${ton}${!x.ok || !aMoi() ? ' data-verrou' : ''}
         data-case="${esc(x.cle)}" title="${esc(x.titre)}" aria-label="${esc(nom)}"${
         choisi ? ' aria-current="true"' : ''}${(etat || tenue) && x.ok && aMoi() ? ` aria-pressed="${retenu}"` : ''}${mort()}>${dedans}${colle}</button>`;
     }
@@ -1034,7 +1058,17 @@
         window.FX?.flash?.(famille(d.fanzzy.type).c);
         dire('C’est lui qu’on verra partout.');
         claquerAvatar = true;
-        await recharger();
+        /* Ce que le serveur vient de poser (`poserAvatar`) : ce personnage,
+           à cet âge, dans cette tenue — la base, c'est n'en porter aucune —
+           et avec cette expression. */
+        await recharger((x) => {
+          const stade = Number(b.dataset.stade) || x.stade;
+          const skin = b.dataset.skin || 'base';
+          x.avatar = true;
+          x.avatarStade = stade;
+          x.avatarEtat = b.dataset.etat || 'neutre';
+          for (const s of x.parAge?.[stade]?.skins ?? []) s.porte = skin !== 'base' && s.id === skin;
+        });
         /* L'avatar a changé : la barre du jeu le relit (son portrait). */
         window.dispatchEvent(new Event('tbf:bourse'));
       } catch {
@@ -1118,7 +1152,20 @@
           }
           dire(voulue === 0 ? `${nom} est titulaire.` : `${nom} entre en remplaçant ${voulue}.`);
           window.FX?.flash?.('#1E9E6A');
-          await recharger();
+          /* Ce que le serveur vient de faire (`placer`, deck) : il est à la
+             place choisie, et celui qui l'occupait prend celle qu'il quitte —
+             l'échange plutôt que le décalage. */
+          await recharger((x) => {
+            const t = x.tribune;
+            if (!t) return;
+            const ici = t.places?.find((p) => p.occupant?.id === x.fanzzy.id);
+            const la = t.places?.find((p) => p.place === voulue);
+            if (la && la !== ici) {
+              if (ici) ici.occupant = la.occupant ?? null;
+              la.occupant = { id: x.fanzzy.id, nom: x.fanzzy.nom };
+            }
+            t.siege = voulue;
+          });
           return true;
         },
       });
@@ -1187,13 +1234,19 @@
         try {
           reponse = await api('/evolve', { id: d.fanzzy.id });
         } catch (e) {
+          if (e.message === 'auth') return;
           fermer();
           dire(e.code === 'fanzzy.error.not_enough_scarves'
             ? 'Pas assez d’écharpes.' : 'Évolution impossible.', { erreur: true });
+          /* **Et la fiche se relit.** Un refus dit qu'elle se trompait — sur
+             le solde, le plus souvent : une autre page a dépensé entre-temps —,
+             et une réponse perdue ne dit pas si l'âge est payé. ÉVOLUER ne
+             doit pas reproposer ce que la fiche croyait. */
+          await recharger();
           return;
         }
         fermer();
-        await ceremonie(vers, ev.cout, soldeAvant, reponse?.wallet ?? null);
+        await ceremonie(vers, ev.cout, soldeAvant, reponse);
       };
     }
 
@@ -1205,7 +1258,8 @@
        recharge. Sa couleur est celle de la rareté d'arrivée, parce que c'est
        elle qu'on achète. Puis la nouvelle carte arrive, son tampon d'âge
        claque, le ticket de la dépense monte, et le solde décompte. */
-    async function ceremonie(vers, cout, soldeAvant, portefeuille) {
+    async function ceremonie(vers, cout, soldeAvant, reponse) {
+      const portefeuille = reponse?.wallet ?? null;
       const portrait = hote.querySelector('#fiche-art .illu');
       const suite = window.FX?.evolution
         ? await window.FX.evolution(portrait, { nom: vers.nom, rar: vers.rar }) : null;
@@ -1216,7 +1270,7 @@
       ageVu = Number(vers.stage);
       voulu = { stade: Number(vers.stage), skin: 'base', etat: 'neutre' };
       choisie = null;
-      await recharger();
+      await recharger((x) => evolue(x, vers, cout, soldeAvant, reponse));
       /* La fiche relue porte déjà le nouveau solde : il reste affiché à
          l'ancien jusqu'au décompte, sinon il descendrait d'un bloc, puis
          remonterait pour décompter. */
@@ -1266,12 +1320,63 @@
       if (portefeuille) window.dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet: portefeuille } }));
     }
 
-    /** Relit la fiche après une action, et prévient la page qui l'accueille. */
-    async function recharger() {
-      try { d = await api('/fiche/' + encodeURIComponent(idDemande)); }
-      catch { return; }
+    /**
+     * **Ce qu'une évolution payée garantit**, reporté sur la fiche quand elle
+     * n'a pas pu se relire (`recharger`) : l'âge atteint (`stade`, dans la
+     * réponse de `/evolve`) et le solde rendu avec (`wallet.scarves`, ou
+     * l'ancien moins le prix si le portefeuille manque). L'âge acquis et ceux
+     * d'avant passent atteints, le personnage prend son nom et sa rareté, et
+     * sa tenue de base lui est acquise — le serveur la pose au nouvel âge
+     * (`evolve`). ÉVOLUER propose alors l'âge d'après, à son prix, contre le
+     * vrai solde : c'est aussi ce que le serveur ferait. **La rangée EFFETS
+     * reste celle d'avant** jusqu'à la prochaine relecture : l'effet réel —
+     * le personnage combiné à son équipement — ne se calcule qu'au serveur,
+     * et ses effets propres (`fanzzy.mods`) restent ceux qui vont avec, pour
+     * que la rangée dise juste d'où vient chaque valeur.
+     */
+    function evolue(x, vers, cout, soldeAvant, reponse) {
+      x.stade = Math.max(Number(x.stade) || 1, Number(reponse?.stade) || Number(vers.stage));
+      const reste = Number(reponse?.wallet?.scarves);
+      x.echarpes = Number.isFinite(reste) ? reste : soldeAvant - Number(reponse?.spent ?? cout);
+      for (const a of x.lignee ?? []) if (Number(a.stage) <= x.stade) a.possede = true;
+      const a = (x.lignee ?? []).find((y) => Number(y.stage) === x.stade);
+      if (a) Object.assign(x.fanzzy, { ageId: a.id, nom: a.nom, rar: a.rar, cri: a.cri, stage: x.stade });
+      const tenues = x.parAge?.[x.stade]?.skins ?? [];
+      const base = tenues.find((s) => s.id === 'base');
+      if (base && !base.possede) Object.assign(base, { possede: true, porte: !tenues.some((s) => s.porte) });
+    }
+
+    /**
+     * Relit la fiche après une action, la redessine, et prévient la page qui
+     * l'accueille. Rend faux si la fiche n'a pas pu se relire.
+     *
+     * **Une relecture manquée ne laisse pas la fiche d'avant à l'écran.**
+     * L'action a réussi — le serveur l'a dit —, mais la relecture avalait son
+     * erreur et ne redessinait rien. Après une évolution payée, le solde
+     * restait l'ancien et ÉVOLUER restait actif et payable : un second
+     * toucher faisait grandir le Fanzzy une deuxième fois, puisque le serveur
+     * part de l'âge qu'il a (`POST /evolve` ne prend que l'identifiant).
+     * `confirme` reporte donc sur la fiche ce que la réponse de l'action
+     * garantit, et elle se redessine sur cet état-là ; la prochaine relecture
+     * réussie rend le reste. La page qui l'accueille est prévenue dans les
+     * deux cas : la collection a changé.
+     *
+     * @param {(d: object) => void} [confirme]  sans elle, rien n'est sûr :
+     *   la fiche reste telle quelle.
+     */
+    async function recharger(confirme) {
+      try {
+        d = await api('/fiche/' + encodeURIComponent(idDemande));
+      } catch (e) {
+        if (e.message === 'auth' || !confirme) return false;
+        confirme(d);
+        rendre();
+        opts.change?.();
+        return false;
+      }
       rendre();
       opts.change?.();
+      return true;
     }
 
     rendre();

@@ -5761,28 +5761,53 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
    `:root`). Le rembourrage du haut — vingt-quatre pixels — lui laisse la place
    sous la déchirure : le ticket rogne tout ce qui dépasse.
 
-   **Les stickers d'une case** : le premier se colle sur le flanc gauche de
-   la carte (NOUVEAU, rouge : `data-ton="flare"`), le second au coin
-   bas-droit (le « +30 » d'un doublon changé en écharpes, un « ×2 »).
-   NOUVEAU est un sticker et non un tampon : le butin colle, l'ouverture
-   tamponne. Sa craie sur la face rouge foncée tient 5,16:1, et 2,61 au
-   soleil — le prix décidé des faces vives, sur un mot que sa forme et sa
-   couleur portent aussi.
+   **Les stickers d'une case** : le premier est NOUVEAU (rouge :
+   `data-ton="flare"`), à cheval sur le coin bas-gauche de la carte ; le
+   second se colle sur le flanc droit (le « +30 » d'un doublon changé en
+   écharpes). NOUVEAU est un sticker et non un tampon : le butin colle,
+   l'ouverture tamponne. Sa craie sur la face rouge foncée tient 5,16:1, et
+   2,61 au soleil — le prix décidé des faces vives, sur un mot que sa forme
+   et sa couleur portent aussi. Dans une page d'album (lot 4), le rouge passe
+   au bord et le mot à l'encre sur la craie, qui tient au soleil (« la
+   grille de la page », plus bas).
 
-   **Le flanc gauche, au tiers de la hauteur, et non plus le coin
-   haut-gauche** (lot 4). La carte du lot 4 occupe ses deux coins du haut :
-   à gauche son pin et son âge (plan 6), à droite sa forme et son mot de
-   rareté (plan 8, qui viennent jusqu'au milieu d'une carte de cent
-   pixels) ; sa bande de nom tient le bas, son « ×3 » le flanc droit. Collé
-   au coin, au plan 5, NOUVEAU perdait « NO » sous le pin ; passé devant,
-   il mangeait le « C » de COMMUNE ; au bas-gauche, il mordait les lettres
-   du nom. Le flanc gauche, entre l'âge (au quart) et la bande (aux trois
-   quarts), ne porte que le dessin : NOUVEAU s'y colle à 34 %, devant la
-   carte (plan 9), et ne passe son bord que de quatre pixels — au-delà, il
-   mordait le « ×3 » de la case voisine, qui déborde de la sienne dans la
-   gouttière. C'est la place que le classeur et /collection avaient trouvée
-   au banc, et celle où l'ouverture d'un booster le tamponne (le kiosque
-   règle la sienne à 40 %, à la taille de sa révélation).
+   **NOUVEAU sous la bande du nom, à cheval sur le coin bas-gauche** (comme
+   la maquette). On gagne une carte pour voir qui est dessus : NOUVEAU ne
+   couvre jamais le visage. Collé sur le flanc gauche, au tiers de la
+   hauteur, il tombait sur les yeux du buste, et le « ×3 » du flanc droit
+   cachait l'autre moitié du visage (vu au classeur, sur /collection et
+   dans le butin : quatre cartes neuves sur cinq avaient le visage dessous).
+   Le haut de la carte n'a pas de place (le pin et l'âge à gauche, la forme
+   et son mot à droite), la bande tient le bas : il reste le bord de la
+   carte sous la bande.
+     — **Son haut est le bas de la bande, deux pixels plus bas** : la carte
+       pose sa bande à `max(6px, 7 × --u)` de son bord (`cartes.css`, le
+       rembourrage de `.body`), soit sept centièmes de sa largeur, cinq
+       centièmes de sa hauteur au format 63/88 — la case a la boîte de sa
+       carte, et `top` se compte en hauteur. Plus haut, son bord et son
+       cerne mordaient les lettres du nom (relevé au banc : le bas des
+       lettres reste à quatre dixièmes de pixel au moins de son bord, de 88
+       à 150 px de carte, nom d'une à trois lignes) ; posé par
+       `bottom: -10px`, il entrait de dix pixels dans la dernière ligne.
+     — **Il penche comme la bande** (−2°) : à −6°, son bout droit remontait
+       de quatre pixels vers les lettres.
+     — **Il dépasse du bord de six pixels**, comme la maquette, et sous la
+       carte d'une vingtaine : c'est ce qui le colle à sa carte et pas à
+       celle du dessous. D'où l'air entre les rangées (trente pixels sur le
+       ticket, trente-quatre dans une page, « la grille de la page »), qui
+       le tient à près de trois pixels du pin de la carte du dessous sur le
+       ticket, à quatre et demi dans une page, et
+       **la case qui porte un sticker passe devant les suivantes**
+       (`z-index`) : NOUVEAU se colle par-dessus le scotch de la carte du
+       dessous, et non sous lui — un sticker est la dernière chose qu'on
+       colle.
+   Le second sticker passe au flanc droit, à 40 % : resté au coin
+   bas-droit, il aurait rencontré le NOUVEAU de la case voisine dans la
+   gouttière. C'est la place que le kiosque lui avait donnée.
+
+   **Hors d'une case**, la même place se pose par `.tbf-sticker--neuf` (la
+   carte révélée de la bienvenue) : le parent est positionné et a la boîte
+   de la carte, rien d'autre.
 
    **La ligne vivante** occupe la largeur sous les cartes : le nom de la
    série, le compte (« 4 → 6 / 11 », tabulaire) et la jauge, que la page fait
@@ -5801,11 +5826,19 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
        stickers : le butin garde ses −3° à +2,5° (`--penche` vaut 1), une
        page d'album les ramène à 2° au plus (« en grille, pas plus de 2° ») ;
      — sur le kraft, le scotch prend `--ruban-k`, le ruban au fil d'encre :
-       la craie seule ne s'y voyait plus. */
-.tbf-ticket.tbf-album{padding:24px 16px 16px}
+       la craie seule ne s'y voyait plus.
+
+   **L'air du ticket** : trente pixels entre les rangées et non plus
+   vingt-quatre, pour NOUVEAU qui pend sous sa carte (plus haut) ; le
+   rembourrage du bas passe de seize à dix pour les payer. Le butin de deux
+   rangées — cinq cartes à 360 px — garde ainsi sa hauteur au pixel près, et
+   sa jauge reste à l'écran sans défiler. Sous la jauge, les franges du nœud
+   gardent leurs dix pixels (le rembourrage de la ligne vivante) et la
+   déchirure les siens. */
+.tbf-ticket.tbf-album{padding:24px 16px 10px}
 .tbf-album-cartes{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--carte,88px),1fr));
-  justify-items:center;gap:24px 14px;
+  justify-items:center;gap:30px 14px;
 }
 .tbf-album-case{--rot:calc(-3deg * var(--penche,1));position:relative;width:100%;max-width:128px;min-width:0;rotate:var(--rot)}
 .tbf-album-case:nth-child(5n+2){--rot:calc(2deg * var(--penche,1))}
@@ -5817,8 +5850,10 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
   pointer-events:none;background:var(--ruban-g) 0 0/58px 24px no-repeat;
 }
 .tbf-ticket .tbf-album-case::before{background-image:var(--ruban-k)}
-.tbf-album-case>.tbf-sticker{position:absolute;z-index:9;left:-4px;top:34%;--rot:-6deg}
-.tbf-album-case>.tbf-sticker~.tbf-sticker{left:auto;top:auto;right:-8px;bottom:-8px;--rot:5deg}
+.tbf-album-case:has(>.tbf-sticker){z-index:1}
+.tbf-album-case>.tbf-sticker,.tbf-sticker--neuf{
+  position:absolute;z-index:9;left:-6px;top:calc(100% - max(6px, 5%) + 2px);--rot:-2deg}
+.tbf-album-case>.tbf-sticker~.tbf-sticker{left:auto;top:40%;right:2px;--rot:5deg}
 .tbf-album-pied{
   display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;
   margin-top:22px;padding:0 6px 12px;font-weight:700;font-size:14px;line-height:1.2;letter-spacing:.06em;
@@ -6954,7 +6989,28 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
 
    Le bord craie, le cerne et l'ombre sont ceux du sticker ; dans un sticker,
    le pin passe à seize pixels et ne garde que son cerne, le bord du sticker
-   faisant le reste. `--taille` règle le diamètre (26 px). */
+   faisant le reste. `--taille` règle le diamètre (26 px).
+
+   **Un emblème en image passe à l'encre.** Les pages posent l'emblème de la
+   famille (`TBF_LOGO.type`, un pin émaillé de sa couleur : le mégaphone
+   jaune de la Voix, le cœur gris de la Fidélité, le drapeau violet du Tifo).
+   Posé tel quel sur le rond de la même couleur, il s'y fondait : six filtres
+   sans libellé dont on ne reconnaissait pas le dessin, et un sticker VOIX
+   presque vide. Il passe en grisaille d'encre — la même que le repli du pin
+   de la carte (`.fz .pip .fz-picto`, cartes.css), qui éteint les mêmes
+   emblèmes sur la craie —, et le rond garde la couleur : un signe foncé sur
+   la famille, dont le corps tient 4:1 au moins sur les six ronds (relevé au
+   banc à 26 px : 4,1 sur le rouge de la Pyro et 4,3 sur le violet du Tifo,
+   les plus proches ; 6 à 7 ailleurs). Le mégaphone, les baguettes du
+   tambour, le drapeau et la torche se reconnaissent à seize pixels comme à
+   vingt-six. Un SVG au trait (`TYPES[k].ico`) reste le pictogramme le plus
+   net : il prend l'encre par `currentColor`.
+
+   **Pressé, dans un filtre** (`.tbf-filtre[aria-pressed=true]`) : en plus
+   du cerne de craie du filtre, le pin prend un bord de craie de trois pixels
+   et une coche d'encre sur une pastille craie, collée à son coin bas-droit —
+   c'est ce qui se lit quand on revient sur la rangée, sans lire la couleur
+   d'un cerne fin. Rien ne bouge. */
 .tbf-pin{
   --taille:26px;
   position:relative;display:inline-grid;place-items:center;flex:none;box-sizing:border-box;
@@ -6963,7 +7019,14 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
   box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6);
   rotate:var(--rot,0deg);
 }
-.tbf-pin>img{display:block;width:70%;height:70%;object-fit:contain}
+.tbf-pin>img{display:block;width:70%;height:70%;object-fit:contain;
+  filter:grayscale(1) brightness(.45) contrast(1.8)}
+.tbf-filtre[aria-pressed=true]>.tbf-pin{
+  box-shadow:0 0 0 3px var(--craie),0 0 0 4.5px var(--encre),2px 2px 0 4.5px rgba(7,9,12,.6)}
+.tbf-filtre[aria-pressed=true]>.tbf-pin::after{
+  content:"";position:absolute;right:-7px;bottom:-6px;width:15px;height:15px;border-radius:50%;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2307090C' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5l5 5L19.5 7'/%3E%3C/svg%3E") 50% 50%/11px 11px no-repeat,var(--craie);
+  box-shadow:0 0 0 1.5px var(--encre)}
 .tbf-pin>svg{width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:2.4;
   stroke-linecap:round;stroke-linejoin:round}
 .tbf-sticker>.tbf-pin{--taille:16px;box-shadow:0 0 0 1.5px var(--encre)}
@@ -7205,15 +7268,18 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
 }
 .tbf-album-pages::-webkit-scrollbar{display:none}
 /* La page : la largeur de l'album, et l'air que demandent ce qui dépasse —
-   le scotch des cases (quinze pixels au-dessus de la première rangée), leurs
-   stickers (huit), l'ombre et le cerne de l'en-tête. `--penche` ramène la
-   rotation des cases et de leurs stickers à 2° au plus. */
+   le scotch des cases (quinze pixels au-dessus de la première rangée),
+   NOUVEAU, qui pend sous sa carte (vingt-sept pixels au plus, son ombre
+   comprise : le bas de la page en garde vingt-huit, car `.tbf-album-pages`
+   rogne en hauteur ce qui sort de la page), l'ombre et le cerne de
+   l'en-tête. `--penche` ramène la rotation des cases et de leurs stickers à
+   2° au plus. */
 .tbf-album-page{
   --penche:.66;
   flex:0 0 100%;min-width:0;box-sizing:border-box;
   scroll-snap-align:start;scroll-snap-stop:always;
   display:flex;flex-direction:column;gap:22px;
-  padding:8px max(var(--marge),10px) 22px;
+  padding:8px max(var(--marge),10px) 28px;
 }
 
 /* ## L'en-tête de série
@@ -7283,10 +7349,17 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
  * haut), sur le mur : trois colonnes à 360 px, cinq au plus — au-delà, sur
  * une tablette, une carte de cent pixels se perd dans une rangée de sept.
  * Chaque case porte sa carte (`cardHTML`, la largeur de la case), son scotch,
- * et NOUVEAU en sticker rouge sur le flanc gauche, au tiers de la hauteur,
- * quand le serveur le dit (`nouveautes`, contrat § 2 ; la place est dite à
- * la case, plus haut) ; le « ×3 » et AVATAR sont sur la carte. La page n'a
- * pas à le placer.
+ * et NOUVEAU à cheval sur le coin bas-gauche, sous la bande du nom, quand le
+ * serveur le dit (`nouveautes`, contrat § 2 ; la place est dite à la case,
+ * plus haut ; dans une page, le rouge passe au bord, voir plus bas) ; le
+ * « ×3 » et AVATAR sont sur la carte. La page n'a pas à le placer.
+ *
+ * **Trente-quatre pixels entre les rangées** (vingt-huit avant) : NOUVEAU
+ * pend d'une vingtaine de pixels sous sa carte, et la carte du dessous lève
+ * son scotch de quinze et son pin de quatre et demi. NOUVEAU se colle
+ * par-dessus le scotch (la case passe devant, plus haut) et reste à quatre
+ * pixels et demi au moins du pin, de 320 à 768 px — à vingt-huit, il le
+ * touchait.
  *
  *     <div class="tbf-album-cartes">
  *       <div class="tbf-album-case"><div class="fz …" data-id="RP4">…</div>
@@ -7303,8 +7376,42 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
  * et à l'ajout, jamais au filtre. */
 .tbf-album-page .tbf-album-cartes{
   grid-template-columns:repeat(auto-fill,minmax(max(var(--carte,88px),calc((100% - 56px) / 5)),1fr));
-  gap:28px 14px;
+  gap:34px 14px;
 }
+
+/* **NOUVEAU dans une page d'album : le rouge au bord, le mot sur la craie.**
+ * Le butin du kiosque colle NOUVEAU en sticker flare, la craie sur la face
+ * rouge foncée : 5,16:1, et 2,61 au soleil, le prix décidé des faces vives,
+ * qu'il paie depuis le lot 3. Les NOUVEAU d'une page d'album sont neufs au
+ * lot 4, et la règle du lot veut que rien n'y empire au soleil : sur le
+ * classeur et /collection, ils y étaient relevés à 2,6 pour un seuil de 4,5.
+ *
+ * Aucune lettre sur une face vive n'y passe 4,5 dehors (la craie 2,61, le
+ * blanc pur 2,9), et aucun rouge sur la craie non plus : le rouge foncé du
+ * tampon plein, celui de l'ouverture, tient 6,82 mais 3,04 au soleil, et il
+ * faut descendre à #300703, un rouge qui n'en est plus un, pour y arriver.
+ * Seule l'encre sur la craie passe (17,21:1, 4,86 au soleil).
+ *
+ * Le rouge passe donc **au bord**, comme l'or du jalon (« le sticker », plus
+ * haut) : le bord découpé est de trois pixels de la face flare au lieu de
+ * deux de craie, sous le cerne d'encre, et le mot est à l'encre sur la craie.
+ * Un sticker rouge à l'œil, une étiquette qu'on lit au soleil. La face est le
+ * jeton `--face-flare`, de la table des tons : une face vive changée un jour
+ * se change là.
+ *
+ * **L'encombrement ne bouge pas d'un pixel** : la boîte perd ce que le bord
+ * gagne (vingt-deux pixels de haut au lieu de vingt-quatre, six de
+ * rembourrage au lieu de sept) et se pousse d'un pixel vers le bas et la
+ * droite, par une marge. Hors tout, le sticker reste où la case le compte :
+ * son bord rouge, plus épais d'un pixel que la craie, ne remonte pas vers les
+ * lettres du nom (sans la marge, il les touchait à 360 px). Une planche de
+ * /collection prend le même NOUVEAU (« la planche d'un personnage », plus
+ * bas), à sa taille. Le butin garde le sien : il est sur le kraft d'un
+ * ticket, sans page, à la taille que le kiosque a mesurée. */
+:is(.tbf-album-page .tbf-album-case,.tbf-planche-case)>.tbf-sticker[data-ton=flare]{
+  --face:var(--craie);--lettre:var(--encre);
+  box-shadow:0 0 0 3px var(--face-flare),0 0 0 4.5px var(--encre),2px 2px 0 4.5px rgba(7,9,12,.6)}
+.tbf-album-page .tbf-album-case>.tbf-sticker[data-ton=flare]{height:22px;padding:0 6px;margin:1px 0 0 1px}
 
 /* ## La pochette numérotée
  *
@@ -7375,7 +7482,17 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
  * Le fond de l'élément est le panneau calme uni, et la fumée vit dans le
  * pseudo-élément, masquée loin du texte : l'audit lit le nom sur le
  * panneau (la craie, 16,4:1 et 4,57 au soleil). Non possédée, la case porte
- * une pochette (`.tbf-album-pochette`) à la place de la case. */
+ * une pochette (`.tbf-album-pochette`) à la place de la case.
+ *
+ * **VITRINE est un grand texte** : vingt pixels gras, sur un sticker de
+ * trente-deux. L'encre sur l'or tient 12,11:1, mais 3,92 au soleil, sous les
+ * 4,5 d'un mot de treize pixels ; et la case se répète pour chaque
+ * légendaire des pages montées : vingt relevés au soleil dans le classeur,
+ * autant dans l'album de /collection, au relevé du lot. À partir de
+ * 18,66 px gras, c'est un grand texte, dont le seuil est 3 : le mot passe, et
+ * l'or reste la règle de l'or (une face, ou un grand texte). C'est aussi le
+ * titre de la case : il se lit avant le nom. Le sticker tient dans la colonne
+ * du mot dès 320 px. */
 .tbf-album-vitrine{
   grid-column:1/-1;justify-self:center;width:100%;max-width:560px;position:relative;isolation:isolate;
   display:grid;grid-template-columns:minmax(88px,128px) minmax(0,1fr);align-items:center;
@@ -7395,7 +7512,8 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
 .tbf-album-vitrine>:is(.tbf-album-case,.tbf-album-pochette){grid-column:1}
 .tbf-album-vitrine-mot{display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0;
   justify-self:start;color:var(--craie)}
-.tbf-album-vitrine-mot>.tbf-sticker{--rot:-4deg}
+.tbf-album-vitrine-mot>.tbf-sticker{--rot:-4deg;height:32px;padding:0 10px;border-radius:6px;
+  font-size:20px;letter-spacing:.06em}
 .tbf-album-vitrine-mot>b{font:700 15px/1.15 var(--banner);letter-spacing:.06em;text-transform:uppercase;
   overflow-wrap:anywhere}
 .tbf-album-vitrine-mot>small{font:500 12px/1.35 var(--ui)}
@@ -7928,8 +8046,13 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
    **NOUVEAU sur une case** : un état ou une tenue que le serveur dit neuf
    (`nouveautes`, contrat § 2.1, `sorte` `etat` ou `skin`) porte le sticker
    rouge, collé de travers sur le haut de son portrait — le nom reste
-   dessous, entier. Dix-huit pixels en onze, comme le mot d'une tuile de
-   l'inventaire : il tient dans la case de soixante-quatre.
+   dessous, entier. C'est le NOUVEAU d'une page d'album (« la grille de la
+   page », plus haut) : le rouge au bord, le mot à l'encre sur la craie
+   (4,86 au soleil, quand la craie sur la face flare n'y tenait que 2,61).
+   Seize pixels de craie en onze sous un bord rouge de trois, la boîte
+   descendue d'un pixel : vingt-cinq pixels hors tout, à la même place que
+   les dix-huit d'avant sous leur bord de craie de deux, et il tient
+   toujours dans la case de soixante-quatre.
 
        <li><button class="tbf-planche-case" data-etat="possede"><img …>JOIE
          <span class="tbf-sticker" data-ton="flare">NOUVEAU</span></button></li> */
@@ -7959,6 +8082,7 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
 .tbf-planche-case>small{display:block;margin-top:-3px;font-size:11px;font-weight:500;letter-spacing:.04em}
 .tbf-planche-case>.tbf-sticker{position:absolute;z-index:1;left:50%;top:-4px;translate:-50% 0;
   height:18px;padding:0 4px;font-size:11px;letter-spacing:.04em;--rot:-5deg}
+.tbf-planche-case>.tbf-sticker[data-ton=flare]{height:16px;padding:0 3px;margin-top:1px}
 .tbf-planche-case:active{scale:.95}
 .tbf-planche-case:focus-visible{outline:3px solid var(--projo);outline-offset:2px}
 .tbf-planche>.tbf-sticker{position:absolute;z-index:2;right:10px;top:-11px;--rot:4deg}

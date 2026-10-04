@@ -22,13 +22,16 @@
  * simultanés, et un versement accordé deux fois est un défaut qu'on ne
  * découvre jamais parce que personne ne s'en plaint. Et elle ne doit rien
  * coûter : un booster offert qui efface la recharge en attente reprend d'une
- * main ce qu'il donne de l'autre, sans que rien ne lève.
+ * main ce qu'il donne de l'autre, sans que rien ne lève. Quand elle ne peut
+ * pas se verser, la cause doit se lire au journal : la page, elle, se tait.
  *
  * Usage : node scripts/aide-smoke.mjs
  */
 import { readFileSync } from 'node:fs';
+import { once } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import express from 'express';
 import { createAide } from '../src/server/aide/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { ETAPES, faq, etapes, RECOMPENSE } from '../src/shared/aide.js';
@@ -291,13 +294,30 @@ async function auBoutDuParcours(id, pseudo) {
      à faire passer le contrôle du dessus. On le casse donc exprès, et la
      recharge doit entrer quand même — par la connexion du versement, pendant
      qu'elle tient la ligne. `NOWAIT` le prouve : une autre connexion qui
-     demande la ligne à cet instant doit être refusée sur-le-champ. */
+     demande la ligne à cet instant doit être refusée sur-le-champ.
+
+     **Et l'appel préalable a bien lieu, avant le verrou.** C'est lui qui
+     évite qu'une demande tenant la ligne attende cinquante secondes une
+     connexion libre pour lire l'abonnement (`ECARTS.md`, fanzzy § 1). Le
+     module fanzzy de cette suite n'a pas d'abonnement : il ne touche jamais
+     le pool pour ça, et ni sa disparition ni son passage sous le verrou ne
+     changeraient un nombre. On exige donc l'ordre exact — le pool, puis la
+     connexion — et, au moment de l'appel sur le pool, une ligne **libre** :
+     le même `NOWAIT` doit y passer. */
   const appels = [];
   let tenue = null;
+  let libreAvant = null;
   const aideSousVerrou = createAide({ pool, requireAuth, fanzzy: {
     recharger: async (lecteur, id) => {
       if (lecteur === pool) {
         appels.push('pool');
+        try {
+          await pool.query('SELECT 1 FROM user_wallet WHERE user_id = ? FOR UPDATE NOWAIT', [id]);
+          libreAvant = true;
+        } catch (e) {
+          libreAvant = false;
+          console.log('        NOWAIT avant le verrou a rendu :', e?.code, e?.message);
+        }
         throw new Error('préchauffe cassée exprès par la suite');
       }
       appels.push('connexion');
@@ -318,13 +338,20 @@ async function auBoutDuParcours(id, pseudo) {
   const v = await aideSousVerrou.recompenser(V);
   const sousVerrou = await reserve(V);
   check(`préchauffe en panne : la recharge entre quand même, sous le verrou (${sousVerrou})`,
-    v.verse === true && sousVerrou === attendu && appels.includes('connexion')
-    || (console.log('        appels :', appels.join(', '), '· il dit :', JSON.stringify(v)), false));
+    v.verse === true && sousVerrou === attendu
+    || (console.log('        il dit :', JSON.stringify(v)), false));
+  check('la recharge est comptée sur le pool d’abord, puis sur la connexion du versement',
+    JSON.stringify(appels) === '["pool","connexion"]'
+    || (console.log('        appels :', JSON.stringify(appels)), false));
+  check('l’appel sur le pool a lieu avant le verrou : la ligne est encore libre',
+    libreAvant === true);
   check('et la ligne était bien tenue par le versement à cet instant', tenue === true);
 
   /* **Le câblage d'aujourd'hui.** `server.js` construit l'aide sans lui passer
      `fanzzy`, et pose `globalThis.fanzzy` juste avant. Le correctif doit
-     valoir là, et pas seulement dans cette suite. */
+     valoir là, et pas seulement dans cette suite. Ce contrôle-ci pose la
+     globale lui-même : il prouve que le repli fonctionne, pas que
+     `server.js` le nourrit — c'est le contrôle suivant qui lit `server.js`. */
   globalThis.fanzzy = F;
   try {
     const aideServeur = createAide({ pool, requireAuth });
@@ -338,6 +365,32 @@ async function auBoutDuParcours(id, pseudo) {
       || (console.log('        il dit :', JSON.stringify(g)), false));
   } finally {
     delete globalThis.fanzzy;
+  }
+
+  /* **Et `server.js` câblé comme on le croit.** En production, la porte ne
+     tient que par ce câblage : retirer la globale (elle ressemble à un
+     reste), ou monter l'aide avant fanzzy, et chaque booster de fin lève —
+     sans qu'aucune suite ne rougisse, puisque toutes posent leur porte
+     elles-mêmes. On lit donc l'appel dans `server.js`, comme
+     `verif-cablage.mjs` le fait pour le quotidien : `createAide` doit venir
+     après `createFanzzy`, et recevoir `fanzzy` — ou, à défaut, venir après
+     `globalThis.fanzzy = fanzzy`, posé lui-même après `createFanzzy`. */
+  {
+    const serveur = readFileSync(path.join(RACINE, 'server.js'), 'utf8');
+    const monteFanzzy = serveur.indexOf('fanzzy = createFanzzy(');
+    const poseGlobale = serveur.search(/globalThis\.fanzzy\s*=\s*fanzzy\s*;/);
+    const debut = serveur.indexOf('createAide({');
+    const fin = debut < 0 ? -1 : serveur.indexOf('})', debut);
+    const appel = debut < 0 || fin < 0 ? '' : serveur.slice(debut, fin);
+    /* `fanzzy` en raccourci ou `fanzzy: fanzzy` ; pas `fanzzy: null`. */
+    const passe = /[{,]\s*fanzzy\s*(?::\s*fanzzy\s*)?(?:,|$)/.test(appel);
+    const parLaGlobale = monteFanzzy >= 0 && poseGlobale > monteFanzzy && debut > poseGlobale;
+    check('server.js construit l’aide après le module fanzzy',
+      appel.length > 0 && monteFanzzy >= 0 && debut > monteFanzzy
+      || (console.log('        createFanzzy à', monteFanzzy, '· createAide à', debut), false));
+    check('et lui donne la porte de la recharge (fanzzy passé, ou la globale posée avant)',
+      passe || parLaGlobale
+      || (console.log('        appel :', appel.replace(/\s+/g, ' '), '· globale à', poseGlobale), false));
   }
 
   /* **Sans porte du tout, rien.** Verser quand même reproduirait le défaut en
@@ -360,6 +413,75 @@ async function auBoutDuParcours(id, pseudo) {
   check('et rien n’est écrit : ni booster, ni drapeau',
     Number(s.packs) === max - 1 && Number(s.p) === 0
     || (console.log('        bourse :', JSON.stringify(s)), false));
+}
+
+/* ============================ une panne se dit au journal, et en 503
+
+   Le refus du dessus ne sert à rien s'il ne se voit nulle part. La page se
+   tait devant une erreur (`CONTRATS.md`, R2) : c'est donc le journal qui
+   doit nommer la cause, et la page qui doit recevoir un code stable — 503,
+   « bloc absent » — et non le code brut de MySQL en 400. On passe par le
+   routeur, comme la page, sans porte d'abord, puis avec un verrou expiré
+   pendant le versement. */
+{
+  const max = reglage('pack.max');
+  let qui = null;
+  const authDeTest = (req, _res, next) => { req.user = { id: qui }; next(); };
+  const expire = new Error('Lock wait timeout exceeded; try restarting transaction');
+  expire.code = 'ER_LOCK_WAIT_TIMEOUT';
+  const app = express();
+  app.use('/sans-porte', createAide({ pool, requireAuth: authDeTest }).router);
+  app.use('/verrou-expire', createAide({ pool, requireAuth: authDeTest, fanzzy: {
+    recharger: async (lecteur) => { if (lecteur !== pool) throw expire; return null; },
+  } }).router);
+  const http = app.listen(0, '127.0.0.1');
+  await once(http, 'listening');
+  const base = `http://127.0.0.1:${http.address().port}`;
+
+  /* Le journal de la route, relevé le temps de deux demandes. */
+  const journal = [];
+  const errorDOrigine = console.error;
+  console.error = (...a) => { journal.push(a.map(String).join(' ')); };
+  const demander = async (prefixe, id) => {
+    qui = id;
+    journal.length = 0;
+    const r = await fetch(`${base}${prefixe}/recompense`, { method: 'POST' });
+    return { statut: r.status, corps: await r.json().catch(() => null), lignes: [...journal] };
+  };
+  const bourse = async (id) => (await pool.query(
+    'SELECT packs, parcours_paye AS p FROM user_wallet WHERE user_id = ?', [id]))[0][0];
+
+  try {
+    const P = 'aide-test-route-sans-porte';
+    await auBoutDuParcours(P, 'RouteSansPorte');
+    await poserReserve(P, max - 1, cadence() + 1000);
+    const a = await demander('/sans-porte', P);
+    check(`sans porte, la route répond 503 « aide.error.indisponible » (${a.statut} ${a.corps?.error})`,
+      a.statut === 503 && a.corps?.error === 'aide.error.indisponible');
+    check('et la cause est au journal : une ligne de l’aide qui nomme « recharger »',
+      a.lignes.some((l) => l.startsWith('[aide]') && l.includes('recharger'))
+      || (console.log('        journal :', JSON.stringify(a.lignes)), false));
+    const bp = await bourse(P);
+    check('rien n’est écrit par la route non plus',
+      Number(bp.packs) === max - 1 && Number(bp.p) === 0);
+
+    const L = 'aide-test-route-verrou';
+    await auBoutDuParcours(L, 'RouteVerrou');
+    await poserReserve(L, max - 1, cadence() + 1000);
+    const b = await demander('/verrou-expire', L);
+    check(`un verrou expiré répond 503, sans le code de MySQL (${b.statut} ${b.corps?.error})`,
+      b.statut === 503 && b.corps?.error === 'aide.error.indisponible');
+    check('et la cause est au journal',
+      b.lignes.some((l) => l.startsWith('[aide]') && l.includes('Lock wait timeout'))
+      || (console.log('        journal :', JSON.stringify(b.lignes)), false));
+    const bl = await bourse(L);
+    check('le versement est annulé en entier : ni booster, ni drapeau',
+      Number(bl.packs) === max - 1 && Number(bl.p) === 0
+      || (console.log('        bourse :', JSON.stringify(bl)), false));
+  } finally {
+    console.error = errorDOrigine;
+    await new Promise((r) => http.close(r));
+  }
 }
 
 /* ================================================= un parcours incomplet ne

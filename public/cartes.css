@@ -32,7 +32,8 @@
  *   — **La rareté est sur la carte** (la forme et son mot, coin haut-droit) :
  *     une page n'en colle plus une seconde au même coin.
  *   — Le reste — les classes, les options, les états — est décrit dans
- *     `cardHTML` (cartes.js) et dans `lot4/CARTE.md`. */
+ *     `cardHTML` (cartes.js), et la planche de toutes les tailles × raretés ×
+ *     états se monte avec `node scripts/cartes-ui-smoke.mjs --servir`. */
 
 /* ------------------------------------------------- l'unité de la carte
 
@@ -110,10 +111,12 @@
    Elle laisse déborder ce qui est collé dessus (`overflow` visible), et c'est
    le dessin, plus bas, qui découpe l'illustration à l'arrondi.
 
-   Sa couleur de texte est posée ici, en craie, parce que `.r-legendaire`
-   (ui.css) écrit en or tout ce qu'il contient : sur une carte, aucun petit
-   texte ne doit hériter l'or (la règle de l'or). Chaque texte de la carte
-   pose d'ailleurs la sienne. */
+   Sa couleur de texte est posée ici, en craie, pour qu'une carte n'hérite
+   rien de la page qui la pose : sept écrans la posent dans sept conteneurs,
+   et l'un d'eux peut écrire en or, ce qu'aucun petit texte de carte ne doit
+   faire (la règle de l'or). Les classes `r-…` de ui.css ne colorent plus
+   le texte depuis le lot 4 ; chaque texte de la carte pose d'ailleurs sa
+   couleur. */
 .fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;
   border-radius:6px;cursor:pointer;color:var(--craie)}
 
@@ -293,13 +296,36 @@
    Au coin haut-droit, toujours, grille comprise (amendement 20) : la forme
    (`.tbf-forme`, ui.css) et son mot — dans la forme pour le rectangle et le
    rond, en étiquette qui court vers l'intérieur pour l'étoile et l'éclat
-   (`--coin`). Vingt-deux pixels en grille ; douze centièmes de la carte
-   au-delà, soit trente-quatre pour la carte de la fiche (deux cent quatre-
-   vingts pixels) et quarante au plus — à trente-quatre sur une carte de
+   (`--coin`). Vingt-deux pixels en grille (vingt-six pour l'étoile et
+   l'éclat, voir plus bas) ; douze centièmes de la carte au-delà, soit
+   trente-quatre pour la carte de la fiche (deux cent quatre-vingts pixels)
+   et quarante au plus — à trente-quatre sur une carte de
    trois cents, le mot retombait à onze pixels dans un coin de vitrine. Deux
    degrés au plus : elle se lit avant de se voir collée. */
 .fz .fz-forme{position:absolute;z-index:8;top:calc(-1 * var(--deb));right:calc(-1 * var(--deb));
   --taille:clamp(22px, calc(12 * var(--u)), 40px);--rot:2deg;pointer-events:none}
+/* **L'étoile et l'éclat se voient en entier.** Leur étiquette, posée par
+   ui.css à cheval sur leur pied (`.tbf-forme--coin`), en cachait 30 à 45 %
+   de 86 à 200 pixels de carte, mesuré au banc : une étiquette craie de
+   47 × 18 (« ÉPIQUE ») ou de 72 × 18 (« LÉGENDAIRE ») sur une face de
+   quinze pixels. On lisait trois rectangles et un rond — la forme ne
+   distinguait plus la moitié des raretés, ce qu'elle est là pour faire.
+
+   L'étiquette descend donc **sous** la forme, et n'en croise plus que la
+   pointe basse, le bord d'encre et de craie : elle y reste attachée
+   (« l'étiquette qui traverse », amendement 20), et la face se voit à
+   95 % au moins, de 86 à 300 pixels (la suite de la carte exige 85 %).
+   Son bord droit reste sur celui de la forme, comme au coin de ui.css :
+   elle court vers l'intérieur.
+
+   Et elles passent à **26 pixels** (13 centièmes, 44 au plus) au lieu de
+   22 — un écart à la spec, comme le rond de ui.css qui grandit jusqu'à son
+   mot : une étoile à huit branches de vingt-deux pixels a une face de
+   quatorze, plus petite que le rond « RARE » (une trentaine) et que le
+   rectangle « COMMUNE » ; c'étaient les deux raretés les plus hautes qui
+   se voyaient le moins. */
+.fz .fz-forme:is([data-rar=epique],[data-rar=legendaire]){--taille:clamp(26px, calc(13 * var(--u)), 44px)}
+.fz .fz-forme:is([data-rar=epique],[data-rar=legendaire])>b{top:84%;transform:rotate(-4deg)}
 
 /* ------------------------------------------------- la bande du nom
 
@@ -380,13 +406,36 @@
    d'un seul gris, la plaque éteinte, une trame à 45° par-dessus — on voit
    qui manque, on ne le possède pas. La croix couvre l'illustration et jamais
    la bande (amendement 19), et le cadenas, icône au trait sur un rond de
-   craie, dit pourquoi ; une raison (« NIV. 10 ») s'écrit à côté de lui. */
+   craie, dit pourquoi ; une raison (« NIV. 10 ») s'écrit à côté de lui.
+
+   **La silhouette ne se tire que d'une image détourée.** Éteindre une image
+   au noir puis la remonter en gris n'en garde que le contour de ce qui est
+   opaque : un buste opaque (la Clé du Local, 95 %) devenait une dalle
+   grise tachée de noir par son gradin. `cardHTML` demande donc pour une
+   carte non possédée l'image détourée (`fz-pied`) ; l'objet (`objet`)
+   l'est toujours. Une image pleine — le tableau d'une carte d'action, ou
+   tout dessin qui n'a pas d'image détourée — n'est jamais passée au noir :
+   elle s'éteint en grisaille, son contraste ramené de moitié vers le gris
+   de la silhouette, ses formes encore lisibles sous la trame (le tableau de
+   « Craquage », sombre, tombait au noir à moins). La suite de la carte
+   mesure que la silhouette couvre de 15 à 70 % du dessin. */
 .fz.fz-verrou .art{filter:grayscale(1) brightness(.85)}
 .fz.fz-verrou .illuwrap>svg{opacity:.38}
-.fz.fz-verrou .illu{filter:brightness(0) invert(.62);opacity:.92}
+.fz.fz-verrou .illu:is(.fz-pied,.objet){filter:brightness(0) invert(.62);opacity:.92}
+.fz.fz-verrou .illu:not(.fz-pied,.objet){filter:grayscale(1) contrast(.5) brightness(1.1)}
 .fz.fz-verrou .art::after{background:repeating-linear-gradient(45deg,rgba(7,9,12,.42) 0 2px,transparent 2px 5px)}
-.fz .fz-croix{z-index:3;left:9%;right:9%;top:15%;bottom:45%;--ruban:max(9px, calc(6 * var(--u)))}
-.fz .cadenas{position:absolute;z-index:5;left:50%;top:36%;transform:translate(-50%,-50%);
+/* **La croix et son cadenas descendent sur une petite carte.** Centrés à
+   36 % de la hauteur, ils tombaient sous l'étiquette de l'étoile et de
+   l'éclat, qui descend sous sa forme (voir « la forme de rareté ») : sur une
+   carte de quatre-vingt-six pixels, elle finit à trente-neuf pixels du
+   haut, ombre comprise, et le cadenas en commençait à trente. Leur centre
+   est donc à 36 % ou à cinquante-quatre pixels, le plus bas des deux —
+   seule une carte de moins de cent sept pixels de large en descend. La
+   croix garde sa hauteur (40 %) autour de lui. */
+.fz.fz-verrou .body{--croix:max(36%, 54px)}
+.fz .fz-croix{z-index:3;left:9%;right:9%;top:calc(var(--croix,36%) - 21%);bottom:calc(81% - var(--croix,36%));
+  --ruban:max(9px, calc(6 * var(--u)))}
+.fz .cadenas{position:absolute;z-index:5;left:50%;top:var(--croix,36%);transform:translate(-50%,-50%);
   display:inline-flex;align-items:center;justify-content:center;gap:.3em;box-sizing:border-box;
   min-width:max(26px, calc(14 * var(--u)));height:max(26px, calc(14 * var(--u)));padding:0 .4em;
   border-radius:99px;background:var(--craie);color:var(--encre);
@@ -400,7 +449,10 @@
    dit « ÂGE À VENIR » au lieu d'un nom flouté, qui se lisait comme une panne
    d'affichage. Le flou suit la carte : trois pixels sur une vignette, plus
    sur une vitrine, où trois pixels ne cachent plus rien. */
-.fz.fz-secret .illu{filter:blur(max(3px, calc(1.8 * var(--u)))) brightness(.8)}
+/* Un âge secret qu'on n'a pas (la croix posée sur un âge encore loin) reste
+   flou : la seconde règle pèse autant que la silhouette du pochoir, plus
+   haut, et vient après elle. */
+.fz.fz-secret .illu,.fz.fz-secret.fz-verrou .illu{filter:blur(max(3px, calc(1.8 * var(--u)))) brightness(.8)}
 
 /* Les effets vivent dans le panneau de détail. Sur la carte ils masquaient
    l'illustration pour redire la même chose. */

@@ -5590,3 +5590,707 @@ et la carte elle-même (lot 4), les arènes, le bilan de tribune et la présence
 (lot 6).
 
 ---
+
+## 4 quadragies quater. La collection FAIT MAIN — une carte pour sept écrans, un album, une fiche qui tient
+
+Du matin du 3 octobre 2026 à l'après-midi du 4, un atelier a mené le **lot 4**
+de la refonte : la carte elle-même, que sept écrans montrent ; le classeur et le
+vestiaire de `/fanzzy` ; la fiche d'un Fanzzy ; `/collection` ; et les **cinq
+reliquats** que la vague des lots 3 et 5 avait laissés — la réserve de boosters
+dessinée de trois façons, la fête de niveau sans place dans `ui.css`, les
+insignes du carnet versés mais ni servis ni dessinés, le booster des premiers
+pas qui mangeait la recharge en attente, et le contrat de `/api/rank/moi`. Ce
+qui se voit à la fin tient en quatre phrases : la carte est un sticker qu'on a
+envie de coller, et elle dit sa rareté par sa couleur, sa forme, son mot et sa
+matière ; le classeur et la collection sont un même album, qu'on feuillette
+série par série ; la fiche se lit d'un coup d'œil, sans défiler ; une carte se
+regarde partout dans la même vitrine.
+
+L'état de départ est le commit `2ff45f9`, celui de la vague précédente. Le
+travail a été partagé comme aux lots précédents, sur des clés de périmètre
+fermées aux fichiers disjoints : quatorze (`mesure`, `feuilles-css`, `carte`,
+`classeur`, `fiche`, `collection`, `fx`, `kiosque`, `boutique`,
+`barre-tiroir`, `profil-classement`, `pages-autres`, `serveur-aide`,
+`serveur-carnet`), plus `paquet` pour `package.json` et `tests` pour les suites
+qui lisent un comportement voulu. La mesure d'abord, seule avec la base ; puis
+les briques — la carte et son écran de test, les briques communes de `ui.css`,
+les deux périmètres du serveur — ; puis huit écrans en parallèle, qui ont codé
+contre les deux documents de la carte et des briques et se sont échangé leurs
+besoins par clé. Quatre tours de vérification, avec des corrections par
+périmètre entre eux ; puis le regard : une critique visuelle, notée 6,5 sur 10,
+et deux relectures adverses, du code des écrans et du serveur ; leurs constats
+importants ont été corrigés, et deux tours ont suivi. Le sixième n'a trouvé que
+trois fautes mineures, laissées en l'état (voir « Ce qui reste »).
+
+**Gaël a commité le travail en cours pendant la vérification** : `60fe268`
+(« Maj V03102026.1747 »), le 3 octobre à 17 h 47, poussé sur `origin/main` et
+pas mis en ligne. Seize fichiers ont changé depuis, qui ne sont pas commités :
+ce sont eux que le dernier tour a vérifiés (« En ligne », plus bas).
+
+**Les trois documents de l'atelier sont restés dans son bac à sable** :
+`CARTE.md` (ce que `cardHTML` rend, ses options, ce que les écrans doivent
+savoir), `BRIQUES.md` (le balisage exact des briques nouvelles) et `MESURE.md`
+(les commandes et les chiffres de départ). Ce qui doit en durer est dans le
+code — l'en-tête de `cardHTML`, le commentaire de chaque brique de `ui.css`,
+l'en-tête de `scripts/audit-ui.mjs` — et dans `ETAT.md`, § 4.
+
+### Mesurer d'abord : la collection d'un joueur qui en a une
+
+Le joueur de l'audit n'a pas une carte, et c'est ce que tout relevé d'avant
+mesure : les pages le gardent. Mais une collection vide ne montre ni doublon, ni
+légendaire, ni une carte à soi à côté d'une carte qui manque — exactement ce que
+le lot redessinait. `--etats` regarde donc **sept écrans de plus**, tous après le
+classement d'un joueur classé, si bien qu'aucun relevé d'avant ne les voit :
+
+| État | Ce que fait l'audit |
+|---|---|
+| `classeur@/fanzzy` | `/fanzzy?ecran=dex` (à défaut, `[data-go="dex"]`) ; la série semée amenée à l'écran par son onglet `[data-serie]`, sinon en défilant jusqu'à sa première carte ; où est chaque carte semée (`vus` : écran, plus loin, caché, absent) |
+| `fiche@possédé`, `fiche@manquant` | `/fanzzy/TR1` et `/fanzzy/TR3`, mesurées seulement si le texte nomme le personnage |
+| `vitrine@possédée`, `vitrine@manquante` | `/collection`, l'album ouvert par `[data-vue="fanzzy"]`, la case de TR2 ou de TR3 touchée (`.fz[data-id]`, puis `[data-open]`), un `[role="dialog"]` attendu et mesuré sous sa portée |
+| `album@/collection` | la sous-vue ouverte par `[data-vue="fanzzy"]`, attendue en `.tbf-album` ; **absente au départ**, et dite telle |
+| `profil@insignes` | deux lignes `carnet` du grand livre cousues au joueur de l'audit (le liseré, puis le tampon S1), `/api/quotidien` relu, `/profil` visité aux trois formats, les lignes retirées ensuite |
+
+Pour les six premiers, un **collectionneur par format** est semé, lu dans
+`/api/fanzzy/dex` : la première série ouverte qui a ce qu'il faut — sur la base
+de test, LA TRIBUNE (LE VIRAGE IMPOSSIBLE, avant elle, n'a que deux lignées). Il
+porte TR1 au deuxième âge, équipé ; TR2 en trois exemplaires ; TR4 et la
+légendaire TR12, NOUVEAU ; il lui manque TR3 ; et 500 écharpes, 6 boosters,
+400 XP, Sion. Ses nouveautés sont resemées avant chaque visite : le classeur
+éteint ce qu'il a montré, la fiche sa clé. Le plan est rangé dans le JSON
+(`collectionSemee`, `insignesSemes`, `formatsEtats`), qui reste `audit-ui/3` :
+rien que des ajouts. Chaque état nomme sa panne (genre « état ») et photographie
+ce qu'il a trouvé, au lieu d'arrêter l'audit. Les accroches qu'il lit
+(`?ecran=dex`, `.fz[data-id]`, `[data-serie]`, `[data-vue="fanzzy"]`,
+`.tbf-album`, `[role="dialog"]`) ont été demandées par écrit aux périmètres qui
+les posent, et posées.
+
+**Chrome ne dit plus que le réseau s'est tu.** Sur le classeur d'avant le lot —
+733 cartes, 573 images paresseuses —, `networkidle0` n'arrivait jamais à partir
+du deuxième contexte du navigateur, alors que ni puppeteer ni le protocole de
+débogage ne voyaient une requête en vol : la page attendait vingt secondes, deux
+fois, et la case restait vide. Les états de la collection arrivent donc par
+`load`, puis attendent que **notre** serveur se taise — aucune requête vers
+notre origine depuis 500 ms, quinze secondes au plus. Les pages gardent
+`networkidle0`, et ce chemin ne leur sert qu'en troisième essai, après deux
+échecs, noté (`essais: 3`) : aucune n'en a eu besoin.
+
+**Un mot pour le lecteur d'écran se comptait comme un texte qu'on lit.** Une
+boîte d'un pixel que sa propre découpe efface (`.tbf-vh`, le `.vh` du profil et
+du classement, le `.long` du Virage) était relevée, pâle au soleil compris : le
+prix « 25 écharpes » de la vitrine l'était deux fois, la seconde par
+« écharpes », que personne ne voit. Ce qu'une découpe rogne à rien sort
+maintenant de tout relevé, nommé à part (`rognes`) : le `textes` d'avant vaut le
+nouveau plus `rognes`. C'est ce qui fait baisser `/profil` de six textes,
+`/virage` de trois et un classement rempli de quatorze, sans que rien n'y ait
+changé.
+
+**Le départ s'est contrôlé lui-même.** Pris le 3 octobre de 11 h 03 à 11 h 11,
+au commit `2ff45f9`, `public/` sans modification, il a été comparé au dernier
+relevé de la vague précédente : cent cases, tous les comptes et toutes les
+listes de trouvailles élément par élément, plus la barre — aucun écart, sinon
+quatre cases du kiosque dont le tirage est au hasard. Ce qu'il disait : **le
+classeur était presque aveugle** — 750 textes sans fond mesurable, le nom et les
+marques de chaque carte posés sur l'illustration ou un dégradé —, et
+`/collection` aussi, 291 sur 324. Le compte au soleil n'y prouvait rien ; c'est
+« non mesurables » qu'il fallait faire tomber.
+
+### La carte : un sticker, et sa rareté dite quatre fois
+
+`cardHTML` (`public/cartes.js`, `public/cartes.css`) dessine la carte du jeu pour
+sept écrans — le classeur, la collection, l'ouverture d'un booster, la
+bienvenue, le profil, l'aide, et ce que le deck reprend de son dessin. Elle a
+été refaite **une fois**, sans changer de signature : tout ce qui s'ajoute est
+une option facultative, et ce que lisent le JavaScript et les suites (`.nm`,
+`.pip`, `.art`, `.illu`, `data-id`, `r-<rareté>`, `holo`) est resté.
+
+**Le sticker de carte.** La plaque de sa rareté en fond, le personnage devant ;
+un bord de découpe craie, un cerne d'encre, une ombre dure ; le nom en
+banderole sur une bande craie de travers, qui passe les deux bords et prend
+autant de lignes qu'il lui en faut, sans couper un mot ; le pin de famille et
+l'âge en haut à gauche — un badge sous 150 pixels de large, le tampon vert
+« ÉVO 2 » au-dessus, avec le pied « VOIX · POUSSÉE 64 » dans la bande ; les
+doublons « ×3 », AVATAR et TITULAIRE en stickers. Tout est en `--u`, un
+centième de la carte, avec des planchers : rien n'est écrit sous 11 pixels, de
+86 à 300 pixels de large. Le seuil du pied, 150 pixels, n'a pas bougé.
+
+**La rareté se dit quatre fois** : par la couleur ; par la **forme**
+(`.tbf-forme` : rectangle, rond, étoile, éclat) ; par son **mot**, toujours, en
+grille comprise (amendement 20) ; par la **matière** — carton mat pour la
+commune, liseré plastifié pour la rare, holo pour l'épique, liseré d'or pour la
+légendaire. Les losanges et les ★/♛ sont partis partout, deck compris ;
+`rarMark` rend la forme, sous la même signature. La matière est **figée en
+grille** et ne bouge qu'à la vitrine, sur la fiche et à la révélation : un seul
+mouvement par carte — la dérive de l'épique, ou le liseré qui tourne — plus la
+respiration du personnage, et trois cartes animées au plus à l'écran ;
+`.fz-fige` arrête le reste (`.kq-fige`, celui du kiosque, ne suffisait plus), et
+`.tbf-album` fige toujours.
+
+**La plaque suit la rareté, plus l'âge** (`palierDecor`,
+`public/fanzzy-fond.js`). Elle avait suivi l'âge, pour que le personnage qu'on
+fait grandir change de lieu ; mais un état rare tiré au premier âge, une tenue
+épique, une pièce rare se tenaient alors dans le gradin gris d'une commune, sous
+un liseré bleu ou violet — deux codes pour une seule information. Dans une
+lignée, rien ne change : ses trois âges sont commune, rare et épique. Les seize
+plaques de tenue restent au vestiaire.
+
+**Ce qu'on n'a pas** (`verrou`) : un pochoir gris sous une trame, un scotch en
+croix, le cadenas sur un rond craie, et le numéro de pochette « N° 013 » à la
+place du nom (`numero`), le nom restant pour le lecteur d'écran ; `raison` écrit
+ce qui ouvre la case (« NIV. 10 »). Un **âge secret** (`secret`) floute le
+dessin, dit « ÂGE À VENIR » et porte son sticker de prix (`prix`). Le **verso**
+n'est construit qu'au premier retournement (`flip`, `TBF_CARTES.retourner`).
+
+**L'étiquette d'état passe dans le flux** de la bande du nom (`.sur`) : un nom
+de trois lignes la repousse, elle ne passe plus jamais dessous. Le correctif
+provisoire du lot 1 (`--lignes-nom` et le `@container` de `.tbf-etiq`) est
+retiré de `ui.css`. Mesuré à la fin sur cent vingt cartes de 86 à 300 pixels aux
+noms les plus longs : jamais sous le nom ; elle touche la boîte de ligne du nom
+dans trente et un cas, à six à huit pixels au-dessus des lettres.
+
+**Quatre corrections après la critique**, chacune gardée par la suite de la
+carte :
+
+- *l'étoile et l'éclat se voient.* Leur étiquette, posée à cheval sur leur pied,
+  en cachait 30 à 45 % de 86 à 200 pixels de carte : on lisait trois rectangles
+  et un rond, et la forme ne distinguait plus la moitié des raretés. Elle descend
+  sous la forme, qui passe à 26 pixels en grille au lieu de 22 : la face se voit
+  à 95 % au moins, et la suite en exige 85 ;
+- *la silhouette se tire d'une image détourée.* Éteint au noir puis remonté en
+  gris, un buste opaque — la Clé du Local, le troisième âge de Gosier — devenait
+  une dalle grise tachée de noir : les cartes les plus désirables étaient les plus
+  ternes. `verrou` prend le plein-pied, détouré, et `brightness(0)` ne se pose
+  plus sur une image opaque ;
+- *une carte qu'on n'a pas ne bouge pas* : la légendaire manquante de la vitrine
+  faisait tourner son liseré d'or autour d'une silhouette qui respirait ;
+- *le personnage en pied seulement quand on le demande* (`pied`). Posé par défaut
+  sur toute carte qui n'était pas de grille, il faisait télécharger chaque carte
+  d'un booster deux fois — en pied à la révélation, en buste au butin — et neuf
+  plein-pieds d'un coup à la bienvenue, 55 Ko pièce contre 14. La vitrine et la
+  fiche le demandent ; le reste garde le buste.
+
+**L'écran de test**, demandé par le brief : `scripts/cartes-ui-smoke.mjs`,
+inscrite sous `cartes:ui`, **sans base**. Elle monte dans Chrome une planche
+faite par les vraies fonctions de `cartes.js` sur le vrai catalogue — cinq
+largeurs (86, 110, 150, 200 et 300 pixels) × quatre raretés × les états
+(possédée, manquante avec son numéro ou sa raison, âge secret, doublon, AVATAR,
+TITULAIRE, retournée, noms d'une, deux et trois lignes), les autres sortes de
+carte, la vitrine animée et la pile figée — et la mesure : aucun texte sous
+11 pixels, coupé ou recouvert ; l'étiquette au-dessus du nom ; la forme et son
+mot partout, la face de l'étoile et de l'éclat visible ; la silhouette
+détourée ; plus aucun losange ; pas de petit or ; le nom à 4,5:1 sur sa bande,
+au soleil compris ; aucune animation infinie en grille, aucune sans mouvement ;
+et **les 765 noms du catalogue** dans la bande d'une carte de 86 pixels. Oswald
+vient de Google Fonts, comme pour le joueur : sans réseau, la suite échoue au
+lieu de mesurer dans une autre police. Elle a été cassée exprès à chaque
+garde-fou — l'étiquette en absolu, une respiration non figée, la rangée posée
+sur le nom, l'arrêt de la pile figée retiré, un objet à 58 %, un pin sans
+repli, l'anneau après le compte à rebours, des nouveautés en `[]` — et a rougi
+chaque fois. Trente-huit contrôles ; `--servir 4317` sert la planche à regarder.
+
+### L'album : le classeur et la collection, un seul composant
+
+`.tbf-album` (`ui.css`) est le classeur de `/fanzzy` **et** l'album Fanzzy de
+`/collection`. Une page par série, qu'on tourne du doigt (`scroll-snap`) ; le
+rail des séries au-dessus, chaque onglet portant `data-serie` — une série fermée
+sous son cadenas, qui se touche et dit pourquoi sans s'ouvrir ; l'en-tête de la
+série (emblème, nom, « 12 / 40 », la jauge-écharpe à crans, le tampon COMPLET
+d'une série finie, la récompense de la série complète quand le serveur la sert) ;
+la grille des cartes collées de travers sous leur scotch, et les **pochettes**
+pointillées et numérotées de ce qui manque — la silhouette au pochoir pour le
+premier âge, rien pour l'âge supérieur d'une lignée absente ; la légendaire
+ferme sa série en case double VITRINE, où rien ne bouge. Entre le rail et la
+page, les six familles en pins ronds et l'interrupteur des manquants.
+
+**Seules la page ouverte et ses voisines sont montées.** Les autres restent des
+sections vides de même largeur, et la page qui s'éloigne se vide. Mesuré à la
+fin : deux ou trois pages montées sur treize, au classeur comme à
+`/collection`, et un onglet lointain démonte les autres. Le classeur d'avant
+montait ses 733 cartes d'un coup.
+
+**Une lignée par rangée.** Le classeur range ses cartes par lignée — TR1, TR1B,
+TR1C — : trois colonnes à 360 pixels, six à partir de 640, soit deux lignées par
+rangée ; à cinq colonnes, les lignées se coupaient en travers des rangées. Les
+six filtres et MANQUANTS tiennent sur une rangée à 360 pixels : la première
+carte tombe à 348 pixels au lieu de 400, et la deuxième rangée entre à l'écran.
+
+**NOUVEAU vient du serveur, et s'éteint après avoir été vu.** Le drapeau est
+`nouveautes` (contrat § 2.1), le même sur tous les appareils. Une carte est vue
+quand elle est restée à moitié à l'écran près d'une seconde ; les clés partent
+par lots (`POST /api/fanzzy/vu`), et à la sortie de la page (`keepalive`). Le
+« +N » de FANZZY sur le hub, que personne n'éteignait depuis qu'il venait du
+serveur, a enfin son lecteur. NOUVEAU est collé **à cheval sur le coin
+bas-gauche**, devant la bande du nom : posé d'abord sur le flanc, au tiers de la
+hauteur, il couvrait avec « ×2 » le visage du personnage qu'on venait de
+gagner — exactement ce qu'on voulait voir. Le butin du kiosque prend la même
+place, et ne colle plus de seconde forme au coin d'une carte qui porte la sienne.
+
+**Le même album, vraiment.** L'album de `/collection` montrait une case par
+personnage, avec les numéros du classeur — N° 016, 019, 022 — : le
+collectionneur cherchait des trous qui n'existaient pas, et sa case VITRINE ne
+disait pas la même chose. Il range maintenant les trois âges à la suite, comme le
+classeur : mesuré sur LA TRIBUNE, cent pochettes de part et d'autre, aucun
+numéro différent. **Mais la fabrique des cases est recopiée** dans
+`collection.html`, « trait pour trait » sur celle de `fanzzy.html` (`cartesDe`,
+`caseHTML`, `vitrineHTML`) ; la sortir dans un module partagé est demandé au
+périmètre de la carte, et n'est pas fait.
+
+**La récompense d'une série complète ne paraît qu'à `/collection`.** Pour ce seul
+sticker, le classeur s'était mis à appeler `/api/fanzzy/bibliotheque` — la
+bibliothèque entière, cinq lectures et tout le catalogue —, ce que le brief
+interdit (« aucune requête lourde de plus par écran »). L'appel est parti : au
+classeur, la jauge reste nue tant que le serveur ne sert pas `paliers.series`
+avec l'état (`/api/fanzzy/state`).
+
+### Le vestiaire
+
+MON FANZZY devient **le vestiaire** : le personnage qu'on montre aux autres, en
+grand, sur une scène — une bâche au cadre de sa rareté, l'écharpe de sa série en
+tête, la lueur de la rareté derrière lui (`.tbf-vestiaire`). Au-dessus, la
+poche : les écharpes, la réserve de boosters et l'anneau du classeur. Dessous,
+son nom en banderole, ses stats en stickers (POUSSÉE, la famille, l'ÉTAGE), la
+bande de son cri, ENTRER EN DUEL avec les trois bustes du deck collés sur le coin
+de la bâche — la seule lecture de plus de l'écran, `GET /api/deck/loadout`,
+légère —, puis SA FICHE. L'écran ne défile pas, et ses images passent de quinze
+à cinq (656 Ko à 297).
+
+**La place vide n'existait plus.** Le brief la disait « faite au lot 2, à
+garder » ; la critique l'a cherchée et n'a trouvé que « Aucun Fanzzy choisi »,
+dans un panneau calme, sans un bouton, au-dessus de 470 pixels de vide — le
+premier écran d'un nouveau joueur. C'est maintenant la scène sans personnage :
+la photo d'une place vide en tribune, « TA PLACE EST VIDE » au marqueur sur un
+papier scotché, et la bâche or OUVRIR MON PREMIER BOOSTER, la réserve en sticker
+sur son coin ; à qui a des cartes sans en avoir choisi une, CHOISIR DANS LE
+CLASSEUR en bleu. `fanzzy.html` charge donc Permanent Marker : six emplois du
+marqueur, sur les six que permet l'amendement 6.
+
+**Le solde n'est à l'écran qu'une fois.** À partir de 560 pixels, la barre ne
+déplie plus ses jetons sur un écran qui porte sa propre bourse (`BOURSE_EN_PAGE`,
+`nav.js`) — et sur `/fanzzy`, seulement tant que la poche du vestiaire est
+montrée : l'album affiche des prix, et cacher la bande sur toute l'adresse y
+laissait des prix sans aucun solde à côté.
+
+### La fiche, budgétée
+
+`/fanzzy/:id` et le panneau que le classeur ouvre par-dessus sont la même fiche
+(`fanzzy-fiche.html`, `.js`, `.css`), refaite autour de **la carte du jeu tenue
+en main** : elle s'incline au doigt, prend la lumière, se retourne.
+
+**Un budget de hauteur, écrit** en tête de `fanzzy-fiche.css` pour
+360 × 640 :
+
+| bloc | pixels |
+|---|---|
+| la barre du jeu | 54 — 44 de boutons, 10 de marges |
+| l'en-tête | 51 — le nom, et la famille en sticker de 24 px |
+| la carte, seul bloc souple | 225 — la carte y fait 151 × 211 |
+| la bande du cri | 48 |
+| l'inventaire | 100 |
+| la fiche kraft du détail | 88 |
+| les actions | 74 |
+
+La direction écrivait « barre 44 » et « en-tête 44 » ; la barre en prend 54 avec
+ses marges, et la bande du cri garde 44 pixels au lieu de 32, parce qu'une cible
+plus basse est relevée par l'audit. La carte ne garde donc qu'un pixel au-dessus
+des 150 qui lui laissent son pied et son tampon d'âge : sur un écran plus court,
+la bande du cri se replie d'abord en une plaque ronde à côté de la carte, puis
+la carte rétrécit, et seulement ensuite le corps défile — jamais les actions.
+Mesuré à la fin à 320 × 568, 360 × 640 et 768 × 1024, pour un possédé, un joueur
+pauvre, un âge maximal, un manquant, une légendaire et RP35 : rien ne défile,
+rien ne déborde.
+
+**Sous la barre, pas par-dessus.** Le panneau couvrait la barre, à z 26 ; le HUD
+(z 30) passait devant son en-tête — à 360 pixels, l'avatar mordait le compteur
+d'écharpes — pendant que la flèche et le menu étaient couverts. La fiche commence
+là où finit la barre (`--sous-barre`), comme à son adresse ; ce qu'elle couvre
+se cache, et sort de la tabulation.
+
+**L'inventaire en quatre rangées** qui défilent en largeur : ÂGES, en arbre de
+nœuds sur une corde, le prix du suivant pendu sous la corde et son nœud qui
+respire quand le solde suffit ; EFFETS ; ÉTATS en vert ; TENUES en **bleu**,
+jamais violet, le ton des autres joueurs. Les tuiles d'effet prenaient la
+couleur de leur famille — la VOIX dans l'or même d'ÉVOLUER, juste dessous, la
+FIDÉLITÉ dans un gris d'objet éteint — : elles sont à la craie, le pin de la
+famille au coin. Puis **la fiche kraft** de la pièce touchée, au noir, sans
+paragraphe : un titre et des lignes de chiffres, « 65 → 80 » entre la jauge
+d'avant et celle d'après.
+
+**Les actions, hiérarchisées et toujours au même endroit** : ÉVOLUER en or, son
+prix en sticker et « 500 → 410 écharpes » dessous ; à court, IL TE FAUT 15,
+éteint et nommé — le retirer ferait croire que ce Fanzzy ne grandit pas ;
+EMMENER EN DUEL en flare ; ME MONTRER AINSI, qui enregistre l'apparence composée
+en touchant un âge, une tenue ou une expression ; et TON AVATAR, un acquis, plus
+un bouton éteint. **Le non possédé** montre la carte au pochoir, la vignette du
+paquet de sa série et la bâche or OUVRIR UN BOOSTER, qui mène à `/boosters`.
+« 1 CHANCE SUR 3 » n'est pas écrit : le serveur ne sert pas la chance d'une
+carte.
+
+**La cérémonie d'évolution joue enfin.** Depuis que le portrait qu'on fait
+évoluer est le dessin même de la carte, que `fx.js` fait respirer, la
+respiration l'emportait à poids égal sur la charge et l'arrivée de
+`FX.evolution` : au banc, `fzsouffle` à la place de `fxcharge`. Elles pèsent
+maintenant un identifiant (`:not(#fx-nul)`). Le tampon ÉVO 2 claque sur la
+carte, le ticket « −25 » descend du sticker de solde (`.tbf-glisse--haut`), le
+solde décompte (`FX.compter`).
+
+### La collection : l'album de tout ce qui se gagne
+
+`/collection` était un accordéon de treize mille pixels. Elle s'ouvre maintenant
+sur **le niveau de collectionneur** — l'anneau, le titre de palier (ABONNÉ,
+ULTRA, CAPO), le prochain cran écrit par ce qu'il ouvre (« 75 → 25 ÉCHARPES »),
+et RÉCUPÉRER quand quelque chose attend (contrat § 5.1) — et sur **cinq rayons**
+en bâches : FANZZY, ÉTATS, TENUES, ÉQUIPEMENT, CARTES D'ACTION, chacun avec son
+anneau, sa dernière pièce arrivée et la pastille de ses nouveautés. Chacun ouvre
+sa sous-vue. L'audit y lit 22 textes au lieu de 324, aucun non mesurable au lieu
+de 291, et plus un nom coupé (15 à 360 pixels, 45 à 768).
+
+- **FANZZY** est l'album du classeur (plus haut) ; une case s'y ouvre dans la
+  vitrine, et non sur la fiche.
+- **ÉTATS et TENUES** se rangent dans le même album : le rail des séries, une
+  page par série montée à ±1, les personnages dans l'ordre de leurs pochettes ;
+  une planche par personnage, les âges atteints seulement ; une planche complète
+  repliée en une ligne, avec PLANCHE COMPLÈTE ; le détail d'un personnage
+  demandé quand sa planche approche de l'écran, une fois. À la critique, ces
+  sous-vues étaient une colonne sans fin — une planche de douze cases par
+  personnage, âges non atteints compris, quelque quatorze mille pixels pour
+  trente-huit personnages : l'accordéon revenait par les tuiles.
+- **ÉQUIPEMENT et CARTES D'ACTION** : une grille de page d'album, ce qu'on a
+  collé sous son scotch, ce qu'on n'a pas sous son pochoir et sa croix, avec son
+  nom — c'est précisément ce qu'on cherche.
+
+Trois corrections de la critique, à l'accueil de la page : **l'anneau vise le
+palier en cours** — « 10 / 3311 » laissait un anneau vide à l'œil, 0,3 %, à côté
+d'un sticker qui promettait le cran de 25 : il vise le prochain cran, comme la
+tuile du hub, au chiffre près (« 10 / 25 »), et le total reste dans son
+étiquette ; **ÉQUIPEMENT est en parpaing**, et plus en violet, le ton des autres
+joueurs ; au-delà de 600 pixels, l'accueil tient une colonne de 560 au lieu de
+dalles vides de 370 × 130.
+
+### La vitrine, modale commune
+
+Toute carte de `/collection` se regarde dans **la même vitrine** (`.tbf-vitrine`,
+`ui.css`), un `[role="dialog"][aria-modal="true"]` posé sur `body` : la carte
+sur une scène qu'on incline au doigt (±8,5°, sous un lustre — pas sous le calme
+ni le mouvement réduit), **la pile des voisines en dos** derrière elle, DANS TA
+COLLECTION, son nom, ses galons (la forme, la famille, la série), le kraft de ce
+qu'elle change, ses âges en tuiles avec leur portrait — flou sous cadenas pour
+un âge pas atteint —, FAIRE GRANDIR en or avec son prix, VOIR SA FICHE, et les
+flèches vers ses voisines. Une possédée en double porte « ×3 » en tampon plein
+sur son flanc (au coin, il tombait sur l'éclat d'une légendaire). Une manquante
+montre, à la place des actions, la vignette du paquet et OUVRIR UN BOOSTER. La
+planche d'un personnage s'ouvre dans le même carton. La boîte ne défile qu'en
+hauteur : à 360 pixels, la vitrine d'avant glissait de 62 pixels de côté sous le
+doigt.
+
+**Une possédée passe par la cérémonie de sa rareté** (`FX.reveler`), une
+manquante n'a qu'un tic : fêter ce qu'on n'a pas serait la meilleure façon de ne
+plus rien fêter. `FX.rare` est parti avec son dernier appelant. **Et les effets
+montent au-dessus d'elle** : la vitrine est un calque plein à z 120, et la
+cérémonie, à z 96, jouait dessous — une légendaire ne s'y entendait et ne s'y
+sentait que par le son et la vibration. Tant que la vitrine est ouverte
+(`tbf-vitrine-ouverte` sur la racine), les calques de `fx.js` montent de
+quarante, toujours sous la boîte de confirmation et la fête de niveau, et la
+secousse fait trembler son carton.
+
+### Les reliquats
+
+**La réserve de boosters est une seule brique**, `.tbf-monnaie.tbf-boosters` : un
+compteur de monnaie qui porte ses sachets, au kiosque, à la boutique, dans la
+bande du HUD et au vestiaire, au lieu de trois dessins dont un sous un autre
+pictogramme. Deux formes, une règle (`reserveHTML`) : une place par booster
+quand le plafond de ce joueur est servi et tient en cinq places, l'anneau sur la
+première vide ; sinon le sachet, son compte et l'anneau à côté. Le compte est
+toujours le premier `<b>`, celui que lisent la bande du HUD, `fanzzy:ui` et
+`FX.compter`. Ce qu'on ne veut pas écrire — PROCHAIN, le temps — ne s'écrit
+pas : le cacher par une règle laisserait un texte à zéro pixel, que l'audit
+relève comme petit. La rangée du HUD se serre de 560 à 600 pixels : avec
+l'anneau, la bande fait 83 pixels, et « Compétitions » se coupait avec un solde
+à quatre chiffres. Mesuré à la fin : la même brique aux quatre endroits, craie,
+le compte en Oswald 17 à l'encre.
+
+**La fête de niveau a sa place dans `ui.css`**, section « la montée de niveau » :
+les règles de la feuille que `niveau-fete.js` posait lui-même
+(`#tbf-niv-feuille`) y sont reprises au sélecteur près, l'ancienne boîte
+« premium » — dont une rosette qui tournait sans fin sous un halo doré — est
+retirée, et le script ne porte plus une ligne de style. Les classes que lisent
+les suites restent.
+
+**Les insignes du carnet sont servis et dessinés.** Le liseré et le tampon S1
+étaient copiés dans `recompenses.insigne` au versement, mais aucune route ne
+disait qu'un joueur les portait. Ils sont à la racine de `GET /api/quotidien`,
+donc aussi dans le `quotidien` de chaque geste : `insignes`, une liste de
+`{ id, saison: { id, numero, nom } }`, **sans une lecture de plus** — la lecture
+du grand livre que l'état faisait déjà prend la colonne (six requêtes avant, six
+après). La ligne fait foi, pas le carnet d'aujourd'hui : un carnet recalé ne
+retire rien à qui a récupéré. Un insigne se porte pour toujours, carnet éteint
+et saison remise en brouillon compris, mais plus quand la saison est supprimée,
+faute de numéro à écrire. Ordre : par numéro de saison, puis par palier — dans
+l'ordre des clés, S10 passerait avant S9 —, un seul par saison et par sorte ;
+absent plutôt que `[]`. Le contrat a été écrit d'abord (`serveur/CONTRATS.md`,
+§ 6.1), et `quotidien:smoke` l'éprouve, vu rouge sans le code. Le profil coud
+**le liseré** autour de l'anneau du buste (`.tbf-avatar[data-lisere]`, une
+bande d'encre au fil de craie, ni or ni couleur de rareté), pose **le tampon
+S1** sur la carte de supporter, et MA SAISON les dit en stickers ; `/aide` écrit
+de nouveau « LISERÉ S1 » et « TAMPON S1 » sur les paliers qui les donnent.
+
+**Le booster des premiers pas compte la recharge.** `recompenser`
+(`src/server/aide/index.js`) ajoutait le cadeau par un `packs = packs + 1` sans
+compter la recharge en attente, alors que son commentaire affirmait l'inverse :
+à 11 sur 12 avec une recharge due, le cadeau menait à 12, la lecture suivante
+voyait la réserve pleine et remettait la minuterie à zéro — 12 au lieu de 13,
+sans que rien ne lève. Il appelle maintenant `recharger(conn, userId)` sur la
+connexion de son versement, sous le `FOR UPDATE` de la bourse, avant le cadeau :
+une annulation défait les deux. Un premier appel, sur le pool et hors
+transaction, pose le souvenir de l'abonnement, comme le quotidien
+(`avantUnBooster`) : sous le verrou, une lecture par le pool peut affamer le
+serveur (4 quadragies ter). Sans porte, il lève **avant toute écriture**, comme
+le grand livre. `aide-smoke` le garde : à 11 sur 12 avec une recharge due, le
+booster de fin mène à 13 ; branchée sur l'aide d'avant, la suite a quinze
+rouges.
+
+**`/api/rank/moi` est au contrat.** Le code n'est pas touché : le § 14 de
+`serveur/CONTRATS.md` déclare la réponse entière — la racine et ses `null`,
+`tribune.couleurs`, `avatar` et `niveau` à la racine avec leurs trois cas (un
+objet, `null` sans Fanzzy équipé, absent quand le serveur ne sait pas), la fin
+de la saison (`fin`, `joursRestants`, `finie`), aussi écrite au § 5.2. Le § 5.1
+y gagne `possibles` et la règle des crans sans les tenues.
+
+Deux constats de détail de la critique précédente sont réglés en passant :
+l'étoile et l'éclat que leur mot cachait (plus haut), et le scotch des cases,
+invisible sur le kraft éclairci, qui prend un ruban au fil d'encre
+(`--ruban-k`).
+
+### Les pièges de l'atelier
+
+**Une étiquette posée sur une forme de quinze pixels la cache.** La forme de
+rareté est là pour qu'on reconnaisse la rareté sans lire : l'étoile et l'éclat,
+recouverts aux deux tiers par leur mot, ne se distinguaient plus du rectangle.
+Une information portée par une forme se mesure à la part visible de la forme —
+c'est ce que la suite de la carte fait maintenant.
+
+**Un pochoir ne fait une silhouette que d'une image détourée.** `brightness(0)`
+sur une image opaque rend un rectangle noir, et le gris qu'on remonte dessus,
+une dalle. Il faut demander l'image détourée — le plein-pied —, et ne jamais
+éteindre une image pleine.
+
+**Un emblème de couleur sur un rond de la même couleur disparaît.** Les pins de
+famille posaient l'emblème émaillé de la famille — le mégaphone jaune de la
+Voix, le cœur gris de la Fidélité — sur un disque de sa couleur : six filtres
+sans libellé dont on ne reconnaissait pas le dessin. L'image passe en grisaille
+d'encre (`grayscale(1) brightness(.45) contrast(1.8)`, la même que le repli du
+pin de la carte), à 4:1 au moins sur les six ronds ; pressé, le pin prend un
+bord de craie et une coche.
+
+**Une option par défaut coûte à tous ses appelants.** `pied`, vrai par défaut sur
+toute carte qui n'était pas de grille, a doublé sans bruit les téléchargements de
+la révélation et de la bienvenue. Une option chère se demande.
+
+**Deux animations au même poids : la dernière écrite gagne.** La respiration de
+`fx.js` et la charge de l'évolution visaient le même dessin avec la même
+spécificité ; la respiration, écrite après, l'emportait, et la cérémonie ne
+jouait pas — sans une erreur. Une animation de moment doit peser plus que celle
+de repos, et cela se vérifie au banc, pas en lisant la feuille.
+
+**Un calque plein cache les effets posés dessous** — la leçon de la fête de
+niveau aux lots 3 et 5, une seconde fois : la vitrine à z 120 couvrait la
+cérémonie à z 96. Un calque plein qu'on ajoute fait monter les effets avec lui.
+
+**Un panneau sous le HUD.** La fiche à z 26 laissait passer le HUD de la barre,
+à z 30, devant son en-tête. Un panneau qui couvre la page commence sous la
+barre ; il ne la couvre pas à moitié.
+
+**Un correctif serveur peut n'exister que dans sa suite.** `aide-smoke` construit
+l'aide avec sa propre porte de recharge ; `server.js`, lui, ne la passe pas à
+`createAide` — fichier d'aucun périmètre. Sans repli, le correctif aurait été
+vert en suite et absent en production. La porte se lit donc aussi sur
+`globalThis.fanzzy`, que `server.js` pose en montant le module fanzzy, avant
+l'aide ; et `aide-smoke` lit `server.js` pour vérifier ce câblage, que retirer la
+globale — elle ressemble à un reste — casserait sans qu'aucune autre suite ne
+rougisse.
+
+**Une panne qui répond 400 sans journal ne se voit nulle part.** La route de
+l'aide rendait 400, avec le code brut de MySQL quand il y en avait un, et
+n'écrivait rien : la page se tait devant une erreur, si bien qu'une faute de
+câblage n'aurait été vue ni à l'écran ni au journal. Elle écrit la pile
+(`[aide]`) et répond 503 `aide.error.indisponible`, le code d'un bloc absent.
+
+**Un sticker posé sur le visage cache ce qu'on vient gagner.** NOUVEAU sur le
+flanc, à un tiers de la hauteur, tombait sur les yeux du buste. Un sticker se
+colle sur un bord que la carte n'emploie pas : ici, le coin bas-gauche, devant
+la bande du nom.
+
+**Un anneau qui compte tout l'univers est vide à l'œil.** « 10 / 3311 » dessine
+0,3 % : l'anneau compte le palier qu'on vise, et le total va dans l'étiquette.
+
+**Une règle déplacée laisse derrière elle des commentaires qui mentent.** NOUVEAU
+a changé de place dans la brique ; deux commentaires de page disent encore qu'il
+est sur le flanc (« Ce qui reste »). C'est le piège de la brique faite pour une
+autre page (`ETAT.md`, § 6), dans l'autre sens.
+
+**Deux ateliers sur le même poste.** Pendant le dernier passage de toutes les
+suites, un banc puppeteer de l'atelier du lot 6, dans sa propre copie, tournait
+sur la machine : `virage:ui` s'est arrêtée sur un délai de navigation dépassé
+(`networkidle0`, au bout de 38 secondes), puis est passée seule trois fois, 102
+contrôles verts. Un rouge de délai pendant qu'un autre Chrome tourne ne s'attribue
+à personne : il se relance seul.
+
+**Un commit pris pendant l'atelier.** `60fe268` est parti sur `origin/main` au
+milieu de la vérification. Cette fois rien n'est parti en ligne, et aucun schéma
+n'était en jeu ; mais il ne porte pas les corrections des tours suivants ni
+celles du regard, et la branche du lot 6 en part.
+
+### Ce que la mesure dit après
+
+L'état de départ est celui du commit `2ff45f9`, mesuré le 3 octobre de 11 h 03
+à 11 h 11 ; la fin, le sixième tour, le 4 octobre de 16 h 24 à 16 h 32, sur la
+copie de travail.
+
+| Relevé, hors `/admin` et `/diagnostic` (360 × 640 / 400 × 800 / 768 × 1024) | départ | fin |
+|---|---|---|
+| texte sous 11 px, opacité sous 0,85, flou, débordement, hors écran, cible sous 44 px, coupé, police de repli, petit or, erreur de script | 0 / 0 / 0 | 0 / 0 / 0 |
+| pâle à l'intérieur, sur fond uni et sous le grain | 0 / 0 / 0 | 0 / 0 / 0 |
+| pâle au soleil, sur fond uni | 20 / 20 / 20 | 18 / 18 / 18 |
+| pâle au soleil, sous le grain | 67 / 67 / 67 | 68 / 68 / 68 |
+| textes lus sous le grain | 225 / 225 / 244 | 224 / 224 / 243 |
+| textes encore non mesurables | 427 / 425 / 433 | 123 / 123 / 132 |
+| textes | 877 / 875 / 944 | 571 / 571 / 638 |
+| coupé (lignes) | 15 / 3 / 45 | 0 / 0 / 0 |
+| hors contraste (pseudo-élément, champ) | 23 / 23 / 23 | 24 / 24 / 24 |
+
+Les textes baissent surtout parce que `/collection` en montrait 324 et en montre
+22 ; les « rognés » en retirent neuf (`/profil` et `/virage`). Au soleil,
+`/fanzzy/RP1` passe de 3 + 0 à 1 + 2, `/collection` de 0 + 1 à 0 ; les autres
+écrans du lot ne bougent pas — `/boosters` 0 + 15, `/boutique` 4 + 2,
+`/abonnement` 0 + 1, `/profil` 1 + 8, `/fanzzy` 0 + 2. Le seul compte qui monte,
+« hors contraste » sur `/fanzzy`, est la pastille « 6 » posée en `::after` sur
+OUVRIR MON PREMIER BOOSTER, que l'audit ne sait pas mesurer : au banc, 17,2:1
+dedans et 4,86 au soleil.
+
+| État (360 × 640) | textes | au soleil (uni + grain) | non mesurables |
+|---|---|---|---|
+| le classeur | 28 → 33 | 4 + 10 → 3 + 2 | 750 → 57 |
+| la fiche d'un possédé | 19 → 26 | 3 + 3 → 2 + 4 | 7 → 1 |
+| la fiche d'un manquant | 18 → 16 | 3 + 0 → 1 + 2 | 9 → 0 |
+| la vitrine, possédée | 24 → 28 | 4 + 11 → 4 + 10 | 1 → 0 |
+| la vitrine, manquante | 21 → 24 | 3 + 8 → 2 + 8 | 1 → 0 |
+| l'album de `/collection` | absent → 378 | — → 3 + 0 | — → 3 |
+| le profil et ses insignes | — → 66 | — → 2 + 8 | — → 0 |
+| une carte révélée | 7 → 8 | 3 + 1 → 3 + 1 | 2 → 1 |
+| le butin (360 / 400 / 768, tirage au hasard) | 25 → 26 | 10 / 13 / 13 → 10 / 11 / 8 | 7 → 3 |
+| un classement rempli | 93 → 79 | 0 + 3 → 0 + 3 | 0 → 0 |
+
+Les trois noms d'âge coupés de la vitrine manquante sont partis, et l'or posé
+dans un objet légendaire aussi (5 au classeur, 2 et 4 au butin) : la carte ne
+porte plus de texte en or. L'ouverture, le tiroir, la bande du HUD et le ticket
+du gain ne bougent pas. Le profil d'un joueur qui porte ses insignes montre le
+tampon, le liseré et les deux stickers.
+
+Mesuré à part, sur la copie de travail, sans base, aux bancs du vérificateur :
+la fiche tient son budget (plus haut) ; l'album ne monte que ses voisines ;
+aucune animation infinie en grille — le classeur, les cinq sous-vues, le butin —,
+au plus une carte animée à l'écran sur la fiche, la vitrine, la révélation et la
+bienvenue, trois animations infinies au plus (la fiche d'une légendaire), et
+aucune sous le calme ni le mouvement réduit ; la carte juste à la révélation (une
+seule forme, le mot, la face remplie), au butin (cinq cartes de grille, aucune
+animée), à la bienvenue (neuf cartes à 320, 360 et 768 pixels, NOUVEAU sans
+toucher la forme ni le pin), au deck (les formes dans leur nom, aucune rognée),
+au duel et à l'aide (sans erreur). Les requêtes de chaque écran, avant et
+après : `/fanzzy` gagne `GET /api/deck/loadout`, la fiche `POST /api/fanzzy/vu`
+(l'extinction des nouveautés, contrat § 2) ; le classeur n'appelle pas la
+bibliothèque ; les autres sont égaux.
+
+### Éprouvé
+
+Les contrôles statiques sont verts : `npm run pages`, `npm run cablage`,
+`npm run promesses` (avec l'avertissement connu : six pages sans suite
+d'interface), `npm run pages:navigateur` (les vingt-quatre écrans, `/fanzzy` et
+`/fanzzy/TR32` compris, serveur muet compris) et `npm run schema:smoke` (34
+contrôles). Aucun retour chariot dans les fichiers du lot.
+
+Le dernier passage de `tout-tester`, le 4 octobre de 15 h 58 à 16 h 20, compte
+**soixante-deux suites et 4 449 contrôles** en vingt-deux minutes, contre
+soixante et une et 4 343 à la fin des lots 3 et 5. `cartes:ui` est nouvelle
+(38, sans base). Ont grandi : `collection:smoke` (58 → 99, réécrite pour la page
+du lot), `fanzzy:ui` (228 → 248), `aide:smoke` (31 → 48), `quotidien:smoke`
+(205 → 216), `tour:ui` (343 → 345, qui lit maintenant l'anneau du
+collectionneur). `deck:ui` (un rouge) et `nvn:ui` (trois) restent rouges à
+l'identique, comme avant le lot 0. `accueil:ui` a eu deux rouges dans la série et
+est verte seule : l'intermittence connue, non attribuée. `virage:ui` s'est
+arrêtée dans la série et passe seule (« Les pièges »). `abo:smoke` est verte,
+lancée vers 16 h, hors de la plage de minuit à deux heures.
+
+Captures 360 et 768 relues à côté du départ et de la maquette : aucun écran
+cassé ni illisible.
+
+### En ligne
+
+**La production sert `2ff45f9`** (la vague précédente), relevé le 4 octobre à
+16 h 46 : `cartes.js`, `nav.js`, `fx.js`, `niveau-fete.js`, `fanzzy-fiche.css` et
+`ui.css` sont ceux du commit, octet pour octet, et les pages aussi, une fois
+retirés les `?v=` que le serveur ajoute ; `uptime_s` dit un redémarrage le
+3 octobre vers 10 h 33. **`/healthz` répond `ok: true`** : Gaël a appliqué
+`sql/quotidien.sql`, et le quotidien est en ligne depuis. L'épisode de
+`e21a923` sans son schéma (4 quadragies ter, « En ligne ») est clos.
+
+**Le lot 4 n'est pas en ligne** : ni `60fe268`, poussé, ni les seize fichiers
+modifiés depuis. Il ne demande aucun schéma ; deux fichiers du serveur changent
+(`src/server/aide/index.js`, `src/server/quotidien/index.js`), il faut donc un
+redémarrage. `A-DEPLOYER.md` dit l'ordre.
+
+### Ce qui reste
+
+D'abord, les trois fautes mineures du sixième tour, non corrigées :
+
+- deux commentaires disent encore que NOUVEAU est posé sur le flanc de la carte,
+  au tiers de sa hauteur (`fanzzy.html`, vers la ligne 98 ; `collection.html`,
+  vers la ligne 195) : la brique le pend au coin bas-gauche ;
+- l'interrupteur du même album s'appelle MANQUANTS au classeur et « Ce qu'il me
+  reste » à `/collection`, où il passe sur une seconde ligne à 360 pixels : un
+  seul mot et une seule mise en page aux deux endroits.
+
+Puis, côté serveur, ce que les écrans attendent :
+
+- servir `paliers.series` avec `/api/fanzzy/state`, pour que le classeur montre la
+  récompense d'une série complète sans lire la bibliothèque ;
+- servir la chance de tirer une carte (« 1 CHANCE SUR 3 »), tirée de `RATES` et du
+  nombre de cartes de sa rareté dans la série ;
+- faire passer `fanzzy` à `createAide` dans `server.js`, et retirer alors le repli
+  sur `globalThis.fanzzy` ;
+- les boosters d'un abonnement acheté (`boutique/index.js`, `livrer`) entrent
+  dans la réserve sans compter la recharge due, comme le faisait l'aide
+  (`serveur/ECARTS.md`) ; et `estAbonne` sur la connexion de l'appelant.
+
+Puis, dans les documents : `serveur/ECARTS.md` (accueil § 5) et le § 5.1 de
+`serveur/CONTRATS.md` (« Lecteurs ») disent encore que l'anneau de
+`/collection` montre `paliers.gagnes / paliers.possibles` ; il vise le prochain
+cran depuis la critique.
+
+Puis, ce que la critique a relevé et qui est resté en l'état :
+
+- la fabrique des cases de l'album, recopiée dans `collection.html` : une seule,
+  partagée avec le classeur ;
+- au classeur, les pochettes des âges 2 et 3 d'une lignée absente, rectangles
+  hachurés sans silhouette ni repère « ÉVO 2 » : une série pas commencée a l'air
+  d'une page morte ;
+- sur la fiche, ME MONTRER AINSI en bloc de trois lignes collé à gauche de la
+  carte, hors de la rangée des actions ; TON AVATAR en tampon vert sur la fiche et
+  en sticker craie au vestiaire ; le lien « où trouver des écharpes » sous IL TE
+  FAUT ;
+- la réserve, une seule brique, mais lue dans deux ordres (les fentes d'abord au
+  kiosque et à la boutique, le chiffre d'abord au HUD et au vestiaire) et sous
+  deux dessins de sachet ;
+- au butin, les cartes d'écharpes d'un doublon portent une forme de rareté et le
+  pin d'une famille d'emprunt ;
+- au vestiaire, à 768 pixels, le nom et les stickers de stats gardent leur corps
+  de téléphone au pied d'une scène de sept cents pixels.
+
+Et, resté de la vague précédente : le sachet de LA REPRISE, qui n'a pas de
+dessin (une production d'images) ; `JURIDIQUE.md`, qui ne dit pas que les crans
+ne comptent pas les tenues ; le booster de l'abonnement, livré à la souscription
+et non à chaque échéance ; l'`ALTER` à trois colonnes de `sql/couleurs.sql` ; et
+les décisions rendues à Gaël (`ETAT.md`, § 7 bis).
+
+**Hors de cet atelier, et c'est la suite :** les arènes, le bilan de tribune et
+la présence (lot 6, commencé le 4 octobre dans sa propre copie, sur la branche
+`refonte-lot6`, qui part de `60fe268`), puis les images et le terrain (lot 7).
+
+---

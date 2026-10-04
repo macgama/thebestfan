@@ -490,22 +490,19 @@
   box-shadow:0 18px 36px rgba(0,0,0,.6)}
 .face.back.dessine>svg{display:none}
 .face.front{transform:rotateY(180deg)}
-/* **La rareté, collée au-dessus de la carte** à l'instant où elle se
-   retourne : le sticker en forme (`.tbf-forme`, 34 px comme dans une
-   vitrine), le mot dedans ou en travers. Sans mouvement, la cérémonie ne joue
-   plus : c'est lui qui porte la rareté, par la forme, la couleur et le mot.
-   La carte du lot 4 porte aussi la sienne, à son coin haut-droit : celle-ci
-   est le geste de l'ouverture — collée au-dessus de la carte, hors d'elle,
-   au moment où elle se retourne (CARTE.md : elle reste juste). Mesuré au
-   banc, de 360 à 768 px : les deux formes ne se touchent pas.
+/* **La rareté se colle sur la carte** à l'instant où elle se retourne : sa
+   propre forme, au coin haut-droit (`cardHTML`, lot 4), avec son mot — voir
+   `collerRarete`. La page en collait une seconde, identique, une trentaine
+   de pixels au-dessus : « COMMUNE » sur « COMMUNE », pour chaque carte, et un
+   texte de plus à lire au soleil. Le geste reste, l'objet est celui de la
+   carte. Sans mouvement, la forme est simplement là quand la carte paraît :
+   la rareté se lit toujours par la forme, la couleur et le mot.
 
    **« NOUVEAU » en tampon, sur la carte** : l'ouverture tamponne, le butin
    colle. Le tampon plein — fond craie, lettres rouge foncé —, parce qu'il se
    pose sur un dessin dont on ne connaît pas la couleur : la forme en contour
    n'y serait lisible qu'une fois sur deux. Seize pixels, sur le côté gauche
    de l'illustration, loin du nom et de l'âge de la carte. */
-.reveal>.tbf-forme{position:absolute;z-index:3;left:50%;top:-44px;translate:-50% 0;
-  --taille:34px;--rot:-4deg}
 .reveal>.kq-nouveau{position:absolute;z-index:4;left:-10px;top:40%;font-size:16px}
 .ofoot{position:relative;z-index:3;flex:none;padding:14px 16px 18px;display:flex;flex-direction:column;
   gap:10px;align-items:center}
@@ -525,11 +522,12 @@
    se replie, et le butin prend la place — s'il ne tient pas (un écran court,
    une série en plus), il défile seul, la tête et les bâches du bas restent.
 
-   **Ce qui est neuf** porte le sticker NOUVEAU sur le flanc gauche ; **ce
-   qui a rapporté des écharpes** (un doublon, une poignée d'écharpes), son
-   prix en sticker sur le flanc droit. Le coin haut-droit est celui de la
-   forme de rareté, le coin haut-gauche celui du pin et de l'âge : la carte
-   les porte elle-même (lot 4), la case n'y colle rien (voir plus bas). */
+   **Ce qui est neuf** porte le sticker NOUVEAU sous la bande du nom, à
+   cheval sur le coin bas-gauche, comme au classeur ; **ce qui a rapporté
+   des écharpes** (un doublon, une poignée d'écharpes), son prix en sticker
+   sur le flanc droit. Le coin haut-droit est celui de la forme de rareté,
+   le coin haut-gauche celui du pin et de l'âge : la carte les porte
+   elle-même (lot 4), la case n'y colle rien (voir plus bas). */
 .summary{display:none;flex:1 1 auto;min-height:0;overflow-y:auto;position:relative;z-index:2;
   padding:6px 14px 10px}
 .summary.on{display:flex;flex-direction:column}
@@ -552,36 +550,41 @@
    seconde, sans mot, au-dessus de ce coin : deux signes pour une rareté au
    même endroit. Elle est partie, et sa règle avec elle.
 
-   **Les stickers de la case se collent sur l'illustration, jamais sur
-   l'étiquette de la carte** (la règle du scotch, amendement 19 : ce qui
-   recouvre va sur l'image, le libellé reste net). La brique les pose au
-   coin haut-gauche, et c'est là que la carte colle son pin et son âge
-   (« ÉVO 2 », en badge sous le pin sur une vignette) ; le coin haut-droit
-   est celui de la forme et de son mot (« LÉGENDAIRE » d'un bord à
+   **Ce que la case colle laisse le libellé net** (la règle du scotch,
+   amendement 19), **et NOUVEAU laisse le visage** : on gagne une carte pour
+   voir qui est dessus. Le haut de la carte est pris : au coin haut-gauche,
+   son pin et son âge (« ÉVO 2 », en badge sous le pin sur une vignette) ;
+   au coin haut-droit, sa forme et son mot (« LÉGENDAIRE » d'un bord à
    l'autre de la forme). Sur une carte de quatre-vingt-onze pixels (360 px
    d'écran), NOUVEAU y cachait l'âge ou la rareté de la carte qui compte le
    plus ; le prix d'une légendaire en doublon (« +45 ») en mangeait autant.
-   Plus haut, au-dessus de la carte, il n'y a pas la place : le scotch et
-   NOUVEAU ne tiennent pas ensemble sur quatre-vingt-onze pixels, et la
-   rangée du dessous n'en a que vingt-quatre.
+   Au-dessus de la carte, le scotch et NOUVEAU ne tiennent pas ensemble sur
+   quatre-vingt-onze pixels.
 
-   **NOUVEAU descend donc sur le flanc gauche, à 40 % de la hauteur** : là
-   où l'ouverture vient de le tamponner, une seconde plus tôt
-   (`.kq-nouveau`) — le butin colle à la même place —, sous l'âge et
-   au-dessus du nom, même écrit sur trois lignes. À la taille de la
-   maquette pour une carte de grille (22 px, Oswald 12) : il couvre moins
-   d'image. Il dépasse du bord de deux pixels, sept avec son bord craie et
-   sa pente : il est collé sur la carte, pas imprimé dedans. **Le prix, sur
-   le flanc droit**, à la même hauteur (comme le « ×3 » d'un doublon de la
-   maquette), rentré de deux pixels : seul son bord craie passe le bord de
-   la carte. Un prix et le NOUVEAU de la case suivante se partagent ainsi
-   les quatorze pixels de la gouttière, et il en reste cinq et demi entre
-   eux (mesuré de 320 à 768 px) ; NOUVEAU dépassant de quatre pixels et le
-   prix au ras du bord, il n'en restait qu'un et demi à 320, 360 et 400,
-   moins que l'ombre dure du prix. Une même case ne porte jamais les deux :
-   une carte neuve n'a rien rapporté (`estNeuve`, `rapporte`). */
-.summary .tbf-album-case>.tbf-sticker[data-ton=flare]{left:-2px;top:40%;
-  height:22px;padding:0 6px;font-size:12px}
+   **NOUVEAU est où la brique le pend** (ui.css, « la page d'album ») : sous
+   la bande du nom, à cheval sur le coin bas-gauche, comme au classeur et
+   sur /collection. La page ne règle que sa taille, celle de la maquette
+   pour une carte de grille (22 px, Oswald 12). Elle le collait sur le flanc
+   gauche, à 40 % de la hauteur, là où l'ouverture le tamponne une seconde
+   plus tôt, et sa règle pesait plus que celle de la brique : NOUVEAU
+   tombait sur le visage de chaque carte neuve (vingt-deux à vingt-sept
+   pixels de haut couverts, de 320 à 768 px, relevé au banc), quand le
+   classeur pose le même sous sa carte. Pendu, son bord craie reste à deux
+   pixels et demi au moins du pin de la carte du dessous et à sept et demi
+   de la ligne vivante, de 320 à 768 px : l'air du ticket, dans la brique,
+   est compté pour lui.
+
+   **Le prix reste sur le flanc droit, à 40 %** (comme le « ×3 » d'un
+   doublon de la maquette), rentré de deux pixels : seul son bord craie
+   passe le bord de la carte. C'est la place que la brique donne au second
+   sticker d'une case ; mais une case du butin ne porte jamais les deux (une
+   carte neuve n'a rien rapporté : `estNeuve`, `rapporte`), et le prix, seul
+   dans la sienne, y est le premier — sans cette règle, la brique le
+   pendrait au coin bas-gauche, à la place de NOUVEAU. Au coin bas-droit,
+   il rencontrerait le NOUVEAU de la case voisine dans les quatorze pixels
+   de la gouttière. Sur une vignette de téléphone, il peut mordre le bord
+   du visage : c'est un doublon, une carte qu'on a déjà vue. */
+.summary .tbf-album-case>.tbf-sticker[data-ton=flare]{height:22px;padding:0 6px;font-size:12px}
 .summary .tbf-album-case>.tbf-sticker.tbf-sticker--prix{left:auto;right:2px;top:40%;bottom:auto;
   --rot:5deg}
 
@@ -2162,14 +2165,36 @@ function phase(p) {
   $('oHint').hidden = butin;
 }
 
-/** Le sticker de rareté, collé au-dessus de la carte qui se retourne. */
-function collerRarete(carte, rar) {
-  const s = document.createElement('span');
-  s.className = 'tbf-forme tbf-colle';
-  s.dataset.rar = rar;
-  s.innerHTML = `<i></i><b>${MOT[rar]}</b>`;
-  aLaFin(s, 'tbf-colle', 'tbf-colle');
-  carte.append(s);
+/** Quand la forme se colle, après le début du retournement : la carte a
+    alors fait plus des neuf dixièmes de son demi-tour (`.reveal .flip`,
+    550 ms, qui démarre vite), elle est presque à plat. Plus tôt, la colle se
+    jouerait sur une face encore de profil ; 300 + 220 ms finissent avant le
+    retournement, et la cérémonie, qui attend la fin des deux
+    (`FX.reveler`), ne part pas plus tard. */
+const COLLE_APRES_MS = 300;
+
+/**
+ * **La rareté se colle sur la carte qui se retourne** : le geste de la
+ * révélation (`.tbf-colle`, ui.css) se joue sur la forme que la carte porte
+ * déjà, à son coin haut-droit, avec son mot (`.fz-forme`, cartes.js).
+ *
+ * La page collait jusqu'ici sa propre forme, au-dessus de la carte : avant le
+ * lot 4, la carte ne disait pas sa rareté en mot (la légendaire seule), et
+ * ce sticker la disait. Depuis, la carte la dit elle-même, et les deux
+ * stickers identiques se lisaient à trente pixels l'un de l'autre — deux
+ * signes pour une rareté. Il n'y en a plus qu'un, et c'est lui qu'on voit se
+ * coller.
+ *
+ * Sans mouvement (préférence ou mode calme), rien n'est posé : la forme est
+ * déjà sur la carte quand elle paraît, et une classe dont l'animation ne
+ * joue pas ne finirait jamais.
+ */
+function collerRarete(carte) {
+  const forme = carte.querySelector('.face.front .fz-forme');
+  if (!forme || sansMouvement()) return;
+  forme.style.setProperty('--d', `${COLLE_APRES_MS}ms`);
+  forme.classList.add('tbf-colle');
+  aLaFin(forme, 'tbf-colle', 'tbf-colle');
 }
 
 /** « NOUVEAU », tamponné sur la carte. */
@@ -2212,7 +2237,7 @@ $('ostage').onclick = () => {
        tremblement que cette page écrivait à la main sont partis avec elle :
        une rare n'avait pas le même poids d'un écran à l'autre. */
     audio.flip();
-    collerRarete(cur, rar);
+    collerRarete(cur);
     if (neuf[idx]) tamponner(cur);
     marquerFente(idx, rar);
     /* **Une cérémonie à la fois** : la suivante ne part qu'une fois finie

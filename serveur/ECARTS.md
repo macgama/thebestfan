@@ -971,8 +971,17 @@ que rien ne lève. `recompenser` appelle maintenant `recharger(conn, userId)`
 sur la connexion de son versement, sous le `FOR UPDATE` de la bourse, avant
 le cadeau : une annulation défait les deux. Sans porte, elle **lève avant
 toute écriture**, comme le grand livre (socle § 3) — ni booster, ni drapeau
-`parcours_paye`, qui fermerait la récompense pour toujours : la route répond
-`aide.error.server` et le joueur peut réessayer.
+`parcours_paye`, qui fermerait la récompense pour toujours. La route (`safe`)
+écrit alors la pile au journal, une ligne `[aide]` qui nomme « recharger »,
+et répond **503 `aide.error.indisponible`** : un bloc absent pour la page
+(R2), qui se tait. Un verrou expiré pendant le versement répond de même, sans
+le code de MySQL, et le versement est annulé en entier. Rien n'étant écrit,
+le cadeau reste dû, et la page `/aide` le redemande d'elle-même à la visite
+suivante (`finir`) — en vain tant que la porte manque : c'est le journal qui
+montre la panne, pas un nouvel essai. (*Révisé le 4 octobre 2026* : cette
+ligne disait que la route répondait `aide.error.server` et que le joueur
+pouvait réessayer ; c'était un 400 sans une ligne au journal, avant que
+`safe` n'écrive la pile et ne réponde 503.)
 
 **Écart temporaire** : la porte se lit sur l'option `fanzzy` de
 `createAide`, **sinon sur `globalThis.fanzzy`**, au moment du versement.
@@ -981,16 +990,26 @@ du lot 4), mais pose `globalThis.fanzzy` en montant le module fanzzy, avant
 l'aide et dans le même bloc : sans ce repli, le correctif ne vaudrait que
 dans la suite. Si le montage de fanzzy échoue, aucune route `/api` n'est
 montée, l'aide non plus : la porte ne manque donc jamais en production
-d'aujourd'hui. Le jour où `server.js` construit l'aide avec `fanzzy`, comme
-le quotidien, le repli ne sert plus et peut partir.
+d'aujourd'hui. Ce câblage est gardé par `aide-smoke`, qui lit `server.js` :
+retirer la globale (elle ressemble à un reste) ou monter l'aide avant
+`createFanzzy` ferait lever chaque booster de fin sans qu'aucune autre suite
+ne rougisse, puisqu'elles posent toutes leur porte elles-mêmes. Le jour où
+`server.js` construit l'aide avec `fanzzy`, comme le quotidien, le repli ne
+sert plus et peut partir.
 
 **Suite** : `aide-smoke`, « la recharge due entre avant le booster de fin » :
 à 11 sur 12 avec une recharge due, le booster de fin mène à 13, et la lecture
-suivante ne reprend rien ; l'appel préalable cassé exprès, la recharge entre
-quand même, par la connexion du versement qui tient la ligne (une autre
-connexion est refusée en `NOWAIT` à cet instant) ; câblée comme `server.js`
-aujourd'hui (`globalThis.fanzzy`), elle compte aussi ; sans porte, rien
-n'est écrit.
+suivante ne reprend rien ; la recharge est comptée sur le pool d'abord, la
+ligne encore libre (un `NOWAIT` y passe), puis sur la connexion du
+versement ; l'appel préalable cassé exprès, la recharge entre quand même, par
+la connexion du versement qui tient la ligne (une autre connexion est refusée
+en `NOWAIT` à cet instant) ; câblée comme `server.js` aujourd'hui
+(`globalThis.fanzzy`), elle compte aussi, et `server.js` est lu pour
+vérifier ce câblage ; sans porte, rien n'est écrit. Puis « une panne se dit
+au journal, et en 503 », par le routeur comme la page : sans porte, 503
+`aide.error.indisponible`, une ligne `[aide]` qui nomme « recharger », rien
+d'écrit ; un verrou expiré pendant le versement, 503 sans le code de MySQL,
+la cause au journal, ni booster ni drapeau.
 
 ### 2. Les nouveautés
 

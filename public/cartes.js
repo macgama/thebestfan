@@ -488,8 +488,11 @@ function packArt(set) {
  * pour qui pose la brique d'un coup. Le compte est toujours le premier `<b>`
  * (celui que lisent la bande du HUD et les suites).
  *
- * `{ enFentes, html }` ne change pas : c'est l'ancienne rangée de fentes,
- * que le kiosque lit encore. Elle partira quand plus personne ne la lira.
+ * **L'ancienne rangée de fentes (`html`) est partie** : le kiosque, son
+ * dernier lecteur, ne prend plus que `brique`, et seule la suite de la carte
+ * la lisait encore — pour vérifier qu'elle n'avait pas changé. `enFentes`
+ * reste : il dit, sans relire le balisage, laquelle des deux formes la
+ * brique a prise.
  *
  * Deux crochets pour la seconde suivante, ceux que la boutique employait
  * déjà : l'anneau porte `data-recharge` (la page y pose `--part`), le temps
@@ -515,11 +518,10 @@ function packArt(set) {
  *     posé seulement si `recharge` ;
  *   `temps` : le temps au premier rendu (« 9:55 », « 1 h 02 ») ;
  *   `plus` : le « + » au bout du sticker, quand il est un lien.
- * @returns {{ enFentes: boolean, html: string,
- *   brique: { avant: string, apres: string }, contenu: string }}
- *   `html` : le contenu de l'ancienne `.tbf-fentes` (en compte, la page
- *   posait `.tbf-fentes--compte` sur le conteneur, et l'anneau hors des
- *   fentes) ; `brique` et `contenu` : le contenu du sticker de la brique.
+ * @returns {{ enFentes: boolean, brique: { avant: string, apres: string }, contenu: string }}
+ *   `enFentes` : la brique dessine une place par booster (sinon le sachet
+ *   seul et son compte) ; `brique` et `contenu` : le contenu du sticker de la
+ *   brique.
  */
 const PLACES_EN_FENTES = 5;
 function reserveHTML({ packs, max = null, recharge = false, forme = 'auto', anneau = recharge,
@@ -542,26 +544,19 @@ function reserveHTML({ packs, max = null, recharge = false, forme = 'auto', anne
       esc(temps)}</b></span>` : '';
   const fin = plus ? '<i class="tbf-monnaie-plus" aria-hidden="true">+</i>' : '';
 
-  let html, brique;
+  let brique;
   if (enFentes) {
-    html = Array.from({ length: places }, (_, i) =>
-      (i < n ? '<span class="tbf-fente"></span>'
-        : i === n && recharge
-          ? '<span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" aria-hidden="true"></span></span>'
-          : '<span class="tbf-fente tbf-fente--vide"></span>')).join('');
     /* Les places : les pleines d'abord, la première vide porte l'anneau. */
     const fentes = Array.from({ length: places }, (_, i) =>
       (i < n ? '<span class="tbf-fente"></span>'
         : `<span class="tbf-fente tbf-fente--vide">${i === n ? rond : ''}</span>`)).join('');
     brique = { avant: `<span class="tbf-fentes" aria-hidden="true">${fentes}</span>`, apres: rebours + fin };
   } else {
-    html = `<span class="tbf-fente${n ? '' : ' tbf-fente--vide'}"></span>`
-      + `<b class="tbf-sticker" aria-hidden="true">${n}</b>`;
     /* Le sachet seul — vide s'il n'y en a aucun —, l'anneau à côté du compte. */
     brique = { avant: `<span class="tbf-fente${n ? '' : ' tbf-fente--vide'}" aria-hidden="true"></span>`,
       apres: rond + rebours + fin };
   }
-  return { enFentes, html, brique, contenu: `${brique.avant}<b>${n}</b>${brique.apres}` };
+  return { enFentes, brique, contenu: `${brique.avant}<b>${n}</b>${brique.apres}` };
 }
 
 /* --------------------------------------------------------- rendu carte */
@@ -690,10 +685,11 @@ function fondDeCarte(f) {
  * fond, et fanzzy-art.js n'appartient pas à la carte.
  *
  * `pied` : le personnage en pied (520 × 945) plutôt que son buste (320 ×
- * 320). Une grande carte — la vitrine, la fiche, la révélation — montre le
+ * 320). Une carte regardée seule — la vitrine, la fiche — montre le
  * personnage entier devant sa plaque ; en buste, à trois cents pixels, on ne
- * voyait plus qu'un visage de la taille de la carte. La grille garde le
- * buste : quatre fois moins lourd, et lisible à quatre-vingt-six pixels.
+ * voyait plus qu'un visage de la taille de la carte. Tout le reste garde le
+ * buste : quatre fois moins lourd (RP1 : 55 Ko contre 14), et lisible à
+ * quatre-vingt-six pixels. Voir `cardHTML`, option `pied`.
  */
 function portraitDeCarte(f, pied = false) {
   const dessin = illustration(f, pied ? 'plein' : 'buste');
@@ -742,8 +738,21 @@ function portraitDeCarte(f, pied = false) {
  * grande carte quand on demande `pied`), `fz-pleine` pour une illustration
  * qui couvre toute la carte (une carte d'action). Sans classe, c'est le
  * buste d'un Fanzzy. Voir `cartes.css`, « le dessin ».
+ *
+ * ## La silhouette d'une carte qu'on n'a pas (`silhouette`)
+ *
+ * Le pochoir gris d'une carte non possédée éteint l'image au noir puis la
+ * remonte en gris : ce n'est une silhouette que si l'image est **détourée**.
+ * Les bustes ne le sont pas tous (celui de la Clé du Local est opaque à
+ * 95 %, le portrait du troisième âge de Gosier à 84 %) : éteints, ils
+ * devenaient une dalle grise tachée de noir, et les cartes les plus
+ * désirables étaient les plus ternes. `silhouette` demande donc une image
+ * détourée partout où le dessin d'un personnage en a une — la pose en pied
+ * (`resoudre`) ou le plein-pied plat (`adresse(…, 'plein')`, comme les
+ * pochettes du classeur), jamais le portrait ni le buste —, et la marque
+ * `fz-pied`. `cardHTML` le pose avec `verrou`.
  */
-function dessinDeCarte(f, { etiquette = true, pied = false } = {}) {
+function dessinDeCarte(f, { etiquette = true, pied = false, silhouette = false } = {}) {
   /* **Un état se dessine avec le dessin qu'il donne.**
    *
    * `art(f)` cherche un Fanzzy nommé `f.id` — or l'identifiant d'un état est
@@ -768,10 +777,11 @@ function dessinDeCarte(f, { etiquette = true, pied = false } = {}) {
      * commentaire de `dessinDeCarte` raconte pour les trois autres sortes,
      * et je l'ai refaite en ajoutant la quatrième.
      *
-     * Montrer le personnage au repos dit au moins **de qui** il s'agit. */
-    const src = r?.src ?? window.FZART?.adresse?.(f.pour, 'buste');
+     * Montrer le personnage au repos dit au moins **de qui** il s'agit.
+     * En silhouette, le plein-pied plutôt que le buste : il est détouré. */
+    const src = r?.src ?? window.FZART?.adresse?.(f.pour, silhouette ? 'plein' : 'buste');
     if (src) {
-      const enPied = r?.src && !/portrait\.\w+(\?|$)/.test(r.src);
+      const enPied = r?.src ? !/portrait\.\w+(\?|$)/.test(r.src) : silhouette;
       return `<div class="illuwrap">${fondDeCarte(f)}
         <img class="illu${enPied ? ' fz-pied' : ''}" src="${src}" alt="" loading="lazy"
              onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
@@ -803,14 +813,16 @@ function dessinDeCarte(f, { etiquette = true, pied = false } = {}) {
        C'est aussi ce que fait la branche des états quelques lignes plus haut,
        et deux cartes voisines dans le même butin doivent se ressembler.
 
-       `portrait` reste en second : un skin peut n'avoir qu'un buste. */
+       `portrait` reste en second : un skin peut n'avoir qu'un buste. Pas en
+       silhouette : un portrait est opaque, et le plein-pied plat, détouré,
+       dit aussi bien de qui il s'agit. */
     const r = window.TBF_ETATS?.resoudre?.(f.pour, { evo, skin: f.id, etat: 'neutre' })
-      ?? window.TBF_ETATS?.portrait?.(f.pour, { evo, skin: f.id });
-    const src = r?.src ?? window.FZART?.adresse?.(f.pour, 'buste');
+      ?? (silhouette ? null : window.TBF_ETATS?.portrait?.(f.pour, { evo, skin: f.id }));
+    const src = r?.src ?? window.FZART?.adresse?.(f.pour, silhouette ? 'plein' : 'buste');
     if (src) {
       /* `fz-pied` seulement quand c'est la pose en pied : `portrait`, le
          second repli, rend un buste, que le cadrage du buste pose mieux. */
-      const enPied = r?.src && !/portrait\.\w+(\?|$)/.test(r.src);
+      const enPied = r?.src ? !/portrait\.\w+(\?|$)/.test(r.src) : silhouette;
       return `<div class="illuwrap">${fondDeCarte(f)}
         <img class="illu${enPied ? ' fz-pied' : ''}" src="${src}" alt="" loading="lazy"
              onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
@@ -839,8 +851,9 @@ function dessinDeCarte(f, { etiquette = true, pied = false } = {}) {
      `pour` est la racine de lignée, et c'est la graine que le reste du jeu
      emploie. La carte de la tenue montre alors la même silhouette que la
      carte du personnage — ce qui est, exactement, ce qu'elle raconte. */
-  if (f.pour) return portraitDeCarte({ ...f, id: f.pour }, pied);
-  return portraitDeCarte(f, pied);
+  /* En silhouette, le plein-pied, détouré : voir plus haut. */
+  if (f.pour) return portraitDeCarte({ ...f, id: f.pour }, pied || silhouette);
+  return portraitDeCarte(f, pied || silhouette);
 }
 
 /**
@@ -911,7 +924,10 @@ const numeroDe = (n) => `N° ${/^\d+$/.test(String(n)) ? String(n).padStart(3, '
  *
  *   mini       carte de grille : matière statique, pas de ligne d'effets ;
  *   verrou     non possédée : pochoir gris sous trame, scotch en croix et
- *              cadenas ; ni âge, ni doublons, ni AVATAR ;
+ *              cadenas ; ni âge, ni doublons, ni AVATAR, **ni matière** — pas
+ *              de liseré d'or sur une légendaire, rien qui bouge sauf si la
+ *              page le demande (`anime`) ; le personnage en silhouette, tiré
+ *              d'une image détourée (voir `dessinDeCarte`) ;
  *   numero     avec `verrou` : la bande porte le numéro de pochette
  *              (« N° 013 ») au lieu du nom, gardé pour le lecteur d'écran ;
  *   raison     avec `verrou` : ce qui ouvre la case (« NIV. 10 »), écrit à
@@ -923,9 +939,15 @@ const numeroDe = (n) => `N° ${/^\d+$/.test(String(n)) ? String(n).padStart(3, '
  *   titulaire  TITULAIRE en sticker vert, sur la bande du nom ;
  *   anime      la matière bouge (l'épique dérive, la légendaire tourne) et
  *              le personnage respire ; par défaut, toute carte qui n'est
- *              pas `mini` — la vitrine, la fiche, la révélation ;
- *   pied       le Fanzzy en pied plutôt qu'en buste ; par défaut, toute
- *              carte qui n'est pas `mini` (une grande carte) ;
+ *              ni `mini` ni `verrou` — la vitrine, la fiche, la révélation ;
+ *   pied       le Fanzzy en pied plutôt qu'en buste, **sur demande** : la
+ *              carte regardée seule (la vitrine, la fiche). Il était posé
+ *              par défaut sur toute carte non `mini`, et la révélation d'un
+ *              booster téléchargeait chaque carte deux fois (en pied pour
+ *              la révélation, en buste pour le butin), la bienvenue ses neuf
+ *              plein-pieds d'un coup — 55 Ko pièce contre 14. Une pile ou
+ *              une grille garde le buste. `verrou` prend toujours l'image
+ *              détourée, quelle que soit cette option ;
  *   flip       la carte se retourne : `retourner(el)` construit son verso
  *              au premier appel, pas avant.
  *
@@ -962,7 +984,12 @@ function cardHTML(f, opts = {}) {
   const rar = rareteDe(f.rar);
   const verrou = Boolean(opts.verrou);
   const secret = Boolean(opts.secret);
-  const anime = opts.anime ?? !opts.mini;
+  /* **Une carte qu'on n'a pas ne bouge pas** : c'est un pochoir sous scotch,
+     sans matière. Animée par défaut parce qu'elle n'était pas `mini`, la
+     légendaire manquante de la vitrine faisait tourner son liseré d'or sans
+     fin autour d'une silhouette grise qui respirait. */
+  const anime = opts.anime ?? (!opts.mini && !verrou);
+  const enPied = verrou || opts.pied === true;
   const holo = !verrou && (rar === 'epique' || rar === 'legendaire') ? ' holo' : '';
   const classes = `fz r-${rar}${holo}${opts.mini ? ' fz-mini' : ''}${anime ? ' fz-anime' : ''}`
     + `${verrou ? ' fz-verrou' : ''}${secret ? ' fz-secret' : ''}${opts.flip ? ' fz-flip' : ''}`;
@@ -1007,8 +1034,8 @@ function cardHTML(f, opts = {}) {
   return `<div class="${classes}" style="--tc:${t.c}" data-id="${esc(f.id)}" data-rar="${rar}"${
     dos ? ` data-dos="${esc(dos)}"` : ''}>
     <div class="body">
-      <div class="art">${dessinDeCarte(f, { etiquette: false, pied: opts.pied ?? !opts.mini })}</div>
-      ${rar === 'legendaire' ? '<i class="lisere" aria-hidden="true"></i>' : ''}
+      <div class="art">${dessinDeCarte(f, { etiquette: false, pied: enPied, silhouette: verrou })}</div>
+      ${rar === 'legendaire' && !verrou ? '<i class="lisere" aria-hidden="true"></i>' : ''}
       <div class="haut">
         <div class="pip"${famille ? ` role="img" aria-label="${esc(t.nom)}"` : ' aria-hidden="true"'}>${picto}</div>
         ${age}

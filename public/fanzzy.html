@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Fanzzy — collection</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <link rel="stylesheet" href="/cartes.css">
@@ -34,9 +34,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .screen{flex:1;display:none;flex-direction:column;min-height:0;z-index:2}
 .screen.on{display:flex}
 
-/* **Le message d'une grille vide a son panneau.** Il était écrit à même la
-   photo, à moitié d'opacité : « Aucun Fanzzy choisi » se perdait entre deux
-   projecteurs. Même fond que le reste de l'interface, et l'encre entière. */
+/* **Le message d'une page vide a son panneau** — une page d'album que les
+   filtres vident, le catalogue qui n'a pas pu se charger. Il était écrit à
+   même la photo, à moitié d'opacité, et se perdait entre deux projecteurs.
+   Même fond que le reste de l'interface, et l'encre entière. La place vide
+   du vestiaire n'en est pas un : c'est une scène (« la place vide »). */
 .empty{grid-column:1/-1;margin:0;text-align:center;padding:44px 22px;font-size:12.5px;line-height:1.7;
   border-radius:var(--r);background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait)}
 #teamBody>.empty{margin-top:10px}
@@ -45,8 +47,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* ============================================================ le classeur
 
    **L'ALBUM** (lot 4) : une page par série, qu'on tourne du doigt, le rail
-   des séries au-dessus, les six familles et « ce qu'il me reste » entre les
-   deux. Tout le dessin est la brique `.tbf-album` de ui.css — la même que
+   des séries au-dessus, les six familles et MANQUANTS entre les deux.
+   Tout le dessin est la brique `.tbf-album` de ui.css — la même que
    l'album Fanzzy de /collection : la page ne lui écrit que sa place.
 
    **L'écran défile en hauteur, l'album en largeur.** Les pages se tournent
@@ -93,17 +95,42 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    le contour du clavier. Le reste de la case est la brique. */
 #s-dex .tbf-album-case[data-open]{cursor:pointer}
 #s-dex .tbf-album-case[data-open]:focus-visible{outline:3px solid var(--projo);outline-offset:4px}
-/* PROVISOIRE (besoin « feuilles-css ») : NOUVEAU sur le flanc gauche de la
-   carte, au tiers de sa hauteur, au-dessus d'elle. La brique colle le
-   premier sticker d'une case au coin haut-gauche, au plan 5 ; la carte du
-   lot 4 y pose son pin et son âge (plan 6) et, à cent pixels, sa forme et son
-   mot COMMUNE viennent jusqu'au milieu (plan 8) : le pin mangeait « NO » de
-   NOUVEAU, et NOUVEAU passé devant mangeait le « C » de COMMUNE. Au bas, il
-   mordait les lettres du nom. Le flanc gauche, entre l'âge (au quart) et la
-   bande (aux trois quarts), ne porte que le dessin ; le « ×3 » est à droite.
-   Quatre pixels hors de la carte, pas plus : au-delà, il mordait sur le
-   « ×3 » de la voisine, qui déborde de la sienne dans la gouttière. */
-#s-dex .tbf-album-case>.tbf-sticker{z-index:9;top:34%;left:-4px}
+/* NOUVEAU sur le flanc gauche, au tiers de la carte : c'est la brique qui le
+   place (`.tbf-album-case>.tbf-sticker`, ui.css), la page n'y ajoute rien. */
+
+/* **Et sans les six pixels entre le rail, les filtres et la page.** La
+   rangée des filtres a déjà son air : quarante-quatre pixels pour des pins
+   de vingt-six, neuf de vide au-dessus et au-dessous. Les six de l'album
+   s'y ajoutaient deux fois, et l'en-tête de la page descendait d'autant ;
+   sans eux, il reste quatorze pixels entre l'ombre de l'onglet ouvert et
+   les pins, dix-sept entre les pins et l'écharpe de l'en-tête. */
+#s-dex .tbf-album{gap:0}
+
+/* **Les six familles et MANQUANTS sur une seule rangée.**
+
+   À 360 px, les six filtres prenaient la ligne et l'interrupteur passait
+   dessous : quarante-six pixels de plus avant l'en-tête de la page, et la
+   première carte tombait à quatre cents pixels — une seule rangée à
+   l'écran, quand c'est la page qui se remplit qu'on vient regarder. Avec
+   la règle d'au-dessus, elle tombe à 348 (364 quand l'accroche de la série
+   passe sur deux lignes, comme celle de LA REPRISE), et la deuxième rangée
+   entre à l'écran.
+
+   Six filtres de quarante-quatre pixels (le doigt) en font 264 ; « Ce qu'il
+   me reste » à côté de son rail en demandait cent soixante. Le mot devient
+   MANQUANTS, celui de la maquette, et **de 350 à 440 px il passe sous le
+   rail**, en légende : soixante-dix pixels de large au lieu de cent vingt
+   (au-delà, il tient à côté, comme la brique le pose). La rangée rend
+   aussi huit pixels de la gouttière (six à gauche, dix à droite) : le
+   premier pin tombe sur le bord gauche de l'en-tête, le mot finit sur son
+   bord droit. Il faut 350 px pour que les six et la légende tiennent
+   (264 + 70 + 16) : en dessous, rien ne se serre sous le doigt,
+   l'interrupteur repasse à la ligne, à côté de son mot comme ailleurs. */
+@media (min-width:350px) and (max-width:439.98px){
+  #s-dex .tbf-album-filtres{padding-inline:6px 10px}
+  #s-dex .tbf-album-filtres>.tbf-interrupteur{flex-direction:column;justify-content:center;gap:4px;
+    padding:0 2px;text-align:center}
+}
 
 
 /* ------------------------------------------------------------- détail */
@@ -203,14 +230,65 @@ html[data-calme~="animations"] .toast.on{animation:none}
   box-shadow:0 12px 30px rgba(0,0,0,.6)}
 .tdessin svg{width:100%;display:block}
 /* Le nom est le titre de l'écran : un `h2`, qui ne garde de lui que sa
-   sémantique — la banderole est celle de la brique. */
+   sémantique — la banderole est celle de la brique, qui le passe à la ligne
+   en lignes équilibrées (`.tbf-vestiaire-pied>.tbf-banderole`, ui.css). */
 .tbf-vestiaire-pied>h2.tbf-banderole{margin:0}
-/* PROVISOIRE (besoin « feuilles-css ») : le nom passe sur deux lignes plutôt
-   que de finir en points de suspension. La banderole ne passe jamais à la
-   ligne, et c'est juste dans une liste ; ici, c'est le nom du personnage
-   qu'on montre, en grand, et « L'ÉPOUVANTAIL DU TERRAIN D'ENTRAÎ… » à 360 px
-   ne le nomme plus. Lignes équilibrées, comme sur la carte. */
-.tbf-vestiaire-pied>h2.tbf-banderole{white-space:normal;text-wrap:balance;text-align:center}
+
+/* **La place vide.** Le premier écran d'un joueur neuf était une impasse :
+   « Aucun Fanzzy choisi » dans un panneau calme, pas un bouton, et quatre
+   cent soixante-dix pixels de vide dessous. C'est maintenant la scène du
+   vestiaire sans personnage : la bâche au cadre gris (`--rar` absent : la
+   commune, la rareté de personne), l'écharpe de la série qu'on ouvrira en
+   tête, et dedans la photo d'une place vide en tribune. Un mot scotché au
+   mur, « TA PLACE EST VIDE », au marqueur sur un papier de craie que tient
+   un ruban — le scotch tient, il ne sert jamais de fond, comme la place du
+   classement. Dessous, le geste qui la remplit, pleine largeur : OUVRIR MON
+   PREMIER BOOSTER en or, la réserve en sticker sur son coin ; ou, à qui a
+   des cartes sans en avoir choisi une, CHOISIR DANS LE CLASSEUR en bleu, le
+   ton de ce qu'on possède.
+
+   La même place que la scène d'un personnage (souple, quatorze pixels
+   au-dessus pour les scotchs de la bâche) : l'écran ne change pas de forme
+   le jour où la place se remplit. La photo est cadrée sur la chaise et
+   l'écharpe posée dessus, au-dessus du mot. */
+#tvide{flex:1;min-height:0;margin-top:14px}
+#tvide .tbf-vestiaire-fond>img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 62%}
+.tvide-mot{--rot:-3deg;position:absolute;z-index:3;left:50%;bottom:22px;margin:0;translate:-50% 0;
+  rotate:var(--rot);padding:9px 16px 7px;background:var(--craie);color:var(--encre);white-space:nowrap;
+  box-shadow:0 0 0 1.5px var(--encre),3px 3px 0 1.5px rgba(7,9,12,.6)}
+.tvide-mot>.tbf-marqueur{font-size:16px;line-height:20px}
+/* Sur une tablette, la scène fait sept cents pixels de côté et un mot de
+   seize s'y perd : celui de la place du classement, vingt-deux. */
+@media (min-width:600px){ .tvide-mot>.tbf-marqueur{font-size:22px;line-height:26px} }
+/* La réserve en sticker sur le coin de la bâche — « 4 », les boosters qui
+   attendent —, en craie comme le compte des fentes du kiosque. Pas le rouge
+   de la pastille : ce n'est pas un direct, c'est un compte. */
+#teamBody .tbf-plaque[data-pastille]::after{--pf:var(--craie);--pl:var(--encre)}
+/* **Le geste de la place vide est un grand texte** : dix-neuf pixels gras,
+   et non les seize demi-gras de la bâche pleine largeur. L'encre sur l'or
+   tient 11,66:1 à travers la toile, mais 3,84 sous le voile blanc du plein
+   jour — le prix de l'or comme face (ui.css, la minuterie prête) —, sous les
+   4,5 d'un texte ordinaire : c'était le seul relevé au soleil de cet écran
+   que le départ du lot n'avait pas. À partir de 18,66 px gras, c'est un grand
+   texte, dont le seuil est 3 : le mot passe dehors, et la bâche garde ce que
+   la direction lui donne — la face de la destination (l'or des boosters,
+   comme la tuile du hub) et son libellé. C'est la règle de la case VITRINE
+   du classeur. CHOISIR DANS LE CLASSEUR, l'autre geste de la même place,
+   prend le même corps : la place ne change pas de forme d'un état à l'autre,
+   et le bleu (2,4 au soleil, une face décidée) se lit mieux en grand.
+
+   Le corps grandit, l'espacement se resserre (0,06 em au lieu de 0,12) :
+   OUVRIR MON PREMIER BOOSTER fait 282 px, dans les 296 que la bâche lui
+   laisse à 360. Plus étroit, le libellé passe sur deux lignes équilibrées
+   plutôt que de mordre le bord — entre deux mots, jamais dans un mot. Sur
+   une ligne, la bâche garde ses cinquante-quatre pixels.
+
+   La pastille de la réserve reste le `::after` de la brique : l'audit ne la
+   mesure pas (il la range « hors contraste »), elle se mesure à la main —
+   l'encre sur la craie, treize pixels gras, 17:1 à l'intérieur et 4,9 au
+   soleil. */
+#tvide+.tbtns>.tbf-bloc{font-size:19px;font-weight:700;letter-spacing:.06em;line-height:1.2;
+  white-space:normal;text-wrap:balance;text-align:center}
 
 #cri{flex:none;margin-top:16px}
 /* **Les deux boutons sur une rangée.** Empilés pleine largeur, ils prenaient
@@ -447,11 +525,22 @@ const album = { pages: [], fermees: [], structure: '', courant: -1, marque: null
 /* Les filtres valent pour tout l'album : on tourne la page, la famille
    choisie reste. */
 const filtre = { famille: null, reste: false };
-/* Les crans de collection (`CONTRATS.md`, § 5.1) : ce que rapporte une série
-   complète, et si c'est prêt. Lus une fois, à la première ouverture du
-   classeur ; absents, la jauge reste nue. */
-let paliers = null;
-let paliersDemandes = false;
+/**
+ * Ce que rapporte une série complète, et si c'est prêt (`paliers.series`,
+ * contrat § 5.1), ou `null`.
+ *
+ * **Lu dans l'état du joueur, jamais dans la bibliothèque.** Le classeur
+ * appelait `/api/fanzzy/bibliotheque` pour ce seul sticker : le recompte du
+ * compte entier — les Fanzzy, les tenues, les pièces, les actions, les
+ * états, puis les paliers — pour n'en garder qu'une ligne par série, sur un
+ * écran qui lit déjà `/api/fanzzy/state`. Le lot ne prend aucune requête
+ * lourde de plus par écran. La donnée est demandée au serveur dans l'état
+ * (`paliers.series`, la forme du § 5.1), que `load()` recopierait dans
+ * `S.paliers` ; d'ici là elle est absente, et la jauge reste nue, sans
+ * sticker : c'est ce que le contrat prévoit (« Absence »).
+ */
+const serieDe = (id) => (Array.isArray(S.paliers?.series)
+  ? S.paliers.series.find((x) => x?.id === id) ?? null : null);
 
 /**
  * Les séries du classeur, dans l'ordre du rail.
@@ -757,9 +846,7 @@ function donneesDePage(p, neufs) {
   const eus = persos.filter((f) => S.col?.[f.id]).length;
   const total = persos.length;
   const complete = ouverte && total > 0 && eus >= total;
-  const serie = ouverte && Array.isArray(paliers?.series)
-    ? paliers.series.find((x) => x?.id === set.id) ?? null : null;
-  const gain = gainHTML(serie);
+  const gain = gainHTML(ouverte ? serieDe(set.id) : null);
   const visibles = cartes.filter((c) => (!filtre.famille || c.f.type === filtre.famille)
     && (!filtre.reste || c.etat !== 'possede'));
   const cle = (c) => (c.etat === 'possede' ? neufs.get(c.f.id) ?? null : null);
@@ -781,9 +868,15 @@ function pageHTML({ p, eus, total, complete, gain, visibles, cle }) {
      courir. */
   const compte = complete ? '<span class="tbf-tampon" data-ton="vert">COMPLET</span>'
     : `<b class="tbf-album-compte">${eus}<small>${ouverte ? ` / ${total}` : ' à toi'}</small></b>`;
+  /* **L'écharpe sans crans.** Elle en portait quatre, en dur : chaque cran
+     est un palier (« les crans », ui.css), et une série ne paie qu'une fois,
+     complète (§ 5.1) — trois paliers à 25, 50 et 75 % qui n'existent pas.
+     Le seul palier d'une série est son bout, et c'est le sticker de ce
+     qu'elle rapporte qui le dit, quand le serveur le sert. Le même balisage
+     que l'album de /collection (`teteAlbum`), le même composant. */
   const part = total ? Math.round((eus / total) * 100) : 0;
   const jauge = ouverte ? `<div class="tbf-album-jauge">
-      <div class="tbf-jauge" data-crans="4" aria-hidden="true"><i style="width:${part}%"></i></div>${gain}</div>` : '';
+      <div class="tbf-jauge" role="img" aria-label="${eus} sur ${total}"><i style="width:${part}%"></i></div>${gain}</div>` : '';
   const vide = filtre.reste && filtre.famille ? 'Rien ici avec ces filtres.'
     : filtre.reste ? 'Il ne te manque rien dans cette série.'
       : 'Aucune carte de cette famille dans cette série.';
@@ -901,12 +994,16 @@ function construireAlbum() {
   return true;
 }
 
-/* Les six familles, une fois : leurs pins, et l'interrupteur au bout. */
+/* Les six familles, une fois : leurs pins, et l'interrupteur au bout.
+   MANQUANTS, le mot de la maquette : « ce qu'il me reste » faisait deux fois
+   sa largeur, et poussait l'interrupteur sur une seconde ligne à 360 px (voir
+   la règle des filtres, plus haut). Allumé, il ne laisse que ce qui manque —
+   les pochettes et les âges à payer. */
 function construireFiltres() {
   $('filtres').innerHTML = Object.entries(TYPES).map(([k, t]) => `<button type="button" class="tbf-filtre"
       data-famille="${esc(k)}" aria-pressed="false" aria-label="${esc(t.nom)}"><span class="tbf-pin"${
       teinte(t.c) ? ` style="--fam:${t.c}"` : ''}>${window.TBF_LOGO?.type?.(k, '') ?? ''}</span></button>`).join('')
-    + '<button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"><i aria-hidden="true"></i>Ce qu’il me reste</button>';
+    + '<button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"><i aria-hidden="true"></i>Manquants</button>';
 }
 
 /**
@@ -1017,8 +1114,8 @@ $('series').addEventListener('animationend', (e) => {
   if (e.animationName === 'tbf-secoue') e.target.classList.remove('tbf-secoue');
 });
 
-/* Les filtres : une famille à la fois (la retoucher la retire), et « ce
-   qu'il me reste ». Les pages montées se refont, sans colle. */
+/* Les filtres : une famille à la fois (la retoucher la retire), et
+   MANQUANTS. Les pages montées se refont, sans colle. */
 $('filtres').addEventListener('click', (e) => {
   const f = e.target.closest('.tbf-filtre');
   const r = e.target.closest('.tbf-interrupteur');
@@ -1035,31 +1132,12 @@ $('filtres').addEventListener('click', (e) => {
 /** Ouvre le classeur, ou le remet à jour s'il l'est déjà. */
 function ouvrirClasseur() {
   if (!DEX.length) return;
-  chargerPaliers();
   if (!$('filtres').firstChild) construireFiltres();
   construireAlbum();
   if (!album.pages.length) return;
   const i = album.courant >= 0 ? album.courant : pageDepart();
   aller(i, { instant: true });
   reobserver();
-}
-
-/**
- * Les crans de collection, une fois par visite : la récompense de chaque
- * série complète et son état. Une erreur, un 404 pendant un déploiement :
- * rien à montrer (R2), et la jauge reste nue.
- */
-function chargerPaliers() {
-  if (paliersDemandes) return;
-  paliersDemandes = true;
-  fetch('/api/fanzzy/bibliotheque', { credentials: 'same-origin' })
-    .then((r) => (r.ok ? r.json() : null))
-    .catch(() => null)
-    .then((j) => {
-      if (!Array.isArray(j?.paliers?.series)) return;
-      paliers = j.paliers;
-      if (album.courant >= 0 && $('s-dex').classList.contains('on')) placer(album.courant);
-    });
 }
 
 /* ------------------------------------------------------------- la fiche
@@ -1320,16 +1398,50 @@ function decorDe(f, age) {
    repartait de zéro à chaque relecture de l'état. */
 let sigEquipe = '';
 
+/**
+ * La place vide (voir `#tvide`) : sans carte, le premier booster ; avec des
+ * cartes et sans avatar, le classeur où le choisir.
+ *
+ * **La réserve en sticker**, seulement s'il y a quelque chose dedans : une
+ * ligne sans donnée disparaît, et « 0 » sur la bâche dirait qu'elle ne mène
+ * à rien — le kiosque dit, lui, quand vient le prochain. Le compte est dans
+ * le nom du lien : le sticker est peint par la feuille.
+ */
+function placeVideHTML(aDesCartes, n) {
+  const geste = aDesCartes
+    ? '<a class="tbf-plaque tbf-bloc" data-ton="bleu" href="/fanzzy?ecran=dex" data-go="dex">CHOISIR DANS LE CLASSEUR</a>'
+    : `<a class="tbf-plaque tbf-bloc" data-ton="or" href="/boosters"${n > 0
+      ? ` data-pastille="${n}" aria-label="Ouvrir mon premier booster — ${pluriel(n, 'booster', 'boosters')} en réserve"`
+      : ''}>OUVRIR MON PREMIER BOOSTER</a>`;
+  return `<div class="tbf-vestiaire" id="tvide" style="${echarpeDe(SETS[0])}">
+      <div class="tbf-vestiaire-fond"><img src="/img/place-vide.webp" alt="" decoding="async"></div>
+      <p class="tvide-mot"><span class="tbf-scotch" aria-hidden="true"></span><span
+        class="tbf-marqueur">TA PLACE EST VIDE</span></p>
+    </div>
+    <div class="tbtns">${geste}</div>`;
+}
+
+/* CHOISIR DANS LE CLASSEUR ouvre l'onglet voisin sans recharger la page,
+   comme l'anneau de la poche ; son adresse reste celle d'un vrai lien. */
+$('teamBody').addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-go]');
+  if (!a) return;
+  e.preventDefault();
+  montrerEcran(a.dataset.go);
+});
+
 function renderTeam() {
   rendreBourse();
   const f = S.active ? BY_ID.get(S.active) : null;
   if (!f || !S.col?.[f.id]) {
-    if (sigEquipe !== 'vide') {
+    const aDesCartes = PERSOS.some((x) => S.col?.[x.id]);
+    const n = aDesCartes ? 0 : Math.max(0, Math.floor(Number(S.packs) || 0));
+    const sig = JSON.stringify(['vide', aDesCartes, n]);
+    if (sigEquipe !== sig) {
       sceneEquipe?.arreter?.();
       sceneEquipe = null;
-      $('teamBody').innerHTML = `<div class="empty">
-        Aucun Fanzzy choisi.<br>Ouvre un booster, puis choisis-le depuis le classeur.</div>`;
-      sigEquipe = 'vide';
+      $('teamBody').innerHTML = placeVideHTML(aDesCartes, n);
+      sigEquipe = sig;
     }
     return;
   }

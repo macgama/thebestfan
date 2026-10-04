@@ -35,9 +35,10 @@
     — **cinq bâches-tuiles**, une par sorte de chose qui se gagne, chacune
       avec son anneau, la dernière pièce arrivée et ce qui est nouveau ;
     — chacune ouvre **sa sous-vue** : l'album Fanzzy — le même composant que
-      le classeur de /fanzzy (`.tbf-album`, ui.css), une page par série —, les
-      planches d'états et de tenues par personnage, l'équipement et les
-      cartes d'action en grilles de cartes ;
+      le classeur de /fanzzy (`.tbf-album`, ui.css), une page par série, les
+      trois âges de chaque personnage à la suite et numérotés comme lui —,
+      les états et les tenues dans le même album, une planche par personnage
+      qu'on a, l'équipement et les cartes d'action en grilles de cartes ;
     — tout ce qui s'y touche s'ouvre dans **la vitrine**, la modale commune
       (`.tbf-vitrine`, ui.css) : la carte en grand qu'on incline, ses voisines
       en dos derrière elle, et le chemin vers ce qui manque.
@@ -73,6 +74,16 @@ html[data-calme~="animations"] .spin{animation:none}
    eux : la pastille « +2 » d'un rayon pend de huit pixels au-dessus de sa
    bâche, et l'ombre dure du cadre descend de trois. */
 #accueil{display:flex;flex-direction:column;gap:26px;padding-top:18px}
+/* **Une colonne de 560 pixels au-delà de 600, au milieu** — la largeur de la
+   fiche (fanzzy-fiche.css). Sur une tablette, chaque rayon devenait une dalle
+   de 370 × 130 pixels dont l'anneau et le nom tenaient au coin bas-gauche,
+   le reste de la face vide ; le collectionneur, une bande de 740 pixels
+   remplie au tiers. L'accueil n'a que six objets à montrer : il garde la
+   proportion du téléphone. Les sous-vues, elles, prennent toute la largeur
+   — un album gagne à montrer deux lignées par rangée. */
+@media (min-width:600px){
+  #accueil{box-sizing:border-box;width:100%;max-width:560px;margin-inline:auto}
+}
 /* **Provisoire** (demandé à la feuille commune) : le nom et le compte d'un
    rayon, sur un bout de gaffer. À la craie sur la face de leur ton, ils
    tombaient à 2,4–2,6:1 sous le voile blanc de l'audit — dix textes au
@@ -112,29 +123,45 @@ html[data-calme~="animations"] .spin{animation:none}
 /* Le titre reçoit le focus à l'ouverture, pour le lecteur d'écran ; ce n'est
    pas une commande, il n'a pas d'anneau. */
 .vue-tete>h2:focus{outline:none}
-/* Le contenu d'une sous-vue qui n'a qu'une page (états, tenues, équipement,
+/* Le contenu d'une sous-vue qui n'a qu'une page (l'équipement, les
    actions) : la page d'album sans le défilement des pages. */
 .vue-seule>.tbf-album-page{padding-top:12px}
-/* **Les vitrines, deux par rangée sur une tablette** — la même place que le
-   classeur (fanzzy.html, `#s-dex`), puisque c'est le même album. Une série
-   ferme sur ses cinq légendaires : à 768 px, cinq cases VITRINE pleine
-   largeur faisaient six cents pixels de rangées à moitié vides. Sur six
-   colonnes, chacune en prend trois, et la première repart d'une rangée
-   propre. À trois colonnes, elle prend toute la rangée, comme la brique. */
+/* **Trois colonnes, puis six — une lignée par rangée, puis deux** : la
+   grille du classeur (fanzzy.html, `#s-dex`), puisque c'est le même album,
+   et qu'il range comme lui les trois âges de chaque personnage à la suite.
+   La brique compte ses colonnes à la largeur, jusqu'à cinq : à quatre ou à
+   cinq, un personnage se coupait en travers de deux rangées. Seulement dans
+   les pages d'une série : l'équipement et les actions n'ont pas d'âges, ils
+   gardent la grille de la brique.
+
+   **Les vitrines, deux par rangée sur une tablette.** Une série ferme sur
+   ses cinq légendaires : à 768 px, cinq cases VITRINE pleine largeur
+   faisaient six cents pixels de rangées à moitié vides. Sur six colonnes,
+   chacune en prend trois, et la première repart d'une rangée propre. À
+   trois colonnes, elle prend toute la rangée, comme la brique. */
+#vue .tbf-album-pages .tbf-album-cartes{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (min-width:640px){
   #vue .tbf-album-pages .tbf-album-cartes{grid-template-columns:repeat(6,minmax(0,1fr))}
   #vue .tbf-album-pages .tbf-album-vitrine{grid-column:span 3}
   #vue .tbf-album-pages .tbf-album-cartes>:not(.tbf-album-vitrine)+.tbf-album-vitrine{grid-column:1 / span 3}
 }
-/* Les planches, l'une sous l'autre : le sticker PLANCHE COMPLÈTE pend de onze
-   pixels au-dessus de la sienne. */
+/* Les planches d'une page de série, l'une sous l'autre : le sticker
+   PLANCHE COMPLÈTE pend de onze pixels au-dessus de la sienne. */
 .planches{display:flex;flex-direction:column;gap:24px}
 .planches>.tbf-planche>.spin{margin:10px auto 4px}
-/* Les tenues ont des noms longs (« PRÉHISTORIQUE », « APOCALYPTIQUE ») : à
-   soixante-quatre pixels, ils se coupaient au milieu du mot. Trois cases par
-   rangée à 360 px — une rangée par âge, les tenues étant trois — et le nom
-   tient sur sa ligne. */
-.tbf-planche[data-quoi=tenues]>.tbf-planche-cases{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+/* **Provisoire** (demandé à la feuille commune) : la planche complète,
+   repliée en une ligne. Sa tête devient le bouton qui la déplie — la ligne
+   entière, quarante-quatre pixels au moins sous le doigt —, et le chevron
+   au bout dit qu'elle s'ouvre. Repliée, elle n'a plus de rangée sous sa
+   tête : la marge qui l'en séparait tombe. Sans transition : le chevron se
+   retourne d'un coup, et n'a donc pas de double au calme. */
+.tbf-planche>button.tbf-planche-tete{box-sizing:border-box;width:100%;min-height:44px;padding:0;border:0;
+  background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tbf-planche>button.tbf-planche-tete:focus-visible{outline:3px solid var(--projo);outline-offset:4px}
+.tbf-planche>button.tbf-planche-tete>svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;
+  stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.tbf-planche:not([data-replie])>button.tbf-planche-tete>svg{rotate:180deg}
+.tbf-planche[data-replie]>.tbf-planche-tete{margin-bottom:0}
 /* Ce qui reste à dire quand une page n'a rien à montrer, et le chemin. */
 .vue-vide{display:flex;flex-direction:column;gap:16px}
 .vue-vide>.tbf-sous{margin:0}
@@ -165,27 +192,10 @@ html[data-calme~="animations"] .spin{animation:none}
 .vue-planche>.tbf-planche{margin-top:24px;text-align:left}
 .vue-planche>.tbf-vitrine-texte{margin-top:20px}
 
-/* **Provisoire** (demandé à la feuille commune) : l'âge qu'on n'a pas encore,
-   dans la rangée des âges de la vitrine, garde son portrait flou — comme le
-   nœud suivant de la fiche et la case du classeur : le montrer net donnerait
-   d'avance la seule chose qu'on paie. */
-.tbf-vitrine-age[data-verrou]>img{filter:blur(2.5px) grayscale(.3)}
-
-/* **Provisoire** (demandé à la feuille commune) : NOUVEAU, le premier sticker
-   d'une case d'album, est posé à z 5 au coin haut-gauche — là où la carte
-   pose son pin et son âge, à z 6 (cartes.css, `.haut`). Le pin mangeait le N
-   (« OUVEAU », vu au banc à 360 et 768 px). Il passe sur le flanc gauche, au
-   tiers de la hauteur, devant la carte : entre l'âge et la bande du nom, il
-   ne couvre que le dessin. **La même place que le classeur** (fanzzy.html,
-   `#s-dex`) : c'est le même album, et un NOUVEAU qui change de coin d'un écran
-   à l'autre se lirait comme deux choses. */
-#vue .tbf-album-case>.tbf-sticker:first-of-type{z-index:9;top:34%;left:-4px}
-/* **Provisoire** (demandé à la feuille commune) : le tampon « ×3 » de la
-   vitrine est posé au coin haut-droit de la scène, là où la carte porte sa
-   forme de rareté — sur une légendaire, il cachait l'éclat (vu au banc). Il
-   descend sur le flanc droit, à la place du doublon d'une carte de grille :
-   il mord toujours sur l'illustration, et la forme reste entière. */
-.tbf-vitrine-scene>.tbf-tampon{top:36%}
+/* Le portrait flou d'un âge pas encore atteint (rangée des âges de la
+   vitrine), NOUVEAU sur le flanc d'une case d'album, et le tampon « ×3 » sur
+   le flanc de la scène sont servis par ui.css depuis le lot 4 : leurs règles
+   provisoires sont parties d'ici. */
 </style>
 </head>
 <body>
@@ -242,6 +252,8 @@ const ICO = {
   avant: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
   apres: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
   croix: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  /* Le chevron d'une planche repliée : il se retourne quand elle s'ouvre. */
+  deplier: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
   /* Le sachet d'un booster, au flare : la même icône que l'en-tête d'album
      du banc des briques. Il n'y a pas de jeton dessiné pour un booster. */
   sachet: '<svg viewBox="0 0 24 24" aria-hidden="true" style="color:var(--flare)"><path d="M4 8h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 8l1.5-4h13L20 8M9 4v4M15 4v4"/></svg>',
@@ -252,6 +264,16 @@ const entier = (v) => { const n = Math.floor(Number(v)); return Number.isFinite(
 /** Une part de 0 à 1, pour `--part` (jamais un pourcentage). */
 const partDe = (g, p) => (p > 0 ? Math.min(1, Math.max(0, g / p)) : 0);
 const pluriel = (n, un, plusieurs) => (n > 1 ? plusieurs : un);
+/* **Une valeur servie n'entre dans le balisage que si elle est ce qu'elle
+   dit être.** La rareté vient de la bibliothèque et du catalogue : elle
+   devient un attribut (`data-rar`) que la feuille et `fx.js` lisent ; hors
+   des quatre mots du jeu, c'est une commune — comme le fait `rareteDe` dans
+   cartes.js pour la carte elle-même. Une couleur de série devient du CSS
+   dans un `style` : seulement si c'est une couleur (la même garde que le
+   classeur, `teinte`). */
+const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
+const rareteSure = (r) => (RARETES.includes(r) ? r : 'commune');
+const teinte = (c) => (/^#[0-9a-f]{3,8}$/i.test(String(c ?? '')) ? c : null);
 
 /* Moins de mouvement : demandé au système, ou dans le tiroir (le mode calme,
    contrat C4). `FX.calme` quand fx.js est là ; sinon la marque qu'il pose sur
@@ -292,32 +314,50 @@ const lignee = (racine) => (DEX ?? [])
 /** L'âge atteint d'un personnage possédé ; le premier sinon. */
 const stadeDe = (racine) => E.parFanzzy.get(racine)?.stade ?? 1;
 const ageAtteint = (racine) => lignee(racine)[stadeDe(racine) - 1] ?? BY_ID?.get(racine) ?? null;
+/** L'âge atteint d'une lignée qu'on a, 0 si on ne l'a pas (le `atteint` du
+    classeur, lu ici dans la bibliothèque plutôt que dans l'état). */
+const atteint = (racine) => (E.parFanzzy.has(racine) ? Math.max(1, entier(E.parFanzzy.get(racine).stade) || 1) : 0);
+/**
+ * La case qui porte AVATAR : **l'âge que l'avatar montre**, et non les trois
+ * — la règle du classeur (fanzzy.html, `estAvatar`). `wallet.avatar` est
+ * l'avatar tel que le serveur le résout, à l'âge choisi sur la fiche.
+ */
+const estAvatar = (racine, stade) => E.avatar?.id === racine
+  && Number(E.avatar.evo ?? atteint(racine)) === stade;
 /** La série, avec son nom, ses couleurs et son ouverture. */
 const serie = (code) => (SETS_TOUTES ?? []).find((s) => s.id === code) ?? null;
 /**
- * Le numéro de pochette d'une carte : **sa place dans sa série**, comptée
- * comme le classeur la compte (fanzzy.html, `cartesDe`) — tous les âges de
- * la série à la suite, les légendaires à la fin, puis le numéro du
- * personnage, puis l'âge. C'est le même album : une carte manquante ne porte
- * pas « N° 003 » ici et « N° 007 » au classeur. Les chiffres de
- * l'identifiant (TR3 → 3) ne sont pas ce numéro-là, ils ne comptent pas les
- * âges des lignées d'avant. Compté sur la série entière, il ne change ni au
- * filtre ni d'une visite à l'autre. Une table par série, faite à la première
- * demande ; sans catalogue, pas de numéro.
+ * Les cartes d'une série **dans l'ordre de l'album**, comptées comme le
+ * classeur les compte (fanzzy.html, `cartesDe`) : tous les âges de la série
+ * à la suite — TR1, TR1B, TR1C, puis TR2 —, les légendaires à la fin, puis
+ * le numéro du personnage, puis l'âge. C'est le même album : une carte
+ * manquante ne porte pas « N° 003 » ici et « N° 007 » au classeur, et les
+ * pochettes se suivent sans trou. Les chiffres de l'identifiant (TR3 → 3) ne
+ * sont pas ce numéro-là, ils ne comptent pas les âges des lignées d'avant.
+ * Compté sur la série entière, il ne change ni au filtre ni d'une visite à
+ * l'autre. Une table par série, faite à la première demande ; sans
+ * catalogue, pas de numéro.
+ *
+ * (La fabrique des cases elle-même — cet ordre, l'état de chaque case, la
+ * case VITRINE — devrait être une seule, partagée avec le classeur : c'est
+ * demandé au périmètre de la carte. En attendant, celle d'ici est écrite
+ * trait pour trait sur la sienne.)
  */
 const rangs = new Map();
-function numeroDe(id) {
-  const f = BY_ID?.get(id);
-  if (!f?.set) return null;
-  if (!rangs.has(f.set)) {
+function ordreSerie(code) {
+  if (!rangs.has(code)) {
     const num = (x) => Number(/^[A-Z]+(\d+)/.exec(x.racine ?? x.id)?.[1] ?? 0);
     const leg = (x) => (x.rar === 'legendaire' ? 1 : 0);
     const age = (x) => x.stade ?? 1;
-    rangs.set(f.set, new Map((DEX ?? []).filter((x) => x.set === f.set)
-      .sort((a, b) => leg(a) - leg(b) || num(a) - num(b) || age(a) - age(b))
-      .map((x, i) => [x.id, i + 1])));
+    const liste = (DEX ?? []).filter((x) => x.set === code)
+      .sort((a, b) => leg(a) - leg(b) || num(a) - num(b) || age(a) - age(b));
+    rangs.set(code, { liste, n: new Map(liste.map((x, i) => [x.id, i + 1])) });
   }
-  return rangs.get(f.set).get(id) ?? null;
+  return rangs.get(code);
+}
+function numeroDe(id) {
+  const f = BY_ID?.get(id);
+  return f?.set ? ordreSerie(f.set).n.get(id) ?? null : null;
 }
 const numeroTexte = (n) => `N° ${String(n).padStart(3, '0')}`;
 /** Le portrait d'un âge (son buste), ou rien. */
@@ -347,13 +387,77 @@ const somme = (gains) => gains.reduce((s, g) => ({
 
 /* ------------------------------------------------------ les nouveautés
 
-   Le drapeau du serveur (contrat § 2.1). La page éteint ce qu'elle a montré
-   **après** l'avoir montré (§ 2.2) : en quittant la sous-vue où il était à
-   l'écran, ou en quittant la page — jamais au chargement. */
-const nouvelles = (garder) => (E.nouv ?? []).filter((n) => !E.eteintes.has(n.cle) && garder(n));
+   Le drapeau du serveur (contrat § 2.1). **On éteint après avoir montré,
+   jamais au chargement** (§ 2.2), et « montré » veut dire vu : une case
+   NOUVEAU porte sa clé (`data-cle`), et elle n'est tenue pour montrée que
+   restée à l'écran, à plus de moitié, près d'une seconde — la sous-vue
+   ouverte, la vitrine fermée (ou la case dans la vitrine), l'onglet au
+   premier plan, sa page d'album ni inerte ni cachée. C'est la règle du
+   classeur (fanzzy.html, « NOUVEAU »), au chiffre près : c'est le même
+   album. Monter une page de cent cinq cases n'en montre que ce qui passe
+   sous les yeux, et une carte NOUVEAU jamais atteinte au défilement reste
+   nouvelle. Toucher une case NOUVEAU la montre, évidemment.
+
+   Ce qui a été montré part s'éteindre en quittant la sous-vue, ou la page.
+   **Le NOUVEAU reste dessiné pendant toute la visite**, même éteint
+   (`toutes`) : il disparaîtrait sinon sous les yeux en revenant dans la
+   sous-vue. La pastille d'un rayon, elle, ne compte que ce qui n'a pas
+   encore été éteint (`nouvelles`). */
+const toutes = (garder) => (E.nouv ?? []).filter((n) => typeof n?.cle === 'string' && garder(n));
+const nouvelles = (garder) => toutes((n) => !E.eteintes.has(n.cle) && garder(n));
 const SORTES = { fanzzy: ['fanzzy', 'age'], etats: ['etat'], tenues: ['skin'],
   equipement: ['stuff'], actions: ['action'] };
 const montrer = (cles) => { for (const c of cles) if (!E.eteintes.has(c)) E.montrees.add(c); };
+
+/* Ce qui est à l'écran depuis assez longtemps pour avoir été vu. Sans
+   observateur (un navigateur très ancien), rien n'est tenu pour vu : le
+   NOUVEAU reviendra à la visite suivante, ce qui vaut mieux qu'une
+   nouveauté éteinte sans avoir été montrée. */
+const vuesEnCours = new Map();
+const guetteur = 'IntersectionObserver' in window ? new IntersectionObserver((entrees) => {
+  for (const x of entrees) {
+    const el = x.target;
+    if (x.isIntersecting && x.intersectionRatio >= 0.55) {
+      if (!vuesEnCours.has(el)) vuesEnCours.set(el, setTimeout(() => { vuesEnCours.delete(el); vu(el); }, 900));
+    } else {
+      clearTimeout(vuesEnCours.get(el));
+      vuesEnCours.delete(el);
+    }
+  }
+}, { threshold: [0, 0.55] }) : null;
+
+function vu(el) {
+  const cle = el.dataset.cle;
+  if (!cle || E.montrees.has(cle) || E.eteintes.has(cle) || !el.isConnected || document.hidden
+    || el.closest('[inert],[hidden]')) return;
+  /* L'observateur ne sait rien de ce qui couvre l'écran : l'album derrière
+     la vitrine ouverte lui paraît visible. Une case compte quand elle est
+     du côté de ce qu'on regarde. */
+  if (Boolean(pileVues.length) !== $('vitr').contains(el)) return;
+  E.montrees.add(cle);
+  guetteur?.unobserve(el);
+}
+/** Guette les cases NOUVEAU d'un morceau de page qui vient d'être dessiné. */
+function surveiller(racine) {
+  if (!guetteur || !racine) return;
+  for (const el of racine.querySelectorAll('[data-cle]')) {
+    if (!E.montrees.has(el.dataset.cle) && !E.eteintes.has(el.dataset.cle)) guetteur.observe(el);
+  }
+}
+/** Cesse de guetter ce qui va être effacé. */
+function oublier(racine) {
+  if (!racine) return;
+  for (const el of racine.querySelectorAll('[data-cle]')) {
+    guetteur?.unobserve(el);
+    clearTimeout(vuesEnCours.get(el));
+    vuesEnCours.delete(el);
+  }
+}
+/* L'observateur ne prévient que d'un **changement** : une case déjà à
+   l'écran quand la vitrine se referme, quand l'onglet revient au premier
+   plan ou quand sa page cesse d'être inerte ne déclencherait plus rien. On
+   la lui redonne. */
+function reguetter(racine) { oublier(racine); surveiller(racine); }
 
 /** Éteint auprès du serveur ce qui a été montré. Tenu pour éteint dès
     l'envoi — la pastille qu'on retrouve en revenant à l'accueil ne le compte
@@ -376,8 +480,10 @@ function eteindre({ depart = false } = {}) {
  * Les titres de palier du collectionneur.
  *
  * **Des seuils de la page, pas du serveur** (la direction les veut « seuils
- * client ») : ils nomment la part de l'anneau, rien d'autre — aucun gain n'y
- * est attaché, les gains sont ceux des crans que le serveur sert.
+ * client ») : ils nomment la part de tout ce que comptent les crans, rien
+ * d'autre — aucun gain n'y est attaché, les gains sont ceux des crans que le
+ * serveur sert. Pas la part de l'anneau : celui-ci vise le palier en cours,
+ * et se remplit à chaque cran ; le titre, lui, ne redescend jamais.
  */
 const TITRES = [[2 / 3, 'CAPO'], [1 / 3, 'ULTRA'], [0, 'ABONNÉ']];
 const titreDe = (part) => TITRES.find(([seuil]) => part >= seuil)[1];
@@ -390,21 +496,39 @@ const titreDe = (part) => TITRES.find(([seuil]) => part >= seuil)[1];
  * tenues à part (`ECARTS.md`, fanzzy § 8), et mettre `total.gagnes` en face
  * de ce seuil mélangerait deux comptes. Sans paliers, la jauge de la
  * bibliothèque entière, sans récompense ni bouton (§ 5.1, « Absence »).
+ *
+ * `vise` est **le palier en cours** (amendement 22) : ce que l'anneau
+ * dessine. Les crans comptent les états — près de trois mille — et
+ * « 10 / 3311 » laissait un anneau vide à l'œil, 0,3 %, à côté d'un sticker
+ * qui promettait le cran de 25. Il vise donc le prochain cran, comme la
+ * tuile de la collection sur le hub (index.html, `palierDe`), au chiffre
+ * près : « 10 / 25 », puis « 37 / 50 » — les deux écrans ne visent jamais
+ * deux seuils différents, et le sticker d'à côté dit ce que ce seuil
+ * rapporte. Sans prochain cran (tout est gagné), le total. Sans paliers,
+ * les repères ronds du hub, qui ne promettent rien. Le total gagné sur le
+ * possible reste dit dans l'étiquette, et nomme le titre de palier.
  */
+const REPERES = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
 function compteAnneau() {
   const P = E.B.paliers && Number.isInteger(E.B.paliers.gagnes) ? E.B.paliers : null;
-  if (!P) return { P: null, g: entier(E.B.total?.gagnes), p: entier(E.B.total?.possibles) };
-  return { P, g: P.gagnes,
-    p: Number.isInteger(P.possibles) ? P.possibles : entier(E.B.total?.possibles) };
+  const g = P ? P.gagnes : entier(E.B.total?.gagnes);
+  const p = P && Number.isInteger(P.possibles) ? P.possibles : entier(E.B.total?.possibles);
+  const cran = Number(P?.cran);
+  const a = Number(P?.prochain?.a);
+  const vise = Number.isInteger(cran) && cran > 0
+    ? (Number.isInteger(a) && a > g ? a : p)
+    : (REPERES.find((x) => x > g && x < p) ?? p);
+  return { P, g, p, vise, auCran: Number.isInteger(cran) && cran > 0 && vise === a };
 }
 
 function collectionneurHTML() {
-  const { P, g, p } = compteAnneau();
-  const part = partDe(g, p);
+  const { P, g, p, vise, auCran } = compteAnneau();
   const t = E.B.total ?? {};
-  const dit = P
-    ? `${g} sur ${p} au compte des paliers, tenues à part ; ${entier(t.gagnes)} sur ${entier(t.possibles)} en tout`
-    : `${g} sur ${p} gagnés`;
+  const dit = [
+    `${g} sur ${vise}${auCran ? ' au prochain palier' : ''}`,
+    P ? `${g} sur ${p} au compte des paliers, tenues à part ; ${entier(t.gagnes)} sur ${entier(t.possibles)} en tout`
+      : `${g} sur ${p} en tout`,
+  ].join(' ; ');
   /* Le prochain cran, écrit par ce qu'il ouvre. Absent : tout est gagné, ou
      le serveur ne sert pas les paliers — rien ne se pose. */
   const mots = P?.prochain ? gainMots(P.prochain.gain) : [];
@@ -424,10 +548,10 @@ function collectionneurHTML() {
   const bouton = dus.length
     ? `<button type="button" class="tbf-plaque tbf-bloc" data-ton="or" id="recuperer">RÉCUPÉRER ${prets.join('')}</button>` : '';
   return `<section class="tbf-cadre tbf-collectionneur" data-echarpe id="collectionneur" aria-label="Niveau de collectionneur">
-    <span class="tbf-cercle" style="--part:${part.toFixed(3)}" role="img" aria-label="${esc(dit)}"><b>${g}</b><small>/${p}</small></span>
+    <span class="tbf-cercle" style="--part:${partDe(g, vise).toFixed(3)}" role="img" aria-label="${esc(dit)}"><b>${g}</b><small>/${vise}</small></span>
     <div class="tbf-collectionneur-corps">
       <small class="tbf-collectionneur-sur">COLLECTIONNEUR</small>
-      <b class="tbf-banderole">${titreDe(part)}</b>
+      <b class="tbf-banderole">${titreDe(partDe(g, p))}</b>
       ${jalon}
     </div>
     ${bouton}
@@ -439,12 +563,18 @@ function collectionneurHTML() {
  *
  * `type` est la clé de la bibliothèque ; `vue` est celle de la sous-vue, et
  * `data-vue="fanzzy"` est ce que l'audit touche pour aller à l'album.
+ *
+ * **ÉQUIPEMENT est en parpaing**, la face neutre (sans `data-ton`). Il était
+ * violet : le ton « les gens » (KOP, amis, INVITER), que la palette et
+ * l'amendement 4 réservent aux autres joueurs, et qui ne se pose sur rien
+ * de ce qu'on possède. Le bleu « posséder » porte déjà FANZZY et TENUES ; un
+ * troisième bleu ferait de la grille un seul bloc.
  */
 const RAYONS = [
   { vue: 'fanzzy', type: 'fanzzy', nom: 'FANZZY', ton: 'bleu' },
   { vue: 'etats', type: 'etats', nom: 'ÉTATS', ton: 'vert' },
   { vue: 'tenues', type: 'tenues', nom: 'TENUES', ton: 'bleu' },
-  { vue: 'equipement', type: 'stuff', nom: 'ÉQUIPEMENT', ton: 'violet' },
+  { vue: 'equipement', type: 'stuff', nom: 'ÉQUIPEMENT', ton: null },
   { vue: 'actions', type: 'actions', nom: 'CARTES D’ACTION', ton: 'flare' },
 ];
 const VUES = new Set(RAYONS.map((r) => r.vue));
@@ -455,7 +585,8 @@ const VUES = new Set(RAYONS.map((r) => r.vue));
  * ne dit ce qui est arrivé en dernier ; sans nouveauté, pas de vignette.
  */
 function derniere(vue) {
-  const n = nouvelles((x) => SORTES[vue].includes(x.sorte))[0];
+  /* `toutes` : la dernière pièce arrivée le reste, même une fois vue. */
+  const n = toutes((x) => SORTES[vue].includes(x.sorte))[0];
   if (!n || !E.catalogue) return null;
   const dessins = window.TBF_ETATS;
   if (n.sorte === 'fanzzy' || n.sorte === 'age') {
@@ -487,10 +618,10 @@ function rayonsHTML() {
     const neufs = nouvelles((x) => SORTES[r.vue].includes(x.sorte)).length;
     const pastille = neufs && etats < 3 ? (etats += 1, ` data-etat="nouveau" data-pastille="+${neufs}"`) : '';
     const d = derniere(r.vue);
-    const objet = d?.src ? `<span class="tbf-objet" data-rar="${esc(d.rar ?? 'commune')}"><img src="${esc(d.src)}"
+    const objet = d?.src ? `<span class="tbf-objet" data-rar="${rareteSure(d.rar)}"><img src="${esc(d.src)}"
       alt="" loading="lazy" onerror="this.parentNode.classList.add('tbf-objet--vide');this.remove()"></span>` : '';
     const dit = `${r.nom.charAt(0)}${r.nom.slice(1).toLowerCase()} : ${g} sur ${p}${neufs ? `, ${neufs} ${pluriel(neufs, 'nouveau', 'nouveaux')}` : ''}`;
-    return `<button type="button" class="tbf-plaque tbf-rayon" data-ton="${r.ton}" data-vue="${r.vue}"${pastille}
+    return `<button type="button" class="tbf-plaque tbf-rayon"${r.ton ? ` data-ton="${r.ton}"` : ''} data-vue="${r.vue}"${pastille}
       aria-label="${esc(dit)}">
       <span class="tbf-cercle" style="--part:${partDe(g, p).toFixed(3)}" aria-hidden="true"><b>${g}</b></span>
       ${objet}
@@ -644,13 +775,15 @@ function teteAlbum({ embleme, nom, ligne, g, p, recompense }) {
 }
 
 /* Les emblèmes des rayons qui n'ont pas de série : un pictogramme au trait,
-   à l'encre sur la craie de l'emblème. */
+   à l'encre sur la craie de l'emblème. Les états et les tenues se rangent
+   par série, sous l'emblème de la leur. */
 const EMBLEMES = {
-  etats: '<svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/></svg>',
-  tenues: '<svg viewBox="0 0 24 24"><path d="M8 3L3 6l2 4 3-1v12h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/></svg>',
   equipement: '<svg viewBox="0 0 24 24"><path d="M3 10v4h3l7 4V6l-7 4zM16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></svg>',
   actions: '<svg viewBox="0 0 24 24"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>',
 };
+/* Ce que dit l'en-tête de chaque page. Pour les états et les tenues, la
+   règle qui explique la planche — pourquoi un âge pas encore atteint n'y
+   est pas — plutôt que l'accroche de la série, qu'on lit déjà au classeur. */
 const ACCROCHES = {
   etats: 'Dans les boosters, pour un Fanzzy que tu as, à un âge que tu as débloqué.',
   tenues: 'Dans les boosters et à la boutique, pour un Fanzzy que tu as, âge par âge.',
@@ -675,6 +808,7 @@ function afficherVue(vue) {
   if (E.album) { E.album.fin?.(); E.album = null; }
   E.vue = vue;
   const v = $('vue');
+  oublier(v);
   if (!vue) {
     v.hidden = true;
     v.innerHTML = '';
@@ -711,28 +845,265 @@ function retourVue() {
   afficherVue(null);
 }
 
-/* ------------------------------------------------------- l'album Fanzzy
+/* ------------------------------------------------------------- l'album
 
    Le même composant que le classeur de /fanzzy : une page par série qu'on
-   tourne du doigt, le rail des séries au-dessus, les filtres de famille.
+   tourne du doigt, le rail des séries au-dessus, les filtres de famille et
+   « ce qu'il me reste ». Il porte trois sous-vues — les Fanzzy, les états,
+   les tenues — et seule la page change de l'une à l'autre.
    **Seules la page ouverte et ses deux voisines sont montées** : un album de
-   cent cinquante-deux cartes n'en monte pas cent cinquante-deux. */
+   cent cinquante-deux cartes n'en monte pas cent cinquante-deux, et un album
+   de deux cents planches ne demande que celles qui passent sous les yeux. */
 
-/** Les lignées d'une série : les personnages dans l'ordre de leur numéro de
-    pochette, les légendaires à la fin — elles ferment la page en case
-    VITRINE. */
-function rangerSerie(items) {
-  const num = (it) => Number(numeroDe(it.id) ?? 0);
-  return items.slice().sort((a, b) => ((a.rar === 'legendaire') - (b.rar === 'legendaire')) || (num(a) - num(b)));
+/** Les couleurs d'une série, sur son onglet et sur sa page (`teinte`). */
+const couleurs = (s) => {
+  const a = teinte(s?.c1);
+  const b = teinte(s?.c2);
+  return a && b ? `--e1:${a};--e2:${b}` : '';
+};
+/** L'emblème d'une série, en tête de sa page et sur son onglet. */
+const emblemeSerie = (s) => `<img src="${esc(window.TBF_LOGO?.adresse?.('serie', s.id) ?? '')}" alt="" onerror="this.remove()">`;
+
+/**
+ * Monte un album dans la sous-vue `v`.
+ *
+ *   pages     `[{ s, … }]`, une par série, dans l'ordre du rail ;
+ *   fermees   les séries sous cadenas, au bout du rail : elles se touchent
+ *             pour dire pourquoi, elles ne s'ouvrent pas ;
+ *   depart    la page d'arrivée ;
+ *   page      `(a, k)` → le balisage de la page k, filtres de `a` compris ;
+ *   montee    `(a, k, sec)` → ce qui suit le montage d'une page ;
+ *   demontee  `(a, k, sec)` → ce qui précède son effacement ;
+ *   ouverte   `(a, i, sec)` → ce qui suit l'arrivée sur la page i ;
+ *   colle     la cascade d'entrée, une fois, sur la page d'arrivée.
+ */
+function monterAlbum(v, r, { pages, fermees = [], depart = 0, nom, ...crochets }) {
+  const a = { series: pages, cur: depart, montees: new Set(), familles: new Set(), reste: false,
+    deplies: new Set(), ...crochets };
+  E.album = a;
+  const familles = Object.entries(TYPES ?? {});
+  v.innerHTML = `${teteVue(r.nom)}
+  <section class="tbf-album tbf-pleine-largeur" aria-label="${esc(nom)}">
+    <nav class="tbf-album-rail" aria-label="Les séries">${pages.map(({ s }, i) =>
+    `<button type="button" class="tbf-album-onglet" data-serie="${esc(s.id)}" data-index="${i}"${
+      i === depart ? ' aria-current="true"' : ''} style="${couleurs(s)}">${emblemeSerie(s)}${esc(s.nom ?? s.id)}</button>`).join('')}${
+    fermees.map((s) =>
+    `<button type="button" class="tbf-album-onglet" data-serie="${esc(s.id)}" data-verrou aria-disabled="true"
+      aria-label="${esc(s.nom ?? s.id)} — pas encore ouverte"><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>${
+      esc(s.nom ?? s.id)}</button>`).join('')}
+    </nav>
+    <div class="tbf-album-filtres" role="group" aria-label="Filtrer par famille">${familles.map(([k, t]) =>
+    `<button type="button" class="tbf-filtre" data-famille="${esc(k)}" aria-pressed="false" aria-label="${esc(t.nom)}">
+      <span class="tbf-pin"${teinte(t.c) ? ` style="--fam:${t.c}"` : ''}><img src="${esc(window.TBF_LOGO?.adresse?.('type', k) ?? '')}" alt=""
+        onerror="this.remove()"></span></button>`).join('')}
+      <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"><i aria-hidden="true"></i>Ce qu’il me reste</button>
+    </div>
+    <div class="tbf-album-pages">${pages.map(({ s }) =>
+    `<section class="tbf-album-page" data-page="${esc(s.id)}" aria-label="${esc(s.nom ?? s.id)}" style="${couleurs(s)}"></section>`).join('')}
+    </div>
+  </section>`;
+
+  const conteneur = v.querySelector('.tbf-album-pages');
+  aller(depart);
+  conteneur.scrollLeft = depart * conteneur.clientWidth;
+
+  /* La page ouverte se lit quand le défilement s'arrête : `scrollend` là où
+     il existe, sinon un repos de cent vingt millisecondes. Un observateur
+     d'intersection se déclencherait sur chaque page traversée en chemin, et
+     démonterait la page qu'on va atteindre. */
+  let repos = 0;
+  const arrive = () => {
+    clearTimeout(repos);
+    const i = Math.round(conteneur.scrollLeft / Math.max(1, conteneur.clientWidth));
+    if (i !== a.cur) aller(i);
+  };
+  const surDefile = () => { clearTimeout(repos); repos = setTimeout(arrive, 120); };
+  conteneur.addEventListener('scroll', surDefile, { passive: true });
+  conteneur.addEventListener('scrollend', arrive);
+  /* Une rotation du téléphone change la largeur des pages : on se recale sur
+     celle qu'on lisait, sans tourner. */
+  const recaler = () => { conteneur.scrollLeft = a.cur * conteneur.clientWidth; };
+  window.addEventListener('resize', recaler);
+  a.fin = () => window.removeEventListener('resize', recaler);
 }
 
-/** L'objet qu'on feuillette dans la vitrine, pour une lignée. */
-const objetFanzzy = (it) => ({ k: 'fanzzy', id: it.id, nom: it.nom, rar: it.rar, possede: Boolean(it.possede),
-  ...(it.possede ? { age: ageAtteint(it.id)?.id } : {}) });
+/** Monte la page `k` (ou la refait, si elle l'était déjà). */
+function monterPage(a, k, sec) {
+  if (a.montees.has(k)) demonterPage(a, k, sec);
+  sec.innerHTML = a.page(a, k);
+  a.montees.add(k);
+  a.montee?.(a, k, sec);
+  surveiller(sec);
+}
+function demonterPage(a, k, sec) {
+  oublier(sec);
+  a.demontee?.(a, k, sec);
+  sec.innerHTML = '';
+  a.montees.delete(k);
+}
+
+/** Monte la page `i` et ses voisines, vide les autres, et dit laquelle est ouverte. */
+function aller(i) {
+  const a = E.album;
+  const v = $('vue');
+  const sections = v.querySelectorAll('.tbf-album-page');
+  i = Math.max(0, Math.min(a.series.length - 1, i));
+  a.cur = i;
+  sections.forEach((sec, k) => {
+    const pres = Math.abs(k - i) <= 1;
+    if (pres && !a.montees.has(k)) monterPage(a, k, sec);
+    if (!pres && a.montees.has(k)) demonterPage(a, k, sec);
+    /* Ce qu'on ne voit pas ne se tabule pas, et ne se lit pas. */
+    sec.inert = k !== i;
+  });
+  /* La cascade d'entrée, une fois, sur la page d'arrivée : jamais au filtre
+     ni en tournant les pages. */
+  if (a.colle && !doux()) {
+    sections[i].querySelectorAll('.tbf-album-case,.tbf-album-pochette').forEach((c, k) => {
+      if (k > 11) return;
+      c.style.setProperty('--d', `${k * 60}ms`);
+      c.classList.add('tbf-colle');
+      c.addEventListener('animationend', () => { c.classList.remove('tbf-colle'); c.style.removeProperty('--d'); }, { once: true });
+    });
+  }
+  a.colle = false;
+  /* La page ouverte sort d'`inert` : ses NOUVEAU deviennent visibles. */
+  reguetter(sections[i]);
+  a.ouverte?.(a, i, sections[i]);
+  /* Le rail suit : l'onglet ouvert, et le rail défile jusqu'à lui. */
+  const rail = v.querySelector('.tbf-album-rail');
+  rail.querySelectorAll('.tbf-album-onglet').forEach((o) => {
+    if (Number(o.dataset.index) === i) o.setAttribute('aria-current', 'true');
+    else o.removeAttribute('aria-current');
+  });
+  const o = rail.querySelector(`[data-index="${i}"]`);
+  if (o) rail.scrollTo({ left: Math.max(0, o.offsetLeft - 14), behavior: doux() ? 'auto' : 'smooth' });
+  /* L'adresse dit la série, pour qu'un retour ou un partage y ramène. */
+  if (E.vue && history.state?.vue === E.vue) {
+    history.replaceState(history.state, '', adresseDe(E.vue, `&serie=${encodeURIComponent(a.series[i].s.id)}`));
+  }
+}
+
+/** Les filtres ont changé : on refait les pages montées, sans cascade. */
+function refiltrer() {
+  const a = E.album;
+  const sections = $('vue').querySelectorAll('.tbf-album-page');
+  for (const k of [...a.montees]) monterPage(a, k, sections[k]);
+  a.ouverte?.(a, a.cur, sections[a.cur]);
+}
+
+/* ------------------------------------------------- l'album des Fanzzy
+
+   **Les cases du classeur, une à une** (fanzzy.html, `cartesDe`, `caseHTML`,
+   `vitrineHTML`) : les trois âges de chaque personnage à la suite, une
+   lignée par rangée, et les légendaires qui ferment la série en case
+   VITRINE. La page ne montrait qu'une case par personnage, avec les numéros
+   du classeur : N° 016, 019, 022… — et le collectionneur cherchait des
+   trous qui n'existaient pas. Les numéros se suivent maintenant, les cases
+   sont les mêmes, le texte de la VITRINE aussi. Ce que la page ajoute :
+   chaque case s'ouvre dans la vitrine (`data-liste`, `data-i`), et non sur
+   la fiche, et porte un nom pour le lecteur d'écran. */
+
+/** L'objet qu'on feuillette dans la vitrine pour une case : la lignée, à
+    l'âge que la case montre. */
+const objetCarte = (c) => {
+  const p = BY_ID.get(c.racine) ?? c.f;
+  return { k: 'fanzzy', id: c.racine, nom: p.nom, rar: p.rar, possede: atteint(c.racine) > 0, age: c.f.id };
+};
+
+/**
+ * Les cartes d'une page, dans l'ordre de l'album (`ordreSerie`), chacune
+ * avec son état — ceux du classeur, mot pour mot :
+ *   possede    l'âge est atteint ;
+ *   achetable  l'âge suivant d'une lignée qu'on a : il s'achète, flouté,
+ *              avec son prix — le flou est ce qu'on paie ;
+ *   avenir     un âge plus loin : flouté, sans prix ;
+ *   manque     le premier âge d'une lignée qu'on n'a pas : une pochette, la
+ *              silhouette du personnage au pochoir ;
+ *   cache      un âge supérieur d'une lignée qu'on n'a pas : une pochette
+ *              sans silhouette — une évolution se cache.
+ */
+function cartesSerie(s) {
+  return ordreSerie(s.id).liste.map((f, i) => {
+    const racine = f.racine ?? f.id;
+    const stade = f.stade ?? 1;
+    const a = atteint(racine);
+    const etat = a >= stade ? 'possede'
+      : a ? (stade === a + 1 ? 'achetable' : 'avenir')
+        : (stade === 1 ? 'manque' : 'cache');
+    return { f, racine, stade, n: i + 1, etat };
+  });
+}
+
+/** La clé NOUVEAU de chaque carte qui en a une, `id de carte → clé` : un
+    personnage arrivé sur son premier âge, un âge acheté sur sa carte. */
+function clesCartes() {
+  const m = new Map();
+  for (const x of toutes((n) => n.sorte === 'fanzzy' || n.sorte === 'age')) {
+    const id = x.sorte === 'fanzzy' ? x.id : lignee(x.id)[Number(x.stade) - 1]?.id;
+    if (id && BY_ID.has(id) && !m.has(id)) m.set(id, x.cle);
+  }
+  return m;
+}
+
+/**
+ * Une case : la carte possédée (ou l'âge à venir) sous son scotch, ou la
+ * pochette d'une carte qu'on n'a pas. `neuve` est la clé NOUVEAU de la
+ * carte : elle n'est posée que sur ce qu'on a.
+ */
+function caseFanzzy(c, vise, neuve) {
+  const { f, racine, stade, n, etat } = c;
+  if (etat === 'manque' || etat === 'cache') {
+    /* La silhouette est le personnage en pied (détouré : le buste ne l'est
+       pas toujours, et une image pleine éteinte au pochoir n'est qu'un carré
+       gris). Sans dessin, la trame et le numéro suffisent. */
+    const img = etat === 'manque' ? window.FZART?.adresse?.(f.id, 'plein') : null;
+    const dit = etat === 'manque' ? `${numeroTexte(n)}, ${f.nom} — à trouver` : `${numeroTexte(n)} — âge à venir`;
+    return `<button type="button" class="tbf-album-pochette" ${vise} aria-label="${esc(dit)}">${
+      img ? `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''
+    }<b>${numeroTexte(n)}</b></button>`;
+  }
+  const opts = { mini: true };
+  let dit;
+  if (etat === 'possede') {
+    /* Les doublons se comptent par personnage : sur le premier âge, sinon le
+       même nombre se répéterait trois fois. */
+    if (stade === 1) opts.doublons = entier(E.col[racine]);
+    opts.avatar = estAvatar(racine, stade);
+    dit = `${f.nom} — à toi${neuve ? ', nouveau' : ''}`;
+  } else {
+    opts.secret = true;
+    const prix = Number(EVO_COST?.[stade]);
+    if (etat === 'achetable' && Number.isFinite(prix) && prix > 0) opts.prix = prix;
+    dit = `${numeroTexte(n)} — âge à venir${opts.prix ? `, ${opts.prix} écharpes` : ''}`;
+  }
+  return `<div class="tbf-album-case" role="button" tabindex="0" ${vise}${neuve ? ` data-cle="${esc(neuve)}"` : ''}
+    aria-label="${esc(dit)}">${cardHTML(f, opts)}${neuve ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : ''}</div>`;
+}
+
+/**
+ * La case VITRINE : une légendaire ferme sa série sur toute la rangée, sa
+ * carte à gauche, VITRINE en sticker or, son nom et ce qu'elle est — le
+ * texte du classeur : possédée, « Légendaire · » et sa famille ; manquante,
+ * son numéro (le nom ne se donne pas d'avance) et « Légendaire · se tire
+ * dans les boosters ». Toutes les pages de cet album sont des séries
+ * ouvertes : la seconde ligne y est toujours vraie. **Rien n'y bouge** :
+ * l'holo tourne dans la vitrine qu'elle ouvre.
+ */
+function vitrineFanzzy(c, html) {
+  const a = c.etat === 'possede';
+  const famille = TYPES?.[c.f.type]?.nom;
+  const quoi = ['Légendaire', a ? famille : 'se tire dans les boosters'].filter(Boolean).join(' · ');
+  return `<div class="tbf-album-vitrine">${html}<div class="tbf-album-vitrine-mot">
+    <span class="tbf-sticker" data-ton="or">VITRINE</span>
+    <b>${a ? esc(c.f.nom) : numeroTexte(c.n)}</b><small>${esc(quoi)}</small></div></div>`;
+}
 
 /** La page d'une série, remplie : l'en-tête, puis les cases. */
-function pageHTML(a, i) {
-  const { s, items } = a.series[i];
+function pageFanzzy(a, k) {
+  const { s, items } = a.series[k];
+  /* Le compte : des personnages, pas leurs âges — un âge supérieur ne se
+     trouve pas dans un booster, il s'achète (le compte du classeur). */
   const g = items.filter((x) => x.possede).length;
   const P = (E.B.paliers?.series ?? []).find((x) => x.id === s.id);
   const mots = P ? gainMots(P.gain) : [];
@@ -741,49 +1112,24 @@ function pageHTML(a, i) {
       ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : jetonDe(P.gain)}${
       entier(P.total) || items.length} → ${mots.join(' ET ')}${P.etat === 'reclame'
       ? '<span class="tbf-vh"> : récupéré</span>' : P.etat === 'pret' ? '<span class="tbf-vh"> : à récupérer</span>' : ''}</span>` : '';
-  const tete = teteAlbum({ embleme: `<img src="${esc(window.TBF_LOGO?.adresse?.('serie', s.id) ?? '')}" alt="" onerror="this.remove()">`,
-    nom: s.nom, ligne: s.ligne, g, p: items.length, recompense });
+  const tete = teteAlbum({ embleme: emblemeSerie(s), nom: s.nom ?? s.id, ligne: s.ligne, g, p: items.length, recompense });
 
-  const garde = (it) => (!a.familles.size || a.familles.has(BY_ID.get(it.id)?.type))
-    && (!a.reste || !it.possede);
-  const vus = items.filter(garde);
-  const liste = vus.map(objetFanzzy);
+  const neufs = clesCartes();
+  const vus = cartesSerie(s).filter((c) => (!a.familles.size || a.familles.has(c.f.type ?? BY_ID.get(c.racine)?.type))
+    && (!a.reste || c.etat !== 'possede'));
   const cle = `serie:${s.id}`;
-  E.listes.set(cle, liste);
-  const neufs = [];
-  const cases = vus.map((it, k) => {
-    const o = liste[k];
-    const n = numeroDe(it.id);
-    const nom = esc(it.nom);
-    const vise = `data-open="${esc(it.id)}" data-liste="${cle}" data-i="${k}"`;
-    let html;
-    if (it.possede) {
-      const age = BY_ID.get(o.age) ?? BY_ID.get(it.id);
-      const nouv = nouvelles((x) => (x.sorte === 'fanzzy' || x.sorte === 'age') && x.id === it.id);
-      neufs.push(...nouv.map((x) => x.cle));
-      html = `<div class="tbf-album-case" role="button" tabindex="0" ${vise}
-        aria-label="${esc(age?.nom ?? it.nom)} — à toi${nouv.length ? ', nouveau' : ''}">${age ? cardHTML(age, { mini: true,
-        doublons: entier(E.col[it.id]), avatar: E.avatar?.id === it.id }) : ''}${nouv.length
-        ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : ''}</div>`;
-    } else {
-      const silhouette = buste(it.id);
-      html = `<button type="button" class="tbf-album-pochette" ${vise}
-        aria-label="${n ? `${numeroTexte(n)} — ` : ''}à trouver">${silhouette
-        ? `<img src="${esc(silhouette)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${
-        n ? `<b>${numeroTexte(n)}</b>` : ''}</button>`;
-    }
-    if (it.rar !== 'legendaire') return html;
-    /* La case VITRINE : toute la rangée, la carte à gauche, le mot à côté.
-       Rien n'y bouge — l'holo tourne dans la vitrine qu'elle ouvre. */
-    return `<div class="tbf-album-vitrine">${html}<div class="tbf-album-vitrine-mot">
-      <span class="tbf-sticker" data-ton="or">VITRINE</span>
-      <b>${it.possede ? nom : esc(n ? numeroTexte(n) : it.nom)}</b>
-      <small>${it.possede ? 'Légendaire · se tire dans les boosters' : 'La légendaire de la série'}</small></div></div>`;
+  E.listes.set(cle, vus.map(objetCarte));
+  const cases = vus.map((c, i) => {
+    const vise = `data-open="${esc(c.f.id)}" data-liste="${esc(cle)}" data-i="${i}"`;
+    const html = caseFanzzy(c, vise, c.etat === 'possede' ? neufs.get(c.f.id) ?? null : null);
+    return c.f.rar === 'legendaire' ? vitrineFanzzy(c, html) : html;
   });
-  a.neufs[i] = neufs;
-  const rien = !vus.length
-    ? `<p class="tbf-sous">${a.reste ? 'Tout est à toi ici' : 'Rien ici'}${a.familles.size ? ' avec ces filtres' : ''}.</p>` : '';
-  return `${tete}<div class="tbf-album-cartes">${cases.join('')}</div>${rien}`;
+  if (!vus.length) {
+    const dit = a.reste && a.familles.size ? 'Rien ici avec ces filtres.'
+      : a.reste ? 'Il ne te manque rien dans cette série.' : 'Aucune carte de cette famille dans cette série.';
+    return `${tete}<p class="tbf-sous">${dit}</p>`;
+  }
+  return `${tete}<div class="tbf-album-cartes">${cases.join('')}</div>`;
 }
 
 function vueFanzzy(v, r) {
@@ -799,143 +1145,75 @@ function vueFanzzy(v, r) {
      le classeur suivent —, puis les fermées, sous cadenas : un jeu ne cache
      pas ce qui vient. */
   const ouvertes = (SETS_TOUTES ?? []).filter((s) => parSerie.has(s.id))
-    .map((s) => ({ s, items: rangerSerie(parSerie.get(s.id)) }));
+    .map((s) => ({ s, items: parSerie.get(s.id) }));
   const fermees = (SETS_TOUTES ?? []).filter((s) => s.ouverte === false && !parSerie.has(s.id));
   if (!ouvertes.length) {
     v.innerHTML = teteVue(r.nom) + vide('Aucune série n’est ouverte pour l’instant.');
     return;
   }
   /* La page d'arrivée : celle de l'adresse, sinon celle du dernier personnage
-     arrivé (s'il est nouveau), sinon la première série. */
+     arrivé (s'il n'a pas encore été vu), sinon la première série. */
   const demandee = new URLSearchParams(location.search).get('serie');
   const neuf = nouvelles((x) => x.sorte === 'fanzzy' || x.sorte === 'age')[0];
   const serieNeuve = neuf ? BY_ID.get(neuf.id)?.set : null;
-  let cur = ouvertes.findIndex((x) => x.s.id === demandee);
-  if (cur < 0) cur = Math.max(0, ouvertes.findIndex((x) => x.s.id === serieNeuve));
-
-  const a = { series: ouvertes, cur, montees: new Set(), familles: new Set(), reste: false, neufs: {},
-    colle: true };
-  E.album = a;
-  const couleurs = (s) => `--e1:${esc(s.c1 ?? '#F5C33B')};--e2:${esc(s.c2 ?? '#E0402C')}`;
-  const familles = Object.entries(TYPES ?? {});
-  v.innerHTML = `${teteVue(r.nom)}
-  <section class="tbf-album tbf-pleine-largeur" aria-label="L’album des Fanzzy">
-    <nav class="tbf-album-rail" aria-label="Les séries">${ouvertes.map(({ s }, i) =>
-    `<button type="button" class="tbf-album-onglet" data-serie="${esc(s.id)}" data-index="${i}"${
-      i === cur ? ' aria-current="true"' : ''} style="${couleurs(s)}"><img src="${esc(window.TBF_LOGO?.adresse?.('serie', s.id) ?? '')}"
-      alt="" onerror="this.remove()">${esc(s.nom)}</button>`).join('')}${fermees.map((s) =>
-    `<button type="button" class="tbf-album-onglet" data-serie="${esc(s.id)}" data-verrou aria-disabled="true"
-      aria-label="${esc(s.nom)} — pas encore ouverte"><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>${esc(s.nom)}</button>`).join('')}
-    </nav>
-    <div class="tbf-album-filtres" role="group" aria-label="Filtrer par famille">${familles.map(([k, t]) =>
-    `<button type="button" class="tbf-filtre" data-famille="${esc(k)}" aria-pressed="false" aria-label="${esc(t.nom)}">
-      <span class="tbf-pin" style="--fam:${esc(t.c)}"><img src="${esc(window.TBF_LOGO?.adresse?.('type', k) ?? '')}" alt=""
-        onerror="this.remove()"></span></button>`).join('')}
-      <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"><i aria-hidden="true"></i>Ce qu’il me reste</button>
-    </div>
-    <div class="tbf-album-pages">${ouvertes.map(({ s }, i) =>
-    `<section class="tbf-album-page" data-page="${esc(s.id)}" aria-label="${esc(s.nom)}" style="${couleurs(s)}"></section>`).join('')}
-    </div>
-  </section>`;
-
-  const pages = v.querySelector('.tbf-album-pages');
-  aller(cur);
-  pages.scrollLeft = cur * pages.clientWidth;
-
-  /* La page ouverte se lit quand le défilement s'arrête : `scrollend` là où
-     il existe, sinon un repos de cent vingt millisecondes. Un observateur
-     d'intersection se déclencherait sur chaque page traversée en chemin, et
-     démonterait la page qu'on va atteindre. */
-  let repos = 0;
-  const arrive = () => {
-    clearTimeout(repos);
-    const i = Math.round(pages.scrollLeft / Math.max(1, pages.clientWidth));
-    if (i !== a.cur) aller(i);
-  };
-  const surDefile = () => { clearTimeout(repos); repos = setTimeout(arrive, 120); };
-  pages.addEventListener('scroll', surDefile, { passive: true });
-  pages.addEventListener('scrollend', arrive);
-  /* Une rotation du téléphone change la largeur des pages : on se recale sur
-     celle qu'on lisait, sans tourner. */
-  const recaler = () => { pages.scrollLeft = a.cur * pages.clientWidth; };
-  window.addEventListener('resize', recaler);
-  a.fin = () => window.removeEventListener('resize', recaler);
-}
-
-/** Monte la page `i` et ses voisines, vide les autres, et dit laquelle est ouverte. */
-function aller(i) {
-  const a = E.album;
-  const v = $('vue');
-  const sections = v.querySelectorAll('.tbf-album-page');
-  i = Math.max(0, Math.min(a.series.length - 1, i));
-  a.cur = i;
-  sections.forEach((sec, k) => {
-    const pres = Math.abs(k - i) <= 1;
-    if (pres && !a.montees.has(k)) { sec.innerHTML = pageHTML(a, k); a.montees.add(k); }
-    if (!pres && a.montees.has(k)) { sec.innerHTML = ''; a.montees.delete(k); }
-    /* Ce qu'on ne voit pas ne se tabule pas, et ne se lit pas. */
-    sec.inert = k !== i;
-  });
-  /* La cascade d'entrée, une fois, sur la page d'arrivée : jamais au filtre
-     ni en tournant les pages. */
-  if (a.colle && !doux()) {
-    a.colle = false;
-    sections[i].querySelectorAll('.tbf-album-case,.tbf-album-pochette').forEach((c, k) => {
-      if (k > 11) return;
-      c.style.setProperty('--d', `${k * 60}ms`);
-      c.classList.add('tbf-colle');
-      c.addEventListener('animationend', () => { c.classList.remove('tbf-colle'); c.style.removeProperty('--d'); }, { once: true });
-    });
-  }
-  a.colle = false;
-  montrer(a.neufs[i] ?? []);
-  /* Le rail suit : l'onglet ouvert, et le rail défile jusqu'à lui. */
-  const rail = v.querySelector('.tbf-album-rail');
-  rail.querySelectorAll('.tbf-album-onglet').forEach((o) => {
-    if (Number(o.dataset.index) === i) o.setAttribute('aria-current', 'true');
-    else o.removeAttribute('aria-current');
-  });
-  const o = rail.querySelector(`[data-index="${i}"]`);
-  if (o) rail.scrollTo({ left: Math.max(0, o.offsetLeft - 14), behavior: doux() ? 'auto' : 'smooth' });
-  /* L'adresse dit la série, pour qu'un retour ou un partage y ramène. */
-  if (history.state?.vue === 'fanzzy') {
-    history.replaceState(history.state, '', adresseDe('fanzzy', `&serie=${encodeURIComponent(a.series[i].s.id)}`));
-  }
-}
-
-/** Les filtres ont changé : on remonte les pages montées, sans cascade. */
-function refiltrer() {
-  const a = E.album;
-  const sections = $('vue').querySelectorAll('.tbf-album-page');
-  for (const k of a.montees) sections[k].innerHTML = pageHTML(a, k);
-  montrer(a.neufs[a.cur] ?? []);
+  let depart = ouvertes.findIndex((x) => x.s.id === demandee);
+  if (depart < 0) depart = Math.max(0, ouvertes.findIndex((x) => x.s.id === serieNeuve));
+  monterAlbum(v, r, { pages: ouvertes, fermees, depart, nom: 'L’album des Fanzzy', page: pageFanzzy, colle: true });
 }
 
 /* ------------------------------------------- les états et les tenues
 
-   Une planche par personnage qu'on a : son buste, son nom, son compte, et
-   ses états (ou ses tenues) âge par âge, pleins quand on les a, au pochoir
-   sinon. Le compte vient de la bibliothèque ; le détail de la fiche du
-   personnage (`/fiche/<id>`), **demandé quand la planche approche de
-   l'écran**, une fois par personnage — trente-cinq fiches à l'ouverture
-   seraient trente-cinq requêtes pour en regarder trois. */
+   **Le même album, une page par série.** C'était une colonne sans fin : une
+   planche par personnage, triée par nom, de douze cases — quatre états sur
+   trois âges, âges non atteints compris —, quatorze mille pixels pour
+   trente-huit personnages, cent mille pour deux cent quatre-vingt-onze :
+   l'accordéon que le lot devait supprimer revenait par ses tuiles. Il a
+   maintenant le rail des séries, une page par série montée à ±1, les
+   filtres de famille et « ce qu'il me reste ».
 
-/** Les fiches déjà demandées : une par personnage, jamais deux fois. */
+   **Une planche ne montre que les âges atteints** — quatre états par âge,
+   « 2/4 » au premier, comme la direction la dessine. Un âge pas encore
+   atteint n'a rien à gagner : un booster ne donne un état que pour un âge
+   débloqué, une tenue s'habille sur l'âge qui la reçoit. Ce qu'on aurait
+   déjà à un âge non atteint (rien ne le donne aujourd'hui) reste dessiné :
+   une case remplie qui disparaîtrait se lirait comme une perte. Le compte
+   suit ce qui est dessiné. La vitrine d'un personnage (SES ÉTATS) garde,
+   elle, les trois âges, ceux d'après sous cadenas : c'est là qu'on regarde
+   ce que fera grandir.
+
+   **Une planche complète se replie** en une ligne : son buste, son nom, son
+   tampon et PLANCHE COMPLÈTE ; elle se déplie au toucher. Sauf si l'une de
+   ses cases est une nouveauté : elle vient d'être complétée, elle reste
+   ouverte, et c'est elle qui a sa petite gerbe.
+
+   Le compte vient de la bibliothèque ; le détail de la fiche du personnage
+   (`/fiche/<id>`), **demandé quand la planche approche de l'écran**, une
+   fois par personnage — trente-cinq fiches à l'ouverture seraient
+   trente-cinq requêtes pour en regarder trois. Une planche repliée ne la
+   demande pas. */
+
+/** Les fiches déjà demandées : une par personnage, jamais deux fois. Celles
+    déjà lues se dessinent sans attendre, au filtre ou à une page revue. */
 const fiches = new Map();
+const fichesLues = new Map();
 const lireFiche = (perso) => {
   if (!fiches.has(perso)) {
     const p = api('/fiche/' + encodeURIComponent(perso));
-    p.catch(() => fiches.delete(perso));
+    p.then((d) => { if (d) fichesLues.set(perso, d); }, () => fiches.delete(perso));
     fiches.set(perso, p);
   }
   return fiches.get(perso);
 };
 
+/** L'observateur qui remplit les planches à l'approche de l'écran. */
 let observateur = null;
 function arreterPlanches() { observateur?.disconnect(); observateur = null; }
 
-/** Les objets d'une planche, âge par âge, depuis la fiche du personnage. */
-function objetsPlanche(perso, quoi, d) {
+/**
+ * Les objets d'une planche, âge par âge, depuis la fiche du personnage.
+ * `atteints` : seulement les âges atteints, et ce qu'on a ailleurs.
+ */
+function objetsPlanche(perso, quoi, d, { atteints = false } = {}) {
   const ages = d?.lignee ?? [];
   return ages.flatMap((a, n) => {
     const stade = n + 1;
@@ -950,8 +1228,33 @@ function objetsPlanche(perso, quoi, d) {
           possede: Boolean(s.possede), pour: perso, stade, ferme, ages: ages.length }))
       : (par.etats ?? []).map((e) => ({ k: 'etat', id: e.id, nom: e.nom, possede: Boolean(e.possede),
         pour: perso, stade, ferme, ages: ages.length }));
-  });
+  }).filter((o) => !atteints || !o.ferme || o.possede);
 }
+
+/** Le compte d'une planche : ce qu'on a, sur ce qui se gagne aujourd'hui —
+    les âges atteints, et ce qu'on aurait ailleurs. Un âge sous cadenas ne
+    compte pas : aucun booster ne peut encore le donner. */
+const comptePlanche = (objets) => ({ g: objets.filter((o) => o.possede).length,
+  t: objets.filter((o) => o.possede || !o.ferme).length });
+
+/**
+ * Le compte d'une planche **avant** que sa fiche soit lue : celui de la
+ * bibliothèque (`parFanzzy`, compté sur tous les âges), ramené aux âges
+ * atteints — le serveur compte autant de cases à chaque âge. Une fois la
+ * fiche lue, le compte exact prend sa place.
+ */
+function estimePlanche(p, quoi) {
+  const d = fichesLues.get(p.id);
+  if (d) return comptePlanche(objetsPlanche(p.id, quoi, d));
+  const c = p[quoi] ?? {};
+  const ages = Math.max(1, entier(p.ages) || lignee(p.id).length);
+  const stade = Math.min(ages, Math.max(1, entier(p.stade)));
+  const t = Math.round((entier(c.possibles) / ages) * stade);
+  return { g: Math.min(entier(c.gagnes), t), t };
+}
+const sorteDe = (quoi) => (quoi === 'tenues' ? 'skin' : 'etat');
+/** Une planche porte-t-elle une nouveauté ? (Toute la visite durant.) */
+const aDuNeuf = (perso, quoi) => toutes((x) => x.sorte === sorteDe(quoi) && x.pour === perso).length > 0;
 
 /** Le dessin d'une case : l'expression ou la tenue, à cet âge. */
 function dessinCase(o) {
@@ -962,16 +1265,34 @@ function dessinCase(o) {
   return r?.src ?? buste(lignee(o.pour)[o.stade - 1]?.id ?? o.pour);
 }
 
-/** Les cases d'une planche. `cle` est la liste qu'on feuillette en vitrine. */
+/** Les cases d'une planche. `cle` est la liste qu'on feuillette en vitrine.
+    Ce que le serveur dit nouveau porte NOUVEAU, et sa clé (`data-cle`). */
 function casesHTML(objets, cle) {
+  const neufs = new Map(toutes((x) => x.sorte === 'etat' || x.sorte === 'skin')
+    .map((x) => [`${x.sorte}:${x.pour}:${Number(x.stade)}:${x.id}`, x.cle]));
+  /* L'âge sous le nom, seulement quand la planche en montre plusieurs :
+     « ÂGE 1 » sous chacune des quatre cases d'un premier âge n'apprend rien. */
+  const plusieurs = new Set(objets.map((o) => o.stade)).size > 1;
   return objets.map((o, k) => {
+    const neuve = o.possede ? neufs.get(`${o.k}:${o.pour}:${o.stade}:${o.id}`) ?? null : null;
     const etat = o.possede ? 'à toi' : o.ferme ? 'âge pas encore atteint' : 'à gagner';
     return `<li><button type="button" class="tbf-planche-case"${o.possede ? ' data-etat="possede"' : ''}${
-      !o.possede && o.ferme ? ' data-verrou' : ''} data-liste="${esc(cle)}" data-i="${k}"
-      aria-label="${esc(o.nom)}${o.ages > 1 ? `, âge ${o.stade}` : ''} — ${etat}"><img src="${esc(dessinCase(o))}" alt=""
+      !o.possede && o.ferme ? ' data-verrou' : ''} data-liste="${esc(cle)}" data-i="${k}"${neuve ? ` data-cle="${esc(neuve)}"` : ''}
+      aria-label="${esc(o.nom)}${plusieurs ? `, âge ${o.stade}` : ''} — ${etat}${neuve ? ', nouveau' : ''}"><img src="${esc(dessinCase(o))}" alt=""
       loading="lazy" onerror="const s=window.TBF_ETATS?.secours?.(this.src,true);if(s)this.src=s;else this.removeAttribute('src')">${
-      esc(o.nom)}${o.ages > 1 ? `<small>ÂGE ${o.stade}</small>` : ''}</button></li>`;
+      esc(o.nom)}${plusieurs ? `<small>ÂGE ${o.stade}</small>` : ''}${
+      neuve ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : ''}</button></li>`;
   }).join('');
+}
+
+/** Les cases d'une planche de l'album : les âges atteints, et sous « ce
+    qu'il me reste », seulement ce qui manque. */
+function casesPlanche(perso, quoi, d, a) {
+  const objets = objetsPlanche(perso, quoi, d, { atteints: true });
+  const vus = a.reste ? objets.filter((o) => !o.possede) : objets;
+  const cle = `album:${quoi}:${perso}`;
+  E.listes.set(cle, vus);
+  return casesHTML(vus, cle);
 }
 
 /**
@@ -983,92 +1304,168 @@ function casesHTML(objets, cle) {
  */
 const tonCompte = (complete) => (complete ? 'vert' : 'craie');
 
-/** Une planche, le compte servi par la bibliothèque ; ses cases plus tard. */
-function plancheHTML(p, quoi) {
-  const c = p[quoi] ?? {};
-  const g = entier(c.gagnes);
-  const t = entier(c.possibles);
-  const complete = t > 0 && g >= t;
+/** Une planche de l'album : sa tête, ses cases (tout de suite si sa fiche
+    est déjà lue, plus tard sinon), et PLANCHE COMPLÈTE. */
+function plancheHTML(p, quoi, a, { g, t } = estimePlanche(p, quoi)) {
   const age = ageAtteint(p.id);
-  return `<section class="tbf-planche" data-perso="${esc(p.id)}" data-quoi="${quoi}"${complete ? ' data-complete' : ''}
-    aria-label="${esc(age?.nom ?? p.nom)} : ${g} sur ${t}">
-    <header class="tbf-planche-tete">
-      <span class="tbf-buste" aria-hidden="true"><img src="${esc(buste(age?.id ?? p.id))}" alt="" onerror="this.remove()"></span>
-      <b>${esc(age?.nom ?? p.nom)}</b>
-      <span class="tbf-tampon tbf-tampon--plein" data-ton="${tonCompte(complete)}">${g}/${t}</span>
-    </header>
-    <ul class="tbf-planche-cases" aria-busy="true"></ul>
+  const nom = age?.nom ?? p.nom;
+  const complete = t > 0 && g >= t;
+  const replie = complete && !aDuNeuf(p.id, quoi) && !a.deplies.has(p.id);
+  const d = replie ? null : fichesLues.get(p.id);
+  const tete = `<span class="tbf-buste" aria-hidden="true"><img src="${esc(buste(age?.id ?? p.id))}" alt="" onerror="this.remove()"></span>
+      <b>${esc(nom)}</b>
+      <span class="tbf-tampon tbf-tampon--plein" data-ton="${tonCompte(complete)}">${g}/${t}</span>`;
+  return `<section class="tbf-planche" data-perso="${esc(p.id)}" data-quoi="${quoi}"${complete ? ' data-complete' : ''}${
+    replie ? ' data-replie' : ''} aria-label="${esc(nom)} : ${g} sur ${t}">
+    ${complete ? `<button type="button" class="tbf-planche-tete" data-deplier aria-expanded="${replie ? 'false' : 'true'}">${
+      tete}${ICO.deplier}</button>` : `<header class="tbf-planche-tete">${tete}</header>`}
+    <ul class="tbf-planche-cases"${replie ? ' hidden' : d ? ' data-rempli="1"' : ' aria-busy="true"'}>${
+      d ? casesPlanche(p.id, quoi, d, a) : ''}</ul>
     ${complete ? '<span class="tbf-sticker" data-ton="vert">PLANCHE COMPLÈTE</span>' : ''}
   </section>`;
 }
 
-async function remplirPlanche(sec, quoi) {
+/** La page d'une série : l'en-tête, puis une planche par personnage qu'on y a. */
+function pagePlanches(a, k) {
+  const { s, persos } = a.series[k];
+  const comptes = new Map(persos.map((p) => [p.id, estimePlanche(p, a.quoi)]));
+  let g = 0;
+  let t = 0;
+  for (const c of comptes.values()) { g += c.g; t += c.t; }
+  const tete = teteAlbum({ embleme: emblemeSerie(s), nom: s.nom ?? s.id, ligne: ACCROCHES[a.quoi], g, p: t });
+  const complete = (c) => c.t > 0 && c.g >= c.t;
+  const vus = persos.filter((p) => (!a.familles.size || a.familles.has(BY_ID.get(p.id)?.type))
+    && (!a.reste || !complete(comptes.get(p.id))));
+  if (!vus.length) {
+    const dit = a.reste && a.familles.size ? 'Rien ici avec ces filtres.'
+      : a.reste ? 'Toutes tes planches de cette série sont complètes.'
+        : 'Aucun de tes Fanzzy de cette famille dans cette série.';
+    return `${tete}<p class="tbf-sous">${dit}</p>`;
+  }
+  return `${tete}<div class="planches">${vus.map((p) => plancheHTML(p, a.quoi, a, comptes.get(p.id))).join('')}</div>`;
+}
+
+async function remplirPlanche(sec) {
+  const a = E.album;
   const perso = sec.dataset.perso;
+  const quoi = sec.dataset.quoi;
   const ul = sec.querySelector('.tbf-planche-cases');
-  if (!ul || ul.dataset.rempli) return;
+  if (!a || !ul || ul.dataset.rempli) return;
   ul.dataset.rempli = '1';
   ul.insertAdjacentHTML('beforebegin', '<div class="spin" aria-hidden="true"></div>');
   let d = null;
   try { d = await lireFiche(perso); } catch { /* repli juste dessous */ }
-  sec.querySelector('.spin')?.remove();
+  sec.querySelector(':scope>.spin')?.remove();
   ul.removeAttribute('aria-busy');
-  if (!sec.isConnected) return;
+  if (!sec.isConnected || E.album !== a) return;
   if (!d) { delete ul.dataset.rempli; return; }
-  const objets = objetsPlanche(perso, quoi, d);
-  const cle = `planche:${quoi}:${perso}`;
-  E.listes.set(cle, objets);
-  ul.innerHTML = casesHTML(objets, cle);
-  /* Ce qui était nouveau sur cette planche a été montré. */
-  const sorte = quoi === 'tenues' ? 'skin' : 'etat';
-  montrer(nouvelles((x) => x.sorte === sorte && x.pour === perso).map((x) => x.cle));
-  if (sec.hasAttribute('data-complete')) gerbe(sec, cle);
+  fichesLues.set(perso, d);
+  ul.innerHTML = casesPlanche(perso, quoi, d, a);
+  /* Le compte exact remplace celui de la bibliothèque, ramené aux âges
+     atteints : ils ne diffèrent que pour une tenue dépubliée qu'on a. */
+  const { g, t } = comptePlanche(objetsPlanche(perso, quoi, d));
+  const tampon = sec.querySelector('.tbf-planche-tete>.tbf-tampon');
+  if (tampon && tampon.textContent !== `${g}/${t}`) {
+    tampon.textContent = `${g}/${t}`;
+    tampon.dataset.ton = tonCompte(t > 0 && g >= t);
+  }
+  surveiller(sec);
 }
 
 /**
- * La petite gerbe d'une planche complète : des confettis de papier vert et
- * craie autour de PLANCHE COMPLÈTE, une fois par visite, **quand elle est à
- * l'écran** — la planche se remplit un peu avant d'y arriver, et une fête
- * jouée sous le pli n'a lieu pour personne. Des confettis et non `FX.rare`,
- * que fx.js réserve à son dernier appelant et appelle à disparaître ; sans
- * mouvement, `particules` ne joue rien et le sticker suffit.
+ * La petite gerbe d'une planche **qui vient d'être complétée** — complète,
+ * et l'une de ses cases encore une nouveauté du serveur : des confettis de
+ * papier vert et craie autour de PLANCHE COMPLÈTE, une fois par visite,
+ * **quand elle est à l'écran** — une fête jouée sous le pli n'a lieu pour
+ * personne. Pas à chaque planche complète : l'album d'un ancien en
+ * compterait trente, et trente gerbes au défilement ne fêtent plus rien.
+ * Des confettis et non une cérémonie de rareté : une planche n'a pas de
+ * rareté. Sans mouvement, `FX.particules` ne joue rien et le sticker suffit.
  */
 function gerbe(sec, cle) {
   if (E.gerbes?.has(cle)) return;
-  (E.gerbes ??= new Set()).add(cle);
   const jouer = () => {
-    const el = sec.querySelector('.tbf-sticker') ?? sec;
+    if (!sec.isConnected || E.gerbes?.has(cle)) return;
+    (E.gerbes ??= new Set()).add(cle);
+    const el = sec.querySelector(':scope>.tbf-sticker') ?? sec;
     const r = el.getBoundingClientRect();
     window.FX?.particules?.({ x: r.left + r.width / 2, y: r.top + r.height / 2, n: 28, distance: 110,
       papier: true, couleurs: ['#2BC586', '#F2EEE4', '#157A51'] });
   };
   if (!('IntersectionObserver' in window)) { jouer(); return; }
   const io = new IntersectionObserver((x) => {
+    if (!sec.isConnected) { io.disconnect(); return; }
     if (!x.some((y) => y.isIntersecting)) return;
     io.disconnect();
-    if (sec.isConnected) jouer();
+    jouer();
   }, { threshold: 0.6 });
   io.observe(sec);
 }
 
 function vuePlanches(v, r, quoi) {
-  const T = E.B.types?.[quoi] ?? {};
-  const persos = E.B.parFanzzy ?? [];
-  v.innerHTML = `${teteVue(r.nom, { cache: true })}
-  <section class="tbf-album tbf-pleine-largeur vue-seule" aria-label="${r.nom}"><div class="tbf-album-page">
-    ${teteAlbum({ embleme: EMBLEMES[quoi], nom: r.nom, ligne: ACCROCHES[quoi], g: entier(T.gagnes), p: entier(T.possibles) })}
-    ${persos.length ? `<div class="planches">${persos.map((p) => plancheHTML(p, quoi)).join('')}</div>`
-    : vide('Ouvre un booster : chaque Fanzzy que tu obtiens ouvre ses états et ses tenues.')}
-  </div></section>`;
-  const sections = [...v.querySelectorAll('.tbf-planche')];
-  if (!('IntersectionObserver' in window)) { sections.slice(0, 6).forEach((s) => remplirPlanche(s, quoi)); return; }
-  observateur = new IntersectionObserver((entrees) => {
+  const parSerie = new Map();
+  for (const p of E.B.parFanzzy ?? []) {
+    const s = BY_ID.get(p.id)?.set;
+    if (!s) continue;
+    if (!parSerie.has(s)) parSerie.set(s, []);
+    parSerie.get(s).push(p);
+  }
+  /* Les séries dans l'ordre du catalogue, comme l'album des Fanzzy ; dans
+     une page, les personnages dans l'ordre de leurs pochettes. Une série où
+     l'on n'a personne n'a pas de page : elle n'aurait rien à montrer. */
+  const pages = (SETS_TOUTES ?? []).filter((s) => parSerie.has(s.id)).map((s) => ({ s,
+    persos: parSerie.get(s.id).slice().sort((x, y) => (numeroDe(x.id) ?? 0) - (numeroDe(y.id) ?? 0)) }));
+  if (!pages.length) {
+    v.innerHTML = teteVue(r.nom) + vide('Ouvre un booster : chaque Fanzzy que tu obtiens ouvre ses états et ses tenues.');
+    return;
+  }
+  /* La page d'arrivée : celle de l'adresse, sinon celle de la dernière
+     nouveauté pas encore vue, sinon la première. */
+  const demandee = new URLSearchParams(location.search).get('serie');
+  const neuf = nouvelles((x) => x.sorte === sorteDe(quoi))[0];
+  let depart = pages.findIndex((x) => x.s.id === demandee);
+  if (depart < 0) depart = Math.max(0, pages.findIndex((x) => x.s.id === BY_ID.get(neuf?.pour)?.set));
+
+  observateur = 'IntersectionObserver' in window ? new IntersectionObserver((entrees) => {
     for (const x of entrees) {
       if (!x.isIntersecting) continue;
       observateur?.unobserve(x.target);
-      remplirPlanche(x.target, quoi);
+      remplirPlanche(x.target);
     }
-  }, { rootMargin: '240px 0px' });
-  sections.forEach((s) => observateur.observe(s));
+  }, { rootMargin: '240px 0px' }) : null;
+  const libres = (sec) => [...sec.querySelectorAll('.tbf-planche:not([data-replie])')]
+    .filter((pl) => !pl.querySelector('.tbf-planche-cases[data-rempli]'));
+  monterAlbum(v, r, {
+    pages, depart, quoi, nom: quoi === 'tenues' ? 'L’album des tenues' : 'L’album des états',
+    page: pagePlanches,
+    montee: (a, k, sec) => {
+      for (const pl of sec.querySelectorAll('.tbf-planche[data-complete]:not([data-replie])')) {
+        if (aDuNeuf(pl.dataset.perso, quoi)) gerbe(pl, `${quoi}:${pl.dataset.perso}`);
+      }
+      if (observateur) for (const pl of libres(sec)) observateur.observe(pl);
+    },
+    demontee: (a, k, sec) => { for (const pl of sec.querySelectorAll('.tbf-planche')) observateur?.unobserve(pl); },
+    /* Sans observateur, les six premières planches de la page ouverte. */
+    ouverte: (a, i, sec) => { if (!observateur) for (const pl of libres(sec).slice(0, 6)) remplirPlanche(pl); },
+  });
+}
+
+/** Une planche complète se replie et se déplie au toucher de sa tête. */
+function deplier(bouton) {
+  const sec = bouton.closest('.tbf-planche');
+  const a = E.album;
+  if (!sec || !a) return;
+  const ouvre = sec.hasAttribute('data-replie');
+  sec.toggleAttribute('data-replie', !ouvre);
+  bouton.setAttribute('aria-expanded', String(ouvre));
+  const ul = sec.querySelector('.tbf-planche-cases');
+  if (ul) ul.hidden = !ouvre;
+  if (!ouvre) { a.deplies.delete(sec.dataset.perso); oublier(sec); return; }
+  a.deplies.add(sec.dataset.perso);
+  /* Déjà remplie (dépliée une première fois) : ses NOUVEAU reviennent sous
+     les yeux. Sinon, elle demande sa fiche — elle est à l'écran. */
+  if (ul?.dataset.rempli) surveiller(sec);
+  else remplirPlanche(sec);
 }
 
 /* ------------------------------------------- l'équipement et les actions
@@ -1082,25 +1479,26 @@ function vueCartes(v, r) {
   const liste = (T.items ?? []).map((x) => ({ k: sorte, id: x.id, nom: x.nom, rar: x.rar, possede: Boolean(x.possede) }));
   const cle = r.vue;
   E.listes.set(cle, liste);
-  const neufs = [];
+  /* NOUVEAU porte sa clé (`data-cle`) : la case n'est montrée que vue —
+     une grille de quarante-neuf pièces ne tient pas sur un écran. */
+  const neufs = new Map(toutes((x) => x.sorte === sorte).map((x) => [x.id, x.cle]));
   const cases = liste.map((o, k) => {
     const c = carteDuPaquet({ type: sorte, id: o.id });
     if (!c) return '';
-    const vise = `data-open="${esc(o.id)}" data-liste="${cle}" data-i="${k}" role="button" tabindex="0"`;
+    const vise = `data-open="${esc(o.id)}" data-liste="${esc(cle)}" data-i="${k}" role="button" tabindex="0"`;
     if (!o.possede) {
       return `<div class="manque" ${vise} aria-label="${esc(c.nom)} — à gagner">${cardHTML(c, { mini: true, verrou: true })}</div>`;
     }
-    const nouv = nouvelles((x) => x.sorte === sorte && x.id === o.id);
-    neufs.push(...nouv.map((x) => x.cle));
-    return `<div class="tbf-album-case" ${vise} aria-label="${esc(c.nom)} — à toi${nouv.length ? ', nouveau' : ''}">${
-      cardHTML(c, { mini: true })}${nouv.length ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : ''}</div>`;
+    const neuve = neufs.get(o.id) ?? null;
+    return `<div class="tbf-album-case" ${vise}${neuve ? ` data-cle="${esc(neuve)}"` : ''} aria-label="${esc(c.nom)} — à toi${
+      neuve ? ', nouveau' : ''}">${cardHTML(c, { mini: true })}${neuve ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : ''}</div>`;
   });
   v.innerHTML = `${teteVue(r.nom, { cache: true })}
   <section class="tbf-album tbf-pleine-largeur vue-seule" aria-label="${r.nom}"><div class="tbf-album-page">
     ${teteAlbum({ embleme: EMBLEMES[r.vue], nom: r.nom, ligne: ACCROCHES[r.vue], g: entier(T.gagnes), p: entier(T.possibles) })}
     ${liste.length ? `<div class="tbf-album-cartes">${cases.join('')}</div>` : vide('Rien à collectionner ici pour l’instant.')}
   </div></section>`;
-  montrer(neufs);
+  surveiller(v);
 }
 
 /* ====================================================================== la vitrine */
@@ -1213,7 +1611,9 @@ function paquetHTML(o) {
 function vueCarte(vue) {
   const o = vue.liste[vue.i];
   const c = carteDe(o);
-  const rar = rarDe(o, c);
+  /* La rareté devient un attribut de la scène (`data-rar`), que la feuille
+     et la cérémonie lisent : seulement un des quatre mots du jeu. */
+  const rar = rareteSure(rarDe(o, c));
   const nom = nomDe(o, c);
 
   /* **La possession se lit sur l'âge montré, pas sur la lignée** : un joueur
@@ -1231,7 +1631,14 @@ function vueCarte(vue) {
   const prixSuivant = o.k === 'fanzzy' && o.possede && stade < ages.length
     && Number.isFinite(Number(EVO_COST?.[stade + 1])) ? Number(EVO_COST[stade + 1]) : null;
 
-  const opts = {};
+  /* **La vitrine montre le personnage en pied.** `cardHTML` ne le pose plus
+     d'office sur une carte non `mini` (une pile ou une grille garde le buste,
+     quatre fois plus léger) : il se demande pour la carte regardée seule. En
+     buste, à trois cents pixels, le Collectionneur n'était plus qu'un visage
+     de la largeur de la carte, la tête coupée en haut à 768. Une seule carte à
+     la fois ici : le plein-pied ne coûte qu'une image. Le verrou prenait déjà
+     l'image détourée ; l'âge secret et la carte possédée la prennent aussi. */
+  const opts = { pied: true };
   if (aPayer) {
     opts.secret = true;
     if (rangVu === stade + 1 && prixSuivant !== null) opts.prix = prixSuivant;
@@ -1242,7 +1649,7 @@ function vueCarte(vue) {
        d'un personnage qu'on n'a pas a sa propre pochette au classeur. */
     const n = o.k === 'fanzzy' ? numeroDe(o.age ?? o.id) : null;
     if (n) opts.numero = n;
-  } else if (o.k === 'fanzzy' && E.avatar?.id === o.id) opts.avatar = true;
+  } else if (o.k === 'fanzzy' && estAvatar(o.id, rangVu)) opts.avatar = true;
   const copies = o.k === 'fanzzy' && possede ? entier(E.col[o.id]) : 0;
 
   /* La scène : le halo de la rareté, les rayons pour l'épique et la
@@ -1305,9 +1712,12 @@ function vueCarte(vue) {
         <span class="tbf-sticker tbf-sticker--prix" data-ton="or"><img src="${esc(JETON)}" alt="">${prixSuivant}<span class="tbf-vh"> écharpes</span></span></a>`);
     }
     if (mien) {
+      /* Le compte de ses planches, celui de l'album : sur les âges atteints. */
+      const e = estimePlanche(mien, 'etats');
+      const t = estimePlanche(mien, 'tenues');
       actions.push(`<div class="vitr-portes">
-        <button type="button" class="tbf-plaque" data-planche="etats">SES ÉTATS ${entier(mien.etats?.gagnes)}/${entier(mien.etats?.possibles)}</button>
-        <button type="button" class="tbf-plaque" data-planche="tenues">SES TENUES ${entier(mien.tenues?.gagnes)}/${entier(mien.tenues?.possibles)}</button></div>`);
+        <button type="button" class="tbf-plaque" data-planche="etats">SES ÉTATS ${e.g}/${e.t}</button>
+        <button type="button" class="tbf-plaque" data-planche="tenues">SES TENUES ${t.g}/${t.t}</button></div>`);
     }
     if (!o.possede) {
       const s = serie(f?.set);
@@ -1363,13 +1773,16 @@ function vueCarte(vue) {
 function vuePlanche(vue) {
   const age = ageAtteint(vue.perso);
   const nom = age?.nom ?? vue.fiche?.fanzzy?.nom ?? vue.perso;
+  /* Les trois âges, ceux qu'on n'a pas atteints sous cadenas : c'est ici
+     qu'on regarde ce que fera grandir. Le compte est celui de l'album — ce
+     qui se gagne aujourd'hui —, et une case nouvelle n'est montrée que vue
+     (`rendreVitrine` la guette). Sa liste n'est pas celle de l'album
+     (`album:`), qui n'a que les âges atteints. */
   const objets = objetsPlanche(vue.perso, vue.quoi, vue.fiche);
   const cle = `planche:${vue.quoi}:${vue.perso}`;
   E.listes.set(cle, objets);
-  const g = objets.filter((x) => x.possede).length;
-  const complete = objets.length > 0 && g === objets.length;
-  const sorte = vue.quoi === 'tenues' ? 'skin' : 'etat';
-  montrer(nouvelles((x) => x.sorte === sorte && x.pour === vue.perso).map((x) => x.cle));
+  const { g, t } = comptePlanche(objets);
+  const complete = t > 0 && g >= t;
   return `
     ${pileVues.length > 1 ? `<button type="button" class="tbf-plaque tbf-plaque--rond tbf-vitrine-retour" data-retour aria-label="Retour">${ICO.avant}</button>` : ''}
     <button type="button" class="tbf-plaque tbf-plaque--rond tbf-vitrine-x" data-fermer aria-label="Fermer">${ICO.croix}</button>
@@ -1382,7 +1795,7 @@ function vuePlanche(vue) {
         <header class="tbf-planche-tete">
           <span class="tbf-buste" aria-hidden="true"><img src="${esc(buste(age?.id ?? vue.perso))}" alt="" onerror="this.remove()"></span>
           <b>${esc(nom)}</b>
-          <span class="tbf-tampon tbf-tampon--plein" data-ton="${tonCompte(complete)}">${g}/${objets.length}</span>
+          <span class="tbf-tampon tbf-tampon--plein" data-ton="${tonCompte(complete)}">${g}/${t}</span>
         </header>
         <ul class="tbf-planche-cases">${casesHTML(objets, cle)}</ul>
         ${complete ? '<span class="tbf-sticker" data-ton="vert">PLANCHE COMPLÈTE</span>' : ''}
@@ -1397,12 +1810,14 @@ function rendreVitrine() {
   const vue = pileVues[pileVues.length - 1];
   const carton = $('vitr-carton');
   if (!vue) return;
+  oublier(carton);
   if (vue.k === 'attente') {
     carton.innerHTML = `<button type="button" class="tbf-plaque tbf-plaque--rond tbf-vitrine-x" data-fermer
       aria-label="Fermer">${ICO.croix}</button><div class="spin"></div>`;
     return;
   }
   carton.innerHTML = vue.k === 'planche' ? vuePlanche(vue) : vueCarte(vue);
+  surveiller(carton);
   $('vitr').setAttribute('aria-label', carton.querySelector('.tbf-vitrine-nom')?.textContent.trim() || 'Carte de collection');
   $('vitr').querySelector('.tbf-vitrine-boite').scrollTop = 0;
   if (vue.k === 'carte') {
@@ -1497,8 +1912,12 @@ function vider() {
   const avant = document.activeElement;
   pileVues = [];
   $('vitr').classList.remove('on');
+  oublier($('vitr-carton'));
   $('vitr-carton').innerHTML = '';
   document.documentElement.classList.remove('tbf-vitrine-ouverte');
+  /* L'album redevient ce qu'on regarde : ses cases NOUVEAU déjà à l'écran
+     ne feraient plus signe d'elles-mêmes à l'observateur. */
+  reguetter($('vue'));
   /* Le focus revient à la case qui a ouvert la vitrine. */
   if (E.ouvreur?.isConnected && (!avant || avant === document.body || !avant.isConnected
     || $('vitr').contains(avant))) {
@@ -1546,6 +1965,8 @@ function ouvrirCarte(el) {
   const liste = E.listes.get(el.dataset.liste);
   const i = Number(el.dataset.i);
   if (!liste?.[i]) return;
+  /* Toucher une case NOUVEAU, c'est l'avoir vue. */
+  if (el.dataset.cle) montrer([el.dataset.cle]);
   E.ouvreur = el;
   ouvrir({ k: 'carte', liste, i });
 }
@@ -1578,7 +1999,7 @@ $('vue').addEventListener('click', (e) => {
     const a = E.album;
     const sections = $('vue').querySelectorAll('.tbf-album-page');
     for (const k of [i - 1, i, i + 1]) {
-      if (sections[k] && !a.montees.has(k)) { sections[k].innerHTML = pageHTML(a, k); a.montees.add(k); }
+      if (sections[k] && !a.montees.has(k)) monterPage(a, k, sections[k]);
     }
     pages.scrollTo({ left: i * pages.clientWidth, behavior: doux() ? 'auto' : 'smooth' });
     if (doux()) aller(i);
@@ -1600,6 +2021,8 @@ $('vue').addEventListener('click', (e) => {
     refiltrer();
     return;
   }
+  const tete = e.target.closest('[data-deplier]');
+  if (tete) { deplier(tete); return; }
 
   const cas = e.target.closest('[data-liste][data-i]');
   if (cas) ouvrirCarte(cas);
@@ -1648,6 +2071,7 @@ $('vitr').addEventListener('click', (e) => {
   const cas = e.target.closest('.tbf-planche-case[data-liste]');
   if (cas) {
     const liste = E.listes.get(cas.dataset.liste);
+    if (cas.dataset.cle) montrer([cas.dataset.cle]);
     if (liste) ouvrir({ k: 'carte', liste, i: Number(cas.dataset.i) });
   }
 });
@@ -1700,7 +2124,13 @@ window.addEventListener('popstate', (e) => {
 /* En quittant la page, ce qui a été montré est éteint (`keepalive` : la
    requête survit à la page). */
 window.addEventListener('pagehide', () => eteindre({ depart: true }));
-document.addEventListener('visibilitychange', () => { if (document.hidden) eteindre({ depart: true }); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { eteindre({ depart: true }); return; }
+  /* L'onglet revient au premier plan : ce qui est à l'écran se regarde de
+     nouveau, et l'observateur ne le dirait pas de lui-même. */
+  reguetter($('vue'));
+  reguetter($('vitr-carton'));
+});
 
 /* ------------------------------------------------------------------ chargement */
 

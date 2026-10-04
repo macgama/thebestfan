@@ -19,13 +19,18 @@
  * 300 pixels) × quatre raretés × les états de la carte — possédée, manquante
  * avec son numéro, âge secret avec son prix, doublon, AVATAR, TITULAIRE,
  * retournée, nom d'une, deux et trois lignes —, plus les autres sortes de
- * carte (un état, une tenue, une pièce, une action, des écharpes) et deux
- * cartes de vitrine. Puis elle mesure **ce qui doit être vrai partout** :
+ * carte (un état, une tenue, une pièce, une action, des écharpes), possédées
+ * et manquantes, et les cartes de vitrine, possédées et manquantes. Puis
+ * elle mesure **ce qui doit être vrai partout** :
  *
  *   — aucun texte sous onze pixels, aucun texte coupé ni recouvert ;
  *   — l'étiquette d'un état jamais sous le nom, quel que soit son nombre de
  *     lignes ;
- *   — la forme et le mot de rareté sur chaque carte ;
+ *   — la forme et le mot de rareté sur chaque carte, et la face de l'étoile
+ *     et de l'éclat visible, pas cachée sous leur étiquette ;
+ *   — la carte qu'on n'a pas en silhouette tirée d'une image détourée,
+ *     jamais une dalle grise, sans liseré d'or ni mouvement ;
+ *   — le personnage en pied seulement là où on le demande ;
  *   — aucune animation infinie sur une carte de grille, et aucune du tout
  *     sans mouvement ;
  *   — le nom tient 4,5:1 sur sa bande, au soleil compris ;
@@ -151,6 +156,13 @@ function construirePlanche() {
     ['écharpes', () => C.cardHTML(C.carteDuPaquet({ type: 'echarpes', montant: 35 }), { mini: true })],
     ['manquante, secret', () => C.cardHTML(get('RP2C'), { mini: true, verrou: true, secret: true })],
     ['pin sans tracé', () => sansTrace(get('RP1'))],
+    /* **Les autres sortes, manquantes** : les grilles d'équipement et
+       d'actions de /collection en sont faites. Le tableau d'une action est
+       une image pleine : il ne doit jamais devenir une dalle grise. */
+    ['état, manquant', () => C.cardHTML(etat(), { mini: true, verrou: true })],
+    ['tenue, manquante', () => C.cardHTML(C.carteDuPaquet({ type: 'skin', id: 'halloween', pour: 'RP13', stade: 1 }), { mini: true, verrou: true })],
+    ['pièce, manquante', () => C.cardHTML(C.carteDuPaquet({ type: 'stuff', id: 'tambour' }), { mini: true, verrou: true })],
+    ['action, manquante', () => C.cardHTML(C.carteDuPaquet({ type: 'action', id: 'a-craquage' }), { mini: true, verrou: true })],
   ];
 
   const caseHTML = (taille, etiquette, html, attrs) => `<figure class="case" style="--l:${taille}px"
@@ -173,17 +185,25 @@ function construirePlanche() {
       h += caseHTML(taille, mot, rendu(), `data-etat="${echap(mot)}" data-grille="1"`);
     }
     h += '</div>';
-    /* La vitrine : une carte sans `mini`, animée. Seulement en grand, là où
-       la vitrine, la fiche et la révélation la posent. Puis la même dans une
-       pile figée (`.fz-fige`), comme les cartes encore face cachée d'une
-       ouverture : elle ne bouge plus, quoi que dise sa matière. */
+    /* La vitrine : une carte sans `mini`, animée, le personnage en pied
+       (`pied`, que la vitrine et la fiche demandent). Seulement en grand, là
+       où la vitrine, la fiche et la révélation la posent. Puis la même
+       manquante, qui ne bouge pas ; puis la carte de la révélation (sans
+       option) dans une pile figée (`.fz-fige`), comme les cartes encore
+       face cachée d'une ouverture : elle ne bouge plus, quoi que dise sa
+       matière, et garde le buste. */
     if (taille >= 200) {
       h += '<div class="rang"><h3>vitrine (animée)</h3>';
       for (const rar of RARETES) {
-        h += caseHTML(taille, `vitrine · ${rar}`, C.cardHTML(get(CARTE[rar]), { titulaire: rar === 'rare' }),
+        h += caseHTML(taille, `vitrine · ${rar}`, C.cardHTML(get(CARTE[rar]), { titulaire: rar === 'rare', pied: true }),
           `data-etat="vitrine" data-rar="${rar}"`);
       }
-      h += '</div><div class="rang fz-fige"><h3>vitrine dans une pile figée</h3>';
+      h += '</div><div class="rang"><h3>vitrine, manquante</h3>';
+      RARETES.forEach((rar, r) => {
+        h += caseHTML(taille, `vitrine manquante · ${rar}`, C.cardHTML(get(CARTE[rar]), { verrou: true, numero: 11 + r, pied: true }),
+          `data-etat="manquante" data-rar="${rar}" data-grille="1"`);
+      });
+      h += '</div><div class="rang fz-fige"><h3>révélation, dans une pile figée</h3>';
       for (const rar of RARETES) {
         h += caseHTML(taille, `figée · ${rar}`, C.cardHTML(get(CARTE[rar])),
           `data-etat="figée" data-rar="${rar}" data-grille="1"`);
@@ -311,12 +331,14 @@ async function mesurer(puppeteer) {
   /* Que fx.js ait eu le temps de poser la respiration sur chaque personnage :
      c'est elle que la grille doit arrêter. */
   await page.evaluate(() => new Promise((r) => setTimeout(r, 400)));
-  /* Les objets se mesurent à leur dessin (voir `analyser`) : on les charge,
-     où qu'ils soient dans la planche — les images sont paresseuses. */
-  await page.evaluate(() => Promise.all([...document.querySelectorAll('.case .illu.objet')].map((i) => {
-    i.loading = 'eager';
-    return i.decode().catch(() => null);
-  })));
+  /* Les objets et les silhouettes se mesurent à leur dessin (voir
+     `analyser`) : on les charge, où qu'ils soient dans la planche — les
+     images sont paresseuses. */
+  await page.evaluate(() => Promise.all([...document.querySelectorAll('.case .illu.objet, .case .fz-verrou .illu')]
+    .map((i) => {
+      i.loading = 'eager';
+      return i.decode().catch(() => null);
+    })));
 
   const r = await page.evaluate(analyser);
 
@@ -348,12 +370,39 @@ async function mesurer(puppeteer) {
   check('plus aucun losange ni ★/♛', r.vieuxSignes === 0);
   check('aucun petit texte en or sur une carte', r.or.length === 0
     || (console.log('        ', r.or.slice(0, 6).join(' · ')), false));
-  check('la légendaire porte son liseré d’or', r.liseres > 0 && r.legendairesSansLisere.length === 0);
+  check('la légendaire porte son liseré d’or, et la manquante n’en porte pas',
+    r.liseres > 0 && r.legendairesSansLisere.length === 0 && r.liseresVerrou.length === 0
+    || (console.log('        ', [...r.legendairesSansLisere, ...r.liseresVerrou].slice(0, 4).join(' · ')), false));
+
+  /* **L'étoile et l'éclat se voient.** Leur étiquette, à cheval sur leur
+     pied, en cachait 30 à 45 % de 86 à 200 pixels : on lisait trois
+     rectangles et un rond. Mesuré à l'œil près : une grille de points sur
+     la face colorée (`<i>`, découpée en étoile), et pour chacun ce qui est
+     peint au-dessus (`elementsFromPoint`). Une largeur à la fois : la
+     mesure de toute la planche d'un seul appel frôlait le délai du
+     protocole (trois minutes). */
+  const faces = { vues: 0, min: 1, faux: [] };
+  for (const t of [86, 110, 150, 200, 300]) {
+    const f = await page.evaluate(mesurerFaces, t);
+    faces.vues += f.vues; faces.min = Math.min(faces.min, f.min); faces.faux.push(...f.faux);
+  }
+  check(`la face de l’étoile et de l’éclat se voit à 85 % au moins (${faces.vues} formes, ${
+    (faces.min * 100).toFixed(0)} % au moins)`, faces.vues > 100 && faces.faux.length === 0
+    || (console.log('        ', faces.faux.slice(0, 6).join(' · ')), false));
 
   /* ---- les états */
   check('une carte manquante porte la croix, le cadenas, son numéro, et pas d’âge',
     r.verrous > 0 && r.verrousFaux.length === 0
     || (console.log('        ', r.verrousFaux.slice(0, 4).join(' · ')), false));
+  check(`sa silhouette est tirée d’une image détourée : elle couvre de 15 à 70 % du dessin (${r.silhouettes} vues)`,
+    r.silhouettes >= 30 && r.silhouettesFaux.length === 0
+    || (console.log('        ', r.silhouettesFaux.slice(0, 6).join(' · ')), false));
+  check(`et aucune image pleine n’est passée au noir (${r.pleinesVerrou} tableaux)`,
+    r.pleinesVerrou >= 5 && r.pleinesNoires.length === 0
+    || (console.log('        ', r.pleinesNoires.slice(0, 4).join(' · ')), false));
+  check('le Fanzzy en pied seulement là où on le demande (vitrine) ou en silhouette, le buste ailleurs',
+    r.pieds > 100 && r.piedsFaux.length === 0
+    || (console.log('        ', r.piedsFaux.slice(0, 6).join(' · ')), false));
   check('un âge secret dit « ÂGE À VENIR », floute le dessin et montre son prix',
     r.secrets > 0 && r.secretsFaux.length === 0
     || (console.log('        ', r.secretsFaux.slice(0, 4).join(' · ')), false));
@@ -419,10 +468,7 @@ async function mesurer(puppeteer) {
 
   /* ---- la réserve de boosters, la brique (BRIQUES § 1) */
   const res = await page.evaluate(verifierReserve);
-  check(`reserveHTML garde sa forme d’avant, { enFentes, html }, au caractère près (${res.anciens} cas)`,
-    res.anciens > 100 && res.anciennesFautes.length === 0
-    || (console.log('        ', res.anciennesFautes.slice(0, 4).join(' · ')), false));
-  check(`et rend la brique : le compte en premier <b>, places ou sachet seul, anneau, PROCHAIN, « + » (${res.cas} cas)`,
+  check(`reserveHTML rend la brique : le compte en premier <b>, places (enFentes) ou sachet seul, anneau, PROCHAIN, « + » (${res.cas} cas)`,
     res.cas > 1000 && res.fautes.length === 0
     || (console.log('        ', res.fautes.slice(0, 6).join(' · ')), false));
   console.log(`        largeurs : ${res.largeurs.join(' · ')}`);
@@ -539,9 +585,39 @@ function analyser() {
   const ratio = (x, y) => { const a = lum(x), b = lum(y); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
   const soleil = (c) => c.map((v) => v * 0.6 + 255 * 0.4);
 
+  /* **Ce qu'une image couvre du dessin**, à son alpha : l'image redessinée
+     dans un canevas à la taille du dessin (`.art`, qui la découpe), à la
+     place que lui donnent `object-fit` et `object-position`, puis ses pixels
+     opaques comptés. `null` si elle n'est pas chargée. Une silhouette tirée
+     d'un buste opaque couvre presque tout ; tirée d'un personnage détouré,
+     entre un cinquième et la moitié. */
+  const couverture = (img) => {
+    if (!img.complete || !img.naturalWidth || !img.naturalHeight) return null;
+    const art = img.closest('.art').getBoundingClientRect();
+    const q = img.getBoundingClientRect();
+    const s = getComputedStyle(img);
+    const k = s.objectFit === 'contain' ? Math.min(q.width / img.naturalWidth, q.height / img.naturalHeight)
+      : s.objectFit === 'cover' ? Math.max(q.width / img.naturalWidth, q.height / img.naturalHeight) : null;
+    const dw = k === null ? q.width : img.naturalWidth * k;
+    const dh = k === null ? q.height : img.naturalHeight * k;
+    const [px = 50, py = 50] = s.objectPosition.split(/\s+/).map((v) => parseFloat(v));
+    const x = q.left + (q.width - dw) * px / 100, y = q.top + (q.height - dh) * py / 100;
+    const L = 120, e = L / art.width;
+    const cv = document.createElement('canvas');
+    cv.width = L; cv.height = Math.max(1, Math.round(art.height * e));
+    const cx = cv.getContext('2d');
+    cx.drawImage(img, (x - art.left) * e, (y - art.top) * e, dw * e, dh * e);
+    const d = cx.getImageData(0, 0, cv.width, cv.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 128) n++;
+    return n / (cv.width * cv.height);
+  };
+
   const r = { cartes: 0, largeurs: [], petits: [], coupes: [], recouverts: [], debords: [],
     etiquettes: 0, etiquettesSous: [], lignes: {}, sansForme: [], vieuxSignes: 0, or: [],
-    liseres: 0, legendairesSansLisere: [], verrous: 0, verrousFaux: [], secrets: 0, secretsFaux: [],
+    liseres: 0, legendairesSansLisere: [], liseresVerrou: [], verrous: 0, verrousFaux: [],
+    silhouettes: 0, silhouettesFaux: [], pleinesVerrou: 0, pleinesNoires: [], pieds: 0, piedsFaux: [],
+    secrets: 0, secretsFaux: [],
     stickersFaux: [], retournees: 0, retourneesFaux: [], seuilFaux: [], contrastes: [],
     grille: 0, infiniesGrille: [], vitrinesRiches: 0, vitrinesAnimees: 0, noms: 0, nomsSortis: [],
     motsCasses: [], pins: 0, pinsFaux: [], pinsVides: [], objets: 0, objetsFaux: [] };
@@ -565,9 +641,50 @@ function analyser() {
     if (!forme || !mot || mot.textContent.trim() !== MOTS[rar] || !rf || rf.width < 14
       || parseFloat(getComputedStyle(mot).fontSize) < 10.95) r.sansForme.push(qui(carte));
     if (carte.querySelector('.rar .d, .rar .s') || /[★♛]/.test(carte.textContent)) r.vieuxSignes++;
+    /* Le liseré d'or est une matière : la légendaire qu'on n'a pas, pochoir
+       sous scotch, ne le porte pas — il tournait sans fin dans la vitrine. */
+    const verrou = carte.classList.contains('fz-verrou');
     if (rar === 'legendaire') {
-      if (carte.querySelector('.lisere')) r.liseres++;
+      if (verrou) { if (carte.querySelector('.lisere')) r.liseresVerrou.push(`${qui(carte)} : un liseré`); }
+      else if (carte.querySelector('.lisere')) r.liseres++;
       else r.legendairesSansLisere.push(qui(carte));
+    }
+
+    /* **Le pochoir de la carte qu'on n'a pas.** Un personnage ou un objet :
+       une silhouette, tirée d'une image détourée, qui couvre de 15 à 70 % du
+       dessin — un buste opaque passé au noir le couvrait presque en entier,
+       une dalle grise. Une image pleine (le tableau d'une action) ne passe
+       jamais au noir. Un âge secret est flou, pas en silhouette : il ne se
+       compte que pour la seconde règle. */
+    const illu = carte.querySelector('.art .illu');
+    if (verrou && illu) {
+      const noir = /brightness\(0\)/.test(getComputedStyle(illu).filter);
+      const part = couverture(illu);
+      if (illu.classList.contains('fz-pleine') || (part !== null && part > 0.7)) {
+        r.pleinesVerrou++;
+        if (noir) r.pleinesNoires.push(`${qui(carte)} : ${part === null ? '?' : (part * 100).toFixed(0)} % passés au noir`);
+      }
+      if (!illu.classList.contains('fz-pleine') && !carte.classList.contains('fz-secret')) {
+        r.silhouettes++;
+        const faute = part === null ? 'image non chargée'
+          : part < 0.15 || part > 0.7 ? `couvre ${(part * 100).toFixed(0)} %`
+            : !noir ? 'pas en silhouette' : null;
+        if (faute) r.silhouettesFaux.push(`${qui(carte)} : ${faute}`);
+      }
+    }
+
+    /* **Le pied, sur demande.** Le personnage en pied pèse quatre fois le
+       buste : la carte de la vitrine le demande, la silhouette en a besoin
+       (elle est détourée) ; la grille et la pile de la révélation gardent
+       le buste — elle téléchargeait sinon chaque carte deux fois. Seulement
+       les Fanzzy : un état, une tenue, une pièce ont leur propre image. */
+    if (illu && /^[A-Z]{2,}\d+[A-Z]?$/.test(carte.dataset.id ?? '') && !retournee) {
+      r.pieds++;
+      const voulu = etat === 'vitrine' || verrou;
+      const src = illu.getAttribute('src') ?? '';
+      const enPied = illu.classList.contains('fz-pied') && !/-buste\.|\/portrait\./.test(src);
+      const enBuste = !illu.classList.contains('fz-pied') && /-buste\.|\/portrait\./.test(src);
+      if (voulu ? !enPied : !enBuste) r.piedsFaux.push(`${qui(carte)} : ${src.replace(/^.*\/img\//, '')}`);
     }
 
     /* **Le pin n'est jamais un rond vide.** Avec le catalogue, le tracé de
@@ -797,46 +914,83 @@ function analyser() {
 }
 
 /**
+ * **La part visible de l'étoile et de l'éclat**, carte par carte, pour une
+ * largeur de la planche : une grille de quatorze sur quatorze points sur la
+ * boîte de la face (`<i>`), et pour chacun la pile de ce qui y est peint
+ * (`elementsFromPoint`). Un point compte s'il est dans la face — sa découpe
+ * en étoile vaut pour le test de contact — et il est vu si rien n'est peint
+ * au-dessus d'elle. La forme ne reçoit pas le pointeur
+ * (`pointer-events:none`, et le test de contact l'ignorerait) : on le lui
+ * rend le temps de la mesure. Chaque carte est amenée à l'écran, le test ne
+ * voyant que la fenêtre.
+ *
+ * **Le reste de la planche est caché pendant ce temps** : chaque test de
+ * contact parcourt toute la page, et la planche entière (les 765 noms
+ * compris) le faisait durer cinq millisecondes — deux minutes et demie pour
+ * la mesure, au bord du délai du protocole. Les cartes de la largeur
+ * mesurée gardent leur place et leur dessin. Sérialisée par puppeteer.
+ */
+function mesurerFaces(taille) {
+  const st = document.createElement('style');
+  st.textContent = '.fz .tbf-forme,.fz .tbf-forme *{pointer-events:auto!important}'
+    + `.noms,.reserve,.taille:not([data-taille="${taille}"]){display:none}`;
+  document.head.append(st);
+  const r = { vues: 0, min: 1, faux: [] };
+  try {
+    for (const kase of document.querySelectorAll(`.taille[data-taille="${taille}"] .case`)) {
+      const fz = kase.querySelector('.fz');
+      if (!fz || fz.classList.contains('fz-retournee')) continue;
+      const forme = fz.querySelector(':scope > .body > .tbf-forme');
+      if (!forme || !/^(epique|legendaire)$/.test(forme.dataset.rar)) continue;
+      const face = forme.querySelector(':scope > i');
+      if (!face) continue;
+      kase.scrollIntoView({ block: 'center' });
+      const q = face.getBoundingClientRect();
+      const N = 14;
+      let dans = 0, vus = 0;
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          const pile = document.elementsFromPoint(q.left + (x + 0.5) * q.width / N, q.top + (y + 0.5) * q.height / N);
+          if (!pile.includes(face)) continue;
+          dans++;
+          if (pile[0] === face) vus++;
+        }
+      }
+      r.vues++;
+      const part = dans ? vus / dans : 0;
+      r.min = Math.min(r.min, part);
+      if (part < 0.85) {
+        r.faux.push(`${kase.dataset.taille}px ${kase.querySelector('figcaption')?.textContent?.trim()} : ${(part * 100).toFixed(0)} %`);
+      }
+    }
+  } finally {
+    st.remove();
+    window.scrollTo(0, 0);
+  }
+  return r;
+}
+
+/**
  * **La réserve de boosters** : ce que `reserveHTML` rend, en entier.
  *
- * Deux promesses. La forme d'avant (`{ enFentes, html }`) ne bouge pas au
- * caractère près — le kiosque la lit encore ; on la compare à la règle telle
- * qu'elle était avant la brique, recopiée ici exprès (c'est la référence,
- * pas une seconde règle). Et la brique (BRIQUES § 1) tient dans toutes les
- * combinaisons : le compte premier `<b>`, cinq places au plus, la forme du
- * compte forcée, l'anneau dans la première place vide ou à côté du compte,
- * jamais d'anneau ni de compte à rebours sur une réserve pleine, PROCHAIN ou
- * le temps seul, le « + » au bout, tout le reste caché au lecteur d'écran.
- * Puis les quatre emplois du tableau de BRIQUES posés dans une planche, pour
- * le plancher de onze pixels et pour les largeurs (lues, pas jugées : c'est
- * la feuille qui les tient). Sérialisée par puppeteer.
+ * La brique (BRIQUES § 1) tient dans toutes les combinaisons : le compte
+ * premier `<b>`, cinq places au plus, la forme du compte forcée, l'anneau
+ * dans la première place vide ou à côté du compte, jamais d'anneau ni de
+ * compte à rebours sur une réserve pleine, PROCHAIN ou le temps seul, le
+ * « + » au bout, tout le reste caché au lecteur d'écran, et `enFentes` qui
+ * dit la forme prise. L'ancienne rangée de fentes (`html`) n'est plus
+ * rendue : le kiosque, son dernier lecteur, ne prend plus que la brique, et
+ * cette suite la gardait seule en vie. Puis les quatre emplois du tableau
+ * de BRIQUES posés dans une planche, pour le plancher de onze pixels et
+ * pour les largeurs (lues, pas jugées : c'est la feuille qui les tient).
+ * Sérialisée par puppeteer.
  */
 function verifierReserve() {
   const C = window.TBF_CARTES;
-  const ancienne = ({ packs, max = null, recharge = false }) => {
-    const n = Math.max(0, Math.floor(Number(packs) || 0));
-    const plafond = Number(max) > 0 ? Math.floor(Number(max)) : null;
-    const places = plafond === null ? Infinity : Math.max(plafond, n + (recharge ? 1 : 0));
-    if (places <= 5) {
-      const html = Array.from({ length: places }, (_, i) =>
-        (i < n ? '<span class="tbf-fente"></span>'
-          : i === n && recharge
-            ? '<span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" aria-hidden="true"></span></span>'
-            : '<span class="tbf-fente tbf-fente--vide"></span>')).join('');
-      return { enFentes: true, html };
-    }
-    return { enFentes: false,
-      html: `<span class="tbf-fente${n ? '' : ' tbf-fente--vide'}"></span>`
-        + `<b class="tbf-sticker" aria-hidden="true">${n}</b>` };
-  };
-  const r = { anciens: 0, anciennesFautes: [], cas: 0, fautes: [], largeurs: [], petits: [] };
+  const r = { cas: 0, fautes: [], largeurs: [], petits: [] };
   for (const packs of [0, 1, 3, 4, 5, 6, 8, 12, 14, 1234]) {
     for (const max of [null, 0, 3, 4, 5, 6, 12, 24]) {
       for (const recharge of [false, true]) {
-        r.anciens++;
-        const a = ancienne({ packs, max, recharge });
-        const x = C.reserveHTML({ packs, max, recharge });
-        if (a.enFentes !== x.enFentes || a.html !== x.html) r.anciennesFautes.push(`${packs}/${max}/${recharge}`);
         for (const forme of ['auto', 'compte']) {
           for (const prochain of [false, 'mot', 'temps']) {
             for (const plus of [false, true]) {
@@ -852,6 +1006,8 @@ function verifierReserve() {
                   const rond = d.querySelector('.tbf-recharge');
                   const pr = d.querySelector('.tbf-reserve-prochain');
                   const faute = y.contenu !== `${y.brique.avant}<b>${packs}</b>${y.brique.apres}` ? 'contenu ≠ brique'
+                    : y.enFentes !== enPlaces ? `enFentes ${y.enFentes}`
+                    : 'html' in y ? 'l’ancienne rangée de fentes revient'
                     : !b || b.parentElement !== d || b.textContent !== String(packs) ? 'le compte n’est pas le premier <b>'
                       : d.querySelector('.tbf-sticker') ? 'un sticker rectangulaire'
                         : enPlaces !== Boolean(d.querySelector(':scope > .tbf-fentes')) ? 'places ou compte'

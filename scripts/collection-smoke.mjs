@@ -345,7 +345,65 @@ const scene = () => $('vitr-scene');
 const pageAlbum = (serie) => [...D.querySelectorAll('#vue .tbf-album-page')]
   .find((p) => p.dataset.page === serie) ?? null;
 const caseDe = (serie, id) => pageAlbum(serie)?.querySelector(`[data-open="${id}"]`) ?? null;
-const numero = (id) => `N° ${(/\d+/.exec(id)?.[0] ?? '').padStart(3, '0')}`;
+/* **Le numéro de pochette attendu : la place de la carte dans l'album de sa
+   série, plus un** — la règle du classeur (fanzzy.html, `cartesDe`), que
+   /collection reprend parce que c'est le même album (`numeroDe`). Tous les
+   âges de la série à la suite, les légendaires à la fin, puis par numéro de
+   lignée, puis par âge : TR2 vient après TR1, TR1B et TR1C, il est donc
+   « N° 004 », et c'est ce que montre la maquette du classeur (N° 004, 005,
+   006 pour la deuxième lignée).
+
+   Les chiffres de l'identifiant (TR2 → « N° 002 ») ne sont pas ce numéro :
+   ils ne comptent pas les âges des lignées d'avant. Ce contrôle les lisait,
+   et il aurait laissé passer la même carte manquante numérotée d'une façon
+   au classeur et d'une autre ici. On ne se contente pas non plus de la forme
+   « N° ddd » : on attend le numéro exact de chaque pochette.
+
+   Recompté ici depuis le catalogue que la suite sert (`dexServi`, dont
+   `racine` et `stade` sont tirés des chaînes `evo`), sur la série entière,
+   et non relu dans la page : c'est la donnée qu'on compare, pas la recette
+   à elle-même. Un identifiant inconnu n'a pas de numéro attendu (`null`),
+   et sa pochette rougit. */
+const NUMEROS = new Map();
+for (const set of new Set(dexServi.map((f) => f.set))) {
+  const deLignee = (f) => Number(/^[A-Z]+(\d+)/.exec(f.racine)?.[1] ?? 0);
+  const leg = (f) => (f.rar === 'legendaire' ? 1 : 0);
+  dexServi.filter((f) => f.set === set)
+    .sort((a, b) => leg(a) - leg(b) || deLignee(a) - deLignee(b) || a.stade - b.stade)
+    .forEach((f, i) => NUMEROS.set(f.id, i + 1));
+}
+const numero = (id) => (NUMEROS.has(id) ? `N° ${String(NUMEROS.get(id)).padStart(3, '0')}` : null);
+
+/* **L'album pose une case par âge, comme le classeur** (fanzzy.html,
+   `cartesDe` ; ici `ordreSerie`) : TR1, TR1B, TR1C, puis TR2 — et non plus
+   une par personnage. C'est ce qui donne aux pochettes des numéros qui se
+   suivent sans trou, les mêmes d'un écran à l'autre. La série de la suite a
+   donc autant de cases que d'âges (168 pour 68 personnages en TR), dans
+   l'ordre des numéros. L'en-tête, lui, reste compté en personnages : un âge
+   supérieur ne sort d'aucun booster, il s'achète.
+
+   **Ce que chaque case doit être**, tiré de l'âge atteint que sert la
+   bibliothèque (`parFanzzy[].stade`), et non de la page :
+     atteint   l'âge est atteint — sa carte, collée (`.fz` sans secret) ;
+     secret    un âge plus loin d'une lignée qu'on a — sa carte au secret
+               (`.fz.fz-secret`), le prix sur le suivant seulement ;
+     pochette  tout le reste — la pochette au numéro de l'âge. */
+const AGES = dexServi.filter((f) => f.set === SERIE)
+  .sort((a, b) => NUMEROS.get(a.id) - NUMEROS.get(b.id));
+const atteintDe = (racine) => biblio.parFanzzy.find((p) => p.id === racine)?.stade ?? 0;
+function formeAttendue(id) {
+  const f = dexServi.find((x) => x.id === id);
+  if (!f) return null;
+  const a = atteintDe(f.racine);
+  return a >= f.stade ? 'atteint' : a ? 'secret' : 'pochette';
+}
+/** Le prix qu'une carte au secret doit porter : celui du **seul** âge
+    suivant (il s'achète), rien pour ceux d'après (il faudra d'abord l'autre). */
+function prixAttendu(id) {
+  const f = dexServi.find((x) => x.id === id);
+  const prix = Number(EVO_COST[f?.stade]);
+  return f && f.stade === atteintDe(f.racine) + 1 && prix > 0 ? String(prix) : '';
+}
 
 /** Ferme la vitrine par sa croix. */
 async function fermerVitrine() {
@@ -399,16 +457,31 @@ const RAYONS = { fanzzy: 'fanzzy', etats: 'etats', tenues: 'tenues', equipement:
   check('et lui seul', rayons.filter((r) => r.dataset.pastille).length === 1);
 
   /* **L'anneau compte les crans**, tenues à part, et jamais le total de la
-     bibliothèque sous le seuil d'un cran (§ 5.1) : le total se dit dans son
-     étiquette. */
+     bibliothèque sous le seuil d'un cran (§ 5.1). **Il vise le palier en
+     cours** (amendement 22), comme la tuile de la collection sur le hub
+     (index.html, `palierDe`) : « 20/30 », le prochain cran (`prochain.a`),
+     et non « 20/3311 », un anneau vide à l'œil à côté d'un sticker qui
+     promet le cran de 30. Sans cran au-dessus du compte (tout est gagné), il
+     vise le total. Le compte des crans et le total se disent dans son
+     étiquette.
+
+     Le prochain cran servi tombe entre le compte et le total des crans :
+     sans quoi « le palier » et « le total » seraient le même chiffre, et le
+     contrôle ne départagerait pas l'ancien anneau du nouveau. */
   const P = biblio.paliers;
+  const vise = P.prochain.a > P.gagnes ? P.prochain.a : P.possibles;
   const cercle = D.querySelector('#collectionneur .tbf-cercle');
   const montre = `${cercle?.querySelector('b')?.textContent.trim() ?? ''}${cercle?.querySelector('small')?.textContent.trim() ?? ''}`;
-  check(`l’anneau du collectionneur compte les crans, tenues à part (${montre})`,
-    montre === `${P.gagnes}/${P.possibles}`);
+  check(`l’anneau du collectionneur vise le palier en cours, tenues à part (${montre})`,
+    P.gagnes < P.prochain.a && P.prochain.a < P.possibles
+    && montre === `${P.gagnes}/${vise}`);
+  /* Ce que l'anneau montre, il le dit aussi en mots ; et ce qu'il ne montre
+     plus — le compte des crans, le total de la bibliothèque — il le dit
+     encore, puisque c'est le seul endroit de la page où ils figurent. */
   const dit = cercle?.getAttribute('aria-label') ?? '';
-  check('et son étiquette dit aussi le total de la bibliothèque',
-    dit.includes(`${P.gagnes} sur ${P.possibles}`)
+  check('et son étiquette dit le palier visé, le compte des crans et le total de la bibliothèque',
+    dit.includes(`${P.gagnes} sur ${vise}`)
+    && dit.includes(`${P.gagnes} sur ${P.possibles}`)
     && dit.includes(`${biblio.total.gagnes} sur ${biblio.total.possibles} en tout`)
     || (console.log('        il dit :', dit), false));
   check('le titre de palier est écrit',
@@ -457,21 +530,46 @@ await ouvrirRayon('fanzzy');
 
   const page = pageAlbum(SERIE);
   const cases = [...(page?.querySelectorAll('[data-open][data-liste][data-i]') ?? [])];
-  check(`chaque Fanzzy de la série a sa case (${cases.length} pour ${itemsSerie.length})`,
-    cases.length === itemsSerie.length
-    && itemsSerie.every((f) => cases.some((c) => c.dataset.open === f.id)));
+  /* Une case par âge (`AGES`), et dans l'ordre des numéros : c'est sur cet
+     ordre que la vitrine compte son rang et que les pochettes se suivent. */
+  check(`chaque âge de la série a sa case, dans l’ordre de l’album (${cases.length} pour ${AGES.length} âges de ${itemsSerie.length} personnages)`,
+    JSON.stringify(cases.map((c) => c.dataset.open)) === JSON.stringify(AGES.map((f) => f.id)));
   check('chaque case se touche, au doigt et au clavier',
     cases.length > 0 && cases.every((c) => c.tagName === 'BUTTON'
       || (c.getAttribute('role') === 'button' && c.tabIndex === 0)));
-  /* Ce qu'on a : sa carte, collée. Ce qu'on n'a pas : une pochette, au
-     numéro du personnage (« N° 013 ») — on sait ce qu'on cherche sans qu'on
-     nous le donne. */
-  const malRangees = cases.filter((c) => (MIENS.has(c.dataset.open)
-    ? !(c.classList.contains('tbf-album-case') && c.querySelector('.fz'))
-    : !(c.classList.contains('tbf-album-pochette')
-      && c.querySelector('b')?.textContent.trim() === numero(c.dataset.open))));
-  check('ce qu’on a est sa carte, ce qu’on n’a pas une pochette numérotée', malRangees.length === 0
-    || (console.log('        ', malRangees.slice(0, 3).map((c) => `${c.dataset.open} : ${c.className}`).join(' · ')), false));
+  /* Un âge atteint : sa carte, collée. Un âge plus loin d'une lignée qu'on
+     a : sa carte au secret, floutée — le flou est ce qu'on paie —, avec son
+     prix sur le seul âge suivant. Tout le reste : une pochette, au numéro de
+     l'âge dans l'album de la série (« N° 013 », `numero`, le même qu'au
+     classeur) — on sait ce qu'on cherche sans qu'on nous le donne. En cas
+     d'écart, on dit la forme attendue, le numéro lu et l'attendu : la classe
+     seule ne disait pas lequel des deux manquait. */
+  const prixLu = (c) => (c.querySelector('.fz.fz-secret .fz-prix')?.textContent ?? '').replace(/\D+/g, '');
+  const malRangees = cases.filter((c) => {
+    const forme = formeAttendue(c.dataset.open);
+    if (forme === 'atteint') {
+      return !(c.classList.contains('tbf-album-case') && c.querySelector('.fz:not(.fz-secret)'));
+    }
+    if (forme === 'secret') {
+      return !(c.classList.contains('tbf-album-case') && c.querySelector('.fz.fz-secret')
+        && prixLu(c) === prixAttendu(c.dataset.open));
+    }
+    return !(c.classList.contains('tbf-album-pochette')
+      && c.querySelector('b')?.textContent.trim() === numero(c.dataset.open));
+  });
+  check('un âge atteint est sa carte, l’âge à venir sa carte au secret, le reste une pochette numérotée',
+    cases.length > 0 && malRangees.length === 0
+    || (console.log('        ', malRangees.slice(0, 3).map((c) => `${c.dataset.open} (${formeAttendue(c.dataset.open)}) : ${c.className}`
+      + ` « ${c.querySelector('b')?.textContent.trim() ?? ''} », attendu « ${numero(c.dataset.open)} »`
+      + `, prix « ${prixLu(c)} » pour « ${prixAttendu(c.dataset.open)} »`)
+      .join(' · ')), false));
+  /* Les trois formes sont bien là toutes trois : sans âge au secret (une
+     lignée à un seul âge, un stub qui donnerait le dernier âge), le contrôle
+     d'au-dessus passerait sans avoir vu la carte floutée ni son prix. */
+  const formes = new Set(cases.map((c) => formeAttendue(c.dataset.open)));
+  check('la page exerce les trois formes : atteint, au secret, en pochette',
+    ['atteint', 'secret', 'pochette'].every((f) => formes.has(f))
+    && cases.some((c) => prixAttendu(c.dataset.open) !== ''));
   check('la rareté porte le cadre des cartes collées',
     cases.filter((c) => c.querySelector('.fz')).every((c) =>
       c.querySelector('.fz').classList.contains(`r-${parId.get(c.dataset.open).rar}`)));
@@ -485,7 +583,10 @@ await ouvrirRayon('fanzzy');
     page?.querySelectorAll('.fz-avatar').length === 1 && Boolean(mienne?.querySelector('.fz-avatar')));
 
   /* L'en-tête de la série : ce qu'on en a, et ce que rapporte la page
-     complète quand le serveur le sert (§ 5.1). */
+     complète quand le serveur le sert (§ 5.1). Il compte **des personnages**,
+     pas leurs âges, alors que la grille en pose un par case : un âge
+     supérieur ne se trouve dans aucun booster, il s'achète, et la série se
+     complète en personnages (le compte du classeur, et celui de `series`). */
   const tete = page?.querySelector('.tbf-album-tete');
   const eus = itemsSerie.filter((f) => MIENS.has(f.id)).length;
   check(`l’en-tête de la série chiffre ce qu’on en a (${eus} / ${itemsSerie.length})`,
@@ -494,15 +595,18 @@ await ouvrirRayon('fanzzy');
     /→ 1 BOOSTER ET 100 ÉCHARPES/.test(tete?.textContent.replace(/\s+/g, ' ') ?? ''));
 
   /* Les filtres : « ce qu'il me reste », puis une famille. Les pages
-     montées se refont ; on les relit. */
+     montées se refont ; on les relit. Ils se comptent **en âges**, comme
+     les cases : « ce qu'il me reste » retire les âges atteints et eux
+     seuls — un âge au secret reste à gagner (il s'achète), une pochette
+     aussi ; une famille garde tous les âges de ses personnages. */
   const inter = D.querySelector('#vue .tbf-interrupteur');
   clic(inter);
   await attendre(20);
   const reste = [...(pageAlbum(SERIE)?.querySelectorAll('[data-open]') ?? [])];
   check('« ce qu’il me reste » ne garde que ce qui manque',
     inter?.getAttribute('aria-checked') === 'true'
-    && reste.length === itemsSerie.filter((f) => !MIENS.has(f.id)).length
-    && reste.every((c) => !MIENS.has(c.dataset.open)));
+    && reste.length === AGES.filter((f) => formeAttendue(f.id) !== 'atteint').length
+    && reste.every((c) => formeAttendue(c.dataset.open) !== 'atteint'));
   clic(inter);
   await attendre(20);
   const famille = MIEN.type;
@@ -514,12 +618,12 @@ await ouvrirRayon('fanzzy');
   const deLaFamille = [...(pageAlbum(SERIE)?.querySelectorAll('[data-open]') ?? [])];
   check('un filtre de famille ne garde que la sienne',
     filtre?.getAttribute('aria-pressed') === 'true'
-    && deLaFamille.length === itemsSerie.filter((f) => f.type === famille).length
+    && deLaFamille.length === AGES.filter((f) => f.type === famille).length
     && deLaFamille.every((c) => parId.get(c.dataset.open)?.type === famille));
   clic(filtre);
   await attendre(20);
   check('et le retirer rend la page entière',
-    pageAlbum(SERIE)?.querySelectorAll('[data-open]').length === itemsSerie.length);
+    pageAlbum(SERIE)?.querySelectorAll('[data-open]').length === AGES.length);
 }
 
 /* ==================================================== 3. une carte possédée */
@@ -535,7 +639,9 @@ check('la page ne défile plus derrière',
 check('elle dit qu’on la possède', /DANS TA COLLECTION/.test(vitrine()));
 check('la rareté vit sur la scène, celle de la carte',
   scene()?.dataset.rar === MIEN.rar && D.querySelector('#vitr .fz')?.dataset.rar === MIEN.rar);
-check(`elle chiffre le rang dans la série (${rang()})`, rang() === `${iMien + 1} / ${itemsSerie.length}`);
+/* Le rang se compte sur ce qu'on feuillette : les cases de la page, donc
+   les âges de la série (« 79 / 168 »), et non ses personnages. */
+check(`elle chiffre le rang dans la série (${rang()})`, rang() === `${iMien + 1} / ${AGES.length}`);
 check('ses doublons y sont tamponnés', /×3/.test(scene()?.querySelector('.tbf-tampon')?.textContent ?? ''));
 check('elle ouvre les deux portes états / tenues', D.querySelectorAll('#vitr [data-planche]').length === 2);
 /* Le prix vient du catalogue servi : un prix écrit ici mentirait au premier
@@ -554,29 +660,30 @@ console.log('\n  le feuilletage');
   const nom1 = nomVitrine();
   clic(D.querySelector('#vitr [data-pas="1"]'));
   await attendre(40);
-  check('la flèche avant avance d’un rang', rang() === `${iMien + 2} / ${itemsSerie.length}`);
+  check('la flèche avant avance d’un rang', rang() === `${iMien + 2} / ${AGES.length}`);
   check('et change de carte', nomVitrine() !== nom1);
   clic(D.querySelector('#vitr [data-pas="-1"]'));
   await attendre(40);
   check('la flèche arrière revient exactement d’où l’on vient',
-    rang() === `${iMien + 1} / ${itemsSerie.length}` && nomVitrine() === nom1);
+    rang() === `${iMien + 1} / ${AGES.length}` && nomVitrine() === nom1);
   touche('ArrowRight');
   await attendre(40);
-  check('le clavier feuillette aussi', rang() === `${iMien + 2} / ${itemsSerie.length}`);
+  check('le clavier feuillette aussi', rang() === `${iMien + 2} / ${AGES.length}`);
   touche('ArrowLeft');
   await attendre(40);
   await fermerVitrine();
 
-  /* Les deux bouts : on ne boucle pas. */
+  /* Les deux bouts : on ne boucle pas. Le dernier rang est le dernier âge
+     de la série, la dernière case de la page. */
   clic(pageAlbum(SERIE)?.querySelector('[data-i="0"]'));
   await jusqua(vitrineOuverte);
   check('la flèche arrière est éteinte au premier rang',
-    rang() === `1 / ${itemsSerie.length}` && D.querySelector('#vitr [data-pas="-1"]')?.disabled === true);
+    rang() === `1 / ${AGES.length}` && D.querySelector('#vitr [data-pas="-1"]')?.disabled === true);
   await fermerVitrine();
-  clic(pageAlbum(SERIE)?.querySelector(`[data-i="${itemsSerie.length - 1}"]`));
+  clic(pageAlbum(SERIE)?.querySelector(`[data-i="${AGES.length - 1}"]`));
   await jusqua(vitrineOuverte);
   check('et la flèche avant au dernier',
-    rang() === `${itemsSerie.length} / ${itemsSerie.length}` && D.querySelector('#vitr [data-pas="1"]')?.disabled === true);
+    rang() === `${AGES.length} / ${AGES.length}` && D.querySelector('#vitr [data-pas="1"]')?.disabled === true);
   await fermerVitrine();
 
   /* Une carte qu'on n'a pas montre le chemin : le paquet de sa série, et la
@@ -743,18 +850,39 @@ await ouvrirRayon('tenues');
 {
   /* Une planche par personnage qu'on a, son compte servi par la
      bibliothèque, ses cases demandées à sa fiche quand elle approche de
-     l'écran (jsdom n'a pas d'observateur : la page remplit les premières). */
+     l'écran (jsdom n'a pas d'observateur : la page remplit les premières).
+
+     **Une planche de l'album ne montre que les âges atteints** : un âge
+     pas encore atteint n'a rien à gagner — une tenue s'habille sur l'âge
+     qui la reçoit. Son compte suit ce qui est dessiné : celui de la
+     bibliothèque (`parFanzzy`, compté sur tous les âges, autant de cases à
+     chacun) ramené aux âges atteints, `possibles / ages × stade`. La
+     vitrine d'un personnage (SES TENUES, plus haut) garde, elle, les trois
+     âges, ceux d'après sous cadenas : c'est là qu'on regarde ce que fera
+     grandir. */
   const planches = [...D.querySelectorAll('#vue .tbf-planche[data-quoi="tenues"]')];
   check(`une planche par personnage qu’on a (${planches.length})`, planches.length === biblio.parFanzzy.length);
-  check('chacune chiffre ses tenues gagnées', biblio.parFanzzy.every((p) => {
-    const pl = planches.find((x) => x.dataset.perso === p.id);
-    return pl?.querySelector('.tbf-planche-tete .tbf-tampon')?.textContent.trim()
-      === `${p.tenues.gagnes}/${p.tenues.possibles}`;
-  }));
+  const tampons = biblio.parFanzzy.map((p) => ({ id: p.id,
+    lu: planches.find((x) => x.dataset.perso === p.id)
+      ?.querySelector('.tbf-planche-tete .tbf-tampon')?.textContent.trim() ?? '',
+    attendu: `${p.tenues.gagnes}/${Math.round((p.tenues.possibles / p.ages) * p.stade)}` }));
+  check('chacune chiffre ses tenues gagnées, sur ses âges atteints',
+    tampons.every((t) => t.lu === t.attendu)
+    || (console.log('        ', tampons.filter((t) => t.lu !== t.attendu).slice(0, 3)
+      .map((t) => `${t.id} « ${t.lu} » pour « ${t.attendu} »`).join(' · ')), false));
   const planche = planches.find((p) => p.dataset.perso === MIEN.id);
   await jusqua(() => (planche?.querySelectorAll('.tbf-planche-case').length ?? 0) > 0);
   const cases = [...(planche?.querySelectorAll('.tbf-planche-case') ?? [])];
-  check('et la sienne est garnie, âge par âge', cases.length === agesDe(MIEN.id) * tenuesGagnables.length);
+  /* Autant de cases que de tenues à gagner sur chaque âge atteint, et aucune
+     sous cadenas : une case d'âge fermé serait un manque qu'aucun booster ne
+     comble, précisément ce que la planche ne montre plus. Le personnage de
+     la suite a des âges qu'il n'a pas atteints (le premier sur trois) :
+     sans eux, l'ancienne planche et la nouvelle auraient le même compte. */
+  const stadeMien = atteintDe(MIEN.id);
+  check(`et la sienne est garnie, des âges atteints seulement (${cases.length} pour ${stadeMien} × ${tenuesGagnables.length})`,
+    stadeMien > 0 && stadeMien < agesDe(MIEN.id)
+    && cases.length === stadeMien * tenuesGagnables.length
+    && cases.every((c) => !c.hasAttribute('data-verrou')));
   clic(cases[1]);
   await jusqua(vitrineOuverte);
   check('une tenue s’ouvre en carte', Boolean(D.querySelector('#vitr .fz')));
@@ -817,7 +945,7 @@ await ouvrirRayon('actions');
 console.log('\n  rien ne lève, sur aucune sorte');
 /* La faute que `dessinDeCarte` raconte cinq fois : une sorte sans branche
    tombait sur le bonhomme gris, ou levait. On ouvre donc **tout** — chaque
-   personnage de chaque page de l'album, chaque pièce, chaque carte d'action —
+   âge de chaque page de l'album, chaque pièce, chaque carte d'action —
    et on compte les cadres obtenus. Un seul manquant est une sorte oubliée.
    L'album ne monte que trois pages : on les tourne une à une, par le rail. */
 let dessinees = 0;
@@ -868,8 +996,11 @@ for (const o of [...D.querySelectorAll('#vue .tbf-album-onglet:not([data-verrou]
   fanzzyOuverts += cases.length;
   await toutOuvrir('fanzzy', cases);
 }
-check(`l’album, page après page, ouvre chaque Fanzzy (${fanzzyOuverts} sur ${persos.length})`,
-  fanzzyOuverts === persos.length);
+/* Une case par âge : la traversée ouvre donc chaque âge du catalogue servi
+   (765 cartes pour 323 personnages), toutes les séries de la suite étant
+   ouvertes (`ouverte: true`) et chacune ayant ses personnages à gagner. */
+check(`l’album, page après page, ouvre chaque âge de chaque Fanzzy (${fanzzyOuverts} sur ${dexServi.length})`,
+  fanzzyOuverts === dexServi.length);
 check('et l’on y est toujours : aucun retour n’a quitté l’album', !$('vue').hidden
   && Boolean(D.querySelector('#vue .tbf-album')));
 await revenirAccueil();
@@ -881,7 +1012,7 @@ await ouvrirRayon('actions');
 armer();
 await toutOuvrir('actions', [...D.querySelectorAll('#vue [data-liste="actions"][data-i]')]);
 check(`les ${ouvertes} cartes des trois sous-vues se dessinent toutes (${dessinees})`,
-  dessinees === ouvertes && ouvertes === persos.length + STUFF.length + ACTIONS.length);
+  dessinees === ouvertes && ouvertes === dexServi.length + STUFF.length + ACTIONS.length);
 
 console.log(fautes ? `\n${fautes} faute(s) — ne pas livrer en l’état.`
   : '\nLa collection s’ouvre, se feuillette et dit où trouver ce qui manque.');
