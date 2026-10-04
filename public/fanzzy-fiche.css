@@ -47,13 +47,25 @@
  * lui reste qu'un pixel au-dessus du seuil : ce qu'on ajoute à la colonne
  * se reprend ailleurs dans la colonne, pas sur elle.
  *
- * En panneau par-dessus le classeur, la barre du jeu n'est pas au-dessus de
- * la fiche : ses cinquante-quatre pixels vont à la carte.
+ * Les deux qu'on ne reprend pas : la bande du cri garde ses quarante-quatre
+ * pixels (une cible plus basse est relevée par l'audit, et c'est la commande
+ * qu'on touche pour entendre le personnage : `.tbf-cri`, ui.css), et
+ * l'en-tête ses quarante-neuf (le sticker de famille est la brique du
+ * vestiaire, la même d'un écran à l'autre).
  *
- * Sur un téléphone plus court, la carte rétrécit d'abord (jusqu'à 150 px de
- * haut), puis **la bande du cri se replie** en une plaque ronde à côté de la
- * carte (sous 600 px de haut), et seulement ensuite le corps défile — jamais
- * les actions, qui restent hors du défilement.
+ * **En panneau par-dessus le classeur, le budget est le même** : le panneau
+ * commence sous la barre du jeu (`--sous-barre`, fanzzy.html), comme la page
+ * à son adresse, et la croix qui le referme tient dans la hauteur de
+ * l'en-tête.
+ *
+ * **Sur un téléphone plus court, la bande du cri se replie d'abord**, en une
+ * plaque ronde à côté de la carte : dès que, avec elle, la carte passerait
+ * sous les cent cinquante pixels de large et perdrait son pied. Le seuil se
+ * lit sur la hauteur du corps (« la bande du cri », plus bas), et non sur
+ * celle de l'écran : il tient compte de la barre, d'un en-tête sur deux
+ * lignes, d'une annonce. Puis la carte rétrécit (jusqu'à 150 px de haut), et
+ * seulement ensuite le corps défile — jamais les actions, qui restent hors du
+ * défilement.
  */
 
 /* ------------------------------------------------------------ la coque
@@ -79,8 +91,13 @@
    jamais le bouton.
 
    Pas de barre de défilement visible : elle dirait « liste » sur un écran
-   qui est une vitrine. */
-.fiche .corps{flex:1;min-height:0;display:flex;flex-direction:column;
+   qui est une vitrine.
+
+   **Le corps est un conteneur de taille** (`fiche-corps`) : c'est sur sa
+   hauteur que la bande du cri décide de se replier. Sa hauteur ne dépend
+   pas de son contenu — il prend ce que la tête et les actions laissent —,
+   et le confinement de taille ne change donc rien à la colonne. */
+.fiche .corps{flex:1;min-height:0;display:flex;flex-direction:column;container:fiche-corps / size;
   overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none}
 .fiche .corps::-webkit-scrollbar{display:none}
 
@@ -169,17 +186,6 @@
 .fiche .vitrine>.tbf-vitrine-scene{width:var(--l);margin:0}
 .fiche .vitrine .fz{width:100%}
 
-/* **Le pin sans pictogramme : provisoire.** À l'adresse /fanzzy/<id>, la page
-   ne charge pas le catalogue (une requête lourde de plus) : `cardHTML` ne
-   connaît alors de la famille que son nom et sa couleur, que la fiche lui
-   donne, et pas le tracé de son pictogramme — le pin restait un rond de
-   craie vide. On y pose l'emblème de la famille (`/img/logo/type-*`), que la
-   fiche passe en `--pin-type` — sur la carte en main comme sur les deux
-   vignettes de la confirmation. À retirer quand la carte saura le faire
-   elle-même (besoin « carte »). */
-.fiche .fz .pip:has(path[d=""]){
-  background:var(--pin-type,none) 50% 50%/74% no-repeat,var(--craie)}
-
 /* **Ce qui se colle à côté de la carte**, dans ses gouttières : à gauche le
    tampon TON AVATAR, ou la bâche ME MONTRER AINSI ; à droite la plaque qui
    la retourne, la bande du cri repliée sur un téléphone court, ou la
@@ -208,12 +214,29 @@
    Pleine largeur sous la carte : toucher lance le cri en vidéo. Les bouts
    rayés sont à la couleur de la famille (`--e1`, posée par la fiche). */
 .fiche .tbf-cri{flex:none;width:auto;margin:0 var(--marge) 4px}
-/* **Repliée sur un téléphone court.** Sous six cents pixels de haut, les
-   quarante-huit pixels de la bande reviennent à la carte, et le cri reste à
-   portée : une plaque ronde ▶ collée à droite de la carte, au niveau de la
-   bande de son nom. */
+/* **Repliée dès que la carte en a besoin.** Les quarante-huit pixels de la
+   bande reviennent alors à la carte, et le cri reste à portée : une plaque
+   ronde ▶ collée à droite de la carte, au niveau de la bande de son nom.
+
+   **Le seuil est celui du pied de la carte, lu sur le corps.** Avec la bande,
+   la scène a la hauteur du corps moins 236 pixels (la bande 48, l'inventaire
+   100, le détail 88) ; la carte, celle de la scène moins 14 ; et sa largeur,
+   63/88 de sa hauteur. Elle dépasse cent cinquante pixels de large — le
+   seuil du pied, `cartes.css` — tant que le corps a au moins 460 pixels de
+   haut : 461 à 360 × 640, où la bande reste, comme le budget l'écrit.
+
+   Le repli se décidait sur l'écran (`max-height:600px`), et ne savait rien
+   de ce que la barre, l'en-tête ou une annonce prennent au-dessus : entre
+   601 et 638 pixels de haut — un Android de 360 de large, barre d'adresse
+   comprise —, la bande restait et la carte tombait en vignette sans pied,
+   jusqu'à 123 pixels de large (137 à 620). Le corps, lui, le sait.
+
+   À 320 de large, la carte est tenue par la largeur (128 px, ses deux
+   gouttières) : entre 608 et 638 pixels de haut, le repli ne lui rend rien,
+   et le cri y reste à portée, en plaque ronde. Une seconde condition pour
+   ces trente pixels d'un téléphone de 320 ne vaudrait pas sa lecture. */
 .fiche .vitrine>.cri-court{display:none}
-@media (max-height:600px){
+@container fiche-corps (height < 460px){
   .fiche .corps>.tbf-cri{display:none}
   .fiche .vitrine>.cri-court{display:grid;position:absolute;z-index:3;
     left:calc(50% + var(--l) / 2 + 10px);top:calc(50% + var(--l) * 44 / 63 - 50px)}
@@ -224,6 +247,15 @@
    Cent pixels, quatre rangées côte à côte qui défilent en largeur : ÂGES,
    EFFETS, ÉTATS, TENUES (`.tbf-inventaire`). La hauteur est à la page. */
 .fiche .tbf-inventaire{flex:none;height:100px}
+/* **Le pin de la famille, au coin d'une tuile d'effet** (fanzzy-fiche.js,
+   `tuileHTML`) : la tuile est à la craie, et c'est lui qui dit la famille.
+   Seize pixels — sa taille dans le sticker sous le nom —, au coin
+   haut-gauche, là où la carte porte le sien, à cheval sur le bord comme les
+   stickers de la tuile ; son cerne garde trois pixels et demi d'air sous le
+   titre de la rangée. **Provisoire** : c'est une place de la brique
+   (`.tbf-tuile`, ui.css), qui ne la connaît pas encore (besoin
+   « feuilles-css »). */
+.fiche .tbf-tuile>.tbf-pin{position:absolute;z-index:3;left:-5px;top:-5px;--taille:16px;--rot:0deg}
 /* **L'ombre qui dit « ça continue ».** La dernière tuile coupée net au bord
    droit se lit comme un défaut d'affichage, et personne ne pousse du doigt
    une image qu'il croit cassée. Un fondu sur les quarante derniers pixels,

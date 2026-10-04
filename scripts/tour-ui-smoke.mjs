@@ -424,8 +424,55 @@ for (const [route, nom] of tousLesEcrans) {
          suspension conviennent à une phrase ; sur un libellé qui dit où l'on
          va, ils font deviner. On lisait « CLASSEME… » et « BOUTIQ… » sur le
          rail de l'accueil. */
+      /* **Ce qui déborde doit être le texte.** `scrollWidth` compte tout ce
+         qui sort de la boîte, décor compris : le coin déchiré de la plaque
+         (`.tbf-plaque::before`, ui.css, lot 1) est un calque positionné qui
+         dépasse de deux pixels et demi à droite, voulu. Sur la plaque
+         CHOISIR DANS LE CLASSEUR de /fanzzy (un `[data-go]`, lot 4), il
+         donnait 335 pour 332 à toutes les largeurs, alors que le libellé se
+         lisait en entier — un rouge pour rien, de ceux qui apprennent à
+         ignorer les rouges.
+
+         On garde donc le premier tri (`scrollWidth`), et on ne retient
+         l'étiquette que si **son texte** sort de sa boîte de contenu : un
+         `Range` rend la géométrie du texte tel qu'il est posé, avant tout
+         rognage et toute ellipse (voir `auBord`), et un pseudo-élément n'en
+         fait pas partie. Une ellipse, un texte rogné ou qui passe par-dessus
+         le bord sortent de cette boîte : ils restent signalés, comme avant.
+         Le texte masqué à l'œil (la forme longue d'un libellé, lot 0) est
+         écarté sur le motif de `rognes` : sa boîte d'un pixel le fait
+         forcément déborder sans que personne en voie une lettre. */
       libelles: [...document.querySelectorAll('.lib,.tbf-tiroir a,[data-onglet],[data-go]')]
-        .filter((el) => el.scrollWidth > el.clientWidth + 1)
+        .filter((el) => {
+          if (el.scrollWidth <= el.clientWidth + 1) return false;
+          const st = getComputedStyle(el);
+          const px = (v) => parseFloat(v) || 0;
+          const r = el.getBoundingClientRect();
+          const gauche = r.left + px(st.borderLeftWidth) + px(st.paddingLeft);
+          const droite = r.right - px(st.borderRightWidth) - px(st.paddingRight);
+          const horsDeLEcran = (n) => {
+            for (let p = n.parentElement; p && p !== el.parentElement; p = p.parentElement) {
+              const s = getComputedStyle(p);
+              if (s.display === 'none' || s.visibility === 'hidden') return true;
+              const b = p.getBoundingClientRect();
+              if (s.position === 'absolute' && (b.width <= 1 || b.height <= 1
+                || /^inset\(50%\)$/.test(s.clipPath)
+                || /^rect\(0(px)?,? 0(px)?,? 0(px)?,? 0(px)?\)$/.test(s.clip))) return true;
+            }
+            return false;
+          };
+          const marche = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          for (let n = marche.nextNode(); n; n = marche.nextNode()) {
+            if (!n.data.trim() || horsDeLEcran(n)) continue;
+            const rg = document.createRange();
+            rg.selectNodeContents(n);
+            for (const b of rg.getClientRects()) {
+              if (b.width < 1 || b.height < 1) continue;
+              if (b.left < gauche - 1 || b.right > droite + 1) return true;
+            }
+          }
+          return false;
+        })
         .slice(0, 5).map((el) => (el.textContent ?? '').trim().slice(0, 20)),
 
       rognes: [...document.querySelectorAll('body *')].filter((el) => {
@@ -1393,20 +1440,38 @@ for (const [route, nom] of tousLesEcrans) {
     };
   });
   /* La sous-vue des Fanzzy, ouverte du doigt. La page d'arrivée est la seule
-     qui ne soit pas `inert` ; son en-tête compte ses personnages
-     (« 2 / 35 », ou le tampon COMPLET) et sa grille doit en montrer chacun —
-     une case pour ce qu'on a, une pochette numérotée pour le reste. */
+     qui ne soit pas `inert`.
+
+     **Sa grille pose une case par âge, comme le classeur** (lot 4,
+     `ordreSerie`) : RP montre 95 cases pour 35 personnages, IM 11 pour 7.
+     Chaque case a l'une de trois formes : l'âge atteint, sa carte collée ;
+     un âge plus loin d'une lignée qu'on a, sa carte au secret ; tout le
+     reste, une pochette numérotée. **Son en-tête, lui, compte des
+     personnages** (« 2 / 35 », ou le tampon COMPLET) : un âge supérieur ne
+     sort d'aucun booster, il s'achète.
+
+     Les âges attendus se lisent dans le catalogue que la page a lu, par la
+     même route et le même cache (`/api/fanzzy/dex`, qui porte `racine` et
+     `stade`) : c'est la seule source qui dise combien d'âges compte la série
+     dans cette base, et à quel personnage chacun appartient. */
   await pc.evaluate(() => document.querySelector('.tbf-rayon[data-vue="fanzzy"]')?.click());
   await pc.waitForFunction(() => document.querySelector('#vue .tbf-album-page:not([inert]) [data-open]'),
     { timeout: 8000 }).catch(() => null);
-  const album = await pc.evaluate(() => {
+  const album = await pc.evaluate(async () => {
     const p = document.querySelector('#vue .tbf-album-page:not([inert])');
+    const serie = p?.dataset.page ?? null;
     const cases = p ? [...p.querySelectorAll('[data-open]')] : [];
+    const dex = await fetch('/api/fanzzy/dex', { credentials: 'same-origin' })
+      .then((r) => r.json()).then((j) => j.dex ?? []).catch(() => []);
     return {
-      serie: p?.dataset.page ?? null,
-      n: cases.length,
-      possedees: cases.filter((c) => c.classList.contains('tbf-album-case')).length,
-      pochettes: cases.filter((c) => c.classList.contains('tbf-album-pochette')).length,
+      serie,
+      cases: cases.map((c) => ({ id: c.dataset.open,
+        forme: c.classList.contains('tbf-album-pochette') ? 'pochette'
+          : !c.classList.contains('tbf-album-case') ? 'autre'
+            : c.querySelector('.fz.fz-secret') ? 'secret'
+              : c.querySelector('.fz:not(.fz-secret)') ? 'atteint' : 'autre' })),
+      ages: dex.filter((f) => f.set === serie)
+        .map((f) => ({ id: f.id, racine: f.racine ?? f.id, stade: Number(f.stade) || 1 })),
       compte: p?.querySelector('.tbf-album-compte')?.textContent.replace(/\s+/g, '') ?? null,
       complet: Boolean(p?.querySelector('.tbf-album-tete > .tbf-tampon')),
     };
@@ -1420,10 +1485,44 @@ for (const [route, nom] of tousLesEcrans) {
     vue.rayons.every((r) => /^\d+ \/ \d+$/.test(r.compte))
     || (console.log('        il dit :', vue.rayons.map((r) => `${r.vue} « ${r.compte} »`).join(' · ')), false));
   const [eus, tous] = /^\d+\/\d+$/.test(album.compte ?? '') ? album.compte.split('/').map(Number) : [];
-  check(`elle montre chaque Fanzzy à gagner, possédé ou en silhouette (${album.serie} : ${album.n} cases, ${
-    album.compte ?? (album.complet ? 'COMPLET' : 'sans compte')})`,
-    album.n > 0 && album.possedees + album.pochettes === album.n
-      && (album.complet ? album.pochettes === 0 : album.n === tous && album.possedees === eus));
+  const nForme = (f) => album.cases.filter((c) => c.forme === f).length;
+  const ageDe = new Map(album.ages.map((a) => [a.id, a]));
+  /* Les cases, rangées par personnage. Une lignée se lit d'un seul tenant :
+     qu'on ne l'a pas, et ce n'est que des pochettes ; qu'on l'a, et ce sont
+     ses premiers âges collés, les suivants au secret, sans une pochette. Un
+     âge collé après un âge au secret, ou une pochette dans une lignée qu'on
+     a, dirait de travers ce qu'on possède. On compare les stades entre eux
+     (tous les collés avant tous les secrets) plutôt qu'à un compte : un âge
+     non publié au milieu d'une lignée fait sauter un stade, et la règle
+     tient encore. */
+  const lignees = new Map();
+  for (const c of album.cases) {
+    const a = ageDe.get(c.id);
+    if (!a) continue;
+    if (!lignees.has(a.racine)) lignees.set(a.racine, []);
+    lignees.get(a.racine).push({ stade: a.stade, forme: c.forme });
+  }
+  const eues = [...lignees.values()].filter((l) => l.some((x) => x.forme === 'atteint'));
+  const deTravers = [...lignees].filter(([, l]) => {
+    const colles = l.filter((x) => x.forme === 'atteint').map((x) => x.stade);
+    if (!colles.length) return l.some((x) => x.forme !== 'pochette');
+    const secrets = l.filter((x) => x.forme === 'secret').map((x) => x.stade);
+    return colles.length + secrets.length !== l.length
+      || Math.max(...colles) >= Math.min(Infinity, ...secrets);
+  }).map(([r]) => r);
+  check(`elle montre chaque âge à gagner : collé, au secret ou en pochette (${album.serie} : ${
+    album.cases.length} cases pour ${album.ages.length} âges ; ${nForme('atteint')} collés, ${
+    nForme('secret')} au secret, ${nForme('pochette')} en pochette)`,
+    album.cases.length > 0 && album.cases.length === album.ages.length
+      && album.ages.every((a) => album.cases.some((c) => c.id === a.id))
+      && nForme('atteint') + nForme('secret') + nForme('pochette') === album.cases.length
+      && deTravers.length === 0
+    || (deTravers.length && console.log('        lignées de travers :', deTravers.slice(0, 4).join(', ')), false));
+  check(`et son en-tête compte les personnages, pas leurs âges (${
+    album.compte ?? (album.complet ? 'COMPLET' : 'sans compte')} pour ${eues.length} eus sur ${lignees.size})`,
+    lignees.size > 0 && (album.complet
+      ? nForme('pochette') === 0 && eues.length === lignees.size
+      : tous === lignees.size && eus === eues.length));
   /* Deux chiffres pour la même question, et l'un des deux ment : la règle
      reste, et le contrat la précise (`CONTRATS.md`, § 5.1). **Les deux écrans
      affichent le même compte de gagnés** — celui des crans quand le serveur

@@ -370,13 +370,15 @@
      secrets, en écharpes : cacher la bande sur toute l'adresse y laissait,
      à partir de 560 px, des prix sans aucun solde à côté. La bourse de la
      page, c'est sa planche (`.tbf-reserve`, la brique commune aux trois
-     écrans) ; posée dans un écran à onglets (`.screen`), elle ne compte que
-     tant que cet écran est montré (`.on`) — voir `bourseEnPage`, dans
-     `monterHud`. Changer d'onglet fait donc passer le solde de la poche à
-     la barre et retour : il est à l'écran une fois, jamais deux, jamais
-     zéro. Le titre n'en bouge pas : les jetons prennent leur place à
-     droite, avant le sticker. La fiche, qui dépense, s'ouvre par-dessus à
-     une autre adresse : la bande y revient aussi. */
+     écrans), et seulement une fois remplie et montrée : avant que l'état
+     soit lu, ou s'il ne l'est jamais, elle ne dit rien. Posée dans un écran
+     à onglets (`.screen`), elle ne compte que tant que cet écran est montré
+     (`.on`) — voir `bourseEnPage`, dans `monterHud`. Changer d'onglet fait
+     donc passer le solde de la poche à la barre et retour : il est à
+     l'écran une fois, jamais deux, jamais zéro, chargement compris. Le
+     titre n'en bouge pas : les jetons prennent leur place à droite, avant
+     le sticker. La fiche, qui dépense, s'ouvre par-dessus à une autre
+     adresse : la bande y revient aussi. */
   const BOURSE_EN_PAGE = ['/boutique', '/boosters', '/fanzzy'];
 
   /* **Retenu au nom du joueur.** L'onglet survit à une déconnexion : sans
@@ -690,11 +692,25 @@
        **Et l'écran du moment** : la planche de la page (`.tbf-reserve`)
        posée dans un écran à onglets ne compte que si cet écran est montré
        (`.screen.on`, la convention du classeur). Hors de tout écran — le
-       kiosque, la boutique —, c'est la bourse de toute la page. Une page
-       de la liste sans planche garde la règle d'adresse seule. */
+       kiosque, la boutique —, c'est la bourse de toute la page.
+
+       **Et seulement une planche qui montre un solde** : un jeton dessus
+       (`.tbf-monnaie`), et rien qui la cache (`hidden`). Les trois pages la
+       posent avant de savoir ce qu'elle dira — vide au vestiaire
+       (`#bourse:empty`, fanzzy.html) et à la boutique, cachée au kiosque —
+       et ne la remplissent qu'une fois l'état lu. Si l'état ne vient pas
+       (un catalogue refusé, un serveur qui ne répond pas), elle reste
+       ainsi : compter sa seule présence cachait la bande à côté d'une
+       planche vide, et le joueur ne voyait ses soldes nulle part. Pendant
+       le chargement, la bande tient donc la place, puis se range au moment
+       où la planche se remplit (voir `brancher`) : jamais les deux à la
+       fois. Une page de la liste sans planche n'a pas de bourse à
+       l'écran : la bande y reste. */
     const bourseEnPage = () => {
       if (!BOURSE_EN_PAGE.includes(location.pathname.replace(/\/$/, '') || '/')) return false;
-      const ecran = document.querySelector('.tbf-reserve')?.closest('.screen');
+      const planche = document.querySelector('.tbf-reserve');
+      if (!planche?.querySelector('.tbf-monnaie') || planche.closest('[hidden]')) return false;
+      const ecran = planche.closest('.screen');
       return !ecran || ecran.classList.contains('on');
     };
     let minuterie = 0;
@@ -773,13 +789,23 @@
       addEventListener('popstate', suivreAdresse);
       document.addEventListener('click', suivreAdresse);
       document.addEventListener('keydown', suivreAdresse);
-      /* L'écran qui porte la planche de la page, s'il y en a un : son `.on`
-         change sans que l'adresse bouge — un onglet touché, l'anneau du
-         classeur dans la poche, ou la page elle-même. On le suit à la
-         source plutôt que de deviner quel toucher l'a changé. */
-      const ecranDeLaPlanche = document.querySelector('.tbf-reserve')?.closest('.screen');
-      if (ecranDeLaPlanche) {
-        new MutationObserver(cacher).observe(ecranDeLaPlanche, { attributes: true, attributeFilter: ['class'] });
+      /* La planche de la page, et l'écran qui la porte s'il y en a un :
+         l'une se remplit ou se montre quand l'état arrive (`bourseEnPage`),
+         l'autre change de `.on` sans que l'adresse bouge — un onglet
+         touché, l'anneau du classeur dans la poche, ou la page elle-même.
+         On les suit à la source plutôt que de deviner quel geste ou quelle
+         réponse les a changés. De la planche, seuls ses enfants directs (un
+         jeton posé ou retiré) et son `hidden` : ce qui bouge dans un jeton —
+         le chiffre qui compte, l'anneau de la recharge, chaque seconde — ne
+         change pas qu'elle montre un solde. Un seul observateur pour les
+         deux : une mutation de l'un et de l'autre dans la même tâche ne
+         rejoue `cacher` qu'une fois. */
+      const planche = document.querySelector('.tbf-reserve');
+      if (planche) {
+        const suivre = new MutationObserver(cacher);
+        suivre.observe(planche, { childList: true, attributes: true, attributeFilter: ['hidden'] });
+        const ecran = planche.closest('.screen');
+        if (ecran) suivre.observe(ecran, { attributes: true, attributeFilter: ['class'] });
       }
       /* L'onglet revient : la minuterie d'arrière-plan a pu être ralentie,
          l'anneau se recale tout de suite (et relit si le booster est arrivé
