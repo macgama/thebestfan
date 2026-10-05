@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Le Fanzzy vivant** (branche `claude/project-thread-iatg2m`, 5 octobre 2026,
+point 4 du lot 7). Il se dépose avec le lot 7 juste en dessous, ou seul.
+
+- `public/index.html` : à l'arrivée sur l'accueil, le Fanzzy raconte le
+  dernier match du club suivi le temps du ticket de retour (la joie et un
+  saut après une victoire, le dépit sans saut après une défaite), fête un
+  retour après 48 heures d'absence, et répond quand on insiste : trois
+  touchers d'affilée, la joie ; six, la colère, et il ne saute plus pendant
+  1,8 seconde. Contrôlé par `npm run accueil:ui` (17 contrôles neufs).
+
+**Aucun schéma ni réglage**, et rien de neuf demandé au serveur : la page lit
+le retour (`/api/quotidien?retour=1`) que le serveur en ligne sert déjà.
+Déposée seule, elle part sans redémarrage (`page()` relit `index.html` à
+chaque demande).
+
+---
+
 **Le foulard, la corde tressée, et le monde qu'on voit enfin** (branche
 `claude/project-thread-iatg2m`, PR #3, 5 octobre 2026). Elle part de la
 branche du relevé des buts, juste en dessous, et se dépose avec elle.
