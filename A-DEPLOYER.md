@@ -1,5 +1,29 @@
 # À déposer sur Infomaniak
 
+**Le relevé des buts et le voile du Virage** (branche
+`claude/project-thread-jyhm3m`, 5 octobre 2026). Le lot 6 est en ligne depuis
+le 5 octobre 2026 (schéma `sql/arenes.sql` appliqué, serveur redémarré) : ce
+qui suit sous « Archive » le décrit et ne se rejoue pas.
+
+- `src/server/football/poller.js` : tant que la liste des événements d'un
+  match compte moins de buts que le tableau, chaque tour du direct redemande
+  ses événements, au plus `RELANCES_MAX` (9) tours. Le but que l'API publie
+  après le score part au tour qui le trouve, au lieu d'attendre le changement
+  de score suivant (club suivi, salle vide) ou la minute (salle occupée).
+  Coût : au plus neuf appels d'événements de plus par but, seulement quand
+  la liste est en retard. Contrôlé par `npm run releve:test`.
+- `public/virage.html` : la photo du tunnel (`img/ecran/tunnel-portrait` et
+  `tunnel-paysage`, déjà en ligne pour l'accueil) derrière le voile de choix,
+  à la place de la photo de tribune.
+
+**Aucun schéma.** Un redémarrage, **hors d'un match en direct** où des joueurs
+sont au Virage (les salles vivent en mémoire), puis relever `/healthz`.
+
+---
+
+# Archive : le lot 6
+
+
 **Le lot 6 de la refonte, « les arènes ».** Le Grand Virage et le duel de tribunes
 (un HUD, une corde, une main, un pavé et un rituel de sortie communs), le **bilan de
 tribune** du Virage et celui du duel, le **verdict servi** et son tampon, le **son
