@@ -168,6 +168,9 @@ function miTemps(statut) {
 export const RULES = {
   get goalAt() { return reglage('virage.but_a'); },
   get decayPerSec() { return reglage('virage.decroissance'); },
+  /* La retombée quand la tribune vers laquelle penche la corde n'a personne
+     qui chante. Voir `tick`. */
+  get decayVidePerSec() { return reglage('virage.decroissance_vide'); },
   get breathMax() { return reglage('virage.souffle_max'); },
   get breathPerSec() { return reglage('virage.souffle_par_sec'); },
   surgeAfterRealGoalMs: 60_000,
@@ -305,6 +308,12 @@ export class VirageRoom {
        libération lit ceci : le dernier instant où quelqu'un était là. */
     this.occupeeA = Date.now();
     this.dirty = false;
+    /* La corde telle que la salle l'a diffusée pour la dernière fois, et
+       quand : sa retombée part aussi, au plus deux fois par seconde. Et les
+       camps qui ont poussé depuis : voir `tick`. */
+    this.cordeDiffusee = 0;
+    this.diffuseeA = 0;
+    this.poussees = [false, false];
 
     /* Le fil, et le vrai match derrière lui.
        `scoreReel` et `statut` ne se déduisent pas du fil : une salle ouverte à
@@ -794,6 +803,7 @@ export class VirageRoom {
     const perCapita = amount / Math.max(1, n[m.side]);
     const signed = (backfire ? -1 : 1) * (m.side === 0 ? -perCapita : perCapita);
     this.rope = clamp(this.rope + signed, -RULES.goalAt, RULES.goalAt);
+    this.poussees[m.side] = true;
     // `ferveurBonus` : ce qui compte au classement. Séparé de la corde
     // exprès — un KOP peut vouloir peser sur le match sans peser sur le
     // classement, et l’inverse.
@@ -1022,6 +1032,7 @@ export class VirageRoom {
     const perCapita = amount / n;
     const signed = m.side === 0 ? -perCapita : perCapita;
     this.rope = clamp(this.rope + signed, -RULES.goalAt, RULES.goalAt);
+    this.poussees[m.side] = true;
     /* Le même plancher qu'au chant : une carte n'échappe à aucune règle,
        c'est ce que dit le paragraphe ci-dessus, et celle-ci en est une. */
     this.crediter(m, amount / this.partFerveur(m), mods);
@@ -1610,10 +1621,24 @@ export class VirageRoom {
 
     /* L’Ancre suspend la décroissance, pour toute la salle. La corde est
        commune aux deux tribunes : un gel qui ne vaudrait que d’un côté
-       n’aurait aucun sens physique. Même règle qu’au duel. */
-    const back = now < this.geleeJusqua ? 0 : RULES.decayPerSec * dt;
-    if (this.rope > 0) this.rope = Math.max(0, this.rope - back);
-    else if (this.rope < 0) this.rope = Math.min(0, this.rope + back);
+       n’aurait aucun sens physique. Même règle qu’au duel.
+
+       **Personne en face, la corde retombe plus vite** (5 octobre 2026, à
+       la demande de Gaël). Seul dans un virage, un supporter n'avait contre
+       lui que la retombée ordinaire, et enchaînait les buts de tribune
+       contre une tribune vide. Le camp qui mène tire contre celui d'en face :
+       quand celui-ci n'a personne qui chante (`crowd`, la foule même que la
+       page écrit « PERSONNE EN FACE »), la corde retombe de
+       `virage.decroissance_vide`. Un seul chant en face, et elle retrouve la
+       retombée ordinaire. La récolte n'y est pour rien : `partFerveur` règle
+       déjà ce qu'un supporter seul gagne. */
+    let n = null;
+    if (this.rope !== 0 && now >= this.geleeJusqua) {
+      n = this.crowd();
+      const enFace = this.rope > 0 ? 0 : 1;
+      const back = (n[enFace] === 0 ? RULES.decayVidePerSec : RULES.decayPerSec) * dt;
+      this.rope = this.rope > 0 ? Math.max(0, this.rope - back) : Math.min(0, this.rope + back);
+    }
 
     for (const m of this.members.values()) this.regen(m, now);
     /* Les cartes s'entretiennent au tour d'horloge, pas au geste : une main se
@@ -1645,16 +1670,36 @@ export class VirageRoom {
        si quelque chose avait bougé, et l'expiration ne bouge rien : dans une
        salle calme, la page gardait « TOUT COMPTE DOUBLE » après les soixante
        secondes, jusqu'au chant suivant — qui comptait alors simple. */
+    /* **La corde qui retombe part aussi.** La diffusion ne partait que si un
+       geste avait bougé quelque chose : entre deux chants, la page gardait la
+       corde où le dernier l'avait laissée, puis la voyait sauter au suivant —
+       en arrière, si l'on avait fait une pause. Et la retombée plus rapide
+       face à une tribune vide ne se serait pas vue du tout. Elle part donc
+       quand le nombre de la corde change, au plus deux fois par seconde :
+       le rythme du duel, pour la même raison (`HISTORIQUE.md`, « La corde
+       était figée à l'écran »). */
+    if (Math.round(this.rope) !== this.cordeDiffusee && now - this.diffuseeA >= 500) {
+      this.dirty = true;
+    }
+
     const surge = now < this.surgeUntil;
     if (!this.dirty && surge === this.surgeDiffusee) return;
     this.dirty = false;
     this.surgeDiffusee = surge;
-    const n = this.crowd();
+    this.cordeDiffusee = Math.round(this.rope);
+    this.diffuseeA = now;
+    /* `pousse` : les camps qui ont poussé depuis la diffusion précédente.
+       La page faisait sauter la foule d'un camp d'après le sens de la corde ;
+       maintenant que la retombée part, elle aurait fait pousser une tribune
+       vide. Elle lit ce signe-ci. */
+    const pousse = this.poussees;
+    this.poussees = [false, false];
     this.push('virage:tick', {
       rope: Math.round(this.rope),
       goals: this.goals,
-      crowd: n,
+      crowd: n ?? this.crowd(),
       surge,
+      pousse,
     });
   }
 

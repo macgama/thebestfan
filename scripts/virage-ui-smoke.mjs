@@ -222,6 +222,55 @@ if (process.env.SHOT) {
     || (console.log(`        elle dit « ${suit.avant} » avant comme après`), false));
 }
 
+/* ------------------------------------------ personne en face (§ 16.7)
+
+   La retombée de la corde part depuis le 5 octobre 2026. Lue au sens de la
+   corde, elle aurait fait sauter la tribune d'en face à chaque recul, vide
+   comprise : la foule saute sur `pousse`, le signe du serveur. Et la tribune
+   vide se dit en toutes lettres, au lieu d'un « 0 ». */
+{
+  const vu = await page.evaluate(() => {
+    const garde = { rope: S.rope, crowd: S.crowd, goals: S.goals, surge: S.surge };
+    const tick = (t) => { for (const f of socket.listeners('virage:tick')) f(t); };
+    const mine = S.you.side;
+    const camps = (nous, eux) => (mine === 0 ? [nous, eux] : [eux, nous]);
+    const vers = (x) => (mine === 0 ? -x : x);          // positif : vers chez eux
+    const foe = document.getElementById('crowdFoe');
+    const me = document.getElementById('crowdMe');
+    const compte = document.getElementById('compteEux');
+    const calmer = () => { foe.classList.remove('pousse'); me.classList.remove('pousse'); };
+    const t = { goals: S.goals, surge: false };
+    P.compteJusqua = 0;                                  // le compte d'entrée est fini
+    calmer();
+    tick({ ...t, rope: vers(120), crowd: camps(1, 0), pousse: camps(true, false) });
+    const seul = { compte: compte.textContent.trim(), marque: compte.hasAttribute('data-personne'),
+                   moi: me.classList.contains('pousse') };
+    calmer();
+    tick({ ...t, rope: vers(117), crowd: camps(1, 0), pousse: camps(false, false) });
+    const recul = { eux: foe.classList.contains('pousse'), moi: me.classList.contains('pousse') };
+    calmer();
+    tick({ ...t, rope: vers(90), crowd: camps(1, 2), pousse: camps(false, true) });
+    const face = { eux: foe.classList.contains('pousse'), compte: compte.textContent.trim(),
+                   marque: compte.hasAttribute('data-personne') };
+    /* Un serveur d'avant ne sert pas `pousse` : la page lit le sens de la
+       corde, sans jamais faire sauter une tribune vide. */
+    calmer();
+    tick({ ...t, rope: vers(60), crowd: camps(1, 0) });
+    const avant = foe.classList.contains('pousse');
+    calmer();
+    Object.assign(S, garde);
+    render();
+    return { seul, recul, face, avant };
+  });
+  check(`personne en face, la tribune le dit (« ${vu.seul.compte} »)`,
+    vu.seul.compte === 'PERSONNE EN FACE' && vu.seul.marque);
+  check('ma foule saute quand mon camp a poussé', vu.seul.moi);
+  check('la corde qui retombe ne fait sauter personne', !vu.recul.eux && !vu.recul.moi);
+  check(`un camp qui pousse en face fait sauter sa foule (« ${vu.face.compte} »)`,
+    vu.face.eux && vu.face.compte === '2 EN FACE' && !vu.face.marque);
+  check('sans le signe, d’un serveur d’avant, une tribune vide ne saute pas', !vu.avant);
+}
+
 /* ------------------------------------ ce que le joueur voit par-dessus
 
    Trois défauts trouvés à l'œil sur une capture, qu'aucune mesure existante
