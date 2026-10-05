@@ -51,7 +51,12 @@ let estAdmin = false;
 const app = express();
 app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo', role: 'joueur' } }));
 app.get('/api/admin/suis-je', (_q, s) => s.json({ admin: estAdmin }));
-app.get('/api/virage/live', (_q, s) => s.json({ matchs: [] }));
+/* Les tribunes et les files que menu.js compte sur ses tuiles : vides, sauf
+   au bloc « le monde, sur les autres pages », qui les remplit. */
+let enDirect = [];
+let enAttente = [];
+app.get('/api/virage/live', (_q, s) => s.json({ matchs: enDirect }));
+app.get('/api/nvn/attentes', (_q, s) => s.json({ attentes: enAttente, alerte: null }));
 app.get('/api/public/reglages', (_q, s) => s.json({}));
 /* La **vraie** version, et non un objet inventé : ce qu'on éprouve ici est
    que le tiroir sait l'afficher, pas qu'un banc sait répondre. Le fourre-tout
@@ -274,6 +279,56 @@ for (const [nom, m] of [['l’accueil', accueil], ['une page de contenu', carnet
   } catch { demande = '(la page a été quittée sans rien demander)'; }
   check(`la déconnexion demande confirmation depuis ${nom}`,
     /DÉCONNECTER/i.test(demande) || (console.log('    dit :', demande || '(rien)'), false));
+}
+
+/* ---------------------------------------- le monde, sur les autres pages
+
+   Depuis le 5 octobre 2026, le tiroir dit **combien** : les supporters de
+   toutes les tribunes ouvertes sur la tuile du Virage (l'état `monde`, en
+   violet), et les duels qui attendent un joueur sur celle du duel — les
+   nombres du bandeau de l'accueil. Le premier ne passe jamais au bouton du
+   menu : du monde au Virage chaque soir n'est pas une urgence. Le second,
+   si : quelqu'un attend, maintenant. */
+{
+  enDirect = [
+    { id: 41, open: true, fini: false, mien: false, crowd: [20, 11] },
+    { id: 42, open: true, fini: false, mien: false, crowd: [4, 2] },
+    // Un match fini garde sa foule une minute et demie : elle ne compte plus.
+    { id: 43, open: true, fini: true, mien: false, crowd: [9, 9] },
+  ];
+  enAttente = [
+    { fixtureId: 51, format: '3v3', camps: [2, 1] },
+    { fixtureId: 52, format: '1v1', camps: [1, 0] },
+  ];
+  const page = await nav.newPage();
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  await page.setViewport({ width: 900, height: 900 });
+  await page.goto(`${base}/carnet`, { waitUntil: 'networkidle0' });
+  const lire = () => page.evaluate(() => {
+    const t = (h) => {
+      const n = document.querySelector(`.tbf-tiroir .tbf-case[href="${h}"]`);
+      return `${n?.dataset.etat ?? ''}:${n?.dataset.pastille ?? ''}`;
+    };
+    return { virage: t('/virage'), duel: t('/duel-nvn'),
+      menu: document.querySelector('.tbf-burger')?.dataset.urgence ?? null };
+  });
+  let e = await lire();
+  for (let i = 0; i < 50 && (e.virage === ':' || e.duel === ':'); i++) {
+    await new Promise((r) => { setTimeout(r, 60); });
+    e = await lire();
+  }
+  check('sur une page de contenu, le tiroir dit le monde au Virage', e.virage === 'monde:37'
+    || (console.log('        virage :', e.virage), false));
+  check('et combien de duels attendent un joueur', e.duel === 'attend:2'
+    || (console.log('        duel :', e.duel), false));
+  check('le bouton du menu annonce le duel, et jamais le monde', e.menu === 'attend'
+    || (console.log('        menu :', e.menu), false));
+  check('sans erreur de script', erreurs.length === 0
+    || (console.log('   ', erreurs.slice(0, 4)), false));
+  enDirect = [];
+  enAttente = [];
+  await page.close();
 }
 
 /* ------------------------------------------------------------ le silence */

@@ -103,6 +103,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .compte b{font-weight:700;font-variant-numeric:tabular-nums}
 #compteEux{top:6px}
 #compteMoi{bottom:8px}
+/* « PERSONNE EN FACE » : le même compte, cerné en pointillé comme une place
+   qui attend quelqu'un (`.tbf-ages`, l'âge suivant). */
+#compteEux[data-personne]{box-shadow:none;outline:1px dashed rgba(242,238,228,.5);outline-offset:-1px}
 /* Le Fanzzy, mains sur la corde, de mon côté : à 45 % de la hauteur de
    l'arène, à gauche de la corde et au-dessus de ma foule. Sous la corde
    (z 3 < 4) : le foulard passe devant lui, et le nombre qui bouge reste
@@ -875,10 +878,15 @@ function pousser(cote) {
   const el = cote === 'moi' ? $('crowdMe') : $('crowdFoe');
   rejouer(el, 'pousse', 1300);
 }
-/** « 12 AVEC TOI » : le chiffre change, la mention reste. */
+/** « 12 AVEC TOI » : le chiffre change, la mention reste. Et quand personne
+    ne chante en face, « PERSONNE EN FACE » (5 octobre 2026) : un « 0 » se
+    lisait comme un compteur pas encore arrivé, et c'est justement là que la
+    corde résiste davantage (contrat § 16.7). */
 function compteDeTribune(el, n) {
   if (performance.now() < P.compteJusqua) return;   // la foule compte encore
-  ecrire(el.firstElementChild, n);
+  const personne = el.id === 'compteEux' && !n;
+  ecrire(el.firstElementChild, personne ? 'PERSONNE' : n);
+  poserAttr(el, 'data-personne', personne ? '' : null);
 }
 
 /* ------------------------------------------------------------ le rendu */
@@ -2582,7 +2590,13 @@ function entrer() {
     P.compteJusqua = performance.now() + COMPTE_MS + 100;
     const mine = S.you.side;
     window.FX.compter($('compteMoi').firstElementChild, 0, S.crowd?.[mine] ?? 0, { ms: COMPTE_MS });
-    window.FX.compter($('compteEux').firstElementChild, 0, S.crowd?.[mine ^ 1] ?? 0, { ms: COMPTE_MS });
+    /* Personne en face : rien à compter, la mention se pose d'emblée. */
+    const eux = S.crowd?.[mine ^ 1] ?? 0;
+    if (eux > 0) window.FX.compter($('compteEux').firstElementChild, 0, eux, { ms: COMPTE_MS });
+    else {
+      ecrire($('compteEux').firstElementChild, 'PERSONNE');
+      poserAttr($('compteEux'), 'data-personne', '');
+    }
   }
   if (fini) {
     window.TBF_SON?.rumeur?.('fin');
@@ -2679,12 +2693,23 @@ function connect() {
 
   socket.on('virage:tick', (t) => {
     if (!S) return;
-    /* La corde qui avance d'un côté, c'est ce camp qui chante : sa foule
-       pousse. Rien d'inventé, c'est le même chiffre que le foulard. */
-    const sens = S.you.side === 0 ? -1 : 1;
-    const delta = (t.rope - S.rope) * sens;
-    if (Math.abs(delta) >= 1) {
-      const cote = delta > 0 ? 'moi' : 'eux';
+    /* La foule d'un camp pousse quand ce camp a chanté : le serveur le dit
+       (`pousse`, contrat § 16.7). La page le lisait dans le sens de la
+       corde ; depuis que sa retombée part, ce sens aurait fait pousser la
+       tribune d'en face à chaque recul — vide comprise. Un serveur d'avant
+       ne dit rien : on retombe sur le sens de la corde, jamais pour une
+       tribune où personne ne chante. */
+    const mine = S.you.side;
+    let qui = [];
+    if (Array.isArray(t.pousse)) {
+      if (t.pousse[mine]) qui.push('moi');
+      if (t.pousse[mine ^ 1]) qui.push('eux');
+    } else {
+      const delta = (t.rope - S.rope) * (mine === 0 ? -1 : 1);
+      if (Math.abs(delta) >= 1) qui = [delta > 0 ? 'moi' : 'eux'];
+      qui = qui.filter((c) => (t.crowd?.[c === 'moi' ? mine : mine ^ 1] ?? 0) > 0);
+    }
+    for (const cote of qui) {
       const el = cote === 'moi' ? $('crowdMe') : $('crowdFoe');
       if (!el.classList.contains('pousse')) pousser(cote);
     }

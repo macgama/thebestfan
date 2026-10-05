@@ -622,6 +622,23 @@
   const sonPossible = () =>
     typeof (window.AudioContext ?? window.webkitAudioContext) === 'function';
 
+  /* **Combien de monde, et où** (5 octobre 2026). Deux comptes, écrits ici
+     une fois : le tiroir les met sur ses tuiles, l'accueil dans son bandeau
+     (`TBF_MENU.auVirage`, `TBF_MENU.duelsEnAttente`). Deux pages qui
+     compteraient chacune de leur côté finiraient par annoncer deux nombres
+     pour la même soirée.
+
+     `auVirage` : les supporters des tribunes ouvertes, les deux camps, tels
+     que `/api/virage/live` les sert (`crowd` : ceux qui ont chanté depuis
+     une minute et demie — la foule même que la tribune affiche en entrant).
+     `duelsEnAttente` : les files de `/api/nvn/attentes` où quelqu'un
+     attend, une par match et par format, c'est-à-dire un duel chacune. */
+  const auVirage = (matchs) => (Array.isArray(matchs) ? matchs : [])
+    .filter((m) => m?.open && !m.fini)
+    .reduce((n, m) => n + (Number(m.crowd?.[0]) || 0) + (Number(m.crowd?.[1]) || 0), 0);
+  const duelsEnAttente = (attentes) => (Array.isArray(attentes) ? attentes : [])
+    .filter((a) => a?.camps?.some((n) => Number(n) > 0)).length;
+
   /**
    * Monte le tiroir et le branche sur un bouton déjà dessiné par la page.
    *
@@ -634,7 +651,8 @@
    *   poser: (href:string, etat:?string, pastille?:(string|number)) => void}}
    *   `poser` : l'état d'une destination — une tuile, ou la bâche des
    *   MISSIONS dans la tête (`/aide`) — (`direct`, `pret`, `attend`,
-   *   `nouveau`, ou rien pour l'éteindre), et le bouton prend le plus urgent.
+   *   `nouveau`, `monde`, ou rien pour l'éteindre), et le bouton prend le
+   *   plus urgent (`monde`, du monde au Virage, n'en est jamais un).
    */
   function monter(bouton, { qui = null } = {}) {
     if (!document.getElementById('tbf-menu-css')) {
@@ -1401,18 +1419,34 @@
        seconde fois sur ces deux pages, puisque toutes deux l'appellent déjà
        pour leur propre compte. Un état redondant n'est pas neutre : il coûte
        un aller-retour, et il apprend à ne plus regarder les stickers. */
+    /* **Et le monde qui chante, ailleurs** (5 octobre 2026, à la demande de
+       Gaël : rien ne disait qu'on jouait au Virage quand ce n'était pas le
+       match d'un de ses clubs). La même réponse porte la foule de chaque
+       tribune ouverte (`crowd`) : la tuile en dit le total, en violet — ce
+       sont des gens —, dans l'état `monde`, qui **ne passe pas au bouton du
+       menu** (voir `URGENCES`). Un sticker allumé chaque soir sur le bouton
+       a déjà appris à ne plus le regarder ; dans le tiroir, on le lit quand
+       on cherche où aller. Le direct d'un club suivi passe devant. Une
+       valeur retenue d'avant (un booléen) se lit comme avant. */
     if (!['/', '/virage'].includes(chemin)) {
-      void pastille('tbf-etat-virage', '/api/virage/live',
-        (d) => Boolean(d?.matchs?.some((m) => m.open && m.mien))).then((direct) => {
+      void pastille('tbf-etat-virage', '/api/virage/live', (d) => ({
+        direct: Boolean(d?.matchs?.some((m) => m.open && m.mien)),
+        monde: auVirage(d?.matchs),
+      })).then((v) => {
+        const direct = v === true || v?.direct === true;
         if (direct) poser('/virage', 'direct');
+        else if (v?.monde > 0) poser('/virage', 'monde', v.monde);
       });
     }
 
     /* Et quand quelqu'un attend un duel. Une file ne vit que deux minutes, le
        temps qu'un joueur est devant son écran : quand elle existe, c'est que
        quelqu'un attend **maintenant**, et le dire est la seule chance qu'il
-       trouve du monde. Le sticker dit combien — `presents`, les deux camps de
-       la file que le serveur juge la plus pertinente pour ce joueur.
+       trouve du monde. Le sticker dit combien **de duels** attendent un
+       joueur (5 octobre 2026) : toutes les files où quelqu'un attend, et non
+       plus les seuls présents de la plus pertinente — c'est le nombre que
+       l'accueil annonce (« 3 duels attendent un joueur »), et deux nombres
+       différents sous le même mot ne se comprendraient pas.
 
        Même retenue qu'au-dessus, et pour les deux mêmes raisons : l'accueil
        nomme déjà le club qui manque sur son bouton d'entrée — « il manque 2
@@ -1420,7 +1454,7 @@
        l'écran du duel, on y est. */
     if (!['/', '/duel-nvn'].includes(chemin)) {
       void pastille('tbf-etat-duel', '/api/nvn/attentes', (d) => {
-        const n = (d?.alerte?.camps?.[0] ?? 0) + (d?.alerte?.camps?.[1] ?? 0);
+        const n = duelsEnAttente(d?.attentes);
         return n > 0 ? n : null;
       }).then((n) => {
         if (n) poser('/duel-nvn', 'attend', n);
@@ -1471,5 +1505,6 @@
      et ne fait rien tant qu'aucun ne l'est. Voir `poser`, dans `monter`. */
   const poser = (href, etat, pastilleTexte) => monte?.poser(href, etat, pastilleTexte);
 
-  window.TBF_MENU = { chemin, TITRES, ICONES, MENU, item, monter, poser, suisJeAdmin };
+  window.TBF_MENU = { chemin, TITRES, ICONES, MENU, item, monter, poser, suisJeAdmin,
+    auVirage, duelsEnAttente };
 })();

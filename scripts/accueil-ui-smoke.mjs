@@ -228,13 +228,19 @@ app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
 // de la réponse — la carte du bas, le bouton d'entrée, et la pose du
 // personnage. Un talon rend le score pilotable, donc le but rejouable.
 let direct = null;
-app.get('/api/virage/live', (_q, s) => s.json({ matchs: direct ? [direct] : [] }));
+/* Les autres matchs en direct, d'aucun club suivi : le bandeau du monde en
+   compte la foule. */
+let ailleurs = [];
+app.get('/api/virage/live', (_q, s) => s.json({ matchs: [...(direct ? [direct] : []), ...ailleurs] }));
 
 /* Ce qui attend un duel. Une file ne vit que deux minutes : c'est ce qui en
    fait un bon signal, et c'est ce que l'accueil doit dire — mais seulement
    quand elle existe. */
 let attente = null;
-app.get('/api/nvn/attentes', (_q, s) => s.json({ attentes: attente ? [attente] : [],
+/* Et les autres files, celles que l'alerte ne retient pas : le bandeau du
+   monde les compte avec elle. */
+let autres = [];
+app.get('/api/nvn/attentes', (_q, s) => s.json({ attentes: [...(attente ? [attente] : []), ...autres],
                                                  alerte: attente }));
 
 /* Le relevé d'événements, tel que la base le porte. L'accueil y lit le nom du
@@ -2186,6 +2192,132 @@ if (process.env.CAPTURE) {
       || (console.log('        il mène à :', href), false));
   }
   attente = null;
+}
+
+/* ================================= le monde qui joue, ailleurs
+
+   « 37 supporters dans les virages · 3 duels attendent un joueur » (5
+   octobre 2026, à la demande de Gaël : rien ne disait, sur l'accueil, qu'on
+   jouait au Virage quand ce n'était pas le match d'un de ses clubs, ni qu'un
+   duel attendait ailleurs que dans la file du bouton). Une bâche au pied du
+   personnage, qui mène là où il y a le plus de monde.
+
+   Elle dit les deux nombres, ceux-là mêmes que le tiroir porte sur ses
+   tuiles ; elle mène à la tribune la plus pleine, ou à la file quand celle-ci
+   est plus remplie ; elle tient entre les rails sans rien prendre au
+   personnage ; et elle se tait quand il n'y a personne, quand le seul duel
+   est déjà sur le bouton, et quand un club du joueur joue. */
+{
+  const match = (id, crowd) => ({
+    id, open: true, fini: false, mien: false, elapsed: 30, status_short: '1H',
+    home_id: 700 + id, away_id: 800 + id, home_name: 'Lyon', away_name: 'Lens',
+    home_goals: 0, away_goals: 0, crowd,
+  });
+  const file = (fixtureId, format, camps) => ({
+    fixtureId, format, attendus: Number(format[0]), camps, mode: 'classe',
+    clubs: [{ id: 21, name: 'Metz' }, { id: 22, name: 'Reims' }],
+  });
+  const lireMonde = (page) => page.evaluate(() => {
+    const b = document.getElementById('monde');
+    const r = b.getBoundingClientRect();
+    const [g, d] = [...document.querySelectorAll('.centre > .rail')]
+      .map((n) => n.getBoundingClientRect());
+    const qui = document.getElementById('qui').getBoundingClientRect();
+    const bas = document.querySelector('.bas').getBoundingClientRect();
+    return {
+      vu: !b.hidden && r.width > 0 && r.height > 0,
+      lignes: [...b.querySelectorAll('span')]
+        .map((s) => s.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean).join(' | '),
+      href: b.getAttribute('href'),
+      // Sa hauteur de mise en page : la cible, sans l'entrée qui la penche.
+      haut: b.offsetHeight,
+      colle: b.classList.contains('tbf-colle'),
+      // Entre les deux rails, au-dessus du nom (quand il est là) et de la bande du bas.
+      place: r.left >= g.right - 1 && r.right <= d.left + 1
+        && (qui.height === 0 || r.bottom <= qui.top + 1) && r.bottom <= bas.top + 1,
+      // La taille de mise en page, que la respiration ne fait pas varier.
+      pile: document.getElementById('pile').offsetHeight,
+      tiroir: Object.fromEntries(['/virage', '/duel-nvn'].map((h) => {
+        const n = document.querySelector(`.tbf-tiroir .tbf-case[href="${h}"]`);
+        return [h, `${n?.dataset.etat ?? ''}:${n?.dataset.pastille ?? ''}`];
+      })),
+      rail: document.querySelector('.rail .tbf-case[href="/virage"]')?.dataset.etat ?? null,
+      menu: document.getElementById('burger')?.dataset.urgence ?? null,
+    };
+  });
+
+  direct = null; attente = null; ailleurs = []; autres = [];
+  const page = await ouvrir();
+  await new Promise((r) => setTimeout(r, 700));
+  let m = await lireMonde(page);
+  check('personne nulle part : pas de bandeau', !m.vu
+    || (console.log('        il dit :', m.lignes), false));
+  const pileSans = m.pile;
+
+  ailleurs = [match(41, [20, 11]), match(42, [4, 2])];
+  attente = { ...file(51, '3v3', [2, 1]), campQuiManque: 1, manque: 2 };
+  autres = [file(52, '1v1', [1, 0]), file(53, '2v2', [0, 1])];
+  await page.evaluate(() => TBF.veiller());
+  /* Mesurée une fois collée : pendant son entrée (`tbf-colle`), la bâche est
+     agrandie et penchée, et son rectangle déborde de ce qu'elle occupe. */
+  await jusqua(async () => {
+    const x = await lireMonde(page);
+    return /duels/.test(x.lignes) && !x.colle;
+  }, 3000);
+  m = await lireMonde(page);
+  check('du monde au Virage et trois duels : le bandeau dit les deux',
+    m.vu && m.lignes === '37 supporters dans les virages | 3 duels attendent un joueur ›'
+    || (console.log('        il dit :', JSON.stringify(m.lignes)), false));
+  check('et il mène à la tribune la plus pleine', m.href === '/virage?match=41'
+    || (console.log('        il mène à :', m.href), false));
+  check('entre les rails, au-dessus du nom, en une cible de 44 px au moins',
+    m.place && m.haut >= 44
+    || (console.log('        bandeau :', JSON.stringify(m)), false));
+  check('sans rien prendre au personnage', m.pile === pileSans
+    || (console.log('        personnage :', pileSans, '→', m.pile), false));
+  /* Les mêmes nombres dans le tiroir — la bâche et la tuile ne peuvent pas
+     annoncer deux soirées différentes —, et rien sur le rail ni sur le
+     bouton du menu : du monde au Virage n'est pas une urgence. */
+  check('le tiroir dit les mêmes nombres, et le menu n’en fait pas une urgence',
+    m.tiroir['/virage'] === 'monde:37' && m.tiroir['/duel-nvn'] === 'attend:3'
+      && m.rail === null && m.menu !== 'monde'
+    || (console.log('        tiroir :', JSON.stringify(m.tiroir), '· rail :', m.rail,
+      '· menu :', m.menu), false));
+
+  /* La file plus remplie que la tribune : elle passe devant, à la place
+     qui y manque. */
+  ailleurs = [match(41, [1, 1])];
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => /^\/duel-nvn/.test((await lireMonde(page)).href ?? ''), 3000);
+  m = await lireMonde(page);
+  const u = new URL(m.href ?? '/', 'http://x');
+  check('une file plus remplie que la tribune : il mène à sa place',
+    u.pathname === '/duel-nvn' && u.searchParams.get('match') === '51'
+      && u.searchParams.get('format') === '3v3' && u.searchParams.get('camp') === '1'
+    || (console.log('        il mène à :', m.href), false));
+
+  /* Un seul duel, et le bouton le propose déjà : le bandeau ne le répète
+     pas, et sans personne au Virage il n'a plus rien à dire. */
+  ailleurs = []; autres = [];
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => !(await lireMonde(page)).vu, 3000);
+  m = await lireMonde(page);
+  check('un seul duel, déjà sur le bouton : le bandeau ne le répète pas', !m.vu
+    || (console.log('        il dit :', m.lignes), false));
+
+  /* Un club du joueur joue : le bouton mène déjà au Virage, et ce soir-là
+     le duel passe après. */
+  direct = { ...match(43, [5, 3]), mien: true, home_id: 85, away_id: 91,
+    home_name: 'Sion', away_name: 'Bâle' };
+  ailleurs = [match(41, [20, 11])];
+  autres = [file(52, '1v1', [1, 0])];
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => (await lireMonde(page)).tiroir['/virage'] === 'direct:', 3000);
+  m = await lireMonde(page);
+  check('un club suivi joue : le bandeau se tait', !m.vu && m.tiroir['/virage'] === 'direct:'
+    || (console.log('        il dit :', m.lignes, '· tiroir :', JSON.stringify(m.tiroir)), false));
+  direct = null; attente = null; ailleurs = []; autres = [];
+  await page.close();
 }
 
 /* ======================================== ce que le hub dit sans qu'on l'ouvre

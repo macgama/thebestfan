@@ -1234,6 +1234,39 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
   }
 }
 
+/* ============================ les pièces d'arène que ui.css demande
+
+   Le foulard noué du lot 7 (`img/arene/foulard-noeud`) est demandé par la
+   feuille elle-même, en fond et en masque. S'il manque, c'est pire que le
+   grain : le masque ne découpe plus rien, le foulard du Virage et du duel
+   devient invisible, et le disque du lot 6 ne revient pas, puisque le
+   navigateur sait faire un masque. Même contrôle, donc, sur les trois
+   formats que `stuff-images.mjs` écrit pour toute pièce : la feuille ne
+   demande que le WebP, mais une pièce sans son AVIF ou son PNG est une
+   pièce déposée à la main, que personne ne saura refaire. */
+{
+  const feuille = (await readFile(path.join(DOSSIER, 'ui.css'), 'utf8'))
+    .replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const pieces = [...new Set([...feuille.matchAll(/\/img\/arene\/([\w-]+)\.webp\b/g)].map((m) => m[1]))];
+  let presents = new Set();
+  try {
+    presents = new Set(await readdir(path.join(DOSSIER, 'img', 'arene')));
+  } catch { /* dossier absent : toutes manquent, et le contrôle le dira */ }
+  const manquent = pieces.flatMap((p) => ['avif', 'webp', 'png']
+    .filter((x) => !presents.has(`${p}.${x}`)).map((x) => `${p}.${x}`));
+  /* Zéro pièce trouvée est une panne du motif : le foulard est dans la
+     feuille depuis le lot 7. */
+  if (!pieces.length) {
+    ko('ui.css', 'aucune adresse /img/arene/….webp hors commentaires : le motif ne '
+      + 'reconnaît plus le foulard, ou il a quitté la feuille sans que ce contrôle le sache');
+  } else if (manquent.length) {
+    ko('ui.css', `pièce(s) d’arène demandée(s) et absente(s) de public/img/arene : ${manquent.join(', ')}`
+      + ' — le foulard devient invisible, sans un message. `npm run stuff` les refait depuis art/arene.');
+  } else {
+    ok('l’arène', `${pieces.length} pièce(s) demandée(s) par ui.css, chacune en AVIF, WebP et PNG`);
+  }
+}
+
 /* ====================================== les garde-fous du socle FAIT MAIN
 
    Le lot 0 de la refonte rend les écrans lisibles en plein jour et
