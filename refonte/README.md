@@ -16,11 +16,16 @@ temporaire de la session ; ce qui doit durer est ici.*
 - **En ligne** : les lots 0 à 6 (le lot 6, les arènes, depuis le 5 octobre
   2026 : `sql/arenes.sql` appliqué et serveur redémarré par Gaël), le chantier
   serveur (vagues 1 et 2), le son de tribune et les correctifs du Virage.
-- **Prêt, pas encore en ligne** (branche `claude/project-thread-jyhm3m`) : le
-  relevé qui redemande les événements tant que sa liste compte moins de buts
-  que le tableau (les vieux buts, à la cause), et la photo du tunnel derrière
-  le voile du Virage. Sans schéma ; un redémarrage hors d'un match.
-- **À venir** : le reste du lot 7 (`lots/BRIEF-LOT7.md`), puis le Fanzzy vivant.
+- **Dans `main`, pas encore en ligne** (fusionné le 5 octobre 2026, PR #2 et
+  #3) : le relevé qui redemande les événements tant que sa liste compte moins
+  de buts que le tableau (les vieux buts, à la cause), la photo du tunnel
+  derrière le voile du Virage, les points 1 à 3 du lot 7 (le foulard noué, la
+  corde tressée, les six silhouettes), la corde qui résiste davantage contre
+  une tribune vide (« PERSONNE EN FACE »), et le monde qui joue enfin visible
+  sur l'accueil et dans le tiroir. Sans schéma ; un redémarrage hors d'un
+  match (`A-DEPLOYER.md`).
+- **À venir** : le Fanzzy vivant (point 4 du lot 7), puis les sons, au choix
+  de Gaël.
 
 ## Où sont les choses
 
@@ -40,19 +45,23 @@ temporaire de la session ; ce qui doit durer est ici.*
 
 ## Le lot 7, et ce qui reste ouvert
 
-1. **Brancher les images déjà générées** (sources dans `art/arene/_src/`) : le
-   foulard noué sur la corde (détouré du fond vert), la corde et les six
-   silhouettes au pochoir redessinées en SVG pour remplacer les dessins
-   provisoires. La photo du tunnel au voile du Virage est faite (branche
-   ci-dessus). Les mêmes images sont aussi dans l'historique Artlist de Gaël
-   (4 octobre, 830 crédits).
-2. **Le Fanzzy vivant** : animer dans le jeu les images existantes (respiration,
-   saut au but, effort sur la corde), **pas** de vidéo générée — l'essai du
-   3 octobre a montré que les modèles vidéo ne gardent pas le personnage. Un
-   essai sur RP1 d'abord, montré à Gaël.
+1. **Les images déjà générées** : fait, dans `main`. Le foulard noué
+   (`public/img/arene/foulard-noeud`, famille `arene` de
+   `scripts/stuff-images.mjs`), la corde tressée et les six silhouettes au
+   pochoir en SVG dans `public/ui.css`, le tunnel au voile du Virage. Les
+   sources restent dans `art/arene/_src/`, hors de git, et dans l'historique
+   Artlist de Gaël (4 octobre, 830 crédits).
+2. **Le Fanzzy vivant** : animer dans le jeu les images existantes, **pas** de
+   vidéo générée — l'essai du 3 octobre a montré que les modèles vidéo ne
+   gardent pas le personnage. La respiration et le saut existent déjà ; ce qui
+   manque, c'est un caractère. Proposé à Gaël le 5 octobre, avec les cinq
+   expressions déjà dessinées : il raconte le dernier match de son club, il
+   répond autrement quand on insiste à le toucher, il fête le retour du
+   joueur. Le clignement des yeux attend une image « yeux fermés » par
+   Fanzzy, que Gaël produit. Un essai sur RP1 d'abord, montré à Gaël.
 3. **Les sons Artlist** (la rumeur, le but, les tambours) : Gaël doit les
    écouter et dire lesquels on garde (`art/son/_src/artlist/A-ECOUTER.md`).
-4. **Les vieux buts** : fait, à mettre en ligne. Le relevé redemande les
+4. **Les vieux buts** : fait, dans `main`. Le relevé redemande les
    événements à chaque tour tant que sa liste compte moins de buts que le
    tableau (au plus neuf tours) ; la priorité au GOAL et la lecture du retour
    de `realGoal` par `server.js` étaient déjà au lot 6.
@@ -62,7 +71,12 @@ temporaire de la session ; ce qui doit durer est ici.*
    § 7 bis (inflation des écharpes, saison 2…).
 6. **Rouges connues** : `deck:ui` (un contrôle, depuis avant le lot 0 ; un
    correctif dort dans la copie `.claude/worktrees/funny-herschel-18c485`
-   d'une autre session) ; `accueil:ui` intermittente.
+   d'une autre session) ; `accueil:ui` intermittente. **Dans un conteneur
+   cloud**, sept de plus, déjà sur `main` le 5 octobre : `accueil:ui` « aucun
+   libellé de rail n'est rogné » (CLASSEMENT) ; `virage:ui` « un pays dans la
+   langue du lecteur » et les trois contrôles d'invitation ; `nvn:ui`
+   « l'arène cède avant la main et les chants » et « elle dit le Fanzzy, le
+   camp et la sorte de partie ».
 
 ## Comment on travaille
 
@@ -83,6 +97,13 @@ temporaire de la session ; ce qui doit durer est ici.*
 - **Ne rien mettre en ligne pendant un atelier** : un commit pris en cours de
   route emporte du travail que personne n'a vérifié. Après une mise en ligne,
   relever `/healthz` et les empreintes des fichiers servis.
+- **Droit dans `main`, après les suites** (demandé par Gaël le 5 octobre
+  2026) : une session travaille sur sa branche, passe toutes les suites, et
+  fusionne elle-même dans `main` quand aucune n'ajoute d'échec, sans laisser
+  de PR en attente de Gaël. `main` ne porte ainsi jamais un travail à moitié
+  fait, et Gaël peut déployer quand il veut. On lui demande encore avant un
+  schéma à appliquer ou un choix qui lui revient ; la mise en ligne reste à
+  lui, et chaque livraison s'écrit en tête d'`A-DEPLOYER.md`.
 
 ## Le ménage à faire maintenant que le lot 6 est en ligne
 
