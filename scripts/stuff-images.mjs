@@ -58,6 +58,19 @@ const RACINE = fileURLToPath(new URL('..', import.meta.url));
  */
 const GAINS = [{ id: 'echarpes', nom: 'Écharpes' }, { id: 'billets', nom: 'Billets' }];
 
+/**
+ * **Les pièces des arènes** (lot 7) : le foulard noué qui court sur la corde
+ * du Virage et du duel. Un objet sur fond vert comme les autres, servi
+ * détouré parce qu'il passe devant la corde et la foule. Dessiné neutre,
+ * crème et gris : la feuille le teint aux couleurs du camp (`ui.css`,
+ * `.tbf-foulard`). La source choisie parmi les variantes de
+ * `art/arene/_src/` se dépose en `art/arene/foulard-noeud.png`.
+ *
+ * Facultative : un poste qui n'a pas `art/arene/` range quand même
+ * l'équipement et les gains, au lieu de s'arrêter.
+ */
+const ARENE = [{ id: 'foulard-noeud', nom: 'Foulard noué' }];
+
 const FAMILLES = [
   { nom: 'stuff', pieces: STUFF,
     source: path.join(RACINE, 'art', 'stuff'),
@@ -65,6 +78,9 @@ const FAMILLES = [
   { nom: 'gains', pieces: GAINS,
     source: path.join(RACINE, 'art', 'gains'),
     cible: path.join(RACINE, 'public', 'img', 'gains') },
+  { nom: 'arene', pieces: ARENE, facultative: true,
+    source: path.join(RACINE, 'art', 'arene'),
+    cible: path.join(RACINE, 'public', 'img', 'arene') },
 ];
 
 /**
@@ -121,6 +137,11 @@ export const INVITES = {
      Sans consigne, le générateur peint des écharpes rouge et or — jolies, et
      étrangères à tout le reste de l'écran. Une monnaie se reconnaît d'un coup
      d'œil ou ne se reconnaît pas. */
+  /* Neutre, pour que la teinte du camp le prenne : sans « no stripes », le
+     générateur tricote des rayures que la feuille ne pourrait plus teindre. */
+  'foulard-noeud': 'a single knitted football supporter scarf tied into one tight round '
+    + 'knot, two short fringed ends hanging down from the knot, chunky wool, plain undyed '
+    + 'cream and light grey only, no stripes, no pattern, slightly worn',
   echarpes: 'a small neat stack of several folded knitted football supporter scarves '
     + 'piled on top of one another, chunky wool with bold horizontal stripes in deep '
     + 'black, off-white and warm orange only, fringed ends visible at the sides, '
@@ -311,6 +332,7 @@ const orphelins = [];
 
 for (const FAMILLE of FAMILLES) {
   const { source: SOURCE, cible: CIBLE } = FAMILLE;
+  if (FAMILLE.facultative && !existsSync(SOURCE)) continue;
   await mkdir(CIBLE, { recursive: true });
 
   if (!existsSync(SOURCE)) {
