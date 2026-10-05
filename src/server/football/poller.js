@@ -32,6 +32,13 @@ export const EVENTS_MIN_MS = 60_000;
  */
 export const LIGNE_FRAICHE_MIN = 5;
 
+/**
+ * Combien de tours du direct, au plus, redemandent les événements d'un match
+ * dont la liste compte moins de buts que le tableau : voir `enAttente`. Neuf
+ * tours de vingt secondes, trois minutes : l'API publie le but bien avant.
+ */
+export const RELANCES_MAX = 9;
+
 /** Les buts au tableau, d'une ligne de l'API ou de la base. */
 const auTableau = (home, away) => (home ?? 0) + (away ?? 0);
 
@@ -162,6 +169,20 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
   const dejaDemandes = new Set();   // fixtureIds qu'un tour a déjà demandés
   let tourPrecedent = new Set();    // fixtureIds demandés au tour d'avant
   const oublies = new Set();        // fixtureIds revenus au direct après un trou
+  /* **Le but que le score annonce avant la liste.** L'API publie le score
+     avant l'événement : le relevé que le changement de score déclenche revient
+     souvent sans le but. Il n'était redemandé qu'au changement de score
+     suivant, ou à la minute pour une salle occupée — et le but arrivait en
+     retard : rangé, puis annoncé comme frais une ou plusieurs minutes après,
+     carte-souvenir frappée pour qui chantait à ce moment-là et non au but,
+     point compté au duel.
+
+     `enAttente` garde, par match, les tours de relance qui restent tant que
+     la liste compte moins de buts que le tableau : chaque tour du direct
+     redemande les événements, sans attendre la minute, jusqu'à ce que la
+     liste rattrape le tableau ou que `RELANCES_MAX` tours soient passés. Un
+     relevé en panne ne retire rien : le tour suivant redemande. */
+  const enAttente = new Map();      // fixtureId -> tours de relance restants
   let timers = [];
   let running = false;
 
@@ -333,7 +354,13 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
         const sortDuJeu = !enJeu && statusChanged;
         const attendu = auFil.has(f.id) && (sortDuJeu
           || (enJeu && Date.now() - (releves.get(f.id) ?? 0) >= EVENTS_MIN_MS));
-        if (scoreChanged || attendu) await pullEvents(f);
+        if (scoreChanged) enAttente.set(f.id, RELANCES_MAX);
+        const relance = !scoreChanged && (enJeu || sortDuJeu) && enAttente.has(f.id);
+        if (relance) {
+          const reste = enAttente.get(f.id) - 1;
+          if (reste > 0) enAttente.set(f.id, reste); else enAttente.delete(f.id);
+        } else if (!enJeu && !sortDuJeu) enAttente.delete(f.id);
+        if (scoreChanged || attendu || relance) await pullEvents(f);
       }
     }
     return live;
@@ -460,6 +487,8 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
     const neufs = auTableau(f.homeGoals, f.awayGoals) - socle;
 
     const buts = events.filter(estUnBut);
+    /* La liste a rattrapé le tableau : plus rien à relancer. */
+    if (buts.length >= auTableau(f.homeGoals, f.awayGoals)) enAttente.delete(f.id);
 
     // Le rang d'un but est sa place parmi tous les buts du match, dans
     // l'ordre chronologique. Il ne dépend plus de ce qui l'entoure, donc il
