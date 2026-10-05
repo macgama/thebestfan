@@ -1835,7 +1835,7 @@ html[data-calme~="animations"] .tbf-case:active{transform:none;filter:brightness
  * Une tuile du hub ou du tiroir dit, sans qu'on l'ouvre, ce qui l'attend
  * derrière : un match en direct au Virage, des boosters à ouvrir, des cartes
  * arrivées depuis la dernière visite, ou une porte qui n'est pas encore
- * ouverte au niveau du joueur. Cinq états, **un seul à la fois** par tuile,
+ * ouverte au niveau du joueur. Six états, **un seul à la fois** par tuile,
  * posés par la page dans `data-etat` :
  *
  *     <a class="tbf-case" data-ton="flare" href="/virage" data-etat="direct">
@@ -1846,6 +1846,8 @@ html[data-calme~="animations"] .tbf-case:active{transform:none;filter:brightness
  *        data-etat="nouveau" data-pastille="+12">…</a>               « +12 » craie
  *     <a class="tbf-case" data-ton="flare" href="/duel-nvn"
  *        data-etat="attend" data-pastille="2">…</a>                  « 2 » violet (le tiroir)
+ *     <a class="tbf-case" data-ton="flare" href="/virage"
+ *        data-etat="monde" data-pastille="37">…</a>                  « 37 » violet (le tiroir)
  *     <a class="tbf-case" data-ton="violet" href="/kop"
  *        data-etat="verrouille" aria-label="KOP — ouvert au niveau 3">
  *       <svg …/><span class="lib">NIV. 3</span></a>                  parpaing, croix sur l'icône
@@ -1914,7 +1916,11 @@ html[data-calme~="animations"] .tbf-case:active{transform:none;filter:brightness
 .tbf-case[data-etat=nouveau]::after{--pf:var(--craie);--pl:var(--encre);--pr:-4deg}
 /* **Attend** : quelqu'un t'attend en duel, en violet. Le tiroir seul le pose
    (sur DUEL DE TRIBUNES) ; le hub n'a pas ce cinquième état dans son budget. */
-.tbf-case[data-etat=attend]::after{--pf:var(--face-violet);--pl:var(--craie);--pr:-3deg}
+/* **Monde** : du monde chante au Virage (5 octobre 2026), le nombre en
+   violet comme celui du duel — ce sont des gens. Le tiroir seul le pose, et
+   il ne passe jamais au bouton du menu : ce n'est pas une urgence (voir
+   `URGENCES`, dans menu.js). */
+.tbf-case:is([data-etat=attend],[data-etat=monde])::after{--pf:var(--face-violet);--pl:var(--craie);--pr:-3deg}
 
 /* **Une seule respiration à la fois** (amendement 7). Le tiroir s'ouvre
    par-dessus un écran dont le budget est déjà pris — sur le hub, le sticker
