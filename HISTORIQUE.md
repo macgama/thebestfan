@@ -7609,3 +7609,79 @@ Zurich.
 - **Le Fanzzy dans l'arène du duel**, qui réagit aux buts de son camp.
 
 ---
+
+## 4 quadragies novies. Le duel vivant — les deux Fanzzy dans l'arène
+
+*5 octobre 2026, session cloud « Lot 7 : images Artlist ». Filmé pour Gaël
+avant la fusion, RP1 contre RP3 puis TR32 contre TR1 : `lot7/duel/duel-vivant.mp4`
+et `duel-vivant-captures.jpg`, dans les fichiers du projet.*
+
+### Ce qui a changé
+
+- **Les deux Fanzzy en tribune descendent dans l'arène du duel.** Le sien en
+  bas à gauche, juste devant sa ligne de but ; celui d'en face en bas à
+  droite, retourné pour lui faire face. Ils entrent en glissant quand
+  l'affiche se retire.
+- **Ils vivent le duel.** La joie et un saut pour la tribune qui marque, un
+  but de corde ou un but du vrai match ; le dépit, terni, pour celle qui
+  encaisse ; un pas vers la corde quand leur tribune pousse ; la colère quand
+  un coup d'en face tombe sur leur tribune (silence, brouillard, parcage,
+  vent de face, Renvoi compris).
+- **La case de BD se pose au-dessus de la corde** quand ils sont à l'écran :
+  centrée, elle couvrait les deux au moment même où l'un sautait et l'autre
+  s'affaissait.
+- **Le but du vrai match ne fait plus lever la page.** Trouvé en chemin et
+  fusionné à part, avant (PR #7) : le serveur dit la tribune du club buteur
+  (`side`) et compte dans `souffles` un nombre de joueurs, que la page
+  lisait comme une paire. Chaque vrai but marqué pendant un duel en ligne
+  perdait sa case « GOAL ! », sa corne et le reste de l'envoi.
+
+### Pourquoi comme ça
+
+- **Le moment, pas la famille.** La page demande `but`, `encaisse`,
+  `decision`, `pousse` : `resoudre` sert à TR1 et TR2 leurs dessins de ces
+  moments, aux 35 Fanzzy de LA REPRISE la joie, le dépit et la colère de leur
+  famille. Un Fanzzy sans expression dessinée garde son plein-pied, et c'est
+  le geste qui joue : il saute, s'affaisse, se penche et trépigne sur le même
+  dessin. Un personnage sans aucun dessin laisse sa place au supporter
+  générique, comme à l'accueil.
+- **Le manifeste des expressions d'abord**, sans quoi un Fanzzy de LA
+  REPRISE se poserait sur son dessin plat puis sauterait sur celui de ses
+  expressions, avec un autre cadrage. Deux calques par figure, comme le
+  personnage de l'accueil : l'expression neuve se charge derrière, puis les
+  opacités se croisent, jamais de cadre vide ; et la dernière demandée gagne.
+- **Celui d'en face** est le premier joueur connecté de sa tribune, au dessin
+  de base : la vue ne dit pas sa tenue. Le sien suit la Relève et le
+  changement de Fanzzy, à son âge ; il porte sa tenue quand c'est le
+  personnage du joueur.
+- **Qui l'emporte** : une poussée ne coupe pas la joie d'un but, un but coupe
+  tout. Le vrai but tient plus longtemps que celui de la corde (3,6 secondes
+  contre 2,6), comme sa case. La colère part au coup qui arrive, pas à celui
+  qui dure.
+- **Aucun geste sans fin** : la carte en tribune respire déjà, et l'écran
+  n'en tolère que trois. Au calme (`data-calme`, `prefers-reduced-motion`),
+  plus aucun mouvement ; l'expression change encore, en fondu, et le dépit
+  ternit toujours.
+- **Une arène de moins de 210 pixels les cache** (un téléphone de 320 × 568,
+  un bandeau d'annonce) : ils monteraient sur la corde. Leur taille se prend
+  en pour cent de l'arène, et non en unités de conteneur (`verif-pages`).
+
+### Contrôles
+
+`nvn:ui` : 9 contrôles de plus (les deux à leur place et chacun le sien, le
+but de corde vécu des deux côtés, la case au-dessus de la corde et des deux
+figures, le plein-pied qui garde son dessin, la poussée qui ne coupe pas la
+joie, leur poussée tournée vers la corde, la colère au silence d'en face, le
+calme sans mouvement mais terni), tous verts ; un banc les a regardés sur
+LA REPRISE, TR1 et sur huit tailles d'écran. Les 66 suites (`npm test`)
+n'ont aucune rouge nouvelle : celles qui restent rougissent à l'identique sur
+`main` dans un conteneur cloud (`refonte/README.md` § 6).
+
+### Ce qui reste
+
+- **La tenue de celui d'en face** : il faudrait que la vue du duel la dise.
+- **Les autres joueurs d'une tribune**, en 2 contre 2 et 3 contre 3 : un seul
+  Fanzzy par camp se tient dans l'arène.
+- **Le clignement**, ici aussi, quand les images « yeux fermés » existeront.
+
+---
