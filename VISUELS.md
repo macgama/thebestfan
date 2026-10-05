@@ -76,6 +76,8 @@ du navigateur.
 | Dos de carte | `art/dos/<CODE>.png` | `npm run dos` | `public/img/dos/` |
 | Décors de série | `art/fonds/<id>.png` | `npm run fonds` | `public/img/fonds/` |
 | Grain des matières | rien : il est calculé | `npm run grain` | `public/img/grain/` |
+| Sachets de série | `art/paquets/_src/pack-<nom>.png` | aucune | `public/img/pack-<nom>.*`, nommé dans `ART` (`cartes.js`) |
+| Écran d'ouverture | `art/ecran/_src/` | aucune : la recette est avec les sources | `public/img/ecran/` |
 
 Le grain fait exception, sur deux points. **Il ne se dessine pas** : aucun
 générateur ne rend une tuile qui se raccorde à elle-même, et une couture se
@@ -107,6 +109,32 @@ Une recette changée change aussi l'adresse que `ui.css` demande — un `?v=`
 ajouté, ou augmenté, sur chaque adresse de la tuile refaite (`?v=2` sur les
 quatre, à la fin du lot 1) : `/img` est servi pour un an, sans retour possible
 chez qui l'a déjà.
+
+**Les sachets et l'écran d'ouverture n'ont pas de commande** : ce sont des
+photos faites une à une, et aucun script du dépôt ne les traite. Leurs sources,
+sous `_src/`, sont ignorées par git.
+
+Un **sachet** n'est pas détouré : il se sert en AVIF, WebP et **JPEG**, sans
+PNG, à 760 × 1352 comme les sept autres sachets d'`ART`. Il n'est montré que
+si `ART`, dans `cartes.js`, le nomme sous le code exact de sa série :
+`npm run pages` monte `cartes.js` et refuse une clé qui n'est le code d'aucune
+série, ou une entrée sans ses trois fichiers. Une série sans entrée montre le repli dessiné
+par le code (`packArt`), sans rouge — cinq sur treize au 4 octobre 2026.
+
+Le **tunnel** de l'écran d'ouverture est une photo en deux compositions,
+debout (1080 × 1920) et couchée (1920 × 1080), en AVIF, WebP et PNG — un PNG
+parce que la sortie, au bout du couloir, est un trou transparent. Sa recette
+est rangée avec les sources, dans `art/ecran/_src/` : `tunnel-provenance.json`
+(le générateur, les invites, le croquis de départ, l'ordre des scripts de
+`recette/`) et les cotes du trou (`tunnel-<groupe>-geo.json`), que la feuille
+d'`index.html` recopie, plus une marge d'un pour cent de la largeur. **Ce
+dossier étant ignoré, la recette n'existe que sur le poste qui l'a faite.** Une
+photo refaite refait trois choses que rien ne contrôle : les cotes du trou dans
+la feuille ; la mesure du contraste sous le libellé et la consigne, posés à
+même le couloir (4,5:1, tenu par le bas assombri de l'image — l'audit ne voit
+pas la photo) ; et son adresse, qui change (`?v=`), puisque `/img` part avec un
+an de cache. `npm run pages` vérifie seulement que chaque adresse
+`/img/ecran/…` que demande `index.html` existe.
 
 Quatre de ces commandes acceptent `--invites` (`actions`, `stuff`, `chants`,
 `logos`) : elles écrivent alors les **invites** à donner au générateur, la

@@ -246,6 +246,16 @@
      * avec la carte toujours plantée au milieu de l'écran, par-dessus la
      * corde, pour le reste de la partie — `onfinish` n'était jamais arrivé.
      * Une minuterie, elle, court même en arrière-plan.
+     *
+     * **Et les deux animations finissent en `fill: 'forwards'`.** Sans lui,
+     * l'effet cesse à la dernière image et la carte reprend son style de base
+     * — centrée, en grand, opacité 1 — jusqu'à ce que la minuterie la retire,
+     * soixante millisecondes plus tard. La carte qui venait de s'effacer vers
+     * le nœud revenait donc d'un coup au milieu de l'écran : le joueur la
+     * voyait deux fois et croyait l'avoir jouée deux fois — dix-neuf cartes
+     * sur vingt au banc, et le duel passe par la même fonction. La minuterie
+     * reste pour l'onglet caché : elle retire alors une carte déjà
+     * transparente.
      */
     const retirer = (ms) => setTimeout(() => el.remove(), ms);
 
@@ -255,7 +265,7 @@
     if (doux) {
       el.animate([{ opacity: 0 }, { opacity: 1, offset: 0.15 },
         { opacity: 1, offset: 0.75 }, { opacity: 0 }],
-      { duration: 1400, easing: 'ease' });
+      { duration: 1400, easing: 'ease', fill: 'forwards' });
       retirer(1460);
       return;
     }
@@ -284,7 +294,7 @@
         opacity: 1, offset: 0.7 },
       { transform: `translate(calc(-50% + ${x1}px), calc(-50% + ${y1}px)) scale(.3)`,
         opacity: 0 },
-    ], { duration: 1250, easing: 'cubic-bezier(.2,.9,.25,1)' });
+    ], { duration: 1250, easing: 'cubic-bezier(.2,.9,.25,1)', fill: 'forwards' });
     retirer(1310);
 
     /* L'éclat de la famille, au moment où la carte est en grand. Il part de la

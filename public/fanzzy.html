@@ -95,8 +95,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    le contour du clavier. Le reste de la case est la brique. */
 #s-dex .tbf-album-case[data-open]{cursor:pointer}
 #s-dex .tbf-album-case[data-open]:focus-visible{outline:3px solid var(--projo);outline-offset:4px}
-/* NOUVEAU sur le flanc gauche, au tiers de la carte : c'est la brique qui le
-   place (`.tbf-album-case>.tbf-sticker`, ui.css), la page n'y ajoute rien. */
+/* NOUVEAU pend sous la bande du nom, à cheval sur le coin bas-gauche de la
+   carte — jamais sur le visage : c'est la brique qui le place
+   (`.tbf-album-case>.tbf-sticker`, ui.css), la page n'y ajoute rien. */
 
 /* **Et sans les six pixels entre le rail, les filtres et la page.** La
    rangée des filtres a déjà son air : quarante-quatre pixels pour des pins
@@ -125,7 +126,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    premier pin tombe sur le bord gauche de l'en-tête, le mot finit sur son
    bord droit. Il faut 350 px pour que les six et la légende tiennent
    (264 + 70 + 16) : en dessous, rien ne se serre sous le doigt,
-   l'interrupteur repasse à la ligne, à côté de son mot comme ailleurs. */
+   l'interrupteur repasse à la ligne, à côté de son mot comme ailleurs.
+   L'album de /collection a le même mot et la même règle (collection.html,
+   sous sa grille) : l'une ne change pas sans l'autre. */
 @media (min-width:350px) and (max-width:439.98px){
   #s-dex .tbf-album-filtres{padding-inline:6px 10px}
   #s-dex .tbf-album-filtres>.tbf-interrupteur{flex-direction:column;justify-content:center;gap:4px;

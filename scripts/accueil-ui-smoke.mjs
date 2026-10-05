@@ -1260,10 +1260,24 @@ await page.close();
        Ils arrivent **après** le score : le relevé du direct écrit l'événement
        un instant plus tard. Le bandeau annonce donc le but tout de suite et se
        complète ensuite — attendre un nom qui ne viendra peut-être jamais
-       ferait manquer l'annonce elle-même. */
+       ferait manquer l'annonce elle-même.
+
+       Le relevé semé est **celui du match tel que le tableau le dit** : les
+       quatre buts de Sion, Diallo le dernier, et celui de Bâle. L'accueil ne
+       nomme le buteur que d'un relevé qui compte exactement les buts du
+       tableau (`buteurDe`, dans index.html). Celui d'avant ne portait que le
+       but de Diallo pour un tableau de quatre — un relevé en retard, que la
+       règle fait taire à dessein : le contrôle rougissait sur un silence
+       voulu, et ne mesurait plus le nom. Le but de Bâle est là parce que le
+       vrai relevé l'aurait : compté avec ceux de Sion, il ferait cinq pour
+       quatre, et le bandeau se tairait aussi. */
     evenements = [
-      { seq: 0, type: 'Card', detail: 'Yellow Card', team_id: 91, player: 'Keller', minute: 12 },
-      { seq: 1, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Diallo', minute: 63 },
+      { seq: 0, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Rey', minute: 9 },
+      { seq: 1, type: 'Card', detail: 'Yellow Card', team_id: 91, player: 'Keller', minute: 12 },
+      { seq: 2, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Fontaine', minute: 31 },
+      { seq: 3, type: 'Goal', detail: 'Normal Goal', team_id: 91, player: 'Roth', minute: 40 },
+      { seq: 4, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Morel', minute: 52 },
+      { seq: 5, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Diallo', minute: 63 },
     ];
     direct = { ...direct, home_goals: 4 };
     await page.evaluate(() => TBF.veiller());
@@ -1273,11 +1287,85 @@ await page.close();
       /Diallo/.test(sous) && /63/.test(sous)
       || (console.log('        il dit :', JSON.stringify(sous)), false));
 
+    /* **Un relevé en retard ne nomme personne.** Le score est écrit en base
+       avant que les événements soient demandés : au but suivant, le relevé
+       porte encore les quatre buts d'avant, et son dernier buteur est celui du
+       but précédent. Le prendre mettait Diallo et sa 63′ sous le cinquième
+       « Goal ! » — un nom faux sous une annonce vraie. On garde donc le
+       relevé tel quel et Sion marque encore : le bandeau doit annoncer le
+       but, et se taire sur le buteur. Lire le titre écarte le silence d'un
+       bandeau qui ne serait simplement pas reparti. */
+    direct = { ...direct, home_goals: 5 };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 900));
+    const enRetard = await page.evaluate(() => ({
+      titre: document.getElementById('momentTitre').textContent.trim(),
+      sous: document.getElementById('momentSous').textContent.trim(),
+      on: document.getElementById('moment').classList.contains('on'),
+    }));
+    check('relevé en retard : le but est annoncé, et personne n’est nommé',
+      enRetard.on && /goal/i.test(enRetard.titre) && enRetard.sous === ''
+      || (console.log('        il dit :', JSON.stringify(enRetard)), false));
+
+    /* **Un relevé en avance ne nomme personne non plus.** L'API range sous
+       « Goal » chaque tir de la séance de tirs au but, et le tableau ne le
+       compte jamais : un relevé qui porte un but de Sion de plus que le score
+       en contient un qui n'en est pas — ici un tir de la séance, un
+       « Penalty » à la 120′, le dernier de la liste —, et rien ne dit lequel.
+       C'est sur ce cas que le relevé refuse de garder le commentaire de l'API
+       (`serveur/ECARTS.md`) : le compte exact suffit à se taire. Le relevé
+       est à jour par ailleurs — Vidal, le cinquième but que le relevé d'avant
+       n'avait pas encore, et Bonvin, celui qui tombe —, si bien qu'un `<` à
+       la place du `!==` de `buteurDe` nommerait le tireur.
+
+       Le bandeau d'avant est déjà sur « Goal ! » sans nom : sa clé dit qu'un
+       nouveau moment est bien parti, sans quoi ce silence serait celui du
+       bandeau précédent. */
+    const cleAvance = await page.evaluate(() => document.getElementById('moment').dataset.cle);
+    evenements = [
+      ...evenements,
+      { seq: 6, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Vidal', minute: 71 },
+      { seq: 7, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Bonvin', minute: 84 },
+      { seq: 8, type: 'Goal', detail: 'Penalty', team_id: 85, player: 'Tireur', minute: 120 },
+    ];
+    direct = { ...direct, home_goals: 6 };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 900));
+    const enAvance = await page.evaluate(() => ({
+      cle: document.getElementById('moment').dataset.cle,
+      titre: document.getElementById('momentTitre').textContent.trim(),
+      sous: document.getElementById('momentSous').textContent.trim(),
+      on: document.getElementById('moment').classList.contains('on'),
+    }));
+    check('relevé en avance : le but est annoncé, et personne n’est nommé',
+      enAvance.on && enAvance.cle !== cleAvance && /goal/i.test(enAvance.titre) && enAvance.sous === ''
+      || (console.log('        il dit :', JSON.stringify(enAvance)), false));
+
+    /* **Un penalty manqué n'est pas le dernier but.** L'API le range sous
+       « Goal » (`Missed Penalty`). Le relevé compte ici exactement les buts du
+       tableau — Gerber vient de marquer le septième —, et Zufferey rate un
+       penalty juste après : le bandeau nommait celui qui venait de rater.
+       Le tir de la séance du contrôle précédent est retiré du relevé : le
+       compte y est alors exact, et c'est le filtre du penalty manqué, seul,
+       qui décide du nom. */
+    evenements = [
+      ...evenements.filter((e) => e.player !== 'Tireur'),
+      { seq: 9, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Gerber', minute: 88 },
+      { seq: 10, type: 'Goal', detail: 'Missed Penalty', team_id: 85, player: 'Zufferey', minute: 90 },
+    ];
+    direct = { ...direct, home_goals: 7 };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 900));
+    const manque = await page.$eval('#momentSous', (n) => n.textContent.trim());
+    check('un penalty manqué derrière le dernier but : c’est le buteur qui est nommé',
+      /Gerber/.test(manque) && /88/.test(manque)
+      || (console.log('        il dit :', JSON.stringify(manque)), false));
+
     /* Sans événement en base — le cas ordinaire des premières secondes — le
        bandeau reste sur « Goal ! », ce qui est vrai. Il ne doit pas afficher
        le buteur du but précédent. */
     evenements = [];
-    direct = { ...direct, home_goals: 5 };
+    direct = { ...direct, home_goals: 8 };
     await page.evaluate(() => TBF.veiller());
     await new Promise((r) => setTimeout(r, 900));
     check('sans buteur connu, il n’invente rien',
@@ -1290,7 +1378,7 @@ await page.close();
      * ignorait purement et simplement les écarts négatifs — un but annulé ne
      * produisait donc rien du tout, et le joueur restait sur une célébration
      * pour un but qui n'existait plus. */
-    direct = { ...direct, home_goals: 4 };
+    direct = { ...direct, home_goals: 7 };
     await page.evaluate(() => TBF.veiller());
     await new Promise((r) => setTimeout(r, 800));
     const refus = await page.evaluate(() => ({
@@ -1311,7 +1399,7 @@ await page.close();
       || (console.log('        il affiche', refus.pose), false));
 
     // On remet un but pour la suite : les contrôles de durée en ont besoin.
-    direct = { ...direct, home_goals: 5 };
+    direct = { ...direct, home_goals: 8 };
     await page.evaluate(() => TBF.veiller());
     await new Promise((r) => setTimeout(r, 600));
 
@@ -1512,7 +1600,211 @@ await page.close();
     check(`et elle se touche (${bouton?.l}×${bouton?.h})`,
       bouton !== null && bouton.h >= 44 && bouton.l >= 44);
     check("et elle dit quoi faire", /recharger/i.test(bouton?.mot ?? ''));
+
+    /* ---- 1 bis. la photo du couloir ----
+
+       Rien à voir avec la sortie de secours, mais c'est le seul écran
+       d'ouverture qui reste : sans `ouverture.js`, rien ne le lève, et on a le
+       temps de le mesurer. Trois choses que la lecture du code ne tranche
+       pas.
+
+       **Elle se voit.** Posée d'abord sous la classe `.decor`, elle a hérité
+       de la règle du décor du hub — opacité nulle tant qu'il manque `.on`, et
+       une demi-largeur de décalage — et l'écran montrait le repli sans un
+       message (index.html, « La photo du couloir »). On la cherche donc par
+       son adresse, pas par sa classe : un contrôle qui suit la classe ne
+       verrait pas la même faute revenir sous un autre nom. Et elle remplit le
+       tunnel, dont la boîte a ses proportions : ni décalée, ni déformée.
+
+       **Le trou de la photo tombe sur la sortie.** Ses coins sont écrits à la
+       main dans la feuille (`--tg`, `--td`, `--th`, `--tb`) : une photo
+       refaite ou un coin retouché, et le bout du couloir montre un pan de
+       béton ou un croissant noir. Le trou se lit dans l'image elle-même — là
+       où elle est plus qu'à moitié transparente —, puis on demande ce qui est
+       peint sous son centre.
+
+       **Elle passe devant le sol et derrière le texte.** Sans son
+       `z-index:1`, le sol (`.tunnel::after`), peint après les enfants du
+       tunnel, recouvrirait le bas de la photo — et la lumière de la sortie
+       (`.sortie::before`, elle-même à z 1) passerait devant le bord adouci
+       du trou : la mutation l'a montré, d'où l'ordre lu aussi au centre.
+       Au-dessus de `.dedans`, elle cacherait le titre.
+
+       `elementsFromPoint` ignore ce qui porte `pointer-events:none` — tout
+       l'écran d'ouverture (ETAT.md, § 2, les pièges de test) : on lui rend le
+       doigt le temps de la mesure, et l'ordre du survol redevient celui de la
+       peinture. */
+    const PHOTO = '#ouverture img[src*="/img/ecran/tunnel-"]';
+    await p4.waitForFunction((s) => {
+      const i = document.querySelector(s);
+      return Boolean(i?.complete && i.naturalWidth > 0);
+    }, { timeout: 8000 }, PHOTO).catch(() => {});
+    const couloir = await p4.evaluate((s) => {
+      const img = document.querySelector(s);
+      if (!img) return null;
+      const tunnel = img.closest('.tunnel');
+      const dedans = document.querySelector('#ouverture .dedans');
+      const sortie = document.querySelector('#ouverture .sortie');
+      /* L'opacité de tout ce qui la porte jusqu'au tunnel : un parent éteint
+         l'éteint aussi, et c'était le cas de `.decor`. */
+      let opacite = 1;
+      for (let n = img; n && n !== tunnel; n = n.parentElement) {
+        opacite *= Number(getComputedStyle(n).opacity);
+      }
+      const ri = img.getBoundingClientRect();
+      const rt = tunnel.getBoundingClientRect();
+      const so = sortie.getBoundingClientRect();
+
+      // Le trou, dans l'image servie (`currentSrc`), à sa taille naturelle.
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const toile = document.createElement('canvas');
+      toile.width = W; toile.height = H;
+      const g = toile.getContext('2d', { willReadFrequently: true });
+      g.drawImage(img, 0, 0, W, H);
+      const px = g.getImageData(0, 0, W, H).data;
+      let x0 = W, x1 = -1, y0 = H, y1 = -1;
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          if (px[(y * W + x) * 4 + 3] >= 128) continue;
+          if (x < x0) x0 = x; if (x > x1) x1 = x;
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+      }
+      const trou = x1 < 0 ? null : {
+        g: ri.left + x0 / W * ri.width, d: ri.left + (x1 + 1) / W * ri.width,
+        h: ri.top + y0 / H * ri.height, b: ri.top + (y1 + 1) / H * ri.height,
+      };
+
+      const nom = (e) => e ? `${e.tagName.toLowerCase()}${e.className && typeof e.className === 'string'
+        ? '.' + e.className.trim().split(/\s+/).join('.') : ''}` : 'rien';
+      const sonde = document.createElement('style');
+      sonde.textContent = '#ouverture, #ouverture *{pointer-events:auto !important}';
+      document.head.append(sonde);
+      let centre = null, sol = null;
+      if (trou) {
+        const cx = (trou.g + trou.d) / 2, cy = (trou.h + trou.b) / 2;
+        const pile = document.elementsFromPoint(cx, cy);
+        // Ce qui est peint sous la photo : ni elle, ni ce qui passe devant elle.
+        const dessous = pile.find((e) => !dedans.contains(e) && e !== img && e !== img.parentElement);
+        centre = { dedans: pile.indexOf(dedans), photo: pile.indexOf(img),
+          dessous: pile.indexOf(dessous), quoi: nom(dessous), sortie: sortie.contains(dessous) };
+        /* Un point du sol : sous la sortie, à mi-chemin du bas de l'écran,
+           dans l'axe du trou. */
+        const pileSol = document.elementsFromPoint(cx, (so.bottom + Math.min(innerHeight, rt.bottom)) / 2);
+        sol = { photo: pileSol.indexOf(img), tunnel: pileSol.indexOf(tunnel),
+          devant: nom(pileSol.find((e) => !dedans.contains(e))) };
+      }
+      sonde.remove();
+      return {
+        src: img.currentSrc.replace(/^.*\/img\//, '/img/'),
+        complete: img.complete, largeur: W, hauteur: H, opacite,
+        boite: { dx: Math.round(ri.left - rt.left), dy: Math.round(ri.top - rt.top),
+          dl: Math.round(ri.width - rt.width), dh: Math.round(ri.height - rt.height) },
+        rapports: [W / H, ri.width / ri.height],
+        trou, sortie: { g: so.left, d: so.right, h: so.top, b: so.bottom }, centre, sol,
+      };
+    }, PHOTO);
+    check(`la photo du couloir est là, entière et visible (${couloir?.src ?? 'absente'})`,
+      couloir !== null && couloir.complete && couloir.largeur > 0 && couloir.opacite === 1
+      || (console.log('        elle est :', JSON.stringify(couloir && {
+        src: couloir.src, complete: couloir.complete, largeur: couloir.largeur, opacite: couloir.opacite })), false));
+    check('elle remplit le tunnel, sans décalage ni déformation',
+      couloir !== null && Object.values(couloir.boite).every((v) => Math.abs(v) <= 1)
+        && Math.abs(couloir.rapports[0] / couloir.rapports[1] - 1) < 0.01
+      || (console.log('        écart à la boîte du tunnel :', JSON.stringify(couloir?.boite),
+        '· rapports image / boîte :', JSON.stringify(couloir?.rapports)), false));
+    /* Le trou tient dans la sortie, au pixel près : la feuille la fait
+       déborder d'un pour cent de la largeur sous le bord adouci, exprès. */
+    const trou = couloir?.trou, bout = couloir?.sortie;
+    check('au centre de son trou, on voit la sortie, pas un pan de béton',
+      Boolean(trou && couloir.centre?.sortie && couloir.centre.photo < couloir.centre.dessous)
+        && trou.g >= bout.g - 1 && trou.d <= bout.d + 1 && trou.h >= bout.h - 1 && trou.b <= bout.b + 1
+      || (console.log('        sous le trou :', couloir?.centre?.quoi ?? '?',
+        '· trou', JSON.stringify(trou && Object.fromEntries(Object.entries(trou).map(([k, v]) => [k, Math.round(v)]))),
+        '· sortie', JSON.stringify(bout && Object.fromEntries(Object.entries(bout).map(([k, v]) => [k, Math.round(v)])))), false));
+    check('elle passe devant le sol, et derrière le texte de l’écran',
+      Boolean(couloir?.centre && couloir.sol)
+        && couloir.centre.dedans >= 0 && couloir.centre.dedans < couloir.centre.photo
+        && couloir.sol.photo >= 0 && (couloir.sol.tunnel < 0 || couloir.sol.photo < couloir.sol.tunnel)
+      || (console.log('        au centre :', JSON.stringify(couloir?.centre),
+        '· au sol :', JSON.stringify(couloir?.sol)), false));
     await p4.close();
+
+    /* ---- 1 ter. sans sa photo ----
+
+       Une photo qui manque ne doit pas rester en image cassée de la taille de
+       l'écran : Chrome la peindrait avec son icône et un cadre gris,
+       par-dessus le repli. Elle s'en va (`onerror`), et le béton peint
+       reprend. On ne refuse que les photos du couloir (et `ouverture.js`,
+       pour que l'écran reste à mesurer), dans un contexte neuf : une photo
+       déjà chargée par la page d'avant pourrait revenir sans requête.
+
+       « Le béton reprend » se lit en pixels, `.dedans` masqué le temps des
+       captures, sur le mur de gauche entre la bâche et le bas de la sortie.
+       **Par différence, et non contre une couleur** : le halo de la sortie
+       éclaire ce coin du tunnel, et un tunnel sans murs n'y est donc pas du
+       fond nu — le premier jet, qui comparait au fond, restait vert murs
+       éteints. On capture la zone telle quelle, puis murs masqués : si les
+       murs peignent, les deux diffèrent ; si leur règle est partie, ou si
+       quelque chose les couvre encore, elles sont identiques. */
+    const ctxSans = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext());
+    const p4b = await ctxSans.newPage();
+    await p4b.setViewport({ width: 400, height: 880 });
+    await p4b.setRequestInterception(true);
+    let refusees = 0;
+    p4b.on('request', (r) => {
+      if (/\/ouverture\.js/.test(r.url())) r.abort().catch(() => {});
+      else if (/\/img\/ecran\/tunnel-/.test(r.url())) {
+        refusees += 1;
+        r.respond({ status: 404, contentType: 'text/plain', body: 'absente' }).catch(() => {});
+      } else r.continue().catch(() => {});
+    });
+    await p4b.goto(base + "/", { waitUntil: "domcontentloaded" });
+    const retiree = await p4b.waitForFunction((s) => !document.querySelector(s),
+      { timeout: 6000 }, PHOTO).then(() => true).catch(() => false);
+    const sans = await p4b.evaluate(() => {
+      const tunnel = document.querySelector('#ouverture .tunnel');
+      const bache = document.querySelector('#ouverture .bache.g')?.getBoundingClientRect();
+      const so = document.querySelector('#ouverture .sortie')?.getBoundingClientRect();
+      const rt = tunnel?.getBoundingClientRect();
+      const zone = bache && so && rt ? {
+        x: Math.ceil(Math.max(0, rt.left) + 4), y: Math.ceil(bache.bottom + 4),
+        width: Math.floor(so.left - 4 - Math.max(0, rt.left) - 4),
+        height: Math.floor(so.bottom - 4 - bache.bottom - 4),
+      } : null;
+      const dedans = document.querySelector('#ouverture .dedans');
+      if (dedans) dedans.style.visibility = 'hidden';
+      return { ecran: Boolean(document.getElementById('ouverture')),
+        // Seule l'image part : ses sources restent, et le reste de l'écran aussi.
+        sources: document.querySelectorAll('#ouverture source[srcset*="/img/ecran/tunnel-"]').length,
+        zone };
+    });
+    let ecartAuTunnelNu = null;
+    if (sans.zone && sans.zone.width > 0 && sans.zone.height > 0) {
+      const sharp = (await import('sharp')).default;
+      const capture = async () => (await sharp(await p4b.screenshot({ clip: sans.zone, encoding: 'binary' }))
+        .removeAlpha().raw().toBuffer());
+      const avec = await capture();
+      await p4b.evaluate(() => {
+        const s = document.createElement('style');
+        s.textContent = '#ouverture .murs{visibility:hidden !important}';
+        document.head.append(s);
+      });
+      const nu = await capture();
+      let somme = 0;
+      for (let i = 0; i < avec.length; i += 3) {
+        somme += Math.max(...[0, 1, 2].map((c) => Math.abs(avec[i + c] - nu[i + c])));
+      }
+      ecartAuTunnelNu = somme / (avec.length / 3);
+    }
+    check(`sans sa photo, elle s’en va au lieu de rester cassée (requêtes refusées : ${refusees})`,
+      refusees >= 1 && retiree && sans.ecran && sans.sources > 0
+      || (console.log('        écran :', sans.ecran, '· sources :', sans.sources, '· retirée :', retiree), false));
+    check(`et le béton peint reprend (écart moyen au tunnel sans murs : ${ecartAuTunnelNu?.toFixed(1) ?? '?'})`,
+      ecartAuTunnelNu !== null && ecartAuTunnelNu > 4
+      || (console.log('        zone :', JSON.stringify(sans.zone)), false));
+    await p4b.close();
+    await ctxSans.close?.();
 
     /* ---- 2. la sonde : elle recharge, et elle s'arrête ----
 

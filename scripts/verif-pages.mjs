@@ -1079,6 +1079,120 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
     + (sans.length ? ` · incomplets : ${sans.map((e) => e.cle).join(', ')}` : ''));
 }
 
+/* ============================ les images de l'écran d'ouverture
+
+   Même silence que les emblèmes, et pour la même raison : la photo du
+   tunnel est posée avec `onerror="this.remove()"` — sans lui, Chrome peint
+   une image cassée de la taille de l'écran, icône et cadre gris compris —,
+   et le béton CSS reprend sa place. C'est le bon comportement, et c'est
+   aussi ce qui la cache à l'audit : une image retirée n'est plus comptée
+   « cassée ». On relève donc chaque adresse `/img/ecran/…` que `index.html`
+   demande, en `src` comme en `srcset`, et on vérifie que le fichier existe.
+   Un `<source>` AVIF qui répond 404 ne retombe pas sur le WebP : le
+   navigateur a déjà choisi, et l'image est perdue pour lui. */
+{
+  const html = await readFile(path.join(DOSSIER, 'index.html'), 'utf8');
+  const adresses = [...new Set([...html.matchAll(/\/img\/ecran\/[\w.-]+\.(?:avif|webp|png|jpe?g)/g)]
+    .map((m) => m[0]))];
+  const manquent = [];
+  for (const a of adresses) {
+    try { await readFile(path.join(DOSSIER, a.slice(1))); } catch { manquent.push(a); }
+  }
+  /* Zéro adresse est une panne du motif, pas une bonne nouvelle : la photo
+     du stade, au bout du couloir, en demande trois à elle seule. */
+  if (!adresses.length) {
+    ko('index.html', 'aucune adresse /img/ecran/… relevée : le motif ne reconnaît plus '
+      + 'les images de l’écran d’ouverture, et ce contrôle ne vérifie plus rien');
+  } else if (manquent.length) {
+    ko('index.html', `image(s) de l’écran d’ouverture demandée(s) et absente(s) : ${manquent.join(', ')}`);
+  } else {
+    ok('l’écran d’ouverture', `${adresses.length} image(s) demandée(s), toutes présentes`);
+  }
+}
+
+/* ===================================== les sachets que le kiosque montre
+
+   Même silence que les emblèmes, sous une autre forme. `ART`, dans
+   `cartes.js`, nomme le visuel dessiné de chaque série qui en a un, et
+   chaque écran qui montre un sachet le demande par `src(ART[set.id])` : le
+   kiosque, le classeur, la collection, la fiche. Un fichier absent ne lève
+   rien. Le kiosque retombe sur `packArt` par `onerror` — un sachet composé
+   là où l'on avait livré un dessin —, les autres perdent un fond ou
+   montrent une image cassée, et rien ne rougit nulle part.
+
+   On monte donc les vrais modules, `fanzzy-art.js` puis `cartes.js`, dans
+   l'ordre du kiosque (qui ne charge `fanzzy-etats.js` qu'après eux), et on
+   lit `TBF_CARTES.ART` tel que les pages le reçoivent. Pas de motif sur le
+   source : il rétrécirait en silence, comme celui des pièces d'équipement
+   (voir les imports en tête de ce fichier). Pour chaque entrée, les trois
+   formats d'une photo — AVIF, WebP et JPEG ; un sachet n'est pas détouré,
+   il n'a pas de PNG — et l'adresse que `src` construit : trois fichiers
+   présents ne disent rien de celui que la page demande, c'est la leçon du
+   `.jpg` des Fanzzy, plus haut.
+
+   Et la clé, qui est un code de série lu tel quel par les pages : une clé
+   qui ne le recopie pas exactement n'est jamais lue, et son dessin, bien
+   présent sur le disque, n'est montré à personne.
+
+   Si `cartes.js` apprend un jour à toucher la page dès son chargement, le
+   bac lève et le contrôle le dit : c'est le bac qu'on complète, pas la
+   table qu'on contourne. */
+{
+  const bac = {
+    document: { createElement: () => { throw new Error('pas de canvas'); } },
+  };
+  /* `window` est le global lui-même, comme dans une page : `cartes.js` lit
+     `FZART` sans préfixe, là où `fanzzy-art.js` l'a posé sur `window`. Le
+     bac du contrôle des Fanzzy, avec son `window` à part, ne le permettrait
+     pas. */
+  bac.window = bac;
+  bac.globalThis = bac;
+  let C;
+  try {
+    const contexte = createContext(bac);
+    for (const nom of ['fanzzy-art.js', 'cartes.js']) {
+      new Script(await readFile(path.join(DOSSIER, nom), 'utf8'), { filename: nom })
+        .runInContext(contexte);
+    }
+    C = bac.TBF_CARTES;
+  } catch (e) {
+    C = null;
+    ko('cartes.js', `ne se monte pas hors d’une page (${e.message}) : le contrôle des `
+      + 'sachets ne vérifie plus rien');
+  }
+  const entrees = Object.entries(C?.ART ?? {});
+  /* Zéro entrée est une panne du montage, pas une table sage : LA REPRISE,
+     la série en production, a son sachet dessiné. */
+  if (C !== null && (!entrees.length || typeof C?.src !== 'function')) {
+    ko('cartes.js', 'TBF_CARTES.ART vide ou introuvable, ou TBF_CARTES.src absent : '
+      + 'le contrôle des sachets ne vérifie plus rien');
+  } else if (C !== null) {
+    const { SETS } = await import('../src/shared/fanzzy/dex.js');
+    const codes = new Set(SETS.map((s) => s.id));
+    const orphelines = entrees.map(([id]) => id).filter((id) => !codes.has(id));
+    const incomplets = [];
+    for (const [id, base] of entrees) {
+      const demandee = String(C.src(base)).split('?')[0].replace(/^\//, '');
+      const voulus = new Set([...['.avif', '.webp', '.jpg'].map((x) => base + x), demandee]);
+      const absents = [...voulus].filter((f) => !existsSync(path.join(DOSSIER, f)))
+        .map((f) => (f === demandee ? `${f} (l’adresse demandée)` : f));
+      if (absents.length) incomplets.push(`${id} : ${absents.join(', ')}`);
+    }
+    if (orphelines.length) {
+      ko('cartes.js', `clé(s) d’ART qui ne sont le code d’aucune série : ${orphelines.join(', ')}`
+        + ' — les pages lisent ART[set.id], ce dessin-là n’est montré à personne');
+    }
+    if (incomplets.length) {
+      ko('cartes.js', `sachet(s) dessiné(s) sans leurs fichiers dans public/ : ${incomplets.join(' ; ')}`
+        + ' — le kiosque retombe sur packArt, les autres écrans perdent l’image, sans un message');
+    }
+    if (!orphelines.length && !incomplets.length) {
+      ok('les sachets', `${entrees.length} sachet(s) dessiné(s) (${entrees.map(([id]) => id).join(', ')}), `
+        + 'chacun en AVIF, WebP et JPEG, et l’adresse demandée existe');
+    }
+  }
+}
+
 /* ========================== les tuiles de grain que ui.css demande
 
    Même silence que les stades, sur toutes les surfaces à la fois. Une tuile

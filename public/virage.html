@@ -684,8 +684,13 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   background:rgba(224,64,44,.92);border-radius:6px;padding:9px 15px;font-size:12.5px;display:none}
 .err.on{display:block}
 /* La carte-souvenir passe même par-dessus le fil : c'est ce que le joueur est
-   venu chercher, elle dure quatre secondes, et elle annonce un gain. */
+   venu chercher, elle dure quatre secondes, et elle annonce un gain.
+   **Elle laisse passer le doigt** : posée au milieu de la colonne, au-dessus
+   de la fenêtre du geste, elle avalait les frappes au centre du pavé — qui ne
+   les écoute que sur lui-même. Elle attend aussi la fin du geste pour se
+   montrer (voir `apresLaFenetre`) ; ce jeton est la garde de second rang. */
 .souvenir{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:96;
+  pointer-events:none;
   border:2px solid var(--projo);border-radius:12px;background:#12161C;padding:20px 24px;text-align:center;
   display:none;box-shadow:0 20px 60px rgba(0,0,0,.8)}
 .souvenir.on{display:block;animation:pop .5s cubic-bezier(.2,.9,.3,1)}
@@ -892,6 +897,47 @@ const HINT = window.TBF_GESTE.AIDE;
 const GOAL_AT = 400;
 
 let socket = null, S = null, busy = false;
+
+/* ------------------------------------------- ce qui attend la fin du geste
+
+   **Pendant un geste, rien ne couvre le pavé ni ne prend ses appuis.**
+
+   La fenêtre du geste vit dans `#app`, qui est un contexte d'empilement
+   (voir ETAT.md § 6) : tout calque posé sur `body` passe devant elle, quel
+   que soit son `z-index`. Or un but — réel, ou de corde, qui naît des chants
+   des autres pendant qu'on fait le sien — posait tout de suite la case
+   « GOAL ! » (z 95, quinze secondes, un tiers du pavé et son centre), le
+   flash et les titres de `FX.but`, la secousse de `#app` donc du pavé, et la
+   carte-souvenir qui avalait les frappes au milieu. Le chant raté coûtait
+   quand même son souffle, en pleine minute double (Gaël, 4 octobre 2026).
+
+   Ce qui couvre ou fait bouger l'écran attend donc la fermeture de la
+   fenêtre ; ce qui doit se savoir tout de suite reste immédiat — la tribune
+   qui s'embrase, le score et le fil, la rumeur, la vibration. C'est la règle
+   des cartes des autres, déjà mises de côté par `TBF_ACTION.suspendre`. */
+const apresLeGeste = [];
+function apresLaFenetre(f) {
+  if (busy) apresLeGeste.push(f); else f();
+}
+
+/** Joue ce qui attendait, dans l'ordre d'arrivée. Deux moments de suite :
+    `scene.moment` remplace le premier, et c'est le dernier qui reste. */
+function viderApresLeGeste() {
+  while (apresLeGeste.length) {
+    const f = apresLeGeste.shift();
+    /* Un effet qui lève n'emporte pas les suivants, et ne remonte pas dans
+       le `finally` du geste qui vide la file. */
+    try { f(); } catch (e) { console.error('[virage] effet différé :', e); }
+  }
+}
+
+/** Un but tombé pendant le geste se sent tout de suite, et se montre après.
+    Le motif est celui de `FX.but`, qui vibrera encore en se montrant : le
+    premier dit qu'il s'est passé quelque chose, le second l'accompagne. */
+function sentirLeBut(pour) {
+  if (busy) buzz(pour ? [45, 55, 130] : 220);
+}
+
 // La part de ferveur d'un neutre. Le serveur la donne avec la liste des
 // matchs ; cette valeur n'est qu'un repli pour le premier rendu.
 let FERVEUR_NEUTRE = 0.5;
@@ -1237,8 +1283,30 @@ function minuteTexte() {
     { statut: S?.statut, minute: S?.minute, extra: S?.minuteExtra, vuA: S?.vuA });
 }
 
-/** Le souffle, animé entre deux vérités du serveur. */
+/** Le souffle, animé entre deux vérités du serveur. Remis à l'heure par
+    chaque message qui porte `breath` : l'état, le résultat d'un chant et
+    `virage:vous`. Seul le résultat d'un chant le faisait : à l'entrée et
+    après une carte, la jauge comptait le regain depuis le dernier chant, ou
+    depuis le chargement de la page, et promettait un souffle qu'on n'avait
+    pas. */
 let souffleVuA = Date.now();
+
+/* **Les recharges se décomptent ici, comme le souffle.**
+
+   Le serveur les envoie en secondes restantes **au moment de l'envoi**, et la
+   page ne les décomptait jamais : une carte reçue en recharge restait grisée,
+   son chiffre figé. Quand toutes les cartes montrées l'étaient, plus aucune
+   ne partait, donc plus aucun `virage:vous` n'arrivait — la main restait
+   bloquée jusqu'au rechargement de la page, en une demi-minute de jeu (Gaël,
+   4 octobre 2026). On retient l'instant de la vérité, et le `render` de
+   chaque seconde rend la carte jouable d'elle-même à zéro. */
+let cdVuA = Date.now();
+
+/** Ce qui reste de la recharge d'une carte, en secondes ; zéro si elle est prête. */
+function rechargeRestante(id) {
+  const reste = Number(S?.you?.cooldowns?.[id]) || 0;
+  return Math.max(0, reste - (Date.now() - cdVuA) / 1000);
+}
 
 function souffleCourant() {
   const you = S?.you;
@@ -1361,6 +1429,43 @@ function couleurDuCamp(cote, defaut = 'var(--projo)') {
     : (S?.fixture?.[S.you.side ? 'homeColors' : 'awayColors'] ?? []);
   return c[0] ? (window.FX?.lisible?.(c[0]) ?? c[0]) : defaut;
 }
+
+/** La minute du match à l'entrée dans la tribune, posée par « virage:state »
+    et relevée par `minuteApprise`. Nulle tant qu'on ne la connaît pas : rien
+    n'est alors écarté. */
+let entreeMinute = null;
+/** L'instant de cette entrée, à l'horloge de la page. */
+let entreeA = Date.now();
+
+/**
+ * Ce qu'une minute reçue après l'entrée apprend de celle de l'entrée.
+ *
+ * L'état ne la dit pas toujours. Une salle qui ouvre sur une ligne de
+ * calendrier jamais relevée — un match « ailleurs », écrit « NS » avant le
+ * coup d'envoi — envoie une minute nulle, et rien n'était écarté : le premier
+ * relevé, à la cinquantième, apportait le rouge de la vingtième et la vidéo
+ * de la trentième, et le personnage jouait les deux. Une ligne vieillie,
+ * restée à la dixième, laissait passer de même tout ce qui avait suivi.
+ *
+ * Or le match ne court pas plus vite que la montre : à la minute M, reçue Δ
+ * minutes après l'entrée, on était entré à la minute M − Δ au moins. Ce
+ * plancher ne fait que relever la minute de l'entrée, jamais la baisser ; la
+ * mi-temps, un relevé en retard ou la minute d'un but ne donnent qu'un
+ * plancher plus bas, donc rien. Δ est arrondi au-dessus : dans le doute, on
+ * écarte moins. Et un match vraiment pas commencé donne un plancher nul ou
+ * négatif — rien de ce qui suit le coup d'envoi n'est écarté, même quand le
+ * premier relevé n'arrive qu'à la cinquième minute.
+ */
+function minuteApprise(minute) {
+  const m = Number(minute);
+  if (minute == null || !Number.isFinite(m)) return;
+  const plancher = m - Math.ceil((Date.now() - entreeA) / 60_000);
+  if (entreeMinute == null || plancher > entreeMinute) entreeMinute = plancher;
+}
+
+/** Une entrée du fil d'avant l'entrée du joueur — voir « virage:fil ». */
+const dAvantLEntree = (e) => entreeMinute != null && e.genre !== 'periode'
+  && (e.minute ?? 0) < entreeMinute - 2;
 
 /**
  * Ce que le personnage fait d'une entrée du fil.
@@ -1544,6 +1649,12 @@ function openMini(card) {
        par-dessus la grille — voir `suspendre` dans action-art.js. Elles
        reviennent à la fermeture, rien n’est perdu. */
     window.TBF_ACTION?.suspendre?.();
+    /* Même règle pour la case d'un moment déjà à l'écran : posée sur `body`
+       pour quinze secondes, elle passerait par-dessus le pavé. Ce qui arrive
+       pendant le geste attend sa fin — voir `apresLaFenetre`. */
+    scene?.couper?.();
+    // Et pour la carte-souvenir déjà là, qui, elle, revient après.
+    rangerLeSouvenir();
     m.classList.add('on');
     let k = 3;
     const tick = () => {
@@ -1634,6 +1745,11 @@ $('hand').addEventListener('pointerdown', async (e) => {
        cartes restaient grises jusqu'au battement d'horloge suivant. */
     busy = false;
     render();
+    /* Ce qui est arrivé pendant le geste se montre maintenant — **après** le
+       `render` : sa pose de fond, demandée ensuite, passerait devant la
+       célébration d'un but encore en train de se charger, et le personnage
+       n'exulterait pas. */
+    viderApresLeGeste();
   }
 });
 
@@ -1731,7 +1847,6 @@ function renderActes() {
      par place de la main — la carte retrouvée par son identifiant, la case
      vide par sa position — posée une fois et retouchée en place. */
   const souffle = souffleCourant();
-  const cd = S?.you?.cooldowns ?? {};
   const places = Array.from({ length: S.you.mainVisible ?? 5 }, (_, i) => main[i] ?? null);
   accorder(boite, clesDe(places.map((id, i) => id ?? `vide@${i}`)),
     (_cle, i) => {
@@ -1749,7 +1864,8 @@ function renderActes() {
       if (!id) return;
       const a = acteDe(id);
       const fam = window.TBF_ACTION.famDe(a);
-      const reste = cd[id];
+      // Décomptée depuis la dernière vérité : voir `rechargeRestante`.
+      const reste = rechargeRestante(id);
       const injouable = Boolean(!a || souffle < a.cost || reste || busy);
       el.classList.toggle('hs', injouable);
       if (injouable) { if (el.hasAttribute('data-acte')) el.removeAttribute('data-acte'); }
@@ -1934,6 +2050,13 @@ function connect() {
 
   socket.on('virage:state', (s) => {
     S = s; $('veil').classList.remove('on');
+    /* L'état porte le souffle et les recharges du moment : les deux horloges
+       locales repartent de lui. Et la minute de l'entrée, que garde le fil
+       pour ne pas rejouer ce qui était déjà au tableau — voir « virage:fil ».
+       Nulle ou vieillie, les minutes reçues ensuite la relèvent : voir
+       `minuteApprise`. */
+    souffleVuA = cdVuA = entreeA = Date.now();
+    entreeMinute = s.minute ?? null;
     renderStatic(); render();
     /* Le personnage entre avec la tribune. Le serveur le donne à l'âge
        atteint : c'est le Fanzzy que le joueur a choisi, pas sa racine — la
@@ -1969,10 +2092,27 @@ function connect() {
         || (a.extra ?? 0) - (b.extra ?? 0) || a.rang - b.rang);
     if (f.scoreReel) S.scoreReel = f.scoreReel;
     if (f.minute != null) S.minute = f.minute;
+    /* Avant la boucle : le relevé qui apporte tout ce qui s'est passé avant
+       porte aussi la minute où il le dit, et c'est elle qui l'écarte quand
+       l'état n'en avait pas — voir `minuteApprise`. */
+    minuteApprise(f.minute);
     renderFil({ neuf: true });
     // Le personnage réagit aux entrées **neuves** seulement. Les rejouer
     // toutes à chaque arrivée ferait célébrer un carton de la douzième minute.
-    for (const e of f.entrees ?? []) reagirAuFil(e);
+    /* **Neuves pour le fil n'est pas neuves pour le joueur.** Le premier
+       relevé d'un match qu'on n'avait jamais relevé envoie tout ce qui s'est
+       passé avant : entrer à la cinquantième jouait « ROUGE POUR EUX » pour
+       un carton de la vingtième, et « BUT REFUSÉ » pour une vidéo de la
+       trentième. Ce qui précède l'entrée va au fil et à la feuille, pas au
+       personnage. Deux minutes de grâce : le relevé a du retard, et un carton
+       de la soixante-neuvième publié quand on entre à la soixante et onzième
+       est neuf pour qui vient d'arriver. Les périodes passent toujours :
+       elles disent où en est le match maintenant, pas ce qui s'y est passé.
+       Et ce qui reste attend la fin du geste : voir `apresLaFenetre`. */
+    for (const e of f.entrees ?? []) {
+      if (dAvantLEntree(e)) continue;
+      apresLaFenetre(() => reagirAuFil(e));
+    }
   });
 
   socket.on('virage:tick', (t) => {
@@ -2038,25 +2178,33 @@ function connect() {
     // La tribune s'embrase. Une fois, et longuement : c'est le moment.
     stade?.embraser(g.side);
     const mien = g.side === S.you.side;
-    // Les effets viennent de la couche commune : une seule définition du
-    // « but » pour tout le jeu, duel compris.
-    window.FX?.but({ pour: mien, score: [S.goals[S.you.side], S.goals[S.you.side ^ 1]] });
+    // Le score de ce but-ci, lu maintenant : il peut avoir changé quand le
+    // geste en cours se ferme.
+    const score = [S.goals[S.you.side], S.goals[S.you.side ^ 1]];
     /* L'ovation de sa tribune (neuf secondes au plus, puis la rumeur revient
        seule), quand c'est elle qui fait céder la corde. Pas quand c'est celle
        d'en face : ce qu'on entend est sa propre tribune, et elle ne fête pas
        un but encaissé — le duel fait de même. `FX.but` garde ses deux sons,
        la corne pour soi, « encaisse » pour l'autre camp. */
     if (mien) window.TBF_SON?.ambiance?.(3);
-    /* Le personnage porte l'annonce, quinze secondes. La bande du milieu ne
-       sert plus que de repli : deux fois la même phrase à deux endroits de
-       l'écran, ce serait du bruit. */
-    if (scene) {
-      scene.moment(mien ? 'but' : 'encaisse',
-        mien ? 'LA CORDE CÈDE !' : 'ILS ONT FAIT CÉDER LA CORDE',
-        { couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)' });
-    } else {
-      banner(mien ? 'BUT DE LA TRIBUNE !' : 'ILS ONT FAIT CÉDER LA CORDE');
-    }
+    sentirLeBut(mien);
+    /* Ce qui couvre l'écran attend la fin du geste : voir `apresLaFenetre`.
+       Un but de corde naît des chants, donc tombe souvent pendant le sien. */
+    apresLaFenetre(() => {
+      // Les effets viennent de la couche commune : une seule définition du
+      // « but » pour tout le jeu, duel compris.
+      window.FX?.but({ pour: mien, score });
+      /* Le personnage porte l'annonce, quinze secondes. La bande du milieu ne
+         sert plus que de repli : deux fois la même phrase à deux endroits de
+         l'écran, ce serait du bruit. */
+      if (scene) {
+        scene.moment(mien ? 'but' : 'encaisse',
+          mien ? 'LA CORDE CÈDE !' : 'ILS ONT FAIT CÉDER LA CORDE',
+          { couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)' });
+      } else {
+        banner(mien ? 'BUT DE LA TRIBUNE !' : 'ILS ONT FAIT CÉDER LA CORDE');
+      }
+    });
   });
 
   socket.on('virage:real_goal', (g) => {
@@ -2066,22 +2214,31 @@ function connect() {
     // Le score du terrain suit le but sans attendre le prochain tour du
     // relevé : c'est la seconde où le joueur le regarde.
     if (g.scoreReel) { S.scoreReel = g.scoreReel; renderFil(); }
-    window.FX?.butReel({ pour: mien, buteur: g.player, minute: g.minute });
     // L'ovation, pour un but de son club seulement : voir « virage:goal ».
     if (mien) window.TBF_SON?.ambiance?.(3);
-    /* « GOAL ! » sur le personnage, avec le buteur et la minute — ils arrivent
-       déjà dans l'événement, aucun appel de plus. Quinze secondes : le temps
-       de sortir le téléphone de sa poche, un but de deux secondes et demie
-       n'a laissé aucune trace. */
-    scene?.moment(mien ? 'but' : 'encaisse', mien ? 'GOAL !' : 'ON ENCAISSE', {
-      // Le but est écrit aux couleurs de l'équipe qui l'a marqué : le sien
-      // dans les couleurs du club, celui d'en face en rouge d'alerte — on ne
-      // célèbre pas un but encaissé, fût-ce joliment.
-      couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)',
-      sous: [g.player, g.minute != null ? `${g.minute}′` : ''].filter(Boolean).join(' · '),
+    sentirLeBut(mien);
+    /* Le reste couvre l'écran, et attend la fin du geste : voir
+       `apresLaFenetre`. La tribune, le score et la rumeur, eux, sont déjà
+       partis. */
+    apresLaFenetre(() => {
+      window.FX?.butReel({ pour: mien, buteur: g.player, minute: g.minute });
+      /* « GOAL ! » sur le personnage, avec le buteur et la minute — ils
+         arrivent déjà dans l'événement, aucun appel de plus. Quinze secondes :
+         le temps de sortir le téléphone de sa poche, un but de deux secondes
+         et demie n'a laissé aucune trace. */
+      scene?.moment(mien ? 'but' : 'encaisse', mien ? 'GOAL !' : 'ON ENCAISSE', {
+        // Le but est écrit aux couleurs de l'équipe qui l'a marqué : le sien
+        // dans les couleurs du club, celui d'en face en rouge d'alerte — on ne
+        // célèbre pas un but encaissé, fût-ce joliment.
+        couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)',
+        sous: [g.player, g.minute != null ? `${g.minute}′` : ''].filter(Boolean).join(' · '),
+      });
+      window.FX?.bandeau('MINUTE DOUBLE', mien ? '#F5C33B' : '#E0402C');
+      /* La carte-souvenir vient après le but qu'elle fête. Un geste ouvert
+         dans l'intervalle la fait attendre encore : elle tient le milieu de
+         la fenêtre quatre secondes. */
+      if (mien) setTimeout(() => apresLaFenetre(() => souvenir(g)), 1400);
     });
-    window.FX?.bandeau('MINUTE DOUBLE', mien ? '#F5C33B' : '#E0402C');
-    if (mien) setTimeout(() => souvenir(g), 1400);
   });
 
   /* Le vrai match : score, minute, période. Il descend dès que le relevé du
@@ -2090,6 +2247,8 @@ function connect() {
     if (!S) return;
     if (v.scoreReel) S.scoreReel = v.scoreReel;
     if (v.minute != null) S.minute = v.minute;
+    // Il précède le fil du même relevé : voir `minuteApprise`.
+    minuteApprise(v.minute);
     S.minuteExtra = v.minuteExtra ?? null;
     if (v.vuA) S.vuA = v.vuA;
     if (v.statut) S.statut = v.statut;
@@ -2123,20 +2282,71 @@ function connect() {
   socket.on('virage:vous', (you) => {
     if (!S || !you) return;
     S.you = { ...S.you, ...you };
+    /* Il porte le souffle et les recharges **de cet instant** : les deux
+       horloges locales repartent d'ici. Il arrive après une carte jouée et à
+       chaque carte tirée ; une main vide qui se remplit refait paraître la
+       rangée, et `renderActes` la remet en place sans recréer ses cases. */
+    souffleVuA = cdVuA = Date.now();
     render();
   });
 
   socket.on('virage:error', (e) => fail(e.code));
 }
 
+/** Le temps que la carte-souvenir reste à l'écran. */
+const SOUVENIR_MS = 4200;
+
+/** La carte-souvenir à l'écran : son but, l'instant où elle s'éteint, et la
+    minuterie qui l'éteindra. Nulle quand il n'y en a pas. */
+let souvenirAffiche = null;
+
 /** Annonce de la carte-souvenir. Le serveur l'a déjà frappée. */
-function souvenir(g) {
+function souvenir(g, ms = SOUVENIR_MS) {
   const el = $('souvenir');
+  /* Une minuterie à la fois : celle de la carte d'avant, encore en cours,
+     éteignait la suivante avant son temps — deux buts rapprochés, ou une
+     carte rangée pendant un geste qui revient juste avant une autre, voir
+     `rangerLeSouvenir`. */
+  clearTimeout(souvenirAffiche?.minuterie);
   el.innerHTML = `<div class="t">CARTE-SOUVENIR</div>
     <div class="m">${g.player ?? 'BUT'} ${g.minute}'</div>
     <div class="d">Tu y étais. Elle est dans ton carnet.</div>`;
   el.className = 'souvenir on';
-  setTimeout(() => { el.className = 'souvenir'; }, 4200);
+  souvenirAffiche = {
+    g, fin: Date.now() + ms,
+    minuterie: setTimeout(() => { el.className = 'souvenir'; souvenirAffiche = null; }, ms),
+  };
+}
+
+/**
+ * Un geste s'ouvre sur une carte-souvenir encore à l'écran : elle se range,
+ * et revient à la fermeture pour le temps qui lui restait.
+ *
+ * Celle qui naît pendant le geste attend déjà sa fin (`apresLaFenetre`).
+ * Celle qui était là avant restait : quatre secondes au milieu de la colonne,
+ * au-dessus de la fenêtre du geste, sur plus d'un tiers du pavé et son
+ * centre. Le cas n'a rien de rare — elle paraît une seconde et demie après
+ * un but de son club, en pleine minute double, et c'est le moment où l'on
+ * relance un chant. Le doigt passe (`pointer-events: none`), mais le pavé
+ * est caché.
+ *
+ * Elle n'est pas coupée comme la case du moment : elle annonce un gain, et
+ * le joueur l'a souvent à peine vue. Le geste la met en pause, comme les
+ * cartes des autres (`TBF_ACTION.suspendre`) : elle passe en tout ses quatre
+ * secondes à l'écran, pas huit — une carte qui s'attarde en grand après avoir
+ * été lue se prend pour une seconde, la méprise de la carte jouée qui
+ * revenait (action-art.js). Moins d'une seconde de reste : elle a été lue,
+ * et un éclair d'elle à la fermeture ne dirait rien de plus.
+ */
+function rangerLeSouvenir() {
+  const s = souvenirAffiche;
+  const el = $('souvenir');
+  if (!s || !el.classList.contains('on')) return;
+  clearTimeout(s.minuterie);
+  souvenirAffiche = null;
+  el.className = 'souvenir';
+  const reste = s.fin - Date.now();
+  if (reste >= 1000) apresLaFenetre(() => souvenir(s.g, reste));
 }
 
 /* ----------------------------------------------------------- choix du match */

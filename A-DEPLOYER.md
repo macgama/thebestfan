@@ -1,157 +1,158 @@
 # À déposer sur Infomaniak
 
-**Lot 4 de la refonte FAIT MAIN, « la collection », 3 et 4 octobre 2026.** La
-carte redessinée une fois pour les sept écrans qui la montrent, et son écran de
-test ; l'album commun au classeur et à la collection ; le vestiaire ; la fiche,
-qui tient sans défiler ; la vitrine, modale commune ; et les cinq reliquats de la
-vague précédente — la réserve de boosters d'une seule brique, la place de la
-fête de niveau, les insignes du carnet servis et dessinés, le booster des
-premiers pas qui compte la recharge, le contrat de `/api/rank/moi`. Le récit est
-dans `HISTORIQUE.md`, section 4 quadragies quater.
+**L'intégration qui a suivi le lot 4, 4 et 5 octobre 2026.** Le correctif
+serveur des salles du Grand Virage, et ce que les pages en tirent ; le sachet de
+LA REPRISE ; la photo du tunnel de l'écran d'ouverture ; les reliquats du lot 4.
+Le récit est dans `HISTORIQUE.md`, section 4 quadragies quinquies ; le détail du
+serveur dans `serveur/ECARTS.md`, serveur-correctif, et son contrat dans
+`serveur/CONTRATS.md`, § 15.
 
-**Le lot 4 est en ligne depuis le 4 octobre vers 17 h 07** (`7450c03`). Aucun
-code n'attend. Ce qui reste à faire : commiter la fin de la trace — des
-documents seulement —, les contrôles à l'œil, et ce que la livraison du
-quotidien laissait à Gaël.
+**Une moitié est déjà en ligne** : `0638fb5`, mis en ligne le 4 octobre vers
+17 h 17, porte le correctif du Virage et le sachet. **L'autre attend** : la photo
+du tunnel, le bandeau du but sur l'accueil, le penalty et la séance de tirs au
+but à `/matchs`, MANQUANTS à `/collection`, le câblage de l'aide, les suites et
+les documents. Aucun schéma ; un redémarrage, **hors d'un match en direct**.
 
 ---
 
 ## Où en sont le dépôt et la production
 
-Relevé le 4 octobre 2026 à 17 h 09.
+Relevé le 5 octobre 2026 à 0 h 25, et les marques de la vérification à 0 h 38.
 
-- **La production sert `7450c03`** (« Maj V04102026.1624 »), commité par Gaël à
-  17 h 05, poussé sur `origin/main`, mis en ligne par le Manager
-  (`"version": null`) : `uptime_s` dit un redémarrage vers 17 h 07. `ui.css`,
-  `cartes.js`, `cartes.css`, `nav.js`, `fx.js`, `fanzzy-fiche.js`,
-  `fanzzy-fiche.css`, `fanzzy-fond.js`, `niveau-fete.js`, `son.js` et `menu.js`
-  servis sont ceux du commit, octet pour octet ; `/fanzzy`, `/collection`,
-  `/boosters`, `/boutique`, `/profil`, `/aide`, `/bienvenue`, `/deck` et
-  `/classement` aussi, une fois retirés les `?v=` que le serveur ajoute aux
-  adresses des feuilles et des scripts. Le serveur n'a pas de marque publique :
-  c'est le redémarrage, après un commit qui touche `src/server/aide/` et
-  `src/server/quotidien/`, qui dit qu'il tourne.
-- **`/healthz` répond `ok: true`**, sans panne, `"quotidien":"actif"`, le jour
-  de jeu à `00:00`, heure de Zurich. `sql/quotidien.sql` est appliqué depuis le
-  3 octobre (Gaël, avec `2ff45f9`) ; le lot 4 n'apportait aucun schéma.
-- Avant, à 16 h 46, la production servait encore `2ff45f9`, depuis un
-  redémarrage le 3 octobre vers 10 h 33 ; `60fe268` (« Maj V03102026.1747 »), le
-  travail du lot commité pendant la vérification, n'a jamais été en ligne seul.
-- **La saison 1 n'a pas de date de fin** : à 16 h 46, `/api/fanzzy/dex` servait
-  `"lancee": true`, `"finie": false`, et aucune `fin`. Son nom, en production :
-  « La reprise ».
-- **Ce qui n'est pas commité, ce sont des documents** : `7450c03` a pris la
-  trace pendant qu'elle s'écrivait. `ETAT.md` (une partie : § 2, § 6, § 7 bis),
-  `HISTORIQUE.md` (dans la section 4 quadragies quater, « En ligne » et deux
-  passages qui disaient le lot pas encore en ligne), `A-DEPLOYER.md` (ce fichier) et
-  `README.md` (les nombres de sessions et de suites). Aucun fichier de
-  `public/`, `src/`, `sql/` ni `scripts/`.
-- **La branche du lot 6** (`refonte-lot6`, dans `.claude/worktrees/lot6`) part
-  de `60fe268` : elle n'a pas les seize fichiers que `7450c03` a ajoutés
-  par-dessus, et sa copie de travail en touche trois (`public/nav.js`,
-  `public/ui.css`, `serveur/ECARTS.md`, relevé le 4 octobre). Elle aura à
-  prendre `7450c03` avant de revenir sur `main`.
+- **La production sert `0638fb5`** (« Maj V04102026.1716 »), commité par Gaël le
+  4 octobre à 17 h 16, poussé sur `origin/main`, mis en ligne par le Manager
+  (`"version": null`) : `uptime_s` dit un redémarrage vers 17 h 17. `cartes.js`
+  et `img/pack-la-reprise.avif` servis sont ceux du commit, octet pour octet —
+  le `cartes.js` de `7450c03` diffère — ; `/`, `/matchs`, `/collection` et
+  `/fanzzy` aussi, une fois retirés les `?v=` que le serveur ajoute. Le serveur
+  n'a pas de marque publique : c'est ce redémarrage, après un commit qui touche
+  `src/server/ferveur/` et `src/server/football/`, qui dit que le correctif
+  tourne.
+- **`/healthz` répond `ok: true`**, sans panne, `"virage": "0 salle(s)"`,
+  `"quotidien": "actif"`. Aucun schéma n'attend.
+- **Le tunnel n'est pas en ligne** : `/img/ecran/tunnel-portrait.webp` répond
+  404.
+- **Ce qui n'est pas commité.** Dix-sept fichiers modifiés : quatre pages
+  (`public/index.html`, `aujourdhui.html`, `collection.html`, `fanzzy.html`) ;
+  `server.js`, `src/server/aide/index.js` et `src/server/football/poller.js`
+  (un commentaire) ; huit suites et contrôles (`accueil-ui-smoke`,
+  `aide-smoke`, `collection-smoke`, `fanzzy-ui-smoke`, `matchs-ui-smoke`,
+  `tour-ui-smoke`, `verif-cablage`, `verif-pages`) ; `serveur/CONTRATS.md` et
+  `serveur/ECARTS.md`. Sept fichiers neufs : les six images du tunnel
+  (`public/img/ecran/tunnel-portrait` et `tunnel-paysage`, en AVIF, WebP et
+  PNG) et `art/A-GENERER-ARTLIST.md`. Et cette trace : `ETAT.md`,
+  `HISTORIQUE.md`, `A-DEPLOYER.md`, `VISUELS.md`, `README.md`.
+- **`CONTRATS.md` § 15 et `ECARTS.md`, serveur-correctif, décrivent un code en
+  ligne depuis 17 h 17** sans être commités : ils partent dans le même commit.
+- **La production pose encore `globalThis.fanzzy`**, et son aide la lit : c'est
+  le câblage de `0638fb5`, et il marche. Cette livraison le remplace par l'appel
+  `createAide({ …, fanzzy })`.
+- **La saison 1 n'a toujours pas de date de fin** : à 0 h 38, `/api/fanzzy/dex`
+  sert `"lancee": true`, `"finie": false`, et aucune `fin`.
+- **La branche du lot 6** (`refonte-lot6`, dans `.claude/worktrees/lot6`) est à
+  `7450c03` : elle n'a ni `0638fb5` ni cette livraison, et sa copie de travail
+  touche `server.js`, `src/server/ferveur/`, `src/server/football/poller.js`,
+  `verif-cablage.mjs`, `verif-pages.mjs`, `CONTRATS.md` et `ECARTS.md`. Sa fusion
+  croise ce correctif ; c'est l'appel `createAide({ …, fanzzy })` qui reste, et
+  `verif-cablage` refuse aussi bien un `server.js` qui ne le passe plus qu'une
+  aide qui relit la globale.
 
 ---
 
-## Ce qui est parti, et dans quel ordre
+## Ce qui part, et dans quel ordre
 
-- **Le schéma : rien.** Aucun fichier de `sql/` n'a changé ; le dernier,
-  `sql/quotidien.sql`, était en place.
-- **Le serveur** : `src/server/quotidien/index.js` sert `insignes` dans
-  `GET /api/quotidien`, sans lecture de plus ; `src/server/aide/index.js` compte
-  la recharge due avant le booster des premiers pas, et répond 503
-  `aide.error.indisponible`, la pile au journal, là où il répondait un 400
-  muet.
-- **Les pages** : la carte (`cartes.js`, `cartes.css`, `fanzzy-fond.js`) ;
-  `ui.css` (les briques du lot 4, la réserve de boosters, la fête de niveau) ;
-  le classeur et le vestiaire (`fanzzy.html`) ; la fiche
-  (`fanzzy-fiche.html`, `.js`, `.css`) ; la collection ; et ce que la carte
-  nouvelle et les reliquats déplacent ailleurs — `boosters.html`,
-  `boutique.html`, `bienvenue.html`, `deck.html`, `aide.html`, `profil.html`,
-  `classement.html`, `index.html`, `nav.js`, `fx.js`, `niveau-fete.js`.
-- **Les suites et les contrats** : `cartes:ui` (le seul script ajouté à
-  `package.json` ; `package-lock.json` n'a pas bougé), les suites revues,
-  `serveur/CONTRATS.md` (§ 6.1, les insignes ; § 14, `/api/rank/moi`) et
-  `serveur/ECARTS.md`.
+- **Le schéma : rien.** Aucun fichier de `sql/` n'a changé.
+- **Le serveur** : `server.js` passe `fanzzy` à `createAide` et ne pose plus la
+  globale ; `src/server/aide/index.js` ne lit plus que la porte reçue ;
+  `poller.js` ne change que d'un commentaire. Rien du relevé ni des salles :
+  le correctif est déjà en ligne.
+- **Les pages** : `index.html` (la photo du tunnel ; le bandeau du but, qui ne
+  nomme plus que le bon buteur, ou personne) ; `aujourdhui.html`, servie à
+  `/matchs` (ni le penalty manqué ni la séance ne crient « GOAL ! », et le
+  verdict d'une qualification aux tirs au but lit la séance) ;
+  `collection.html` et `fanzzy.html` (MANQUANTS sur une rangée, deux
+  commentaires).
+- **Les six images du tunnel, dans le même commit qu'`index.html`.** Par
+  GitHub, `verif-pages` refuserait la livraison sans elles ; par le Manager, qui
+  ne le lance pas, la page demanderait des images absentes, qui se retireraient
+  et laisseraient le béton peint — sans un mot.
+- **Les suites et les documents.**
 
-Serveur et pages sont partis dans la même livraison, avec un redémarrage, et ce
-lot n'était pas sensible à leur ordre : une page servie une minute par l'ancien
-serveur ne reçoit pas `insignes` et ne dessine ni liseré ni tampon ; une page
-d'avant les ignore ; et devant une panne de l'aide, 400 ou 503, les deux pages
-se taisent.
+L'ordre ne compte pas ici : une page servie une minute par l'ancien serveur ne
+lit rien de neuf, et l'aide marche par la globale comme par l'appel.
 
-### Ce qui reste à commiter
+### Quand : hors d'un match en direct
 
-Les quatre documents, en un commit, poussé. Aucun redémarrage, aucune
-construction : rien de ce qu'ils changent n'est servi. Avant, comme toujours :
+**La raison première de cette précaution est passée.** Un match en cours dont
+un penalty manqué avait déjà pris un numéro, sous l'ancien code, perdait la
+carte du but réel suivant, une fois : le correctif ne compte plus le penalty
+manqué, le but suivant reprend son numéro, et sa carte existe déjà
+(`souvenirs`, `UNIQUE (fixture_id, seq)`). Ce passage s'est fait avec
+`0638fb5`, un dimanche à 17 h 17, sans la précaution ; personne n'a regardé si
+un match en était touché. Cette livraison ne change pas ce qui compte comme un
+but.
+
+**Mais tout redémarrage pendant un match coûte encore.** Les salles vivent en
+mémoire : la corde, le score de la tribune et l'état de chaque supporter
+repartent de zéro. Et une coupure de plus de cinq minutes de jeu, ou qui
+enjambe une mi-temps, n'annonce pas les buts qu'elle a couverts : le score les
+porte, leurs cartes ne sont pas frappées (`serveur/ECARTS.md`,
+serveur-correctif § 4).
+
+### Avant
 
 ```bash
-npm run pages      # « Toutes les pages compilent, la barre est partout où elle doit être. »
+npm run pages      # « l'écran d'ouverture — 9 image(s) demandée(s), toutes présentes » ; « les sachets — 8 sachet(s) dessiné(s) »
+npm run cablage    # 30 contrôles, dont les cinq de l'aide
 ```
 
-### La vérification, faite
+### La vérification, après
 
 ```bash
 T=$(date +%s)
-curl -s "https://thebestfan.online/healthz?v=$T"                                         # "ok":true, sans "panne"
-curl -s "https://thebestfan.online/cartes.css?v=$T" | grep -c 'top:84%'                    # 1
-curl -s "https://thebestfan.online/ui.css?v=$T"     | grep -c 'brightness(.45) contrast(1.8)'  # 1
-curl -s "https://thebestfan.online/collection?v=$T" | grep -c ordreSerie                   # 4
-curl -s "https://thebestfan.online/fanzzy?v=$T"     | grep -c place-vide.webp              # 1
-curl -s "https://thebestfan.online/boosters?v=$T"   | grep -c kBoosters                    # 3
-curl -s "https://thebestfan.online/profil?v=$T"     | grep -c data-lisere                  # 5
+curl -s "https://thebestfan.online/healthz?v=$T"                                    # "ok":true, sans "panne"
+curl -s "https://thebestfan.online/?v=$T"           | grep -c tunnel-portrait         # 4
+curl -s "https://thebestfan.online/?v=$T"           | grep -c auTableau               # 3
+curl -s "https://thebestfan.online/matchs?v=$T"     | grep -c 'Missed Penalty'        # 2
+curl -s "https://thebestfan.online/collection?v=$T" | grep -c 'Manquants</button>'    # 1
+curl -s -o /dev/null -w '%{http_code}\n' "https://thebestfan.online/img/ecran/tunnel-portrait.webp?v=$T"   # 200
 ```
 
-À 17 h 09 : `ok: true`, puis 1, 1, 4, 1, 3 et 5 — les valeurs attendues. À
-16 h 46, sur `2ff45f9`, elles valaient toutes 0. Les quatre premiers comptes ne
-viennent qu'avec les seize fichiers d'après `60fe268` : 0, 0, 0, 0 puis 3 et 5
-auraient dit que `60fe268` était parti seul.
+Le 5 octobre à 0 h 38, sur `0638fb5` : `ok: true`, puis 0, 0, 0, 0 et 404. Un
+200 sur l'image avec un 0 sur la page dirait que les images sont parties sans
+`index.html` ; l'inverse, qu'`index.html` est parti sans ses images.
 
 ### Les contrôles à l'œil
 
-Sur un téléphone, connecté, du plus parlant au plus discret.
+Sur un téléphone, connecté.
 
-1. **Le classeur** (MON FANZZY ▸ CLASSEUR). Le rail des séries, LA REPRISE
-   ouverte, les autres sous cadenas ; la page de la série : son en-tête et sa
-   jauge-écharpe, les cartes collées de travers, une pochette « N° 0… » pour
-   chaque carte qui manque, la légendaire en case VITRINE. Une carte neuve
-   porte NOUVEAU au coin bas-gauche, sans cacher le visage ; restée une seconde
-   à l'écran, elle s'éteint, et le « +N » du hub aussi au retour. Les six pins
-   de famille se reconnaissent, MANQUANTS ne laisse que ce qui manque.
-2. **Le vestiaire** (MON FANZZY). La poche — écharpes, réserve, anneau du
-   classeur —, le personnage sur sa scène, ses stickers, son cri, ENTRER EN
-   DUEL avec les bustes du deck, SA FICHE. Avec un compte neuf : TA PLACE EST
-   VIDE et OUVRIR MON PREMIER BOOSTER.
-3. **La fiche** (SA FICHE, ou une carte du classeur). Rien ne défile ; la carte
-   s'incline au doigt et se retourne ; les âges sur la corde, les effets sur la
-   craie avec leur pin, les états en vert, les tenues en bleu, le détail sur le
-   kraft. ÉVOLUER, s'il y a de quoi : la cérémonie, le tampon ÉVO 2, le ticket
-   qui descend, le solde qui décompte. Sur une carte qu'on n'a pas : le
-   pochoir, la vignette du paquet, OUVRIR UN BOOSTER.
-4. **La collection.** Le niveau de collectionneur, son anneau sur le prochain
-   cran (« 10 / 25 », pas sur le total), RÉCUPÉRER si un cran attend ; les cinq
-   rayons. FANZZY ouvre l'album, et une case, la vitrine ; ÉTATS et TENUES
-   rangent leurs planches par série, une planche complète repliée ;
-   ÉQUIPEMENT et CARTES D'ACTION, une grille de stickers.
-5. **La vitrine.** La carte inclinable, les dos des voisines derrière, « ×N »
-   en tampon, FAIRE GRANDIR, les flèches ; une rare, une épique ou une
-   légendaire a sa cérémonie, au-dessus de la vitrine ; une manquante, le
-   paquet et OUVRIR UN BOOSTER.
-6. **La carte partout.** La forme et son mot au coin haut-droit, l'étoile de
-   l'épique et l'éclat de la légendaire entiers sous leur étiquette ; une carte
-   qu'on n'a pas en silhouette, jamais en dalle grise. À l'ouverture d'un
-   booster, au butin, à la bienvenue, au deck.
-7. **La réserve de boosters**, le même sticker au kiosque, à la boutique, au
-   vestiaire et dans la bande du HUD (toucher l'avatar de la barre, sous
-   560 pixels), avec l'anneau de recharge quand un booster est en route.
-8. **Le mode calme**, animations coupées : la vitrine ne s'incline plus, aucune
-   carte ne bouge, la forme et le mot de la rareté restent.
+1. **Le tunnel, à l'ouverture** (une fenêtre privée, ou après avoir vidé le
+   site). La photo de béton — les poutres, les deux mains courantes,
+   l'escalier, la bâche rouge à gauche et l'or à droite —, la tribune au bout
+   du trou, et la lumière qui grandit ; le titre et la jauge lisibles. Couché,
+   le titre ne mord pas sur la lumière. Avec le mode calme, rien ne bouge.
+2. **Le sachet, au kiosque** (en ligne depuis `0638fb5`) : BOOSTERS, LA
+   REPRISE choisie, trois sachets dessinés au carrousel, pas trois cartes
+   plates.
+3. **Aucune salle de Virage restée sur un match fini.** Une fois les matchs du
+   jour finis et leurs pages fermées, `/healthz` dit `"virage": "0 salle(s)"`.
+   Entre-temps, l'aperçu de `/admin` liste les salles en vie, le numéro de leur
+   match et leur foule : une
+   salle à foule nulle sur un match fini ne doit pas y rester plus d'une
+   minute. Une salle encore occupée sur un match fini peut rester tant que
+   quelqu'un est sur la page, mais elle n'est plus relevée.
+4. **Dans un Virage, pendant un match** (en ligne depuis `0638fb5`) : recharger
+   la page rend le même souffle et la même main ; fermer un autre onglet du jeu
+   ne fait pas sortir de la tribune.
+5. **Si l'occasion se présente.** Un but de ton club en direct, sur l'accueil :
+   « Goal ! », puis le buteur et sa minute — ou rien, jamais le buteur du but
+   d'avant. Un match aux tirs au but, à `/matchs` : pas de « GOAL ! » pendant
+   la séance ; au coup de sifflet, VICTOIRE ou DÉFAITE, « aux tirs au but ».
+6. **L'album de `/collection`** (FANZZY), sur un téléphone de 360 à 440 pixels :
+   les six pins et MANQUANTS sur une seule rangée.
 
-**Les insignes du carnet ne se verront pas tout de suite.** Le liseré vient au
-palier de 40 tampons, le tampon S1 à celui de 100, et les missions en donnent
-cinq par jour au plus depuis le 3 octobre : personne ne les a encore. L'audit
-les photographie sur un joueur semé (`profil@insignes`).
+Les contrôles à l'œil du lot 4, s'ils n'ont pas été faits, sont dans la version
+précédente de ce fichier : `git show 0638fb5:A-DEPLOYER.md`.
 
 ### À faire par Gaël, resté de la livraison du quotidien
 
@@ -160,7 +161,7 @@ quotidien ».
 
 1. **Saisir la fin de la saison 1** dans l'onglet Saisons, après avoir vérifié
    sur `/matchs` le dernier week-end de championnat avant la trêve (proposée :
-   2026-12-20). Au 4 octobre, elle n'est pas saisie.
+   2026-12-20). Au 5 octobre, elle n'est pas saisie.
 2. **Recaler les quatre seuils de division** sur la ferveur réelle des joueurs
    **sans abonnement** (la requête, en lecture seule, est dans
    `DEPLOIEMENT.md`).
@@ -168,26 +169,27 @@ quotidien ».
    ligne depuis le 3 octobre, avant le 19.
 
 Et les premiers jours, la requête de détection du grand livre (`DEPLOIEMENT.md`,
-« Le grand livre des récompenses »). Les contrôles à l'œil des lots 3 et 5,
-s'ils n'ont pas été faits, sont dans une version précédente de ce fichier :
-`git show 2ff45f9:A-DEPLOYER.md`, étape 5.
+« Le grand livre des récompenses »).
 
 ---
 
 ## Ce que ça change à l'écran
 
-- **La carte est un sticker** qu'on a envie de coller : sa plaque de rareté, son
-  nom en banderole, sa rareté dite par la couleur, la forme, le mot et la
-  matière ; une carte qu'on n'a pas, en silhouette sous scotch, avec son numéro.
-- **Le classeur est un album** qu'on feuillette série par série ; MON FANZZY
-  est un vestiaire.
-- **La fiche tient sur un écran** de téléphone, la carte en main, et évoluer est
-  une cérémonie.
-- **La collection** s'ouvre sur le niveau de collectionneur et cinq rayons, au
-  lieu d'un accordéon de treize mille pixels ; **toute carte s'y regarde dans
-  la même vitrine**.
-- **Partout**, la réserve de boosters est le même sticker ; le profil coud le
-  liseré de saison et pose son tampon, dès qu'un joueur les a.
+- **L'écran d'ouverture a son couloir de béton** : une photo, debout ou couchée
+  selon l'écran, avec le stade au bout. Sans elle, le béton peint d'avant,
+  à la même géométrie.
+- **Au but de ton club, l'accueil nomme le bon buteur**, ou personne — jamais
+  celui du but d'avant, ni celui qui vient de manquer son penalty.
+- **`/matchs` ne fête plus un penalty raté**, ne crie plus « GOAL ! » à chaque
+  tir d'une séance, et dit d'une qualification aux tirs au but qu'elle est une
+  victoire ou une défaite, avec le score de la séance.
+- **L'album de `/collection`** dit MANQUANTS, comme le classeur, sur la même
+  rangée que ses filtres.
+- Déjà en ligne : **le kiosque montre le sachet de LA REPRISE** ; **dans le
+  Virage**, recharger ne rend plus un souffle neuf, deux onglets ne se chassent
+  plus, la minute double finit à l'écran, un penalty raté ne frappe plus de
+  carte, et une tribune ouverte en cours de match ne rejoue pas les buts
+  d'avant.
 
 ---
 
@@ -195,39 +197,36 @@ s'ils n'ont pas été faits, sont dans une version précédente de ce fichier :
 
 **Deux suites restent rouges, et l'étaient avant le lot 0, à l'identique** :
 `deck:ui` (un rouge) et `nvn:ui` (trois). Dernier passage, le 4 octobre de
-15 h 58 à 16 h 20 : soixante-deux suites, 4 449 contrôles. **`accueil:ui` est
-intermittente**, rouge dans la série et verte seule ; **`virage:ui`** s'est
-arrêtée dans la série sur un délai de navigation, pendant qu'un banc de
-l'atelier du lot 6 tournait sur le poste, et passe seule (trois fois, 102
-contrôles). `abo:smoke`, lancée vers 16 h, est verte.
+23 h 26 à 23 h 48 : soixante-quatre suites, 4 708 contrôles. **`accueil:ui` est
+intermittente** : trois rouges dans la série, deux quand elle est relancée
+seule, aucun dans une copie de la suite hors du dépôt, puis le rouge connu de
+la bulle ; dans les passages rouges du rideau, `ouverture.js`
+démarrait environ neuf secondes après la navigation (`ETAT.md` § 6).
 
-**Trois fautes mineures, relevées au dernier tour et parties en ligne telles
-quelles** : deux commentaires qui disent encore NOUVEAU « sur le flanc » de la
-carte, et l'interrupteur de l'album appelé MANQUANTS au classeur et « Ce qu'il
-me reste » à `/collection`, où il passe sur une seconde ligne à 360 pixels.
-Sans effet sur ce que la page fait.
+**Le correctif est éprouvé contre de faux clients, pas contre un vrai match.**
+`salles:test` et `releve:test` montent les vrais modules sur de fausses sockets
+et une fausse API. Ce qui s'est passé en production depuis le 4 octobre à
+17 h 17 — le journal du serveur, le quota du jour dans l'aperçu de `/admin` —
+n'a pas été relu.
 
-**Deux données manquent au serveur** : la récompense d'une série complète ne
-paraît pas au classeur (elle paraît à `/collection`) tant que
-`/api/fanzzy/state` ne sert pas `paliers.series` ; et la fiche n'écrit pas « 1
-CHANCE SUR 3 », la chance d'une carte n'étant pas servie.
+**L'audit ne voit pas la photo du tunnel** : il mesure la craie de l'ouverture
+sur le fond de l'écran. Le 4,5:1 sous le libellé et la consigne est celui du
+traitement de l'image, mesuré à sa fabrication.
 
-**Le sachet de LA REPRISE n'a toujours pas de dessin** : au kiosque, à la
-fiche d'une carte manquante et dans la vitrine, c'est le repli du code.
+**`/matchs` peut taire un vrai but** : au statut P ou PEN, un penalty marqué à
+la minute 90 ou plus et publié après le début de la séance est pris pour un
+tir de la séance. Et un match retour gagné 1-0 puis perdu aux tirs au but
+s'annonce VICTOIRE.
 
-**Au soleil, les faces restent sous le seuil, et c'est décidé** (les arbitrages
-du 2 octobre) : la craie sur les faces vives, 2,4 à 2,6:1 ; l'encre sur l'or,
-3,8.
+**Le coût.** La photo pèse 53 Ko en AVIF debout, 42 couchée (65 et 43 en
+WebP) ; le PNG, 885 et 933 Ko, ne part que vers un navigateur qui ne lit ni
+l'un ni l'autre. Aucune lecture ni aucun appel à l'API sportive de plus.
 
-**Le coût sur un téléphone modeste n'est pas mesuré.** Mesuré en lectures :
-MON FANZZY fait une lecture légère de plus (`/api/deck/loadout`, les bustes du
-deck) et passe de quinze images à cinq (656 Ko à 297) ; la fiche envoie
-l'extinction de ses nouveautés (`POST /api/fanzzy/vu`) ; le classeur ne lit pas
-la bibliothèque ; aucun appel à l'API sportive. Au plus trois animations infinies
-à l'écran (la fiche d'une légendaire), aucune en grille, aucune au calme.
-
-**Le retour arrière.** Le code se défait par un `git revert` de `7450c03` et
-`60fe268`, puis une mise en ligne ; il n'y a pas de schéma à défaire.
+**Le retour arrière.** Cette livraison se défait par un `git revert` de son
+commit, puis une mise en ligne ; il n'y a pas de schéma à défaire. Défaire le
+correctif lui-même (`0638fb5`, qui porte aussi le sachet et la fin de la trace
+du lot 4) rouvrirait D1 à D3, et ferait aux numéros des buts le chemin
+inverse : hors d'un match en direct, là aussi.
 
 ---
 
@@ -236,8 +235,10 @@ la bibliothèque ; aucun appel à l'API sportive. Au plus trois animations infin
 Dans `ETAT.md`, § 7 bis, avec le détail dans `HISTORIQUE.md`, 4 quadragies ter
 et quater, « Ce qui reste » : les décisions que le chantier du quotidien rend à
 Gaël ; `paliers.series` avec l'état et la chance d'une carte, que les écrans du
-lot 4 attendent ; `server.js`, qui ne passe pas `fanzzy` à l'aide (elle le lit
-sur `globalThis.fanzzy` : **ne pas retirer cette globale**) ; les boosters d'un
-abonnement acheté, qui entrent dans la réserve sans compter la recharge due ; et
-le contrôle de démarrage, qui ne vérifie que la première des trois colonnes de
-`sql/couleurs.sql`.
+lot 4 attendent ; les boosters d'un abonnement acheté, qui entrent dans la
+réserve sans compter la recharge due ; et le contrôle de démarrage, qui ne
+vérifie que la première des trois colonnes de `sql/couleurs.sql`.
+
+Et, de cette intégration (4 quadragies quinquies, « Ce qui reste ») : faire
+suivre `comments` dans les événements du télétexte, pour que `/matchs`
+reconnaisse la séance comme le relevé ; D4, D5 et D7 du Grand Virage, au lot 6.

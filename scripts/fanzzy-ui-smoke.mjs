@@ -849,10 +849,12 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
   /* **Ce qui reste à trouver.** L'en-tête de la grille l'écrivait
      (« 138 à trouver »). Depuis le lot 4, chaque page d'album dit son compte
      (« 2 / 68 », ou le tampon COMPLET), et ce qui reste **se montre** :
-     l'interrupteur « ce qu'il me reste » ne laisse sur la page que les cases
-     à trouver — les pochettes et les âges à payer. On tourne l'album jusqu'à
-     la page de TR32 (elle a des cartes en clair, donc quelque chose à
-     retirer), on le touche, on compte, et on le rend.
+     l'interrupteur MANQUANTS ne laisse sur la page que les cases à trouver —
+     les pochettes et les âges à payer. Les contrôles portent le mot de
+     l'écran : un rouge qui nommerait un libellé disparu enverrait chercher un
+     bouton qui n'existe plus. On tourne l'album jusqu'à la page de TR32
+     (elle a des cartes en clair, donc quelque chose à retirer), on le touche,
+     on compte, et on le rend.
 
      `\s` et non un espace littéral : un espace insécable s'était glissé dans
      le gabarit, invisible dans l'éditeur comme dans le message d'échec, et le
@@ -889,7 +891,7 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
     ALBUM.every((p) => /^\d+\s*\/\s*\d+$/.test(p.compte ?? '') || p.complet)
     || (console.log('        il dit :', [...(ALBUM.find((p) => !/^\d+\s*\/\s*\d+$/.test(p.compte ?? '')
       && !p.complet)?.compte ?? '')].map((c) => c.codePointAt(0).toString(16)).join(' ')), false));
-  check(`« ce qu’il me reste » ne laisse que ce qui est à trouver (${reste.n} sur ${avant?.cases.length})`,
+  check(`MANQUANTS ne laisse que ce qui est à trouver (${reste.n} sur ${avant?.cases.length})`,
     (reste.coche === 'true' && reste.montee && reste.enClair === 0 && reste.n === aTrouver && aTrouver > 0)
     || (console.log('        il montre :', JSON.stringify(reste), 'attendu', aTrouver), false));
   check('et le compte de la page ne bouge pas avec lui', reste.compte === avant?.compte);

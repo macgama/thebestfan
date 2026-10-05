@@ -537,10 +537,36 @@ check('cadence de chants plafonnée',
 await pool.query(
   `UPDATE virage_presence SET last_push_at = NOW(3) - INTERVAL 10 MINUTE WHERE user_id = ?`, [U[2]]);
 
+/* **Le but de Diallo, à la 23e, était au tableau quand la salle a ouvert** —
+   1–0 à la 34e. Le relevé peut l'apporter en retard, avec son score : l'API
+   publie le score avant l'événement, ou le télétexte a rangé le score avant
+   le tour du direct. Il sonnait alors « GOAL ! » pour toute la tribune,
+   ouvrait la minute double et ramenait la minute à 23. Le vrai chemin, celui
+   de `ferveur/index.js` ; le but sans score, juste après, sert de témoin :
+   les mêmes sockets l'entendent. */
+{
+  const salle = virage.rooms.get(7001);
+  const minute = salle.minute, surge = salle.surgeUntil;
+  const score = JSON.stringify(salle.scoreReel), fil = salle.fil.length;
+  const dit = virage.realGoal({ fixtureId: 7001, teamId: 85, minute: 23, player: 'Diallo',
+    score: [1, 0] });
+  await wait(200);
+  check('un but qui était au tableau à l’ouverture ne sonne pas',
+    dit === false && A.realGoals.length === 0 && C.realGoals.length === 0
+    || (console.log(`        rendu ${dit} · ${A.realGoals.length} annonce(s)`), false));
+  /* La corde n'est pas comparée ici : l'horloge commune la fait retomber
+     pendant l'attente. La salle seule, plus bas, la lit sans horloge. */
+  check('ni minute double, ni minute, ni score, ni fil qui bougent',
+    salle.surgeUntil === surge && salle.minute === minute
+    && JSON.stringify(salle.scoreReel) === score && salle.fil.length === fil);
+}
+
 const avant = A.state.rope;
-virage.realGoal({ fixtureId: 7001, teamId: 85, minute: 23, player: 'Diallo' });
+const annonce = virage.realGoal({ fixtureId: 7001, teamId: 85, minute: 23, player: 'Diallo' });
 check('but réel diffusé à toute la salle',
   await until(() => A.realGoals.length === 1 && C.realGoals.length === 1));
+// Sans score, rien ne le date : la salle l'annonce, et le dit.
+check('et la salle dit l’avoir annoncé', annonce === true);
 check('le but secoue la corde du bon côté', A.realGoals[0].side === 0);
 /* La durée part à côté de l'instant : une horloge de téléphone en avance
    lirait `surgeUntil` de travers, et le compte à rebours part de `surgeMs`. */
@@ -1013,6 +1039,96 @@ for (const m of room.members.values()) m.lastPush = Date.now();
   check('un neutre qui ressort et rechoisit obtient le camp demandé',
     P3.state?.you?.side === 0 && room.members.get(QUI)?.side === 0);
   P3.socket.disconnect();
+  await until(() => !room.members.has(QUI));
+}
+
+/* ------------------------------------- la carte tirée, dans chaque onglet
+
+ * Le battement tirait la carte suivante et ne le disait à personne :
+ * `virage:vous` ne partait qu'après une carte jouée, sur la socket qui
+ * l'avait jouée — donc avant le tirage. La page gardait une case vide pour
+ * toujours. On éprouve le vrai chemin — l'horloge commune de
+ * `ferveur/index.js` et la table des sockets — avec deux onglets du même
+ * joueur, et un voisin de tribune qui ne doit rien recevoir. */
+{
+  const QUI = 'bbbbbbbb-0000-0000-0000-000000000006';
+  const T1 = connect(QUI), T2 = connect(QUI);
+  const vus1 = [], vus2 = [], voisin = [];
+  T1.socket.on('virage:vous', (v) => vus1.push(v));
+  T2.socket.on('virage:vous', (v) => vus2.push(v));
+  const espion = (v) => voisin.push(v);
+  B.socket.on('virage:vous', espion);
+  await until(() => T1.socket.connected && T2.socket.connected);
+  T1.socket.emit('virage:join', { fixtureId: 7001 });
+  await until(() => T1.state);
+  T2.socket.emit('virage:join', { fixtureId: 7001 });
+  await until(() => T2.state);
+
+  /* Deux cartes en main, une en pioche, et la suivante due maintenant. */
+  const x = room.members.get(QUI);
+  x.main = ['a-fumigene', 'a-fumigene']; x.pioche = ['a-tifo']; x.defausse = [];
+  x.remplirA = Date.now();
+  check('la carte tirée au battement part aux deux onglets du joueur',
+    await until(() => vus1.length >= 1 && vus2.length >= 1)
+    || (console.log(`        ${vus1.length} et ${vus2.length} reçu(s)`), false));
+  check('avec la main entière, la carte tirée comprise',
+    vus1[0]?.main?.length === 3 && vus1[0]?.main?.includes('a-tifo')
+    && JSON.stringify(vus2[0]?.main) === JSON.stringify(vus1[0]?.main));
+  /* Le tirage suivant attend `refillMs`, et la pioche est vide : d'ici là,
+     cinq battements ne doivent rien envoyer de plus. */
+  await wait(RULES.tickMs * 5);
+  check('une fois, et à lui seul',
+    vus1.length === 1 && vus2.length === 1 && voisin.length === 0
+    || (console.log(`        ${vus1.length}, ${vus2.length}, voisin ${voisin.length}`), false));
+
+  /* **Le Changement de chant**, joué dans un onglet, refait cinq cartes d'un
+     coup et n'appelle aucun tirage : seul le message de la carte jouée peut
+     l'apprendre à l'autre. Il ne partait qu'à la socket qui avait joué, et
+     l'autre onglet gardait l'ancienne main — ses cartes refusées, les
+     neuves invisibles — sans limite de temps. */
+  vus1.length = 0; vus2.length = 0;
+  x.main = ['a-relais', 'a-fumigene', 'a-fumigene', 'a-fumigene', 'a-fumigene'];
+  x.pioche = Array(6).fill('a-tifo'); x.defausse = []; x.breath = 100; x.cooldowns = {};
+  T1.socket.emit('virage:jouer', { cardId: 'a-relais' });
+  const mainServeur = () => JSON.stringify(room.members.get(QUI)?.main);
+  check('le Changement de chant joué dans un onglet refait la main des deux',
+    await until(() => vus1.length >= 1 && vus2.length >= 1)
+    && x.remplirA === 0 && x.main.length === 5
+    && JSON.stringify(vus1[0].main) === mainServeur()
+    && JSON.stringify(vus2[0].main) === mainServeur()
+    || (console.log(`        ${vus1.length} et ${vus2.length} reçu(s) · serveur ${mainServeur()}`
+      + ` · onglet 2 ${JSON.stringify(vus2[0]?.main)}`), false));
+
+  /* **Le filet.** La salle change la main sans rien dire — on le simule —,
+     et l'onglet joue la carte qu'il croit tenir. Le refus lui renvoie la
+     main, les recharges et le souffle : l'écart se répare de lui-même, au
+     lieu de durer jusqu'au rechargement. À lui seul : rien n'a changé pour
+     l'autre onglet. Ni tirage ici — `remplirA` reste à zéro. */
+  vus1.length = 0; vus2.length = 0; T2.errors.length = 0;
+  x.main = ['a-tifo']; x.cooldowns = {};
+  T2.socket.emit('virage:jouer', { cardId: 'a-fumigene' });
+  check('une carte qui n’est plus en main : refusée, et la main renvoyée à cet onglet',
+    await until(() => T2.errors.includes('ferveur.error.card_not_in_hand') && vus2.length === 1)
+    && JSON.stringify(vus2[0].main) === '["a-tifo"]'
+    || (console.log(`        ${T2.errors.join(', ')} · ${vus2.length} reçu(s)`), false));
+  x.main = ['a-fumigene']; x.cooldowns = { 'a-fumigene': Date.now() + 9000 };
+  T2.socket.emit('virage:jouer', { cardId: 'a-fumigene' });
+  check('une carte en recharge : refusée, et la recharge renvoyée',
+    await until(() => T2.errors.includes('ferveur.error.card_on_cooldown') && vus2.length === 2)
+    && vus2[1].cooldowns?.['a-fumigene'] > 0
+    || (console.log(`        ${T2.errors.join(', ')} · ${vus2.length} reçu(s)`), false));
+  x.cooldowns = {}; x.breath = 0; x.regenAt = Date.now();
+  T2.socket.emit('virage:jouer', { cardId: 'a-fumigene' });
+  check('trop peu de souffle : refusée, et le souffle renvoyé',
+    await until(() => T2.errors.includes('ferveur.error.not_enough_breath') && vus2.length === 3)
+    && vus2[2].breath < 20
+    || (console.log(`        ${T2.errors.join(', ')} · ${vus2.length} reçu(s)`), false));
+  await wait(RULES.tickMs * 3);
+  check('et l’autre onglet n’en reçoit rien', vus1.length === 0 && voisin.length === 0
+    || (console.log(`        onglet 1 ${vus1.length}, voisin ${voisin.length}`), false));
+  B.socket.off('virage:vous', espion);
+  T1.socket.disconnect();
+  T2.socket.disconnect();
   await until(() => !room.members.has(QUI));
 }
 
@@ -1518,6 +1634,343 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
   check('la fin de la minute double est diffusée, même quand rien ne bouge',
     ticks.at(-1)?.p.surge === false && ticks.filter((x) => x.p.surge === false).length === 1
     || (console.log('        ticks :', ticks.map((x) => x.p.surge).join(' ')), false));
+}
+
+/* ================================== la carte tirée, annoncée
+
+   Le tirage posait `dirtyMain`, que personne ne lisait : la page montrait au
+   plus quatre cartes, et quand celles qu'elle voyait étaient toutes en
+   recharge, plus rien ne partait — ni carte, ni message — jusqu'au
+   rechargement. La salle seule, sur son horloge, avec un espion à la place
+   des sockets. */
+{
+  const vues = [];
+  let horloge = 0;
+  const salle = new VirageRoom({
+    fixture: { id: 9012, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: () => {}, emitVous: (userId, you) => vues.push({ userId, you, a: horloge }),
+    log: { warn() {}, error() {} },
+  });
+  const tic = (t) => { horloge = t; salle.tick(t); };
+  const dix = ACTIONS_VIRAGE.slice(0, 10).map((a) => a.id);
+  salle.join('t1', { side: 0, name: 'Un', actions: dix });
+  salle.join('t2', { side: 0, name: 'Deux', actions: dix });
+  const m = salle.members.get('t1');
+  check('un deck de dix cartes du Virage : cinq en main, cinq en pioche',
+    m.main.length === 5 && m.pioche.length === 5);
+
+  m.main[0] = 'a-fumigene'; m.breath = 100; m.cooldowns = {};
+  const t0 = Date.now();
+  salle.jouer('t1', 'a-fumigene');
+  tic(t0 + RULES.refillMs - 100);
+  check('rien ne part avant le tirage', vues.length === 0);
+  tic(t0 + RULES.refillMs + 100);
+  check('le tirage est annoncé à celui qui la tient, avec une main de cinq',
+    vues.length === 1 && vues[0].userId === 't1' && vues[0].you?.main?.length === 5
+    && vues[0].you?.mainVisible === RULES.mainVisible
+    || (console.log('        reçu :', JSON.stringify(vues.map((v) => [v.userId, v.you?.main?.length]))), false));
+  check('et la marque est effacée', m.dirtyMain === false);
+
+  /* Au plus un message toutes les `refillMs` : une main vide, une pioche
+     pleine, et vingt secondes de battements. */
+  vues.length = 0;
+  const tc = t0 + RULES.refillMs + 200;   // l'horloge de la salle ne recule pas
+  m.main = []; m.pioche = [...dix]; m.defausse = []; m.remplirA = tc;
+  for (let t = tc; t <= tc + 20_000; t += RULES.tickMs) tic(t);
+  const ecarts = vues.slice(1).map((v, i) => v.a - vues[i].a);
+  check('cinq tirages, cinq messages, jamais deux à moins de refillMs',
+    vues.length === 5 && vues.every((v) => v.userId === 't1')
+    && ecarts.every((e) => e >= RULES.refillMs) && vues.at(-1)?.you?.main?.length === 5
+    || (console.log(`        ${vues.length} message(s), écarts ${ecarts.join(', ')}`), false));
+
+  /* **Un parti ne reçoit rien**, et ne tire pas : la salle garde sa main
+     telle qu'il l'a laissée, et la lui rend à l'entrée. Le tirage dû pendant
+     l'absence tombe au premier battement après son retour. */
+  vues.length = 0;
+  const p = salle.members.get('t2');
+  const tp = tc + 21_000;
+  p.main.pop(); p.remplirA = tp;          // une carte jouée : la suivante est due à `tp`
+  salle.leave('t2', tp - 1000);
+  for (let t = tp; t <= tp + 3 * RULES.refillMs; t += RULES.tickMs) tic(t);
+  check('un parti ne reçoit rien et ne tire pas', vues.length === 0 && p.main.length === 4);
+  const retour = salle.join('t2', { side: 0, name: 'Deux', actions: dix });
+  check('à son retour, l’état porte la main qu’il a laissée', retour.you?.main?.length === 4);
+  tic(tp + 3 * RULES.refillMs + RULES.tickMs);
+  check('et le battement suivant tire et l’annonce',
+    vues.length === 1 && vues[0].userId === 't2' && vues[0].you?.main?.length === 5);
+
+  /* Une salle montée sans le canal — les suites — tire quand même, en
+     silence, et efface sa marque. */
+  const muette = new VirageRoom({
+    fixture: { id: 9013, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: () => {}, log: { warn() {}, error() {} },
+  });
+  muette.join('t3', { side: 0, name: 'Trois', actions: dix });
+  const q3 = muette.members.get('t3');
+  q3.main.pop(); q3.remplirA = Date.now();
+  muette.tick(Date.now() + RULES.tickMs);
+  check('sans canal, la salle tire sans rien casser',
+    q3.main.length === 5 && q3.dirtyMain === false);
+}
+
+/* ================================== un but d'avant l'ouverture
+
+   La salle ouvre à 2–1, à la cinquantième. Le relevé lui apporte en retard
+   un but de la neuvième : l'API a publié le score avant l'événement, ou le
+   télétexte a rangé le score avant le tour du direct. Il sonnait « GOAL ! »,
+   secouait la corde, ouvrait la minute double et ramenait la salle à la
+   neuvième minute — et au score de ce moment-là. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9014, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+      status: '2H', elapsed: 50, homeGoals: 2, awayGoals: 1 },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('o1', { side: 0, name: 'Un' });
+  const annonces = () => emis.filter((x) => x.e === 'virage:real_goal');
+  const butsAuFil = () => salle.fil.filter((e) => e.type === 'Goal').length;
+
+  // Rang 2 : le but de la neuvième. Rang 3 : le dernier d'avant l'ouverture.
+  const r2 = salle.realGoal({ teamId: 1, minute: 9, player: 'Ancien', score: [1, 1] });
+  const r3 = salle.realGoal({ teamId: 1, minute: 41, player: 'Borne', score: [2, 1] });
+  check('un but d’avant l’ouverture ne sonne pas, le dernier compris',
+    r2 === false && r3 === false && annonces().length === 0
+    || (console.log(`        rendu ${r2}/${r3} · ${annonces().length} annonce(s)`), false));
+  check('il ne secoue pas la corde et n’ouvre pas la minute double',
+    salle.rope === 0 && salle.surgeUntil === 0);
+  check('ni la minute ni le score de la salle ne reculent jusqu’à lui',
+    salle.minute === 50 && salle.scoreReel[0] === 2 && salle.scoreReel[1] === 1);
+  check('et il n’entre ni au fil ni au compte des buts vus',
+    butsAuFil() === 0 && salle.realGoals[0] === 0 && salle.realGoals[1] === 0);
+
+  /* Au même tour, le relevé fait monter le tableau **avant** d'apporter le
+     but : la garde compare à l'ouverture, pas au score du moment. */
+  salle.matchStatus({ status: '2H', elapsed: 51, homeGoals: 3, awayGoals: 1 });
+  const r4 = salle.realGoal({ teamId: 1, minute: 51, player: 'Frais', score: [3, 1] });
+  check('le but suivant sonne, même quand le tableau l’a déjà compté',
+    r4 === true && annonces().length === 1 && annonces()[0].p.player === 'Frais');
+  check('avec sa secousse, sa minute double et sa minute',
+    salle.rope < 0 && salle.surgeUntil > Date.now() && salle.minute === 51 && butsAuFil() === 1);
+}
+
+/* ================================== un but refusé par la vidéo
+
+   Ouverte à 1–0, la salle voit la vidéo retirer ce but : le tableau
+   redescend à 0–0. Le vrai but suivant reprend le rang 1 ; si le compte de
+   l'ouverture ne redescendait pas avec le tableau, il serait tu. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9015, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+      status: '1H', elapsed: 30, homeGoals: 1, awayGoals: 0 },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('v1', { side: 1, name: 'Un' });
+  salle.matchStatus({ status: '1H', elapsed: 32, homeGoals: 0, awayGoals: 0 });
+  salle.matchStatus({ status: '1H', elapsed: 35, homeGoals: 0, awayGoals: 1 });
+  const r = salle.realGoal({ teamId: 2, minute: 35, player: 'Apres', score: [0, 1] });
+  check('après un but refusé par la vidéo, le vrai but suivant sonne',
+    r === true && emis.filter((x) => x.e === 'virage:real_goal').length === 1
+    || (console.log(`        rendu ${r} · buts connus ${salle.butsConnus}`), false));
+}
+
+/* ================================== un but déjà annoncé, revenu sous un autre nom
+
+   La salle ouvre au coup d'envoi et annonce le but de la neuvième. À la
+   cinquantième, l'API corrige le buteur — « K. Buteur » devient « Karim
+   Buteur » : pour le relevé, qui reconnaît un but à son buteur, c'est un but
+   jamais vu, et il le renvoie avec son score d'alors. La garde de
+   l'ouverture ne le couvrait pas — la salle avait ouvert à 0–0 —, et il
+   sonnait une seconde fois : « GOAL ! », corde, minute double, et la salle
+   revenait à la neuvième minute. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9016, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+      status: '1H', elapsed: 5, homeGoals: 0, awayGoals: 0 },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('k1', { side: 0, name: 'Un' });
+  const annonces = () => emis.filter((x) => x.e === 'virage:real_goal');
+  const butsAuFil = () => salle.fil.filter((e) => e.type === 'Goal').length;
+
+  // Comme au même tour du relevé : le tableau d'abord, le but ensuite.
+  salle.matchStatus({ status: '1H', elapsed: 9, homeGoals: 1, awayGoals: 0 });
+  const r1 = salle.realGoal({ teamId: 1, minute: 9, player: 'K. Buteur', score: [1, 0] });
+  check('le but de la neuvième sonne, une fois', r1 === true && annonces().length === 1);
+
+  /* La corde et la minute double repartent de zéro : ce qui suit ne doit
+     pas les toucher, et une minute double reposée dans la même milliseconde
+     ne se verrait pas. */
+  salle.matchStatus({ status: '2H', elapsed: 50, homeGoals: 1, awayGoals: 0 });
+  salle.rope = 0; salle.surgeUntil = 0;
+  const r2 = salle.realGoal({ teamId: 1, minute: 9, player: 'Karim Buteur', score: [1, 0] });
+  check('revenu sous un buteur corrigé, il ne sonne pas une seconde fois',
+    r2 === false && annonces().length === 1
+    || (console.log(`        rendu ${r2} · ${annonces().length} annonce(s) · buts connus ${salle.butsConnus}`), false));
+  check('ni corde, ni minute double, ni minute qui recule, ni fil, ni compte',
+    salle.rope === 0 && salle.surgeUntil === 0 && salle.minute === 50
+    && butsAuFil() === 1 && salle.realGoals[0] === 1 && salle.realGoals[1] === 0);
+
+  const r3 = salle.realGoal({ teamId: 2, minute: 60, player: 'Frais', score: [1, 1] });
+  check('le but suivant, lui, sonne',
+    r3 === true && annonces().length === 2 && annonces()[1].p.player === 'Frais');
+
+  /* La vidéo retire ce but annoncé : le tableau redescend, le compte avec
+     lui, et le but qui reprend son rang sonne. */
+  salle.matchStatus({ status: '2H', elapsed: 62, homeGoals: 1, awayGoals: 0 });
+  salle.matchStatus({ status: '2H', elapsed: 70, homeGoals: 2, awayGoals: 0 });
+  const r4 = salle.realGoal({ teamId: 1, minute: 70, player: 'Encore', score: [2, 0] });
+  check('un but annoncé puis refusé ne tait pas celui qui reprend son rang',
+    r4 === true && annonces().length === 3
+    || (console.log(`        rendu ${r4} · buts connus ${salle.butsConnus}`), false));
+}
+
+/* ================================== un but frais, au rang d'un but connu
+
+   Le relevé compte le rang d'un but dans **sa liste d'événements**, pas au
+   tableau. Qu'elle manque un but d'avant l'ouverture — jamais publié, ou
+   publié après le suivant —, et le premier but frais prend son rang : la
+   salle le taisait, pour toute la tribune — ni « GOAL ! », ni corde, ni
+   minute double. Ouverte à la 20e à 2–0, buts de la 9e et de la 15e ; au
+   tour de la 31e, le tableau passe à 3–0 et la liste ne porte que le but de
+   la 30e, rang 1. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9017, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+      status: '1H', elapsed: 20, homeGoals: 2, awayGoals: 0 },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('f1', { side: 0, name: 'Un' });
+  const annonces = () => emis.filter((x) => x.e === 'virage:real_goal');
+
+  salle.matchStatus({ status: '1H', elapsed: 31, homeGoals: 3, awayGoals: 0 });
+  const r1 = salle.realGoal({ teamId: 1, minute: 30, player: 'Frais', score: [1, 0] });
+  check('un but frais au rang d’un but d’avant l’ouverture sonne',
+    r1 === true && annonces().length === 1 && salle.rope < 0 && salle.surgeUntil > Date.now()
+    || (console.log(`        rendu ${r1} · ${annonces().length} annonce(s) · buts connus ${salle.butsConnus}`), false));
+  /* Le score qu'il porte est celui de la liste, en retard de deux buts : la
+     page affichait 1–0 sous « GOAL ! » d'un 3–0, et la minute revenait à
+     la 30e. */
+  check('sans faire reculer le tableau ni la minute de la salle',
+    JSON.stringify(salle.scoreReel) === '[3,0]' && salle.minute === 31
+    && JSON.stringify(annonces()[0]?.p.scoreReel) === '[3,0]'
+    || (console.log(`        ${JSON.stringify(salle.scoreReel)} à la ${salle.minute}e`), false));
+
+  /* Les événements des buts d'avant paraissent enfin, rangs 1 et 2. Le but
+     frais annoncé au rang 1 n'a pas fait oublier à la salle qu'elle en
+     connaissait deux. */
+  salle.rope = 0; salle.surgeUntil = 0;
+  const r2 = salle.realGoal({ teamId: 1, minute: 9, player: 'Neuf', score: [1, 0] });
+  const r3 = salle.realGoal({ teamId: 1, minute: 15, player: 'Quinze', score: [2, 0] });
+  check('les buts d’avant, publiés enfin, ne sonnent toujours pas',
+    r2 === false && r3 === false && annonces().length === 1
+    && salle.rope === 0 && salle.surgeUntil === 0
+    || (console.log(`        rendus ${r2}/${r3} · buts connus ${salle.butsConnus}`), false));
+
+  /* Le même club, la minute suivante : un but déjà annoncé à une minute
+     près, mais un rang neuf. C'est le rang qui le distingue d'un buteur
+     corrigé. */
+  salle.matchStatus({ status: '1H', elapsed: 32, homeGoals: 4, awayGoals: 0 });
+  const r4 = salle.realGoal({ teamId: 1, minute: 31, player: 'Encore', score: [4, 0] });
+  check('deux buts du même club en deux minutes qui se suivent sonnent tous les deux',
+    r4 === true && annonces().length === 2
+    || (console.log(`        rendu ${r4} · buts connus ${salle.butsConnus}`), false));
+}
+
+/* ================================== la vidéo retire un but annoncé, le même club remarque
+
+   Le but de la 30e est annoncé, la vidéo le retire — le tableau redescend
+   au tour suivant —, et le même club marque à la 31e. Même club, à une
+   minute près : sans la redescente du compte, la salle l'aurait pris pour
+   le premier revenu sous un autre buteur. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9021, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+      status: '1H', elapsed: 1, homeGoals: 0, awayGoals: 0 },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('w1', { side: 0, name: 'Un' });
+  salle.matchStatus({ status: '1H', elapsed: 30, homeGoals: 1, awayGoals: 0 });
+  salle.realGoal({ teamId: 1, minute: 30, player: 'Refuse', score: [1, 0] });
+  salle.matchStatus({ status: '1H', elapsed: 31, homeGoals: 0, awayGoals: 0 });
+  salle.matchStatus({ status: '1H', elapsed: 32, homeGoals: 1, awayGoals: 0 });
+  const r = salle.realGoal({ teamId: 1, minute: 31, player: 'Valable', score: [1, 0] });
+  check('après un but annoncé puis refusé, le même club qui remarque aussitôt sonne',
+    r === true && emis.filter((x) => x.e === 'virage:real_goal').length === 2
+    || (console.log(`        rendu ${r} · buts connus ${salle.butsConnus}`), false));
+}
+
+/* ================================== la vidéo retire un but, un autre tombe
+
+   Entre deux tours du relevé, la vidéo retire B (30e) et C est marqué
+   (33e) : le tableau reste à 2–0 et ne redescend jamais, la liste passe de
+   [A, B] à [A, C]. C a le rang de B. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9018, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+      status: '1H', elapsed: 1, homeGoals: 0, awayGoals: 0 },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('c1', { side: 0, name: 'Un' });
+  const annonces = () => emis.filter((x) => x.e === 'virage:real_goal').map((x) => x.p.player);
+  salle.matchStatus({ status: '1H', elapsed: 10, homeGoals: 1, awayGoals: 0 });
+  salle.realGoal({ teamId: 1, minute: 10, player: 'A', score: [1, 0] });
+  salle.matchStatus({ status: '1H', elapsed: 30, homeGoals: 2, awayGoals: 0 });
+  salle.realGoal({ teamId: 1, minute: 30, player: 'B', score: [2, 0] });
+  salle.matchStatus({ status: '1H', elapsed: 34, homeGoals: 2, awayGoals: 0 });
+  const r = salle.realGoal({ teamId: 1, minute: 33, player: 'C', score: [2, 0] });
+  check('un but marqué pendant que la vidéo en retire un autre sonne',
+    r === true && annonces().join() === 'A,B,C'
+    || (console.log(`        rendu ${r} · annoncés ${annonces().join()}`), false));
+}
+
+/* ================================== deux buts publiés dans le désordre
+
+   Ouverte au coup d'envoi. L'API publie le but de la 11e avant celui de la
+   9e : celui-ci arrive avec le rang de l'autre. Deux buts frais, deux
+   annonces — et la salle ne revient ni à la 9e minute ni à 1–0. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9019, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+      status: '1H', elapsed: 1, homeGoals: 0, awayGoals: 0 },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('d1', { side: 0, name: 'Un' });
+  const annonces = () => emis.filter((x) => x.e === 'virage:real_goal').map((x) => x.p.player);
+  salle.matchStatus({ status: '1H', elapsed: 11, homeGoals: 1, awayGoals: 1 });
+  const rB = salle.realGoal({ teamId: 2, minute: 11, player: 'Onze', score: [0, 1] });
+  const rA = salle.realGoal({ teamId: 1, minute: 9, player: 'Neuf', score: [1, 0] });
+  check('un but frais publié après un plus tardif sonne aussi',
+    rB === true && rA === true && annonces().join() === 'Onze,Neuf'
+    || (console.log(`        rendus ${rB}/${rA} · annoncés ${annonces().join()}`), false));
+  check('sans ramener la salle à sa minute ni à son score',
+    salle.minute === 11 && JSON.stringify(salle.scoreReel) === '[1,1]'
+    || (console.log(`        ${JSON.stringify(salle.scoreReel)} à la ${salle.minute}e`), false));
+}
+
+/* ================================== une salle ouverte sans minute
+
+   Rien ne date alors un but : le rang décide seul, comme avant. */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9020, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+      status: '1H', elapsed: null, homeGoals: 1, awayGoals: 0 },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  salle.join('n1', { side: 0, name: 'Un' });
+  const r1 = salle.realGoal({ teamId: 1, minute: 9, player: 'Ancien', score: [1, 0] });
+  const r2 = salle.realGoal({ teamId: 2, minute: 30, player: 'Frais', score: [1, 1] });
+  check('sans minute à l’ouverture, le rang seul tait l’ancien et laisse sonner le frais',
+    r1 === false && r2 === true
+    && emis.filter((x) => x.e === 'virage:real_goal').length === 1
+    || (console.log(`        rendus ${r1}/${r2}`), false));
 }
 
 /* ================================== une salle vide se libère

@@ -45,8 +45,8 @@ const SCHEMA_INCOMPLET = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR']);
 /**
  * @param o.fanzzy  le module fanzzy : `recharger(conn, userId)` compte la
  *                  recharge due avant le booster de fin (voir `recompenser`).
- *                  Lu au moment du versement, et non à la construction : une
- *                  suite peut le poser après, comme pour le quotidien.
+ *                  Sans lui, l'aide se monte et répond, mais le versement
+ *                  refuse : `server.js` le construit donc avant elle.
  */
 export function createAide({ pool, requireAuth, fanzzy = null }) {
   const q = async (sql, params = []) => {
@@ -57,18 +57,18 @@ export function createAide({ pool, requireAuth, fanzzy = null }) {
   /**
    * La porte de la recharge, cherchée au moment du versement.
    *
-   * L'injection d'abord. À défaut, `globalThis.fanzzy`, que `server.js` pose
-   * dès que le module fanzzy est monté — avant celui-ci : `server.js` ne
-   * passe pas encore `fanzzy` à l'aide, et sans ce repli le correctif
-   * n'existerait que dans la suite, la production continuant de perdre la
-   * recharge. Le jour où `server.js` le passe, le repli ne sert plus.
-   * `aide-smoke` lit `server.js` et exige l'un ou l'autre : `fanzzy` passé à
-   * `createAide`, ou la globale posée avant elle, après `createFanzzy`.
+   * **Par l'injection seulement.** Elle a eu, au lot 4, un repli sur
+   * `globalThis.fanzzy`, que `server.js` posait faute de passer `fanzzy` à
+   * l'aide : sans lui, le correctif de la recharge n'aurait existé que dans
+   * la suite. `server.js` le passe depuis, et personne d'autre ne lisait la
+   * globale ; la garder aurait laissé deux chemins, dont un qu'on retire en
+   * croyant nettoyer. `verif-cablage.mjs` et `aide-smoke.mjs` lisent l'appel
+   * de `server.js` et rougissent si `fanzzy` n'y est plus ; `verif-cablage`
+   * rougit aussi si ce repli revient, car le journal du lot 4 le décrit
+   * encore comme le câblage à garder.
    */
-  const porteRecharge = () => {
-    const f = fanzzy ?? globalThis.fanzzy;
-    return typeof f?.recharger === 'function' ? f.recharger : null;
-  };
+  const porteRecharge = () =>
+    (typeof fanzzy?.recharger === 'function' ? fanzzy.recharger : null);
 
   /**
    * **La recharge due, comptée avant de prendre le verrou** — la même

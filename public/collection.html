@@ -145,6 +145,23 @@ html[data-calme~="animations"] .spin{animation:none}
   #vue .tbf-album-pages .tbf-album-vitrine{grid-column:span 3}
   #vue .tbf-album-pages .tbf-album-cartes>:not(.tbf-album-vitrine)+.tbf-album-vitrine{grid-column:1 / span 3}
 }
+/* **Les six familles et MANQUANTS sur une seule rangée**, comme au classeur
+   (fanzzy.html, la règle des filtres) : c'est le même album, il a le même
+   mot et la même rangée. L'interrupteur s'y appelait « Ce qu'il me reste » :
+   cent soixante pixels à côté de son rail, qui ne tenaient au bout des six
+   filtres qu'à partir de 452 px de large — sur tout téléphone, il passait
+   dessous, et la page descendait de quarante-six pixels. MANQUANTS, le mot
+   de la maquette, en demande cent vingt-six, et **de 350 à 440 px il passe
+   sous son rail**, en légende de soixante-dix pixels ; la rangée rend huit
+   pixels de la gouttière (six à gauche, dix à droite). Au-delà, il tient à
+   côté, comme la brique le pose ; en dessous, rien ne se serre sous le
+   doigt, il repasse à la ligne. Les valeurs sont celles du classeur : l'une
+   ne change pas sans l'autre. */
+@media (min-width:350px) and (max-width:439.98px){
+  #vue .tbf-album-filtres{padding-inline:6px 10px}
+  #vue .tbf-album-filtres>.tbf-interrupteur{flex-direction:column;justify-content:center;gap:4px;
+    padding:0 2px;text-align:center}
+}
 /* Les planches d'une page de série, l'une sous l'autre : le sticker
    PLANCHE COMPLÈTE pend de onze pixels au-dessus de la sienne. */
 .planches{display:flex;flex-direction:column;gap:24px}
@@ -193,9 +210,10 @@ html[data-calme~="animations"] .spin{animation:none}
 .vue-planche>.tbf-vitrine-texte{margin-top:20px}
 
 /* Le portrait flou d'un âge pas encore atteint (rangée des âges de la
-   vitrine), NOUVEAU sur le flanc d'une case d'album, et le tampon « ×3 » sur
-   le flanc de la scène sont servis par ui.css depuis le lot 4 : leurs règles
-   provisoires sont parties d'ici. */
+   vitrine), NOUVEAU pendu sous la bande du nom d'une case d'album, à cheval
+   sur son coin bas-gauche, et le tampon « ×3 » sur le flanc de la scène sont
+   servis par ui.css depuis le lot 4 : leurs règles provisoires sont parties
+   d'ici. */
 </style>
 </head>
 <body>
@@ -849,8 +867,8 @@ function retourVue() {
 
    Le même composant que le classeur de /fanzzy : une page par série qu'on
    tourne du doigt, le rail des séries au-dessus, les filtres de famille et
-   « ce qu'il me reste ». Il porte trois sous-vues — les Fanzzy, les états,
-   les tenues — et seule la page change de l'une à l'autre.
+   MANQUANTS. Il porte trois sous-vues — les Fanzzy, les états, les tenues —
+   et seule la page change de l'une à l'autre.
    **Seules la page ouverte et ses deux voisines sont montées** : un album de
    cent cinquante-deux cartes n'en monte pas cent cinquante-deux, et un album
    de deux cents planches ne demande que celles qui passent sous les yeux. */
@@ -896,7 +914,7 @@ function monterAlbum(v, r, { pages, fermees = [], depart = 0, nom, ...crochets }
     `<button type="button" class="tbf-filtre" data-famille="${esc(k)}" aria-pressed="false" aria-label="${esc(t.nom)}">
       <span class="tbf-pin"${teinte(t.c) ? ` style="--fam:${t.c}"` : ''}><img src="${esc(window.TBF_LOGO?.adresse?.('type', k) ?? '')}" alt=""
         onerror="this.remove()"></span></button>`).join('')}
-      <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"><i aria-hidden="true"></i>Ce qu’il me reste</button>
+      <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"><i aria-hidden="true"></i>Manquants</button>
     </div>
     <div class="tbf-album-pages">${pages.map(({ s }) =>
     `<section class="tbf-album-page" data-page="${esc(s.id)}" aria-label="${esc(s.nom ?? s.id)}" style="${couleurs(s)}"></section>`).join('')}
@@ -1169,7 +1187,7 @@ function vueFanzzy(v, r) {
    trente-huit personnages, cent mille pour deux cent quatre-vingt-onze :
    l'accordéon que le lot devait supprimer revenait par ses tuiles. Il a
    maintenant le rail des séries, une page par série montée à ±1, les
-   filtres de famille et « ce qu'il me reste ».
+   filtres de famille et MANQUANTS.
 
    **Une planche ne montre que les âges atteints** — quatre états par âge,
    « 2/4 » au premier, comme la direction la dessine. Un âge pas encore
@@ -1285,8 +1303,8 @@ function casesHTML(objets, cle) {
   }).join('');
 }
 
-/** Les cases d'une planche de l'album : les âges atteints, et sous « ce
-    qu'il me reste », seulement ce qui manque. */
+/** Les cases d'une planche de l'album : les âges atteints, et sous
+    MANQUANTS, seulement ce qui manque. */
 function casesPlanche(perso, quoi, d, a) {
   const objets = objetsPlanche(perso, quoi, d, { atteints: true });
   const vus = a.reste ? objets.filter((o) => !o.possede) : objets;

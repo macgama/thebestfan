@@ -15,7 +15,7 @@ Les documents, et lequel ouvrir :
 | Fichier | Ce qu'il répond |
 |---|---|
 | `ETAT.md` | où en est le projet, et quels pièges sont connus |
-| `HISTORIQUE.md` | **pourquoi** le code est écrit ainsi — quarante-deux sessions, à consulter, jamais à lire d'affilée |
+| `HISTORIQUE.md` | **pourquoi** le code est écrit ainsi — quarante-trois sessions, à consulter, jamais à lire d'affilée |
 | `IDEES.md` | ce qui n'est pas encore écrit, rangé par valeur |
 | `serveur/` | le chantier serveur de la refonte : le contenu choisi (`SERVEUR.md`), les contrats d'API que lisent les écrans (`CONTRATS.md`, cité par le code), le plan, les écarts au contrat, les risques et l'étude d'économie avec sa simulation |
 | `DEPLOIEMENT.md` | comment mettre en ligne, et les pièges de l'hébergeur |
@@ -84,10 +84,10 @@ voit exactement la pulsation sur laquelle il est noté.
 
 ## Les tests
 
-`npm test` lance les **soixante-deux** suites. Elles se divisent en deux
+`npm test` lance les **soixante-quatre** suites. Elles se divisent en deux
 groupes, et il faut le savoir avant de s'alarmer :
 
-- **vingt-quatre ne demandent rien** et tournent tout de suite, sur n'importe
+- **vingt-six ne demandent rien** et tournent tout de suite, sur n'importe
   quelle machine ;
 - **trente-huit demandent MySQL** — une base *locale*, sur le port 3307, jamais
   celle de production : elles effacent les tables au démarrage. Sans base, elles

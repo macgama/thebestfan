@@ -580,6 +580,483 @@ await wait(200);
 check('et le bouton de fermeture aussi',
   !(await page.$eval('#feuille', (n) => n.classList.contains('on'))));
 
+/* ======================================= la main se recharge d'elle-même
+
+   « Est-ce que les cartes se régénèrent ? » (Gaël, 4 octobre 2026). Oui,
+   côté serveur. Mais la page ne l'apprenait pas : les recharges arrivaient en
+   secondes restantes et n'étaient jamais décomptées, si bien qu'une carte
+   restait grise sous un chiffre figé. Quand toutes l'étaient, plus rien ne
+   partait, donc plus aucun `virage:vous` n'arrivait : la main était bloquée
+   jusqu'au rechargement, en une demi-minute de jeu.
+
+   Le joueur de cette suite n'a pas de deck. On lui pose une main par le
+   message même du serveur, `virage:vous`, rejoué par les écouteurs de la
+   socket : c'est la page qu'on éprouve ici, la salle l'est par
+   `virage-smoke`. */
+const vous = (you) => page.evaluate((y) => {
+  for (const f of socket.listeners('virage:vous')) f(y);
+}, you);
+
+/* Nommée `laScene` et non `scene` : dans un `page.evaluate`, le corps est
+   évalué **dans la page**, où `scene` désigne la scène du virage. Deux noms
+   identiques de part et d'autre du navigateur ne se mélangent pas, mais se
+   relisent très mal. */
+const laScene = () => page.evaluate(() => ({
+  // `scene` est la scène de la page : un `const` de premier niveau d'un script
+  // classique est bien visible ici, comme `S` et `minuteTexte` plus haut.
+  etat: scene?.etat?.() ?? null,
+  titre: document.querySelector('.tbf-moment b')?.textContent.trim() ?? '',
+  sous: document.querySelector('.tbf-moment small')?.textContent.trim() ?? '',
+  on: document.querySelector('.tbf-moment')?.classList.contains('on') ?? false,
+  duree: document.querySelector('.tbf-moment')?.style.getPropertyValue('--mt') ?? '',
+}));
+
+{
+  const id = await page.evaluate(() =>
+    (S.actions ?? []).find((a) => a.id === 'a-fumigene')?.id ?? S.actions?.[0]?.id ?? null);
+  const lire = () => page.evaluate(() => {
+    const el = document.querySelector('#actes .acte:not(.vide)');
+    return {
+      cachee: document.getElementById('actes').hidden,
+      hs: el ? el.classList.contains('hs') : null,
+      acte: el?.dataset.acte ?? null,
+      cd: el?.querySelector('.cd')?.textContent.trim() ?? null,
+      meme: Boolean(el) && el === window.__carteEssai,
+    };
+  });
+
+  await vous({ main: [id], cooldowns: { [id]: 2 }, breath: 100 });
+  await page.evaluate(() => {
+    window.__carteEssai = document.querySelector('#actes .acte:not(.vide)');
+  });
+  const avant = await lire();
+  check(`une carte reçue en recharge est grise, avec son compte (${avant.cd})`,
+    avant.cachee === false && avant.hs === true && avant.acte === null && avant.cd === '2'
+    || (console.log('        ', JSON.stringify(avant)), false));
+
+  /* Trois secondes : la recharge en dure deux, et le rendu passe chaque
+     seconde. Aucun message du serveur entre les deux — c'est tout l'objet. */
+  await wait(3200);
+  const apres = await lire();
+  check('trois secondes plus tard, elle se rejoue d’elle-même',
+    apres.hs === false && apres.acte === id && apres.cd === null
+    || (console.log('        ', JSON.stringify(apres)), false));
+  // Voir ETAT.md § 6 : une case refaite lâche le doigt posé dessus.
+  check('et c’est la même case, retouchée en place', apres.meme);
+
+  /* Le souffle. `virage:vous` le porte, et la jauge comptait pourtant le
+     regain depuis le dernier chant : une minute après lui, elle promettait
+     le plein à quelqu'un qui venait de dépenser. */
+  const souffle = await page.evaluate(() => {
+    const regen = S.you.regen;
+    S.you.regen = 2;
+    souffleVuA = Date.now() - 60_000;
+    for (const f of socket.listeners('virage:vous')) f({ breath: 10 });
+    const vu = souffleCourant();
+    S.you.regen = regen;
+    return vu;
+  });
+  check(`le souffle repart de celui que porte virage:vous (${Math.round(souffle)} pour 10)`,
+    souffle < 12);
+
+  /* L'état aussi — à l'entrée, au retour d'une coupure — porte le souffle
+     et les recharges de l'instant. Décomptées depuis le chargement de la
+     page, une recharge de trente secondes reçue une minute plus tard serait
+     déjà finie : la carte se montrerait prête, et le serveur la refuserait.
+     Rejoué sans le personnage, qu'un état referait entrer ; il est rendu
+     après, avec le reste de ce qu'on emprunte. */
+  const etat = await page.evaluate((id) => {
+    const { regen, fanzzy } = S.you;
+    souffleVuA = cdVuA = Date.now() - 60_000;
+    const s = { ...S, you: { ...S.you, fanzzy: null, regen: 2, breath: 10,
+      main: [id], cooldowns: { [id]: 30 } } };
+    for (const f of socket.listeners('virage:state')) f(s);
+    const vu = { souffle: souffleCourant(), reste: rechargeRestante(id) };
+    S.you.regen = regen;
+    S.you.fanzzy = fanzzy;
+    return vu;
+  }, id);
+  check('l’état remet aussi les deux horloges à l’heure '
+    + `(souffle ${Math.round(etat.souffle)} pour 10, recharge ${etat.reste.toFixed(1)} s pour 30)`,
+  etat.souffle < 12 && etat.reste > 29);
+
+  /* Une main vide cache la rangée ; la carte tirée ensuite doit la refaire
+     paraître, sans quoi la main est perdue pour le reste du match. */
+  await vous({ main: [], cooldowns: {}, breath: 100 });
+  const vide = await lire();
+  await vous({ main: [id], cooldowns: {}, breath: 100 });
+  const revenue = await lire();
+  check('une main vide cache la rangée', vide.cachee === true);
+  check('et une carte tirée ensuite la refait paraître, jouable',
+    revenue.cachee === false && revenue.acte === id
+    || (console.log('        ', JSON.stringify(revenue)), false));
+  // On rend au joueur sans deck sa main vide : la suite le suppose.
+  await vous({ main: [], cooldowns: {} });
+}
+
+/* ======================================== ce qui était déjà au tableau
+
+   Le premier relevé d'un match qu'on n'avait jamais relevé envoie au fil
+   tout ce qui s'est passé avant. Entrer à la cinquantième faisait jouer
+   « ROUGE POUR EUX » pour un carton de la vingtième, et « BUT REFUSÉ » pour
+   une vidéo de la trentième (S8 de l'enquête). Le joueur est entré ici à la
+   soixante et onzième. */
+{
+  await page.evaluate(() => scene?.couper?.());
+  virage.matchEvents(8001, [{ type: 'Card', detail: 'Red Card', teamId: 91,
+    minute: 20, player: 'Ancien' }]);
+  await wait(500);
+  const vieux = await page.evaluate(() => ({
+    on: document.querySelector('.tbf-moment')?.classList.contains('on') ?? false,
+    auFil: (S.fil ?? []).some((e) => e.joueur === 'Ancien'),
+    entree: entreeMinute,
+  }));
+  check(`un rouge d’avant l’entrée (20e, entré à la ${vieux.entree}e) ne fait pas réagir`,
+    vieux.entree != null && !vieux.on);
+  check('mais il entre au fil, et donc à la feuille', vieux.auFil);
+
+  virage.matchEvents(8001, [{ type: 'Card', detail: 'Red Card', teamId: 91,
+    minute: 76, player: 'Frais' }]);
+  await wait(500);
+  const frais = await laScene();
+  check('un rouge d’après l’entrée le fait toujours réagir',
+    frais.on && /ROUGE/.test(frais.titre)
+    || (console.log('        il dit :', frais.titre), false));
+  await page.evaluate(() => scene?.couper?.());
+}
+
+/* La même garde, quand l'état ne dit pas la minute.
+
+   Une salle qui ouvre sur une ligne de calendrier jamais relevée — un match
+   « ailleurs », écrit « NS » avant le coup d'envoi — envoie un état sans
+   minute, et rien n'était alors écarté : le premier relevé, à la
+   cinquantième, apportait le rouge de la vingtième et la vidéo de la
+   trentième, et le personnage jouait « BUT REFUSÉ » (trouvé par la
+   vérification du correctif). La minute de l'entrée s'apprend donc des
+   minutes qui suivent.
+
+   Et l'inverse, qu'une garde trop pressée casserait : un match vraiment pas
+   commencé, où l'on attend depuis dix minutes, et dont le premier relevé
+   n'arrive qu'à la cinquième. Le rouge de la première minute est tombé
+   pendant que le joueur était là ; il doit le faire réagir.
+
+   Sur une page à part, avec ses deux matchs : celle du haut garde le sien
+   pour la suite. */
+{
+  await pool.query(`INSERT INTO teams (id,name,color1,color2) VALUES (92,'FC Thoune',NULL,NULL)`);
+  await pool.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
+                                          home_goals,away_goals,elapsed,kickoff_at,polled_at)
+                    VALUES (8002,207,2026,91,92,'NS',NULL,NULL,NULL,UTC_TIMESTAMP(),NOW(3)),
+                           (8003,207,2026,91,92,'NS',NULL,NULL,NULL,UTC_TIMESTAMP(),NOW(3))`);
+  const ailleurs = await nav.newPage();
+  ailleurs.on('pageerror', (e) => erreurs.push(e.message));
+  await ailleurs.setViewport({ width: 400, height: 880 });
+  await ailleurs.goto(base + '/virage', { waitUntil: 'networkidle0' });
+
+  /* Entre dans le match, côté domicile, et attend son état. La sonde note
+     chaque case de moment qui se pose : un `.on` lu à un seul instant
+     manquerait celle qu'un second moment a déjà remplacée. */
+  const entrer = (fixtureId) => ailleurs.evaluate((id) => {
+    clearInterval(window.__sondeMoments);
+    socket.emit('virage:join', { fixtureId: id, camp: 'domicile' });
+  }, fixtureId).then(() => ailleurs.waitForFunction((id) => S?.fixture?.id === id,
+    { timeout: 8000 }, fixtureId)).then(() => true).catch(() => false);
+  const guetter = () => ailleurs.evaluate(() => {
+    scene?.couper?.();
+    window.__moments = [];
+    window.__sondeMoments = setInterval(() => {
+      const t = document.querySelector('.tbf-moment.on b')?.textContent.trim();
+      if (t && !window.__moments.includes(t)) window.__moments.push(t);
+    }, 40);
+  });
+  const vus = () => ailleurs.evaluate(() => [...window.__moments]);
+
+  const dedans = await entrer(8002);
+  const etat = await ailleurs.evaluate(() => ({ minute: S?.minute ?? null, entree: entreeMinute }));
+  check(`on entre sur une ligne « NS » jamais relevée, sans minute (${etat.minute})`,
+    dedans && etat.minute == null && etat.entree == null);
+
+  await guetter();
+  // Le premier relevé : le tableau, puis tout ce qui s'est passé avant.
+  virage.matchStatus(8002, { status: '2H', elapsed: 50, homeGoals: 1, awayGoals: 0 });
+  virage.matchEvents(8002, [
+    { type: 'Card', detail: 'Red Card', teamId: 92, minute: 20, player: 'Rouge' },
+    { type: 'Var', detail: 'Penalty cancelled', teamId: 91, minute: 30, player: 'Video' }]);
+  await wait(900);
+  const vieux = await ailleurs.evaluate(() => ({
+    vus: [...window.__moments], entree: entreeMinute,
+    auFil: (S.fil ?? []).filter((e) => ['Rouge', 'Video'].includes(e.joueur)).length,
+  }));
+  check(`un rouge de la 20e et une vidéo de la 30e, reçus à la 50e, ne font pas réagir `
+    + `(vu : ${vieux.vus.join(', ') || 'rien'} ; entré à la ${vieux.entree ?? '?'}e)`,
+  vieux.vus.length === 0 && vieux.entree != null);
+  check('mais les deux entrent au fil', vieux.auFil === 2);
+
+  // Sans quoi le contrôle du dessus passerait sur un personnage muet.
+  virage.matchEvents(8002, [{ type: 'Card', detail: 'Red Card', teamId: 92,
+    minute: 50, player: 'Frais' }]);
+  await wait(600);
+  const frais = await vus();
+  check(`un rouge de la 50e, lui, le fait réagir (${frais.join(', ') || 'rien'})`,
+    frais.some((t) => /ROUGE/.test(t)));
+
+  const avantLeCoup = await entrer(8003);
+  /* Le joueur attend depuis dix minutes quand le match commence : on recule
+     l'instant de son entrée, plutôt que de les attendre. */
+  await ailleurs.evaluate(() => { entreeA -= 10 * 60_000; });
+  await guetter();
+  virage.matchStatus(8003, { status: '1H', elapsed: 5, homeGoals: 0, awayGoals: 0 });
+  virage.matchEvents(8003, [{ type: 'Card', detail: 'Red Card', teamId: 92,
+    minute: 1, player: 'Premier' }]);
+  await wait(900);
+  const tot = await ailleurs.evaluate(() => ({ vus: [...window.__moments], entree: entreeMinute }));
+  check('entré avant le coup d’envoi, le rouge de la 1re reçu à la 5e le fait réagir '
+    + `(vu : ${tot.vus.join(', ') || 'rien'} ; entré à la ${tot.entree ?? '?'}e)`,
+  avantLeCoup && tot.vus.some((t) => /ROUGE/.test(t)));
+
+  await ailleurs.evaluate(() => clearInterval(window.__sondeMoments));
+  await ailleurs.close();
+}
+
+/* ============================================== un but pendant le geste
+
+   Gaël, le 4 octobre 2026 : un but tombe pendant qu'il fait son geste, et
+   l'alerte se pose sur le pavé. La fenêtre du geste vit dans `#app`, contexte
+   d'empilement : la case du moment (z 95, quinze secondes), le flash et les
+   titres de `FX.but` passaient devant, la secousse faisait trembler le pavé,
+   et la carte-souvenir avalait les frappes en son milieu. Le chant raté
+   coûtait quand même son souffle.
+
+   Le geste est un vrai geste, ouvert au doigt sur un chant ; seule sa fin
+   est tenue par la suite, pour mesurer pendant qu'il est ouvert. Une sonde
+   regarde toutes les quarante millisecondes ce qui est à l'écran tant que
+   la fenêtre l'est. */
+{
+  await page.evaluate(() => {
+    window.__vraiJouer = window.TBF_GESTE.jouer;
+    window.TBF_GESTE.jouer = (...a) => {
+      window.__vraiJouer(...a)?.catch?.(() => {});
+      return new Promise((ok) => { window.__finirGeste = () => ok(null); });
+    };
+    /* Le tempo : un pavé qui compte ses frappes, de quoi voir qu'un appui
+       arrive. Remis comme il était à la fin. */
+    window.__chantEssai = { card: S.cards[0], gest: S.cards[0].gest };
+    S.cards[0].gest = 'tempo';
+  });
+  const ouvrir = () => page.evaluate(() => {
+    window.__finirGeste = null;
+    S.you.breath = 100; souffleVuA = Date.now();
+    const id = window.__chantEssai.card.id;
+    const el = [...document.querySelectorAll('#hand [data-card]')]
+      .find((n) => n.dataset.card === id);
+    el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  });
+  const pret = () => page.waitForFunction(
+    () => document.querySelector('#mini.on #pad') && window.__finirGeste,
+    { timeout: 6000 }).then(() => true).catch(() => false);
+
+  await page.evaluate(() => scene?.couper?.());
+  await ouvrir();
+  const ouvert = await pret();
+  check('un geste s’ouvre sur son pavé', ouvert);
+
+  await page.evaluate(() => {
+    window.__vu = new Set();
+    window.__sonde = setInterval(() => {
+      if (!document.getElementById('mini').classList.contains('on')) return;
+      const vu = (sel, nom) => { if (document.querySelector(sel)) window.__vu.add(nom); };
+      vu('.tbf-moment.on', 'la case du moment');
+      vu('.fx-titre', 'un titre');
+      vu('.fx-flash', 'le flash');
+      vu('#app.fx-shake', 'la secousse');
+      vu('.souvenir.on', 'la carte-souvenir');
+      vu('.fx-bandeau', 'le bandeau');
+    }, 40);
+    // Un but de corde d'en face, né des chants des autres pendant le sien.
+    for (const f of socket.listeners('virage:goal')) f({ side: S.you.side ^ 1 });
+  });
+  /* Un rouge frais au fil, d'en face : sa case « ROUGE POUR EUX » attend
+     aussi. Avant le but réel, pour que ce soit « GOAL ! » qui reste à la
+     fermeture — le dernier moment en attente gagne. */
+  virage.matchEvents(8001, [{ type: 'Card', detail: 'Red Card', teamId: 91,
+    minute: 75, player: 'Pendant' }]);
+  await wait(300);
+  // Et un but réel de son club : c'est lui qui pose la carte-souvenir.
+  virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 75, player: 'Mbaye', score: [4, 1] });
+  await wait(1600);
+
+  const pendant = await page.evaluate(() => {
+    const pad = document.getElementById('pad');
+    const r = pad.getBoundingClientRect();
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const n = document.elementFromPoint(x, y);
+    return {
+      x, y,
+      dessus: n?.closest('#pad') ? 'le pavé' : `${n?.tagName}.${n?.className}`,
+      vu: [...window.__vu],
+      enAttente: apresLeGeste.length,
+      score: document.getElementById('filScore').textContent.trim(),
+      frappes: Number(document.getElementById('n')?.textContent),
+    };
+  });
+  check('un but ou un rouge pendant le geste ne pose rien sur l’écran '
+    + `(${pendant.vu.join(', ') || 'rien'})`,
+  pendant.vu.length === 0);
+  check(`le centre du pavé reste le pavé (${pendant.dessus})`, pendant.dessus === 'le pavé');
+  check('le score du terrain, lui, suit tout de suite', pendant.score === '4 – 1'
+    || (console.log('        il dit :', pendant.score), false));
+  // Le but de corde, le rouge du fil et le but réel : trois effets en file.
+  check(`et le reste attend la fin du geste (${pendant.enAttente} en attente)`,
+    pendant.enAttente >= 3);
+
+  // Un vrai appui au centre : il doit compter.
+  await page.mouse.click(pendant.x, pendant.y);
+  await wait(120);
+  const compte = await page.evaluate(() => Number(document.getElementById('n')?.textContent));
+  check(`un appui au centre du pavé compte (${pendant.frappes} → ${compte})`,
+    compte === pendant.frappes + 1);
+
+  /* La carte-souvenir laisse passer le doigt, même posée là : c'est la garde
+     de second rang, pour ce qui passerait la file. */
+  const souvenirDessus = await page.evaluate(({ x, y }) => {
+    clearInterval(window.__sonde);
+    souvenir({ player: 'Essai', minute: 1 });
+    const n = document.elementFromPoint(x, y);
+    const dessus = n?.closest('#pad') ? 'le pavé' : `${n?.tagName}.${n?.className}`;
+    document.getElementById('souvenir').className = 'souvenir';
+    return dessus;
+  }, pendant);
+  check(`la carte-souvenir laisse passer le doigt (${souvenirDessus})`,
+    souvenirDessus === 'le pavé');
+
+  await page.evaluate(() => window.__finirGeste());
+  await wait(600);
+  const apres = await laScene();
+  const vide = await page.evaluate(() => apresLeGeste.length);
+  check(`à la fermeture, le but se montre (${apres.titre})`,
+    apres.on && apres.titre === 'GOAL !'
+    || (console.log('        ', JSON.stringify(apres)), false));
+  /* Et le personnage exulte : la pose de fond du `render` de fermeture ne
+     doit pas passer devant la célébration qui se charge. */
+  check(`et le personnage exulte (${apres.etat})`, apres.etat === 'but');
+  check('et la file est vidée', vide === 0);
+  await wait(1300);
+  check('puis la carte-souvenir', await page.evaluate(() =>
+    document.getElementById('souvenir').classList.contains('on')));
+
+  /* Second cas : une case déjà à l'écran quand le geste s'ouvre. Posée sur
+     `body` pour quinze secondes, elle passerait par-dessus le pavé. */
+  await page.evaluate(() => scene.moment('but', 'ESSAI', {}));
+  await ouvrir();
+  const coupee = await page.evaluate(() =>
+    !document.querySelector('.tbf-moment')?.classList.contains('on'));
+  check('ouvrir un geste coupe la case déjà affichée', coupee);
+  await pret();
+  await page.evaluate(() => window.__finirGeste?.());
+  await wait(200);
+
+  /* Troisième cas : une carte-souvenir déjà à l'écran quand le geste s'ouvre.
+     Elle paraît une seconde et demie après un but de son club, en pleine
+     minute double, et c'est justement là qu'on relance un chant : elle tenait
+     plus d'un tiers du pavé et son centre jusqu'à sa fin. Elle se range, et
+     revient à la fermeture pour le temps qui lui restait — ni coupée, puisqu'on
+     l'a à peine vue, ni rejouée en entier, puisqu'on croirait en avoir gagné
+     deux. Sa première minuterie ne doit pas l'éteindre en route. */
+  const eteindreSouvenir = () => page.evaluate(() => {
+    clearTimeout(souvenirAffiche?.minuterie);
+    souvenirAffiche = null;
+    document.getElementById('souvenir').className = 'souvenir';
+  });
+  const leSouvenir = () => page.evaluate(() => ({
+    on: document.getElementById('souvenir').classList.contains('on'),
+    texte: document.querySelector('#souvenir .m')?.textContent.trim() ?? '',
+  }));
+  await eteindreSouvenir();
+  await page.evaluate(() => scene?.couper?.());
+  const t0 = Date.now();
+  await page.evaluate(() => souvenir({ player: 'Retour', minute: 80 }));
+  await wait(1200);
+  await ouvrir();
+  await pret();
+  const sousLeGeste = await page.evaluate(() => {
+    const r = document.getElementById('pad').getBoundingClientRect();
+    const n = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return {
+      on: document.getElementById('souvenir').classList.contains('on'),
+      dessus: n?.closest('#pad') ? 'le pavé' : `${n?.tagName}.${n?.className}`,
+    };
+  });
+  check('une carte-souvenir déjà là se range quand le geste s’ouvre '
+    + `(centre du pavé : ${sousLeGeste.dessus})`,
+  !sousLeGeste.on && sousLeGeste.dessus === 'le pavé'
+    || (console.log('        ', JSON.stringify(sousLeGeste)), false));
+  await page.evaluate(() => window.__finirGeste?.());
+  await wait(150);
+  const revenu = await leSouvenir();
+  check(`et revient à la fermeture (${revenu.texte})`,
+    revenu.on && /Retour/.test(revenu.texte));
+  // Ses 4,2 s d'origine tombent à t0 + 4200 : elle doit encore être là après.
+  await wait(Math.max(0, t0 + 4700 - Date.now()));
+  check('sa première minuterie ne l’éteint pas en route', (await leSouvenir()).on);
+  /* Rangée à 1,2 s, il lui en restait 3 : revenue vers 3 s, elle s'éteint
+     vers 6 s. Rejouée en entier, elle tiendrait jusque vers 7,2 s. */
+  await wait(Math.max(0, t0 + 6600 - Date.now()));
+  check('puis s’éteint, au bout du temps qui lui restait seulement',
+    !(await leSouvenir()).on);
+
+  /* Moins d'une seconde de reste : elle a été lue, elle ne revient pas. */
+  await page.evaluate(() => souvenir({ player: 'Lue', minute: 81 }, 800));
+  await ouvrir();
+  await pret();
+  const lueSous = await leSouvenir();
+  await page.evaluate(() => window.__finirGeste?.());
+  await wait(150);
+  const lueApres = await leSouvenir();
+  check('une carte-souvenir presque finie se range aussi, et ne revient pas',
+    !lueSous.on && !lueApres.on
+    || (console.log('        ', JSON.stringify({ lueSous, lueApres })), false));
+
+  /* Deux cartes de suite — deux buts rapprochés, ou une carte qui revient
+     après un geste juste avant une autre : la minuterie de la première
+     éteignait la seconde avant son temps. */
+  await page.evaluate(() => {
+    souvenir({ player: 'Premiere', minute: 84 }, 600);
+    souvenir({ player: 'Seconde', minute: 85 });
+  });
+  await wait(900);
+  const seconde = await leSouvenir();
+  check('la minuterie d’une carte-souvenir n’éteint pas la suivante',
+    seconde.on && /Seconde/.test(seconde.texte)
+    || (console.log('        ', JSON.stringify(seconde)), false));
+  await eteindreSouvenir();
+
+  /* Quatrième cas : elle n'est pas encore là quand le geste s'ouvre. Elle part
+     une seconde et demie après le but, donc pendant le compte à rebours d'un
+     chant relancé aussitôt : elle attend la fin du geste. Le but est rejoué
+     par l'écouteur de la socket — c'est la page qu'on éprouve. */
+  await page.evaluate(() => {
+    for (const f of socket.listeners('virage:real_goal')) {
+      f({ side: S.you.side, player: 'Minuteur', minute: 83 });
+    }
+  });
+  await ouvrir();
+  await pret();
+  const minuteurSous = await leSouvenir();
+  await page.evaluate(() => window.__finirGeste?.());
+  await wait(150);
+  const minuteurApres = await leSouvenir();
+  check('une carte-souvenir qui part pendant le compte à rebours attend la fin du geste',
+    !minuteurSous.on && minuteurApres.on && /Minuteur/.test(minuteurApres.texte)
+    || (console.log('        ', JSON.stringify({ minuteurSous, minuteurApres })), false));
+  await page.evaluate(() => scene?.couper?.());
+
+  await eteindreSouvenir();
+  await page.evaluate(() => {
+    window.TBF_GESTE.jouer = window.__vraiJouer;
+    window.__chantEssai.card.gest = window.__chantEssai.gest;
+  });
+}
+
 /* ------------------------------------------------------- le personnage
 
  * Le virage avait le fil et le but réel ; il lui manquait le supporter. La
@@ -678,24 +1155,15 @@ check('et le bouton de fermeture aussi',
 
 /* ------------------------------------------------- ce qui le fait réagir */
 
-/* Nommée `laScene` et non `scene` : dans un `page.evaluate`, le corps est
-   évalué **dans la page**, où `scene` désigne la scène du virage. Deux noms
-   identiques de part et d'autre du navigateur ne se mélangent pas, mais se
-   relisent très mal. */
-const laScene = () => page.evaluate(() => ({
-  // `scene` est la scène de la page : un `const` de premier niveau d'un script
-  // classique est bien visible ici, comme `S` et `minuteTexte` plus haut.
-  etat: scene?.etat?.() ?? null,
-  titre: document.querySelector('.tbf-moment b')?.textContent.trim() ?? '',
-  sous: document.querySelector('.tbf-moment small')?.textContent.trim() ?? '',
-  on: document.querySelector('.tbf-moment')?.classList.contains('on') ?? false,
-  duree: document.querySelector('.tbf-moment')?.style.getPropertyValue('--mt') ?? '',
-}));
+// `laScene` est plus haut : la main, le fil et le geste s'en servent aussi.
 
 {
   /* Un vrai but de son club. Le buteur et la minute viennent de l'événement
-     lui-même — aucun appel de plus à l'API pour les afficher. */
-  virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 78, player: 'Sarr', score: [4, 1] });
+     lui-même — aucun appel de plus à l'API pour les afficher. Le cinquième
+     au tableau : le quatrième, Mbaye, est déjà tombé pendant le geste, et la
+     salle tait un but dont elle connaît le rang. La vidéo le retire plus
+     bas, d'où le 4 – 1 du coup de sifflet final. */
+  virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 78, player: 'Sarr', score: [5, 1] });
   await wait(600);
   const b = await laScene();
   check('un but réel le fait exulter', b.etat === 'but');

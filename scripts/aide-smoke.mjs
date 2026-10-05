@@ -347,50 +347,30 @@ async function auBoutDuParcours(id, pseudo) {
     libreAvant === true);
   check('et la ligne était bien tenue par le versement à cet instant', tenue === true);
 
-  /* **Le câblage d'aujourd'hui.** `server.js` construit l'aide sans lui passer
-     `fanzzy`, et pose `globalThis.fanzzy` juste avant. Le correctif doit
-     valoir là, et pas seulement dans cette suite. Ce contrôle-ci pose la
-     globale lui-même : il prouve que le repli fonctionne, pas que
-     `server.js` le nourrit — c'est le contrôle suivant qui lit `server.js`. */
-  globalThis.fanzzy = F;
-  try {
-    const aideServeur = createAide({ pool, requireAuth });
-    const G = 'aide-test-recharge-serveur';
-    await auBoutDuParcours(G, 'RechargeServeur');
-    await poserReserve(G, max - 1, cadence() + 1000);
-    const g = await aideServeur.recompenser(G);
-    const commeServeur = await reserve(G);
-    check(`câblé comme server.js aujourd’hui, la recharge compte aussi (${commeServeur})`,
-      g.verse === true && commeServeur === attendu
-      || (console.log('        il dit :', JSON.stringify(g)), false));
-  } finally {
-    delete globalThis.fanzzy;
-  }
-
   /* **Et `server.js` câblé comme on le croit.** En production, la porte ne
-     tient que par ce câblage : retirer la globale (elle ressemble à un
-     reste), ou monter l'aide avant fanzzy, et chaque booster de fin lève —
-     sans qu'aucune suite ne rougisse, puisque toutes posent leur porte
-     elles-mêmes. On lit donc l'appel dans `server.js`, comme
-     `verif-cablage.mjs` le fait pour le quotidien : `createAide` doit venir
-     après `createFanzzy`, et recevoir `fanzzy` — ou, à défaut, venir après
-     `globalThis.fanzzy = fanzzy`, posé lui-même après `createFanzzy`. */
+     tient que par ce câblage : retirer `fanzzy` de l'appel, ou monter l'aide
+     avant fanzzy, et chaque booster de fin lève — sans qu'aucune autre suite
+     ne rougisse, puisque toutes posent leur porte elles-mêmes. On lit donc
+     l'appel dans `server.js`, comme `verif-cablage.mjs` le fait pour le
+     quotidien : `createAide` doit venir après `createFanzzy`, et recevoir
+     `fanzzy`.
+
+     La globale qui en a tenu lieu au lot 4 (`globalThis.fanzzy`) n'est
+     plus lue par l'aide : la poser ne suffit plus, et ce contrôle ne
+     l'accepte plus. */
   {
     const serveur = readFileSync(path.join(RACINE, 'server.js'), 'utf8');
     const monteFanzzy = serveur.indexOf('fanzzy = createFanzzy(');
-    const poseGlobale = serveur.search(/globalThis\.fanzzy\s*=\s*fanzzy\s*;/);
     const debut = serveur.indexOf('createAide({');
     const fin = debut < 0 ? -1 : serveur.indexOf('})', debut);
     const appel = debut < 0 || fin < 0 ? '' : serveur.slice(debut, fin);
     /* `fanzzy` en raccourci ou `fanzzy: fanzzy` ; pas `fanzzy: null`. */
     const passe = /[{,]\s*fanzzy\s*(?::\s*fanzzy\s*)?(?:,|$)/.test(appel);
-    const parLaGlobale = monteFanzzy >= 0 && poseGlobale > monteFanzzy && debut > poseGlobale;
     check('server.js construit l’aide après le module fanzzy',
       appel.length > 0 && monteFanzzy >= 0 && debut > monteFanzzy
       || (console.log('        createFanzzy à', monteFanzzy, '· createAide à', debut), false));
-    check('et lui donne la porte de la recharge (fanzzy passé, ou la globale posée avant)',
-      passe || parLaGlobale
-      || (console.log('        appel :', appel.replace(/\s+/g, ' '), '· globale à', poseGlobale), false));
+    check('et lui passe fanzzy, la porte de la recharge',
+      passe || (console.log('        appel :', appel.replace(/\s+/g, ' ')), false));
   }
 
   /* **Sans porte du tout, rien.** Verser quand même reproduirait le défaut en
