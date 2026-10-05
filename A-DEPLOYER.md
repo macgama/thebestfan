@@ -281,9 +281,8 @@ n'est pas une arène.**
 ### À faire par Gaël
 
 1. **Écouter le mixage** (point 9) **avant** la mise en ligne : un téléphone, un casque,
-   la page d'écoute de l'atelier — `lot6/fx-b/ecoute/index.html`, dans son bac à sable
-   (`C:\Users\gaelm\AppData\Local\Temp\claude\C--Users-gaelm-Documents-GitHub-thebestfan\cdc72f2f-5e5a-438f-afe4-d9732321ca9d\scratchpad\lot6\fx-b\ecoute\index.html`) :
-   le son d'avant et celui du lot, côte à côte.
+   la page d'écoute de l'atelier, `art/son/_src/ecoute-lot6/index.html` (hors de git :
+   54 Mo de WAV ; à ouvrir dans Chrome) : le son d'avant et celui du lot, côte à côte.
 2. **La vérification d'« Avant »** sur la base `tbf`, puis **commiter** le tout
    ensemble.
 3. **Appliquer le schéma, puis redémarrer** (plus haut), hors d'un match, et relever le
