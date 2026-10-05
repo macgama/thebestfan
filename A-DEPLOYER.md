@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Le but du vrai match au duel** (branche `claude/project-thread-iatg2m`,
+5 octobre 2026). Un défaut plus ancien que le lot 6, donc déjà en ligne.
+
+- `public/duel-nvn.html` : chaque vrai but marqué pendant un duel faisait
+  lever la page (« number 1 is not iterable ») : pas de case « GOAL ! », pas
+  de corne, et la corde qui cède perdue avec quand ce but la faisait céder.
+  La page lit maintenant la tribune du buteur telle que le serveur l'envoie.
+  Contrôlé par `npm run nvn:ui`, où ce but part désormais du serveur.
+
+**Aucun schéma ni réglage.** Déposée seule, elle part sans redémarrage
+(`page()` relit la page à chaque demande).
+
+---
+
 **Le Fanzzy vivant** (branche `claude/project-thread-iatg2m`, 5 octobre 2026,
 point 4 du lot 7). Il se dépose avec le lot 7 juste en dessous, ou seul.
 
