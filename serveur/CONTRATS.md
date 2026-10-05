@@ -1583,9 +1583,32 @@ coupure, un second onglet ou un retour.*
   bouger, sans erreur : c'est voulu, chaque relevé se paie sur l'enveloppe de
   l'API.
 
+### 16.7 Personne en face
+
+*Versé le 5 octobre 2026, à la demande de Gaël : un supporter seul enchaînait
+les buts de tribune contre une tribune vide.*
+
+- **La retombée face à une tribune vide.** Quand le camp d'en face de celui
+  qui mène n'a personne dans sa foule (`crowd`, les présents qui ont chanté
+  dans les `virage.inactif_sec` dernières secondes), la corde
+  retombe de `virage.decroissance_vide` (3 par seconde) au lieu de
+  `virage.decroissance` (1,4). Un chant en face, et la retombée redevient
+  l'ordinaire. Ce que le supporter seul récolte ne change pas (§ 16.2, le
+  plancher de `virage.tribune_min`).
+- **La retombée part.** `virage:tick` part aussi quand la corde arrondie
+  change sans qu'un geste l'ait bougée, au plus deux fois par seconde. La
+  page n'a plus à garder une corde figée entre deux chants.
+- **`pousse`** : `virage:tick` porte `[domicile, exterieur]`, deux booléens,
+  les camps qui ont poussé (un chant ou une carte) depuis l'envoi précédent.
+  La foule d'un camp ne saute que sur ce signe : la retombée et la secousse
+  d'un but réel ne poussent personne. Un serveur d'avant ne le sert pas ; la
+  page lit alors le sens de la corde, sans jamais faire sauter une tribune
+  vide.
+
 **Lecteurs.** `virage.html` (le tampon, le combo, la ferveur à paliers, le
-sticker de phase, la carte-souvenir, le camp et l'état rendus au retour),
-`geste.js` (le tampon de la fenêtre du geste).
+sticker de phase, la carte-souvenir, le camp et l'état rendus au retour,
+« PERSONNE EN FACE » et la foule qui saute), `geste.js` (le tampon de la
+fenêtre du geste).
 
 ---
 
