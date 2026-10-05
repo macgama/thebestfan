@@ -4192,10 +4192,114 @@ let filet = null;
   }
 }
 
-/** Le petit saut, indépendant de la pose affichée. */
+/* --------------------------------------------------- le Fanzzy vivant
+
+   Il respirait, il sautait sous le doigt, il exultait au but : il bougeait
+   déjà. Ce qui lui manquait, c'est un caractère — se souvenir, remarquer,
+   répondre autrement quand on insiste (lot 7, point 4 ; 5 octobre 2026, à
+   la demande de Gaël). **Rien de neuf à dessiner** : il prend les
+   expressions qui existent, et celui qui n'a pas la bonne garde son repos,
+   comme partout (`source`). Pas de vidéo non plus : l'essai du 3 octobre a
+   montré qu'un modèle vidéo ne garde pas le personnage.
+
+   — **Il raconte le dernier match** de son club, en même temps que le
+     ticket « Depuis ta dernière visite » qui l'écrit (`raconter`) : fier
+     d'une victoire, et il saute ; abattu d'une défaite. Le temps du ticket,
+     pas plus. Ce n'est pas la victoire rejouée comme si elle venait de
+     tomber (voir « le coup de sifflet final ») : ni case de BD, ni
+     « Victoire ! », un visage et c'est tout.
+   — **Il fête un retour**, après deux jours sans venir : le coucou, puis la
+     joie et un saut.
+   — **Il répond quand on insiste** (`sauter`) : au troisième toucher
+     d'affilée il exulte, au sixième il proteste et ne saute plus, le temps
+     de sa colère.
+
+   Il ne prend jamais la scène à un moment qui la tient — un but en direct,
+   le salut, le récit — : un toucher y reste un petit saut. */
+
+/** Le temps du ticket de retour (`montrerRetour` le retire à 3 320 ms) : le récit dure ce qu'il dure. */
+const RECIT_MS = 3300;
+/** Deux jours : en deçà, on est simplement repassé, et un personnage qui fête chaque visite ne fête plus rien. */
+const ABSENCE_FETEE = 48 * 3600e3;
+const FETE_MS = 2200;
+/** La durée du coucou, celle de `.scene.coucou .salut` : la fête attend qu'il ait fini. */
+const COUCOU_MS = 1500;
+/** Deux touchers plus espacés que ça ne sont pas « d'affilée ». */
+const AFFILEE_MS = 1200;
+const EXULTE_MS = 1600;
+const BOUDE_MS = 1800;
+
+/** Jusqu'où (`performance.now()`) une expression d'arrivée — le récit, la fête — tient la scène. */
+let recitJusqua = 0;
+/** La fin du coucou en cours. */
+let salutJusqua = 0;
+let touchers = 0;
+let dernierToucher = -Infinity;
+/** Jusqu'où le visage posé par les touchers tient, et jusqu'où il boude. */
+let toucherJusqua = 0;
+let boudeJusqua = 0;
+
+/**
+ * Ce personnage a-t-il un dessin pour cet état — le sien, ou celui de sa
+ * famille (`fanzzy-etats.js`) ?
+ *
+ * `source` rend toujours quelque chose à montrer, et c'est son rôle : le
+ * repos quand l'état manque, le plein-pied quand rien n'est dessiné. Mais un
+ * visage qui ne change pas ne raconte rien, et un personnage qui « boude »
+ * sans que rien ne change sur lui s'est simplement arrêté de sauter. On ne
+ * compte donc ici que ce qui se voit. Même règle que `source` pour l'âge : un
+ * autre âge est un autre personnage.
+ */
+function dessine(etat) {
+  if (equipe) {
+    const r = window.TBF_ETATS.resoudre(equipe.id, { evo: equipe.evo, skin: equipe.skin, etat });
+    if (r?.evo === equipe.evo) return r.etat !== 'neutre' || etat === 'neutre';
+    if (equipe.plein) return false;         // le plein-pied est immobile : aucun visage à changer
+  }
+  return Boolean(SUPPORTER[etat]);
+}
+
+/**
+ * Le premier des états que ce personnage sait montrer, ou `null`.
+ *
+ * Du plus juste au plus large : TR1 et TR2 ont leur victoire à eux, les
+ * Fanzzy de LA REPRISE la joie de leur famille, et le supporter générique n'a
+ * que ses quatre poses — d'où le second nom (`but`).
+ */
+const expression = (...etats) => etats.find(dessine) ?? null;
+
+/** Le petit saut, indépendant de la pose affichée — et ce qui change quand on insiste. */
 function sauter() {
+  const t = performance.now();
+  if (t < boudeJusqua) return;              // il boude : un toucher de plus ne le fait pas sauter
+  touchers = t - dernierToucher < AFFILEE_MS ? touchers + 1 : 1;
+  dernierToucher = t;
+  /* Son visage n'est à prendre que si rien ne le tient, si ce sont les
+     touchers d'avant qui l'ont posé, ou si ce qui le tient ne se voit pas :
+     le salut d'arrivée, chez qui ne l'a pas dessiné, garde deux secondes et
+     demie le visage de repos — et c'est là que tombent les premiers touchers
+     d'un joueur. */
+  const libre = !retour || t < toucherJusqua || !dessine(poseActuelle);
+  if (touchers >= 6 && libre) {
+    /* Le supporter générique n'a pas de colère : il continue de sauter. */
+    const agace = expression('decision');
+    if (agace) {
+      touchers = 0;
+      toucherJusqua = boudeJusqua = t + BOUDE_MS;
+      pose(agace, BOUDE_MS);
+      return;
+    }
+  }
   rejouer('saute');
   window.FX?.son?.('tic');
+  if (touchers === 2) {
+    /* Les deux visages qui viennent, chargés avant qu'on en ait besoin. */
+    for (const e of ['but', 'decision']) { const s = source(e); if (s) new Image().src = s; }
+  }
+  if (touchers === 3 && libre) {
+    const exulte = expression('but');
+    if (exulte) { toucherJusqua = t + EXULTE_MS; pose(exulte, EXULTE_MS); }
+  }
 }
 
 $('scene').addEventListener('pointerdown', sauter);
@@ -4356,7 +4460,69 @@ function saluer() {
   } catch { /* stockage refusé : on salue à chaque fois, c'est le moindre mal */ }
   if (deja) return;
   rejouer('coucou');
+  salutJusqua = performance.now() + COUCOU_MS;
+  /* Le récit d'un match tient déjà la scène (voir « le Fanzzy vivant ») :
+     le coucou se joue par-dessus, sans lui reprendre son visage. */
+  if (performance.now() < recitJusqua) return;
   pose('salut', 2400);
+}
+
+/**
+ * Ce que le Fanzzy dira de l'absence : un visage, un saut ou non, et combien
+ * de temps. `null` s'il n'a rien à en dire.
+ *
+ * Le dernier match d'abord : le serveur range les matchs du plus récent au
+ * plus ancien, et c'est le premier que le ticket écrit (`nouvellesDepuis`).
+ * Un nul ne se raconte pas d'un visage : il n'y en a pas pour lui. Sans
+ * match à raconter, une longue absence se fête — après le coucou, pour que
+ * le salut garde son geste.
+ *
+ * @param {object|null} depuis  le `depuis` du ticket montré, ou `null`
+ * @param {number|null} absent  la durée de l'absence, en millisecondes
+ */
+function recitDe(depuis, absent) {
+  const m = (Array.isArray(depuis?.matchs) ? depuis.matchs : [])
+    .find((x) => typeof x?.club === 'string' && x.club.trim()
+      && ['gagne', 'nul', 'perdu'].includes(x.issue));
+  const r = m?.issue === 'gagne' ? { etat: expression('victoire', 'but'), saute: true, tenue: RECIT_MS }
+    : m?.issue === 'perdu' ? { etat: expression('defaite', 'encaisse'), saute: false, tenue: RECIT_MS }
+    : absent >= ABSENCE_FETEE ? { etat: expression('joie', 'but'), saute: true, tenue: FETE_MS, fete: true }
+    : null;
+  return r?.etat ? r : null;
+}
+
+/** Le récit, ou la fête, joué à l'arrivée (voir `recitDe`). */
+function raconter(depuis, absent) {
+  const r = recitDe(depuis, absent);
+  if (!r) return;
+  const attente = r.fete ? Math.max(0, salutJusqua - performance.now()) : 0;
+  recitJusqua = performance.now() + attente + r.tenue;
+  const jouer = () => {
+    pose(r.etat, r.tenue);
+    if (r.saute) rejouer('saute');
+  };
+  if (attente) setTimeout(jouer, attente); else jouer();
+}
+
+/**
+ * La durée de l'absence, et la marque de cette arrivée-ci.
+ *
+ * Celle que le serveur mesure quand il la sert (`depuis.ilYaMs`, la dernière
+ * visite marquée, d'un appareil ou d'un autre) ; sinon celle de cet appareil.
+ * Le serveur ne sert `depuis` que s'il a des nouvelles : deux jours sans
+ * match ni ami ne lui laissent rien à dire, et le Fanzzy, lui, a remarqué
+ * qu'on n'était pas venu. Un écart de l'horloge du téléphone ne fait au pire
+ * qu'une fête de trop. `null` à la première visite, ou sans stockage.
+ */
+function absence(depuis) {
+  const cle = `tbf.arrivee.${quiQuotidien ?? 'anonyme'}`;
+  let avant = null;
+  try {
+    avant = Number(localStorage.getItem(cle)) || null;
+    localStorage.setItem(cle, String(Date.now()));
+  } catch { /* sans stockage, seul le serveur peut la dire */ }
+  if (Number.isFinite(depuis?.ilYaMs)) return depuis.ilYaMs;
+  return avant ? Date.now() - avant : null;
 }
 
 /* -------------------------------------------------------------- le menu */
@@ -4922,15 +5088,33 @@ async function arriverAuHub(lecture) {
      marque, ni pastille — et un état d'une arrivée précédente (retour par
      la flèche) s'efface avec elle (R2). */
   poserQuotidien(await lecture);
-  if (!H.quotidien) return;
+  /* L'absence, pour le Fanzzy (voir « le Fanzzy vivant ») : lue avant que
+     cette arrivée ne la remette à zéro. Elle se fête même quand le serveur
+     ne sert pas le quotidien — elle n'est ni un ticket ni une marque. */
+  const absent = absence(H.quotidien?.depuis);
+  /* Son visage se charge pendant que le rideau tient encore : il arrive avec
+     le ticket, pas une seconde après. Redemandé au moment de le jouer — le
+     personnage peut avoir changé entre-temps. */
+  const prevu = recitDe(H.quotidien?.depuis, absent);
+  if (prevu) { const s = source(prevu.etat); if (s) new Image().src = s; }
+  if (!H.quotidien) {
+    if (absent >= ABSENCE_FETEE) { await quandOnVoit(); raconter(null, absent); }
+    return;
+  }
   const depuis = H.quotidien.depuis;
   if (!depuis) marquerVisite();
   await quandOnVoit();
   if (depuis) {
     const montre = montrerRetour(depuis);
     marquerVisite();
+    /* Il ne raconte que ce que le ticket écrit : sans ticket, un visage
+       défait ne s'expliquerait pas. */
+    raconter(montre ? depuis : null, absent);
     if (montre) await pause(3400);
-  } else await pause(600);
+  } else {
+    raconter(null, absent);
+    await pause(600);
+  }
   proposerBonus();
 }
 

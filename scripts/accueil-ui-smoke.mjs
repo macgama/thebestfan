@@ -265,6 +265,18 @@ app.get('/api/football/feed', (_q, s, n) => (calendrier === null ? n()
 let parcours = null;
 app.get('/api/aide/parcours', (_q, s, n) => (parcours === null ? n() : s.json(parcours)));
 
+/* L'état du jour, et le ticket « Depuis ta dernière visite » avec lui
+   (contrat § 8). `null` : la route se tait (404), et l'accueil s'en passe,
+   comme il l'a toujours fait sur ce banc. `depuis` n'est servi qu'avec
+   `?retour=1`, comme le vrai serveur ; la marque de visite répond `ok`. */
+let quotidien = null;
+app.get('/api/quotidien', (q, s, n) => {
+  if (quotidien === null) return n();
+  const { depuis, ...reste } = quotidien;
+  s.json(q.query.retour === '1' && depuis ? { ...reste, depuis } : reste);
+});
+app.post('/api/quotidien/visite', (_q, s, n) => (quotidien === null ? n() : s.json({ ok: true })));
+
 /* Le Fanzzy équipé n'est pas simulé : il vit dans `user_wallet.active_fanzzy`
    et le vrai module fanzzy le sert. On l’équipe donc en base, comme le ferait
    le joueur depuis son classeur — c’est précisément le chemin qui était faux,
@@ -337,7 +349,7 @@ async function jusquaSrc(page, ms = 1200) {
  * jamais venu ; un  sur cette page est un rafraîchissement, avec sa
  * mémoire — et les deux ont chacun leurs contrôles.
  */
-async function ouvrir(largeur = 400, hauteur = 880) {
+async function ouvrir(largeur = 400, hauteur = 880, avant = null) {
   const contexte = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext());
   const page = await contexte.newPage();
   page.on('pageerror', (e) => erreurs.push(e.message));
@@ -346,11 +358,32 @@ async function ouvrir(largeur = 400, hauteur = 880) {
      Une classe de geste est retirée dès l'animation finie — il le faut, sinon
      elle remplacerait pour toujours la respiration qui tourne en boucle — donc
      la lire après coup ne prouve rien. Le journal, lui, garde la trace, et il
-     survit à un rechargement puisqu'il est réinstallé à chaque document. */
+     survit à un rechargement puisqu'il est réinstallé à chaque document.
+
+     **Les visages aussi** (`__visages`) : le dessin du calque visible, à
+     chaque fois qu'il change. Le récit d'un match se joue au lever du
+     rideau, avant que cette fonction rende la main ; le guetter après coup
+     le manquerait. */
   await page.evaluateOnNewDocument(() => {
     window.__gestes = [];
     addEventListener('animationstart', (e) => window.__gestes.push(e.animationName), true);
+    window.__visages = [];
+    addEventListener('DOMContentLoaded', () => {
+      const pile = document.getElementById('pile');
+      if (!pile) return;
+      const noter = () => {
+        const src = pile.querySelector('.pose.on')?.getAttribute('src') ?? '';
+        if (src && window.__visages.at(-1)?.src !== src) {
+          window.__visages.push({ t: performance.now(), src });
+        }
+      };
+      new MutationObserver(noter).observe(pile,
+        { subtree: true, attributes: true, attributeFilter: ['class', 'src'] });
+    });
   });
+  /* Ce que le navigateur sait avant la première ligne de la page : la marque
+     d'une visite d'avant, par exemple. */
+  if (avant) await page.evaluateOnNewDocument(avant.fn, ...(avant.args ?? []));
   await page.goto(base + '/', { waitUntil: 'networkidle0' });
   await page.waitForSelector('#hub.on', { timeout: 8000 }).catch(() => {});
   await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
@@ -2318,6 +2351,170 @@ if (process.env.CAPTURE) {
     || (console.log('        il dit :', m.lignes, '· tiroir :', JSON.stringify(m.tiroir)), false));
   direct = null; attente = null; ailleurs = []; autres = [];
   await page.close();
+}
+
+/* ================================= le Fanzzy vivant (lot 7, point 4)
+
+   Un caractère, avec les dessins qui existent (5 octobre 2026, à la demande
+   de Gaël) : il raconte le dernier match de son club en même temps que le
+   ticket « Depuis ta dernière visite » — fier et sautant d'une victoire,
+   abattu d'une défaite — ; il fête un retour après deux jours, après son
+   coucou ; et il répond autrement quand on insiste à le toucher : il exulte
+   au troisième toucher d'affilée, proteste au sixième et ne saute plus le
+   temps de sa colère. Il ne prend jamais le visage qu'un moment tient.
+
+   Éprouvé sur RP1 et ses cinq expressions (le repos, la poussée, la joie,
+   le dépit, la colère : la victoire et la défaite d'un match se montrent
+   par leur famille, `fanzzy-etats.js`), puis sur le supporter générique,
+   qui n'a pas de colère et doit continuer de sauter. */
+{
+  const manifeste = JSON.parse(readFileSync(
+    path.join(RACINE, 'public', 'img', 'fanzzy', 'index.json'), 'utf8')).fanzzy ?? {};
+  const etatsDe = (id) => manifeste[id]?.evolutions?.e1?.skins?.base?.etats ?? [];
+  const VOULUS = ['neutre', 'joie', 'depit', 'colere'];
+  const VIF = ['RP1', ...Object.keys(manifeste)]
+    .find((id) => VOULUS.every((e) => etatsDe(id).includes(e)));
+  /* Le nom d'un dessin, de son adresse : `…/RP1/e1/base/victoire.avif?v=2`
+     donne `victoire`, `/img/supporter/goal.avif`, `goal`. */
+  const nom = (src) => (src ?? '').match(/\/([a-z]+)\.(?:avif|webp|png)(?:\?|$)/)?.[1] ?? '';
+  /* L'heure du coucou, pour dire ce qui vient après lui. */
+  const heureDuCoucou = { fn: () => {
+    addEventListener('animationstart', (e) => {
+      if (e.animationName === 'coucou') window.__coucou ??= performance.now();
+    }, true);
+  } };
+  const visages = async (page) => (await page.evaluate(() => window.__visages.map((v) => v.src)))
+    .map(nom);
+  const sauts = async (page) => (await page.evaluate(() => window.__gestes))
+    .filter((g) => g === 'saut').length;
+  const toucher = (page) => page.evaluate(() => document.getElementById('scene')
+    .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+  const pause = (ms) => new Promise((r) => { setTimeout(r, ms); });
+  const visite = (depuis) => ({ actif: true, depuis });
+  const match = (issue, score) => ({ fixtureId: 9001, domicile: 'FC Sion',
+    exterieur: 'FC Bâle', score, club: 'FC Sion', issue });
+  const HEURE = 3600e3;
+  const [[{ avant: equipeAvant } = {}]] = await pool.query(
+    'SELECT active_fanzzy AS avant FROM user_wallet WHERE user_id = ?', [U]);
+
+  if (!VIF) {
+    console.log('  --   aucun Fanzzy avec ses expressions dans index.json : section sautée');
+  } else {
+    await equiper(VIF);
+
+    /* Une victoire depuis la dernière visite : il la raconte avec le ticket. */
+    quotidien = visite({ ilYaMs: 18 * HEURE, matchs: [match('gagne', [2, 1])] });
+    let page = await ouvrir();
+    check('une victoire depuis la dernière visite : il la raconte, fier',
+      await jusqua(async () => (await visages(page)).includes('joie'), 6000)
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    check('et il saute', await sauts(page) >= 1);
+    check('le temps du ticket, puis il rend la main à son repos',
+      await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000)
+      || (console.log('        il montre :', (await scene(page)).src), false));
+    await page.close();
+
+    /* Une défaite : abattu, et il ne saute pas. */
+    quotidien = visite({ ilYaMs: 18 * HEURE, matchs: [match('perdu', [0, 1])] });
+    page = await ouvrir();
+    check('une défaite : il la raconte, abattu',
+      await jusqua(async () => (await visages(page)).includes('depit'), 6000)
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    check('sans sauter', await sauts(page) === 0);
+    await page.close();
+
+    /* Trois jours sans venir, sans match à raconter : la fête, après le
+       coucou — le salut garde son geste. */
+    quotidien = visite({ ilYaMs: 72 * HEURE, souvenirs: 2 });
+    page = await ouvrir(400, 880, heureDuCoucou);
+    await jusqua(async () => (await visages(page)).includes('joie'), 6000);
+    const fete = await page.evaluate(() => ({ coucou: window.__coucou ?? null,
+      joie: window.__visages.find((v) => /\/joie\./.test(v.src))?.t ?? null }));
+    check('trois jours sans venir : il salue, puis il fête le retour',
+      fete.coucou !== null && fete.joie !== null && fete.joie - fete.coucou >= 1300
+      || (console.log('        coucou à', fete.coucou, '· joie à', fete.joie), false));
+    check('d’un saut', await sauts(page) >= 1);
+    await page.close();
+
+    /* Cinq heures : on est simplement repassé. */
+    quotidien = visite({ ilYaMs: 5 * HEURE, souvenirs: 1 });
+    page = await ouvrir();
+    await pause(2500);
+    const vus = await visages(page);
+    check('cinq heures sans venir, rien à raconter : pas de fête',
+      !vus.includes('joie') && await sauts(page) === 0
+      || (console.log('        visages :', vus.join(' → ')), false));
+    await page.close();
+
+    /* Le serveur ne sert `depuis` que s'il a des nouvelles : sans lui, la
+       marque de cet appareil dit l'absence. */
+    quotidien = null;
+    page = await ouvrir(400, 880, { fn: (t) => {
+      try { localStorage.setItem('tbf.arrivee.anonyme', String(t)); } catch { /* rien */ }
+    }, args: [Date.now() - 72 * HEURE] });
+    check('sans nouvelles du serveur, la marque de l’appareil suffit à la fête',
+      await jusqua(async () => (await visages(page)).includes('joie'), 6000)
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    await page.close();
+
+    /* Les touchers, sur un accueil sans rien à raconter, et dès l'arrivée :
+       le salut tient alors la scène, mais sur le visage de repos — rien qui
+       se voie, donc rien qui doive rendre le Fanzzy sourd aux premiers
+       touchers d'un joueur. */
+    page = await ouvrir();
+    await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000);
+    await page.evaluate(() => { window.__gestes.length = 0; window.__visages.length = 0; });
+    for (let i = 0; i < 3; i++) { await toucher(page); await pause(150); }
+    check('trois touchers d’affilée : il exulte',
+      await jusqua(async () => (await visages(page)).includes('joie'), 2000)
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    check('en sautant à chacun', await sauts(page) === 3
+      || (console.log('        sauts :', await sauts(page)), false));
+    await jusqua(async () => nom((await scene(page)).src) === 'neutre', 4000);
+    await pause(400);
+
+    await page.evaluate(() => { window.__gestes.length = 0; window.__visages.length = 0; });
+    for (let i = 0; i < 6; i++) { await toucher(page); await pause(150); }
+    check('six : il proteste',
+      await jusqua(async () => (await visages(page)).includes('colere'), 2000)
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    check('et le sixième ne le fait pas sauter', await sauts(page) === 5
+      || (console.log('        sauts :', await sauts(page)), false));
+    for (let i = 0; i < 2; i++) { await toucher(page); await pause(150); }
+    check('tant qu’il boude, un toucher ne le fait pas sauter', await sauts(page) === 5
+      || (console.log('        sauts :', await sauts(page)), false));
+    await pause(1900);
+    await toucher(page);
+    await pause(200);
+    check('sa colère passée, il ressaute', await sauts(page) === 6
+      || (console.log('        sauts :', await sauts(page)), false));
+
+    /* Un moment tient la scène : un toucher y reste un petit saut. */
+    await jusqua(async () => nom((await scene(page)).src) === 'neutre', 4000);
+    await pause(1300);
+    await page.evaluate(() => TBF.pose('encaisse', 3000));
+    await pause(400);
+    await page.evaluate(() => { window.__visages.length = 0; });
+    for (let i = 0; i < 3; i++) { await toucher(page); await pause(150); }
+    await pause(300);
+    check('un moment tient son visage : trois touchers ne le lui prennent pas',
+      !(await visages(page)).includes('joie')
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    await page.close();
+  }
+
+  /* Le supporter générique n'a pas de colère : il saute à chaque toucher. */
+  await pool.query('UPDATE user_wallet SET active_fanzzy = NULL WHERE user_id = ?', [U]);
+  quotidien = null;
+  const page = await ouvrir();
+  await pause(2600);
+  await page.evaluate(() => { window.__gestes.length = 0; });
+  for (let i = 0; i < 6; i++) { await toucher(page); await pause(150); }
+  await pause(200);
+  check('le supporter, sans colère dessinée, saute à chacun des six touchers',
+    await sauts(page) === 6 || (console.log('        sauts :', await sauts(page)), false));
+  await page.close();
+  await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [equipeAvant ?? null, U]);
 }
 
 /* ======================================== ce que le hub dit sans qu'on l'ouvre
