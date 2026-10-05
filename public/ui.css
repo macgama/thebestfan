@@ -9826,9 +9826,10 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
    craie cernés d'encre près de la ligne de chaque camp, un par but — la
    page pose autant de `<i>` que de buts (`goals`).
 
-   **Le foulard** : tant que `foulard-noeud` n'existe pas (lot 7), un rond
-   de trente-huit pixels aux rayures de mon écharpe, cerné de craie puis
-   d'encre comme un sticker, et deux franges qui pendent. C'est lui que
+   **Le foulard** : le foulard noué dessiné du lot 7 (`img/arene/`), teint
+   au camp qui mène ; en repli, un rond de trente-huit pixels aux rayures de
+   mon écharpe, cerné de craie puis d'encre comme un sticker, et deux franges
+   qui pendent (voir « Le foulard noué dessiné », plus bas). C'est lui que
    `FX.points` vise (`#knot`). Le chiffre de la corde, s'il est montré, va
    dans un `<b>` (une banderole à côté du foulard) : le foulard lui-même ne
    porte pas de texte, que ses rayures rendraient illisible.
@@ -9987,6 +9988,49 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 }
 .tbf-corde[data-sens=h] .tbf-foulard>b{left:50%;top:auto;bottom:calc(100% + 10px);translate:-50% 0}
 .tbf-foulard>b:empty{display:none}
+
+/* **Le foulard noué dessiné** (lot 7) : `img/arene/foulard-noeud`, une
+   écharpe nouée crème et grise détourée par `stuff-images.mjs` (famille
+   `arene`), à 48 pixels au Virage et 40 au duel. **Il est teint au camp qui
+   mène** : un dégradé de ses deux couleurs posé sous le dessin en `multiply`
+   — le crème prend la couleur, les gris du tricot gardent leur relief —, le
+   tout découpé par le dessin lui-même (`mask`). Le `::before` porte mes
+   couleurs, le `::after` les leurs, par-dessus, visible seulement quand la
+   corde penche chez moi (`--corde` < 0 : ils poussent) ; à égalité, le
+   foulard est à mes couleurs, comme le disque d'avant. L'ombre est une tache
+   d'encre floue sous le nœud, peinte par l'élément lui-même : un
+   `drop-shadow` sur lui aurait doublé l'ombre dure de la banderole.
+
+   **Le disque du lot 6 reste le repli** d'un navigateur qui ne connaît pas
+   `mask` : tout ce qui suit est sous `@supports`. Un dessin qui ne
+   chargerait pas, lui, laisserait un foulard invisible : il part avec la
+   feuille, en trois formats, et `verif-pages` refuse une image manquante. */
+@supports (mask-image:url("")) or (-webkit-mask-image:url("")){
+  .tbf-foulard{
+    --foulard:url("/img/arene/foulard-noeud.webp");
+    width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:0;
+    background:radial-gradient(closest-side,rgba(7,9,12,.6),transparent) 2px 5px/100% 86% no-repeat;
+  }
+  .tbf-corde[data-sens=h] .tbf-foulard{width:40px;height:40px;margin:-20px 0 0 -20px}
+  .tbf-foulard::before,.tbf-foulard::after{
+    inset:0;width:auto;height:auto;border-radius:0;box-shadow:none;clip-path:none;
+    background:var(--foulard) 50% 50%/contain no-repeat,
+      linear-gradient(135deg,var(--f1) 0 44%,var(--f2) 56% 100%);
+    background-blend-mode:multiply;
+    -webkit-mask:var(--foulard) 50% 50%/contain no-repeat;mask:var(--foulard) 50% 50%/contain no-repeat;
+  }
+  .tbf-foulard::before{--f1:var(--e1,var(--projo));--f2:var(--e2,var(--flare))}
+  .tbf-foulard::after{z-index:2;--f1:var(--eux1,var(--bleu));--f2:var(--eux2,var(--bleu-clair));
+    opacity:clamp(0,calc(var(--corde,0) * -1000),1)}
+  /* En minute double, une lueur d'or autour du nœud à la place de l'ombre,
+     portée par l'élément arrondi : le `box-shadow` du disque, posé sur le
+     nœud, serait découpé par le masque, et un dégradé plus grand que la
+     boîte s'y couperait en carré (vu au banc). */
+  [data-double] .tbf-foulard{border-radius:50%;
+    background:radial-gradient(closest-side,rgba(245,195,59,.7),rgba(245,195,59,.3));
+    box-shadow:0 0 16px 2px rgba(245,195,59,.5)}
+  [data-double] .tbf-foulard::before{box-shadow:none}
+}
 
 /* ## La marée du duel
  *
