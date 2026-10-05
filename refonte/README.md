@@ -13,13 +13,14 @@ temporaire de la session ; ce qui doit durer est ici.*
 - **Les arbitrages du 2 octobre 2026 sont des règles** : faces vives foncées
   (flare `#B8321F`, vert `#197450`, bleu `#2F63B4`, violet `#6545AE`) ; kraft
   `#E4D3B5` à l'encre noire pure ; l'or seulement en grand texte ou en face.
-- **En ligne** : les lots 0, 1, 2, 3, 4 et 5, le chantier serveur (vague 1 :
-  le quotidien), le son de tribune, le correctif serveur du Virage et le
-  correctif des quatre retours de Gaël (commit `524b2ca`, 5 octobre 2026).
-- **Prêt, pas encore en ligne** : **le lot 6, les arènes**, fusionné dans la
-  copie principale et vérifié. La marche à suivre est dans `../A-DEPLOYER.md`
-  (le schéma `sql/arenes.sql` d'abord, puis un redémarrage hors d'un match).
-- **À venir** : le lot 7 (images et terrain), puis le Fanzzy vivant.
+- **En ligne** : les lots 0 à 6 (le lot 6, les arènes, depuis le 5 octobre
+  2026 : `sql/arenes.sql` appliqué et serveur redémarré par Gaël), le chantier
+  serveur (vagues 1 et 2), le son de tribune et les correctifs du Virage.
+- **Prêt, pas encore en ligne** (branche `claude/project-thread-jyhm3m`) : le
+  relevé qui redemande les événements tant que sa liste compte moins de buts
+  que le tableau (les vieux buts, à la cause), et la photo du tunnel derrière
+  le voile du Virage. Sans schéma ; un redémarrage hors d'un match.
+- **À venir** : le reste du lot 7 (`lots/BRIEF-LOT7.md`), puis le Fanzzy vivant.
 
 ## Où sont les choses
 
@@ -27,7 +28,8 @@ temporaire de la session ; ce qui doit durer est ici.*
 |---|---|
 | `direction/` | les trois directions maquettées (`direction-ultras-diy.json` est FAIT MAIN : lire `amendements` d'abord), la maquette `dir-ultras-diy.html`, et la synthèse qui a mené au choix |
 | `lots/BRIEF-REFONTE.md` | le brief de départ de toute la refonte |
-| `lots/BRIEF-LOT4.md`, `lots/BRIEF-LOT6.md` | les deux derniers briefs de lot : le modèle pour écrire celui du lot 7 (même plan, mêmes règles) |
+| `lots/BRIEF-LOT4.md`, `lots/BRIEF-LOT6.md` | les deux briefs précédents : le modèle de celui du lot 7 (même plan, mêmes règles) |
+| `lots/BRIEF-LOT7.md` | le brief du lot 7 : foulard, corde, silhouettes, Fanzzy vivant, sons |
 | `lots/LOT6-DECISIONS.md`, `lots/LOT6-QUESTIONS.md` | les décisions de Gaël du 3 octobre (XP du Virage, présence, verdict, ferveur) et les recommandations suivies pour les autres |
 | `lots/IMAGES-LOTS-6-7.md` | ce qui reste à dessiner, où chaque image sert, à quel format, par quelle chaîne |
 | `lots/VIRAGE-RETOURS-GAEL.md` | le correctif des quatre retours de Gaël au Virage, et ce qui reste à trancher |
@@ -41,18 +43,19 @@ temporaire de la session ; ce qui doit durer est ici.*
 1. **Brancher les images déjà générées** (sources dans `art/arene/_src/`) : le
    foulard noué sur la corde (détouré du fond vert), la corde et les six
    silhouettes au pochoir redessinées en SVG pour remplacer les dessins
-   provisoires ; la photo du tunnel au voile du Virage.
+   provisoires. La photo du tunnel au voile du Virage est faite (branche
+   ci-dessus). Les mêmes images sont aussi dans l'historique Artlist de Gaël
+   (4 octobre, 830 crédits).
 2. **Le Fanzzy vivant** : animer dans le jeu les images existantes (respiration,
    saut au but, effort sur la corde), **pas** de vidéo générée — l'essai du
    3 octobre a montré que les modèles vidéo ne gardent pas le personnage. Un
    essai sur RP1 d'abord, montré à Gaël.
 3. **Les sons Artlist** (la rumeur, le but, les tambours) : Gaël doit les
    écouter et dire lesquels on garde (`art/son/_src/artlist/A-ECOUTER.md`).
-4. **Les vieux buts** : la salle ne les annonce plus, mais un but ancien frappe
-   encore une carte-souvenir et compte au duel. Corriger la cause : le relevé
-   redemande les évènements tant que sa liste compte moins de buts que le
-   tableau. Et donner la priorité au GOAL quand plusieurs moments attendent la
-   fin d'un geste.
+4. **Les vieux buts** : fait, à mettre en ligne. Le relevé redemande les
+   événements à chaque tour tant que sa liste compte moins de buts que le
+   tableau (au plus neuf tours) ; la priorité au GOAL et la lecture du retour
+   de `realGoal` par `server.js` étaient déjà au lot 6.
 5. **Décisions en attente de Gaël** : le stade du duel ; la date de fin de la
    saison 1 et les seuils de division (`/admin`) ; la présence des amis (après
    relecture de `CONFIDENTIALITE.md` par un juriste) ; celles de `ETAT.md`
@@ -81,7 +84,7 @@ temporaire de la session ; ce qui doit durer est ici.*
   route emporte du travail que personne n'a vérifié. Après une mise en ligne,
   relever `/healthz` et les empreintes des fichiers servis.
 
-## Le ménage à faire après la mise en ligne du lot 6
+## Le ménage à faire maintenant que le lot 6 est en ligne
 
 Les copies de travail `.claude/worktrees/lot6`, `hotfix-virage` et
 `wf_fce88c4c-ecf-4` (leur travail est versé dans la copie principale) et les

@@ -287,8 +287,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* ------------------------------------------------------ le voile de choix
 
-   Le tunnel en fond — son image n'existe pas encore (lot 7) : la photo de
-   tribune à 25 % sur le noir en tient lieu —, une tête qui ne défile pas
+   Le tunnel en fond, à 25 % sur le noir (lot 7) : la photo de l'ouverture
+   de l'accueil, debout ou couchée comme l'écran, le même chemin vers la
+   tribune. Le PNG ne sert qu'à un navigateur sans WebP. Une tête qui ne défile pas
    (avec quarante matchs, le titre et la recherche sortaient par le haut),
    et la liste des affiches qui défile. La tête garde la place des deux
    boutons flottants. */
@@ -464,9 +465,11 @@ html[data-calme~="animations"] .float,html[data-calme~="animations"] .countdown{
   <div class="veil on" id="veil">
     <!-- Le tunnel, en attendant son image : la tribune à 25 %. -->
     <picture class="veil-fond" aria-hidden="true">
-      <source srcset="/img/ecran/tribune.avif" type="image/avif">
-      <source srcset="/img/ecran/tribune.webp" type="image/webp">
-      <img src="/img/ecran/tribune.jpg" alt="" decoding="async">
+      <source media="(orientation: landscape)" srcset="/img/ecran/tunnel-paysage.avif" type="image/avif">
+      <source media="(orientation: landscape)" srcset="/img/ecran/tunnel-paysage.webp" type="image/webp">
+      <source srcset="/img/ecran/tunnel-portrait.avif" type="image/avif">
+      <source srcset="/img/ecran/tunnel-portrait.webp" type="image/webp">
+      <img src="/img/ecran/tunnel-portrait.png" alt="" decoding="async">
     </picture>
     <div class="tete">
       <h1 class="veil-titre" id="veilTitle"><span class="tbf-banderole">LE GRAND VIRAGE</span><span

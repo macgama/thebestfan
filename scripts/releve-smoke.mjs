@@ -30,10 +30,14 @@
  *     relevé d'événements, sauf au tour qui le voit sortir du jeu — et
  *     celui-là relève sans attendre la minute ;
  *   - **l'heure du coup d'envoi** part avec le statut, pour la salle ;
+ *   - **le but que le score annonce avant la liste** : tant que la liste
+ *     compte moins de buts que le tableau, chaque tour redemande les
+ *     événements, au plus `RELANCES_MAX` fois, et le but part au tour qui le
+ *     trouve — pas au changement de score suivant ;
  *   - **l'absence** : un lot du direct qui a répondu sans un match demandé le
  *     signale par `onAbsent` ; un lot en panne ne signale rien.
  */
-import { createPoller, estUnBut, mapEvent, LIGNE_FRAICHE_MIN } from '../src/server/football/poller.js';
+import { createPoller, estUnBut, mapEvent, LIGNE_FRAICHE_MIN, RELANCES_MAX } from '../src/server/football/poller.js';
 import { QuotaExhausted } from '../src/server/football/client.js';
 
 let failures = 0;
@@ -701,6 +705,64 @@ console.log('\nUn lot qui répond sans un match le dit ; une panne ne dit rien')
   avancer(1_000);
   try { await p.pollLive(); } catch (e) { if (!(e instanceof QuotaExhausted)) throw e; }
   check('un lot en panne ne signale rien', absents.length === 1);
+}
+
+/* L'API publie le score avant l'événement. Le relevé qu'ouvre le changement de
+   score revenait sans le but, et rien ne le redemandait avant le changement
+   de score suivant (salle vide) ou la minute (salle occupée) : le but partait
+   en retard, carte frappée pour qui chantait à ce moment-là. */
+console.log('\nLe but que le score annonce avant la liste');
+for (const occupee of [false, true]) {
+  const ID = occupee ? 8602 : 8601;
+  const quoi = occupee ? 'salle occupée' : 'salle vide';
+  const api = { status: '1H', elapsed: 1, home: 0, away: 0, events: [] };
+  const store = fauxStore({}, { suivis: [ID] });
+  const client = fauxClient(ID, api);
+  const { p, buts } = poller({ store, client, auFil: occupee ? [ID] : [] });
+  const tour = async () => { avancer(20_000); await p.pollLive(); };
+  await tour();                                                    // coup d'envoi
+  Object.assign(api, { elapsed: 12, home: 1 });                    // le score, sans le but
+  await tour();
+  const avant = client.n.evenements;
+  api.events.push(ev(12, HOME, 'Diallo', 'Normal Goal'));          // la liste rattrape
+  await tour();
+  check(`${quoi} : le but part au tour suivant, sans attendre`,
+    buts.length === 1 && buts[0].player === 'Diallo' && client.n.evenements === avant + 1
+    || (console.log('        annoncés :', buts.map(dit).join(' · '), client.n), false));
+  const n = client.n.evenements;
+  for (let i = 0; i < 3; i++) await tour();
+  check(`${quoi} : la liste rattrapée, plus de relance à chaque tour`,
+    client.n.evenements - n <= 1 || (console.log('        ', client.n), false));
+}
+{
+  /* Un but que la liste ne porte jamais : les relances s'arrêtent. */
+  const ID = 8603;
+  const api = { status: '1H', elapsed: 1, home: 0, away: 0, events: [] };
+  const store = fauxStore({}, { suivis: [ID] });
+  const client = fauxClient(ID, api);
+  const { p } = poller({ store, client });
+  const tour = async () => { avancer(20_000); await p.pollLive(); };
+  await tour();
+  Object.assign(api, { elapsed: 12, home: 1 });
+  for (let i = 0; i < RELANCES_MAX + 5; i++) await tour();
+  check('un but que la liste ne porte jamais : au plus RELANCES_MAX relances',
+    client.n.evenements === 1 + 9 || (console.log('        ', client.n), false));
+}
+{
+  /* Un relevé en panne ne retire rien : le tour suivant redemande. */
+  const ID = 8604;
+  const api = { status: '1H', elapsed: 1, home: 0, away: 0, events: [] };
+  const store = fauxStore({}, { suivis: [ID] });
+  const { buts, tour: t } = poller({ store, client: fauxClient(ID, api) });
+  const tour = async () => { avancer(20_000); await t(); };
+  await tour();
+  Object.assign(api, { elapsed: 12, home: 1, panne: true });
+  api.events.push(ev(12, HOME, 'Diallo', 'Normal Goal'));
+  await tour();
+  api.panne = false;
+  await tour();
+  check('un relevé en panne : le but part au tour suivant',
+    buts.length === 1 || (console.log('        annoncés :', buts.map(dit).join(' · ')), false));
 }
 
 Date.now = vrai;
