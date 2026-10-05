@@ -75,11 +75,19 @@ temporaire de la session ; ce qui doit durer est ici.*
 6. **Rouges connues** : `deck:ui` (un contrôle, depuis avant le lot 0 ; un
    correctif dort dans la copie `.claude/worktrees/funny-herschel-18c485`
    d'une autre session) ; `accueil:ui` intermittente. **Dans un conteneur
-   cloud**, sept de plus, déjà sur `main` le 5 octobre : `accueil:ui` « aucun
-   libellé de rail n'est rogné » (CLASSEMENT) ; `virage:ui` « un pays dans la
-   langue du lecteur » et les trois contrôles d'invitation ; `nvn:ui`
-   « l'arène cède avant la main et les chants » et « elle dit le Fanzzy, le
-   camp et la sorte de partie ».
+   cloud**, relevé sur `main` le 5 octobre 2026 : `equipes:ui` (le plafond de
+   clubs suivis : « la page dit pourquoi, avec le compte » et deux autres),
+   `nvn:ui` « elle dit le Fanzzy, le camp et la sorte de partie », `virage:ui`
+   « un pays dans la langue du lecteur » et les trois contrôles d'invitation. Deux réglages du conteneur, à faire avant
+   les suites, en effacent d'autres : faire confiance aux deux CA de
+   `/root/.ccr/agent-proxy-ca.crt` dans le magasin NSS du navigateur
+   (`certutil`, paquet `libnss3-tools`), sans quoi Chrome ne charge pas les
+   polices Google et `accueil:ui`, `cartes:ui` et `tour:ui` rougissent sur des
+   mesures de texte ; mettre la base de test à l'heure de Zurich, comme la
+   sonde du jour de jeu l'attend (`mysql_tzinfo_to_sql /usr/share/zoneinfo |
+   mysql -uroot mysql`, puis `SET GLOBAL time_zone = 'Europe/Zurich'`), sans
+   quoi `quotidien:smoke`, `recompenses:smoke` et `admin:smoke` rougissent sur
+   les jours de 23 et de 25 heures.
 
 ## Comment on travaille
 
