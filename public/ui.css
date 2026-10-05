@@ -6228,9 +6228,8 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
    `--p` est la part du niveau faite, en pour cent (`niv.dans / niv.pour`),
    la même valeur que l'anneau d'XP. Au niveau maximum, rien après lui.
 
-   **La corde est peinte en CSS** — du kraft vrillé de traits d'encre et
-   cerné — tant que `corde.svg` n'est pas produite ; le jour où elle l'est,
-   elle remplace le fond de ce seul `::before`.
+   **La corde** est la tuile tressée du lot 7 (`--corde-h`, dans `:root`),
+   ramenée à sept pixels de haut, sur le kraft et cernée.
 
    **Posé sur le kraft** (un ticket) : les libellés sont au noir du papier
    (14,28:1, 4,58 au soleil) en onze pixels, le pointillé des paliers à venir
@@ -6252,7 +6251,7 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
   content:"";position:absolute;left:50%;width:100%;top:calc(var(--k) / 2 - 3.5px);height:7px;
   border-radius:4px;box-shadow:0 0 0 1.5px var(--encre);pointer-events:none;
   background:
-    repeating-linear-gradient(35deg,transparent 0 3px,rgba(7,9,12,.42) 3px 4px),
+    var(--corde-h) 0 50%/13.5px 7px,
     linear-gradient(180deg,rgba(7,9,12,.32),transparent 45%,rgba(7,9,12,.32)),
     var(--kraft);
 }
@@ -7858,7 +7857,7 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
  *
  * **La corde** relie chaque nœud au suivant (le `::before` de chaque
  * `li`, sauf le dernier) : du kraft vrillé de traits d'encre et cerné, comme
- * le chemin de niveau, tant que `corde.svg` n'est pas produite. Entre deux
+ * le chemin de niveau (la tuile `--corde-h`, à six pixels). Entre deux
  * âges atteints, elle devient l'écharpe tricotée (`--e1`, `--e2`) : le
  * chemin fait est de la laine, celui qui reste de la corde.
  *
@@ -7876,7 +7875,7 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
   top:calc(var(--k) / 2 - 3px);height:6px;border-radius:3px;pointer-events:none;
   box-shadow:0 0 0 1.5px var(--encre);
   background:
-    repeating-linear-gradient(35deg,transparent 0 3px,rgba(7,9,12,.42) 3px 4px),
+    var(--corde-h) 0 50%/11.6px 6px,
     linear-gradient(180deg,rgba(7,9,12,.32),transparent 45%,rgba(7,9,12,.32)),
     var(--kraft);
 }
@@ -9363,26 +9362,38 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
      l'écran ; à quatorze, il tient entier. */
   --hudm-haut:calc(env(safe-area-inset-top) + 14px);
   --hudm-cote:14px;
-  /* **Une corde, un dessin** : la tresse du chemin de niveau et de l'arbre
-     des âges — des traits d'encre à 35° sur du kraft, à 42 % —, et un
-     second brin croisé, plus léger, qui la tresse : à quatorze pixels de
-     large, une seule hachure se lisait comme une règle graduée. Le jour où
-     `corde.svg` existe (lot 7), elle remplace ces deux couches, et le
-     chemin et l'arbre peuvent les prendre ici à leur tour. */
-  --corde-tresse:repeating-linear-gradient(35deg,transparent 0 3px,rgba(7,9,12,.42) 3px 4px),
-    repeating-linear-gradient(-35deg,transparent 0 4px,rgba(7,9,12,.2) 4px 5px);
-  /* **Le pochoir des supporters, en attendant `pochoir-supporters.svg`**
-     (lot 7) : cinq silhouettes dessinées ici, en aplat, sur une grille de
-     24 × 40 — debout, le poing levé, l'écharpe tendue, les bras en V, et
-     assis. Elles ne portent ni maillot ni visage : c'est un pochoir, et la
-     page les teint au camp. Le cou est un vide d'un pixel, comme le pont
-     d'une lettre au pochoir. Chaque membre est un tracé à part : deux
-     tracés qui se croisent en sens contraires, dans un seul, se seraient
-     évidés l'un l'autre. */
+  /* **La corde tressée** (lot 7), dessinée à la main en décalquant
+     `art/arene/_src/corde-reference-1` : une tuile de 14 × 27, trois torons
+     de neuf pixels séparés d'un trait d'encre en S, l'un plus sombre, l'un
+     plus clair, le troisième nu. **Le fond de la tuile est transparent** :
+     elle se pose sur la couleur de la corde (`--corde-fil`, le kraft, l'or
+     de la minute double) et la teinte suit sans masque ni seconde tuile.
+     `--corde-v` court de haut en bas (le Virage), `--corde-h` de gauche à
+     droite (le duel, le chemin de niveau, l'arbre des âges) ; la page qui
+     la rétrécit garde le rapport 27 ⁄ 14, sans quoi les torons s'écrasent.
+     Aucune couture : la tuile boucle sur ses trois torons. */
+  --corde-v:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='27' viewBox='0 0 14 27'%3E%3Cpath fill='rgba(255,255,255,.14)' d='M0 -18C4.6 -19.6 9.4 -9.4 14 -11L14 -2C9.4 -0.4 4.6 -10.6 0 -9Z'/%3E%3Cpath fill='rgba(7,9,12,.16)' d='M0 0C4.6 -1.6 9.4 8.6 14 7L14 16C9.4 17.6 4.6 7.4 0 9Z'/%3E%3Cpath fill='rgba(255,255,255,.14)' d='M0 9C4.6 7.4 9.4 17.6 14 16L14 25C9.4 26.6 4.6 16.4 0 18Z'/%3E%3Cpath fill='rgba(7,9,12,.16)' d='M0 27C4.6 25.4 9.4 35.6 14 34L14 43C9.4 44.6 4.6 34.4 0 36Z'/%3E%3Cpath fill='none' stroke='%2307090C' stroke-width='1.3' d='M0 -9C4.6 -10.6 9.4 -0.4 14 -2M0 0C4.6 -1.6 9.4 8.6 14 7M0 9C4.6 7.4 9.4 17.6 14 16M0 18C4.6 16.4 9.4 26.6 14 25M0 27C4.6 25.4 9.4 35.6 14 34'/%3E%3C/svg%3E");
+  --corde-h:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27' height='14' viewBox='0 0 27 14'%3E%3Cg transform='matrix(0 1 -1 0 27 0)'%3E%3Cpath fill='rgba(255,255,255,.14)' d='M0 -18C4.6 -19.6 9.4 -9.4 14 -11L14 -2C9.4 -0.4 4.6 -10.6 0 -9Z'/%3E%3Cpath fill='rgba(7,9,12,.16)' d='M0 0C4.6 -1.6 9.4 8.6 14 7L14 16C9.4 17.6 4.6 7.4 0 9Z'/%3E%3Cpath fill='rgba(255,255,255,.14)' d='M0 9C4.6 7.4 9.4 17.6 14 16L14 25C9.4 26.6 4.6 16.4 0 18Z'/%3E%3Cpath fill='rgba(7,9,12,.16)' d='M0 27C4.6 25.4 9.4 35.6 14 34L14 43C9.4 44.6 4.6 34.4 0 36Z'/%3E%3Cpath fill='none' stroke='%2307090C' stroke-width='1.3' d='M0 -9C4.6 -10.6 9.4 -0.4 14 -2M0 0C4.6 -1.6 9.4 8.6 14 7M0 9C4.6 7.4 9.4 17.6 14 16M0 18C4.6 16.4 9.4 26.6 14 25M0 27C4.6 25.4 9.4 35.6 14 34'/%3E%3C/g%3E%3C/svg%3E");
+  --corde-tresse:var(--corde-v) 0 0/14px 27px;
+  --corde-tresse-h:var(--corde-h) 0 50%/27px 14px;
+  /* **Le pochoir des supporters** (lot 7), redessiné d'après
+     `art/arene/_src/silhouettes-1` : six poses en aplat sur la grille de
+     24 × 40 du lot 6 — les bras levés poings fermés, l'écharpe tendue
+     au-dessus de la tête, le tambour, le mégaphone, les mains frappées
+     au-dessus de la tête, et le supporter qui tire la corde. Ni visage, ni
+     maillot, ni signe sur l'écharpe, le tambour ou le mégaphone : c'est un
+     pochoir, la page le teint au camp. Le cou reste un vide d'un pixel ; les
+     bras sont des traits arrondis (la feuille s'en sert en masque, seule
+     l'opacité compte). Lisibles à dix pixels de haut : la tête et ce que
+     chacun tient sortent du corps. **Le repos et l'assis** du lot 6 restent
+     pour les états (`.muet`, `.parti`) : ce ne sont pas des poses de chant. */
   --pochoir-repos:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='12' cy='9.6' r='4.3'/%3E%3Cpath d='M6.6 16.4Q12 13.9 17.4 16.4L18.6 28.2L16.9 28.6L15.9 21.6L15.3 27.8L14.6 40H12.8L12 30.4L11.2 40H9.4L8.7 27.8L8.1 21.6L7.1 28.6L5.4 28.2Z'/%3E%3C/svg%3E");
-  --pochoir-poing:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='12' cy='10.5' r='4.2'/%3E%3Cpath d='M8.3 16.6Q12 15 15.7 16.6L16.4 27.6H14.7L14.3 40H12.7L12 30.5L11.3 40H9.7L9.3 27.6H7.6Z'/%3E%3Cpath d='M15.1 18.4L19.6 4.6A1.5 1.5 0 0 0 16.8 3.9L13.2 16.4Z'/%3E%3Cpath d='M8.4 17L5.6 27.4L7.4 27.9L9.6 19Z'/%3E%3C/svg%3E");
-  --pochoir-echarpe:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='12' cy='12' r='4.1'/%3E%3Cpath d='M8.3 17.8Q12 16.3 15.7 17.8L16.4 28.4H14.7L14.3 40H12.7L12 31L11.3 40H9.7L9.3 28.4H7.6Z'/%3E%3Cpath d='M8.8 19.4L5.4 6.4L7.9 5.9L10.9 17.4Z'/%3E%3Cpath d='M15.2 19.4L18.6 6.4L16.1 5.9L13.1 17.4Z'/%3E%3Cpath d='M0 2.6H24V5.8H0Z'/%3E%3C/svg%3E");
-  --pochoir-leve:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='12' cy='10.5' r='4.2'/%3E%3Cpath d='M8.3 16.6Q12 15 15.7 16.6L16.4 27.6H14.7L14.3 40H12.7L12 30.5L11.3 40H9.7L9.3 27.6H7.6Z'/%3E%3Cpath d='M8.9 18.4L2.6 6.9A1.5 1.5 0 0 1 5.2 5.4L10.9 16.2Z'/%3E%3Cpath d='M15.1 18.4L21.4 6.9A1.5 1.5 0 0 0 18.8 5.4L13.1 16.2Z'/%3E%3C/svg%3E");
+  --pochoir-leve:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='12' cy='10.5' r='4.2'/%3E%3Cpath d='M8.3 16.6Q12 15 15.7 16.6L16.4 27.6H14.7L14.3 40H12.7L12 30.5L11.3 40H9.7L9.3 27.6H7.6Z'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M8.6 17.6L5.2 12.2L4.4 5.4M15.4 17.6L18.8 12.2L19.6 5.4'/%3E%3Ccircle cx='4.3' cy='4.2' r='1.9'/%3E%3Ccircle cx='19.7' cy='4.2' r='1.9'/%3E%3C/svg%3E");
+  --pochoir-echarpe:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='12' cy='12' r='4.1'/%3E%3Cpath d='M8.3 17.8Q12 16.3 15.7 17.8L16.4 28.4H14.7L14.3 40H12.7L12 31L11.3 40H9.7L9.3 28.4H7.6Z'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M8.6 19L5.6 13.6L5.4 6.4M15.4 19L18.4 13.6L18.6 6.4'/%3E%3Cpath d='M2.2 3.4Q12 1.8 21.8 3.4V6.6Q12 5 2.2 6.6Z'/%3E%3Cpath d='M0.6 3.6H3.4L3 11.6H1.6L1.2 10.2L0.6 11.6Z'/%3E%3Cpath d='M20.6 3.6H23.4V11.6L22.8 10.2L22.4 11.6H21Z'/%3E%3C/svg%3E");
+  --pochoir-tambour:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='11' cy='10.5' r='4.2'/%3E%3Cpath d='M7.3 16.6Q11 15 14.7 16.6L15.4 27.6H13.7L13.3 40H11.7L11 30.5L10.3 40H8.7L8.3 27.6H6.6Z'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M7.8 17.8L6.6 22.6L10.6 24.4M14.6 17.6L18.6 15.4L19.8 12.2'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round' d='M10.6 24.4L14.4 23.2M19.8 12.2L22.6 8.4'/%3E%3Cpath fill-rule='evenodd' d='M12.4 24.6Q17.6 22.4 22.8 24.6V32.4Q17.6 34.8 12.4 32.4ZM12.4 26.6Q17.6 24.6 22.8 26.6V27.6Q17.6 25.6 12.4 27.6Z'/%3E%3C/svg%3E");
+  --pochoir-megaphone:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='13' cy='10.8' r='4.1'/%3E%3Cpath d='M9.3 16.8Q13 15.2 16.7 16.8L17.4 27.8H15.7L15.3 40H13.7L13 30.6L12.3 40H10.7L10.3 27.8H8.6Z'/%3E%3Cpath d='M9.4 9.8L1.8 5.6V15.8L9.4 12.2Z'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M9.6 18L6.6 15.4L7.2 12.6M16.4 18.4L17.4 23.6L16.8 27'/%3E%3C/svg%3E");
+  --pochoir-clap:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='12' cy='11.6' r='3.9'/%3E%3Cpath d='M8.3 17.4Q12 15.9 15.7 17.4L16.4 28H14.7L14.3 40H12.7L12 30.8L11.3 40H9.7L9.3 28H7.6Z'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M8.8 18.2L3.4 12.4L10.6 2.6M15.2 18.2L20.6 12.4L13.4 2.6'/%3E%3Cpath d='M10.2 0.6H13.8L13.4 4.4H10.6Z'/%3E%3C/svg%3E");
+  --pochoir-tire:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='15.4' cy='10.2' r='4'/%3E%3Cpath d='M12.2 15.6Q15.6 14.6 17.6 16.4L15.8 27.2L13.6 27.6L11 27Z'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' d='M12.6 26.6L8.6 33.6L5 39M15 26.8L16.2 33L18.4 39'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M14.6 17.6L9.4 19.6L5.8 19.2M16.4 18L11.6 21.4L6.8 21'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round' d='M0 20.2H7.6Q9.8 20.4 10.6 24.6Q11.2 29 9.4 33'/%3E%3C/svg%3E");
   --pochoir-assis:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 40'%3E%3Ccircle cx='12' cy='19' r='4.1'/%3E%3Cpath d='M8.2 25Q12 23.6 15.8 25L16.3 32.5H7.7Z'/%3E%3Cpath d='M6.4 32.5H17.6V35.5H6.4Z'/%3E%3Cpath d='M6.6 35.5H9V40H6.6Z'/%3E%3Cpath d='M15 35.5H17.4V40H15Z'/%3E%3C/svg%3E");
 }
 
@@ -9802,7 +9813,7 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
    en change la place si elle veut.
 
    **La corde** est le `::before` : quatorze pixels de kraft tressé
-   (`--corde-tresse`, la corde peinte du chemin de niveau, voir `:root`),
+   (`--corde-tresse`, la tuile tressée du lot 7, voir `:root`),
    un ombrage qui l'arrondit, le cerne d'encre et une ombre dure ; elle
    dépasse de quatorze pixels chaque ligne de but. **La progression** est
    le `::after` : une écharpe de huit pixels, de mes couleurs du côté
@@ -9853,7 +9864,7 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 .tbf-corde[data-sens=h]::before{
   left:calc(var(--corde-marge) - 14px);right:calc(var(--corde-marge) - 14px);top:50%;bottom:auto;
   width:auto;height:14px;margin:-7px 0 0;
-  background:var(--corde-tresse),
+  background:var(--corde-tresse-h),
     linear-gradient(180deg,rgba(7,9,12,.32),transparent 45%,rgba(7,9,12,.32)),
     var(--corde-fil,var(--kraft));
   box-shadow:0 0 0 2px var(--encre),1px 2px 0 2px rgba(7,9,12,.6);
@@ -10018,7 +10029,7 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 
    **Le dessin est un masque** (`--pochoir-…`, dans `:root`) sur la couleur
    du camp : aucune image réseau, et la silhouette prend la teinte qu'on lui
-   donne. Cinq poses tournent d'un supporter à l'autre (`:nth-child`) pour
+   donne. Six poses tournent d'un supporter à l'autre (`:nth-child`) pour
    qu'une rangée ne soit pas un tampon répété. Éteint, un supporter reste
    là, à 30 % — la place vide se voit ; allumé (`.on`), il est plein.
 
@@ -10049,14 +10060,16 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 .tbf-foule[data-tribune=eux]{color:var(--bleu);
   background:radial-gradient(ellipse 62% 100% at 50% 100%,rgba(60,130,232,.36),transparent 74%)}
 .tbf-foule>i{
-  --pochoir:var(--pochoir-repos);
+  --pochoir:var(--pochoir-tambour);
   flex:none;display:block;width:calc(var(--fh) * .6);height:var(--fh);opacity:.3;
   background:currentColor;
   -webkit-mask:var(--pochoir) 50% 100%/contain no-repeat;mask:var(--pochoir) 50% 100%/contain no-repeat;
 }
-.tbf-foule>i:nth-child(5n+2){--pochoir:var(--pochoir-poing)}
-.tbf-foule>i:nth-child(5n+3){--pochoir:var(--pochoir-echarpe)}
-.tbf-foule>i:nth-child(5n+5){--pochoir:var(--pochoir-leve)}
+.tbf-foule>i:nth-child(6n+2){--pochoir:var(--pochoir-megaphone)}
+.tbf-foule>i:nth-child(6n+3){--pochoir:var(--pochoir-echarpe)}
+.tbf-foule>i:nth-child(6n+4){--pochoir:var(--pochoir-clap)}
+.tbf-foule>i:nth-child(6n+5){--pochoir:var(--pochoir-leve)}
+.tbf-foule>i:nth-child(6n){--pochoir:var(--pochoir-tire)}
 .tbf-foule>i.on{opacity:1}
 .tbf-foule.pousse>i.on,.tbf-foule>i.on.pousse{--pochoir:var(--pochoir-leve);
   animation:tbf-foule-saute .42s cubic-bezier(.3,1.5,.5,1) backwards}
