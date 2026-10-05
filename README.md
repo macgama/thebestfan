@@ -17,6 +17,7 @@ Les documents, et lequel ouvrir :
 | `ETAT.md` | où en est le projet, et quels pièges sont connus |
 | `HISTORIQUE.md` | **pourquoi** le code est écrit ainsi — quarante-trois sessions, à consulter, jamais à lire d'affilée |
 | `IDEES.md` | ce qui n'est pas encore écrit, rangé par valeur |
+| `refonte/` | la refonte FAIT MAIN de l'interface : où elle en est, la direction choisie et sa maquette, les briefs de lot, et comment reprendre (`refonte/README.md`) |
 | `serveur/` | le chantier serveur de la refonte : le contenu choisi (`SERVEUR.md`), les contrats d'API que lisent les écrans (`CONTRATS.md`, cité par le code), le plan, les écarts au contrat, les risques et l'étude d'économie avec sa simulation |
 | `DEPLOIEMENT.md` | comment mettre en ligne, et les pièges de l'hébergeur |
 | `A-DEPLOYER.md` | le lot en attente de mise en ligne, et comment le vérifier |
