@@ -104,7 +104,12 @@ for (const [i, id] of U.entries()) {
       actions: dix })]);
 }
 
-await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle'),(60,'Lugano'),(61,'Coire')`);
+/* Les couleurs des deux clubs du match support (`sql/couleurs.sql`) : la
+   liste et la vue les servent, et la page en fait l'écharpe de l'affiche,
+   la corde et les bâches du HUD (lot 6). Le second match n'en a pas : sans
+   elles, rien ne s'invente. */
+await raw.query(`INSERT INTO teams (id,name,color1,color2) VALUES (85,'Sion','#D7141A','#F2EEE4'),
+  (91,'Bâle','#C8102E','#003DA5'),(60,'Lugano',NULL,NULL),(61,'Coire',NULL,NULL)`);
 await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
 // Deux matchs : celui du club suivi, et celui de deux clubs que personne ne
 // suit. Le second n'apparaît que sous « tous les matchs », et sans le badge
@@ -232,6 +237,47 @@ const B = await ouvrir(U[1]);
 
 check('la page se charge sans erreur de script', A.erreurs.length === 0 && B.erreurs.length === 0);
 
+/* ------------------------------------------- ce que la page demande au son
+
+   **Le son de tribune est branché sur le match** (lot 6) : la rumeur suit
+   la partie — le vestiaire, l'entrée, le jeu, la fin — et le chant d'un
+   geste de rythme part avec lui, sur les durées servies, et s'arrête à la
+   fermeture de la fenêtre. Un banc sans haut-parleur ne l'entend pas : on
+   relève donc ce que la page **demande** au moteur, en enveloppant ses deux
+   portes. Le moteur arrive en différé (`fx.js` le charge) : on l'attend. */
+const espionnerLeSon = (page) => page.evaluate(() => {
+  const moteur = window.TBF_SON;
+  if (!moteur) return false;
+  if (moteur.__espion) return true;
+  window.__rumeurs = [];
+  window.__chants = [];
+  const rumeur = moteur.rumeur?.bind(moteur);
+  moteur.rumeur = (m, o) => { window.__rumeurs.push(m); return rumeur?.(m, o); };
+  const chant = moteur.chantDuGeste?.bind(moteur);
+  moteur.chantDuGeste = (g, gestes, o) => {
+    const p = chant?.(g, gestes, o) ?? null;
+    /* **Les durées servies, comparées par leur valeur** : le serveur envoie
+       une vue neuve dix fois par seconde, et le décompte du geste dure trois
+       secondes — l'objet que la page a pris au toucher n'est plus celui de
+       la vue courante, mais ses durées sont les mêmes. Comparé à l'identité,
+       le contrôle ne passait que sur un banc qui renvoie toujours le même
+       objet. */
+    const appel = { g, servis: Boolean(gestes)
+      && JSON.stringify(gestes) === JSON.stringify(S.vue?.moi?.gestes ?? null),
+      origine: typeof o?.origine === 'number', depuis: o?.origine ?? null, arrete: false };
+    window.__chants.push(appel);
+    if (p && typeof p.arreter === 'function') {
+      const arreter = p.arreter.bind(p);
+      p.arreter = () => { appel.arrete = true; return arreter(); };
+    }
+    return p;
+  };
+  moteur.__espion = true;
+  return true;
+});
+check('le moteur du son est là, et ses deux portes sont relevées',
+  await jusqua(() => espionnerLeSon(A.page), 6000));
+
 /* ------------------------------------------------------- la préparation */
 
 const prepa = await A.page.evaluate(() => ({
@@ -241,7 +287,7 @@ const prepa = await A.page.evaluate(() => ({
   formatChoisi: document.querySelector('[data-fmt].on')?.dataset.fmt ?? null,
   matchs: [...document.querySelectorAll('[data-fixture]')].map((m) => m.textContent.trim()),
   entrerActif: !document.getElementById('entrer')?.disabled,
-  texte: document.getElementById('prepaCorps').textContent.replace(/\s+/g, ' '),
+  regles: document.getElementById('regles')?.textContent.replace(/\s+/g, ' ') ?? '',
 }));
 check('les cinq formats sont proposés', prepa.formats.length === 5);
 /* **Et c'est le 1v1 qui est coché.** Le format décidé d'avance indexe la
@@ -253,11 +299,305 @@ check(`et le 1v1 est celui qui est coché (${prepa.formatChoisi})`,
   prepa.formatChoisi === '1v1'
   || (console.log('        la page s’ouvre sur', prepa.formatChoisi), false));
 check('le match support en cours est proposé', prepa.matchs.some((m) => /Sion/.test(m)));
-check('le duel est annoncé classé pour un match en cours',
-  /comptera au classement/.test(prepa.texte));
+/* La phrase du serveur (`raisonDuMatch`) dit pourquoi ce duel compte : elle
+   est dans les règles, derrière le « i » — l'affiche le dit d'un mot, CLASSÉ
+   en sticker d'or (contrôlé plus bas). */
+check('le duel est annoncé classé pour un match en cours, la phrase dans les règles',
+  /comptera au classement/.test(prepa.regles) || (console.log('        règles :', prepa.regles), false));
 check('avec un deck, l\u2019entrée en file est ouverte', prepa.entrerActif === true);
 check('l\u2019écran prévient que des bots complètent',
-  /bots complètent/.test(prepa.texte));
+  /bots complètent/.test(prepa.regles));
+
+/* **La préparation du lot 6** : le match choisi en affiche, chaque format
+   avec sa prime en sticker, et sous ENTRER EN FILE **ce qui est en jeu, tel
+   que le serveur le sert** (`enJeu`, § 17) — jamais un montant que la page
+   aurait compté, et rien sans lui. */
+{
+  const vu = await A.page.evaluate(() => ({
+    affiche: Boolean(document.querySelector('.mt.on.tbf-affiche')),
+    classe: Boolean(document.querySelector('.mt.on .tbf-sticker[data-ton="or"]')),
+    dit: document.querySelector('#entrer small')?.textContent.trim() ?? null,
+    servi: S.matchs.find((m) => m.id === S.fixtureId)?.enJeu?.[S.format] ?? null,
+    primes: [...document.querySelectorAll('[data-fmt] .prime')].map((p) => p.textContent.trim()),
+    attendues: Object.entries(S.primes ?? {}).filter(([, p]) => p > 1)
+      .map(([, p]) => `+${Math.round((p - 1) * 100)} %`),
+  }));
+  check('le match choisi se pose en affiche, CLASSÉ en sticker d’or', vu.affiche && vu.classe);
+  check(`ce qui est en jeu se lit sous ENTRER EN FILE, tel que servi (${vu.dit ?? 'rien'})`,
+    vu.servi ? vu.dit === `+${vu.servi} écharpes en jeu` : vu.dit === null);
+  check('chaque format porte sa prime, lue dans le catalogue',
+    vu.primes.length === vu.attendues.length && vu.primes.every((p, i) => p === vu.attendues[i])
+    || (console.log('        ', JSON.stringify(vu)), false));
+}
+
+/* **L'écharpe de l'affiche est aux couleurs des deux clubs**, telles que la
+   liste les sert (`homeColors`, `awayColors`), éclaircies comme partout par
+   `FX.lisible` — le domicile à gauche (`--a1`), l'extérieur à droite
+   (`--b1`). Le match support en a (voir la base) : un contrôle qui ne
+   verrait que l'absence passerait sur une page qui n'en pose jamais. */
+{
+  const vu = await A.page.evaluate(() => {
+    const m = S.matchs.find((x) => x.id === S.fixtureId);
+    const el = document.querySelector('.mt.on');
+    const lisible = (c) => (c ? (window.FX?.lisible?.(c) ?? c) : '');
+    return { servies: [m?.homeColors?.[0] ?? null, m?.awayColors?.[0] ?? null],
+      a1: el?.style.getPropertyValue('--a1') ?? '', b1: el?.style.getPropertyValue('--b1') ?? '',
+      attendues: [lisible(m?.homeColors?.[0]), lisible(m?.awayColors?.[0])] };
+  });
+  check(`l’affiche porte l’écharpe des deux clubs, telle que servie (${vu.a1 || 'rien'} · ${vu.b1 || 'rien'})`,
+    vu.servies.every(Boolean) && vu.a1 === vu.attendues[0] && vu.b1 === vu.attendues[1]
+    || (console.log('        ', JSON.stringify(vu)), false));
+}
+
+/* **La préparation ne défile que pour un match qu'on ne voit pas** (lot 6).
+   Centré d'office, le match choisi faisait défiler la page alors qu'il était
+   déjà à l'écran — de 163 px à 360 × 640 : le titre sortait, et les tuiles
+   des formats, le premier choix, passaient sous la flèche et le menu
+   flottants. La règle : vu d'au moins cent vingt pixels sans défiler, rien
+   ne bouge ; sinon il se pose sous les deux boutons (`scroll-margin-top`).
+   **À 360 × 640**, là où le défaut a été vu : à 400 × 880, le centrage
+   d'avant ne défilait pas, et le contrôle n'aurait rien prouvé. La page
+   rejoue ce qu'elle fait au chargement (`amenerLeMatch`), deux fois : le
+   match tel qu'il est, puis repoussé hors de vue sous le titre. */
+{
+  const mesurer = (pousse) => A.page.evaluate((px) => {
+    const prepa = document.getElementById('prepa');
+    const choisi = prepa.querySelector('.mt.on');
+    const titre = prepa.querySelector('.top');
+    if (!choisi || !titre) return null;
+    const avant = titre.style.paddingBottom;
+    /* Repoussé sous le titre, et une longue liste dessous (une cale en fin
+       de préparation) : le défilement n'est pas borné par le bas. */
+    const cale = document.createElement('div');
+    if (px) { titre.style.paddingBottom = `${px}px`; cale.style.height = `${px}px`; prepa.appendChild(cale); }
+    prepa.scrollTop = 0;
+    const dansLaPage = choisi.getBoundingClientRect().top - prepa.getBoundingClientRect().top;
+    amenerLeMatch();
+    const vu = { defile: Math.round(prepa.scrollTop), dansLaPage: Math.round(dansLaPage),
+      fenetre: prepa.clientHeight, marge: parseFloat(getComputedStyle(choisi).scrollMarginTop) || 0,
+      max: prepa.scrollHeight - prepa.clientHeight,
+      // Posé sous la flèche et le menu flottants, jamais dessous.
+      sousBoutons: ['.tbf-retour', '.tbf-burger'].every((x) => {
+        const q = document.querySelector(x)?.getBoundingClientRect();
+        return !q || choisi.getBoundingClientRect().top >= q.bottom - 1;
+      }) };
+    titre.style.paddingBottom = avant;
+    cale.remove();
+    prepa.scrollTop = 0;
+    return vu;
+  }, pousse);
+  const juste = (h) => Boolean(h) && Math.abs(h.defile - (h.dansLaPage <= h.fenetre - 120 ? 0
+    : Math.min(h.max, Math.round(h.dansLaPage - h.marge)))) <= 2;
+  const avant = A.page.viewport();
+  await A.page.setViewport({ width: 360, height: 640 });
+  await dodo(150);
+  const vu = await mesurer(0);
+  const loin = await mesurer(900);
+  await A.page.setViewport(avant);
+  await dodo(150);
+  check(`à 360 × 640, la préparation ne défile pas pour un match déjà à l’écran (${vu?.defile ?? '?'} px)`,
+    juste(vu) && vu.defile === 0 || (console.log('        ', JSON.stringify(vu)), false));
+  check(`et amène sous les boutons un match hors de vue (${loin?.defile ?? '?'} px)`,
+    juste(loin) && loin.defile > 0 && loin.sousBoutons
+    || (console.log('        ', JSON.stringify(loin)), false));
+}
+
+/* **Entre l'affiche et ENTRER EN FILE, rien que ce qui reste à décider**
+   (lot 6, critique de la partie B). À 360 × 640, la préparation s'arrêtait
+   sur l'affiche du match : ENTRER EN FILE était 150 px sous le bord, derrière
+   deux phrases qui redisaient les stickers (« comptera au classement » sous
+   CLASSÉ, « le double d'écharpes » sous ×2) et une rubrique TA TRIBUNE qui,
+   chez soi, n'a rien à faire choisir. Chez soi, le camp se lit maintenant
+   sur l'affiche (« TA TRIBUNE » sur son club), les phrases sont dans les
+   règles du « i », et la rangée d'entrée se colle au bas de la préparation
+   dans le bloc du match choisi.
+
+   On regarde à 360 × 640, là où le défaut a été vu, et sans rien faire
+   défiler : le bouton entier à l'écran, rien entre l'affiche et lui, le
+   camp sur l'affiche, rien de lisible sous la rangée. **Puis la rangée
+   elle-même**, qu'une affiche courte (ici, pas de blason en base) laisserait
+   à sa place sans jamais la coller : une cale glissée entre l'affiche et elle
+   la repousse sous le bord, et elle doit tenir au bas de l'écran ; une cale
+   après le match, la liste défilée au-delà, et elle doit partir avec son
+   match — collée à la page, elle resterait sous les autres matchs, où elle
+   se lirait comme la leur. **Enfin le « i »** : ses règles viennent sous les
+   yeux, et disent ce que les phrases disaient. */
+{
+  const avant = A.page.viewport();
+  await A.page.setViewport({ width: 360, height: 640 });
+  await dodo(200);
+  const LIRE = () => {
+    const prepa = document.getElementById('prepa');
+    const port = prepa.getBoundingClientRect();
+    const choisi = document.querySelector('#prepaCorps .mt.on');
+    const b = document.getElementById('entrer');
+    const rang = b?.closest('.entree');
+    const q = rang?.getBoundingClientRect();
+    const r = b?.getBoundingClientRect();
+    /* Ce que la rangée couvre : un texte de la préparation, hors d'elle et
+       hors d'un panneau replié, dont une ligne croise sa bande sombre (le
+       fondu du haut, huit pixels, laisse voir ce qui passe dessous). */
+    const couvre = [];
+    if (q) {
+      const marche = document.createTreeWalker(document.getElementById('prepaCorps'), NodeFilter.SHOW_TEXT);
+      for (let n = marche.nextNode(); n; n = marche.nextNode()) {
+        if (!n.nodeValue.trim() || rang.contains(n) || n.parentElement?.closest('[hidden]')) continue;
+        const plage = document.createRange();
+        plage.selectNodeContents(n);
+        if ([...plage.getClientRects()].some((t) => t.width && t.top < q.bottom - 1 && q.top + 8 < t.bottom
+          && t.bottom > port.top && t.top < port.bottom)) couvre.push(n.nodeValue.trim().slice(0, 30));
+      }
+    }
+    const regles = document.getElementById('regles');
+    const rr = regles && !regles.hidden ? regles.getBoundingClientRect() : null;
+    return { defile: Math.round(prepa.scrollTop), port: [Math.round(port.top), Math.round(port.bottom)],
+      entrer: r ? [Math.round(r.top), Math.round(r.bottom)] : null, actif: Boolean(b && !b.disabled),
+      rangee: q ? [Math.round(q.top), Math.round(q.bottom)] : null,
+      suivant: choisi?.nextElementSibling?.matches('.entree') ?? false,
+      marques: choisi ? [...choisi.querySelectorAll('.tbf-affiche-club')]
+        .map((c) => c.querySelector('.tribune-mienne')?.textContent.trim() ?? '') : [],
+      regles: rr ? [Math.round(rr.top), Math.round(rr.bottom)] : null,
+      dit: regles?.textContent.replace(/\s+/g, ' ') ?? '',
+      couvre };
+  };
+  const aLEcran = (v) => Boolean(v?.entrer) && v.entrer[0] >= v.port[0] && v.entrer[1] <= v.port[1];
+  /* Posée une fois dans la page : les deux mesures sous cale la rappellent
+     entre la pose de la cale et son retrait. */
+  await A.page.evaluate(`window.__lirePrepa = ${LIRE}`);
+
+  await A.page.evaluate(() => { document.getElementById('prepa').scrollTop = 0; });
+  const vu = await A.page.evaluate(() => window.__lirePrepa());
+  check(`à 360 × 640, chez soi, ENTRER EN FILE est à l’écran sans rien faire défiler (${
+    vu.entrer?.join('–') ?? 'absent'} dans ${vu.port.join('–')})`,
+  vu.defile === 0 && vu.actif && aLEcran(vu) || (console.log('        ', JSON.stringify(vu)), false));
+  check('rien entre l’affiche et lui : ni phrase, ni rubrique d’un camp qui ne se choisit pas',
+    vu.suivant || (console.log('        ', JSON.stringify(vu)), false));
+  check(`l’affiche dit le camp : « TA TRIBUNE » sur Sion, et sur lui seul (${JSON.stringify(vu.marques)})`,
+    vu.marques.length === 2 && vu.marques[0] === 'TA TRIBUNE' && vu.marques[1] === '');
+  check(`la rangée d’entrée ne cache rien de lisible (${vu.couvre.join(' | ') || 'rien'})`,
+    vu.couvre.length === 0);
+
+  /* Repoussée sous le bord par une cale entre l'affiche et elle. */
+  const colle = await A.page.evaluate(() => {
+    const choisi = document.querySelector('#prepaCorps .mt.on');
+    const cale = document.createElement('div');
+    cale.style.height = '400px';
+    choisi.after(cale);
+    document.getElementById('prepa').scrollTop = 0;
+    const v = window.__lirePrepa();
+    cale.remove();
+    return v;
+  });
+  check(`repoussée sous le bord, la rangée tient au bas de l’écran (${colle.rangee?.join('–') ?? 'absente'})`,
+    aLEcran(colle) && colle.rangee && Math.abs(colle.rangee[1] - colle.port[1]) <= 1
+    || (console.log('        ', JSON.stringify(colle)), false));
+
+  /* La liste défilée au-delà du match choisi. */
+  const partie = await A.page.evaluate(() => {
+    const bloc = document.querySelector('#prepaCorps .match-choisi');
+    const prepa = document.getElementById('prepa');
+    if (!bloc) return null;
+    const cale = document.createElement('div');
+    cale.style.height = '1200px';
+    bloc.after(cale);
+    prepa.scrollTop = 0;
+    prepa.scrollTop = bloc.getBoundingClientRect().bottom - prepa.getBoundingClientRect().top + 40;
+    const v = window.__lirePrepa();
+    cale.remove();
+    prepa.scrollTop = 0;
+    return v;
+  });
+  check(`la liste défilée au-delà du match, la rangée part avec lui (${partie?.entrer?.join('–') ?? 'absente'})`,
+    Boolean(partie?.entrer) && partie.defile > 0 && partie.entrer[1] <= partie.port[0]
+    || (console.log('        ', JSON.stringify(partie)), false));
+
+  /* Le « i » : ses règles sous les yeux, au-dessus du bord, et ce qu'elles
+     disent — la phrase du serveur, le double, le camp imposé. */
+  await A.page.evaluate(() => {
+    document.getElementById('prepa').scrollTop = 0;
+    document.querySelector('[data-regles]')?.click();
+  });
+  await dodo(100);
+  const lu = await A.page.evaluate(() => window.__lirePrepa());
+  check(`le « i » touché, ses règles viennent sous les yeux (${lu.regles?.join('–') ?? 'fermées'} dans ${lu.port.join('–')})`,
+    Boolean(lu.regles) && lu.regles[0] >= lu.port[0] && lu.regles[1] <= lu.port[1]
+    || (console.log('        ', JSON.stringify(lu)), false));
+  check('et elles disent ce que valait la phrase du dessus : classé, le double, le camp',
+    /comptera au classement/.test(lu.dit) && /rapporte le double/.test(lu.dit)
+      && /Tu es chez toi\s*:\s*Sion/.test(lu.dit)
+    || (console.log('        règles :', lu.dit), false));
+  await A.page.evaluate(() => {
+    if (S.regles) document.querySelector('[data-regles]')?.click();
+    document.getElementById('prepa').scrollTop = 0;
+  });
+  await A.page.setViewport(avant);
+  await dodo(150);
+}
+
+/* **Le bandeau d'annonce** de l'administration : `nav.js` le pose en tête
+   de la colonne, où la flèche et le menu flottants en couvraient les deux
+   bouts (et, en partie, il repoussait la rangée du HUD hors de leurs
+   cases). La page le range sous son titre en préparation, sous les deux
+   rangées du HUD en partie — après le ticket terrain (`#filLigne`), comme
+   `nav.js` le fait au Virage : posé entre les deux, il séparait le score du
+   vrai match de celui de la corde. On le pose comme `nav.js` le pose, puis
+   on regarde où il finit. */
+const poserAnnonce = (page) => page.evaluate(() => {
+  const b = document.createElement('div');
+  b.className = 'tbf-annonce ton-info';
+  b.id = 'annonceBanc';
+  b.textContent = 'Annonce du banc : maintenance ce soir à 23 h.';
+  const haut = document.querySelector('#app > .tbf-haut-jeu');
+  if (haut) haut.after(b); else document.getElementById('app').prepend(b);
+});
+const lireAnnonce = (page) => page.evaluate(async () => {
+  await new Promise((r) => { setTimeout(r, 80); });
+  const b = document.getElementById('annonceBanc');
+  if (!b) return null;
+  const r = b.getBoundingClientRect();
+  const couvre = ['.tbf-retour', '.tbf-burger'].some((s) => {
+    const q = document.querySelector(s)?.getBoundingClientRect();
+    return Boolean(q) && r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom;
+  });
+  const apres = b.previousElementSibling;
+  const vu = { sousTitre: Boolean(apres?.matches('#prepa > .top')),
+    sousHud: Boolean(apres?.matches('#jeu > #filLigne')
+      && apres.previousElementSibling?.matches('.tbf-hudm')), couvre };
+  b.remove();
+  document.getElementById('jeu').removeAttribute('data-annonce');
+  return vu;
+});
+{
+  await poserAnnonce(A.page);
+  const vu = await lireAnnonce(A.page);
+  check('le bandeau d’annonce se range sous le titre de la préparation, hors des deux boutons',
+    vu?.sousTitre === true && vu.couvre === false
+    || (console.log('        ', JSON.stringify(vu)), false));
+}
+
+/* **Un refus d'entrer en file** (lot 6) : un match reporté ou annulé depuis
+   que la liste s'est chargée n'est plus proposé, mais une page restée
+   ouverte peut encore l'envoyer, et le serveur répond
+   `duel.error.fixture_annule`. La page le disait « Refusé par le serveur :
+   duel.error.fixture_annule », sous le voile « Dans la file » qui restait
+   posé : on ne pouvait pas choisir l'autre match que le message demandait.
+   Le refus est rejoué tel que la socket le livre, sans entrer en file pour
+   de bon. */
+{
+  const vu = await A.page.evaluate(async () => {
+    S.enFile = true;
+    voile('Dans la file', 'Recherche d’adversaires…', { texte: 'Quitter la file', action: quitterFile });
+    socket.listeners('nvn:error').forEach((f) => f({ code: 'duel.error.fixture_annule' }));
+    await new Promise((r) => { setTimeout(r, 400); });
+    return { voile: document.getElementById('voile').classList.contains('on'), enFile: S.enFile,
+      toast: document.getElementById('toast').textContent.trim(),
+      choisi: Boolean(document.querySelector('#prepaCorps .mt.on')) };
+  });
+  check('un refus d’entrer en file retire le voile de la file',
+    vu.voile === false && vu.enFile === false || (console.log('        ', JSON.stringify(vu)), false));
+  check(`et il dit en clair ce qui reste ouvert (${vu.toast})`,
+    /reporté ou annulé/.test(vu.toast) && !/Refusé par le serveur/.test(vu.toast) && vu.choisi);
+}
 
 /* -------------------------------- la portée, et le double pour son club
 
@@ -276,7 +616,8 @@ const portee = async (quoi) => {
     matchs: [...document.querySelectorAll('[data-fixture]')].map((m) => m.textContent.trim()),
     doubles: [...document.querySelectorAll('[data-fixture]')]
       .filter((m) => m.querySelector('.q.mien')).length,
-    texte: document.getElementById('prepaCorps').textContent.replace(/s+/g, ' '),
+    /* Les règles du « i » : c'est là que la page dit pourquoi (lot 6). */
+    regles: document.getElementById('regles')?.textContent.replace(/\s+/g, ' ') ?? '',
   }));
 };
 
@@ -284,7 +625,8 @@ const miens = await portee('miens');
 check('par défaut, seuls les matchs de ses clubs sont proposés',
   miens.matchs.length === 1 && /Sion/.test(miens.matchs[0]));
 check('et celui-là porte le badge du double', miens.doubles === 1);
-check('la page explique pourquoi', /rapporte le double/.test(miens.texte));
+check('la page explique pourquoi, dans les règles du « i »', /rapporte le double/.test(miens.regles)
+  || (console.log('        règles :', miens.regles), false));
 
 const tousM = await portee('tous');
 check('« tous les matchs » en propose davantage', tousM.matchs.length === 2);
@@ -296,16 +638,19 @@ check('et un seul porte le badge du double', tousM.doubles === 1);
    Les deux camps d'un duel sont les deux clubs du match. Le premier joueur
    suit Sion, qui reçoit ; le second suit Bâle. Aucun des deux n'a de choix à
    faire, et c'est ce qu'on éprouve d'abord : un joueur chez lui ne doit pas
-   voir de boutons, seulement le nom de sa tribune. */
+   voir de boutons, seulement le nom de sa tribune — sur l'affiche, le
+   sticker « TA TRIBUNE » sous son club ; dans les règles, le pourquoi. */
 
 const chezMoi = await A.page.evaluate(() => ({
   boutons: document.querySelectorAll('[data-camp]').length,
-  texte: document.getElementById('prepaCorps').textContent.replace(/\s+/g, ' '),
+  marque: [...document.querySelectorAll('.mt.on .tbf-affiche-club')]
+    .filter((c) => c.querySelector('.tribune-mienne')).map((c) => c.querySelector('b')?.textContent.trim()),
+  regles: document.getElementById('regles')?.textContent.replace(/\s+/g, ' ') ?? '',
 }));
 check('chez soi, aucune tribune à choisir', chezMoi.boutons === 0);
-check('mais on dit laquelle est la sienne',
-  /Tu es chez toi\s*:\s*Sion/.test(chezMoi.texte)
-  || (console.log('        il dit :', chezMoi.texte.slice(-260)), false));
+check(`mais on dit laquelle est la sienne (${chezMoi.marque.join(', ') || 'aucune marquée'})`,
+  chezMoi.marque.length === 1 && chezMoi.marque[0] === 'Sion' && /Tu es chez toi\s*:\s*Sion/.test(chezMoi.regles)
+  || (console.log('        règles :', chezMoi.regles), false));
 
 /* Et sur un match dont aucun club n'est suivi, l'inverse : deux boutons, et
    l'entrée fermée tant qu'on n'a pas dit pour qui l'on vient chanter. */
@@ -317,37 +662,60 @@ const neutre = await A.page.evaluate(() => {
   m?.click();
   return {
     boutons: [...document.querySelectorAll('[data-camp]')].map((b) => b.textContent.trim()),
+    /* Deux bâches de club (lot 6) : l'écharpe du club en bord bas. Ces
+       deux clubs n'ont pas de couleurs en base : aucune ne doit s'inventer. */
+    clubs: [...document.querySelectorAll('[data-camp]')].map((b) => ({
+      brique: b.classList.contains('tbf-plaque--club'), e1: b.style.getPropertyValue('--e1') })),
     entrerActif: !document.getElementById('entrer')?.disabled,
+    /* Fermée, la rangée d'entrée reste à sa place (lot 6) : collée, elle
+       couvrirait les bâches du camp sans rien offrir. Et l'affiche ne
+       marque aucun camp tant qu'on n'a pas choisi. */
+    position: getComputedStyle(document.getElementById('entrer')?.closest('.entree') ?? document.body).position,
+    marques: document.querySelectorAll('.mt.on .tribune-mienne').length,
   };
 });
 check('sans club dans le match, les deux tribunes sont proposées',
   neutre.boutons.length === 2 && neutre.boutons.some((n) => /Lugano/.test(n)));
+check('en deux bâches de club, sans couleur inventée quand le club n’en a pas',
+  neutre.clubs.length === 2 && neutre.clubs.every((c) => c.brique && c.e1 === '')
+  || (console.log('        ', JSON.stringify(neutre.clubs)), false));
 check('et l’entrée reste fermée tant qu’on n’a pas choisi',
   neutre.entrerActif === false);
+check(`fermée, sa rangée reste à sa place, et l’affiche ne marque aucun camp (${neutre.position}, ${neutre.marques})`,
+  neutre.position === 'static' && neutre.marques === 0);
 
 const apresChoix = await A.page.evaluate(() => {
   document.querySelector('[data-camp="1"]')?.click();
   return {
     choisi: document.querySelector('[data-camp="1"]')?.classList.contains('on'),
     entrerActif: !document.getElementById('entrer')?.disabled,
+    position: getComputedStyle(document.getElementById('entrer')?.closest('.entree') ?? document.body).position,
+    marque: [...document.querySelectorAll('.mt.on .tbf-affiche-club')]
+      .findIndex((c) => c.querySelector('.tribune-mienne')),
   };
 });
 check('choisir une tribune la marque', apresChoix.choisi === true);
 check('et ouvre l’entrée en file', apresChoix.entrerActif === true);
+check(`ouverte, la rangée se colle, et l’affiche marque le camp choisi (${apresChoix.position}, club ${apresChoix.marque})`,
+  apresChoix.position === 'sticky' && apresChoix.marque === 1);
 
 /* **Le choix se déplie sous le match**, pas au bas de la page.
 
    La liste fait soixante lignes depuis qu'elle montre tout ce qui se joue : on
    cliquait un match en haut, et ce qu'il fallait faire ensuite se trouvait
    mille pixels plus bas, hors de l'écran. Ce contrôle regarde **où** sont les
-   boutons, pas s'ils existent — c'est toute la question. */
+   boutons, pas s'ils existent — c'est toute la question. Le bouton d'entrée
+   suit ce qui se déplie, dans le bloc du match choisi (`.match-choisi`,
+   lot 6) : c'est à ce bloc qu'il reste collé. */
 const place = await A.page.evaluate(() => {
   const choisi = document.querySelector('.mt.on');
   const sous = choisi?.nextElementSibling;
   const entrer = document.getElementById('entrer');
+  const bloc = choisi?.parentElement;
   return {
     juste: sous?.classList.contains('souscarte') ?? false,
-    dedans: Boolean(sous?.contains(entrer)),
+    dedans: Boolean(bloc?.matches('.match-choisi') && bloc.contains(entrer) && sous
+      && sous.compareDocumentPosition(entrer) & Node.DOCUMENT_POSITION_FOLLOWING),
     // Et pas d'un écran de haut : le geste suivant doit être sous le doigt.
     ecart: entrer && choisi
       ? Math.round(entrer.getBoundingClientRect().top - choisi.getBoundingClientRect().bottom)
@@ -355,7 +723,7 @@ const place = await A.page.evaluate(() => {
   };
 });
 check('le choix se déplie juste sous le match', place.juste === true);
-check('et le bouton d’entrée est dedans', place.dedans === true);
+check('et le bouton d’entrée le suit, dans le bloc du match choisi', place.dedans === true);
 check('à portée de doigt, pas à un écran de là',
   place.ecart !== null && place.ecart >= 0 && place.ecart < 260
   || (console.log('        écart :', place.ecart, 'px'), false));
@@ -413,6 +781,27 @@ await dodo(400);
     check('et le rebours avant les supporters d’appoint tourne',
       /\d+/.test(salle.rebours)
       || (console.log('        il dit :', salle.rebours), false));
+    /* **Jamais de points de suspension sur le nom de quelqu'un** (lot 6). À
+       cinq places par gradin, un siège n'a que soixante pixels : le gradin
+       de la brique abrégeait « LEGRANDD… ». Le vestiaire porte la pièce des
+       noms entiers (`.tbf-gradins--entiers`), qui passe le nom à la ligne.
+       Un gradin de cinq aux noms longs, rendu par la page elle-même dans la
+       salle, à la largeur d'un téléphone. */
+    const noms = await A.page.evaluate(() => {
+      const s = document.querySelector('.salle');
+      const essai = document.createElement('div');
+      essai.style.width = '332px';
+      essai.innerHTML = tribuneAttente('ESSAI', ['LeGrandDéplacement', 'François Gonçalves',
+        'Tambour_Nord_Officiel', 'Bâche-Haute', 'Élodie'].map((nom) => ({ nom })), 5, 'FC SION', 'moi');
+      s.appendChild(essai);
+      const vu = [...essai.querySelectorAll('.tbf-siege-nom')].map((n) => ({ nom: n.textContent,
+        coupe: n.scrollWidth > n.clientWidth + 1 || getComputedStyle(n).whiteSpace === 'nowrap' }));
+      essai.remove();
+      return vu;
+    });
+    const coupes = noms.filter((n) => n.coupe).map((n) => n.nom);
+    check(`au vestiaire, les noms longs passent à la ligne au lieu de s’abréger (${coupes.join(', ') || 'aucun coupé'})`,
+      noms.length === 5 && coupes.length === 0);
   }
 }
 
@@ -577,6 +966,111 @@ const ouvert = await A.page.evaluate(() => ({
     check('ni en bas : les deux équipes se lisent sans faire défiler', !large.defileV);
     await A.page.setViewport(avant);
   }
+
+  /* **La ligne de forme tient dans sa propre largeur, à l'étroit aussi.**
+
+     À 320 × 568, à trois par camp, le résumé « 3 V · 1 D · 1 N » ne passait
+     pas à la ligne et glissait sous le premier Fanzzy de la rangée : « 3 V ·
+     1 », coupé net par son cadre. Rien ne le voyait — l'audit ne cherche
+     que les coupes à points de suspension, et cette suite ne regardait
+     l'affiche qu'en 1 contre 1, à 400 px et à 1 440. Et en 1 contre 1, la
+     forme, qui ne rétrécit pas, prenait au nom toute sa place :
+     « LeGrandDéplacement » se lisait sur quatre lignes, cassé au milieu.
+
+     On repose donc l'affiche, dans la forme que le serveur sert
+     (`nvn:affiche`), à trois par camp puis en 1 contre 1 avec deux noms
+     longs, et l'on mesure les boîtes : aucun morceau de la forme sous un
+     portrait ni hors de la colonne, aucun nom cassé au milieu d'un mot. Et
+     le contraire, pour qu'une forme muette ne passe pas pour une forme
+     rangée : à 320, le résumé des pastilles se tait mais « PREMIER DUEL »
+     se lit encore, et à 412 le résumé se lit à côté de ses pastilles.
+     L'affiche servie est remise en place après. */
+  {
+    const avant = A.page.viewport();
+    const sauve = await A.page.evaluate(() => {
+      const e = document.getElementById('affiche');
+      return { camps: document.getElementById('afficheCamps').innerHTML,
+        lieu: document.getElementById('afficheLieu').innerHTML,
+        fond: e.dataset.fond ?? null, image: e.style.getPropertyValue('--fond') };
+    });
+    const poser = (format) => A.page.evaluate((format) => {
+      const F = [['win', 2, 1], ['loss', 0, 1], ['win', 3, 2], ['draw', 1, 1], ['win', 2, 0]]
+        .map(([issue, pour, contre]) => ({ issue, pour, contre }));
+      const fanzzy = ['TR32', 'MS30', 'TR33'].map((id) => ({ id, nom: id, stade: 1 }));
+      const j = (side, nom, forme, bot = false) => ({ userId: nom, nom, side, bot, fanzzy, forme });
+      montrerAffiche({ joueurs: format === 'trois'
+        ? [j(0, 'Sédunois', F), j(0, 'Tambour_Nord', F.slice(0, 4)), j(0, 'Supporter d’appoint', [], true),
+          j(1, 'Bâloise', F), j(1, 'LeGrandDéplacement', F.slice(0, 4)), j(1, 'Sifflet', [])]
+        : [j(0, 'LeGrandDéplacement', F), j(1, 'Mégaphone_Sud_1907', F.slice(0, 4))] });
+    }, format);
+    const mesurer = () => A.page.evaluate(() => {
+      const e = document.getElementById('affiche');
+      const colonne = e.querySelector('.camps').getBoundingClientRect();
+      const coupe = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5
+        && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+      const fautes = [];
+      for (const f of e.querySelectorAll('.forme')) {
+        const ligne = f.closest('.joueur') ?? f.closest('.camp-bloc');
+        const portraits = [...ligne.querySelectorAll('.fz-aff')].map((v) => v.getBoundingClientRect());
+        for (const m of f.children) {
+          if (!m.getClientRects().length) continue; // retiré de l'écran : il ne couvre rien
+          const b = m.getBoundingClientRect();
+          const quoi = m.textContent.trim();
+          if (portraits.some((v) => coupe(b, v))) fautes.push(`« ${quoi} » sous un portrait`);
+          if (b.left < colonne.left - 0.5 || b.right > colonne.right + 0.5) fautes.push(`« ${quoi} » hors de la colonne`);
+        }
+      }
+      /* Un nom cassé au milieu d'un mot prend plus de lignes qu'il n'a de
+         mots : « Supporter d'appoint · BOT » peut en prendre trois, pas
+         « LeGrandDéplacement » deux. */
+      for (const b of e.querySelectorAll('.camp-bloc .qui b')) {
+        const s = getComputedStyle(b);
+        const ligneH = parseFloat(s.lineHeight) || parseFloat(s.fontSize) * 1.2;
+        const lignes = Math.round(b.getBoundingClientRect().height / ligneH);
+        const mots = b.textContent.trim().split(/[\s·-]+/).filter(Boolean).length;
+        if (lignes > mots) fautes.push(`« ${b.textContent.trim()} » cassé sur ${lignes} lignes`);
+      }
+      const lus = [...e.querySelectorAll('.forme small')].filter((s) => s.getClientRects().length)
+        .map((s) => s.textContent.trim());
+      /* « À côté » : le résumé commence sur la ligne de ses pastilles. */
+      const cote = [...e.querySelectorAll('.forme i ~ small')].filter((s) => s.getClientRects().length)
+        .every((s) => { const i = s.parentElement.querySelector('i').getBoundingClientRect();
+          const r = s.getBoundingClientRect(); return r.top < i.bottom && r.bottom > i.top; });
+      return { fautes, lus, cote };
+    });
+    /* Les vignettes glissent en cascade (`.tbf-glisse`, 320 ms après au plus
+       800 ms de retard) : on mesure une fois posées. */
+    await A.page.setViewport({ width: 320, height: 568 });
+    await poser('trois');
+    await dodo(1300);
+    const etroit = await mesurer();
+    await A.page.setViewport({ width: 412, height: 915 });
+    await dodo(300);
+    const moyen = await mesurer();
+    await A.page.setViewport({ width: 320, height: 568 });
+    await poser('un');
+    await dodo(1300);
+    const seul = await mesurer();
+    await A.page.setViewport(avant);
+    await A.page.evaluate((sauve) => {
+      const e = document.getElementById('affiche');
+      document.getElementById('afficheCamps').innerHTML = sauve.camps;
+      document.getElementById('afficheLieu').innerHTML = sauve.lieu;
+      if (sauve.fond !== null) { e.dataset.fond = sauve.fond; e.style.setProperty('--fond', sauve.image); }
+    }, sauve);
+    check('à 320 × 568, à trois par camp, la forme ne passe sous aucun portrait',
+      etroit.fautes.length === 0 || (console.log('        ', etroit.fautes.join(' ; ')), false));
+    /* Le résumé des pastilles s'y tait (il allongerait chaque rangée d'une
+       ligne qui les redit) ; « PREMIER DUEL », seul dans sa forme, reste. */
+    check('le résumé des pastilles s’y tait, « PREMIER DUEL » s’y lit encore',
+      etroit.lus.length === 1 && etroit.lus[0] === 'PREMIER DUEL'
+      || (console.log('        lus :', JSON.stringify(etroit.lus)), false));
+    check('à 412 px, le résumé se lit à côté de ses pastilles',
+      moyen.fautes.length === 0 && moyen.cote && moyen.lus.filter((t) => / V/.test(t)).length === 4
+      || (console.log('        ', JSON.stringify(moyen)), false));
+    check('en 1 contre 1 à 320, un nom long reste entier, et sa forme ne couvre rien',
+      seul.fautes.length === 0 || (console.log('        ', seul.fautes.join(' ; ')), false));
+  }
   }
 
   /* Elle se retire seule. Une affiche qui resterait à l'écran cacherait la
@@ -584,7 +1078,20 @@ const ouvert = await A.page.evaluate(() => ({
      comprendre pourquoi. */
   await new Promise((r) => { setTimeout(r, 6400); });
   const partie = await A.page.evaluate(() => document.getElementById('affiche').hidden);
-  check('puis se retire d\u2019elle-même', partie === true);
+  check('puis se retire d’elle-même', partie === true);
+
+  /* **La rumeur suit la partie** (lot 6) : celle du vestiaire pendant
+     l'attente, l'entrée quand l'affiche se retire — une fois —, puis la
+     phase de jeu ; **pas de phase de jeu avant l'entrée**, sans quoi la
+     rumeur serait déjà montée et l'entrée ne s'entendrait plus. */
+  await dodo(300);
+  const rumeurs = await A.page.evaluate(() => window.__rumeurs ?? []);
+  const entree = rumeurs.indexOf('entree');
+  check(`la rumeur du vestiaire, puis l’entrée en tribune (${[...new Set(rumeurs)].join(', ')})`,
+    rumeurs.some((r) => r === 'vestiaire' || r === 'arrivee') && entree >= 0
+    && rumeurs.filter((r) => r === 'entree').length === 1);
+  check('et la phase de jeu seulement après l’entrée',
+    rumeurs.includes('jeu') && !rumeurs.slice(0, entree).includes('jeu'));
 }
 
 check('l\u2019horloge démarre à cinq minutes', /^[45]:/.test(ouvert.horloge));
@@ -719,8 +1226,13 @@ check('ni le même prix',
 
 /**
  * Un nom seul ne dit pas qui est en jeu. Chaque Fanzzy porte donc son
- * portrait — dessiné pour les trois illustrés, silhouette pour les autres —
- * et il respire, comme partout ailleurs dans le jeu.
+ * portrait — dessiné pour les trois illustrés, silhouette pour les autres.
+ *
+ * **Seul celui qui est en tribune respire** (lot 6). `fx.js` fait respirer
+ * tout portrait, et l'écran en comptait dix sans fin — trois portraits, les
+ * dessins de la main, le point du direct — quand la règle en tolère trois.
+ * Le banc porte `data-fige` : on vérifie les deux moitiés, sans quoi figer
+ * tout le monde passerait pour une réparation.
  */
 {
   const vignettes = await A.page.evaluate(() => {
@@ -729,16 +1241,125 @@ check('ni le même prix',
       const el = t.querySelector('.vig .illu, .vig [data-vivant]');
       if (!el) return null;
       return {
-        balise: el.tagName.toLowerCase(),
-        vivant: el.classList.contains('fz-vivant'),
+        actif: t.classList.contains('actif'),
+        fige: Boolean(el.closest('[data-fige]')),
         animation: getComputedStyle(el).animationName,
       };
     });
   });
   check('chaque Fanzzy du deck a sa vignette',
     vignettes.length === 3 && vignettes.every(Boolean));
-  check('et elle respire, illustrée ou non',
-    vignettes.every((v) => v?.vivant && /fzsouffle/.test(v.animation)));
+  check('celui qui est en tribune respire',
+    vignettes.some((v) => v?.actif && !v.fige && /fzsouffle/.test(v.animation))
+    || (console.log('        ', JSON.stringify(vignettes)), false));
+  check('et le banc est figé',
+    vignettes.filter((v) => !v?.actif).every((v) => v?.fige && !/fzsouffle/.test(v.animation))
+    || (console.log('        ', JSON.stringify(vignettes)), false));
+  /* Le plafond de l'écran : trois animations sans fin, au plus (`FX.sansFin`
+     les compte comme la règle les compte). */
+  const sansFin = await A.page.evaluate(() => window.FX?.sansFin?.()?.length ?? null);
+  check(`l’écran de duel tient sous trois animations sans fin (${sansFin})`,
+    sansFin !== null && sansFin <= 3);
+}
+
+/* ------------------------------------------------ le HUD de match (lot 6)
+
+   La même rangée qu'au Virage : ma bâche, la plaque de l'horloge et du
+   sticker CLASSÉ, la bâche d'en face. Les deux boutons de la barre n'y
+   entrent pas : rien du HUD ne doit passer sous eux. Et le bouton de son a
+   quitté l'arène — le son se coupe au tiroir. */
+{
+  const hud = await A.page.evaluate(() => {
+    const boites = ['.tbf-retour', '.tbf-burger']
+      .map((s) => document.querySelector(s)?.getBoundingClientRect()).filter(Boolean);
+    const gene = [...document.querySelectorAll('#jeu .tbf-hudm *')].filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width && r.height && boites.some((b) =>
+        r.left < b.right - 1 && b.left < r.right - 1 && r.top < b.bottom - 1 && b.top < r.bottom - 1);
+    }).map((el) => el.className);
+    return {
+      hud: Boolean(document.querySelector('#jeu > .score.tbf-hudm')),
+      boutons: boites.length,
+      gene,
+      classe: document.getElementById('modeTag')?.dataset.ton ?? null,
+      son: Boolean(document.getElementById('son')),
+    };
+  });
+  check('le duel porte le HUD de match', hud.hud);
+  check('rien du HUD ne passe sous la flèche ni sous le menu',
+    hud.boutons === 2 && hud.gene.length === 0 || (console.log('        ', JSON.stringify(hud)), false));
+  check('CLASSÉ est la face d’or de la plaque', hud.classe === 'or');
+  check('le bouton de son a quitté l’arène', hud.son === false);
+}
+
+/* **La vue dit qui je suis, et les couleurs du match** (§ 17, lot 6). La
+   page reconnaissait son joueur au camp et à la ferveur — trois joueurs du
+   même camp en 3 contre 3 — : elle lit maintenant `moi.userId`. Et les
+   écharpes de l'arène sont celles des deux clubs : `--e1` pour le mien (le
+   foulard, ma moitié de corde, mes barres du bilan), `--eux1` pour celui
+   d'en face, sa couleur aussi sur sa bâche du HUD. A suit Sion, qui reçoit. */
+{
+  const vu = await A.page.evaluate(() => {
+    const lisible = (c) => (c ? (window.FX?.lisible?.(c) ?? c) : '');
+    const app = document.getElementById('app');
+    const eux = document.querySelector('#jeu .tbf-hudm-club[data-tribune=eux]');
+    const m = S.matchs.find((x) => x.id === S.vue?.fixture?.id) ?? null;
+    const mon = S.vue?.moi?.side ?? 0;
+    const servies = (cote) => (S.vue?.fixture?.[cote ? 'awayColors' : 'homeColors']
+      ?? m?.[cote ? 'awayColors' : 'homeColors'] ?? [])[0];
+    /* Le vestiaire l'a dit aussi (`nvn:file`, `moi`) : on lui fait dire
+       autre chose le temps de la lecture, pour voir que c'est bien la vue
+       que la page croit. */
+    const vestiaire = S.moiId;
+    S.moiId = '__vestiaire';
+    const id = monId();
+    S.moiId = vestiaire;
+    return { id, servi: S.vue?.moi?.userId ?? null,
+      e1: app.style.getPropertyValue('--e1'), eux1: app.style.getPropertyValue('--eux1'),
+      bache: eux?.style.getPropertyValue('--e1') ?? '',
+      attendues: [lisible(servies(mon)), lisible(servies(mon ^ 1))] };
+  });
+  check(`la vue dit qui je suis, et la page le lit (${vu.id})`, vu.servi === U[0] && vu.id === U[0]
+    || (console.log('        ', JSON.stringify(vu)), false));
+  check(`l’arène et le HUD prennent les couleurs des deux clubs (${vu.e1 || 'rien'} · ${vu.eux1 || 'rien'})`,
+    vu.attendues.every(Boolean) && vu.e1 === vu.attendues[0] && vu.eux1 === vu.attendues[1]
+    && vu.bache === vu.attendues[1]
+    || (console.log('        ', JSON.stringify(vu)), false));
+}
+
+/* **Le budget de hauteur** (lot 6) : à 360 × 640 et à 320 × 568, la main et
+   les chants sont entiers à l'écran, rien ne défile, et l'arène — la seule
+   rangée qui cède — garde au moins 36 % de l'écran à 360 × 640 (elle en
+   avait 29 au départ du lot, 33 en partie A ; la direction en vise 45, que
+   seuls les écrans plus hauts tiennent). On compte l'arène avec la rangée
+   des effets en cours, qui lui prend sa hauteur quand il y en a. */
+{
+  const avant = A.page.viewport();
+  const mesurer = async (w, h) => {
+    await A.page.setViewport({ width: w, height: h });
+    await dodo(300);
+    return A.page.evaluate(() => {
+      const r = (id) => document.getElementById(id)?.getBoundingClientRect();
+      const entier = (b) => Boolean(b) && b.height > 0 && b.top >= -1 && b.bottom <= innerHeight + 1;
+      const effets = r('effets');
+      const app = document.getElementById('app');
+      return { fenetre: innerHeight, arene: Math.round(r('arene')?.height ?? 0),
+        effets: effets?.height ? Math.round(effets.height + 7) : 0,
+        main: entier(r('mainCartes')), chants: entier(r('chants')),
+        defile: document.documentElement.scrollHeight > innerHeight + 1 || app.scrollHeight > app.clientHeight + 1 };
+    });
+  };
+  const grand = await mesurer(360, 640);
+  const petit = await mesurer(320, 568);
+  await A.page.setViewport(avant);
+  await dodo(300);
+  const part = (grand.arene + grand.effets) / grand.fenetre;
+  check(`à 360 × 640, l’arène cède avant la main et les chants (${grand.arene} px, ${Math.round(part * 100)} % avec les effets)`,
+    grand.main && grand.chants && !grand.defile && part >= 0.36
+    || (console.log('        ', JSON.stringify(grand)), false));
+  check(`à 320 × 568 aussi : la main et les chants restent entiers (arène ${petit.arene} px)`,
+    petit.main && petit.chants && !petit.defile && petit.arene > 0
+    || (console.log('        ', JSON.stringify(petit)), false));
 }
 
 /* ------------------------------------ le barème du geste suit l'équipement */
@@ -824,20 +1445,79 @@ const chantTempo = ouvert.chants.find((c) => /TEMPO/.test(c.geste))?.id;
 check('un chant de tempo est offert', Boolean(chantTempo)
   || (console.log('        gestes offerts :',
     ouvert.chants.map((c) => c.geste).join(', ')), false));
+/* **Le verdict claque en tampon** (lot 6) : il vient du serveur
+   (`verdict`, § 17), la page ne compte aucun seuil. On relève chaque tampon
+   posé, et où — dans la fenêtre du geste, ou sur la carte jouée quand la
+   réponse est venue trop tard. */
+await A.page.evaluate(() => {
+  window.__tampons = [];
+  // Et le mot que le serveur a servi pour ce chant : le tampon doit être lui.
+  window.__servis = [];
+  const raconterVrai = raconter;
+  // eslint-disable-next-line no-global-assign
+  raconter = (e) => {
+    if (e?.t === 'chant' && e.side === S.vue?.moi?.side) window.__servis.push(e.verdict ?? null);
+    return raconterVrai(e);
+  };
+  new MutationObserver((lot) => {
+    for (const m of lot) for (const n of m.addedNodes) {
+      if (n.nodeType !== 1 || !n.matches?.('.tbf-tampon[data-verdict]')) continue;
+      window.__tampons.push({ verdict: n.dataset.verdict, mot: n.textContent.trim(),
+        ou: n.closest('#miniZone') ? 'fenetre' : n.closest('#chants') ? 'carte' : 'ailleurs' });
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+  /* **Les pulsations, relevées comme le joueur les voit** : l'anneau du pavé
+     qui bat (`#ring` prend `beat` ; retirée puis remise dans la même tâche,
+     deux mutations pour une pulsation). Posé avant d'ouvrir le geste, pour
+     ne pas manquer la première. */
+  window.__pulses = [];
+  new MutationObserver((ms) => {
+    const t = performance.now();
+    for (const m of ms) {
+      if (m.target.id === 'ring' && m.target.classList.contains('beat')
+        && !/\bbeat\b/.test(m.oldValue ?? '')
+        && !(window.__pulses.length && t - window.__pulses[window.__pulses.length - 1] < 50)) {
+        window.__pulses.push(t);
+      }
+    }
+  }).observe(document.getElementById('miniZone'), { subtree: true, attributes: true,
+    attributeFilter: ['class'], attributeOldValue: true });
+  /* L'instant que la page prête au pavé (`origine`) : le même que celui du
+     chant de la tribune, pour que l'un et l'autre battent ensemble. */
+  window.__gestes = [];
+  const jouer = window.TBF_GESTE.jouer;
+  window.TBF_GESTE.jouer = (kind, gestes, el) => {
+    window.__gestes.push({ kind, origine: el?.origine ?? null });
+    return jouer(kind, gestes, el);
+  };
+});
 await A.page.evaluate((id) => document.querySelector(`[data-chant="${id}"]`)?.click(),
   chantTempo);
 check('le mini-jeu s\u2019ouvre', await jusqua(async () =>
   await A.page.evaluate(() => document.getElementById('mini').classList.contains('on'))));
 
-// Décompte de trois, puis huit pulsations à l'intervalle du joueur : on tape
-// sur ce que l'écran affiche, ce qui est exactement le cas d'usage cassé.
+/* Décompte de trois, puis les pulsations à l'intervalle du joueur : **on tape
+   sur ce que l'écran affiche** — la première pulsation de l'anneau, puis la
+   grille qu'elle ouvre —, ce qui est exactement le cas d'usage cassé. Le
+   pavé ne prend plus les frappes du décompte : taper dès qu'il paraît,
+   c'était taper dans le vide. Une attente qui tremble de quelques
+   millisecondes, comptée depuis la première pulsation : le moteur refuse
+   une régularité mécanique, et des attentes enchaînées dériveraient. */
 await jusqua(async () => await A.page.evaluate(() => Boolean(document.getElementById('pad'))), 6000);
-const intervalle = bareme.tempo.interval;
-for (let i = 0; i < bareme.tempo.beats; i++) {
-  await A.page.evaluate(() => document.getElementById('pad')
-    ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
-  await dodo(intervalle);
-}
+const frappe = await A.page.evaluate(async (t) => {
+  const dodo = (ms) => new Promise((r) => { setTimeout(r, ms); });
+  const t1 = performance.now();
+  while (!window.__pulses.length && performance.now() - t1 < 6000) await dodo(4);
+  const premier = window.__pulses[0];
+  if (premier == null) return { vu: false, n: 0 };
+  for (let i = 0; i < t.beats; i++) {
+    const quand = premier + i * t.interval + (i ? (Math.random() - 0.5) * 30 : 0);
+    if (quand > performance.now()) await dodo(quand - performance.now());
+    document.getElementById('pad')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  }
+  return { vu: true, n: t.beats };
+}, bareme.tempo);
+check(`on tape sur les pulsations que l’anneau dessine (${frappe.n} frappes)`, frappe.vu && frappe.n > 0);
 
 const chante = await jusqua(async () => {
   const f = await A.page.evaluate(() => S.vue?.equipes?.[S.vue.moi.side]?.[0]?.ferveur ?? 0);
@@ -845,8 +1525,124 @@ const chante = await jusqua(async () => {
 }, 12000);
 check('taper sur la pulsation affichée fait monter la ferveur', chante);
 
+/* La fenêtre attend le verdict au plus six cents millisecondes après la
+   dernière frappe, le laisse lire, puis se ferme : elle ne reste jamais
+   ouverte. Le tempo finit sur sa huitième frappe (`geste.js`) : la fenêtre
+   s'ouvre moins longtemps qu'avant, et rien ici ne compte sur elle passé le
+   verdict. */
+const refermee = await jusqua(async () => A.page.evaluate(() =>
+  !document.getElementById('mini').classList.contains('on')), 6000);
+check('la fenêtre du geste se referme d’elle-même après le verdict', refermee);
+{
+  const vu = await A.page.evaluate(() => ({ tampons: window.__tampons ?? [], chants: window.__chants ?? [],
+    servis: window.__servis ?? [] }));
+  const MOTS = { parfait: 'PARFAIT', bon: 'BON', moyen: 'MOYEN', rate: 'RATÉ' };
+  check(`le verdict servi claque en tampon, dans le mot de l’échelle (${
+    vu.tampons.map((t) => `${t.mot}@${t.ou}`).join(', ') || 'aucun'})`,
+    vu.tampons.length >= 1
+    && vu.tampons.every((t) => MOTS[t.verdict] === t.mot && t.ou !== 'ailleurs'
+      && vu.servis.includes(t.verdict))
+    || (console.log('        servis :', JSON.stringify(vu.servis)), false));
+  const tempo = vu.chants.filter((c) => c.g === 'tempo');
+  check('le chant de la tribune part avec le geste, sur les durées servies',
+    tempo.some((c) => c.servis && c.origine)
+    || (console.log('        ', JSON.stringify(vu.chants)), false));
+  check('et il s’arrête à la fermeture de la fenêtre',
+    tempo.length > 0 && tempo.every((c) => c.arrete)
+    || (console.log('        ', JSON.stringify(vu.chants)), false));
+  /* Le pavé et le chant partent du **même** instant : la page prête au
+     geste l'origine qu'elle vient de donner au chant (`origine`). Deux
+     lectures de l'horloge, et la pulsation entendue glissait de celle
+     qu'on voit. */
+  const gestes = await A.page.evaluate(() => window.__gestes ?? []);
+  const pave = gestes.filter((g) => g.kind === 'tempo').at(-1);
+  const chanteA = tempo.at(-1);
+  check('le pavé bat sur l’instant du chant (la même origine)',
+    Number.isFinite(pave?.origine) && pave.origine === chanteA?.depuis
+    || (console.log('        pavé :', JSON.stringify(pave), '· chant :', JSON.stringify(chanteA)), false));
+}
+
 const bouge = await A.page.evaluate(() => S.vue.rope !== 0);
 check('la corde a bougé', bouge);
+
+/* **Le verdict attendu est le sien** (lot 6) : la fenêtre du geste prend le
+   mot de l'évènement `chant` qui porte **son** identifiant. Un partenaire de
+   tribune peut chanter la même carte au même instant : la tribune et la
+   carte ne suffisent pas à reconnaître son propre chant. */
+{
+  const vu = await A.page.evaluate(() => {
+    const id = monId();
+    const pris = [];
+    const avant = [S.verdictCarte, S.verdictAttendu];
+    S.verdictCarte = '__banc';
+    S.verdictAttendu = (e) => { pris.push(e.userId); };
+    const side = S.vue.moi.side;
+    raconter({ t: 'chant', userId: '__partenaire', side, cardId: '__banc', verdict: 'bon', quality: 0.8 });
+    raconter({ t: 'chant', userId: id, side, cardId: '__banc', verdict: 'parfait', quality: 0.95 });
+    [S.verdictCarte, S.verdictAttendu] = avant;
+    return { id, pris };
+  });
+  check(`la fenêtre du geste prend le verdict de son chant, pas celui d’un partenaire (${vu.pris.join(', ') || 'aucun'})`,
+    vu.id != null && vu.pris.length === 1 && vu.pris[0] === vu.id);
+}
+
+/* **Un but se lit dans la case de BD** (lot 6, `.tbf-moment`, la pièce
+   unifiée) : « LA CORDE CÈDE ! », « GOAL ! » avec le buteur et la minute —
+   et plus aucun lettrage nu par-dessus (la forme pleine de `FX.but`
+   écrivait « BUT ! », `FX.butReel` un second titre une seconde plus tard).
+   Les évènements sont ceux que le serveur émet ; on les raconte à la page,
+   un vrai but de corde demandant trois cents de poussée. La case passe sous
+   le tiroir quand on l'ouvre, comme au Virage. */
+{
+  const vu = await A.page.evaluate(async () => {
+    const titres = [];
+    const obs = new MutationObserver((lot) => {
+      for (const m of lot) for (const n of m.addedNodes) {
+        if (n.nodeType === 1 && n.matches?.('.fx-titre')) titres.push(n.textContent.trim());
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+    const lire = () => {
+      const m = document.getElementById('moment');
+      return { on: Boolean(m?.classList.contains('on')),
+        titre: document.getElementById('momentTitre')?.textContent ?? '',
+        sous: document.getElementById('momentSous')?.textContent ?? '',
+        z: m ? Number(getComputedStyle(m).zIndex) : null };
+    };
+    const side = S.vue.moi.side;
+    raconter({ t: 'goal', side, goals: side === 0 ? [1, 0] : [0, 1] });
+    const corde = lire();
+    raconter({ t: 'but_reel', side, souffles: side === 0 ? [10, 0] : [0, 10], joueur: 'Kabashi', minute: 71 });
+    const reel = lire();
+    const tiroir = document.querySelector('.tbf-tiroir');
+    tiroir?.classList.add('on');
+    await new Promise((r) => { setTimeout(r, 80); });
+    const sousTiroir = lire().z;
+    tiroir?.classList.remove('on');
+    // `FX.butReel` posait son second titre neuf cents millisecondes après.
+    await new Promise((r) => { setTimeout(r, 1300); });
+    obs.disconnect();
+    couperMoment();
+    return { corde, reel, tiroir: Boolean(tiroir), sousTiroir, titres };
+  });
+  check(`la corde qui cède se lit dans la case de BD (${vu.corde.titre || 'rien'})`,
+    vu.corde.on && vu.corde.titre === 'LA CORDE CÈDE !');
+  check(`le but du vrai match aussi, avec le buteur et la minute (${vu.reel.titre} · ${vu.reel.sous})`,
+    vu.reel.on && vu.reel.titre === 'GOAL !' && vu.reel.sous === 'Kabashi · 71′');
+  check(`et aucun lettrage nu par-dessus (${vu.titres.join(', ') || 'aucun'})`, vu.titres.length === 0);
+  check(`la case passe sous le tiroir ouvert (calque ${vu.sousTiroir})`,
+    vu.tiroir && vu.sousTiroir !== null && vu.sousTiroir < 48);
+}
+
+/* Le bandeau d'annonce, en partie : sous les deux rangées du HUD, hors des
+   deux boutons — voir la préparation. */
+{
+  await poserAnnonce(A.page);
+  const vu = await lireAnnonce(A.page);
+  check('en partie, le bandeau d’annonce se range sous les deux rangées du HUD, hors des deux boutons',
+    vu?.sousHud === true && vu.couvre === false
+    || (console.log('        ', JSON.stringify(vu)), false));
+}
 
 /**
  * Ce qui a remplacé le fil de texte : on ne lit plus l'état, on le voit.
@@ -854,21 +1650,79 @@ check('la corde a bougé', bouge);
  * Sans ces deux contrôles, la refonte pourrait se figer sans que rien ne le
  * signale — la corde bougerait dans les données, pas à l'écran.
  */
+/* **Depuis le lot 6, une seule variable** : la page pose `--corde` (de −1 à
+   1) sur l'arène, et la marée (`.tbf-maree`) et le foulard (`#noeud`) la
+   lisent. On mesure donc ce qu'ils dessinent, pas ce que la page écrit : le
+   front de la marée, sa part, et le foulard posé dessus. Les transitions
+   durent 120 et 200 ms : on attend qu'elles aient fini. */
+await dodo(400);
 {
-  const arene = await A.page.evaluate(() => ({
-    partMoi: parseFloat(document.getElementById('coteMoi').style.width),
-    partEux: parseFloat(document.getElementById('coteEux').style.width),
-    noeud: parseFloat(document.getElementById('noeud').style.left),
-    ecart: document.getElementById('ecart').firstChild.textContent,
-    mention: document.getElementById('ecart').querySelector('small').textContent,
-  }));
-  check('le territoire du camp suit la corde', arene.partMoi !== 50);
+  const arene = await A.page.evaluate(() => {
+    const ar = document.getElementById('arene');
+    const maree = ar.querySelector('.tbf-maree');
+    const r = maree.getBoundingClientRect();
+    const moi = parseFloat(getComputedStyle(maree, '::before').width);
+    const eux = parseFloat(getComputedStyle(maree, '::after').width);
+    const n = document.getElementById('noeud').getBoundingClientRect();
+    return {
+      corde: parseFloat(ar.style.getPropertyValue('--corde')),
+      partMoi: (moi / r.width) * 100,
+      partEux: (eux / r.width) * 100,
+      noeud: ((n.left + n.width / 2 - r.left) / r.width) * 100,
+      ecart: document.getElementById('ecart').firstChild.textContent,
+      mention: document.getElementById('ecart').querySelector('small').textContent,
+    };
+  });
+  check(`le territoire du camp suit la corde (--corde ${arene.corde})`,
+    Number.isFinite(arene.corde) && arene.corde !== 0 && Math.abs(arene.partMoi - 50) > 0.05);
   check('les deux camps se partagent toute la largeur',
-    Math.abs(arene.partMoi + arene.partEux - 100) < 0.2);
-  check('le nœud est à la frontière des deux camps',
-    Math.abs(arene.noeud - arene.partMoi) < 0.2);
-  check('l\u2019écart est annoncé en chiffres', /^[+\u2212]\d+$/.test(arene.ecart));
+    Math.abs(arene.partMoi + arene.partEux - 100) < 0.5
+    || (console.log('        ', JSON.stringify(arene)), false));
+  check('le foulard est au front de la marée',
+    Math.abs(arene.noeud - arene.partMoi) < 1
+    || (console.log('        ', JSON.stringify(arene)), false));
+  check('l’écart est annoncé en chiffres', /^[+−]\d+$/.test(arene.ecart));
   check('et il dit qui mène', /MÈNES|TIRENT/.test(arene.mention));
+}
+
+/* **Les effets des deux camps sont posés sur l'arène** (lot 6, § 17) : la
+   vue dit ce que porte chaque joueur (`equipes[][].effets`), et la page en
+   fait des objets — le brouillard sur la moitié d'en face, leur bâche
+   devant leur tribune, le vent qui souffle vers moi —, chacun avec son
+   anneau, **ce qui reste sur la durée servie** (`reste / duree`), et non
+   sur la plus longue valeur vue. Le serveur ne pose ces effets qu'au gré
+   des cartes : on prend la vue qu'il vient d'envoyer, on y met ce qu'il y
+   mettrait, et on la rend à la page dans la même tâche — la vue suivante
+   remet tout en place. */
+{
+  const vu = await A.page.evaluate(() => {
+    const v = JSON.parse(JSON.stringify(S.vue));
+    const eux = v.moi.side ^ 1;
+    const porte = (j) => Array.isArray(j?.effets);
+    const servi = (v.equipes ?? []).every((eq) => (eq ?? []).every(porte));
+    for (const j of v.equipes[eux] ?? []) {
+      j.effets = [{ type: 'blind', reste: 3000, duree: 6000 }, { type: 'shield', reste: null, duree: null }];
+    }
+    v.moi.effets = [{ type: 'mod_foe', reste: 2000, duree: 8000 }];
+    for (const j of v.equipes[v.moi.side] ?? []) if (j.userId === v.moi.userId) j.effets = v.moi.effets;
+    S.vue = v;
+    rendreDuel();
+    const objets = [...document.querySelectorAll('#effetsArene .tbf-effet')].map((o) => ({
+      effet: o.dataset.effet, cote: o.dataset.tribune,
+      part: o.querySelector('.tbf-recharge')?.style.getPropertyValue('--part') ?? '',
+      cache: o.querySelector('.tbf-recharge')?.style.display === 'none' }));
+    return { servi, objets };
+  });
+  const trouve = (effet, cote) => vu.objets.find((o) => o.effet === effet && o.cote === cote);
+  check('la vue porte ce que chaque joueur subit, des deux côtés', vu.servi
+    || (console.log('        equipes[][].effets absents de la vue'), false));
+  check(`le brouillard et la bâche d’en face se posent sur leur moitié (${vu.objets.map((o) => `${o.effet}@${o.cote}`).join(', ')})`,
+    Boolean(trouve('brouillard', 'eux')) && Boolean(trouve('bache', 'eux'))
+    || (console.log('        ', JSON.stringify(vu.objets)), false));
+  check('l’anneau d’un effet se lit sur la durée servie (2 s sur 8, 3 s sur 6)',
+    trouve('vent', 'moi')?.part === '0.250' && trouve('brouillard', 'eux')?.part === '0.500'
+    && trouve('bache', 'eux')?.cache === true
+    || (console.log('        ', JSON.stringify(vu.objets)), false));
 }
 /* ---------------------------------------------------------- jouer une carte */
 
@@ -1147,6 +2001,16 @@ if (process.env.CAPTURE) {
   } else {
     /* On avance la fin dans le passé et on laisse l'horloge la constater. Poser
        `termine` à la main court-circuiterait justement ce qu'on veut éprouver. */
+    /* Ce que le serveur a servi, gardé pour le comparer à ce que la page en
+       montre : une ligne n'existe que si sa donnée existe (R1). */
+    await A.page.evaluate(() => {
+      const vrai = montrerBilan;
+      // eslint-disable-next-line no-global-assign
+      montrerBilan = (b) => { window.__bilan = b; return vrai(b); };
+      // Ce que la page annonce à la barre (`tbf:bourse`, R6).
+      window.__bourses = [];
+      addEventListener('tbf:bourse', (e) => { window.__bourses.push(e.detail ?? null); });
+    });
     salle.duel.fin = Date.now() - 1;
     await new Promise((r) => { setTimeout(r, 900); });
 
@@ -1186,7 +2050,121 @@ if (process.env.CAPTURE) {
         ['CHANTS', 'CARTES JOUÉES', 'CHANGEMENTS'].every((l) => bil.lignes.includes(l))
         || (console.log('        lignes :', bil.lignes.join(' | ')), false));
       check('il offre une sortie', /REVENIR/i.test(bil.sortie));
-      check('et l\u2019ancien voile gris ne se montre plus', bil.voile === false);
+      check('et l’ancien voile gris ne se montre plus', bil.voile === false);
+
+      /* **La page kraft du lot 6** : la case de BD au ton du résultat, et
+         chaque ligne nouvelle **seulement si sa donnée est servie** — le
+         meilleur geste en tampon (§ 17), la cote (§ 4.1), l'XP qui se
+         remplit depuis `gains.niveau` (§ 1). Le contrôle compare ce qui est
+         à l'écran à ce qui a été servi : une ligne inventée rougit autant
+         qu'une ligne oubliée. */
+      const k = await A.page.evaluate(() => {
+        const b = window.__bilan;
+        const e = document.getElementById('bilan');
+        const mien = S.vue?.moi?.side ?? 0;
+        const miens = (b?.joueurs ?? []).filter((j) => j.side === mien);
+        // Sa propre ligne, que le serveur marque dans son envoi (§ 17).
+        const marquees = (b?.joueurs ?? []).filter((j) => j.moi === true);
+        const moi = marquees[0] ?? miens[0] ?? null;
+        const lignes = [...e.querySelectorAll('.tbf-bilan-l > span:first-child')].map((x) => x.textContent.trim());
+        return {
+          marquees: marquees.map((j) => j.userId),
+          kraft: e.classList.contains('tbf-bilan') && Boolean(e.querySelector('.tbf-ticket')),
+          ton: document.getElementById('bilanCase')?.dataset.ton ?? null,
+          attendu: b?.vainqueur == null ? 'gris' : b.vainqueur === mien ? 'vert' : 'flare',
+          meilleur: moi?.meilleur?.verdict ?? null,
+          tampon: e.querySelector('.tbf-bilan-l .tbf-tampon[data-verdict]')?.dataset.verdict ?? null,
+          cote: Boolean(b?.gains?.cote), ligneCote: lignes.includes('COTE'),
+          niveau: Number.isFinite(Number(b?.gains?.niveau?.part)),
+          jauge: Boolean(e.querySelector('.tbf-bilan-xp .tbf-jauge')),
+          vs: e.querySelectorAll('.tbf-vs .tbf-vs-l').length,
+          rejouer: document.getElementById('bilanRejouer')?.textContent.trim() ?? '',
+          fin: (window.__rumeurs ?? []).includes('fin'),
+        };
+      });
+      check(`le bilan reconnaît sa ligne à la marque du serveur (${k.marquees.join(', ') || 'aucune'})`,
+        k.marquees.length === 1 && k.marquees[0] === U[0]);
+      check(`la case de BD prend le ton du résultat (${k.ton})`, k.kraft && k.ton === k.attendu);
+      check(`le meilleur geste en tampon, seulement s’il est servi (${k.meilleur ?? 'non servi'})`,
+        k.tampon === k.meilleur);
+      check(`la cote, seulement si elle est servie (${k.cote ? 'servie' : 'non servie'})`,
+        k.cote === k.ligneCote);
+      check('l’XP se remplit dans l’écharpe quand le niveau est servi', k.niveau === k.jauge);
+      check(`toi contre lui, en barres miroir (${k.vs} lignes)`, k.vs >= 4);
+      check('REJOUER à côté de REVENIR', /REJOUER/.test(k.rejouer));
+      check('et la tribune se vide au coup de sifflet', k.fin);
+
+      /* **La barre l'apprend** (R6) : le duel a versé des écharpes ou de
+         l'XP, la page l'annonce (`tbf:bourse`) une fois — sans quoi le HUD
+         garde l'ancien solde, et l'écran suivant avec lui. Rien de versé,
+         rien d'annoncé. */
+      const bourse = await A.page.evaluate(() => ({ annonces: window.__bourses ?? [],
+        verse: Number(window.__bilan?.gains?.echarpes) > 0 || Number(window.__bilan?.gains?.xp) > 0 }));
+      check(`le bilan annonce à la barre ce qu’il a versé (${bourse.annonces.length} annonce, ${
+        bourse.verse ? 'versé' : 'rien de versé'})`,
+        bourse.annonces.length === (bourse.verse ? 1 : 0));
+
+      /* **Le bilan rejoué** : ce que ce banc ne peut pas obtenir du vrai
+         serveur, on le rejoue sur le bilan reçu, dans la forme du contrat.
+
+         **Sa ligne est celle que le serveur marque** (`moi: true`, § 17),
+         même quand un partenaire de tribune la précède et a la même
+         ferveur — un 1 contre 1 ne départage rien, on lui ajoute donc ce
+         partenaire, avec un autre meilleur geste.
+
+         **L'XP part de là où elle était, et la fête est fusionnée** (§ 1).
+         Ce banc ne branche pas le module de niveau : le serveur n'y sert
+         pas `gains.niveau`. On le sert tel que le contrat le décrit — une
+         montée de 3 à 4 — et on regarde l'écharpe : elle part de
+         `depart.part` (91 %), fait le tour, **et c'est au bout du tour** que
+         la fête se pose (et non 1,4 s après le bilan, par-dessus) ; puis
+         elle repart de zéro vers `part` (17 %), le sticker au nouveau
+         niveau. La fête est relevée sans être jouée. */
+      const xp = await A.page.evaluate(async () => {
+        const b = JSON.parse(JSON.stringify(window.__bilan));
+        const sienne = (b.joueurs ?? []).find((j) => j.moi === true);
+        const MOTS = ['parfait', 'bon', 'moyen', 'rate'];
+        const autre = MOTS.find((m) => m !== sienne?.meilleur?.verdict);
+        if (sienne) {
+          b.joueurs.unshift({ ...sienne, moi: undefined, userId: '__partenaire', nom: 'Partenaire',
+            ferveur: S.vue?.moi?.ferveur ?? sienne.ferveur,
+            meilleur: { chant: sienne.meilleur?.chant ?? 'reprise', nom: 'Le partenaire', verdict: autre } });
+        }
+        b.gains = { ...(b.gains ?? {}), xp: 35, niveau: { xp: 430, gain: 35, niveau: 4, dans: 30, pour: 180,
+          part: 0.167, max: false, avant: 3, monte: true, paliers: [], ecarpes: 0,
+          depart: { xp: 395, niveau: 3, dans: 145, pour: 160, part: 0.906, max: false } } };
+        const fetes = [];
+        const jauge = () => document.querySelector('#bilan .tbf-bilan-xp .tbf-jauge i');
+        const vraie = window.TBF_NIVEAU?.feter;
+        if (window.TBF_NIVEAU) {
+          window.TBF_NIVEAU.feter = (n) => { fetes.push({ niveau: n?.niveau, largeur: jauge()?.style.width ?? null });
+            return Promise.resolve(); };
+        }
+        montrerBilan(b);
+        const tampon = document.querySelector('#bilan .tbf-bilan-l .tbf-tampon[data-verdict]')?.dataset.verdict ?? null;
+        const depart = { largeur: jauge()?.style.width ?? null,
+          sticker: document.getElementById('bilanNiv')?.textContent.trim() ?? null };
+        const t0 = performance.now();
+        while (performance.now() - t0 < 12000
+          && !(fetes.length && document.getElementById('bilanNiv')?.textContent.trim() === 'NIV. 4'
+            && jauge()?.style.width === '17%')) {
+          await new Promise((r) => { setTimeout(r, 100); });
+        }
+        if (window.TBF_NIVEAU && vraie) window.TBF_NIVEAU.feter = vraie;
+        return { sienne: sienne?.meilleur?.verdict ?? null, autre, tampon, depart, fetes,
+          fin: { largeur: jauge()?.style.width ?? null,
+            sticker: document.getElementById('bilanNiv')?.textContent.trim() ?? null } };
+      });
+      check(`le bilan prend sa ligne, pas celle d’un partenaire qui la précède (${xp.tampon ?? 'aucun tampon'})`,
+        xp.sienne !== null && xp.tampon === xp.sienne
+        || (console.log('        ', JSON.stringify({ sienne: xp.sienne, autre: xp.autre, tampon: xp.tampon })), false));
+      check(`l’XP part de là où elle était (${xp.depart.largeur} · ${xp.depart.sticker})`,
+        xp.depart.largeur === '91%' && xp.depart.sticker === 'NIV. 3'
+        || (console.log('        ', JSON.stringify(xp)), false));
+      check(`et la fête de niveau se pose au bout du tour, une fois (${xp.fetes.map((f) => f.largeur).join(', ') || 'jamais'})`,
+        xp.fetes.length === 1 && xp.fetes[0].niveau === 4 && xp.fetes[0].largeur === '100%'
+        && xp.fin.largeur === '17%' && xp.fin.sticker === 'NIV. 4'
+        || (console.log('        ', JSON.stringify(xp)), false));
     }
 
     if (process.env.CAPTURE) {
@@ -1220,6 +2198,9 @@ if (process.env.CAPTURE) {
   check('le coup de sifflet range le drapeau « en partie »', arme === false
     || (console.log('        le corps porte encore tbf-en-partie après le bilan'), false));
 
+  /* **Sans rechargement** (lot 6) : un repère posé dans la page doit
+     survivre à la sortie — une page rechargée l'aurait perdu. */
+  await A.page.evaluate(() => { window.__pasRecharge = true; });
   await A.page.click('#bilanSortir');
   /* On ne demande pas « la page a-t-elle rechargé » mais « le joueur peut-il
      rejouer » : la liste des matchs, dépliée, avec de quoi appuyer. C'est ce
@@ -1241,6 +2222,7 @@ if (process.env.CAPTURE) {
     check('le bilan est refermé', propre.bilan);
     check('la corde n’est plus à l’écran', propre.jeu);
     check('et aucun voile ne reste par-dessus', propre.voile);
+    check('sans recharger la page', await A.page.evaluate(() => window.__pasRecharge === true));
   }
 }
 

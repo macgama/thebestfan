@@ -93,4 +93,10 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      il vient donc après les trois. En dernier plutôt que juste après
      saisons.sql, parce qu'il ne fait rien dont un autre fichier dépende — le
      dernier rang est celui qui ne peut gêner personne. */
-  'quotidien'];
+  'quotidien',
+  /* Les arènes (vague 2, lot 6) : le bilan de tribune et la préférence de
+     présence. Il ajoute des colonnes à `virage_presence` et à `user_wallet`
+     (souvenirs.sql), et il prolonge l'upsert des chants que quotidien.sql a
+     élargi — les suites du Virage le posent par-dessus celui-ci. Après les
+     deux, donc ; et rien n'en dépend : il prend le dernier rang à son tour. */
+  'arenes'];

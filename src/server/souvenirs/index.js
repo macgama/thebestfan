@@ -40,8 +40,37 @@ export function createSouvenirs({ pool, requireAuth,
 
   /* ------------------------------------------------------- présence */
 
-  /* Les deux formes de l'écriture de présence. La seconde est celle d'avant
-     `sql/quotidien.sql`, mot pour mot : c'est elle que le repli rejoue. */
+  /* Les trois formes de l'écriture de présence, de la plus riche à la plus
+     nue : celle des arènes (`sql/arenes.sql`, qui suppose le quotidien),
+     celle du quotidien (`sql/quotidien.sql`), et celle d'avant les deux, mot
+     pour mot. Le repli descend de l'une à l'autre : voir `recordPush`.
+
+     **Dans la forme des arènes, le chant s'écrit avant la note.** Un `ON
+     DUPLICATE KEY UPDATE` s'évalue de gauche à droite sur MariaDB : la note
+     écrite d'abord, la comparaison du chant lirait la nouvelle note contre
+     elle-même, et le meilleur chant ne changerait plus jamais après le
+     premier — sans une erreur (`SERVEUR-VAGUE2.md`, règle 15).
+
+     `meilleur_chant IS NULL` le pose aussi quand la ligne n'en a pas encore :
+     une ligne ouverte par une carte (note 0, pas de chant), puis un chant noté
+     0, garderait sinon un meilleur geste vide sur un match où l'on a chanté.
+     `COALESCE` : une carte ne l'efface jamais. */
+  const PRESENCE_ARENES = `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, fanzzy_id,
+                                    ferveur, classe, chants, chants_mt1, chants_mt2,
+                                    parfaits, serie_max, meilleur_q, meilleur_chant)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         ferveur = ferveur + VALUES(ferveur),
+         fanzzy_id = VALUES(fanzzy_id),
+         chants = chants + VALUES(chants),
+         chants_mt1 = chants_mt1 + VALUES(chants_mt1),
+         chants_mt2 = chants_mt2 + VALUES(chants_mt2),
+         parfaits = parfaits + VALUES(parfaits),
+         serie_max = GREATEST(serie_max, VALUES(serie_max)),
+         meilleur_chant = IF(VALUES(meilleur_q) > meilleur_q OR meilleur_chant IS NULL,
+                             COALESCE(VALUES(meilleur_chant), meilleur_chant), meilleur_chant),
+         meilleur_q = GREATEST(meilleur_q, VALUES(meilleur_q)),
+         last_push_at = NOW(3)`;
   const PRESENCE = `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, fanzzy_id,
                                     ferveur, classe, chants, chants_mt1, chants_mt2)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -60,10 +89,26 @@ export function createSouvenirs({ pool, requireAuth,
          fanzzy_id = VALUES(fanzzy_id),
          last_push_at = NOW(3)`;
 
-  /* L'état du repli : jusqu'à quand écrire sans les chants (0 : on ne s'est
-     jamais replié, ou on en est revenu), et si le journal l'a déjà dit. */
+  /* Les formes, dans l'ordre où le repli les essaie, et ce que le journal dit
+     quand on doit s'y arrêter ou qu'on en remonte. */
+  const FORMES = [
+    { sql: PRESENCE_ARENES },
+    { sql: PRESENCE,
+      perte: 'PARFAITS, série et meilleur geste du Virage non comptés',
+      fichier: 'sql/arenes.sql',
+      retour: 'les PARFAITS, la série et le meilleur geste du Virage se comptent de nouveau '
+        + '(colonnes de sql/arenes.sql trouvées)' },
+    { sql: PRESENCE_SANS_CHANTS,
+      perte: 'chants du Virage non comptés',
+      fichier: 'sql/quotidien.sql',
+      retour: 'les chants du Virage se comptent de nouveau (colonnes de sql/quotidien.sql trouvées)' },
+  ];
+
+  /* L'état du repli : la forme par laquelle commencer, jusqu'à quand (passé
+     ce délai, on retente la plus riche), et ce que le journal a déjà dit. */
+  let forme = 0;
   let repliJusqua = 0;
-  let repliDit = false;
+  const dits = new Set();
 
   /**
    * Enregistre une poussée dans le Grand Virage.
@@ -104,38 +149,74 @@ export function createSouvenirs({ pool, requireAuth,
    * on applique le schéma (`npm run schema:appliquer`) sur un processus déjà
    * démarré : un repli définitif ne compterait alors plus jamais un chant
    * jusqu'au prochain redémarrage, et les missions du Virage resteraient à
-   * zéro sans un mot. Au pire, une instruction en échec toutes les dix
-   * minutes ; jamais deux par poussée.
+   * zéro sans un mot.
+   *
+   * ## Trois formes, et non plus deux
+   *
+   * `sql/arenes.sql` (le bilan de tribune, vague 2) ajoute les PARFAITS, la
+   * meilleure série et le meilleur geste. **Une colonne des arènes absente ne
+   * doit pas faire perdre le compte des chants**, que les missions lisent :
+   * `ER_BAD_FIELD_ERROR` sur la forme des arènes retente celle du quotidien,
+   * puis la nue. On s'arrête sur la première qui passe, pour dix minutes ; le
+   * journal dit une fois ce qui ne se compte plus, et quel fichier appliquer,
+   * puis dit la reprise quand une forme plus riche repasse. Au pire, deux
+   * instructions en échec toutes les dix minutes, sur une base qui n'a ni
+   * l'un ni l'autre fichier ; jamais plus.
+   *
+   * @param {number} [parfait] 1 si le chant est un PARFAIT (`verdict.js`).
+   * @param {number} [serie] la meilleure série de PARFAIT de la salle ; la
+   *   base garde la plus grande.
+   * @param {number} [q] la note du verdict en millièmes (0 pour une carte).
+   * @param {string|null} [chantId] le chant de cette note (nul pour une carte).
    */
   async function recordPush({ userId, fixtureId, side, teamId = null, fanzzyId,
-                              amount, classe = true, chant = 0, mt = 0 }) {
+                              amount, classe = true, chant = 0, mt = 0,
+                              parfait = 0, serie = 0, q: note = 0, chantId = null }) {
     const presence = [userId, fixtureId, side ? 1 : 0, teamId ?? null, fanzzyId ?? null,
       Math.max(0, Math.round(amount ?? 0)), classe === false ? 0 : 1];
+    /* Une carte n'est pas un chant, et une mi-temps ne se compte que pour un
+       chant : la salle transporte la mi-temps de toute poussée. De même, une
+       carte n'est ni un PARFAIT ni un geste noté. */
+    const c = chant ? 1 : 0;
+    const chants = [c, c && mt === 1 ? 1 : 0, c && mt === 2 ? 1 : 0];
+    const arenes = [c && parfait ? 1 : 0, entier(serie, 65535),
+      c ? entier(note, 1200) : 0, c && chantId ? String(chantId).slice(0, 24) : null];
+    const valeurs = [[...presence, ...chants, ...arenes], [...presence, ...chants], presence];
 
-    if (horloge() >= repliJusqua) {
-      /* Une carte n'est pas un chant, et une mi-temps ne se compte que pour
-         un chant : la salle transporte la mi-temps de toute poussée. */
-      const c = chant ? 1 : 0;
+    const debut = horloge() >= repliJusqua ? 0 : forme;
+    for (let k = debut; k < FORMES.length; k++) {
       try {
-        await q(PRESENCE, [...presence, c, c && mt === 1 ? 1 : 0, c && mt === 2 ? 1 : 0]);
-        if (repliJusqua) {
-          repliJusqua = 0;
-          console.warn('[souvenirs] les chants du Virage se comptent de nouveau '
-            + '(colonnes de sql/quotidien.sql trouvées)');
-        }
-        return;
+        await q(FORMES[k].sql, valeurs[k]);
       } catch (e) {
-        if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
-        repliJusqua = horloge() + REPLI_CHANTS_MS;
-        if (!repliDit) {
-          repliDit = true;
-          console.warn(`[souvenirs] chants du Virage non comptés : ${e.message} `
-            + '— appliquer sql/quotidien.sql (npm run schema:appliquer). '
-            + 'La présence s’écrit sans eux, et le comptage se retente toutes les dix minutes.');
-        }
+        /* La dernière forme ne se replie sur rien : une colonne qu'elle n'a
+           pas est une panne, et elle remonte comme avant. */
+        if (e?.code !== 'ER_BAD_FIELD_ERROR' || k === FORMES.length - 1) throw e;
+        continue;
       }
+      /* Une forme plus riche que la dernière repasse : on le dit, pour
+         chaque étage regagné. */
+      for (let j = forme; j > k; j--) console.warn(`[souvenirs] ${FORMES[j].retour}`);
+      /* Ce qui ne se compte pas, une fois par étage et par processus. */
+      for (let j = 1; j <= k; j++) {
+        if (dits.has(j)) continue;
+        dits.add(j);
+        console.warn(`[souvenirs] ${FORMES[j].perte} — appliquer ${FORMES[j].fichier} `
+          + '(npm run schema:appliquer). La présence s’écrit sans eux, et le comptage '
+          + 'se retente toutes les dix minutes.');
+      }
+      /* On a dû descendre depuis la forme essayée en premier : on s'y tient
+         dix minutes. Revenu à la plus riche, plus de repli. */
+      if (k > debut) repliJusqua = horloge() + REPLI_CHANTS_MS;
+      else if (k === 0) repliJusqua = 0;
+      forme = k;
+      return;
     }
-    await q(PRESENCE_SANS_CHANTS, presence);
+  }
+
+  /** Un entier borné, jamais `NaN` : il part dans une colonne non signée. */
+  function entier(v, max) {
+    const n = Math.round(Number(v));
+    return Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
   }
 
   /* ---------------------------------------------------------- frappe */
@@ -152,7 +233,7 @@ export function createSouvenirs({ pool, requireAuth,
     ))[0]?.family;
 
     // Compétition non couverte ou désactivée : pas de carte, et c'est voulu.
-    if (!family) return { minted: false, reason: 'league_not_eligible' };
+    if (!family) return { minted: false, reason: 'league_not_eligible', userIds: [] };
 
     const price = PRICE[family] ?? 60;
     const expires = new Date(Date.now() + MARKET_DAYS * 864e5);
@@ -167,7 +248,7 @@ export function createSouvenirs({ pool, requireAuth,
        goal.kickoffAt, expires, price],
     );
 
-    if (!res.affectedRows) return { minted: false, reason: 'already_minted' };
+    if (!res.affectedRows) return { minted: false, reason: 'already_minted', userIds: [] };
 
     const souvenirId = res.insertId;
 
@@ -186,7 +267,17 @@ export function createSouvenirs({ pool, requireAuth,
         [presents.map((p) => [p.user_id, souvenirId, 'presence', p.fanzzy_id, p.ferveur])],
       );
     }
-    return { minted: true, souvenirId, presents: presents.length, family, price };
+    /* **Les receveurs, nommés** (`userIds`, défaut D5). La page annonçait la
+       carte à chaque but de son club — « Elle est dans ton carnet » — alors
+       qu'elle n'est frappée que pour une compétition couverte, et donnée qu'à
+       ceux qui ont poussé dans la fenêtre. Le Virage ne l'annonce plus qu'à
+       ces joueurs-là (`souvenirFrappe`, `ferveur/index.js`), et c'est
+       `server.js` qui fait le lien : ce nom exact est leur point de contact.
+
+       Tous ceux de la fenêtre l'ont reçue : la carte vient d'être frappée
+       (`affectedRows` ci-dessus), personne ne pouvait déjà l'avoir. */
+    const userIds = [...new Set(presents.map((p) => String(p.user_id)))];
+    return { minted: true, souvenirId, presents: presents.length, userIds, family, price };
   }
 
   /* --------------------------------------------------------- lecture */

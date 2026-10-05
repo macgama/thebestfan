@@ -59,7 +59,7 @@ public/                 les pages, une par écran, script en ligne
 public/fanzzy-art.js    le dessin des Fanzzy — source unique, partagée
 public/nav.js           la barre commune
 public/fx.js            les effets et les personnages vivants
-sql/                    le schéma, 33 fichiers appliqués dans l'ordre, 47 tables
+sql/                    le schéma, 34 fichiers appliqués dans l'ordre, 47 tables
 scripts/                les tests, un par module — et les chaînes de production
 ```
 
@@ -84,17 +84,17 @@ voit exactement la pulsation sur laquelle il est noté.
 
 ## Les tests
 
-`npm test` lance les **soixante-quatre** suites. Elles se divisent en deux
+`npm test` lance les **soixante-six** suites. Elles se divisent en deux
 groupes, et il faut le savoir avant de s'alarmer :
 
-- **vingt-six ne demandent rien** et tournent tout de suite, sur n'importe
+- **vingt-sept ne demandent rien** et tournent tout de suite, sur n'importe
   quelle machine ;
-- **trente-huit demandent MySQL** — une base *locale*, sur le port 3307, jamais
+- **trente-neuf demandent MySQL** — une base *locale*, sur le port 3307, jamais
   celle de production : elles effacent les tables au démarrage. Sans base, elles
   ne rougissent pas, elles s'arrêtent, et `npm test` les compte comme « la suite
   s'est arrêtée ».
 
-**Un premier `npm test` sur une machine sans base affiche donc trente-huit
+**Un premier `npm test` sur une machine sans base affiche donc trente-neuf
 échecs, et c'est normal.** Voir `ETAT.md` § 2 pour la base attendue et § 4 pour
 le détail des deux groupes.
 

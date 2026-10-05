@@ -120,6 +120,25 @@ function prendreLeVerrou() {
   }
 }
 
+/* ===================================================== une base par copie
+
+   **Le verrou est par copie, la base ne l'est pas.** Une copie de travail
+   (`git worktree`) a son propre `.tbf-suite.lock`, puisqu'il vit à la racine
+   de la copie : une suite lancée là ne voit pas celle qui tourne dans la copie
+   principale, et vide la même base sous ses pieds.
+
+   Le compte `tbf` ne peut pas créer de base `tbf_…`, mais le serveur local
+   laisse à tous les bases `test_…`. Une copie qui travaille en même temps
+   qu'une autre se donne donc la sienne : une ligne, l'URL, dans
+   `.tbf-base-de-test` à sa racine (ignoré par git). `DATABASE_URL` passe
+   toujours avant ; sans fichier, rien ne change. */
+const FICHIER_BASE = path.join(fileURLToPath(new URL('..', import.meta.url)), '.tbf-base-de-test');
+
+function baseDeCetteCopie() {
+  try { return readFileSync(FICHIER_BASE, 'utf8').trim() || null; }
+  catch { return null; }
+}
+
 /** Les hôtes qui désignent la machine où tourne le test. */
 const LOCAUX = new Set(['localhost', '127.0.0.1', '::1', '[::1]', '']);
 
@@ -131,7 +150,7 @@ const LOCAUX = new Set(['localhost', '127.0.0.1', '::1', '[::1]', '']);
  * laisser dix-huit autres suites tenter leur chance sur la même base.
  */
 export function baseDeTest() {
-  const url = process.env.DATABASE_URL ?? DEFAUT;
+  const url = process.env.DATABASE_URL ?? baseDeCetteCopie() ?? DEFAUT;
 
   let hote;
   try { hote = new URL(url).hostname.toLowerCase(); }

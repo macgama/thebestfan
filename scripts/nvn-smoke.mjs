@@ -4,8 +4,13 @@
  * événements. C'est ce qui permet de tester chaque effet un par un.
  */
 import { DuelNvN, RULES } from '../src/server/nvn/engine.js';
-import { GESTES, GESTURES, MOTIFS, grade, instantsDuMotif }
+import { GESTES, GESTURES, MOTIFS, grade, instantsDuMotif, applyHeroMods }
   from '../src/server/ferveur/gestures.js';
+/* Le verdict du duel est nommé par la couche réseau, pas par le moteur : ses
+   fonctions pures s'éprouvent ici, sans base ni socket. */
+import { chanterEtNommer, noteMesuree, resumeDuCompte, nouveauCompte, compterChant,
+  jouerEtMarquer, vuePour } from '../src/server/nvn/index.js';
+import { verdictDe } from '../src/shared/verdict.js';
 import { ACTION_BY_ID } from '../src/shared/duel/actions.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { combine } from '../src/shared/fanzzy/inventaire.js';
@@ -754,6 +759,322 @@ check('un entraînement ne compte pas',
     reussi.chant?.backfire === false
     && reussi.poussee?.userId === '0-0' && reussi.poussee.side === 0
     || (console.log('        événements :', JSON.stringify(reussi.ev)), false));
+}
+
+/* ===================================================== le verdict, au duel
+
+   CONTRATS.md § 17 : chaque évènement `chant` porte `verdict`, mesuré comme au
+   § 16.1 — sur la note **avant** les modificateurs du Fanzzy, relevée par le
+   plancher du « Second souffle » quand il mord. Le moteur ne sert que la note
+   finale, et il ne bouge pas : c'est `nvn/index.js` qui rejoue la note mesurée
+   juste avant lui (`chanterEtNommer`) et tient le compte du bilan.
+
+   Les notes se règlent à la milliseconde sur la tenue et le maintien, dont la
+   note est une simple proportion (tenu ÷ limite) : 3 990 ms sur 4 200 font
+   0,95. Le lieu et les modificateurs des Fanzzy sont retirés, sauf là où un
+   contrôle les pose. */
+{
+  const tV = 5_000_000;
+  const tenue = (part) => [0, Math.round(GESTURES.tenue.limite * part)];
+  const maintien = (part) => [0, Math.round(GESTURES.hold.need * part)];
+  const nu = (id) => {
+    const dV = duel(1, 'entrainement', tV, id);
+    dV.stade = null;
+    for (const j of dV.joueurs.values()) for (const f of j.fanzzy) f.mods = { id: f.id };
+    dV.repertoire = ['tenir', 'onetaitla', 'reprise', 'montee', 'cadence'];
+    return dV;
+  };
+  /* Un chant par le chemin du serveur. Le souffle est rempli avant : un refus
+     éventuel doit venir du geste, jamais de l'économie. */
+  let pas = 0;
+  const chanteV = (dV, comptes, uid, cardId, taps) => {
+    dV.joueurs.get(uid).breath = 100;
+    pas += 1000;
+    return chanterEtNommer(dV, comptes, uid, { cardId, taps }, tV + pas)
+      .find((e) => e.t === 'chant');
+  };
+
+  /* Le moteur seul ne nomme rien. Le jour où il le ferait, le mot aurait deux
+     auteurs — et `engine.js` doit rester tel qu'il est (SERVEUR-VAGUE2 § 12). */
+  {
+    const dV = nu('dV0');
+    dV.joueurs.get('0-0').breath = 100;
+    const brut = dV.chanter('0-0', { cardId: 'tenir', taps: tenue(0.95) }, tV)
+      .find((e) => e.t === 'chant');
+    check('le moteur ne nomme pas le verdict : c’est la couche réseau',
+      Boolean(brut) && !('verdict' in brut)
+      || (console.log('        chant :', JSON.stringify(brut)), false));
+  }
+
+  /* 0,95, 0,97, 0,6, puis 0,96 : trois PARFAITS, une série de deux que le
+     MOYEN a coupée, et le meilleur geste sur le 0,97 — pas sur le dernier. */
+  {
+    const dV = nu('dV1');
+    const comptes = new Map();
+    const vus = [
+      chanteV(dV, comptes, '0-0', 'tenir', tenue(0.95)),
+      chanteV(dV, comptes, '0-0', 'onetaitla', maintien(0.97)),
+      chanteV(dV, comptes, '0-0', 'tenir', tenue(0.6)),
+      chanteV(dV, comptes, '0-0', 'tenir', tenue(0.96)),
+    ];
+    const mots = vus.map((c) => c?.verdict).join(', ');
+    check(`chaque chant porte son mot (${mots})`, mots === 'parfait, parfait, moyen, parfait');
+    const r = resumeDuCompte(comptes.get('0-0'));
+    check(`trois PARFAITS au bilan (${r.parfaits})`, r.parfaits === 3);
+    check(`la meilleure série est de deux : le MOYEN l’a remise à zéro (${r.serie})`,
+      r.serie === 2);
+    check('le meilleur geste est le 0,97, sur son chant et sous son nom',
+      r.meilleur?.chant === 'onetaitla' && r.meilleur?.nom === CHANTS.onetaitla.nom
+      && r.meilleur?.verdict === 'parfait'
+      || (console.log('        meilleur :', JSON.stringify(r.meilleur)), false));
+  }
+
+  /* Les bornes, au duel : « au-dessus de », strictement (§ 16.1). 3 780 ms sur
+     4 200 font 0,9 tout juste, qui est BON. */
+  {
+    const dV = nu('dV2');
+    const comptes = new Map();
+    const bornes = [[3780, 'bon'], [3781, 'parfait'], [2940, 'moyen'], [2941, 'bon'],
+      [1680, 'rate'], [1681, 'moyen']];
+    const lus = bornes.map(([ms]) => chanteV(dV, comptes, '0-0', 'tenir', [0, ms])?.verdict);
+    check(`aux bornes exactes, le mot de l’échelle unique (${lus.join(', ')})`,
+      lus.join() === bornes.map((b) => b[1]).join());
+  }
+
+  /* **D7 au duel.** Un Fanzzy qui paie mal le parfait fait d'un 0,95 un 0,779 ;
+     mesuré sur la note finale, le PARFAIT que le moteur vient de récompenser
+     s'écrirait BON. Puis la même chose venue d'en face : « Rouille ». */
+  {
+    const dV = nu('dV3');
+    const comptes = new Map();
+    dV.joueurs.get('0-0').fanzzy[0].mods = { id: 'TR32', perfectBonus: 0.82 };
+    const c = chanteV(dV, comptes, '0-0', 'tenir', tenue(0.95));
+    check(`un Fanzzy qui paie mal le parfait ne change pas le mot (${c?.quality} reste PARFAIT)`,
+      c?.quality < 0.9 && c?.verdict === 'parfait'
+      || (console.log('        chant :', JSON.stringify(c)), false));
+    check('et ce PARFAIT compte au bilan', resumeDuCompte(comptes.get('0-0')).parfaits === 1);
+
+    const j1 = dV.joueurs.get('1-0');
+    j1.breath = 100;
+    j1.main.push('a-rp-rouille');
+    pas += 1000;
+    dV.jouer('1-0', 'a-rp-rouille', tV + pas);
+    const sous = chanteV(dV, comptes, '0-0', 'tenir', tenue(0.95));
+    check(`sous la Rouille d’en face non plus (${sous?.quality} reste PARFAIT)`,
+      sous?.quality < 0.6 && sous?.verdict === 'parfait'
+      || (console.log('        chant :', JSON.stringify(sous)), false));
+  }
+
+  /* Le plancher du « Second souffle » : il relève un raté en MOYEN, une fois,
+     et ne mord pas sur un bon geste — sa charge reste alors pour le suivant. */
+  {
+    const dV = nu('dV4');
+    const comptes = new Map();
+    const j = dV.joueurs.get('0-0');
+    j.breath = 100;
+    j.main.push('a-secondsouffle');
+    pas += 1000;
+    dV.jouer('0-0', 'a-secondsouffle', tV + pas);
+    const bien = chanteV(dV, comptes, '0-0', 'tenir', tenue(0.95));
+    const sauve = chanteV(dV, comptes, '0-0', 'tenir', tenue(0.2));
+    const rate = chanteV(dV, comptes, '0-0', 'tenir', tenue(0.2));
+    check('le plancher ne mord pas sur un bon geste', bien?.verdict === 'parfait');
+    check(`un raté relevé par le plancher se dit MOYEN (${sauve?.quality})`,
+      sauve?.quality === 0.5 && sauve?.verdict === 'moyen'
+      || (console.log('        chant :', JSON.stringify(sauve)), false));
+    check('la charge partie, le raté suivant est RATÉ', rate?.verdict === 'rate');
+  }
+
+  /* Ce que le bilan dit d'un joueur qui n'a pas chanté, ou d'un seul PARFAIT :
+     `parfaits` toujours, `serie` à partir de deux, `meilleur` dès un chant. */
+  check('sans chant : zéro PARFAIT, ni série ni meilleur geste',
+    JSON.stringify(resumeDuCompte(undefined)) === '{"parfaits":0}'
+    && JSON.stringify(resumeDuCompte(nouveauCompte())) === '{"parfaits":0}');
+  {
+    const c = nouveauCompte();
+    compterChant(c, 0.95, 'tenir');
+    const r = resumeDuCompte(c);
+    check('un PARFAIT seul n’est pas une série', r.parfaits === 1 && !('serie' in r)
+      && r.meilleur?.verdict === 'parfait'
+      || (console.log('        bilan :', JSON.stringify(r)), false));
+    // À égalité, le premier chant reste le meilleur : il faut faire mieux.
+    compterChant(c, 0.95, 'mur');
+    check('à égalité, le premier chant reste le meilleur', resumeDuCompte(c).meilleur?.chant === 'tenir');
+  }
+
+  /* **Le rejeu contre le moteur.** La note mesurée est rejouée avant lui avec
+     une copie de sa composition des modificateurs : si `engine.js` changeait
+     un jour sa façon de les composer, le mot dériverait en silence. Des
+     centaines de chants, sur de vrais decks et de vrais lieux (`marin` paie le
+     parfait 0,82), avec les cartes qui changent les fenêtres, le parfait et le
+     plancher : la note rejouée, passée par `applyHeroMods`, doit retomber
+     exactement sur la `quality` du moteur. */
+  {
+    const RYTHMES = new Set(['tempo', 'mash', 'hold', 'contretemps', 'echo',
+      'crescendo', 'relance', 'salves', 'tenue', 'retenue']);
+    const bruit = (a) => (Math.random() * 2 - 1) * a;
+    /* Des frappes plausibles pour chaque geste, du juste (0) au faux (2), lues
+       dans la configuration que le serveur sert au joueur. */
+    const frappesPour = (gest, g, v) => {
+      const jeu = [15, 50, 140, 25, 12][v];
+      const tremble = (arr, plafond = jeu) => arr.map((x, i) =>
+        Math.max(0, Math.round(i === 0 ? x : x + bruit(Math.max(12, Math.min(jeu, plafond))))));
+      const regulier = (n, span) => Array.from({ length: n }, (_, i) => i * (span / (n + 1)));
+      switch (gest) {
+        case 'tempo': return tremble(Array.from({ length: g.tempo.beats }, (_, i) => i * g.tempo.interval));
+        case 'contretemps': return tremble(Array.from({ length: g.contretemps.beats },
+          (_, i) => (i + 0.5) * g.contretemps.interval));
+        case 'echo': return tremble(g.echo.instants);
+        case 'crescendo': return tremble(g.crescendo.instants);
+        case 'mash': return tremble(regulier(Math.round(g.mash.target * [1, 0.85, 0.5, 1.05, 1.1][v]),
+          g.mash.ms), 30);
+        case 'hold': return [0, Math.round(g.hold.need * [1, 0.92, 0.5, 0.97, 1.02][v])];
+        case 'tenue': return [0, Math.round(g.tenue.limite * [0.97, 0.9, 0.5, 0.95, 0.99][v])];
+        case 'relance': return [0, Math.round(g.relance.attente + [0, 80, 200, 20, 5][v])];
+        case 'retenue': return tremble(regulier(g.retenue.exact + [0, 1, 4, 0, 2][v], g.retenue.ms), 40);
+        case 'salves': {
+          const t = [];
+          for (let r = 0; r < g.salves.rafales; r++) {
+            for (let k = 0; k < g.salves.parRafale; k++) {
+              t.push(r * (g.salves.parRafale * 120 + g.salves.silence) + k * 120);
+            }
+          }
+          return tremble(t, 30);
+        }
+        default: return [];
+      }
+    };
+    const PERSOS = [['TR34', 'MS30', 'TR33'], ['RV19', 'TR32', 'MS30'],
+      ['MT4', 'TR21', 'TR33'], ['TR32', 'MS30', 'TR33']];
+    const CARTES_V = ['a-metronome', 'a-vent', 'a-rp-rouille', 'a-secondsouffle',
+      'a-fumigene', 'a-torche', 'a-bache', 'a-thermos', 'a-arbitre', 'a-vol'];
+    const EFFETS = ['a-metronome', 'a-vent', 'a-rp-rouille', 'a-secondsouffle'];
+
+    let compares = 0, ecarts = 0, sauves = 0;
+    const premiers = [];
+    const journal = [];
+    const ecrire = console.error;
+    console.error = (...a) => { journal.push(a.join(' ')); };
+    try {
+      for (let k = 0; k < 24; k++) {
+        const ids = PERSOS[k % PERSOS.length];
+        const eq = (side) => [{ userId: `${side}-0`, nom: `J${side}`,
+          loadout: loadout(ids, CARTES_V, { [ids[0]]: ['jumelles'], [ids[1]]: ['tambour'] }) }];
+        // Les identifiants `rej-…` tirent de vrais lieux, dont `marin` (rej-0).
+        const dK = new DuelNvN({ id: `rej-${k}`, equipes: [eq(0), eq(1)], mode: 'entrainement',
+          now: tV, fixture: { id: 7001, elapsed: 20,
+            home: { id: 85, name: 'Sion' }, away: { id: 91, name: 'Bâle' } } });
+        if (!dK.repertoire.some((id) => RYTHMES.has(CHANTS[id].gest))) dK.repertoire[0] = 'reprise';
+        const rythmes = dK.repertoire.filter((id) => RYTHMES.has(CHANTS[id].gest));
+        const comptes = new Map();
+        let tk = tV;
+        for (let n = 0; n < 16; n++) {
+          tk += 1500;
+          const uid = n % 2 ? '1-0' : '0-0';
+          const j = dK.joueurs.get(uid);
+          if (n % 3 === 0) {
+            const carte = EFFETS[(Math.floor(n / 3) + k) % EFFETS.length];
+            j.main.push(carte);
+            j.cooldowns = {};
+            j.breath = 100;
+            try { dK.jouer(uid, carte, tk); } catch { /* une condition : sans effet ici */ }
+          }
+          j.breath = 100;
+          const cardId = rythmes[(n + k) % rythmes.length];
+          const p = { cardId, taps: frappesPour(CHANTS[cardId].gest, dK.vue(uid).moi.gestes, (n * 7 + k) % 5) };
+          const m = noteMesuree(dK, uid, p, tk);
+          let ev;
+          try { ev = chanterEtNommer(dK, comptes, uid, p, tk); } catch { continue; }
+          const chant = ev.find((e) => e.t === 'chant');
+          if (!chant) continue;
+          if (!m) { ecarts++; continue; }
+          compares++;
+          const fin = applyHeroMods(m.avantMods, m.mods);
+          if (Number(fin.quality.toFixed(3)) !== chant.quality || fin.backfire !== chant.backfire) {
+            ecarts++;
+            if (premiers.length < 3) premiers.push(`${dK.id}/${cardId} : rejoué ${fin.quality.toFixed(3)}, moteur ${chant.quality}`);
+          }
+          if (verdictDe(chant.quality) !== chant.verdict) sauves++;
+        }
+      }
+    } finally { console.error = ecrire; }
+
+    check(`le rejeu retrouve la note du moteur sur ${compares} chants (${ecarts} écart)`,
+      compares >= 200 && ecarts === 0
+      || (console.log('        ', premiers.join(' · ') || '(trop peu de chants comparés)'), false));
+    /* La preuve que le rejeu sert : sur ces chants-là, le mot de la note finale
+       aurait été un autre. Sans eux, le contrôle du dessus passerait aussi
+       avec un verdict mesuré sur `quality`. */
+    check(`et sur ${sauves} d’entre eux, la note finale aurait dit un autre mot`, sauves > 0);
+    check('le journal n’a rien eu à signaler',
+      !journal.some((l) => l.includes('[nvn] verdict'))
+      || (console.log('        journal :', journal.join(' | ')), false));
+  }
+}
+
+/* ============================================ les effets, vus des deux camps
+
+   L'arène du duel pose chaque effet en objet avec son chrono en anneau. La vue
+   du moteur ne servait que `reste`, et seulement pour soi : la page devinait
+   la durée et le camp. `nvn/index.js` les lit maintenant dans l'état du
+   moteur (`jouerEtMarquer`, `vuePour`), sans toucher `engine.js`.
+
+   L'horloge est la vraie : la vue du moteur calcule `reste` sur `Date.now()`,
+   et un instant fabriqué loin de lui le rendrait négatif. */
+{
+  const t0 = Date.now();
+  const dE = duel(1, 'entrainement', t0, 'dE1');
+  const donne = (uid, carte) => {
+    const j = dE.joueurs.get(uid);
+    j.breath = 100; j.cooldowns = {}; j.main.push(carte);
+  };
+  const effet = (evs, type) => evs.find((e) => e.t === 'effect' && e.type === type);
+
+  donne('0-0', 'a-brouillard');
+  const e1 = effet(jouerEtMarquer(dE, '0-0', 'a-brouillard', t0), 'blind');
+  check(`le Brouillard : l’évènement dit le camp qui le porte (${e1?.side})`,
+    e1?.cible === 'adverse' && e1?.side === 1
+    || (console.log('        évènement :', JSON.stringify(e1)), false));
+  const vB = vuePour(dE, '1-0', t0 + 1500);
+  const vA = vuePour(dE, '0-0', t0 + 1500);
+  check('celui qui le porte le voit avec sa durée entière',
+    vB.moi.effets.find((e) => e.type === 'blind')?.duree === 6000
+    || (console.log('        effets :', JSON.stringify(vB.moi.effets)), false));
+  const vuDA = vA.equipes[1][0].effets.find((e) => e.type === 'blind');
+  check(`et l’autre camp le voit sur lui : reste ${vuDA?.reste} sur ${vuDA?.duree}`,
+    vuDA?.reste === 4500 && vuDA?.duree === 6000
+    && !vA.equipes[0][0].effets.some((e) => e.type === 'blind')
+    || (console.log('        équipes :', JSON.stringify(vA.equipes)), false));
+  check('la vue dit à chacun qui il est', vA.moi.userId === '0-0' && vB.moi.userId === '1-0');
+  check('passé son échéance, il n’est plus sur personne',
+    !vuePour(dE, '0-0', t0 + 6001).equipes[1][0].effets.some((e) => e.type === 'blind'));
+
+  // Sans échéance (la Bâche absorbe une poussée) : ni reste ni durée.
+  donne('1-0', 'a-bache');
+  jouerEtMarquer(dE, '1-0', 'a-bache', t0 + 2000);
+  const bache = vuePour(dE, '0-0', t0 + 2000).equipes[1][0].effets.find((e) => e.type === 'shield');
+  check('un effet sans échéance n’a ni reste ni durée',
+    Boolean(bache) && bache.reste === null && bache.duree === null
+    || (console.log('        bâche :', JSON.stringify(bache)), false));
+
+  /* **Le Renvoi** : la carte « adverse » se retourne contre celui qui la joue.
+     La page lisait le camp d'en face de la dernière carte jouée — ici, le
+     mauvais. L'état du moteur, lui, sait où l'effet s'est posé. */
+  donne('1-0', 'a-miroir');
+  jouerEtMarquer(dE, '1-0', 'a-miroir', t0 + 2500);
+  donne('0-0', 'a-silence');
+  const ev3 = jouerEtMarquer(dE, '0-0', 'a-silence', t0 + 3000);
+  const e3 = effet(ev3, 'silence');
+  check(`retourné par un Renvoi, le Silence porte le camp de celui qui l’a joué (${e3?.side})`,
+    ev3.some((e) => e.t === 'reflected') && e3?.cible === 'adverse' && e3?.side === 0
+    || (console.log('        évènements :', JSON.stringify(ev3)), false));
+  check('et il le porte avec sa durée',
+    vuePour(dE, '0-0', t0 + 3000).moi.effets.find((e) => e.type === 'silence')?.duree === 4000);
+
+  // Un vol de souffle ne se pose sur personne : pas de camp à dire.
+  donne('0-0', 'a-vol');
+  const e4 = effet(jouerEtMarquer(dE, '0-0', 'a-vol', t0 + 3500), 'steal');
+  check('un effet qui ne se pose sur personne n’a pas de camp', Boolean(e4) && !('side' in e4));
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

@@ -94,8 +94,19 @@
   const parentDe = (ou) => (/^\/fanzzy\/.+/.test(ou) ? '/fanzzy'
     : ({ '/boosters': '/fanzzy', '/abonnement': '/boutique' })[ou] ?? '/');
 
-  /** Une adresse de chez nous ? Une adresse illisible n'en est pas une. */
+  /** Une adresse de chez nous ? Une adresse illisible n'en est pas une, une
+      adresse vide non plus.
+
+      **Le vide se teste à part** (lot 6). `new URL('', location.href)` rend
+      la page elle-même, donc notre origine : un référent vide passait pour
+      « de chez nous ». Sur une page ouverte sans référent — un favori, une
+      adresse tapée, un lien venu d'une autre application — dans un onglet
+      qui avait déjà un passé, la flèche faisait alors `history.back()` et
+      sortait du jeu, exactement ce que `peutRevenir` promet d'éviter. Le duel
+      ouvert dans un onglet neuf menait ainsi à une page blanche (`nvn:ui`,
+      « la flèche emmène quelque part »). Le défaut datait d'avant le lot. */
   const memeSite = (u) => {
+    if (!u) return false;
     try { return new URL(u, location.href).origin === location.origin; }
     catch { return false; }
   };
@@ -138,8 +149,9 @@
    * à un bouton en particulier.
    *
    * En phase de bulle, donc en dernier. Les deux écrans de jeu interceptent
-   * déjà `.tbf-retour` en phase de **capture**, pour demander confirmation
-   * avant de quitter une tribune, et ils arrêtent la propagation : leur geste
+   * déjà `.tbf-retour` en phase de **capture**, pour poser leur propre sortie
+   * avant de quitter une tribune — la confirmation du duel, le bilan de
+   * tribune du Virage (lot 6) —, et ils arrêtent la propagation : leur geste
    * passe avant celui-ci et n'arrive jamais jusqu'ici. Inchangé.
    *
    * On laisse le navigateur faire dans trois cas, et chacun compte : un clic
@@ -202,7 +214,18 @@
 
      Sous quatre cent vingt pixels, on garde le bouton et la marge, on rend la
      respiration. Le bouton ne se touche pas moins bien pour autant : il fait
-     toujours ses quarante-quatre pixels. */
+     toujours ses quarante-quatre pixels.
+
+     **Depuis le lot 6, un seul lecteur.** Le HUD de match garde lui-même la
+     place des deux boutons, dans son rembourrage (ui.css, « le HUD de
+     match »), et la feuille pose la barre des écrans de jeu à quatorze
+     pixels du haut et des bords (--hudm-haut, --hudm-cote), sans condition,
+     au lieu de huit et dix. Ces deux variables ne servent donc plus qu'au
+     titre de la préparation du duel, que les deux boutons survolent aussi :
+     cinquante-deux pixels ajoutés à la gouttière de la colonne y laissent
+     huit pixels entre le titre et chaque bouton à trois cent vingt (mesuré
+     au banc du lot 6). Elles restent tant qu'une page les lit : chercher
+     --tbf-haut- avant de les retirer. */
   :root{--tbf-haut-g:64px;--tbf-haut-d:64px}
   @media (max-width:420px){:root{--tbf-haut-g:52px;--tbf-haut-d:52px}}
   .tbf-spark{position:fixed;width:3px;height:3px;border-radius:50%;z-index:0;pointer-events:none;opacity:0}`;
@@ -260,10 +283,18 @@
     const decor = document.createElement('div');
     decor.className = 'tbf-decor';
     const voile = document.createElement('div');
-    // `dense`: sur une page de contenu, le voile doit gagner. Le réglage de
-    // l'accueil est fait pour un écran où un personnage occupe le centre ; sur
-    // une liste, la même transparence met la foule en concurrence avec le texte.
-    voile.className = 'tbf-grad dense';
+    /* `dense` : sur une page de contenu, le voile doit gagner. Le réglage de
+       l'accueil est fait pour un écran où un personnage occupe le centre ; sur
+       une liste, la même transparence met la foule en concurrence avec le texte.
+
+       **Pas sur les deux écrans de jeu** (lot 6, QUESTIONS Q6 : l'hypothèse
+       H6 est levée). Leur colonne est opaque et peint sa propre scène — le
+       stade, la fumée —, si bien que le mur ne s'y voit qu'au-delà de neuf
+       cents pixels, de part et d'autre d'elle : rien n'y est lu, et c'est là
+       qu'il doit ressembler au hub, que la direction veut vif comme les
+       arènes. Sans `dense`, le voile est celui du hub, à 60 % (ui.css, « H6 »),
+       sans une ligne de plus dans la feuille. */
+    voile.className = ECRANS_DE_JEU.includes(chemin) ? 'tbf-grad' : 'tbf-grad dense';
     document.body.prepend(decor, voile);
     const img = new Image();
     img.onload = () => { decor.style.backgroundImage = `url("${img.src}")`; decor.classList.add('on'); };
@@ -1143,6 +1174,68 @@
     });
   }
 
+  /* --------------------------------- sur les deux écrans de jeu (lot 6)
+
+     Pas de HUD replié au Virage ni au duel : pendant qu'on joue, le solde
+     d'écharpes n'intéresse personne, et la rangée du haut est celle du HUD
+     de match. Mais deux choses que le HUD fait pour tout l'onglet ne doivent
+     pas s'y perdre.
+
+     **Les boosters à ouvrir, sur le bouton de menu.** Il porte désormais
+     l'état le plus urgent du tiroir comme partout ailleurs (menu.js, « les
+     états, et l'urgence » : le point rouge des écrans de jeu est parti) ; et
+     partout ailleurs, c'est le HUD qui pose celui des boosters (`afficher`).
+     Ici, on le lit dans ce que le HUD a retenu pour ce joueur dans l'onglet
+     (`CLE_HUD`), **sans requête** : une arène n'ajoute aucune lecture pour un
+     sticker. Rien de retenu, rien de posé — un état sans donnée ne se pose
+     pas.
+
+     **Ce que la page annonce, gardé pour l'écran suivant.** Le bilan de
+     tribune verse l'XP du Virage et l'annonce (`tbf:bourse`, R6). Sans HUD
+     pour l'entendre, l'annonce restait en attente ici, et l'écran suivant
+     redessinait pendant une demi-minute le niveau et les soldes d'avant le
+     match. La valeur retenue suit donc l'annonce, comme `recevoir` le fait :
+     le niveau servi avec les soldes vaut une lecture complète (l'heure est
+     celle-ci), sans lui elle garde l'heure de la dernière. **Seulement si
+     une valeur existe déjà pour ce joueur** : un HUD ne se fabrique pas à
+     partir d'une moitié, et sans rien de retenu l'écran suivant lit tout.
+
+     **Une annonce sans portefeuille dit « ça a changé »** : le bilan du duel
+     annonce le niveau seul, quand la victoire a aussi versé des écharpes
+     qu'il ne relaie pas (§ 4.1 ne les sert pas en solde). Ailleurs, le HUD
+     relirait tout (`surBourse`, dans `monterHud`) ; ici, sans requête, la
+     valeur retenue prend le niveau annoncé et passe pour périmée (son heure
+     à zéro) : l'écran suivant la dessine aussitôt, puis relit les soldes au
+     lieu de redire pendant une demi-minute ceux d'avant le match. */
+  function suivreEnJeu(menu, qui) {
+    joueur = qui == null ? null : String(qui);
+    const poserReserve = (packs) => {
+      if (packs == null || !Number.isFinite(Number(packs))) return;
+      menu?.poser?.('/boosters', Number(packs) > 0 ? 'pret' : null, Number(packs));
+    };
+    const prendre = (w, niv) => {
+      const avant = lireHud();
+      if (!avant) { poserReserve(w?.packs); return; }
+      const garde = (cle) => (w && cle in w && w[cle] !== undefined ? w[cle] : avant[cle]);
+      const d = composer({ scarves: garde('scarves'), packs: garde('packs'), avatar: garde('avatar'),
+        prochainA: garde('prochainA'), cadenceMs: garde('cadenceMs'), packMax: garde('packMax') },
+      niv ?? avant.niveau ?? null, !w ? 0 : niv ? Date.now() : avant.t);
+      retenirHud(d);
+      poserReserve(d.packs);
+    };
+    poserReserve(lireHud()?.packs);
+    /* Une annonce arrivée avant « qui es-tu ? » a été gardée : on la prend.
+       Une annonce sans donnée aussi (`changeSansDonnee`) : elle dit « ça a
+       changé », comme celle qui arrive après, et la valeur retenue passe
+       pour périmée. */
+    if (annonce || annonceNiveau) prendre(annonce, annonceNiveau);
+    else if (changeSansDonnee) prendre(null, null);
+    annonce = null;
+    annonceNiveau = null;
+    changeSansDonnee = false;
+    surBourse = prendre;
+  }
+
   /* --------------------------------------------------- la barre du haut */
 
   /**
@@ -1229,7 +1322,20 @@
      * bouton du navigateur.
      *
      * On y garde donc le bouton, et rien d'autre : de quoi partir, pas de
-     * quoi distraire. */
+     * quoi distraire.
+     *
+     * **Ses deux boutons sont les deux bouts du HUD de match** (lot 6). La
+     * rangée du HUD (`.tbf-hudm`, ui.css) leur garde leur case dans son
+     * rembourrage, et c'est la feuille qui pose la barre dessus, à quatorze
+     * pixels du haut et des bords (`.tbf-haut-jeu`, `--hudm-haut`,
+     * `--hudm-cote`) — l'air du sticker d'état du menu, qui déborde de neuf
+     * pixels au-dessus du bouton et de huit à droite, treize et demi avec son
+     * bord, son cerne et son ombre. **Sans condition** : la règle ne demande
+     * plus que la colonne porte le HUD, ni que la barre en soit un enfant
+     * direct (c'était `#app:has(.tbf-hudm) > .tbf-haut-jeu`, au début du
+     * lot). La barre se monte en tête de `#app` comme sur toute page
+     * (`prepend`, plus bas), mais sa place n'en dépend plus. Ce fichier n'en
+     * pose aucune lui-même : `caler` n'est pas appelé sur un écran de jeu. */
     const enJeu = ECRANS_DE_JEU.includes(chemin);
 
     /* **Une seule promesse par page.** La question « qui es-tu ? » se posait
@@ -1391,7 +1497,28 @@
            champ d'administration, et un champ d'administration reste une
            entrée. On ne monte pas du HTML avec. */
         b.textContent = a.texte;
-        haut.after(b);
+        /* **Sur un écran de jeu, sous le HUD de match** (lot 6), quand sa
+           rangée est un enfant direct de la colonne — au Virage. Posé juste
+           après la barre, le bandeau prenait la tête de `#app` et repoussait
+           la rangée de quarante-neuf pixels, alors que la flèche et le menu
+           flottent à quatorze : ils sortaient de leurs cases et couvraient
+           les deux bouts du bandeau (mesuré au banc à 360 × 640).
+
+           **Sous ses deux rangées, et non entre elles.** La seconde
+           (`.tbf-hudm-ligne` : le ticket terrain, et le sticker de phase qui
+           dit GRAND VIRAGE ou MINUTE DOUBLE sous le score) est la suite de la
+           première ; posé juste sous la rangée, le bandeau les séparait de
+           cinquante-huit pixels, et la phase se lisait sous un message de
+           l'administration au lieu de sous le score. Dessous, il pousse
+           l'arène, qui absorbe ce qui reste ; l'air autour de lui est celui
+           que la page lui donne.
+
+           Le duel porte son HUD dans `#jeu` et range le bandeau lui-même
+           (`placerAnnonce`, duel-nvn.html) : ici, il garde la place d'avant,
+           et la page le reprend à son arrivée. */
+        let apres = enJeu ? app.querySelector(':scope > .tbf-hudm') : null;
+        if (apres?.nextElementSibling?.classList.contains('tbf-hudm-ligne')) apres = apres.nextElementSibling;
+        (apres ?? haut).after(b);
       })
       .catch(() => {});
 
@@ -1412,10 +1539,13 @@
     const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger'), { qui }) : null;
 
     /* **Le HUD replié**, pour un joueur connecté, hors des deux écrans de jeu :
-       pendant un duel, son solde d'écharpes n'intéresse personne (le HUD de
-       match est l'affaire d'un autre lot). Un visiteur n'a ni niveau ni
-       solde : rien à replier. */
+       pendant un duel, son solde d'écharpes n'intéresse personne, et la
+       rangée du haut y est celle du HUD de match (lot 6), dont la flèche et
+       ce menu occupent les deux bouts. Là, seulement ce que le HUD faisait
+       pour le bouton de menu et pour l'écran suivant (`suivreEnJeu`). Un
+       visiteur n'a ni niveau ni solde : rien à replier. */
     if (user && !enJeu) monterHud(haut, menu, qui);
+    else if (user) suivreEnJeu(menu, qui);
 
     /**
      * Ce qu'une page peut encore dire à la barre : qu'une partie tourne.

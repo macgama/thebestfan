@@ -43,6 +43,7 @@ import { createQuotidien, sonderJourDeJeu, phraseJourDeJeu }
 import { createRepetition } from './src/server/repetition/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
+import { createPresence } from './src/server/presence/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
 import { createBoutique } from './src/server/boutique/index.js';
@@ -198,6 +199,7 @@ let decks = null;
 let niveau = null;
 let kop = null;
 let amis = null;
+let presence = null;
 let admin = null;
 let boutique = null;
 let nvn = null;
@@ -284,6 +286,27 @@ if (process.env.DATABASE_URL) {
 
     app.use(auth.attachUser);
 
+    /* ---- la présence (vague 2, lot 6 ; `CONTRATS.md`, § 18)
+
+       Montée **ici**, juste après la session, parce que c'est ici qu'une
+       activité se voit : toute requête `/api` d'un joueur connecté le marque
+       « en ligne » — en mémoire, sans une écriture, et seulement si la
+       présence est allumée (`presence.actif`, éteint à la livraison). Le
+       crochet passe avant tous les routeurs, sans quoi une requête servie
+       plus haut ne compterait pas.
+
+       Les amis et le Virage la reçoivent plus bas ; elle apprend des deux
+       arènes qui est où par `brancher`, une fois qu'elles sont montées. Ses
+       routes, `/api/presence`, se montent après la fermeture du jeu. */
+    presence = createPresence({ pool, requireAuth: auth.requireAuth });
+    app.use('/api', (req, _res, next) => {
+      if (req.user) presence.noter(req.user.id);
+      next();
+    });
+    console.log(reglage('presence.actif')
+      ? 'présence active'
+      : 'présence éteinte (presence.actif) : rien n’est servi');
+
     // Connexion Google, montée avant les routes classiques pour que
     // /api/auth/google/* ne passe pas par la vérification d'origine.
     google = createGoogleAuth({
@@ -331,8 +354,13 @@ if (process.env.DATABASE_URL) {
     /* ---- les amis
        Monté juste après le KOP, et il en dépend : accepter une invitation
        passe par `kop.rejoindre`, pour que les règles d’entrée — suivre le
-       club, un seul KOP par club — restent écrites à un seul endroit. */
-    amis = createAmis({ pool, requireAuth: auth.requireAuth, kop });
+       club, un seul KOP par club — restent écrites à un seul endroit.
+
+       `presence` : la pastille de chaque ami (§ 18.1), et l'oubli de ce que
+       la présence a gardé d'une amitié qui vient de changer. Reçue à `null`,
+       la liste resterait sans pastille, sans un mot — d'où le contrôle de
+       `verif-cablage.mjs`. */
+    amis = createAmis({ pool, requireAuth: auth.requireAuth, kop, presence });
     app.use('/api/amis', amis.router);
     console.log('amis actifs');
 
@@ -425,6 +453,11 @@ if (process.env.DATABASE_URL) {
     classements = createClassements({ pool, requireAuth: auth.requireAuth, abonnement });
     app.use('/api/rank', classements.router);
     console.log('classements actifs');
+
+    /* ---- l'interrupteur « apparaître hors ligne » (§ 18.2)
+       Après la fermeture du jeu, comme toute route nouvelle : un jeu fermé
+       ferme aussi l'interrupteur, et le tiroir lit le 503 comme une absence. */
+    app.use('/api/presence', presence.router);
 
     // Entretien quotidien : sessions, jetons et tentatives périmés.
     setInterval(() => auth.store.cleanup().catch((e) => console.error('[auth] purge', e.message)),
@@ -533,6 +566,17 @@ if (process.env.DATABASE_URL) {
       /* Pour savoir si ce Virage-ci compte au classement. Absent, tout
          compte : voir le branchement du duel juste au-dessus. */
       abonnement,
+      /* Les amis dans la tribune (§ 18.3) : « 2 AMIS ICI » à l'entrant, et
+         l'arrivée annoncée aux seuls amis présents, jamais à la salle. */
+      presence,
+      /* L'XP du match, versée par le bilan de tribune (§ 15) : le grand livre
+         la crédite par `niveau.gagnerDans`, comme pour les missions et le
+         duel, qui reçoivent ce même module. Oublié ici, rien ne casse ni ne
+         se dit : le bilan monterait sa propre instance au premier versement,
+         et l'XP du serveur passerait par deux modules au lieu d'un — d'où les
+         deux contrôles de `verif-cablage.mjs` (lu, puis crédité par lui).
+         `fanzzy`, déjà passé plus haut, porte `recharger`. */
+      niveau,
       /* La journée du football, pour la liste « ailleurs en direct ».
          Le télétexte n'est pas encore monté — il l'est plus bas, et il a besoin
          du client API. On passe donc une **fonction** : elle lira `teletext`
@@ -541,6 +585,13 @@ if (process.env.DATABASE_URL) {
       jourDuFoot: () => teletext?.jour('') ?? null });
     app.use('/api/virage', virage.router);
     console.log('grand virage actif');
+
+    /* **La présence apprend qui est où**, maintenant que les deux arènes
+       existent : le duel est monté plus haut, le Virage à l'instant. Branchée
+       avant eux, elle aurait reçu deux `undefined` et ne dirait jamais « au
+       Virage » ni « en duel » — sans erreur, sans un mot. `verif-cablage.mjs`
+       vérifie l'ordre, et que les deux fonctions existent. */
+    presence.brancher({ estAuVirage: virage.estAuVirage, estEnDuel: nvn.estEnDuel });
 
     // ---- suivi des équipes (API-Football)
     if (process.env.API_FOOTBALL_KEY) {
@@ -577,12 +628,47 @@ if (process.env.DATABASE_URL) {
           // 0. Secouer la corde du Grand Virage AVANT de frapper les cartes :
           //    ceux qui chantaient à la seconde du but doivent être comptés
           //    présents, et la minute double s'ouvre aussitôt.
-          try { virage.realGoal(g); } catch (e) { console.error('[virage]', e.message); }
+          /* **Et l'écouter : un but que la salle tait ne part nulle part**
+             (`CONTRATS.md`, § 16.6 : la frappe ne part que pour un but frais).
+
+             Le relevé juge un but frais sur ce qu'il a vu ; la salle, sur ce
+             qu'elle connaît. Elle tait un but au tableau à son ouverture, que
+             le relevé apporte en retard — un but de la 23ᵉ livré à des
+             supporters entrés à la 34ᵉ —, et un but déjà annoncé qui revient
+             buteur corrigé. Ce retour n'était pas lu : la carte du vieux but
+             se frappait quand même, pour ceux qui chantaient dans les deux
+             dernières minutes, et `virage:souvenir` leur disait « TU Y
+             ÉTAIS » sans « GOAL ! » à l'écran ; le but revenu redonnait au
+             duel son souffle et sa secousse une seconde fois.
+
+             `realGoal` rend `true` quand la salle l'annonce, et `false` sans
+             salle comme pour un but tu. **Sans salle, rien n'est tu** : la
+             frappe et le duel partent comme avant — personne n'est là pour en
+             juger, et le duel ne dépend pas d'une tribune ouverte. On lit
+             donc si la salle existe **avant** l'appel, qui est synchrone et
+             la cherche par la même clé ; une salle ouverte qui ne rend pas
+             `true` a tu le but, quelle que soit la forme du refus. Une corde
+             qui lève ne coûte ni la carte ni le duel : le relevé l'a jugé
+             frais, et c'est l'état d'avant. `verif-cablage.mjs` le rejoue
+             sur la vraie salle.
+
+             Ce que ça coûte : un but tu n'a pas de carte du tout, au marché
+             non plus — comme un but que le relevé range sans l'annoncer
+             (son socle). Le but revenu, lui, a déjà la sienne, frappée sous
+             son rang. */
+          let tu = false;
+          try {
+            const salle = virage.rooms?.has(g.fixtureId) === true;
+            const annonce = virage.realGoal(g);
+            tu = salle && annonce !== true;
+          } catch (e) { console.error('[virage]', e.message); }
+          if (tu) return;
 
           // 1. Frapper la carte-souvenir et la distribuer aux présents.
           //    Le rang du but sert de cle : rejouer un match ne refrappe rien.
+          let frappe = null;
           try {
-            await souvenirs.mintGoal({
+            frappe = await souvenirs.mintGoal({
               fixtureId: g.fixtureId, seq: g.seq ?? 0, leagueId: g.leagueId,
               teamId: g.teamId, homeId: g.home?.id, awayId: g.away?.id,
               minute: g.minute, player: g.player,
@@ -591,11 +677,38 @@ if (process.env.DATABASE_URL) {
             });
           } catch (e) { console.error('[souvenir]', e.message); }
 
+          /* 1 bis. **L'annoncer à ceux-là seuls qui l'ont reçue**
+             (`CONTRATS.md`, § 16.3 ; défaut D5).
+
+             La page l'annonçait elle-même à chaque but de son club — « Elle
+             est dans ton carnet » — alors que la carte n'est frappée que pour
+             une compétition couverte, et donnée qu'à ceux qui ont poussé dans
+             la fenêtre de présence. La frappe rend donc la liste de ses
+             receveurs, et le Virage ne l'annonce qu'à leurs sockets : rien
+             pour une compétition non couverte, rien pour un but déjà frappé,
+             rien pour qui regardait sans chanter.
+
+             **Après** la frappe, et sur son résultat : annoncer avant, c'est
+             promettre une carte que la base n'a peut-être pas écrite.
+             `minute` et `joueur` partent seulement s'ils sont connus (R1). */
+          if (frappe?.minted && frappe.userIds?.length) {
+            try {
+              await virage.souvenirFrappe(g.fixtureId, {
+                souvenirId: frappe.souvenirId,
+                ...(g.minute != null ? { minute: g.minute } : {}),
+                ...(g.player ? { joueur: g.player } : {}),
+                userIds: frappe.userIds,
+              });
+            } catch (e) { console.error('[virage] souvenir', e.message); }
+          }
+
           // 2. Le but déborde sur les duels adossés à ce match : la tribune
           //    du club buteur reprend son souffle, et la corde tressaille de
-          //    son côté. Depuis que les deux camps d'un duel sont les deux
-          //    clubs du match, il n'y a plus à demander à la base qui suit
-          //    qui — c'est une lecture de moins à chaque but.
+          //    son côté — pas pour un but que la salle a tu (voir 0.) : le
+          //    duel l'aurait reçu deux fois, ou en retard. Depuis que les
+          //    deux camps d'un duel sont les deux clubs du match, il n'y a
+          //    plus à demander à la base qui suit qui — c'est une lecture de
+          //    moins à chaque but.
           try { nvn?.butReel(g); }
           catch (e) { console.error('[nvn] but réel', e.message); }
         },
@@ -998,6 +1111,10 @@ io.use(async (socket, next) => {
 
 io.on('connection', (socket) => {
   sockets++;
+  /* Une socket qui se connecte est une activité, au même titre qu'une
+     requête `/api` : c'est souvent la seule d'un joueur posé dans une
+     tribune. Mémoire seule ; rien si la présence est éteinte. */
+  presence?.noter(socket.data.user?.userId);
   socket.on('ping:client', (t0, ack) => {
     if (typeof ack === 'function') {
       ack({ t0, serverTime: Date.now(), transport: socket.conn.transport.name, user: socket.data.user?.name ?? null });

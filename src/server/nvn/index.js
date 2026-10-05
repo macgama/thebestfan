@@ -1,8 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import express from 'express';
-import { DuelNvN, RULES } from './engine.js';
-import { Cheat } from '../ferveur/gestures.js';
-import { FORMATS, primeDeFormat } from '../deck/index.js';
+import { DuelNvN, RULES, avecLieu } from './engine.js';
+import { Cheat, grade, applyHeroMods } from '../ferveur/gestures.js';
+/* Le barème du duel vit dans `deck` depuis qu'il s'annonce avant l'entrée en
+   file (`enJeu`, CONTRATS.md § 17) : un seul endroit pour le chiffre promis et
+   le chiffre versé. Voir `GAIN` et `baseDuDuel` là-bas. */
+import { FORMATS, DOUBLE_CLUB, baseDuDuel } from '../deck/index.js';
+import { modsAvecEffets } from '../../shared/duel/effets.js';
+import { CHANTS } from '../../shared/duel/chants.js';
+// L'échelle unique du verdict (CONTRATS.md § 16.1) : le serveur nomme, la page écrit.
+import { verdictDe, estParfait, noteDuVerdict } from '../../shared/verdict.js';
 import { XP } from '../../shared/niveau.js';
 import { reglage } from '../../shared/reglages.js';
 import { apres as coteApres, moyenne as coteMoyenne, COTE_DEPART }
@@ -39,6 +46,246 @@ import { assurerBourse } from '../bourse.js';
 const TICK_MS = 500;
 const BOT_APRES_MS = 20_000;
 const GRACE_MS = 90_000;
+
+/* ================================================== le verdict d'un chant
+
+   **Le moteur ne sert que la note finale**, `quality`, celle qui pousse la
+   corde — après les modificateurs du Fanzzy (`applyHeroMods`). Or le verdict
+   se mesure **avant** eux (CONTRATS.md § 16.1) : un Fanzzy qui paie mal le
+   parfait (`perfectBonus` 0,82) fait d'un 0,95 un 0,779, et mesuré sur
+   `quality` le PARFAIT que le moteur vient de récompenser s'écrirait BON
+   (contre-expertise du 3 octobre 2026, D7). Et l'on ne remonte pas de
+   `quality` à la note d'avant : un 0,78 final peut venir d'un 0,95 ou d'un
+   0,78.
+
+   `engine.js` ne bouge pas (SERVEUR-VAGUE2 § 12 : trois suites en dépendent,
+   et `niveau-smoke` y refuse un mot). La note mesurée est donc **rejouée
+   ici, juste avant le moteur**, avec exactement ce qu'il va lire : le geste
+   de la carte, les frappes, les modificateurs du Fanzzy en tribune composés
+   avec le lieu et les effets en cours, le motif du joueur, et le plancher du
+   « Second souffle » s'il a encore sa charge. `grade` est une fonction pure ;
+   rien de tout cela ne change entre ce calcul et celui du moteur, puisque les
+   deux tournent dans le même tour de boucle, au même instant `t`.
+
+   Le rejeu porte une copie de la composition des modificateurs (`modsDe`,
+   privée dans le moteur). Pour qu'une divergence future ne passe pas en
+   silence, chaque chant vérifie que la note rejouée, passée par
+   `applyHeroMods`, retombe sur la `quality` du moteur ; sinon le journal le
+   dit, une fois. `nvn-smoke` le vérifie sur des centaines de chants. */
+
+let divergenceDite = false;
+
+/**
+ * La note que le verdict mesure, rejouée avant que le moteur chante.
+ *
+ * Rend `null` quand le moteur refusera le chant de toute façon (joueur ou
+ * chant inconnu, frappes refusées par `grade`) : il n'y aura pas d'évènement
+ * à nommer. Ne lève jamais — un refus reste celui du moteur, avec son code.
+ *
+ * @returns {{ note: number, avantMods: number, mods: object } | null}
+ *   `note` : la note mesurée (§ 16.1) ; `avantMods` : ce que le moteur passera
+ *   à `applyHeroMods` (la note brute, ou le plancher s'il a mordu).
+ */
+export function noteMesuree(duel, userId, p, t) {
+  const j = duel?.joueurs?.get(userId);
+  const card = CHANTS[p?.cardId];
+  if (!j || !card) return null;
+  // Les mêmes modificateurs que `modsDe` dans le moteur, au même instant.
+  const mods = modsAvecEffets(avecLieu(j.fanzzy[j.actif]?.mods, duel.stade), j.effets, t);
+  let brut;
+  try { brut = grade(card.gest, p.taps, mods, { motif: j.motif }); }
+  catch { return null; }
+  // « Second souffle » : il ne mord que s'il a sa charge et que le geste est en dessous.
+  const plancher = (j.effets ?? []).find((e) => e.type === 'floor_quality' && e.charges > 0);
+  const mordu = Boolean(plancher) && brut < plancher.valeur;
+  return {
+    note: noteDuVerdict(brut, mordu ? plancher.valeur : null),
+    avantMods: mordu ? plancher.valeur : brut,
+    mods,
+  };
+}
+
+/**
+ * Ce que les gestes d'un joueur ont donné pendant ce duel : ses PARFAITS, sa
+ * série en cours et sa meilleure, sa meilleure note et le chant qui l'a donnée.
+ * Tenu dans la salle, jamais dans le moteur.
+ */
+export const nouveauCompte = () =>
+  ({ parfaits: 0, serie: 0, serieMax: 0, meilleurQ: -1, meilleurChant: null });
+
+/**
+ * Ajoute un chant au compte.
+ *
+ * La série compte les PARFAITS **d'affilée** : un chant d'un autre verdict la
+ * remet à zéro, une carte ne la coupe pas (elle ne passe jamais par ici), un
+ * chant refusé non plus (il n'a pas eu lieu). La meilleure note ne change que
+ * si elle est **strictement** dépassée : à égalité, le premier chant reste —
+ * la même règle que `meilleur_chant` au Virage.
+ */
+export function compterChant(c, note, cardId) {
+  if (estParfait(note)) {
+    c.parfaits += 1;
+    c.serie += 1;
+    c.serieMax = Math.max(c.serieMax, c.serie);
+  } else {
+    c.serie = 0;
+  }
+  if (note > c.meilleurQ) { c.meilleurQ = note; c.meilleurChant = cardId; }
+}
+
+/**
+ * Ce que le bilan dit des gestes d'un joueur (`nvn:fin`, `joueurs[]`,
+ * CONTRATS.md § 17) : `parfaits` toujours ; `serie` à partir de deux ;
+ * `meilleur` dès qu'il a chanté une fois.
+ */
+export function resumeDuCompte(c) {
+  const out = { parfaits: c?.parfaits ?? 0 };
+  if ((c?.serieMax ?? 0) >= 2) out.serie = c.serieMax;
+  if (c?.meilleurChant) {
+    out.meilleur = {
+      chant: c.meilleurChant,
+      // Le nom du répertoire, tel quel : la page l'écrit sans le traduire (R7).
+      nom: CHANTS[c.meilleurChant]?.nom ?? c.meilleurChant,
+      verdict: verdictDe(c.meilleurQ),
+    };
+  }
+  return out;
+}
+
+/**
+ * Fait chanter un joueur, et nomme le geste.
+ *
+ * Le seul chemin des chants du duel — ceux des sockets comme ceux des bots :
+ * la note est rejouée **avant** le moteur, l'évènement `chant` qu'il rend
+ * reçoit `verdict` avant d'être diffusé, et le compte du joueur avance. Un
+ * refus du moteur traverse tel quel, sans rien compter.
+ *
+ * @param comptes  `Map(userId → compte)`, celle de la salle
+ */
+export function chanterEtNommer(duel, comptes, userId, p, t = Date.now()) {
+  const mesure = noteMesuree(duel, userId, p, t);
+  const evenements = duel.chanter(userId, p, t);
+  const chant = evenements.find((e) => e.t === 'chant' && e.userId === userId);
+  if (!chant) return evenements;
+
+  /* Le garde-fou du rejeu : la note rejouée doit retomber sur celle du moteur.
+     Arrondie comme lui (trois décimales) ; un retour de flamme compte aussi.
+     Un chant accepté que le rejeu n'a pas su noter est la même divergence :
+     on ne nomme alors rien plutôt qu'un mot inventé. */
+  const final = mesure ? applyHeroMods(mesure.avantMods, mesure.mods) : null;
+  if (!final || Number(final.quality.toFixed(3)) !== chant.quality
+      || final.backfire !== chant.backfire) {
+    if (!divergenceDite) {
+      divergenceDite = true;
+      console.error('[nvn] verdict : la note rejouée ne retrouve pas celle du moteur',
+        `(${final?.quality.toFixed(3) ?? 'aucune'} contre ${chant.quality})`,
+        '— engine.js a-t-il changé sa façon de composer les modificateurs ?');
+    }
+    if (!mesure) return evenements;
+  }
+
+  chant.verdict = verdictDe(mesure.note);
+  let c = comptes.get(userId);
+  if (!c) { c = nouveauCompte(); comptes.set(userId, c); }
+  compterChant(c, mesure.note, chant.cardId);
+  return evenements;
+}
+
+/* ====================================================== les effets, des deux côtés
+
+   L'arène du duel pose chaque effet en objet, avec son chrono en anneau
+   (BRIEF-LOT6 § 1 et § 3) : la bâche devant la tribune qu'elle protège, le
+   brouillard sur la moitié qui ne voit plus, les flèches de vent vers le camp
+   qui le subit. **La vue du moteur n'en disait pas assez** pour le dessiner
+   juste : `moi.effets` ne sert que ce qui reste (`reste`), sans la durée
+   totale, et rien de ce qui pèse sur les autres joueurs. La page devinait :
+   la durée était la plus longue valeur vue, et le camp d'un effet « adverse »
+   celui d'en face de la dernière carte jouée — faux dès qu'un Renvoi la
+   retourne contre celui qui la joue.
+
+   Le serveur compte, l'écran nomme (R7). Comme pour le verdict, `engine.js`
+   ne bouge pas : tout se lit ici, **dans l'état du moteur et non dans ses
+   règles**. Avant chaque carte jouée, on retient les effets déjà posés ;
+   après, ceux qui sont neufs sont exactement ce que la carte a posé, sur qui
+   et pour combien de temps. Aucune copie de `appliquer`, donc rien qui puisse
+   diverger le jour où une carte change : un effet de plus, un Renvoi, un
+   revers, tout passe par le même constat. */
+
+/** Effet posé → sa durée totale en millisecondes (`null` sans échéance).
+    Une `WeakMap` et non une propriété : l'objet appartient au moteur, et il
+    part avec l'effet quand le moteur le retire. */
+const dureeDePose = new WeakMap();
+
+/**
+ * Joue une carte, et note ce qu'elle a posé.
+ *
+ * Le seul chemin des cartes du duel — sockets et bots. Les évènements du
+ * moteur partent tels quels, à une chose près : un évènement `effect` dont
+ * l'effet s'est posé sur des joueurs d'**un** camp reçoit `side`, ce camp-là
+ * (celui qui le porte, Renvoi compris). Un effet qui ne se pose sur personne
+ * (un vol de souffle, le gel de la corde) n'en a pas. Un refus du moteur
+ * traverse tel quel, sans rien noter.
+ */
+export function jouerEtMarquer(duel, userId, cardId, t = Date.now()) {
+  const avant = new Set();
+  for (const j of duel.joueurs.values()) for (const e of j.effets ?? []) avant.add(e);
+  const evenements = duel.jouer(userId, cardId, t);
+
+  const camps = new Map();          // type d'effet → camps qui l'ont reçu
+  for (const j of duel.joueurs.values()) {
+    for (const e of j.effets ?? []) {
+      if (avant.has(e)) continue;
+      dureeDePose.set(e, e.fin ? e.fin - t : null);
+      if (!camps.has(e.type)) camps.set(e.type, new Set());
+      camps.get(e.type).add(j.side);
+    }
+  }
+  for (const ev of evenements) {
+    if (ev.t !== 'effect' || 'side' in ev) continue;
+    const ou = camps.get(ev.type);
+    if (ou?.size === 1) ev.side = [...ou][0];
+  }
+  return evenements;
+}
+
+/** Ce qu'un joueur porte, vu de l'arène : comme `moi.effets`, avec la durée. */
+function effetsVus(j, t) {
+  return (j?.effets ?? [])
+    // Ce que `nettoyerEffets` retirera au prochain battement n'est déjà plus là.
+    .filter((e) => (!e.fin || e.fin > t) && (e.charges === undefined || e.charges > 0))
+    .map((e) => ({ type: e.type, reste: e.fin ? e.fin - t : null,
+      duree: dureeDePose.get(e) ?? null }));
+}
+
+/**
+ * La vue d'un joueur, telle qu'elle part (`nvn:start`, `nvn:state`).
+ *
+ * Celle du moteur, plus trois choses qu'il ne sait pas dire :
+ * - `moi.userId` — la page ne savait pas qui elle était hors du vestiaire
+ *   (`nvn:file.moi`) : elle le devinait au camp et à la ferveur, et un 3v3
+ *   a trois joueurs du même camp. Il reconnaît ses propres chants
+ *   (`chant.userId`) et sa ligne du bilan ;
+ * - `moi.effets[].duree` — la durée totale de chaque effet, pour l'anneau ;
+ * - `equipes[][].effets` — ce que porte chaque joueur, des deux camps, sous
+ *   la même forme. Le souffle des autres y est déjà (« une information de
+ *   jeu ») ; leurs effets le sont tout autant, puisque chaque carte jouée
+ *   est déjà annoncée à toute la salle (`action`).
+ */
+export function vuePour(duel, userId, t = Date.now()) {
+  const v = duel.vue(userId);
+  if (v.moi) {
+    v.moi.userId = userId;
+    /* Le moteur rend ses effets dans l'ordre où le joueur les porte : on les
+       apparie un à un, et un type qui ne correspond pas reste sans durée
+       plutôt que d'en recevoir une autre. */
+    const siens = duel.joueurs.get(userId)?.effets ?? [];
+    v.moi.effets = (v.moi.effets ?? []).map((e, i) => ({ ...e,
+      duree: siens[i]?.type === e.type ? dureeDePose.get(siens[i]) ?? null : null }));
+  }
+  v.equipes = (v.equipes ?? []).map((eq) => eq.map((p) =>
+    ({ ...p, effets: effetsVus(duel.joueurs.get(p.userId), t) })));
+  return v;
+}
 
 export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = null,
                             /* Facultatif : sans lui, aucun plafond, et le
@@ -555,14 +802,18 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          leurs, et elles ne servent jamais puisqu'on les écarte. */
       neutre: p.neutre ?? true, teamId: p.teamId ?? null, bonus: p.bonus ?? 1 }));
 
-    const salle = { duel, membres, room: `nvn:${id}` };
+    /* `comptes` : ce que les gestes de chacun ont donné — PARFAITS, série,
+       meilleur chant — tenu ici et non dans le moteur, qui ne bouge pas.
+       Voir `chanterEtNommer` en tête de module. Les bots ont le leur. */
+    const salle = { duel, membres, room: `nvn:${id}`, comptes: new Map() };
     salles.set(id, salle);
 
     for (const [userId, m] of membres) {
       if (!m.socket) continue;
       salleDe.set(userId, id);
       m.socket.join(salle.room);
-      m.socket.emit('nvn:start', duel.vue(userId));
+      // La vue telle qu'elle part, avec ce que le moteur ne sait pas dire.
+      m.socket.emit('nvn:start', vuePour(duel, userId));
     }
 
     /* L'affiche part **après** le départ, et sans le retenir : elle lit la base,
@@ -619,7 +870,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   function diffuser(salle, evenements) {
     if (evenements?.length) io.to(salle.room).emit('nvn:events', evenements);
     for (const [userId, m] of salle.membres) {
-      if (m.socket?.connected) m.socket.emit('nvn:state', salle.duel.vue(userId));
+      if (m.socket?.connected) m.socket.emit('nvn:state', vuePour(salle.duel, userId));
     }
     if (salle.duel.termine) fermer(salle);
   }
@@ -636,7 +887,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         try {
           const j = salle.duel.joueur(userId);
           const carte = j.main[Math.floor(Math.random() * j.main.length)];
-          if (carte && Math.random() < 0.35) ev.push(...salle.duel.jouer(userId, carte, t));
+          // Par le même chemin que les joueurs : ses effets ont leur durée.
+          if (carte && Math.random() < 0.35) ev.push(...jouerEtMarquer(salle.duel, userId, carte, t));
           else {
             /* Le bot choisit son chant comme un joueur : dans le répertoire du
                duel. Il envoyait `geste: 'tempo'`, un champ que le moteur
@@ -649,7 +901,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
                un adversaire d'entraînement plus dur qu'un humain. */
             const chant = salle.duel.repertoire[
               Math.floor(Math.random() * salle.duel.repertoire.length)];
-            ev.push(...salle.duel.chanter(userId, {
+            /* Par le même chemin que les joueurs : le verdict de son chant
+               part à la salle, et ses PARFAITS au bilan (« un bot a les
+               siens », CONTRATS.md § 17). */
+            ev.push(...chanterEtNommer(salle.duel, salle.comptes, userId, {
               cardId: chant,
               taps: Array.from({ length: 8 }, (_, i) =>
                 i * 560 + (Math.random() * 2 - 1) * 260 * (1 - m.bot.adresse)),
@@ -673,35 +928,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     }
   }
 
-  /**
-   * Ce qu'un duel rapporte, en écharpes.
-   *
-   * Le classé paie le double de l'entraînement : c'est ce qui fait préférer un
-   * vrai adversaire pendant un vrai match. Le perdant touche quand même — une
-   * défaite qui ne rapporte rien pousse à quitter la salle avant la fin, et un
-   * duel abandonné gâche la soirée des deux camps.
-   *
-   * Les montants sont volontairement modestes au regard d'un booster (45) :
-   * les écharpes viennent surtout des doublons, le duel est un complément.
-   */
-  const GAIN = {
-    classe: { gagne: 30, perdu: 12 },
-    entrainement: { gagne: 15, perdu: 6 },
-  };
-
-  /**
-   * Le double quand on pousse pour son club.
-   *
-   * On peut jouer pour n'importe quel match — c'est ce qui permet de trouver un
-   * adversaire un mardi soir de trêve. Mais pousser pour son club doit rester ce
-   * qui rapporte le plus, sinon le suivi d'équipe ne veut plus rien dire et le
-   * joueur va simplement là où il y a du monde.
-   *
-   * Le multiplicateur se calcule **par joueur**, pas par duel : deux adversaires
-   * peuvent très bien avoir chacun leur club sur le terrain, ou un seul, ou
-   * aucun. C'est justement l'intérêt d'un derby.
-   */
-  const DOUBLE_CLUB = 2;
+  /* Ce qu'un duel rapporte en écharpes (`GAIN`) et le double pour son club
+     (`DOUBLE_CLUB`) vivent dans `deck/index.js` depuis que la page de
+     préparation annonce ce qui est en jeu avant l'entrée en file : voir
+     `baseDuDuel` et `enJeuDe` là-bas. */
 
   /**
    * Qui, parmi ces joueurs, suit l'une des deux équipes du match.
@@ -822,8 +1052,6 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
   async function recompenser(salle) {
     const d = salle.duel;
-    const bareme = GAIN[d.mode] ?? GAIN.entrainement;
-    const prime = primeDeFormat(d.format);
     const verse = new Map();
     try {
       // Un bot n'a pas de bourse, et lui en créer une inventerait un joueur.
@@ -841,9 +1069,11 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         /* La prime entre dans `base`, donc avant le double du club **et**
            avant la part du KOP : ce que le groupe touche suit ce que son
            membre a gagné, ce qui est exactement ce que « une part » veut
-           dire. Voir `primeDeFormat`. */
-        const base = aFuit ? 0
-          : Math.round((gagne ? bareme.gagne : bareme.perdu) * prime);
+           dire. Voir `primeDeFormat`.
+
+           `baseDuDuel` est la formule même qui annonce `enJeu` sur la page
+           de préparation : ce qui est promis est ce qui est versé. */
+        const base = aFuit ? 0 : baseDuDuel(d.mode, d.format, gagne);
         const pourSonClub = clubs.has(userId);
         const montant = base * (pourSonClub ? DOUBLE_CLUB : 1);
         await assurerBourse(q, userId);
@@ -1086,9 +1316,20 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      * de la cote, qu'il montre. */
     {
       const bilan = d.bilan();
+      /* **Ce que les gestes ont donné** (CONTRATS.md § 17) : les PARFAITS, la
+         meilleure série, le meilleur chant, joueur par joueur — bots compris,
+         qui ont les leurs et ne touchent rien. Ajoutés ici et non dans
+         `bilan()` : le moteur ne connaît pas le verdict. */
+      bilan.joueurs = bilan.joueurs.map((j) =>
+        ({ ...j, ...resumeDuCompte(salle.comptes?.get(j.userId)) }));
       for (const [userId, m] of salle.membres) {
         if (!m.socket?.connected) continue;
-        m.socket.emit('nvn:fin', { ...bilan, gains: gains.get(userId) ?? null });
+        m.socket.emit('nvn:fin', { ...bilan, gains: gains.get(userId) ?? null,
+          /* **Sa ligne porte `moi: true`**, celle de chacun dans son envoi :
+             TOI/LUI, son meilleur geste et sa carte préférée se lisent sur
+             elle. La page la cherchait au camp et à la ferveur, ce qui ne
+             départage pas deux joueurs d'une même tribune à égalité. */
+          joueurs: bilan.joueurs.map((j) => (j.userId === userId ? { ...j, moi: true } : j)) });
       }
     }
 
@@ -1297,8 +1538,15 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     });
 
     for (const [evt, fn] of [
-      ['nvn:chant', (salle, u, p) => salle.duel.chanter(u.userId, p)],
-      ['nvn:play', (salle, u, p) => salle.duel.jouer(u.userId, String(p?.cardId))],
+      /* L'instant est pris **une fois** et passé au moteur : le verdict est
+         rejoué juste avant lui, et les deux doivent lire les effets en cours
+         au même instant. Voir `chanterEtNommer`. */
+      ['nvn:chant', (salle, u, p) =>
+        chanterEtNommer(salle.duel, salle.comptes, u.userId, p, Date.now())],
+      /* La carte, par le chemin qui note ce qu'elle pose (durée, camp) : voir
+         `jouerEtMarquer`. Le même instant pour le moteur et pour la durée. */
+      ['nvn:play', (salle, u, p) =>
+        jouerEtMarquer(salle.duel, u.userId, String(p?.cardId), Date.now())],
       ['nvn:swap', (salle, u, p) => salle.duel.changer(u.userId, Number(p?.index))],
     ]) {
       socket.on(evt, (p = {}) => {
@@ -1321,7 +1569,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       m.socket = socket;
       m.coupeA = null;
       socket.join(salle.room);
-      socket.emit('nvn:start', salle.duel.vue(u.userId));
+      socket.emit('nvn:start', vuePour(salle.duel, u.userId));
       io.to(salle.room).emit('nvn:events',
         [{ seq: ++salle.duel.seq, t: 'back', userId: u.userId }]);
     });
@@ -1493,11 +1741,35 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     });
   });
 
+  /**
+   * Ce joueur est-il en duel ? Lu par la présence (CONTRATS.md § 18 : l'état
+   * `duel`, « dans un duel ou en file d'attente »).
+   *
+   * **Dans une salle** dont le duel n'est pas fini et où sa place tient
+   * encore : une coupure réseau garde sa place quatre-vingt-dix secondes, et
+   * il est en duel pendant ce temps-là, puisqu'il peut y revenir ; sa grâce
+   * épuisée (`parti`), il ne l'est plus, même si sa place attend la fin pour
+   * se libérer. **Ou dans une file**, quel qu'en soit le format.
+   *
+   * Mémoire seule, aucune requête : la présence le demande pour chaque ami
+   * d'une liste, et ces deux tables sont déjà là.
+   */
+  function estEnDuel(userId) {
+    if (userId == null) return false;
+    const id = salleDe.get(userId);
+    const salle = id ? salles.get(id) : null;
+    if (salle && !salle.duel.termine && !salle.membres.get(userId)?.parti) return true;
+    for (const file of files.values()) {
+      if (file.some((f) => f.userId === userId)) return true;
+    }
+    return false;
+  }
+
   /* `accepte` est exporté pour les tests : la borne haute — « jamais plus
      grand que ce qui a été demandé » — ne se voit pas depuis une socket, et
      c’est pourtant elle qui empêche un 1v1 de finir dans un 5v5. */
   return { router, salles, files, filesParMatch, alertePour, accepte,
-           ouvrir, ouvrirAvecBots, tenterAppariement, butReel,
+           ouvrir, ouvrirAvecBots, tenterAppariement, butReel, estEnDuel,
            /* `fermer` n'est appelée par aucun autre module : elle n'est exposée
               qu'aux suites, qui doivent pouvoir la frapper deux fois de suite
               pour voir qu'elle ne paie qu'une fois. Le nom dit à qui elle est

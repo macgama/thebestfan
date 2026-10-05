@@ -16,13 +16,19 @@ import { createVirage } from '../src/server/ferveur/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
-import { VirageRoom, RULES } from '../src/server/ferveur/virage.js';
-import { poserReglages, reglagesVivants } from '../src/shared/reglages.js';
+import { VirageRoom, RULES, crowdFactor } from '../src/server/ferveur/virage.js';
+import { poserReglages, reglagesVivants, reglage } from '../src/shared/reglages.js';
 import { resoudreGeste, GESTES } from '../src/server/ferveur/gestures.js';
 import { ORDRE } from '../src/shared/duel/chants.js';
 import { EFFETS_CONNUS } from '../src/server/ferveur/virage.js';
 import { ACTIONS, ACTIONS_VIRAGE, ACTION_BY_ID, dansLeVirage }
   from '../src/shared/duel/actions.js';
+import { createNiveau } from '../src/server/niveau/index.js';
+import { createPresence } from '../src/server/presence/index.js';
+import { createBilan } from '../src/server/ferveur/bilan.js';
+import { AVATAR_PUBLIC } from '../src/server/fanzzy/avatar.js';
+import { grade } from '../src/server/ferveur/gestures.js';
+import { enParallele, figerHorloge } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -45,7 +51,7 @@ await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invi
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
-                 leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
+                 leagues, api_quota, login_attempts, auth_tokens, sessions, recompenses, users`);
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'tenues.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
@@ -73,6 +79,25 @@ for (const instruction of CHANTS_SQL) await raw.query(instruction);
     CHANTS_SQL.length === 3 && cols.length === 3
     || (console.log(`        ${CHANTS_SQL.length} instruction(s), ${cols.length} colonne(s)`), false));
 }
+/* **La vague 2, telle qu'on la déploie.** `arenes.sql` entier (les PARFAITS,
+   la série, le meilleur geste, l'index du bilan, le choix de présence) ;
+   `niveau.sql` pour l'XP ; et, pris dans leurs fichiers au motif, le grand
+   livre (`recompenses`, de `quotidien.sql`) et les amitiés (`amities`, de
+   `amis.sql`) — sans le reste de ces fichiers, qui demanderait les saisons et
+   les KOP, que ce banc n'éprouve pas. */
+{
+  const sql = (f) => readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8');
+  await raw.query(sql('arenes.sql'));
+  await raw.query(sql('niveau.sql'));
+  const table = (f, nom) => new RegExp(`CREATE TABLE IF NOT EXISTS ${nom} \\([\\s\\S]*?\\) ENGINE[^;]*;`)
+    .exec(sql(f))?.[0];
+  const recompenses = table('quotidien.sql', 'recompenses');
+  const amities = table('amis.sql', 'amities');
+  check('le grand livre et les amitiés se prennent dans leurs fichiers',
+    Boolean(recompenses && amities) || (console.log('        motif introuvable'), false));
+  if (recompenses) await raw.query(recompenses);
+  if (amities) await raw.query(amities);
+}
 const U = ['bbbbbbbb-0000-0000-0000-00000000000' + 1,
            'bbbbbbbb-0000-0000-0000-00000000000' + 2,
            'bbbbbbbb-0000-0000-0000-00000000000' + 3];
@@ -99,6 +124,14 @@ await raw.query(`INSERT INTO fixture_events (fixture_id,seq,type,detail,team_id,
 // Deux supporters de Sion, un de Bâle.
 await raw.query(`INSERT INTO user_follows (user_id,team_id) VALUES (?,85),(?,85),(?,91)`,
   [U[0], U[1], U[2]]);
+/* Les matchs de la vague 2, un par bloc : le bilan lit la ligne de présence
+   d'un match, et deux blocs sur le même se compteraient l'un l'autre. */
+for (const id of [7101, 7102, 7103, 7105, 7106, 7107, 7108, 7109, 7110, 7111,
+                 7112, 7113, 7114, 7115]) {
+  await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
+                                         home_goals,away_goals,elapsed,kickoff_at)
+                   VALUES (?,207,2026,85,91,'2H',0,0,60,UTC_TIMESTAMP())`, [id]);
+}
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 8, ...OPTIONS_BASE });
@@ -107,6 +140,30 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 8, ...OPTIONS_BASE });
 // sur un catalogue vide.
 await chargerCatalogue(pool);
 await chargerTenues(pool);
+
+/** Des joueurs de plus, avec leur bourse : `prefixe-0001`… Le Fanzzy, s'il est donné, est équipé. */
+async function creerJoueurs(prefixe, n, { fanzzy = null } = {}) {
+  const ids = Array.from({ length: n }, (_, i) => `${prefixe}-${String(i + 1).padStart(4, '0')}`);
+  for (const id of ids) {
+    await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
+      [id, `${id}@ex.fr`, id.slice(0, 20)]);
+    await pool.query(`INSERT INTO user_wallet (user_id, scarves, active_fanzzy) VALUES (?, 0, ?)`,
+      [id, fanzzy]);
+  }
+  return ids;
+}
+
+/** Une ligne de présence, écrite comme le serveur l'écrit, avec ce qu'on veut y lire. */
+async function semer(userId, fixtureId, o = {}) {
+  const l = { side: 0, team_id: 85, ferveur: 0, classe: 1, chants: 0, parfaits: 0, serie_max: 0,
+    meilleur_q: 0, meilleur_chant: null, ...o };
+  await pool.query(
+    `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, ferveur, classe, chants,
+                                  parfaits, serie_max, meilleur_q, meilleur_chant)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    [userId, fixtureId, l.side, l.team_id, l.ferveur, l.classe, l.chants, l.parfaits,
+      l.serie_max, l.meilleur_q, l.meilleur_chant]);
+}
 
 /* -------------------------------------------------------------- serveur */
 
@@ -124,9 +181,33 @@ const fanzzy = createFanzzy({ pool, requireAuth: (r, _s, n) => { r.user = { id: 
    la plupart des contrôles n'en ont que faire, et le Virage doit tenir sans
    elle. Le bloc de `/live` la remplit le moment venu. */
 let journee = null;
-const virage = createVirage({ pool, io, souvenirs, fanzzy,
+/* Le module niveau, pour l'XP du match, et la présence, éteinte comme à la
+   livraison : le bloc des amis l'allume le temps de ses contrôles. */
+const niveau = createNiveau({ pool, requireAuth: (_q, _r, n) => n() });
+const presence = createPresence({ pool, requireAuth: (_q, _r, n) => n() });
+/* La présence telle que le Virage la voit : la vraie, dont on note les appels.
+   L'ordre des deux lectures d'une entrée est un contrat entre les deux
+   modules — `aPrevenir` relit en mémoire la liste d'amis qu'`amisPresents`
+   vient de lire, et ne lit le choix de l'entrant que s'il a un ami présent
+   (`ferveur/index.js`, `annoncerArrivee`). */
+const appelsPresence = [];
+/* Une lecture qu'on retient pour un joueur : la promesse à attendre avant de
+   lire. C'est ainsi qu'on laisse une entrée se faire dépasser par la suivante. */
+const retenues = new Map();
+const presenceVue = { ...presence };
+for (const f of ['amisPresents', 'aPrevenir']) {
+  presenceVue[f] = async (userId, ids) => {
+    appelsPresence.push({ f, t: 'debut', id: String(userId) });
+    try {
+      await retenues.get(String(userId));
+      return await presence[f](userId, ids);
+    } finally { appelsPresence.push({ f, t: 'fin', id: String(userId) }); }
+  };
+}
+const virage = createVirage({ pool, io, souvenirs, fanzzy, niveau, presence: presenceVue,
   requireAuth: (r, _s, n) => { r.user = { id: identite }; n(); },
   jourDuFoot: () => (typeof journee === 'function' ? journee() : journee) });
+presence.brancher({ estAuVirage: virage.estAuVirage, estEnDuel: () => false });
 app.use('/api/virage', virage.router);
 await new Promise((r) => http.listen(0, r));
 const url = `http://localhost:${http.address().port}`;
@@ -134,7 +215,9 @@ const url = `http://localhost:${http.address().port}`;
 function connect(userId) {
   const socket = client(url, { transports: ['websocket'], auth: { token: userId } });
   const p = { socket, state: null, ticks: [], results: [], errors: [],
-              realGoals: [], goals: [], fils: [] };
+              realGoals: [], goals: [], fils: [],
+              // La vague 2 : ce que la salle dit à chacun, et ce qu'elle ne doit pas dire.
+              souvenirs: [], bilans: [], fins: [], fermes: [], amis: [], ami: [], crowds: [] };
   socket.on('virage:state', (s) => { p.state = s; });
   socket.on('virage:tick', (t) => p.ticks.push(t));
   socket.on('virage:result', (r) => p.results.push(r));
@@ -142,6 +225,13 @@ function connect(userId) {
   socket.on('virage:real_goal', (g) => p.realGoals.push(g));
   socket.on('virage:goal', (g) => p.goals.push(g));
   socket.on('virage:fil', (f) => p.fils.push(f));
+  socket.on('virage:souvenir', (x) => p.souvenirs.push(x));
+  socket.on('virage:bilan', (x) => p.bilans.push(x));
+  socket.on('virage:fin', (x) => p.fins.push(x));
+  socket.on('virage:ferme', (x) => p.fermes.push(x));
+  socket.on('virage:amis', (x) => p.amis.push(x));
+  socket.on('virage:ami', (x) => p.ami.push(x));
+  socket.on('virage:crowd', (x) => p.crowds.push(x));
   return p;
 }
 
@@ -543,7 +633,8 @@ await pool.query(
    le tour du direct. Il sonnait alors « GOAL ! » pour toute la tribune,
    ouvrait la minute double et ramenait la minute à 23. Le vrai chemin, celui
    de `ferveur/index.js` ; le but sans score, juste après, sert de témoin :
-   les mêmes sockets l'entendent. */
+   les mêmes sockets l'entendent. (Correctif d'urgence du 4 octobre 2026,
+   reporté au lot 6.) */
 {
   const salle = virage.rooms.get(7001);
   const minute = salle.minute, surge = salle.surgeUntil;
@@ -723,6 +814,39 @@ const r = await souvenirs.mintGoal({
 });
 check('carte-souvenir frappée', r.minted === true);
 check('seuls les chanteurs récents la reçoivent', r.presents === 2);
+
+/* ---------------------------------- D5 : l'annoncer à eux, et à eux seuls
+
+ * La page l'annonçait à chaque but de son club — « Elle est dans ton
+ * carnet » —, à C comme aux autres, alors que C n'avait pas chanté dans la
+ * fenêtre et ne l'a pas. La frappe nomme ses receveurs, et le Virage ne
+ * l'annonce qu'à leurs sockets : c'est le chemin que `server.js` prend après
+ * `mintGoal` (`verif-cablage` en garde le branchement). */
+{
+  const n = virage.souvenirFrappe(7001, { souvenirId: r.souvenirId, minute: 23, joueur: 'Diallo',
+    userIds: r.userIds });
+  check('la frappe nomme ses deux receveurs',
+    JSON.stringify([...(r.userIds ?? [])].sort()) === JSON.stringify([U[0], U[1]].sort()));
+  check('virage:souvenir part à leurs sockets', n === 2
+    && await until(() => A.souvenirs.length === 1 && B.souvenirs.length === 1));
+  await wait(150);
+  check('et pas à celui qui regardait sans chanter, ni à la salle',
+    C.souvenirs.length === 0 && A.souvenirs.length === 1 && B.souvenirs.length === 1
+    || (console.log('        A', A.souvenirs.length, 'B', B.souvenirs.length, 'C', C.souvenirs.length), false));
+  check('avec la forme du contrat (§ 16.3)',
+    JSON.stringify(A.souvenirs[0]) === JSON.stringify({ fixtureId: 7001, id: r.souvenirId,
+      minute: 23, joueur: 'Diallo' })
+    || (console.log('        reçu :', JSON.stringify(A.souvenirs[0])), false));
+  /* Une compétition non couverte ne frappe rien et ne nomme personne : rien
+     ne part, pas même à ceux qui chantaient. */
+  const nulle = await souvenirs.mintGoal({
+    fixtureId: 7001, seq: 9, leagueId: 999, teamId: 85, homeId: 85, awayId: 91,
+    minute: 80, player: 'Bonvin', scoreHome: 2, scoreAway: 0, kickoffAt: '2026-09-13 16:00:00' });
+  const rien = virage.souvenirFrappe(7001, { souvenirId: nulle.souvenirId, userIds: nulle.userIds });
+  await wait(150);
+  check('un but d’une compétition non couverte n’annonce rien',
+    nulle.minted === false && rien === 0 && A.souvenirs.length === 1 && B.souvenirs.length === 1);
+}
 
 identite = U[0];
 const mesA = await souvenirs.collection(U[0]);
@@ -1047,9 +1171,10 @@ for (const m of room.members.values()) m.lastPush = Date.now();
  * Le battement tirait la carte suivante et ne le disait à personne :
  * `virage:vous` ne partait qu'après une carte jouée, sur la socket qui
  * l'avait jouée — donc avant le tirage. La page gardait une case vide pour
- * toujours. On éprouve le vrai chemin — l'horloge commune de
- * `ferveur/index.js` et la table des sockets — avec deux onglets du même
- * joueur, et un voisin de tribune qui ne doit rien recevoir. */
+ * toujours (correctif d'urgence du 4 octobre 2026, reporté au lot 6). On
+ * éprouve le vrai chemin — l'horloge commune de `ferveur/index.js` et la
+ * table des sockets, par `auJoueur` — avec deux onglets du même joueur, et
+ * un voisin de tribune qui ne doit rien recevoir. */
 {
   const QUI = 'bbbbbbbb-0000-0000-0000-000000000006';
   const T1 = connect(QUI), T2 = connect(QUI);
@@ -1634,6 +1759,1087 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
   check('la fin de la minute double est diffusée, même quand rien ne bouge',
     ticks.at(-1)?.p.surge === false && ticks.filter((x) => x.p.surge === false).length === 1
     || (console.log('        ticks :', ticks.map((x) => x.p.surge).join(' ')), false));
+}
+
+/* ##################################################### la vague 2 (lot 6)
+
+   Le verdict, la série, le rang et le palier, le plancher de ferveur, le
+   coup de sifflet et la tribune qui se vide, le bilan, l'XP du match, la
+   foule qui ne se diffuse plus à l'entrée, et les amis dans la tribune
+   (`serveur/CONTRATS.md`, § 15, § 16, § 18.3). Chaque bloc a son match : le
+   bilan lit la ligne de présence d'un match, et deux blocs sur le même se
+   compteraient l'un l'autre.
+   ######################################################################## */
+
+/** Deux objets égaux, clés dans n'importe quel ordre. */
+const canon = (x) => (Array.isArray(x) ? x.map(canon)
+  : x && typeof x === 'object'
+    ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, canon(x[k])])) : x);
+const pareil = (a, b) => JSON.stringify(canon(a)) === JSON.stringify(canon(b));
+const montrer = (quoi, x) => (console.log(`        ${quoi} :`, JSON.stringify(x)), false);
+
+/**
+ * Les `n` premières frappes d'un tempo, une sur deux décalée de `d` ms : de
+ * quoi viser une note au millième. Toutes, et sans décalage, par défaut.
+ */
+const frappesTempo = (mods, d, n = Infinity) => {
+  const g = resoudreGeste(mods).tempo;
+  return Array.from({ length: Math.min(n, g.beats) },
+    (_, i) => Math.round(i * g.interval + (i % 2 ? d : 0)));
+};
+/**
+ * Le geste qui donne une note brute dans `]min, max]`, cherché avec `grade`
+ * — la fonction même que le serveur appelle — plutôt que supposé : le stade
+ * d'un match change la fenêtre du tempo. Le décalage d'abord, puis des
+ * frappes en moins pour descendre sous ce qu'un décalage atteint.
+ */
+const viser = (mods, min, max, motif = 0) => {
+  for (let n = resoudreGeste(mods).tempo.beats; n >= 1; n--) {
+    for (let d = 0; d <= 600; d++) {
+      /* Trop décalées, deux frappes se touchent, et le serveur les refuse
+         (`taps_too_fast`) : ce décalage-là ne vise rien. */
+      let q;
+      try { q = grade('tempo', frappesTempo(mods, d, n), mods, { motif }); } catch { continue; }
+      if (q > min && q <= max) return { d, n, q };
+    }
+  }
+  throw new Error(`aucun geste ne note entre ${min} et ${max}`);
+};
+
+/* ================================== le verdict, la série, le Cri (§ 16.1)
+
+   Le mot se mesure sur la note brute du geste, relevée par le plancher s'il
+   mord, **avant** les modificateurs du Fanzzy (D7) ; le Cri et la série
+   lisent la même note. Ce que la salle transporte à la base pour le bilan
+   part dans le même appel au crochet de présence. */
+{
+  const recues = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9020, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: () => {}, onPush: (p) => { recues.push(p); }, log: { warn() {}, error() {} },
+  });
+  salle.join('v1', { side: 0, name: 'Un', actions: ['a-fumigene'] });
+  const v = salle.members.get('v1');
+  const mods = salle.modsDe(v);
+  const cri = viser(mods, 0.95, 1.2);
+  const parfait = viser(mods, 0.9, 0.95);
+  const bon = viser(mods, 0.7, 0.9);
+  const moyen = viser(mods, 0.4, 0.7);
+  const rate = viser(mods, -1, 0.4);
+  const chanter = (x, qui = 'v1') => {
+    salle.members.get(qui).breath = 100;
+    recues.length = 0;
+    return salle.chant(qui, { cardId: 'reprise', taps: frappesTempo(salle.modsDe(salle.members.get(qui)), x.d, x.n) });
+  };
+
+  let r = chanter(cri);
+  check(`une note de ${cri.q.toFixed(3)} : PARFAIT, le Cri, une série de 1`,
+    r.verdict === 'parfait' && r.cri === true && r.serie === 1 || montrer('réponse', r));
+  check('la première place n’a pas de palier au-dessus, et le rang est servi',
+    r.rang === 1 && r.sur === 1 && !('prochain' in r) || montrer('réponse', r));
+  check('la base reçoit le PARFAIT, la note en millièmes et le chant, dans le même appel',
+    recues.length === 1 && recues[0].parfait === 1 && recues[0].serie === 1
+    && recues[0].q === Math.ceil(cri.q * 1000 - 1e-6) && recues[0].chantId === 'reprise'
+    || montrer('appel', recues));
+
+  r = chanter(parfait);
+  check(`${parfait.q.toFixed(3)} : PARFAIT sans le Cri, la série monte à 2`,
+    r.verdict === 'parfait' && !('cri' in r) && r.serie === 2 || montrer('réponse', r));
+
+  /* Une carte ne coupe pas la série : elle ne chante pas. */
+  v.main = ['a-fumigene']; v.breath = 100; v.cooldowns = {};
+  recues.length = 0;
+  salle.jouer('v1', 'a-fumigene');
+  check('une carte ne coupe pas la série, et ne compte ni chant, ni PARFAIT, ni note',
+    v.serie === 2 && recues.length === 1 && recues[0].chant === 0 && recues[0].parfait === 0
+    && recues[0].q === 0 && recues[0].chantId === null && recues[0].serie === 2
+    || montrer('appel', recues));
+
+  r = chanter(bon);
+  check(`${bon.q.toFixed(3)} : BON, et la série retombe à 0`,
+    r.verdict === 'bon' && r.serie === 0 || montrer('réponse', r));
+  check('mais la meilleure série part toujours à la base', recues[0]?.serie === 2
+    && recues[0].parfait === 0);
+  check(`${moyen.q.toFixed(3)} : MOYEN`, chanter(moyen).verdict === 'moyen');
+  check(`${rate.q.toFixed(3)} : RATÉ`, chanter(rate).verdict === 'rate');
+  check('les chants et les PARFAITS se comptent sur le membre',
+    v.chants === 5 && v.parfaits === 2 && v.serieMax === 2 || montrer('membre',
+      { chants: v.chants, parfaits: v.parfaits, serieMax: v.serieMax }));
+
+  /* D7 : un Fanzzy qui paie mal le parfait (`perfectBonus` 0,82) fait d'un
+     geste parfait une poussée de 0,78. Le mot reste PARFAIT. */
+  salle.join('v2', { side: 0, name: 'Deux', mods: { perfectBonus: 0.82 } });
+  const p2 = viser(salle.modsDe(salle.members.get('v2')), 0.94, 0.96);
+  r = chanter(p2, 'v2');
+  check('un Fanzzy qui paie mal le parfait ne change pas un PARFAIT en BON (D7)',
+    r.verdict === 'parfait' && r.quality < 0.8 || montrer('réponse', r));
+
+  /* Le plancher d'une carte (« Second souffle ») relève la note mesurée
+     quand il mord : un raté compte comme moyen, et se dit MOYEN. */
+  v.effets = [{ type: 'floor_quality', valeur: 0.6, charges: 1 }];
+  r = chanter(rate);
+  check('un raté relevé par le Second souffle se dit MOYEN, et le plancher se consomme',
+    r.verdict === 'moyen' && v.effets[0].charges === 0 && recues[0]?.q === 600
+    || montrer('réponse', { r, effets: v.effets, q: recues[0]?.q }));
+}
+
+/* ================================== le rang en direct et le palier (§ 16.2)
+
+   Parmi les présents de sa tribune, dans l'ordre du bilan : la ferveur, puis
+   les chants, puis les PARFAITS. Le palier suivant (100, 50, 10, 3, 1) et ce
+   qui manque pour y passer. */
+{
+  const salle = new VirageRoom({
+    fixture: { id: 9021, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: () => {}, log: { warn() {}, error() {} },
+  });
+  const F = [500, 480, 460, 440, 420, 400, 380, 360, 340, 320, 300, 280, 260, 240, 220];
+  F.forEach((f, i) => {
+    salle.join(`r${i + 1}`, { side: 0, name: `R${i + 1}` });
+    salle.members.get(`r${i + 1}`).ferveur = f;
+  });
+  salle.join('x1', { side: 1, name: 'En face' });
+  salle.classer();
+  const place = (id) => salle.placeDe(salle.members.get(id));
+  check('12ᵉ sur 15 : TOP 10, à 41 de ferveur (320 − 280 + 1)',
+    pareil(place('r12'), { rang: 12, sur: 15, prochain: { rang: 10, ecart: 41 } })
+    || montrer('place', place('r12')));
+  check('4ᵉ : TOP 3', pareil(place('r4').prochain, { rang: 3, ecart: 21 }) || montrer('place', place('r4')));
+  check('2ᵉ : la première place, à 21', pareil(place('r2').prochain, { rang: 1, ecart: 21 }));
+  check('1ᵉʳ : pas de palier', place('r1').rang === 1 && place('r1').prochain === null);
+  check('l’autre tribune a son propre classement', pareil(place('x1'), { rang: 1, sur: 1, prochain: null }));
+
+  /* À ferveur égale, les chants départagent ; à chants égaux aussi, le même rang. */
+  const a = salle.members.get('r14'), b = salle.members.get('r15');
+  a.ferveur = 0; b.ferveur = 0; a.chants = 3; b.chants = 5;
+  salle.classer();
+  check('à ferveur nulle, le plus de chants passe devant', place('r15').rang === 14 && place('r14').rang === 15);
+  a.chants = 5; a.parfaits = 1;
+  salle.classer();
+  check('à chants égaux, les PARFAITS', place('r14').rang === 14 && place('r15').rang === 15);
+  a.parfaits = 0;
+  salle.classer();
+  check('égaux sur les trois : la même place', place('r14').rang === 14 && place('r15').rang === 14);
+
+  /* L'état de l'entrée porte la même place, et le palier. */
+  const vue = salle.snapshotFor('r12').you;
+  check('l’état porte rank, of, prochain et serie',
+    vue.rank === 12 && vue.of === 15 && pareil(vue.prochain, { rang: 10, ecart: 41 }) && vue.serie === 0
+    || montrer('you', { rank: vue.rank, of: vue.of, prochain: vue.prochain, serie: vue.serie }));
+  check('et un parti n’a plus de place', salle.rankOf('r12') !== null
+    && (salle.leave('r12'), salle.rankOf('r12') === null) && salle.rankOf('r13').of === 14);
+
+  /* **Au plus une fois par seconde**, et seulement si quelque chose a bougé :
+     mille chants par seconde dans une tribune de mille ne paient pas mille tris. */
+  let tris = 0;
+  const vrai = salle.classer.bind(salle);
+  salle.classer = (...x) => { tris++; return vrai(...x); };
+  const t0 = Date.now() + 10_000;
+  const r1 = salle.members.get('r1');
+  salle.crediter(r1, 10);
+  salle.tick(t0);
+  for (let k = 1; k <= 9; k++) { salle.crediter(r1, 10); salle.tick(t0 + k * 100); }
+  check('dix tours d’horloge qui bougent dans la même seconde : un seul tri', tris === 1
+    || montrer('tris', tris));
+  salle.tick(t0 + 1000);
+  check('la seconde d’après, un de plus', tris === 2);
+  salle.tick(t0 + 3000);
+  check('et rien quand rien n’a bougé', tris === 2);
+}
+
+/* ================================== le plancher de ferveur (Q4, § 16.2)
+
+   Dans une grande tribune, la part d'un chant s'arrondissait à zéro : tout le
+   monde y finissait le match à zéro de ferveur. Un chant noté au moins MOYEN
+   rapporte au moins 1, tous facteurs appliqués ; un raté, une carte, rien de
+   plus qu'avant. */
+{
+  const avant = reglagesVivants();
+  poserReglages({ ...avant, 'virage.tribune_min': 1 });
+  try {
+    const recues = [];
+    const grande = new VirageRoom({
+      fixture: { id: 9022, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+      emit: () => {}, onPush: (p) => { recues.push(p); }, log: { warn() {}, error() {} },
+    });
+    for (let i = 0; i < 300; i++) {
+      grande.join(`g${i}`, { side: 0, name: 'G', neutre: i === 1,
+        actions: i === 0 ? ['a-fumigene'] : [] });
+      grande.members.get(`g${i}`).lastPush = Date.now();
+    }
+    const g0 = grande.members.get('g0');
+    const mods = grande.modsDe(g0);
+    const gain = (qui, x) => {
+      const m = grande.members.get(qui);
+      m.breath = 100;
+      const f = m.ferveur;
+      recues.length = 0;
+      grande.chant(qui, { cardId: 'reprise', taps: frappesTempo(grande.modsDe(m), x.d, x.n) });
+      return { delta: m.ferveur - f, base: recues[0]?.amount };
+    };
+    /* La prémisse : sans plancher, ce chant ne rapporterait rien ici. */
+    const brute = 26 * crowdFactor(300) / 300 * (mods.ferveurBonus ?? 1);
+    check(`la part d’un chant parfait dans une tribune de 300 s’arrondit à zéro (${brute.toFixed(2)})`,
+      brute < 0.5);
+    const p = gain('g0', viser(mods, 0.9, 1.2));
+    check('un PARFAIT y rapporte 1, dans la salle comme en base', p.delta === 1 && p.base === 1
+      || montrer('gain', p));
+    const m = gain('g0', viser(mods, 0.4, 0.7));
+    check('un MOYEN aussi', m.delta === 1 && m.base === 1 || montrer('gain', m));
+    const r = gain('g0', viser(mods, -1, 0.4));
+    check('un RATÉ, rien', r.delta === 0 && r.base === 0 || montrer('gain', r));
+    const n = gain('g1', viser(grande.modsDe(grande.members.get('g1')), 0.4, 0.7));
+    check('un neutre, dont la part est encore divisée par deux, reçoit 1 aussi',
+      n.delta === 1 || montrer('gain', n));
+    g0.main = ['a-fumigene']; g0.breath = 100; g0.cooldowns = {};
+    const f0 = g0.ferveur;
+    grande.jouer('g0', 'a-fumigene');
+    check('une carte n’y entre pas : elle rapporte ce qu’elle rapportait', g0.ferveur === f0);
+
+    /* **La proportion, là où le plancher ne mord pas.** Dix fois plus de
+       monde, dix fois moins par tête : mesuré avec un bonus de ferveur qui
+       met les deux parts loin au-dessus de 1, sur le même match (le stade,
+       donc les mêmes modificateurs). Mesuré dans une grande tribune sans ce
+       bonus, le contrôle rougirait à raison : le plancher y relève tout. */
+    const parTete = (n) => {
+      const x = new VirageRoom({
+        fixture: { id: 9023, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+        emit: () => {}, log: { warn() {}, error() {} } });
+      for (let i = 0; i < n; i++) {
+        x.join(`p${i}`, { side: 0, name: 'P', mods: { ferveurBonus: 100 } });
+        x.members.get(`p${i}`).lastPush = Date.now();
+      }
+      const p0 = x.members.get('p0');
+      p0.breath = 100;
+      x.chant('p0', { cardId: 'reprise', taps: frappesTempo(x.modsDe(p0), 0) });
+      return p0.ferveur;
+    };
+    const petite = parTete(4), grande40 = parTete(40);
+    check(`la ferveur d’un chant se partage par l’effectif (${petite} à 4, ${grande40} à 40)`,
+      grande40 > 10 && petite / grande40 > 8 && petite / grande40 < 12);
+  } finally {
+    poserReglages(avant);
+  }
+}
+
+/* ================================== le coup de sifflet, dans la salle (§ 15.3) */
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9025, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B', status: '2H' },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} },
+  });
+  check('un match en jeu n’a pas de coup de sifflet', salle.finA === 0);
+  salle.matchStatus({ status: 'FT', elapsed: 90 });
+  salle.matchStatus({ status: 'FT', elapsed: 90 });
+  const premierA = salle.finA;
+  /* L'API revient parfois sur une fin (une correction de statut) : la
+     tribune n'est plus à fermer, et quand la fin revient, elle ne se
+     réannonce pas — la page a déjà demandé son bilan. */
+  salle.matchStatus({ status: '2H', elapsed: 90 });
+  const rouverte = salle.finA === 0;
+  salle.matchStatus({ status: 'FT', elapsed: 90 });
+  const fins = emis.filter((x) => x.e === 'virage:fin');
+  check('virage:fin part une fois à la salle, avec son statut, même si l’API se reprend',
+    fins.length === 1 && fins[0].p.statut === 'FT' && premierA > 0 && rouverte && salle.finA > 0
+    || montrer('fins', { fins, premierA, rouverte, finA: salle.finA }));
+  const prolong = new VirageRoom({
+    fixture: { id: 9026, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B', status: 'ET' },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} } });
+  emis.length = 0;
+  prolong.matchStatus({ status: 'AET' });
+  check('après prolongation, AET', emis.filter((x) => x.e === 'virage:fin')[0]?.p.statut === 'AET');
+  const annule = new VirageRoom({
+    fixture: { id: 9027, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B', status: '1H' },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} } });
+  emis.length = 0;
+  annule.matchStatus({ status: 'CANC' });
+  check('un match annulé n’a pas de coup de sifflet',
+    !emis.some((x) => x.e === 'virage:fin') && annule.finA === 0);
+  emis.length = 0;
+  const tard = new VirageRoom({
+    fixture: { id: 9028, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B', status: 'FT' },
+    emit: (e, p) => emis.push({ e, p }), log: { warn() {}, error() {} } });
+  const connue = tard.finA > 0;
+  /* Même si l'API se reprend ensuite : la page l'a lu dans l'état. */
+  tard.matchStatus({ status: '2H' });
+  tard.matchStatus({ status: 'FT' });
+  check('une salle ouverte après la fin ne l’annonce pas, mais la connaît',
+    !emis.some((x) => x.e === 'virage:fin') && connue && tard.finA > 0);
+  /* La minute double : sa durée relative est toujours servie, à 0 hors de la
+     minute (`CONTRATS.md`, § 16.2, comme le correctif l'a posée). Absente,
+     elle ne se distinguerait plus d'un serveur d'avant. */
+  tard.join('t1', { side: 0, name: 'T' });
+  check('hors de la minute double, l’état sert surgeMs à 0', tard.snapshotFor('t1').surgeMs === 0
+    || montrer('surgeMs', tard.snapshotFor('t1').surgeMs));
+}
+
+/* ================================== le bilan de tribune (§ 15.1)
+
+   Cinq joueurs à domicile, dont un parti avant la fin, deux à ferveur nulle
+   que leurs chants départagent ; un neutre non classé en face ; un entré qui
+   n'a jamais poussé. Les chiffres viennent de la base, tous passages
+   compris, et sont comparés à la valeur exacte. */
+const J = await creerJoueurs('bilan', 8, { fanzzy: 'TR32' });
+{
+  await semer(J[0], 7101, { ferveur: 120, chants: 30, parfaits: 9, serie_max: 4,
+    meilleur_q: 970, meilleur_chant: 'mur' });
+  await semer(J[1], 7101, { ferveur: 120, chants: 25, parfaits: 12, serie_max: 1,
+    meilleur_q: 880, meilleur_chant: 'reprise' });
+  await semer(J[2], 7101, { ferveur: 80, chants: 12 });          // parti avant la fin
+  await semer(J[3], 7101, { ferveur: 0, chants: 5 });
+  await semer(J[4], 7101, { ferveur: 0, chants: 3 });
+  await semer(J[5], 7101, { side: 1, team_id: 91, ferveur: 50, chants: 20 });
+  await semer(J[6], 7101, { side: 1, team_id: null, classe: 0, ferveur: 10, chants: 10 });
+  const [s1] = await pool.query(
+    `INSERT INTO souvenirs (fixture_id, seq, league_id, family, scorer_team, home_id, away_id,
+                            minute, player, score_home, score_away, kickoff_at, expires_at, price)
+     VALUES (7101, 1, 207, 'championnat', 85, 85, 91, 23, 'Diallo', 1, 0, NOW(), NOW() + INTERVAL 15 DAY, 60)`);
+  const [s2] = await pool.query(
+    `INSERT INTO souvenirs (fixture_id, seq, league_id, family, scorer_team, home_id, away_id,
+                            minute, player, score_home, score_away, kickoff_at, expires_at, price)
+     VALUES (7101, 2, 207, 'championnat', 85, 85, 91, 71, NULL, 2, 0, NOW(), NOW() + INTERVAL 15 DAY, 60)`);
+  const S1 = s1.insertId, S2 = s2.insertId;
+  await pool.query(`INSERT INTO user_souvenirs (user_id, souvenir_id, kind) VALUES
+    (?, ?, 'presence'), (?, ?, 'presence'), (?, ?, 'presence'), (?, ?, 'vignette')`,
+    [J[0], S2, J[0], S1, J[1], S1, J[2], S2]);
+
+  const attendus = {
+    [J[0]]: { fixtureId: 7101, side: 0, classe: true, neutre: false, ferveur: 120, chants: 30,
+      parfaits: 9, serie: 4, meilleur: { chant: 'mur', nom: 'Le mur', verdict: 'parfait' },
+      rang: 1, sur: 5,
+      souvenirs: [{ id: S1, minute: 23, joueur: 'Diallo' }, { id: S2, minute: 71 }] },
+    [J[1]]: { fixtureId: 7101, side: 0, classe: true, neutre: false, ferveur: 120, chants: 25,
+      parfaits: 12, meilleur: { chant: 'reprise', nom: 'La reprise', verdict: 'bon' },
+      rang: 2, sur: 5, souvenirs: [{ id: S1, minute: 23, joueur: 'Diallo' }] },
+    [J[2]]: { fixtureId: 7101, side: 0, classe: true, neutre: false, ferveur: 80, chants: 12,
+      parfaits: 0, rang: 3, sur: 5 },
+    [J[3]]: { fixtureId: 7101, side: 0, classe: true, neutre: false, ferveur: 0, chants: 5,
+      parfaits: 0, rang: 4, sur: 5 },
+    [J[4]]: { fixtureId: 7101, side: 0, classe: true, neutre: false, ferveur: 0, chants: 3,
+      parfaits: 0, rang: 5, sur: 5 },
+    [J[5]]: { fixtureId: 7101, side: 1, classe: true, neutre: false, ferveur: 50, chants: 20,
+      parfaits: 0, rang: 1, sur: 2 },
+    [J[6]]: { fixtureId: 7101, side: 1, classe: false, neutre: true, ferveur: 10, chants: 10,
+      parfaits: 0, rang: 2, sur: 2 },
+    [J[7]]: { fixtureId: 7101, side: 0 },
+  };
+  const noms = ['le meilleur, ses PARFAITS, sa série, son geste et ses deux cartes',
+    'à ferveur égale, deux de moins en chants : deuxième, sans série d’un seul',
+    'le parti avant la fin compte, sans sa vignette',
+    'à ferveur nulle, cinq chants', 'à ferveur nulle, trois chants : derrière',
+    'en face, premier de sa tribune', 'le neutre non classé', 'entré, jamais poussé : rien à poser'];
+  for (const [i, id] of J.entries()) {
+    const b = await virage.bilan.bilanDe(id, 7101, { xp: false });
+    check(`bilan — ${noms[i]}`, pareil(b, attendus[id]) || montrer('bilan', b));
+  }
+  /* Fini, la même chose, lue autrement : toute la salle en une fois. */
+  const fautes = [];
+  for (const id of J) {
+    const b = await virage.bilan.bilanDe(id, 7101, { xp: false, fini: true });
+    if (!pareil(b, { ...attendus[id], fini: true })) fautes.push(b);
+  }
+  check('le bilan du coup de sifflet, lu par salle, dit la même chose', fautes.length === 0
+    || montrer('écarts', fautes));
+
+  /* Par la socket : la page demande, la socket reçoit, l'XP part avec. */
+  const P = connect(J[0]);
+  await until(() => P.socket.connected);
+  P.socket.emit('virage:join', { fixtureId: 7101 });
+  await until(() => P.state);
+  P.socket.emit('virage:bilan');
+  check('virage:bilan répond à cette socket', await until(() => P.bilans.length === 1));
+  const b = P.bilans[0] ?? {};
+  const { xp, ...sansXp } = b;
+  check('le même bilan', pareil(sansXp, attendus[J[0]]) || montrer('bilan', b));
+  check('avec l’XP du match, versée : 15, et rien d’autre (R5)',
+    xp?.verse === true && pareil(xp.gain, { echarpes: 0, packs: 0, xp: 15, tampons: 0 })
+    && xp.niveau?.gain === 15 && typeof xp.wallet?.scarves === 'number' || montrer('xp', xp));
+  const [lignes] = await pool.query(
+    `SELECT source, cle, xp, echarpes, packs FROM recompenses WHERE user_id = ?`, [J[0]]);
+  const [[w]] = await pool.query('SELECT xp FROM user_wallet WHERE user_id = ?', [J[0]]);
+  check('une ligne au grand livre : virage, le match, 15 XP — et 15 XP au joueur',
+    lignes.length === 1 && lignes[0].source === 'virage' && lignes[0].cle === '7101'
+    && lignes[0].xp === 15 && lignes[0].echarpes === 0 && w.xp === 15
+    || montrer('grand livre', { lignes, xp: w.xp }));
+  P.socket.emit('virage:bilan');
+  check('une seconde demande dans les cinq secondes : rate_limited',
+    await until(() => P.errors.includes('ferveur.error.rate_limited')) && P.bilans.length === 1);
+  const deja = await virage.bilan.bilanDe(J[0], 7101, {});
+  check('l’XP ne se verse qu’une fois : « deja » ensuite',
+    pareil(deja.xp, { verse: false, raison: 'deja' }) || montrer('xp', deja.xp));
+  const H = connect(J[7]);
+  await until(() => H.socket.connected);
+  H.socket.emit('virage:bilan');
+  check('une socket dans aucune salle : not_in_virage',
+    await until(() => H.errors.includes('ferveur.error.not_in_virage')));
+  P.socket.disconnect(); H.socket.disconnect();
+}
+
+/* ================================== P5 : mille bilans au coup de sifflet
+
+   Une fois le match fini, la salle entière se lit en deux requêtes, gardées
+   deux minutes et partagées : le nombre de lectures ne dépend plus de
+   l'effectif. On compte au pool lui-même. */
+{
+  const C50 = await creerJoueurs('coup', 50);
+  for (const [i, id] of C50.entries()) await semer(id, 7102, { ferveur: 100 + i, chants: 3 });
+  let lectures = 0, connexions = 0;
+  const compteur = new Proxy(pool, {
+    get(cible, cle) {
+      const v = cible[cle];
+      if (typeof v !== 'function') return v;
+      if (cle === 'execute' || cle === 'query') return (...a) => { lectures++; return v.apply(cible, a); };
+      if (cle === 'getConnection') return (...a) => { connexions++; return v.apply(cible, a); };
+      return v.bind(cible);
+    },
+  });
+  const B = createBilan({ pool: compteur, niveau });
+  const bilans = await Promise.all(C50.map((id) => B.bilanDe(id, 7102, { fini: true })));
+  check(`cinquante bilans au coup de sifflet : deux lectures en tout (${lectures})`, lectures === 2);
+  check('et aucun versement ouvert pour une XP qui manque de chants', connexions === 0);
+  check('chacun a sa place, sur cinquante, et ce qui lui manque pour l’XP',
+    bilans.every((b, i) => b.rang === 50 - i && b.sur === 50
+      && pareil(b.xp, { verse: false, raison: 'incomplet', manque: 7 }))
+    || montrer('un bilan', bilans[0]));
+  lectures = 0;
+  await Promise.all(C50.slice(0, 10).map((id) => B.bilanDe(id, 7102, { fini: false, xp: false })));
+  check(`en cours de match, trois lectures par bilan (${lectures} pour dix)`, lectures === 30);
+}
+
+/* ================================== l'XP du match (§ 15.2)
+
+   15 XP par match, une fois, à partir de dix chants, trois matchs par jour ;
+   ni le club, ni l'abonnement, ni la neutralité, ni le classement n'y
+   changent rien. */
+{
+  /* Deux, puis dix demandes simultanées : une ligne. */
+  const deux = await enParallele(2, () => virage.bilan.verserXp(J[1], 7101));
+  const [l2] = await pool.query(`SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ?`, [J[1]]);
+  check('deux demandes simultanées : un versement, une ligne',
+    deux.filter((r) => r.verse).length === 1 && Number(l2[0].n) === 1 || montrer('rendus', deux));
+  const [K] = await creerJoueurs('dix', 1);
+  await semer(K, 7105, { chants: 12 });
+  const dix = await enParallele(10, () => virage.bilan.verserXp(K, 7105));
+  const [l10] = await pool.query(`SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ?`, [K]);
+  check('dix demandes simultanées : un versement, une ligne, et « deja » pour les neuf autres',
+    dix.filter((r) => r.verse).length === 1 && Number(l10[0].n) === 1
+    && dix.filter((r) => r.raison === 'deja').length === 9 || montrer('rendus', dix));
+
+  /* Neuf chants : il en manque un. Par le recompte du grand livre, et par le bilan. */
+  const [N9] = await creerJoueurs('neuf', 1);
+  await semer(N9, 7106, { chants: 9, ferveur: 30 });
+  check('neuf chants : « incomplet », il en manque un (recompte sous verrou)',
+    pareil(await virage.bilan.verserXp(N9, 7106), { verse: false, raison: 'incomplet', manque: 1 }));
+  check('et le bilan dit la même chose',
+    pareil((await virage.bilan.bilanDe(N9, 7106, {})).xp, { verse: false, raison: 'incomplet', manque: 1 }));
+
+  /* Le plafond du jour : trois matchs ont rapporté, le quatrième non. Les
+     versements d'hier ne comptent pas. */
+  const Q = await creerJoueurs('quota', 2);
+  for (const q of Q) await semer(q, 7106, { chants: 12 });
+  for (const cle of ['8001', '8002', '8003']) {
+    await pool.query(`INSERT INTO recompenses (user_id, source, cle, xp) VALUES (?, 'virage', ?, 15)`, [Q[0], cle]);
+  }
+  for (const [cle, hier] of [['8001', 0], ['8002', 0], ['8003', 1], ['8004', 1]]) {
+    await pool.query(`INSERT INTO recompenses (user_id, source, cle, xp, verse_a)
+                      VALUES (?, 'virage', ?, 15, NOW(3) - INTERVAL ? DAY)`, [Q[1], cle, hier]);
+  }
+  check('le quatrième match du jour : « quota »',
+    pareil(await virage.bilan.verserXp(Q[0], 7106), { verse: false, raison: 'quota' }));
+  const [lq] = await pool.query(`SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ? AND cle = '7106'`, [Q[0]]);
+  check('et rien d’écrit', Number(lq[0].n) === 0);
+  check('deux aujourd’hui, deux hier : le troisième du jour passe',
+    (await virage.bilan.verserXp(Q[1], 7106)).verse === true);
+
+  /* La même chose pour tous : un joueur classé chez lui, un neutre, un
+     Virage non classé. L'abonnement, lui, ne se lit nulle part dans le
+     module (le contrôle lit le code, commentaires ôtés). */
+  const T = await creerJoueurs('egal', 3);
+  await semer(T[0], 7107, { chants: 10 });
+  await semer(T[1], 7107, { chants: 10, team_id: null });
+  await semer(T[2], 7107, { chants: 10, classe: 0 });
+  const rendus = [];
+  for (const t of T) rendus.push(await virage.bilan.verserXp(t, 7107));
+  check('classé chez lui, neutre, non classé : exactement la même XP',
+    rendus.every((r) => r.verse && pareil(r.gain, { echarpes: 0, packs: 0, xp: 15, tampons: 0 })
+      && r.niveau?.gain === 15) || montrer('rendus', rendus.map((r) => [r.verse, r.raison, r.gain])));
+  const code = readFileSync(new URL('../src/server/ferveur/bilan.js', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  const xpSeule = code.slice(code.indexOf('async function verserXp'), code.indexOf('async function xpDuBilan'));
+  check('l’XP ne lit ni l’abonnement, ni le classement, ni le club',
+    xpSeule.length > 100 && !/abonn|estAbonne|classe|team_id|neutre/i.test(xpSeule)
+    && !/abonn/i.test(code));
+
+  /* Sans la colonne d'XP : « schema », ni XP ni ligne. */
+  const [S] = await creerJoueurs('schema', 1);
+  await semer(S, 7106, { chants: 12 });
+  await pool.query('ALTER TABLE user_wallet DROP COLUMN xp');
+  let rs;
+  try { rs = await virage.bilan.verserXp(S, 7106); } finally {
+    const brut = await mysql.createConnection({ uri: DB, multipleStatements: true });
+    await brut.query(readFileSync(new URL('../sql/niveau.sql', import.meta.url), 'utf8'));
+    await brut.end();
+  }
+  const [ls] = await pool.query(`SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ?`, [S]);
+  check('sans la colonne xp : « schema », et pas de ligne',
+    pareil(rs, { verse: false, raison: 'schema' }) && Number(ls[0].n) === 0 || montrer('rendu', rs));
+
+  /* `xp.virage` à 0 : l'XP du Virage est éteinte, rien ne part au grand livre. */
+  const avant = reglagesVivants();
+  poserReglages({ ...avant, 'xp.virage': 0 });
+  try {
+    check('xp.virage à 0 : « inactif »',
+      pareil((await virage.bilan.bilanDe(S, 7106, {})).xp, { verse: false, raison: 'inactif' }));
+  } finally { poserReglages(avant); }
+  const [li] = await pool.query(`SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ?`, [S]);
+  check('et rien d’écrit', Number(li[0].n) === 0);
+
+  /* **Le filet** : un membre qui a chanté et qui s'en va sans demander de
+     bilan reçoit son XP au départ ; celui qui n'a fait qu'entrer, rien. */
+  const [Pc, Pe] = await creerJoueurs('filet', 2);
+  const X = connect(Pc), Y = connect(Pe);
+  await until(() => X.socket.connected && Y.socket.connected);
+  X.socket.emit('virage:join', { fixtureId: 7108 });
+  Y.socket.emit('virage:join', { fixtureId: 7108 });
+  await until(() => X.state && Y.state);
+  const salle = virage.rooms.get(7108);
+  salle.minute = 0; salle.rangChangeA = 0;             // « reprise » au répertoire
+  const mx = salle.members.get(Pc);
+  mx.breath = 100;
+  X.socket.emit('virage:chant', { cardId: 'reprise', taps: frappesTempo(salle.modsDe(mx), 0) });
+  await until(() => X.results.length === 1);
+  const ligne = async () => (await pool.query(
+    'SELECT chants FROM virage_presence WHERE user_id = ? AND fixture_id = 7108', [Pc]))[0][0];
+  for (let t = 0; t < 50 && !(await ligne()); t++) await wait(40);
+  await pool.query('UPDATE virage_presence SET chants = 12 WHERE user_id = ? AND fixture_id = 7108', [Pc]);
+  /* Celui qui n'a fait qu'entrer a pourtant, en base, de quoi toucher l'XP
+     (un passage d'avant) : c'est d'être entré sans chanter qui ne la verse
+     pas au départ — son bilan, s'il le demande, la versera. */
+  await semer(Pe, 7108, { chants: 12 });
+  X.socket.disconnect(); Y.socket.disconnect();
+  const versee = async (u) => Number((await pool.query(
+    `SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ? AND source = 'virage' AND cle = '7108'`,
+    [u]))[0][0].n);
+  let n = 0;
+  for (let t = 0; t < 60 && !n; t++) { await wait(50); n = await versee(Pc); }
+  check('le filet verse au départ de qui a chanté sans demander son bilan', n === 1);
+  check('et rien à qui n’a fait qu’entrer', await versee(Pe) === 0);
+}
+
+/* ================================== le coup de sifflet, par la socket (§ 15.3)
+
+   `virage:fin` une fois ; le bilan devient `fini` ; `virage.bilan_min`
+   minutes après, `virage:ferme` à chaque socket, qui quitte la salle — sauf
+   qui est arrivé après la fin, qui a les mêmes minutes que les autres. */
+{
+  const X = await creerJoueurs('fin', 3);
+  const S1 = connect(X[0]), S2 = connect(X[1]);
+  await until(() => S1.socket.connected && S2.socket.connected);
+  S1.socket.emit('virage:join', { fixtureId: 7109 });
+  S2.socket.emit('virage:join', { fixtureId: 7109 });
+  await until(() => S1.state && S2.state);
+  check('au Virage pendant le match (estAuVirage)', virage.estAuVirage(X[0]) === true);
+  virage.matchStatus(7109, { status: 'FT', elapsed: 90 });
+  virage.matchStatus(7109, { status: 'FT', elapsed: 90 });
+  await until(() => S1.fins.length && S2.fins.length);
+  await wait(150);
+  check('virage:fin une fois à chaque socket, statut FT',
+    S1.fins.length === 1 && S2.fins.length === 1 && S1.fins[0].statut === 'FT'
+    || montrer('fins', [S1.fins, S2.fins]));
+  check('après le coup de sifflet, on n’est plus « au Virage »', virage.estAuVirage(X[0]) === false);
+  check('et la salle ne coûte plus de relevé', !virage.sallesOccupees().includes(7109));
+  S1.socket.emit('virage:bilan');
+  await until(() => S1.bilans.length === 1);
+  check('le bilan dit fini, et rien d’autre sans ligne de présence',
+    pareil(S1.bilans[0], { fixtureId: 7109, side: 0, fini: true }) || montrer('bilan', S1.bilans[0]));
+
+  const S3 = connect(X[2]);
+  await until(() => S3.socket.connected);
+  S3.socket.emit('virage:join', { fixtureId: 7109 });
+  await until(() => S3.state);
+  await wait(150);
+  check('qui entre après la fin ne reçoit pas virage:fin, mais l’état le dit',
+    S3.fins.length === 0 && S3.state.statut === 'FT');
+  check('assis dans une salle finie, il n’est pas « au Virage » : il y lit son bilan',
+    virage.rooms.get(7109)?.members.has(X[2]) && virage.estAuVirage(X[2]) === false);
+
+  const avant = reglagesVivants();
+  poserReglages({ ...avant, 'virage.bilan_min': 1 });
+  try {
+    const salle = virage.rooms.get(7109);
+    const ilYa = Date.now() - 61_000;
+    salle.finA = ilYa;
+    salle.members.get(X[0]).entreA = ilYa;
+    salle.members.get(X[1]).entreA = ilYa;
+    check('virage.bilan_min après le coup de sifflet, virage:ferme à chaque socket',
+      await until(() => S1.fermes.length === 1 && S2.fermes.length === 1, 2000));
+    check('et la tribune se vide d’eux', !salle.members.has(X[0]) && !salle.members.has(X[1]));
+    check('après virage:ferme, ni l’un ni l’autre n’est « au Virage »',
+      virage.estAuVirage(X[0]) === false && virage.estAuVirage(X[1]) === false);
+    check('mais pas de qui est arrivé après : il a ses minutes à lui',
+      S3.fermes.length === 0 && salle.members.has(X[2]));
+    S2.socket.emit('virage:bilan');
+    check('après virage:ferme, le bilan répond not_in_virage',
+      await until(() => S2.errors.includes('ferveur.error.not_in_virage')));
+    const tardif = salle.members.get(X[2]);
+    if (tardif) tardif.entreA = ilYa;
+    check('ses minutes passées, il sort à son tour',
+      await until(() => S3.fermes.length === 1 && salle.size === 0, 2000));
+  } finally {
+    poserReglages(avant);
+    for (const s of [S1, S2, S3]) s.socket.disconnect();
+  }
+}
+
+/* ================================== D4 : une entrée ne diffuse rien à la salle
+
+   La foule part avec la corde : `join` lève `dirty`, et le battement suivant
+   la porte. `virage:crowd` à toute la salle à chaque entrée, c'était un
+   demi-million de messages au coup d'envoi d'un match à mille. */
+{
+  const [d1, d2] = await creerJoueurs('foule', 2);
+  const P1 = connect(d1), P2 = connect(d2);
+  await until(() => P1.socket.connected && P2.socket.connected);
+  P1.socket.emit('virage:join', { fixtureId: 7110 });
+  await until(() => P1.state);
+  await wait(150);
+  P1.crowds.length = 0; P1.ticks.length = 0;
+  P2.socket.emit('virage:join', { fixtureId: 7110 });
+  await until(() => P2.state);
+  await wait(300);
+  check('une entrée n’émet pas virage:crowd à la salle', P1.crowds.length === 0
+    || montrer('virage:crowd', P1.crowds.length));
+  check('la foule part avec la corde, au battement suivant',
+    P1.ticks.length >= 1 && Array.isArray(P1.ticks.at(-1).crowd));
+  P1.socket.disconnect(); P2.socket.disconnect();
+}
+
+/* ================================== les amis dans la tribune (§ 18.3)
+
+   Une salle de cinquante. L'entrant a deux amis mutuels présents — l'un
+   visible, l'autre caché —, une demande en attente et des inconnus. « 2 AMIS
+   ICI » ne dit que les visibles, à lui seul ; son arrivée ne part qu'aux
+   sockets de ses amis, cachés compris, jamais à la salle. Éteinte, la
+   présence ne dit rien. */
+{
+  const [E] = await creerJoueurs('entrant', 1, { fanzzy: 'TR32' });
+  const [F1] = await creerJoueurs('ami-vu', 1, { fanzzy: 'TR32' });
+  const [F2] = await creerJoueurs('ami-cache', 1);
+  const [F3] = await creerJoueurs('demande', 1);
+  const O = await creerJoueurs('foule50', 46);
+  await pool.query(`INSERT INTO amities (a, b, par, etat) VALUES (?, ?, ?, 'amis'), (?, ?, ?, 'amis'),
+    (?, ?, ?, 'demande')`, [E, F1, E, E, F2, E, E, F3, F3]);
+  await pool.query('UPDATE user_wallet SET presence = 0 WHERE user_id = ?', [F2]);
+  const avant = reglagesVivants();
+  const salleDe50 = [F1, F2, F3, ...O].map((id) => ({ id, p: connect(id) }));
+  const tous = [];
+  try {
+    poserReglages({ ...avant, 'presence.actif': true });
+    for (const { p } of salleDe50) {
+      await until(() => p.socket.connected);
+      p.socket.emit('virage:join', { fixtureId: 7103 });
+      tous.push(p);
+    }
+    check('quarante-neuf dans la tribune',
+      await until(() => tous.every((p) => p.state), 8000) && virage.rooms.get(7103)?.size === 49);
+    const e1 = connect(E);
+    await until(() => e1.socket.connected);
+    e1.socket.emit('virage:join', { fixtureId: 7103 });
+    check('l’entrant reçoit virage:amis', await until(() => e1.amis.length === 1, 3000));
+    const amis = e1.amis[0]?.amis ?? [];
+    check('ses seuls amis mutuels visibles : ni le caché, ni la demande, ni les inconnus',
+      amis.length === 1 && amis[0].id === F1 || montrer('amis', amis));
+    check('avec un pseudo, et l’avatar en liste blanche (§ 3)',
+      typeof amis[0]?.pseudo === 'string'
+      && JSON.stringify(Object.keys(amis[0]?.avatar ?? {})) === JSON.stringify(AVATAR_PUBLIC)
+      || montrer('ami', amis[0]));
+    const parId = new Map(salleDe50.map(({ id, p }) => [id, p]));
+    await until(() => parId.get(F1).ami.length === 1 && parId.get(F2).ami.length === 1, 3000);
+    await wait(200);
+    const recoivent = salleDe50.filter(({ p }) => p.ami.length).map(({ id }) => id).sort();
+    check('virage:ami part exactement aux sockets de ses deux amis, le caché compris',
+      JSON.stringify(recoivent) === JSON.stringify([F1, F2].sort()) || montrer('reçoivent', recoivent));
+    const annonce = parId.get(F1).ami[0] ?? {};
+    check('et dit qui, présent', annonce.id === E && annonce.present === true
+      && typeof annonce.pseudo === 'string' && Boolean(annonce.avatar) || montrer('annonce', annonce));
+    check('personne d’autre ne reçoit virage:amis', tous.every((p) => p.amis.length === 0));
+    /* L'ordre des lectures : ses amis d'abord, puis à qui l'annoncer, la
+       seconde partie une fois la première rendue — en parallèle, elles
+       liraient chacune de leur côté ce que l'autre allait garder. */
+    const deE = appelsPresence.filter((x) => x.id === E).map((x) => `${x.f}:${x.t}`);
+    check('ses amis d’abord, puis à qui l’annoncer, l’une après l’autre',
+      JSON.stringify(deE) === JSON.stringify(
+        ['amisPresents:debut', 'amisPresents:fin', 'aPrevenir:debut', 'aPrevenir:fin'])
+      || montrer('appels', deE));
+    check('présent dans la tribune : « au Virage » (estAuVirage)', virage.estAuVirage(E) === true);
+
+    /* Un second onglet n'est pas une arrivée. */
+    const e2 = connect(E);
+    await until(() => e2.socket.connected);
+    e2.socket.emit('virage:join', { fixtureId: 7103 });
+    await until(() => e2.state);
+    await wait(200);
+    check('un second onglet ne se réannonce pas',
+      parId.get(F1).ami.length === 1 && e2.amis.length === 0);
+    e2.socket.disconnect();
+    await wait(200);
+    check('le fermer n’est pas un départ', parId.get(F1).ami.length === 1
+      && virage.estAuVirage(E) === true);
+    e1.socket.disconnect();
+    check('le départ réel part aux mêmes, et à eux seuls',
+      await until(() => parId.get(F1).ami.length === 2 && parId.get(F2).ami.length === 2, 3000)
+      && parId.get(F1).ami[1].present === false
+      && salleDe50.filter(({ p }) => p.ami.length).length === 2);
+    check('après son départ réel, il n’est plus « au Virage »',
+      await until(() => virage.estAuVirage(E) === false, 2000)
+      && virage.rooms.get(7103)?.partis.has(E));
+
+    /* Éteinte : rien. */
+    poserReglages(avant);
+    const e3 = connect(E);
+    await until(() => e3.socket.connected);
+    e3.socket.emit('virage:join', { fixtureId: 7103 });
+    await until(() => e3.state);
+    await wait(300);
+    check('présence éteinte : ni virage:amis, ni virage:ami',
+      e3.amis.length === 0 && parId.get(F1).ami.length === 2);
+    e3.socket.disconnect();
+  } finally {
+    poserReglages(avant);
+    for (const { p } of salleDe50) p.socket.disconnect();
+  }
+}
+
+/* ================================== une entrée dépassée ne s'annonce pas
+   (§ 18.3)
+
+   Parti puis revenu pendant que la présence lit encore — un téléphone qui
+   change de réseau au moment d'entrer : c'est la seconde entrée qui annonce,
+   une fois, et la première s'efface (`annoncerArrivee`). Sans quoi l'ami
+   présent l'apprendrait deux fois, et l'entrant recevrait deux fois ses amis. */
+{
+  const [G] = await creerJoueurs('revient', 1);
+  const [H] = await creerJoueurs('ami-la', 1);
+  await pool.query(`INSERT INTO amities (a, b, par, etat) VALUES (?, ?, ?, 'amis')`, [G, H, G]);
+  const avant = reglagesVivants();
+  let lacher = null;
+  const h = connect(H);
+  const g = [];
+  try {
+    poserReglages({ ...avant, 'presence.actif': true });
+    await until(() => h.socket.connected);
+    h.socket.emit('virage:join', { fixtureId: 7111 });
+    await until(() => h.state);
+    retenues.set(G, new Promise((r) => { lacher = r; }));
+    g.push(connect(G));
+    await until(() => g[0].socket.connected);
+    g[0].socket.emit('virage:join', { fixtureId: 7111 });
+    await until(() => g[0].state);
+    g[0].socket.disconnect();
+    const salle = virage.rooms.get(7111);
+    await until(() => salle?.partis.has(G));
+    g.push(connect(G));
+    await until(() => g[1].socket.connected);
+    g[1].socket.emit('virage:join', { fixtureId: 7111 });
+    await until(() => g[1].state);
+    lacher();
+    retenues.delete(G);
+    await until(() => h.ami.length >= 1 && g[1].amis.length >= 1, 3000);
+    await wait(300);
+    check('parti puis revenu pendant les lectures : une seule arrivée, annoncée par la seconde entrée',
+      h.ami.length === 1 && h.ami[0].id === G && h.ami[0].present === true && g[1].amis.length === 1
+      || montrer('annonces', { h: h.ami, revenu: g[1].amis }));
+  } finally {
+    lacher?.();
+    retenues.delete(G);
+    poserReglages(avant);
+    for (const p of [h, ...g]) p.socket.disconnect();
+  }
+}
+
+/* ================================== la présence éteinte en cours de match
+   (§ 18)
+
+   Allumée à l'entrée d'un ami, éteinte depuis `/admin` avant son départ :
+   « tant que `presence.actif` est faux, rien de ce paragraphe n'est servi ».
+   Son départ ne part plus à ceux qui l'avaient vu entrer. */
+{
+  const [G] = await creerJoueurs('eteinte', 1);
+  const [H] = await creerJoueurs('eteinte-ami', 1);
+  await pool.query(`INSERT INTO amities (a, b, par, etat) VALUES (?, ?, ?, 'amis')`, [G, H, G]);
+  const avant = reglagesVivants();
+  const h = connect(H), g = connect(G);
+  try {
+    poserReglages({ ...avant, 'presence.actif': true });
+    await until(() => h.socket.connected && g.socket.connected);
+    h.socket.emit('virage:join', { fixtureId: 7114 });
+    await until(() => h.state);
+    g.socket.emit('virage:join', { fixtureId: 7114 });
+    check('allumée, son arrivée est dite à son ami',
+      await until(() => h.ami.length === 1, 3000) && h.ami[0].present === true);
+    poserReglages(avant);
+    g.socket.disconnect();
+    await until(() => virage.rooms.get(7114)?.partis.has(G), 2000);
+    await wait(300);
+    check('éteinte avant son départ, son départ ne part plus',
+      h.ami.length === 1 || montrer('virage:ami', h.ami));
+  } finally {
+    poserReglages(avant);
+    for (const p of [h, g]) p.socket.disconnect();
+  }
+}
+
+/* ================================== une transaction par versement dû
+   (§ 15.2 ; revue de la partie B)
+
+   Un versement tenté coûte une connexion, le verrou de la bourse et une
+   place au sémaphore, qu'il verse ou non. Le bilan n'en ouvrait aucune pour
+   un chanteur sous le seuil ; le départ qui le suit (la page quitte la salle
+   après son bilan, § 15.3) et `virage:ferme` en rouvraient une par chanteur.
+   Un « quota » redemandé, dix sockets du même joueur, en rouvraient autant.
+
+   Un second Virage, sur le même pool **compté** et une socket.io en
+   mémoire : on compte au pool lui-même, et une connexion, c'est une
+   transaction de bourse. */
+{
+  const compte = { lectures: 0, connexions: 0 };
+  const zero = () => { compte.lectures = 0; compte.connexions = 0; };
+  const poolCompte = new Proxy(pool, {
+    get(cible, cle) {
+      const v = cible[cle];
+      if (typeof v !== 'function') return v;
+      if (cle === 'execute' || cle === 'query') return (...a) => { compte.lectures++; return v.apply(cible, a); };
+      if (cle === 'getConnection') return (...a) => { compte.connexions++; return v.apply(cible, a); };
+      return v.bind(cible);
+    },
+  });
+  /* Une socket.io en mémoire : ce que reçoit chaque socket, et quand. */
+  const fauxIo = () => {
+    const sockets = new Set();
+    const io2 = { conn: [], on(ev, fn) { if (ev === 'connection') this.conn.push(fn); },
+      to(salle) {
+        return { emit: (e, p) => { for (const s of sockets) if (s.rooms.has(salle)) s.got.push([e, p, Date.now()]); } };
+      } };
+    io2.connecter = (userId) => {
+      const s = { connected: true, data: { user: { userId, name: 'Fan' } }, rooms: new Set(), h: new Map(), got: [],
+        on(n, fn) { (this.h.get(n) ?? this.h.set(n, []).get(n)).push(fn); },
+        emit(e, p) { this.got.push([e, p, Date.now()]); },
+        join(r) { this.rooms.add(r); }, leave(r) { this.rooms.delete(r); },
+        fire(n, ...a) { for (const fn of this.h.get(n) ?? []) fn(...a); },
+        de(ev) { return this.got.filter(([e]) => e === ev).map(([, p]) => p); },
+        couper() { this.connected = false; this.rooms.clear(); sockets.delete(this); this.fire('disconnect', 'test'); } };
+      sockets.add(s);
+      for (const fn of io2.conn) fn(s);
+      return s;
+    };
+    return io2;
+  };
+  const io2 = fauxIo();
+  const V2 = createVirage({ pool: poolCompte, io: io2, souvenirs, fanzzy, niveau,
+    requireAuth: (r, _s, n) => { r.user = { id: identite }; n(); } });
+  const lignesVirage = async (u, f) => Number((await pool.query(
+    `SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ? AND source = 'virage' AND cle = ?`,
+    [u, String(f)]))[0][0].n);
+  const fermeDans = (salle) => {
+    salle.finA = Date.now() - reglage('virage.bilan_min') * 60_000 - 1000;
+    for (const m of salle.members.values()) m.entreA = 0;
+  };
+  const avant = reglagesVivants();
+  try {
+    /* 1. Six chanteurs sous le seuil et un qui a droit à l'XP sans l'avoir
+          demandée. Le bilan, le départ après lui, puis `virage:ferme`. */
+    const R = await creerJoueurs('rien', 7);
+    const du = R[6];
+    for (const id of R.slice(0, 6)) await semer(id, 7112, { chants: 1, ferveur: 1 });
+    await semer(du, 7112, { chants: 12, ferveur: 5 });
+    const S = R.map((id) => io2.connecter(id));
+    for (const s of S) s.fire('virage:join', { fixtureId: 7112 });
+    check('sept dans la tribune du second Virage',
+      await until(() => S.every((s) => s.de('virage:state').length), 6000));
+    const salle = V2.rooms.get(7112);
+    for (const id of R) salle.members.get(id).chants = 1;   // ils ont chanté dans cette salle
+    V2.matchStatus(7112, { status: 'FT', elapsed: 90 });
+    zero();
+    for (const s of S.slice(0, 6)) s.fire('virage:bilan');
+    await until(() => S.slice(0, 6).every((s) => s.de('virage:bilan').length));
+    check('six « incomplet » au coup de sifflet : la salle lue en deux requêtes, aucune connexion '
+      + `(${compte.lectures} lectures, ${compte.connexions} connexions)`,
+    compte.connexions === 0 && compte.lectures === 2
+      && S.slice(0, 6).every((s) => pareil(s.de('virage:bilan')[0]?.xp,
+        { verse: false, raison: 'incomplet', manque: 9 }))
+      || montrer('xp', S[0].de('virage:bilan')[0]?.xp));
+    zero();
+    for (const s of S.slice(0, 3)) s.fire('virage:leave');
+    await until(() => R.slice(0, 3).every((id) => salle.partis.has(id)));
+    await wait(200);
+    check('la page quitte la salle après son bilan : une lecture par départ, aucune connexion '
+      + `(${compte.lectures} lectures, ${compte.connexions} connexions)`,
+    compte.connexions === 0 && compte.lectures === 3);
+    zero();
+    fermeDans(salle);
+    check('virage:ferme sort les quatre qui restaient',
+      await until(() => S.slice(3).every((s) => s.de('virage:ferme').length), 3000));
+    let n = 0;
+    for (let t = 0; t < 60 && !n; t++) { await wait(50); n = await lignesVirage(du, 7112); }
+    await wait(100);
+    check('virage:ferme : rien pour les trois « incomplet », une connexion pour qui a droit à l’XP '
+      + `sans l’avoir demandée (${compte.connexions})`, compte.connexions === 1 && n === 1);
+
+    /* 2. Au plafond du jour, trois sockets du même joueur demandent leur
+          bilan ensemble, puis il s'en va. */
+    const [P] = await creerJoueurs('plafond', 1);
+    await semer(P, 7113, { chants: 12, ferveur: 4 });
+    for (const cle of ['8101', '8102', '8103']) {
+      await pool.query(`INSERT INTO recompenses (user_id, source, cle, xp) VALUES (?, 'virage', ?, 15)`, [P, cle]);
+    }
+    const T = [io2.connecter(P), io2.connecter(P), io2.connecter(P)];
+    for (const s of T) s.fire('virage:join', { fixtureId: 7113 });
+    await until(() => T.every((s) => s.de('virage:state').length));
+    V2.rooms.get(7113).members.get(P).chants = 1;
+    zero();
+    for (const s of T) s.fire('virage:bilan');
+    await until(() => T.every((s) => s.de('virage:bilan').length));
+    check('au plafond, trois sockets demandent leur bilan ensemble : « quota » à chacune, '
+      + `une seule connexion (${compte.connexions})`,
+    compte.connexions === 1 && T.every((s) => s.de('virage:bilan')[0]?.xp?.raison === 'quota')
+      || montrer('xp', T.map((s) => s.de('virage:bilan')[0]?.xp)));
+    for (const s of T) s.couper();
+    await until(() => V2.rooms.get(7113)?.partis.has(P));
+    await wait(200);
+    check(`et son départ n’en rouvre pas (${compte.connexions})`, compte.connexions === 1);
+
+    /* 3. Dix demandes ensemble d'un joueur à qui l'XP est due : une
+          transaction, pas dix qui s'attendent sur le même verrou. */
+    const [K2] = await creerJoueurs('ensemble', 1);
+    await semer(K2, 7113, { chants: 12 });
+    const B2 = createBilan({ pool: poolCompte, niveau, log: { warn() {} } });
+    zero();
+    const dix = await enParallele(10, () => B2.verserXp(K2, 7113));
+    check(`dix demandes ensemble : une transaction (${compte.connexions}), un versement, `
+      + '« deja » pour les neuf autres',
+    compte.connexions === 1 && dix.filter((r) => r.verse).length === 1
+      && dix.filter((r) => r.raison === 'deja').length === 9 && await lignesVirage(K2, 7113) === 1
+      || montrer('rendus', dix.map((r) => (r.verse ? 'verse' : r.raison))));
+
+    /* 4. Un joueur sans bourse : « inconnu », retenu. */
+    zero();
+    const i1 = await B2.verserXp('fantome-0000', 7113, { chants: 12 });
+    const i2 = await B2.verserXp('fantome-0000', 7113, { chants: 12 });
+    check(`un joueur sans bourse : « inconnu », retenu (${compte.connexions} connexion)`,
+      i1.raison === 'inconnu' && i2.raison === 'inconnu' && compte.connexions === 1
+      || montrer('rendus', [i1, i2]));
+
+    /* 5. Le « quota » tient jusqu'au minuit **de la base**, et pas plus ; le
+          plafond relevé depuis /admin le lève. L'horloge de la base est figée
+          à 23:59:30, celle du module avancée à la main. */
+    let maintenant = Date.now();
+    const B3 = createBilan({ pool: poolCompte, niveau, log: { warn() {} }, horloge: () => maintenant });
+    const [[{ jour }]] = await pool.query(`SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS jour`);
+    await figerHorloge(pool, `${jour} 23:59:30`);
+    try {
+      zero();
+      const q1 = await B3.verserXp(P, 7113, { chants: 12 });
+      maintenant += 29_000;
+      const q2 = await B3.verserXp(P, 7113, { chants: 12 });
+      check(`« quota » à 23:59:30, encore retenu 29 s plus tard (${compte.connexions} connexion)`,
+        q1.raison === 'quota' && q2.raison === 'quota' && compte.connexions === 1
+        || montrer('rendus', [q1, q2]));
+      maintenant += 2_000;
+      await B3.verserXp(P, 7113, { chants: 12 });
+      check(`minuit passé pour la base, on redemande au grand livre (${compte.connexions})`,
+        compte.connexions === 2);
+      poserReglages({ ...avant, 'xp.virage_matchs_jour': 4 });
+      const q4 = await B3.verserXp(P, 7113, { chants: 12 });
+      check(`le plafond relevé depuis /admin : le refus ne tient plus, et le match paie (${compte.connexions})`,
+        q4.verse === true && compte.connexions === 3 || montrer('rendu', q4));
+    } finally {
+      await figerHorloge(pool, null);
+      poserReglages(avant);
+    }
+
+    /* 6. Le recompte sous verrou fait foi : la lecture que le filet fait avant
+          le sémaphore, si elle se trompait vers le haut, n'y change rien. */
+    const [N9] = await creerJoueurs('neuf-verrou', 1);
+    await semer(N9, 7113, { chants: 9 });
+    const menteur = new Proxy(pool, {
+      get(cible, cle) {
+        const v = cible[cle];
+        if (cle === 'execute') {
+          return (sql, p) => (/^SELECT chants FROM virage_presence/.test(sql)
+            ? Promise.resolve([[{ chants: 12 }], []]) : v.call(cible, sql, p));
+        }
+        return typeof v === 'function' ? v.bind(cible) : v;
+      },
+    });
+    const B4 = createBilan({ pool: menteur, niveau, log: { warn() {} } });
+    check('neuf chants, un filet dont la lecture d’avant en voit douze : le recompte sous verrou dit « incomplet », il en manque un',
+      pareil(await B4.verserXp(N9, 7113, { filet: true }), { verse: false, raison: 'incomplet', manque: 1 })
+      && await lignesVirage(N9, 7113) === 0);
+
+    /* 7. Une tribune de vingt-cinq se vide par battements de dix au plus :
+          sortie d'un coup, elle lançait le filet de chacun dans le même
+          battement. */
+    const VG = await creerJoueurs('vague', 25);
+    const SV = VG.map((id) => io2.connecter(id));
+    for (const s of SV) s.fire('virage:join', { fixtureId: 7115 });
+    await until(() => SV.every((s) => s.de('virage:state').length), 8000);
+    V2.matchStatus(7115, { status: 'FT', elapsed: 90 });
+    fermeDans(V2.rooms.get(7115));
+    check('virage:ferme les sort tous', await until(() => SV.every((s) => s.de('virage:ferme').length), 5000));
+    const instants = SV.map((s) => s.got.find(([e]) => e === 'virage:ferme')?.[2] ?? 0).sort((a, b) => a - b);
+    const vagues = [];
+    for (const t of instants) {
+      if (vagues.length && t - vagues.at(-1).at(-1) <= 40) vagues.at(-1).push(t);
+      else vagues.push([t]);
+    }
+    check(`dix par battement au plus (${vagues.map((v) => v.length).join(' + ')})`,
+      vagues.length >= 3 && vagues.every((v) => v.length <= 10));
+  } finally {
+    poserReglages(avant);
+    V2.stop();
+  }
+}
+
+/* ================================== le bilan avant le filet, au sémaphore
+
+   Une page attend son bilan trois secondes au plus (§ 15.4) ; un départ
+   n'attend personne. Quatre filets tiennent le sémaphore, deux attendent ;
+   un bilan arrive, puis un second pour le même joueur et le même match qu'un
+   filet en attente : les deux bilans passent avant les filets. Sans base : un
+   grand livre doublé, qui ne rend la main qu'à la demande — et qui rend
+   toutes les mains d'un même joueur à la fois, pour qu'un code qui ouvrirait
+   deux versements au lieu d'un rougisse au lieu de rester suspendu. */
+{
+  const ordre = [];
+  const portes = new Map();         // joueur -> les versements qui attendent sa porte
+  const ouvrir = (u) => { for (const r of portes.get(u) ?? []) r(); portes.delete(u); };
+  const B = createBilan({
+    pool: { execute: async () => [[{ chants: 99 }], []] },
+    niveau: { gagnerDans() {} }, log: { warn() {} },
+    verser: async (_p, o) => {
+      ordre.push(o.userId);
+      await new Promise((r) => portes.set(o.userId, [...(portes.get(o.userId) ?? []), r]));
+      return { verse: false, raison: 'deja' };
+    },
+  });
+  const tous = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'].map((u) => B.verserXp(u, 1, { filet: true }));
+  await wait(20);
+  tous.push(B.verserXp('b1', 1, { chants: 99 }));
+  await wait(20);
+  tous.push(B.verserXp('f6', 1, { chants: 99 }));   // une page attend désormais f6
+  await wait(20);
+  check('quatre au grand livre, trois en attente dont un filet',
+    ordre.join(' ') === 'f1 f2 f3 f4' && B.etatXp().enAttente === 3 && B.etatXp().filets === 1
+    || montrer('état', { ordre, etat: B.etatXp() }));
+  for (const u of ['f1', 'f2', 'f3', 'f4']) { ouvrir(u); await wait(10); }
+  for (let k = 0; k < 4 && portes.size; k++) {
+    for (const u of [...portes.keys()]) ouvrir(u);
+    await wait(10);
+  }
+  const fini = await Promise.race([Promise.all(tous).then(() => true), wait(2000).then(() => false)]);
+  check(`le bilan d’abord, puis le filet qu’une page attend, puis les autres (${ordre.join(' ')})`,
+    fini && ordre.join(' ') === 'f1 f2 f3 f4 b1 f6 f5');
 }
 
 /* ================================== la carte tirée, annoncée

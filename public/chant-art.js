@@ -31,6 +31,9 @@
 
   const adresse = (id) => `/img/chant/${id}${ext()}`;
 
+  const echappe = (s) => String(s ?? '').replace(/[<>&"]/g,
+    (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
   /**
    * L'illustration d'un chant, en HTML, à poser **avant** son texte.
    *
@@ -40,10 +43,34 @@
    *
    * `aria-hidden` : le dessin ne dit rien que le nom ne dise déjà, et le faire
    * annoncer ferait lire deux fois la même chose à qui écoute la page.
+   *
+   * **Le dessin est la face de la carte** (lot 6, la matière commune des deux
+   * arènes : dessin plein, plus d'assombrissement). Il était un fond voilé —
+   * à moitié ou au tiers, sous un dégradé sombre —, et ce que les pages lui
+   * appliquaient vivait dans les pages : rien n'en est écrit ici, l'image
+   * reste nue et la feuille décide de sa lumière. Trois choses changent
+   * pour autant, parce qu'une face ne se charge pas comme un fond :
+   *
+   *   — **elle n'attend plus d'être vue** (plus de `loading="lazy"`). La main
+   *     du duel est posée dans une partie encore cachée pendant la
+   *     préparation ; une image paresseuse n'y part qu'à l'affichage, et la
+   *     carte arrivait vide puis se peignait sous les yeux. Douze dessins de
+   *     sept à dix kilo-octets : les charger d'un coup ne coûte rien ;
+   *   — `decoding` asynchrone : son décodage ne retient pas le reste ;
+   *   — `draggable` à faux : la main en éventail se touche et se presse, et
+   *     un dessin qu'on peut traîner partait en fantôme sous la souris.
+   *
+   * Elle ne respire pas : sa classe n'est pas `.illu` (voir `fx.js`), et
+   * c'est voulu — un chant n'est pas un personnage.
+   *
+   * **Les dessins sont en 4:3** (320 × 240), la carte de chant en 2:3 : la
+   * face en recadre la moitié de la largeur. Le cadrage est à la feuille
+   * (`object-position`) ; des dessins en 2:3 sont un travail d'images
+   * (lot 7), pas de ce fichier.
    */
   function illustration(id, classe = 'fond') {
-    return `<img class="${classe}" src="${adresse(id)}" alt="" aria-hidden="true"
-      loading="lazy" onerror="this.remove()">`;
+    return `<img class="${echappe(classe)}" src="${adresse(echappe(id))}" alt="" aria-hidden="true"
+      decoding="async" draggable="false" onerror="this.remove()">`;
   }
 
   window.TBF_CHANT = { adresse, illustration };

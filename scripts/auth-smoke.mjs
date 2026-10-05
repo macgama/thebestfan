@@ -36,8 +36,9 @@ await raw.query(`DROP TABLE IF EXISTS recompenses, missions_jour, compteurs_jour
 /* Au-delà d'auth.sql, ce que la suppression d'un compte doit vider : les
    tables du quotidien et les colonnes qu'il pose sur la bourse. `admin.sql`
    pour `reglages`, que `saisons.sql` lit ; `saisons.sql` parce que
-   `quotidien.sql` complète sa table. */
-for (const f of ['auth', 'admin', 'souvenirs', 'saisons', 'quotidien']) {
+   `quotidien.sql` complète sa table. `arenes.sql` (vague 2) pour la
+   préférence de présence, qui part elle aussi avec le compte. */
+for (const f of ['auth', 'admin', 'souvenirs', 'saisons', 'quotidien', 'arenes']) {
   await raw.query(readFileSync(new URL(`../sql/${f}.sql`, import.meta.url), 'utf8'));
 }
 await raw.end();
@@ -285,8 +286,10 @@ const BOB = '00000000-0000-4000-8000-00000000b0b0';
 await pool.query(`INSERT INTO users (public_id, email, pseudo, password_hash) VALUES (?, ?, ?, 'x')`,
   [BOB, 'bob-temoin@exemple.fr', 'TemoinBob']);
 for (const qui of [ALICE, BOB]) {
-  await pool.query(`INSERT INTO user_wallet (user_id, packs, packs_at, rangs_vus, visite_a, instantane)
-    VALUES (?, 3, ?, JSON_OBJECT('ref', JSON_OBJECT('jour', '2026-10-01')), NOW(3), JSON_OBJECT('k', 1))`,
+  /* `presence = 0` : l'un et l'autre ont choisi d'apparaître hors ligne
+     (`CONTRATS.md`, § 18.2). C'est un choix qui décrit une personne. */
+  await pool.query(`INSERT INTO user_wallet (user_id, packs, packs_at, rangs_vus, visite_a, instantane, presence)
+    VALUES (?, 3, ?, JSON_OBJECT('ref', JSON_OBJECT('jour', '2026-10-01')), NOW(3), JSON_OBJECT('k', 1), 0)`,
   [qui, new Date()]);
   await pool.query(`INSERT INTO missions_jour (user_id, jour, rang, mission, cible, echarpes, xp, tampons)
     VALUES (?, CURDATE(), 0, 'boosters', 3, 30, 20, 1), (?, CURDATE(), 3, 'sachet', 3, 0, 0, 1)`, [qui, qui]);
@@ -301,19 +304,21 @@ const lignesDe = async (qui) => {
   const compte = async (t) => Number((await pool.query(
     `SELECT COUNT(*) AS n FROM ${t} WHERE user_id = ?`, [qui]))[0][0].n);
   const [[w]] = await pool.query(
-    'SELECT rangs_vus, visite_a, instantane FROM user_wallet WHERE user_id = ?', [qui]);
+    'SELECT rangs_vus, visite_a, instantane, presence FROM user_wallet WHERE user_id = ?', [qui]);
   return {
     nouveautes: await compte('user_nouveautes'),
     missions: await compte('missions_jour'),
     compteurs: await compte('compteurs_jour'),
     grandLivre: await compte('recompenses'),
     bourse: w ? [w.rangs_vus, w.visite_a, w.instantane].filter((x) => x !== null).length : -1,
+    // Le choix de présence : 0 (caché), 1 (visible), null (le défaut du registre).
+    presence: w ? w.presence : 'sans bourse',
   };
 };
 const avantSuppression = await lignesDe(ALICE);
-check('les lignes du quotidien d’Alice sont bien semées avant la suppression',
+check('les lignes du quotidien d’Alice et son choix de présence sont bien semés avant la suppression',
   JSON.stringify(avantSuppression)
-    === JSON.stringify({ nouveautes: 1, missions: 2, compteurs: 1, grandLivre: 1, bourse: 3 })
+    === JSON.stringify({ nouveautes: 1, missions: 2, compteurs: 1, grandLivre: 1, bourse: 3, presence: 0 })
   || (console.log('        semées :', JSON.stringify(avantSuppression)), false));
 
 r = await alice.call('/api/auth/me', { method: 'DELETE', body: { password: 'mauvais' } });
@@ -378,9 +383,44 @@ check('ticket inutilisable après suppression du compte', apresSuppression === n
   check('sa dernière visite, ses rangs vus et l’état des pots sont oubliés', apres.bourse === 0
     || (console.log('        restent :', apres.bourse, 'colonne(s)'), false));
   check('le grand livre garde sa ligne : la trace comptable ne nomme personne', apres.grandLivre === 1);
+  /* La présence (`CONFIDENTIALITE.md`, vague 2) : le choix d'apparaître hors
+     ligne part avec le compte, remis à NULL — le défaut du registre, comme
+     pour qui n'a jamais choisi. */
+  check('son choix de présence est oublié (remis à NULL)', apres.presence === null
+    || (console.log('        reste :', apres.presence), false));
   check('et rien n’est pris au témoin',
     JSON.stringify(await lignesDe(BOB))
-      === JSON.stringify({ nouveautes: 1, missions: 2, compteurs: 1, grandLivre: 1, bourse: 3 }));
+      === JSON.stringify({ nouveautes: 1, missions: 2, compteurs: 1, grandLivre: 1, bourse: 3, presence: 0 }));
+}
+
+/* ======== une base sans sql/arenes.sql : la colonne absente n'emporte qu'elle
+
+   Le choix de présence s'efface par **une instruction à lui**. Glissé dans
+   celle du quotidien, il la ferait lever sur une base où `arenes.sql` n'est
+   pas encore passé — et le repli tolérant avalerait avec lui l'effacement de
+   la dernière visite et des rangs vus : la politique de confidentialité
+   mentirait sans un mot au journal. On retire la colonne, on supprime un
+   compte, on regarde ce qui reste ; puis on la repose. `deleteUser` est
+   appelé avec le numéro interne, comme la route le fait. */
+{
+  const { createStore } = await import('../src/server/auth/store.js');
+  const CAROLE = '00000000-0000-4000-8000-0000000ca201';
+  const [ins] = await pool.query(
+    `INSERT INTO users (public_id, email, pseudo, password_hash) VALUES (?, ?, ?, 'x')`,
+    [CAROLE, 'carole-sans-arenes@exemple.fr', 'CaroleSansArenes']);
+  await pool.query(`INSERT INTO user_wallet (user_id, packs, packs_at, rangs_vus, visite_a, instantane)
+    VALUES (?, 3, ?, JSON_OBJECT('ref', 1), NOW(3), JSON_OBJECT('k', 1))`, [CAROLE, new Date()]);
+  await pool.query('ALTER TABLE user_wallet DROP COLUMN presence');
+  let leve = null;
+  try { await createStore(pool).deleteUser(ins.insertId); } catch (e) { leve = e; }
+  const [[w]] = await pool.query(
+    'SELECT rangs_vus, visite_a, instantane FROM user_wallet WHERE user_id = ?', [CAROLE]);
+  await pool.query(readFileSync(new URL('../sql/arenes.sql', import.meta.url), 'utf8')
+    .replace(/--[^\n]*/g, '').split(';').map((s) => s.trim())
+    .find((s) => /ADD COLUMN IF NOT EXISTS presence\b/.test(s)));
+  check('sans la colonne presence, la suppression passe et oublie quand même la dernière visite',
+    !leve && w && w.rangs_vus === null && w.visite_a === null && w.instantane === null
+    || (console.log('        lève :', leve?.message ?? 'non', '· reste :', JSON.stringify(w)), false));
 }
 
 /* --------------------------------------------------- vie privée en base */

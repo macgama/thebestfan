@@ -147,10 +147,33 @@
    * `this.remove()` est le repli : un fichier absent retire son image et le
    * glyphe dessous redevient visible. Sans ça, une carte sans dessin
    * afficherait le carré vide du navigateur — pire que pas d'image du tout.
+   *
+   * **Figée d'office** (`data-fige`, la règle de `fx.js`). `fx.js` fait
+   * respirer toute image `.illu`, et le dessin d'une carte d'action en est
+   * une — c'est le nom que les pages stylent et que les suites lisent. Une
+   * torche ou une bâche n'ont pourtant pas de souffle : seul un personnage
+   * en a. Les dessins de la rangée d'action du Virage et ceux de la main du
+   * duel respiraient donc tous : six animations sans fin à l'écran au Virage,
+   * dix au duel, pour un plafond de trois (mesuré au banc du lot 6), et
+   * chaque carte de la grille du deck respirait aussi (« aucune animation
+   * infinie en grille »).
+   * `vivant: true` rend le souffle à un dessin, pour qui le voudrait vraiment.
+   *
+   * **La matière du lot 6** (dessin plein, plus d'assombrissement) est dans
+   * la feuille : l'image reste nue, sans filtre ni voile écrits ici, et c'est
+   * la carte qui décide de sa lumière. `draggable` à faux : une main en
+   * éventail se touche, se presse, se glisse, et un dessin qu'on peut
+   * traîner partait en fantôme sous la souris au lieu de jouer la carte.
+   * `decoding` asynchrone : le décodage ne retient pas l'image suivante.
+   *
+   * @param {string} id
+   * @param {string} [classe='illu']
+   * @param {object} [o]
+   * @param {boolean} [o.vivant=false]  laisser `fx.js` le faire respirer
    */
-  function illustration(id, classe = 'illu') {
-    return `<img class="${classe}" src="${adresse(id)}" alt="" loading="lazy"
-      onerror="this.remove()">`;
+  function illustration(id, classe = 'illu', { vivant = false } = {}) {
+    return `<img class="${echappe(classe)}" src="${adresse(echappe(id))}" alt="" loading="lazy"
+      decoding="async" draggable="false"${vivant ? '' : ' data-fige'} onerror="this.remove()">`;
   }
 
   /* ------------------------------------------------- la carte qu'on joue */
@@ -216,7 +239,13 @@
       return;
     }
     const fam = famDe(a);
-    const doux = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    /* Sans mouvement : la préférence du système **ou le mode calme** du
+       tiroir (« animations », sur la racine du document — fx.js et menu.js
+       l'y posent). La carte ne lisait que la première : au calme, elle volait
+       encore à travers l'écran, alors que ses étincelles (FX.particules)
+       s'arrêtaient. Chaque mouvement a ses deux doubles. */
+    const doux = Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+      || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
 
     const el = document.createElement('div');
     el.className = 'tbf-jouee';

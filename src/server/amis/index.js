@@ -49,6 +49,15 @@ import { niveauPour } from '../../shared/niveau.js';
  * envoyant le lien, l'autre en s'en servant. Faire cliquer « accepter » à
  * quelqu'un qui vient d'arriver par l'invitation de son ami serait lui faire
  * répondre à une question qu'il a déjà posée.
+ *
+ * ## Où ils sont, maintenant
+ *
+ * La liste peut dire d'un ami qu'il est en ligne, au Virage ou en duel —
+ * jamais quel match, jamais depuis quand. Ce n'est pas ce module qui le sait :
+ * il le demande à `presence/index.js`, qui ne le dit qu'entre amis mutuels,
+ * à qui ne s'est pas caché, et seulement quand la présence est allumée
+ * (`CONTRATS.md`, § 18). La règle du dessus vaut ici aussi : on ne montre
+ * rien de plus que ce qu'on verrait en se croisant dans la tribune.
  */
 
 /** Le délai avant de pouvoir redemander à quelqu'un qui a dit non. */
@@ -72,7 +81,14 @@ export const FENETRE_PARRAINAGE_MS = 24 * 60 * 60 * 1000;
 /** Au plus tant de suggestions : c'est une page, pas un annuaire. */
 const MAX_SUGGESTIONS = 40;
 
-export function createAmis({ pool, requireAuth, kop = null }) {
+/**
+ * @param {object} o
+ * @param {object} [o.presence]  le module de présence (`presence/index.js`).
+ *   Facultatif : sans lui, la liste d'amis est celle d'avant, sans pastille.
+ *   Avec lui, chaque ami mutuel peut recevoir `presence` (`CONTRATS.md`,
+ *   § 18.1), et ce module lui dit quand une amitié change.
+ */
+export function createAmis({ pool, requireAuth, kop = null, presence = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -208,12 +224,59 @@ export function createAmis({ pool, requireAuth, kop = null }) {
       };
     });
 
+    const amis = gens.filter((g) => g.etat === 'amis');
+    /* Un compte supprimé garde sa ligne d'ami, sous un pseudo anonyme : il
+       n'a plus de visage, et il n'a pas davantage de présence. */
+    const actifs = new Set(lignes.filter((l) => l.status === 'active').map((l) => l.public_id));
+    await poserLaPresence(userId, amis.filter((g) => actifs.has(g.id)));
     return {
-      amis: gens.filter((g) => g.etat === 'amis'),
+      amis,
       recues: gens.filter((g) => g.etat === 'demande' && g.aMoi),
       envoyees: gens.filter((g) => g.etat === 'demande' && !g.aMoi),
       invitations: await invitationsDe(userId),
     };
+  }
+
+  /**
+   * La pastille de présence, sur les **amis** et sur eux seuls
+   * (`CONTRATS.md`, § 18.1).
+   *
+   * Elle ne se pose qu'ici, sur la liste `amis` déjà triée : jamais sur une
+   * demande reçue ou envoyée — quelqu'un qui n'a pas encore dit oui n'a rien
+   * consenti —, et le module de présence revérifie de son côté que chacun est
+   * un ami mutuel actif. Absente veut dire hors ligne, caché ou présence
+   * éteinte : la clé n'est simplement pas posée, jamais `null`, jamais une
+   * heure.
+   *
+   * **Une panne de présence ne fait pas tomber la liste d'amis** : on la
+   * sert sans pastille, et le journal le dit. La pastille est un agrément ;
+   * la liste, c'est le module.
+   */
+  async function poserLaPresence(userId, amis) {
+    if (!presence || !amis.length) return;
+    let etats;
+    try {
+      etats = await presence.etatsPour(userId, amis.map((g) => g.id));
+    } catch (e) {
+      console.error('[amis] présence illisible :', e?.message ?? e);
+      return;
+    }
+    for (const g of amis) {
+      const e = etats?.get?.(g.id);
+      if (e) g.presence = e;
+    }
+  }
+
+  /**
+   * Une amitié vient de changer entre ces deux-là : la présence ne doit plus
+   * se fier à ce qu'elle a gardé d'eux. Sans cet oubli, un ami retiré verrait
+   * encore où l'on est pendant les deux minutes de sa mémoire, et un ami tout
+   * juste accepté resterait sans pastille. Ni l'un ni l'autre ne lève : le
+   * geste sur l'amitié est déjà fait.
+   */
+  function amitieChangee(x, y) {
+    try { presence?.oublierAmis?.(x, y); }
+    catch (e) { console.error('[amis] présence non prévenue :', e?.message ?? e); }
   }
 
   /** Les KOP où l'on m'invite, avec qui invite et ce que pèse le groupe. */
@@ -385,6 +448,7 @@ export function createAmis({ pool, requireAuth, kop = null }) {
     const [a, b] = paire(userId, autreId);
     await q(`UPDATE amities SET etat = ?, repondu_le = NOW(3) WHERE a = ? AND b = ?`,
       [oui ? 'amis' : 'refuse', a, b]);
+    amitieChangee(userId, autreId);
     return { etat: oui ? 'amis' : 'refuse' };
   }
 
@@ -400,6 +464,7 @@ export function createAmis({ pool, requireAuth, kop = null }) {
       `DELETE FROM amities WHERE a = ? AND b = ? AND etat IN ('demande','amis')
          AND (? = a OR ? = b)`, [a, b, userId, userId]);
     if (!r.affectedRows) throw fail('amis.error.pas_de_lien');
+    amitieChangee(userId, autreId);
     return { retire: true };
   }
 
@@ -564,6 +629,7 @@ export function createAmis({ pool, requireAuth, kop = null }) {
       if (e.code === 'ER_DUP_ENTRY') throw fail('amis.error.deja_amis');
       throw e;
     }
+    amitieChangee(userId, parrain.id);
     return { ami: { id: parrain.id, pseudo: parrain.pseudo, fanzzy: parrain.fanzzy } };
   }
 

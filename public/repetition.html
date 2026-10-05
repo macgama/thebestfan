@@ -102,21 +102,86 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Les mots en gras de la consigne se détachent par la graisse, plus par
    l'or : l'or ne s'écrit plus qu'en grand (arbitrage du 2 octobre 2026). */
 .salle .consigne em{font-style:normal;font-weight:700;color:var(--craie)}
+/* **Sur un petit écran, la consigne cède sa place au verdict.** À 320 × 568,
+   les trois portes et la note prennent au pavé une trentaine de pixels de trop
+   une fois le geste jugé : il débordait sur son propre chiffre. La consigne a
+   servi — on vient de jouer — et RECOMMENCER la remet. Au-dessus de six cents
+   pixels de haut, tout tient et elle reste. */
+@media (max-height:600px){
+  .salle.jugee .consigne{display:none}
+}
 /* La zone que `geste.js` remplit. Il y pose ses propres formes — on ne lui
-   donne qu'une surface et on ne touche à rien de ce qu'il y met. */
-#zone{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+   donne qu'une surface et on ne touche à rien de ce qu'il y met.
 
-.note{text-align:center;padding:6px 0 2px;min-height:96px}
+   **En colonne**, comme la fenêtre des deux arènes. En ligne, une épreuve
+   rangeait côte à côte ce que `geste.js` pose l'un sous l'autre : la grille du
+   tri, sa consigne et « J'AI TOUT RAMASSÉ » se partageaient la largeur, et la
+   grille tombait à la moitié de l'écran. On ne s'entraîne pas sur une grille
+   plus petite que celle du match.
+
+   **Et, le geste jugé, elle réduit l'épreuve au lieu de la couper.** Pendant
+   le geste, la note ne tient qu'une ligne et les trois portes sont cachées :
+   la zone a toute la place, et l'épreuve s'y joue à sa taille. Elle ne coupe
+   rien alors — la bouffée d'une frappe déborde du pavé de moitié, et coupée
+   au bord de la zone elle dessinait un rectangle de fumée. Une fois le
+   verdict tombé, la note et les portes reprennent leur hauteur (cent
+   cinquante pixels à 360 × 640), et une grande épreuve n'y tient plus : la
+   grille du tri (286 px et sa ligne « RAMASSE LE ■ »), la mosaïque, la ola,
+   les deux voix. La zone les **coupait** : la rangée du haut tronquée, la
+   ligne qui nomme la couleur à ramasser coupée en deux — c'est elle qui
+   donne leur sens aux cartons cerclés de rouge (audit du lot 6,
+   `repetition@tri`).
+
+   Le geste fini ne se touche plus : on le regarde. La salle mesure donc
+   l'épreuve et la réduit, d'un bloc et autour du centre de la zone, juste
+   assez pour qu'elle y tienne entière (`ajuster`, plus bas : `--ajuste`).
+   Le tampon, posé au centre, reste au centre. Pendant le geste, rien ne
+   change : on ne s'entraîne pas sur une épreuve plus petite.
+
+   **Pas plus petit que `PLANCHER`** (0,6) : le tampon, trente pixels, y en
+   garde dix-huit ; plus bas, il passerait sous les seize pixels d'un tampon
+   en contour, et le mot se lirait mal. Sur un écran trop bas pour
+   l'y faire tenir — un téléphone couché —, l'épreuve garde alors son centre
+   et la zone coupe le reste, comme avant. La coupe est un `clip-path` et non
+   `overflow:hidden` : celui-ci couperait avant la réduction, au cadre de la
+   zone non réduite — la rangée du haut disparaîtrait quand même, en plus
+   petit. L'encart de `calc(50% - 50% / k)` ramène la coupe, une fois
+   réduite, au cadre exact de la zone. */
+#zone{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative}
+.salle.jugee #zone{transform:scale(var(--ajuste,1));
+  clip-path:inset(calc(50% - 50% / var(--ajuste,1)))}
+
+/* La hauteur d'une note et d'une ligne dessous (« Ton meilleur : … ») : la
+   place est gardée dès « PRÊT ? », pour que le pavé ne saute pas quand le
+   résultat arrive. Le refus, qui explique en deux lignes, la dépasse — il est
+   rare, et il se lit. */
+.note{text-align:center;padding:6px 0 2px;min-height:84px}
+/* La note et le tampon du record sur une même ligne : le record dit quelque
+   chose de **cette** note, et une ligne de plus prendrait au pavé la hauteur
+   qu'il lui faut à 360 × 640. */
+.note .ligne{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
 .note .n{font-family:var(--banner);font-size:46px;line-height:1;color:var(--c)}
-.note .n small{font-size:15px}
-.note .q{font-size:12px;letter-spacing:.18em;margin-top:5px}
+/* Le « /1 » à la craie : il héritait la couleur du geste, et quinze pixels
+   ne sont pas du grand texte — de l'or au tempo, relevé « petit or » par
+   l'audit à 320 et 360, et l'ambre du tri tombait à 3,0:1 au soleil. Le
+   chiffre, à quarante-six pixels, garde la couleur du geste (arbitrage du
+   2 octobre 2026). */
+.note .n small{font-size:15px;color:var(--craie)}
+.note .q{display:inline-block;padding:4px 0}
 .note .r{font-size:11.5px;line-height:1.5;margin-top:7px}
-/* « TON MEILLEUR » est un sticker craie (`.tbf-sticker`, ui.css) : il était
-   écrit en or, en onze pixels, et l'or ne s'écrit plus qu'en grand
-   (arbitrage du 2 octobre 2026). Le sticker garde l'accent d'un record ; la
-   ligne lui laisse l'air de son bord et de son ombre. */
-.note .record{margin-top:9px;padding-bottom:4px}
+/* « TON MEILLEUR » est un tampon (direction, rituel de sortie) : un record ne
+   se discute pas, il se tamponne. Il était un sticker « ★ TON MEILLEUR », et
+   avant cela de l'or en onze pixels — l'or ne s'écrit plus qu'en grand
+   (arbitrage du 2 octobre 2026). Craie, et non vert : le vert est déjà le
+   PARFAIT qui vient de claquer sur le pavé, et deux tampons verts côte à côte
+   se liraient comme un seul mot répété. Vingt pixels sur le noir de la salle :
+   la forme en contour, celle des grands tampons. */
+.note .record{display:inline-block;padding:4px 0}
 .apres{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+/* « LE JOUER EN DUEL » prend toute la largeur, sous les deux autres : c'est
+   la sortie vers l'arène, celle que la salle prépare. */
+.apres #enDuel{grid-column:1 / -1}
 .attend{text-align:center;font-size:12px;letter-spacing:.18em;padding:10px 0}
 
 /* La tuile ne porte plus de transition à elle : celle de `.pan`, et son arrêt
@@ -147,10 +212,14 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <div id="zone"></div>
   <div class="note" id="resultat"><div class="attend">PRÊT ?</div></div>
   <div class="apres" id="apres" style="display:none">
-    <!-- Recommencer, c'est rejouer : le ton flare des arènes. L'autre porte
-         ramène au choix, et reste en béton. -->
-    <button class="tbf-plaque tbf-bloc" data-ton="flare" id="encore">RECOMMENCER</button>
+    <!-- Les deux portes de la salle restent en béton : recommencer, ou choisir
+         un autre geste. Le ton flare des arènes passe à la sortie vers l'arène
+         elle-même — c'est là qu'on joue pour de bon, et c'est là que la
+         salle mène (direction : « la répétition termine par son tampon et
+         LE JOUER EN DUEL »). -->
+    <button class="tbf-plaque tbf-bloc" id="encore">RECOMMENCER</button>
     <button class="tbf-plaque tbf-bloc" id="autre">UN AUTRE GESTE</button>
+    <a class="tbf-plaque tbf-bloc" data-ton="flare" id="enDuel" href="/duel-nvn">LE JOUER EN DUEL</a>
   </div>
 </div>
 
@@ -172,6 +241,17 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
  * **Elle ne calcule aucune durée**, non plus. La configuration vient de
  * `/api/repetition`, comme `you.gestes` vient de l'état en partie. C'est la
  * règle écrite en tête de `geste.js`, et elle a déjà été payée une fois.
+ *
+ * **Elle ne nomme rien elle-même, non plus.** Le mot du geste — PARFAIT, BON,
+ * MOYEN, RATÉ — est celui de l'arène, servi par le serveur à côté de la note
+ * (`verdict`, `CONTRATS.md` § 17) : la décision de Gaël du 3 octobre 2026 (Q3)
+ * veut une échelle, quatre mots, partout, pour qu'on s'entraîne ici au PARFAIT
+ * qu'on verra en tribune. La salle avait la sienne — PARFAIT à 0,95, TRÈS
+ * BIEN, ÇA VIENT, À REPRENDRE —, si bien qu'un 0,92 était PARFAIT au Virage et
+ * TRÈS BIEN ici. Elle n'écrit plus aucun seuil : sans mot servi (un serveur
+ * d'avant), elle montre la note et rien d'autre. Elle garde **sa note chiffrée
+ * et son record** : c'est ce qui la rend utile, un nombre qui bouge d'un essai
+ * à l'autre.
  *
  * ## Le meilleur score
  *
@@ -270,7 +350,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     $('consigne').innerHTML = consigne(g);
     $('resultat').innerHTML = '<div class="attend">PRÊT ?</div>';
     $('apres').style.display = 'none';
+    $('salle').classList.remove('jugee');
     $('zone').innerHTML = '';
+    ajuster();
     $('salle').classList.add('on');
     $('sortir').focus();
 
@@ -291,31 +373,29 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
        sur la pulsation que `geste.js` dessine. Sur les durées du serveur,
        jamais les nôtres — la règle de cette salle (voir plus haut).
 
-       `debut` vaut un temps : `geste.js` bat sa première pulsation au bout
-       d'un intervalle, pas à l'ouverture. Le contretemps compte un temps de
-       plus que ses frappes, comme le geste. Pour l'écho, les frappes ne
-       jouent que pendant la démonstration : le joueur refait le motif en
-       silence, c'est le geste. Le calme ou le son coupé ne changent rien à
-       l'écran : la pulsation reste dessinée, le son ne porte jamais seul
-       l'information. Sans moteur, `chant` est nul et rien ne joue ; une
-       poignée qui n'a rien joué s'arrête sans rien faire.
+       **Le passage du geste au chant est écrit une fois, dans le moteur**
+       (`chantDuGeste`), comme au Virage et au duel : la salle l'écrivait à
+       sa façon — un temps d'avance, un temps de plus au contretemps, la
+       démonstration de l'écho —, et c'est là qu'une copie diverge. Les
+       autres gestes ne chantent pas (la poignée rendue ne joue rien).
 
-       `window.TBF_SON` écrit en toutes lettres à chaque appel, sans alias :
-       `son:smoke` lit les pages et vérifie que chaque chant appelé existe
-       dans la banque — un alias le lui cacherait. */
-    const cfg = d.gestes?.[g] ?? {};
-    const chant = g === 'tempo'
-      ? window.TBF_SON?.chant?.('tempo', { tempo: cfg.interval, temps: cfg.beats, debut: cfg.interval })
-      : g === 'contretemps'
-        ? window.TBF_SON?.chant?.('contretemps',
-          { tempo: cfg.interval, temps: cfg.beats + 1, debut: cfg.interval })
-        : (g === 'echo' || g === 'crescendo')
-          ? window.TBF_SON?.chant?.('frappes', { instants: cfg.instants })
-          : null;
+       **Le même instant zéro** pour le chant et pour le geste (`origine`) :
+       la pulsation dessinée, la frappe entendue et les instants comptés
+       partent de la même lecture de l'horloge.
+
+       Le calme ou le son coupé ne changent rien à l'écran : la pulsation
+       reste dessinée, le son ne porte jamais seul l'information. Sans
+       moteur, `chant` est nul et rien ne joue.
+
+       `window.TBF_SON` écrit en toutes lettres, sans alias : `son:smoke` lit
+       les pages et relève les appels au moteur — un alias les lui
+       cacherait. */
+    const origine = performance.now();
+    const chant = window.TBF_SON?.chantDuGeste?.(g, d.gestes, { origine }) ?? null;
 
     let rendu;
     try {
-      rendu = await G.jouer(g, d.gestes, { zone: $('zone') });
+      rendu = await G.jouer(g, d.gestes, { zone: $('zone'), origine });
     } catch {
       chant?.arreter();
       occupe = false;
@@ -328,55 +408,99 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
        raté. */
     if (!$('salle').classList.contains('on') || courant !== g) { occupe = false; return; }
 
-    let note = 0;
-    let refuse = null;
-    try {
-      const r = await fetch('/api/repetition', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ geste: g, motif: d.motif, rendu }),
-      }).then((x) => x.json());
-      note = Number(r?.note) || 0;
-      refuse = r?.refuse ?? null;
-    } catch { /* on montre zéro, et on le dit */ }
+    const reponse = fetch('/api/repetition', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ geste: g, motif: d.motif, rendu }),
+    }).then((x) => x.json()).catch(() => null);
 
-    montrer(g, note, refuse);
+    /* **Le tampon, comme en partie.** Le même lecteur que les deux arènes :
+       le mot servi claque au centre du pavé s'il arrive à temps. La salle ne
+       ferme pas sa fenêtre — on reste devant son essai —, donc le tampon
+       tardif claque **au même endroit** (`carte` est ici le pavé lui-même)
+       et y reste (`duree: 0`). Un geste refusé n'a pas de verdict : le
+       contrat n'en sert pas, et on ne lui en prête pas. On n'attend pas la
+       lecture du tampon pour écrire la note : elles arrivent ensemble.
+
+       **Ce pavé-ci, et pas le suivant** : un joueur sorti pendant
+       l'aller-retour a pu lancer un autre geste, et le tampon tardif de
+       l'essai d'avant n'a rien à faire sur son nouveau pavé. */
+    const paveJoue = $('pad');
+    G.attendre(reponse.then((r) => (r && !r.refuse ? r : null)),
+      { zone: $('zone'), carte: () => (paveJoue?.isConnected ? paveJoue : null), duree: 0 });
+
+    const r = await reponse;
+    // Sorti pendant l'aller-retour : rien à écrire, et surtout pas un record.
+    if (!$('salle').classList.contains('on') || courant !== g) { occupe = false; return; }
+    /* Pas de réponse lisible : on le dit, au lieu d'afficher un zéro qu'on
+       prendrait pour sa note. Les trois portes restent ouvertes. */
+    if (!r || typeof r !== 'object') {
+      $('resultat').innerHTML = '<div class="r">Le serveur n’a pas noté cet essai.<br>'
+        + 'Recommence quand la connexion sera revenue.</div>';
+      $('apres').style.display = 'grid';
+      $('salle').classList.add('jugee');
+      ajuster();
+      $('encore').focus();
+      occupe = false;
+      return;
+    }
+    const note = Number(r.note) || 0;
+    const refuse = r.refuse ?? null;
+    // Le mot servi, s'il est l'un des quatre ; sinon aucun (jamais un seuil d'ici).
+    const verdict = !refuse && window.TBF_GESTE.mot(r.verdict) ? r.verdict : null;
+    montrer(g, note, refuse, verdict);
     occupe = false;
   }
 
   /**
    * Ce que le joueur lit après coup.
    *
-   * La note d'abord, le mot ensuite. Un nombre seul n'apprend rien — « 0,62 »
-   * ne dit pas s'il faut taper plus tôt ou plus fort — mais c'est lui qui
-   * bouge d'un essai à l'autre, et c'est pour le voir bouger qu'on recommence.
+   * Le mot est sur le pavé, en tampon, là où il le verra en partie ; ici, la
+   * note et le record. Un nombre seul n'apprend rien — « 0,62 » ne dit pas
+   * s'il faut taper plus tôt ou plus fort — mais c'est lui qui bouge d'un
+   * essai à l'autre, et c'est pour le voir bouger qu'on recommence.
+   *
+   * `verdict` est le mot servi, déjà vérifié, ou `null` : il ne sert ici qu'à
+   * la fête d'un record PARFAIT. Elle partait à « 0,6 » — un seuil de plus
+   * écrit dans la page, que l'échelle unique retire avec les autres.
    */
-  function montrer(g, note, refuse) {
+  function montrer(g, note, refuse, verdict) {
     const best = lire();
     const avant = best[g];
     const record = note > 0 && (avant == null || note > avant + 0.001);
     if (record) { best[g] = note; ecrire(best); }
 
-    const mot = refuse ? 'REFUSÉ'
-      : note >= 0.95 ? 'PARFAIT'
-      : note >= 0.8 ? 'TRÈS BIEN'
-      : note >= 0.6 ? 'ÇA VIENT'
-      : note >= 0.3 ? 'À REPRENDRE'
-      : 'RATÉ';
-
     /* Le refus n'est pas une note basse, c'est un geste que le moteur n'a pas
-       accepté — trop vite pour une main, trop régulier pour un humain. On le
-       dit, parce qu'un joueur qui obtient zéro sans savoir pourquoi croit que
-       l'écran est cassé. */
-    $('resultat').innerHTML = `<div class="n">${note.toFixed(2)}<small>/1</small></div>
-      <div class="q">${mot}</div>
+       accepté — trop vite pour une main, trop régulier pour un humain. Il n'a
+       pas de verdict (le serveur n'en sert pas), mais il a son tampon gris, et
+       on dit pourquoi : un joueur qui obtient zéro sans savoir pourquoi croit
+       que l'écran est cassé.
+
+       Le record claque un temps après le verdict du pavé (`--d`) : deux
+       tampons qui tombent ensemble se lisent comme un seul bruit. Il ne fait
+       pas de son à lui — le clac du verdict suffit.
+
+       Les deux tampons se posent **à côté** de la note et non dessous : à
+       360 × 640, une ligne de plus sous la note prenait au pavé sa hauteur,
+       et il débordait sur le chiffre qu'on venait chercher. */
+    $('resultat').innerHTML = `<div class="ligne">
+        <div class="n">${note.toFixed(2)}<small>/1</small></div>
+        ${record ? '<span class="record"><span class="tbf-tampon tbf-clac" data-ton="craie"'
+          + ' style="--d:320ms;--rot:6deg">TON MEILLEUR</span></span>' : ''}
+        ${refuse ? '<span class="q"><span class="tbf-tampon tbf-clac" data-ton="gris"'
+          + ' style="--rot:6deg">REFUSÉ</span></span>' : ''}</div>
       ${refuse ? '<div class="r">Le moteur n’a pas accepté ce geste : trop rapide, '
         + 'ou trop régulier pour une main. En partie, il ne compterait pas non plus.</div>' : ''}
-      ${record ? '<div class="record"><span class="tbf-sticker">★ TON MEILLEUR</span></div>'
-        : avant != null ? `<div class="r">Ton meilleur : ${Number(avant).toFixed(2)}</div>` : ''}`;
+      ${!record && avant != null ? `<div class="r">Ton meilleur : ${Number(avant).toFixed(2)}</div>` : ''}`;
     $('apres').style.display = 'grid';
+    $('salle').classList.add('jugee');
+    // Dans la même tâche que les portes qui paraissent : aucune image ne
+    // montre l'épreuve coupée avant d'être réduite.
+    ajuster();
     $('encore').focus();
 
-    if (record && note >= 0.6) {
+    /* La fête d'un record **PARFAIT**, au mot servi : on s'entraîne pour le
+       PARFAIT qu'on verra en tribune, et c'est lui qu'on fête. */
+    if (record && verdict === 'parfait') {
       window.FX?.son?.('parfait');
       const r = $('resultat').getBoundingClientRect();
       window.FX?.particules?.({ x: r.left + r.width / 2, y: r.top + 30, n: 20,
@@ -384,11 +508,56 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     }
   }
 
+  /**
+   * L'épreuve jugée tient dans sa zone, entière (voir la feuille, `#zone`).
+   *
+   * L'étendue de l'épreuve est celle de ce que `geste.js` a posé dans la
+   * zone — le pavé ou la grille, la ligne qui le suit —, du haut de la
+   * première boîte au bas de la dernière, lue **en mise en page**
+   * (`offsetTop`, `offsetHeight`) : la réduction déjà posée ne la change pas,
+   * et la mesure ne court pas après son propre résultat. Les boîtes et non
+   * leurs marges : la grille est centrée par des marges automatiques, qui
+   * débordaient la zone d'un quart de pixel et faisaient réduire une
+   * épreuve qui tenait. Les calques posés en absolu (un tampon sans pavé) ne
+   * comptent pas : ils suivent leur hôte. Une épreuve qui remplit sa zone
+   * exactement (la bascule, la visée, le compte) n'est pas touchée : on ne
+   * réduit qu'au-delà d'un pixel, ce que les mesures arrondies peuvent
+   * ajouter à une épreuve qui tient.
+   *
+   * Hors de l'état jugé, aucune réduction : `--ajuste` est retiré, et la
+   * feuille ne la lit de toute façon que sur `.salle.jugee`.
+   */
+  const PLANCHER = 0.6;
+  function ajuster() {
+    const zone = $('zone');
+    if (!zone) return;
+    let k = 1;
+    if ($('salle').classList.contains('jugee')) {
+      let haut = Infinity; let bas = -Infinity; let gauche = Infinity; let droite = -Infinity;
+      for (const e of zone.children) {
+        const s = getComputedStyle(e);
+        if (s.display === 'none' || s.position === 'absolute' || s.position === 'fixed') continue;
+        haut = Math.min(haut, e.offsetTop);
+        bas = Math.max(bas, e.offsetTop + e.offsetHeight);
+        gauche = Math.min(gauche, e.offsetLeft);
+        droite = Math.max(droite, e.offsetLeft + e.offsetWidth);
+      }
+      const h = bas - haut;
+      const l = droite - gauche;
+      if (h > 0 && l > 0 && (h > zone.clientHeight + 1 || l > zone.clientWidth + 1)) {
+        k = Math.max(PLANCHER, Math.min(1, zone.clientHeight / h, zone.clientWidth / l));
+      }
+    }
+    if (k < 1) zone.style.setProperty('--ajuste', k.toFixed(4));
+    else zone.style.removeProperty('--ajuste');
+  }
+
   function sortir() {
     // Sortir en plein geste coupe aussi le chant qui battait avec lui.
     window.TBF_SON?.arreterChant?.();
     $('salle').classList.remove('on');
     $('zone').innerHTML = '';
+    ajuster();
     courant = null;
     occupe = false;
     rendre();
@@ -404,6 +573,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && $('salle').classList.contains('on')) sortir();
   });
+  /* Le téléphone qu'on tourne, la fenêtre qu'on redimensionne, un refus qui
+     prend deux lignes de plus sous la note : la zone change de taille sans
+     que l'épreuve change, et la réduction se refait. La réduction elle-même
+     ne change pas la taille de la zone (une transformation ne touche pas la
+     mise en page) : l'observateur ne se relance pas sur son propre effet. */
+  if (typeof ResizeObserver === 'function') new ResizeObserver(() => ajuster()).observe($('zone'));
 
   (async () => {
     /* **On attend `geste.js`.** Ce bloc-ci est en ligne, donc il s'exécute

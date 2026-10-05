@@ -87,9 +87,36 @@ const pool = {
     if (sql.includes('FROM user_follows')) {
       return [NEUTRES.has(params[0]) ? [] : [{ team_id: HOME }]];
     }
+    /* Le filet de l'XP lit d'abord les chants du match, sur le pool et sans
+       transaction (`bilan.js`) : sous le seuil, il s'arrête là. Assez de
+       chants ici, pour qu'il aille jusqu'au grand livre, plus bas, et qu'on
+       voie pour qui il l'a fait. */
+    if (sql.startsWith('SELECT chants FROM virage_presence')) {
+      lecturesDuFilet.push(String(params[0]));
+      return [[{ chants: 12 }]];
+    }
     return [[]];
   },
+  /* **Le filet de l'XP passe par ici** (`ferveur/index.js`, `filetXp`) :
+     au départ réel d'un membre qui a chanté, le grand livre ouvre une
+     connexion. Celle-ci répond comme une base vide — pas de bourse, donc
+     « inconnu », rien de versé — et retient pour qui elle a été ouverte : le
+     bloc D3 vérifie que le filet part au dernier onglet, et pas avant. */
+  async getConnection() {
+    return {
+      async execute(sql, params = []) {
+        if (sql.includes('INSERT IGNORE INTO user_wallet')) filets.push(String(params[0]));
+        return [[]];
+      },
+      async query() { return [[]]; },
+      async beginTransaction() {}, async commit() {}, async rollback() {}, release() {},
+    };
+  },
 };
+/** Les joueurs pour qui le filet de l'XP a ouvert un versement. */
+const filets = [];
+/** Ceux dont le filet a lu les chants avant de tenter un versement. */
+const lecturesDuFilet = [];
 
 /* Une main pour chacun : toutes les cartes jouables au Virage. */
 const TOUTES = ACTIONS_VIRAGE.map((a) => a.id);
@@ -420,12 +447,22 @@ console.log('\nD3 — une socket, pas un joueur');
   const A = io.connecter('d3a'), B = io.connecter('d3a');
   await entrer(A, 1003); await entrer(B, 1003);
   const salle = V.rooms.get(1003);
+  /* Un chant d'abord : le filet de l'XP, plus bas, ne part que pour qui a
+     chanté, et il doit avoir de quoi partir à tort. */
+  check('le premier onglet chante', await chanter(A, salle, 'd3a') === 'result');
   A.couper();
   check('fermer un onglet ne vide pas la place', salle.members.has('d3a'));
   check('l’autre onglet chante encore', await chanter(B, salle, 'd3a') === 'result');
   check('et il est toujours dans la salle socket', B.rooms.has('virage:1003'));
+  /* Le filet de l'XP du match (`CONTRATS.md`, § 15.2) suit le départ réel :
+     fermer un onglet parmi deux n'en est pas un. */
+  await wait(30);
+  check('fermer un onglet ne verse pas l’XP en filet',
+    !filets.includes('d3a') && !lecturesDuFilet.includes('d3a'));
   B.couper();
   check('à la dernière socket, il part', !salle.members.has('d3a') && salle.partis.has('d3a'));
+  check('et l’XP du match se tente en filet, puisqu’il a chanté',
+    await until(() => filets.includes('d3a')));
 }
 {
   /* (b) Le même, par `virage:leave`. */

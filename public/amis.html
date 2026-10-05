@@ -109,6 +109,35 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
 /* La ligne dont un choix est déplié s'y raccorde : son bas devient droit. */
 .gars.deplie{border-radius:12px 12px 0 0}
 
+/* ------------------------------------------------- où il est (lot 6)
+
+   **La présence d'un ami** (`CONTRATS.md`, § 18.1) : un sticker au bout de
+   son nom — AU VIRAGE, EN DUEL, EN LIGNE — et **rien pour hors ligne**. Le
+   serveur ne la sert qu'aux amis mutuels qui ne se sont pas cachés, et
+   seulement quand la présence est allumée (elle est livrée éteinte) :
+   absente, la ligne est exactement celle d'avant. L'écran ne distingue pas
+   un ami hors ligne d'un ami caché, et c'est voulu.
+
+   La pièce est le sticker commun à point (`.tbf-sticker--live` : un point
+   devant le mot, de la couleur du mot) ; le point dit « maintenant », le mot
+   dit où. Rouge quand il joue — le Virage et le duel sont les deux portes de
+   JOUER, rouges au tiroir comme au hub (« rouge on joue ») —, craie quand il
+   est seulement là. Jamais la couleur seule : le mot est toujours écrit. Le
+   sticker ne se touche pas et ne mène nulle part : pas de « REJOINDRE »
+   (décision de Gaël, Q2).
+
+   Cette page n'en écrit que la place. La ligne du nom passe à la ligne
+   quand le nom et le sticker ne tiennent pas ensemble : le nom garde sa
+   ligne et ses points de suspension, le sticker descend dessous. L'air que
+   la boîte du sticker ne compte pas (son bord de craie, son cerne, son
+   ombre) : dix pixels après le nom, six à sa droite, huit entre deux
+   lignes, et quatre de plus dessous — sans eux, son ombre touchait le cerne
+   de « INVITER AU KOP ». Une ligne sans sticker ne bouge pas d'un pixel. */
+.gars .nom{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;min-width:0;max-width:100%}
+.gars .nom>b{min-width:0}
+.gars .nom>.tbf-sticker{margin-right:6px}
+.gars .nom:has(>.tbf-sticker){padding-bottom:4px}
+
 /* **En largeur, les amis sont une tribune de bustes**, plus une pile de
    barres : à partir de 560 px, la colonne tient trois cartes de front (deux
    vers 560), le buste au milieu en soixante-quatre pixels — la taille que la
@@ -125,6 +154,8 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
     padding:20px 12px 14px;text-align:center}
   .gens--amis>.gars>.tbf-buste{--taille:64px}
   .gens--amis>.gars .qui{align-items:center;width:100%}
+  /* Le nom et sa présence, centrés eux aussi, même passés à la ligne. */
+  .gens--amis>.gars .nom{justify-content:center}
   .gens--amis>.gars>.plus{position:absolute;top:4px;right:4px}
   .gens--amis>.gars.deplie{border-radius:12px;border-color:rgba(130,87,218,.75)}
   .gens--amis>.dessous{grid-column:1/-1;margin-top:0;border-top:1px solid var(--trait);border-radius:12px}
@@ -471,13 +502,43 @@ function convier() {
   </div>`;
 }
 
+/**
+ * Où est cet ami, s'il le montre : le sticker de sa présence, ou rien.
+ *
+ * Trois mots et rien d'autre (`CONTRATS.md`, § 18.1). `presence` absente —
+ * hors ligne, caché, présence éteinte, serveur d'avant le lot 6 — ne pose
+ * rien ; une valeur que le contrat ne connaît pas non plus : un mot inconnu
+ * ne s'écrit pas, et « HORS LIGNE » ne s'écrit jamais. Une `Map` et non un
+ * objet : `presence: "constructor"` n'irait rien chercher dans un prototype.
+ *
+ * Le mot s'écrit en minuscules et le sticker le met en capitales : un
+ * lecteur d'écran lit « au Virage », pas « A U ». Aucun lien, aucun
+ * « REJOINDRE » : on ne dit pas quel match (Q2).
+ *
+ * L'état est dans `data-presence-ami`, et non `data-presence` : le tiroir
+ * pose celui-là sur son interrupteur « apparaître hors ligne » (`menu.js`),
+ * et un `[data-presence]` cherché dans tout le document trouverait d'abord
+ * le sticker d'un ami, posé avant le tiroir.
+ */
+const PRESENCE = new Map([
+  ['virage',   { mot: 'Au Virage', ton: 'flare' }],
+  ['duel',     { mot: 'En duel',   ton: 'flare' }],
+  ['en_ligne', { mot: 'En ligne',  ton: 'craie' }],
+]);
+function presence(g) {
+  const p = PRESENCE.get(g.presence);
+  return p ? `<span class="tbf-sticker tbf-sticker--live" data-ton="${p.ton}"
+    data-presence-ami="${esc(g.presence)}">${p.mot}</span>` : '';
+}
+
 /** Ce qui est déplié sous cet ami, s'il y a quelque chose : 'kop', 'plus' ou null. */
 const deplie = (g) => (S.deplie && S.deplie.id === String(g.id) ? S.deplie.quoi : null);
 
 /**
- * Un ami : son buste, son nom, et sous le nom le geste qui le concerne —
+ * Un ami : son buste, son nom — et au bout du nom, où il est, s'il le
+ * montre (voir `presence`) —, et sous le nom le geste qui le concerne —
  * l'emmener dans un de mes KOP, si j'en ai un (violet : les gens). Le reste
- * est derrière « ⋯ ». Voir « un ami », dans la feuille.
+ * est derrière « ⋯ ». Voir « un ami » et « où il est », dans la feuille.
  */
 function carteAmi(g) {
   const ouvert = deplie(g);
@@ -487,7 +548,7 @@ function carteAmi(g) {
   return `
   <div class="gars ami${ouvert ? ' deplie' : ''}" data-id="${esc(g.id)}">
     ${avatar(g)}
-    <span class="qui"><b>${esc(g.pseudo)}</b>${inviter}</span>
+    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${presence(g)}</span>${inviter}</span>
     <button class="bt tbf-plaque plus" data-plus="${esc(g.id)}" aria-expanded="${ouvert === 'plus'}"
       aria-label="Plus d’options pour ${esc(g.pseudo)}"><i class="tbf-ico ico-plus" aria-hidden="true"></i></button>
   </div>`;

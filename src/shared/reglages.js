@@ -94,6 +94,15 @@ export const SECTIONS = [
       'et les divisions. Les divisions n’ont aucun montant à régler : elles ne ' +
       'paient que l’insigne et le titre, parce que la ferveur classée n’a pas ' +
       'de plafond pour un abonné et qu’une division payée s’achèterait en partie.' },
+  /* La présence (vague 2, lot 6). Une section à elle, et non une ligne de
+     l'exploitation : c'est la donnée la plus sensible du jeu, pour un public
+     qui compte des mineurs, et l'interrupteur qui l'allume doit se trouver
+     sans chercher. */
+  { id: 'presence', titre: 'LA PRÉSENCE',
+    aide: 'Ce que les amis mutuels voient les uns des autres : en ligne, au Virage ' +
+      'ou en duel — trois états grossiers, sans match ni heure, jamais écrits en ' +
+      'base. Livrée éteinte : à allumer seulement après la mise en ligne de la ' +
+      'nouvelle politique de confidentialité.' },
 ];
 
 /* ------------------------------------------------------------ les réglages
@@ -180,6 +189,17 @@ export const REGLAGES = [
 
   { cle: 'virage.secousse_but_reel', section: 'virage', type: 'entier',
     titre: 'Un vrai but secoue la corde de', unite: 'points', min: 0, max: 400, defaut: 90 },
+
+  /* La tribune qui se vide après le coup de sifflet (vague 2, Q11). Ce n'est
+     pas une question de confort : tant qu'une salle a un membre, le relevé du
+     direct la met dans ses appels, et un onglet oublié sur un Virage fini
+     coûtait à lui seul jusqu'à 1 440 appels par jour à l'API sportive. */
+  { cle: 'virage.bilan_min', section: 'virage', type: 'entier',
+    titre: 'La tribune se vide après le coup de sifflet final au bout de', unite: 'minutes',
+    min: 1, max: 30, defaut: 5,
+    aide: 'Chacun garde son bilan à l’écran ; la tribune, elle, ne vit plus, pour que ' +
+      'le relevé du direct cesse de la payer. Une page oubliée sur un Virage fini ' +
+      'coûtait jusqu’à 1 440 appels par jour à l’API sportive.' },
 
   /* -------------------------------------------------------------- duel */
   { cle: 'duel.but_a', section: 'duel', type: 'entier',
@@ -364,6 +384,32 @@ export const REGLAGES = [
     titre: 'Gagner rapporte en plus', unite: 'XP', min: 0, max: 500, defaut: 15,
     aide: 'En plus du duel joué. La victoire ajoute, elle ne multiplie pas : ' +
       'perdre trois duels doit rester plus profitable que ne pas jouer.' },
+
+  /* L'XP du Grand Virage (vague 2, décision de Gaël du 3 octobre 2026, Q1).
+     Le cœur du jeu ne rapportait aucune XP. Elle passe par le grand livre
+     (`source = 'virage'`), une fois par match, et **ne dépend de rien d'autre
+     que de ces trois nombres** : ni du club, ni de l'abonnement, ni de la
+     neutralité, ni du classement. Le drapeau `classe` dépend du plafond de
+     Virages comptés, que l'abonnement lève : lier l'XP au classement ferait
+     acheter de l'XP. Le niveau mesure le temps passé à jouer. */
+  { cle: 'xp.virage', section: 'progression', type: 'entier',
+    titre: 'Un match poussé au Grand Virage rapporte', unite: 'XP', min: 0, max: 200, defaut: 15,
+    aide: 'Une fois par match, au bilan de tribune ou au départ de la tribune. À 0, le ' +
+      'Virage ne rapporte plus d’XP. Ni le club, ni l’abonnement, ni le classement n’y ' +
+      'changent rien : le niveau mesure le temps passé à jouer.' },
+
+  { cle: 'xp.virage_chants', section: 'progression', type: 'entier',
+    titre: 'Un match est poussé à partir de', unite: 'chants acceptés dans ce match',
+    min: 1, max: 200, defaut: 10,
+    aide: 'Les chants que le serveur a acceptés : chacun coûte du souffle et passe la ' +
+      'cadence. Dix, c’est une à deux minutes de jeu.' },
+
+  { cle: 'xp.virage_matchs_jour', section: 'progression', type: 'entier',
+    titre: 'Matchs du Virage qui rapportent de l’XP, par jour', unite: 'matchs',
+    min: 1, max: 20, defaut: 3,
+    aide: 'Le même pour tous, abonnés compris. Il borne ce qu’un client automatisé peut ' +
+      'en tirer : aux valeurs de départ, 45 XP par jour, un peu plus du tiers des 120 ' +
+      'que paient les trois missions.' },
 
   /* --------------------------------------------------------------- étal
 
@@ -678,6 +724,35 @@ export const REGLAGES = [
       'classés et deux Virages comptés par jour) : le titre « Capo de la ' +
       'saison » doit rester atteignable sans payer. Relever un seuil en cours ' +
       'de saison ne retire rien à qui l’a déjà récupéré.' },
+
+  /* ========================================================== la présence
+
+     Décision de Gaël du 3 octobre 2026 (Q2) : les amis mutuels seulement,
+     trois états grossiers, rien en base, visible par défaut avec
+     l'interrupteur « apparaître hors ligne », pas de « REJOINDRE ».
+
+     **Livrée éteinte**, et c'est le défaut qui le porte : `presence.actif`
+     reste faux jusqu'à la mise en ligne de la nouvelle `CONFIDENTIALITE.md`.
+     Éteinte, rien n'est servi (`CONTRATS.md`, § 18). `reglages-smoke` refuse
+     qu'elle parte allumée. */
+  { cle: 'presence.actif', section: 'presence', type: 'booleen',
+    titre: 'Montrer la présence des amis', defaut: false,
+    aide: 'Éteint, aucun écran ne montre de présence et rien n’est servi. À allumer ' +
+      'seulement après la mise en ligne de la nouvelle politique de confidentialité ' +
+      '(CONFIDENTIALITE.md). Sans sql/arenes.sql, elle reste éteinte même allumée ici : ' +
+      'personne ne pourrait s’y cacher.' },
+
+  { cle: 'presence.visible_defaut', section: 'presence', type: 'booleen',
+    titre: 'Un joueur est visible de ses amis par défaut', defaut: true,
+    aide: 'Vaut pour qui n’a jamais touché l’interrupteur « apparaître hors ligne ». Un ' +
+      'joueur qui a choisi garde son choix.' },
+
+  { cle: 'presence.en_ligne_sec', section: 'presence', type: 'entier',
+    titre: 'Un joueur reste « en ligne »', unite: 'secondes après sa dernière activité',
+    min: 30, max: 900, defaut: 120,
+    aide: 'Une activité, c’est une requête au jeu ou une connexion en direct. Rien ' +
+      'n’est écrit : la marque vit en mémoire, est effacée au plus une minute après ' +
+      'ce délai, et disparaît au redémarrage.' },
 ];
 
 /** Le registre indexé par clé. */

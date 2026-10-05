@@ -1,6 +1,7 @@
 # Contrats des données nouvelles — serveur ↔ écrans
 
 *Chantier serveur de la refonte FAIT MAIN, vague 1. 2 octobre 2026.*
+*Vague 2, les arènes (lot 6) : § 15 à § 18, versés le 4 octobre 2026.*
 
 Ce document est un **contrat**. Les écrans des lots 3 et 5 (et plus tard 2, 4
 et 6) codent contre lui pendant que le serveur l'implémente. Un champ décrit
@@ -997,8 +998,8 @@ rideau).
 
 | donnée | ce que l'écran fait d'ici le lot 6 |
 |---|---|
-| présence (en ligne, au stade, en duel) | aucune pastille de présence, aucun « REJOINDRE » |
-| bilan de tribune du Virage, PARFAIT, meilleur geste, série officielle | le bilan du Virage se construit avec ce que la salle envoie déjà, sans ces lignes |
+| présence (en ligne, au Virage, en duel) | servie, § 18 — **livrée éteinte** : tant que `presence.actif` est faux, rien n'est servi et aucun écran ne montre de présence. « REJOINDRE » n'existe pas |
+| bilan de tribune du Virage, PARFAIT, meilleur geste, série officielle | servis, § 15 à § 17 |
 | deltas de rang des autres lignes | mémoire locale de la page |
 | titres sur les lignes des autres joueurs | rien |
 
@@ -1014,13 +1015,14 @@ rideau).
 | `profil.html` | 5 | § 4.2, § 5.2 (division, titres), § 6 (série, record, insignes du carnet), § 7, § 14 (avatar, niveau, couleurs du club) |
 | `classement.html` | 5 | § 3, § 4.2, § 5.2, § 5.3, § 7, § 14 (ma ligne) |
 | `kop.html` | 5 | § 3 |
-| `amis.html` | 5 | § 3 (niveau) |
+| `amis.html` | 5 / 6 | § 3 (niveau), § 18.1 (la pastille de présence) |
 | `aide.html` (MISSIONS) | 5 | § 6, § 5.2 (lien), § 7 |
 | `niveau-fete.js` | 5 | § 1 |
-| `nav.js`, `menu.js` | 2 / 5 | R10, § 1 par `tbf:bourse` |
+| `nav.js`, `menu.js` | 2 / 5 / 6 | R10, § 1 par `tbf:bourse` ; `menu.js` : § 18.2 (l'interrupteur « apparaître hors ligne ») |
 | `fanzzy.html`, `collection.html`, `fanzzy-fiche.html` | 4 | § 2, § 5.1 |
-| `duel-nvn.html` | 6 | § 1, § 4.1, § 7 |
-| `virage.html` | 6 | § 15 (la minute double, l'entrée et le retour, les buts annoncés, la vie d'une salle) |
+| `virage.html` | 6 | § 1, § 15, § 16, § 18.3 |
+| `duel-nvn.html` | 6 | § 1, § 4.1, § 7, § 16.1, § 17 |
+| `geste.js`, `repetition.html` | 6 | § 16.1, § 17 (le verdict) |
 | `teletext.html` | — | § 3 (compétition) |
 
 ---
@@ -1037,6 +1039,7 @@ rideau).
 | `plafond` | le disjoncteur du jour est atteint ; c'est dû demain. Jamais rendu pour un élément déjà versé : `deja` passe avant | « Tu récupéreras le reste demain » |
 | `schema` | la base n'a pas les tables nécessaires | il retire le bloc |
 | `inconnu` | palier, mission ou saison qui n'existe pas | il relit |
+| `quota` | *(vague 2, l'XP du Virage, § 15.2)* `xp.virage_matchs_jour` matchs ont déjà rapporté leur XP ce jour de jeu ; jamais rendu pour un match déjà payé : `deja` passe avant | « Tes matchs du jour ont déjà rapporté leur XP », une fois, sans bouton |
 
 Pour `relance` seulement : `epuisees` (plus de relance aujourd'hui), `aucune`
 (aucune autre mission possible), `terminee` (mission prête ou récupérée).
@@ -1044,7 +1047,12 @@ Pour `relance` seulement : `epuisees` (plus de relance aujourd'hui), `aucune`
 Une erreur HTTP (400 corps mal formé, 401 sans session, 503 base indisponible)
 garde la forme habituelle `{ "error": "<code>" }`. Codes nouveaux :
 `quotidien.error.requete`, `fanzzy.error.vu_invalide`,
-`fanzzy.error.palier_requete`, `rank.error.division_requete`.
+`fanzzy.error.palier_requete`, `rank.error.division_requete`, et pour la
+vague 2 `presence.error.requete` (400, § 18.2), `presence.error.server`
+(503, une panne inattendue de la présence, § 18.2 : l'écran la lit comme une
+absence, R2) et `duel.error.fixture_annule` (le match est annulé ou reporté,
+§ 17 : 400 `{ "error" }` sur `GET /api/deck/match/:id`, `nvn:error`
+`{ "code" }` à l'entrée en file ; l'écran le dit par une phrase).
 
 ---
 
@@ -1236,134 +1244,534 @@ tribune où va ma ferveur, la fin de la saison).
 
 ---
 
-## 15. Le Grand Virage : la minute double, l'entrée, les buts (déclaré le 4 octobre 2026)
+# Vague 2 — les arènes (lot 6)
 
-*Ajouté par le correctif serveur des salles (`ECARTS.md`, serveur-correctif).
-Les événements de la salle n'étaient décrits nulle part dans ce contrat ; ce
-paragraphe ne fixe que ce que le correctif change. **Un champ de plus**
-(`surgeMs`), aucun renommé ni retiré. Le reste est du comportement : la page
-du lot 6 le lit ici plutôt que dans le code.*
+*Versé le 4 octobre 2026 par `serveur-socle`, depuis `SERVEUR-VAGUE2.md` § 7
+et avec les décisions de Gaël du 3 octobre 2026 (Q1 à Q4). Les règles R1 à
+R10 du § 0 valent pour tout ce qui suit. Les écrans du lot 6 codent contre ce
+texte avant que le serveur l'implémente : un champ décrit ici a exactement ce
+nom, ce type et cette unité, et la colonne « absent » dit quand il manque.
+Un serveur d'avant cette vague ne sert **rien** de ce qui suit : chaque
+paragraphe dit ce que l'écran fait alors (R1, R2).*
 
-### 15.1 `surgeMs` : ce qui reste de la minute double
+*Retouché le 4 octobre 2026 au soir, après le correctif du Virage et les
+rendus de la partie A : `classe` (§ 15.1), la fin lue dans l'état (§ 15.3),
+`surgeMs` toujours servi (§ 16.2), la salle d'une entrée à l'autre (§ 16.5),
+le but réel (§ 16.6), les champs du duel servis en chemin (§ 17), l'écran
+après un `POST /api/presence` (§ 18.2). Aucun champ renommé ni retiré ; le
+détail est dans `ECARTS.md`, `serveur-socle`, 9.*
 
-| événement | champ | type | sens |
+*Retouché une dernière fois le même soir, sur les rendus du serveur de la
+partie B : les chants après le coup de sifflet (§ 15.1), l'XP au départ
+(§ 15.2), la fermeture de la tribune pour qui entre après la fin et les matchs
+arrêtés (§ 15.3), la session et la cadence du bilan (§ 15.4), le plancher sous
+un bonus de ferveur nul (§ 16.2), la route d'un match du duel, les couleurs de
+la vue et les matchs annulés ou reportés (§ 17, § 11), le départ d'un ami qui
+s'est caché (§ 18.2, § 18.3). Aucun champ renommé ni retiré ; le détail est
+dans `ECARTS.md`, `serveur-socle`, 10.*
+
+## 15. Le bilan de tribune du Virage
+
+### 15.1 La demande et la réponse
+
+Socket, la page → le serveur : **`virage:bilan`**, sans données. Le serveur →
+**cette socket seule** : `virage:bilan`.
+
+```json
+{
+  "fixtureId": 1208051, "side": 0, "fini": true,
+  "classe": true, "neutre": false,
+  "ferveur": 1240, "chants": 46, "parfaits": 9, "serie": 4,
+  "meilleur": { "chant": "montee", "nom": "La montée", "verdict": "parfait" },
+  "rang": 12, "sur": 298,
+  "souvenirs": [{ "id": 88, "minute": 71, "joueur": "Kabashi" }],
+  "xp": { "verse": true, "gain": { "echarpes": 0, "packs": 0, "xp": 15, "tampons": 0 },
+          "wallet": { "scarves": 412, "packs": 7 }, "niveau": { "…": "§ 1" } }
+}
+```
+
+| champ | type | sens | absent quand |
 |---|---|---|---|
-| `virage:real_goal` | `surgeMs` | entier > 0 | la durée de la minute double qui vient de s'ouvrir, en millisecondes (60 000 au réglage de départ) |
-| `virage:state` | `surgeMs` | entier ≥ 0 | ce qui reste de la minute double à l'envoi ; `0` hors minute double |
+| `fixtureId` | entier | le match de la salle où est la socket | jamais |
+| `side` | `0` \| `1` | le camp poussé (0 domicile, 1 extérieur) : celui de la ligne de présence, à défaut celui de la socket dans la salle | jamais |
+| `fini` | `true` | le match est terminé (`FT`, `AET`, `PEN`) | en cours de match — jamais `false` |
+| `classe` | booléen | ce Virage compte au classement. Faux : le plafond gratuit du jour (`abo.virages_classes_jour`) était atteint à l'entrée qui a précédé sa **première poussée** — c'est elle qui écrit la ligne, et la décision ne bouge plus ensuite ; regarder une tribune sans y pousser ne consomme rien du plafond (§ 16.5). La page écrit « ce Virage ne compte pas au classement » | sans ligne de présence |
+| `neutre` | booléen | il poussait pour un club qu'il ne suit pas (sa ferveur comptait `ferveur.neutre`, la moitié par défaut) | sans ligne de présence |
+| `ferveur` | entier ≥ 0 | la ferveur de ce match, **tous ses passages compris** (déconnexions, onglets, retours) | sans ligne de présence |
+| `chants` | entier ≥ 0 | les chants acceptés par le serveur dans ce match | sans ligne de présence ; sans `sql/quotidien.sql` |
+| `parfaits` | entier ≥ 0 | les chants au verdict `parfait` (§ 16.1) | sans ligne de présence ; sans `sql/arenes.sql` |
+| `serie` | entier ≥ 2 | la meilleure série de `parfait` d'affilée du match | en dessous de deux ; sans `sql/arenes.sql` |
+| `meilleur` | objet | le chant de la meilleure note du match : `chant` (identifiant du répertoire), `nom` (son nom, à écrire tel quel, R7), `verdict` (§ 16.1) — « PARFAIT sur LA MONTÉE » | sans aucun chant ; sans `sql/arenes.sql` |
+| `rang`, `sur` | entiers ≥ 1 | ma place parmi **tous** ceux qui ont poussé pour ce camp pendant ce match, départs compris, et leur nombre (moi compris). Ordre : la ferveur, puis les chants, puis les PARFAITS ; `rang` = 1 + le nombre de ceux qui font strictement mieux (deux joueurs égaux sur les trois ont le même rang) | sans ligne de présence |
+| `souvenirs` | tableau, au moins un élément | les cartes-souvenirs **de présence** reçues pendant ce match, dans l'ordre des buts : `id` (entier), `minute` (entier ; absente si le relevé ne la donne pas), `joueur` (le buteur, une chaîne venue de l'API sportive, **à poser en texte, jamais en HTML** ; absent s'il est inconnu) | s'il n'y en a aucune |
+| `xp` | objet | l'XP du match, § 15.2 | sans ligne de présence |
 
-- **R3.** Un compte à rebours part de la **réception** plus `surgeMs`,
-  décompté par `performance.now()`. `surgeUntil` reste servi à côté, mais
-  c'est un instant de l'horloge du serveur : un téléphone en avance d'une
-  demi-minute le lirait de travers. Aucune page ne calcule à partir de
-  `surgeUntil`.
-- **La fin est diffusée.** `virage:tick` porte `surge: false` au battement
-  qui suit l'expiration, même dans une salle où rien d'autre ne bouge.
-  Avant, le battement ne partait que si quelque chose avait bougé : la page
-  gardait « TOUT COMPTE DOUBLE » jusqu'au chant suivant, qui comptait simple.
-  Un compte à rebours arrivé à zéro attend ce battement plutôt que de
-  conclure seul.
-- `surge` (booléen, `virage:tick` et `virage:state`) reste ce que lit
-  l'affichage : le ×2 se calcule au serveur.
+- `ferveur`, `chants` et `parfaits` peuvent valoir 0 : c'est une réponse, et
+  la page n'écrit pas une ligne à zéro.
+- **Sans ligne de présence** (entré, jamais poussé) : `fixtureId`, `side`, et
+  `fini` le cas échéant — rien d'autre. Il n'y a pas de bilan à poser.
+- Après le coup de sifflet (`fini`), les chiffres viennent d'une lecture
+  groupée de la salle, gardée au plus deux minutes et partagée par toute la
+  tribune : c'est ce qui rend mille bilans aussi peu chers qu'un (P5).
+- **La salle accepte encore les chants entre le coup de sifflet et
+  `virage:ferme`** (§ 15.3) : ils comptent (ferveur, chants, PARFAITS, XP),
+  et une lecture groupée faite avant eux ne les voit pas. Les chiffres d'un
+  bilan `fini` ne sont donc pas promis définitifs ; la page, qui quitte la
+  salle après son bilan, n'a rien à en faire.
 
-### 15.2 Entrer, sortir, revenir
+### 15.2 L'XP du match : `xp`
 
-**La salle se tient par socket.** Une socket est dans une salle au plus :
-celle de son dernier `virage:join`. `virage:chant` et `virage:jouer` vont
-dans la salle de **la socket qui les émet** — deux onglets sur deux matchs
-chantent chacun dans le leur. Fermer un onglet qui n'a jamais rejoint de
-salle (KOP, Équipes, duel) ne touche plus au Virage ouvert à côté, et fermer
-l'un de deux onglets sur la même salle laisse chanter l'autre :
-`ferveur.error.not_in_virage` ne répond plus qu'à une socket qui n'est dans
-aucune salle.
+Décision de Gaël (Q1, 3 octobre 2026) : **15 XP par match poussé, une fois par
+match, à partir de 10 chants acceptés dans ce match, 3 matchs par jour au
+plus.** Les trois nombres sont réglables (`xp.virage`, `xp.virage_chants`,
+`xp.virage_matchs_jour`) : l'écran ne les recopie jamais. **Ni le club, ni
+l'abonnement, ni la neutralité, ni `classe` n'y changent rien** (R9) : un
+abonné, un neutre et un Virage non classé reçoivent exactement ce que reçoit
+un joueur gratuit classé chez lui.
 
-**On quitte la salle avec sa dernière socket** (`virage:leave`, ou la
-déconnexion), et l'on y devient un **parti** : hors de la foule (`crowd`),
-du rang et du battement, mais **son état est gardé** tant que la salle vit
-(§ 15.4). Au retour, `virage:state` rend le même souffle — arrêté au départ,
-il ne remonte pas pendant l'absence —, la même main, la même pioche, les
-mêmes recharges et la même fatigue — des instants, qui ont couru pendant
-l'absence —, les mêmes effets et la même ferveur. Recharger la page ne rend
-plus un état neuf à 40 de souffle.
+- Versée **à la première demande de bilan** qui la trouve due — à la sortie,
+  au coup de sifflet — et, si aucun bilan ne l'a encore réglée (versée, ou
+  trouvée déjà versée), **au départ de la tribune** (la dernière socket du
+  joueur qui s'en va) d'un joueur qui a chanté dans cette salle — depuis son
+  ouverture : une salle libérée puis rouverte (§ 16.5) repart sans chants —,
+  sans réponse à la page. Un bilan qui a répondu `incomplet` ou `quota` ne la
+  règle pas : le départ la retente. Une seule fois par match : par le grand
+  livre, `source: 'virage'`, `cle: '<fixtureId>'`.
+- Forme R6. Versée : `{ "verse": true, "gain": { … }, "wallet": { … },
+  "niveau": { … § 1 … } }` — `gain` ne porte que de l'XP (`echarpes`,
+  `packs` et `tampons` à 0 : ne pas les écrire, R5), et `niveau` est toujours
+  là. Après un versement, la page émet `tbf:bourse` avec `xp.wallet` et
+  `xp.niveau` (R6), et l'anneau s'anime de `niveau.depart.part` vers
+  `niveau.part` (§ 1).
+- Refusée : `{ "verse": false, "raison": "…" }`.
 
-**Le camp** (`you.side` de `virage:state`) :
-
-| le joueur | `virage:join` sans `camp` | `virage:join` avec `camp` |
+| `raison` | sens | ce que l'écran fait |
 |---|---|---|
-| suit l'un des deux clubs | le camp de ce club | ignoré : le camp de ce club |
-| neutre, déjà connu de la salle (un autre onglet, ou parti) | **son camp d'avant** | **le camp demandé** |
-| neutre, nouveau | domicile | le camp demandé |
+| `deja` | l'XP de ce match a déjà été versée : bilan précédent, départ, autre onglet | aucune ligne d'XP |
+| `incomplet` | moins de `xp.virage_chants` chants dans ce match ; **`manque`** (entier ≥ 1) dit combien il en manque | il peut l'écrire avec `manque` (« encore 3 chants pour l'XP du match ») ; jamais un seuil recopié |
+| `quota` | `xp.virage_matchs_jour` matchs ont déjà rapporté leur XP ce jour de jeu (R4) | « Tes matchs du jour ont déjà rapporté leur XP », une fois, sans bouton |
+| `inactif` | `xp.virage` vaut 0 | aucune ligne d'XP |
+| `schema` | la base n'a pas le grand livre, ou pas la colonne d'XP | aucune ligne d'XP |
 
-`camp` vaut `"domicile"`, `"exterieur"`, `0` ou `1` ; toute autre valeur
-compte comme absente. La page qui se reconnecte peut donc renvoyer
-`virage:join` sans camp : le neutre parti pousser à l'extérieur n'est plus
-remis à domicile. Une page qui pose la question du camp à l'entrée envoie la
-réponse, et **un camp demandé l'emporte** : « je me suis trompé de camp, je
-ressors et je rechoisis » reste un geste normal. La page lit toujours son
-camp sur `you.side`, jamais sur ce qu'elle a demandé.
+Toute autre raison de la liste fermée (§ 11) : aucune ligne d'XP.
 
-**Seule la dernière demande d'une socket est servie.** `virage:join` lit la
-base avant de répondre. Si la même socket a émis entre-temps `virage:leave`
-ou un autre `virage:join`, l'entrée en vol ne s'assied pas et **aucun
-`virage:state` ne part pour elle**. Une page qui ressort n'attend donc pas
-d'état ; une page qui change de match reçoit l'état du second, et lui seul.
+### 15.3 La fin du match : `virage:fin` et `virage:ferme`
 
-**Le rang « classé » n'est qu'une réservation avant la première poussée.**
-Le plafond des Virages classés se pèse à chaque entrée tant qu'aucune
-présence n'est écrite pour ce match, en comptant les autres salles où le
-joueur est assis sans avoir poussé : regarder trois tribunes et revenir
-chanter dans les trois, ou ouvrir deux onglets avant tout chant, ne fait pas
-deux Virages classés sur un plafond d'un. Dès la première poussée, la
-décision est posée pour le match, et rejoindre ne la rouvre plus. Rien de
-cela ne change la forme de `virage:state`.
+- **`virage:fin`** (le serveur → toute la salle) `{ "statut": "FT" }`,
+  `statut` ∈ `"FT"` \| `"AET"` \| `"PEN"` : **une fois** par salle, quand le
+  relevé du direct voit le match fini. La page demande son bilan après un
+  délai **tiré au hasard entre 0 et 8 000 ms**, et le pose sans qu'on touche
+  rien ; puis elle quitte la salle (`virage:leave`) et n'y rentre plus — ni à
+  la reconnexion de sa socket, qui réémet aujourd'hui `virage:join`.
+- Une page qui entre ou se reconnecte après le coup de sifflet ne reçoit pas
+  `virage:fin` : `virage:state.statut` le dit déjà. **La page traite alors un
+  `virage:state` dont `statut` vaut `FT`, `AET` ou `PEN` exactement comme
+  `virage:fin`** : bilan demandé après le même délai tiré entre 0 et 8 000 ms,
+  puis `virage:leave`, et plus de `virage:join`, ni à la reconnexion. Le
+  serveur s'y attend : aucun code ne refuse l'entrée dans un match fini — la
+  salle s'ouvre, le temps du bilan, et c'est l'état qui dit la fin. Le bilan
+  se lit en base (§ 15.1) : il est le même dans une salle rouverte.
+- Un match arrêté pour de bon (`CANC`, `AWD`, `WO`) ou reporté (`PST`,
+  `ABD`) n'a ni `virage:fin`, ni `virage:ferme`, ni bilan au coup de
+  sifflet : la sortie reste celle de la flèche ou du menu, et la salle se
+  libère une minute après la dernière socket partie (ci-dessous).
+- Une salle de match fini que tout le monde a quittée est libérée **une
+  minute** après la dernière socket partie, et ses partis avec elle (§ 16.5) ;
+  la page qui revient après rouvre une salle neuve, et son bilan ne change
+  pas.
+- **`virage:ferme`** (le serveur → chaque socket d'un joueur de la salle)
+  `{}`, `virage.bilan_min` minutes (5 par défaut, Q11) après **le plus tardif
+  du coup de sifflet et de son arrivée** : qui était là au coup de sifflet
+  sort ce délai après lui ; qui entre ou revient après la fin (une page
+  rechargée, un lien, un retour de parti) a le même délai depuis son arrivée,
+  et non le battement suivant. Une salle ouverte sur un match
+  déjà fini arme ce délai à son ouverture, sans `virage:fin`. Un second
+  onglet ne repousse rien : l'arrivée est celle de la première socket du
+  joueur. La tribune est vidée et le relevé du direct a cessé de la payer dès
+  le coup de sifflet. La page **ne rejoint plus — ni à la reconnexion de sa
+  socket —**, garde le bilan qu'elle a et ne le redemande pas.
+- Si l'API revient sur une fin (une correction de statut qui rend le match
+  « en jeu »), `virage:ferme` n'est plus armé ; `virage:fin`, déjà parti, ne
+  se répète pas à la fin suivante.
 
-### 15.3 Les buts annoncés
+### 15.4 Cadence, erreurs, absence
 
-`virage:real_goal` — et la carte-souvenir qui le suit — ne part que pour un
-but **qui compte au tableau**, et qu'on n'avait pas déjà :
+- Sans session : `virage:error` `{ "code": "auth.error.unauthenticated" }`,
+  et pas de bilan.
+- Au plus **une demande par socket et par cinq secondes** ; au-delà,
+  `virage:error` `{ "code": "ferveur.error.rate_limited" }` et pas de bilan.
+  **Toute demande avec session compte**, y compris celle qui reçoit
+  `not_in_virage` : une page qui demande hors de la salle puis y rentre
+  attend ses cinq secondes. Ce n'est pas une erreur à montrer : la page garde
+  le bilan qu'elle a.
+- Une socket qui n'est dans aucune salle (jamais entrée, partie, ou après
+  `virage:ferme`) : `virage:error` `{ "code": "ferveur.error.not_in_virage" }`.
+- **Absence** : un serveur d'avant cette vague ne répond pas à
+  `virage:bilan`. Au-delà de **trois secondes** sans réponse, la page sort
+  comme avant (à la flèche ou au menu) ou ne pose rien (au coup de sifflet).
+- Sans `sql/arenes.sql`, le bilan sert ce que la ligne porte déjà : la
+  ferveur, les chants, le rang et l'XP. `parfaits`, `serie` et `meilleur`
+  sont absents, et leurs lignes disparaissent.
 
-- **ni le penalty manqué, ni les tirs de la séance de tirs au but**, marqués
-  ou non, que l'API range sous `Goal` : aucun n'est annoncé, aucun ne décale
-  le rang ni le score gravé des buts suivants ;
-- **ni un but déjà au tableau quand le relevé regarde le match pour la
-  première fois** : la première salle ouverte sur un match en cours lit ces
-  buts dans le `scoreReel` de son `virage:state`, pas en `virage:real_goal` ;
-- **ni un but marqué pendant que plus rien ne relevait le match** (aucune
-  salle à relever, aucun club suivi, ne serait-ce qu'un tour — un match
-  relevé au coup d'œil, § 15.4, l'est entre deux coups d'œil) : il est
-  rangé, le score le porte, il n'est pas annoncé ;
-- **un but en avance sur le tableau** — dans la liste des événements avant
-  que le score ne le compte — attend que le score le rattrape, puis part.
+**Lecteurs.** `virage.html` : la page kraft du bilan, à la flèche ou au menu
+(si le joueur a poussé pendant ce match) et au coup de sifflet.
 
-Le score peut donc monter sans `virage:real_goal` : la page suit
-`scoreReel` dans `virage:match` et `virage:fil`, qu'elle lisait déjà, et
-n'en déduit pas un but à fêter.
+---
 
-### 15.4 La vie d'une salle, et la cadence de son match
+## 16. Le Virage en jeu
 
-**Une salle vide se libère**, partis compris, quand plus aucune socket n'y
-est :
+### 16.1 Le verdict : une échelle, quatre mots, partout
 
-| le match (dernier statut vu) | libérée |
-|---|---|
-| fini, annulé, gagné sur tapis vert ou par forfait (`FT`, `AET`, `PEN`, `CANC`, `AWD`, `WO`), reporté ou arrêté (`PST`, `ABD`) | une minute après le dernier départ |
-| tout autre statut, entre la demi-heure qui précède le coup d'envoi et trois heures après | jamais : sortir à la mi-temps ne coûte ni son souffle, ni sa main, ni le score de la tribune |
-| tout autre statut, hors de cette fenêtre | après une demi-heure de vide |
+Décision de Gaël (Q3, 3 octobre 2026) : la même échelle au Virage, au duel et
+dans la salle de répétition.
 
-Un retour après la libération entre dans une salle neuve, ressemée depuis la
-base : le score du vrai match, le statut et le fil sont justes, mais la
-corde, le score de la tribune et l'état du supporter repartent de zéro.
+| `verdict` | la note mesurée est | tampon |
+|---|---|---|
+| `"parfait"` | au-dessus de 0,9 | vert |
+| `"bon"` | au-dessus de 0,7 | bleu |
+| `"moyen"` | au-dessus de 0,4 | or |
+| `"rate"` | 0,4 ou moins | rouge |
 
-**Le relevé ne suit plus chaque salle à chaque tour.** Une salle occupée sur
-un match fini n'est plus relevée. Sur un match à venir, elle l'est à chaque
-tour de la demi-heure qui précède le coup d'envoi aux quatre heures qui le
-suivent, pas du tout avant, une fois par demi-heure après. Sur un match
-reporté, arrêté, ou que l'API ne rend plus, une fois par demi-heure ; sur un
-match « en jeu » dont rien n'a bougé depuis une heure, une fois par quart
-d'heure. Dans ces cas, `virage:match` arrive rarement ou jamais, et c'est
-voulu : un statut qui ne bouge pas n'est pas une panne de la page.
+- **« Au-dessus » est strict** : 0,9 tout juste est `bon`, 0,4 tout juste est
+  `rate`. Liste fermée : un mot que l'écran ne connaît pas ne s'écrit pas.
+- **La note mesurée** est la note brute du geste — les instants de frappe,
+  notés par le serveur — **relevée par le plancher** quand une carte en pose
+  un (« Second souffle » : un raté compte comme moyen), **avant les
+  modificateurs du Fanzzy** (`perfectBonus`…). Le PARFAIT affiché et le geste
+  parfait que les modificateurs récompensent sont ainsi le même fait : un
+  Fanzzy qui paie mal le parfait ne change pas un PARFAIT en BON
+  (contre-expertise du 3 octobre 2026, D7).
+- Les seuils sont écrits **une fois**, dans `src/shared/verdict.js`
+  (`SEUILS`, `verdictDe`), lu par le serveur. Ils ne se règlent pas : ils
+  sont dessinés. **Aucune page n'écrit un seuil** — ni pour le mot, ni pour
+  une vibration, un son ou une onde : elle lit `verdict`, et `cri` (§ 16.2).
+- `quality` reste servie là où elle l'était : c'est la note **après** les
+  modificateurs, celle qui pousse la corde. Elle ne décide plus d'aucun
+  affichage.
 
-### Lecteurs
+### 16.2 Les champs
 
-`virage.html` (lot 6) : le chrono de la minute double (§ 15.1), la
-reconnexion et le choix du camp (§ 15.2), la fête d'un but et la ligne
-« Tu y étais » (§ 15.3), le bilan d'après le coup de sifflet (§ 15.4).
+| où | champ | type | sens | absent quand |
+|---|---|---|---|---|
+| `virage:result` | `verdict` | `"parfait"` \| `"bon"` \| `"moyen"` \| `"rate"` | le mot de ce geste (§ 16.1) | jamais |
+| `virage:result` | `cri` | `true` | la note mesurée (celle du verdict) dépasse 0,95 : le Cri du Fanzzy part. C'est une récompense, pas un verdict | en dessous de 0,95 — jamais `false` |
+| `virage:result`, `virage:state.you`, `virage:vous` | `serie` | entier ≥ 0 | les `parfait` d'affilée en cours. Une carte jouée ne la coupe pas ; un chant d'un autre verdict la remet à 0. Le combo du HUD lit ce nombre, jamais un compte local | jamais |
+| `virage:result` | `rang`, `sur` | entiers ≥ 1 | ma place parmi les **présents** de ma tribune (mon camp, dans cette salle, les partis exclus) et leur nombre ; même ordre qu'au bilan (§ 15.1). Recalculés au plus une fois par seconde : une seconde de retard est normale | jamais |
+| `virage:result`, `virage:state.you`, `virage:vous` | `prochain` | `{ "rang": 10, "ecart": 140 }` | le palier suivant. `rang` est le plus grand de **100, 50, 10, 3, 1** qui soit strictement meilleur que ma place (« 12ᵉ → TOP 10 ») ; `ecart` (entier ≥ 1), la ferveur qui me manque pour passer devant celui qui tient cette place (sa ferveur moins la mienne, plus un). Les paliers ne se règlent pas | à la première place |
+| `virage:state`, `virage:real_goal` | `surgeMs` | entier, 0 à 60 000 | ce qui reste de la minute qui compte double, en millisecondes, compté à l'envoi (R3). Sur `virage:real_goal`, la minute entière (60 000) ; sur `virage:state`, ce qu'il en reste, et **0 hors de la minute double** — la page ne décompte que si `surgeMs` > 0 | jamais, depuis le correctif du 4 octobre 2026 ; un serveur d'avant ne le sert pas (§ 16.4) |
+
+- `virage:state.you.rank` et `you.of` existent déjà et gardent leur sens : la
+  même place que `rang` et `sur`, à l'instant de l'état.
+- **Le chrono de la minute double se décompte sur `surgeMs`**, avec
+  `performance.now()` depuis la réception (R3), jamais sur `surgeUntil` :
+  celui-ci reste servi (un instant de l'horloge du serveur) et ne sert à aucun
+  calcul. La fin est diffusée : `virage:tick` part avec `surge: false` dans
+  les 100 ms qui suivent la fin de la minute, même dans une salle où personne
+  ne chante. À zéro, la page attend ce signal au lieu de conclure seule.
+- **Le plancher de ferveur** (Q4, 3 octobre 2026) : au Virage, un chant
+  accepté dont le verdict est au moins `moyen` crédite **au moins 1** de
+  ferveur, quelle que soit la taille de la tribune, tous les facteurs
+  appliqués (neutre compris). Les cartes n'y entrent pas. Dans une petite
+  tribune, rien ne change. Seule exception : sous un bonus de ferveur nul
+  (« pèse sur la corde, ne compte pas au classement » ; aucune source n'en
+  pose aujourd'hui), rien ne compte, plancher compris. `ferveur` de `virage:result` (existant) le reflète
+  déjà : l'écran n'a rien à calculer.
+
+### 16.3 La carte-souvenir : `virage:souvenir`
+
+Le serveur → **les seules sockets, dans cette salle, des joueurs qui l'ont
+reçue** :
+
+```json
+{ "fixtureId": 1208051, "id": 88, "minute": 71, "joueur": "Kabashi" }
+```
+
+- `minute` et `joueur` sont absents quand le relevé ne les donne pas ;
+  `joueur` vient de l'API sportive et se pose en texte.
+- **C'est le seul signal qui annonce une carte-souvenir.** `virage:real_goal`
+  n'en annonce aucune : une compétition non couverte n'en frappe pas, et un
+  spectateur qui n'a pas poussé dans la fenêtre de présence n'en reçoit pas —
+  « Elle est dans ton carnet » serait faux.
+- Une fois par but et par joueur ; un but déjà frappé ne se réannonce pas.
+
+### 16.4 Absence
+
+Un serveur d'avant cette vague ne sert ni `verdict`, ni `cri`, ni `serie`, ni
+`rang`/`sur`, ni `prochain`, ni `surgeMs`, ni `virage:souvenir`, ni
+`virage:fin`. La page n'écrit alors ni tampon, ni combo, ni palier (le rang
+seul, par `you.rank`), ni chrono (le sticker dit la minute double sans chiffre
+tant que `surge` est vrai), et n'annonce aucune carte-souvenir. Elle ne
+retombe **jamais** sur un seuil à elle.
+
+### 16.5 La salle, d'une entrée à l'autre
+
+*Versé le 4 octobre 2026 avec le correctif du Virage (défauts D1, D2 et D3 de
+`SERVEUR-VAGUE2.md` § 5, relu en cinq passes). Aucun champ nouveau hormis
+`surgeMs` : ce qui change, c'est ce que valent les champs existants après une
+coupure, un second onglet ou un retour.*
+
+- **Une socket n'est pas un joueur.** Chaque onglet, chaque reconnexion est
+  une socket. Le joueur est dans la salle tant qu'une de ses sockets y est, et
+  n'en sort qu'à la dernière (`virage:leave` ou coupure). Fermer un onglet
+  KOP, Équipes ou duel, ou perdre l'ancienne socket d'un téléphone qui change
+  de réseau, ne coupe plus l'onglet resté ouvert (il recevait
+  `ferveur.error.not_in_virage`). Une socket qui demande un autre match quitte
+  le premier ; deux onglets sur deux matchs chantent chacun dans le leur.
+- **Partir n'efface rien.** Le joueur qui sort passe parmi les **partis** de
+  la salle, et retrouve à son retour **son** état : souffle, main, pioche,
+  recharges, fatigue, effets, ferveur. `virage:state.you` le rend tel quel à
+  la socket qui revient. Le souffle ne remonte pas pendant l'absence ; les
+  recharges et la fatigue, qui sont des instants, ont couru comme pour qui
+  reste assis. **Recharger la page ne rend plus 40 de souffle ni une main
+  neuve**, et la page ne doit pas le supposer.
+- **Un parti ne compte nulle part en direct** : ni dans la foule (`crowd`), ni
+  dans `rang`, `sur` et `prochain`, ni dans `you.rank` et `you.of`. Le bilan,
+  lui, compte tout le match, départs compris (§ 15.1).
+- **Les partis vivent autant que la salle** : tant que son match peut se jouer
+  (de la demi-heure qui précède le coup d'envoi jusqu'à trois heures après),
+  vide ou non. Hors de ce créneau, une salle vide est libérée une demi-heure
+  après la dernière sortie ; celle d'un match fini, reporté ou arrêté, une
+  minute après. Libérée, elle emporte ses partis : on y revient à neuf.
+- **Le camp.** `virage:join` porte `{ "fixtureId", "camp" }`, `camp` ∈
+  `"domicile"` \| `"exterieur"` (ou `0` \| `1`). **Chez soi** (le joueur suit
+  l'un des deux clubs), le camp découle du club suivi, à chaque entrée, et
+  `camp` est ignoré. **Neutre** : un camp demandé est un camp choisi, et il
+  l'emporte (« je me suis trompé, je ressors et je rechoisis ») ; **sans
+  camp** — la page qui se reconnecte réémet `virage:join` sans le choix —, le
+  neutre que la salle connaît déjà (présent dans un autre onglet, ou parti)
+  retrouve le sien, et un neutre inconnu va à domicile. Le KOP se compose sur
+  ce camp-là ; `virage:state.you.side` dit toujours le camp retenu.
+- **`classe` est une réservation jusqu'à la première poussée** : décidée à
+  chaque entrée tant que le joueur n'a pas poussé dans ce match, fixée par sa
+  première poussée (c'est elle qui écrit la ligne de présence). Regarder trois
+  tribunes au coup d'envoi ne consomme pas trois places du plafond gratuit ;
+  deux onglets ouverts sur deux matchs ne se réservent pas tous les deux la
+  dernière.
+- **Une entrée dépassée ne s'assoit pas.** Un `virage:join` suivi, avant sa
+  réponse, d'un `virage:leave` ou d'un autre `virage:join` de la même socket
+  ne reçoit rien : seule la dernière demande compte. Une socket fermée pendant
+  son entrée n'entre pas.
+
+### 16.6 Le but réel : ce qui part, et ce qui ne part pas
+
+*Versé avec le même correctif.*
+
+- `virage:real_goal` — et avec lui la secousse de la corde, la minute double
+  et la frappe des cartes-souvenirs (§ 16.3) — ne part que pour **un but qui
+  compte au tableau** : jamais pour un penalty manqué, ni pour un tir de la
+  séance de tirs au but, marqué ou non (l'API les range tous sous « but »). Le
+  fil (`virage:fil`) ne les raconte pas non plus.
+- **Seulement pour un but frais**, vu tomber par le relevé. Un but marqué
+  avant que le relevé regarde ce match — une salle ouverte en cours de match,
+  un redémarrage du serveur qui dure plus de cinq minutes de jeu ou enjambe
+  une période, ou, pour un match que le relevé ne suit que parce que sa salle
+  est occupée, une salle restée vide un tour entier puis rouverte — n'est pas
+  annoncé : `scoreReel`, servi avec l'état et le fil, le porte déjà, et la
+  page n'a rien à rattraper.
+- Un but que la liste des événements porte **avant** le tableau d'affichage
+  attend que le tableau le porte, puis part, au tour suivant du relevé (une
+  vingtaine de secondes plus tard). Un but que la vidéo refuse avant qu'il
+  arrive au tableau ne part jamais.
+- `virage:state.fixture.kickoffAt` suit l'heure que le relevé lit : un match
+  avancé ou reculé change d'heure dans sa salle, et le compte à rebours de la
+  page lit la dernière reçue.
+- Une salle ne fait plus relever un match fini (`FT`, `AET`, `PEN`, `CANC`,
+  `AWD`, `WO`) ; un match reporté (`PST`, `ABD`), un match que l'API ne rend
+  plus (supprimé, renuméroté) ou un match en jeu qui ne bouge plus depuis une
+  heure ne le sont plus qu'au coup d'œil (une demi-heure, ou un quart d'heure
+  pour le dernier). Dans sa salle, la minute et le score cessent alors de
+  bouger, sans erreur : c'est voulu, chaque relevé se paie sur l'enveloppe de
+  l'API.
+
+**Lecteurs.** `virage.html` (le tampon, le combo, la ferveur à paliers, le
+sticker de phase, la carte-souvenir, le camp et l'état rendus au retour),
+`geste.js` (le tampon de la fenêtre du geste).
+
+---
+
+## 17. Le duel
+
+| où | champ | type | sens | absent quand |
+|---|---|---|---|---|
+| `nvn:events`, évènement `chant` | `verdict` | comme au § 16.1 | le mot du geste, pour chaque joueur (le sien comme celui d'en face), mesuré comme au § 16.1 | jamais |
+| `nvn:fin`, `joueurs[]` | `parfaits` | entier ≥ 0 | ses chants au verdict `parfait` dans ce duel ; un bot a les siens | jamais |
+| `nvn:fin`, `joueurs[]` | `serie` | entier ≥ 2 | sa meilleure série de `parfait` d'affilée | en dessous de deux |
+| `nvn:fin`, `joueurs[]` | `meilleur` | `{ "chant", "nom", "verdict" }` | le chant de sa meilleure note (mesurée comme le verdict) : identifiant, nom à écrire tel quel (R7), verdict — « PARFAIT sur LA MONTÉE » | sans aucun chant |
+| `GET /api/deck/matchs`, chaque match | `enJeu` | `{ "1v1": 60, "2v2": 70, "3v3": 78, "4v4": 88, "5v5": 96 }` | les écharpes qu'une **victoire** rapporterait à ce joueur dans chaque format : le barème du `mode` du match (`classe` ou `entrainement`) × la prime du format (`duel.prime_format`) × 2 si `mien`. L'exemple : un match classé de son club | pour un match sur lequel on ne peut plus entrer en file : celui d'un jour passé, compté en jour UTC comme `mode` (un match fini du jour même reste ouvert) |
+| `POST /api/repetition` | `verdict` | comme au § 16.1 | le mot de `note` (la note brute : la salle de répétition ne porte aucun modificateur). La page garde sa note chiffrée et son record ; son mot est celui de l'arène | quand `refuse` est posé (la page dit REFUSÉ) |
+| `nvn:start`, `nvn:state` | `moi.userId` | chaîne | l'identifiant du joueur à qui part cette vue : le même que `userId` dans `equipes[][]`, dans les évènements et dans `nvn:fin.joueurs[]`. La page reconnaît ainsi ses propres chants et sa ligne du bilan — en 3 contre 3, trois joueurs ont le même camp | jamais |
+| `nvn:start`, `nvn:state` | `moi.effets[].duree` | entier (ms) ou `null` | la durée totale de l'effet, posée à la carte jouée ; avec `reste`, l'anneau du chrono | jamais ; `null` pour un effet sans échéance (Bâche, Renvoi, charges) |
+| `nvn:start`, `nvn:state` | `equipes[][].effets` | `[{ "type", "reste", "duree" }]` | ce que porte chaque joueur **des deux camps**, sous la forme de `moi.effets`, sans les effets échus. Chaque carte jouée est déjà annoncée à toute la salle : ses effets aussi | jamais ; un tableau vide sans effet |
+| `nvn:events`, évènement `effect` | `side` | `0` \| `1` | le camp qui porte l'effet que la carte vient de poser ; sous un Renvoi, celui de qui a joué la carte, qui le reçoit en retour | quand l'effet ne se pose sur personne (`steal`, `refill`, `team_breath`, `per_mate`, `halve_gap`, `refill_hand`, `clear_cooldowns`, `freeze_decay`, `swap_ready`) |
+| `nvn:fin`, `joueurs[]` | `moi` | `true` | sur **sa** ligne, dans **son** envoi : la page n'a pas à la chercher | sur les autres lignes — jamais `false` |
+| `GET /api/deck/matchs`, chaque match | `homeColors`, `awayColors` | tableaux de 0 à 2 couleurs `#RRGGBB` | les couleurs des deux clubs, lues dans `teams` (`sql/couleurs.sql`), comme sur `/api/virage/live` : l'affiche, la marée et les foules de l'arène | jamais : vides quand on ne les connaît pas, ou sans `sql/couleurs.sql` |
+| `GET /api/deck/match/:id`, `nvn:start`, `nvn:state` | `fixture.homeColors`, `fixture.awayColors` | tableaux de 0 à 2 couleurs `#RRGGBB` | les mêmes couleurs, dans l'objet `fixture` du match, sous la forme de `virage:state.fixture` : la vue du duel les porte à chaque état, reprise d'un duel comprise, sans relire la liste | jamais : un tableau vide quand on ne les connaît pas |
+| `GET /api/deck/match/:id` | `enJeu` | la forme de la liste | ce qu'une victoire rapporterait dans chaque format, calculé sur le `mode` que cette réponse sert, par la même formule que la liste | jamais sur une réponse 200 : la route refuse (400) un match où l'on ne peut plus entrer |
+
+- `enJeu` : **les mêmes montants pour tous, abonnés compris** (R9). Un format
+  qu'un joueur gratuit ne peut pas jouer classé est refusé à l'entrée
+  (`format_classe_abonne`, `duels_classes_epuises`), jamais payé autrement.
+  L'XP n'y entre pas : elle ne double pas pour son club et ne dépend pas du
+  format. Le serveur compte (barème, prime, double du club), l'écran nomme
+  (« +60 écharpes en jeu ») et n'écrit rien sans ce champ.
+- **Le jour d'un match**, qui décide `mode` (classé le jour même) et la fin
+  d'`enJeu`, est **le jour UTC de l'instant du coup d'envoi**, calculé par
+  une seule fonction pour la liste, la route d'un match et l'entrée en file :
+  une ligne de la liste annonce le mode et les écharpes que l'entrée
+  décidera. Ce n'est pas le « jour de jeu » des quotas (R4).
+- **Un match annulé ou reporté** (`CANC`, `PST`) **ne porte aucun duel** : la
+  liste ne le propose pas, même quand la journée du football l'apporte, et la
+  route d'un match comme l'entrée en file le refusent avec
+  `duel.error.fixture_annule` (route : 400 `{ "error" }` ; file : `nvn:error`
+  `{ "code" }`). Une page restée ouverte depuis le matin peut encore l'envoyer :
+  elle dit le refus par une phrase (« Ce match est reporté ou annulé »),
+  jamais par le code, et relit la liste, qui ne le propose plus.
+- Le « +3 places » du bilan n'est pas servi (Q12) : `gains.cote` (§ 4.1)
+  suffit au bilan, et `/classement` montre la place.
+- **Pas de `serie` sur l'évènement `chant`** : le duel n'a pas de combo en jeu,
+  et le contrat ne sert sa série qu'au bilan (`ECARTS.md`, `serveur-socle`,
+  8 et 10). La page ne la compte pas elle-même.
+- Le **stade** du duel n'est pas servi avant le coup d'envoi : il est tiré à
+  l'ouverture du duel, et non sur le match (`ECARTS.md`, `serveur-duel`). La
+  préparation n'a donc pas de stade-mini.
+- **Absence** : sans `verdict`, la page n'écrit pas de tampon, joue le son
+  ordinaire du chant et pas d'onde — jamais un seuil à elle ; sans
+  `parfaits`, `serie` ou `meilleur`, leurs lignes disparaissent du bilan ;
+  sans `enJeu`, « ENTRER EN FILE » n'a pas de sous-libellé. Pour un serveur
+  d'avant ces champs : sans `moi.userId`, la page lit `nvn:file.moi` ; sans
+  `duree`, elle garde la plus longue valeur de `reste` vue pour cet effet ;
+  sans `equipes[][].effets` ni `side`, elle déduit des évènements ce que
+  porte la tribune d'en face ; sans `fixture.homeColors`/`awayColors` dans la
+  vue, elle prend les couleurs du match dans la liste qu'elle a chargée ; sans
+  couleurs nulle part (un duel repris sans la liste, ou des tableaux vides),
+  l'arène prend ses teintes par défaut. Sans `enJeu` sur la route d'un match,
+  rien ne change : la préparation lit celui de la liste.
+
+**Lecteurs.** `duel-nvn.html` (le tampon du geste, les PARFAITS et le meilleur
+geste au bilan, le sous-libellé d'ENTRER EN FILE, l'anneau des effets et ceux
+d'en face, sa ligne du bilan, les couleurs de l'affiche et de l'arène — de la
+vue d'abord, de la liste à défaut —, le refus d'un match annulé ou reporté ;
+aucune page ne lit aujourd'hui la route d'un match, ni donc son `enJeu`),
+`geste.js`, `repetition.html` (le tampon de fin, « ★ TON MEILLEUR » en
+tampon).
+
+---
+
+## 18. La présence
+
+Décision de Gaël (Q2, 3 octobre 2026). **Livrée éteinte** : le réglage
+`presence.actif` vaut faux jusqu'à la mise en ligne de la nouvelle
+`CONFIDENTIALITE.md`. **Tant qu'il est faux, rien de ce paragraphe n'est
+servi** — ni sur `/api/amis`, ni dans la tribune — et aucun écran ne montre de
+présence. **Il en va de même sur une base sans `sql/arenes.sql`**, réglage
+allumé ou non : sans la colonne du choix, personne ne pourrait s'y cacher, et
+la présence se comporte comme éteinte (§ 18.2).
+
+- **Qui la voit** : les **amis mutuels** seulement (une amitié acceptée,
+  `amities.etat = 'amis'`). Jamais une demande en attente, un refus, un
+  inconnu, un compte supprimé.
+- **Ce qu'elle dit** : **un seul de trois états grossiers**, dans cet ordre de
+  priorité — `"virage"` (dans une tribune du Virage dont le match n'est pas
+  fini), `"duel"` (dans un duel ou en file d'attente), `"en_ligne"` (une
+  activité depuis moins de `presence.en_ligne_sec` secondes, 120 par défaut).
+  **Jamais le match, jamais une heure, jamais « vu il y a ».** Rien n'est
+  écrit en base : la présence vit dans la mémoire du serveur et disparaît à
+  son redémarrage. Éteinte, elle ne garde rien, pas même une marque
+  d'activité ; seul le choix de se cacher s'écrit.
+- **Par défaut, visible** (`presence.visible_defaut`, vrai) ; chacun peut
+  **apparaître hors ligne**, par l'interrupteur du tiroir. Un joueur caché
+  n'apparaît chez personne, et voit ses amis comme avant. Il n'y a pas de
+  « REJOINDRE » : dire quel match on pousse, c'est ce que le module des amis
+  refuse depuis le début.
+
+### 18.1 `GET /api/amis`
+
+Chaque ami de `amis[]` reçoit **`presence`** : `"virage"` \| `"duel"` \|
+`"en_ligne"`. **Absent** veut dire hors ligne, caché, ou présence éteinte :
+l'écran ne distingue pas ces trois cas, et c'est voulu (« rien pour hors
+ligne »). Jamais dans `recues[]` ni `envoyees[]`, jamais d'horodatage. Aucun
+autre champ de la réponse ne change.
+
+### 18.2 `GET` et `POST /api/presence` — l'interrupteur
+
+Session requise (R8).
+
+| état | `GET /api/presence` | `POST /api/presence` `{ "visible": false }` |
+|---|---|---|
+| éteinte, ou base sans `sql/arenes.sql` | `{ "actif": false }` | `{ "actif": false }` — rien n'est écrit |
+| allumée | `{ "actif": true, "visible": true }` : le choix du joueur, à défaut `presence.visible_defaut` | `{ "actif": true, "visible": false }` |
+
+- `{ "actif": false }` : l'écran ne dessine pas l'interrupteur.
+- **Sans `sql/arenes.sql`** (la colonne `user_wallet.presence` absente), la
+  présence est éteinte même si `presence.actif` est allumé : `GET` et `POST`
+  rendent `{ "actif": false }`, et rien n'est servi, ni sur `/api/amis` ni
+  dans la tribune. Le serveur relit la colonne au plus toutes les dix
+  minutes : le fichier appliqué, la présence revient d'elle-même.
+- Le choix vaut **tout de suite** pour `/api/amis` de ses amis, et à sa
+  prochaine entrée dans une tribune. Ceux qui l'ont déjà vu entrer dans celle
+  où il est ne reçoivent rien de plus que son départ (§ 18.3) : leur « AMIS
+  ICI » ne doit pas le garder après qu'il est parti.
+- Un corps qui n'est pas exactement `{ "visible": <booléen> }` → 400
+  `{ "error": "presence.error.requete" }`. **Le corps se juge avant l'état** :
+  ce 400 vaut aussi quand la présence est éteinte.
+- Une panne inattendue → 503 `{ "error": "presence.error.server" }` ; un jeu
+  en maintenance répond 503 lui aussi (la route est montée après la fermeture
+  du jeu).
+- Le tiroir lit `GET /api/presence` **à son ouverture**, jamais au chargement
+  d'une page : la présence n'ajoute aucune requête par écran (P6). 404, 503
+  ou réseau : pas d'interrupteur (R2).
+- **Après un `POST`**, seule la réponse `{ "actif": true, "visible": <booléen> }`
+  garde l'interrupteur, à la position servie. Toute autre réponse le
+  **retire** : `{ "actif": false }` (présence éteinte entre-temps, ou base sans
+  `sql/arenes.sql`), 400 `presence.error.requete`, 401, 503
+  `presence.error.server`, ou une coupure réseau — après une panne, on ne sait
+  pas si le choix a été écrit, et l'écran ne montre pas une position qu'il ne
+  connaît pas. Rien en console. L'ouverture suivante du tiroir relit `GET` et
+  rend l'interrupteur s'il y a lieu.
+
+### 18.3 Dans la tribune : `virage:amis` et `virage:ami`
+
+À chaque entrée dans une salle du Virage :
+
+- **`virage:amis`** (le serveur → l'entrant, **seulement s'il y en a**) :
+
+  ```json
+  { "amis": [{ "id": "<public_id>", "pseudo": "Lucas", "avatar": { "…": "§ 3" } }] }
+  ```
+
+  ses amis mutuels **visibles** présents dans la même salle, les deux camps
+  compris — « 2 AMIS ICI » ne révèle rien : on y est tous les deux. Un joueur
+  caché reçoit quand même les siens.
+- **`virage:ami`** (le serveur → les sockets, dans cette salle, des amis
+  mutuels présents, **cachés compris** — un joueur caché voit ses amis comme
+  avant ; **jamais à la salle entière**) : `{ "id", "pseudo",
+  "avatar", "present": true }` quand un ami visible entre ;
+  `"present": false` quand il quitte vraiment la salle (sa dernière socket),
+  **à ceux-là seuls à qui sa présence a été dite** — par son entrée, ou par
+  leur propre `virage:amis` — et qui sont encore là, sans relire qui est
+  visible.
+- **Une entrée** est la première socket du joueur dans la salle, y compris un
+  retour après un vrai départ (il était parmi les partis, § 16.5). Une socket
+  de plus d'un joueur déjà là (un second onglet, une reconnexion avant que la
+  précédente soit tombée) ne l'annonce pas une seconde fois.
+- **Un ami caché dès son entrée** n'est annoncé ni à l'entrée, ni au départ.
+  **Un ami visible à son entrée, qui se cache ensuite**, est annoncé à son
+  départ à ceux qui l'ont vu entrer : leur dire qu'il est parti ne leur
+  apprend rien qu'ils ne savaient, et leur « AMIS ICI » mentirait sinon
+  jusqu'à leur propre départ.
+- `id` est l'identifiant public (celui de `/api/amis`) ; `pseudo` se pose en
+  texte ; `avatar` a la forme du § 3 et est **absent** sans Fanzzy (pas de
+  `null` ici).
+- La page ajoute un `virage:ami` d'un id qu'elle ne connaît pas, et ignore un
+  `present: false` d'un id qu'elle ne connaît pas.
+
+**Absence** : présence éteinte, base sans `sql/arenes.sql` (la présence est
+alors éteinte, § 18.2) ou serveur d'avant la vague → ni `presence` sur
+`/api/amis`, ni `virage:amis`, ni `virage:ami` ; `/api/presence` répond
+`{ "actif": false }` (éteinte, ou sans `sql/arenes.sql`), 404 (serveur d'avant
+la vague) ou 503 (panne, maintenance). Aucune pastille, aucun « AMIS ICI », pas
+d'interrupteur.
+
+**Lecteurs.** `amis.html` (la pastille de chaque ami), `virage.html` (« 2 AMIS
+ICI »), `menu.js` (l'interrupteur « apparaître hors ligne », au pied du
+tiroir, à côté du mode calme).

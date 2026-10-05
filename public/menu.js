@@ -24,10 +24,11 @@
  * `nav.js` l'appelle pour les pages de contenu ; l'accueil l'appelle pour
  * lui-même. Le jour où une entrée change, elle change une fois.
  *
- * Trois réglages y vivent aussi, pour la même raison — le tiroir est le seul
+ * Quatre réglages y vivent aussi, pour la même raison — le tiroir est le seul
  * endroit présent sur toutes les pages d'un joueur connecté : **le mode
- * calme** (sons, vibrations, animations décoratives), **le volume** des sons
- * et **l'installation** de l'application sur l'appareil.
+ * calme** (sons, vibrations, animations décoratives), **le volume** des sons,
+ * **l'installation** de l'application sur l'appareil et, quand le serveur
+ * sert la présence, **apparaître hors ligne** pour ses amis (lot 6).
  *
  * ## Ce que ce fichier ne fait pas
  *
@@ -40,10 +41,10 @@
  * L'apparence vit dans `ui.css` (`.tbf-tiroir`, `.tbf-tiroir-tete`,
  * `.tbf-rubrique`, `.tbf-tiroir-grille`, `.tbf-case`, `.tbf-tiroir-pied`,
  * `.tbf-voile`).
- * Seuls les interrupteurs, le curseur du volume, l'entrée d'installation, et
- * la place et le sticker de la bâche des MISSIONS dans la tête, qui
- * n'existent qu'ici, ont leur feuille à eux, posée par ce fichier — voir
- * `CSS_REGLAGES`.
+ * Seuls les interrupteurs, le curseur du volume, l'entrée d'installation, la
+ * place de la ligne « apparaître hors ligne », et la place et le sticker de
+ * la bâche des MISSIONS dans la tête, qui n'existent qu'ici, ont leur feuille
+ * à eux, posée par ce fichier — voir `CSS_REGLAGES`.
  */
 (() => {
   const chemin = location.pathname.replace(/\/$/, '') || '/';
@@ -193,6 +194,10 @@
     animations: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
     // Une flèche qui descend dans l'appareil : ce qu'on télécharge chez soi.
     installer: 'M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M5 20h14',
+    /* La présence (lot 6) : une silhouette et, à son pied, le rond d'« en
+       ligne ». Comme les facettes du calme, l'icône dessine ce que
+       l'interrupteur coupe — être vu de ses amis —, pas un interdit. */
+    presence: 'M10 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M3.5 20a6.5 6.5 0 0 1 11.2-4.5M18.5 20.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5',
   };
 
   /**
@@ -434,6 +439,58 @@
     background:var(--craie);box-shadow:0 0 0 2px var(--encre-kraft,#000),1px 2px 0 2px rgba(7,9,12,.45)}
   .tbf-volume input:focus-visible{outline:3px solid var(--encre-kraft,#000);outline-offset:2px}
   .tbf-volume input:disabled{opacity:.45;cursor:not-allowed}
+  /* **Apparaître hors ligne** (lot 6) : une ligne-bouton du pied, le mot à
+     gauche, la piste au bord droit (sa marge automatique, plus haut) — elle
+     se lit comme une phrase qu'on coche. Sa matière (l'encre du kraft, le
+     corps, la piste) est celle des autres lignes du pied ; cette feuille
+     n'en décide que la place.
+
+     **À côté du volume, dans la seconde colonne du pied** (à partir de
+     350 px, là où le pied en a deux). Sur sa propre ligne, sous le volume,
+     elle ajoutait cinquante et un pixels à un tiroir qui en avait déjà
+     neuf cent cinquante-sept à 360 × 640 : mille huit, un écran et
+     cinquante-huit centièmes, au-delà de l'écran et demi que le lot 2 a
+     fixé (« un écran et demi au plus, sur un téléphone », ui.css), et que
+     l'audit relève sur le tiroir avec la présence servie. Rangée avec le
+     volume, elle ne coûte rien : neuf cent cinquante-sept, comme sans elle.
+     Les deux sont des réglages de la façon dont le jeu se comporte, et
+     tiennent chacun dans sa colonne : VOLUME et son curseur dans la
+     première (quatre-vingt-cinq pixels de curseur à 360), le mot et la
+     piste dans la seconde. Un filet tireté vertical, celui des liens du
+     pied, posé dans l'écart des colonnes, les sépare : ce n'est ni le
+     volume, ni une facette du calme.
+
+     **Le mot passe sur deux lignes**, « APPARAÎTRE » puis « HORS LIGNE »
+     (une espace insécable les tient ensemble, voir presenceHTML) : deux
+     lignes de treize pixels tiennent dans les quarante-quatre de la cible.
+     Sous 420 px, l'icône s'efface de cette rangée-là : à 360, la colonne a
+     cent quarante-trois pixels, et l'icône, le mot, la piste et leurs
+     écarts en demandaient cent quarante-sept en Oswald, cent soixante-cinq
+     dans la police de repli tant qu'Oswald n'est pas arrivée (le mot seul y
+     fait quatre-vingt-dix pixels au lieu de soixante-douze). Sans l'icône,
+     cent trente-huit au plus. Le mot reste, c'est lui qu'on cherche ; le
+     volume, à côté, n'a pas d'icône non plus.
+
+     La classe tbf-volume--rangee est posée sur le volume par ce fichier,
+     seulement quand la ligne existe (voir montrerPresence) : un sélecteur
+     ne sait pas regarder vers un frère qui suit sans :has, que l'on
+     n'emploie pas ici pour la même raison que la marge des MISSIONS, plus
+     bas. Un volume caché (un appareil sans son) laisse la ligne seule, sur
+     toute la largeur, comme sous 350 px, où le pied n'a qu'une colonne :
+     un filet tireté horizontal la sépare alors du volume. */
+  .tbf-presence{margin:6px 0 0;border-top:1.5px dashed rgba(7,9,12,.38)}
+  .tbf-presence .lib{min-width:0}
+  @media (min-width:350px){
+    .tbf-tiroir-pied>.tbf-volume--rangee:not([hidden]){grid-column:1}
+    .tbf-tiroir-pied>.tbf-volume--rangee:not([hidden])+.tbf-presence{grid-column:2;position:relative;
+      margin:4px 0 0;border-top:0}
+    .tbf-tiroir-pied>.tbf-volume--rangee:not([hidden])+.tbf-presence::before{content:"";position:absolute;
+      left:-8px;top:8px;bottom:8px;border-left:1.5px dashed rgba(7,9,12,.38)}
+  }
+  @media (min-width:350px) and (max-width:419px){
+    .tbf-tiroir-pied>.tbf-volume--rangee:not([hidden])+.tbf-presence .tbf-tiroir-bt{gap:8px}
+    .tbf-tiroir-pied>.tbf-volume--rangee:not([hidden])+.tbf-presence svg{display:none}
+  }
   /* **La bâche des MISSIONS, dans la tête** (lots 3 et 5). Elle prend la
      matière de celle de l'accueil, dont elle porte la classe ; cette feuille
      n'en décide que la place et le sticker.
@@ -681,6 +738,43 @@
     const volumeHTML = '<label class="tbf-volume">Volume'
       + '<input type="range" min="0" max="100" step="5" aria-label="Volume des sons"></label>';
 
+    /* **Apparaître hors ligne** (lot 6, décision de Gaël sur Q2 ; contrat
+       § 18.2). La présence — en ligne, au Virage, en duel — est vue des seuls
+       amis mutuels, et visible par défaut : chacun doit pouvoir s'en retirer,
+       et le tiroir est le seul endroit présent sur toutes les pages. Au pied,
+       juste sous le mode calme, à côté du volume : c'est la façon dont le
+       jeu se comporte, pas un endroit où aller.
+
+       Un interrupteur, comme ceux du calme, et pour la même raison : le
+       libellé dit ce qu'il fait quand on l'allume — **apparaître hors
+       ligne**. Allumé, on est caché ; un « Présence » allumé laisserait
+       deviner si l'on se montre ou si l'on se cache. Le nom que lit un
+       lecteur d'écran précise auprès de qui, et contient le mot affiché.
+
+       Hors du groupe du calme, et sans titre de rubrique : ce n'est pas une
+       facette du calme, et une rubrique de plus pour une ligne allongerait
+       le pied (`menu-smoke` compare aussi la liste des rubriques mot pour
+       mot). Dans la seconde colonne du pied, sur la rangée du volume : sur
+       sa propre ligne, elle faisait passer le tiroir au-delà d'un écran et
+       demi à 360 × 640 (voir `CSS_REGLAGES`). Le mot y passe sur deux
+       lignes, « APPARAÎTRE » puis « HORS LIGNE » : l'espace insécable
+       empêche une coupure en « APPARAÎTRE HORS » puis « LIGNE ».
+
+       **Absent du tiroir tant que le serveur ne sert pas la présence**, et
+       non pas caché : la ligne n'est construite qu'à la réponse qui la
+       permet, et retirée à celle qui l'éteint (voir `lirePresence`). Née
+       cachée, elle restait dans l'arbre, et `menu-smoke` — qui relève tous
+       les `[role="switch"]` du tiroir, cachés compris — y comptait quatre
+       interrupteurs du calme au lieu de trois, sur un serveur où la
+       présence est éteinte (le cas de la livraison). Servie, le tiroir en
+       compte quatre, dont trois dans le groupe du calme : un contrôle qui
+       les relève tous doit alors le savoir. */
+    const presenceHTML = '<button type="button" class="tbf-tiroir-bt" role="switch" aria-checked="false"'
+      + ' aria-label="Apparaître hors ligne pour mes amis" data-presence>'
+      + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.presence}"/></svg>`
+      + '<span class="lib">Apparaître hors&nbsp;ligne</span>'
+      + '<span class="tbf-inter" aria-hidden="true"></span></button>';
+
     /* **Le pied, sur un ticket kraft** (lot 2) : une liste calme, en deux
        colonnes, pour ce qu'on vient chercher en sachant ce qu'on cherche — et
        qui n'est pas un endroit où jouer. Les liens gardent leur balisage et
@@ -725,6 +819,9 @@
       + item('#', 'sortie', 'Se déconnecter', 'sortie')
       + calmeHTML
       + volumeHTML
+      /* Ici, entre le volume et la version, la ligne « apparaître hors
+         ligne » quand le serveur la permet (`presenceHTML`, plus haut), sur
+         la rangée du volume à partir de 350 px. */
       /* **La version, tout en bas, et sur toutes les pages.**
 
          Un joueur qui signale un défaut décrit ce qu'il voit ; il ne peut pas
@@ -838,6 +935,105 @@
     });
     reglerVolume();
 
+    /* ------------------------------------------ apparaître hors ligne
+
+       **Lu à l'ouverture du tiroir, jamais au chargement d'une page**
+       (contrat § 18.2) : la présence n'ajoute aucune requête par écran, et
+       ne coûte une ligne qu'à qui ouvre le menu. Relu à chaque ouverture,
+       comme les interrupteurs du calme : un autre onglet a pu changer le
+       choix, et Gaël peut éteindre la présence entre deux ouvertures.
+
+       **Ce qui fait paraître l'interrupteur** : `{ actif: true, visible }`,
+       avec un vrai booléen. `{ actif: false }` (la présence éteinte, comme à
+       la livraison), une autre forme, un 404 (un serveur d'avant), un 503 ou
+       pas de réseau : il ne paraît pas, ou disparaît (R2). Un interrupteur
+       qui dirait un état qu'on ne connaît pas est pire que pas
+       d'interrupteur — et ici, il parlerait de ce que les autres voient.
+
+       **Le toucher.** La piste bascule tout de suite, sous le doigt, puis le
+       serveur répond : `{ actif: true, visible }`, et son `visible` fait foi.
+       **Toute autre réponse retire l'interrupteur**, comme à l'ouverture :
+       `{ actif: false }` (la présence éteinte entre-temps, ou une base sans
+       `sql/arenes.sql`), un refus (400 `presence.error.requete` — le corps
+       envoyé est toujours juste, un refus dit donc un serveur qui ne parle
+       pas ce contrat), une session perdue (401), une panne (503
+       `presence.error.server`) ou pas de réseau. Il revenait auparavant où
+       il était ; mais après une panne ou une coupure, on ne sait pas si le
+       choix a été écrit avant elle, et l'interrupteur dirait alors un état
+       qu'on ne connaît pas. La prochaine ouverture relit, et il revient si
+       le serveur répond. Rien en console : l'absence n'est pas une faute de
+       la page (R2).
+
+       Un seul envoi à la fois ; tant qu'il est en route, l'ouverture ne
+       relit pas (une lecture partie avant l'envoi rendrait l'état d'avant),
+       et `tour` écarte toute réponse plus vieille que la dernière question
+       posée. */
+    let lignePresence = null;
+    let tourPresence = 0;
+    let envoiPresence = false;
+    const etatPresence = (j) => (j?.actif === true && typeof j.visible === 'boolean' ? j.visible : null);
+    const montrerPresence = (visible) => {
+      if (visible === null) {
+        if (!lignePresence) return;
+        /* Le focus ne tombe pas avec elle (même règle que l'installation) :
+           il passe au volume s'il se touche, sinon à la croix de la tête. */
+        if (lignePresence.contains(document.activeElement)) {
+          (ligneVolume.hidden || curseur.disabled ? tiroir.querySelector('.tbf-tiroir-fermer') : curseur)
+            .focus({ preventScroll: true });
+        }
+        lignePresence.remove();
+        lignePresence = null;
+        // Le volume reprend toute la largeur (voir `CSS_REGLAGES`).
+        ligneVolume.classList.remove('tbf-volume--rangee');
+        return;
+      }
+      if (!lignePresence) {
+        lignePresence = document.createElement('div');
+        lignePresence.className = 'tbf-presence';
+        lignePresence.id = 'tbf-presence';
+        lignePresence.innerHTML = presenceHTML;
+        lignePresence.querySelector('[data-presence]').addEventListener('click', basculerPresence);
+        /* Juste après le volume, dont elle partage la rangée à partir de
+           350 px : la feuille la range à côté de lui par la classe qu'il
+           prend ici. Avant la version, qui reste tout en bas. */
+        ligneVolume.after(lignePresence);
+        ligneVolume.classList.add('tbf-volume--rangee');
+      }
+      lignePresence.querySelector('[data-presence]').setAttribute('aria-checked', String(!visible));
+    };
+    async function lirePresence() {
+      if (envoiPresence) return;
+      const n = ++tourPresence;
+      let j = null;
+      try {
+        const r = await fetch('/api/presence', { credentials: 'same-origin' });
+        if (r.ok) j = await r.json();
+      } catch { /* pas de réseau, ou pas du JSON : pas d'interrupteur */ }
+      if (n === tourPresence) montrerPresence(etatPresence(j));
+    }
+    async function basculerPresence(e) {
+      const inter = e.currentTarget;
+      if (envoiPresence) return;
+      const cache = inter.getAttribute('aria-checked') === 'true';
+      const n = ++tourPresence;
+      envoiPresence = true;
+      inter.setAttribute('aria-checked', String(!cache));
+      inter.setAttribute('aria-busy', 'true');
+      let j = null;
+      try {
+        const r = await fetch('/api/presence', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          // Le nouveau choix : visible si l'on était caché, caché sinon.
+          body: JSON.stringify({ visible: cache }),
+        });
+        if (r.ok) j = await r.json();
+      } catch { /* pas de réseau, ou pas du JSON : pas d'interrupteur */ }
+      envoiPresence = false;
+      inter.removeAttribute('aria-busy');
+      if (n === tourPresence) montrerPresence(etatPresence(j));
+    }
+
     /* --------------------------------------- installer l'application
 
        Trois cas, les mêmes que l'invitation que portait l'accueil, et le
@@ -935,6 +1131,7 @@
         majInterrupteurs();
         reglerVolume();
         proposerInstallation();
+        void lirePresence();
         void tiroir.offsetWidth;
         tiroir.classList.add('on');
         voile.classList.add('on');
@@ -1138,13 +1335,18 @@
        comprises : le hub monte le tiroir avant que le quotidien lui
        réponde, et lui pose `aReclamer` à chaque recomposition. */
     const URGENCES = ['direct', 'pret', 'attend'];
-    /* **Sur les deux écrans de jeu, le point d'avant.** Le Grand Virage et le
-       duel ne changent pas dans ce lot : leur barre flotte à huit pixels du
-       bord, et le sticker, qui déborde de neuf au-dessus du bouton, y serait
-       rogné par le haut de l'écran. Le point rouge reste donc là, dans le
-       bouton, tel qu'il était — jusqu'au HUD de match, qui accueillera ces
-       deux boutons. */
-    const enJeu = Boolean(bouton.closest('.tbf-haut-jeu'));
+    /* **Les deux écrans de jeu aussi** (lot 6, reliquat du lot 2). Le Grand
+       Virage et le duel gardaient le point rouge d'avant, dans le bouton :
+       leur barre flottait à huit pixels du haut et dix du bord, et le
+       sticker, qui déborde de neuf pixels au-dessus du bouton et de huit à
+       droite — treize et demi avec son bord de craie, son cerne et son
+       ombre —, y était rogné par le haut de l'écran. Le HUD de match leur
+       laisse maintenant cet air : ses deux boutons sont ses deux bouts, à
+       quatorze pixels du haut et du bord (ui.css, `.tbf-haut-jeu` et « le
+       HUD de match »). Le bouton y porte donc le sticker de l'état le plus
+       urgent, comme partout ailleurs — LIVE, « 2 », « 4 » au lieu d'un point
+       qui ne disait ni quoi ni combien —, et ce fichier n'y pose plus rien
+       d'autre. La branche qui posait le point est partie avec lui. */
     /* Les porteurs d'état : la bâche des MISSIONS **d'abord**, puis les
        tuiles. Pour deux récompenses prêtes, le bouton prend donc les
        MISSIONS avant les boosters : une mission prête ne se récupère que
@@ -1155,13 +1357,6 @@
       ...tiroir.querySelectorAll('.tbf-case[data-etat]')];
     function urgence() {
       const etats = porteurs();
-      if (enJeu) {
-        const allume = etats.some((n) => URGENCES.includes(n.dataset.etat));
-        const pip = bouton.querySelector('.pip');
-        if (allume && !pip) bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-        if (!allume) pip?.remove();
-        return;
-      }
       for (const u of URGENCES) {
         const t = etats.find((n) => n.dataset.etat === u);
         if (!t) continue;

@@ -14,6 +14,8 @@ import { XP } from '../src/shared/niveau.js';
 import { PART_POT } from '../src/shared/kop.js';
 import { apres as coteApres, COTE_DEPART } from '../src/shared/cote.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
+import { CHANTS } from '../src/shared/duel/chants.js';
+import { VERDICTS } from '../src/shared/verdict.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
@@ -62,7 +64,10 @@ for (const [i, id] of [...U, ...V].entries()) {
     [id, 'Deck', JSON.stringify({ nom:'Deck',
       fanzzy:[{id:'TR32',stuff:[]},{id:'MS30',stuff:[]},{id:'TR33',stuff:[]}], actions: dix })]);
 }
-await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
+/* Les couleurs des deux clubs (`sql/couleurs.sql`) : le match support les
+   porte, et la vue du duel les sert (lot 6). */
+await raw.query(`INSERT INTO teams (id,name,color1,color2)
+  VALUES (85,'Sion','#C8102E','#FFFFFF'),(91,'Bâle','#1D428A',NULL)`);
 // Le premier duelliste suit Sion, qui joue le match 900 ; le second ne suit
 // personne. Pousser pour son club rapporte le double, et la comparaison des
 // deux bourses à la fin du duel est le seul moyen de le vérifier.
@@ -126,6 +131,11 @@ check('sockets connectées', await until(()=>A.socket.connected && B.socket.conn
 A.socket.emit('nvn:queue', { format:'1v1', fixtureId:900 });
 check('mise en file confirmée', await until(()=>A.file !== null));
 check('le mode du match est annoncé', A.file.mode === 'classe');
+/* La présence lira `estEnDuel` (CONTRATS.md § 18 : « dans un duel ou en file
+   d'attente ») : mémoire seule, sans requête. */
+check('en file, il est « en duel » pour la présence', N.estEnDuel(U[0]) === true);
+check('et qui n’a rien demandé ne l’est pas',
+  N.estEnDuel(U[1]) === false && N.estEnDuel(null) === false);
 check('pas d\u2019appariement seul', A.state === null);
 
 /* ------------------------------------------------------- les deux camps
@@ -180,6 +190,7 @@ check('l’attente est annoncée à tout le monde',
 }
 B.socket.emit('nvn:queue', { format:'1v1', fixtureId:900, camp:1 });
 check('duel formé à deux', await until(()=>A.state && B.state));
+check('dans la salle, les deux sont « en duel »', N.estEnDuel(U[0]) && N.estEnDuel(U[1]));
 check('le neutre a pris le camp qu’il a demandé',
   B.file.camp === 1 && B.file.neutre === true);
 check('et tenir le camp vide double sa ferveur', B.file.renfort === 2
@@ -189,7 +200,25 @@ check('et le camp est le club', A.state.moi.side === 0 && B.state.moi.side === 1
 check('main de cinq cartes', A.state.moi.main.length === 5);
 check('trois Fanzzy', A.state.moi.fanzzy.length === 3);
 check('le match support est transmis', A.state.fixture?.id === 900);
+/* **Les couleurs des deux clubs, dans la vue** (lot 6) : l'arène, le HUD et le
+   bilan du duel les lisent là, sans dépendre de la liste chargée par la page —
+   une reprise après rechargement n'a pas cette liste sous la main. Les mêmes
+   pour les deux camps : ce sont celles des clubs, pas celles des tribunes. */
+{
+  const teintes = (s) => JSON.stringify([s?.fixture?.homeColors, s?.fixture?.awayColors]);
+  check(`la vue porte les couleurs des deux clubs (${teintes(A.state)})`,
+    teintes(A.state) === JSON.stringify([['#C8102E', '#FFFFFF'], ['#1D428A']])
+    && teintes(B.state) === teintes(A.state));
+}
 check('duel classé', A.state.mode === 'classe');
+/* La page ne savait pas qui elle était hors du vestiaire : elle se cherchait
+   au camp et à la ferveur. La vue le dit, à chacun la sienne. */
+check('la vue dit à chacun qui il est (moi.userId)',
+  A.state.moi.userId === U[0] && B.state.moi.userId === U[1]
+  || (console.log('        A :', A.state.moi.userId, '· B :', B.state.moi.userId), false));
+check('et chaque joueur des deux camps porte ses effets, même vides',
+  A.state.equipes.flat().length === 2
+  && A.state.equipes.flat().every((j) => Array.isArray(j.effets)));
 
 
 /**
@@ -350,6 +379,41 @@ A.socket.emit('nvn:play', { cardId: carte });
 check('la carte est jouée', await until(()=>A.events.some((e)=>e.t==='action')));
 check('elle quitte la main', await until(()=>!A.state.moi.main.includes(carte)));
 
+/* ------------------------------------- un effet posé en face, vu des deux côtés
+
+   L'arène pose chaque effet en objet, avec son chrono en anneau. La vue du
+   moteur ne servait que `reste`, et seulement pour soi : la page devinait la
+   durée (la plus longue valeur vue) et le camp d'un effet « adverse » (celui
+   d'en face de la dernière carte). Le Brouillard d'A sur B, par la socket :
+   l'évènement dit le camp qui le porte, B le voit sur lui avec sa durée, et A
+   le voit sur B. */
+{
+  const jA = salleA.duel.joueurs.get(U[0]);
+  jA.breath = 100;
+  jA.cooldowns = {};
+  jA.main.push('a-brouillard');
+  const avant = A.events.length;
+  A.socket.emit('nvn:play', { cardId: 'a-brouillard' });
+  const ev = await until(() => A.events.slice(avant).some((e) => e.t === 'effect' && e.type === 'blind'))
+    ? A.events.slice(avant).find((e) => e.t === 'effect' && e.type === 'blind') : null;
+  check(`l’évènement du Brouillard dit le camp qui le porte (${ev?.side})`,
+    ev?.cible === 'adverse' && ev?.side === 1
+    || (console.log('        évènement :', JSON.stringify(ev)), false));
+  const chezB = () => B.state?.moi?.effets?.find((e) => e.type === 'blind');
+  const vuDA = () => A.state?.equipes?.[1]?.[0]?.effets?.find((e) => e.type === 'blind');
+  await until(() => chezB() && vuDA());
+  check(`B le porte, avec sa durée entière (${chezB()?.duree} ms, reste ${chezB()?.reste})`,
+    chezB()?.duree === 6000 && chezB().reste > 0 && chezB().reste <= 6000
+    || (console.log('        B :', JSON.stringify(B.state?.moi?.effets)), false));
+  check('et A le voit sur la tribune d’en face, sous la même forme',
+    vuDA()?.duree === 6000 && vuDA().reste > 0 && vuDA().reste <= 6000
+    && !(A.state.equipes[0][0].effets ?? []).some((e) => e.type === 'blind')
+    || (console.log('        A voit :', JSON.stringify(A.state?.equipes)), false));
+  // Levé tout de suite : la suite a encore besoin de la main de B.
+  salleA.duel.joueurs.get(U[1]).effets = [];
+  jA.breath = 100;
+}
+
 A.errors.length = 0;
 A.socket.emit('nvn:play', { cardId: 'a-inexistante' });
 check('carte inconnue refusée',
@@ -366,6 +430,10 @@ B.socket.disconnect();
 check('la coupure est annoncée', await until(()=>A.events.some((e)=>e.t==='disconnected')));
 check('la place est gardée', salle.membres.get(U[1]).parti !== true);
 check('le duel continue', !salle.duel.termine);
+/* Sa place l'attend quatre-vingt-dix secondes et il peut y revenir : il est
+   encore en duel. C'est la grâce épuisée qui l'en sort (plus bas, banc de la
+   reprise). */
+check('coupé, il reste « en duel » tant que sa place l’attend', N.estEnDuel(U[1]) === true);
 
 const B2 = co(U[1]);
 await until(()=>B2.socket.connected);
@@ -373,6 +441,7 @@ B2.socket.emit('nvn:resume');
 check('reprise acceptée', await until(()=>B2.state !== null));
 check('l\u2019état est complet à la reprise',
   B2.state.moi.main.length > 0 && B2.state.moi.fanzzy.length === 3);
+check('et la reprise dit aussi qui il est', B2.state.moi.userId === U[1]);
 check('le retour est annoncé', await until(()=>A.events.some((e)=>e.t==='back')));
 
 /* ------------------------------------------------------- fin et classement */
@@ -416,6 +485,62 @@ check('le duel classé est enregistré',
 const res = await resultats();
 check('un gagnant et un perdant',
   res.filter((r)=>r.outcome==='win').length === 1 && res.filter((r)=>r.outcome==='loss').length === 1);
+check('le duel fini, plus personne n’y est « en duel »',
+  N.estEnDuel(U[0]) === false && N.estEnDuel(U[1]) === false);
+
+/* --------------------------------------- le verdict, et ce que le bilan en dit
+
+   CONTRATS.md § 17 : chaque évènement `chant` porte `verdict`, le sien comme
+   celui d'en face, et `nvn:fin` dit pour chaque joueur ses PARFAITS, sa
+   meilleure série (à partir de deux) et son meilleur geste. La note mesurée
+   n'est pas dans l'évènement — elle se prend avant les modificateurs, et
+   `nvn-smoke` éprouve ce calcul. Ce qu'on éprouve ici est le **câblage** : ce
+   que le bilan compte est exactement ce que les évènements ont dit, chant par
+   chant, et dans l'ordre. */
+{
+  const chants = A.events.filter((e) => e.t === 'chant');
+  check(`chaque chant diffusé porte un mot de l’échelle (${chants.map((c) => c.verdict).join(', ')})`,
+    chants.length >= 2 && chants.every((c) => VERDICTS.includes(c.verdict))
+    || (console.log('        chants :', JSON.stringify(chants)), false));
+  /* B a quitté la salle en cours de route : ce qu'il a reçu avant doit être
+     ce que A a reçu, mot pour mot. */
+  const deB = B.events.filter((e) => e.t === 'chant');
+  check('et l’autre tribune lit le même mot',
+    deB.length >= 1 && deB.every((c) => chants.find((x) => x.seq === c.seq)?.verdict === c.verdict));
+
+  check('un seul bilan', await until(() => A.fin) && A.fins === 1);
+  /* Sa ligne, dans son envoi : `moi: true` sur elle seule. B, revenu par une
+     socket neuve, a la sienne dans le sien. */
+  const siennes = (f) => (f?.joueurs ?? []).filter((j) => j.moi === true).map((j) => j.userId);
+  check('au bilan, sa ligne porte moi, et elle seule',
+    siennes(A.fin).join() === U[0] && (A.fin?.joueurs ?? []).length === 2
+    || (console.log('        A :', JSON.stringify(siennes(A.fin))), false));
+  check('et chez l’autre, la sienne', await until(() => B2.fin) && siennes(B2.fin).join() === U[1]
+    || (console.log('        B :', JSON.stringify(siennes(B2.fin))), false));
+  const RANG = { parfait: 0, bon: 1, moyen: 2, rate: 3 };
+  const fautes = [];
+  for (const j of A.fin?.joueurs ?? []) {
+    const siens = chants.filter((c) => c.userId === j.userId);
+    let serie = 0, max = 0;
+    for (const c of siens) {
+      if (c.verdict === 'parfait') max = Math.max(max, ++serie); else serie = 0;
+    }
+    const parfaits = siens.filter((c) => c.verdict === 'parfait').length;
+    const mieux = siens.reduce((m, c) => (RANG[c.verdict] < RANG[m] ? c.verdict : m), 'rate');
+    const bon = j.parfaits === parfaits
+      && (max >= 2 ? j.serie === max : !('serie' in j))
+      && (siens.length
+        ? j.meilleur?.verdict === mieux
+          && siens.some((c) => c.cardId === j.meilleur.chant && c.verdict === mieux)
+          && j.meilleur.nom === CHANTS[j.meilleur.chant]?.nom
+        : !('meilleur' in j));
+    if (!bon) fautes.push(`${j.userId.slice(-2)} : ${JSON.stringify({ parfaits: j.parfaits,
+      serie: j.serie, meilleur: j.meilleur })} pour ${siens.map((c) => c.verdict).join(',')}`);
+  }
+  check(`le bilan compte ce que les chants ont dit (${(A.fin?.joueurs ?? []).length} joueurs)`,
+    (A.fin?.joueurs ?? []).length === 2 && fautes.length === 0
+    || (console.log('        ', fautes.join(' · ') || '(pas de bilan)'), false));
+}
 
 /* ------------------------------- ce que la ligne dit de la partie jouée
 
@@ -545,6 +670,52 @@ const avant = C.events.length;
    contrôle clignotait environ une fois sur six, en accusant les bots de ne
    pas jouer alors qu'ils jouaient une seconde plus tard. */
 check('les bots jouent', await until(()=>C.events.length > avant, 20_000));
+
+/* **Un bot a les siens** (CONTRATS.md § 17) : il chante par le même chemin
+   que les joueurs, son chant porte son mot, et le bilan a ses chiffres — sans
+   que rien ne lui soit versé. On l'y aide sans attendre son tour : le
+   répertoire réduit au tempo, que ses frappes savent jouer, et la main vide,
+   car sans carte un bot chante. La salle est ensuite fermée ici : elle
+   aurait couru jusqu'au bout de la suite, et pu payer le joueur pendant que
+   d'autres contrôles lisent sa bourse. */
+/* Une salle déjà fermée — trois buts de bots en vingt secondes — ferait
+   lever la suite au lieu de rougir : on le dit et on passe. */
+const salleC = N.salles.get(C.state?.id);
+check('la salle d’entraînement court encore', Boolean(salleC));
+if (salleC) {
+  const bots = [...salleC.membres.entries()].filter(([, m]) => m.bot).map(([id]) => id);
+  salleC.duel.repertoire = salleC.duel.repertoire.map(() => 'reprise');
+  const chantDeBot = () => C.events.find((e) => e.t === 'chant' && bots.includes(e.userId));
+  for (let k = 0; k < 12 && !chantDeBot(); k++) {
+    for (const id of bots) {
+      const j = salleC.duel.joueurs.get(id);
+      j.main = []; j.remplirA = null; j.breath = 100;
+      salleC.membres.get(id).bot.prochain = 0;
+    }
+    await until(() => chantDeBot(), 700);
+  }
+  const cb = chantDeBot();
+  check(`le chant d’un bot porte son mot (${cb?.verdict})`, VERDICTS.includes(cb?.verdict)
+    || (console.log('        chant :', JSON.stringify(cb)), false));
+
+  salleC.duel.finir(0, 'buts', []);
+  await N.pourLesTests.fermer(salleC);
+  check('le bilan de l’entraînement arrive', await until(() => C.fin));
+  const leSien = C.fin?.joueurs?.find((j) => j.userId === cb?.userId);
+  const sesChants = C.events.filter((e) => e.t === 'chant' && e.userId === cb?.userId);
+  check('au bilan, le bot a ses PARFAITS et son meilleur geste',
+    Number.isInteger(leSien?.parfaits)
+    && leSien.parfaits === sesChants.filter((c) => c.verdict === 'parfait').length
+    && sesChants.some((c) => c.cardId === leSien.meilleur?.chant)
+    && VERDICTS.includes(leSien.meilleur?.verdict)
+    || (console.log('        bilan :', JSON.stringify(leSien)), false));
+  check('et chacun le sien, bots compris',
+    (C.fin?.joueurs ?? []).length === 4
+    && C.fin.joueurs.every((j) => Number.isInteger(j.parfaits)));
+  const [[{ n: boursesDeBots }]] = await pool.query(
+    "SELECT COUNT(*) AS n FROM user_wallet WHERE user_id LIKE 'bot:%'");
+  check('et rien n’est versé à un bot', Number(boursesDeBots) === 0);
+}
 
 /* ---------------------------------------------------------- refus utiles */
 
@@ -1014,6 +1185,12 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
     check('fermer deux fois : un seul bilan pour chacun',
       sA.fins.length === 1 && sB.fins.length === 1
       || (console.log('        bilans :', sA.fins.length, 'et', sB.fins.length), false));
+    /* Personne n'a chanté : `parfaits` est là quand même, à zéro, et ni
+       série ni meilleur geste (CONTRATS.md § 17, « absent sans aucun chant »). */
+    check('sans un chant, le bilan dit zéro PARFAIT, ni série ni meilleur geste',
+      (sA.fins[0]?.joueurs ?? []).length === 2 && sA.fins[0].joueurs.every((j) =>
+        j.parfaits === 0 && !('serie' in j) && !('meilleur' in j))
+      || (console.log('        joueurs :', JSON.stringify(sA.fins[0]?.joueurs)), false));
     /* V[0] suit Sion, qui joue ce match : 30, doublé pour son club. */
     check(`le gain annoncé est le barème, doublé pour son club (${gA.echarpes})`,
       gA.echarpes === 60);
@@ -1134,6 +1311,10 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
       premier.membres.get(V[3]).coupeA = 1;
       check('la grâce épuisée retire le joueur',
         await until(() => E3.events.some((e) => e.t === 'left' && e.userId === V[3])));
+      /* Sa place court jusqu'à la fin du duel, mais lui n'y est plus : la
+         présence ne doit pas le montrer « en duel » pour autant. */
+      check('sa grâce épuisée, il n’est plus « en duel »', N2.estEnDuel(V[3]) === false
+        && N2.estEnDuel(V[2]) === true);
 
       const F4 = co(V[3], url2);
       await until(() => F4.socket.connected);

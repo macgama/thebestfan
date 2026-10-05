@@ -5,7 +5,8 @@
  *
  * Le chantier du quotidien fait verser au jeu huit sortes de choses : le bonus
  * de présence, les missions, le sachet, les paliers du carnet, le passage de
- * relais, les crans et les séries complètes de la collection, les divisions.
+ * relais, les crans et les séries complètes de la collection, les divisions —
+ * et la vague 2 une neuvième, l'XP d'un match poussé au Grand Virage.
  * Chacune aurait pu verser à sa façon. Ce dépôt sait ce que cela donne : la
  * bourse s'ouvrait de cinq manières et une seule connaissait la règle
  * (`bourse.js`), la fin de duel payait deux fois le joueur resté, deux gains
@@ -43,17 +44,32 @@ import { assurerBourse } from './bourse.js';
 import { reglage } from '../shared/reglages.js';
 import { grandLivreFerme } from './auth/schema.js';
 
-/** Les sources, liste fermée. La colonne `source` n'accepte rien d'autre. */
-export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division'];
+/** Les sources, liste fermée. La colonne `source` n'accepte rien d'autre.
+
+    `virage` (vague 2, lot 6) : l'XP d'un match poussé au Grand Virage, une
+    fois par match — la clé est l'identifiant du match (`CONTRATS.md`, § 15.2).
+    Elle n'a demandé aucune colonne : `source` est un `VARCHAR(16)`, et
+    l'idempotence par match tient dans la clé primaire qui existe. */
+export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
+  'virage'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',
-  'schema', 'inconnu'];
+  'schema', 'inconnu', 'quota'];
 
 /* Ce qu'un recompte (`verifier`) a le droit de répondre, en plus de `true`.
    `deja`, `plafond` et `schema` n'y sont pas : ce sont les verdicts du grand
-   livre lui-même, et un appelant qui les rendrait parlerait à sa place. */
-const RAISONS_DU_RECOMPTE = new Set(['incomplet', 'inconnu', 'change', 'jour_passe', 'inactif']);
+   livre lui-même, et un appelant qui les rendrait parlerait à sa place.
+
+   `quota` y est, et c'est la différence avec `plafond` : le disjoncteur est
+   au grand livre, toutes sources confondues, et ne regarde que les écharpes
+   et les boosters ; le quota est une règle **d'une source**, que seul son
+   recompte connaît — l'XP du Virage, au plus `xp.virage_matchs_jour` matchs
+   par jour de jeu, compte ses lignes `virage` du jour sur la connexion du
+   versement, sous le verrou du joueur. Il traverse tel quel, comme
+   `incomplet`. */
+const RAISONS_DU_RECOMPTE = new Set(['incomplet', 'inconnu', 'change', 'jour_passe', 'inactif',
+  'quota']);
 
 /** Le gain qui ne verse rien : celui d'une division (l'honneur seulement). */
 export const GAIN_NUL = Object.freeze({ echarpes: 0, packs: 0, xp: 0, tampons: 0 });
@@ -174,8 +190,11 @@ const COURSES = new Set(['ER_CHECKREAD', 'ER_LOCK_DEADLOCK']);
  *                    déjà inscrit)
  * @param o.titre, o.insigne   copiés dans la ligne
  * @param o.verifier  async (conn) => true | 'incomplet' | 'inconnu' | 'change'
- *                    | 'jour_passe' | 'inactif' — le recompte de l'appelant,
- *                    DANS la transaction, sous le verrou du joueur
+ *                    | 'jour_passe' | 'inactif' | 'quota' — le recompte de
+ *                    l'appelant, DANS la transaction, sous le verrou du joueur.
+ *                    Ce qu'il veut dire de plus que la raison (le `manque` de
+ *                    l'XP du Virage) reste chez lui : il le garde dans sa
+ *                    fermeture et l'ajoute à la réponse qu'il sert.
  * @param o.niveau    le module niveau : `gagnerDans(conn, userId, xp)` crédite
  *                    l'XP sur la connexion du versement ; obligatoire si le
  *                    gain porte de l'XP

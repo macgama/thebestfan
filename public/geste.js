@@ -21,10 +21,56 @@
  *
  * ## Ce qu'il rend
  *
- * Une suite d'instants en millisecondes depuis l'ouverture de la fenêtre —
+ * Une suite d'instants en millisecondes depuis **le zéro du serveur** —
  * c'est tout ce que le serveur accepte, et c'est ce qui lui permet de juger
- * sans faire confiance à personne. Les gestes de tenue rendent des paires
- * appui/relâchement.
+ * sans faire confiance à personne. Ce zéro est l'ouverture de la fenêtre,
+ * sauf pour les quatre gestes de rythme (voir `grille`) : la première
+ * pulsation au tempo, au contretemps et au crescendo, la première frappe à
+ * l'écho. Les gestes de tenue rendent des paires appui/relâchement.
+ *
+ * Un geste de rythme **finit sur sa dernière frappe attendue** : le serveur
+ * ne lit que ses `n` premières frappes (`noterContre`), une de plus ne
+ * changerait rien à la note, et la fenêtre n'a plus de raison de tenir le
+ * joueur devant un pavé muet.
+ *
+ * ## Le pavé sous le doigt (lot 6)
+ *
+ * Les dix gestes de rythme se jouent sur **le pavé-bâche** : une bâche craie
+ * ronde (`.pad.tbf-pave`), dont la matière vit dans `ui.css` (« le pavé de
+ * geste, la bâche ronde »). Ce qu'elle fait sous le doigt dépend du geste, et
+ * c'est une règle de la direction (amendement 9), pas un goût :
+ *
+ *   - **les gestes de frappe** (`FRAPPE` : tempo, contretemps, écho,
+ *     crescendo) — le pavé porte `data-frappe` ; à chaque frappe il s'enfonce
+ *     de quatre pixels (`.hit`, 80 ms) et lâche une bouffée de la couleur du
+ *     geste (`.tbf-bouffee`, posée dans le pavé, que la feuille garde autour
+ *     du disque) ;
+ *   - **le martelage et les salves** — un tic et huit millisecondes, rien
+ *     d'autre : à huit ou dix frappes par seconde, chaque image perdue à
+ *     animer se paie sur la note ;
+ *   - **les gestes positionnels** (tifo, écharpe, visée, jauge, rouleaux, ola,
+ *     bascule) — le pavé ne bouge jamais : le doigt vise un point, et une
+ *     cible qui se dérobe fausse la mesure.
+ *
+ * Partout ailleurs, chaque toucher rend le même tic et la même vibration de
+ * huit millisecondes. Les vibrations qui **annoncent** quelque chose — la
+ * pulsation, le signal de la bascule, le coup du capo — gardent les leurs :
+ * ce ne sont pas des retours de toucher, ce sont des consignes.
+ *
+ * ## Le verdict vient du serveur
+ *
+ * Ce fichier ne note rien, et il ne nomme rien non plus : le mot du geste
+ * (`parfait`, `bon`, `moyen`, `rate`) est servi (`CONTRATS.md`, § 16 et
+ * § 17), et la page ne garde **aucun seuil** — ni pour le mot, ni pour un son.
+ * Ce fichier ne fait que le poser :
+ *
+ *   - `tamponner(hôte, verdict)` claque le tampon au centre d'un élément — le
+ *     pavé, ou la carte jouée ;
+ *   - `attendre(réponse, { zone, carte })` garde la fenêtre du geste ouverte
+ *     le temps que la réponse arrive, **au plus `DELAI_VERDICT` (600 ms)
+ *     après la dernière frappe**, et y claque le tampon ; trop tard, il rend
+ *     la main pour que la page ferme la fenêtre, et le tampon claque sur la
+ *     carte jouée à l'arrivée.
  *
  * Script classique, pas module : comme tout ce qui vit dans `public/`.
  */
@@ -110,6 +156,233 @@
   const aide = (g) => AIDE[g] ?? '';
   const couleur = (g) => COULEUR[g] ?? '#F5C33B';
 
+  /* **Les quatre gestes qui s'enfoncent.** Ce sont les seuls où une frappe
+     tombe sur un temps qu'on attend — une par pulsation, deux par seconde au
+     plus vite du crescendo : le pavé a le temps de descendre et de remonter,
+     et la bouffée de se dissiper, avant la frappe suivante. Sur le martelage
+     (huit à dix frappes par seconde), la même animation empilerait des
+     bouffées et coûterait des images là où la note se joue. La liste est
+     fermée et `gestes:test` la relit : un geste qu'on y ajouterait sans le
+     dire ferait bouger un pavé que la direction veut immobile. */
+  const FRAPPE = Object.freeze(['tempo', 'contretemps', 'echo', 'crescendo']);
+
+  /* **Les quatre mots du verdict.** La liste est celle du serveur
+     (`src/shared/verdict.js`, `VERDICTS`) — recopiée et non importée, parce
+     que ce fichier est un script de navigateur ; `gestes:test` compare les
+     deux. Un mot que cette table ne connaît pas ne s'écrit pas (`CONTRATS.md`,
+     § 16.1).
+
+     **Les mots, pas les couleurs.** Le tampon porte le code servi dans
+     `data-verdict`, et c'est la feuille qui le teint — PARFAIT vert, BON bleu,
+     MOYEN or, RATÉ rouge, chacun dans l'encre que son fond demande (« l'échelle
+     du verdict », `ui.css`). Une table de tons ici serait une seconde vérité,
+     et elle se tromperait de fond : le même BON n'a pas la même encre sur le
+     sombre, sur la craie du pavé et sur une carte. */
+  const MOTS = Object.freeze({ parfait: 'PARFAIT', bon: 'BON', moyen: 'MOYEN', rate: 'RATÉ' });
+  const connu = (v) => typeof v === 'string' && Object.prototype.hasOwnProperty.call(MOTS, v);
+  /** Le mot servi, lu dans une chaîne ou dans la réponse qui le porte. */
+  const verdictDans = (r) => {
+    const v = typeof r === 'string' ? r : r?.verdict;
+    return connu(v) ? v : null;
+  };
+  const mot = (v) => (connu(v) ? MOTS[v] : null);
+
+  /* **Combien de temps la fenêtre attend le serveur : six cents
+     millisecondes après la dernière frappe** (le brief, mot pour mot) — le
+     temps d'un aller-retour sur un réseau mobile ordinaire —, et pas une de
+     plus : au-delà, on garderait le joueur devant un pavé muet pendant que le
+     match continue derrière. La réponse qui arrive plus tard n'est pas
+     perdue, elle claque sur la carte jouée.
+
+     Lue à la lettre, la règle ne tenait pas avec des fenêtres qui restaient
+     ouvertes **après** la dernière frappe : celle du contretemps se fermait
+     un demi-temps et 360 ms plus tard, celle de l'écho 900 ms, et l'échéance
+     était passée avant que les frappes partent. Elle s'était donc comptée
+     depuis la fin du geste. C'est la fenêtre qui avait tort : un geste de
+     rythme **finit maintenant sur sa dernière frappe attendue** (`frappes`
+     dans `grille`), et l'échéance part d'elle. Le joueur qui a tout tapé lit
+     son mot six cents millisecondes au plus après son dernier coup — et non
+     plus un temps et demi plus tard.
+
+     « La dernière frappe », geste par geste (`jouer`, `reperes`) :
+       - **les quatre gestes de rythme** : la dernière frappe prise. Celui qui
+         en a manqué une a vu la fenêtre l'attendre jusqu'à sa fermeture ; son
+         échéance est alors passée, et son tampon claque sur la carte ;
+       - **la relance et le sang-froid** : le lâcher, qui les finit ;
+       - **tous les autres** — le martelage, les salves, la mesure,
+         l'endurance, les épreuves — : leur fin. Leur durée **est** l'épreuve,
+         une frappe peut y venir jusqu'au dernier instant, et c'est leur fin
+         qui en tient lieu (le bouton « C'EST FAIT » et la touche du compte
+         sont d'ailleurs une frappe qui finit le geste). */
+  const DELAI_VERDICT = 600;
+  /* Le tampon posé, la fenêtre reste ouverte le temps de le lire : il claque
+     en 260 ms (`.tbf-clac`), et un mot qui disparaît dans la foulée n'a pas
+     été lu — c'était tout le défaut de l'ancien verdict, écrit sous le pavé
+     à l'instant où la fenêtre se fermait. */
+  const LECTURE_VERDICT = 600;
+  /* Sur la carte jouée, le tampon reste un peu plus : l'œil y revient après
+     la fermeture de la fenêtre, il ne l'y attendait pas. */
+  const TENUE_CARTE = 1600;
+
+  /* **L'avance qu'une frappe peut prendre sur le zéro du serveur.** Le
+     serveur refuse le geste **entier** — comme une triche — dès qu'une frappe
+     tombe plus de deux cents millisecondes avant son zéro (`sanity`,
+     `tap_out_of_window`, dans `gestures.js`). Ce n'est pas une durée de jeu,
+     c'est la borne de sa défense : recopiée ici parce que ce fichier ne peut
+     rien importer, et `gestes:test` vérifie qu'elle est la sienne (une
+     frappe à −200 passe, à −201 le geste est refusé). */
+  const AVANCE = 200;
+
+  /* **L'instant zéro qu'une page peut prêter au geste** (`el.origine`) : celui
+     qu'elle vient de donner au chant de la tribune (`TBF_SON.chantDuGeste`),
+     pris dans la même tâche. Plus vieux qu'un quart de seconde, ce n'est plus
+     l'ouverture de ce geste-ci — une valeur gardée d'un autre appel — et le
+     geste prend le sien : une origine lointaine ferait tomber toutes ses
+     pulsations d'un coup, à l'ouverture. */
+  const ORIGINE_MAX = 250;
+
+  /**
+   * **La grille d'un geste de rythme** : quand ses pulsations se dessinent,
+   * d'où partent les frappes qu'on rend au serveur, et quand la fenêtre se
+   * ferme — en millisecondes depuis l'ouverture du geste.
+   *
+   * ## Pourquoi elle existe
+   *
+   * La pulsation était dessinée **un temps trop tard pour la note.** Le
+   * serveur note le tempo contre `0, I, 2I…` et le contretemps contre
+   * `I/2, 3I/2…` (`gestures.js`, dans l'ordre et non au plus proche) ; ce
+   * fichier dessinait — et la tribune chante (`son.js`) — la première
+   * pulsation au bout d'un intervalle, à `I`, et comptait les frappes depuis
+   * l'ouverture. Un joueur qui tapait **exactement** sur chaque pulsation
+   * rendait donc `I, 2I…` contre `0, I…` : un intervalle d'écart sur chaque
+   * temps, 560 ms contre une fenêtre de 200, et **0,00 — RATÉ — à chaque
+   * fois** (mesuré au banc du lot 6, la vraie route et un joueur qui tape
+   * sur l'anneau). Seul celui qui tapait dès l'ouverture, avant toute
+   * pulsation, était payé : c'est ce que faisaient les suites.
+   *
+   * Le temps d'avance n'est pas une faute : c'est le décompte, qui laisse
+   * voir arriver le premier temps. Ce qui était faux, c'est le zéro. **Le
+   * zéro du serveur est la première pulsation** : les frappes se comptent
+   * depuis elle (`zero`), et le dessin comme le chant ne bougent pas.
+   *
+   * Même défaut à l'écho, d'une autre façon : le commentaire disait « le
+   * serveur note le motif depuis sa première frappe », le code comptait
+   * depuis l'apparition de « À TOI ». Le motif refait à la perfection, mais
+   * commencé au temps de réaction d'un humain — deux dixièmes —, tombait
+   * hors de chaque fenêtre (190 ms) : 0,00. Le zéro de l'écho est la
+   * première frappe (`zero: null`), comme le commentaire le voulait.
+   *
+   * ## Ce qu'elle rend
+   *
+   *   - `pulsations` : les instants où l'anneau bat ;
+   *   - `zero` : l'instant que le serveur appelle zéro — les frappes rendues
+   *     se comptent depuis lui ; `null` : depuis la première frappe ;
+   *   - `ouvert` : l'instant à partir duquel le pavé prend une frappe. Avant,
+   *     c'est le décompte : une frappe y serait **refusée avec tout le
+   *     geste** (plus de `AVANCE` avant le zéro), ou, notée dans l'ordre,
+   *     elle décalerait d'un rang toutes les suivantes. Le pavé l'ignore,
+   *     comme il ignore les frappes pendant la démonstration de l'écho ;
+   *     il s'ouvre une fenêtre (servie) avant le premier temps, pour qui
+   *     l'anticipe ;
+   *   - `tour` (écho) : l'instant de « À TOI » ;
+   *   - `frappes` : combien de frappes le serveur lit — `beats` au tempo et
+   *     au contretemps, un instant chacune à l'écho et au crescendo. La
+   *     dernière **finit le geste** : `noterContre` ne lit que celles-là,
+   *     une de plus ne changerait rien à la note ;
+   *   - `fin` : quand la fenêtre se ferme, si la dernière frappe n'est pas
+   *     venue.
+   *
+   * `null` pour un geste sans pulsation, ou **sans durées servies lisibles** :
+   * aucun tempo n'est inventé. Le tempo, sans intervalle, battait toutes les
+   * quatre millisecondes, vibrait d'autant et ne finissait jamais.
+   *
+   * Pure, et exposée : `gestes:test` joue ces grilles contre la note du
+   * serveur, sans navigateur.
+   *
+   * @param {string} kind    le geste (tempo, contretemps, echo, crescendo)
+   * @param {object} gestes  la configuration servie
+   * @returns {{ pulsations: number[], zero: number|null, ouvert: number,
+   *             tour?: number, frappes: number, fin: number }|null}
+   */
+  function grille(kind, gestes) {
+    const g = gestes?.[kind];
+    if (!g || typeof g !== 'object' || !FRAPPE.includes(kind)) return null;
+    /* Une fenêtre d'avance pour qui anticipe le premier temps, jamais plus
+       que ce que le serveur laisse passer. */
+    const avance = Math.min(Number(g.window) > 0 ? Number(g.window) : 0, AVANCE);
+
+    if (kind === 'tempo' || kind === 'contretemps') {
+      const pas = Number(g.interval);
+      const temps = Number(g.beats);
+      if (!(pas > 0 && Number.isInteger(temps) && temps > 0)) return null;
+      /* Le contretemps bat un temps de plus que ses frappes : on tape entre
+         deux pulsations, il en faut une de chaque côté de la dernière. */
+      const combien = kind === 'tempo' ? temps : temps + 1;
+      const pulsations = Array.from({ length: combien }, (_, k) => (k + 1) * pas);
+      /* La fenêtre se ferme un souffle après le dernier temps : le temps
+         d'y taper (420 ms au tempo, 360 au contretemps, comme avant). */
+      const fin = pulsations[combien - 1] + (kind === 'tempo' ? 420 : 360);
+      return { pulsations, zero: pas, ouvert: pas - avance, frappes: temps, fin };
+    }
+
+    const instants = Array.isArray(g.instants) ? g.instants.map(Number) : [];
+    if (!instants.length || !instants.every((t) => Number.isFinite(t) && t >= 0)) return null;
+    const dernier = instants[instants.length - 1];
+    if (kind === 'crescendo') {
+      /* **Un temps d'avance, comme au tempo.** Le crescendo battait son
+         premier temps à l'ouverture même, là où le serveur l'attend : la
+         grille et la note étaient d'accord, mais ce temps-là ne se voyait
+         pas venir. Il coûtait un temps de réaction à chacun — deux dixièmes
+         sur une fenêtre de 165 ms, le premier temps perdu : 0,86 au lieu de
+         0,96 au banc du lot 6 —, et aucun entraînement n'y changeait rien.
+
+         L'ouverture devient le temps zéro, qu'on ne frappe pas : le premier
+         temps tombe un intervalle plus tard — le premier du crescendo, le
+         plus lent —, et le joueur l'attend comme il attend le premier temps
+         du tempo. Le zéro du serveur suit la première pulsation (`zero`) :
+         les frappes rendues ne changent pas d'un chiffre, rien n'est à
+         toucher au serveur. **Le chant suit la même grille** (`son.js`, le
+         chant du geste) : il doit lui aussi partir après ce temps d'avance. */
+      const decompte = instants.length > 1 ? Math.max(0, instants[1] - instants[0]) : 0;
+      return {
+        pulsations: instants.map((t) => t + decompte), zero: decompte,
+        ouvert: Math.max(0, decompte - avance), frappes: instants.length,
+        fin: decompte + dernier + 600,
+      };
+    }
+    /* L'écho : la démonstration, puis « À TOI » sept cents millisecondes
+       après sa dernière frappe, et le temps de refaire le motif.
+
+       **Un temps d'avance à la démonstration, comme au crescendo.** Elle
+       battait son premier coup à l'ouverture même. La tribune chante ces
+       instants-là (`son.js`, le chant du geste, qui lit cette grille), et un
+       coup dû à l'instant zéro est déjà passé quand le chant part, d'une
+       latence de sortie au moins : le motif glissait d'un bloc, entendu une
+       cinquantaine de millisecondes derrière son dessin sur le Chrome du
+       banc ; et au-delà de cent cinquante millisecondes — un casque sans
+       fil —, son premier coup se taisait. Au banc du lot 6 (une latence de
+       sortie simulée), cent vingt de plus suffisaient : quatre coups
+       entendus sur cinq, pour les sept motifs. On n'écoute pas un motif
+       dont le premier coup manque.
+
+       L'avance est **le temps le plus court du motif** (son unité) : un
+       temps qu'on ne frappe pas, avant le premier coup, comme le zéro du
+       crescendo. Le plus court, et non le premier intervalle comme au
+       crescendo : les motifs durent tous le même nombre d'unités, c'est ce
+       qui les rend d'égale difficulté (`MOTIFS`, `gestures.js`), et une
+       avance prise sur le premier intervalle ferait attendre trois unités
+       avant l'un et une seule avant l'autre. Rien ne change pour la note :
+       le zéro de l'écho est la première frappe du joueur (`zero: null`),
+       qui vient après « À TOI ». */
+    const ecarts = instants.slice(1).map((t, k) => t - instants[k]).filter((e) => e > 0);
+    const decompte = ecarts.length ? Math.min(...ecarts) : 0;
+    const tour = decompte + dernier + 700;
+    return {
+      pulsations: instants.map((t) => t + decompte), zero: null, ouvert: tour, tour,
+      frappes: instants.length, fin: tour + dernier + 900,
+    };
+  }
+
   /* **Les vibrations se taisent sous le calme « vibrations »** du tiroir.
      La question se pose à chaque appel, jamais une fois pour toutes : le
      joueur peut changer d'avis en pleine partie. `FX.calme` répond quand
@@ -122,6 +395,24 @@
     if (calmeVibrations()) return;
     try { navigator.vibrate?.(ms); } catch { /* tant pis */ }
   };
+
+  /* **Le retour de chaque toucher : un tic et huit millisecondes.** Le même
+     partout, pour qu'on sente qu'une frappe a pris sans avoir à regarder — et
+     assez court pour ne pas se confondre avec la vibration d'un gain. Le son
+     passe par `FX.son`, donc par le moteur commun, qui garde le calme « sons »
+     ; la vibration par `buzz`, qui garde le calme « vibrations ». Aucun des
+     deux ne porte seul une information : le compteur du pavé change aussi. */
+  const tic = () => {
+    try { window.FX?.son?.('tic'); } catch { /* le son ne casse jamais un geste */ }
+    buzz(8);
+  };
+
+  /* La dernière frappe du dernier geste joué dans chaque zone (voir
+     `DELAI_VERDICT` : ce qu'elle est, geste par geste) : c'est d'elle que se
+     compte l'attente du verdict. Rangée par zone, et non dans une seule
+     variable : une page qui ouvrirait deux fenêtres ne doit pas faire courir
+     l'attente de l'une sur l'horloge de l'autre. */
+  const reperes = new WeakMap();
 
   /* Les éléments que ce fichier vient de poser lui-même dans la zone. Il ne
      cherche jamais rien d autre dans la page : les deux écrans n ont pas le
@@ -153,12 +444,27 @@
    * @param el      les éléments de la page : `{ boite, titre, aide, zone }`.
    *   Les deux écrans n'ont pas les mêmes identifiants, et c'est très bien —
    *   ce fichier n'a pas à connaître leur balisage.
+   *   `el.origine` (facultatif) : l'instant `performance.now()` que la page
+   *   vient de donner au chant de la tribune (`TBF_SON.chantDuGeste`, même
+   *   tâche). Un geste de rythme (`FRAPPE`) le prend pour l'ouverture de sa
+   *   grille : la pulsation dessinée, le chant entendu et les frappes
+   *   comptées partent alors du **même** instant, et non de deux lectures de
+   *   l'horloge. Absent, plus vieux que `ORIGINE_MAX`, ou pour un geste qui
+   *   ne se chante pas — ses minuteries partent de l'appel, son zéro aussi —,
+   *   le geste prend le sien à l'entrée.
    */
-  function jouer(kind, gestes, el) {
+  function jouer(kind, gestes, el = {}) {
     const zone = el.zone;
-    const t0 = performance.now();
+    const ici = performance.now();
+    const origine = typeof el.origine === 'number' && FRAPPE.includes(kind) ? el.origine : NaN;
+    const t0 = Number.isFinite(origine) && origine <= ici && ici - origine <= ORIGINE_MAX ? origine : ici;
     const taps = [];
     const maintenant = () => Math.round(performance.now() - t0);
+    /* L'instant (`performance.now()`) de la frappe d'où se comptera
+       l'attente du verdict : la dernière prise par un geste de rythme, le
+       lâcher qui finit la relance ou le sang-froid. Nul pour les autres
+       gestes, dont la fin tient lieu de dernière frappe (`DELAI_VERDICT`). */
+    let derniere = null;
 
     return new Promise((resolve) => {
       /* Ce que la fenêtre rendra. Les dix gestes rendent leurs frappes ;
@@ -174,17 +480,59 @@
         // a déjà payé cette erreur quatre fois.
         for (const t of minuteries) { clearInterval(t); clearTimeout(t); }
         minuteries.length = 0;
+        /* « C'EST FAIT » n'a plus rien à finir : retiré, il laisse la place au
+           tampon et ne se propose plus pendant qu'on attend le verdict. */
+        zone?.querySelector('#valider')?.remove();
+        /* **Le geste fini ne répond plus.** La fenêtre reste ouverte le temps
+           du verdict (`attendre`), et une frappe de plus enfonçait encore la
+           bâche, avec son tic, sous un tampon qui disait déjà que c'était
+           joué. Ce qu'elle aurait noté ne partait nulle part : les frappes
+           étaient déjà rendues. */
+        const joue = zone?.querySelector('#pad');
+        if (joue) {
+          joue.onpointerdown = null; joue.onpointerup = null; joue.onpointermove = null;
+          joue.onpointercancel = null; joue.onpointerleave = null;
+          /* Le pavé remonte s'il était enfoncé, et l'endurance, qui finit doigt
+             posé, ne verra pas son relâchement : le tampon du verdict va
+             claquer dessus, et une bâche restée plaquée au mur dirait qu'on
+             appuie encore. **Sauf la frappe qui vient de finir le geste** :
+             son relâchement (`relache`, 80 ms) est déjà en route, et retiré
+             dans la même tâche, l'enfoncement ne se verrait pas — la dernière
+             frappe d'un geste de rythme serait la seule sans retour. */
+          if (!relache) joue.classList.remove('hit');
+        }
+        if (zone) reperes.set(zone, derniere ?? performance.now());
         resolve(rendre ?? taps);
       };
       const minuteries = [];
       const apres = (ms, fn) => { const t = setTimeout(fn, ms); minuteries.push(t); return t; };
       const chaque = (ms, fn) => { const t = setInterval(fn, ms); minuteries.push(t); return t; };
+      /* **À l'instant `t` du geste**, compté depuis son zéro, et non depuis
+         l'appel : chaque pulsation est posée sur la grille elle-même. Le
+         `setInterval` qui les battait dérivait de quelques millisecondes à
+         chaque temps — huit temps, c'est l'écart d'une fenêtre qui se
+         creuse entre ce qu'on voit et ce qui est noté — et il continuait de
+         battre jusqu'à `finir` : sous 420 ms d'intervalle (360 au
+         contretemps), il dessinait un temps de trop après le dernier temps
+         noté (vu au banc : cinq pulsations pour quatre temps de 250 ms). */
+      const aLInstant = (t, fn) => apres(Math.max(0, t0 + t - performance.now()), fn);
 
       /* ---------------------------------------------------- les formes */
 
-      /** Le pavé qu'on frappe, avec son compteur. */
+      /**
+       * Le pavé qu'on frappe, avec son compteur : la bâche ronde.
+       *
+       * Le balisage est celui de la brique (`ui.css`, « le pavé de geste, la
+       * bâche ronde ») : `.pad.tbf-pave`, et `data-frappe` sur les quatre
+       * gestes de frappe seulement — c'est lui qui permet à la feuille
+       * d'enfoncer la bâche, et à elle seule. `data-geste` dit aux suites quel
+       * geste se joue ; la couleur du geste (`--c`) est posée sur le pavé
+       * lui-même, et non héritée de la page : c'est ce fichier qui la connaît.
+       */
+      const enfonce = FRAPPE.includes(kind);
       const pave = (gros, petit, anneau = false) => {
-        zone.innerHTML = `<div class="pad" id="pad">
+        zone.innerHTML = `<div class="pad tbf-pave" id="pad"${enfonce ? ' data-frappe' : ''}
+          data-geste="${String(kind ?? '').replace(/[^\w-]/g, '')}" style="--c:${couleur(kind)}">
           ${anneau ? '<div class="ring" id="ring"></div>' : ''}
           <div style="text-align:center">
             <div class="n" id="n">${gros}</div>
@@ -202,25 +550,114 @@
         if (!r) return;
         r.classList.remove('beat'); void r.offsetWidth; r.classList.add('beat');
       };
-      const toucher = (pad) => {
+      /**
+       * Ce que le pavé rend à une frappe, selon le geste.
+       *
+       * Sur les quatre gestes de frappe (`FRAPPE`) : `.hit` le temps de
+       * quatre-vingts millisecondes — la feuille enfonce de quatre pixels le
+       * pavé qui porte `data-frappe`, et l'assombrit à la place sous le
+       * mouvement réduit et le calme — et une bouffée de la couleur du geste.
+       * Sur tous les autres : rien qu'on voie bouger, seulement le tic et les
+       * huit millisecondes. Le martelage ne prend même plus `.hit` : il
+       * l'avait, pour un éclat de fond à chaque frappe, et c'est précisément
+       * ce que la direction lui retire.
+       *
+       * Le relâchement est une minuterie **à part**, et non une de celles que
+       * `finir` efface : une frappe qui tombe juste avant la fin laisserait
+       * sinon la bâche plaquée au mur. `finir` la remonte de toute façon.
+       */
+      let relache = 0;
+      const frapper = (pad) => {
+        tic();
+        if (!enfonce) return;
         pad.classList.add('hit');
-        apres(80, () => pad.classList.remove('hit'));
+        clearTimeout(relache);
+        relache = setTimeout(() => { relache = 0; pad.classList.remove('hit'); }, 80);
+        bouffer(pad);
       };
 
-      /** Les gestes de frappe : on note l'instant, on montre le compte. */
-      const frappes = (pad, sous) => {
+      /**
+       * La bouffée d'une frappe : une `.tbf-bouffee` du vocabulaire, posée
+       * **dans** le pavé, en premier enfant. La feuille la règle autour du
+       * disque, sa taille et sa couleur comprises (`.tbf-pave > .tbf-bouffee`) :
+       * elle ne passe jamais sur la craie, ni sur le chiffre.
+       *
+       * **Une seule à la fois** : celle de la frappe précédente est retirée
+       * avant de poser la nouvelle. Au plus vite du crescendo, quatre bouffées
+       * se chevaucheraient, chacune en `mix-blend-mode` — et c'est sur ce
+       * geste-là que la régularité se joue.
+       *
+       * Retirée à la fin de sa dissipation, **et** par une minuterie : sous le
+       * mouvement réduit ou le calme, elle ne s'anime pas du tout (la feuille
+       * l'éteint), et un onglet caché gèle les animations — une fin
+       * d'animation qui ne vient jamais laisserait les bouffées s'empiler.
+       */
+      const bouffer = (pad) => {
+        pad.querySelector(':scope > .tbf-bouffee')?.remove();
+        const b = document.createElement('i');
+        b.className = 'tbf-bouffee';
+        b.setAttribute('aria-hidden', 'true');
+        let filet = 0;
+        const retirer = (e) => {
+          if (e && e.animationName !== 'tbf-dissipe') return;
+          clearTimeout(filet);
+          filet = 0;
+          b.removeEventListener('animationend', retirer);
+          b.remove();
+        };
+        b.addEventListener('animationend', retirer);
+        filet = setTimeout(() => retirer(), 1200);
+        pad.prepend(b);
+      };
+
+      /**
+       * Les gestes de frappe : on note l'instant, on montre le compte.
+       *
+       * Avec une grille (`grille`), l'instant se compte depuis **le zéro du
+       * serveur** et le pavé ne prend rien avant `ouvert` : une frappe du
+       * décompte ne compte pas, ne s'affiche pas et ne fait pas de tic — un
+       * compteur qui monterait pour une frappe qui ne part pas mentirait.
+       * Sans grille (martelage, salves, mesure), depuis l'ouverture.
+       *
+       * **Et la dernière frappe attendue finit le geste** (`gr.frappes`) :
+       * les frappes partent avec elle, et l'attente du verdict se compte
+       * depuis elle (`derniere`). Le serveur ne lit que ces frappes-là, dans
+       * l'ordre : une de plus ne changeait rien à la note, et la fenêtre
+       * tenait le joueur un temps et demi de plus devant un pavé qui n'avait
+       * plus rien à lui demander. Le martelage, les salves et la mesure n'ont
+       * pas de compte qui finisse : leur durée est l'épreuve (« ni plus, ni
+       * moins », à la mesure, se joue jusqu'au bout).
+       */
+      const frappes = (pad, sous, gr = null) => {
+        const zero = gr?.zero ?? 0;
+        const ouvert = gr?.ouvert ?? 0;
         pad.onpointerdown = () => {
-          taps.push(maintenant());
+          const ici = performance.now();
+          const t = ici - t0;
+          if (t < ouvert) return;
+          taps.push(Math.round(t - zero));
           dit(taps.length, sous);
-          toucher(pad); buzz(14);
+          frapper(pad);
+          if (!gr) return;
+          derniere = ici;
+          if (taps.length >= gr.frappes) finir();
         };
       };
 
-      /** Les gestes de tenue : on note l'appui **et** le relâchement. */
+      /**
+       * Les gestes de tenue : on note l'appui **et** le relâchement.
+       *
+       * `pendant` ne suit qu'un **vrai** lâcher, un doigt qui était posé. Il
+       * suivait n'importe quel `pointerleave` : à la souris, le pointeur qui
+       * sortait du pavé avant d'appuyer finissait la relance au bout de
+       * 120 ms, sans un appui, et rendait un geste vide.
+       */
       const tenir = (pad, pendant) => {
-        pad.onpointerdown = () => { taps.push(maintenant()); pad.classList.add('hit'); buzz(10); };
+        pad.onpointerdown = () => { taps.push(maintenant()); pad.classList.add('hit'); tic(); };
         const lacher = () => {
-          if (taps.length % 2 === 1) { taps.push(maintenant()); pad.classList.remove('hit'); }
+          if (taps.length % 2 !== 1) return;
+          taps.push(maintenant());
+          pad.classList.remove('hit');
           pendant?.();
         };
         pad.onpointerup = lacher;
@@ -257,15 +694,18 @@
       /* ------------------------------------------------------ les dix */
 
       switch (kind) {
+        /* Les quatre gestes de rythme suivent leur grille (`grille`, plus
+           haut) : les pulsations posées sur elle, les frappes comptées depuis
+           le zéro du serveur. Sans durées servies lisibles, il n'y a rien à
+           battre : la fenêtre se referme aussitôt, sans tempo inventé. */
         case 'tempo': {
-          const g = gestes?.tempo ?? {};
           const pad = pave(0, 'SUR LE RYTHME', true);
-          frappes(pad, 'SUR LE RYTHME');
-          let i = 0;
-          chaque(g.interval, () => {
-            battre(); buzz(12);
-            if (++i >= g.beats) apres(420, finir);
-          });
+          const gr = grille('tempo', gestes);
+          if (!gr) { apres(0, finir); break; }
+          frappes(pad, 'SUR LE RYTHME', gr);
+          // Exactement les temps servis : rien ne bat après le dernier.
+          for (const t of gr.pulsations) aLInstant(t, () => { battre(); buzz(12); });
+          aLInstant(gr.fin, finir);
           break;
         }
 
@@ -273,14 +713,12 @@
           /* La pulsation se voit, mais il faut taper **entre** deux. On la
              marque donc plus discrètement que pour le tempo : c'est le
              silence qui compte, pas le coup. */
-          const g = gestes?.contretemps ?? {};
           const pad = pave(0, 'ENTRE LES TEMPS', true);
-          frappes(pad, 'ENTRE LES TEMPS');
-          let i = 0;
-          chaque(g.interval, () => {
-            battre(); buzz(6);
-            if (++i >= g.beats + 1) apres(360, finir);
-          });
+          const gr = grille('contretemps', gestes);
+          if (!gr) { apres(0, finir); break; }
+          frappes(pad, 'ENTRE LES TEMPS', gr);
+          for (const t of gr.pulsations) aLInstant(t, () => { battre(); buzz(6); });
+          aLInstant(gr.fin, finir);
           break;
         }
 
@@ -289,32 +727,38 @@
              on ne peut pas refaire ce qu'on n'a pas écouté. Le pavé ne répond
              pas pendant la démonstration, sinon la première frappe du joueur
              tomberait dans le motif et fausserait tout. */
-          const g = gestes?.echo ?? {};
-          const instants = g.instants ?? [];
           const pad = pave('…', 'ÉCOUTE', true);
-          const fin = instants[instants.length - 1] ?? 0;
-          for (const t of instants) apres(t, () => { battre(); buzz(10); });
-          apres(fin + 700, () => {
+          const gr = grille('echo', gestes);
+          if (!gr) { apres(0, finir); break; }
+          for (const t of gr.pulsations) aLInstant(t, () => { battre(); buzz(10); });
+          aLInstant(gr.tour, () => {
             dit(0, 'À TOI');
-            const t1 = performance.now();
-            // On repart de zéro : le serveur note le motif depuis sa première
-            // frappe, pas depuis l'ouverture de la fenêtre.
+            /* **Le zéro est la première frappe du joueur**, pas l'apparition
+               de « À TOI » : le serveur note le motif depuis son premier coup,
+               et un motif juste, commencé un temps de réaction plus tard,
+               tombait tout entier hors de ses fenêtres. */
+            let premiere = null;
             pad.onpointerdown = () => {
-              taps.push(Math.round(performance.now() - t1));
-              dit(taps.length, 'À TOI'); toucher(pad); buzz(14);
+              const t = performance.now();
+              if (premiere === null) premiere = t;
+              taps.push(Math.round(t - premiere));
+              dit(taps.length, 'À TOI'); frapper(pad);
+              // Le motif refait en entier finit le geste (voir `frappes`).
+              derniere = t;
+              if (taps.length >= gr.frappes) finir();
             };
-            apres(fin + 900, finir);
           });
+          aLInstant(gr.fin, finir);
           break;
         }
 
         case 'crescendo': {
-          const g = gestes?.crescendo ?? {};
-          const instants = g.instants ?? [];
           const pad = pave(0, 'ACCÉLÈRE', true);
-          frappes(pad, 'ACCÉLÈRE');
-          for (const t of instants) apres(t, () => { battre(); buzz(8); });
-          apres((instants[instants.length - 1] ?? 0) + 600, finir);
+          const gr = grille('crescendo', gestes);
+          if (!gr) { apres(0, finir); break; }
+          frappes(pad, 'ACCÉLÈRE', gr);
+          for (const t of gr.pulsations) aLInstant(t, () => { battre(); buzz(8); });
+          aLInstant(gr.fin, finir);
           break;
         }
 
@@ -326,13 +770,25 @@
           const pad = pave('TIENS', 'PUIS LÂCHE SUR LE COUP', false);
           pad.insertAdjacentHTML('beforeend', '<i class="jauge" id="jauge"></i>');
           const jauge = document.getElementById('jauge');
-          const debut = performance.now();
-          chaque(40, () => {
-            const part = Math.min(1, (performance.now() - debut) / g.attente);
+          /* La jauge monte, puis s'arrête pleine. Sa minuterie tournait
+             jusqu'à la fin du geste et, la jauge pleine, appelait à chaque
+             tour une pulsation (sans anneau à battre) et une vibration de
+             18 ms : jusqu'à vingt-sept vibrations d'affilée, toutes les
+             quarante millisecondes, pendant qu'on cherchait justement le
+             bon instant pour lâcher. */
+          const monte = chaque(40, () => {
+            const part = Math.min(1, (performance.now() - t0) / g.attente);
             if (jauge) jauge.style.transform = `scaleX(${part})`;
-            if (part >= 1) { battre(); buzz(18); }
+            if (part >= 1) clearInterval(monte);
           });
-          tenir(pad, () => apres(120, finir));
+          /* **Le signal « lâche », une fois**, à l'instant même que le serveur
+             attend (`attente`, compté depuis l'ouverture comme le lâcher
+             rendu), et non au tour de minuterie suivant : une vibration qui
+             annonce l'instant n'a pas le droit d'arriver quarante
+             millisecondes après lui. La jauge pleine dit la même chose à
+             l'œil. Sans attente servie lisible, pas de signal inventé. */
+          if (Number(g.attente) > 0) aLInstant(Number(g.attente), () => buzz(18));
+          tenir(pad, () => { derniere ??= performance.now(); apres(120, finir); });
           apres(g.attente + 1100, finir);
           break;
         }
@@ -376,10 +832,17 @@
           let depuis = null;
           pad.onpointerdown = () => {
             taps.push(maintenant()); depuis = performance.now();
-            pad.classList.add('hit'); buzz(10);
+            pad.classList.add('hit'); tic();
           };
+          /* Le lâcher finit le geste, et l'attente du verdict part de lui.
+             Seulement un **vrai** lâcher, comme à la relance (`tenir`) : un
+             pointeur de souris qui sortait du pavé avant d'appuyer finissait
+             le sang-froid au bout de 150 ms, sans un appui. */
           const lacher = () => {
-            if (taps.length % 2 === 1) { taps.push(maintenant()); pad.classList.remove('hit'); }
+            if (taps.length % 2 !== 1) return;
+            taps.push(maintenant());
+            pad.classList.remove('hit');
+            derniere ??= performance.now();
             apres(150, finir);
           };
           pad.onpointerup = lacher; pad.onpointercancel = lacher; pad.onpointerleave = lacher;
@@ -437,7 +900,7 @@
             pose = true;
             rendre.trace.push(situer(e));
             prendre(pad, e);
-            buzz(8);
+            tic();
           };
           pad.onpointermove = (e) => {
             if (!pose) return;
@@ -472,6 +935,7 @@
             dernier = situer(e);
             rendre.trace.push(dernier);
             prendre(pad, e);
+            tic();
           };
           pad.onpointermove = (e) => {
             if (!pose || !dernier) return;
@@ -520,7 +984,7 @@
               rendre.grille[i] = rendre.grille[i] ? 0 : 1;
               c.className = rendre.grille[i] ? 'mise' : '';
               rendre.instants.push(maintenant());
-              buzz(9);
+              tic();
             };
             valider();
             apres(g.ms ?? 9000, finir);
@@ -546,7 +1010,7 @@
               if (!c || c.classList.contains('prise') || c === ouverte) return;
               c.className = 'vue';
               rendre.instants.push(maintenant());
-              buzz(9);
+              tic();
               if (!ouverte) { ouverte = c; return; }
               const a = Number(ouverte.dataset.c);
               const b = Number(c.dataset.c);
@@ -593,7 +1057,7 @@
                 rendre.instants.push(maintenant());
                 c.className = 'on';
                 apres(140, () => { c.className = ''; });
-                buzz(11);
+                tic();
                 if (rendre.suite.length >= suite.length) apres(320, finir);
               };
               apres(g.ms ?? 9000, finir);
@@ -643,7 +1107,11 @@
                il voit les couleurs — et le lui cacher ne rendrait pas
                l'épreuve plus difficile, seulement moins lisible. */
             c.className = plateau[i] === cible ? 'pris' : 'pris rate';
-            buzz(plateau[i] === cible ? 9 : 22);
+            /* Un bon carton rend le tic commun ; un mauvais, le tic sourd d'une
+               porte fermée et une vibration plus longue. Le tic clair dirait
+               « ça a pris » sur une faute que l'épreuve va compter. */
+            if (plateau[i] === cible) tic();
+            else { try { window.FX?.son?.('sourd'); } catch { /* muet */ } buzz(22); }
           };
           valider('J’AI TOUT RAMASSÉ');
           apres(g.ms ?? 6000, finir);
@@ -683,13 +1151,17 @@
           const cpt = $('cpt');
           /* Le rebours ne se rafraîchit qu'au dixième : à la milliseconde, le
              joueur lirait le chiffre au lieu de compter, et l'épreuve
-             mesurerait sa vue. */
-          const tic = setInterval(() => {
+             mesurerait sa vue.
+
+             `rebours` et non plus `tic` : ce nom-là est désormais le retour
+             commun d'un toucher (plus haut), et le masquer ici par un numéro
+             de minuterie faisait lever la touche elle-même. */
+          const rebours = setInterval(() => {
             const passe = maintenant() - depart;
             if (passe >= visible) {
               cpt.textContent = '';
               cpt.classList.add('noir');
-              clearInterval(tic);
+              clearInterval(rebours);
               return;
             }
             cpt.textContent = ((cible - passe) / 1000).toFixed(1);
@@ -697,7 +1169,7 @@
           $('pad').onpointerdown = () => {
             if (rendre.ecoule) return;              // un seul coup, le premier
             rendre.ecoule = maintenant() - depart;
-            clearInterval(tic);
+            clearInterval(rebours);
             cpt.classList.remove('noir');
             /* La coche est l'icône commune et non l'émoji : celui-ci se
                dessinait autrement d'un téléphone à l'autre, et jurait avec les
@@ -705,10 +1177,10 @@
                prend la taille du chiffre qu'elle remplace ; son nom dit
                « touché » à qui n'a que la lecture d'écran. */
             cpt.innerHTML = '<i class="tbf-ico tbf-ico-coche" role="img" aria-label="Touché"></i>';
-            buzz(14);
+            tic();
             finir();
           };
-          apres(g.ms ?? 12_000, () => { clearInterval(tic); finir(); });
+          apres(g.ms ?? 12_000, () => { clearInterval(rebours); finir(); });
           break;
         }
 
@@ -772,7 +1244,7 @@
             rendre.instants.push(maintenant());
             b.classList.add('pris');
             apres(140, () => b.classList.remove('pris'));
-            buzz(14);
+            tic();
           };
 
           avancer();
@@ -816,7 +1288,7 @@
             eclat.style.cssText = `left:${e.clientX - r.left}px;top:${e.clientY - r.top}px`;
             pad.appendChild(eclat);
             apres(400, () => eclat.remove());
-            buzz(12);
+            tic();
           };
 
           /* Chaque cible naît à son instant, **pâlit** quand elle commence à
@@ -890,7 +1362,9 @@
             v = Math.min(1, Math.max(0, 1 - (e.clientY - r.top) / r.height));
             cur.style.bottom = `${v * 100}%`;
           };
-          pad.onpointerdown = (e) => { pad.setPointerCapture?.(e.pointerId); poser(e); };
+          /* Le point d'abord, la capture ensuite et sous garde (voir `prendre`) :
+             une capture qui lève emportait la première mesure avec elle. */
+          pad.onpointerdown = (e) => { poser(e); prendre(pad, e); tic(); };
           pad.onpointermove = (e) => { if (e.buttons) poser(e); };
 
           cur.style.bottom = '50%';
@@ -963,7 +1437,7 @@
             moi?.classList.remove('tbf-debout');
             void moi?.offsetWidth;
             moi?.classList.add('tbf-debout');
-            buzz(14);
+            tic();
           };
           apres(g.ms ?? 10_000, finir);
           break;
@@ -1016,7 +1490,7 @@
             if (!b) return;
             rendre.frappes.push({ t: maintenant(), cote: Number(b.dataset.k) });
             allumer(b, 'pris', 140);
-            buzz(14);
+            tic();
           };
           apres(g.ms ?? 12_000, finir);
           break;
@@ -1095,7 +1569,7 @@
               rouleau.classList.add('vole');
             }));
             apres(1400, () => rouleau.remove());
-            buzz(16);
+            tic();
           };
           apres(g.ms ?? 10_000, finir);
           break;
@@ -1146,7 +1620,7 @@
             const bouton = pad.querySelector(`.tbf-cote[data-k="${b.dataset.k}"]`);
             bouton?.classList.add('pris');
             apres(120, () => bouton?.classList.remove('pris'));
-            buzz(12);
+            tic();
           };
           apres(g.ms ?? 8600, finir);
           break;
@@ -1187,5 +1661,195 @@
     });
   }
 
-  window.TBF_GESTE = { jouer, label, aide, couleur, LABEL, AIDE, COULEUR };
+  /**
+   * Claque le tampon du verdict au centre d'un élément.
+   *
+   * Le mot est **celui que le serveur a servi**, jamais déduit d'une note :
+   * un mot que `MOTS` ne connaît pas — ou pas de mot du tout, un serveur
+   * d'avant le lot 6 — ne pose rien et rend `null`. Il n'y a pas de repli sur
+   * un seuil : c'est exactement la faute que l'échelle unique corrige.
+   *
+   * Le tampon porte le code servi dans `data-verdict` et le mot en toutes
+   * lettres ; **la couleur est à la feuille** (« l'échelle du verdict »,
+   * `ui.css`), qui choisit l'encre selon le fond : claire sur le sombre,
+   * foncée sur la craie du pavé et sur une carte. Un seul tampon par élément :
+   * celui d'un geste précédent est retiré. La feuille retire dessous le
+   * chiffre et la consigne du pavé (`:has()`), le temps que le tampon se
+   * lise. Un hôte qui n'est pas positionné l'est ici : le tampon se centre
+   * sur lui, et sur un hôte statique il partirait se centrer sur un ancêtre
+   * quelconque.
+   *
+   * **Plein ou en contour**, comme le veut la règle du tampon : en contour à
+   * partir de seize pixels sur le sombre, plein en dessous. Sur la carte
+   * jouée (`.tbf-carte`, ou tout hôte de moins de 140 px de large), il est
+   * forcément petit : il passe plein de lui-même (`plein` le force). Sur le
+   * pavé-bâche, c'est la feuille qui lui donne l'encre foncée de la craie.
+   *
+   * Le « clac » est celui de la banque (`bache`), sous le calme « sons » comme
+   * tous les autres, et il tombe **à l'impact** (`impactDu`) : `.tbf-clac`
+   * descend en 260 ms et touche à 60 %, et le son joué au départ tombait un
+   * sixième de seconde avant le tampon (`SON.md`, § 3). Sous le mouvement
+   * réduit et le calme « animations », le tampon est posé sans claquer
+   * (`.tbf-clac` s'éteint dans la feuille) : le son part tout de suite.
+   *
+   * @param {Element} hote     le pavé, l'épreuve, ou la carte jouée
+   * @param {string|object} verdict  le mot servi, ou la réponse qui le porte
+   * @param {{ plein?: boolean, duree?: number }} [o]  `duree` : retiré après
+   *   ce délai (0 ou absent : il reste, et la page le retire avec l'hôte)
+   * @returns {HTMLElement|null} le tampon posé
+   */
+  function tamponner(hote, verdict, o = {}) {
+    const v = verdictDans(verdict);
+    if (!hote?.isConnected || !v) return null;
+    hote.querySelector(':scope > .tbf-verdict')?.remove();
+    if (getComputedStyle(hote).position === 'static') hote.style.position = 'relative';
+    const large = hote.clientWidth;
+    const plein = o.plein ?? (hote.classList.contains('tbf-carte') || (large > 0 && large < 140));
+    const t = document.createElement('span');
+    t.className = `tbf-tampon tbf-clac tbf-verdict${plein ? ' tbf-tampon--plein' : ''}`;
+    t.dataset.verdict = v;
+    t.textContent = MOTS[v];
+    /* **Le tampon n'entre jamais dans le flux de son hôte.** La feuille le
+       place sur le pavé et sur la carte ; sur une épreuve — la grille du tri,
+       la mosaïque, le cadre du tifo —, rien ne le place, et posé dans une
+       grille il y prenait une case : sa largeur élargissait une colonne, et la
+       grille débordait de l'écran sous un tampon qu'on ne voyait plus. Hors du
+       pavé et de la carte, il est donc centré ici ; sa taille et son encre
+       restent à la feuille. */
+    if (!hote.matches('.tbf-pave, .tbf-carte')) {
+      t.style.cssText = 'position:absolute;z-index:5;left:50%;top:50%;translate:-50% -50%';
+    }
+    hote.appendChild(t);
+    /* Un tampon retiré avant d'avoir touché — l'hôte refermé entre-temps —
+       ne claque pas : on entendrait un coup sur une fenêtre déjà vide. */
+    const clac = () => {
+      if (!t.isConnected) return;
+      try { window.FX?.son?.('bache'); } catch { /* le son ne casse jamais un verdict */ }
+    };
+    const impact = impactDu(t);
+    if (impact > 0) setTimeout(clac, impact); else clac();
+    if (o.duree > 0) {
+      setTimeout(() => t.remove(), o.duree);
+    }
+    return t;
+  }
+
+  /* **L'instant où le tampon touche**, en millisecondes après sa pose : le
+     retard de `.tbf-clac` plus 60 % de sa durée — la marque de la feuille où
+     il est plein et au plus bas (`@keyframes tbf-clac`, 60 % : opacité 1,
+     échelle 0,95). Lu sur le style calculé et non recopié : la durée, un
+     `--d` posé par la page et l'extinction sous le mouvement réduit ou le
+     calme (« animation: none », impact immédiat) restent à la feuille. */
+  const IMPACT_CLAC = 0.6;
+  const enMs = (v) => {
+    const x = parseFloat(v);
+    if (!Number.isFinite(x)) return 0;
+    return /ms\s*$/.test(String(v)) ? x : x * 1000;
+  };
+  function impactDu(el) {
+    let s = null;
+    try { s = getComputedStyle(el); } catch { return 0; }
+    const noms = String(s?.animationName ?? '').split(',').map((x) => x.trim());
+    const i = noms.indexOf('tbf-clac');
+    if (i < 0) return 0;
+    const lire = (liste) => {
+      const a = String(liste ?? '').split(',');
+      return a[i % a.length] ?? '0s';
+    };
+    return Math.max(0, enMs(lire(s.animationDelay)) + IMPACT_CLAC * enMs(lire(s.animationDuration)));
+  }
+
+  /**
+   * Garde la fenêtre du geste ouverte le temps que le verdict arrive.
+   *
+   * La page l'appelle **juste après avoir envoyé les frappes**, avec la
+   * promesse de la réponse, et ne ferme sa fenêtre qu'une fois celle-ci
+   * tenue :
+   *
+   *     const taps = await TBF_GESTE.jouer(geste, gestes, { zone });
+   *     const reponse = …;                 // la réponse du serveur, en promesse
+   *     await TBF_GESTE.attendre(reponse, { zone, carte: () => laCarteJouee });
+   *     fermerLaFenetre();                 // et seulement maintenant
+   *
+   * Trois issues, et la promesse rendue dit laquelle (`pose`) :
+   *
+   *   - **à temps** (au plus `delai` après la dernière frappe du geste joué
+   *     dans `zone` — voir `DELAI_VERDICT` pour ce qu'elle est, geste par
+   *     geste) : le tampon claque au centre du pavé, et la promesse se tient
+   *     `lecture` millisecondes plus tard, le temps de le lire —
+   *     `{ verdict, pose: 'fenetre' }` ;
+   *   - **trop tard** : la promesse se tient à l'échéance, la page ferme sa
+   *     fenêtre, et le tampon claquera sur `carte` à l'arrivée —
+   *     `{ verdict: null, pose: 'carte' }` (`pose: null` sans carte) ;
+   *   - **sans mot** (réponse vide, refusée, ou d'un serveur d'avant le lot
+   *     6) : la promesse se tient tout de suite, rien n'est posé —
+   *     `{ verdict: null, pose: null }`. Attendre l'échéance pour ne rien
+   *     montrer ferait payer au joueur un mot qui ne viendra pas.
+   *
+   * `carte` peut être une fonction : elle est appelée à l'arrivée, pas avant.
+   * La main du Virage et celle du duel se reposent entre-temps, et l'élément
+   * qu'on aurait gardé au départ peut ne plus être dans la page. Une carte
+   * absente ou détachée ne reçoit rien.
+   *
+   * La promesse ne rejette jamais : une page qui attend son verdict ne doit
+   * pas rester avec une fenêtre ouverte parce que le réseau a levé.
+   *
+   * @param {Promise<string|object>|string|object} reponse
+   * @param {{ zone: Element, carte?: Element|(() => Element),
+   *           delai?: number, lecture?: number, duree?: number }} o
+   * @returns {Promise<{ verdict: string|null, pose: 'fenetre'|'carte'|null }>}
+   */
+  function attendre(reponse, o = {}) {
+    const { zone, carte } = o;
+    const delai = o.delai ?? DELAI_VERDICT;
+    const lecture = o.lecture ?? LECTURE_VERDICT;
+    const duree = o.duree ?? TENUE_CARTE;
+    /* Depuis la dernière frappe, et non depuis l'appel : la page envoie les
+       frappes puis appelle, et ce qui s'est passé entre-temps est déjà pris
+       sur les six cents millisecondes. Une zone où aucun geste n'a été joué
+       compte depuis l'appel. */
+    const echeance = (reperes.get(zone) ?? performance.now()) + delai;
+    /* Le pavé du geste qui vient de finir, pris **maintenant** : à l'arrivée,
+       la zone peut porter le pavé d'un autre geste, et ce verdict n'est pas
+       le sien. Détaché d'ici là, il ne reçoit rien (`tamponner`). */
+    const hote = zone?.querySelector?.('#pad') ?? zone;
+
+    return new Promise((tenir) => {
+      let tranche = false;
+      let attente = setTimeout(() => {
+        attente = 0;
+        if (tranche) return;
+        tranche = true;
+        tenir({ verdict: null, pose: carte ? 'carte' : null });
+      }, Math.max(0, echeance - performance.now()));
+
+      Promise.resolve(reponse).then(verdictDans, () => null).then((v) => {
+        if (tranche) {
+          // Trop tard pour la fenêtre : la carte jouée, si elle est encore là.
+          if (!v) return;
+          let c = null;
+          try { c = typeof carte === 'function' ? carte() : carte; } catch { c = null; }
+          tamponner(c, v, { duree });
+          return;
+        }
+        tranche = true;
+        clearTimeout(attente);
+        attente = 0;
+        if (!v || !tamponner(hote, v)) {
+          tenir({ verdict: null, pose: null });
+          return;
+        }
+        setTimeout(() => tenir({ verdict: v, pose: 'fenetre' }), lecture);
+      });
+    });
+  }
+
+  window.TBF_GESTE = {
+    jouer, label, aide, couleur, LABEL, AIDE, COULEUR,
+    // Le pavé et le verdict (lot 6) : voir l'en-tête.
+    FRAPPE, MOTS, mot, tamponner, attendre,
+    DELAI_VERDICT, LECTURE_VERDICT, TENUE_CARTE,
+    // La grille des gestes de rythme et la borne du serveur (lot 6) : voir `grille`.
+    grille, AVANCE, ORIGINE_MAX,
+  };
 })();

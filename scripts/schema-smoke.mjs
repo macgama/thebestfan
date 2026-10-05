@@ -299,6 +299,131 @@ check('et le grand livre y est ouvert', grandLivreFerme() === null);
   check('et appliqué deux fois, il donne le même état', avant === await photo());
 }
 
+/* ------------------------------------------- les arènes (vague 2, lot 6)
+
+   `sql/arenes.sql` pose ce que le bilan de tribune compte dans l'upsert de
+   présence (PARFAITS, meilleure série, meilleur chant), l'index du rang, et
+   la préférence de présence. Quatre promesses à tenir, chacune lue dans la
+   base et dans le fichier : les colonnes avec leur forme, l'index, une
+   colonne par instruction (et par ligne), le dernier rang de `ORDRE` — et le
+   fichier rejoué deux fois ne change rien. */
+console.log('\n— les arènes —');
+{
+  /* La forme compte autant que le nom. `presence` doit rester **nullable et
+     sans défaut** : NULL y veut dire « le défaut du registre », et un
+     `NOT NULL DEFAULT 1` ferait de chaque joueur quelqu'un qui a choisi d'être
+     vu — Gaël ne pourrait plus changer le défaut depuis /admin. Les trois
+     compteurs partent à zéro sur les lignes déjà écrites. */
+  const ATTENDUES = {
+    'virage_presence.parfaits': { nul: 'NO', defaut: '0' },
+    'virage_presence.serie_max': { nul: 'NO', defaut: '0' },
+    'virage_presence.meilleur_q': { nul: 'NO', defaut: '0' },
+    'virage_presence.meilleur_chant': { nul: 'YES', defaut: null },
+    'user_wallet.presence': { nul: 'YES', defaut: null },
+  };
+  const [cols] = await pool.query(
+    `SELECT table_name AS t, column_name AS c, is_nullable AS n, column_default AS d
+       FROM information_schema.columns
+      WHERE table_schema = DATABASE()
+        AND ((table_name = 'virage_presence'
+              AND column_name IN ('parfaits', 'serie_max', 'meilleur_q', 'meilleur_chant'))
+          OR (table_name = 'user_wallet' AND column_name = 'presence'))`);
+  /* MariaDB écrit le défaut d'une colonne nullable sans défaut « NULL », en
+     toutes lettres ; MySQL, `null`. Les deux veulent dire la même chose. */
+  const vues = Object.fromEntries(cols.map((x) => [`${String(x.t).toLowerCase()}.${
+    String(x.c).toLowerCase()}`, { nul: x.n, defaut: x.d === 'NULL' ? null : x.d }]));
+  const ecarts = Object.entries(ATTENDUES).filter(([k, v]) => JSON.stringify(vues[k]) !== JSON.stringify(v))
+    .map(([k, v]) => `${k} : attendu ${JSON.stringify(v)}, vu ${JSON.stringify(vues[k] ?? 'absente')}`);
+  check('les cinq colonnes des arènes sont en base, avec leur forme (nullable, défaut)',
+    ecarts.length === 0 || (console.log('       ', ecarts.join('\n        ')), false));
+  check('user_wallet.presence est nullable et sans défaut : NULL = « le défaut du registre »',
+    vues['user_wallet.presence']?.nul === 'YES' && vues['user_wallet.presence']?.defaut === null);
+
+  const [ix] = await pool.query(
+    `SELECT column_name AS c FROM information_schema.statistics
+      WHERE table_schema = DATABASE() AND table_name = 'virage_presence' AND index_name = 'idx_bilan'
+      ORDER BY seq_in_index`);
+  check('l’index idx_bilan couvre (fixture_id, side, ferveur), dans cet ordre',
+    ix.map((x) => String(x.c).toLowerCase()).join(',') === 'fixture_id,side,ferveur'
+    || (console.log('        vu :', ix.map((x) => x.c).join(',') || 'aucun'), false));
+
+  /* Une colonne par ALTER, comme pour le quotidien : le contrôle de démarrage
+     ne voit que le premier ajout d'une instruction. **Et une instruction par
+     ligne** : les suites du Virage prennent ces lignes une à une, au motif,
+     pour retirer ou reposer une colonne sans le reste du fichier — une
+     instruction coupée en deux ne s'y laisserait pas prendre. La ligne
+     `CREATE INDEX` ne doit troubler ni l'un ni l'autre. */
+  const code = readFileSync(path.join(SQL, 'arenes.sql'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+  const instructions = code.split(';').map((s) => s.trim()).filter(Boolean);
+  const alters = instructions.filter((s) => /^ALTER\s+TABLE/i.test(s));
+  const doubles = alters.filter((s) => (s.match(/ADD\s+COLUMN/gi) ?? []).length !== 1);
+  check(`dans sql/arenes.sql, chaque ALTER TABLE porte un seul ADD COLUMN (${alters.length})`,
+    alters.length === 5 && doubles.length === 0
+    || (console.log('        à découper :', doubles.map((s) => s.slice(0, 70)).join(' | ')), false));
+  const coupees = instructions.filter((s) => s.includes('\n'));
+  check('et chaque instruction tient sur une ligne',
+    coupees.length === 0 || (console.log('        coupées :', coupees.map((s) => s.slice(0, 50)).join(' | ')), false));
+  check('le fichier ne fait rien d’autre : cinq ALTER, un CREATE INDEX',
+    instructions.length === 6 && instructions.filter((s) => /^CREATE\s+INDEX\s+IF\s+NOT\s+EXISTS\s+idx_bilan\b/i
+      .test(s)).length === 1
+    || (console.log('        instructions :', instructions.map((s) => s.slice(0, 40)).join(' | ')), false));
+  const auDemarrage = ((await lireColonnesAttendues(SQL)).get('arenes.sql') ?? [])
+    .map((x) => `${x.table}.${x.colonne}`).sort();
+  check('le contrôle de démarrage voit exactement ces cinq colonnes, l’index ne le trouble pas',
+    JSON.stringify(auDemarrage) === JSON.stringify(Object.keys(ATTENDUES).sort())
+    || (console.log('        vues :', auDemarrage.join(', ')), false));
+
+  check('sql/arenes.sql est le dernier de l’ordre d’application',
+    ORDRE.at(-1) === 'arenes' || (console.log('        dernier :', ORDRE.at(-1)), false));
+  check('et vient après ce qu’il complète (souvenirs, quotidien)',
+    ORDRE.indexOf('arenes') > Math.max(ORDRE.indexOf('souvenirs'), ORDRE.indexOf('quotidien')));
+
+  /* Sans lui, le démarrage le nomme : la panne du 9 septembre (un fichier qui
+     n'ajoute que des colonnes, oublié) ne doit pas revenir par celui-ci. On
+     retire ce qu'il pose, on regarde, on le rejoue — sur une base de test
+     que cette suite vient de remonter entière. */
+  await pool.query(`ALTER TABLE virage_presence DROP COLUMN parfaits, DROP COLUMN serie_max,
+    DROP COLUMN meilleur_q, DROP COLUMN meilleur_chant, DROP INDEX idx_bilan`);
+  await pool.query('ALTER TABLE user_wallet DROP COLUMN presence');
+  const sans = await verifierSchema(pool, SQL);
+  const m = sans.find((x) => x.fichier === 'arenes.sql');
+  check('sans lui, le démarrage nomme sql/arenes.sql et ses cinq colonnes',
+    m?.colonnes?.length === 5 && sans.length === 1
+      && (messageDeManque(sans) ?? '').includes('sql/arenes.sql')
+    || (console.log('        vu :', JSON.stringify(sans)), false));
+
+  /* Appliqué deux fois de suite, le même état — et pas une erreur : c'est ce
+     que le déploiement fait à chaque mise en ligne. */
+  const photo = async () => {
+    const [c] = await pool.query(
+      `SELECT table_name, column_name, column_type, is_nullable, column_default
+         FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name IN ('virage_presence', 'user_wallet')
+        ORDER BY table_name, ordinal_position`);
+    const [i] = await pool.query(
+      `SELECT table_name, index_name, column_name, seq_in_index, non_unique
+         FROM information_schema.statistics
+        WHERE table_schema = DATABASE() AND table_name IN ('virage_presence', 'user_wallet')
+        ORDER BY table_name, index_name, seq_in_index`);
+    return JSON.stringify([c, i]);
+  };
+  const rejouer = async () => {
+    const cnx = await mysql.createConnection({ uri: DB, multipleStatements: true });
+    try {
+      await cnx.query(readFileSync(path.join(SQL, 'arenes.sql'), 'utf8'));
+      return null;
+    } catch (e) { return e; } finally { await cnx.end(); }
+  };
+  const premier = await rejouer();
+  const apresUn = await photo();
+  const second = await rejouer();
+  check('sql/arenes.sql s’applique, puis se rejoue, sans erreur', !premier && !second
+    || (console.log('        il lève :', (premier ?? second).message), false));
+  check('et appliqué deux fois, il donne le même état', apresUn === await photo());
+  check('rejoué, la base est de nouveau à jour', (await verifierSchema(pool, SQL)).length === 0);
+}
+
 /* --------------------------------------------- la panne réelle, rejouée */
 
 // On ne supprime pas la vraie table : `user_fanzzy` a des clés étrangères et

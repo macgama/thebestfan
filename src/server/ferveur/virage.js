@@ -11,6 +11,69 @@ import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/ef
 // La ventilation de ce qu'un supporter porte : le lieu s'y ajoute ici, les
 // trois autres sources arrivent avec l'entrée. Partagée avec le duel.
 import { apportsDe, seulsLesMods } from '../../shared/apports.js';
+// L'échelle unique du verdict (`CONTRATS.md`, § 16.1) : le mot, le Cri, le
+// PARFAIT qui fait la série, et la note qu'ils mesurent tous les trois.
+import { verdictDe, estParfait, criDe, auMoins, noteDuVerdict } from '../../shared/verdict.js';
+
+/**
+ * Les trois fins d'un match, celles que le contrat appelle « le coup de
+ * sifflet final » (`CONTRATS.md`, § 15.3) : `virage:fin` part une fois à la
+ * salle, le bilan devient `fini`, et la tribune se vide `virage.bilan_min`
+ * minutes plus tard.
+ *
+ * Pas l'annulation, le tapis vert ni le forfait : ils sortent du relevé comme
+ * eux (`TERMINES`, dans `ferveur/index.js`), mais ce ne sont pas des coups de
+ * sifflet, et un bilan « fini » sur un match qui n'a pas été joué mentirait.
+ */
+export const FINS_DE_MATCH = new Set(['FT', 'AET', 'PEN']);
+
+/**
+ * Les paliers de la ferveur, du plus large au plus étroit : « 12ᵉ → TOP 10 »
+ * (`CONTRATS.md`, § 16.2). **Une règle, pas un réglage** : ils sont dessinés,
+ * comme les seuils du verdict, et ne passent pas par le registre.
+ */
+export const PALIERS = Object.freeze([100, 50, 10, 3, 1]);
+
+/**
+ * L'ordre d'une tribune : la ferveur, puis les chants, puis les PARFAITS.
+ *
+ * Le même au bilan (`bilan.js`) et en direct : un joueur ne doit pas se voir
+ * 11ᵉ dans la tribune et 12ᵉ au bilan pour la même ferveur. Les chants
+ * départagent d'abord parce que la ferveur d'une grande tribune s'arrondit
+ * vers le plancher (Q4) : sans eux, « 1 + ceux qui font mieux » dirait 1ᵉʳ à
+ * tout le monde.
+ *
+ * @returns un nombre > 0 si `a` fait strictement mieux que `b`
+ */
+export function comparerTribune(a, b) {
+  return (a.ferveur - b.ferveur) || ((a.chants ?? 0) - (b.chants ?? 0))
+    || ((a.parfaits ?? 0) - (b.parfaits ?? 0));
+}
+
+/** Le plus grand palier strictement meilleur qu'une place ; `null` à la première. */
+export function palierAuDessus(rang) {
+  for (const p of PALIERS) if (p < rang) return p;
+  return null;
+}
+
+/**
+ * La note du verdict en millièmes, pour `virage_presence.meilleur_q` (0 à
+ * 1 200 : certains gestes notent jusqu'à 1,2).
+ *
+ * **Arrondie vers le haut**, et non au plus proche : le bilan relit le verdict
+ * du meilleur geste sur ce nombre (`verdictDe(q / 1000)`), et les seuils sont
+ * stricts. Un 0,9004 arrondi au plus proche ferait 900 — BON au bilan pour un
+ * geste annoncé PARFAIT en tribune. Vers le haut, « au-dessus de 0,9 » reste
+ * « au-dessus de 900 », et 0,9 tout juste reste 900.
+ *
+ * Le millionième retiré avant d'arrondir efface le bruit des flottants : 0,97
+ * vaut 970,0000000000001 une fois multiplié, et ferait sinon 971.
+ */
+export function enMilliemes(note) {
+  const n = Number(note);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.max(0, Math.min(1200, Math.ceil(n * 1000 - 1e-6)));
+}
 
 /**
  * Le Grand Virage.
@@ -284,6 +347,27 @@ export class VirageRoom {
        « 90' EN DIRECT ». */
     this.minuteExtra = fixture.elapsedExtra ?? null;
     this.vuA = fixture.vuA ?? Date.now();
+
+    /* **Le coup de sifflet, tel que la salle l'a vu.** `finA` est l'instant
+       où elle a appris la fin du match — par le relevé (`matchStatus`), ou à
+       sa création si la base la disait déjà finie. C'est lui que lit la
+       fermeture de la tribune (`virage:ferme`, `ferveur/index.js`). Une salle
+       ouverte après le coup de sifflet n'annonce pas `virage:fin` : son état
+       porte déjà le statut (`CONTRATS.md`, § 15.3). */
+    this.finA = FINS_DE_MATCH.has(this.statut) ? Date.now() : 0;
+    this.finDiffusee = FINS_DE_MATCH.has(this.statut);
+
+    /* **Le classement en direct, recalculé au plus une fois par seconde**,
+       au tour d'horloge et seulement s'il a bougé : mille chants par seconde
+       dans une tribune de mille ne paient pas mille tris. Voir `classer`. */
+    this.classement = null;
+    this.classementSale = true;
+    this.classementA = 0;
+
+    /* Ceux dont l'XP de ce match est réglée — versée, ou déjà versée par un
+       autre chemin. Le grand livre fait foi ; ceci n'évite que de lui
+       redemander ce qu'il a déjà répondu (`ferveur/index.js`, le filet). */
+    this.xpReglee = new Set();
   }
 
   /* ---------------------------------------------------------------- le fil */
@@ -418,7 +502,8 @@ export class VirageRoom {
       this.partis.delete(userId);
       revenu.regenAt = Date.now();
     }
-    const m = this.members.get(userId) ?? revenu ?? {
+    const present = this.members.get(userId);
+    const m = present ?? revenu ?? {
       side: side ? 1 : 0, name, mods, neutre, perso,
       classe,
       userId,
@@ -427,7 +512,21 @@ export class VirageRoom {
          pas tout de suite. Ce qui n'est pas dans la main est dans la pioche. */
       pioche: [], main: [], defausse: [], cooldowns: {}, effets: [], remplirA: 0,
       dernierChant: 0,
+      /* Ce que le geste a donné dans cette salle : les chants acceptés, les
+         PARFAITS, la série en cours et la meilleure. Ils départagent le rang
+         en direct (`comparerTribune`) ; la base garde les siens, tous
+         passages compris, pour le bilan. */
+      chants: 0, parfaits: 0, serie: 0, serieMax: 0,
+      /* Ceux à qui sa présence a été annoncée (`virage:ami`, `virage:amis`) :
+         ce sont eux, et eux seuls, qui apprennent son départ. */
+      annonceA: new Set(),
     };
+    /* L'instant de son arrivée dans la tribune — pas celui d'un second
+       onglet. La fermeture d'après le coup de sifflet laisse à qui arrive
+       tard le même délai qu'aux autres. */
+    if (!present) m.entreA = Date.now();
+    m.annonceA ??= new Set();
+    this.classementSale = true;
     m.side = side ? 1 : 0;
     /* La réservation se refait tant qu'aucune présence n'est écrite : voir
        `classe`, plus haut, et `crediter`. */
@@ -499,6 +598,7 @@ export class VirageRoom {
     this.partis.set(userId, m);
     this.occupeeA = now;
     this.dirty = true;
+    this.classementSale = true;
   }
 
   /** Les actifs : ceux qui ont poussé récemment. Une app ouverte ne compte pas. */
@@ -623,10 +723,34 @@ export class VirageRoom {
        se consomme sur le raté, pas sur le prochain geste quel qu'il soit —
        sinon la carte se dépenserait sur un chant déjà réussi. */
     const plancher = (m.effets ?? []).find((e) => e.type === 'floor_quality' && e.charges > 0);
+    let plancherMordu = null;
     if (plancher && quality < plancher.valeur) {
       quality = plancher.valeur;
       backfire = false;
       plancher.charges--;
+      plancherMordu = plancher.valeur;
+    }
+
+    /* **Le verdict, et ce qu'il compte.** Il se mesure sur la note brute du
+       geste, relevée par le plancher s'il vient de mordre, **avant** les
+       modificateurs du Fanzzy (`CONTRATS.md`, § 16.1 ; défaut D7) : un
+       Fanzzy qui paie mal le parfait ne change pas un PARFAIT en BON. La
+       note finale, `quality`, pousse la corde ; elle ne nomme plus rien.
+
+       Le mot, le Cri, la série et le meilleur geste lisent tous **la même
+       note** : un PARFAIT qui ne compterait pas dans la série serait un mot
+       qui ment. La série ne vit qu'ici, sur le chant : une carte ne la coupe
+       pas (voir `crediter`), un chant d'un autre verdict la remet à zéro. */
+    const mesuree = noteDuVerdict(brut, plancherMordu);
+    const verdict = verdictDe(mesuree);
+    const parfait = estParfait(mesuree);
+    m.chants = (m.chants ?? 0) + 1;
+    if (parfait) {
+      m.parfaits = (m.parfaits ?? 0) + 1;
+      m.serie = (m.serie ?? 0) + 1;
+      m.serieMax = Math.max(m.serieMax ?? 0, m.serie);
+    } else {
+      m.serie = 0;
     }
 
     /* **La Mise** se résout ici, au chant qui suit la carte, et nulle part
@@ -680,12 +804,24 @@ export class VirageRoom {
        Virage comptent des chants, pas des poussées — une carte jouée ne doit
        donc pas en remplir une. Un chant raté compte quand même : le serveur
        l'a accepté, il a coûté son souffle, et la cadence le plafonne. */
-    this.crediter(m, amount / this.partFerveur(m), mods, { chant: true });
+    /* `plancher` : le plancher de ferveur (Q4, `CONTRATS.md`, § 16.2). Un
+       chant noté au moins MOYEN rapporte au moins 1, quelle que soit la
+       taille de la tribune — voir `crediter`. `q` et `chantId` : le meilleur
+       geste du match, que la base garde par `GREATEST`. */
+    this.crediter(m, amount / this.partFerveur(m), mods, {
+      chant: true, plancher: auMoins(verdict, 'moyen'),
+      parfait, q: enMilliemes(mesuree), chantId: cardId,
+    });
 
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
 
+    /* Le rang en direct, sur le classement d'il y a au plus une seconde
+       (`CONTRATS.md`, § 16.2 : « une seconde de retard est normale »). */
+    const { rang, sur, prochain } = this.placeDe(m, now);
     return { quality: Number(quality.toFixed(3)), backfire, breath: Math.round(m.breath),
-             ferveur: m.ferveur, push: Math.round(perCapita) };
+             ferveur: m.ferveur, push: Math.round(perCapita),
+             verdict, ...(criDe(mesuree) ? { cri: true } : {}),
+             serie: m.serie, rang, sur, ...(prochain ? { prochain } : {}) };
   }
 
   /* --------------------------------------------------------- les cartes
@@ -807,11 +943,33 @@ export class VirageRoom {
   /* `chant` : vrai pour le seul appel de `chant()`. Une carte, un tifo qui se
      déplie, une poussée étalée passent par ici sans lui, et ne comptent donc
      pas comme des chants. */
-  crediter(m, perCapita, mods = this.modsDe(m), { chant = false } = {}) {
-    const gagne = Math.round(Math.max(0, perCapita) * (mods.ferveurBonus ?? 1)
+  /* `plancher` : vrai pour un chant noté au moins MOYEN. **Le plancher de
+     ferveur** (Q4, décision du 3 octobre 2026 ; `CONTRATS.md`, § 16.2) : dans
+     une tribune de plus de trente-quatre personnes — soixante-sept pour un
+     supporter du club —, la part d'un chant s'arrondissait à zéro, et tout le
+     monde y finissait le match à zéro de ferveur, « 1ᵉʳ » de sa tribune. Un
+     bon chant rapporte donc au moins 1, **tous les facteurs appliqués**
+     (Fanzzy, lieu, moitié du neutre) : c'est le résultat qu'on relève, pas
+     une étape. Les cartes n'y entrent pas : elles ne passent pas par ici avec
+     `plancher`. Une petite tribune ne change pas : sa part dépasse déjà 1.
+
+     `parfait`, `q` (millièmes de la note du verdict) et `chantId` partent à la
+     base dans l'écriture de présence qui existe : les PARFAITS, la meilleure
+     série et le meilleur geste du match y sont comptés sans une instruction
+     de plus (P8). Une carte les laisse à zéro — elle ne coupe pas la série,
+     elle n'a pas de note. */
+  crediter(m, perCapita, mods = this.modsDe(m),
+           { chant = false, plancher = false, parfait = false, q = 0, chantId = null } = {}) {
+    const bonus = mods.ferveurBonus ?? 1;
+    let gagne = Math.round(Math.max(0, perCapita) * bonus
       * (m.neutre ? RULES.ferveurNeutre : 1));
+    /* Un bonus de ferveur nul veut dire « ne compte pas au classement » (un
+       KOP peut peser sur la corde sans peser sur le classement) : le plancher
+       ne le contredit pas. */
+    if (chant && plancher && bonus > 0 && gagne < 1) gagne = 1;
     m.ferveur += gagne;
     this.dirty = true;
+    this.classementSale = true;
 
     /* Présence : c'est ce que consulteront les cartes-souvenirs au prochain
        but, et les classements bien après le match.
@@ -833,6 +991,13 @@ export class VirageRoom {
          tel quel dans la colonne. */
       chant: chant ? 1 : 0,
       mt: miTemps(this.statut),
+      /* Le bilan de tribune (`CONTRATS.md`, § 15) : un PARFAIT (0 ou 1), la
+         meilleure série de la salle (la base garde la plus grande), la note
+         du verdict en millièmes et le chant qui l'a donnée. */
+      parfait: chant && parfait ? 1 : 0,
+      serie: m.serieMax ?? 0,
+      q: chant ? q : 0,
+      chantId: chant ? chantId : null,
     })?.catch?.(() => {});
     return gagne;
   }
@@ -1412,6 +1577,25 @@ export class VirageRoom {
         minuteExtra: this.minuteExtra, statut: this.statut, vuA: this.vuA,
       });
     }
+
+    /* **Le coup de sifflet final** (`CONTRATS.md`, § 15.3), lu dans le
+       statut que le relevé du direct apporte de toute façon : aucun appel de
+       plus. `virage:fin` part **une fois** à la salle — la page tire alors un
+       délai de 0 à 8 s et demande son bilan, si bien que mille bilans
+       s'étalent au lieu de tomber dans la même seconde (P5). `finA` arme la
+       fermeture de la tribune, `virage.bilan_min` minutes plus tard.
+
+       Si l'API revient sur une fin (une correction de statut), la tribune
+       n'est plus à fermer ; l'annonce, elle, ne se répète pas. */
+    if (change && FINS_DE_MATCH.has(status)) {
+      this.finA ||= Date.now();
+      if (!this.finDiffusee) {
+        this.finDiffusee = true;
+        this.push('virage:fin', { statut: status });
+      }
+    } else if (change && !FINS_DE_MATCH.has(status)) {
+      this.finA = 0;
+    }
     if (!change) return [];
     return this.ajouterAuFil([this.entreePeriode(status)]);
   }
@@ -1453,6 +1637,10 @@ export class VirageRoom {
       this.emitVous?.(userId, this.snapshotFor(userId).you);
     }
 
+    /* Le classement en direct : au plus une fois par seconde, et seulement
+       si une ferveur, une entrée ou un départ l'a fait bouger. */
+    if (this.classementSale && now - this.classementA >= 1000) this.classer(now);
+
     /* **La fin de la minute double part aussi.** La diffusion ne partait que
        si quelque chose avait bougé, et l'expiration ne bouge rien : dans une
        salle calme, la page gardait « TOUT COMPTE DOUBLE » après les soixante
@@ -1476,28 +1664,98 @@ export class VirageRoom {
 
   /* --------------------------------------------------------- snapshots */
 
-  /** Classement d'un supporter dans sa tribune. C'est son vrai enjeu. */
+  /**
+   * Le classement des présents, tribune par tribune.
+   *
+   * L'ordre est celui du bilan (`comparerTribune`) : la ferveur, puis les
+   * chants, puis les PARFAITS ; deux supporters égaux sur les trois ont la
+   * même place — `1 +` ceux qui font strictement mieux. Les partis n'y sont
+   * pas : le rang en direct se dit parmi ceux qu'on voit.
+   *
+   * Appelé au tour d'horloge, au plus une fois par seconde, et par `placeDe`
+   * pour un supporter qu'il ne connaît pas encore — une entrée, un retour :
+   * c'est rare au regard des chants, et l'entrant doit avoir sa place tout de
+   * suite (`rang` n'est jamais absent d'une réponse, § 16.2).
+   */
+  classer(now = Date.now()) {
+    const tribunes = [[], []];
+    for (const m of this.members.values()) tribunes[m.side ? 1 : 0].push(m);
+    const rangs = new Map();          // membre -> { rang, cote }
+    tribunes.forEach((t, cote) => {
+      t.sort((a, b) => comparerTribune(b, a));
+      for (let i = 0; i < t.length; i++) {
+        const egal = i > 0 && comparerTribune(t[i], t[i - 1]) === 0;
+        rangs.set(t[i], { rang: egal ? rangs.get(t[i - 1]).rang : i + 1, cote });
+      }
+    });
+    this.classement = { tribunes, rangs };
+    this.classementSale = false;
+    this.classementA = now;
+    return this.classement;
+  }
+
+  /**
+   * La place d'un présent : `rang`, `sur`, et `prochain`, le palier suivant
+   * (`CONTRATS.md`, § 16.2), lus dans le classement de la dernière seconde.
+   *
+   * `prochain.ecart` est la ferveur qui manque pour passer devant celui qui
+   * tient la place du palier — sa ferveur moins la mienne, plus un —, lue
+   * **maintenant**, et jamais moins de 1 : le classement peut dater d'une
+   * seconde, la ferveur non.
+   */
+  placeDe(m, now = Date.now()) {
+    /* Un membre que le classement ne connaît pas encore, ou qu'il range dans
+       l'autre tribune — un neutre qui a rechoisi son camp —, le fait refaire. */
+    let c = this.classement;
+    const cote = m.side ? 1 : 0;
+    if (c?.rangs.get(m)?.cote !== cote) c = this.classer(now);
+    const tribune = c.tribunes[cote];
+    // Un parti n'a pas de place en direct : on ne l'invente pas.
+    if (!c.rangs.has(m)) return { rang: null, sur: tribune.length, prochain: null };
+    const { rang } = c.rangs.get(m);
+    const palier = palierAuDessus(rang);
+    const devant = palier ? tribune[palier - 1] : null;
+    const prochain = devant
+      ? { rang: palier, ecart: Math.max(1, devant.ferveur - m.ferveur + 1) }
+      : null;
+    return { rang, sur: tribune.length, prochain };
+  }
+
+  /**
+   * Classement d'un supporter dans sa tribune. C'est son vrai enjeu.
+   *
+   * **À l'instant**, et non à la seconde près : c'est la lecture qu'on fait
+   * pour savoir où il en est maintenant, un départ ou une ferveur de la
+   * dernière seconde compris. Les réponses de chant, elles, lisent le
+   * classement de la dernière seconde (`placeDe`).
+   */
   rankOf(userId) {
     const m = this.members.get(userId);
     if (!m) return null;
-    const meme = [...this.members.values()].filter((x) => x.side === m.side);
-    meme.sort((a, b) => b.ferveur - a.ferveur);
-    return { rank: meme.indexOf(m) + 1, of: meme.length, ferveur: m.ferveur };
+    if (this.classementSale) this.classer();
+    const { rang, sur } = this.placeDe(m);
+    return { rank: rang, of: sur, ferveur: m.ferveur };
   }
 
   snapshotFor(userId) {
     const m = this.members.get(userId);
     const n = this.crowd();
+    const now = Date.now();
+    const surge = now < this.surgeUntil;
+    const place = m ? this.placeDe(m, now) : null;
     return {
       fixture: this.fixture,
       rope: Math.round(this.rope),
       goals: this.goals,
       realGoals: this.realGoals,
       crowd: n,
-      surge: Date.now() < this.surgeUntil,
+      surge,
       surgeUntil: this.surgeUntil,
-      // Ce qui reste de la minute double : voir `realGoal`.
-      surgeMs: Math.max(0, this.surgeUntil - Date.now()),
+      /* Ce qui reste de la minute double : voir `realGoal`. **Toujours servi,
+         et 0 hors de la minute** (`CONTRATS.md`, § 16.2 ; le correctif du
+         4 octobre 2026) : la page ne décompte que sur une valeur positive, et
+         un champ toujours là ne se confond pas avec un serveur d'avant. */
+      surgeMs: surge ? this.surgeUntil - now : 0,
       seq: this.seq,
       // Le fil part avec l'état : entrer à la soixantième minute doit donner
       // ce qui s'est passé avant, pas un écran vide qui ne se remplira qu'au
@@ -1569,7 +1827,13 @@ export class VirageRoom {
            nombre existe pour que la rangée d'action puisse expliquer ses
            cases vides au lieu de les laisser passer pour une panne. */
         ecartees: m.ecartees ?? 0,
-        ...this.rankOf(userId),
+        /* Sa place, dans l'ordre du bilan : `rank` et `of` gardent leur nom
+           d'avant (`CONTRATS.md`, § 16.2) ; `prochain`, le palier suivant,
+           absent à la première place. `serie` : les PARFAITS d'affilée en
+           cours — le combo du HUD lit ce nombre, jamais un compte à lui. */
+        rank: place.rang, of: place.sur, ferveur: m.ferveur,
+        serie: m.serie ?? 0,
+        ...(place.prochain ? { prochain: place.prochain } : {}),
       } : null,
       // Les cinq chants du moment, pas les douze : voir `repertoire()`.
       cards: this.chantsOfferts(),

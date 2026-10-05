@@ -157,6 +157,9 @@
     let poseActuelle = null;
     let retour = null;
     let demande = 0;
+    /* La célébration en cours : le jeton de la pose tenue (voir « pose »),
+       **de sa demande** jusqu'au retour au fond, ou 0. */
+    let tenue = 0;
     let fond = opts.fond ?? 'neutre';
     let perso = null;
     let cleMoment = 0;
@@ -238,8 +241,18 @@
       const jeton = ++demande;
       clearTimeout(retour);
       retour = null;
+      /* **Une pose tenue est une célébration dès qu'on la demande**, pas
+         dès qu'elle paraît. Le décodage de son dessin prend un moment, et
+         `retour` ne s'arme qu'une fois la pose à l'écran : entre les deux,
+         rien ne disait qu'une célébration arrivait, et un `poserFond`
+         demandé dans l'intervalle prenait un jeton neuf et passait devant
+         elle. Au Virage, le rendu qui suit un but réel effaçait ainsi le
+         « GOAL ! » du personnage avant qu'il paraisse (vu par `virage:ui`).
+         Une pose demandée en toutes lettres, elle, passe toujours : c'est
+         la dernière qui gagne, tenue ou non. */
+      tenue = tenir ? jeton : 0;
       const src = source(nom);
-      if (!src) return false;
+      if (!src) return lacher(jeton);
       // `force` sert quand le personnage change sans que l'état change : le
       // Fanzzy équipé vient d'arriver et doit remplacer celui d'avant.
       if (nom === poseActuelle && !force) { rendreLaMain(tenir); return true; }
@@ -256,11 +269,11 @@
            personnage sur tout ce qui n'est pas Chrome. */
         const repli = window.TBF_ETATS?.secours?.(src)
           ?? window.FZART?.secours?.(src);
-        if (!repli) return false;            // déjà au dernier recours
+        if (!repli) return lacher(jeton);    // déjà au dernier recours
         try {
           derriere.src = repli;
           await derriere.decode();
-        } catch { return false; }            // cet état n'est pas dessiné
+        } catch { return lacher(jeton); }    // cet état n'est pas dessiné
       }
       if (jeton !== demande) return false;   // une autre pose est passée devant
 
@@ -289,12 +302,34 @@
     }
 
     /**
+     * Une pose tenue qui n'a pas pu paraître (pas de dessin, décodage
+     * manqué) n'est plus une célébration : la scène se libère, et le fond
+     * qu'un `poserFond` a demandé pendant son décodage, et qui l'attendait,
+     * passe. Sans quoi le personnage resterait sur la pose d'avant jusqu'au
+     * prochain rendu — ou pour toujours sur une page qui ne redemande pas son
+     * fond. Rend toujours `false`, ce que `pose` rend dans ce cas.
+     */
+    function lacher(jeton) {
+      /* `tenue === jeton` dit aussi qu'aucune pose n'a été demandée depuis :
+         chaque demande réécrit `tenue`. */
+      if (tenue !== jeton) return false;
+      tenue = 0;
+      if (fond !== poseActuelle) pose(fond);
+      return false;
+    }
+
+    /**
      * L'état de repos, celui vers lequel on retombe après une célébration.
      * `pousse` pendant que la tribune chante, `attente` le reste du temps :
      * sans cette distinction, un but ramenait le personnage au calme alors
      * que le match continuait.
+     *
+     * Retenu toujours, posé seulement **hors célébration** : de la demande
+     * d'une pose tenue jusqu'à son retour (`tenue`, voir « pose »), et plus
+     * seulement une fois la pose à l'écran. Le retour pose le dernier fond
+     * retenu.
      */
-    function poserFond(p) { fond = p; if (!retour) pose(p); }
+    function poserFond(p) { fond = p; if (!tenue) pose(p); }
 
     /* ------------------------------------------------------------ les gestes */
 

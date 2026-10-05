@@ -1,6 +1,11 @@
 import express from 'express';
-import { VirageRoom, RULES } from './virage.js';
+import { VirageRoom, RULES, FINS_DE_MATCH } from './virage.js';
 import { Cheat } from './gestures.js';
+// Le bilan de tribune et l'XP du match (`CONTRATS.md`, § 15).
+import { createBilan } from './bilan.js';
+import { reglage } from '../../shared/reglages.js';
+// La liste blanche de l'avatar public (`CONTRATS.md`, § 3), pour `virage:amis`.
+import { AVATAR_PUBLIC } from '../fanzzy/avatar.js';
 // Le club qu'on soutient dans une rencontre : la même règle qu'au duel,
 // écrite une seule fois. Elle remplace un `suivis[0]` qui laissait l'ordre
 // de la base décider du camp dans un derby.
@@ -27,6 +32,8 @@ const MAX_CHANTS_PER_10S = 12;
    rechargent : la limite n'est qu'un filet contre le client modifié, et une
    main de cinq cartes jouées d'affilée est un coup légitime. */
 const MAX_CARTES_PER_10S = 8;
+/* Une demande de bilan par socket et par cinq secondes (`CONTRATS.md`, § 15.4). */
+const BILAN_CADENCE_MS = 5000;
 
 /* `couleurs` est facultatif : les suites de test montent le virage sans
    lui, et un club sans couleur garde celle du jeu. Une teinte manquante ne
@@ -43,8 +50,23 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
                                   server.js : le télétexte se monte après le
                                   Virage. Absente, la liste retombe sur la base,
                                   qui ne connaît que les clubs suivis. */
-                               jourDuFoot = null }) {
+                               jourDuFoot = null,
+                               /* Le module niveau, pour l'XP du match : le
+                                  grand livre crédite par sa `gagnerDans`.
+                                  Absent, le bilan en monte une instance à lui
+                                  — elle ne tient aucun état —, mais server.js
+                                  doit passer le sien. */
+                               niveau = null,
+                               /* La présence (`CONTRATS.md`, § 18.3) : « 2 AMIS
+                                  ICI » à l'entrant, et son arrivée annoncée aux
+                                  seuls amis présents. Facultative : sans elle,
+                                  rien ne part, et éteinte (`presence.actif`
+                                  faux), elle ne rend rien. */
+                               presence = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
+  /* Le bilan lit la base, jamais la salle (voir `bilan.js`). `recharger` ne
+     sert pas à l'XP — elle ne porte pas de booster — et part par principe. */
+  const bilan = createBilan({ pool, niveau, recharger: fanzzy?.recharger ?? null });
   const enCours = new Map();        // créations en vol, pour n'en faire qu'une
   /* **Une socket, pas un joueur.**
 
@@ -74,6 +96,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
   };
   const buckets = new WeakMap();    // socket -> horodatages des chants
   const seauxCartes = new WeakMap();// socket -> horodatages des cartes jouées
+  const bilansDe = new WeakMap();   // socket -> instant de sa dernière demande de bilan
 
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
@@ -214,8 +237,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       /* La main d'un joueur, à **toutes ses sockets** dans cette salle : la
          carte tirée au battement doit apparaître dans chacun de ses onglets,
          pas seulement dans celui qui a joué. La table est celle qu'`attacher`
-         remplit, rangée sous l'identifiant du match qu'elle tient — `f.id`. */
-      emitVous: (userId, you) => aSesOnglets(f.id, userId, you),
+         remplit, rangée sous l'identifiant du match qu'elle tient — `f.id`
+         (`room.fixture.id`), pas l'identifiant demandé. */
+      emitVous: (userId, you) => auJoueur(f.id, userId, 'virage:vous', you),
       /* **Le `catch` n'est pas de la politesse.**
 
          La salle appelle ce crochet à chaque chant et ne l'attend pas : c'est
@@ -344,12 +368,56 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       && now <= coupDEnvoi + MATCH_JOUABLE_MS);
   }
 
+  /* ------------------------------------------- la tribune se vide (Q11)
+
+     **`virage.bilan_min` minutes après le coup de sifflet** (5 par défaut,
+     décision du 3 octobre 2026), chaque socket de la salle reçoit
+     `virage:ferme` et la quitte (`CONTRATS.md`, § 15.3). La page garde son
+     bilan et ne rejoint plus. Le relevé du direct a cessé de payer la salle
+     dès le coup de sifflet (`sallesOccupees`, D1) ; ceci vide la mémoire, et
+     la libération emporte la salle une minute après (`libre`).
+
+     Le délai court **pour chacun depuis son arrivée, au plus tôt le coup de
+     sifflet** : qui entre après la fin — une page rechargée, un lien — a les
+     mêmes cinq minutes pour lire son bilan que ceux qui étaient là, au lieu
+     d'être mis dehors au battement suivant.
+
+     Chaque départ passe par `detacher` : c'est un vrai départ, avec le filet
+     de l'XP et l'annonce aux amis.
+
+     **Au plus `FERME_PAR_BATTEMENT` joueurs par battement et par salle.** Une
+     tribune entière sortie d'un seul battement lançait d'un coup le filet de
+     chacun — une lecture, ou un versement pour qui n'a pas demandé son bilan —
+     et tenait le pool et le sémaphore pendant que le coup de sifflet d'une
+     autre salle attendait ses bilans. Dix par battement, cent par seconde :
+     une tribune de mille se vide en dix secondes, cinq minutes après la fin,
+     sans que personne l'attende. */
+  const FERME_PAR_BATTEMENT = 10;
+  function fermerCeQuiEstDu(id, room, now) {
+    const delai = reglage('virage.bilan_min') * 60_000;
+    if (now - room.finA < delai) return;
+    const parJoueur = socketsDe.get(id);
+    if (!parJoueur) return;
+    let sortis = 0;
+    for (const [userId, siennes] of [...parJoueur]) {
+      if (sortis >= FERME_PAR_BATTEMENT) break;
+      const m = room.members.get(userId);
+      if (now - Math.max(room.finA, m?.entreA ?? 0) < delai) continue;
+      for (const s of [...siennes]) {
+        s.emit('virage:ferme', {});
+        detacher(s);
+      }
+      sortis++;
+    }
+  }
+
   /** Une seule horloge pour toutes les salles : dix battements par seconde. */
   const timer = setInterval(() => {
     const now = Date.now();
     for (const [id, room] of rooms) {
       try {
         room.tick(now);
+        if (room.finA) fermerCeQuiEstDu(id, room, now);
         if (libre(id, room, now)) rooms.delete(id);
       } catch (e) {
         console.error(`[virage ${id}]`, e.message);
@@ -393,21 +461,155 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     if (siennes?.size) return;
     parJoueur?.delete(userId);
     if (parJoueur && !parJoueur.size) socketsDe.delete(fixtureId);
-    rooms.get(fixtureId)?.leave(userId);
+    const room = rooms.get(fixtureId);
+    const m = room?.members.get(userId);
+    room?.leave(userId);
+    /* **Un vrai départ** — sa dernière socket —, et lui seul : ses amis
+       présents l'apprennent, et l'XP du match se verse s'il a chanté sans
+       demander son bilan. Une coupure d'un onglet parmi deux n'est rien de
+       tout ça. */
+    if (room && m) {
+      annoncerDepart(room, m);
+      filetXp(room, m);
+    }
+  }
+
+  /** Ce qui part « au joueur » part à toutes ses sockets de cette salle (règle 16). */
+  function auJoueur(fixtureId, userId, evenement, charge) {
+    let n = 0;
+    for (const s of socketsDe.get(fixtureId)?.get(String(userId)) ?? []) {
+      s.emit(evenement, charge);
+      n++;
+    }
+    return n;
+  }
+
+  /* ------------------------------------------------ l'XP, en filet
+
+     Versée à la première demande de bilan ; **et si la page n'en a demandé
+     aucun** — l'onglet fermé, le téléphone éteint —, au départ de la
+     tribune (`CONTRATS.md`, § 15.2). Sans attendre et avec son `catch` : le
+     départ ne doit ni patienter derrière un verrou de bourse, ni emporter le
+     processus sur une base qui bronche. Le grand livre est idempotent : un
+     filet qui passerait après le bilan répond « déjà », sans rien verser.
+
+     **Le filet ne paie que ce qui est dû.** La page quitte la salle juste
+     après son bilan, et la tribune se vide à `virage:ferme` : un chanteur
+     sous le seuil, déjà dit « incomplet » au bilan, rouvrait ici une
+     transaction de bourse. `verserXp` lit d'abord ses chants, sans
+     connexion tenue ni verrou, retient un « quota » jusqu'au minuit de la
+     base, et fait passer le filet **après** les bilans au sémaphore
+     (`bilan.js`). Ce que le bilan a répondu n'est pas gardé ici pour le
+     croire sur parole : au coup de sifflet, il vient d'une lecture de la
+     salle vieille de deux minutes au plus, et les chants restent acceptés
+     jusqu'à `virage:ferme` (§ 15.1) — le dixième chant d'après sa lecture
+     serait perdu. */
+  function filetXp(room, m) {
+    if (!m.chants || room.xpReglee.has(m.userId)) return;
+    bilan.verserXp(m.userId, room.fixture.id, { filet: true })
+      .then((r) => { if (r.verse || r.raison === 'deja') room.xpReglee.add(m.userId); })
+      .catch((e) => console.error(`[virage ${room.fixture.id}] XP au départ :`, e.message));
+  }
+
+  /* ------------------------------------------- les amis dans la tribune
+
+     `CONTRATS.md`, § 18.3. **Jamais une diffusion à la salle** : mille
+     personnes n'ont pas à apprendre que deux d'entre elles sont amies. Les
+     deux listes viennent de la présence (`amisPresents` : ses amis visibles,
+     pour lui ; `aPrevenir` : ses amis présents, cachés compris, à qui
+     l'annoncer — personne s'il est caché), qui rend `[]` quand elle est
+     éteinte, sans une requête. Le pseudo et le Fanzzy viennent du membre :
+     aucune lecture de plus. */
+
+  /** Ce qu'un ami voit de lui : l'avatar en liste blanche, absent sans Fanzzy. */
+  const RARETES = new Set(['commune', 'rare', 'epique', 'legendaire']);
+  function carteDAmi(m) {
+    const p = m.perso;
+    let avatar = null;
+    if (p?.id && p.age) {
+      const forme = { id: String(p.id), age: String(p.age), evo: Number(p.evo) || 1,
+        nom: p.nom ?? null, skin: p.skin || 'base', etat: p.etat || null,
+        rar: RARETES.has(p.rar) ? p.rar : null };
+      /* La liste blanche du § 3, et rien d'autre : le cri, la garde-robe, ce
+         que `perso` porte de plus ne partent pas chez un ami. */
+      avatar = Object.fromEntries(AVATAR_PUBLIC.map((k) => [k, forme[k] ?? null]));
+    }
+    return { id: String(m.userId), pseudo: m.name ?? '', ...(avatar ? { avatar } : {}) };
   }
 
   /**
-   * La main d'un joueur — `virage:vous` —, à chacune de ses sockets dans la
-   * salle de ce match.
+   * Une entrée réelle — sa première socket dans cette salle — : ses amis
+   * présents (« 2 AMIS ICI ») à lui, et son arrivée à eux.
    *
-   * Le seul chemin par lequel elle part : au tirage (le battement de la
-   * salle) comme après une carte jouée. Un second onglet n'a pas d'autre
-   * moyen de l'apprendre, et une main qu'il garde périmée ne se répare pas
-   * seule — ses cartes répondent « plus dans ta main », les neuves restent
-   * invisibles.
+   * **Les deux lectures l'une après l'autre, dans cet ordre** : `amisPresents`
+   * lit (ou retrouve en mémoire) la liste de ses amis ; `aPrevenir` la relit
+   * en mémoire, et ne lit le choix de l'entrant que s'il a un ami présent.
+   * Une entrée sans ami — le cas courant du coup d'envoi — coûte ainsi une
+   * lecture par deux minutes, et non deux. Éteinte, la présence rend `[]`
+   * sans une requête.
+   *
+   * Les présents sont pris **au moment de l'entrée** : un ami qui entre
+   * pendant que ces lectures sont en route l'apprendra par sa propre entrée,
+   * et personne ne reçoit la même nouvelle deux fois. Ce qui est parti entre
+   * temps n'est plus prévenu. Une entrée que dépasse la suivante (parti, puis
+   * revenu avant la fin des lectures) s'arrête : c'est la nouvelle qui
+   * annonce. Une panne de présence ne ferme rien : la porte de la tribune est
+   * déjà passée, et l'appelant journalise.
    */
-  function aSesOnglets(fixtureId, userId, you) {
-    for (const s of socketsDe.get(fixtureId)?.get(userId) ?? []) s.emit('virage:vous', you);
+  async function annoncerArrivee(room, m) {
+    const fid = room.fixture.id;
+    const id = String(m.userId);
+    const jeton = (m.arrivee = (m.arrivee ?? 0) + 1);
+    const presents = [...room.members.keys()];
+    const encoreLa = () => room.members.get(m.userId) === m && m.arrivee === jeton
+      && Boolean(socketsDe.get(fid)?.get(id)?.size);
+
+    /* D'abord ses amis visibles, à lui seul. */
+    const amis = await presence.amisPresents(m.userId, presents);
+    if (!encoreLa()) return;
+    const vus = (amis ?? []).map((a) => room.members.get(String(a.id))).filter(Boolean);
+    if (vus.length) {
+      auJoueur(fid, m.userId, 'virage:amis', { amis: vus.map(carteDAmi) });
+      /* Il les sait là : leur départ lui sera dit. */
+      for (const ami of vus) ami.annonceA.add(id);
+    }
+
+    /* Puis son arrivée, aux seules sockets de ses amis présents. */
+    const aPrevenir = await presence.aPrevenir(m.userId, presents);
+    if (!encoreLa()) return;
+    const moi = carteDAmi(m);
+    for (const { id: ami } of aPrevenir ?? []) {
+      if (!room.members.has(String(ami))) continue;
+      if (auJoueur(fid, ami, 'virage:ami', { ...moi, present: true })) m.annonceA.add(String(ami));
+    }
+  }
+
+  /**
+   * Un départ réel : `present: false` à ceux à qui sa présence a été dite et
+   * qui sont encore là — **eux seuls**, et non une nouvelle liste.
+   *
+   * Un ami qui s'est caché depuis son entrée ne serait plus « à prévenir » :
+   * le « 2 AMIS ICI » de ceux qui l'ont vu entrer mentirait jusqu'à leur
+   * propre départ. Leur dire qu'il est parti ne leur apprend rien qu'ils ne
+   * savaient. Un ami caché dès l'entrée, lui, n'a été annoncé à personne, et
+   * son départ ne l'est pas davantage.
+   *
+   * **Mais la présence éteinte ne dit plus rien**, départs compris : « tant
+   * que `presence.actif` est faux, rien de ce paragraphe n'est servi »
+   * (`CONTRATS.md`, § 18). Éteinte depuis `/admin` pendant le match — ou
+   * sans `sql/arenes.sql`, ce qui revient au même —, le départ d'un ami
+   * annoncé à l'entrée partait encore ; il se tait, et la liste de ceux qui
+   * l'avaient vu entrer s'oublie avec lui. Une présence qui ne sait pas dire
+   * si elle est allumée (une doublure sans `actif`) garde la règle d'avant.
+   */
+  function annoncerDepart(room, m) {
+    const qui = [...(m.annonceA ?? [])];
+    m.annonceA?.clear();
+    if (!qui.length || presence?.actif?.() === false) return;
+    const moi = carteDAmi(m);
+    for (const id of qui) {
+      if (room.members.has(id)) auJoueur(room.fixture.id, id, 'virage:ami', { ...moi, present: false });
+    }
   }
 
   /* Les refus d'une carte qui disent que la page s'est trompée sur la main,
@@ -711,6 +913,10 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          le premier — sans quoi elle chanterait dans l'un en étant comptée
          dans l'autre. Rejoindre la même salle ne détache rien. */
       if (salleDeSocket.get(socket)?.fixtureId !== room.fixture.id) detacher(socket);
+      /* Sa première socket dans cette salle ? Un second onglet, ou la même
+         page qui renvoie son entrée, n'est pas une arrivée : ses amis ne
+         l'apprennent qu'une fois. */
+      const premiere = !socketsDe.get(room.fixture.id)?.get(u.userId)?.size;
       attacher(socket, room.fixture.id, u.userId);
       if (process.env.VIRAGE_DEBUG) console.log('[virage] join', u.userId, '->', room.fixture.id);
 
@@ -724,7 +930,20 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       socket.emit('virage:state',
         room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions,
           classe, apports }));
-      io.to(`virage:${room.fixture.id}`).emit('virage:crowd', { crowd: room.crowd() });
+      /* **Plus de `virage:crowd` à toute la salle** (D4). Un entrant n'a
+         jamais poussé et ne change pas la foule, qui ne compte que les actifs ;
+         et `join` lève `dirty`, si bien que le battement suivant — cent
+         millisecondes au plus — porte la foule avec la corde. Au coup d'envoi
+         d'un match à mille entrées, c'était un demi-million de messages pour
+         rien, et autant de redessins chez chaque présent. */
+
+      /* Les amis : après l'état, sans l'attendre — une présence lente ou en
+         panne ne retarde ni ne ferme l'entrée. */
+      const m = room.members.get(u.userId);
+      if (premiere && presence && m) {
+        annoncerArrivee(room, m).catch((e) =>
+          console.error(`[virage ${room.fixture.id}] amis dans la tribune :`, e.message));
+      }
     });
     socket.on('virage:join', (charge) => entrer(charge, demander(socket)));
 
@@ -797,7 +1016,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
            une autre —, mais pas le Changement de chant : il refait cinq
            cartes d'un coup, sans tirage à venir, et l'autre onglet gardait
            l'ancienne main sans limite de temps. */
-        aSesOnglets(fixtureId, u.userId, room.snapshotFor(u.userId).you);
+        auJoueur(fixtureId, u.userId, 'virage:vous', room.snapshotFor(u.userId).you);
       } catch (e) {
         if (e instanceof Cheat) {
           socket.emit('virage:error', { code: e.code });
@@ -814,6 +1033,35 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
           socket.emit('virage:error', { code: 'ferveur.error.server' });
         }
       }
+    });
+
+    /**
+     * Le bilan de tribune (`CONTRATS.md`, § 15), à cette socket seule.
+     *
+     * Une demande par socket et par cinq secondes : au coup de sifflet, la
+     * page demande le sien une fois, après un délai tiré entre 0 et 8 s ; à
+     * la sortie, une fois. Au-delà, c'est une page qui boucle, et elle garde
+     * le bilan qu'elle a. Hors de toute salle — jamais entrée, partie, ou
+     * après `virage:ferme` —, il n'y a pas de bilan : `not_in_virage`.
+     *
+     * Le match fini (`FT`, `AET`, `PEN`), le bilan vient de la lecture
+     * groupée de la salle, partagée par toute la tribune ; avant, de ses trois
+     * lectures. L'XP part avec, versée à la première demande qui la trouve
+     * due.
+     */
+    sur('virage:bilan', async () => {
+      const u = me();
+      if (!u) return socket.emit('virage:error', { code: 'auth.error.unauthenticated' });
+      const now = Date.now();
+      if (now - (bilansDe.get(socket) ?? -Infinity) < BILAN_CADENCE_MS) {
+        return socket.emit('virage:error', { code: 'ferveur.error.rate_limited' });
+      }
+      bilansDe.set(socket, now);
+      const { fixtureId, room } = salleDe(socket);
+      if (!room) return socket.emit('virage:error', { code: 'ferveur.error.not_in_virage' });
+      const m = room.members.get(u.userId) ?? room.partis.get(u.userId);
+      socket.emit('virage:bilan', await bilan.bilanDe(u.userId, fixtureId, {
+        fini: FINS_DE_MATCH.has(room.statut), side: m?.side ?? 0, regle: room.xpReglee }));
     });
 
     /* Les deux sorties passent par `detacher` : c'est la socket qui part, et
@@ -850,6 +1098,46 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       // but : sans lui, la salle ne peut pas savoir qu'il est ancien.
       score: goal.score ?? null,
     });
+  }
+
+  /**
+   * **La carte-souvenir, annoncée à ceux-là seuls qui l'ont reçue**
+   * (`CONTRATS.md`, § 16.3 ; défaut D5).
+   *
+   * `server.js` l'appelle **après** la frappe, avec les receveurs que
+   * `souvenirs.mintGoal` rend (`userIds`) : rien pour une compétition non
+   * couverte, rien pour un but déjà frappé, rien pour qui regardait sans
+   * chanter. Elle part à toutes leurs sockets dans la salle de ce match —
+   * deux onglets, deux annonces : ce qui part au joueur part à ses sockets —,
+   * jamais à la salle. `minute` et `joueur` ne partent que s'ils sont connus.
+   *
+   * @returns le nombre de sockets prévenues
+   */
+  function souvenirFrappe(fixtureId, { souvenirId, minute = null, joueur = null, userIds = [] } = {}) {
+    const fid = Number(fixtureId);
+    if (souvenirId == null || !socketsDe.has(fid)) return 0;
+    const carte = { fixtureId: fid, id: Number(souvenirId),
+      ...(minute != null ? { minute: Number(minute) } : {}),
+      ...(joueur ? { joueur: String(joueur) } : {}) };
+    let n = 0;
+    for (const id of new Set((userIds ?? []).map(String))) n += auJoueur(fid, id, 'virage:souvenir', carte);
+    return n;
+  }
+
+  /**
+   * Ce joueur est-il au Virage ? Une socket dans une salle dont le match
+   * n'est pas terminé — ni fini, ni annulé : après le coup de sifflet, on
+   * n'y est plus « au Virage », on y lit son bilan. Mémoire seule ; lu par
+   * la présence (`presence.brancher`, dans `server.js`).
+   */
+  function estAuVirage(userId) {
+    const id = String(userId);
+    for (const [fid, parJoueur] of socketsDe) {
+      if (!parJoueur.get(id)?.size) continue;
+      const room = rooms.get(fid);
+      if (room && !TERMINES.has(room.statut)) return true;
+    }
+    return false;
   }
 
   /* ------------------------------------------------- le fil, venu du worker */
@@ -1236,5 +1524,6 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
   });
 
   return { router, realGoal, matchEvents, matchStatus, matchAbsent, sallesOccupees,
+           souvenirFrappe, estAuVirage, bilan,
            rooms, roomFor, stop: () => clearInterval(timer) };
 }

@@ -3,7 +3,7 @@
  *
  * ## Oui, on peut allumer les tribunes
  *
- * Les cinq stades sont dessinés de nuit, **tribunes dans l'ombre** : c'était
+ * Les stades sont dessinés de nuit, **tribunes dans l'ombre** : c'était
  * la consigne donnée au dessin, et c'est ce qui rend tout le reste possible.
  * Une tribune déjà éclairée ne peut plus s'allumer ; une tribune sombre, si.
  *
@@ -49,25 +49,43 @@
 
   const pc = (v) => `${(v * 100).toFixed(2)}%`;
 
+  const echappe = (s) => String(s ?? '').replace(/[<>&"]/g,
+    (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
   /**
    * Monte un stade dans un élément, et rend de quoi l'animer.
+   *
+   * **Les deux nappes portent `data-cote`**, le côté du terrain (0 à gauche,
+   * le domicile ; 1 à droite), et plus `data-camp`. C'était le même attribut
+   * que les boutons du choix de camp, au duel comme au Virage
+   * (`[data-camp]`) : la page le cherche au toucher (`closest`), et
+   * `nvn:ui` compte les `[data-camp]` du document pour dire « chez soi,
+   * aucune tribune à choisir ». Tant que le stade ne vivait que dans l'arène,
+   * on ne les voyait jamais ensemble ; le lot 6 pose le stade-mini dans la
+   * préparation du duel, à côté des boutons, et ses deux nappes seraient
+   * comptées pour deux tribunes à choisir.
    *
    * @param hote      l'élément qui reçoit le stade. Il doit être positionné.
    * @param id        l'identifiant du stade.
    * @param couleurs  [couleur du camp 0, couleur du camp 1]. Le camp 0 est à
    *   gauche, comme le terrain : c'est le domicile.
+   * @param mini      le dessin réduit (`<id>-mini`, 300 × 402 au lieu de
+   *   720 × 964, le même cadrage) : l'affiche du match et le choix du camp,
+   *   là où le stade fait une vignette. Les plans des tribunes sont en
+   *   proportions : la lumière se pose pareil sur les deux.
    */
-  function monter(hote, { id, couleurs = ['#F5C33B', '#3C82E8'] } = {}) {
+  function monter(hote, { id, couleurs = ['#F5C33B', '#3C82E8'], mini = false } = {}) {
     if (!hote) return null;
+    const teinte = (c) => echappe(c ?? '');
     hote.innerHTML = `
-      <img class="tbf-stade-fond" src="${adresse(id)}" alt="" decoding="async"
-        onerror="this.remove()">
-      <div class="tbf-tribune" data-camp="0" style="--c:${couleurs[0]}"></div>
-      <div class="tbf-tribune" data-camp="1" style="--c:${couleurs[1]}"></div>`;
+      <img class="tbf-stade-fond" src="${adresse(echappe(id), mini)}" alt="" decoding="async"
+        draggable="false" onerror="this.remove()">
+      <div class="tbf-tribune" data-cote="0" style="--c:${teinte(couleurs[0])}"></div>
+      <div class="tbf-tribune" data-cote="1" style="--c:${teinte(couleurs[1])}"></div>`;
     hote.classList.add('tbf-stade');
 
-    const bandes = [hote.querySelector('[data-camp="0"]'),
-                    hote.querySelector('[data-camp="1"]')];
+    const bandes = [hote.querySelector('[data-cote="0"]'),
+                    hote.querySelector('[data-cote="1"]')];
 
     /* Les bandes sont posées dès que les plans arrivent. Avant ça elles sont
        invisibles plutôt que mal placées : une nappe de lumière au milieu du
@@ -87,8 +105,10 @@
       }
     });
 
-    /** Les minuteries de battement, par camp. Nulées : voir plus bas. */
+    /** Les minuteries de battement et d'embrasement, par camp. Nulées : voir
+        plus bas. */
     const bat = [null, null];
+    const feu = [null, null];
 
     return {
       /**
@@ -122,14 +142,23 @@
         bat[camp] = setTimeout(() => { el.classList.remove('bat'); bat[camp] = null; }, 620);
       },
 
-      /** Un but. Toute la tribune s'embrase, une fois. */
+      /**
+       * Un but. Toute la tribune s'embrase, une fois.
+       *
+       * Comme le battement, **la minuterie précédente est effacée** : quand
+       * deux buts tombent à moins de deux secondes et demie d'écart — un but
+       * du terrain, puis la corde qui cède dans la minute double qu'il
+       * ouvre —, la minuterie du premier retirait la classe en plein milieu
+       * de l'embrasement du second, et la tribune s'éteignait d'un coup.
+       */
       embraser(camp) {
         const el = bandes[camp];
         if (!el) return;
         el.classList.remove('feu');
         void el.offsetWidth;
         el.classList.add('feu');
-        setTimeout(() => el.classList.remove('feu'), 2400);
+        clearTimeout(feu[camp]); feu[camp] = null;
+        feu[camp] = setTimeout(() => { el.classList.remove('feu'); feu[camp] = null; }, 2400);
       },
 
       /** Les couleurs changent quand on apprend celles des clubs. */

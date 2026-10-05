@@ -6317,7 +6317,9 @@ le sachet de LA REPRISE et la photo du tunnel de l'écran d'ouverture, produits
 le 3 octobre ; et les reliquats du lot 4. Il a aussi porté jusqu'aux pages ce
 que le correctif avait appris des événements de l'API. Le détail du serveur
 est dans `serveur/ECARTS.md`, serveur-correctif, et ce que les pages peuvent en
-attendre dans `serveur/CONTRATS.md`, § 15 : cette section ne les recopie pas.
+attendre dans `serveur/CONTRATS.md`, § 16.2, § 16.5 et § 16.6 — déclaré alors
+« § 15 », reversé là à la fusion du lot 6, qui donne le § 15 au bilan de
+tribune : cette section ne les recopie pas.
 Les pièges de l'atelier sont dans `ETAT.md`, § 6.
 
 **Gaël a commité et mis en ligne le correctif et le sachet pendant
@@ -6519,8 +6521,8 @@ seq)`) : il n'en a pas, une fois. Personne n'a regardé si un tel match tournait
 **Le reste n'est pas en ligne** : les photos du tunnel répondent 404, et les
 pages servies sont celles de `0638fb5`. Les dix-sept fichiers modifiés, les six
 images du tunnel et `art/A-GENERER-ARTLIST.md` ne sont pas commités ;
-`CONTRATS.md` § 15 et `ECARTS.md`, serveur-correctif, qui décrivent un code en
-ligne, non plus. `A-DEPLOYER.md` dit l'ordre.
+`CONTRATS.md` § 15 (aujourd'hui § 16.2, § 16.5 et § 16.6) et `ECARTS.md`,
+serveur-correctif, qui décrivent un code en ligne, non plus. `A-DEPLOYER.md` dit l'ordre.
 
 ### Ce qui reste
 
@@ -6555,7 +6557,10 @@ Ce que le regard de l'intégration a relevé, et qui reste en l'état :
   avant » la demi-heure du coup d'envoi, alors que le relevé regarde une fois
   tout statut qu'il n'a pas encore vu ; et sa table des lecteurs n'a pas de
   ligne pour `index.html`, qui lit la route des événements, où un tir de la
-  séance ressemble à un penalty du match.
+  séance ressemble à un penalty du match. *(Sans objet depuis la fusion du
+  lot 6 : ce § 15 est reversé aux § 16.2, § 16.5 et § 16.6, qui ne portent
+  pas la phrase ; la règle exacte reste dans `ECARTS.md`, serveur-correctif
+  § 1. Les lecteurs du § 16 ne nomment pas davantage `index.html`.)*
 
 Puis, hors de cet atelier : D4, D5, D7 et la page du Virage, au lot 6. La
 branche `refonte-lot6` est à `7450c03`, sans `0638fb5` ni cette livraison, et
@@ -6565,5 +6570,889 @@ fusion croise ce correctif, et c'est l'appel `createAide({ …, fanzzy })` qui
 reste. Le reste de « Ce qui reste », au lot 4, est inchangé : `paliers.series`,
 la chance d'une carte, les boosters d'un abonnement acheté, la fabrique des
 cases recopiée, les constats de la critique.
+
+---
+
+## 4 quadragies sexies. Les arènes FAIT MAIN — le Grand Virage, le duel de tribunes, le bilan, et la vague 2 du serveur
+
+Du 3 octobre 2026, où Gaël a tranché les quatre questions qui changeaient ce que
+le serveur écrit, au 5 octobre vers 5 h, un atelier a mené le **lot 6** de la
+refonte : les deux arènes, c'est-à-dire les écrans où l'on joue pour de bon. Le
+**Grand Virage** (`/virage`) et le **duel de tribunes** (`/duel-nvn`) partagent
+maintenant un seul HUD, une seule corde, une seule main de cartes, un seul pavé
+de geste et un seul rituel de sortie ; le
+Virage a un **bilan de tribune** qui remplace la boîte « QUITTER LA TRIBUNE ? » et
+qui s'ouvre tout seul au coup de sifflet final ; le duel a le sien ; le geste
+reçoit son **verdict du serveur** et le claque en tampon sur le pavé ; le son de
+tribune suit le match ; et le serveur apprend à servir tout cela — le bilan, l'XP
+du Virage, le verdict, le rang et le palier, la fin de match, la présence des amis
+— dans la **vague 2** du chantier serveur. Ce qui se voit à la fin tient en
+quatre phrases : on voit d'un coup d'œil qui tire plus fort ; une carte dit ce
+qui lui manque pour se jouer ; le geste rend son mot, PARFAIT, BON, MOYEN ou
+RATÉ, au même endroit qu'il s'est joué ; on ne quitte plus un match sans qu'il
+dise ce qu'il a donné.
+
+**Le lot est versé dans la copie principale, pas encore commité, et rien n'en
+est en ligne.** Il a été mené dans `.claude/worktrees/lot6`, sur la branche
+`refonte-lot6`, dont le HEAD est resté `7450c03` ; `git diff 7450c03` en donnait
+**70 fichiers** (62 modifiés, 8 neufs), **28 936 lignes ajoutées et 3 881
+retirées** — le correctif du Virage compris, qui y pèse ses deux suites. Une
+copie de travail est un `git worktree` : la copie principale a continué de
+vivre pendant ce temps (« La base par copie », plus bas), et le 5 octobre au
+matin ce diff y a été appliqué en trois voies, sur `524b2ca` (« La fusion dans
+la copie principale », plus bas).
+
+Le lot a été mené en **deux parties, avec une fusion entre elles**. La partie A,
+le 4 octobre dès le matin, est partie de `60fe268` — le lot 4 n'était alors pas
+fini — ; Gaël a mis le lot 4 en ligne à 17 h 07 (`7450c03`), puis le correctif
+du Virage à 17 h 17 (`0638fb5`, vu dans la section précédente). La fusion, vers
+17 h 30, a **reposé la partie A sur `7450c03` et y a ajouté le correctif, sans
+aucun conflit et sans rien perdre** : 54 fichiers appliqués, 51 identiques octet
+pour octet à leur sauvegarde, trois fusionnés en trois voies (`ui.css`,
+`nav.js`, `ECARTS.md`) et relus ligne à ligne, chaque côté entier. La partie B,
+le soir, a écrit ce que la partie A avait laissé — le serveur du Virage surtout
+—, puis des tours de vérification (numérotés 1, 2, 3 et 5), des corrections par
+périmètre, le regard, et le report à la main d'un **correctif d'urgence** que
+Gaël avait demandé dans l'intervalle (« Un correctif d'urgence, reporté à la
+main », plus bas).
+
+Le travail s'est partagé sur des **clés de périmètre fermées aux fichiers
+disjoints**, comme aux lots précédents : quatorze — `mesure`, `feuilles-css`,
+`fx`, `geste`, `grand-virage`, `duel-tribunes`, `barre-tiroir`, `amis`,
+`serveur-socle`, `serveur-virage`, `serveur-duel`, `serveur-presence`, plus
+`paquet` pour `package.json` et `tests` pour les suites qui lisent un
+comportement voulu. La mesure d'abord, seule avec la base ; puis le socle du
+serveur, seul — le contrat collé avant que les écrans codent contre lui ; puis
+les briques, les écrans et les trois autres périmètres serveur en parallèle ;
+puis la vérification. Le regard — une critique visuelle notée **7,5 sur 10**
+(23 constats, dont 9 importants) et une revue adverse du serveur — a mené à
+des corrections et à un dernier tour, le cinquième. Les périmètres se sont échangé leurs
+besoins par clé, et chaque constat est allé à la clé qui porte le fichier.
+
+Le texte de la revue adverse du serveur (contrat, XP, bilan, présence) n'est pas
+parmi les pièces dont cette trace est tirée : ses constats ont été traités par
+les clés qui portent leurs fichiers, et cette section ne les nomme pas.
+
+Les documents de l'atelier sont restés dans son bac à sable :
+`BRIEF-LOT6.md`, `DECISIONS.md`, `QUESTIONS.md`, `SERVEUR-VAGUE2.md`,
+`SOCLE.md` (ce que le contrat, le schéma, les réglages et le verdict offrent aux
+pages), `BRIQUES.md` (le balisage exact de chaque pièce d'arène, vingt
+paragraphes), `SON.md` (ce que `son.js` offre) et `MESURE.md` (les commandes et les
+chiffres de départ), et `FUSION-PRINCIPALE.md` (la marche de la fusion, ses dix
+conflits et leur règle, éprouvés dans un arbre à part). Ce qui doit en durer est
+dans le code — le commentaire de
+chaque pièce de `ui.css` donne son balisage exact —, dans `serveur/CONTRATS.md`
+(§ 15 à § 18), dans `serveur/ECARTS.md` (« Vague 2 », une rubrique par clé) et
+dans `ETAT.md`.
+
+### Ce que Gaël a tranché
+
+Le 3 octobre 2026, quatre questions **avant le lancement**, toutes selon la
+recommandation de `QUESTIONS.md` :
+
+- **L'XP du Virage (Q1).** Le cœur du jeu ne rapportait aucune XP : seules les
+  missions le payaient. **15 XP par match poussé**, une fois par match, à partir
+  de **10 chants acceptés** par le serveur, **trois matchs par jour** au plus ;
+  ni le club, ni l'abonnement, ni la neutralité, ni le classement n'y changent
+  rien — l'XP mesure le temps passé à jouer (`ETAT.md` § 3, « l'XP ne double pas
+  pour son club »), et lier l'XP au classement ferait acheter de l'XP, puisque
+  l'abonnement lève le plafond des Virages comptés. Trois réglages :
+  `xp.virage`, `xp.virage_chants`, `xp.virage_matchs_jour`. À 45 XP par jour au
+  plus, c'est un peu plus du tiers des 120 que paient les trois missions.
+- **La présence (Q2).** Les **amis mutuels** seulement, **trois états
+  grossiers** (en ligne, au Virage, en duel) sans match ni heure, **rien en
+  base**, visible par défaut avec l'interrupteur « apparaître hors ligne » au
+  pied du tiroir ; **pas de REJOINDRE** (dire quel match, c'est la phrase que le
+  module des amis refuse depuis le début). **Livrée éteinte**
+  (`presence.actif` faux) jusqu'à la mise en ligne de la nouvelle
+  `CONFIDENTIALITE.md`, parce que le jeu est ouvert aux mineurs (dossier L5).
+- **Une seule échelle de verdict (Q3).** Quatre mots, partout, la répétition
+  comprise : PARFAIT au-dessus de 0,9, BON au-dessus de 0,7, MOYEN au-dessus de
+  0,4, RATÉ en dessous. Le Cri du Fanzzy reste réservé au-dessus de 0,95 : une
+  récompense, pas un verdict. La répétition garde sa note chiffrée et son record.
+- **Un plancher de ferveur (Q4).** Un chant accepté, noté au moins MOYEN, rapporte
+  au moins 1 de ferveur ; le rang se départage par les chants, puis par les
+  PARFAITS. Sans cela, dans une tribune de plus de 34 personnes la ferveur d'un
+  chant s'arrondit à zéro, le bilan afficherait « 1ᵉʳ » à tout le monde, et les
+  divisions de saison ne bougeraient pas.
+
+Les neuf autres questions (Q5 à Q13) se tranchaient **pendant le lot**, et la
+recommandation a été suivie : on garde **le stade de la rencontre** au fond de
+l'arène plutôt que la photo de tribune (Q5) ; **le voile des arènes est levé**
+(Q6, hypothèse H6 : `nav.js` ne pose plus `.dense` sur les deux écrans de jeu) ;
+**pas de supporter d'en face aux couleurs de l'adversaire** (Q7 : la foule au
+pochoir, teintée au camp, dit déjà qui est en face) ; **la rumeur reste
+synthétisée** (Q8) ; **les missions de qualité restent en réserve** (Q9 : payer
+la qualité du geste pousse à l'automatiser) ; **le bilan seulement si l'on a
+poussé** (Q10 : sans un chant, on sort sans question) ; **la tribune se vide
+cinq minutes après le coup de sifflet** (Q11, `virage.bilan_min`) ; **ce qui est
+en jeu au duel est servi, pas « +3 places »** (Q12) ; et l'ordre des images du
+lot 7 (Q13) est dans « Ce qui reste ».
+
+### Mesurer d'abord : des états d'arène que l'audit ne savait pas voir
+
+L'audit visitait `/virage` et `/duel-nvn` à leur porte seulement : le voile du
+Virage vide, la préparation du duel sans deck. Rien de ce qu'on y joue n'était
+mesuré. Le départ a été pris le 4 octobre de 12 h 21 à 12 h 32 (onze minutes et
+demie), au commit `60fe268`, `public/` sans modification : **172 captures** —
+75 pages, 47 états d'avant, **50 états d'arène**.
+
+Les états d'arène sont fabriqués **par la technique du banc** : la requête de
+`/socket.io/socket.io.js` reçoit une **fausse socket pilotable**
+(`window.__sock.fire(évènement, données)`, et `window.__emis` garde ce que la
+page émet), quatre lectures sont bouchées et nommées dans le relevé
+(`/api/virage/live`, `/api/deck/matchs`, `/api/deck/loadout`,
+`/api/nvn/attentes`), et le reste — la page, ses scripts, la session, le
+catalogue, le niveau — vient du vrai serveur. Un match fabriqué, FC Sion – FC
+Bâle à la 66ᵉ (2 – 1 au terrain), poussé pour Sion ; une tribune de 46 contre
+31 ; un duel 3 contre 3 classé. Les champs de la vague 2 y sont déjà, à la
+forme du contrat. Onze états au départ (le Virage au voile, en tribune, en minute
+double, au but, au pavé, au bilan ; le duel à la préparation, au vestiaire, à
+l'affiche, en jeu, au bilan), qui sont devenus **vingt-deux** au fil des
+parties : le duel au pavé, au but, à l'entraînement, au verdict ; le Virage
+dans une tribune de 300, à la fin du match, au verdict ; et quatre états des
+autres écrans que le lot touche (`repetition@jugee`, `repetition@tri`,
+`amis@presence`, `tiroir@presence`). Chaque état qui ne se pose pas **nomme sa
+panne** au lieu d'être mesuré sous le nom d'un autre : cassé exprès, un
+évènement renommé fait tomber les cinq états du Virage avec leur garde.
+
+L'audit a gagné **cinq choses** qui servent au-delà du lot :
+
+- **un port à soi.** Il prenait toujours le 3999. Deux copies qui mesurent en
+  même temps se le seraient disputé, et le second serveur s'arrêtant sur un port
+  pris, l'audit aurait mesuré **les pages et la base de l'autre copie** sans un
+  mot. Le port est donné par le système (`listen(0)`), et `debout` refuse un
+  serveur arrêté ;
+- **un budget de hauteur** : chaque rangée dans l'ordre de l'écran, sa hauteur,
+  et ce qu'on en voit dans la fenêtre — c'est ce qui rend vérifiable la règle du
+  brief, « l'arène cède avant la main et les chants, jamais l'inverse ». Au
+  départ, à 320 × 568, la rangée des chants du duel **sortait de l'écran** (111
+  px) sans qu'aucun relevé le dise : un texte coupé par son cadre n'est pas
+  « hors écran ». Une règle, **« main coupée »**, la voit ;
+- **six règles de plus**, relevées sur chaque état du lot : « sans fin » (plus
+  de trois animations qui ne s'arrêtent jamais), « sticker rogné », « voile
+  dense », « encre rognée » (l'encre d'un texte contre le rembourrage de chaque
+  ancêtre qui coupe), « libellé couvert » (le corps des lettres sondé au point
+  près) et « main coupée » ; et, côté `npm run pages`, le contrôle « le
+  verdict » (voir « Le geste ») ;
+- **`--arenes`**, pour re-mesurer les seuls états d'arène en une à cinq
+  minutes pendant que les écrans bougent ;
+- **un album stable.** `album@/collection` donnait 201, 202 ou 203 textes sur le
+  même commit. La cause n'était pas dans la page : une page éteint au serveur
+  ce qu'elle a montré en partant (`pagehide`, `fetch` en `keepalive`), et
+  `contexte.close()` rend la main **avant** que cette requête atteigne le
+  serveur — elle effaçait, après coup, les nouveautés que l'état suivant venait
+  de resemer. L'audit répond maintenant lui-même à l'extinction, et la page
+  quitte le document avant qu'on ferme son contexte.
+
+**Ce que le départ disait.** Le voile du mur était `.dense` (75 %) dans les onze
+états, mur compris. À 320 × 568, la tribune coupait le nom des deux clubs du HUD.
+L'arène du Virage tenait **157 px** à 360 × 640 (91 à 320) parce que le HUD en
+prenait 72, le fil 64, la ligne « ce que tu portes » 44 et le bandeau des cartes
+de duel 60. L'affiche du duel coupait cinq noms à 360 et douze à 320, et ne
+montrait que sa propre tribune sans défiler. Le vestiaire coupait les noms de
+Fanzzy sous les bustes. Partout : zéro texte sous 11 px, zéro opacité sous 0,85,
+zéro petit or, zéro débordement, zéro erreur de script.
+
+### Ce qui a changé
+
+#### Les pièces d'arène
+
+Les deux écrans partagent leurs pièces, **une fois**, dans une section en fin de
+`public/ui.css` — après « la montée de niveau » du lot 4, avec le balisage exact
+de chaque pièce en commentaire, ses doubles `prefers-reduced-motion` et
+`html[data-calme~="animations"]`, et son banc. Une page n'écrit que la **place**
+d'une pièce, jamais son dessin ; ce qui bouge passe par une variable (`--corde`,
+`--h`, `--part`, `--a`/`--b`) ou un attribut posé sur un nœud qui dure, parce que
+`render` (Virage) et `rendreDuel` passent dix fois par seconde.
+
+- **Le HUD de match** (`.tbf-hudm`) : une rangée, la même aux deux arènes. La
+  flèche et le menu de `nav.js` gardent leurs cases de 44 px, la bâche du club
+  de chaque camp porte son nom en Oswald et son écharpe (`--e1`, `--e2`) en
+  bord bas, **cerne or pour toi, bleu pour en face** ; la plaque du milieu porte
+  le score de la corde au Virage, l'horloge et le sticker CLASSÉ au duel. Les
+  deux formes d'un libellé (« TA TRIBUNE »/« TOI ») sont écrites, la longue
+  retirée de l'écran sous 390 px par le motif que `tour:ui` reconnaît. Une ligne de
+  club qui ne tient pas **s'efface en entier** plutôt que de se couper.
+- **Le ticket terrain**, en kraft déchiré de 24 px, qu'on lit et qu'on ne touche
+  que pour ouvrir la feuille du fil ; **le sticker de phase** à son côté (GRAND
+  VIRAGE, puis MINUTE DOUBLE avec l'anneau de soixante secondes).
+- **La corde** tressée — verticale au Virage, horizontale au duel —, **le foulard
+  noué** qui la parcourt, les deux lignes de but en scotch, la progression en
+  écharpe et les buts de corde en crans ; une seule variable, `--corde`, de −1 à
+  1. **La marée** du duel, qui montre à front net qui mène.
+- **La foule au pochoir** : des silhouettes teintées au camp, huit par camp sous
+  400 px, allumées en proportion de `crowd`, qui lèvent les bras quand le camp
+  chante. Au duel, un supporter par joueur, assis s'il est parti, la bouche
+  barrée sous « Silence radio », deux rubans de craie sous « Parcage fermé ».
+  Tant que `corde.svg`, `foulard-noeud` et `pochoir-supporters` n'existent pas
+  (lot 7), les replis sont peints en CSS, **et aucune page ne nomme une image qui
+  n'existe pas**.
+- **La carte de chant (2:3) et la carte d'action (3:4)**, une seule matière :
+  le dessin plein — fini l'assombrissement à 60 % —, un bord de craie, un cerne
+  d'encre, le coût en sticker rond. Une carte injouable porte un scotch en croix
+  et un sticker « −8 » qui dit **ce qui manque**, jamais sur le libellé ; une
+  carte en recharge, un scotch qui se retire et son chiffre ; **l'éventail** de la
+  main se chevauche de 6 % (la direction écrivait 22 %, qui couvrait le nom du
+  geste de la voisine).
+- **Le pavé de geste en bâche craie** et **le tampon de verdict** qui claque au
+  centre : PARFAIT vert, BON bleu, MOYEN or, RATÉ rouge — en contour sur le
+  sombre, **plein sur le kraft**, toujours.
+- **Le tableau de tribune** : le souffle en écharpe fine bleue à crans aux coûts
+  des cartes en main, la ferveur à paliers (« 12ᵉ → TOP 10 »), le sticker de
+  combo (« 3 PARFAITS »), la pile des souvenirs en dos de carte.
+- **La page kraft du bilan**, les deux doubles barres miroir TOI/LUI du duel,
+  **l'affiche** (le cadre à écharpe aux deux couleurs des clubs, le sticker LIVE)
+  et **les effets posés sur l'arène** (la bâche déployée, le brouillard sur la
+  moitié adverse, les flèches de vent), chacun avec son chrono en anneau.
+- Au second tour, les pièces que les pages avaient demandées : la carte d'un
+  Fanzzy du duel, la carte-souvenir qui se retourne, l'étiquette à liseré, la
+  bâche qu'on lit (le chrono avant les bots), le panneau de ce qu'on porte
+  hors de la colonne. À la partie B, **les noms entiers du vestiaire**
+  (`.tbf-gradins--entiers`).
+
+Deux choses ont demandé de la précision à la matière. **Les accents** : une
+ligne serrée qui coupe pour ses points de suspension rognait l'accent d'une
+capitale — Oswald le porte à 1,08 em de la ligne de base —, et « BÂLE » se lisait
+« BÄLE » ; le nom et le petit texte ont un quart de cadratin de rembourrage rendu
+par une marge négative, et la sonde « encre rognée » le mesure. **Les cartes
+couvertes** : le nom du geste se faisait couvrir par le coût de la carte voisine
+dans l'éventail, et le même pourcentage lu sur la main au duel, sur la carte au
+Virage, donnait deux mains différentes ; il se lit sur la carte (`6% + 3,5 px`).
+Le banc des briques mesure 405 textes : zéro pâle, zéro coupé, zéro sous 11 px.
+
+#### Le Grand Virage
+
+`public/virage.html` passe de 2 432 à 3 205 lignes.
+
+**Le voile de choix** : « LE GRAND VIRAGE » peint sur une bâche craie tournée, le
+tunnel en fond — l'image n'existant pas (lot 7), la tribune à 25 % sous un voile —,
+chaque match en direct en **affiche** (la foule en frise de silhouettes
+allumées selon `crowd`), les matchs « ailleurs » en cadre pointillé, le choix du
+camp en deux bâches aux couleurs des clubs ; l'état vide dit le prochain coup
+d'envoi, avec le même compte à rebours que le hub, et écarte les matchs
+reportés, suspendus ou sans heure.
+
+**La tribune** tient dans l'écran à 360 × 640, encoche comprise : le HUD 62, le
+ticket terrain 24, **l'arène 266**, le tableau 52, la rangée d'actions 80, la
+main 134 — 640 sur 640. À 320 × 568 l'arène garde 200. La corde, le foulard, le
+stade de la rencontre en fond, la fumée du club au quart bas de l'arène, le
+Fanzzy mains sur la corde. Ce que la direction ne dessinait pas et qui devait
+rester a trouvé sa place sans rien perdre : la **fenêtre collective du capo** passe
+en ticket sur le bas de l'arène le temps de la fenêtre ; les **cartes restées au
+duel** deviennent un sticker « DUEL SEULEMENT » sur les cases vides ; la ligne
+« ce que tu portes » devient une plaque ronde « i ».
+
+**La minute qui compte double** passe à l'or — le HUD, la corde, la fumée,
+jamais les cartes ni les familles — et le chrono descend **dans le sticker de
+phase**, avec son anneau de soixante secondes, calculé sur `surgeMs` (une durée
+relative servie) et jamais sur `surgeUntil`. `FX.bandeau('MINUTE DOUBLE')` ne se
+joue plus : le sticker le dit, et sous 390 px, en minute double, il prend sa
+forme longue pour que les mots soient là. La critique avait trouvé que la
+minute double ne se sentait pas : 5 % des pixels seulement changeaient.
+
+**Le but réel** garde sa case de BD « GOAL ! », que la page redescend sous le
+tiroir quand on l'ouvre. **La carte-souvenir ne s'annonce plus que sur
+`virage:souvenir`**, que le serveur n'envoie qu'à ceux qui l'ont reçue : la page
+l'annonçait à chaque but de son club, même quand la compétition n'était pas
+couverte ou que le joueur n'avait pas poussé, et « Elle est dans ton carnet »
+était alors faux. Elle se retourne au centre — dos de LA REPRISE, buteur et
+minute imprimés, tampon « TU Y ÉTAIS » — puis glisse vers la pile du coin.
+
+**L'entrée** pose les deux bâches, fait compter la foule de 0 à son effectif, et le
+Fanzzy entre et salue ; **la sortie** est le bilan.
+
+#### Le duel de tribunes
+
+`public/duel-nvn.html` passe de 3 159 à 4 011 lignes.
+
+**La préparation** : l'affiche du match choisi en tête, avec CLASSÉ en sticker
+or — la seule face d'or hors achat, c'est l'enjeu — et « ×2 » en tampon vert ; les
+cinq formats en bâches-tuiles avec leurs silhouettes et leur prime
+(« +30 % ») ; les matchs en tickets kraft ; **ENTRER EN FILE** en bâche flare,
+collante en bas de la préparation, avec « +60 écharpes en jeu » en sous-libellé
+**seulement si le barème est servi** ; les règles derrière un « i ». Sans deck,
+trois places vides sous une bâche « CONSTRUIRE MON DECK ». **Pas de stade-mini**
+à la préparation, et c'est un risque ouvert (« Ce qui reste ») : le stade du duel
+est tiré sur l'identifiant du duel, pas sur le match.
+
+**Le vestiaire** : les places sont des sièges — les gradins du lot 5 —
+qui s'occupent des bustes, **les noms entiers** (« LEGRANDDU / DUDU »), le chrono
+avant les bots sur une bâche parpaing, « INVITER QUELQU'UN » en bâche violette, la
+rumeur qui monte à chaque arrivée. **L'affiche** de six secondes : « VS » en
+banderole entre deux écharpes croisées, la forme en cinq stickers ronds V/D/N,
+les trois Fanzzy qui entrent en cascade ; la cote seulement si servie.
+
+**La partie** : le même HUD que le Virage, l'arène à 215 px à 360 × 640 (33 % de
+l'écran — la règle « l'arène cède avant la main » l'emporte sur les 45 % du
+brief), la corde horizontale et son foulard, la marée, l'écart en banderole, un
+supporter au pochoir par joueur, les effets posés sur l'arène, l'équipe en trois
+cartes 2:3 sur leur plaque de rareté (l'active surélevée avec le halo de son camp,
+le banc grisé, « Changement possible » qui décolle les cartes du banc et les
+fait pulser en vert), la Relève en `FX.evolution` avec le tampon « A GRANDI », la
+main en éventail. **Le bouton de son quitte l'arène** : le son se coupe dans le
+tiroir. Les écharpes du bilan volent vers le bouton de menu, qui est l'endroit
+du solde partout ailleurs.
+
+#### Le bilan
+
+**Le bilan de tribune du Virage** est une **page kraft**, pas une boîte : le
+rang dans sa tribune en tête et en grand, avec le palier qui reste à gagner
+(« À 1 PLACE DU TOP 10 ») ; la ferveur, les chants, les PARFAITS, la meilleure
+série, le meilleur geste en tampon plein, les souvenirs du match en dos de carte,
+**l'XP versée qui remplit l'anneau**, et, quand `classe` est faux, « ce Virage ne
+compte pas au classement ». Les chiffres comptent l'un après l'autre. **Toute ligne
+sans donnée disparaît** : jamais un tiret, jamais une ligne à zéro. À la flèche ou
+au menu, **si le joueur a poussé pendant ce match** (Q10), la page demande
+`virage:bilan` et le pose, avec RESTER et SORTIR ; sans poussée, on sort sans rien
+demander ; sans réponse en trois secondes, la sortie reste celle d'avant.
+**Au coup de sifflet** (`virage:fin`), la page demande son bilan après un délai
+tiré entre 0 et 8 secondes — pour que mille bilans ne tombent pas ensemble —, le
+pose sans qu'on touche rien, quitte la salle, et ne la rejoint plus, même à la
+reconnexion de sa socket. La critique avait relevé qu'au coup de sifflet RESTER
+renvoyait dans une tribune morte : le bilan de fin dit « FIN DU MATCH » et propose
+**UN AUTRE MATCH**.
+
+**Le bilan du duel** devient la même page : la case de BD VICTOIRE, DÉFAITE ou
+NUL avec sa bouffée, les écharpes qui tombent dans le compteur, **la jauge d'XP qui
+se remplit depuis `gains.niveau.depart`** et fusionne la fête de niveau au lieu de
+l'empiler 1,4 seconde après, la cote « 1 240 → 1 262 » — sans « +3 places » —, le
+meilleur geste en tampon (« PARFAIT sur LA MONTÉE »), la carte préférée, **TOI/LUI
+en doubles barres miroir**, le Fanzzy en pose de victoire ou de défaite, et deux
+bâches **REJOUER** (flare) et **REVENIR** (parpaing) **sans rechargement**. Les
+bâches de sortie sont collées au bas de la page, pour les deux bilans : la feuille
+du duel fait environ 1 200 px, et REJOUER était à plusieurs centaines de pixels
+sous le bord.
+
+#### Le geste et le verdict servi
+
+Le geste reste noté **par le serveur** : le client envoie des instants de frappe,
+jamais une réussite ; il ne compte ni PARFAITS, ni série, ni ferveur, ni XP. Ce
+qui change est qu'**il ne nomme plus le verdict lui-même**. Le Virage écrivait
+ses seuils (0,9 / 0,7 / 0,4), le duel les siens pour le son, la répétition une
+autre échelle (0,95 / 0,8 / 0,6 / 0,3) avec d'autres mots : le même 0,92 était
+PARFAIT au Virage et TRÈS BIEN à la répétition. Le mot vient du serveur
+(`verdict`), le Cri de `cri: true`, le combo de `serie`.
+
+- **Le pavé-bâche** est dans les dix gestes de rythme ; **l'enfoncement de
+  quatre pixels et la bouffée ne jouent que sur les gestes de frappe** (tempo,
+  contretemps, écho, crescendo) ; martelage et salves ne font qu'un tic ; les
+  gestes positionnels (tifo, écharpe, visée, jauge, rouleaux, ola, bascule) ne
+  font jamais bouger le pavé.
+- **La fenêtre attend la réponse** du serveur au plus 600 ms et y claque le
+  tampon ; sans réponse à temps, elle se ferme et le tampon claque **sur la
+  carte jouée**. Les 600 ms se comptent **depuis la fin du geste**, quand les
+  frappes partent, et non depuis la dernière frappe : comptée ainsi, l'échéance
+  serait déjà passée à la fermeture et le tampon n'y claquerait presque jamais
+  (`DELAI_VERDICT`). C'est une lecture du brief à confirmer.
+- **`/repetition`** finit par son tampon et « LE JOUER EN DUEL » ; son « ★ TON
+  MEILLEUR » devient un tampon. Elle garde sa note chiffrée et son record.
+- **`npm run pages` refuse** toute page qui compare `quality`, `qualite`, `note`
+  ou `q` à un nombre écrit : neuf formes rougissent, cinq restent vertes
+  parce qu'elles ne sont pas des seuils de verdict.
+
+#### Le son de tribune, branché sur le match
+
+`public/son.js` ne change pas de nature : tout est synthétisé, rien ne part avant
+le premier geste, le mode calme coupe tout, l'onglet caché aussi, et **le son ne
+porte jamais seul une information**. Ce qui est neuf : **les chants calés sur la
+pulsation du geste** — `TBF_SON.chantDuGeste` chante tempo, contretemps, écho et
+crescendo sur les durées que le serveur donne, depuis le même instant que le
+pavé et les frappes comptées, et s'arrête à la fermeture de la fenêtre ; chaque
+coup tombe à moins de 5 ms de la grille, et à moins de 40 ms de la pulsation
+dessinée. **La rumeur suit le match** (`TBF_SON.rumeur`) : l'entrée, la mi-temps
+qui retombe, la minute double qui pousse, l'ovation au but de son camp, la
+tribune qui se vide à la fin, le vestiaire qui monte à chaque arrivée. Le tampon
+claque (`bache`) à l'impact, et la page n'ajoute pas son propre clac au verdict.
+La chaîne naît maintenant avec une relâche brève : le premier son d'une visite
+sortait treize décibels sous les suivants (−33,1 contre −20,0 dBFS pour un tic,
+mesuré), parce que le limiteur de Chrome naît fermé ; il sort à −21,0.
+
+**Le mixage a changé, et il s'écoute.** L'interface sort 6 à 8 dB plus bas qu'en
+ligne, la poussée, le contre et le chant environ 6 dB, le but encaissé et la
+charge 3 à 4 dB : c'est le mixage dessiné, mesuré au banc. **Gaël doit l'écouter
+sur un téléphone avant la mise en ligne** (`lot6/fx-b/ecoute/index.html` met
+côte à côte, son par son, ce qui est en ligne et le lot).
+
+#### La présence, éteinte
+
+Une pastille de mot sur chaque ami de `/amis` — AU VIRAGE, EN DUEL, EN LIGNE ; rien
+pour hors ligne —, « AMIS ICI » dans la tribune (`virage:amis`, `virage:ami`) et
+l'interrupteur « apparaître hors ligne » au pied du tiroir. **Rien de cela ne
+paraît tant que `presence.actif` est faux**, et il l'est à la livraison : éteinte,
+`GET /api/presence` répond `{ actif: false }`, aucun écran n'en montre, aucune
+activité n'est gardée en mémoire — `presence:smoke` le vérifie, jusqu'à un
+éteint depuis `/admin`. Elle ne s'allumera qu'une fois la nouvelle
+`CONFIDENTIALITE.md` (paragraphe « La présence de tes amis ») relue par un juriste
+et mise en ligne. Sans `sql/arenes.sql`, elle reste éteinte même allumée : sans
+la colonne du choix, personne ne pourrait s'y cacher. **La présence n'est jamais
+écrite** : elle vit dans la mémoire du serveur ; seul le choix de se cacher l'est
+(`user_wallet.presence`).
+
+#### Le serveur de la vague 2
+
+Une rubrique par clé dans `serveur/ECARTS.md`, et le contrat dans
+`serveur/CONTRATS.md`, § 15 à § 18 (le texte du plan y a été collé **en premier**,
+avant que les écrans codent contre lui, puis retouché deux fois sur le serveur
+écrit — aucun champ renommé ni retiré).
+
+**Le socle.** `sql/arenes.sql`, en dernier de `ORDRE`, **six instructions et rien
+de plus** : `virage_presence.parfaits`, `serie_max`, `meilleur_q`, `meilleur_chant`,
+l'index `idx_bilan (fixture_id, side, ferveur)` et `user_wallet.presence` — une
+colonne par `ALTER`, une instruction par ligne. Sept réglages (`xp.virage` 15,
+`xp.virage_chants` 10, `xp.virage_matchs_jour` 3, `virage.bilan_min` 5,
+`presence.actif` faux, `presence.visible_defaut` vrai, `presence.en_ligne_sec`
+120). **`src/shared/verdict.js`**, l'échelle écrite une fois, sans dépendance. La
+source `virage` du grand livre, et la raison `quota`.
+
+**Le verdict se mesure sur la note brute, relevée par le plancher, avant les
+modificateurs du Fanzzy.** Le plan le mesurait sur la note finale, « comme
+`perfectBonus` » — or `perfectBonus` lit la note brute : un Fanzzy à
+`perfectBonus` 0,82 faisait d'un 0,95 un 0,779, écrit BON sur un geste que le
+moteur venait de juger parfait. La note s'écrit en millièmes, **arrondie vers le
+haut** (`enMilliemes`), parce que les seuils sont stricts : un 0,9004 arrondi au
+plus proche ferait BON au bilan pour un geste annoncé PARFAIT en tribune.
+
+**Le Virage** (`ferveur/bilan.js`, neuf, 580 lignes ; `virage.js` 1 382 → 1 870 ;
+`ferveur/index.js` 791 → 1 529). Le bilan vient **de la base**, jamais de la salle
+en mémoire — le membre disparaît de la salle à chaque déconnexion —, par une
+lecture groupée par salle finie (deux requêtes, quel que soit l'effectif),
+gardée deux minutes et partagée par une promesse en vol. L'XP se verse par le
+grand livre, à la première demande de bilan et **en filet au départ de la tribune**
+pour qui a chanté sans le demander ; elle passe par un sémaphore de quatre ; ni
+`classe`, ni l'abonnement, ni la neutralité ne sont lus. Le verdict, la série (une
+carte ne la coupe pas, un chant non PARFAIT la remet à zéro), le rang et le
+palier suivant (100, 50, 10, 3, puis 1ᵉʳ), recalculés au plus une fois par
+seconde ; le **plancher de ferveur** ; `virage:fin`, puis `virage:ferme` cinq
+minutes plus tard ; `virage:souvenir` aux seuls receveurs (`mintGoal` rend
+maintenant `userIds`) ; la présence dans la tribune ; `estAuVirage` et
+`souvenirFrappe`. Les chants restent acceptés entre le coup de sifflet et
+`virage:ferme`, sans code d'erreur de plus : le contrat le dit au lieu de
+promettre des chiffres définitifs. Et **une salle n'émet plus `virage:crowd` à
+chaque entrée** (D4) : sur un match de mille entrées au coup d'envoi, c'était de
+l'ordre d'un million de messages inutiles.
+
+**Le duel** (`nvn/index.js` 1 507 → 1 779 ; `deck/index.js` 845 → 1 053). Le
+verdict du duel se mesure par un **rejeu de `grade`** juste avant le moteur
+(`noteMesuree`) : `engine.js` ne sert que la note finale, et l'on ne remonte pas
+de la note finale à la note mesurée. **`engine.js` n'a pas été touché**, et
+`niveau-smoke` le lit. Le rejeu recopie la composition des modificateurs de
+`modsDe`, privée au moteur ; un garde-fou, à chaque chant, vérifie que la note
+rejouée passée par `applyHeroMods` retombe sur la `quality` du moteur, et
+`nvn-smoke` le vérifie sur environ 383 chants — **si `engine.js` change un jour
+`modsDe`, c'est là qu'il faut regarder.** `GAIN` et `DOUBLE_CLUB` ont déménagé
+dans `deck/index.js` : `baseDuDuel` est la formule unique du versement et de
+l'annonce `enJeu` — ce qui est promis est ce qui est versé. Les PARFAITS, la série
+et le meilleur geste de chaque joueur sont dans `nvn:fin` ; les matchs `CANC` et
+`PST` ne sont plus proposés, et l'entrée en file les refuse
+(`duel.error.fixture_annule`).
+
+**La présence** (`presence/index.js`, neuf, 515 lignes). La mémoire seule, trois
+états, les amis mutuels revérifiés à chaque lecture, le crochet d'activité posé
+juste après `attachUser`, `aPrevenir` en plus de `amisPresents` (un ami caché
+reçoit encore l'entrée des autres, et son départ est annoncé à qui l'a vu entrer),
+et un module qui ne fait jamais tomber la liste d'amis si une arène lève. Les
+deux arènes se lisent par `Boolean(await fn(id))` : une promesse serait « vraie »
+pour un simple `if`, et tout le monde serait au Virage.
+
+**Le correctif du Virage** (section précédente) est dans la copie, sans une ligne
+défaite : la partie B se bâtit dessus. D1, D2, D3, la libération des salles, la
+fin de la minute double et `surgeMs`, le penalty manqué, le rejeu des buts.
+
+#### Un correctif d'urgence, reporté à la main
+
+Pendant l'atelier, Gaël a signalé quatre défauts du Virage : des cartes qui ne
+reviennent pas dans la main, de vieux buts annoncés, des alertes posées sur le
+pavé du geste, une carte jouée affichée deux fois. Un correctif a été écrit,
+vérifié et relu **sur le code en ligne** (`0638fb5`, sept fichiers) ; la page
+du lot 6 avait réécrit les mêmes endroits. Il a donc été **reporté à la main**,
+ancré sur le texte qui l'entoure et non sur des numéros de ligne : le canal
+`emitVous` et la main annoncée à chaque tirage — par `auJoueur`, la fonction du
+lot qui envoie à toutes les sockets d'un joueur —, la garde des buts déjà au
+tableau, le décompte des recharges côté page, la file `apresLaFenetre` qui attend
+la fin du geste, et `fill: 'forwards'` sur le vol de la carte. Sur la page
+neuve, ses contrôles changent de sélecteurs et de titres, pas de sens. Ses contrôles
+sont reportés eux aussi, dans `virage-smoke`, `virage-ui-smoke` et
+`actions-ui-smoke`. **Ces corrections existaient donc des deux côtés, écrites
+différemment** : c'était le point délicat de la fusion (plus bas).
+
+#### La base par copie, et le lot mené en parallèle
+
+**Le verrou des suites est par copie, la base ne l'est pas.** Une copie de travail
+a son propre `.tbf-suite.lock`, puisqu'il vit à la racine : une suite lancée dans
+le lot 6 ne voyait pas celle qui tournait dans la copie principale, et vidait la
+même base sous ses pieds. Le compte `tbf` ne peut pas créer de base `tbf_…`, mais
+le serveur local laisse à tous les bases `test_…` : le lot a donc **sa base,
+`test_lot6`**, sur le même serveur. `scripts/base-de-test.mjs` lit une ligne,
+l'URL, dans **`.tbf-base-de-test`** à la racine de la copie — ignoré par git —,
+après `DATABASE_URL`, qui passe toujours avant ; sans fichier, rien ne change.
+L'audit prend son port au système, et `virage-loadtest.mjs`, qui visait par défaut
+la **base de développement** et vidait `users` sans prendre le verrou, passe par
+`baseDeTest()` comme les suites : il refuse un hôte distant.
+
+La copie principale a vécu pendant ce temps : le lot 4 y a fini sa vérification
+(un banc du lot 6 a fait tomber `virage:ui` de cette copie sur un délai de
+navigation, qui a passé relancée seule), puis y a été mis en ligne ; Gaël a mis
+en ligne le correctif du Virage et le sachet à 17 h 17, au milieu de la partie B ;
+un atelier d'intégration y a ensuite posé la photo du tunnel et appliqué le
+correctif d'urgence, que Gaël a commités ensemble (`524b2ca`) et mis en ligne
+le 5 octobre à 5 h 19. **C'est pourquoi le lot n'a touché à aucun des documents
+du dépôt** — `HISTORIQUE.md`, `ETAT.md`, `A-DEPLOYER.md`, `README.md`
+changeaient dans l'autre copie au même moment : cette trace a été écrite en
+brouillon, et versée à la fusion.
+
+### Les pièges du lot
+
+(Le détail utile est dans `ETAT.md`, § 6 ; ce qui suit dit l'histoire.)
+
+**Un `ON DUPLICATE KEY UPDATE` s'évalue de gauche à droite.** MariaDB, sans
+`SIMULTANEOUS_ASSIGNMENT` : une colonne qui compare l'ancienne valeur d'une autre
+(`meilleur_chant` selon `meilleur_q`) s'écrit **avant** elle. Inversées, elles ne
+lèvent rien, et le meilleur chant ne change plus jamais après le premier. La
+suite joue le cas — 0,92 sur « montée », puis 0,97 sur « mur », puis 0,93 sur
+« cadence » — et la mutation « note avant chant » la fait rougir.
+
+**Une socket n'est pas un joueur.** Ce qui part « au joueur » part à toutes ses
+sockets, et il ne quitte une salle que quand la dernière s'en va. Le contrôle
+« revenir dans la salle ne redistribue pas la main » du Virage était vert
+**parce qu'il rappelait `join` sans `leave` entre les deux** : il n'éprouvait pas
+le vrai chemin d'une reconnexion. La suite passe maintenant par `disconnect`, puis
+`virage:join` sur une socket neuve.
+
+**Un verdict mesuré sur la mauvaise note dit un mot faux.** Voir « Le serveur » :
+la note finale n'est pas la note qu'a jugée le moteur. Et un arrondi au plus
+proche à la frontière d'un seuil strict change le mot.
+
+**Une ferveur arrondie à zéro rend « 1ᵉʳ » à tout le monde.** Le rang était
+« 1 + ceux qui font mieux » : dans une grande tribune, personne ne fait mieux de
+zéro. Le plancher et le départage par les chants puis les PARFAITS le
+répondent — et le contrôle de proportion du Virage (« dix fois plus de monde,
+dix fois moins par tête ») se mesure sur des tribunes où le plancher ne mord
+pas, sans quoi il rougirait à raison.
+
+**Une promesse n'est pas un booléen.** Les deux arènes se lisent par
+`Boolean(await fn(id))`, et `verif-cablage` éprouve les vraies arènes montées
+sur de faux appuis : une présence branchée avant les arènes recevrait deux
+`undefined` et ne dirait jamais ni l'un ni l'autre, sans un mot.
+
+**Deux copies, un port.** L'audit prenait toujours le 3999 ; un second audit dans
+une autre copie trouvait au 3999 le serveur de la première, qui répondait, et
+mesurait ses pages et sa base sans le dire.
+
+**Une page éteint à son départ ce qu'elle a montré, et `contexte.close()` ne
+l'attend pas.** L'album de `/collection` donnait 201, 202 ou 203 textes sur le
+même commit parce que la requête `keepalive` de départ de l'état d'avant arrivait
+au serveur après que l'état suivant avait resemé ses nouveautés. La cause était
+dans la mesure.
+
+**Un émoji hors plan de base décale tout ce qui suit.** `appels:test` dénonçait
+soixante-quatre noms que `virage.html` déclare pourtant : le ticket terrain porte
+un carton rouge et un carton jaune (🟥, 🟨), qui tiennent en deux unités UTF-16 pour
+`s.length` et en un point de code pour `Array.from(s)` ; le tableau de sortie
+était indexé d'une façon, le parcours de l'autre, et l'effacement tombait un
+caractère trop tard — le début de « function » partait avec. Tout se compte en
+points de code.
+
+**La sonde qui mesure faux accuse le CSS.** « LA BASCULE » était couverte à 12 %
+au duel : la sonde « libellé couvert » balayait le rectangle d'une ligne penchée de
+6°, qui déborde des lettres, et comptait des coins où le dessus de la pile était le
+dessin de la carte. La sonde a été corrigée avant la feuille, et le dessin d'une
+carte ne prend plus le doigt.
+
+**Un pourcentage se lit sur la boîte qui le porte.** `--pli` valait
+`largeur × 0,06` ; le duel pose une largeur en pourcentage de la main, que les
+libellés relisaient sur la carte : le côté couvert ne s'écartait que de 1,3 px au
+duel contre 4,3 au Virage, et « LA BASCULE » tenait sur une ligne ici, deux là.
+
+**Deux paragraphes du contrat portent le même numéro.** Le correctif du Virage
+déclarait son contrat « § 15 » dans la copie principale ; le plan de la vague 2
+réservait le § 15 au bilan de tribune. Il n'y avait pas de conflit de texte, il y
+avait un conflit de sens : voir « La fusion dans la copie principale ».
+
+**Les outils du poste.** Dans le Bash de ce poste, `grep -c $'\r'` compte toutes
+les lignes et fait croire à des CRLF partout : compter avec
+`CR=$(printf '\r')`. Et `git clean -fd` a retiré `.tbf-base-de-test` d'une copie
+revenue à un `.gitignore` qui ne l'ignorait pas : le fichier est recréé.
+
+### Ce que la mesure dit après
+
+L'état de départ est celui du commit `60fe268`, pris le 4 octobre de 12 h 21 à
+12 h 32 ; la fin, le cinquième tour, le 5 octobre de 4 h 31 à 4 h 43 (douze
+minutes et quatorze secondes), sur la copie de travail, base `test_lot6`, aucune
+erreur de script, aucune panne de maintenance.
+
+| Budget de hauteur (px) | départ | fin |
+|---|---|---|
+| Virage, arène, à 360 × 640 / 320 × 568 / 412 × 915 / 768 × 1024 | 157 / 91 / 459 / 584 | 266 / 200 / 541 / 650 |
+| Virage, HUD + rangée sous lui, à 360 × 640 | 72 + 64 | 62 + 24 |
+| Duel, arène, aux mêmes quatre formats | 158 / 132 / 429 / 454 | 215 / 133 / 490 / 599 |
+| Duel, la rangée des chants à 320 × 568 | 111, hors de l'écran | 123, entière |
+| Virage, tableau, rangée d'actions, main à 360 × 640 | – | 52, 80, 134 (fenêtre 640 sur 640) |
+
+| Relevé des arènes (71 relevés d'état) | départ | fin |
+|---|---|---|
+| texte sous 11 px, opacité sous 0,85, petit or, pâle, débordement, hors écran, encre rognée, libellé couvert, erreur de script | 0 (pâle : 8 à l'affiche du duel) | 0 partout |
+| texte coupé | virage@tribune et @double 2 à 320, vestiaire 2, affiche 5 à 360 et 12 à 320, duel@jeu 3 / 3 / 1 | 0 partout |
+| animations qui ne s'arrêtent jamais | non mesurées | Virage 2, duel 0 à 1, plafond de 3 tenu |
+| voile du mur `.dense` (75 %) | partout, mur compris | levé : le voile du hub |
+
+Contre le tour 3, **zéro pire** sur toutes les colonnes bloquantes. Seul écart
+de colonne consultative : au bilan de fin de match, « sur grain » passe de 2 à 4,
+parce que le bilan lit 23 textes au lieu de 20 (zéro pâle, zéro pâle sur grain).
+Les colonnes « au jour » et « sur grain » montent aux faces vives — « MINUTE
+DOUBLE » en blanc sur le flare à 2,6:1, le tampon vert « TU Y ÉTAIS » à 2,8:1 :
+l'arbitrage du 2 octobre sur les faces vives, consultatif, qui ne joue qu'au
+soleil.
+
+Mesuré à part, au banc : le geste reste noté par le serveur (les seuls
+évènements de geste sont `virage:chant` et `nvn:chant` avec des instants, et
+`POST /api/repetition` ; aucun seuil 0,9 / 0,7 / 0,4 dans une page) ; au plus
+trois animations infinies, **0 sous mouvement réduit** hors le scotch de temps de
+la case de BD, voulu et documenté ; chaque bloc `prefers-reduced-motion` de la
+section des pièces a son double `data-calme` règle pour règle ; **aucune ligne vide
+ni tiret** sur un Virage minimal, un bilan à vide, un bilan réduit à la ferveur,
+un duel sans fixture ni stade ; la carte-souvenir ne s'annonce que sur
+`virage:souvenir`.
+
+**Le serveur sous charge** (`npm run charge 300`, base de test, pool de huit) :
+300 supporters dans la tribune du coup de sifflet et 75 qui se vident, **chant →
+corde au 95ᵉ centile 100 ms**, bilans 300 sur 300 dont **zéro au-delà de trois
+secondes** (95ᵉ centile 5 ms), **188 connexions pour 188 versements dus**, file du
+pool au plus 3, sémaphore à 0.
+
+### Éprouvé
+
+Les contrôles statiques sont verts sur la copie du lot : `npm run pages` (81 contrôles,
+dont « le verdict »), `npm run cablage` (**66**, contre cinq rouges que la
+fusion avait laissés à la partie B : le Virage lit la présence, rend
+`estAuVirage` et `souvenirFrappe`, et `mintGoal` rend `userIds`),
+`npm run promesses`, `npm run pages:navigateur` (24 écrans, serveur muet compris,
+26 contrôles), `npm run schema:smoke` (47), `npm run securite` (24, avec deux
+points d'attention par nature). Aucun retour chariot, aucun marqueur de conflit,
+aucun `console.log` ni `debugger` dans les pages, `node --check` passe.
+
+Le dernier tour complet de `tout-tester` que le lot a gardé, le 4 octobre à
+23 h 28 : **soixante-six suites, 5 405 contrôles** en vingt-deux minutes vingt-cinq,
+contre soixante-quatre et 4 708 à la fin de l'intégration. Deux rouges :
+`deck:ui` (un, celui d'avant le lot 0 : « l'effet combiné est affiché », sans lien
+avec les arènes) et `appels:test` (l'émoji, plus haut — **réparé et vérifié le
+5 octobre : 45 contrôles verts**). **`nvn:ui` n'a plus aucun rouge** : les trois
+d'avant le lot 0, le bloc « la porte de sortie », venaient de `nav.js`.
+
+Suites relancées par le dernier rapport, sur `test_lot6`, une à la fois :
+`virage:ui` **212** (149 au départ du lot), `nvn:ui` 193, `virage:smoke` **357**
+(189 à la fusion : la reconnexion rend le souffle et la main laissés, la présence
+éteinte n'émet rien, une entrée n'émet pas `virage:crowd`, une transaction par
+versement dû), `salles:test` 137, `releve:test` 56, `souvenirs:smoke` 68 (49),
+`presence:smoke` 100, `verdict:smoke` 27, `son:smoke` 166 (148), `gestes:test` 69,
+`menu:smoke` 27, `repetition:ui` 86, `amis:ui` 47, `amis:smoke` 87,
+`quotidien:smoke` 216 (les chants se comptent toujours), `foot:smoke` 71,
+`nvn:smoke` 111, `nvn:net` 167, `reglages:smoke` 65, `repetition:smoke` 19,
+`cartes:ui` 38, `deck:ui` (un rouge connu, 80 verts) ; `accueil:ui`, intermittente
+comme avant, verte. **`nvn:net` n'est pas lancée par `npm test`** : `tout-tester`
+ne retient que les clés en `:smoke`, `:test` et `:ui` ; elle se lance à la main.
+`recompenses:smoke` (103), `abo:smoke` (81) et `auth:smoke` (72) ont été relancées
+par le socle après la fusion, et leurs fichiers n'ont pas bougé depuis.
+
+Chaque contrôle neuf a été **cassé exprès** : le socle (deux `ADD COLUMN` dans un
+`ALTER`, `>=` au seuil de PARFAIT, `presence.actif` allumé par défaut,
+`'virage'` retiré de `SOURCES`, `deleteUser` qui oublie la préférence), `verdict-smoke`
+(douze mutations), `verif-pages` (quatorze formes), l'audit (vingt-trois
+mutations, vingt-trois rouges), les briques (HUD défait, cartes défaites, encre
+rognée revenue : chacune rougit au banc). Captures à 360 × 640, 320 × 568, 412 et
+768 × 1024 relues à côté du départ et de la maquette : aucun écran cassé ni
+illisible. Ce que l'audit ne tranche pas : le mixage sonore, et le contraste des faces vives
+au soleil, que ses colonnes « au jour » et « sur grain » relèvent sans le
+juger.
+
+### La fusion dans la copie principale
+
+Le 5 octobre vers 5 h 35, la copie principale propre, à `524b2ca` — en ligne
+depuis 5 h 19 —, la copie du lot inchangée depuis la répétition (`git diff
+--binary 7450c03` redonne le patch de la répétition, sha1 `85cdde30…`). Le relevé
+des fichiers communs donne les dix-huit attendus, pas un de plus. Le patch est
+appliqué en trois voies (`git apply -3 --binary`), puis désindexé, les six
+fichiers neufs marqués (`git add -N`).
+
+**Cinquante-deux fichiers** que seul le lot change passent tels quels ; **quatre**
+sont identiques des deux côtés (`actions-ui-smoke`, `football-smoke`,
+`releve-smoke`, `football/routes.js`) ; **quatre** fusionnent seuls
+(`package.json`, `action-art.js`, `verif-pages.mjs`, `server.js` : la présence
+du lot et `createAide({ …, fanzzy })` de l'intégration y sont tous deux). **Dix
+sont en conflit**, et chacun a été tranché par la règle écrite et éprouvée
+d'avance dans un arbre à part :
+
+- **le fichier du lot, entier** : `ferveur/index.js`, `ferveur/virage.js`,
+  `virage.html`, `virage-ui-smoke`, `virage-smoke`, `salles-smoke` (que le lot
+  avait complété, 134 → 137 contrôles). Avant de le prendre, chaque ligne que la
+  copie principale ajoutait a été cherchée dans le fichier du lot : il n'en
+  manque aucune de `salles-smoke`, trois de `virage.js` (une construction
+  équivalente), cinq lignes de commentaire de `virage-smoke` ; `virage.html`
+  est réécrit, et porte `apresLaFenetre`, `viderApresLeGeste`,
+  `rangerLeSouvenir`, `rechargeRestante`, `cdVuA`, `minuteApprise`,
+  `dAvantLEntree`, `sentirLeBut` et `fill: 'forwards'` ;
+- **le correctif d'urgence, écrit deux fois** : dans `ferveur/index.js`, les
+  treize lignes du principal absentes du lot sont exactement `aSesOnglets` — la
+  main envoyée à toutes les sockets du joueur — et ses deux appels. Le lot fait
+  la même chose par `auJoueur(fixtureId, userId, évènement, charge)`, plus
+  complète (l'identifiant ramené à une chaîne, le nombre de sockets atteintes
+  rendu, et servie aussi aux amis et aux cartes-souvenirs). **Une seule version
+  reste, celle du lot** : `aSesOnglets` n'existe plus nulle part, et la main ne
+  part qu'une fois après une carte jouée (`auJoueur(…, 'virage:vous', …)`),
+  au tirage par `emitVous`, et à la seule socket fautive par le filet
+  `REFUS_DE_MAIN` ;
+- **le fichier du principal** : `poller.js` (cinq lignes de commentaire de
+  l'intégration ; le lot avait la version de `0638fb5`) ;
+- **les deux blocs gardés** : `verif-cablage.mjs` (les cinq contrôles de l'aide
+  et ceux de la présence) et `serveur/ECARTS.md` (la rubrique
+  `serveur-correctif`, puis « Vague 2 »). `git merge-file --union` y perd ce
+  que les deux ajouts ont en commun : l'accolade fermante et la ligne vide du
+  premier bloc de `verif-cablage`, rétablies à la main (`node --check` vert) ;
+  et — ce que la répétition n'avait pas vu — le filet `---` qui ouvrait la
+  rubrique du lot dans `ECARTS.md`, rétabli lui aussi. Compté : aucune ligne
+  d'aucun côté ne manque, et chaque fichier fait la base plus les deux ajouts ;
+- **`serveur/CONTRATS.md`, le numéro 15.** Le correctif avait déclaré son
+  contrat « § 15 » ; le lot y a son bilan de tribune, et avait déjà reversé le
+  contenu du correctif aux § 16.2, § 16.5 et § 16.6. Fusionné en trois voies avec
+  le lot dans les deux morceaux en conflit — le § 15 et la ligne de `virage.html`
+  au tableau des lecteurs —, **pas** avec `git checkout --theirs`, qui aurait
+  effacé la révision du § 5.1 de l'intégration (l'anneau de `/collection` vise
+  le prochain cran) : elle est là. Les renvois au « § 15 » du correctif sont
+  renumérotés — trois dans `ECARTS.md` (serveur-correctif), trois dans la
+  section précédente de ce journal (avec une note : la phrase fautive du § 15.4
+  est sans objet), `ETAT.md` et `A-DEPLOYER.md`. `ECARTS.md` garde deux
+  rubriques sur le même correctif, `serveur-correctif` (longue) et
+  `serveur-virage` (courte, qui renvoie au contrat) : c'est voulu, les dédoubler
+  serait une retouche à part.
+
+Les quatorze fichiers communs sont, octet pour octet, ceux de la répétition — le
+filet d'`ECARTS.md` en plus.
+
+**Les deux fautes que le dernier rapport du lot avait laissées dans `ui.css`
+sont corrigées à la fusion.**
+
+- **L'accent de « CÈDE ».** `.tbf-vignette-mot` avait un interligne de 0,94 ;
+  en Oswald 700, l'accent d'une capitale monte à 1,11 corps au-dessus de la
+  ligne de base du dessus, en comptant le bas de ses lettres. Mesuré au banc,
+  sur la vraie page du duel, la case redressée : « LA CORDE / CÈDE ! » posait
+  l'accent **5,9 à 9,2 px dans le C** de « CORDE », de 320 à 768 px de large —
+  et « ILS ONT / FAIT CÉDER » de même. L'interligne passe à **1,16**, et deux
+  marges de **−0,11 corps** rendent ce qu'il ajoute : l'accent garde 1,6 à
+  2,6 px d'air, et **un titre d'une ligne ne bouge pas** — la case garde sa
+  hauteur au centième de pixel près, la lettre au demi-pixel d'arrondi près
+  (GOAL !, ON ENCAISSE, le bilan VICTOIRE, « NIVEAU 5 », dont la règle
+  `.tbf-niv-n` repose sa marge et compense de même). Les titres de deux lignes
+  sans accent prennent le même interligne : MINUTE / DOUBLE s'aère d'une
+  dizaine de pixels.
+- **Les deux mouvements des gestes sans leurs doubles.** La case qui se lève à
+  l'ola (`.tbf-ola-anneau i.tbf-debout`) grandissait de près du double à chaque
+  frappe, et la cible qui pâlit à la visée (`.tbf-visee .cible.vue.passe`) se
+  resserrait en deux tiers de seconde, sous le mouvement réduit comme sous le
+  calme. Ils ont leur double `prefers-reduced-motion` et
+  `html[data-calme~="animations"]`, règle pour règle : la case garde son
+  éclair blanc — c'est lui qui dit que la frappe est prise — sans grandir
+  (`tbfDeboutCalme`), la cible pâlit au même rythme sans se resserrer. Relevé
+  dans les trois modes ; les règles sous mouvement réduit passent de 108 à 110,
+  toutes deux avec leur double.
+
+**Éprouvé sur la copie fusionnée**, avant tout commit : aucun marqueur de
+conflit, aucun retour chariot ; `node --check` sur les cinquante-trois `.js` et
+`.mjs` modifiés ou neufs ; `npm run pages` **83** (dont « 9 image(s)
+demandée(s), toutes présentes », « 8 sachet(s) dessiné(s) » et « le verdict »),
+`npm run cablage` **71** (les cinq de l'aide et ceux de la présence),
+`npm run promesses` (avec l'avertissement connu des six pages sans suite
+d'interface), `pages:navigateur` 26 (les vingt-quatre écrans, serveur muet
+compris), `cartes:ui` 38, `son:smoke` 166 ; sur la base `tbf`,
+`schema-smoke` 47 (les trente-quatre fichiers montés). La répétition avait fait
+tourner vingt-six suites sur l'arbre fusionné, toutes vertes (`virage:ui` 212,
+`virage:smoke` 357, `nvn:ui` 193, `accueil:ui` 223…). **Ni `npm test` en
+entier, ni l'audit, ni `npm run charge` n'ont tourné sur la copie fusionnée** :
+c'est la vérification d'avant la livraison (`A-DEPLOYER.md`).
+
+### En ligne
+
+**Rien du lot 6 n'est en ligne.** La production sert `524b2ca` depuis le
+5 octobre vers 5 h 19 — le lot 4, le correctif des salles du Virage, le correctif
+d'urgence des quatre retours de Gaël, le tunnel et le sachet. Relevé à 5 h 35 :
+`/healthz` répond `ok: true`, sans panne, `"virage": "0 salle(s)"`, et
+`uptime_s` (952) dit un redémarrage vers 5 h 19 ; `virage.html` et
+`action-art.js` servis sont ceux de `524b2ca`, octet pour octet. Le lot est
+versé dans la copie principale, **pas encore commité**. Sa livraison remplace le
+correctif d'urgence en ligne par son équivalent du lot (`auJoueur` pour
+`aSesOnglets`). Elle passe par le schéma — `sql/arenes.sql`, par `npm run
+schema:appliquer` en SSH, puis un redémarrage, hors d'un match en direct — et
+`A-DEPLOYER.md` dit l'ordre. **La présence reste éteinte.**
+
+### Ce qui reste
+
+**D'abord, la vérification sur la base `tbf`**, dans la copie principale, avant
+de commiter et de livrer : `npm test` en entier (soixante-six suites ; attendu
+tout vert sauf le rouge connu de `deck:ui`, `accueil:ui` intermittente),
+`nvn:net` à la main, `npm run audit:ui -- --jour --etats` en arrière-plan
+(rien ne doit empirer sur les colonnes bloquantes), `npm run charge 300` et
+`npm run securite`. Puis commiter le tout ensemble — le code, le schéma, les
+suites et cette trace — et livrer (`A-DEPLOYER.md`). **La sonde « encre
+rognée » ne voit toujours pas un accent qui en touche un autre** : la faute de
+« CÈDE » est corrigée, pas la sonde.
+
+**Les constats de détail de la critique, non repris.** Les neuf constats
+importants ont été traités : les bâches de sortie collées, la minute double en
+toutes lettres, la bâche du duel, les noms de l'affiche, le combo en vert, le rang
+en tête du bilan, UN AUTRE MATCH au coup de sifflet, ENTRER EN FILE collante, les
+états d'audit manquants. Parmi les quatorze de détail, **ceux que j'ai relus dans
+le code le 5 octobre sont encore là** : au Virage comme au duel, **un cran de
+souffle par coût distinct** — la feuille sait n'en poser que deux et les faire
+claquer, les pages ne l'écrivent pas — ; le pas de 700 ms du bilan du duel, qui
+fait six secondes avant TOI/LUI ; la fenêtre du geste du duel garde sa tête
+d'avant (un titre nu, la consigne au-dessus du pavé) quand le Virage a deux
+stickers ; BON s'écrit à l'encre noire sur le kraft au lieu du bleu foncé ; la
+face de la carte-souvenir est un aplat noir au lieu de la plaque de rareté ;
+« TU Y ÉTAIS » est vert à chaque bilan, y compris quand on sort à la 66ᵉ minute ;
+un match pas encore commencé met son heure dans la banderole du score (« 02:55 »
+se lit comme un score) ; les places libres du vestiaire portent un « + » sans
+geste derrière ; les noms de carte se coupent dans le mot (`hyphens:auto`) ;
+l'interrupteur de présence partage la ligne du volume. **Les autres** — les
+cartes qui gardent leur taille de téléphone à 768 px, l'écharpe que le voile du
+choix de camp donne aux deux côtés quand aucune couleur de club n'est servie —
+ne sont pas revérifiés. Et **les gestes positionnels** (tifo, visée, ola, bascule,
+jauge) gardent leur matière d'avant, à côté du pavé craie : une passe de matière,
+pour le lot 7, qui ne change rien au geste ni à sa notation.
+
+**Les décisions qui reviennent à Gaël :**
+
+- **Le tunnel au voile du Virage.** La page du lot ne nomme aucune image du
+  tunnel (« la tribune à 25 % sous un voile ») : elle a été écrite avant la photo,
+  qui existe depuis l'intégration (`tunnel-portrait`, `tunnel-paysage`). La
+  fusion ne la branche pas — c'est un changement de page, avec son contrôle
+  (`verif-pages` exige les trois formats de toute image nommée) : au lot 7, ou
+  dans un petit lot à part.
+
+- **Le stade du duel.** Il est tiré sur l'identifiant du duel (un `randomUUID`
+  dans `engine.js`), pas sur le match : deux duels sur le même match tombent dans
+  deux stades, contre « le stade appartient au match » (`ETAT.md` § 3). La
+  correction tient en une ligne dans `engine.js`, mais `engine.js` est hors du lot,
+  trois suites le lisent, et c'est une règle de jeu. Tant qu'elle n'est pas
+  prise, la préparation n'a pas de stade-mini.
+- **Allumer la présence**, après la nouvelle `CONFIDENTIALITE.md` relue par un
+  juriste (les mineurs, dossier L5) et mise en ligne.
+- **Écouter le mixage** sur un téléphone avant la mise en ligne.
+- **Les 600 ms du verdict** comptées depuis la fin du geste, ou depuis la dernière
+  frappe (lecture littérale du brief, qui rendrait le tampon quasi inutile).
+- **Un combo en jeu au duel** : `serie` sur l'évènement `chant` — refusé, aucune
+  page ne le lit ; le compte existe, l'ajout tient en une ligne.
+- **`gains.wallet` dans `nvn:fin`**, non servi : `tbf:bourse` part sans solde et
+  `nav.js` relit.
+- **`nvn:net`**, jamais lancée par `npm test` : renommer la clé ou élargir
+  `tout-tester`.
+- **Les trois questions laissées par le correctif d'urgence** : la priorité du
+  but réel sur les autres moments d'un même geste, les cartes-souvenirs d'un but
+  ancien, et le trou d'une suite qui ne fait passer aucun scénario de relevé
+  jusqu'à la salle.
+
+**Le lot 7**, dans cet ordre (Q13) : le sachet de LA REPRISE et le tunnel — **déjà
+produits par l'intégration**, et le voile du Virage n'a pas encore pris le
+tunnel, il garde la tribune à 25 % —, puis le foulard, la corde et les
+silhouettes (à la main, sans crédit), les dessins de chant en 2:3, et la passe de
+matière des gestes. Pour le Fanzzy vivant, un pilote sur RP1 seulement.
 
 ---

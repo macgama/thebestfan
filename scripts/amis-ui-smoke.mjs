@@ -10,7 +10,9 @@
  *     ne laisse rien faire ; « il ne suit pas ce club » dit exactement quoi ;
  *   - qu'un geste referme la boucle — la liste doit montrer l'état du serveur
  *     après le clic, pas celui qu'on espérait avant ;
- *   - que les trois vues aient chacune leur écran vide, qui dit où aller.
+ *   - que les trois vues aient chacune leur écran vide, qui dit où aller ;
+ *   - que la présence d'un ami (lot 6) se dise par un mot au bout de son nom,
+ *     et rien du tout quand elle n'est pas servie.
  *
  * Avant de lancer :  npm install --no-save puppeteer
  */
@@ -83,7 +85,23 @@ await chargerCatalogue(pool);
 let moi = MOI;
 const requireAuth = (r, _s, n) => { r.user = { id: moi }; n(); };
 const kop = createKop({ pool, requireAuth });
-const amis = createAmis({ pool, requireAuth, kop });
+/* **Une fausse présence, branchée au vrai module des amis.** Ce qu'on
+   éprouve ici, c'est la page : ce qu'elle écrit quand `/api/amis` porte
+   `presence`, et ce qu'elle n'écrit pas quand il ne la porte pas. La vraie
+   présence — qui la voit, quand elle s'éteint, qui se cache — a sa suite
+   (`presence:smoke`) ; la brancher ici ferait dépendre la page de son
+   registre et de ses horloges. Le module des amis, lui, est le vrai : c'est
+   lui qui pose `presence` sur ses seuls amis. Vide, la fausse présence sert
+   ce que sert la vraie quand elle est éteinte (`presence.actif` faux, le
+   défaut) : rien, et les épreuves d'avant le lot 6 restent celles d'avant. */
+const etatsServis = new Map();          // identifiant public → 'virage' | 'duel' | 'en_ligne' | …
+const faussePresence = {
+  async etatsPour(_lecteur, ids) {
+    return new Map(ids.filter((id) => etatsServis.has(id)).map((id) => [id, etatsServis.get(id)]));
+  },
+  oublierAmis() {},
+};
+const amis = createAmis({ pool, requireAuth, kop, presence: faussePresence });
 
 const app = express();
 app.use('/api/amis', amis.router);
@@ -98,10 +116,10 @@ const base = `http://localhost:${http.address().port}`;
 
 const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
 const erreurs = [];
-async function ouvrir() {
+async function ouvrir({ largeur = 400 } = {}) {
   const page = await nav.newPage();
   page.on('pageerror', (e) => erreurs.push(e.message));
-  await page.setViewport({ width: 400, height: 900 });
+  await page.setViewport({ width: largeur, height: 900 });
   await page.goto(base + '/amis', { waitUntil: 'networkidle0' });
   await jusqua(async () => !/Chargement/.test(await texte(page)));
   return page;
@@ -386,6 +404,190 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
       new RegExp(`/${X}/e1/base/joie\\.`).test(src)
       || (console.log('        il montre :', src || 'rien'), false));
   }
+}
+
+/* ===================================================== où sont mes amis
+
+   **La présence** (lot 6, `CONTRATS.md` § 18.1) : au bout du nom de chaque
+   ami, un sticker — AU VIRAGE, EN DUEL, EN LIGNE — et rien pour hors ligne.
+   Elle est livrée éteinte : sans rien de servi, la page doit être exactement
+   celle d'avant, et c'est l'état dans lequel tout ce qui précède a tourné.
+
+   Ce qui se joue ici, et que `presence:smoke` ne peut pas voir :
+     - éteinte, pas un sticker ; allumée, le bon mot sur le bon ami ;
+     - un ami sans état ne porte rien, et rien n'écrit « hors ligne » : l'écran
+       ne distingue pas un ami absent d'un ami caché, et c'est voulu ;
+     - un état que le contrat ne connaît pas ne s'écrit pas ;
+     - une demande en attente n'a pas de présence, même si on lui en servait
+       une : quelqu'un qui n'a pas encore dit oui n'a rien consenti ;
+     - le sticker ne mène nulle part : ni lien, ni bouton, ni « REJOINDRE »
+       (décision de Gaël, Q2 : on ne dit pas quel match) ;
+     - le sticker tient dans la carte, à 320, 360 et 768 px — en liste et en
+       cartes —, à côté de « INVITER AU KOP », sans couvrir le nom, le buste
+       ni le niveau collé dessus, sans pousser « ⋯ » ; un nom trop long pour
+       partager sa ligne la garde entière, et le sticker descend dessous.
+
+   Moi, Sarah, Tarek et Wolfgang sommes amis, et j'ai deux KOP : chaque carte
+   porte son bouton d'invitation, le cas le plus chargé. Wolfgang a le pseudo
+   le plus long que l'inscription accepte (vingt signes, `PSEUDO_RE` de
+   `auth/routes.js`), en lettres larges : à côté de lui, un sticker ne tient
+   pas sur la ligne du nom, et c'est ce cas-là qui coupait les noms. */
+{
+  moi = MOI;
+  const KENZA = 'aaaaaaaa-1111-0000-0000-000000000004';
+  const WOLF = 'aaaaaaaa-1111-0000-0000-000000000005';
+  for (const [id, nom, mel] of [[KENZA, 'Kenza', 'kenza'], [WOLF, 'Wolfgang Maximiliens', 'wolfgang']]) {
+    await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
+      [id, `${mel}@ex.fr`, nom]);
+    await pool.query(`INSERT INTO user_wallet (user_id,scarves,active_fanzzy) VALUES (?,60,'TR32')`, [id]);
+  }
+  await amis.demander(KENZA, MOI);
+  await amis.demander(WOLF, MOI);
+  await amis.repondre(MOI, WOLF, true);
+
+  /* **Le niveau sur le buste, comme en ligne.** Son sticker rond déborde du
+     buste de cinq pixels, vers le nom et vers le sticker de présence. Les
+     épreuves d'avant tournent sans `sql/niveau.sql` (la liste passe alors
+     sans niveau, et le journal le dit) ; on le pose ici, pour mesurer la
+     place dans la carte telle qu'on la voit en ligne, avec le niveau le plus
+     large — deux chiffres. Le module des amis relit la colonne à chaque
+     liste : rien à redémarrer. */
+  {
+    const brut = await mysql.createConnection({ uri: DB, multipleStatements: true });
+    await brut.query(readFileSync(path.join(RACINE, 'sql', 'niveau.sql'), 'utf8'));
+    await brut.end();
+    await pool.query(`UPDATE user_wallet SET xp = 20000 WHERE user_id IN (?, ?, ?)`, [ELLE, LUI, WOLF]);
+  }
+
+  /** Chaque carte d'ami : son nom, et ce que dit son sticker de présence. */
+  const presences = (p) => p.evaluate(() => [...document.querySelectorAll('#corps .gars')].map((n) => {
+    const s = n.querySelectorAll('[data-presence-ami]');
+    return { nom: n.querySelector('.qui b')?.textContent.trim(), n: s.length,
+             etat: s[0]?.dataset.presenceAmi ?? null, ton: s[0]?.dataset.ton ?? null,
+             // `innerText` : le mot tel qu'il s'affiche, capitales du sticker comprises.
+             mot: s[0]?.innerText.trim() ?? null };
+  }));
+  const de = (vus, nom) => vus.find((v) => v.nom === nom);
+  /* Les trois amis sont là : un contrôle d'absence sur une liste vide (une
+     page partie, une liste qui n'a pas chargé) passerait sans rien voir. */
+  const lesTrois = (vus) => ['Sarah', 'Tarek', 'Wolfgang Maximiliens'].every((nom) => de(vus, nom));
+
+  etatsServis.clear();
+  let p = await ouvrir({ largeur: 360 });
+  let vus = await presences(p);
+  check('présence éteinte : aucun ami ne porte de sticker de présence',
+    lesTrois(vus) && vus.every((v) => v.n === 0)
+    || (console.log('        il montre :', JSON.stringify(vus)), false));
+  await p.close();
+
+  const allumee = () => {
+    etatsServis.clear();
+    etatsServis.set(ELLE, 'virage').set(LUI, 'duel').set(WOLF, 'virage').set(KENZA, 'virage');
+  };
+  allumee();
+  p = await ouvrir({ largeur: 360 });
+  vus = await presences(p);
+  check('un ami au Virage le porte au bout de son nom, en rouge',
+    (de(vus, 'Sarah')?.mot === 'AU VIRAGE' && de(vus, 'Sarah')?.ton === 'flare')
+    || (console.log('        Sarah :', JSON.stringify(de(vus, 'Sarah'))), false));
+  check('un ami en duel aussi',
+    (de(vus, 'Tarek')?.mot === 'EN DUEL' && de(vus, 'Tarek')?.ton === 'flare')
+    || (console.log('        Tarek :', JSON.stringify(de(vus, 'Tarek'))), false));
+  check('un seul sticker par ami', lesTrois(vus) && vus.every((v) => v.n <= 1)
+    || (console.log('        il montre :', JSON.stringify(vus)), false));
+
+  /* Pas de « REJOINDRE » : le sticker ne se touche pas. Ni lien, ni bouton,
+     ni rien qui prenne le focus ou le doigt ; il dit où est l'ami, jamais
+     comment l'y suivre. */
+  const muet = await p.evaluate(() => [...document.querySelectorAll('#corps [data-presence-ami]')].map((s) => ({
+    mot: s.textContent.trim(),
+    touche: Boolean(s.closest('a,button,[role=button],[role=link],[tabindex],[onclick]')
+      || s.querySelector('a,button,[tabindex]')),
+  })));
+  check('le sticker ne mène nulle part : ni lien, ni bouton, ni « REJOINDRE »',
+    (muet.length === 3 && muet.every((m) => !m.touche) && !/rejoindre/i.test(await texte(p)))
+    || (console.log('        il pose :', JSON.stringify(muet)), false));
+
+  await onglet(p, 'demandes');
+  check('une demande en attente ne porte jamais de présence',
+    (/Kenza/.test(await texte(p))
+      && await p.evaluate(() => !document.querySelector('#corps [data-presence-ami]')))
+    || (console.log('        il montre :', (await texte(p)).slice(0, 120)), false));
+  await p.close();
+
+  /* **La place**, sur les trois largeurs du banc : 320 et 360 en liste, 768
+     en cartes. Tout le sticker — son bord de craie et son cerne, que sa
+     boîte ne compte pas (3,5 px) — dans la carte, à l'écart du buste, du
+     niveau qui en déborde, du nom et de « ⋯ ». Mesuré sur le rectangle
+     tourné, que `getBoundingClientRect` rend englobant. */
+  for (const largeur of [320, 360, 768]) {
+    allumee();
+    p = await ouvrir({ largeur });
+    const place = await p.evaluate(() => [...document.querySelectorAll('#corps .gars [data-presence-ami]')].map((s) => {
+      const r = s.getBoundingClientRect();
+      const carte = s.closest('.gars');
+      const c = carte.getBoundingClientRect();
+      const plus = carte.querySelector('.plus').getBoundingClientRect();
+      const buste = carte.querySelector('.tbf-buste').getBoundingClientRect();
+      const niv = carte.querySelector('.tbf-buste-niv')?.getBoundingClientRect() ?? null;
+      const nomEl = carte.querySelector('.qui b');
+      const nom = nomEl.getBoundingClientRect();
+      const kop = carte.querySelector('[data-kop]')?.getBoundingClientRect();
+      const bord = 3.5;
+      const chevauche = (a, b) => a.left - bord < b.right && a.right + bord > b.left
+        && a.top - bord < b.bottom && a.bottom + bord > b.top;
+      return {
+        qui: nomEl.textContent.trim(),
+        dedans: r.left - bord >= c.left && r.right + bord <= c.right && r.top - bord >= c.top && r.bottom + bord <= c.bottom,
+        surPlus: chevauche(r, plus), surBuste: chevauche(r, buste), surNom: chevauche(r, nom),
+        // Le niveau doit être là : sans lui, « ne le couvre pas » ne dirait rien.
+        surNiv: niv ? chevauche(r, niv) : null,
+        /* Le sticker ne coupe jamais un nom qui tiendrait seul : à côté du
+           nom, le nom est entier ; sinon le sticker est descendu à la ligne. */
+        nomEntier: nomEl.scrollWidth <= nomEl.clientWidth + 1,
+        memeLigne: Math.abs((r.top + r.bottom) / 2 - (nom.top + nom.bottom) / 2) < 6,
+        plusALEcran: plus.right <= innerWidth,
+        /* De l'air entre son ombre (le bord, 3,5, et le décalage, 2) et
+           « INVITER AU KOP » dessous : collés, ils se lisent comme un seul objet. */
+        air: kop ? kop.top - r.bottom - 5.5 : null,
+      };
+    }));
+    /* Les deux chemins sont éprouvés à chaque largeur : un nom court garde
+       son sticker sur sa ligne, celui de Wolfgang le fait descendre. */
+    const court = place.find((x) => x.qui === 'Tarek');
+    const long = place.find((x) => x.qui === 'Wolfgang Maximiliens');
+    check(`à ${largeur} px, le sticker tient dans la carte, sans couvrir ni couper le nom, sans toucher le buste, son niveau, « ⋯ » ni l’invitation`,
+      (place.length === 3 && place.every((x) => x.dedans && !x.surPlus && !x.surBuste && x.surNiv === false
+        && !x.surNom && (x.nomEntier || !x.memeLigne) && x.plusALEcran && x.air !== null && x.air >= 2)
+        && court?.memeLigne && long && !long.memeLigne)
+      || (console.log('        il pose :', JSON.stringify(place)), false));
+    await p.close();
+  }
+
+  etatsServis.clear();
+  etatsServis.set(ELLE, 'en_ligne');
+  p = await ouvrir({ largeur: 360 });
+  vus = await presences(p);
+  check('un ami seulement en ligne le dit, à la craie',
+    (de(vus, 'Sarah')?.mot === 'EN LIGNE' && de(vus, 'Sarah')?.ton === 'craie')
+    || (console.log('        Sarah :', JSON.stringify(de(vus, 'Sarah'))), false));
+  check('un ami hors ligne ne porte rien, et rien ne dit « hors ligne »',
+    (de(vus, 'Tarek')?.n === 0 && !/hors.ligne/i.test(await texte(p)))
+    || (console.log('        Tarek :', JSON.stringify(de(vus, 'Tarek'))), false));
+  await p.close();
+
+  /* Un état que le contrat ne connaît pas ne s'écrit pas, pas même un
+     « hors_ligne » qu'un serveur de demain croirait utile de servir — ni un
+     nom qu'un objet JavaScript connaît déjà. */
+  etatsServis.clear();
+  etatsServis.set(ELLE, 'hors_ligne').set(LUI, 'constructor');
+  p = await ouvrir({ largeur: 360 });
+  vus = await presences(p);
+  check('un état que le contrat ne connaît pas ne s’écrit pas',
+    (lesTrois(vus) && vus.every((v) => v.n === 0) && !/hors.ligne|constructor/i.test(await texte(p)))
+    || (console.log('        il montre :', JSON.stringify(vus)), false));
+  await p.close();
+  etatsServis.clear();
 }
 
 check('aucune erreur de script sur la page des amis',

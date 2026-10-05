@@ -157,6 +157,52 @@ const post = (body) => fetch(base, {
     && typeof vide.corps.error === 'string');
 }
 
+/* ================================================ le mot de l'arène, aux bornes
+
+   Décision de Gaël du 3 octobre 2026 (Q3) : une échelle, quatre mots, partout.
+   La page coupait elle-même à 0,95 / 0,8 / 0,6 / 0,3 avec d'autres mots, et un
+   0,92 était PARFAIT en tribune et TRÈS BIEN ici. La salle sert maintenant le
+   mot de l'arène (CONTRATS.md § 17), mesuré sur sa note — la note brute,
+   puisqu'elle ne porte aucun modificateur.
+
+   La tenue se règle à la milliseconde : sa note est le temps tenu sur la
+   limite (4 200 ms), donc 3 780 ms font 0,9 tout juste — BON, puisque PARFAIT
+   est **strictement** au-dessus. */
+{
+  const d = await get();
+  const lim = GESTURES.tenue.limite;
+  const bornes = [
+    [Math.round(lim * 0.9), 'bon'], [Math.round(lim * 0.9) + 1, 'parfait'],
+    [Math.round(lim * 0.7), 'moyen'], [Math.round(lim * 0.7) + 1, 'bon'],
+    [Math.round(lim * 0.4), 'rate'], [Math.round(lim * 0.4) + 1, 'moyen'],
+    // 0,92 : PARFAIT en tribune, et maintenant ici aussi (c'était TRÈS BIEN).
+    [Math.round(lim * 0.92), 'parfait'],
+    // Au-delà de la limite, tout est perdu : zéro, RATÉ.
+    [lim + 50, 'rate'],
+  ];
+  const lus = [];
+  for (const [ms] of bornes) {
+    const r = await post({ geste: 'tenue', motif: d.motif, rendu: [0, ms] });
+    lus.push(r.corps.verdict);
+  }
+  check(`le mot suit l’échelle de l’arène, bornes comprises (${lus.join(', ')})`,
+    lus.join() === bornes.map((b) => b[1]).join()
+    || (console.log('        attendu :', bornes.map((b) => b[1]).join(', ')), false));
+
+  /* La note chiffrée reste : c'est elle qui rend la salle utile, et le record
+     de la page se nourrit d'elle. */
+  const r = await post({ geste: 'tenue', motif: d.motif, rendu: [0, Math.round(lim * 0.92)] });
+  check(`la note chiffrée reste à côté du mot (${r.corps.note})`,
+    Math.abs(r.corps.note - 0.92) < 1e-9 && r.corps.refuse === null);
+
+  /* Un geste refusé n'a pas de mot : la page dit REFUSÉ, pas RATÉ. */
+  const refuse = await post({ geste: 'mash', motif: d.motif,
+    rendu: Array.from({ length: 80 }, (_, i) => i * 12) });
+  check('un geste refusé n’a pas de mot', typeof refuse.corps.refuse === 'string'
+    && !('verdict' in refuse.corps)
+    || (console.log('        rendu :', JSON.stringify(refuse.corps)), false));
+}
+
 /* ===================================================== la note reste une note
 
    Bornée entre zéro et un : elle s'affiche telle quelle sur l'écran, et un

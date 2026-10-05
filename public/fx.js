@@ -479,7 +479,14 @@
   @media (prefers-reduced-motion:reduce){
     .fz-vivant,.fz-vivant.fz-reagit{animation:none}}
   html[data-calme~="animations"] .fz-vivant,
-  html[data-calme~="animations"] .fz-vivant.fz-reagit{animation:none}`;
+  html[data-calme~="animations"] .fz-vivant.fz-reagit{animation:none}
+  /* Le filet de « data-fige » (voir « animer ») : un dessin qu'on fige après
+     coup, ou dont un parent se fige, s'arrête tout de suite, avant même que
+     le veilleur ne lui retire sa respiration. Après les règles de la vie, à
+     poids égal : la réaction au toucher (« fz-reagit ») ne le réveille pas.
+     Les cérémonies (« fx-charge », « fx-arrive ») pèsent un identifiant et
+     passent devant : un dessin figé peut encore évoluer. */
+  .fz-vivant[data-fige],[data-fige] .fz-vivant{animation:none;will-change:auto}`;
 
   const style = document.createElement('style');
   style.textContent = css + cssVie;
@@ -609,7 +616,17 @@
     const petitOr = dore(couleur) && taille < 24;
     t.style.fontSize = `${petitOr ? Math.max(taille, 19) : taille}px`;
     if (petitOr) t.style.fontWeight = '700';
-    t.innerHTML = `${texte}${sous ? `<span class="fx-sous">${sous}</span>` : ''}`;
+    /* **Du texte, jamais du balisage.** Le sous-titre porte le nom d'un
+       buteur ou d'un joueur averti (« butReel », « carton », le duel), qui
+       vient de l'API sportive : le contrat dit de l'échapper (§ 15), et il
+       était posé par « innerHTML ». Aucun appelant ne passe de balise. */
+    t.textContent = String(texte ?? '');
+    if (sous) {
+      const s = document.createElement('span');
+      s.className = 'fx-sous';
+      s.textContent = String(sous);
+      t.appendChild(s);
+    }
     document.body.appendChild(t);
     requestAnimationFrame(() => t.classList.add('go'));
     setTimeout(() => t.remove(), 1800);
@@ -650,16 +667,50 @@
 
   /* ------------------------------------------------------- effets de jeu */
 
+  /* ------------------------------------------------ figer une illustration
+
+     **`data-fige`** : un dessin qui porte cet attribut, ou dont un parent le
+     porte, ne respire pas. Sans valeur — sa présence suffit —, posé par la
+     page ou par le module qui écrit le dessin.
+
+     Pourquoi il existe. Ce fichier fait respirer toute image « .illu » du
+     document (voir « animer ») : c'est ce qui rend vivant un Fanzzy sur sa
+     carte. Mais « .illu » est aussi le nom du dessin d'une carte d'action,
+     d'un objet d'équipement, et les suites le lisent (« nvn:ui » compte les
+     « .illu » de la main) : le renommer pour échapper à la respiration aurait
+     cassé ce qu'elles vérifient. Le Virage faisait ainsi respirer les cinq
+     dessins de sa rangée d'action, le duel ceux de sa main et de son équipe —
+     six et dix animations sans fin à l'écran (mesuré au banc du lot 6), là où
+     la règle en permet trois, toutes comptées (« FX.sansFin »).
+
+     Ce qu'il fait : « animer » ne pose pas la respiration sur un dessin figé,
+     et la retire à celui qui se fige après coup (le veilleur regarde aussi
+     l'attribut) ; la réaction au toucher l'ignore ; une règle de la feuille
+     l'arrête dans l'intervalle. Retiré, le dessin se remet à respirer. Les
+     cérémonies (« evolution ») jouent quand même sur un dessin figé.
+
+     `action-art.js` fige d'office le dessin d'une carte d'action : une
+     torche ou une bâche n'ont pas de souffle, seul un personnage en a. */
+  const FIGE = '[data-fige]';
+  const fige = (el) => Boolean(el.closest?.(FIGE));
+
   /**
    * Rend vivant tout personnage déjà présent dans la page.
    *
    * Les durées et les retards sont dérivés d'une graine stable — l'identifiant
    * du Fanzzy — pour que deux cartes voisines ne respirent jamais en même
    * temps. Une grille synchronisée fait mécanique ; décalée, elle fait foule.
+   *
+   * Un dessin figé (« data-fige », plus haut) est laissé immobile, et perd sa
+   * respiration s'il l'avait.
    */
   function animer(racineEl = document) {
     const cibles = racineEl.querySelectorAll?.('.illu, [data-vivant]') ?? [];
     for (const el of cibles) {
+      if (fige(el)) {
+        el.classList.remove('fz-vivant', 'fz-reagit');
+        continue;
+      }
       if (el.classList.contains('fz-vivant')) continue;
       const graine = (el.getAttribute('data-vivant') || el.src || '')
         .split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7);
@@ -669,9 +720,45 @@
     }
   }
 
+  /**
+   * Ce qui bouge sans fin à l'écran, compté comme la règle le compte : « au
+   * plus trois animations infinies par écran, toutes comptées » (direction
+   * FAIT MAIN, amendement 8 ; brief du lot 6).
+   *
+   * **Un objet par élément**, ou par pseudo-élément : un Fanzzy qui respire
+   * et se balance porte deux animations et compte pour un. Seules celles qui
+   * tournent : une animation en pause (une scène endormie hors de l'écran)
+   * ne coûte rien et ne se compte pas ; un élément sans boîte
+   * (« display:none ») n'en a pas. Celles d'un calque caché derrière un
+   * autre, elles, se comptent : elles coûtent autant.
+   *
+   * Pour les suites et les bancs, qui vérifient le plafond sur un écran
+   * posé : la règle de compte est écrite ici une fois.
+   *
+   * @returns {{ el: Element, pseudo: string, noms: string[] }[]}
+   */
+  function sansFin() {
+    const vus = [];
+    let animations = [];
+    try { animations = document.getAnimations?.() ?? []; } catch { return vus; }
+    for (const a of animations) {
+      if (a.playState !== 'running') continue;
+      let t = null;
+      try { t = a.effect?.getComputedTiming?.(); } catch { /* effet détaché */ }
+      if (!t || t.iterations !== Infinity) continue;
+      const el = a.effect.target;
+      if (!el) continue;
+      const pseudo = a.effect.pseudoElement ?? '';
+      let o = vus.find((x) => x.el === el && x.pseudo === pseudo);
+      if (!o) { o = { el, pseudo, noms: [] }; vus.push(o); }
+      o.noms.push(a.animationName || a.id || 'script');
+    }
+    return vus;
+  }
+
   /** Réaction au toucher : le personnage sursaute, comme s'il répondait. */
   function reagir(el) {
-    if (!el || doux()) return;
+    if (!el || doux() || fige(el)) return;
     el.classList.remove('fz-reagit');
     void el.offsetWidth;
     el.classList.add('fz-reagit');
@@ -681,12 +768,15 @@
 
   // Les cartes arrivent souvent après le premier rendu — ouverture de booster,
   // filtre du classeur. On surveille plutôt que de demander à chaque page d'y
-  // penser.
+  // penser. L'attribut « data-fige » aussi (et lui seul : le filtre garde le
+  // veilleur sourd aux classes et aux styles que les pages changent dix fois
+  // par seconde) — un dessin figé ou dégelé après coup suit tout de suite.
   if (typeof MutationObserver === 'function') {
     const veilleur = new MutationObserver(() => animer(document));
     const lancer = () => {
       animer(document);
-      veilleur.observe(document.body, { childList: true, subtree: true });
+      veilleur.observe(document.body, { childList: true, subtree: true,
+        attributes: true, attributeFilter: ['data-fige'] });
     };
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', lancer);
@@ -1262,7 +1352,7 @@
     /** Une couleur de club, éclaircie jusqu'à se lire sur le fond du jeu. */
     lisible,
 
-    particules, onde, flash, secousse, titre, nombre, animer, reagir,
+    particules, onde, flash, secousse, titre, nombre, animer, reagir, sansFin,
 
     /**
      * Joue un son de la banque — celle du moteur commun, `son.js`
@@ -1357,8 +1447,20 @@
      * elle est posée sur le document, hors de `#app` que la secousse fait
      * trembler, et c'est elle qu'on lit.
      *
-     * Le Virage et le duel appellent encore la forme pleine : leur écran de
-     * match n'est pas repris avant le lot 6.
+     * **Le Virage et le duel aussi, depuis le lot 6.** Ils posent la même
+     * case de BD et appellent la même forme, `{ pour, vignette: true }` : le
+     * Virage sous la case que pose sa scène (« LA CORDE CÈDE ! »,
+     * « GOAL ! »), le duel sous la sienne (`#moment`, posée par la page, qui
+     * n'a pas de scène). Chacun choisit son son — `FX.son('but' | 'butReel'
+     * | 'encaisse')` —, puis l'ovation de sa tribune pour un but de son camp
+     * (`TBF_SON.rumeur('but')`, voir `son.js`). Le duel n'appelle plus
+     * `butReel` : son second titre, neuf cents millisecondes après,
+     * s'écrivait par-dessus la case.
+     *
+     * La forme pleine et `butReel` n'ont donc plus d'appelant dans `public/`
+     * (relevé le 4 octobre 2026) : un écran qui n'a pas de case de BD peut
+     * encore s'en servir, mais tout écran qui en pose une passe par
+     * `vignette`.
      */
     but({ pour = true, score, vignette = false } = {}) {
       // Un seul motif pour les deux formes : un but se sent pareil sous le

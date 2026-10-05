@@ -23,8 +23,17 @@
  *   TBF_SON.ambiance(niveau, o)   la rumeur de tribune : 0 tribune vide,
  *                                 1 rumeur, 2 la tribune pousse, 3 but
  *                                 (avec l'ovation)
+ *   TBF_SON.rumeur(moment, o)     la rumeur qui suit le match, par son nom :
+ *                                 l'entrée, le jeu, la mi-temps, la minute
+ *                                 double, le but, la fin, le vestiaire du
+ *                                 duel et ses arrivées (lot 6)
  *   TBF_SON.chant(type, o)        des frappes de tambour et des claps de
- *                                 foule calés sur la pulsation d'un geste
+ *                                 foule calés sur la pulsation d'un geste ;
+ *                                 `origine` les cale sur l'instant même où
+ *                                 le geste a commencé (lot 6)
+ *   TBF_SON.chantDuGeste(g, gestes, o)  le chant d'un geste de rythme, sur
+ *                                 les durées que le serveur a servies et la
+ *                                 pulsation que `geste.js` dessine
  *   TBF_SON.volume(v)             le volume du joueur, de 0 à 1, retenu
  *   TBF_SON.audio                 la façade de l'objet « audio » de
  *                                 cartes.js (ready, rip, flip, chime,
@@ -150,32 +159,50 @@
   const CRETE_MAX = -0.5;
 
   /* Le gain de mixage de chaque son, appliqué à sa sortie. En commentaire,
-     la mesure du banc à volume plein, le 2 octobre 2026 :
-     crête (dBFS) · sonie (LUFS, 100 ms) · durée. */
+     la mesure du banc à volume plein, **chaîne chaude**, le 4 octobre 2026 :
+     crête (dBFS) · sonie (LUFS, 100 ms) · durée.
+
+     **Recalés le 4 octobre 2026 (lot 6).** Le banc mesurait chaque son
+     limiteur encore fermé, au tout début du rendu (voir CHAUFFE, au rendu
+     hors ligne) : les sons brefs y sortaient six à huit décibels sous ce que
+     le joueur entend. Les gains tirés de ces mesures faisaient donc sonner,
+     en jeu, l'interface dans la fenêtre du jeu (le tic à −21,2 LUFS, pas
+     −29,5), le jeu dans celle des moments (la poussée à −16,4), et le but
+     encaissé (−14,3) et la charge (−14,9) au-dessus du but (−15,5). Chaque
+     gain qui avait bougé de deux dixièmes de décibel ou plus a été ramené à
+     la sonie que le mixage lui donnait : 10 ^ ((mesure froide − mesure
+     chaude) / 20) ; la poussée, que le limiteur tassait déjà chaîne chaude
+     (crête −5,4), en deux fois. Les sept qui n'ont pas bougé sont des sons
+     longs, dont les cent millisecondes les plus fortes tombaient déjà
+     limiteur ouvert. Gains d'avant : tic 5,54 · carte 3,67 · bâche 1,7 ·
+     sourd 3,66 · ok 0,966 · retournement 2,45 · poussée 4,6 · contre 5 ·
+     chant 4,47 · parfait 1,77 · déchirure 1,99 · carillon 1,17 · accord
+     épique 0,623 · gong 0,776 · encaissé 4,75 · charge 5,15 · rugissement
+     4,15. */
   const MIX = {
-    tic: 5.54,                    // −19,5 · −29,5 · 0,03 s
-    carte: 3.67,                  // −21,2 · −29,0 · 0,07 s
-    bache: 1.7,                   // −21,3 · −28,0 · 0,16 s
-    sourd: 3.66,                  // −15,3 · −28,5 · 0,06 s
-    ok: 0.966,                    // −20,1 · −28,0 · 0,17 s
-    retournement: 2.45,           // −17,3 · −28,5 · 0,09 s
-    pousse: 4.6,                  // −12,0 · −22,1 · 0,13 s
-    contre: 5,                    // −14,3 · −23,5 · 0,15 s
-    chant: 4.47,                  // −14,5 · −22,0 · 0,18 s
-    parfait: 1.77,                // −15,1 · −20,5 · 0,32 s
-    dechirure: 1.99,              // estimé (voir la banque) : −21,5 à 1 ; 0,22 → −23,9 · 1,4 → −20,9
-    carillon: 1.17,               // −17,4 · −21,0 · 0,67 s
-    'accord-epique': 0.623,       // −16,6 · −21,0 · 1,06 s
-    gong: 0.776,                  // −14,3 · −21,0 · 1,62 s
-    but: 3.93,                    //  −8,7 · −15,5 · 0,67 s
-    butReel: 4.13,                //  −8,0 · −15,0 · 0,76 s
-    encaisse: 4.75,               // −13,8 · −18,0 · 0,56 s
-    charge: 5.15,                 // −12,3 · −18,0 · 0,80 s
-    evolue: 1.95,                 //  −9,7 · −15,5 · 0,82 s
-    rugissement: 4.15,            //  −9,7 · −15,5 · 0,94 s
+    tic: 2.13,                    // −20,0 · −29,5 · 0,03 s
+    carte: 1.55,                  // −20,9 · −29,0 · 0,07 s
+    bache: 0.862,                 // −19,7 · −28,0 · 0,14 s
+    sourd: 1.51,                  // −15,9 · −28,5 · 0,06 s
+    ok: 0.708,                    // −21,5 · −28,0 · 0,16 s
+    retournement: 1.07,           // −16,9 · −28,5 · 0,08 s
+    pousse: 1.99,                 // −10,7 · −22,1 · 0,12 s
+    contre: 2.45,                 // −12,9 · −23,4 · 0,14 s
+    chant: 2.27,                  // −14,0 · −22,0 · 0,16 s
+    parfait: 1.56,                // −14,9 · −20,5 · 0,31 s
+    dechirure: 1.39,              // −16,2 · −21,5 · 0,27 s (à 1 ; de −23,1 à 0,22 à −21,0 à 1,4 : la banque)
+    carillon: 1.13,               // −17,4 · −21,0 · 0,67 s
+    'accord-epique': 0.581,       // −16,1 · −21,0 · 1,03 s
+    gong: 0.589,                  // −12,9 · −21,0 · 1,53 s
+    but: 3.93,                    //  −8,3 · −15,5 · 0,67 s
+    butReel: 4.13,                //  −7,7 · −15,0 · 0,76 s
+    encaisse: 3.10,               // −11,3 · −18,0 · 0,51 s
+    charge: 3.60,                 // −11,8 · −18,0 · 0,74 s
+    evolue: 1.95,                 // −10,1 · −15,5 · 0,81 s
+    rugissement: 3.18,            // −10,0 · −15,5 · 0,87 s
     'accord-legendaire': 0.841,   //  −9,6 · −15,4 · 1,35 s
     grondement: 3.02,             //  −8,1 · −16,5 · 1,80 s
-    niveau: 1.65,                 //  −8,4 · −16,0 · 1,14 s
+    niveau: 1.65,                 //  −8,6 · −16,1 · 1,15 s
     ovation: 1.19,                //  −8,4 · −16,5 · 3,20 s
   };
 
@@ -192,9 +219,38 @@
      qui remonterait tout ce qui passe dessous. On le retire juste après : la
      chaîne est transparente sous le seuil (un sinus à −20 dB ressort à
      −20,0), et un sinus à pleine échelle ressort à −5,5. Les dix moments
-     joués ensemble ressortent à −4,5 dBFS. */
+     joués ensemble ressortent à −4,7 dBFS (chaîne chaude, 4 octobre 2026). */
   const LIMITEUR = { seuil: -6, ratio: 20, attaque: 0.002, relache: 0.2 };
   const RATTRAPAGE_DB = 0.6 * -LIMITEUR.seuil * (1 - 1 / LIMITEUR.ratio);
+
+  /* **La naissance de la chaîne** (lot 6). Le compresseur de Chrome naît
+     fermé (voir CHAUFFE, au rendu hors ligne) : son détecteur part de zéro,
+     il écrase tout ce qui passe, et ne s'ouvre qu'à la vitesse de sa
+     relâche, deux dixièmes de seconde. Or le contexte vivant naît au premier
+     toucher, et le son de ce toucher part dans le même instant : le premier
+     son d'une visite sortait fermé. Mesuré le 4 octobre 2026, dans Chrome,
+     sur la sortie même, cinq visites : le tic joué dans le geste qui fait
+     naître le contexte à −33,1 dBFS de crête, puis −20,0 tous les suivants —
+     treize décibels sous la banque, un son qu'on n'entend pas (et c'est la
+     déchirure du booster quand la visite commence au kiosque). Hors ligne,
+     depuis la naissance : le tic posé 20 ms après à −27,8, 40 ms après à
+     −24,6, 80 ms après à −21,7, une seconde après à −19,9 ; un sinus à
+     −20 dB, −25,7 sur ses cinquante premières millisecondes.
+
+     Le remède : une relâche de deux millisecondes à la naissance, rendue à
+     LIMITEUR.relache soixante millisecondes plus tard. Le détecteur s'ouvre
+     alors en quelques millisecondes au lieu de deux cents, et le limiteur
+     garde ensuite son pas. Mesuré pareil : hors ligne, le tic posé 20 ms
+     après la naissance sort à −20,1, le sinus à −20,0 dès ses cinquante
+     premières millisecondes ; dans Chrome, cinq visites, le premier tic à
+     −21,0 et les suivants à −20,0 (le début de son attaque passe pendant que
+     le détecteur s'ouvre). Ce que ça coûte : pendant ces soixante
+     millisecondes, un empilement relâcherait vite entre deux crêtes — tous
+     les moments de la banque ensemble, posés à la naissance, sortent à
+     −2,7 dBFS au lieu de −4,6 —, et le plafond le tient sous CRETE_MAX.
+     Aucun écran ne joue tous ses moments au premier toucher. `son:smoke` et
+     `son:banc` le mesurent (« la naissance »). */
+  const NAISSANCE = { relache: 0.002, duree: 0.06 };
 
   /* Le plafond, en dernier : une courbe qui laisse passer tel quel tout ce
      qui reste sous 0,7 (−3 dB) et arrondit le reste sans jamais dépasser
@@ -236,7 +292,13 @@
     lim.knee.value = 0;
     lim.ratio.value = LIMITEUR.ratio;
     lim.attack.value = LIMITEUR.attaque;
-    lim.release.value = LIMITEUR.relache;
+    /* Brève à la naissance, puis la sienne (voir NAISSANCE). Un navigateur
+       qui refuserait de programmer ce paramètre garde la relâche ordinaire :
+       une exception ici emporterait toute la chaîne, donc tout le son. */
+    try {
+      lim.release.setValueAtTime(NAISSANCE.relache, c.currentTime);
+      lim.release.setValueAtTime(LIMITEUR.relache, c.currentTime + NAISSANCE.duree);
+    } catch { lim.release.value = LIMITEUR.relache; }
     const retrait = c.createGain();
     retrait.gain.value = 10 ** (-RATTRAPAGE_DB / 20);
     const plaf = c.createWaveShaper();
@@ -554,13 +616,17 @@
        remplit que la moitié, et il s'éteint en route —, c'est donc la durée
        qui porte l'élan, et l'amplitude ne fait que l'appuyer.
 
-       Le gain (MIX) et les sonies visées en sont **calculés**, pas encore
-       mesurés : la sonie suit l'amplitude au décibel près, et l'effet de la
-       durée se lit, point par point, sur les mesures ci-dessus (la forme de
-       l'enveloppe et le balayage du filtre n'ont pas changé). Visé : 0,22 →
-       −23,9 · 0,47 → −23,0 · 0,72 → −22,2 · 1 → −21,5 · 1,4 → −20,9, à
-       près d'un décibel des bords de la fenêtre. Le banc le confirme, et sa
-       mesure remplace alors l'estimation dans le commentaire de MIX. */
+       Le gain (MIX) et les sonies visées en ont été **calculés** : la sonie
+       suit l'amplitude au décibel près, et l'effet de la durée se lit, point
+       par point, sur les mesures ci-dessus (la forme de l'enveloppe et le
+       balayage du filtre n'ont pas changé). Visé : 0,22 → −23,9 · 0,47 →
+       −23,0 · 0,72 → −22,2 · 1 → −21,5 · 1,4 → −20,9, à près d'un décibel
+       des bords de la fenêtre. **Le banc l'a confirmé** le 4 octobre 2026
+       (lot 6) : −23,9 · −22,8 · −22,1 · −21,5 · −20,8. Sa mesure remplace
+       l'estimation dans le commentaire de MIX. Remesurées chaîne chaude
+       (voir CHAUFFE, le même jour) et recalées sur l'intensité 1 : −23,1 ·
+       −22,3 · −21,9 · −21,5 · −21,0 — la montée se resserre (les crans
+       brefs perdaient le plus à la mesure froide), et tient la fenêtre. */
     dechirure: { famille: 'jeu', duree: 0.45,
       variantes: [{ intensite: 0.22 }, { intensite: 0.47 }, { intensite: 0.72 }, { intensite: 1.4 }],
       jouer: (c, s, t, { intensite = 1 } = {}) => {
@@ -943,7 +1009,9 @@
      décibels, la respiration se calcule sur la fenêtre du banc), à
      remesurer : 1 → −40 · −37,7 ; 2 → −35,1 · −34 ; 3 inchangé. Quatre à
      cinq décibels du niveau 1 au niveau 2, assez pour qu'une poussée
-     s'entende ; huit du 2 au but, qui seul passe au-dessus de l'interface. */
+     s'entende ; huit du 2 au but, qui seul passe au-dessus de l'interface.
+     Remesuré chaîne chaude le 4 octobre 2026 : 1 → −40,0 · −37,7 ; 2 →
+     −35,1 · −33,6 ; 3 → −27,5 · −26,2. */
   const NIVEAUX_AMBIANCE = [
     { grave: 0, voix: 0, clair: 0, souffle: 0, voixHz: 450, eclats: 0, eclat: 0, fenetre: null,
       sousInterface: false },
@@ -963,15 +1031,46 @@
      redescend lentement (une tribune ne se tait pas d'un coup), et le but
      arrive presque d'un coup. Ce sont des constantes de temps : la cible est
      atteinte aux deux tiers après une fois, presque entièrement après trois. */
-  const TAU = { monte: 0.6, descend: 1.6, but: 0.15 };
+  const TAU = { monte: 0.6, descend: 1.6, but: 0.15, creux: 2.5 };
   /** Combien de temps la tribune reste au maximum après un but. */
   const TENUE_BUT = 9000;
 
-  /** Le graphe de la rumeur, éteint (tous ses gains à zéro). */
-  function construireLit(c, dest) {
+  /* ------------------------------------------ l'échelle de la rumeur (lot 6)
+
+     Le niveau dit **comment** la tribune chante (la rumeur, la poussée, le
+     but) ; l'échelle dit **combien** elle est pleine. Un seul gain, sur la
+     sortie de la rumeur, qui ne fait que la baisser : 1 la tribune entière,
+     moins quand elle se creuse ou n'est pas encore remplie. Les fenêtres et
+     les plafonds que le banc mesure à l'échelle 1 restent donc des plafonds
+     — une rumeur plus basse ne couvre jamais rien — et seule la retombée
+     elle-même est à éprouver (son:smoke la mesure).
+
+       CREUX       la mi-temps : la tribune retombe, sans se vider. Huit
+                   décibels sous la rumeur, assez pour qu'on entende la pause
+                   (deux décibels se lisent « plus bas », huit « autre
+                   chose »), pas assez pour qu'elle passe pour la fin ;
+       VESTIAIRE   le vestiaire du duel, vide : neuf décibels sous la
+                   rumeur, qui remonte à l'échelle pleine place par place.
+
+     L'ovation et les sons de la banque n'y passent pas : ils sonnent au
+     vestiaire comme en tribune. */
+  const CREUX = 0.4;            // 20 × log10(0,4) = −8,0 dB
+  const VESTIAIRE_VIDE = 0.35;  // 20 × log10(0,35) = −9,1 dB
+  /** Ce qu'une arrivée au vestiaire fait enfler la rumeur, en millisecondes. */
+  const ARRIVEE_MS = 2500;
+  /** Ce que dure, par défaut, la foule qui compte à l'entrée. */
+  const ENTREE_MS = 1500;
+  /** Ce que met la tribune à se vider au coup de sifflet final. */
+  const FIN_MS = 6000;
+  /** La minute double, au plus (le contrat la sert en `surgeMs`, R3). */
+  const DOUBLE_MS = 60000;
+
+  /** Le graphe de la rumeur, éteint (tous ses gains à zéro). `echelle` : voir
+      plus haut. */
+  function construireLit(c, dest, echelle = 1) {
     const [r1, r2] = deuxRoses(c);
     const sortie = c.createGain();
-    sortie.gain.value = MIX_AMBIANCE;
+    sortie.gain.value = MIX_AMBIANCE * echelle;
     sortie.connect(dest);
     const boucle = (tampon) => {
       const s = c.createBufferSource();
@@ -1044,10 +1143,41 @@
   }
 
   /* L'état de l'ambiance. `base` est le niveau que la page a posé ;
-     `passe`, un niveau passager (un but, une poussée) qui retombe seul ;
-     `joue`, le niveau vers lequel la rumeur va vraiment. */
-  const amb = { base: 0, passe: null, joue: 0, lit: null, minuterie: 0, eclats: 0, demontage: 0 };
-  const voulu = () => Math.max(amb.base, amb.passe?.niveau ?? 0);
+     `passes`, les niveaux passagers (un but, une poussée, la minute double)
+     qui retombent seuls, chacun à son heure ; `joue`, le niveau vers lequel
+     la rumeur va vraiment. `echelle`, l'échelle voulue (voir plus haut), et
+     `posee`, celle que la rumeur a reçue ; `phase`, la dernière phase de
+     « rumeur » ; `fondu`, la constante de temps d'une transition demandée
+     une fois (l'entrée, la fin), en secondes, 0 sinon.
+
+     **Plusieurs passagers à la fois, et le plus fort qui court l'emporte.**
+     Il n'y en avait qu'un : le plus fort remplaçait l'autre, qui était
+     perdu. Or le Virage en empile deux au même instant — le but réel joue
+     l'ovation (3, neuf secondes) et ouvre la minute double (2, une minute) —
+     et la minute double s'éteignait avec l'ovation, cinquante secondes trop
+     tôt ; un chant pendant la minute double (2, cinq secondes) la ramenait
+     de même à cinq secondes. Désormais chacun garde son heure de fin, et la
+     tribune joue le plus fort de ceux qui courent encore. */
+  const amb = { base: 0, passes: [], joue: 0, lit: null, minuterie: 0, eclats: 0, demontage: 0,
+    echelle: 1, posee: 1, phase: null, fondu: 0 };
+  /** Les passagers encore en cours ; les autres sont oubliés. */
+  function elaguer() {
+    const t = performance.now();
+    if (amb.passes.some((p) => p.fin <= t)) amb.passes = amb.passes.filter((p) => p.fin > t);
+    return amb.passes;
+  }
+  const passager = () => elaguer().reduce((m, p) => Math.max(m, p.niveau), 0);
+  const voulu = () => Math.max(amb.base, passager());
+  /* Une minuterie, réglée sur la prochaine fin de passager : à son heure,
+     la tribune retombe au niveau des autres, ou à celui que la page a posé. */
+  function armer() {
+    clearTimeout(amb.minuterie);
+    amb.minuterie = 0;
+    const restent = elaguer();
+    if (!restent.length) return;
+    const proche = restent.reduce((m, p) => Math.min(m, p.fin), Infinity) - performance.now();
+    amb.minuterie = setTimeout(() => { amb.minuterie = 0; armer(); appliquer(); }, Math.max(0, proche) + 5);
+  }
 
   function eteindreLit(tau) {
     clearTimeout(amb.eclats);
@@ -1074,16 +1204,22 @@
   function appliquer() {
     const n = voulu();
     const jouable = ctx && chaine && ctx.state !== 'closed' && !calme() && !document.hidden;
+    // Le fondu demandé ne vaut qu'une fois, et seulement s'il s'entend.
+    const fondu = amb.fondu;
+    amb.fondu = 0;
     if (!jouable) { eteindreLit(0); return; }
     /* Zéro : on éteint en fondu, une fois. Une rumeur déjà en train de
        s'éteindre ne se rééteint pas à chaque toucher — son démontage serait
        repoussé d'autant. */
-    if (n === 0) { if (amb.joue !== 0) eteindreLit(TAU.descend); return; }
+    if (n === 0) { if (amb.joue !== 0) eteindreLit(fondu || TAU.descend); return; }
     clearTimeout(amb.demontage);
     amb.demontage = 0;
-    if (!amb.lit) amb.lit = construireLit(ctx, chaine.bus.ambiance);
+    if (!amb.lit) {
+      amb.lit = construireLit(ctx, chaine.bus.ambiance, amb.echelle);
+      amb.posee = amb.echelle;
+    }
     if (n !== amb.joue) {
-      const tau = n === 3 ? TAU.but : n > amb.joue ? TAU.monte : TAU.descend;
+      const tau = fondu || (n === 3 ? TAU.but : n > amb.joue ? TAU.monte : TAU.descend);
       reglerLit(amb.lit, n, ctx.currentTime, tau);
       amb.joue = n;
       /* Le prochain cri suit le nouveau niveau : celui qu'on avait tiré au
@@ -1091,6 +1227,14 @@
          d'un but. */
       clearTimeout(amb.eclats);
       amb.eclats = 0;
+    }
+    /* L'échelle : la tribune remonte vite (on entend tout de suite qu'elle
+       se remplit), elle se creuse lentement (une mi-temps ne coupe pas le
+       son d'un coup). Posée seulement quand elle change. */
+    if (amb.posee !== amb.echelle) {
+      const tau = fondu || (amb.echelle > amb.posee ? TAU.monte : TAU.creux);
+      amb.lit.sortie.gain.setTargetAtTime(MIX_AMBIANCE * amb.echelle, ctx.currentTime, tau);
+      amb.posee = amb.echelle;
     }
     planifierEclats();
   }
@@ -1128,27 +1272,142 @@
    */
   function ambiance(niveau, { pendant } = {}) {
     const n = Math.round(borner(Number(niveau) || 0, 0, 3));
-    const passager = n === 3 ? Number(pendant) || TENUE_BUT : Number(pendant) || 0;
+    const duree = n === 3 ? Number(pendant) || TENUE_BUT : Number(pendant) || 0;
     if (n === 0) {
-      // La tribune se vide : la fin du match, la sortie. Rien ne la retient.
+      /* La tribune se vide : la fin du match, la sortie. Rien ne la
+         retient — ni les passagers, ni la phase et l'échelle que « rumeur »
+         avait posées : la prochaine tribune repart pleine. */
       amb.base = 0;
-      amb.passe = null;
-      clearTimeout(amb.minuterie);
-      amb.minuterie = 0;
-    } else if (passager > 0) {
-      /* Un passager plus faible que celui qui court ne le coupe pas : une
-         poussée pendant l'ovation n'éteint pas l'ovation. */
-      if (!amb.passe || n >= amb.passe.niveau) {
-        amb.passe = { niveau: n };
-        clearTimeout(amb.minuterie);
-        amb.minuterie = setTimeout(() => { amb.minuterie = 0; amb.passe = null; appliquer(); }, passager);
+      amb.passes = [];
+      amb.phase = null;
+      amb.echelle = 1;
+      armer();
+    } else if (duree > 0) {
+      /* Un passager s'ajoute à ceux qui courent, avec son heure de fin. Le
+         plus fort l'emporte tant qu'il court : une poussée pendant
+         l'ovation n'éteint pas l'ovation, et l'ovation finie rend la main à
+         la minute double qui court encore (voir l'état, plus haut). Seize
+         au plus : au-delà, ce sont les plus proches de leur fin qui partent. */
+      const passes = elaguer();
+      passes.push({ niveau: n, fin: performance.now() + duree });
+      if (passes.length > 16) {
+        passes.sort((a, b) => b.fin - a.fin);
+        passes.length = 16;
       }
+      armer();
     } else {
       amb.base = n;
     }
     if (n === 3) jouer('ovation');
     else ouvrir();
     appliquer();
+    return voulu();
+  }
+
+  /* ============================================== la rumeur suit le match
+
+     **Le match dit où en est la tribune ; la page ne compte pas les
+     niveaux** (lot 6). Le Virage et le duel posaient chacun leurs chiffres —
+     1, puis 2 quand tout compte double, 0 au coup de sifflet — et rien ne
+     disait la mi-temps, l'entrée, le vestiaire, ni que la tribune se vide.
+     Ici, un nom par moment du match, et le moteur choisit le niveau,
+     l'échelle et le temps qu'il faut pour y aller. Deux sortes :
+
+     **Les phases**, durables — on peut les redire à chaque rendu, chaque
+     seconde, sans rien déranger ni rien relancer :
+       jeu        la rumeur du match, avant le coup d'envoi comme pendant
+                  (le niveau 1, la tribune pleine) ; lève la mi-temps ;
+       mi-temps   la rumeur retombe (CREUX) et tient jusqu'à la phase
+                  suivante ;
+       fin        la tribune se vide : la rumeur s'éteint en `ms`
+                  (FIN_MS par défaut), puis se démonte. Redite, elle ne
+                  recommence pas son fondu ;
+       vestiaire  le vestiaire du duel : la rumeur à la mesure des places
+                  prises, `part` de 0 à 1 (les présents sur les attendus).
+
+     **Les moments**, passagers — une fois, à l'évènement :
+       entree     la foule qui compte : la rumeur monte du silence (ou du
+                  vestiaire) à la tribune pleine en `ms` (ENTREE_MS par
+                  défaut), le temps du compte que la page joue avec
+                  FX.compter ; puis la phase « jeu » ;
+       double     la minute qui compte double : la tribune pousse (2)
+                  pendant `ms` — la durée relative que le serveur sert
+                  (`surgeMs`, R3), une minute au plus — puis retombe seule ;
+       but        l'ovation d'un but de son camp (3) : `ambiance(3)` ;
+       arrivee    quelqu'un entre au vestiaire : la rumeur enfle
+                  (ARRIVEE_MS) et prend sa nouvelle mesure (`part`).
+
+     Tout le reste du moteur tient : rien ne démarre avant le premier geste
+     (la phase est retenue et joue au toucher), le calme et l'onglet caché
+     taisent tout et le retour reprend la phase où elle en est, et la rumeur
+     ne porte jamais seule une information — l'écran dit la mi-temps, le
+     vestiaire, la minute double. `ambiance()` reste, pour les sons de jeu
+     (une poussée : `ambiance(2, { pendant })`) et les pages d'avant. */
+  const mesure = (part) => {
+    const p = borner(Number(part) || 0, 0, 1);
+    return VESTIAIRE_VIDE + (1 - VESTIAIRE_VIDE) * p;
+  };
+  /** Le contexte tourne-t-il assez pour qu'une transition s'entende ? */
+  const entendu = () => Boolean(ctx && ctx.state === 'running' && !calme() && !document.hidden);
+  function phase(nom, echelle) {
+    amb.phase = nom;
+    amb.base = 1;
+    amb.echelle = echelle;
+  }
+  const RUMEUR = {
+    jeu: () => phase('jeu', 1),
+    'mi-temps': () => phase('mi-temps', CREUX),
+    vestiaire: (o) => phase('vestiaire', mesure(o.part)),
+    fin: (o) => {
+      if (amb.phase === 'fin') return;
+      amb.phase = 'fin';
+      amb.base = 0;
+      amb.passes = [];
+      armer();
+      if (entendu() && amb.lit) amb.fondu = borner(Number(o.ms) || FIN_MS, 300, 30000) / 3000;
+    },
+    entree: (o) => {
+      /* Trois constantes de temps pour la durée du compte : à son dernier
+         chiffre, la rumeur est à 95 % de la tribune pleine. Sans contexte
+         qui tourne encore (aucun geste), la phase est retenue et la
+         rumeur viendra au premier toucher, à son pas ordinaire : le compte
+         est fini depuis longtemps. */
+      phase('jeu', 1);
+      if (entendu()) amb.fondu = borner(Number(o.ms) || ENTREE_MS, 150, 10000) / 3000;
+    },
+    double: (o) => {
+      const ms = o.ms === undefined || o.ms === null ? DOUBLE_MS : borner(Number(o.ms) || 0, 0, DOUBLE_MS);
+      if (ms > 0) ambiance(2, { pendant: ms });
+    },
+    but: () => { ambiance(3); },
+    arrivee: (o) => {
+      phase('vestiaire', mesure(o.part));
+      ambiance(2, { pendant: ARRIVEE_MS });
+    },
+  };
+  /* Les moments dont l'ambiance() appelée ci-dessus a déjà tout fait. */
+  const SANS_APPLIQUER = new Set(['double', 'but', 'arrivee']);
+
+  /**
+   * La rumeur suit le match. Voir l'en-tête de la section pour chaque nom.
+   *
+   * @param {string} moment  « jeu », « mi-temps », « fin », « vestiaire »,
+   *   « entree », « double », « but » ou « arrivee » ; un autre nom ne fait
+   *   rien
+   * @param {object} [o]
+   * @param {number} [o.ms]    la durée de l'entrée, de la fin ou de la
+   *   minute double, en millisecondes
+   * @param {number} [o.part]  au vestiaire, les places prises, de 0 à 1
+   * @returns {number} le niveau voulu désormais
+   */
+  function rumeur(moment, o = {}) {
+    const f = Object.prototype.hasOwnProperty.call(RUMEUR, moment) ? RUMEUR[moment] : null;
+    if (!f) return voulu();
+    f(o ?? {});
+    if (!SANS_APPLIQUER.has(moment)) {
+      ouvrir();
+      appliquer();
+    }
     return voulu();
   }
 
@@ -1181,13 +1440,25 @@
      l'oreille. Équilibrées au banc (huit temps à 560 ms) : tambour seul
      −23,7 LUFS, claps seuls −23,0 ; le chant « tempo » entier −20,4, le
      contretemps −23,8, la marche −23,1, le roulement −20,9 : dans la
-     fenêtre du jeu. */
-  const MIX_CHANT = { tambour: 0.164, clap: 0.856 };
+     fenêtre du jeu.
+
+     Chaîne chaude (4 octobre 2026, voir CHAUFFE), la sonie des chants ne
+     bouge pas — leurs cent millisecondes les plus fortes tombaient déjà
+     limiteur ouvert —, mais leur premier temps sort entier : le « tempo »
+     montait à −6,47 dBFS de crête, au-dessus de CRETE_SEULE. Les deux voix
+     baissent ensemble d'un demi-décibel (0,164 et 0,856 avant) : tambour
+     seul −24,3, claps seuls −23,5 ; le « tempo » −20,9 (crête −7,0), le
+     contretemps −24,2, la marche −23,6, le roulement −21,4, l'écho −21,9. */
+  const MIX_CHANT = { tambour: 0.155, clap: 0.808 };
   /** Les bornes d'un tempo : en deçà ce n'est plus un temps, au-delà plus un rythme. */
   const TEMPO = { min: 150, max: 2000, defaut: 560 };
   /** Le plus long chant compté : au-delà, on s'arrête là. Un chant sans fin
       se demande avec « temps: Infinity ». */
   const TEMPS_MAX = 512;
+  /** Le retard de la première frappe en deçà duquel tout le chant glisse
+      plutôt que de la perdre (voir « chant ») : la latence de sortie d'un
+      téléphone, avec sa marge. En secondes. */
+  const RATTRAPE = 0.15;
 
   /**
    * Le plan d'un chant : la liste de ses temps, et de ses frappes. Un chant
@@ -1241,6 +1512,39 @@
   }
 
   /**
+   * L'instant de l'horloge audio où il faut poser un son pour qu'il
+   * **s'entende** à l'instant `p` de la page (`performance.now()`, en ms).
+   *
+   * La sortie a sa latence : quelques millisecondes sur un ordinateur, plus
+   * de cent sur certains téléphones avec un casque sans fil. Un tambour posé
+   * à l'instant où le pavé bat s'entend donc une latence plus tard, et un
+   * joueur qui frappe sur ce qu'il entend frappe en retard sur ce que le
+   * serveur note. Le navigateur sait dire quel échantillon sort à quel
+   * instant de la page (« getOutputTimestamp ») : on s'en sert. Sans lui
+   * (un Safari d'avant 14.1), la latence que le contexte déclare,
+   * retranchée de l'horloge.
+   *
+   * **Rien tant que l'horloge n'a pas tourné.** Un contexte né dans le
+   * geste même se dit « running » une centaine de millisecondes avant que
+   * son horloge ne bouge : elle reste à zéro, l'horodatage aussi, et l'on
+   * ne sait pas encore à quel instant de la page correspondra son premier
+   * échantillon. Calé à ce moment-là, le premier chant d'une visite
+   * s'entendait un dixième de seconde derrière le pavé (mesuré au banc du
+   * lot 6). On rend donc `null`, et le chant attend de pouvoir se caler.
+   */
+  function horlogeDe(c, p) {
+    try {
+      const ts = c.getOutputTimestamp?.();
+      if (ts && ts.performanceTime > 0 && Number.isFinite(ts.contextTime)) {
+        return ts.contextTime + (p - ts.performanceTime) / 1000;
+      }
+    } catch { /* sans horodatage de sortie : le repli */ }
+    if (!(c.currentTime > 0)) return null;
+    const latence = Number(c.outputLatency) || Number(c.baseLatency) || 0;
+    return c.currentTime + (p - performance.now()) / 1000 - latence;
+  }
+
+  /**
    * Un chant à l'unisson d'un geste.
    *
    * Les frappes sont posées sur l'horloge audio, pas sur des minuteries :
@@ -1248,6 +1552,24 @@
    * audio jamais. On les pose un quart de seconde en avance, par petits
    * paquets — un chant ouvert ne peut pas être dressé en entier, et un chant
    * qu'on arrête ne doit pas laisser vingt frappes déjà parties.
+   *
+   * **Calé sur le geste** (`origine`, lot 6) : l'instant `performance.now()`
+   * où le geste commence, celui dont le serveur compte les frappes. Chaque
+   * frappe s'entend à `origine + debut + k × tempo`, latence de sortie
+   * comprise. Sans origine, c'est l'instant de l'appel : la salle de
+   * répétition appelle le chant juste avant d'ouvrir le geste, et c'est
+   * bien de là que le geste compte. Le chant partait avant trente
+   * millisecondes après l'appel, plus la latence de la sortie — le temps
+   * entendu tombait d'autant derrière le temps noté.
+   *
+   * **Et si la première frappe est déjà passée ?** De peu (moins de
+   * RATTRAPE) — l'écho frappe à l'instant zéro, que la latence de sortie a
+   * déjà dépassé quand le chant part ; le crescendo ne le fait plus depuis
+   * que sa grille lui donne un temps d'avance (lot 6) —, tout le chant
+   * glisse d'autant : le motif reste entier, son rythme intact, juste un peu
+   * après le pavé. De beaucoup — un chant demandé bien après son origine —,
+   * les frappes passées se taisent et les suivantes tombent sur la grille :
+   * un temps entendu en retard ferait taper à contretemps.
    *
    * @param {string} type  « tempo », « contretemps », « marche », « roulement »
    *   ou « frappes » (avec « instants »)
@@ -1259,6 +1581,9 @@
    * @param {number} [o.debut=0]    en millisecondes, avant le premier temps
    * @param {number[]} [o.instants] les instants des frappes, en
    *   millisecondes depuis le début (« gestes.echo.instants »)
+   * @param {number} [o.origine]    l'instant zéro, en temps de la page
+   *   (`performance.now()`) : celui du geste que le chant accompagne ;
+   *   absent, l'instant de l'appel
    * @returns {{ arreter(): void, duree: number, joue: boolean }}
    */
   function chant(type, o = {}) {
@@ -1270,18 +1595,54 @@
     if (!c || !chaine || !pretAJouer(c)) return sansChant(plan.duree);
     let voix;
     try { voix = voixDuChant(c, chaine.bus.effets); } catch { return sansChant(plan.duree); }
-    const t0 = c.currentTime + 0.03;
+    const donnee = o?.origine == null ? NaN : Number(o.origine);
+    const origine = Number.isFinite(donnee) ? donnee : performance.now();
     const ch = { c, voix, minuterie: 0 };
+    /* L'instant zéro sur l'horloge audio, posé dès qu'elle tourne (voir
+       « horlogeDe »), et **relu à chaque paquet** de frappes : l'horodatage
+       d'un contexte tout juste démarré se corrige pendant ses premières
+       centaines de millisecondes — calé une fois au départ, le premier chant
+       d'une visite tombait juste sur son premier temps et vingt-deux
+       millisecondes derrière les suivants (mesuré au banc du lot 6). Une
+       frappe déjà posée ne bouge plus ; celles d'après suivent la meilleure
+       estimation. La première frappe passée de peu : tout le chant glisse
+       (voir plus haut), d'un décalage décidé une fois. */
+    let t0 = null;
+    let decalage = null;
+    const caler = () => {
+      const t = horlogeDe(c, origine);
+      if (t === null) return t0 !== null;
+      if (decalage === null) {
+        const retard = c.currentTime + 0.01 - (t + plan.frappesDu(0)[0].t);
+        decalage = retard > 0 && retard < RATTRAPE ? retard : 0;
+      }
+      t0 = t + decalage;
+      return true;
+    };
     let i = 0;
     const AVANCE = 0.25;
+    const appel = performance.now();
     const avancer = () => {
       if (chantEnCours !== ch) return;
-      const horizon = c.currentTime + AVANCE;
+      if (c.state === 'closed') { arreterChant(ch); return; }
+      /* L'horloge ne tourne pas encore : on revient dans un instant. Deux
+         secondes au plus — une horloge qui ne part jamais ne laisse pas une
+         minuterie tourner toute la partie. */
+      if (!caler()) {
+        if (performance.now() - appel > 2000) { arreterChant(ch); return; }
+        ch.minuterie = setTimeout(avancer, 15);
+        return;
+      }
+      const maintenant = c.currentTime;
+      const horizon = maintenant + AVANCE;
       try {
         while (i < plan.n) {
           const frappes = plan.frappesDu(i);
           if (t0 + frappes[0].t > horizon) break;
-          for (const f of frappes) frapper(c, voix, f, t0);
+          /* Une frappe passée se tait (voir plus haut) ; les suivantes
+             jouent. Cinq millisecondes de grâce : un départ à peine passé
+             part tout de suite, et c'est le même instant à l'oreille. */
+          for (const f of frappes) if (t0 + f.t >= maintenant - 0.005) frapper(c, voix, f, t0);
           i += 1;
         }
       } catch { arreterChant(ch); return; }
@@ -1295,6 +1656,84 @@
     chantEnCours = ch;
     avancer();
     return { arreter: () => arreterChant(ch), duree: plan.duree, joue: true };
+  }
+
+  /* ------------------------------------------- le chant d'un geste (lot 6)
+
+     Trois écrans accompagnent un geste de rythme — la salle de répétition,
+     le Virage, le duel —, et chacun aurait écrit le passage du geste au
+     chant : quel motif, combien de temps, à partir de quand. C'est là
+     qu'une copie diverge (le contretemps compte un temps de plus que ses
+     frappes ; le tempo bat son premier temps au bout d'un intervalle, pas à
+     l'ouverture).
+
+     **Les instants viennent de `geste.js`, et de lui seul** (lot 6). Ils y
+     sont calculés une fois, par `TBF_GESTE.grille(geste, gestes)` : la
+     pulsation que le pavé dessine, et que le serveur note. Ce moteur les
+     recopiait d'après le dessin, dans sa propre table — deux sources qui
+     devaient rester d'accord, et `son:smoke` ne les comparait que sur le
+     tempo. Le crescendo en a donné la preuve : sa grille lui a pris un
+     temps d'avance (le premier temps un intervalle après l'ouverture, soit
+     `instants[1] − instants[0]`, 700 ms sur la configuration servie), et le
+     pavé et le chant ont bougé ensemble sans qu'une ligne change ici —
+     recopié, le chant aurait battu 700 ms avant le pavé, et le joueur qui
+     suit le son aurait tapé à côté. Sans `geste.js` dans la page, ou sans
+     grille pour ces durées (configuration absente, intervalle illisible,
+     instants vides), rien ne chante : aucun tempo n'est inventé, et un chant
+     ne va jamais sans le pavé qu'il accompagne.
+
+     Ce qui reste ici, c'est le son : ce que la tribune frappe sur chaque
+     pulsation.
+
+       tempo        le tambour et les claps sur chaque temps (un tambour plus
+                    fort tous les quatre) ;
+       contretemps  le tambour sur le temps, les claps entre deux — la
+                    pulsation y bat un temps de plus que les frappes ;
+       echo         tambour et claps aux instants de la démonstration — le
+                    joueur la refait ensuite en silence, c'est le geste ;
+       crescendo    tambour et claps aux instants de la pulsation qui
+                    accélère, après le temps d'avance de sa grille.
+
+     Les vingt autres gestes du serveur (martelage, salves, relance,
+     sang-froid, le tifo, les épreuves…) n'ont pas de pulsation à suivre :
+     pas de chant, et la poignée rendue ne joue rien. */
+  const MOTIF_DU_GESTE = { tempo: 'tempo', contretemps: 'contretemps', echo: 'frappes', crescendo: 'frappes' };
+
+  /** Les pulsations du geste, telles que `geste.js` les dessine, ou `null`. */
+  function pulsationsDu(geste, gestes) {
+    let gr = null;
+    try { gr = window.TBF_GESTE?.grille?.(geste, gestes) ?? null; } catch { gr = null; }
+    const p = Array.isArray(gr?.pulsations) ? gr.pulsations.map(Number) : [];
+    return p.length && p.every((t) => Number.isFinite(t) && t >= 0) ? p : null;
+  }
+
+  /**
+   * Le chant d'un geste de rythme, sur les durées que le serveur a servies.
+   *
+   * À appeler **juste avant** d'ouvrir le geste (`TBF_GESTE.jouer`), avec le
+   * même instant pour origine — que la page donne aussi au geste
+   * (`{ zone, origine }`) —, et à arrêter à la fermeture de la fenêtre
+   * (`arreter()` de la poignée, ou `arreterChant()`). Les instants sont ceux
+   * de `TBF_GESTE.grille` (voir plus haut) : la page doit charger `geste.js`.
+   *
+   * @param {string} geste   le geste (« tempo », « contretemps », « echo »,
+   *   « crescendo » ; tout autre ne chante pas)
+   * @param {object} gestes  la configuration servie (`S.you.gestes` au
+   *   Virage, `moi.gestes` au duel, `/api/repetition` à la répétition)
+   * @param {object} [o]
+   * @param {number} [o.origine]  l'instant `performance.now()` où le geste
+   *   commence ; absent, le chant part tout de suite (voir « chant »)
+   * @returns {{ arreter(): void, duree: number, joue: boolean }}
+   */
+  function chantDuGeste(geste, gestes, { origine } = {}) {
+    const motif = Object.prototype.hasOwnProperty.call(MOTIF_DU_GESTE, geste) ? MOTIF_DU_GESTE[geste] : null;
+    const instants = motif ? pulsationsDu(geste, gestes) : null;
+    if (!instants) { arreterChant(); return sansChant(); }
+    /* L'intervalle donne sa mesure au temps : la place des claps du
+       contretemps, entre deux pulsations, et la durée du dernier temps. */
+    const pas = Number(gestes?.[geste]?.interval);
+    return chant(motif, { instants, ...(pas > 0 ? { tempo: pas } : {}),
+      ...(origine != null ? { origine } : {}) });
   }
 
   /* ===================================================== calme et onglet
@@ -1413,13 +1852,49 @@
      contrôle, et rend le tampon. Le hasard repart de la graine donnée : deux
      rendus du même son sont identiques. */
   const DEBUT_RENDU = 0.02;
-  async function rendre(quoi = {}, { duree = 2, frequence = 48000, graine: g = 1 } = {}) {
+  /* **La chaîne chauffe avant qu'on mesure** (lot 6). Le compresseur de
+     Chrome, notre limiteur, naît fermé : son détecteur part de zéro, il
+     écrase tout ce qui passe, et ne s'ouvre qu'en deux dixièmes de seconde.
+     Un sinus à −20 dB sort à −27,5 à 20 ms du début d'un rendu, −23,4 à
+     50 ms, −21,0 à 100 ms, et −20,0 à partir de 200 ms (mesuré le 4 octobre
+     2026). Le banc posait chaque son à 20 ms : tout ce qui est bref était
+     mesuré limiteur fermé — le tic à −19,5 dBFS de crête, quand le même tic
+     posé une seconde plus tard en fait −11,5 —, six à huit décibels sous ce
+     que le joueur entend. Car dans le jeu la chaîne tourne depuis le premier
+     geste, et le limiteur est grand ouvert quand le tic part. Une rafale de
+     tics le montrait : le premier sonnait comme dans la banque, les suivants
+     huit décibels au-dessus. On chauffe donc la chaîne une demi-seconde
+     dans le silence — comme le jeu entre deux sons — et le tampon rendu
+     commence là.
+
+     Le tout premier son d'une visite, celui du toucher qui fait naître le
+     contexte, passait, lui, limiteur fermé (treize décibels sous la banque,
+     mesuré dans Chrome) : c'est NAISSANCE, plus haut, qui l'ouvre à temps.
+     La chauffe reste pourtant : elle mesure la chaîne telle qu'elle tourne
+     en jeu, relâche ordinaire comprise, et non pendant ses soixante
+     premières millisecondes. `chauffe: 0` rend depuis la naissance, pour
+     éprouver NAISSANCE elle-même (`son:smoke`, `son:banc`). */
+  const CHAUFFE = 0.5;
+  /**
+   * @param {object} quoi  ce qu'on rend : `son`, `sons`, `suite`, `ambiance`
+   *   (et `echelle`), `chant` (et ses options), `sinus`
+   * @param {object} [o]
+   * @param {number} [o.duree=2]       en secondes, ce que dure le tampon rendu
+   * @param {number} [o.graine=1]      le hasard des bruits et des éclats
+   * @param {number} [o.chauffe]       en secondes, le silence qui chauffe la
+   *   chaîne avant le tampon (CHAUFFE par défaut ; 0 : depuis la naissance)
+   * @returns {Promise<AudioBuffer|null>}
+   */
+  async function rendre(quoi = {}, { duree = 2, frequence = 48000, graine: g = 1, chauffe = CHAUFFE } = {}) {
     const OAC = window.OfflineAudioContext ?? window.webkitOfflineAudioContext;
     if (typeof OAC !== 'function') return null;
     graine = (Number(g) >>> 0) || 1;
-    const c = new OAC(2, Math.ceil(frequence * duree), frequence);
+    // La chaîne chauffe d'abord dans le silence (voir CHAUFFE), puis le rendu.
+    const avant = Math.round(frequence * borner(Number(chauffe) || 0, 0, 2));
+    const longueur = Math.ceil(frequence * duree);
+    const c = new OAC(2, avant + longueur, frequence);
     const ch = construireChaine(c, 1);
-    const t = DEBUT_RENDU;
+    const t = avant / frequence + DEBUT_RENDU;
     if (Number.isFinite(quoi.sinus)) {
       const o = c.createOscillator();
       o.frequency.value = 997;
@@ -1431,13 +1906,27 @@
     for (const nom of [quoi.son, ...(quoi.sons ?? [])].filter(Boolean)) {
       if (existe(nom)) jouerDans(c, ch, nom, quoi.options, t);
     }
+    /* « suite » : des sons de la banque posés chacun à son instant, en
+       millisecondes depuis le début du rendu (lot 6). Le pavé fait un tic à
+       chaque frappe — jusqu'à dix par seconde au martelage —, et le banc doit
+       entendre cette rafale par-dessus le tambour d'un chant, pas un tic
+       seul : c'est leur densité, plus que leur force, qui pourrait couvrir le
+       chant. Ils passent avant le chant et ne tirent aucun hasard : le chant
+       rendu avec eux est, frappe pour frappe, celui qu'on rend sans eux. */
+    for (const x of Array.isArray(quoi.suite) ? quoi.suite : []) {
+      const ms = Number(x?.a);
+      if (existe(x?.son) && Number.isFinite(ms) && ms >= 0) jouerDans(c, ch, x.son, x.options, t + ms / 1000);
+    }
     if (quoi.ambiance) {
       const n = Math.round(borner(Number(quoi.ambiance), 1, 3));
-      const lit = construireLit(c, ch.bus.ambiance);
+      /* « echelle » : la rumeur creusée ou à demi pleine (la mi-temps, le
+         vestiaire), pour mesurer que la retombée s'entend. */
+      const echelle = quoi.echelle == null ? 1 : borner(Number(quoi.echelle) || 0, 0, 1);
+      const lit = construireLit(c, ch.bus.ambiance, echelle);
       reglerLit(lit, n, 0, 0);
       // Les éclats, au rythme du niveau, comme le jeu les tire.
       const pas = NIVEAUX_AMBIANCE[n].eclats / 1000;
-      for (let x = t + pas * (0.5 + alea()); x < duree - 0.7; x += pas * (0.5 + alea())) {
+      for (let x = t + pas * (0.5 + alea()); x < t + duree - 0.72; x += pas * (0.5 + alea())) {
         eclats(c, lit.eclats, x, 1 + Math.floor(alea() * (n >= 2 ? 3 : 1.6)), NIVEAUX_AMBIANCE[n].eclat);
       }
     }
@@ -1451,7 +1940,14 @@
         }
       }
     }
-    return c.startRendering();
+    /* Le tampon rendu commence où la chauffe finit : pour qui le lit, le son
+       part toujours à DEBUT_RENDU, comme avant. */
+    const plein = await c.startRendering();
+    const tampon = c.createBuffer(plein.numberOfChannels, longueur, frequence);
+    for (let k = 0; k < plein.numberOfChannels; k++) {
+      tampon.copyToChannel(plein.getChannelData(k).subarray(avant, avant + longueur), k);
+    }
+    return tampon;
   }
 
   /** Ce que le moteur fait en ce moment : pour la suite, et pour qui cherche. */
@@ -1460,7 +1956,9 @@
     geste: vuGeste,
     /** Les sons ponctuels qui sonnent encore (rumeur et chants à part). */
     enCours: enCours.size,
-    ambiance: { base: amb.base, passager: amb.passe?.niveau ?? 0, voulu: voulu(), joue: amb.lit ? amb.joue : 0 },
+    ambiance: { base: amb.base, passager: passager(), voulu: voulu(), joue: amb.lit ? amb.joue : 0 },
+    /** La phase de « rumeur » et l'échelle voulue (1 : la tribune pleine). */
+    rumeur: { phase: amb.phase, echelle: amb.echelle },
     chant: Boolean(chantEnCours),
     volume: volumeJoueur,
   });
@@ -1468,7 +1966,9 @@
   window.TBF_SON = {
     jouer,
     ambiance,
+    rumeur,
     chant,
+    chantDuGeste,
     arreterChant: () => arreterChant(),
     volume,
     ouvrir,
@@ -1479,6 +1979,10 @@
     noms: () => Object.keys(BANQUE),
     /** Les types de chant. */
     chants: () => Object.keys(CHANTS),
+    /** Les moments de la rumeur (voir « rumeur »). */
+    rumeurs: () => Object.keys(RUMEUR),
+    /** Les gestes qui ont un chant (voir « chantDuGeste »). */
+    gestesChantes: () => Object.keys(MOTIF_DU_GESTE),
     etat,
     rendre,
     /* Le mixage tel que le banc le mesure et que la suite le vérifie : les
@@ -1496,6 +2000,9 @@
          passe au-dessus : c'est le seul). */
       ambiancePlafonds: NIVEAUX_AMBIANCE.map((N) => (N.sousInterface
         ? FAMILLES.interface.fenetre[0] - MARGE_RUMEUR : null)),
+      /* Les deux échelles de la rumeur (voir « l'échelle de la rumeur ») :
+         la mi-temps et le vestiaire vide. */
+      echelles: { creux: CREUX, vestiaire: VESTIAIRE_VIDE },
       creteSeule: CRETE_SEULE,
       creteMax: CRETE_MAX,
       limiteur: { ...LIMITEUR },
