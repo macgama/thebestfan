@@ -2161,7 +2161,8 @@ Par ordre d'utilité.
     foulard, la corde et les silhouettes** sont faits au lot 7, dans `main`
     depuis le 5 octobre 2026 (pas encore en ligne), comme **le Fanzzy
     vivant** (point 4), dont le clignement attend une image « yeux fermés »
-    par Fanzzy. Et `nvn:net`, que
+    par Fanzzy, et **le duel vivant** (les deux Fanzzy en tribune dans
+    l'arène du duel). Et `nvn:net`, que
     `npm test` ne lance pas. Les deux fautes de
     `ui.css` que le dernier rapport du lot avait laissées — l'accent de
     « CÈDE » dans la case de BD, deux mouvements des gestes sans leurs doubles

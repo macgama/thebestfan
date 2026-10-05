@@ -25,7 +25,9 @@ temporaire de la session ; ce qui doit durer est ici.*
   sur l'accueil et dans le tiroir. Sans schéma ; un redémarrage hors d'un
   match (`A-DEPLOYER.md`). Et le Fanzzy vivant (point 4 du lot 7) : il
   raconte le dernier match, répond quand on insiste, fête le retour du
-  joueur ; une page seulement.
+  joueur ; une page seulement. Puis le duel vivant : les deux Fanzzy en
+  tribune dans l'arène du duel, qui vivent poussées, buts et coups ; une page
+  seulement, avec le but du vrai match qui y faisait lever la page, réparé.
 - **À venir** : les sons, au choix de Gaël, et le clignement des Fanzzy, qui
   attend leurs images « yeux fermés ».
 
@@ -61,7 +63,9 @@ temporaire de la session ; ce qui doit durer est ici.*
    4 quadragies octies) : il raconte le dernier match de son club, il répond
    autrement quand on insiste à le toucher, il fête le retour du joueur. Le
    clignement des yeux attend une image « yeux fermés » par Fanzzy, que Gaël
-   produit (une pour RP1 d'abord).
+   produit (une pour RP1 d'abord). **Au duel aussi**, filmé pour Gaël le même
+   jour (`HISTORIQUE.md`, 4 quadragies novies) : les deux Fanzzy en tribune
+   se tiennent dans l'arène et vivent poussées, buts et coups d'en face.
 3. **Les sons Artlist** (la rumeur, le but, les tambours) : Gaël doit les
    écouter et dire lesquels on garde (`art/son/_src/artlist/A-ECOUTER.md`).
 4. **Les vieux buts** : fait, dans `main`. Le relevé redemande les
@@ -87,7 +91,9 @@ temporaire de la session ; ce qui doit durer est ici.*
    sonde du jour de jeu l'attend (`mysql_tzinfo_to_sql /usr/share/zoneinfo |
    mysql -uroot mysql`, puis `SET GLOBAL time_zone = 'Europe/Zurich'`), sans
    quoi `quotidien:smoke`, `recompenses:smoke` et `admin:smoke` rougissent sur
-   les jours de 23 et de 25 heures.
+   les jours de 23 et de 25 heures. Et `images:test` lit `TEMP`, une variable
+   de Windows : ailleurs, lancer `TEMP=<un dossier> npm test`, sans quoi elle
+   s'arrête avant son premier contrôle.
 
 ## Comment on travaille
 
