@@ -1,5 +1,36 @@
 # À déposer sur Infomaniak
 
+**Le foulard, la corde tressée, et le monde qu'on voit enfin** (branche
+`claude/project-thread-iatg2m`, PR #3, 5 octobre 2026). Elle part de la
+branche du relevé des buts, juste en dessous, et se dépose avec elle.
+
+- `src/server/ferveur/virage.js`, `src/shared/reglages.js` : quand le camp
+  qui mène n'a personne qui chante en face, la corde retombe de 3 points par
+  seconde au lieu de 1,4. Réglage `virage.decroissance_vide`, dans la
+  section Virage de l'administration ; à 1,4, on revient à l'ancien jeu. La
+  corde qui retombe part aussi aux écrans, deux fois par seconde au plus,
+  avec `pousse` : le camp qui a vraiment poussé depuis la diffusion
+  précédente. Contrat : `serveur/CONTRATS.md`, § 16.7. Contrôlé par `npm run
+  salles:test`.
+- `public/virage.html` : « PERSONNE EN FACE » sur la tribune vide, et la
+  foule ne saute plus que lorsque son camp a poussé. Contrôlé par `npm run
+  virage:ui`.
+- `public/index.html`, `public/menu.js`, `public/ui.css` : le bandeau de
+  l'accueil (« 37 supporters dans les virages · 3 duels attendent un
+  joueur »), qui mène là où il y a le plus de monde, et les mêmes nombres
+  sur les tuiles VIRAGE et DUEL du tiroir. Contrôlé par `npm run accueil:ui`
+  et `npm run menu:smoke`.
+- `public/ui.css`, `public/img/arene/foulard-noeud.*` : le foulard noué au
+  Virage et au duel, la corde tressée et les six silhouettes au pochoir
+  (points 1 à 3 du brief du lot 7).
+
+**Aucun schéma** : le réglage nouveau vaut 3 tant que personne n'y touche.
+Un redémarrage, hors d'un match en direct, puis relever `/healthz`. Les
+pages tolèrent le serveur d'avant (sans `pousse`, la foule suit le sens de
+la corde), mais le serveur et les pages partent ensemble.
+
+---
+
 **Le relevé des buts et le voile du Virage** (branche
 `claude/project-thread-jyhm3m`, 5 octobre 2026). Le lot 6 est en ligne depuis
 le 5 octobre 2026 (schéma `sql/arenes.sql` appliqué, serveur redémarré) : ce
