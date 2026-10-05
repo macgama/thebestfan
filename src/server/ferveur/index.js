@@ -211,6 +211,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         homeGoals: f.home_goals, awayGoals: f.away_goals,
       },
       emit: (event, payload) => io.to(`virage:${fixtureId}`).emit(event, payload),
+      /* La main d'un joueur, à **toutes ses sockets** dans cette salle : la
+         carte tirée au battement doit apparaître dans chacun de ses onglets,
+         pas seulement dans celui qui a joué. La table est celle qu'`attacher`
+         remplit, rangée sous l'identifiant du match qu'elle tient — `f.id`. */
+      emitVous: (userId, you) => aSesOnglets(f.id, userId, you),
       /* **Le `catch` n'est pas de la politesse.**
 
          La salle appelle ce crochet à chaque chant et ne l'attend pas : c'est
@@ -390,6 +395,25 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     if (parJoueur && !parJoueur.size) socketsDe.delete(fixtureId);
     rooms.get(fixtureId)?.leave(userId);
   }
+
+  /**
+   * La main d'un joueur — `virage:vous` —, à chacune de ses sockets dans la
+   * salle de ce match.
+   *
+   * Le seul chemin par lequel elle part : au tirage (le battement de la
+   * salle) comme après une carte jouée. Un second onglet n'a pas d'autre
+   * moyen de l'apprendre, et une main qu'il garde périmée ne se répare pas
+   * seule — ses cartes répondent « plus dans ta main », les neuves restent
+   * invisibles.
+   */
+  function aSesOnglets(fixtureId, userId, you) {
+    for (const s of socketsDe.get(fixtureId)?.get(userId) ?? []) s.emit('virage:vous', you);
+  }
+
+  /* Les refus d'une carte qui disent que la page s'est trompée sur la main,
+     les recharges ou le souffle — pas sur le match ni sur la carte. */
+  const REFUS_DE_MAIN = new Set(['ferveur.error.card_not_in_hand',
+    'ferveur.error.card_on_cooldown', 'ferveur.error.not_enough_breath']);
 
   /** La salle que cette socket a rejointe, s'il y en a une. */
   const salleDe = (socket) => {
@@ -768,10 +792,24 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       try {
         const evenements = room.jouer(u.userId, cardId);
         io.to(`virage:${fixtureId}`).emit('virage:events', { evenements });
-        socket.emit('virage:vous', room.snapshotFor(u.userId).you);
+        /* **À tous ses onglets**, et pas à celui-ci seul. Le tirage du
+           battement les couvrait presque tous — une carte jouée en appelle
+           une autre —, mais pas le Changement de chant : il refait cinq
+           cartes d'un coup, sans tirage à venir, et l'autre onglet gardait
+           l'ancienne main sans limite de temps. */
+        aSesOnglets(fixtureId, u.userId, room.snapshotFor(u.userId).you);
       } catch (e) {
-        if (e instanceof Cheat) socket.emit('virage:error', { code: e.code });
-        else {
+        if (e instanceof Cheat) {
+          socket.emit('virage:error', { code: e.code });
+          /* **Le filet.** Un tel refus prouve que cette page voit une autre
+             main, d'autres recharges ou un autre souffle que la salle : on
+             les lui renvoie, et l'écart se répare de lui-même au lieu de
+             durer jusqu'au rechargement. À elle seule — rien n'a changé pour
+             les autres onglets. Borné par le seau des cartes, plus haut. */
+          if (REFUS_DE_MAIN.has(e.code) && room.members.has(u.userId)) {
+            socket.emit('virage:vous', room.snapshotFor(u.userId).you);
+          }
+        } else {
           console.error('[virage] carte', e);
           socket.emit('virage:error', { code: 'ferveur.error.server' });
         }
@@ -791,18 +829,27 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
    * Appelé par le worker API-Football. Le but secoue la corde, ouvre la minute
    * double, et la frappe des cartes-souvenirs suit dans la foulée : les
    * présents sont exactement ceux qui viennent de chanter.
+   *
+   * Rend `true` quand une salle l'a annoncé. `false` sans salle, **et pour un
+   * but que la salle connaît déjà** : au tableau à son ouverture — le relevé
+   * l'apporte en retard, et personne dans la tribune ne l'a vu tomber —, ou
+   * déjà annoncé ici et revenu sous une autre identité, quand l'API corrige
+   * le buteur. Voir `VirageRoom.realGoal`. `server.js` ne lit pas ce retour
+   * aujourd'hui : la carte-souvenir d'un but ancien se frappe quand même, et
+   * va aux chanteurs des deux dernières minutes, quel que soit l'âge du but ;
+   * celle d'un but revenu, non — elle porte son rang, déjà frappé.
    */
   function realGoal(goal) {
     const room = rooms.get(goal.fixtureId);
     if (!room) return false;
-    room.realGoal({
+    return room.realGoal({
       teamId: goal.teamId, minute: goal.minute, player: goal.player,
       // Le relevé porte le score à l'instant du but. Le recompter à partir des
       // buts vus depuis l'ouverture de la salle afficherait 1–0 à qui est
-      // entré à la soixantième minute d'un 3–2.
+      // entré à la soixantième minute d'un 3–2. C'est aussi lui qui date le
+      // but : sans lui, la salle ne peut pas savoir qu'il est ancien.
       score: goal.score ?? null,
     });
-    return true;
   }
 
   /* ------------------------------------------------- le fil, venu du worker */

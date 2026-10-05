@@ -5,10 +5,10 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : lot 4 de la refonte FAIT MAIN, « la collection » — la
-carte redessinée pour sept écrans et son écran de test, l'album commun au
-classeur et à la collection, le vestiaire, la fiche budgétée, la vitrine
-commune, et les cinq reliquats de la vague précédente —, 4 octobre 2026.
+Dernière mise à jour : l'intégration qui a suivi le lot 4 — le correctif
+serveur des salles du Grand Virage, le sachet de LA REPRISE, la photo du tunnel
+de l'écran d'ouverture et les reliquats du lot 4 —, 5 octobre 2026. Avant elle,
+le lot 4 de la refonte FAIT MAIN, « la collection », le 4 octobre.
 
 ## Par où entrer, selon ce qu'on cherche
 
@@ -1405,10 +1405,10 @@ Google Fonts, sinon elle échoue). `node scripts/cartes-ui-smoke.mjs --servir
 
 ### Les suites de contrôle
 
-**Soixante-deux suites**, lancées ensemble par `npm test`. Elles se divisent en
+**Soixante-quatre suites**, lancées ensemble par `npm test`. Elles se divisent en
 deux groupes qu'il faut connaître avant de s'inquiéter d'un rouge :
 
-- **vingt-quatre ne demandent rien** — ni base, ni réseau, ni clé d'API. Elles
+- **vingt-six ne demandent rien** — ni base, ni réseau, ni clé d'API. Elles
   tournent sur n'importe quelle machine, tout de suite (sauf `cartes:ui`, qui
   veut Google Fonts) ;
 - **trente-huit demandent MySQL.** Sans base, elles ne rougissent pas : elles
@@ -1435,12 +1435,22 @@ contrôles) et fait grandir `fanzzy:ui` (228 → 248), `aide:smoke` (31 → 48 :
 recharge due avant le booster des premiers pas, la panne en 503, et le câblage
 de `server.js`, qu'elle lit), `quotidien:smoke` (205 → 216 : les insignes du
 carnet) et `tour:ui` (343 → 345 : l'accueil et l'anneau du collectionneur disent
-le même compte). Au dernier passage, le 4 octobre 2026 : **4 449 contrôles** en
-vingt-deux minutes. Deux suites restent rouges, comme avant le lot 0, à
-l'identique : `deck:ui` (un) et `nvn:ui` (trois) ; `fanzzy:smoke` est verte
-depuis les lots 3 et 5. `accueil:ui` est intermittente (§ 6), et `virage:ui`
-peut s'arrêter sur un délai de navigation quand un autre Chrome tourne sur le
-poste (§ 6) : relancées seules, elles passent.
+le même compte) ; à sa fin, 4 449 contrôles.
+
+Le correctif des salles du Grand Virage en a ajouté deux, sans base, qui
+montent les vrais modules sur de faux clients : `salles:test` (le vrai
+`createVirage`, un faux `io`, de fausses sockets, un faux pool, sans port) et
+`releve:test` (le vrai `createPoller`, un faux store, un faux client).
+L'intégration qui a suivi a fait grandir `matchs:ui` (46 → 50 : le penalty
+manqué, la séance de tirs au but) et `tour:ui` (345 → 347 : les filtres de
+l'album sur une rangée) ; `aide:smoke` passe à 47, et `accueil:ui` porte la
+photo du tunnel et le buteur du bandeau. Au dernier passage, le 4 octobre 2026
+de 23 h 26 à 23 h 48 : **4 708 contrôles** en vingt-deux minutes. Deux suites
+restent rouges, comme avant le lot 0, à l'identique : `deck:ui` (un) et
+`nvn:ui` (trois) ; `fanzzy:smoke` est verte depuis les lots 3 et 5.
+`accueil:ui` est intermittente (§ 6), et `virage:ui` peut s'arrêter sur un
+délai de navigation quand un autre Chrome tourne sur le poste (§ 6) : relancées
+seules, elles passent.
 
 Quatre contrôles gardent la livraison et ne demandent aucune base — à lancer
 avant tout :
@@ -1812,32 +1822,42 @@ Par ordre d'utilité.
    est dans `HISTORIQUE.md`, 4 quadragies ter, « Ce qui reste »). Les documents
    du chantier serveur sont dans `serveur/` depuis `2ff45f9`, et le lot 4 a fait
    la réserve d'une seule brique, la place de la fête de niveau, les insignes du
-   carnet et le contrat de `/api/rank/moi`. Reste : dessiner le sachet de LA
-   REPRISE (`pack-la-reprise`, absent de `ART` dans `cartes.js` : le kiosque de
-   production montre un repli) — une production d'images ; et les décisions que
-   le chantier rend à Gaël (§ 7 bis).
+   carnet et le contrat de `/api/rank/moi`. Le sachet de LA REPRISE est
+   dessiné, et en ligne depuis `0638fb5`. Reste : les décisions que le chantier
+   rend à Gaël (§ 7 bis).
 
 10. **Ce que le lot 4 laisse** (`HISTORIQUE.md`, 4 quadragies quater, « Ce qui
-    reste »). Trois fautes mineures du dernier tour : deux commentaires qui
-    disent encore NOUVEAU « sur le flanc » de la carte (`fanzzy.html` vers la
-    ligne 98, `collection.html` vers la ligne 195), et l'interrupteur du même
-    album appelé MANQUANTS au classeur et « Ce qu'il me reste » à
-    `/collection`, où il passe sur une seconde ligne. **La fabrique des cases
-    de l'album** (`cartesDe`, `caseHTML`, `vitrineHTML`) est recopiée de
-    `fanzzy.html` dans `collection.html` : une seule, dans un module partagé.
-    Côté serveur : servir `paliers.series` avec `/api/fanzzy/state` (sans lui,
-    le classeur ne montre pas la récompense d'une série complète, et il ne doit
-    pas lire la bibliothèque pour elle) ; servir la chance de tirer une carte
-    (« 1 CHANCE SUR 3 », que la fiche n'écrit pas). Dans `serveur/` :
-    `ECARTS.md` (accueil § 5) et `CONTRATS.md` (§ 5.1, « Lecteurs ») disent
-    encore que l'anneau de `/collection` montre `gagnes / possibles` ; il vise
-    le prochain cran. Et les constats de détail de la critique, laissés : les
-    pochettes des âges 2 et 3 d'une lignée absente, sans repère ; ME MONTRER
-    AINSI hors de la rangée des actions, TON AVATAR tampon sur la fiche et
-    sticker au vestiaire ; le lien « où trouver des écharpes » sous IL TE
-    FAUT ; la réserve lue dans deux ordres, sous deux dessins de sachet ; la
-    carte d'écharpes du butin, qui porte une forme de rareté et un pin
-    d'emprunt ; le vestiaire à 768 pixels, aux stickers de téléphone.
+    reste »). Ses trois fautes mineures — NOUVEAU « sur le flanc » dans deux
+    commentaires, l'interrupteur de `/collection` qui ne disait pas MANQUANTS
+    et passait à la ligne —, les deux documents de `serveur/` sur l'anneau de
+    `/collection` et le câblage de l'aide sont refermés par l'intégration du
+    4 octobre (4 quadragies quinquies). **La fabrique des cases de l'album**
+    (`cartesDe`, `caseHTML`, `vitrineHTML`) est recopiée de `fanzzy.html` dans
+    `collection.html` : une seule, dans un module partagé. Côté serveur :
+    servir `paliers.series` avec `/api/fanzzy/state` (sans lui, le classeur ne
+    montre pas la récompense d'une série complète, et il ne doit pas lire la
+    bibliothèque pour elle) ; servir la chance de tirer une carte (« 1 CHANCE
+    SUR 3 », que la fiche n'écrit pas). Et les constats de détail de la
+    critique, laissés : les pochettes des âges 2 et 3 d'une lignée absente,
+    sans repère ; ME MONTRER AINSI hors de la rangée des actions, TON AVATAR
+    tampon sur la fiche et sticker au vestiaire ; le lien « où trouver des
+    écharpes » sous IL TE FAUT ; la réserve lue dans deux ordres, sous deux
+    dessins de sachet ; la carte d'écharpes du butin, qui porte une forme de
+    rareté et un pin d'emprunt ; le vestiaire à 768 pixels, aux stickers de
+    téléphone.
+
+11. **Ce que l'intégration du 4 octobre laisse** (`HISTORIQUE.md`,
+    4 quadragies quinquies, « Ce qui reste »). D'abord la commiter et la
+    mettre en ligne (`A-DEPLOYER.md`). Puis : `/matchs` peut taire un penalty
+    marqué en toute fin de prolongation et publié après le début de la séance
+    — le télétexte ne fait pas suivre `comments` — et annonce VICTOIRE un match
+    retour gagné 1-0 et perdu aux tirs au but ; `verif-pages` n'exige ni
+    l'entrée de la série de la saison dans `ART`, ni les trois formats et
+    l'`onerror` de la photo du tunnel ; la recette du tunnel n'est pas
+    versionnée (`VISUELS.md`) ; le gabarit de la brique des filtres, dans
+    `ui.css`, dit encore « Ce qu'il me reste » ; `CONTRATS.md` § 15.4 est
+    inexact sur la première vue d'un match à venir. D4, D5 et D7 du Grand
+    Virage sont au lot 6.
 
 **Ce qui n'est plus sur cette liste**, et qui y figurait : la simulation
 d'économie (rejouée, `npm run economie`), les trois évolutions pour tous
@@ -1845,8 +1865,12 @@ d'économie (rejouée, `npm run economie`), les trois évolutions pour tous
 âge, le contenu des boosters, **le fil du match dans le Grand Virage**, les
 **amis**, les **couleurs extraites des blasons**, le **déploiement depuis
 GitHub**, les **cartes d'action illustrées** et leur animation, les **cartes
-d'équipement**, et **les cartes d'action dans le Grand Virage**. L'audit
-A-à-Z du produit est entièrement traité.
+d'équipement**, **les cartes d'action dans le Grand Virage**, et, depuis le
+4 octobre 2026, **le sachet de LA REPRISE**, **la photo du tunnel** de l'écran
+d'ouverture et **les salles du Grand Virage** — relevé payé pour rien,
+déconnexion d'un autre onglet, retour gratuit, salles jamais libérées, penalty
+manqué compté comme un but, buts d'avant rejoués (`serveur/ECARTS.md`,
+serveur-correctif). L'audit A-à-Z du produit est entièrement traité.
 
 **Le multilingue reste une promesse à moitié tenue**, et c'est le plus gênant
 de la liste parce qu'il se voit : `/compte` et `/profil` proposent quatre
@@ -2638,7 +2662,13 @@ chantier », écrite à la main. Ce qui doit durer va dans le code ou ici.
 **Une suite qui ne vide pas une table partagée dépend de l'ordre des suites.**
 `accueil-ui-smoke` ne vide pas `saisons` : une table laissée par une autre suite
 change la collection qu'elle lit (« 10 / 25 » au lieu de « 14 / 25 »). Elle est
-aussi intermittente sur la bulle et la frise du rideau, sans cause trouvée.
+aussi intermittente sur la bulle et la frise du rideau. Une piste, relevée le
+5 octobre 2026 pendant qu'un autre atelier chargeait le poste : dans les deux
+passages rouges du rideau, `ouverture.js` a démarré environ neuf secondes après
+la navigation (reçu en 17 ms dans un passage vert), et ses libellés tombaient
+juste aux tiers comptés depuis son départ. Le même `index.html` passait au tour
+d'avant, et une copie de la suite hors du dépôt est passée entière. Un rouge du
+rideau se lit donc d'abord sur l'heure de départ du script.
 
 **Un commit pris pendant un atelier part en ligne tel quel.** Le lot 1 l'avait
 fait (`9e90c90`) ; le 3 octobre 2026, `e21a923` est parti par le Manager au
@@ -2649,7 +2679,11 @@ fois : `60fe268` (le 3 octobre à 17 h 47), poussé sans être mis en ligne, n'a
 pas les corrections des tours suivants — et la branche du lot 6 en part — ;
 `7450c03` (le 4 octobre à 17 h 05), mis en ligne deux minutes après, a pris le
 code vérifié mais la trace en cours d'écriture. Sans schéma en jeu, rien n'a
-cassé ; les documents sont à recommiter.
+cassé ; les documents sont partis avec le commit suivant. Celui-là, `0638fb5`
+(le 4 octobre à 17 h 16), a mis en ligne le correctif des salles du Grand Virage
+pendant son intégration : sans la précaution qu'il demandait — hors d'un match
+en direct (« Changer ce qui compte comme un but », plus bas) — et sans ses deux
+documents de `serveur/`, restés dans la copie de travail.
 
 **Les pièges du lot 4** (octobre 2026 ; le récit est dans `HISTORIQUE.md`,
 4 quadragies quater).
@@ -2706,14 +2740,18 @@ calque plein qui s'ajoute fait monter les effets avec lui
 passer le HUD de la barre (z 30) devant son en-tête, et couvrait la flèche et le
 menu. Un panneau qui couvre la page commence sous la barre (`--sous-barre`).
 
-**Un correctif serveur peut n'exister que dans sa suite.** `aide-smoke`
-construit l'aide avec sa porte de recharge ; `server.js` ne la passe pas à
-`createAide`. La porte se lit donc aussi sur `globalThis.fanzzy`, que
-`server.js` pose en montant le module fanzzy avant l'aide, et `aide-smoke` lit
-`server.js` pour garder ce câblage : **retirer cette globale — elle ressemble à
-un reste — rendrait chaque booster des premiers pas en panne**, sans qu'aucune
-autre suite ne rougisse. Le jour où `server.js` passe `fanzzy` à `createAide`,
-le repli peut partir.
+**Un correctif serveur peut n'exister que dans sa suite.** Au lot 4,
+`aide-smoke` construisait l'aide avec sa porte de recharge, et `server.js` ne
+la passait pas à `createAide` : vert en suite, le correctif aurait manqué en
+production. Un repli l'a tenu jusqu'au 4 octobre 2026 — l'aide lisait aussi
+`globalThis.fanzzy`, que `server.js` posait —, puis `server.js` a passé
+`fanzzy` à `createAide`, et la globale et le repli sont partis
+(`serveur/ECARTS.md`, serveur-correctif § 7). **Ne pas les remettre** : deux
+chemins vers une même porte laissent toujours celui qu'on retire en croyant
+nettoyer. Une dépendance qu'une suite injecte, `server.js` la passe aussi, et
+un contrôle le lit : `verif-cablage` — sans base, et dans le workflow de
+déploiement — lit l'appel, verse par la porte passée et refuse le repli ;
+`aide-smoke` lit l'appel.
 
 **Une panne qui répond 400 sans journal ne se voit nulle part.** La page se
 tait devant une erreur ; si la route ne l'écrit pas, personne ne la voit. Une
@@ -2742,6 +2780,58 @@ qu'un autre Chrome tourne se relance seul avant d'être attribué. (Une copie
 sous `.claude/worktrees/` a son propre verrou des suites et la même base, sauf
 à se donner une base `test_…` par `DATABASE_URL`.)
 
+**Les pièges du correctif du Virage et de son intégration** (octobre 2026 ; le
+récit est dans `HISTORIQUE.md`, 4 quadragies quinquies, et le détail du
+serveur dans `serveur/ECARTS.md`, serveur-correctif).
+
+**Tout ce que l'API range sous `Goal` n'est pas un but.** Le penalty manqué y
+est, et chaque tir de la séance de tirs au but, marqué ou non, à la minute où
+le jeu s'est arrêté (120, ou 90 sans prolongation). Trois lecteurs les
+comptaient : le relevé (une carte-souvenir pour un ballon à côté, et le numéro
+de tous les buts suivants décalé d'un cran), le bandeau du hub (sous « Goal ! »,
+le nom de celui qui venait de rater), `/matchs` (le personnage qui exulte, puis
+une séance de « GOAL ! » à score immobile). Le
+penalty manqué se lit sur `detail` ; le tir de la séance, seulement sur le
+commentaire `Penalty Shootout`, que le relevé lit (`estUnBut`, `poller.js`) et
+que la base ne garde pas : une page le déduit du tableau. Un nouveau lecteur
+d'événements filtre, ou refait la faute.
+
+**Changer ce qui compte comme un but décale les numéros d'un match en cours.**
+Une carte-souvenir est unique par `(fixture_id, seq)`, et `seq` est la place du
+but parmi les buts du match. Une livraison qui retire un faux but d'un match
+déjà relevé rend son numéro au vrai but suivant, dont la carte existe déjà :
+il n'en a pas. Une telle livraison part hors d'un match en direct — `0638fb5`
+ne l'a pas fait, un dimanche à 17 h 17. Défaire le correctif ferait le chemin
+inverse.
+
+**Une liste d'événements en retard sur le score nomme le buteur précédent.** Le
+score est écrit en base avant que les événements soient demandés, et l'API
+publie le score avant l'événement : le dernier but de la liste est alors
+l'avant-dernier du match. Seule une liste qui compte exactement les buts du
+tableau dit qui a marqué le dernier ; en retard ou en avance, on ne nomme
+personne.
+
+**Un nom de classe peut déjà avoir une règle dans la page.** C'est le piège des
+briques d'épreuve et des variables des plaques, une troisième fois : la photo
+du tunnel, posée en `.decor`, a pris la règle sans portée du décor du hub —
+opacité nulle, décalée d'une demi-largeur —, et l'écran montrait le repli sans
+un message. Une maquette qui n'a que la feuille de l'écran ne le voit pas ; un
+banc sur la vraie page, si. La photo s'appelle `.couloir`.
+
+**Une image qui se retire quand elle manque se cache aussi à l'audit.**
+`onerror="this.remove()"` est le bon repli — sans lui, Chrome peint une icône
+cassée et un cadre gris de la taille de l'écran par-dessus le béton —, mais une
+image retirée n'est plus comptée cassée. Et un `<source>` AVIF en 404 ne
+retombe pas sur le WebP : le navigateur a déjà choisi. D'où le relevé des
+adresses `/img/ecran/…` dans `verif-pages`, et le contrôle d'`accueil:ui`, qui
+refuse les requêtes de la photo et attend le béton peint.
+
+**Et une photo sœur du texte échappe à l'audit comme le mur.** Il lit le fond
+des ancêtres : la craie de l'ouverture se mesure sur le `#05070A` de l'écran,
+pas sur le couloir. Le 4,5:1 sous le libellé et la consigne est tenu par
+l'image elle-même, assombrie en bas au traitement ; une photo refaite refait la
+mesure, et change d'adresse (`?v=`), puisque `/img` part avec un an de cache.
+
 ---
 
 ## 7. Questions juridiques ouvertes
@@ -2769,15 +2859,18 @@ sous `.claude/worktrees/` a son propre verrou des suites et la même base, sauf
 
 ## 7 bis. À faire sur le serveur, en attente
 
-0. **Le quotidien et le lot 4 sont en ligne.** Gaël a appliqué
-   `sql/quotidien.sql` le 3 octobre, avec `2ff45f9` ; puis il a mis en ligne le
-   lot 4 (`7450c03`) le 4 octobre vers 17 h 07. Relevé à 17 h 09 : `/healthz`
-   répond `ok: true`, sans panne, et les fichiers servis sont ceux de
-   `7450c03`. Aucun schéma n'attend ; ce qui n'est pas commité n'est que
-   documentaire (`A-DEPLOYER.md`). Pour la prochaine livraison qui en
-   apporterait un : par GitHub, le schéma est appliqué **avant** le
-   redémarrage ; par le Manager, `npm run schema:appliquer` en SSH, **puis
-   redémarrer** — le contrôle de démarrage ne relit la base qu'au lancement.
+0. **Le quotidien, le lot 4, le correctif du Virage et le sachet sont en
+   ligne.** Gaël a appliqué `sql/quotidien.sql` le 3 octobre, avec `2ff45f9` ;
+   puis il a mis en ligne le lot 4 (`7450c03`) le 4 octobre vers 17 h 07, et
+   `0638fb5` — le correctif des salles du Grand Virage, le sachet de LA
+   REPRISE — vers 17 h 17. Relevé le 5 octobre à 0 h 25 : `/healthz` répond
+   `ok: true`, sans panne, et les fichiers servis comparés sont ceux de
+   `0638fb5`. **Une livraison attend** — le tunnel, les pages, le câblage de
+   l'aide, sans schéma : `A-DEPLOYER.md`, hors d'un match en direct. Pour la
+   prochaine livraison qui en apporterait un : par GitHub, le schéma est
+   appliqué **avant** le redémarrage ; par le Manager, `npm run
+   schema:appliquer` en SSH, **puis redémarrer** — le contrôle de démarrage ne
+   relit la base qu'au lancement.
 
    **Après la livraison du quotidien, à faire par Gaël** (`DEPLOIEMENT.md`,
    « Après la livraison du quotidien ») : **saisir la fin de la saison 1** dans
@@ -2803,10 +2896,9 @@ sous `.claude/worktrees/` a son propre verrou des suites et la même base, sauf
    colonnes de `sql/couleurs.sql` ; les boosters d'un abonnement acheté
    (`boutique/index.js`, `livrer`) entrent dans la réserve sans compter la
    recharge due, comme le faisait le booster des premiers pas avant le lot 4
-   (`serveur/ECARTS.md`) ; `server.js` ne passe pas `fanzzy` à `createAide`
-   (l'aide le lit sur `globalThis.fanzzy`, § 6) ; et deux données que les
-   écrans du lot 4 attendent — `paliers.series` avec `/api/fanzzy/state`, et la
-   chance de tirer une carte (§ 5, point 10).
+   (`serveur/ECARTS.md`) ; et deux données que les écrans du lot 4 attendent
+   — `paliers.series` avec `/api/fanzzy/state`, et la chance de tirer une
+   carte (§ 5, point 10).
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
    peut-être encore l'ancienne règle, qui classait 117 compétitions comme

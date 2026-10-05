@@ -1476,6 +1476,42 @@ for (const [route, nom] of tousLesEcrans) {
       complet: Boolean(p?.querySelector('.tbf-album-tete > .tbf-tampon')),
     };
   });
+
+  /* **Les familles et MANQUANTS sur une seule rangée, à 360 px** — la largeur
+     où ce tour mesure tout. L'interrupteur s'appelait « Ce qu'il me reste » :
+     il ne tenait au bout des six filtres qu'à partir de 452 px, passait
+     dessous sur tout téléphone, et la page descendait de quarante-six pixels.
+     Il porte maintenant le mot du classeur, et de 350 à 440 px il se range
+     sous son rail (la règle des filtres, sous la grille de collection.html).
+     Rien de cela ne se lit sans mise en page : `collection:smoke` tourne sous
+     jsdom, qui ne mesure rien. « Une rangée » se dit sans seuil en pixels :
+     toutes les boîtes se recouvrent en hauteur — une rangée repassée à la
+     ligne commence sous le bas des autres. Les polices d'abord : la règle est
+     comptée en Oswald, et une police de repli n'a pas ses largeurs. */
+  await pc.setViewport({ width: 360, height: 640 });
+  await pc.evaluate(() => document.fonts.ready.then(() => true));
+  const filtres = await pc.evaluate(() => {
+    const rang = document.querySelector('#vue .tbf-album-filtres');
+    if (!rang) return null;
+    const r = rang.getBoundingClientRect();
+    const boites = [...rang.children].map((e) => e.getBoundingClientRect())
+      .filter((b) => b.width > 0 && b.height > 0);
+    const inter = rang.querySelector('.tbf-interrupteur');
+    return {
+      n: boites.length, largeur: Math.round(innerWidth),
+      uneRangee: boites.length > 1
+        && Math.max(...boites.map((b) => b.top)) < Math.min(...boites.map((b) => b.bottom)),
+      dedans: boites.every((b) => b.left >= r.left - 0.5 && b.right <= r.right + 0.5),
+      hauts: boites.map((b) => `${Math.round(b.top)}–${Math.round(b.bottom)}`).join(' '),
+      mot: inter?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+    };
+  });
+  check(`à ${filtres?.largeur ?? '?'} px, les filtres de l’album tiennent sur une rangée (${filtres?.n ?? 0} boutons)`,
+    Boolean(filtres?.uneRangee && filtres.dedans)
+    || (console.log('        hauteurs :', filtres?.hauts ?? 'pas de rangée', '· dans la rangée :', filtres?.dedans), false));
+  check('et l’interrupteur dit « Manquants », le mot du classeur',
+    /^manquants$/i.test(filtres?.mot ?? '')
+    || (console.log('        il dit :', JSON.stringify(filtres?.mot)), false));
   await pc.close();
   const rayons = vue.rayons.map((r) => r.vue);
   check(`la bibliothèque range les cinq types (${rayons.join(', ')})`,

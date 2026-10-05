@@ -233,6 +233,89 @@ check('server.js dit au virage les matchs que l’API ne rend plus',
     /sonderJourDeJeu\(pool\)/.test(serveur) && /\.\.\.\(jourDeJeu \? \{ jourDeJeu \} : \{\}\)/.test(serveur));
 }
 
+/* ------------------------------------ l'aide : la porte de la recharge
+
+   **La même panne muette, en plus discret.** Le booster de fin des premiers
+   pas compte d'abord la recharge due, par `fanzzy.recharger`, et refuse de
+   verser sans elle. `server.js` ne la passait pas : l'aide la lisait sur
+   `globalThis.fanzzy`, une globale qui ressemblait à un reste et que rien ne
+   protégeait. Elle reçoit `fanzzy` désormais, et ne lit plus que lui. Retirer
+   `fanzzy` de l'appel, ou monter l'aide avant fanzzy, mettrait chaque booster
+   de fin en panne — un 503 et une ligne au journal —, et aucune suite ne le
+   verrait, puisque toutes passent leur porte elles-mêmes.
+
+   Des deux côtés, comme pour le relevé : un vrai versement, sur un faux pool,
+   appelle-t-il la porte reçue — une signature qui nomme `fanzzy` peut ne la
+   transmettre à personne —, et `server.js` la passe-t-il ? */
+{
+  const { createAide } = await import('../src/server/aide/index.js');
+
+  /* Un joueur au bout du parcours : les six signaux sont vrais, et rien n'a
+     encore été versé. */
+  const lignes = (sql) => {
+    if (/FROM user_fanzzy/.test(sql)) return [{ n: 1, age: 2 }];
+    if (/packs_ouverts/.test(sql)) return [{ n: 1 }];
+    if (/FROM user_decks/.test(sql)) return [{ contenu: '{"fanzzy":[1,2]}', cree: 0, maj: 1 }];
+    if (/FROM virage_presence|FROM duel_results/.test(sql)) return [{ oui: 1 }];
+    return [];
+  };
+  const fauxPool = {
+    execute: async (sql) => [lignes(sql)],
+    getConnection: async () => ({
+      beginTransaction: async () => {},
+      query: async (sql) => (/parcours_paye AS p/.test(sql)
+        ? [[{ p: 0 }]] : [{ affectedRows: 1 }]),
+      commit: async () => {},
+      rollback: async () => {},
+      release: () => {},
+    }),
+  };
+  const recharges = [];
+  const aide = createAide({ pool: fauxPool, requireAuth: (_r, _s, n) => n(),
+    fanzzy: { recharger: async (lecteur) => {
+      recharges.push(lecteur === fauxPool ? 'pool' : 'connexion');
+    } } });
+  const verse = await aide.recompenser('u-aide').catch((e) => ({ leve: e.message }));
+  check('l’aide verse le booster de fin par la porte qu’on lui passe',
+    verse?.verse === true && recharges.includes('connexion')
+    || (console.log('        il dit :', JSON.stringify(verse), '· recharges :',
+      recharges.join(', ') || 'aucune'), false));
+
+  /* **Et par elle seule.** Lire l'appel ne suffit pas : le journal du lot 4
+     (`HISTORIQUE.md`, 4 quadragies quater) décrit la globale comme le
+     câblage à garder, et le journal ne se réécrit pas. Qui le suit
+     remettrait le repli sans toucher à l'appel, et l'aide aurait de nouveau
+     deux chemins vers la même porte — dont un qu'on retire un jour en
+     croyant nettoyer. Sans `fanzzy`, une globale posée, elle doit donc
+     refuser comme sans porte, et ne jamais appeler celle de la globale. */
+  const parLaGlobale = [];
+  globalThis.fanzzy = { recharger: async () => { parLaGlobale.push('globale'); } };
+  let sansInjection;
+  try {
+    sansInjection = await createAide({ pool: fauxPool, requireAuth: (_r, _s, n) => n() })
+      .recompenser('u-aide-globale').catch((e) => ({ leve: e.message }));
+  } finally {
+    delete globalThis.fanzzy;
+  }
+  check('et par elle seule : une globale fanzzy posée n’est pas lue',
+    /recharger/.test(sansInjection?.leve ?? '') && parLaGlobale.length === 0
+    || (console.log('        il dit :', JSON.stringify(sansInjection),
+      '· porte de la globale appelée', parLaGlobale.length, 'fois'), false));
+
+  /* Ce que `server.js` lui passe, lu dans l'appel lui-même. */
+  const debut = serveur.indexOf('createAide({');
+  const fin = debut < 0 ? -1 : serveur.indexOf('})', debut);
+  const appel = debut < 0 || fin < 0 ? '' : serveur.slice(debut, fin);
+  const monteFanzzy = serveur.indexOf('fanzzy = createFanzzy(');
+  check('server.js construit l’aide', appel.length > 0);
+  /* `fanzzy` en raccourci ou `fanzzy: fanzzy` ; pas `fanzzy: null`. */
+  check('server.js lui passe fanzzy, la porte de la recharge',
+    /[{,]\s*fanzzy\s*(?::\s*fanzzy\s*)?(?:,|$)/.test(appel)
+    || (console.log('        appel :', appel.replace(/\s+/g, ' ')), false));
+  check('fanzzy est construit avant elle dans server.js',
+    monteFanzzy > 0 && debut > monteFanzzy);
+}
+
 /* ---------------------------- le serveur n'emporte que ses cinq paquets
 
    **La panne que ce contrôle empêche n'arrive qu'en production.**

@@ -6306,3 +6306,264 @@ la présence (lot 6, commencé le 4 octobre dans sa propre copie, sur la branche
 `refonte-lot6`, qui part de `60fe268`), puis les images et le terrain (lot 7).
 
 ---
+
+## 4 quadragies quinquies. Le Grand Virage réparé au serveur, le sachet de LA REPRISE, le tunnel en photo
+
+*Du 4 octobre 2026 en fin d'après-midi au 5 octobre peu après minuit.* Un
+atelier d'intégration, hors lot, a réuni quatre pièces qui attendaient chacune
+de son côté : le correctif serveur des salles du Grand Virage, écrit sur la
+synthèse de ses défauts et relu en cinq passes par trois relecteurs adverses ;
+le sachet de LA REPRISE et la photo du tunnel de l'écran d'ouverture, produits
+le 3 octobre ; et les reliquats du lot 4. Il a aussi porté jusqu'aux pages ce
+que le correctif avait appris des événements de l'API. Le détail du serveur
+est dans `serveur/ECARTS.md`, serveur-correctif, et ce que les pages peuvent en
+attendre dans `serveur/CONTRATS.md`, § 15 : cette section ne les recopie pas.
+Les pièges de l'atelier sont dans `ETAT.md`, § 6.
+
+**Gaël a commité et mis en ligne le correctif et le sachet pendant
+l'atelier** : `0638fb5` (« Maj V04102026.1716 »), le 4 octobre à 17 h 16, avec
+la fin de la trace du lot 4. Le reste — le tunnel, les pages, le câblage de
+l'aide, les suites et les deux documents du correctif — attend (« En ligne »,
+plus bas).
+
+### Le correctif des salles
+
+Tous ces défauts étaient en ligne depuis `e21a923`.
+
+- **D1, le relevé payé pour rien.** Toute salle où quelqu'un était assis était
+  relevée à chaque tour, match fini compris — et le bilan garde les gens sur la
+  page après le coup de sifflet : 1 440 appels par jour et par salle, 21 % du
+  budget. Neuf salles finies restées ouvertes épuisaient le quota et figeaient
+  le direct de tout le site, cartes-souvenirs comprises. `aRelever` décide sur
+  le statut vu en dernier : jamais un match fini ; rien pour un match à venir
+  avant la demi-heure du coup d'envoi, sauf une fois à la première vue ; un
+  coup d'œil par demi-heure pour un match reporté, arrêté ou que l'API ne rend
+  plus (`onAbsent`, un crochet de plus, branché dans `server.js`) ; à chaque
+  tour autour du coup d'envoi et tant que le match bouge.
+- **D3, la salle tenue par joueur.** Fermer n'importe quel onglet du même
+  espace de noms — KOP, Équipes, duel — vidait la salle de l'onglet resté
+  ouvert, qui recevait `not_in_virage` à chaque chant. La salle se tient par
+  socket, et l'on n'en sort qu'avec sa dernière.
+- **D2, le retour gratuit.** Un départ effaçait le membre : F5 rendait 40 de
+  souffle et une main neuve, recharges et fatigue effacées — un « Nouveau
+  souffle » gratuit, et de la ferveur au classement. Le parti est gardé, son
+  souffle arrêté, et repris au retour. Un camp demandé l'emporte ; sans
+  demande, un neutre retrouve le sien.
+- **Les salles ne se libéraient jamais** : la ligne lisait `room.last`, que le
+  battement venait de poser. Elles se libèrent sur `occupeeA`, une minute après
+  le dernier départ d'un match fini, jamais pendant la fenêtre du match —
+  sortir à la mi-temps ne coûte plus son souffle. Et le rang « classé » n'est
+  qu'une réservation jusqu'à la première poussée : regarder trois tribunes puis
+  revenir chanter dans les trois ne fait plus trois Virages classés.
+- **La minute double ne disait pas sa fin** : le battement ne partait que si
+  quelque chose avait bougé, et l'expiration ne bouge rien. Elle est diffusée,
+  et `surgeMs` — le seul champ ajouté au contrat — dit ce qui en reste.
+- **Le penalty.** L'API range sous `Goal` le penalty manqué et chaque tir de la
+  séance de tirs au but, marqué ou non. Compté, il frappait une carte-souvenir
+  pour un ballon à côté, secouait la corde du côté qui venait de rater, et
+  décalait d'un cran le numéro de tous les buts suivants du match, gravé sur
+  leurs cartes. `estUnBut` (`poller.js`) les écarte.
+- **Le rejeu.** Le premier relevé d'un match déjà commencé trouvait tous ses
+  buts « jamais vus » et les annonçait : corde, minute double, cartes de
+  présence pour qui n'y était pas. Il les range sans les annoncer ; un trou
+  dans le relevé repart de ce qu'on voit ; un but en avance sur le tableau
+  attend qu'il le rattrape.
+- La Remontada lit le vrai score, et non les buts vus depuis l'ouverture de la
+  salle.
+
+Deux suites sont nées, sans base : `salles:test` (134 contrôles) et
+`releve:test` (56). D4, D5 et D7 restent au lot 6.
+
+### Les pages qui lisent les mêmes événements
+
+Le hub et `/matchs` lisent les événements du match sans passer par le relevé,
+et chacun faisait la faute qu'`estUnBut` corrige au serveur.
+
+**Le hub nommait le mauvais buteur.** `buteurDe` prenait le dernier `Goal` de
+l'équipe. Or le score est écrit en base avant que les événements soient
+demandés, et l'API publie le score avant l'événement : à 2-0, le bandeau
+mettait sous « Goal ! » le nom et la minute du 1-0 — ou celui qui venait de
+manquer son penalty. Il écarte le penalty manqué, et ne nomme plus que si la
+liste compte exactement les buts de l'équipe au tableau : en retard ou en
+avance (un tir de la séance, un but refusé encore listé), personne.
+
+**`/matchs` exultait sur le penalty raté**, enchaînait les « GOAL ! » et les
+« ON ENCAISSE » pendant une séance au score immobile, et annonçait MATCH NUL
+une qualification aux tirs au but. `pasUnBut` écarte le penalty manqué et, au
+statut P ou PEN, le penalty à la minute 90 ou plus ; le verdict final lit la
+séance (`periodes.penalty`) quand le match est nul : « VICTOIRE », « aux tirs
+au but · 4 – 3 ».
+
+**La séance n'est pas rangée en base, et c'est décidé.** Seul le commentaire
+`Penalty Shootout` distingue un tir de la séance d'un penalty du match, et
+`fixture_events` n'a pas de colonne pour lui. L'ajouter demandait un `.sql`,
+que le Manager n'applique jamais, et un `INSERT` qui nommerait une colonne
+absente lèverait dans le relevé **avant l'annonce des buts**, pour tous les
+matchs. Les pages déduisent donc la séance du tableau, et se trompent dans le
+seul sens acceptable : elles taisent, elles ne nomment jamais le mauvais
+(`serveur/ECARTS.md`, serveur-correctif § 9).
+
+### Le sachet de LA REPRISE
+
+La seule série en production n'avait pas de dessin : au centre du kiosque,
+sous les projecteurs, c'était le repli de `packArt`, trois cartes plates
+identiques là où l'on venait chercher un sachet. Il a été généré le 3 octobre,
+réduit à 760 × 1352 comme les sept autres sachets dessinés, servi en AVIF,
+WebP et JPEG, et branché par son code de série dans `ART` (`cartes.js`) — une
+clé qui ne le recopie pas exactement ne lève rien, elle rend le repli.
+`verif-pages` monte
+désormais `fanzzy-art.js` et `cartes.js` comme le kiosque, et exige de chaque
+entrée d'`ART` une clé qui soit le code d'une série, ses trois fichiers, et
+l'adresse que `src` construit.
+
+### Le tunnel
+
+Depuis le lot 2, quatre pans de béton en CSS tenaient la place de
+`tunnel.webp`, « à produire ». La photo existe en deux compositions — une seule
+ne met pas le trou et les marches au bon endroit à la fois en 9:16 et en
+16:9 —, générées le 3 octobre (Nano Banana 2, d'image à image) à partir d'un
+croquis plat qui posait le trou là où le CSS l'attend. La sortie blanche est
+détourée en transparence, et le bas de l'image assombri : la craie du libellé
+et de la consigne y tient 4,5:1. Servies en 1080 × 1920 et 1920 × 1080, en AVIF
+(53 et 42 Ko), WebP (65 et 43 Ko) et PNG (885 et 933 Ko).
+
+Le tunnel est devenu la boîte de l'image, en « cover », et les coins du trou
+sont ceux que le détourage a mesurés : la photo et le repli ont la même
+géométrie, et le couloir ne saute pas quand elle arrive. Les pans et les
+bâches restent dessous, aux places de la photo : sans elle, l'écran perd son
+béton, pas son couloir. La sortie part de 60 % de sa taille sous un voile plus
+léger — partie de 30 %, elle était plus sombre que le mur qu'elle éclaire. Et
+un téléphone couché prend un titre de 34 px et un trou plus bas : à 46 px, le
+titre mordait sur la lumière.
+
+**Elle s'appelle `.couloir`, pas `.decor`.** `.decor` est le décor du
+personnage du hub, une règle sans portée : posée sur la photo, elle l'éteignait
+et la décalait d'une demi-largeur, et l'écran montrait le repli sans un
+message. La maquette, qui n'avait que la feuille de l'ouverture, ne pouvait pas
+le voir ; le banc sur la vraie page l'a vu. Si son fichier manque, l'image se
+retire (`onerror`) plutôt que de peindre une icône cassée de la taille de
+l'écran — ce qui la cache aussi à l'audit. `verif-pages` vérifie donc que
+chaque adresse `/img/ecran/…` de la page existe, et `accueil:ui` que la photo
+est visible, qu'elle remplit le tunnel, qu'on voit la sortie au centre du trou,
+et que sans elle le béton peint reprend.
+
+### Les reliquats du lot 4
+
+- **Le câblage de l'aide.** `server.js` passe `fanzzy` à `createAide`, et ne
+  pose plus `globalThis.fanzzy`, que personne d'autre ne lisait ; l'aide n'a
+  plus de repli. `verif-cablage` lit l'appel, verse un booster de fin sur un
+  faux pool par la porte passée, et refuse le repli : une globale posée n'est
+  pas lue. Le piège et l'item de « Ce qui reste » de la section précédente
+  restent tels quels, c'est un journal daté ; `ETAT.md` et `A-DEPLOYER.md`
+  sont repris.
+- **Les trois fautes mineures du sixième tour.** Les deux commentaires qui
+  posaient NOUVEAU « sur le flanc » ; et l'interrupteur de `/collection`, qui
+  dit MANQUANTS comme le classeur, avec sa règle de rangée : « Ce qu'il me
+  reste » ne tenait au bout des six filtres qu'à partir de 452 px, et sur tout
+  téléphone la page descendait de quarante-six pixels.
+- **Les documents.** `serveur/CONTRATS.md` (§ 5.1) et `serveur/ECARTS.md`
+  (accueil § 5) disent que l'anneau de `/collection` vise le prochain cran.
+
+### Éprouvé
+
+Cinq tours de vérification ; le dernier, du 4 octobre à 23 h 23 au 5 octobre
+vers 0 h 25, dans la copie principale, n'a touché aucun fichier.
+
+Les contrôles statiques sont verts : `npm run pages` (82 contrôles, dont « 9
+image(s) demandée(s), toutes présentes » pour l'écran d'ouverture et huit
+sachets dessinés), `npm run cablage` (30), `npm run promesses` (avec
+l'avertissement connu : six pages sans suite d'interface),
+`npm run pages:navigateur` (les vingt-quatre écrans) et `npm run schema:smoke`
+(34). Aucun retour chariot dans les fichiers modifiés ni dans les nouveaux.
+
+`tout-tester`, le 4 octobre de 23 h 26 à 23 h 48 : **soixante-quatre suites et
+4 708 contrôles** en vingt-deux minutes, contre soixante-deux et 4 449 à la fin
+du lot 4. Ont grandi `matchs:ui` (46 → 50 : le penalty manqué, la séance, la
+victoire aux tirs au but et son sous-titre) et `tour:ui` (345 → 347 : à
+360 px, les filtres de l'album sur une rangée, et MANQUANTS) ; `accueil:ui`
+porte les trois cas du buteur, quatre contrôles de la photo et deux du repli ;
+`aide:smoke` passe de 48 à 47, son contrôle de la globale retiré. `deck:ui` (un
+rouge) et `nvn:ui` (trois) restent rouges à l'identique. `accueil:ui` a eu
+trois rouges dans la série, deux du rideau relancée seule, aucun dans une
+copie de la suite hors du dépôt, puis le rouge connu de la bulle : son
+`index.html` est celui du tour d'avant, où ces contrôles passaient (la piste
+est dans `ETAT.md` § 6).
+
+L'audit, en deux passes, n'empire que sur `booster@butin`, et c'est le tirage :
+quatre cartes neuves au lieu d'une, donc quatre stickers NOUVEAU à 2,6:1 au
+jour. Aucun genre de constat qui n'existait pas à la fin du lot 4. Les captures
+de l'ouverture, de 320 à 768 px, montrent la photo de béton ; celles du
+kiosque, LA REPRISE choisie, à 360 et 768 px, le sachet dessiné — l'audit ne
+photographie que LE VIRAGE IMPOSSIBLE.
+
+### En ligne
+
+**Le correctif du Virage et le sachet sont en ligne depuis le 4 octobre vers
+17 h 17.** Relevé le 5 octobre à 0 h 25 : `uptime_s` dit un redémarrage vers
+17 h 17, moins d'une minute après le commit de `0638fb5`, par le Manager
+(`"version": null`) ; `cartes.js` et l'AVIF du sachet servis sont ceux de
+`0638fb5`, octet pour octet (celui de `7450c03` diffère) ; `/`, `/matchs`,
+`/collection` et `/fanzzy` aussi, une fois retirés les `?v=`. `/healthz` répond
+`ok: true`, `"virage": "0 salle(s)"`. Le serveur n'a pas de marque publique :
+c'est ce redémarrage, après un commit qui touche `src/server/ferveur/` et
+`src/server/football/`, qui dit que le correctif tourne.
+
+**Il est parti sans la précaution qu'il demandait** : hors d'un match en
+direct. C'était un dimanche, à 17 h 17. Dans un match en cours, un penalty
+manqué compté par l'ancien code avait pris un numéro, et sa carte était
+frappée ; le correctif ne le compte plus, le but réel suivant reprend ce
+numéro, et sa carte existe déjà (`INSERT IGNORE`, sur `UNIQUE (fixture_id,
+seq)`) : il n'en a pas, une fois. Personne n'a regardé si un tel match tournait
+à cette heure-là.
+
+**Le reste n'est pas en ligne** : les photos du tunnel répondent 404, et les
+pages servies sont celles de `0638fb5`. Les dix-sept fichiers modifiés, les six
+images du tunnel et `art/A-GENERER-ARTLIST.md` ne sont pas commités ;
+`CONTRATS.md` § 15 et `ECARTS.md`, serveur-correctif, qui décrivent un code en
+ligne, non plus. `A-DEPLOYER.md` dit l'ordre.
+
+### Ce qui reste
+
+D'abord, **commiter ensemble** les dix-sept fichiers modifiés, les six images
+du tunnel, `art/A-GENERER-ARTLIST.md` et cette trace : `index.html` sans ses
+images ferait refuser la livraison par `verif-pages` dans le workflow, et, par
+le Manager, qui ne le lance pas, servirait le repli sans un mot. Puis la
+livraison (`A-DEPLOYER.md`).
+
+Ce que le regard de l'intégration a relevé, et qui reste en l'état :
+
+- `/matchs` peut taire un vrai but : au statut P ou PEN, un penalty marqué à
+  la minute 90 ou plus et publié après le passage à la séance — l'égalisation à
+  120+1, livrée une minute après le sifflet — est pris pour un tir de la
+  séance. La correction passe par le télétexte : faire suivre `comments` dans
+  ses événements, et reconnaître la séance comme `estUnBut` ;
+- au statut PEN, la séance ne décide que d'un match nul : un match retour gagné
+  1-0 et perdu aux tirs au but s'annonce VICTOIRE. Décider par la séance dès
+  qu'elle est lisible, ou dire ce cas dans le commentaire ;
+- `verif-pages` ne protège pas le sachet lui-même : sans l'entrée `RP` d'`ART`,
+  il dirait « 7 sachet(s) dessiné(s) », en vert. Exiger l'entrée de
+  `SET_SAISON` ;
+- il ne vérifie pas non plus qu'une image de l'écran d'ouverture a ses trois
+  formats, ni que l'`<img>` du couloir garde son `onerror` ;
+- la recette du tunnel — ses scripts, les cotes du trou (`geo.json`), le
+  traitement du bas dont dépend le 4,5:1 — vit dans `art/ecran/_src/`, ignoré
+  par git : une photo refaite ne peut pas refaire la mesure depuis une autre
+  copie (`VISUELS.md`) ;
+- `ui.css` documente encore, dans le gabarit de la brique des filtres,
+  l'interrupteur « Ce qu'il me reste », qui passe dessous à 360 px ;
+- `CONTRATS.md` § 15.4 dit qu'un match à venir n'est relevé « pas du tout
+  avant » la demi-heure du coup d'envoi, alors que le relevé regarde une fois
+  tout statut qu'il n'a pas encore vu ; et sa table des lecteurs n'a pas de
+  ligne pour `index.html`, qui lit la route des événements, où un tir de la
+  séance ressemble à un penalty du match.
+
+Puis, hors de cet atelier : D4, D5, D7 et la page du Virage, au lot 6. La
+branche `refonte-lot6` est à `7450c03`, sans `0638fb5` ni cette livraison, et
+sa copie de travail touche `server.js`, `src/server/ferveur/`, `poller.js`,
+`verif-cablage.mjs`, `verif-pages.mjs`, `CONTRATS.md` et `ECARTS.md` : sa
+fusion croise ce correctif, et c'est l'appel `createAide({ …, fanzzy })` qui
+reste. Le reste de « Ce qui reste », au lot 4, est inchangé : `paliers.series`,
+la chance d'une carte, les boosters d'un abonnement acheté, la fabrique des
+cases recopiée, les constats de la critique.
+
+---

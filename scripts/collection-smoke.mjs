@@ -594,16 +594,18 @@ await ouvrirRayon('fanzzy');
   check('et dit ce que rapporte la série complète',
     /→ 1 BOOSTER ET 100 ÉCHARPES/.test(tete?.textContent.replace(/\s+/g, ' ') ?? ''));
 
-  /* Les filtres : « ce qu'il me reste », puis une famille. Les pages
-     montées se refont ; on les relit. Ils se comptent **en âges**, comme
-     les cases : « ce qu'il me reste » retire les âges atteints et eux
-     seuls — un âge au secret reste à gagner (il s'achète), une pochette
-     aussi ; une famille garde tous les âges de ses personnages. */
+  /* Les filtres : MANQUANTS, puis une famille. Les pages montées se
+     refont ; on les relit. Ils se comptent **en âges**, comme les cases :
+     MANQUANTS retire les âges atteints et eux seuls — un âge au secret
+     reste à gagner (il s'achète), une pochette aussi ; une famille garde
+     tous les âges de ses personnages. L'interrupteur s'appelait « Ce qu'il
+     me reste » ici : il porte maintenant le mot du classeur, et le contrôle
+     aussi, pour qu'un rouge nomme ce qu'on voit à l'écran. */
   const inter = D.querySelector('#vue .tbf-interrupteur');
   clic(inter);
   await attendre(20);
   const reste = [...(pageAlbum(SERIE)?.querySelectorAll('[data-open]') ?? [])];
-  check('« ce qu’il me reste » ne garde que ce qui manque',
+  check('MANQUANTS ne garde que ce qui manque',
     inter?.getAttribute('aria-checked') === 'true'
     && reste.length === AGES.filter((f) => formeAttendue(f.id) !== 'atteint').length
     && reste.every((c) => formeAttendue(c.dataset.open) !== 'atteint'));

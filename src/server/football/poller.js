@@ -72,7 +72,11 @@ export function mapEvent(e) {
     minute: e.time?.elapsed ?? null,
     extra: e.time?.extra ?? null,
     /* La séance de tirs au but arrive en `Goal`, minute 120 : seul ce
-       commentaire la distingue d'un penalty du match. */
+       commentaire la distingue d'un penalty du match. Il sert à `estUnBut`,
+       et il n'est pas rangé : `fixture_events` n'a pas de colonne pour lui.
+       La route des événements ne le sert donc pas, et le hub déduit la séance
+       du tableau. Pourquoi la colonne attend : `serveur/ECARTS.md`,
+       serveur-correctif § 9. */
     comments: e.comments ?? null,
   };
 }

@@ -439,11 +439,16 @@ somme versée, et `verse` est faux s'il n'y avait rien à verser
 montre sa jauge de collection sans récompense ni bouton.
 
 **Lecteurs.** `collection.html` (l'anneau du collectionneur,
-`gagnes / possibles`, le gain du prochain cran, RÉCUPÉRER), `fanzzy.html`
+`gagnes / prochain.a` — le prochain cran, `possibles` quand tout est gagné —,
+le gain du prochain cran, RÉCUPÉRER ; `gagnes / possibles` n'y est plus que
+dans l'étiquette de l'anneau et dans le titre de palier), `fanzzy.html`
 (page de série : tampon COMPLET), `index.html` (la tuile COLLECTION,
-`gagnes / prochain.a`). Les deux écrans affichent le même `gagnes` ;
-`total.gagnes` n'est dit que dans leurs étiquettes (`ECARTS.md`, accueil
-§ 5).
+`gagnes / prochain.a`). Les deux écrans affichent le même `gagnes` contre le
+même seuil ; `total.gagnes` n'est dit que dans leurs étiquettes (`ECARTS.md`,
+accueil § 5). *Révisé le 4 octobre 2026 : ce paragraphe donnait à l'anneau
+`gagnes / possibles`, ce qu'il montrait avant le lot 4 ; un anneau sur
+l'univers des crans restait vide à l'œil (« 10 / 3311 », 0,3 %) à côté du
+sticker qui promettait le cran de 25.*
 
 ### 5.2 Rang : les divisions de saison
 
@@ -1015,6 +1020,7 @@ rideau).
 | `nav.js`, `menu.js` | 2 / 5 | R10, § 1 par `tbf:bourse` |
 | `fanzzy.html`, `collection.html`, `fanzzy-fiche.html` | 4 | § 2, § 5.1 |
 | `duel-nvn.html` | 6 | § 1, § 4.1, § 7 |
+| `virage.html` | 6 | § 15 (la minute double, l'entrée et le retour, les buts annoncés, la vie d'une salle) |
 | `teletext.html` | — | § 3 (compétition) |
 
 ---
@@ -1227,3 +1233,137 @@ la ligne épinglée et le profil écrivent « SAISON 1 · 78 JOURS » sans lire
 écharpe de tête par `tribune.couleurs` ; « SAISON 1 · 78 JOURS »),
 `classement.html` (ma ligne épinglée : buste, rang de chaque échelle, la
 tribune où va ma ferveur, la fin de la saison).
+
+---
+
+## 15. Le Grand Virage : la minute double, l'entrée, les buts (déclaré le 4 octobre 2026)
+
+*Ajouté par le correctif serveur des salles (`ECARTS.md`, serveur-correctif).
+Les événements de la salle n'étaient décrits nulle part dans ce contrat ; ce
+paragraphe ne fixe que ce que le correctif change. **Un champ de plus**
+(`surgeMs`), aucun renommé ni retiré. Le reste est du comportement : la page
+du lot 6 le lit ici plutôt que dans le code.*
+
+### 15.1 `surgeMs` : ce qui reste de la minute double
+
+| événement | champ | type | sens |
+|---|---|---|---|
+| `virage:real_goal` | `surgeMs` | entier > 0 | la durée de la minute double qui vient de s'ouvrir, en millisecondes (60 000 au réglage de départ) |
+| `virage:state` | `surgeMs` | entier ≥ 0 | ce qui reste de la minute double à l'envoi ; `0` hors minute double |
+
+- **R3.** Un compte à rebours part de la **réception** plus `surgeMs`,
+  décompté par `performance.now()`. `surgeUntil` reste servi à côté, mais
+  c'est un instant de l'horloge du serveur : un téléphone en avance d'une
+  demi-minute le lirait de travers. Aucune page ne calcule à partir de
+  `surgeUntil`.
+- **La fin est diffusée.** `virage:tick` porte `surge: false` au battement
+  qui suit l'expiration, même dans une salle où rien d'autre ne bouge.
+  Avant, le battement ne partait que si quelque chose avait bougé : la page
+  gardait « TOUT COMPTE DOUBLE » jusqu'au chant suivant, qui comptait simple.
+  Un compte à rebours arrivé à zéro attend ce battement plutôt que de
+  conclure seul.
+- `surge` (booléen, `virage:tick` et `virage:state`) reste ce que lit
+  l'affichage : le ×2 se calcule au serveur.
+
+### 15.2 Entrer, sortir, revenir
+
+**La salle se tient par socket.** Une socket est dans une salle au plus :
+celle de son dernier `virage:join`. `virage:chant` et `virage:jouer` vont
+dans la salle de **la socket qui les émet** — deux onglets sur deux matchs
+chantent chacun dans le leur. Fermer un onglet qui n'a jamais rejoint de
+salle (KOP, Équipes, duel) ne touche plus au Virage ouvert à côté, et fermer
+l'un de deux onglets sur la même salle laisse chanter l'autre :
+`ferveur.error.not_in_virage` ne répond plus qu'à une socket qui n'est dans
+aucune salle.
+
+**On quitte la salle avec sa dernière socket** (`virage:leave`, ou la
+déconnexion), et l'on y devient un **parti** : hors de la foule (`crowd`),
+du rang et du battement, mais **son état est gardé** tant que la salle vit
+(§ 15.4). Au retour, `virage:state` rend le même souffle — arrêté au départ,
+il ne remonte pas pendant l'absence —, la même main, la même pioche, les
+mêmes recharges et la même fatigue — des instants, qui ont couru pendant
+l'absence —, les mêmes effets et la même ferveur. Recharger la page ne rend
+plus un état neuf à 40 de souffle.
+
+**Le camp** (`you.side` de `virage:state`) :
+
+| le joueur | `virage:join` sans `camp` | `virage:join` avec `camp` |
+|---|---|---|
+| suit l'un des deux clubs | le camp de ce club | ignoré : le camp de ce club |
+| neutre, déjà connu de la salle (un autre onglet, ou parti) | **son camp d'avant** | **le camp demandé** |
+| neutre, nouveau | domicile | le camp demandé |
+
+`camp` vaut `"domicile"`, `"exterieur"`, `0` ou `1` ; toute autre valeur
+compte comme absente. La page qui se reconnecte peut donc renvoyer
+`virage:join` sans camp : le neutre parti pousser à l'extérieur n'est plus
+remis à domicile. Une page qui pose la question du camp à l'entrée envoie la
+réponse, et **un camp demandé l'emporte** : « je me suis trompé de camp, je
+ressors et je rechoisis » reste un geste normal. La page lit toujours son
+camp sur `you.side`, jamais sur ce qu'elle a demandé.
+
+**Seule la dernière demande d'une socket est servie.** `virage:join` lit la
+base avant de répondre. Si la même socket a émis entre-temps `virage:leave`
+ou un autre `virage:join`, l'entrée en vol ne s'assied pas et **aucun
+`virage:state` ne part pour elle**. Une page qui ressort n'attend donc pas
+d'état ; une page qui change de match reçoit l'état du second, et lui seul.
+
+**Le rang « classé » n'est qu'une réservation avant la première poussée.**
+Le plafond des Virages classés se pèse à chaque entrée tant qu'aucune
+présence n'est écrite pour ce match, en comptant les autres salles où le
+joueur est assis sans avoir poussé : regarder trois tribunes et revenir
+chanter dans les trois, ou ouvrir deux onglets avant tout chant, ne fait pas
+deux Virages classés sur un plafond d'un. Dès la première poussée, la
+décision est posée pour le match, et rejoindre ne la rouvre plus. Rien de
+cela ne change la forme de `virage:state`.
+
+### 15.3 Les buts annoncés
+
+`virage:real_goal` — et la carte-souvenir qui le suit — ne part que pour un
+but **qui compte au tableau**, et qu'on n'avait pas déjà :
+
+- **ni le penalty manqué, ni les tirs de la séance de tirs au but**, marqués
+  ou non, que l'API range sous `Goal` : aucun n'est annoncé, aucun ne décale
+  le rang ni le score gravé des buts suivants ;
+- **ni un but déjà au tableau quand le relevé regarde le match pour la
+  première fois** : la première salle ouverte sur un match en cours lit ces
+  buts dans le `scoreReel` de son `virage:state`, pas en `virage:real_goal` ;
+- **ni un but marqué pendant que plus rien ne relevait le match** (aucune
+  salle à relever, aucun club suivi, ne serait-ce qu'un tour — un match
+  relevé au coup d'œil, § 15.4, l'est entre deux coups d'œil) : il est
+  rangé, le score le porte, il n'est pas annoncé ;
+- **un but en avance sur le tableau** — dans la liste des événements avant
+  que le score ne le compte — attend que le score le rattrape, puis part.
+
+Le score peut donc monter sans `virage:real_goal` : la page suit
+`scoreReel` dans `virage:match` et `virage:fil`, qu'elle lisait déjà, et
+n'en déduit pas un but à fêter.
+
+### 15.4 La vie d'une salle, et la cadence de son match
+
+**Une salle vide se libère**, partis compris, quand plus aucune socket n'y
+est :
+
+| le match (dernier statut vu) | libérée |
+|---|---|
+| fini, annulé, gagné sur tapis vert ou par forfait (`FT`, `AET`, `PEN`, `CANC`, `AWD`, `WO`), reporté ou arrêté (`PST`, `ABD`) | une minute après le dernier départ |
+| tout autre statut, entre la demi-heure qui précède le coup d'envoi et trois heures après | jamais : sortir à la mi-temps ne coûte ni son souffle, ni sa main, ni le score de la tribune |
+| tout autre statut, hors de cette fenêtre | après une demi-heure de vide |
+
+Un retour après la libération entre dans une salle neuve, ressemée depuis la
+base : le score du vrai match, le statut et le fil sont justes, mais la
+corde, le score de la tribune et l'état du supporter repartent de zéro.
+
+**Le relevé ne suit plus chaque salle à chaque tour.** Une salle occupée sur
+un match fini n'est plus relevée. Sur un match à venir, elle l'est à chaque
+tour de la demi-heure qui précède le coup d'envoi aux quatre heures qui le
+suivent, pas du tout avant, une fois par demi-heure après. Sur un match
+reporté, arrêté, ou que l'API ne rend plus, une fois par demi-heure ; sur un
+match « en jeu » dont rien n'a bougé depuis une heure, une fois par quart
+d'heure. Dans ces cas, `virage:match` arrive rarement ou jamais, et c'est
+voulu : un statut qui ne bouge pas n'est pas une panne de la page.
+
+### Lecteurs
+
+`virage.html` (lot 6) : le chrono de la minute double (§ 15.1), la
+reconnexion et le choix du camp (§ 15.2), la fête d'un but et la ligne
+« Tu y étais » (§ 15.3), le bilan d'après le coup de sifflet (§ 15.4).

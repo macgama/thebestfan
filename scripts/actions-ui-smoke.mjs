@@ -194,6 +194,81 @@ check('et chacune dit de quoi il s’agit',
   check(`il passe au-dessus de tout (z-index ${t.couche})`, t.couche >= 92);
 }
 
+/* ========================================= une carte jouée ne revient pas
+
+   Gaël l'a vue deux fois au Virage, le 4 octobre 2026, et l'a crue jouée deux
+   fois. Elle ne partait qu'une fois : elle se **montrait** deux fois. Ses deux
+   animations finissaient sans `fill`, donc l'effet cessait à la dernière image
+   et l'élément reprenait son style de base — centré, en grand, opacité 1 —
+   pendant les soixante millisecondes qui séparent la fin du vol de la
+   minuterie qui le retire.
+
+   Deux contrôles. Le premier est sûr : on termine l'animation à la main et on
+   lit ce qui reste à l'écran. Le second regarde la vraie course, image par
+   image, sur six cartes à la fois : la fenêtre ne dure que deux ou trois
+   images, et une seule carte pourrait passer entre elles. Les deux, en
+   mouvement normal et en mouvement réduit, qui a sa propre animation. */
+{
+  const carte = ACTIONS.find((a) => a.id === 'a-fumigene') ?? ACTIONS[0];
+  const a = { id: carte.id, nom: carte.nom, fam: carte.fam, cost: carte.cost,
+    texte: carte.texte, effet: carte.effet };
+
+  const finie = () => page.evaluate((a) => {
+    document.querySelectorAll('.tbf-jouee').forEach((x) => x.remove());
+    window.TBF_ACTION.jouee(a, { pour: true, vers: { x: 195, y: 500 } });
+    const el = document.querySelector('.tbf-jouee');
+    const anim = el?.getAnimations?.()[0];
+    if (!anim) return null;
+    anim.finish();
+    const reste = { opacite: Number(getComputedStyle(el).opacity),
+      fill: anim.effect.getTiming().fill };
+    el.remove();
+    return reste;
+  }, a);
+
+  const course = () => page.evaluate((a) => new Promise((ok) => {
+    document.querySelectorAll('.tbf-jouee').forEach((x) => x.remove());
+    const suivies = [];
+    for (let i = 0; i < 6; i++) {
+      window.TBF_ACTION.jouee(a, { pour: i % 2 === 0, vers: { x: 195, y: 500 } });
+      const el = [...document.querySelectorAll('.tbf-jouee')].at(-1);
+      suivies.push({ el, anim: el.getAnimations()[0] });
+    }
+    let revenues = 0, images = 0;
+    const t0 = performance.now();
+    const image = () => {
+      let vivantes = 0;
+      for (const { el, anim } of suivies) {
+        if (!el.isConnected) continue;
+        vivantes++;
+        /* Finie mais encore là : c'est exactement la fenêtre du défaut. */
+        if (anim?.playState === 'finished') {
+          images++;
+          if (Number(getComputedStyle(el).opacity) >= 0.5) revenues++;
+        }
+      }
+      if (vivantes && performance.now() - t0 < 4000) requestAnimationFrame(image);
+      else ok({ revenues, images });
+    };
+    requestAnimationFrame(image);
+  }), a);
+
+  for (const doux of [false, true]) {
+    await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion',
+      value: doux ? 'reduce' : 'no-preference' }]);
+    const nom = doux ? 'en mouvement réduit' : 'en vol';
+    const f = await finie();
+    check(`${nom}, une carte finie reste éteinte jusqu’à son retrait `
+      + `(opacité ${f?.opacite ?? '—'}, fill ${f?.fill ?? '—'})`,
+      Boolean(f) && f.opacite < 0.05 && f.fill === 'forwards');
+    const c = await course();
+    check(`${nom}, aucune des six ne revient au milieu de l’écran `
+      + `(${c.revenues} image(s) revenue(s) sur ${c.images} après la fin)`,
+      c.revenues === 0);
+  }
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+}
+
 check('aucune erreur de script', erreurs.length === 0
   || (console.log('        ', erreurs.slice(0, 3).join(' · ')), false));
 

@@ -196,9 +196,16 @@ export class VirageRoom {
   /**
    * @param fixture {id, homeId, awayId, homeName, awayName, leagueId, kickoffAt}
    */
-  constructor({ fixture, emit, onPush, onGoal, log = console }) {
+  constructor({ fixture, emit, emitVous, onPush, onGoal, log = console }) {
     this.fixture = fixture;
     this.emit = emit;                 // (event, payload) => void, vers la salle
+    /* (userId, you) => void, vers **tous les onglets d'un seul joueur**.
+       `emit` parle à la salle entière ; la main, elle, n'appartient qu'à
+       celui qui la tient. Sans ce canal, la carte tirée au battement restait
+       dans la salle : `virage:vous` ne partait qu'après une carte jouée, donc
+       *avant* le tirage, et la page gardait une case vide pour toujours.
+       Facultatif : une salle montée sans lui — les suites — tire en silence. */
+    this.emitVous = emitVous;
     this.onPush = onPush;             // enregistrement de présence
     this.onGoal = onGoal;             // but de jeu (pas le but réel)
     this.log = log;
@@ -243,6 +250,31 @@ export class VirageRoom {
     this.fil = [];
     this.rang = 0;                    // départage deux entrées de même minute
     this.scoreReel = [fixture.homeGoals ?? 0, fixture.awayGoals ?? 0];
+    /* **Les buts que cette salle connaît déjà** : ceux qui étaient au tableau
+       quand elle a ouvert, puis chacun de ceux qu'elle a annoncés. Le relevé
+       en apporte de deux sortes, et ni l'une ni l'autre n'est une nouvelle.
+       Un but d'avant l'ouverture livré en retard, parce que l'API a publié le
+       score avant l'événement ou que le télétexte a rangé le score avant le
+       tour du direct : il sonnait « GOAL ! » à la cinquantième pour un but de
+       la neuvième. Et un but déjà annoncé qui revient sous une autre
+       identité, quand l'API corrige le buteur : il sonnait une seconde fois,
+       corde et minute double comprises. Voir `realGoal`, qui les tait et
+       fait monter ce compte, et `matchStatus`, qui le fait redescendre quand
+       la vidéo retire un but. */
+    this.butsConnus = (Number(this.scoreReel[0]) || 0) + (Number(this.scoreReel[1]) || 0);
+    /* **Et ce qui les date.** Le rang seul ne suffit pas : le relevé le
+       compte dans *sa* liste d'événements, et une liste qui manque un but
+       d'avant l'ouverture — jamais publié, ou publié après le suivant — fait
+       descendre d'un cran le rang de tous les buts frais. Le premier prenait
+       alors le rang du but manquant, et la salle le taisait : ni « GOAL ! »,
+       ni corde, ni minute double, pour toute la tribune. La minute de jeu à
+       l'ouverture date un but d'avant elle ; les buts annoncés ici, par club
+       et par minute, reconnaissent celui qui revient. Lue dans la même ligne
+       de base que le score : un but au tableau à l'ouverture a donc une
+       minute qui ne la dépasse pas. */
+    const ouverte = Number(fixture.elapsed);
+    this.minuteOuverture = fixture.elapsed != null && Number.isFinite(ouverte) ? ouverte : null;
+    this.butsAnnonces = [];           // {teamId, minute} de chaque but annoncé ici
     this.statut = fixture.status ?? null;
     this.minute = fixture.elapsed ?? null;
     /* Le temps additionnel, et l'instant où le serveur a vu tout ça.
@@ -1198,16 +1230,80 @@ export class VirageRoom {
    * Un but dans le vrai match. Il secoue la corde du côté qui a marqué et
    * ouvre une minute où tout compte double : c'est le moment où le joueur
    * ouvre son téléphone, et il doit valoir le déplacement.
+   *
+   * Rend `true` quand la salle l'a annoncé, `false` quand elle l'a tu.
    */
   realGoal({ teamId, minute, player, assist = null, score = null }) {
+    /* **Un but que la salle connaît déjà ne sonne pas.** Au tableau à
+       l'ouverture, personne ici ne l'a vu tomber ; annoncé ici, il l'a déjà
+       été. Le relevé, lui, reconnaît un but à tout ce qui le décrit, buteur
+       compris : un nom que l'API corrige le lui renvoie comme neuf.
+
+       Ni « GOAL ! », ni corde, ni minute double ; et ni la minute ni le
+       score de la salle ne reculent jusqu'à lui, le relevé du direct les
+       tient déjà à jour. Il n'entre pas non plus au fil, pour la raison de
+       `semerLeFil` : le score le porte, et l'y glisser maintenant le ferait
+       passer pour frais.
+
+       **Deux indices, jamais un seul.** Le rang — les buts au tableau une
+       fois qu'il est marqué — dit qu'il peut être connu : on le compare à ce
+       que la salle a vu, **pas au score du moment**, qu'au même tour le
+       relevé fait monter (`matchStatus`) avant d'apporter le but. Mais ce
+       rang, le relevé le compte dans sa liste d'événements : qu'elle manque
+       un but plus ancien, et un but frais prend le rang d'un but connu. Il
+       faut donc un second indice pour le taire. Sa minute, qui ne dépasse
+       pas celle de l'ouverture : il était au tableau — la mi-temps comprise,
+       puisque la minute de jeu s'y arrête. Ou un but du même club, à une
+       minute près, déjà annoncé ici : c'est lui qui revient, buteur corrigé.
+       Le rang garde ce second cas de deux buts du même club en deux minutes
+       qui se suivent : le second a un rang neuf.
+
+       Quand rien ne date le but — pas de minute, ou une salle ouverte sans
+       la sienne —, le rang décide seul. Sans score, rien ne le situe : on
+       l'annonce, comme avant, et il ne compte pas.
+
+       Ce que ça coûte : un but frais encore tu, quand deux hasards rares
+       tombent ensemble. Une liste qui manque un but d'avant, et un but frais
+       dans la minute même de l'ouverture — ou dans le même temps additionnel,
+       que la minute ne distingue pas. Ou une vidéo qui retire un but, et un
+       autre du même club marqué la minute suivante, entre deux tours du
+       relevé. */
+    const rang = Array.isArray(score) && score.length === 2
+      ? Number(score[0]) + Number(score[1]) : null;
+    const quand = minute == null ? NaN : Number(minute);
+    if (Number.isFinite(rang) && rang <= this.butsConnus) {
+      const datable = Number.isFinite(quand) && this.minuteOuverture != null;
+      const dAvant = !datable || quand <= this.minuteOuverture;
+      const revenu = Number.isFinite(quand) && this.butsAnnonces.some(
+        (b) => b.teamId === teamId && Math.abs(b.minute - quand) <= 1);
+      if (dAvant || revenu) return false;
+    }
+    /* Un but frais au rang décalé ne fait pas redescendre le compte : les
+       buts qu'il connaît restent connus. */
+    if (Number.isFinite(rang)) this.butsConnus = Math.max(this.butsConnus, rang);
+    if (Number.isFinite(quand)) this.butsAnnonces.push({ teamId, minute: quand });
+
     const side = teamId === this.fixture.homeId ? 0 : 1;
     this.realGoals[side]++;
-    // Le score du vrai match vient du relevé quand il l'accompagne : le
-    // compter ici à partir des buts vus donnerait 1–0 à qui entre à la
-    // soixantième minute d'un 3–2.
-    if (Array.isArray(score) && score.length === 2) this.scoreReel = [...score];
-    else this.scoreReel[side]++;
-    if (minute != null) this.minute = minute;
+    /* Le score du vrai match vient du relevé quand il l'accompagne : le
+       compter ici à partir des buts vus donnerait 1–0 à qui entre à la
+       soixantième minute d'un 3–2.
+
+       **Sans jamais faire reculer le tableau, ni la minute.** Ce score est
+       celui que le relevé reconstitue dans sa liste : en retard d'un but
+       quand elle en manque un, ou quand l'API publie ce but après un plus
+       tardif. Le tableau que `matchStatus` vient de poser au même tour est
+       plus juste — la page affichait 1–0 sous « GOAL ! » d'un 2–0. Il ne
+       recule que par lui, quand la vidéo retire un but. La minute non plus :
+       celle d'un but est déjà derrière celle que le relevé vient de poser,
+       et bien plus pour un but publié en retard. La reprendre ferait tourner
+       le répertoire à l'envers, et refuserait une carte de fin de match déjà
+       permise. */
+    if (Array.isArray(score) && score.length === 2) {
+      this.scoreReel = [Math.max(Number(this.scoreReel[0]) || 0, Number(score[0]) || 0),
+                        Math.max(Number(this.scoreReel[1]) || 0, Number(score[1]) || 0)];
+    } else this.scoreReel[side]++;
+    if (Number.isFinite(quand) && !(this.minute > quand)) this.minute = quand;
     this.ajouterAuFil([this.entreeTerrain(
       { type: 'Goal', detail: null, teamId, minute, player, assist })]);
     const jolt = RULES.realGoalJolt * (side === 0 ? -1 : 1);
@@ -1225,6 +1321,7 @@ export class VirageRoom {
       surgeMs: RULES.surgeAfterRealGoalMs,
     });
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
+    return true;
   }
 
   /* -------------------------------------------- le terrain, hors les buts */
@@ -1294,7 +1391,18 @@ export class VirageRoom {
     // Le relevé vient de voir le match : l'horloge de la page repart de là, et
     // non de l'instant où elle a reçu le message.
     this.vuA = Date.now();
-    if (homeGoals != null && awayGoals != null) this.scoreReel = [homeGoals, awayGoals];
+    if (homeGoals != null && awayGoals != null) {
+      this.scoreReel = [homeGoals, awayGoals];
+      /* **Un but que la vidéo retire fait redescendre le tableau, et ce compte
+         avec lui.** Le vrai but suivant reprend le rang du but refusé, et la
+         minute ne le sauve pas toujours : la salle le tairait sinon quand
+         rien ne le date, ou quand le même club marque la minute d'après celle
+         du but refusé — il passerait pour lui, revenu. Il ne monte jamais
+         ici : passé l'ouverture, un but n'y entre qu'annoncé — voir
+         `realGoal`. */
+      const auTableau = (Number(homeGoals) || 0) + (Number(awayGoals) || 0);
+      this.butsConnus = Math.min(this.butsConnus, auTableau);
+    }
     const change = status && status !== this.statut;
     if (status) this.statut = status;
 
@@ -1328,6 +1436,22 @@ export class VirageRoom {
        remplit et une recharge se termine même pour quelqu'un qui a posé son
        téléphone. */
     this.entretenirCartes(now);
+
+    /* **La carte tirée, annoncée à celui qui la tient.**
+       Le tirage marquait `dirtyMain` et personne ne le lisait : `virage:vous`
+       ne partait qu'après une carte jouée — avant le tirage, donc —, la page
+       montrait quatre cartes au plus, et une case restait vide jusqu'au
+       rechargement. Le message part ici, au tour même du tirage.
+
+       Au plus un par joueur toutes les `refillMs` : un tirage repousse le
+       suivant d'autant, et une carte jouée aussi. Les partis n'en reçoivent
+       aucun — ils ne sont pas dans `members`, et ne tirent pas : leur main
+       repart avec l'état, à leur retour. */
+    for (const [userId, m] of this.members) {
+      if (!m.dirtyMain) continue;
+      m.dirtyMain = false;
+      this.emitVous?.(userId, this.snapshotFor(userId).you);
+    }
 
     /* **La fin de la minute double part aussi.** La diffusion ne partait que
        si quelque chose avait bougé, et l'expiration ne bouge rien : dans une

@@ -439,7 +439,6 @@ if (process.env.DATABASE_URL) {
     fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth, niveau, decks,
       abonnement });
     app.use('/api/fanzzy', fanzzy.router);
-    globalThis.fanzzy = fanzzy;
     console.log('collection fanzzy active');
 
     /* ---- la boutique
@@ -468,12 +467,19 @@ if (process.env.DATABASE_URL) {
     console.log('inscription et inventaire actifs');
 
     /* ---- l'aide : la FAQ, et les premiers pas
-       Monté après l'inscription parce qu'il lit ce qu'elle écrit, et il ne
-       dépend de rien d'autre : ses six signaux se lisent directement en base,
-       sans passer par un module de jeu. Une table ou une colonne absente vaut
-       « pas fait » plutôt que de lever — c'est l'écran qu'on ouvre quand
-       quelque chose ne va pas. */
-    const aide = createAide({ pool, requireAuth: auth.requireAuth });
+       Monté après l'inscription parce qu'il lit ce qu'elle écrit. Ses six
+       signaux se lisent directement en base, sans passer par un module de
+       jeu. Une table ou une colonne absente vaut « pas fait » plutôt que de
+       lever — c'est l'écran qu'on ouvre quand quelque chose ne va pas.
+
+       **Et après fanzzy, qu'il reçoit** : le booster de fin compte d'abord la
+       recharge due (`fanzzy.recharger`), et sans elle le versement refuse.
+       Au lot 4, l'aide lisait cette porte sur une globale, que ce fichier
+       posait faute de la lui passer ; une globale qui ressemble à un reste
+       finit retirée, et chaque booster des premiers pas serait tombé en panne
+       sans qu'une seule suite rougisse. `verif-cablage.mjs` et
+       `aide-smoke.mjs` lisent cet appel. */
+    const aide = createAide({ pool, requireAuth: auth.requireAuth, fanzzy });
     app.use('/api/aide', aide.router);
     console.log('aide et premiers pas actifs');
 

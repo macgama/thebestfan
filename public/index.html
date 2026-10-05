@@ -1235,8 +1235,10 @@ html[data-calme~="animations"] .pose{transition:none}
 
    Il est **écrit dans le HTML**, visible avant que la moindre ligne de script
    ne tourne, et c'est tout l'intérêt : un écran d'ouverture qu'il faut charger
-   pour voir arrive après ce qu'il était censé couvrir. Le tunnel est du CSS,
-   le titre et la jauge du texte et des boîtes, la photo du stade une image
+   pour voir arrive après ce qu'il était censé couvrir. Le tunnel est d'abord
+   du CSS, et sa photo de béton se pose dessus quand elle arrive : le couloir
+   peint reste dessous, et tient seul si elle manque (voir « le tunnel »). Le
+   titre et la jauge sont du texte et des boîtes, la photo du stade une image
    qui arrive quand elle peut ; rien ici n'attend le réseau pour exister. Ce
    que `ouverture.js` ajoute — les visages, les libellés qui changent par
    tiers, « TOUCHE POUR ENTRER », l'astuce du jour — vient en plus, jamais
@@ -1291,20 +1293,57 @@ html[data-calme~="animations"] .pose{transition:none}
 
 /* ------------------------------------------------------------ le tunnel
 
-   Le substitut de `tunnel.webp`, qui est à produire : quatre pans de béton en
-   perspective autour d'une ouverture, comme sur la maquette. Les coins de
-   l'ouverture sont des variables, lues par les quatre pans **et** par la
-   sortie, pour qu'ils ne se désaccordent jamais. Ils sont en pour cent de
-   l'écran : le tunnel se déforme avec lui, sans palier.
+   **Une photo, et le béton CSS dessous, en repli.** La photo
+   (`/img/ecran/tunnel-portrait` debout, `tunnel-paysage` couché) porte tout
+   le couloir : le plafond à poutres, les murs, l'escalier, les deux mains
+   courantes et les deux bâches unies. Au bout, un trou transparent, par
+   lequel on voit la sortie. Elle est posée en `<picture>` (`.couloir`) et non
+   en fond : un fond se peint sous les enfants et sous les pseudo-éléments,
+   et le sol (`::after`) la recouvrirait.
+
+   Deux images et non une : une seule composition ne met pas le trou et les
+   marches de la troupe au bon endroit à la fois en 9:16 et en 16:9. Le
+   `<picture>` choisit par l'orientation, et la boîte ci-dessous suit la même
+   règle (`orientation:landscape`) : jamais une photo couchée dans une boîte
+   debout.
+
+   **Le tunnel est la boîte de l'image.** 9:16 debout, 16:9 couché, en
+   « cover » : assez large pour l'écran, assez haute pour lui, centrée en x,
+   le centre du trou posé à `--yc` de la hauteur (c'est l'`object-position`
+   d'une image, écrit à la main). Tout ce qui vit dedans — les quatre pans,
+   les bâches, la sortie, la photo — est en pour cent de cette boîte. Les
+   coins du trou (`--tg`, `--td`, `--th`, `--tb`) sont ceux que le détourage
+   a mesurés (`geo.json`), plus une marge d'un pour cent de la largeur sous le
+   bord adouci, et ils valent pour la photo comme pour le repli : la sortie
+   tombe dans le trou à tous les formats, et le couloir ne saute pas quand
+   la photo arrive.
+
+   **Le repli.** Les quatre pans et les bâches restent, sous la photo : on
+   les voit le temps qu'elle arrive, ou pour de bon si elle manque. Ils ont
+   sa géométrie — le même trou, les bâches aux mêmes places. Le jour où la
+   photo manque, l'écran perd son béton, pas son couloir.
 
    Quatre pans, quatre pseudo-éléments sur deux boîtes : le plafond et le sol
    sur le tunnel, les deux murs sur `.murs`. Les murs passent après le
    plafond, les bâches et la sortie après les murs ; le sol est peint en
-   dernier, mais il ne touche ni les bâches ni la sortie. */
+   dernier, mais il ne touche ni les bâches ni la sortie.
+
+   `--vh` vaut `1dvh` là où l'unité existe (la hauteur visible), `1vh`
+   ailleurs : une variable qui désignerait une unité inconnue invaliderait
+   la largeur, et la boîte tomberait à zéro. */
 .ouverture .tunnel{
-  position:absolute;inset:0;
-  --tg:34%;--td:66%;--th:31%;--tb:60%;
+  position:absolute;
+  --vh:1vh;--r:calc(9 / 16);--yc:.435;
+  --bw:max(100vw,100 * var(--vh) * var(--r));
+  --bh:max(100 * var(--vh),100vw / var(--r));
+  width:var(--bw);height:var(--bh);
+  left:calc((100% - var(--bw)) / 2);top:calc((100% - var(--bh)) * var(--yc));
+  --tg:33.96%;--td:66.04%;--th:34.41%;--tb:52.56%;
   background:#0B0D10;
+}
+@supports (height:1dvh){.ouverture .tunnel{--vh:1dvh}}
+@media (orientation:landscape){
+  .ouverture .tunnel{--r:calc(16 / 9);--yc:.485;--tg:38.47%;--td:61.56%;--th:37.35%;--tb:59.79%}
 }
 .ouverture .murs{position:absolute;inset:0}
 .ouverture .tunnel::before,.ouverture .tunnel::after,
@@ -1338,16 +1377,21 @@ html[data-calme~="animations"] .pose{transition:none}
     linear-gradient(270deg,#15191D,#2B3137);
 }
 /* Les bâches unies tendues aux murs, rouge à gauche, or à droite : les deux
-   couleurs de la fumée. Sans texte — on est encore dans le couloir. La
-   perspective est en `vw` pour tourner pareil sur un téléphone et sur une
-   tablette, où la bâche est deux fois plus large. */
+   couleurs de la fumée. Sans texte — on est encore dans le couloir. Ce sont
+   celles de la photo, mesurées sur elle (boîte englobante, puis le trapèze
+   que la perspective en fait) : le repli les pose exactement où la photo les
+   montrera. Pas de cerne : un trapèze découpé ne garde pas sa bordure. */
 .ouverture .bache{
-  position:absolute;top:33%;height:16%;width:12.2%;
-  border:2px solid #07090C;
+  position:absolute;top:33%;height:14.4%;width:16%;
   background:repeating-linear-gradient(0deg,rgba(7,9,12,.1) 0 1px,transparent 1px 3px),var(--c);
 }
-.ouverture .bache.g{left:12.8%;--c:var(--flare,#E0402C);transform:perspective(83vw) rotateY(38deg)}
-.ouverture .bache.d{right:12.8%;--c:var(--projo,#F5C33B);transform:perspective(83vw) rotateY(-38deg)}
+.ouverture .bache.g{left:15%;--c:var(--flare,#E0402C);clip-path:polygon(0 0,100% 32.1%,100% 88.4%,0 100%)}
+.ouverture .bache.d{right:15%;--c:var(--projo,#F5C33B);clip-path:polygon(0 32.1%,100% 0,100% 100%,0 88.4%)}
+@media (orientation:landscape){
+  .ouverture .bache{top:35.5%;height:20.6%;width:14%}
+  .ouverture .bache.g{left:19.8%;clip-path:polygon(0 0,100% 29.1%,100% 83%,0 100%)}
+  .ouverture .bache.d{right:19.8%;clip-path:polygon(0 29.1%,100% 0,100% 100%,0 83%)}
+}
 
 /* ## La sortie, et la lumière qui grandit
 
@@ -1358,10 +1402,18 @@ html[data-calme~="animations"] .pose{transition:none}
    qui change d'échelle, jamais un dégradé animé — un dégradé animé se
    repeint à chaque image ; une échelle se compose, sans repeindre.
 
-   Elle part de 30 % et finit à sa taille quand le plafond tombe ; si
+   Elle part de 60 % et finit à sa taille quand le plafond tombe ; si
    l'écran part avant, elle s'arrête où elle en était. Sans mouvement, elle
-   est simplement à sa taille. Le halo autour de l'ouverture est une ombre
-   portée, fixe. */
+   est simplement à sa taille. **Pourquoi 60 % et un voile léger** (de .12 à
+   .35) : le béton de la photo est éclairé par cette sortie — 0,35 de
+   luminance autour du trou debout, 0,30 couché. Partie de 30 % sous
+   l'ancien voile (.25 à .55), la sortie était plus sombre que le mur
+   qu'elle éclaire (0,20 debout, 0,28 couché) : une lumière qui ne vient de
+   nulle part. Elle part maintenant à 0,45 et 0,52.
+
+   Le halo autour de l'ouverture est une ombre portée, fixe ; avec la
+   photo, lui et l'anneau d'encre passent sous le béton opaque et ne
+   servent plus qu'au repli. */
 .ouverture .sortie{
   position:absolute;overflow:hidden;
   left:var(--tg);right:calc(100% - var(--td));top:var(--th);bottom:calc(100% - var(--tb));
@@ -1371,14 +1423,43 @@ html[data-calme~="animations"] .pose{transition:none}
 .ouverture .sortie img{position:absolute;inset:0;width:100%;height:100%;
   object-fit:cover;object-position:50% 35%}
 .ouverture .sortie::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(15,18,22,.25),rgba(15,18,22,.55))}
+  background:linear-gradient(180deg,rgba(15,18,22,.12),rgba(15,18,22,.35))}
 .ouverture .sortie::before{
   content:"";position:absolute;z-index:1;left:50%;top:40%;width:330%;aspect-ratio:1;
   translate:-50% -50%;border-radius:50%;
   background:radial-gradient(closest-side,rgba(255,246,220,.95),rgba(255,226,160,.45) 45%,transparent 75%);
   animation:ouvLumiere var(--duree) cubic-bezier(.2,.6,.3,1) backwards;
 }
-@keyframes ouvLumiere{from{scale:.3}}
+@keyframes ouvLumiere{from{scale:.6}}
+
+/* ## La photo du couloir
+
+   Au-dessus des pans et de la sortie, sous `.dedans`. `z-index:1` et non
+   l'ordre du document : le sol (`.tunnel::after`) se peint après les
+   enfants du tunnel et passerait devant le bas de la photo. Elle remplit la
+   boîte, qui a exactement ses proportions : ni rognée ni déformée ici, c'est
+   la boîte qui déborde de l'écran.
+
+   Elle ne bouge pas : rien à couper au calme ni sous
+   `prefers-reduced-motion`. Un fondu d'arrivée, s'il en vient un, irait
+   dans les deux listes du bas de cette feuille.
+
+   **L'audit ne la voit pas.** Le fond qu'il lit sous un texte est celui des
+   ancêtres, et la photo est une sœur de `.dedans` : il mesure la craie sur
+   le #05070A de l'écran. Le contraste réel — 4,5:1 au moins sous le libellé
+   et la consigne, posés à même le couloir — est tenu par l'image elle-même :
+   son bas est assombri au traitement, au-delà de 58 % (debout) ou de 62 %
+   (couché) de sa hauteur. Une photo refaite doit refaire cette mesure, et
+   changer d'adresse (un `?v=`) : `/img` part avec un an de cache.
+
+   **Elle s'appelle `.couloir`, pas `.decor`.** `.decor` est déjà le décor
+   derrière le personnage du hub, une règle sans portée : posée sur la photo,
+   elle l'éteignait (opacité nulle tant qu'il manque `.on`) et la décalait
+   d'une demi-largeur, et l'écran montrait le repli sans un message. La
+   maquette de l'intégration, qui n'avait que la feuille de l'ouverture, ne
+   pouvait pas le voir ; le banc sur la vraie page, si. */
+.ouverture .couloir{position:absolute;inset:0;z-index:1;pointer-events:none}
+.ouverture .couloir img{display:block;width:100%;height:100%}
 
 /* ------------------------------------------------------------ dedans
 
@@ -1642,6 +1723,17 @@ html[data-calme~="animations"] .pose{transition:none}
   .ouverture .dedans{padding-top:calc(env(safe-area-inset-top,0px) + 14px)}
 }
 
+/* **Un téléphone couché** : le titre à 34 px, et le trou plus bas (57 %).
+   Le titre, à 46 px, mordait sur le haut du trou — jusqu'à 11 px à
+   780 × 360, la bâche posée sur la lumière ; à 34 px et le trou descendu,
+   il reste de 1 à 26 px entre les deux (de 667 × 375 à 932 × 430), et le
+   plus lointain de la troupe a les pieds au seuil (58,8 à 59,2 % de
+   l'image, pour un bas de trou à 58 %). */
+@media (orientation:landscape) and (max-height:520px){
+  .ouverture .tunnel{--yc:.57}
+  .ouverture .enseigne h1{font-size:34px}
+}
+
 /* ==================================== la sortie de secours de l'écran
 
    **Toutes les sorties de cet écran vivaient dans un fichier.** `ouverture.js`
@@ -1728,9 +1820,11 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
 <!-- ================================================ l ouverture
 
      Écrit dans la page, pas monté par un script : il doit être là avant que
-     quoi que ce soit ne tourne. Le tunnel est du CSS ; la photo du stade, au
-     bout du couloir, est servie en trois formats comme le reste du jeu —
-     <picture> choisit, et le JPEG couvre ce qui reste.
+     quoi que ce soit ne tourne. Le tunnel est du CSS, et la photo du couloir
+     se pose dessus quand elle arrive : sans elle, le béton peint tient seul.
+     Elle et la photo du stade, au bout du couloir, sont servies en trois
+     formats comme le reste du jeu — <picture> choisit, et le PNG ou le JPEG
+     couvre ce qui reste.
 
      Les Fanzzy de la scène, les deux libellés suivants de la jauge, la
      consigne et l astuce du jour sont posés par ouverture.js dès qu il se
@@ -1746,6 +1840,20 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
         <img src="/img/ecran/tribune.jpg" alt="">
       </picture>
     </div>
+    <!-- La photo du couloir, au-dessus de la sortie : voir « le tunnel »,
+         dans la feuille de cette page. Debout ou couchée selon l écran, et
+         en trois formats ; le béton CSS reste dessous, en repli. Si elle
+         manque, elle s en va : une image cassée de la taille de l écran,
+         Chrome la peint avec son icône et un cadre gris, par-dessus le repli
+         (alt vide ou non). -->
+    <picture class="couloir" aria-hidden="true">
+      <source media="(orientation: portrait)" srcset="/img/ecran/tunnel-portrait.avif" type="image/avif">
+      <source media="(orientation: portrait)" srcset="/img/ecran/tunnel-portrait.webp" type="image/webp">
+      <source media="(orientation: portrait)" srcset="/img/ecran/tunnel-portrait.png" type="image/png">
+      <source srcset="/img/ecran/tunnel-paysage.avif" type="image/avif">
+      <source srcset="/img/ecran/tunnel-paysage.webp" type="image/webp">
+      <img src="/img/ecran/tunnel-paysage.png" alt="" decoding="async" onerror="this.remove()">
+    </picture>
   </div>
   <div class="dedans">
     <!-- Le nom du jeu, peint sur la bâche principale à la craie : voir « Le
@@ -4066,14 +4174,45 @@ function preciserMoment(cle, sous) {
  * appel à l'API**. Une absence n'est pas une faute : le relevé peut n'avoir
  * pas encore écrit l'événement quand le score, lui, a bougé. Le bandeau reste
  * alors sur « Goal ! », ce qui est vrai.
+ *
+ * **Et une absence ne se voit pas à une liste vide.** Le relevé en retard
+ * porte les buts d'avant sans le dernier : le score est écrit en base avant
+ * que les événements soient demandés (`upsertFixture`, puis `pullEvents` après
+ * un appel à l'API, dans `src/server/football/poller.js`), et l'API publie le
+ * score avant l'événement. Le dernier but de la liste est alors le précédent,
+ * et le prendre mettait son buteur sous le nouveau « Goal ! » — à 2-0, le
+ * nom et la minute du 1-0.
+ *
+ * **Tout ce que l'API range sous `Goal` n'est pas un but.** Le penalty manqué
+ * y est, et chaque tir de la séance de tirs au but, marqué ou non : le
+ * dernier « but » de l'équipe pouvait être un ballon à côté, et le bandeau
+ * nommait alors, sous « Goal ! », celui qui venait de rater. Le relevé du
+ * direct les écarte pour la même raison (`estUnBut`, dans
+ * `src/server/football/poller.js`).
+ *
+ * Le penalty manqué se lit sur son détail. Le tir de la séance, non : seul le
+ * commentaire `Penalty Shootout` le distingue d'un penalty du match, et
+ * `fixture_events` ne le garde pas. C'est donc le tableau qui tranche —
+ * `auTableau`, les buts de l'équipe au score qu'on vient de lire, qui ne
+ * compte jamais un tir de la séance. Un relevé qui porte plus de buts de
+ * l'équipe que le tableau en contient un qui n'en est pas — un tir de la
+ * séance, ou un but refusé que la vidéo n'a pas encore retiré —, et rien ne
+ * dit lequel : on ne nomme personne plutôt que le mauvais. Un relevé qui en
+ * porte moins est en retard, plus haut : personne non plus. **Seul un relevé
+ * qui compte exactement les buts du tableau dit qui a marqué le dernier.**
+ * Sans tableau lisible, personne.
  */
-async function buteurDe(fixtureId, teamId) {
+async function buteurDe(fixtureId, teamId, auTableau) {
   try {
     /* `?? {}` : `lire` peut rendre `null` — une page d'erreur au lieu du JSON —
        et déstructurer `null` lève, ce qui emporterait le fil du match entier
        pour une réponse manquée. */
     const { events = [] } = (await lire(`/api/football/fixture/${fixtureId}/events`)) ?? {};
-    const buts = events.filter((e) => e.type === 'Goal' && e.team_id === teamId);
+    const buts = events.filter((e) => e.type === 'Goal' && e.team_id === teamId
+      && e.detail !== 'Missed Penalty');
+    /* `!==`, et non `>` : le relevé en retard trompe autant que le relevé en
+       avance — son dernier but est le précédent, et il a un buteur. */
+    if (!Number.isFinite(auTableau) || buts.length !== auTableau) return '';
     const dernier = buts[buts.length - 1];
     if (!dernier?.player) return '';
     return dernier.minute != null
@@ -5678,13 +5817,15 @@ async function alerteDuel() {
           const cle = moment('but', 'Goal !', 'club', {
             mc: couleurDuClub(m, jeSuisDomicile),
             mc2: (jeSuisDomicile ? m.homeColors : m.awayColors)?.[1] ?? null });
-          buteurDe(m.id, monClub).then((qui) => preciserMoment(cle, qui));
+          buteurDe(m.id, monClub, jeSuisDomicile ? m.home_goals : m.away_goals)
+            .then((qui) => preciserMoment(cle, qui));
           sauter();
           window.FX?.son?.('butReel');
           window.FX?.but?.({ pour: true, vignette: true });
         } else if (contreMoi > 0) {
           const cle = moment('encaisse', 'On encaisse', 'flare');
-          buteurDe(m.id, leurClub).then((qui) => preciserMoment(cle, qui));
+          buteurDe(m.id, leurClub, jeSuisDomicile ? m.away_goals : m.home_goals)
+            .then((qui) => preciserMoment(cle, qui));
           window.FX?.son?.('encaisse');
         } else if (pourMoi < 0) {
           /* Le score **recule** : l'arbitrage vidéo a refusé le but. C'est le

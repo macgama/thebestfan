@@ -786,10 +786,32 @@ function reagir(d) {
     return c ? (window.FX?.lisible?.(c) ?? c) : 'var(--projo)';
   };
 
+  /* **L'API range sous « Goal » deux choses qui n'en sont pas** : le penalty
+     manqué (« Missed Penalty »), et chaque tir de la séance de tirs au but,
+     réussi ou non. Le personnage exultait donc sur le penalty que son club
+     venait de rater, et une séance enchaînait les « GOAL ! » et les « ON
+     ENCAISSE » sur un score qui ne bougeait pas — l'API ne compte pas la
+     séance dans le score du match, elle la range à part (`periodes.penalty`,
+     lue au coup de sifflet final, plus bas).
+
+     Un tir de la séance ne porte aucune marque que cette page reçoive : le
+     relevé du direct le reconnaît au commentaire « Penalty Shootout » de
+     l'API (`estUnBut`, poller.js), mais la fiche du télétexte ne fait pas
+     suivre ce commentaire. Il se reconnaît donc ici à son moment : arrivé
+     pendant la séance ou après elle (P, PEN), à la minute où le jeu s'est
+     arrêté — 120, ou 90 sans prolongation. Le seul vrai but que la règle
+     puisse taire est un penalty de la toute fin des prolongations que l'API
+     livrerait après le début de la séance : il est déjà dans le score, et le
+     fil le montre. */
+  const seance = ['P', 'PEN'].includes(d.fixture?.status);
+  const pasUnBut = (e) => e.detail === 'Missed Penalty'
+    || (seance && e.detail === 'Penalty' && (e.minute == null || e.minute >= 90));
+
   for (const e of neufs) {
     const aMoi = mien(e.equipe);
     const contreMoi = !aMoi && (mien(d.equipes.home.id) || mien(d.equipes.away.id));
     if (e.type === 'Goal') {
+      if (pasUnBut(e)) continue;
       const sous = [e.joueur, e.minute != null ? `${e.minute}′` : ''].filter(Boolean).join(' · ');
       if (contreMoi) scene.moment('encaisse', 'ON ENCAISSE', { couleur: 'var(--flare)', sous });
       else scene.moment('but', aMoi ? 'GOAL !' : 'BUT',
@@ -814,11 +836,20 @@ function reagir(d) {
     const eux = mien(d.equipes.home.id) ? d.equipes.away.goals
       : mien(d.equipes.away.id) ? d.equipes.home.goals : null;
     if (nous == null) return;
-    const gagne = nous > eux, perdu = nous < eux;
+    /* **Aux tirs au but, le score du match est un nul** : la séance se
+       compte à part, et c'est elle qui décide. Maintenant que ses tirs ne
+       crient plus « GOAL ! », c'est ici seulement qu'elle se dit — lue sur
+       le score du match, une qualification aux tirs au but s'annonçait
+       MATCH NUL. Sans le compte de la séance, on garde celui du match. */
+    const tab = d.fixture.status === 'PEN' ? d.periodes?.penalty : null;
+    const auxTirs = nous === eux && tab?.home != null && tab?.away != null;
+    const [a, b] = !auxTirs ? [nous, eux]
+      : mien(d.equipes.home.id) ? [tab.home, tab.away] : [tab.away, tab.home];
+    const gagne = a > b, perdu = a < b;
     scene.moment(gagne ? 'victoire' : perdu ? 'defaite' : 'neutre',
       gagne ? 'VICTOIRE' : perdu ? 'DÉFAITE' : 'MATCH NUL',
       { couleur: gagne ? 'var(--vert)' : perdu ? 'var(--flare)' : 'var(--gris)',
-        sous: 'coup de sifflet final' });
+        sous: auxTirs ? `aux tirs au but · ${a} – ${b}` : 'coup de sifflet final' });
   }
 }
 

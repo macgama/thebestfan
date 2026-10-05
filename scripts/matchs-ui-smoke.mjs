@@ -106,6 +106,9 @@ const match = () => ({
     away: { id: 22, name: 'Persik Kediri', logo: '', goals: etat.away, couleur: null },
   },
   evenements: etat.evenements,
+  /* Le `score` de l'API, tel que le télétexte le fait suivre. Seule la séance
+     de tirs au but s'y lit (`penalty`) : elle n'entre jamais dans `goals`. */
+  periodes: etat.periodes ?? null,
   statistiques: [], compositions: null, stale: false,
 });
 
@@ -142,6 +145,24 @@ if (!AVEC_ETATS) throw new Error(
  */
 const passePar = (e) => jusqua(async () =>
   await page.evaluate(() => FICHE?.scene?.etat?.() ?? null) === e, 4000);
+
+/**
+ * Le bandeau du moment fort, et ce que la fiche a lu.
+ *
+ * **Un silence ne se prouve pas en attendant.** Le bandeau reste allumé
+ * quinze secondes sur le moment d'avant : le relire après un événement qui ne
+ * doit rien poser, c'est relire le but précédent. Sa clé (`data-cle`, que
+ * `fanzzy-scene.js` avance à chaque moment posé) dit, elle, si un moment est
+ * parti. Et `lus` compte les événements que la fiche a passés en revue : un
+ * silence n'en est un que si elle les a lus — une fiche qui lève en se
+ * dessinant ne réagit plus à rien, et se tairait aussi.
+ */
+const bandeau = () => page.evaluate(() => ({
+  cle: document.querySelector('.tbf-moment')?.dataset.cle ?? null,
+  titre: document.querySelector('.tbf-moment b')?.textContent.trim() ?? '',
+  sous: document.querySelector('.tbf-moment small')?.textContent.trim() ?? '',
+  lus: FICHE.vus?.size ?? 0,
+}));
 const app = express();
 app.get('/api/tt/jour', (_q, s) => s.json(jour()));
 app.get('/api/tt/match/:id', (_q, s) => s.json(match()));
@@ -317,6 +338,21 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   check('et le score de la fiche a suivi', moment.score === '1 – 1'
     || (console.log('        il dit :', moment.score), false));
 
+  /* **Un penalty manqué n'est pas un but.** L'API le range sous « Goal »
+     (`Missed Penalty`), et le personnage exultait sur le penalty que son club
+     venait de rater (`pasUnBut`, dans aujourdhui.html). Le score ne bouge
+     pas : le bandeau non plus. */
+  const avantManque = await bandeau();
+  etat = { ...etat,
+    evenements: [...etat.evenements, { minute: 26, extra: null, equipe: 11, type: 'Goal',
+      detail: 'Missed Penalty', joueur: 'Sidibé', passeur: null }] };
+  await page.evaluate(() => relire());
+  const apresManque = await bandeau();
+  check('un penalty manqué de ton club ne le fait pas exulter',
+    avantManque.cle !== null && apresManque.cle === avantManque.cle
+      && apresManque.lus === avantManque.lus + 1
+    || (console.log('        bandeau :', JSON.stringify({ avant: avantManque, apres: apresManque })), false));
+
   // Un but d'en face, maintenant.
   etat = { ...etat, away: 2,
     evenements: [...etat.evenements, { minute: 30, extra: null, equipe: 22, type: 'Goal',
@@ -357,6 +393,64 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
      mal vu ; un bouton éteint qui dit pourquoi se comprend. */
   check('et le Grand Virage s’y éteint, en disant pourquoi',
     virage.eteint && /match/.test(virage.texte));
+}
+
+/* -------------------------------------------- la séance de tirs au but
+
+   L'API range chaque tir de la séance sous « Goal », marqué ou non, et ne le
+   compte pas dans le score du match : la séance est à part, dans
+   `periodes.penalty`. La fiche enchaînait donc les « GOAL ! » et les « ON
+   ENCAISSE » sur un 1-1 qui ne bougeait plus, puis annonçait MATCH NUL une
+   qualification gagnée aux tirs au but. Elle ne reçoit pas le commentaire
+   « Penalty Shootout » qui distingue un tir de la séance : elle le reconnaît à
+   son moment, statut P ou PEN, minute 90 ou plus (`pasUnBut`). D'où deux
+   contrôles :
+
+     — pendant la séance, aucun tir ne pose de moment, ni pour ni contre ;
+     — au coup de sifflet final, c'est la séance qui décide, et le bandeau
+       dit qu'elle a décidé.                                                */
+
+{
+  /* Une fiche rouverte, sur un 1-1 au bout des prolongations : le bloc
+     précédent a déjà vu son coup de sifflet final, et une fiche n'annonce le
+     sien qu'une fois. La rouvrir est ce que fait le joueur ; à la première
+     lecture, elle enregistre les buts déjà marqués sans les rejouer. */
+  etat = { status: 'ET', elapsed: 118, extra: null, home: 1, away: 1,
+    live: true, fini: false, periodes: null,
+    evenements: [
+      { minute: 22, extra: null, equipe: 11, type: 'Goal', detail: 'Normal Goal', joueur: 'Diallo', passeur: null },
+      { minute: 30, extra: null, equipe: 22, type: 'Goal', detail: 'Normal Goal', joueur: 'Keller', passeur: null },
+    ] };
+  await page.evaluate((id) => ouvrirFiche(id), MATCH);
+
+  /* Les premiers tirs, un de chaque côté, à la 120′ — c'est là que l'API les
+     range. Ni l'un ni l'autre ne change le score. */
+  const avantTirs = await bandeau();
+  etat = { ...etat, status: 'P', elapsed: 120,
+    evenements: [...etat.evenements,
+      { minute: 120, extra: null, equipe: 11, type: 'Goal', detail: 'Penalty', joueur: 'Rey', passeur: null },
+      { minute: 120, extra: null, equipe: 22, type: 'Goal', detail: 'Penalty', joueur: 'Roth', passeur: null }] };
+  await page.evaluate(() => relire());
+  const apresTirs = await bandeau();
+  check('pendant la séance, un tir au but ne pose aucun moment',
+    avantTirs.cle !== null && apresTirs.cle === avantTirs.cle && apresTirs.lus === avantTirs.lus + 2
+    || (console.log('        bandeau :', JSON.stringify({ avant: avantTirs, apres: apresTirs })), false));
+
+  /* La séance finie : 1-1 au tableau, 4-3 aux tirs au but pour le club suivi,
+     qui reçoit. Le score du match dit MATCH NUL ; c'est faux. */
+  etat = { ...etat, status: 'PEN', live: false, fini: true,
+    periodes: { halftime: { home: 1, away: 1 }, fulltime: { home: 1, away: 1 },
+      extratime: { home: 0, away: 0 }, penalty: { home: 4, away: 3 } },
+    evenements: [...etat.evenements,
+      { minute: 120, extra: null, equipe: 11, type: 'Goal', detail: 'Penalty', joueur: 'Morel', passeur: null },
+      { minute: 120, extra: null, equipe: 22, type: 'Goal', detail: 'Missed Penalty', joueur: 'Frei', passeur: null }] };
+  await page.evaluate(() => relire());
+  const fin = await bandeau();
+  check('aux tirs au but, la séance gagnée est une VICTOIRE',
+    /VICTOIRE/.test(fin.titre) || (console.log('        il dit :', fin.titre), false));
+  check('et le bandeau dit comment elle s’est gagnée',
+    fin.sous.includes('aux tirs au but · 4 – 3')
+    || (console.log('        il dit :', JSON.stringify(fin.sous)), false));
 }
 
 /* ------------------------------------------------ la page vue sans compte

@@ -983,19 +983,23 @@ ligne disait que la route répondait `aide.error.server` et que le joueur
 pouvait réessayer ; c'était un 400 sans une ligne au journal, avant que
 `safe` n'écrive la pile et ne réponde 503.)
 
-**Écart temporaire** : la porte se lit sur l'option `fanzzy` de
-`createAide`, **sinon sur `globalThis.fanzzy`**, au moment du versement.
-`server.js` ne passe pas encore `fanzzy` à l'aide (fichier d'aucun périmètre
-du lot 4), mais pose `globalThis.fanzzy` en montant le module fanzzy, avant
-l'aide et dans le même bloc : sans ce repli, le correctif ne vaudrait que
-dans la suite. Si le montage de fanzzy échoue, aucune route `/api` n'est
-montée, l'aide non plus : la porte ne manque donc jamais en production
-d'aujourd'hui. Ce câblage est gardé par `aide-smoke`, qui lit `server.js` :
-retirer la globale (elle ressemble à un reste) ou monter l'aide avant
-`createFanzzy` ferait lever chaque booster de fin sans qu'aucune autre suite
-ne rougisse, puisqu'elles posent toutes leur porte elles-mêmes. Le jour où
-`server.js` construit l'aide avec `fanzzy`, comme le quotidien, le repli ne
-sert plus et peut partir.
+**Écart refermé le 4 octobre 2026** (serveur-correctif, § 7). Jusque-là, la
+porte se lisait sur l'option `fanzzy` de `createAide`, **sinon sur
+`globalThis.fanzzy`** : `server.js` ne passait pas `fanzzy` à l'aide (fichier
+d'aucun périmètre du lot 4), mais posait la globale en montant le module
+fanzzy, avant l'aide et dans le même bloc ; sans ce repli, le correctif
+n'aurait valu que dans la suite. `server.js` construit maintenant l'aide avec
+`fanzzy`, comme le quotidien, après `createFanzzy`. Personne d'autre ne
+lisait la globale (relevé par `grep` dans tout le dépôt, et dans la copie du
+lot 6) : elle est retirée de `server.js`, et le repli de `aide/index.js`
+avec elle — garder deux chemins laissait celui qu'on retire en croyant
+nettoyer. Si le montage de fanzzy échoue, aucune route `/api` n'est montée,
+l'aide non plus : la porte ne manque toujours jamais en production. Retirer
+`fanzzy` de l'appel, le passer à `null`, ou monter l'aide avant
+`createFanzzy`, ferait lever chaque booster de fin sans qu'aucune autre
+suite ne rougisse — elles posent toutes leur porte elles-mêmes : c'est
+`verif-cablage` (sans base, et dans le workflow de déploiement) et
+`aide-smoke` qui lisent l'appel.
 
 **Suite** : `aide-smoke`, « la recharge due entre avant le booster de fin » :
 à 11 sur 12 avec une recharge due, le booster de fin mène à 13, et la lecture
@@ -1003,9 +1007,11 @@ suivante ne reprend rien ; la recharge est comptée sur le pool d'abord, la
 ligne encore libre (un `NOWAIT` y passe), puis sur la connexion du
 versement ; l'appel préalable cassé exprès, la recharge entre quand même, par
 la connexion du versement qui tient la ligne (une autre connexion est refusée
-en `NOWAIT` à cet instant) ; câblée comme `server.js` aujourd'hui
-(`globalThis.fanzzy`), elle compte aussi, et `server.js` est lu pour
-vérifier ce câblage ; sans porte, rien n'est écrit. Puis « une panne se dit
+en `NOWAIT` à cet instant) ; `server.js` est lu : il doit construire l'aide
+après le module fanzzy, et lui passer `fanzzy` (la globale n'est plus
+acceptée) ; sans porte, rien n'est écrit. `verif-cablage` lit le même appel,
+sans base, et verse un booster de fin sur un faux pool pour vérifier que la
+porte reçue est bien celle qu'appelle le versement. Puis « une panne se dit
 au journal, et en 503 », par le routeur comme la page : sans porte, 503
 `aide.error.indisponible`, une ligne `[aide]` qui nomme « recharger », rien
 d'écrit ; un verrou expiré pendant le versement, 503 sans le code de MySQL,
@@ -1341,16 +1347,24 @@ montre `paliers.gagnes / prochain.a` (le total `paliers.possibles` sans
   au prochain cran, sans les tenues ; 24 gagnés sur 788 en tout ».
 
 **La page de la collection** (*révisé le 3 octobre 2026, lot 4* : ce
-paragraphe disait qu'elle affichait `total`, ce qui n'est plus vrai). Son
-anneau de collectionneur montre `paliers.gagnes / paliers.possibles` quand
-`paliers` est servi avec un `gagnes` entier : **le même numérateur que la
-tuile**, sur l'univers des crans plutôt que sur le prochain cran. `total` n'y
-est plus que dans l'étiquette de l'anneau (« 23 sur 760 au compte des
-paliers, tenues à part ; 24 sur 788 en tout »). Les replis sont ceux de la
-tuile : sans `paliers` lisible, l'anneau montre `total.gagnes /
-total.possibles` ; sans `possibles`, l'univers est `total.possibles`. Les deux
-écrans affichent donc le même compte gagné, et disent le même total aux
-lecteurs d'écran : 23 ici et 23 là-bas, 24 dans les deux étiquettes.
+paragraphe disait qu'elle affichait `total`, ce qui n'est plus vrai ; *et
+le 4 octobre 2026* : il donnait à l'anneau `paliers.gagnes /
+paliers.possibles`, que la page du lot 4 a quitté). Son anneau de
+collectionneur vise **le prochain cran**, comme la tuile : `paliers.gagnes /
+prochain.a` quand `paliers` est servi avec un `gagnes` entier, et
+`paliers.possibles` quand tout est gagné (`prochain` absent). Les deux écrans
+ne visent donc jamais deux seuils différents, et le sticker d'à côté dit ce
+que ce seuil rapporte. Un anneau sur l'univers des crans restait vide à
+l'œil : « 10 / 3311 », 0,3 %, à côté d'un sticker qui promettait le cran
+de 25. `paliers.gagnes / paliers.possibles` ne se lit plus que dans
+l'étiquette de l'anneau et dans le titre de palier (ABONNÉ, ULTRA, CAPO), et
+`total` que dans l'étiquette (« 23 sur 25 au prochain palier ; 23 sur 760 au
+compte des paliers, tenues à part ; 24 sur 788 en tout »). Sans `paliers`
+lisible, l'anneau vise les repères ronds du hub (10, 25, 50…) sur
+`total.gagnes`, sans rien promettre ; sans `possibles`, l'univers est
+`total.possibles`. Les deux écrans affichent donc le même compte gagné
+contre le même seuil, et disent le même total aux lecteurs d'écran : 23 ici
+et 23 là-bas, 24 dans les deux étiquettes.
 
 **Pour les suites** : chez un joueur qui a une tenue, avec `paliers` servi,
 le chiffre de la tuile n'est plus `total.gagnes`. `tour-ui-smoke` (« et
@@ -1554,3 +1568,402 @@ prix du booster ou pas du tout. Elle lit `paye` (entier ≥ 0, les écharpes
 réellement prélevées par cette ouverture : `prixPack()` dans la branche
 `buy`, 0 sinon) s'il est servi, et le préfère à sa déduction. Besoin rendu
 au périmètre `fanzzy`.
+
+---
+
+## `serveur-correctif` — les salles du Grand Virage et le relevé du direct (4 octobre 2026)
+
+**Un champ de plus au contrat : `surgeMs`** sur `virage:real_goal` et
+`virage:state` (`CONTRATS.md` § 15.1). Aucun champ renommé ni retiré. Le
+reste change le comportement de la salle et du relevé, et `CONTRATS.md`
+§ 15 le décrit pour la page ; ce qui suit dit pourquoi, et ce que ça coûte.
+
+Correctif hors lot, écrit sur la synthèse des défauts du Grand Virage
+(D1, D2, D3 et les constats voisins qu'elle relevait, tous en ligne depuis
+`e21a923`), et relu en cinq passes par trois relecteurs adverses. Fichiers :
+`src/server/ferveur/index.js`, `src/server/ferveur/virage.js`,
+`src/server/football/poller.js`, `src/server/football/routes.js`,
+`server.js`. D4, D5 et D7 restent au lot 6 (§ 9).
+
+### 1. D1 — une salle occupée n'est plus une salle à relever
+
+`sallesOccupees()` rendait toute salle qui avait un membre, quel que soit le
+match. Une salle finie restée ouverte — et le bilan garde les gens sur la
+page après le coup de sifflet — payait un relevé du direct et un relevé
+d'événements à chaque tour, jour et nuit : 1 440 appels par jour et par
+salle, 21 % du budget codé de 6 800. Neuf salles dépassaient le budget, et le
+quota épuisé figeait le direct de tout le site — scores, buts et
+cartes-souvenirs compris. Un lien vers un match fini ou lointain suffisait.
+
+**La règle** (`aRelever`, `ferveur/index.js`), pour une salle où quelqu'un
+est assis, sur le statut vu en dernier :
+
+| le match | relevé |
+|---|---|
+| terminé : `FT`, `AET`, `PEN`, `CANC`, `AWD`, `WO` | jamais ; le tour qui voit le coup de sifflet avait déjà dressé sa liste, et relève une dernière fois |
+| statut qu'aucun relevé de ce processus n'a vu | une fois, tout de suite : la ligne en base peut dater de semaines — un report qui se rejoue sous le même numéro resterait figé |
+| absent des réponses de l'API depuis plus d'une demi-heure | un coup d'œil par demi-heure, compté sur la dernière absence |
+| reporté ou arrêté : `PST`, `ABD` | un coup d'œil par demi-heure : l'API peut le reprogrammer sous le même numéro |
+| en attente : `NS`, `TBD`, `SUSP` | rien plus d'une demi-heure avant le coup d'envoi ; à chaque tour de la demi-heure d'avant aux quatre heures d'après ; au-delà, un coup d'œil par demi-heure. Une date illisible ne ferme rien |
+| tout autre statut (en jeu) | à chaque tour, tant que quelque chose bouge (statut, minute, temps additionnel, score) ; immobile depuis une heure, un coup d'œil par quart d'heure, et le premier mouvement le rend à chaque tour |
+
+Écart à la synthèse, qui proposait d'écarter les statuts finaux et de ne
+garder un `NS` qu'à la demi-heure : un match à venir, suspendu, ou que l'API
+laisse « en jeu » toute la journée coûtait autant qu'une salle finie, et la
+borne sur l'immobilité, plutôt que sur l'heure, ne ralentit pas une reprise
+après suspension, dont l'heure reste celle d'origine. Au pire, une salle au
+coup d'œil de la demi-heure coûte 48 appels par jour ; un match laissé « en
+jeu », au plus 450 (`salles-smoke`), contre 1 440 et 5 760.
+
+**Ce que le relevé a vu survit aux salles** (`vusA`, `sansReponse`,
+`mouvements`, par match, bornés comme les mémoires du relevé par les matchs
+vus depuis le démarrage). Une salle libérée puis rouverte ne repaie pas le
+relevé « une fois » d'un statut que le relevé venait d'écrire en base :
+trente matchs lointains visités trois minutes par heure coûtaient sinon 720
+appels par jour. **Ce regard peut vieillir** — un match regardé la veille,
+puis avancé à aujourd'hui — : à l'entrée, la journée du football (le cache
+de `/matchs`, sans appel de plus) le contredit sur le statut ou l'heure, et
+il s'oublie (`oublierLeRegard`).
+
+**L'heure du coup d'envoi part avec le statut.** `onStatus` porte
+`kickoffAt`, la date de l'API, et la salle la prend : un match avancé ou
+reculé gardait sinon l'heure lue à l'ouverture, et le relevé comme la
+libération (§ 3) se décidaient sur une heure fausse.
+
+**Un crochet de plus, `onAbsent`** : `server.js` → `createFootball` →
+`createPoller`, branché sur `virage.matchAbsent`. Un lot du relevé du direct
+**qui a répondu** sans un match demandé le signale, match par match. Un
+match que l'API ne rend pas, ou plus — supprimé, renuméroté, dont la ligne
+reste en base et qu'un lien ouvre encore — était relevé à chaque tour tant
+que sa salle était occupée : 720 appels par jour, pour rien. Seul un lot
+réussi le dit : un lot qui échoue (API en panne, quota épuisé) lève avant,
+et une panne ne doit pas passer pour une disparition — au retour de l'API,
+une salle en jeu aurait attendu sa demi-heure. Le signal part avant
+l'écriture des lignes rendues, pour qu'une écriture qui lève ne le taise
+pas. Un crochet passé n'est pas un crochet branché : `verif-cablage` le
+vérifie dans `server.js`, puis en déroulant un tour de relevé où un seul
+des deux matchs demandés revient.
+
+**La ceinture, dans le relevé** (`poller.js`, `attendu`). Les événements
+d'une salle ne se relèvent plus que pour un match en jeu, au plus un par
+minute — **sauf au tour qui voit le match sortir du jeu** (coup de sifflet,
+suspension, arrêt), qui relève une dernière fois sans attendre la minute :
+les cartons du temps additionnel ont droit au fil, la porte d'une minute ne
+s'ouvre qu'un tour sur trois à la cadence du direct, et au tour suivant la
+salle finie n'est déjà plus au relevé. Au plus un appel par fin de match.
+
+### 2. D2 et D3 — la salle se tient par socket, et garde ses partis
+
+**D3.** La salle d'un supporter était rangée par joueur (`roomOfUser`), et
+la déconnexion de **n'importe laquelle** de ses sockets la vidait : fermer
+un onglet KOP, Équipes ou duel (le même espace de noms), ou perdre
+l'ancienne socket d'un téléphone qui change de réseau après que la neuve est
+entrée, et l'onglet resté ouvert recevait `not_in_virage` à chaque chant et
+chaque carte jusqu'au rechargement. Avec deux onglets sur deux matchs, le
+membre restait pour toujours dans la première salle, qui continuait de
+payer son relevé (D1 sans aucun onglet). `ferveur/index.js` tient
+maintenant ce que **chaque socket** a rejoint (`salleDeSocket`), et pour
+chaque salle les sockets de chaque joueur (`socketsDe`). `detacher`, appelé
+par la déconnexion et par `virage:leave`, ne fait rien pour une socket qui
+n'a jamais rejoint, et le joueur ne quitte la salle qu'avec la dernière des
+siennes. `virage:chant` et `virage:jouer` lisent la salle de la socket. Une
+socket qui part pour un autre match quitte le premier.
+
+**D2.** Un départ supprimait le membre, et le retour le recréait à neuf :
+40 de souffle, une main neuve, les recharges et la fatigue effacées. F5, ou
+« quitter la tribune » puis revenir, valait un « Nouveau souffle » et un
+« Changement de chant » gratuits — et la ferveur ainsi gagnée s'écrit au
+classement par `virage_presence` —, pendant que le joueur honnête perdait à
+chaque coupure son rang et son souffle au-delà de 40. `VirageRoom.leave`
+range maintenant le membre parmi les **partis** (`partis`), son souffle
+arrêté à l'instant du départ ; `join` le reprend dans cet ordre : présent
+dans un autre onglet, parti, ou neuf. Le souffle ne remonte pas pendant
+l'absence (`regenAt` remis au retour) : `regen` lit son multiplicateur au
+moment où il calcule, et compter l'absence au retour effacerait la fatigue
+ou le revers d'une carte qu'on aurait fuis en sortant. Les recharges, la
+fatigue et la carte suivante sont des instants, qui courent pendant
+l'absence comme pour qui reste assis. Un parti ne compte ni dans la foule,
+ni dans le rang, ni dans le battement, ni dans la Collecte d'un coéquipier.
+D2 ne part pas sans D3 : sans lui, la déconnexion tardive d'une ancienne
+socket enverrait parmi les partis le membre qu'une socket neuve utilise.
+
+**Le camp** (`CONTRATS.md` § 15.2). C'est l'entrée qui le décide, et la
+salle le pose tel quel. **Écart à la synthèse**, qui demandait de ne jamais
+réécrire le camp d'un membre revenu : un camp **demandé** l'emporte, sinon
+« je me suis trompé de camp, je ressors et je rechoisis » rendrait l'ancien
+camp pour toute la vie de la salle, pendant que la page dessinerait
+l'autre. C'est **sans demande** — la page qui se reconnecte renvoie
+`virage:join` sans camp — qu'un neutre déjà connu retrouve le sien : il
+n'est plus remis à domicile par le réseau. Chez soi, le camp découle du club
+suivi à chaque entrée.
+
+**Les entrées en vol.** `virage:join` lit la base pendant de longues
+millisecondes. Chaque demande d'une socket, entrée ou sortie, est numérotée
+**à la réception** (`demandes`), hors du filet qui lance le corps au tour
+suivant de la boucle : un `virage:leave` arrivé dans le même paquet
+passerait sinon devant. L'entrée qui revient de ses lectures ne s'assied
+que si elle est encore la dernière demande de sa socket, et si la socket
+est encore connectée — sinon un membre que plus rien ne sortirait gardait
+la salle « occupée », et son relevé payé, jusqu'au redémarrage. Une salle
+libérée pendant ces lectures est remise en place, ou l'on prend celle
+qu'un autre a rouverte entre-temps ; et l'entrée pose `occupeeA` d'emblée,
+pour qu'une salle vide ne soit pas libérée sous les pieds de qui y entre.
+
+**Le rang « classé » se refait jusqu'à la première poussée.** La décision
+était posée une fois, à la première entrée. Gardée au parti, une décision
+jamais consommée laissait regarder trois tribunes au coup d'envoi,
+ressortir, puis revenir chanter dans les trois — trois Virages classés sur
+un plafond d'un : le compteur de l'abonnement lit les lignes de présence,
+et une ligne n'existe qu'à la première poussée. La décision n'est donc
+qu'une réservation tant que `presenceEcrite` est faux, et elle se pèse
+après le détachement, contre le compteur moins les salles où le joueur est
+assis sans avoir poussé (`reservees`). Les partis n'y sont pas : qui a
+regardé une tribune sans chanter ne perd pas sa place dans celle où il va
+jouer. Une panne du compteur ne ferme toujours rien.
+
+### 3. La libération des salles
+
+La ligne qui libérait une salle vide **n'avait jamais rien libéré** : elle
+lisait `room.last`, que `tick()` pose à chaque battement juste avant elle.
+Chaque match où quelqu'un était entré depuis le démarrage gardait sa salle en
+mémoire, comptée en vie par le bilan de santé et l'administration. La
+libération lit maintenant `occupeeA`, que le battement n'avance que s'il y a
+quelqu'un, et que l'entrée et la sortie posent.
+
+**Le délai suit le match** (`libre`), parce qu'une salle garde ce que la
+base n'a pas — le score de la tribune, la corde, le fil, et les partis. La
+libérer une minute après le dernier départ rendait tout ça au premier
+téléphone verrouillé : seul en tribune, sorti à la mi-temps, on revenait à
+40 de souffle, une main neuve et un 0–0 de tribune ; repartir à neuf
+redevenait gratuit, au prix d'une minute. Donc : fini ou reporté, une
+minute ; sinon, jamais entre la demi-heure d'avant le coup d'envoi et trois
+heures après ; hors de cette fenêtre, une demi-heure de vide. **La fenêtre a
+une fin, et elle compte** : une salle vide n'est plus relevée, et
+n'apprendrait jamais le coup de sifflet d'un match qu'aucun club suivi ne
+joue ; attendre son « FT » serait attendre pour toujours. Une salle vide ne
+coûte aucun appel : `sallesOccupees` ne rend que les salles où quelqu'un est
+assis. Les partis vivent autant que la salle, et partent avec elle.
+
+### 4. Les buts annoncés : `estUnBut`, le premier relevé, le trou
+
+**`estUnBut(e)`** (exporté par `poller.js`) : `type === 'Goal'`, ni
+`detail === 'Missed Penalty'`, ni un commentaire `Penalty Shootout`.
+`mapEvent` garde désormais `comments`, seul à distinguer un tir de la
+séance d'un penalty du match (minute 120, type `Goal`). Les compter frappait
+une carte-souvenir pour un ballon à côté, secouait la corde du côté qui
+venait de rater, ouvrait la minute double, et décalait d'un cran le rang et
+le score de tous les buts suivants du match — gravés sur leurs cartes.
+
+**Le premier relevé ne rejoue pas les buts d'avant.** Un match qu'aucun club
+suivi ne joue n'a rien dans `fixture_events` quand le premier supporter
+entre dans sa salle : son premier relevé trouvait tous les buts déjà
+marqués « jamais vus » et les annonçait — corde, minute double, score du
+duel doublé, carte de présence pour qui n'y était pas. Le relevé retient
+donc combien de buts étaient au tableau à son premier regard (`socles`), et
+les range sans les annoncer. La ligne en base sert de point de départ quand
+elle est fraîche — même période, à cinq minutes de jeu près
+(`LIGNE_FRAICHE_MIN`) : celle qu'un redémarrage laisse, ou que l'ancrage
+vient de poser —, et un but au-delà d'elle part. Quand la base a en plus
+une histoire de ce match, c'est elle qui fait foi : un redémarrage annonce
+encore les buts de la coupure qui n'avaient jamais été annoncés. Une base
+vide ne vaut pas « premier relevé » : le socle d'un club suivi est posé
+avant le coup d'envoi, à zéro, et tous ses buts partent comme avant. Le
+socle descend avec un but refusé par la vidéo, sans quoi le but suivant
+prendrait son rang et ne serait jamais annoncé. Un but, lui, n'est jamais
+jugé frais à sa minute de jeu : l'horloge de l'API s'arrête aux pauses, et
+un but de la 41e passerait pour frais un quart d'heure plus tard, à la
+mi-temps, carte de présence comprise. Ce qui compte est ce que le processus
+a vu, et quand.
+
+**Un trou efface le socle.** Un match qui n'est plus demandé au direct
+qu'au gré de sa salle, puis l'est de nouveau sans l'avoir été au tour
+d'avant (`dejaDemandes`, `tourPrecedent`, `oublies`), repart comme au
+premier regard, sur ce qu'on voit maintenant. Une tolérance de quelques
+minutes laissait payer qui sortait : sorti à la 10e, revenu chanter à la
+14e, on avait la carte du but de la 12e marqué salle vide, que celui resté
+assis n'avait pas. Le trou se compte en **tours**, et c'est la **demande**
+qui compte : un relevé qui demande sans obtenir (API en panne) n'a pas
+cessé de regarder.
+
+**Un but en avance attend le tableau** (`enAvance`). Dans un même tour, le
+score vient du lot du direct et les événements d'un appel parti après : un
+but marqué entre les deux est dans la liste, pas encore au tableau. Il était
+rangé quand même, et au tour suivant la base le donnait pour déjà vu : il
+n'était jamais annoncé. Il reste hors de la base et du fil tant que le
+tableau ne le couvre pas. Un but refusé que la liste garde n'est jamais
+couvert : jamais annoncé.
+
+**Ce que ça coûte, et c'est assumé.** Un match relevé au coup d'œil perd
+l'annonce des buts marqués entre deux coups d'œil (le score les porte, la
+carte n'est pas frappée). Le seul occupant d'une salle qui recharge sa page
+à l'instant où un tour dresse sa liste fait manquer ce tour à son match, et
+un but marqué entre deux tours est alors rangé sans être annoncé. Un
+redémarrage de plus de cinq minutes de jeu, ou qui enjambe un changement de
+période, n'annonce pas les buts de la coupure ; une fraîcheur lue en temps
+réel sur `polled_at` les distinguerait, au prix d'un calcul en SQL (voir la
+note sur les fuseaux en tête de `ferveur/index.js`).
+
+### 5. La minute double : `surgeMs`, et sa fin
+
+`virage:real_goal` porte `surgeMs` (la durée, `RULES.surgeAfterRealGoalMs`)
+et `virage:state` ce qui en reste. D6 de la synthèse était réfuté pour
+aujourd'hui — aucune page ne lit `surgeUntil` — : le champ est préventif,
+pour le chrono du lot 6, qui partira de la réception (R3). **Le défaut
+voisin était réel** : le battement ne diffusait que si quelque chose avait
+bougé, et l'expiration ne bouge rien. La salle retient la minute double
+qu'elle a annoncée en dernier (`surgeDiffusee`), et un battement part dès
+qu'elle change.
+
+### 6. La Remontada se lit sur le vrai score
+
+La condition « mené d'au moins un but » lisait `realGoals`, qui ne compte
+que les buts vus tomber depuis l'ouverture de la salle : une tribune ouverte
+à la soixantième minute d'un 0–2 y lisait 0–0 et refusait la Remontada à
+ceux qui la jouaient à bon droit. Elle lit `scoreReel`, semé depuis la base
+et recalé à chaque tour du relevé.
+
+### 7. Le câblage de l'aide (reliquat du lot 4)
+
+`server.js` passe `fanzzy` à `createAide`, et ne pose plus
+`globalThis.fanzzy`, que personne d'autre ne lisait ; l'aide n'a plus de
+repli sur la globale. Voir `fanzzy` § 1, « Écart refermé ». Gardé par
+`verif-cablage` (sans base : l'appel lu dans `server.js`, et un versement
+sur un faux pool) et par `aide-smoke`. Les trois mutations — `fanzzy` retiré
+de l'appel, passé à `null`, la porte reçue ignorée par l'aide — font rougir
+leur contrôle.
+
+Et le repli ne revient pas sans rougir : construite sans `fanzzy`, une
+`globalThis.fanzzy` posée, l'aide doit refuser comme sans porte et ne jamais
+appeler celle de la globale (`verif-cablage`, « et par elle seule »). Lire
+l'appel ne le voyait pas, et la trace du lot 4 décrivait la globale comme le
+câblage à garder (§ 9) : qui l'aurait suivie aurait remis le repli sans toucher
+à l'appel. La quatrième mutation — le repli du lot 4 remis tel quel dans
+`aide/index.js` — fait rougir ce contrôle, et lui seul.
+
+### 8. Pour les suites
+
+- **`npm run salles:test`** (`scripts/salles-smoke.mjs`, nouvelle) : les
+  salles avec le vrai `createVirage`, un faux `io`, de fausses sockets et un
+  faux pool, **sans base, sans réseau et sans port** — la règle du relevé et
+  sa mémoire, les partis, le camp, les sockets, les entrées en vol, la
+  réservation du rang classé, la libération, la fin de la minute double, la
+  Remontada.
+- **`npm run releve:test`** (`scripts/releve-smoke.mjs`, nouvelle) : le
+  relevé avec le vrai `createPoller`, un faux store et un faux client,
+  **sans base** — `estUnBut`, le premier relevé, le trou, le but en avance,
+  la ceinture, l'heure du coup d'envoi, `onAbsent`.
+- `football-smoke` : un penalty manqué ne décale pas le but suivant ; un
+  relevé qui découvre un match en cours ne rejoue rien et range tout ; la
+  séance de tirs au but est relevée et rien n'en est annoncé ; au coup de
+  sifflet, un relevé d'événements et un seul, même vingt secondes après le
+  précédent.
+- `virage-smoke` : `surgeMs` ; une salle finie sort du relevé sans que
+  personne en soit chassé ; deux onglets puis un retour, avec de vraies
+  sockets (camp, souffle, ferveur, recharge, carte refusée) ; la fin de la
+  minute double ; la libération.
+- `verif-cablage` : `onAbsent` branché et appelé pour le seul match omis ;
+  l'aide (§ 7), et son refus de la globale.
+
+Passage du 4 octobre 2026, sur la base locale `tbf`, à la file : `salles`
+134 contrôles, `releve` 56, `cablage` 29, `football` 71, `virage` 189,
+`souvenirs` 49, `virage:ui` 102, `nvn` 84, `aide` 47 — tous verts. Et les
+deux suites qui montent aussi `createVirage` : `abo:smoke` 78 (dont le
+plafond des Virages classés, que la réservation du § 2 touche) et
+`quotidien-smoke` 216, vertes. Puis `cablage` seule, sans base, après le
+refus de la globale (§ 7) : 30 contrôles, verts — le contrôle ajouté ne
+change aucun module, les suites du dessus restent valables.
+
+### 9. Ce qui reste, hors de ce correctif
+
+- **La trace du lot 4 prescrivait encore la globale** (§ 7). *Repris le
+  5 octobre 2026, avec l'appel qui la remplace* : le piège d'`ETAT.md` § 6
+  garde sa leçon, le câblage au passé ; l'item d'`ETAT.md` § 7 bis, point 0,
+  et celui d'`A-DEPLOYER.md` sont tombés ; `HISTORIQUE.md`, 4 quadragies
+  quinquies, dit l'item refermé. Ce qui suit est le relevé d'avant la
+  reprise. Relu le 4 octobre, sur `0638fb5` qui l'a commitée : cinq
+  passages, dans trois fichiers, décrivent le câblage par
+  `globalThis.fanzzy` comme celui d'aujourd'hui, et l'appel `createAide`
+  sans `fanzzy` comme une dette ouverte. Aucun de ces fichiers n'est de ce
+  périmètre. Les passages se
+  reprennent **dans le commit même de ce correctif**, pas à sa mise en
+  ligne : commité sans eux, le dépôt dirait ici de retirer la globale et
+  là de la garder, et c'est `ETAT.md`, le fichier qu'on lit en arrivant,
+  qui dirait de la garder. Pas tous de la même façon (lignes du 4 octobre,
+  qui bougeront) :
+  - `A-DEPLOYER.md`, « Ce qui reste en attente côté serveur » (ligne 240) :
+    « ne pas retirer cette globale ». L'item tombe : c'est cette livraison
+    qui le referme.
+  - `ETAT.md` § 6, « Un correctif serveur peut n'exister que dans sa suite »
+    (lignes 2709 à 2716). La leçon reste — un correctif vert en suite peut
+    manquer en production —, mais le câblage passe au passé : `server.js`
+    passe `fanzzy` à `createAide`, la globale et le repli sont partis,
+    `verif-cablage` et `aide-smoke` lisent l'appel, et `verif-cablage`
+    refuse le repli.
+  - `ETAT.md` § 7 bis, point 0 (lignes 2806 et 2807) : « `server.js` ne
+    passe pas `fanzzy` à `createAide` (l'aide le lit sur
+    `globalThis.fanzzy`, § 6) ». L'item tombe.
+  - `HISTORIQUE.md`, 4 quadragies quater : le piège (lignes 6102 à 6109) et
+    l'item de « Ce qui reste » (lignes 6268 et 6269). Ceux-là ne se
+    reprennent pas : c'est le journal d'une session datée, exact à sa date,
+    et le journal ne se réécrit pas. C'est l'entrée de ce correctif qui dit
+    l'item refermé.
+
+  D'ici là, qui suit ces passages remettrait la globale et le repli. La
+  globale seule ne ferait rien, l'aide ne la lit plus ; le repli rouvrirait
+  les deux chemins que ce correctif ramène à un, et `verif-cablage` le refuse
+  depuis (§ 7). Le piège d'`ETAT.md` § 6 n'en garde pas moins au présent une
+  règle que le code a quittée. Jusqu'à cette mise en ligne, la production
+  (`0638fb5`, en ligne depuis le 4 octobre vers 17 h 17) pose encore la
+  globale et son aide la lit ; la branche du lot 6, à `7450c03`, aussi : à
+  la fusion, c'est l'appel de ce
+  correctif qui reste, et `verif-cablage` refuse aussi bien un `server.js`
+  qui ne passe plus `fanzzy` qu'une aide qui relit la globale.
+- **D4** : `virage:join` diffuse encore `virage:crowd` à toute la salle à
+  chaque entrée, retour compris ; le battement suivant porte déjà la foule.
+  Lot 6.
+- **D5** : « Tu y étais. Elle est dans ton carnet. » s'affiche sur le seul
+  camp du but, alors que la carte ne va qu'à qui a poussé dans les deux
+  minutes ; il faut un `virage:souvenir` aux seuls receveurs, puis la page.
+  Lot 6.
+- **D7** : les seuils du verdict d'un geste, écrits en dur dans trois pages,
+  et `perfectBonus` qui teste la note brute. Lot 6, après l'arbitrage de
+  Gaël (Q3).
+- **La page** (`virage.html`, lot 6) : elle ne quitte pas la salle au coup
+  de sifflet — sans coût désormais —, et elle pose le nom du buteur par
+  `innerHTML`.
+- **La séance de tirs au but dans `fixture_events`** — demandée par
+  l'accueil le 4 octobre 2026, optionnelle ; **refusée pour ce correctif**.
+  `/api/football/fixture/:id/events` ne distingue pas un tir de la séance
+  d'un penalty du match : `mapEvent` garde `comments`, mais `insertEvents`
+  ne l'écrit pas, et la table n'a pas de colonne pour lui. Le hub le déduit
+  du tableau (`buteurDe`, `index.html`) : une liste qui porte plus de buts
+  d'une équipe que le score n'en compte ne fait nommer personne. La
+  déduction se trompe dans le seul sens acceptable — elle tait, elle ne
+  nomme jamais le mauvais —, et elle ne sert presque jamais : `buteurDe` ne
+  part que quand le score monte, et un tir de la séance ne le fait pas
+  monter. Seul y perd un but de prolongation que le hub découvrirait après
+  le début de la séance : son buteur n'est pas nommé.
+
+  Aucun des trois chemins ne vaut ce gain. **Une colonne** demande un `.sql`
+  neuf (`ALTER TABLE fixture_events ADD COLUMN IF NOT EXISTS`), son rang
+  dans `scripts/ordre-schema.mjs` et `store.js` — aucun n'est de ce
+  périmètre —, et surtout une écriture qui tolère la colonne absente : le
+  Manager n'applique jamais le schéma (`ETAT.md` § 2), et un `INSERT` qui
+  nomme une colonne absente lève dans `pullEvents` **avant l'annonce des
+  buts** — ni corde, ni minute double, ni carte-souvenir, pour aucun match,
+  jusqu'à ce que le fichier soit appliqué. **Un marquage au rangement**,
+  dans une colonne qui existe, change ce que lisent les autres : un `type`
+  neuf ferait entrer chaque tir au fil du Virage (`matchEvents` n'écarte
+  que `Goal`), dans un vocabulaire que `virage.html` ne traduit pas ; un
+  `detail` réécrit mettrait en base un mot que l'API ne dit pas, perdrait
+  « marqué ou manqué » ou l'encoderait, et devrait être réécrit pareil côté
+  API pour que l'identité d'un événement (`identite`) corresponde encore.
+  **Une mémoire du relevé**, que la route lirait, se perd au redémarrage et
+  ne couvre pas un match fini : la page garderait sa déduction, plus un
+  troisième état à lire.
+
+  Le jour où la séance doit se lire au serveur — un fil des tirs au but au
+  Virage, par exemple —, c'est la colonne qu'il faut, avec ses trois pièces :
+  le `.sql` appliqué avant le code ; un `insertEvents` qui retombe sur
+  l'ancienne liste de colonnes quand la nouvelle manque, et le dit au
+  journal ; une suite qui casse exprès ce repli.
