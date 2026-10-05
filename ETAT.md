@@ -2148,20 +2148,19 @@ Par ordre d'utilité.
     serveur-correctif § 1.)
 
 12. **Ce que le lot 6 laisse** (`HISTORIQUE.md`, 4 quadragies sexies, « Ce qui
-    reste »). **Rien n'en est en ligne.** Il est versé dans la copie
-    principale, pas encore commité : d'abord la vérification sur la base
-    `tbf` (`npm test` en entier, l'audit, la charge), puis la livraison
-    (`A-DEPLOYER.md` : `sql/arenes.sql`, puis un redémarrage hors d'un
-    match). Puis : écouter le mixage sur un téléphone ; les constats de détail
+    reste »). **En ligne depuis le 5 octobre 2026** (`sql/arenes.sql`
+    appliqué et serveur redémarré par Gaël). Restent : écouter le mixage sur
+    un téléphone ; les constats de détail
     de la critique (un seul cran de souffle par coût distinct, le pas de 700 ms
     du bilan du duel, la tête de la fenêtre du geste au duel, BON noir sur le
     kraft, la face de la carte-souvenir, « TU Y ÉTAIS » à chaque bilan, l'heure
     d'un match à venir dans la banderole du score, les places libres du
     vestiaire, les noms de carte coupés dans le mot, l'interrupteur de présence
-    sur la ligne du volume) ; **le tunnel**, que le voile du Virage n'a pas pris
-    (la tribune à 25 %), puis le foulard, la corde et les silhouettes, les
-    dessins de chant en 2:3 et la passe de matière des gestes positionnels
-    (lot 7). Et `nvn:net`, que `npm test` ne lance pas. Les deux fautes de
+    sur la ligne du volume) ; les dessins de chant en 2:3 et la passe de
+    matière des gestes positionnels. **Le tunnel** au voile du Virage, **le
+    foulard, la corde et les silhouettes** sont faits au lot 7, dans `main`
+    depuis le 5 octobre 2026 (pas encore en ligne). Et `nvn:net`, que
+    `npm test` ne lance pas. Les deux fautes de
     `ui.css` que le dernier rapport du lot avait laissées — l'accent de
     « CÈDE » dans la case de BD, deux mouvements des gestes sans leurs doubles
     — sont corrigées à la fusion.

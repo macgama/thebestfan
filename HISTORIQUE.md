@@ -7456,3 +7456,88 @@ silhouettes (à la main, sans crédit), les dessins de chant en 2:3, et la passe
 matière des gestes. Pour le Fanzzy vivant, un pilote sur RP1 seulement.
 
 ---
+
+## 4 quadragies septies. Le lot 7 — le foulard, la corde, les silhouettes, et le monde qu'on voit enfin
+
+*5 octobre 2026, deux sessions cloud : « Reprise de la refonte » (PR #2), puis
+« Lot 7 : images Artlist » (PR #3). Les deux sont dans `main` depuis le
+5 octobre (`057e18f`), pas encore en ligne.*
+
+### Ce qui a changé
+
+- **Les vieux buts, à la cause** (PR #2). Le relevé redemande les événements à
+  chaque tour du direct tant que sa liste compte moins de buts que le tableau,
+  au plus neuf tours (`enAttente`, `RELANCES_MAX` dans `poller.js`) : le but que
+  l'API publie après le score part au tour qui le trouve. Et le voile du
+  Virage prend enfin la photo du tunnel.
+- **Le foulard noué** (point 1). Une famille `arene` dans `stuff-images.mjs`,
+  le fond vert détouré, 256 px en AVIF, WebP et PNG. Il remplace le disque du
+  lot 6 sur `#knot` (48 px au Virage) et `#noeud` (40 px au duel), teint au camp
+  qui mène par un dégradé posé en `multiply` sous le dessin et découpé par lui.
+  Le disque reste le repli d'un navigateur sans `mask`. `verif-pages` vérifie
+  que chaque pièce d'arène que `ui.css` demande existe en ses trois formats.
+- **La corde tressée et les six silhouettes** (points 2 et 3), dessinées à la
+  main en SVG, sans crédit : une tuile de 14 × 27 décalquée de la référence
+  Artlist (trois torons, fond transparent sur `--corde-fil`), au Virage, au
+  duel, au chemin de niveau et à l'arbre des âges ; six poses d'après la
+  planche du 4 octobre (bras levés, écharpe, tambour, mégaphone, mains
+  frappées, tirant la corde). Le repos et l'assis restent pour `.muet` et
+  `.parti`.
+- **Personne en face** (`CONTRATS.md`, § 16.7). Gaël a demandé s'il fallait un
+  joueur de chaque côté pour que les points comptent. Non : le supporter seul
+  continue de marquer, sinon il ne pourrait plus jouer seul. Mais la
+  corde retombe de 3 par seconde au lieu de 1,4 quand le camp d'en face est
+  vide (`virage.decroissance_vide`, réglable ; à 1,4, l'ancien jeu), la
+  tribune vide dit « PERSONNE EN FACE », et la foule ne saute plus que sur
+  `pousse`, le camp qui a vraiment chanté.
+- **Le monde qui joue, enfin visible.** Gaël trouvait qu'un joueur ne voyait
+  ni les duels qui attendent ni le Virage qui chante. L'accueil porte une bâche
+  violette au pied du personnage, « 37 supporters dans les virages · 3 duels
+  attendent un joueur », et le tiroir les mêmes nombres sur VIRAGE (nouvel
+  état `monde`) et DUEL (les duels qui attendent, et non plus les présents
+  d'une file). Les deux comptes sont écrits une fois, dans `menu.js`.
+
+### Pourquoi la bâche est là
+
+- **Au pied du personnage**, parce qu'il n'y avait pas d'autre place : les
+  rails tiennent trois états au plus, la bande du bas est pleine, et les
+  planchers de taille du personnage ne bougent pas. Posée sur ses chaussures,
+  elle ne lui prend rien d'autre, de 320 à 412 px de large.
+- **Une bâche (`.tbf-plaque`), pas un sticker** : un sticker n'est jamais une
+  cible à lui seul. **Violette**, parce que ce sont des gens (amendement 18).
+- **Elle se tait quand un club du joueur joue** : ce soir-là, l'accueil parle
+  de son match. Et elle ne répète pas le seul duel que le bouton propose déjà.
+- **À égalité, elle mène à la file** : un duel ne part pas sans le joueur qui
+  lui manque, une tribune chante sans lui.
+- **Le menu ne s'allume pas pour le monde** : son bouton est réservé à ce qui
+  presse (le direct, un booster prêt, un duel qui attend).
+
+### Contrôles
+
+`menu:smoke`, `pages`, `salles:test`, `virage:smoke`, `reglages:smoke` verts.
+`accueil:ui` (+ 9 contrôles du bandeau), `virage:ui` (+ 5) et `nvn:ui` gardent
+sept rouges propres au conteneur cloud, présentes aussi sur `main` avant le
+lot : CLASSEMENT rogné, le pays dans la langue du lecteur, les trois contrôles
+d'invitation du Virage, la hauteur de l'arène du duel à 360 × 640 et une ligne
+de l'historique des duels.
+
+### Une nouvelle façon de livrer
+
+Gaël a demandé, le 5 octobre, de ne plus passer par des PR en attente de son
+accord : une session fusionne elle-même dans `main` quand toutes les suites
+passent sans nouvel échec, et lui demande encore avant un schéma ou un choix
+qui lui revient. La mise en ligne reste à lui (`refonte/README.md`, « Comment
+on travaille »).
+
+### Ce qui reste
+
+- **Le Fanzzy vivant** (point 4). La respiration et le saut existent déjà ; il
+  manque un caractère. Proposé à Gaël avec les cinq expressions dessinées : il
+  raconte le dernier match de son club en accueillant le joueur, il répond
+  autrement quand on insiste à le toucher, il fête un retour après quelques
+  jours. Le clignement attend une image « yeux fermés » par Fanzzy.
+- **Les sons**, au choix de Gaël (`art/son/_src/artlist/A-ECOUTER.md`).
+- Les dessins de chant en 2:3 et la passe de matière des gestes positionnels,
+  que le lot 6 renvoyait ici.
+
+---
