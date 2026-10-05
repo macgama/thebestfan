@@ -1590,45 +1590,59 @@ check('la corde a bougé', bouge);
    unifiée) : « LA CORDE CÈDE ! », « GOAL ! » avec le buteur et la minute —
    et plus aucun lettrage nu par-dessus (la forme pleine de `FX.but`
    écrivait « BUT ! », `FX.butReel` un second titre une seconde plus tard).
-   Les évènements sont ceux que le serveur émet ; on les raconte à la page,
-   un vrai but de corde demandant trois cents de poussée. La case passe sous
-   le tiroir quand on l'ouvre, comme au Virage. */
+   La corde qui cède est racontée à la page, un vrai but de corde demandant
+   trois cents de poussée. **Le but du vrai match, lui, part du serveur**
+   (`nvn.butReel`, le chemin du relevé du direct) : raconté à la main, il
+   avait la forme que la page attendait — `souffles` en paire — et non celle
+   que le moteur émet — un nombre, et `side` —, et la page levait sur chaque
+   vrai but sans qu'aucun contrôle le voie. La case passe sous le tiroir
+   quand on l'ouvre, comme au Virage. */
 {
-  const vu = await A.page.evaluate(async () => {
-    const titres = [];
-    const obs = new MutationObserver((lot) => {
+  const lire = () => A.page.evaluate(() => {
+    const m = document.getElementById('moment');
+    return { on: Boolean(m?.classList.contains('on')),
+      titre: document.getElementById('momentTitre')?.textContent ?? '',
+      sous: document.getElementById('momentSous')?.textContent ?? '',
+      z: m ? Number(getComputedStyle(m).zIndex) : null };
+  });
+  const cote = await A.page.evaluate(() => {
+    window.__titres = [];
+    window.__obsTitres = new MutationObserver((lot) => {
       for (const m of lot) for (const n of m.addedNodes) {
-        if (n.nodeType === 1 && n.matches?.('.fx-titre')) titres.push(n.textContent.trim());
+        if (n.nodeType === 1 && n.matches?.('.fx-titre')) window.__titres.push(n.textContent.trim());
       }
     });
-    obs.observe(document.body, { childList: true, subtree: true });
-    const lire = () => {
-      const m = document.getElementById('moment');
-      return { on: Boolean(m?.classList.contains('on')),
-        titre: document.getElementById('momentTitre')?.textContent ?? '',
-        sous: document.getElementById('momentSous')?.textContent ?? '',
-        z: m ? Number(getComputedStyle(m).zIndex) : null };
-    };
+    window.__obsTitres.observe(document.body, { childList: true, subtree: true });
     const side = S.vue.moi.side;
     raconter({ t: 'goal', side, goals: side === 0 ? [1, 0] : [0, 1] });
-    const corde = lire();
-    raconter({ t: 'but_reel', side, souffles: side === 0 ? [10, 0] : [0, 10], joueur: 'Kabashi', minute: 71 });
-    const reel = lire();
+    return side;
+  });
+  const corde = await lire();
+  const erreursAvant = A.erreurs.length;
+  // Le club de sa tribune marque : Sion est le domicile du match support.
+  const touchees = nvn.butReel({ fixtureId: 7, teamId: cote === 0 ? 85 : 91, minute: 71, player: 'Kabashi' });
+  await jusqua(async () => (await lire()).titre === 'GOAL !', 3000);
+  const reel = await lire();
+  const leve = A.erreurs.slice(erreursAvant);
+  const vu = await A.page.evaluate(async () => {
+    const lireZ = () => Number(getComputedStyle(document.getElementById('moment')).zIndex);
     const tiroir = document.querySelector('.tbf-tiroir');
     tiroir?.classList.add('on');
     await new Promise((r) => { setTimeout(r, 80); });
-    const sousTiroir = lire().z;
+    const sousTiroir = lireZ();
     tiroir?.classList.remove('on');
     // `FX.butReel` posait son second titre neuf cents millisecondes après.
     await new Promise((r) => { setTimeout(r, 1300); });
-    obs.disconnect();
+    window.__obsTitres.disconnect();
     couperMoment();
-    return { corde, reel, tiroir: Boolean(tiroir), sousTiroir, titres };
+    return { tiroir: Boolean(tiroir), sousTiroir, titres: window.__titres };
   });
-  check(`la corde qui cède se lit dans la case de BD (${vu.corde.titre || 'rien'})`,
-    vu.corde.on && vu.corde.titre === 'LA CORDE CÈDE !');
-  check(`le but du vrai match aussi, avec le buteur et la minute (${vu.reel.titre} · ${vu.reel.sous})`,
-    vu.reel.on && vu.reel.titre === 'GOAL !' && vu.reel.sous === 'Kabashi · 71′');
+  check(`la corde qui cède se lit dans la case de BD (${corde.titre || 'rien'})`,
+    corde.on && corde.titre === 'LA CORDE CÈDE !');
+  check(`le but du vrai match, tel que le serveur l’émet, aussi — avec le buteur et la minute (${reel.titre} · ${reel.sous})`,
+    touchees === 1 && reel.on && reel.titre === 'GOAL !' && reel.sous === 'Kabashi · 71′'
+    || (console.log('        salles touchées :', touchees, '· erreurs :', leve.join(' / ')), false));
+  check(`et la page ne lève pas en le lisant (${leve.join(' / ') || 'rien'})`, leve.length === 0);
   check(`et aucun lettrage nu par-dessus (${vu.titres.join(', ') || 'aucun'})`, vu.titres.length === 0);
   check(`la case passe sous le tiroir ouvert (calque ${vu.sousTiroir})`,
     vu.tiroir && vu.sousTiroir !== null && vu.sousTiroir < 48);

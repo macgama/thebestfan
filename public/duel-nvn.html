@@ -3115,7 +3115,14 @@ function raconter(e) {
      */
     case 'but_reel': {
       const mon = S.vue?.moi?.side ?? 0;
-      const [a, b] = e.souffles ?? [0, 0];
+      /* **Le serveur dit la tribune du club buteur** (`side`), et compte dans
+         `souffles` les joueurs qui ont repris leur souffle — un nombre. La
+         page le lisait comme une paire, `[a, b]` (la forme que `nvn:ui` lui
+         racontait), et la déstructuration levait : pas de case, pas de corne,
+         et le reste de l'envoi perdu avec — dont la corde qui cède, quand le
+         but la fait céder. Une paire reste lue si elle vient. */
+      const [a, b] = Array.isArray(e.souffles) ? e.souffles
+        : [Number(e.side === 0), Number(e.side === 1)];
       const nous = mon === 0 ? a : b;
       const eux = mon === 0 ? b : a;
       if (!nous && !eux) break;
