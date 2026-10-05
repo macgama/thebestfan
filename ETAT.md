@@ -2159,7 +2159,9 @@ Par ordre d'utilité.
     sur la ligne du volume) ; les dessins de chant en 2:3 et la passe de
     matière des gestes positionnels. **Le tunnel** au voile du Virage, **le
     foulard, la corde et les silhouettes** sont faits au lot 7, dans `main`
-    depuis le 5 octobre 2026 (pas encore en ligne). Et `nvn:net`, que
+    depuis le 5 octobre 2026 (pas encore en ligne), comme **le Fanzzy
+    vivant** (point 4), dont le clignement attend une image « yeux fermés »
+    par Fanzzy. Et `nvn:net`, que
     `npm test` ne lance pas. Les deux fautes de
     `ui.css` que le dernier rapport du lot avait laissées — l'accent de
     « CÈDE » dans la case de BD, deux mouvements des gestes sans leurs doubles
