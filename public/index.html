@@ -718,6 +718,41 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    hub, et ce qu'il en reste quand on referme le menu se voit encore. */
 #moment{z-index:47}
 
+/* ------------------------------------------- le monde qui joue, ailleurs
+
+   « 37 supporters dans les virages · 3 duels attendent un joueur » (5
+   octobre 2026, à la demande de Gaël) : ce que la bâche dit et où elle mène
+   est écrit avec `bandeauDuMonde`, dans le script.
+
+   **Au pied du personnage, par-dessus ses chaussures**, comme une bâche
+   tendue sur la balustrade devant lui. Il n'y avait pas d'autre place : la
+   bande du bas est comptée, le personnage a ses planchers (`accueil:ui` :
+   plus de 60 % de l'écran à 400 × 690), la bulle est passagère, et la bâche
+   du jour a déjà sa chaîne de priorités. Une rangée de plus aurait pris ses
+   quarante-quatre pixels au personnage ; posée sur la scène, elle ne lui
+   prend que la vue de ses pieds, et seulement quand quelqu'un joue.
+
+   **Une bâche violette** : elle se touche — c'est donc une plaque, et non un
+   sticker, qui n'est jamais une cible à lui seul —, et ce sont des gens
+   (amendement 18). Le lettrage est celui du sous-libellé du bouton d'entrée,
+   Oswald 12 en minuscules, le nombre en gras : une phrase, pas une
+   enseigne. Une ligne par lieu, la flèche au bout de la dernière, comme au
+   ticket. */
+.centre>.monde{grid-row:1;grid-column:2;align-self:end;justify-self:center;z-index:4;
+  flex-direction:column;gap:1px;max-width:calc(100% - 8px);min-height:44px;
+  padding:6px 12px;font-size:12px;font-weight:500;line-height:15px;
+  letter-spacing:.04em;text-transform:none;text-align:center;text-wrap:balance}
+.monde b{font-weight:700}
+.monde span:empty{display:none}
+/* **Sous 340 pixels**, la colonne du milieu n'en a plus que cent soixante-dix :
+   « 37 supporters dans les virages » y passait sur deux lignes, et la bâche
+   en faisait quatre, sur la moitié du personnage. L'espacement tombe à celui
+   que l'Oswald dessine, le rembourrage à huit : les deux lignes tiennent, et
+   la lettre garde ses douze pixels. */
+@media (max-width:340px){
+  .centre>.monde{padding-inline:8px;letter-spacing:0}
+}
+
 /* ------------------------------------------- qui est à l'écran
 
    Le nom du Fanzzy équipé et l'âge qu'il a atteint. Le personnage était au
@@ -2147,6 +2182,13 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
         </div>
       </div>
 
+      <!-- Le monde qui joue ailleurs : « 37 supporters dans les virages ·
+           3 duels attendent un joueur ». Une bâche tendue au pied du
+           personnage, qui mène là où il y a le plus de monde. Née cachée :
+           `bandeauDuMonde` la montre quand quelqu'un joue. -->
+      <a class="monde tbf-plaque" data-ton="violet" id="monde" href="/virage" hidden>
+        <span id="mondeVirage"></span><span id="mondeDuels"></span></a>
+
       <nav class="rail" aria-label="Les autres">
         <a class="tbf-case" data-ton="flare" href="/duel-nvn">
           <svg viewBox="0 0 24 24"><path d="M4 4l7 7M20 4l-7 7M12 13v7M8 20h8"/></svg><span class="lib">DUEL</span></a>
@@ -2359,6 +2401,11 @@ const H = {
   nouveauxCartes: true, // et ce ne sont que des cartes : la bulle le dit ainsi
   sansFanzzy: null,  // vrai quand le portefeuille dit « aucun Fanzzy équipé »
   attente: 0,        // les supporters qui attendent un duel
+  monde: 0,          // les supporters de toutes les tribunes ouvertes (`TBF_MENU.auVirage`)
+  mondeMatch: null,  // et la tribune où l'on chante le plus : { id, n }
+  duels: 0,          // les duels où quelqu'un attend un joueur (`TBF_MENU.duelsEnAttente`)
+  duelFile: null,    // et la file la plus remplie : { match, format, camp, n }
+  duelAuBouton: false, // l'alerte de duel est sur le bouton d'entrée (voir `alerteDuel`)
   echarpes: null,    // le solde d'écharpes de la dernière bourse posée
   prixPack: null,    // le prix d'un booster au kiosque, quand le portefeuille le sert
   tribune: null,     // une tribune du Virage est ouverte, quelque part (relevé du direct)
@@ -2416,9 +2463,16 @@ function etatsDuHub() {
      de menu, lui, est recalculé par `menu.js` depuis ces tuiles — le hub ne
      l'écrit jamais lui-même, sans quoi deux mains poseraient le même
      attribut. */
-  MENU?.poser?.('/virage', H.live && commence(H.live) ? 'direct' : null);
+  /* Le monde au Virage et les duels qui attendent : les nombres du bandeau
+     (`bandeauDuMonde`), et ceux que le tiroir montre sur les autres pages.
+     Pas sur les tuiles du hub : la bâche les dit déjà, au milieu de
+     l'écran, et les trois états du rail sont comptés. Le direct passe
+     devant le monde. */
+  const direct = Boolean(H.live && commence(H.live));
+  MENU?.poser?.('/virage', direct ? 'direct' : (H.monde > 0 ? 'monde' : null),
+    direct ? null : H.monde);
   MENU?.poser?.('/boosters', H.packs > 0 ? 'pret' : null, H.packs);
-  MENU?.poser?.('/duel-nvn', H.attente > 0 ? 'attend' : null, H.attente);
+  MENU?.poser?.('/duel-nvn', H.duels > 0 ? 'attend' : null, H.duels);
   /* Ce qu'un RÉCUPÉRER verserait aux MISSIONS (`aReclamer`, contrat § 6.1).
      La clé R10 le dit aussi aux autres écrans (voir `poserQuotidien`) ; ici,
      le tiroir est déjà monté quand la réponse arrive, et il ne relirait pas
@@ -3468,12 +3522,79 @@ function bouton(href, titre, sous, ton = 'flare') {
   }
 }
 
+/* ------------------------------------------- le monde qui joue, ailleurs
+
+   « 37 supporters dans les virages · 3 duels attendent un joueur » (5
+   octobre 2026, à la demande de Gaël). Rien, sur l'accueil, ne disait qu'on
+   chantait au Virage quand ce n'était pas le match d'un de ses clubs, ni
+   que d'autres duels attendaient un joueur que celui du bouton.
+
+   Les deux nombres sont ceux du tiroir (`TBF_MENU.auVirage`,
+   `TBF_MENU.duelsEnAttente`) : la bâche et la tuile du menu ne peuvent pas
+   annoncer deux nombres pour la même soirée. Elle mène **là où il y a le
+   plus de monde** : la tribune où l'on chante le plus, ou la file la plus
+   remplie, à la place qui y manque. À égalité, la file : un duel ne part
+   pas sans le joueur qui lui manque, une tribune chante sans lui.
+
+   Elle se tait **quand un club du joueur joue** (`H.live`) : le bouton
+   d'entrée mène déjà au Virage et dit combien y chantent, et ce soir-là le
+   duel passe après (voir `unTour`). Et le duel n'y est pas répété **quand
+   c'est le seul et que le bouton le propose déjà** (« il manque 2
+   supporters de… ») : le même duel deux fois, à quelques pixels d'écart,
+   n'en ferait pas deux. */
+function bandeauDuMonde() {
+  const b = $('monde');
+  const virage = H.live ? 0 : H.monde;
+  const duels = H.live || (H.duels === 1 && H.duelAuBouton) ? 0 : H.duels;
+  const versDuel = duels > 0
+    && (!virage || (H.duelFile?.n ?? 0) >= (H.mondeMatch?.n ?? 0));
+  let href = '/virage';
+  if (versDuel && H.duelFile) {
+    const q = new URLSearchParams({ match: String(H.duelFile.match) });
+    if (H.duelFile.format) q.set('format', H.duelFile.format);
+    q.set('camp', String(H.duelFile.camp));
+    href = `/duel-nvn?${q}`;
+  } else if (versDuel) {
+    href = '/duel-nvn';
+  } else if (H.mondeMatch) {
+    href = `/virage?match=${H.mondeMatch.id}`;
+  }
+  // Rien n'a changé depuis la dernière fois : on ne réécrit rien, et la
+  // bâche ne se recolle pas à chaque tour de veille.
+  const cle = virage || duels ? `${virage}|${duels}|${href}` : '';
+  if (b.dataset.cle === cle) return;
+  b.dataset.cle = cle;
+  if (!cle) { b.hidden = true; return; }
+
+  const lignes = [
+    [$('mondeVirage'), virage, 'supporter dans un virage', 'supporters dans les virages'],
+    [$('mondeDuels'), duels, 'duel attend un joueur', 'duels attendent un joueur'],
+  ];
+  const dites = [];
+  for (const [el, n, un, plusieurs] of lignes) {
+    if (!n) { el.replaceChildren(); continue; }
+    const nb = document.createElement('b');
+    nb.textContent = String(n);
+    el.replaceChildren(nb, ` ${n > 1 ? plusieurs : un}`);
+    dites.push([el, `${n} ${n > 1 ? plusieurs : un}`]);
+  }
+  dites.at(-1)[0].append(' ›');
+  b.href = href;
+  // Lue d'une traite : sans elle, les deux lignes se suivaient sans pause.
+  b.setAttribute('aria-label', dites.map(([, t]) => t).join(', '));
+  if (b.hidden) {
+    b.hidden = false;
+    rejouerSur(b, 'tbf-colle');
+  }
+}
+
 /** Tout recomposer depuis `H`. */
 function montrer() {
   etatsDuHub();
   bacheDuJour();
   soirDeMatch();
   direBulle();
+  bandeauDuMonde();
 }
 
 /* --------------------------------------------------- le personnage
@@ -5620,6 +5741,20 @@ async function alerteDuel() {
   try {
     const r = await lire('/api/nvn/attentes', { credentials: 'same-origin' });
     a = r?.alerte ?? null;
+    /* Toutes les files, pour le bandeau du monde : combien de duels
+       attendent un joueur, et la plus remplie, au camp qui y manque — la
+       règle de `campQuiManque`, côté serveur. */
+    H.duels = window.TBF_MENU?.duelsEnAttente?.(r?.attentes) ?? 0;
+    const presents = (f) => (Number(f.camps?.[0]) || 0) + (Number(f.camps?.[1]) || 0);
+    const pleine = (Array.isArray(r?.attentes) ? r.attentes : []).filter((f) => presents(f) > 0)
+      .reduce((p, f) => (p && presents(p) >= presents(f) ? p : f), null);
+    H.duelFile = pleine ? { match: pleine.fixtureId, format: pleine.format,
+      camp: Number(pleine.camps[0]) <= Number(pleine.camps[1]) ? 0 : 1, n: presents(pleine) } : null;
+    /* Le bouton va la proposer (plus bas) : le bandeau ne la répète pas.
+       Écrit ici, à la réponse, et non lu dans `H.attente`, remis à zéro au
+       départ de la demande : le bandeau aurait montré le duel le temps
+       qu'elle revienne, puis l'aurait retiré — à chaque tour de veille. */
+    H.duelAuBouton = Boolean(a?.clubs?.length) && presents(a) > 0;
   } catch { return; }              // duels non montés : le bouton ne change pas
   /* Un match du joueur a commencé pendant qu'on attendait la réponse : le
      Virage passe avant, voir plus bas. */
@@ -5709,8 +5844,17 @@ async function alerteDuel() {
       /* Une tribune ouverte, n'importe où : la mission du jour qui se fait au
          Virage peut avancer maintenant (voir `faisableMaintenant`). */
       H.tribune = matchs.some((x) => x.open && aSonCoup(x));
+      /* Et qui y chante, partout : le bandeau du monde (`bandeauDuMonde`)
+         en dit le total, et mène à la tribune la plus pleine. */
+      const foule = (x) => (Number(x.crowd?.[0]) || 0) + (Number(x.crowd?.[1]) || 0);
+      H.monde = window.TBF_MENU?.auVirage?.(matchs) ?? 0;
+      const pleine = matchs.filter((x) => x.open && !x.fini && foule(x) > 0)
+        .reduce((p, x) => (p && foule(p) >= foule(x) ? p : x), null);
+      H.mondeMatch = pleine ? { id: pleine.id, n: foule(pleine) } : null;
     } catch {                                 // suivi non actif
       H.tribune = false;
+      H.monde = 0;
+      H.mondeMatch = null;
       // La bulle n'attend plus le direct : elle dit ce qu'on sait sans lui.
       bulleAttend = false;
       montrer();
@@ -5779,6 +5923,8 @@ async function alerteDuel() {
        peut s’écrire, et le lui prendre ce soir-là remplacerait l’essentiel
        par l’accessoire. Le sticker du duel s'éteint avec. */
     H.attente = 0;
+    H.duels = 0;
+    H.duelAuBouton = false;
 
     // Le match est lancé : le supporter pousse. C'est son état de fond tant
     // que la rencontre dure, pas une célébration passagère.

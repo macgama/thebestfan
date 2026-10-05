@@ -753,7 +753,72 @@ console.log('\nLa fin de la minute double est diffusée');
   check('l’ouverture part au battement suivant', ticks[0]?.p.surge === true);
   check('et la fin part, alors que rien d’autre n’a bougé', eteinte.length === 1
     || (console.log('        ticks :', ticks.map((x) => x.p.surge).join(' ')), false));
-  check('une seule fois, sans bavarder entre les deux', ticks.length === 2);
+  /* Entre les deux, la secousse du but retombe, et la corde qui retombe part
+     depuis le 5 octobre 2026 (voir `tick`) : c'est tout ce qui doit partir.
+     Chaque envoi d'entre-deux porte une corde neuve, à une demi-seconde au
+     moins du précédent. */
+  const entre = ticks.slice(1, -1);
+  check('entre les deux, rien que la corde qui retombe, deux fois par seconde au plus',
+    entre.every((x, i) => x.p.surge === true && x.p.rope !== ticks[i].p.rope)
+    && entre.length <= Math.ceil((fin - t0) / 500)
+    || (console.log('        cordes :', ticks.map((x) => x.p.rope).join(' ')), false));
+}
+
+/* ================================================= personne en face
+
+   Seul dans un virage, un supporter n'avait contre lui que la retombée
+   ordinaire, et enchaînait les buts contre une tribune vide (5 octobre 2026,
+   demande de Gaël). Face à un camp où personne ne chante, la corde retombe
+   de `virage.decroissance_vide` ; un chant en face, et elle revient à
+   l'ordinaire. La diffusion dit quel camp a poussé (`pousse`) : la page ne
+   fait plus sauter que sa foule, et la retombée ne pousse personne. */
+
+console.log('\nPersonne en face, la corde résiste davantage');
+{
+  const emis = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9003, homeId: HOME, awayId: AWAY, homeName: 'A', awayName: 'B' },
+    emit: (e, p) => emis.push({ e, p }), onPush: () => {}, log: { warn() {}, error() {} },
+  });
+  salle.join('seul', { side: 1, name: 'Seul' });
+  const m = salle.members.get('seul');
+  let t = Date.now();
+  salle.last = t;
+  m.lastPush = t;                      // il vient de chanter : il est de la foule
+  salle.pousserDepuisCarte(m, 100, t, []);
+  const seconde = () => { for (let k = 0; k < 10; k++) { t += 100; salle.tick(t); } };
+
+  let avant = salle.rope;
+  emis.length = 0;
+  seconde();
+  const vide = avant - salle.rope;
+  check(`personne en face : elle retombe de ${RULES.decayVidePerSec} par seconde (${vide.toFixed(2)})`,
+    RULES.decayVidePerSec > RULES.decayPerSec && Math.abs(vide - RULES.decayVidePerSec) < 0.01);
+  const ticks = emis.filter((x) => x.e === 'virage:tick').map((x) => x.p);
+  check('la poussée part avec le camp qui l’a donnée',
+    JSON.stringify(ticks[0]?.pousse) === JSON.stringify([false, true]));
+  check('et la retombée part aussi, sans camp qui pousse', ticks.length >= 2
+    && ticks.slice(1).every((p) => p.pousse[0] === false && p.pousse[1] === false)
+    || (console.log('        envois :', JSON.stringify(ticks)), false));
+
+  /* Quelqu'un entre en face et chante : la retombée redevient l'ordinaire. */
+  salle.join('face', { side: 0, name: 'Face' });
+  salle.members.get('face').lastPush = Date.now();
+  avant = salle.rope;
+  seconde();
+  const face = avant - salle.rope;
+  check(`un supporter en face : elle revient à ${RULES.decayPerSec} par seconde (${face.toFixed(2)})`,
+    Math.abs(face - RULES.decayPerSec) < 0.01);
+
+  /* Ce qui compte est le camp **d'en face de celui qui mène**. Le camp
+     domicile mène, plus personne n'y chante, et le seul supporter d'en face
+     chante encore : il y a quelqu'un en face, la retombée reste l'ordinaire. */
+  salle.members.get('face').lastPush = 0;
+  salle.rope = -50;
+  avant = salle.rope;
+  seconde();
+  check(`l’autre camp mène, face à celui qui chante : l’ordinaire (${(salle.rope - avant).toFixed(2)})`,
+    Math.abs(salle.rope - avant - RULES.decayPerSec) < 0.01);
 }
 
 /* ======================================================= la Remontada */

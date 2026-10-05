@@ -162,6 +162,14 @@ export const REGLAGES = [
       'tomber tout seul. À 3, elle mangeait l’essentiel de ce qu’une tribune ' +
       'poussait, et le marqueur ne bougeait pas.' },
 
+  { cle: 'virage.decroissance_vide', section: 'virage', type: 'decimal',
+    titre: 'Sans personne en face, la corde retombe de', unite: 'points/seconde',
+    min: 0, max: 30, pas: 0.1, defaut: 3,
+    aide: 'Quand le camp qui mène n’a personne qui chante en face. Seul, un ' +
+      'supporter n’avait contre lui que la retombée ordinaire et enchaînait les ' +
+      'buts contre une tribune vide. Un seul chant en face, et la corde revient ' +
+      'à la retombée ordinaire. À la même valeur qu’elle, on revient à l’ancien jeu.' },
+
   { cle: 'virage.inactif_sec', section: 'virage', type: 'entier',
     titre: 'On sort de la foule après', unite: 'secondes sans geste', min: 15, max: 600, defaut: 90,
     aide: 'Sans ça, une tribune de trois cents dont deux cents sont partis ' +
