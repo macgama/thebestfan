@@ -7594,8 +7594,11 @@ RP1 et montré à Gaël avant la fusion : `lot7/vivant/rp1-vivant.mp4` et
 
 `accueil:ui` : 17 contrôles de plus (le récit de la victoire et de la défaite,
 la fête et son heure, la marque de l'appareil, les touchers, la bouderie, le
-moment qui garde son visage, le supporter sans colère), tous verts ; la seule
-rouge restante est celle du conteneur (CLASSEMENT rogné).
+moment qui garde son visage, le supporter sans colère), tous verts. Les 66
+suites (`npm test`) n'ont aucune rouge nouvelle : celles qui restent rougissent
+à l'identique sur `main` dans un conteneur cloud, où le Chrome des suites ne
+charge pas les polices Google et où la base de test n'était pas à l'heure de
+Zurich.
 
 ### Ce qui reste
 
