@@ -7541,3 +7541,68 @@ on travaille »).
   que le lot 6 renvoyait ici.
 
 ---
+
+## 4 quadragies octies. Le Fanzzy vivant — il raconte, il répond, il fête
+
+*5 octobre 2026, session cloud « Lot 7 : images Artlist ». Un essai filmé sur
+RP1 et montré à Gaël avant la fusion : `lot7/vivant/rp1-vivant.mp4` et
+`rp1-vivant-captures.jpg`, dans les fichiers du projet.*
+
+### Ce qui a changé
+
+- **Il raconte le dernier match de ton club.** À l'arrivée sur l'accueil, le
+  temps du ticket de retour (3,3 secondes), le Fanzzy prend le visage du
+  dernier match que le ticket annonce : la joie et un saut après une
+  victoire, le dépit sans saut après une défaite. Puis il rend la main au
+  repos que le joueur a choisi.
+- **Il fête le retour.** Sans match à raconter, une absence de 48 heures ou
+  plus se fête d'une joie et d'un saut, une fois le coucou fini. L'absence
+  vient du serveur (`depuis.ilYaMs`) ou, quand il n'a pas de nouvelles et ne
+  sert donc pas `depuis`, de la dernière arrivée notée sur l'appareil
+  (`tbf.arrivee.<joueur>`, dans `localStorage`).
+- **Il répond quand on insiste.** Trois touchers d'affilée (moins de 1,2
+  seconde entre deux) : la joie, 1,6 seconde. Six : la colère, et il boude
+  1,8 seconde, sans sauter.
+
+### Pourquoi comme ça
+
+- **Aucune image neuve.** Les familles d'expressions de `fanzzy-etats.js`
+  donnent à chaque moment le dessin le plus proche : les 35 Fanzzy de LA
+  REPRISE ont leur joie, leur dépit et leur colère ; TR1 et TR2 leurs douze
+  moments ; le supporter générique ses quatre poses, sans colère, et il saute
+  donc à chacun des six touchers. Un personnage dont le moment n'est pas
+  dessiné ne change pas de visage (`dessine`) : un visage qui ne bouge pas ne
+  raconte rien, et un Fanzzy qui « boude » sans que rien ne change sur lui
+  s'est simplement arrêté de sauter.
+- **Sur le ticket, pas en plus.** Le récit ne joue que si le ticket de retour
+  s'affiche, et dure ce qu'il dure : le joueur lit le score pendant que le
+  Fanzzy le vit. La victoire de la veille ne se rejoue pas comme un but qui
+  tombe : trois secondes de souvenir, puis le repos choisi. Un nul ne se
+  raconte pas, faute d'expression pour lui.
+- **La fête après le coucou**, pour que le salut garde son geste.
+- **Un moment garde son visage.** Pendant un but ou un récit, un toucher
+  n'est qu'un saut. Mais le salut d'arrivée, chez qui ne l'a pas dessiné,
+  tient deux secondes et demie le visage de repos, et c'est là que tombent
+  les premiers touchers d'un joueur : un moment qui ne se voit pas ne retient
+  rien. La suite l'a trouvé, ses touchers tombant précisément pendant ce
+  salut.
+- **Aucune animation infinie de plus** : le saut et le fondu de pose
+  existaient, et `prefers-reduced-motion` comme `data-calme` les coupent
+  déjà.
+
+### Contrôles
+
+`accueil:ui` : 17 contrôles de plus (le récit de la victoire et de la défaite,
+la fête et son heure, la marque de l'appareil, les touchers, la bouderie, le
+moment qui garde son visage, le supporter sans colère), tous verts ; la seule
+rouge restante est celle du conteneur (CLASSEMENT rogné).
+
+### Ce qui reste
+
+- **Le clignement**, le signe de vie le plus fort : une image « yeux fermés »
+  par Fanzzy, que Gaël produit (une pour RP1 d'abord).
+- **Le rouge contre nous, en colère** : le résumé de retour (`depuis.matchs`)
+  ne dit pas les cartons.
+- **Le Fanzzy dans l'arène du duel**, qui réagit aux buts de son camp.
+
+---

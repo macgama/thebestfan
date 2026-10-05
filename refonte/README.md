@@ -23,9 +23,11 @@ temporaire de la session ; ce qui doit durer est ici.*
   corde tressée, les six silhouettes), la corde qui résiste davantage contre
   une tribune vide (« PERSONNE EN FACE »), et le monde qui joue enfin visible
   sur l'accueil et dans le tiroir. Sans schéma ; un redémarrage hors d'un
-  match (`A-DEPLOYER.md`).
-- **À venir** : le Fanzzy vivant (point 4 du lot 7), puis les sons, au choix
-  de Gaël.
+  match (`A-DEPLOYER.md`). Et le Fanzzy vivant (point 4 du lot 7) : il
+  raconte le dernier match, répond quand on insiste, fête le retour du
+  joueur ; une page seulement.
+- **À venir** : les sons, au choix de Gaël, et le clignement des Fanzzy, qui
+  attend leurs images « yeux fermés ».
 
 ## Où sont les choses
 
@@ -54,11 +56,12 @@ temporaire de la session ; ce qui doit durer est ici.*
 2. **Le Fanzzy vivant** : animer dans le jeu les images existantes, **pas** de
    vidéo générée — l'essai du 3 octobre a montré que les modèles vidéo ne
    gardent pas le personnage. La respiration et le saut existent déjà ; ce qui
-   manque, c'est un caractère. Proposé à Gaël le 5 octobre, avec les cinq
-   expressions déjà dessinées : il raconte le dernier match de son club, il
-   répond autrement quand on insiste à le toucher, il fête le retour du
-   joueur. Le clignement des yeux attend une image « yeux fermés » par
-   Fanzzy, que Gaël produit. Un essai sur RP1 d'abord, montré à Gaël.
+   manque, c'est un caractère. **Fait**, avec les expressions déjà
+   dessinées, et filmé sur RP1 pour Gaël le 5 octobre (`HISTORIQUE.md`,
+   4 quadragies octies) : il raconte le dernier match de son club, il répond
+   autrement quand on insiste à le toucher, il fête le retour du joueur. Le
+   clignement des yeux attend une image « yeux fermés » par Fanzzy, que Gaël
+   produit (une pour RP1 d'abord).
 3. **Les sons Artlist** (la rumeur, le but, les tambours) : Gaël doit les
    écouter et dire lesquels on garde (`art/son/_src/artlist/A-ECOUTER.md`).
 4. **Les vieux buts** : fait, dans `main`. Le relevé redemande les
