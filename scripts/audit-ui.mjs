@@ -158,6 +158,46 @@
  * est écarté de tout relevé, et nommé à part (`rognes`) avec tout texte
  * qu'une découpe efface. Voir « Rogné à rien ».
  *
+ * ## Les arènes en jeu (lot 6)
+ *
+ * L'audit ne voyait les deux arènes qu'à leur porte : /virage au voile de
+ * choix, /duel-nvn à la préparation — et toutes deux vides, puisque la base
+ * de l'audit n'a aucun match. Tout ce que le lot 6 redessine se joue après :
+ * la tribune, la minute double, la case « GOAL ! », le pavé du geste, la
+ * sortie par le bilan ; au duel, le vestiaire, l'affiche, la partie et son
+ * bilan. Rien de cela ne vient sans une socket et un match en cours.
+ *
+ * `--etats` les photographie et les mesure par **la technique du banc des
+ * arènes** : la page arrive du vrai serveur, avec le vrai joueur, mais
+ * `/socket.io/socket.io.js` est remplacé par une fausse socket qu'on pilote
+ * de l'extérieur, et les états qu'elle reçoit sont **fabriqués** ici, à la
+ * forme du contrat (`serveur/CONTRATS.md`, § 15 à § 18 compris : un écran
+ * d'avant ne les lit pas, un écran du lot 6 les trouve). Pour le voile et la
+ * préparation garnis, quatre lectures sont **bouchées** (les deux listes de
+ * matchs, le deck, la file) : elles sont nommées dans chaque relevé
+ * (`bouches`). Un relevé d'arène mesure donc l'écran, pas le serveur — c'est
+ * le travail des suites. Voir « Les arènes ».
+ *
+ * À 360 × 640, 320 × 568, 412 × 915 et 768 × 1024 ; et la tribune et la
+ * partie aussi à 1 280 × 800, où le mur se voit de part et d'autre de la
+ * colonne (le voile des arènes, H6). Avec le pavé du duel, la corde qui y
+ * cède, une tribune de trois cents et le coup de sifflet d'un Virage non
+ * classé. `--arenes` ne regarde qu'elles.
+ *
+ * Avec elles, quatre écrans que le lot refait ailleurs et qu'aucune visite
+ * ne montre : la salle de répétition une fois le geste jugé (un tempo, puis
+ * le tri), /amis et le tiroir avec la présence servie — livrée éteinte, le
+ * serveur de l'audit ne la sert jamais. Et quatre règles qu'aucun compte de
+ * texte ne lit, relevées sur chaque état du lot : au plus trois animations
+ * sans fin à l'écran, l'air du sticker d'urgence du menu sur un écran de
+ * jeu, le voile du hub (et non le voile dense) sur les arènes au-delà de
+ * 768 px, et la main et les chants à l'écran — l'arène cède d'abord. Voir
+ * « Les arènes ».
+ *
+ * Et **le port n'est plus fixe** : deux copies de travail qui mesurent en
+ * même temps se seraient disputé le 3999, et la seconde aurait mesuré le
+ * serveur de la première sans un mot. Voir « Un port à soi ».
+ *
  * Usage :
  *   node scripts/audit-ui.mjs                  toutes les pages, trois formats
  *   node scripts/audit-ui.mjs /virage          une seule page
@@ -172,13 +212,20 @@
  *                                              ticket, un classement, et la
  *                                              collection (classeur, fiches,
  *                                              vitrine, album), et le profil
- *                                              avec ses insignes
+ *                                              avec ses insignes, et les arènes
+ *                                              en jeu (Virage, duel) et les
+ *                                              autres écrans du lot 6
+ *   node scripts/audit-ui.mjs --arenes         les états du lot 6 seulement
+ *                                              (pour re-mesurer vite pendant un
+ *                                              lot ; avec une page et un format,
+ *                                              une minute)
  *
  * (Sous Git Bash, « /virage » est réécrit en chemin Windows avant d'arriver
  * ici : préfixer la commande de MSYS_NO_PATHCONV=1, ou la lancer depuis
  * PowerShell.)
  */
 import { spawn, spawnSync } from 'node:child_process';
+import { createServer } from 'node:net';
 import { ORDRE } from './ordre-schema.mjs';
 import { readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -202,7 +249,12 @@ const seule = args.find((a, i) => a.startsWith('/') && !A_VALEUR.has(args[i - 1]
 const tout = args.includes('--tout');
 const jour = args.includes('--jour');
 const pleine = args.includes('--pleine');
-const etats = args.includes('--etats');
+/* `--arenes` : les états des arènes seuls (voir « Les arènes »). Ils ne
+   sèment rien et ne dépendent d'aucun autre état : on peut les reprendre
+   seuls, en une minute avec une page et un format, pendant qu'un lot
+   retouche ses deux écrans de jeu. */
+const arenesSeules = args.includes('--arenes');
+const etats = args.includes('--etats') || arenesSeules;
 
 /* Une option à valeur sans sa valeur est refusée **avant** de vider la base
    et de démarrer un Chrome : découvrir au bout de six minutes que le JSON
@@ -269,8 +321,12 @@ const FORMATS_BASE = [
    « --largeur 320 » le désigne, pour toutes les visites : un téléphone de
    320 px de large a aussi 568 px de haut, pas 800. */
 const PETIT = { largeur: 320, hauteur: 568 };
+/* Le grand téléphone (412 × 915), pour les seuls états des arènes (voir « Les
+   arènes ») : c'est là qu'un budget écrit pour 640 px de haut laisse le plus
+   de vide. « --largeur 412 » le désigne avec sa vraie hauteur. */
+const GRAND_TELEPHONE = { largeur: 412, hauteur: 915 };
 const FORMATS = opt('--largeur')
-  ? [[...FORMATS_BASE, PETIT].find((f) => f.largeur === Number(opt('--largeur')))
+  ? [[...FORMATS_BASE, PETIT, GRAND_TELEPHONE].find((f) => f.largeur === Number(opt('--largeur')))
     ?? { largeur: Number(opt('--largeur')), hauteur: Number(opt('--largeur')) >= 768 ? 1024 : 800 }]
   : FORMATS_BASE;
 const cleFormat = (f) => `${f.largeur}x${f.hauteur}`;
@@ -289,6 +345,29 @@ const SEUILS = {
   /* Un pixel d'écart d'une page à l'autre, pour la barre : la règle du
      « hors écran », pour la même raison (un arrondi n'est pas un défaut). */
   barrePx: 1,
+  /* **Au plus trois animations sans fin par écran, toutes comptées**
+     (direction FAIT MAIN, amendement 8 ; brief du lot 6), comptées comme
+     `FX.sansFin` les compte : un objet par élément ou pseudo-élément, celles
+     qui tournent. Relevé sur les états du lot 6 (« sans fin »). */
+  sansFin: 3,
+  /* Ce qui entoure la face du sticker d'urgence du menu, au-dessus et à
+     droite : son bord de craie (2 px) et son cerne d'encre (1,5 px) ; à
+     droite, son ombre portée en plus (décalée de 2 px). Ils font partie de
+     ce que l'écran doit lui laisser (brief du lot 6, § 7 : « neuf pixels,
+     treize avec son bord et son ombre » ; ui.css, « le sticker de l'état le
+     plus urgent »). Voir `BARRE_JEU` et « sticker rogné ». */
+  bordSticker: [3.5, 5.5],
+  /* L'encre d'un texte qu'un cadre rogne en haut ou en bas, en pixels :
+     au-delà, un accent, une cédille ou un émoji est entamé (« encre
+     rognée »). Un quart de pixel : l'arrondi de la mesure, au banc des
+     briques, reste en dessous ; les accents rognés qu'elle y a trouvés
+     allaient de 0,9 à 2,4 px. */
+  encreRognee: 0.25,
+  /* La part des lettres d'un libellé de carte sur laquelle autre chose est
+     posé, en pour cent (« libellé couvert ») : au banc des briques, 0 % une
+     fois les cartes justes, de 14 à 59 % quand un sticker, une recharge ou
+     une voisine couvrait un mot. */
+  libelleCouvert: 5,
 };
 
 /* **Les mentions légales, et elles seules, ont droit à moins.**
@@ -432,7 +511,25 @@ await raw.end();
 
 /* --------------------------------------------------------- le vrai serveur */
 
-const port = 3999;
+/* **Un port à soi.** L'audit prenait toujours le 3999. Depuis que deux copies
+   de travail mesurent en même temps (le lot 4 dans la copie principale, le
+   lot 6 dans la sienne, chacune sur sa base), le second serveur ne pouvait
+   pas l'ouvrir : il s'arrêtait, et `debout` trouvait au 3999 le serveur de
+   l'autre copie — qui répondait. L'audit mesurait alors les pages et la base
+   de l'autre lot, sans un mot, et ses sessions semées dans sa propre base n'y
+   ouvraient rien. Le système donne donc un port libre, à chaque audit ; un
+   audit d'avant ce correctif, qui prend encore le 3999, ne tombe jamais sur
+   celui-ci. Et `debout` ne se contente plus d'une réponse : notre serveur
+   doit être vivant. */
+const portLibre = () => new Promise((resoudre, refuser) => {
+  const essai = createServer();
+  essai.once('error', refuser);
+  essai.listen(0, () => {
+    const libre = essai.address().port;
+    essai.close(() => resoudre(libre));
+  });
+});
+const port = await portLibre();
 let journal = '';
 /* Lancé par une fonction : le classement d'un joueur classé (voir « Les
    états ») demande un serveur neuf, dont la mémoire de classement n'a pas
@@ -452,6 +549,9 @@ let serveur = lancerServeur();
 const base = `http://localhost:${port}`;
 const debout = async () => {
   for (let i = 0; i < 60; i++) {
+    /* Un serveur arrêté (un port pris entre-temps, une erreur au démarrage)
+       ne répond plus de rien : ce qui répondrait à sa place n'est pas lui. */
+    if (serveur.exitCode !== null || serveur.signalCode !== null) return false;
     try { const r = await fetch(`${base}/healthz`); if (r.ok || r.status === 503) return true; }
     catch { /* pas encore */ }
     await new Promise((r) => setTimeout(r, 500));
@@ -1631,13 +1731,55 @@ const git = (...a) => {
    les nomme et `compte.rognes` les compte ; ailleurs, ni l'un ni l'autre.
    Le `textes` d'avant vaut le nouveau plus `rognes`, et les trouvailles
    qu'ils faisaient (au soleil surtout) sortent des listes sous ces mêmes
-   noms, avec celles des mots posés dedans. Le schéma reste `audit-ui/3`. */
+   noms, avec celles des mots posés dedans. Le schéma reste `audit-ui/3`.
+
+   **Ajouts du lot 6**, sans rien changer au sens des champs d'avant : onze
+   états d'arène (`virage@voile`, `virage@tribune`, `virage@double`,
+   `virage@but`, `virage@pave`, `virage@bilan`, `duel@prepa`,
+   `duel@vestiaire`, `duel@affiche`, `duel@jeu`, `duel@bilan`), leurs formats
+   dans `formatsEtats.arenes` (et `formatsEtats.mur` pour les deux qu'on
+   regarde aussi à 1 280 × 800), ce qu'on leur a fabriqué dans
+   `arenesFabriquees`, et l'option `arenes`. Chaque relevé d'arène dit ce
+   qu'il a tiré par la fausse socket (`evenements`), ce que la page a émis
+   (`emis`), les lectures bouchées (`bouches`), la place des deux boutons de
+   la barre (`barre`) et le voile du mur (`voile`) ; la tribune, la minute
+   double et la partie, leur budget de hauteur, rangée par rangée
+   (`budget`). Un relevé d'avant ce lot se compare page à page et état à
+   état, ces onze-là mis à part.
+
+   **Et, pendant le lot**, quatre états des autres écrans qu'il refait
+   (`repetition@jugee`, `repetition@tri`, `amis@presence`,
+   `tiroir@presence`), à deux formats chacun ; le compte des animations sans
+   fin de chaque état (`sansFin`, et `seuils.sansFin`), l'état et l'air du
+   sticker d'urgence dans `barre` (`urgence`, `pastille`, `air`, `demande`,
+   et `seuils.bordSticker`), et trois genres de relevé : « sans fin »,
+   « sticker rogné », « voile dense ». Le budget nomme les rangées du lot 6
+   (voir `RANGEES_VIRAGE`) : ses clés ne sont plus celles du relevé de
+   départ. Puis quatre états d'arène (`duel@pave`, `duel@but`, `virage@300`,
+   `virage@fin`) et ce qu'on leur a fabriqué (`arenesFabriquees.virage.grande`,
+   `.virage.fin`, `.duel.pave`, `.duel.but`) ; un quatrième nombre dans
+   chaque rangée du budget (ce qu'on en voit à l'écran) et un quatrième genre,
+   « main coupée » ; et, sur chaque état de la collection,
+   `nouveautesEnBase` (voir « Une nouveauté éteinte par la visite
+   d'avant »). Enfin un état d'arène, `duel@entrainement` (et
+   `arenesFabriquees.duel.entrainement`), et sur chaque état du lot 6 deux
+   sondes et leurs genres : l'encre rognée par un cadre (`encre`,
+   `seuils.encreRognee`, « encre rognée ») et les libellés de carte couverts
+   (`couverts`, `seuils.libelleCouvert`, « libellé couvert ») — une liste
+   vide quand rien n'est relevé, absente quand la sonde n'a pas tourné. La
+   rangée `#jeu .souffle` sort du budget du duel : elle est dans
+   `#jeu .rang-equipe`. Et deux états d'arène, `virage@verdict` et
+   `duel@verdict` (le tampon du verdict sur le pavé, et
+   `arenesFabriquees.virage.verdict`, `.duel.verdict`) ; les trois bilans
+   (`virage@bilan`, `virage@fin`, `duel@bilan`) disent comment ils se sont
+   posés (`pose` : étapes, barres, temps pris, plafond, et ce qui restait
+   en route), un bilan pas posé sous son plafond étant relevé. */
 const rapport = {
   schema: 'audit-ui/3',
   date: new Date().toISOString(),
   commit: git('rev-parse', '--short', 'HEAD'),
   publicModifie: Boolean(git('status', '--porcelain', '--', 'public')),
-  options: { jour, pleine, etats, seule: seule ?? null },
+  options: { jour, pleine, etats, arenes: arenesSeules, seule: seule ?? null },
   seuils: SEUILS,
   /* Ce qu'est une encre dorée pour le relevé du petit or. */
   dore: DORE,
@@ -1662,7 +1804,9 @@ if (dossierCaptures) mkdirSync(dossierCaptures, { recursive: true });
 
 console.log(`\nAUDIT D’INTERFACE — ${VISITES.length} page(s), ${
   FORMATS.map((f) => `${f.largeur}×${f.hauteur}`).join(' / ')}${jour ? ', au jour' : ''}${
-  etats ? `, et les états${opt('--largeur') ? '' : ` (l’ouverture aussi à ${PETIT.largeur}×${PETIT.hauteur})`}` : ''}\n`);
+  arenesSeules ? ', et les états des arènes seulement'
+    : etats ? `, et les états${opt('--largeur') ? '' : ` (l’ouverture aussi à ${PETIT.largeur}×${PETIT.hauteur})`}`
+      : ''}\n`);
 
 /* **Un navigateur neuf par visite.** Les pages partageaient un seul
    contexte, donc ses cookies : le cookie de session posé pour une page
@@ -1705,8 +1849,49 @@ console.log(`\nAUDIT D’INTERFACE — ${VISITES.length} page(s), ${
    d'une visite neuve est vide. */
 let visite = 0;
 
-/** Un contexte neuf, une adresse à lui, un format, et qui regarde. */
-async function nouvelleVisite({ largeur, hauteur }, qui) {
+/* **La fausse socket des arènes**, servie à la place de
+   `/socket.io/socket.io.js` (voir « Les arènes »). Celle du banc des arènes
+   du lot 0 : `io()` la rend, la page y pose ses écouteurs, et l'audit lui
+   fait recevoir un évènement par `window.__sock.fire(nom, données)`. Ce que
+   la page émet est gardé dans `window.__emis`, dans l'ordre — on le relit
+   pour savoir si elle a demandé son bilan. Et `window.__repondre[nom]`, s'il
+   existe, répond à une émission comme le serveur le ferait : c'est ainsi
+   que la demande de bilan reçoit le sien. `connected` est vrai : le duel
+   refuse d'entrer en file sans connexion. Aucun « connect » n'est émis : la
+   page croirait se reconnecter et redemanderait sa salle. */
+const FAUSSE_SOCKET = `(() => {
+  const ecouteurs = {};
+  const emis = [];
+  const s = {
+    connected: true, id: 'audit-ui',
+    on(e, f) { (ecouteurs[e] ??= []).push(f); return s; },
+    off(e, f) { ecouteurs[e] = (ecouteurs[e] ?? []).filter((g) => g !== f); return s; },
+    once(e, f) { const g = (d) => { s.off(e, g); f(d); }; return s.on(e, g); },
+    emit(e, d) {
+      emis.push([e, d ?? null]);
+      const r = window.__repondre?.[e];
+      if (r) setTimeout(() => r(d), 60);
+      return s;
+    },
+    connect() { return s; }, disconnect() { return s; }, close() { return s; },
+    io: { on() { return s.io; }, off() { return s.io; } },
+  };
+  s.fire = (e, d) => { for (const f of [...(ecouteurs[e] ?? [])]) f(d); };
+  window.__sock = s;
+  window.__emis = emis;
+  window.io = () => s;
+})();`;
+
+/** Un contexte neuf, une adresse à lui, un format, et qui regarde.
+
+    Pour les arènes seulement (voir « Les arènes ») : `socket` remplace la
+    bibliothèque du direct par la fausse socket, et `bouchons` répond à la
+    place du serveur aux lectures nommées (un chemin, sans sa requête → un
+    corps JSON). Un chemin précédé de sa méthode (« POST /api/repetition »)
+    ne répond qu'à elle, et passe avant le chemin seul : la salle de
+    répétition lit sa configuration au serveur et ne fait boucher que la
+    note. Sans ces deux options, rien ne change pour les autres visites. */
+async function nouvelleVisite({ largeur, hauteur }, qui, { socket = false, bouchons = null } = {}) {
   const contexte = await nav.createBrowserContext();
   const page = await contexte.newPage();
   const erreurs = [];
@@ -1722,6 +1907,20 @@ async function nouvelleVisite({ largeur, hauteur }, qui) {
     if (r.isInterceptResolutionHandled()) return;
     let notre = false;
     try { notre = new URL(r.url()).origin === origine; } catch { /* adresse illisible : telle quelle */ }
+    if (notre && (socket || bouchons)) {
+      const chemin = new URL(r.url()).pathname;
+      if (socket && chemin === '/socket.io/socket.io.js') {
+        r.respond({ status: 200, contentType: 'text/javascript; charset=utf-8', body: FAUSSE_SOCKET })
+          .catch(() => {});
+        return;
+      }
+      const cle = bouchons && [`${r.method()} ${chemin}`, chemin].find((k) => Object.hasOwn(bouchons, k));
+      if (cle) {
+        r.respond({ status: 200, contentType: 'application/json; charset=utf-8',
+          body: JSON.stringify(bouchons[cle]) }).catch(() => {});
+        return;
+      }
+    }
     /* Une page fermée pendant qu'une requête attend : il n'y a plus rien à
        continuer, et ce n'est pas une faute de la page mesurée. */
     r.continue(notre ? { headers: { ...r.headers(), 'x-forwarded-for': adresse } } : undefined)
@@ -2416,6 +2615,55 @@ async function etatOuverture(format) {
   }
 }
 
+/** Ouvre le tiroir par son bouton, comme un joueur. Rend la panne, ou null.
+
+    Ouvert par le bouton, puis attendu jusqu'à la fin de ses transitions —
+    pas de ses boucles : une pastille qui bat ne finit jamais.
+    « aria-expanded » plutôt qu'une classe : c'est le contrat que le bouton
+    doit tenir pour un lecteur d'écran, il survivra à un changement de
+    feuille de style. Partagé par `tiroir@/classement` et l'état du lot 6
+    qui l'ouvre avec la présence servie (`tiroir@presence`). */
+async function ouvrirLeTiroir(page) {
+  const { faute } = await page.evaluate(async () => {
+    const b = document.querySelector('[aria-controls="tbf-tiroir"]');
+    if (!b) return { faute: 'aucun bouton ne commande le tiroir (aria-controls="tbf-tiroir")' };
+    b.click();
+    const depart = performance.now();
+    while (b.getAttribute('aria-expanded') !== 'true') {
+      if (performance.now() - depart > 3000) return { faute: 'le tiroir ne s’est pas ouvert en 3 s' };
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    if (!document.getElementById('tbf-tiroir')) {
+      return { faute: 'le bouton dit le tiroir ouvert, et il n’y a pas de #tbf-tiroir' };
+    }
+    return { faute: null };
+  });
+  if (faute) return faute;
+  await finDesMouvements(page, '#tbf-tiroir, .tbf-voile', 2500);
+  await new Promise((r) => setTimeout(r, 300));
+  return null;
+}
+
+/** **Combien d'écrans de haut.** Le tiroir défile en lui-même : ce qu'il
+    pousse sous le bord n'est ni coupé ni hors fenêtre, il est plus bas — et
+    le lot 2 l'a laissé à deux écrans au téléphone étroit, la moitié des
+    destinations hors de vue. Sa hauteur à défiler sur celle de la fenêtre ;
+    au-delà de `SEUILS.tiroirEcrans`, c'est relevé. Rend la hauteur, et si
+    elle a été relevée. */
+async function hauteurDuTiroir(page, cle, largeur) {
+  const tiroir = await page.evaluate(() => {
+    const t = document.getElementById('tbf-tiroir');
+    return { defile: t.scrollHeight, fenetre: window.innerHeight };
+  });
+  tiroir.ecrans = Math.round((tiroir.defile / tiroir.fenetre) * 100) / 100;
+  const tropHaut = tiroir.ecrans > SEUILS.tiroirEcrans;
+  if (tropHaut) {
+    note(cle, largeur, 'tiroir trop haut', `${String(tiroir.ecrans).replace('.', ',')} écrans de haut (${
+      tiroir.defile} px pour ${tiroir.fenetre}) : il en faut ${String(SEUILS.tiroirEcrans).replace('.', ',')} au plus`);
+  }
+  return { tiroir, tropHaut };
+}
+
 async function etatTiroir(format) {
   const cle = `tiroir@${PAGE_TIROIR}`;
   const { contexte, page, erreurs, refus } = await nouvelleVisite(format, 'joueur');
@@ -2427,32 +2675,12 @@ async function etatTiroir(format) {
       return;
     }
     await new Promise((r) => setTimeout(r, 1800));
-    /* Ouvert par le bouton, comme un joueur, puis attendu jusqu'à la fin de
-       ses transitions — pas de ses boucles : une pastille qui bat ne finit
-       jamais. « aria-expanded » plutôt qu'une classe : c'est le contrat que
-       le bouton doit tenir pour un lecteur d'écran, il survivra à un
-       changement de feuille de style. */
-    const ouvert = await page.evaluate(async () => {
-      const b = document.querySelector('[aria-controls="tbf-tiroir"]');
-      if (!b) return { faute: 'aucun bouton ne commande le tiroir (aria-controls="tbf-tiroir")' };
-      b.click();
-      const depart = performance.now();
-      while (b.getAttribute('aria-expanded') !== 'true') {
-        if (performance.now() - depart > 3000) return { faute: 'le tiroir ne s’est pas ouvert en 3 s' };
-        await new Promise((r) => setTimeout(r, 30));
-      }
-      if (!document.getElementById('tbf-tiroir')) {
-        return { faute: 'le bouton dit le tiroir ouvert, et il n’y a pas de #tbf-tiroir' };
-      }
-      return { faute: null };
-    });
-    if (ouvert.faute) {
-      note(cle, format.largeur, 'état', ouvert.faute);
+    const faute = await ouvrirLeTiroir(page);
+    if (faute) {
+      note(cle, format.largeur, 'état', faute);
       rangerEtat(cle, PAGE_TIROIR, format, { capture: null });
       return;
     }
-    await finDesMouvements(page, '#tbf-tiroir, .tbf-voile', 2500);
-    await new Promise((r) => setTimeout(r, 300));
     /* La mesure attend les polices que le tiroir vient de réclamer (voir
        mesurer) ; la capture, prise après, les montre donc aussi. Leur état
        est rangé avec celui de l'ouverture : le tiroir avait été mesuré en
@@ -2460,21 +2688,7 @@ async function etatTiroir(format) {
     const m = await mesurer(page, '#tbf-tiroir');
     const polices = await page.evaluate(POLICES);
     const capture = await photographier(page, `tiroir-${nomDeRoute(PAGE_TIROIR)}`, format, cle);
-    /* **Combien d'écrans de haut.** Le tiroir défile en lui-même : ce qu'il
-       pousse sous le bord n'est ni coupé ni hors fenêtre, il est plus bas —
-       et le lot 2 l'a laissé à deux écrans au téléphone étroit, la moitié
-       des destinations hors de vue. Sa hauteur à défiler sur celle de la
-       fenêtre ; au-delà de `SEUILS.tiroirEcrans`, c'est relevé. */
-    const tiroir = await page.evaluate(() => {
-      const t = document.getElementById('tbf-tiroir');
-      return { defile: t.scrollHeight, fenetre: window.innerHeight };
-    });
-    tiroir.ecrans = Math.round((tiroir.defile / tiroir.fenetre) * 100) / 100;
-    const tropHaut = tiroir.ecrans > SEUILS.tiroirEcrans;
-    if (tropHaut) {
-      note(cle, format.largeur, 'tiroir trop haut', `${String(tiroir.ecrans).replace('.', ',')} écrans de haut (${
-        tiroir.defile} px pour ${tiroir.fenetre}) : il en faut ${String(SEUILS.tiroirEcrans).replace('.', ',')} au plus`);
-    }
+    const { tiroir, tropHaut } = await hauteurDuTiroir(page, cle, format.largeur);
     rangerEtat(cle, PAGE_TIROIR, format, { ...polices, capture, tiroir }, m, erreurs, refus, tropHaut ? 1 : 0);
   } finally {
     await contexte.close();
@@ -2923,10 +3137,13 @@ async function etatClassement(format) {
 
    Tout le reste de la série manque, et les autres séries aussi.
 
-   **Les nouveautés sont resemées avant chaque visite.** Le classeur éteint
-   ce qu'il a montré et la fiche éteint sa clé à l'ouverture (contrat § 2) :
-   sans cela, chaque état hériterait de ce que le précédent a éteint, et un
-   NOUVEAU ne paraîtrait qu'au premier.
+   **Les nouveautés sont resemées avant chaque visite**, et aucune visite
+   ne les éteint au serveur. Le classeur éteint ce qu'il a montré et la
+   fiche éteint sa clé à l'ouverture (contrat § 2) : sans cela, chaque état
+   hériterait de ce que le précédent a éteint, et un NOUVEAU ne paraîtrait
+   qu'au premier. Resemer ne suffisait pas : l'extinction de départ d'une
+   page arrivait après les semailles de la suivante (voir « Une nouveauté
+   éteinte par la visite d'avant »).
 
    **Ce qu'ils lisent de la page, et rien d'autre** : la carte de cardHTML
    (`.fz[data-id]`, que lisent déjà les suites du classeur), `[data-open]`
@@ -3097,14 +3314,44 @@ async function allerALaSerie(page, plan) {
   return { serie, vus: await page.evaluate(OU_SONT_LES_CARTES, idsDuPlan(plan)) };
 }
 
+/* **Une nouveauté éteinte par la visite d'avant.** L'album de /collection
+   donnait 201, 202 ou 203 textes d'un relevé à l'autre, sur le même commit :
+   ses NOUVEAU — deux, un, ou aucun — et, sans aucun, l'album ouvert sur la
+   première série au lieu de celle des cartes semées (`serie` : « par le
+   rail » au lieu d'« arrivée »). La cause était ici. Une page éteint au
+   serveur ce qu'elle a montré, **en partant** (`pagehide`, une requête
+   `keepalive`) ; or fermer le contexte rend la main **avant** que cette
+   requête ait atteint le serveur — vu à la sonde : elle y arrive après, et
+   l'interception ne la voit pas. La visite suivante resemait ses nouveautés
+   juste avant, et la requête de départ de la précédente les effaçait
+   derrière elle, selon la charge du poste.
+
+   Le collectionneur ne doit donc rien éteindre au serveur : chaque visite
+   repart de ce qu'on a semé, et c'est ce que « resemées avant chaque
+   visite » voulait dire. L'extinction est **répondue par l'audit**
+   (`POST /api/fanzzy/vu`, la forme de la route), et la page quitte le
+   document (`about:blank`) avant qu'on ferme son contexte : son départ part
+   alors sous l'interception, qui le retient — à la sonde, rien n'arrive au
+   serveur. Ce que la page montre pendant la visite ne change pas : elle
+   reçoit le « 200 » qu'elle attend. `nouveautesEnBase` dit, après
+   l'arrivée, combien des nouveautés semées étaient encore en base. */
+const SANS_EXTINCTION = { 'POST /api/fanzzy/vu': { restantes: 0 } };
+const partirSansEteindre = ({ page, contexte }) => ({
+  async close() {
+    await page.goto('about:blank', { timeout: 5000 }).catch(() => {});
+    return contexte.close();
+  },
+});
+
 /** Arrive sur une page avec un joueur semé (le collectionneur, ou le joueur
     de l'audit et ses insignes), comme les autres visites : le réseau tu, le
     rideau parti, une fête fermée si elle est venue. Rend la visite, ou null
     si la page n'a pas chargé (et c'est noté). Sans `plan` (le profil des
-    insignes), aucune nouveauté à resemer. */
+    insignes), aucune nouveauté à resemer, et rien à retenir. */
 async function arriver(format, joueur, plan, chemin, cle) {
   const nouveautes = plan ? await resemerNouveautes(joueur.id, plan) : null;
-  const visite = await nouvelleVisite(format, joueur.qui);
+  const ouverte = await nouvelleVisite(format, joueur.qui, plan ? { bouchons: SANS_EXTINCTION } : {});
+  const visite = plan ? { ...ouverte, contexte: partirSansEteindre(ouverte) } : ouverte;
   /* La page chargée, puis notre serveur tu — et non « networkidle0 », que
      le classeur ne donne plus après le premier contexte : voir « Le calme
      de notre serveur ». Une seconde chance, comme pour les pages. */
@@ -3137,7 +3384,14 @@ async function arriver(format, joueur, plan, chemin, cle) {
      sans quoi sa capture ferait chercher un défaut de plus. */
   await visite.page.evaluate(() => Promise.race([document.fonts?.ready.then(() => true),
     new Promise((r) => { setTimeout(() => r(false), 5000); })])).catch(() => {});
-  return { ...visite, ...(plan ? { nouveautes } : {}), ...(fete ? { fete } : {}) };
+  /* Les nouveautés semées encore en base, la page arrivée : deux, si rien
+     ne les a éteintes en chemin (voir « Une nouveauté éteinte par la visite
+     d'avant »). Null sans table ou sans semailles. */
+  const nouveautesEnBase = plan && nouveautes
+    ? await pool.query('SELECT COUNT(*) AS n FROM user_nouveautes WHERE user_id = ?', [joueur.id])
+      .then(([[r]]) => Number(r?.n ?? 0), () => null)
+    : null;
+  return { ...visite, ...(plan ? { nouveautes, nouveautesEnBase } : {}), ...(fete ? { fete } : {}) };
 }
 
 async function etatClasseur(format, plan, joueur) {
@@ -3158,7 +3412,7 @@ async function etatClasseur(format, plan, joueur) {
     vus = allee.vus;
     const polices = await page.evaluate(POLICES);
     const donnees = { ...polices, ouvert, serie: allee.serie, vus, nouveautes: v.nouveautes,
-      ...(v.fete ? { fete: v.fete } : {}) };
+      nouveautesEnBase: v.nouveautesEnBase, ...(v.fete ? { fete: v.fete } : {}) };
     if (!Object.values(vus).some((x) => x === 'écran' || x === 'plus loin')) {
       note(cle, format.largeur, 'état', `le classeur ne montre aucune des cartes semées (série ${plan.serie}) : `
         + 'photographié, pas mesuré');
@@ -3190,7 +3444,8 @@ async function etatFiche(format, plan, joueur, sorte) {
       return noms.some((n) => t.includes(n.toLocaleUpperCase('fr')));
     }, carte.noms);
     const nomCapture = `fiche-${sorte === 'possédé' ? 'possede' : 'manquant'}`;
-    const donnees = { carte: carte.id, nomVu, nouveautes: v.nouveautes, ...(v.fete ? { fete: v.fete } : {}) };
+    const donnees = { carte: carte.id, nomVu, nouveautes: v.nouveautes, nouveautesEnBase: v.nouveautesEnBase,
+      ...(v.fete ? { fete: v.fete } : {}) };
     if (!nomVu) {
       note(cle, format.largeur, 'état', `la fiche de ${carte.id} ne nomme pas ${carte.noms.join(' / ')} : `
         + 'photographiée, pas mesurée');
@@ -3317,7 +3572,8 @@ async function etatVitrine(format, plan, joueur, sorte) {
     const polices = await page.evaluate(POLICES);
     const capture = await photographier(page, nomCapture, format, cle);
     rangerEtat(cle, PAGE_COLLECTION, format, { ...polices, capture, carte: carte.id, portee, touche, carteVue,
-      ...(album ? { album } : {}), nouveautes: v.nouveautes, ...(v.fete ? { fete: v.fete } : {}) },
+      ...(album ? { album } : {}), nouveautes: v.nouveautes, nouveautesEnBase: v.nouveautesEnBase,
+      ...(v.fete ? { fete: v.fete } : {}) },
     m, erreurs, refus);
   } catch (e) {
     await echec(`l’étape a levé : ${String(e?.message ?? e).slice(0, 80)}`);
@@ -3368,7 +3624,8 @@ async function etatAlbum(format, plan, joueur) {
     const polices = await page.evaluate(POLICES);
     const capture = await photographier(page, 'album-collection', format, cle);
     rangerEtat(cle, PAGE_COLLECTION, format, { ...polices, capture, album, portee, serie: allee.serie,
-      vus: allee.vus, nouveautes: v.nouveautes, ...(v.fete ? { fete: v.fete } : {}) }, m, erreurs, refus);
+      vus: allee.vus, nouveautes: v.nouveautes, nouveautesEnBase: v.nouveautesEnBase,
+      ...(v.fete ? { fete: v.fete } : {}) }, m, erreurs, refus);
   } finally {
     await contexte.close();
   }
@@ -3620,32 +3877,1943 @@ async function etatsDesInsignes() {
   }
 }
 
+/* ------------------------------------------------------ les arènes (lot 6)
+
+   **Ce que voit le joueur une fois entré**, et que la visite de /virage et
+   de /duel-nvn ne voyait jamais : elle arrive, le serveur de l'audit n'a
+   aucun match, et elle mesure une porte vide. Onze états, chacun sur une
+   visite neuve, du même joueur que les pages (et quatre de plus, plus bas,
+   pendant le lot) :
+
+     — `virage@voile` : le voile de choix garni — un match de son club en
+       direct, deux ailleurs, un coup d'envoi dans vingt minutes. Mesuré comme
+       une page ; et, s'il s'ouvre, le choix du camp sur un match d'ailleurs,
+       photographié à part (`captureCamp`), pas mesuré ;
+     — `virage@tribune` : la tribune, à l'entrée, une fois l'entrée jouée —
+       et son budget de hauteur, rangée par rangée (voir `BUDGET`). Deux
+       supporters attendent un duel : le menu y porte son sticker « 2 » ;
+     — `virage@double` : la même, entrée pendant la minute qui compte double ;
+     — `virage@but` : un but réel de son club, puis la corde qui passe à la
+       minute double — mesuré sous la case « GOAL ! » (`.tbf-moment`), une
+       fois partis le bandeau et le titre qui passaient par-dessus ;
+     — `virage@pave` : un chant touché (le premier du répertoire, un tempo),
+       le décompte passé, deux frappes sur le pavé — photographié juste
+       après la seconde, sa bouffée encore là, **puis** mesuré sous la
+       fenêtre du geste (`#mini`), tant que le geste dure ;
+     — `virage@bilan` : un chant accepté (QUESTIONS Q10 : le bilan ne vient
+       que si l'on a poussé), puis la flèche. La page demande son bilan
+       (`virage:bilan`), la fausse socket lui rend celui du contrat (§ 15).
+       Mesuré sous ce qui vient, une fois toutes ses étapes posées (voir
+       `attendreLeBilan`) : la page du bilan quand elle porte `#bilan`,
+       `[data-bilan]` ou `.tbf-bilan`, la boîte « QUITTER LA TRIBUNE ? »
+       d'avant le lot sinon (`.tbf-dial-fond`) ; ce qu'il a trouvé est dans
+       `vu`, et la boîte, venue à la place d'un bilan servi, est relevée
+       (genre « état »). Rien ne vient : l'état le dit et photographie
+       l'écran ;
+     — `duel@prepa` : la préparation avec un deck, deux matchs et quelqu'un
+       qui attend. Mesurée comme une page ;
+     — `duel@vestiaire` : ENTRER EN FILE touché, puis la salle d'attente d'un
+       3 contre 3 à moitié pleine — mesurée sous le calque fixé qui porte ses
+       tribunes (`.tribune-att`, `#voile` aujourd'hui) ;
+     — `duel@affiche` : le coup d'envoi et son affiche, qui part d'elle-même
+       au bout de six secondes — photographiée puis mesurée sous `#affiche` ;
+     — `duel@jeu` : la partie, et son budget. Mesurée comme une page. Le
+       match de son club est en direct : le menu y porte LIVE ;
+     — `duel@bilan` : le coup de sifflet et son bilan, mesuré sous `#bilan`
+       une fois toutes ses étapes posées, la rangée TOI/LUI en dernier,
+       chaque barre à sa part (voir `attendreLeBilan`).
+
+   À 360 × 640, 320 × 568, 412 × 915 et 768 × 1024. **Et la tribune et la
+   partie à 1 280 × 800** : la colonne y laisse voir le mur de part et
+   d'autre, et c'est là seulement que le voile des arènes se juge (QUESTIONS
+   Q6, l'hypothèse H6 : `voile.dense` dit s'il est à 75 % ou à 60 %).
+
+   **Sept états d'arène de plus**, ajoutés pendant le lot :
+
+     — `duel@entrainement` (320 × 568, 412 × 915) : la partie à
+       l'entraînement, sur le match à venir de la liste — la plaque
+       ENTRAÎNEMENT au milieu du HUD (« ENTRAÎN. » sous 391 px, le mot
+       entier au-delà : ses deux formats les plus serrés), pas de ticket
+       terrain avant le coup d'envoi ; et son budget ;
+     — `duel@pave` (aux quatre formats) : le pavé du duel, comme
+       `virage@pave` — le premier chant de la main touché, deux frappes, la
+       photo juste après la seconde, mesuré sous `#mini` ;
+     — `virage@verdict` et `duel@verdict` (320 × 568, 360 × 640) : le cœur
+       du retour du geste, que les deux pavés ne montraient pas — un tempo
+       joué jusqu'à sa dernière frappe, la réponse du serveur servie à temps
+       (PARFAIT), le tampon claqué au centre du pavé ; photographié puis
+       mesuré sous `#mini`, tenu le temps de la mesure par la brique même
+       (voir `verdictSurLePave`) ;
+     — `duel@but` (320 × 568, 360 × 640) : la corde qui cède pour sa
+       tribune, la case de BD du duel (`.tbf-moment`, trois secondes et
+       demie), photographiée puis mesurée sous elle ;
+     — `virage@300` (mêmes formats) : la tribune de trois cents — le rang à
+       trois chiffres, le palier TOP 100, pas de combo — et son budget ;
+     — `virage@fin` (mêmes formats) : le coup de sifflet final dans cette
+       tribune, sur un Virage qui ne compte pas au classement et dont l'XP
+       du jour est déjà prise : le bilan que la page pose seule, avec ses
+       notes, sans ligne d'XP, ni de série, ni de souvenir.
+
+   Les deux variantes du Virage sont celles que le brief fait regarder au
+   banc de chaque écran (une tribune de 300, un Virage non classé) ; aux
+   deux formats les plus serrés, où un chiffre de plus coupe un nom.
+
+   **Et quatre écrans de plus, que le lot refait hors des arènes**, à deux
+   formats chacun, sans fausse socket :
+
+     — `repetition@jugee` (320 × 568, 360 × 640) : un tempo joué dans la
+       salle de répétition, la note bouchée (PARFAIT) — le tampon sur le
+       pavé, le tampon TON MEILLEUR, LE JOUER EN DUEL. Mesuré sous la salle ;
+     — `repetition@tri` (mêmes formats) : une épreuve tamponnée, le tri (BON),
+       la plus grande grille, que la zone coupe une fois le geste jugé ;
+     — `amis@presence` (360 × 640, 768 × 1024) : /amis avec la présence
+       servie — un ami au Virage, un en duel, un en ligne, un sans état — et
+       un KOP pour « INVITER AU KOP ». Mesuré comme une page ;
+     — `tiroir@presence` (mêmes formats) : le tiroir ouvert, la présence
+       servie (`{ actif: true, visible: true }`), la ligne « Apparaître hors
+       ligne » au pied. Mesuré sous le tiroir, sa hauteur relevée.
+
+   Livrée éteinte, la présence n'est jamais servie au serveur de l'audit :
+   sans ces deux états, la pastille et l'interrupteur ne seraient jamais
+   regardés.
+
+   **Six règles que les comptes de texte ne lisent pas** sont relevées
+   sur chacun : les animations sans fin, le sticker du menu sur un écran de
+   jeu, le voile des arènes au-delà de 768 px, la main et les chants à
+   l'écran, l'encre qu'un cadre rogne, les libellés de carte couverts —
+   voir `reglesDuLot6`.
+
+   **Par la technique du banc des arènes** (lot 0) : la page vient du vrai
+   serveur, la socket est fausse (`FAUSSE_SOCKET`), et l'audit lui fait
+   recevoir des états fabriqués. Quatre lectures sont bouchées pour garnir le
+   voile et la préparation (`/api/virage/live`, `/api/deck/matchs`,
+   `/api/deck/loadout`, `/api/nvn/attentes`), et deux pour le sticker du
+   menu ; aux autres écrans, la note de la répétition, les amis et les KOP,
+   la présence — chacune nommée dans `bouches`. Rien n'est écrit en base :
+   ces états passent où l'on veut, et se reprennent seuls (`--arenes`).
+
+   **Ce qui est fabriqué, et pourquoi ces chiffres-là.** Un match, FC Sion –
+   FC Bâle à la 66ᵉ (2 – 1 au terrain), poussé pour Sion, le club du joueur.
+   Une tribune de 46 contre 31 : la foule a de quoi se remplir, et le 12ᵉ a
+   un palier à viser (TOP 10 à 38 de ferveur). Un souffle de 25 sur 100 et
+   **aucun regain** : les cartes grisées ne dépendent pas de l'instant de la
+   mesure. Quatre cartes d'action, une case laissée vide par une carte de
+   duel, une carte en recharge et une trop chère ; les cinq premiers chants
+   du répertoire ; le stade de la rencontre (QUESTIONS Q5 : le stade reste).
+   Au duel, un 3 contre 3 classé sur le même match (ses clubs et leurs
+   couleurs dans la vue), un bot et un absent, trois Fanzzy de LA REPRISE
+   (la seule série ouverte), une bâche posée et un changement possible, et
+   le Brouillard chez eux. Les chants, les cartes, le barème du geste, les
+   Fanzzy, le stade, le niveau, ce qui est en jeu au duel (`enJeuDe`) et
+   l'échelle du verdict (`verdictDe`) viennent des modules du dépôt, jamais
+   d'une copie : un chant qui change de coût change ici aussi.
+
+   **Les champs de la vague 2 y sont déjà** (contrat, § 15 à § 18) :
+   `surgeMs`, `serie`, `prochain`, `verdict`, le bilan de tribune, `enJeu`, la
+   cote, les PARFAITS et le meilleur geste du duel ; « +3 places » non
+   (QUESTIONS Q12). Une page d'avant le lot les ignore, une page du lot les
+   trouve : le relevé d'après se compare à celui-ci, état pour état. */
+const FORMATS_ARENES = opt('--largeur') ? FORMATS : [FORMATS_BASE[0], PETIT, GRAND_TELEPHONE, FORMATS_BASE[2]];
+const MUR = { largeur: 1280, hauteur: 800 };
+const FORMATS_MUR = opt('--largeur') ? [] : [MUR];
+const MATCH_ARENE = 990710;
+/* **L'entrée, laissée jouer.** Le Virage annonce l'entrée une seconde et
+   huit dixièmes (« TU ES DANS LE VIRAGE ») ; le lot 6 y pose les bâches, la
+   foule qui compte et le Fanzzy qui salue. On lui laisse ce temps, puis la
+   fin de ce qui finit et des chiffres qui comptent — voir `entrerAuVirage`. */
+const ENTREE_MS = 2200;
+
+/** Les données de jeu des arènes, lues dans le dépôt, et les états qu'on en
+    fabrique. Lève en nommant ce qui manque : tous les états du lot 6 le
+    diront. */
+async function fabriquerLesArenes() {
+  const [{ LISTE_CHANTS }, { ACTIONS, ACTIONS_VIRAGE }, { resoudreGeste }, { BY_ID }, { STADE_BY_ID },
+    { apportsDe }, { progression }, { enJeuDe, journeeDuMatch }, { verdictDe }] = await Promise.all([
+    import('../src/shared/duel/chants.js'), import('../src/shared/duel/actions.js'),
+    import('../src/server/ferveur/gestures.js'), import('../src/shared/fanzzy/dex.js'),
+    import('../src/shared/stades.js'), import('../src/shared/apports.js'), import('../src/shared/niveau.js'),
+    import('../src/server/deck/index.js'), import('../src/shared/verdict.js')]);
+  if (typeof enJeuDe !== 'function') throw new Error('deck/index.js ne sert plus enJeuDe (ce qui est en jeu)');
+  if (typeof verdictDe !== 'function') throw new Error('verdict.js ne sert plus verdictDe (l’échelle du verdict)');
+  const fz = (id) => {
+    const f = BY_ID.get(id);
+    if (!f) throw new Error(`le Fanzzy ${id} n’est plus au catalogue`);
+    return f;
+  };
+  const carte = (id) => {
+    const a = ACTIONS.find((x) => x.id === id);
+    if (!a) throw new Error(`la carte ${id} n’est plus au catalogue`);
+    return a;
+  };
+  const stade = STADE_BY_ID.get('chaudron');
+  if (!stade) throw new Error('le stade « chaudron » n’est plus au catalogue');
+  const lieu = { id: stade.id, nom: stade.nom, effet: stade.effet };
+  const gestes = resoudreGeste({}, { motif: 1 });
+  const chants = LISTE_CHANTS.slice(0, 5);
+  const iso = (ms) => new Date(Date.now() + ms).toISOString();
+  const COULEURS = [['#D52B1E', '#FFFFFF'], ['#1C3F94', '#D52B1E']];
+  /* Le blason d’un club : le logo du jeu. Aucun blason réel dans une capture,
+     et pas de blason vide non plus — l’API en sert toujours un, et une image
+     sans adresse se dessine en icône cassée qu’aucun joueur ne voit. */
+  const BLASON = '/img/logo.png';
+  const CLUBS = [{ id: 85, name: 'FC Sion' }, { id: 91, name: 'FC Bâle' }];
+
+  /* Le joueur : le Fanzzy qu'il pousse au Virage (la forme « en jeu » du
+     serveur, premier âge), ce qu'il porte, et sa main. */
+  const sien = fz('RP1');
+  const perso = { id: 'RP1', age: 'RP1', evo: 1, nom: sien.nom, skin: 'base', etat: null,
+    cri: sien.cri?.label ?? null, rar: sien.rar ?? null };
+  const apports = apportsDe({ fanzzy: { nom: sien.nom, mods: sien.mods ?? {} }, stade });
+  const mods = { ...(sien.mods ?? {}), ...(stade.mods ?? {}) };
+  const mainVirage = ['a-fumigene', 'a-torche', 'a-craquage', 'a-thermos'];
+  if (!mainVirage.every((id) => ACTIONS_VIRAGE.some((a) => a.id === id))) {
+    throw new Error('une carte de la main du Virage ne se joue plus au Virage');
+  }
+  const fixture = { id: MATCH_ARENE, homeName: CLUBS[0].name, awayName: CLUBS[1].name,
+    homeLogo: BLASON, awayLogo: BLASON, homeColors: COULEURS[0], awayColors: COULEURS[1] };
+  /* Le fil, comme le relevé du direct l'a rempli : deux périodes, trois buts
+     du terrain (dont un penalty) qui font le 2 – 1, un carton, une corde qui
+     a cédé. Les noms sont inventés. */
+  const FIL = [
+    { genre: 'periode', type: '1H', minute: 0, rang: 0 },
+    { genre: 'match', type: 'Goal', detail: 'Normal Goal', joueur: 'L. Kabashi', passeur: 'N. Berset',
+      minute: 23, side: 0, rang: 1 },
+    { genre: 'match', type: 'Card', detail: 'Yellow Card', joueur: 'T. Roth', minute: 41, side: 1, rang: 2 },
+    { genre: 'periode', type: '2H', minute: 46, rang: 3 },
+    { genre: 'tribune', side: 0, goals: [1, 0], minute: 52, rang: 4 },
+    { genre: 'match', type: 'Goal', detail: 'Penalty', joueur: 'D. Imhof', minute: 58, side: 1, rang: 5 },
+    { genre: 'match', type: 'Goal', detail: 'Normal Goal', joueur: 'J. Morand', minute: 64, side: 0, rang: 6 },
+  ];
+  const niveau = (avant, gain) => {
+    const a = progression(avant);
+    const p = progression(avant + gain);
+    return { xp: avant + gain, gain, ...p, avant: a.niveau, monte: p.niveau > a.niveau,
+      paliers: [], ecarpes: 0, depart: { xp: avant, ...a } };
+  };
+
+  /* --- le Grand Virage --- */
+  /* **La grande tribune** (`grande`) : trois cents d'un côté, deux cent onze
+     de l'autre — la tribune de 300 du brief. Là, un chant rapporte de l'ordre
+     d'un point (le plancher de ferveur, QUESTIONS Q4) : 18 de ferveur, le rang
+     à trois chiffres (212ᵉ sur 298), le palier suivant à TOP 100 (contrat
+     § 16 : 100, 50, 10, 3, 1), et **pas de série** — le combo ne se pose pas
+     (une donnée absente ne se pose pas). La corde y bouge moins : chaque
+     poussée est divisée par l'effectif. */
+  const GRANDE = { crowd: [298, 211], rope: -40,
+    you: { rank: 212, of: 298, ferveur: 18, prochain: { rang: 100, ecart: 9 } } };
+  const etatVirage = ({ surge = false, grande = false } = {}) => {
+    const t = Date.now();
+    const you = {
+      side: 0, neutre: false, ferveurNeutre: 0.5, breath: 25, regen: 0, breathMax: 100, gestes,
+      apports, mods, main: mainVirage, mainVisible: 5, cooldowns: { 'a-torche': 7 }, effets: [],
+      fanzzy: perso, ecartees: 1, rank: 12, of: 46, ferveur: 412, serie: 2,
+      prochain: { rang: 10, ecart: 38 },
+    };
+    if (grande) { delete you.serie; Object.assign(you, GRANDE.you); }
+    return {
+      fixture, rope: grande ? GRANDE.rope : -150, goals: [1, 0], realGoals: [2, 1],
+      crowd: grande ? GRANDE.crowd : [46, 31],
+      surge, surgeUntil: surge ? t + 47_000 : 0, ...(surge ? { surgeMs: 47_000 } : {}),
+      seq: 1, fil: FIL, scoreReel: [2, 1], statut: '2H', minute: 66, minuteExtra: null, vuA: t,
+      you,
+      cards: chants, rang: 0, stade: { ...stade }, actions: ACTIONS_VIRAGE, rally: [],
+    };
+  };
+  const butReel = () => ({ side: 0, teamId: 85, minute: 71, player: 'J. Morand', realGoals: [3, 1],
+    scoreReel: [3, 1], surgeUntil: Date.now() + 60_000, surgeMs: 60_000, seq: 2 });
+  const tickDouble = () => ({ rope: -230, goals: [1, 0], crowd: [46, 31], surge: true, seq: 3 });
+  const resultat = () => ({ quality: 0.93, backfire: false, breath: 3, ferveur: 431, push: 19,
+    verdict: 'parfait', serie: 3, rang: 11, sur: 46, prochain: { rang: 10, ecart: 19 } });
+  /* Le joueur de l'audit a 400 XP (niveau 4, le 5 à 480) : les 15 du
+     Virage et les 35 du duel ne font pas monter, et aucune fête ne vient
+     couvrir le bilan qu'on mesure. */
+  const bilanVirage = () => ({
+    fixtureId: MATCH_ARENE, side: 0, classe: true, neutre: false,
+    ferveur: 431, chants: 14, parfaits: 3, serie: 3,
+    meilleur: { chant: chants[0].id, verdict: 'parfait' }, rang: 11, sur: 46,
+    souvenirs: [{ id: 88, minute: 23, joueur: 'L. Kabashi' }],
+    xp: { verse: true, gain: { echarpes: 0, packs: 0, xp: 15, tampons: 0 },
+      wallet: { scarves: 500, packs: 6 }, niveau: niveau(400, 15) },
+  });
+  /* **Le bilan du coup de sifflet, dans la grande tribune, sur un Virage
+     qui ne compte pas au classement** (§ 15) : `fini`, `classe: false`
+     (« Ce Virage ne compte pas au classement »), l'XP du jour déjà prise
+     (`quota` : pas de ligne d'XP, une note à la place), un meilleur geste
+     BON (un autre tampon que le PARFAIT de `virage@bilan`, plein sur le
+     kraft), un seul PARFAIT, et ni série (sous 2) ni souvenir : leurs
+     lignes disparaissent. */
+  const bilanFin = () => ({
+    fixtureId: MATCH_ARENE, side: 0, fini: true, classe: false, neutre: false,
+    ferveur: GRANDE.you.ferveur, chants: 14, parfaits: 1,
+    meilleur: { chant: chants[0].id, verdict: 'bon' }, rang: GRANDE.you.rank, sur: GRANDE.you.of,
+    xp: { verse: false, raison: 'quota' },
+  });
+  const live = () => {
+    const t = Date.now();
+    const ligne = (id, dom, ext, statut, minute, buts, foule, mien, depuisMin) => ({
+      id, status_short: statut, elapsed: minute, elapsed_extra: null, luA: t,
+      home_goals: buts?.[0] ?? null, away_goals: buts?.[1] ?? null,
+      kickoff_at: new Date(t - depuisMin * 60_000).toISOString(),
+      home_name: dom, home_logo: BLASON, away_name: ext, away_logo: BLASON, league_name: 'Super League',
+      pays: 'Switzerland', drapeau: null, homeColors: [], awayColors: [], crowd: foule, mien,
+      fini: false, open: true,
+    });
+    return { ferveurNeutre: 0.5, matchs: [
+      { ...ligne(MATCH_ARENE, CLUBS[0].name, CLUBS[1].name, '2H', 66, [2, 1], [46, 31], true, 70),
+        homeColors: COULEURS[0], awayColors: COULEURS[1] },
+      ligne(990711, 'Grasshopper Club', 'FC Zurich', 'HT', 45, [1, 1], [12, 9], false, 50),
+      ligne(990712, 'FC Lugano', 'Servette FC', '1H', 24, [0, 0], [3, 5], false, 26),
+      ligne(990713, 'BSC Young Boys', 'FC Thoune', 'NS', null, null, [0, 0], false, -20),
+    ] };
+  };
+
+  /* --- le duel de tribunes --- */
+  const enEquipe = (id) => {
+    const f = fz(id);
+    const age = (def, i) => ({ id, nom: def.nom, type: def.type, cri: def.cri, stage: i + 1,
+      mods: { id, ...(def.mods ?? {}) }, modsBase: def.mods ?? {} });
+    const suite = f.evo ? BY_ID.get(f.evo) : null;
+    const ages = [age(f, 0), ...(suite ? [age(suite, 1)] : [])];
+    return { ...ages[0], rar: f.rar, stuff: [], stade: 1, ages };
+  };
+  const equipe = ['RP1', 'RP3', 'RP5'].map(enEquipe);
+  const DECK = ['a-fumigene', 'a-torche', 'a-silence', 'a-brouillard', 'a-arbitre',
+    'a-craquage', 'a-thermos', 'a-releve', 'a-bache', 'a-vent'];
+  const deck = DECK.map(carte);
+  /* Le joueur de l'audit en premier dans son camp : une page d'avant le
+     lot 6 prenait le premier joueur de son côté pour « toi ». Celle du lot
+     lit `moi.userId` et la ligne `moi: true` du bilan (§ 17) : les deux
+     sont servis. */
+  const JOUEURS = [
+    { userId: U, nom: 'Audit', side: 0, fanzzy: ['RP1', 'RP3', 'RP5'] },
+    { userId: 'aud-allie', nom: 'Tambour_Nord', side: 0, fanzzy: ['RP2', 'RP4', 'RP6'] },
+    { userId: 'bot:1', nom: 'Supporter d’appoint', side: 0, bot: true, fanzzy: ['RP7', 'RP8', 'RP18'] },
+    { userId: 'aud-face-1', nom: 'Bâche-Haute', side: 1, fanzzy: ['RP19', 'RP20', 'RP21'] },
+    { userId: 'aud-face-2', nom: 'LeGrandDéplacement', side: 1, connecte: false, fanzzy: ['RP22', 'RP23', 'RP24'] },
+    { userId: 'aud-face-3', nom: 'Sifflet', side: 1, fanzzy: ['RP25', 'RP26', 'RP27'] },
+  ];
+  for (const j of JOUEURS) j.fanzzy.forEach(fz);
+  /* **Ce qui est en jeu** (contrat § 17, QUESTIONS Q12), par la fonction
+     même que la liste des matchs sert (`enJeuDe`) : au réglage par défaut,
+     70 et 88 en 2v2 et 4v4 classés chez soi — le serveur arrondit avant de
+     doubler, comme au versement. Écrits à la main, ils valaient 69 et 87, un
+     chiffre que le serveur ne sert jamais, et la capture le montrait. */
+  const enJeu = enJeuDe('classe', true);
+  /* **Les deux matchs de la liste**, avec les couleurs de leurs clubs
+     (contrat § 17 : `homeColors`, `awayColors`, de zéro à deux couleurs,
+     toujours servies). Le classé du jour a les couleurs du Virage ; le
+     second, une couleur d'un côté et deux de l'autre (celles de
+     `deck-smoke`), pour que l'arène les lise toutes deux. Sans elles, les
+     captures ne montraient que le repli de la page (l'or et le bleu). */
+  const AUTRES_COULEURS = [['#C8102E', '#FFFFFF'], ['#1D428A']];
+  const ENTRAINEMENT = { id: 990714, statut: 'NS', kickoff: iso(26 * 3_600_000),
+    clubs: [{ id: 92, name: 'FC Lugano' }, { id: 93, name: 'Servette FC' }], couleurs: AUTRES_COULEURS };
+  const matchsDuel = () => ({ matchs: [
+    { id: MATCH_ARENE, status_short: '2H', elapsed: 66, kickoff_at: iso(-70 * 60_000), home_goals: 2, away_goals: 1,
+      home_name: CLUBS[0].name, home_logo: BLASON, away_name: CLUBS[1].name, away_logo: BLASON,
+      league_name: 'Super League', enCours: true, termine: false,
+      raison: 'Le match est en cours : ce duel comptera au classement.', aujourdhui: 1,
+      mode: 'classe', mien: true, monCamp: 0, enJeu, homeColors: COULEURS[0], awayColors: COULEURS[1] },
+    { id: ENTRAINEMENT.id, status_short: ENTRAINEMENT.statut, elapsed: null, kickoff_at: ENTRAINEMENT.kickoff,
+      home_goals: null, away_goals: null, home_name: ENTRAINEMENT.clubs[0].name, home_logo: BLASON,
+      away_name: ENTRAINEMENT.clubs[1].name, away_logo: BLASON,
+      league_name: 'Super League', enCours: false, termine: false,
+      raison: 'Match à venir : entraînement, sans effet sur le classement.', aujourdhui: 0,
+      mode: 'entrainement', mien: false, monCamp: null, enJeu: enJeuDe('entrainement', false),
+      homeColors: AUTRES_COULEURS[0], awayColors: AUTRES_COULEURS[1] },
+  ] });
+  const loadout = () => ({ fanzzy: equipe, actions: deck, mainVisible: 5 });
+  const attentes = () => ({ attentes: [{ fixtureId: MATCH_ARENE, format: '1v1', camps: [0, 1], attendus: 1 }] });
+  const file = () => {
+    const t = Date.now();
+    const vu = (j) => ({ userId: j.userId, nom: j.nom, fanzzy: { id: j.fanzzy[0], nom: fz(j.fanzzy[0]).nom },
+      depuis: t - 20_000 });
+    return { format: '3v3', mode: 'classe', raison: 'Le match est en cours : ce duel comptera au classement.',
+      camp: 0, attendus: 3, club: CLUBS[0], enFaceClub: CLUBS[1], presents: 2, enFace: 1,
+      manqueEnFace: 2, manqueChezMoi: 1,
+      tribunes: { moi: [vu(JOUEURS[0]), vu(JOUEURS[1])], eux: [vu(JOUEURS[3])] },
+      botA: t + 75_000, botDansMs: 75_000, neutre: false, renfort: 1, moi: U };
+  };
+  /* **Le match d'un duel, tel que la vue le sert** (`DuelNvN.fixture`, que
+     `matchSupport` fabrique) : les deux clubs, le score au montage du duel
+     et leurs couleurs (§ 17). Sans lui, le HUD n'écrivait pas le club de
+     chaque tribune et l'arène ne prenait que ses teintes par défaut. */
+  const fixtureDuel = ({ id, statut, elapsed, goals, kickoff, clubs, couleurs }) => ({
+    id, ...(typeof journeeDuMatch === 'function' ? { jour: journeeDuMatch(kickoff).jour } : {}),
+    status: statut, elapsed, goals, kickoffAt: kickoff, league: 'Super League',
+    home: { id: clubs[0].id, name: clubs[0].name, logo: BLASON },
+    away: { id: clubs[1].id, name: clubs[1].name, logo: BLASON },
+    homeColors: couleurs[0], awayColors: couleurs[1] });
+  /* **Ce que chacun porte** (contrat § 17), sous la forme du serveur :
+     `reste` et `duree` en millisecondes, `null` pour un effet sans échéance
+     (la Bâche tient jusqu'à ce qu'elle cède, le changement est une charge).
+     Chez soi, la Bâche et le changement possible ; **en face, le Brouillard**
+     que l'allié vient de jouer, posé sur chacun des trois (comme le moteur
+     le pose sur tous les adverses), avec son chrono : sans un effet chez
+     eux, les objets d'en face et leur anneau ne se photographiaient jamais. */
+  const EFFETS_MOI = [{ type: 'shield', reste: null, duree: null }, { type: 'peut_changer', reste: null, duree: null }];
+  const EFFETS_EUX = [{ type: 'blind', reste: 4200, duree: 6000 }];
+  const MOI = { ferveur: 212, breath: 25 };
+  /* `entrainement` : le même duel, à l'entraînement, sur le match à venir de
+     la liste (Lugano – Servette, demain) — la plaque ENTRAÎNEMENT au lieu de
+     CLASSÉ, et pas de ticket terrain avant le coup d'envoi. */
+  const vueDuel = ({ entrainement = false } = {}) => ({
+    id: 'audit-duel', mode: entrainement ? 'entrainement' : 'classe', seq: 1,
+    fixture: entrainement
+      ? fixtureDuel({ id: ENTRAINEMENT.id, statut: ENTRAINEMENT.statut, elapsed: null, goals: [0, 0],
+        kickoff: ENTRAINEMENT.kickoff, clubs: ENTRAINEMENT.clubs, couleurs: ENTRAINEMENT.couleurs })
+      : fixtureDuel({ id: MATCH_ARENE, statut: '2H', elapsed: 66, goals: [2, 1], kickoff: iso(-70 * 60_000),
+        clubs: CLUBS, couleurs: COULEURS }),
+    chants, stade: lieu, rope: -90, goals: [1, 0],
+    ...(entrainement ? { scoreReel: [0, 0], minuteReelle: null, statutReel: ENTRAINEMENT.statut }
+      : { scoreReel: [2, 1], minuteReelle: 66, statutReel: '2H' }),
+    resteMs: 187_000, termine: false, vainqueur: null,
+    equipes: [0, 1].map((side) => JOUEURS.filter((j) => j.side === side).map((j) => ({
+      userId: j.userId, nom: j.nom, ferveur: j.userId === U ? MOI.ferveur : 0, connecte: j.connecte ?? true,
+      fanzzy: j.fanzzy[0], breath: j.userId === U ? MOI.breath : 50,
+      effets: j.userId === U ? EFFETS_MOI : side === 1 ? EFFETS_EUX : [] }))),
+    moi: { userId: U, side: 0, breath: MOI.breath, ferveur: MOI.ferveur, main: DECK.slice(0, 5), aveugle: false,
+      gestes, sienGeste: 'tempo', fanzzy: equipe.map((f, i) => ({ ...f, actif: i === 0 })),
+      cooldowns: { 'a-torche': 5.2 }, effets: EFFETS_MOI, apports, mods },
+  });
+  /* La corde cède pour sa tribune : le deuxième but de corde, dans
+     l'évènement que le moteur émet déjà (`nvn:events`, `t: 'goal'`). */
+  const butDuel = () => ({ t: 'goal', side: 0, goals: [2, 0], seq: 2 });
+  /* Son chant noté, tel que le serveur le diffuse à la salle (`nvn:events`,
+     l'évènement `chant` du moteur que `chanterEtNommer` nomme, § 17) : à
+     son identifiant, sur la carte chantée, la note et le mot de l'échelle
+     du serveur (`verdictDe`) — la même note que le chant du Virage. */
+  const NOTE_DU_CHANT = 0.93;
+  const chantDuel = (cardId) => ({ seq: 2, t: 'chant', userId: U, side: 0, geste: 'tempo', cardId,
+    quality: NOTE_DU_CHANT, backfire: false, verdict: verdictDe(NOTE_DU_CHANT) });
+  const FORME = [{ issue: 'win', pour: 2, contre: 1 }, { issue: 'loss', pour: 0, contre: 1 },
+    { issue: 'win', pour: 3, contre: 2 }, { issue: 'draw', pour: 1, contre: 1 }, { issue: 'win', pour: 2, contre: 0 }];
+  const affiche = () => ({ id: 'audit-duel', mode: 'classe', stade: lieu,
+    joueurs: JOUEURS.map((j, i) => ({ userId: j.userId, nom: j.nom, side: j.side, bot: Boolean(j.bot),
+      fanzzy: j.fanzzy.map((id) => {
+        const f = fz(id);
+        return { id, nom: f.nom, stade: 1, type: f.type, rar: f.rar, cri: f.cri?.label ?? null,
+          geste: f.cri?.gest ?? null };
+      }),
+      forme: j.bot ? [] : FORME.slice(0, 5 - (i % 3)) })) });
+  const CHIFFRES = [[612, 18, 6, 1, 1, 5, 3], [488, 15, 4, 0, 0, 3, 2], [301, 11, 3, 0, 0, 0, 0],
+    [540, 16, 5, 1, 0, 4, 2], [120, 4, 1, 0, 0, 0, 0], [455, 14, 4, 0, 1, 2, 0]];
+  const finDuel = () => ({
+    id: 'audit-duel', mode: 'classe', goals: [2, 1], vainqueur: 0, stade: { id: lieu.id, nom: lieu.nom },
+    dureeMs: 300_000,
+    joueurs: JOUEURS.map((j, i) => {
+      const [ferveur, nbChants, cartes, changements, releves, parfaits, serie] = CHIFFRES[i];
+      return { userId: j.userId, nom: j.nom, side: j.side, buts: j.side ? 1 : 2, ferveur, chants: nbChants,
+        cartes, preferee: cartes ? { id: DECK[i % 3], fois: Math.min(3, cartes) } : null,
+        chantPrefere: { id: chants[0].id, nom: chants[0].nom, fois: 5 }, changements, releves,
+        fanzzy: j.fanzzy.slice(0, 2).map((id) => ({ id, nom: fz(id).nom, stade: 1 })),
+        dernier: j.fanzzy[0], connecte: j.connecte ?? true, bot: Boolean(j.bot),
+        /* Sa ligne, marquée dans son envoi (§ 17) : la page n'a plus à la
+           chercher parmi les trois de son camp. */
+        ...(j.userId === U ? { moi: true } : {}),
+        parfaits, ...(serie >= 2 ? { serie } : {}),
+        ...(nbChants ? { meilleur: { chant: chants[i % 5].id, verdict: parfaits ? 'parfait' : 'bon' } } : {}) };
+    }),
+    gains: { echarpes: 60, pourSonClub: true, xp: 35, kop: null, niveau: niveau(400, 35),
+      cote: { avant: 1240, apres: 1262, delta: 22 } },
+  });
+
+  /* --- le sticker du menu, sur un écran de jeu ---
+     Deux supporters attendent un duel (`alerte`, que menu.js lit sur
+     `/api/nvn/attentes`) : le menu du Virage porte le « 2 » violet. Le
+     duel, lui, ne regarde pas sa propre file : il porte LIVE, le match de
+     son club en direct (`/api/virage/live`, le premier match de `live`). */
+  const alerteDuel = () => ({ attentes: [{ fixtureId: MATCH_ARENE, format: '1v1', camps: [1, 1], attendus: 1 }],
+    alerte: { fixtureId: MATCH_ARENE, format: '1v1', camps: [1, 1] } });
+
+  /* --- la présence (contrat § 18, décision de Gaël sur Q2) ---
+     Livrée éteinte, le serveur de l'audit ne la sert pas : la pastille de
+     /amis et l'interrupteur du tiroir ne se verraient jamais. Les deux
+     lectures sont bouchées à la forme du contrat. Quatre amis : un au
+     Virage (le pseudo le plus long, le sticker le plus long), un en duel, un
+     en ligne, un sans état ; et un KOP au joueur, pour que chaque ligne porte
+     « INVITER AU KOP ». */
+  const visage = (id) => {
+    const f = fz(id);
+    return { fanzzy: id, avatar: { id, age: id, evo: 1, nom: f.nom, skin: 'base', etat: null, rar: f.rar ?? null } };
+  };
+  const ami = (n, pseudo, id, presence, niv) => ({ id: `aud-ami-${n}`, pseudo, ...visage(id),
+    ...(niv ? { niveau: niv } : {}), etat: 'amis', aMoi: false, depuis: iso(-n * 86_400_000),
+    ...(presence ? { presence } : {}) });
+  const amis = () => ({ amis: [ami(1, 'LeGrandDéplacement', 'RP22', 'virage', 12), ami(2, 'Bâche-Haute', 'RP19', 'duel', 7),
+    ami(3, 'Sifflet', 'RP25', 'en_ligne'), ami(4, 'Tambour_Nord', 'RP2', null, 3)],
+  recues: [], envoyees: [], invitations: [] });
+  const kops = () => ({ kops: [{ id: 1, nom: 'Les Irréductibles', team_id: CLUBS[0].id, team_nom: CLUBS[0].name,
+    pot: 120, verse_total: 340, createur: U, verse: 40, depuis: iso(-30 * 86_400_000), membres: 6,
+    couleurs: COULEURS[0] }], catalogue: [], dureeVoteMs: 0 });
+  const presence = () => ({ actif: true, visible: true });
+
+  /* --- la salle de répétition jugée ---
+     La note est bouchée (le serveur noterait les frappes de l'audit, et le
+     mot changerait d'un relevé à l'autre) ; le mot vient de l'échelle même
+     du serveur (`verdictDe`, Q3) : PARFAIT sur le tempo, BON sur le tri. */
+  const noteDe = (note) => ({ note, refuse: null, verdict: verdictDe(note) });
+
+  return {
+    etatVirage, butReel, tickDouble, resultat, bilanVirage, bilanFin, live,
+    matchsDuel, loadout, attentes, file, vueDuel, butDuel, chantDuel, affiche, finDuel,
+    alerteDuel, amis, kops, presence, noteDe,
+    /* Ce qui a été fabriqué, dit en clair dans le JSON (`arenesFabriquees`). */
+    decrit: {
+      match: { id: MATCH_ARENE, rencontre: `${CLUBS[0].name} – ${CLUBS[1].name}`, minute: 66, terrain: [2, 1],
+        camp: 0, stade: lieu.id },
+      virage: { tribune: [46, 31], rang: 12, sur: 46, prochain: { rang: 10, ecart: 38 }, souffle: 25,
+        regain: 0, main: mainVirage, ecartees: 1, recharge: { 'a-torche': 7 }, chants: chants.map((c) => c.id),
+        fanzzy: perso.id, minuteDouble: { surgeMs: 47_000 }, but: { minute: 71, buteur: 'J. Morand' },
+        bilan: { rang: 11, sur: 46, chants: 14, parfaits: 3, xp: 15 },
+        grande: { tribune: GRANDE.crowd, rang: GRANDE.you.rank, sur: GRANDE.you.of, ferveur: GRANDE.you.ferveur,
+          prochain: GRANDE.you.prochain, serie: null },
+        fin: { statut: 'FT', classe: false, xp: 'quota', meilleur: 'bon', parfaits: 1 },
+        verdict: { emis: 'virage:chant', reponse: 'virage:result', note: resultat().quality, verdict: resultat().verdict,
+          tenue: TENUE_DU_VERDICT } },
+      duel: { format: '3v3', mode: 'classe', equipe: equipe.map((f) => f.id), main: DECK.slice(0, 5),
+        effets: EFFETS_MOI.map((e) => e.type), effetsEnFace: EFFETS_EUX, couleurs: COULEURS,
+        vainqueur: 'toi', gains: { echarpes: 60, xp: 35, cote: [1240, 1262] },
+        enJeu, pave: { chant: chants[0].id, geste: chants[0].gest }, but: butDuel(),
+        verdict: { emis: 'nvn:chant', reponse: 'nvn:events', note: NOTE_DU_CHANT, verdict: verdictDe(NOTE_DU_CHANT),
+          tenue: TENUE_DU_VERDICT },
+        entrainement: { match: ENTRAINEMENT.id, rencontre: ENTRAINEMENT.clubs.map((c) => c.name).join(' – '),
+          statut: ENTRAINEMENT.statut, couleurs: ENTRAINEMENT.couleurs } },
+      voile: { matchs: 4, miens: 1 },
+      menu: { virage: { urgence: 'attend', pastille: 2 }, duel: { urgence: 'direct', pastille: 'LIVE' } },
+      amis: amis().amis.map((a) => ({ pseudo: a.pseudo, presence: a.presence ?? null })), kops: 1,
+      presence: presence(),
+      repetition: { tempo: noteDe(0.93), tri: noteDe(0.82) },
+    },
+  };
+}
+
+/* Les attentes dans la page, bornées. */
+const pause = (ms) => new Promise((r) => { setTimeout(r, ms); });
+const attendreQue = (page, condition, ms) =>
+  page.evaluate(`(async () => (${ATTENDRE})(${condition}, ${ms}))()`).catch(() => false);
+/* **Des chiffres qui comptent.** Un bilan qui pose ses lignes l'une après
+   l'autre, une foule qui compte de 0 à son effectif (`FX.compter`) : la fin
+   d'une transition ne le dit pas, ce sont des textes qui changent. On attend
+   que le texte de la zone ne bouge plus pendant `calme` ms, au plus `max`. */
+const TEXTE_STABLE = `async (sel, calme, max) => {
+  const depart = performance.now();
+  let avant = null;
+  let depuis = depart;
+  while (performance.now() - depart < max) {
+    const t = document.querySelector(sel)?.innerText ?? '';
+    if (t !== avant) { avant = t; depuis = performance.now(); }
+    else if (performance.now() - depuis >= calme) return true;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return false;
+}`;
+const texteStable = (page, sel, calme = 800, max = 6000) =>
+  page.evaluate(`(async () => (${TEXTE_STABLE})(${JSON.stringify(sel)}, ${calme}, ${max}))()`).catch(() => false);
+
+/* **Un bilan se pose en étapes, et on l'attend jusqu'à la dernière.** La
+   page kraft d'un bilan (le Virage, le duel) pose ses blocs l'un après
+   l'autre — `.tbf-glisse`, sept cents millisecondes de `--d` de plus à
+   chaque étape (brief du lot 6, § 4 : « les chiffres qui comptent l'un
+   après l'autre ») —, fait compter leurs chiffres, et pousse les barres
+   miroir TOI/LUI du duel quand leur bloc arrive (`.tbf-vs-l` : `--a` et
+   `--b` posés depuis `data-a` et `data-b`). Les deux attentes d'avant n'y
+   suffisaient pas : `texteStable` rendait la main dans le premier creux de
+   800 ms entre deux chiffres qui comptent, et `finDesMouvements` n'attend
+   que ce qui finit sous son plafond. La rangée TOI/LUI du duel, huitième
+   étape, à près de cinq secondes, n'était ni photographiée ni mesurée : la
+   capture montrait une demi-feuille de kraft vide sous « +35 XP ».
+
+   On attend donc que **chaque étape soit posée** (plus aucune animation à
+   venir ou en cours sur elle) et **chaque barre à sa part**, au plus le
+   nombre d'étapes fois `PAS_DU_BILAN` plus `MARGE_DU_BILAN` — le rythme
+   que le brief écrit, plus le temps de la dernière étape et de ses barres ;
+   un bilan qui le dépasse est trop lent, pas seulement long. Rend ce qu'on
+   a vu : les étapes et les barres comptées, ce qui restait en route, le
+   temps pris et le plafond (`pose` dans le relevé). Une boîte sans étape
+   (`.tbf-dial-fond`) est posée tout de suite. */
+const PAS_DU_BILAN = 700;
+const MARGE_DU_BILAN = 1200;
+const BILAN_POSE = async (sel, pas, marge) => {
+  const zone = document.querySelector(sel);
+  if (!zone) return null;
+  const depart = performance.now();
+  const etapes = [...zone.querySelectorAll('.tbf-glisse')];
+  const barres = [...zone.querySelectorAll('.tbf-vs-l')];
+  const plafond = etapes.length * pas + marge;
+  /* Une barre est à sa part quand la variable posée vaut celle qu'elle
+     porte en donnée ; sans donnée lisible, rien à attendre d'elle. */
+  const aSaPart = (l, k) => {
+    const voulue = parseFloat(l.dataset[k]);
+    if (!Number.isFinite(voulue)) return true;
+    return Math.abs((parseFloat(getComputedStyle(l).getPropertyValue(`--${k}`)) || 0) - voulue) < 0.0005;
+  };
+  const enRoute = () => ({
+    etapes: etapes.filter((e) => e.isConnected && e.getAnimations().some((a) => a.playState !== 'finished'
+      && a.effect?.getComputedTiming?.().iterations !== Infinity)).length,
+    barres: barres.filter((l) => l.isConnected && !(aSaPart(l, 'a') && aSaPart(l, 'b'))).length,
+  });
+  let reste = enRoute();
+  while ((reste.etapes || reste.barres) && performance.now() - depart < plafond) {
+    await new Promise((r) => { setTimeout(r, 50); });
+    reste = enRoute();
+  }
+  const entier = !reste.etapes && !reste.barres;
+  return { etapes: etapes.length, barres: barres.length, ms: Math.round(performance.now() - depart), plafond,
+    entier, ...(entier ? {} : { enRoute: reste }) };
+};
+
+/** Attendre qu'un bilan soit posé en entier (voir `BILAN_POSE`), puis ce
+    qui bouge encore — les barres et la jauge d'XP lancées par la dernière
+    étape — et les chiffres qui finissent de compter. Un bilan qui ne finit
+    pas de se poser sous son plafond est relevé (genre « état ») : la capture
+    le montrera à moitié, et le relevé ne doit pas se lire comme un bon.
+    Rend `pose`, et `autres` : le relevé en plus, à compter sur la ligne. */
+async function attendreLeBilan(page, vu, cle, format) {
+  const pose = await page.evaluate(BILAN_POSE, vu, PAS_DU_BILAN, MARGE_DU_BILAN).catch(() => null);
+  let autres = 0;
+  if (pose && !pose.entier) {
+    autres = 1;
+    note(cle, format.largeur, 'état', `le bilan (${vu}) ne s’est pas posé en ${pose.plafond} ms (${
+      pose.etapes} étapes × ${PAS_DU_BILAN} + ${MARGE_DU_BILAN}) : ${pose.enRoute.etapes} étape(s) encore en route, ${
+      pose.enRoute.barres} barre(s) TOI/LUI sans leur part — la capture le montre à moitié`);
+  }
+  await finDesMouvements(page, vu, 2500);
+  await texteStable(page, vu, 800, 4000);
+  return { pose, autres };
+}
+
+/* **La dernière étape d'un bilan, sous le pli.** Aux petits formats, la
+   page kraft défile : sa dernière étape (au duel, la rangée TOI/LUI) est
+   mesurée avec le reste, mais la capture ne prend que l'écran, et ne la
+   montrait pas — à 320 × 568, la feuille s'y arrête à « MEILLEURE SÉRIE ».
+   Elle est alors amenée au milieu de l'écran (c'est le bilan qui défile)
+   et photographiée à part (`captureFin`), sans mesure. Rien quand elle est
+   déjà entière à l'écran : la capture de l'état la montre. Un `apres` d'état
+   (voir `ETATS_ARENES`), pour la zone `sel`. */
+const derniereEtapeSousLePli = (sel, nom) => async ({ page, format, cle }) => {
+  const amenee = await page.evaluate((s) => {
+    const zone = document.querySelector(s);
+    const e = zone ? [...zone.querySelectorAll('.tbf-glisse')].at(-1) : null;
+    if (!e) return null;
+    const r = e.getBoundingClientRect();
+    if (r.top >= 0 && r.bottom <= innerHeight) return false;
+    e.scrollIntoView({ block: 'center' });
+    return true;
+  }, sel).catch(() => null);
+  if (!amenee) return {};
+  await pause(300);
+  return { captureFin: await photographier(page, nom, format, cle) };
+};
+
+/* **Frapper le pavé comme un doigt, jusqu'à ce que ça compte.** Depuis le
+   lot 6, un geste de rythme suit la grille du serveur : une frappe tombée
+   avant l'ouverture de la grille (le premier temps, moins la fenêtre
+   d'avance) ne compte pas, ne s'affiche pas et ne fait rien bouger. L'audit
+   frappait dès le pavé posé : ses deux frappes tombaient avant, et l'état
+   photographiait un pavé à 0. On frappe donc jusqu'à ce que le compteur du
+   pavé (`#n`) bouge, `combien` fois, au plus pendant `max` ms, et l'on rend
+   le nombre de frappes comptées. Un pavé sans compteur : les frappes
+   partent sans être vérifiées. */
+const FRAPPER = `async (combien, max) => {
+  const frapper = () => {
+    const p = document.getElementById('pad');
+    for (const type of ['pointerdown', 'pointerup']) {
+      p?.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, isPrimary: true, pointerType: 'touch' }));
+    }
+  };
+  const compte = () => document.getElementById('n')?.textContent ?? null;
+  const depart = performance.now();
+  let comptees = 0;
+  while (comptees < combien && performance.now() - depart < max) {
+    const avant = compte();
+    frapper();
+    if (avant === null || compte() !== avant) {
+      comptees += 1;
+      if (comptees < combien) await new Promise((r) => setTimeout(r, 300));
+    } else await new Promise((r) => setTimeout(r, 90));
+  }
+  return comptees;
+}`;
+
+/* Le premier de ces sélecteurs qui est à l'écran, ou null. */
+const PREMIER_VISIBLE = (liste) => liste.find((sel) => {
+  const e = document.querySelector(sel);
+  if (!e || e.hidden) return false;
+  const s = getComputedStyle(e);
+  const r = e.getBoundingClientRect();
+  return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
+}) ?? null;
+
+/* Le calque fixé qui porte un élément, nommé comme un sélecteur : c'est la
+   portée d'un état posé par-dessus la page (voir « Les états »). Null s'il
+   n'est sur aucun calque fixé. */
+const CALQUE_DE = (sel) => {
+  const el = document.querySelector(sel);
+  let n = el;
+  while (n && n !== document.body && getComputedStyle(n).position !== 'fixed') n = n.parentElement;
+  if (!n || n === document.body) return null;
+  const chemin = [];
+  for (let x = n; x && x !== document.body; x = x.parentElement) {
+    if (x.id) { chemin.unshift(`#${CSS.escape(x.id)}`); return chemin.join(' > '); }
+    const memes = [...x.parentElement.children].filter((y) => y.tagName === x.tagName);
+    chemin.unshift(`${x.tagName.toLowerCase()}:nth-of-type(${memes.indexOf(x) + 1})`);
+  }
+  return ['body', ...chemin].join(' > ');
+};
+
+/* **Les deux boutons de la barre, sur un écran de jeu** : leur boîte
+   (gauche, haut, largeur, hauteur), et si la barre est celle du jeu. Le lot
+   6 les fait entrer dans les deux cases de 44 du HUD de match ; la
+   comparaison de « La barre » ne les regarde pas (`.tbf-haut-jeu` en est
+   exclue), celle-ci les nomme. Sur les deux écrans de jeu, ui.css la pose à
+   [14, 14], HUD affiché ou non — l'air du sticker ; avant le lot 6, elle
+   flottait à [10, 8]. Aucun seuil sur la place : elle bouge à chaque
+   retouche de la feuille, et c'est l'air qui compte (« sticker rogné »).
+
+   **Et le sticker d'urgence du menu** (brief du lot 6, § 7) : l'état qu'il
+   porte (`data-urgence`, `data-pastille`), l'air que l'écran laisse au
+   bouton au-dessus et à droite (`air`), et ce que le sticker en demande
+   (`demande`), en pixels. C'est un pseudo-élément : aucune boîte à lire, et
+   le relevé « hors écran » ne le voit pas. Sa demande se calcule donc sur
+   son style calculé — sa place (`top`, `right`), sa taille (LIVE est plus
+   large qu'un chiffre), ses coins arrondis, sa rotation —, plus ce qui
+   l'entoure (`SEUILS.bordSticker`). Neuf et huit pixels, treize avec le
+   bord : le brief le chiffre pour un chiffre ; tourné de six degrés, LIVE
+   en demande 13,7 au-dessus, ce que ui.css a mesuré de son côté. Un air
+   plus court que la demande rogne le sticker (« sticker rogné »). */
+const BARRE_JEU = (bord = [0, 0]) => {
+  const boite = (sel) => {
+    const r = document.querySelector(sel)?.getBoundingClientRect();
+    return r && r.width > 0 && r.height > 0
+      ? [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)] : null;
+  };
+  const menu = document.querySelector('.tbf-burger');
+  const sticker = () => {
+    const r = menu.getBoundingClientRect();
+    const s = getComputedStyle(menu, '::after');
+    const w = parseFloat(s.width);
+    const h = parseFloat(s.height);
+    if (s.position !== 'absolute' || !(w > 0 && h > 0)) return {};
+    const a = ((parseFloat(s.rotate) || 0) * Math.PI) / 180;
+    /* La face tournée autour de son centre : sa demi-largeur et sa
+       demi-hauteur à l'écran. Ses coins sont arrondis (un rond pour le
+       direct sans mot) : c'est l'arrondi qui touche le bord, pas l'angle. */
+    const rr = Math.min(parseFloat(s.borderTopLeftRadius) || 0, w / 2, h / 2);
+    const c = Math.abs(Math.cos(a));
+    const si = Math.abs(Math.sin(a));
+    const dx = (w / 2 - rr) * c + (h / 2 - rr) * si + rr;
+    const dy = (w / 2 - rr) * si + (h / 2 - rr) * c + rr;
+    const au = (x) => Math.round(x * 10) / 10;
+    return { air: [au(r.top), au(document.documentElement.clientWidth - r.right)],
+      demande: [au(-parseFloat(s.top) - h / 2 + dy + bord[0]), au(-parseFloat(s.right) - w / 2 + dx + bord[1])] };
+  };
+  return { jeu: Boolean(document.querySelector('.tbf-haut-jeu')), retour: boite('.tbf-retour'),
+    burger: boite('.tbf-burger'),
+    ...(menu?.dataset.urgence ? { urgence: menu.dataset.urgence, pastille: menu.dataset.pastille ?? null,
+      ...sticker() } : {}) };
+};
+/* **Ce qui bouge sans fin à l'écran**, compté par fx.js même (`FX.sansFin`,
+   la règle de compte écrite une fois : un objet par élément ou
+   pseudo-élément, seulement celles qui tournent). Null sur une page sans
+   fx.js, ou d'avant le lot 6. Chaque entrée nommée en clair, pour savoir
+   quoi figer. */
+const SANS_FIN = () => {
+  const liste = window.FX?.sansFin?.();
+  if (!Array.isArray(liste)) return null;
+  return { n: liste.length, liste: liste.map(({ el, pseudo, noms }) => {
+    const id = el.id ? `#${el.id}` : '';
+    const classes = typeof el.className === 'string' && el.className.trim()
+      ? `.${el.className.trim().split(/\s+/).slice(0, 3).join('.')}` : '';
+    return `${el.tagName.toLowerCase()}${id}${classes}${pseudo ?? ''} (${noms.join(', ')})`;
+  }) };
+};
+/* **Le budget d'un écran de jeu.** Le brief du lot 6 l'écrit pour 360 × 640
+   — HUD 44, ticket 24, arène 256, souffle et ferveur 52, actions 56, main
+   110, marges 24 : 566 —, et pose la règle « l'arène cède avant la main et
+   les chants, jamais l'inverse ». Une règle de hauteur ne se lit pas dans un
+   compte de défauts : chaque rangée est donc relevée, dans l'ordre de
+   l'écran — haut dans la page, hauteur, entière à l'écran ou non, et ce
+   qu'on en voit (en pixels, dans la fenêtre) —, avec la hauteur de la
+   fenêtre et celle qu'on fait défiler. Une rangée absente vaut null (le lot
+   peut en renommer une : le relevé le dira). La règle elle-même est relevée
+   sur la main et les chants (« main coupée », voir `MAINS`). */
+const BUDGET = (rangees) => {
+  const out = { fenetre: innerHeight, defile: document.scrollingElement.scrollHeight, rangees: {} };
+  for (const sel of rangees) {
+    const r = document.querySelector(sel)?.getBoundingClientRect();
+    out.rangees[sel] = r && r.height > 0
+      ? [Math.round(r.top + scrollY), Math.round(r.height), r.top >= -1 && r.bottom <= innerHeight + 1,
+        Math.max(0, Math.round(Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)))] : null;
+  }
+  return out;
+};
+/* **Ce qu'on joue reste à l'écran** : la règle du budget (« l'arène cède
+   avant la main et les chants, jamais l'inverse »), sur les rangées que le
+   joueur touche. Au duel, la main et les chants entiers (`null`) ; au
+   Virage, au moins 110 px de la main — le brief la compte « 110 visibles »
+   et la laisse dépasser du bord, comme la maquette. Relevé au départ : à
+   320 × 568, la rangée des chants du duel sortait de l'écran (111 px) pendant
+   que l'arène en gardait 132, et seul le tableau du budget le disait. */
+const MAINS = { '#hand': 110, '#mainCartes': null, '#chants': null };
+/* Les rangées, dans l'ordre de l'écran, telles que le lot 6 les pose. Au
+   Virage : le HUD (`.hud`, que la brique garde), la seconde rangée du ticket
+   terrain et de la phase (`.tbf-hudm-ligne`), l'arène, le tableau du souffle
+   et de la ferveur avec le « i » de ce qu'on porte (`.tableau`, le « i »
+   dans `.tbf-tableau-droite`), la rangée des cartes d'action
+   (`#rangeeActes`), la main. `#ecartees` n'existe plus (un sticker DUEL
+   SEULEMENT sur les cases vides) et `.me-bar` n'est plus qu'une ligne du
+   tableau : le relevé de départ les nommait (MESURE.md, § 5.3), celui-ci
+   nomme les rangées qui les contiennent. Au duel : le HUD (`#jeu > .score`,
+   gardé), la rangée du ticket terrain (`#filLigne`, cachée avant le coup
+   d'envoi), l'arène, la rangée des effets (`#effets`, absente sans effet),
+   la rangée de l'équipe, du souffle et du « i » (`.rang-equipe` : le
+   souffle y est entré, à côté de l'équipe, et n'est plus une rangée), la
+   main, les chants. Une rangée par hauteur d'écran : une rangée imbriquée
+   dans une autre se compterait deux fois. */
+const RANGEES_VIRAGE = ['.hud', '.tbf-hudm-ligne', '#rope', '.tableau', '#rangeeActes', '#hand'];
+const RANGEES_DUEL = ['#jeu > .score', '#filLigne', '#arene', '#effets', '#jeu .rang-equipe', '#mainCartes', '#chants'];
+/* Le voile du mur (H6) : `.dense` est le voile des pages de contenu (75 %),
+   sans lui celui du hub (60 %). */
+const VOILE_DU_MUR = () => {
+  const v = document.querySelector('.tbf-grad');
+  return v ? { dense: v.classList.contains('dense') } : null;
+};
+
+/* **L'encre rognée par un cadre** (« encre rognée » ; la mesure du banc des
+   briques, partie B du lot 6, qui ne connaissait pas de page qui défile).
+   « coupé » ne lit qu'une coupe en largeur — un nom en points de
+   suspension : l'accent d'une capitale (« FC BÂLE »), une cédille
+   (« GONÇALVES ») ou un émoji qu'un
+   cadre en `overflow: hidden` entame en haut ou en bas, sous un interligne
+   serré, passait l'audit sans un relevé. Pour chaque texte de la portée,
+   la boîte de son encre se tire de la boîte de sa police (la plage,
+   `Range`, qui suit l'ascendant et le descendant de la police et non
+   l'interligne ; le navigateur arrondit l'ascendant au pixel et pose la
+   ligne dessus) et des mesures d'encre du canevas, prises à cent fois la
+   taille pour ne pas être arrondies au pixel ; puis on la compare au
+   rembourrage de chaque ancêtre qui coupe en hauteur, jusqu'à la portée.
+
+   Ne comptent pas : une ligne entière hors du cadre (une ligne de trop,
+   pas un accent rogné) ; **ce qui défile** — un conteneur qui défile
+   vraiment en hauteur ne coupe rien (on y fait venir le texte au doigt,
+   comme partout dans cet audit), et une ligne qui n'est pas entière dans
+   sa fenêtre est plus loin dans le défilement : ni lui ni un cadre plus
+   haut ne la rognent (au banc, la préparation du duel défile dans
+   `#prepa`, sous `#app` qui coupe au même bord — la ligne du bas de
+   l'écran y était relevée) ; un mot retiré de l'écran exprès (une boîte
+   d'un pixel, `.tbf-vh`, `clip-path: inset(50%)`) ou éteint (opacité
+   nulle). Une rangée qui ne défile qu'en largeur coupe en hauteur, et
+   compte. La portée nulle est la colonne (`#app`). Rend les textes rognés
+   de plus de `seuil` px, le pire d'abord. */
+const ENCRE_ROGNEE = (portee, seuil) => {
+  const zone = (portee && document.querySelector(portee)) || document.getElementById('app') || document.body;
+  const nom = (el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${
+    typeof el.className === 'string' && el.className.trim()
+      ? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}` : ''}`;
+  const cv = document.createElement('canvas').getContext('2d');
+  const K = 100;
+  /* Chaque ancêtre une fois : masque-t-il ce qu'il porte ; défile-t-il
+     vraiment en hauteur (sa fenêtre) ; sinon, coupe-t-il en hauteur ce qui
+     le dépasse ? Fenêtre et cadre, le rembourrage de la boîte. */
+  const vus = new Map();
+  const lire = (a) => {
+    if (vus.has(a)) return vus.get(a);
+    const s = getComputedStyle(a);
+    const r = a.getBoundingClientRect();
+    const boite = s.display !== 'contents';
+    /* La boîte d'un pixel du motif, tournée avec la pièce qui la porte,
+       en mesure un et cinq centièmes : deux pixels de marge. */
+    const masque = s.opacity === '0' || a.classList.contains('tbf-vh') || s.clipPath.includes('inset(50%)')
+      || (boite && r.width <= 2 && r.height <= 2);
+    const bord = { haut: r.top + parseFloat(s.borderTopWidth), bas: r.bottom - parseFloat(s.borderBottomWidth),
+      qui: nom(a) };
+    const defile = boite && /auto|scroll/.test(s.overflowY) && a.scrollHeight > a.clientHeight + 1;
+    const x = { masque, fenetre: defile ? bord : null,
+      coupe: boite && !defile && s.overflowY !== 'visible' ? bord : null };
+    vus.set(a, x);
+    return x;
+  };
+  const out = [];
+  const marcheur = document.createTreeWalker(zone, NodeFilter.SHOW_TEXT);
+  for (let n = marcheur.nextNode(); n; n = marcheur.nextNode()) {
+    const txt = n.textContent;
+    if (!/[\p{L}\p{N}\p{Extended_Pictographic}]/u.test(txt)) continue;
+    const el = n.parentElement;
+    const s = getComputedStyle(el);
+    if (s.visibility !== 'visible' || s.display === 'none') continue;
+    const coupes = [];
+    const fenetres = [];
+    let masque = false;
+    for (let a = el; a && a !== zone.parentElement; a = a.parentElement) {
+      const x = lire(a);
+      if (x.masque) { masque = true; break; }
+      if (x.coupe) coupes.push(x.coupe);
+      if (x.fenetre) fenetres.push(x.fenetre);
+    }
+    if (masque || !coupes.length) continue;
+    const g = document.createRange();
+    g.selectNodeContents(n);
+    /* Une ligne qui n'est pas entière dans la fenêtre d'un conteneur qui
+       défile est plus loin dans le défilement, pas rognée. */
+    const lignes = [...g.getClientRects()].filter((r) => r.width > 0 && r.height > 0
+      && fenetres.every((f) => r.top >= f.haut - 1 && r.bottom <= f.bas + 1));
+    if (!lignes.length) continue;
+    const px = parseFloat(s.fontSize);
+    cv.font = `${s.fontStyle} ${s.fontWeight} ${px * K}px ${s.fontFamily}`;
+    const t = s.textTransform === 'uppercase' ? txt.toUpperCase()
+      : s.textTransform === 'lowercase' ? txt.toLowerCase() : txt;
+    const m = cv.measureText(t.trim() || t);
+    const asc = Math.round(m.fontBoundingBoxAscent / K);
+    const dessus = m.actualBoundingBoxAscent / K;
+    const dessous = m.actualBoundingBoxDescent / K;
+    let pire = 0;
+    let ou = '';
+    let qui = '';
+    for (const r of lignes) {
+      const base = r.top + asc;
+      for (const c of coupes) {
+        if (r.bottom <= c.haut || r.top >= c.bas) continue;
+        const h = c.haut - (base - dessus);
+        const b = base + dessous - c.bas;
+        if (h > pire) { pire = h; ou = 'haut'; qui = c.qui; }
+        if (b > pire) { pire = b; ou = 'bas'; qui = c.qui; }
+      }
+    }
+    if (pire > seuil) {
+      out.push({ q: nom(el), texte: txt.replace(/\u00AD/g, '').replace(/\s+/g, ' ').trim().slice(0, 30), px,
+        de: Math.round(pire * 10) / 10, ou, coupe: qui });
+    }
+  }
+  return out.sort((a, b) => b.de - a.de);
+};
+
+/* **Les libellés de carte couverts** (« libellé couvert » ; la sonde du
+   banc des briques, partie B du lot 6). Une carte porte son nom, son
+   geste, sa poussée et son coût ; ce qui lui manque de souffle (le sticker
+   « −8 »), sa recharge (le scotch et son chiffre) et sa voisine de
+   l'éventail se posent sur elle — **jamais sur le libellé** (brief du lot
+   6). Aucune mesure de texte ne voit un texte couvert par un autre
+   élément. Celle-ci sonde, au point près, la bande du milieu de chaque
+   ligne de chaque libellé, et compte la part des points où quelque chose
+   est posé dessus : la pile des éléments sous le point
+   (`elementsFromPoint`, qui suit les rotations de l'éventail), lue du
+   dessus jusqu'au libellé ou à ce qui le porte. Ne couvrent pas : un
+   libellé voisin de la même carte (la boîte d'une police est plus haute
+   que ses lettres), un élément éteint (opacité nulle). La recharge ne
+   prend pas le doigt (`pointer-events: none`), et serait passée sous la
+   sonde sans être vue : on le lui rend le temps de la sonder. Toutes les
+   cartes de la colonne (`#app .tbf-carte`) ; rend chaque libellé couvert à
+   plus de `seuil` %. */
+const LIBELLES_COUVERTS = (seuil) => {
+  const doigt = document.createElement('style');
+  doigt.textContent = '.tbf-carte-recharge,.tbf-carte-recharge *{pointer-events:auto !important}';
+  document.head.appendChild(doigt);
+  const VOISINS = '.tbf-carte-geste, .tbf-carte-pousse, .tbf-carte-nom';
+  const SORTES = [['.tbf-carte-manque', 'manque'], ['.tbf-carte-recharge > b', 'recharge'],
+    ['.tbf-carte-cout', 'coût'], ['.tbf-carte-nom', 'nom'], ['.tbf-carte-geste', 'geste'],
+    ['.tbf-carte-pousse', 'poussée']];
+  const eteints = new Map();
+  const eteint = (e) => {
+    if (!e || e === document.documentElement) return false;
+    if (!eteints.has(e)) eteints.set(e, getComputedStyle(e).opacity === '0' || eteint(e.parentElement));
+    return eteints.get(e);
+  };
+  const couvert = (el) => {
+    if (!el.textContent.trim() || getComputedStyle(el).display === 'none') return null;
+    const carte = el.closest('.tbf-carte');
+    const dessus = (x, y) => {
+      for (const e of document.elementsFromPoint(x, y)) {
+        if (el.contains(e) || e.contains(el)) return false;
+        if (e.closest('.tbf-carte') === carte && e.matches(VOISINS)) return false;
+        if (!eteint(e)) return true;
+      }
+      return false;
+    };
+    const g = document.createRange();
+    g.selectNodeContents(el);
+    let pris = 0;
+    let tous = 0;
+    for (const t of g.getClientRects()) {
+      if (!t.width || !t.height) continue;
+      for (let x = t.left + 0.5; x < t.right; x += 1) {
+        for (let y = t.top + t.height * 0.27; y <= t.top + t.height * 0.78; y += 1) {
+          if (y < 0 || y > innerHeight || x < 0 || x > innerWidth) continue;
+          tous += 1;
+          if (dessus(x, y)) pris += 1;
+        }
+      }
+    }
+    return tous ? Math.round((pris / tous) * 100) : null;
+  };
+  const out = [];
+  try {
+    for (const c of document.querySelectorAll('#app .tbf-carte')) {
+      /* Son nom dans la page ; une carte de la main du duel n'en porte
+         que jouable (`data-jouer`) : son nom écrit, sinon. */
+      const carte = c.dataset.acte || c.dataset.card || c.dataset.chant || c.dataset.jouer || c.id
+        || (c.querySelector('.tbf-carte-nom')?.textContent ?? '').replace(/\u00AD/g, '').replace(/\s+/g, ' ').trim();
+      for (const [sel, sorte] of SORTES) {
+        for (const el of c.querySelectorAll(sel)) {
+          const part = couvert(el);
+          if (part !== null && part > seuil) {
+            /* Sans ses coupures conditionnelles (celle, invisible, de
+               « MARTE-LAGE ») : le mot, tel qu'on le cherche. */
+            out.push({ carte, libelle: sorte,
+              texte: el.textContent.replace(/\u00AD/g, '').replace(/\s+/g, ' ').trim().slice(0, 24), part });
+          }
+        }
+      }
+    }
+  } finally {
+    doigt.remove();
+  }
+  return out.sort((a, b) => b.part - a.part);
+};
+
+/** Entrer dans la tribune, et laisser l'entrée se jouer. Rend la panne, ou
+    null : **une tribune qui ne se pose pas ne se mesure pas.** Sans ce
+    contrôle, un évènement renommé ou une page qui lève à l'entrée laissait
+    le voile à l'écran, et l'état le mesurait sous le nom de la tribune — un
+    relevé faux qui se lit comme un bon. On lit ce que les suites lisent : le
+    voile (`#veil`) parti, la corde (`#rope`) à l'écran. */
+async function entrerAuVirage({ page, tirer }, etat) {
+  await tirer('virage:state', etat);
+  const posee = await attendreQue(page, '() => !document.querySelector(\'#veil.on\')'
+    + ' && (document.getElementById(\'rope\')?.getBoundingClientRect().height ?? 0) > 0', 2000);
+  if (!posee) return 'la tribune ne s’est pas posée après virage:state (#veil encore là, ou #rope invisible)';
+  await pause(ENTREE_MS);
+  await finDesMouvements(page, 'body', 2500);
+  await texteStable(page, '#app');
+  return null;
+}
+
+/** Entrer en partie au duel, et la laisser se poser. Rend la panne, ou
+    null. Même garde que la tribune : la préparation partie, l'arène
+    (`#arene`, que lisent les suites) à l'écran. */
+async function entrerEnPartie({ page, tirer }, vue) {
+  await tirer('nvn:start', vue);
+  const pose = await attendreQue(page, '() => (document.getElementById(\'arene\')'
+    + '?.getBoundingClientRect().height ?? 0) > 0', 2000);
+  if (!pose) return 'la partie ne s’est pas posée après nvn:start (#arene invisible)';
+  await pause(1500);
+  await finDesMouvements(page, 'body', 2500);
+  await texteStable(page, '#app');
+  return null;
+}
+
+/** **Le pavé frappé deux fois, et la photo juste après la seconde**, dans
+    les deux arènes (le pavé est la même brique, `geste.js`) : le pavé d'un
+    geste de frappe s'enfonce et pose sa bouffée (`.tbf-bouffee`, 500 ms) à
+    chaque frappe — c'est l'écran qu'on voit en jouant. La bouffée est le
+    premier enfant du pavé, `aria-hidden` et sans texte : elle ne compte
+    dans aucun relevé de texte, et l'état dit si elle y était (`bouffee`).
+    Voir `FRAPPER` pour les frappes du décompte, que le pavé ne prend plus.
+    Rend les frappes comptées, la bouffée, et la portée : la fenêtre du
+    geste (`#mini`) si elle est ouverte, le pavé sinon. */
+async function frapperLePave(page) {
+  const frappes = await page.evaluate(`(${FRAPPER})(2, 4000)`).catch(() => 0);
+  await pause(120);
+  const lu = await page.evaluate(() => {
+    const b = document.querySelector('#pad > .tbf-bouffee');
+    return { portee: document.querySelector('#mini.on') ? '#mini' : '#pad',
+      bouffee: b ? { premiere: b === document.getElementById('pad').firstElementChild,
+        cachee: b.getAttribute('aria-hidden') === 'true', texte: b.textContent.trim().length > 0 } : null };
+  });
+  return { frappes, ...lu };
+}
+
+/* **Toucher un chant**, dans chaque arène comme elle l'écoute. Rend
+   l'identifiant du chant touché, ou null s'il n'y en a aucun.
+
+   Au Virage, le doigt pose (`pointerdown`, ce que la page écoute) ; si la
+   fenêtre du geste ne s'ouvre pas, un `click` — l'autre façon d'écouter
+   une carte, celle du duel. Jamais les deux à coup sûr : un écran qui
+   écouterait les deux ouvrirait deux gestes. Au duel, le `click` sur la
+   rangée des chants. */
+const TOUCHER_AU_VIRAGE = async (id) => {
+  const c = document.querySelector(`#hand [data-card="${id}"]`)
+    ?? document.querySelector('#hand [data-card], #hand .card');
+  if (!c) return null;
+  const r = c.getBoundingClientRect();
+  c.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 1,
+    isPrimary: true, pointerType: 'touch', clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }));
+  const ouverte = () => document.querySelector('#mini.on, #pad');
+  const depart = performance.now();
+  while (!ouverte() && performance.now() - depart < 400) await new Promise((x) => { setTimeout(x, 30); });
+  if (!ouverte()) c.click();
+  return c.dataset.card ?? id;
+};
+const TOUCHER_AU_DUEL = (id) => {
+  const c = document.querySelector(`#chants [data-chant="${CSS.escape(id)}"]`)
+    ?? document.querySelector('#chants [data-chant]');
+  if (!c) return null;
+  c.click();
+  return c.dataset.chant ?? id;
+};
+
+/* **Le tampon du verdict sur le pavé** (brief du lot 6, § 5 : le cœur du
+   retour du geste). Le geste fini, la page envoie ses frappes, le serveur
+   répond par le mot, et la fenêtre l'attend — au plus six cents
+   millisecondes après la dernière frappe — pour le claquer au centre du
+   pavé ; elle se ferme six cents millisecondes plus tard
+   (`LECTURE_VERDICT` de geste.js, le temps de le lire). Trop tard, le
+   tampon claque sur la carte jouée, la fenêtre déjà fermée.
+
+   **Six cents millisecondes, c'est le temps d'une photo, pas d'une
+   mesure.** L'audit demande donc à la brique elle-même de tenir le tampon
+   plus longtemps : l'option `lecture` de `TBF_GESTE.attendre`, que les deux
+   arènes appellent sans elle (`TENIR_LE_VERDICT`). Rien d'autre ne change :
+   le pavé mesuré est celui des six cents millisecondes de lecture, son
+   tampon posé. Les appels sont comptés (`window.__attentesDuVerdict`) :
+   une page qui n'attendrait plus son verdict ne tiendrait aucun tampon, et
+   l'état le dirait. Et chaque tampon posé est noté là où il claque
+   (`window.__tamponsDuVerdict` : « pavé », « carte » ou « ailleurs ») :
+   celui d'une carte jouée ne vit qu'une seconde et demie, et serait parti
+   quand l'état cherche pourquoi le pavé n'en a pas. */
+const TENUE_DU_VERDICT = 30_000;
+const TENIR_LE_VERDICT = (ms) => {
+  const g = window.TBF_GESTE;
+  if (typeof g?.attendre !== 'function') return false;
+  const attendre = g.attendre;
+  window.__attentesDuVerdict = 0;
+  g.attendre = (reponse, o = {}) => {
+    window.__attentesDuVerdict += 1;
+    return attendre.call(g, reponse, { ...o, lecture: ms });
+  };
+  const vus = [];
+  window.__tamponsDuVerdict = vus;
+  new MutationObserver((liste) => {
+    for (const m of liste) {
+      for (const n of m.addedNodes) {
+        if (n.nodeType !== 1 || !n.classList.contains('tbf-verdict')) continue;
+        const hote = n.parentElement;
+        vus.push(hote?.id === 'pad' ? 'pavé' : hote?.closest('.tbf-carte, [data-card], [data-chant]') ? 'carte' : 'ailleurs');
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+  return true;
+};
+/* Le tampon tenu sur le pavé de la fenêtre ouverte : seul celui-là est le
+   verdict « à temps ». */
+const TAMPON_DU_PAVE = '#mini.on #pad > .tbf-verdict';
+
+/** **Un geste joué jusqu'au bout, et son verdict sur le pavé**, dans l'une
+    ou l'autre arène (`toucher`, l'émission du chant, sa réponse) : le
+    chant touché, toutes les frappes de sa grille comptées — un geste de
+    rythme finit sur sa dernière frappe attendue, et l'attente du verdict
+    se compte depuis elle : avec deux frappes seulement, la fenêtre
+    attendait la fin du geste et le tampon partait sur la carte —, la
+    réponse servie par la fausse socket (soixante millisecondes, à temps),
+    le tampon claqué. Photographié puis mesuré sous la fenêtre (`#mini`) ;
+    l'état vérifie qu'il y était encore. Le mot du tampon doit être le code
+    servi (`data-verdict`) : un autre est relevé (genre « état »). */
+async function verdictSurLePave({ page, cle, format }, { toucher, chant, gestes, emission, servi }) {
+  const grille = gestes?.[chant.gest];
+  const frappes = Number(grille?.beats);
+  if (chant.gest !== 'tempo' || !Number.isInteger(frappes) || frappes < 1) {
+    return { faute: `le chant ${chant.id} n’est pas un tempo à temps servis (beats) : rien à frapper jusqu’au bout` };
+  }
+  if (!await page.evaluate(TENIR_LE_VERDICT, TENUE_DU_VERDICT).catch(() => false)) {
+    return { faute: 'la brique du geste ne sert plus TBF_GESTE.attendre : la fenêtre n’attend plus son verdict' };
+  }
+  const touche = await page.evaluate(toucher, chant.id).catch(() => null);
+  if (!touche) return { faute: `aucun chant à toucher (${chant.id})` };
+  const pave = await attendreQue(page, '() => document.getElementById(\'pad\')', 4000);
+  if (!pave) return { faute: `le chant ${touche} touché, aucun pavé (#pad) en 4 s`, donnees: { chant: touche } };
+  const comptees = await page.evaluate(`(${FRAPPER})(${frappes}, 8000)`).catch(() => 0);
+  const tamponne = await attendreQue(page, `() => document.querySelector(${JSON.stringify(TAMPON_DU_PAVE)})`, 3000);
+  const donnees = { chant: touche, geste: chant.gest, frappes: comptees, sur: frappes, servi };
+  if (!tamponne) {
+    const vu = await page.evaluate((evt) => ({
+      tampons: [...(window.__tamponsDuVerdict ?? [])],
+      emis: (window.__emis ?? []).some(([e]) => e === evt),
+      attentes: window.__attentesDuVerdict ?? 0,
+    }), emission).catch(() => ({}));
+    vu.carte = (vu.tampons ?? []).includes('carte');
+    const pourquoi = vu.carte
+      ? `le verdict servi à temps (60 ms après ${emission}) a claqué sur la carte jouée, pas sur le pavé : la fenêtre ne l’a pas attendu`
+      : !vu.emis ? `${comptees} frappe(s) comptée(s) sur ${frappes}, le geste n’a pas envoyé ${emission}`
+        : !vu.attentes ? `${emission} émis, la page n’attend pas son verdict (TBF_GESTE.attendre jamais appelé)`
+          : `${emission} émis, le verdict « ${servi} » servi, aucun tampon sur le pavé (${TAMPON_DU_PAVE}) en 3 s`;
+    return { faute: pourquoi, donnees: { ...donnees, ...vu } };
+  }
+  // Le tampon claque en 260 ms (`.tbf-clac`) : on le photographie posé.
+  await finDesMouvements(page, '#pad', 800);
+  const tampon = await page.evaluate((sel) => {
+    const t = document.querySelector(sel);
+    if (!t) return null;
+    return { verdict: t.dataset.verdict ?? null, mot: t.textContent.trim(), plein: t.classList.contains('tbf-tampon--plein'),
+      px: parseFloat(getComputedStyle(t).fontSize) };
+  }, TAMPON_DU_PAVE).catch(() => null);
+  let autres = 0;
+  if (tampon && tampon.verdict !== servi) {
+    autres = 1;
+    note(cle, format.largeur, 'état', `le tampon du pavé porte « ${tampon.verdict ?? 'rien'} » (${
+      tampon.mot || 'sans mot'}), le serveur a servi « ${servi} » : la page ne nomme le verdict qu’avec le code servi`);
+  }
+  return { portee: '#mini', photoDAbord: true, autres,
+    encore: () => Boolean(document.querySelector('#mini.on #pad > .tbf-verdict')),
+    donnees: { ...donnees, tampon, ...await page.evaluate(() => ({ attentes: window.__attentesDuVerdict ?? 0,
+      tampons: [...(window.__tamponsDuVerdict ?? [])] })).catch(() => ({})) } };
+}
+
+/* Les états du lot 6 : les dix-huit des arènes, puis les quatre des autres
+   écrans. `jouer` amène l'écran et rend la portée de la mesure (null : la
+   page entière), ou une faute, et `autres`, ce qu'il a relevé hors de la
+   mesure ; `photoDAbord` pour un écran qui passe (le geste, l'affiche), avec
+   `encore` qui dit s'il était toujours là après la mesure ; `apres` pour une
+   capture de plus, sans mesure ; `socket: false` pour un écran sans la
+   fausse socket, et `formats` pour un état qui ne se regarde qu'à ceux-là. */
+const BILANS_VIRAGE = ['#bilan', '[data-bilan]', '.tbf-bilan', '.tbf-dial-fond.on'];
+const ETATS_ARENES = [
+  {
+    cle: 'virage@voile', chemin: '/virage', capture: 'virage-voile',
+    bouchons: (d) => ({ '/api/virage/live': d.live() }),
+    async jouer({ page }) {
+      const peint = await attendreQue(page,
+        '() => document.querySelectorAll(\'#matchs .match, #matchs [data-id]\').length >= 4', 5000);
+      if (!peint) return { faute: 'le voile n’a pas peint les quatre matchs servis (#matchs .match) en 5 s' };
+      await finDesMouvements(page, 'body', 2500);
+      return { portee: null };
+    },
+    /* Le choix du camp, sur le premier match d'ailleurs : photographié, pas
+       mesuré — c'est la liste, avec deux boutons de plus. */
+    async apres({ page, format, cle }) {
+      const ouvert = await page.evaluate(() => {
+        const m = document.querySelector('#matchs [data-id][data-mien="0"]:not(.off), #matchs .match.ailleurs:not(.off)');
+        if (!m) return false;
+        m.click();
+        return true;
+      }).catch(() => false);
+      if (!ouvert) return {};
+      const camps = await attendreQue(page, '() => document.querySelector(\'#matchs [data-camp]\')', 2000);
+      if (!camps) return { camp: 'pas de [data-camp] après le toucher' };
+      await finDesMouvements(page, 'body', 1500);
+      await page.evaluate(() => document.querySelector('#matchs [data-camp]')
+        ?.scrollIntoView({ block: 'center' })).catch(() => {});
+      await pause(300);
+      return { camp: 'ouvert', captureCamp: await photographier(page, 'virage-voile-camp', format, cle) };
+    },
+  },
+  {
+    /* Deux supporters attendent un duel : le menu porte le « 2 » violet dans
+       sa case du HUD (le sticker d'un écran de jeu, brief du lot 6, § 7). */
+    cle: 'virage@tribune', chemin: '/virage', capture: 'virage-tribune', mur: true, budget: RANGEES_VIRAGE,
+    bouchons: (d) => ({ '/api/nvn/attentes': d.alerteDuel() }),
+    async jouer(ctx) {
+      const faute = await entrerAuVirage(ctx, ctx.d.etatVirage());
+      return faute ? { faute } : { portee: null };
+    },
+  },
+  {
+    cle: 'virage@double', chemin: '/virage', capture: 'virage-double', budget: RANGEES_VIRAGE,
+    async jouer(ctx) {
+      const faute = await entrerAuVirage(ctx, ctx.d.etatVirage({ surge: true }));
+      return faute ? { faute } : { portee: null };
+    },
+  },
+  {
+    cle: 'virage@but', chemin: '/virage', capture: 'virage-but',
+    async jouer(ctx) {
+      const { page, tirer, d } = ctx;
+      const faute = await entrerAuVirage(ctx, d.etatVirage());
+      if (faute) return { faute };
+      await tirer('virage:real_goal', d.butReel());
+      await tirer('virage:tick', d.tickDouble());
+      const pose = await attendreQue(page, '() => document.querySelector(\'body > .tbf-moment.on\')', 1500);
+      if (!pose) return { faute: 'la case « GOAL ! » (body > .tbf-moment.on) n’est pas venue en 1,5 s' };
+      /* Le bandeau et le titre de fx.js passaient par-dessus (3,1 s au
+         plus) : la case se lisait après eux. Depuis le lot 6, le Virage ne
+         les pose plus au but réel (la case est la forme vignette, et le
+         sticker de phase dit la minute double) : l'attente rend la main
+         tout de suite. Elle reste pour une page qui les reposerait — la case
+         ne doit pas se mesurer sous eux. */
+      await attendreQue(page, '() => !document.querySelector(\'.fx-bandeau, .fx-titre\')', 4000);
+      await finDesMouvements(page, 'body > .tbf-moment', 1500);
+      return { portee: 'body > .tbf-moment',
+        encore: () => Boolean(document.querySelector('body > .tbf-moment.on')) };
+    },
+  },
+  {
+    cle: 'virage@pave', chemin: '/virage', capture: 'virage-pave',
+    async jouer(ctx) {
+      const { page, d } = ctx;
+      const etat = d.etatVirage();
+      const faute = await entrerAuVirage(ctx, etat);
+      if (faute) return { faute };
+      // Le doigt pose, puis un `click` s'il le faut : voir `TOUCHER_AU_VIRAGE`.
+      const touche = await page.evaluate(TOUCHER_AU_VIRAGE, etat.cards[0].id);
+      if (!touche) return { faute: 'aucun chant à toucher dans la main (#hand [data-card], #hand .card)' };
+      /* Le décompte (3, 2, 1 : 1,7 s), puis le pavé. */
+      const pave = await attendreQue(page, '() => document.getElementById(\'pad\')', 4000);
+      if (!pave) return { faute: `le chant ${touche} touché, aucun pavé (#pad) en 4 s`, donnees: { chant: touche } };
+      /* Deux frappes comptées, et la photo juste après la seconde : voir
+         `frapperLePave`. */
+      const { portee, frappes, bouffee } = await frapperLePave(page);
+      return { portee, photoDAbord: true, encore: () => Boolean(document.getElementById('pad')),
+        donnees: { chant: touche, geste: etat.cards.find((c) => c.id === touche)?.gest ?? null, frappes, bouffee } };
+    },
+  },
+  {
+    /* **Le verdict sur le pavé du Virage** : le premier tempo de la main
+       joué jusqu'à sa dernière frappe, `virage:chant` émis, la réponse du
+       serveur (`virage:result`, PARFAIT) servie pendant que la fenêtre
+       attend, le tampon claqué au centre du pavé. Voir `verdictSurLePave`.
+       Aux deux formats les plus serrés, où le tampon a le moins de pavé. */
+    cle: 'virage@verdict', chemin: '/virage', capture: 'virage-verdict', formats: [PETIT, FORMATS_BASE[0]],
+    async jouer(ctx) {
+      const { page, d } = ctx;
+      const etat = d.etatVirage();
+      const faute = await entrerAuVirage(ctx, etat);
+      if (faute) return { faute };
+      const chant = etat.cards.find((c) => c.gest === 'tempo');
+      if (!chant) return { faute: 'aucun tempo dans la main servie : rien à jouer jusqu’au verdict' };
+      const reponse = d.resultat();
+      await page.evaluate((r) => {
+        window.__repondre = { 'virage:chant': () => window.__sock.fire('virage:result', r) };
+      }, reponse);
+      return verdictSurLePave(ctx, { toucher: TOUCHER_AU_VIRAGE, chant, gestes: etat.you.gestes,
+        emission: 'virage:chant', servi: reponse.verdict });
+    },
+  },
+  {
+    cle: 'virage@bilan', chemin: '/virage', capture: 'virage-bilan',
+    async jouer(ctx) {
+      const { page, tirer, d } = ctx;
+      const faute = await entrerAuVirage(ctx, d.etatVirage());
+      if (faute) return { faute };
+      await tirer('virage:result', d.resultat());
+      await finDesMouvements(page, 'body', 2500);
+      await page.evaluate((bilan) => {
+        window.__repondre = { 'virage:bilan': () => window.__sock.fire('virage:bilan', bilan) };
+      }, d.bilanVirage());
+      const fleche = await page.evaluate(() => {
+        const b = document.querySelector('.tbf-retour');
+        if (!b) return false;
+        b.click();
+        return true;
+      });
+      if (!fleche) return { faute: 'pas de flèche de retour (.tbf-retour) à toucher' };
+      const vu = await page.waitForFunction(PREMIER_VISIBLE, { polling: 50, timeout: 4000 }, BILANS_VIRAGE)
+        .then((h) => h.jsonValue(), () => null);
+      if (!vu) {
+        return { faute: `la flèche touchée après un chant, ni bilan (${BILANS_VIRAGE.slice(0, 3).join(', ')
+        }) ni boîte (.tbf-dial-fond) en 4 s` };
+      }
+      /* **La boîte, à la place du bilan servi, est une panne** depuis le
+         lot 6 : la page ne la garde que contre un serveur sans bilan, au
+         bout de trois secondes, et la fausse socket lui en rend un en 60 ms.
+         Si elle vient quand même, la page n'a pas demandé son bilan (voir
+         `emis`) ou ne l'a pas posé. Mesurée quand même : c'est l'écran. */
+      if (vu === '.tbf-dial-fond.on') {
+        note(ctx.cle, ctx.format.largeur, 'état', `la boîte « QUITTER ? » est venue au lieu du bilan servi (${
+          await page.evaluate(() => ((window.__emis ?? []).some(([e]) => e === 'virage:bilan')
+            ? 'virage:bilan émis, rien de posé' : 'virage:bilan jamais émis')).catch(() => '?')})`);
+      }
+      // Toutes ses étapes posées, voir `attendreLeBilan`.
+      const { pose, autres } = await attendreLeBilan(page, vu, ctx.cle, ctx.format);
+      return { portee: vu, autres, donnees: { vu, pose } };
+    },
+  },
+
+  /* --- deux variantes du banc, aux deux formats les plus serrés ---
+     La grande tribune (trois cents) et le coup de sifflet d'un Virage non
+     classé : ce que le brief fait regarder au banc de chaque écran, et que
+     les états d'au-dessus — une tribune de 46, un Virage classé, une sortie
+     à la flèche — ne montrent pas. */
+  {
+    /* La tribune de 300 : le rang à trois chiffres et le palier TOP 100 dans
+       le tableau, les deux foules les plus larges, et pas de combo. Le
+       budget, comme la tribune. */
+    cle: 'virage@300', chemin: '/virage', capture: 'virage-300', budget: RANGEES_VIRAGE,
+    formats: [PETIT, FORMATS_BASE[0]],
+    async jouer(ctx) {
+      const faute = await entrerAuVirage(ctx, ctx.d.etatVirage({ grande: true }));
+      return faute ? { faute } : { portee: null };
+    },
+  },
+  {
+    /* **Le coup de sifflet final** (`virage:fin`, § 15.3), dans la tribune
+       de 300, sur un Virage qui ne compte pas au classement : la page
+       demande son bilan seule, le pose sans qu'on touche rien, puis quitte
+       la salle (`virage:leave`, dans `emis`). Le délai qu'elle tire entre 0
+       et 8 s — mille bilans au même instant seraient mille lectures — est
+       ramené à zéro, le temps du seul évènement (`hasard`) ; une page qui
+       tirerait son délai autrement se fait attendre jusqu'au bout. Mesuré
+       sous le bilan, comme `virage@bilan`. */
+    cle: 'virage@fin', chemin: '/virage', capture: 'virage-fin', formats: [PETIT, FORMATS_BASE[0]],
+    async jouer(ctx) {
+      const { page, tirer, d } = ctx;
+      const faute = await entrerAuVirage(ctx, d.etatVirage({ grande: true }));
+      if (faute) return { faute };
+      await page.evaluate((bilan) => {
+        window.__repondre = { 'virage:bilan': () => window.__sock.fire('virage:bilan', bilan) };
+      }, d.bilanFin());
+      await tirer('virage:fin', { statut: 'FT' }, { hasard: 0 });
+      const vu = await page.waitForFunction(PREMIER_VISIBLE, { polling: 50, timeout: 9500 }, BILANS_VIRAGE)
+        .then((h) => h.jsonValue(), () => null);
+      if (!vu) {
+        return { faute: `le coup de sifflet tiré (virage:fin), aucun bilan (${BILANS_VIRAGE.slice(0, 3).join(', ')
+        }) posé en 9,5 s` };
+      }
+      /* Au coup de sifflet, la page ne pose que le bilan servi : la boîte
+         « QUITTER ? » n'a rien à faire là. Mesurée quand même : c'est l'écran. */
+      if (vu === '.tbf-dial-fond.on') {
+        note(ctx.cle, ctx.format.largeur, 'état', 'au coup de sifflet, la boîte « QUITTER ? » est venue au lieu du bilan');
+      }
+      const { pose, autres } = await attendreLeBilan(page, vu, ctx.cle, ctx.format);
+      return { portee: vu, autres, donnees: { vu, pose } };
+    },
+  },
+  {
+    cle: 'duel@prepa', chemin: '/duel-nvn', capture: 'duel-prepa',
+    bouchons: (d) => ({ '/api/deck/matchs': d.matchsDuel(), '/api/deck/loadout': d.loadout(),
+      '/api/nvn/attentes': d.attentes() }),
+    async jouer({ page }) {
+      const peint = await attendreQue(page, '() => document.querySelector(\'#prepaCorps [data-fixture]\')', 5000);
+      if (!peint) return { faute: 'la préparation n’a pas peint les matchs servis (#prepaCorps [data-fixture]) en 5 s' };
+      await finDesMouvements(page, 'body', 2500);
+      const entrer = await page.evaluate(() => {
+        const b = document.getElementById('entrer');
+        return b ? (b.disabled ? 'éteint' : 'allumé') : null;
+      });
+      return { portee: null, donnees: { entrer } };
+    },
+  },
+  {
+    cle: 'duel@vestiaire', chemin: '/duel-nvn', capture: 'duel-vestiaire',
+    bouchons: (d) => ({ '/api/deck/matchs': d.matchsDuel(), '/api/deck/loadout': d.loadout(),
+      '/api/nvn/attentes': d.attentes() }),
+    async jouer({ page, tirer, d }) {
+      await attendreQue(page, '() => document.querySelector(\'#prepaCorps [data-fixture]\')', 5000);
+      /* ENTRER EN FILE, comme un joueur : la page émet sa demande, le
+         serveur répond par la salle. Sans bouton, la salle vient quand même. */
+      const entre = await page.evaluate(() => {
+        const b = document.getElementById('entrer');
+        if (!b || b.disabled) return false;
+        b.click();
+        return true;
+      });
+      await tirer('nvn:file', d.file());
+      const salle = await attendreQue(page, '() => document.querySelector(\'.tribune-att\')', 3000);
+      if (!salle) return { faute: 'la salle d’attente n’a pas montré ses tribunes (.tribune-att) en 3 s', donnees: { entre } };
+      await finDesMouvements(page, 'body', 2000);
+      const portee = await page.evaluate(CALQUE_DE, '.tribune-att');
+      return { portee, donnees: { entre } };
+    },
+  },
+  {
+    cle: 'duel@affiche', chemin: '/duel-nvn', capture: 'duel-affiche',
+    async jouer({ page, tirer, d }) {
+      await tirer('nvn:start', d.vueDuel());
+      await tirer('nvn:affiche', d.affiche());
+      const posee = await attendreQue(page, '() => document.getElementById(\'affiche\')?.hidden === false', 1500);
+      if (!posee) return { faute: 'l’affiche (#affiche) n’est pas venue en 1,5 s' };
+      await finDesMouvements(page, '#affiche', 2500);
+      return { portee: '#affiche', photoDAbord: true,
+        encore: () => document.getElementById('affiche')?.hidden === false };
+    },
+  },
+  {
+    /* Le match de son club est en direct : le menu porte LIVE dans sa case
+       du HUD (le sticker d'un écran de jeu, brief du lot 6, § 7). */
+    cle: 'duel@jeu', chemin: '/duel-nvn', capture: 'duel-jeu', mur: true, budget: RANGEES_DUEL,
+    bouchons: (d) => ({ '/api/virage/live': d.live() }),
+    async jouer(ctx) {
+      const faute = await entrerEnPartie(ctx, ctx.d.vueDuel());
+      return faute ? { faute } : { portee: null };
+    },
+  },
+  {
+    /* **La partie à l'entraînement**, sur le match à venir de la liste : la
+       plaque du HUD porte ENTRAÎNEMENT au lieu de CLASSÉ, entre les deux
+       bâches. C'est le mot le plus long du HUD, et il a deux formes : la
+       courte (« ENTRAÎN. ») sur les petits écrans, la longue au-delà — à
+       412 px, elle écrasait les deux bâches (« TA TRIBU… »). Aux trois
+       formats où cela se joue : le plus étroit, la frontière, la tablette.
+       Pas de ticket terrain avant le coup d'envoi : l'arène reprend sa
+       place, et le budget le dit. L'état exige la plaque à l'écran, et dit
+       la forme qu'elle montre (`plaque`). */
+    cle: 'duel@entrainement', chemin: '/duel-nvn', capture: 'duel-entrainement', budget: RANGEES_DUEL,
+    formats: [PETIT, GRAND_TELEPHONE, FORMATS_BASE[2]],
+    async jouer(ctx) {
+      const faute = await entrerEnPartie(ctx, ctx.d.vueDuel({ entrainement: true }));
+      if (faute) return { faute };
+      const plaque = await ctx.page.evaluate(() => {
+        const t = document.getElementById('modeTag');
+        /* À l'écran : ni cachée, ni retirée par le motif de la brique (une
+           boîte d'un pixel que sa découpe efface — un pixel et cinq
+           centièmes, la plaque est tournée). */
+        const vu = (e) => {
+          const r = e.getBoundingClientRect();
+          const s = getComputedStyle(e);
+          return r.width > 2 && r.height > 2 && s.visibility === 'visible' && s.display !== 'none'
+            && !s.clipPath.includes('inset(50%)');
+        };
+        if (!t || t.hidden || !vu(t)) return null;
+        const formes = [...t.children].filter(vu).map((e) => e.textContent.trim());
+        return formes.length ? formes.join(' ') : t.textContent.trim();
+      }).catch(() => null);
+      if (!plaque || !/ENTRA/.test(plaque)) {
+        return { faute: `la partie à l’entraînement posée, la plaque ENTRAÎNEMENT (#modeTag) n’est pas à l’écran${
+          plaque ? ` (« ${plaque} »)` : ''}` };
+      }
+      return { portee: null, donnees: { plaque } };
+    },
+  },
+  {
+    /* **Le pavé du duel** : le premier chant de la main touché (un tempo,
+       dans le souffle qu'on a), le décompte passé, deux frappes — comme
+       `virage@pave`, photographié juste après la seconde puis mesuré sous
+       la fenêtre du geste (`#mini`), tant que le geste dure. Le pavé est la
+       même brique ; la fenêtre qui le porte, le titre, l'aide et ce qui
+       passe devant (les cartes adverses suspendues) sont ceux du duel. */
+    cle: 'duel@pave', chemin: '/duel-nvn', capture: 'duel-pave',
+    async jouer(ctx) {
+      const { page, d } = ctx;
+      const vue = d.vueDuel();
+      const faute = await entrerEnPartie(ctx, vue);
+      if (faute) return { faute };
+      /* Le duel écoute le `click` sur sa rangée de chants. */
+      const touche = await page.evaluate(TOUCHER_AU_DUEL, vue.chants[0].id);
+      if (!touche) return { faute: 'aucun chant à toucher dans la rangée (#chants [data-chant])' };
+      const pave = await attendreQue(page, '() => document.getElementById(\'pad\')', 4000);
+      if (!pave) return { faute: `le chant ${touche} touché, aucun pavé (#pad) en 4 s`, donnees: { chant: touche } };
+      const { portee, frappes, bouffee } = await frapperLePave(page);
+      return { portee, photoDAbord: true, encore: () => Boolean(document.getElementById('pad')),
+        donnees: { chant: touche, geste: vue.chants.find((c) => c.id === touche)?.gest ?? null, frappes, bouffee } };
+    },
+  },
+  {
+    /* **Le verdict sur le pavé du duel** : comme `virage@verdict`, le
+       premier tempo de la rangée joué jusqu'au bout, `nvn:chant` émis, et
+       la réponse comme le serveur la diffuse à la salle — l'évènement
+       `chant` de `nvn:events`, à son identifiant, sur sa carte, avec son
+       mot (§ 17). Mêmes formats. */
+    cle: 'duel@verdict', chemin: '/duel-nvn', capture: 'duel-verdict', formats: [PETIT, FORMATS_BASE[0]],
+    async jouer(ctx) {
+      const { page, d } = ctx;
+      const vue = d.vueDuel();
+      const faute = await entrerEnPartie(ctx, vue);
+      if (faute) return { faute };
+      const chant = vue.chants.find((c) => c.gest === 'tempo');
+      if (!chant) return { faute: 'aucun tempo dans la rangée servie : rien à jouer jusqu’au verdict' };
+      const reponse = d.chantDuel(chant.id);
+      await page.evaluate((r) => {
+        window.__repondre = { 'nvn:chant': () => window.__sock.fire('nvn:events', [r]) };
+      }, reponse);
+      return verdictSurLePave(ctx, { toucher: TOUCHER_AU_DUEL, chant, gestes: vue.moi.gestes,
+        emission: 'nvn:chant', servi: reponse.verdict });
+    },
+  },
+  {
+    /* **La corde cède pour sa tribune** : la case de BD du duel (« LA CORDE
+       CÈDE ! », `body > .tbf-moment`), trois secondes et demie — plus
+       courte qu'au Virage, un duel dure cinq minutes. Photographiée puis
+       mesurée sous la case, et l'état vérifie qu'elle était encore là. Aux
+       deux formats les plus serrés : c'est la brique de `virage@but`. */
+    cle: 'duel@but', chemin: '/duel-nvn', capture: 'duel-but', formats: [PETIT, FORMATS_BASE[0]],
+    async jouer(ctx) {
+      const { page, tirer, d } = ctx;
+      const faute = await entrerEnPartie(ctx, d.vueDuel());
+      if (faute) return { faute };
+      await tirer('nvn:events', [d.butDuel()]);
+      const pose = await attendreQue(page, '() => document.querySelector(\'body > .tbf-moment.on\')', 1500);
+      if (!pose) {
+        return { faute: 'la corde cédée (nvn:events, « goal »), la case de BD (body > .tbf-moment.on) n’est pas venue '
+          + 'en 1,5 s' };
+      }
+      /* L'entrée de la case, pas le scotch qui se décolle sur toute sa
+         durée : le plafond les sépare. */
+      await finDesMouvements(page, 'body > .tbf-moment', 1200);
+      return { portee: 'body > .tbf-moment', photoDAbord: true,
+        encore: () => Boolean(document.querySelector('body > .tbf-moment.on')) };
+    },
+  },
+  {
+    /* Le coup de sifflet et la page kraft du duel : la case de BD, les
+       lignes qui comptent, l'XP, et en dernier la rangée TOI/LUI en barres
+       miroir — attendue jusqu'à ce que chaque barre ait sa part (voir
+       `attendreLeBilan`). Sous le pli aux petits formats, cette rangée a
+       sa capture à part (`derniereEtapeSousLePli`). */
+    cle: 'duel@bilan', chemin: '/duel-nvn', capture: 'duel-bilan',
+    apres: derniereEtapeSousLePli('#bilan', 'duel-bilan-fin'),
+    async jouer({ page, tirer, d, cle, format }) {
+      await tirer('nvn:start', d.vueDuel());
+      await pause(400);
+      await tirer('nvn:fin', d.finDuel());
+      const vu = await page.waitForFunction(PREMIER_VISIBLE, { polling: 50, timeout: 3000 }, ['#bilan', '[data-bilan]'])
+        .then((h) => h.jsonValue(), () => null);
+      if (!vu) return { faute: 'le bilan (#bilan) n’est pas venu en 3 s après nvn:fin' };
+      const { pose, autres } = await attendreLeBilan(page, vu, cle, format);
+      return { portee: vu, autres, donnees: { pose } };
+    },
+  },
+
+  /* --- les autres écrans du lot 6, hors des deux arènes ---
+     Sans fausse socket (`socket: false`), et à deux formats chacun
+     (`formats`) : ceux où l'écran se joue le plus serré. */
+  {
+    /* La salle de répétition, le geste jugé : le tampon PARFAIT sur le pavé,
+       le tampon TON MEILLEUR (un premier essai est toujours un record) et LE
+       JOUER EN DUEL. Sous 600 px de haut, la consigne s'efface pour le
+       verdict (`.salle.jugee`). */
+    cle: 'repetition@jugee', chemin: '/repetition', capture: 'repetition-jugee', socket: false,
+    formats: [PETIT, FORMATS_BASE[0]],
+    bouchons: (d) => ({ 'POST /api/repetition': d.noteDe(0.93) }),
+    async jouer({ page }) {
+      return jugerALaRepetition(page, 'tempo', () => page.evaluate(`(${FRAPPER})(3, 4000)`).catch(() => 0));
+    },
+  },
+  {
+    /* Une épreuve tamponnée : le tri, deux cartons ramassés puis « J'AI
+       TOUT RAMASSÉ ». Le tampon (BON) se centre sur la grille, que la zone
+       coupe une fois le geste jugé : c'est la plus grande épreuve. */
+    cle: 'repetition@tri', chemin: '/repetition', capture: 'repetition-tri', socket: false,
+    formats: [PETIT, FORMATS_BASE[0]],
+    bouchons: (d) => ({ 'POST /api/repetition': d.noteDe(0.82) }),
+    async jouer({ page }) {
+      return jugerALaRepetition(page, 'tri', async () => {
+        for (const i of [0, 1]) {
+          await page.evaluate((n) => {
+            document.querySelector(`#pad [data-c="${n}"]`)?.dispatchEvent(new PointerEvent('pointerdown',
+              { bubbles: true, pointerId: 1, isPrimary: true, pointerType: 'touch' }));
+          }, i);
+          await pause(250);
+        }
+        await page.evaluate(() => document.getElementById('valider')?.click());
+      });
+    },
+  },
+  {
+    /* /amis avec la présence servie : la pastille de chaque ami (au Virage,
+       en duel, en ligne ; rien pour le quatrième), un pseudo long, et
+       « INVITER AU KOP » sur chaque ligne. Mesuré comme une page. */
+    cle: 'amis@presence', chemin: '/amis', capture: 'amis-presence', socket: false,
+    formats: [FORMATS_BASE[0], FORMATS_BASE[2]],
+    bouchons: (d) => ({ 'GET /api/amis/': d.amis(), 'GET /api/kop/miens': d.kops() }),
+    async jouer({ page }) {
+      const vues = await attendreQue(page,
+        '() => document.querySelectorAll(\'#corps [data-presence-ami]\').length >= 3', 6000);
+      if (!vues) return { faute: 'trois amis présents servis, moins de trois pastilles ([data-presence-ami]) en 6 s' };
+      await finDesMouvements(page, 'body', 2500);
+      const donnees = await page.evaluate(() => ({
+        presences: [...document.querySelectorAll('#corps .gars')].map((g) =>
+          g.querySelector('[data-presence-ami]')?.dataset.presenceAmi ?? null),
+        inviter: document.querySelectorAll('#corps [data-kop]').length,
+      }));
+      return { portee: null, donnees };
+    },
+  },
+  {
+    /* Le tiroir avec la présence servie (`{ actif: true, visible: true }`) :
+       la ligne « Apparaître hors ligne » au pied, amenée au milieu de
+       l'écran pour la photo. Mesuré sous le tiroir, comme `tiroir@`, et sa
+       hauteur relevée de même : une ligne de plus au pied ne doit pas le
+       faire passer au-delà d'un écran et demi. La ligne elle-même est
+       décrite (`presence` : corps, encre, cible, piste) — son contraste, sa
+       taille et sa cible sont dans les relevés ordinaires. */
+    cle: 'tiroir@presence', chemin: PAGE_TIROIR, capture: 'tiroir-presence', socket: false,
+    formats: [FORMATS_BASE[0], FORMATS_BASE[2]],
+    bouchons: (d) => ({ 'GET /api/presence': d.presence() }),
+    async jouer({ page, cle, format }) {
+      await pause(1800);
+      const faute = await ouvrirLeTiroir(page);
+      if (faute) return { faute };
+      const vue = await attendreQue(page, '() => document.getElementById(\'tbf-presence\')?.hidden === false', 3000);
+      if (!vue) {
+        return { faute: 'la présence servie, la ligne « Apparaître hors ligne » (#tbf-presence) n’a pas paru en 3 s' };
+      }
+      await page.evaluate(() => document.getElementById('tbf-presence').scrollIntoView({ block: 'center' }));
+      await pause(300);
+      const presence = await page.evaluate(() => {
+        const b = document.querySelector('#tbf-presence [role="switch"]');
+        if (!b) return null;
+        const lib = getComputedStyle(b.querySelector('.lib') ?? b);
+        const piste = b.querySelector('.tbf-inter')?.getBoundingClientRect();
+        return { px: parseFloat(lib.fontSize), encre: lib.color, cible: Math.round(b.getBoundingClientRect().height),
+          piste: piste ? [Math.round(piste.width), Math.round(piste.height)] : null,
+          cache: b.getAttribute('aria-checked') === 'true' };
+      });
+      const { tiroir, tropHaut } = await hauteurDuTiroir(page, cle, format.largeur);
+      return { portee: '#tbf-tiroir', donnees: { presence, tiroir }, autres: tropHaut ? 1 : 0 };
+    },
+  },
+];
+
+/** Un geste à l'essai dans la salle de répétition, jusqu'à son verdict.
+    Rend la portée (la salle, un calque fixé) et ce qu'on a vu, ou la faute.
+    La configuration vient du serveur ; la note, du bouchon de l'état. */
+async function jugerALaRepetition(page, geste, jouer) {
+  const tuile = await attendreQue(page, `() => document.querySelector('#vue [data-g="${geste}"]')`, 8000);
+  if (!tuile) return { faute: `la salle n’a pas peint le geste « ${geste} » ([data-g]) en 8 s` };
+  await page.evaluate((g) => document.querySelector(`#vue [data-g="${g}"]`).click(), geste);
+  const pave = await attendreQue(page, '() => document.querySelector(\'#zone #pad\')', 4000);
+  if (!pave) return { faute: `le geste « ${geste} » touché, aucun pavé (#zone #pad) en 4 s` };
+  const frappes = await jouer();
+  /* Le geste finit seul (le tempo : huit temps), ou par son bouton (le
+     tri) ; puis la note arrive et le tampon claque. */
+  const jugee = await attendreQue(page, '() => document.querySelector(\'#salle.jugee #pad > .tbf-verdict\')', 12_000);
+  if (!jugee) {
+    return { faute: `le geste « ${geste} » joué, pas de tampon sur le pavé (#pad > .tbf-verdict) en 12 s`,
+      donnees: { geste } };
+  }
+  await finDesMouvements(page, '#salle', 2500);
+  await texteStable(page, '#resultat', 600, 3000);
+  const donnees = await page.evaluate((g) => {
+    const vu = (sel) => {
+      const e = document.querySelector(sel);
+      const r = e?.getBoundingClientRect();
+      return Boolean(r && r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden');
+    };
+    return { geste: g, verdict: document.querySelector('#pad > .tbf-verdict')?.dataset.verdict ?? null,
+      record: vu('#resultat .record .tbf-tampon'), enDuel: vu('#enDuel'), consigne: vu('#consigne') };
+  }, geste);
+  return { portee: await page.evaluate(CALQUE_DE, '#salle'),
+    donnees: { ...donnees, ...(typeof frappes === 'number' ? { frappes } : {}) } };
+}
+const CLES_ARENES = new Set(ETATS_ARENES.map((x) => x.cle));
+/* Un état qui ne se regarde qu'à certains formats (`formats`) : les autres
+   l'ignorent. Avec `--largeur`, il passe si le format demandé en est. */
+const aCeFormat = (def, format) => !def.formats
+  || def.formats.some((f) => f.largeur === format.largeur && f.hauteur === format.hauteur);
+
+/** **Six règles du lot 6 qu'aucun compte de texte ne lit**, relevées sur
+    chaque état mesuré. Rend le nombre de relevés, compté sur la ligne de
+    console avec le reste.
+
+      — **au plus trois animations sans fin à l'écran** (« sans fin »),
+        comptées par `FX.sansFin` ; toutes, calques cachés compris, comme la
+        règle les compte. Avant le lot, au banc : six à la tribune du
+        Virage, sept en minute double, dix au duel en jeu ;
+      — **le sticker d'urgence du menu a son air** (« sticker rogné ») : sur
+        un écran de jeu, quand le menu en porte un, l'écran laisse au bouton,
+        au-dessus et à droite, au moins ce que le sticker en déborde, bord
+        et cerne compris (`barre.air` contre `barre.demande`, au demi-pixel
+        près : un arrondi n'est pas un défaut) ;
+      — **le voile des arènes est celui du hub** (« voile dense », QUESTIONS
+        Q6, l'hypothèse H6 levée) : à 768 px de large et au-delà, où le mur
+        se voit autour de la colonne, /virage et /duel-nvn ne portent plus
+        le voile dense des pages de contenu (75 %), mais celui du hub (60 %) ;
+      — **la main et les chants restent à l'écran** (« main coupée », sur
+        les états qui relèvent un budget) : l'arène cède d'abord (voir
+        `MAINS`). Le compte « hors écran » ne le voit pas — un texte coupé
+        par le cadre qui le porte n'est pas compté ;
+      — **aucun cadre n'entame l'encre d'un texte** (« encre rognée ») : ni
+        l'accent d'une capitale, ni une cédille, ni un émoji (voir
+        `ENCRE_ROGNEE`) ;
+      — **rien ne se pose sur le libellé d'une carte** (« libellé couvert »,
+        sur la page entière) : ni ce qui manque, ni la recharge, ni la
+        voisine de l'éventail (voir `LIBELLES_COUVERTS`). */
+const ARENES = new Set(['/virage', '/duel-nvn']);
+function reglesDuLot6(cle, chemin, format, vus, sansFin, budget = null, sondes = {}) {
+  let n = 0;
+  for (const [sel, r] of Object.entries(budget?.rangees ?? {})) {
+    if (!r || !Object.hasOwn(MAINS, sel)) continue;
+    const [, haut, , vue] = r;
+    const exige = MAINS[sel] === null ? haut : Math.min(MAINS[sel], haut);
+    if (vue + 1 >= exige) continue;
+    n += 1;
+    const arene = budget.rangees['#rope'] ?? budget.rangees['#arene'];
+    note(cle, format.largeur, 'main coupée', `${sel} : ${vue} px à l’écran sur ${haut}, il en faut ${exige}${
+      arene ? `, pendant que l’arène en garde ${arene[1]}` : ''} — l’arène cède avant la main et les chants`);
+  }
+  if (sansFin && sansFin.n > SEUILS.sansFin) {
+    n += 1;
+    note(cle, format.largeur, 'sans fin', `${sansFin.n} animations sans fin à l’écran, il en faut ${
+      SEUILS.sansFin} au plus : ${sansFin.liste.slice(0, 6).join(' · ')}`);
+  }
+  const b = vus.barre;
+  if (b?.jeu && b.air && b.demande && b.air.some((x, i) => x + 0.5 < b.demande[i])) {
+    n += 1;
+    note(cle, format.largeur, 'sticker rogné', `le sticker « ${b.pastille ?? b.urgence} » du menu a ${
+      b.air[0]} px au-dessus du bouton et ${b.air[1]} à sa droite, il en demande ${b.demande[0]} et ${
+      b.demande[1]} : l’écran le rogne`);
+  }
+  if (ARENES.has(chemin) && format.largeur >= 768 && vus.voile?.dense) {
+    n += 1;
+    note(cle, format.largeur, 'voile dense', 'le voile du mur est dense (75 %) sur un écran de jeu : '
+      + 'H6 est levée (Q6), il doit être celui du hub (60 %)');
+  }
+  /* Les deux sondes : tout compte, les quatre premiers sont nommés, comme
+     les relevés de la mesure. */
+  const encre = sondes.encre ?? [];
+  n += encre.length;
+  for (const x of encre.slice(0, 4)) {
+    note(cle, format.largeur, 'encre rognée', `${x.q} « ${x.texte} » — ${String(x.de).replace('.', ',')} px d’encre ${
+      x.ou === 'haut' ? 'au-dessus' : 'au-dessous'} du cadre de ${x.coupe}, qui la coupe`);
+  }
+  const couverts = sondes.couverts ?? [];
+  n += couverts.length;
+  for (const x of couverts.slice(0, 4)) {
+    note(cle, format.largeur, 'libellé couvert', `${x.carte ? `la carte ${x.carte}` : 'une carte'} : ${x.libelle} « ${
+      x.texte} » couvert à ${x.part} % — rien ne se pose sur un libellé`);
+  }
+  return n;
+}
+
+/** Un état d'arène, sur une visite neuve. Chaque panne est nommée (genre
+    « état ») et l'écran trouvé à la place est photographié : un sélecteur
+    disparu ne doit pas arrêter les autres. */
+async function etatArene(format, def, d) {
+  const { cle, chemin } = def;
+  const bouchons = def.bouchons?.(d) ?? null;
+  const socket = def.socket !== false;
+  const { contexte, page, erreurs, refus } = await nouvelleVisite(format, 'joueur', { socket, bouchons });
+  const evenements = [];
+  /* `hasard` : ce que `Math.random` rend **pendant** l'évènement, et
+     seulement pendant (la fausse socket appelle les écouteurs sans
+     attendre) — pour une page qui tire un délai au hasard en le recevant. */
+  const tirer = async (evt, donnees, { hasard = null } = {}) => {
+    evenements.push(evt);
+    await page.evaluate((e, x, h) => {
+      if (h === null) { window.__sock.fire(e, x); return; }
+      const r = Math.random;
+      Math.random = () => h;
+      try { window.__sock.fire(e, x); } finally { Math.random = r; }
+    }, evt, donnees, hasard);
+  };
+  const autour = async () => ({
+    evenements: [...evenements],
+    emis: await page.evaluate(() => (window.__emis ?? []).map(([e]) => e)).catch(() => null),
+    ...(bouchons ? { bouches: Object.keys(bouchons) } : {}),
+    barre: await page.evaluate(BARRE_JEU, SEUILS.bordSticker).catch(() => null),
+    voile: await page.evaluate(VOILE_DU_MUR).catch(() => null),
+  });
+  const echec = async (quoi, en = {}) => {
+    note(cle, format.largeur, 'état', quoi);
+    const capture = await photographier(page, def.capture, format, cle).catch(() => null);
+    rangerEtat(cle, chemin, format, { capture, ...await autour(), ...en });
+  };
+  try {
+    try {
+      await page.goto(base + chemin, { waitUntil: 'networkidle0', timeout: 20_000 });
+    } catch {
+      note(cle, format.largeur, 'chargement', 'la page n’a pas fini de charger en 20 s');
+      return;
+    }
+    /* La fausse socket, fx.js et la barre (tous deux différés) : sans eux,
+       rien à tirer ni à toucher. Un écran sans socket n'attend que les deux
+       derniers. */
+    const prete = await page.waitForFunction((s) => Boolean((!s || window.__sock) && window.FX
+      && document.querySelector('.tbf-retour')), { timeout: 8000 }, socket).then(() => true, () => false);
+    if (!prete) {
+      await echec(`la page n’a pas posé ${socket ? 'sa fausse socket, ' : ''}fx.js ou la barre en 8 s`);
+      return;
+    }
+    const r = await def.jouer({ page, tirer, d, format, cle });
+    if (r.faute) { await echec(r.faute, r.donnees); return; }
+    /* Les deux sondes, juste après la mesure : un écran qui passe (le
+       pavé, l'affiche, la case de BD) est encore là, et `encore` le
+       vérifie pour elles aussi. Les libellés de carte, seulement sur la
+       page entière : sous un calque posé par-dessus (le pavé, un bilan),
+       les cartes sont couvertes exprès. */
+    const sonder = async () => ({
+      encre: await page.evaluate(ENCRE_ROGNEE, r.portee, SEUILS.encreRognee).catch(() => null),
+      couverts: r.portee === null
+        ? await page.evaluate(LIBELLES_COUVERTS, SEUILS.libelleCouvert).catch(() => null) : null,
+    });
+    let m = null;
+    let capture = null;
+    let sondes = {};
+    if (r.photoDAbord) {
+      capture = await photographier(page, def.capture, format, cle);
+      m = await mesurer(page, r.portee);
+      if (m) sondes = await sonder();
+    } else {
+      m = await mesurer(page, r.portee);
+      if (m) sondes = await sonder();
+      capture = await photographier(page, def.capture, format, cle);
+    }
+    if (!m) {
+      note(cle, format.largeur, 'état', `la portée de la mesure (${r.portee}) n’est plus dans la page : photographié, pas mesuré`);
+      rangerEtat(cle, chemin, format, { capture, portee: r.portee, ...await autour(), ...r.donnees });
+      return;
+    }
+    const polices = await page.evaluate(POLICES);
+    if (r.encore && !await page.evaluate(r.encore).catch(() => false)) {
+      note(cle, format.largeur, 'état', 'l’écran est parti avant la fin de la mesure : relevé écarté, capture gardée');
+      rangerEtat(cle, chemin, format, { ...polices, capture, portee: r.portee, ...await autour(), ...r.donnees });
+      return;
+    }
+    const budget = def.budget ? await page.evaluate(BUDGET, def.budget).catch(() => null) : null;
+    const sansFin = await page.evaluate(SANS_FIN).catch(() => null);
+    const enPlus = def.apres ? await def.apres({ page, d, format, cle }) : {};
+    const vus = await autour();
+    const autres = (r.autres ?? 0) + reglesDuLot6(cle, chemin, format, vus, sansFin, budget, sondes);
+    rangerEtat(cle, chemin, format, { ...polices, capture, portee: r.portee, ...vus, ...r.donnees,
+      ...(budget ? { budget } : {}), ...(sansFin ? { sansFin } : {}),
+      ...(sondes.encre ? { encre: sondes.encre } : {}), ...(sondes.couverts ? { couverts: sondes.couverts } : {}),
+      ...enPlus }, m, erreurs, refus, autres);
+  } catch (e) {
+    await echec(`l’étape a levé : ${String(e?.message ?? e).slice(0, 80)}`).catch(() => {});
+  } finally {
+    await contexte.close();
+  }
+}
+
+/** Les états du lot 6, format après format (chacun à ses formats) ; puis la
+    tribune et la partie au format du mur. Rend ce qui a été fabriqué, ou la
+    cause. */
+async function etatsDesArenes() {
+  let d;
+  try { d = await fabriquerLesArenes(); } catch (e) {
+    const faute = `pas d’état d’arène fabriqué : ${String(e?.message ?? e).slice(0, 80)}`;
+    for (const format of FORMATS_ARENES) {
+      for (const def of ETATS_ARENES.filter((x) => aCeFormat(x, format))) note(def.cle, format.largeur, 'état', faute);
+    }
+    return { faute };
+  }
+  for (const format of FORMATS_ARENES) {
+    for (const def of ETATS_ARENES.filter((x) => aCeFormat(x, format))) await etatArene(format, def, d);
+  }
+  for (const format of FORMATS_MUR) {
+    for (const def of ETATS_ARENES.filter((x) => x.mur)) await etatArene(format, def, d);
+  }
+  return d.decrit;
+}
+
 if (etats) {
   console.log('');
   /* Les formats de chaque état, dans le JSON : celui de 320 n'est pas dans
      « formats », qui reste la liste des pages. */
-  rapport.formatsEtats = { ouverture: FORMATS_OUVERTURE.map(cleFormat), tiroir: FORMATS.map(cleFormat),
-    hud: FORMATS_HUD.map(cleFormat), booster: FORMATS.map(cleFormat), classement: FORMATS.map(cleFormat),
-    collection: FORMATS.map(cleFormat), profil: FORMATS.map(cleFormat) };
-  for (const format of FORMATS_OUVERTURE) {
-    await etatOuverture(format);
-    if (FORMATS.includes(format)) await etatTiroir(format);
+  rapport.formatsEtats = arenesSeules ? {} : { ouverture: FORMATS_OUVERTURE.map(cleFormat),
+    tiroir: FORMATS.map(cleFormat), hud: FORMATS_HUD.map(cleFormat), booster: FORMATS.map(cleFormat),
+    classement: FORMATS.map(cleFormat), collection: FORMATS.map(cleFormat), profil: FORMATS.map(cleFormat) };
+  rapport.formatsEtats.arenes = FORMATS_ARENES.map(cleFormat);
+  if (FORMATS_MUR.length) rapport.formatsEtats.mur = FORMATS_MUR.map(cleFormat);
+  /* Les états du lot 6 qui ne se regardent qu'à certains de ces formats. */
+  rapport.formatsEtats.parEtat = Object.fromEntries(ETATS_ARENES.filter((x) => x.formats)
+    .map((x) => [x.cle, FORMATS_ARENES.filter((f) => aCeFormat(x, f)).map(cleFormat)]));
+  if (!arenesSeules) {
+    for (const format of FORMATS_OUVERTURE) {
+      await etatOuverture(format);
+      if (FORMATS.includes(format)) await etatTiroir(format);
+    }
+    /* Les états des lots 3 et 5, après : voir « les écrans de plus ». */
+    for (const format of FORMATS_HUD) await etatHud(format);
+    for (const format of FORMATS) await etatBooster(format);
+    /* Le profil et ses insignes (lot 4), avant le classement : voir « les
+       insignes du carnet ». */
+    rapport.insignesSemes = await etatsDesInsignes();
   }
-  /* Les états des lots 3 et 5, après : voir « les écrans de plus ». */
-  for (const format of FORMATS_HUD) await etatHud(format);
-  for (const format of FORMATS) await etatBooster(format);
-  /* Le profil et ses insignes (lot 4), avant le classement : voir « les
-     insignes du carnet ». */
-  rapport.insignesSemes = await etatsDesInsignes();
-  rapport.classementSeme = await semerClassement();
-  if (await redemarrer()) {
-    for (const format of FORMATS) await etatClassement(format);
-    /* La collection du lot 4, en dernier : voir « la collection ». */
-    rapport.collectionSemee = await etatsDeLaCollection();
-  } else {
-    for (const format of FORMATS) {
-      note('classement@classé', format.largeur, 'état', 'le serveur n’a pas redémarré : classement non mesuré');
-      note('(la collection)', format.largeur, 'état', 'le serveur n’a pas redémarré : collection non mesurée');
+  /* Les arènes (lot 6), avant le classement et son redémarrage : elles ne
+     sèment rien, et ne dépendent que d'un serveur debout. Voir « les
+     arènes ». */
+  rapport.arenesFabriquees = await etatsDesArenes();
+  /* `--arenes` s'arrête là : il ne regarde qu'elles. */
+  if (!arenesSeules) {
+    rapport.classementSeme = await semerClassement();
+    if (await redemarrer()) {
+      for (const format of FORMATS) await etatClassement(format);
+      /* La collection du lot 4, en dernier : voir « la collection ». */
+      rapport.collectionSemee = await etatsDeLaCollection();
+    } else {
+      for (const format of FORMATS) {
+        note('classement@classé', format.largeur, 'état', 'le serveur n’a pas redémarré : classement non mesuré');
+        note('(la collection)', format.largeur, 'état', 'le serveur n’a pas redémarré : collection non mesurée');
+      }
     }
   }
 }
@@ -3683,7 +5851,8 @@ if (!trouvailles.length) {
      demain se verra même si personne ne pense à cette ligne. */
   const ORDRE_GENRES = ['script', 'image cassée', 'chargement', 'police de repli', 'état', 'refusé (429)',
     'renvoyée', 'fête de niveau', 'bonus du jour', 'ticket resté', 'déborde', 'hors écran', 'hors fenêtre',
-    'barre décalée', 'tiroir trop haut', 'coupé', 'coupé (lignes)', 'trop petit', 'pâle', 'pâle sur grain', 'sous le décor',
+    'barre décalée', 'sticker rogné', 'tiroir trop haut', 'sans fin', 'voile dense', 'main coupée',
+    'encre rognée', 'libellé couvert', 'coupé', 'coupé (lignes)', 'trop petit', 'pâle', 'pâle sur grain', 'sous le décor',
     'petit texte', 'opacité', 'petit or',
     'backdrop-filter', 'pâle au jour', 'pâle au jour sur grain', 'sans alt', 'capture'];
   const genres = [...ORDRE_GENRES, ...[...parGenre.keys()].filter((g) => !ORDRE_GENRES.includes(g))];
@@ -3759,9 +5928,29 @@ const tableau = (titre, lignes, formats = FORMATS, enPlus = []) => {
 };
 tableau('Le socle, page par page', VISITES.map(({ cle }) => ({ cle, par: rapport.pages[cle] ?? {} })));
 if (etats) {
-  tableau('Les états', Object.entries(rapport.etats)
-    .filter(([, par]) => FORMATS_OUVERTURE.some((f) => par[cleFormat(f)]?.compte))
-    .map(([cle, par]) => ({ cle, par })), FORMATS_OUVERTURE, [['hors fen.', 'horsFenetre']]);
+  if (!arenesSeules) {
+    tableau('Les états', Object.entries(rapport.etats)
+      .filter(([cle, par]) => !CLES_ARENES.has(cle) && FORMATS_OUVERTURE.some((f) => par[cleFormat(f)]?.compte))
+      .map(([cle, par]) => ({ cle, par })), FORMATS_OUVERTURE, [['hors fen.', 'horsFenetre']]);
+  }
+  /* Les arènes, à part : leurs formats ne sont pas ceux des autres états
+     (412 × 915 en plus, 400 × 800 en moins), et un tableau à cinq formats
+     ne se lirait plus d'une traite. Le mur en une ligne : deux états, un
+     format. */
+  tableau('Les arènes', Object.entries(rapport.etats)
+    .filter(([cle, par]) => CLES_ARENES.has(cle) && FORMATS_ARENES.some((f) => par[cleFormat(f)]?.compte))
+    .map(([cle, par]) => ({ cle, par })), FORMATS_ARENES, [['hors fen.', 'horsFenetre']]);
+  for (const f of FORMATS_MUR) {
+    const dit = ETATS_ARENES.filter((x) => x.mur).map(({ cle }) => {
+      const e = rapport.etats[cle]?.[cleFormat(f)];
+      if (!e?.compte) return `${cle} non mesuré`;
+      const n = Object.entries(e.compte).filter(([k]) => ['petitTexte', 'opacite', 'backdrop', 'petitOr', 'palesGrain',
+        'deborde', 'horsEcran', 'coupes', ...(jour ? ['jour', 'jourGrain'] : [])].includes(k))
+        .reduce((s, [, v]) => s + v, 0);
+      return `${cle} ${n} relevé(s), voile ${e.voile ? (e.voile.dense ? 'dense (75 %)' : 'du hub (60 %)') : 'absent'}`;
+    });
+    console.log(`  Le mur, ${f.largeur}×${f.hauteur} : ${dit.join(' ; ')}\n`);
+  }
 }
 
 /* **Ce que la lecture à travers le grain a rendu mesurable**, format par

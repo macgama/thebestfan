@@ -5,10 +5,14 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : l'intégration qui a suivi le lot 4 — le correctif
-serveur des salles du Grand Virage, le sachet de LA REPRISE, la photo du tunnel
-de l'écran d'ouverture et les reliquats du lot 4 —, 5 octobre 2026. Avant elle,
-le lot 4 de la refonte FAIT MAIN, « la collection », le 4 octobre.
+Dernière mise à jour : le lot 6 de la refonte FAIT MAIN, « les arènes » — le
+Grand Virage, le duel de tribunes, le bilan, le verdict servi, le son branché sur
+le match, la présence (éteinte) et la vague 2 du serveur —, versé dans la copie
+principale le 5 octobre 2026 et **pas encore en ligne** (`A-DEPLOYER.md`). Avant
+lui, l'intégration qui a suivi le lot 4 (le correctif des salles du Grand Virage,
+le correctif d'urgence des quatre retours de Gaël, le sachet de LA REPRISE, la
+photo du tunnel), en ligne depuis le 5 octobre à 5 h 19, et le lot 4,
+« la collection », le 4 octobre.
 
 ## Par où entrer, selon ce qu'on cherche
 
@@ -35,7 +39,7 @@ Les **chiffres** écrits dans ce fichier sont des relevés datés. Ceux qui font
 sortent de `npm run dossier` et `npm run catalogue`, qui lisent les mêmes modules
 que le jeu. Quand les deux se contredisent, c'est la commande qui a raison.
 
-Un premier `npm test` sur une machine sans base de données affiche **trente-huit
+Un premier `npm test` sur une machine sans base de données affiche **trente-neuf
 échecs**, et c'est normal : ces suites demandent MySQL et s'arrêtent sans lui.
 Voir § 4.
 
@@ -62,11 +66,28 @@ Le projet suit une méthode constante, à conserver :
   La base attendue est **locale**, pas celle d'Infomaniak : les suites visent
   `mysql://tbf:tbfpass@127.0.0.1:3307/tbf` par défaut, sinon `DATABASE_URL`.
   Il faut donc un MariaDB local sur le port 3307, une base `tbf` en
-  `utf8mb4_unicode_ci`, et les trente-trois fichiers de `sql/` appliqués dans
-  l'ordre de `scripts/ordre-schema.mjs` (`npm run schema:appliquer`) — 47
-  tables au bout. Chaque suite fait son propre
+  `utf8mb4_unicode_ci`, et les **trente-quatre** fichiers de `sql/` appliqués
+  dans l'ordre de `scripts/ordre-schema.mjs` (`npm run schema:appliquer` ; le
+  dernier est `arenes.sql`, du lot 6, qui n'ajoute que des colonnes et un
+  index) — 47 tables au bout. Chaque suite fait son propre
   `DROP` puis recrée ce dont elle a besoin : **elles ne se lancent donc jamais
   en parallèle**, elles s'écraseraient l'une l'autre.
+
+  **Une copie de travail se donne sa base.** Le verrou des suites
+  (`.tbf-suite.lock`) vit à la racine de la copie : un `git worktree` a donc le
+  sien, et une suite lancée dedans ne voit pas celle qui tourne dans la copie
+  principale — elle vide la même base sous ses pieds. Le compte `tbf` ne peut pas
+  créer de base `tbf_…`, mais le serveur local laisse à tous les bases `test_…` :
+  une copie qui travaille en même temps qu'une autre met **une ligne** — l'URL —
+  dans `.tbf-base-de-test` à sa racine (ignoré par git), et `scripts/base-de-test.mjs`
+  la lit **après** `DATABASE_URL`, qui passe toujours avant. Sans ce fichier, rien
+  ne change : **la copie principale n'en a pas, et ne doit pas en avoir** — il
+  détournerait toutes ses suites. L'audit prend son port au système
+  (`listen(0)`), et `virage-loadtest.mjs` passe par `baseDeTest()` comme les
+  suites : il visait par défaut la base de développement et vidait `users` sans
+  prendre le verrou ; il refuse maintenant un hôte distant. Une base de plus ne
+  rend pas le verrou inutile : deux suites de la même copie ne se lancent
+  toujours pas ensemble.
 
   Il n'y a **aucune étape de compilation** : le projet est en JavaScript
   simple, servi tel quel. `node build.mjs` existe encore parce que la commande
@@ -98,7 +119,7 @@ Le projet suit une méthode constante, à conserver :
   `/healthz` renvoie `ok: false` et un champ `panne` dès qu'une route manque, de
   sorte qu'une surveillance branchée dessus le voie ; et **toute livraison qui
   ajoute une table demande d'appliquer le `.sql` avant de reconstruire**. Les
-  trente-trois fichiers sont idempotents : les rejouer tous, dans l'ordre de
+  trente-quatre fichiers sont idempotents : les rejouer tous, dans l'ordre de
   `DEPLOIEMENT.md`, est la manœuvre sûre. Depuis septembre 2026, il n'y a plus
   à le faire à la main : `.github/workflows/deploiement.yml` applique le schéma
   **avant** de redémarrer, et `npm run schema:appliquer` fait la même chose
@@ -132,11 +153,30 @@ Le projet suit une méthode constante, à conserver :
   et une feuille où le motif ne trouve plus aucune tuile fait rougir le
   contrôle. Le workflow de déploiement lance ce script et **refuse de mettre en
   ligne** s'il échoue.
+
+  Depuis le lot 6, il refuse aussi toute page de `public/` (HTML et JS,
+  commentaires retirés) qui **compare la note d'un geste** — `quality`,
+  `qualite`, `note` ou `q` — **à un nombre écrit** : décimale, 1, ou 10 à 99,
+  nue, au bout d'un objet, en pourcentage ou avec un défaut `?? 0`, et la
+  comparaison retournée. C'est le contrôle « le verdict » : le mot d'un geste
+  vient du serveur, et un seuil écrit dans une page est une seconde échelle.
+  Éprouvé sur quatorze formes — neuf rougissent, cinq restent vertes parce que
+  ce ne sont pas des seuils de verdict (`note > 0`, le record
+  `note > avant + 0.001`, un filtre de `son.js`, du texte, un commentaire).
 - **`node scripts/verif-cablage.mjs` avant chaque livraison serveur.** Il monte
   les modules sur un faux pool, sans base ni réseau, et vérifie qu'aucune
   dépendance construite trop tard dans `server.js` n'est restée à `null`. Ce
   genre de panne ne dit rien : pas d'exception, pas de log, juste une
   fonctionnalité qui ne s'exécute jamais.
+
+  Depuis le lot 6, il éprouve aussi la **présence** (montée juste après la
+  session, branchée aux deux arènes une fois montées — `estAuVirage` et
+  `estEnDuel` non nuls —, passée aux amis et au Virage, son crochet d'activité
+  avant les routeurs), le **`niveau` passé au Virage** (le bilan verse l'XP par
+  le grand livre, qui lève sur un gain d'XP sans module de niveau), et que
+  **`souvenirFrappe` est appelé** sur un but du faux relevé, pas seulement
+  passé. Les deux arènes se lisent par `Boolean(await fn(id))` : une promesse
+  serait « vraie ». Avec les cinq contrôles de l'aide, 71 contrôles.
 
 ### Les tests d'interface
 
@@ -148,12 +188,12 @@ panneau peint sous un bandeau plein écran.
 | Suite | Ce qu'elle couvre | Outil |
 |---|---|---|
 | `deck-ui-smoke.mjs` | construction de deck | jsdom |
-| `nvn-ui-smoke.mjs` | duel N contre N, deux joueurs | puppeteer |
+| `nvn-ui-smoke.mjs` | le duel de tribunes : préparation, vestiaire, partie, bilan | puppeteer |
 | `fanzzy-ui-smoke.mjs` | classeur, kiosque, catalogue | puppeteer |
 | `accueil-ui-smoke.mjs` | scène du personnage sur l'accueil | puppeteer |
 | `admin-ui-smoke.mjs` | catalogue Fanzzy dans l'administration | puppeteer |
 | `kop-ui-smoke.mjs` | la page du KOP : créer, rejoindre, voir le pot, voter | puppeteer |
-| `virage-ui-smoke.mjs` | le fil du match dans le Grand Virage | puppeteer |
+| `virage-ui-smoke.mjs` | le Grand Virage : le HUD, le fil du match, la tribune, le geste et son verdict, le but, le bilan et la fin de match | puppeteer |
 
 `accueil-ui-smoke.mjs` vérifie ce qui ne se lit pas dans le HTML : que le
 supporter **bouge** — il mesure le style calculé et exige l'animation de
@@ -184,6 +224,19 @@ ces mots-là traversaient la page tels quels — et que la feuille reste
 dernier point se mesure en comptant les pixels de la couleur du bandeau sur la
 tête du panneau : voir le piège ci-dessous, les deux premières versions de ce
 contrôle ne pouvaient pas échouer.
+
+Au lot 6 la suite est réécrite pour la page neuve (212 contrôles) et garde le
+sens de chaque contrôle d'avant. Le bilan **remplace** la boîte « QUITTER LA
+TRIBUNE ? » : les contrôles de `[data-oui]` et `[data-non]` suivent (RESTER,
+SORTIR), et le contrôle de la feuille du fil, qui se mesurait sous le bandeau
+MINUTE DOUBLE — retiré —, se mesure sous un autre calque. Elle éprouve ce que
+le serveur ne peut pas : qu'un but ou un rouge **tombé pendant un geste** ne
+pose rien sur le pavé, que la carte-souvenir ne s'annonce que sur
+`virage:souvenir`, que le bilan de fin de match demande son délai de 0 à 8 s et
+quitte la salle, que le tampon ne porte que le mot servi. Les contrôles du
+correctif d'urgence du Virage y sont, reformulés pour la page neuve. `nvn:ui`
+compte 193 contrôles et **n'a plus aucun rouge** : les trois d'avant le lot 0
+(« la porte de sortie ») venaient de `nav.js`.
 
 `jsdom` est déclaré en `devDependencies`. **`puppeteer` ne l'est pas, et c'est
 volontaire** : il télécharge un Chromium de près de 200 Mo, ce qui alourdirait
@@ -687,13 +740,17 @@ populaire gagnerait toujours.
 
 **Le geste est noté par le serveur.** Le client envoie les instants de ses
 frappes, jamais sa réussite. Deux contrôles écartent l'automatisation : écart
-minimal entre frappes, et plafond de frappes.
+minimal entre frappes, et plafond de frappes. Depuis le lot 6, il ne nomme pas
+non plus le verdict : le mot vient du serveur (« Le geste a une seule échelle
+de verdict », plus bas).
 
 **Le barème du geste vient du serveur, jamais recalculé par le client.**
 `resoudreGeste()` est la seule source. Quand le client redessinait la pulsation
 avec ses propres constantes, un joueur portant les Jumelles tapait juste sur ce
 qu'il voyait et récoltait 0,36 au lieu de 0,99 : l'équipement censé l'aider le
-pénalisait, et plus la carte était rare, pire c'était.
+pénalisait, et plus la carte était rare, pire c'était. Le verdict non plus ne se
+recalcule pas : une page écrit le mot qu'elle reçoit, jamais un seuil, et
+`verif-pages` le refuse (« le verdict », § 2).
 
 **Le catalogue Fanzzy vit en base**, table `fanzzy`, servi par
 `/api/fanzzy/dex` et modifiable depuis `/admin`. `src/shared/fanzzy/dex.js`
@@ -940,6 +997,79 @@ nettoyer, l'interroger, empiler ses modificateurs — vit dans
 `src/shared/duel/effets.js` et sert aux deux. C'est la mécanique qui est
 partagée, pas ce que l'arène en fait.
 
+**Le geste a une seule échelle de verdict, et elle vient du serveur.** PARFAIT
+au-dessus de 0,9, BON au-dessus de 0,7, MOYEN au-dessus de 0,4, RATÉ en
+dessous — le Virage, le duel et la répétition, qui garde sa note chiffrée et son
+record. L'échelle est écrite **une fois**, dans `src/shared/verdict.js`
+(`verdictDe`, `estParfait`, `auMoins`, `criDe`, `noteDuVerdict`), et **seuls le
+serveur et ses suites l'importent** : une page n'importe pas le module et ne
+recalcule jamais le mot, elle écrit celui qu'elle reçoit (`verdict`), et le Cri
+du Fanzzy vient de `cri: true` (au-dessus de 0,95), le combo de `serie`.
+**La note mesurée est la note brute relevée par le plancher, avant les
+modificateurs du Fanzzy** : `quality`, après eux, reste servie et ne décide
+d'aucun affichage. Le plan la mesurait sur la note finale, et un Fanzzy à
+`perfectBonus` 0,82 faisait d'un 0,95 un 0,779 — BON sur un geste que le moteur
+venait de juger parfait. La note s'écrit en millièmes, **arrondie vers le haut**
+(`enMilliemes`) : les seuils sont stricts. Au duel, `engine.js` ne sert que la
+note finale, et le verdict se mesure par un rejeu de `grade` dans `nvn/index.js`
+(`noteMesuree`) ; **si `engine.js` change un jour `modsDe`, c'est là qu'il faut
+regarder**. Les seuils ne sont pas réglables : ils sont dessinés.
+
+**L'XP du Virage se gagne au temps passé à jouer, pas au club ni à l'argent.**
+Quinze XP par match poussé (`xp.virage`), une fois par match, à partir de dix
+chants acceptés par le serveur (`xp.virage_chants`), trois matchs par jour au plus
+(`xp.virage_matchs_jour`) ; versés par le grand livre (`source = 'virage'`,
+`cle = <fixtureId>`) à la première demande de bilan, et **en filet au départ de la
+tribune** pour qui a chanté sans demander son bilan, sous un sémaphore de quatre.
+Ni le club, ni l'abonnement, ni la neutralité, ni `classe` n'y changent rien :
+`classe` dépend du plafond de Virages comptés que l'abonnement lève, et lier l'XP
+au classement ferait acheter de l'XP (`abonnement-smoke` refuse que
+`abonnement/` lise `xp.virage`). `xp.virage` à 0 éteint la source. **Les PARFAITS
+et la série ne paient rien** : payer la qualité du geste pousse à
+l'automatiser, et les missions de qualité restent en réserve.
+
+**La ferveur d'un chant a un plancher d'un point.** Un chant accepté, noté au
+moins MOYEN, crédite au moins 1, tous facteurs appliqués, **chants seulement,
+jamais les cartes** — et pas sous un bonus de ferveur nul (« pèse sur la corde,
+ne compte pas au classement »). Sans lui, dans une tribune de plus de 34 personnes
+la ferveur d'un chant s'arrondit à zéro, et le rang « 1 + ceux qui font mieux »
+disait « 1ᵉʳ » à chacun. À ferveur égale, **les chants puis les PARFAITS
+départagent**, au bilan comme en direct. Le contrôle de proportion du Virage se
+mesure sur des tribunes où le plancher ne mord pas.
+
+**Le bilan de tribune vient de la base, jamais de la salle.** Le membre disparaît
+de la salle à chaque déconnexion ; la ligne de `virage_presence` cumule le match
+entier, départs compris. Une lecture groupée par salle finie (deux requêtes,
+quel que soit l'effectif), gardée deux minutes, partagée par une promesse en vol ;
+chaque page demande son bilan après un délai tiré entre 0 et 8 s. Le serveur
+compte, la page n'écrit aucune ligne à zéro. La salle se vide
+`virage.bilan_min` minutes (5) après le coup de sifflet **ou après l'arrivée du
+joueur, si elle est plus tardive** ; les chants restent acceptés jusqu'à
+`virage:ferme`, sans code d'erreur de plus.
+
+**La présence est une dérivée de la mémoire, vue des amis mutuels, et éteinte à
+la livraison.** Trois états (en ligne, au Virage, en duel), jamais le match, jamais
+l'heure, **jamais écrite en base** — seul le choix de se cacher l'est
+(`user_wallet.presence`, `NULL` = le défaut du registre). Visible par défaut pour
+les seuls amis mutuels, avec l'interrupteur « apparaître hors ligne » au tiroir ;
+**pas de REJOINDRE**. `presence.actif` est **faux** tant que la nouvelle
+`CONFIDENTIALITE.md` n'est pas relue par un juriste et en ligne (le jeu est ouvert
+aux mineurs, dossier L5). Éteinte — ou sans `sql/arenes.sql` — rien n'est servi :
+`/api/presence` répond `{ actif: false }`, aucun écran n'en montre, aucune
+activité n'est gardée en mémoire. Aucune socket de plus sur les autres pages.
+
+**Dans une arène, l'arène cède avant la main et les chants.** À 360 × 640 le
+budget du Virage est : HUD 62, ticket terrain 24, arène 266, tableau 52, rangée
+d'actions 80, main 134 — 640 sur 640 ; au duel, l'arène prend 215 px, pas 45 %
+de l'écran. L'audit le mesure (`budget`, règle « main coupée ») : une main ou des
+chants que l'arène pousse hors de l'écran est une faute.
+
+**Une ligne sans donnée disparaît, jamais un tiret.** Le bilan, les deux HUD,
+l'affiche : un champ absent du serveur (ancien serveur, base sans
+`sql/arenes.sql`, réseau) ne pose ni ligne vide, ni « — », ni « 0 », et la page
+garde la sortie d'avant — la boîte au bout de trois secondes sans bilan. Une
+carte-souvenir ne s'annonce que sur `virage:souvenir`.
+
 **Le stade appartient au match, jamais à un joueur.** Les cinq stades se
 collectionnent, et leur effet s'applique **aux deux camps**.
 
@@ -961,6 +1091,13 @@ tomber, et donc les situations qu'un deck doit savoir affronter. L'exemple de
 la Vuvuzela le montre bien — une pièce d'équipement plus forte dans un stade
 donné est une lecture de deck sur une condition **commune**, que les deux camps
 peuvent embarquer.
+
+Au Grand Virage c'est tenu ; **au duel, le stade est encore tiré sur
+l'identifiant du duel** (un `randomUUID`, dans `engine.js`), et deux duels sur le
+même match tombent dans deux stades. C'est la raison pour laquelle la préparation
+du duel n'a pas de stade-mini. Risque ouvert, à trancher par Gaël : la correction
+tient en une ligne dans `engine.js`, mais le fichier est hors du lot 6 et trois
+suites le lisent (`serveur/ECARTS.md`, `serveur-duel`, 9 et 12).
 
 **Les tribunes des stades sont dessinées dans l'ombre, exprès.** C'est ce qui
 permet de les allumer. Une tribune déjà éclairée ne peut plus s'éclairer ; une
@@ -1061,17 +1198,17 @@ simulateur.
 | `/deck` | construction de deck : jusqu'à trois Fanzzy, équipement, dix cartes |
 | `/kop` | le KOP : caisse commune, votes de dépense en case de BD, bonus de virage, membres en gradins ; les clubs suivis sans KOP |
 | `/carnet` | souvenirs vécus et vignettes à récupérer |
-| `/virage` | Grand Virage : tir à la corde pendant un vrai match, le fil du terrain, **les cartes d'action de sa tribune** et le panneau « ce que tu portes » |
-| `/amis` | amis : qui suit les mêmes clubs, demandes, invitations en KOP |
+| `/virage` | Grand Virage : le voile des matchs en direct (affiches), la tribune — HUD, ticket terrain, corde, foules, main, tableau —, la minute qui compte double, le but, le **bilan de tribune** à la sortie et au coup de sifflet, **les cartes d'action de sa tribune** et le panneau « ce que tu portes » |
+| `/amis` | amis : qui suit les mêmes clubs, demandes, invitations en KOP ; **la présence** (AU VIRAGE, EN DUEL, EN LIGNE) quand elle est allumée |
 | `/equipes` | les clubs suivis, et la recherche pour en ajouter |
-| `/duel-nvn` | **le duel** : tir à la corde, 1v1 à 5v5, adossé à un vrai match, même panneau de bonus |
+| `/duel-nvn` | **le duel** : préparation (l'affiche, cinq formats, ce qui est en jeu), vestiaire, affiche, partie, bilan en page kraft ; tir à la corde, 1v1 à 5v5, adossé à un vrai match, même panneau de bonus |
 | `/matchs` | matchs du jour, en direct, avec fiche détaillée |
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
 | `/classement` | supporters, tribunes, duellistes ; le podium, ma ligne épinglée, la saison (`SAISON`, `TOUJOURS`) et ses divisions |
 | `/boutique` | l'échoppe : À LA UNE, l'étal en écharpes par rayons et par rareté, la cabine d'essayage, le rayon de l'abonnement |
 | `/abonnement` | le PASS DE TRIBUNE, ce qu'on garde sans payer, ses droits et sa résiliation |
 | `/profil` | la carte de supporter, MON NIVEAU en chemin, MA SAISON, MON PARCOURS, MON FANZZY, l'équipement ; les réglages derrière une bâche |
-| `/repetition` | la répétition : apprendre les gestes hors match |
+| `/repetition` | la répétition : apprendre les gestes hors match, avec le même tampon de verdict que les arènes et « LE JOUER EN DUEL » |
 | `/aide` | **MISSIONS** : celles du jour et le bonus de présence, le carnet de la saison, les premiers pas, les questions |
 | `/admin` | **catalogue Fanzzy**, séries ouvertes, joueurs, compétitions, journal |
 | `/diagnostic`, `/healthz` | état du service |
@@ -1346,16 +1483,102 @@ Les règles qui tiennent l'ensemble :
   le motif que l'audit et `verif-pages` reconnaissent ; une autre adresse
   rendrait la surface non mesurable.
 
-**Sept hypothèses attendent encore Gaël**, listées en tête de `ui.css` avec la
+**Six hypothèses attendent encore Gaël**, listées en tête de `ui.css` avec la
 section qui porte chacune : le panneau calme et le cadre restés sur `--panneau`
-au lieu du parpaing (H4), le creux noir des onglets (H5), le voile des arènes
-(H6), les scotchs réservés à la bâche principale (H7), la fumée fixe au calme
-(H8), la bande noire du haut du mur (H9), et le « ? » de l'avatar sans Fanzzy
-laissé au marqueur (H11). Chacune dit pourquoi, et comment la défaire en un
-bloc. H1 (les faces vives foncées), H2 (l'or) et la teinte du kraft sont
-tranchées depuis le 2 octobre 2026 (plus haut) ; H3, la police du marqueur, est
-levée au lot 2 ; H10, le titre de la barre sur un scotch clair, y est née et
-défaite.
+au lieu du parpaing (H4), le creux noir des onglets (H5), les scotchs réservés
+à la bâche principale (H7), la fumée fixe au calme (H8), la bande noire du haut
+du mur (H9), et le « ? » de l'avatar sans Fanzzy laissé au marqueur (H11).
+Chacune dit pourquoi, et comment la défaire en un bloc. H1 (les faces vives
+foncées), H2 (l'or) et la teinte du kraft sont tranchées depuis le 2 octobre
+2026 (plus haut) ; H3, la police du marqueur, est levée au lot 2 ; H10, le
+titre de la barre sur un scotch clair, y est née et défaite ; H6, le voile des
+arènes à 75 %, est levée au lot 6 (Q6 : `nav.js` ne pose plus `.dense` sur les
+deux écrans de jeu, qui prennent le voile du hub).
+
+### Les arènes : le HUD, la corde, la main, le pavé, le bilan
+
+Les deux arènes partagent leurs pièces, **une fois**, dans la dernière section de
+`public/ui.css` (« les pièces du lot 6 », après « la montée de niveau »), chacune
+avec son balisage exact en commentaire et ses doubles `prefers-reduced-motion` et
+`html[data-calme~="animations"]`. **Une page n'écrit que la place d'une pièce**
+(position, taille quand la pièce la laisse ouverte, variables d'état), jamais son
+dessin ; s'il manque quelque chose, c'est un besoin de la feuille. Les pièces :
+le HUD de match `.tbf-hudm` (44 px, la même rangée aux deux arènes), le ticket
+terrain, la corde `.tbf-corde` et le foulard (une variable, `--corde`, de −1 à 1),
+la marée du duel, la foule au pochoir `.tbf-foule`, la carte de chant (2:3) et
+d'action (3:4) `.tbf-carte` et l'éventail, le pavé-bâche craie `.tbf-pave` et le
+tampon de verdict, le tableau de tribune, la page kraft du bilan `.tbf-bilan` et
+`.tbf-vs` (TOI/LUI), l'affiche `.tbf-affiche`, les effets posés sur l'arène
+`.tbf-effet`, et, au second tour, la carte d'un Fanzzy, la carte-souvenir, l'étiquette
+à liseré, la bâche qu'on lit, le panneau de ce qu'on porte, les noms entiers du
+vestiaire (`.tbf-gradins--entiers`). Les noms déjà pris et à ne pas reprendre :
+`.tbf-tribune` (`stade-art.js`), `.tbf-souffle` (`fanzzy-scene.js`), `.tbf-compte`
+(l'éclat de `FX.compter`), `--s` (la ola).
+
+**Ce qui ne doit pas bouger**, parce que des suites ou le serveur le lisent :
+
+- **Les nœuds stables.** `render` (Virage) et `rendreDuel` passent dix fois par
+  seconde : ce qui bouge passe par une variable (`--corde`, `--h`, `--part`,
+  `--a`/`--b`) ou un attribut/une classe posés sur un nœud qui dure, jamais par
+  `innerHTML` sur un conteneur qu'ils touchent. `accorder`, `ecrire`, `poser`.
+- **Le côté d'une pièce est `data-tribune="moi"` ou `"eux"`, jamais
+  `data-camp`** : le voile du Virage et la préparation du duel cherchent
+  `[data-camp]` au toucher, et `nvn:ui` compte les `[data-camp]` du document.
+- **Les couleurs** : `--e1`/`--e2` (mon club), `--eux1`/`--eux2` (en face), posées
+  sur l'arène ou plus haut, jamais sur la pièce ; les camps restent l'or (moi) et
+  le bleu (eux) — ce n'est pas réglable. `data-double` (la minute double) passe
+  le HUD, la corde, le foulard et la fumée à l'or, **jamais les cartes ni les
+  familles**.
+- **L'ordre des calques.** La rangée des deux boutons reste sous le voile et le
+  tiroir (45 < 48 < 49) : le tiroir doit couvrir le HUD ; la case de BD à 95, que
+  la page redescend quand le tiroir s'ouvre ; la cérémonie à 96, la boîte à 160, la
+  fête de niveau à 170. **La fenêtre du geste vit dans `#app`**, un contexte
+  d'empilement : tout calque posé sur le document passe devant elle. Rien ne couvre
+  le pavé ni ne le fait trembler pendant qu'elle est ouverte — la case de BD, la
+  secousse, les titres de `fx.js` et la carte-souvenir attendent sa fermeture
+  (`apresLaFenetre`, un but réel en dernier) ; la case déjà affichée est coupée à
+  l'ouverture, et la carte-souvenir déjà là se range puis revient pour son reste.
+- **Les deux formes d'un libellé** (« TA TRIBUNE »/« TOI », « GRAND VIRAGE ») sont
+  écrites dans le balisage, la longue retirée de l'écran par le motif que `tour:ui`
+  reconnaît, jamais par une police de zéro pixel.
+- **Aucune animation infinie en grille, au plus trois par écran, toutes
+  comptées** (`FX.sansFin()`) : le Virage en a 2 (la fumée du club, la respiration
+  de la scène), le duel 0 ou 1. Les dessins d'une carte d'action sont figés d'office
+  (`data-fige`), le banc du duel aussi. Chaque mouvement a ses deux doubles — les
+  gestes compris, depuis la fusion (la case qui se lève à l'ola, la cible qui pâlit
+  à la visée) ; chaque son et chaque vibration hors `fx.js` lit `data-calme`.
+- **Le lettrage de la case de BD** (`.tbf-vignette-mot`) a l'interligne d'un titre
+  sur deux lignes (1,16) et deux marges de −0,11 corps qui rendent la place d'une
+  ligne serrée : un titre d'une ligne ne bouge pas, et l'accent d'une capitale ne
+  touche plus la ligne du dessus. Une règle qui repose sa marge la compense de
+  même (`.tbf-niv-n`).
+- **Les identifiants et classes lus par les suites** — au Virage `#app`, `#veil`,
+  `#rope`, `#score`, `.hud *`, `#fil`, `#filScore`, `#filDer`, `#feuille`, `.card`,
+  `#fzs`, `[data-oui]`, `[data-non]` ; au duel `#prepaCorps`, `[data-fixture]`,
+  `#entrer`, `#arene`, `#fouleMoi .tete`, `#equipe .fz`, `#mainCartes .ct`,
+  `#chants .chant`, `#pad`, `#affiche`, `#bilan` — : un `grep` dans `scripts/` avant
+  d'en changer un. Le lot a retiré `#filQui`, `#verdict`, `#ecartees` (le Virage) et
+  `#son` (le duel) ; le duel a remplacé `.cote.moi`/`.cote.eux`, `.fil-corde` et `.noeud` par
+  `.tbf-maree`, `.tbf-corde` et `.tbf-foulard#noeud`.
+- **Rien n'est nommé qui n'existe pas en ses trois formats.** `corde.svg`,
+  `foulard-noeud` et `pochoir-supporters` attendent le lot 7 ; les replis sont
+  peints en CSS (la corde peinte du chemin de niveau, un rond craie à rayures
+  d'écharpe, cinq silhouettes au pochoir). Le voile du Virage garde la tribune à
+  25 % : il a été écrit avant la photo du tunnel, qui existe depuis
+  l'intégration (`tunnel-portrait`, `tunnel-paysage`) et qu'il ne nomme pas
+  encore — la brancher est un changement de page, avec son contrôle.
+
+**Le son de tribune suit le match** (`public/son.js`, `window.TBF_SON` écrit en
+toutes lettres, toujours sous garde, jamais seul porteur d'une information) :
+`chantDuGeste(geste, gestes, { origine })` chante tempo, contretemps, écho et
+crescendo sur les durées servies, depuis le même instant que le pavé et les frappes
+comptées, arrêté à la fermeture de la fenêtre ; `rumeur('jeu' | 'mi-temps' |
+'fin' | 'vestiaire')` pour les phases et `rumeur('entree' | 'double' | 'but' |
+'arrivee')` pour les moments. Le tampon claque `bache` à l'impact : une page n'ajoute
+pas son propre clac au verdict. Un son ajouté ou un gain touché : `npm run
+son:banc`, et `son:smoke` vert (166 contrôles). **Le mixage a changé** — l'interface
+6 à 8 dB plus bas qu'en ligne — et **s'écoute sur un téléphone avant la mise en
+ligne**.
 
 ### La carte (`cardHTML`)
 
@@ -1405,17 +1628,17 @@ Google Fonts, sinon elle échoue). `node scripts/cartes-ui-smoke.mjs --servir
 
 ### Les suites de contrôle
 
-**Soixante-quatre suites**, lancées ensemble par `npm test`. Elles se divisent en
+**Soixante-six suites**, lancées ensemble par `npm test`. Elles se divisent en
 deux groupes qu'il faut connaître avant de s'inquiéter d'un rouge :
 
-- **vingt-six ne demandent rien** — ni base, ni réseau, ni clé d'API. Elles
+- **vingt-sept ne demandent rien** — ni base, ni réseau, ni clé d'API. Elles
   tournent sur n'importe quelle machine, tout de suite (sauf `cartes:ui`, qui
   veut Google Fonts) ;
-- **trente-huit demandent MySQL.** Sans base, elles ne rougissent pas : elles
+- **trente-neuf demandent MySQL.** Sans base, elles ne rougissent pas : elles
   s'arrêtent, et `npm test` les compte comme « la suite s'est arrêtée » sur
   `ECONNREFUSED 127.0.0.1:3307`. C'est un défaut d'environnement, pas de code.
 
-Un développeur qui reprend ce dépôt sans base de données verra donc trente-huit
+Un développeur qui reprend ce dépôt sans base de données verra donc trente-neuf
 échecs au premier `npm test`, et ce sera normal. Il faut un MySQL joignable, et
 un `.env` qui le dise, pour que le compte ait un sens.
 
@@ -1452,12 +1675,35 @@ restent rouges, comme avant le lot 0, à l'identique : `deck:ui` (un) et
 délai de navigation quand un autre Chrome tourne sur le poste (§ 6) : relancées
 seules, elles passent.
 
+Le lot 6 en a ajouté deux : `verdict:smoke` (**sans base** : l'échelle aux bornes
+exactes, la note mesurée, `perfectBonus` au seuil du PARFAIT, le contrat qui
+recopie les mêmes nombres, le serveur qui nomme par le module, et un détecteur qui
+s'éprouve sur des lignes fabriquées ; 27 contrôles) et `presence:smoke` (la base :
+éteinte, rien n'est servi ni gardé ; allumée, les trois états, un ami caché, une
+demande qui n'est pas un ami, aucune horloge dans aucune réponse ; 100
+contrôles). Il a fait grandir `virage:smoke` (189 à la fusion de sa partie A,
+**357** : la reconnexion rend le souffle et la main laissés, deux onglets, la
+présence éteinte n'émet rien, une entrée n'émet pas `virage:crowd`, une
+transaction par versement dû), `souvenirs:smoke` (49 → 68), `salles:test` (134 →
+137 : une salle finie ne paie plus le relevé), `son:smoke` (148 → 166),
+`virage:ui` (149 → 212), `nvn:ui` (→ 193, **sans rouge** : les trois d'avant le
+lot 0 venaient de `nav.js`), `nvn:smoke` (111, dont le rejeu du verdict sur
+environ 383 chants), `repetition:ui` (86), `quotidien:smoke` (216 : les chants se
+comptent toujours). Au premier tour complet du lot (4 octobre, 23 h 28, dans sa
+copie), `tout-tester` comptait **66 suites et 5 405 contrôles en vingt-deux
+minutes**, avec deux rouges : `deck:ui` (un, celui d'avant le lot 0) et
+`appels:test` — que l'émoji hors plan de base avait décalée (§ 6), réparée depuis
+(45 contrôles). **Il n'a pas été relancé en entier sur la copie fusionnée** : la
+vérification d'avant la livraison le demande (`A-DEPLOYER.md`). **`nvn:net`
+n'est pas lancée par `npm test`** : `tout-tester` ne retient que les clés en
+`:smoke`, `:test` et `:ui` ; elle se lance à la main.
+
 Quatre contrôles gardent la livraison et ne demandent aucune base — à lancer
 avant tout :
 
 | Commande | Ce qu'elle garantit |
 |---|---|
-| `npm run pages` | les pages compilent ; la barre est là ; chaque dessin déclaré a ses trois formats ; aucun identifiant n'est écrit deux fois dans une page ; **les garde-fous du socle FAIT MAIN** — aucun `backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton` sur chaque rail d'onglets — et chaque tuile de grain demandée par `ui.css`, en WebP et en PNG (voir § 2) |
+| `npm run pages` | les pages compilent ; la barre est là ; chaque dessin déclaré a ses trois formats ; aucun identifiant n'est écrit deux fois dans une page ; **les garde-fous du socle FAIT MAIN** — aucun `backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton` sur chaque rail d'onglets — et chaque tuile de grain demandée par `ui.css`, en WebP et en PNG ; aucune page ne compare la note d'un geste à un seuil écrit (« le verdict », lot 6) (voir § 2) |
 | `npm run cablage` | les modules sont branchés entre eux, **et le serveur n'importe aucun paquet de développement** |
 | `npm run promesses` | chaque adresse appelée par une page est servie ; chaque page a une route |
 | `npm run pages:navigateur` | les vingt-quatre écrans s'ouvrent sans lever, serveur muet compris, et chacun porte sa flèche de retour |
@@ -1515,6 +1761,44 @@ lecteur d'écran seul (`.tbf-vh`, `.vh`, `.long`), une boîte d'un pixel que sa
 découpe efface, sort de tout relevé, et se nomme à part (`releves.rognes`,
 `compte.rognes`). Le `textes` d'un relevé d'avant vaut le nouveau plus
 `rognes` ; le schéma reste `audit-ui/3`.
+
+**Les états d'arène** (`--etats`, ou `--arenes` pour eux seuls, de une à cinq
+minutes), **par la technique du banc** : la requête de `/socket.io/socket.io.js`
+reçoit une fausse socket pilotable (`window.__sock.fire(évènement, données)`,
+`window.__emis`, `window.__repondre[nom]`), quatre lectures sont bouchées et
+nommées dans le relevé (`/api/virage/live`, `/api/deck/matchs`,
+`/api/deck/loadout`, `/api/nvn/attentes`), la page, la session, le catalogue et le
+niveau viennent du vrai serveur, et rien n'est écrit en base. Un match fabriqué, FC
+Sion – FC Bâle à la 66ᵉ, 2 – 1 au terrain ; les chants, les cartes, le barème du
+geste, les Fanzzy, le stade et le niveau sont chargés **des modules du dépôt** : une
+donnée qui change de nom fait tomber l'état avec une panne nommée (« pas d'état
+d'arène fabriqué : … »). Vingt-deux états : `virage@voile`, `@tribune`, `@double`,
+`@but`, `@pave`, `@bilan`, `@300`, `@fin`, `@verdict` ; `duel@prepa`, `@vestiaire`,
+`@affiche`, `@jeu`, `@pave`, `@but`, `@bilan`, `@entrainement`, `@verdict` ;
+`repetition@jugee`, `@tri` ; `amis@presence` ; `tiroir@presence` — aux formats
+360 × 640, 320 × 568, 412 × 915 et 768 × 1024, la tribune et la partie aussi à
+1 280 × 800 (le mur). Chaque état exige que l'écran se soit posé (le voile parti,
+l'arène à l'écran), et **nomme sa panne** au lieu d'être mesuré sous le nom d'un
+autre. Un écran qui passe (le pavé, l'affiche) est photographié d'abord, mesuré
+ensuite, puis l'audit vérifie qu'il est encore là. Le bilan est posé **en entier**
+avant la mesure (chaque étape `.tbf-glisse`, chaque barre à sa part, au plus
+étapes × 700 + 1 200 ms).
+
+Le relevé de chaque état dit aussi son **`budget`** (la hauteur de chaque rangée,
+et ce qu'on en voit dans la fenêtre), sa **`barre`** (la boîte de la flèche et du
+menu, et ce que le sticker du menu demande d'air) et sa **`voile`**. Six règles de
+plus : « sans fin » (plus de trois animations qui ne s'arrêtent jamais), « sticker
+rogné », « voile dense » (à 768 px et plus), « encre rognée », « libellé couvert »
+et « main coupée » (au duel, `#mainCartes` et `#chants` entiers ; au Virage, au
+moins 110 px de `#hand`). **Un audit prend maintenant un port libre** : il visait
+toujours le 3999, et deux copies qui mesurent en même temps auraient mesuré les
+pages et la base de l'autre. Compter **12 minutes 14 s** avec `--jour --etats`
+(soixante et onze relevés d'état d'arène) : plus que les dix minutes du verrou
+des suites, donc en arrière-plan, vers un journal, sans rien lancer d'autre. La
+suite qui le lance (`audit-ui.mjs`) a été éprouvée par vingt-trois mutations,
+vingt-trois rouges. **« Encre rognée » ne voit pas un accent qui en touche un
+autre** : il mesure l'encre contre le cadre qui coupe, pas contre la ligne du
+dessus (§ 6).
 
 Depuis le lot 0 de la refonte FAIT MAIN, il porte les seuils du socle :
 
@@ -1847,17 +2131,40 @@ Par ordre d'utilité.
     téléphone.
 
 11. **Ce que l'intégration du 4 octobre laisse** (`HISTORIQUE.md`,
-    4 quadragies quinquies, « Ce qui reste »). D'abord la commiter et la
-    mettre en ligne (`A-DEPLOYER.md`). Puis : `/matchs` peut taire un penalty
+    4 quadragies quinquies, « Ce qui reste »). Elle est commitée
+    (`524b2ca`) et en ligne depuis le 5 octobre à 5 h 19, avec le correctif
+    d'urgence des quatre retours de Gaël. Restent : `/matchs` peut taire un penalty
     marqué en toute fin de prolongation et publié après le début de la séance
     — le télétexte ne fait pas suivre `comments` — et annonce VICTOIRE un match
     retour gagné 1-0 et perdu aux tirs au but ; `verif-pages` n'exige ni
     l'entrée de la série de la saison dans `ART`, ni les trois formats et
     l'`onerror` de la photo du tunnel ; la recette du tunnel n'est pas
     versionnée (`VISUELS.md`) ; le gabarit de la brique des filtres, dans
-    `ui.css`, dit encore « Ce qu'il me reste » ; `CONTRATS.md` § 15.4 est
-    inexact sur la première vue d'un match à venir. D4, D5 et D7 du Grand
-    Virage sont au lot 6.
+    `ui.css`, dit encore « Ce qu'il me reste ». D4, D5 et D7 du Grand
+    Virage sont corrigés au lot 6. (L'inexactitude de `CONTRATS.md` § 15.4 sur
+    la première vue d'un match à venir est sans objet : à la fusion du lot 6,
+    le contrat du correctif est reversé aux § 16.2, § 16.5 et § 16.6, qui ne la
+    portent pas ; la règle exacte est dans `serveur/ECARTS.md`,
+    serveur-correctif § 1.)
+
+12. **Ce que le lot 6 laisse** (`HISTORIQUE.md`, 4 quadragies sexies, « Ce qui
+    reste »). **Rien n'en est en ligne.** Il est versé dans la copie
+    principale, pas encore commité : d'abord la vérification sur la base
+    `tbf` (`npm test` en entier, l'audit, la charge), puis la livraison
+    (`A-DEPLOYER.md` : `sql/arenes.sql`, puis un redémarrage hors d'un
+    match). Puis : écouter le mixage sur un téléphone ; les constats de détail
+    de la critique (un seul cran de souffle par coût distinct, le pas de 700 ms
+    du bilan du duel, la tête de la fenêtre du geste au duel, BON noir sur le
+    kraft, la face de la carte-souvenir, « TU Y ÉTAIS » à chaque bilan, l'heure
+    d'un match à venir dans la banderole du score, les places libres du
+    vestiaire, les noms de carte coupés dans le mot, l'interrupteur de présence
+    sur la ligne du volume) ; **le tunnel**, que le voile du Virage n'a pas pris
+    (la tribune à 25 %), puis le foulard, la corde et les silhouettes, les
+    dessins de chant en 2:3 et la passe de matière des gestes positionnels
+    (lot 7). Et `nvn:net`, que `npm test` ne lance pas. Les deux fautes de
+    `ui.css` que le dernier rapport du lot avait laissées — l'accent de
+    « CÈDE » dans la case de BD, deux mouvements des gestes sans leurs doubles
+    — sont corrigées à la fusion.
 
 **Ce qui n'est plus sur cette liste**, et qui y figurait : la simulation
 d'économie (rejouée, `npm run economie`), les trois évolutions pour tous
@@ -1870,7 +2177,10 @@ d'équipement**, **les cartes d'action dans le Grand Virage**, et, depuis le
 d'ouverture et **les salles du Grand Virage** — relevé payé pour rien,
 déconnexion d'un autre onglet, retour gratuit, salles jamais libérées, penalty
 manqué compté comme un but, buts d'avant rejoués (`serveur/ECARTS.md`,
-serveur-correctif). L'audit A-à-Z du produit est entièrement traité.
+serveur-correctif) ; et, avec le lot 6, **le bilan de tribune et l'XP du
+Virage**, **le verdict servi**, **la présence des amis (éteinte)** et **le son
+de tribune branché sur le match**. L'audit A-à-Z du produit est entièrement
+traité.
 
 **Le multilingue reste une promesse à moitié tenue**, et c'est le plus gênant
 de la liste parce qu'il se voit : `/compte` et `/profil` proposent quatre
@@ -2683,7 +2993,12 @@ cassé ; les documents sont partis avec le commit suivant. Celui-là, `0638fb5`
 (le 4 octobre à 17 h 16), a mis en ligne le correctif des salles du Grand Virage
 pendant son intégration : sans la précaution qu'il demandait — hors d'un match
 en direct (« Changer ce qui compte comme un but », plus bas) — et sans ses deux
-documents de `serveur/`, restés dans la copie de travail.
+documents de `serveur/`, restés dans la copie de travail. Et `524b2ca` (le
+5 octobre à 5 h 18), l'intégration et le correctif d'urgence, mis en ligne une
+minute après, pendant que la fusion du lot 6 se préparait : la trace du lot avait
+été écrite avant, et disait la production à `0638fb5`. On relève l'état réel
+(`git log`, `/healthz`, un fichier servi comparé au commit) avant de verser une
+trace.
 
 **Les pièges du lot 4** (octobre 2026 ; le récit est dans `HISTORIQUE.md`,
 4 quadragies quater).
@@ -2832,6 +3147,125 @@ pas sur le couloir. Le 4,5:1 sous le libellé et la consigne est tenu par
 l'image elle-même, assombrie en bas au traitement ; une photo refaite refait la
 mesure, et change d'adresse (`?v=`), puisque `/img` part avec un an de cache.
 
+**Les pièges du lot 6** (octobre 2026 ; le récit est dans `HISTORIQUE.md`,
+4 quadragies sexies, et le détail du serveur dans `serveur/ECARTS.md`, « Vague 2 »).
+
+**Un `ON DUPLICATE KEY UPDATE` s'évalue de gauche à droite.** MariaDB, sans
+`SIMULTANEOUS_ASSIGNMENT` : une colonne qui compare l'ancienne valeur d'une autre
+(`meilleur_chant` selon `meilleur_q`) s'écrit **avant** elle. Inversées, elles ne
+lèvent rien, et le meilleur chant ne change plus jamais après le premier. La suite
+joue 0,92 sur « montée », 0,97 sur « mur », puis 0,93 sur « cadence » : le dernier
+mot reste « mur ».
+
+**Une socket n'est pas un joueur.** Ce qui part « au joueur » (`auJoueur`) part à
+toutes ses sockets de la salle, et il ne la quitte qu'avec la dernière. Un
+contrôle qui rappelle `join` sans `leave` entre les deux ne passe pas par le vrai
+chemin d'une reconnexion : `virage-smoke` coupe la socket, puis rejoint sur une
+neuve.
+
+**Le verdict se mesure sur la note qu'a jugée le moteur, pas sur celle qu'il
+sert.** `quality` est la note après `applyHeroMods` ; `perfectBonus` lit la note
+brute. Mesuré sur la finale, un Fanzzy à 0,82 écrit BON sur un geste parfait. Et un
+arrondi au plus proche à la frontière d'un seuil strict change le mot : 0,9004
+arrondi à 900 est BON (`enMilliemes` arrondit vers le haut).
+
+**Un seuil écrit dans une page est une seconde échelle.** Le Virage écrivait 0,9 /
+0,7 / 0,4, le duel un 90 pour le son, la répétition 0,95 / 0,8 / 0,6 / 0,3 : le
+même 0,92 était PARFAIT ici et TRÈS BIEN là. `verif-pages` refuse la comparaison
+d'une note à un nombre écrit, sous neuf formes.
+
+**Un rang qui compte « 1 + ceux qui font mieux » est faux dès que tout le monde
+est à zéro.** Une ferveur arrondie à zéro dans une grande tribune rendait « 1ᵉʳ »
+à chacun. Plancher de 1 par chant noté au moins MOYEN, et départage par les chants
+puis les PARFAITS — au bilan **et** en direct, sans quoi un joueur est 11ᵉ en
+tribune et 12ᵉ au bilan pour la même ferveur.
+
+**Une promesse n'est pas un booléen.** `Boolean(await fn(id))` : les deux arènes
+que lit la présence peuvent rendre une valeur ou une promesse, et une promesse est
+« vraie » pour un simple `if` — tout le monde serait au Virage, sans exception ni
+journal.
+
+**Deux copies, un port.** L'audit prenait toujours le 3999 ; un second audit,
+dans une autre copie, trouvait au 3999 le serveur de la première, qui répondait,
+et mesurait ses pages et sa base sans le dire.
+
+**Une page éteint à son départ ce qu'elle a montré, et `contexte.close()` ne
+l'attend pas.** La requête `keepalive` de `pagehide` atteint le serveur après la
+fermeture du contexte, et l'audit la voyait effacer, après coup, les nouveautés
+que l'état suivant venait de resemer : l'album de `/collection` donnait 201, 202
+ou 203 textes sur le même commit. L'audit répond maintenant lui-même à l'extinction
+et quitte le document (`about:blank`) avant de fermer le contexte. La cause était
+dans la mesure, pas dans la page.
+
+**Un émoji hors plan de base décale tout ce qui suit.** Le ticket terrain porte
+🟥 et 🟨 : deux unités UTF-16 pour `s.length`, un point de code pour `Array.from`.
+`blanchir`, dans `appels-smoke`, indexait le tableau de sortie d'une façon et
+parcourait le texte de l'autre : l'effacement tombait un caractère trop tard, le
+début de « function » partait avec, et la suite dénonçait soixante-quatre noms que
+la page déclare. **Tout se compte en points de code**, pour lire comme pour écrire.
+
+**Une ligne serrée qui coupe pour ses points de suspension rogne l'accent d'une
+capitale.** Oswald porte l'accent à 1,08 em de la ligne de base : « BÂLE » se lisait
+« BÄLE », une cédille de « GONÇALVES » disparaissait. Un quart de cadratin de
+rembourrage rendu par une marge négative ne bouge rien et laisse passer l'encre ;
+la sonde `ENCRE_ROGNEE` de l'audit le mesure. **Et l'accent d'une capitale touche la
+ligne du dessus dès que l'interligne passe sous 1,11** (en Oswald 700, en comptant
+le bas des lettres du dessus) : « LA CORDE CÈDE ! » se lisait « LA ÇORDE CÈDE ! »
+à 0,94, six à neuf pixels de chevauchement. La sonde ne le voit pas — elle mesure
+l'encre contre le cadre qui coupe, pas contre la ligne du dessus. Corrigé à la
+fusion du lot 6 par le même principe : `.tbf-vignette-mot` passe à 1,16 avec deux
+marges de −0,11 corps, qui rendent à une ligne seule sa place et son pixel.
+
+**Une sonde qui mesure faux accuse le CSS.** « LA BASCULE » était couverte à 12 %
+au duel : la sonde « libellé couvert » balayait le rectangle d'une ligne penchée
+de 6°, qui déborde des lettres. On corrige la sonde avant la feuille, et on la
+casse exprès (`elementsFromPoint`, le corps des lettres sondé au point près).
+
+**Un pourcentage se lit sur la boîte qui le porte.** `--pli` valait
+`largeur de carte × 0,06` ; le duel pose une largeur en pourcentage de la main, que
+les libellés relisaient sur la carte : le côté couvert de l'éventail s'écartait de
+1,3 px au duel contre 4,3 au Virage.
+
+**Un correctif d'urgence se reporte sur une page réécrite par ses ancres de
+texte, pas par ses numéros de ligne.** Le correctif d'urgence du Virage (cartes
+qui ne reviennent pas, vieux buts annoncés, alertes sur le pavé, carte jouée
+affichée deux fois) a été écrit sur le code en ligne ; le lot 6 avait réécrit les
+mêmes endroits. Il existait donc **des deux côtés, écrit différemment** :
+`aSesOnglets(fixtureId, userId, you)` côté principal, `auJoueur(fixtureId,
+userId, évènement, charge)` côté lot, qui fait la même chose pour tout ce qui part
+« au joueur ». À la fusion, la page et le serveur du lot sont gardés entiers,
+après avoir vérifié que chaque ligne ajoutée par l'autre côté y est ou y a un
+équivalent : `aSesOnglets` a disparu, et la main ne part qu'une fois après une
+carte jouée — `auJoueur(…, 'virage:vous', …)` —, au tirage par `emitVous`, et à
+la seule socket fautive par le filet `REFUS_DE_MAIN`. Le hasard d'un `git merge`
+ne le fera pas.
+
+**Deux paragraphes d'un contrat ne portent pas le même numéro.** Le correctif du
+Virage avait déclaré le sien « § 15 » ; le plan de la vague 2 réservait le § 15 au
+bilan de tribune. À la fusion, le § 15 est le bilan, et le contrat du correctif
+vit aux § 16.2 (les champs, `surgeMs`), § 16.5 (la salle d'une entrée à l'autre,
+le camp) et § 16.6 (le but réel), où le lot l'avait déjà reversé ; les renvois des
+documents du correctif sont renumérotés. Un `grep -n '§ 15'` sur `ECARTS.md`,
+`HISTORIQUE.md`, `ETAT.md` et `A-DEPLOYER.md` après une fusion qui touche le
+contrat.
+
+**`git merge-file --union` perd ce que les deux côtés ajoutent pareil.** Deux blocs
+ajoutés au même endroit d'un fichier se mettent bout à bout, mais ce qu'ils ont
+en commun passe pour du contexte et ne s'écrit qu'une fois : dans
+`verif-cablage`, le dernier `}` et la ligne vide du premier bloc (le fichier ne
+compile plus, « Unexpected end of input ») ; dans `ECARTS.md`, le filet `---` qui
+ouvre la seconde rubrique (« # Vague 2 » se collait à la dernière ligne de
+serveur-correctif). La résolution se fait à la main, puis `node --check`, et l'on
+compte les lignes : base, plus ce que chaque côté ajoute. **Et `--theirs` sur un
+document efface ce que l'autre côté y a changé ailleurs** : sur `CONTRATS.md`, la
+révision du § 5.1 de l'intégration. Fusionner en trois voies (`git merge-file
+--theirs`, qui ne tranche que les morceaux en conflit), pas choisir un côté.
+
+**Les outils du poste.** Dans le Bash de ce poste, `grep -c $'\r'` compte toutes les
+lignes et fait croire à des CRLF partout : compter avec `CR=$(printf '\r'); grep -c
+"$CR" fichier`. `git clean -fd` retire un fichier que le `.gitignore` de la
+révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
+
 ---
 
 ## 7. Questions juridiques ouvertes
@@ -2856,21 +3290,44 @@ mesure, et change d'adresse (`?v=`), puisque `/img` part avec un an de cache.
 - **Une carte-souvenir porte le nom et l'écusson d'un club.** L'afficher dans un
   tableau de résultats est un usage normal ; en vendre un exemplaire est autre
   chose.
+- **La présence des amis, et les mineurs.** La fonction est livrée **éteinte**
+  (`presence.actif` faux). Elle ne s'allume qu'une fois la nouvelle
+  `CONFIDENTIALITE.md` (paragraphe « La présence de tes amis », marqué « à faire
+  relire — pas encore en service ») relue par un juriste et mise en ligne, **la
+  question des mineurs comprise** — le jeu leur est ouvert sans barrière (dossier
+  L5). Ce que le texte affirme est lu dans `src/server/presence/index.js` et vérifié
+  par `presence:smoke` : jamais écrite, trois états, amis mutuels, un choix gardé
+  tant que le compte existe et effacé avec lui. À poser au juriste : « je sais où
+  tu vas le week-end » — pourquoi il n'y a pas de REJOINDRE —, et un ami qui se
+  cache dans une tribune où il est déjà : ceux qui l'y ont vu entrer apprennent son
+  départ.
+- **Ce que le jeu garde d'un match du Virage** : les PARFAITS, la meilleure série
+  et le meilleur chant, avec la ligne de présence de ce match, qui survit à la
+  suppression d'un compte, **sans le nom** (`CONFIDENTIALITE.md`).
 
 ## 7 bis. À faire sur le serveur, en attente
 
-0. **Le quotidien, le lot 4, le correctif du Virage et le sachet sont en
-   ligne.** Gaël a appliqué `sql/quotidien.sql` le 3 octobre, avec `2ff45f9` ;
-   puis il a mis en ligne le lot 4 (`7450c03`) le 4 octobre vers 17 h 07, et
-   `0638fb5` — le correctif des salles du Grand Virage, le sachet de LA
-   REPRISE — vers 17 h 17. Relevé le 5 octobre à 0 h 25 : `/healthz` répond
-   `ok: true`, sans panne, et les fichiers servis comparés sont ceux de
-   `0638fb5`. **Une livraison attend** — le tunnel, les pages, le câblage de
-   l'aide, sans schéma : `A-DEPLOYER.md`, hors d'un match en direct. Pour la
-   prochaine livraison qui en apporterait un : par GitHub, le schéma est
-   appliqué **avant** le redémarrage ; par le Manager, `npm run
-   schema:appliquer` en SSH, **puis redémarrer** — le contrôle de démarrage ne
-   relit la base qu'au lancement.
+0. **Le quotidien, le lot 4, le correctif du Virage, le sachet et
+   l'intégration sont en ligne.** Gaël a appliqué `sql/quotidien.sql` le
+   3 octobre, avec `2ff45f9` ; puis il a mis en ligne le lot 4 (`7450c03`) le
+   4 octobre vers 17 h 07, `0638fb5` — le correctif des salles du Grand
+   Virage, le sachet de LA REPRISE — vers 17 h 17, et `524b2ca` — le tunnel,
+   le bandeau du but, le penalty et la séance à `/matchs`, MANQUANTS, le
+   câblage de l'aide, le correctif d'urgence des quatre retours de Gaël — le
+   5 octobre vers 5 h 19. Relevé le 5 octobre à 5 h 35 : `/healthz` répond
+   `ok: true`, sans panne, `uptime_s` dit un redémarrage vers 5 h 19, et
+   `virage.html` et `action-art.js` servis sont ceux de `524b2ca`, octet pour
+   octet.
+
+   **Une livraison attend, avec un schéma : celle du lot 6**, versée dans la
+   copie principale et pas encore commitée. `sql/arenes.sql` — six
+   instructions, rien de renommé, aucune reprise de données —, par `npm run
+   schema:appliquer` en SSH **puis un redémarrage**, hors d'un match en direct
+   (`A-DEPLOYER.md`). Sans lui rien ne casse : les poussées retombent sur la
+   forme du quotidien, le bilan sert la ferveur, les chants et le rang, la
+   présence reste éteinte, et le démarrage nomme le fichier. Par GitHub, le
+   schéma est appliqué **avant** le redémarrage ; par le Manager, il ne l'est
+   jamais — le contrôle de démarrage ne relit la base qu'au lancement.
 
    **Après la livraison du quotidien, à faire par Gaël** (`DEPLOIEMENT.md`,
    « Après la livraison du quotidien ») : **saisir la fin de la saison 1** dans
@@ -2884,14 +3341,15 @@ mesure, et change d'adresse (`?v=`), puisque `/img` part avec un an de cache.
    **Les décisions que le chantier rend à Gaël** (`HISTORIQUE.md`, 4 quadragies
    ter, « Ce qui reste ») : l'inflation des écharpes avant la saison 2 ;
    brancher ou retirer « La quête » et « Mur de bâches », et que faire des KOP
-   qui les ont payés ; la ferveur arrondie à zéro dans une grande tribune ; la
-   saison 2 et sa série ; payer ou non les divisions ; le dossier du juriste ;
+   qui les ont payés ; la saison 2 et sa série ; payer ou non les divisions ; le dossier du juriste ;
    un bonus de KOP voté après la fin d'une saison ; le rang de la racine de
    `/api/rank/moi`, qui compte les comptes supprimés ; les tenues prises par
    l'abonnement ; le nom de la saison 1 (« Le premier virage » dans
    `sql/saisons.sql`, « La reprise » partout ailleurs — et en production,
-   relevé le 4 octobre). L'XP du Virage est tranchée pour le lot 6 (le
-   3 octobre : quinze par match poussé). Et des défauts voisins, hors des
+   relevé le 4 octobre). L'XP du Virage est tranchée et réglée (le 3 octobre :
+   quinze par match poussé, dix chants au moins, trois matchs par jour), et la
+   ferveur arrondie à zéro dans une grande tribune aussi (le plancher d'un
+   point, au lot 6). Et des défauts voisins, hors des
    périmètres faits : le démarrage ne contrôle que la première des trois
    colonnes de `sql/couleurs.sql` ; les boosters d'un abonnement acheté
    (`boutique/index.js`, `livrer`) entrent dans la réserve sans compter la
@@ -2899,6 +3357,20 @@ mesure, et change d'adresse (`?v=`), puisque `/img` part avec un an de cache.
    (`serveur/ECARTS.md`) ; et deux données que les écrans du lot 4 attendent
    — `paliers.series` avec `/api/fanzzy/state`, et la chance de tirer une
    carte (§ 5, point 10).
+
+   **Ce que le lot 6 rend à Gaël** (`HISTORIQUE.md`, 4 quadragies sexies, « Ce qui
+   reste ») : **le stade du duel** (tiré sur l'identifiant du duel, pas sur le
+   match : une ligne dans `engine.js`, une règle de jeu) ; **allumer la
+   présence**, après le juriste ; **écouter le mixage** sur un téléphone avant la
+   mise en ligne ; **les 600 ms du verdict**, comptées depuis la fin du geste ou
+   depuis la dernière frappe ; un **combo en jeu au duel** (`serie` sur
+   l'évènement `chant`, refusé tant qu'aucune page ne le lit) ; `gains.wallet`
+   dans `nvn:fin` (non servi : `nav.js` relit le solde) ; `nvn:net`, que
+   `npm test` ne lance pas ; **le tunnel au voile du Virage** (la photo existe,
+   la page ne la nomme pas) ; et, du correctif d'urgence, la priorité du but
+   réel sur les autres moments d'un même geste, les cartes-souvenirs d'un but
+   ancien, et le trou d'une suite qui ne fait passer aucun scénario du relevé
+   jusqu'à la salle.
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
    peut-être encore l'ancienne règle, qui classait 117 compétitions comme
@@ -2944,6 +3416,23 @@ MAIL_FROM=thebestfan <no-reply@thebestfan.online>
 ```
 
 Déploiement complet : voir `DEPLOIEMENT.md`.
+
+Le lot 6 n'ajoute rien à `.env`. **Sept réglages de plus dans `/admin`,
+RÉGLAGES**, aucun type `liste`, tous bornés (`src/shared/reglages.js`) :
+
+| clé | section | défaut | lu par |
+|---|---|---|---|
+| `xp.virage` | LA PROGRESSION | 15 (0 à 200 ; **0 éteint la source**) | le bilan de tribune |
+| `xp.virage_chants` | LA PROGRESSION | 10 (1 à 200) | le bilan de tribune |
+| `xp.virage_matchs_jour` | LA PROGRESSION | 3 (1 à 20), le même pour tous | le bilan de tribune |
+| `virage.bilan_min` | LE GRAND VIRAGE | 5 minutes (1 à 30) | la fermeture de la tribune |
+| `presence.actif` | **LA PRÉSENCE** (section neuve) | **faux** | la présence |
+| `presence.visible_defaut` | LA PRÉSENCE | vrai | la présence |
+| `presence.en_ligne_sec` | LA PRÉSENCE | 120 (30 à 900) | la présence |
+
+Les paliers de ferveur (100, 50, 10, 3, 1ᵉʳ) et le seuil de PARFAIT **ne se règlent
+pas** : ils sont dessinés. `abonnement-smoke` refuse que `abonnement/` lise
+`presence.` ou `xp.virage`.
 
 ---
 
@@ -3312,3 +3801,16 @@ travaillant en même temps. Rien n'a été écrasé, mais deux agents qui écriv
 au même endroit finiront par se croiser sur le même fichier. Si tu fais
 travailler plusieurs sessions en même temps, donne-leur des chantiers qui ne se
 recouvrent pas, et dis-le-leur.
+
+**Plusieurs copies, plusieurs bases.** Le lot 6 s'est mené dans un `git worktree`
+(`.claude/worktrees/lot6`, branche `refonte-lot6`) pendant que la copie principale
+vérifiait puis livrait le lot 4 et l'intégration : chaque copie a son verrou des
+suites, une base `test_…` par `.tbf-base-de-test`, et l'audit son port. Une copie
+ne commit rien qu'on n'ait décidé de livrer — `scripts/deployer.sh` fait `git reset
+--hard origin/main`, et un « Maj » de tout part en ligne à moitié fait. Un lot qui
+attend sa fusion garde **ses documents hors du dépôt** (un brouillon dans le bac à
+sable) : `ETAT.md`, `HISTORIQUE.md` et `A-DEPLOYER.md` changent dans l'autre copie
+au même moment. Et il se verse par un patch contre leur base commune, appliqué en
+trois voies sur la copie principale propre (`git apply -3`), chaque conflit
+tranché par une règle écrite d'avance et éprouvée dans un arbre à part (§ 6, « Les
+pièges du lot 6 »).

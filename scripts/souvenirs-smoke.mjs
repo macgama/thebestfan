@@ -25,9 +25,11 @@ await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invi
 /* `quotidien.sql` pose les colonnes des chants sur `virage_presence`. Il
    complète aussi `saisons`, d'où `saisons.sql` avant lui, qui lit lui-même
    `reglages` (admin.sql) : le fichier s'applique en entier, tel que le
-   déploiement l'applique, et non par morceaux choisis. */
+   déploiement l'applique, et non par morceaux choisis. `arenes.sql` vient en
+   dernier, comme dans `ORDRE` : les PARFAITS, la série et le meilleur geste
+   du bilan de tribune. */
 const SCHEMA = ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql',
-  'admin.sql', 'saisons.sql', 'quotidien.sql'];
+  'admin.sql', 'saisons.sql', 'quotidien.sql', 'arenes.sql'];
 for (const f of SCHEMA) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
@@ -76,12 +78,21 @@ let r = await S.mintGoal(goal(1, 23, 85, 1, 0, 'Diallo'));
 check('but frappé', r.minted === true);
 check('les deux présents reçoivent la carte', r.presents === 2);
 check('prix de championnat', r.price === 60);
+/* **Les receveurs, nommés** (D5) : c'est la liste à qui le Virage annonce la
+   carte (`virage:souvenir`), sous ce nom exact — `server.js` le lit, et un
+   autre nom ne lèverait rien : la carte ne s'annoncerait simplement plus. */
+check('la frappe nomme ses receveurs (userIds), eux et eux seuls',
+  JSON.stringify([...(r.userIds ?? [])].sort()) === JSON.stringify([U[0], U[1]].sort())
+  || (console.log('        userIds :', JSON.stringify(r.userIds)), false));
 
 r = await S.mintGoal(goal(1, 23, 85, 1, 0, 'Diallo'));
 check('rejouer le même but ne refrappe rien', r.minted === false && r.reason === 'already_minted');
+check('et ne nomme personne : un but déjà frappé ne se réannonce pas',
+  Array.isArray(r.userIds) && r.userIds.length === 0);
 
 r = await S.mintGoal({ ...goal(2, 30, 85, 2, 0, 'Morel'), leagueId: 999 });
 check('compétition désactivée : aucune carte', r.reason === 'league_not_eligible');
+check('et personne à qui l’annoncer', Array.isArray(r.userIds) && r.userIds.length === 0);
 
 /* --------------------------------- le deuxième joueur décroche à la mi-temps */
 
@@ -169,18 +180,23 @@ await pool.query(
   [Math.floor(PRESENCE_WINDOW_MS / 1000) + 30, U[2]]);
 r = await S.mintGoal({ ...goal(1, 12, 85, 1, 0, 'Bento'), fixtureId: 5002 });
 check('avoir laissé l\u2019app ouverte ne suffit pas', r.presents === 0);
+check('et qui n’a pas chanté dans la fenêtre n’est pas nommé',
+  r.minted === true && Array.isArray(r.userIds) && r.userIds.length === 0);
 
 /* ------------------------------------------------- les chants, et leur repli
 
  * Les missions du Virage comptent des chants : « chante 10 fois », « 10 fois
- * dans chaque mi-temps ». Ils s'écrivent **dans l'upsert de présence qui
- * existe**, sans une instruction de plus — une tribune de mille chante plus
- * de dix fois par seconde.
+ * dans chaque mi-temps ». Le bilan de tribune compte les PARFAITS, la
+ * meilleure série et le meilleur geste. Tout s'écrit **dans l'upsert de
+ * présence qui existe**, sans une instruction de plus — une tribune de mille
+ * chante plus de dix fois par seconde (P8).
  *
- * Et leur absence ne doit rien casser : sans `sql/quotidien.sql`, la présence
- * s'écrit comme avant (elle porte les cartes-souvenirs et le classement). Le
- * repli dure dix minutes, puis le comptage se retente, pour qu'un schéma
- * appliqué sur un processus déjà démarré se voie sans le redémarrer.
+ * Et leur absence ne doit rien casser. Trois formes, de la plus riche à la
+ * plus nue : sans `sql/arenes.sql`, les chants se comptent toujours ; sans
+ * `sql/quotidien.sql` non plus, la présence s'écrit comme avant (elle porte
+ * les cartes-souvenirs et le classement). Le repli dure dix minutes, puis la
+ * forme la plus riche se retente, pour qu'un schéma appliqué sur un processus
+ * déjà démarré se voie sans le redémarrer.
  *
  * Tout passe par une instance à part : un pool qui compte ses instructions,
  * une horloge du repli qu'on avance à la main, un journal qu'on lit. */
@@ -205,91 +221,157 @@ check('avoir laissé l\u2019app ouverte ne suffit pas', r.presents === 0);
 
   const X = createSouvenirs({ pool: compteur, requireAuth: (_q, _r, next) => next(),
     horloge: () => Date.now() + decalage });
-  const lire = async (colonnes) => (await pool.query(
-    `SELECT ${colonnes} FROM virage_presence WHERE user_id = ? AND fixture_id = 5003`, [U[0]]))[0][0];
+  const lire = async (colonnes, fixture = 5003) => (await pool.query(
+    `SELECT ${colonnes} FROM virage_presence WHERE user_id = ? AND fixture_id = ?`,
+    [U[0], fixture]))[0][0];
   /** Une poussée de 5 de ferveur ; rend le nombre d'instructions qu'elle a coûté. */
-  const pousser = async (o = {}) => {
+  const pousser = async (o = {}, fixture = 5003) => {
     const avant = instructions;
-    await X.recordPush({ userId: U[0], fixtureId: 5003, side: 0, fanzzyId: 'TR32C', amount: 5, ...o });
+    await X.recordPush({ userId: U[0], fixtureId: fixture, side: 0, fanzzyId: 'TR32C', amount: 5, ...o });
     return instructions - avant;
+  };
+  /* Les colonnes des deux fichiers, lues au motif dans les fichiers eux-mêmes
+     (une instruction par ligne, `schema-smoke` le garde) : on retire et on
+     remet exactement ce qu'on déploie. */
+  const colonnesDe = (fichier) => readFileSync(new URL('../sql/' + fichier, import.meta.url), 'utf8')
+    .split('\n').map((l) => /^ALTER TABLE virage_presence ADD COLUMN IF NOT EXISTS (\w+)/i.exec(l.trim())?.[1])
+    .filter(Boolean);
+  const ARENES = colonnesDe('arenes.sql');
+  const CHANTS = colonnesDe('quotidien.sql');
+  const retirer = (cols) => pool.query(
+    `ALTER TABLE virage_presence ${cols.map((c) => `DROP COLUMN ${c}`).join(', ')}`);
+  const appliquer = async (fichier) => {
+    const raw2 = await mysql.createConnection({ uri: DB, multipleStatements: true });
+    await raw2.query(readFileSync(new URL('../sql/' + fichier, import.meta.url), 'utf8'));
+    await raw2.end();
   };
 
   try {
-    let n = await pousser({ chant: 1, mt: 1 });
-    let l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    check('sql/arenes.sql pose les quatre colonnes du bilan sur virage_presence',
+      JSON.stringify(ARENES) === JSON.stringify(['parfaits', 'serie_max', 'meilleur_q', 'meilleur_chant'])
+      || (console.log('        lues :', ARENES.join(', ')), false));
+
+    let n = await pousser({ chant: 1, mt: 1, parfait: 1, serie: 1, q: 920, chantId: 'montee' });
+    let l = await lire('ferveur, chants, chants_mt1, chants_mt2, parfaits, serie_max, meilleur_q, meilleur_chant');
     check('un chant en première mi-temps : chants 1, première 1, seconde 0',
       l?.chants === 1 && l.chants_mt1 === 1 && l.chants_mt2 === 0
       || (console.log('        ligne :', JSON.stringify(l)), false));
-    check('et il ne coûte qu’une instruction', n === 1
+    check('un PARFAIT, sa série et son geste s’écrivent avec lui',
+      l?.parfaits === 1 && l.serie_max === 1 && l.meilleur_q === 920 && l.meilleur_chant === 'montee'
+      || (console.log('        ligne :', JSON.stringify(l)), false));
+    check('et il ne coûte qu’une instruction, colonnes des arènes comprises (P8)', n === 1
       || (console.log(`        ${n} instructions`), false));
 
-    n = await pousser({ chant: 1, mt: 2 });
-    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    /* **Le meilleur geste**, et l'ordre de l'upsert. 0,97 sur « mur » passe
+       devant 0,92 sur « montée » ; 0,93 sur « cadence », ensuite, ne le
+       détrône pas. Écrite avant le chant, la note se comparerait à elle-même
+       et « montée » resterait le meilleur geste pour toujours (règle 15). */
+    n = await pousser({ chant: 1, mt: 2, parfait: 1, serie: 2, q: 970, chantId: 'mur' });
+    l = await lire('chants, chants_mt1, chants_mt2, parfaits, serie_max, meilleur_q, meilleur_chant');
     check('un chant en seconde mi-temps compte dans la seconde',
       l.chants === 2 && l.chants_mt1 === 1 && l.chants_mt2 === 1);
     check('une instruction encore, ligne existante comprise', n === 1);
-
-    await pousser({ chant: 1, mt: 0 });
-    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    check('0,97 sur « mur » devient le meilleur geste',
+      l.meilleur_chant === 'mur' && l.meilleur_q === 970 && l.parfaits === 2 && l.serie_max === 2
+      || (console.log('        ligne :', JSON.stringify(l)), false));
+    await pousser({ chant: 1, mt: 0, parfait: 1, serie: 2, q: 930, chantId: 'cadence' });
+    l = await lire('chants, chants_mt1, chants_mt2, parfaits, serie_max, meilleur_q, meilleur_chant');
+    check('0,93 sur « cadence » ne le détrône pas',
+      l.meilleur_chant === 'mur' && l.meilleur_q === 970
+      || (console.log('        ligne :', JSON.stringify(l)), false));
     check('un chant à la mi-temps compte, mais dans aucune des deux',
       l.chants === 3 && l.chants_mt1 === 1 && l.chants_mt2 === 1);
+    /* La série d'une salle rouverte repart de zéro en mémoire : la base garde
+       la plus grande, jamais la dernière. */
+    await pousser({ chant: 1, mt: 1, parfait: 0, serie: 1, q: 850, chantId: 'reprise' });
+    l = await lire('chants, parfaits, serie_max, meilleur_chant');
+    check('un BON ne compte pas comme PARFAIT, et la meilleure série reste la plus grande',
+      l.chants === 4 && l.parfaits === 3 && l.serie_max === 2 && l.meilleur_chant === 'mur');
 
     /* Une carte : la salle transporte la mi-temps de toute poussée, et c'est
-       ici que l'on refuse de la compter sans chant. */
-    await pousser({ chant: 0, mt: 1 });
+       ici que l'on refuse de la compter sans chant — ni comme PARFAIT, ni
+       comme geste noté, même si on le lui passe. */
+    await pousser({ chant: 0, mt: 1, parfait: 1, q: 999, chantId: 'mur' });
     await pousser();
-    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    l = await lire('ferveur, chants, chants_mt1, parfaits, meilleur_q');
     check('une carte n’est pas un chant, même en pleine mi-temps',
-      l.chants === 3 && l.chants_mt1 === 1);
-    check('et la ferveur s’ajoute comme avant, poussée par poussée (5 × 5)',
-      l.ferveur === 25 || (console.log(`        ferveur ${l.ferveur}`), false));
+      l.chants === 4 && l.chants_mt1 === 2);
+    check('ni un PARFAIT, ni un geste noté', l.parfaits === 3 && l.meilleur_q === 970);
+    check('et la ferveur s’ajoute comme avant, poussée par poussée (6 × 5)',
+      l.ferveur === 30 || (console.log(`        ferveur ${l.ferveur}`), false));
+
+    /* Une ligne ouverte par une carte, puis un chant noté 0 : le match a un
+       chant, il a donc un meilleur geste, si mauvais soit-il. */
+    await pousser({ chant: 0 }, 5004);
+    await pousser({ chant: 1, q: 0, chantId: 'repons' }, 5004);
+    l = await lire('meilleur_q, meilleur_chant', 5004);
+    check('une ligne ouverte par une carte prend le premier chant pour meilleur geste',
+      l?.meilleur_chant === 'repons' && l.meilleur_q === 0
+      || (console.log('        ligne :', JSON.stringify(l)), false));
     check('aucun mot au journal tant que les colonnes sont là', journal.length === 0);
 
-    /* ---------------------------- le schéma n'a pas été appliqué */
+    /* ------------------- sans sql/arenes.sql : les chants comptent toujours */
 
-    await pool.query(`ALTER TABLE virage_presence DROP COLUMN chants,
-      DROP COLUMN chants_mt1, DROP COLUMN chants_mt2`);
+    await retirer(ARENES);
     let leve = null;
-    try { n = await pousser({ chant: 1, mt: 1 }); } catch (e) { leve = e; }
-    check('sans les colonnes des chants, la poussée ne lève pas',
+    try { n = await pousser({ chant: 1, mt: 1, parfait: 1, serie: 3, q: 990, chantId: 'mur' }); }
+    catch (e) { leve = e; }
+    check('sans les colonnes des arènes, la poussée ne lève pas',
       leve === null || (console.log('        levé :', leve.message), false));
-    l = await lire('ferveur');
-    check('et la présence s’écrit toujours', l?.ferveur === 30
-      || (console.log(`        ferveur ${l?.ferveur}`), false));
+    l = await lire('ferveur, chants, chants_mt1');
+    check('et les chants se comptent toujours : la forme du quotidien prend le relais',
+      l?.chants === 5 && l.chants_mt1 === 3 && l.ferveur === 35
+      || (console.log('        ligne :', JSON.stringify(l)), false));
     check('au prix d’une seule instruction en échec, rejouée aussitôt (2)', n === 2
       || (console.log(`        ${n} instructions`), false));
-    check('le journal le dit, et nomme le fichier à appliquer',
-      journal.length === 1 && journal[0].includes('sql/quotidien.sql')
+    check('le journal le dit, et nomme sql/arenes.sql',
+      journal.length === 1 && journal[0].includes('sql/arenes.sql')
       || (console.log('        journal :', JSON.stringify(journal)), false));
-
     n = await pousser({ chant: 1, mt: 1 });
     check('pendant le repli, une poussée ne coûte qu’une instruction', n === 1
       || (console.log(`        ${n} instructions`), false));
-    check('et le journal ne se répète pas', journal.length === 1);
 
-    /* Dix minutes plus tard, toujours sans les colonnes : un seul nouvel essai,
-       et le repli repart pour dix minutes. C'est la borne promise : une
-       instruction en échec toutes les dix minutes, jamais deux par poussée. */
+    /* ------------- ni les arènes ni le quotidien : la présence s'écrit */
+
+    await retirer(CHANTS);
+    leve = null;
+    try { n = await pousser({ chant: 1, mt: 1 }); } catch (e) { leve = e; }
+    check('sans les colonnes des chants non plus, la poussée ne lève pas',
+      leve === null || (console.log('        levé :', leve.message), false));
+    l = await lire('ferveur');
+    check('et la présence s’écrit toujours', l?.ferveur === 45
+      || (console.log(`        ferveur ${l?.ferveur}`), false));
+    check('une instruction en échec, rejouée sur la forme nue (2)', n === 2
+      || (console.log(`        ${n} instructions`), false));
+    check('le journal le dit une fois, et nomme sql/quotidien.sql',
+      journal.length === 2 && journal[1].includes('sql/quotidien.sql')
+      || (console.log('        journal :', JSON.stringify(journal)), false));
+    n = await pousser({ chant: 1, mt: 1 });
+    check('pendant le repli, une instruction seulement (1)', n === 1);
+    check('et le journal ne se répète pas', journal.length === 2);
+
+    /* Dix minutes plus tard, toujours sans rien : un seul nouvel essai de
+       chaque forme, et le repli repart pour dix minutes. C'est la borne
+       promise : deux instructions en échec toutes les dix minutes, jamais
+       plus. */
     decalage = REPLI_CHANTS_MS + 1;
     n = await pousser({ chant: 1, mt: 1 });
-    check('passé dix minutes, le comptage se retente une fois (2)', n === 2);
+    check('passé dix minutes, les deux formes se retentent une fois (3)', n === 3
+      || (console.log(`        ${n} instructions`), false));
     n = await pousser({ chant: 1, mt: 1 });
-    check('puis se replie de nouveau pour dix minutes (1)', n === 1);
+    check('puis se replient de nouveau pour dix minutes (1)', n === 1);
     l = await lire('ferveur');
-    check('sans perdre une seule présence en route', l.ferveur === 45
+    check('sans perdre une seule présence en route', l.ferveur === 60
       || (console.log(`        ferveur ${l.ferveur}`), false));
-    check('et sans le redire au journal', journal.length === 1);
+    check('et sans le redire au journal', journal.length === 2);
 
     /* ------------------- le schéma arrive, le module tourne toujours */
 
-    const raw2 = await mysql.createConnection({ uri: DB, multipleStatements: true });
-    await raw2.query(readFileSync(new URL('../sql/quotidien.sql', import.meta.url), 'utf8'));
-    await raw2.end();
-
+    await appliquer('quotidien.sql');
     await pousser({ chant: 1, mt: 2 });
-    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    l = await lire('ferveur, chants');
     check('le repli tient ses dix minutes, même colonnes revenues',
-      l.chants === 0 && l.ferveur === 50);
+      l.chants === 0 && l.ferveur === 65);
 
     decalage += REPLI_CHANTS_MS + 1;
     n = await pousser({ chant: 1, mt: 2 });
@@ -297,9 +379,22 @@ check('avoir laissé l\u2019app ouverte ne suffit pas', r.presents === 0);
     check('dix minutes plus tard, les chants se comptent de nouveau, sans remonter le module',
       l.chants === 1 && l.chants_mt2 === 1 && l.chants_mt1 === 0
       || (console.log('        ligne :', JSON.stringify(l)), false));
+    check('au prix de la forme des arènes, toujours absente (2)', n === 2
+      || (console.log(`        ${n} instructions`), false));
+    check('et le journal dit la reprise des chants, une fois',
+      journal.length === 3 && journal[2].includes('chants') && journal[2].includes('de nouveau')
+      || (console.log('        journal :', JSON.stringify(journal)), false));
+
+    await appliquer('arenes.sql');
+    decalage += REPLI_CHANTS_MS + 1;
+    n = await pousser({ chant: 1, mt: 2, parfait: 1, serie: 1, q: 940, chantId: 'canon' });
+    l = await lire('chants, parfaits, meilleur_q, meilleur_chant');
+    check('les colonnes des arènes revenues, tout se recompte',
+      l.chants === 2 && l.parfaits === 1 && l.meilleur_chant === 'canon' && l.meilleur_q === 940
+      || (console.log('        ligne :', JSON.stringify(l)), false));
     check('d’une seule instruction', n === 1);
-    check('et le journal dit la reprise, une fois',
-      journal.length === 2 && journal[1].includes('de nouveau')
+    check('et le journal dit la reprise des PARFAITS',
+      journal.length === 4 && journal[3].includes('PARFAITS') && journal[3].includes('de nouveau')
       || (console.log('        journal :', JSON.stringify(journal)), false));
   } finally {
     console.warn = warnAvant;

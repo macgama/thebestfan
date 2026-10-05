@@ -146,7 +146,26 @@ export function createStore(pool) {
         `UPDATE user_wallet SET rangs_vus = NULL, visite_a = NULL, instantane = NULL
           WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
       ];
-      for (const sql of quotidien) {
+      /* **Le choix de présence** (`sql/arenes.sql`) : visible de ses amis ou
+         caché. Il décrit une personne, il part avec elle — remis à `NULL`, le
+         défaut du registre, comme pour qui n'a jamais choisi.
+
+         **Une instruction à elle**, et non une colonne de plus dans celle du
+         quotidien : sur une base où `arenes.sql` n'est pas encore passé, la
+         colonne absente ferait lever l'instruction entière, et le repli
+         tolérant ci-dessous avalerait alors aussi l'effacement de la dernière
+         visite et des rangs vus. Une colonne qui manque ne doit faire oublier
+         que la sienne.
+
+         Ce que le bilan de tribune ajoute à la ligne de présence (PARFAITS,
+         meilleure série, meilleur chant) reste avec elle, comme les parties :
+         c'est l'histoire d'un match, et la ligne ne porte qu'un identifiant
+         que plus rien ne relie à personne. */
+      const arenes = [
+        `UPDATE user_wallet SET presence = NULL
+          WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
+      ];
+      for (const sql of [...quotidien, ...arenes]) {
         try {
           await q(sql, [userId]);
         } catch (e) {

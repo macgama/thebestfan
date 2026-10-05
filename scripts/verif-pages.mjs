@@ -27,9 +27,10 @@
  *      et cache la fuite.
  *
  *   5. **Les règles du socle FAIT MAIN** qui se lisent dans le texte : aucun
- *      backdrop-filter, aucun émoji cadenas ou coche, aucun « .calc( », et un
- *      data-ton sur chaque rail d'onglets. Voir leur section, en fin de
- *      fichier ; ce qui demande un rendu est mesuré par audit-ui.mjs.
+ *      backdrop-filter, aucun émoji cadenas ou coche, aucun « .calc( », un
+ *      data-ton sur chaque rail d'onglets, et (lot 6) aucune page qui coupe
+ *      elle-même la note d'un geste — le mot est servi. Voir leur section, en
+ *      fin de fichier ; ce qui demande un rendu est mesuré par audit-ui.mjs.
  *
  * Usage : node scripts/verif-pages.mjs
  * Sortie : 0 si tout va bien, 1 sinon — utilisable tel quel avant un déploiement.
@@ -633,9 +634,9 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
      quel élément les propriétés atterrissent — le dernier composé — et si cet
      élément est tenu par un ancêtre de la feuille commune.
 
-     `.tbf-tiroir .pip` ne peut atteindre que ce que la commune a elle-même
-     posé ; `.compte` tout seul atteint n'importe quel `.compte` de n'importe
-     quelle page. La différence est là, et elle est entière. */
+     `.tbf-ticket--terrain .sc` ne peut atteindre que ce que la commune a
+     elle-même posé ; `.compte` tout seul atteint n'importe quel `.compte` de
+     n'importe quelle page. La différence est là, et elle est entière. */
   const sujetsLibres = (css) => {
     const libres = new Set();
     const tenu = (c) => c.startsWith('tbf-') || PARTAGEES.has(c);
@@ -1236,8 +1237,9 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
 /* ====================================== les garde-fous du socle FAIT MAIN
 
    Le lot 0 de la refonte rend les écrans lisibles en plein jour et
-   homogènes au toucher. Quatre de ses règles se lisent dans le texte des
-   fichiers, sans navigateur : elles sont tenues ici, parce qu'une règle que
+   homogènes au toucher. Quatre de ses règles, et une du lot 6 (l'échelle
+   du verdict, servie), se lisent dans le texte des fichiers, sans
+   navigateur : elles sont tenues ici, parce qu'une règle que
    seule une passe de correction a fait respecter revient au premier écran
    qu'on ajoute. Celles qui demandent un rendu — la taille réelle du texte,
    son opacité effective, le contraste au soleil — sont mesurées par
@@ -1389,7 +1391,7 @@ const ligneDe = (texte, index) => texte.slice(0, index).split('\n').length;
 
   /* **Le retrait des commentaires ne doit rien manger d'autre.** S'il se
      trompait sur une barre oblique, il blanchirait du vrai code jusqu'à la
-     fin de la ligne — ou du fichier — et les quatre contrôles ci-dessous
+     fin de la ligne — ou du fichier — et les cinq contrôles ci-dessous
      deviendraient verts sur ce qu'ils ne lisent plus. Du code dont on n'a
      retiré que des commentaires compile exactement comme avant : on le
      vérifie, script par script, et on nomme le fichier sinon. */
@@ -1493,6 +1495,40 @@ const ligneDe = (texte, index) => texte.slice(0, index).split('\n').length;
         + 'invalide, et le navigateur jette la déclaration entière sans rien dire.');
     }
     if (!vus.size) ok('.calc(', 'aucune valeur invalide par un point devant calc');
+  }
+
+  /* --- aucun seuil de verdict dans une page
+
+     **Le mot du geste vient du serveur** (décision de Gaël sur Q3, contrat
+     § 16 et § 17) : PARFAIT, BON, MOYEN, RATÉ, une échelle, partout — et le
+     serveur la mesure sur la note **avant** les modificateurs, quand la page
+     ne reçoit que la note d'après (contre-expertise du lot 6, D7). Une page
+     qui compare encore `quality` à 0,9 recommence une seconde échelle, qui
+     dit BON d'un geste que le serveur a compté PARFAIT. Il y en avait trois
+     avant le lot 6 : le Virage (0,9 / 0,7 / 0,4, le Cri à 0,95), le duel
+     (90 et 70 sur la note en pourcentage), la répétition (0,95 / 0,8 / 0,6 /
+     0,3) ; `gestes:test` tient les deux fichiers du lecteur, ce contrôle
+     tient tout public/.
+
+     Ce qu'il cherche : la note — `quality`, `qualite`, `note`, ou `q`, nue
+     ou au bout d'un objet, en pourcentage (`* 100`), avec un défaut
+     (`?? 0`), parenthèses refermées — comparée (`<`, `<=`, `>`, `>=`) à un
+     nombre écrit : une décimale, 1, ou un pourcentage de 10 à 99 ; et la
+     comparaison retournée. Une note comparée à zéro (« une note, pas un
+     zéro ») ou à une autre note (le record) n'est pas un seuil. */
+  {
+    const NOMBRE = String.raw`(?:0?\.\d+|1(?:\.0+)?|[1-9]\d)(?![\d.])`;
+    const NOTE = String.raw`(?:quality|qualite|note|q)\b`;
+    const vus = releve(new RegExp(
+      String.raw`(?<![\w$])${NOTE}(?:\s*(?:\?\?|\|\|)\s*0)?(?:\s*\*\s*100)?\s*\)*\s*[<>]=?\s*${NOMBRE}`
+      + String.raw`|(?<![\w$.])${NOMBRE}\s*[<>]=?\s*\(*\s*(?:[\w$]+\??\.)*${NOTE}`, 'g'),
+    (s) => s.sorte !== 'css');
+    for (const [nom, l] of vus) {
+      ko(nom, `seuil de verdict écrit dans la page (${lignes(l)} : ${[...new Set(l.map((x) => `« ${x.texte} »`))]
+        .slice(0, 3).join(', ')}) : le mot du geste est « verdict », servi, et le Cri « cri » — `
+        + 'une page qui coupe elle-même la note recommence une seconde échelle (Q3, D7).');
+    }
+    if (!vus.size) ok('le verdict', 'aucune page ne compare la note du geste à un seuil écrit');
   }
 
   /* --- chaque rail d'onglets porte son ton

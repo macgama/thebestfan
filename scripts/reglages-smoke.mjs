@@ -20,7 +20,10 @@
  *   2. **qu'une valeur refusée dit pourquoi** — nommer la borne, pas « refusé » ;
  *   3. **que la remise au défaut efface la ligne** plutôt que d'y écrire le
  *      défaut, sans quoi un changement de registre serait figé pour toujours ;
- *   4. **que la route publique ne publie pas l'équilibrage**.
+ *   4. **que la route publique ne publie pas l'équilibrage** ;
+ *   5. **que ce qui est dessiné reste hors du registre** — l'échelle du
+ *      verdict (`src/shared/verdict.js`), dont les bornes sont éprouvées
+ *      sans base par `verdict-smoke`.
  */
 import express from 'express';
 import { createServer } from 'node:http';
@@ -184,10 +187,19 @@ const PLAN = [
     bonus: 'bonus.actif', mission: 'missions.actif', sachet: 'missions.actif',
     carnet: 'saison.carnet_actif', relais: 'saison.carnet_actif',
     cran: 'collection.actif', serie: 'collection.actif', division: 'rang.actif',
+    /* L'XP du Virage (vague 2) s'éteint par son montant : `xp.virage` à 0
+       rend `inactif` (`CONTRATS.md`, § 15.2). Une bascule de plus dirait la
+       même chose que ce zéro, et deux leviers pour une seule porte finissent
+       par se contredire. */
+    virage: 'xp.virage',
   };
+  /* Un interrupteur est une bascule — ou un montant qui descend à 0 et dont
+     l'aide dit qu'à 0 la source s'arrête : c'est ce que lira celui qui
+     cherche le disjoncteur un samedi soir. */
   const sans = SOURCES.filter((s) => {
     const r = PAR_CLE.get(INTERRUPTEURS[s]);
-    return !r || r.type !== 'booleen';
+    return !r || !(r.type === 'booleen'
+      || (r.type === 'entier' && r.min === 0 && /à 0/i.test(r.aide ?? '')));
   });
   check(`chaque source du grand livre a son interrupteur (${SOURCES.length})`,
     sans.length === 0 || (console.log('        sans interrupteur :', sans.join(', ')), false));
@@ -230,6 +242,85 @@ check('les montants des missions disent qu’ils valent pour le lendemain',
     .every((c) => /lendemain/.test(PAR_CLE.get(c)?.aide ?? '')));
 check('une XP de duel à zéro dit qu’elle sort des missions du tirage',
   ['xp.duel_entrainement', 'xp.duel_classe'].every((c) => /tirage/.test(PAR_CLE.get(c)?.aide ?? '')));
+
+/* ------------------------------------------------- le registre des arènes
+
+   La vague 2 (lot 6) pose ses sept clés d'un coup, et trois périmètres
+   codent contre elles : le bilan et l'XP du Virage, la tribune qui se vide,
+   la présence. Même raison que pour le quotidien : une clé absente ne casse
+   rien, elle rend `undefined`, et un `undefined` dans un plafond de matchs
+   ou un délai d'« en ligne » ne se voit nulle part. La table vient du plan
+   (`SERVEUR-VAGUE2.md`, § 4) et des décisions de Gaël du 3 octobre 2026. */
+
+console.log('\n— le registre des arènes —');
+
+check('la section « presence » existe, titrée LA PRÉSENCE',
+  SECTIONS.some((s) => s.id === 'presence' && s.titre === 'LA PRÉSENCE'));
+
+const PLAN_ARENES = [
+  ['xp.virage', 'progression', 'entier', 0, 200, 15],
+  ['xp.virage_chants', 'progression', 'entier', 1, 200, 10],
+  ['xp.virage_matchs_jour', 'progression', 'entier', 1, 20, 3],
+  ['virage.bilan_min', 'virage', 'entier', 1, 30, 5],
+  ['presence.actif', 'presence', 'booleen', null, null, false],
+  ['presence.visible_defaut', 'presence', 'booleen', null, null, true],
+  ['presence.en_ligne_sec', 'presence', 'entier', 30, 900, 120],
+];
+{
+  const ecarts = [];
+  for (const [cle, section, type, min, max, defaut] of PLAN_ARENES) {
+    const r = PAR_CLE.get(cle);
+    if (!r) { ecarts.push(`${cle} absente`); continue; }
+    if (r.section !== section) ecarts.push(`${cle} : section ${r.section}`);
+    if (r.type !== type) ecarts.push(`${cle} : type ${r.type}`);
+    if (r.defaut !== defaut) ecarts.push(`${cle} : défaut ${r.defaut}, le plan dit ${defaut}`);
+    if (min !== null && (r.min !== min || r.max !== max)) {
+      ecarts.push(`${cle} : bornes ${r.min}–${r.max}, le plan dit ${min}–${max}`);
+    }
+  }
+  check(`les ${PLAN_ARENES.length} clés des arènes sont là, avec leur section, leurs bornes et leur valeur de départ`,
+    ecarts.length === 0 || (console.log('        écarts :', ecarts.join(' · ')), false));
+}
+
+/* **Livrée éteinte.** C'est la décision (Q2) : la présence ne s'allume
+   qu'après la mise en ligne de la nouvelle politique de confidentialité, et
+   c'est le défaut du registre qui le garantit — une livraison qui la ferait
+   partir allumée montrerait à des mineurs qui est en ligne, sans texte pour
+   le dire. Un contrôle à lui, et non une ligne de la table : il doit rougir
+   avec son propre nom. */
+check('presence.actif existe, est une bascule, et part éteinte',
+  PAR_CLE.get('presence.actif')?.type === 'booleen' && DEFAUTS['presence.actif'] === false
+  || (console.log('        défaut :', DEFAUTS['presence.actif']), false));
+
+/* Ce que l'écran d'administration doit dire au moment de toucher ces
+   nombres (le plan, § 4). */
+check('xp.virage dit « une fois par match » et ce qui se passe à 0',
+  /une fois par match/i.test(PAR_CLE.get('xp.virage')?.aide ?? '')
+    && /à 0/i.test(PAR_CLE.get('xp.virage')?.aide ?? ''));
+check('xp.virage_matchs_jour dit qu’il est le même pour tous, abonnés compris',
+  /abonnés compris/i.test(PAR_CLE.get('xp.virage_matchs_jour')?.aide ?? ''));
+check('virage.bilan_min dit que la tribune se vide pour que le relevé cesse de la payer',
+  /relevé du direct/i.test(PAR_CLE.get('virage.bilan_min')?.aide ?? ''));
+check('presence.actif dit qu’éteint, aucun écran ne montre de présence',
+  /aucun écran/i.test(PAR_CLE.get('presence.actif')?.aide ?? ''));
+check('presence.visible_defaut dit qu’un joueur qui a choisi garde son choix',
+  /garde son choix/i.test(PAR_CLE.get('presence.visible_defaut')?.aide ?? ''));
+
+/* ------------------------------------------- le verdict : dessiné, pas réglé
+
+   L'échelle unique du verdict (Q3, `src/shared/verdict.js`) ne se règle pas :
+   un seuil de PARFAIT qu'on pourrait déplacer depuis /admin ferait varier le
+   compte des PARFAITS d'un soir à l'autre, et le bilan comparerait des
+   choses différentes. Le registre ne doit donc pas l'héberger — c'est le seul
+   contrôle du verdict qui parle du registre, et il reste ici. L'échelle
+   elle-même (ses bornes, la note mesurée, le contrat qui la recopie, le
+   serveur qui la lit) est éprouvée sans base par `verdict-smoke`. */
+
+console.log('\n— le verdict —');
+check('aucun réglage ne porte le verdict, ses seuils, le Cri ou les paliers de ferveur',
+  !REGLAGES.some((r) => /verdict|parfait|\bcri\b|palier/i.test(r.cle))
+  || (console.log('        fautives :', REGLAGES.filter((r) => /verdict|parfait|\bcri\b|palier/i.test(r.cle))
+    .map((r) => r.cle).join(', ')), false));
 
 /* ------------------------------------------------------ la validation */
 
@@ -434,6 +525,10 @@ check('la route ne publie pas l’équilibrage du jeu',
 check('ni les montants du quotidien, ni le disjoncteur',
   !/bonus\.|missions?\.|quotidien\.|saison\.|collection\.|rang\.|recompenses\./.test(brut)
   || (console.log('        rendu :', brut), false));
+/* Ni la présence : allumée ou non, elle se lit par `/api/presence`, session
+   requise (`CONTRATS.md`, § 18.2) — jamais sur une route publique. */
+check('ni les réglages de la présence',
+  !/presence\./.test(brut) || (console.log('        rendu :', brut), false));
 
 await ecrireReglage(pool, 'maintenance.actif', true, null);
 check('la fermeture s’annonce, avec son message',

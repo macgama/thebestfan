@@ -39,6 +39,8 @@
 import express from 'express';
 import { resoudreGeste, grade, GESTES, MOTIFS, Cheat } from '../ferveur/gestures.js';
 import { Triche } from '../ferveur/epreuves.js';
+// L'échelle de l'arène (CONTRATS.md § 16.1), et plus celle de la page.
+import { verdictDe } from '../../shared/verdict.js';
 
 /**
  * Le motif, tiré ici et à chaque fois.
@@ -94,8 +96,17 @@ export function createRepetition() {
     const motif = Number(req.body?.motif) || 0;
 
     try {
-      const note = grade(geste, req.body?.rendu, {}, { motif });
-      res.json({ note: Math.max(0, Math.min(1, Number(note) || 0)), refuse: null });
+      const note = Math.max(0, Math.min(1, Number(grade(geste, req.body?.rendu, {}, { motif })) || 0));
+      /* **Le mot de l'arène**, à côté de la note (décision de Gaël du
+         3 octobre 2026, Q3 ; CONTRATS.md § 17). La page coupait elle-même à
+         0,95 / 0,8 / 0,6 / 0,3, avec d'autres mots : un 0,92 était PARFAIT en
+         tribune et TRÈS BIEN ici. On s'entraîne pour le PARFAIT qu'on verra
+         au Virage, donc la salle dit le même. Mesuré sur la note servie — la
+         note brute, puisque la salle ne porte aucun modificateur ; la borner
+         à 1 ne change aucun mot, tout ce qui dépasse 0,9 est PARFAIT. La note
+         chiffrée et le record restent : ce sont eux qui rendent la salle
+         utile. */
+      res.json({ note, refuse: null, verdict: verdictDe(note) });
     } catch (e) {
       if (e instanceof Cheat || e instanceof Triche) {
         res.json({ note: 0, refuse: e.message || 'refuse' });

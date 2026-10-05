@@ -88,9 +88,16 @@ await raw.query(`INSERT INTO user_follows (user_id,team_id) VALUES (?,85)`, [U])
    c'est tout l'intérêt : NOW(3) date dans le fuseau de la session MySQL alors
    que le pilote lit en UTC. Un match semé sans cette colonne laissait `luA` à
    nul, et le contrôle de l'horloge ne pouvait rien éprouver du tout. */
+/* Un second match du même club, en jeu lui aussi, pour les sorties (en fin
+   de suite) : le premier a reçu son coup de sifflet entre-temps, et une page
+   qui entre dans un match fini fait d'elle-même ce que fait le coup de
+   sifflet — elle demande son bilan, puis quitte la salle. Sur lui, le
+   contrôle de RESTER voyait partir un `virage:leave` qu'aucun bouton
+   n'avait demandé. */
 await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
                                        home_goals,away_goals,elapsed,kickoff_at,polled_at)
-                 VALUES (8001,207,2026,85,91,'2H',2,1,71,UTC_TIMESTAMP(),NOW(3))`);
+                 VALUES (8001,207,2026,85,91,'2H',2,1,71,UTC_TIMESTAMP(),NOW(3)),
+                        (8002,207,2026,85,91,'2H',0,0,55,UTC_TIMESTAMP(),NOW(3))`);
 await raw.query(`INSERT INTO fixture_events
                    (fixture_id,seq,type,detail,team_id,player,assist,minute)
                  VALUES (8001,0,'Card','Yellow Card',91,'Zambrano',NULL,12),
@@ -119,6 +126,11 @@ app.get('/virage', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'virage.htm
    cette route, pas de bouton de menu — et depuis que la barre du bas a
    disparu, plus aucune sortie du Virage. */
 app.get('/api/auth/me', (_q, s) => s.json({ user: { id: U, pseudo: 'Testeur' } }));
+/* Le bandeau d'annonce de l'administration, que `nav.js` lit dans les
+   réglages publics : aucun, comme le plus souvent en ligne ; le bloc qui
+   l'éprouve en pose un le temps de charger sa page (voir plus bas). */
+let annonceDuBanc = null;
+app.get('/api/public/reglages', (_q, s) => s.json(annonceDuBanc ? { annonce: annonceDuBanc } : {}));
 app.use(express.static(path.join(RACINE, 'public')));
 await new Promise((r) => http.listen(0, r));
 const base = `http://localhost:${http.address().port}`;
@@ -353,6 +365,26 @@ if (!entre) {
       chants.filter((c) => c.rogne).map((c) => c.texte).join(', ')), false));
 }
 
+/* ------------------------------------------- le « i » de ce qu'on porte
+
+   Une plaque ronde dans la rangée du souffle (le tableau), et son panneau
+   hors de la colonne (brief du lot 6). Au premier passage, il s'était posé
+   au bout de la rangée d'actions ; on vérifie qu'il est à sa place, qu'il y
+   reste quand la rangée d'actions est là, et que son panneau ne vit pas
+   dans `#app`, contexte d'empilement. */
+{
+  const i = await page.evaluate(() => {
+    render();
+    const el = document.getElementById('apportsL');
+    return { tableau: Boolean(el.closest('.tableau .tbf-tableau-droite')),
+      rangee: Boolean(el.closest('#rangeeActes')),
+      panneau: !document.getElementById('apportsP').closest('#app') };
+  });
+  check('le « i » de ce qu’on porte est dans la rangée du souffle',
+    i.tableau && !i.rangee || (console.log('        tableau', i.tableau, '· rangée d’actions', i.rangee), false));
+  check('et son panneau vit hors de la colonne', i.panneau);
+}
+
 /* ---------------------------------------------------------- la bande */
 
 const bande = () => page.evaluate(() => ({
@@ -367,8 +399,12 @@ const bande = () => page.evaluate(() => ({
      le joueur pousse sur une corde dont le score n'a rien à voir avec la
      rencontre, et c'est justement ce que le fil est là pour démêler. */
   check('la bande donne le score du vrai match', b.score === '2 – 1');
+  /* **Le ticket terrain tient court** (lot 6) : l'icône et le nom, rien
+     d'autre — la minute du match a sa pastille à côté, la minute de l'action
+     et son détail sont dans la feuille. Le carton rouge se dit par sa forme
+     de couleur : sur le kraft, l'encre ne prend pas de teinte. */
   check('et la dernière chose arrivée sur le terrain',
-    /66'.*Keller/.test(b.dernier) || (console.log('        elle dit :', b.dernier), false));
+    /^🟥 Keller$/.test(b.dernier) || (console.log('        elle dit :', b.dernier), false));
   check('le score de la tribune reste distinct, en haut',
     (await page.$eval('#score', (n) => n.textContent.trim())) === '0 – 0');
 
@@ -408,6 +444,50 @@ const bande = () => page.evaluate(() => ({
     const s = document.querySelector('#fil .sc small').getBoundingClientRect();
     return s.top >= f.top && s.bottom <= f.bottom && s.height > 0;
   }));
+}
+
+/* ------------------------------------------- le dernier fait, à l'étroit
+
+   Le ticket ne porte que le nom (« 🟥 KELLER ») : l'API écrit l'initiale du
+   prénom, et à 320 px en minute double, le sticker de phase prenait la
+   place — « 🟥 M. KELLER » sortait coupé de vingt pixels (relevé de la
+   mesure, lot 6). La page écrit le nom sans l'initiale, et **efface le
+   dernier fait plutôt que de le couper** : il reste dans la feuille. On le
+   pousse ici au plus étroit, avec un nom qui ne tient pas, puis on rend la
+   page comme on l'a trouvée. */
+{
+  const formes = await page.evaluate(() =>
+    [nomCourt('M. Keller'), nomCourt('J.-P. Dupont'), nomCourt('N’Golo Kanté'), nomCourt('Keller')].join('|'));
+  check('le ticket écrit le nom sans l’initiale du prénom',
+    formes === 'Keller|Dupont|N’Golo Kanté|Keller' || (console.log('        il écrit :', formes), false));
+
+  await page.setViewport({ width: 320, height: 568 });
+  const etroit = await page.evaluate(async () => {
+    const lire = () => { const d = document.getElementById('filDer');
+      return { texte: d.textContent, coupe: d.scrollWidth - d.clientWidth }; };
+    const fil = S.fil, surge = S.surge, fin = P.doubleFin;
+    S.surge = true; P.doubleFin = performance.now() + 45_000;
+    S.fil = [...(fil ?? []), { genre: 'match', type: 'Card', detail: 'Red Card',
+      joueur: 'M. Abdelhamid-Zambrano', minute: 80, side: 1, rang: 999 }];
+    render(); renderFil();
+    await new Promise((r) => setTimeout(r, 60));
+    const long = lire();
+    S.fil = [...(fil ?? []), { genre: 'match', type: 'Card', detail: 'Red Card', joueur: 'M. Roth', minute: 80, side: 1, rang: 999 }];
+    S.surge = false; P.doubleFin = null;
+    render(); renderFil();
+    await new Promise((r) => setTimeout(r, 60));
+    const court = lire();
+    S.fil = fil; S.surge = surge; P.doubleFin = fin;
+    render(); renderFil();
+    return { long, court };
+  });
+  await page.setViewport({ width: 400, height: 880 });
+  await wait(150);
+  check('à l’étroit, un nom qui ne tient pas s’efface au lieu de se couper',
+    etroit.long.texte === '' || (console.log('        il dit :', etroit.long.texte, 'coupé de', etroit.long.coupe), false));
+  check('et un nom qui tient s’écrit en entier',
+    etroit.court.texte === '🟥 Roth' && etroit.court.coupe <= 1
+    || (console.log('        il dit :', etroit.court.texte, 'coupé de', etroit.court.coupe), false));
 }
 
 /* ------------------------------------------------- l'horloge du match
@@ -521,10 +601,62 @@ const lignes = () => page.evaluate(() => [...document.querySelectorAll('#feuille
  * « MINUTE DOUBLE » d'un but pendant trois secondes.
  *
  * C'est la règle du booster, transposée : un plein écran doit rester lisible
- * et refermable tant qu'il est ouvert. */
+ * et refermable tant qu'il est ouvert.
+ *
+ * **Le lot 6 a retiré ce bandeau-là du Virage** : la minute double se dit
+ * dans le sticker de phase du HUD. Le but réel ne pose donc plus de calque
+ * sur la tête de la feuille, et le contrôle garde son sens avec un autre :
+ * un bandeau de `fx.js` posé exprès en haut de l'écran (le même calque que
+ * tous ses titres), et la case du moment fort, que la scène pose sur le
+ * document au même calque que la feuille. */
 {
+  /* **L'entrée dans la minute double claque** (partie B) : l'attribut
+     basculait seul, sans claquement ni son, et l'or ne se voyait qu'en le
+     cherchant. On relève, avant le but, chaque fois que le sticker de phase
+     prend `.tbf-clac`, et chaque son que la page demande à `fx.js` : le
+     claquement est une classe qui s'en va en 400 ms, la mesure d'après le
+     but ne la verrait plus. */
+  await page.evaluate(() => {
+    window.__clacsPhase = 0;
+    window.__sons = [];
+    const ph = document.getElementById('phase');
+    new MutationObserver(() => { if (ph.classList.contains('tbf-clac')) window.__clacsPhase++; })
+      .observe(ph, { attributes: true, attributeFilter: ['class'] });
+    const vrai = window.FX?.son?.bind(window.FX);
+    if (vrai) window.FX.son = (nom, ...reste) => { window.__sons.push(nom); return vrai(nom, ...reste); };
+  });
   virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 73, player: 'Bonvin', score: [3, 1] });
   await wait(700);
+
+  const apresBut = await page.evaluate(() => ({
+    bandeau: Boolean(document.querySelector('.fx-bandeau')),
+    phase: document.querySelector('#phase .long')?.textContent.trim() ?? '',
+    double: document.getElementById('app').hasAttribute('data-double'),
+    clacs: window.__clacsPhase, sons: [...window.__sons],
+  }));
+  check('le but réel ne pose plus de bandeau « MINUTE DOUBLE »', !apresBut.bandeau);
+  /* Avec ou sans le chrono : un serveur qui sert `surgeMs` (CONTRATS § 16)
+     donne « MINUTE DOUBLE 0:59 », un serveur d'avant « MINUTE DOUBLE ». */
+  check('c’est le sticker de phase qui dit la minute double',
+    (/^MINUTE DOUBLE( \d:\d\d)?$/.test(apresBut.phase) && apresBut.double)
+    || (console.log('        il dit :', apresBut.phase, apresBut.double ? '(data-double)' : '(sans data-double)'), false));
+  check('et son entrée claque : le sticker prend le coup de tampon, et le clac sonne',
+    (apresBut.clacs >= 1 && apresBut.sons.includes('bache'))
+    || (console.log('        claquements', apresBut.clacs, '· sons', apresBut.sons.join(', ') || 'aucun'), false));
+  /* La case du moment fort est au calque de la feuille, et posée après elle
+     dans le document : la page la redescend tant que la feuille est ouverte. */
+  const cases = await page.evaluate(() => {
+    const c = document.querySelector('body > .tbf-moment');
+    const f = document.getElementById('feuille');
+    return { on: Boolean(c?.classList.contains('on')), case: Number(getComputedStyle(c).zIndex),
+      feuille: Number(getComputedStyle(f).zIndex) };
+  });
+  check('la case du but passe sous la feuille ouverte',
+    (cases.on && cases.case < cases.feuille)
+    || (console.log('        case', cases.case, '· feuille', cases.feuille, cases.on ? '' : '(case éteinte)'), false));
+
+  await page.evaluate(() => window.FX.bandeau('TEMPS FORT'));
+  await wait(400);
 
   /* On regarde les **pixels**, pas l'ordre de survol.
      `document.elementsFromPoint` ignore tout ce qui porte `pointer-events:none`
@@ -566,6 +698,34 @@ const lignes = () => page.evaluate(() => [...document.querySelectorAll('#feuille
   check('et le score du terrain suit', (await bande()).score === '3 – 1');
 }
 
+/* ------------------------------------- le sticker de phase dit la mi-temps
+
+   Hors de la minute double, le sticker disait « GRAND VIRAGE » (« VIRAGE »
+   sous 390 px) quoi qu'il arrive, et le ticket ne montre à la pause qu'une
+   minute arrêtée : la rumeur retombait, et rien à l'écran ne disait
+   pourquoi. Il dit maintenant la phase du match quand elle en a une — la
+   mi-temps ici. La minute double passe devant : on l'éteint le temps de
+   lire, puis on rend la page telle qu'on l'a trouvée (un seul passage
+   synchrone, qu'aucun message du serveur ne coupe). */
+{
+  const phases = await page.evaluate(() => {
+    const lire = () => [document.querySelector('#phase .long')?.textContent.trim() ?? '',
+      document.querySelector('#phase .court')?.textContent.trim() ?? ''].join('|');
+    const statut = S.statut, surge = S.surge, fin = P.doubleFin;
+    S.surge = false; P.doubleFin = null;
+    S.statut = 'HT'; render();
+    const pause = lire();
+    S.statut = '2H'; render();
+    const jeu = lire();
+    S.statut = statut; S.surge = surge; P.doubleFin = fin; render();
+    return { pause, jeu };
+  });
+  check('à la mi-temps, le sticker de phase le dit',
+    phases.pause === 'MI-TEMPS|MI-TEMPS' || (console.log('        il dit :', phases.pause), false));
+  check('et en jeu, il redit le Grand Virage, sous ses deux formes',
+    phases.jeu === 'GRAND VIRAGE|VIRAGE' || (console.log('        il dit :', phases.jeu), false));
+}
+
 /* ------------------------------------------------------- on peut sortir */
 
 await page.keyboard.press('Escape');
@@ -585,9 +745,11 @@ check('et le bouton de fermeture aussi',
    « Est-ce que les cartes se régénèrent ? » (Gaël, 4 octobre 2026). Oui,
    côté serveur. Mais la page ne l'apprenait pas : les recharges arrivaient en
    secondes restantes et n'étaient jamais décomptées, si bien qu'une carte
-   restait grise sous un chiffre figé. Quand toutes l'étaient, plus rien ne
-   partait, donc plus aucun `virage:vous` n'arrivait : la main était bloquée
-   jusqu'au rechargement, en une demi-minute de jeu.
+   gardait son scotch sous un chiffre figé, et que la page la refusait
+   elle-même. Quand toutes l'étaient, plus rien ne partait, donc plus aucun
+   `virage:vous` n'arrivait : la main était bloquée jusqu'au rechargement, en
+   une demi-minute de jeu. (Correctif d'urgence, reporté au lot 6 : la carte
+   en recharge est ici le scotch qui se retire, `.tbf-carte-recharge`.)
 
    Le joueur de cette suite n'a pas de deck. On lui pose une main par le
    message même du serveur, `virage:vous`, rejoué par les écouteurs de la
@@ -615,32 +777,51 @@ const laScene = () => page.evaluate(() => ({
   const id = await page.evaluate(() =>
     (S.actions ?? []).find((a) => a.id === 'a-fumigene')?.id ?? S.actions?.[0]?.id ?? null);
   const lire = () => page.evaluate(() => {
-    const el = document.querySelector('#actes .acte:not(.vide)');
+    const el = document.querySelector('#actes [data-acte]');
+    const r = el?.querySelector('.tbf-carte-recharge');
     return {
       cachee: document.getElementById('actes').hidden,
-      hs: el ? el.classList.contains('hs') : null,
       acte: el?.dataset.acte ?? null,
-      cd: el?.querySelector('.cd')?.textContent.trim() ?? null,
+      cd: r?.firstElementChild?.textContent.trim() ?? null,
+      h: r?.style.getPropertyValue('--h').trim() ?? null,
       meme: Boolean(el) && el === window.__carteEssai,
     };
+  });
+  /* Toucher la carte : ce que la page envoie est relevé, et la carte jouée
+     retenue — le joueur de cette suite n'a pas de deck, la salle la
+     refuserait et renverrait sa main vide. */
+  const toucher = () => page.evaluate(() => {
+    const vrai = socket.emit;
+    const emis = [];
+    socket.emit = (e, ...a) => {
+      emis.push(e);
+      return e === 'virage:jouer' ? socket : vrai.call(socket, e, ...a);
+    };
+    try {
+      document.querySelector('#actes [data-acte]')
+        ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    } finally { socket.emit = vrai; }
+    return emis.includes('virage:jouer');
   });
 
   await vous({ main: [id], cooldowns: { [id]: 2 }, breath: 100 });
   await page.evaluate(() => {
-    window.__carteEssai = document.querySelector('#actes .acte:not(.vide)');
+    window.__carteEssai = document.querySelector('#actes [data-acte]');
   });
   const avant = await lire();
-  check(`une carte reçue en recharge est grise, avec son compte (${avant.cd})`,
-    avant.cachee === false && avant.hs === true && avant.acte === null && avant.cd === '2'
+  check(`une carte reçue en recharge porte son scotch et son compte (${avant.cd}, ${avant.h})`,
+    avant.cachee === false && avant.acte === id && avant.cd === '2' && avant.h === '100%'
     || (console.log('        ', JSON.stringify(avant)), false));
+  check('et la page ne la joue pas encore', !(await toucher()));
 
   /* Trois secondes : la recharge en dure deux, et le rendu passe chaque
      seconde. Aucun message du serveur entre les deux — c'est tout l'objet. */
   await wait(3200);
   const apres = await lire();
-  check('trois secondes plus tard, elle se rejoue d’elle-même',
-    apres.hs === false && apres.acte === id && apres.cd === null
+  check('trois secondes plus tard, le scotch s’est retiré de lui-même',
+    apres.acte === id && apres.cd === '' && apres.h === '0%'
     || (console.log('        ', JSON.stringify(apres)), false));
+  check('et la carte se joue', await toucher());
   // Voir ETAT.md § 6 : une case refaite lâche le doigt posé dessus.
   check('et c’est la même case, retouchée en place', apres.meme);
 
@@ -688,10 +869,36 @@ const laScene = () => page.evaluate(() => ({
   const revenue = await lire();
   check('une main vide cache la rangée', vide.cachee === true);
   check('et une carte tirée ensuite la refait paraître, jouable',
-    revenue.cachee === false && revenue.acte === id
+    revenue.cachee === false && revenue.acte === id && revenue.cd === ''
     || (console.log('        ', JSON.stringify(revenue)), false));
+
+  /* **« DUEL SEULEMENT » sur une case qui le restera, et sur elle seule.**
+     Il se posait sur autant de cases vides qu'il y a de cartes restées au
+     duel : la case de la carte suivante, pas encore tirée, s'expliquait donc
+     par le duel, à chaque carte jouée. Un deck de dix cartes : avec trois au
+     duel, sept se jouent ici et la main se remplit toujours ; avec sept au
+     duel, trois seulement, et les deux dernières cases restent vides. */
+  const rangee = (ecartees, n) => page.evaluate(({ ecartees, n }) => {
+    const main = (S.actions ?? []).slice(0, n).map((a) => a.id);
+    for (const f of socket.listeners('virage:vous')) {
+      f({ main, cooldowns: {}, breath: 100, ecartees, mainVisible: 5 });
+    }
+    return [...document.getElementById('actes').children].map((c) => (c.dataset.acte ? 'carte'
+      : /DUEL SEULEMENT/.test(c.textContent) ? 'duel' : 'vide')).join(' ');
+  }, { ecartees, n });
+  const ecarteesAvant = await page.evaluate(() => S.you.ecartees ?? 0);
+  const tirage = await rangee(3, 4);
+  check(`trois cartes au duel : la case du tirage reste nue (${tirage})`,
+    tirage === 'carte carte carte carte vide');
+  const pleine = await rangee(7, 3);
+  check(`sept au duel : les deux cases que rien ne remplira le disent (${pleine})`,
+    pleine === 'carte carte carte duel duel');
+  const enAttente = await rangee(7, 2);
+  check(`et la case du tirage, entre les deux, reste nue (${enAttente})`,
+    enAttente === 'carte carte vide duel duel');
+
   // On rend au joueur sans deck sa main vide : la suite le suppose.
-  await vous({ main: [], cooldowns: {} });
+  await vous({ main: [], cooldowns: {}, ecartees: ecarteesAvant });
 }
 
 /* ======================================== ce qui était déjà au tableau
@@ -699,8 +906,8 @@ const laScene = () => page.evaluate(() => ({
    Le premier relevé d'un match qu'on n'avait jamais relevé envoie au fil
    tout ce qui s'est passé avant. Entrer à la cinquantième faisait jouer
    « ROUGE POUR EUX » pour un carton de la vingtième, et « BUT REFUSÉ » pour
-   une vidéo de la trentième (S8 de l'enquête). Le joueur est entré ici à la
-   soixante et onzième. */
+   une vidéo de la trentième (S8 de l'enquête du 4 octobre 2026). Le joueur
+   est entré ici à la soixante et onzième. */
 {
   await page.evaluate(() => scene?.couper?.());
   virage.matchEvents(8001, [{ type: 'Card', detail: 'Red Card', teamId: 91,
@@ -722,6 +929,29 @@ const laScene = () => page.evaluate(() => ({
   check('un rouge d’après l’entrée le fait toujours réagir',
     frais.on && /ROUGE/.test(frais.titre)
     || (console.log('        il dit :', frais.titre), false));
+
+  /* **Une reconnexion garde la garde.** L'état revient — la même salle, ou
+     une salle libérée puis rouverte pendant la coupure, dont le premier
+     relevé rapporterait tout le match —, et s'il ne dit pas la minute, la
+     garde ne tombe pas : le rouge de la vingtième reste muet. L'état est
+     rejoué tel que la page le tient, sans minute ni personnage. */
+  await page.evaluate(() => scene?.couper?.());
+  const retour = await page.evaluate(() => {
+    const { fanzzy } = S.you;
+    const minute = S.minute;
+    const s = { ...S, minute: null, you: { ...S.you, fanzzy: null } };
+    for (const f of socket.listeners('virage:state')) f(s);
+    S.you.fanzzy = fanzzy;
+    S.minute = minute;
+    return entreeMinute;
+  });
+  virage.matchEvents(8001, [{ type: 'Var', detail: 'Goal cancelled', teamId: 85,
+    minute: 21, player: 'Revenu' }]);
+  await wait(500);
+  const apresRetour = await laScene();
+  check(`revenu sans minute, la garde tient (entré à la ${retour}e) : la vidéo de la 21e est muette`,
+    retour != null && !apresRetour.on
+    || (console.log('        il dit :', apresRetour.titre), false));
   await page.evaluate(() => scene?.couper?.());
 }
 
@@ -732,22 +962,22 @@ const laScene = () => page.evaluate(() => ({
    minute, et rien n'était alors écarté : le premier relevé, à la
    cinquantième, apportait le rouge de la vingtième et la vidéo de la
    trentième, et le personnage jouait « BUT REFUSÉ » (trouvé par la
-   vérification du correctif). La minute de l'entrée s'apprend donc des
-   minutes qui suivent.
+   vérification du correctif d'urgence). La minute de l'entrée s'apprend
+   donc des minutes qui suivent.
 
    Et l'inverse, qu'une garde trop pressée casserait : un match vraiment pas
    commencé, où l'on attend depuis dix minutes, et dont le premier relevé
    n'arrive qu'à la cinquième. Le rouge de la première minute est tombé
    pendant que le joueur était là ; il doit le faire réagir.
 
-   Sur une page à part, avec ses deux matchs : celle du haut garde le sien
-   pour la suite. */
+   Sur une page à part, avec ses deux matchs (8004 et 8005 : 8002 sert aux
+   sorties, plus bas) : celle du haut garde le sien pour la suite. */
 {
   await pool.query(`INSERT INTO teams (id,name,color1,color2) VALUES (92,'FC Thoune',NULL,NULL)`);
   await pool.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
                                           home_goals,away_goals,elapsed,kickoff_at,polled_at)
-                    VALUES (8002,207,2026,91,92,'NS',NULL,NULL,NULL,UTC_TIMESTAMP(),NOW(3)),
-                           (8003,207,2026,91,92,'NS',NULL,NULL,NULL,UTC_TIMESTAMP(),NOW(3))`);
+                    VALUES (8004,207,2026,91,92,'NS',NULL,NULL,NULL,UTC_TIMESTAMP(),NOW(3)),
+                           (8005,207,2026,91,92,'NS',NULL,NULL,NULL,UTC_TIMESTAMP(),NOW(3))`);
   const ailleurs = await nav.newPage();
   ailleurs.on('pageerror', (e) => erreurs.push(e.message));
   await ailleurs.setViewport({ width: 400, height: 880 });
@@ -771,15 +1001,15 @@ const laScene = () => page.evaluate(() => ({
   });
   const vus = () => ailleurs.evaluate(() => [...window.__moments]);
 
-  const dedans = await entrer(8002);
+  const dedans = await entrer(8004);
   const etat = await ailleurs.evaluate(() => ({ minute: S?.minute ?? null, entree: entreeMinute }));
   check(`on entre sur une ligne « NS » jamais relevée, sans minute (${etat.minute})`,
     dedans && etat.minute == null && etat.entree == null);
 
   await guetter();
   // Le premier relevé : le tableau, puis tout ce qui s'est passé avant.
-  virage.matchStatus(8002, { status: '2H', elapsed: 50, homeGoals: 1, awayGoals: 0 });
-  virage.matchEvents(8002, [
+  virage.matchStatus(8004, { status: '2H', elapsed: 50, homeGoals: 1, awayGoals: 0 });
+  virage.matchEvents(8004, [
     { type: 'Card', detail: 'Red Card', teamId: 92, minute: 20, player: 'Rouge' },
     { type: 'Var', detail: 'Penalty cancelled', teamId: 91, minute: 30, player: 'Video' }]);
   await wait(900);
@@ -793,20 +1023,20 @@ const laScene = () => page.evaluate(() => ({
   check('mais les deux entrent au fil', vieux.auFil === 2);
 
   // Sans quoi le contrôle du dessus passerait sur un personnage muet.
-  virage.matchEvents(8002, [{ type: 'Card', detail: 'Red Card', teamId: 92,
+  virage.matchEvents(8004, [{ type: 'Card', detail: 'Red Card', teamId: 92,
     minute: 50, player: 'Frais' }]);
   await wait(600);
   const frais = await vus();
   check(`un rouge de la 50e, lui, le fait réagir (${frais.join(', ') || 'rien'})`,
     frais.some((t) => /ROUGE/.test(t)));
 
-  const avantLeCoup = await entrer(8003);
+  const avantLeCoup = await entrer(8005);
   /* Le joueur attend depuis dix minutes quand le match commence : on recule
      l'instant de son entrée, plutôt que de les attendre. */
   await ailleurs.evaluate(() => { entreeA -= 10 * 60_000; });
   await guetter();
-  virage.matchStatus(8003, { status: '1H', elapsed: 5, homeGoals: 0, awayGoals: 0 });
-  virage.matchEvents(8003, [{ type: 'Card', detail: 'Red Card', teamId: 92,
+  virage.matchStatus(8005, { status: '1H', elapsed: 5, homeGoals: 0, awayGoals: 0 });
+  virage.matchEvents(8005, [{ type: 'Card', detail: 'Red Card', teamId: 92,
     minute: 1, player: 'Premier' }]);
   await wait(900);
   const tot = await ailleurs.evaluate(() => ({ vus: [...window.__moments], entree: entreeMinute }));
@@ -814,7 +1044,36 @@ const laScene = () => page.evaluate(() => ({
     + `(vu : ${tot.vus.join(', ') || 'rien'} ; entré à la ${tot.entree ?? '?'}e)`,
   avantLeCoup && tot.vus.some((t) => /ROUGE/.test(t)));
 
+  /* **Le ticket terrain se retire quand on ne sait rien du vrai match.**
+     La salle sème toujours le score réel (« 0 – 0 » avant le premier
+     relevé) ; mais un état qui ne le porte pas — un serveur d'avant, une
+     ligne que l'API ne détaille pas —, sans minute ni fait, laissait au
+     ticket sa seule flèche : une bande de kraft vide sous le HUD, qui
+     ouvrait une feuille vide. L'état est rejoué tel que la page le tient,
+     sans score, minute ni fil ; le sticker de phase ne doit pas glisser à
+     la place du ticket, et le relevé suivant, servi par la salle, doit le
+     refaire paraître. */
   await ailleurs.evaluate(() => clearInterval(window.__sondeMoments));
+  const sansRien = await ailleurs.evaluate(() => {
+    const s = { ...S, scoreReel: null, minute: null, fil: [], you: { ...S.you, fanzzy: null } };
+    for (const f of socket.listeners('virage:state')) f(s);
+    const fil = document.getElementById('fil');
+    const ligne = fil.parentElement, bord = ligne.getBoundingClientRect().right
+      - parseFloat(getComputedStyle(ligne).paddingRight);
+    return { retire: fil.hidden && fil.getBoundingClientRect().width === 0,
+      ecart: Math.round(bord - document.getElementById('phase').getBoundingClientRect().right) };
+  });
+  check('sans score, minute ni fait, le ticket terrain se retire en entier', sansRien.retire);
+  check(`et le sticker de phase reste au bout de sa rangée (à ${sansRien.ecart} px du bord)`,
+    Math.abs(sansRien.ecart) <= 3);
+  virage.matchStatus(8005, { status: '1H', elapsed: 7, homeGoals: 0, awayGoals: 0 });
+  const revenu = await ailleurs.waitForFunction(() => {
+    const fil = document.getElementById('fil');
+    return !fil.hidden && fil.getBoundingClientRect().width > 0
+      && document.getElementById('filMinute').textContent.trim() === '7′';
+  }, { timeout: 4000 }).then(() => true).catch(() => false);
+  check('le relevé suivant le refait paraître, avec sa minute', revenu);
+
   await ailleurs.close();
 }
 
@@ -822,16 +1081,16 @@ const laScene = () => page.evaluate(() => ({
 
    Gaël, le 4 octobre 2026 : un but tombe pendant qu'il fait son geste, et
    l'alerte se pose sur le pavé. La fenêtre du geste vit dans `#app`, contexte
-   d'empilement : la case du moment (z 95, quinze secondes), le flash et les
-   titres de `FX.but` passaient devant, la secousse faisait trembler le pavé,
-   et la carte-souvenir avalait les frappes en son milieu. Le chant raté
-   coûtait quand même son souffle.
+   d'empilement : la case du moment (z 95, quinze secondes) passait devant, et
+   la secousse faisait trembler le pavé. Le chant raté coûtait quand même son
+   souffle.
 
    Le geste est un vrai geste, ouvert au doigt sur un chant ; seule sa fin
    est tenue par la suite, pour mesurer pendant qu'il est ouvert. Une sonde
    regarde toutes les quarante millisecondes ce qui est à l'écran tant que
    la fenêtre l'est. */
 {
+  const idSocket = await page.evaluate(() => socket.id);
   await page.evaluate(() => {
     window.__vraiJouer = window.TBF_GESTE.jouer;
     window.TBF_GESTE.jouer = (...a) => {
@@ -854,11 +1113,47 @@ const laScene = () => page.evaluate(() => ({
   const pret = () => page.waitForFunction(
     () => document.querySelector('#mini.on #pad') && window.__finirGeste,
     { timeout: 6000 }).then(() => true).catch(() => false);
+  const leSouvenir = () => page.evaluate(() => {
+    const el = document.getElementById('souvenir');
+    return {
+      on: !el.hidden, face: el.dataset.etat === 'face',
+      texte: el.querySelector('.tbf-souvenir-face > b')?.textContent.trim() ?? '',
+      pile: P.souvenirs.length,
+      opacite: Number(getComputedStyle(el).opacity),
+      anims: el.getAnimations().length,
+    };
+  });
+  const centreDuPave = () => page.evaluate(() => {
+    const r = document.getElementById('pad').getBoundingClientRect();
+    const n = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return n?.closest('#pad') ? 'le pavé' : `${n?.tagName}.${n?.className}`;
+  });
 
   await page.evaluate(() => scene?.couper?.());
   await ouvrir();
   const ouvert = await pret();
   check('un geste s’ouvre sur son pavé', ouvert);
+  /* **Le pavé se tient sur l'axe de la fenêtre**, avec son titre et sa
+     consigne. La zone du geste prend toute la largeur (les épreuves s'y
+     taillent en pour cent) ; le pavé rond n'en prend que 270 px au plus, et
+     posé en bloc il partait au bord gauche de la zone pendant que le titre
+     et la consigne restaient au centre : 43 px de décalage à cette largeur,
+     227 à 768, sans qu'aucun autre contrôle le voie (le centre du pavé
+     restait le pavé, l'appui comptait). Les centres horizontaux seuls :
+     l'enfoncement d'une frappe ne déplace le pavé que vers le bas. */
+  const axe = await page.evaluate(() => {
+    const centre = (id) => {
+      const r = document.getElementById(id)?.getBoundingClientRect();
+      return r ? Math.round((r.left + r.width / 2) * 10) / 10 : null;
+    };
+    return { pave: centre('pad'), fenetre: centre('mini'), titre: centre('miniTitle'),
+      consigne: centre('miniHint') };
+  });
+  check(`le pavé se tient sur l’axe de la fenêtre, avec son titre et sa consigne (pavé à ${
+    axe.pave}, fenêtre ${axe.fenetre}, titre ${axe.titre}, consigne ${axe.consigne})`,
+  axe.pave !== null
+    && [axe.fenetre, axe.titre, axe.consigne].every((x) => x !== null && Math.abs(axe.pave - x) <= 2));
+  const pileAvant = (await leSouvenir()).pile;
 
   await page.evaluate(() => {
     window.__vu = new Set();
@@ -869,21 +1164,23 @@ const laScene = () => page.evaluate(() => ({
       vu('.fx-titre', 'un titre');
       vu('.fx-flash', 'le flash');
       vu('#app.fx-shake', 'la secousse');
-      vu('.souvenir.on', 'la carte-souvenir');
+      vu('#souvenir:not([hidden])', 'la carte-souvenir');
       vu('.fx-bandeau', 'le bandeau');
     }, 40);
     // Un but de corde d'en face, né des chants des autres pendant le sien.
     for (const f of socket.listeners('virage:goal')) f({ side: S.you.side ^ 1 });
   });
-  /* Un rouge frais au fil, d'en face : sa case « ROUGE POUR EUX » attend
-     aussi. Avant le but réel, pour que ce soit « GOAL ! » qui reste à la
-     fermeture — le dernier moment en attente gagne. */
+  /* Un but réel de son club, puis un rouge frais d'en face : la case
+     « ROUGE POUR EUX » arrive après « GOAL ! », et c'est pourtant le but qui
+     doit rester à la fermeture — **un but réel passe devant**. */
+  virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 75, player: 'Mbaye', score: [4, 1] });
+  await wait(300);
   virage.matchEvents(8001, [{ type: 'Card', detail: 'Red Card', teamId: 91,
     minute: 75, player: 'Pendant' }]);
-  await wait(300);
-  // Et un but réel de son club : c'est lui qui pose la carte-souvenir.
-  virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 75, player: 'Mbaye', score: [4, 1] });
-  await wait(1600);
+  /* Et sa carte-souvenir, servie pendant le geste (`virage:souvenir`, à la
+     seule socket de la page) : elle attend aussi. */
+  io.to(idSocket).emit('virage:souvenir', { fixtureId: 8001, id: 601, minute: 75, joueur: 'Mbaye' });
+  await wait(1300);
 
   const pendant = await page.evaluate(() => {
     const pad = document.getElementById('pad');
@@ -896,16 +1193,18 @@ const laScene = () => page.evaluate(() => ({
       vu: [...window.__vu],
       enAttente: apresLeGeste.length,
       score: document.getElementById('filScore').textContent.trim(),
+      double: document.getElementById('app').hasAttribute('data-double'),
       frappes: Number(document.getElementById('n')?.textContent),
     };
   });
-  check('un but ou un rouge pendant le geste ne pose rien sur l’écran '
+  check('un but, un rouge ou une carte-souvenir pendant le geste ne posent rien sur l’écran '
     + `(${pendant.vu.join(', ') || 'rien'})`,
   pendant.vu.length === 0);
   check(`le centre du pavé reste le pavé (${pendant.dessus})`, pendant.dessus === 'le pavé');
-  check('le score du terrain, lui, suit tout de suite', pendant.score === '4 – 1'
-    || (console.log('        il dit :', pendant.score), false));
-  // Le but de corde, le rouge du fil et le but réel : trois effets en file.
+  check('le score du terrain et la minute double, eux, suivent tout de suite',
+    pendant.score === '4 – 1' && pendant.double
+    || (console.log('        il dit :', pendant.score, pendant.double ? '(double)' : '(simple)'), false));
+  // Le but de corde, le but réel et le rouge du fil : trois effets en file.
   check(`et le reste attend la fin du geste (${pendant.enAttente} en attente)`,
     pendant.enAttente >= 3);
 
@@ -917,32 +1216,39 @@ const laScene = () => page.evaluate(() => ({
     compte === pendant.frappes + 1);
 
   /* La carte-souvenir laisse passer le doigt, même posée là : c'est la garde
-     de second rang, pour ce qui passerait la file. */
+     de second rang (`pointer-events: none`, dans la pièce), pour ce qui
+     passerait la file. */
   const souvenirDessus = await page.evaluate(({ x, y }) => {
     clearInterval(window.__sonde);
-    souvenir({ player: 'Essai', minute: 1 });
+    const el = document.getElementById('souvenir');
+    el.hidden = false;
+    const r = el.getBoundingClientRect();
+    const couvre = r.left <= x && x <= r.right && r.top <= y && y <= r.bottom;
     const n = document.elementFromPoint(x, y);
     const dessus = n?.closest('#pad') ? 'le pavé' : `${n?.tagName}.${n?.className}`;
-    document.getElementById('souvenir').className = 'souvenir';
-    return dessus;
+    el.hidden = true;
+    return { dessus, couvre };
   }, pendant);
-  check(`la carte-souvenir laisse passer le doigt (${souvenirDessus})`,
-    souvenirDessus === 'le pavé');
+  check(`la carte-souvenir laisse passer le doigt (${souvenirDessus.dessus}`
+    + `${souvenirDessus.couvre ? ', posée sur le centre du pavé' : ', hors du centre'})`,
+  souvenirDessus.dessus === 'le pavé');
 
   await page.evaluate(() => window.__finirGeste());
   await wait(600);
   const apres = await laScene();
   const vide = await page.evaluate(() => apresLeGeste.length);
-  check(`à la fermeture, le but se montre (${apres.titre})`,
+  check(`à la fermeture, le but se montre, devant le rouge arrivé après lui (${apres.titre})`,
     apres.on && apres.titre === 'GOAL !'
     || (console.log('        ', JSON.stringify(apres)), false));
-  /* Et le personnage exulte : la pose de fond du `render` de fermeture ne
-     doit pas passer devant la célébration qui se charge. */
+  /* Et le personnage exulte : rien de ce que la fermeture remet en place ne
+     doit passer devant la célébration qui se charge. */
   check(`et le personnage exulte (${apres.etat})`, apres.etat === 'but');
   check('et la file est vidée', vide === 0);
-  await wait(1300);
-  check('puis la carte-souvenir', await page.evaluate(() =>
-    document.getElementById('souvenir').classList.contains('on')));
+  const sv = await leSouvenir();
+  check(`puis la carte-souvenir (${sv.texte})`, sv.on && /Mbaye/.test(sv.texte)
+    || (console.log('        ', JSON.stringify(sv)), false));
+  await wait(3200);
+  check('qui rejoint la pile', (await leSouvenir()).pile === pileAvant + 1);
 
   /* Second cas : une case déjà à l'écran quand le geste s'ouvre. Posée sur
      `body` pour quinze secondes, elle passerait par-dessus le pavé. */
@@ -955,105 +1261,90 @@ const laScene = () => page.evaluate(() => ({
   await page.evaluate(() => window.__finirGeste?.());
   await wait(200);
 
-  /* Troisième cas : une carte-souvenir déjà à l'écran quand le geste s'ouvre.
-     Elle paraît une seconde et demie après un but de son club, en pleine
-     minute double, et c'est justement là qu'on relance un chant : elle tenait
-     plus d'un tiers du pavé et son centre jusqu'à sa fin. Elle se range, et
-     revient à la fermeture pour le temps qui lui restait — ni coupée, puisqu'on
-     l'a à peine vue, ni rejouée en entier, puisqu'on croirait en avoir gagné
-     deux. Sa première minuterie ne doit pas l'éteindre en route. */
-  const eteindreSouvenir = () => page.evaluate(() => {
-    clearTimeout(souvenirAffiche?.minuterie);
-    souvenirAffiche = null;
-    document.getElementById('souvenir').className = 'souvenir';
-  });
-  const leSouvenir = () => page.evaluate(() => ({
-    on: document.getElementById('souvenir').classList.contains('on'),
-    texte: document.querySelector('#souvenir .m')?.textContent.trim() ?? '',
-  }));
-  await eteindreSouvenir();
+  /* Troisième cas : une carte-souvenir déjà à l'écran quand le geste
+     s'ouvre. Elle paraît peu après un but de son club, en pleine minute
+     double, et c'est justement là qu'on relance un chant : elle tenait le
+     centre de l'écran jusqu'à partir vers la pile. Elle se range, et revient
+     à la fermeture, déjà retournée, pour le temps qui lui restait — ni
+     coupée, puisqu'on l'a à peine vue, ni rejouée en entier, puisqu'on
+     croirait en avoir gagné deux. Ses minuteries ne doivent pas la poser
+     dans la pile pendant le geste. */
   await page.evaluate(() => scene?.couper?.());
-  const t0 = Date.now();
-  await page.evaluate(() => souvenir({ player: 'Retour', minute: 80 }));
-  await wait(1200);
+  io.to(idSocket).emit('virage:souvenir', { fixtureId: 8001, id: 602, minute: 80, joueur: 'Retour' });
+  await page.waitForFunction(() => !document.getElementById('souvenir').hidden, { timeout: 3000 })
+    .catch(() => {});
+  await wait(1000);
+  const p0 = (await leSouvenir()).pile;
   await ouvrir();
   await pret();
-  const sousLeGeste = await page.evaluate(() => {
-    const r = document.getElementById('pad').getBoundingClientRect();
-    const n = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    return {
-      on: document.getElementById('souvenir').classList.contains('on'),
-      dessus: n?.closest('#pad') ? 'le pavé' : `${n?.tagName}.${n?.className}`,
-    };
-  });
+  const sousLeGeste = { ...(await leSouvenir()), dessus: await centreDuPave() };
   check('une carte-souvenir déjà là se range quand le geste s’ouvre '
     + `(centre du pavé : ${sousLeGeste.dessus})`,
   !sousLeGeste.on && sousLeGeste.dessus === 'le pavé'
     || (console.log('        ', JSON.stringify(sousLeGeste)), false));
+  // Son départ vers la pile tombait 2,4 s après sa face : il est passé.
+  await wait(1000);
+  const pendantLeGeste = await leSouvenir();
+  check('et ses minuteries ne la posent pas dans la pile pendant le geste',
+    !pendantLeGeste.on && pendantLeGeste.pile === p0
+    || (console.log('        ', JSON.stringify(pendantLeGeste)), false));
   await page.evaluate(() => window.__finirGeste?.());
-  await wait(150);
+  const fermeA = Date.now();
+  await wait(650);
   const revenu = await leSouvenir();
-  check(`et revient à la fermeture (${revenu.texte})`,
-    revenu.on && /Retour/.test(revenu.texte));
-  // Ses 4,2 s d'origine tombent à t0 + 4200 : elle doit encore être là après.
-  await wait(Math.max(0, t0 + 4700 - Date.now()));
-  check('sa première minuterie ne l’éteint pas en route', (await leSouvenir()).on);
-  /* Rangée à 1,2 s, il lui en restait 3 : revenue vers 3 s, elle s'éteint
-     vers 6 s. Rejouée en entier, elle tiendrait jusque vers 7,2 s. */
-  await wait(Math.max(0, t0 + 6600 - Date.now()));
-  check('puis s’éteint, au bout du temps qui lui restait seulement',
-    !(await leSouvenir()).on);
+  check(`et revient à la fermeture, déjà retournée (${revenu.texte})`,
+    revenu.on && revenu.face && /Retour/.test(revenu.texte) && revenu.pile === p0
+    || (console.log('        ', JSON.stringify(revenu)), false));
+  /* Rangée après une seconde de face, il lui en restait moins d'une et
+     demie : revenue 0,4 s après la fermeture, elle part vers la pile et s'y
+     éteint vers 2,3 s. Rejouée en entier, retournement compris, elle
+     tiendrait jusque vers 3,3 s : on regarde entre les deux. */
+  await wait(Math.max(0, fermeA + 2850 - Date.now()));
+  const partie = await leSouvenir();
+  check('puis rejoint la pile au bout du temps qui lui restait seulement',
+    !partie.on && partie.pile === p0 + 1
+    || (console.log('        ', JSON.stringify(partie)), false));
 
-  /* Moins d'une seconde de reste : elle a été lue, elle ne revient pas. */
-  await page.evaluate(() => souvenir({ player: 'Lue', minute: 81 }, 800));
+  /* Moins d'une seconde de reste : elle a été lue, elle va droit à la pile,
+     et ne revient pas. */
+  io.to(idSocket).emit('virage:souvenir', { fixtureId: 8001, id: 603, minute: 81, joueur: 'Lue' });
+  await page.waitForFunction(() => !document.getElementById('souvenir').hidden, { timeout: 3000 })
+    .catch(() => {});
+  await wait(1700);
+  const p1 = (await leSouvenir()).pile;
   await ouvrir();
-  await pret();
   const lueSous = await leSouvenir();
-  await page.evaluate(() => window.__finirGeste?.());
-  await wait(150);
-  const lueApres = await leSouvenir();
-  check('une carte-souvenir presque finie se range aussi, et ne revient pas',
-    !lueSous.on && !lueApres.on
-    || (console.log('        ', JSON.stringify({ lueSous, lueApres })), false));
-
-  /* Deux cartes de suite — deux buts rapprochés, ou une carte qui revient
-     après un geste juste avant une autre : la minuterie de la première
-     éteignait la seconde avant son temps. */
-  await page.evaluate(() => {
-    souvenir({ player: 'Premiere', minute: 84 }, 600);
-    souvenir({ player: 'Seconde', minute: 85 });
-  });
-  await wait(900);
-  const seconde = await leSouvenir();
-  check('la minuterie d’une carte-souvenir n’éteint pas la suivante',
-    seconde.on && /Seconde/.test(seconde.texte)
-    || (console.log('        ', JSON.stringify(seconde)), false));
-  await eteindreSouvenir();
-
-  /* Quatrième cas : elle n'est pas encore là quand le geste s'ouvre. Elle part
-     une seconde et demie après le but, donc pendant le compte à rebours d'un
-     chant relancé aussitôt : elle attend la fin du geste. Le but est rejoué
-     par l'écouteur de la socket — c'est la page qu'on éprouve. */
-  await page.evaluate(() => {
-    for (const f of socket.listeners('virage:real_goal')) {
-      f({ side: S.you.side, player: 'Minuteur', minute: 83 });
-    }
-  });
-  await ouvrir();
   await pret();
-  const minuteurSous = await leSouvenir();
   await page.evaluate(() => window.__finirGeste?.());
-  await wait(150);
-  const minuteurApres = await leSouvenir();
-  check('une carte-souvenir qui part pendant le compte à rebours attend la fin du geste',
-    !minuteurSous.on && minuteurApres.on && /Minuteur/.test(minuteurApres.texte)
-    || (console.log('        ', JSON.stringify({ minuteurSous, minuteurApres })), false));
-  await page.evaluate(() => scene?.couper?.());
+  await wait(650);
+  const lueApres = await leSouvenir();
+  check('une carte-souvenir presque finie va droit à la pile, et ne revient pas',
+    !lueSous.on && lueSous.pile === p1 + 1 && !lueApres.on && lueApres.pile === p1 + 1
+    || (console.log('        ', JSON.stringify({ p1, lueSous, lueApres })), false));
 
-  await eteindreSouvenir();
+  /* Deux cartes de suite : la seconde paraît après le glissement de la
+     première, au centre et entière. Le glissement finit en
+     `fill: 'forwards'` (la règle de la carte jouée) ; laissé en place, il
+     poserait la seconde au coin de la pile, à moitié éteinte. */
+  io.to(idSocket).emit('virage:souvenir', { fixtureId: 8001, id: 604, minute: 84, joueur: 'Premiere' });
+  io.to(idSocket).emit('virage:souvenir', { fixtureId: 8001, id: 605, minute: 85, joueur: 'Seconde' });
+  await wait(3400);
+  const seconde = await leSouvenir();
+  check(`la carte-souvenir suivante paraît au centre, entière (${seconde.texte}, `
+    + `opacité ${seconde.opacite}, ${seconde.anims} animation(s))`,
+  seconde.on && /Seconde/.test(seconde.texte) && seconde.opacite > 0.95 && seconde.anims === 0);
+  await page.waitForFunction(() => document.getElementById('souvenir').hidden, { timeout: 5000 })
+    .catch(() => {});
+
+  /* On rend la page comme on l'a trouvée : le chant, le moteur des gestes,
+     et une pile vide — le bloc de la carte-souvenir, plus bas, compte la
+     sienne depuis zéro. */
   await page.evaluate(() => {
     window.TBF_GESTE.jouer = window.__vraiJouer;
     window.__chantEssai.card.gest = window.__chantEssai.gest;
+    scene?.couper?.();
+    P.souvenirs = [];
+    renderPile();
   });
 }
 
@@ -1160,8 +1451,8 @@ const laScene = () => page.evaluate(() => ({
 {
   /* Un vrai but de son club. Le buteur et la minute viennent de l'événement
      lui-même — aucun appel de plus à l'API pour les afficher. Le cinquième
-     au tableau : le quatrième, Mbaye, est déjà tombé pendant le geste, et la
-     salle tait un but dont elle connaît le rang. La vidéo le retire plus
+     au tableau, avec le score que le relevé lui donne : le quatrième,
+     Mbaye, est tombé pendant le geste (plus haut). La vidéo le retire plus
      bas, d'où le 4 – 1 du coup de sifflet final. */
   virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 78, player: 'Sarr', score: [5, 1] });
   await wait(600);
@@ -1178,6 +1469,55 @@ const laScene = () => page.evaluate(() => ({
   check('et le moment tient quinze secondes',
     b.duree.trim() === '15000ms'
     || (console.log('        il tient', b.duree), false));
+
+  /* ---------------------------------- la carte-souvenir, et elle seule
+
+   * La page l'annonçait 1,4 s après chaque but de son club — « Tu y étais.
+   * Elle est dans ton carnet. » —, même quand la compétition n'est pas
+   * couverte ou que le joueur n'avait pas poussé dans la fenêtre : la carte
+   * n'existait pas. Elle ne s'annonce plus que sur `virage:souvenir`, servi
+   * à ceux qui l'ont reçue (CONTRATS.md, § 16.3). On l'envoie ici à la seule
+   * socket de la page, comme le serveur le fera. Le nom du buteur vient de
+   * l'API sportive : il se pose en texte, jamais en balisage. */
+  await wait(1300);
+  check('un but de son club n’annonce pas, à lui seul, de carte-souvenir',
+    await page.evaluate(() => document.getElementById('souvenir').hidden));
+  const idSocket = await page.evaluate(() => socket.id);
+  io.to(idSocket).emit('virage:souvenir', { fixtureId: 8001, id: 501, minute: 78, joueur: '<b>Sarr</b>' });
+  await wait(900);
+  const sv = await page.evaluate(() => {
+    const el = document.getElementById('souvenir');
+    return {
+      montre: !el.hidden,
+      nom: document.querySelector('#souvenir b')?.textContent ?? '',
+      balise: Boolean(document.querySelector('#souvenir b b')),
+      /* La pièce de la feuille (`.tbf-souvenir`) : retournée par
+         `data-etat="face"`, la minute imprimée, et l'écharpe de mon club
+         posée sur la carte elle-même — elle vit hors de la colonne. */
+      piece: el.classList.contains('tbf-souvenir'),
+      face: el.dataset.etat === 'face',
+      minute: el.querySelector('i')?.textContent ?? '',
+      echarpe: getComputedStyle(el).getPropertyValue('--e1').trim(),
+      club: getComputedStyle(document.getElementById('app')).getPropertyValue('--e1').trim(),
+    };
+  });
+  check('virage:souvenir l’annonce', sv.montre);
+  check('et le nom du buteur y est un texte', (sv.nom === '<b>Sarr</b>' && !sv.balise)
+    || (console.log('        il dit :', sv.nom, sv.balise ? '(balisage interprété)' : ''), false));
+  check('la carte se retourne au centre, face visible, minute imprimée',
+    sv.piece && sv.face && sv.minute === '78′'
+    || (console.log('        pièce', sv.piece, '· face', sv.face, '· minute', sv.minute), false));
+  check('et sa face porte l’écharpe de son club',
+    Boolean(sv.echarpe) && sv.echarpe === sv.club
+    || (console.log('        écharpe', sv.echarpe || '(aucune)', '· club', sv.club || '(aucun)'), false));
+  await wait(2600);
+  check('puis la carte rejoint la pile du match', await page.evaluate(() =>
+    !document.getElementById('pile').hidden && document.getElementById('pile').textContent.trim() === '1'));
+  /* Le même souvenir réannoncé ne s'empile pas deux fois. */
+  io.to(idSocket).emit('virage:souvenir', { fixtureId: 8001, id: 501, minute: 78, joueur: 'Sarr' });
+  await wait(300);
+  check('et un souvenir déjà reçu ne s’annonce pas deux fois', await page.evaluate(() =>
+    document.getElementById('souvenir').hidden && document.getElementById('pile').textContent.trim() === '1'));
 
   /* ------------------------------------------- aux couleurs du club
 
@@ -1544,72 +1884,441 @@ const laScene = () => page.evaluate(() => ({
 
   await sans.close();
 }
-/* ===================== quitter la tribune se dit, et mène quelque part
+/* ===================== quitter la tribune : le bilan, ou rien à demander
 
    « Si je sors d'un virage, je n'ai pas de message qui avertit et j'arrive
-   sur une page vide. » Les deux moitiés étaient vraies. La page
-   n'interceptait aucune sortie — ni flèche, ni menu — et elle n'émettait
-   jamais `virage:leave` : le serveur gardait un supporter parti jusqu’à ce
-   que la coupure de socket soit constatée, compté dans la foule et dans le
-   classement de la salle pendant tout ce temps.
+   sur une page vide. » Les deux moitiés étaient vraies : la page
+   n'interceptait aucune sortie et n'émettait jamais `virage:leave`.
 
-   Trois contrôles : la question vient, elle dit ce qu'on manque, et **on
-   arrive sur une page qui répond**. Un 404 a un corps vide dans ce serveur —
-   `page()` répond `.end()` — donc « page blanche » et « 404 » sont les deux
-   faces de la même chose, et il faut regarder le code autant que le contenu.
+   **Le lot 6 a remplacé la question par le bilan de tribune** (QUESTIONS
+   Q10) : à la flèche ou au menu, **si l'on a poussé pendant ce match**, la
+   page demande `virage:bilan` et pose la page kraft, avec RESTER et SORTIR ;
+   sans poussée, on sort sans rien demander — une confirmation qui ne dit
+   rien apprend à passer outre. Sans bilan servi (un serveur d'avant la
+   vague 2, le réseau), au-delà de trois secondes, la sortie reste celle
+   d'avant : la boîte « QUITTER LA TRIBUNE ? ». Et au coup de sifflet final
+   (`virage:fin`), la page demande son bilan, le pose sans qu'on touche rien,
+   puis quitte la salle et n'y rentre plus.
 
-   Sur une page à part : les blocs précédents ont besoin de leur virage. */
-{
-  const sortir = await nav.newPage();
+   **Ce que le serveur répond ne décide pas du contrôle** : la page est
+   espionnée (ce qu'elle émet est relevé, et `virage:bilan` ne part pas vers
+   le serveur), et le bilan lui est envoyé par la socket du banc, à elle
+   seule. Le même contrôle vaut donc avant et après la vague 2 du serveur.
+
+   Chaque cas sur une page à part : les blocs précédents ont besoin de leur
+   virage. **Et sur le second match (8002), encore en jeu** : le premier a
+   reçu son coup de sifflet plus haut, et une page qui y entre le traite
+   comme un coup de sifflet — elle quitterait la salle d'elle-même au
+   milieu du contrôle. On vérifie à chaque fois que `virage:leave` part
+   **avant** la navigation, et qu'on arrive sur une page qui répond — un
+   404 a un corps vide dans ce serveur. */
+const MATCH_SORTIE = 8002;
+const BILAN = {
+  fixtureId: MATCH_SORTIE, side: 0, classe: false, neutre: false,
+  ferveur: 431, chants: 14, parfaits: 3, serie: 3,
+  meilleur: { chant: 'montee', nom: 'La montée', verdict: 'parfait' },
+  rang: 11, sur: 46,
+  xp: { verse: false, raison: 'incomplet', manque: 2 },
+};
+
+/** Une page entrée dans la tribune, qui relève ce qu'elle émet et peut
+    retenir un évènement (il n'atteint pas le serveur). */
+async function tribuneEspionnee() {
+  const p = await nav.newPage();
   const bruits = [];
-  sortir.on('pageerror', (e) => bruits.push(e.message));
-  await sortir.setViewport({ width: 400, height: 880 });
-  await sortir.goto(base + '/virage', { waitUntil: 'networkidle0' });
-  await sortir.evaluate(() => socket.emit('virage:join', { fixtureId: 8001 }));
-  const dedans = await sortir.waitForSelector('#fil:not([hidden])', { timeout: 8000 })
+  p.on('pageerror', (e) => bruits.push(e.message));
+  await p.setViewport({ width: 400, height: 880 });
+  await p.goto(base + '/virage', { waitUntil: 'networkidle0' });
+  await p.evaluate((id) => socket.emit('virage:join', { fixtureId: id }), MATCH_SORTIE);
+  const dedans = await p.waitForSelector('#fil:not([hidden])', { timeout: 8000 })
     .then(() => true).catch(() => false);
+  await p.waitForSelector('.tbf-retour', { timeout: 6000 }).catch(() => {});
+  await p.evaluate(() => {
+    const vrai = socket.emit.bind(socket);
+    window.__emis = [];
+    window.__retenus = new Set(['virage:bilan']);
+    socket.emit = (e, ...a) => { window.__emis.push(e); return window.__retenus.has(e) ? socket : vrai(e, ...a); };
+  });
+  return { p, bruits, dedans, id: await p.evaluate(() => socket.id) };
+}
+const emis = (p) => p.evaluate(() => [...(window.__emis ?? [])]);
+/** Touche ce qui sort et attend la navigation ; relève ce qui est parti
+    avant elle (la page part 180 ms après `virage:leave`). */
+async function sortirPar(p, selecteur) {
+  const [rep, avant] = await Promise.all([
+    p.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => null),
+    p.evaluate(async (s) => {
+      document.querySelector(s).click();
+      await new Promise((r) => setTimeout(r, 60));
+      return { emis: [...window.__emis], boite: Boolean(document.querySelector('.tbf-dial, #bilan')) };
+    }, selecteur).catch(() => null),
+  ]);
+  return { rep, avant };
+}
+async function arrivee(p, rep, bruits, cas) {
+  check(`${cas} : on arrive quelque part (${rep?.status() ?? 'sans réponse'})`, rep?.status() === 200
+    || (console.log('        code', rep?.status(), 'sur', p.url()), false));
+  await wait(700);
+  const corps = await p.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').trim()).catch(() => '');
+  check(`${cas} : et la page n’est pas vide (${corps.length} caractères)`, corps.length > 20
+    || (console.log('        arrivée blanche sur', p.url()), false));
+  check(`${cas} : et rien n’a cassé en chemin`, bruits.length === 0
+    || (console.log('        ', bruits.join(' / ')), false));
+}
+
+/* --- sans avoir poussé : on sort, sans question ni bilan. */
+{
+  const { p, bruits, dedans } = await tribuneEspionnee();
   check('on entre dans la tribune pour éprouver la sortie', dedans);
-
   if (dedans) {
-    await sortir.evaluate(() => document.querySelector('.tbf-retour')?.click());
-    const demande = await (async () => {
-      for (let i = 0; i < 40; i++) {
-        await wait(120);
-        if (await sortir.evaluate(() => Boolean(document.querySelector('[data-non]')))) return true;
-      }
-      return false;
-    })();
-    check('la flèche de retour demande avant de quitter la tribune', demande
-      || (console.log('        on serait parti sans un mot'), false));
+    const { rep, avant } = await sortirPar(p, '.tbf-retour');
+    check('sans avoir poussé, la flèche sort sans rien demander',
+      (avant && !avant.boite && !avant.emis.includes('virage:bilan'))
+      || (console.log('        avant de partir :', JSON.stringify(avant)), false));
+    check('et prévient le serveur avant de partir', Boolean(avant?.emis.includes('virage:leave'))
+      || (console.log('        émis :', avant?.emis?.join(', ')), false));
+    await arrivee(p, rep, bruits, 'sans poussée');
+  }
+  await p.close();
+}
 
+/* --- après avoir poussé, sans bilan servi : la boîte d'avant, trois
+   secondes plus tard, et elle dit ce qu'on manque. */
+{
+  const { p, bruits, dedans } = await tribuneEspionnee();
+  if (dedans) {
+    // Poussé : le serveur lui connaît une ferveur (la page la lit dans l'état).
+    await p.evaluate(() => { S.you.ferveur = 12; });
+    await p.evaluate(() => document.querySelector('.tbf-retour').click());
+    const t0 = Date.now();
+    const demande = await p.waitForSelector('.tbf-dial [data-non]', { timeout: 6000 })
+      .then(() => true).catch(() => false);
+    const attendu = Date.now() - t0;
+    check('après avoir poussé, la page demande son bilan',
+      (await emis(p)).includes('virage:bilan'));
+    check('sans bilan servi, la boîte d’avant vient au bout de trois secondes',
+      (demande && attendu >= 2500)
+      || (console.log('        boîte', demande ? `après ${attendu} ms` : 'jamais venue'), false));
     if (demande) {
-      const dit = await sortir.evaluate(() =>
+      const dit = await p.evaluate(() =>
         document.querySelector('.tbf-dial')?.textContent.replace(/\s+/g, ' ').trim() ?? '');
-      /* Elle doit dire ce qu’on manque, pas seulement demander : une tribune
-         qu'on quitte ne se paie pas, elle se rate. */
+      /* Elle dit ce qu’on manque : une tribune qu'on quitte ne se paie pas,
+         elle se rate. */
       check('et elle dit ce qu’on manque en partant', /souvenir|pousse/i.test(dit)
         || (console.log('        elle dit :', dit.slice(0, 100)), false));
-
-      const [rep] = await Promise.all([
-        sortir.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 })
-          .catch(() => null),
-        sortir.evaluate(() => document.querySelector('[data-oui]').click()),
-      ]);
-      check('« SORTIR » emmène quelque part', Boolean(rep)
-        || (console.log('        aucune navigation après avoir confirmé'), false));
-      check(`et la page d’arrivée répond (${rep?.status() ?? 'sans réponse'})`,
-        rep?.status() === 200
-        || (console.log('        code', rep?.status(), 'sur', sortir.url()), false));
-      await wait(700);
-      const corps = await sortir.evaluate(() =>
-        document.body.innerText.replace(/\s+/g, ' ').trim());
-      check(`et elle n’est pas vide (${corps.length} caractères)`, corps.length > 20
-        || (console.log('        arrivée blanche sur', sortir.url()), false));
-      check('et rien n’a cassé en chemin', bruits.length === 0
-        || (console.log('        ', bruits.join(' / ')), false));
+      const { rep, avant } = await sortirPar(p, '.tbf-dial [data-oui]');
+      check('« SORTIR » prévient le serveur avant de partir', Boolean(avant?.emis.includes('virage:leave')));
+      await arrivee(p, rep, bruits, 'boîte d’avant');
     }
   }
-  await sortir.close();
+  await p.close();
+}
+
+/* --- après avoir poussé, avec un bilan servi : la page kraft. Le HUD a
+   servi un palier (« 12ᵉ → TOP 10 », CONTRATS § 16.2) : la feuille dit ce
+   qui reste à gagner depuis le rang du bilan (11ᵉ : à une place). */
+{
+  const { p, bruits, dedans, id } = await tribuneEspionnee();
+  if (dedans) {
+    await p.evaluate(() => { S.you.ferveur = 12; S.you.prochain = { rang: 10, ecart: 30 }; });
+    await p.evaluate(() => document.querySelector('.tbf-retour').click());
+    await wait(250);
+    io.to(id).emit('virage:bilan', BILAN);
+    const pose = await p.waitForSelector('#bilan', { timeout: 3000 }).then(() => true).catch(() => false);
+    check('après avoir poussé, la flèche pose le bilan de tribune', pose);
+    if (pose) {
+      /* Les lignes comptent l'une après l'autre (700 ms d'écart) : on lit
+         une fois les chiffres posés — et avant cinq secondes, le délai sous
+         lequel la page ne redemande pas son bilan (voir plus bas). */
+      await wait(2600);
+      const vu = await p.evaluate(() => {
+        const b = document.getElementById('bilan');
+        return {
+          titre: b.querySelector('#bilanTitre')?.textContent ?? '',
+          // Le libellé, le chiffre, et ce qui est écrit dessous : « RANG DANS
+          // TA TRIBUNE|11e|sur 46 ».
+          lignes: [...b.querySelectorAll('.tbf-bilan-l')].map((l) => [l.firstElementChild?.textContent,
+            l.querySelector('b')?.textContent, l.querySelector('small')?.textContent]
+            .filter(Boolean).map((t) => t.trim()).join('|')),
+          verdict: b.querySelector('.tbf-bilan-l [data-verdict]')?.dataset.verdict ?? null,
+          notes: [...b.querySelectorAll('.tbf-bilan-note')].map((n) => n.textContent.trim()),
+          oui: Boolean(b.querySelector('[data-oui]')), non: Boolean(b.querySelector('[data-non]')),
+          xp: Boolean(b.querySelector('.tbf-bilan-xp')),
+          // Sur le document, hors de la colonne : sinon le tiroir passerait dessus.
+          horsColonne: !b.closest('#app'),
+          /* Le rang ouvre la feuille, en grand, avec ce qui reste à gagner ;
+             les autres chiffres gardent leur taille. */
+          premiere: b.querySelector('.tbf-bilan-l')?.firstElementChild?.textContent.trim() ?? '',
+          rangPx: parseFloat(getComputedStyle(b.querySelector('.tbf-bilan-l > b')).fontSize),
+          autrePx: parseFloat(getComputedStyle(b.querySelector('.tbf-bilan-l:nth-child(2) > b')).fontSize),
+          palier: b.querySelector('.tbf-bilan-l .tbf-sticker')?.textContent.trim() ?? '',
+          // Les sorties d'en cours de match : RESTER en parpaing, SORTIR en flare.
+          nonDit: b.querySelector('[data-non]')?.textContent.trim() ?? '',
+          nonTon: b.querySelector('[data-non]')?.dataset.ton ?? null,
+          ouiTon: b.querySelector('[data-oui]')?.dataset.ton ?? null,
+          // Ni case de BD ni Fanzzy en pose : le match n'est pas fini.
+          finVue: [...b.querySelectorAll('.bilan-case, .tbf-bilan-fz')].some((n) => !n.hidden),
+        };
+      });
+      check('c’est une page de bilan, pas une boîte', /BILAN DE TRIBUNE/.test(vu.titre) && vu.horsColonne);
+      check('elle dit le rang dans sa tribune, la ferveur et les chants',
+        vu.lignes.includes('RANG DANS TA TRIBUNE|11e|sur 46')
+        && vu.lignes.includes('FERVEUR|431') && vu.lignes.includes('CHANTS|14')
+        || (console.log('        lignes :', vu.lignes.join(' | ')), false));
+      check('le rang ouvre la feuille, en grand (32 px et plus, plus que les autres chiffres)',
+        (vu.premiere === 'RANG DANS TA TRIBUNE' && vu.rangPx >= 32 && vu.rangPx > vu.autrePx)
+        || (console.log('        en tête :', vu.premiere, '·', vu.rangPx, 'px contre', vu.autrePx), false));
+      check('et il dit ce qui reste à gagner, depuis le palier du HUD',
+        vu.palier === 'À 1 PLACE DU TOP 10' || (console.log('        il dit :', vu.palier || '(rien)'), false));
+      check('le meilleur geste en tampon, avec le mot servi', vu.verdict === 'parfait');
+      check('et ce qui manque à l’XP, sans ligne d’XP versée',
+        !vu.xp && vu.notes.some((n) => /Encore 2 chants pour l’XP du match/.test(n)));
+      check('un Virage non classé le dit', vu.notes.some((n) => /ne compte pas au classement/.test(n)));
+      check('avec RESTER et SORTIR', vu.oui && vu.non);
+      check('en cours de match : RESTER au parpaing, SORTIR en flare, ni case ni Fanzzy',
+        (vu.nonDit === 'RESTER' && !vu.nonTon && vu.ouiTon === 'flare' && !vu.finVue)
+        || (console.log('        ', JSON.stringify({ non: vu.nonDit, nonTon: vu.nonTon, ouiTon: vu.ouiTon, fin: vu.finVue })), false));
+
+      // RESTER : on reste, rien ne part.
+      await p.evaluate(() => document.querySelector('#bilan [data-non]').click());
+      await wait(200);
+      const reste = await p.evaluate(() => ({ ferme: !document.getElementById('bilan'), emis: [...window.__emis] }));
+      check('RESTER referme le bilan, et l’on reste dans la tribune',
+        reste.ferme && !reste.emis.includes('virage:leave'));
+      // La flèche de nouveau, dans les cinq secondes : le même bilan, sans redemande.
+      const avant = (await emis(p)).filter((e) => e === 'virage:bilan').length;
+      await p.evaluate(() => document.querySelector('.tbf-retour').click());
+      const revient = await p.waitForSelector('#bilan', { timeout: 2000 }).then(() => true).catch(() => false);
+      const apres = (await emis(p)).filter((e) => e === 'virage:bilan').length;
+      check('la flèche de nouveau rouvre le bilan gardé, sans le redemander', revient && apres === avant);
+      if (revient) {
+        const { rep, avant: av } = await sortirPar(p, '#bilan [data-oui]');
+        check('SORTIR prévient le serveur avant de partir', Boolean(av?.emis.includes('virage:leave')));
+        await arrivee(p, rep, bruits, 'bilan');
+      }
+    }
+  }
+  await p.close();
+}
+
+/* --- au coup de sifflet final : le bilan sans rien toucher, puis la salle
+   quittée pour de bon. Le tirage du délai (0 à 8 s) est ramené à zéro.
+
+   **Le rituel de sortie du duel** (partie B) : la case de BD du score final
+   et le Fanzzy en pose de victoire, son club ayant gagné au terrain (2 – 1,
+   posé ici). Le Fanzzy est pris dans une lignée dont les poses sont
+   dessinées (RP1 : la victoire et la défaite n'y ont pas le même dessin) —
+   avec un personnage sans poses, une pose de défaite passerait pour une
+   victoire. **Et plus de RESTER** : la page a quitté la salle, RESTER y
+   ramenait pour rien. UN AUTRE MATCH rend le voile de choix. */
+{
+  const { p, bruits, dedans, id } = await tribuneEspionnee();
+  if (dedans) {
+    await p.evaluate(async () => {
+      S.you.ferveur = 12; Math.random = () => 0;
+      S.scoreReel = [2, 1];
+      S.you.fanzzy = { id: 'RP1', age: 'RP1', evo: 1, skin: 'base' };
+      await window.TBF_ETATS?.charger?.();
+    });
+    io.to(id).emit('virage:fin', { statut: 'FT' });
+    const demande = await p.waitForFunction(() => window.__emis.includes('virage:bilan'), { timeout: 3000 })
+      .then(() => true).catch(() => false);
+    check('au coup de sifflet final, la page demande son bilan', demande);
+    io.to(id).emit('virage:bilan', { ...BILAN, fini: true, classe: true });
+    const pose = await p.waitForSelector('#bilan', { timeout: 3000 }).then(() => true).catch(() => false);
+    check('et le pose sans qu’on touche rien', pose);
+    await wait(300);
+    check('puis quitte la salle', (await emis(p)).includes('virage:leave'));
+    // Une reconnexion après le coup de sifflet ne rejoint plus la salle.
+    await p.evaluate(() => { socket.disconnect(); socket.connect(); });
+    await wait(1500);
+    check('et n’y rentre plus, même à la reconnexion', !(await emis(p)).includes('virage:join'));
+    check('le coup de sifflet n’a rien cassé', bruits.length === 0
+      || (console.log('        ', bruits.join(' / ')), false));
+    if (pose) {
+      const fin = await p.evaluate(() => {
+        const b = document.getElementById('bilan');
+        const c = b.querySelector('.bilan-case');
+        const fz = b.querySelector('.tbf-bilan-fz');
+        const av = S.you.fanzzy;
+        return {
+          caseVue: Boolean(c && !c.hidden),
+          mot: c?.querySelector('.tbf-vignette-mot')?.textContent.trim() ?? '',
+          score: c?.querySelector('.tbf-vignette small')?.textContent.trim() ?? '',
+          ton: c?.querySelector('.tbf-vignette')?.dataset.ton ?? null,
+          fzVu: Boolean(fz && !fz.hidden), fz: fz?.getAttribute('src') ?? '',
+          victoire: window.FZART.dessinAvatar(av, 'plein', { etat: 'victoire' }),
+          defaite: window.FZART.dessinAvatar(av, 'plein', { etat: 'defaite' }),
+          // Les deux bâches, dans l'ordre de l'écran.
+          sorties: [...b.querySelectorAll('.tbf-bilan-sortie > button')].map((n) =>
+            `${'oui' in n.dataset ? 'oui' : 'non'}:${n.textContent.trim()}:${n.dataset.ton ?? '-'}`),
+        };
+      });
+      check('au coup de sifflet, la case de BD dit le score final, en vert pour une victoire',
+        (fin.caseVue && fin.mot === 'VICTOIRE' && fin.ton === 'vert' && /^2 – 1\b/.test(fin.score))
+        || (console.log('        ', JSON.stringify({ vue: fin.caseVue, mot: fin.mot, ton: fin.ton, score: fin.score })), false));
+      check('et le Fanzzy se pose au-dessus de la feuille, en pose de victoire',
+        (fin.fzVu && fin.victoire !== fin.defaite && fin.fz === fin.victoire)
+        || (console.log('        ', JSON.stringify({ vu: fin.fzVu, src: fin.fz, victoire: fin.victoire })), false));
+      check('plus de RESTER : SORTIR au parpaing, puis UN AUTRE MATCH en flare',
+        fin.sorties.join(' | ') === 'oui:SORTIR:- | non:UN AUTRE MATCH:flare'
+        || (console.log('        ', fin.sorties.join(' | ')), false));
+      /* UN AUTRE MATCH : le voile de choix, relu — l'adresse sans le match
+         fini, qui y ramènerait. */
+      const { rep } = await sortirPar(p, '#bilan [data-non]');
+      const ou = new URL(p.url());
+      check('UN AUTRE MATCH rend le voile de choix',
+        (ou.pathname === '/virage' && !ou.search
+          && await p.evaluate(() => document.getElementById('veil')?.classList.contains('on')).catch(() => false))
+        || (console.log('        arrivé sur', p.url()), false));
+      await arrivee(p, rep, bruits, 'un autre match');
+    }
+  }
+  await p.close();
+}
+
+/* --- revenu après le coup de sifflet : `virage:fin` ne viendra pas (CONTRATS
+   § 15.3), c'est l'état qui le dit. La page restait dans une salle finie,
+   qu'elle rejoignait encore à chaque reconnexion et que le relevé du direct
+   continuait de payer (contre-expertise, D1). Elle fait maintenant comme au
+   coup de sifflet. L'état est renvoyé à la seule socket de la page, tel
+   qu'elle le tient, le statut passé à FT. */
+{
+  const { p, bruits, dedans, id } = await tribuneEspionnee();
+  if (dedans) {
+    const fini = await p.evaluate(() => { Math.random = () => 0; S.you.ferveur = 12;
+      return JSON.parse(JSON.stringify({ ...S, statut: 'FT' })); });
+    io.to(id).emit('virage:state', fini);
+    const demande = await p.waitForFunction(() => window.__emis.includes('virage:bilan'), { timeout: 3000 })
+      .then(() => true).catch(() => false);
+    check('revenu après le coup de sifflet, la page demande son bilan', demande);
+    io.to(id).emit('virage:bilan', { ...BILAN, fini: true, classe: true });
+    const pose = await p.waitForSelector('#bilan', { timeout: 3000 }).then(() => true).catch(() => false);
+    check('et le pose', pose);
+    await wait(300);
+    check('puis quitte la salle finie', (await emis(p)).includes('virage:leave'));
+    const joints = (await emis(p)).filter((e) => e === 'virage:join').length;
+    await p.evaluate(() => { socket.disconnect(); socket.connect(); });
+    await wait(1500);
+    check('et n’y rentre plus', (await emis(p)).filter((e) => e === 'virage:join').length === joints);
+    check('le retour après le coup de sifflet n’a rien cassé', bruits.length === 0
+      || (console.log('        ', bruits.join(' / ')), false));
+  }
+  await p.close();
+}
+
+/* --- la flèche touchée, le bilan en route : un chant touché n'ouvre pas de
+   geste. Le bilan l'aurait couvert, et le chant serait parti après
+   `virage:leave`. La demande de bilan est retenue (pas de réponse) : la
+   sortie attend ses trois secondes, on regarde avant. */
+{
+  const { p, bruits, dedans } = await tribuneEspionnee();
+  if (dedans) {
+    await p.evaluate(() => { S.you.ferveur = 12; S.you.breath = 100; S.you.regen = 0; });
+    await p.evaluate(() => document.querySelector('.tbf-retour').click());
+    await wait(200);
+    await p.evaluate(() => document.querySelector('#hand [data-card]')
+      ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, isPrimary: true })));
+    await wait(400);
+    check('pendant la sortie, un chant touché n’ouvre pas de geste',
+      !(await p.evaluate(() => document.getElementById('mini').classList.contains('on'))));
+    check('et rien n’a cassé', bruits.length === 0 || (console.log('        ', bruits.join(' / ')), false));
+  }
+  await p.close();
+}
+
+/* ------------------------------------- un bandeau d'annonce dans la tribune
+
+   L'administration peut poser un bandeau sur toutes les pages
+   (`.tbf-annonce`) ; sur un écran de jeu, `nav.js` le range sous les deux
+   rangées du HUD. Il y touchait le ticket terrain par le haut, et à
+   320 × 568 l'arène butait sur son plancher de 150 px : la main sortait de
+   l'écran, de 41 px sous un bandeau de trois lignes (mesuré au banc). La
+   page donne au bandeau son air et lui cède la hauteur de l'arène, qui
+   garde ses deux lignes de but écartées et dans l'ordre — à 44 px de
+   chaque bout, une arène de 109 px ne laissait que vingt et un pixels
+   entre elles. Le cas éprouvé : trois lignes de bandeau, un deck (la
+   rangée des actions), le combo, une carte-souvenir et le « i ». */
+{
+  annonceDuBanc = { texte: 'Maintenance ce soir de 23 h à minuit : les tribunes ferment dix minutes. '
+    + 'Les chants poussés avant la coupure restent comptés au bilan.', ton: 'attention' };
+  const p = await nav.newPage();
+  const bruits = [];
+  p.on('pageerror', (e) => bruits.push(e.message));
+  await p.setViewport({ width: 320, height: 568 });
+  await p.goto(base + '/virage', { waitUntil: 'networkidle0' });
+  annonceDuBanc = null;
+  await p.evaluate((id) => socket.emit('virage:join', { fixtureId: id }), MATCH_SORTIE);
+  const dedans = await p.waitForSelector('#fil:not([hidden])', { timeout: 8000 })
+    .then(() => true).catch(() => false);
+  const pose = await p.waitForSelector('#app > .tbf-annonce', { timeout: 4000 })
+    .then(() => true).catch(() => false);
+  check('le bandeau d’annonce paraît dans la tribune', dedans && pose);
+  if (dedans && pose) {
+    await p.evaluate(() => {
+      // Un deck (la rangée des actions), le combo, une carte-souvenir et le « i ».
+      S.you.main = (S.actions ?? []).slice(0, 4).map((a) => a.id);
+      S.you.mainVisible = 5;
+      S.you.ecartees = Math.max(1, S.you.ecartees ?? 0);
+      S.you.serie = 3;
+      P.souvenirs = [{ id: 901 }];
+      render();
+    });
+    await wait(400);
+    const vu = await p.evaluate(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      const b = document.querySelector('#app > .tbf-annonce');
+      const a = b.getBoundingClientRect(), ticket = r('#fil .tbf-ticket'), rope = r('#rope');
+      const ligne = (t) => { const x = r(`#rope .tbf-corde-but[data-tribune=${t}]`); return x.top + x.height / 2; };
+      return {
+        apres: b.previousElementSibling?.classList.contains('tbf-hudm-ligne') ?? false,
+        air: Math.round(a.top - ticket.bottom),
+        dessous: Math.round(rope.top - a.bottom),
+        actions: !document.getElementById('actes').hidden,
+        tableau: Math.round(r('.tableau').height),
+        rope: Math.round(rope.height),
+        bas: Math.round(Math.max(r('#hand').bottom,
+          ...[...document.querySelectorAll('#hand .card')].map((c) => c.getBoundingClientRect().bottom))),
+        ecran: innerHeight,
+        ecartLignes: Math.round(ligne('moi') - ligne('eux')),
+        foulard: document.getElementById('knot').offsetHeight,
+        combo: { vu: !document.getElementById('combo').hidden, dit: document.getElementById('combo').textContent,
+          ton: document.getElementById('combo').dataset.ton ?? null },
+      };
+    });
+    const dit = () => (console.log('        ', JSON.stringify(vu)), false);
+    /* Le combo est une récompense : le vert du PARFAIT (l'échelle unique du
+       verdict, QUESTIONS Q3), jamais le rouge du RATÉ et des « −9 » de ce
+       qui manque, posés juste en dessous. */
+    check('le combo dit ses PARFAITS en vert, la couleur du PARFAIT',
+      (vu.combo.vu && vu.combo.dit === '3 PARFAITS' && vu.combo.ton === 'vert') || dit());
+    check('il se pose sous les deux rangées du HUD, avec de l’air au-dessus et dessous',
+      (vu.apres && vu.air >= 4 && vu.dessous >= 4) || dit());
+    /* Le cas n'est éprouvé que s'il est posé : sans la rangée des actions,
+       ou avec un bandeau plus court, l'arène reste au-dessus de son
+       plancher ordinaire, et le contrôle passerait sans rien mesurer. */
+    check('à 320 × 568, avec un deck, l’arène passe sous son plancher et la main reste entière',
+      (vu.actions && vu.rope < 150 && vu.bas <= vu.ecran) || dit());
+    /* Plus d'un foulard entre les deux lignes : plus près, il les couvre
+       toutes les deux, et l'on ne voit plus de quel côté penche la corde. */
+    check('et l’arène qui cède garde ses deux lignes de but écartées, dans l’ordre',
+      (vu.foulard > 0 && vu.ecartLignes > vu.foulard) || dit());
+    check('le bandeau n’a rien cassé', bruits.length === 0
+      || (console.log('        ', bruits.join(' / ')), false));
+  }
+  await p.close();
+}
+
+/* --------------------------------------------- aucun seuil dans la page
+
+   Le mot du geste est servi (`verdict`, CONTRATS § 16.1) : la page ne
+   compare plus la note à un nombre, ni pour le mot, ni pour une vibration,
+   ni pour le Cri. Une comparaison remise à la main rougit ici. */
+{
+  const src = readFileSync(path.join(RACINE, 'public', 'virage.html'), 'utf8');
+  const seuils = [...src.matchAll(/\bquality\s*[<>]=?\s*[\d.]+/g)].map((m) => m[0]);
+  check('la page n’écrit aucun seuil de note', seuils.length === 0
+    || (console.log('        trouvé :', seuils.join(' · ')), false));
 }
 check('aucune erreur de script sur le virage',
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));

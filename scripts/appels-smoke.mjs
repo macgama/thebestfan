@@ -75,9 +75,20 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
  * ils ne mesuraient plus rien. Le parcours reste le même dans les deux cas,
  * et c'est ce qui compte — il faut traverser une chaîne pour savoir que le
  * `//` d'une adresse web n'ouvre pas un commentaire.
+ *
+ * **Et tout se compte en points de code, jamais en unités UTF-16.** Un émoji
+ * hors du plan de base (🟥, 🟨 : le ticket terrain du Virage) tient en deux
+ * unités pour `s.length` et `s[i]`, en un seul point de code pour
+ * `Array.from(s)`. Le tableau de sortie était indexé d'une façon et le parcours
+ * de l'autre : chaque émoji décalait d'un cran tout l'effacement qui suivait,
+ * qui tombait alors un caractère trop tard — le début de « nomCourt », de
+ * « String » ou de « function » partait avec, et la page dénonçait soixante-
+ * quatre noms qu'elle déclare pourtant. On travaille donc sur `t`, le tableau
+ * des points de code, pour lire comme pour écrire : un seul compte, partout.
  */
 export const blanchir = (s, { chaines = true } = {}) => {
-  const out = Array.from(s);
+  const t = Array.from(s);
+  const out = t.slice();
   const efface = (a, b) => {
     if (!chaines) return;
     for (let k = a; k < b; k += 1) if (out[k] !== '\n') out[k] = ' ';
@@ -95,41 +106,50 @@ export const blanchir = (s, { chaines = true } = {}) => {
   /* Le texte du gabarit jusqu'au prochain « ${ » ou au « ` » de fin. */
   const texte = (depuis) => {
     let j = depuis;
-    while (j < s.length) {
-      if (s[j] === '\\') { j += 2; continue; }
-      if (s[j] === '`' || (s[j] === '$' && s[j + 1] === '{')) break;
+    while (j < t.length) {
+      if (t[j] === '\\') { j += 2; continue; }
+      if (t[j] === '`' || (t[j] === '$' && t[j + 1] === '{')) break;
       j += 1;
     }
     efface(depuis, j);
     return j;
   };
+  /* Où se ferme un commentaire de bloc : la première paire « * / » à partir de
+     « depuis ». Un tableau de points de code n'a pas d'« indexOf » de sous-
+     chaîne, et la chercher sur `s` rendrait un indice d'unités UTF-16. */
+  const finDuBloc = (depuis) => {
+    for (let k = depuis; k < t.length - 1; k += 1) {
+      if (t[k] === '*' && t[k + 1] === '/') return k;
+    }
+    return -1;
+  };
   let i = 0;
-  while (i < s.length) {
-    const c = s[i];
-    const d = s[i + 1];
+  while (i < t.length) {
+    const c = t[i];
+    const d = t[i + 1];
     if (c === '/' && d === '/') {
-      const j = s.indexOf('\n', i); const f = j < 0 ? s.length : j;
+      const j = t.indexOf('\n', i); const f = j < 0 ? t.length : j;
       effaceToujours(i, f); i = f; continue;
     }
     if (c === '/' && d === '*') {
-      const j = s.indexOf('*/', i + 2); const f = j < 0 ? s.length : j + 2;
+      const j = finDuBloc(i + 2); const f = j < 0 ? t.length : j + 2;
       effaceToujours(i, f); i = f; continue;
     }
     if (c === '"' || c === "'") {
       let j = i + 1;
-      while (j < s.length && s[j] !== c) { if (s[j] === '\\') j += 1; j += 1; }
+      while (j < t.length && t[j] !== c) { if (t[j] === '\\') j += 1; j += 1; }
       efface(i + 1, j); i = j + 1; continue;
     }
     if (c === '`') {
       const j = texte(i + 1);
-      if (s[j] === '$') { pile.push(1); i = j + 2; continue; }
+      if (t[j] === '$') { pile.push(1); i = j + 2; continue; }
       i = j + 1; continue;
     }
     if (pile.length && (c === '{' || c === '}')) {
       pile[pile.length - 1] += c === '{' ? 1 : -1;
       if (pile[pile.length - 1] === 0) {
         const j = texte(i + 1);
-        if (s[j] === '$') { pile[pile.length - 1] = 1; i = j + 2; continue; }
+        if (t[j] === '$') { pile[pile.length - 1] = 1; i = j + 2; continue; }
         pile.pop(); i = j + 1; continue;
       }
     }
@@ -138,14 +158,19 @@ export const blanchir = (s, { chaines = true } = {}) => {
        d'avant suffit ici : ce dépôt ne divise jamais par une parenthèse
        fermante suivie d'un slash. */
     if (c === '/') {
-      const p = (s.slice(0, i).match(/(\S)\s*$/) ?? ['', ''])[1];
+      /* Le dernier signe qui n'est pas une espace, en remontant. Même résultat
+         que « (\S)\s*$ » sur le texte d'avant, sans recopier tout ce texte à
+         chaque barre oblique, et en points de code comme le reste. */
+      let k = i - 1;
+      while (k >= 0 && /\s/.test(t[k])) k -= 1;
+      const p = k >= 0 ? t[k] : '';
       if (p === '' || '=(,:;!&|?{}[+-*%~^'.includes(p) || /[A-Za-z]/.test(p) === false) {
         let j = i + 1; let crochet = false; let ok = false;
-        while (j < s.length && s[j] !== '\n') {
-          if (s[j] === '\\') { j += 2; continue; }
-          if (s[j] === '[') crochet = true;
-          else if (s[j] === ']') crochet = false;
-          else if (s[j] === '/' && !crochet) { ok = true; break; }
+        while (j < t.length && t[j] !== '\n') {
+          if (t[j] === '\\') { j += 2; continue; }
+          if (t[j] === '[') crochet = true;
+          else if (t[j] === ']') crochet = false;
+          else if (t[j] === '/' && !crochet) { ok = true; break; }
           j += 1;
         }
         if (ok) { efface(i + 1, j); i = j + 1; continue; }
@@ -278,6 +303,51 @@ console.log('\n— le blanchiment');
      la fin de la ligne — donc les appels qui s'y trouvent. */
   check('une division reste une division',
     /apres\(/.test(blanchir('const x = a / b; apres();')));
+
+  /* **Un émoji hors plan de base ne décale rien.** C'est la panne du ticket
+     terrain du Virage : deux carrés de couleur dans une chaîne (🟥, 🟨), et
+     soixante-quatre noms de la page dénoncés à tort. Chaque émoji valait deux
+     unités UTF-16 pour le parcours et un point de code pour la sortie, donc un
+     cran de retard de plus à chaque émoji, mesuré sur l'ancien parcours : un
+     seul efface le « $ » du « ${ » qui suit, deux font perdre son début à
+     « function » après un commentaire, trois mangent la première lettre du nom
+     qui suit « ${ » (« nomCourt » devenait « omCourt »). La page en portait
+     trois, d'où les soixante-quatre. Le jeu d'essai en met quatre pour tenir
+     les trois cas d'un coup.
+
+     Les émojis sont écrits en échappements : le contrôle ne dépend ni de
+     l'encodage du fichier, ni de l'éditeur qui le rouvre. */
+  const rouge = '\u{1F7E5}'; const jaune = '\u{1F7E8}'; const vert = '\u{1F7E9}';
+  const avecEmojis = 'const carte = (c) => c ? \'' + rouge + '\' : \'' + jaune + '\';\n'
+    + 'const tag = \'' + vert + '\';\n'
+    + 'const m = `' + rouge + ' ${nomCourt(x)}`;\n'
+    + 'const un = `un ${premier(1)} deux ${second(2)} trois`;\n'
+    + 'const re = /[/]perdre(s)/g; vrai();\n'
+    + 'n / dedans() / 2;\n'
+    + '/* note */\nfunction scoreTerrain() {}\nscoreTerrain();';
+  const blanc = blanchir(avecEmojis);
+  /* Un contrôle par endroit du parcours qui lit le texte : le gabarit et ses
+     interpolations, l'expression régulière (sa fin, puis la division qui la
+     distingue), le commentaire de bloc. Chacun a son contrôle, parce que
+     chacun a failli relire `s` en unités sans que les autres le disent. */
+  check('un émoji hors plan de base ne décale pas l’effacement qui suit',
+    /\$\{nomCourt\(x\)\}/.test(blanc)
+    && /\$\{premier\(1\)\}/.test(blanc) && /\$\{second\(2\)\}/.test(blanc)
+    && /\bvrai\(\);/.test(blanc)
+    && /\bdedans\(\) \/ 2;/.test(blanc)
+    && /\nfunction scoreTerrain\(\) \{\}\nscoreTerrain\(\);$/.test(blanc));
+  check('et ce qui doit partir part encore : les émojis, le texte, le commentaire, la regex',
+    ![rouge, jaune, vert].some((e) => blanc.includes(e))
+    && !/note/.test(blanc) && !/perdre/.test(blanc) && !/deux/.test(blanc));
+  check('ni une ligne ni un point de code ne bougent',
+    blanc.split('\n').length === avecEmojis.split('\n').length
+    && Array.from(blanc).length === Array.from(avecEmojis).length);
+  /* Sans l'effacement des chaînes, le contenu reste, émoji compris : c'est ce
+     que lisent les contrôles de codes d'erreur plus bas, et un « /^🟥 Keller$/ »
+     écrit dans une chaîne n'a pas à se faire mordre. */
+  const chaine = 'const t = \'' + rouge + ' Keller\'; /* x */ vrai();';
+  check('chaines: false garde l’émoji d’une chaîne et n’efface que le commentaire',
+    blanchir(chaine, { chaines: false }) === chaine.replace('/* x */', '       '));
 }
 
 /* ==================================================== le contrôle se déclenche-t-il ?
@@ -301,6 +371,21 @@ console.log('\n— le contrôle se déclenche');
     + '<script>function go(){ toast("x"); }</script>';
   check('une aide venue d’un script chargé compte comme présente',
     orphelins(depuisUnAutreFichier, () => 'function toast(t){}').length === 0);
+
+  /* Le ticket terrain du Virage : des émojis hors plan de base (🟥, 🟨, 🟩, en
+     échappements) avant des fonctions déclarées. Le faux positif d'origine
+     dénonçait soixante-quatre noms que la page écrit pourtant elle-même ; et,
+     du même geste, la fonction vraiment absente doit rester dénoncée — le
+     contrôle ne doit pas se taire parce qu'il y a des émojis. */
+  const ticket = '<script>const carte = (c) => c ? \'\u{1F7E5}\' : \'\u{1F7E8}\';\n'
+    + 'const tag = \'\u{1F7E9}\'; const m = `\u{1F7E5} ${nomCourt(1)}`;\n'
+    + '/* ticket */\nfunction nomCourt(n) { return scoreTerrain(n); }\n'
+    + 'function scoreTerrain(n) { return n; }</script>';
+  check('une page qui porte des émojis n’est pas dénoncée pour ce qu’elle déclare',
+    orphelins(ticket, () => null).length === 0);
+  check('et ce qui lui manque reste dénoncé malgré les émojis',
+    orphelins(ticket.replace('return scoreTerrain(n);', 'return toast(n);'), () => null)
+      .join() === 'toast');
 }
 
 /* ==================================================== les pages du jeu */

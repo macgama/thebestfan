@@ -3,8 +3,8 @@
 > **Projet à faire relire.** Ce texte décrit fidèlement ce que le code fait —
 > chaque affirmation a été lue dans `sql/`, `src/server/auth/` et
 > `src/server/boutique/`, et les plus importantes sont vérifiées par
-> `npm run auth:smoke` (ce que la suppression d'un compte efface, quotidien
-> compris, et ce qu'elle garde). Les durées du quotidien (400 jours, 60 jours)
+> `npm run auth:smoke` (ce que la suppression d'un compte efface, quotidien et
+> choix de présence compris, et ce qu'elle garde). Les durées du quotidien (400 jours, 60 jours)
 > sont celles que le chantier serveur d'octobre 2026 écrit dans ses modules ;
 > elles se relisent à sa livraison. Il n'a pas été relu par un juriste, et il doit l'être
 > avant d'être publié. Les passages entre crochets attendent une information que
@@ -52,6 +52,7 @@ d'autre.
 | ta collection, ton deck, tes écharpes | c'est le jeu |
 | tes parties : adversaires, scores, dates, durées | ton parcours, et celui de tes adversaires |
 | ta présence dans un virage, et le nombre de tes chants | la corde partagée, les cartes-souvenirs, les missions du Virage |
+| ce que ton geste a donné pendant un match du Virage : tes PARFAITS, ta meilleure série, ton meilleur chant | le bilan de tribune qu'on te montre à la sortie et au coup de sifflet, et le départage de ton rang dans ta tribune. Gardés avec ta présence de ce match, comme elle |
 | ton groupe (KOP), tes amis | les fonctions de groupe, que tu choisis d'utiliser |
 | ton activité du jour : boosters ouverts, évolutions, missions tirées et leur avancement | les missions du jour, qui se comptent sur ce que tu as fait |
 | ce que le jeu t'a versé : missions, bonus de présence, carnet de saison, paliers de collection, divisions | ne jamais payer deux fois la même récompense, et repérer un abus |
@@ -68,6 +69,43 @@ tu as équipé** (son nom, son âge, sa tenue, son expression, sa rareté), **to
 niveau**, et, dans le classement de la saison, **ta division**. Ni ta
 collection, ni ta garde-robe, ni ton XP exacte n'en font partie. Un compte
 supprimé n'y montre plus son personnage.
+
+### La présence de tes amis
+
+> **À faire relire — pas encore en service.** Ce paragraphe décrit une fonction
+> livrée **éteinte** : tant qu'elle l'est, rien de ce qui suit n'est montré à
+> personne. Elle ne s'allumera qu'une fois ce texte relu par un juriste et mis
+> en ligne, la question des mineurs comprise (voir « Les mineurs »). Il a été lu
+> dans `src/server/presence/index.js`, `src/shared/reglages.js` et
+> `serveur/CONTRATS.md` (§ 18) ; `npm run presence:smoke` vérifie que rien
+> n'est servi ni gardé tant qu'elle est éteinte, et qu'aucune activité ne
+> s'écrit en base.
+
+Quand elle sera allumée, **tes amis** — seulement ceux dont tu as accepté
+l'amitié et qui ont accepté la tienne — verront si tu es **en ligne**, **au
+Virage** ou **en duel**. Rien de plus : ni le match que tu regardes, ni l'heure,
+ni « vu il y a ». Un joueur qui n'est pas ton ami, ou à qui tu as seulement
+envoyé une demande, ne voit rien. Dans une tribune du Virage, un ami présent
+dans la même tribune voit que tu y es — vous y êtes tous les deux.
+
+**Rien de tout cela n'est écrit** : la présence vit dans la mémoire du serveur,
+et disparaît à son redémarrage. Pour dire « en ligne », il garde l'instant de
+ta dernière action dans le jeu (une page qui lui demande quelque chose, une
+connexion en direct). Cette marque cesse de dire « en ligne » après deux
+minutes sans action (c'est le réglage par défaut), puis elle est effacée au
+plus une minute plus tard tant que le site a des joueurs. « Au Virage » et
+« en duel » se lisent dans ce que le serveur tient déjà pour faire tourner le
+match, et cessent quand tu en sors (en duel, une coupure de réseau te garde ta
+place, et l'état, une minute et demie). **Tant que la fonction est éteinte, rien
+n'est gardé**, pas même cette marque.
+
+**La seule chose écrite, c'est ton choix** : par défaut tu es visible de tes
+amis, et tu peux **apparaître hors ligne** depuis le menu, à tout moment.
+Caché, tu n'apparais chez personne, et tu vois tes amis comme avant. Le choix
+vaut tout de suite pour la liste de tes amis ; dans une tribune où tu es déjà,
+il vaut à ta prochaine entrée : les amis qui t'y ont vu entrer le savent
+déjà, et apprennent seulement ton départ. Ce choix est gardé tant que ton
+compte existe ; il est effacé avec lui.
 
 ### Pour la sécurité
 
@@ -132,6 +170,11 @@ pas et ne sont pas croisées avec ton compte.
   le jeu n'en garde que la dernière.
 - **Le registre de ce que le jeu t'a versé** : tant que le compte existe ; après
   sa suppression, voir plus bas.
+- **Ta présence auprès de tes amis** (pas encore en service) : jamais écrite ;
+  en mémoire, la marque de ta dernière action est effacée au plus une minute
+  après avoir cessé de dire « en ligne » (tant que le site a des joueurs), et
+  rien n'est gardé tant que la fonction est éteinte ; **ton choix d'apparaître hors
+  ligne** : tant que le compte existe.
 - **Tes sessions** : jusqu'à leur expiration ou ta déconnexion.
 - **Les traces de connexion** : **[à fixer — 30 jours proposés]**.
 - **Les factures et paiements** : **[à confirmer — 10 ans en France, 10 ans en
@@ -153,10 +196,13 @@ C'est immédiat et définitif.
 - le club que tu suivais,
 - toutes tes sessions et tous les liens en attente,
 - ton activité du jour, tes missions tirées, ce que tu n'avais pas encore
-  regardé, ta dernière visite et tes rangs de la veille.
+  regardé, ta dernière visite et tes rangs de la veille,
+- ton choix d'apparaître hors ligne auprès de tes amis.
 
 **Ce qui reste, et pourquoi.** Les parties que tu as jouées restent dans
-l'historique de tes adversaires, **sans ton nom**. Elles ne t'appartiennent pas
+l'historique de tes adversaires, **sans ton nom** — et, de la même façon, ta
+présence dans les matchs du Virage, avec ce que ton geste y a donné (PARFAITS,
+meilleure série, meilleur chant) : c'est l'histoire de ces tribunes. Elles ne t'appartiennent pas
 seulement à toi : effacer un duel reviendrait à réécrire la soirée de la
 personne d'en face, qui n'a rien demandé. Ces lignes ne portent plus aucune
 information permettant de te reconnaître.

@@ -17,8 +17,17 @@
  *   durée   jusqu'à ce qu'il retombe sous −60 dBFS pour de bon.
  *
  * Il rend aussi les superpositions, les trois niveaux de l'ambiance, les
- * chants, et un sinus qui vérifie que la chaîne est transparente sous le
- * seuil du limiteur.
+ * chants, une rafale de tics par-dessus un chant (lot 6), et un sinus qui
+ * vérifie que la chaîne est transparente sous le seuil du limiteur.
+ *
+ * **Chaîne chaude.** Le limiteur de Chrome naît fermé et s'ouvre en deux
+ * dixièmes de seconde ; `rendre` le laisse s'ouvrir dans le silence avant de
+ * poser le son (voir CHAUFFE dans `son.js`). Jusqu'au lot 6, chaque son bref
+ * était mesuré pendant cette ouverture, six à huit décibels sous ce que le
+ * joueur entend, et les gains de la banque avaient été tirés de ces mesures.
+ * Seuls les rendus de **la naissance** partent d'une chaîne froide (lot 6) :
+ * le premier son d'une visite part dans le toucher qui fait naître le
+ * contexte, et c'est lui qu'ils mesurent (voir NAISSANCE dans `son.js`).
  *
  * ## Usage
  *
@@ -187,7 +196,9 @@ async function rendreEtMesurer(travaux, avecWav) {
   const S = window.TBF_SON;
   const sorties = [];
   for (const t of travaux) {
-    const tampon = await S.rendre(t.quoi, { duree: t.duree, graine: t.graine ?? 1 });
+    // `chauffe` : rendu depuis la naissance de la chaîne (voir « la naissance »).
+    const tampon = await S.rendre(t.quoi, { duree: t.duree, graine: t.graine ?? 1,
+      ...(t.chauffe != null ? { chauffe: t.chauffe } : {}) });
     if (!tampon) { sorties.push({ ...t, erreur: 'pas de rendu hors ligne' }); continue; }
     sorties.push({ ...t, ...mesurer(tampon, 0.02), ...(avecWav ? { wav: wav(tampon) } : {}) });
   }
@@ -219,6 +230,9 @@ export function travaux(mix) {
   sup('but+parfait+carte', ['but', 'parfait', 'carte'], 1.7);
   sup('butReel+ovation+pousse', ['butReel', 'ovation', 'pousse'], 5.9);
   sup('legendaire', ['rugissement', 'accord-legendaire', 'grondement', 'bache'], 2.4);
+  /* Le verdict (lot 6) : la dernière frappe fait son tic, le tampon claque
+     (« bache ») et le PARFAIT sonne — au pire, tous trois au même instant. */
+  sup('verdict', ['tic', 'bache', 'parfait'], 0.9);
   sup('tous-les-moments', Object.keys(mix.sons).filter((n) => mix.sons[n].famille === 'moment'), 5.9);
   /* L'ambiance, niveau par niveau, assez longtemps pour respirer. Avec sa
      fenêtre (la moyenne) et, aux niveaux qui restent sous l'interface, son
@@ -230,6 +244,14 @@ export function travaux(mix) {
         plafond: mix.ambiancePlafonds?.[n] ?? null });
     }
   });
+  /* Les échelles de la rumeur (lot 6) : la mi-temps et le vestiaire vide,
+     au niveau 1, sur la même graine que la rumeur pleine. La chaîne est
+     transparente sous le limiteur : l'écart de sonie moyenne se lit tel
+     quel, et c'est lui qui dit qu'on entend la tribune retomber. */
+  for (const [nom, echelle] of Object.entries(mix.echelles ?? {})) {
+    t.push({ id: `ambiance-1-${nom}`, sorte: 'echelle', niveau: 1, echelle,
+      quoi: { ambiance: 1, echelle }, duree: 8 });
+  }
   // Les chants, aux tempos des gestes du serveur (gestures.js).
   const chant = (id, quoi, duree) => t.push({ id, sorte: 'chant', famille: 'jeu', quoi, duree });
   chant('chant-tempo', { chant: 'tempo', tempo: 560, temps: 8 }, 5.2);
@@ -240,7 +262,72 @@ export function travaux(mix) {
   // L'équilibre des deux voix d'un chant : le tambour seul, les claps seuls (non jugés).
   t.push({ id: 'voix-tambour', sorte: 'voix', quoi: { chant: 'tempo', tempo: 560, temps: 8, voix: 'T' }, duree: 5.2 });
   t.push({ id: 'voix-claps', sorte: 'voix', quoi: { chant: 'tempo', tempo: 560, temps: 8, voix: 'C' }, duree: 5.2 });
+  t.push(...rafales());
+  t.push(...naissances(mix));
   return t;
+}
+
+/* ---------------------------------------------------------- la naissance
+
+   Lot 6. Tout le reste du banc se rend **chaîne chaude** (CHAUFFE, dans
+   son.js) : la chaîne telle qu'elle tourne en jeu. Mais le premier son d'une
+   visite part dans le toucher même qui fait naître le contexte, sur une
+   chaîne qui n'a encore rien entendu — et le limiteur de Chrome naît fermé :
+   ce son-là sortait treize décibels sous la banque. Son remède (NAISSANCE,
+   une relâche brève le temps que le limiteur s'ouvre) se mesure ici, en
+   rendant **depuis la naissance** (`chauffe: 0`) : un son d'interface y sort
+   comme chaîne chaude, à NAISSANCE_ECART près ; et ce qui s'empile pendant
+   la relâche brève — tous les moments à la fois, ce qu'aucun écran ne joue
+   au premier toucher — reste sous la crête de tout ce qui sort. */
+export const NAISSANCE_ECART = 0.5;
+export function naissances(mix) {
+  const moments = Object.keys(mix.sons).filter((n) => mix.sons[n].famille === 'moment');
+  return [
+    { id: 'naissance-tic', sorte: 'naissance', comme: 'tic', quoi: { son: 'tic' }, duree: 0.6, chauffe: 0 },
+    { id: 'naissance-bache', sorte: 'naissance', comme: 'bache', quoi: { son: 'bache' }, duree: 0.8, chauffe: 0 },
+    { id: 'naissance-tous-les-moments', sorte: 'naissance', quoi: { sons: moments }, duree: 5.9, chauffe: 0 },
+  ];
+}
+
+/* ------------------------------------------------------------- la rafale
+
+   Lot 6 : le pavé fait un tic à chaque frappe (`geste.js`), jusqu'à huit ou
+   dix par seconde au martelage, et le tambour du chant bat dessous. Un tic
+   seul est mesuré dans la banque ; dix à la seconde, c'est autre chose :
+   chacun garde la sonie d'un tic (il n'en tombe qu'un par fenêtre de cent
+   millisecondes), mais ensemble ils remplissent les silences entre deux temps
+   du chant, et c'est par là qu'ils pourraient le couvrir. Trois rendus, sur
+   la même graine : le chant « tempo » du serveur (560 ms, huit temps) seul,
+   la rafale seule (un tic toutes les RAFALE_MS, tant que dure le chant), et
+   les deux ensemble — le chant y est, frappe pour frappe, celui qu'on rend
+   seul (les tics ne tirent aucun hasard). Le premier tic tombe sur le
+   premier temps, le vingt-neuvième sur le sixième : la crête la plus haute
+   est celle d'un tic posé sur un coup de tambour. */
+export const RAFALE_MS = 100;
+/**
+ * Ce que la rafale doit tenir, jugé sur l'ensemble contre ses deux moitiés :
+ *
+ *   sousChant  l'écart de sonie, en décibels, entre le chant seul et la
+ *              rafale seule : celui que les familles gardent entre le haut
+ *              de l'interface (−27) et le bas du jeu (−25). Deux décibels se
+ *              lisent « plus bas » ; en deçà, les tics valent le tambour ;
+ *   gonfle     ce que la rafale ajoute, au plus, à la sonie du chant : un
+ *              décibel, sous ce que l'oreille lit « plus fort ».
+ *
+ * Et la crête de l'ensemble sous `creteMax`, comme toute superposition.
+ */
+export const RAFALE = { sousChant: 2, gonfle: 1 };
+export function rafales() {
+  const chant = { chant: 'tempo', tempo: 560, temps: 8 };
+  const duree = 5.2;
+  const suite = [];
+  for (let a = 0; a < chant.temps * chant.tempo; a += RAFALE_MS) suite.push({ son: 'tic', a });
+  const groupe = `tempo-${1000 / RAFALE_MS}hz`;
+  return [
+    { id: 'rafale-chant', sorte: 'rafale', groupe, role: 'chant', quoi: chant, duree },
+    { id: 'rafale-tics', sorte: 'rafale', groupe, role: 'tics', quoi: { suite }, duree },
+    { id: 'rafale-ensemble', sorte: 'rafale', groupe, role: 'ensemble', quoi: { ...chant, suite }, duree },
+  ];
 }
 
 /**
@@ -254,6 +341,11 @@ export async function mesurerTout(page, { wav = false } = {}) {
   return { mix, mesures };
 }
 
+/** L'écart, en décibels, qu'une rumeur creusée doit tenir sous la rumeur
+    pleine : en deçà, on n'entend pas la tribune retomber (deux décibels se
+    lisent « plus bas », six « autre chose »). */
+export const RETOMBEE_MIN = 6;
+
 /**
  * Le verdict de chaque mesure contre le mixage déclaré : sa fenêtre, sa
  * crête. Rend les mesures avec `ok` et, quand ça ne va pas, `pourquoi`.
@@ -263,6 +355,18 @@ export function juger({ mix, mesures }) {
   return mesures.map((m) => {
     const fautes = [];
     if (m.erreur) fautes.push(m.erreur);
+    else if (m.sorte === 'echelle') {
+      /* Une rumeur creusée (lot 6) : sous la rumeur pleine du même niveau,
+         d'au moins RETOMBEE_MIN. Sans la pleine, rien à quoi la comparer —
+         c'est une faute, pas un vert. */
+      const pleine = mesures.find((x) => x.sorte === 'ambiance' && x.niveau === m.niveau && !x.erreur);
+      if (!pleine) fautes.push(`pas de rumeur pleine au niveau ${m.niveau} à laquelle la comparer`);
+      else if (pleine.moyen - m.moyen < RETOMBEE_MIN) {
+        fautes.push(`seulement ${Math.round((pleine.moyen - m.moyen) * 10) / 10} dB sous la rumeur pleine `
+          + `(${RETOMBEE_MIN} au moins) : on n'entendrait pas la tribune retomber`);
+      }
+      if (m.crete > mix.creteSeule) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteSeule}`);
+    }
     else if (m.sorte === 'son' || m.sorte === 'chant') {
       const f = mix.familles[m.famille].fenetre;
       if (!dans(m.sonie, f)) fautes.push(`sonie ${m.sonie} hors de [${f.join(', ')}]`);
@@ -278,6 +382,32 @@ export function juger({ mix, mesures }) {
       if (m.crete > mix.creteSeule) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteSeule}`);
     } else if (m.sorte === 'superposition') {
       if (m.crete > mix.creteMax) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteMax}`);
+    } else if (m.sorte === 'rafale') {
+      /* La rafale (lot 6). Les tics seuls restent des sons d'interface :
+         dix à la seconde ne sonnent pas plus fort qu'un. L'ensemble se juge
+         contre ses deux moitiés rendues seules — sans elles, rien à quoi le
+         comparer, et c'est une faute, pas un vert. */
+      const de = (role) => mesures.find((x) => x.sorte === 'rafale' && x.groupe === m.groupe
+        && x.role === role && !x.erreur);
+      if (m.role === 'tics') {
+        const haut = mix.familles.interface.fenetre[1];
+        if (m.sonie > haut) fautes.push(`sonie ${m.sonie} au-dessus de l'interface (${haut})`);
+        if (m.crete > mix.creteSeule) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteSeule}`);
+      } else if (m.role === 'ensemble') {
+        const chant = de('chant');
+        const tics = de('tics');
+        if (!chant || !tics) fautes.push('le chant ou la rafale rendus seuls manquent : rien à quoi comparer');
+        else {
+          const sous = Math.round((chant.sonie - tics.sonie) * 10) / 10;
+          if (sous < RAFALE.sousChant) {
+            fautes.push(`les tics ne sont que ${sous} dB sous le chant (${RAFALE.sousChant} au moins) : `
+              + 'ils couvriraient le tambour');
+          }
+          const plus = Math.round((m.sonie - chant.sonie) * 10) / 10;
+          if (plus > RAFALE.gonfle) fautes.push(`la rafale gonfle le chant de ${plus} dB (${RAFALE.gonfle} au plus)`);
+        }
+        if (m.crete > mix.creteMax) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteMax}`);
+      }
     } else if (m.sorte === 'ambiance') {
       if (!dans(m.moyen, m.fenetre)) fautes.push(`moyen ${m.moyen} hors de [${m.fenetre.join(', ')}]`);
       /* La moyenne de huit secondes ne dit pas qu'une crête de la rumeur
@@ -286,6 +416,22 @@ export function juger({ mix, mesures }) {
         fautes.push(`sonie ${m.sonie} au-dessus de ${m.plafond} : la rumeur couvrirait l'interface`);
       }
       if (m.crete > mix.creteSeule) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteSeule}`);
+    } else if (m.sorte === 'naissance') {
+      /* Depuis la naissance (lot 6) : le son seul contre le même son rendu
+         chaîne chaude — sans lui, rien à quoi le comparer, et c'est une
+         faute ; l'empilement, contre la crête de tout ce qui sort. */
+      if (m.comme) {
+        const chaud = mesures.find((x) => x.sorte === 'son' && x.id === m.comme && !x.erreur);
+        if (!chaud) fautes.push(`pas de « ${m.comme} » chaîne chaude auquel le comparer`);
+        else {
+          const ecart = Math.max(Math.abs(m.crete - chaud.crete), Math.abs(m.sonie - chaud.sonie));
+          if (ecart > NAISSANCE_ECART) {
+            fautes.push(`${Math.round(ecart * 10) / 10} dB d'écart avec la chaîne chaude (crête ${m.crete} `
+              + `contre ${chaud.crete}, sonie ${m.sonie} contre ${chaud.sonie}) : le limiteur naît fermé`);
+          }
+        }
+      }
+      if (m.crete > mix.creteMax) fautes.push(`crête ${m.crete} au-dessus de ${mix.creteMax}`);
     } else if (m.sorte === 'chaine') {
       if (m.attendu != null && Math.abs(m.crete - m.attendu) > 0.3) {
         fautes.push(`crête ${m.crete} au lieu de ${m.attendu} : la chaîne n'est pas transparente`);
@@ -349,10 +495,18 @@ function rapport({ mix, mesures }, jugees) {
   bloc('L’ambiance', 'ambiance', ['niveau', 'fenêtre (moyen)', 'moyen', 'plafond (sonie)', 'sonie', 'crête', 'verdict'],
     (j) => [String(j.niveau), `${nombre(j.fenetre[0])} à ${nombre(j.fenetre[1])}`, nombre(j.moyen),
       j.plafond == null ? 'aucun (le but)' : nombre(j.plafond), nombre(j.sonie), nombre(j.crete), verdict(j)]);
+  bloc('Les échelles de la rumeur (lot 6)', 'echelle', ['rendu', 'échelle', 'moyen', 'sonie', 'crête', 'verdict'],
+    (j) => [j.id, String(j.echelle).replace('.', ','), nombre(j.moyen), nombre(j.sonie), nombre(j.crete), verdict(j)]);
   bloc('Les deux voix d’un chant', 'voix', ['voix', 'crête', 'sonie', 'moyen'],
     (j) => [j.id, nombre(j.crete), nombre(j.sonie), nombre(j.moyen)]);
   bloc('Les chants', 'chant', ['chant', 'crête', 'sonie', 'moyen', 'durée (s)', 'verdict'],
     (j) => [j.id, nombre(j.crete), nombre(j.sonie), nombre(j.moyen), secondes(j.duree), verdict(j)]);
+  bloc(`La rafale de tics sur le chant (lot 6 : un tic toutes les ${RAFALE_MS} ms)`, 'rafale',
+    ['rendu', 'rôle', 'crête', 'sonie', 'moyen', 'verdict'],
+    (j) => [j.id, j.role, nombre(j.crete), nombre(j.sonie), nombre(j.moyen), verdict(j)]);
+  bloc('La naissance de la chaîne (lot 6 : rendue sans chauffe, le premier son d’une visite)', 'naissance',
+    ['rendu', 'comme', 'crête', 'sonie', 'verdict'],
+    (j) => [j.id, j.comme ?? '—', nombre(j.crete), nombre(j.sonie), verdict(j)]);
   const hors = jugees.filter((j) => !j.ok);
   L.push(hors.length ? `**${hors.length} rendu(s) hors de leur fenêtre.**` : '**Tout est dans sa fenêtre.**');
   L.push('');

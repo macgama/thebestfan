@@ -6,7 +6,6 @@ import { ACTIONS, ACTIONS_MARQUEES, ACTION_BY_ID, DECK_RULES, validerDeck }
 import { publies as jouables } from '../contenus/index.js';
 import { parIdentifiant, racineDe, lignee } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
-import { jourISO } from '../../shared/jour.js';
 // La prime des grands formats se lit dans les réglages : elle s’ajuste depuis
 // /admin, comme le reste du barème. Voir `primeDeFormat`.
 import { reglage } from '../../shared/reglages.js';
@@ -77,6 +76,84 @@ export function primeDeFormat(format) {
   const taille = FORMATS[format] ?? 1;
   return 1 + Math.max(0, taille - 1) * reglage('duel.prime_format');
 }
+
+/**
+ * Ce qu'un duel rapporte, en écharpes.
+ *
+ * Le classé paie le double de l'entraînement : c'est ce qui fait préférer un
+ * vrai adversaire pendant un vrai match. Le perdant touche quand même — une
+ * défaite qui ne rapporte rien pousse à quitter la salle avant la fin, et un
+ * duel abandonné gâche la soirée des deux camps.
+ *
+ * Les montants sont volontairement modestes au regard d'un booster (45) :
+ * les écharpes viennent surtout des doublons, le duel est un complément.
+ *
+ * **Il vit ici, et non plus dans `nvn/index.js`**, pour la même raison que
+ * `primeDeFormat` juste au-dessus : deux modules le lisent. `nvn` pour verser
+ * à la fin du duel, cette page-ci pour dire **avant** l'entrée en file ce qui
+ * est en jeu (`enJeu`, CONTRATS.md § 17). Recopié de l'autre côté, il
+ * divergerait au premier barème retouché, et l'écran promettrait un montant
+ * que le duel ne paie pas. `nvn` importe déjà `deck` ; l'inverse ferait une
+ * boucle d'imports.
+ */
+export const GAIN = Object.freeze({
+  classe: Object.freeze({ gagne: 30, perdu: 12 }),
+  entrainement: Object.freeze({ gagne: 15, perdu: 6 }),
+});
+
+/**
+ * Le double quand on pousse pour son club.
+ *
+ * On peut jouer pour n'importe quel match — c'est ce qui permet de trouver un
+ * adversaire un mardi soir de trêve. Mais pousser pour son club doit rester ce
+ * qui rapporte le plus, sinon le suivi d'équipe ne veut plus rien dire et le
+ * joueur va simplement là où il y a du monde.
+ *
+ * Le multiplicateur se calcule **par joueur**, pas par duel : deux adversaires
+ * peuvent très bien avoir chacun leur club sur le terrain, ou un seul, ou
+ * aucun. C'est justement l'intérêt d'un derby.
+ *
+ * **Les écharpes seulement.** L'XP ne double pas pour son club (ETAT.md § 3) :
+ * le niveau mesure le temps passé à jouer.
+ */
+export const DOUBLE_CLUB = 2;
+
+/**
+ * Les écharpes d'un duel **avant** le double du club : barème du mode × prime
+ * du format, arrondi.
+ *
+ * Écrite une fois, et lue deux fois : par `nvn` au versement — la part du KOP
+ * se prend sur ce montant-là, avant le double — et par `enJeuDe` pour
+ * l'annoncer. Deux formules finiraient par ne plus dire le même chiffre.
+ *
+ * @param {'classe'|'entrainement'} mode  un mode inconnu paie l'entraînement
+ * @param {string} format                 `1v1` … `5v5` ; inconnu, pas de prime
+ * @param {boolean} gagne                 la victoire, ou le barème du perdu
+ */
+export function baseDuDuel(mode, format, gagne) {
+  const bareme = GAIN[mode] ?? GAIN.entrainement;
+  return Math.round((gagne ? bareme.gagne : bareme.perdu) * primeDeFormat(format));
+}
+
+/**
+ * Ce qu'une victoire rapporterait à ce joueur, format par format (`enJeu`,
+ * CONTRATS.md § 17) : `{ '1v1': 60, '2v2': 70, … }`.
+ *
+ * **Le serveur compte, l'écran nomme** (R7). La page écrivait « +40 écharpes
+ * en jeu » sans que rien ne le lui dise ; elle n'écrit plus rien sans ce champ.
+ *
+ * Les mêmes montants pour tous, abonnés compris (R9) : un format qu'un joueur
+ * gratuit ne peut pas jouer classé est refusé à l'entrée, jamais payé
+ * autrement — et cette fonction ne lit pas l'abonnement. Pas d'XP non plus :
+ * elle ne dépend ni du format ni du club.
+ *
+ * @param {'classe'|'entrainement'} mode  celui que la liste sert pour ce match
+ * @param {boolean} mien                  le joueur suit l'un des deux clubs
+ */
+export function enJeuDe(mode, mien) {
+  return Object.fromEntries(Object.keys(FORMATS).map((f) =>
+    [f, baseDuDuel(mode, f, true) * (mien ? DOUBLE_CLUB : 1)]));
+}
 const LIVE = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'];
 
 /**
@@ -127,6 +204,45 @@ const jourDe = (quand) => {
   const d = new Date(quand);
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 };
+
+/**
+ * Ce que la journée d'un match décide : son jour (`AAAA-MM-JJ`, UTC), s'il
+ * est du jour (le duel est alors classé), et si l'on peut encore y entrer
+ * (`ouvert` : aujourd'hui ou plus tard).
+ *
+ * **Une fonction pour la liste et pour l'entrée en file.** Elles avaient
+ * chacune la leur : la liste lisait le jour UTC de l'instant du coup
+ * d'envoi ; `matchSupport` les dix premiers caractères de la date servie par
+ * la journée, ou `DATE()` et `UTC_DATE()` en base. Les trois disent la même
+ * chose tant que la date arrive en UTC et que les deux horloges s'accordent.
+ * Une date servie avec son décalage — « 01:30+02:00 », la veille à 23:30 en
+ * UTC — faisait annoncer un duel classé et ses écharpes par la liste, puis
+ * monter un entraînement à l'entrée. Le mode et `enJeu` d'une ligne sont
+ * maintenant ceux que l'entrée décidera, par construction.
+ *
+ * @param coupDEnvoi  un instant : `Date`, ou chaîne ISO avec son décalage
+ * @param maintenant  l'instant de référence, lu une fois par l'appelant
+ */
+export function journeeDuMatch(coupDEnvoi, maintenant = Date.now()) {
+  const jour = jourDe(coupDEnvoi);
+  const ajd = jourDe(maintenant);
+  return { jour, duJour: jour !== null && jour === ajd, ouvert: jour !== null && jour >= ajd };
+}
+
+/**
+ * Les statuts qui ne portent jamais un duel : un match **annulé** (`CANC`)
+ * ou **reporté** (`PST`) n'a pas eu lieu, il ne peut donc être le support de
+ * rien. Ce n'est pas la même chose qu'un match terminé, qui reste ouvert
+ * jusqu'à la fin de sa journée.
+ *
+ * Écrits une fois, et lus aux trois endroits où la règle se joue. La requête
+ * de la liste les écartait déjà ; mais la journée du football, qui se
+ * superpose à la base, les y remettait — un match reporté le matin même
+ * restait proposé, avec ses écharpes en jeu — et `matchSupport` les
+ * acceptait, qu'ils viennent de la journée ou de la base : un duel classé se
+ * montait sur une rencontre qui n'aurait pas lieu.
+ */
+export const SANS_DUEL = Object.freeze(['CANC', 'PST']);
 
 export function createDecks({ pool, requireAuth, niveau = null,
                              /* Posée après coup par server.js : le télétexte
@@ -364,10 +480,12 @@ export function createDecks({ pool, requireAuth, niveau = null,
    * aujourd'hui doit pouvoir être choisi dès le matin.
    */
   async function matchSupport(fixtureId, userId = null) {
+    /* Le jour se lit sur `kickoff_at`, par `journeeDuMatch`, comme la liste :
+       plus de `DATE()` ni de `UTC_DATE()` ici, qui faisaient de l'entrée la
+       seule à lire l'horloge de la base. */
     const rows = await q(
       `SELECT f.id, f.status_short, f.kickoff_at, f.elapsed,
               f.home_goals, f.away_goals,
-              DATE(f.kickoff_at) AS jour, UTC_DATE() AS aujourdhui,
               h.name AS home_name, h.logo AS home_logo, h.id AS home_id,
               a.name AS away_name, a.logo AS away_logo, a.id AS away_id,
               l.name AS league_name
@@ -403,7 +521,6 @@ export function createDecks({ pool, requireAuth, niveau = null,
     }
 
     const base = rows[0] ?? {};
-    const auj = new Date().toISOString().slice(0, 10);
     const f = duJour ? {
       id: duJour.id,
       status_short: duJour.status,
@@ -411,18 +528,17 @@ export function createDecks({ pool, requireAuth, niveau = null,
       home_goals: duJour.home?.goals ?? 0,
       away_goals: duJour.away?.goals ?? 0,
       kickoff_at: duJour.date,
-      jour: String(duJour.date).slice(0, 10),
-      aujourdhui: auj,
       home_id: duJour.home.id, home_name: duJour.home.name, home_logo: duJour.home.logo,
       away_id: duJour.away.id, away_name: duJour.away.name, away_logo: duJour.away.logo,
       league_name: duJour.leagueName,
     } : base;
 
-    // jourISO et pas String(...).slice(0, 10) : voir src/shared/jour.js. La
-    // seconde forme comparait des noms de jours de la semaine et refusait un
-    // match à venir comme s'il était passé.
-    const jour = jourISO(f.jour);
-    const ajd = jourISO(f.aujourdhui);
+    /* Le jour UTC de l'instant du coup d'envoi, par la fonction même de la
+       liste : voir `journeeDuMatch`. Ni les dix premiers caractères d'une
+       date (une date servie avec son décalage tombait le lendemain), ni
+       `String(date)` (voir src/shared/jour.js : il comparait des noms de
+       jours de la semaine). */
+    const { jour, duJour: estDuJour, ouvert } = journeeDuMatch(f.kickoff_at);
     const enCours = LIVE.includes(f.status_short);
     // Il ne décide plus de rien — la journée s'en charge — mais il sert encore
     // à le dire : « le match est joué » et « le match n'a pas commencé » sont
@@ -436,8 +552,17 @@ export function createDecks({ pool, requireAuth, niveau = null,
        et c'était cohérent tant que « classé » voulait dire « en cours » : un
        match fini ne pouvait plus rien valoir. Depuis que la règle est la
        journée, le refuser fermerait précisément la soirée — le moment où l'on
-       a envie de rejouer le match qu'on vient de regarder. */
-    if (jour < ajd) throw fail('duel.error.fixture_past');
+       a envie de rejouer le match qu'on vient de regarder.
+
+       Un coup d'envoi illisible n'est d'aucun jour : la colonne est `NOT
+       NULL` et la journée sert toujours sa date, mais un match qu'on ne sait
+       pas dater ne se classe pas plus qu'il ne s'écarte en silence. */
+    if (jour === null) throw fail('duel.error.fixture_unknown');
+    if (!ouvert) throw fail('duel.error.fixture_past');
+    /* **Reporté ou annulé : refusé**, d'où que vienne le match. La liste ne
+       le propose plus ; une page restée ouverte depuis le matin, elle, peut
+       encore l'envoyer. Voir `SANS_DUEL`. */
+    if (SANS_DUEL.includes(f.status_short)) throw fail('duel.error.fixture_annule');
 
     /* ======================================= **Classé, c'est le jour du match**
 
@@ -466,18 +591,26 @@ export function createDecks({ pool, requireAuth, niveau = null,
        Après le coup de sifflet final aussi : un match terminé à vingt heures
        reste le support d'un duel jusqu'à la fin de sa journée. C'est le soir
        qu'on en parle. */
-    const mode = jour === ajd ? 'classe' : 'entrainement';
+    const mode = estDuJour ? 'classe' : 'entrainement';
 
     /* Le club soutenu, et donc le camp. La page en a besoin **avant**
        l'entrée en file : chez soi le camp est décidé et il n'y a rien à
        demander ; ailleurs, c'est au joueur de dire quelle tribune il vient
        tenir. Lui montrer un choix qu'il n'a pas, ou l'envoyer sans choisir,
-       seraient deux façons de lui mentir. */
-    const club = userId ? clubParmi(await q(
-      `SELECT team_id, is_main FROM user_follows
-        WHERE user_id = ? AND team_id IN (?, ?)
-        ORDER BY is_main DESC, created_at`,
-      [userId, f.home_id, f.away_id]), f.home_id, f.away_id)
+       seraient deux façons de lui mentir.
+
+       Les couleurs des deux clubs se lisent en même temps : deux clés
+       primaires, par la fonction même de la liste (`teintesDes`, qui rend
+       une liste sans couleurs plutôt que de lever). */
+    const [suivisIci, teintes] = await Promise.all([
+      userId ? q(
+        `SELECT team_id, is_main FROM user_follows
+          WHERE user_id = ? AND team_id IN (?, ?)
+          ORDER BY is_main DESC, created_at`,
+        [userId, f.home_id, f.away_id]) : null,
+      teintesDes([f.home_id, f.away_id]),
+    ]);
+    const club = suivisIci ? clubParmi(suivisIci, f.home_id, f.away_id)
       : { teamId: null, neutre: true };
     const mien = !club.neutre;
     return {
@@ -489,6 +622,14 @@ export function createDecks({ pool, requireAuth, niveau = null,
         kickoffAt: f.kickoff_at, league: f.league_name,
         home: { id: f.home_id, name: f.home_name, logo: f.home_logo },
         away: { id: f.away_id, name: f.away_name, logo: f.away_logo },
+        /* **Les couleurs des deux clubs**, sous la forme du Virage
+           (`virage:state.fixture`) et de la liste : une ou deux couleurs
+           `#RRGGBB`, un tableau vide quand on ne les a pas lues. Le duel
+           emporte cet objet (`DuelNvN.fixture`) et sa vue le sert à chaque
+           état : l'arène, le HUD et le bilan les ont sans relire la liste,
+           reprise d'un duel comprise. */
+        homeColors: teintes.get(Number(f.home_id)) ?? [],
+        awayColors: teintes.get(Number(f.away_id)) ?? [],
       },
       mode,
       enCours,
@@ -501,7 +642,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
          décide est la journée, mais ce que le joueur veut savoir est **où en
          est le match**. « Ce duel comptera » sur une rencontre terminée
          laisserait croire à une erreur ; « le match est joué » l'explique. */
-      raison: raisonDuMatch(jour === ajd, enCours, termine),
+      raison: raisonDuMatch(estDuJour, enCours, termine),
       // Ce match met-il en jeu un club suivi ? Le duel rapporte alors le
       // double. `userId` est facultatif : appelé sans lui — depuis la file du
       // NvN, qui ne veut que le support du duel — la question ne se pose pas.
@@ -515,7 +656,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
     const filtre = tousLesClubs ? '' :
       `AND (f.home_id IN (SELECT team_id FROM user_follows WHERE user_id = ?)
          OR f.away_id IN (SELECT team_id FROM user_follows WHERE user_id = ?))`;
-    const args = tousLesClubs ? [] : [userId, userId];
+    const args = [...SANS_DUEL, ...(tousLesClubs ? [] : [userId, userId])];
 
     const rows = await q(
       `SELECT f.id, f.status_short, f.elapsed, f.kickoff_at, f.home_goals, f.away_goals,
@@ -534,8 +675,9 @@ export function createDecks({ pool, requireAuth, niveau = null,
         --
         -- CANC et PST partent toujours : un match annulé ou reporté n'a pas eu
         -- lieu, il ne peut donc être le support de rien. Ce n'est pas la même
-        -- chose qu'un match terminé.
-        WHERE f.status_short NOT IN ('CANC','PST')
+        -- chose qu'un match terminé. La liste vient de SANS_DUEL, et la
+        -- journée superposée plus bas passe par le même filtre.
+        WHERE f.status_short NOT IN (${SANS_DUEL.map(() => '?').join(',')})
           AND DATE(f.kickoff_at) >= UTC_DATE()
           AND f.kickoff_at < (UTC_TIMESTAMP() + INTERVAL 8 DAY)
           ${filtre}
@@ -583,20 +725,36 @@ export function createDecks({ pool, requireAuth, niveau = null,
       });
     }
 
-    /* Le jour d'aujourd'hui, calculé **une fois** et sur la même horloge que
-       `matchSupport` : la colonne `aujourdhui` de la requête ne vaut que pour
-       les lignes venues de la base, et les rencontres injectées par la journée
-       n'en ont pas. Deux façons de dire « aujourd'hui » dans la même liste
-       finiraient par se contredire sur un match de vingt-trois heures. */
-    const ajd = jourDe(Date.now());
+    /* L'instant de référence, lu **une fois** pour toute la liste, et passé à
+       la fonction même que `matchSupport` emploie (`journeeDuMatch`) : la
+       colonne `aujourdhui` de la requête ne vaut que pour les lignes venues de
+       la base, et les rencontres injectées par la journée n'en ont pas. Deux
+       façons de dire « aujourd'hui » finiraient par se contredire sur un
+       match de vingt-trois heures. */
+    const maintenant = Date.now();
 
-    const liste = [...parId.values()].map((f) => {
+    /* **Reporté ou annulé : hors de la liste**, d'où que vienne le match. La
+       requête les écartait, mais la journée superposée juste au-dessus les y
+       remettait — et un match que la base croit à venir, la journée peut le
+       savoir reporté. Le filtre passe donc après elle. Voir `SANS_DUEL`. */
+    const supportables = [...parId.values()].filter((f) => !SANS_DUEL.includes(f.status_short));
+
+    const liste = supportables.map((f) => {
       const club = clubParmi(suivis, f.home_id, f.away_id);
       const enCours = LIVE.includes(f.status_short);
       // Il ne décide plus de rien — la journée s'en charge — mais il sert
       // encore à le dire : voir `raisonDuMatch`.
       const termine = TERMINE.includes(f.status_short);
-      const duJour = jourDe(f.kickoff_at) === ajd;
+      /* **Ce qui est en jeu** (CONTRATS.md § 17), sauf sur un match qu'on ne
+         peut plus jouer (`ouvert`) : `matchSupport` refuse un jour passé, et
+         promettre des écharpes sur une entrée refusée serait mentir deux
+         fois. La requête écarte déjà les jours passés ; c'est la journée du
+         football qui peut en rapporter un. Le jour, le mode et `ouvert`
+         sortent de la même fonction que ceux de l'entrée : le montant et le
+         mode d'une ligne ne peuvent contredire ni l'un l'autre, ni ce que
+         l'entrée décidera. */
+      const { duJour, ouvert } = journeeDuMatch(f.kickoff_at, maintenant);
+      const mode = duJour ? 'classe' : 'entrainement';
       return {
         ...f,
         enCours,
@@ -606,13 +764,15 @@ export function createDecks({ pool, requireAuth, niveau = null,
         /* **Classé, c'est le jour du match.** Voir `matchSupport`, qui applique
            la même règle — et qui fait autorité, puisque c'est lui qui décide au
            moment de l'entrée en file. */
-        mode: duJour ? 'classe' : 'entrainement',
+        mode,
         // Pousser pour son club rapporte le double. Le dire **avant** le choix :
         // une règle qu'on ne découvre qu'en lisant son solde après coup ne pèse
         // sur aucune décision, et c'est pourtant là qu'elle doit peser.
         mien: !club.neutre,
         // Et de quel côté : la page en fait un camp imposé ou un choix.
         monCamp: campDe(club.teamId, f.home_id, f.away_id),
+        // Absent, et non nul, quand on ne peut plus entrer (R1).
+        ...(ouvert ? { enJeu: enJeuDe(mode, !club.neutre) } : {}),
       };
     });
 
@@ -634,7 +794,46 @@ export function createDecks({ pool, requireAuth, niveau = null,
     /* Soixante, comme avant : la requête s'arrêtait là, et la journée pourrait
        en ajouter trois cents un samedi soir. Ce qui se joue est en tête, donc
        ce qui tombe est ce qu'on n'allait pas choisir de toute façon. */
-    return visibles.slice(0, 60);  }
+    const retenus = visibles.slice(0, 60);
+
+    /* **Les couleurs des deux clubs**, comme les sert la liste du Virage :
+       l'affiche du match choisi porte une écharpe à leurs deux couleurs, et
+       le camp se choisit sur deux bâches teintes. Elles ne viennent pas de la
+       requête du dessus — la moitié des matchs arrivent par la journée, sans
+       ligne en base —, mais d'une lecture **par clé primaire** des clubs de
+       ces soixante matchs au plus, faite après la coupe : cent vingt clés,
+       jamais la journée entière. Une ou deux couleurs, jamais un tableau vide
+       déguisé en couleur : la page teste la longueur et garde la sienne. */
+    const teintes = await teintesDes(retenus.flatMap((f) => [f.home_id, f.away_id]));
+    return retenus.map((f) => ({ ...f,
+      homeColors: teintes.get(Number(f.home_id)) ?? [],
+      awayColors: teintes.get(Number(f.away_id)) ?? [] }));
+  }
+
+  let teintesTues = false;
+  /**
+   * Les couleurs de ces clubs, lues dans `teams` (`sql/couleurs.sql`).
+   *
+   * Une base sans les colonnes, ou une lecture qui échoue, rend la liste sans
+   * couleurs plutôt que de la faire tomber : une teinte ne vaut pas le choix
+   * d'un match. Le journal le dit une fois.
+   */
+  async function teintesDes(ids) {
+    const uniques = [...new Set(ids.map(Number).filter((id) => id > 0))];
+    if (!uniques.length) return new Map();
+    try {
+      const rows = await q(`SELECT id, color1, color2 FROM teams WHERE id IN (${
+        uniques.map(() => '?').join(',')})`, uniques);
+      return new Map(rows.map((t) => [Number(t.id), [t.color1, t.color2].filter(Boolean)]));
+    } catch (e) {
+      if (!teintesTues) {
+        teintesTues = true;
+        console.error('[deck] matchs servis sans les couleurs des clubs :',
+          e.sqlMessage ?? e.message, '(applique sql/couleurs.sql)');
+      }
+      return new Map();
+    }
+  }
 
 
   /* ------------------------------------------------- placer depuis la fiche
@@ -837,8 +1036,17 @@ export function createDecks({ pool, requireAuth, niveau = null,
     res.json({ matchs: await matchsProposables(req.user.id,
       { tousLesClubs: req.query.tous === '1' }) })));
 
-  router.get('/match/:id', requireAuth, safe(async (req, res) =>
-    res.json(await matchSupport(Number(req.params.id), req.user.id))));
+  /** Un match, tel que l'entrée en file le décidera — et ce qui y est en jeu
+      (`enJeu`, comme sur la liste, CONTRATS.md § 17), calculé sur le mode
+      que `matchSupport` vient de décider. Ajouté ici et non dans
+      `matchSupport` : le duel emporte ce support tel quel, et un entraînement
+      contre les bots, qui le recopie en changeant le mode, y garderait un
+      montant classé qu'il ne paiera pas. Un match refusé n'a rien en jeu :
+      la route rend alors l'erreur, comme avant. */
+  router.get('/match/:id', requireAuth, safe(async (req, res) => {
+    const s = await matchSupport(Number(req.params.id), req.user.id);
+    res.json({ ...s, enJeu: enJeuDe(s.mode, s.mien) });
+  }));
 
   return { router, deckDe, loadout, enregistrer, placer, premierDeck, matchSupport,
     matchsProposables, possessions };

@@ -245,11 +245,12 @@ console.log('\n— l’horloge figée de la base —');
 /* ================================================= le contrat du module */
 
 console.log('\n— ce que le module promet —');
-check('les huit sources, liste fermée',
-  meme(SOURCES, ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division']));
-check('les raisons de refus sont celles du contrat (§ 11)',
+check('les neuf sources, liste fermée (la neuvième : l’XP du Virage, vague 2)',
+  meme(SOURCES, ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
+    'virage']));
+check('les raisons de refus sont celles du contrat (§ 11), quota compris',
   meme([...RAISONS].sort(), ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',
-    'schema', 'inconnu'].sort()));
+    'schema', 'inconnu', 'quota'].sort()));
 check('le gain nul a les quatre clés à zéro', meme(GAIN_NUL, { echarpes: 0, packs: 0, xp: 0, tampons: 0 }));
 {
   /* L1 : le grand livre ne peut pas savoir qui est abonné. Le meilleur moyen
@@ -404,6 +405,118 @@ console.log('\n— le recompte de l’appelant —');
 
   const oui = await verser(pool, mission(D, 'fini', { echarpes: 5 }, { verifier: async () => true }));
   check('un recompte qui dit oui laisse verser', oui.verse === true);
+}
+
+/* ===================================================== l'XP du Virage
+
+   La vague 2 (lot 6) fait verser au Virage **15 XP par match poussé, une fois
+   par match, à partir de 10 chants, 3 matchs par jour au plus** (décision de
+   Gaël du 3 octobre 2026, `CONTRATS.md` § 15.2). Le bilan qui l'appelle est
+   écrit par un autre périmètre ; ce que le grand livre doit tenir, lui, se
+   vérifie ici : la source existe, le montant est exact, l'idempotence est
+   celle du match, et le quota d'une source traverse tel quel.
+
+   Les appels passent par `essayer` : une source retirée de la liste lève
+   (faute d'appelant), et ce contrôle-là doit rougir avec son nom, pas tuer
+   la suite. */
+console.log('\n— l’XP du Virage —');
+{
+  const essayer = (o) => verser(pool, o).catch((e) => ({ leve: e.message }));
+  /* Le montant vient du registre, comme le bilan le prendra : jamais de la
+     page, jamais écrit en dur. La clé est l'identifiant du match. */
+  const virage = (userId, fixtureId, plus = {}) => ({
+    userId, source: 'virage', cle: String(fixtureId), saisonId: null,
+    gain: { xp: reglage('xp.virage') }, niveau, recharger, ...plus });
+  check('le registre dit 15 XP par match au départ', reglage('xp.virage') === 15);
+
+  const V = await joueur();
+  const avant = await bourse(V);
+  const r = await essayer(virage(V, 1208051));
+  const apres = await bourse(V);
+  check('un match poussé : versé, exactement 15 XP et rien d’autre',
+    r.verse === true && meme(r.gain, { echarpes: 0, packs: 0, xp: 15, tampons: 0 })
+      && apres.xp === avant.xp + 15 && apres.scarves === avant.scarves && apres.packs === avant.packs
+    || (console.log('        rendu :', JSON.stringify(r), 'bourse', JSON.stringify([avant, apres])), false));
+  const l = await lignes(V, '1208051');
+  check('une ligne au grand livre, source virage, clé = le match, 15 XP',
+    l.length === 1 && l[0].source === 'virage' && l[0].xp === 15 && l[0].echarpes === 0
+      && l[0].packs === 0 && l[0].tampons === 0
+    || (console.log('        lignes :', JSON.stringify(l)), false));
+  check('et la réponse porte la jauge d’XP du § 1 (gain 15, départ)',
+    r.niveau?.gain === 15 && r.niveau?.depart?.xp === avant.xp);
+  check('le même match une seconde fois : « deja »',
+    meme(await essayer(virage(V, 1208051)), { verse: false, raison: 'deja' }));
+
+  /* Deux onglets, puis dix : le premier bilan au coup de sifflet et le filet
+     du départ peuvent se croiser. Une ligne par match, jamais deux. */
+  const W = await joueur();
+  const avantW = await bourse(W);
+  const deux = await enParallele(2, () => essayer(virage(W, 7001)));
+  check('deux demandes simultanées pour un match : un versé, un « deja »',
+    deux.filter((x) => x.verse).length === 1 && deux.filter((x) => x.raison === 'deja').length === 1
+    || (console.log('        rendus :', JSON.stringify(deux)), false));
+  const dix = await enParallele(10, () => essayer(virage(W, 7002)));
+  check('dix demandes simultanées pour un autre match : un versé, neuf « deja »',
+    dix.filter((x) => x.verse).length === 1 && dix.filter((x) => x.raison === 'deja').length === 9
+    || (console.log('        rendus :', JSON.stringify(dix.map((x) => x.raison ?? x.leve ?? 'verse'))), false));
+  check('l’XP n’est montée qu’une fois par match : +30 exactement',
+    (await bourse(W)).xp === avantW.xp + 30);
+  check('une seule ligne par match',
+    (await lignes(W, '7001')).length === 1 && (await lignes(W, '7002')).length === 1);
+
+  /* Le quota : au plus `xp.virage_matchs_jour` matchs par jour de jeu. Il
+     n'est pas au grand livre — le disjoncteur ne regarde que les écharpes et
+     les boosters — mais dans le recompte de la source, sur la connexion du
+     versement, et sa raison doit traverser telle quelle. Les trois lignes du
+     jour sont semées comme le serveur les écrit : la base les date. */
+  const Q = await joueur();
+  for (const f of [8001, 8002, 8003]) {
+    await pool.query(`INSERT INTO recompenses (user_id, source, cle, xp) VALUES (?, 'virage', ?, 15)`,
+      [Q, String(f)]);
+  }
+  const avantQ = await bourse(Q);
+  const quota = async (conn) => {
+    const [[n]] = await conn.query(`SELECT COUNT(*) AS n FROM recompenses
+      WHERE user_id = ? AND source = 'virage' AND verse_a >= CURDATE()`, [Q]);
+    return Number(n.n) >= reglage('xp.virage_matchs_jour') ? 'quota' : true;
+  };
+  const rq = await essayer(virage(Q, 8004, { verifier: quota }));
+  check('le quatrième match du jour : « quota », tel quel',
+    meme(rq, { verse: false, raison: 'quota' }) || (console.log('        rendu :', JSON.stringify(rq)), false));
+  check('rien d’écrit, ni XP ni ligne', meme(await bourse(Q), avantQ)
+    && (await lignes(Q, '8004')).length === 0);
+
+  /* `incomplet`, avec ce qui manque : le grand livre ne transporte que la
+     raison, et c'est voulu — ce que le recompte veut dire de plus reste dans
+     sa fermeture (le bilan y lit `manque`). Le motif est montré ici, pour
+     qu'il soit éprouvé une fois là où il se décide. */
+  let manque = null;
+  const ri = await essayer(virage(Q, 8005, { verifier: async (conn) => {
+    const [[x]] = await conn.query('SELECT 9 AS chants');
+    if (x.chants < reglage('xp.virage_chants')) {
+      manque = reglage('xp.virage_chants') - x.chants;
+      return 'incomplet';
+    }
+    return true;
+  } }));
+  check('neuf chants : « incomplet », et le recompte sait qu’il en manque un',
+    meme(ri, { verse: false, raison: 'incomplet' }) && manque === 1
+    && (await lignes(Q, '8005')).length === 0);
+  check('xp.virage à 0 : le recompte rend « inactif », qui traverse aussi',
+    meme(await essayer(virage(Q, 8006, { verifier: async () => 'inactif' })),
+      { verse: false, raison: 'inactif' }));
+
+  /* L'XP seule ne bute jamais sur le disjoncteur : il borne les écharpes et
+     les boosters d'un jour, pas l'expérience. Un joueur qui a touché tout son
+     plafond d'écharpes reçoit encore l'XP de son match. */
+  poserReglages({ 'recompenses.plafond_echarpes_jour': 100 });
+  const P = await joueur();
+  const plein = await essayer(mission(P, 'plein', { echarpes: 100 }));
+  const rp = await essayer(virage(P, 9001));
+  poserReglages({});
+  check('disjoncteur des écharpes atteint : l’XP du Virage passe quand même',
+    plein.verse === true && rp.verse === true && rp.gain?.xp === 15
+    || (console.log('        rendus :', JSON.stringify([plein, rp])), false));
 }
 
 /* =================================================== les fautes d'appel */

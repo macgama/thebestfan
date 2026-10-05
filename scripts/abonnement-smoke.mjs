@@ -472,9 +472,17 @@ check('tous les formats de duel restent ouverts à tous',
      (L1) : abonné et non-abonné reçoivent exactement la même chose, et aucun
      réglage d'abonnement ne doit pouvoir y toucher — ni missions, ni bonus,
      ni carnet, ni crans, ni divisions, ni disjoncteur. */
+  /* La vague 2 (lot 6) y ajoute deux familles, pour la même raison (L1, R9) :
+     **l'XP du Virage** (`xp.virage`, `xp.virage_chants`,
+     `xp.virage_matchs_jour`) — un abonné reçoit exactement ce que reçoit un
+     joueur gratuit, et le drapeau `classe`, que l'abonnement lève, n'y entre
+     pas : lier l'XP au classement ferait acheter de l'XP ; et **la
+     présence** (`presence.`) — qui voit qui est en ligne ne s'achète pas. */
   const interdits = ['duel.', 'deck.', 'ferveur.', 'virage.', 'quotidien.', 'missions.',
-    'mission.', 'bonus.', 'saison.', 'collection.', 'rang.', 'recompenses.'];
-  check('et aucun ne gouverne le duel, le deck, le virage ni les récompenses du quotidien',
+    'mission.', 'bonus.', 'saison.', 'collection.', 'rang.', 'recompenses.',
+    'presence.', 'xp.virage'];
+  check('et aucun ne gouverne le duel, le deck, le virage, les récompenses du quotidien, '
+    + 'l’XP du Virage ni la présence',
     !abo.some((r) => interdits.some((p) => r.cle.replace('abo.', '').startsWith(p))));
   /* L'autre sens : aucun réglage du quotidien ne vit dans la section de
      l'abonnement, ni ne porte un montant « pour l'abonné ». */
@@ -482,6 +490,26 @@ check('tous les formats de duel restent ouverts à tous',
   check(`et aucun réglage du quotidien ne dépend de l’abonnement (${quotidien.length})`,
     quotidien.length > 0
       && quotidien.every((r) => r.section !== 'abonnement' && !/abo|abonn/i.test(r.cle)));
+  check('les clés de l’XP du Virage et de la présence en font partie (3 + 3)',
+    quotidien.filter((r) => /^xp\.virage/.test(r.cle)).length === 3
+      && quotidien.filter((r) => r.cle.startsWith('presence.')).length === 3
+    || (console.log('        vues :', quotidien.filter((r) => /^(xp\.virage|presence\.)/.test(r.cle))
+      .map((r) => r.cle).join(', ')), false));
+
+  /* Et **aucune de ces clés ne se lit dans `abonnement/`** : un plafond
+     d'abonné posé un jour sur l'XP du Virage ou sur la présence passerait par
+     ce module, c'est donc là qu'on regarde. Le détecteur est d'abord
+     confronté à une faute plantée, écrite comme elle le serait. */
+  const lit = (texte) => /reglage\(\s*['"`](?:presence\.|xp\.virage)/.test(texte);
+  check('le détecteur voit une lecture plantée de xp.virage, et pas une lecture de pack.max',
+    lit("const n = reglage('xp.virage_matchs_jour') * 2;") && lit('reglage(`presence.actif`)')
+      && !lit("reglage('pack.max')"));
+  const dossierAbo = path.join(RACINE, 'src', 'server', 'abonnement');
+  const { readdirSync } = await import('node:fs');
+  const lecteurs = readdirSync(dossierAbo).filter((f) => f.endsWith('.js'))
+    .filter((f) => lit(readFileSync(path.join(dossierAbo, f), 'utf8')));
+  check('aucun fichier de src/server/abonnement/ ne lit l’XP du Virage ni la présence',
+    lecteurs.length === 0 || (console.log('        lecteurs :', lecteurs.join(', ')), false));
 }
 
 /* Le module d'abonnement n'expose **aucune** porte vers le jeu lui-même. Si

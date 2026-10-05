@@ -24,7 +24,12 @@
  *      (`son-banc.mjs`) rend chaque son hors ligne à travers la chaîne
  *      complète, et la mesure est jugée contre le mixage que le moteur
  *      déclare. Le plafond est éprouvé seul, par un signal que le limiteur
- *      ne peut plus tenir.
+ *      ne peut plus tenir. La mesure se fait **chaîne chaude**, limiteur
+ *      ouvert, comme en jeu (lot 6) ; et une rafale de tics à dix par
+ *      seconde, celle du pavé, ne couvre pas le tambour du chant. **Le
+ *      premier son d'une visite**, joué dans le toucher qui fait naître le
+ *      contexte, sort comme les suivants — hors ligne, sur une chaîne rendue
+ *      depuis sa naissance, et à l'écoute du contexte vivant (lot 6).
  *   5. **Tout fonctionne sans AudioContext** : un navigateur qui n'en a pas
  *      n'entend rien, et rien ne lève.
  *   6. **L'ambiance s'arrête quand l'onglet est caché**, et revient au
@@ -34,6 +39,26 @@
  *      s'arrêtent avec elle, et ne reprennent pas au retour.
  *   7. **Le volume agit sur ce qui sort**, pas seulement dans le stockage :
  *      mi-course sonne à −12 dB, zéro tait la sortie en moins de 100 ms.
+ *   8. **Le chant tombe sur le geste** (lot 6) : `chantDuGeste` chante les
+ *      quatre gestes de rythme du serveur et eux seuls, aux instants de la
+ *      grille que `geste.js` dessine — une seule source : la grille déplacée
+ *      déplace le chant, et sans grille rien ne chante ; pour chacun des
+ *      quatre, avec la même origine que le pavé, chaque coup s'entend à sa
+ *      place, latence de sortie comprise, et avec la pulsation dessinée ;
+ *      le crescendo part après le temps d'avance de sa grille, un intervalle
+ *      après l'origine (compté depuis la configuration servie) ; l'écho
+ *      garde son motif entier ; un chant demandé en retard tait ses temps
+ *      passés.
+ *   9. **La rumeur suit le match** (lot 6) : l'entrée monte le temps du
+ *      compte, la mi-temps retombe et s'entend, la minute double survit à
+ *      l'ovation qui l'ouvre et au chant qui la traverse, la fin vide la
+ *      tribune sans se relancer, le vestiaire prend la mesure de ses places ;
+ *      le calme et l'absence de geste n'y changent rien de ce qu'ils
+ *      tenaient.
+ *  10. **À côté du son, la scène d'un Fanzzy tient sa célébration** (lot 6,
+ *      même périmètre `fx`, aucune autre suite pour elle) : une pose tenue
+ *      ne cède pas au fond qu'un rendu redemande pendant son décodage, et
+ *      celle qui ne paraît pas rend la main au fond.
  *
  * Un serveur statique sur un port libre et un Chrome sans interface :
  * aucune base, aucun verrou. Les départs de sons se comptent en espionnant
@@ -55,7 +80,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ouvrirBanc, mesurerTout, juger } from './son-banc.mjs';
+import { ouvrirBanc, mesurerTout, juger, RETOMBEE_MIN, RAFALE, RAFALE_MS, NAISSANCE_ECART } from './son-banc.mjs';
+import { GESTES, resoudreGeste } from '../src/server/ferveur/gestures.js';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const PUBLIC = path.join(RACINE, 'public');
@@ -89,12 +115,28 @@ const PAGE_CARTES = '<!doctype html><html lang="fr"><head><meta charset="utf-8">
   + '<script src="/fanzzy-art.js"></script><script src="/cartes.js"></script>'
   + '<script src="/fx.js" defer></script></body></html>';
 
+/* La page du geste (lot 6) : le pavé de geste.js et le moteur, comme dans
+   les deux arènes et la salle de répétition. C'est elle qui dit si le chant
+   d'un geste tombe sur la pulsation que le pavé dessine. */
+const PAGE_GESTE = '<!doctype html><html lang="fr"><head><meta charset="utf-8">'
+  + '<title>geste</title></head><body>'
+  + '<button id="geste" style="width:240px;height:120px">GESTE</button><div id="zone"></div>'
+  + '<script src="/geste.js"></script><script src="/fx.js" defer></script></body></html>';
+
+/* La scène d'un Fanzzy seule (`fanzzy-scene.js`, lot 6) : aucun son, voir
+   « la scène tient sa célébration ». */
+const PAGE_SCENE = '<!doctype html><html lang="fr"><head><meta charset="utf-8">'
+  + '<title>scene</title></head><body><div id="hote" style="width:200px;height:300px"></div>'
+  + '<script src="/fanzzy-scene.js"></script></body></html>';
+
 /* Sans moteur, rien d'autre ne se mesure : la panne est un contrôle rouge
    qui dit sa cause, pas une exception qui coupe la suite. */
 const banc = await ouvrirBanc({
   routes: (app) => {
     app.get('/__son-double', (_q, s) => s.type('html').send(PAGE_DOUBLE));
     app.get('/__son-cartes', (_q, s) => s.type('html').send(PAGE_CARTES));
+    app.get('/__son-geste', (_q, s) => s.type('html').send(PAGE_GESTE));
+    app.get('/__son-scene', (_q, s) => s.type('html').send(PAGE_SCENE));
   },
 }).catch((e) => {
   check('fx.js charge le moteur (son.js) dans une page qui n’a que lui', false, e.message);
@@ -118,6 +160,19 @@ function espion({ sansAudio = false } = {}) {
   window.__sonVivantes = new Set();
   window.__sonSortie = null;
   window.__sonEcoute = null;
+  /* L'instant où chaque source du contexte vivant **s'entendra**, en temps
+     de la page (performance.now()) : son départ sur l'horloge audio,
+     ramené par l'horodatage de sortie que le navigateur tient au moment du
+     départ — le même que son.js emploie pour caler un chant (lot 6). Sans
+     horodatage, rien : les contrôles qui le lisent rougissent. */
+  window.__sonQuand = [];
+  /* Les cibles posées sur les paramètres audio (« setTargetAtTime ») : la
+     valeur visée et la constante de temps. C'est l'instruction que le
+     graphe exécute, pas ce que le moteur en raconte : une entrée qui monte
+     au pas du compte, une fin qui se vide au sien, se lisent là, sans la
+     respiration de la rumeur qui brouille l'écoute. Les rendus hors ligne
+     n'en posent pas (ils posent leurs niveaux d'un coup). */
+  window.__sonCibles = [];
   if (sansAudio) {
     for (const nom of ['AudioContext', 'webkitAudioContext', 'OfflineAudioContext',
       'webkitOfflineAudioContext']) {
@@ -127,6 +182,11 @@ function espion({ sansAudio = false } = {}) {
     return;
   }
   const hors = (c) => typeof OfflineAudioContext === 'function' && c instanceof OfflineAudioContext;
+  const cibler = AudioParam.prototype.setTargetAtTime;
+  AudioParam.prototype.setTargetAtTime = function setTargetAtTime(v, t, tc) {
+    if (window.__sonCibles.length < 4000) window.__sonCibles.push({ v, tc });
+    return cibler.call(this, v, t, tc);
+  };
   const C = window.AudioContext;
   window.AudioContext = class extends C {
     constructor(...a) { super(...a); window.__son.contextes += 1; }
@@ -149,6 +209,12 @@ function espion({ sansAudio = false } = {}) {
     P.start = function start(...a) {
       if (!hors(this.context)) {
         window.__son.departs += 1;
+        try {
+          const ts = this.context.getOutputTimestamp?.();
+          const q = Number(a[0]) || 0;
+          window.__sonQuand.push(ts && ts.performanceTime > 0
+            ? Math.round((ts.performanceTime + (q - ts.contextTime) * 1000) * 10) / 10 : null);
+        } catch { window.__sonQuand.push(null); }
         const vivantes = window.__sonVivantes;
         vivantes.add(this);
         this.addEventListener('ended', () => vivantes.delete(this));
@@ -367,6 +433,8 @@ if (banc) try {
   const mix = await banc.page.evaluate(() => window.TBF_SON.mixage());
   const facade = await banc.page.evaluate(() => Object.keys(window.TBF_SON.audio));
   const chants = await banc.page.evaluate(() => window.TBF_SON.chants());
+  const rumeurs = await banc.page.evaluate(() => window.TBF_SON.rumeurs?.() ?? []);
+  const chantes = await banc.page.evaluate(() => window.TBF_SON.gestesChantes?.() ?? []);
   const banque = new Set(Object.keys(mix.sons));
 
   /* Un appel se reconnaît à sa forme : un littéral seul, un littéral suivi
@@ -378,7 +446,15 @@ if (banc) try {
   const APPELS_FACADE = /\baudio\s*(?:\?\.|\.)\s*(\w+)\s*(?:\?\.)?\s*\(/g;
   const APPELS_CHANT = /TBF_SON\s*(?:\?\.|\.)\s*chant\s*(?:\?\.)?\s*\(\s*(['"])([\w-]+)\1/g;
   const APPELS_AMBIANCE = /TBF_SON\s*(?:\?\.|\.)\s*ambiance\s*(?:\?\.)?\s*\(\s*(-?[\d.]+)/g;
+  /* La rumeur du match et le chant d'un geste (lot 6) : un moment de la
+     rumeur, un geste écrit en toutes lettres. Un nom que le moteur ne
+     connaît pas se tait sans rien dire — c'est exactement la panne que ce
+     relevé attrape. Un geste passé par une variable (le cas ordinaire) ne
+     se relève pas ici : le moteur le vérifie lui-même plus bas. */
+  const APPELS_RUMEUR = /TBF_SON\s*(?:\?\.|\.)\s*rumeur\s*(?:\?\.)?\s*\(\s*(['"])([\w-]+)\1/g;
+  const APPELS_GESTE = /TBF_SON\s*(?:\?\.|\.)\s*chantDuGeste\s*(?:\?\.)?\s*\(\s*(['"])([\w-]+)\1/g;
   const inconnus = [], facadeInconnue = [], chantsInconnus = [], niveauxFaux = [];
+  const rumeursInconnues = [], gestesInconnus = [];
   const vus = new Set();
   for (const nom of readdirSync(PUBLIC).filter((f) => /\.(html|js)$/.test(f)).sort()) {
     const src = readFileSync(path.join(PUBLIC, nom), 'utf8');
@@ -407,6 +483,12 @@ if (banc) try {
       const v = Number(m[1]);
       if (!(Number.isInteger(v) && v >= 0 && v <= 3)) niveauxFaux.push(`${nom} : ambiance(${m[1]})`);
     }
+    for (const m of src.matchAll(APPELS_RUMEUR)) {
+      if (!rumeurs.includes(m[2])) rumeursInconnues.push(`${nom} : rumeur(« ${m[2]} »)`);
+    }
+    for (const m of src.matchAll(APPELS_GESTE)) {
+      if (!chantes.includes(m[2])) gestesInconnus.push(`${nom} : chantDuGeste(« ${m[2]} »)`);
+    }
   }
   check(`chaque son appelé existe dans la banque (${vus.size} noms relevés)`, inconnus.length === 0,
     ...inconnus);
@@ -420,6 +502,15 @@ if (banc) try {
     ...facadeInconnue);
   check('chaque chant appelé existe', chantsInconnus.length === 0, ...chantsInconnus);
   check('chaque niveau d’ambiance écrit est un entier de 0 à 3', niveauxFaux.length === 0, ...niveauxFaux);
+  /* Les huit moments que le brief du lot 6 nomme (l'entrée, la mi-temps, la
+     minute double, le but, la fin, le vestiaire et ses arrivées), et le jeu
+     qui lève la mi-temps : un moment retiré du moteur serait une page qui se
+     tait sans le savoir. */
+  check('la rumeur connaît les moments du match (entree, jeu, mi-temps, double, but, fin, vestiaire, arrivee)',
+    ['entree', 'jeu', 'mi-temps', 'double', 'but', 'fin', 'vestiaire', 'arrivee']
+      .every((m) => rumeurs.includes(m)), rumeurs);
+  check('chaque moment de la rumeur appelé existe', rumeursInconnues.length === 0, ...rumeursInconnues);
+  check('chaque geste chanté écrit en toutes lettres a son chant', gestesInconnus.length === 0, ...gestesInconnus);
 
   /* ============================================ 2. un seul moteur, au geste */
 
@@ -888,6 +979,398 @@ if (banc) try {
     await page.close();
   }
 
+  /* ========================================= 5 bis. le chant calé sur le geste
+
+     Lot 6 : les deux arènes chantent sur la pulsation que le serveur sert,
+     comme la salle de répétition. Ce qui se vérifie : le passage du geste au
+     chant (`chantDuGeste`, écrit une fois), et que les frappes **s'entendent**
+     sur la grille du geste — `origine + debut + k × tempo`, latence de sortie
+     comprise — et sur la pulsation que `geste.js` dessine. L'instant où une
+     frappe s'entend est lu par l'espion (`__sonQuand`) : le départ sur
+     l'horloge audio, ramené par l'horodatage de sortie du navigateur. */
+
+  console.log('\n  le chant calé sur le geste (lot 6)');
+  {
+    const servis = resoudreGeste({}, { motif: 1 });
+    const { page, erreurs } = await nouvellePage('/__son-geste');
+    await page.click('#geste');
+    await jusqua(page, (x) => x.contexte === 'running');
+    const chantes = await page.evaluate(() => window.TBF_SON.gestesChantes());
+    check('les gestes chantés sont des gestes du serveur (tempo, contretemps, echo, crescendo)',
+      chantes.length === 4 && chantes.every((g) => GESTES.includes(g))
+        && ['tempo', 'contretemps', 'echo', 'crescendo'].every((g) => chantes.includes(g)), chantes);
+    /* Sur la configuration que le serveur sert, geste par geste : les quatre
+       chantent, et aucun des vingt autres. */
+    const parGeste = await page.evaluate((gestes, liste) => liste.map((g) => {
+      const p = window.TBF_SON.chantDuGeste(g, gestes);
+      p.arreter();
+      return [g, p.joue, p.duree];
+    }), servis, GESTES);
+    const faux = parGeste.filter(([g, joue]) => joue !== chantes.includes(g));
+    check(`sur les gestes servis, seuls les gestes de rythme chantent (${GESTES.length} gestes)`,
+      faux.length === 0, faux);
+    /* La durée : celle des pulsations que geste.js bat — le tempo, ses
+       `beats` temps et un intervalle d'avance ; le contretemps, un temps de
+       plus que ses frappes. */
+    const duree = Object.fromEntries(parGeste.map(([g, , d]) => [g, d]));
+    const t = servis.tempo, ct = servis.contretemps;
+    check('le chant du tempo dure ses temps et un intervalle d’avance',
+      Math.abs(duree.tempo - (t.beats + 1) * t.interval) < 1, { duree: duree.tempo, tempo: t });
+    check('celui du contretemps compte un temps de plus que ses frappes',
+      Math.abs(duree.contretemps - (ct.beats + 2) * ct.interval) < 1, { duree: duree.contretemps, contretemps: ct });
+    const sansConfig = await page.evaluate(() => [
+      window.TBF_SON.chantDuGeste('tempo', {}).joue,
+      window.TBF_SON.chantDuGeste('tempo', { tempo: { interval: 'vite' } }).joue,
+      window.TBF_SON.chantDuGeste('echo', { echo: { instants: [] } }).joue,
+      window.TBF_SON.chantDuGeste('constructor', { constructor: {} }).joue]);
+    check('sans durées servies, rien ne chante (pas de tempo inventé)', sansConfig.every((x) => x === false),
+      sansConfig);
+
+    /* **Une seule source pour la pulsation** : les instants du chant sont
+       ceux de la grille que `geste.js` dessine (`TBF_GESTE.grille`), et non
+       une table recopiée dans le moteur. Les gestes chantés sont donc
+       exactement ceux qui ont une grille ; et une grille déplacée déplace le
+       chant — sans grille, rien ne chante, même sur des durées lisibles. */
+    const frappe = await page.evaluate(() => [...(window.TBF_GESTE?.FRAPPE ?? [])]);
+    check('les gestes chantés sont ceux qui ont une grille dans geste.js (FRAPPE)',
+      frappe.length > 0 && [...chantes].sort().join() === [...frappe].sort().join(), { chantes, frappe });
+    const suit = await page.evaluate(async () => {
+      const G = window.TBF_GESTE;
+      const vraie = G.grille;
+      const gestes = { tempo: { interval: 300, beats: 3, window: 200 } };
+      try {
+        // La grille décalée de 37 ms, le temps d'un chant.
+        G.grille = (g, c) => {
+          const gr = vraie(g, c);
+          return gr && { ...gr, pulsations: gr.pulsations.map((t) => t + 37) };
+        };
+        window.__sonQuand.length = 0;
+        const origine = performance.now();
+        const p = window.TBF_SON.chantDuGeste('tempo', gestes, { origine });
+        await new Promise((r) => setTimeout(r, 1400));
+        p.arreter();
+        G.grille = () => null;
+        const sans = window.TBF_SON.chantDuGeste('tempo', gestes);
+        sans.arreter();
+        return { origine, quand: window.__sonQuand.slice(), joue: p.joue, sansGrille: sans.joue };
+      } finally { G.grille = vraie; }
+    });
+    const tempsSuivis = [];
+    for (const q of suit.quand.filter((x) => x !== null).map((x) => x - suit.origine).sort((a, b) => a - b)) {
+      if (!tempsSuivis.length || q - tempsSuivis[tempsSuivis.length - 1] > 5) tempsSuivis.push(q);
+    }
+    const ecartsSuivis = tempsSuivis.map((q, k) => Math.round(q - (300 * (k + 1) + 37)));
+    check('le chant suit la grille de geste.js : décalée de 37 ms, il frappe décalé de 37 ms (à 5 ms près)',
+      suit.joue && tempsSuivis.length === 3 && ecartsSuivis.every((e) => Math.abs(e) <= 5),
+      { temps: tempsSuivis.map(Math.round), ecarts: ecartsSuivis });
+    check('et sans grille, rien ne chante', suit.sansGrille === false, suit);
+
+    /* **Le calage, geste par geste.** Les quatre gestes de rythme, chant et
+       pavé ouverts au même instant et avec **la même origine**, comme les
+       arènes et la salle de répétition le font (`jouer(…, { zone, origine })`) :
+       chaque frappe doit s'entendre à son instant de la grille, latence de
+       sortie comprise, et la pulsation dessinée tomber avec elle.
+
+       Le tempo bat à 300 ms, sous les 420 ms qui ferment sa fenêtre après le
+       dernier temps : `geste.js` battait autrefois par une minuterie répétée,
+       qui dessinait une pulsation de trop sous cet intervalle, et ce contrôle
+       s'en tenait à 480 ms. Il pose maintenant ses pulsations sur sa grille,
+       autant que de temps servis. Le contretemps, l'écho et le crescendo
+       prennent les durées du serveur. L'écho frappe à l'instant zéro, déjà
+       passé d'une latence quand le chant part : son motif glisse d'un bloc
+       (moins de 150 ms, la marge du moteur), et garde ses écarts. Le
+       crescendo ne le fait plus : sa grille lui donne un temps d'avance, et
+       son premier temps tombe un intervalle après l'origine (contrôlé à
+       part, depuis la configuration servie).
+
+       Le contexte est né au clic, quelques centaines de millisecondes plus
+       tôt : son horodatage de sortie se corrige encore, et c'est ce cas que
+       le calage doit tenir. */
+    const CAS = [
+      ['tempo', { tempo: { interval: 300, beats: 4, window: 200 } }],
+      ['contretemps', { contretemps: servis.contretemps }],
+      ['crescendo', { crescendo: servis.crescendo }],
+      ['echo', { echo: servis.echo }],
+    ];
+    for (const [g, gestes] of CAS) {
+      const cale = await page.evaluate(async (g, gestes) => {
+        const zone = document.getElementById('zone');
+        const vus = [];
+        /* Une pulsation, c'est la classe « beat » retirée puis remise dans la
+           même tâche (geste.js, « battre ») : deux mutations, une seule
+           pulsation — la première compte, l'autre tombe dans la même
+           milliseconde. */
+        const veille = new MutationObserver((ms) => {
+          const t = performance.now();
+          for (const m of ms) {
+            if (m.target.id === 'ring' && m.target.classList.contains('beat')
+              && !/\bbeat\b/.test(m.oldValue ?? '') && !(vus.length && t - vus[vus.length - 1] < 50)) vus.push(t);
+          }
+        });
+        veille.observe(zone, { subtree: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+        window.__sonQuand.length = 0;
+        const origine = performance.now();
+        const p = window.TBF_SON.chantDuGeste(g, gestes, { origine });
+        const grille = window.TBF_GESTE.grille(g, gestes);
+        await window.TBF_GESTE.jouer(g, gestes, { zone, origine });
+        p.arreter();
+        veille.disconnect();
+        return { origine, quand: window.__sonQuand.slice(), vus, joue: p.joue,
+          pulsations: grille?.pulsations ?? null };
+      }, g, gestes);
+      const pulsations = cale.pulsations ?? [];
+      /* Ce qui doit s'entendre : un coup par pulsation ; au contretemps,
+         les claps entre deux, une demi-mesure après chaque coup. */
+      const pas = Number(gestes[g]?.interval);
+      const attendus = pulsations.flatMap((p) => (g === 'contretemps' ? [p, p + pas / 2] : [p]));
+      // Les frappes, regroupées par instant : un coup de tambour et ses claps partent ensemble.
+      const temps = [];
+      for (const q of cale.quand.filter((x) => x !== null).map((x) => x - cale.origine).sort((a, b) => a - b)) {
+        if (!temps.length || q - temps[temps.length - 1] > 5) temps.push(q);
+      }
+      const ecarts = temps.map((q, k) => Math.round(q - (attendus[k] ?? NaN)));
+      /* Sur la grille : à 5 ms près. Un motif qui part à l'instant zéro
+         glisse d'un bloc — un seul décalage pour toutes ses frappes, à 5 ms
+         près, et sous la marge de 150 ms. */
+      const glisse = pulsations[0] === 0;
+      const surLaGrille = glisse
+        ? ecarts.every((e) => e >= -5 && e <= 150) && Math.max(...ecarts) - Math.min(...ecarts) <= 5
+        : ecarts.every((e) => Math.abs(e) <= 5);
+      check(`${g} : avec son origine, le chant frappe ses ${attendus.length} coups ${glisse
+        ? 'd’un seul bloc, à la latence près' : 'sur la grille du geste (à 5 ms près)'}`,
+      cale.joue && pulsations.length > 0 && temps.length === attendus.length && surLaGrille,
+      { attendus: attendus.map(Math.round), temps: temps.map(Math.round), ecarts });
+      /* Et avec le pavé : chaque pulsation dessinée tombe avec le coup du
+         chant à sa place (les claps du contretemps n'ont pas de pulsation).
+         Un motif qui glisse s'entend en bloc derrière son dessin — de la
+         latence de sortie et d'un souffle, une cinquantaine de
+         millisecondes sur ce Chrome — : on y tient le même écart pour tous
+         les coups, à 40 ms près, sous la marge de 150 ms. */
+      const vus = cale.vus.map((v) => v - cale.origine);
+      const coups = pulsations.map((p) => temps[attendus.indexOf(p)]);
+      const avecPave = vus.map((v, k) => Math.round((coups[k] ?? NaN) - v));
+      const ensemble = glisse
+        ? Math.max(...avecPave) - Math.min(...avecPave) <= 40 && avecPave.every((e) => e >= -40 && e <= 150)
+        : avecPave.every((e) => Math.abs(e) <= 40);
+      check(`${g} : et chaque coup s’entend avec la pulsation que geste.js dessine (${pulsations.length}, ${glisse
+        ? 'un même retard pour tous, à 40 ms près' : 'à 40 ms près'})`,
+      vus.length === pulsations.length && ensemble,
+      { pave: vus.map(Math.round), chant: coups.map((x) => Math.round(x)), ecarts: avecPave });
+      /* **Le temps d'avance du crescendo** (`geste.js`, sa grille) : son
+         premier temps tombe un intervalle après l'origine — le premier du
+         crescendo, `instants[1] − instants[0]` de la configuration servie,
+         700 ms —, et non à l'instant zéro. Les deux contrôles d'au-dessus
+         comparent le chant à la grille : une grille qui perdrait ce temps
+         d'avance, avec le chant qui la suit, y resterait verte (un motif à
+         zéro « glisse »). Celui-ci compte depuis le serveur : la première
+         frappe entendue et la première pulsation dessinée, toutes deux à
+         cet instant. Un chant qui partirait sans le décalage battrait
+         700 ms avant le pavé, et le joueur qui suit le son taperait à
+         côté. */
+      if (g === 'crescendo') {
+        const ins = (gestes.crescendo?.instants ?? []).map(Number);
+        const avance = ins.length > 1 ? ins[1] - ins[0] : 0;
+        check(`crescendo : la première frappe s’entend sur la première pulsation dessinée, un intervalle (${
+          avance} ms) après l’origine — à 5 ms près pour le chant, 40 ms pour le pavé`,
+        avance > 0 && Math.abs((temps[0] ?? NaN) - avance) <= 5 && Math.abs((vus[0] ?? NaN) - avance) <= 40,
+        { avance, chant: temps.length ? Math.round(temps[0]) : null, pave: vus.length ? Math.round(vus[0]) : null });
+      }
+    }
+
+    /* L'écho frappe à l'instant zéro, déjà passé d'une latence de sortie
+       quand le chant part : le motif glisse en entier, rien ne se perd et
+       ses écarts restent les siens. */
+    const echo = await page.evaluate(async () => {
+      window.__sonQuand.length = 0;
+      const origine = performance.now();
+      const p = window.TBF_SON.chantDuGeste('echo', { echo: { instants: [0, 200, 500] } }, { origine });
+      await new Promise((r) => setTimeout(r, 900));
+      p.arreter();
+      return { origine, quand: window.__sonQuand.slice() };
+    });
+    const frappesEcho = [];
+    for (const q of echo.quand.filter((x) => x !== null).sort((a, b) => a - b)) {
+      if (!frappesEcho.length || q - frappesEcho[frappesEcho.length - 1] > 5) frappesEcho.push(q);
+    }
+    const intervalles = frappesEcho.slice(1).map((q, k) => Math.round(q - frappesEcho[k]));
+    check('l’écho, qui frappe à l’instant zéro, garde ses trois frappes et ses écarts (200, 300 ms)',
+      frappesEcho.length === 3 && Math.abs(intervalles[0] - 200) <= 3 && Math.abs(intervalles[1] - 300) <= 3,
+      { frappes: frappesEcho.map((q) => Math.round(q - echo.origine)), intervalles });
+
+    /* Un chant demandé bien après son origine : les temps passés se taisent,
+       les suivants tombent sur la grille. Six temps de 200 ms partis il y a
+       650 ms : quatre sont passés, deux s'entendent — huit sources. */
+    const tard = await page.evaluate(async () => {
+      window.__sonQuand.length = 0;
+      const origine = performance.now() - 650;
+      const p = window.TBF_SON.chant('tempo', { tempo: 200, temps: 6, origine });
+      await new Promise((r) => setTimeout(r, 700));
+      p.arreter();
+      return { origine, quand: window.__sonQuand.slice() };
+    });
+    const tardifs = tard.quand.filter((x) => x !== null).map((q) => Math.round(q - tard.origine));
+    check('demandé 650 ms après son origine, il tait les temps passés et frappe les deux suivants sur la grille',
+      tardifs.length === 8 && tardifs.every((q) => Math.abs(q - 800) <= 5 || Math.abs(q - 1000) <= 5),
+      { sources: tardifs.length, instants: [...new Set(tardifs)] });
+    check('aucune erreur de script', erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+
+  /* ========================================= 5 ter. la rumeur suit le match
+
+     Lot 6 : `TBF_SON.rumeur(moment)`. Les contrôles qui disent « ça
+     s'entend » écoutent la sortie (l'écoute de l'espion) ; ceux qui disent
+     quel niveau joue lisent l'état du moteur, et la rumeur elle-même par ses
+     sources sans fin. */
+
+  console.log('\n  la rumeur suit le match (lot 6)');
+  /* La valeur efficace la plus basse sur `n` écoutes espacées : un éclat de
+     voix qui passe pendant l'une d'elles ne la fausse pas. */
+  const plancher = async (page, n = 6, pas = 110) => {
+    let bas = Infinity;
+    for (let k = 0; k < n; k++) {
+      const e = await ecoute(page);
+      if (e) bas = Math.min(bas, e.rms);
+      await attendre(pas);
+    }
+    return Number.isFinite(bas) ? bas : null;
+  };
+  {
+    const { page, erreurs } = await nouvellePage();
+    // Avant tout geste : la phase est retenue, rien ne se construit.
+    await page.evaluate(() => window.TBF_SON.rumeur('entree', { ms: 3000 }));
+    let c = await compte(page);
+    let e = await etat(page);
+    check('avant le premier geste, l’entrée ne crée rien, mais la phase « jeu » est retenue',
+      c.contextes === 0 && e.rumeur?.phase === 'jeu' && e.ambiance.voulu === 1, e, c);
+    await page.evaluate(() => window.TBF_SON.ambiance(0));
+    await page.click('#geste');
+    await jusqua(page, (x) => x.contexte === 'running');
+    /* L'entrée : la foule compte trois secondes. Trois cents millisecondes
+       après, la rumeur est encore loin de sa pleine mesure — six décibels au
+       moins ; une rumeur ordinaire (`ambiance(1)`) y serait déjà à huit
+       décibels de la sienne, l'entrée y est à douze. */
+    const cibles = await page.evaluate(() => {
+      window.__sonCibles.length = 0;
+      window.TBF_SON.rumeur('entree', { ms: 3000 });
+      return window.__sonCibles.map((x) => x.tc);
+    });
+    /* Trois constantes de temps pour le compte : une seconde ici. Une
+       entrée au pas ordinaire de la rumeur (0,6 s) passerait l'écoute
+       ci-dessous — les deux sont loin de leur pleine mesure à 250 ms —,
+       pas celui-ci. Les six paramètres de la rumeur la visent. */
+    check('l’entrée monte au pas du compte : la rumeur vise son niveau en ms / 3 (1 s pour 3 s de compte)',
+      cibles.filter((tc) => Math.abs(tc - 1) < 0.001).length >= 6, cibles);
+    await attendre(250);
+    const debut = await plancher(page, 2, 40);
+    await attendre(3200);
+    const plein = await plancher(page);
+    check('l’entrée fait monter la rumeur le temps du compte : au début, six décibels sous sa pleine mesure au moins',
+      debut !== null && plein !== null && plein - debut >= 6, { debut, plein });
+
+    /* La mi-temps : la rumeur retombe, et tient. Six secondes de creux
+       (plus de deux constantes de temps) : huit décibels visés, quatre
+       exigés — la respiration de la rumeur va et vient de deux ou trois. */
+    await page.evaluate(() => window.TBF_SON.rumeur('mi-temps'));
+    e = await etat(page);
+    check('la mi-temps garde la tribune (niveau 1) et creuse son échelle',
+      e.rumeur?.phase === 'mi-temps' && e.ambiance.voulu === 1 && e.rumeur.echelle < 1, e);
+    await attendre(6000);
+    const creux = await plancher(page);
+    check('la mi-temps s’entend : la rumeur retombe de quatre décibels au moins',
+      creux !== null && plein - creux >= 4, { plein, creux });
+    // Redite chaque seconde (une page la rappelle à chaque rendu) : rien ne bouge.
+    const n0 = (await compte(page)).noeuds;
+    await page.evaluate(() => { window.TBF_SON.rumeur('mi-temps'); window.TBF_SON.rumeur('mi-temps'); });
+    check('redite, une phase ne recrée rien', (await compte(page)).noeuds === n0);
+    await page.evaluate(() => window.TBF_SON.rumeur('jeu'));
+    e = await etat(page);
+    check('le jeu lève la mi-temps', e.rumeur?.phase === 'jeu' && e.rumeur.echelle === 1, e);
+
+    /* La minute double et le but, ensemble : le but réel joue l'ovation et
+       ouvre la minute double au même instant. L'ovation finie, la minute
+       double court encore ; un chant pendant la minute double ne l'abrège
+       pas. Durées réduites : l'ovation 600 ms, la minute 1,8 s. */
+    await page.evaluate(() => {
+      window.TBF_SON.ambiance(3, { pendant: 600 });
+      window.TBF_SON.rumeur('double', { ms: 1800 });
+      window.TBF_SON.ambiance(2, { pendant: 300 });
+    });
+    check('au but réel, l’ovation (3) passe devant la minute double', (await etat(page)).ambiance.joue === 3);
+    await attendre(1000);
+    e = await etat(page);
+    check('l’ovation finie, la minute double court encore (2), et le chant ne l’a pas abrégée',
+      e.ambiance.joue === 2 && e.ambiance.passager === 2, e.ambiance);
+    const retombe = await jusqua(page, (x) => x.ambiance.joue === 1 && x.ambiance.passager === 0, 1600);
+    check('puis la tribune retombe seule à la rumeur du jeu', retombe, await etat(page));
+    const sansDuree = await page.evaluate(() => {
+      window.TBF_SON.rumeur('double', { ms: 0 });
+      return window.TBF_SON.etat().ambiance.passager;
+    });
+    check('une minute double déjà finie (surgeMs 0) ne fait rien pousser', sansDuree === 0);
+
+    /* La fin : la tribune se vide, en un fondu qu'une page qui la redit à
+       chaque rendu ne relance pas. 1,5 s demandées : démontée vers 2,5 s.
+       Redite à 1,5 s, elle repartirait et se démonterait vers 4 s. */
+    const vers0 = await page.evaluate(() => {
+      window.__sonCibles.length = 0;
+      window.TBF_SON.rumeur('fin', { ms: 1500 });
+      return window.__sonCibles.filter((x) => x.v === 0).map((x) => x.tc);
+    });
+    check('la fin se vide à son pas : la rumeur vise le silence en ms / 3 (0,5 s pour 1,5 s)',
+      vers0.filter((tc) => Math.abs(tc - 0.5) < 0.001).length >= 5, vers0);
+    await attendre(400);
+    check('à la fin, la tribune se vide en fondu : elle s’entend encore un instant',
+      ((await ecoute(page))?.rms ?? -200) > -60 && (await compte(page)).sansFin > 0);
+    await attendre(1100);
+    await page.evaluate(() => window.TBF_SON.rumeur('fin', { ms: 1500 }));
+    await attendre(1700);
+    c = await compte(page);
+    await attendre(300);
+    const vide = await ecoute(page);
+    check('puis elle se démonte, et la redire ne relance pas son fondu',
+      c.sansFin === 0 && vide !== null && vide.crete <= -120, { ...c, vide });
+    check('aucune erreur de script', erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+  {
+    /* Le vestiaire du duel : la rumeur à la mesure des places prises, qui
+       enfle à chaque arrivée puis reprend sa nouvelle mesure. Et le calme :
+       rien ne se construit, et la phase revient avec lui levé. */
+    const { page, erreurs } = await nouvellePage();
+    await page.click('#geste');
+    await jusqua(page, (x) => x.contexte === 'running');
+    await page.evaluate(() => window.TBF_SON.rumeur('vestiaire', { part: 1 / 3 }));
+    let e = await etat(page);
+    const tiers = e.rumeur?.echelle;
+    check('au vestiaire, la rumeur joue à la mesure des places prises (moins que pleine)',
+      e.rumeur?.phase === 'vestiaire' && e.ambiance.joue === 1 && tiers > 0 && tiers < 1, e);
+    await page.evaluate(() => window.TBF_SON.rumeur('arrivee', { part: 2 / 3 }));
+    e = await etat(page);
+    check('une arrivée la fait enfler (2) et monter d’un cran',
+      e.ambiance.joue === 2 && e.rumeur.echelle > tiers && e.rumeur.echelle < 1, e);
+    const repos = await jusqua(page, (x) => x.ambiance.joue === 1, 3500);
+    check('puis elle reprend la rumeur, à sa nouvelle mesure', repos && (await etat(page)).rumeur.echelle > tiers);
+    await page.evaluate(() => window.FX.sonCoupe(true));
+    await attendre(80);
+    await page.evaluate(() => { window.TBF_SON.rumeur('entree'); window.TBF_SON.rumeur('mi-temps'); });
+    let c = await compte(page);
+    check('sous le calme, la rumeur ne construit rien', c.sansFin === 0, c);
+    await page.evaluate(() => window.FX.sonCoupe(false));
+    await jusqua(page, (x) => x.contexte === 'running');
+    e = await etat(page);
+    c = await compte(page);
+    check('le calme levé, elle revient dans la phase demandée pendant (la mi-temps)',
+      e.rumeur?.phase === 'mi-temps' && e.ambiance.joue === 1 && c.sansFin > 0, e, c);
+    await page.evaluate(() => window.TBF_SON.ambiance(0));
+    e = await etat(page);
+    check('ambiance(0) vide la tribune pour de bon : ni phase, ni échelle creusée',
+      e.rumeur?.phase === null && e.rumeur.echelle === 1 && e.ambiance.voulu === 0, e);
+    const inconnu = await page.evaluate(() => window.TBF_SON.rumeur('hymne'));
+    check('un moment inconnu ne fait rien et ne lève pas', inconnu === 0 && erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+
   /* =========================================================== 6. le volume */
 
   console.log('\n  le volume');
@@ -950,6 +1433,13 @@ if (banc) try {
       for (const n of [0, 1, 2, 3]) S.ambiance(n);
       S.ambiance(2, { pendant: 100 });
       const poignees = S.chants().map((t) => S.chant(t, { tempo: 300, temps: 4, instants: [0, 100] }));
+      // Lot 6 : le chant d'un geste, calé ou non, et chaque moment de la rumeur.
+      const gestes = { tempo: { interval: 300, beats: 4 }, contretemps: { interval: 300, beats: 4 },
+        echo: { instants: [0, 100] }, crescendo: { instants: [0, 100] } };
+      for (const g of S.gestesChantes()) {
+        poignees.push(S.chantDuGeste(g, gestes), S.chantDuGeste(g, gestes, { origine: performance.now() }));
+      }
+      for (const m of S.rumeurs()) S.rumeur(m, { part: 0.5, ms: 200 });
       poignees.forEach((p) => p.arreter());
       const A = S.audio;
       const pret = A.ready();
@@ -965,6 +1455,48 @@ if (banc) try {
     check('le rendu hors ligne se refuse proprement', r.rendu === null);
     check('le moteur le dit : pas de contexte', r.etat.contexte === 'absent', r.etat);
     check('et rien ne lève, ni le moteur ni la cérémonie', erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+
+  /* ============================================ 7 bis. le premier son d'une visite
+
+     Lot 6. Le contexte naît au premier toucher, et le son de ce toucher part
+     dans le même instant, sur une chaîne qui n'a encore rien entendu. Le
+     limiteur de Chrome naît fermé : ce son-là sortait treize décibels sous
+     les suivants (un tic à −33,1 dBFS de crête contre −20,0, à l'écoute), un
+     son qu'on n'entend pas. NAISSANCE (son.js) l'ouvre à temps. L'écoute
+     relève la crête de ce qui sort autour du premier tic — joué dans le
+     gestionnaire du clic qui fait naître le contexte, comme une page le
+     fait —, puis autour d'un second, une demi-seconde plus tard. Deux
+     décibels de marge : le premier perd encore un peu de son attaque
+     pendant que le détecteur s'ouvre. */
+
+  console.log('\n  le premier son d’une visite (lot 6)');
+  {
+    const { page, erreurs } = await nouvellePage('/__son');
+    await page.evaluate(() => document.getElementById('geste').addEventListener('click',
+      () => { window.__premier = window.TBF_SON.jouer('tic'); }, { once: true }));
+    /* La crête la plus haute de l'écoute pendant une demi-seconde : la
+       fenêtre de l'analyseur (170 ms) glisse sur le tic, une lecture toutes
+       les trente millisecondes ne le manque pas. */
+    const pic = async () => {
+      let c = -200;
+      for (let k = 0; k < 16; k++) {
+        const e = await ecoute(page);
+        if (e) c = Math.max(c, e.crete);
+        await attendre(30);
+      }
+      return c;
+    };
+    await page.click('#geste');
+    const premier = await pic();
+    await attendre(500);
+    await page.evaluate(() => window.TBF_SON.jouer('tic'));
+    const second = await pic();
+    const parti = await page.evaluate(() => window.__premier === true);
+    check('le premier son d’une visite, joué dans le toucher qui fait naître le contexte, sort comme les suivants (à 2 dB près)',
+      parti && second > -60 && Math.abs(premier - second) <= 2, { parti, premier, second });
+    check('et rien ne lève', erreurs.length === 0, ...erreurs);
     await page.close();
   }
 
@@ -1031,7 +1563,49 @@ if (banc) try {
       plafonnes.map((j) => ({ niveau: j.niveau, sonie: j.sonie, plafond: j.plafond })));
     const amb = parSorte('ambiance').map((j) => j.moyen);
     check('et chaque niveau sonne plus fort que le précédent', amb.length === 3 && amb[0] < amb[1] && amb[1] < amb[2], amb);
+    /* Lot 6 : la mi-temps et le vestiaire vide creusent la rumeur. Assez
+       pour qu'on l'entende, et sans rien dépasser — une échelle ne fait que
+       baisser. */
+    check(`la mi-temps et le vestiaire vide sonnent ${RETOMBEE_MIN} dB au moins sous la rumeur pleine`,
+      parSorte('echelle').length === 2 && hors('echelle').length === 0,
+      ...hors('echelle'), parSorte('echelle').map((j) => ({ id: j.id, moyen: j.moyen })));
     check('les chants sont dans la fenêtre du jeu', hors('chant').length === 0, ...hors('chant'));
+    /* Lot 6 : le pavé fait un tic à chaque frappe, jusqu'à dix par seconde
+       au martelage, par-dessus le tambour du chant. Chaîne froide, la rafale
+       valait le chant (−21,2 LUFS contre −20,4) et le gonflait de 2,6 dB. */
+    check(`une rafale de tics à ${1000 / RAFALE_MS} Hz sur le chant « tempo » reste sous ${mix.creteMax} dBFS `
+      + `et ne le couvre pas (${RAFALE.sousChant} dB dessous, ${RAFALE.gonfle} dB de plus au plus)`,
+      parSorte('rafale').length === 3 && hors('rafale').length === 0,
+      ...hors('rafale'), parSorte('rafale').map((j) => ({ id: j.id, crete: j.crete, sonie: j.sonie })));
+    /* **La mesure se fait chaîne chaude** (CHAUFFE, dans son.js). Le
+       limiteur naît fermé : un son posé au début d'un rendu froid sortait
+       huit décibels sous le même son joué une seconde plus tard — sous ce
+       que le joueur entend —, et les gains de la banque avaient été tirés
+       de là. Le tic au début du rendu et le tic une seconde après doivent
+       sortir pareils. */
+    const chaud = await banc.page.evaluate(async () => {
+      const pic = (b) => {
+        let p = 0;
+        for (let k = 0; k < b.numberOfChannels; k++) for (const v of b.getChannelData(k)) p = Math.max(p, Math.abs(v));
+        return p > 0 ? Math.round(2000 * Math.log10(p)) / 100 : -200;
+      };
+      const S = window.TBF_SON;
+      return {
+        debut: pic(await S.rendre({ son: 'tic' }, { duree: 0.6 })),
+        apres: pic(await S.rendre({ suite: [{ son: 'tic', a: 1000 }] }, { duree: 1.6 })),
+      };
+    });
+    check('le banc mesure chaîne chaude : un tic au début du rendu sort comme un tic une seconde après',
+      Math.abs(chaud.debut - chaud.apres) <= 0.5, chaud);
+    /* **Et la chaîne qui vient de naître** (lot 6, NAISSANCE dans son.js) :
+       rendue sans chauffe, comme au premier toucher d'une visite, un tic et
+       une bâche y sortent comme chaîne chaude ; et tous les moments empilés
+       pendant la relâche brève de la naissance ne saturent pas. Sans
+       NAISSANCE, le tic y sortait à −27,8 dBFS contre −20,0. */
+    check(`à sa naissance, la chaîne laisse passer le premier son comme chaîne chaude (à ${NAISSANCE_ECART} dB près), `
+      + `et rien n’y sature (${mix.creteMax} dBFS)`,
+    parSorte('naissance').length === 3 && hors('naissance').length === 0,
+    ...hors('naissance'), parSorte('naissance').map((j) => ({ id: j.id, crete: j.crete, sonie: j.sonie })));
     /* Reproductible à −100 dB près, pas au bit : Chrome lui-même rend deux
        fois le même graphe avec un écart d'un bit de flottant (1,2e-7, soit
        −138 dB) sur quelques centaines d'échantillons. Un hasard qui fuirait
@@ -1050,6 +1624,83 @@ if (banc) try {
     });
     check('un rendu est reproductible : même graine, même son (à −100 dB près)',
       ecart.meme < 1e-5 && ecart.autre > 1e-3, ecart);
+  }
+
+  /* ============================== 9. la scène tient sa célébration (fx)
+
+     Pas du son, mais du même périmètre, et sans autre suite pour elle :
+     `fanzzy-scene.js`, le personnage du Virage, de la fiche du match, de
+     « Mon Fanzzy » et du kiosque (l'accueil a sa propre scène). Une pose
+     tenue — `pose(nom, tenir)`, le but, la poussée d'un chant — est une
+     célébration **dès sa demande** : un `poserFond` demandé pendant le
+     décodage de son dessin prenait un jeton neuf et passait devant elle, et
+     au Virage le rendu qui suit un but réel effaçait le « GOAL ! » du
+     personnage avant qu'il paraisse (lot 6, vu par `virage:ui`). La page
+     s'en garde maintenant elle-même : sans ce contrôle, une scène qui
+     retomberait dans la faute ne rougirait plus nulle part.
+
+     Les dessins sont des leurres et leur décodage dure ce que le contrôle
+     veut : 300 ms pour « but » (le temps qu'un rendu passe), un refus pour
+     « manque » (un état sans dessin, sans repli), 10 ms pour les autres. */
+  console.log('\n  la scène tient sa célébration (fanzzy-scene.js, lot 6)');
+  {
+    const page = await banc.nav.newPage();
+    const erreurs = [];
+    page.on('pageerror', (e) => erreurs.push(e.message));
+    await page.evaluateOnNewDocument(() => {
+      window.TBF_ETATS = {
+        charger: async () => {},
+        resoudre: (_id, { evo, etat }) => ({ evo, src: `data:image/gif;base64,R0lGODlhAQABAAAAACw=#${etat}` }),
+        secours: () => null,
+      };
+      HTMLImageElement.prototype.decode = function decode() {
+        const etat = String(this.src).split('#')[1];
+        return new Promise((ok, non) => setTimeout(() => (etat === 'manque' ? non(new Error('manque')) : ok()),
+          etat === 'but' ? 300 : 10));
+      };
+    });
+    await page.goto(banc.base + '/__son-scene', { waitUntil: 'load' });
+    const r = await page.evaluate(async () => {
+      const dormir = (ms) => new Promise((ok) => setTimeout(ok, ms));
+      const scene = window.TBF_SCENE.creer(document.getElementById('hote'), { fond: 'attente' });
+      await scene.definir({ id: 'ESSAI' });
+      const vu = { depart: scene.etat() };
+      // Le but, tenu 600 ms ; le rendu suivant redemande le fond pendant son décodage.
+      const but = scene.pose('but', 600);
+      scene.poserFond('pousse');
+      vu.butParu = await but;
+      vu.pendant = scene.etat();
+      await dormir(800);
+      vu.apres = scene.etat();
+      // Une pose tenue qui ne paraît pas, et un fond demandé pendant son décodage.
+      const manque = scene.pose('manque', 600);
+      scene.poserFond('attente');
+      vu.manqueParu = await manque;
+      await dormir(100);
+      vu.apresManque = scene.etat();
+      scene.poserFond('pousse');
+      await dormir(100);
+      vu.fondLibre = scene.etat();
+      /* La même, sans fond demandé pendant son décodage : le fond retenu est
+         déjà à l'écran, rien n'est à reposer — et la scène doit quand même
+         se libérer, sans quoi plus aucun fond ne passerait. */
+      vu.seuleParue = await scene.pose('manque', 600);
+      await dormir(50);
+      scene.poserFond('attente');
+      await dormir(100);
+      vu.libreApresSeule = scene.etat();
+      scene.arreter();
+      return vu;
+    });
+    check('un fond demandé pendant le décodage d’une pose tenue ne passe pas devant elle (le « GOAL ! » paraît)',
+      r.depart === 'attente' && r.butParu === true && r.pendant === 'but', r);
+    check('la célébration finie, la scène revient au dernier fond demandé', r.apres === 'pousse', r);
+    check('une pose tenue qui ne paraît pas libère la scène : le fond demandé entre-temps passe, et les suivants aussi',
+      r.manqueParu === false && r.apresManque === 'attente' && r.fondLibre === 'pousse', r);
+    check('et sans fond demandé entre-temps, elle se libère aussi : le fond suivant passe',
+      r.seuleParue === false && r.libreApresSeule === 'attente', r);
+    check('aucune erreur de script (la scène)', erreurs.length === 0, ...erreurs);
+    await page.close();
   }
 } finally {
   await banc.fermer();

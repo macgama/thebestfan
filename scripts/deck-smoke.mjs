@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
-import { createDecks } from '../src/server/deck/index.js';
+import { createDecks, FORMATS, primeDeFormat } from '../src/server/deck/index.js';
 import { ACTIONS, DECK_RULES } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
@@ -412,6 +412,299 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
     && r.json.fixture?.away?.name === 'Liverpool');
 
   journee = null;
+}
+
+/* ===================================== ce qui est en jeu, avant d'entrer en file
+
+   CONTRATS.md § 17 (décision Q12) : chaque match de la liste sert `enJeu`, les
+   écharpes qu'une **victoire** rapporterait dans chaque format — barème du
+   mode (30 classé, 15 entraînement) × prime du format × 2 si l'on suit l'un
+   des deux clubs. Le serveur compte, la page nomme ; elle n'écrit rien sans
+   ce champ. Absent sur un match qu'on ne peut plus jouer.
+
+   Les montants attendus sont **exacts**, écrits depuis le barème et la prime
+   du registre, jamais « plus que zéro ». */
+{
+  const attendu = (bareme, double) => Object.fromEntries(Object.keys(FORMATS)
+    .map((f) => [f, Math.round(bareme * primeDeFormat(f)) * double]));
+  const pareil = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+  r = await call('/api/deck/matchs');
+  const duJour = r.json.matchs.find((m) => m.id === 2);
+  check(`1 contre 1 classé chez soi : 30 × 2 (${duJour?.enJeu?.['1v1']})`,
+    duJour?.enJeu?.['1v1'] === 60);
+  check('et chaque format porte sa prime, doublée pour son club',
+    pareil(duJour?.enJeu, attendu(30, 2))
+    || (console.log('        servi :', JSON.stringify(duJour?.enJeu),
+      '· attendu :', JSON.stringify(attendu(30, 2))), false));
+  const plusTard = r.json.matchs.find((m) => m.id === 3);
+  check('à l’entraînement, le barème de l’entraînement, doublé pour son club',
+    pareil(plusTard?.enJeu, attendu(15, 2))
+    || (console.log('        servi :', JSON.stringify(plusTard?.enJeu)), false));
+
+  /* Un match où l'on ne suit personne : pas de double. Semé ici et retiré
+     après, pour ne rien changer à ce que les blocs du dessus comptent. */
+  await pool.query(`INSERT INTO teams (id,name) VALUES (92,'Lugano')`);
+  await pool.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
+    VALUES (20,207,2026,91,92,'NS', UTC_TIMESTAMP() + INTERVAL 3 DAY)`);
+  /* La journée apporte un match du jour qu'on ne suit pas, et un match
+     d'hier : elle peut en rapporter un, la requête de la base non. */
+  /* « Maintenant » et non « il y a trente minutes » : passé minuit UTC, le
+     second serait la veille, et le contrôle accuserait le barème. */
+  journee = { groupes: [{ ligue: { id: 39, name: 'Premier League', tier: 1 }, matchs: [
+    { id: 5000, date: new Date().toISOString(),
+      status: '1H', elapsed: 28, live: true, fini: false,
+      home: { id: 33, name: 'Manchester United', goals: 1 },
+      away: { id: 40, name: 'Liverpool', goals: 0 } },
+    { id: 6000, date: new Date(Date.now() - 30 * 3600e3).toISOString(),
+      status: 'FT', elapsed: 90, live: false, fini: true,
+      home: { id: 33, name: 'Manchester United', goals: 2 },
+      away: { id: 40, name: 'Liverpool', goals: 2 } },
+  ] }] };
+
+  r = await call('/api/deck/matchs?tous=1');
+  const ailleurs = r.json.matchs.find((m) => m.id === 20);
+  check(`3 contre 3 à l’entraînement, sans son club : 15 × la prime (${ailleurs?.enJeu?.['3v3']})`,
+    ailleurs?.enJeu?.['3v3'] === Math.round(15 * primeDeFormat('3v3'))
+    && pareil(ailleurs?.enJeu, attendu(15, 1))
+    || (console.log('        servi :', JSON.stringify(ailleurs?.enJeu)), false));
+  const enDirect = r.json.matchs.find((m) => m.id === 5000);
+  check('classé, sans son club : le barème simple',
+    pareil(enDirect?.enJeu, attendu(30, 1))
+    || (console.log('        servi :', JSON.stringify(enDirect?.enJeu)), false));
+
+  const hier = r.json.matchs.find((m) => m.id === 6000);
+  check('un match d’hier rapporté par la journée n’a rien en jeu',
+    Boolean(hier) && !('enJeu' in hier)
+    || (console.log('        il dit :', JSON.stringify(hier ?? '(absent de la liste)')), false));
+  /* Et c'est bien un match où l'on ne peut plus entrer : la liste et le choix
+     du support disent la même chose. */
+  const support = await call('/api/deck/match/6000');
+  check('et l’on ne peut d’ailleurs plus y entrer', support.json.error === 'duel.error.fixture_past'
+    || (console.log('        il dit :', JSON.stringify(support.json)), false));
+
+  journee = null;
+  await pool.query('DELETE FROM fixtures WHERE id = 20');
+  await pool.query('DELETE FROM teams WHERE id = 92');
+}
+
+/* ===================================== les couleurs des deux clubs (lot 6)
+
+   L'affiche du match choisi porte une écharpe aux couleurs des deux clubs, et
+   le camp se choisit sur deux bâches teintes : la liste les sert comme celle
+   du Virage (`homeColors`, `awayColors` : une ou deux couleurs, un tableau vide
+   quand on ne les a pas). Lues par clé primaire, **une** lecture pour toute la
+   liste, et une base sans `sql/couleurs.sql` rend la liste sans couleurs
+   plutôt que de la faire tomber. */
+{
+  await pool.query(`UPDATE teams SET color1 = '#C8102E', color2 = '#FFFFFF' WHERE id = 85`);
+  await pool.query(`UPDATE teams SET color1 = '#1D428A', color2 = NULL WHERE id = 91`);
+  /* Un match du jour que la base ne connaît pas : ses clubs n'ont pas de
+     couleurs lues (au plus une ligne posée par l'ancrage, sans teinte). */
+  journee = { groupes: [{ ligue: { id: 39, name: 'Premier League', tier: 1 }, matchs: [
+    { id: 5001, date: new Date().toISOString(), status: 'NS', elapsed: null, live: false, fini: false,
+      home: { id: 33, name: 'Manchester United', goals: 0 },
+      away: { id: 40, name: 'Liverpool', goals: 0 } } ] }] };
+
+  // Compter les lectures des clubs : une par liste, jamais une par match.
+  const executer = pool.execute.bind(pool);
+  let lectures = 0;
+  pool.execute = (sql, ...reste) => {
+    if (/FROM teams WHERE id IN/.test(sql)) lectures++;
+    return executer(sql, ...reste);
+  };
+  try {
+    r = await call('/api/deck/matchs?tous=1');
+  } finally { pool.execute = executer; }
+  const pareil = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const m2 = r.json.matchs?.find((m) => m.id === 2);
+  check(`Sion–Bâle porte les couleurs des deux clubs (${JSON.stringify([m2?.homeColors, m2?.awayColors])})`,
+    pareil(m2?.homeColors, ['#C8102E', '#FFFFFF']) && pareil(m2?.awayColors, ['#1D428A']));
+  const m3 = r.json.matchs?.find((m) => m.id === 3);
+  check('et Bâle–Sion, dans l’autre sens',
+    pareil(m3?.homeColors, ['#1D428A']) && pareil(m3?.awayColors, ['#C8102E', '#FFFFFF']));
+  const inconnu = r.json.matchs?.find((m) => m.id === 5001);
+  check('des clubs sans couleurs lues : deux tableaux vides, jamais une couleur inventée',
+    Boolean(inconnu) && pareil(inconnu.homeColors, []) && pareil(inconnu.awayColors, [])
+    || (console.log('        il dit :', JSON.stringify(inconnu ?? '(absent)')), false));
+  check(`une seule lecture des clubs pour ${r.json.matchs?.length} matchs (${lectures})`,
+    lectures === 1 && r.json.matchs.length > 3);
+
+  /* Sans la seconde colonne, la liste répond, sans couleurs, et le journal le
+     dit une fois. Remise ensuite comme `sql/couleurs.sql` la pose. */
+  await pool.query('ALTER TABLE teams DROP COLUMN color2');
+  const dire = console.error;
+  const journal = [];
+  console.error = (...a) => { journal.push(a.join(' ')); };
+  let sans, encore;
+  try {
+    sans = await call('/api/deck/matchs?tous=1');
+    encore = await call('/api/deck/matchs?tous=1');
+  } finally {
+    console.error = dire;
+    await pool.query('ALTER TABLE teams ADD COLUMN IF NOT EXISTS color2 CHAR(7) NULL AFTER color1');
+  }
+  const s2 = sans.json.matchs?.find((m) => m.id === 2);
+  check('sans sql/couleurs.sql, la liste répond quand même, sans couleurs',
+    sans.status === 200 && Boolean(s2) && pareil(s2.homeColors, []) && 'enJeu' in s2
+    || (console.log('        il dit :', sans.status, JSON.stringify(sans.json).slice(0, 200)), false));
+  check('et le journal le dit une fois, pas à chaque liste',
+    encore.status === 200 && journal.filter((l) => l.includes('couleurs des clubs')).length === 1
+    || (console.log('        journal :', journal.join(' | ')), false));
+  journee = null;
+}
+
+/* ===================================== ce que la liste annonce, l'entrée le tient (lot 6)
+
+   La liste des matchs annonce un mode et ce qui est en jeu ; `matchSupport`
+   décide à l'entrée en file. Deux constats de la partie A, éprouvés ici :
+
+   1. **Un match reporté ou annulé ne porte aucun duel.** La requête de la
+      liste écartait CANC et PST, mais la journée du football, qui se
+      superpose à la base, les y remettait — et `matchSupport` les acceptait,
+      qu'ils viennent de la journée ou de la base. Un match reporté le matin
+      même restait proposé, écharpes en jeu, et un duel classé s'y montait.
+
+   2. **La liste et l'entrée lisent le même jour.** La liste prenait le jour
+      UTC de l'instant du coup d'envoi ; l'entrée, les dix premiers caractères
+      de la date servie. Une date servie avec son décalage — 01:30 à +02:00,
+      c'est-à-dire la veille à 23:30 UTC — faisait annoncer un duel classé par
+      la liste et monter un entraînement à l'entrée.
+
+   Et ce que l'entrée sert maintenant en plus : `enJeu` sur la route d'un
+   match (le même que sur la liste), et les couleurs des deux clubs dans le
+   match support, que la vue du duel transporte. */
+{
+  const pareil = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const D0 = new Date().toISOString().slice(0, 10);
+  const lendemain = new Date(Date.parse(`${D0}T00:00:00Z`) + 86400e3).toISOString().slice(0, 10);
+  // Les couleurs des deux clubs : le bloc du dessus a retiré puis remis `color2`.
+  await pool.query(`UPDATE teams SET color1 = '#C8102E', color2 = '#FFFFFF' WHERE id = 85`);
+  await pool.query(`UPDATE teams SET color1 = '#1D428A', color2 = NULL WHERE id = 91`);
+  /* En base : un match du jour reporté (la journée ne le connaît pas), et un
+     match du jour que la base croit encore à venir. */
+  await pool.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
+    VALUES (30,207,2026,85,91,'PST', UTC_DATE() + INTERVAL 21 HOUR),
+           (31,207,2026,91,85,'NS',  UTC_DATE() + INTERVAL 22 HOUR)`);
+  const club = (id, name) => ({ id, name, goals: null });
+  journee = { groupes: [{ ligue: { id: 207, name: 'Super League', tier: 2 }, matchs: [
+    // La base le croit à venir ; la journée le sait reporté.
+    { id: 31, date: `${D0}T22:00:00+00:00`, status: 'PST', elapsed: null, live: false, fini: false,
+      home: club(91, 'Bâle'), away: club(85, 'Sion') },
+    // Annulé, et inconnu de la base.
+    { id: 7000, date: `${D0}T18:00:00+00:00`, status: 'CANC', elapsed: null, live: false, fini: false,
+      home: club(85, 'Sion'), away: club(91, 'Bâle') },
+    // Aujourd'hui à 23:30 UTC, écrit à l'heure de Zurich en été : sa date affichée est demain.
+    { id: 7001, date: `${lendemain}T01:30:00+02:00`, status: 'NS', elapsed: null, live: false,
+      fini: false, home: club(85, 'Sion'), away: club(91, 'Bâle') },
+  ] }] };
+
+  r = await call('/api/deck/matchs?tous=1');
+  const liste = r.json.matchs ?? [];
+  const statuts = liste.map((m) => `${m.id}:${m.status_short}`);
+  check('aucun match reporté ou annulé n’est proposé, d’où qu’il vienne',
+    !liste.some((m) => ['CANC', 'PST'].includes(m.status_short))
+    || (console.log('        la liste :', statuts.join(', ')), false));
+  check('pas même celui que la base croit à venir et que la journée sait reporté',
+    !liste.some((m) => m.id === 31) && !liste.some((m) => m.id === 7000)
+    || (console.log('        la liste :', statuts.join(', ')), false));
+  for (const [id, quoi] of [[30, 'reporté, connu de la base seule'],
+    [31, 'reporté selon la journée'], [7000, 'annulé, connu de la journée seule']]) {
+    const x = await call(`/api/deck/match/${id}`);
+    check(`et l’entrée le refuse (${quoi})`, x.json.error === 'duel.error.fixture_annule'
+      || (console.log('        il dit :', JSON.stringify(x.json).slice(0, 160)), false));
+  }
+
+  /* **Et la page du duel sait le dire.** Un refus du support ne se lit pas
+     sur cette route-ci — aucune page ne l'appelle — mais à l'entrée en file :
+     `nvn:queue` relaie le code de `matchSupport` tel quel (`nvn:error`), et la
+     page le traduit par son tableau `MESSAGES`. Un code sans phrase s'y lit
+     « Refusé par le serveur : duel.error.fixture_annule ». Le contrôle des
+     refus d'`appels-smoke` ne voit que les `new Cheat` de `nvn/index.js` :
+     ceux du support lui échappent, et le refus d'un match reporté ou annulé
+     est né sans phrase. On lit les deux fichiers plutôt que d'en recopier un :
+     une liste recopiée ne mesurerait que sa copie. */
+  const refusDuSupport = (src) =>
+    new Set([...src.matchAll(/fail\('(duel\.error\.[a-z_]+)'/g)].map((m) => m[1]));
+  const sansPhrase = (src, page) => {
+    const traduits = new Set([...page.matchAll(/'(duel\.error\.[a-z_]+)'\s*:/g)].map((m) => m[1]));
+    return [...refusDuSupport(src)].filter((c) => !traduits.has(c));
+  };
+  // Le canari : sans lui, une lecture qui ne trouve rien passerait pour un vert.
+  check('le contrôle des phrases dénonce un refus que la page ne traduit pas',
+    sansPhrase("throw fail('duel.error.x');", "{ 'duel.error.y': 'Y' }").join() === 'duel.error.x');
+  check('et se tait quand la phrase est écrite',
+    sansPhrase("throw fail('duel.error.x');", "{ 'duel.error.x':  'X' }").length === 0);
+  const srcDeck = readFileSync(new URL('../src/server/deck/index.js', import.meta.url), 'utf8');
+  const pageDuel = readFileSync(new URL('../public/duel-nvn.html', import.meta.url), 'utf8');
+  const muets = sansPhrase(srcDeck, pageDuel);
+  check(muets.length
+    ? `${muets.length} refus du support ${muets.length > 1 ? 's’affichent' : 's’affiche'} en code brut sur la page du duel : ${
+      muets.join(', ')} (phrase à écrire dans MESSAGES, public/duel-nvn.html)`
+    : `chacun des ${refusDuSupport(srcDeck).size} refus du support a sa phrase sur la page du duel`,
+  refusDuSupport(srcDeck).size >= 3 && muets.length === 0);
+
+  /* Le même mode et le même `enJeu`, ligne par ligne, sur la liste et à
+     l'entrée : ce qu'on annonce est ce que l'entrée décidera. */
+  const ecarts = [];
+  for (const m of liste) {
+    const x = await call(`/api/deck/match/${m.id}`);
+    if (x.json.mode !== m.mode || !pareil(x.json.enJeu, m.enJeu)) {
+      ecarts.push(`${m.id} : liste ${m.mode} ${JSON.stringify(m.enJeu)} · entrée ${
+        x.json.error ?? x.json.mode} ${JSON.stringify(x.json.enJeu)}`);
+    }
+  }
+  check(`la liste et l’entrée disent le même mode et le même enJeu (${liste.length} matchs)`,
+    liste.length > 3 && ecarts.length === 0
+    || (console.log('       ', ecarts.join('\n        ')), false));
+  const decale = liste.find((m) => m.id === 7001);
+  check('une date servie avec son décalage reste du jour où elle tombe en UTC',
+    decale?.mode === 'classe'
+    && (await call('/api/deck/match/7001')).json.mode === 'classe'
+    || (console.log('        il dit :', decale?.mode), false));
+
+  /* Les couleurs, dans le match support : c'est lui que le duel emporte
+     (`fixture`), et que la vue sert dix fois par seconde sans relire. */
+  r = await call('/api/deck/match/2');
+  check(`le match support porte les couleurs des deux clubs (${JSON.stringify(
+    [r.json.fixture?.homeColors, r.json.fixture?.awayColors])})`,
+    pareil(r.json.fixture?.homeColors, ['#C8102E', '#FFFFFF'])
+    && pareil(r.json.fixture?.awayColors, ['#1D428A']));
+  check('et ce qui y est en jeu, comme sur la liste : 30 × 2 en 1 contre 1',
+    r.json.enJeu?.['1v1'] === 60);
+  /* Un match que seule la journée connaît : ses couleurs se lisent par
+     l'identifiant de ses clubs, pas par une ligne de match. */
+  r = await call('/api/deck/match/7001');
+  check('un match venu de la journée porte aussi les couleurs de ses clubs',
+    pareil(r.json.fixture?.homeColors, ['#C8102E', '#FFFFFF'])
+    && pareil(r.json.fixture?.awayColors, ['#1D428A'])
+    || (console.log('        il dit :', JSON.stringify(r.json.fixture)), false));
+  /* Et un club dont on n'a rien lu : un tableau vide, jamais absent. */
+  await pool.query(`UPDATE teams SET color1 = NULL, color2 = NULL WHERE id = 91`);
+  const sansTeinte = await call('/api/deck/match/3');
+  await pool.query(`UPDATE teams SET color1 = '#1D428A' WHERE id = 91`);
+  check('un club sans couleurs lues : un tableau vide, jamais une couleur inventée',
+    pareil(sansTeinte.json.fixture?.homeColors, [])
+    && pareil(sansTeinte.json.fixture?.awayColors, ['#C8102E', '#FFFFFF'])
+    || (console.log('        il dit :', JSON.stringify(sansTeinte.json.fixture)), false));
+
+  /* Sans `color2`, l'entrée en file ne doit pas tomber pour une teinte. */
+  await pool.query('ALTER TABLE teams DROP COLUMN color2');
+  const dire = console.error;
+  console.error = () => {};
+  let sans;
+  try { sans = await call('/api/deck/match/2'); }
+  finally {
+    console.error = dire;
+    await pool.query('ALTER TABLE teams ADD COLUMN IF NOT EXISTS color2 CHAR(7) NULL AFTER color1');
+  }
+  check('sans sql/couleurs.sql, le match support répond, sans couleurs',
+    sans.status === 200 && sans.json.mode === 'classe'
+    && pareil(sans.json.fixture?.homeColors, [])
+    || (console.log('        il dit :', sans.status, JSON.stringify(sans.json).slice(0, 200)), false));
+
+  journee = null;
+  await pool.query('DELETE FROM fixtures WHERE id IN (30, 31, 7000, 7001)');
 }
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end(); http.close();

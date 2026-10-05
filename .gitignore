@@ -31,3 +31,6 @@ art/**/_src/
 # sous `_src/` pour « faire comme les autres » : ce ne sont pas les mêmes
 # fichiers.
 .tbf-suite.lock
+
+# La base de test propre à une copie de travail (voir scripts/base-de-test.mjs).
+.tbf-base-de-test

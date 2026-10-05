@@ -50,7 +50,7 @@ node_modules/
 
 ## Étape 2 — Le schéma
 
-Les **trente-trois** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
+Les **trente-quatre** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
 du précédent. Ils sont tous idempotents — les rejouer sur une base déjà à jour ne
 casse rien.
 
@@ -350,6 +350,44 @@ que `raretes` les a rangées.
   ligne « [souvenirs] les chants du Virage se comptent de nouveau » le
   confirme.
 
+- `arenes.sql` (vague 2 du chantier serveur, lot 6) pose ce que les arènes
+  comptent : le **bilan de tribune** du Virage et la **préférence de
+  présence**. Aucune table neuve, six instructions, rien de renommé, aucune
+  reprise de données. Il vient **après `quotidien.sql`**, en dernier : il
+  ajoute des colonnes à `virage_presence` et à `user_wallet` (souvenirs.sql)
+  et prolonge l'upsert des chants que quotidien.sql a élargi.
+
+  - `virage_presence` gagne `parfaits`, `serie_max`, `meilleur_q` et
+    `meilleur_chant` : ce que le geste a donné pendant un match, compté dans
+    l'upsert de présence qui existe (une poussée reste une instruction). Les
+    lignes déjà écrites partent à zéro.
+  - `idx_bilan` (`fixture_id`, `side`, `ferveur`) : le rang du bilan et la
+    lecture groupée d'une salle au coup de sifflet. Le démarrage ne le
+    contrôle pas — un index absent coûte du temps, pas une donnée.
+  - `user_wallet.presence` : visible (1) ou caché (0) ; `NULL` veut dire « le
+    défaut du registre » (`presence.visible_defaut`). La présence elle-même
+    n'est **jamais** écrite : elle vit en mémoire.
+
+  **Sans lui, rien ne casse** : les poussées retombent sur la forme du
+  quotidien (les chants et les missions continuent de se compter), le bilan
+  sert la ferveur, les chants, le rang et l'XP du Virage, et le démarrage
+  nomme `sql/arenes.sql`. **La présence reste éteinte**, même si
+  `presence.actif` est allumé dans `/admin` : sans la colonne du choix,
+  personne ne pourrait s'y cacher. Le journal le dit une fois
+  (« [presence] colonne user_wallet.presence absente ») ; le fichier
+  appliqué, elle revient d'elle-même dans les dix minutes.
+
+  **Après un passage par le Manager**, qui n'applique jamais le schéma :
+  `npm run schema:appliquer` en SSH **tout de suite, puis redémarrer** depuis
+  l'onglet Node.js — le contrôle de démarrage et `/healthz` ne relisent la
+  base qu'au lancement. **Hors des heures de match** : les salles du Virage
+  vivent en mémoire, et un redémarrage en plein match vide les tribunes —
+  avec elles, l'état que la salle garde à ceux qui en sont sortis (souffle,
+  main, recharges), et les buts marqués pendant une coupure de plus de cinq
+  minutes de jeu ne s'annoncent pas (le score les porte, la carte-souvenir
+  n'est pas frappée). Le workflow GitHub applique le schéma avant de
+  redémarrer : rien de plus à faire par ce chemin.
+
 Contrôle : `SHOW TABLES;` doit en lister **47**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
@@ -441,7 +479,7 @@ Redémarrer pendant la construction relance l'ancien code : `npm start` ne fait
 jamais de `git pull`.
 
 **Le Manager n'applique pas le schéma.** Une livraison qui ajoute un fichier
-de `sql/` (la dernière : `sql/quotidien.sql`) demande, une fois la
+de `sql/` (la dernière : `sql/arenes.sql`) demande, une fois la
 construction finie, `npm run schema:appliquer` en SSH, **puis un second
 redémarrage** : le contrôle de démarrage et `/healthz` ne relisent la base
 qu'au lancement du processus.
@@ -588,6 +626,31 @@ lui :
    projeter sur la saison (× jours totaux / jours écoulés), et les saisir dans
    RÉGLAGES : `rang.habitue`, `rang.fervent`, `rang.ultra`, `rang.capo`. Capo
    ne dépasse jamais ce qu'un joueur gratuit assidu fait dans la saison.
+
+### Après la livraison des arènes
+
+La livraison du lot 6 (`sql/arenes.sql`, le bilan de tribune, l'XP du Virage,
+le verdict servi, la présence) part **en une fois avec ses écrans** : le
+serveur avant les écrans, ou ensemble, jamais les écrans seuls. Puis, avec
+Gaël :
+
+1. **Le schéma, puis le redémarrage**, hors des heures de match (voir plus
+   haut). `/healthz` répond `ok: true` ; sans le fichier, le démarrage le
+   nomme.
+2. **Lire au journal** que les chants du Virage se comptent toujours : aucune
+   ligne « [souvenirs] chants du Virage non comptés ».
+3. **`/admin`, RÉGLAGES** : la section **LA PRÉSENCE** existe, et
+   `presence.actif` y est **éteint**. Il le reste jusqu'à la mise en ligne de la
+   nouvelle `CONFIDENTIALITE.md` (paragraphe « La présence de tes amis »), et
+   selon la décision de Gaël (Q2) ; l'allumer est un geste dans `/admin`, sans
+   livraison. Allumée sans `sql/arenes.sql`, elle ne montre rien : le journal
+   nomme alors le fichier.
+4. Dans LA PROGRESSION, `xp.virage` (15), `xp.virage_chants` (10) et
+   `xp.virage_matchs_jour` (3) ; dans LE GRAND VIRAGE, `virage.bilan_min` (5).
+5. **Le lendemain d'un soir de match**, la consommation de l'API sportive
+   (`GET /api/tt/cache`) : une salle restée ouverte après le coup de sifflet
+   ne la paie plus. Avant le correctif du Virage livré avec ce lot, chacune
+   coûtait jusqu'à 1 440 appels par jour, sur une garde de 6 800.
 
 ## Étape 6 — L'inventaire des compétitions
 
@@ -813,8 +876,15 @@ qu'en logarithme : une tribune deux fois plus nombreuse pousse 18 % plus fort,
 pas deux fois. Sans cela, le club le plus populaire gagnerait toujours et
 personne ne jouerait les petits.
 
-Le camp n'est pas choisi : il découle des clubs suivis. Un joueur qui ne suit
-aucune des deux équipes ne peut pas entrer.
+Chez soi, le camp n'est pas choisi : il découle du club suivi. Un joueur qui
+ne suit aucune des deux équipes entre en neutre, choisit son camp, et sa
+ferveur y compte moitié (`ferveur.neutre`).
+
+Une socket n'est pas un joueur : deux onglets ne se coupent pas l'un l'autre,
+et qui sort de la tribune puis revient — un tunnel, un rechargement —
+retrouve son souffle, sa main, ses recharges et son camp. Une salle ne fait
+relever son match par l'API que tant qu'il peut se jouer : finie, elle cesse
+de payer, et se libère une minute après le départ du dernier.
 
 ## Si quelque chose ne démarre pas
 

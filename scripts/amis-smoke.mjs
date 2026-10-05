@@ -54,10 +54,12 @@ await raw.query(`DROP TABLE IF EXISTS abonnements, achats, parrainages, kop_invi
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-// `niveau.sql` pose `user_wallet.xp`, d'où se déduit le niveau de chacun.
+// `niveau.sql` pose `user_wallet.xp`, d'où se déduit le niveau de chacun ;
+// `arenes.sql`, `user_wallet.presence` — sans le choix de se cacher, la
+// présence reste éteinte, et la pastille ne s'éprouverait pas.
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql',
                  'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'etats.sql', 'stades.sql', 'kop.sql', 'amis.sql',
-                 'niveau.sql']) {
+                 'niveau.sql', 'arenes.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -538,6 +540,99 @@ console.log('\n— le niveau de chacun —');
   check('sans aucun niveau, plutôt qu’un niveau inventé',
     tous.length > 0 && tous.every((g) => !('niveau' in g)));
   await pool.query('ALTER TABLE user_wallet ADD COLUMN IF NOT EXISTS xp INT UNSIGNED NOT NULL DEFAULT 0');
+}
+
+/* ======================================================== la présence
+
+   La pastille de chaque ami (`CONTRATS.md`, § 18.1) : `virage`, `duel` ou
+   `en_ligne`, **sur les amis et sur eux seuls**, absente sinon — jamais
+   `null`, jamais une heure. Livrée éteinte : tant que `presence.actif` est
+   faux, la liste est exactement celle d'avant.
+
+   Deux présences s'y essaient, et pas par redondance. La **vraie** dit ce que
+   le joueur verra. Une **naïve**, qui répond « au Virage » pour n'importe quel
+   identifiant qu'on lui passe, éprouve la liste seule : la vraie revérifie de
+   son côté qu'on lui demande des amis mutuels, et masquerait une liste qui
+   lui passerait aussi les demandes en attente. Chaque couche doit tenir sans
+   l'autre.
+
+   Les règles fines — trois états, délai, se cacher, défaut du registre — sont
+   dans `presence-smoke`. */
+console.log('\n— la présence sur la liste —');
+{
+  const { createPresence } = await import('../src/server/presence/index.js');
+  const { poserReglages } = await import('../src/shared/reglages.js');
+  /* Où en est Ana : amie de Clara et de Neo (au compte supprimé plus haut),
+     une demande reçue de Bob, un refus de Dan. Tous « au Virage » : une
+     pastille qui manque doit manquer pour la bonne raison. */
+  const NEO = 'cccccccc-0000-0000-0000-000000000009';
+  const auVirage = new Set([ANA, BOB, DAN, CLA, NEO]);
+  const P = createPresence({ pool, requireAuth: (r, _s, n) => n(), horloge: () => 1_900_000_000_000,
+    log: { warn() {}, error() {}, log() {} } });
+  P.brancher({ estAuVirage: (id) => auVirage.has(id), estEnDuel: () => false });
+  const AP = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop, presence: P });
+
+  const eteinte = await AP.tableau(ANA);
+  check('éteinte (le défaut), aucune pastille nulle part',
+    !JSON.stringify(eteinte).includes('"presence"'));
+
+  poserReglages({ 'presence.actif': true });
+  try {
+    const allumee = await AP.tableau(ANA);
+    const cla = allumee.amis.find((g) => g.id === CLA);
+    check('allumée, une amie au Virage porte « virage »', cla?.presence === 'virage'
+      || (console.log('        Clara :', JSON.stringify(cla)), false));
+    check('une demande reçue n’en porte jamais, même de quelqu’un au Virage',
+      allumee.recues.some((g) => g.id === BOB) && allumee.recues.every((g) => !('presence' in g)));
+    check('ni une demande envoyée',
+      (await AP.tableau(BOB)).envoyees.every((g) => !('presence' in g)));
+    check('ni un ami au compte supprimé',
+      !('presence' in (allumee.amis.find((g) => g.id === NEO) ?? {})));
+    check('ni une suggestion', (await AP.suggestions(ANA)).every((g) => !('presence' in g)));
+    const cles = (t) => Object.keys(t.amis.find((g) => g.id === CLA) ?? {}).sort();
+    check('la pastille est la seule clé ajoutée à la ligne',
+      JSON.stringify(cles(allumee)) === JSON.stringify([...cles(eteinte), 'presence'].sort()));
+
+    /* La liste seule : une présence qui dirait « au Virage » de n'importe
+       qui. On note ce qu'on lui demande. */
+    const demandes = [];
+    const naive = { etatsPour: async (_lecteur, liste) => {
+      demandes.push(...liste);
+      return new Map(liste.map((id) => [id, 'virage']));
+    }, oublierAmis() {} };
+    const AN = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop, presence: naive });
+    const t = await AN.tableau(ANA);
+    check('la liste ne demande la présence que de ses amis',
+      demandes.length > 0 && demandes.every((id) => t.amis.some((g) => g.id === id))
+      && !demandes.includes(BOB)
+      || (console.log('        elle demande :', demandes), false));
+    check('et pas d’un compte supprimé', !demandes.includes(NEO)
+      && !('presence' in (t.amis.find((g) => g.id === NEO) ?? {})));
+    check('et ne la pose sur rien d’autre',
+      [...t.recues, ...t.envoyees].every((g) => !('presence' in g)));
+
+    /* Une présence en panne ne fait pas tomber la liste d'amis. */
+    const enPanne = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop,
+      presence: { etatsPour: async () => { throw new Error('mémoire illisible'); }, oublierAmis() {} } });
+    let liste = null;
+    const code = await refus(async () => { liste = await enPanne.tableau(ANA); });
+    check('une présence en panne : la liste passe, sans pastille',
+      code === '' && liste?.amis?.length > 0 && !JSON.stringify(liste).includes('"presence"')
+      || (console.log('        elle tombe :', code), false));
+
+    /* Une amitié qui change le dit à la présence : sans cela, un ami retiré
+       verrait encore où l'on est pendant deux minutes. */
+    const oublies = [];
+    const temoin = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop,
+      presence: { etatsPour: async () => new Map(), oublierAmis: (...x) => oublies.push(x.sort().join('+')) } });
+    await temoin.repondre(ANA, BOB, true);
+    await temoin.retirer(ANA, BOB);
+    check('accepter puis retirer un ami : la présence oublie la paire, deux fois',
+      oublies.length === 2 && oublies.every((p) => p === [ANA, BOB].sort().join('+'))
+      || (console.log('        oubliées :', oublies), false));
+  } finally {
+    poserReglages({});
+  }
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

@@ -175,6 +175,51 @@ const billetsEcrits = (c) => ecrireBillets.flatMap((re) => [...c.matchAll(re)].m
     'écriture de billets hors de src/server/boutique/ : ' + ailleurs.join(', '));
 }
 
+/* 4 quater. Ce que le bilan de tribune affiche ne vient jamais du client
+      (vague 2, lot 6). Le serveur note le geste, nomme le verdict, compte les
+      PARFAITS, la série, la ferveur, les chants, le rang et l'XP du match
+      (`CONTRATS.md`, § 15 et § 16) : la page ne renvoie rien de ce qu'elle
+      affiche. Une route qui lirait `req.body.parfaits`, ou une socket qui
+      déstructurerait `{ verdict } = p`, rendrait le bilan déclaratif — et le
+      classement avec lui, puisque le rang départage par les chants et les
+      PARFAITS.
+
+      La lecture directe se cherche sur `req.(body|query|params)` ; la
+      déstructuration aussi sur `p` et `payload`, les noms que les sockets
+      donnent à leur charge. Pas l'accès direct `p.rang` : `p` est aussi un
+      alias SQL et une variable de boucle, et le détecteur crierait sans
+      raison. */
+const BILAN = 'xp|ferveur|chants|parfaits|serie|rang|verdict|quality|meilleur';
+const lireBilan = new RegExp(`req\\.(body|query|params)\\??\\.(${BILAN})\\b`, 'g');
+const deconstruireBilan = new RegExp(
+  `\\{[^}]*\\b(${BILAN})\\b[^}]*\\}\\s*=\\s*(req\\.(?:body|query|params)|p|payload)\\b(?!\\.)`, 'g');
+const bilanLu = (c) => [...c.matchAll(lireBilan)].map((m) => `req.${m[1]}.${m[2]}`)
+  .concat([...c.matchAll(deconstruireBilan)].map((m) => `{ ${m[1]} } = ${m[2]}`));
+{
+  const plantees = [
+    'const n = req.body.parfaits;',
+    'const v = req.query?.verdict;',
+    'const { cardId, ferveur } = p;',
+    'const { serie } = payload;',
+    'const { rang, sur } = req.body;',
+  ];
+  const sains = 'const { cardId, taps } = p; const { fixtureId, camp } = payload; '
+    + 'const x = p.ferveur; const { rang } = p.prochain; const { visible } = req.body;';
+  check(plantees.every((x) => bilanLu(x).length === 1) && bilanLu(sains).length === 0,
+    'le détecteur du bilan voit une faute plantée (requête et socket), et pas un corps sain',
+    'le détecteur du bilan est aveugle, ou crie sur un corps sain : '
+      + JSON.stringify([plantees.map((x) => bilanLu(x).length), bilanLu(sains)]));
+}
+{
+  const suspects = [];
+  for (const [f, c] of [...SERVEUR, ['server.js', serverJs]]) {
+    for (const s of bilanLu(c)) suspects.push(`${f} : ${s}`);
+  }
+  check(suspects.length === 0,
+    'ni le verdict, ni les PARFAITS, la série, la ferveur, le rang ou l’XP ne sont lus dans la requête',
+    'chiffre du bilan lu dans la requête : ' + suspects.join(', '));
+}
+
 /* 5. Tout le SQL est paramétré. Une seule interpolation suffit à ouvrir la
       base : c'est la faille la plus ancienne du métier, et la plus coûteuse. */
 {
