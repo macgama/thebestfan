@@ -2926,12 +2926,17 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
    les rails lui laissent : 1 320 px au plus, et jamais moins que les 900
    de la colonne commune.
 
-   **Une page qui ne s'est pas réorganisée ne le demande pas.** Élargir la
-   colonne de toutes les pages d'un coup aurait étiré des listes et des
-   textes sur 1 300 pixels : une ligne de match ou un paragraphe qui
-   traverse l'écran se lit moins bien qu'en colonne. Chaque page passe donc
-   à la largeur le jour où elle a de quoi la remplir (deux colonnes, une
-   grille qui s'allonge), et c'est à elle de le dire.
+   **Toutes les pages de l'application la portent** (Gaël, le même jour :
+   « sur PC, toutes les pages, pour la cohérence ») : d'une page à l'autre,
+   la barre, la colonne et les tuiles restent à la même place. Les écrans
+   de jeu (le Virage, le duel) gardent leur scène, et l'accueil ses tuiles.
+
+   **La règle commune** : une liste ne s'étire pas sur 1 300 pixels, elle se
+   range en colonnes de la largeur d'un téléphone (une grille
+   `auto-fill, minmax(440px, 1fr)`, ou `columns` pour des blocs de hauteurs
+   inégales) ; une pièce seule (une scène, un bandeau) prend la largeur ou
+   reste au milieu. Chaque page écrit sa part dans sa feuille, sous le même
+   `@media` ; `large:ui` et les suites des pages le vérifient.
 
    `--tbf-colonne` suit : les rails et le tiroir s'ancrent au bord de la
    colonne réelle, et non à celui des 900 px qu'elle avait. Posé sur `body`,
@@ -2940,7 +2945,7 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
 @media (min-width:1180px) and (min-height:560px){
   :root{--colonne-large:min(max(900px, calc(100vw - 296px)), 1320px)}
   body.tbf-large{--tbf-colonne:var(--colonne-large)}
-  body.tbf-large #app{max-width:var(--colonne-large)}
+  body.tbf-large>:is(main,#app){max-width:var(--colonne-large)}
 }
 .tbf-tiroir.on{translate:0 0;pointer-events:auto}
 @starting-style{
