@@ -2,9 +2,9 @@ import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
 import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
-import { stadeDeLaRencontre } from '../../shared/stades.js';
-// Les stades qu'une saison a ouverts : voir `stade()`.
-import { ouverts } from '../contenus/index.js';
+// Le stade du match, tiré dans ce qu'une saison a ouvert : voir `stade()`.
+// La même fonction donne le leur aux duels de ce match.
+import { stadeDuMatch } from '../contenus/index.js';
 // La composition lieu + Fanzzy vit dans le moteur de duel : une seule règle.
 import { avecLieu } from '../nvn/engine.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
@@ -620,11 +620,15 @@ export class VirageRoom {
    * dans la salle voit le même, et le même à chaque fois qu'on y revient.
    *
    * L'intersection des possessions n'a pas de sens dans une salle ouverte à
-   * tous — on passe donc un tableau vide, ce qui ouvre les quinze. Le jour où
-   * le stade viendra du vrai lieu du match, c'est cette ligne-là qui changera,
-   * et elle seule.
+   * tous — on n'en passe aucune, ce qui ouvre tous les stades.
    *
-   * **Les quinze, moins ceux qu'aucune saison n'a ouverts.** Un stade est du
+   * **C'est aussi le stade de tous les duels de ce match** : la règle vit dans
+   * `stadeDuMatch` (`contenus/index.js`), que le duel appelle à son ouverture
+   * et que la liste des matchs du duel sert avant l'entrée en file. Le jour où
+   * le stade viendra du vrai lieu du match, c'est cette fonction-là qui
+   * changera, et les trois suivront ensemble.
+   *
+   * **Tous, moins ceux qu'aucune saison n'a ouverts.** Un stade est du
    * contenu qu'une saison livre, au même titre qu'une série : le tirer avant
    * son ouverture, c'est livrer la saison en avance à qui passe par le Virage.
    * Ce filtre-là est la seule chose que `publie` change ici — un stade fermé
@@ -636,7 +640,7 @@ export class VirageRoom {
    * annoncé aux joueurs dès la première diffusion.
    */
   stade() {
-    this._stade ??= stadeDeLaRencontre([], this.fixture.id, ouverts('stade'));
+    this._stade ??= stadeDuMatch(this.fixture.id);
     return this._stade;
   }
 
@@ -1890,12 +1894,9 @@ export class VirageRoom {
        * dans `stades.js`, et c'est elle qui empêche un stade de devenir un
        * avantage qu'on achète. Ici il découle donc de l'identifiant du match :
        * tout le monde dans la salle voit le même, et le même à chaque fois
-       * qu'on y revient.
-       *
-       * L'intersection des possessions n'a pas de sens dans une salle ouverte
-       * à tous — on passe donc un tableau vide, ce qui ouvre les cinq. Le jour
-       * où le stade viendra du vrai lieu du match, c'est cette ligne-là qui
-       * changera, et elle seule. */
+       * qu'on y revient — le même aussi que dans chaque duel de ce match, que
+       * la préparation du duel annonce avant l'entrée en file. Voir `stade()`,
+       * et `stadeDuMatch`, où vit la règle. */
       stade: this.stade(),
       /* Le catalogue des cartes d'action jouables ici. Il part avec l'état
          plutôt que d'être recopié dans la page : le jour où une carte change

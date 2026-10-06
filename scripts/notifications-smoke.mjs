@@ -34,7 +34,11 @@ import { fileURLToPath } from 'node:url';
 import {
   createNotifications, abonnementValide, estLaNuit, empreinteAppareil, deClub,
 } from '../src/server/notifications/index.js';
-import { createKop, EN_VENTE } from '../src/server/kop/index.js';
+/* Le catalogue des bonus : celui du partagé, qui ne garde plus que ce que le
+   Virage applique depuis que « La quête » et « Mur de bâches » en sont
+   sortis (`EN_VENTE` a disparu avec eux). */
+import { createKop } from '../src/server/kop/index.js';
+import { BONUS } from '../src/shared/kop.js';
 import { createStore } from '../src/server/auth/store.js';
 import { poserReglages } from '../src/shared/reglages.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
@@ -250,7 +254,7 @@ console.log('\n— le vote du KOP');
   /* Le vrai KOP, avec les notifications branchées comme dans server.js. */
   const K = createKop({ pool, requireAuth, notifications: N });
   envois.length = 0;
-  const vote = await K.proposer(ANA, kopId, EN_VENTE[0].id);
+  const vote = await K.proposer(ANA, kopId, BONUS[0].id);
   // L'envoi n'est pas attendu par le vote : on lui laisse le temps de partir.
   for (let i = 0; i < 50 && !envois.length; i++) await new Promise((ok) => setTimeout(ok, 20));
   check('un vote ouvert prévient les membres qui l’ont demandé, pas celui qui l’ouvre',
