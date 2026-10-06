@@ -382,6 +382,21 @@ async function ouvrir(largeur = 400, hauteur = 880, avant = null) {
       };
       new MutationObserver(noter).observe(pile,
         { subtree: true, attributes: true, attributeFilter: ['class', 'src'] });
+      /* **Et ce qu'il dit** (`__paroles`) : chaque parole du Fanzzy, son
+         moment, sa ligne et son adresse, au moment où elle s'écrit. */
+      const bulle = document.getElementById('bulle');
+      if (!bulle) return;
+      window.__paroles = [];
+      new MutationObserver(() => {
+        const quoi = bulle.dataset.parole;
+        const texte = bulle.textContent;
+        const der = window.__paroles.at(-1);
+        if (quoi && !(der && der.quoi === quoi && der.texte === texte && der.encore)) {
+          if (der) der.encore = false;
+          window.__paroles.push({ t: performance.now(), quoi, texte,
+            href: bulle.getAttribute('href'), encore: true });
+        } else if (!quoi && der) der.encore = false;
+      }).observe(bulle, { attributes: true, childList: true, characterData: true, subtree: true });
     });
   });
   /* Ce que le navigateur sait avant la première ligne de la page : la marque
@@ -2538,6 +2553,24 @@ if (process.env.CAPTURE) {
     .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
   const pause = (ms) => new Promise((r) => { setTimeout(r, ms); });
   const visite = (depuis) => ({ actif: true, depuis });
+  /* Ce qu'il a dit (voir « la parole du Fanzzy ») : les moments, dans l'ordre. */
+  const paroles = (page) => page.evaluate(() => window.__paroles ?? []);
+  const ditDe = async (page, quoi) => (await paroles(page)).find((p) => p.quoi === quoi) ?? null;
+  /* Une ligne vraiment écrite pour ce moment, et qui ne mène nulle part. */
+  const ligneDe = (page, p) => page.evaluate((q) => {
+    const R = window.TBF_REPLIQUES;
+    const toutes = [...R.etages(q.quoi, {}).flat(),
+      ...Object.values(R.FAMILLES).flatMap((f) => f[q.quoi] ?? []),
+      ...Object.values(R.PERSO).flatMap((f) => f[q.quoi] ?? []),
+      ...(q.quoi === 'salut' ? Object.values(R.COMMUN.salut).flat() : [])];
+    return toutes.includes(q.texte) && q.href === null;
+  }, p);
+  const dit = async (page, quoi, ms = 6000) => {
+    await jusqua(async () => Boolean(await ditDe(page, quoi)), ms);
+    const p = await ditDe(page, quoi);
+    return Boolean(p) && await ligneDe(page, p)
+      || (console.log('        paroles :', JSON.stringify(await paroles(page))), false);
+  };
   const match = (issue, score) => ({ fixtureId: 9001, domicile: 'FC Sion',
     exterieur: 'FC Bâle', score, club: 'FC Sion', issue });
   const HEURE = 3600e3;
@@ -2556,6 +2589,7 @@ if (process.env.CAPTURE) {
       await jusqua(async () => (await visages(page)).includes('joie'), 6000)
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
     check('et il saute', await sauts(page) >= 1);
+    check('et il le dit, d’une ligne de victoire qui ne mène nulle part', await dit(page, 'victoire'));
     check('le temps du ticket, puis il rend la main à son repos',
       await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000)
       || (console.log('        il montre :', (await scene(page)).src), false));
@@ -2568,6 +2602,19 @@ if (process.env.CAPTURE) {
       await jusqua(async () => (await visages(page)).includes('depit'), 6000)
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
     check('sans sauter', await sauts(page) === 0);
+    check('et il le dit', await dit(page, 'defaite'));
+    check('l’arrivée a ses mots : il ne dit pas bonjour par-dessus',
+      (await pause(3500), !(await ditDe(page, 'salut')))
+      || (console.log('        paroles :', JSON.stringify(await paroles(page))), false));
+    await page.close();
+
+    /* Un nul sans rouge : pas de visage pour lui, mais des mots. */
+    quotidien = visite({ ilYaMs: 18 * HEURE, matchs: [match('nul', [1, 1])] });
+    page = await ouvrir();
+    check('un nul : il n’a pas de visage pour lui, il a des mots', await dit(page, 'nul'));
+    check('et son visage ne bouge pas',
+      !(await visages(page)).some((v) => ['joie', 'depit', 'colere'].includes(v))
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
     await page.close();
 
     /* Le carton rouge (6 octobre 2026) : un rouge pris par son club, après
@@ -2581,6 +2628,7 @@ if (process.env.CAPTURE) {
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
     check('sans abattement ni saut', !(await visages(page)).includes('depit') && await sauts(page) === 0
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    check('et il dit le rouge', await dit(page, 'rouge'));
     let lignes = await lignesDuTicket(page);
     check('le ticket écrit le rouge', lignes.includes('FC Sion perd 0–1 · carton rouge')
       || (console.log('        ticket :', lignes), false));
@@ -2648,6 +2696,7 @@ if (process.env.CAPTURE) {
       fete.coucou !== null && fete.joie !== null && fete.joie - fete.coucou >= 1300
       || (console.log('        coucou à', fete.coucou, '· joie à', fete.joie), false));
     check('d’un saut', await sauts(page) >= 1);
+    check('et il dit qu’on lui a manqué', await dit(page, 'retour'));
     await page.close();
 
     /* Cinq heures : on est simplement repassé. */
@@ -2658,6 +2707,9 @@ if (process.env.CAPTURE) {
     check('cinq heures sans venir, rien à raconter : pas de fête',
       !vus.includes('joie') && await sauts(page) === 0
       || (console.log('        visages :', vus.join(' → ')), false));
+    /* Après la phrase du hub, s'il en a une : elle passe d'abord. */
+    check('il dit bonjour, selon l’heure', await dit(page, 'salut', 12000)
+      && !(await ditDe(page, 'retour')));
     await page.close();
 
     /* Le serveur ne sert `depuis` que s'il a des nouvelles : sans lui, la
@@ -2677,6 +2729,10 @@ if (process.env.CAPTURE) {
        touchers d'un joueur. */
     page = await ouvrir();
     await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000);
+    /* Au calme pour de bon : la phrase du hub repliée, et le bonjour dit. Un
+       toucher seul cède à ce que la bulle dit déjà. */
+    await jusqua(() => page.evaluate(() => document.getElementById('bulle').hidden
+      && (window.__paroles ?? []).some((p) => p.quoi === 'salut')), 14000);
     await page.evaluate(() => { window.__gestes.length = 0; window.__visages.length = 0; });
     for (let i = 0; i < 3; i++) { await toucher(page); await pause(150); }
     check('trois touchers d’affilée : il exulte',
@@ -2684,6 +2740,8 @@ if (process.env.CAPTURE) {
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
     check('en sautant à chacun', await sauts(page) === 3
       || (console.log('        sauts :', await sauts(page)), false));
+    check('le premier toucher : sa réplique au calme', await dit(page, 'calme', 1000));
+    check('le troisième : il en redemande', await dit(page, 'encore', 1000));
     await jusqua(async () => nom((await scene(page)).src) === 'neutre', 4000);
     await pause(400);
 
@@ -2694,6 +2752,7 @@ if (process.env.CAPTURE) {
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
     check('et le sixième ne le fait pas sauter', await sauts(page) === 5
       || (console.log('        sauts :', await sauts(page)), false));
+    check('et il le dit', await dit(page, 'boude', 1000));
     for (let i = 0; i < 2; i++) { await toucher(page); await pause(150); }
     check('tant qu’il boude, un toucher ne le fait pas sauter', await sauts(page) === 5
       || (console.log('        sauts :', await sauts(page)), false));
@@ -2840,6 +2899,7 @@ if (process.env.CAPTURE) {
   await pause(200);
   check('le supporter, sans colère dessinée, saute à chacun des six touchers',
     await sauts(page) === 6 || (console.log('        sauts :', await sauts(page)), false));
+  check('mais il dit qu’il en a assez', await dit(page, 'boude', 1000));
   check('ni de paupières à poser : il ne cligne pas',
     await page.evaluate(() => !document.getElementById('paupieres').getAttribute('src')
       && !document.getElementById('paupieres').classList.contains('on')));
@@ -3116,6 +3176,23 @@ const couleurs = {};
   check(`et elle tient ses ${REPLI_BULLE / 1000} s avant de se replier (${(tenue / 1000).toFixed(1)} s)`,
     repliee && tenue >= REPLI_BULLE - 700 && tenue <= REPLI_BULLE + 1800);
 
+  /* **Une parole passe, la phrase reste** (voir « la parole du Fanzzy ») :
+     il dit un mot sur la bulle repliée, sans adresse, puis le « ! » revient,
+     qui rouvre la même phrase vers les boosters. */
+  const dite = await page.evaluate(() => TBF.parler('victoire'));
+  b = await lireBulle(page);
+  check('il parle par-dessus le « ! » : un mot qui ne mène nulle part',
+    dite && b.vue && !b.pli && b.href === null && b.texte === dite
+    || (console.log('        dit :', dite, '· bulle :', JSON.stringify(b)), false));
+  const revenu = await jusqua(() => bulleRepliee(page), 4000);
+  b = await lireBulle(page);
+  check('puis le « ! » revient, sur la phrase des boosters',
+    revenu && b.pli && b.texte === phrase && b.href === '/boosters'
+    || (console.log('        bulle :', JSON.stringify(b)), false));
+  check('un bonjour cède à la phrase ouverte du hub',
+    await page.evaluate(() => { document.getElementById('bullePli').click(); return TBF.parler('salut', { cede: true }); }) === null
+    && (await lireBulle(page)).href === '/boosters');
+
   /* **Un club suivi joue** : le direct passe devant la récompense, sur le
      bouton du menu comme dans la bulle, qui parle d'abord du match. */
   direct = { ...LIVE };
@@ -3171,8 +3248,11 @@ const couleurs = {};
     || (console.log('        tuile :', JSON.stringify(e.rail['/boosters']), '· jeton :', e.jeton), false));
   /* Rien à dire — pas de match, pas de réserve, pas de nouvelle carte, un
      Fanzzy équipé : pas de bulle, et pas de « ! » qui rouvrirait du vide. */
+  /* Il peut dire bonjour (voir « la parole du Fanzzy ») : une parole n'est
+     pas une phrase du hub — elle ne mène nulle part, et ne laisse pas de
+     « ! » derrière elle. */
   const b = await lireBulle(page);
-  check('rien à dire : ni bulle, ni « ! »', !b.vue && !b.pli
+  check('rien à dire : ni bulle qui mène quelque part, ni « ! »', (!b.vue || b.href === null) && !b.pli
     || (console.log('        bulle :', JSON.stringify(b)), false));
 
   /* La file partie, le bouton redevient muet : un état sans donnée ne se

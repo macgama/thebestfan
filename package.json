@@ -80,6 +80,7 @@
     "doublons": "node scripts/fanzzy-doublons.mjs",
     "etats:test": "node scripts/etats-smoke.mjs",
     "cligne:test": "node scripts/cligne-smoke.mjs",
+    "repliques:test": "node scripts/repliques-smoke.mjs",
     "catalogue:test": "node scripts/catalogue-smoke.mjs",
     "cote:test": "node scripts/cote-smoke.mjs",
     "dossier": "node scripts/dossier.mjs",
