@@ -326,6 +326,21 @@ export const STUFF = [
 export const SKIN_BY_ID = new Map(SKINS.map((s) => [s.id, s]));
 export const STUFF_BY_ID = new Map(STUFF.map((s) => [s.id, s]));
 
+/**
+ * Les pièces qu'un Fanzzy porte, telles qu'un écran les dessine : l'identifiant
+ * (le dessin), le nom (ce qu'on lit au toucher) et la rareté (le cadre).
+ *
+ * Deux au plus, dans l'ordre du sac — la borne de `combine` : une pièce que le
+ * moteur ignore ne doit pas paraître portée. Une pièce inconnue du catalogue
+ * (retirée depuis, ou un deck abîmé) est sautée plutôt que dessinée vide.
+ */
+export function piecesPortees(stuffIds = []) {
+  return (Array.isArray(stuffIds) ? stuffIds : []).slice(0, 2)
+    .map((id) => STUFF_BY_ID.get(id))
+    .filter(Boolean)
+    .map(({ id, nom, rar }) => ({ id, nom, rar }));
+}
+
 /* **Il n'y a plus de liste de cartes d'action ici.**
  *
  * Il y en avait une, de quatre lignes, présentée comme « les cartes du paquet de

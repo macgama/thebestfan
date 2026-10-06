@@ -2917,6 +2917,31 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
   .tbf-rail .tbf-case[aria-current]:not(:focus-visible){outline:2px dashed var(--lettre);outline-offset:-5px}
   .tbf-rail .tbf-case[data-etat=pret]::after{animation:none}
 }
+
+/* **Les pages larges** (choisi par Gaël le 6 octobre 2026 : « tuiles + pages
+   larges »). Les tuiles seules laissaient le contenu à sa largeur de
+   téléphone au milieu d'un écran de 1 920 : le vide restait, il changeait
+   seulement de place. Une page qui sait se tenir en largeur le dit par
+   `<body class="tbf-large">`, et sa colonne prend alors toute la place que
+   les rails lui laissent : 1 320 px au plus, et jamais moins que les 900
+   de la colonne commune.
+
+   **Une page qui ne s'est pas réorganisée ne le demande pas.** Élargir la
+   colonne de toutes les pages d'un coup aurait étiré des listes et des
+   textes sur 1 300 pixels : une ligne de match ou un paragraphe qui
+   traverse l'écran se lit moins bien qu'en colonne. Chaque page passe donc
+   à la largeur le jour où elle a de quoi la remplir (deux colonnes, une
+   grille qui s'allonge), et c'est à elle de le dire.
+
+   `--tbf-colonne` suit : les rails et le tiroir s'ancrent au bord de la
+   colonne réelle, et non à celui des 900 px qu'elle avait. Posé sur `body`,
+   il l'emporte pour tout ce qui est dedans sur la valeur que `nav.js` écrit
+   sur la racine. */
+@media (min-width:1180px) and (min-height:560px){
+  :root{--colonne-large:min(max(900px, calc(100vw - 296px)), 1320px)}
+  body.tbf-large{--tbf-colonne:var(--colonne-large)}
+  body.tbf-large #app{max-width:var(--colonne-large)}
+}
 .tbf-tiroir.on{translate:0 0;pointer-events:auto}
 @starting-style{
   .tbf-tiroir.on{translate:0 calc(-100% - 14px);opacity:0}
@@ -8659,6 +8684,21 @@ html[data-calme~="animations"] .tbf-vitrine-scene[data-rayons]::after{animation:
      le fond lui prenait, sans remettre de rectangle autour. */
   filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));
 }
+
+/* **Ce que le Fanzzy porte** (`TBF_STUFF.porte`) : ses deux pièces du deck,
+   accrochées à côté de lui comme des insignes, l'une sous l'autre. La page
+   les place (en absolu, dans la boîte du personnage) et règle leur taille par
+   `--piece`. Légèrement de travers, chacune dans son sens : épinglées à la
+   main, pas alignées par une grille. Elles ne prennent jamais le doigt — le
+   personnage, dessous, répond au toucher. */
+.tbf-porte{position:absolute;z-index:3;display:flex;flex-direction:column;gap:6px;
+  pointer-events:none;--piece:40px}
+.tbf-porte .tbf-piece{width:var(--piece);height:var(--piece);border-radius:calc(var(--piece) * .24);
+  rotate:-6deg;animation:tbf-porte-pose .5s cubic-bezier(.2,1.6,.4,1) both}
+.tbf-porte .tbf-piece:nth-child(2){rotate:5deg;animation-delay:.12s}
+@keyframes tbf-porte-pose{from{opacity:0;scale:.4}to{opacity:1;scale:1}}
+@media (prefers-reduced-motion:reduce){.tbf-porte .tbf-piece{animation:none}}
+html[data-calme~="animations"] .tbf-porte .tbf-piece{animation:none}
 
 /* ------------------------------------------------------------- le stade
 
