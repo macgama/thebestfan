@@ -30,6 +30,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
+import { controlerLarge } from './large-ui.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 let failures = 0;
@@ -169,6 +170,15 @@ app.get('/api/tt/match/:id', (_q, s) => s.json(match()));
 // Le joueur suit le club qui reçoit : c'est ce qui décide si le personnage
 // exulte ou encaisse.
 app.get('/api/football/follows', (_q, s) => s.json({ teams: [{ id: 11, name: 'Garudayaksa' }] }));
+/* Le pronostic : `null` répond 404, comme un serveur sans la route ; sinon
+   la réponse telle quelle. Le dernier envoi est retenu pour être contrôlé. */
+let pronoServi = null;
+let pronoRecu = null;
+app.get('/api/pronostics/match/:id', (_q, s) => (pronoServi ? s.json(pronoServi) : s.status(404).end()));
+app.post('/api/pronostics/match/:id', express.json(), (q, s) => {
+  pronoRecu = q.body;
+  s.json({ ouvert: true, prono: q.body, gains: { vainqueur: 15, exact: 50 } });
+});
 app.get('/api/fanzzy/state', (_q, s) => s.json({
   wallet: { active: AVEC_ETATS, scarves: 0, packs: 0 }, stades: {},
   collection: { [AVEC_ETATS]: 1 },
@@ -599,6 +609,133 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   await page.evaluate(() => charger());
   await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
 }
+
+/* ------------------------------------------------------- le pronostic */
+
+{
+  const GAINS = { vainqueur: 15, exact: 50 };
+  const rouvrir = async () => {
+    await page.evaluate(() => { fermerFiche(); ouvrirFiche(8801); });
+    await jusqua(async () => await page.$('#fcorps .aff') !== null);
+    await dodo(250);
+  };
+  const panneau = () => page.evaluate(() => {
+    const el = document.getElementById('prono');
+    return { vu: !!el && !el.hidden, texte: el?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+      bouton: document.getElementById('prValider')?.textContent.trim() ?? null,
+      eteint: document.getElementById('prValider')?.disabled ?? null };
+  });
+
+  await rouvrir();
+  check('sans la route du pronostic, la fiche n’en montre aucun', !(await panneau()).vu);
+
+  pronoServi = { ouvert: false, raison: 'pas_suivi', prono: null, gains: GAINS };
+  await rouvrir();
+  check('un match où l’on ne peut pas pronostiquer : rien', !(await panneau()).vu);
+
+  pronoServi = { ouvert: true, prono: null, gains: GAINS };
+  await rouvrir();
+  let p = await panneau();
+  check('avant le coup d’envoi : les deux compteurs, à 0 – 0, et ce que ça rapporte',
+    p.vu && /TON PRONOSTIC/.test(p.texte) && /Gratuit/.test(p.texte) && /15 écharpes/.test(p.texte)
+    && /exact : 50/.test(p.texte) && p.bouton === 'VALIDER MON PRONOSTIC'
+    || (console.log('        il dit :', p), false));
+  check('moins de zéro ne se peut pas', await page.evaluate(() =>
+    document.querySelector('#prono button[data-pr="away"][data-d="-1"]').disabled === true));
+  for (const [cote, d] of [['home', 1], ['home', 1], ['away', 1], ['home', 1], ['home', -1]]) {
+    await page.click(`#prono button[data-pr="${cote}"][data-d="${d}"]`);
+  }
+  check('les compteurs suivent le doigt : 2 – 1', await page.evaluate(() =>
+    [...document.querySelectorAll('#prono .pr-n')].map((n) => n.textContent).join('-')) === '2-1');
+  await page.click('#prValider');
+  await jusqua(async () => (await panneau()).bouton === 'PRONOSTIC ENREGISTRÉ');
+  p = await panneau();
+  check('valider envoie 2 – 1, et le bouton le dit',
+    pronoRecu?.home === 2 && pronoRecu?.away === 1 && p.eteint === true
+    || (console.log('        reçu :', pronoRecu, p), false));
+  await page.click('#prono button[data-pr="away"][data-d="1"]');
+  check('le changer rallume le bouton', (await panneau()).bouton === 'CHANGER MON PRONOSTIC');
+
+  pronoServi = { ouvert: false, raison: 'commence', prono: { home: 2, away: 1 }, gains: GAINS };
+  await rouvrir();
+  p = await panneau();
+  check('pendant le match : le pronostic, sans compteurs, verdict au coup de sifflet',
+    p.vu && p.bouton === null && /coup de sifflet final/.test(p.texte)
+    && (await page.evaluate(() => [...document.querySelectorAll('#prono .pr-n')]
+      .map((n) => n.textContent).join('-'))) === '2-1'
+    || (console.log('        il dit :', p.texte), false));
+
+  pronoServi = { ouvert: false, raison: 'commence', gains: GAINS,
+    prono: { home: 2, away: 1, issue: 'exact', echarpes: 50 } };
+  await rouvrir();
+  check('réglé : score exact, +50 écharpes', /SCORE EXACT · \+50 ÉCHARPES/.test((await panneau()).texte));
+  pronoServi = { ouvert: false, raison: 'commence', gains: GAINS,
+    prono: { home: 1, away: 1, issue: 'vainqueur', echarpes: 15 } };
+  await rouvrir();
+  check('réglé : bon nul, +15', /BON NUL · \+15 ÉCHARPES/.test((await panneau()).texte));
+  pronoServi = { ouvert: false, raison: 'commence', gains: GAINS,
+    prono: { home: 0, away: 3, issue: 'rate', echarpes: 0 } };
+  await rouvrir();
+  check('réglé : raté, et ça ne coûte rien', /RATÉ · ÇA NE COÛTE RIEN/.test((await panneau()).texte));
+
+  pronoServi = null;
+}
+
+/* ---------------------------------------------------------- grand écran
+
+   La page des matchs est une page large (`tbf-large`) : ses compétitions
+   se rangent en colonnes de la largeur d'un téléphone, chacune avec ses
+   matchs. Deux compétitions servies, pour qu'il y ait deux colonnes. */
+selections = true;
+await controlerLarge(page, check, { nom: 'la page des matchs', liste: '#liste>.ligue',
+  pret: () => jusqua(async () => (await page.$$('#liste>.ligue')).length === 2) });
+selections = false;
+
+/* La fiche d'un match, sur grand écran, est une page comme les autres : elle
+   se pose dans la colonne, sous la barre du haut, entre les tuiles qui
+   restent à portée ; l'affiche à gauche, le fil à droite. La flèche de la
+   barre la referme, sans quitter les matchs (Gaël, 6 octobre 2026 : une
+   fenêtre de téléphone au milieu d'un écran noir). */
+{
+  await page.setViewport({ width: 1366, height: 682 });
+  await page.reload({ waitUntil: 'networkidle0' });
+  await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
+  await page.evaluate((id) => ouvrirFiche(id), MATCH);
+  await jusqua(async () => await page.$('#souspage') !== null);
+  await dodo(300);
+  if (process.env.TBF_CAPTURES) {
+    await page.screenshot({ path: path.join(process.env.TBF_CAPTURES, 'fiche-match-large.png') });
+  }
+  const g = await page.evaluate(() => {
+    const b = (s) => document.querySelector(s)?.getBoundingClientRect();
+    const [fiche, aff, sous, haut] = [b('#fiche'), b('#fcorps .aff'), b('#souspage'), b('#app>.tbf-haut')];
+    const tuiles = [...document.querySelectorAll('.tbf-rails .tbf-case')].map((a) => {
+      const r = a.getBoundingClientRect();
+      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.tbf-case') === a;
+    });
+    return { fiche: { l: fiche.left, r: fiche.right, t: fiche.top }, haut: haut?.bottom,
+      aff: { r: aff.right, t: aff.top }, sous: { l: sous.left, t: sous.top }, tuiles,
+      fermer: getComputedStyle(document.getElementById('ferme')).display };
+  });
+  check('à 1 366 px, la fiche du match se pose dans la colonne, sous la barre',
+    g.fiche.l > 120 && g.fiche.r < 1246 && Math.abs(g.fiche.t - g.haut) < 2
+    || (console.log('        ', JSON.stringify(g)), false));
+  check('les dix tuiles restent visibles et cliquables autour d’elle',
+    g.tuiles.length === 10 && g.tuiles.every(Boolean) || (console.log('        ', g.tuiles), false));
+  check('l’affiche à gauche, le fil à droite, à la même hauteur',
+    g.sous.l > g.aff.r && Math.abs(g.sous.t - g.aff.t) < 40 || (console.log('        ', JSON.stringify(g)), false));
+  check('sa propre flèche s’efface devant celle de la barre', g.fermer === 'none');
+  await page.click('#app>.tbf-haut .tbf-retour');
+  await dodo(300);
+  check('la flèche de la barre referme la fiche sans quitter les matchs',
+    await page.evaluate(() => !document.getElementById('fiche').classList.contains('on')
+      && location.pathname === '/matchs'
+      && getComputedStyle(document.getElementById('liste')).visibility === 'visible'));
+  await page.setViewport({ width: 400, height: 880 });
+}
+
+await page.reload({ waitUntil: 'networkidle0' });
+await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
 
 if (process.env.CAPTURE) {
   const { tmpdir } = await import('node:os');

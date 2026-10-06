@@ -165,7 +165,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 /* `saisons` et ce que pose `sql/quotidien.sql` sont vidés aussi : un bonus
    de saison se juge contre les saisons lancées, et une saison laissée là par
    une autre suite changerait ce que ce fichier éprouve. */
-await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops,
   user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
   souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,

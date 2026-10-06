@@ -38,6 +38,7 @@ import { createNiveau } from './src/server/niveau/index.js';
 import { createAbonnement } from './src/server/abonnement/index.js';
 import { createContenus } from './src/server/contenus/index.js';
 import { createAide } from './src/server/aide/index.js';
+import { createPronostics } from './src/server/pronostics/index.js';
 import { createQuotidien, sonderJourDeJeu, phraseJourDeJeu }
   from './src/server/quotidien/index.js';
 import { createRepetition } from './src/server/repetition/index.js';
@@ -563,6 +564,13 @@ if (process.env.DATABASE_URL) {
     app.use('/api/quotidien', quotidien.router);
     console.log('quotidien actif');
 
+    /* Le pronostic : gratuit, sans mise, réglé par le grand livre. Il est
+       monté ici, sans attendre le football : ses routes lisent ce que le
+       relevé a rangé en base, et le règlement au coup de sifflet final lui
+       est branché plus bas (`onFinished`). */
+    const pronostics = createPronostics({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/pronostics', pronostics.router);
+
     /* **La sonde du jour de jeu.** Le jour change au minuit de la base, celui
        des quotas gratuits : si la base n'est pas à l'heure de Zurich, missions
        et quotas basculent ensemble à une ou deux heures du matin. Ce n'est pas
@@ -634,6 +642,10 @@ if (process.env.DATABASE_URL) {
         onFinished: async (f) => {
           try { await teletext?.invalider(f.leagueId); }
           catch (e) { console.error('[teletext] invalidation', e.message); }
+          // Les pronostics du match se règlent au coup de sifflet. Manqué
+          // (un redémarrage), ils le seront à la première lecture.
+          try { await pronostics.regler(f.id); }
+          catch (e) { console.error('[prono] fin de match', e.message); }
         },
 
         /* ---------------------------------------------- le fil du match

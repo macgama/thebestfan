@@ -97,7 +97,7 @@ if (!REMOTE) {
   /* Le grand livre et les tables du quotidien n'ont pas de clé étrangère
      vers `users` (`ETAT.md`, § 6) : on les vide quand même, pour qu'un
      versement d'une suite d'avant ne se compte pas ici. */
-  await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites,
+  await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites,
                  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, amities,
   user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,

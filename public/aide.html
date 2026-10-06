@@ -277,9 +277,17 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+
+/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
+   règle commune des pages larges : les missions se rangent en colonnes de la
+   largeur d'un téléphone, le bonus du jour et la règle gardent toute la
+   largeur. */
+@media (min-width:1180px) and (min-height:560px){
+  .tbf-missions{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:10px 14px;align-items:start}
+}
 </style>
 </head>
-<body>
+<body class="tbf-large">
 <main id="app">
   <p class="tbf-sous">Ce qu’il y a à faire, et ce que ça rapporte</p>
 
