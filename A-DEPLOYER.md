@@ -1,5 +1,26 @@
 # À déposer sur Infomaniak
 
+**L'équipement porté** (branche `claude/equipement-porte-3ml5d5`, 6 octobre
+2026, forme choisie par Gaël sur maquette : « à côté de lui »). Il se dépose
+avec ce qui est en dessous, ou seul.
+
+- Les deux pièces que le deck met au Fanzzy sont accrochées à côté de lui,
+  chacune dans le cadre de sa rareté : à l'accueil (`public/index.html`), au
+  Virage (`public/virage.html`) et dans l'arène du duel, des deux côtés
+  (`public/duel-nvn.html`). Le dessin vient de `public/stuff-art.js`
+  (`TBF_STUFF.porte`), le style de `public/ui.css` (`.tbf-porte`).
+- Serveur : le portefeuille sert `stuffPorte` (`src/server/fanzzy/index.js`),
+  la vue du duel `equipes[].sac` (`src/server/nvn/engine.js`), et les lignes
+  d'équipement de « ce que tu portes » leur identifiant et leur rareté
+  (`src/shared/apports.js`). Contrôlé par `npm run deck:smoke`,
+  `nvn:smoke`, `accueil:ui`, `nvn:ui` et `virage:ui` (seize contrôles neufs).
+
+**Aucun schéma ni réglage. Un redémarrage** pour le serveur, hors d'un match
+en direct ; sans lui, les pages n'ont aucune pièce à accrocher et restent
+comme avant.
+
+---
+
 **Les tuiles de l'accueil sur grand écran** (branche
 `claude/ecran-large-pkbkwj`, 6 octobre 2026). Elles se déposent avec ce qui
 est en dessous, ou seules.
