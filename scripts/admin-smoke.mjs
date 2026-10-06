@@ -1134,6 +1134,136 @@ console.log('\n— la saison datée —');
   await chargerSeries(pool);
 }
 
+/* ------------------------------------------ recaler les seuils de division
+
+   L'annexe A d'`ECONOMIE.md`, servie par l'administration : la règle pure
+   d'abord, sur des nombres posés à la main, puis la lecture de la base. */
+{
+  const SH = await import('../src/shared/saison.js');
+  const { poserReglages, reglagesVivants } = await import('../src/shared/reglages.js');
+  const dire = (x) => JSON.stringify(x);
+  const montre = (l, x) => (console.log(`        ${l} :`, dire(x)?.slice(0, 260)), false);
+
+  /* Cent joueurs, de 100 à 10 000, en vingt jours sur cent vingt. */
+  const cent = Array.from({ length: 100 }, (_, i) => ({ ferveur: (i + 1) * 100, jours: 10 }));
+  let p = SH.proposerSeuils({ joueurs: cent, joursEcoules: 20, joursTotaux: 120 });
+  check('les rangs 30, 60, 85 et 96 % sont lus sur la liste rangée',
+    dire(p.lus) === dire({ habitue: 3000, fervent: 6000, ultra: 8500, capo: 9600 }) || montre('lus', p));
+  check('projetés sur la saison (× 6) et arrondis à deux chiffres',
+    dire(p.seuils) === dire({ 'rang.habitue': 18000, 'rang.fervent': 36000,
+      'rang.ultra': 51000, 'rang.capo': 58000 }) || montre('seuils', p.seuils));
+  check('assez de joueurs et de jours : aucun avertissement, Capo sous le plafond',
+    (p.avertissements.length === 0 && p.plafond === 100000) || montre('rendu', p));
+
+  /* Les plus appliqués ne font que 300 par jour : rien au-delà de 36 000. */
+  const bas = cent.map((j) => ({ ...j, jours: 30 }));
+  bas[99] = { ferveur: 300 * 15, jours: 15 };
+  p = SH.proposerSeuils({ joueurs: bas, joursEcoules: 20, joursTotaux: 120 });
+  check('Capo ne dépasse jamais ce qu’un gratuit assidu fait dans la saison',
+    (p.seuils['rang.capo'] <= p.plafond && p.avertissements.includes('capo_borne'))
+    || montre('rendu', p));
+  check('ni aucune autre division, et les seuils restent rangés',
+    (Object.values(p.seuils).every((x) => x <= p.plafond)
+      && p.seuils['rang.capo'] >= p.seuils['rang.ultra']) || montre('seuils', p.seuils));
+
+  p = SH.proposerSeuils({ joueurs: cent.slice(0, 5), joursEcoules: 3, joursTotaux: 120 });
+  check('cinq joueurs en trois jours : une proposition, dite fragile deux fois',
+    (p.seuils && p.avertissements.includes('peu_de_joueurs')
+      && p.avertissements.includes('trop_tot')) || montre('rendu', p));
+  p = SH.proposerSeuils({ joueurs: cent, joursEcoules: 20, joursTotaux: null });
+  check('sans dernier jour saisi, rien ne se projette',
+    (p.seuils === null && p.avertissements.includes('sans_fin')) || montre('rendu', p));
+  p = SH.proposerSeuils({ joueurs: [{ ferveur: 0, jours: 1 }], joursEcoules: 20, joursTotaux: 120 });
+  check('les joueurs à zéro ne comptent pas',
+    (p.seuils === null && p.joueurs === 0 && p.avertissements.includes('aucun_joueur'))
+    || montre('rendu', p));
+  p = SH.proposerSeuils({ joueurs: cent, joursEcoules: 0.2, joursTotaux: 120 });
+  check('le premier soir se projette comme un jour, pas sur six cents fois sa durée',
+    p.facteur === 120 || montre('facteur', p.facteur));
+
+  /* La base. `duel_results` n'est pas posée par cette suite jusqu'ici. */
+  const brut = await mysql.createConnection({ uri: DB, multipleStatements: true });
+  for (const f of ['duel.sql', 'historique.sql']) {
+    await brut.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
+  }
+  await brut.end();
+  const avant = reglagesVivants();
+  await pool.query(`UPDATE saisons SET lancee_a = NULL WHERE numero <> 1`);
+  await pool.query(`UPDATE saisons SET lancee_a = CURDATE() - INTERVAL 20 DAY,
+                      fin_le = NULL WHERE numero = 1`);
+
+  r = await call('/api/admin/divisions/recalage');
+  check('sans dernier jour de jeu, la lecture le dit et ne propose rien',
+    (r.status === 200 && r.json.seuils === null && r.json.avertissements.includes('sans_fin')
+      && r.json.saison?.numero === 1 && r.json.joueurs === null) || montre('rendu', r.json));
+  r = await call('/api/admin/divisions/recalage', { body: {} });
+  check('et poser est refusé, avec sa raison',
+    (r.status === 409 && r.json.error === 'admin.error.recalage_impossible') || montre('rendu', r.json));
+
+  await pool.query(`UPDATE saisons SET fin_le = CURDATE() + INTERVAL 99 DAY WHERE numero = 1`);
+  /* Quarante joueurs sans abonnement, de 100 à 4 000 au Virage compté. */
+  const R = (i) => `rrrr0000-0000-0000-0000-${String(i).padStart(12, '0')}`;
+  for (let i = 0; i < 42; i++) {
+    await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
+      [R(i), `r${i}@ex.fr`, `R${i}`]);
+  }
+  for (let i = 0; i < 40; i++) {
+    await pool.query(`INSERT INTO virage_presence (user_id, fixture_id, side, ferveur, classe,
+        last_push_at, joined_at) VALUES (?, ?, 0, ?, 1, NOW(3) - INTERVAL ? DAY, NOW(3) - INTERVAL ? DAY)`,
+      [R(i), 7000 + i, (i + 1) * 100, i % 5, i % 5]);
+  }
+  /* Le quarantième a aussi trois duels classés, trois autres jours. */
+  for (const j of [6, 7, 8]) {
+    await pool.query(`INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome, ferveur,
+        mode, ended_at) VALUES (UUID(), ?, 'x', 'win', 100, 'classe', NOW(3) - INTERVAL ? DAY)`, [R(39), j]);
+  }
+  /* Ce qui ne compte pas : l'entraînement, le Virage hors classement, la
+     ferveur d'avant la saison, et l'abonné (le 41ᵉ). Un abonnement échu ne
+     retire personne : le premier joueur en a eu un. */
+  await pool.query(`INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome, ferveur, mode)
+      VALUES (UUID(), ?, 'x', 'win', 1000000, 'entrainement')`, [R(0)]);
+  await pool.query(`INSERT INTO virage_presence (user_id, fixture_id, side, ferveur, classe)
+      VALUES (?, 7100, 0, 1000000, 0)`, [R(1)]);
+  await pool.query(`INSERT INTO virage_presence (user_id, fixture_id, side, ferveur, classe,
+      last_push_at, joined_at) VALUES (?, 7101, 0, 1000000, 1, CURDATE() - INTERVAL 30 DAY,
+      CURDATE() - INTERVAL 30 DAY)`, [R(2)]);
+  await pool.query(`INSERT INTO virage_presence (user_id, fixture_id, side, ferveur, classe)
+      VALUES (?, 7102, 0, 9000000, 1)`, [R(40)]);
+  await pool.query(`INSERT INTO abonnements (user_id, formule, fin) VALUES (?, 'offert', NULL),
+      (?, 'mensuel', NOW(3) - INTERVAL 1 DAY)`, [R(40), R(0)]);
+
+  r = await call('/api/admin/divisions/recalage');
+  const g = r.json;
+  check('quarante joueurs sans abonnement : l’abonné, l’entraînement et le hors-saison restent dehors',
+    (g.joueurs === 40 && g.lus?.capo === 3900 && g.lus?.habitue === 1200) || montre('rendu', g));
+  check('la saison compte ses cent vingt jours, dont un peu plus de vingt écoulés',
+    (g.joursTotaux === 120 && g.joursEcoules > 20 && g.joursEcoules < 21) || montre('jours', g));
+  check('le plafond suit le seul gratuit qui a joué trois jours (1 075 par jour)',
+    g.plafond === 120000 || montre('plafond', g.plafond));
+  check('quatre seuils proposés et rangés ; 40 joueurs en 20 jours : rien de fragile',
+    (g.seuils && g.seuils['rang.habitue'] < g.seuils['rang.fervent']
+      && g.seuils['rang.fervent'] < g.seuils['rang.ultra']
+      && g.seuils['rang.ultra'] < g.seuils['rang.capo'] && g.avertissements.length === 0)
+    || montre('rendu', g));
+  check('les seuils actuels sont rendus à côté',
+    g.actuels?.['rang.capo'] === SH.seuilsDivisions()[4].seuil || montre('actuels', g.actuels));
+
+  r = await call('/api/admin/divisions/recalage', { body: {} });
+  const v = reglagesVivants();
+  check('poser écrit les quatre réglages proposés',
+    (r.status === 200 && ['rang.habitue', 'rang.fervent', 'rang.ultra', 'rang.capo']
+      .every((cle) => v[cle] === g.seuils[cle])) || montre('posé', [r.json, v]));
+  r = await call('/api/admin/journal?limite=1000');
+  check('et chacun au journal, sous le nom de l’administrateur',
+    ['rang.habitue', 'rang.fervent', 'rang.ultra', 'rang.capo'].every((cle) =>
+      r.json.journal.some((l) => l.action === 'reglage.modifie' && l.cible === cle))
+    || montre('journal', r.json.journal.map((l) => [l.action, l.cible])));
+
+  poserReglages(avant);
+  await pool.query(`DELETE FROM reglages WHERE cle LIKE 'rang.%'`);
+  await pool.query(`UPDATE saisons SET fin_le = NULL WHERE numero = 1`);
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end();
 
