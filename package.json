@@ -105,6 +105,7 @@
     "salles:test": "node scripts/salles-smoke.mjs",
     "releve:test": "node scripts/releve-smoke.mjs",
     "boutique:smoke": "node scripts/boutique-smoke.mjs",
+    "boutique:ui": "node scripts/boutique-ui-smoke.mjs",
     "stripe:diag": "node --env-file-if-exists=.env scripts/stripe-diag.mjs",
     "boosters:ui": "node scripts/boosters-ui-smoke.mjs",
     "repetition:smoke": "node scripts/repetition-smoke.mjs",

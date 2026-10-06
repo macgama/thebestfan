@@ -21,6 +21,21 @@ le pronostic ne paraît pas, et le démarrage nomme le fichier.
 
 ---
 
+**Les tenues s'achètent dans la boutique** (branche `claude/boutique-tenues-p8r3wa`,
+6 octobre 2026, demandé par Gaël). Serveur + page, **sans schéma** ;
+**redémarrage**, hors d'un match. Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/boutique.html` : dans l'onglet TENUES, les Fanzzy du joueur qui ont
+  la tenue en dessin, un par âge atteint ; on en touche un, ACHETER demande
+  confirmation et l'achat se fait sur place (avant, le bouton menait au
+  classeur, où rien ne s'achetait). LA PORTER la lui met tout de suite.
+- `src/server/boutique/index.js` (l'étal dit les tenues déjà posées) et
+  `src/server/fanzzy/index.js` (une tenue s'achète pour tout âge atteint,
+  plus seulement le dernier). Contrôlé par `npm run boutique:smoke` et
+  `npm run boutique:ui` (suite neuve).
+
+---
+
 **Toutes les pages en largeur sur PC** (branche `claude/ecran-large-pkbkwj`,
 6 octobre 2026, demandé par Gaël). Des pages seules : ni schéma ni
 redémarrage. Il se dépose avec ce qui est en dessous, ou seul.
