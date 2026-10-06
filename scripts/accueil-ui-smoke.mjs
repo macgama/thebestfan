@@ -3032,7 +3032,26 @@ const couleurs = {};
      restée ouverte. On touche le « ! » comme un joueur, d'un vrai clic, après
      avoir prouvé qu'il est bien sous le doigt : un clic qui tomberait sur la
      bulle partirait vers les boosters. */
-  const replie = await jusqua(() => bulleRepliee(page), REPLI_BULLE + 2000);
+  /* **Le bonjour passe d'abord.** À l'arrivée, il attend que la phrase du hub
+     se replie pour dire bonjour (`saluer`, qui réessaie toutes les sept
+     dixièmes pendant douze secondes) : selon l'instant où la bulle s'est
+     ouverte, le « ! » paraît puis s'efface deux secondes et demie sous
+     « Salut, toi ! ». On attend donc un repli qui dure, sans parole, plus
+     longtemps que l'intervalle du bonjour : sans quoi le clic visait un
+     « ! » caché, et la suite rougissait au gré de l'horloge. */
+  const replieDurable = async () => {
+    const fini = Date.now() + REPLI_BULLE + 2000 + 3500;
+    while (Date.now() < fini) {
+      const calme = () => page.evaluate(() => !document.getElementById('bulle').dataset.parole);
+      if (await bulleRepliee(page) && await calme()) {
+        await new Promise((r) => setTimeout(r, 900));
+        if (await bulleRepliee(page) && await calme()) return true;
+      }
+      await new Promise((r) => setTimeout(r, 80));
+    }
+    return false;
+  };
+  const replie = await replieDurable();
   b = await lireBulle(page);
   check('elle se replie en « ! »', replie && !b.vue && b.pli && b.pliDit === '!'
     || (console.log('        bulle :', JSON.stringify(b)), false));
