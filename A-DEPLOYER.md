@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**Toutes les pages en largeur sur PC** (branche `claude/ecran-large-pkbkwj`,
+6 octobre 2026, demandé par Gaël). Des pages seules : ni schéma ni
+redémarrage. Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/ui.css` et quinze pages (`aide`, `amis`, `kop`, `classement`,
+  `carnet`, `collection`, `equipes`, `teletext`, `aujourdhui`, `abonnement`,
+  `compte`, `deck`, `boosters`, `fanzzy`, `fanzzy-fiche`) : au-delà de
+  1 180 px, chacune prend la colonne large entre les tuiles, ses listes en
+  colonnes. Sur téléphone et tablette, rien ne change. Contrôlé par
+  `npm run large:ui` (neuf pages) et par les suites des six autres.
+- Sur grand écran, la fiche d'un match (`/matchs`) devient une page entre
+  les tuiles : l'affiche à gauche, le fil à droite, la flèche de la barre
+  la referme. Partout, une coupe sans classement (`/teletext?ligue=…`)
+  s'ouvre sur ses résultats, et non plus sur « Cette donnée n'existe pas ».
+  Contrôlé par `npm run matchs:ui` et `npm run competitions:ui`.
+
+---
+
 **Le Fanzzy parle** (branche `claude/dialogues-fanzzy-vgfrke`, 6 octobre
 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
 **Pages seules** (`public/index.html`, `public/fanzzy-repliques.js`) : ni

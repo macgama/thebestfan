@@ -36,6 +36,7 @@ import { createAide } from '../src/server/aide/index.js';
 import { ETAPES } from '../src/shared/aide.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import { controlerLarge } from './large-ui.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -154,6 +155,11 @@ const lire = () => page.evaluate(() => ({
 await page.goto(`${base}/aide`, { waitUntil: 'networkidle0' });
 check('les six étapes s’affichent', await jusqua(async () =>
   page.evaluate(() => document.querySelectorAll('.pas').length === 6)));
+
+/* La page des missions est une page large (`tbf-large`) : les étapes se
+   rangent en colonnes de la largeur d'un téléphone. */
+await controlerLarge(page, check, { nom: 'l’écran d’aide', liste: '.tbf-missions>.pas',
+  pret: () => jusqua(async () => page.evaluate(() => document.querySelectorAll('.pas').length === 6)) });
 
 const un = await lire();
 check('elles sont dans l’ordre du parcours',
