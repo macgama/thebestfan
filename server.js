@@ -856,6 +856,10 @@ app.use('/img', express.static(path.join(__dirname, 'public/img'),
   { maxAge: '365d', immutable: true, setHeaders: typer }));
 app.use('/video', express.static(path.join(__dirname, 'public/video'),
   { maxAge: '365d', immutable: true }));
+/* Les deux sons enregistrés de la tribune (la rumeur, la clameur du but) :
+   leur nom porte leur empreinte, ils ne changent donc jamais d'adresse. */
+app.use('/son', express.static(path.join(__dirname, 'public/son'),
+  { maxAge: '365d', immutable: true }));
 
 /* ============================================ le code, et sa fraîcheur
 

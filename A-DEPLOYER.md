@@ -1,5 +1,25 @@
 # À déposer sur Infomaniak
 
+**La tribune enregistrée** (branche `claude/sons-fid6tr`, 6 octobre 2026,
+les sons gardés par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+**Serveur**, sans schéma : redémarrer, hors d'un match en direct.
+
+- `public/son/` (neuf, quatre fichiers, 184 Ko) : la rumeur de stade et la
+  clameur du but, prises dans Artlist, en Opus avec un repli pour Safari.
+- `public/son.js` : au Virage et au duel, la rumeur de la tribune vient de
+  l'enregistrement dès qu'il est arrivé (la synthèse joue en attendant, puis
+  passe la main en fondu), et le but sonne la vraie clameur au lieu de
+  l'ovation synthétisée. Rien n'est téléchargé sous le mode calme ni sur les
+  autres pages ; un fichier illisible laisse la synthèse jouer. Les chants
+  (tambours et claps) ne changent pas.
+- `server.js` : `/son` servi un an, comme `/video` (le redémarrage sert à
+  ça ; sans lui, les fichiers partent quand même, avec un cache d'une heure).
+- Contrôlé par `npm run son:smoke` (17 contrôles neufs) et le banc
+  (`node scripts/son-banc.mjs`) : la rumeur enregistrée tient les mêmes
+  fenêtres que la synthèse à ses trois niveaux, la clameur celle des moments.
+
+---
+
 **Cent pièces d'équipement** (branche `claude/cent-objets-lj2o13`, 6 octobre
 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
 **Serveur**, sans schéma : redémarrer, hors d'un match en direct.

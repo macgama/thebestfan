@@ -74,8 +74,11 @@ temporaire de la session ; ce qui doit durer est ici.*
    Gaël le même jour (`HISTORIQUE.md`, 4 quadragies novies) : les deux
    Fanzzy en tribune se tiennent dans l'arène et vivent poussées, buts et
    coups d'en face.
-3. **Les sons Artlist** (la rumeur, le but, les tambours) : Gaël doit les
-   écouter et dire lesquels on garde (`art/son/_src/artlist/A-ECOUTER.md`).
+3. **Les sons Artlist** (la rumeur, le but, les tambours) : **fait** le
+   6 octobre, après l'accord de Gaël. La rumeur et la clameur du but jouent
+   depuis `public/son/` (`son.js`, « la tribune enregistrée ») ; la synthèse
+   reste en repli. Les tambours restent synthétisés : la frappe enregistrée
+   mêle tambour et claps, que trois chants sur cinq séparent.
 4. **Les vieux buts** : fait, dans `main`. Le relevé redemande les
    événements à chaque tour tant que sa liste compte moins de buts que le
    tableau (au plus neuf tours) ; la priorité au GOAL et la lecture du retour
