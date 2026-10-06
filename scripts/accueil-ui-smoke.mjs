@@ -2544,6 +2544,88 @@ if (process.env.CAPTURE) {
       !(await visages(page)).includes('joie')
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
     await page.close();
+
+    /* ---------------------------------------------- il cligne des yeux
+
+       Le repos de RP1 a des paupières (`scripts/fanzzy-cligne.mjs`) : un
+       troisième calque, posé sur lui le temps d'un battement, toutes les
+       trois à sept secondes. On note chaque battement avec le visage qu'il
+       couvrait : des paupières sur une joie tomberaient à côté de ses yeux. */
+    const paupieresDe = manifeste[VIF]?.evolutions?.e1?.skins?.base?.cligne === true;
+    const battements = (calme) => ({ fn: (c) => {
+      if (c) { try { localStorage.setItem('tbf-calme', 'animations'); } catch { /* rien */ } }
+      window.__battements = [];
+      addEventListener('DOMContentLoaded', () => {
+        const p = document.getElementById('paupieres');
+        if (!p) return;
+        new MutationObserver(() => {
+          const on = p.classList.contains('on');
+          if ((window.__battements.at(-1)?.on ?? false) === on) return;
+          window.__battements.push({ t: performance.now(), on,
+            visage: document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '' });
+        }).observe(p, { attributes: true, attributeFilter: ['class'] });
+      });
+    }, args: [calme] });
+    const lesBattements = (pg) => pg.evaluate(() => window.__battements ?? []);
+
+    if (!paupieresDe) {
+      console.log(`  --   ${VIF} n'a pas de paupières dans index.json : clignement non éprouvé`);
+    } else {
+      /* Au premier plan : un onglet caché ne cligne pas — personne ne le
+         regarde —, et des pages ouvertes plus haut sont encore là. */
+      page = await ouvrir(400, 880, battements(false));
+      await page.bringToFront();
+      await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000);
+      check('au repos, ses paupières sont prêtes avant le premier battement',
+        await jusqua(() => page.evaluate(() => /\/e1\/base\/cligne\.webp\?v=\d+$/
+          .test(document.getElementById('paupieres').getAttribute('src') ?? '')
+          && document.getElementById('paupieres').complete), 4000));
+      const posees = await page.evaluate(() => {
+        const boite = (n) => { const b = n.getBoundingClientRect();
+          return [b.x, b.y, b.width, b.height].map((v) => v.toFixed(1)).join(','); };
+        const p = document.getElementById('paupieres');
+        const v = document.querySelector('#pile .pose.on');
+        return { boite: boite(p), repos: boite(v),
+          dessin: `${p.naturalWidth}x${p.naturalHeight}`, reposDessin: `${v.naturalWidth}x${v.naturalHeight}`,
+          filtre: getComputedStyle(p).filter, fondu: getComputedStyle(p).transitionDuration };
+      });
+      check('posées exactement sur lui : même boîte, dessin de même taille',
+        posees.boite === posees.repos && posees.dessin === posees.reposDessin
+        || (console.log('        ', JSON.stringify(posees)), false));
+      check('sans lueur ni fondu : le contour reste celui du repos, le battement est net',
+        posees.filtre === 'none' && /^0s/.test(posees.fondu));
+      check('il cligne des yeux de lui-même',
+        await jusqua(async () => (await lesBattements(page)).some((b) => !b.on), 8500)
+        || (console.log('        battements :', JSON.stringify(await lesBattements(page)),
+          JSON.stringify(await page.evaluate(() => ({ cache: document.hidden,
+            arme: battement !== null, calme: sansMouvement(), repos: paupieresDe,
+            visible: calques[devant].getAttribute('src') })))), false));
+      const b = await lesBattements(page);
+      const duree = b.length >= 2 ? b[1].t - b[0].t : -1;
+      check(`le temps d’un battement (${Math.round(duree)} ms)`, duree >= 80 && duree <= 400);
+      check('sur son repos et sur rien d’autre',
+        b.filter((x) => x.on).every((x) => /\/neutre\.(?:webp|png)/.test(x.visage)));
+
+      /* Un moment qui arrive les yeux fermés les rouvre au même instant :
+         l'échange des calques et la levée des paupières se font ensemble. */
+      await page.evaluate(() => document.getElementById('paupieres').classList.add('on'));
+      await page.evaluate(() => TBF.pose('but', 2500));
+      check('un moment rouvre ses yeux à l’instant où il change de visage',
+        await page.evaluate(() => !document.getElementById('paupieres').classList.contains('on')));
+      await page.close();
+
+      /* Au calme, le personnage ne bouge pas : ni souffle, ni battement. */
+      page = await ouvrir(400, 880, battements(true));
+      await page.bringToFront();
+      await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000);
+      await jusqua(() => page.evaluate(() => Boolean(document.getElementById('paupieres')
+        .getAttribute('src'))), 4000);
+      await pause(7500);
+      check('au calme, il ne cligne pas',
+        (await lesBattements(page)).length === 0
+        || (console.log('        battements :', JSON.stringify(await lesBattements(page))), false));
+      await page.close();
+    }
   }
 
   /* Le supporter générique n'a pas de colère : il saute à chaque toucher. */
@@ -2556,6 +2638,9 @@ if (process.env.CAPTURE) {
   await pause(200);
   check('le supporter, sans colère dessinée, saute à chacun des six touchers',
     await sauts(page) === 6 || (console.log('        sauts :', await sauts(page)), false));
+  check('ni de paupières à poser : il ne cligne pas',
+    await page.evaluate(() => !document.getElementById('paupieres').getAttribute('src')
+      && !document.getElementById('paupieres').classList.contains('on')));
   await page.close();
   await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [equipeAvant ?? null, U]);
 }

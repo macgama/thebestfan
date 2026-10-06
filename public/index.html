@@ -706,6 +706,15 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   transition:opacity .24s ease;
   filter:drop-shadow(0 0 22px rgba(245,195,59,.26)) drop-shadow(0 14px 26px rgba(0,0,0,.55))}
 .pose.on{opacity:1}
+/* Les paupières tombent sur les yeux du repos au pixel près parce qu'elles en
+   ont tout : la même boîte, le même `object-fit`, une image de la même
+   taille. Ni lueur ni ombre — elles ne couvrent que les yeux, et le contour
+   reste celui du repos. Pas de fondu non plus : un clignement est un
+   battement, et fondu sur cent trente millisecondes, il se lit comme un
+   regard qui se trouble. */
+.cligne{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  opacity:0;pointer-events:none}
+.cligne.on{opacity:1}
 /* Le saut s'étire depuis les pieds (voir `saut`) : étiré depuis le milieu du
    personnage, il abaissait ses pieds de 4 % de sa hauteur au moment même où
    il décollait de vingt-six pixels. Passé 650 pixels de personnage,
@@ -2195,6 +2204,10 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
                 <img class="pose on" id="poseA" alt="Ton supporter dans la tribune"
                   width="448" height="900">
                 <img class="pose" id="poseB" alt="" aria-hidden="true"
+                  width="448" height="900">
+                <!-- Les paupières : par-dessus le repos, le temps d'un
+                     clignement, quand ce repos en a (voir `cligner`). -->
+                <img class="cligne" id="paupieres" alt="" aria-hidden="true"
                   width="448" height="900">
               </div>
             </div>
@@ -3795,6 +3808,9 @@ async function pose(nom, tenir, force) {
   derriere.classList.add('on');
   calques[devant].classList.remove('on');
   devant = 1 - devant;
+  /* Dans la même tâche que l'échange : des paupières restées fermées une
+     image de plus tomberaient sur un autre visage. */
+  cligner();
 
   rejouer('change');
 
@@ -3815,6 +3831,92 @@ async function pose(nom, tenir, force) {
 function rendreLaMain(tenir) {
   if (!tenir) return;
   retour = setTimeout(() => { retour = null; pose(fond); }, tenir);
+}
+
+/* --------------------------------------------------- le clignement
+
+   Un personnage qui ne cligne jamais des yeux est une affiche. Celui dont le
+   repos a des paupières — `cligne` dans le manifeste, découpées par
+   `scripts/fanzzy-cligne.mjs` — les ferme de temps en temps : un troisième
+   calque posé sur le repos, montré cent trente millisecondes.
+
+   **Sur le repos seulement.** Les paupières sont découpées dans cette
+   image-là et tomberaient à côté des yeux de toute autre : une joie, une
+   poussée, le supporter générique ne clignent pas, ils n'ont rien à poser.
+   Et **pas sous le calme** : celui qui a demandé un écran immobile, ou dont
+   l'appareil le demande, garde un personnage qui ne bouge pas, comme sa
+   respiration (`souffle`) s'arrête pour lui. */
+const paupieres = $('paupieres');
+/* Une seule minuterie à la fois : le battement en cours, ou le prochain.
+   `armement` écarte un décodage dépassé — une autre pose a pu passer devant
+   pendant qu'il attendait. */
+let battement = null;
+let armement = 0;
+/* Le repos que les paupières chargées accompagnent, et leur adresse. */
+let paupieresDe = null;
+let paupieresChargees = null;
+
+const sansMouvement = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+  || window.FX?.calme?.('animations') === true;
+
+/**
+ * (Ré)arme le clignement pour l'image qui vient de passer devant.
+ *
+ * Les yeux se rouvrent d'abord, dans la même tâche que l'échange des
+ * calques. Puis, si ce repos a des paupières, elles sont décodées **avant**
+ * le premier battement : chargées au moment de fermer les yeux, elles
+ * arriveraient quand ils seraient déjà rouverts.
+ */
+async function cligner() {
+  clearTimeout(battement);
+  battement = null;
+  paupieres.classList.remove('on');
+  const tour = ++armement;
+  const repos = calques[devant].getAttribute('src');
+  const src = window.TBF_ETATS.paupieres?.(repos) ?? null;
+  paupieresDe = null;
+  if (!src) return;
+  if (paupieresChargees !== src) {
+    paupieres.src = src;
+    try { await paupieres.decode(); }
+    catch {
+      // Le même repli que le repos : le PNG, qui existe toujours à côté.
+      const repli = window.TBF_ETATS.secours(src);
+      if (!repli || tour !== armement) return;
+      try { paupieres.src = repli; await paupieres.decode(); }
+      catch { return; }
+    }
+    if (tour !== armement) return;
+    paupieresChargees = src;
+  }
+  paupieresDe = repos;
+  attendreUnBattement();
+}
+
+/* Toutes les trois à sept secondes : le rythme de quelqu'un qui regarde, un
+   peu plus lent que celui de quelqu'un qui parle. */
+function attendreUnBattement() {
+  battement = setTimeout(battre, 3000 + Math.random() * 4000);
+}
+
+function battre() {
+  battement = null;
+  if (!paupieresDe || calques[devant].getAttribute('src') !== paupieresDe) return;
+  /* Le calme se relit à chaque battement, pas à l'armement : il se règle
+     dans le tiroir, page ouverte, et vaut tout de suite. Un onglet caché ne
+     cligne pas non plus — personne ne le regarde. */
+  if (document.hidden || sansMouvement()) { attendreUnBattement(); return; }
+  // Une fois sur cinq, deux battements de suite : c'est ce qui fait vrai.
+  const fois = Math.random() < 0.2 ? 2 : 1;
+  const fermer = (reste) => {
+    paupieres.classList.add('on');
+    battement = setTimeout(() => {
+      paupieres.classList.remove('on');
+      if (reste > 1) battement = setTimeout(() => fermer(reste - 1), 140);
+      else attendreUnBattement();
+    }, reste > 1 ? 110 : 130);
+  };
+  fermer(fois);
 }
 
 /**
@@ -5783,6 +5885,9 @@ function feterNiveau(niveau) {
            image : invisible, mais c'est un travail pour rien à la seconde où
            la page a le plus à faire. */
         if (!memeQuAvant) await pose(aPoser, 0, true);
+        /* Le souvenir s'est posé avant le manifeste, donc sans savoir que ce
+           repos a des paupières : on le lui apprend maintenant. */
+        else cligner();
         const def = (dex.dex ?? []).find((f) => f.id === actif);
         const age = (dex.dex ?? []).find((f) => f.racine === actif
           && f.stade === candidat.evo) ?? def;
