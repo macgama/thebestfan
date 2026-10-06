@@ -49,9 +49,12 @@ import { grandLivreFerme } from './auth/schema.js';
     `virage` (vague 2, lot 6) : l'XP d'un match poussé au Grand Virage, une
     fois par match — la clé est l'identifiant du match (`CONTRATS.md`, § 15.2).
     Elle n'a demandé aucune colonne : `source` est un `VARCHAR(16)`, et
-    l'idempotence par match tient dans la clé primaire qui existe. */
+    l'idempotence par match tient dans la clé primaire qui existe.
+
+    `prono` (6 octobre 2026) : les écharpes d'un pronostic juste, une fois par
+    match — la clé est l'identifiant du match, comme `virage`. */
 export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
-  'virage'];
+  'virage', 'prono'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',

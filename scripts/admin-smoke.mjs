@@ -23,7 +23,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 /* Les quatre tables de `sql/quotidien.sql` aussi : la saison datée lit le grand
    livre pour savoir si un carnet est figé, et une ligne laissée par un passage
    précédent figerait un carnet que cette suite croit libre. */
-await raw.query(`DROP TABLE IF EXISTS parrainages, contenus, abonnements, achats, kop_invites, amities, saisons,
+await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, contenus, abonnements, achats, kop_invites, amities, saisons,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, reglages, admin_audit, user_decks, user_stuff, user_etats, user_skins,
   user_fanzzy, user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache,
   souvenir_leagues, duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings,

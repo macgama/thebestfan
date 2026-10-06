@@ -366,6 +366,12 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
     const ont = await q('SELECT stuff_id, copies FROM user_stuff WHERE user_id = ?', [req.user.id]);
     const [bourse] = await q(
       'SELECT scarves FROM user_wallet WHERE user_id = ?', [req.user.id]);
+    /* Les tenues déjà posées, pour que la cabine ne propose pas de racheter
+       ce qu'on a : le serveur le refuserait (`tenue_deja_posee`), mais
+       après qu'on a choisi, au lieu de le dire avant. */
+    const posees = await q(
+      `SELECT fanzzy_id, stage, skin_id FROM user_skins WHERE user_id = ? AND skin_id <> 'base'`,
+      [req.user.id]);
     res.json({
       monnaie: MONNAIE,
       /* `echarpes` et non `billets` : le nom du champ dit la monnaie, et le
@@ -377,6 +383,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
          existe parce qu'on a la pièce (même règle que `stuffCopies` du deck). */
       stuff: etalStuff(new Map(ont.map((o) => [o.stuff_id, Math.max(1, Number(o.copies) || 1)]))),
       tenues: etalTenues(tenuesPubliees()),
+      posees: posees.map((r) => ({ fanzzy: r.fanzzy_id, stade: Number(r.stage), tenue: r.skin_id })),
     });
   });
 
