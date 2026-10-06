@@ -355,6 +355,24 @@ export function createDecks({ pool, requireAuth, niveau = null,
       `SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]))
       .map((r) => [r.fanzzy_id, Number(r.stage)]));
 
+    /* **La tenue portée à chaque âge**, `{ 1: 'carnaval' }` — les âges sans
+       tenue sont absents et se dessinent en `base`. La vue du duel la donne
+       pour le personnage en tribune de chaque joueur, à son stade du moment :
+       celui d'en face apparaissait dans son dessin de base, faute de la
+       connaître. Même lecture qu'`avatarsDe`, et même tolérance : une base
+       sans `sql/skins.sql` joue en tenue de base plutôt que de refuser le
+       duel. */
+    const tenues = {};
+    try {
+      for (const r of await q(
+        `SELECT fanzzy_id, stage, skin_id FROM user_skins
+          WHERE user_id = ? AND equipped = 1`, [userId])) {
+        (tenues[r.fanzzy_id] ??= {})[Number(r.stage) || 1] = r.skin_id;
+      }
+    } catch (e) {
+      if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
+    }
+
     return {
       fanzzy: deck.fanzzy.map((f) => {
         const stuff = f.stuff ?? [];
@@ -393,6 +411,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
           // joueur a le droit d'aller.
           stade: 1,
           ages: jouables,
+          tenues: tenues[f.id] ?? {},
         };
       }),
       actions: deck.actions.map((id) => ACTION_BY_ID.get(id)).filter(Boolean),
