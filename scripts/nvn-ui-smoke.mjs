@@ -29,6 +29,9 @@ import { STUFF_BY_ID } from '../src/shared/fanzzy/inventaire.js';
 import { CHANTS, ORDRE } from '../src/shared/duel/chants.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
+/* Le stade d'un match, tel que le serveur le tire pour le Virage et pour
+   chacun de ses duels : ce que l'affiche de la préparation doit montrer. */
+import { stadeDuMatch } from '../src/server/contenus/index.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -356,6 +359,38 @@ check('l\u2019écran prévient que des bots complètent',
     || (console.log('        ', JSON.stringify(vu)), false));
 }
 
+/* **Le stade du match, sur son affiche** (décision de Gaël, 6 octobre
+   2026 : tous les duels d'un match se jouent dans son stade, celui de son
+   Grand Virage, et la préparation le montre avant l'entrée en file). La
+   liste le sert avec chaque match (`stade`, § 17) ; l'affiche du match
+   choisi en pose le dessin réduit en fond, sous le voile de la brique, et le
+   nom au pied ; les règles du « i » disent ce qu'il change. On compare à ce
+   que le serveur tire pour ce match (`stadeDuMatch`, la fonction que le
+   Virage et le duel appellent) et, plus bas, au stade où le duel se joue
+   vraiment, puis à celui d'un autre match choisi : un contrôle qui ne
+   verrait qu'un nom passerait sur une page qui montrerait toujours le même.
+   Le lieu se lit dans l'adresse du dessin, la seule trace de son
+   identifiant dans la page. */
+const lireStade = () => {
+  const el = document.querySelector('#prepaCorps .mt.on');
+  const fond = el?.hasAttribute('data-fond') ? el.style.getPropertyValue('--fond') : '';
+  return { match: S.fixtureId, id: fond.match(/\/img\/stade\/([a-z0-9-]+)-mini\./)?.[1] ?? null,
+    nom: el?.querySelector('.lieu-match b')?.textContent.trim() ?? null,
+    regles: document.getElementById('regles')?.textContent.replace(/\s+/g, ' ') ?? '' };
+};
+await A.page.evaluate(`window.__lireStade = ${lireStade}`);
+const stadeAnnonce = await A.page.evaluate(() => window.__lireStade());
+{
+  const attendu = stadeDuMatch(stadeAnnonce.match);
+  check(`l’affiche du match choisi montre son stade, le dessin en fond et le nom au pied (${
+    stadeAnnonce.nom ?? 'rien'})`,
+  stadeAnnonce.match === 7 && stadeAnnonce.id === attendu.id && stadeAnnonce.nom === attendu.nom
+    || (console.log('        vu', stadeAnnonce.id, stadeAnnonce.nom, '· attendu', attendu.id, attendu.nom), false));
+  check('et les règles du « i » disent ce qu’il change',
+    stadeAnnonce.regles.includes(`Le stade : ${attendu.nom}. ${attendu.effet}`.replace(/\s+/g, ' '))
+    || (console.log('        règles :', stadeAnnonce.regles), false));
+}
+
 /* **La préparation ne défile que pour un match qu'on ne voit pas** (lot 6).
    Centré d'office, le match choisi faisait défiler la page alors qu'il était
    déjà à l'écran — de 163 px à 360 × 640 : le titre sortait, et les tuiles
@@ -679,8 +714,20 @@ const neutre = await A.page.evaluate(() => {
        marque aucun camp tant qu'on n'a pas choisi. */
     position: getComputedStyle(document.getElementById('entrer')?.closest('.entree') ?? document.body).position,
     marques: document.querySelectorAll('.mt.on .tribune-mienne').length,
+    stade: window.__lireStade(),
   };
 });
+/* **Un autre match, un autre stade** : l'affiche suit le match choisi, et
+   ne garde pas celui du précédent. Les deux matchs de la base tombent sur
+   deux lieux différents — sans quoi ce contrôle ne prouverait rien. */
+{
+  const attendu = stadeDuMatch(8);
+  check(`un autre match choisi, son affiche montre son stade à lui (${neutre.stade.nom ?? 'rien'}, et non ${
+    stadeAnnonce.nom})`,
+  neutre.stade.match === 8 && attendu.id !== stadeAnnonce.id
+      && neutre.stade.id === attendu.id && neutre.stade.nom === attendu.nom
+    || (console.log('        vu', neutre.stade.id, '· attendu', attendu.id), false));
+}
 check('sans club dans le match, les deux tribunes sont proposées',
   neutre.boutons.length === 2 && neutre.boutons.some((n) => /Lugano/.test(n)));
 check('en deux bâches de club, sans couleur inventée quand le club n’en a pas',
@@ -821,6 +868,22 @@ await B.page.evaluate(() => {
 const apparie = await jusqua(async () =>
   await A.page.evaluate(() => document.getElementById('jeu').classList.contains('on')));
 check('les deux joueurs sont appariés et le duel s\u2019ouvre', apparie);
+
+/* **Et le duel se joue dans le stade que l'affiche annonçait** — la promesse
+   de la préparation. Le lieu d'un duel se tirait sur son identifiant, au coup
+   d'envoi, et rien ne pouvait l'annoncer avant ; il est celui du match depuis
+   le 6 octobre 2026. On lit la vue, que l'arène, l'affiche du coup d'envoi et
+   « ce que tu portes » lisent, et le nom posé au pied de l'arène. */
+{
+  await jusqua(() => A.page.evaluate(() => Boolean(S.vue?.stade
+    && document.getElementById('lieu')?.textContent.trim())), 6000);
+  const joue = await A.page.evaluate(() => ({ id: S.vue?.stade?.id ?? null, nom: S.vue?.stade?.nom ?? null,
+    pied: document.getElementById('lieu')?.textContent.trim() ?? '' }));
+  check(`le duel se joue dans le stade que l’affiche annonçait (${joue.nom ?? 'aucun'})`,
+    Boolean(stadeAnnonce.id) && joue.id === stadeAnnonce.id && joue.nom === stadeAnnonce.nom
+      && joue.pied === stadeAnnonce.nom
+    || (console.log('        annoncé', stadeAnnonce.id, '· joué', joue.id, '· au pied', joue.pied), false));
+}
 
 /* **On impose un chant de tempo au répertoire de ce duel.**
  *
@@ -1434,11 +1497,15 @@ check('le barème des deux joueurs arrive à l’écran', arriveA && arriveB
  *
  * Les deux contrôles comparaient à des nombres absolus : 630 pour le joueur
  * équipé, 560 pour l'autre. Ils tenaient tant qu'aucun stade ne touchait à la
- * pulsation. Or le stade d'un duel se tire sur son identifiant, donc il change
- * à chaque partie, et deux des quinze en changent : `neige` ajoute 130 ms,
- * `rp-bache` en ajoute 80. Un duel tombé sur la neige lisait donc 690 là où la
- * suite attendait 560 — et les deux contrôles rougissaient ensemble, en
- * accusant l'équipement d'un tirage de stade.
+ * pulsation. Or le stade d'un duel se tirait alors sur son identifiant, donc
+ * il changeait à chaque partie, et deux des quinze en changeaient : `neige`
+ * ajoute 130 ms, `rp-bache` en ajoute 80. Un duel tombé sur la neige lisait
+ * donc 690 là où la suite attendait 560 — et les deux contrôles rougissaient
+ * ensemble, en accusant l'équipement d'un tirage de stade. Depuis le
+ * 6 octobre 2026, le stade est celui du match : le même à chaque passage de
+ * cette suite, mais un autre dès que sa base change de match ou qu'une
+ * saison ouvre ou ferme un stade — et trois des dix-huit touchent à la
+ * pulsation (`caverne` y ajoute 70 ms).
  *
  * Le bon invariant est la **différence entre les deux joueurs** : le stade
  * s'applique aux deux, l'équipement à un seul. Elle vaut exactement ce que les

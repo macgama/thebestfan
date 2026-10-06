@@ -630,10 +630,13 @@ lui :
 2. **`/healthz` répond `ok: true` et `"quotidien":"actif"`**, et `/admin`,
    RÉGLAGES, montre les trois sections LE QUOTIDIEN, LES MISSIONS DU JOUR et
    LA SAISON ET SES PALIERS.
-3. **La fin de la saison 1.** Vérifier sur `/matchs` le dernier week-end de
-   championnat avant la trêve, puis saisir la date dans l'onglet Saisons
-   (proposée : 2026-12-20). C'est un jour, celui du jeu : la saison finit le
-   soir de ce jour-là.
+3. **La fin de la saison 1 : le 31 décembre 2026.** Les saisons durent
+   quatre mois — du 1er janvier au 30 avril, du 1er mai au 31 août, du
+   1er septembre au 31 décembre (tranché le 6 octobre 2026) : il n'y a plus
+   de calendrier de championnat à vérifier. Saisir `2026-12-31` dans l'onglet
+   Saisons, sur la ligne de « La reprise ». C'est un jour, celui du jeu : la
+   saison finit le soir de ce jour-là. La saison 2 suit du 1er janvier au
+   30 avril 2027 ; sa série et son nom restent à choisir.
 4. **Le carnet de la saison 1, si les missions arrivent après le 19 octobre.**
    Ses seuils sont comptés pour 63 jours : les saisir dans l'onglet Saisons,
    multipliés par jours restants / 63, **avant** le premier palier versé. Le

@@ -297,6 +297,38 @@ partagé `src/shared/kop.js` n'est pas touché) :
    moteur ne les lit : les fiches les affichent, la carte coûte 30 de souffle
    et ne fait rien. Hors de ma main ; à aiguiller.
 
+**Tranché le 6 octobre 2026, et fait : retirés, et remboursés** (points 1
+et 2). **Aucun champ de `CONTRATS.md` ne change** ; `catalogue` sert
+toujours 5 bonus.
+- `src/shared/kop.js` ne les porte plus. Ce qui ne servait qu'à les tenir
+  hors de vente part avec eux : `MODS_DU_VIRAGE`, `agit` et `EN_VENTE`
+  n'existent plus, et `catalogue` sert `BONUS`. `proposer()` refuse un
+  identifiant inconnu (`kop.error.bonus_inconnu`). Le dépouillement garde sa
+  garde : un vote ouvert avant le déploiement est rejeté sans débiter le
+  pot, `horsVente: true`, comme un identifiant que le catalogue n'a jamais
+  connu. `bonusActifs` écarte toute ligne dont l'identifiant n'est plus au
+  catalogue.
+- Le prix est rendu par le serveur, à son démarrage (`rendreLesRetires`,
+  appelé et attendu par `server.js` avant l'écoute). Une transaction par
+  KOP : le pot sous verrou d'abord, comme au dépouillement ; puis chaque
+  ligne `echarpes` ou `contres` devient `rendu:echarpes` ou `rendu:contres`,
+  `restant` 0, épuisée (la date d'un épuisement antérieur est gardée) ; puis
+  le pot reçoit 900 ou 500 par ligne. Toutes les lignes sont rendues, même
+  celles que des matchs avaient décomptées avant le 3 octobre : ces matchs
+  n'ont rien reçu. `verse_total` ne bouge pas, ce n'est pas un versement.
+  Aucun changement de schéma : la marque tient dans `bonus_id`.
+- Le journal dit une ligne par KOP remboursé (nom, identifiant, détail, pot
+  avant et après), puis un bilan, ou « rien à rendre ». Un KOP en échec est
+  annulé entier, nommé, et repris au démarrage suivant ; la fonction ne lève
+  jamais.
+- `kop-smoke` (« ce qui est en vente », « les retirés, rendus au pot » : un
+  remboursement, un second démarrage qui ne rend rien, quatre démarrages
+  simultanés, une panne entre la marque et le crédit, une base sans la
+  table) et `cablage` (l'appel attendu, avant l'écoute) ; chaque contrôle a
+  été cassé exprès et a rougi.
+
+Le point 3 reste ouvert.
+
 ### 7. `couleurs` sur `GET /api/kop/club/:teamId` (servi, 3 octobre 2026)
 
 **Aucun champ de `CONTRATS.md` ne change** (la route est hors contrat). C'est
@@ -1176,7 +1208,10 @@ toutes les tenues de ses âges reçoit donc des écharpes là où un joueur grat
 reçoit une tenue : de l'ordre de 5 écharpes par booster (0,46 place « tenue »
 par booster × 11,5), tant que le joueur gratuit n'a pas lui-même toutes ses
 tenues. Le corriger demande de savoir quelles tenues ont été prises par
-l'abonnement : c'est la colonne ci-dessus.
+l'abonnement : c'est la colonne ci-dessus. *Depuis le 6 octobre 2026, une
+catégorie épuisée ne rend plus que 2 écharpes (`POIGNEE_DE_REPLI`) : l'écart
+tombe à environ 1 écharpe par booster (0,46 × 2), et la question perd
+l'essentiel de son poids.*
 
 **Suite** : `fanzzy-smoke`, « ce que l'abonnement ouvre ne paie pas ». Un
 abonné simulé porte, **par la route de l'avatar** (`POST
@@ -2181,7 +2216,9 @@ renommé ni retiré.**
   pour un serveur d'avant. Vérifiés dans le code (`vuePour`, `jouerEtMarquer`,
   `effetsVus`, le bilan par socket, la liste de `deck/index.js`). Et deux
   phrases : pas de `serie` sur le chant (8, ci-dessus), pas de stade avant le
-  coup d'envoi (`serveur-duel`, 9).
+  coup d'envoi (`serveur-duel`, 9). *(La seconde a quitté le § 17 le
+  6 octobre 2026 : le stade du match est servi avec la liste et la route
+  d'un match — voir `serveur-duel`, 9.)*
 - **§ 18.2, l'écran après un `POST /api/presence`** (besoin de
   `barre-tiroir`) : seule `{ actif: true, visible }` garde l'interrupteur ;
   `{ actif: false }`, 400, 401, 503 ou une coupure le retirent, et l'ouverture
@@ -2261,7 +2298,8 @@ ni retiré.** Leurs écarts sont versés sous leur clé, plus bas.
   demande le combo, au § 17, comme au § 16.2.
 - **Le stade du duel** (`serveur-duel`, 9) : déjà versé à la partie A, et
   toujours à trancher par Gaël ; rien de plus au contrat que la phrase du
-  § 17 (« pas de stade avant le coup d'envoi »).
+  § 17 (« pas de stade avant le coup d'envoi »). *(Tranché le 6 octobre
+  2026 : voir `serveur-duel`, 9.)*
 
 `scripts/verdict-smoke.mjs` gagne une section : la note écrite en millièmes
 (`enMilliemes`, `ferveur/virage.js`) garde son verdict, parce que les seuils
@@ -2331,6 +2369,12 @@ viennent.
    jeu : **à trancher par Gaël**. C'est pourquoi la préparation n'a pas de
    stade-mini (`duel-tribunes`, plus bas) ; écrire `duel.stade` après coup
    depuis `nvn/index.js` ferait le même changement en cachette.
+   *(Tranché par Gaël le 6 octobre 2026 : le stade du match, celui de son
+   Grand Virage. La correction est celle-ci, dans `engine.js`, par une
+   fonction que le Virage et la liste du duel appellent aussi
+   (`stadeDuMatch`, `contenus/index.js`) ; la liste sert le `stade` de chaque
+   match, et la préparation le pose sur l'affiche du match choisi. Voir
+   `CONTRATS.md`, § 17, et `HISTORIQUE.md`, 4 quinquagies bis.)*
 
 Deux constats de la partie A, non corrigés, antérieurs au lot *(corrigés à
 la partie B : voir 10 et 11, plus bas)* :
@@ -2378,7 +2422,8 @@ couleurs dans la vue sont servis et versés au contrat : voir 14 et 15.
     `randomUUID` (`engine.js`) et dans l'intersection des possessions
     (`ETAT.md` § 3) ; il n'est donc connu qu'après l'appariement, d'où
     l'absence de stade-mini à la préparation. C'est le point 9, à trancher par
-    Gaël ; rien de plus dans cette partie.
+    Gaël ; rien de plus dans cette partie. *(Tranché le 6 octobre 2026 : voir
+    9.)*
 13. **`gains.wallet` n'est pas servi dans `nvn:fin`** : R6 veut la réserve de
     packs recharge comprise, qu'il faudrait relire pour chaque joueur à la fin
     du duel. `tbf:bourse` part donc sans `wallet`, et `nav.js` relit le solde
@@ -2667,7 +2712,10 @@ nommés, parce que des suites les lisent.*
    tribunes du stade-mini : le stade du duel n'appartient pas au match
    (`serveur-duel`, 9) — en poser un serait inventer un lieu dont les effets ne
    s'appliqueront pas. Le camp se choisit par deux bâches de même poids, la
-   choisie en flare.
+   choisie en flare. *(Le 6 octobre 2026, le stade du duel est devenu celui
+   du match (`serveur-duel`, 9) : la préparation le pose sur l'affiche du
+   match choisi, le dessin réduit en fond et le nom au pied. Le camp se
+   choisit toujours par les deux bâches.)*
 2. **L'arène fait 33 % de l'écran en jeu** (213 px à 360 × 640 ; 146 à
    320 × 568), et non 45 % : la règle du brief — l'arène cède avant la main
    et les chants — l'emporte. La main et les chants restent entiers partout.

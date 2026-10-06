@@ -54,7 +54,7 @@
  * d'affichage. On calcule donc une seule boîte, l'union de tous les états de
  * l'évolution, et on l'applique à tous.
  */
-import { readdir, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, readdir, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -67,6 +67,7 @@ import sharp from 'sharp';
    que les quatre. */
 import { PAR_NUMERO, ETATS_ACCEPTES as ETATS } from '../src/shared/fanzzy/rendus.js';
 import { agreger } from './fanzzy-manifeste.mjs';
+import { poserLesPaupieres, dossierDesRetouches, nomDeRetouche } from './fanzzy-cligne.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const SORTIE_DEFAUT = path.join(RACINE, 'public', 'img', 'fanzzy');
@@ -379,6 +380,62 @@ let manifeste = { id: ID, rev: 0, evolutions: {} };
 try { manifeste = JSON.parse(await readFile(cheminManifeste, 'utf8')); }
 catch { /* premier passage */ }
 
+/* Les paupières d'un repos (`cligne`, voir `fanzzy-cligne.mjs`) ne valent que
+   pour les pixels d'où elles ont été découpées. On garde donc, **avant
+   d'écrire quoi que ce soit**, chaque repos qui en a : ressorti à l'octet
+   près, il les garde ; sinon, on les repose depuis la retouche. */
+const reposAvant = new Map();
+for (const [eCle, contenu] of Object.entries(manifeste.evolutions ?? {})) {
+  for (const [tenue, s] of Object.entries(contenu.skins ?? {})) {
+    if (s.cligne !== true) continue;
+    try { reposAvant.set(`${eCle}/${tenue}`, await readFile(path.join(dossierId, eCle, tenue, 'neutre.png'))); }
+    catch { /* plus de repos sur le disque : rien à comparer */ }
+  }
+}
+const avertissements = [];
+
+/**
+ * Les paupières d'une tenue d'un âge, une fois son repos récrit.
+ *
+ * **Gardées** si le repos est ressorti au même octet. **Reposées** depuis la
+ * retouche de `art/<ID>/cligne/` s'il a bougé : une tenue de plus agrandit le
+ * cadre commun de l'âge, et tout le personnage glisse de quelques pixels —
+ * des paupières laissées en place tomberaient à côté des yeux. **Retirées**,
+ * et on le dit, si la retouche ne colle plus parce que le visage a été
+ * redessiné. Une retouche déposée sans être encore posée l'est ici aussi :
+ * la chaîne ne demande rien de plus que le fichier.
+ */
+async function paupieresDe(evo, tenue, repos) {
+  const cle = `e${evo}/${tenue}`;
+  const avant = reposAvant.get(cle);
+  if (avant) {
+    try {
+      await access(path.join(path.dirname(repos), 'cligne.png'));
+      if ((await readFile(repos)).equals(avant)) return 'gardees';
+    } catch { /* des paupières manquent sur le disque : on les refait */ }
+  }
+  const nom = nomDeRetouche(ID, evo, tenue).toLowerCase();
+  let retouche = null;
+  try {
+    retouche = (await readdir(dossierDesRetouches(ID)))
+      .find((f) => path.basename(f, path.extname(f)).toLowerCase() === nom) ?? null;
+  } catch { /* pas de dossier : pas de retouche */ }
+  if (!retouche) {
+    if (avant) avertissements.push(`${cle} : le repos a changé et aucune retouche n'est gardée `
+      + `dans ${path.relative(RACINE, dossierDesRetouches(ID))}/ — il ne clignera plus. `
+      + `Refais-la : npm run cligne -- tete ${ID}${evo !== 1 ? ` --age ${evo}` : ''}`
+      + `${tenue !== 'base' ? ` --tenue ${tenue}` : ''}`);
+    return null;
+  }
+  try {
+    await poserLesPaupieres({ repos, retouche: path.join(dossierDesRetouches(ID), retouche) });
+    return 'reposees';
+  } catch (e) {
+    avertissements.push(`${cle} : paupières retirées, il ne clignera plus. ${e.message}`);
+    return null;
+  }
+}
+
 /* ------------------------------------ tout lire et tout vérifier d'abord
 
    **Rien n'est écrit tant que le lot entier n'est pas validé.**
@@ -509,6 +566,10 @@ for (const { evo, lus, l, h, cadre } of ages) {
         .resize(PORTRAIT.l, PORTRAIT.h, { fit: 'cover' }), dossier, 'portrait', empreinte);
     }
 
+    const paupieres = nus.has('neutre')
+      ? await paupieresDe(evo, tenue, path.join(dossier, 'neutre.png'))
+      : null;
+
     manifeste.evolutions[eCle].skins[tenue] = {
       etats: ETATS.filter((e) => nus.has(e)),
       portrait: nus.has('neutre'),
@@ -519,9 +580,13 @@ for (const { evo, lus, l, h, cadre } of ages) {
          l'habille. `base` n'a pas de repli, c'est lui le fond du puits. */
       ...(tenue !== 'base' ? { repli: 'base' } : {}),
       sha: empreinte.digest('hex').slice(0, 12),
+      /* En dernier, à la place même où `fanzzy-cligne.mjs` l'ajoute : un
+         manifeste republié à l'identique doit se relire à l'identique, sinon
+         `rev` monterait pour rien. */
+      ...(paupieres ? { cligne: true } : {}),
     };
 
-    compte.push({ evo: eCle, tenue, etats: nus.size,
+    compte.push({ evo: eCle, tenue, etats: nus.size, paupieres,
       objets: Object.keys(objets).length, cadre: `${cadre.width}×${cadre.height}` });
   }
 }
@@ -545,9 +610,12 @@ console.log(`${ID}  (rendu ${cle})  rev ${manifeste.rev}`);
 for (const c of compte) {
   console.log(`  ${c.evo}/${c.tenue.padEnd(14)} ${String(c.etats).padStart(2)} état(s)`
     + (c.objets ? ` · ${c.objets} objet(s)` : '')
+    + (c.paupieres === 'reposees' ? ' · paupières reposées' : '')
+    + (c.paupieres === 'gardees' ? ' · paupières gardées' : '')
     + ` · cadre ${c.cadre}`);
 }
 for (const f of ignores) console.log(`  ignoré : ${f}`);
+for (const a of avertissements) console.warn(`  ⚠ ${a}`);
 
 if (refus.length) {
   console.error(['', ...refus, '', EXPLICATION,
