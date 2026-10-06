@@ -265,6 +265,14 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+
+/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
+   règle commune des pages larges : le sommaire des compétitions se range en
+   colonnes de la largeur d'un téléphone ; une compétition ouverte
+   (classement, calendrier) garde sa feuille. */
+@media (min-width:1180px) and (min-height:560px){
+  .list:has(>.lg){display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));column-gap:14px;align-content:start}
+}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -274,7 +282,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body>
+<body class="tbf-large">
 <main id="app">
   <div class="top">
     <button class="back tbf-plaque" id="back" aria-label="Revenir à toutes les compétitions">‹</button>

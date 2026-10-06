@@ -37,6 +37,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
+import { controlerLarge } from './large-ui.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 let failures = 0;
@@ -217,6 +218,13 @@ await jusqua(async () => await page.$('.lg') !== null);
 
 check('la page se charge sans erreur de script', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
+
+/* ---------------------------------------------------------- grand écran
+
+   La page des compétitions est une page large (`tbf-large`) : son sommaire
+   se range en colonnes de la largeur d'un téléphone. */
+await controlerLarge(page, check, { nom: 'la page des compétitions', liste: '.list>.lg',
+  pret: () => jusqua(async () => await page.$('.lg') !== null) });
 
 /* ------------------------------------------------------------- les pays */
 
