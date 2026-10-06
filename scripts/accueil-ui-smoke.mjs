@@ -648,6 +648,24 @@ check('la page ne déborde pas en largeur', await page.evaluate(() =>
 }
 
 
+/* **Au milieu de sa scène, sur un téléphone.** Il y est plus large que la
+   colonne entre les rails et passe dessous ; une colonne qui grandissait avec
+   lui le poussait d'une trentaine de pixels vers la droite, loin de son
+   ombre, de son décor et de son nom. Mesuré sur la mise en page
+   (`offsetLeft`), sans les gestes ni la respiration qui l'inclinent. */
+{
+  const m = await page.evaluate(() => {
+    const scene = document.getElementById('scene');
+    const pile = document.getElementById('pile');
+    let centre = pile.offsetWidth / 2;
+    for (let el = pile; el && el !== scene; el = el.offsetParent) centre += el.offsetLeft;
+    return { ecart: centre - scene.clientWidth / 2, pile: pile.offsetWidth, scene: scene.clientWidth };
+  });
+  check(`le personnage se tient au milieu de sa scène (écart ${Math.round(m.ecart)} px, `
+    + `${Math.round(m.pile)} px dans ${Math.round(m.scene)})`, Math.abs(m.ecart) <= 2);
+}
+
+
 /* ------------------------------------- le personnage, sur trois écrans
 
  * Il est le sujet de l'écran : c'est lui qu'on vient voir, et tout le reste
