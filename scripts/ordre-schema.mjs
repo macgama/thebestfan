@@ -99,4 +99,9 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      (souvenirs.sql), et il prolonge l'upsert des chants que quotidien.sql a
      élargi — les suites du Virage le posent par-dessus celui-ci. Après les
      deux, donc ; et rien n'en dépend : il prend le dernier rang à son tour. */
-  'arenes'];
+  'arenes',
+  /* Le pronostic (6 octobre 2026) : une table clée sur `users.public_id`
+     (auth.sql), et rien d'autre. Ses versements passent par le grand livre
+     de quotidien.sql, qu'il ne modifie pas. Rien n'en dépend : le dernier
+     rang. */
+  'pronostics'];
