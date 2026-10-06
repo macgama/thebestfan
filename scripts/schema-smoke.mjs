@@ -374,13 +374,13 @@ console.log('\n— les arènes —');
     JSON.stringify(auDemarrage) === JSON.stringify(Object.keys(ATTENDUES).sort())
     || (console.log('        vues :', auDemarrage.join(', ')), false));
 
-  /* Le dernier à toucher `virage_presence` et `user_wallet`. Seul
-     `pronostics.sql` (6 octobre 2026) vient après lui : une table neuve, qui
-     ne touche à aucune colonne d'un autre fichier. */
+  /* Il l'était ; la collection de stades et le pronostic sont venus après
+     lui, sans rien lui prendre. Ce qui compte est qu'il vienne après ce qu'il
+     complète. */
   const apresArenes = ORDRE.slice(ORDRE.indexOf('arenes') + 1);
-  check('sql/arenes.sql est le dernier à compléter des tables d’autres fichiers',
-    apresArenes.every((f) => f === 'pronostics')
-    || (console.log('        après lui :', apresArenes.join(', ')), false));
+  check('sql/arenes.sql n’est suivi que de ce qui ne dépend pas de lui',
+    apresArenes.every((f) => f === 'collection-stades' || f === 'pronostics')
+    || (console.log('        après :', apresArenes.join(', ')), false));
   check('et vient après ce qu’il complète (souvenirs, quotidien)',
     ORDRE.indexOf('arenes') > Math.max(ORDRE.indexOf('souvenirs'), ORDRE.indexOf('quotidien')));
 

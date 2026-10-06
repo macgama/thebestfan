@@ -259,8 +259,8 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
    ligne plutôt que dans une branche rare : sans elles, la page garde ses
    comptes et dit qu'elle ne peut pas dessiner les cartes. */
 const V = window.TBF_CARTES ?? {};
-const { BY_ID, DEX, SETS, SETS_TOUTES, STUFFS, ACTES, TENUES, TYPES, EVO_COST, ART, api,
-  audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, formeHTML, modsText, packArt, src } = V;
+const { BY_ID, DEX, SETS, SETS_TOUTES, STUFFS, ACTES, TENUES, LIEUX, TYPES, EVO_COST, ART, api,
+  audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, formeHTML, lieuSrc, modsText, packArt, src } = V;
 
 /** Le jeton des écharpes, le même dessin que partout ailleurs. */
 const JETON = window.TBF_STUFF?.gain?.('echarpes') ?? '/img/gains/echarpes.webp';
@@ -424,7 +424,7 @@ const somme = (gains) => gains.reduce((s, g) => ({
 const toutes = (garder) => (E.nouv ?? []).filter((n) => typeof n?.cle === 'string' && garder(n));
 const nouvelles = (garder) => toutes((n) => !E.eteintes.has(n.cle) && garder(n));
 const SORTES = { fanzzy: ['fanzzy', 'age'], etats: ['etat'], tenues: ['skin'],
-  equipement: ['stuff'], actions: ['action'] };
+  equipement: ['stuff'], actions: ['action'], lieux: ['lieu'] };
 const montrer = (cles) => { for (const c of cles) if (!E.eteintes.has(c)) E.montrees.add(c); };
 
 /* Ce qui est à l'écran depuis assez longtemps pour avoir été vu. Sans
@@ -594,6 +594,9 @@ const RAYONS = [
   { vue: 'tenues', type: 'tenues', nom: 'TENUES', ton: 'bleu' },
   { vue: 'equipement', type: 'stuff', nom: 'ÉQUIPEMENT', ton: null },
   { vue: 'actions', type: 'actions', nom: 'CARTES D’ACTION', ton: 'flare' },
+  /* Les stades : la face neutre, comme l'équipement. Ils ne se portent pas
+     et ne donnent rien ; l'un d'eux peut habiller l'accueil. */
+  { vue: 'lieux', type: 'lieux', nom: 'STADES', ton: null },
 ];
 const VUES = new Set(RAYONS.map((r) => r.vue));
 
@@ -621,6 +624,7 @@ function derniere(vue) {
   }
   if (n.sorte === 'stuff') return { src: window.TBF_STUFF?.adresse?.(n.id), rar: STUFFS?.get(n.id)?.rar };
   if (n.sorte === 'action') return { src: window.TBF_ACTION?.adresse?.(n.id), rar: ACTES?.get(n.id)?.rar };
+  if (n.sorte === 'lieu') return { src: lieuSrc?.(n.id, true), rar: LIEUX?.get(n.id)?.rar };
   return null;
 }
 
@@ -798,6 +802,7 @@ function teteAlbum({ embleme, nom, ligne, g, p, recompense }) {
 const EMBLEMES = {
   equipement: '<svg viewBox="0 0 24 24"><path d="M3 10v4h3l7 4V6l-7 4zM16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></svg>',
   actions: '<svg viewBox="0 0 24 24"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>',
+  lieux: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18H6zM6 12h12M9.5 3v3h5V3M9.5 21v-3h5v3"/></svg>',
 };
 /* Ce que dit l'en-tête de chaque page. Pour les états et les tenues, la
    règle qui explique la planche — pourquoi un âge pas encore atteint n'y
@@ -807,6 +812,7 @@ const ACCROCHES = {
   tenues: 'Dans les boosters et à la boutique, pour un Fanzzy que tu as, âge par âge.',
   equipement: 'Dans les boosters et à la boutique. Chaque pièce a un bonus et un revers.',
   actions: 'Les communes sont à tout le monde ; les autres sortent des boosters.',
+  lieux: 'Dans les boosters. Le Chaudron est à tout le monde ; un stade à toi peut habiller ton accueil.',
 };
 
 /** Le chemin quand une sous-vue n'a rien à montrer : une phrase, et la bâche. */
@@ -1493,7 +1499,7 @@ function deplier(bouton) {
    précisément ce qu'on cherche. */
 function vueCartes(v, r) {
   const T = E.B.types?.[r.type] ?? {};
-  const sorte = r.type === 'stuff' ? 'stuff' : 'action';
+  const sorte = { stuff: 'stuff', lieux: 'lieu' }[r.type] ?? 'action';
   const liste = (T.items ?? []).map((x) => ({ k: sorte, id: x.id, nom: x.nom, rar: x.rar, possede: Boolean(x.possede) }));
   const cle = r.vue;
   E.listes.set(cle, liste);
@@ -1595,6 +1601,8 @@ function galons(o, rar) {
     if (lignee(o.pour).length > 1) out.push(`<span class="tbf-sticker">ÂGE ${o.stade}</span>`);
   } else if (o.k === 'stuff') {
     out.push('<span class="tbf-sticker">ÉQUIPEMENT</span>');
+  } else if (o.k === 'lieu') {
+    out.push('<span class="tbf-sticker">STADE</span>');
   } else if (o.k === 'action') {
     const a = ACTES?.get(o.id);
     const fam = window.TBF_ACTION?.famDe?.(a);
@@ -1759,6 +1767,18 @@ function vueCarte(vue) {
   }
   if (o.k === 'etat' || o.k === 'skin') {
     actions.push(`<a class="tbf-plaque tbf-bloc" href="/fanzzy/${encodeURIComponent(o.pour)}">VOIR SA FICHE</a>`);
+  }
+  /* **Un stade à soi habille l'accueil**, et c'est tout ce qu'il fait : il ne
+     décide pas où l'on joue, la rencontre se tient dans le stade de son
+     match. Le texte le dit, pour qu'on ne le croie pas plus fort. */
+  if (o.k === 'lieu') {
+    blocs.push('<p class="tbf-vitrine-texte">Son effet vaut pour les deux tribunes, quand un match s’y joue. '
+      + 'L’avoir ne t’y fait pas jouer plus souvent : il décore ton accueil, si tu veux.</p>');
+    if (possede) {
+      const pose = E.B?.lieuAccueil === o.id;
+      actions.push(`<button type="button" class="tbf-plaque tbf-bloc"${pose ? '' : ' data-ton="or"'} data-lieu-accueil="${
+        pose ? '' : esc(o.id)}">${pose ? 'RETIRER DE L’ACCUEIL' : 'EN DÉCOR DE L’ACCUEIL'}</button>`);
+    }
   }
 
   return `
@@ -2079,6 +2099,9 @@ $('vitr').addEventListener('click', (e) => {
     return;
   }
 
+  const decor = e.target.closest('[data-lieu-accueil]');
+  if (decor) { poserDecor(decor); return; }
+
   const porte = e.target.closest('[data-planche]');
   if (porte) {
     const vue = pileVues[pileVues.length - 1];
@@ -2149,6 +2172,22 @@ document.addEventListener('visibilitychange', () => {
   reguetter($('vue'));
   reguetter($('vitr-carton'));
 });
+
+/** Pose (ou retire, `data-lieu-accueil` vide) le stade en décor de l'accueil. */
+async function poserDecor(bouton) {
+  if (bouton.disabled) return;
+  bouton.disabled = true;
+  const id = bouton.dataset.lieuAccueil || null;
+  const { j } = await poster('/api/fanzzy/lieu-accueil', { id });
+  if (j) {
+    E.B.lieuAccueil = j.lieuAccueil ?? null;
+    toast(id ? 'C’est ton décor d’accueil.' : 'L’accueil reprend son image.');
+    remplacer(pileVues[pileVues.length - 1]);
+  } else {
+    bouton.disabled = false;
+    toast('Le décor n’a pas pu changer. Réessaie dans un instant.', true);
+  }
+}
 
 /* ------------------------------------------------------------------ chargement */
 

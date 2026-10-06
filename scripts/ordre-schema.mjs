@@ -104,6 +104,9 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      élargi — les suites du Virage le posent par-dessus celui-ci. Après les
      deux, donc ; et rien n'en dépend : il prend le dernier rang à son tour. */
   'arenes',
+  /* La collection de stades : une table sur `users` (auth.sql) et une colonne
+     sur `user_wallet` (souvenirs.sql). Rien n'en dépend : dernier rang. */
+  'collection-stades',
   /* Le pronostic (6 octobre 2026) : une table clée sur `users.public_id`
      (auth.sql), et rien d'autre. Ses versements passent par le grand livre
      de quotidien.sql, qu'il ne modifie pas. Rien n'en dépend : le dernier
