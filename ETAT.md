@@ -2073,8 +2073,17 @@ Par ordre d'utilité.
    migration mécanique** : attribuer un geste, c'est décrire un caractère, et
    cela se décide personnage par personnage.
 
-4. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
-   suivent les deux clubs qui s'affrontent réellement. Conçu, pas commencé.
+4. ~~**Le derby automatique**~~ — **fait le 6 octobre 2026.** Deux joueurs
+   sur le jeu au même moment, l'un suivant chaque club d'un match du jour :
+   le bouton de l'accueil propose à chacun « Derby du jour · Un supporter de
+   Bâle est en ligne », qui mène à ce match en 1v1 classé, dans la tribune de
+   son club ; l'écran du duel le marque DERBY. Quand l'un entre en file,
+   l'autre lit « Derby ! · un supporter de Sion t'attend » (l'accueil relit
+   alors toutes les trente secondes). Jamais qui, rien en base : une marque
+   « vu sur le jeu » en mémoire, quatre minutes, posée par la lecture de
+   `/api/nvn/attentes`. Voir `derbyPour` dans `src/server/nvn/index.js`, et
+   `npm run derby:smoke`. Reste possible : prévenir hors de l'accueil (les
+   notifications, point 6).
 
 5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
    d'envoi. Conçu, pas commencé.
