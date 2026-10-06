@@ -12,8 +12,6 @@ qui est en dessous, ou seul. **Pages seules**, sans schéma ni redémarrage.
   courte (zoom ou grand texte du téléphone), la page défile jusqu'au dernier
   bouton au lieu de le couper. Rien ne change sur un téléphone ordinaire ni sur PC.
 - Contrôlé par `npm run barres:ui` (neuve) et `npm run pages`.
-- Après la mise en ligne, l'icône installée peut garder l'ancienne page une
-  fois : la fermer complètement et la rouvrir.
 
 ---
 
