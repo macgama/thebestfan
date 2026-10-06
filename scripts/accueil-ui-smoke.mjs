@@ -2765,17 +2765,48 @@ if (process.env.CAPTURE) {
         || (console.log('        ', JSON.stringify(posees)), false));
       check('sans lueur ni fondu : le contour reste celui du repos, le battement est net',
         posees.filtre === 'none' && /^0s/.test(posees.fondu));
-      check('il cligne des yeux de lui-même',
-        await jusqua(async () => (await lesBattements(page)).some((b) => !b.on), 8500)
-        || (console.log('        battements :', JSON.stringify(await lesBattements(page)),
-          JSON.stringify(await page.evaluate(() => ({ cache: document.hidden,
-            arme: battement !== null, calme: sansMouvement(), repos: paupieresDe,
-            visible: calques[devant].getAttribute('src') })))), false));
+      /* Ce qu'il faut pour comprendre un rouge s'écrit **après** lui :
+         `tout-tester` ne remonte que les lignes qui suivent un FAIL. Écrit
+         avant, il s'était perdu la première fois que ce contrôle a rougi sur
+         la passe complète — et seul, il passait. */
+      const cligne = await jusqua(async () => (await lesBattements(page)).some((b) => !b.on), 8500);
+      check('il cligne des yeux de lui-même', cligne);
+      if (!cligne) {
+        console.log('        battements :', JSON.stringify(await lesBattements(page)));
+        console.log('        état :', JSON.stringify(await page.evaluate(() => ({
+          cache: document.hidden, arme: battement !== null, calme: sansMouvement(),
+          repos: paupieresDe, visible: calques[devant].getAttribute('src'),
+          visages: window.__visages.map((v) => `${Math.round(v.t)} ${v.src.split('/').pop()}`) }))));
+      }
       const b = await lesBattements(page);
       const duree = b.length >= 2 ? b[1].t - b[0].t : -1;
       check(`le temps d’un battement (${Math.round(duree)} ms)`, duree >= 80 && duree <= 400);
       check('sur son repos et sur rien d’autre',
         b.filter((x) => x.on).every((x) => /\/neutre\.(?:webp|png)/.test(x.visage)));
+
+      /* Le salut d'arrivée n'a pas de dessin à lui : il pose le repos sur le
+         repos, et son retour aussi. Ces deux échanges, invisibles, réarmaient
+         la minuterie, et le premier battement de la session venait huit à
+         douze secondes après l'arrivée au lieu de trois à sept : c'est ce
+         qui faisait rougir le contrôle d'au-dessus une passe sur quatre. On
+         le rejoue juste après un battement, puisque le suivant est à trois
+         secondes au moins : la minuterie doit être la même avant, pendant et
+         après, et les calques doivent bien s'être croisés deux fois. */
+      await pause(400);
+      const salut = await page.evaluate(async () => {
+        const avant = { minuterie: battement, calque: devant };
+        await TBF.pose('salut', 500);
+        const pendant = { minuterie: battement, calque: devant };
+        await new Promise((r) => { setTimeout(r, 800); });
+        return { avant, pendant, apres: { minuterie: battement, calque: devant } };
+      });
+      const garde = salut.pendant.calque !== salut.avant.calque
+        && salut.apres.calque === salut.avant.calque
+        && salut.avant.minuterie !== null
+        && salut.pendant.minuterie === salut.avant.minuterie
+        && salut.apres.minuterie === salut.avant.minuterie;
+      check('le salut, sans dessin à lui, ne repousse pas son battement', garde);
+      if (!garde) console.log('        minuterie et calque :', JSON.stringify(salut));
 
       /* Un moment qui arrive les yeux fermés les rouvre au même instant :
          l'échange des calques et la levée des paupières se font ensemble. */

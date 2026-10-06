@@ -3901,11 +3901,18 @@ const sansMouvement = () => matchMedia('(prefers-reduced-motion: reduce)').match
  * arriveraient quand ils seraient déjà rouverts.
  */
 async function cligner() {
+  const repos = calques[devant].getAttribute('src');
+  /* **Le même visage ne remet pas le compte à zéro.** Un moment sans dessin
+     à lui — le salut d'arrivée, l'attente — pose le repos sur le repos :
+     rien ne change à l'écran. Réarmer à chaque échange repoussait le premier
+     battement deux fois, au salut puis à son retour : il venait huit à douze
+     secondes après l'arrivée, au lieu de trois à sept. Les yeux ouverts sur
+     ce repos-là, la minuterie qui tourne continue. */
+  if (repos === paupieresDe && battement !== null && !paupieres.classList.contains('on')) return;
   clearTimeout(battement);
   battement = null;
   paupieres.classList.remove('on');
   const tour = ++armement;
-  const repos = calques[devant].getAttribute('src');
   const src = window.TBF_ETATS.paupieres?.(repos) ?? null;
   paupieresDe = null;
   if (!src) return;
