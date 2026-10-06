@@ -240,8 +240,11 @@ let attente = null;
 /* Et les autres files, celles que l'alerte ne retient pas : le bandeau du
    monde les compte avec elle. */
 let autres = [];
+/* Le derby automatique : un supporter de l'autre club d'un match du jour est
+   en ligne (`derbyPour`, serveur). */
+let derby = null;
 app.get('/api/nvn/attentes', (_q, s) => s.json({ attentes: [...(attente ? [attente] : []), ...autres],
-                                                 alerte: attente }));
+                                                 alerte: attente, derby }));
 
 /* Le relevé d'événements, tel que la base le porte. L'accueil y lit le nom du
    buteur et sa minute — sans appel à l'API, le relevé du direct les a déjà
@@ -2267,6 +2270,64 @@ if (process.env.CAPTURE) {
       && u.searchParams.get('camp') === '1'
       || (console.log('        il mène à :', href), false));
   }
+  attente = null;
+}
+
+/* ================================= le derby automatique
+
+   Un supporter de Bâle est en ligne, Sion–Bâle se joue aujourd'hui, et le
+   joueur suit Sion : le bouton propose le derby, sans dire qui. Puis, quand
+   l'autre est entré en file, il dit qu'un supporter de Bâle attend. Et une
+   file ailleurs, sur un match qui n'est pas le sien, ne passe pas devant. */
+
+{
+  direct = null;
+  const lire = async (page) => page.evaluate(() => {
+    const e = document.getElementById('entrer');
+    return { texte: e.textContent.replace(/\s+/g, ' ').trim(), href: e.getAttribute('href'),
+      ton: e.dataset.ton ?? '' };
+  });
+  derby = {
+    fixtureId: 7, format: '1v1', mode: 'classe', monCamp: 0,
+    clubs: [{ id: 85, name: 'Sion' }, { id: 91, name: 'Bâle' }],
+  };
+  /* Une file sur un autre match, d'aucun club suivi : l'alerte ordinaire. */
+  attente = {
+    fixtureId: 2, format: '2v2', attendus: 2, camps: [1, 0], mode: 'classe',
+    clubs: [{ id: 1, name: 'Lyon' }, { id: 2, name: 'Nantes' }],
+    mien: false, presents: 1, campQuiManque: 1, manque: 2,
+  };
+  let page = await ouvrir();
+  await jusqua(async () => /Derby/.test((await lire(page)).texte));
+  let b = await lire(page);
+  check('un derby du jour se propose sur le bouton',
+    /Derby du jour/.test(b.texte) && /Un supporter de Bâle est en ligne/.test(b.texte)
+    || (console.log('        il dit :', JSON.stringify(b)), false));
+  check('en violet, sans nommer personne', b.ton === 'violet' && !/Derbyste/.test(b.texte));
+  {
+    const u = new URL(b.href, 'http://x');
+    check('et il mène au match, en 1v1, dans ma tribune', u.pathname === '/duel-nvn'
+      && u.searchParams.get('match') === '7' && u.searchParams.get('format') === '1v1'
+      && u.searchParams.get('camp') === '0'
+      || (console.log('        il mène à :', b.href), false));
+  }
+
+  /* L'autre a appuyé : il attend en face, sur un match de mes clubs. */
+  derby = null;
+  attente = {
+    fixtureId: 7, format: '1v1', attendus: 1, camps: [0, 1], mode: 'classe',
+    clubs: [{ id: 85, name: 'Sion' }, { id: 91, name: 'Bâle' }],
+    mien: true, presents: 1, campQuiManque: 0, manque: 1, derby: true, monCamp: 0,
+  };
+  page = await ouvrir();
+  await jusqua(async () => /Derby/.test((await lire(page)).texte));
+  b = await lire(page);
+  check('quand il attend, le bouton dit qu’un supporter de Bâle m’attend',
+    /Derby !/.test(b.texte) && /un supporter de Bâle t’attend/.test(b.texte)
+    || (console.log('        il dit :', JSON.stringify(b)), false));
+  check('et il mène à ma tribune', new URL(b.href, 'http://x').searchParams.get('camp') === '0'
+    || (console.log('        il mène à :', b.href), false));
+  derby = null;
   attente = null;
 }
 
