@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**L'administration lisible** (branche `claude/sons-fid6tr`, 6 octobre 2026,
+vu par Gaël sur `/admin`). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/nav.js` : sur `/admin`, la photo de tribune et son voile passaient
+  devant la page ; les chiffres de l'aperçu, les tableaux et le titre étaient
+  invisibles. L'administration retrouve son fond sombre, sans photo. Rien ne
+  change sur les autres pages. Contrôlé par `npm run admin:ui` (un contrôle
+  neuf).
+
+**Aucun schéma ni réglage.** Déposée seule, la page part sans redémarrage
+(fichier statique). Si l’ancienne page reste affichée, un rechargement suffit.
+
+---
+
 **Les seuils de division recalés depuis l'administration** (branche
 `claude/seuils-division-eahsmj`, 6 octobre 2026, demandé par Gaël). Il se
 dépose avec ce qui est en dessous, ou seul.
