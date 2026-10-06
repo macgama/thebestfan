@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Les barres du téléphone** (branche `claude/affichage-mobile-z3oflp`,
+6 octobre 2026, signalé par Gaël sur son Samsung S24+). Il se dépose avec ce
+qui est en dessous, ou seul. **Pages seules**, sans schéma ni redémarrage.
+
+- Les 24 pages (`public/*.html`) : sur Android, un script en tête retire
+  `viewport-fit=cover`, et Chrome tient la page entre la barre d'état et les
+  boutons du bas, dans le navigateur comme depuis l'icône. iPhone ne change pas.
+- Accueil, Fanzzy et sa fiche, Virage, duel, bienvenue : ils ne descendent plus
+  sous 560 px de haut (`--ecran-min`, `public/ui.css`). Dans une fenêtre plus
+  courte (zoom ou grand texte du téléphone), la page défile jusqu'au dernier
+  bouton au lieu de le couper. Rien ne change sur un téléphone ordinaire ni sur PC.
+- Contrôlé par `npm run barres:ui` (neuve) et `npm run pages`.
+
+---
+
 **Les bruitages du duel** (branche `claude/sons-fid6tr`, 6 octobre 2026,
 demandé par Gaël, synthèse choisie par lui). Il se dépose avec ce qui est en
 dessous, ou seul. **Pages seules**, sans schéma ni redémarrage.
