@@ -74,5 +74,37 @@
     return `<span class="${classe} r-${s.rar ?? 'commune'}">${illustration(s.id)}</span>`;
   }
 
-  window.TBF_STUFF = { adresse, illustration, pastille, gain, illustrationGain };
+  const echapper = (t) => String(t ?? '').replace(/[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+  /**
+   * **Ce que le Fanzzy porte**, accroché à côté de lui : ses deux pièces du
+   * deck, chacune dans le cadre de sa rareté, l'une sous l'autre.
+   *
+   * Pourquoi à côté et pas sur lui : les Fanzzy sont des rendus en volume, les
+   * pièces des objets détourés éclairés autrement, et le cou ou la main ne sont
+   * jamais au même endroit d'une expression à l'autre. Posée sur le
+   * personnage, l'écharpe se lisait comme un autocollant (maquette du
+   * 6 octobre 2026, `equipement/porte-a-cote-ou-colle.jpg`). Accrochées comme
+   * des insignes, elles se lisent comme ce qu'elles sont : son sac.
+   *
+   * `pieces` : `[{ id, nom, rar }]`, tel que le serveur les sert
+   * (`piecesPortees`). Deux au plus. Rien à porter : une chaîne vide, et la
+   * page n'a rien à cacher. La page décide de la place (`.tbf-porte` est en
+   * absolu dans la boîte qu'elle lui donne) et de la taille (`--piece`).
+   */
+  function porte(pieces, classe = 'tbf-porte') {
+    const l = (Array.isArray(pieces) ? pieces : []).filter((s) => s?.id).slice(0, 2);
+    if (!l.length) return '';
+    const noms = l.map((s) => echapper(s.nom ?? s.id)).join(', ');
+    return `<span class="${classe}" role="img" aria-label="Porte : ${noms}">${
+      l.map((s) => `<span class="tbf-piece r-${echapper(s.rar ?? 'commune')}" title="${echapper(s.nom ?? '')}">${
+        illustration(echapper(s.id))}</span>`).join('')}</span>`;
+  }
+
+  /** La clé d'un sac : sert aux pages à ne redessiner que ce qui a changé. */
+  const cleSac = (pieces) => (Array.isArray(pieces) ? pieces : []).slice(0, 2)
+    .map((s) => s?.id ?? '').join('+');
+
+  window.TBF_STUFF = { adresse, illustration, pastille, gain, illustrationGain, porte, cleSac };
 })();

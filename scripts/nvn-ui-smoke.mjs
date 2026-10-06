@@ -1817,6 +1817,33 @@ check('la corde a bougé', bouge);
     || (console.log('        ', dessin.affiche, dessin.afficheBase), false));
 }
 
+/* **Ce qu'il porte, accroché à côté de lui** : le Sédunois a mis les
+   Jumelles à son Choriste ; la Bâloise n'a rien mis au sien. Chacun voit le
+   sac du Fanzzy de son côté et celui d'en face, et un Fanzzy sans pièce n'a
+   rien d'accroché — pas un cadre vide. */
+{
+  const lire = (P) => P.page.evaluate(() => {
+    const ids = (id) => [...document.querySelectorAll(`#${id} .tbf-porte .tbf-piece img`)]
+      .map((i) => /\/img\/stuff\/([^.]+)\./.exec(i.getAttribute('src'))?.[1] ?? '?');
+    const e = S.vue.equipes.flat().find((x) => x.sac?.length);
+    return { moi: ids('fzMoi'), eux: ids('fzEux'), servi: e?.sac ?? null,
+      vide: document.querySelectorAll('#fzMoi .tbf-porte, #fzEux .tbf-porte').length };
+  });
+  await jusqua(async () => (await lire(A)).moi.length > 0, 4000);
+  const a = await lire(A);
+  const b = await lire(B);
+  if (process.env.SHOT) {
+    await A.page.screenshot({ path: process.env.SHOT + '/duel-sac-moi.png' });
+    await B.page.screenshot({ path: process.env.SHOT + '/duel-sac-eux.png' });
+  }
+  check(`la vue sert le sac de chacun, avec la rareté (${JSON.stringify(a.servi)})`,
+    a.servi?.[0]?.id === 'jumelles' && a.servi[0].rar === 'commune' && a.servi[0].nom === 'Jumelles');
+  check(`dans mon arène, mes Jumelles sont accrochées à mon Fanzzy (${a.moi.join(',')})`,
+    a.moi.join() === 'jumelles' && a.eux.length === 0 && a.vide === 1);
+  check(`chez celui d’en face, elles sont accrochées au mien, de son côté à lui (${b.eux.join(',')})`,
+    b.eux.join() === 'jumelles' && b.moi.length === 0);
+}
+
 /* Le bandeau d'annonce, en partie : sous les deux rangées du HUD, hors des
    deux boutons — voir la préparation. */
 {
