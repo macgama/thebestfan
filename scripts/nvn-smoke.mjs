@@ -477,7 +477,7 @@ check('un entraînement ne compte pas',
   /* **Le répertoire est une règle, pas une suggestion de la page.** Sans ce
      refus, un client modifié demanderait le chant le plus rentable des
      dix-neuf à chaque fois, et le tirage du répertoire ne servirait à rien. */
-  const dehors = ORDRE.find((id) => !solo2.repertoire.includes(id));
+  const dehors = ORDRE.find((id) => !solo2.offreDe(solo2.joueurs.get('0-0')).includes(id));
   let refuse = null;
   try {
     solo2.joueurs.get('0-0').breath = 100;
@@ -509,6 +509,45 @@ check('un entraînement ne compte pas',
     check(`le chant de son geste le dit, avec sa famille (${fz.cri.gest}, ${fz.type})`,
       ev1?.sien === true && ev1.famille === fz.type);
     check('un autre chant ne le dit pas', ev2 && !('sien' in ev2) && !('famille' in ev2));
+  }
+
+  /* **Son chant est toujours dans sa main, au milieu.** Le répertoire tire cinq
+     chants sur vingt-six : sans cette place, le geste du Fanzzy n'y tombait
+     qu'une fois sur cinq. La main reste de cinq cartes, et elle suit le Fanzzy
+     en tribune. */
+  {
+    let toujours = true, cinq = true, milieu = true, remplace = 0, refuse = true;
+    for (let k = 0; k < 40; k++) {
+      const d = duel(1, 'entrainement', t, `offre-${k}`);
+      const j = d.joueurs.get('0-0');
+      const geste = j.fanzzy[j.actif].cri.gest;
+      const main = d.vue('0-0').chants;
+      cinq &&= main.length === 5 && new Set(main.map((c) => c.id)).size === 5;
+      toujours &&= main.some((c) => c.gest === geste);
+      milieu &&= main[2]?.gest === geste;
+      if (!d.repertoire.some((id) => CHANTS[id].gest === geste)) {
+        remplace++;
+        // Le chant commun qui lui a laissé sa place n'est plus dans sa main.
+        const parti = d.repertoire.find((id) => !main.some((c) => c.id === id));
+        j.breath = 100;
+        try { d.chanter('0-0', { cardId: parti, taps: [] }, t); refuse = false; } catch { /* refusé */ }
+      }
+    }
+    check('le chant de son Fanzzy est toujours dans sa main', toujours);
+    check('qui reste de cinq cartes, sans doublon', cinq);
+    check('et il y tient la place du milieu', milieu);
+    check(`quand le tirage ne l'offrait pas, il prend une place, et celle-ci n'est plus jouable (${remplace} fois sur 40)`,
+      remplace > 0 && refuse);
+
+    // Il suit le Fanzzy en tribune.
+    const d = duel(1, 'entrainement', t, 'offre-suit');
+    const j = d.joueurs.get('0-0');
+    const autre = j.fanzzy.findIndex((f) => f.cri.gest !== j.fanzzy[0].cri.gest);
+    if (autre > 0) {
+      j.actif = autre;
+      check(`et il suit le Fanzzy en tribune (${j.fanzzy[autre].cri.gest})`,
+        d.vue('0-0').chants[2].gest === j.fanzzy[autre].cri.gest);
+    }
   }
 
   /* **Le coût et la poussée viennent de la carte.** C'est toute la décision

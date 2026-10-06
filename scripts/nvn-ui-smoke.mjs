@@ -1229,6 +1229,42 @@ check(`ils ne portent pas tous le même geste (${new Set(ouvert.chants.map((c) =
 check('ni le même prix',
   new Set(ouvert.chants.map((c) => c.cout)).size >= 2);
 
+/* **Le chant de son geste**, au milieu, porte le sceau de sa famille : entier,
+   à la couleur de la famille, sans toucher le coût. */
+{
+  const sien = await A.page.evaluate(() => {
+    const cartes = [...document.querySelectorAll('#chants [data-chant]')];
+    const i = cartes.findIndex((c) => c.hasAttribute('data-sien'));
+    const c = cartes[i];
+    const s = c?.querySelector('.carte-sien');
+    const r = s?.getBoundingClientRect();
+    const cout = c?.querySelector('.tbf-carte-cout')?.getBoundingClientRect();
+    // Ce qui est réellement au centre du sceau : lui, et pas une voisine.
+    const dessus = r ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+    return { i, n: cartes.filter((x) => x.hasAttribute('data-sien')).length,
+      geste: S.vue.moi.sienGeste, gesteCarte: S.vue.chants[i]?.gest,
+      famille: S.vue.chants[i]?.sien?.famille ?? null,
+      actif: (S.vue.moi.fanzzy ?? []).find((f) => f.actif)?.type ?? null,
+      vu: Boolean(r && r.width > 0 && getComputedStyle(s).display !== 'none'),
+      chemin: s?.querySelector('path')?.getAttribute('d') ?? '',
+      entier: Boolean(dessus && s.contains(dessus)),
+      separe: Boolean(r && cout && (r.left >= cout.right || r.right <= cout.left)),
+      label: c?.getAttribute('aria-label') ?? '' };
+  });
+  check(`le chant du geste de son Fanzzy est au milieu, et il est seul marqué (${sien.geste}, place ${sien.i + 1})`,
+    sien.i === 2 && sien.n === 1 && sien.gesteCarte === sien.geste && sien.famille === sien.actif
+    || (console.log('        ', JSON.stringify(sien)), false));
+  check('il porte le sceau de sa famille, entier, sans toucher le coût',
+    sien.vu && sien.chemin.length > 10 && sien.entier && sien.separe
+    || (console.log('        ', JSON.stringify(sien)), false));
+  check(`et il le dit à qui ne le voit pas (« ${sien.label} »)`, /le geste de ton Fanzzy$/.test(sien.label));
+  if (process.env.CAPTURE) {
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    await A.page.screenshot({ path: join(tmpdir(), 'nvn-chants.png') });
+  }
+}
+
 /* ------------------------------------------ les Fanzzy ont un visage */
 
 /**
