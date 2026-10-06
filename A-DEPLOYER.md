@@ -1,5 +1,30 @@
 # À déposer sur Infomaniak
 
+**Les compétitions et les calendriers à jour tout seuls** (branche
+`claude/rythme-foot-uwpqfu`, fusionnée dans `main` le 6 octobre 2026).
+Serveur seul, **aucun schéma ni réglage**. Un redémarrage, hors d'un match en
+direct où des joueurs sont au Virage ou en duel.
+
+- `src/server/football/inventaire.js` (neuf), `poller.js`, `routes.js` :
+  l'inventaire des compétitions (`souvenir_leagues`), que seul
+  `scripts/coverage.mjs` lancé à la main tenait à jour, passe désormais une
+  fois par jour, cinq minutes après le démarrage puis toutes les vingt-quatre
+  heures, pour un appel. La saison nouvelle d'une compétition arrive donc en
+  base sans toi, et le télétexte y bascule à sa date de début. Une saison
+  nouvelle reprend l'interrupteur et le palier réglés dans /admin pour la
+  saison d'avant ; une ligne déjà connue garde les siens (le script, lui,
+  réécrivait le palier).
+- Les calendriers des clubs suivis se relisent aussi deux minutes après chaque
+  démarrage (trois appels par club suivi) : leur tour de vingt-quatre heures
+  ne passait jamais sur un serveur redémarré chaque jour.
+- `scripts/coverage.mjs` reste, pour lire le rapport ou forcer un passage.
+  Contrôlé par `npm run inventaire:smoke` (suite neuve).
+
+**Après le redémarrage** : au bout de cinq minutes, le journal dit
+`[foot] competitions : N saison(s) nouvelle(s)` s'il en a trouvé.
+
+---
+
 **Les décisions de Gaël du 6 octobre au matin** (branche
 `claude/project-thread-iatg2m`, fusionnée dans `main` le 6 octobre 2026).
 Quatre changements, qui partent ensemble au prochain build :

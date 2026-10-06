@@ -700,7 +700,9 @@ Gaël :
 
 ## Étape 6 — L'inventaire des compétitions
 
-Une seule fois, et à chaque intersaison :
+Le serveur la tient à jour seul : cinq minutes après chaque démarrage, puis
+une fois par jour (`src/server/football/inventaire.js`). Le script reste pour
+lire le rapport, ou remplir la table tout de suite sur une base neuve :
 
 ```bash
 node --env-file=.env scripts/coverage.mjs
