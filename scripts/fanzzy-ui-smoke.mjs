@@ -2419,15 +2419,18 @@ amputer = null;
 
   const m = await court.evaluate(async () => {
     const app = document.getElementById('app');
-    /* On va au bas de la colonne, comme le ferait un doigt. */
+    /* On va au bas de la colonne, comme le ferait un doigt. Sous
+       `--ecran-min` (« Les barres du téléphone », ui.css), c'est la page
+       elle-même qui défile, la colonne gardant sa hauteur plancher. */
     app.scrollTop = app.scrollHeight;
+    scrollTo(0, document.scrollingElement.scrollHeight);
     await new Promise((r) => setTimeout(r, 200));
     const bt = document.querySelector('.actions .bt')
       ?? document.querySelector('.actions > *');
     const r = bt?.getBoundingClientRect();
     return {
       trouve: Boolean(r),
-      defile: app.scrollHeight > app.clientHeight + 1,
+      defile: app.scrollHeight > app.clientHeight + 1 || scrollY > 0,
       dansLEcran: r ? (r.top >= -1 && r.bottom <= innerHeight + 1) : false,
       bas: r ? Math.round(r.bottom) : null, ecran: innerHeight,
     };
