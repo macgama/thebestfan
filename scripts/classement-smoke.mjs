@@ -20,7 +20,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    fenêtre de saison et le grand livre des divisions, et une saison laissée par
    une autre suite (lancée hier, finie avant-hier) déplacerait chaque nombre
    du classement « saison ». Aucune n'a de clé étrangère vers `users`. */
-await raw.query(`DROP TABLE IF EXISTS recompenses, missions_jour, compteurs_jour, user_nouveautes,
+await raw.query(`DROP TABLE IF EXISTS pronostics, recompenses, missions_jour, compteurs_jour, user_nouveautes,
   saisons, parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
