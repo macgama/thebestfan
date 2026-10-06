@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Les bruitages du duel** (branche `claude/sons-fid6tr`, 6 octobre 2026,
+demandé par Gaël, synthèse choisie par lui). Il se dépose avec ce qui est en
+dessous, ou seul. **Pages seules**, sans schéma ni redémarrage.
+
+- `public/son.js` : 63 bruitages synthétisés, un par carte d'action (39) et
+  un par épreuve (24), dans la fenêtre de volume du jeu. Aucun fichier.
+- `public/action-art.js` : une carte qui part fait entendre le sien, chez les
+  deux joueurs, au duel et au Virage (au lieu du claquement commun), même
+  sous le calme des animations.
+- `public/geste.js` : une épreuve qui s'ouvre fait entendre le sien, au duel,
+  au Virage et en répétition ; ceux des épreuves de rythme se taisent avant
+  le premier temps.
+- Contrôlé par `npm run son:smoke` (13 contrôles neufs) et le banc.
+  À l'écoute : https://claude.ai/artifact/7vEh8GY8qpckkdKxfU1kWt
+
+---
+
 **La tribune enregistrée** (branche `claude/sons-fid6tr`, 6 octobre 2026,
 les sons gardés par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
 **Serveur**, sans schéma : redémarrer, hors d'un match en direct.
