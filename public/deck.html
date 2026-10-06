@@ -37,36 +37,28 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    lui-même, en plus de celle que nav.js réserve déjà pour la navigation. */
 .corps{flex:1;padding-bottom:calc(var(--barre) + 12px)}
 
-/* **Deux portes, et plus de rail.** Le haut de l'écran reprenait le rail du
-   classeur — MON FANZZY, CLASSEUR, DECK —, DECK allumé. Sur /fanzzy, DECK
-   n'est plus un onglet mais une porte posée à côté du rail, avec la flèche ↗ :
-   un onglet qui emmène ailleurs ment sur ce qu'il fait. Ici, ce sont les deux
-   autres qui mentaient, puisque tous deux quittent la page. Ils deviennent
-   donc deux portes, avec la même flèche (`.tbf-ico-lien`, ui.css), et le rail
-   s'en va : un rail d'un seul onglet, allumé, ne dirait que le nom de l'écran,
-   et la barre du haut le dit déjà. Les onglets de cette page sont ceux qui
-   restent ici — TRIBUNE et CARTES, juste dessous.
+/* **Le rail de la section, le même que sur /fanzzy.** Les deux portes
+   MON FANZZY et CLASSEUR, en béton pleine largeur, et l'état PRÊT seul sur la
+   ligne d'en dessous, faisaient du deck le seul écran de la section avec un
+   autre haut : on y lisait une autre application. Le rail reprend donc ici
+   exactement celui de /fanzzy — même creux, mêmes icônes, même plaque DECK à
+   droite —, et seul ce qui est allumé change : la plaque DECK, au bleu de ce
+   qu'on possède. Ses deux onglets sont des liens, éteints, comme l'est là-bas
+   l'onglet de l'écran qu'on ne regarde pas.
 
-   En béton, comme la porte du deck sur /fanzzy : le rail TRIBUNE / CARTES
-   allume déjà une plaque bleue, et une porte bleue à côté laisserait croire
-   qu'elle aussi est « ici ». Côte à côte à parts égales, avec moins de marge
-   intérieure que la plaque commune : « MON FANZZY » doit tenir entier dans sa
-   moitié de colonne sur un téléphone de 320 px. */
-.portes{display:flex;gap:8px}
-.portes .tbf-plaque{flex:1 1 0;min-width:0;padding-inline:12px;white-space:nowrap}
+   La plaque est calée sur le rail, comme sa sœur de /fanzzy : sa face fait la
+   hauteur du rail moins sa tranche. Elle n'est pas un bouton (`span`,
+   `aria-current`) : on y est. */
+.rail{display:flex;align-items:flex-start;gap:8px;flex:none}
+.rail .nav{flex:1;min-width:0}
+.rail .ici{flex:none;min-height:49px;padding:0 16px;display:flex;align-items:center;cursor:default}
+.rail .tbf-onglet svg{width:15px;height:15px;display:inline-block;vertical-align:-3px;margin-right:6px}
 
-/* Le sous-titre « Trois Fanzzy, dix cartes » est parti : les deux onglets
-   juste en dessous disent déjà « TRIBUNE 1/2 » et « CARTES 10/10 », et le
-   dire deux fois poussait le deck sous la ligne de flottaison du téléphone.
-   Reste l'état, rangé à droite. */
-.top{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:14px 16px 6px}
-/* L'état du deck, en étiquette (`.tbf-etiquette`, dans ui.css) : c'est une
-   valeur et non une action, donc la matière du jeu sans tranche ni
-   enfoncement. Il était écrit en neuf pixels et demi, en couleur à même la
-   photo de tribune, sans rien derrière — illisible au soleil. Le ton dit
-   l'état : vert quand le deck est prêt, rouge tant qu'il manque quelque
-   chose. Il est posé par `rendre`, qui seul sait lequel. */
-.etat{letter-spacing:.12em}
+/* L'état du deck, en sticker dans la barre du bas, à côté d'ENREGISTRER :
+   c'est là que se décide l'envoi, et c'est là qu'on regarde s'il manque
+   quelque chose. Le ton dit l'état — vert prêt, rouge incomplet —, posé par
+   `rendre`, qui seul sait lequel. */
+.etat{flex:none;--rot:-2deg;letter-spacing:.1em}
 
 
 /* Onglets, filtres, boutons : le même matériau que le classeur. Un socle dur
@@ -84,33 +76,35 @@ h2{margin:20px 16px 9px}
    entre au coup d'envoi », « cinq visibles à la fois », le souffle moyen. Un
    fil qui remplit la ligne ne laisse plus de place à côté du titre, et un
    texte posé à même la photo de tribune ne se lit pas au soleil. */
-.chapo{display:flex;align-items:baseline;gap:10px;margin:0 14px 10px;padding:8px 11px;
-  border-radius:9px;background:var(--panneau);font-size:11.5px;line-height:1.45;
-  box-shadow:inset 0 0 0 1px rgba(242,238,228,.07)}
+.chapo{display:flex;align-items:center;gap:10px;margin:0 14px 12px;padding:8px 11px;
+  font-size:12px;line-height:1.45}
 .chapo span{flex:1;min-width:0;opacity:.88}
 /* Le souffle moyen : la seule mesure de la page, donc la seule chose qui se
    détache sous un titre de section. **Par la graisse, plus par l'or** :
    l'or ne s'écrit plus qu'en grand texte (arbitrage du 2 octobre 2026), et
    en douze pixels il tombait sous 4,5:1 au plein jour. */
 .chapo b{flex:none;font-family:var(--banner);font-weight:700;font-size:12px;
-  letter-spacing:.1em;color:var(--craie);white-space:nowrap}
+  letter-spacing:.08em;white-space:nowrap;--rot:2deg}
 
 /* ------------------------------------------------------------- tribune */
 
-.rang{margin:0 14px 13px;border:0;border-radius:13px;overflow:hidden;
-  background:linear-gradient(150deg,#171D25,#0D1116);
-  box-shadow:inset 0 0 0 1px rgba(242,238,228,.1),0 4px 0 rgba(0,0,0,.55),
-             0 7px 14px rgba(0,0,0,.4)}
-/* Le titulaire entre au coup d'envoi : c'est la seule décision de cet écran
-   qui change le début du duel, et elle doit se voir sans qu'on lise le
-   petit cartouche. */
-.rang.titulaire{box-shadow:inset 0 0 0 2px rgba(245,195,59,.55),0 4px 0 #6B4E0A,
-  0 0 22px rgba(245,195,59,.14),0 7px 14px rgba(0,0,0,.4)}
-/* Le panneau seul, sans flou d'arrière-plan : `--panneau` est opaque, et le
-   flou recalculait la photo à chaque image pour un texte qu'il ne rendait pas
-   plus lisible. */
-.rang.vide{background:var(--panneau);
-  box-shadow:inset 0 0 0 2px rgba(242,238,228,.14),0 4px 0 rgba(0,0,0,.4)}
+/* **Un rang est une bâche du jeu** (`.pan`, posé dans le balisage) : le
+   béton grainé et son filet, comme les panneaux du profil et de la boutique.
+   Il avait sa propre matière — un dégradé lisse cerné d'un liseré clair —,
+   la seule de la section, et c'est elle qui faisait lire « un autre écran ».
+
+   Le titulaire se marque **au vert de son sticker**, plus à l'or : l'or ne
+   dit que trois choses (acheter, une récompense prête, le légendaire —
+   arbitrage du 2 octobre 2026), et un cadre doré autour d'un Fanzzy commun
+   le faisait lire légendaire. Le cadre et le sticker TITULAIRE disent
+   maintenant la même chose, de la même couleur. */
+.rang{margin:0 14px 14px;overflow:hidden;border-radius:10px;
+  box-shadow:0 4px 0 rgba(0,0,0,.55),0 7px 14px rgba(0,0,0,.4)}
+.rang.titulaire{border-color:var(--vert-clair);
+  box-shadow:inset 0 0 0 1px var(--vert-clair),0 4px 0 var(--vert-fonce),0 7px 14px rgba(0,0,0,.4)}
+/* Le rang libre est un creux en pointillé, comme la case vide du classeur
+   et de l'album : une place qui attend, pas un panneau éteint. */
+.rang.vide{background:rgba(4,7,11,.72);border:2px dashed rgba(242,238,228,.3);box-shadow:none}
 .rang .tete{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;position:relative}
 .rang .tete::before{content:"";position:absolute;inset:0;opacity:.16;pointer-events:none;
   background:radial-gradient(70% 120% at 12% 50%,var(--tc,#8257DA),transparent 62%)}
@@ -204,40 +198,59 @@ h2{margin:20px 16px 9px}
 .rang .chevron{position:relative;opacity:.3;font-size:18px;flex:none}
 
 .rang .pieces{display:flex;gap:7px;padding:0 12px 12px}
-.piece{flex:1;border:0;border-radius:10px;padding:10px 8px 9px;min-height:64px;
+/* **Les deux emplacements sont des creux**, comme ceux du rail : on y pose
+   quelque chose. Ils étaient violets — la couleur des gens dans le jeu, et
+   celle de l'épique —, sans rien qui le justifie ici. Plein, l'emplacement
+   garde le creux et montre la pièce sur son sticker de craie, comme à la
+   boutique (voir `.piece .tbf-piece`) ; vide, il est en pointillé. */
+.piece{flex:1;border:0;border-radius:9px;padding:9px 9px;min-height:64px;
   display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer;text-align:center;
-  background:rgba(0,0,0,.28);color:inherit;font-family:inherit;
-  box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.16),0 3px 0 rgba(0,0,0,.5);
-  transition:transform .1s,box-shadow .1s}
-.piece:active{transform:translateY(3px);box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.16)}
-.piece.plein{background:rgba(130,87,218,.14);
-  box-shadow:inset 0 0 0 2px rgba(130,87,218,.6),0 3px 0 #2E1D53}
-.piece.plein:active{box-shadow:inset 0 0 0 2px rgba(130,87,218,.6)}
+  background:rgba(4,7,11,.62);color:inherit;font-family:inherit;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.6),0 0 0 1px rgba(242,238,228,.08);
+  transition:transform .1s}
+.piece:active{transform:translateY(2px)}
+.piece:not(.plein){box-shadow:none;outline:1.5px dashed rgba(242,238,228,.28);outline-offset:-1.5px}
 /* L'emplacement passe en ligne : l'objet à gauche, le texte à droite. En
    colonne, la pastille poussait le nom et l'effet hors du bouton. */
 .piece{flex-direction:row;align-items:center;text-align:left;gap:9px}
-.piece .tbf-piece{width:40px;height:40px;border-radius:10px}
+.piece .tbf-piece{width:42px;height:42px;border-radius:6px}
+/* **La pièce sur son sticker de craie**, la forme FAIT MAIN de l'objet
+   (`.tbf-objet`, ui.css) que la boutique et le sac montrent déjà : la craie
+   éclaircie, la lueur de la rareté au centre, le bord craie et le cerne
+   d'encre. La pastille sombre cerclée d'or n'existait que sur cet écran et
+   dans les arènes ; ui.css le note, « le lot qui reprendra le deck les
+   fondra en une ». On garde la classe (les arènes la lisent) et l'on peint
+   la face ici, dans les deux endroits du deck qui la montrent. */
+:is(.piece,.choix) .tbf-piece{
+  background:linear-gradient(rgba(242,238,228,.45),rgba(242,238,228,.45)),
+    radial-gradient(closest-side,var(--rc,#C2CAD6),transparent),var(--craie);
+  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 3px 0 3.5px rgba(7,9,12,.6)}
+:is(.piece,.choix) .tbf-piece .illu{filter:drop-shadow(1px 2px 0 rgba(7,9,12,.55))}
 .piece .txt{min-width:0}
-.piece b{font-family:var(--banner);font-size:11.5px;letter-spacing:.03em;display:block}
+.piece b{font-family:var(--banner);font-size:12.5px;letter-spacing:.03em;display:block}
 /* `.txt span` et non `span` : la règle prenait aussi la boîte du texte et la
    pastille de l'objet, qui sont des `span` elles aussi — la phrase tombait à
    la moitié de la moitié, et le dessin de la pièce à 50 %. */
 .piece .txt span{font-size:11px;opacity:.88;line-height:1.35;display:block}
 /* L'emplacement vide garde le même gabarit que l'emplacement plein : sans ce
    creux, les deux boutons d'un même Fanzzy n'avaient pas la même hauteur. */
-.piece .creux{width:40px;height:40px;flex:none;border-radius:10px;font-size:19px;
-  display:flex;align-items:center;justify-content:center;opacity:.3;
-  box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.16)}
+.piece .creux{width:42px;height:42px;flex:none;border-radius:6px;font-size:20px;
+  display:flex;align-items:center;justify-content:center;font-family:var(--banner);
+  color:rgba(242,238,228,.6);box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.22)}
 .rang .effet{padding:0 13px 12px;font-size:11px;opacity:.88;line-height:1.65}
 /* « Effet » se détache par la graisse : en onze pixels, l'or ne tenait pas
    au soleil (arbitrage du 2 octobre 2026). */
 .rang .effet em{font-style:normal;font-weight:700;color:var(--craie)}
-.rang .actions{display:flex;gap:7px;padding:0 12px 12px}
+.rang .actions{display:flex;justify-content:flex-end;gap:8px;padding:0 12px 14px}
 /* TITULARISER et RETIRER sont des plaques (`.tbf-plaque`) : la même matière
    et le même enfoncement que tous les boutons du jeu. Il ne reste ici que leur
    mise en page — deux plaques qui se partagent la largeur du rang, plus
    basses qu'une action d'écran. RETIRER est au rouge, comme aux amis. */
-.mini{flex:1;padding:10px 8px;min-height:44px;font-size:12px;letter-spacing:.1em}
+/* **À droite, à leur taille**, et non plus à pleine largeur : RETIRER
+   barrait chaque rang d'une bande rouge de toute la colonne, la chose la plus
+   visible de l'écran pour l'action qu'on fait le moins. Une plaque rouge à sa
+   taille dit la même chose sans crier. */
+.mini{flex:none;padding:9px 16px;min-height:44px;font-size:12px;letter-spacing:.1em}
 
 /* --------------------------------------------------------------- cartes */
 
@@ -367,9 +380,7 @@ h2{margin:20px 16px 9px}
    reste quoi ? » */
 /* Sur un panneau, et non plus sur un voile à 4 % : c'était du texte posé à
    même la photo de tribune. */
-.ouJoue{margin:2px 14px 10px;padding:9px 11px;border-radius:9px;
-  background:var(--panneau);font-size:11.5px;line-height:1.45;
-  box-shadow:inset 0 0 0 1px rgba(242,238,228,.07)}
+.ouJoue{margin:4px 14px 10px;padding:9px 11px;font-size:12px;line-height:1.45}
 .ouJoue b{font-family:var(--banner);font-size:14px;color:var(--craie);
   font-variant-numeric:tabular-nums}
 .ouJoue .maigre{display:block;margin-top:5px;color:var(--flare)}
@@ -406,8 +417,7 @@ h2{margin:20px 16px 9px}
    qui revient, et une réponse qu'il faut aller chercher n'est pas une
    réponse. Discrète par sa place, plus par sa transparence : à 60 % sur la
    photo, elle ne se lisait qu'à l'ombre. */
-.note{margin:0 14px 10px;padding:9px 11px;border-radius:9px;background:var(--panneau);
-  font-size:11.5px;line-height:1.6;box-shadow:inset 0 0 0 1px rgba(242,238,228,.07)}
+.note{margin:0 14px 10px;padding:9px 11px;font-size:12px;line-height:1.6}
 
 /* L'intitulé de famille du catalogue. Il était écrit **dans la couleur de la
    famille, à même la photo de tribune** : sur les lumières floues du stade, le
@@ -423,8 +433,9 @@ h2{margin:20px 16px 9px}
   color:var(--craie)}
 .fam .trait{flex:1;height:2px;border-radius:1px;background:var(--fc,#8257DA);opacity:.5}
 .cat{margin:0 14px}
-.carte{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
-  border:1px solid rgba(242,238,228,.1);background:var(--panneau);margin-bottom:6px;
+/* Une rangée du catalogue est une bâche (`.pan`), avec le liseré de sa
+   famille à gauche : la même matière que les rangs de la tribune. */
+.carte{display:flex;align-items:center;gap:11px;padding:11px 12px;margin-bottom:7px;
   cursor:pointer;border-left:3px solid var(--fc,#8257DA)}
 /* **Une carte qu'on n'a pas s'éteint par son dessin, pas par son texte.**
    Toute la rangée tombait à 40 % : on voyait qu'elle n'était pas à soi, et on
@@ -508,18 +519,28 @@ h2{margin:20px 16px 9px}
    corps prend ce qui reste, et le bouton d'action reste sous les yeux. Avant,
    le panneau défilait en entier et l'on devait descendre pour trouver le prix
    et le bouton — sur l'écran même où l'on vient pour décider. */
+/* **La matière du menu** (`.tbf-tiroir`, ui.css) : le parpaing grainé, le
+   cadre tracé au marqueur, et la bande d'écharpe en tête que porte toute
+   boîte du jeu (`.tbf-dial`). Le panneau était un aplat bleu nuit à coins
+   ronds, en police de titre à quinze pixels : la feuille d'un système
+   d'exploitation, posée sur un écran de jeu. */
 .panneau{width:100%;max-width:var(--colonne);max-height:86dvh;
-  display:flex;flex-direction:column;background:#10151C;
-  border-top-left-radius:16px;border-top-right-radius:16px;border:1px solid rgba(242,238,228,.14);
-  border-bottom:0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  display:flex;flex-direction:column;
+  background:var(--grain-beton) 0 0/256px 256px repeat,var(--parpaing);
+  border-image:var(--trace-c) 9 / 9px stretch;border-bottom:0;
+  box-shadow:0 -10px 40px rgba(0,0,0,.6);
+  padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+.panneau::before{content:"";display:block;flex:none;height:4px;margin:12px 16px 0;border-radius:2px;
+  background:repeating-linear-gradient(115deg,var(--projo) 0 9px,transparent 9px 18px)}
 /* `min-height:0` : sans lui, un enfant de flex refuse de descendre sous la
    taille minimale de son contenu, et le corps repousserait le bouton hors de
    l'écran. C'est le même piège que `1fr` en grille, rencontré deux fois déjà
    dans ce dépôt — il vaut la peine de le reconnaître du premier coup d'œil. */
 .panneau .pc{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain}
-.panneau .ph{flex:none;background:#10151C;padding:15px 16px 11px;z-index:2;
-  display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(242,238,228,.08)}
-.panneau .ph h3{flex:1;margin:0;font-family:var(--banner);font-size:15px;letter-spacing:.09em}
+.panneau .ph{flex:none;padding:12px 16px 10px;z-index:2;
+  display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--trait)}
+.panneau .ph h3{flex:1;margin:0;font-family:var(--banner);font-size:19px;letter-spacing:.05em;
+  line-height:1.18;text-transform:uppercase}
 /* La croix : quarante-quatre pixels, la pulpe d'un doigt, comme toute cible
    du jeu. Elle en faisait trente sur vingt-deux. */
 .panneau .ph button{background:none;border:0;color:inherit;opacity:.85;font-size:22px;cursor:pointer;
@@ -528,10 +549,18 @@ h2{margin:20px 16px 9px}
 /* Le pied du panneau : ce qui décide, tenu hors du corps qui défile.
    `flex:none` pour qu'il ne se comprime jamais, et un filet au-dessus pour
    qu'on voie qu'il reste du texte à faire défiler derrière lui. */
-.panneau .pp{flex:none;padding:8px 14px 0;border-top:1px solid rgba(242,238,228,.08);
-  background:#10151C}
-.choix{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
-  border:1px solid rgba(242,238,228,.1);background:var(--panneau);margin-bottom:7px;cursor:pointer}
+.panneau .pp{flex:none;padding:10px 14px 0;border-top:1px solid var(--trait)}
+.choix{display:flex;align-items:center;gap:12px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.choix:active{transform:translateY(2px)}
+.choix .tbf-piece{width:46px;height:46px;border-radius:7px;margin:4px}
+/* Le Fanzzy qu'on choisit, **dessiné**, comme dans sa tribune et au
+   classeur : on choisissait un rang sur une pastille de type et un nom,
+   alors que l'écran juste derrière montre le personnage. */
+.choix .face{width:46px;height:60px;flex:none;position:relative;display:flex;align-items:flex-end;justify-content:center}
+.choix .face img{width:100%;height:100%;object-fit:contain;object-position:50% 100%;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+.choix.pris .face{opacity:.4;filter:grayscale(1)}
+.choix .tag{white-space:nowrap}
 /* Ce qui est déjà pris s'éteint par son dessin, et l'étiquette dit pourquoi
    — « DÉJÀ PRIS », « TOUS PORTÉS ». La ligne entière à 35 % rendait
    illisible justement la raison du refus. */
@@ -608,19 +637,41 @@ h2{margin:20px 16px 9px}
    petit, sans qu'aucune valeur soit à reprendre. Une hauteur minimale garantit
    qu'on voit toujours quelque chose ; `contain` garantit qu'il ne se déforme
    jamais, quelle que soit la place qu'on lui laisse. */
-.gcArt{position:relative;width:100%;flex:0 1 auto;
-  aspect-ratio:63/80;max-height:46dvh;min-height:150px;
-  border-radius:12px;overflow:hidden;
-  background:linear-gradient(165deg,rgba(255,255,255,.06),rgba(0,0,0,.45));
-  border:1px solid var(--fc,#8257DA)}
+/* **La carte, à la taille d'une carte.** Sa largeur se déduit du plafond de
+   hauteur, au lieu de prendre toute la colonne : à pleine largeur, le dessin
+   en `contain` laissait deux bandes vides de chaque côté, et sur un écran
+   large la carte flottait au milieu d'un grand cadre vide. Elle a le bord de
+   craie et le cerne d'encre des stickers du jeu, et penche d'un degré, comme
+   une carte posée sur la table. */
+.gcArt{position:relative;flex:none;align-self:center;
+  width:min(100%,calc(46dvh * 63 / 80),340px);min-width:150px;aspect-ratio:63/80;max-height:46dvh;
+  border-radius:9px;overflow:hidden;rotate:-1deg;margin:6px 0 4px;
+  background:linear-gradient(165deg,rgba(255,255,255,.06),rgba(0,0,0,.45)),#0B1017;
+  box-shadow:inset 0 0 0 3px var(--fc,#8257DA),0 0 0 2px var(--craie),0 0 0 4px var(--encre),
+    3px 5px 0 4px rgba(7,9,12,.6)}
 /* Le glyphe de famille, dessous : il reste si l'illustration ne charge pas —
    `action-art.js` retire alors son image, et la carte garde un visage. */
 .gcArt>svg{position:absolute;left:50%;top:50%;width:38%;height:38%;
   transform:translate(-50%,-50%);fill:none;stroke:var(--fc,#8257DA);stroke-width:1.4;
   opacity:.5}
-.gcArt .gcIllu{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-  object-position:50% 42%}
+.gcArt .gcIllu{position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);
+  object-fit:contain;object-position:50% 42%;border-radius:6px}
 
+/* **Sur un écran large, la carte à gauche et sa légende à droite**, comme on
+   tient une carte à côté de sa règle. Empilées, la légende passait sous le
+   bord de l'écran d'un ordinateur portable (768 px de haut, barre comprise),
+   et les trois chiffres s'étiraient chacun sur un tiers de neuf cents pixels. */
+@media (min-width:700px){
+  .grandeCarte{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:24px;
+    align-content:start;align-items:start}
+  .grandeCarte>*{grid-column:2}
+  .grandeCarte>.gcArt{grid-column:1;grid-row:1 / span 8;align-self:start}
+  .grandeCarte>.gcRang{margin-top:8px}
+  /* À côté de sa légende, la carte n'a plus à laisser de place dessous : elle
+     prend la hauteur que le panneau lui laisse. */
+  .grandeCarte>.gcArt{width:min(300px,calc(60dvh * 63 / 80));max-height:60dvh}
+  .gcChiffres{max-width:420px}
+}
 .gcRang{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.14em;
   text-transform:uppercase}
 .gcFam{color:var(--fc,#8257DA);font-weight:700}
@@ -643,11 +694,9 @@ h2{margin:20px 16px 9px}
    avant de la rejouer, et si on l'a. Le deuxième n'était écrit nulle part —
    or une carte à quatre-vingt-dix secondes de recharge ne se joue pas comme
    une à huit. */
-.gcChiffres{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-.gcChiffres div{padding:9px 6px;border-radius:9px;text-align:center;
-  background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.11)}
-.gcChiffres b{display:block;font-family:var(--banner);font-size:17px;color:var(--fc,#8257DA)}
-.gcChiffres small{display:block;margin-top:3px;font-size:11px;letter-spacing:.06em;opacity:.88}
+/* En stickers de craie (`.tbf-stat`, ui.css), comme les chiffres du profil :
+   un chiffre du jeu s'écrit partout de la même façon. */
+.gcChiffres{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:4px 4px 6px}
 
 .gcCond{padding:10px 12px;border-radius:9px;font-size:12px;line-height:1.55;
   background:rgba(245,195,59,.09);border:1px solid rgba(245,195,59,.3)}
@@ -673,17 +722,17 @@ h2{margin:20px 16px 9px}
 </head>
 <body>
 <main id="app">
-  <!-- Les deux écrans voisins, et chacun change de page : des portes avec
-       leur flèche, pas des onglets. Voir la règle « .portes » plus haut. Le
-       classeur s'ouvre par « ?ecran=dex », que fanzzy.html lit à l'arrivée. -->
-  <nav class="portes" aria-label="Mes Fanzzy">
-    <a class="tbf-plaque" href="/fanzzy">MON FANZZY<i class="tbf-ico tbf-ico-lien" aria-hidden="true"></i></a>
-    <a class="tbf-plaque" href="/fanzzy?ecran=dex">CLASSEUR<i class="tbf-ico tbf-ico-lien" aria-hidden="true"></i></a>
-  </nav>
-  <div class="top">
-    <!-- Vide et caché jusqu'au premier rendu : il affichait un tiret en
-         attendant, et un tiret n'est pas un état. -->
-    <div class="etat tbf-etiquette" id="etat" hidden></div>
+  <!-- **Le même rail que /fanzzy**, au pixel : MON FANZZY et CLASSEUR dans le
+       creux, DECK en plaque à côté. Seul change ce qui est allumé — ici la
+       plaque DECK, là-bas l'onglet de l'écran. Les trois écrans de la section
+       ont ainsi le même haut, et on lit « une autre page de la même
+       section », plus « une autre application ». Voir la règle « .rail ». -->
+  <div class="rail">
+    <nav class="nav tbf-onglets" data-ton="bleu" aria-label="Mes Fanzzy">
+      <a class="tbf-onglet" href="/fanzzy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>MON FANZZY</a>
+      <a class="tbf-onglet" href="/fanzzy?ecran=dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</a>
+    </nav>
+    <span class="tbf-plaque ici" data-ton="bleu" aria-current="page">DECK</span>
   </div>
 
   <div class="corps" id="corps"><div class="spin"></div></div>
@@ -691,6 +740,10 @@ h2{margin:20px 16px 9px}
 
 <div class="barre" id="barre" style="display:none">
   <div class="in">
+    <!-- L'état du deck, PRÊT ou INCOMPLET, à côté du bouton qu'il commande :
+         seul sur sa ligne en haut de l'écran, il prenait une rangée entière
+         pour un mot. Vide et caché jusqu'au premier rendu. -->
+    <div class="etat tbf-sticker" id="etat" hidden></div>
     <div class="info" id="info"></div>
     <button class="btn tbf-plaque" data-ton="bleu" id="save" disabled>ENREGISTRER</button>
   </div>
@@ -1063,8 +1116,11 @@ function rendre() {
 }
 
 function tribuneHTML() {
-  const out = [`<h2 class="tbf-cousu">LA TRIBUNE</h2>
-    <p class="chapo"><span>Le premier entre au coup d\u2019envoi.</span></p>`];
+  /* Le titre seul : « le premier entre au coup d'envoi », qui le suivait sur
+     son panneau, est dit par le sticker TITULAIRE du premier rang, et
+     rappelé avec la règle des âges sous les rangs. Deux panneaux de texte
+     avant le premier Fanzzy le poussaient sous la ligne de flottaison. */
+  const out = ['<h2 class="tbf-cousu">LA TRIBUNE</h2>'];
 
   /* Pourquoi il n'y a que deux rangs.
    *
@@ -1092,15 +1148,10 @@ function tribuneHTML() {
    * deux ? » Non — c'est le même personnage, donc une seule carte et un seul
    * rang. L'écran ne le disait nulle part, et le panneau de choix n'en montre
    * qu'une ligne, ce qui ressemble à une carte perdue plutôt qu'à une règle. */
-  out.push(`<p class="note">Un personnage et ses âges sont
-    <b>une seule carte</b> : un évolué n\u2019occupe pas un second rang.
-    Tout le monde entre au premier âge, et c\u2019est la carte
-    <b>Relève</b> qui le fait grandir en cours de partie.</p>`);
-
   for (let i = 0; i < placesFanzzy(); i++) {
     const slot = S.deck.fanzzy[i];
     if (!slot) {
-      out.push(`<div class="rang vide"><div class="tete" data-choisir-fanzzy="${i}">
+      out.push(`<div class="rang vide pan"><div class="tete" data-choisir-fanzzy="${i}">
         <div class="pip" style="--tc:#2A323C"><span style="opacity:.5;font-size:20px">+</span></div>
         <div class="id"><b>Emplacement libre</b>
           <div class="sous">${i === 0 ? 'Titulaire : il entre au coup d\u2019envoi' : 'Remplaçant'}</div></div>
@@ -1121,7 +1172,7 @@ function tribuneHTML() {
       // on hésite entre deux.
       pieces.push(`<button class="piece ${s ? 'plein' : ''}" data-piece="${i}:${p}">
         ${s ? `${window.TBF_STUFF.pastille(s)}
-               <span class="txt"><b>${esc(s.nom)}</b><span>${esc(s.texte)}</span></span>`
+               <span class="txt"><b>${esc(s.nom)}</b></span>`
             : `<span class="creux">+</span>
                <span class="txt"><b>Vide</b>
                <span>Ajouter une pièce</span></span>`}</button>`);
@@ -1143,7 +1194,7 @@ function tribuneHTML() {
       : `<div class="pip" style="--tc:${t.c}"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13"
           stroke-width="2" stroke-linecap="round"><path d="${t.ico}"/></svg></div>`;
 
-    out.push(`<div class="rang ${i === 0 ? 'titulaire' : ''}" style="--tc:${t.c}">
+    out.push(`<div class="rang pan ${i === 0 ? 'titulaire' : ''}" style="--tc:${t.c}">
       <div class="tete" data-choisir-fanzzy="${i}">
         ${tete}
         <div class="id">
@@ -1165,6 +1216,12 @@ function tribuneHTML() {
 
   // Un deck sans « Arbitre — changement » enferme le joueur sur son premier
   // Fanzzy. Ce n'est pas interdit, mais c'est presque toujours involontaire.
+  out.push(`<p class="note pan">Le titulaire entre au coup d\u2019envoi, les remplaçants sur la carte
+    <b>Arbitre</b>. Un personnage et ses âges sont
+    <b>une seule carte</b> : un évolué n\u2019occupe pas un second rang.
+    Tout le monde entre au premier âge, et c\u2019est la carte
+    <b>Relève</b> qui le fait grandir en cours de partie.</p>`);
+
   if (S.deck.fanzzy.length === placesFanzzy() && !S.deck.actions.includes('a-arbitre')) {
     out.push(`<div class="avert doux"><b>TES REMPLAÇANTS NE JOUERONT PAS</b>
       ${MESSAGES['deck.warn.no_substitution']}</div>`);
@@ -1201,8 +1258,8 @@ function cartesHTML() {
     ? (posees.reduce((s, a) => s + (a.cost ?? 0), 0) / posees.length) : 0;
 
   const out = [`<h2 class="tbf-cousu">LES DIX CARTES</h2>
-    <p class="chapo"><span>Cinq visibles à la fois.</span>${
-    posees.length ? `<b>souffle moyen ${moyen.toFixed(1)}</b>` : ''}</p>`];
+    <p class="chapo pan"><span>Cinq visibles à la fois.</span>${
+    posees.length ? `<b class="tbf-sticker" data-ton="craie">souffle moyen ${moyen.toFixed(1)}</b>` : ''}</p>`];
 
   const emp = [];
   for (let i = 0; i < S.regles.actions; i++) {
@@ -1233,7 +1290,7 @@ function cartesHTML() {
      c'est exactement l'écran que le joueur a signalé — une carte et quatre
      cases vides. */
   const auVirage = posees.filter((a) => a.virage).length;
-  out.push(`<div class="ouJoue">
+  out.push(`<div class="ouJoue pan">
     <b>${posees.length}</b> carte(s) au duel de tribunes ·
     <b>${auVirage}</b> au Grand Virage
     ${auVirage < 4 && posees.length ? `<span class="maigre">
@@ -1269,7 +1326,7 @@ function cartesHTML() {
     for (const a of cartes) {
       const possede = S.possede.actions.includes(a.id);
       const n = compte[a.id] ?? 0;
-      out.push(`<div class="carte ${possede ? '' : 'absente'}" style="--fc:${fam.c}"
+      out.push(`<div class="carte pan ${possede ? '' : 'absente'}" style="--fc:${fam.c}"
         data-detail="${a.id}">
         <div class="vig"><svg viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
           ${window.TBF_ACTION.illustration(a.id)}</div>
@@ -1370,10 +1427,12 @@ function panneauFanzzy(index) {
   const lignes = dispo.map((f) => {
     const t = S.types[f.type] ?? { nom: f.type, c: '#8257DA', ico: '' };
     const pris = dedans.has(f.id) && S.deck.fanzzy[index]?.id !== f.id;
-    return `<div class="choix ${pris ? 'pris' : ''}" ${pris ? '' : `data-prendre-fanzzy="${index}:${f.id}"`}>
-      <div class="pip" style="--tc:${t.c};width:38px;height:38px;border-radius:9px">
+    const dessin = window.FZART?.illustration?.(f, 'plein') ?? null;
+    return `<div class="choix pan ${pris ? 'pris' : ''}" ${pris ? '' : `data-prendre-fanzzy="${index}:${f.id}"`}>
+      ${dessin ? `<div class="face r-${f.rar ?? 'commune'}">${dessin}</div>`
+        : `<div class="pip" style="--tc:${t.c};width:46px;height:46px;border-radius:9px">
         <svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13" stroke-width="2" stroke-linecap="round"
-          style="width:20px;height:20px"><path d="${t.ico}"/></svg></div>
+          style="width:22px;height:22px"><path d="${t.ico}"/></svg></div>`}
       <div class="txt"><b>${esc(f.nom)}${rangHTML(f.rar)}</b>
         <p>${esc(t.nom)} · ${esc(modsTexte(f.mods ?? {}).join(' · ') || 'aucun modificateur')}</p></div>
       <div class="tag">${pris ? 'DÉJÀ PRIS' : ''}</div>
@@ -1412,7 +1471,7 @@ function panneauPiece(index, place) {
     const ici = surCeFanzzy[place] === s.id;
     const bloque = !ici && poses >= possedes;
     const ailleurs = portees.has(s.id) && !ici;
-    return `<div class="choix ${bloque ? 'pris' : ''}"
+    return `<div class="choix pan ${bloque ? 'pris' : ''}"
       ${bloque ? '' : `data-prendre-piece="${index}:${place}:${s.id}"`}>
       ${window.TBF_STUFF.pastille(s)}
       <div class="txt"><b>${esc(s.nom)}${rangHTML(s.rar)}</b>
@@ -1425,7 +1484,7 @@ function panneauPiece(index, place) {
   });
 
   const vider = surCeFanzzy[place]
-    ? `<div class="choix" data-vider-piece="${index}:${place}">
+    ? `<div class="choix pan" data-vider-piece="${index}:${place}">
         <div class="txt"><b>Laisser vide</b>
         <p>Retirer la pièce de cet emplacement.</p></div></div>` : '';
 
@@ -1459,9 +1518,9 @@ function panneauCarte(id) {
     <p class="gcTexte">${esc(a.texte)}</p>
 
     <div class="gcChiffres">
-      <div><b>${a.cost}</b><small>SOUFFLE</small></div>
-      <div><b>${a.cd}s</b><small>RECHARGE</small></div>
-      <div><b>${possede ? (S.regles.copiesMax == null ? `×${n}` : `${n}/${S.regles.copiesMax}`) : CADENAS}</b><small>DANS TON DECK</small></div>
+      <div class="tbf-stat"><b>${a.cost}</b><small>SOUFFLE</small></div>
+      <div class="tbf-stat"><b>${a.cd}s</b><small>RECHARGE</small></div>
+      <div class="tbf-stat"><b>${possede ? (S.regles.copiesMax == null ? `×${n}` : `${n}/${S.regles.copiesMax}`) : CADENAS}</b><small>DANS TON DECK</small></div>
     </div>
 
     ${cond ? `<div class="gcCond"><b>Pour la jouer</b>${

@@ -1,5 +1,79 @@
 # À déposer sur Infomaniak
 
+**Le derby automatique** (branche `claude/derby-auto-hmhnv6`, 6 octobre
+2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `src/server/nvn/index.js` : quand deux joueurs sont sur le jeu au même
+  moment et suivent chacun un club d'un match du jour, `/api/nvn/attentes`
+  leur propose ce derby (1v1 classé, chacun dans la tribune de son club).
+  Jamais qui, rien écrit en base. Quand l'un entre en file, l'autre lit qu'un
+  supporter de l'autre club l'attend.
+- `public/index.html` : le bouton de l'accueil dit « Derby du jour · Un
+  supporter de Bâle est en ligne », puis « Derby ! · un supporter de Sion
+  t'attend ». `public/duel-nvn.html` : le match porte DERBY.
+- Contrôlé par `npm run derby:smoke` (suite neuve, 25 contrôles) et
+  `npm run accueil:ui` (5 contrôles neufs).
+
+**Aucun schéma ni réglage.** Le serveur change : **redémarrer** après la
+construction, hors d'un match en direct.
+
+---
+
+**Le deck refait au style du jeu** (branche `claude/deck-interface-n1oqm1`,
+6 octobre 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou
+seul. **Une page seule** (`public/deck.html`) : ni schéma ni redémarrage.
+
+- Le haut reprend le rail de MON FANZZY (DECK allumé à droite) ; PRÊT passe
+  en bas, à côté d'ENREGISTRER. Les Fanzzy, les cartes du catalogue et les
+  choix sont sur le béton des autres pages ; l'équipement se montre comme à
+  la boutique ; RETIRER est à sa taille ; le titulaire au vert.
+- Les fenêtres (carte, équipement, choix d'un Fanzzy) ont le décor du menu ;
+  le Fanzzy qu'on choisit est dessiné ; la carte ouverte est à sa taille, et
+  à côté de son texte sur ordinateur. Avant/après :
+  `/mnt/project-files/deck/` du projet.
+
+---
+
+**Le profil, la boutique et la répétition en largeur** (branche
+`claude/ecran-large-pkbkwj`, 6 octobre 2026, la forme choisie par Gaël :
+« tuiles + pages larges »). Ils se déposent avec ce qui est en dessous, ou
+seuls.
+
+- `public/ui.css`, `public/profil.html`, `public/boutique.html`,
+  `public/repetition.html` : sur un écran d'au moins 1 180 pixels de large,
+  ces trois pages prennent toute la place entre les tuiles (1 320 pixels au
+  plus). Le profil passe en deux colonnes (la carte, le bonus, le niveau et
+  la saison à gauche ; le parcours, le Fanzzy et l'équipement à droite), la
+  boutique montre huit objets par rangée au lieu de cinq, la répétition range
+  ses familles de gestes deux par rangée. Rien ne change sur téléphone ni sur
+  tablette. Contrôlé par `npm run profil:ui` et `npm run repetition:ui` (sept
+  contrôles neufs) ; mesuré sous Firefox 136 et Chrome.
+
+**Aucun schéma ni réglage, sans redémarrage.**
+
+---
+
+**L'équipement porté** (branche `claude/equipement-porte-3ml5d5`, 6 octobre
+2026, forme choisie par Gaël sur maquette : « à côté de lui »). Il se dépose
+avec ce qui est en dessous, ou seul.
+
+- Les deux pièces que le deck met au Fanzzy sont accrochées à côté de lui,
+  chacune dans le cadre de sa rareté : à l'accueil (`public/index.html`), au
+  Virage (`public/virage.html`) et dans l'arène du duel, des deux côtés
+  (`public/duel-nvn.html`). Le dessin vient de `public/stuff-art.js`
+  (`TBF_STUFF.porte`), le style de `public/ui.css` (`.tbf-porte`).
+- Serveur : le portefeuille sert `stuffPorte` (`src/server/fanzzy/index.js`),
+  la vue du duel `equipes[].sac` (`src/server/nvn/engine.js`), et les lignes
+  d'équipement de « ce que tu portes » leur identifiant et leur rareté
+  (`src/shared/apports.js`). Contrôlé par `npm run deck:smoke`,
+  `nvn:smoke`, `accueil:ui`, `nvn:ui` et `virage:ui` (dix-huit contrôles neufs).
+
+**Aucun schéma ni réglage. Un redémarrage** pour le serveur, hors d'un match
+en direct ; sans lui, les pages n'ont aucune pièce à accrocher et restent
+comme avant.
+
+---
+
 **Le geste de chaque Fanzzy au duel** (branche `claude/geste-fanzzy-0qd5x6`,
 6 octobre 2026, règle « Toujours là » choisie par Gaël). Il se dépose avec ce
 qui est en dessous, ou seul.
