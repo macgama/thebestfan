@@ -221,7 +221,10 @@ export function tous(famille) {
  * parce qu'un fichier SQL n'a pas été appliqué.
  */
 export function publies(famille) {
-  if (!memoire?.[famille]) return FAMILLES[famille]?.source ?? [];
+  /* Sans la table, le code décide : une fiche qui écrit `publie: false` (un
+     contenu neuf, qui attend sa saison) reste fermée, comme le semis la
+     poserait. Tout le reste est jouable, comme avant. */
+  if (!memoire?.[famille]) return (FAMILLES[famille]?.source ?? []).filter((o) => o.publie !== false);
   return memoire[famille].filter((o) => o.publie);
 }
 
