@@ -18,6 +18,9 @@ dessous, ou seul.
 modifié ailleurs). Après la construction : `npm run schema:appliquer` en SSH,
 puis **redémarrer**, hors d'un match en direct. Sans le schéma, rien ne casse :
 le pronostic ne paraît pas, et le démarrage nomme le fichier.
+
+---
+
 **Le derby automatique** (branche `claude/derby-auto-hmhnv6`, 6 octobre
 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
 
