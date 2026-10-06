@@ -619,6 +619,11 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   transform:translate(-50%,-50%);pointer-events:none;
   background:radial-gradient(circle,rgba(245,195,59,.28) 0%,rgba(224,64,44,.14) 32%,
     rgba(60,130,232,.06) 54%,rgba(4,6,10,0) 70%)}
+/* **Ce qu'il porte**, accroché à sa gauche, à hauteur de hanche : les deux
+   pièces du deck (`TBF_STUFF.porte`, `ui.css`). Au-dessus du sol, sous le
+   défilé des âges ; la scène reste touchable à travers. */
+.sac{position:absolute;inset:0;z-index:3;pointer-events:none}
+.sac .tbf-porte{left:max(4px,calc(50% - 128px));bottom:calc(9% + 8px);--piece:38px}
 .sol{position:absolute;left:50%;bottom:calc(9% - 10px);width:min(44%,180px);height:24px;
   transform:translateX(-50%);border-radius:50%;pointer-events:none;
   background:radial-gradient(ellipse at center,rgba(0,0,0,.6),rgba(0,0,0,0) 70%)}
@@ -2183,6 +2188,9 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
         <div class="soir" id="soir" aria-hidden="true" hidden>
           <div class="tbf-bache-club"></div><div class="tbf-fumee"></div></div>
         <div class="sol"></div>
+        <!-- Ce qu'il porte : les deux pièces que le deck lui a mises
+             (`poserSac`). Vide tant que le portefeuille n'a rien dit. -->
+        <div class="sac" id="sac" aria-hidden="true"></div>
         <div class="flotte">
           <div class="bascule">
             <!-- Un calque par geste : l'arrivée et le saut, le rebond de pose,
@@ -2351,6 +2359,8 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
      le supporter générique, qui est quelqu'un d'autre. -->
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<!-- Les pièces d'équipement : ce que le Fanzzy porte, accroché à côté de lui. -->
+<script src="/stuff-art.js"></script>
 <!-- L ouverture : l éventail de Fanzzy, et le moment où l écran s en va.
      Après fanzzy-art.js, dont il lit la liste des personnages dessinés. -->
 <script src="/ouverture.js"></script>
@@ -3951,6 +3961,22 @@ function nommer(p) {
   commandes();
   /* L'avatar suit : tout changement de personnage passe par ici. */
   poserAvatar();
+}
+
+/**
+ * Accroche à côté du personnage les deux pièces que son deck lui a mises
+ * (`wallet.stuffPorte`). Ne redessine que si le sac a changé : les pièces
+ * arrivent avec un petit geste, et le rejouer à chaque relecture du
+ * portefeuille le ferait passer pour une nouveauté.
+ */
+let cleSacPose = null;
+function poserSac(pieces) {
+  const el = $('sac');
+  if (!el || !window.TBF_STUFF?.porte) return;
+  const cle = window.TBF_STUFF.cleSac(pieces);
+  if (cle === cleSacPose) return;
+  cleSacPose = cle;
+  el.innerHTML = window.TBF_STUFF.porte(pieces);
 }
 
 /** Le lieu, la famille et la rareté de l'âge montré — ce que lit le décor. */
@@ -5707,6 +5733,7 @@ function feterNiveau(niveau) {
        d'illustration pour cette carte — dans les trois cas le supporter reste à
        l'écran et l'accueil ne s'en aperçoit pas.                             */
     const actif = coll?.wallet?.active;
+    poserSac(actif ? coll?.wallet?.stuffPorte : null);
     if (actif) {
       /* ----------------------------------------- la lignée, avant le reste
 
@@ -5983,9 +6010,11 @@ function deClub(nom) {
 async function alerteDuel() {
   H.attente = 0;
   let a = null;
+  let derby = null;
   try {
     const r = await lire('/api/nvn/attentes', { credentials: 'same-origin' });
     a = r?.alerte ?? null;
+    derby = r?.derby?.clubs?.length === 2 ? r.derby : null;
     /* Toutes les files, pour le bandeau du monde : combien de duels
        attendent un joueur, et la plus remplie, au camp qui y manque — la
        règle de `campQuiManque`, côté serveur. */
@@ -6000,14 +6029,31 @@ async function alerteDuel() {
        départ de la demande : le bandeau aurait montré le duel le temps
        qu'elle revienne, puis l'aurait retiré — à chaque tour de veille. */
     H.duelAuBouton = Boolean(a?.clubs?.length) && presents(a) > 0;
-  } catch { return; }              // duels non montés : le bouton ne change pas
+  } catch { return false; }        // duels non montés : le bouton ne change pas
   /* Un match du joueur a commencé pendant qu'on attendait la réponse : le
      Virage passe avant, voir plus bas. */
-  if (H.live) return;
-  if (!a?.clubs?.length) { montrer(); return; }
+  if (H.live) return false;
+
+  /* **Le derby automatique.** Un supporter de l'autre club d'un match du
+     jour est en ligne, et personne n'attend encore sur un match de mes
+     clubs : le bouton le propose. Il passe devant une file d'un match qui
+     n'est pas le mien — un derby de son club vaut mieux qu'une place
+     ailleurs —, jamais devant quelqu'un qui attend déjà sur un des miens.
+     Le serveur ne dit pas qui : un club, un match, rien d'autre. */
+  if (derby && !a?.mien) {
+    const eux = derby.clubs[derby.monCamp ^ 1]?.name ?? '';
+    const q = new URLSearchParams({ match: String(derby.fixtureId), format: derby.format ?? '1v1' });
+    if (derby.monCamp === 0 || derby.monCamp === 1) q.set('camp', String(derby.monCamp));
+    bouton(`/duel-nvn?${q}`, 'Derby du jour',
+      `Un supporter ${deClub(eux)} est en ligne`, 'violet');
+    montrer();
+    return true;
+  }
+
+  if (!a?.clubs?.length) { montrer(); return false; }
 
   const combien = (a.camps?.[0] ?? 0) + (a.camps?.[1] ?? 0);
-  if (!combien) { montrer(); return; }
+  if (!combien) { montrer(); return false; }
 
   const affiche = `${a.clubs[0]?.name ?? ''} – ${a.clubs[1]?.name ?? ''}`;
 
@@ -6032,12 +6078,28 @@ async function alerteDuel() {
     ? `il manque ${manque} ${manque > 1 ? 'supporters' : 'supporter'} ${deClub(club)}`
     : affiche;
 
+  /* **Le derby qui attend** : un supporter de l'autre club est en file sur
+     un match de mes clubs, et ma tribune a de la place (`derby`, serveur).
+     C'est la suite du « Derby du jour » une fois que l'autre a appuyé : on
+     dit de quel club il est, et le lien porte mon camp, celui qu'impose le
+     club que je suis. */
+  if (a.derby && (a.monCamp === 0 || a.monCamp === 1)) {
+    const eux = a.clubs[a.monCamp ^ 1]?.name ?? '';
+    q.set('camp', String(a.monCamp));
+    bouton(`/duel-nvn?${q}`, 'Derby !',
+      `${a.format ? `${a.format} · ` : ''}un supporter ${deClub(eux)} t’attend`, 'violet');
+    H.attente = combien;
+    montrer();
+    return true;
+  }
+
   /* En violet : ce sont des gens qui attendent (amendement 18), et l'or ne dit
      plus qu'acheter, récompense prête et légendaire. */
   bouton(`/duel-nvn?${q}`, combien > 1 ? `${combien} t’attendent` : 'Quelqu’un t’attend',
     `${a.format ? `${a.format} · ` : ''}${ou}`, 'violet');
   H.attente = combien;
   montrer();
+  return false;
 }
 
   /**
@@ -6118,8 +6180,13 @@ async function alerteDuel() {
 
     if (!m) {
       bouton('/duel-nvn', 'Prendre ma place', 'Duel de tribunes');
-      // Et si quelqu'un attend vraiment, on le dit à sa place.
-      void alerteDuel();
+      /* Et si quelqu'un attend vraiment, on le dit à sa place. **Un derby
+         se relit vite** : trente secondes au lieu de trois minutes. Quand
+         l'un des deux appuie, l'autre a deux minutes avant les bots, et un
+         tour de trois minutes les lui ferait manquer. */
+      void alerteDuel().then((derby) => {
+        if (derby && !H.live && !document.hidden) planifier(30_000);
+      });
 
       /* Le coup de sifflet final.
          Un match fini sort de la liste des matchs ouverts : sans ce détour,
