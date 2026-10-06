@@ -2071,9 +2071,11 @@ Par ordre d'utilité.
    que le joueur le voie : depuis que le duel offre cinq chants au choix, le
    geste du personnage n'y décidait plus de rien. Depuis le 6 octobre 2026, le
    chant réussi de sa spécialité le fait chanter dans l'arène à la manière de
-   sa famille (la Voix crie, la Percussion frappe…), sans dessin de plus. La
-   règle (garantir ce chant à chaque duel, avec ou sans bonus) attend la
-   décision de Gaël.
+   sa famille (la Voix crie, la Percussion frappe…), sans dessin de plus, et
+   ce chant est toujours dans la main, au milieu, avec le sceau de la famille
+   (règle « Toujours là », choisie par Gaël : sans bonus de poussée).
+   `offreDe()` dans `src/server/nvn/engine.js`. Le Virage n'est pas concerné :
+   sa rangée de chants est commune à toute la tribune.
 
 4. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
    suivent les deux clubs qui s'affrontent réellement. Conçu, pas commencé.
