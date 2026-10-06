@@ -5,7 +5,7 @@ import express from 'express';
 import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
 import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
   racineDe, lignee, auStade } from './catalogue.js';
-import { STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
+import { STUFF, STUFF_BY_ID, combine, piecesPortees } from '../../shared/fanzzy/inventaire.js';
 /* Les quatre états dessinés. `rendus.js` fait foi : la même liste sert la
    chaîne d'images, la résolution côté client et, maintenant, le tirage. */
 import { ETATS_DESSINES, ETAT_DESSIN } from '../../shared/fanzzy/rendus.js';
@@ -377,8 +377,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        `activeSkin`, `activeStade`, `activeEtat` — en sont tirés, et non plus
        calculés à part : ils restent pour les écrans qui les lisent encore,
        mais ils ne peuvent plus dire autre chose que `avatar`. */
-    const [{ avatar, enJeu, tenuesParAge }, lieuAccueil] = await Promise.all([
-      construireAvatar(userId, w), lieuAccueilDe(userId)]);
+    const [{ avatar, enJeu, tenuesParAge }, stuffPorte, lieuAccueil] = await Promise.all([
+      construireAvatar(userId, w), sacDuDeck(userId, w.active_fanzzy), lieuAccueilDe(userId)]);
 
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
       nextPackInMs: nextIn,
@@ -428,7 +428,29 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       /* **La pose choisie.** Nulle veut dire le repos, et c'est le cas de
          presque tout le monde : l'écran qui la choisit ne sert qu'à celui qui
          a gagné une expression et veut la montrer en permanence. */
-      activeEtat: avatar?.etat ?? null };
+      activeEtat: avatar?.etat ?? null,
+      /* **Ce qu'il porte** : les deux pièces que le deck lui a mises, si le
+         Fanzzy montré y a sa place. L'accueil les accroche à côté de lui.
+         C'est le sac du Virage (`ferveur`, `place.stuff`) et du duel : celui
+         qui compte en jeu, pas un second choix. Vide sans deck, ou quand le
+         Fanzzy montré n'y est pas. */
+      stuffPorte };
+  }
+
+  /**
+   * Les pièces du Fanzzy `fanzzyId` dans le deck actif, prêtes à dessiner.
+   * Une lecture sur clé ; un deck illisible rend un sac vide plutôt qu'un
+   * portefeuille en erreur — c'est la lecture la plus fréquente du jeu.
+   */
+  async function sacDuDeck(userId, fanzzyId) {
+    if (!decks || !fanzzyId) return [];
+    try {
+      const deck = await decks.deckDe(userId);
+      const racine = racineDe(String(fanzzyId));
+      return piecesPortees((deck?.fanzzy ?? []).find((x) => x.id === racine)?.stuff);
+    } catch {
+      return [];
+    }
   }
 
   /* ------------------------------------------------------------ recharge
