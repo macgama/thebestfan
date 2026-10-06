@@ -2394,22 +2394,45 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
    question sur la même page : on prend celle du module. */
 const { EXT, EXT_ALPHA } = window.TBF_ETATS;
 
-{
+/**
+ * Le décor de l'accueil : l'image habituelle, ou le stade que le joueur a
+ * choisi dans sa collection (`lieuAccueil`, `/api/fanzzy/state`).
+ *
+ * Le dernier choix est gardé dans l'onglet, pour qu'un joueur qui a choisi un
+ * stade ne voie pas l'image habituelle passer avant lui à chaque visite ; le
+ * serveur a le dernier mot dès que son état arrive (`decorAccueil` y est
+ * rappelé). Sans stockage, on part de l'image habituelle.
+ */
+const CLE_DECOR = 'tbf:decor-accueil';
+let decorPose;
+function decorAccueil(lieu) {
+  const id = typeof lieu === 'string' && /^[a-z0-9-]{1,24}$/.test(lieu) ? lieu : null;
+  try { if (id) localStorage.setItem(CLE_DECOR, id); else localStorage.removeItem(CLE_DECOR); } catch { /* sans stockage */ }
+  if (id === decorPose) return;
+  decorPose = id;
   const img = new Image();
   img.onload = () => {
+    if (decorPose !== id) return;
     $('fond').style.backgroundImage = `url("${img.src}")`;
     $('fond').classList.add('on');
   };
-  /* Deux replis, dans cet ordre : le décor d'avant, puis le JPEG. Une mise en
-     ligne où l'image manque laisserait sinon un écran noir, et un écran noir ne
-     dit pas pourquoi ; un navigateur sans WebP aurait eu le même. */
-  const replis = ['/img/hero' + EXT, '/img/accueil' + window.TBF_ETATS.REPLI];
+  /* Les replis, dans cet ordre : le stade en JPEG, puis l'image habituelle, le
+     décor d'avant, et le JPEG. Une mise en ligne où l'image manque laisserait
+     sinon un écran noir, et un écran noir ne dit pas pourquoi ; un navigateur
+     sans WebP aurait eu le même. */
+  const replis = [...(id ? [`/img/stade/${id}.jpg`, '/img/accueil' + EXT] : []),
+    '/img/hero' + EXT, '/img/accueil' + window.TBF_ETATS.REPLI];
   img.onerror = () => {
     const suivant = replis.shift();
     if (!suivant) { img.onerror = null; return; }
     img.src = suivant;
   };
-  img.src = '/img/accueil' + EXT;
+  img.src = id ? `/img/stade/${id}${EXT}` : '/img/accueil' + EXT;
+}
+{
+  let garde = null;
+  try { garde = localStorage.getItem(CLE_DECOR); } catch { /* sans stockage */ }
+  decorAccueil(garde);
 }
 
 
@@ -5497,7 +5520,13 @@ function feterNiveau(niveau) {
     parcours: lire('/api/aide/parcours', { credentials: 'same-origin' }).catch(() => null),
     dex: lire('/api/fanzzy/dex').catch(() => null),
     coll: lire('/api/fanzzy/state', { credentials: 'same-origin' })
-      .then((j) => { collLuA = Date.now(); return j; }).catch(() => null),
+      .then((j) => {
+        collLuA = Date.now();
+        /* Le décor choisi : seulement sur une réponse qui le porte. Un
+           serveur d'avant, ou un refus, ne dit rien du décor et le laisse. */
+        if (j?.wallet && 'lieuAccueil' in j.wallet) decorAccueil(j.wallet.lieuAccueil);
+        return j;
+      }).catch(() => null),
     biblio: lire('/api/fanzzy/bibliotheque', { credentials: 'same-origin' }).catch(() => null),
     /* Deux de plus au lot 2, pour la bâche du jour : le direct, qui était lu
        après tout le reste — la case se serait d'abord peinte sans lui, puis
