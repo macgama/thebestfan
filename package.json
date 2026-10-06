@@ -25,6 +25,7 @@
     "aide:smoke": "node scripts/aide-smoke.mjs",
     "contenus:smoke": "node scripts/contenus-smoke.mjs",
     "kop:smoke": "node scripts/kop-smoke.mjs",
+    "prono:smoke": "node scripts/pronostics-smoke.mjs",
     "amis:smoke": "node scripts/amis-smoke.mjs",
     "presence:smoke": "node scripts/presence-smoke.mjs",
     "notifications:smoke": "node scripts/notifications-smoke.mjs",

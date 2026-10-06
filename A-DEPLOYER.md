@@ -1,5 +1,26 @@
 # À déposer sur Infomaniak
 
+**Le pronostic** (branche `claude/pronostic-th5gjy`, 6 octobre 2026, demandé
+par Gaël, version gratuite choisie par lui). Il se dépose avec ce qui est en
+dessous, ou seul.
+
+- Sur la fiche d'un match d'un club suivi (`/matchs`), avant le coup d'envoi :
+  **TON PRONOSTIC**, deux compteurs et un bouton. Modifiable jusqu'au coup
+  d'envoi. Au coup de sifflet final, le bon vainqueur (ou le bon nul) rapporte
+  15 écharpes, le score exact 50 ; un pronostic faux ne coûte rien. Montants
+  et interrupteur dans `/admin`, RÉGLAGES, LE PRONOSTIC.
+- `src/server/pronostics/index.js` (neuf), `server.js`, `public/aujourdhui.html`,
+  `src/server/recompenses.js` (source `prono`), `src/shared/reglages.js`.
+  Contrôlé par `npm run prono:smoke` (suite neuve, 46 contrôles) et
+  `npm run matchs:ui` (13 contrôles neufs).
+
+**Un schéma est à appliquer : `sql/pronostics.sql`** (une table neuve, rien de
+modifié ailleurs). Après la construction : `npm run schema:appliquer` en SSH,
+puis **redémarrer**, hors d'un match en direct. Sans le schéma, rien ne casse :
+le pronostic ne paraît pas, et le démarrage nomme le fichier.
+
+---
+
 **Les tenues s'achètent dans la boutique** (branche `claude/boutique-tenues-p8r3wa`,
 6 octobre 2026, demandé par Gaël). Serveur + page, **sans schéma** ;
 **redémarrage**, hors d'un match. Il se dépose avec ce qui est en dessous, ou seul.

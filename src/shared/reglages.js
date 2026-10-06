@@ -108,6 +108,11 @@ export const SECTIONS = [
       's’ouvre, un duel classé qui attend un supporter de son club. Rien ne part ' +
       'vers un appareil qui n’a pas dit oui, case par case, depuis la page du compte, ' +
       'et rien ne part la nuit (de 22 h à 8 h, heure de Zurich).' },
+
+  { id: 'pronostic', titre: 'LE PRONOSTIC',
+    aide: 'Le score qu’on attend d’un match de son club, donné avant le coup ' +
+      'd’envoi. Gratuit, sans mise : un pronostic juste rapporte des écharpes, la ' +
+      'même chose à tout le monde, et un pronostic faux ne coûte rien.' },
 ];
 
 /* ------------------------------------------------------------ les réglages
@@ -783,6 +788,28 @@ export const REGLAGES = [
     aide: 'Un duel qui attend un supporter de ton club, c’est une invitation ; dix ' +
       'dans la soirée, c’est du bruit, et le joueur coupe tout. Un même match ' +
       'n’est de toute façon annoncé qu’une fois.' },
+
+  /* ------------------------------------------------------- le pronostic
+
+     Les deux montants valent au **règlement**, au coup de sifflet final : un
+     changement fait en cours de match vaut pour ce match. Pas de mise, et
+     c'est voulu : un gain gratuit, sans mise, ne crée pas de jeu d'argent
+     (JURIDIQUE.md) ; une mise d'écharpes sur un vrai match, si. */
+  { cle: 'prono.actif', section: 'pronostic', type: 'booleen',
+    titre: 'Proposer le pronostic', defaut: true,
+    aide: 'Éteint : plus de pronostic neuf, et aucun n’est réglé. Rien n’est perdu : ' +
+      'un pronostic juste est payé quand on rallume.' },
+
+  { cle: 'prono.vainqueur_echarpes', section: 'pronostic', type: 'entier',
+    titre: 'Le bon vainqueur (ou le bon nul) rapporte', unite: 'écharpes',
+    min: 0, max: 300, defaut: 15,
+    aide: 'Un tiers de booster aux valeurs de départ. Le pronostic ne vaut que pour ' +
+      'les matchs des clubs suivis : quelques-uns par semaine, pas une source de revenu.' },
+
+  { cle: 'prono.exact_echarpes', section: 'pronostic', type: 'entier',
+    titre: 'Le score exact rapporte', unite: 'écharpes', min: 0, max: 600, defaut: 50,
+    aide: 'À la place du bon vainqueur, pas en plus. Un score exact tombe environ ' +
+      'une fois sur dix : c’est le coup qu’on raconte.' },
 ];
 
 /** Le registre indexé par clé. */
