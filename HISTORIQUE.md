@@ -7971,3 +7971,90 @@ cette session : une autre le faisait dans la copie principale.
   suite est verte. La suite n'est pas corrigée.
 
 ---
+
+## 4 quinquagies quater. Il cligne des yeux, et le Virage montre le jeu d'abord
+
+*6 octobre 2026, session cloud « Lot 7 : images Artlist ». Réponses de Gaël du
+matin : « Tu peux gérer le clignement pour RP1 », et « au virage, quand
+plusieurs moments tombent pendant un même geste, on affiche toujours en
+premier ce qui est lié au jeu ». Le clignement est filmé pour Gaël avant la
+fusion : `lot7/cligne/rp1-cligne.mp4`, dans les fichiers du projet.*
+
+### Ce qui a changé
+
+- **Gosier Rouillé (RP1) cligne des yeux à l'accueil**, au repos, toutes les
+  trois à sept secondes ; une fois sur cinq, deux fois de suite. Un
+  troisième calque sur la pile (`#paupieres`), montré 130 ms.
+- **Seulement les paupières.** Une retouche Artlist de sa tête (Nano Banana 2,
+  512 px, « ferme les yeux, ne change rien d'autre », 440 crédits en tout)
+  est recalée sur son image de repos, et l'on n'en garde que ce qui a
+  changé autour des yeux : `cligne.{avif,webp,png}`, une image de la taille
+  du repos, transparente partout ailleurs. Le reste du visage est celui du
+  repos, au pixel près.
+- **La chaîne sait les refaire.** `npm run cligne -- tete <ID>` découpe la
+  tête et dit quoi demander à Artlist ; `npm run cligne -- poser <ID>
+  <retouche>` pose les paupières et range la retouche dans
+  `art/<ID>/cligne/`, dans le dépôt. `fanzzy-art.mjs` les garde quand il
+  republie un repos à l'identique, les repose depuis la retouche quand le
+  repos a bougé (une tenue de plus agrandit le cadre de l'âge), et les
+  retire en le disant quand le visage a changé.
+- **Au Virage, les moments tombés pendant un geste se montrent l'un après
+  l'autre**, 3,5 secondes chacun : la corde qui cède d'abord, puis ce que le
+  match a fait (la vidéo, un rouge, le coup de sifflet final), et les buts
+  réels en dernier — c'est le dernier qui reste à l'écran ses quinze
+  secondes. Avant, la file se vidait d'un coup et seul le dernier restait :
+  un rouge arrivé après le but le couvrait. La carte-souvenir d'un but
+  attend la fin du défilé.
+
+### Pourquoi comme ça
+
+- **Des paupières, pas une image « yeux fermés » entière.** Le modèle rend
+  le visage à un ou deux tons près, un sourcil un peu plus haut : posée
+  130 ms sur le repos, l'image entière ferait tressaillir tout le visage.
+- **Sur le repos seulement.** Les paupières sont découpées dans cette
+  image-là : une joie, une poussée ou le supporter générique ne clignent
+  pas. `TBF_ETATS.paupieres` part de l'adresse affichée, pas d'une identité,
+  parce que `resoudre` a pu reculer d'une tenue ou d'un âge.
+- **Pas sous le calme** (`data-calme~="animations"`, `prefers-reduced-motion`),
+  ni dans un onglet caché ; le calme se relit à chaque battement.
+- **La boîte de la tête peut déborder de l'image.** Ramenée dedans, elle se
+  décalait par rapport à la tête quand le cadre pose le personnage tout en
+  haut : six pixels pour RP1 recadré, et des paupières à 1,8 % de leur
+  place. La découpe borde maintenant l'image d'une marge transparente.
+- **Le jeu d'abord, le but en dernier.** Un moment qui arrive pendant le
+  défilé y prend son rang au lieu de le couper ; hors d'un geste et d'un
+  défilé, rien ne change. Une entrée du fil qui ne montre rien (un jaune,
+  un changement) ne prend pas de place.
+
+### Contrôles
+
+`accueil:ui` : 8 contrôles de plus (les paupières prêtes avant le premier
+battement, posées sur la boîte exacte du repos, sans lueur ni fondu, un
+battement de lui-même, sa durée, jamais sur un autre visage, un moment qui
+rouvre les yeux, le calme sans battement) et un pour le supporter.
+`etats:test` : 12, `paupieres` sur un manifeste fabriqué et sur le vrai.
+`cligne:test` (neuf, 13 contrôles) : la chaîne sur RP1 recadré, republié,
+puis redessiné. `virage:ui` : 4, la corde, la carte-souvenir qui attend, puis
+le rouge, puis « GOAL ! » qui reste.
+
+Les 68 suites (`npm test`, 5 676 contrôles), passées sur la branche une fois
+fondus le stade du match, les trois décisions de saison 2 et le `main` du
+jour (notifications, carton rouge, tenue d'en face, seuils de division),
+n'ont aucune rouge nouvelle : celles qui restent rougissent à l'identique
+sur `main` dans un conteneur cloud (`equipes:ui` 3, `deck:ui` 1, `nvn:ui` 1,
+`virage:ui` 4). `son:smoke` a rougi une fois, un écho dont deux sources
+partaient à un peu plus de 5 ms l'une de l'autre sous la charge de la passe
+complète, puis passé deux fois seul : ses pages de test ne chargent rien que
+cette branche change. La suite des notifications importait `EN_VENTE`,
+parti avec « La quête » : elle lit maintenant le catalogue partagé.
+
+### Ce qui reste
+
+- **Les autres Fanzzy** : une retouche par repos (`npm run cligne -- tete`),
+  environ 120 crédits chacun ; et le clignement au duel et au Virage, où les
+  Fanzzy ont leurs propres calques.
+- **« Le jeu », compris comme la corde.** Si Gaël entendait par là le vrai
+  match, l'ordre se change d'une ligne (`RANG_DES_MOMENTS`,
+  `public/virage.html`), et le contrôle de `virage:ui` avec.
+
+---

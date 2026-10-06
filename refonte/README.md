@@ -80,13 +80,19 @@ temporaire de la session ; ce qui doit durer est ici.*
    événements à chaque tour tant que sa liste compte moins de buts que le
    tableau (au plus neuf tours) ; la priorité au GOAL et la lecture du retour
    de `realGoal` par `server.js` étaient déjà au lot 6.
-5. **Décisions en attente de Gaël** : la date de fin de la saison 1 et les
-   seuils de division (`/admin`) ; la présence des amis (après relecture de
-   `CONFIDENTIALITE.md` par un juriste) ; celles de `ETAT.md` § 7 bis
-   (inflation des écharpes, saison 2…). Le stade du duel est tranché le
-   6 octobre : celui du match, le même que son Grand Virage, et la
-   préparation le montre avant l'entrée en file (`HISTORIQUE.md`,
-   4 quinquagies bis).
+5. **Les décisions de Gaël du 6 octobre 2026**, faites dans `main` : le
+   stade du duel, celui du match, montré dès la préparation (`HISTORIQUE.md`,
+   4 quinquagies bis) ; le reste des boosters à deux écharpes, « La quête » et
+   « Mur de bâches » retirés et remboursés aux KOP, des divisions qui ne
+   paient que l'honneur, des saisons de quatre mois (4 quinquagies ter) ; au
+   Virage, le jeu d'abord et le but réel en dernier (4 quinquagies quater) ;
+   les seuils de division, que Gaël recale lui-même dans `/admin`
+   (4 quinquagies). **Ce qui reste à Gaël** : saisir le 31 décembre 2026
+   comme fin de la saison 1 dans `/admin` ; donner les informations d'éditeur
+   de `CONFIDENTIALITE.md` (nom, forme juridique, adresse, e-mail de
+   contact) : la page se publie d'abord, puis il allume la présence des amis
+   (`presence.actif`, dans `/admin`) ; choisir la série et le nom de la
+   saison 2.
 6. **Rouges connues** : `deck:ui` (un contrôle, depuis avant le lot 0 ; un
    correctif dort dans la copie `.claude/worktrees/funny-herschel-18c485`
    d'une autre session) ; `accueil:ui` intermittente. **Dans un conteneur
