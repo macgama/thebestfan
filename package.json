@@ -18,6 +18,7 @@
     "bienvenue:smoke": "node scripts/onboarding-smoke.mjs",
     "foot:smoke": "node scripts/football-smoke.mjs",
     "tt:smoke": "node scripts/teletext-smoke.mjs",
+    "inventaire:smoke": "node scripts/inventaire-smoke.mjs",
     "deck:smoke": "node scripts/deck-smoke.mjs",
     "stades:smoke": "node scripts/stades-smoke.mjs",
     "niveau:smoke": "node scripts/niveau-smoke.mjs",

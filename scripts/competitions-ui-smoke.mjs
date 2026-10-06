@@ -149,10 +149,16 @@ const MATCHS_COUPE = [1, 2, 3, 4].map((i) => ({
   away: { id: 950 + i, name: `Extérieur ${i}`, logo: '', goals: 1 },
 }));
 
-app.get('/api/tt/league/:id', (q, s) => (q.params.id === '811'
+/* Deux saisons connues de la Super League : la page doit offrir le choix,
+   et la saison choisie voyage dans l'adresse. */
+let derniereLigue = null;
+const ligueEn = (q) => (q.query.saison === '2025'
+  ? { ...LIGUE, season: 2025, seasons: [2026, 2025], courante: 2026 }
+  : { ...LIGUE, seasons: [2026, 2025], courante: 2026 });
+app.get('/api/tt/league/:id', (q, s) => (derniereLigue = { id: q.params.id, ...q.query }, q.params.id === '811'
   ? s.json({ league: COUPE, unsupported: true })
   : s.json({
-  league: LIGUE,
+  league: ligueEn(q),
   groups: [[{ rank: 1, name: 'FC Sion', logo: '', played: 12, win: 9, draw: 0,
               lose: 3, gf: 24, ga: 11, points: 27 }]],
   stale: false,
@@ -164,9 +170,10 @@ app.get('/api/tt/league/:id/results', (q, s) => {
   }
   /* La journée en cours est la cinquième : c'est elle qui se joue. Le talon
      la choisit quand on ne demande rien, comme le fait le vrai service. */
+  derniereLigue = { id: q.params.id, ...q.query };
   const voulue = MATCHS[q.query.journee] ? q.query.journee : 'Regular Season - 5';
   s.json({
-    league: LIGUE,
+    league: ligueEn(q),
     journees: JOURNEES.map((j) => ({ ...j, en: j.round === voulue })),
     journee: voulue,
     // Nul hors du direct : la minute n'a alors rien à faire courir.
@@ -486,6 +493,41 @@ await controlerLarge(page, check, { nom: 'la page des compétitions', liste: '.l
   check('sans personne, la page le dit au lieu de rester vide',
     (await page.$eval('.empty', (n) => n.textContent)).includes('poussé'));
   ferveurVide = false;
+}
+
+/* --------------------------------------------------- les saisons finies
+
+   Dès qu'une saison nouvelle commençait, l'ancienne ne se revoyait plus : ni
+   son classement, ni le classement de ferveur qu'on y avait gagné. Le
+   sous-titre devient un choix quand le service connaît plusieurs saisons. */
+{
+  await page.goto(base + '/teletext?ligue=207', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('#tsaison') !== null);
+  const choix = await page.$eval('#tsaison', (n) => ({
+    options: [...n.options].map((o) => o.textContent.trim()), valeur: n.value }));
+  check('le sous-titre offre les saisons connues',
+    choix.options.length === 2 && choix.valeur === '2026');
+  check('et dit laquelle est en cours', choix.options[0] === 'saison 2026 (en cours)');
+  check('le pays reste dit devant', (await page.$eval('#tsous', (n) => n.textContent)).startsWith('Suisse'));
+
+  await page.select('#tsaison', '2025');
+  await jusqua(async () => derniereLigue?.saison === '2025'
+    && await page.$eval('#tsaison', (n) => n.value).catch(() => null) === '2025');
+  check('choisir 2025 redemande le classement de 2025', derniereLigue?.saison === '2025');
+
+  await page.evaluate(() => document.querySelector('[data-t=resultats]').click());
+  await jusqua(async () => await page.$('#jsel') !== null);
+  check('les résultats suivent la saison choisie', derniereLigue?.saison === '2025');
+
+  await page.evaluate(() => document.querySelector('[data-t=ferveur]').click());
+  await jusqua(async () => derniereRang?.saison === '2025');
+  check('la ferveur aussi', derniereRang?.saison === '2025');
+
+  await page.select('#tsaison', '2026').catch(() => {});
+  await page.evaluate(() => document.querySelector('[data-t=classement]').click());
+  await jusqua(async () => derniereLigue && !('saison' in derniereLigue));
+  check('revenir à la saison en cours ne la nomme plus dans l’adresse',
+    derniereLigue && !('saison' in derniereLigue));
 }
 
 /* --------------------------------------------- une coupe sans classement
