@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**Les seuils de division recalés depuis l'administration** (branche
+`claude/seuils-division-eahsmj`, 6 octobre 2026, demandé par Gaël). Il se
+dépose avec ce qui est en dessous, ou seul.
+
+- `src/server/admin/index.js`, `src/shared/saison.js`, `public/admin.html` :
+  dans `/admin`, RÉGLAGES, section LA SAISON ET SES PALIERS, un cadre
+  **RECALER LES DIVISIONS** lit la ferveur classée de la saison des seuls
+  joueurs sans abonnement et propose les quatre seuils ; **Poser ces quatre
+  seuils** les écrit. Contrôlé par `npm run admin:smoke` et `npm run
+  admin:ui` (20 contrôles neufs).
+
+**Aucun schéma.** Le serveur change : **redémarrer** après la construction,
+hors d'un match en direct. Ensuite, pour Gaël : saisir le **31 décembre 2026**
+comme dernier jour de jeu de la saison 1 (SAISONS, Modifier), puis, après
+deux semaines de jeu au moins, ouvrir le cadre et cliquer **Poser ces quatre
+seuils**. Les seuils ne changent pas tant qu'on n'a pas cliqué.
+
+---
+
 **Le personnage de l'accueil au milieu, sur téléphone** (branche
 `claude/project-thread-iatg2m`, 6 octobre 2026, choisi par Gaël sur la
 capture avant/après). Il se dépose avec ce qui est en dessous, ou seul.
