@@ -1,5 +1,35 @@
 # À déposer sur Infomaniak
 
+**Les notifications** (branche `claude/notifications-pkpvy9`, 6 octobre 2026,
+demandées par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+
+- Prévenir un joueur dont le jeu est fermé, sur son téléphone ou son
+  ordinateur, pour deux choses : **un vote de son KOP qui s'ouvre** (les
+  membres, sauf celui qui l'ouvre) et **un duel classé qui attend un supporter
+  de son club** (une fois par match, et pas plus d'un duel par heure, réglable
+  dans `/admin`). Jamais la nuit, de 22 h à 8 h. Un message ne nomme jamais
+  un joueur.
+- Rien ne part sans le oui du joueur : deux interrupteurs sur la page **Mon
+  compte**, valables pour cet appareil, puis la fenêtre du navigateur. Sur
+  iPhone, seulement depuis le jeu installé sur l'écran d'accueil (la carte le
+  dit). Se déconnecter coupe les notifications de cet appareil ; supprimer son
+  compte les efface toutes.
+- `src/server/notifications/index.js`, `public/sw.js` (l'affichage),
+  `public/pwa.js` (l'inscription), `public/compte.html`, `public/menu.js` (la
+  déconnexion), le KOP et les duels qui préviennent. Un paquet neuf,
+  `web-push`, que la construction du Manager installe. `CONFIDENTIALITE.md` a
+  son paragraphe, à faire relire. Contrôlé par `npm run notifications:smoke`
+  (37 contrôles neufs) et `npm run pwa:ui` (7).
+
+**Un schéma : `sql/notifications.sql`**, deux tables neuves, rien de touché
+ailleurs. `npm run schema:appliquer` en SSH, puis **un redémarrage** hors d'un
+match en direct. **Rien à saisir dans le Manager** : les clés d'envoi se
+créent seules au premier démarrage. Sans le fichier, rien ne casse : la carte
+ne s'affiche pas, et le journal dit « appliquer sql/notifications.sql ».
+Interrupteur d'urgence : `/admin`, section Les notifications.
+
+---
+
 **Le carton rouge au Fanzzy de l'accueil** (branche
 `claude/carton-rouge-q3bnc0`, 6 octobre 2026, lot 7, confié par Gaël). Il se
 dépose avec ce qui est en dessous, ou seul.
