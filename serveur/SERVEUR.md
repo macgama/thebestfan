@@ -74,6 +74,10 @@ ouverte en production (LA REPRISE), dit trois choses.
   en moyenne **45,8 écharpes, pour un prix de 45**. L'assidu encaisse ainsi
   environ 2 400 écharpes par jour, presque toutes tirées de la recharge
   gratuite. Un montant d'écharpes ne motive donc plus qu'un nouveau venu.
+  (Ces deux chiffres sont ceux d'avant le 6 octobre 2026. Depuis, une
+  catégorie épuisée ne rend plus que 2 écharpes, et la même simulation donne
+  environ 29 écharpes par booster et 1 700 par jour : § 11.1. Le constat
+  reste vrai, il est moins criant.)
 - **Le jeu paie l'ouverture, pas le jeu.** Une minute passée à ouvrir des
   boosters rapporte des dizaines de fois plus qu'une minute de duel. Le Grand
   Virage, le cœur du jeu, ne rapporte rien du tout.
@@ -489,6 +493,14 @@ dessiné.
    quand la catégorie tirée est épuisée, ou une légendaire en double qui
    rapporte moins (voir `ECONOMIE.md`, § 12). Le quotidien fonctionne avec ou
    sans.
+
+   **Tranché le 6 octobre 2026, et fait : la poignée réduite.** Quand la
+   catégorie tirée (tenue, état, carte d'action) n'a plus rien à donner, la
+   place rend 2 écharpes au lieu d'une poignée de 6, 14 ou 30. La catégorie
+   des écharpes garde sa poignée. Un booster établi rend environ
+   **29 écharpes au lieu de 46**, et la légendaire en double garde ses 45 :
+   le second levier n'est pas pris. Le détail, et ce que le nouveau venu y
+   perd au passage, est dans `ECONOMIE.md`, § 12.
 2. **L'XP du Virage** : proposer 15 XP par match poussé, versés par le bilan de
    tribune, avec le lot 6. C'est une règle, pas un montant.
 3. **Le bonus de KOP « La quête »** ne fait rien aujourd'hui : un KOP qui le
@@ -501,8 +513,9 @@ dessiné.
    date de fin de la saison 1, après vérification du calendrier.
 7. **Le dossier du juriste** : l'abonnement, qui double les boosters, fait
    gagner par ricochet environ 2 700 écharpes par jour à un assidu en régime
-   établi. Et plus de boosters offerts avec cérémonie rendent plus pressante la
-   question de l'affichage des taux de tirage. Le quotidien n'aggrave rien,
+   établi (environ 1 700 depuis la poignée réduite du point 1). Et plus de
+   boosters offerts avec cérémonie rendent plus pressante la question de
+   l'affichage des taux de tirage. Le quotidien n'aggrave rien,
    puisqu'il est identique pour tous, mais ces deux points méritent d'y être
    ajoutés. Trois autres aussi, relevés à la relecture :
    - **`JURIDIQUE.md` dit le contraire du code** : « un booster ne s'achète

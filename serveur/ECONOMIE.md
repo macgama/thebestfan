@@ -29,6 +29,11 @@ la deuxième semaine, et 2 100 de ces écharpes viennent de la recharge gratuite
 des boosters. Au 42ᵉ jour, son solde est de 92 000 écharpes. Dans le même
 temps, le **Grand Virage**, le cœur du jeu, ne rapporte **ni écharpe ni XP**.
 
+*Ces chiffres sont ceux d'avant le 6 octobre 2026. Depuis, une catégorie
+épuisée ne rend plus que 2 écharpes au lieu d'une poignée : un booster établi
+rend 28,8 écharpes, et l'assidu en encaisse environ 1 700 par jour (§ 12.1).
+Le constat tient toujours, et les règles qui suivent aussi.*
+
 Il en découle trois règles pour le contenu :
 
 1. **Les missions doivent payer le jeu, pas l'ouverture.** Elles visent le
@@ -59,7 +64,8 @@ occasionnel +32 %, +4 %, +50 %. Le quotidien penche donc vers ceux qui jouent
 peu, et presque rien ne passe par les boosters.
 
 **À trancher par Gaël, hors délégation** (§ 12) : l'inflation des écharpes
-(avant la saison 2) ; l'XP du Virage ; le bonus de KOP « La quête », qui ne fait
+(avant la saison 2 ; tranchée le 6 octobre 2026, et faite : § 12.1) ; l'XP du
+Virage ; le bonus de KOP « La quête », qui ne fait
 rien ; la ferveur arrondie à zéro dans les tribunes nombreuses.
 
 ---
@@ -71,7 +77,7 @@ rien ; la ferveur arrondie à zéro dans les tribunes nombreuses.
 | Source | Montant | Où |
 |---|---|---|
 | Doublon de personnage | commune 1, rare 3, épique 10, légendaire 45 | `src/shared/fanzzy/dex.js:95` `SCARVES` |
-| Place ouverte d'un booster (3,3 par booster en moyenne) | 23 % de poignées : 6 (55 %), 14 (33 %), 30 (12 %), soit 11,5 en moyenne. Les autres catégories (action 28 %, pièce 23 %, tenue 14 %, état 12 %) **retombent sur une poignée** quand elles sont épuisées | `src/server/fanzzy/index.js:442` `PLACES_OUVERTES`, `:463` `POIGNEES` |
+| Place ouverte d'un booster (3,3 par booster en moyenne) | 23 % de poignées : 6 (55 %), 14 (33 %), 30 (12 %), soit 11,5 en moyenne. Les autres catégories (action 28 %, pièce 23 %, tenue 14 %, état 12 %) **retombent sur une poignée** quand elles sont épuisées. *Depuis le 6 octobre 2026, ce repli ne rend plus que 2 écharpes (§ 12.1)* | `src/server/fanzzy/index.js:723` `PLACES_OUVERTES`, `:749` `POIGNEES` ; `src/shared/fanzzy/dex.js:113` `POIGNEE_DE_REPLI` |
 | Doublon de pièce d'équipement | `SCARVES` de sa rareté (10,45 en moyenne sur les 20 pièces RP) | `src/server/fanzzy/index.js:566` |
 | Duel classé | victoire 30, défaite 12 ; **×2** pour son club ; prime de format +15 % par joueur de plus par camp ; un forfait ne rapporte rien | `src/server/nvn/index.js:687` `GAIN`, `:704`, réglage `duel.prime_format` |
 | Duel d'entraînement | victoire 15, défaite 6 (mêmes multiplicateurs) | idem |
@@ -842,6 +848,24 @@ ALTER TABLE kop_bonus       ADD COLUMN IF NOT EXISTS saison_id INT UNSIGNED NULL
    booster (7 en comptant les doublons de pièces légendaires). Sans
    décision, les vétérans paieront la saison 2 entière dans la minute. Le
    quotidien proposé ici fonctionne avec ou sans.
+
+   **Tranché le 6 octobre 2026, et fait : le levier a).** Une catégorie
+   épuisée (toutes les tenues, tous les états ou toutes les cartes d'action
+   déjà gagnés) rend `POIGNEE_DE_REPLI`, 2 écharpes
+   (`src/shared/fanzzy/dex.js`, lue par `tirerAutreChose`). La catégorie des
+   écharpes garde sa poignée de 6, 14 ou 30, et une pièce d'équipement en
+   double son tarif de doublon. Le levier b) n'est pas pris : la légendaire en
+   double rend toujours 45. `serveur/sim-eco.mjs`, relancé avec la règle :
+   un booster établi rend **28,8 écharpes au lieu de 45,8** ; un assidu
+   encaisse 11 700 écharpes par semaine au lieu de 16 700 (semaines 3 et 4),
+   et son solde du 28ᵉ jour passe de 58 000 à 41 000. **Le nouveau venu y perd
+   aussi** : ses vingt premiers boosters rendent 12,3 écharpes au lieu de
+   18,2, parce que les sept cartes d'action de LA REPRISE sont vite toutes
+   gagnées et que la catégorie se replie dès lors. Un occasionnel fait grandir
+   pour 760 écharpes la première semaine au lieu de 1 020, et ses trente
+   lignées atteignent toujours le troisième âge vers le 28ᵉ jour. Le ricochet
+   de l'abonnement (C3) tombe d'environ 2 700 à environ 1 700 écharpes par
+   jour. Contrôlé par `fanzzy:smoke` (« le repli : deux écharpes »).
 2. **L'XP du Virage.** Proposé : un réglage `xp.virage` à **15 XP par match**
    poussé (au moins 20 chants réussis), versé par le bilan de tribune
    (mécanisme 10 de la synthèse). C'est l'équivalent d'un entraînement. C'est

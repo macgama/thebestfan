@@ -2,7 +2,8 @@ import express from 'express';
 // Les cartes viennent de la base ; les barèmes — séries, types, raretés, taux,
 // coûts — restent du code, parce qu'ils décrivent les règles du jeu et non son
 // contenu. On ne change pas un taux de tirage depuis un écran d'administration.
-import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
+import { SETS, TYPES, RAR, RATES, SCARVES, POIGNEE_DE_REPLI, EVO_COST }
+  from '../../shared/fanzzy/dex.js';
 import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
   racineDe, lignee, auStade } from './catalogue.js';
 import { STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
@@ -712,8 +713,10 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * Les écharpes en font partie, et ce n'est pas un lot de consolation : c'est
    * ce qui paie les évolutions, donc les âges qu'on ne tire jamais. C'est aussi
    * le seul lot qui ne peut pas être vide, et il sert donc de dernier recours à
-   * un joueur qui possède déjà toutes les tenues, tout l'équipement et toutes
-   * les cartes d'action — à qui l'on rendait un supporter de plus.
+   * un joueur qui possède déjà toutes les tenues, tous les états et toutes les
+   * cartes d'action — à qui l'on rendait un supporter de plus. Ce recours-là
+   * rend **deux écharpes** (`POIGNEE_DE_REPLI`), pas une poignée : voir
+   * `tirerAutreChose`.
    *
    * @returns {{carte, scarves}}
    */
@@ -737,7 +740,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
 
   /* Trois poignées, de la plus probable à la plus rare. Un booster coûte
      quarante-cinq écharpes ; trois places ouvertes en rendent donc rarement le
-     prix, et c'est voulu — on achète des cartes, pas de la monnaie. */
+     prix, et c'est voulu — on achète des cartes, pas de la monnaie.
+
+     Elles ne tombent que là où la catégorie tirée est **celle des écharpes**.
+     Une catégorie épuisée ne rend plus une poignée, mais la poignée de repli
+     (`POIGNEE_DE_REPLI`, deux écharpes) : sans quoi un joueur qui a tout
+     gagnait plus à ouvrir un booster qu'il ne lui coûtait. */
   const POIGNEES = [[6, 0.55], [14, 0.33], [30, 0.12]];
 
   function tirerCategorie() {
@@ -759,22 +767,33 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       stuffPris, actionsPrises } = ctx;
     const cat = tirerCategorie();
 
-    /* Les écharpes. Le seul lot qui ne peut pas être vide, et donc le recours
-       de toutes les autres catégories : voir les `return echarpes()` plus bas,
-       qui remplacent les anciens `return null` — lesquels rendaient la main au
-       supporter tiré, c'est-à-dire à la carte qu'on cherche justement à ne plus
-       donner cinq fois. */
-    const echarpes = () => {
-      const n = tirerPoignee();
-      return { carte: { type: 'echarpes', id: 'echarpes', montant: n, new: false },
-               scarves: n };
-    };
-    if (cat === 'echarpes') return echarpes();
+    /* Les écharpes, tirées pour elles-mêmes : une poignée de 6, 14 ou 30. */
+    const echarpes = (n) => ({
+      carte: { type: 'echarpes', id: 'echarpes', montant: n, new: false }, scarves: n });
+    if (cat === 'echarpes') return echarpes(tirerPoignee());
 
-    /* Chaque catégorie peut être vide — tout l'équipement déjà possédé, aucun
-       Fanzzy à habiller. On retombe alors sur le supporter plutôt que de rendre
-       une place blanche : une carte vide dans un booster est pire qu'une carte
-       banale. */
+    /* **Le repli : deux écharpes, jamais une place blanche.**
+
+       Chaque catégorie peut être vide pour ce joueur — toutes les tenues et
+       tous les états de ses âges déjà gagnés, toutes les cartes d'action, aucun
+       Fanzzy à habiller. Les écharpes sont le seul lot qui ne peut pas l'être,
+       et c'est donc le recours de toutes les autres : voir les `return repli()`
+       plus bas. Ils remplacent les anciens `return null`, qui rendaient la main
+       au supporter tiré — la carte qu'on cherche justement à ne plus donner
+       cinq fois —, et une carte vide dans un booster serait pire qu'une carte
+       banale.
+
+       Ce recours rendait une poignée entière, la même que la catégorie des
+       écharpes : 11,5 en moyenne. C'était payer un joueur pour avoir tout. Chez
+       celui qui a tout, plus de la moitié des places ouvertes y tombaient, et
+       un booster lui rendait 46 écharpes pour un prix de 45. Il rend
+       désormais `POIGNEE_DE_REPLI`, deux écharpes, comme Gaël l'a tranché le
+       6 octobre 2026 (`serveur/ECONOMIE.md`, § 12) : le booster établi revient
+       à une trentaine d'écharpes, moins que son prix. La catégorie des
+       écharpes garde sa poignée, et l'équipement en double son tarif de
+       doublon (plus bas) : ce n'est pas un repli, c'est un doublon, qui paie
+       comme celui d'un supporter. */
+    const repli = () => echarpes(POIGNEE_DE_REPLI);
 
     if (cat === 'skin') {
       // Un skin habille **un âge précis**. On ne propose donc que les âges que
@@ -790,7 +809,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
           }
         }
       }
-      if (!places.length) return echarpes();
+      if (!places.length) return repli();
       const p = rnd(places);
       skinsPris.add(`${p.id}:${p.stade}:${p.skin}`);
       await conn.query(
@@ -811,7 +830,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     if (cat === 'etat') {
       // Table absente : rien à ranger, donc rien à tirer. Voir la garde posée
       // sur sa lecture dans `openPack`.
-      if (!etatsPris) return echarpes();
+      if (!etatsPris) return repli();
       const places = [];
       for (const id of avant) {
         const stade = stadeDe.get(id) ?? 1;
@@ -821,7 +840,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
           }
         }
       }
-      if (!places.length) return echarpes();
+      if (!places.length) return repli();
       const p = rnd(places);
       etatsPris.add(`${p.id}:${p.stade}:${p.etat}`);
       await conn.query(
@@ -840,7 +859,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       const def = ouvert.find((s) => s.rar === pickRarity(5) && !stuffPris.has(s.id))
         ?? ouvert.find((s) => !stuffPris.has(s.id));
       // Tout possédé : un doublon d'équipement rapporte des écharpes, comme un
-      // doublon de supporter. Il ne se perd pas.
+      // doublon de supporter, au tarif de sa rareté. Il ne se perd pas — et ce
+      // n'est pas un repli : la poignée de repli ne le touche pas.
       if (!def) {
         /* Le doublon se tire parmi l'**ouvert** lui aussi. Le tirer dans la
            liste entière ne donnerait rien de neuf — un doublon ne donne que des
@@ -860,21 +880,21 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       return { carte: { type: 'stuff', id: def.id, new: true }, scarves: 0 };
     }
 
-    /* La dernière branche est **nommée**, et ce qui reste tombe en écharpes.
+    /* La dernière branche est **nommée**, et ce qui reste tombe dans le repli.
        Elle ne l'était pas : toute catégorie sans branche à elle finissait ici,
        en carte d'action, sans que rien ne le dise. Ajouter une ligne à
        `PLACES_OUVERTES` sans écrire la branche qui va avec donnait donc
        silencieusement autre chose que ce qu'on avait déclaré — et un contrôle
        qui remet « fanzzy » dans la table restait vert, puisque le supporter
        promis sortait en carte d'action. */
-    if (cat !== 'action') return echarpes();
+    if (cat !== 'action') return repli();
 
     // Une carte d'action ne se possède qu'une fois : le deck en accepte dix
-    // exemplaires, mais c'est le même droit répété. Un doublon rapporte donc
-    // des écharpes plutôt qu'une ligne de plus.
+    // exemplaires, mais c'est le même droit répété. Toutes possédées, la place
+    // se replie donc sur deux écharpes plutôt que d'écrire une ligne de plus.
     const libres = jouables('action')
       .filter((a) => a.rar !== 'commune' && !actionsPrises.has(a.id));
-    if (!libres.length) return echarpes();
+    if (!libres.length) return repli();
     const vise = pickRarity(5);
     const def = rnd(libres.filter((a) => a.rar === vise).length
       ? libres.filter((a) => a.rar === vise) : libres);

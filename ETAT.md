@@ -3341,14 +3341,18 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
    jeu est lue : `jourDeJeu.changeA` vaut `00:00`.
 
    **Les décisions que le chantier rend à Gaël** (`HISTORIQUE.md`, 4 quadragies
-   ter, « Ce qui reste ») : l'inflation des écharpes avant la saison 2 ;
-   brancher ou retirer « La quête » et « Mur de bâches », et que faire des KOP
-   qui les ont payés ; la saison 2 et sa série ; payer ou non les divisions ; le dossier du juriste ;
+   ter, « Ce qui reste ») : brancher ou retirer « La quête » et « Mur de
+   bâches », et que faire des KOP qui les ont payés ; la saison 2 et sa série ;
+   payer ou non les divisions ; le dossier du juriste ;
    un bonus de KOP voté après la fin d'une saison ; le rang de la racine de
    `/api/rank/moi`, qui compte les comptes supprimés ; les tenues prises par
    l'abonnement ; le nom de la saison 1 (« Le premier virage » dans
    `sql/saisons.sql`, « La reprise » partout ailleurs — et en production,
-   relevé le 4 octobre). L'XP du Virage est tranchée et réglée (le 3 octobre :
+   relevé le 4 octobre). **Tranchée le 6 octobre 2026, et faite** :
+   l'inflation des écharpes avant la saison 2 — une place de booster dont la
+   catégorie est épuisée rend deux écharpes au lieu d'une poignée, et un
+   booster établi environ 29 au lieu de 46 (`serveur/ECONOMIE.md`, § 12).
+   L'XP du Virage est tranchée et réglée (le 3 octobre :
    quinze par match poussé, dix chants au moins, trois matchs par jour), et la
    ferveur arrondie à zéro dans une grande tribune aussi (le plancher d'un
    point, au lot 6). Et des défauts voisins, hors des

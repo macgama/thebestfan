@@ -1176,7 +1176,10 @@ toutes les tenues de ses âges reçoit donc des écharpes là où un joueur grat
 reçoit une tenue : de l'ordre de 5 écharpes par booster (0,46 place « tenue »
 par booster × 11,5), tant que le joueur gratuit n'a pas lui-même toutes ses
 tenues. Le corriger demande de savoir quelles tenues ont été prises par
-l'abonnement : c'est la colonne ci-dessus.
+l'abonnement : c'est la colonne ci-dessus. *Depuis le 6 octobre 2026, une
+catégorie épuisée ne rend plus que 2 écharpes (`POIGNEE_DE_REPLI`) : l'écart
+tombe à environ 1 écharpe par booster (0,46 × 2), et la question perd
+l'essentiel de son poids.*
 
 **Suite** : `fanzzy-smoke`, « ce que l'abonnement ouvre ne paie pas ». Un
 abonné simulé porte, **par la route de l'avatar** (`POST

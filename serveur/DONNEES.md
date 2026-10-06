@@ -731,9 +731,11 @@ ces lignes sans une ligne de code de plus (ce sont des entiers et des booléens,
 Ordres de grandeur, pour les relire (montants : `ECONOMIE.md` fait foi). Un joueur qui fait
 tout reçoit en moyenne ~35 écharpes par jour de carte et un booster par semaine, 190 écharpes,
 120 XP et un booster par jour de missions. Une victoire classée pour son club en paie 60, un
-booster complet (collection RP finie) rend à peu près son prix (45) en doublons et poignées :
-le quotidien est un **complément**, la même règle que les écharpes de palier
-(`shared/niveau.js` : « de quoi sentir la montée, jamais de quoi remplacer les doublons »).
+booster complet (collection RP finie) rendait à peu près son prix (45) en doublons et poignées,
+et en rend environ 29 depuis qu'une catégorie épuisée ne donne plus que 2 écharpes (6 octobre
+2026, `ECONOMIE.md` § 12.1) : le quotidien est un **complément**, la même règle que les
+écharpes de palier (`shared/niveau.js` : « de quoi sentir la montée, jamais de quoi
+remplacer les doublons »).
 Les seuils de division supposent une cote de départ à 1000 et un K de 48 puis 24 : à valider
 sur les cotes réelles de production avant le lancement de la récompense de saison.
 
