@@ -5,7 +5,7 @@ import { Cheat, grade, applyHeroMods } from '../ferveur/gestures.js';
 /* Le barème du duel vit dans `deck` depuis qu'il s'annonce avant l'entrée en
    file (`enJeu`, CONTRATS.md § 17) : un seul endroit pour le chiffre promis et
    le chiffre versé. Voir `GAIN` et `baseDuDuel` là-bas. */
-import { FORMATS, DOUBLE_CLUB, baseDuDuel } from '../deck/index.js';
+import { FORMATS, DOUBLE_CLUB, baseDuDuel, SANS_DUEL } from '../deck/index.js';
 import { modsAvecEffets } from '../../shared/duel/effets.js';
 import { CHANTS } from '../../shared/duel/chants.js';
 // L'échelle unique du verdict (CONTRATS.md § 16.1) : le serveur nomme, la page écrit.
@@ -16,7 +16,7 @@ import { apres as coteApres, moyenne as coteMoyenne, COTE_DEPART }
   from '../../shared/cote.js';
 // La même règle qu'au Virage : le club qu'on soutient dans cette
 // rencontre, ou rien du tout si on n'en suit aucun des deux.
-import { clubSoutenu, campDe } from '../football/suivis.js';
+import { clubSoutenu, clubParmi, campDe } from '../football/suivis.js';
 import { assurerBourse } from '../bourse.js';
 
 /**
@@ -926,8 +926,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
                Il prend au hasard : un bot qui optimiserait son souffle serait
                un adversaire d'entraînement plus dur qu'un humain. */
-            const chant = salle.duel.repertoire[
-              Math.floor(Math.random() * salle.duel.repertoire.length)];
+            const offre = salle.duel.offreDe(salle.duel.joueurs.get(userId));
+            const chant = offre[Math.floor(Math.random() * offre.length)];
             /* Par le même chemin que les joueurs : le verdict de son chant
                part à la salle, et ses PARFAITS au bilan (« un bot a les
                siens », CONTRATS.md § 17). */
@@ -1730,13 +1730,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
    * file la plus remplie — c'est celle qui partira le plus vite, donc celle où
    * mon arrivée change quelque chose.
    */
-  async function alertePour(userId) {
+  async function alertePour(userId, suivisLus = null) {
     const attentes = filesParMatch().filter((a) => a.camps.some((n) => n > 0));
     if (!attentes.length) return null;
 
-    const suivis = new Set((await q(
-      `SELECT team_id FROM user_follows WHERE user_id = ?`, [userId]))
-      .map((r) => r.team_id));
+    const lignes = suivisLus ?? await suivisDe(userId);
+    const suivis = new Set(lignes.map((r) => r.team_id));
 
     const avecMien = attentes.map((a) => ({
       ...a,
@@ -1750,12 +1749,163 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        c'est là que la ferveur vaut davantage. À égalité, celui d'en face de
        ceux qui attendent déjà. */
     const manque = a.camps[0] <= a.camps[1] ? 0 : 1;
-    return { ...a, campQuiManque: manque, manque: Math.max(0, a.attendus - a.camps[manque]) };
+    const alerte = { ...a, campQuiManque: manque,
+      manque: Math.max(0, a.attendus - a.camps[manque]) };
+
+    /* **Un derby qui attend.** Sur un match de mes clubs, mon camp est
+       imposé : c'est le club que je suis. Quand ceux qui attendent sont **en
+       face**, dans la tribune de l'autre club, et que la mienne a de la
+       place, ce n'est plus « quelqu'un attend », c'est un supporter de
+       l'autre club qui m'attend — la suite naturelle de la proposition de
+       derby (voir `derbyPour`), une fois que l'un des deux a appuyé. */
+    if (a.mien) {
+      const club = clubParmi(lignes, a.clubs[0]?.id, a.clubs[1]?.id);
+      const monCamp = campDe(club.teamId, a.clubs[0]?.id, a.clubs[1]?.id);
+      if (monCamp !== null && a.camps[monCamp ^ 1] > 0 && a.camps[monCamp] < a.attendus) {
+        return { ...alerte, derby: true, monCamp };
+      }
+    }
+    return alerte;
+  }
+
+  /* ==================================================== le derby automatique
+
+     Deux supporters sont sur le jeu au même moment ; l'un suit Sion, l'autre
+     Bâle, et Sion–Bâle se joue aujourd'hui. Chacun, de son côté, ne voyait
+     rien : aucun n'attendait en file, donc aucun panneau ne s'allumait, et
+     ils repartaient sans s'être croisés. **Le derby automatique le leur
+     propose, à tous les deux** : « Un supporter de Bâle est en ligne ».
+
+     ## Ce qui est dit, et ce qui ne l'est jamais
+
+     La même règle que les files : **combien, et de quel côté. Jamais qui.**
+     Le derby nomme un club et un match, pas une personne : ni pseudo, ni
+     Fanzzy, ni depuis quand. Et rien n'est écrit en base — la marque « vu sur
+     le jeu » vit en mémoire quelques minutes, disparaît au redémarrage, et
+     ne sert qu'à ça. Ce n'est pas la présence des amis (`presence/`), qui
+     montre *qui* est là et reste éteinte tant que sa politique n'est pas
+     publiée.
+
+     ## Comment il se joue
+
+     Le premier qui appuie entre en file, en 1v1, dans la tribune de son
+     club : le duel est classé, puisque le match est du jour. L'autre voit
+     alors « un supporter de Sion t'attend » (`alertePour`, `derby: true`),
+     et le duel part dès qu'il entre. S'il ne vient pas, les bots complètent
+     comme pour n'importe quelle file : personne n'attend pour rien.
+
+     ## Qui compte comme « en ligne »
+
+     Celui qui a lu `/api/nvn/attentes` depuis moins de `DERBY_FRAIS_MS` :
+     l'accueil le lit à chaque tour de veille (onglet visible seulement),
+     le tiroir à chaque page, l'écran du duel à son arrivée. Un joueur en
+     duel ou déjà en file n'est proposé à personne — il a mieux à faire.  */
+
+  /**
+   * Combien de temps une lecture fait de quelqu'un un adversaire possible.
+   * Quatre minutes : l'accueil relit toutes les trois minutes quand rien ne
+   * se passe, et un joueur ne doit pas disparaître entre deux tours de sa
+   * propre page. Au pire, l'autre entre en file pour rien — et les bots
+   * complètent.
+   */
+  const DERBY_FRAIS_MS = 4 * 60_000;
+  /** Joueur → { vu, suivis } : ses clubs, triés comme `clubParmi` les veut. */
+  const guetteurs = new Map();
+  let menageDerbyA = 0;
+
+  /** Les clubs suivis, le principal d'abord : l'ordre qui départage un derby. */
+  const suivisDe = (userId) => q(
+    `SELECT team_id FROM user_follows WHERE user_id = ?
+      ORDER BY is_main DESC, created_at`, [userId]);
+
+  function noterGuetteur(userId, suivis, t) {
+    if (suivis.length) guetteurs.set(userId, { vu: t, suivis });
+    else guetteurs.delete(userId);
+    /* Le ménage, au plus une fois par minute : sans lui, la mémoire garderait
+       la trace de chaque joueur passé depuis le démarrage. */
+    if (t - menageDerbyA >= 60_000) {
+      menageDerbyA = t;
+      for (const [id, g] of guetteurs) if (t - g.vu >= DERBY_FRAIS_MS) guetteurs.delete(id);
+    }
+  }
+
+  /**
+   * Le derby à proposer à ce joueur, ou `null`.
+   *
+   * Un match **du jour** (le duel est donc classé), ni annulé ni reporté,
+   * dont il suit un club et dont un autre joueur en ligne suit l'autre —
+   * chacun de son côté selon la règle du club soutenu (`clubParmi`) : celui
+   * qui suit les deux clubs est chez lui dans celui qu'il a mis en premier.
+   * Ce qui se joue d'abord, puis ce qui va se jouer, puis ce qui est joué :
+   * le soir même, on a encore envie d'en découdre.
+   *
+   * Une requête, et seulement quand quelqu'un d'autre est en ligne : les
+   * matchs du jour de **ses** clubs, quelques lignes. Le reste est en mémoire.
+   */
+  async function derbyPour(userId, suivis, t = Date.now()) {
+    if (!suivis.length || estEnDuel(userId)) return null;
+
+    /* Les clubs des autres, pour savoir en mémoire qui pourrait être en face.
+       Club → camps possibles n'a pas de sens avant d'avoir le match : on
+       garde les joueurs, et on applique la règle match par match. */
+    const autres = [];
+    for (const [id, g] of guetteurs) {
+      if (id === userId || t - g.vu >= DERBY_FRAIS_MS || estEnDuel(id)) continue;
+      autres.push(g);
+    }
+    if (!autres.length) return null;
+
+    const mes = suivis.map((s) => s.team_id);
+    const ph = mes.map(() => '?').join(',');
+    const matchs = await q(
+      `SELECT f.id, f.status_short, f.kickoff_at, f.home_id, f.away_id,
+              h.name AS home_name, h.logo AS home_logo,
+              a.name AS away_name, a.logo AS away_logo
+         FROM fixtures f
+         JOIN teams h ON h.id = f.home_id
+         JOIN teams a ON a.id = f.away_id
+        WHERE DATE(f.kickoff_at) = UTC_DATE()
+          AND f.status_short NOT IN (${SANS_DUEL.map(() => '?').join(',')})
+          AND (f.home_id IN (${ph}) OR f.away_id IN (${ph}))
+        ORDER BY f.kickoff_at
+        LIMIT 20`, [...SANS_DUEL, ...mes, ...mes]);
+
+    const LIVE = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'];
+    const TERMINE = ['FT', 'AET', 'PEN'];
+    const rang = (m) => (LIVE.includes(m.status_short) ? 0
+      : TERMINE.includes(m.status_short) ? 2 : 1);
+    matchs.sort((x, y) => rang(x) - rang(y));
+
+    for (const m of matchs) {
+      const moi = clubParmi(suivis, m.home_id, m.away_id);
+      const monCamp = campDe(moi.teamId, m.home_id, m.away_id);
+      if (monCamp === null) continue;
+      const enFace = autres.some((g) => {
+        const lui = clubParmi(g.suivis, m.home_id, m.away_id);
+        return campDe(lui.teamId, m.home_id, m.away_id) === (monCamp ^ 1);
+      });
+      if (!enFace) continue;
+      return {
+        fixtureId: Number(m.id), format: '1v1', mode: 'classe', monCamp,
+        status: m.status_short, kickoffAt: m.kickoff_at,
+        clubs: [{ id: m.home_id, name: m.home_name, logo: m.home_logo },
+                { id: m.away_id, name: m.away_name, logo: m.away_logo }],
+      };
+    }
+    return null;
   }
 
   router.get('/attentes', requireAuth, async (req, res) => {
     try {
-      res.json({ attentes: filesParMatch(), alerte: await alertePour(req.user.id) });
+      const userId = req.user.id;
+      const suivis = await suivisDe(userId);
+      noterGuetteur(userId, suivis, Date.now());
+      /* Le derby ne fait pas tomber le panneau : une panne de sa requête le
+         tait, et les files s'affichent comme avant. */
+      let derby = null;
+      try { derby = await derbyPour(userId, suivis); }
+      catch (e) { console.error('[nvn] derby', e.message); }
+      res.json({ attentes: filesParMatch(), alerte: await alertePour(userId, suivis), derby });
     } catch (e) {
       console.error('[nvn] attentes', e.message);
       res.status(503).json({ error: 'nvn.error.server' });
@@ -1798,7 +1948,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   /* `accepte` est exporté pour les tests : la borne haute — « jamais plus
      grand que ce qui a été demandé » — ne se voit pas depuis une socket, et
      c’est pourtant elle qui empêche un 1v1 de finir dans un 5v5. */
-  return { router, salles, files, filesParMatch, alertePour, accepte,
+  return { router, salles, files, filesParMatch, alertePour, derbyPour, guetteurs, accepte,
            ouvrir, ouvrirAvecBots, tenterAppariement, butReel, estEnDuel,
            /* `fermer` n'est appelée par aucun autre module : elle n'est exposée
               qu'aux suites, qui doivent pouvoir la frapper deux fois de suite

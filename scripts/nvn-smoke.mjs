@@ -393,6 +393,28 @@ check('un entraînement ne compte pas',
       vuePour(dT, '0-0', t).equipes[1][0].skin === 'base');
   }
 
+  /* **Ce qu'il porte.** La vue sert, pour chaque joueur, les pièces que son
+     deck a mises à son Fanzzy en tribune, avec leur nom et leur rareté :
+     l'arène les accroche à côté de lui. Les deux premières, comme `combine` ;
+     une pièce inconnue du catalogue est sautée plutôt que dessinée vide. */
+  {
+    const dS = duelR({ TR32: 1 });
+    dS.joueurs.get('0-0').fanzzy[0].stuff = ['megaphone', 'disparue', 'jumelles', 'echarpe'];
+    const sac = vuePour(dS, '1-0', t).equipes[0][0].sac;
+    check(`la vue d’en face dit ce que porte son Fanzzy (${sac.map((x) => x.id).join(', ')})`,
+      sac.length === 1 && sac[0].id === 'megaphone' && sac[0].rar === 'epique'
+      && sac[0].nom === 'Mégaphone');
+    /* La troisième pièce n'est pas montrée à la place de l'inconnue : `combine`
+       ne l'applique pas non plus, et une pièce affichée doit être une pièce
+       qui compte. */
+    dS.joueurs.get('0-0').fanzzy[0].stuff = ['megaphone', 'jumelles'];
+    check('deux pièces connues : les deux, dans l’ordre du sac',
+      vuePour(dS, '1-0', t).equipes[0][0].sac.map((x) => x.id).join() === 'megaphone,jumelles');
+    check('un Fanzzy sans pièce a un sac vide',
+      Array.isArray(vuePour(dS, '0-0', t).equipes[1][0].sac)
+      && vuePour(dS, '0-0', t).equipes[1][0].sac.length === 0);
+  }
+
   j.main.push('a-releve');
   j.breath = 100;
   j.cooldowns['a-releve'] = 0;
@@ -477,7 +499,7 @@ check('un entraînement ne compte pas',
   /* **Le répertoire est une règle, pas une suggestion de la page.** Sans ce
      refus, un client modifié demanderait le chant le plus rentable des
      dix-neuf à chaque fois, et le tirage du répertoire ne servirait à rien. */
-  const dehors = ORDRE.find((id) => !solo2.repertoire.includes(id));
+  const dehors = ORDRE.find((id) => !solo2.offreDe(solo2.joueurs.get('0-0')).includes(id));
   let refuse = null;
   try {
     solo2.joueurs.get('0-0').breath = 100;
@@ -490,6 +512,65 @@ check('un entraînement ne compte pas',
   try { solo2.chanter('0-0', { cardId: 'pas-un-chant', taps: tempoParfait() }, t); }
   catch (e) { inconnu = e.code; }
   check('et un chant qui n’existe pas aussi', inconnu === 'ferveur.error.unknown_card');
+
+  /* **Son geste.** Le chant de la spécialité du Fanzzy en tribune le dit, avec
+     sa famille : c'est ce qui le fait chanter à sa manière dans l'arène. Un
+     autre chant ne le dit pas — sinon tout chant ferait bouger le personnage,
+     et sa spécialité ne se verrait plus. */
+  {
+    const d = duel(1, 'entrainement', t, 'sien');
+    const fz = d.joueurs.get('0-0').fanzzy[0];
+    const sienne = ORDRE.find((id) => CHANTS[id].gest === fz.cri.gest);
+    const autre = ORDRE.find((id) => CHANTS[id].gest !== fz.cri.gest);
+    d.repertoire[0] = sienne;
+    d.repertoire[1] = autre;
+    d.joueurs.get('0-0').breath = 100;
+    const ev1 = d.chanter('0-0', { cardId: sienne, taps: [] }, t).find((e) => e.t === 'chant');
+    d.joueurs.get('0-0').breath = 100;
+    const ev2 = d.chanter('0-0', { cardId: autre, taps: [] }, t + 20_000).find((e) => e.t === 'chant');
+    check(`le chant de son geste le dit, avec sa famille (${fz.cri.gest}, ${fz.type})`,
+      ev1?.sien === true && ev1.famille === fz.type);
+    check('un autre chant ne le dit pas', ev2 && !('sien' in ev2) && !('famille' in ev2));
+  }
+
+  /* **Son chant est toujours dans sa main, au milieu.** Le répertoire tire cinq
+     chants sur vingt-six : sans cette place, le geste du Fanzzy n'y tombait
+     qu'une fois sur cinq. La main reste de cinq cartes, et elle suit le Fanzzy
+     en tribune. */
+  {
+    let toujours = true, cinq = true, milieu = true, remplace = 0, refuse = true;
+    for (let k = 0; k < 40; k++) {
+      const d = duel(1, 'entrainement', t, `offre-${k}`);
+      const j = d.joueurs.get('0-0');
+      const geste = j.fanzzy[j.actif].cri.gest;
+      const main = d.vue('0-0').chants;
+      cinq &&= main.length === 5 && new Set(main.map((c) => c.id)).size === 5;
+      toujours &&= main.some((c) => c.gest === geste);
+      milieu &&= main[2]?.gest === geste;
+      if (!d.repertoire.some((id) => CHANTS[id].gest === geste)) {
+        remplace++;
+        // Le chant commun qui lui a laissé sa place n'est plus dans sa main.
+        const parti = d.repertoire.find((id) => !main.some((c) => c.id === id));
+        j.breath = 100;
+        try { d.chanter('0-0', { cardId: parti, taps: [] }, t); refuse = false; } catch { /* refusé */ }
+      }
+    }
+    check('le chant de son Fanzzy est toujours dans sa main', toujours);
+    check('qui reste de cinq cartes, sans doublon', cinq);
+    check('et il y tient la place du milieu', milieu);
+    check(`quand le tirage ne l'offrait pas, il prend une place, et celle-ci n'est plus jouable (${remplace} fois sur 40)`,
+      remplace > 0 && refuse);
+
+    // Il suit le Fanzzy en tribune.
+    const d = duel(1, 'entrainement', t, 'offre-suit');
+    const j = d.joueurs.get('0-0');
+    const autre = j.fanzzy.findIndex((f) => f.cri.gest !== j.fanzzy[0].cri.gest);
+    if (autre > 0) {
+      j.actif = autre;
+      check(`et il suit le Fanzzy en tribune (${j.fanzzy[autre].cri.gest})`,
+        d.vue('0-0').chants[2].gest === j.fanzzy[autre].cri.gest);
+    }
+  }
 
   /* **Le coût et la poussée viennent de la carte.** C'est toute la décision
      qu'on vient d'ajouter : un gros chant coûte plus de souffle et rend plus.
