@@ -400,7 +400,15 @@ que `raretes` les a rangées.
   n'est pas frappée). Le workflow GitHub applique le schéma avant de
   redémarrer : rien de plus à faire par ce chemin.
 
-Contrôle : `SHOW TABLES;` doit en lister **49**.
+- `collection-stades.sql` (6 octobre 2026) pose la **collection de stades** :
+  la table `user_stades` (ce qu'un joueur a tiré en booster) et la colonne
+  `user_wallet.stade_accueil` (le stade choisi en décor de l'accueil, `NULL`
+  pour l'image habituelle). Additif, rien de renommé, aucune reprise de
+  données, pas de clé étrangère (la raison est celle de `quotidien.sql`). Il
+  vient en dernier. **Sans lui, rien ne casse** : le booster ne tire pas de
+  stade, la collection montre Le Chaudron seul, l'accueil garde son image.
+
+Contrôle : `SHOW TABLES;` doit en lister **50**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
@@ -491,7 +499,7 @@ Redémarrer pendant la construction relance l'ancien code : `npm start` ne fait
 jamais de `git pull`.
 
 **Le Manager n'applique pas le schéma.** Une livraison qui ajoute un fichier
-de `sql/` (la dernière : `sql/arenes.sql`) demande, une fois la
+de `sql/` (la dernière : `sql/collection-stades.sql`) demande, une fois la
 construction finie, `npm run schema:appliquer` en SSH, **puis un second
 redémarrage** : le contrôle de démarrage et `/healthz` ne relisent la base
 qu'au lancement du processus.

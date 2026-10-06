@@ -29,6 +29,9 @@ import { ACTIONS, DECK_RULES } from '../../shared/duel/actions.js';
 import { publies as jouables } from '../contenus/index.js';
 import { DEFAUTS, reglage } from '../../shared/reglages.js';
 import { stadeAffiche } from '../../shared/fanzzy/ages.js';
+/* Les **lieux** : les stades où l'on joue (`shared/stades.js`). Renommés ici,
+   où « stade » veut dire l'âge d'un Fanzzy depuis `sql/stades.sql`. */
+import { STADES, STADE_BY_ID as LIEU_BY_ID, STADE_DEFAUT as LIEU_DEFAUT } from '../../shared/stades.js';
 import { avatarsDe } from './avatar.js';
 import { XP } from '../../shared/niveau.js';
 import { saisonsLancees, saisonEnCours } from './saisons.js';
@@ -67,12 +70,12 @@ function signalerAnnexe(table, e) {
    ne pas l'écrire deux fois, à la page pour l'éteindre. Sa forme est fermée :
 
      fanzzy:RP4 · age:RP4:2 · etat:RP4:1:joie · skin:RP4:1:prehistorique
-     stuff:<pièce> · action:<carte>
+     stuff:<pièce> · action:<carte> · lieu:<stade où l'on joue>
 
    Les deux fonctions qui suivent sont les seules à la construire et à la
    lire : une seconde façon d'écrire la même clé ferait deux nouveautés pour un
    seul gain, et une page qui en éteint une verrait l'autre rester allumée. */
-export const SORTES_NOUVEAUTE = Object.freeze(['fanzzy', 'age', 'etat', 'skin', 'stuff', 'action']);
+export const SORTES_NOUVEAUTE = Object.freeze(['fanzzy', 'age', 'etat', 'skin', 'stuff', 'action', 'lieu']);
 
 /** La clé d'une carte de booster, ou `null` pour une poignée d'écharpes. */
 export function cleDeCarte(c) {
@@ -82,6 +85,7 @@ export function cleDeCarte(c) {
     case 'skin': return `skin:${c.pour}:${c.stade}:${c.id}`;
     case 'stuff': return `stuff:${c.id}`;
     case 'action': return `action:${c.id}`;
+    case 'lieu': return `lieu:${c.id}`;
     default: return null;
   }
 }
@@ -99,7 +103,7 @@ export function nouveauteDe(cle) {
   const stade = Number(p[2]);
   const stadeLu = Number.isInteger(stade) && stade >= 1 && stade <= 3;
   switch (p[0]) {
-    case 'fanzzy': case 'stuff': case 'action':
+    case 'fanzzy': case 'stuff': case 'action': case 'lieu':
       return p.length === 2 && p[1] ? { cle, sorte: p[0], id: p[1] } : null;
     case 'age':
       return p.length === 3 && p[1] && stadeLu ? { cle, sorte: 'age', id: p[1], stade } : null;
@@ -124,7 +128,7 @@ export function nouveauteDe(cle) {
  */
 export const CHEMINS_NOUVEAUTES = Object.freeze({
   ecrivent: Object.freeze({
-    openPack: Object.freeze(['fanzzy', 'etat', 'skin', 'stuff', 'action']),
+    openPack: Object.freeze(['fanzzy', 'etat', 'skin', 'stuff', 'action', 'lieu']),
     evolve: Object.freeze(['age']),
     remettreStuff: Object.freeze(['stuff']),
     remettreTenue: Object.freeze(['skin']),
@@ -374,8 +378,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        `activeSkin`, `activeStade`, `activeEtat` — en sont tirés, et non plus
        calculés à part : ils restent pour les écrans qui les lisent encore,
        mais ils ne peuvent plus dire autre chose que `avatar`. */
-    const [{ avatar, enJeu, tenuesParAge }, stuffPorte] = await Promise.all([
-      construireAvatar(userId, w), sacDuDeck(userId, w.active_fanzzy)]);
+    const [{ avatar, enJeu, tenuesParAge }, stuffPorte, lieuAccueil] = await Promise.all([
+      construireAvatar(userId, w), sacDuDeck(userId, w.active_fanzzy), lieuAccueilDe(userId)]);
 
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
       nextPackInMs: nextIn,
@@ -405,6 +409,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          et montrait donc une tenue que le joueur ne possède pas à cet âge-là.
          La règle de possession est par âge depuis `sql/skins.sql`. */
       tenuesParAge: tenuesParAge ?? {},
+      /* **Le décor de l'accueil**, un stade possédé, ou `null` pour l'image
+         habituelle (`sql/collection-stades.sql`). */
+      lieuAccueil,
       /* **L'âge auquel le montrer, déjà calculé.**
 
          `activeEvo` reste ce qu'il a toujours été : le choix brut, nul quand
@@ -758,7 +765,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        on tire trop souvent dedans — et une case qui se remplit vite cesse de
        faire envie. */
     ['etat', 0.12],
-    ['echarpes', 0.23],
+    /* **Les lieux.** Les stades où l'on joue se collectionnent : ils ne
+       décident pas où se tient une rencontre (le stade appartient au match)
+       et n'y donnent rien, ils se rangent dans la collection et l'un d'eux
+       peut habiller l'accueil. Cinq pour cent, pris sur les écharpes : une
+       quinzaine de lieux à gagner, la case ne doit pas se remplir en une
+       semaine. */
+    ['lieu', 0.05],
+    ['echarpes', 0.18],
   ];
 
   /* Trois poignées, de la plus probable à la plus rare. Un booster coûte
@@ -787,7 +801,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
 
   async function tirerAutreChose(ctx) {
     const { conn, userId, avant, stadeDe, skinsPris, etatsPris,
-      stuffPris, actionsPrises } = ctx;
+      stuffPris, actionsPrises, lieuxPris } = ctx;
     const cat = tirerCategorie();
 
     /* Les écharpes, tirées pour elles-mêmes : une poignée de 6, 14 ou 30. */
@@ -901,6 +915,33 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         `INSERT INTO user_stuff (user_id, stuff_id, copies) VALUES (?, ?, 1)
          ON DUPLICATE KEY UPDATE copies = copies + 1`, [userId, def.id]);
       return { carte: { type: 'stuff', id: def.id, new: true }, scarves: 0 };
+    }
+
+    if (cat === 'lieu') {
+      /* Ce que la saison a ouvert, moins le stade de départ : il est à tout
+         le monde, le tirer serait donner ce qu'on a déjà. Table absente
+         (`sql/collection-stades.sql` pas appliqué) : rien à ranger, donc
+         rien à tirer, et la place rend le repli. */
+      if (!lieuxPris) return repli();
+      const ouvert = jouables('stade').filter((l) => l.id !== LIEU_DEFAUT);
+      if (!ouvert.length) return repli();
+      const libres = ouvert.filter((l) => !lieuxPris.has(l.id));
+      const vise = pickRarity(5);
+      const def = libres.find((l) => l.rar === vise) ?? (libres.length ? rnd(libres) : null);
+      // Tout possédé : un doublon rapporte des écharpes, comme l'équipement.
+      if (!def) {
+        const dedans = rnd(ouvert);
+        await conn.query(
+          `UPDATE user_stades SET copies = copies + 1 WHERE user_id = ? AND stade_id = ?`,
+          [userId, dedans.id]);
+        return { carte: { type: 'lieu', id: dedans.id, new: false },
+          scarves: SCARVES[dedans.rar] ?? 1 };
+      }
+      lieuxPris.add(def.id);
+      await conn.query(
+        `INSERT INTO user_stades (user_id, stade_id, copies) VALUES (?, ?, 1)
+         ON DUPLICATE KEY UPDATE copies = copies + 1`, [userId, def.id]);
+      return { carte: { type: 'lieu', id: def.id, new: true }, scarves: 0 };
     }
 
     /* La dernière branche est **nommée**, et ce qui reste tombe dans le repli.
@@ -1059,6 +1100,17 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]);
       const stuffPris = new Set(stuffOwned.map((s) => s.stuff_id));
 
+      /* Les lieux déjà tirés, avec la même garde que les états : sans
+         `sql/collection-stades.sql`, `null`, et la place tombe en écharpes. */
+      let lieuxPris = null;
+      try {
+        const [lieuxOwned] = await conn.query(
+          `SELECT stade_id FROM user_stades WHERE user_id = ?`, [userId]);
+        lieuxPris = new Set(lieuxOwned.map((l) => l.stade_id));
+      } catch (e) {
+        if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
+      }
+
       const [wRow] = await conn.query(
         `SELECT action_cards FROM user_wallet WHERE user_id = ?`, [userId]);
       const brutActions = wRow[0]?.action_cards;
@@ -1089,7 +1141,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const ouverte = i >= 2 || (i === 1 && Math.random() >= 0.7);
         if (ouverte) {
           const autre = await tirerAutreChose({
-            conn, userId, avant, stadeDe, skinsPris, etatsPris, stuffPris, actionsPrises });
+            conn, userId, avant, stadeDe, skinsPris, etatsPris, stuffPris, actionsPrises, lieuxPris });
           if (autre) {
             scarves += autre.scarves ?? 0;
             cards.push(autre.carte);
@@ -1589,6 +1641,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       // le joueur que sa version était périmée, et lui montrait trois cartes
       // en annonçant « 1 / 5 ». Ce qui se tire doit être servi.
       stuff: STUFF, actions: ACTIONS, tenues: toutesTenues(),
+      /* Les lieux, sans leurs `mods` : la page n'en dit que le nom, la
+         rareté et l'effet écrit. */
+      lieux: STADES.map(({ id, nom, rar, texte, effet }) => ({ id, nom, rar, texte, effet })),
     });
   });
 
@@ -1652,12 +1707,13 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       if (e?.code === 'ER_NO_SUCH_TABLE' || e?.code === 'ER_BAD_FIELD_ERROR') return [];
       throw e;
     });
-    const [fz, sk, st, w, etats] = await Promise.all([
+    const [fz, sk, st, w, etats, li] = await Promise.all([
       lecteur(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]),
       lire(`SELECT fanzzy_id, skin_id FROM user_skins WHERE user_id = ?`, [userId]),
       lire(`SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]),
       lire(`SELECT action_cards FROM user_wallet WHERE user_id = ?`, [userId]),
       etatsGagnes(userId, lecteur).catch(() => null),
+      lire(`SELECT stade_id FROM user_stades WHERE user_id = ?`, [userId]),
     ]);
 
     const persos = obtenables();
@@ -1711,6 +1767,17 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       items: actions.map((a) => ({ id: a.id, nom: a.nom, rar: a.rar,
         possede: a.rar === 'commune' || tirees.has(a.id) })) };
     T.actions.gagnes = T.actions.items.filter((a) => a.possede).length;
+
+    /* Les lieux. Le stade de départ est à tout le monde, comme les cartes
+       d'action communes : gagné dès le premier jour. Ils comptent dans les
+       crans comme l'équipement — ils sortent des boosters, rien ne les
+       achète. */
+    const aLieux = new Set(li.map((r) => r.stade_id));
+    const lieux = jouables('stade');
+    T.lieux = { possibles: lieux.length,
+      items: lieux.map((l) => ({ id: l.id, nom: l.nom, rar: l.rar,
+        possede: l.id === LIEU_DEFAUT || aLieux.has(l.id) })) };
+    T.lieux.gagnes = T.lieux.items.filter((l) => l.possede).length;
 
     const somme = (types) => types.reduce((s, t) => ({
       gagnes: s.gagnes + t.gagnes, possibles: s.possibles + t.possibles }),
@@ -1811,9 +1878,45 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   }
 
   async function bibliotheque(userId) {
-    const compte = await compter(userId);
+    const [compte, lieuAccueil] = await Promise.all([compter(userId), lieuAccueilDe(userId)]);
     const paliers = await paliersDe(userId, compte);
-    return { ...compte.biblio, ...(paliers ? { paliers } : {}) };
+    return { ...compte.biblio, lieuAccueil, ...(paliers ? { paliers } : {}) };
+  }
+
+  /* ------------------------------------------------- le lieu de l'accueil
+
+     Un stade possédé peut servir de décor à l'accueil. C'est le seul usage
+     d'un lieu possédé : il ne décide pas où l'on joue, il n'y donne rien
+     (`shared/stades.js`). `null` : l'image d'accueil habituelle — c'est aussi
+     la réponse sans `sql/collection-stades.sql`, colonne absente. */
+  async function lieuAccueilDe(userId) {
+    try {
+      const id = (await q(`SELECT stade_accueil FROM user_wallet WHERE user_id = ?`,
+        [userId]))[0]?.stade_accueil;
+      return id && LIEU_BY_ID.has(id) ? id : null;
+    } catch (e) {
+      if (e?.code === 'ER_BAD_FIELD_ERROR') return null;
+      throw e;
+    }
+  }
+
+  async function poserLieuAccueil(userId, brut) {
+    const id = brut === null || brut === '' ? null : String(brut ?? '');
+    if (id !== null) {
+      if (!LIEU_BY_ID.has(id)) throw fail('fanzzy.error.unknown');
+      if (id !== LIEU_DEFAUT) {
+        const a = await q(`SELECT 1 FROM user_stades WHERE user_id = ? AND stade_id = ?`, [userId, id])
+          .catch((e) => { if (e?.code === 'ER_NO_SUCH_TABLE') return []; throw e; });
+        if (!a.length) throw fail('fanzzy.error.not_owned');
+      }
+    }
+    try {
+      await q(`UPDATE user_wallet SET stade_accueil = ? WHERE user_id = ?`, [id, userId]);
+    } catch (e) {
+      if (e?.code === 'ER_BAD_FIELD_ERROR') throw fail('fanzzy.error.indisponible');
+      throw e;
+    }
+    return { lieuAccueil: id };
   }
 
   /** Le corps d'une réclamation, sous les trois formes du contrat (§ 5.1). */
@@ -1930,6 +2033,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
 
   router.post('/palier', requireAuth, (req, res) =>
     send(res, reclamerPalier(req.user.id, req.body)));
+
+  router.post('/lieu-accueil', requireAuth, (req, res) =>
+    send(res, poserLieuAccueil(req.user.id, req.body?.id ?? null)));
 
   router.get('/state', requireAuth, (req, res) =>
     send(res, Promise.all([
