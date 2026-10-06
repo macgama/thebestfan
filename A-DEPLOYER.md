@@ -1,5 +1,44 @@
 # À déposer sur Infomaniak
 
+**Le stade du match, au duel** (branche `worktree-agent-a006e044bb6abe612`,
+6 octobre 2026, décision de Gaël : « Celui du match »). Il se dépose avec ce
+qui est en dessous, ou seul.
+
+- `src/server/contenus/index.js`, `src/server/nvn/engine.js` : tous les duels
+  d'un match se jouent dans son stade, celui de son Grand Virage. Le duel
+  tirait son lieu sur son propre identifiant, neuf à chaque partie : deux
+  duels d'un même match tombaient dans deux stades, presque jamais dans
+  celui du Virage. Une seule fonction tire maintenant le stade d'un match
+  (`stadeDuMatch`), pour le Virage comme pour le duel. Contrôlé par `npm run
+  nvn:smoke` (2 contrôles neufs) et `npm run contenus:smoke`.
+- `src/server/deck/index.js` : la liste des matchs du duel
+  (`/api/deck/matchs`) et la route d'un match (`/api/deck/match/:id`)
+  servent ce `stade` : `{ id, nom, effet }`. Contrat : `serveur/CONTRATS.md`,
+  § 17. Contrôlé par `npm run deck:smoke` (un contrôle neuf).
+- `public/duel-nvn.html` : avant l'entrée en file, l'affiche du match choisi
+  montre son stade, le dessin en fond et le nom au pied, et les règles du
+  « i » disent ce qu'il change. Contrôlé par `npm run nvn:ui` (4 contrôles
+  neufs) ; photographié pour Gaël (`duel/stade-preparation.jpg` dans les
+  fichiers du projet). La page porte déjà le duel vivant et le but du vrai
+  match (plus bas), qui partent seuls eux aussi.
+- `src/server/ferveur/virage.js` : le Virage tire le même stade qu'avant,
+  maintenant par `stadeDuMatch` ; rien ne change à l'écran. Ce fichier porte
+  aussi la corde qui retombe (« Le foulard », plus bas), qui lit son réglage
+  dans `src/shared/reglages.js` : **déposé seul, ce lot part sans lui**, et
+  le `virage.js` en ligne tire toujours le même stade que le duel.
+  `src/shared/stades.js` : des commentaires.
+
+**Aucun schéma ni réglage**, aucune image neuve : la préparation prend le
+dessin réduit du stade que l'affiche du coup d'envoi montre déjà. Un
+redémarrage, **hors d'un match en direct** où des joueurs sont au Virage ou
+en duel (les salles du Virage, les duels et leurs files vivent en mémoire),
+puis relever `/healthz`. La page et le serveur se tolèrent — sans `stade`
+dans la liste, l'affiche reste sans lieu ; la page d'avant ignore le
+champ —, mais c'est ensemble que la préparation annonce le stade où le duel
+se jouera.
+
+---
+
 **Le personnage de l'accueil au milieu, sur téléphone** (branche
 `claude/project-thread-iatg2m`, 6 octobre 2026, choisi par Gaël sur la
 capture avant/après). Il se dépose avec ce qui est en dessous, ou seul.
@@ -431,7 +470,8 @@ n'est pas une arène.**
    ce moment-là. **Allumée sans `sql/arenes.sql`, elle ne montre rien** : le journal
    nomme le fichier.
 5. **Trancher le stade du duel** (`HISTORIQUE.md`, « Ce qui reste ») : il n'est pas
-   bloquant pour la livraison.
+   bloquant pour la livraison. Tranché le 6 octobre 2026 — celui du match —, et
+   déposé à part (« Le stade du match, au duel », en tête de ce fichier).
 6. **Les premiers jours, la requête de détection du grand livre** (`DEPLOIEMENT.md`,
    « Le grand livre des récompenses ») : une ligne `source = 'virage'` par joueur et par
    match, jamais deux.
@@ -529,7 +569,8 @@ lui-même (`0638fb5`) rouvrirait D1 à D3.
 
 Dans `ETAT.md`, § 7 bis, avec le détail dans `HISTORIQUE.md`, 4 quadragies sexies,
 « Ce qui reste » : **le stade du duel**, tiré sur l'identifiant du duel et non sur le
-match (une ligne dans `engine.js`, une règle de jeu) ; **`gains.wallet`** dans `nvn:fin`,
+match (une ligne dans `engine.js`, une règle de jeu ; tranché le 6 octobre 2026, en
+tête de ce fichier) ; **`gains.wallet`** dans `nvn:fin`,
 non servi ; **un combo en jeu au duel** (`serie` sur l'évènement `chant`), refusé tant
 qu'aucune page ne le lit ; **`nvn:net`** hors de `npm test` ; les trois questions du
 correctif d'urgence du Virage (la priorité du but réel sur les autres moments d'un
