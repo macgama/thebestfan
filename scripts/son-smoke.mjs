@@ -82,6 +82,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ouvrirBanc, mesurerTout, juger, RETOMBEE_MIN, RAFALE, RAFALE_MS, NAISSANCE_ECART } from './son-banc.mjs';
 import { GESTES, resoudreGeste } from '../src/server/ferveur/gestures.js';
+import { ACTIONS } from '../src/shared/duel/actions.js';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const PUBLIC = path.join(RACINE, 'public');
@@ -1123,13 +1124,23 @@ if (banc) try {
         const origine = performance.now();
         const p = window.TBF_SON.chantDuGeste(g, gestes, { origine });
         const grille = window.TBF_GESTE.grille(g, gestes);
-        await window.TBF_GESTE.jouer(g, gestes, { zone, origine });
+        /* Le bruitage d'ouverture de l'épreuve (6 octobre 2026) part dans
+           l'appel même, avant tout temps : il est mis à part — ce n'est pas
+           une frappe du chant —, et jugé plus bas. */
+        const avant = window.__sonQuand.length;
+        const fin = window.TBF_GESTE.jouer(g, gestes, { zone, origine });
+        const ouverture = window.__sonQuand.splice(avant, window.__sonQuand.length - avant);
+        await fin;
         p.arreter();
         veille.disconnect();
-        return { origine, quand: window.__sonQuand.slice(), vus, joue: p.joue,
+        return { origine, quand: window.__sonQuand.slice(), vus, joue: p.joue, ouverture,
           pulsations: grille?.pulsations ?? null };
       }, g, gestes);
       const pulsations = cale.pulsations ?? [];
+      const ouvre = cale.ouverture.filter((x) => x !== null).map((x) => x - cale.origine);
+      check(`${g} : le bruitage d’ouverture part avec l’épreuve, avant son premier temps`,
+        ouvre.length > 0 && pulsations.length > 0 && Math.max(...ouvre) < pulsations[0] - 100,
+        { ouverture: ouvre.map(Math.round), premierTemps: pulsations[0] });
       /* Ce qui doit s'entendre : un coup par pulsation ; au contretemps,
          les claps entre deux, une demi-mesure après chaque coup. */
       const pas = Number(gestes[g]?.interval);
@@ -1749,6 +1760,76 @@ if (banc) try {
       check('aucune erreur de script (fichier illisible)', erreurs.length === 0, ...erreurs);
       await page.close();
     }
+  }
+
+  /* ===================================== les cartes et les épreuves
+
+     6 octobre 2026, à la demande de Gaël : chaque carte d'action a son
+     bruitage, joué quand elle part (`TBF_ACTION.jouee`, des deux côtés), et
+     chaque épreuve le sien, joué à son ouverture (`TBF_GESTE.jouer`). Tous
+     synthétisés. Leurs niveaux sont jugés plus haut avec la banque ; ici, ce
+     qui les relie au jeu : une carte ou un geste de plus sans bruitage, une
+     page qui ne l'appelle plus, un bruitage de rythme qui déborderait sur le
+     premier temps. */
+  console.log('\n  les cartes et les épreuves (6 octobre 2026)');
+  {
+    const sansCarte = ACTIONS.filter((a) => mix.sons[a.id]?.famille !== 'jeu').map((a) => a.id);
+    check(`chaque carte d’action a son bruitage, de la famille du jeu (${ACTIONS.length} cartes)`,
+      ACTIONS.length > 0 && sansCarte.length === 0, ...sansCarte);
+    const sansEpreuve = GESTES.filter((g) => mix.sons[`epreuve-${g}`]?.famille !== 'jeu');
+    check(`chaque épreuve a son bruitage d’ouverture, de la famille du jeu (${GESTES.length} épreuves)`,
+      GESTES.length > 0 && sansEpreuve.length === 0, ...sansEpreuve);
+    /* Les quatre de rythme : la tribune chante leurs temps, le premier un
+       intervalle après l'ouverture — 280 ms au plus court (l'écho). Leur
+       bruitage doit s'être tu avant : rendu seul, il retombe sous −60 dBFS
+       en moins de 250 ms. */
+    const durees = await banc.page.evaluate(async (noms) => {
+      const r = {};
+      for (const nom of noms) {
+        const b = await window.TBF_SON.rendre({ son: nom }, { duree: 0.6 });
+        const x = b.getChannelData(0);
+        let der = 0;
+        for (let i = 0; i < x.length; i++) if (Math.abs(x[i]) > 0.001) der = i;
+        r[nom] = Math.round((der / b.sampleRate - 0.02) * 1000);
+      }
+      return r;
+    }, ['tempo', 'contretemps', 'echo', 'crescendo'].map((g) => `epreuve-${g}`));
+    check('les bruitages des épreuves de rythme se taisent en moins de 250 ms (avant le premier temps)',
+      Object.values(durees).every((ms) => ms > 0 && ms < 250), durees);
+
+    const { page, erreurs } = await nouvellePage('/__son-geste');
+    await page.addScriptTag({ url: '/action-art.js' });
+    await page.click('#geste');
+    await jusqua(page, (x) => x.contexte === 'running');
+    const joues = (fn, ...args) => page.evaluate(async (fn, args) => {
+      const vus = [];
+      const S = window.TBF_SON;
+      const jouer = S.jouer;
+      S.jouer = (nom, o) => { vus.push(nom); return jouer(nom, o); };
+      try { await new Function(`return (${fn})`)()(...args); } finally { S.jouer = jouer; }
+      return vus;
+    }, fn.toString(), args);
+    const carte = (id, pour) => window.TBF_ACTION.jouee({ id, nom: id, fam: 'pousse', cost: 20, texte: '' }, { pour });
+    let vus = await joues(carte, 'a-fumigene', true);
+    check('une carte jouée fait entendre son bruitage (le fumigène)', vus.includes('a-fumigene') && !vus.includes('carte'), vus);
+    vus = await joues(carte, 'a-arbitre', false);
+    check('celle de l’adversaire aussi (l’arbitre)', vus.includes('a-arbitre'), vus);
+    vus = await joues(carte, 'a-carte-inconnue', true);
+    check('une carte sans bruitage garde le claquement ordinaire', vus.includes('carte'), vus);
+    await page.evaluate(() => document.documentElement.setAttribute('data-calme', 'animations'));
+    vus = await joues(carte, 'a-ancre', true);
+    check('le calme des animations retire le vol de la carte, pas son bruitage', vus.includes('a-ancre'), vus);
+    await page.evaluate(() => document.documentElement.removeAttribute('data-calme'));
+    const gestes = resoudreGeste({}, { motif: 1 });
+    vus = await joues((g, gestes) => {
+      const zone = document.getElementById('zone');
+      const p = window.TBF_GESTE.jouer(g, gestes, { zone });
+      zone.querySelector('#valider')?.click();
+      return Promise.race([p, new Promise((r) => setTimeout(r, 50))]);
+    }, 'tifo', gestes);
+    check('une épreuve qui s’ouvre fait entendre son bruitage (le tifo)', vus[0] === 'epreuve-tifo', vus);
+    check('aucune erreur de script (cartes et épreuves)', erreurs.length === 0, ...erreurs);
+    await page.close();
   }
 
   /* ============================== 9. la scène tient sa célébration (fx)
