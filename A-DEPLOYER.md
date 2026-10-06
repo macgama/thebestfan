@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**Le profil, la boutique et la répétition en largeur** (branche
+`claude/ecran-large-pkbkwj`, 6 octobre 2026, la forme choisie par Gaël :
+« tuiles + pages larges »). Ils se déposent avec ce qui est en dessous, ou
+seuls.
+
+- `public/ui.css`, `public/profil.html`, `public/boutique.html`,
+  `public/repetition.html` : sur un écran d'au moins 1 180 pixels de large,
+  ces trois pages prennent toute la place entre les tuiles (1 320 pixels au
+  plus). Le profil passe en deux colonnes (la carte, le bonus, le niveau et
+  la saison à gauche ; le parcours, le Fanzzy et l'équipement à droite), la
+  boutique montre huit objets par rangée au lieu de cinq, la répétition range
+  ses familles de gestes deux par rangée. Rien ne change sur téléphone ni sur
+  tablette. Contrôlé par `npm run profil:ui` et `npm run repetition:ui` (sept
+  contrôles neufs) ; mesuré sous Firefox 136 et Chrome.
+
+**Aucun schéma ni réglage, sans redémarrage.**
+
+---
+
 **Les tuiles de l'accueil sur grand écran** (branche
 `claude/ecran-large-pkbkwj`, 6 octobre 2026). Elles se déposent avec ce qui
 est en dessous, ou seules.
