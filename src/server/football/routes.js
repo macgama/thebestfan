@@ -1,6 +1,7 @@
 import express from 'express';
 import { createFootballStore } from './store.js';
 import { createPoller, isLive } from './poller.js';
+import { inventorier } from './inventaire.js';
 
 /**
  * Suivi des équipes : recherche, abonnement, calendrier, classement.
@@ -29,7 +30,8 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
   };
 
   const poller = createPoller({ client, store, broadcast, onGoal, onFinished,
-                                onEvents, onStatus, onAbsent, fixturesAuFil });
+                                onEvents, onStatus, onAbsent, fixturesAuFil,
+                                inventaire: () => inventorier({ api: (p) => client.call(p), pool }) });
 
   /* -------------------------------------------------------------- socket */
 
