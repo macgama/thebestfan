@@ -368,6 +368,12 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
   aspect-ratio:7/12;pointer-events:none}
 .duel-fz[data-tribune=moi]{left:calc(8% + 4px)}
 .duel-fz[data-tribune=eux]{--vers:-1;right:calc(8% + 4px)}
+/* Ce qu'il porte (`TBF_STUFF.porte`), accroché à hauteur de hanche, du côté
+   du milieu de l'arène : c'est là qu'il y a de la place. Côté tribune, la
+   jauge de crans et le bord de l'arène le recouvraient. */
+.duel-fz .tbf-porte{--piece:32px;bottom:30%;gap:5px}
+.duel-fz[data-tribune=moi] .tbf-porte{left:calc(100% - 22px)}
+.duel-fz[data-tribune=eux] .tbf-porte{right:calc(100% - 22px)}
 /* L'ombre au sol : sans elle, le personnage flotte sur le terrain. */
 .duel-fz::before{content:"";position:absolute;left:16%;right:16%;bottom:1%;height:6%;border-radius:50%;
   background:radial-gradient(closest-side,rgba(0,0,0,.62),transparent)}
@@ -940,6 +946,8 @@ html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:n
 <script src="/mods.js"></script>
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<!-- Ce que chaque Fanzzy porte, accroché à côté de lui dans l'arène. -->
+<script src="/stuff-art.js"></script>
 <script src="/action-art.js"></script>
 <!-- Le déroulé des dix gestes, partagé avec le Grand Virage. -->
 <!-- Le stade et la lumiere de ses tribunes, comme au Virage. -->
@@ -1349,6 +1357,7 @@ const S = {
   format: '1v1', fixtureId: null, camp: null, matchs: [], catalogue: [],
   // Ce qui attend, par match et par format. Voir `lireAttentes`.
   attentes: [],
+  derby: null,
   vue: null, enFile: false, dernierSeq: 0, occupe: false,
   /* Vrai quand la bibliothèque du direct n'a pas pu se charger. La page
      fonctionne quand même — on regarde les matchs — mais on ne peut pas
@@ -1504,6 +1513,11 @@ async function lireAttentes() {
   try {
     const r = await api('/api/nvn/attentes');
     S.attentes = r.attentes ?? [];
+    /* Le derby automatique (voir `derbyPour`, serveur) : un supporter de
+       l'autre club d'un match du jour est en ligne. Lu à l'arrivée
+       seulement — l'annonce diffusée des files ne le porte pas, elle est la
+       même pour tout le monde. */
+    S.derby = r.derby?.fixtureId ? r.derby : null;
   } catch { /* le panneau d'affichage n'est pas la page : on s'en passe */ }
 }
 
@@ -1669,7 +1683,8 @@ function ticketMatch(m) {
   return `<div class="mt tbf-ticket" data-fixture="${m.id}">
     ${blasonsDe(m)}
     <div class="n">${esc(m.home_name)} – ${esc(m.away_name)}
-      <small>${m.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT'}${fileDe(m)}</small></div>
+      <small>${m.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT'}${fileDe(m)}${
+        S.derby?.fixtureId === m.id ? '<span class="q attente derby">DERBY</span>' : ''}</small></div>
     <div class="bout">${etatDuMatch(m)}${m.mien
       ? '<span class="q mien tbf-tampon" data-ton="vert">×2</span>' : ''}</div>
   </div>`;
@@ -1784,6 +1799,14 @@ function souLeMatch(choisi, sansDeck) {
      défaut du côté du domicile, et le camp visiteur ne se remplirait jamais.
      **Ouvert, il se colle au bas de la préparation** (`data-colle`, voir
      `.entree`) ; fermé, il reste à sa place. */
+  /* **Le derby du jour** : quelqu'un qui suit l'autre club est en ligne.
+     Le dire là où l'on décide d'entrer, sans dire qui. */
+  if (S.derby?.fixtureId === choisi.id && S.format === (S.derby.format ?? '1v1') && chezMoi) {
+    const eux = S.derby.clubs?.[choisi.monCamp ^ 1]?.name ?? clubs[choisi.monCamp ^ 1];
+    out.push(`<div class="raison attend derby"><b>DERBY</b> · un supporter de l’autre
+      tribune, <b>${esc(eux)}</b>, est en ligne. Entre en file : il le verra.</div>`);
+  }
+
   const sansCamp = !chezMoi && S.camp === null;
   const ferme = sansDeck || sansCamp;
   const enJeu = !S.souple ? Number(choisi.enJeu?.[S.format]) : NaN;
@@ -2985,7 +3008,7 @@ const COUPS_RECUS = new Set(['silence', 'blind', 'lock_actions', 'mod_foe']);
 
 const fzArene = {};
 for (const cote of ['moi', 'eux']) {
-  fzArene[cote] = { cote, id: cote === 'moi' ? 'fzMoi' : 'fzEux', qui: null, cle: '',
+  fzArene[cote] = { cote, id: cote === 'moi' ? 'fzMoi' : 'fzEux', qui: null, cle: '', cleSac: '',
     pose: 'neutre', jusqua: 0, retour: 0, gesteT: 0, jeton: 0, devant: 0, src: '', voulu: '', coups: null,
     sienJusqua: 0 };
 }
@@ -3024,7 +3047,10 @@ function quiEnTribune(v, cote) {
     const racine = racineFz(f?.id);
     if (!racine) return null;
     const evo = Number(f.stade) || ageFz(f.id);
-    return { id: f.id, racine, evo, skin: tenueEnJeu(f, evo, racine) };
+    /* Mon sac, tel que l'équipe le sert (`equipes[].sac`, avec la rareté) :
+       `moi.fanzzy[].stuff` n'a que les identifiants. */
+    const sac = (v.equipes?.[mon] ?? []).find((x) => x?.userId != null && x.userId === monId())?.sac ?? [];
+    return { id: f.id, racine, evo, skin: tenueEnJeu(f, evo, racine), sac };
   }
   const tribune = v.equipes?.[cote === 'moi' ? mon : mon ^ 1] ?? [];
   const j = tribune.find((x) => x?.fanzzy && x.connecte !== false) ?? tribune.find((x) => x?.fanzzy);
@@ -3032,7 +3058,7 @@ function quiEnTribune(v, cote) {
   /* `parti` : toute sa tribune a quitté le duel. Il reste, terni, comme ses
      supporters assis (`dessinerFoule`) : on voit qu'il n'y a plus personne. */
   return racine ? { id: j.fanzzy, racine, evo: Number(j.stade) || ageFz(j.fanzzy), skin: j.skin || 'base',
-    parti: tribune.every((x) => x?.connecte === false) } : null;
+    sac: j.sac ?? [], parti: tribune.every((x) => x?.connecte === false) } : null;
 }
 
 /** Le plein-pied de ce personnage à ce moment, par la fonction unique. */
@@ -3198,6 +3224,15 @@ function rendreFzArene(v) {
         }
         if (geste && S.entree) gesteFz(f, geste);
       }
+    }
+    /* Ce qu'il porte : ses deux pièces, accrochées côté tribune, hors du
+       corps — elles ne se retournent pas avec celui d'en face et ne sautent
+       pas avec lui. Redessinées seulement quand le sac change. */
+    const cleSac = window.TBF_STUFF?.cleSac?.(qui?.sac) ?? '';
+    if (cleSac !== f.cleSac) {
+      f.cleSac = cleSac;
+      el.querySelector('.tbf-porte')?.remove();
+      if (qui && cleSac) el.insertAdjacentHTML('beforeend', window.TBF_STUFF.porte(qui.sac));
     }
     if (el.hasAttribute('data-parti') !== Boolean(qui?.parti)) el.toggleAttribute('data-parti', Boolean(qui?.parti));
     const coups = coupsRecus(v, f.cote);

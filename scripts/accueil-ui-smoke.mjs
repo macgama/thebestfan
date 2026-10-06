@@ -240,8 +240,11 @@ let attente = null;
 /* Et les autres files, celles que l'alerte ne retient pas : le bandeau du
    monde les compte avec elle. */
 let autres = [];
+/* Le derby automatique : un supporter de l'autre club d'un match du jour est
+   en ligne (`derbyPour`, serveur). */
+let derby = null;
 app.get('/api/nvn/attentes', (_q, s) => s.json({ attentes: [...(attente ? [attente] : []), ...autres],
-                                                 alerte: attente }));
+                                                 alerte: attente, derby }));
 
 /* Le relevé d'événements, tel que la base le porte. L'accueil y lit le nom du
    buteur et sa minute — sans appel à l'API, le relevé du direct les a déjà
@@ -896,6 +899,49 @@ for (const [nom, l, h, plancher] of [
       (await scene(page))?.src ?? '(rien)'), false));
   await page.close();
   await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [ILLUSTRE, U]);
+}
+
+/* ------------------------------------------- ce qu'il porte, à côté de lui
+
+   Les deux pièces que le deck a mises au Fanzzy montré (`wallet.stuffPorte`,
+   éprouvé côté serveur par deck-smoke) sont accrochées à côté de lui, dans
+   la scène, dans le cadre de leur rareté. Elles restent dans la scène et ne
+   prennent pas le doigt : le personnage, dessous, répond au toucher. */
+{
+  const page = await ouvrir();
+  await jusqua(async () => Boolean((await scene(page))?.src), 9000);
+  const r = await page.evaluate(() => {
+    poserSac([{ id: 'megaphone', nom: 'Mégaphone', rar: 'epique' },
+      { id: 'jumelles', nom: 'Jumelles', rar: 'commune' }]);
+    const porte = document.querySelector('#sac .tbf-porte');
+    const sc = document.getElementById('scene').getBoundingClientRect();
+    const pieces = [...document.querySelectorAll('#sac .tbf-piece')].map((p) => {
+      const b = p.getBoundingClientRect();
+      return { cls: [...p.classList].find((c) => c.startsWith('r-')),
+        src: p.querySelector('img')?.getAttribute('src') ?? '',
+        dedans: b.left >= sc.left - 1 && b.right <= sc.right + 1 && b.top >= sc.top && b.bottom <= sc.bottom,
+        w: p.offsetWidth };
+    });
+    const doigt = porte ? getComputedStyle(porte).pointerEvents : '';
+    const el = porte;
+    poserSac([{ id: 'megaphone', nom: 'Mégaphone', rar: 'epique' },
+      { id: 'jumelles', nom: 'Jumelles', rar: 'commune' }]);
+    const meme = document.querySelector('#sac .tbf-porte') === el;
+    return { pieces, doigt, meme, nom: porte?.getAttribute('aria-label') ?? '' };
+  });
+  if (process.env.SHOT) {
+    await new Promise((res) => setTimeout(res, 900));
+    await page.screenshot({ path: process.env.SHOT + '/accueil-sac.png' });
+  }
+  const vide = await page.evaluate(() => { poserSac([]); return document.querySelectorAll('#sac .tbf-porte').length; });
+  check(`ses deux pièces sont accrochées dans la scène (${r.pieces.map((p) => p.cls).join(', ')})`,
+    r.pieces.length === 2 && r.pieces[0].cls === 'r-epique' && r.pieces[1].cls === 'r-commune'
+    && /\/img\/stuff\/megaphone\./.test(r.pieces[0].src) && r.pieces.every((p) => p.dedans && p.w >= 30)
+    || (console.log('        ', JSON.stringify(r.pieces)), false));
+  check('elles ne prennent pas le doigt au personnage', r.doigt === 'none');
+  check('le même sac ne se redessine pas', r.meme);
+  check('sans pièce, rien d’accroché', vide === 0);
+  await page.close();
 }
 
 /* ------------------------------------------------------ changer de pose */
@@ -2267,6 +2313,64 @@ if (process.env.CAPTURE) {
       && u.searchParams.get('camp') === '1'
       || (console.log('        il mène à :', href), false));
   }
+  attente = null;
+}
+
+/* ================================= le derby automatique
+
+   Un supporter de Bâle est en ligne, Sion–Bâle se joue aujourd'hui, et le
+   joueur suit Sion : le bouton propose le derby, sans dire qui. Puis, quand
+   l'autre est entré en file, il dit qu'un supporter de Bâle attend. Et une
+   file ailleurs, sur un match qui n'est pas le sien, ne passe pas devant. */
+
+{
+  direct = null;
+  const lire = async (page) => page.evaluate(() => {
+    const e = document.getElementById('entrer');
+    return { texte: e.textContent.replace(/\s+/g, ' ').trim(), href: e.getAttribute('href'),
+      ton: e.dataset.ton ?? '' };
+  });
+  derby = {
+    fixtureId: 7, format: '1v1', mode: 'classe', monCamp: 0,
+    clubs: [{ id: 85, name: 'Sion' }, { id: 91, name: 'Bâle' }],
+  };
+  /* Une file sur un autre match, d'aucun club suivi : l'alerte ordinaire. */
+  attente = {
+    fixtureId: 2, format: '2v2', attendus: 2, camps: [1, 0], mode: 'classe',
+    clubs: [{ id: 1, name: 'Lyon' }, { id: 2, name: 'Nantes' }],
+    mien: false, presents: 1, campQuiManque: 1, manque: 2,
+  };
+  let page = await ouvrir();
+  await jusqua(async () => /Derby/.test((await lire(page)).texte));
+  let b = await lire(page);
+  check('un derby du jour se propose sur le bouton',
+    /Derby du jour/.test(b.texte) && /Un supporter de Bâle est en ligne/.test(b.texte)
+    || (console.log('        il dit :', JSON.stringify(b)), false));
+  check('en violet, sans nommer personne', b.ton === 'violet' && !/Derbyste/.test(b.texte));
+  {
+    const u = new URL(b.href, 'http://x');
+    check('et il mène au match, en 1v1, dans ma tribune', u.pathname === '/duel-nvn'
+      && u.searchParams.get('match') === '7' && u.searchParams.get('format') === '1v1'
+      && u.searchParams.get('camp') === '0'
+      || (console.log('        il mène à :', b.href), false));
+  }
+
+  /* L'autre a appuyé : il attend en face, sur un match de mes clubs. */
+  derby = null;
+  attente = {
+    fixtureId: 7, format: '1v1', attendus: 1, camps: [0, 1], mode: 'classe',
+    clubs: [{ id: 85, name: 'Sion' }, { id: 91, name: 'Bâle' }],
+    mien: true, presents: 1, campQuiManque: 0, manque: 1, derby: true, monCamp: 0,
+  };
+  page = await ouvrir();
+  await jusqua(async () => /Derby/.test((await lire(page)).texte));
+  b = await lire(page);
+  check('quand il attend, le bouton dit qu’un supporter de Bâle m’attend',
+    /Derby !/.test(b.texte) && /un supporter de Bâle t’attend/.test(b.texte)
+    || (console.log('        il dit :', JSON.stringify(b)), false));
+  check('et il mène à ma tribune', new URL(b.href, 'http://x').searchParams.get('camp') === '0'
+    || (console.log('        il mène à :', b.href), false));
+  derby = null;
   attente = null;
 }
 

@@ -706,6 +706,33 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
   journee = null;
   await pool.query('DELETE FROM fixtures WHERE id IN (30, 31, 7000, 7001)');
 }
+/* -------------------------------------- ce que le Fanzzy montré porte
+
+   Le portefeuille (`/api/fanzzy/state`) sert les pièces que le deck a mises
+   au Fanzzy montré : l'accueil les accroche à côté de lui. Le même sac que le
+   Virage et le duel — celui du deck, pas `user_stuff.slot`. */
+{
+  const { createFanzzy } = await import('../src/server/fanzzy/index.js');
+  const pareil = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const F = createFanzzy({ pool, requireAuth: (r, _s, n) => n(), decks: D });
+  const deck = { nom: 'Sac', actions: dixCartes,
+    fanzzy: [{ id: 'TR32', stuff: ['jumelles'] }, { id: 'MS30', stuff: ['echarpe', 'tambour'] }] };
+  await pool.query(`INSERT INTO user_decks (user_id, nom, contenu, actif) VALUES (?, 'Sac', ?, 1)
+    ON DUPLICATE KEY UPDATE contenu = VALUES(contenu)`, [U, JSON.stringify(deck)]);
+  const montre = async (id) => {
+    await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [id, U]);
+    return (await F.wallet(U)).stuffPorte;
+  };
+  const ms30 = await montre('MS30');
+  check(`le Fanzzy montré porte les pièces de sa place au deck (${JSON.stringify(ms30)})`,
+    pareil(ms30, [{ id: 'echarpe', nom: 'Écharpe du club', rar: 'commune' },
+      { id: 'tambour', nom: 'Tambour de poche', rar: 'rare' }]));
+  check('un âge supérieur porte le sac de sa lignée',
+    pareil((await montre('TR32B')).map((x) => x.id), ['jumelles']));
+  check('hors du deck, rien d’accroché', pareil(await montre('TR33'), []));
+  check('sans Fanzzy montré, rien non plus', pareil(await montre(null), []));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end(); http.close();
 process.exit(failures ? 1 : 0);
