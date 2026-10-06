@@ -23,6 +23,17 @@ direct où des joueurs sont au Virage ou en duel.
 **Après le redémarrage** : au bout de cinq minutes, le journal dit
 `[foot] competitions : N saison(s) nouvelle(s)` s'il en a trouvé.
 
+**Les saisons finies se revoient** (même branche, fusionnée le même jour).
+Serveur et page, sans schéma.
+
+- `src/server/teletext/index.js`, `public/teletext.html` : sur la page d'une
+  compétition, le sous-titre « Suisse · saison 2026 » devient un choix quand
+  l'inventaire connaît plusieurs saisons. Classement, résultats, buteurs,
+  passeurs, cartons et FERVEUR suivent la saison choisie. Une saison close
+  depuis plus d'une semaine se garde une semaine en cache (un appel par
+  semaine et par onglet, au premier qui la revoit). Contrôlé par `npm run
+  tt:smoke` et `npm run competitions:ui`.
+
 ---
 
 **Les décisions de Gaël du 6 octobre au matin** (branche

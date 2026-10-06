@@ -255,6 +255,26 @@ qui = null;
 
 const s = await T.seasonOf(207);
 check('saison choisie sur les dates du jour', s.season === 2026);
+check('les saisons connues sont nommées, la plus récente d’abord',
+  JSON.stringify(s.seasons) === '[2026,2025]' && s.courante === 2026);
+
+/* Une saison finie se revoit : son classement, ses buteurs, ses résultats.
+   Close depuis plus d'une semaine, elle se garde une semaine en cache. */
+r = await get('/api/tt/league/207?saison=2025');
+check('le classement d’une saison finie s’ouvre', r.json.league?.season === 2025
+  && r.json.groups?.[0]?.length === 2 && r.json.league.courante === 2026);
+{
+  const [[c]] = await pool.query(
+    `SELECT TIMESTAMPDIFF(HOUR, NOW(3), expires_at) AS h FROM api_cache WHERE k = 'standings:207:2025'`);
+  check('et se garde une semaine, pas six heures', Number(c?.h) >= 24 * 7 - 1);
+}
+r = await get('/api/tt/league/207/scorers?saison=2025');
+check('ses buteurs aussi', r.json.league?.season === 2025);
+r = await get('/api/tt/league/207?saison=1999');
+check('une saison inconnue retombe sur la courante', r.json.league?.season === 2026);
+r = await get('/api/tt/league/207?saison=abc');
+check('une saison illisible aussi', r.json.league?.season === 2026);
+await pool.query(`DELETE FROM api_cache`);
 
 /* ---------------------------------------------------------- classement */
 
