@@ -28,8 +28,13 @@ temporaire de la session ; ce qui doit durer est ici.*
   joueur ; une page seulement. Puis le duel vivant : les deux Fanzzy en
   tribune dans l'arène du duel, qui vivent poussées, buts et coups ; une page
   seulement, avec le but du vrai match qui y faisait lever la page, réparé.
-- **À venir** : les sons, au choix de Gaël, et le clignement des Fanzzy, qui
-  attend leurs images « yeux fermés ».
+- **Dans `main` le 6 octobre 2026** : Gosier Rouillé (RP1) cligne des yeux
+  à l'accueil, au repos (filmé pour Gaël, `lot7/cligne/rp1-cligne.mp4` dans
+  les fichiers du projet), et au Virage, les moments tombés pendant un même
+  geste se montrent l'un après l'autre, le jeu d'abord et le but réel en
+  dernier. Des pages seulement.
+- **À venir** : les sons, au choix de Gaël, et le clignement des autres
+  Fanzzy, une retouche Artlist de leur tête chacun (`npm run cligne`).
 
 ## Où sont les choses
 
@@ -61,9 +66,11 @@ temporaire de la session ; ce qui doit durer est ici.*
    manque, c'est un caractère. **Fait**, avec les expressions déjà
    dessinées, et filmé sur RP1 pour Gaël le 5 octobre (`HISTORIQUE.md`,
    4 quadragies octies) : il raconte le dernier match de son club, il répond
-   autrement quand on insiste à le toucher, il fête le retour du joueur. Le
-   clignement des yeux attend une image « yeux fermés » par Fanzzy, que Gaël
-   produit (une pour RP1 d'abord). **Au duel aussi**, filmé pour Gaël le même
+   autrement quand on insiste à le toucher, il fête le retour du joueur. **Il
+   cligne des yeux** depuis le 6 octobre, RP1 seulement et à l'accueil
+   (4 quinquagies) : une retouche Artlist de sa tête, dont on ne garde que
+   les paupières ; les autres Fanzzy attendent la leur (`npm run cligne --
+   tete <ID>` dit quoi demander). **Au duel aussi**, filmé pour Gaël le même
    jour (`HISTORIQUE.md`, 4 quadragies novies) : les deux Fanzzy en tribune
    se tiennent dans l'arène et vivent poussées, buts et coups d'en face.
 3. **Les sons Artlist** (la rumeur, le but, les tambours) : Gaël doit les
