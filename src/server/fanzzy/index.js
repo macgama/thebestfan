@@ -2537,9 +2537,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const t = tenuesPubliees().find((x) => x.id === tenue);
     if (!t || tenue === 'base') throw fail('boutique.error.tenue_inconnue');
 
+    /* **Un âge atteint, pas seulement le dernier.** On peut se montrer à un
+       âge plus jeune que celui atteint (`stadeAffiche`) : la tenue de cet
+       âge-là doit pouvoir s'acheter aussi, sinon le Gamin qu'on a fait
+       grandir ne s'habillerait plus jamais. Un âge pas encore atteint, lui,
+       reste refusé : on ne paie pas pour un dessin qu'on ne peut pas porter. */
     const etage = Number(stage);
+    if (!Number.isInteger(etage) || etage < 1 || etage > 3) throw fail('boutique.error.fanzzy_non_possede');
     const [[a]] = [await conn.query(
-      `SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ? AND stage = ?`,
+      `SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ? AND stage >= ?`,
       [userId, fanzzy, etage])];
     if (!a.length) throw fail('boutique.error.fanzzy_non_possede');
 

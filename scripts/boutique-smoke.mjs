@@ -635,6 +635,35 @@ const evenement = (sessionId) => ({
     d.code === 200 && JSON.stringify(await nouveautes()) === JSON.stringify([`skin|${cle}`])
     || (console.log('        ', d.code, JSON.stringify(d.json), JSON.stringify(await nouveautes())), false));
 
+  /* **L'étal dit ce qui est déjà posé**, pour que la cabine ne propose pas
+     de le racheter. */
+  const relu = await fetch(base + '/api/boutique/etal').then((r) => r.json());
+  check('l’étal dit la tenue déjà posée, sur qui et à quel âge',
+    (relu.posees ?? []).some((x) => x.fanzzy === fid && x.stade === 1 && x.tenue === tenue?.id)
+    || (console.log('        ', JSON.stringify(relu.posees)), false));
+
+  /* **Un âge atteint, pas seulement le dernier.** Un Fanzzy qu'on a fait
+     grandir garde le droit d'habiller ses âges d'avant ; l'âge d'après, pas
+     encore atteint, reste refusé, sans rien coûter. */
+  const tenue2 = (etal.tenues ?? [])[1] ?? null;
+  if (tenue2) {
+    await q('UPDATE user_fanzzy SET stage = 2 WHERE user_id = ? AND fanzzy_id = ?', [U, fid]);
+    await q('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [tenue2.prix, U]);
+    const jeune = await depenser({ type: 'tenue', id: tenue2.id, fanzzy: fid, stage: 1 });
+    check('une tenue s’achète pour un âge plus jeune que l’âge atteint', jeune.code === 200
+      || (console.log('        ', jeune.code, JSON.stringify(jeune.json)), false));
+    await q('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [tenue2.prix, U]);
+    const vieux = await depenser({ type: 'tenue', id: tenue2.id, fanzzy: fid, stage: 3 });
+    const [[w5]] = [await q('SELECT scarves FROM user_wallet WHERE user_id = ?', [U])];
+    check('mais pas pour un âge pas encore atteint, et sans rien coûter',
+      vieux.code === 400 && vieux.json.error === 'boutique.error.fanzzy_non_possede'
+      && Number(w5.scarves) === Number(tenue2.prix)
+      || (console.log('        ', vieux.code, JSON.stringify(vieux.json), w5.scarves), false));
+    await q('UPDATE user_fanzzy SET stage = 1 WHERE user_id = ? AND fanzzy_id = ?', [U, fid]);
+  } else {
+    console.log('        une seule tenue en vente : l’achat à un âge plus jeune n’est pas éprouvé');
+  }
+
   /* Sans la table : l'achat se fait, sans sa nouveauté. Perdre une vente pour
      une pastille serait absurde, et l'erreur avalée est seulement celle-là. */
   await q('DROP TABLE user_nouveautes');
