@@ -2071,8 +2071,13 @@ Par ordre d'utilité.
    écran » dans `ui.css`, contrôlés par `menu:smoke`). L'accueil, le Virage
    et le duel n'en ont pas. Les maquettes des deux formes proposées à Gaël
    (les tuiles seules, ou les tuiles et des pages réorganisées pour la
-   largeur) sont dans le dossier du projet, `ecran-large/`. Le contenu des
-   pages garde pour l'instant sa largeur de téléphone.
+   largeur) sont dans le dossier du projet, `ecran-large/`. Gaël a choisi la
+   seconde : une page réorganisée pour la largeur le dit par
+   `<body class="tbf-large">` (« Les pages larges » dans `ui.css`), et sa
+   colonne prend alors jusqu'à 1 320 px. Faits : le profil (deux colonnes),
+   la boutique (l'étal s'allonge), la répétition (les familles deux par
+   rangée). Les autres pages gardent leur colonne, tuiles autour ; le deck
+   est revu à part (fil « Interface des pages du deck »).
 
 3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
    765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
