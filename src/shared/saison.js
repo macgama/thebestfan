@@ -292,6 +292,108 @@ export function titreDivision(n, numero) {
   return Number(n) === 5 ? `Capo de la saison ${numero}` : null;
 }
 
+/* ============================================= recaler les seuils de division
+
+   La règle de l'annexe A d'`ECONOMIE.md`, écrite une fois pour l'onglet
+   RÉGLAGES : on lisait jusqu'ici la requête à la main, en SSH, puis on
+   comptait les rangs sur la liste.
+
+   **Sur les seuls joueurs sans abonnement.** L'abonné n'a pas de plafond de
+   ferveur classée : le compter tirerait Capo hors de portée du gratuit
+   (`SERVEUR.md`, § 6). C'est à l'appelant de ne passer que ceux-là.
+
+   Les rangs lus, de la liste rangée du plus faible au plus fort : 30 %
+   (Habitué, que 70 % des joueurs atteignent), 60 % (Fervent, 40 %), 85 %
+   (Ultra, 15 %) et 96 % (Capo, 4 %). Chacun est projeté sur la saison
+   entière (× jours totaux / jours écoulés), puis arrondi à deux chiffres.
+
+   **Capo ne dépasse jamais ce qu'un gratuit assidu fait dans la saison**,
+   ni aucune autre division :
+   le rythme quotidien des plus appliqués (le rang 90 % des ferveurs par jour
+   joué, parmi ceux qui ont joué au moins trois jours), tenu chaque jour de la
+   saison. Un rythme sur un ou deux soirs ne dit pas ce qu'on tient. */
+
+export const RANGS_DIVISIONS = Object.freeze({ habitue: 0.30, fervent: 0.60,
+  ultra: 0.85, capo: 0.96 });
+/** En dessous, la proposition se fait, mais elle est dite fragile. */
+export const RECALAGE_MIN = Object.freeze({ joueurs: 30, jours: 14 });
+
+/* Le rang `p` d'une liste rangée, au plus proche : sur dix joueurs, le
+   rang 30 % est le troisième. */
+const auRang = (liste, p) =>
+  liste[Math.min(liste.length - 1, Math.max(0, Math.ceil(p * liste.length) - 1))];
+
+/* Deux chiffres significatifs : 34 567 devient 35 000. Un seuil à l'unité
+   près promet une précision que trois semaines de jeu n'ont pas. */
+function arrondi(v, vers = Math.round) {
+  if (!(v > 0)) return 0;
+  if (v < 100) return vers(v);
+  const pas = 10 ** (Math.floor(Math.log10(v)) - 1);
+  return vers(v / pas) * pas;
+}
+
+/**
+ * Les quatre seuils proposés pour la saison, à partir de la ferveur classée
+ * de ses joueurs sans abonnement.
+ *
+ * @param {object} o
+ * @param {{ ferveur: number, jours: number }[]} o.joueurs un par joueur
+ *   sans abonnement : sa ferveur classée de la saison et le nombre de jours
+ *   où il en a gagné. Ceux à zéro sont écartés ici.
+ * @param {number} o.joursEcoules jours depuis le lancement (décimaux).
+ * @param {number|null} o.joursTotaux durée de la saison, de son lancement à
+ *   la fin de son dernier jour de jeu ; `null` sans dernier jour saisi, et
+ *   rien n'est alors projeté.
+ * @returns {{ joueurs: number, joursEcoules: number, joursTotaux: number|null,
+ *   facteur: number|null, lus: object|null, plafond: number|null,
+ *   seuils: object|null, avertissements: string[] }}
+ *   `seuils` porte `rang.habitue` … `rang.capo`, prêts à poser ; `null`
+ *   quand il n'y a rien à proposer (aucun joueur, ou pas de fin saisie).
+ */
+export function proposerSeuils({ joueurs = [], joursEcoules, joursTotaux }) {
+  const actifs = joueurs
+    .map((j) => ({ ferveur: Number(j.ferveur) || 0, jours: Number(j.jours) || 0 }))
+    .filter((j) => j.ferveur > 0);
+  const ecoules = Math.max(0, Number(joursEcoules) || 0);
+  const totaux = Number(joursTotaux) > 0 ? Number(joursTotaux) : null;
+  const rendu = { joueurs: actifs.length, joursEcoules: ecoules, joursTotaux: totaux,
+    facteur: null, lus: null, plafond: null, seuils: null, avertissements: [] };
+  if (totaux === null) rendu.avertissements.push('sans_fin');
+  if (!actifs.length) rendu.avertissements.push('aucun_joueur');
+  if (totaux === null || !actifs.length) return rendu;
+
+  /* Moins d'un jour écoulé se compte pour un jour : sinon le premier soir
+     se projetterait sur cent vingt fois sa durée réelle, et davantage. */
+  const facteur = Math.max(1, totaux / Math.max(1, ecoules));
+  const liste = actifs.map((j) => j.ferveur).sort((a, b) => a - b);
+  const lus = {};
+  for (const [id, p] of Object.entries(RANGS_DIVISIONS)) lus[id] = auRang(liste, p);
+
+  const rythmes = actifs.filter((j) => j.jours >= 3).map((j) => j.ferveur / j.jours)
+    .sort((a, b) => a - b);
+  const plafond = rythmes.length ? arrondi(auRang(rythmes, 0.90) * totaux, Math.floor) : null;
+
+  const seuils = {};
+  let plancher = 2;   // Habitué au-dessus de Sympathisant, qui vient dès 1
+  for (const id of Object.keys(RANGS_DIVISIONS)) {
+    let v = arrondi(lus[id] * facteur);
+    /* Aucune division au-delà du plafond, Capo comme les autres : si Ultra
+       le dépassait déjà, Capo égal à Ultra le dépasserait aussi. */
+    if (plafond !== null && v > plafond) {
+      v = plafond;
+      if (id === 'capo') rendu.avertissements.push('capo_borne');
+    }
+    v = Math.max(plancher, v);
+    seuils[SEUIL_DE[id]] = v;
+    plancher = v;
+  }
+  const valeurs = Object.values(seuils);
+  if (new Set(valeurs).size < valeurs.length) rendu.avertissements.push('seuils_egaux');
+  if (actifs.length < RECALAGE_MIN.joueurs) rendu.avertissements.push('peu_de_joueurs');
+  if (ecoules < RECALAGE_MIN.jours) rendu.avertissements.push('trop_tot');
+  return Object.assign(rendu, { facteur, lus, plafond, seuils });
+}
+
 /* ================================================== la fenêtre d'une saison
 
    **Une seule borne, écrite en SQL, pour tous.** Le classement « saison », les

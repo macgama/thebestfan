@@ -609,7 +609,24 @@ lui :
    carnet se fige ensuite, et l'administration le refuse en le disant.
 5. **Les seuils de division**, recalés sur la ferveur réelle des joueurs
    **sans abonnement** (l'abonné n'a pas de plafond de ferveur classée, et le
-   titre de Capo doit rester atteignable sans payer). En lecture seule :
+   titre de Capo doit rester atteignable sans payer). Dans `/admin`,
+   RÉGLAGES, section LA SAISON ET SES PALIERS : le cadre **RECALER LES
+   DIVISIONS** lit la ferveur classée de la saison en cours, joueur par
+   joueur, abonnés exclus, et propose les quatre seuils ; **Poser ces quatre
+   seuils** les écrit (chacun au journal). Il faut que le dernier jour de jeu
+   de la saison soit saisi (onglet SAISONS) : c'est lui qui donne la durée sur
+   laquelle on projette. À faire après deux semaines de jeu au moins, et à
+   refaire quand le cadre dit la proposition fragile (moins de 30 joueurs ou
+   de 14 jours). Relever un seuil ne retire rien à qui a déjà récupéré sa
+   division.
+
+   La règle (`proposerSeuils`, `src/shared/saison.js`) : les valeurs aux rangs
+   30 %, 60 %, 85 % et 96 % de la liste rangée, projetées sur la saison
+   (× jours totaux / jours écoulés), arrondies à deux chiffres. Aucune
+   division, Capo compris, ne dépasse ce qu'un gratuit assidu fait dans la
+   saison : le rang 90 % des ferveurs par jour joué (parmi ceux qui ont joué
+   au moins trois jours), tenu chaque jour de la saison. La même lecture, à la
+   main, reste possible en SQL :
 
    ```sql
    SELECT x.user_id, SUM(x.ferveur) AS ferveur
@@ -621,11 +638,6 @@ lui :
     GROUP BY x.user_id
     ORDER BY ferveur;
    ```
-
-   Lire les valeurs aux rangs 30 %, 60 %, 85 % et 96 % de la liste, les
-   projeter sur la saison (× jours totaux / jours écoulés), et les saisir dans
-   RÉGLAGES : `rang.habitue`, `rang.fervent`, `rang.ultra`, `rang.capo`. Capo
-   ne dépasse jamais ce qu'un joueur gratuit assidu fait dans la saison.
 
 ### Après la livraison des arènes
 
