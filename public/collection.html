@@ -214,9 +214,21 @@ html[data-calme~="animations"] .spin{animation:none}
    sur son coin bas-gauche, et le tampon « ×3 » sur le flanc de la scène sont
    servis par ui.css depuis le lot 4 : leurs règles provisoires sont parties
    d'ici. */
+
+/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
+   règle commune des pages larges : l'accueil du classeur prend la largeur :
+   le collectionneur en bandeau, puis les rayons trois par rangée (six
+   rayons, deux rangées pleines ; un rayon seul sur la sienne la prend
+   entière, comme sur le téléphone). */
+@media (min-width:1180px) and (min-height:560px){
+  #accueil{max-width:none}
+  #accueil .tbf-rayons{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #accueil .tbf-rayons>.tbf-rayon:last-child:nth-child(odd){grid-column:auto}
+  #accueil .tbf-rayons>.tbf-rayon:last-child:nth-child(3n+1){grid-column:1/-1}
+}
 </style>
 </head>
-<body>
+<body class="tbf-large">
 <main id="app">
   <h1 class="tbf-vh">Ma collection</h1>
   <!-- L'accueil de la page : le niveau de collectionneur et les cinq rayons. -->

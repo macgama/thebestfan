@@ -30,6 +30,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
+import { controlerLarge } from './large-ui.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 let failures = 0;
@@ -599,6 +600,18 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   await page.evaluate(() => charger());
   await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
 }
+
+/* ---------------------------------------------------------- grand écran
+
+   La page des matchs est une page large (`tbf-large`) : ses compétitions
+   se rangent en colonnes de la largeur d'un téléphone, chacune avec ses
+   matchs. Deux compétitions servies, pour qu'il y ait deux colonnes. */
+selections = true;
+await controlerLarge(page, check, { nom: 'la page des matchs', liste: '#liste>.ligue',
+  pret: () => jusqua(async () => (await page.$$('#liste>.ligue')).length === 2) });
+selections = false;
+await page.reload({ waitUntil: 'networkidle0' });
+await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
 
 if (process.env.CAPTURE) {
   const { tmpdir } = await import('node:os');

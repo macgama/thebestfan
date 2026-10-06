@@ -269,6 +269,14 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+
+/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
+   règle commune des pages larges : les compétitions du jour se rangent en
+   colonnes de la largeur d'un téléphone, chacune avec ses matchs. */
+@media (min-width:1180px) and (min-height:560px){
+  #liste:has(>.ligue){columns:2 440px;column-gap:16px}
+  #liste>.ligue{break-inside:avoid}
+}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -278,7 +286,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body>
+<body class="tbf-large">
 <main id="app">
   <!-- Le nom de la page dans un `span` : c'est lui que la règle `:has` efface
        quand la barre du haut le dit déjà. Le sous-titre reste — il nomme la

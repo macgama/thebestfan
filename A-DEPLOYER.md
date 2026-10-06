@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Toutes les pages en largeur sur PC** (branche `claude/ecran-large-pkbkwj`,
+6 octobre 2026, demandé par Gaël). Des pages seules : ni schéma ni
+redémarrage. Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/ui.css` et quinze pages (`aide`, `amis`, `kop`, `classement`,
+  `carnet`, `collection`, `equipes`, `teletext`, `aujourdhui`, `abonnement`,
+  `compte`, `deck`, `boosters`, `fanzzy`, `fanzzy-fiche`) : au-delà de
+  1 180 px, chacune prend la colonne large entre les tuiles, ses listes en
+  colonnes. Sur téléphone et tablette, rien ne change. Contrôlé par
+  `npm run large:ui` (neuf pages) et par les suites des six autres.
+
+---
+
 **La collection de stades** (branche `claude/collection-stades-nsq24k`,
 6 octobre 2026, option « album + décor d'accueil » choisie par Gaël). Il se
 dépose avec ce qui est en dessous, ou seul.
