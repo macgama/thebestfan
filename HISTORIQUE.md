@@ -8067,3 +8067,44 @@ parti avec « La quête » : elle lit maintenant le catalogue partagé.
   `public/virage.html`), et le contrôle de `virage:ui` avec.
 
 ---
+
+## Le Fanzzy parle — un mot à chaque moment
+
+*6 octobre 2026, session cloud « Dialogues du Fanzzy », à la demande de Gaël
+(« crée les divers dialogues pour rendre vivant le Fanzzy »). Ton proposé sur
+échantillon : familier, un peu pince-sans-rire, comme les histoires des cartes.*
+
+### Ce qui a changé
+
+- **Il parle dans sa bulle**, aux moments du Fanzzy vivant : bonjour selon
+  l'heure (matin, jour, soir, nuit), le dernier match (victoire, défaite,
+  rouge, et le nul, qu'il ne disait pas faute de visage), le retour après
+  deux jours, un toucher seul (sa réplique à lui), trois (il en redemande),
+  six (il boude, même le supporter générique, qui n'a pas de colère dessinée).
+- **Les mots sont dans `public/fanzzy-repliques.js`** : une ou deux
+  répliques par Fanzzy de LA REPRISE au premier âge, tirées de son histoire ;
+  une voix par famille ; celle de tout le monde. Par carte et non par lignée :
+  Gosier de Bronze n'a plus à dire « Ça revient… presque ».
+
+### Pourquoi comme ça
+
+- **Une parole n'est pas un lien** : la bulle perd son adresse le temps qu'il
+  parle, puis la phrase du hub reprend sa place (« ! » replié, ou ouverte si
+  elle attendait).
+- **La phrase du hub passe d'abord** : un bonjour attend qu'elle se replie, un
+  toucher seul se tait quand elle est ouverte. Le dernier match, le retour et
+  les touchers répétés passent devant le temps de le dire.
+- **Les règles du marqueur** (quatre mots, aucun chiffre) valent ligne par
+  ligne : `repliques:test` les vérifie, et l'accueil les revérifie avant
+  d'écrire.
+
+### Contrôles
+
+`repliques:test` (suite neuve) ; `accueil:ui` : 14 contrôles de plus (chaque
+moment dit, sans adresse ; la phrase des boosters qui revient ; le bonjour
+qui cède), tous verts.
+
+### Ce qui reste
+
+- Des répliques à leurs âges 2 et 3, et pour les autres séries : ils parlent
+  pour l'instant comme leur famille.

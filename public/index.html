@@ -2359,6 +2359,9 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
      état donné — et sur quoi retomber quand ce dessin n'existe pas encore. -->
 <script src="/menu.js"></script>
 <script src="/fanzzy-etats.js"></script>
+<!-- Ce que dit le Fanzzy à chaque moment : sa réplique, celle de sa famille,
+     celle de tout le monde. Voir « la parole du Fanzzy ». -->
+<script src="/fanzzy-repliques.js"></script>
 <!-- L'horloge d'un match en direct, pour la vitrine : le serveur donne la
      minute lue et l'instant de cette lecture, elle fait défiler le reste. Sans
      elle, l'écran non connecté afficherait la minute de son chargement pendant
@@ -3323,7 +3326,16 @@ function direBulle() {
   const b = $('bulle'); const pli = $('bullePli');
   if (!texte) {
     clearTimeout(bulleMinuteur); bulleMinuteur = null;
-    b.hidden = true; pli.hidden = true; delete b.dataset.texte;
+    delete b.dataset.texte; delete b.dataset.href;
+    if (b.dataset.parole) { ouvrirApresParole = false; return; }
+    b.hidden = true; pli.hidden = true;
+    return;
+  }
+  b.dataset.href = href;
+  /* Le Fanzzy parle (voir « la parole du Fanzzy ») : la phrase attend qu'il
+     ait fini, et s'ouvre alors. */
+  if (b.dataset.parole) {
+    if (b.dataset.texte !== texte) { b.dataset.texte = texte; ouvrirApresParole = true; }
     return;
   }
   b.href = href;
@@ -3358,6 +3370,12 @@ function direBulle() {
  */
 function ouvrirBulle(e) {
   const b = $('bulle'); const pli = $('bullePli');
+  /* Le « ! » touché pendant qu'il parle : la phrase reprend la bulle. Ouverte
+     d'elle-même, elle attend qu'il ait fini (`direBulle`). */
+  if (b.dataset.parole) {
+    if (e?.type !== 'click') { ouvrirApresParole = true; return; }
+    finirParole(false);
+  }
   if (!b.dataset.texte) return;
   clearTimeout(bulleMinuteur);
   pli.hidden = true;
@@ -3406,6 +3424,7 @@ function bulleCouvre() {
    Marker arrive. Un téléphone qu'on tourne déplace les rails. Dans les deux
    cas, ouverte d'elle-même, elle se plie. */
 function garderLesTuiles() {
+  if ($('bulle').dataset.parole) { if (bulleCouvre()) finirParole(); return; }
   if (bulleDElleMeme && !$('bulle').hidden && bulleCouvre()) replierBulle();
 }
 if (typeof ResizeObserver === 'function') new ResizeObserver(garderLesTuiles).observe($('bulle'));
@@ -3432,6 +3451,88 @@ function rejouerSur(el, classe) {
   el.addEventListener('animationend', el._fin);
 }
 $('bullePli').addEventListener('click', ouvrirBulle);
+
+/* ------------------------------------------- la parole du Fanzzy
+
+   Il changeait de visage sans rien dire. Il dit maintenant un mot aux moments
+   du Fanzzy vivant — le salut, le retour, le dernier match, les touchers, la
+   bouderie —, dans sa bulle (6 octobre 2026, à la demande de Gaël). Les mots
+   sont dans `fanzzy-repliques.js` : les siens, ceux de sa famille, ceux de
+   tout le monde.
+
+   **Une parole n'est pas un lien.** La bulle perd son adresse le temps qu'il
+   parle : toucher « On les a eus ! » ne mène nulle part. Puis la phrase du
+   hub — le match, les boosters — reprend sa place : repliée en « ! » si elle
+   l'était, ouverte si elle attendait qu'il ait fini (`ouvrirApresParole`).
+
+   **Les règles du marqueur valent pour lui aussi** (`ecrivable`) : une ligne
+   qui les enfreindrait ne se dit pas.
+
+   **D'elle-même, une parole ne couvre jamais une tuile**, comme la bulle
+   (`ouvrirBulle`) : elle se tait au lieu de se plier en « ! » — un mot de
+   passage n'a rien à rouvrir.
+
+   **Le salut et le calme cèdent** (`cede`) à une phrase du hub ouverte :
+   « Bien dormi ? » ne vaut pas « Tes boosters t'attendent ». Le reste — un
+   match, un retour, un toucher — passe devant le temps de le dire.
+
+   Personne ne parle derrière le rideau d'ouverture. */
+const PAROLE_MS = 2600;
+let paroleMinuteur = null;
+let ouvrirApresParole = false;
+
+/** Qui parle : sa carte (l'âge montré) et sa famille, pour `TBF_REPLIQUES`. */
+function quiParle() {
+  if (!equipe) return {};
+  const age = lignee.ages.find((a) => a.stade === equipe.evo) ?? lignee.ages[0];
+  return { carte: equipe.carte ?? age?.id ?? equipe.id, type: age?.type ?? equipe.type };
+}
+
+/**
+ * Le Fanzzy dit un mot de ce moment, s'il en a un. Rend la ligne dite, ou `null`.
+ *
+ * @param {string} quoi  un moment de `TBF_REPLIQUES.MOMENTS`
+ * @param {{ms?: number, cede?: boolean}} [o]
+ */
+function parler(quoi, { ms = PAROLE_MS, cede = false } = {}) {
+  if (document.getElementById('ouverture')) return null;
+  const b = $('bulle'); const pli = $('bullePli');
+  const ouverte = !b.hidden && !b.dataset.parole;
+  if (cede && !b.hidden) return null;
+  const texte = window.TBF_REPLIQUES?.dire(quoi, quiParle()) ?? null;
+  if (!ecrivable(texte)) return null;
+  if (ouverte) { clearTimeout(bulleMinuteur); bulleMinuteur = null; ouvrirApresParole = true; }
+  clearTimeout(paroleMinuteur);
+  b.dataset.parole = quoi;
+  b.removeAttribute('href');
+  b.textContent = texte;
+  pli.hidden = true;
+  b.hidden = false;
+  if (bulleCouvre()) { finirParole(); return null; }
+  rejouerSur(b, 'tbf-colle');
+  paroleMinuteur = setTimeout(finirParole, ms);
+  return texte;
+}
+
+/**
+ * Il a fini : la phrase du hub reprend la bulle, repliée en « ! » — ou
+ * ouverte, si elle attendait (`rouvrir`, faux quand le « ! » vient d'être
+ * touché et l'ouvre lui-même).
+ */
+function finirParole(rouvrir = true) {
+  clearTimeout(paroleMinuteur); paroleMinuteur = null;
+  const b = $('bulle'); const pli = $('bullePli');
+  if (!b.dataset.parole) return;
+  delete b.dataset.parole;
+  b.hidden = true;
+  const texte = b.dataset.texte;
+  if (!texte) { pli.hidden = true; ouvrirApresParole = false; return; }
+  b.textContent = texte;
+  if (b.dataset.href) b.href = b.dataset.href;
+  const ouvrir = ouvrirApresParole && rouvrir;
+  ouvrirApresParole = false;
+  if (ouvrir) ouvrirBulle(); else pli.hidden = false;
+}
 
 /* ------------------------------------------- l'avatar
 
@@ -4465,9 +4566,13 @@ function sauter() {
       touchers = 0;
       toucherJusqua = boudeJusqua = t + BOUDE_MS;
       pose(agace, BOUDE_MS);
+      parler('boude', { ms: BOUDE_MS + 800 });
       return;
     }
   }
+  /* Les mots n'ont pas besoin d'un dessin : celui qui n'a pas de colère
+     continue de sauter, mais il le dit. */
+  if (touchers === 6) parler('boude');
   rejouer('saute');
   window.FX?.son?.('tic');
   if (touchers === 2) {
@@ -4478,6 +4583,10 @@ function sauter() {
     const exulte = expression('but');
     if (exulte) { toucherJusqua = t + EXULTE_MS; pose(exulte, EXULTE_MS); }
   }
+  /* Un toucher seul, au calme : sa réplique à lui. Elle cède à tout ce que
+     la bulle dit déjà. Au troisième d'affilée, il en redemande. */
+  if (touchers === 1) parler('calme', { cede: true });
+  else if (touchers === 3) parler('encore');
 }
 
 $('scene').addEventListener('pointerdown', sauter);
@@ -4639,6 +4748,17 @@ function saluer() {
   if (deja) return;
   rejouer('coucou');
   salutJusqua = performance.now() + COUCOU_MS;
+  /* Et il dit bonjour, selon l'heure, une fois le coucou fini — sauf si
+     l'arrivée a mieux à dire (`raconter`). Le ticket arrive le temps que le
+     rideau se lève : on lui laisse une seconde. **La phrase du hub passe
+     d'abord** : ouverte, il attend qu'elle se replie en « ! » pour dire
+     bonjour, et renonce au bout de douze secondes. */
+  const debut = performance.now();
+  const bonjour = () => {
+    if (arriveeDite || performance.now() - debut > 12000) return;
+    if (!parler('salut', { cede: true }) && !$('bulle').hidden) setTimeout(bonjour, 700);
+  };
+  setTimeout(bonjour, COUCOU_MS + 1000);
   /* Le récit d'un match tient déjà la scène (voir « le Fanzzy vivant ») :
      le coucou se joue par-dessus, sans lui reprendre son visage. */
   if (performance.now() < recitJusqua) return;
@@ -4669,12 +4789,7 @@ function saluer() {
  *                              sans elles, on suppose tout écrit
  */
 function recitDe(depuis, absent, ecrit) {
-  const m = (Array.isArray(depuis?.matchs) ? depuis.matchs : [])
-    .find((x) => typeof x?.club === 'string' && x.club.trim()
-      && ['gagne', 'nul', 'perdu'].includes(x.issue));
-  const lignes = m ? lignesDuMatch(m) : [];
-  const rouge = lignes.length > 1
-    && (!ecrit || lignes.slice(0, -1).some((l) => ecrit.includes(l)));
+  const { m, rouge } = dernierMatchDe(depuis, ecrit);
   const fache = rouge && m.issue !== 'gagne' ? expression('decision') : null;
   const r = fache ? { etat: fache, saute: false, tenue: RECIT_MS }
     : m?.issue === 'gagne' ? { etat: expression('victoire', 'but'), saute: true, tenue: RECIT_MS }
@@ -4684,18 +4799,58 @@ function recitDe(depuis, absent, ecrit) {
   return r?.etat ? r : null;
 }
 
-/** Le récit, ou la fête, joué à l'arrivée (voir `recitDe`). */
+/**
+ * Le dernier match que le ticket raconte, et s'il y a pris un rouge écrit
+ * sur le ticket (voir `recitDe`).
+ */
+function dernierMatchDe(depuis, ecrit) {
+  const m = (Array.isArray(depuis?.matchs) ? depuis.matchs : [])
+    .find((x) => typeof x?.club === 'string' && x.club.trim()
+      && ['gagne', 'nul', 'perdu'].includes(x.issue));
+  const lignes = m ? lignesDuMatch(m) : [];
+  const rouge = lignes.length > 1
+    && (!ecrit || lignes.slice(0, -1).some((l) => ecrit.includes(l)));
+  return { m: m ?? null, rouge };
+}
+
+/**
+ * Ce qu'il **dit** de l'absence (voir « la parole du Fanzzy ») : le même
+ * récit que son visage, à une différence près — **un nul se dit**. Il n'a
+ * pas de visage, il a des mots. Et les mots n'ont pas besoin d'un dessin :
+ * le supporter générique raconte lui aussi.
+ */
+function motDuRetour(depuis, absent, ecrit) {
+  const { m, rouge } = dernierMatchDe(depuis, ecrit);
+  if (m) {
+    if (rouge && m.issue !== 'gagne') return 'rouge';
+    return { gagne: 'victoire', perdu: 'defaite', nul: 'nul' }[m.issue];
+  }
+  return absent >= ABSENCE_FETEE ? 'retour' : null;
+}
+
+/** Le récit, ou la fête, joué à l'arrivée (voir `recitDe`) — et ce qu'il en dit. */
 function raconter(depuis, absent, ecrit) {
   const r = recitDe(depuis, absent, ecrit);
-  if (!r) return;
-  const attente = r.fete ? Math.max(0, salutJusqua - performance.now()) : 0;
-  recitJusqua = performance.now() + attente + r.tenue;
+  const mot = motDuRetour(depuis, absent, ecrit);
+  if (!r && !mot) return;
+  const fete = r ? r.fete : mot === 'retour';
+  const tenue = r?.tenue ?? (fete ? FETE_MS : RECIT_MS);
+  const attente = fete ? Math.max(0, salutJusqua - performance.now()) : 0;
+  /* Seul un visage tient la scène : un nul dit, sans visage, laisse le salut
+     faire le sien. */
+  if (r) recitJusqua = performance.now() + attente + tenue;
+  arriveeDite = Boolean(mot);
   const jouer = () => {
-    pose(r.etat, r.tenue);
-    if (r.saute) rejouer('saute');
+    if (r) {
+      pose(r.etat, r.tenue);
+      if (r.saute) rejouer('saute');
+    }
+    if (mot) parler(mot, { ms: Math.max(tenue, PAROLE_MS) });
   };
   if (attente) setTimeout(jouer, attente); else jouer();
 }
+/** L'arrivée a déjà ses mots — le dernier match, le retour : le salut se tait. */
+let arriveeDite = false;
 
 /**
  * La durée de l'absence, et la marque de cette arrivée-ci.
@@ -6468,7 +6623,7 @@ async function alerteDuel() {
    * tour de veille de vingt-cinq secondes, et c'est aussi par là qu'on met la
    * page au point depuis la console.
    */
-  window.TBF = { pose, veiller, saluer, etatDeFond: () => fond };
+  window.TBF = { pose, veiller, saluer, parler, etatDeFond: () => fond };
 
   /* L écran d ouverture peut partir : le personnage est posé, la collection
      est lue, il n y a plus rien à couvrir. On ne l efface pas d ici — on dit
