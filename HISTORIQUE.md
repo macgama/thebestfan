@@ -7685,3 +7685,116 @@ n'ont aucune rouge nouvelle : celles qui restent rougissent à l'identique sur
 - **Le clignement**, ici aussi, quand les images « yeux fermés » existeront.
 
 ---
+
+## 4 quinquagies. Le stade du match, au duel — celui de son Virage, montré dès la préparation
+
+*6 octobre 2026. Gaël a tranché sur la carte « Au duel, jouer dans le stade du
+match, comme au Virage ? » : « Celui du match » — tous les duels d'un match se
+jouent dans son stade, et la préparation le montre avant d'entrer en file.
+Photographié pour lui à la taille d'un téléphone (390 × 844), Sion – Bâle en
+direct au Chaudron, règles du « i » ouvertes : `duel/stade-preparation.jpg`,
+dans les fichiers du projet.*
+
+### Ce qui a changé
+
+- **Tous les duels d'un match se jouent dans son stade**, celui de son Grand
+  Virage. Le duel tirait son lieu sur son propre identifiant, un
+  `randomUUID` neuf à chaque partie : deux duels d'un même match tombaient
+  dans deux stades, presque jamais dans celui du Virage d'à côté, contre
+  « le stade appartient au match » (`stades.js`, `ETAT.md` § 3). Le risque
+  était ouvert depuis le lot 6 (4 quadragies sexies, « Ce qui reste ») ; la
+  correction est celle qu'il décrivait : la graine du match dans
+  `engine.js`, l'identifiant du duel en repli.
+- **Une seule fonction tire le stade d'un match** : `stadeDuMatch`, en bas
+  de `src/server/contenus/index.js`. La graine du Virage (l'identifiant du
+  match), aucune possession, les stades ouverts relus à chaque appel. La
+  salle du Virage, le moteur du duel et le deck l'appellent. Le duel ne
+  retombe sur son identifiant que sans match, ce qui n'arrive pas
+  aujourd'hui : seul `ouvrir` (`nvn/index.js`) crée un duel, et toujours sur
+  le support d'un match.
+- **La liste des matchs du duel sert le stade de chacun**, et la route d'un
+  match aussi : `stade`, `{ id, nom, effet }` (`CONTRATS.md`, § 17).
+- **La préparation le montre.** Sur l'affiche du match choisi, le dessin
+  réduit du stade passe en fond, sous le voile de la brique `tbf-affiche`,
+  comme sur l'affiche du coup d'envoi ; son nom se lit au pied, « STADE » en
+  petit devant, sur la ligne du compte de la file quand quelqu'un attend.
+  Les règles du « i » disent ce qu'il change : « Le stade : Le Chaudron.
+  Tout le monde pousse plus fort, et se fatigue plus vite. Tous les duels de
+  ce match s'y jouent, et son Grand Virage aussi. »
+
+### Pourquoi comme ça
+
+- **Une fonction, pas deux tirages qui s'accordent.** Le Virage et le duel
+  tiraient chacun le leur ; deux copies d'un même tirage finissent par se
+  séparer — un filtre de saison ajouté d'un côté, une graine convertie de
+  l'autre —, et l'écart ne se voit qu'en jouant les deux le même soir. Les
+  suites éprouvent la vraie salle du Virage et le vrai moteur, jamais une
+  copie de la règle.
+- **Le serveur tire, la page lit.** Les stades qu'une saison a ouverts ne se
+  connaissent qu'en base : une page qui tirerait le sien sur l'identifiant
+  du match tomberait juste tant qu'aucune saison ne ferme de stade, puis
+  annoncerait un lieu où personne ne joue. Sans `stade` dans la liste (un
+  serveur d'avant), l'affiche reste sans lieu et les règles n'en parlent pas.
+- **Pas d'intersection des possessions.** `ETAT.md` § 3 la promettait au
+  duel ; elle n'a jamais été écrite, et elle n'est plus à écrire : un lieu
+  qui dépendrait de l'adversaire ne se connaîtrait qu'après l'appariement,
+  et la préparation ne pourrait pas l'annoncer. Collectionner n'achète pas
+  le lieu : il change avec les matchs.
+- **Le nom au pied, l'effet derrière le « i ».** « STADE » devant le nom,
+  parce que « LE CHAUDRON » seul, sous deux clubs, se lirait comme un
+  troisième. La phrase de l'effet, jusqu'à quatre-vingt-cinq signes, aurait
+  pris deux lignes juste au-dessus d'ENTRER EN FILE ; elle va dans les
+  règles, comme en partie dans « ce que tu portes ». Le nom coûte une ligne
+  quand personne n'attend, aucune quand il tient à côté du compte de la
+  file, et il ne s'abrège jamais. À 360 × 640, ENTRER EN FILE reste à
+  l'écran sans rien faire défiler, et sa rangée ne cache rien de lisible.
+- **Le dessin réduit en fond**, comme le brief du lot 6 dessinait l'affiche
+  de la préparation (« le stade-mini en fond », attendu depuis faute d'un
+  stade connu avant l'appariement) et comme l'affiche du coup d'envoi le
+  prenait déjà : aucune image neuve, et la préparation montre en petit le
+  stade que la partie montrera en grand.
+
+### Contrôles
+
+`nvn:smoke` : deux contrôles de plus. Pour douze matchs, deux duels aux
+identifiants tirés comme en production, un classé et un d'entraînement, se
+jouent dans le stade de la salle du Virage du même match (douze matchs, douze
+lieux), et la vue des deux camps l'annonce. Les rejeux de la note, qui
+passaient par les dix-huit stades grâce aux identifiants de leurs duels,
+prennent chacun un match (7001 à 7024), `marin` compris. `deck:smoke` : un de
+plus — chaque match de la liste, et sa route, servent le stade d'un vrai duel
+ouvert sur lui. `nvn:ui` : quatre de plus — l'affiche montre le stade du match
+choisi (le dessin en fond, le nom au pied), les règles du « i » disent son
+effet, un autre match montre le sien, et le duel se joue là où l'affiche
+l'annonçait. `contenus:smoke` tire ses deux cents lieux par `stadeDuMatch`.
+
+**Chaque contrôle ajouté a été vu rouge sur l'ancien code** : le moteur d'avant
+fait rougir les deux de `nvn:smoke`, celui de `deck:smoke` et le dernier de
+`nvn:ui` ; le deck d'avant, celui de `deck:smoke` ; la page d'avant, les quatre
+de `nvn:ui`.
+
+Les suites touchées, et elles seules — une autre session lançait `npm test`
+dans la copie principale : `nvn:smoke` (113), `deck:smoke` (91),
+`contenus:smoke` (34), `niveau:smoke` (99), `virage:smoke` (357), `salles:test`
+(142), `nvn:net` (167), `catalogue:test` (35), `pages` (84) et `cablage` (71),
+toutes vertes ; `nvn:ui`, 206 vertes et une rouge, « et elle dit le Fanzzy, le
+camp et la sorte de partie », rouge à l'identique sur `main` dans un conteneur
+cloud (`refonte/README.md` § 6). `audit:ui --arenes` ne relève rien sur
+`/duel-nvn` à 360 × 640, 400 × 800 et 768 × 1024, ni dans les états du duel.
+
+### Ce qui reste
+
+- **Une saison qui s'ouvre en plein match.** Les stades ouverts sont relus à
+  chaque tirage, et la salle du Virage garde le sien tout le match : une
+  saison lancée pendant un match peut donner aux duels qui suivent, et à la
+  liste, un autre lieu que celui du Virage déjà ouvert (`CONTRATS.md`,
+  § 17).
+- **Le vrai lieu du match.** Le stade se tire sur l'identifiant du match, pas
+  sur l'endroit où il se joue. Le jour où il en viendra, c'est `stadeDuMatch`
+  qui changera, et le Virage, le duel et la liste suivront ensemble.
+- **Le camp choisi en touchant une tribune du stade-mini**, que le brief du
+  lot 6 prévoyait (`ECARTS.md`, `duel-tribunes`, 1) : le stade est sur
+  l'affiche, mais le camp se choisit toujours par les deux bâches, et rien
+  n'en a changé ici.
+
+---

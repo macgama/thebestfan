@@ -1081,23 +1081,36 @@ skin ne donne aucun bonus, chaque pièce d'équipement a un revers — qui disen
 toutes deux la même chose : « un débutant qui chante juste bat un vétéran mal
 équipé ».
 
-Au Grand Virage le stade vient du vrai match ; en duel, `stadeDeLaRencontre()`
-le tire dans l'**intersection** de ce que les deux joueurs possèdent, jamais
-dans la réunion. Jouer dans un stade que l'adversaire n'a jamais vu serait lui
-imposer une règle qu'il ne connaît pas.
+**Au Grand Virage comme en duel, le stade vient du vrai match**, et tous les
+duels d'un match se jouent dans le stade de son Virage (décision de Gaël, le
+6 octobre 2026 : « Celui du match »). Une seule fonction le tire,
+`stadeDuMatch` (`src/server/contenus/index.js`), sur l'identifiant du match et
+parmi les stades qu'une saison a ouverts : le Virage, le moteur du duel et le
+deck l'appellent, et aucun ne garde sa copie du tirage. Le lieu se connaît donc
+avant de jouer : la préparation du duel pose le stade du match choisi sur son
+affiche — le dessin en fond, le nom au pied — et les règles du « i » disent son
+effet, avant l'entrée en file.
 
-Collectionner n'achète donc pas de la force : ça élargit les lieux où l'on peut
-tomber, et donc les situations qu'un deck doit savoir affronter. L'exemple de
-la Vuvuzela le montre bien — une pièce d'équipement plus forte dans un stade
+L'**intersection** de ce que les deux joueurs possèdent, que ce paragraphe
+promettait au duel, n'a jamais été écrite : le duel tirait son stade sur son
+propre identifiant (un `randomUUID`, dans `engine.js`), et deux duels sur le
+même match tombaient dans deux stades, presque jamais dans celui du Virage. Elle
+n'est plus à écrire : un lieu qui dépendrait de l'adversaire ne se connaîtrait
+qu'après l'appariement, et la préparation ne pourrait pas l'annoncer.
+`stadeDeLaRencontre()` sait encore la faire ; personne ne lui passe de
+possessions.
+
+Collectionner n'achète donc pas de la force, ni le lieu : il change avec les
+matchs, et avec lui les situations qu'un deck doit savoir affronter. L'exemple
+de la Vuvuzela le montre bien — une pièce d'équipement plus forte dans un stade
 donné est une lecture de deck sur une condition **commune**, que les deux camps
 peuvent embarquer.
 
-Au Grand Virage c'est tenu ; **au duel, le stade est encore tiré sur
-l'identifiant du duel** (un `randomUUID`, dans `engine.js`), et deux duels sur le
-même match tombent dans deux stades. C'est la raison pour laquelle la préparation
-du duel n'a pas de stade-mini. Risque ouvert, à trancher par Gaël : la correction
-tient en une ligne dans `engine.js`, mais le fichier est hors du lot 6 et trois
-suites le lisent (`serveur/ECARTS.md`, `serveur-duel`, 9 et 12).
+Trois suites le gardent, et chacune rougit si le duel tire de nouveau son stade
+de son côté : `nvn:smoke` (deux duels de chacun de douze matchs, dans le stade
+de son Virage), `deck:smoke` (la liste et la route d'un match servent ce
+stade-là) et `nvn:ui` (l'affiche le montre, et le duel se joue là où elle
+l'annonçait). Le récit : `HISTORIQUE.md`, 4 quinquagies.
 
 **Les tribunes des stades sont dessinées dans l'ombre, exprès.** C'est ce qui
 permet de les allumer. Une tribune déjà éclairée ne peut plus s'éclairer ; une
@@ -1201,7 +1214,7 @@ simulateur.
 | `/virage` | Grand Virage : le voile des matchs en direct (affiches), la tribune — HUD, ticket terrain, corde, foules, main, tableau —, la minute qui compte double, le but, le **bilan de tribune** à la sortie et au coup de sifflet, **les cartes d'action de sa tribune** et le panneau « ce que tu portes » |
 | `/amis` | amis : qui suit les mêmes clubs, demandes, invitations en KOP ; **la présence** (AU VIRAGE, EN DUEL, EN LIGNE) quand elle est allumée |
 | `/equipes` | les clubs suivis, et la recherche pour en ajouter |
-| `/duel-nvn` | **le duel** : préparation (l'affiche, cinq formats, ce qui est en jeu), vestiaire, affiche, partie, bilan en page kraft ; tir à la corde, 1v1 à 5v5, adossé à un vrai match, même panneau de bonus |
+| `/duel-nvn` | **le duel** : préparation (l'affiche et le stade du match, cinq formats, ce qui est en jeu), vestiaire, affiche, partie, bilan en page kraft ; tir à la corde, 1v1 à 5v5, adossé à un vrai match, même panneau de bonus |
 | `/matchs` | matchs du jour, en direct, avec fiche détaillée |
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
 | `/classement` | supporters, tribunes, duellistes ; le podium, ma ligne épinglée, la saison (`SAISON`, `TOUJOURS`) et ses divisions |
@@ -3361,18 +3374,19 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
    carte (§ 5, point 10).
 
    **Ce que le lot 6 rend à Gaël** (`HISTORIQUE.md`, 4 quadragies sexies, « Ce qui
-   reste ») : **le stade du duel** (tiré sur l'identifiant du duel, pas sur le
-   match : une ligne dans `engine.js`, une règle de jeu) ; **allumer la
-   présence**, après le juriste ; **écouter le mixage** sur un téléphone avant la
-   mise en ligne ; **les 600 ms du verdict**, comptées depuis la fin du geste ou
-   depuis la dernière frappe ; un **combo en jeu au duel** (`serie` sur
-   l'évènement `chant`, refusé tant qu'aucune page ne le lit) ; `gains.wallet`
-   dans `nvn:fin` (non servi : `nav.js` relit le solde) ; `nvn:net`, que
-   `npm test` ne lance pas ; **le tunnel au voile du Virage** (la photo existe,
-   la page ne la nomme pas) ; et, du correctif d'urgence, la priorité du but
-   réel sur les autres moments d'un même geste, les cartes-souvenirs d'un but
-   ancien, et le trou d'une suite qui ne fait passer aucun scénario du relevé
-   jusqu'à la salle.
+   reste ») : **allumer la présence**, après le juriste ; **écouter le
+   mixage** sur un téléphone avant la mise en ligne ; **les 600 ms du
+   verdict**, comptées depuis la fin du geste ou depuis la dernière frappe ;
+   un **combo en jeu au duel** (`serie` sur l'évènement `chant`, refusé tant
+   qu'aucune page ne le lit) ; `gains.wallet` dans `nvn:fin` (non servi :
+   `nav.js` relit le solde) ; `nvn:net`, que `npm test` ne lance pas ; **le
+   tunnel au voile du Virage** (la photo existe, la page ne la nomme pas) ;
+   et, du correctif d'urgence, la priorité du but réel sur les autres moments
+   d'un même geste, les cartes-souvenirs d'un but ancien, et le trou d'une
+   suite qui ne fait passer aucun scénario du relevé jusqu'à la salle. Le
+   stade du duel est tranché et réglé (le 6 octobre : celui du match, le même
+   que son Grand Virage, et la préparation l'annonce avant l'entrée en file ;
+   `HISTORIQUE.md`, 4 quinquagies).
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
    peut-être encore l'ancienne règle, qui classait 117 compétitions comme
