@@ -95,6 +95,7 @@
     "pages:test": "node scripts/verif-pages.mjs",
     "pages:navigateur": "node scripts/pages-navigateur.mjs",
     "pwa:ui": "node scripts/pwa-ui-smoke.mjs",
+    "barres:ui": "node scripts/barres-ui-smoke.mjs",
     "menu:smoke": "node scripts/menu-smoke.mjs",
     "son:smoke": "node scripts/son-smoke.mjs",
     "son:banc": "node scripts/son-banc.mjs",

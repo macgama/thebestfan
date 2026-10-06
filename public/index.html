@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <title>thebestfan — le jeu des tribunes</title>
 <!-- **Permanent Marker, dans la même ligne qu'Oswald** (lot 2, fin de
      l'hypothèse H3). L'accueil est la seule page de ce lot qui l'emploie, et
@@ -53,7 +54,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* L'accueil est un écran de jeu : il tient dans la fenêtre et ne défile pas.
    `height` et non `min-height`, sinon le bouton d'entrée passe sous le pli. */
-#app{position:relative;width:100%;max-width:var(--colonne);height:100dvh;overflow:hidden;
+#app{position:relative;width:100%;max-width:var(--colonne);height:max(100dvh,var(--ecran-min));overflow:hidden;
   display:flex;flex-direction:column;background:#04060A}
 
 /* Le décor et son voile viennent de ui.css : ce sont les mêmes que sur toutes

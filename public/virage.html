@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <title>Grand Virage — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
@@ -23,7 +24,7 @@
    ======================================================================= */
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
+html,body{margin:0;height:100%;overflow-x:clip;overscroll-behavior:none;touch-action:manipulation}
 body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
 /* **`hidden` cache, partout.** Les briques posent leur propre `display`
    (`flex`, `grid`, `block`) : une règle d'auteur l'emporte sur celle du
@@ -31,7 +32,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    d'invitation sur un navigateur qui ne sait pas partager, la bande du fil
    avant l'entrée. */
 [hidden]{display:none!important}
-#app{position:relative;width:100%;max-width:var(--colonne);height:100dvh;display:flex;flex-direction:column;
+#app{position:relative;width:100%;max-width:var(--colonne);height:max(100dvh,var(--ecran-min));display:flex;flex-direction:column;
   background:linear-gradient(180deg,#141A21,#0A0D11 50%,#141A21);overflow:hidden}
 
 /* ------------------------------------------------------------- le HUD

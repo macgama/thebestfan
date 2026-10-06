@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <title>Fanzzy — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
@@ -24,7 +25,7 @@
    dans l'écran, et l'attente pendant le chargement. */
 
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+html,body{margin:0;height:100%;overflow-x:clip;overscroll-behavior:none}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
 /* **Le filet : on ne peut jamais être bloqué.**
 
@@ -42,7 +43,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    C'est un filet, pas une correction : il ne rend pas la fiche défilante, il
    empêche qu'elle devienne une porte close. `overscroll-behavior` reste
    contenu, sinon le geste tiré au-delà du bas rebondit sur la page. */
-#app{width:100%;max-width:var(--colonne);height:100dvh;display:flex;flex-direction:column;
+#app{width:100%;max-width:var(--colonne);height:max(100dvh,var(--ecran-min));display:flex;flex-direction:column;
   overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none;
   padding-bottom:calc(var(--nav-h,62px) + env(safe-area-inset-bottom))}
 #app::-webkit-scrollbar{display:none}
