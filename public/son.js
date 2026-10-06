@@ -45,8 +45,11 @@
  *
  * ## Les règles
  *
- *   — **aucun fichier audio** : tout est synthétisé. Un son téléchargé se
- *     joue en retard la première fois, exactement quand il compte ;
+ *   — **aucun fichier audio pour ce qui doit tomber pile** : un son
+ *     téléchargé se joue en retard la première fois, exactement quand il
+ *     compte. Deux sons seulement viennent d'un fichier (voir « la tribune
+ *     enregistrée ») : la rumeur, qui n'a pas d'instant, et la clameur du
+ *     but, qui ne joue que déjà décodée — sinon la synthèse les remplace ;
  *   — **aucune mélodie connue**, aucun chant de club, aucun hymne : les
  *     chants de supporters reprennent souvent des airs protégés. On joue du
  *     rythme, des accords tenus, des bruits ; jamais un air ;
@@ -797,8 +800,11 @@
     });
   }
 
-  /** Joue un son de la banque dans un contexte et une chaîne donnés. */
-  function jouerDans(c, ch, nom, options, t) {
+  /** Joue un son de la banque dans un contexte et une chaîne donnés.
+      `fichiers` : les sons enregistrés décodés pour ce contexte — la
+      clameur, si elle l'est, remplace l'ovation synthétisée. */
+  function jouerDans(c, ch, nom, options, t, fichiers = null) {
+    if (nom === 'ovation' && fichiers?.clameur) { clameur(c, ch, fichiers.clameur, t); return; }
     const s = BANQUE[nom];
     const mix = c.createGain();
     mix.gain.value = MIX[nom] ?? 1;
@@ -954,7 +960,7 @@
     if (derniers.size > 64) derniers.clear();
     derniers.set(cle, maintenant);
     try {
-      jouerDans(c, chaine, nom, options, c.currentTime);
+      jouerDans(c, chaine, nom, options, c.currentTime, { clameur: pret(c, 'clameur') });
       return true;
     } catch { return false; /* le son ne doit jamais casser le jeu */ }
   }
@@ -1065,6 +1071,199 @@
   /** La minute double, au plus (le contrat la sert en `surgeMs`, R3). */
   const DOUBLE_MS = 60000;
 
+  /* ================================================ la tribune enregistrée
+
+     **Deux sons viennent d'un fichier, et deux seulement** (6 octobre 2026,
+     choisis par Gaël à l'écoute de `art/son/_src/artlist/A-ECOUTER.md`) :
+     la rumeur de la tribune (deux prises de stade, nuit et jour, mêlées en
+     une boucle de douze secondes) et la clameur du but, qui remplace
+     l'ovation synthétisée. Les mesures et la méthode sont dans ce document ;
+     ce qui suit en est l'application.
+
+     **La règle d'en-tête tient, amendée.** Un fichier se joue en retard la
+     première fois : il ne sert donc que là où rien n'attend l'instant. La
+     rumeur n'a pas d'instant — qu'elle arrive une demi-seconde plus tard ne
+     manque à personne, et la synthèse joue tant que le fichier n'est pas
+     prêt. La clameur en a un, le but : elle ne joue que si son fichier est
+     **déjà décodé** quand le but tombe ; sinon, c'est l'ovation synthétisée.
+     Les frappes des chants restent synthétisées (la frappe enregistrée mêle
+     tambour et claps, que trois motifs sur cinq séparent).
+
+     **Rien ne se télécharge** sous le calme, en « économie de données », ni
+     sur une page qui ne demande pas d'ambiance : le premier appel à
+     `ambiance(n ≥ 1)` ou à `rumeur()` lance le téléchargement — sans geste,
+     un `fetch` n'en demande pas —, le décodage attend le contexte du premier
+     toucher. Un fichier absent, ou qu'un navigateur refuse de décoder,
+     laisse la synthèse jouer pour toute la page, sans rien signaler : le son
+     ne doit jamais casser le jeu.
+
+     **Les noms portent une empreinte** (les huit premiers caractères du
+     SHA-1 du fichier) : ce qui est gardé ne change plus d'adresse, et le
+     serveur sert `/son` un an. Opus d'abord ; le repli (AAC pour la rumeur,
+     MP3 pour la clameur) pour un Safari qui ne décode pas l'Opus. */
+  const FICHIERS = {
+    rumeur: { opus: '/son/ambiance-tribune.84ff833c.ogg', repli: '/son/ambiance-tribune.70e5801e.m4a' },
+    clameur: { opus: '/son/clameur-but.3a391fd2.ogg', repli: '/son/clameur-but.c2a59d53.mp3' },
+  };
+  /* La boucle de la rumeur, en échantillons à 48 kHz : [marge 0,25 s |
+     boucle 12 s | marge 0,25 s], et le fondu de reprise (50 ms). Les marges
+     sont cycliques (la fin de la boucle, puis son début) : elles absorbent le
+     décalage d'un décodeur AAC qui ignore la liste d'éditions (1 024 à 2 112
+     échantillons), et la queue sert au fondu. */
+  const BOUCLE = { P: 12000, L: 576000, X: 2400 };
+  /* Le gain de la rumeur enregistrée par niveau, en décibels. Le fichier est
+     nivelé à −40,0 LUFS de sonie moyenne, celle de la rumeur synthétisée au
+     niveau 1 : il se joue au gain 1, **sans MIX_AMBIANCE**, et monte des
+     écarts que la synthèse tient entre ses niveaux (+4,9 au 2, +12,5 au but).
+     Mesuré dans A-ECOUTER.md : niveau 2, −34,0 LUFS sur 100 ms (plafond
+     −33) ; niveau 3, −27,5 de moyenne, crête −17,0 dBFS. Le banc le remesure
+     (« rumeur-enregistree-n »). Pas d'éclats de voix par-dessus : la foule
+     enregistrée crie d'elle-même, et des éclats feraient monter la sonie du
+     niveau 2, à un décibel de son plafond. */
+  const RUMEUR_DB = [null, 0, 4.9, 12.5];
+  const gainRumeur = (n) => (n > 0 ? 10 ** (RUMEUR_DB[n] / 20) : 0);
+  /* La clameur, sur le bus de l'ambiance comme l'ovation qu'elle remplace :
+     −16,4 LUFS sur 100 ms contre −16,5, crête −7,4 dBFS (le MP3 de repli,
+     un demi-décibel plus bas). Gain 1 : le banc la juge dans la fenêtre des
+     moments (« clameur »). */
+  const MIX_CLAMEUR = 1;
+  /** Le passage de la rumeur synthétisée à l'enregistrée, en secondes. */
+  const PASSAGE = { tau: 0.6, demontage: 3 };
+
+  /** Les formats que ce navigateur lira, Opus d'abord. */
+  function formats() {
+    let opus = '';
+    try { opus = document.createElement('audio').canPlayType('audio/ogg; codecs="opus"'); } catch { /* rien */ }
+    return opus ? ['opus', 'repli'] : ['repli'];
+  }
+  const sansDonnees = () => Boolean(navigator.connection?.saveData);
+  const recuperer = (url) => fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+
+  /* Les octets, téléchargés une fois par page : `nom` → Promise<[format,
+     octets] | null>. Le repli n'est téléchargé que si le premier manque :
+     un navigateur ne prend qu'un fichier. */
+  const octets = new Map();
+  function telecharger(nom) {
+    if (octets.has(nom)) return octets.get(nom);
+    if (calme() || sansDonnees() || typeof fetch !== 'function') return null;
+    const [premier, second] = formats();
+    const f = FICHIERS[nom];
+    const p = recuperer(f[premier]).then((o) => (o ? [premier, o]
+      : second ? recuperer(f[second]).then((r) => (r ? [second, r] : null)) : null));
+    octets.set(nom, p);
+    return p;
+  }
+  /** Les deux fichiers, si la page demande une tribune. */
+  function prefetch() {
+    if (voulu() < 1) return;
+    telecharger('rumeur');
+    telecharger('clameur');
+  }
+
+  /* Le décodage, par la forme à rappels : la seule que connaissent les
+     anciens Safari (`webkitAudioContext`). Une copie : `decodeAudioData`
+     détache le tampon qu'on lui donne, et un second contexte (le banc)
+     décode les mêmes octets. */
+  const decoder = (c, o) => new Promise((ok) => {
+    try {
+      const p = c.decodeAudioData(o.slice(0), ok, () => ok(null));
+      p?.catch?.(() => ok(null));
+    } catch { ok(null); }
+  });
+  /** Décode `nom` pour ce contexte : l'Opus refusé (un Safari qui l'annonce
+      sans le décoder), on tente le repli. */
+  async function decoderPour(c, nom, preparer) {
+    const t = await telecharger(nom);
+    if (!t) return null;
+    const [format, o] = t;
+    let b = await decoder(c, o);
+    if (!b && format === 'opus') {
+      const r = await recuperer(FICHIERS[nom].repli);
+      b = r ? await decoder(c, r) : null;
+    }
+    return b ? preparer(b) : null;
+  }
+
+  /* Ce qui est décodé, par contexte : contexte → nom → { fini, valeur,
+     promesse }. Le tampon reste tant que le contexte vit : au retour du
+     calme ou de l'onglet, la rumeur repart sans rien retélécharger ni
+     redécoder. */
+  const decodes = new WeakMap();
+  const PREPARER = { rumeur: (b) => preparerBoucle(b), clameur: (b) => b };
+  function charger(c, nom) {
+    let m = decodes.get(c);
+    if (!m) { m = new Map(); decodes.set(c, m); }
+    if (!m.has(nom)) {
+      if (!telecharger(nom)) return null;
+      const e = { fini: false, valeur: null, promesse: null };
+      e.promesse = decoderPour(c, nom, PREPARER[nom])
+        .catch(() => null)
+        .then((v) => { e.valeur = v; e.fini = true; return v; });
+      m.set(nom, e);
+    }
+    return m.get(nom);
+  }
+  /** Le son décodé pour ce contexte, s'il l'est déjà ; rien sinon. */
+  const pret = (c, nom) => decodes.get(c)?.get(nom)?.valeur ?? null;
+
+  /* La boucle : le fondu de reprise posé **dans le tampon décodé**, puis
+     joué entre `loopStart` et `loopEnd`. Le fichier se décode à la fréquence
+     du contexte (44,1 kHz sur bien des téléphones) : les bornes se
+     recalculent et s'arrondissent à l'échantillon. Les X premiers
+     échantillons de la boucle sont fondus avec ce qui suit sa fin, dans la
+     marge de queue, que le fondu ne touche pas.
+
+     Trois interdits, chiffrés dans A-ECOUTER.md : jamais `loop` sans
+     `loopStart`/`loopEnd` (un clic toutes les 12,5 s, la plus forte fenêtre
+     du tour) ; jamais de boucle sans le fondu ; jamais les deux méthodes
+     mêlées (un tampon fondu joué avec loopStart à 0,25 s : un clic, et une
+     boucle de 11,75 s). */
+  function preparerBoucle(t) {
+    const k = t.sampleRate / 48000;
+    const p = Math.round(BOUCLE.P * k), l = Math.round(BOUCLE.L * k), x = Math.round(BOUCLE.X * k);
+    if (t.length < p + l + x) return null;      // un fichier tronqué : la synthèse reste
+    for (let ch = 0; ch < t.numberOfChannels; ch++) {
+      const d = t.getChannelData(ch);
+      for (let i = 0; i < x; i++) {
+        const w = 0.5 - 0.5 * Math.cos(Math.PI * (i + 0.5) / x);   // w + (1 − w) = 1
+        d[p + i] = d[p + i] * w + d[p + l + i] * (1 - w);
+      }
+    }
+    return { tampon: t, debut: p / t.sampleRate, fin: (p + l) / t.sampleRate };
+  }
+
+  /** Le lit enregistré : une source en boucle, le gain du niveau, puis
+      l'échelle (la mi-temps, le vestiaire), sur le bus de l'ambiance. */
+  function construireLitEnregistre(c, dest, r, echelle = 1) {
+    const sortie = c.createGain();
+    sortie.gain.value = echelle;
+    sortie.connect(dest);
+    const niveau = c.createGain();
+    niveau.gain.value = 0;
+    niveau.connect(sortie);
+    const s = c.createBufferSource();
+    s.buffer = r.tampon;
+    s.loop = true;
+    s.loopStart = r.debut;
+    s.loopEnd = r.fin;
+    s.connect(niveau);
+    // Un départ au hasard dans la boucle : chaque visite n'entend pas la même seconde.
+    s.start(c.currentTime, r.debut + alea() * (r.fin - r.debut));
+    return { enregistre: true, mix: 1, sortie, niveau, sources: [s] };
+  }
+
+  /** La clameur du but, à la place de l'ovation : une source, lancée par
+      « lancer » pour que le calme et l'onglet caché l'arrêtent. */
+  function clameur(c, ch, b, t) {
+    const g = c.createGain();
+    g.gain.value = MIX_CLAMEUR;
+    g.connect(ch.bus.ambiance);
+    const s = c.createBufferSource();
+    s.buffer = b;
+    s.connect(g);
+    lancer(c, s, t);
+  }
+
   /** Le graphe de la rumeur, éteint (tous ses gains à zéro). `echelle` : voir
       plus haut. */
   function construireLit(c, dest, echelle = 1) {
@@ -1121,7 +1320,7 @@
     s2.start(debut, alea() * r2.duration);
     o1.start(debut);
     o2.start(debut);
-    return { sortie, gGrave, gVoix, gClair, bpVoix, pVoix, pGrave, eclats: entreeEclats,
+    return { sortie, mix: MIX_AMBIANCE, gGrave, gVoix, gClair, bpVoix, pVoix, pGrave, eclats: entreeEclats,
       sources: [s1, s2, o1, o2] };
   }
 
@@ -1129,6 +1328,8 @@
   function reglerLit(lit, n, t, tau) {
     const N = NIVEAUX_AMBIANCE[n];
     const poser = (p, v) => (tau > 0 ? p.setTargetAtTime(v, t, tau) : p.setValueAtTime(v, t));
+    // L'enregistrée n'a qu'un gain : la foule respire et crie d'elle-même.
+    if (lit.enregistre) { poser(lit.niveau.gain, gainRumeur(n)); return; }
     poser(lit.gGrave.gain, N.grave);
     poser(lit.gVoix.gain, N.voix);
     poser(lit.gClair.gain, N.clair);
@@ -1159,7 +1360,7 @@
      de même à cinq secondes. Désormais chacun garde son heure de fin, et la
      tribune joue le plus fort de ceux qui courent encore. */
   const amb = { base: 0, passes: [], joue: 0, lit: null, minuterie: 0, eclats: 0, demontage: 0,
-    echelle: 1, posee: 1, phase: null, fondu: 0 };
+    echelle: 1, posee: 1, phase: null, fondu: 0, ancien: null, passage: 0 };
   /** Les passagers encore en cours ; les autres sont oubliés. */
   function elaguer() {
     const t = performance.now();
@@ -1179,10 +1380,20 @@
     amb.minuterie = setTimeout(() => { amb.minuterie = 0; armer(); appliquer(); }, Math.max(0, proche) + 5);
   }
 
+  /* Le lit synthétisé que l'enregistré vient de relayer, et qui s'éteint en
+     fondu (voir « passer ») : démonté à son heure, ou tout de suite si tout
+     se tait avant. */
+  function oublierAncien() {
+    clearTimeout(amb.passage);
+    amb.passage = 0;
+    if (amb.ancien) { demonterLit(amb.ancien); amb.ancien = null; }
+  }
+
   function eteindreLit(tau) {
     clearTimeout(amb.eclats);
     amb.eclats = 0;
     amb.joue = 0;
+    if (!(tau > 0)) oublierAncien();
     const lit = amb.lit;
     if (!lit) return;
     if (tau > 0 && ctx?.state === 'running') {
@@ -1214,9 +1425,17 @@
     if (n === 0) { if (amb.joue !== 0) eteindreLit(fondu || TAU.descend); return; }
     clearTimeout(amb.demontage);
     amb.demontage = 0;
+    // La clameur se décode avec la rumeur : elle doit être prête avant le but.
+    charger(ctx, 'clameur');
     if (!amb.lit) {
-      amb.lit = construireLit(ctx, chaine.bus.ambiance, amb.echelle);
+      /* L'enregistrée si elle est déjà décodée pour ce contexte ; sinon la
+         synthèse, et l'enregistrée prendra le relais à son arrivée. */
+      const e = charger(ctx, 'rumeur');
+      const r = pret(ctx, 'rumeur');
+      amb.lit = r ? construireLitEnregistre(ctx, chaine.bus.ambiance, r, amb.echelle)
+        : construireLit(ctx, chaine.bus.ambiance, amb.echelle);
       amb.posee = amb.echelle;
+      if (!r && e && !e.fini) e.promesse.then(() => passer(e));
     }
     if (n !== amb.joue) {
       const tau = fondu || (n === 3 ? TAU.but : n > amb.joue ? TAU.monte : TAU.descend);
@@ -1233,17 +1452,42 @@
        son d'un coup). Posée seulement quand elle change. */
     if (amb.posee !== amb.echelle) {
       const tau = fondu || (amb.echelle > amb.posee ? TAU.monte : TAU.creux);
-      amb.lit.sortie.gain.setTargetAtTime(MIX_AMBIANCE * amb.echelle, ctx.currentTime, tau);
+      amb.lit.sortie.gain.setTargetAtTime(amb.lit.mix * amb.echelle, ctx.currentTime, tau);
       amb.posee = amb.echelle;
     }
     planifierEclats();
+  }
+
+  /**
+   * L'enregistrée arrive : elle relaie la synthèse en fondu enchaîné. Les
+   * deux ont la même sonie moyenne au niveau 1 : on n'entend changer que le
+   * grain. Rien ne part si la rumeur ne peut plus jouer (le calme tombé
+   * pendant le décodage, l'onglet caché, la tribune vidée, un autre
+   * contexte) : le tampon reste, et servira au prochain lit.
+   */
+  function passer(e) {
+    const r = e.valeur;
+    const lit = amb.lit;
+    if (!r || !lit || lit.enregistre || amb.joue === 0 || !entendu() || decodes.get(ctx)?.get('rumeur') !== e) return;
+    try {
+      const t = ctx.currentTime;
+      const neuf = construireLitEnregistre(ctx, chaine.bus.ambiance, r, amb.posee);
+      reglerLit(neuf, amb.joue, t, PASSAGE.tau);
+      reglerLit(lit, 0, t, PASSAGE.tau);
+      clearTimeout(amb.eclats);
+      amb.eclats = 0;
+      oublierAncien();
+      amb.ancien = lit;
+      amb.lit = neuf;
+      amb.passage = setTimeout(oublierAncien, PASSAGE.demontage * 1000);
+    } catch { /* la synthèse continue */ }
   }
 
   /* Les éclats de voix : rares à la rumeur (toutes les neuf secondes en
      moyenne), fréquents au but. Une minuterie, pas une boucle d'images :
      elle dort entre deux cris, et l'onglet caché l'arrête. */
   function planifierEclats() {
-    if (amb.eclats) return;
+    if (amb.eclats || amb.lit?.enregistre) return;
     const N = NIVEAUX_AMBIANCE[amb.joue];
     if (!amb.lit || !N.eclats) return;
     amb.eclats = setTimeout(() => {
@@ -1298,6 +1542,7 @@
     } else {
       amb.base = n;
     }
+    prefetch();
     if (n === 3) jouer('ovation');
     else ouvrir();
     appliquer();
@@ -1404,6 +1649,7 @@
     const f = Object.prototype.hasOwnProperty.call(RUMEUR, moment) ? RUMEUR[moment] : null;
     if (!f) return voulu();
     f(o ?? {});
+    prefetch();
     if (!SANS_APPLIQUER.has(moment)) {
       ouvrir();
       appliquer();
@@ -1895,6 +2141,17 @@
     const c = new OAC(2, avant + longueur, frequence);
     const ch = construireChaine(c, 1);
     const t = avant / frequence + DEBUT_RENDU;
+    /* « enregistre » : la rumeur et la clameur jouées depuis leurs fichiers,
+       décodés dans ce contexte comme le jeu les décode dans le sien. Un
+       fichier manquant rend `null` : le banc doit le dire, pas mesurer la
+       synthèse à sa place. */
+    let fichiers = null;
+    if (quoi.enregistre) {
+      const [rumeurE, clameurE] = await Promise.all([
+        decoderPour(c, 'rumeur', preparerBoucle), decoderPour(c, 'clameur', (b) => b)]);
+      if (!rumeurE || !clameurE) return null;
+      fichiers = { rumeur: rumeurE, clameur: clameurE };
+    }
     if (Number.isFinite(quoi.sinus)) {
       const o = c.createOscillator();
       o.frequency.value = 997;
@@ -1904,7 +2161,7 @@
       o.start(t);
     }
     for (const nom of [quoi.son, ...(quoi.sons ?? [])].filter(Boolean)) {
-      if (existe(nom)) jouerDans(c, ch, nom, quoi.options, t);
+      if (existe(nom)) jouerDans(c, ch, nom, quoi.options, t, fichiers);
     }
     /* « suite » : des sons de la banque posés chacun à son instant, en
        millisecondes depuis le début du rendu (lot 6). Le pavé fait un tic à
@@ -1922,12 +2179,17 @@
       /* « echelle » : la rumeur creusée ou à demi pleine (la mi-temps, le
          vestiaire), pour mesurer que la retombée s'entend. */
       const echelle = quoi.echelle == null ? 1 : borner(Number(quoi.echelle) || 0, 0, 1);
-      const lit = construireLit(c, ch.bus.ambiance, echelle);
-      reglerLit(lit, n, 0, 0);
-      // Les éclats, au rythme du niveau, comme le jeu les tire.
-      const pas = NIVEAUX_AMBIANCE[n].eclats / 1000;
-      for (let x = t + pas * (0.5 + alea()); x < t + duree - 0.72; x += pas * (0.5 + alea())) {
-        eclats(c, lit.eclats, x, 1 + Math.floor(alea() * (n >= 2 ? 3 : 1.6)), NIVEAUX_AMBIANCE[n].eclat);
+      if (fichiers) {
+        // L'enregistrée : son gain de niveau, et ni respiration ni éclats.
+        reglerLit(construireLitEnregistre(c, ch.bus.ambiance, fichiers.rumeur, echelle), n, 0, 0);
+      } else {
+        const lit = construireLit(c, ch.bus.ambiance, echelle);
+        reglerLit(lit, n, 0, 0);
+        // Les éclats, au rythme du niveau, comme le jeu les tire.
+        const pas = NIVEAUX_AMBIANCE[n].eclats / 1000;
+        for (let x = t + pas * (0.5 + alea()); x < t + duree - 0.72; x += pas * (0.5 + alea())) {
+          eclats(c, lit.eclats, x, 1 + Math.floor(alea() * (n >= 2 ? 3 : 1.6)), NIVEAUX_AMBIANCE[n].eclat);
+        }
       }
     }
     if (quoi.chant) {
@@ -1956,7 +2218,11 @@
     geste: vuGeste,
     /** Les sons ponctuels qui sonnent encore (rumeur et chants à part). */
     enCours: enCours.size,
-    ambiance: { base: amb.base, passager: passager(), voulu: voulu(), joue: amb.lit ? amb.joue : 0 },
+    ambiance: { base: amb.base, passager: passager(), voulu: voulu(), joue: amb.lit ? amb.joue : 0,
+      /** La rumeur qui joue : « enregistree », « synthese », ou rien. */
+      source: amb.lit ? (amb.lit.enregistre ? 'enregistree' : 'synthese') : null },
+    /** Les sons enregistrés décodés pour le contexte vivant. */
+    fichiers: { rumeur: Boolean(ctx && pret(ctx, 'rumeur')), clameur: Boolean(ctx && pret(ctx, 'clameur')) },
     /** La phase de « rumeur » et l'échelle voulue (1 : la tribune pleine). */
     rumeur: { phase: amb.phase, echelle: amb.echelle },
     chant: Boolean(chantEnCours),
@@ -2003,6 +2269,8 @@
       /* Les deux échelles de la rumeur (voir « l'échelle de la rumeur ») :
          la mi-temps et le vestiaire vide. */
       echelles: { creux: CREUX, vestiaire: VESTIAIRE_VIDE },
+      /** Le gain de la clameur enregistrée (voir « la tribune enregistrée »). */
+      clameur: MIX_CLAMEUR,
       creteSeule: CRETE_SEULE,
       creteMax: CRETE_MAX,
       limiteur: { ...LIMITEUR },
