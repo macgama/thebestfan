@@ -814,7 +814,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 /* Les aides communes viennent de /cartes.js — l'état, le catalogue, le dessin
    d'une carte. On les réalias ici pour que le code du kiosque soit exactement
    celui qu'il était quand il vivait dans la page des Fanzzy. */
-const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, reserveHTML, save, seeded, src, uid } = window.TBF_CARTES;
+const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, LIEUX, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, reserveHTML, save, seeded, src, uid } = window.TBF_CARTES;
 
 /** Le jeton des écharpes : le même dessin dans la réserve, sur les prix, les
     tickets et ce qui vole vers le compteur. Une monnaie dessinée de deux
@@ -1903,13 +1903,14 @@ let montantsSurs = false;
    compteur — voir `crediterDoublons`, qui le consomme. */
 let doublonsAVerser = false;
 const rapporte = (c) => c?.type === 'echarpes' || c?.type === 'scarves'
-  || ((c?.type === 'fanzzy' || c?.type === 'stuff') && c.new === false);
+  || ((c?.type === 'fanzzy' || c?.type === 'stuff' || c?.type === 'lieu') && c.new === false);
 function montantDe(c) {
   if (c?.type === 'echarpes' || c?.type === 'scarves') return Number(c.montant ?? c.amount) || 0;
   if (c?.new !== false) return 0;
   if (c.type === 'fanzzy') return Number(SCARVES[BY_ID.get(c.id)?.rar]) || 0;
   // Le serveur rend une écharpe pour une pièce dont la rareté lui échappe.
   if (c.type === 'stuff') return Number(SCARVES[STUFFS.get(c.id)?.rar]) || 1;
+  if (c.type === 'lieu') return Number(SCARVES[LIEUX?.get(c.id)?.rar]) || 1;
   return 0;
 }
 

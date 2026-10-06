@@ -99,4 +99,7 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      (souvenirs.sql), et il prolonge l'upsert des chants que quotidien.sql a
      élargi — les suites du Virage le posent par-dessus celui-ci. Après les
      deux, donc ; et rien n'en dépend : il prend le dernier rang à son tour. */
-  'arenes'];
+  'arenes',
+  /* La collection de stades : une table sur `users` (auth.sql) et une colonne
+     sur `user_wallet` (souvenirs.sql). Rien n'en dépend : dernier rang. */
+  'collection-stades'];

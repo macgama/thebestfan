@@ -61,6 +61,7 @@ import { JSDOM, VirtualConsole } from 'jsdom';
 import { DEX, TYPES, RAR, SCARVES, EVO_COST, RATES, SETS } from '../src/shared/fanzzy/dex.js';
 import { STUFF, SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
+import { STADES, STADE_DEFAUT } from '../src/shared/stades.js';
 import { ETATS_DESSINES, ETAT_DESSIN } from '../src/shared/fanzzy/rendus.js';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -140,6 +141,11 @@ const biblio = (() => {
     items: ACTIONS.map((a) => ({ id: a.id, nom: a.nom, rar: a.rar,
       possede: a.rar === 'commune' })) };
   T.actions.gagnes = T.actions.items.filter((a) => a.possede).length;
+  /* Les lieux : le départ, et un second tiré. */
+  T.lieux = { possibles: STADES.length,
+    items: STADES.map((l, i) => ({ id: l.id, nom: l.nom, rar: l.rar,
+      possede: l.id === STADE_DEFAUT || i === 1 })) };
+  T.lieux.gagnes = T.lieux.items.filter((l) => l.possede).length;
   const total = Object.values(T).reduce((s, t) => ({
     gagnes: s.gagnes + t.gagnes, possibles: s.possibles + t.possibles }),
   { gagnes: 0, possibles: 0 });
@@ -170,6 +176,7 @@ const biblio = (() => {
 const dexPayload = {
   dex: dexServi, types: TYPES, rar: RAR, scarves: SCARVES, evoCost: EVO_COST,
   rates: RATES, stuff: STUFF, actions: ACTIONS, tenues,
+  lieux: STADES.map(({ id, nom, rar, texte, effet }) => ({ id, nom, rar, texte, effet })),
   sets: SETS.map((s) => ({ ...s, ouverte: true, saison: 1 })),
   saison: { n: 1 }, aCollectionner: persos.length,
 };
@@ -246,7 +253,7 @@ const reponse = (corps, ok = true) => Promise.resolve({
   ok, status: ok ? 200 : 404, json: async () => structuredClone(corps) });
 
 /** Ce que la page a envoyé au serveur, par route : le corps de chaque POST. */
-const postes = { vu: [], palier: [] };
+const postes = { vu: [], palier: [], lieu: [] };
 
 const dom = new JSDOM(html, {
   url: 'http://localhost/collection',
@@ -262,6 +269,10 @@ const dom = new JSDOM(html, {
       const corps = () => { try { return JSON.parse(o.body ?? 'null'); } catch { return null; } };
       if (s.includes('/api/fanzzy/vu')) { postes.vu.push(corps()); return reponse({ restantes: 0 }); }
       if (s.includes('/api/fanzzy/palier')) { postes.palier.push(corps()); return reponse(recuperation()); }
+      if (s.includes('/api/fanzzy/lieu-accueil')) {
+        postes.lieu.push(corps());
+        return reponse({ lieuAccueil: corps()?.id ?? null });
+      }
       if (s.includes('/api/fanzzy/state')) return reponse(etatServi);
       if (s.includes('/bibliotheque')) return reponse(biblio);
       if (s.includes('/api/fanzzy/dex')) return reponse(dexPayload);
@@ -429,15 +440,16 @@ async function revenirAccueil() {
 /* ======================================================= 1. l'accueil */
 
 console.log('\n  l’accueil : le collectionneur et ses rayons');
-await jusqua(() => D.querySelectorAll('.tbf-rayon[data-vue]').length >= 5);
+await jusqua(() => D.querySelectorAll('.tbf-rayon[data-vue]').length >= 6);
 /* La clé de la sous-vue, et celle du type dans la bibliothèque : elles ne
    s'écrivent pas pareil pour l'équipement. */
-const RAYONS = { fanzzy: 'fanzzy', etats: 'etats', tenues: 'tenues', equipement: 'stuff', actions: 'actions' };
+const RAYONS = { fanzzy: 'fanzzy', etats: 'etats', tenues: 'tenues', equipement: 'stuff', actions: 'actions',
+  lieux: 'lieux' };
 {
   const rayons = [...D.querySelectorAll('#accueil .tbf-rayon[data-vue]')];
-  check('les cinq rayons sont rangés, dans l’ordre',
+  check('les six rayons sont rangés, dans l’ordre',
     JSON.stringify(rayons.map((r) => r.dataset.vue)) === JSON.stringify(Object.keys(RAYONS)));
-  check('chacun est un bouton', rayons.length === 5 && rayons.every((r) => r.tagName === 'BUTTON'));
+  check('chacun est un bouton', rayons.length === 6 && rayons.every((r) => r.tagName === 'BUTTON'));
   const comptes = Object.entries(RAYONS).map(([vue, type]) => {
     const r = rayons.find((x) => x.dataset.vue === vue);
     const t = biblio.types[type];
@@ -942,6 +954,45 @@ await ouvrirRayon('actions');
   check('Échap ferme', !vitrineOuverte());
 }
 
+/* ======================================================= 9 bis. les stades */
+
+console.log('\n  les stades');
+await revenirAccueil();
+await ouvrirRayon('lieux');
+{
+  const cases = [...D.querySelectorAll('#vue [data-liste="lieux"][data-i]')];
+  check(`chaque stade a sa case (${cases.length})`, cases.length === STADES.length);
+  const miens = new Set(biblio.types.lieux.items.filter((l) => l.possede).map((l) => l.id));
+  check('le stade de départ est à soi', miens.has(STADE_DEFAUT)
+    && !cases.find((c) => c.dataset.open === STADE_DEFAUT)?.querySelector('.fz-verrou'));
+  check('un stade qui manque est sous son cadenas',
+    cases.filter((c) => !miens.has(c.dataset.open)).every((c) => c.querySelector('.fz.fz-verrou .cadenas')));
+  check('chaque case montre le dessin du stade',
+    cases.every((c) => c.querySelector(`img[src*="/img/stade/${c.dataset.open}-mini"]`)));
+  const autre = STADES[1];
+  clic(cases.find((c) => c.dataset.open === autre.id));
+  await jusqua(vitrineOuverte);
+  check('un stade s’ouvre en carte, avec son effet écrit',
+    Boolean(D.querySelector('#vitr .fz')) && vitrine().includes(autre.effet.slice(0, 20)));
+  check('la vitrine dit qu’il ne fait pas jouer plus souvent', /ne t’y fait pas jouer plus souvent/.test(vitrine()));
+  const poser = D.querySelector('#vitr [data-lieu-accueil]');
+  check('un stade à soi propose d’habiller l’accueil', /EN DÉCOR DE L’ACCUEIL/.test(poser?.textContent ?? ''));
+  clic(poser);
+  await jusqua(() => postes.lieu.length === 1);
+  check('le choix part au serveur', postes.lieu[0]?.id === autre.id);
+  await jusqua(() => /RETIRER DE L’ACCUEIL/.test(vitrine()));
+  check('et la vitrine propose ensuite de le retirer', /RETIRER DE L’ACCUEIL/.test(vitrine()));
+  clic(D.querySelector('#vitr [data-lieu-accueil]'));
+  await jusqua(() => postes.lieu.length === 2);
+  check('retirer envoie « aucun »', postes.lieu[1]?.id === null);
+  await fermerVitrine();
+  clic(cases.find((c) => !miens.has(c.dataset.open)));
+  await jusqua(vitrineOuverte);
+  check('un stade qui manque mène au kiosque, sans décor à poser',
+    Boolean(D.querySelector('#vitr a[href="/boosters"]')) && !D.querySelector('#vitr [data-lieu-accueil]'));
+  await fermerVitrine();
+}
+
 /* ==================================================== 10. tout est atteignable */
 
 console.log('\n  rien ne lève, sur aucune sorte');
@@ -1013,8 +1064,12 @@ await revenirAccueil();
 await ouvrirRayon('actions');
 armer();
 await toutOuvrir('actions', [...D.querySelectorAll('#vue [data-liste="actions"][data-i]')]);
-check(`les ${ouvertes} cartes des trois sous-vues se dessinent toutes (${dessinees})`,
-  dessinees === ouvertes && ouvertes === dexServi.length + STUFF.length + ACTIONS.length);
+await revenirAccueil();
+await ouvrirRayon('lieux');
+armer();
+await toutOuvrir('lieux', [...D.querySelectorAll('#vue [data-liste="lieux"][data-i]')]);
+check(`les ${ouvertes} cartes des quatre sous-vues se dessinent toutes (${dessinees})`,
+  dessinees === ouvertes && ouvertes === dexServi.length + STUFF.length + ACTIONS.length + STADES.length);
 
 console.log(fautes ? `\n${fautes} faute(s) — ne pas livrer en l’état.`
   : '\nLa collection s’ouvre, se feuillette et dit où trouver ce qui manque.');

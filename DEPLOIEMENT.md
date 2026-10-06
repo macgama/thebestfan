@@ -388,7 +388,7 @@ que `raretes` les a rangées.
   n'est pas frappée). Le workflow GitHub applique le schéma avant de
   redémarrer : rien de plus à faire par ce chemin.
 
-Contrôle : `SHOW TABLES;` doit en lister **47**.
+Contrôle : `SHOW TABLES;` doit en lister **48**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
