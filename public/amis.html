@@ -218,12 +218,23 @@ h2{margin:22px 2px 9px}
    ses doubles au calme sont ceux de la feuille. `hidden` doit gagner sur son
    `display:flex`. */
 .tbf-toast[hidden]{display:none}
+
+/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
+   règle commune des pages larges : la colonne de lecture s'ouvre, et les
+   demandes et les suggestions se rangent en colonnes de la largeur d’un
+   téléphone (les amis gardent leur tribune de bustes). Ce qu’une carte
+   déplie (inviter, retirer) prend toute la rangée sous elle. */
+@media (min-width:1180px) and (min-height:560px){
+  .colonne{max-width:none}
+  .gens:not(.gens--amis){grid-template-columns:repeat(auto-fill,minmax(440px,1fr));column-gap:14px}
+  .gens>.dessous{grid-column:1/-1}
+}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0A0D11">
 </head>
-<body>
+<body class="tbf-large">
 <main id="app"><div class="colonne">
   <p class="tbf-sous">Ceux qui poussent avec toi</p>
 

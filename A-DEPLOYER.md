@@ -21,6 +21,39 @@ le pronostic ne paraît pas, et le démarrage nomme le fichier.
 
 ---
 
+**Toutes les pages en largeur sur PC** (branche `claude/ecran-large-pkbkwj`,
+6 octobre 2026, demandé par Gaël). Des pages seules : ni schéma ni
+redémarrage. Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/ui.css` et quinze pages (`aide`, `amis`, `kop`, `classement`,
+  `carnet`, `collection`, `equipes`, `teletext`, `aujourdhui`, `abonnement`,
+  `compte`, `deck`, `boosters`, `fanzzy`, `fanzzy-fiche`) : au-delà de
+  1 180 px, chacune prend la colonne large entre les tuiles, ses listes en
+  colonnes. Sur téléphone et tablette, rien ne change. Contrôlé par
+  `npm run large:ui` (neuf pages) et par les suites des six autres.
+- Sur grand écran, la fiche d'un match (`/matchs`) devient une page entre
+  les tuiles : l'affiche à gauche, le fil à droite, la flèche de la barre
+  la referme. Partout, une coupe sans classement (`/teletext?ligue=…`)
+  s'ouvre sur ses résultats, et non plus sur « Cette donnée n'existe pas ».
+  Contrôlé par `npm run matchs:ui` et `npm run competitions:ui`.
+
+---
+
+**Le Fanzzy parle** (branche `claude/dialogues-fanzzy-vgfrke`, 6 octobre
+2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+**Pages seules** (`public/index.html`, `public/fanzzy-repliques.js`) : ni
+schéma ni redémarrage.
+
+- Dans sa bulle, le Fanzzy de l'accueil dit bonjour selon l'heure, raconte le
+  dernier match (le nul compris), fête un retour, a sa réplique à lui quand on
+  le touche, en redemande au troisième toucher et boude au sixième. Une
+  réplique par Fanzzy de LA REPRISE, une voix par famille, et celle de tout le
+  monde. La phrase du hub (match, boosters) passe toujours d'abord.
+- Contrôlé par `npm run repliques:test` (suite neuve, chaque ligne : quatre
+  mots, aucun chiffre) et `npm run accueil:ui` (14 contrôles neufs).
+
+---
+
 **La collection de stades** (branche `claude/collection-stades-nsq24k`,
 6 octobre 2026, option « album + décor d'accueil » choisie par Gaël). Il se
 dépose avec ce qui est en dessous, ou seul.
