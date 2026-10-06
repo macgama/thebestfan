@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**Cent pièces d'équipement** (branche `claude/cent-objets-lj2o13`, 6 octobre
+2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+**Serveur**, sans schéma : redémarrer, hors d'un match en direct.
+
+- `src/shared/fanzzy/inventaire.js` : 51 pièces neuves, dix par série qui
+  attend sa saison (VIP, Gastronomie de comptoir, Galères de déplacement,
+  Phénomènes météo, Héros du canapé) et une centième. Toutes **fermées**
+  (`publie: false`) : le redémarrage les sème fermées dans `contenus`, rien
+  ne change pour les joueurs. On les ouvre avec la saison de leur série, ou
+  dans /admin, onglet CONTENUS. Liste : `/mnt/project-files/equipement/cent-pieces.md`.
+- La boutique vendait aussi les pièces fermées : elle ne vend plus que celles
+  qui sont ouvertes (`src/server/boutique/index.js`). Sans la table
+  `contenus`, une fiche `publie: false` reste fermée (`contenus/index.js`).
+- Images à faire dans Artlist : `/mnt/project-files/equipement/equipement-images-artlist.md`.
+  Contrôlé par `npm run contenus:smoke`, `catalogue:test` et `pages:test`.
+
+---
+
 **Les compétitions et les calendriers à jour tout seuls** (branche
 `claude/rythme-foot-uwpqfu`, fusionnée dans `main` le 6 octobre 2026).
 Serveur seul, **aucun schéma ni réglage**. Un redémarrage, hors d'un match en

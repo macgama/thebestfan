@@ -545,19 +545,31 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
      Le format de secours est le PNG et non le JPEG : ces objets sont détourés
      et ont une transparence à garder. Chercher un `.jpg` ici passerait au vert
      sur des fichiers qui n'existent pas. */
+  /* Une pièce **fermée dans le code** (`publie: false`, neuve, qui attend sa
+     saison) peut attendre son dessin : personne ne la tire ni ne l'achète.
+     Elle est nommée, sans rougir — c'est la liste que Gaël dessine. Ouverte,
+     elle rentre dans la règle commune. */
   const pieces = STUFF.map((s) => s.id);
+  const fermees = new Set(STUFF.filter((s) => s.publie === false).map((s) => s.id));
   const nues = [];
+  const enAttente = new Set();
   for (const id of pieces) {
     for (const ext of ['.avif', '.webp', '.png']) {
       const f = path.join(DOSSIER, 'img', 'stuff', id + ext);
-      try { await readFile(f); } catch { nues.push(id + ext); }
+      try { await readFile(f); } catch {
+        if (fermees.has(id)) enAttente.add(id); else nues.push(id + ext);
+      }
     }
+  }
+  if (enAttente.size) {
+    ok('stuff-art.js', `${enAttente.size} pièce(s) fermée(s) attendent leur dessin`
+      + ' (scripts/stuff-images.mjs --invites)');
   }
   if (nues.length) {
     ko('stuff-art.js', `pièces sans dessin : ${nues.join(', ')}`
       + ' — les invites sont dans scripts/stuff-images.mjs --invites');
   } else if (pieces.length) {
-    ok('stuff-art.js', `${pieces.length} pièce(s) d’équipement détourées en trois formats`);
+    ok('stuff-art.js', `${pieces.length - enAttente.size} pièce(s) d’équipement détourées en trois formats`);
   }
 
   /* Les dessins des chants, même raison et même forme que les cartes d'action.
