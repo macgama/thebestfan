@@ -19,6 +19,25 @@ seuils**. Les seuils ne changent pas tant qu'on n'a pas cliqué.
 
 ---
 
+**La tenue d'en face au duel** (branche `claude/tenue-duel-4bbx7e`,
+6 octobre 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou
+seul.
+
+- `src/server/deck/index.js`, `src/server/nvn/engine.js`,
+  `src/server/nvn/index.js` : la vue du duel dit, pour chaque joueur, l'âge
+  de son Fanzzy en tribune et la tenue qu'il lui a mise à cet âge ; l'affiche
+  dit la tenue de chacun. Les bots d'entraînement restent en tenue de base.
+- `public/duel-nvn.html` : le Fanzzy d'en face paraît dans sa tenue, dans
+  l'arène et sur l'affiche, et la Relève le fait grandir à l'écran (avant,
+  l'arène gardait le premier âge, des deux côtés). Contrôlé par
+  `npm run nvn:smoke` et `npm run nvn:ui` (contrôles neufs).
+
+**Aucun schéma ni réglage.** Un redémarrage, **hors d'un match en direct**
+(le serveur change). La page seule, sans redémarrage, ne casse rien : elle
+garde alors la tenue de base pour celui d'en face.
+
+---
+
 **Le personnage de l'accueil au milieu, sur téléphone** (branche
 `claude/project-thread-iatg2m`, 6 octobre 2026, choisi par Gaël sur la
 capture avant/après). Il se dépose avec ce qui est en dessous, ou seul.
