@@ -647,8 +647,21 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 /* Les calques de gestes prennent toute la hauteur de la scène. Sans ça, une
    hauteur en pourcentage sur la pile se résout contre un parent de hauteur
    automatique — c'est-à-dire contre rien — et retombe silencieusement sur
-   `auto`. La règle ne casse pas : elle ne s'applique simplement pas. */
-.flotte,.bascule,.salut{height:100%;display:grid;place-items:end center}
+   `auto`. La règle ne casse pas : elle ne s'applique simplement pas.
+
+   **Et toute sa largeur.** La pile tire sa largeur de sa hauteur
+   (`aspect-ratio`) ; ajustés à leur contenu, ces calques demandaient
+   d'abord sa largeur à la pile, avant que sa hauteur en pourcentage ne soit
+   connue. Chrome s'en tire ; Firefox (140 ESR, encore en octobre 2026)
+   répondait zéro, et le personnage disparaissait de l'accueil — l'ombre au
+   sol et le décor restaient seuls. Pleine largeur, la pile se centre dans
+   une case connue. Les gestes tournent toujours autour du milieu des
+   pieds (`transform-origin`), et le toucher se lit sur toute la scène.
+   Mesuré : rien ne bouge dans Chrome, et Firefox dessine le même personnage
+   sur un écran d'ordinateur. Sur un téléphone étroit, il le dessine encore
+   plus petit, borné par sa colonne là où Chrome le laisse passer sous les
+   rails. */
+.flotte,.bascule,.salut{width:100%;height:100%;display:grid;place-items:end center}
 /* Devant la bâche du club et la fumée : elles sont des calques positionnés,
    et un calque positionné passe devant ce qui ne l'est pas.
 
