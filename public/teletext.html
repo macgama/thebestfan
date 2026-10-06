@@ -32,6 +32,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Le sous-titre dit ce que la liste montre — « Suisse · saison 2026 ». Il
    était à neuf pixels et 50 %, espacé de près d'un quart de cadratin. */
 .top h1 small{display:block;font-size:11px;letter-spacing:.1em;opacity:.88;margin-top:3px;font-family:var(--ui)}
+/* Le choix de la saison, dans le sous-titre : il se lit comme le texte qu'il
+   remplace, souligné pour dire qu'il se touche. */
+#tsaison{font:inherit;letter-spacing:inherit;color:inherit;background:transparent;border:0;
+  border-bottom:1px dashed currentColor;padding:0 2px;cursor:pointer;max-width:100%}
+#tsaison option{color:#111;background:#fff}
 /* **Un lien de quinze pixels de haut se rate.** Celui-ci ouvre les matchs du
    jour depuis le kiosque : c'est la sortie la plus empruntée de la page, et
    c'était la plus petite. On lui donne les quarante-quatre pixels
@@ -558,7 +563,7 @@ async function ouvrir(id) {
   /* La saison et les classements appartiennent à la compétition qu'on
      quitte : les garder ferait afficher les siens sous le nom de l'autre,
      le temps d'un aller-retour au serveur. */
-  SAISON = null; FERVEUR = null; echelle = 'joueurs';
+  SAISON = null; SAISON_VOULUE = null; FERVEUR = null; echelle = 'joueurs';
   $('back').classList.add('on');
   // La feuille : un seul panneau sous le tableau, la colonne étant rendue au décor.
   $('list').classList.add('feuille');
@@ -597,8 +602,10 @@ async function charger() {
   if (onglet === 'ferveur') return chargerFerveur();
   const route = { classement:'', resultats:'/results', scorers:'/scorers',
                   assists:'/assists', cards:'/cards' }[onglet];
-  const suite = onglet === 'resultats' && journee
-    ? `?journee=${encodeURIComponent(journee)}` : '';
+  const params = new URLSearchParams();
+  if (onglet === 'resultats' && journee) params.set('journee', journee);
+  if (SAISON_VOULUE) params.set('saison', SAISON_VOULUE);
+  const suite = params.size ? `?${params}` : '';
   const quelle = ligue;
   let d;
   try { d = await api(`/league/${ligue}${route}${suite}`); }
@@ -606,8 +613,7 @@ async function charger() {
   if (quelle !== ligue || vue !== 'ligue') return;   // on a changé d'avis pendant l'attente
 
   $('tnom').textContent = d.league.name;
-  $('tsous').textContent = sousLigue(d.league);
-  $('tsous').hidden = !$('tsous').textContent;
+  sousTitreLigue(d.league);
   /* La saison que le télétexte a retenue sur les dates de la compétition. Le
      classement la reprend telle quelle plutôt que de la recalculer : une
      seule règle, un seul endroit. */
@@ -844,6 +850,36 @@ let echelle = 'joueurs';
 let FERVEUR = null;
 /** La saison que le télétexte a retenue, transmise telle quelle au classement. */
 let SAISON = null;
+/** La saison choisie au sélecteur, ou `null` : la courante, que le serveur choisit. */
+let SAISON_VOULUE = null;
+
+/* **Les saisons finies se revoient.** Dès qu'une nouvelle saison commençait,
+   la page ne montrait plus l'ancienne — ni son classement, ni le classement
+   de ferveur qu'on y avait gagné — alors que rien n'en est effacé. Quand le
+   serveur en connaît plusieurs, le sous-titre devient un choix ; tous les
+   onglets, la ferveur comprise, suivent la saison choisie. */
+function sousTitreLigue(l) {
+  const saisons = l.seasons ?? [];
+  if (saisons.length < 2) {
+    $('tsous').textContent = sousLigue(l);
+    $('tsous').hidden = !$('tsous').textContent;
+    return;
+  }
+  const pays = nomPays(l);
+  $('tsous').innerHTML = `${pays ? `${esc(pays)} · ` : ''}<select id="tsaison"
+      aria-label="Saison">${saisons.map((x) => `<option value="${esc(x)}"${
+        Number(x) === Number(l.season) ? ' selected' : ''}>saison ${esc(x)}${
+        Number(x) === Number(l.courante) ? ' (en cours)' : ''}</option>`).join('')}</select>`;
+  $('tsous').hidden = false;
+  $('tsaison').onchange = (e) => {
+    const x = Number(e.target.value);
+    SAISON_VOULUE = x === Number(l.courante) ? null : x;
+    SAISON = x;
+    FERVEUR = null;
+    journee = null;
+    charger();
+  };
+}
 
 const rangTexte = (n) => (n === 1 ? '1er' : `${n}e`);
 

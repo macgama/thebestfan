@@ -8,12 +8,15 @@
  * range le résultat en base, et le jeu n'ouvre le Grand Virage que sur les
  * compétitions éligibles.
  *
- * Coût : 1 à 2 appels sur les 7 500 quotidiens. À relancer à chaque
- * intersaison, pas plus.
+ * Coût : 1 appel sur les 7 500 quotidiens. Le serveur fait ce passage seul,
+ * une fois par jour (`src/server/football/inventaire.js`) : ce script ne sert
+ * plus qu'à lire le rapport, ou à forcer un passage sans attendre.
  *
  *   node scripts/coverage.mjs           # inventaire + écriture en base
  *   node scripts/coverage.mjs --dry     # affichage seul, sans écrire
  */
+
+import { trier, ecrireInventaire } from '../src/server/football/inventaire.js';
 
 const KEY = process.env.API_FOOTBALL_KEY;
 const DB = process.env.DATABASE_URL;
@@ -38,53 +41,8 @@ async function api(path) {
   return body.response ?? [];
 }
 
-/** Ce qu'on considère comme une compétition intéressante pour le jeu. */
-function classer(l) {
-  const nom = l.league.name.toLowerCase();
-  const pays = l.country?.name ?? '';
-  if (pays === 'World') {
-    if (/friendl|amical/.test(nom)) return 'amical';
-    return 'international';
-  }
-  if (l.league.type === 'Cup') return 'coupe';
-  return 'championnat';
-}
-
-const rows = await api('/leagues');
-console.error(`${rows.length} compétitions renvoyées par l'API\n`);
-
-const eligibles = [];
-const recalees = [];
-
-for (const l of rows) {
-  // Saison en cours, ou la plus récente si aucune n'est marquée courante.
-  const saison = (l.seasons ?? []).find((s) => s.current) ?? (l.seasons ?? []).at(-1);
-  if (!saison) continue;
-
-  const c = saison.coverage?.fixtures ?? {};
-  const cov = saison.coverage ?? {};
-  const entree = {
-    id: l.league.id,
-    nom: l.league.name,
-    pays: l.country?.name ?? null,
-    /* Les deux lettres ISO du pays. C'est la seule chose de cette réponse qui
-       permette de dire « Espagne » plutôt que « Spain » sans tenir une table
-       de traductions : le navigateur fait le reste. Voir public/pays.js. */
-    code: l.country?.code ?? null,
-    type: l.league.type,
-    famille: classer(l),
-    saison: saison.year,
-    events: Boolean(c.events),
-    lineups: Boolean(c.lineups),
-    classement: Boolean(cov.standings),
-    buteurs: Boolean(cov.top_scorers),
-    passeurs: Boolean(cov.top_assists),
-    cartons: Boolean(cov.top_cards),
-    debut: saison.start ?? null,
-    fin: saison.end ?? null,
-  };
-  (entree.events ? eligibles : recalees).push(entree);
-}
+const { eligibles, recalees } = trier(await api('/leagues'));
+console.error(`${eligibles.length + recalees.length} compétitions avec une saison renvoyées par l'API\n`);
 
 /* ------------------------------------------------------------- rapport */
 
@@ -159,104 +117,13 @@ await pool.query(`
     KEY idx_enabled (enabled, family)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
-// Les amicaux sont éligibles techniquement mais désactivés : un souvenir de
-// match amical ne vaut rien, et l'API prévient elle-même que leur couverture
-// est irrégulière.
-/**
- * Palier de notoriété : il décide du prix des vignettes et de l'ordre
- * d'affichage dans le télétexte.
- *
- * La règle doit nommer les compétitions, pas se contenter de leur pays.
- * « toutes les ligues anglaises » classait la National League South Play-offs
- * au même rang que la Premier League — c'est absurde, et ça noyait les grandes
- * compétitions au milieu de leurs divisions inférieures.
- */
-const MAJEURES = new Set([
-  'UEFA Champions League', 'World Cup', 'Euro Championship',
-  'Copa America', 'Africa Cup of Nations', 'UEFA Nations League',
-]);
-
-/** Première division de chaque grand pays, nommée explicitement. */
-const ELITES = new Map([
-  ['England', 'Premier League'],
-  ['Spain', 'La Liga'],
-  ['Italy', 'Serie A'],
-  ['Germany', 'Bundesliga'],
-  ['France', 'Ligue 1'],
-]);
-
-/** Deuxièmes divisions des grands pays, et élites des pays solides. */
-const SECONDES = new Map([
-  ['England', 'Championship'],
-  ['Spain', 'Segunda División'],
-  ['Italy', 'Serie B'],
-  ['Germany', '2. Bundesliga'],
-  ['France', 'Ligue 2'],
-]);
-
-const SOLIDES = new Map([
-  ['Switzerland', 'Super League'],
-  ['Netherlands', 'Eredivisie'],
-  ['Portugal', 'Primeira Liga'],
-  ['Belgium', 'Jupiler Pro League'],
-  ['Brazil', 'Serie A'],
-  ['Argentina', 'Liga Profesional Argentina'],
-  ['Turkey', 'Süper Lig'],
-  ['Scotland', 'Premiership'],
-  ['Austria', 'Bundesliga'],
-  ['Denmark', 'Superliga'],
-  ['USA', 'Major League Soccer'],
-  ['Mexico', 'Liga MX'],
-]);
-
-const COUPES_MAJEURES = new Set([
-  'UEFA Europa League', 'UEFA Europa Conference League', 'UEFA Conference League',
-  'FA Cup', 'Copa del Rey', 'Coppa Italia', 'DFB Pokal', 'Coupe de France',
-  'Copa Libertadores',
-]);
-
-function palier(e) {
-  if (MAJEURES.has(e.nom)) return 1;
-  if (ELITES.get(e.pays) === e.nom) return 1;
-  if (COUPES_MAJEURES.has(e.nom)) return 2;
-  if (SECONDES.get(e.pays) === e.nom) return 2;
-  if (SOLIDES.get(e.pays) === e.nom) return 2;
-  // Les compétitions de sélections restent visibles sans être majeures.
-  if (e.famille === 'international' && !/friendl|qualif|u1[7-9]|u2[0-3]|women/i.test(e.nom)) {
-    return 2;
-  }
-  return 3;
-}
-
-const values = eligibles.map((e) => [
-  e.id, e.saison, e.nom, e.pays, e.code, e.type, e.famille,
-  1, e.lineups ? 1 : 0, e.classement ? 1 : 0,
-  e.buteurs ? 1 : 0, e.passeurs ? 1 : 0, e.cartons ? 1 : 0,
-  palier(e), e.debut, e.fin,
-  e.famille === 'amical' ? 0 : 1,
-]);
-
-for (let i = 0; i < values.length; i += 200) {
-  await pool.query(
-    `INSERT INTO souvenir_leagues
-       (league_id, season, name, country, country_code, type, family, has_events, has_lineups,
-        has_standings, has_top_scorers, has_top_assists, has_top_cards, tier,
-        starts_on, ends_on, enabled)
-     VALUES ?
-     ON DUPLICATE KEY UPDATE name=VALUES(name), country=VALUES(country),
-       country_code=VALUES(country_code), type=VALUES(type),
-       family=VALUES(family), has_events=VALUES(has_events), has_lineups=VALUES(has_lineups),
-       has_standings=VALUES(has_standings), has_top_scorers=VALUES(has_top_scorers),
-       has_top_assists=VALUES(has_top_assists), has_top_cards=VALUES(has_top_cards),
-       tier=VALUES(tier), starts_on=VALUES(starts_on), ends_on=VALUES(ends_on)`,
-    [values.slice(i, i + 200)],
-  );
-}
+const { ecrites, nouvelles } = await ecrireInventaire(pool, eligibles);
+console.log(`\n${nouvelles} saison(s) nouvelle(s)`);
 
 const [[{ n }]] = await pool.query(
   `SELECT COUNT(*) AS n FROM souvenir_leagues WHERE enabled = 1`);
 const [[{ p1 }]] = await pool.query(`SELECT COUNT(*) AS p1 FROM souvenir_leagues WHERE tier = 1`);
 const [[{ p2 }]] = await pool.query(`SELECT COUNT(*) AS p2 FROM souvenir_leagues WHERE tier = 2`);
-console.log(`\n${values.length} compétitions écrites · ${n} activées`);
-console.log(`paliers : ${p1} majeures · ${p2} solides · ${values.length - p1 - p2} autres`);
+console.log(`${ecrites} compétitions écrites · ${n} activées`);
+console.log(`paliers : ${p1} majeures · ${p2} solides · ${ecrites - p1 - p2} autres`);
 await pool.end();
