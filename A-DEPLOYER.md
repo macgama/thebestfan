@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Le deck refait au style du jeu** (branche `claude/deck-interface-n1oqm1`,
+6 octobre 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou
+seul. **Une page seule** (`public/deck.html`) : ni schéma ni redémarrage.
+
+- Le haut reprend le rail de MON FANZZY (DECK allumé à droite) ; PRÊT passe
+  en bas, à côté d'ENREGISTRER. Les Fanzzy, les cartes du catalogue et les
+  choix sont sur le béton des autres pages ; l'équipement se montre comme à
+  la boutique ; RETIRER est à sa taille ; le titulaire au vert.
+- Les fenêtres (carte, équipement, choix d'un Fanzzy) ont le décor du menu ;
+  le Fanzzy qu'on choisit est dessiné ; la carte ouverte est à sa taille, et
+  à côté de son texte sur ordinateur. Avant/après :
+  `/mnt/project-files/deck/` du projet.
+
+---
+
 **Le profil, la boutique et la répétition en largeur** (branche
 `claude/ecran-large-pkbkwj`, 6 octobre 2026, la forme choisie par Gaël :
 « tuiles + pages larges »). Ils se déposent avec ce qui est en dessous, ou
