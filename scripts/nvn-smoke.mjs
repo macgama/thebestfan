@@ -393,6 +393,28 @@ check('un entraînement ne compte pas',
       vuePour(dT, '0-0', t).equipes[1][0].skin === 'base');
   }
 
+  /* **Ce qu'il porte.** La vue sert, pour chaque joueur, les pièces que son
+     deck a mises à son Fanzzy en tribune, avec leur nom et leur rareté :
+     l'arène les accroche à côté de lui. Les deux premières, comme `combine` ;
+     une pièce inconnue du catalogue est sautée plutôt que dessinée vide. */
+  {
+    const dS = duelR({ TR32: 1 });
+    dS.joueurs.get('0-0').fanzzy[0].stuff = ['megaphone', 'disparue', 'jumelles', 'echarpe'];
+    const sac = vuePour(dS, '1-0', t).equipes[0][0].sac;
+    check(`la vue d’en face dit ce que porte son Fanzzy (${sac.map((x) => x.id).join(', ')})`,
+      sac.length === 1 && sac[0].id === 'megaphone' && sac[0].rar === 'epique'
+      && sac[0].nom === 'Mégaphone');
+    /* La troisième pièce n'est pas montrée à la place de l'inconnue : `combine`
+       ne l'applique pas non plus, et une pièce affichée doit être une pièce
+       qui compte. */
+    dS.joueurs.get('0-0').fanzzy[0].stuff = ['megaphone', 'jumelles'];
+    check('deux pièces connues : les deux, dans l’ordre du sac',
+      vuePour(dS, '1-0', t).equipes[0][0].sac.map((x) => x.id).join() === 'megaphone,jumelles');
+    check('un Fanzzy sans pièce a un sac vide',
+      Array.isArray(vuePour(dS, '0-0', t).equipes[1][0].sac)
+      && vuePour(dS, '0-0', t).equipes[1][0].sac.length === 0);
+  }
+
   j.main.push('a-releve');
   j.breath = 100;
   j.cooldowns['a-releve'] = 0;
