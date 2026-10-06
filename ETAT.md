@@ -605,9 +605,11 @@ niveau mesure le temps passé à jouer, et le doubler ferait progresser deux foi
 plus vite pour un choix fait à l’inscription.
 **Un bonus de KOP est un jeu de modificateurs**, écrit dans le vocabulaire que
 le moteur emploie déjà — `tempoWindow`, `breathBonus`, `pushMult`… C’est ce qui
-permet à un KOP de peser sur la corde, la ferveur, les écharpes, le souffle, le
-tempo ou les contres **sans connaître aucune de ces mécaniques**. Une mécanique
-ajoutée demain sera couverte par une clé de plus, pas par une réécriture.
+permet à un KOP de peser sur la corde, la ferveur, le souffle ou le tempo **sans
+connaître aucune de ces mécaniques**. Une mécanique ajoutée demain sera couverte
+par une clé de plus, pas par une réécriture — pourvu que le Virage la lise : les
+écharpes et les contres en ont fait l’expérience (« La quête » et « Mur de
+bâches », retirés le 6 octobre 2026).
 
 Dans le VIRAGE, les modificateurs du KOP **multiplient** ceux du Fanzzy au lieu
 de les écraser : le groupe amplifie le personnage, il ne le remplace pas. Une
@@ -2926,11 +2928,16 @@ donne ; quand la base ne sait pas le distinguer, elle ne compte pas (§ 3).
 
 **Un bonus vendu doit être lu par un moteur.** Le KOP vendait « La quête »
 (`scarvesBonus`) et « Mur de bâches » (`parryBonus`, `parryResist`), qu'aucun
-moteur ne lit. Il ne vend plus que les bonus dont le Virage lit chaque clé
-(`MODS_DU_VIRAGE`, `src/server/kop/index.js`), et `kop-smoke` confronte cette
-liste au code du Virage dans les deux sens. `parryBonus` et `parryResist` restent
-portés par des Fanzzy, des pièces et la carte « Filet de chantier » : rien ne les
-lit.
+moteur ne lit. Le serveur a d'abord cessé de les vendre ; Gaël les a retirés du
+catalogue le 6 octobre 2026, et leur prix revient au pot de chaque KOP qui les
+avait payés, une fois, au démarrage du serveur (`rendreLesRetires`,
+`src/server/kop/index.js`). `kop-smoke` confronte chaque clé du catalogue au code
+du Virage : un bonus posé sur une clé morte rougit avant d'être vendu. Et
+**un remboursement qui passe au démarrage se marque dans la transaction qui
+paie** — la ligne remboursée change de nom en même temps que le pot est
+crédité —, sans quoi le démarrage suivant rembourserait encore. `parryBonus` et
+`parryResist` restent portés par des Fanzzy, des pièces et la carte « Filet de
+chantier » : rien ne les lit.
 
 **Un jour se compte au coup d'envoi, pas à la dernière poussée.** La présence au
 Virage est une ligne par match, réécrite à chaque poussée : un match à cheval sur
@@ -3341,17 +3348,19 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
    jeu est lue : `jourDeJeu.changeA` vaut `00:00`.
 
    **Les décisions que le chantier rend à Gaël** (`HISTORIQUE.md`, 4 quadragies
-   ter, « Ce qui reste ») : brancher ou retirer « La quête » et « Mur de
-   bâches », et que faire des KOP qui les ont payés ; la saison 2 et sa série ;
-   payer ou non les divisions ; le dossier du juriste ;
+   ter, « Ce qui reste ») : la saison 2 et sa série ; payer ou non les
+   divisions ; le dossier du juriste ;
    un bonus de KOP voté après la fin d'une saison ; le rang de la racine de
    `/api/rank/moi`, qui compte les comptes supprimés ; les tenues prises par
    l'abonnement ; le nom de la saison 1 (« Le premier virage » dans
    `sql/saisons.sql`, « La reprise » partout ailleurs — et en production,
-   relevé le 4 octobre). **Tranchée le 6 octobre 2026, et faite** :
+   relevé le 4 octobre). **Tranchées le 6 octobre 2026, et faites** :
    l'inflation des écharpes avant la saison 2 — une place de booster dont la
    catégorie est épuisée rend deux écharpes au lieu d'une poignée, et un
-   booster établi environ 29 au lieu de 46 (`serveur/ECONOMIE.md`, § 12).
+   booster établi environ 29 au lieu de 46 (`serveur/ECONOMIE.md`, § 12) ;
+   « La quête » et « Mur de bâches », retirés du catalogue, leur prix rendu au
+   pot des KOP qui les avaient payés au démarrage qui suit la livraison
+   (`serveur/ECONOMIE.md`, § 12.3).
    L'XP du Virage est tranchée et réglée (le 3 octobre :
    quinze par match poussé, dix chants au moins, trois matchs par jour), et la
    ferveur arrondie à zéro dans une grande tribune aussi (le plancher d'un

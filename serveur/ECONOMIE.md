@@ -65,8 +65,9 @@ peu, et presque rien ne passe par les boosters.
 
 **À trancher par Gaël, hors délégation** (§ 12) : l'inflation des écharpes
 (avant la saison 2 ; tranchée le 6 octobre 2026, et faite : § 12.1) ; l'XP du
-Virage ; le bonus de KOP « La quête », qui ne fait
-rien ; la ferveur arrondie à zéro dans les tribunes nombreuses.
+Virage ; le bonus de KOP « La quête », qui ne fait rien (retiré le 6 octobre
+2026, son prix rendu au pot : § 12.3) ; la ferveur arrondie à zéro dans les
+tribunes nombreuses.
 
 ---
 
@@ -185,7 +186,9 @@ viennent de la recharge gratuite des boosters.
   matchs ») ne fait rien.** `scarvesBonus` n'est lu nulle part dans
   `src/server` ; les bonus de KOP ne se consomment qu'à l'entrée au Virage
   (`kop.modsDe`, appelé par `ferveur/index.js:390`), où il n'y a pas
-  d'écharpes. Un KOP qui vote ce bonus perd 900 écharpes.
+  d'écharpes. Un KOP qui vote ce bonus perd 900 écharpes. *Tranché le
+  6 octobre 2026 : retiré du catalogue, avec « Mur de bâches », et le prix
+  rendu au pot des KOP qui l'avaient payé (§ 12.3).*
 - **C6. Le bonus de KOP « Le virage debout » (5 000, « jusqu'à la fin de la
   saison ») n'a pas de fin** : `saisons` n'a pas de date de fin, et
   `restant` vaut NULL pour toujours. La date de fin de saison (§ 6) doit
@@ -873,6 +876,16 @@ ALTER TABLE kop_bonus       ADD COLUMN IF NOT EXISTS saison_id INT UNSIGNED NULL
 3. **« La quête », le bonus de KOP qui ne fait rien (C5)** : le brancher sur
    les écharpes de duel, ou le retirer de la liste. En attendant, un KOP peut
    y perdre 900 écharpes.
+
+   **Tranché le 6 octobre 2026, et fait : retiré.** « La quête » et « Mur de
+   bâches » (500 écharpes, des contres que le Virage ne connaît pas) quittent
+   `src/shared/kop.js` pour de bon. Chaque achat est rendu au pot de son KOP,
+   900 ou 500 écharpes, une fois, par le serveur à son démarrage
+   (`rendreLesRetires`, `src/server/kop/index.js`) : la ligne de `kop_bonus`
+   devient `rendu:echarpes` ou `rendu:contres` dans la transaction qui
+   crédite le pot, si bien que les démarrages suivants n'ont plus rien à
+   rendre. Aucun changement de schéma. Contrôlé par `kop:smoke` (« les
+   retirés, rendus au pot ») et `cablage`.
 4. **La ferveur arrondie à zéro (C4)** : accumuler le reste décimal par
    supporter et n'arrondir qu'à l'écriture. Les divisions en dépendent.
 5. **`JURIDIQUE.md` est en retard** sur deux points qui touchent aux

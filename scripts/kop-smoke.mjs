@@ -33,7 +33,10 @@
  *     d'un club sans KOP aussi** (`GET /api/kop/club/:id`) ;
  *   - **le KOP ne vend que ce que le Virage applique** (`SERVEUR.md`,
  *     § 11.3) : « La quête » promettait des écharpes que rien ne verse, et
- *     « Mur de bâches » des contres que le Virage ne connaît pas.
+ *     « Mur de bâches » des contres que le Virage ne connaît pas ;
+ *   - **ils ont quitté le catalogue, et leur prix revient au pot** une fois,
+ *     au démarrage du serveur, quel que soit le nombre de démarrages
+ *     (décision de Gaël, 6 octobre 2026).
  *
  * La suite tourne aussi sous un autre fuseau que celui de la base. Sous
  * Windows, depuis PowerShell — Git Bash ne transmet pas `TZ` à Node, et la
@@ -48,8 +51,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { createKop, couleursDuClub, MODS_DU_VIRAGE, EN_VENTE, agit }
-  from '../src/server/kop/index.js';
+import { createKop, couleursDuClub, BONUS_RETIRES } from '../src/server/kop/index.js';
 import { BONUS, BONUS_PAR_ID, VOIX_CREATEUR, depouiller, nomValide, DUREE_VOTE_MS }
   from '../src/shared/kop.js';
 import { seuil } from '../src/shared/niveau.js';
@@ -124,12 +126,14 @@ check('et aucune quand le club n’en a pas', memes(couleursDuClub(null, null), 
 
 /* ============================================ ce que le Virage applique
 
-   Un bonus de KOP n'arrive qu'au Virage, et le serveur ne vend que ceux dont
-   le Virage lit chaque clé (`MODS_DU_VIRAGE`). Cette liste est écrite à la
-   main, faute d'être publiée par le Virage : on la confronte donc à son code,
-   dans les deux sens. Une lecture, c'est la clé prise sur un objet
-   (`mods.pushMult`, `(…).breathBonus ??`), commentaires ôtés : une clé citée
-   dans une phrase ne s'applique pas.                                        */
+   Un bonus de KOP n'arrive qu'au Virage, et chacune de ses clés doit y être
+   lue (`src/shared/kop.js`, note de `BONUS`). « La quête » (`scarvesBonus`)
+   et « Mur de bâches » (`parryBonus`, `parryResist`) ont été vendus sur des
+   clés que rien ne lisait, puis retirés le 6 octobre 2026. On confronte donc
+   chaque clé du catalogue au code du Virage : un bonus ajouté demain sur une
+   clé morte fait rougir la suite avant d'être vendu. Une lecture, c'est la
+   clé prise sur un objet (`mods.pushMult`, `(…).breathBonus ??`),
+   commentaires ôtés : une clé citée dans une phrase ne s'applique pas.     */
 
 console.log('\n— ce que le Virage applique —');
 const codeDuVirage = (() => {
@@ -143,22 +147,16 @@ const codeDuVirage = (() => {
 })();
 const lue = (cle) => new RegExp(`\\.${cle}\\b`).test(codeDuVirage);
 
-const sansLecture = [...MODS_DU_VIRAGE].filter((k) => !lue(k));
-check(`le Virage lit encore les ${MODS_DU_VIRAGE.size} clés que le KOP vend`,
-  sansLecture.length === 0 || (console.log('        plus lues :', sansLecture.join(', ')), false));
-const clesDuCatalogue = new Set(BONUS.flatMap((b) => Object.keys(b.mods ?? {})));
-const luesHorsListe = [...clesDuCatalogue].filter((k) => !MODS_DU_VIRAGE.has(k) && lue(k));
-check('et aucune autre clé du catalogue (sinon, l’ajouter à MODS_DU_VIRAGE)',
-  luesHorsListe.length === 0
-  || (console.log('        lues sans être vendues :', luesHorsListe.join(', ')), false));
-check(`le KOP vend ${EN_VENTE.length} bonus sur ${BONUS.length}, et chacun agit`,
-  EN_VENTE.length > 0 && EN_VENTE.every(agit)
-  && BONUS.filter(agit).length === EN_VENTE.length);
-check('« La quête » n’est vendue que si le Virage lit scarvesBonus',
-  EN_VENTE.some((b) => b.id === 'echarpes') === lue('scarvesBonus'));
-check('« Mur de bâches » que s’il lit parryBonus et parryResist',
-  EN_VENTE.some((b) => b.id === 'contres') === (lue('parryBonus') && lue('parryResist')));
-check('un identifiant inconnu n’agit pas', agit(undefined) === false && agit({ mods: {} }) === false);
+const clesDuCatalogue = [...new Set(BONUS.flatMap((b) => Object.keys(b.mods ?? {})))];
+const nonLues = clesDuCatalogue.filter((k) => !lue(k));
+check(`le Virage lit chacune des ${clesDuCatalogue.length} clés du catalogue`,
+  (clesDuCatalogue.length > 0 && BONUS.every((b) => Object.keys(b.mods ?? {}).length > 0)
+    && nonLues.length === 0)
+  || (console.log('        non lues :', nonLues.join(', ')), false));
+check('« La quête » et « Mur de bâches » ont quitté le catalogue',
+  (!BONUS_PAR_ID.has('echarpes') && !BONUS_PAR_ID.has('contres')
+    && BONUS.every((b) => !BONUS_RETIRES.has(b.id)))
+  || (console.log('        il vend encore :', BONUS.map((b) => b.id).join(', ')), false));
 
 /* ============================================================== en base */
 
@@ -493,16 +491,17 @@ check('un vote adopté sur un pot vide est rejeté',
 check('et le pot ne devient jamais négatif',
   (await K.etat(kop.id, U[0])).pot === 0);
 
-/* ========================================= le KOP ne vend que ce qui agit
+/* ======================================== ce qui se vend, et ce qui ne se vend plus
 
    « La quête » promettait 25 % d'écharpes en plus que rien ne verse, et
    « Mur de bâches » des contres que le Virage ne connaît pas : un KOP qui les
-   votait perdait 900 ou 500 écharpes pour rien (`SERVEUR.md`, § 11.3). Le
-   serveur ne les sert plus au catalogue — la page en tire la liste des
-   dépenses **et** les crans du pot —, refuse de les mettre aux voix, ne paie
-   pas un vote ouvert avant de cesser de les vendre, et ne compte pas parmi
-   les bonus actifs une ligne achetée avant. Si le Virage branche un jour
-   leurs clés, ils reviennent en vente, et ces contrôles se taisent.        */
+   votait perdait 900 ou 500 écharpes pour rien (`SERVEUR.md`, § 11.3). Ils
+   ont quitté le catalogue le 6 octobre 2026. Le serveur sert donc le
+   catalogue tel quel — la page en tire la liste des dépenses **et** les crans
+   du pot —, refuse de les mettre aux voix, ne paie pas un vote ouvert avant
+   le déploiement qui les a retirés (le redémarrage tombe pendant ses trois
+   minutes), et ne compte pas parmi les bonus actifs une ligne que le
+   remboursement n'aurait pas encore rendue.                                  */
 
 console.log('\n— ce qui est en vente —');
 {
@@ -518,35 +517,34 @@ console.log('\n— ce qui est en vente —');
   };
   try {
     const mes = await lire('/miens');
-    check('la page lit un catalogue où chaque bonus agit',
-      (ids(mes.catalogue) === ids(EN_VENTE) && mes.catalogue.every(agit))
+    check(`la page lit les ${BONUS.length} bonus du catalogue, et aucun retiré`,
+      (ids(mes.catalogue) === ids(BONUS) && !mes.catalogue.some((b) => BONUS_RETIRES.has(b.id)))
       || (console.log('        elle lit :', ids(mes.catalogue)), false));
     const sien = await lire(`/${kop.id}`);
     check('et l’état d’un KOP sert le même',
-      ids(sien.catalogue) === ids(EN_VENTE) || (console.log('        il sert :', ids(sien.catalogue)), false));
+      ids(sien.catalogue) === ids(BONUS) || (console.log('        il sert :', ids(sien.catalogue)), false));
   } finally {
     await new Promise((ok) => serveur.close(ok));
   }
 
-  const HORS = BONUS.filter((b) => !agit(b));
-  const Q = HORS.find((b) => b.id === 'echarpes') ?? HORS[0] ?? null;
-  if (!Q) console.log('  (tout le catalogue agit : il n’y a plus de bonus hors vente à refuser)');
-
-  if (Q) {
-    await pool.query('UPDATE kops SET pot = ? WHERE id = ?', [Q.prix * 2, kop.id]);
-    const code = await refus(() => K.proposer(U[0], kop.id, Q.id));
-    check(`« ${Q.nom} » ne se met pas aux voix, même avec le pot pour`,
+  await pool.query('UPDATE kops SET pot = 5000 WHERE id = ?', [kop.id]);
+  for (const [id, { nom }] of BONUS_RETIRES) {
+    const code = await refus(() => K.proposer(U[0], kop.id, id));
+    check(`« ${nom} » ne se met plus aux voix, même avec le pot pour`,
       code === 'kop.error.bonus_inconnu' || (console.log('        il répond :', code || 'accepté'), false));
+  }
+  {
     const [[{ n }]] = await pool.query(
-      'SELECT COUNT(*) n FROM kop_votes WHERE kop_id = ? AND bonus_id = ?', [kop.id, Q.id]);
+      `SELECT COUNT(*) n FROM kop_votes WHERE kop_id = ? AND bonus_id IN ('echarpes', 'contres')`,
+      [kop.id]);
     check('et aucun vote ne s’est ouvert', n === 0);
   }
 
-  /* Un vote ouvert avant (le déploiement tombe pendant ses trois minutes), et
-     un identifiant que le catalogue partagé ne connaît plus : adoptés par le
-     créateur, échus, sur un pot qui les couvre. Le pot ne paie ni l'un ni
-     l'autre — et le second faisait tomber toute lecture du KOP. */
-  for (const bonusId of [...(Q ? [Q.id] : []), 'disparu']) {
+  /* Un vote ouvert avant le déploiement, et un identifiant que le catalogue
+     n'a jamais connu : adoptés par le créateur, échus, sur un pot qui les
+     couvre. Le pot ne paie ni l'un ni l'autre — et le second faisait tomber
+     toute lecture du KOP. */
+  for (const bonusId of ['echarpes', 'disparu']) {
     await pool.query('UPDATE kops SET pot = 5000 WHERE id = ?', [kop.id]);
     const id = randomUUID();
     await pool.query(
@@ -559,7 +557,7 @@ console.log('\n— ce qui est en vente —');
     try {
       fait = (await K.depouillerEchus(kop.id)).find((f) => f.id === id) ?? null;
     } catch (e) { erreur = e.message; }
-    check(`un vote adopté sur « ${bonusId} », hors vente, est rejeté et dit pourquoi`,
+    check(`un vote adopté sur « ${bonusId} », hors catalogue, est rejeté et dit pourquoi`,
       (fait?.issue === 'rejete' && fait.horsVente === true && fait.potInsuffisant === false)
       || (console.log('        il rend :', erreur || JSON.stringify(fait)), false));
     const [[{ pot }]] = await pool.query('SELECT pot FROM kops WHERE id = ?', [kop.id]);
@@ -569,27 +567,230 @@ console.log('\n— ce qui est en vente —');
       || (console.log('        pot :', pot, '· lignes :', n), false));
   }
 
-  /* Acheté avant que le serveur cesse de le vendre : il n'agit pas, il ne
-     s'affiche donc pas comme actif, ni dans la page ni dans le panneau du
-     Virage, et il ne se décompte pas — si sa clé est branchée un jour, il
-     agira pour les matchs qu'il avait encore. */
-  if (Q) {
-    const restant = Q.portee === 'charges' ? (Q.charges ?? 3) : Q.portee === 'match' ? 1 : null;
-    await pool.query(
-      `INSERT INTO kop_bonus (id, kop_id, bonus_id, portee, restant) VALUES (?, ?, ?, ?, ?)`,
-      [randomUUID(), kop.id, Q.id, Q.portee, restant]);
-    check('acheté avant, il ne s’affiche pas parmi les bonus actifs',
-      !(await K.etat(kop.id, U[0])).bonus.some((b) => b.bonusId === Q.id));
-    const m = await K.modsDe(U[1], 85, 7101);
-    check('le Virage ne le reçoit pas',
-      (Object.keys(Q.mods).every((k) => !(k in m)) && !(m.kopBonus ?? []).includes(Q.id))
-      || (console.log('        il reçoit :', JSON.stringify(m)), false));
-    const [[b]] = await pool.query(
-      'SELECT restant, fixture_id FROM kop_bonus WHERE kop_id = ? AND bonus_id = ?', [kop.id, Q.id]);
-    check('et il ne se décompte pas : ses matchs restent',
-      (b?.restant === restant && b?.fixture_id === null)
-      || (console.log('        ligne :', JSON.stringify(b)), false));
+  /* « La quête » achetée en septembre, jamais décomptée : la ligne de
+     production telle que le remboursement la trouvera (bloc suivant). Tant
+     qu'il ne l'a pas rendue, elle n'agit pas : elle ne s'affiche pas parmi
+     les bonus actifs, le Virage ne la reçoit pas, et elle ne se décompte
+     pas. */
+  await pool.query(
+    `INSERT INTO kop_bonus (id, kop_id, bonus_id, portee, restant, achete)
+     VALUES (?, ?, 'echarpes', 'charges', 3, '2026-09-28 20:15:00')`, [randomUUID(), kop.id]);
+  check('achetée avant, « La quête » ne s’affiche pas parmi les bonus actifs',
+    !(await K.etat(kop.id, U[0])).bonus.some((b) => b.bonusId === 'echarpes'));
+  const m = await K.modsDe(U[1], 85, 7101);
+  check('le Virage ne la reçoit pas',
+    (!('scarvesBonus' in m) && !(m.kopBonus ?? []).includes('echarpes'))
+    || (console.log('        il reçoit :', JSON.stringify(m)), false));
+  const [[b]] = await pool.query(
+    `SELECT restant, fixture_id FROM kop_bonus WHERE kop_id = ? AND bonus_id = 'echarpes'`, [kop.id]);
+  check('et elle ne se décompte pas : ses matchs restent',
+    (b?.restant === 3 && b?.fixture_id === null)
+    || (console.log('        ligne :', JSON.stringify(b)), false));
+}
+
+/* ============================================= les retirés, rendus au pot
+
+   Ce que « La quête » et « Mur de bâches » avaient coûté revient au pot de
+   chaque KOP qui les avait achetés, **une fois**. Le remboursement passe au
+   démarrage du serveur, à chaque démarrage (`rendreLesRetires`, appelé par
+   `server.js` ; `verif-cablage` vérifie l'appel) : on rejoue donc ici des
+   démarrages, chacun par une instance neuve du module — un vrai redémarrage
+   n'a aucune mémoire —, et c'est la base seule qui doit savoir ce qui a déjà
+   été rendu. Les montants sont écrits en clair : 900 et 500 sont ce que les
+   KOP ont payé, pas une valeur que le code pourrait choisir.
+
+   Le décor : le Virage Nord a la ligne de « La quête » du bloc précédent ;
+   Bâle a payé deux fois « Mur de bâches », dont une ligne que des matchs
+   avaient épuisée avant le 3 octobre (ils n'ont rien reçu pour autant), et
+   il a aussi « Tous en cadence », qui reste au catalogue ; un troisième KOP
+   n'a acheté que ce bonus-là. Rien de ce qui reste au catalogue ne doit
+   bouger.                                                                    */
+
+console.log('\n— les retirés, rendus au pot —');
+{
+  /** Ce qu'une fonction écrit au journal pendant qu'elle tourne, et ce qu'elle rend. */
+  const journal = async (fn) => {
+    const lignes = [];
+    const { log, warn, error } = console;
+    console.log = console.warn = console.error = (...a) => { lignes.push(a.join(' ')); };
+    try {
+      return { r: await fn(), lignes };
+    } finally {
+      Object.assign(console, { log, warn, error });
+    }
+  };
+  const nouveau = (p = pool) => createKop({ pool: p, requireAuth: (r, _s, n) => n() });
+  const demarrer = (p = pool) => journal(() => nouveau(p).rendreLesRetires());
+  const lireKop = async (id) =>
+    (await pool.query('SELECT pot, verse_total FROM kops WHERE id = ?', [id]))[0][0];
+  const lignesDe = async (id) => (await pool.query(
+    `SELECT bonus_id, restant, DATE_FORMAT(epuise, '%Y-%m-%d %H:%i:%s') AS epuise
+       FROM kop_bonus WHERE kop_id = ? ORDER BY achete, id`, [id]))[0];
+  const poser = (kopId, bonusId, portee, restant, achete, epuise = null, fixture = null) =>
+    pool.query(
+      `INSERT INTO kop_bonus (id, kop_id, bonus_id, portee, restant, fixture_id, achete, epuise)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [randomUUID(), kopId, bonusId, portee, restant, fixture, achete, epuise]);
+
+  const [[{ id: bale }]] = await pool.query('SELECT id FROM kops WHERE team_id = 91');
+  const temoins = randomUUID();
+  await pool.query(
+    `INSERT INTO kops (id, team_id, nom, createur, pot, verse_total)
+     VALUES (?, 85, 'Les Témoins', ?, 300, 300)`, [temoins, U[4]]);
+  await pool.query('UPDATE kops SET pot = 120 WHERE id = ?', [kop.id]);
+  await pool.query('UPDATE kops SET pot = 40 WHERE id = ?', [bale]);
+  await poser(bale, 'contres', 'match', 0, '2026-09-27 19:00:00', '2026-10-02 21:47:00', 6001);
+  await poser(bale, 'contres', 'match', 1, '2026-10-02 22:10:00');
+  await poser(bale, 'tempo', 'match', 1, '2026-10-05 18:00:00');
+  await poser(temoins, 'tempo', 'match', 1, '2026-10-01 18:00:00');
+
+  const avant = { nord: await lireKop(kop.id), bale: await lireKop(bale), temoins: await lireKop(temoins) };
+  const lignesAvant = { nord: await lignesDe(kop.id), bale: await lignesDe(bale) };
+  const [[{ n: total }]] = await pool.query('SELECT COUNT(*) n FROM kop_bonus');
+
+  const premier = await demarrer();
+  const apres = { nord: await lireKop(kop.id), bale: await lireKop(bale), temoins: await lireKop(temoins) };
+  check('« La quête » achetée : 900 écharpes reviennent au pot du KOP',
+    apres.nord.pot - avant.nord.pot === 900
+    || (console.log('        pot :', avant.nord.pot, '→', apres.nord.pot), false));
+  check('« Mur de bâches » payé deux fois, dont une ligne déjà épuisée : 1 000 reviennent',
+    apres.bale.pot - avant.bale.pot === 1000
+    || (console.log('        pot :', avant.bale.pot, '→', apres.bale.pot), false));
+  /* Ce qui reste au catalogue, dans un KOP remboursé comme dans un KOP qui
+     n'avait rien à rendre. */
+  {
+    const tempo = JSON.stringify([{ bonus_id: 'tempo', restant: 1, epuise: null }]);
+    const deBale = (await lignesDe(bale)).filter((l) => !/contres$/.test(l.bonus_id));
+    const actifsBale = (await K.etat(bale, U[0])).bonus.map((x) => x.bonusId);
+    const deTemoins = await lignesDe(temoins);
+    check('ce qui reste au catalogue ne bouge pas : « Tous en cadence » agit encore, à Bâle comme ailleurs',
+      (JSON.stringify(deBale) === tempo && actifsBale.join(',') === 'tempo'
+        && apres.temoins.pot === 300 && JSON.stringify(deTemoins) === tempo)
+      || (console.log('        Bâle :', JSON.stringify(deBale), '· actifs :', actifsBale.join(','),
+        '· témoin :', apres.temoins.pot, JSON.stringify(deTemoins)), false));
   }
+  check('le pot remonte, pas le cumul de ce qui a été versé',
+    apres.nord.verse_total === avant.nord.verse_total && apres.bale.verse_total === avant.bale.verse_total
+    && apres.temoins.verse_total === avant.temoins.verse_total);
+
+  /* Rien ne s'efface (`sql/kop.sql` : « rien ne se supprime ») : chaque ligne
+     reste, marquée `rendu:`, éteinte, et celle que des matchs avaient épuisée
+     garde la date de son épuisement. */
+  const [[{ n: totalApres }]] = await pool.query('SELECT COUNT(*) n FROM kop_bonus');
+  const marquees = [...await lignesDe(kop.id), ...await lignesDe(bale)]
+    .filter((l) => l.bonus_id.startsWith('rendu:'));
+  const epuiseeAvant = lignesAvant.bale.find((l) => l.restant === 0);
+  check('les lignes restent, marquées rendues et éteintes',
+    (totalApres === total && marquees.length === 3
+      && marquees.filter((l) => l.bonus_id === 'rendu:echarpes').length === 1
+      && marquees.filter((l) => l.bonus_id === 'rendu:contres').length === 2
+      && marquees.every((l) => l.restant === 0 && l.epuise !== null)
+      && marquees.some((l) => l.epuise === epuiseeAvant?.epuise))
+    || (console.log('        lignes :', totalApres, '/', total, '·', JSON.stringify(marquees)), false));
+  check('le démarrage en fait le bilan : 2 KOP, 3 achats, 1 900 écharpes',
+    (premier.r?.kops === 2 && premier.r.lignes === 3 && premier.r.echarpes === 1900
+      && premier.r.echecs === 0)
+    || (console.log('        bilan :', JSON.stringify(premier.r)), false));
+  check('le journal nomme chaque KOP remboursé, ce qu’il reçoit, et le bilan',
+    (premier.lignes.some((l) => l.includes('« Le Virage Nord »') && l.includes('900 écharpes')
+        && l.includes('1 × « La quête »') && l.includes('120 → 1020'))
+      && premier.lignes.some((l) => l.includes('« Bâle aussi »') && l.includes('1000 écharpes')
+        && l.includes('2 × « Mur de bâches »'))
+      && premier.lignes.some((l) => /1900 écharpes rendues à 2 KOP pour 3 achat/.test(l)))
+    || (console.log('        journal :', premier.lignes.join(' | ')), false));
+
+  /* Le démarrage d'après — le redémarrage de la livraison suivante, ou celui
+     d'une panne : il ne trouve plus rien, et le dit en une ligne. */
+  const second = await demarrer();
+  const encore = { nord: await lireKop(kop.id), bale: await lireKop(bale) };
+  check('un second démarrage ne rend rien de plus',
+    (encore.nord.pot === apres.nord.pot && encore.bale.pot === apres.bale.pot
+      && second.r?.kops === 0 && second.r.echarpes === 0 && second.r.echecs === 0)
+    || (console.log('        pots :', encore.nord.pot, encore.bale.pot, '· bilan :', JSON.stringify(second.r)), false));
+  check('et le dit en une ligne de journal',
+    (second.lignes.length === 1 && /rien à rendre/.test(second.lignes[0]))
+    || (console.log('        journal :', second.lignes.join(' | ')), false));
+
+  /* Quatre démarrages à la fois : deux processus lancés ensemble, ou un
+     dépouillement qui tombe pendant le remboursement. Le pot sous verrou
+     d'abord, comme au dépouillement : ils passent l'un après l'autre, et seul
+     le premier trouve quelque chose à rendre. */
+  await poser(temoins, 'echarpes', 'charges', 3, '2026-09-30 21:00:00');
+  const potT = (await lireKop(temoins)).pot;
+  let bilans = [];
+  let erreur = null;
+  try {
+    bilans = (await journal(() => enParallele(4, () => nouveau().rendreLesRetires()))).r;
+  } catch (e) { erreur = e; }
+  const potT2 = (await lireKop(temoins)).pot;
+  check('quatre démarrages simultanés ne rendent qu’une fois, sans échec',
+    (erreur === null && potT2 - potT === 900
+      && bilans.reduce((s, x) => s + x.echarpes, 0) === 900 && bilans.every((x) => x.echecs === 0))
+    || (console.log('        pot :', potT, '→', potT2, '· bilans :', JSON.stringify(bilans), erreur?.message ?? ''), false));
+
+  /* Une panne entre la marque et le crédit — la connexion perdue au pire
+     moment. Rien ne doit s'écrire : une marque sans crédit ne serait jamais
+     remboursée, un crédit sans marque le serait deux fois. Le démarrage va
+     quand même au bout, et le suivant reprend. */
+  await poser(temoins, 'contres', 'match', 1, '2026-10-01 20:00:00');
+  const potAvantPanne = (await lireKop(temoins)).pot;
+  const enPanne = {
+    execute: (...a) => pool.execute(...a),
+    query: (...a) => pool.query(...a),
+    getConnection: async () => {
+      const c = await pool.getConnection();
+      return new Proxy(c, {
+        get(cible, cle) {
+          if (cle === 'execute') {
+            return (sql, p) => (/UPDATE kops SET pot = pot \+/.test(sql)
+              ? Promise.reject(Object.assign(new Error('connexion perdue (simulée)'),
+                { code: 'PROTOCOL_CONNECTION_LOST' }))
+              : cible.execute(sql, p));
+          }
+          const v = cible[cle];
+          return typeof v === 'function' ? v.bind(cible) : v;
+        },
+      });
+    },
+  };
+  let leve = null;
+  let panne = null;
+  try { panne = await demarrer(enPanne); } catch (e) { leve = e; }
+  const [[{ n: marqueesEnPanne }]] = await pool.query(
+    `SELECT COUNT(*) n FROM kop_bonus WHERE kop_id = ? AND bonus_id = 'rendu:contres'`, [temoins]);
+  const potApresPanne = (await lireKop(temoins)).pot;
+  check('un remboursement interrompu n’écrit rien, et le démarrage ne lève pas',
+    (leve === null && panne?.r?.echecs === 1 && marqueesEnPanne === 0 && potApresPanne === potAvantPanne
+      && panne.lignes.some((l) => /n’a pas été remboursé/.test(l)))
+    || (console.log('        levé :', leve?.message ?? 'non', '· bilan :', JSON.stringify(panne?.r),
+      '· marquées :', marqueesEnPanne, '· pot :', potAvantPanne, '→', potApresPanne), false));
+  const reprise = await demarrer();
+  const potRepris = (await lireKop(temoins)).pot;
+  check('le démarrage suivant le reprend : 500 écharpes, une fois',
+    (potRepris - potAvantPanne === 500 && reprise.r?.echarpes === 500)
+    || (console.log('        pot :', potAvantPanne, '→', potRepris, '· bilan :', JSON.stringify(reprise.r)), false));
+
+  /* Sans la table des bonus (`sql/kop.sql` pas appliqué), le démarrage
+     continue : une ligne au journal, rien qui lève. Une exception ici
+     éteindrait toute l'application, `server.js` montant ses routes dans un
+     seul `try`. */
+  const absente = async () => {
+    throw Object.assign(new Error("Table 'tbf.kop_bonus' doesn't exist"), { code: 'ER_NO_SUCH_TABLE' });
+  };
+  let leve2 = null;
+  let sans = null;
+  try {
+    sans = await demarrer({ execute: absente, query: absente, getConnection: absente });
+  } catch (e) { leve2 = e; }
+  check('sans la table des bonus, le démarrage ne lève pas, et le dit',
+    (leve2 === null && sans?.r?.echecs === 1 && sans.lignes.some((l) => /kop_bonus/.test(l)))
+    || (console.log('        levé :', leve2?.message ?? 'non', '· journal :', sans?.lignes?.join(' | ')), false));
+
+  /* Le banc ne laisse derrière lui que les lignes rendues : le KOP témoin
+     part, et le bonus de Bâle aussi, que la suite du fichier ne doit pas
+     trouver actif. */
+  await pool.query('DELETE FROM kops WHERE id = ?', [temoins]);
+  await pool.query(`DELETE FROM kop_bonus WHERE kop_id = ? AND bonus_id = 'tempo'`, [bale]);
 }
 
 /* ============================================== la clôture se juge en base

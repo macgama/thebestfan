@@ -41,52 +41,35 @@ export function couleursDuClub(c1, c2) {
 }
 
 /**
- * Les modificateurs que le VIRAGE applique vraiment.
+ * Les bonus retirés du catalogue, et ce que le pot avait payé pour chacun.
  *
- * Un bonus de KOP n'arrive qu'au Virage : `ferveur/index.js` mêle ce que rend
- * `modsDe` aux modificateurs du Fanzzy, et le duel ne le reçoit pas. Or le
- * Virage ne lit pas tout le vocabulaire du moteur, seulement :
- *
- *   - `pushMult`     — la corde (`virage.js`, le chant et les cartes) ;
- *   - `breathBonus`  — le souffle qui revient (`virage.js`, `regen`) ;
- *   - `tempoWindow`  — les fenêtres de rythme (`gestures.js`, `epreuves.js`) ;
- *   - `ferveurBonus` — la ferveur créditée (`virage.js`, `crediter`).
- *
- * Deux bonus du catalogue partagé portaient une clé que rien ne lit :
  * « La quête » (`scarvesBonus`) et « Mur de bâches » (`parryBonus`,
- * `parryResist`). Un KOP qui les votait payait 900 ou 500 écharpes pour rien,
- * sur la promesse écrite d'un écran (`SERVEUR.md`, § 11.3). Les brancher ou
- * les retirer du catalogue est une décision de Gaël ; en attendant, **le
- * serveur ne vend que ce qu'il applique**.
+ * `parryResist`) portaient des clés qu'aucun moteur ne lit : un bonus de KOP
+ * n'arrive qu'au Virage, qui ne verse aucune écharpe et ne connaît pas le
+ * contre. Un KOP qui les votait payait 900 ou 500 écharpes pour rien. Le
+ * serveur avait cessé de les vendre le 3 octobre 2026, en les gardant au
+ * catalogue partagé faute de décision (`serveur/ECARTS.md`, social § 6) ;
+ * Gaël a tranché le 6 octobre : ils en sortent pour de bon, et ce qu'ils ont
+ * coûté revient au pot (`rendreLesRetires`, plus bas).
  *
- * La liste est écrite à la main parce que le Virage ne la publie pas, et
- * `scripts/kop-smoke.mjs` la confronte au code du Virage dans les deux sens :
- * une clé de la liste qu'il ne lit plus, ou une clé du catalogue qu'il
- * s'est mis à lire, la font rougir. Brancher `scarvesBonus` demain (le
- * Virage ne verse aujourd'hui aucune écharpe, et le duel, qui en verse, ne
- * reçoit pas les bonus de KOP) se termine en l'ajoutant ici : « La quête »
- * revient alors en vente d'elle-même.
+ * Le prix est écrit ici parce que `kop_bonus` ne le garde pas. Il est sûr :
+ * c'est celui du catalogue, qui n'a pas changé depuis l'arrivée du KOP (un
+ * seul commit, le 23 septembre 2026), et que `proposer` recopiait dans le
+ * vote dont le dépouillement débitait le pot. Le nom sert au journal.
  */
-export const MODS_DU_VIRAGE = new Set(['pushMult', 'breathBonus', 'tempoWindow', 'ferveurBonus']);
+export const BONUS_RETIRES = new Map([
+  ['echarpes', { nom: 'La quête', prix: 900 }],
+  ['contres', { nom: 'Mur de bâches', prix: 500 }],
+]);
 
 /**
- * Un bonus agit si le Virage applique **chacun** de ses modificateurs : une
- * promesse tenue à moitié reste une promesse que l'écran ne peut pas faire.
- * Un identifiant inconnu (retiré du catalogue partagé depuis) n'agit pas.
- */
-export function agit(def) {
-  const cles = Object.keys(def?.mods ?? {});
-  return cles.length > 0 && cles.every((k) => MODS_DU_VIRAGE.has(k));
-}
-
-/**
- * Ce que le KOP vend : le catalogue partagé, moins ce qui n'agirait pas.
+ * La marque d'une ligne remboursée : son `bonus_id` devient `rendu:echarpes`.
  *
- * C'est lui que les deux routes servent sous `catalogue` : la page du KOP en
- * tire la liste PROPOSER UNE DÉPENSE **et** la fenêtre de crans du pot, si
- * bien qu'un bonus retiré ici disparaît des deux à la fois.
+ * Elle tient dans la colonne (`VARCHAR(32)`), ne ressemble à aucun bonus du
+ * catalogue, et dit sur la ligne elle-même ce qui lui est arrivé — sans
+ * colonne ni table de plus, et sans rien effacer : `kop_bonus` garde tout.
  */
-export const EN_VENTE = BONUS.filter(agit);
+const RENDU = 'rendu:';
 
 /**
  * Le KOP, côté serveur.
@@ -101,7 +84,9 @@ export const EN_VENTE = BONUS.filter(agit);
  * **Le pot ne se retire pas.** Il n'existe aucun chemin qui rende des écharpes
  * à un membre. C'est la règle « ce qui est versé est versé », et elle tient
  * parce qu'on ne l'a écrite nulle part — il n'y a simplement pas de fonction
- * pour le faire.
+ * pour le faire. Le seul crédit du pot qui ne vient pas d'un versement est le
+ * remboursement des bonus retirés (`rendreLesRetires`) : il rend au pot ce que
+ * le pot avait payé, et rien à personne.
  */
 export function createKop({ pool, requireAuth, io = null,
   /* **Créer** un KOP est un geste d'abonné ; **rejoindre** reste libre.
@@ -400,14 +385,15 @@ export function createKop({ pool, requireAuth, io = null,
       const r = depouiller(bulletins.map((b) => ({ userId: b.userId, pour: Boolean(b.pour) })),
         k?.createur);
 
-      /* Adopté, mais le bonus n'est plus en vente : un vote ouvert avant que
-         le serveur cesse de le vendre (le déploiement tombe au milieu de ses
-         trois minutes), ou un identifiant retiré du catalogue partagé depuis.
-         Le pot ne paie pas un bonus qui n'agirait pas ; et sans cette garde,
-         un identifiant inconnu faisait tomber le dépouillement sur
-         `def.portee`, donc toute lecture de ce KOP, à chaque regard. */
+      /* Adopté, mais le bonus n'est plus au catalogue : un vote ouvert avant
+         le déploiement qui l'a retiré (le redémarrage tombe au milieu de ses
+         trois minutes — « La quête » et « Mur de bâches », le 6 octobre 2026),
+         ou tout autre identifiant que le catalogue ne connaît pas. Le pot ne
+         paie pas un bonus qui n'existe plus ; et sans cette garde, un
+         identifiant inconnu faisait tomber le dépouillement sur `def.portee`,
+         donc toute lecture de ce KOP, à chaque regard. */
       const def = BONUS_PAR_ID.get(v.bonus_id);
-      const enVente = agit(def);
+      const enVente = Boolean(def);
       // Adopté, mais le pot a fondu entre-temps — un autre vote est passé
       // avant. On rejette plutôt que de creuser un pot négatif, et le KOP
       // pourra revoter.
@@ -448,11 +434,10 @@ export function createKop({ pool, requireAuth, io = null,
 
   async function proposer(userId, kopId, bonusId) {
     const def = BONUS_PAR_ID.get(String(bonusId));
-    /* Un bonus qui n'agirait pas n'est pas en vente (`EN_VENTE`) : pour qui
-       le propose quand même — une page restée ouverte d'avant, une requête
-       écrite à la main —, il n'existe pas. Le code est celui que la page sait
-       déjà dire. */
-    if (!agit(def)) throw fail('kop.error.bonus_inconnu');
+    /* Un bonus retiré du catalogue — proposé par une page restée ouverte
+       d'avant, ou par une requête écrite à la main — n'existe pas. Le code est
+       celui que la page sait déjà dire. */
+    if (!def) throw fail('kop.error.bonus_inconnu');
 
     const m = await q(`SELECT 1 FROM kop_membres WHERE kop_id = ? AND user_id = ?`,
       [kopId, userId]);
@@ -542,16 +527,16 @@ export function createKop({ pool, requireAuth, io = null,
    * sur celle d'avant, et le journal le dit une fois : un bonus qui ne
    * s'éteint pas vaut mieux qu'un Virage où l'on ne peut plus entrer.
    *
-   * **Un bonus qui n'agit pas n'est pas actif** (`agit`) : « La quête » ou
-   * « Mur de bâches » achetés avant que le serveur cesse de les vendre ne
-   * s'affichent pas parmi les bonus actifs de la page, ne s'annoncent pas
-   * dans le panneau du Virage, et ne se décomptent pas. Leur ligne reste
-   * telle quelle : si la clé est branchée un jour, le bonus agit pour les
-   * matchs qu'il avait encore, et c'est ce que le KOP avait payé.
+   * **Un bonus que le catalogue ne connaît pas n'est pas actif** : il ne
+   * s'affiche pas parmi les bonus actifs de la page, ne s'annonce pas dans le
+   * panneau du Virage, et ne se décompte pas. Les lignes de « La quête » et
+   * de « Mur de bâches » sont remboursées et éteintes au démarrage
+   * (`rendreLesRetires`) avant qu'aucune lecture n'arrive ; la garde vaut
+   * pour ce qui leur échapperait, et pour un bonus qu'on retirerait demain.
    */
   async function bonusActifs(kopId) {
     const lignes = await lireActifs(kopId);
-    return lignes.filter((a) => agit(BONUS_PAR_ID.get(a.bonus_id)));
+    return lignes.filter((a) => BONUS_PAR_ID.has(a.bonus_id));
   }
 
   /** La règle de saison ci-dessus, en base, avec ses replis. */
@@ -748,8 +733,134 @@ export function createKop({ pool, requireAuth, io = null,
       } : null,
       bonus: actifs.map((a) => ({ id: a.id, bonusId: a.bonus_id, portee: a.portee,
         restant: a.restant })),
-      catalogue: EN_VENTE,
+      catalogue: BONUS,
     };
+  }
+
+  /* ------------------------------------------ le remboursement des retirés */
+
+  /**
+   * Rend au pot de chaque KOP ce que les bonus retirés lui avaient coûté,
+   * **une fois** — et ne fait rien quand il n'y a rien à rendre.
+   *
+   * `server.js` l'appelle à **chaque** démarrage, avant d'écouter : c'est ce
+   * qui le fait passer en production sans geste de plus que le déploiement
+   * habituel. Le premier démarrage après la livraison rembourse ; les
+   * suivants ne trouvent plus rien, et une seule lecture le leur dit (la
+   * table des bonus achetés est petite : quelques lignes par KOP).
+   *
+   * **La marque est sur la ligne, et elle s'écrit avec le crédit.** Dans une
+   * seule transaction par KOP : chaque ligne de `kop_bonus` d'un bonus retiré
+   * prend le `bonus_id` `rendu:<id>` (`RENDU`), `restant` à zéro et son
+   * épuisement daté s'il ne l'était pas ; puis le pot reçoit la somme des
+   * prix. Une transaction interrompue ne laisse donc ni un pot crédité sans
+   * marque, qui serait recrédité au démarrage suivant, ni une marque sans
+   * crédit, qui ne le serait jamais. Toutes les lignes sont rendues, même
+   * celles que des matchs avaient décomptées avant le 3 octobre : ces matchs
+   * n'ont rien reçu.
+   *
+   * L'ordre est celui du dépouillement (`depouillerUn`), et pour la même
+   * raison : le pot **sous verrou d'abord**, première lecture de la
+   * transaction, puis les lignes relues sous verrou. Deux démarrages
+   * simultanés, ou un dépouillement en même temps, passent l'un après
+   * l'autre, et le second ne trouve plus de ligne à rendre.
+   *
+   * Un KOP par transaction : celui qui échoue (verrou trop long, connexion
+   * perdue) n'empêche pas les autres, il est annulé entier, et le démarrage
+   * suivant le reprend. **Ne lève jamais** : un remboursement en panne ne doit
+   * pas éteindre l'application (une exception au démarrage coupe `/api`). Le
+   * journal dit chaque KOP remboursé, chaque échec, et le bilan.
+   *
+   * Les identifiants retirés partent en **un** paramètre, une liste que
+   * `query` développe en `'echarpes', 'contres'` (`execute` ne le sait pas) :
+   * le texte de la requête ne reçoit rien, et le jour où un troisième bonus
+   * serait retiré, il suffirait de l'ajouter à `BONUS_RETIRES`.
+   *
+   * @returns {Promise<{ kops: number, lignes: number, echarpes: number, echecs: number }>}
+   */
+  async function rendreLesRetires() {
+    const ids = [...BONUS_RETIRES.keys()];
+    const bilan = { kops: 0, lignes: 0, echarpes: 0, echecs: 0 };
+
+    let concernes;
+    try {
+      [concernes] = await pool.query(
+        'SELECT DISTINCT kop_id FROM kop_bonus WHERE bonus_id IN (?)', [ids]);
+    } catch (e) {
+      bilan.echecs = 1;
+      console.error(`[kop] bonus retirés : rien n’a pu être rendu (${
+        e.sqlMessage ?? e.message}) — repris au prochain démarrage`);
+      return bilan;
+    }
+
+    for (const { kop_id: kopId } of concernes) {
+      try {
+        const r = await rendreAuKop(kopId, ids);
+        if (!r) continue;
+        bilan.kops += 1;
+        bilan.lignes += r.lignes;
+        bilan.echarpes += r.echarpes;
+        console.log(`[kop] bonus retirés : ${r.echarpes} écharpes rendues au pot du KOP « ${
+          r.nom} » (${kopId}) pour ${r.detail} ; pot ${r.avant} → ${r.avant + r.echarpes}`);
+      } catch (e) {
+        bilan.echecs += 1;
+        console.error(`[kop] bonus retirés : le KOP ${kopId} n’a pas été remboursé (${
+          e.sqlMessage ?? e.message}) — rien n’est écrit, repris au prochain démarrage`);
+      }
+    }
+
+    console.log(bilan.kops || bilan.echecs
+      ? `[kop] bonus retirés : ${bilan.echarpes} écharpes rendues à ${bilan.kops} KOP pour ${
+        bilan.lignes} achat(s)${bilan.echecs ? `, ${bilan.echecs} KOP en échec` : ''}`
+      : '[kop] bonus retirés : rien à rendre');
+    return bilan;
+  }
+
+  /** Le remboursement d'un KOP, dans sa transaction ; `null` s'il n'y a rien. */
+  async function rendreAuKop(kopId, ids) {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const [[k]] = await conn.execute(
+        `SELECT nom, pot FROM kops WHERE id = ? FOR UPDATE`, [kopId]);
+      const [lignes] = await conn.query(
+        `SELECT id, bonus_id FROM kop_bonus
+          WHERE kop_id = ? AND bonus_id IN (?) FOR UPDATE`, [kopId, ids]);
+      // Un autre démarrage est passé avant : il n'y a plus rien à rendre.
+      if (!k || !lignes.length) {
+        await conn.rollback();
+        return null;
+      }
+
+      const parBonus = new Map();
+      for (const l of lignes) parBonus.set(l.bonus_id, (parBonus.get(l.bonus_id) ?? 0) + 1);
+      const echarpes = lignes.reduce((s, l) => s + BONUS_RETIRES.get(l.bonus_id).prix, 0);
+
+      const [maj] = await conn.query(
+        `UPDATE kop_bonus
+            SET bonus_id = CONCAT(?, bonus_id), restant = 0, epuise = COALESCE(epuise, NOW(3))
+          WHERE kop_id = ? AND bonus_id IN (?)`, [RENDU, kopId, ids]);
+      /* Sous verrou, elles sont toutes là. Si ce n'était pas le cas, rien ne
+         s'écrit : un crédit qui ne correspondrait pas aux lignes marquées est
+         exactement ce qu'il ne faut pas laisser. */
+      if (maj.affectedRows !== lignes.length) {
+        await conn.rollback();
+        throw new Error(`${maj.affectedRows} ligne(s) marquée(s) pour ${lignes.length} lue(s)`);
+      }
+      await conn.execute(`UPDATE kops SET pot = pot + ? WHERE id = ?`, [echarpes, kopId]);
+      await conn.commit();
+
+      return {
+        nom: k.nom, avant: Number(k.pot), echarpes, lignes: lignes.length,
+        detail: [...parBonus].map(([id, n]) => `${n} × « ${BONUS_RETIRES.get(id).nom} »`)
+          .join(' et '),
+      };
+    } catch (e) {
+      try { await conn.rollback(); } catch { /* la connexion est déjà perdue */ }
+      throw e;
+    } finally {
+      conn.release();
+    }
   }
 
   /* ------------------------------------------------------------- routes */
@@ -766,7 +877,7 @@ export function createKop({ pool, requireAuth, io = null,
   router.get('/miens', requireAuth, safe(async (req, res) => {
     const liste = await miens(req.user.id);
     for (const k of liste) await depouillerEchus(k.id);
-    res.json({ kops: liste, catalogue: EN_VENTE, dureeVoteMs: DUREE_VOTE_MS });
+    res.json({ kops: liste, catalogue: BONUS, dureeVoteMs: DUREE_VOTE_MS });
   }));
 
   /* Les KOP d'un club, et ses couleurs quand elles sont connues, de la forme
@@ -825,5 +936,5 @@ export function createKop({ pool, requireAuth, io = null,
   }
 
   return { router, miens, mienPour, pourClub, creer, rejoindre, quitter,
-    verser, proposer, voter, depouillerEchus, modsDe, etat, PART_POT };
+    verser, proposer, voter, depouillerEchus, modsDe, etat, rendreLesRetires, PART_POT };
 }
