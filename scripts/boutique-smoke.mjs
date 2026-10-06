@@ -616,10 +616,10 @@ const evenement = (sessionId) => ({
 
   /* L'étal dit combien d'exemplaires on en a, pas seulement qu'on l'a : la
      page en fait « À TOI ×2 ». */
-  const relu = (await fetch(base + '/api/boutique/etal').then((r) => r.json()))
+  const pieceRelue = (await fetch(base + '/api/boutique/etal').then((r) => r.json()))
     .stuff?.find((o) => o.id === neuve.id);
   check('l’étal compte les exemplaires d’une pièce achetée deux fois',
-    relu?.possede === true && relu?.copies === 2 || (console.log('        ', JSON.stringify(relu)), false));
+    pieceRelue?.possede === true && pieceRelue?.copies === 2 || (console.log('        ', JSON.stringify(pieceRelue)), false));
 
   /* Une tenue, sur un Fanzzy qu'on possède : d'abord sans les écharpes. */
   const fid = (await q('SELECT id FROM fanzzy WHERE stage = 1 AND publie = 1 ORDER BY id LIMIT 1'))[0]?.id;
