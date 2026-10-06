@@ -50,7 +50,7 @@ node_modules/
 
 ## Étape 2 — Le schéma
 
-Les **trente-quatre** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
+Les **trente-cinq** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
 du précédent. Ils sont tous idempotents — les rejouer sur une base déjà à jour ne
 casse rien.
 
@@ -350,6 +350,18 @@ que `raretes` les a rangées.
   ligne « [souvenirs] les chants du Virage se comptent de nouveau » le
   confirme.
 
+- `notifications.sql` (6 octobre 2026) pose deux tables neuves, et ne touche
+  à rien d'existant : `notif_appareils` (les appareils qui ont dit oui aux
+  notifications, avec leurs deux cases) et `notif_cles` (les deux clés qui
+  signent les envois, créées seules au premier démarrage : **rien à saisir
+  dans le Manager**). Il vient après `quotidien.sql` et avant `arenes.sql`,
+  qui doit rester le dernier.
+
+  **Sans lui, rien ne casse** : les notifications restent éteintes, la page du
+  compte ne les propose pas, et le journal le dit une fois
+  (« [notifications] table absente : appliquer sql/notifications.sql »). Le
+  fichier appliqué, elles reviennent d'elles-mêmes dans les dix minutes.
+
 - `arenes.sql` (vague 2 du chantier serveur, lot 6) pose ce que les arènes
   comptent : le **bilan de tribune** du Virage et la **préférence de
   présence**. Aucune table neuve, six instructions, rien de renommé, aucune
@@ -388,7 +400,7 @@ que `raretes` les a rangées.
   n'est pas frappée). Le workflow GitHub applique le schéma avant de
   redémarrer : rien de plus à faire par ce chemin.
 
-Contrôle : `SHOW TABLES;` doit en lister **47**.
+Contrôle : `SHOW TABLES;` doit en lister **49**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
@@ -612,7 +624,24 @@ lui :
    carnet se fige ensuite, et l'administration le refuse en le disant.
 5. **Les seuils de division**, recalés sur la ferveur réelle des joueurs
    **sans abonnement** (l'abonné n'a pas de plafond de ferveur classée, et le
-   titre de Capo doit rester atteignable sans payer). En lecture seule :
+   titre de Capo doit rester atteignable sans payer). Dans `/admin`,
+   RÉGLAGES, section LA SAISON ET SES PALIERS : le cadre **RECALER LES
+   DIVISIONS** lit la ferveur classée de la saison en cours, joueur par
+   joueur, abonnés exclus, et propose les quatre seuils ; **Poser ces quatre
+   seuils** les écrit (chacun au journal). Il faut que le dernier jour de jeu
+   de la saison soit saisi (onglet SAISONS) : c'est lui qui donne la durée sur
+   laquelle on projette. À faire après deux semaines de jeu au moins, et à
+   refaire quand le cadre dit la proposition fragile (moins de 30 joueurs ou
+   de 14 jours). Relever un seuil ne retire rien à qui a déjà récupéré sa
+   division.
+
+   La règle (`proposerSeuils`, `src/shared/saison.js`) : les valeurs aux rangs
+   30 %, 60 %, 85 % et 96 % de la liste rangée, projetées sur la saison
+   (× jours totaux / jours écoulés), arrondies à deux chiffres. Aucune
+   division, Capo compris, ne dépasse ce qu'un gratuit assidu fait dans la
+   saison : le rang 90 % des ferveurs par jour joué (parmi ceux qui ont joué
+   au moins trois jours), tenu chaque jour de la saison. La même lecture, à la
+   main, reste possible en SQL :
 
    ```sql
    SELECT x.user_id, SUM(x.ferveur) AS ferveur
@@ -624,11 +653,6 @@ lui :
     GROUP BY x.user_id
     ORDER BY ferveur;
    ```
-
-   Lire les valeurs aux rangs 30 %, 60 %, 85 % et 96 % de la liste, les
-   projeter sur la saison (× jours totaux / jours écoulés), et les saisir dans
-   RÉGLAGES : `rang.habitue`, `rang.fervent`, `rang.ultra`, `rang.capo`. Capo
-   ne dépasse jamais ce qu'un joueur gratuit assidu fait dans la saison.
 
 ### Après la livraison des arènes
 

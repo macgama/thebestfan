@@ -1112,7 +1112,7 @@ Trois suites le gardent, et chacune rougit si le duel tire de nouveau son stade
 de son côté : `nvn:smoke` (deux duels de chacun de douze matchs, dans le stade
 de son Virage), `deck:smoke` (la liste et la route d'un match servent ce
 stade-là) et `nvn:ui` (l'affiche le montre, et le duel se joue là où elle
-l'annonçait). Le récit : `HISTORIQUE.md`, 4 quinquagies.
+l'annonçait). Le récit : `HISTORIQUE.md`, 4 quinquagies bis.
 
 **Les tribunes des stades sont dessinées dans l'ombre, exprès.** C'est ce qui
 permet de les allumer. Une tribune déjà éclairée ne peut plus s'éclairer ; une
@@ -2094,10 +2094,13 @@ Par ordre d'utilité.
 5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
    d'envoi. Conçu, pas commencé.
 
-6. **Les notifications.** Le KOP émet déjà sur le socket quand un vote s'ouvre,
-   mais rien n'atteint un joueur dont l'onglet est fermé. Trois minutes de
-   vote, c'est court : sans notification hors de la page, la moitié d'un KOP ne
-   votera jamais.
+6. **Les notifications.** *Faites le 6 octobre 2026* : un vote du KOP qui
+   s'ouvre et un duel classé qui attend un supporter de ton club préviennent
+   l'appli fermée, pour qui l'a demandé sur la page du compte
+   (`src/server/notifications/index.js`, `sql/notifications.sql`). Restent
+   possibles : d'autres sujets (le derby automatique, le pronostic de ferveur
+   avant le coup d'envoi), et une invitation à les activer ailleurs que dans
+   le compte — sur la page du KOP, au moment où l'on rejoint.
 
 7. **Brancher la collection de stades.** Le catalogue et les effets sont écrits
    dans `src/shared/stades.js`, les cinq dessins sont rangés, les tribunes se
@@ -3404,7 +3407,7 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
    suite qui ne fait passer aucun scénario du relevé jusqu'à la salle. Le
    stade du duel est tranché et réglé (le 6 octobre : celui du match, le même
    que son Grand Virage, et la préparation l'annonce avant l'entrée en file ;
-   `HISTORIQUE.md`, 4 quinquagies).
+   `HISTORIQUE.md`, 4 quinquagies bis).
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
    peut-être encore l'ancienne règle, qui classait 117 compétitions comme

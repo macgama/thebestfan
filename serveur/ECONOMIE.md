@@ -938,6 +938,12 @@ projette sur la durée de la saison en multipliant par jours totaux / jours
 écoulés. Ces quatre nombres deviennent `rang.habitue`, `rang.fervent`,
 `rang.ultra` et `rang.capo`.
 
+Depuis le 6 octobre 2026, `/admin` le fait sans SSH (RÉGLAGES, LA SAISON ET
+SES PALIERS, cadre RECALER LES DIVISIONS), et sur les seuls joueurs **sans
+abonnement**, comme `SERVEUR.md` § 6 le demande : la requête ci-dessus les
+compte tous. Il borne en plus chaque seuil à ce qu'un gratuit assidu fait
+dans la saison (`proposerSeuils`, `src/shared/saison.js`).
+
 ## Annexe B. La simulation
 
 `serveur/sim-eco.mjs` importe en lecture `dex.js`,

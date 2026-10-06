@@ -290,7 +290,11 @@ export function vuePour(duel, userId, t = Date.now()) {
 export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = null,
                             /* Facultatif : sans lui, aucun plafond, et le
                                classé s'ouvre à tous les formats. */
-                            abonnement = null }) {
+                            abonnement = null,
+                            /* Facultatif : sans elles, un duel classé qui
+                               attend ne prévient que ceux qui ont l'accueil
+                               ouvert. */
+                            notifications = null }) {
   const salles = new Map();          // duelId -> { duel, membres, timer }
   const salleDe = new Map();         // userId -> duelId
   const files = new Map();           // clé -> [candidats]
@@ -424,6 +428,27 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     for (let k = Math.max(...Object.values(FORMATS)); k >= 1; k--) {
       const parti = tenterLarge(Number(fixtureId), k);
       if (parti) return parti;
+    }
+
+    /* **Personne en face : on prévient ceux qui suivent ce club-là.**
+
+       Seulement en classé. À l'entraînement les bots entrent au bout de vingt
+       secondes, avant qu'on ait seulement déverrouillé son téléphone ; en
+       classé on en laisse deux minutes, et c'est le temps qu'il faut pour
+       venir. Le club qui manque est celui du camp d'en face, que le joueur
+       qui attend soit son supporter ou un neutre venu le tenir. Ni attendu
+       ni bloquant : la file est déjà ouverte. */
+    if (notifications && support.mode === 'classe') {
+      const fx = support.fixture;
+      const clubs = [fx.home, fx.away];
+      const enFile = [];
+      for (const [k, f] of files) {
+        if (k.split(':')[1] === String(fixtureId)) enFile.push(...f.map((x) => x.userId));
+      }
+      notifications.duelAttend({
+        fixtureId: Number(fixtureId), club: clubs[monCamp ^ 1], contre: clubs[monCamp],
+        format, camp: monCamp ^ 1, exclus: enFile,
+      });
     }
     return null;
   }
@@ -771,7 +796,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          est le but d'un entraînement. */
       bot: { prochain: Date.now() + 2500 + Math.random() * 3000,
         adresse: 0.30 + Math.random() * 0.25 },
-      loadout: modele,
+      /* Le deck de l'humain, pas sa garde-robe : un bot habillé comme lui
+         passerait pour son double. */
+      loadout: { ...modele, fanzzy: modele.fanzzy.map((f) => ({ ...f, tenues: {} })) },
     };
   }
 
@@ -1043,6 +1070,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            l'équipe, et c'est en la voyant qu'on comprend qu'on peut changer. */
         fanzzy: j.fanzzy.map((f) => ({
           id: f.id, nom: f.nom, stade: f.stade ?? 1, type: f.type,
+          // La tenue de son premier âge, celui qui entre : chacun paraît
+          // sur l'affiche comme il l'a habillé.
+          skin: f.tenues?.[f.stade ?? 1] || 'base',
           rar: f.rar, cri: f.cri?.label ?? null, geste: f.cri?.gest ?? null,
         })),
         forme: formes.get(j.userId) ?? [],

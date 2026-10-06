@@ -7686,7 +7686,57 @@ n'ont aucune rouge nouvelle : celles qui restent rougissent à l'identique sur
 
 ---
 
-## 4 quinquagies. Le stade du match, au duel — celui de son Virage, montré dès la préparation
+## 4 quinquagies. Les seuils de division recalés depuis l'administration
+
+Gaël, le 6 octobre 2026 : « Tu peux recaler les seuils de division pour les
+joueurs sans abonnement ? ». La base de production n'est pas joignable depuis
+le cloud : le recalage ne pouvait pas se faire d'ici sur les vrais chiffres.
+Il se fait désormais en un geste dans `/admin`.
+
+### Ce qui a changé
+
+- **RÉGLAGES, LA SAISON ET SES PALIERS** porte un cadre **RECALER LES
+  DIVISIONS**, au-dessus des quatre seuils. Il lit la ferveur classée de la
+  saison en cours (Virage compté et duel classé, dans la fenêtre de la
+  saison), joueur par joueur, **abonnés exclus**, et montre pour chaque
+  division le seuil actuel, la valeur lue aujourd'hui et le seuil proposé.
+  **Poser ces quatre seuils** les écrit par le chemin ordinaire des réglages,
+  chacun au journal ; les valeurs posées sont recalculées au clic.
+- **La règle** est `proposerSeuils` (`src/shared/saison.js`) : rangs 30 %,
+  60 %, 85 % et 96 % de la liste rangée (l'annexe A d'`ECONOMIE.md`),
+  projetés sur la saison (× jours totaux / jours écoulés, un jour au moins),
+  arrondis à deux chiffres. **Aucun seuil ne dépasse ce qu'un gratuit
+  assidu fait dans la saison** : le rang 90 % des ferveurs par jour joué,
+  parmi ceux qui ont joué au moins trois jours, tenu chaque jour.
+- Sans dernier jour de jeu saisi, rien ne se projette, et le bouton reste
+  fermé. Sous 30 joueurs ou 14 jours, la proposition se fait, dite fragile.
+
+### Pourquoi comme ça
+
+- L'annexe A comptait tout le monde : un abonné, sans plafond, aurait tiré
+  Capo hors de portée du gratuit (`SERVEUR.md` § 6).
+- Les saisons durent désormais quatre mois (la saison 1 jusqu'au
+  31 décembre 2026) : la projection prend la vraie durée de la saison, pas
+  les treize semaines sur lesquelles les défauts avaient été estimés. Les
+  défauts (5 000, 30 000, 100 000, 300 000) ne bougent pas : sans chiffres
+  réels, les changer serait deviner une seconde fois.
+
+### Contrôles
+
+`admin:smoke` : 18 contrôles de plus (la règle sur des nombres posés, puis la
+base : l'abonné, l'entraînement, le Virage hors classement et la ferveur
+d'avant la saison restent dehors, un abonnement échu ne retire personne,
+cent vingt jours comptés, le plafond, la pose et le journal). `admin:ui` :
+2 de plus (le cadre à sa place, et fermé sans dernier jour).
+
+### Ce qui reste
+
+- **Gaël** : saisir le 31 décembre 2026 comme dernier jour de la saison 1,
+  puis, après deux semaines de jeu au moins, ouvrir le cadre et poser.
+
+---
+
+## 4 quinquagies bis. Le stade du match, au duel — celui de son Virage, montré dès la préparation
 
 *6 octobre 2026. Gaël a tranché sur la carte « Au duel, jouer dans le stade du
 match, comme au Virage ? » : « Celui du match » — tous les duels d'un match se
@@ -7799,7 +7849,7 @@ cloud (`refonte/README.md` § 6). `audit:ui --arenes` ne relève rien sur
 
 ---
 
-## 4 quinquagies bis. Trois décisions de Gaël — le reste des boosters, les bonus de KOP retirés, des saisons de quatre mois
+## 4 quinquagies ter. Trois décisions de Gaël — le reste des boosters, les bonus de KOP retirés, des saisons de quatre mois
 
 *6 octobre 2026, session cloud « Lot 7 : images Artlist ».
 Gaël a tranché ce jour-là les décisions que le chantier lui rendait

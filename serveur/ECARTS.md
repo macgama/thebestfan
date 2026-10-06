@@ -2374,7 +2374,7 @@ viennent.
    fonction que le Virage et la liste du duel appellent aussi
    (`stadeDuMatch`, `contenus/index.js`) ; la liste sert le `stade` de chaque
    match, et la préparation le pose sur l'affiche du match choisi. Voir
-   `CONTRATS.md`, § 17, et `HISTORIQUE.md`, 4 quinquagies.)*
+   `CONTRATS.md`, § 17, et `HISTORIQUE.md`, 4 quinquagies bis.)*
 
 Deux constats de la partie A, non corrigés, antérieurs au lot *(corrigés à
 la partie B : voir 10 et 11, plus bas)* :

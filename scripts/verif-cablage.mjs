@@ -86,6 +86,19 @@ check('server.js branche le fil du match sur le virage',
 check('server.js dit au virage les matchs que l’API ne rend plus',
   /onAbsent:\s*\([^)]*\)\s*=>\s*virage\.matchAbsent\(/.test(serveur));
 
+/* Les notifications : construites avant le KOP et les duels, et passées aux
+   deux. Reçues à `null`, un vote qui s'ouvre et un duel classé qui attend ne
+   préviendraient personne hors de la page — et rien ne le dirait. */
+{
+  const construites = serveur.indexOf('notifications = createNotifications(');
+  const kopIci = serveur.search(/kop = createKop\(\{[^}]*notifications/);
+  const nvnIci = serveur.search(/nvn = createNvN\(\{[^}]*notifications/);
+  check('server.js passe les notifications au KOP', kopIci > construites && construites > 0);
+  check('server.js passe les notifications aux duels', nvnIci > construites && construites > 0);
+  check('server.js monte les routes des notifications',
+    /app\.use\('\/api\/notifications',\s*notifications\.router\)/.test(serveur));
+}
+
 /* ------------------------- les crochets du suivi atteignent-ils le relevé ? */
 
 /**

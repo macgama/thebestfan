@@ -106,6 +106,12 @@ await page.goto(base + '/admin', { waitUntil: 'networkidle0' });
 check('la page se charge sans erreur de script', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
+/* Le décor commun (photo et voile, calques fixes à z-index 0) passait devant
+   tout le contenu de cette page, qui n'a pas la colonne `#app` pour s'élever
+   au-dessus : les chiffres de l'aperçu et les tableaux étaient invisibles. */
+check('aucun décor ne recouvre l’administration', await page.evaluate(() =>
+  !document.querySelector('.tbf-decor, .tbf-grad')));
+
 /* ------------------------------------------------------------ la liste */
 
 await page.evaluate(() => [...document.querySelectorAll('nav button')]
@@ -303,6 +309,28 @@ await page.evaluate(() => [...document.querySelectorAll('nav button')]
 
 check('l’écran des réglages se peuple depuis le registre', await jusqua(async () =>
   await page.evaluate(() => document.querySelectorAll('#main .rg').length > 15)));
+
+/* Le recalage des divisions se pose dans la section de la saison, au-dessus
+   des quatre seuils. La saison 1 reprise n'a pas de dernier jour : rien ne se
+   projette, et le bouton le montre au lieu d'échouer au clic. */
+{
+  const recal = await page.evaluate(() => {
+    const el = document.getElementById('recalage');
+    return el && {
+      section: el.closest('.sect')?.querySelector('h3')?.textContent ?? '',
+      texte: el.textContent.replace(/\s+/g, ' '),
+      ferme: document.getElementById('poser-recalage')?.disabled,
+      avantLesSeuils: Boolean(el.compareDocumentPosition(
+        document.querySelector('[data-rg="rang.habitue"]')) & Node.DOCUMENT_POSITION_FOLLOWING),
+    };
+  });
+  check('le recalage des divisions se pose dans la section de la saison, avant les seuils',
+    (recal && /SAISON/i.test(recal.section) && recal.avantLesSeuils
+      && /RECALER LES DIVISIONS/.test(recal.texte)) || (console.log('        ', recal), false));
+  check('sans dernier jour de jeu, il le dit et son bouton reste fermé',
+    (recal?.ferme === true && /dernier jour de jeu/.test(recal.texte))
+    || (console.log('        ', recal), false));
+}
 
 /* ------------------------- les avantages de l'abonnement se règlent d'ici
 

@@ -2466,6 +2466,73 @@ if (process.env.CAPTURE) {
     check('sans sauter', await sauts(page) === 0);
     await page.close();
 
+    /* Le carton rouge (6 octobre 2026) : un rouge pris par son club, après
+       une défaite, le met en colère, et le ticket l'écrit. */
+    const lignesDuTicket = (page) => page.evaluate(() => [...document.querySelectorAll(
+      '.tbf-ticket--retour li')].map((li) => li.textContent));
+    quotidien = visite({ ilYaMs: 18 * HEURE, matchs: [{ ...match('perdu', [0, 1]), rouges: 1 }] });
+    page = await ouvrir();
+    check('un rouge dans une défaite : il se fâche',
+      await jusqua(async () => (await visages(page)).includes('colere'), 6000)
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    check('sans abattement ni saut', !(await visages(page)).includes('depit') && await sauts(page) === 0
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    let lignes = await lignesDuTicket(page);
+    check('le ticket écrit le rouge', lignes.includes('FC Sion perd 0–1 · carton rouge')
+      || (console.log('        ticket :', lignes), false));
+    await page.close();
+
+    /* Un nul à dix : le rouge suffit à le fâcher. Deux rouges, au pluriel. */
+    quotidien = visite({ ilYaMs: 18 * HEURE, matchs: [{ ...match('nul', [1, 1]), rouges: 2 }] });
+    page = await ouvrir();
+    check('un nul avec deux rouges : il se fâche aussi',
+      await jusqua(async () => (await visages(page)).includes('colere'), 6000)
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    lignes = await lignesDuTicket(page);
+    check('« 2 cartons rouges »', lignes.includes('FC Sion fait nul 1–1 · 2 cartons rouges')
+      || (console.log('        ticket :', lignes), false));
+    await page.close();
+
+    /* Gagner à dix : la victoire l'emporte. */
+    quotidien = visite({ ilYaMs: 18 * HEURE, matchs: [{ ...match('gagne', [2, 1]), rouges: 1 }] });
+    page = await ouvrir();
+    check('une victoire malgré un rouge : il reste fier',
+      await jusqua(async () => (await visages(page)).includes('joie'), 6000)
+      && !(await visages(page)).includes('colere')
+      || (console.log('        visages :', (await visages(page)).join(' → ')), false));
+    await page.close();
+
+    /* Un nom trop long pour le rouge en entier : la ligne raccourcit le
+       rouge plutôt que de disparaître, et la colère suit ce qui est écrit.
+       La largeur du ticket décide : on allonge le nom jusqu'à trouver
+       chaque cas, sur la page même. */
+    page = await ouvrir(360, 760);
+    await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000);
+    const replis = await page.evaluate(() => {
+      const vus = {};
+      for (let n = 4; n <= 60; n++) {
+        const club = 'FC ' + 'Mönchengladbach'.repeat(4).slice(0, n);
+        const m = { fixtureId: 1, domicile: club, exterieur: 'Bâle', score: [0, 1], club,
+          issue: 'perdu', rouges: 1 };
+        const ecrit = montrerRetour({ matchs: [m] }) || [];
+        document.querySelectorAll('.tbf-ticket--retour').forEach((t) => t.remove());
+        const l = ecrit[0] ?? '';
+        const cas = l.endsWith(' · carton rouge') ? 'complet' : l.endsWith(' · rouge') ? 'court'
+          : l ? 'sans' : 'rien';
+        vus[cas] ??= { club, l, etat: recitDe({ matchs: [m] }, 0, ecrit)?.etat ?? null };
+      }
+      return vus;
+    });
+    check('un nom long : le rouge s’écrit court plutôt que la ligne ne tombe',
+      replis.complet && replis.court?.l === `${replis.court.club} perd 0–1 · rouge`
+      || (console.log('        replis :', JSON.stringify(replis)), false));
+    check('écrit court, le rouge le fâche encore', replis.court?.etat === 'decision'
+      || (console.log('        replis :', JSON.stringify(replis)), false));
+    check('trop long pour le rouge, la ligne reste et il n’est qu’abattu',
+      replis.sans?.l === `${replis.sans.club} perd 0–1` && replis.sans.etat === 'defaite'
+      || (console.log('        replis :', JSON.stringify(replis)), false));
+    await page.close();
+
     /* Trois jours sans venir, sans match à raconter : la fête, après le
        coucou — le salut garde son geste. */
     quotidien = visite({ ilYaMs: 72 * HEURE, souvenirs: 2 });

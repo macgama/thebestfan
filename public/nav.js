@@ -47,8 +47,17 @@
 
   /* Le décor, lui, reste à la porte de la connexion. La barre répare un défaut
      de navigation ; poser en plus la photo de tribune changerait l'allure d'un
-     écran qui a été dessiné sans elle, et ce n'est pas ce qu'on vient corriger. */
-  const SANS_DECOR = ['/compte'];
+     écran qui a été dessiné sans elle, et ce n'est pas ce qu'on vient corriger.
+
+     **`/admin` y entre, pour la raison inverse.** Le décor y avait été laissé
+     (voir `SANS_HAUT`, plus bas), et il effaçait la page : la photo et le
+     voile sont des calques fixes à `z-index:0`, et rien ne soulève le contenu
+     de l'administration au-dessus d'eux — elle n'a pas la colonne `#app` qui
+     le fait ailleurs. Les chiffres de l'aperçu, les cellules des tableaux et
+     le titre passaient dessous ; seuls les libellés translucides restaient
+     lisibles, parce qu'une opacité sous 1 les peint au niveau du décor. La
+     page a été dessinée sur son propre fond sombre : elle le retrouve. */
+  const SANS_DECOR = ['/compte', '/admin'];
 
   /* Écrans qui portent **leur propre** barre du haut.
    *
@@ -62,8 +71,8 @@
    * réécrit cette colonne en entier. La barre commune apparaissait puis
    * disparaissait, emportant sa flèche de retour avec elle.
    *
-   * On ne la monte donc plus là. Le décor, lui, reste : il est déjà à l'écran
-   * aujourd'hui, et ce n'est pas ce qu'on vient corriger. La flèche de cette
+   * On ne la monte donc plus là. Le décor non plus, depuis (`SANS_DECOR`,
+   * plus haut) : il passait devant le contenu. La flèche de cette
    * page est écrite dans son propre en-tête, et la poignée ci-dessous la
    * reconnaît comme les autres. */
   const SANS_HAUT = ['/admin'];

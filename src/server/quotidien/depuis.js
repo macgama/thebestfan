@@ -111,10 +111,22 @@ export async function lireDepuis(lire, userId, { ilYaMs, instantane }) {
       [userId, userId, userId, userId, userId]), []),
     /* Les matchs finis de ses clubs, au coup d'envoi postérieur à la marque.
        `kickoff_at` est en UTC : la borne est l'heure UTC moins l'absence,
-       mesurée en secondes Unix dans la base. */
+       mesurée en secondes Unix dans la base.
+
+       Et les cartons rouges de chaque camp, pour que le Fanzzy de l'accueil
+       se fâche de celui que son club a pris (lot 7). L'API en a deux : le
+       rouge direct et le second jaune, qui expulse tout autant. La
+       collation compare sans la casse — l'API écrit `Second Yellow card`,
+       mais rien ne garantit qu'elle s'y tienne. */
     essai(() => lire(
       `SELECT f.id, f.home_id, f.away_id, f.home_goals, f.away_goals,
               th.name AS domicile, ta.name AS exterieur,
+              (SELECT COUNT(*) FROM fixture_events e
+                WHERE e.fixture_id = f.id AND e.team_id = f.home_id AND e.type = 'Card'
+                  AND e.detail IN ('Red Card', 'Second Yellow card')) AS rouges_domicile,
+              (SELECT COUNT(*) FROM fixture_events e
+                WHERE e.fixture_id = f.id AND e.team_id = f.away_id AND e.type = 'Card'
+                  AND e.detail IN ('Red Card', 'Second Yellow card')) AS rouges_exterieur,
               (SELECT uf.team_id FROM user_follows uf
                 WHERE uf.user_id = ? AND uf.team_id IN (f.home_id, f.away_id)
                 ORDER BY uf.is_main DESC, uf.created_at LIMIT 1) AS club
@@ -178,6 +190,7 @@ export async function lireDepuis(lire, userId, { ilYaMs, instantane }) {
     const chezSoi = Number(x.club) === Number(x.home_id);
     const pour = Number(chezSoi ? x.home_goals : x.away_goals);
     const contre = Number(chezSoi ? x.away_goals : x.home_goals);
+    const rouges = Number(chezSoi ? x.rouges_domicile : x.rouges_exterieur) || 0;
     return {
       fixtureId: Number(x.id),
       domicile: x.domicile ?? '',
@@ -185,6 +198,9 @@ export async function lireDepuis(lire, userId, { ilYaMs, instantane }) {
       score: [Number(x.home_goals ?? 0), Number(x.away_goals ?? 0)],
       club: (chezSoi ? x.domicile : x.exterieur) ?? '',
       issue: pour > contre ? 'gagne' : pour < contre ? 'perdu' : 'nul',
+      /* Ceux du club suivi seulement, et absent sans rouge : un rouge de
+         l'adversaire ne fâche personne de ce côté-ci. */
+      ...(rouges > 0 ? { rouges } : {}),
     };
   });
   if (finis.length) d.matchs = finis;

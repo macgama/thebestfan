@@ -208,6 +208,9 @@ export function avecLieu(mods = {}, stade = null) {
  * connaître ni les écharpes ni le catalogue.
  */
 const ageSuivant = (f) => f?.ages?.[f.stade ?? 1];
+/** La tenue qu'un personnage porte à son âge du moment (`tenues`, lue par
+    `loadout`), `base` sans tenue mise à cet âge. */
+const tenueDe = (f) => f?.tenues?.[f.stade ?? 1] || 'base';
 
 
 /* ------------------------------------------------------------- duel */
@@ -1049,6 +1052,11 @@ export class DuelNvN {
     const equipe = (side) => [...this.joueurs.values()].filter((j) => j.side === side).map((j) => ({
       userId: j.userId, nom: j.nom, ferveur: j.ferveur, connecte: j.connecte,
       fanzzy: j.fanzzy[j.actif]?.id,
+      /* Son âge du moment et la tenue que son joueur lui a mise à cet âge :
+         l'arène dessine le personnage d'en face tel qu'il est, Relève comprise.
+         L'identifiant seul est la lignée, et disait toujours le premier âge. */
+      stade: j.fanzzy[j.actif]?.stade ?? 1,
+      skin: tenueDe(j.fanzzy[j.actif]),
       // Le souffle des autres est visible : c'est une information de jeu.
       breath: Math.round(j.breath),
     }));
