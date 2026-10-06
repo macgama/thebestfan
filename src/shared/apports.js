@@ -76,7 +76,9 @@ export function apportsDe({ fanzzy = null, stuff = [], kop = null, stade = null 
      non appliquée serait pire que pas de ligne. */
   for (const id of (stuff ?? []).slice(0, 2)) {
     const s = STUFF_BY_ID.get(id);
-    if (s && garni(s.mods)) out.push({ quoi: 'stuff', nom: s.nom, mods: s.mods });
+    /* `id` et `rar` : le Virage accroche ces pièces à côté de son Fanzzy, et
+       c'est d'ici qu'il les tient — le même sac que celui qui compte. */
+    if (s && garni(s.mods)) out.push({ quoi: 'stuff', id: s.id, rar: s.rar, nom: s.nom, mods: s.mods });
   }
 
   const duKop = seulsLesMods(kop);
