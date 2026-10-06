@@ -398,6 +398,15 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 @keyframes fzDuelAffaisse{35%{translate:0 5%}}
 @keyframes fzDuelRage{0%,100%{translate:0 0}15%,45%{translate:-4% 0}30%,60%{translate:4% 0}75%{translate:-2% 0}}
 @keyframes fzDuelEntre{from{translate:calc(var(--vers) * -60%) 0;opacity:0}}
+/* **Le chant de son geste** porte le sceau de sa famille, au coin haut-droit
+   que le coût laisse libre sur la carte du milieu. Le sceau de la carte
+   d'action, en sticker rond. */
+.chants .carte-sien{display:none;position:absolute;z-index:4;top:-10px;right:-6px;--taille:22px;--rot:0deg;
+  padding:0;background:var(--fam,var(--projo))}
+.chants .carte-sien>svg{width:14px;height:14px;fill:none;stroke:var(--encre);stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+.chants [data-sien]>.carte-sien{display:grid;place-items:center}
+
 /* **Son geste**, celui de sa famille (`GESTE_DE_FAMILLE`) : quand on réussit
    le chant de sa spécialité, il le chante à sa manière. `scale` et `rotate`
    reprennent la main le temps du geste, puis la pose tenue revient. */
@@ -4227,10 +4236,22 @@ function rendreChants(v) {
         <span class="g tbf-carte-geste"></span><span class="p tbf-carte-pousse"></span>
         <b class="tbf-carte-nom"></b>
         <span class="c tbf-sticker tbf-sticker--rond tbf-carte-cout"></span>
+        <span class="tbf-sticker tbf-sticker--rond carte-sien" aria-hidden="true"><svg viewBox="0 0 24 24"><path d=""/></svg></span>
         <span class="tbf-sticker tbf-carte-manque" data-ton="flare"></span></button>`);
     },
     (el, _cle, i) => {
       const c = chants[i];
+      /* **Son geste** : le chant de la spécialité du Fanzzy en tribune porte le
+         sceau de sa famille, au coin que le coût laisse libre. Le serveur le
+         place au milieu de l'éventail, la seule carte entière. */
+      const sien = Boolean(c.sien);
+      if (el.hasAttribute('data-sien') !== sien) el.toggleAttribute('data-sien', sien);
+      if (sien) {
+        const chemin = el.querySelector('.carte-sien path');
+        if (chemin && chemin.getAttribute('d') !== (c.sien.ico ?? '')) chemin.setAttribute('d', c.sien.ico ?? '');
+        el.style.setProperty('--fam', c.sien.c ?? 'var(--projo)');
+        el.setAttribute('aria-label', `${c.nom ?? c.id}, le geste de ton Fanzzy`);
+      } else if (el.hasAttribute('aria-label')) el.removeAttribute('aria-label');
       const manque = souffle < c.cost ? c.cost - souffle : 0;
       const hors = Boolean(muet || v.termine || manque);
       el.classList.toggle('dim', hors);

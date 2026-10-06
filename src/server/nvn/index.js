@@ -901,8 +901,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
                Il prend au hasard : un bot qui optimiserait son souffle serait
                un adversaire d'entraînement plus dur qu'un humain. */
-            const chant = salle.duel.repertoire[
-              Math.floor(Math.random() * salle.duel.repertoire.length)];
+            const offre = salle.duel.offreDe(salle.duel.joueurs.get(userId));
+            const chant = offre[Math.floor(Math.random() * offre.length)];
             /* Par le même chemin que les joueurs : le verdict de son chant
                part à la salle, et ses PARFAITS au bilan (« un bot a les
                siens », CONTRATS.md § 17). */
