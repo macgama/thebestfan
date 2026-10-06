@@ -8053,10 +8053,11 @@ section seule le manquaient, et ils lui laissent une seconde.
 puis redessiné. `virage:ui` : 4, la corde, la carte-souvenir qui attend, puis
 le rouge, puis « GOAL ! » qui reste.
 
-Les 71 suites (`npm test`, 5 897 contrôles), passées sur la branche une fois
+Les 74 suites (`npm test`, 6 053 contrôles), passées sur la branche une fois
 fondus le stade du match, les trois décisions de saison 2 et le `main` du
 jour (notifications, carton rouge, tenue d'en face, seuils de division,
-collection de stades, le Fanzzy qui parle), n'ont aucune rouge nouvelle :
+collection de stades, le Fanzzy qui parle, le pronostic, les tenues en
+boutique, les pages en largeur), n'ont aucune rouge nouvelle :
 celles qui restent rougissent à l'identique sur `main` dans un conteneur
 cloud (`equipes:ui` 3, `deck:ui` 1, `nvn:ui` 1, `virage:ui` 4). Deux
 fusions ont demandé plus que des conflits de texte : la suite des
