@@ -1,8 +1,13 @@
 /** Test des decks et du choix du match support. */
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
 import { createDecks, FORMATS, primeDeFormat } from '../src/server/deck/index.js';
+/* Le moteur du duel, pour le seul stade où il jouera un match : celui que la
+   liste doit annoncer (voir « le stade du match, sur la liste et à
+   l'entrée »). */
+import { DuelNvN } from '../src/server/nvn/engine.js';
 import { ACTIONS, DECK_RULES } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
@@ -657,6 +662,32 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
   check(`la liste et l’entrée disent le même mode et le même enJeu (${liste.length} matchs)`,
     liste.length > 3 && ecarts.length === 0
     || (console.log('       ', ecarts.join('\n        ')), false));
+
+  /* **Le stade du match, sur la liste et à l'entrée** (décision de Gaël,
+     6 octobre 2026 : tous les duels d'un match se jouent dans son stade, et
+     la préparation le montre avant l'entrée en file). La page n'en sait que
+     ce que le serveur lui sert : chaque match de la liste porte `stade`, la
+     route d'un match le même, et c'est celui où le moteur jouera — comparé ici
+     à un duel monté sur ce match par le moteur lui-même, sous un identifiant
+     tiré comme en production. Un stade servi sans rapport avec la partie
+     passerait un contrôle de présence ; pas celui-ci. */
+  {
+    const faux = [];
+    const lieux = new Set();
+    for (const m of liste) {
+      const x = await call(`/api/deck/match/${m.id}`);
+      const joue = new DuelNvN({ id: randomUUID(), equipes: [[], []], fixture: { id: m.id } }).stade;
+      lieux.add(m.stade?.id);
+      if (!m.stade?.nom || !m.stade.effet || m.stade.id !== joue?.id || !pareil(x.json.stade, m.stade)) {
+        faux.push(`${m.id} : liste ${m.stade?.id ?? 'rien'} · entrée ${x.json.stade?.id ?? 'rien'} · duel ${joue?.id}`);
+      }
+    }
+    check(`chaque match sert le stade où ses duels se joueront, sur la liste et à l’entrée (${
+      liste.length} matchs, ${lieux.size} lieux)`,
+    liste.length > 3 && lieux.size > 1 && faux.length === 0
+      || (console.log('       ', faux.join('\n        ')), false));
+  }
+
   const decale = liste.find((m) => m.id === 7001);
   check('une date servie avec son décalage reste du jour où elle tombe en UTC',
     decale?.mode === 'classe'

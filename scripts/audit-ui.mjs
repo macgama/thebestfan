@@ -4028,7 +4028,7 @@ const ENTREE_MS = 2200;
     diront. */
 async function fabriquerLesArenes() {
   const [{ LISTE_CHANTS }, { ACTIONS, ACTIONS_VIRAGE }, { resoudreGeste }, { BY_ID }, { STADE_BY_ID },
-    { apportsDe }, { progression }, { enJeuDe, journeeDuMatch }, { verdictDe }] = await Promise.all([
+    { apportsDe }, { progression }, { enJeuDe, journeeDuMatch, lieuServi }, { verdictDe }] = await Promise.all([
     import('../src/shared/duel/chants.js'), import('../src/shared/duel/actions.js'),
     import('../src/server/ferveur/gestures.js'), import('../src/shared/fanzzy/dex.js'),
     import('../src/shared/stades.js'), import('../src/shared/apports.js'), import('../src/shared/niveau.js'),
@@ -4208,19 +4208,28 @@ async function fabriquerLesArenes() {
   const AUTRES_COULEURS = [['#C8102E', '#FFFFFF'], ['#1D428A']];
   const ENTRAINEMENT = { id: 990714, statut: 'NS', kickoff: iso(26 * 3_600_000),
     clubs: [{ id: 92, name: 'FC Lugano' }, { id: 93, name: 'Servette FC' }], couleurs: AUTRES_COULEURS };
+  /* **Et le stade de chacun** (§ 17, décision du 6 octobre 2026) : celui où
+     ses duels se jouent, que la préparation pose sur l'affiche du match
+     choisi. Le second a celui que le serveur tire pour lui (`lieuServi`) ;
+     le classé du jour, celui de la vue du duel, plus bas — le Chaudron,
+     fabriqué comme le reste de ce duel : le tirage lui en donnerait un
+     autre, et la liste doit dire le lieu du duel qu'on y joue. Un dépôt
+     d'avant la décision ne sert pas de stade : la liste n'en porte pas. */
+  const lieuEntrainement = typeof lieuServi === 'function' ? lieuServi(ENTRAINEMENT.id) : undefined;
   const matchsDuel = () => ({ matchs: [
     { id: MATCH_ARENE, status_short: '2H', elapsed: 66, kickoff_at: iso(-70 * 60_000), home_goals: 2, away_goals: 1,
       home_name: CLUBS[0].name, home_logo: BLASON, away_name: CLUBS[1].name, away_logo: BLASON,
       league_name: 'Super League', enCours: true, termine: false,
       raison: 'Le match est en cours : ce duel comptera au classement.', aujourdhui: 1,
-      mode: 'classe', mien: true, monCamp: 0, enJeu, homeColors: COULEURS[0], awayColors: COULEURS[1] },
+      mode: 'classe', mien: true, monCamp: 0, enJeu, homeColors: COULEURS[0], awayColors: COULEURS[1],
+      ...(lieuEntrainement ? { stade: lieu } : {}) },
     { id: ENTRAINEMENT.id, status_short: ENTRAINEMENT.statut, elapsed: null, kickoff_at: ENTRAINEMENT.kickoff,
       home_goals: null, away_goals: null, home_name: ENTRAINEMENT.clubs[0].name, home_logo: BLASON,
       away_name: ENTRAINEMENT.clubs[1].name, away_logo: BLASON,
       league_name: 'Super League', enCours: false, termine: false,
       raison: 'Match à venir : entraînement, sans effet sur le classement.', aujourdhui: 0,
       mode: 'entrainement', mien: false, monCamp: null, enJeu: enJeuDe('entrainement', false),
-      homeColors: AUTRES_COULEURS[0], awayColors: AUTRES_COULEURS[1] },
+      homeColors: AUTRES_COULEURS[0], awayColors: AUTRES_COULEURS[1], stade: lieuEntrainement },
   ] });
   const loadout = () => ({ fanzzy: equipe, actions: deck, mainVisible: 5 });
   const attentes = () => ({ attentes: [{ fixtureId: MATCH_ARENE, format: '1v1', camps: [0, 1], attendus: 1 }] });
