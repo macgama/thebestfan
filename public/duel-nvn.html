@@ -2940,10 +2940,10 @@ function teteSaute(userId) {
    aucun dessin laisse sa place au supporter générique, comme à l'accueil :
    quelqu'un d'autre, mais quelqu'un.
 
-   Celui d'en face est **le premier joueur connecté de sa tribune**, au
-   dessin de base : le serveur ne dit pas sa tenue, et n'a aucune raison de
-   le faire (voir `vignetteFz`). Le mien suit la Relève et le changement de
-   Fanzzy : c'est l'actif de la vue, à son âge. */
+   Celui d'en face est **le premier joueur connecté de sa tribune**, à son
+   âge et dans la tenue que son joueur lui a mise à cet âge : la vue les
+   donne (`equipes[].stade`, `equipes[].skin`). Le mien suit la Relève et le
+   changement de Fanzzy : c'est l'actif de la vue, à son âge, dans sa tenue. */
 
 /** Les quatre poses du supporter générique, par moment (celles de
     l'accueil). Il n'a pas de colère : il garde son visage, et trépigne. */
@@ -2976,6 +2976,14 @@ Promise.resolve(window.TBF_ETATS?.charger?.()).catch(() => null).then(() => {
   if (S.vue) rendreFzArene(S.vue);
 });
 
+/** La tenue d'un de mes Fanzzy à cet âge : celle que la vue porte
+    (`tenues`, par âge), sinon celle de mon avatar s'il s'agit de lui — un
+    serveur d'avant ne la donnait pas. */
+function tenueEnJeu(f, evo, racine) {
+  if (f?.tenues) return f.tenues[evo] || 'base';
+  return monAvatar?.id === racine ? (monAvatar.skin || 'base') : 'base';
+}
+
 const racineFz = (id) => /^([A-Z]+\d+)/.exec(String(id ?? ''))?.[1] ?? null;
 /** L'âge qu'un identifiant porte : `RP1` vaut un, `RP1B` deux. */
 const ageFz = (id) => {
@@ -2990,15 +2998,15 @@ function quiEnTribune(v, cote) {
     const f = (v.moi.fanzzy ?? []).find((x) => x.actif);
     const racine = racineFz(f?.id);
     if (!racine) return null;
-    return { id: f.id, racine, evo: Number(f.stade) || ageFz(f.id),
-      skin: monAvatar?.id === racine ? (monAvatar.skin || 'base') : 'base' };
+    const evo = Number(f.stade) || ageFz(f.id);
+    return { id: f.id, racine, evo, skin: tenueEnJeu(f, evo, racine) };
   }
   const tribune = v.equipes?.[cote === 'moi' ? mon : mon ^ 1] ?? [];
   const j = tribune.find((x) => x?.fanzzy && x.connecte !== false) ?? tribune.find((x) => x?.fanzzy);
   const racine = racineFz(j?.fanzzy);
   /* `parti` : toute sa tribune a quitté le duel. Il reste, terni, comme ses
      supporters assis (`dessinerFoule`) : on voit qu'il n'y a plus personne. */
-  return racine ? { id: j.fanzzy, racine, evo: ageFz(j.fanzzy), skin: 'base',
+  return racine ? { id: j.fanzzy, racine, evo: Number(j.stade) || ageFz(j.fanzzy), skin: j.skin || 'base',
     parti: tribune.every((x) => x?.connecte === false) } : null;
 }
 
@@ -3117,14 +3125,17 @@ function rendreFzArene(v) {
     const el = $(f.id);
     if (!el) continue;
     const qui = quiEnTribune(v, f.cote);
-    const cle = qui ? `${qui.id}|${qui.skin}` : '';
+    /* L'âge dans la clé : l'identifiant est la lignée, et ne change pas
+       quand la Relève fait grandir le personnage. */
+    const cle = qui ? `${qui.id}|${qui.evo}|${qui.skin}` : '';
     if (cle !== f.cle) {
       /* Un autre Fanzzy entre en glissant depuis sa ligne ; le même qui
          grandit (la Relève) saute sur place ; la tenue arrivée en retard
          (le portefeuille répond après la première vue) ne fait rien. */
-      const avant = f.cle.split('|')[0];
-      const geste = !avant || avant === qui?.id ? null
-        : racineFz(avant) === qui?.racine ? 'saut' : 'entre';
+      const [avant, evoAvant] = f.cle.split('|');
+      const geste = !avant || !qui ? null
+        : avant !== qui.id ? (racineFz(avant) === qui.racine ? 'saut' : 'entre')
+          : evoAvant !== String(qui.evo) ? 'saut' : null;
       f.cle = cle;
       f.qui = qui ? { ...qui, supporter: !dessinFzArene(qui, 'neutre') } : null;
       if (el.hidden === Boolean(qui)) el.hidden = !qui;
@@ -3566,13 +3577,16 @@ function vignetteFz(f, entre, couleur, rang = 0) {
      d'un côté, « TR32B » de l'autre pour le même personnage. */
   const racine = (s) => /^([A-Z]+\d+)/.exec(String(s ?? ''))?.[1] ?? s;
   const mien = monAvatar && racine(f.id) === monAvatar.id;
-  /* Le sien passe par la fonction unique ; ceux d'en face gardent leur
-     dessin de base — le serveur ne dit pas leur tenue, et n'a aucune raison
-     de le faire. L'âge suit la partie : la carte Relève fait grandir en
-     cours de match, et la vignette doit le montrer. */
+  /* Le sien passe par la fonction unique ; ceux d'en face aussi, dans la
+     tenue que l'affiche dit (`skin`) — un serveur d'avant ne la donnait pas,
+     et ils gardent alors leur dessin de base. L'âge suit la partie : la carte
+     Relève fait grandir en cours de match, et la vignette doit le montrer. */
   const src = mien
-    ? window.FZART?.dessinAvatar?.({ ...monAvatar, age: f.id, evo: f.stade ?? 1 }, 'plein')
-    : dessinFz(f.id, 'plein');
+    ? window.FZART?.dessinAvatar?.({ ...monAvatar, age: f.id, evo: f.stade ?? 1,
+      ...(f.skin ? { skin: f.skin } : {}) }, 'plein')
+    : f.skin && f.skin !== 'base'
+      ? window.FZART?.dessinAvatar?.({ id: racine(f.id), age: f.id, evo: f.stade ?? 1, skin: f.skin }, 'plein')
+      : dessinFz(f.id, 'plein');
   return `<div class="fz-aff tbf-glisse ${entre ? 'entre' : ''}" style="--ac:${couleur};--d:${rang * 160}ms">
     ${src ? `<img alt="" loading="lazy" src="${src}">` : ''}
     ${entre ? `<span class="tag tbf-sticker" ${couleur === 'var(--bleu)' ? 'data-ton="bleu"' : 'data-ton="or"'}>ENTRE</span>` : ''}
@@ -3946,7 +3960,7 @@ function poseDuBilan(id, etat) {
   const actif = (S.vue?.moi?.fanzzy ?? []).find((f) => f.id === id);
   const lettre = /^[A-Z]+\d+([A-Z])$/.exec(String(id))?.[1];
   const evo = Number(actif?.stade) || (lettre ? lettre.charCodeAt(0) - 64 : 1);
-  const skin = monAvatar?.id === racine ? (monAvatar.skin || 'base') : 'base';
+  const skin = tenueEnJeu(actif, evo, racine);
   try {
     return window.FZART.dessinAvatar({ id: racine, age: id, evo, skin }, 'plein', { etat }) ?? null;
   } catch { return null; }

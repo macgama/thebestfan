@@ -341,8 +341,9 @@ acquise pour la saison, même si d'autres joueurs vous dépassent.
 - **Les seuils sont incertains d'un facteur deux** : la ferveur réelle des
   joueurs de production n'est pas connue d'ici. Il faut viser environ 70 %,
   40 %, 15 % et 4 % des joueurs actifs sans abonnement pour Habitué, Fervent,
-  Ultra et Capo. Relever un seuil en cours de saison ne retire rien à qui l'a
-  déjà récupéré. Une division atteinte mais pas encore récupérée suit le
+  Ultra et Capo (`/admin`, RÉGLAGES, cadre RECALER LES DIVISIONS, qui
+  écarte les abonnés et borne chaque seuil au gratuit assidu). Relever un
+  seuil en cours de saison ne retire rien à qui l'a déjà récupéré. Une division atteinte mais pas encore récupérée suit le
   nouveau seuil.
 - L'insigne est la couleur de l'écharpe autour de l'avatar. Elle ne donne
   aucune puissance. RÉCUPÉRER, c'est la porter : le geste reste, sans
