@@ -5,10 +5,12 @@ import { randomUUID } from 'node:crypto';
 import express from 'express';
 import { createFanzzy, MAX_PACKS, PACKS_DEPART, PACK_PRICE, CHEMINS_NOUVEAUTES,
   SORTES_NOUVEAUTE, cleDeCarte } from '../src/server/fanzzy/index.js';
-import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
+import { DEX, BY_ID, SETS, POIGNEE_DE_REPLI } from '../src/shared/fanzzy/dex.js';
+import { ETATS_DESSINES } from '../src/shared/fanzzy/rendus.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
-import { charger as chargerCatalogue, obtenables, chargerSeries, lignee } from '../src/server/fanzzy/catalogue.js';
+import { charger as chargerCatalogue, obtenables, chargerSeries, lignee, publies }
+  from '../src/server/fanzzy/catalogue.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
 import { chargerTenues, tenuesPubliees } from '../src/server/fanzzy/tenues.js';
 import * as moduleSaisons from '../src/server/fanzzy/saisons.js';
@@ -906,6 +908,60 @@ console.log('\n  ce qu’une ouverture a prélevé');
   } finally {
     poserReglages({});
   }
+}
+
+/* ---------------------------------------- le repli : deux écharpes, pas une poignée
+
+   Un joueur qui possédait tout ce qu'une catégorie peut donner retombait sur
+   une poignée entière, 11,5 écharpes en moyenne, et un booster lui rendait plus
+   qu'il ne coûtait. Gaël a tranché le 6 octobre 2026 : la catégorie épuisée
+   rend la poignée de repli (`POIGNEE_DE_REPLI`, deux écharpes), et la
+   catégorie des écharpes garde sa poignée.
+
+   On l'éprouve sur le joueur qui a vraiment tout : chaque personnage de la
+   série à son premier âge, chaque tenue et chaque état de cet âge, chaque
+   pièce et chaque carte d'action. Une place ouverte ne peut plus lui rendre
+   qu'un repli, une poignée ou une pièce en double, et le premier contrôle
+   vérifie d'abord ce décor : chez un joueur à qui il manque quelque chose,
+   un repli absent ne prouverait rien.
+
+   Les replis doivent **l'emporter** sur les poignées, comme les catégories
+   qui se replient (action, tenue, état : 54 %) sur celle des écharpes (23 %).
+   Un repli posé dans une seule branche — l'action, et pas la tenue ni l'état
+   — en donnerait moins que de poignées, et le second contrôle rougirait. */
+console.log('\n  le repli : deux écharpes, la catégorie épuisée');
+{
+  const SERIE = 'IM';
+  const R = await joueur('Repli');
+  const siens = publies().filter((f) => f.set === SERIE && f.stage === 1).map((f) => f.id);
+  const tenues = tenuesPubliees().filter((t) => t.id !== 'base').map((t) => t.id);
+  await pool.query('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES ?',
+    [siens.map((id) => [R, id, 1, 1])]);
+  if (tenues.length) {
+    await pool.query('INSERT INTO user_skins (user_id, fanzzy_id, stage, skin_id) VALUES ?',
+      [siens.flatMap((id) => tenues.map((t) => [R, id, 1, t]))]);
+  }
+  await pool.query('INSERT INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES ?',
+    [siens.flatMap((id) => ETATS_DESSINES.map((e) => [R, id, 1, e]))]);
+  await pool.query('INSERT INTO user_stuff (user_id, stuff_id, copies) VALUES ?',
+    [STUFF.map((s) => [R, s.id, 1])]);
+  await pool.query('UPDATE user_wallet SET action_cards = ?, packs = 40 WHERE user_id = ?',
+    [JSON.stringify(ACTIONS.map((a) => a.id)), R]);
+
+  const cartes = [];
+  for (let i = 0; i < 40; i++) cartes.push(...((await ouvrir(R, SERIE)).json.cards ?? []));
+  const neuves = cartes.filter((c) => c.new).map((c) => `${c.type}:${c.id}`);
+  const montants = cartes.filter((c) => c.type === 'echarpes').map((c) => c.montant);
+  const replis = montants.filter((n) => n === POIGNEE_DE_REPLI).length;
+  const poignees = montants.filter((n) => n > POIGNEE_DE_REPLI).length;
+  const decor = siens.length > 0 && cartes.length === 200 && neuves.length === 0;
+  check(`une catégorie épuisée rend ${POIGNEE_DE_REPLI} écharpes, celle des écharpes sa `
+    + `poignée (${replis} replis, ${poignees} poignées sur ${cartes.length} cartes)`,
+  (decor && replis > 0 && poignees > 0 && replis + poignees === montants.length)
+    || (console.log('        cartes :', cartes.length, '· neuves :', neuves.slice(0, 5).join(', '),
+      '· montants :', [...new Set(montants)].join(', ')), false));
+  check('et les replis l’emportent sur les poignées, comme les catégories qui se replient',
+    replis > poignees || (console.log('        replis :', replis, '· poignées :', poignees), false));
 }
 
 /* ------------------------------------------------------- les nouveautés (§ 2) */

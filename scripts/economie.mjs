@@ -160,10 +160,13 @@ function ouvrir(setId) {
   for (let i = 0; i < TAILLE_PAQUET; i++) {
     /* Une place ouverte ne rend jamais de supporter. Le serveur y appelle
        `tirerAutreChose`, qui **ne peut pas échouer** : chaque catégorie sans
-       stock retombe sur les écharpes, jamais sur le supporter tiré. La carte de
-       collection de cette place est donc perdue quoi qu'il arrive — c'est la
-       différence avec l'ancienne version, où la place revenait au supporter dès
-       que le joueur n'avait rien à habiller. */
+       stock retombe sur les écharpes — deux, la poignée de repli, depuis le
+       6 octobre 2026 —, jamais sur le supporter tiré. La carte de collection
+       de cette place est donc perdue quoi qu'il arrive — c'est la différence
+       avec l'ancienne version, où la place revenait au supporter dès que le
+       joueur n'avait rien à habiller. Ces deux écharpes-là ne sont pas
+       comptées ici : la simulation ne suit que la collection des supporters,
+       et `serveur/sim-eco.mjs` mesure le reste. */
     const ouverte = i >= PLACES_SUPPORTER_SURES + 1
       || (i === PLACES_SUPPORTER_SURES && Math.random() >= CHANCE_DEUXIEME);
     if (ouverte) {
