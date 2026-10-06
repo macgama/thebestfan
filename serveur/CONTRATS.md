@@ -971,7 +971,7 @@ marquée date d'au moins `quotidien.retour_heures` (3 h par défaut) :
 | `amis.demandes` | entier | demandes reçues et en attente, arrivées depuis |
 | `kops[]` | tableau | par KOP du joueur où il s'est passé quelque chose : `arrivees` (pseudos, au plus 5), `verse` (écharpes versées au pot depuis), `pot` avant/après, `votes` clos depuis avec `issue` ∈ `"adopte"` \| `"rejete"` (les valeurs de la table `kop_votes`) |
 | `invitationsKop` | entier | invitations à un KOP reçues depuis |
-| `matchs[]` | tableau | matchs terminés des clubs suivis, au plus 3 : `issue` ∈ `"gagne"` \| `"nul"` \| `"perdu"` du point de vue de `club` |
+| `matchs[]` | tableau | matchs terminés des clubs suivis, au plus 3 : `issue` ∈ `"gagne"` \| `"nul"` \| `"perdu"` du point de vue de `club` ; `rouges` (entier), les cartons rouges pris par `club` (rouge direct ou second jaune), absent s'il n'en a pris aucun |
 | `souvenirs` | entier | cartes-souvenirs gagnées depuis |
 | `saison` | `{ id, numero, nom }` | une saison lancée depuis |
 

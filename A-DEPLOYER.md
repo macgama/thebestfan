@@ -1,5 +1,26 @@
 # À déposer sur Infomaniak
 
+**Le carton rouge au Fanzzy de l'accueil** (branche
+`claude/carton-rouge-q3bnc0`, 6 octobre 2026, lot 7, confié par Gaël). Il se
+dépose avec ce qui est en dessous, ou seul.
+
+- `src/server/quotidien/depuis.js` : le résumé « Depuis ta dernière visite »
+  compte les cartons rouges que le club suivi a pris dans chaque match (le
+  rouge direct et le second jaune ; pas ceux de l'adversaire). Contrôlé par
+  `npm run quotidien:smoke` (un contrôle neuf).
+- `public/index.html` : le ticket l'écrit (« FC Sion perd 0–1 · carton
+  rouge », raccourci en « · rouge » si la ligne est trop longue), et le
+  Fanzzy se fâche à l'arrivée, sans sauter, après une défaite ou un nul où
+  son club a pris un rouge. Après une victoire, il reste fier. Contrôlé par
+  `npm run accueil:ui` (huit contrôles neufs).
+
+**Aucun schéma ni réglage** : les cartons sont déjà rangés dans
+`fixture_events`. **Un redémarrage** pour le serveur, hors d'un match en
+direct ; la page seule n'en demande pas, mais sans le serveur à jour elle ne
+reçoit aucun rouge à raconter.
+
+---
+
 **L'administration lisible** (branche `claude/sons-fid6tr`, 6 octobre 2026,
 vu par Gaël sur `/admin`). Il se dépose avec ce qui est en dessous, ou seul.
 
