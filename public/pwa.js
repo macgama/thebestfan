@@ -130,6 +130,111 @@
     window.dispatchEvent(new CustomEvent('tbf-pwa'));
   });
 
+  /* ----------------------------------------------------- les notifications
+
+     Ce que la page du compte et la déconnexion demandent ; le serveur est
+     dans `src/server/notifications/index.js`, l'affichage dans `sw.js`.
+
+     Ici et non dans la page du compte, parce que **la déconnexion** en a
+     besoin et qu'elle se fait aussi depuis le tiroir (`menu.js`) : un
+     téléphone qu'on rend ne doit plus annoncer les votes du KOP de celui qui
+     s'en est servi. Ce fichier est le seul que toutes les pages chargent. */
+  const NOTIF = '/api/notifications';
+  const appel = async (chemin, methode = 'GET', corps) => {
+    const r = await fetch(NOTIF + chemin, {
+      method: methode, credentials: 'same-origin',
+      headers: corps ? { 'content-type': 'application/json' } : undefined,
+      body: corps ? JSON.stringify(corps) : undefined,
+    });
+    const json = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(json.error || `notifications ${r.status}`);
+    return json;
+  };
+  /* La clé publique du serveur, en octets : `subscribe` ne prend pas le
+     base64url que le serveur sert. */
+  const octets = (b64) => {
+    const brut = atob((b64 + '='.repeat((4 - b64.length % 4) % 4))
+      .replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(brut, (c) => c.charCodeAt(0));
+  };
+  const inscription = async () => {
+    if (!('serviceWorker' in navigator)) return null;
+    const reg = await navigator.serviceWorker.getRegistration('/');
+    return (await reg?.pushManager?.getSubscription?.()) ?? null;
+  };
+
+  window.TBF_NOTIF = {
+    /**
+     * Où en est cet appareil. `raison` dit pourquoi on ne peut rien proposer :
+     * `eteintes` (le serveur), `ios` (un iPhone hors de l'application
+     * installée : Safari n'y reçoit rien), `navigateur` (pas de notifications
+     * du tout), `refusees` (le joueur a dit non à la fenêtre du navigateur).
+     */
+    async etat() {
+      const s = await appel('').catch(() => ({ actif: false }));
+      if (!s.actif) return { possible: false, raison: 'eteintes' };
+      const outille = 'serviceWorker' in navigator && 'PushManager' in window
+        && 'Notification' in window;
+      if (!outille) {
+        return { possible: false, raison: etat.ios && !etat.installe ? 'ios' : 'navigateur' };
+      }
+      if (Notification.permission === 'denied') return { possible: false, raison: 'refusees' };
+      const ins = await inscription().catch(() => null);
+      const lu = ins ? await appel('/etat', 'POST', { endpoint: ins.endpoint })
+        .catch(() => ({ sujets: null })) : { sujets: null };
+      return { possible: true, sujets: lu.sujets ?? { kop: false, duel: false } };
+    },
+
+    /**
+     * Pose les cases de cet appareil. La première case cochée ouvre la fenêtre
+     * du navigateur ; toutes décochées, l'appareil est oublié. Rend les cases
+     * telles que le serveur les a gardées, ou lève avec la raison.
+     */
+    async poser(sujets) {
+      const veut = Boolean(sujets.kop || sujets.duel);
+      let ins = await inscription();
+      if (!veut) {
+        if (ins) {
+          await appel('/appareil', 'DELETE', { endpoint: ins.endpoint }).catch(() => {});
+          await ins.unsubscribe().catch(() => {});
+        }
+        return { kop: false, duel: false };
+      }
+      if (Notification.permission !== 'granted') {
+        const p = await Notification.requestPermission();
+        if (p !== 'granted') throw new Error(p === 'denied' ? 'refusees' : 'sans_reponse');
+      }
+      const { cle } = await appel('');
+      const reg = await navigator.serviceWorker.ready;
+      if (!ins) {
+        try {
+          ins = await reg.pushManager.subscribe({ userVisibleOnly: true,
+            applicationServerKey: octets(cle) });
+        } catch (e) {
+          /* Une inscription d'avant, faite avec une autre clé : on la défait
+             et l'on recommence, une fois. */
+          const vieille = await reg.pushManager.getSubscription();
+          if (!vieille) throw e;
+          await vieille.unsubscribe();
+          ins = await reg.pushManager.subscribe({ userVisibleOnly: true,
+            applicationServerKey: octets(cle) });
+        }
+      }
+      const r = await appel('/appareil', 'PUT', { abonnement: ins.toJSON(), sujets });
+      return r.sujets ?? { kop: false, duel: false };
+    },
+
+    /** Oublie cet appareil : à appeler **avant** la déconnexion, qui ferme la session. */
+    async oublier() {
+      try {
+        const ins = await inscription();
+        if (!ins) return;
+        await appel('/appareil', 'DELETE', { endpoint: ins.endpoint }).catch(() => {});
+        await ins.unsubscribe().catch(() => {});
+      } catch { /* rien à oublier */ }
+    },
+  };
+
   window.addEventListener('appinstalled', () => {
     etat.installe = true;
     etat.possible = false;

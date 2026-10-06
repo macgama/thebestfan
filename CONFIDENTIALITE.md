@@ -107,6 +107,29 @@ il vaut à ta prochaine entrée : les amis qui t'y ont vu entrer le savent
 déjà, et apprennent seulement ton départ. Ce choix est gardé tant que ton
 compte existe ; il est effacé avec lui.
 
+### Les notifications
+
+> **À faire relire.** Paragraphe écrit d'après `src/server/notifications/index.js`
+> et `sql/notifications.sql` ; `npm run notifications:smoke` vérifie ce qu'il
+> promet.
+
+Si tu les actives dans **Mon compte**, ton appareil peut être prévenu même le
+jeu fermé, pour deux choses seulement : **un vote de ton KOP qui s'ouvre**, et
+**un duel classé qui attend un supporter de ton club**. Tu choisis l'une, l'autre
+ou les deux, appareil par appareil, et ton navigateur te le redemande par sa
+propre fenêtre. Rien n'est envoyé **la nuit**, de 22 h à 8 h (heure de Zurich).
+Un message ne nomme jamais un joueur : il parle de clubs, de ton KOP, d'un
+bonus.
+
+Pour cela nous gardons, **par appareil**, l'adresse d'envoi que ton navigateur
+nous donne et ses deux clés de chiffrement, avec tes deux choix. Rien d'autre :
+ni le modèle de l'appareil, ni l'heure des messages. Les messages passent par le
+service de notification de ton navigateur (Google pour Chrome, Apple pour
+Safari, Mozilla pour Firefox), qui les reçoit chiffrés et ne peut pas les lire.
+
+Tu peux les couper à tout moment, au même endroit. **Te déconnecter** les coupe
+aussi pour cet appareil, et **supprimer ton compte** les efface toutes.
+
 ### Pour la sécurité
 
 | donnée | pourquoi | durée |
@@ -175,6 +198,9 @@ pas et ne sont pas croisées avec ton compte.
   après avoir cessé de dire « en ligne » (tant que le site a des joueurs), et
   rien n'est gardé tant que la fonction est éteinte ; **ton choix d'apparaître hors
   ligne** : tant que le compte existe.
+- **Les appareils qui reçoivent tes notifications** : tant que tu ne les coupes
+  pas, que tu ne te déconnectes pas de cet appareil, ou que son navigateur ne
+  les refuse pas.
 - **Tes sessions** : jusqu'à leur expiration ou ta déconnexion.
 - **Les traces de connexion** : **[à fixer — 30 jours proposés]**.
 - **Les factures et paiements** : **[à confirmer — 10 ans en France, 10 ans en
@@ -197,7 +223,8 @@ C'est immédiat et définitif.
 - toutes tes sessions et tous les liens en attente,
 - ton activité du jour, tes missions tirées, ce que tu n'avais pas encore
   regardé, ta dernière visite et tes rangs de la veille,
-- ton choix d'apparaître hors ligne auprès de tes amis.
+- ton choix d'apparaître hors ligne auprès de tes amis,
+- les appareils qui recevaient tes notifications.
 
 **Ce qui reste, et pourquoi.** Les parties que tu as jouées restent dans
 l'historique de tes adversaires, **sans ton nom** — et, de la même façon, ta
