@@ -236,3 +236,50 @@ self.addEventListener('fetch', (e) => {
     })());
   }
 });
+
+/* ------------------------------------------------------- les notifications
+
+   Ce que `src/server/notifications/index.js` envoie : un titre, une phrase,
+   l'adresse où aller, et un `tag` qui remplace au lieu d'empiler — le même
+   vote annoncé deux fois ne fait qu'une notification.
+
+   **Rien ne s'affiche si le jeu est déjà sous les yeux du joueur.** La page
+   le dit déjà, sur son propre écran : la notification par-dessus serait un
+   écho. Chrome le permet tant qu'une fenêtre du site est visible ; sinon il
+   exige qu'on montre quelque chose, et c'est bien ce qu'on fait. */
+self.addEventListener('push', (e) => {
+  let m = {};
+  try { m = e.data?.json() ?? {}; } catch { m = { corps: e.data?.text() ?? '' }; }
+  e.waitUntil((async () => {
+    const fenetres = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (fenetres.some((f) => f.visibilityState === 'visible' && f.focused)) return;
+    await self.registration.showNotification(m.titre || 'thebestfan', {
+      body: m.corps || '',
+      tag: m.tag || undefined,
+      renotify: Boolean(m.tag),
+      icon: '/img/icone-192.png',
+      lang: 'fr',
+      data: { url: m.url || '/' },
+    });
+  })());
+});
+
+/* Toucher la notification mène là où elle parle. Une fenêtre du jeu déjà
+   ouverte est reprise plutôt que doublée : deux onglets, ce sont deux
+   sockets, et au duel le second ferait sortir le premier de la file. */
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const cible = new URL(e.notification.data?.url || '/', self.location.origin);
+  if (cible.origin !== self.location.origin) return;
+  e.waitUntil((async () => {
+    const fenetres = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const une = fenetres.find((f) => new URL(f.url).origin === self.location.origin);
+    if (une) {
+      /* Le premier plan d'abord : le navigateur ne le permet que dans
+         l'instant qui suit le toucher, et la navigation peut prendre du temps. */
+      try { await une.focus(); await une.navigate(cible.href); return undefined; }
+      catch { /* fenêtre non contrôlée : on en ouvre une */ }
+    }
+    return self.clients.openWindow(cible.href);
+  })());
+});
