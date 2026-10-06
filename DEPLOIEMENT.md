@@ -388,7 +388,18 @@ que `raretes` les a rangées.
   n'est pas frappée). Le workflow GitHub applique le schéma avant de
   redémarrer : rien de plus à faire par ce chemin.
 
-Contrôle : `SHOW TABLES;` doit en lister **47**.
+- `pronostics.sql` (6 octobre 2026) pose la table `pronostics` : le score
+  qu'un joueur attend d'un match d'un club qu'il suit, et son règlement.
+  Une table neuve, clée sur `users.public_id`, rien de modifié ailleurs. Il
+  vient **en dernier**. Le pronostic est gratuit : il ne débite rien, et ses
+  écharpes passent par le grand livre (source `prono`).
+
+  **Sans lui, rien ne casse** : la fiche d'un match ne montre pas de
+  pronostic, l'envoi répond 503, et le démarrage nomme `sql/pronostics.sql`.
+  Appliqué, le pronostic paraît sans redémarrage de plus que celui que le
+  contrôle de démarrage demande.
+
+Contrôle : `SHOW TABLES;` doit en lister **48**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
@@ -479,7 +490,7 @@ Redémarrer pendant la construction relance l'ancien code : `npm start` ne fait
 jamais de `git pull`.
 
 **Le Manager n'applique pas le schéma.** Une livraison qui ajoute un fichier
-de `sql/` (la dernière : `sql/arenes.sql`) demande, une fois la
+de `sql/` (la dernière : `sql/pronostics.sql`) demande, une fois la
 construction finie, `npm run schema:appliquer` en SSH, **puis un second
 redémarrage** : le contrôle de démarrage et `/healthz` ne relisent la base
 qu'au lancement du processus.

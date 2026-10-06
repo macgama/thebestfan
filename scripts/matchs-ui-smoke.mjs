@@ -169,6 +169,15 @@ app.get('/api/tt/match/:id', (_q, s) => s.json(match()));
 // Le joueur suit le club qui reçoit : c'est ce qui décide si le personnage
 // exulte ou encaisse.
 app.get('/api/football/follows', (_q, s) => s.json({ teams: [{ id: 11, name: 'Garudayaksa' }] }));
+/* Le pronostic : `null` répond 404, comme un serveur sans la route ; sinon
+   la réponse telle quelle. Le dernier envoi est retenu pour être contrôlé. */
+let pronoServi = null;
+let pronoRecu = null;
+app.get('/api/pronostics/match/:id', (_q, s) => (pronoServi ? s.json(pronoServi) : s.status(404).end()));
+app.post('/api/pronostics/match/:id', express.json(), (q, s) => {
+  pronoRecu = q.body;
+  s.json({ ouvert: true, prono: q.body, gains: { vainqueur: 15, exact: 50 } });
+});
 app.get('/api/fanzzy/state', (_q, s) => s.json({
   wallet: { active: AVEC_ETATS, scarves: 0, packs: 0 }, stades: {},
   collection: { [AVEC_ETATS]: 1 },
@@ -598,6 +607,77 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   selections = false;
   await page.evaluate(() => charger());
   await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
+}
+
+/* ------------------------------------------------------- le pronostic */
+
+{
+  const GAINS = { vainqueur: 15, exact: 50 };
+  const rouvrir = async () => {
+    await page.evaluate(() => { fermerFiche(); ouvrirFiche(8801); });
+    await jusqua(async () => await page.$('#fcorps .aff') !== null);
+    await dodo(250);
+  };
+  const panneau = () => page.evaluate(() => {
+    const el = document.getElementById('prono');
+    return { vu: !!el && !el.hidden, texte: el?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+      bouton: document.getElementById('prValider')?.textContent.trim() ?? null,
+      eteint: document.getElementById('prValider')?.disabled ?? null };
+  });
+
+  await rouvrir();
+  check('sans la route du pronostic, la fiche n’en montre aucun', !(await panneau()).vu);
+
+  pronoServi = { ouvert: false, raison: 'pas_suivi', prono: null, gains: GAINS };
+  await rouvrir();
+  check('un match où l’on ne peut pas pronostiquer : rien', !(await panneau()).vu);
+
+  pronoServi = { ouvert: true, prono: null, gains: GAINS };
+  await rouvrir();
+  let p = await panneau();
+  check('avant le coup d’envoi : les deux compteurs, à 0 – 0, et ce que ça rapporte',
+    p.vu && /TON PRONOSTIC/.test(p.texte) && /Gratuit/.test(p.texte) && /15 écharpes/.test(p.texte)
+    && /exact : 50/.test(p.texte) && p.bouton === 'VALIDER MON PRONOSTIC'
+    || (console.log('        il dit :', p), false));
+  check('moins de zéro ne se peut pas', await page.evaluate(() =>
+    document.querySelector('#prono button[data-pr="away"][data-d="-1"]').disabled === true));
+  for (const [cote, d] of [['home', 1], ['home', 1], ['away', 1], ['home', 1], ['home', -1]]) {
+    await page.click(`#prono button[data-pr="${cote}"][data-d="${d}"]`);
+  }
+  check('les compteurs suivent le doigt : 2 – 1', await page.evaluate(() =>
+    [...document.querySelectorAll('#prono .pr-n')].map((n) => n.textContent).join('-')) === '2-1');
+  await page.click('#prValider');
+  await jusqua(async () => (await panneau()).bouton === 'PRONOSTIC ENREGISTRÉ');
+  p = await panneau();
+  check('valider envoie 2 – 1, et le bouton le dit',
+    pronoRecu?.home === 2 && pronoRecu?.away === 1 && p.eteint === true
+    || (console.log('        reçu :', pronoRecu, p), false));
+  await page.click('#prono button[data-pr="away"][data-d="1"]');
+  check('le changer rallume le bouton', (await panneau()).bouton === 'CHANGER MON PRONOSTIC');
+
+  pronoServi = { ouvert: false, raison: 'commence', prono: { home: 2, away: 1 }, gains: GAINS };
+  await rouvrir();
+  p = await panneau();
+  check('pendant le match : le pronostic, sans compteurs, verdict au coup de sifflet',
+    p.vu && p.bouton === null && /coup de sifflet final/.test(p.texte)
+    && (await page.evaluate(() => [...document.querySelectorAll('#prono .pr-n')]
+      .map((n) => n.textContent).join('-'))) === '2-1'
+    || (console.log('        il dit :', p.texte), false));
+
+  pronoServi = { ouvert: false, raison: 'commence', gains: GAINS,
+    prono: { home: 2, away: 1, issue: 'exact', echarpes: 50 } };
+  await rouvrir();
+  check('réglé : score exact, +50 écharpes', /SCORE EXACT · \+50 ÉCHARPES/.test((await panneau()).texte));
+  pronoServi = { ouvert: false, raison: 'commence', gains: GAINS,
+    prono: { home: 1, away: 1, issue: 'vainqueur', echarpes: 15 } };
+  await rouvrir();
+  check('réglé : bon nul, +15', /BON NUL · \+15 ÉCHARPES/.test((await panneau()).texte));
+  pronoServi = { ouvert: false, raison: 'commence', gains: GAINS,
+    prono: { home: 0, away: 3, issue: 'rate', echarpes: 0 } };
+  await rouvrir();
+  check('réglé : raté, et ça ne coûte rien', /RATÉ · ÇA NE COÛTE RIEN/.test((await panneau()).texte));
+
+  pronoServi = null;
 }
 
 if (process.env.CAPTURE) {

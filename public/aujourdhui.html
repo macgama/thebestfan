@@ -203,6 +203,32 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 @media (max-width:430px){#fwatch{width:74px;height:116px}}
 #fwatch[hidden]{display:none}
 
+/* **Le pronostic.** Sur la fiche d'un match d'un club suivi : le score qu'on
+   attend, donné avant le coup d'envoi. Gratuit, sans mise : un pronostic juste
+   rapporte des écharpes, un faux ne coûte rien (`src/server/pronostics/`).
+   Un panneau du même grain que le reste de la fiche, et le score se règle au
+   doigt, par deux compteurs : un clavier qui s'ouvre sur un téléphone pour
+   taper « 2 » couvre la moitié du match qu'on pronostique. */
+.f .prono{margin:16px 0 4px;padding:12px 12px 13px;border:1px solid var(--trait);border-radius:12px;
+  background:var(--panneau)}
+.f .prono[hidden]{display:none}
+.f .prono h3{font-family:var(--banner);font-size:12px;letter-spacing:.18em;margin:0 0 10px;
+  text-align:center;font-weight:600}
+.f .prono .pr-sc{display:flex;align-items:center;justify-content:center;gap:10px}
+.f .prono .pr-eq{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.f .prono .pr-nom{font-size:11.5px;opacity:.9;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.f .prono .pr-cpt{display:flex;align-items:center;gap:6px}
+.f .prono .pr-cpt button{width:44px;height:44px;border-radius:10px;border:1px solid rgba(242,238,228,.22);
+  background:rgba(242,238,228,.06);color:var(--craie);font-size:22px;font-family:var(--banner);cursor:pointer}
+.f .prono .pr-cpt button:active{transform:translateY(1px)}
+.f .prono .pr-cpt button:disabled{opacity:.35;cursor:default}
+.f .prono .pr-n{font-family:var(--banner);font-size:34px;min-width:30px;text-align:center}
+.f .prono .pr-tiret{font-family:var(--banner);font-size:26px;opacity:.7}
+.f .prono .pr-valider{margin-top:12px;width:100%}
+.f .prono .pr-dit{margin:10px 0 0;font-size:12px;line-height:1.55;text-align:center;opacity:.9}
+.f .prono .pr-issue{font-family:var(--banner);font-size:16px;letter-spacing:.08em;text-align:center;margin:8px 0 0}
+.f .prono .pr-issue.gagne{color:var(--projo)}
 .f .infos{display:flex;gap:8px;margin-top:16px;font-size:11px;opacity:.88;justify-content:center;
   flex-wrap:wrap}
 .f .infos span{border:1px solid rgba(242,238,228,.12);border-radius:999px;padding:4px 10px}
@@ -638,9 +664,11 @@ async function ouvrirFiche(id) {
   // les événements déjà arrivés sans y réagir. Ouvrir un 3-2 ne doit pas
   // rejouer cinq buts d'affilée.
   FICHE.vus = null;
+  FICHE.prono = null;
 
   const [clubs, perso] = await Promise.all([clubsSuivis(), persoEquipe()]);
   if (FICHE.id !== id) return;
+  chargerProno(id);
 
   if (perso && !FICHE.scene) {
     FICHE.scene = window.TBF_SCENE?.creer?.($('fwatch'), {
@@ -935,6 +963,7 @@ function dessinerFiche() {
            verif-pages guette, et elle vient de se produire. -->
       <a class="aller tbf-plaque" data-ton="flare" data-porte="duel" href="/duel-nvn?match=${f.id}">DUEL<small>tribune contre tribune</small></a>
     </div>
+    <section class="prono" id="prono" hidden aria-live="polite"></section>
     <div class="souspage tbf-onglets" data-ton="vert" id="souspage">
       <button data-s="fil" class="tbf-onglet ${FICHE.volet === 'fil' ? 'on' : ''}">LE FIL</button>
       <button data-s="stats" class="tbf-onglet ${FICHE.volet === 'stats' ? 'on' : ''}">STATISTIQUES</button>
@@ -943,6 +972,7 @@ function dessinerFiche() {
     <div id="souscontenu"></div>`;
 
   dessinerVolet();
+  dessinerProno();
   $('fcorps').scrollTop = defile;
 
   $('souspage').onclick = (ev) => {
@@ -953,6 +983,107 @@ function dessinerFiche() {
     dessinerVolet();
   };
   $('ferme').onclick = fermerFiche;
+}
+
+/* ------------------------------------------------------- le pronostic
+
+   Lu une fois à l'ouverture de la fiche, puis gardé : la fiche d'un match en
+   direct se redessine toutes les trente secondes, et le pronostic ne bouge
+   pas pendant un match. Sans compte, ou sur un match qui n'est pas celui d'un
+   club suivi, le panneau ne paraît pas — sauf si un pronostic y a déjà été
+   donné, qu'on montre jusqu'à son issue. */
+async function chargerProno(id) {
+  const u = await moi();
+  if (!u || FICHE.id !== id) return;
+  try {
+    const r = await fetch('/api/pronostics/match/' + id, { credentials: 'same-origin' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (FICHE.id !== id) return;
+    FICHE.prono = { ...d, saisie: d.prono ? { home: d.prono.home, away: d.prono.away }
+      : { home: 0, away: 0 }, modifie: false };
+    dessinerProno();
+  } catch { /* le pronostic se tait, la fiche reste */ }
+}
+
+function dessinerProno() {
+  const el = $('prono');
+  const P = FICHE.prono, d = FICHE.d;
+  if (!el || !d) return;
+  if (!P || (!P.ouvert && !P.prono)) { el.hidden = true; return; }
+  el.hidden = false;
+  const e = d.equipes;
+  const g = P.gains ?? {};
+  const regle = P.prono && P.prono.issue;
+
+  if (!P.ouvert) {
+    /* Le match a commencé, ou il est fini : on montre ce qu'on avait dit. */
+    const issue = !regle ? (d.fixture.fini
+      ? '<p class="pr-dit">Les écharpes arrivent dès que le score final est confirmé.</p>'
+      : '<p class="pr-dit">Verdict au coup de sifflet final.</p>')
+      : P.prono.issue === 'exact'
+        ? `<p class="pr-issue gagne">SCORE EXACT · +${P.prono.echarpes} ÉCHARPES</p>`
+        : P.prono.issue === 'vainqueur'
+          ? `<p class="pr-issue gagne">BON ${P.prono.home === P.prono.away ? 'NUL' : 'VAINQUEUR'} · +${P.prono.echarpes} ÉCHARPES</p>`
+          : '<p class="pr-issue">RATÉ · ÇA NE COÛTE RIEN</p>';
+    el.innerHTML = `<h3>TON PRONOSTIC</h3>
+      <div class="pr-sc">
+        <div class="pr-eq"><span class="pr-nom">${esc(e.home.name)}</span><span class="pr-n">${P.prono.home}</span></div>
+        <span class="pr-tiret">–</span>
+        <div class="pr-eq"><span class="pr-nom">${esc(e.away.name)}</span><span class="pr-n">${P.prono.away}</span></div>
+      </div>${issue}`;
+    return;
+  }
+
+  const s = P.saisie;
+  const cpt = (cote) => `<div class="pr-cpt">
+      <button type="button" data-pr="${cote}" data-d="-1" aria-label="Un but de moins pour ${esc(e[cote].name)}"
+        ${s[cote] <= 0 ? 'disabled' : ''}>−</button>
+      <span class="pr-n" data-n="${cote}">${s[cote]}</span>
+      <button type="button" data-pr="${cote}" data-d="1" aria-label="Un but de plus pour ${esc(e[cote].name)}"
+        ${s[cote] >= 20 ? 'disabled' : ''}>+</button></div>`;
+  const deja = P.prono && !P.modifie;
+  el.innerHTML = `<h3>TON PRONOSTIC</h3>
+    <div class="pr-sc">
+      <div class="pr-eq"><span class="pr-nom">${esc(e.home.name)}</span>${cpt('home')}</div>
+      <span class="pr-tiret">–</span>
+      <div class="pr-eq"><span class="pr-nom">${esc(e.away.name)}</span>${cpt('away')}</div>
+    </div>
+    <button type="button" class="tbf-plaque pr-valider" data-ton="vert" id="prValider"
+      ${deja ? 'disabled' : ''}>${deja ? 'PRONOSTIC ENREGISTRÉ' : P.prono ? 'CHANGER MON PRONOSTIC' : 'VALIDER MON PRONOSTIC'}</button>
+    <p class="pr-dit">Gratuit. Bon vainqueur : ${g.vainqueur ?? 0} écharpes. Score exact : ${g.exact ?? 0}.
+      Modifiable jusqu’au coup d’envoi.</p>`;
+
+  el.onclick = async (ev) => {
+    const b = ev.target.closest('button');
+    if (!b || b.disabled) return;
+    if (b.dataset.pr) {
+      const c = b.dataset.pr;
+      s[c] = Math.max(0, Math.min(20, s[c] + Number(b.dataset.d)));
+      P.modifie = !P.prono || s.home !== P.prono.home || s.away !== P.prono.away;
+      return dessinerProno();
+    }
+    if (b.id === 'prValider') {
+      b.disabled = true;
+      try {
+        const r = await fetch('/api/pronostics/match/' + FICHE.id, {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ home: s.home, away: s.away }) });
+        const j = await r.json();
+        if (r.ok) {
+          P.prono = j.prono;
+          P.modifie = false;
+        } else {
+          /* Le coup d'envoi est passé pendant qu'on hésitait : le panneau
+             relit ce qui est vrai plutôt que de garder un bouton qui ment. */
+          P.ouvert = false;
+          if (!P.prono) { FICHE.prono = null; }
+        }
+      } catch { /* hors ligne : le bouton se rallume au dessin */ }
+      dessinerProno();
+    }
+  };
 }
 
 function dessinerVolet() {

@@ -103,6 +103,10 @@ export const SECTIONS = [
       'ou en duel — trois états grossiers, sans match ni heure, jamais écrits en ' +
       'base. Livrée éteinte : à allumer seulement après la mise en ligne de la ' +
       'nouvelle politique de confidentialité.' },
+  { id: 'pronostic', titre: 'LE PRONOSTIC',
+    aide: 'Le score qu’on attend d’un match de son club, donné avant le coup ' +
+      'd’envoi. Gratuit, sans mise : un pronostic juste rapporte des écharpes, la ' +
+      'même chose à tout le monde, et un pronostic faux ne coûte rien.' },
 ];
 
 /* ------------------------------------------------------------ les réglages
@@ -761,6 +765,28 @@ export const REGLAGES = [
     aide: 'Une activité, c’est une requête au jeu ou une connexion en direct. Rien ' +
       'n’est écrit : la marque vit en mémoire, est effacée au plus une minute après ' +
       'ce délai, et disparaît au redémarrage.' },
+
+  /* ------------------------------------------------------- le pronostic
+
+     Les deux montants valent au **règlement**, au coup de sifflet final : un
+     changement fait en cours de match vaut pour ce match. Pas de mise, et
+     c'est voulu : un gain gratuit, sans mise, ne crée pas de jeu d'argent
+     (JURIDIQUE.md) ; une mise d'écharpes sur un vrai match, si. */
+  { cle: 'prono.actif', section: 'pronostic', type: 'booleen',
+    titre: 'Proposer le pronostic', defaut: true,
+    aide: 'Éteint : plus de pronostic neuf, et aucun n’est réglé. Rien n’est perdu : ' +
+      'un pronostic juste est payé quand on rallume.' },
+
+  { cle: 'prono.vainqueur_echarpes', section: 'pronostic', type: 'entier',
+    titre: 'Le bon vainqueur (ou le bon nul) rapporte', unite: 'écharpes',
+    min: 0, max: 300, defaut: 15,
+    aide: 'Un tiers de booster aux valeurs de départ. Le pronostic ne vaut que pour ' +
+      'les matchs des clubs suivis : quelques-uns par semaine, pas une source de revenu.' },
+
+  { cle: 'prono.exact_echarpes', section: 'pronostic', type: 'entier',
+    titre: 'Le score exact rapporte', unite: 'écharpes', min: 0, max: 600, defaut: 50,
+    aide: 'À la place du bon vainqueur, pas en plus. Un score exact tombe environ ' +
+      'une fois sur dix : c’est le coup qu’on raconte.' },
 ];
 
 /** Le registre indexé par clé. */
