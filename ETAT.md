@@ -2065,6 +2065,15 @@ Par ordre d'utilité.
    centrée, pensée pour le téléphone. Sur un ordinateur, les deux tiers de
    l'écran sont vides.
 
+   **Commencé le 6 octobre 2026** (fil « écran large ») : au-delà de 1 180 px,
+   les pages de contenu portent les dix tuiles de l'accueil de part et
+   d'autre de leur colonne (`RAILS` dans `menu.js`, « Les rails du grand
+   écran » dans `ui.css`, contrôlés par `menu:smoke`). L'accueil, le Virage
+   et le duel n'en ont pas. Les maquettes des deux formes proposées à Gaël
+   (les tuiles seules, ou les tuiles et des pages réorganisées pour la
+   largeur) sont dans le dossier du projet, `ecran-large/`. Le contenu des
+   pages garde pour l'instant sa largeur de téléphone.
+
 3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
    765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
    (`TYPES` dans `dex.js`, éprouvé par `catalogue:test`). Ce qui manquait, c'est
