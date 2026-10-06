@@ -15,6 +15,9 @@
   `contenus`, une fiche `publie: false` reste fermée (`contenus/index.js`).
 - Images à faire dans Artlist : `/mnt/project-files/equipement/equipement-images-artlist.md`.
   Contrôlé par `npm run contenus:smoke`, `catalogue:test` et `pages:test`.
+
+---
+
 **Les compétitions et les calendriers à jour tout seuls** (branche
 `claude/rythme-foot-uwpqfu`, fusionnée dans `main` le 6 octobre 2026).
 Serveur seul, **aucun schéma ni réglage**. Un redémarrage, hors d'un match en
