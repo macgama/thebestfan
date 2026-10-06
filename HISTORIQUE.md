@@ -8017,6 +8017,15 @@ fusion : `lot7/cligne/rp1-cligne.mp4`, dans les fichiers du projet.*
   parce que `resoudre` a pu reculer d'une tenue ou d'un âge.
 - **Pas sous le calme** (`data-calme~="animations"`, `prefers-reduced-motion`),
   ni dans un onglet caché ; le calme se relit à chaque battement.
+- **Le même visage ne remet pas le compte à zéro.** Le salut d'arrivée n'a
+  pas de dessin à lui : il pose le repos sur le repos, et son retour aussi.
+  Ces deux échanges invisibles réarmaient la minuterie, et le premier
+  battement de la session venait huit à douze secondes après l'arrivée au
+  lieu de trois à sept (douze ouvertures mesurées avant, douze après). Le
+  contrôle « il cligne des yeux de lui-même » rougissait ainsi une passe sur
+  quatre, et c'est la passe complète qui l'a montré : seul, il avait eu de
+  la chance. La minuterie qui tourne continue maintenant à travers ces
+  échanges, tant que les yeux sont ouverts sur ce repos-là.
 - **La boîte de la tête peut déborder de l'image.** Ramenée dedans, elle se
   décalait par rapport à la tête quand le cadre pose le personnage tout en
   haut : six pixels pour RP1 recadré, et des paupières à 1,8 % de leur
