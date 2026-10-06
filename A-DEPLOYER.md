@@ -143,6 +143,62 @@ saisons durent désormais quatre mois ; la saison 2 court du 1er janvier au
 
 ---
 
+**L'équipement porté** (branche `claude/equipement-porte-3ml5d5`, 6 octobre
+2026, forme choisie par Gaël sur maquette : « à côté de lui »). Il se dépose
+avec ce qui est en dessous, ou seul.
+
+- Les deux pièces que le deck met au Fanzzy sont accrochées à côté de lui,
+  chacune dans le cadre de sa rareté : à l'accueil (`public/index.html`), au
+  Virage (`public/virage.html`) et dans l'arène du duel, des deux côtés
+  (`public/duel-nvn.html`). Le dessin vient de `public/stuff-art.js`
+  (`TBF_STUFF.porte`), le style de `public/ui.css` (`.tbf-porte`).
+- Serveur : le portefeuille sert `stuffPorte` (`src/server/fanzzy/index.js`),
+  la vue du duel `equipes[].sac` (`src/server/nvn/engine.js`), et les lignes
+  d'équipement de « ce que tu portes » leur identifiant et leur rareté
+  (`src/shared/apports.js`). Contrôlé par `npm run deck:smoke`,
+  `nvn:smoke`, `accueil:ui`, `nvn:ui` et `virage:ui` (dix-huit contrôles neufs).
+
+**Aucun schéma ni réglage. Un redémarrage** pour le serveur, hors d'un match
+en direct ; sans lui, les pages n'ont aucune pièce à accrocher et restent
+comme avant.
+
+---
+
+**Le geste de chaque Fanzzy au duel** (branche `claude/geste-fanzzy-0qd5x6`,
+6 octobre 2026, règle « Toujours là » choisie par Gaël). Il se dépose avec ce
+qui est en dessous, ou seul.
+
+- `src/server/nvn/engine.js`, `src/server/nvn/index.js`, `public/duel-nvn.html` :
+  le chant du geste du Fanzzy en tribune est toujours dans la main du joueur,
+  au milieu, avec le sceau de sa famille ; quand le tirage ne l'offrait pas, il
+  prend la place du cinquième. Aucun bonus. Réussi, ce chant fait chanter le
+  Fanzzy de l'arène à la manière de sa famille (la Voix crie, la Percussion
+  frappe…), sans image neuve. Contrôlé par `npm run nvn:smoke` et `npm run
+  nvn:ui` (13 contrôles neufs).
+
+**Aucun schéma.** Le serveur change : **redémarrer** après la construction,
+hors d'un match en direct.
+
+---
+
+**Les tuiles de l'accueil sur grand écran** (branche
+`claude/ecran-large-pkbkwj`, 6 octobre 2026). Elles se déposent avec ce qui
+est en dessous, ou seules.
+
+- `public/menu.js`, `public/nav.js`, `public/ui.css` : sur un écran d'au
+  moins 1 180 pixels de large (un ordinateur), chaque page de contenu porte
+  les dix tuiles de l'accueil, cinq de chaque côté de sa colonne, avec les
+  mêmes stickers que le menu (boosters, monde au Virage, duels qui
+  attendent). On change de section en un clic, sans ouvrir le menu.
+  L'accueil, le Virage et le duel ne changent pas ; rien ne change sur
+  téléphone ni sur tablette. Contrôlé par `npm run menu:smoke` (onze
+  contrôles neufs) ; mesuré sous Firefox 136 et Chrome.
+
+**Aucun schéma ni réglage, sans redémarrage** : ce sont trois fichiers
+statiques, et leur empreinte se recalcule quand ils changent sur le disque.
+
+---
+
 **Les notifications** (branche `claude/notifications-pkpvy9`, 6 octobre 2026,
 demandées par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
 
