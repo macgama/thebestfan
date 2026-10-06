@@ -74,8 +74,16 @@ export function prixTenue() {
  * possédée reste **listée** mais marquée : la retirer ferait un étal qui
  * rétrécit à mesure qu'on achète, et l'on ne saurait plus si une pièce manque
  * parce qu'on l'a ou parce qu'elle n'existe pas.
+ *
+ * `possede` peut aussi être une `Map` identifiant → nombre d'exemplaires :
+ * une pièce s'achète plusieurs fois (chaque exemplaire se porte sur un autre
+ * Fanzzy), et l'étal dit alors combien on en a dans `copies`. Avec un `Set`,
+ * une pièce possédée compte pour un.
  */
 export function etalStuff(possede = new Set()) {
+  const copiesDe = (id) => (possede instanceof Map
+    ? Math.max(0, Number(possede.get(id)) || 0)
+    : (possede.has(id) ? 1 : 0));
   return STUFF
     .map((s) => ({
       type: 'stuff',
@@ -84,7 +92,8 @@ export function etalStuff(possede = new Set()) {
       texte: s.texte,
       rar: s.rar,
       prix: prixStuff(s.rar),
-      possede: possede.has(s.id),
+      possede: copiesDe(s.id) > 0,
+      copies: copiesDe(s.id),
     }))
     .filter((s) => s.prix !== null);
 }

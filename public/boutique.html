@@ -849,8 +849,14 @@ const GAGNER = '<span class="tbf-sticker" data-ton="vert">GAGNER</span>';
  *
  * Une pièce **déjà à soi** reste en vente : un second exemplaire se porte sur
  * un second Fanzzy (le serveur compte les copies). Le tampon le dit avant le
- * nom ; le prix reste, pour qui veut le second.
+ * nom ; le prix reste, pour qui veut le second. Au-delà d'un exemplaire, le
+ * tampon dit combien (« À TOI ×2 ») : sans le nombre, deux Jumelles et une
+ * seule se lisaient pareil.
  */
+const exemplaires = (o) => Number(o.copies) || (o.possede ? 1 : 0);
+const tamponPossede = (o) => (exemplaires(o) > 1 ? `À TOI ×${exemplaires(o)}` : 'DÉJÀ À TOI');
+const dejaPossede = (o) => (exemplaires(o) > 1 ? `Tu en as déjà ${exemplaires(o)}` : 'Tu en as déjà un');
+
 function etiquetteHTML(o, { portee = false, colle = -1 } = {}) {
   const rar = rarDe(o.rar);
   const assez = S.echarpes >= o.prix;
@@ -859,7 +865,7 @@ function etiquetteHTML(o, { portee = false, colle = -1 } = {}) {
   const pied = prixHTML(o.prix)
     + (etat === 'cher' ? `${ecartHTML(o.prix)}<b class="manque">−${manque}</b>` : '');
   const dedans = `${objetHTML(o)}
-    ${o.possede ? '<span class="tbf-tampon" data-ton="vert">DÉJÀ À TOI</span>' : ''}
+    ${o.possede ? `<span class="tbf-tampon" data-ton="vert">${tamponPossede(o)}</span>` : ''}
     <span class="tbf-marche-nom">${nomHTML(o.nom, rar)}</span>
     ${o.texte ? `<span class="tbf-marche-effet">${esc(o.texte)}</span>` : ''}
     <span class="tbf-marche-pied">${pied}</span>`;
@@ -868,10 +874,10 @@ function etiquetteHTML(o, { portee = false, colle = -1 } = {}) {
   /* Le nom accessible remplace tout ce que l'étiquette écrit : il porte donc
      la phrase d'effet, et hors de portée ce qui manque. */
   const nomAcc = assez
-    ? `${o.possede ? 'Un autre exemplaire : ' : ''}${o.nom}, ${RAR_NOM[rar].toLowerCase()}. ${
+    ? `${o.possede ? `Un autre exemplaire (${dejaPossede(o).toLowerCase()}) : ` : ''}${o.nom}, ${RAR_NOM[rar].toLowerCase()}. ${
       o.texte ? `${o.texte} ` : ''}${o.prix} écharpes`
     : `${o.nom}, ${RAR_NOM[rar].toLowerCase()}. ${o.texte ? `${o.texte} ` : ''}${o.prix} écharpes${
-      o.possede ? ', déjà à toi' : ''} — il t’en manque ${manque}`;
+      o.possede ? `, ${dejaPossede(o).toLowerCase()}` : ''} — il t’en manque ${manque}`;
   return `<button type="button" ${attrs} aria-label="${esc(nomAcc)}">${dedans}</button>`;
 }
 
@@ -1063,7 +1069,7 @@ async function lireObjet(o) {
   const manque = Math.max(0, (Number(o.prix) || 0) - S.echarpes);
   if (await window.TBF_DIALOGUE?.confirmer({
     titre: String(o.nom).toUpperCase(),
-    texte: (o.possede ? 'Tu en as déjà un ; un second se porterait sur un autre Fanzzy. ' : '')
+    texte: (o.possede ? `${dejaPossede(o)} ; un de plus se porterait sur un autre Fanzzy. ` : '')
       + `Il t’en manque ${manque} : les écharpes se gagnent en jouant, dans le Virage ou en duel.`,
     corps: boiteObjet(o, { prix: true }),
     oui: `GAGNER ${pluriel(manque, 'ÉCHARPE', 'ÉCHARPES')}`, non: 'FERMER', ton: 'vert',
@@ -1078,7 +1084,7 @@ async function acheter(id, bouton) {
   const ecr = pluriel(prix, 'écharpe', 'écharpes');
   if (!(await window.TBF_DIALOGUE?.confirmer({
     titre: `ACHETER ${String(o.nom).toUpperCase()} ?`,
-    texte: (o.possede ? 'Tu en as déjà un : celui-ci se portera sur un autre Fanzzy. ' : '')
+    texte: (o.possede ? `${dejaPossede(o)} : celui-ci se portera sur un autre Fanzzy. ` : '')
       + `${ecr} seront débitées. Une écharpe dépensée ne revient pas — mais elle se regagne en jouant.`,
     corps: boiteObjet(o),
     oui: 'ACHETER', sousOui: ecr, ton: 'or',

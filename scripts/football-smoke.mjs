@@ -77,7 +77,11 @@ fakeApi.get('/standings', (_req, res) => res.json({
       id: 61, season: 2026,
       standings: [[
         ...(standingsAbime
-          ? [{ rank: 0, team: {}, points: 0, all: {}, form: null, group: null }] : []),
+          ? [{ rank: 0, team: {}, points: 0, all: {}, form: null, group: null },
+            /* La forme réelle, vue en production le 6 octobre 2026 sur le
+               classement 3/2017 : l'équipe est là, son identifiant est nul. */
+            { rank: 0, team: { id: null, name: null, logo: null }, points: 0, all: {},
+              form: null, group: null }] : []),
         { rank: 1, team: TEAM, points: 12, all: { played: 5, win: 4, draw: 0, lose: 1, goals: { for: 11, against: 4 } }, form: 'WWWLW', group: 'Ligue 1' },
         { rank: 2, team: OPPO, points: 9, all: { played: 5, win: 3, draw: 0, lose: 2, goals: { for: 7, against: 6 } }, form: 'WLWLW', group: 'Ligue 1' },
       ]],
