@@ -26,6 +26,7 @@ import { createAmis } from '../src/server/amis/index.js';
 import { createKop } from '../src/server/kop/index.js';
 import { charger as chargerCatalogue, auStade } from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import { controlerLarge } from './large-ui.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -43,7 +44,7 @@ async function jusqua(fn, ms = 6000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS abonnements, achats, parrainages, kop_invites, amities, kop_bulletins, kop_votes,
+await raw.query(`DROP TABLE IF EXISTS pronostics, abonnements, achats, parrainages, kop_invites, amities, kop_bulletins, kop_votes,
   kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
@@ -588,6 +589,16 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
     || (console.log('        il montre :', JSON.stringify(vus)), false));
   await p.close();
   etatsServis.clear();
+}
+
+/* ---------------------------------------------------------- grand écran
+
+   La page des amis est une page large (`tbf-large`) : sa colonne s'ouvre
+   entre les tuiles, et la tribune de bustes y gagne des places. */
+{
+  const p = await ouvrir();
+  await controlerLarge(p, check, { nom: 'la page des amis' });
+  await p.close();
 }
 
 check('aucune erreur de script sur la page des amis',

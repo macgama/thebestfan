@@ -144,7 +144,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    ou sans lignes — décidait en silence du « +N » de FANZZY. La suite
    démarre donc sans elle (le repli, l'accueil que le reste de la suite a
    toujours vu), et le bloc des nouveautés la pose et la retire lui-même. */
-await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,

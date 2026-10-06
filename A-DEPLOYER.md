@@ -143,6 +143,60 @@ saisons durent désormais quatre mois ; la saison 2 court du 1er janvier au
 
 ---
 
+**Le pronostic** (branche `claude/pronostic-th5gjy`, 6 octobre 2026, demandé
+par Gaël, version gratuite choisie par lui). Il se dépose avec ce qui est en
+dessous, ou seul.
+
+- Sur la fiche d'un match d'un club suivi (`/matchs`), avant le coup d'envoi :
+  **TON PRONOSTIC**, deux compteurs et un bouton. Modifiable jusqu'au coup
+  d'envoi. Au coup de sifflet final, le bon vainqueur (ou le bon nul) rapporte
+  15 écharpes, le score exact 50 ; un pronostic faux ne coûte rien. Montants
+  et interrupteur dans `/admin`, RÉGLAGES, LE PRONOSTIC.
+- `src/server/pronostics/index.js` (neuf), `server.js`, `public/aujourdhui.html`,
+  `src/server/recompenses.js` (source `prono`), `src/shared/reglages.js`.
+  Contrôlé par `npm run prono:smoke` (suite neuve, 46 contrôles) et
+  `npm run matchs:ui` (13 contrôles neufs).
+
+**Un schéma est à appliquer : `sql/pronostics.sql`** (une table neuve, rien de
+modifié ailleurs). Après la construction : `npm run schema:appliquer` en SSH,
+puis **redémarrer**, hors d'un match en direct. Sans le schéma, rien ne casse :
+le pronostic ne paraît pas, et le démarrage nomme le fichier.
+
+---
+
+**Les tenues s'achètent dans la boutique** (branche `claude/boutique-tenues-p8r3wa`,
+6 octobre 2026, demandé par Gaël). Serveur + page, **sans schéma** ;
+**redémarrage**, hors d'un match. Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/boutique.html` : dans l'onglet TENUES, les Fanzzy du joueur qui ont
+  la tenue en dessin, un par âge atteint ; on en touche un, ACHETER demande
+  confirmation et l'achat se fait sur place (avant, le bouton menait au
+  classeur, où rien ne s'achetait). LA PORTER la lui met tout de suite.
+- `src/server/boutique/index.js` (l'étal dit les tenues déjà posées) et
+  `src/server/fanzzy/index.js` (une tenue s'achète pour tout âge atteint,
+  plus seulement le dernier). Contrôlé par `npm run boutique:smoke` et
+  `npm run boutique:ui` (suite neuve).
+
+---
+
+**Toutes les pages en largeur sur PC** (branche `claude/ecran-large-pkbkwj`,
+6 octobre 2026, demandé par Gaël). Des pages seules : ni schéma ni
+redémarrage. Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/ui.css` et quinze pages (`aide`, `amis`, `kop`, `classement`,
+  `carnet`, `collection`, `equipes`, `teletext`, `aujourdhui`, `abonnement`,
+  `compte`, `deck`, `boosters`, `fanzzy`, `fanzzy-fiche`) : au-delà de
+  1 180 px, chacune prend la colonne large entre les tuiles, ses listes en
+  colonnes. Sur téléphone et tablette, rien ne change. Contrôlé par
+  `npm run large:ui` (neuf pages) et par les suites des six autres.
+- Sur grand écran, la fiche d'un match (`/matchs`) devient une page entre
+  les tuiles : l'affiche à gauche, le fil à droite, la flèche de la barre
+  la referme. Partout, une coupe sans classement (`/teletext?ligue=…`)
+  s'ouvre sur ses résultats, et non plus sur « Cette donnée n'existe pas ».
+  Contrôlé par `npm run matchs:ui` et `npm run competitions:ui`.
+
+---
+
 **Le Fanzzy parle** (branche `claude/dialogues-fanzzy-vgfrke`, 6 octobre
 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
 **Pages seules** (`public/index.html`, `public/fanzzy-repliques.js`) : ni

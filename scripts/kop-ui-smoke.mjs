@@ -24,6 +24,7 @@ import puppeteer from 'puppeteer';
 import { createKop } from '../src/server/kop/index.js';
 import { BONUS_PAR_ID } from '../src/shared/kop.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import { controlerLarge } from './large-ui.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -41,7 +42,7 @@ async function jusqua(fn, ms = 8000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops,
   user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
   souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
@@ -203,6 +204,13 @@ check('et il n’est plus proposé à la création',
 
 const membres = (await K.etat(kopId, U[1])).membres.length;
 check(`le KOP compte deux membres (${membres})`, membres === 2);
+
+/* ---------------------------------------------------------- grand écran
+
+   La page du KOP est une page large (`tbf-large`) : sa colonne s'ouvre
+   entre les tuiles, ses KOP et ses clubs s'y rangent en colonnes. */
+await controlerLarge(page2, check, { nom: 'la page du KOP',
+  pret: () => jusqua(async () => /MES KOP/.test(await texte(page2))) });
 
 check('aucune erreur de script sur toute la session', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));

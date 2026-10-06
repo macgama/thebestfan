@@ -27,6 +27,7 @@ import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFootball } from '../src/server/football/routes.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import { controlerLarge } from './large-ui.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -43,7 +44,7 @@ async function jusqua(fn, ms = 6000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities, kop_bulletins, kop_votes,
+await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites, amities, kop_bulletins, kop_votes,
   kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
@@ -122,6 +123,11 @@ await jusqua(async () => await page.$('.team') !== null);
 
 check('la page se charge sans erreur de script', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
+
+/* La page des clubs est une page large (`tbf-large`) : les clubs suivis se
+   rangent en colonnes de la largeur d'un téléphone, chacun avec ses matchs. */
+await controlerLarge(page, check, { nom: 'la page des clubs', liste: '#feed>.team',
+  pret: () => jusqua(async () => await page.$('.team') !== null) });
 
 /** Cherche un club et rend l'état des résultats proposés. */
 async function chercher(terme) {

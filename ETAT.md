@@ -2089,10 +2089,17 @@ Par ordre d'utilité.
    largeur) sont dans le dossier du projet, `ecran-large/`. Gaël a choisi la
    seconde : une page réorganisée pour la largeur le dit par
    `<body class="tbf-large">` (« Les pages larges » dans `ui.css`), et sa
-   colonne prend alors jusqu'à 1 320 px. Faits : le profil (deux colonnes),
-   la boutique (l'étal s'allonge), la répétition (les familles deux par
-   rangée). Les autres pages gardent leur colonne, tuiles autour ; le deck
-   est revu à part (fil « Interface des pages du deck »).
+   colonne prend alors jusqu'à 1 320 px. Puis, à la demande de Gaël (« sur
+   PC, toutes les pages, pour la cohérence »), **toutes les pages de
+   l'application** la portent : la barre, la colonne et les tuiles ne
+   bougent plus d'une page à l'autre. La règle commune : une liste se range
+   en colonnes de la largeur d'un téléphone (missions, amis, KOP, carnet,
+   clubs, matchs, compétitions), le classement s'ouvre en deux (podium et
+   ta place à gauche, la liste à droite), le classeur pose ses rayons trois
+   par rangée, et les scènes (le Fanzzy, les boosters, le deck, la fiche)
+   restent au milieu. `large:ui` et les suites des pages le vérifient à
+   1 366 et 1 100 px (`scripts/large-ui.mjs`). Restent en colonne : l'accueil
+   (ses tuiles), le Virage et le duel (leur scène).
 
 3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
    765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
@@ -2120,8 +2127,15 @@ Par ordre d'utilité.
    attend en file, et les supporters de l'autre club qui l'ont demandé sont
    prévenus, l'appli fermée.
 
-5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
-   d'envoi. Conçu, pas commencé.
+5. **Le pronostic** — **fait le 6 octobre 2026**, sans mise : Gaël a choisi
+   la version gratuite (une mise d'écharpes sur un vrai match rouvrirait la
+   question du jeu d'argent, `JURIDIQUE.md`). Sur la fiche d'un match d'un club
+   suivi, avant le coup d'envoi, le joueur donne un score ; au coup de sifflet
+   final, le bon vainqueur rapporte 15 écharpes, le score exact 50
+   (`/admin`, LE PRONOSTIC). `src/server/pronostics/`, `sql/pronostics.sql`,
+   `npm run prono:smoke`. Reste à imaginer : un rappel sur l'accueil avant le
+   match de son club, et la liste « mes pronostics » (la route existe,
+   `GET /api/pronostics`).
 
 6. **Les notifications.** *Faites le 6 octobre 2026* : un vote du KOP qui
    s'ouvre et un duel classé qui attend un supporter de ton club préviennent

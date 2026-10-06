@@ -194,9 +194,9 @@
    Une tenue se vend portée : le Fanzzy du joueur en pied, sur un socle,
    dans la plaque de sa tenue, et deux flèches pour passer d'une tenue à
    l'autre. L'interrupteur « avec la tenue » montre l'avant et l'après sur
-   le même personnage, au même âge. Le prix est sur la bâche or dessous, qui
-   mène au classeur choisir qui l'habille (c'est le couple Fanzzy + âge qui
-   s'achète, et l'écran du classeur sait le présenter). */
+   le même personnage, au même âge. Dessous, les vignettes de ceux qui la
+   portent en dessin : on touche celui qu'on habille (c'est le couple
+   Fanzzy + âge qui s'achète), puis la bâche or ACHETER, qui confirme ici. */
 .cabine{display:flex;flex-direction:column;align-items:center;gap:14px}
 .cabine-scene{position:relative;width:100%;max-width:360px;height:270px;overflow:hidden;border-radius:8px;
   background:var(--encre);box-shadow:0 0 0 2px var(--encre)}
@@ -214,7 +214,20 @@
 .cabine-nom .tbf-forme[data-rar=epique]{margin-inline:14px}
 .cabine-nom .tbf-forme[data-rar=legendaire]{margin-inline:28px}
 .cabine-effet{margin:0;max-width:360px;font-size:12.5px;line-height:1.45;text-align:center}
+.cabine-pour{margin:0;font-size:13px;text-align:center}
+/* Les vignettes : une rangée qui défile sous le pouce quand il y en a
+   beaucoup (Halloween est dessinée sur trente-cinq Fanzzy). */
+.cabine-qui{display:flex;gap:10px;width:100%;max-width:360px;overflow-x:auto;padding:4px 2px 8px;
+  scrollbar-width:thin;scroll-snap-type:x proximity}
+.cabine-vignette{position:relative;flex:none;width:60px;height:60px;padding:0;border:0;border-radius:50%;
+  background:var(--panneau);box-shadow:0 0 0 2px var(--encre);cursor:pointer;scroll-snap-align:start}
+.cabine-vignette>img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 20%}
+.cabine-vignette[aria-pressed=true]{box-shadow:0 0 0 2px var(--encre),0 0 0 5px var(--projo)}
+.cabine-vignette .tbf-tampon{position:absolute;left:50%;bottom:-4px;translate:-50% 0;--rot:-6deg;
+  font-size:9px;padding:2px 4px 1px;pointer-events:none}
+.cabine-manque{margin:0;max-width:360px;font-size:11.5px;line-height:1.45;text-align:center;opacity:.85}
 .cabine-achat{width:100%;max-width:360px}
+.cabine-achat .cabine-deja{justify-content:center}
 .cabine-achat .tbf-plaque{width:100%;justify-content:space-between}
 .cabine-gagner{display:flex;align-items:center;gap:10px;width:100%;max-width:360px;min-height:44px;
   margin-top:-4px;color:inherit;text-decoration:none}
@@ -448,6 +461,8 @@ const S = {
   tout: false,
   tenue: 0,
   avecTenue: true,
+  choix: {},         // par tenue, le Fanzzy et l'âge touchés dans la cabine (« RP1:2 »)
+  dex: null,         // /api/fanzzy/dex — les noms des Fanzzy à chaque âge, pour la cabine
 };
 
 const RARS = ['commune', 'rare', 'epique', 'legendaire'];
@@ -774,6 +789,11 @@ window.sansDessin = (img) => {
 function objetHTML(o, taille) {
   const rar = rarDe(o.rar);
   const style = taille ? ` style="--taille:${taille}px"` : '';
+  /* Une tenue se montre portée : le portrait du Fanzzy qui la reçoit. */
+  if (o.type === 'tenue' && o.image) {
+    return `<span class="tbf-objet" data-rar="${rar}"${style}><img src="${esc(o.image)}"
+      alt="" decoding="async"></span>`;
+  }
   if (o.type === 'stuff' && window.TBF_STUFF) {
     return `<span class="tbf-objet" data-rar="${rar}"${style}><img src="${esc(window.TBF_STUFF.adresse(o.id))}"
       alt="" decoding="async" data-nom="${esc(o.nom)}" onerror="sansDessin(this)"></span>`;
@@ -1147,7 +1167,7 @@ const MESSAGES = {
  * réécrit rien (`poserSolde`) ; une valeur relue après le tampon se pose à
  * la fermeture.
  */
-function ceremonie(o, prix) {
+function ceremonie(o, prix, { geste = null } = {}) {
   const rar = rarDe(o.rar);
   const calque = document.createElement('div');
   calque.className = 'tbf-calque';
@@ -1166,7 +1186,9 @@ function ceremonie(o, prix) {
       </div>
       <b class="tbf-banderole achat-nom">${esc(o.nom)}</b>
       <div class="achat-gestes" hidden>
-        <a class="tbf-plaque tbf-bloc tbf-colle" data-ton="violet" href="/deck">L’ÉQUIPER</a>
+        ${geste
+          ? `<button type="button" class="tbf-plaque tbf-bloc tbf-colle" data-ton="violet" data-geste>${esc(geste.libelle)}</button>`
+          : '<a class="tbf-plaque tbf-bloc tbf-colle" data-ton="violet" href="/deck">L’ÉQUIPER</a>'}
         <button type="button" class="tbf-plaque tbf-colle" style="--d:80ms" data-fermer>CONTINUER</button>
       </div>
     </div>`;
@@ -1193,7 +1215,8 @@ function ceremonie(o, prix) {
          s'il n'y a plus de une. */
       const ici = document.querySelector(`#etal [data-id="${CSS.escape(o.id)}"]`)
         ?? (avant?.isConnected ? avant : null)
-        ?? document.querySelector('#une .une-lire, #etal .tbf-marche');
+        ?? document.querySelector(o.type === 'tenue' ? '#cabine [aria-pressed="true"], #cabine button'
+          : '#une .une-lire, #etal .tbf-marche');
       try { ici?.focus?.({ preventScroll: true }); } catch { /* parti */ }
       resoudre();
     };
@@ -1209,6 +1232,7 @@ function ceremonie(o, prix) {
     }
     document.addEventListener('keydown', touche, true);
     calque.addEventListener('click', (e) => {
+      if (geste && e.target.closest('[data-geste]')) { fermer(); geste.faire(); return; }
       if (e.target.closest('[data-fermer]') || e.target === calque
         || e.target.classList.contains('tbf-projecteurs')) fermer();
     });
@@ -1263,36 +1287,45 @@ function ticketDepense(o, prix) {
 
 /* ===================================================== la cabine d'essayage
 
-   **Le défaut qu'elle corrige.** L'étal montrait chaque tenue sur l'avatar du
-   joueur, à son âge atteint, et seulement si elle y était dessinée : or deux
-   des trois tenues ne sont peintes que sur deux personnages. Un joueur dont
-   l'avatar n'en était pas voyait un cadre vide sous « Préhistorique » — la
-   tenue avait l'air de ne pas exister. Et l'âge pris était l'âge atteint,
-   pas celui auquel il se montre.
+   **Le défaut qu'elle corrige.** Le bouton CHOISIR LE FANZZY menait au
+   classeur, qui ne savait rien de la tenue : on quittait la boutique, et il
+   n'y avait nulle part où l'acheter. Et la cabine ne montrait la tenue que
+   sur un seul Fanzzy, celui qu'elle trouvait la première.
 
-   La cabine cherche donc **un Fanzzy du joueur qui la porte vraiment** : son
-   avatar à l'âge où il se montre, puis les autres âges qu'il a atteints, puis
-   ses autres personnages. Le premier dont le dessin existe, exactement — pas
-   un repli sur la tenue de base, qui montrerait le mauvais vêtement. Aucun :
-   la silhouette au pochoir de l'objet, jamais un cadre vide. */
-function mannequins() {
+   La cabine dit maintenant **sur qui** elle se pose : sous la scène, les
+   Fanzzy du joueur qui la portent vraiment, à chaque âge atteint — le
+   couple Fanzzy + âge est ce qui s'achète (`etalTenues`). Toucher l'un le
+   met dans la scène ; ACHETER demande confirmation, ici, et la cérémonie se
+   joue sur place.
+
+   Seuls ceux dont le dessin existe, exactement, sont proposés — pas un repli
+   sur la tenue de base, qui vendrait le mauvais vêtement. Les autres sont
+   comptés en une ligne : la tenue leur viendra avec leur dessin. Aucun : la
+   silhouette au pochoir de l'objet, jamais un cadre vide. */
+function candidats(t) {
   const w = S.etat?.wallet;
   if (!w) return [];
   const stades = S.etat.stades ?? {};
   const atteint = (id) => Math.min(3, Math.max(1, Number(stades[id] ?? 1) || 1));
-  const liste = [];
-  const ajouter = (id, evo) => {
-    if (id && !liste.some((m) => m.id === id && m.evo === evo)) liste.push({ id, evo });
-  };
   const moi = w.avatar?.id ?? w.active ?? null;
-  if (moi) {
-    ajouter(moi, Math.min(atteint(moi), Math.max(1, Number(w.avatar?.evo ?? w.activeStade) || atteint(moi))));
-    for (let e = atteint(moi); e >= 1; e--) ajouter(moi, e);
-  }
-  for (const id of Object.keys(S.etat.collection ?? {})) {
-    for (let e = atteint(id); e >= 1; e--) ajouter(id, e);
+  const ids = Object.keys(S.etat.collection ?? {});
+  if (moi && ids.includes(moi)) ids.splice(ids.indexOf(moi), 1), ids.unshift(moi);
+  const posees = new Set((S.etal?.posees ?? []).map((p) => `${p.fanzzy}:${p.stade}:${p.tenue}`));
+  const liste = [];
+  for (const id of ids) {
+    for (let evo = atteint(id); evo >= 1; evo--) {
+      const m = { id, evo };
+      liste.push({ ...m, cle: `${id}:${evo}`, dessin: porte(m, t.id), nom: nomDe(id, evo),
+        possede: posees.has(`${id}:${evo}:${t.id}`) });
+    }
   }
   return liste;
+}
+
+/** Le nom de la carte de ce Fanzzy à cet âge, ou son identifiant. */
+function nomDe(id, evo) {
+  const c = (S.dex ?? []).find((f) => (f.racine ?? f.id) === id && Number(f.stade ?? 1) === evo);
+  return c?.nom ?? id;
 }
 
 /** Le dessin exact d'un Fanzzy dans une tenue, à un âge, ou rien. */
@@ -1303,7 +1336,21 @@ function porte(m, skin) {
   return r && r.skin === skin && r.evo === m.evo ? r.src : null;
 }
 
+/** Sa vignette : le portrait exact dans la tenue, sinon le plein-pied. */
+function vignette(m, skin) {
+  const p = window.TBF_ETATS?.portrait?.(m.id, { evo: m.evo, skin });
+  return p?.exact ? p.src : porte(m, skin);
+}
+
 const CHEVRON = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+
+/** Le Fanzzy dans la scène : celui qu'on a touché, sinon le premier à qui
+    elle manque, sinon le premier qui la porte déjà. */
+function choisi(t, liste) {
+  const dessines = liste.filter((c) => c.dessin);
+  return dessines.find((c) => c.cle === S.choix[t.id])
+    ?? dessines.find((c) => !c.possede) ?? dessines[0] ?? null;
+}
 
 function rendreCabine() {
   const tenues = S.etal?.tenues ?? [];
@@ -1312,12 +1359,34 @@ function rendreCabine() {
   S.tenue = ((S.tenue % tenues.length) + tenues.length) % tenues.length;
   const t = tenues[S.tenue];
   const rar = rarDe(t.rar);
-  const m = mannequins().find((x) => porte(x, t.id));
-  const apres = m ? porte(m, t.id) : null;
+  const liste = candidats(t);
+  const dessines = liste.filter((c) => c.dessin);
+  const m = choisi(t, liste);
+  const apres = m?.dessin ?? null;
   const avant = m ? porte(m, 'base') : null;
   const montre = S.avecTenue || !avant ? apres : avant;
   const skin = S.avecTenue || !avant ? t.id : 'base';
   const assez = S.echarpes >= t.prix;
+  const sansDessin = new Set(liste.filter((c) => !c.dessin).map((c) => c.id));
+  for (const c of dessines) sansDessin.delete(c.id);
+  const fanzzy = new Set(liste.map((c) => c.id)).size;
+
+  const qui = dessines.length > 1 ? `<div class="cabine-qui" role="group" aria-label="Sur qui la poser">${
+    dessines.map((c) => `<button type="button" class="cabine-vignette" data-qui="${esc(c.cle)}"
+      aria-pressed="${c === m}" aria-label="${esc(`${c.nom}, âge ${c.evo}${c.possede ? ', déjà à toi' : ''}`)}">
+      <img src="${esc(vignette(c, t.id) ?? '')}" alt="" decoding="async">
+      ${c.possede ? '<span class="tbf-tampon tbf-tampon--plein" data-ton="vert" aria-hidden="true">À TOI</span>' : ''}
+    </button>`).join('')}</div>` : '';
+  const ligne = !S.etat?.wallet ? ''
+    : !dessines.length ? `Elle n’est pas encore dessinée pour tes Fanzzy. Elle leur viendra avec leurs dessins.`
+      : sansDessin.size ? `Dessinée pour ${fanzzy - sansDessin.size} de tes ${fanzzy} Fanzzy. Les autres l’auront quand leurs dessins seront faits.`
+        : '';
+
+  const geste = !m ? ''
+    : m.possede
+      ? `<span class="tbf-plaque tbf-bloc cabine-deja" aria-disabled="true">DÉJÀ À ${esc(m.nom.toUpperCase())}</span>`
+      : `<button type="button" class="tbf-plaque tbf-bloc" data-ton="or" data-acheter
+          aria-label="${esc(`Acheter ${t.nom} pour ${m.nom}, âge ${m.evo} — ${t.prix} écharpes`)}">ACHETER${prixHTML(t.prix)}</button>`;
 
   el.innerHTML = `<div class="cabine">
     <div class="cabine-scene">
@@ -1325,7 +1394,7 @@ function rendreCabine() {
       <div class="tbf-projecteurs" aria-hidden="true"></div>
       <span class="tbf-socle" aria-hidden="true"></span>
       ${montre
-        ? `<img class="cabine-perso" src="${esc(montre)}" alt="${esc(`${t.nom}, porté par ton Fanzzy`)}" data-vivant="${esc(m.id)}">`
+        ? `<img class="cabine-perso" src="${esc(montre)}" alt="${esc(`${t.nom}, porté par ${m.nom}`)}" data-vivant="${esc(m.id)}">`
         : `<span class="tbf-objet tbf-objet--vide" data-rar="${rar}" style="--taille:140px" role="img"
             aria-label="${esc(`${t.nom} — aucun de tes Fanzzy ne la porte encore en dessin`)}"></span>`}
       ${tenues.length > 1 ? `<button type="button" class="tbf-plaque tbf-plaque--rond cabine-avant" data-tenue="-1"
@@ -1340,11 +1409,11 @@ function rendreCabine() {
     ${t.texte ? `<p class="cabine-effet">${esc(t.texte)}</p>` : ''}
     ${apres && avant ? `<button type="button" class="tbf-interrupteur" role="switch" aria-checked="${S.avecTenue}"
         data-avec><i aria-hidden="true"></i>Avec la tenue</button>` : ''}
-    <div class="cabine-achat">
-      <a class="tbf-plaque tbf-bloc" data-ton="or" href="/fanzzy?ecran=dex&amp;tenue=${encodeURIComponent(t.id)}"
-        aria-label="${esc(`Choisir le Fanzzy qui portera ${t.nom} — ${t.prix} écharpes`)}">CHOISIR LE FANZZY${prixHTML(t.prix)}</a>
-    </div>
-    ${assez ? '' : `<a class="cabine-gagner" href="/virage" aria-label="${esc(
+    ${m ? `<p class="cabine-pour">Pour <b>${esc(m.nom)}</b>, âge ${m.evo}</p>` : ''}
+    ${qui}
+    ${ligne ? `<p class="cabine-manque">${esc(ligne)}</p>` : ''}
+    ${geste ? `<div class="cabine-achat">${geste}</div>` : ''}
+    ${!m || m.possede || assez ? '' : `<a class="cabine-gagner" href="/virage" aria-label="${esc(
       `Il t’en manque ${t.prix - S.echarpes} : où gagner des écharpes`)}">${ecartHTML(t.prix)}${GAGNER}</a>`}
   </div>`;
 }
@@ -1362,8 +1431,101 @@ $('cabine').addEventListener('click', (e) => {
     S.avecTenue = !S.avecTenue;
     rendreCabine();
     $('cabine').querySelector('[data-avec]')?.focus({ preventScroll: true });
+    return;
   }
+  const v = e.target.closest('[data-qui]');
+  if (v) {
+    const t = (S.etal?.tenues ?? [])[S.tenue];
+    if (t) S.choix[t.id] = v.dataset.qui;
+    S.avecTenue = true;
+    rendreCabine();
+    $('cabine').querySelector(`[data-qui="${CSS.escape(v.dataset.qui)}"]`)?.focus({ preventScroll: true });
+    return;
+  }
+  const b = e.target.closest('[data-acheter]');
+  if (b) acheterTenue(b);
 });
+
+/**
+ * Acheter la tenue pour le Fanzzy de la scène, sans quitter la boutique.
+ *
+ * La boîte montre **lui, dans la tenue** — c'est ce qu'on paie — et dit pour
+ * qui et à quel âge. Le serveur revérifie tout (possession, âge atteint,
+ * tenue déjà posée) et relit le prix ; la page n'envoie que le choix.
+ */
+async function acheterTenue(bouton) {
+  const t = (S.etal?.tenues ?? [])[S.tenue];
+  const m = t && choisi(t, candidats(t));
+  if (!t || !m || m.possede || enAchat) return;
+  const prix = Number(t.prix) || 0;
+  const o = { ...t, type: 'tenue', image: vignette(m, t.id) };
+  const pour = `Pour ${m.nom}, à l’âge ${m.evo}.`;
+  if (S.echarpes < prix) {
+    const manque = prix - S.echarpes;
+    if (await window.TBF_DIALOGUE?.confirmer({
+      titre: String(t.nom).toUpperCase(),
+      texte: `${pour} Il t’en manque ${manque} : les écharpes se gagnent en jouant, dans le Virage ou en duel.`,
+      corps: boiteObjet(o, { prix: true }),
+      oui: `GAGNER ${pluriel(manque, 'ÉCHARPE', 'ÉCHARPES')}`, non: 'FERMER', ton: 'vert',
+    })) location.href = '/virage';
+    return;
+  }
+  const ecr = pluriel(prix, 'écharpe', 'écharpes');
+  if (!(await window.TBF_DIALOGUE?.confirmer({
+    titre: `ACHETER ${String(t.nom).toUpperCase()} ?`,
+    texte: `${pour} ${ecr} seront débitées. Une écharpe dépensée ne revient pas — mais elle se regagne en jouant.`,
+    corps: boiteObjet(o),
+    oui: 'ACHETER', sousOui: ecr, ton: 'or',
+  }))) return;
+
+  enAchat = true;
+  bouton.disabled = true;
+  const avant = S.echarpes;
+  try {
+    const r = await fetch('/api/boutique/depenser', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'tenue', id: t.id, fanzzy: m.id, stage: m.evo }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      toast(MESSAGES[j.error] ?? 'Achat impossible.', { erreur: true });
+      bouton.disabled = false;
+      return;
+    }
+    const apres = Number.isFinite(Number(j.echarpes)) ? Number(j.echarpes) : Math.max(0, avant - prix);
+    S.echarpes = apres;
+    if (S.etat?.wallet) S.etat.wallet.scarves = apres;
+    annoncer({ scarves: apres });
+    const fete = ceremonie(o, prix, {
+      geste: { libelle: 'LA PORTER', faire: () => porterTenue(m, t) },
+    });
+    await monterEtal();
+    await fete;
+  } catch {
+    toast('Le serveur n’a pas répondu — on ne sait pas si l’achat est passé. '
+      + 'Vérifie ton solde avant de réessayer.', { erreur: true, ms: 8000 });
+    await monterEtal().catch(() => { bouton.disabled = false; });
+  } finally {
+    enAchat = false;
+  }
+}
+
+/** LA PORTER : ce Fanzzy, à cet âge, dans cette tenue, devient celui qui se
+    montre — le même geste que l'accueil (`/api/onboarding/avatar`). */
+async function porterTenue(m, t) {
+  try {
+    const r = await fetch('/api/onboarding/avatar', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ fanzzyId: m.id, stade: m.evo, skinId: t.id }),
+    });
+    if (!r.ok) throw new Error(String(r.status));
+    toast(`${m.nom} porte ${t.nom}. C’est lui qui se montre à l’accueil.`);
+  } catch {
+    toast('Il n’a pas pu l’enfiler. Tu peux la lui mettre depuis l’accueil.', { erreur: true });
+  }
+}
 
 /* ======================================================= la vitrine en euros
 
@@ -1561,7 +1723,7 @@ async function monterEtal() {
 }
 
 async function monter() {
-  const [catalogue, etat, abo] = await Promise.all([
+  const [catalogue, etat, abo, dex] = await Promise.all([
     lire('/api/boutique/catalogue'),
     lire('/api/fanzzy/state'),
     /* **Une seule question à l'abonnement par page.** Le tiroir la pose
@@ -1573,7 +1735,9 @@ async function monter() {
        de `lire` : le corps d'une réponse réussie, ou `null`, sans jamais
        lever. L'objet est commun : on le lit, on n'y écrit pas. */
     (window.TBF_ABO ??= lire('/api/abonnement')),
+    lire('/api/fanzzy/dex'),
   ]);
+  S.dex = dex?.dex ?? null;
   S.catalogue = catalogue;
   S.etat = etat?.wallet ? etat : null;
   S.abo = abo && !abo.error ? abo : null;
