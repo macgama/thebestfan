@@ -743,7 +743,11 @@ if (process.env.DATABASE_URL) {
       // Le télétexte range ce qu'il lit : les équipes et les matchs alimentent
       // aussi le suivi des clubs et le Grand Virage, sans un appel de plus.
       globalThis.footClient = client;
-      if (admin) admin.deps = { client, virage };
+      /* Ajouter, jamais remplacer : `admin.deps` porte déjà `abonnement` et
+         `contenus`, posés à la construction. Les écraser ici, quelques secondes
+         après le démarrage, faisait dire à l'onglet CONTENUS « applique
+         sql/contenus.sql » sur une base qui l'avait depuis septembre. */
+      if (admin) Object.assign(admin.deps, { client, virage });
       teletext = createTeletext({ pool, client, footballStore: football.store });
       app.use('/api/tt', teletext.router);
       setInterval(() => teletext.cleanup().catch(() => {}), 24 * 3600 * 1000).unref();

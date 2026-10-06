@@ -898,6 +898,49 @@ for (const [nom, l, h, plancher] of [
   await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [ILLUSTRE, U]);
 }
 
+/* ------------------------------------------- ce qu'il porte, à côté de lui
+
+   Les deux pièces que le deck a mises au Fanzzy montré (`wallet.stuffPorte`,
+   éprouvé côté serveur par deck-smoke) sont accrochées à côté de lui, dans
+   la scène, dans le cadre de leur rareté. Elles restent dans la scène et ne
+   prennent pas le doigt : le personnage, dessous, répond au toucher. */
+{
+  const page = await ouvrir();
+  await jusqua(async () => Boolean((await scene(page))?.src), 9000);
+  const r = await page.evaluate(() => {
+    poserSac([{ id: 'megaphone', nom: 'Mégaphone', rar: 'epique' },
+      { id: 'jumelles', nom: 'Jumelles', rar: 'commune' }]);
+    const porte = document.querySelector('#sac .tbf-porte');
+    const sc = document.getElementById('scene').getBoundingClientRect();
+    const pieces = [...document.querySelectorAll('#sac .tbf-piece')].map((p) => {
+      const b = p.getBoundingClientRect();
+      return { cls: [...p.classList].find((c) => c.startsWith('r-')),
+        src: p.querySelector('img')?.getAttribute('src') ?? '',
+        dedans: b.left >= sc.left - 1 && b.right <= sc.right + 1 && b.top >= sc.top && b.bottom <= sc.bottom,
+        w: p.offsetWidth };
+    });
+    const doigt = porte ? getComputedStyle(porte).pointerEvents : '';
+    const el = porte;
+    poserSac([{ id: 'megaphone', nom: 'Mégaphone', rar: 'epique' },
+      { id: 'jumelles', nom: 'Jumelles', rar: 'commune' }]);
+    const meme = document.querySelector('#sac .tbf-porte') === el;
+    return { pieces, doigt, meme, nom: porte?.getAttribute('aria-label') ?? '' };
+  });
+  if (process.env.SHOT) {
+    await new Promise((res) => setTimeout(res, 900));
+    await page.screenshot({ path: process.env.SHOT + '/accueil-sac.png' });
+  }
+  const vide = await page.evaluate(() => { poserSac([]); return document.querySelectorAll('#sac .tbf-porte').length; });
+  check(`ses deux pièces sont accrochées dans la scène (${r.pieces.map((p) => p.cls).join(', ')})`,
+    r.pieces.length === 2 && r.pieces[0].cls === 'r-epique' && r.pieces[1].cls === 'r-commune'
+    && /\/img\/stuff\/megaphone\./.test(r.pieces[0].src) && r.pieces.every((p) => p.dedans && p.w >= 30)
+    || (console.log('        ', JSON.stringify(r.pieces)), false));
+  check('elles ne prennent pas le doigt au personnage', r.doigt === 'none');
+  check('le même sac ne se redessine pas', r.meme);
+  check('sans pièce, rien d’accroché', vide === 0);
+  await page.close();
+}
+
 /* ------------------------------------------------------ changer de pose */
 
 // `window.TBF` est la poignée que la page expose. On passe par elle plutôt

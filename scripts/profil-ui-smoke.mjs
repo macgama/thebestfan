@@ -509,6 +509,57 @@ check('aucune erreur de script sur le profil', erreurs.length === 0
     || (console.log('        elle dit :', JSON.stringify(vieille)), false));
 }
 
+/* ======================================================= sur grand écran
+
+   Au-delà de 1 180 px, le profil est une page large (`tbf-large`) : deux
+   colonnes de lecture, qui je suis à gauche, ce que j'ai fait à droite, et
+   les tuiles de l'accueil de part et d'autre. Ce qu'on éprouve : la coupure
+   tombe avant MON PARCOURS, la seconde colonne commence en haut, rien ne
+   déborde, et les rails bordent la colonne élargie sans la toucher. Puis, un
+   cran plus étroit, la page redevient une seule colonne. */
+{
+  const mesure = () => page.evaluate(() => {
+    const titre = [...document.querySelectorAll('#page h2')]
+      .find((h) => h.textContent.trim().startsWith('MON PARCOURS'));
+    const carte = document.getElementById('carte').getBoundingClientRect();
+    const t = titre?.getBoundingClientRect();
+    const col = document.getElementById('app').getBoundingClientRect();
+    const rails = [...document.querySelectorAll('.tbf-rails .tbf-case')]
+      .map((a) => a.getBoundingClientRect()).filter((b) => b.width > 0);
+    return {
+      carte: { l: carte.left, r: carte.right, t: carte.top },
+      parcours: t ? { l: t.left, t: t.top } : null,
+      col: { l: col.left, r: col.right, w: col.width },
+      deborde: document.documentElement.scrollWidth > window.innerWidth,
+      rails: rails.map((b) => [b.left, b.right]),
+    };
+  });
+  await page.setViewport({ width: 1366, height: 682 });
+  await page.reload({ waitUntil: 'networkidle0' });
+  await jusqua(async () =>
+    page.evaluate(() => document.querySelectorAll('#parcours .part').length > 0));
+  const g = await mesure();
+  check('à 1 366 px, la colonne du profil s’élargit au-delà des 900 px',
+    g.col.w > 1000 || (console.log('        colonne :', g.col), false));
+  check('MON PARCOURS ouvre la seconde colonne, à droite de la carte',
+    g.parcours && g.parcours.l > g.carte.r && g.parcours.t < g.carte.t + 60
+    || (console.log('        carte :', g.carte, '· parcours :', g.parcours), false));
+  check('rien ne déborde de l’écran', !g.deborde);
+  check('les dix tuiles bordent la colonne élargie sans la toucher',
+    g.rails.length === 10
+    && g.rails.slice(0, 5).every(([, r]) => r <= g.col.l)
+    && g.rails.slice(5).every(([l]) => l >= g.col.r)
+    && g.rails.every(([l, r]) => l >= 0 && r <= 1366)
+    || (console.log('        colonne :', g.col, '· rails :', g.rails), false));
+
+  await page.setViewport({ width: 1100, height: 800 });
+  const e = await mesure();
+  check('à 1 100 px, une seule colonne, sans tuiles',
+    e.parcours && Math.abs(e.parcours.l - e.carte.l) < 6 && e.rails.length === 0
+    || (console.log('        carte :', e.carte, '· parcours :', e.parcours, '· rails :', e.rails.length), false));
+  await page.setViewport({ width: 400, height: 900 });
+}
+
 await nav.close();
 await new Promise((r) => http.close(r));
 await pool.end();
