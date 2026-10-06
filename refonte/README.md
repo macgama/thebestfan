@@ -79,10 +79,13 @@ temporaire de la session ; ce qui doit durer est ici.*
    événements à chaque tour tant que sa liste compte moins de buts que le
    tableau (au plus neuf tours) ; la priorité au GOAL et la lecture du retour
    de `realGoal` par `server.js` étaient déjà au lot 6.
-5. **Décisions en attente de Gaël** : le stade du duel ; la date de fin de la
-   saison 1 et les seuils de division (`/admin`) ; la présence des amis (après
-   relecture de `CONFIDENTIALITE.md` par un juriste) ; celles de `ETAT.md`
-   § 7 bis (inflation des écharpes, saison 2…).
+5. **Décisions en attente de Gaël** : la date de fin de la saison 1 et les
+   seuils de division (`/admin`) ; la présence des amis (après relecture de
+   `CONFIDENTIALITE.md` par un juriste) ; celles de `ETAT.md` § 7 bis
+   (inflation des écharpes, saison 2…). Le stade du duel est tranché le
+   6 octobre : celui du match, le même que son Grand Virage, et la
+   préparation le montre avant l'entrée en file (`HISTORIQUE.md`,
+   4 quinquagies).
 6. **Rouges connues** : `deck:ui` (un contrôle, depuis avant le lot 0 ; un
    correctif dort dans la copie `.claude/worktrees/funny-herschel-18c485`
    d'une autre session) ; `accueil:ui` intermittente. **Dans un conteneur

@@ -1630,6 +1630,7 @@ fenêtre du geste).
 | `GET /api/deck/matchs`, chaque match | `homeColors`, `awayColors` | tableaux de 0 à 2 couleurs `#RRGGBB` | les couleurs des deux clubs, lues dans `teams` (`sql/couleurs.sql`), comme sur `/api/virage/live` : l'affiche, la marée et les foules de l'arène | jamais : vides quand on ne les connaît pas, ou sans `sql/couleurs.sql` |
 | `GET /api/deck/match/:id`, `nvn:start`, `nvn:state` | `fixture.homeColors`, `fixture.awayColors` | tableaux de 0 à 2 couleurs `#RRGGBB` | les mêmes couleurs, dans l'objet `fixture` du match, sous la forme de `virage:state.fixture` : la vue du duel les porte à chaque état, reprise d'un duel comprise, sans relire la liste | jamais : un tableau vide quand on ne les connaît pas |
 | `GET /api/deck/match/:id` | `enJeu` | la forme de la liste | ce qu'une victoire rapporterait dans chaque format, calculé sur le `mode` que cette réponse sert, par la même formule que la liste | jamais sur une réponse 200 : la route refuse (400) un match où l'on ne peut plus entrer |
+| `GET /api/deck/matchs`, chaque match ; `GET /api/deck/match/:id` | `stade` | `{ "id", "nom", "effet" }` | le stade du match : celui de son Grand Virage et de **tous** ses duels, tiré sur l'identifiant du match parmi les stades qu'une saison a ouverts (`stadeDuMatch`, `src/server/contenus/index.js`). La forme du `stade` de la vue du duel (`nvn:start`, `nvn:state`) : `id` nomme le dessin (`/img/stade/<id>-mini`), `nom` et `effet` s'écrivent tels quels (R7) | jamais |
 
 - `enJeu` : **les mêmes montants pour tous, abonnés compris** (R9). Un format
   qu'un joueur gratuit ne peut pas jouer classé est refusé à l'entrée
@@ -1654,9 +1655,16 @@ fenêtre du geste).
 - **Pas de `serie` sur l'évènement `chant`** : le duel n'a pas de combo en jeu,
   et le contrat ne sert sa série qu'au bilan (`ECARTS.md`, `serveur-socle`,
   8 et 10). La page ne la compte pas elle-même.
-- Le **stade** du duel n'est pas servi avant le coup d'envoi : il est tiré à
-  l'ouverture du duel, et non sur le match (`ECARTS.md`, `serveur-duel`). La
-  préparation n'a donc pas de stade-mini.
+- **Le stade d'un duel est celui de son match** (décision de Gaël, 6 octobre
+  2026) : tous les duels d'un match se jouent dans le stade de son Grand
+  Virage, tiré par une seule fonction pour le Virage, le duel et la liste
+  (`stadeDuMatch`). La liste l'annonce donc avant l'entrée en file, et
+  `nvn:start` sert le même. Un seul écart demeure : les stades ouverts sont
+  relus à chaque tirage, et la salle du Virage garde le sien tout le match —
+  une saison lancée en plein match peut donner aux duels qui suivent, et à la
+  liste, un autre lieu que celui du Virage déjà ouvert. Avant la décision, le
+  lieu d'un duel se tirait sur son identifiant à l'ouverture, et la
+  préparation n'avait pas de stade-mini (`ECARTS.md`, `serveur-duel`).
 - **Absence** : sans `verdict`, la page n'écrit pas de tampon, joue le son
   ordinaire du chant et pas d'onde — jamais un seuil à elle ; sans
   `parfaits`, `serie` ou `meilleur`, leurs lignes disparaissent du bilan ;
@@ -1668,13 +1676,17 @@ fenêtre du geste).
   vue, elle prend les couleurs du match dans la liste qu'elle a chargée ; sans
   couleurs nulle part (un duel repris sans la liste, ou des tableaux vides),
   l'arène prend ses teintes par défaut. Sans `enJeu` sur la route d'un match,
-  rien ne change : la préparation lit celui de la liste.
+  rien ne change : la préparation lit celui de la liste. Sans `stade` sur un
+  match de la liste, son affiche reste sans dessin ni nom de lieu, et les
+  règles du « i » n'en parlent pas : la page ne tire jamais un stade elle-même.
 
 **Lecteurs.** `duel-nvn.html` (le tampon du geste, les PARFAITS et le meilleur
 geste au bilan, le sous-libellé d'ENTRER EN FILE, l'anneau des effets et ceux
 d'en face, sa ligne du bilan, les couleurs de l'affiche et de l'arène — de la
-vue d'abord, de la liste à défaut —, le refus d'un match annulé ou reporté ;
-aucune page ne lit aujourd'hui la route d'un match, ni donc son `enJeu`),
+vue d'abord, de la liste à défaut —, le refus d'un match annulé ou reporté,
+le stade du match choisi sur l'affiche de la préparation (le dessin en fond,
+le nom au pied, son effet dans les règles du « i ») ; aucune page ne lit
+aujourd'hui la route d'un match, ni donc son `enJeu` ou son `stade`),
 `geste.js`, `repetition.html` (le tampon de fin, « ★ TON MEILLEUR » en
 tampon).
 
