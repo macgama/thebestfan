@@ -268,10 +268,17 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 
 /* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
    règle commune des pages larges : le sommaire des compétitions se range en
-   colonnes de la largeur d'un téléphone ; une compétition ouverte
-   (classement, calendrier) garde sa feuille. */
+   colonnes de la largeur d'un téléphone. Une compétition ouverte garde sa
+   feuille, mais ses matchs d'une journée s'y rangent en deux colonnes (une
+   ligne de match étirée sur mille pixels séparait les deux équipes de toute
+   la largeur de l'écran), et les groupes d'une coupe aussi. */
 @media (min-width:1180px) and (min-height:560px){
   .list:has(>.lg){display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));column-gap:14px;align-content:start}
+  .list.feuille:has(>.m){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;align-content:start}
+  .list.feuille:has(>.m)>:not(.m){grid-column:1/-1}
+  .list.feuille:has(>table ~ table){columns:2 440px;column-gap:28px}
+  .list.feuille:has(>table ~ table)>table{break-inside:avoid}
+  .list.feuille:has(>table ~ table)>.round{break-after:avoid}
 }
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -375,6 +382,9 @@ function panne(e) {
 }
 
 let vue = 'sommaire', ligue = null, onglet = 'classement';
+/* L'onglet a-t-il été choisi par le lecteur, ou posé par la page ? Voir le
+   repli d'un classement qui n'existe pas, dans `charger`. */
+let ongletChoisi = false;
 let paysFiltre = '', terme = '', filtreFavoris = false;
 /** La journée demandée, ou `null` pour celle que le serveur juge courante. */
 let journee = null;
@@ -544,7 +554,7 @@ function debounce(fn, ms) {
 /* ---------------------------------------------------------- une ligue */
 
 async function ouvrir(id) {
-  vue = 'ligue'; ligue = id; onglet = 'classement'; journee = null;
+  vue = 'ligue'; ligue = id; onglet = 'classement'; journee = null; ongletChoisi = false;
   /* La saison et les classements appartiennent à la compétition qu'on
      quitte : les garder ferait afficher les siens sous le nom de l'autre,
      le temps d'un aller-retour au serveur. */
@@ -568,6 +578,7 @@ async function ouvrir(id) {
     const b = e.target.closest('[data-t]');
     if (!b) return;
     onglet = b.dataset.t;
+    ongletChoisi = true;
     // Le rail défile quand les six onglets ne tiennent pas : on ramène dans la
     // vue celui qu'on vient de choisir, sinon il reste à moitié caché.
     b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -601,6 +612,18 @@ async function charger() {
      classement la reprend telle quelle plutôt que de la recalculer : une
      seule règle, un seul endroit. */
   SAISON = d.league.season ?? null;
+
+  /* **Une coupe n'a souvent pas de classement.** La page s'ouvrait pourtant
+     dessus, sur « Cette donnée n'existe pas » : la première chose qu'on
+     voyait d'une compétition était un vide (Gaël, 6 octobre 2026, sur la
+     Federation Cup du Bangladesh). Quand la page a choisi l'onglet et que
+     le classement manque, elle passe aux résultats, qui existent toujours.
+     Un classement demandé du doigt garde sa phrase. */
+  if (onglet === 'classement' && !ongletChoisi && (d.unsupported || !d.groups?.length)) {
+    onglet = 'resultats';
+    [...$('tabs').children].forEach((x) => x.classList.toggle('on', x.dataset.t === 'resultats'));
+    return charger();
+  }
 
   if (d.unsupported) {
     $('list').innerHTML = `<div class="empty">Cette donnée n'existe pas pour cette compétition.<br>

@@ -272,10 +272,38 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 
 /* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
    règle commune des pages larges : les compétitions du jour se rangent en
-   colonnes de la largeur d'un téléphone, chacune avec ses matchs. */
+   colonnes de la largeur d'un téléphone, chacune avec ses matchs.
+
+   **La fiche d'un match y est une page comme les autres**, et non plus une
+   fenêtre de téléphone au milieu d'un écran noir : elle se pose dans la
+   colonne, sous la barre du haut, entre les tuiles qui restent ouvertes.
+   L'affiche à gauche (le score, l'heure, les deux portes), le fil, les
+   statistiques et les compositions à droite. La flèche de la barre la
+   referme (voir `fermerParLaBarre`), la sienne n'a plus lieu d'être. Le
+   Fanzzy qui regarde se range dans le coin de la colonne. */
 @media (min-width:1180px) and (min-height:560px){
   #liste:has(>.ligue){columns:2 440px;column-gap:16px}
   #liste>.ligue{break-inside:avoid}
+
+  html:has(#fiche.on){overflow:hidden}
+  body:has(#fiche.on) #app>:not(.tbf-haut){visibility:hidden}
+  #fiche{z-index:2;top:var(--fiche-haut,64px);bottom:0;background:none;overscroll-behavior:contain;
+    left:calc(50% - var(--colonne-large) / 2);right:auto;width:var(--colonne-large)}
+  #fiche>.f{max-width:none;display:grid;align-content:start;align-items:start;
+    grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:32px;padding:6px 10px 40px}
+  /* Les deux côtés tiennent chacun leur pile : rangés dans une grille commune,
+     la hauteur de l'affiche creusait un trou entre les onglets et le fil. */
+  #fiche>.f>.cote-affiche{grid-column:1}
+  #fiche>.f>.cote-volets{grid-column:2}
+  #fiche>.f>.fermer{display:none}
+  #fiche>.f>.spin{grid-column:1/-1}
+  #fiche .cote-affiche>.aff,#fiche #souscontenu{border:1px solid var(--trait);border-radius:12px;
+    background:var(--panneau)}
+  #fiche .cote-affiche>.aff{margin-top:12px;padding:16px 14px 14px}
+  #fiche .cote-volets>.souspage{margin-top:12px}
+  #fiche #souscontenu{margin-top:10px;padding:4px 12px 8px}
+  #fiche #souscontenu:empty{display:none}
+  #fwatch{left:calc(50% - var(--colonne-large) / 2 + 6px);bottom:6px}
 }
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -589,7 +617,7 @@ const ICONES = { Goal:'⚽', Card:'▮', subst:'⇄', Var:'▣' };
 /** Tout ce que la fiche tient entre deux relectures. */
 const FICHE = {
   id: null, d: null, minuterie: null, chrono: null,
-  volet: 'fil', scene: null, vus: null, cote: null, finVue: false,
+  volet: 'fil', scene: null, vus: null, cote: null, finVue: false, defilement: null,
 };
 
 /**
@@ -635,7 +663,20 @@ async function persoEquipe() {
   return monPerso;
 }
 
+/** Le grand écran, tel que la feuille le nomme (« Les pages larges »). */
+const LARGE = '(min-width:1180px) and (min-height:560px)';
+
 async function ouvrirFiche(id) {
+  /* Sur grand écran, la fiche se pose sous la barre du haut (voir la
+     feuille) : on lui dit où celle-ci s'arrête. */
+  const haut = document.querySelector('#app>.tbf-haut');
+  if (matchMedia(LARGE).matches && !FICHE.id) {
+    /* La barre défile avec la page : on remonte à elle, et l'on reviendra
+       là où l'on était dans la liste en refermant. */
+    FICHE.defilement = scrollY;
+    scrollTo(0, 0);
+  }
+  if (haut) $('fiche').style.setProperty('--fiche-haut', `${Math.round(haut.getBoundingClientRect().bottom)}px`);
   $('fiche').classList.add('on');
   $('fcorps').innerHTML = '<div class="spin"></div>';
   FICHE.id = id;
@@ -661,11 +702,25 @@ async function ouvrirFiche(id) {
   await relire({ premier: true });
 }
 
+/* **Sur grand écran, la flèche de la barre referme la fiche**, comme le
+   ferait la sienne : la barre reste visible au-dessus d'elle, et sa flèche
+   quittait les matchs d'un coup, fiche comprise. En phase de capture, avant
+   la règle du retour de `nav.js`, comme le font les écrans de jeu. Sur un
+   téléphone la fiche couvre la barre : ce clic n'y arrive pas. */
+document.addEventListener('click', (e) => {
+  if (!FICHE.id || !e.target.closest?.('.tbf-retour')) return;
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  e.stopPropagation();
+  fermerFiche();
+}, true);
+
 function fermerFiche() {
   /* On efface le match de l’adresse : sans cela, recharger la page
      rouvrirait la fiche qu’on vient de fermer. */
   if (location.search.includes('match=')) history.replaceState({}, '', '/matchs');
   $('fiche').classList.remove('on');
+  if (FICHE.defilement != null) { scrollTo(0, FICHE.defilement); FICHE.defilement = null; }
   FICHE.id = null;
   clearTimeout(FICHE.minuterie);
   clearInterval(FICHE.chrono);
@@ -887,6 +942,9 @@ function dessinerFiche() {
 
   $('fcorps').innerHTML = `
     <button class="fermer tbf-plaque" id="ferme" aria-label="Fermer la fiche">‹</button>
+    <!-- Deux côtés, qui ne se distinguent que sur grand écran (voir la
+         feuille) : l'affiche, puis ce qu'on lit du match. -->
+    <div class="cote-affiche">
     <div class="aff">
       ${ligneCompetition}
       <div class="sc">
@@ -943,12 +1001,15 @@ function dessinerFiche() {
            verif-pages guette, et elle vient de se produire. -->
       <a class="aller tbf-plaque" data-ton="flare" data-porte="duel" href="/duel-nvn?match=${f.id}">DUEL<small>tribune contre tribune</small></a>
     </div>
+    </div>
+    <div class="cote-volets">
     <div class="souspage tbf-onglets" data-ton="vert" id="souspage">
       <button data-s="fil" class="tbf-onglet ${FICHE.volet === 'fil' ? 'on' : ''}">LE FIL</button>
       <button data-s="stats" class="tbf-onglet ${FICHE.volet === 'stats' ? 'on' : ''}">STATISTIQUES</button>
       <button data-s="compo" class="tbf-onglet ${FICHE.volet === 'compo' ? 'on' : ''}">COMPOSITIONS</button>
     </div>
-    <div id="souscontenu"></div>`;
+    <div id="souscontenu"></div>
+    </div>`;
 
   dessinerVolet();
   $('fcorps').scrollTop = defile;

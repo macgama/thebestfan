@@ -10,6 +10,11 @@ redémarrage. Il se dépose avec ce qui est en dessous, ou seul.
   1 180 px, chacune prend la colonne large entre les tuiles, ses listes en
   colonnes. Sur téléphone et tablette, rien ne change. Contrôlé par
   `npm run large:ui` (neuf pages) et par les suites des six autres.
+- Sur grand écran, la fiche d'un match (`/matchs`) devient une page entre
+  les tuiles : l'affiche à gauche, le fil à droite, la flèche de la barre
+  la referme. Partout, une coupe sans classement (`/teletext?ligue=…`)
+  s'ouvre sur ses résultats, et non plus sur « Cette donnée n'existe pas ».
+  Contrôlé par `npm run matchs:ui` et `npm run competitions:ui`.
 
 ---
 
