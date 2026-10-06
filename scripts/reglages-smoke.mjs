@@ -192,6 +192,7 @@ const PLAN = [
        même chose que ce zéro, et deux leviers pour une seule porte finissent
        par se contredire. */
     virage: 'xp.virage',
+    prono: 'prono.actif',
   };
   /* Un interrupteur est une bascule — ou un montant qui descend à 0 et dont
      l'aide dit qu'à 0 la source s'arrête : c'est ce que lira celui qui

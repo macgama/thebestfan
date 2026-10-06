@@ -2112,8 +2112,15 @@ Par ordre d'utilité.
    attend en file, et les supporters de l'autre club qui l'ont demandé sont
    prévenus, l'appli fermée.
 
-5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
-   d'envoi. Conçu, pas commencé.
+5. **Le pronostic** — **fait le 6 octobre 2026**, sans mise : Gaël a choisi
+   la version gratuite (une mise d'écharpes sur un vrai match rouvrirait la
+   question du jeu d'argent, `JURIDIQUE.md`). Sur la fiche d'un match d'un club
+   suivi, avant le coup d'envoi, le joueur donne un score ; au coup de sifflet
+   final, le bon vainqueur rapporte 15 écharpes, le score exact 50
+   (`/admin`, LE PRONOSTIC). `src/server/pronostics/`, `sql/pronostics.sql`,
+   `npm run prono:smoke`. Reste à imaginer : un rappel sur l'accueil avant le
+   match de son club, et la liste « mes pronostics » (la route existe,
+   `GET /api/pronostics`).
 
 6. **Les notifications.** *Faites le 6 octobre 2026* : un vote du KOP qui
    s'ouvre et un duel classé qui attend un supporter de ton club préviennent

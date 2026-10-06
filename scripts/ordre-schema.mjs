@@ -106,4 +106,9 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
   'arenes',
   /* La collection de stades : une table sur `users` (auth.sql) et une colonne
      sur `user_wallet` (souvenirs.sql). Rien n'en dépend : dernier rang. */
-  'collection-stades'];
+  'collection-stades',
+  /* Le pronostic (6 octobre 2026) : une table clée sur `users.public_id`
+     (auth.sql), et rien d'autre. Ses versements passent par le grand livre
+     de quotidien.sql, qu'il ne modifie pas. Rien n'en dépend : le dernier
+     rang. */
+  'pronostics'];
