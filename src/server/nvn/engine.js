@@ -515,9 +515,17 @@ export class DuelNvN {
     j.chants++;
     j.motif = (j.motif + 1) % MOTIFS.length;
 
+    /* **Son geste.** Le chant qui porte le geste du Fanzzy en tribune est sa
+       spécialité : la page le fait chanter à la manière de sa famille (la
+       Voix crie, la Percussion frappe). L'évènement le dit plutôt que de
+       laisser la page le déduire — celui d'en face, elle n'en connaît que
+       l'identifiant. Rien ne se calcule dessus. */
+    const fz = j.fanzzy[j.actif];
+    const sien = Boolean(fz?.cri?.gest) && fz.cri.gest === geste;
     const evenements = [this.ev('chant', {
       userId, side: j.side, geste, cardId,
       quality: Number(quality.toFixed(3)), backfire,
+      ...(sien ? { sien: true, famille: fz.type ?? null } : {}),
     })];
 
     // Les charges d'un modificateur temporaire se consomment au chant.

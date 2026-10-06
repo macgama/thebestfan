@@ -1744,6 +1744,28 @@ check('la corde a bougé', bouge);
     pousse.eux.pose === 'pousse' && pousse.eux.geste === 'hisse' && /^-4deg$/.test(pousse.eux.rotate ?? '')
     || (console.log('        ', JSON.stringify(pousse.eux)), false));
 
+  /* **Son geste** : le chant réussi de sa spécialité le fait chanter à la
+     manière de sa famille — la Percussion frappe —, et la poussée qui suit
+     ne le coupe pas pour se pencher. Raté, rien de plus que d'habitude. */
+  await jusqua(() => A.page.evaluate(() => ['fzMoi', 'fzEux']
+    .every((id) => document.getElementById(id)?.dataset.pose === 'neutre')), 6000);
+  await A.page.evaluate(() => {
+    const side = S.vue.moi.side;
+    raconter({ t: 'chant', side, userId: 'personne', cardId: 'roulement', geste: 'mash',
+      verdict: 'bon', sien: true, famille: 'perc' });
+    raconter({ t: 'push', side, valeur: 12 });
+  });
+  await dodo(150);
+  const sien = await lireFz();
+  check(`son geste réussi : le mien chante à la manière de sa famille (${sien.moi.geste}, ${sien.moi.animation})`,
+    sien.moi.pose === 'pousse' && sien.moi.geste === 'frappe' && sien.moi.animation === 'fzDuelFrappe'
+    || (console.log('        ', JSON.stringify(sien.moi)), false));
+  await jusqua(() => A.page.evaluate(() => document.getElementById('fzEux')?.dataset.pose === 'neutre'), 6000);
+  await A.page.evaluate(() => raconter({ t: 'chant', side: S.vue.moi.side ^ 1, userId: 'personne',
+    cardId: 'reprise', geste: 'tempo', verdict: 'rate', sien: true, famille: 'voix' }));
+  const rate = await lireFz();
+  check(`son geste raté : celui d’en face ne crie pas (${rate.eux.geste ?? 'rien'})`, rate.eux.geste !== 'crie');
+
   /* Un coup d'en face sur ma tribune : la vue le porte (`equipes[][].effets`),
      et c'est **son arrivée** qui met en colère, pas sa durée. */
   await A.page.evaluate(() => {

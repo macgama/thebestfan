@@ -491,6 +491,26 @@ check('un entraînement ne compte pas',
   catch (e) { inconnu = e.code; }
   check('et un chant qui n’existe pas aussi', inconnu === 'ferveur.error.unknown_card');
 
+  /* **Son geste.** Le chant de la spécialité du Fanzzy en tribune le dit, avec
+     sa famille : c'est ce qui le fait chanter à sa manière dans l'arène. Un
+     autre chant ne le dit pas — sinon tout chant ferait bouger le personnage,
+     et sa spécialité ne se verrait plus. */
+  {
+    const d = duel(1, 'entrainement', t, 'sien');
+    const fz = d.joueurs.get('0-0').fanzzy[0];
+    const sienne = ORDRE.find((id) => CHANTS[id].gest === fz.cri.gest);
+    const autre = ORDRE.find((id) => CHANTS[id].gest !== fz.cri.gest);
+    d.repertoire[0] = sienne;
+    d.repertoire[1] = autre;
+    d.joueurs.get('0-0').breath = 100;
+    const ev1 = d.chanter('0-0', { cardId: sienne, taps: [] }, t).find((e) => e.t === 'chant');
+    d.joueurs.get('0-0').breath = 100;
+    const ev2 = d.chanter('0-0', { cardId: autre, taps: [] }, t + 20_000).find((e) => e.t === 'chant');
+    check(`le chant de son geste le dit, avec sa famille (${fz.cri.gest}, ${fz.type})`,
+      ev1?.sien === true && ev1.famille === fz.type);
+    check('un autre chant ne le dit pas', ev2 && !('sien' in ev2) && !('famille' in ev2));
+  }
+
   /* **Le coût et la poussée viennent de la carte.** C'est toute la décision
      qu'on vient d'ajouter : un gros chant coûte plus de souffle et rend plus.
      Tant que les deux étaient constants, choisir ne changeait rien. */
