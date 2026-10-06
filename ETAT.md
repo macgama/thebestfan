@@ -2065,6 +2065,15 @@ Par ordre d'utilité.
    centrée, pensée pour le téléphone. Sur un ordinateur, les deux tiers de
    l'écran sont vides.
 
+   **Commencé le 6 octobre 2026** (fil « écran large ») : au-delà de 1 180 px,
+   les pages de contenu portent les dix tuiles de l'accueil de part et
+   d'autre de leur colonne (`RAILS` dans `menu.js`, « Les rails du grand
+   écran » dans `ui.css`, contrôlés par `menu:smoke`). L'accueil, le Virage
+   et le duel n'en ont pas. Les maquettes des deux formes proposées à Gaël
+   (les tuiles seules, ou les tuiles et des pages réorganisées pour la
+   largeur) sont dans le dossier du projet, `ecran-large/`. Le contenu des
+   pages garde pour l'instant sa largeur de téléphone.
+
 3. **Répartir les dix gestes sur le catalogue.** `cri.gest` ne vaut encore que
    `tempo`, `mash` ou `hold` dans `dex.js` et `dex-2026.js` — les sept nouveaux
    gestes n'appartiennent à aucun personnage. Le duel les fait tourner de
@@ -2082,16 +2091,21 @@ Par ordre d'utilité.
    alors toutes les trente secondes). Jamais qui, rien en base : une marque
    « vu sur le jeu » en mémoire, quatre minutes, posée par la lecture de
    `/api/nvn/attentes`. Voir `derbyPour` dans `src/server/nvn/index.js`, et
-   `npm run derby:smoke`. Reste possible : prévenir hors de l'accueil (les
-   notifications, point 6).
+   `npm run derby:smoke`. Hors de l'accueil, c'est la notification du duel
+   classé qui prend le relais (point 6) : celui qui a appuyé le premier
+   attend en file, et les supporters de l'autre club qui l'ont demandé sont
+   prévenus, l'appli fermée.
 
 5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
    d'envoi. Conçu, pas commencé.
 
-6. **Les notifications.** Le KOP émet déjà sur le socket quand un vote s'ouvre,
-   mais rien n'atteint un joueur dont l'onglet est fermé. Trois minutes de
-   vote, c'est court : sans notification hors de la page, la moitié d'un KOP ne
-   votera jamais.
+6. **Les notifications.** *Faites le 6 octobre 2026* : un vote du KOP qui
+   s'ouvre et un duel classé qui attend un supporter de ton club préviennent
+   l'appli fermée, pour qui l'a demandé sur la page du compte
+   (`src/server/notifications/index.js`, `sql/notifications.sql`). Restent
+   possibles : d'autres sujets (le derby automatique, le pronostic de ferveur
+   avant le coup d'envoi), et une invitation à les activer ailleurs que dans
+   le compte — sur la page du KOP, au moment où l'on rejoint.
 
 7. **Brancher la collection de stades.** Le catalogue et les effets sont écrits
    dans `src/shared/stades.js`, les cinq dessins sont rangés, les tribunes se

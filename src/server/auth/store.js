@@ -165,7 +165,15 @@ export function createStore(pool) {
         `UPDATE user_wallet SET presence = NULL
           WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
       ];
-      for (const sql of [...quotidien, ...arenes]) {
+      /* **Les appareils qui recevaient ses notifications**
+         (`sql/notifications.sql`). La ligne `users` reste, anonymisée : rien
+         ne les emporterait sans cette instruction, et un compte supprimé
+         continuerait d'être prévenu des votes de son KOP. */
+      const notifications = [
+        `DELETE FROM notif_appareils
+          WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
+      ];
+      for (const sql of [...quotidien, ...arenes, ...notifications]) {
         try {
           await q(sql, [userId]);
         } catch (e) {
