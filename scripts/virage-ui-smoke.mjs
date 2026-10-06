@@ -434,6 +434,56 @@ if (!entre) {
   check('et son panneau vit hors de la colonne', i.panneau);
 }
 
+/* ------------------------------------------- ce qu'il porte, à côté de lui
+
+   Les pièces du sac qui compte ici (les lignes `stuff` d'`apports`, le même
+   sac que le panneau du « i ») sont accrochées à côté du Fanzzy, dans sa
+   boîte. Sans pièce, rien d'accroché ; une vue suivante identique ne les
+   redessine pas (elles arrivent avec un geste, qui ne doit pas se rejouer). */
+{
+  await page.evaluate(() => {
+    const avant = S.you.apports;
+    window.__sac = [
+      { quoi: 'stuff', id: 'megaphone', rar: 'epique', nom: 'Mégaphone', mods: { perfectBonus: 1.4 } },
+      { quoi: 'stuff', id: 'jumelles', rar: 'commune', nom: 'Jumelles', mods: { tempoWindow: 1.25 } },
+    ];
+    S.you.apports = window.__sac;
+    render();
+    window.__sacAvant = avant;
+    return null;
+  });
+  if (process.env.SHOT) {
+    await new Promise((res) => setTimeout(res, 900));
+    await page.screenshot({ path: process.env.SHOT + '/virage-sac.png' });
+  }
+  const r = await page.evaluate(() => {
+    const avant = window.__sacAvant;
+    const lire = () => [...document.querySelectorAll('#fzs > .tbf-porte .tbf-piece')]
+      .map((p) => `${/\/img\/stuff\/([^.]+)\./.exec(p.querySelector('img')?.getAttribute('src') ?? '')?.[1]}:${
+        [...p.classList].find((c) => c.startsWith('r-'))}`);
+    /* Reposé : une vue du serveur a pu passer pendant la capture. */
+    S.you.apports = window.__sac;
+    render();
+    const deux = lire();
+    const el = document.querySelector('#fzs > .tbf-porte');
+    render();
+    const meme = document.querySelector('#fzs > .tbf-porte') === el;
+    S.you.apports = [];
+    render();
+    const rien = document.querySelectorAll('#fzs .tbf-porte').length;
+    S.you.apports = avant;
+    delete window.__sacAvant;
+    delete window.__sac;
+    render();
+    return { deux, meme, rien, nom: el?.getAttribute('aria-label') ?? '' };
+  });
+  check(`ses deux pièces sont accrochées à côté de lui, dans le cadre de leur rareté (${r.deux.join(', ')})`,
+    r.deux.join() === 'megaphone:r-epique,jumelles:r-commune');
+  check(`et elles se disent (${r.nom})`, r.nom === 'Porte : Mégaphone, Jumelles');
+  check('une vue identique ne les redessine pas', r.meme);
+  check('sans pièce, rien d’accroché', r.rien === 0);
+}
+
 /* ---------------------------------------------------------- la bande */
 
 const bande = () => page.evaluate(() => ({

@@ -113,6 +113,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    coûterait un chant. */
 .fzs{position:absolute;right:calc(50% + 14px);bottom:40px;width:40%;max-width:210px;height:45%;
   z-index:3;pointer-events:none}
+/* Ce qu'il porte (`TBF_STUFF.porte`) : au bord gauche de sa boîte, à hauteur
+   de hanche, loin de la corde. */
+.fzs>.tbf-porte{left:0;bottom:16%;--piece:30px;gap:5px}
 /* Les amis présents (`virage:amis`), en sticker au coin haut de l'arène. */
 #amisIci{position:absolute;left:10px;top:8px;z-index:5;--rot:-3deg}
 /* L'annonce de repli sur la corde, quand le personnage n'est pas monté. */
@@ -520,6 +523,8 @@ html[data-calme~="animations"] .float,html[data-calme~="animations"] .countdown{
 <!-- Le dictionnaire des effets, avant tout ce qui en affiche. -->
 <script src="/mods.js"></script>
 <script src="/fanzzy-art.js"></script>
+<!-- Ce que le Fanzzy porte, accroché à côté de lui. -->
+<script src="/stuff-art.js"></script>
 <!-- Les familles de cartes, leurs dessins, et la carte qu'on voit partir. -->
 <script src="/action-art.js"></script>
 <!-- Le stade et la lumière de ses tribunes. -->
@@ -1084,6 +1089,23 @@ function etatsDesChants(souffle) {
    que le deck ne remplira jamais. */
 let apportsVus = null;
 
+/**
+ * **Ce qu'il porte, accroché à côté de lui** : les pièces du sac qui compte
+ * ici (`apports`, lignes `stuff` — le même sac que le panneau). Dans la boîte
+ * du personnage, hors de sa scène : elles ne sautent pas avec lui.
+ */
+let cleSacVu = '';
+function poserSac() {
+  const hote = $('fzs');
+  if (!hote || !window.TBF_STUFF?.porte) return;
+  const sac = (S?.you?.apports ?? []).filter((a) => a?.quoi === 'stuff' && a.id);
+  const cle = window.TBF_STUFF.cleSac(sac);
+  if (cle === cleSacVu) return;
+  cleSacVu = cle;
+  hote.querySelector(':scope > .tbf-porte')?.remove();
+  if (cle) hote.insertAdjacentHTML('beforeend', window.TBF_STUFF.porte(sac));
+}
+
 function contenuApports() {
   const M = window.TBF_MODS;
   const apports = S?.you?.apports ?? [];
@@ -1096,6 +1118,7 @@ function contenuApports() {
 }
 
 function renderApports() {
+  poserSac();
   const M = window.TBF_MODS;
   const ligne = $('apportsL'), panneau = $('apportsP');
   const apports = S?.you?.apports ?? [];

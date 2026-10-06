@@ -99,6 +99,14 @@ check('server.js dit au virage les matchs que l’API ne rend plus',
     /app\.use\('\/api\/notifications',\s*notifications\.router\)/.test(serveur));
 }
 
+/* L'administration reçoit `abonnement` et `contenus` à sa construction, puis
+   le client du football et le Virage une fois le suivi prêt. Ce second
+   branchement **remplaçait** les dépendances au lieu de les compléter :
+   l'onglet CONTENUS se disait débranché et ses boutons disparaissaient, sur
+   une base où `sql/contenus.sql` était appliqué depuis des semaines. */
+check('server.js complète les dépendances de l’administration sans les écraser',
+  !/admin\.deps\s*=[^=]/.test(serveur) && /Object\.assign\(admin\.deps,/.test(serveur));
+
 /* ------------------------- les crochets du suivi atteignent-ils le relevé ? */
 
 /**
