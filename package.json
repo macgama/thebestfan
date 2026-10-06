@@ -60,6 +60,7 @@
     "art": "node scripts/fanzzy-art.mjs",
     "art:tout": "node scripts/fanzzy-art-tout.mjs",
     "cligne": "node scripts/fanzzy-cligne.mjs",
+    "planche": "node scripts/fanzzy-planche.mjs",
     "dessins": "node scripts/dessins.mjs",
     "audit:ui": "node scripts/audit-ui.mjs",
     "quota": "node scripts/quota.mjs",
