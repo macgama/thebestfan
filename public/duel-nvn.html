@@ -368,6 +368,12 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
   aspect-ratio:7/12;pointer-events:none}
 .duel-fz[data-tribune=moi]{left:calc(8% + 4px)}
 .duel-fz[data-tribune=eux]{--vers:-1;right:calc(8% + 4px)}
+/* Ce qu'il porte (`TBF_STUFF.porte`), accroché à hauteur de hanche, du côté
+   du milieu de l'arène : c'est là qu'il y a de la place. Côté tribune, la
+   jauge de crans et le bord de l'arène le recouvraient. */
+.duel-fz .tbf-porte{--piece:32px;bottom:30%;gap:5px}
+.duel-fz[data-tribune=moi] .tbf-porte{left:calc(100% - 22px)}
+.duel-fz[data-tribune=eux] .tbf-porte{right:calc(100% - 22px)}
 /* L'ombre au sol : sans elle, le personnage flotte sur le terrain. */
 .duel-fz::before{content:"";position:absolute;left:16%;right:16%;bottom:1%;height:6%;border-radius:50%;
   background:radial-gradient(closest-side,rgba(0,0,0,.62),transparent)}
@@ -398,6 +404,30 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 @keyframes fzDuelAffaisse{35%{translate:0 5%}}
 @keyframes fzDuelRage{0%,100%{translate:0 0}15%,45%{translate:-4% 0}30%,60%{translate:4% 0}75%{translate:-2% 0}}
 @keyframes fzDuelEntre{from{translate:calc(var(--vers) * -60%) 0;opacity:0}}
+/* **Le chant de son geste** porte le sceau de sa famille, au coin haut-droit
+   que le coût laisse libre sur la carte du milieu. Le sceau de la carte
+   d'action, en sticker rond. */
+.chants .carte-sien{display:none;position:absolute;z-index:4;top:-10px;right:-6px;--taille:22px;--rot:0deg;
+  padding:0;background:var(--fam,var(--projo))}
+.chants .carte-sien>svg{width:14px;height:14px;fill:none;stroke:var(--encre);stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+.chants [data-sien]>.carte-sien{display:grid;place-items:center}
+
+/* **Son geste**, celui de sa famille (`GESTE_DE_FAMILLE`) : quand on réussit
+   le chant de sa spécialité, il le chante à sa manière. `scale` et `rotate`
+   reprennent la main le temps du geste, puis la pose tenue revient. */
+.duel-fz[data-geste=crie] .duel-fz-corps{animation:fzDuelCrie .9s ease-out}
+.duel-fz[data-geste=frappe] .duel-fz-corps{animation:fzDuelFrappe .9s linear}
+.duel-fz[data-geste=tient] .duel-fz-corps{animation:fzDuelTient 1s ease-out}
+.duel-fz[data-geste=deploie] .duel-fz-corps{animation:fzDuelDeploie .9s cubic-bezier(.3,.7,.4,1)}
+.duel-fz[data-geste=allume] .duel-fz-corps{animation:fzDuelAllume .9s ease-out}
+.duel-fz[data-geste=tourne] .duel-fz-corps{animation:fzDuelTourne .95s ease-in-out}
+@keyframes fzDuelCrie{25%{scale:1.1;rotate:calc(var(--vers) * -6deg)}60%{scale:1.08;rotate:calc(var(--vers) * -5deg)}}
+@keyframes fzDuelFrappe{0%,22%,44%,66%,100%{translate:0 0}11%,33%,55%{translate:0 4%}}
+@keyframes fzDuelTient{20%,75%{scale:1.04;translate:0 -3%}}
+@keyframes fzDuelDeploie{35%,65%{scale:1.14 1.02}}
+@keyframes fzDuelAllume{30%{translate:0 -10%;filter:brightness(1.45)}60%{filter:brightness(1.2)}}
+@keyframes fzDuelTourne{0%,100%{rotate:0deg}20%{rotate:-7deg}45%{rotate:7deg}70%{rotate:-4deg}}
 /* Une arène trop basse pour eux (un petit téléphone, des effets en cours,
    un bandeau d'annonce) : ils monteraient sur la corde. La foule au
    pochoir garde seule la tribune. */
@@ -916,6 +946,8 @@ html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:n
 <script src="/mods.js"></script>
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<!-- Ce que chaque Fanzzy porte, accroché à côté de lui dans l'arène. -->
+<script src="/stuff-art.js"></script>
 <script src="/action-art.js"></script>
 <!-- Le déroulé des dix gestes, partagé avec le Grand Virage. -->
 <!-- Le stade et la lumiere de ses tribunes, comme au Virage. -->
@@ -2953,7 +2985,7 @@ const SUPPORTER_DUEL = { neutre: 'idle', pousse: 'push', but: 'goal', encaisse: 
 const RANG_FZ = { neutre: 0, pousse: 1, decision: 2, but: 3, encaisse: 3 };
 /** Combien de temps chaque moment tient, en millisecondes. Le but du vrai
     match dure plus que celui de la corde, comme sa case de BD. */
-const TENIR_FZ = { but: 2600, butReel: 3600, pousse: 1100, decision: 1800 };
+const TENIR_FZ = { but: 2600, butReel: 3600, pousse: 1100, decision: 1800, sien: 1000 };
 /** Les coups d'en face : les effets qu'une carte pose chez l'adversaire
     (`appliquer`, côté serveur). Le Renvoi compris — c'est la vue qui dit
     où l'effet est tombé, pas la carte. */
@@ -2961,8 +2993,9 @@ const COUPS_RECUS = new Set(['silence', 'blind', 'lock_actions', 'mod_foe']);
 
 const fzArene = {};
 for (const cote of ['moi', 'eux']) {
-  fzArene[cote] = { cote, id: cote === 'moi' ? 'fzMoi' : 'fzEux', qui: null, cle: '',
-    pose: 'neutre', jusqua: 0, retour: 0, gesteT: 0, jeton: 0, devant: 0, src: '', voulu: '', coups: null };
+  fzArene[cote] = { cote, id: cote === 'moi' ? 'fzMoi' : 'fzEux', qui: null, cle: '', cleSac: '',
+    pose: 'neutre', jusqua: 0, retour: 0, gesteT: 0, jeton: 0, devant: 0, src: '', voulu: '', coups: null,
+    sienJusqua: 0 };
 }
 
 /* **Le manifeste des expressions d'abord.** Sans lui, un Fanzzy de LA
@@ -2999,7 +3032,10 @@ function quiEnTribune(v, cote) {
     const racine = racineFz(f?.id);
     if (!racine) return null;
     const evo = Number(f.stade) || ageFz(f.id);
-    return { id: f.id, racine, evo, skin: tenueEnJeu(f, evo, racine) };
+    /* Mon sac, tel que l'équipe le sert (`equipes[].sac`, avec la rareté) :
+       `moi.fanzzy[].stuff` n'a que les identifiants. */
+    const sac = (v.equipes?.[mon] ?? []).find((x) => x?.userId != null && x.userId === monId())?.sac ?? [];
+    return { id: f.id, racine, evo, skin: tenueEnJeu(f, evo, racine), sac };
   }
   const tribune = v.equipes?.[cote === 'moi' ? mon : mon ^ 1] ?? [];
   const j = tribune.find((x) => x?.fanzzy && x.connecte !== false) ?? tribune.find((x) => x?.fanzzy);
@@ -3007,7 +3043,7 @@ function quiEnTribune(v, cote) {
   /* `parti` : toute sa tribune a quitté le duel. Il reste, terni, comme ses
      supporters assis (`dessinerFoule`) : on voit qu'il n'y a plus personne. */
   return racine ? { id: j.fanzzy, racine, evo: Number(j.stade) || ageFz(j.fanzzy), skin: j.skin || 'base',
-    parti: tribune.every((x) => x?.connecte === false) } : null;
+    sac: j.sac ?? [], parti: tribune.every((x) => x?.connecte === false) } : null;
 }
 
 /** Le plein-pied de ce personnage à ce moment, par la fonction unique. */
@@ -3067,8 +3103,8 @@ async function poserImageFz(f, etat) {
   f.src = src;
 }
 
-/** Un geste d'un instant (`saut`, `hisse`, `affaisse`, `rage`, `entre`),
-    rejoué du début. Le calme l'éteint dans la feuille. */
+/** Un geste d'un instant (`saut`, `hisse`, `affaisse`, `rage`, `entre`, et
+    ceux des familles), rejoué du début. Le calme l'éteint dans la feuille. */
 function gesteFz(f, geste) {
   const el = $(f.id);
   if (!el || el.hidden) return;
@@ -3089,6 +3125,8 @@ function vivreFz(cote, etat, tenir, geste) {
   if (!f?.qui || !el) return;
   const t = performance.now();
   if (t < f.jusqua && (RANG_FZ[etat] ?? 0) < (RANG_FZ[f.pose] ?? 0)) return;
+  // La poussée qui suit son geste ne le coupe pas pour se pencher.
+  if (geste === 'hisse' && t < f.sienJusqua) geste = null;
   f.pose = etat;
   f.jusqua = t + tenir;
   el.dataset.pose = etat;
@@ -3101,6 +3139,29 @@ function vivreFz(cote, etat, tenir, geste) {
     el.dataset.pose = 'neutre';
     poserImageFz(f, 'neutre');
   }, tenir);
+}
+
+/**
+ * **Le geste de sa famille.** Quand un joueur réussit le chant de la
+ * spécialité de son Fanzzy, celui-ci le chante à sa manière : la Voix crie
+ * (il se gonfle, la tête en arrière), la Percussion frappe (trois coups secs),
+ * la Fidélité tient (elle se dresse et ne bouge plus), le Tifo déploie (il
+ * s'élargit), le Pyro allume (il bondit dans un éclat), le Déplacement fait
+ * tourner l'écharpe (il balance d'un côté à l'autre).
+ *
+ * **Aucun dessin de plus** : la pose « pousse » quand elle existe, le
+ * plein-pied sinon, et le mouvement fait le reste — comme pour le saut d'un
+ * but chez qui n'a pas de joie dessinée.
+ */
+const GESTE_DE_FAMILLE = { voix: 'crie', perc: 'frappe', fide: 'tient', tifo: 'deploie',
+  pyro: 'allume', depl: 'tourne' };
+
+function sonGesteFz(cote, famille) {
+  const f = fzArene[cote];
+  const geste = GESTE_DE_FAMILLE[famille];
+  if (!f?.qui || !geste) return;
+  vivreFz(cote, 'pousse', TENIR_FZ.sien, geste);
+  f.sienJusqua = performance.now() + TENIR_FZ.sien;
 }
 
 /** Les coups d'en face posés sur la tribune d'un camp, par type. */
@@ -3148,6 +3209,15 @@ function rendreFzArene(v) {
         }
         if (geste && S.entree) gesteFz(f, geste);
       }
+    }
+    /* Ce qu'il porte : ses deux pièces, accrochées côté tribune, hors du
+       corps — elles ne se retournent pas avec celui d'en face et ne sautent
+       pas avec lui. Redessinées seulement quand le sac change. */
+    const cleSac = window.TBF_STUFF?.cleSac?.(qui?.sac) ?? '';
+    if (cleSac !== f.cleSac) {
+      f.cleSac = cleSac;
+      el.querySelector('.tbf-porte')?.remove();
+      if (qui && cleSac) el.insertAdjacentHTML('beforeend', window.TBF_STUFF.porte(qui.sac));
     }
     if (el.hasAttribute('data-parti') !== Boolean(qui?.parti)) el.toggleAttribute('data-parti', Boolean(qui?.parti));
     const coups = coupsRecus(v, f.cote);
@@ -3321,6 +3391,9 @@ function raconter(e) {
         const p = pointCorde();
         FX?.onde?.({ ...p, couleur: pour ? OR : BLEU, taille: 220 });
       }
+      /* **Son geste** : réussi, le chant de sa spécialité le fait chanter à
+         la manière de sa famille (voir `GESTE_DE_FAMILLE`). */
+      if (e.sien && (v === 'parfait' || v === 'bon')) sonGesteFz(pour ? 'moi' : 'eux', e.famille);
       break;
     }
 
@@ -4183,10 +4256,22 @@ function rendreChants(v) {
         <span class="g tbf-carte-geste"></span><span class="p tbf-carte-pousse"></span>
         <b class="tbf-carte-nom"></b>
         <span class="c tbf-sticker tbf-sticker--rond tbf-carte-cout"></span>
+        <span class="tbf-sticker tbf-sticker--rond carte-sien" aria-hidden="true"><svg viewBox="0 0 24 24"><path d=""/></svg></span>
         <span class="tbf-sticker tbf-carte-manque" data-ton="flare"></span></button>`);
     },
     (el, _cle, i) => {
       const c = chants[i];
+      /* **Son geste** : le chant de la spécialité du Fanzzy en tribune porte le
+         sceau de sa famille, au coin que le coût laisse libre. Le serveur le
+         place au milieu de l'éventail, la seule carte entière. */
+      const sien = Boolean(c.sien);
+      if (el.hasAttribute('data-sien') !== sien) el.toggleAttribute('data-sien', sien);
+      if (sien) {
+        const chemin = el.querySelector('.carte-sien path');
+        if (chemin && chemin.getAttribute('d') !== (c.sien.ico ?? '')) chemin.setAttribute('d', c.sien.ico ?? '');
+        el.style.setProperty('--fam', c.sien.c ?? 'var(--projo)');
+        el.setAttribute('aria-label', `${c.nom ?? c.id}, le geste de ton Fanzzy`);
+      } else if (el.hasAttribute('aria-label')) el.removeAttribute('aria-label');
       const manque = souffle < c.cost ? c.cost - souffle : 0;
       const hors = Boolean(muet || v.termine || manque);
       el.classList.toggle('dim', hors);
