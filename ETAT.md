@@ -2083,10 +2083,13 @@ Par ordre d'utilité.
 5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
    d'envoi. Conçu, pas commencé.
 
-6. **Les notifications.** Le KOP émet déjà sur le socket quand un vote s'ouvre,
-   mais rien n'atteint un joueur dont l'onglet est fermé. Trois minutes de
-   vote, c'est court : sans notification hors de la page, la moitié d'un KOP ne
-   votera jamais.
+6. **Les notifications.** *Faites le 6 octobre 2026* : un vote du KOP qui
+   s'ouvre et un duel classé qui attend un supporter de ton club préviennent
+   l'appli fermée, pour qui l'a demandé sur la page du compte
+   (`src/server/notifications/index.js`, `sql/notifications.sql`). Restent
+   possibles : d'autres sujets (le derby automatique, le pronostic de ferveur
+   avant le coup d'envoi), et une invitation à les activer ailleurs que dans
+   le compte — sur la page du KOP, au moment où l'on rejoint.
 
 7. **Brancher la collection de stades.** Le catalogue et les effets sont écrits
    dans `src/shared/stades.js`, les cinq dessins sont rangés, les tribunes se
