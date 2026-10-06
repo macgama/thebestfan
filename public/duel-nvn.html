@@ -1357,6 +1357,7 @@ const S = {
   format: '1v1', fixtureId: null, camp: null, matchs: [], catalogue: [],
   // Ce qui attend, par match et par format. Voir `lireAttentes`.
   attentes: [],
+  derby: null,
   vue: null, enFile: false, dernierSeq: 0, occupe: false,
   /* Vrai quand la bibliothèque du direct n'a pas pu se charger. La page
      fonctionne quand même — on regarde les matchs — mais on ne peut pas
@@ -1512,6 +1513,11 @@ async function lireAttentes() {
   try {
     const r = await api('/api/nvn/attentes');
     S.attentes = r.attentes ?? [];
+    /* Le derby automatique (voir `derbyPour`, serveur) : un supporter de
+       l'autre club d'un match du jour est en ligne. Lu à l'arrivée
+       seulement — l'annonce diffusée des files ne le porte pas, elle est la
+       même pour tout le monde. */
+    S.derby = r.derby?.fixtureId ? r.derby : null;
   } catch { /* le panneau d'affichage n'est pas la page : on s'en passe */ }
 }
 
@@ -1677,7 +1683,8 @@ function ticketMatch(m) {
   return `<div class="mt tbf-ticket" data-fixture="${m.id}">
     ${blasonsDe(m)}
     <div class="n">${esc(m.home_name)} – ${esc(m.away_name)}
-      <small>${m.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT'}${fileDe(m)}</small></div>
+      <small>${m.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT'}${fileDe(m)}${
+        S.derby?.fixtureId === m.id ? '<span class="q attente derby">DERBY</span>' : ''}</small></div>
     <div class="bout">${etatDuMatch(m)}${m.mien
       ? '<span class="q mien tbf-tampon" data-ton="vert">×2</span>' : ''}</div>
   </div>`;
@@ -1792,6 +1799,14 @@ function souLeMatch(choisi, sansDeck) {
      défaut du côté du domicile, et le camp visiteur ne se remplirait jamais.
      **Ouvert, il se colle au bas de la préparation** (`data-colle`, voir
      `.entree`) ; fermé, il reste à sa place. */
+  /* **Le derby du jour** : quelqu'un qui suit l'autre club est en ligne.
+     Le dire là où l'on décide d'entrer, sans dire qui. */
+  if (S.derby?.fixtureId === choisi.id && S.format === (S.derby.format ?? '1v1') && chezMoi) {
+    const eux = S.derby.clubs?.[choisi.monCamp ^ 1]?.name ?? clubs[choisi.monCamp ^ 1];
+    out.push(`<div class="raison attend derby"><b>DERBY</b> · un supporter de l’autre
+      tribune, <b>${esc(eux)}</b>, est en ligne. Entre en file : il le verra.</div>`);
+  }
+
   const sansCamp = !chezMoi && S.camp === null;
   const ferme = sansDeck || sansCamp;
   const enJeu = !S.souple ? Number(choisi.enJeu?.[S.format]) : NaN;

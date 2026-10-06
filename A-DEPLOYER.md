@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**Le derby automatique** (branche `claude/derby-auto-hmhnv6`, 6 octobre
+2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `src/server/nvn/index.js` : quand deux joueurs sont sur le jeu au même
+  moment et suivent chacun un club d'un match du jour, `/api/nvn/attentes`
+  leur propose ce derby (1v1 classé, chacun dans la tribune de son club).
+  Jamais qui, rien écrit en base. Quand l'un entre en file, l'autre lit qu'un
+  supporter de l'autre club l'attend.
+- `public/index.html` : le bouton de l'accueil dit « Derby du jour · Un
+  supporter de Bâle est en ligne », puis « Derby ! · un supporter de Sion
+  t'attend ». `public/duel-nvn.html` : le match porte DERBY.
+- Contrôlé par `npm run derby:smoke` (suite neuve, 25 contrôles) et
+  `npm run accueil:ui` (5 contrôles neufs).
+
+**Aucun schéma ni réglage.** Le serveur change : **redémarrer** après la
+construction, hors d'un match en direct.
+
+---
+
 **Le deck refait au style du jeu** (branche `claude/deck-interface-n1oqm1`,
 6 octobre 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou
 seul. **Une page seule** (`public/deck.html`) : ni schéma ni redémarrage.
