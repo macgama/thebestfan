@@ -2074,10 +2074,17 @@ Par ordre d'utilité.
    largeur) sont dans le dossier du projet, `ecran-large/`. Gaël a choisi la
    seconde : une page réorganisée pour la largeur le dit par
    `<body class="tbf-large">` (« Les pages larges » dans `ui.css`), et sa
-   colonne prend alors jusqu'à 1 320 px. Faits : le profil (deux colonnes),
-   la boutique (l'étal s'allonge), la répétition (les familles deux par
-   rangée). Les autres pages gardent leur colonne, tuiles autour ; le deck
-   est revu à part (fil « Interface des pages du deck »).
+   colonne prend alors jusqu'à 1 320 px. Puis, à la demande de Gaël (« sur
+   PC, toutes les pages, pour la cohérence »), **toutes les pages de
+   l'application** la portent : la barre, la colonne et les tuiles ne
+   bougent plus d'une page à l'autre. La règle commune : une liste se range
+   en colonnes de la largeur d'un téléphone (missions, amis, KOP, carnet,
+   clubs, matchs, compétitions), le classement s'ouvre en deux (podium et
+   ta place à gauche, la liste à droite), le classeur pose ses rayons trois
+   par rangée, et les scènes (le Fanzzy, les boosters, le deck, la fiche)
+   restent au milieu. `large:ui` et les suites des pages le vérifient à
+   1 366 et 1 100 px (`scripts/large-ui.mjs`). Restent en colonne : l'accueil
+   (ses tuiles), le Virage et le duel (leur scène).
 
 3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
    765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
