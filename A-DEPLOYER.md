@@ -18,6 +18,79 @@ statiques, et leur empreinte se recalcule quand ils changent sur le disque.
 
 ---
 
+**Le carton rouge au Fanzzy de l'accueil** (branche
+`claude/carton-rouge-q3bnc0`, 6 octobre 2026, lot 7, confié par Gaël). Il se
+dépose avec ce qui est en dessous, ou seul.
+
+- `src/server/quotidien/depuis.js` : le résumé « Depuis ta dernière visite »
+  compte les cartons rouges que le club suivi a pris dans chaque match (le
+  rouge direct et le second jaune ; pas ceux de l'adversaire). Contrôlé par
+  `npm run quotidien:smoke` (un contrôle neuf).
+- `public/index.html` : le ticket l'écrit (« FC Sion perd 0–1 · carton
+  rouge », raccourci en « · rouge » si la ligne est trop longue), et le
+  Fanzzy se fâche à l'arrivée, sans sauter, après une défaite ou un nul où
+  son club a pris un rouge. Après une victoire, il reste fier. Contrôlé par
+  `npm run accueil:ui` (huit contrôles neufs).
+
+**Aucun schéma ni réglage** : les cartons sont déjà rangés dans
+`fixture_events`. **Un redémarrage** pour le serveur, hors d'un match en
+direct ; la page seule n'en demande pas, mais sans le serveur à jour elle ne
+reçoit aucun rouge à raconter.
+
+---
+
+**L'administration lisible** (branche `claude/sons-fid6tr`, 6 octobre 2026,
+vu par Gaël sur `/admin`). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/nav.js` : sur `/admin`, la photo de tribune et son voile passaient
+  devant la page ; les chiffres de l'aperçu, les tableaux et le titre étaient
+  invisibles. L'administration retrouve son fond sombre, sans photo. Rien ne
+  change sur les autres pages. Contrôlé par `npm run admin:ui` (un contrôle
+  neuf).
+
+**Aucun schéma ni réglage.** Déposée seule, la page part sans redémarrage
+(fichier statique). Si l’ancienne page reste affichée, un rechargement suffit.
+
+---
+
+**Les seuils de division recalés depuis l'administration** (branche
+`claude/seuils-division-eahsmj`, 6 octobre 2026, demandé par Gaël). Il se
+dépose avec ce qui est en dessous, ou seul.
+
+- `src/server/admin/index.js`, `src/shared/saison.js`, `public/admin.html` :
+  dans `/admin`, RÉGLAGES, section LA SAISON ET SES PALIERS, un cadre
+  **RECALER LES DIVISIONS** lit la ferveur classée de la saison des seuls
+  joueurs sans abonnement et propose les quatre seuils ; **Poser ces quatre
+  seuils** les écrit. Contrôlé par `npm run admin:smoke` et `npm run
+  admin:ui` (20 contrôles neufs).
+
+**Aucun schéma.** Le serveur change : **redémarrer** après la construction,
+hors d'un match en direct. Ensuite, pour Gaël : saisir le **31 décembre 2026**
+comme dernier jour de jeu de la saison 1 (SAISONS, Modifier), puis, après
+deux semaines de jeu au moins, ouvrir le cadre et cliquer **Poser ces quatre
+seuils**. Les seuils ne changent pas tant qu'on n'a pas cliqué.
+
+---
+
+**La tenue d'en face au duel** (branche `claude/tenue-duel-4bbx7e`,
+6 octobre 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou
+seul.
+
+- `src/server/deck/index.js`, `src/server/nvn/engine.js`,
+  `src/server/nvn/index.js` : la vue du duel dit, pour chaque joueur, l'âge
+  de son Fanzzy en tribune et la tenue qu'il lui a mise à cet âge ; l'affiche
+  dit la tenue de chacun. Les bots d'entraînement restent en tenue de base.
+- `public/duel-nvn.html` : le Fanzzy d'en face paraît dans sa tenue, dans
+  l'arène et sur l'affiche, et la Relève le fait grandir à l'écran (avant,
+  l'arène gardait le premier âge, des deux côtés). Contrôlé par
+  `npm run nvn:smoke` et `npm run nvn:ui` (contrôles neufs).
+
+**Aucun schéma ni réglage.** Un redémarrage, **hors d'un match en direct**
+(le serveur change). La page seule, sans redémarrage, ne casse rien : elle
+garde alors la tenue de base pour celui d'en face.
+
+---
+
 **Le personnage de l'accueil au milieu, sur téléphone** (branche
 `claude/project-thread-iatg2m`, 6 octobre 2026, choisi par Gaël sur la
 capture avant/après). Il se dépose avec ce qui est en dessous, ou seul.
