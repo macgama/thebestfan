@@ -8037,25 +8037,33 @@ fusion : `lot7/cligne/rp1-cligne.mp4`, dans les fichiers du projet.*
 
 ### Contrôles
 
-`accueil:ui` : 8 contrôles de plus (les paupières prêtes avant le premier
+`accueil:ui` : 9 contrôles de plus (les paupières prêtes avant le premier
 battement, posées sur la boîte exacte du repos, sans lueur ni fondu, un
-battement de lui-même, sa durée, jamais sur un autre visage, un moment qui
-rouvre les yeux, le calme sans battement) et un pour le supporter.
+battement de lui-même, sa durée, jamais sur un autre visage, le salut sans
+dessin qui ne repousse pas la minuterie, un moment qui rouvre les yeux, le
+calme sans battement) et un pour le supporter. Le contrôle du salut rougit
+sans le correctif : la minuterie change à chaque échange de calques. Le
+diagnostic du clignement s'écrit maintenant après sa ligne rouge, là où
+`tout-tester` le remonte. « et il saute » et « d'un saut », du Fanzzy
+vivant, lisaient le saut à l'instant où la joie s'affiche, alors que son
+`animationstart` n'arrive qu'à l'image suivante : deux passes sur six de la
+section seule le manquaient, et ils lui laissent une seconde.
 `etats:test` : 12, `paupieres` sur un manifeste fabriqué et sur le vrai.
 `cligne:test` (neuf, 13 contrôles) : la chaîne sur RP1 recadré, republié,
 puis redessiné. `virage:ui` : 4, la corde, la carte-souvenir qui attend, puis
 le rouge, puis « GOAL ! » qui reste.
 
-Les 68 suites (`npm test`, 5 676 contrôles), passées sur la branche une fois
+Les 71 suites (`npm test`, 5 897 contrôles), passées sur la branche une fois
 fondus le stade du match, les trois décisions de saison 2 et le `main` du
-jour (notifications, carton rouge, tenue d'en face, seuils de division),
-n'ont aucune rouge nouvelle : celles qui restent rougissent à l'identique
-sur `main` dans un conteneur cloud (`equipes:ui` 3, `deck:ui` 1, `nvn:ui` 1,
-`virage:ui` 4). `son:smoke` a rougi une fois, un écho dont deux sources
-partaient à un peu plus de 5 ms l'une de l'autre sous la charge de la passe
-complète, puis passé deux fois seul : ses pages de test ne chargent rien que
-cette branche change. La suite des notifications importait `EN_VENTE`,
-parti avec « La quête » : elle lit maintenant le catalogue partagé.
+jour (notifications, carton rouge, tenue d'en face, seuils de division,
+collection de stades, le Fanzzy qui parle), n'ont aucune rouge nouvelle :
+celles qui restent rougissent à l'identique sur `main` dans un conteneur
+cloud (`equipes:ui` 3, `deck:ui` 1, `nvn:ui` 1, `virage:ui` 4). Deux
+fusions ont demandé plus que des conflits de texte : la suite des
+notifications importait `EN_VENTE`, parti avec « La quête », et lit
+maintenant le catalogue partagé ; le tirage d'un stade, venu avec la
+collection, rend lui aussi le repli de 2 écharpes quand il n'a rien à
+donner.
 
 ### Ce qui reste
 
