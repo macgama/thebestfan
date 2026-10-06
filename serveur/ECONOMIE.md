@@ -29,6 +29,11 @@ la deuxième semaine, et 2 100 de ces écharpes viennent de la recharge gratuite
 des boosters. Au 42ᵉ jour, son solde est de 92 000 écharpes. Dans le même
 temps, le **Grand Virage**, le cœur du jeu, ne rapporte **ni écharpe ni XP**.
 
+*Ces chiffres sont ceux d'avant le 6 octobre 2026. Depuis, une catégorie
+épuisée ne rend plus que 2 écharpes au lieu d'une poignée : un booster établi
+rend 28,8 écharpes, et l'assidu en encaisse environ 1 700 par jour (§ 12.1).
+Le constat tient toujours, et les règles qui suivent aussi.*
+
 Il en découle trois règles pour le contenu :
 
 1. **Les missions doivent payer le jeu, pas l'ouverture.** Elles visent le
@@ -48,8 +53,8 @@ Il en découle trois règles pour le contenu :
 | Missions du jour | 3 tirées par jour (une facile, une moyenne, une difficile) dans un catalogue de 15, plus 1 relance gratuite | 30 / 60 / 100 écharpes, 20 / 40 / 60 XP, 1 / 1 / 2 tampons ; **1 booster** quand les trois sont faites |
 | Bonus quotidien | une carte de présence de 7 cases qui **n'est jamais remise à zéro** | 20, 25, 30, 35, 40, 45 puis 50 écharpes + 1 booster |
 | Jour | minuit, **heure de Zurich**, donné par `CURDATE()` de MySQL (la même horloge que les quotas) | — |
-| Saison 1 « La reprise » | fin le **dimanche 20 décembre 2026 à 23 h 59**, dernier week-end avant la trêve | carnet de tampons à 5 paliers (de 100 écharpes à 4 boosters + 600 écharpes + titre) |
-| Saison 2 | « La trêve », du **lundi 21 décembre 2026** au 28 février 2027 ; ouvre **LES HÉROS DU CANAPÉ** | 2 boosters offerts au lancement à qui a ≥ 10 tampons en S1 |
+| Saison 1 « La reprise » | fin le **jeudi 31 décembre 2026** (tranché le 6 octobre 2026 : des saisons de quatre mois ; proposé ici, le dimanche 20 décembre, dernier week-end avant la trêve) | carnet de tampons à 5 paliers (de 100 écharpes à 4 boosters + 600 écharpes + titre) |
+| Saison 2 | du **1er janvier au 30 avril 2027** (tranché le 6 octobre 2026) ; sa série et son nom restent à choisir (proposé ici : « La trêve », du 21 décembre au 28 février, qui ouvrait **LES HÉROS DU CANAPÉ**) | 2 boosters offerts au lancement à qui a ≥ 10 tampons en S1 |
 | Paliers de collection | **oui, un cran tous les 25 objets**, sur toute la bibliothèque (635 objets en RP, soit 25 crans) | 25 écharpes par cran, 1 booster tous les 4 crans, 1 booster + 100 pour une série complète |
 | Paliers de rang | 5 divisions de ferveur de saison, à seuils absolus qu'on ne perd jamais | de 50 écharpes à 3 boosters + 200, et l'insigne |
 
@@ -59,8 +64,10 @@ occasionnel +32 %, +4 %, +50 %. Le quotidien penche donc vers ceux qui jouent
 peu, et presque rien ne passe par les boosters.
 
 **À trancher par Gaël, hors délégation** (§ 12) : l'inflation des écharpes
-(avant la saison 2) ; l'XP du Virage ; le bonus de KOP « La quête », qui ne fait
-rien ; la ferveur arrondie à zéro dans les tribunes nombreuses.
+(avant la saison 2 ; tranchée le 6 octobre 2026, et faite : § 12.1) ; l'XP du
+Virage ; le bonus de KOP « La quête », qui ne fait rien (retiré le 6 octobre
+2026, son prix rendu au pot : § 12.3) ; la ferveur arrondie à zéro dans les
+tribunes nombreuses.
 
 ---
 
@@ -71,7 +78,7 @@ rien ; la ferveur arrondie à zéro dans les tribunes nombreuses.
 | Source | Montant | Où |
 |---|---|---|
 | Doublon de personnage | commune 1, rare 3, épique 10, légendaire 45 | `src/shared/fanzzy/dex.js:95` `SCARVES` |
-| Place ouverte d'un booster (3,3 par booster en moyenne) | 23 % de poignées : 6 (55 %), 14 (33 %), 30 (12 %), soit 11,5 en moyenne. Les autres catégories (action 28 %, pièce 23 %, tenue 14 %, état 12 %) **retombent sur une poignée** quand elles sont épuisées | `src/server/fanzzy/index.js:442` `PLACES_OUVERTES`, `:463` `POIGNEES` |
+| Place ouverte d'un booster (3,3 par booster en moyenne) | 23 % de poignées : 6 (55 %), 14 (33 %), 30 (12 %), soit 11,5 en moyenne. Les autres catégories (action 28 %, pièce 23 %, tenue 14 %, état 12 %) **retombent sur une poignée** quand elles sont épuisées. *Depuis le 6 octobre 2026, ce repli ne rend plus que 2 écharpes (§ 12.1)* | `src/server/fanzzy/index.js:723` `PLACES_OUVERTES`, `:749` `POIGNEES` ; `src/shared/fanzzy/dex.js:113` `POIGNEE_DE_REPLI` |
 | Doublon de pièce d'équipement | `SCARVES` de sa rareté (10,45 en moyenne sur les 20 pièces RP) | `src/server/fanzzy/index.js:566` |
 | Duel classé | victoire 30, défaite 12 ; **×2** pour son club ; prime de format +15 % par joueur de plus par camp ; un forfait ne rapporte rien | `src/server/nvn/index.js:687` `GAIN`, `:704`, réglage `duel.prime_format` |
 | Duel d'entraînement | victoire 15, défaite 6 (mêmes multiplicateurs) | idem |
@@ -179,7 +186,9 @@ viennent de la recharge gratuite des boosters.
   matchs ») ne fait rien.** `scarvesBonus` n'est lu nulle part dans
   `src/server` ; les bonus de KOP ne se consomment qu'à l'entrée au Virage
   (`kop.modsDe`, appelé par `ferveur/index.js:390`), où il n'y a pas
-  d'écharpes. Un KOP qui vote ce bonus perd 900 écharpes.
+  d'écharpes. Un KOP qui vote ce bonus perd 900 écharpes. *Tranché le
+  6 octobre 2026 : retiré du catalogue, avec « Mur de bâches », et le prix
+  rendu au pot des KOP qui l'avaient payé (§ 12.3).*
 - **C6. Le bonus de KOP « Le virage debout » (5 000, « jusqu'à la fin de la
   saison ») n'a pas de fin** : `saisons` n'a pas de date de fin, et
   `restant` vaut NULL pour toujours. La date de fin de saison (§ 6) doit
@@ -381,7 +390,15 @@ compteur), pas une source de revenu.
 
 ## 6. La saison 1 « La reprise », et ce qui s'ouvre ensuite
 
-### 6.1 La fin : dimanche 20 décembre 2026, 23 h 59, heure de Zurich
+### 6.1 La fin : jeudi 31 décembre 2026
+
+**Tranché le 6 octobre 2026 : des saisons de quatre mois**, du 1er janvier au
+30 avril, du 1er mai au 31 août et du 1er septembre au 31 décembre. La
+saison 1 finit le jeudi 31 décembre 2026, et Gaël saisit lui-même la date dans
+l'onglet Saisons (`saisons.fin_le`, un jour : la saison finit avec ce jour de
+jeu). Ce qui suit est la proposition d'origine — le dimanche 20 décembre — et
+n'a plus cours ; un calendrier fixe ne demande plus de vérifier celui des
+championnats.
 
 - **Pourquoi là** : « La reprise », c'est la première journée après la coupure
   d'été. La fin naturelle est la **dernière journée avant la trêve d'hiver**.
@@ -413,6 +430,11 @@ Calibré sur les 9 semaines restantes de la saison 1 : un assidu fait environ
 4,7 tampons par jour joué (≈ 290 au total), un joueur moyen 2,8 (≈ 125), un
 occasionnel 1,6 (≈ 45).
 
+*Avec la fin au 31 décembre et les missions en ligne depuis le 3 octobre, la
+saison 1 compte 90 jours de missions au lieu de 63 : au même rythme, environ
+410, 180 et 65 tampons. Les paliers arrivent plus tôt ; le carnet, figé depuis
+son premier palier versé, n'est pas à recaler (`SERVEUR.md`, § 5).*
+
 | Palier | Tampons | Nom (propre à S1) | Récompense | Qui l'atteint |
 |---|---|---|---|---|
 | 1 | 10 | De retour | 100 écharpes | tout le monde, en 2 à 6 jours |
@@ -440,7 +462,17 @@ moins **10 tampons en S1** reçoit **2 boosters** (« les sachets de la trêve �
 annoncés avec la saison. C'est ce qui ramène les joueurs le jour où il se
 passe quelque chose.
 
-### 6.3 La saison 2 : « La trêve », du 21 décembre 2026 au 28 février 2027
+### 6.3 La saison 2 : du 1er janvier au 30 avril 2027
+
+**Tranché le 6 octobre 2026 pour les dates** : du vendredi 1er janvier au
+vendredi 30 avril 2027, dix-sept semaines, puis la saison 3 du 1er mai au
+31 août et la 4 du 1er septembre au 31 décembre. **Sa série et son nom restent
+à choisir** : ce qui suit — « La trêve », du 21 décembre 2026 au 28 février
+2027, qui ouvrait LES HÉROS DU CANAPÉ — est la proposition d'origine. Trois
+de ses points tenaient aux anciennes dates : le carnet S2 « sur 10 semaines »
+est à recalculer par le gabarit (jours × 4,7) sur dix-sept ; l'annonce se
+poserait au 1er janvier 2027, et non au 21 décembre ; et la « cadence
+ensuite » est désormais celle des quatre mois.
 
 - **Ce qu'elle ouvre** : **une seule** des douze séries fermées. Il ne s'agit
   pas de rouvrir les douze ; c'est le lancement voulu, et la question a déjà
@@ -842,6 +874,24 @@ ALTER TABLE kop_bonus       ADD COLUMN IF NOT EXISTS saison_id INT UNSIGNED NULL
    booster (7 en comptant les doublons de pièces légendaires). Sans
    décision, les vétérans paieront la saison 2 entière dans la minute. Le
    quotidien proposé ici fonctionne avec ou sans.
+
+   **Tranché le 6 octobre 2026, et fait : le levier a).** Une catégorie
+   épuisée (toutes les tenues, tous les états ou toutes les cartes d'action
+   déjà gagnés) rend `POIGNEE_DE_REPLI`, 2 écharpes
+   (`src/shared/fanzzy/dex.js`, lue par `tirerAutreChose`). La catégorie des
+   écharpes garde sa poignée de 6, 14 ou 30, et une pièce d'équipement en
+   double son tarif de doublon. Le levier b) n'est pas pris : la légendaire en
+   double rend toujours 45. `serveur/sim-eco.mjs`, relancé avec la règle :
+   un booster établi rend **28,8 écharpes au lieu de 45,8** ; un assidu
+   encaisse 11 700 écharpes par semaine au lieu de 16 700 (semaines 3 et 4),
+   et son solde du 28ᵉ jour passe de 58 000 à 41 000. **Le nouveau venu y perd
+   aussi** : ses vingt premiers boosters rendent 12,3 écharpes au lieu de
+   18,2, parce que les sept cartes d'action de LA REPRISE sont vite toutes
+   gagnées et que la catégorie se replie dès lors. Un occasionnel fait grandir
+   pour 760 écharpes la première semaine au lieu de 1 020, et ses trente
+   lignées atteignent toujours le troisième âge vers le 28ᵉ jour. Le ricochet
+   de l'abonnement (C3) tombe d'environ 2 700 à environ 1 700 écharpes par
+   jour. Contrôlé par `fanzzy:smoke` (« le repli : deux écharpes »).
 2. **L'XP du Virage.** Proposé : un réglage `xp.virage` à **15 XP par match**
    poussé (au moins 20 chants réussis), versé par le bilan de tribune
    (mécanisme 10 de la synthèse). C'est l'équivalent d'un entraînement. C'est
@@ -849,6 +899,16 @@ ALTER TABLE kop_bonus       ADD COLUMN IF NOT EXISTS saison_id INT UNSIGNED NULL
 3. **« La quête », le bonus de KOP qui ne fait rien (C5)** : le brancher sur
    les écharpes de duel, ou le retirer de la liste. En attendant, un KOP peut
    y perdre 900 écharpes.
+
+   **Tranché le 6 octobre 2026, et fait : retiré.** « La quête » et « Mur de
+   bâches » (500 écharpes, des contres que le Virage ne connaît pas) quittent
+   `src/shared/kop.js` pour de bon. Chaque achat est rendu au pot de son KOP,
+   900 ou 500 écharpes, une fois, par le serveur à son démarrage
+   (`rendreLesRetires`, `src/server/kop/index.js`) : la ligne de `kop_bonus`
+   devient `rendu:echarpes` ou `rendu:contres` dans la transaction qui
+   crédite le pot, si bien que les démarrages suivants n'ont plus rien à
+   rendre. Aucun changement de schéma. Contrôlé par `kop:smoke` (« les
+   retirés, rendus au pot ») et `cablage`.
 4. **La ferveur arrondie à zéro (C4)** : accumuler le reste décimal par
    supporter et n'arrondir qu'à l'écriture. Les divisions en dépendent.
 5. **`JURIDIQUE.md` est en retard** sur deux points qui touchent aux

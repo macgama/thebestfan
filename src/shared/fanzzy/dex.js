@@ -94,6 +94,24 @@ const RAR = { commune:1, rare:2, epique:3, legendaire:4 };
  */
 const SCARVES = { commune:1, rare:3, epique:10, legendaire:45 };
 /**
+ * Ce que rend une place ouverte de booster quand la catégorie tirée n'a plus
+ * rien à donner à ce joueur : **deux écharpes**, et non une poignée.
+ *
+ * Toutes les tenues, tous les états ou toutes les cartes d'action déjà
+ * possédés, la place retombait sur une poignée entière — 11,5 écharpes en
+ * moyenne. Chez un joueur qui a tout, plus de la moitié des places ouvertes y
+ * tombaient, et un booster rendait 46 écharpes pour un prix de 45 : l'acheter
+ * ne coûtait rien, et les vétérans seraient arrivés à la saison 2 avec de quoi
+ * la payer entière dans la minute. Gaël a tranché le 6 octobre 2026 pour ce
+ * reste réduit (`serveur/ECONOMIE.md`, § 12) : un booster établi rend
+ * désormais une trentaine d'écharpes, moins que son prix.
+ *
+ * Il vit ici, à côté des doublons, parce que l'aide le cite : un nombre que la
+ * FAQ dit se lit, il ne se recopie pas (`src/shared/aide.js`). Le tirage, lui,
+ * est dans `tirerAutreChose` (`src/server/fanzzy/index.js`).
+ */
+const POIGNEE_DE_REPLI = 2;
+/**
  * Coût d'évolution, en écharpes. Vingt-cinq pour le stade 2, quatre-vingt-dix
  * pour le stade 3.
  *
@@ -768,5 +786,5 @@ const TOUS_SETS = [...SETS, ...SETS_2026, ...SETS_NEUVES, SET_SAISON];
 }
 
 export const BY_ID = new Map(TOUT.map((f) => [f.id, f]));
-export { TYPES, RAR, SCARVES, EVO_COST, RATES };
+export { TYPES, RAR, SCARVES, POIGNEE_DE_REPLI, EVO_COST, RATES };
 export { TOUS_SETS as SETS, TOUT as DEX };

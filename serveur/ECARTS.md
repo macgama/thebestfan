@@ -297,6 +297,38 @@ partagé `src/shared/kop.js` n'est pas touché) :
    moteur ne les lit : les fiches les affichent, la carte coûte 30 de souffle
    et ne fait rien. Hors de ma main ; à aiguiller.
 
+**Tranché le 6 octobre 2026, et fait : retirés, et remboursés** (points 1
+et 2). **Aucun champ de `CONTRATS.md` ne change** ; `catalogue` sert
+toujours 5 bonus.
+- `src/shared/kop.js` ne les porte plus. Ce qui ne servait qu'à les tenir
+  hors de vente part avec eux : `MODS_DU_VIRAGE`, `agit` et `EN_VENTE`
+  n'existent plus, et `catalogue` sert `BONUS`. `proposer()` refuse un
+  identifiant inconnu (`kop.error.bonus_inconnu`). Le dépouillement garde sa
+  garde : un vote ouvert avant le déploiement est rejeté sans débiter le
+  pot, `horsVente: true`, comme un identifiant que le catalogue n'a jamais
+  connu. `bonusActifs` écarte toute ligne dont l'identifiant n'est plus au
+  catalogue.
+- Le prix est rendu par le serveur, à son démarrage (`rendreLesRetires`,
+  appelé et attendu par `server.js` avant l'écoute). Une transaction par
+  KOP : le pot sous verrou d'abord, comme au dépouillement ; puis chaque
+  ligne `echarpes` ou `contres` devient `rendu:echarpes` ou `rendu:contres`,
+  `restant` 0, épuisée (la date d'un épuisement antérieur est gardée) ; puis
+  le pot reçoit 900 ou 500 par ligne. Toutes les lignes sont rendues, même
+  celles que des matchs avaient décomptées avant le 3 octobre : ces matchs
+  n'ont rien reçu. `verse_total` ne bouge pas, ce n'est pas un versement.
+  Aucun changement de schéma : la marque tient dans `bonus_id`.
+- Le journal dit une ligne par KOP remboursé (nom, identifiant, détail, pot
+  avant et après), puis un bilan, ou « rien à rendre ». Un KOP en échec est
+  annulé entier, nommé, et repris au démarrage suivant ; la fonction ne lève
+  jamais.
+- `kop-smoke` (« ce qui est en vente », « les retirés, rendus au pot » : un
+  remboursement, un second démarrage qui ne rend rien, quatre démarrages
+  simultanés, une panne entre la marque et le crédit, une base sans la
+  table) et `cablage` (l'appel attendu, avant l'écoute) ; chaque contrôle a
+  été cassé exprès et a rougi.
+
+Le point 3 reste ouvert.
+
 ### 7. `couleurs` sur `GET /api/kop/club/:teamId` (servi, 3 octobre 2026)
 
 **Aucun champ de `CONTRATS.md` ne change** (la route est hors contrat). C'est
@@ -1176,7 +1208,10 @@ toutes les tenues de ses âges reçoit donc des écharpes là où un joueur grat
 reçoit une tenue : de l'ordre de 5 écharpes par booster (0,46 place « tenue »
 par booster × 11,5), tant que le joueur gratuit n'a pas lui-même toutes ses
 tenues. Le corriger demande de savoir quelles tenues ont été prises par
-l'abonnement : c'est la colonne ci-dessus.
+l'abonnement : c'est la colonne ci-dessus. *Depuis le 6 octobre 2026, une
+catégorie épuisée ne rend plus que 2 écharpes (`POIGNEE_DE_REPLI`) : l'écart
+tombe à environ 1 écharpe par booster (0,46 × 2), et la question perd
+l'essentiel de son poids.*
 
 **Suite** : `fanzzy-smoke`, « ce que l'abonnement ouvre ne paie pas ». Un
 abonné simulé porte, **par la route de l'avatar** (`POST
