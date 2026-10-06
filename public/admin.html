@@ -1557,11 +1557,15 @@ const VUES = {
     const NOMS = { 'rang.habitue': ['HABITUÉ', 'habitue', '70 %'],
       'rang.fervent': ['FERVENT', 'fervent', '40 %'], 'rang.ultra': ['ULTRA', 'ultra', '15 %'],
       'rang.capo': ['CAPO', 'capo', '4 %'] };
+    /* Le cadre, écrit une fois : son identifiant ne doit apparaître qu'une
+       fois dans la page (`npm run pages`), refus ou proposition. */
+    const cadreRecalage = (corps) =>
+      `<div class="recal" id="recalage"><b>RECALER LES DIVISIONS</b>${corps}</div>`;
     function recalage(r) {
       if (r?.refus) {
-        return `<div class="recal" id="recalage"><b>RECALER LES DIVISIONS</b>
+        return cadreRecalage(`
           <p class="alerte">${esc(MSG_FANZZY[r.refus.code] ?? r.refus.raison ?? r.refus.code
-            ?? 'le serveur n’a pas répondu.')}</p></div>`;
+            ?? 'le serveur n’a pas répondu.')}</p>`);
       }
       const s = r.saison;
       const tete = s
@@ -1574,7 +1578,7 @@ const VUES = {
           <td>${nom}</td><td>${part}</td><td>${ent(r.actuels?.[cle] ?? 0)}</td>
           <td>${r.lus ? ent(r.lus[id]) : '—'}</td>
           <td><b>${r.seuils ? ent(r.seuils[cle]) : '—'}</b></td></tr>`).join('');
-      return `<div class="recal" id="recalage"><b>RECALER LES DIVISIONS</b>
+      return cadreRecalage(`
         <p>${tete} La règle lit la ferveur classée des seuls joueurs <b>sans abonnement</b>
         (l’abonné n’a pas de plafond), puis la projette sur la saison entière${
           r.facteur ? ` (× ${r.facteur.toLocaleString('fr-CH', { maximumFractionDigits: 2 })})` : ''}.</p>
@@ -1586,7 +1590,7 @@ const VUES = {
           .map((a) => `<p class="alerte">${esc(AVERTIS[a])}</p>`).join('')}
         <p>Relever un seuil ne retire rien à qui a déjà récupéré sa division.</p>
         <button class="mini" id="poser-recalage"${r.seuils ? '' : ' disabled'}>
-          Poser ces quatre seuils</button></div>`;
+          Poser ces quatre seuils</button>`);
     }
 
     $('main').innerHTML = `
