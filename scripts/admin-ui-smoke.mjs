@@ -106,6 +106,12 @@ await page.goto(base + '/admin', { waitUntil: 'networkidle0' });
 check('la page se charge sans erreur de script', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
+/* Le décor commun (photo et voile, calques fixes à z-index 0) passait devant
+   tout le contenu de cette page, qui n'a pas la colonne `#app` pour s'élever
+   au-dessus : les chiffres de l'aperçu et les tableaux étaient invisibles. */
+check('aucun décor ne recouvre l’administration', await page.evaluate(() =>
+  !document.querySelector('.tbf-decor, .tbf-grad')));
+
 /* ------------------------------------------------------------ la liste */
 
 await page.evaluate(() => [...document.querySelectorAll('nav button')]
