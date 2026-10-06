@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Le personnage de l'accueil au milieu, sur téléphone** (branche
+`claude/project-thread-iatg2m`, 6 octobre 2026, choisi par Gaël sur la
+capture avant/après). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/index.html` : sur un téléphone, le personnage de l'accueil se tenait
+  une trentaine de pixels à droite de son ombre, de son décor et de son nom.
+  Il se tient maintenant au milieu, à la même taille, et Firefox le dessine
+  aussi grand que Chrome. Rien ne change sur ordinateur ni sur tablette.
+  Contrôlé par `npm run accueil:ui` (un contrôle neuf).
+
+**Aucun schéma ni réglage.** Déposée seule, la page part sans redémarrage
+(`page()` relit la page à chaque demande).
+
+---
+
 **Le personnage de l'accueil sous Firefox** (branche
 `claude/project-thread-iatg2m`, 6 octobre 2026). Un défaut déjà en ligne, vu
 par Gaël sous Firefox 140 ESR. Il se dépose avec ce qui est en dessous, ou
