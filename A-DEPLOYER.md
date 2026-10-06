@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Le geste de chaque Fanzzy au duel** (branche `claude/geste-fanzzy-0qd5x6`,
+6 octobre 2026, règle « Toujours là » choisie par Gaël). Il se dépose avec ce
+qui est en dessous, ou seul.
+
+- `src/server/nvn/engine.js`, `src/server/nvn/index.js`, `public/duel-nvn.html` :
+  le chant du geste du Fanzzy en tribune est toujours dans la main du joueur,
+  au milieu, avec le sceau de sa famille ; quand le tirage ne l'offrait pas, il
+  prend la place du cinquième. Aucun bonus. Réussi, ce chant fait chanter le
+  Fanzzy de l'arène à la manière de sa famille (la Voix crie, la Percussion
+  frappe…), sans image neuve. Contrôlé par `npm run nvn:smoke` et `npm run
+  nvn:ui` (13 contrôles neufs).
+
+**Aucun schéma.** Le serveur change : **redémarrer** après la construction,
+hors d'un match en direct.
+
+---
+
 **L'administration lisible** (branche `claude/sons-fid6tr`, 6 octobre 2026,
 vu par Gaël sur `/admin`). Il se dépose avec ce qui est en dessous, ou seul.
 
