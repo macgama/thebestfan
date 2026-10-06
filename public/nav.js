@@ -1536,7 +1536,11 @@
        (contrat R10). La même valeur pour les deux, et pour les pages qui
        écrivent ces clés. */
     const qui = user ? (user.id ?? user.pseudo) : null;
-    const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger'), { qui }) : null;
+    /* Les rails du grand écran (`RAILS`, dans menu.js) : sur les pages de
+       contenu seulement : dans une arène, une tuile à côté de la corde serait
+       une sortie en plein chant. */
+    const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger'),
+      { qui, rails: !ECRANS_DE_JEU.includes(chemin) }) : null;
 
     /* **Le HUD replié**, pour un joueur connecté, hors des deux écrans de jeu :
        pendant un duel, son solde d'écharpes n'intéresse personne, et la
