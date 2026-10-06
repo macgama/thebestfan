@@ -24,7 +24,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createContenus, tous, publies, ouverts, oublier, FAMILLES }
+import { createContenus, tous, publies, ouverts, oublier, FAMILLES, stadeDuMatch }
   from '../src/server/contenus/index.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
@@ -194,21 +194,25 @@ const contenus = createContenus({ pool });
    qu'il est vert.
 
    On éprouve ici les **tirages**, un par un, en fermant un contenu et en
-   regardant s'il cesse d'être distribué. Six endroits distribuent : le booster,
-   le paquet de bienvenue, la boutique, les communes offertes au deck, et les
-   deux moteurs qui choisissent le stade d'une rencontre. */
+   regardant s'il cesse d'être distribué. Cinq endroits distribuent : le
+   booster, le paquet de bienvenue, la boutique, les communes offertes au deck,
+   et le stade d'un match — celui de son Grand Virage et de tous ses duels,
+   que les deux moteurs tirent par la même fonction (`stadeDuMatch`) depuis le
+   6 octobre 2026. Ils étaient six : chacun des deux le tirait de son côté. */
 
 /* ------------------------------------------------- le stade d'une rencontre
 
    Deux cents graines et non une : le lieu se tire sur l'identifiant du match,
-   et un seul essai pourrait tomber à côté du stade fermé sans rien prouver. */
+   et un seul essai pourrait tomber à côté du stade fermé sans rien prouver. Par
+   `stadeDuMatch`, la fonction que le Virage et le duel appellent, et non par une
+   copie de son tirage : la suite éprouverait sinon sa copie. */
 {
   const ferme = STADES.find((s) => s.id !== STADE_DEFAUT && s.id.startsWith('rp-'))
     ?? STADES.at(-1);
   await contenus.publier('stade', [ferme.id], false);
 
   const tires = new Set();
-  for (let g = 0; g < 200; g++) tires.add(stadeDeLaRencontre([], g, ouverts('stade')).id);
+  for (let g = 0; g < 200; g++) tires.add(stadeDuMatch(g).id);
   check(`un stade fermé ne se tire plus (${tires.size} lieux sur ${STADES.length - 1})`,
     !tires.has(ferme.id)
     || (console.log('        il est sorti quand même :', ferme.id), false));
