@@ -362,6 +362,17 @@ if (process.env.DATABASE_URL) {
     kop = createKop({ pool, io, requireAuth: auth.requireAuth, abonnement, notifications });
     app.use('/api/kop', kop.router);
     console.log('KOP actifs');
+    /* « La quête » et « Mur de bâches » ont quitté le catalogue le 6 octobre
+       2026 : ce qu'ils avaient coûté revient au pot de chaque KOP qui les
+       avait achetés. **À chaque démarrage**, et c'est sans danger : chaque
+       ligne remboursée est marquée dans la transaction qui crédite le pot,
+       si bien que les démarrages suivants n'ont plus rien à rendre et le
+       disent en une ligne de journal. Attendu ici, avant que le serveur
+       écoute : aucun membre ne lit un pot à moitié remboursé. La fonction ne
+       lève pas — un remboursement en panne ne doit pas couper `/api` —, et
+       le `catch` n'est là que pour l'imprévu. Voir `rendreLesRetires`. */
+    await kop.rendreLesRetires().catch((e) =>
+      console.error('[kop] bonus retirés : remboursement interrompu —', e.message));
 
     /* ---- les amis
        Monté juste après le KOP, et il en dépend : accepter une invitation

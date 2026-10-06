@@ -1271,7 +1271,7 @@ const laScene = () => page.evaluate(() => ({
   });
   /* Un but réel de son club, puis un rouge frais d'en face : la case
      « ROUGE POUR EUX » arrive après « GOAL ! », et c'est pourtant le but qui
-     doit rester à la fermeture — **un but réel passe devant**. */
+     doit rester à la fin — **un but réel passe en dernier**. */
   virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 75, player: 'Mbaye', score: [4, 1] });
   await wait(300);
   virage.matchEvents(8001, [{ type: 'Card', detail: 'Red Card', teamId: 91,
@@ -1290,7 +1290,7 @@ const laScene = () => page.evaluate(() => ({
       x, y,
       dessus: n?.closest('#pad') ? 'le pavé' : `${n?.tagName}.${n?.className}`,
       vu: [...window.__vu],
-      enAttente: apresLeGeste.length,
+      enAttente: apresLeGeste.length + momentsEnAttente.length,
       score: document.getElementById('filScore').textContent.trim(),
       double: document.getElementById('app').hasAttribute('data-double'),
       frappes: Number(document.getElementById('n')?.textContent),
@@ -1334,9 +1334,24 @@ const laScene = () => page.evaluate(() => ({
 
   await page.evaluate(() => window.__finirGeste());
   await wait(600);
+  /* **Le jeu d'abord** (Gaël, 6 octobre 2026) : les trois moments se
+     montrent l'un après l'autre, chacun le temps de se lire — la corde qui a
+     cédé, puis le rouge du match, et le but réel en dernier, qui reste.
+     Posés d'un coup, on n'en voyait que le dernier. */
+  const premier = await laScene();
+  check(`à la fermeture, le jeu d’abord : la corde (${premier.titre})`,
+    premier.on && premier.titre === 'ILS ONT FAIT CÉDER LA CORDE'
+    || (console.log('        ', JSON.stringify(premier)), false));
+  check('la carte-souvenir attend le but dont elle est le souvenir', !(await leSouvenir()).on);
+  await wait(3500);
+  const second = await laScene();
+  check(`puis le match : le rouge (${second.titre})`,
+    second.on && second.titre === 'ROUGE POUR EUX'
+    || (console.log('        ', JSON.stringify(second)), false));
+  await wait(3500);
   const apres = await laScene();
-  const vide = await page.evaluate(() => apresLeGeste.length);
-  check(`à la fermeture, le but se montre, devant le rouge arrivé après lui (${apres.titre})`,
+  const vide = await page.evaluate(() => apresLeGeste.length + momentsEnAttente.length);
+  check(`et le but réel en dernier, qui reste à l’écran (${apres.titre})`,
     apres.on && apres.titre === 'GOAL !'
     || (console.log('        ', JSON.stringify(apres)), false));
   /* Et le personnage exulte : rien de ce que la fermeture remet en place ne

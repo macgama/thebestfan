@@ -15,14 +15,18 @@
  * choisie**. On équipe son Fanzzy en sachant ce qu'on y perd ; on ne choisit
  * pas de jouer chez quelqu'un.
  *
- * Le stade appartient donc **au match**, jamais à un joueur :
- *
- *   — au Grand Virage, il vient du vrai match ;
- *   — en duel, il est tiré parmi ceux que **les deux** joueurs possèdent.
+ * Le stade appartient donc **au match**, jamais à un joueur : au Grand Virage
+ * comme en duel, il vient du vrai match, et tous les duels d'un match se
+ * jouent dans le stade de son Virage (décision de Gaël, 6 octobre 2026 ; le
+ * tirage vit dans `stadeDuMatch`, `src/server/contenus/index.js`). Le duel
+ * devait le tirer parmi ceux que **les deux** joueurs possèdent : ça n'a
+ * jamais été écrit — il le tirait sur son propre identifiant —, et un lieu
+ * qui dépendrait de l'adversaire ne se connaîtrait qu'après l'appariement,
+ * quand la préparation du duel l'annonce avant l'entrée en file.
  *
  * Son effet s'applique aux deux camps. Collectionner n'achète pas de la force,
- * ça élargit les lieux où l'on peut tomber — et donc les situations qu'un deck
- * doit savoir affronter. C'est une profondeur, pas un palier.
+ * ni le lieu : il change avec les matchs, et avec lui les situations qu'un
+ * deck doit savoir affronter. C'est une profondeur, pas un palier.
  *
  * ## Ce qu'un effet a le droit de faire
  *
@@ -172,9 +176,9 @@ export const STADES = [
 
      ## La règle, inchangée et non négociable
 
-     Un stade appartient au match, jamais à un joueur : en duel il est tiré
-     parmi ceux que **les deux** possèdent, et son effet s'applique aux deux
-     camps. Ces cinq-là changent donc la même règle pour tout le monde. Ce qui
+     Un stade appartient au match, jamais à un joueur : en duel comme au
+     Virage, il est celui du match, et son effet s'applique aux deux camps.
+     Ces cinq-là changent donc la même règle pour tout le monde. Ce qui
      départage ensuite, c'est qui a construit le bon deck pour ce lieu — pas qui
      l'a collectionné.
 
@@ -283,10 +287,14 @@ export const STADE_DEFAUT = 'chaudron';
 /**
  * Le stade d'une rencontre.
  *
- * **Il appartient au match.** En duel, on le tire parmi ceux que les deux
- * camps possèdent — ce qui veut dire qu'un joueur qui collectionne n'emporte
- * jamais un avantage : il ouvre des lieux où la rencontre *peut* se tenir, et
- * l'adversaire y a exactement les mêmes règles que lui.
+ * **Il appartient au match.** La fonction sait le tirer parmi ceux que les
+ * deux camps possèdent — c'était la règle prévue pour le duel : un joueur qui
+ * collectionne n'y emportait jamais un avantage, il ouvrait des lieux où la
+ * rencontre *pouvait* se tenir. Aucun appelant ne lui passe de possessions :
+ * le Virage et tous les duels d'un match le tirent sur le seul identifiant du
+ * match, par `stadeDuMatch` (côté serveur), pour qu'un duel se joue dans le
+ * stade de son Virage et que la préparation l'annonce avant l'appariement
+ * (décision de Gaël, 6 octobre 2026).
  *
  * L'intersection et non la réunion : jouer dans un stade que l'adversaire n'a
  * jamais vu serait lui imposer une règle qu'il ne connaît pas. Si
@@ -305,8 +313,9 @@ export const STADE_DEFAUT = 'chaudron';
  * sans aucun lieu où se tenir.
  *
  * @param possessions  un tableau par camp : les identifiants possédés.
- * @param graine       un nombre stable — l'identifiant du duel, du match —
- *   pour que les deux clients tirent le même stade sans se parler.
+ * @param graine       un nombre stable — l'identifiant du match, celui d'un
+ *   duel sans match en repli — pour que les deux clients tirent le même stade
+ *   sans se parler.
  * @param jouables     un Set d'identifiants ouverts, ou `null` pour tous.
  */
 export function stadeDeLaRencontre(possessions, graine = 0, jouables = null) {
