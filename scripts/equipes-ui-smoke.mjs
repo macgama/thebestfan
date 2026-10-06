@@ -27,6 +27,7 @@ import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFootball } from '../src/server/football/routes.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import { controlerLarge } from './large-ui.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -122,6 +123,11 @@ await jusqua(async () => await page.$('.team') !== null);
 
 check('la page se charge sans erreur de script', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
+
+/* La page des clubs est une page large (`tbf-large`) : les clubs suivis se
+   rangent en colonnes de la largeur d'un téléphone, chacun avec ses matchs. */
+await controlerLarge(page, check, { nom: 'la page des clubs', liste: '#feed>.team',
+  pret: () => jusqua(async () => await page.$('.team') !== null) });
 
 /** Cherche un club et rend l'état des résultats proposés. */
 async function chercher(terme) {
