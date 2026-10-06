@@ -13,7 +13,7 @@ avec ce qui est en dessous, ou seul.
   la vue du duel `equipes[].sac` (`src/server/nvn/engine.js`), et les lignes
   d'équipement de « ce que tu portes » leur identifiant et leur rareté
   (`src/shared/apports.js`). Contrôlé par `npm run deck:smoke`,
-  `nvn:smoke`, `accueil:ui`, `nvn:ui` et `virage:ui` (seize contrôles neufs).
+  `nvn:smoke`, `accueil:ui`, `nvn:ui` et `virage:ui` (dix-huit contrôles neufs).
 
 **Aucun schéma ni réglage. Un redémarrage** pour le serveur, hors d'un match
 en direct ; sans lui, les pages n'ont aucune pièce à accrocher et restent
