@@ -622,6 +622,31 @@ check('la page ne déborde pas en largeur', await page.evaluate(() =>
       + `${Math.round(m.bandeHaut)}–${Math.round(m.bandeBas)}`), false));
 }
 
+/* **Les calques de gestes tiennent toute la largeur de la scène.** La pile
+   tire sa largeur de sa hauteur ; ajustés à leur contenu, ces calques
+   demandaient sa largeur à la pile avant que sa hauteur ne soit connue, et
+   Firefox (140 ESR) répondait zéro : plus de personnage sur l'accueil, que
+   ce Chrome dessinait pourtant. Ce contrôle ne voit pas Firefox ; il garde
+   la règle qui l'a réparé (voir `.flotte,.bascule,.salut`).
+
+   **Sur un écran d'ordinateur**, le seul où la scène est plus large que le
+   personnage : un calque ajusté à son contenu s'y voit, il fait la largeur
+   du personnage. Sur un téléphone, le personnage déborde de sa colonne sous
+   les rails, et ses calques s'élargissent avec lui dans les deux cas. */
+{
+  const p = await ouvrir(1366, 682);
+  await p.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  const m = await p.evaluate(() => {
+    // `offsetWidth` : la boîte de mise en page, sans les gestes qui la tournent.
+    const scene = document.getElementById('scene').offsetWidth;
+    return { scene, calques: ['.flotte', '.bascule', '.salut']
+      .map((s) => document.querySelector(s).offsetWidth) };
+  });
+  check(`les calques de gestes tiennent toute la largeur de la scène (${m.calques.join(', ')} sur ${m.scene})`,
+    m.calques.every((l) => l >= m.scene - 1));
+  await p.close();
+}
+
 
 /* ------------------------------------- le personnage, sur trois écrans
 
