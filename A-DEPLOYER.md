@@ -12,7 +12,7 @@ dessous, ou seul. **Pages seules**, sans schéma ni redémarrage.
 - `public/geste.js` : une épreuve qui s'ouvre fait entendre le sien, au duel,
   au Virage et en répétition ; ceux des épreuves de rythme se taisent avant
   le premier temps.
-- Contrôlé par `npm run son:smoke` (13 contrôles neufs) et le banc.
+- Contrôlé par `npm run son:smoke` (13 contrôles neufs), `repetition:ui` et le banc.
   À l'écoute : https://claude.ai/artifact/7vEh8GY8qpckkdKxfU1kWt
 
 ---
