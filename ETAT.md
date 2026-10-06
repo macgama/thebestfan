@@ -2079,13 +2079,17 @@ Par ordre d'utilité.
    rangée). Les autres pages gardent leur colonne, tuiles autour ; le deck
    est revu à part (fil « Interface des pages du deck »).
 
-3. **Répartir les dix gestes sur le catalogue.** `cri.gest` ne vaut encore que
-   `tempo`, `mash` ou `hold` dans `dex.js` et `dex-2026.js` — les sept nouveaux
-   gestes n'appartiennent à aucun personnage. Le duel les fait tourner de
-   lui-même, donc le joueur les rencontre quand même ; ce qui manque, c'est que
-   le geste dise quelque chose du Fanzzy qui le porte. **Ce n'est pas une
-   migration mécanique** : attribuer un geste, c'est décrire un caractère, et
-   cela se décide personnage par personnage.
+3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
+   765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
+   (`TYPES` dans `dex.js`, éprouvé par `catalogue:test`). Ce qui manquait, c'est
+   que le joueur le voie : depuis que le duel offre cinq chants au choix, le
+   geste du personnage n'y décidait plus de rien. Depuis le 6 octobre 2026, le
+   chant réussi de sa spécialité le fait chanter dans l'arène à la manière de
+   sa famille (la Voix crie, la Percussion frappe…), sans dessin de plus, et
+   ce chant est toujours dans la main, au milieu, avec le sceau de la famille
+   (règle « Toujours là », choisie par Gaël : sans bonus de poussée).
+   `offreDe()` dans `src/server/nvn/engine.js`. Le Virage n'est pas concerné :
+   sa rangée de chants est commune à toute la tribune.
 
 4. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
    suivent les deux clubs qui s'affrontent réellement. Conçu, pas commencé.
@@ -2114,10 +2118,22 @@ Par ordre d'utilité.
    sur les côtés et la corde qui descend le long de la pelouse. La seconde est
    plus lisible et ne coûte rien.
 
-8. **L'intégration de l'équipement sur les personnages.** Les sept objets sont
-   détourés pour ça — l'écharpe autour d'un cou, le mégaphone dans une main. Il
-   reste à décider des points d'ancrage et de la façon dont ils suivent les
-   poses de `fanzzy-scene.js`.
+8. **L'équipement porté — fait le 6 octobre 2026, à côté du personnage.** Les
+   deux pièces que le deck met à un Fanzzy sont accrochées à côté de lui, chacune
+   dans le cadre de sa rareté (`TBF_STUFF.porte`, `.tbf-porte` dans `ui.css`) :
+   à l'accueil (`wallet.stuffPorte`, le sac du deck pour le Fanzzy montré), au
+   Virage (les lignes `stuff` d'`apports`) et dans l'arène du duel, des deux
+   côtés (`equipes[].sac`). Gaël a choisi cette forme sur maquette
+   (`/mnt/project-files/equipement/porte-a-cote-ou-colle.jpg`) : posés sur le
+   personnage, les objets détourés se lisaient comme des autocollants sur des
+   rendus en volume, et le cou ou la main changent de place à chaque
+   expression. Des Fanzzy dessinés avec l'objet porté, produits dans Artlist,
+   restent possibles pour quelques pièces phares (l'écharpe les jours de
+   match, idée 6 des Fanzzy vivants).
+
+   Relevé en passant : la fiche d'un Fanzzy sert encore un `stuffPorte` tiré
+   de `user_stuff.slot`, l'ancien équipement global, qu'aucune page ne lit
+   plus ; le jeu joue le sac du deck.
 
 9. **Ce que les lots 3 et 5 et le chantier du quotidien laissent** (le détail
    est dans `HISTORIQUE.md`, 4 quadragies ter, « Ce qui reste »). Les documents
