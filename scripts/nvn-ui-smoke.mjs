@@ -1648,6 +1648,127 @@ check('la corde a bougé', bouge);
     vu.tiroir && vu.sousTiroir !== null && vu.sousTiroir < 48);
 }
 
+/* **Les deux Fanzzy de l'arène** (lot 7, le duel vivant). Le Fanzzy en
+   tribune de chaque camp se tient dans l'arène, sous la corde : le mien à
+   gauche, celui d'en face à droite, retourné vers moi. Ils vivent le duel —
+   la joie et un saut pour la tribune qui marque, le dépit pour l'autre, la
+   poussée de leur tribune, la colère d'un coup d'en face —, et la case de
+   BD se pose au-dessus de la corde pour qu'on les voie le vivre.
+
+   Le deck de cette suite n'aligne que des plein-pieds (TR32, MS30, TR33) :
+   leur image reste, ce sont la pose et le geste qui changent. Les
+   expressions dessinées (LA REPRISE, TR1) passent par la même fonction
+   (`imageFz`) et ont été regardées au banc. Aucun geste n'est sans fin : le
+   plafond des trois animations est contrôlé plus haut. */
+{
+  // Les célébrations du but d'avant rendues : on part du repos.
+  await jusqua(() => A.page.evaluate(() => ['fzMoi', 'fzEux']
+    .every((id) => document.getElementById(id)?.dataset.pose === 'neutre')), 6000);
+  const lireFz = () => A.page.evaluate(() => {
+    const boite = (el) => {
+      const r = el.getBoundingClientRect();
+      return { haut: r.top, bas: r.bottom, gauche: r.left, droite: r.right };
+    };
+    const fig = (id) => {
+      const el = document.getElementById(id);
+      const img = el?.querySelector('.duel-fz-corps>img.on');
+      const corps = el?.querySelector('.duel-fz-corps');
+      const style = corps ? getComputedStyle(corps) : null;
+      return { vu: Boolean(el && !el.hidden && el.offsetParent), pose: el?.dataset.pose ?? null,
+        geste: el?.dataset.geste ?? null, src: img?.getAttribute('src') ?? '', ...(el ? boite(el) : {}),
+        miroir: img ? getComputedStyle(img).scale : null,
+        animation: style?.animationName ?? null, rotate: style?.rotate ?? null, filtre: style?.filter ?? null };
+    };
+    const n = document.getElementById('noeud').getBoundingClientRect();
+    /* La case par sa boîte de mise en page, pas par son rectangle : elle
+       entre en grossissant, et un rectangle pris pendant l'entrée serait
+       plus petit qu'elle. */
+    const m = document.querySelector('#moment.on');
+    const vg = m?.querySelector('.tbf-vignette');
+    const v = vg ? { top: m.getBoundingClientRect().top + vg.offsetTop,
+      bottom: m.getBoundingClientRect().top + vg.offsetTop + vg.offsetHeight } : null;
+    const racine = (id) => /^([A-Z]+\d+)/.exec(String(id ?? ''))?.[1] ?? '';
+    return { moi: fig('fzMoi'), eux: fig('fzEux'), corde: n.top + n.height / 2,
+      arene: boite(document.getElementById('arene')), vignette: v ? { haut: v.top, bas: v.bottom } : null,
+      mien: racine(S.vue.moi.fanzzy.find((f) => f.actif)?.id),
+      enFace: racine(S.vue.equipes[S.vue.moi.side ^ 1]?.[0]?.fanzzy) };
+  });
+  const nom = (src) => src.split('/').pop()?.split('?')[0] || 'rien';
+
+  const repos = await lireFz();
+  check(`les deux Fanzzy en tribune se tiennent dans l’arène, chacun le sien (${nom(repos.moi.src)} · ${nom(repos.eux.src)})`,
+    repos.moi.vu && repos.eux.vu && Boolean(repos.mien) && Boolean(repos.enFace)
+    && repos.moi.src.includes(`/${repos.mien}`) && repos.eux.src.includes(`/${repos.enFace}`)
+    || (console.log('        ', JSON.stringify(repos)), false));
+  check('sous la corde, le mien à gauche, celui d’en face à droite et retourné vers moi',
+    repos.moi.haut > repos.corde && repos.eux.haut > repos.corde
+    && repos.moi.bas <= repos.arene.bas + 1 && repos.eux.bas <= repos.arene.bas + 1
+    && repos.moi.gauche >= repos.arene.gauche && repos.eux.droite <= repos.arene.droite + 1
+    && repos.moi.droite <= repos.eux.gauche && repos.eux.miroir === '-1 1' && repos.moi.miroir === 'none'
+    || (console.log('        ', JSON.stringify(repos)), false));
+
+  // Un but de corde pour ma tribune.
+  await A.page.evaluate(() => {
+    const side = S.vue.moi.side;
+    raconter({ t: 'goal', side, goals: side === 0 ? [2, 0] : [0, 2] });
+  });
+  const but = await lireFz();
+  check(`un but de corde : le mien saute de joie, celui d’en face s’affaisse (${but.moi.pose}/${but.moi.geste} · ${but.eux.pose}/${but.eux.geste})`,
+    but.moi.pose === 'but' && but.moi.geste === 'saut' && but.eux.pose === 'encaisse' && but.eux.geste === 'affaisse');
+  check('et la case de BD se pose au-dessus de la corde : on les voit le vivre',
+    Boolean(but.vignette) && but.vignette.bas <= but.corde + 1
+    && but.vignette.bas <= Math.min(but.moi.haut, but.eux.haut)
+    || (console.log('        ', JSON.stringify({ vignette: but.vignette, corde: but.corde,
+      moi: but.moi.haut, eux: but.eux.haut })), false));
+  check('un plein-pied sans expression garde son dessin : c’est le geste qui joue',
+    but.moi.src === repos.moi.src && but.eux.src === repos.eux.src);
+
+  // Une poussée de ma tribune ne coupe pas ma joie.
+  await A.page.evaluate(() => raconter({ t: 'push', side: S.vue.moi.side, valeur: 12 }));
+  check('une poussée ne coupe pas la joie d’un but', (await lireFz()).moi.pose === 'but');
+
+  // La célébration finie, la tribune d'en face pousse : son Fanzzy se penche vers moi.
+  await jusqua(() => A.page.evaluate(() => ['fzMoi', 'fzEux']
+    .every((id) => document.getElementById(id)?.dataset.pose === 'neutre')), 6000);
+  await A.page.evaluate(() => raconter({ t: 'push', side: S.vue.moi.side ^ 1, valeur: 12 }));
+  await dodo(300);
+  const pousse = await lireFz();
+  check(`leur poussée : leur Fanzzy se penche vers la corde (${pousse.eux.pose}, ${pousse.eux.rotate})`,
+    pousse.eux.pose === 'pousse' && pousse.eux.geste === 'hisse' && /^-4deg$/.test(pousse.eux.rotate ?? '')
+    || (console.log('        ', JSON.stringify(pousse.eux)), false));
+
+  /* Un coup d'en face sur ma tribune : la vue le porte (`equipes[][].effets`),
+     et c'est **son arrivée** qui met en colère, pas sa durée. */
+  await A.page.evaluate(() => {
+    const v = JSON.parse(JSON.stringify(S.vue));
+    v.moi.effets = [...(v.moi.effets ?? []), { type: 'silence', reste: 4000, duree: 4000 }];
+    S.vue = v;
+    rendreDuel();
+  });
+  const coup = await lireFz();
+  check(`un silence d’en face : le mien trépigne de colère (${coup.moi.pose}/${coup.moi.geste})`,
+    coup.moi.pose === 'decision' && coup.moi.geste === 'rage');
+
+  // Au calme, plus aucun mouvement ; le dépit les ternit encore.
+  await jusqua(() => A.page.evaluate(() => ['fzMoi', 'fzEux']
+    .every((id) => document.getElementById(id)?.dataset.pose === 'neutre')), 6000);
+  await A.page.evaluate(() => {
+    document.documentElement.dataset.calme = 'animations';
+    const side = S.vue.moi.side ^ 1;
+    raconter({ t: 'goal', side, goals: side === 0 ? [1, 0] : [0, 1] });
+  });
+  // Le dépit se pose en fondu (0,35 s) : on le lit fini, le moment tenant encore.
+  await dodo(500);
+  const calme = await lireFz();
+  await A.page.evaluate(() => { delete document.documentElement.dataset.calme; couperMoment(); });
+  const terni = Number(/brightness\(([\d.]+)\)/.exec(calme.moi.filtre ?? '')?.[1] ?? 1);
+  check(`au calme, le but d’en face ne fait plus bouger personne, et le dépit ternit encore (${calme.moi.animation} · ${calme.moi.rotate} · ${calme.moi.filtre})`,
+    calme.eux.pose === 'but' && calme.moi.pose === 'encaisse'
+    && calme.moi.animation === 'none' && calme.eux.animation === 'none'
+    && calme.moi.rotate === 'none' && terni < 0.9
+    || (console.log('        ', JSON.stringify({ moi: calme.moi, eux: calme.eux })), false));
+}
+
 /* Le bandeau d'annonce, en partie : sous les deux rangées du HUD, hors des
    deux boutons — voir la préparation. */
 {

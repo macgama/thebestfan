@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**Le duel vivant** (branche `claude/project-thread-iatg2m`, 5 octobre 2026,
+lot 7). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `public/duel-nvn.html` : le Fanzzy en tribune de chaque camp se tient dans
+  l'arène du duel, sous la corde, le sien à gauche et celui d'en face à
+  droite, tourné vers lui. Il se penche quand sa tribune pousse, saute de
+  joie au but de sa tribune (de corde ou du vrai match), accuse le coup
+  quand l'autre marque, et se fâche quand un coup d'en face tombe sur la
+  sienne. La case « LA CORDE CÈDE ! » se pose au-dessus de la corde pour
+  qu'on les voie. Contrôlé par `npm run nvn:ui` (9 contrôles neufs) ; filmé
+  pour Gaël (`lot7/duel/duel-vivant.mp4` dans les fichiers du projet).
+
+**Aucun schéma ni réglage**, aucune image neuve, rien de neuf demandé au
+serveur. Déposée seule, la page part sans redémarrage (`page()` relit la page
+à chaque demande).
+
+---
+
 **Le but du vrai match au duel** (branche `claude/project-thread-iatg2m`,
 5 octobre 2026). Un défaut plus ancien que le lot 6, donc déjà en ligne.
 

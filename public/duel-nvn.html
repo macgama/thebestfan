@@ -347,6 +347,64 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .arene .tbf-foule[data-tribune=moi]{left:12px}
 .arene .tbf-foule[data-tribune=eux]{right:12px}
 
+/* **Les deux Fanzzy en tribune** (lot 7, le duel vivant) : le mien en bas à
+   gauche, juste devant ma ligne de but, celui d'en face en bas à droite,
+   **retourné** pour me faire face — sa poussée part vers moi, la mienne vers
+   lui. Ils restent sous la corde (calque 2, celui des foules, qui passent
+   devant leurs pieds) et ne prennent jamais le doigt. Voir `rendreFzArene`.
+
+   **Deux calques par figure**, comme le personnage de l'accueil : la
+   nouvelle expression se charge derrière, puis les opacités se croisent —
+   jamais de cadre vide. Le corps porte la pose qu'on tient (`data-pose` :
+   penché pour pousser, grandi pour la joie, affaissé et terni pour le
+   dépit) et le geste d'un instant (`data-geste`). **Aucun n'est sans fin** :
+   la carte en tribune respire déjà, et l'écran n'en tolère que trois.
+
+   Leur taille se prend **en pour cent de l'arène**, leur bloc de
+   positionnement, et non en unités de conteneur : même mesure ici (l'arène
+   n'a pas de marge intérieure), sans rabat sur la fenêtre là où le
+   confinement ne prend pas (voir `verif-pages`). */
+.duel-fz{--vers:1;position:absolute;z-index:2;bottom:calc(2px + 1%);height:min(45%,232px);
+  aspect-ratio:7/12;pointer-events:none}
+.duel-fz[data-tribune=moi]{left:calc(8% + 4px)}
+.duel-fz[data-tribune=eux]{--vers:-1;right:calc(8% + 4px)}
+/* L'ombre au sol : sans elle, le personnage flotte sur le terrain. */
+.duel-fz::before{content:"";position:absolute;left:16%;right:16%;bottom:1%;height:6%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(0,0,0,.62),transparent)}
+.duel-fz-corps{position:absolute;inset:0;transform-origin:50% 96%;
+  transition:rotate .22s ease,scale .3s ease,filter .35s ease}
+.duel-fz-corps>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%;
+  opacity:0;transition:opacity .22s ease;-webkit-user-drag:none}
+.duel-fz-corps>img.on{opacity:1}
+.duel-fz[data-tribune=eux] .duel-fz-corps>img{scale:-1 1}
+/* Toute sa tribune est partie : il reste, terni, comme ses supporters
+   assis. */
+.duel-fz[data-parti]{opacity:.5;filter:grayscale(.85)}
+/* Les poses tenues, du côté du camp : on se penche vers la corde pour
+   pousser, on recule d'un pas quand on encaisse. */
+.duel-fz[data-pose=pousse] .duel-fz-corps{rotate:calc(var(--vers) * 4deg)}
+.duel-fz[data-pose=but] .duel-fz-corps{scale:1.05}
+.duel-fz[data-pose=encaisse] .duel-fz-corps{rotate:calc(var(--vers) * -3deg);scale:.96;
+  filter:brightness(.74) saturate(.7)}
+/* Les gestes d'un instant. `translate` et non `transform` : il s'ajoute à la
+   pose tenue au lieu de la remplacer le temps du geste. */
+.duel-fz[data-geste=saut] .duel-fz-corps{animation:fzDuelSaut .9s cubic-bezier(.3,.7,.4,1)}
+.duel-fz[data-geste=hisse] .duel-fz-corps{animation:fzDuelHisse .45s ease-out}
+.duel-fz[data-geste=affaisse] .duel-fz-corps{animation:fzDuelAffaisse .6s ease-out}
+.duel-fz[data-geste=rage] .duel-fz-corps{animation:fzDuelRage .55s linear}
+.duel-fz[data-geste=entre] .duel-fz-corps{animation:fzDuelEntre .5s cubic-bezier(.2,.8,.3,1)}
+@keyframes fzDuelSaut{0%,44%,80%,100%{translate:0 0}22%{translate:0 -15%}62%{translate:0 -7%}}
+@keyframes fzDuelHisse{40%{translate:calc(var(--vers) * 7%) 0}}
+@keyframes fzDuelAffaisse{35%{translate:0 5%}}
+@keyframes fzDuelRage{0%,100%{translate:0 0}15%,45%{translate:-4% 0}30%,60%{translate:4% 0}75%{translate:-2% 0}}
+@keyframes fzDuelEntre{from{translate:calc(var(--vers) * -60%) 0;opacity:0}}
+/* Une arène trop basse pour eux (un petit téléphone, des effets en cours,
+   un bandeau d'annonce) : ils monteraient sur la corde. La foule au
+   pochoir garde seule la tribune. */
+@container arene (max-height:210px){
+  .duel-fz{display:none}
+}
+
 /* Les effets posés sur l'arène (`.tbf-effet`, la brique) : leur calque a la
    boîte de l'arène, sous la corde. */
 .effets-arene{position:absolute;inset:0;z-index:3;pointer-events:none}
@@ -660,9 +718,13 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
    les départage. */
 @media (prefers-reduced-motion:reduce){
   .compte,.spin{animation:none}
+  .duel-fz[data-tribune] .duel-fz-corps{animation:none;rotate:none;scale:none}
 }
 html[data-calme~="animations"] .compte,
 html[data-calme~="animations"] .spin{animation:none}
+/* Les Fanzzy de l'arène ne bougent plus ; ils changent encore d'expression
+   (un fondu, pas un mouvement), et le dépit les ternit toujours. */
+html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:none;rotate:none;scale:none}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -718,6 +780,13 @@ html[data-calme~="animations"] .spin{animation:none}
            aux coins arrondis ni au découpage. -->
       <div class="stadewrap"><div class="stade" id="stade"></div></div>
       <div class="tbf-maree" aria-hidden="true"></div>
+      <!-- Les deux Fanzzy en tribune, le mien et celui d'en face : voir
+           `rendreFzArene`. Deux calques chacun, pour croiser les
+           expressions sans cadre vide. -->
+      <div class="duel-fz" data-tribune="moi" data-pose="neutre" id="fzMoi" aria-hidden="true" hidden>
+        <div class="duel-fz-corps"><img alt="" decoding="async" draggable="false"><img alt="" decoding="async" draggable="false"></div></div>
+      <div class="duel-fz" data-tribune="eux" data-pose="neutre" id="fzEux" aria-hidden="true" hidden>
+        <div class="duel-fz-corps"><img alt="" decoding="async" draggable="false"><img alt="" decoding="async" draggable="false"></div></div>
       <div class="tbf-foule" data-tribune="moi" id="fouleMoi"></div>
       <div class="tbf-foule" data-tribune="eux" id="fouleEux"></div>
       <div class="effets-arene" id="effetsArene"></div>
@@ -2134,6 +2203,7 @@ function entrerEnTribune(reposer = false) {
   S.entree = true;
   window.TBF_SON?.rumeur?.('entree', { ms: ENTREE_MS });
   if (reposer) poserBaches();
+  entrerFz();
 }
 
 /* ------------------------------------------------------- affichage */
@@ -2456,6 +2526,7 @@ function rendreDuel() {
 
   dessinerFoule('fouleMoi', v.equipes?.[mon] ?? []);
   dessinerFoule('fouleEux', v.equipes?.[eux] ?? []);
+  rendreFzArene(v);
   rendreObjets(v);
 
   if (!moi) return;
@@ -2850,6 +2921,237 @@ function teteSaute(userId) {
   t._pousse = setTimeout(() => t.classList.remove('pousse'), 1100);
 }
 
+/* ------------------------------------------- les deux Fanzzy de l'arène
+
+   **Le duel vivant** (lot 7). Le Fanzzy en tribune de chaque camp se tient
+   dans l'arène, et il vit ce que vit la corde : la joie et un saut pour la
+   tribune qui marque — un but de corde ou un but du vrai match —, le dépit
+   pour celle qui encaisse, la poussée quand sa tribune pousse, la colère
+   quand un coup d'en face tombe sur la sienne (silence, brouillard,
+   parcage, vent de face).
+
+   **L'expression quand elle est dessinée, le geste toujours.** Les Fanzzy de
+   LA REPRISE ont leur joie, leur dépit, leur poussée et leur colère ; TR1 et
+   TR2 leurs douze moments ; les autres n'ont que leur plein-pied, et c'est
+   là que le geste compte : ils sautent, s'affaissent, se penchent et
+   trépignent sur le même dessin. On demande donc **le moment** et non la
+   famille — `but`, `encaisse`, `decision` — : `resoudre` sert à TR1 son
+   dessin du but, et à LA REPRISE la joie de sa famille. Un personnage sans
+   aucun dessin laisse sa place au supporter générique, comme à l'accueil :
+   quelqu'un d'autre, mais quelqu'un.
+
+   Celui d'en face est **le premier joueur connecté de sa tribune**, au
+   dessin de base : le serveur ne dit pas sa tenue, et n'a aucune raison de
+   le faire (voir `vignetteFz`). Le mien suit la Relève et le changement de
+   Fanzzy : c'est l'actif de la vue, à son âge. */
+
+/** Les quatre poses du supporter générique, par moment (celles de
+    l'accueil). Il n'a pas de colère : il garde son visage, et trépigne. */
+const SUPPORTER_DUEL = { neutre: 'idle', pousse: 'push', but: 'goal', encaisse: 'sad' };
+/** Qui l'emporte quand deux moments se croisent : une poussée ne coupe pas
+    une célébration, un but coupe tout. */
+const RANG_FZ = { neutre: 0, pousse: 1, decision: 2, but: 3, encaisse: 3 };
+/** Combien de temps chaque moment tient, en millisecondes. Le but du vrai
+    match dure plus que celui de la corde, comme sa case de BD. */
+const TENIR_FZ = { but: 2600, butReel: 3600, pousse: 1100, decision: 1800 };
+/** Les coups d'en face : les effets qu'une carte pose chez l'adversaire
+    (`appliquer`, côté serveur). Le Renvoi compris — c'est la vue qui dit
+    où l'effet est tombé, pas la carte. */
+const COUPS_RECUS = new Set(['silence', 'blind', 'lock_actions', 'mod_foe']);
+
+const fzArene = {};
+for (const cote of ['moi', 'eux']) {
+  fzArene[cote] = { cote, id: cote === 'moi' ? 'fzMoi' : 'fzEux', qui: null, cle: '',
+    pose: 'neutre', jusqua: 0, retour: 0, gesteT: 0, jeton: 0, devant: 0, src: '', voulu: '', coups: null };
+}
+
+/* **Le manifeste des expressions d'abord.** Sans lui, un Fanzzy de LA
+   REPRISE se poserait sur son dessin plat, puis sauterait sur celui de ses
+   expressions à son arrivée : un autre cadrage, un personnage qui change de
+   taille sous les yeux. Un manifeste qui ne vient pas libère tout de même
+   la place — le dessin plat vaut mieux que personne. */
+let fzManifesteLu = false;
+Promise.resolve(window.TBF_ETATS?.charger?.()).catch(() => null).then(() => {
+  fzManifesteLu = true;
+  if (S.vue) rendreFzArene(S.vue);
+});
+
+const racineFz = (id) => /^([A-Z]+\d+)/.exec(String(id ?? ''))?.[1] ?? null;
+/** L'âge qu'un identifiant porte : `RP1` vaut un, `RP1B` deux. */
+const ageFz = (id) => {
+  const l = /^[A-Z]+\d+([A-Z])$/.exec(String(id ?? ''))?.[1];
+  return l ? l.charCodeAt(0) - 64 : 1;
+};
+
+/** Qui se tient dans l'arène pour ce camp, ou `null`. */
+function quiEnTribune(v, cote) {
+  const mon = v.moi?.side ?? 0;
+  if (cote === 'moi' && v.moi) {
+    const f = (v.moi.fanzzy ?? []).find((x) => x.actif);
+    const racine = racineFz(f?.id);
+    if (!racine) return null;
+    return { id: f.id, racine, evo: Number(f.stade) || ageFz(f.id),
+      skin: monAvatar?.id === racine ? (monAvatar.skin || 'base') : 'base' };
+  }
+  const tribune = v.equipes?.[cote === 'moi' ? mon : mon ^ 1] ?? [];
+  const j = tribune.find((x) => x?.fanzzy && x.connecte !== false) ?? tribune.find((x) => x?.fanzzy);
+  const racine = racineFz(j?.fanzzy);
+  /* `parti` : toute sa tribune a quitté le duel. Il reste, terni, comme ses
+     supporters assis (`dessinerFoule`) : on voit qu'il n'y a plus personne. */
+  return racine ? { id: j.fanzzy, racine, evo: ageFz(j.fanzzy), skin: 'base',
+    parti: tribune.every((x) => x?.connecte === false) } : null;
+}
+
+/** Le plein-pied de ce personnage à ce moment, par la fonction unique. */
+function dessinFzArene(qui, etat) {
+  try {
+    return window.FZART?.dessinAvatar?.({ id: qui.racine, age: qui.id, evo: qui.evo, skin: qui.skin },
+      'plein', { etat }) ?? null;
+  } catch { return null; }
+}
+
+/**
+ * L'image d'un moment, ou `null` s'il n'a pas de dessin à lui.
+ *
+ * Même règle que l'accueil (`dessine`) : `resoudre` retombe toujours sur le
+ * repos, et un visage qui ne change pas ne raconte rien ; un autre âge est
+ * un autre personnage.
+ */
+function imageFz(qui, etat) {
+  if (qui.supporter) {
+    return SUPPORTER_DUEL[etat] ? `/img/supporter/${SUPPORTER_DUEL[etat]}${window.TBF_ETATS?.EXT_ALPHA ?? '.webp'}` : null;
+  }
+  if (etat === 'neutre') return dessinFzArene(qui, 'neutre');
+  const r = window.TBF_ETATS?.pret?.() ? window.TBF_ETATS.resoudre(qui.racine, { evo: qui.evo, skin: qui.skin, etat }) : null;
+  return r?.evo === qui.evo && r.etat !== 'neutre' ? dessinFzArene(qui, etat) : null;
+}
+
+/**
+ * Pose l'image d'un moment sur la figure : chargée sur le calque de derrière,
+ * décodée, puis croisée. Un moment sans dessin montre le repos.
+ *
+ * **Le dernier demandé gagne.** Une poussée puis un but, en deux dixièmes de
+ * seconde : la poussée finit de charger après, et ne doit pas reprendre la
+ * place. `voulu` retient la dernière demande, `jeton` l'ordre des charges.
+ */
+async function poserImageFz(f, etat) {
+  const el = $(f.id);
+  const src = f.qui ? (imageFz(f.qui, etat) ?? imageFz(f.qui, 'neutre')) : null;
+  if (!el || !src || src === f.voulu) return;
+  f.voulu = src;
+  const jeton = ++f.jeton;
+  if (src === f.src) return;               // déjà devant : on n'annule que ce qui chargeait
+  const calques = el.querySelectorAll('.duel-fz-corps>img');
+  const derriere = calques[1 - f.devant];
+  derriere.src = src;
+  try { await derriere.decode(); }
+  catch {
+    // Le dessin qui ne se charge pas retombe sur son PNG (`secours`).
+    if (jeton !== f.jeton) return;
+    const repli = window.TBF_ETATS?.secours?.(src);
+    if (!repli) return;
+    try { derriere.src = repli; await derriere.decode(); } catch { return; }
+  }
+  if (jeton !== f.jeton) return;
+  derriere.classList.add('on');
+  calques[f.devant].classList.remove('on');
+  f.devant = 1 - f.devant;
+  f.src = src;
+}
+
+/** Un geste d'un instant (`saut`, `hisse`, `affaisse`, `rage`, `entre`),
+    rejoué du début. Le calme l'éteint dans la feuille. */
+function gesteFz(f, geste) {
+  const el = $(f.id);
+  if (!el || el.hidden) return;
+  clearTimeout(f.gesteT);
+  el.removeAttribute('data-geste');
+  void el.offsetWidth;
+  el.dataset.geste = geste;
+  f.gesteT = setTimeout(() => el.removeAttribute('data-geste'), 1000);
+}
+
+/**
+ * Fait vivre un moment au Fanzzy d'un camp, `tenir` millisecondes, puis le
+ * rend au repos. Un moment de rang plus bas ne coupe pas celui qui tient.
+ */
+function vivreFz(cote, etat, tenir, geste) {
+  const f = fzArene[cote];
+  const el = $(f?.id);
+  if (!f?.qui || !el) return;
+  const t = performance.now();
+  if (t < f.jusqua && (RANG_FZ[etat] ?? 0) < (RANG_FZ[f.pose] ?? 0)) return;
+  f.pose = etat;
+  f.jusqua = t + tenir;
+  el.dataset.pose = etat;
+  poserImageFz(f, etat);
+  if (geste) gesteFz(f, geste);
+  clearTimeout(f.retour);
+  f.retour = setTimeout(() => {
+    f.pose = 'neutre';
+    f.jusqua = 0;
+    el.dataset.pose = 'neutre';
+    poserImageFz(f, 'neutre');
+  }, tenir);
+}
+
+/** Les coups d'en face posés sur la tribune d'un camp, par type. */
+function coupsRecus(v, cote) {
+  const mon = v.moi?.side ?? 0;
+  const listes = (v.equipes?.[cote === 'moi' ? mon : mon ^ 1] ?? []).map((j) => j?.effets ?? []);
+  if (cote === 'moi') listes.push(v.moi?.effets ?? []);
+  const vus = new Set();
+  for (const l of listes) for (const e of l) if (COUPS_RECUS.has(e?.type)) vus.add(e.type);
+  return vus;
+}
+
+/**
+ * Qui se tient dans l'arène, à chaque vue : on ne change la figure que si le
+ * personnage a changé (une Relève, un changement de Fanzzy, un joueur
+ * d'en face parti), et la colère part au coup d'en face **qui arrive**, pas
+ * à celui qui dure.
+ */
+function rendreFzArene(v) {
+  if (!fzManifesteLu || !v) return;
+  for (const f of Object.values(fzArene)) {
+    const el = $(f.id);
+    if (!el) continue;
+    const qui = quiEnTribune(v, f.cote);
+    const cle = qui ? `${qui.id}|${qui.skin}` : '';
+    if (cle !== f.cle) {
+      /* Un autre Fanzzy entre en glissant depuis sa ligne ; le même qui
+         grandit (la Relève) saute sur place ; la tenue arrivée en retard
+         (le portefeuille répond après la première vue) ne fait rien. */
+      const avant = f.cle.split('|')[0];
+      const geste = !avant || avant === qui?.id ? null
+        : racineFz(avant) === qui?.racine ? 'saut' : 'entre';
+      f.cle = cle;
+      f.qui = qui ? { ...qui, supporter: !dessinFzArene(qui, 'neutre') } : null;
+      if (el.hidden === Boolean(qui)) el.hidden = !qui;
+      if (f.qui) {
+        poserImageFz(f, f.pose);
+        // Les moments qu'il vivra : chargés d'avance, ils arrivent au pire moment pour attendre.
+        for (const etat of ['pousse', 'but', 'encaisse', 'decision']) {
+          const src = imageFz(f.qui, etat);
+          if (src) new Image().src = src;
+        }
+        if (geste && S.entree) gesteFz(f, geste);
+      }
+    }
+    if (el.hasAttribute('data-parti') !== Boolean(qui?.parti)) el.toggleAttribute('data-parti', Boolean(qui?.parti));
+    const coups = coupsRecus(v, f.cote);
+    if (f.coups && [...coups].some((c) => !f.coups.has(c))) {
+      vivreFz(f.cote, 'decision', TENIR_FZ.decision, 'rage');
+    }
+    f.coups = coups;
+  }
+}
+
+/** Les deux entrent en scène quand l'affiche se retire. */
+function entrerFz() {
+  for (const f of Object.values(fzArene)) gesteFz(f, 'entre');
+}
+
 /* ------------------------------------------------- ce qui se voit
 
    Il n'y a plus de fil de texte. Un journal qui défile pendant qu'on joue
@@ -2897,6 +3199,7 @@ function poserMoment(texte, ton, { sous = '', ms = MOMENT_CORDE_MS } = {}) {
   ecrire($('momentTitre'), texte);
   ecrire($('momentSous'), sous);
   b.dataset.ton = ton;
+  placerCase(b);
   // Le scotch sous la case se décolle sur la durée du moment.
   b.style.setProperty('--mt', `${ms}ms`);
   b.classList.remove('on');
@@ -2905,6 +3208,34 @@ function poserMoment(texte, ton, { sous = '', ms = MOMENT_CORDE_MS } = {}) {
   clearTimeout(momentT);
   momentT = setTimeout(() => b.classList.remove('on'), ms);
   reglerCase();
+}
+
+/**
+ * **Au-dessus de la corde, quand les deux Fanzzy sont dans l'arène.**
+ *
+ * Centrée sur l'écran, la case couvrait la moitié basse de l'arène — et
+ * c'est là, au même instant, que l'un saute de joie et que l'autre
+ * s'affaisse. Le but se lisait, mais on ne le voyait plus vivre. La case
+ * descend donc **jusqu'à la corde et pas plus bas** : sa boîte (le voile, la
+ * bouffée, les confettis, centrés sur elle) va du haut de l'arène à la
+ * corde, et remonte sur le HUD quand l'arène est trop basse pour la tenir.
+ * Sans Fanzzy à l'écran — une arène trop basse, un écran trop court —, elle
+ * reprend le centre, comme partout ailleurs.
+ */
+function placerCase(b) {
+  b.style.top = '';
+  b.style.bottom = '';
+  const arene = $('arene')?.getBoundingClientRect();
+  // `offsetParent` est nul sous `display:none` : l'arène les a cachés.
+  const visibles = ['fzMoi', 'fzEux'].some((id) => $(id) && !$(id).hidden && $(id).offsetParent);
+  const vignette = b.querySelector('.tbf-vignette');
+  if (!arene?.height || !visibles || !vignette) return;
+  const corde = arene.top + arene.height / 2;
+  const pad = parseFloat(getComputedStyle(b).paddingTop) || 0;
+  const haut = Math.min(arene.top, corde - vignette.offsetHeight - 2 * pad - 8);
+  if (haut < 0) return;
+  b.style.top = `${Math.round(haut)}px`;
+  b.style.bottom = `${Math.round(innerHeight - corde)}px`;
 }
 
 function couperMoment() {
@@ -2993,6 +3324,8 @@ function raconter(e) {
      */
     case 'push': {
       if ((e.valeur ?? 0) < 6) break;
+      // Son Fanzzy se penche vers la corde avec elle (voir `vivreFz`).
+      vivreFz(pour ? 'moi' : 'eux', 'pousse', TENIR_FZ.pousse, 'hisse');
       const p = pointCorde();
       if (pour) {
         FX?.points?.(e.valeur, p, { couleur: OR, quoi: 'POUSSÉE' });
@@ -3126,6 +3459,9 @@ function raconter(e) {
       const nous = mon === 0 ? a : b;
       const eux = mon === 0 ? b : a;
       if (!nous && !eux) break;
+      // Les deux Fanzzy le vivent, chacun de son côté (voir `vivreFz`).
+      vivreFz('moi', nous ? 'but' : 'encaisse', TENIR_FZ.butReel, nous ? 'saut' : 'affaisse');
+      vivreFz('eux', eux ? 'but' : 'encaisse', TENIR_FZ.butReel, eux ? 'saut' : 'affaisse');
       FX?.but?.({ pour: Boolean(nous), vignette: true });
       FX?.son?.(nous ? 'butReel' : 'encaisse');
       if (nous) window.TBF_SON?.rumeur?.('but');
@@ -3139,6 +3475,8 @@ function raconter(e) {
        celle d'en face — les mots du Virage. Le compte des buts de corde est
        déjà dans le HUD : la case ne l'écrit pas une seconde fois. */
     case 'goal':
+      vivreFz(pour ? 'moi' : 'eux', 'but', TENIR_FZ.but, 'saut');
+      vivreFz(pour ? 'eux' : 'moi', 'encaisse', TENIR_FZ.but, 'affaisse');
       FX?.but?.({ pour, vignette: true });
       FX?.son?.(pour ? 'but' : 'encaisse');
       // L'ovation, pour la corde que sa tribune fait céder : voir « but_reel ».
