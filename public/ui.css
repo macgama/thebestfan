@@ -8608,6 +8608,21 @@ html[data-calme~="animations"] .tbf-vitrine-scene[data-rayons]::after{animation:
   filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));
 }
 
+/* **Ce que le Fanzzy porte** (`TBF_STUFF.porte`) : ses deux pièces du deck,
+   accrochées à côté de lui comme des insignes, l'une sous l'autre. La page
+   les place (en absolu, dans la boîte du personnage) et règle leur taille par
+   `--piece`. Légèrement de travers, chacune dans son sens : épinglées à la
+   main, pas alignées par une grille. Elles ne prennent jamais le doigt — le
+   personnage, dessous, répond au toucher. */
+.tbf-porte{position:absolute;z-index:3;display:flex;flex-direction:column;gap:6px;
+  pointer-events:none;--piece:40px}
+.tbf-porte .tbf-piece{width:var(--piece);height:var(--piece);border-radius:calc(var(--piece) * .24);
+  rotate:-6deg;animation:tbf-porte-pose .5s cubic-bezier(.2,1.6,.4,1) both}
+.tbf-porte .tbf-piece:nth-child(2){rotate:5deg;animation-delay:.12s}
+@keyframes tbf-porte-pose{from{opacity:0;scale:.4}to{opacity:1;scale:1}}
+@media (prefers-reduced-motion:reduce){.tbf-porte .tbf-piece{animation:none}}
+html[data-calme~="animations"] .tbf-porte .tbf-piece{animation:none}
+
 /* ------------------------------------------------------------- le stade
 
    Un stade vu du dessus, et la lumière de ses tribunes. Les dessins sont faits

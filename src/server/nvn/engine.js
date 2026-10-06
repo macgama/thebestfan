@@ -13,6 +13,7 @@ import { ouverts } from '../contenus/index.js';
    deux arènes composent les mêmes modificateurs, elles doivent les nommer
    pareil. Voir `src/shared/apports.js`. */
 import { apportsDe, seulsLesMods } from '../../shared/apports.js';
+import { piecesPortees } from '../../shared/fanzzy/inventaire.js';
 
 /**
  * Moteur de duel N contre N.
@@ -1050,6 +1051,10 @@ export class DuelNvN {
          L'identifiant seul est la lignée, et disait toujours le premier âge. */
       stade: j.fanzzy[j.actif]?.stade ?? 1,
       skin: tenueDe(j.fanzzy[j.actif]),
+      /* Les deux pièces que son joueur lui a mises au deck : l'arène les
+         accroche à côté du personnage, des deux côtés de la corde. Elles se
+         voient comme son Fanzzy se voit — c'est ce qu'il a choisi d'emporter. */
+      sac: piecesPortees(j.fanzzy[j.actif]?.stuff),
       // Le souffle des autres est visible : c'est une information de jeu.
       breath: Math.round(j.breath),
     }));
