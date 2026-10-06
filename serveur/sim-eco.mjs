@@ -2,7 +2,7 @@
  * Simulation de l'économie d'un joueur de LA REPRISE, règle par règle.
  *
  * Reprend `openPack` / `tirerAutreChose` de src/server/fanzzy/index.js à
- * l'identique (places ouvertes, poignées, replis sur les écharpes), le barème
+ * l'identique (places ouvertes, poignées, replis sur deux écharpes), le barème
  * des duels de src/server/nvn/index.js, l'XP et les écharpes de palier de
  * src/shared/niveau.js. Lecture seule du dépôt : on n'importe que des modules
  * purs.
@@ -12,7 +12,7 @@
  */
 // La racine du dépôt, lue depuis l'emplacement de ce fichier (serveur/).
 const REPO = new URL('../', import.meta.url).href;
-const { RATES, SCARVES, EVO_COST } = await import(REPO + 'src/shared/fanzzy/dex.js');
+const { RATES, SCARVES, EVO_COST, POIGNEE_DE_REPLI } = await import(REPO + 'src/shared/fanzzy/dex.js');
 const { STUFF } = await import(REPO + 'src/shared/fanzzy/inventaire.js');
 const { ACTIONS } = await import(REPO + 'src/shared/duel/actions.js');
 const { niveauPour, ecarpesDuPalier, seuil } = await import(REPO + 'src/shared/niveau.js');
@@ -69,7 +69,9 @@ function ouvrirBooster(j) {
     const ouverte = i >= 2 || (i === 1 && Math.random() >= 0.7);
     if (ouverte) {
       const cat = tire(PLACES_OUVERTES);
-      const poignee = (repli) => { const n = tire(POIGNEES); gain += n;
+      /* Une catégorie épuisée rend la poignée de repli (deux écharpes, depuis
+         le 6 octobre 2026), la catégorie des écharpes sa poignée tirée. */
+      const poignee = (repli) => { const n = repli ? POIGNEE_DE_REPLI : tire(POIGNEES); gain += n;
         if (repli) j.src.replis += n; else j.src.poignees += n; };
       if (cat === 'echarpes') { poignee(false); continue; }
       if (cat === 'skin' || cat === 'etat') {

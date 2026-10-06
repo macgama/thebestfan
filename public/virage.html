@@ -1476,7 +1476,7 @@ const dAvantLEntree = (e) => entreeMinute != null && e.genre !== 'periode'
  * carton rouge et le coup de sifflet final. Le reste passe dans le ticket.
  */
 function reagirAuFil(e) {
-  if (!scene || !S?.you) return;
+  if (!scene || !S?.you) return false;
   const mien = e.side === S.you.side;
 
   if (e.type === 'Var') {
@@ -1485,7 +1485,7 @@ function reagirAuFil(e) {
       couleur: mien ? 'var(--flare)' : 'var(--vert)',
       sous: ditDetail(e.detail ?? '') || 'Décision de l’arbitrage vidéo',
     });
-    return;
+    return true;
   }
 
   if (e.type === 'Card' && /red/i.test(e.detail ?? '')) {
@@ -1495,7 +1495,7 @@ function reagirAuFil(e) {
         couleur: mien ? 'var(--flare)' : 'var(--vert)',
         sous: e.joueur ?? '',
       });
-    return;
+    return true;
   }
 
   if (e.genre === 'periode' && window.TBF_HORLOGE.FINIES.has(e.type)) {
@@ -1507,7 +1507,12 @@ function reagirAuFil(e) {
       couleur: nous > eux ? 'var(--vert)' : nous < eux ? 'var(--flare)' : 'var(--gris)',
       sous: PERIODES[e.type] ?? '',
     });
+    return true;
   }
+  /* Le reste — un jaune, un changement, la mi-temps — passe dans le ticket,
+     pas sur la scène : rien à montrer, donc pas de place prise dans le
+     défilé des moments (`apresLaFenetre`). */
+  return false;
 }
 
 function banner(t, ms = 1800) {
@@ -1719,25 +1724,76 @@ const carteDeCle = (cle) => [...$('hand').children].find((n) => n._cle === cle) 
    autres, déjà mises de côté par `TBF_ACTION.suspendre`, et de la
    carte-souvenir (`annoncerSouvenir`). */
 const apresLeGeste = [];
+
+/* ## Plusieurs moments pendant un même geste : **le jeu d'abord**
+
+   `scene.moment` remplace le moment affiché, et la file se vidait d'un coup
+   à la fermeture : trois moments posés dans la même milliseconde n'en
+   laissaient voir qu'un, le dernier. Un but de corde, un rouge et un but
+   réel tombés pendant un chant ne montraient que « GOAL ! » ; les deux
+   autres passaient sans que personne les voie.
+
+   Ils se montrent donc **l'un après l'autre**, chacun le temps de se lire
+   (`ENTRE_DEUX_MOMENTS`), et dans l'ordre que Gaël a fixé le 6 octobre 2026 —
+   « on affiche toujours en premier ce qui est lié au jeu » : ce que la
+   tribune a fait (la corde qui cède), puis ce que le match a fait (la vidéo,
+   un rouge, le coup de sifflet final), et les buts réels **en dernier** —
+   c'est le dernier qui reste à l'écran ses quinze secondes, et le but est
+   celui qu'on veut y voir. À rang égal, l'ordre d'arrivée.
+
+   Un moment qui arrive pendant le défilé y prend son rang au lieu de couper
+   la file : posé tout de suite, il serait remplacé quelques secondes plus
+   tard par un moment plus ancien. Hors d'un geste et hors d'un défilé, rien
+   ne change : un moment remplace le précédent, et c'est le dernier qui
+   compte (`fanzzy-scene.js`). Un geste qui s'ouvre en plein défilé
+   l'interrompt — rien ne couvre le pavé — et sa fermeture le reprend. */
+const RANG_DES_MOMENTS = { jeu: 0, match: 1, but: 2 };
+const ENTRE_DEUX_MOMENTS = 3500;
+const momentsEnAttente = [];
+let defile = null;
+
 /**
- * `but` : un but réel. **Il passe devant les autres moments en attente** :
- * la file les rejoue à la fermeture, et `scene.moment` garde le dernier —
- * un rouge ou un but de corde tombé après lui pendant le même geste
- * laissait « ROUGE POUR EUX » à l'écran à la place de « GOAL ! ». Les buts
- * réels se jouent donc en dernier, entre eux dans l'ordre d'arrivée.
+ * Joue `f` tout de suite, ou à la fermeture du geste en cours.
+ *
+ * `moment` : ce que `f` montre sur la scène — `'jeu'` (la corde),
+ * `'match'` (le fil du vrai match), `'but'` (un but réel). Un moment attend
+ * aussi la fin d'un défilé en cours, et prend son rang dans la file. Un
+ * effet de moment qui rend `false` n'avait rien à montrer : il ne prend pas
+ * de place dans le défilé.
  */
-function apresLaFenetre(f, { but = false } = {}) {
-  if (busy) apresLeGeste.push({ f, but }); else f();
+function apresLaFenetre(f, { moment = null } = {}) {
+  if (!moment) {
+    if (busy) apresLeGeste.push(f); else jouerEffet(f);
+    return;
+  }
+  if (!busy && !defile) { jouerEffet(f); return; }
+  const i = momentsEnAttente.findIndex((x) => RANG_DES_MOMENTS[x.moment] > RANG_DES_MOMENTS[moment]);
+  momentsEnAttente.splice(i < 0 ? momentsEnAttente.length : i, 0, { f, moment });
 }
 
-/** Joue ce qui attendait : le reste dans l'ordre d'arrivée, puis les buts réels. */
+/** Un effet qui lève n'emporte pas les suivants, ni le geste qui vide la file. */
+function jouerEffet(f) {
+  try { return f(); } catch (e) { console.error('[virage] effet différé :', e); return false; }
+}
+
+/** Joue ce qui attendait la fermeture : les effets tout de suite, puis les moments. */
 function viderApresLeGeste() {
-  const file = apresLeGeste.splice(0);
-  for (const { f } of [...file.filter((x) => !x.but), ...file.filter((x) => x.but)]) {
-    /* Un effet qui lève n'emporte pas les suivants, et ne remonte pas dans
-       le `finally` du geste qui vide la file. */
-    try { f(); } catch (e) { console.error('[virage] effet différé :', e); }
+  for (const f of apresLeGeste.splice(0)) jouerEffet(f);
+  if (!defile) defiler();
+}
+
+/** Montre le moment suivant, et programme celui d'après. */
+function defiler() {
+  defile = null;
+  if (busy) return;                    // la fermeture du geste reprendra
+  while (momentsEnAttente.length) {
+    const { f } = momentsEnAttente.shift();
+    if (jouerEffet(f) === false) continue;
+    if (momentsEnAttente.length) { defile = setTimeout(defiler, ENTRE_DEUX_MOMENTS); return; }
   }
+  /* Le dernier moment est à l'écran : la carte-souvenir qui attendait vient
+     maintenant, avec lui — c'est celle du but, qui passe en dernier. */
+  annoncerSouvenir();
 }
 
 /** Un but tombé pendant le geste se sent tout de suite, et se montre après.
@@ -2057,7 +2113,9 @@ function rangerLeSouvenir() {
 }
 
 function annoncerSouvenir() {
-  if (busy || !souvenirsEnAttente.length) return;
+  /* Ni pendant un geste, ni pendant un défilé de moments : elle vient avec
+     le dernier, qui est le but dont elle est le souvenir (`defiler`). */
+  if (busy || defile || !souvenirsEnAttente.length) return;
   const el = $('souvenir');
   if (!el.hidden) return;   // une carte à la fois : la suivante attend la fin du glissement
   const s = souvenirsEnAttente.shift();
@@ -2710,7 +2768,7 @@ function connect() {
        qui reste attend la fin du geste : voir `apresLaFenetre`. */
     for (const e of f.entrees ?? []) {
       if (dAvantLEntree(e)) continue;
-      apresLaFenetre(() => reagirAuFil(e));
+      apresLaFenetre(() => reagirAuFil(e), { moment: 'match' });
     }
   });
 
@@ -2814,7 +2872,7 @@ function connect() {
       } else {
         banner(mien ? 'BUT DE LA TRIBUNE !' : 'ILS ONT FAIT CÉDER LA CORDE');
       }
-    });
+    }, { moment: 'jeu' });
   });
 
   socket.on('virage:real_goal', (g) => {
@@ -2833,9 +2891,10 @@ function connect() {
     sentirLeBut(mien);
     /* La secousse et « GOAL ! » sur la case de BD, avec le buteur et la
        minute — quinze secondes, aux couleurs de l'équipe qui a marqué —
-       attendent la fin du geste, et **passent devant** les autres moments
-       en attente : c'est le but qui reste à l'écran. La tribune, le score,
-       la minute double et la rumeur, eux, sont déjà partis. */
+       attendent la fin du geste, et se montrent **après** les autres
+       moments en attente : c'est le but qui reste à l'écran (voir
+       `apresLaFenetre`). La tribune, le score, la minute double et la
+       rumeur, eux, sont déjà partis. */
     apresLaFenetre(() => {
       window.FX?.but?.({ pour: mien, vignette: true });
       celebrer();
@@ -2843,7 +2902,7 @@ function connect() {
         couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)',
         sous: [g.player, g.minute != null ? `${g.minute}′` : ''].filter(Boolean).join(' · '),
       });
-    }, { but: true });
+    }, { moment: 'but' });
     render();
   });
 

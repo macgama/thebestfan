@@ -115,7 +115,7 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 /* Le match choisi : l'affiche (`.tbf-affiche`, la brique). La page ne
    garde que sa place dans la liste. */
 .mt.tbf-affiche{cursor:default;margin-top:4px}
-.mt.tbf-affiche .tbf-affiche-pied{justify-content:center}
+.mt.tbf-affiche .tbf-affiche-pied{justify-content:center;flex-wrap:wrap;row-gap:4px}
 .mt.tbf-affiche .tbf-affiche-pied>.tbf-foule{flex:0 1 auto}
 /* **Le camp pour qui l'on pousse, marqué sur l'affiche** : un sticker craie
    « TA TRIBUNE » sous le nom de son club. Chez soi, il remplace la rubrique
@@ -129,6 +129,23 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .mt.tbf-affiche.camp-marque .tbf-affiche-club{position:relative;padding-bottom:28px}
 .tbf-affiche-club>.tribune-mienne{position:absolute;left:50%;bottom:0;translate:-50% 0;
   --rot:-3deg;height:20px;padding:0 5px;font-size:11px}
+/* **Le stade du match, sur son affiche** (décision de Gaël, 6 octobre
+   2026 : tous les duels d'un match se jouent dans son stade, et la
+   préparation le montre avant l'entrée en file). Son dessin réduit passe en
+   fond, sous le voile de la brique (`data-fond`, `--fond`) ; son nom se lit
+   **au pied de l'affiche**, comme celui du lieu au pied de l'arène
+   (`.lieu`), à la craie du compte de la file. « STADE » en petit devant :
+   seul, « LE CHAUDRON » se lirait comme un troisième club. Ce qu'il change
+   est dit dans les règles du « i », comme en partie dans « ce que tu
+   portes » : la phrase entière, jusqu'à quatre-vingt-cinq signes, prendrait
+   deux lignes de plus à l'affiche, juste au-dessus d'ENTRER EN FILE. Le nom
+   partage le pied avec la file quand quelqu'un attend, et passe dessus
+   quand les deux ne tiennent pas sur une ligne ; il ne s'abrège jamais. */
+.lieu-match{display:flex;align-items:baseline;gap:6px;min-width:0;max-width:100%;
+  color:var(--craie);font-family:var(--banner);font-size:12px;font-weight:600;line-height:1.2;
+  letter-spacing:.06em;text-transform:uppercase}
+.lieu-match>small{flex:none;font-size:11px;letter-spacing:.1em;opacity:.88}
+.lieu-match>b{min-width:0;font-weight:700;overflow-wrap:anywhere}
 
 /* **Le match choisi et ce qui se déplie sous lui**, dans un même bloc : c'est
    le bloc auquel la rangée d'entrée reste collée (voir `.entree`). */
@@ -650,10 +667,11 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .versus .tbf-echarpe:nth-child(2){rotate:-16deg;--e1:var(--eux1,var(--bleu));--e2:var(--eux2,var(--bleu-clair))}
 .versus .tbf-banderole{position:relative;z-index:1;font-size:20px;line-height:24px;padding:2px 12px 1px;
   letter-spacing:.2em}
-/* **Le stade du duel en fond de l'affiche**, connu au coup d'envoi (il est
-   tiré sur l'identifiant du duel) : le dessin réduit, sous un voile qui
-   part des deux tiers et s'épaissit vers le bas — il se devine derrière le
-   titre et le VS, et la craie des noms y garde son contraste. */
+/* **Le stade du duel en fond de l'affiche** : celui du match, que l'affiche
+   de la préparation montrait déjà (`stadeDuMatch`, côté serveur) — le
+   dessin réduit, sous un voile qui part des deux tiers et s'épaissit vers
+   le bas : il se devine derrière le titre et le VS, et la craie des noms y
+   garde son contraste. */
 .grand[data-fond]{
   background:radial-gradient(120% 55% at 50% -10%,rgba(224,64,44,.2),transparent 60%),
     linear-gradient(180deg,rgba(17,22,29,.62),rgba(5,7,10,.8) 45%,rgba(5,7,10,.94) 80%),
@@ -1697,11 +1715,22 @@ function ticketMatch(m) {
  * « VS » et l'heure avant le coup d'envoi —, « CLASSÉ » en sticker d'or (la
  * seule face d'or hors achat : c'est l'enjeu), « ×2 » en tampon vert sous le
  * score, la file en frise au pied, et l'écharpe aux couleurs des deux
- * clubs (`homeColors`, `awayColors`). **Pas de stade en fond** : celui du
- * duel est tiré au coup d'envoi (sur l'identifiant du duel, pas sur le
- * match), et le match n'en sert aucun — en poser un serait montrer un lieu
- * dont les effets ne s'appliqueront pas. Le stade se montre quand il est
- * connu : en fond de l'affiche du coup d'envoi (`montrerAffiche`).
+ * clubs (`homeColors`, `awayColors`).
+ *
+ * **Le stade du match, en fond et au pied** (décision de Gaël, 6 octobre
+ * 2026 : tous les duels d'un match se jouent dans son stade — celui de son
+ * Grand Virage —, et la préparation le montre avant l'entrée en file). Il
+ * vient du serveur, avec le match (`stade`, § 17), tiré par la fonction
+ * même qui donne le leur au Virage et au duel qui va se jouer
+ * (`stadeDuMatch`) : la page ne le calcule pas, elle ne connaît ni la règle
+ * ni les stades qu'une saison a ouverts. Le dessin réduit sous le voile de
+ * la brique, le nom au pied, à côté de la file ; ce qu'il change est dans
+ * les règles du « i ». Jusqu'ici, le lieu d'un duel se tirait sur son propre
+ * identifiant, au coup d'envoi : aucun match n'en servait, et l'affiche
+ * restait nue plutôt que de montrer un stade dont les effets ne
+ * s'appliqueraient pas. **Un match servi sans stade la laisse nue**
+ * aujourd'hui encore (une liste d'avant la décision, gardée par une page
+ * restée ouverte) : rien ne s'invente.
  *
  * **Le camp pour qui l'on pousse** porte le sticker « TA TRIBUNE » sous le
  * nom de son club : imposé chez soi (`monCamp`), choisi ailleurs (`S.camp`,
@@ -1720,10 +1749,21 @@ function afficheMatch(m) {
     ? '<span class="tbf-sticker tribune-mienne">TA TRIBUNE</span>' : ''}</span>`;
   const att = attenteDe(m);
   const n = att ? att.camps[0] + att.camps[1] : 0;
-  const couleurs = [echarpeDe('a', couleursDe(m, 0)), echarpeDe('b', couleursDe(m, 1))]
-    .filter(Boolean).join(';');
+  /* Le stade : son dessin réduit en `--fond`, à l'adresse que `stade-art.js`
+     donne au coup d'envoi — l'identifiant réduit aux lettres, aux chiffres
+     et au tiret avant d'entrer dans une adresse, comme là-bas. */
+  const lieu = m.stade?.id ? m.stade : null;
+  const fond = lieu && window.TBF_STADE?.adresse
+    ? window.TBF_STADE.adresse(String(lieu.id).replace(/[^a-z0-9-]/gi, ''), true) : null;
+  const style = [echarpeDe('a', couleursDe(m, 0)), echarpeDe('b', couleursDe(m, 1)),
+    fond ? `--fond:url('${fond}')` : ''].filter(Boolean).join(';');
+  const pied = [
+    lieu?.nom ? `<span class="lieu-match"><small>STADE</small><b>${esc(lieu.nom)}</b></span>` : '',
+    n ? `<span class="tbf-foule tbf-foule--frise" data-tribune="moi"
+      aria-hidden="true">${'<i class="on"></i>'.repeat(Math.min(12, n))}</span>
+      <small>${n} EN FILE</small>` : ''].join('');
   return `<div class="mt on tbf-cadre tbf-affiche${camp === 0 || camp === 1 ? ' camp-marque' : ''}" data-fixture="${m.id}"${
-    couleurs ? ` style="${couleurs}"` : ''}>
+    fond ? ' data-fond' : ''}${style ? ` style="${style}"` : ''}>
     ${club(m.home_name, m.home_logo, 0)}
     <span class="tbf-affiche-score"><b class="tbf-banderole">${score}</b>${sous ? `<small>${sous}</small>` : ''}${
       m.mien ? '<span class="q mien tbf-tampon" data-ton="vert">×2</span>' : ''}</span>
@@ -1732,9 +1772,7 @@ function afficheMatch(m) {
       : '<span class="tbf-sticker">ENTRAÎNEMENT</span>'}
     ${m.enCours && !['HT', 'BT', 'P', 'SUSP', 'INT'].includes(m.status_short)
       ? '<span class="tbf-sticker tbf-sticker--live" data-ton="flare">LIVE</span>' : ''}
-    ${n ? `<span class="tbf-affiche-pied"><span class="tbf-foule tbf-foule--frise" data-tribune="moi"
-      aria-hidden="true">${'<i class="on"></i>'.repeat(Math.min(12, n))}</span>
-      <small>${n} EN FILE</small></span>` : ''}
+    ${pied ? `<span class="tbf-affiche-pied">${pied}</span>` : ''}
   </div>`;
 }
 
@@ -1827,7 +1865,11 @@ function souLeMatch(choisi, sansDeck) {
      (`raisonDuMatch`, dans `src/server/deck/index.js`) ; le repli couvre une
      page restée ouverte pendant un déploiement, et ne promet rien sur le
      classement. Puis le double d'écharpes quand un de ses clubs joue, et le
-     camp : imposé chez soi, à choisir ailleurs. */
+     camp : imposé chez soi, à choisir ailleurs. Puis **le stade**, dont
+     l'affiche ne dit que le nom : ce qu'il change, dans la phrase même que
+     la partie redira dans « ce que tu portes » (`effet`, servi avec lui), et
+     qu'il est celui de tous les duels du match comme de son Grand Virage. */
+  const lieu = choisi.stade?.nom ? choisi.stade : null;
   out.push(`<div class="regles" id="regles" ${S.regles ? '' : 'hidden'}>
     <p>${esc(choisi.raison ?? (choisi.enCours ? 'Le match est en cours.' : 'Match à venir.'))}</p>
     ${choisi.mien ? '<p><b>Un de tes clubs joue : ce duel rapporte le double d’écharpes.</b></p>' : ''}
@@ -1836,6 +1878,8 @@ function souLeMatch(choisi, sansDeck) {
     : `<p>Aucun de tes clubs ne joue : tu viens tenir une tribune qui
       n’est pas la tienne. <b>Prends celle qui manque de monde</b> — ta ferveur y vaut
       jusqu’au double.</p>`}
+    ${lieu ? `<p>Le stade : <b>${esc(lieu.nom)}</b>.${lieu.effet ? ` ${esc(lieu.effet)}` : ''}
+      Tous les duels de ce match s’y jouent, et son Grand Virage aussi.</p>` : ''}
     <p>Si personne ne se présente, des bots complètent les places et le duel
       devient un entraînement.</p>
     <p>Partir en plein duel est un forfait : on perd, et la tribune d’en face
@@ -3721,8 +3765,9 @@ function montrerAffiche(a) {
   $('afficheLieu').innerHTML = a.stade
     ? `<b>${esc(a.stade.nom)}</b>${a.stade.effet ? ` · ${esc(a.stade.effet)}` : ''}`
     : '';
-  /* Le stade du duel en fond, en dessin réduit : le lieu est connu au coup
-     d'envoi, et c'est là que la partie se jouera. Sans lui, le fond nu. */
+  /* Le stade du duel en fond, en dessin réduit : celui du match, que la
+     préparation annonçait sur son affiche, et c'est là que la partie se
+     jouera. Sans lui, le fond nu. */
   const affiche = $('affiche');
   const fond = a.stade?.id && window.TBF_STADE?.adresse
     ? window.TBF_STADE.adresse(String(a.stade.id).replace(/[^a-z0-9-]/gi, ''), true) : null;

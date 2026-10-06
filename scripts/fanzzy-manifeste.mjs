@@ -43,8 +43,12 @@ export async function agreger(dossier = SORTIE_DEFAUT) {
     for (const [evo, contenu] of Object.entries(m.evolutions ?? {})) {
       const skins = {};
       for (const [skin, s] of Object.entries(contenu.skins ?? {})) {
+        /* `cligne` ne suit que s'il est vrai : trente-cinq Fanzzy n'ont pas
+           de paupières, et un `false` de plus par tenue pèserait sur chaque
+           ouverture de page pour ne rien dire. */
         skins[skin] = { etats: s.etats, portrait: s.portrait === true,
-          ...(s.repli ? { repli: s.repli } : {}) };
+          ...(s.repli ? { repli: s.repli } : {}),
+          ...(s.cligne === true ? { cligne: true } : {}) };
       }
       evolutions[evo] = { skins };
     }

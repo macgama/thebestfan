@@ -28,8 +28,13 @@ temporaire de la session ; ce qui doit durer est ici.*
   joueur ; une page seulement. Puis le duel vivant : les deux Fanzzy en
   tribune dans l'arène du duel, qui vivent poussées, buts et coups ; une page
   seulement, avec le but du vrai match qui y faisait lever la page, réparé.
-- **À venir** : les sons, au choix de Gaël, et le clignement des Fanzzy, qui
-  attend leurs images « yeux fermés ».
+- **Dans `main` le 6 octobre 2026** : Gosier Rouillé (RP1) cligne des yeux
+  à l'accueil, au repos (filmé pour Gaël, `lot7/cligne/rp1-cligne.mp4` dans
+  les fichiers du projet), et au Virage, les moments tombés pendant un même
+  geste se montrent l'un après l'autre, le jeu d'abord et le but réel en
+  dernier. Des pages seulement.
+- **À venir** : les sons, au choix de Gaël, et le clignement des autres
+  Fanzzy, une retouche Artlist de leur tête chacun (`npm run cligne`).
 
 ## Où sont les choses
 
@@ -61,21 +66,33 @@ temporaire de la session ; ce qui doit durer est ici.*
    manque, c'est un caractère. **Fait**, avec les expressions déjà
    dessinées, et filmé sur RP1 pour Gaël le 5 octobre (`HISTORIQUE.md`,
    4 quadragies octies) : il raconte le dernier match de son club, il répond
-   autrement quand on insiste à le toucher, il fête le retour du joueur. Le
-   clignement des yeux attend une image « yeux fermés » par Fanzzy, que Gaël
-   produit (une pour RP1 d'abord). **Au duel aussi**, filmé pour Gaël le même
-   jour (`HISTORIQUE.md`, 4 quadragies novies) : les deux Fanzzy en tribune
-   se tiennent dans l'arène et vivent poussées, buts et coups d'en face.
+   autrement quand on insiste à le toucher, il fête le retour du joueur. **Il
+   cligne des yeux** depuis le 6 octobre, RP1 seulement et à l'accueil
+   (4 quinquagies quater) : une retouche Artlist de sa tête, dont on ne
+   garde que les paupières ; les autres Fanzzy attendent la leur (`npm run
+   cligne -- tete <ID>` dit quoi demander). **Au duel aussi**, filmé pour
+   Gaël le même jour (`HISTORIQUE.md`, 4 quadragies novies) : les deux
+   Fanzzy en tribune se tiennent dans l'arène et vivent poussées, buts et
+   coups d'en face.
 3. **Les sons Artlist** (la rumeur, le but, les tambours) : Gaël doit les
    écouter et dire lesquels on garde (`art/son/_src/artlist/A-ECOUTER.md`).
 4. **Les vieux buts** : fait, dans `main`. Le relevé redemande les
    événements à chaque tour tant que sa liste compte moins de buts que le
    tableau (au plus neuf tours) ; la priorité au GOAL et la lecture du retour
    de `realGoal` par `server.js` étaient déjà au lot 6.
-5. **Décisions en attente de Gaël** : le stade du duel ; la date de fin de la
-   saison 1 et les seuils de division (`/admin`) ; la présence des amis (après
-   relecture de `CONFIDENTIALITE.md` par un juriste) ; celles de `ETAT.md`
-   § 7 bis (inflation des écharpes, saison 2…).
+5. **Les décisions de Gaël du 6 octobre 2026**, faites dans `main` : le
+   stade du duel, celui du match, montré dès la préparation (`HISTORIQUE.md`,
+   4 quinquagies bis) ; le reste des boosters à deux écharpes, « La quête » et
+   « Mur de bâches » retirés et remboursés aux KOP, des divisions qui ne
+   paient que l'honneur, des saisons de quatre mois (4 quinquagies ter) ; au
+   Virage, le jeu d'abord et le but réel en dernier (4 quinquagies quater) ;
+   les seuils de division, que Gaël recale lui-même dans `/admin`
+   (4 quinquagies). **Ce qui reste à Gaël** : saisir le 31 décembre 2026
+   comme fin de la saison 1 dans `/admin` ; donner les informations d'éditeur
+   de `CONFIDENTIALITE.md` (nom, forme juridique, adresse, e-mail de
+   contact) : la page se publie d'abord, puis il allume la présence des amis
+   (`presence.actif`, dans `/admin`) ; choisir la série et le nom de la
+   saison 2.
 6. **Rouges connues** : `deck:ui` (un contrôle, depuis avant le lot 0 ; un
    correctif dort dans la copie `.claude/worktrees/funny-herschel-18c485`
    d'une autre session) ; `accueil:ui` intermittente. **Dans un conteneur
