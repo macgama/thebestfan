@@ -35,6 +35,16 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    devinait au lieu de les lire. */
 .fam h2{margin:0 0 8px;padding-left:2px}
 .liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+/* **Sur grand écran, les familles côte à côte** (`tbf-large`, voir « Les
+   pages larges » dans ui.css). Pleine largeur, chaque famille n'occupait
+   qu'un tiers de sa rangée — deux à quatre gestes sur une ligne de mille
+   trois cents pixels — et la page faisait trois écrans de haut. Deux par
+   rangée, elle tient presque dans un seul, et chaque famille garde ses
+   tuiles ensemble sous son titre. */
+@media (min-width:1180px) and (min-height:560px){
+  #vue{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:22px;align-items:start}
+  .liste{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+}
 
 /* Une tuile par geste. La barre de gauche porte la couleur de la famille —
    c'est le seul endroit de l'écran où la couleur veut dire quelque chose, et
@@ -188,7 +198,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    sous `prefers-reduced-motion` comme sous le mode calme, viennent de ui.css. */
 </style>
 </head>
-<body>
+<body class="tbf-large">
 <main id="app">
   <p class="tbf-sous">Essayer sans rien risquer</p>
 
