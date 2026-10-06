@@ -12,6 +12,9 @@ schéma ni redémarrage.
   monde. La phrase du hub (match, boosters) passe toujours d'abord.
 - Contrôlé par `npm run repliques:test` (suite neuve, chaque ligne : quatre
   mots, aucun chiffre) et `npm run accueil:ui` (14 contrôles neufs).
+
+---
+
 **La collection de stades** (branche `claude/collection-stades-nsq24k`,
 6 octobre 2026, option « album + décor d'accueil » choisie par Gaël). Il se
 dépose avec ce qui est en dessous, ou seul.
