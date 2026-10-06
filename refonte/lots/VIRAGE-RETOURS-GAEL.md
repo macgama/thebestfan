@@ -132,7 +132,7 @@ Le lot a déjà la file `apresLaFenetre` (l.1501 à 1504) et la carte-souvenir e
 
 ## Reste à trancher par Gaël (hors correctif)
 
-- **Ce qui reste visible quand plusieurs moments tombent pendant le geste.** La file rejoue les moments dans l'ordre, et `scene.moment` garde le dernier. Si un rouge ou un but de corde suit le but réel pendant le même geste, c'est « ROUGE POUR EUX » qui reste à l'écran, pas « GOAL ! ». Les titres, le bandeau et la carte-souvenir du but passent quand même. Donner la priorité au but est un choix d'interface.
+- **Ce qui reste visible quand plusieurs moments tombent pendant le geste.** *Tranché par Gaël le 6 octobre 2026 (« on affiche toujours en premier ce qui est lié au jeu ») et fait : les moments tombés pendant un geste se montrent l'un après l'autre, 3,5 secondes chacun, la corde d'abord, puis ce que le match a fait, et le but réel en dernier, qui reste à l'écran (`HISTORIQUE.md`, 4 quinquagies quater).* Avant : la file rejoue les moments dans l'ordre, et `scene.moment` garde le dernier. Si un rouge ou un but de corde suit le but réel pendant le même geste, c'est « ROUGE POUR EUX » qui reste à l'écran, pas « GOAL ! ». Les titres, le bandeau et la carte-souvenir du but passent quand même. Donner la priorité au but est un choix d'interface.
 - **Les autres effets d'un but ancien.** Un but ancien continue de frapper la carte-souvenir (pour ceux qui ont chanté dans les 2 dernières minutes) et de compter au duel : `server.js` ignore le retour de `realGoal`. Deux remèdes possibles :
   - faire redemander les événements au relevé tant que sa liste compte moins de buts que le tableau ;
   - plafonner l'âge d'un but.

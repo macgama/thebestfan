@@ -3402,12 +3402,13 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
    qu'aucune page ne le lit) ; `gains.wallet` dans `nvn:fin` (non servi :
    `nav.js` relit le solde) ; `nvn:net`, que `npm test` ne lance pas ; **le
    tunnel au voile du Virage** (la photo existe, la page ne la nomme pas) ;
-   et, du correctif d'urgence, la priorité du but réel sur les autres moments
-   d'un même geste, les cartes-souvenirs d'un but ancien, et le trou d'une
-   suite qui ne fait passer aucun scénario du relevé jusqu'à la salle. Le
-   stade du duel est tranché et réglé (le 6 octobre : celui du match, le même
-   que son Grand Virage, et la préparation l'annonce avant l'entrée en file ;
-   `HISTORIQUE.md`, 4 quinquagies bis).
+   et, du correctif d'urgence, les cartes-souvenirs d'un but ancien et le
+   trou d'une suite qui ne fait passer aucun scénario du relevé jusqu'à la
+   salle. Le stade du duel est tranché et réglé (le 6 octobre : celui du
+   match, le même que son Grand Virage, et la préparation l'annonce avant
+   l'entrée en file ; `HISTORIQUE.md`, 4 quinquagies bis), et l'ordre des
+   moments d'un même geste aussi (le même jour : le jeu d'abord, le but réel
+   en dernier, qui reste à l'écran ; 4 quinquagies quater).
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
    peut-être encore l'ancienne règle, qui classait 117 compétitions comme
