@@ -2065,6 +2065,15 @@ Par ordre d'utilité.
    centrée, pensée pour le téléphone. Sur un ordinateur, les deux tiers de
    l'écran sont vides.
 
+   **Commencé le 6 octobre 2026** (fil « écran large ») : au-delà de 1 180 px,
+   les pages de contenu portent les dix tuiles de l'accueil de part et
+   d'autre de leur colonne (`RAILS` dans `menu.js`, « Les rails du grand
+   écran » dans `ui.css`, contrôlés par `menu:smoke`). L'accueil, le Virage
+   et le duel n'en ont pas. Les maquettes des deux formes proposées à Gaël
+   (les tuiles seules, ou les tuiles et des pages réorganisées pour la
+   largeur) sont dans le dossier du projet, `ecran-large/`. Le contenu des
+   pages garde pour l'instant sa largeur de téléphone.
+
 3. **Répartir les dix gestes sur le catalogue.** `cri.gest` ne vaut encore que
    `tempo`, `mash` ou `hold` dans `dex.js` et `dex-2026.js` — les sept nouveaux
    gestes n'appartiennent à aucun personnage. Le duel les fait tourner de
