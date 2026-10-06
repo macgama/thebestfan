@@ -711,6 +711,13 @@ h2{margin:20px 16px 9px}
 /* La rangée dit qu'elle s'ouvre : sans ce signe, personne ne pense à toucher. */
 .carte{cursor:pointer}
 .carte:active{transform:translateY(2px)}
+
+/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
+   barre du bas suit la colonne élargie, ENREGISTRER sous le bord droit de
+   la page comme sur le téléphone. */
+@media (min-width:1180px) and (min-height:560px){
+  .barre .in{max-width:var(--colonne-large)}
+}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -720,7 +727,7 @@ h2{margin:20px 16px 9px}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body>
+<body class="tbf-large">
 <main id="app">
   <!-- **Le même rail que /fanzzy**, au pixel : MON FANZZY et CLASSEUR dans le
        creux, DECK en plaque à côté. Seul change ce qui est allumé — ici la

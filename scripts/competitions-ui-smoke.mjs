@@ -37,6 +37,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
+import { controlerLarge } from './large-ui.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 let failures = 0;
@@ -137,13 +138,30 @@ app.delete('/api/tt/favoris/:id', (q, s) => {
 const LIGUE = { season: 2026, name: 'Super League', country: 'Switzerland',
                 country_code: 'CH', family: 'championnat', type: 'League' };
 
-app.get('/api/tt/league/:id', (_q, s) => s.json({
+/* Une coupe sans classement, comme la Federation Cup du Bangladesh : le
+   service le dit (`unsupported`), et ses matchs d'une phase de groupes. */
+const COUPE = { season: 2026, name: 'Federation Cup', country: 'Bangladesh',
+                country_code: 'BD', family: 'coupe', type: 'Cup' };
+const MATCHS_COUPE = [1, 2, 3, 4].map((i) => ({
+  id: 8110 + i, date: new Date(Date.now() - 864e5).toISOString(), status: 'FT',
+  elapsed: 90, extra: null, round: 'Group Stage', live: false, fini: true,
+  home: { id: 900 + i, name: `Domicile ${i}`, logo: '', goals: i % 3 },
+  away: { id: 950 + i, name: `Extérieur ${i}`, logo: '', goals: 1 },
+}));
+
+app.get('/api/tt/league/:id', (q, s) => (q.params.id === '811'
+  ? s.json({ league: COUPE, unsupported: true })
+  : s.json({
   league: LIGUE,
   groups: [[{ rank: 1, name: 'FC Sion', logo: '', played: 12, win: 9, draw: 0,
               lose: 3, gf: 24, ga: 11, points: 27 }]],
   stale: false,
-}));
+})));
 app.get('/api/tt/league/:id/results', (q, s) => {
+  if (q.params.id === '811') {
+    return s.json({ league: COUPE, journees: [{ round: 'Group Stage', joues: 4, total: 4 }],
+      journee: 'Group Stage', luA: null, matchs: MATCHS_COUPE, stale: false });
+  }
   /* La journée en cours est la cinquième : c'est elle qui se joue. Le talon
      la choisit quand on ne demande rien, comme le fait le vrai service. */
   const voulue = MATCHS[q.query.journee] ? q.query.journee : 'Regular Season - 5';
@@ -217,6 +235,13 @@ await jusqua(async () => await page.$('.lg') !== null);
 
 check('la page se charge sans erreur de script', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
+
+/* ---------------------------------------------------------- grand écran
+
+   La page des compétitions est une page large (`tbf-large`) : son sommaire
+   se range en colonnes de la largeur d'un téléphone. */
+await controlerLarge(page, check, { nom: 'la page des compétitions', liste: '.list>.lg',
+  pret: () => jusqua(async () => await page.$('.lg') !== null) });
 
 /* ------------------------------------------------------------- les pays */
 
@@ -461,6 +486,28 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
   check('sans personne, la page le dit au lieu de rester vide',
     (await page.$eval('.empty', (n) => n.textContent)).includes('poussé'));
   ferveurVide = false;
+}
+
+/* --------------------------------------------- une coupe sans classement
+
+   La page s'ouvrait sur CLASSEMENT, et une coupe n'en a souvent pas : la
+   première chose qu'on voyait d'elle était « Cette donnée n'existe pas »
+   (Gaël, 6 octobre 2026). Elle s'ouvre maintenant sur ses résultats ; un
+   classement demandé du doigt garde sa phrase. Sur grand écran, ses matchs
+   se rangent en deux colonnes. */
+{
+  await page.goto(base + '/teletext?ligue=811', { waitUntil: 'networkidle0' });
+  const resultats = () => jusqua(async () => (await page.$$('.list .m')).length === 4);
+  check('une coupe sans classement s’ouvre sur ses résultats', await resultats()
+    && await page.$eval('#tabs .on', (n) => n.dataset.t) === 'resultats');
+  check('et rien ne dit qu’une donnée manque',
+    !/n'existe pas/.test(await page.$eval('#list', (n) => n.textContent)));
+  await controlerLarge(page, check, { nom: 'une coupe ouverte', liste: '.list>.m', pret: resultats });
+
+  await page.evaluate(() => document.querySelector('[data-t=classement]').click());
+  await jusqua(async () => await page.$('.list .empty') !== null);
+  check('le classement demandé du doigt dit qu’il n’existe pas',
+    /n'existe pas/.test(await page.$eval('#list', (n) => n.textContent)));
 }
 
 check('aucune erreur de script sur la page des compétitions',
