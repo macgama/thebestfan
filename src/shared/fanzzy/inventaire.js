@@ -321,6 +321,207 @@ export const STUFF = [
   { id: 'ap-drapeau', nom: 'Le dernier drapeau', rar: 'legendaire',
     texte: 'Recousu vingt fois, il tient encore. Rien ne le perce, et il ralentit tout.',
     mods: { holdBonus: 1.5, parryResist: 1.3, tempoInterval: 130, mashBonus: 0.8 } },
+
+  /* ============================================= LES CINQ SÉRIES NEUVES (51)
+
+     ## Pourquoi cent
+
+     Gaël a voulu cent pièces (6 octobre 2026). Les quarante-neuf d'avant
+     viennent de trois sources : le sac d'origine, LA REPRISE, les époques.
+     Les cinquante et une qui manquaient suivent les **cinq séries qui
+     attendent leur saison** (`dex-series-neuves.js`) : dix par série, et une
+     centième qui n'appartient à personne.
+
+     ## Elles naissent fermées
+
+     `publie: false` sur chaque fiche : c'est la règle de
+     `contenus/index.js` pour un contenu neuf. Le semis les pose fermées en
+     base ; une saison les ouvre avec sa série (le champ `stuff` d'une
+     saison), ou l'onglet CONTENUS de l'administration une par une. Ce qu'on
+     possède se joue toujours : fermer, c'est cesser de distribuer.
+
+     ## Le même équilibre
+
+     Par série : trois communes, trois rares, trois épiques, une
+     légendaire. Les mêmes effets que les quarante-neuf d'avant, rien de
+     neuf, et **pas une seule n'a que des bonus** — `catalogue-smoke.mjs` le
+     vérifie sur toutes. `pushMult` reste interdit, pour la raison écrite
+     au-dessus de LA REPRISE.
+
+     Préfixe : le code de la série en minuscules, comme `rp-`.             */
+
+  /* ------------------------------------------------------- LES VIP (vp-) */
+
+  { id: 'vp-flute', nom: 'Flûte de champagne', rar: 'commune', publie: false,
+    texte: 'Les bulles montent en mesure. Le bras ne se lève pas pour autant.',
+    mods: { tempoWindow: 1.18, mashBonus: 0.88 } },
+  { id: 'vp-badge', nom: 'Badge d’accès', rar: 'commune', publie: false,
+    texte: 'Il ouvre toutes les portes. Derrière, personne ne t’écoute.',
+    mods: { parryResist: 1.2, perfectBonus: 0.88 } },
+  { id: 'vp-coussin', nom: 'Coussin de loge', rar: 'commune', publie: false,
+    texte: 'Assis, tu tiens tout le match. Debout, plus jamais.',
+    mods: { holdBonus: 1.2, mashTime: 400 } },
+  { id: 'vp-telephone', nom: 'Téléphone en selfie', rar: 'rare', publie: false,
+    texte: 'Chaque geste parfait est filmé. Le reste du match, tu le rates.',
+    mods: { perfectBonus: 1.3, tempoWindow: 0.88 } },
+  { id: 'vp-jumelles-opera', nom: 'Jumelles de théâtre', rar: 'rare', publie: false,
+    texte: 'Tu vois le capo d’en face respirer. Tu oublies de respirer toi-même.',
+    mods: { tempoWindow: 1.28, breathBonus: 0.86 } },
+  { id: 'vp-plaid', nom: 'Plaid en cachemire', rar: 'rare', publie: false,
+    texte: 'Le froid ne passe pas. Les mains non plus.',
+    mods: { parryResist: 1.3, mashBonus: 0.84 } },
+  { id: 'vp-carte-or', nom: 'Carte de membre or', rar: 'epique', publie: false,
+    texte: 'Tout est compris, même ce que tu ne voulais pas.',
+    mods: { breathBonus: 1.3, costPenalty: 1.25 } },
+  { id: 'vp-montre', nom: 'Montre de collection', rar: 'epique', publie: false,
+    texte: 'Elle avance à la seconde. Elle ne pardonne aucun temps mort.',
+    mods: { tempoInterval: -75, holdForgive: -2 } },
+  { id: 'vp-cigare', nom: 'Cigare de la présidence', rar: 'epique', publie: false,
+    texte: 'La fumée couvre la loge : rien ne t’atteint. Ta voix y reste.',
+    mods: { parryResist: 1.38, breathBonus: 0.84 } },
+  { id: 'vp-cles-loge', nom: 'Les clés de la loge présidentielle', rar: 'legendaire', publie: false,
+    texte: 'La meilleure place du stade. D’ici, on ne voit plus le virage.',
+    mods: { parryBonus: 1.5, parryResist: 1.35, tempoWindow: 0.85, mashBonus: 0.82 } },
+
+  /* ------------------------------------ LA GASTRONOMIE DE COMPTOIR (gc-) */
+
+  { id: 'gc-frites', nom: 'Cornet de frites', rar: 'commune', publie: false,
+    texte: 'Ça tient au corps. Les doigts collent au tambour.',
+    mods: { holdBonus: 1.16, mashBonus: 0.88 } },
+  { id: 'gc-gobelet', nom: 'Gobelet consigné', rar: 'commune', publie: false,
+    texte: 'Tu le gardes et tu tapes dessus. Il ne sonne pas juste.',
+    mods: { mashBonus: 1.2, perfectBonus: 0.88 } },
+  { id: 'gc-moutarde', nom: 'Pot de moutarde', rar: 'commune', publie: false,
+    texte: 'Ça monte au nez et ça réveille. Tu en pleures un peu.',
+    mods: { breathBonus: 1.18, tempoWindow: 0.9 } },
+  { id: 'gc-saucisse', nom: 'Saucisse de buvette', rar: 'rare', publie: false,
+    texte: 'Avalée debout à la mi-temps : tu repars vite, tu digères mal.',
+    mods: { refundBonus: 1.25, holdBonus: 0.86 } },
+  { id: 'gc-biere-tiede', nom: 'Bière tiède', rar: 'rare', publie: false,
+    texte: 'Elle passe toute seule. Le refrain aussi, avec un temps de retard.',
+    mods: { tempoWindow: 1.26, tempoInterval: 80 } },
+  { id: 'gc-sandwich', nom: 'Sandwich triangle', rar: 'rare', publie: false,
+    texte: 'Trois bouchées et le souffle revient. Le contre reste coincé.',
+    mods: { breathBonus: 1.28, parryBonus: 0.84 } },
+  { id: 'gc-plateau', nom: 'Plateau de la buvette', rar: 'epique', publie: false,
+    texte: 'Tu portes pour toute la rangée : personne ne te bouscule, tu ne martèles plus.',
+    mods: { parryResist: 1.34, mashTime: 600 } },
+  { id: 'gc-piment', nom: 'Sauce piquante maison', rar: 'epique', publie: false,
+    texte: 'Le geste parfait brûle. Le geste raté aussi.',
+    mods: { perfectBonus: 1.36, backfire: true } },
+  { id: 'gc-chocolat', nom: 'Chocolat chaud de la buvette', rar: 'epique', publie: false,
+    texte: 'Il réchauffe les mains et la voix. Il coûte trois fois son prix.',
+    mods: { holdBonus: 1.32, breathBonus: 1.12, costPenalty: 1.25 } },
+  { id: 'gc-recette', nom: 'La recette secrète de la buvette', rar: 'legendaire', publie: false,
+    texte: 'Tout le virage vient la goûter. Il faut la servir avant de chanter.',
+    mods: { perfectBonus: 1.4, breathBonus: 1.25, tempoInterval: 140, refundBonus: 0.8 } },
+
+  /* ------------------------------------ LES GALÈRES DE DÉPLACEMENT (gd-) */
+
+  { id: 'gd-billet-train', nom: 'Billet de train composté', rar: 'commune', publie: false,
+    texte: 'Tu es parti à l’heure. Tu arrives en retard sur le refrain.',
+    mods: { perfectBonus: 1.18, tempoInterval: 60 } },
+  { id: 'gd-coussin-nuque', nom: 'Coussin de nuque', rar: 'commune', publie: false,
+    texte: 'Tu tiens les neuf heures de car. Tu tournes mal la tête.',
+    mods: { holdBonus: 1.2, parryBonus: 0.88 } },
+  { id: 'gd-carte-routiere', nom: 'Carte routière mal repliée', rar: 'commune', publie: false,
+    texte: 'Tu sais où tu vas. Tu ne sais plus la replier.',
+    mods: { tempoWindow: 1.18, mashTime: 300 } },
+  { id: 'gd-sac-couchage', nom: 'Sac de couchage', rar: 'rare', publie: false,
+    texte: 'Tu dors n’importe où et tu repars frais. Tu sors du sac lentement.',
+    mods: { breathBonus: 1.28, mashTime: 450 } },
+  { id: 'gd-glaciere', nom: 'Glacière du car', rar: 'rare', publie: false,
+    texte: 'Tout le monde vient se servir : tu tiens ta place, tu ne bouges plus.',
+    mods: { parryResist: 1.3, tempoWindow: 0.9 } },
+  { id: 'gd-gilet', nom: 'Gilet fluo de l’aire d’autoroute', rar: 'rare', publie: false,
+    texte: 'On te voit de loin et on te suit. On te voit venir aussi.',
+    mods: { parryBonus: 1.3, parryResist: 0.84 } },
+  { id: 'gd-batterie', nom: 'Batterie externe', rar: 'epique', publie: false,
+    texte: 'Le souffle ne s’éteint jamais. Chaque chant tire sur la charge.',
+    mods: { breathBonus: 1.34, costPenalty: 1.2 } },
+  { id: 'gd-valise', nom: 'Valise à une roue', rar: 'epique', publie: false,
+    texte: 'Elle claque à chaque pas, en mesure. Elle se traîne quand il faut taper.',
+    mods: { tempoWindow: 1.32, mashBonus: 0.84 } },
+  { id: 'gd-gps', nom: 'GPS qui recalcule', rar: 'epique', publie: false,
+    texte: 'Il retrouve toujours le rythme. Il passe par le chemin le plus long.',
+    mods: { tempoInterval: -70, refundBonus: 0.84 } },
+  { id: 'gd-car', nom: 'Le car des neuf cents kilomètres', rar: 'legendaire', publie: false,
+    texte: 'Tout le monde est dedans et personne ne lâche. Il arrive à la mi-temps.',
+    mods: { holdBonus: 1.5, holdForgive: 2, tempoInterval: 140, mashBonus: 0.8 } },
+
+  /* ------------------------------------------ LES PHÉNOMÈNES MÉTÉO (mt-) */
+
+  { id: 'mt-poncho', nom: 'Poncho en plastique', rar: 'commune', publie: false,
+    texte: 'La pluie ne passe pas. Le poncho colle aux bras.',
+    mods: { parryResist: 1.2, mashBonus: 0.88 } },
+  { id: 'mt-parapluie', nom: 'Parapluie retourné', rar: 'commune', publie: false,
+    texte: 'Il tient tête au vent. Il ne tient rien d’autre.',
+    mods: { holdBonus: 1.18, perfectBonus: 0.88 } },
+  { id: 'mt-chaufferette', nom: 'Chaufferette de poche', rar: 'commune', publie: false,
+    texte: 'Les doigts dégèlent, le martelage repart. Elle refroidit en route.',
+    mods: { mashBonus: 1.18, holdBonus: 0.9 } },
+  { id: 'mt-bottes', nom: 'Bottes de pluie', rar: 'rare', publie: false,
+    texte: 'Les pieds au sec et bien plantés. Lourds à décoller.',
+    mods: { holdBonus: 1.28, mashTime: 450 } },
+  { id: 'mt-girouette', nom: 'Girouette de toit', rar: 'rare', publie: false,
+    texte: 'Elle sent venir le vent. Elle tourne avec.',
+    mods: { tempoWindow: 1.28, parryResist: 0.84 } },
+  { id: 'mt-eventail', nom: 'Éventail de canicule', rar: 'rare', publie: false,
+    texte: 'Le souffle revient à chaque coup. Le bras fatigue.',
+    mods: { breathBonus: 1.28, mashBonus: 0.86 } },
+  { id: 'mt-paratonnerre', nom: 'Paratonnerre de poche', rar: 'epique', publie: false,
+    texte: 'La foudre tombe sur toi et repart vers eux. Tout coûte plus cher.',
+    mods: { parryBonus: 1.38, costPenalty: 1.2 } },
+  { id: 'mt-barometre', nom: 'Baromètre de grand-père', rar: 'epique', publie: false,
+    texte: 'Il dit le temps qu’il fera. Il ne dit jamais quand.',
+    mods: { tempoWindow: 1.36, tempoInterval: 100 } },
+  { id: 'mt-grelons', nom: 'Seau de grêlons', rar: 'epique', publie: false,
+    texte: 'Ça tape dru et vite. Ça fond dans les mains.',
+    mods: { mashBonus: 1.34, mashTime: -450, holdForgive: -2 } },
+  { id: 'mt-manche-a-air', nom: 'La manche à air du stade', rar: 'legendaire', publie: false,
+    texte: 'Elle dit d’où vient le vent, et le virage suit. Elle claque à chaque rafale.',
+    mods: { parryBonus: 1.4, tempoWindow: 1.3, mashTime: 700, breathBonus: 0.84 } },
+
+  /* ------------------------------------------- LES HÉROS DU CANAPÉ (hc-) */
+
+  { id: 'hc-telecommande', nom: 'Télécommande', rar: 'commune', publie: false,
+    texte: 'Tu zappes vite. Tu rates le refrain.',
+    mods: { mashBonus: 1.2, tempoWindow: 0.9 } },
+  { id: 'hc-chips', nom: 'Paquet de chips', rar: 'commune', publie: false,
+    texte: 'Une poignée et ça repart. Le sel gâche le geste parfait.',
+    mods: { breathBonus: 1.16, perfectBonus: 0.88 } },
+  { id: 'hc-pantoufles', nom: 'Pantoufles du club', rar: 'commune', publie: false,
+    texte: 'Rien ne te déloge. Rien ne te fait lever non plus.',
+    mods: { parryResist: 1.22, mashTime: 350 } },
+  { id: 'hc-casque', nom: 'Casque audio', rar: 'rare', publie: false,
+    texte: 'Tu entends le rythme avant tout le monde. Tu n’entends plus ton voisin.',
+    mods: { tempoWindow: 1.26, parryBonus: 0.84 } },
+  { id: 'hc-tablette', nom: 'Tablette des statistiques', rar: 'rare', publie: false,
+    texte: 'Tu sais tout du match. Tu ne le vis plus.',
+    mods: { perfectBonus: 1.3, holdBonus: 0.86 } },
+  { id: 'hc-canette', nom: 'Canette ouverte à la mi-temps', rar: 'rare', publie: false,
+    texte: 'Le souffle revient d’un trait. La suite pique.',
+    mods: { breathBonus: 1.3, tempoInterval: 70 } },
+  { id: 'hc-fauteuil', nom: 'Fauteuil inclinable', rar: 'epique', publie: false,
+    texte: 'Tu tiens jusqu’aux tirs au but. Tu ne te relèves qu’après.',
+    mods: { holdBonus: 1.4, holdForgive: 1, mashTime: 650 } },
+  { id: 'hc-ecran', nom: 'Grand écran', rar: 'epique', publie: false,
+    texte: 'Le ralenti ne ment pas : tes gestes parfaits pèsent, tes ratés repassent en boucle.',
+    mods: { perfectBonus: 1.38, backfire: true } },
+  { id: 'hc-pizza', nom: 'Pizza de fin de match', rar: 'epique', publie: false,
+    texte: 'Elle arrive à point et tout repart. Elle se paie.',
+    mods: { breathBonus: 1.24, refundBonus: 1.2, costPenalty: 1.25 } },
+  { id: 'hc-canape', nom: 'Le canapé des grands soirs', rar: 'legendaire', publie: false,
+    texte: 'Il a vu toutes les finales. On ne le contre pas, on ne le soulève pas.',
+    mods: { parryResist: 1.45, holdBonus: 1.4, mashBonus: 0.78, tempoWindow: 0.86 } },
+
+  /* ----------------------------------------------------- la centième
+
+     Hors série : elle ne s'ouvre avec aucune saison, mais quand on le
+     décide, depuis CONTENUS. */
+  { id: 'boite-souvenirs', nom: 'La boîte à souvenirs', rar: 'legendaire', publie: false,
+    texte: 'Cent objets dedans, et tu les connais tous. Le temps de choisir, le refrain est passé.',
+    mods: { perfectBonus: 1.3, holdBonus: 1.3, costPenalty: 1.2, tempoInterval: 120 } },
 ];
 
 export const SKIN_BY_ID = new Map(SKINS.map((s) => [s.id, s]));
