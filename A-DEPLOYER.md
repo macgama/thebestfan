@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Combien d'exemplaires d'un objet** (branche `claude/exemplaires-objets-eeg3ce`,
+6 octobre 2026, demandé par Gaël). Il se dépose avec ce qui est en dessous, ou
+seul. **Serveur + page**, sans schéma : redémarrer, hors d'un match en direct.
+
+- À la boutique, le tampon d'une pièce qu'on a plusieurs fois dit « À TOI ×2 »
+  (« DÉJÀ À TOI » reste pour un seul exemplaire), et les boîtes d'achat disent
+  « Tu en as déjà 2 ». L'étal (`src/server/boutique/index.js`,
+  `src/shared/etal.js`) envoie maintenant le nombre d'exemplaires.
+- Contrôlé par `npm run boutique:smoke` (un contrôle neuf).
+
+---
+
 **Les classements qui refusaient une ligne sans équipe** (branche
 `claude/contenus-sql-q1sziv`, 6 octobre 2026, vu dans le journal de Gaël :
 « [foot] classement 3/2017 : Column 'team_id' cannot be null »). Il se dépose
