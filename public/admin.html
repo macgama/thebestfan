@@ -98,6 +98,17 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
   font-size:9px;letter-spacing:.1em;color:var(--projo);border:1px solid currentColor;
   border-radius:20px;padding:1px 6px;vertical-align:2px}
 .rg .def{font-size:10px;opacity:.4;white-space:nowrap}
+/* Le recalage des divisions : ce que la règle tire de la saison en cours,
+   au-dessus des quatre seuils qu'il propose de remplacer. */
+.recal{margin:0 0 12px;padding:12px 14px;border:1px solid rgba(242,238,228,.12);
+  border-radius:8px;background:rgba(242,238,228,.03)}
+.recal > b{font-family:var(--banner);font-size:11px;letter-spacing:.12em;color:var(--projo)}
+.recal p{margin:6px 0;font-size:12px;line-height:1.55}
+.recal p.alerte{color:#f0b35a}
+.recal table{border-collapse:collapse;font-size:12px;margin:8px 0}
+.recal th,.recal td{padding:3px 12px 3px 0;text-align:right}
+.recal th:first-child,.recal td:first-child{text-align:left}
+.recal th{font-weight:400;opacity:.5;font-size:10.5px;letter-spacing:.06em}
 .rg button.rendre{visibility:hidden}
 .rg.change button.rendre{visibility:visible}
 /* La bascule : un bouton, pas une case — on la vise au doigt. */
@@ -391,6 +402,11 @@ const MSG_FANZZY = {
   'admin.error.serie_sans_carte': 'Cette série n’a aucune carte de stade 1 publiée : '
     + 'elle ne pourrait pas distribuer de booster.',
   'admin.error.saison_inconnue': 'Cette saison n’existe pas.',
+  'admin.error.recalage_impossible': 'Rien à proposer pour l’instant : il faut une saison '
+    + 'lancée, son dernier jour de jeu saisi, et au moins un joueur sans abonnement qui a '
+    + 'gagné de la ferveur classée.',
+  'admin.error.recalage_sans_schema': 'La base n’a pas encore toutes ses tables (saisons '
+    + 'datées, Virage ou duels) : le recalage ne peut pas lire la ferveur de la saison.',
   'admin.error.saison_sans_nom': 'Donne un nom à la saison : c’est ce que les joueurs liront.',
   'admin.error.lancer_manquant': 'La demande n’a pas dit s’il fallait lancer ou refermer. '
     + 'Recharge l’écran et recommence — le serveur refuse de deviner sur ce geste-là.',
@@ -1487,7 +1503,8 @@ const VUES = {
   },
 
   async reglages() {
-    const d = await api('/registre');
+    const [d, recal] = await Promise.all([api('/registre'),
+      api('/divisions/recalage').catch((e) => ({ refus: e }))]);
     const parSection = (id) => d.reglages.filter((r) => r.section === id);
     // Une clé posée en base est une clé modifiée, même si sa valeur égale le
     // défaut : c'est ce que `brutes` dit et que `valeurs` ne peut pas dire.
@@ -1522,6 +1539,56 @@ const VUES = {
           title="Revenir à la valeur par défaut">↺</button></div>
     </div>`;
 
+    /* Le recalage des seuils de division (`ECONOMIE.md`, annexe A), posé
+       au-dessus des quatre seuils de la section de la saison. Le serveur
+       calcule ; l'écran montre ce qu'il a lu et ce qu'il propose. */
+    const ent = (n) => Number(n).toLocaleString('fr-CH', { maximumFractionDigits: 0 });
+    const AVERTIS = {
+      sans_fin: 'Le dernier jour de jeu de la saison n’est pas saisi (onglet SAISONS) : '
+        + 'sans lui, rien ne se projette sur la saison entière.',
+      aucun_joueur: 'Aucun joueur sans abonnement n’a encore de ferveur classée cette saison.',
+      peu_de_joueurs: 'Moins de 30 joueurs : les rangs lus tiennent à quelques personnes. '
+        + 'La proposition est fragile, à refaire plus tard.',
+      trop_tot: 'Moins de deux semaines de jeu : la projection sur la saison est fragile, '
+        + 'à refaire plus tard.',
+      capo_borne: 'Capo est ramené à ce qu’un joueur gratuit assidu fait dans la saison.',
+      seuils_egaux: 'Deux seuils proposés sont égaux : ces divisions se franchiront ensemble.',
+    };
+    const NOMS = { 'rang.habitue': ['HABITUÉ', 'habitue', '70 %'],
+      'rang.fervent': ['FERVENT', 'fervent', '40 %'], 'rang.ultra': ['ULTRA', 'ultra', '15 %'],
+      'rang.capo': ['CAPO', 'capo', '4 %'] };
+    function recalage(r) {
+      if (r?.refus) {
+        return `<div class="recal" id="recalage"><b>RECALER LES DIVISIONS</b>
+          <p class="alerte">${esc(MSG_FANZZY[r.refus.code] ?? r.refus.raison ?? r.refus.code
+            ?? 'le serveur n’a pas répondu.')}</p></div>`;
+      }
+      const s = r.saison;
+      const tete = s
+        ? `Saison ${esc(String(s.numero ?? ''))} « ${esc(s.nom ?? '')} » : ${ent(r.joursEcoules)} jour${
+            r.joursEcoules >= 2 ? 's' : ''} joué${r.joursEcoules >= 2 ? 's' : ''}${
+            r.joursTotaux ? ` sur ${ent(r.joursTotaux)}` : ''}${r.joueurs == null ? '.' : `, ${
+            r.joueurs} joueur${r.joueurs > 1 ? 's' : ''} sans abonnement avec de la ferveur classée.`}`
+        : 'Aucune saison lancée.';
+      const lignes = Object.entries(NOMS).map(([cle, [nom, id, part]]) => `<tr>
+          <td>${nom}</td><td>${part}</td><td>${ent(r.actuels?.[cle] ?? 0)}</td>
+          <td>${r.lus ? ent(r.lus[id]) : '—'}</td>
+          <td><b>${r.seuils ? ent(r.seuils[cle]) : '—'}</b></td></tr>`).join('');
+      return `<div class="recal" id="recalage"><b>RECALER LES DIVISIONS</b>
+        <p>${tete} La règle lit la ferveur classée des seuls joueurs <b>sans abonnement</b>
+        (l’abonné n’a pas de plafond), puis la projette sur la saison entière${
+          r.facteur ? ` (× ${r.facteur.toLocaleString('fr-CH', { maximumFractionDigits: 2 })})` : ''}.</p>
+        <table><thead><tr><th>DIVISION</th><th>VISÉE</th><th>SEUIL ACTUEL</th>
+          <th>LU AUJOURD’HUI</th><th>PROPOSÉ</th></tr></thead><tbody>${lignes}</tbody></table>
+        ${r.plafond ? `<p>Un joueur gratuit assidu fait environ ${ent(r.plafond)} de ferveur
+          classée dans la saison : Capo ne le dépasse pas.</p>` : ''}
+        ${(r.avertissements ?? []).filter((a) => AVERTIS[a])
+          .map((a) => `<p class="alerte">${esc(AVERTIS[a])}</p>`).join('')}
+        <p>Relever un seuil ne retire rien à qui a déjà récupéré sa division.</p>
+        <button class="mini" id="poser-recalage"${r.seuils ? '' : ' disabled'}>
+          Poser ces quatre seuils</button></div>`;
+    }
+
     $('main').innerHTML = `
       <p style="opacity:.5;font-size:12px;max-width:660px">Ces réglages agissent
       <b>immédiatement</b>, sans redéploiement : le serveur relit ses valeurs après chaque
@@ -1530,6 +1597,7 @@ const VUES = {
       donnée réglementée qui ne bouge pas depuis un champ de saisie.</p>
       ${d.sections.map((sec) => `<section class="sect">
         <h3>${esc(sec.titre)}</h3><p class="sh">${esc(sec.aide)}</p>
+        ${sec.id === 'saison' ? recalage(recal) : ''}
         ${parSection(sec.id).map(ligne).join('')}
       </section>`).join('')}
       <div class="enreg"><span class="quoi" id="quoi"></span></div>`;
@@ -1568,6 +1636,15 @@ const VUES = {
     };
 
     $('main').onclick = async (e) => {
+      if (e.target.closest('#poser-recalage')) {
+        try {
+          const r = await api('/divisions/recalage', {}, 'POST');
+          await VUES.reglages();
+          recu('seuils de division posés : ' + Object.entries(r.seuils)
+            .map(([cle, v]) => `${NOMS[cle][0]} ${ent(v)}`).join(', ') + '.');
+        } catch (err) { recuRate(err); }
+        return;
+      }
       const b = e.target.closest('[data-bascule]');
       if (b) {
         const on = b.getAttribute('aria-pressed') !== 'true';
