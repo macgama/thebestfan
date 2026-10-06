@@ -1514,9 +1514,9 @@ for (const [route, nom] of tousLesEcrans) {
     || (console.log('        il dit :', JSON.stringify(filtres?.mot)), false));
   await pc.close();
   const rayons = vue.rayons.map((r) => r.vue);
-  check(`la bibliothèque range les cinq types (${rayons.join(', ')})`,
-    rayons.length === 5
-      && ['fanzzy', 'etats', 'tenues', 'equipement', 'actions'].every((k) => rayons.includes(k)));
+  check(`la bibliothèque range les six types (${rayons.join(', ')})`,
+    rayons.length === 6
+      && ['fanzzy', 'etats', 'tenues', 'equipement', 'actions', 'lieux'].every((k) => rayons.includes(k)));
   check('et chacun dit son compte, gagnés sur possibles',
     vue.rayons.every((r) => /^\d+ \/ \d+$/.test(r.compte))
     || (console.log('        il dit :', vue.rayons.map((r) => `${r.vue} « ${r.compte} »`).join(' · ')), false));

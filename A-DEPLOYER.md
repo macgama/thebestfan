@@ -12,6 +12,25 @@ schéma ni redémarrage.
   monde. La phrase du hub (match, boosters) passe toujours d'abord.
 - Contrôlé par `npm run repliques:test` (suite neuve, chaque ligne : quatre
   mots, aucun chiffre) et `npm run accueil:ui` (14 contrôles neufs).
+**La collection de stades** (branche `claude/collection-stades-nsq24k`,
+6 octobre 2026, option « album + décor d'accueil » choisie par Gaël). Il se
+dépose avec ce qui est en dessous, ou seul.
+
+- **Un schéma à appliquer** : `sql/collection-stades.sql` (la table
+  `user_stades` et la colonne `user_wallet.stade_accueil`). Après la
+  construction : `npm run schema:appliquer` en SSH, puis redémarrer, hors d'un
+  match en direct. Sans lui rien ne casse, mais aucun stade ne se gagne.
+- `src/server/fanzzy/index.js` : un booster peut donner un stade (5 % des
+  places ouvertes, pris sur les écharpes ; un doublon rapporte des écharpes),
+  les stades comptent dans la jauge de collection, et
+  `POST /api/fanzzy/lieu-accueil` choisit le stade en décor de l'accueil.
+  Contrôlé par `npm run fanzzy:smoke` (douze contrôles neufs).
+- `public/collection.html`, `public/cartes.js`, `public/boosters.html` : un
+  sixième rayon STADES, la carte d'un stade et son bouton « EN DÉCOR DE
+  L'ACCUEIL ». `public/index.html` : le stade choisi passe derrière le
+  Fanzzy. Contrôlé par `npm run collection:smoke` (onze contrôles neufs).
+
+Posséder un stade ne décide pas où l'on joue et n'y donne rien.
 
 ---
 

@@ -87,6 +87,7 @@
     "identites": "node scripts/fanzzy-identites.mjs",
     "economie": "node scripts/economie.mjs",
     "pages": "node scripts/verif-pages.mjs",
+    "pages:test": "node scripts/verif-pages.mjs",
     "pages:navigateur": "node scripts/pages-navigateur.mjs",
     "pwa:ui": "node scripts/pwa-ui-smoke.mjs",
     "menu:smoke": "node scripts/menu-smoke.mjs",
