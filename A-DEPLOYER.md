@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Le personnage de l'accueil sous Firefox** (branche
+`claude/project-thread-iatg2m`, 6 octobre 2026). Un défaut déjà en ligne, vu
+par Gaël sous Firefox 140 ESR. Il se dépose avec ce qui est en dessous, ou
+seul.
+
+- `public/index.html` : sous Firefox, l'accueil s'affichait sans son
+  personnage (l'ombre au sol, le décor et la bulle restaient). Les calques de
+  gestes qui l'entourent prennent maintenant toute la largeur de la scène.
+  Rien ne change dans Chrome. Contrôlé par `npm run accueil:ui` (un contrôle
+  neuf, sur un écran d'ordinateur) ; mesuré sous Firefox 136 et Chrome sur
+  neuf tailles d'écran.
+
+**Aucun schéma ni réglage.** Déposée seule, la page part sans redémarrage
+(`page()` relit la page à chaque demande).
+
+---
+
 **Le duel vivant** (branche `claude/project-thread-iatg2m`, 5 octobre 2026,
 lot 7). Il se dépose avec ce qui est en dessous, ou seul.
 
