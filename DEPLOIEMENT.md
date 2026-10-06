@@ -400,10 +400,18 @@ que `raretes` les a rangées.
   n'est pas frappée). Le workflow GitHub applique le schéma avant de
   redémarrer : rien de plus à faire par ce chemin.
 
+- `collection-stades.sql` (6 octobre 2026) pose la **collection de stades** :
+  la table `user_stades` (ce qu'un joueur a tiré en booster) et la colonne
+  `user_wallet.stade_accueil` (le stade choisi en décor de l'accueil, `NULL`
+  pour l'image habituelle). Additif, rien de renommé, aucune reprise de
+  données, pas de clé étrangère (la raison est celle de `quotidien.sql`). Il
+  vient en dernier. **Sans lui, rien ne casse** : le booster ne tire pas de
+  stade, la collection montre Le Chaudron seul, l'accueil garde son image.
+
 - `pronostics.sql` (6 octobre 2026) pose la table `pronostics` : le score
   qu'un joueur attend d'un match d'un club qu'il suit, et son règlement.
   Une table neuve, clée sur `users.public_id`, rien de modifié ailleurs. Il
-  vient **en dernier**. Le pronostic est gratuit : il ne débite rien, et ses
+  vient **en dernier**, après `collection-stades.sql`. Le pronostic est gratuit : il ne débite rien, et ses
   écharpes passent par le grand livre (source `prono`).
 
   **Sans lui, rien ne casse** : la fiche d'un match ne montre pas de
@@ -411,7 +419,7 @@ que `raretes` les a rangées.
   Appliqué, le pronostic paraît sans redémarrage de plus que celui que le
   contrôle de démarrage demande.
 
-Contrôle : `SHOW TABLES;` doit en lister **50**.
+Contrôle : `SHOW TABLES;` doit en lister **51**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
