@@ -3,9 +3,13 @@
  * Aucune base, aucun réseau : on donne des intentions, on vérifie les
  * événements. C'est ce qui permet de tester chaque effet un par un.
  */
+import { randomUUID } from 'node:crypto';
 import { DuelNvN, RULES } from '../src/server/nvn/engine.js';
 import { GESTES, GESTURES, MOTIFS, grade, instantsDuMotif, applyHeroMods }
   from '../src/server/ferveur/gestures.js';
+/* La salle du Virage, pour son seul stade : celui de tous les duels du même
+   match (voir « le stade d'un duel »). */
+import { VirageRoom } from '../src/server/ferveur/virage.js';
 /* Le verdict du duel est nommé par la couche réseau, pas par le moteur : ses
    fonctions pures s'éprouvent ici, sans base ni socket. */
 import { chanterEtNommer, noteMesuree, resumeDuCompte, nouveauCompte, compterChant,
@@ -85,8 +89,9 @@ const CARTES = ['a-fumigene','a-torche','a-bache','a-thermos','a-arbitre',
 
 /* `id` est un paramètre depuis que le répertoire de chants en découle : deux
    duels du même nom offrent les mêmes cinq chants, et c'est précisément ce
-   qu'un contrôle de variété doit pouvoir faire varier. */
-function duel(n = 1, mode = 'entrainement', t = 1_000_000, id = 'd1') {
+   qu'un contrôle de variété doit pouvoir faire varier. `match` aussi, depuis
+   que le stade du duel est celui de son match (voir « le stade d'un duel »). */
+function duel(n = 1, mode = 'entrainement', t = 1_000_000, id = 'd1', match = 7001) {
   const eq = (side) => Array.from({ length: n }, (_, i) => ({
     userId: `${side}-${i}`, nom: `J${side}${i}`,
     loadout: loadout(['TR32','MS30','TR33'], CARTES),
@@ -94,7 +99,7 @@ function duel(n = 1, mode = 'entrainement', t = 1_000_000, id = 'd1') {
   /* Les deux clubs du match : ils sont devenus les deux tribunes du duel, et
      sans eux le moteur ne sait plus de quel côté pousse un vrai but. */
   return new DuelNvN({ id, equipes:[eq(0), eq(1)], mode, now: t,
-    fixture: { id: 7001, elapsed: 20,
+    fixture: { id: match, elapsed: 20,
                home: { id: 85, name: 'Sion' }, away: { id: 91, name: 'Bâle' } } });
 }
 
@@ -774,6 +779,47 @@ check('un entraînement ne compte pas',
     || (console.log('        ', buts, 'buts en cinq minutes'), false));
 }
 
+/* ===================================== le stade d'un duel : celui de son match
+
+   **Tous les duels d'un match se jouent dans son stade, celui de son Grand
+   Virage** (décision de Gaël, 6 octobre 2026). Le lieu d'un duel se tirait
+   sur son propre identifiant — un `randomUUID`, neuf à chaque partie —
+   pendant que le Virage tirait le sien sur le match : deux duels du même
+   match se jouaient dans deux stades, et presque jamais dans celui du Virage
+   d'à côté. Les deux tirent maintenant par la même fonction (`stadeDuMatch`,
+   dans `contenus/index.js`), sur l'identifiant du match.
+
+   On l'éprouve sur le moteur et sur la salle du Virage eux-mêmes, jamais sur
+   une copie de la règle : pour douze matchs, deux duels aux identifiants
+   tirés comme en production, un classé et un d'entraînement, et le Virage du
+   même match. **Douze matchs, et autant de lieux** : un match seul pourrait
+   tomber par hasard sur le lieu qu'un identifiant de duel donne aussi, et
+   des duels tous au même stade ne seraient d'accord qu'avec un Virage figé
+   de même. */
+{
+  const ecarts = [];
+  const lieux = new Set();
+  let annonces = 0;
+  for (let k = 0; k < 12; k++) {
+    const match = 7001 + k;
+    const a = duel(1, 'classe', t, randomUUID(), match);
+    const b = duel(1, 'entrainement', t, randomUUID(), match);
+    const virage = new VirageRoom({ fixture: { id: match }, emit() {},
+      log: { warn() {}, error() {} } }).stade();
+    lieux.add(virage.id);
+    if (a.stade?.id !== virage.id || b.stade?.id !== virage.id) {
+      ecarts.push(`match ${match} : duels ${a.stade?.id} et ${b.stade?.id}, Virage ${virage.id}`);
+    }
+    /* Et la vue le dit aux deux camps : c'est elle que l'arène, l'affiche du
+       coup d'envoi et « ce que tu portes » lisent. */
+    if (a.vue('0-0').stade?.id === virage.id && a.vue('1-0').stade?.id === virage.id) annonces++;
+  }
+  check(`deux duels d’un même match se jouent dans le stade de son Virage (12 matchs, ${lieux.size} lieux)`,
+    ecarts.length === 0 && lieux.size >= 6
+    || (console.log('        ', ecarts.slice(0, 3).join(' · ') || `${lieux.size} lieux seulement`), false));
+  check(`et l’état du duel l’annonce aux deux camps (${annonces} matchs sur 12)`, annonces === 12);
+}
+
 /* ============================================== un deck qui ne fond pas
 
    **Jouer un exemplaire faisait disparaître les autres.** La main retirait
@@ -1009,7 +1055,9 @@ check('un entraînement ne compte pas',
      centaines de chants, sur de vrais decks et de vrais lieux (`marin` paie le
      parfait 0,82), avec les cartes qui changent les fenêtres, le parfait et le
      plancher : la note rejouée, passée par `applyHeroMods`, doit retomber
-     exactement sur la `quality` du moteur. */
+     exactement sur la `quality` du moteur. Un match par duel : le lieu est
+     celui du match depuis le 6 octobre 2026, et vingt-quatre duels du même
+     match se joueraient tous dans le même stade. */
   {
     const RYTHMES = new Set(['tempo', 'mash', 'hold', 'contretemps', 'echo',
       'crescendo', 'relance', 'salves', 'tenue', 'retenue']);
@@ -1061,9 +1109,11 @@ check('un entraînement ne compte pas',
         const ids = PERSOS[k % PERSOS.length];
         const eq = (side) => [{ userId: `${side}-0`, nom: `J${side}`,
           loadout: loadout(ids, CARTES_V, { [ids[0]]: ['jumelles'], [ids[1]]: ['tambour'] }) }];
-        // Les identifiants `rej-…` tirent de vrais lieux, dont `marin` (rej-0).
+        /* Les matchs 7001 à 7024 font passer les vingt-quatre duels par les
+           dix-huit stades, dont `marin` (7008) — tant qu'aucune saison n'en
+           ferme : cette suite ne charge pas la mémoire des contenus. */
         const dK = new DuelNvN({ id: `rej-${k}`, equipes: [eq(0), eq(1)], mode: 'entrainement',
-          now: tV, fixture: { id: 7001, elapsed: 20,
+          now: tV, fixture: { id: 7001 + k, elapsed: 20,
             home: { id: 85, name: 'Sion' }, away: { id: 91, name: 'Bâle' } } });
         if (!dK.repertoire.some((id) => RYTHMES.has(CHANTS[id].gest))) dK.repertoire[0] = 'reprise';
         const rythmes = dK.repertoire.filter((id) => RYTHMES.has(CHANTS[id].gest));

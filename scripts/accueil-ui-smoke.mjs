@@ -2588,7 +2588,11 @@ if (process.env.CAPTURE) {
     check('une victoire depuis la dernière visite : il la raconte, fier',
       await jusqua(async () => (await visages(page)).includes('joie'), 6000)
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
-    check('et il saute', await sauts(page) >= 1);
+    /* Le saut part au même instant que le visage, mais son `animationstart`
+       n'est envoyé qu'à l'image suivante : lu dès que la joie s'affiche, il
+       pouvait manquer encore (deux passes sur six de cette section, seule).
+       On lui laisse une seconde. */
+    check('et il saute', await jusqua(async () => await sauts(page) >= 1, 1000));
     check('et il le dit, d’une ligne de victoire qui ne mène nulle part', await dit(page, 'victoire'));
     check('le temps du ticket, puis il rend la main à son repos',
       await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000)
@@ -2695,7 +2699,7 @@ if (process.env.CAPTURE) {
     check('trois jours sans venir : il salue, puis il fête le retour',
       fete.coucou !== null && fete.joie !== null && fete.joie - fete.coucou >= 1300
       || (console.log('        coucou à', fete.coucou, '· joie à', fete.joie), false));
-    check('d’un saut', await sauts(page) >= 1);
+    check('d’un saut', await jusqua(async () => await sauts(page) >= 1, 1000));
     check('et il dit qu’on lui a manqué', await dit(page, 'retour'));
     await page.close();
 
@@ -2774,6 +2778,132 @@ if (process.env.CAPTURE) {
       !(await visages(page)).includes('joie')
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
     await page.close();
+
+    /* ---------------------------------------------- il cligne des yeux
+
+       Le repos de RP1 a des paupières (`scripts/fanzzy-cligne.mjs`) : un
+       troisième calque, posé sur lui le temps d'un battement, toutes les
+       trois à sept secondes. On note chaque battement avec le visage qu'il
+       couvrait : des paupières sur une joie tomberaient à côté de ses yeux. */
+    const paupieresDe = manifeste[VIF]?.evolutions?.e1?.skins?.base?.cligne === true;
+    const battements = (calme) => ({ fn: (c) => {
+      if (c) { try { localStorage.setItem('tbf-calme', 'animations'); } catch { /* rien */ } }
+      window.__battements = [];
+      addEventListener('DOMContentLoaded', () => {
+        const p = document.getElementById('paupieres');
+        if (!p) return;
+        new MutationObserver(() => {
+          const on = p.classList.contains('on');
+          if ((window.__battements.at(-1)?.on ?? false) === on) return;
+          window.__battements.push({ t: performance.now(), on,
+            visage: document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '' });
+        }).observe(p, { attributes: true, attributeFilter: ['class'] });
+      });
+    }, args: [calme] });
+    const lesBattements = (pg) => pg.evaluate(() => window.__battements ?? []);
+
+    if (!paupieresDe) {
+      console.log(`  --   ${VIF} n'a pas de paupières dans index.json : clignement non éprouvé`);
+    } else {
+      /* Au premier plan : un onglet caché ne cligne pas — personne ne le
+         regarde —, et des pages ouvertes plus haut sont encore là. */
+      page = await ouvrir(400, 880, battements(false));
+      await page.bringToFront();
+      await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000);
+      check('au repos, ses paupières sont prêtes avant le premier battement',
+        await jusqua(() => page.evaluate(() => /\/e1\/base\/cligne\.webp\?v=\d+$/
+          .test(document.getElementById('paupieres').getAttribute('src') ?? '')
+          && document.getElementById('paupieres').complete), 4000));
+      const posees = await page.evaluate(() => {
+        const boite = (n) => { const b = n.getBoundingClientRect();
+          return [b.x, b.y, b.width, b.height].map((v) => v.toFixed(1)).join(','); };
+        const p = document.getElementById('paupieres');
+        const v = document.querySelector('#pile .pose.on');
+        return { boite: boite(p), repos: boite(v),
+          dessin: `${p.naturalWidth}x${p.naturalHeight}`, reposDessin: `${v.naturalWidth}x${v.naturalHeight}`,
+          filtre: getComputedStyle(p).filter, fondu: getComputedStyle(p).transitionDuration };
+      });
+      check('posées exactement sur lui : même boîte, dessin de même taille',
+        posees.boite === posees.repos && posees.dessin === posees.reposDessin
+        || (console.log('        ', JSON.stringify(posees)), false));
+      check('sans lueur ni fondu : le contour reste celui du repos, le battement est net',
+        posees.filtre === 'none' && /^0s/.test(posees.fondu));
+      /* Ce qu'il faut pour comprendre un rouge s'écrit **après** lui :
+         `tout-tester` ne remonte que les lignes qui suivent un FAIL. Écrit
+         avant, il s'était perdu la première fois que ce contrôle a rougi sur
+         la passe complète — et seul, il passait. */
+      const cligne = await jusqua(async () => (await lesBattements(page)).some((b) => !b.on), 8500);
+      check('il cligne des yeux de lui-même', cligne);
+      if (!cligne) {
+        console.log('        battements :', JSON.stringify(await lesBattements(page)));
+        console.log('        état :', JSON.stringify(await page.evaluate(() => ({
+          cache: document.hidden, arme: battement !== null, calme: sansMouvement(),
+          repos: paupieresDe, visible: calques[devant].getAttribute('src'),
+          visages: window.__visages.map((v) => `${Math.round(v.t)} ${v.src.split('/').pop()}`) }))));
+      }
+      const b = await lesBattements(page);
+      const duree = b.length >= 2 ? b[1].t - b[0].t : -1;
+      check(`le temps d’un battement (${Math.round(duree)} ms)`, duree >= 80 && duree <= 400);
+      check('sur son repos et sur rien d’autre',
+        b.filter((x) => x.on).every((x) => /\/neutre\.(?:webp|png)/.test(x.visage)));
+
+      /* Le salut d'arrivée n'a pas de dessin à lui : il pose le repos sur le
+         repos, et son retour aussi. Ces deux échanges, invisibles, réarmaient
+         la minuterie, et le premier battement de la session venait huit à
+         douze secondes après l'arrivée au lieu de trois à sept : c'est ce
+         qui faisait rougir le contrôle d'au-dessus une passe sur quatre.
+
+         On le rejoue **une fois l'arrivée finie** : le premier battement peut
+         maintenant tomber pendant elle, et un salut demandé pendant le salut
+         ne croise aucun calque. La minuterie doit être la même avant, pendant
+         et après, et les calques doivent s'être croisés deux fois. Un
+         battement tombé pendant l'essai change la minuterie pour de bon :
+         l'essai ne dit alors rien, et on le refait. */
+      const unSalut = async () => {
+        await jusqua(() => page.evaluate(() => salutJusqua > 0 && !retour
+          && poseActuelle === TBF.etatDeFond()
+          && !document.getElementById('paupieres').classList.contains('on')), 5000);
+        return page.evaluate(async () => {
+          const vus = window.__battements.length;
+          const avant = { minuterie: battement, calque: devant };
+          await TBF.pose('salut', 300);
+          const pendant = { minuterie: battement, calque: devant };
+          await new Promise((r) => { setTimeout(r, 700); });
+          return { avant, pendant, apres: { minuterie: battement, calque: devant },
+            battu: window.__battements.length !== vus };
+        });
+      };
+      let salut = await unSalut();
+      for (let essai = 1; essai < 3 && salut.battu; essai++) salut = await unSalut();
+      const garde = !salut.battu
+        && salut.pendant.calque !== salut.avant.calque
+        && salut.apres.calque === salut.avant.calque
+        && salut.avant.minuterie !== null
+        && salut.pendant.minuterie === salut.avant.minuterie
+        && salut.apres.minuterie === salut.avant.minuterie;
+      check('le salut, sans dessin à lui, ne repousse pas son battement', garde);
+      if (!garde) console.log('        minuterie et calque :', JSON.stringify(salut));
+
+      /* Un moment qui arrive les yeux fermés les rouvre au même instant :
+         l'échange des calques et la levée des paupières se font ensemble. */
+      await page.evaluate(() => document.getElementById('paupieres').classList.add('on'));
+      await page.evaluate(() => TBF.pose('but', 2500));
+      check('un moment rouvre ses yeux à l’instant où il change de visage',
+        await page.evaluate(() => !document.getElementById('paupieres').classList.contains('on')));
+      await page.close();
+
+      /* Au calme, le personnage ne bouge pas : ni souffle, ni battement. */
+      page = await ouvrir(400, 880, battements(true));
+      await page.bringToFront();
+      await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000);
+      await jusqua(() => page.evaluate(() => Boolean(document.getElementById('paupieres')
+        .getAttribute('src'))), 4000);
+      await pause(7500);
+      check('au calme, il ne cligne pas',
+        (await lesBattements(page)).length === 0
+        || (console.log('        battements :', JSON.stringify(await lesBattements(page))), false));
+      await page.close();
+    }
   }
 
   /* Le supporter générique n'a pas de colère : il saute à chaque toucher. */
@@ -2787,6 +2917,9 @@ if (process.env.CAPTURE) {
   check('le supporter, sans colère dessinée, saute à chacun des six touchers',
     await sauts(page) === 6 || (console.log('        sauts :', await sauts(page)), false));
   check('mais il dit qu’il en a assez', await dit(page, 'boude', 1000));
+  check('ni de paupières à poser : il ne cligne pas',
+    await page.evaluate(() => !document.getElementById('paupieres').getAttribute('src')
+      && !document.getElementById('paupieres').classList.contains('on')));
   await page.close();
   await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [equipeAvant ?? null, U]);
 }

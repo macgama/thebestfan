@@ -605,9 +605,11 @@ niveau mesure le temps passé à jouer, et le doubler ferait progresser deux foi
 plus vite pour un choix fait à l’inscription.
 **Un bonus de KOP est un jeu de modificateurs**, écrit dans le vocabulaire que
 le moteur emploie déjà — `tempoWindow`, `breathBonus`, `pushMult`… C’est ce qui
-permet à un KOP de peser sur la corde, la ferveur, les écharpes, le souffle, le
-tempo ou les contres **sans connaître aucune de ces mécaniques**. Une mécanique
-ajoutée demain sera couverte par une clé de plus, pas par une réécriture.
+permet à un KOP de peser sur la corde, la ferveur, le souffle ou le tempo **sans
+connaître aucune de ces mécaniques**. Une mécanique ajoutée demain sera couverte
+par une clé de plus, pas par une réécriture — pourvu que le Virage la lise : les
+écharpes et les contres en ont fait l’expérience (« La quête » et « Mur de
+bâches », retirés le 6 octobre 2026).
 
 Dans le VIRAGE, les modificateurs du KOP **multiplient** ceux du Fanzzy au lieu
 de les écraser : le groupe amplifie le personnage, il ne le remplace pas. Une
@@ -1081,23 +1083,36 @@ skin ne donne aucun bonus, chaque pièce d'équipement a un revers — qui disen
 toutes deux la même chose : « un débutant qui chante juste bat un vétéran mal
 équipé ».
 
-Au Grand Virage le stade vient du vrai match ; en duel, `stadeDeLaRencontre()`
-le tire dans l'**intersection** de ce que les deux joueurs possèdent, jamais
-dans la réunion. Jouer dans un stade que l'adversaire n'a jamais vu serait lui
-imposer une règle qu'il ne connaît pas.
+**Au Grand Virage comme en duel, le stade vient du vrai match**, et tous les
+duels d'un match se jouent dans le stade de son Virage (décision de Gaël, le
+6 octobre 2026 : « Celui du match »). Une seule fonction le tire,
+`stadeDuMatch` (`src/server/contenus/index.js`), sur l'identifiant du match et
+parmi les stades qu'une saison a ouverts : le Virage, le moteur du duel et le
+deck l'appellent, et aucun ne garde sa copie du tirage. Le lieu se connaît donc
+avant de jouer : la préparation du duel pose le stade du match choisi sur son
+affiche — le dessin en fond, le nom au pied — et les règles du « i » disent son
+effet, avant l'entrée en file.
 
-Collectionner n'achète donc pas de la force : ça élargit les lieux où l'on peut
-tomber, et donc les situations qu'un deck doit savoir affronter. L'exemple de
-la Vuvuzela le montre bien — une pièce d'équipement plus forte dans un stade
+L'**intersection** de ce que les deux joueurs possèdent, que ce paragraphe
+promettait au duel, n'a jamais été écrite : le duel tirait son stade sur son
+propre identifiant (un `randomUUID`, dans `engine.js`), et deux duels sur le
+même match tombaient dans deux stades, presque jamais dans celui du Virage. Elle
+n'est plus à écrire : un lieu qui dépendrait de l'adversaire ne se connaîtrait
+qu'après l'appariement, et la préparation ne pourrait pas l'annoncer.
+`stadeDeLaRencontre()` sait encore la faire ; personne ne lui passe de
+possessions.
+
+Collectionner n'achète donc pas de la force, ni le lieu : il change avec les
+matchs, et avec lui les situations qu'un deck doit savoir affronter. L'exemple
+de la Vuvuzela le montre bien — une pièce d'équipement plus forte dans un stade
 donné est une lecture de deck sur une condition **commune**, que les deux camps
 peuvent embarquer.
 
-Au Grand Virage c'est tenu ; **au duel, le stade est encore tiré sur
-l'identifiant du duel** (un `randomUUID`, dans `engine.js`), et deux duels sur le
-même match tombent dans deux stades. C'est la raison pour laquelle la préparation
-du duel n'a pas de stade-mini. Risque ouvert, à trancher par Gaël : la correction
-tient en une ligne dans `engine.js`, mais le fichier est hors du lot 6 et trois
-suites le lisent (`serveur/ECARTS.md`, `serveur-duel`, 9 et 12).
+Trois suites le gardent, et chacune rougit si le duel tire de nouveau son stade
+de son côté : `nvn:smoke` (deux duels de chacun de douze matchs, dans le stade
+de son Virage), `deck:smoke` (la liste et la route d'un match servent ce
+stade-là) et `nvn:ui` (l'affiche le montre, et le duel se joue là où elle
+l'annonçait). Le récit : `HISTORIQUE.md`, 4 quinquagies bis.
 
 **Les tribunes des stades sont dessinées dans l'ombre, exprès.** C'est ce qui
 permet de les allumer. Une tribune déjà éclairée ne peut plus s'éclairer ; une
@@ -1201,7 +1216,7 @@ simulateur.
 | `/virage` | Grand Virage : le voile des matchs en direct (affiches), la tribune — HUD, ticket terrain, corde, foules, main, tableau —, la minute qui compte double, le but, le **bilan de tribune** à la sortie et au coup de sifflet, **les cartes d'action de sa tribune** et le panneau « ce que tu portes » |
 | `/amis` | amis : qui suit les mêmes clubs, demandes, invitations en KOP ; **la présence** (AU VIRAGE, EN DUEL, EN LIGNE) quand elle est allumée |
 | `/equipes` | les clubs suivis, et la recherche pour en ajouter |
-| `/duel-nvn` | **le duel** : préparation (l'affiche, cinq formats, ce qui est en jeu), vestiaire, affiche, partie, bilan en page kraft ; tir à la corde, 1v1 à 5v5, adossé à un vrai match, même panneau de bonus |
+| `/duel-nvn` | **le duel** : préparation (l'affiche et le stade du match, cinq formats, ce qui est en jeu), vestiaire, affiche, partie, bilan en page kraft ; tir à la corde, 1v1 à 5v5, adossé à un vrai match, même panneau de bonus |
 | `/matchs` | matchs du jour, en direct, avec fiche détaillée |
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
 | `/classement` | supporters, tribunes, duellistes ; le podium, ma ligne épinglée, la saison (`SAISON`, `TOUJOURS`) et ses divisions |
@@ -2987,11 +3002,16 @@ donne ; quand la base ne sait pas le distinguer, elle ne compte pas (§ 3).
 
 **Un bonus vendu doit être lu par un moteur.** Le KOP vendait « La quête »
 (`scarvesBonus`) et « Mur de bâches » (`parryBonus`, `parryResist`), qu'aucun
-moteur ne lit. Il ne vend plus que les bonus dont le Virage lit chaque clé
-(`MODS_DU_VIRAGE`, `src/server/kop/index.js`), et `kop-smoke` confronte cette
-liste au code du Virage dans les deux sens. `parryBonus` et `parryResist` restent
-portés par des Fanzzy, des pièces et la carte « Filet de chantier » : rien ne les
-lit.
+moteur ne lit. Le serveur a d'abord cessé de les vendre ; Gaël les a retirés du
+catalogue le 6 octobre 2026, et leur prix revient au pot de chaque KOP qui les
+avait payés, une fois, au démarrage du serveur (`rendreLesRetires`,
+`src/server/kop/index.js`). `kop-smoke` confronte chaque clé du catalogue au code
+du Virage : un bonus posé sur une clé morte rougit avant d'être vendu. Et
+**un remboursement qui passe au démarrage se marque dans la transaction qui
+paie** — la ligne remboursée change de nom en même temps que le pot est
+crédité —, sans quoi le démarrage suivant rembourserait encore. `parryBonus` et
+`parryResist` restent portés par des Fanzzy, des pièces et la carte « Filet de
+chantier » : rien ne les lit.
 
 **Un jour se compte au coup d'envoi, pas à la dernière poussée.** La présence au
 Virage est une ligne par match, réécrite à chaque poussée : un match à cheval sur
@@ -3394,22 +3414,33 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
 
    **Après la livraison du quotidien, à faire par Gaël** (`DEPLOIEMENT.md`,
    « Après la livraison du quotidien ») : **saisir la fin de la saison 1** dans
-   l'onglet Saisons (proposée : le 20 décembre 2026, à vérifier sur `/matchs`)
-   — au 4 octobre, `/api/fanzzy/dex` en production ne sert aucune `fin` : elle
-   n'est pas saisie ; recaler les seuils de division sur la ferveur des joueurs
-   **sans abonnement**. Le carnet de la saison 1 n'a pas à être recalé : les
-   missions sont en ligne depuis le 3 octobre, avant le 19. La ligne du jour de
-   jeu est lue : `jourDeJeu.changeA` vaut `00:00`.
+   l'onglet Saisons, **le 31 décembre 2026** — les saisons durent quatre mois
+   (1er janvier–30 avril, 1er mai–31 août, 1er septembre–31 décembre), tranché
+   le 6 octobre ; au 4 octobre, `/api/fanzzy/dex` en production ne sert
+   aucune `fin` : elle n'est pas saisie ; recaler les seuils de division sur la
+   ferveur des joueurs **sans abonnement**. Le carnet de la saison 1 n'a pas à
+   être recalé : les missions sont en ligne depuis le 3 octobre, avant le 19,
+   et la saison en compte maintenant 90 jours au lieu de 63 — les paliers
+   arrivent plus tôt (`serveur/SERVEUR.md`, § 5). La ligne du jour de jeu est
+   lue : `jourDeJeu.changeA` vaut `00:00`.
 
    **Les décisions que le chantier rend à Gaël** (`HISTORIQUE.md`, 4 quadragies
-   ter, « Ce qui reste ») : l'inflation des écharpes avant la saison 2 ;
-   brancher ou retirer « La quête » et « Mur de bâches », et que faire des KOP
-   qui les ont payés ; la saison 2 et sa série ; payer ou non les divisions ; le dossier du juriste ;
-   un bonus de KOP voté après la fin d'une saison ; le rang de la racine de
-   `/api/rank/moi`, qui compte les comptes supprimés ; les tenues prises par
-   l'abonnement ; le nom de la saison 1 (« Le premier virage » dans
-   `sql/saisons.sql`, « La reprise » partout ailleurs — et en production,
-   relevé le 4 octobre). L'XP du Virage est tranchée et réglée (le 3 octobre :
+   ter, « Ce qui reste ») : la série et le nom de la saison 2 ; le dossier du
+   juriste ; un bonus de KOP voté après la fin d'une saison ; le rang de la
+   racine de `/api/rank/moi`, qui compte les comptes supprimés ; les tenues
+   prises par l'abonnement. **Tranchées le 6 octobre 2026, et faites** :
+   l'inflation des écharpes avant la saison 2 — une place de booster dont la
+   catégorie est épuisée rend deux écharpes au lieu d'une poignée, et un
+   booster établi environ 29 au lieu de 46 (`serveur/ECONOMIE.md`, § 12) ;
+   « La quête » et « Mur de bâches », retirés du catalogue, leur prix rendu au
+   pot des KOP qui les avaient payés au démarrage qui suit la livraison
+   (`serveur/ECONOMIE.md`, § 12.3) ; les divisions ne paient toujours que de
+   l'honneur ; le nom de la saison 1 est « La reprise », que la graine de
+   `sql/saisons.sql` donne maintenant aussi à une installation neuve (elle
+   disait « Le premier virage » ; une base existante n'est pas touchée) ; et
+   le calendrier : des saisons de quatre mois, la 1 jusqu'au 31 décembre 2026,
+   la 2 du 1er janvier au 30 avril 2027 (`serveur/SERVEUR.md`, § 5).
+   L'XP du Virage est tranchée et réglée (le 3 octobre :
    quinze par match poussé, dix chants au moins, trois matchs par jour), et la
    ferveur arrondie à zéro dans une grande tribune aussi (le plancher d'un
    point, au lot 6). Et des défauts voisins, hors des
@@ -3422,18 +3453,20 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
    carte (§ 5, point 10).
 
    **Ce que le lot 6 rend à Gaël** (`HISTORIQUE.md`, 4 quadragies sexies, « Ce qui
-   reste ») : **le stade du duel** (tiré sur l'identifiant du duel, pas sur le
-   match : une ligne dans `engine.js`, une règle de jeu) ; **allumer la
-   présence**, après le juriste ; **écouter le mixage** sur un téléphone avant la
-   mise en ligne ; **les 600 ms du verdict**, comptées depuis la fin du geste ou
-   depuis la dernière frappe ; un **combo en jeu au duel** (`serie` sur
-   l'évènement `chant`, refusé tant qu'aucune page ne le lit) ; `gains.wallet`
-   dans `nvn:fin` (non servi : `nav.js` relit le solde) ; `nvn:net`, que
-   `npm test` ne lance pas ; **le tunnel au voile du Virage** (la photo existe,
-   la page ne la nomme pas) ; et, du correctif d'urgence, la priorité du but
-   réel sur les autres moments d'un même geste, les cartes-souvenirs d'un but
-   ancien, et le trou d'une suite qui ne fait passer aucun scénario du relevé
-   jusqu'à la salle.
+   reste ») : **allumer la présence**, après le juriste ; **écouter le
+   mixage** sur un téléphone avant la mise en ligne ; **les 600 ms du
+   verdict**, comptées depuis la fin du geste ou depuis la dernière frappe ;
+   un **combo en jeu au duel** (`serie` sur l'évènement `chant`, refusé tant
+   qu'aucune page ne le lit) ; `gains.wallet` dans `nvn:fin` (non servi :
+   `nav.js` relit le solde) ; `nvn:net`, que `npm test` ne lance pas ; **le
+   tunnel au voile du Virage** (la photo existe, la page ne la nomme pas) ;
+   et, du correctif d'urgence, les cartes-souvenirs d'un but ancien et le
+   trou d'une suite qui ne fait passer aucun scénario du relevé jusqu'à la
+   salle. Le stade du duel est tranché et réglé (le 6 octobre : celui du
+   match, le même que son Grand Virage, et la préparation l'annonce avant
+   l'entrée en file ; `HISTORIQUE.md`, 4 quinquagies bis), et l'ordre des
+   moments d'un même geste aussi (le même jour : le jeu d'abord, le but réel
+   en dernier, qui reste à l'écran ; 4 quinquagies quater).
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
    peut-être encore l'ancienne règle, qui classait 117 compétitions comme

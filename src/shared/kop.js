@@ -20,10 +20,10 @@
  *
  * **Un bonus est un jeu de modificateurs**, écrit dans le vocabulaire que le
  * moteur emploie déjà — `tempoWindow`, `breathBonus`, `pushMult`… C'est ce qui
- * permet à un KOP de peser sur la corde, la ferveur, les écharpes, le souffle,
- * le tempo ou les contres sans que le KOP connaisse aucune de ces mécaniques.
- * Une mécanique ajoutée demain sera couverte par une clé de plus, pas par une
- * réécriture.
+ * permet à un KOP de peser sur la corde, la ferveur, le souffle ou le tempo
+ * sans que le KOP connaisse aucune de ces mécaniques. Une mécanique ajoutée
+ * demain sera couverte par une clé de plus, pas par une réécriture — à
+ * condition qu'un moteur la lise : voir `BONUS`.
  */
 
 /** Ce qu'un membre ordinaire pèse dans un vote. */
@@ -62,6 +62,16 @@ export const DUREE_VOTE_MS = 3 * 60 * 1000;
  *   - `match`  — un seul match réel, puis il s'éteint ;
  *   - `charges`— un nombre de matchs, décompté à chaque match joué ;
  *   - `saison` — jusqu'à la fin de la saison.
+ *
+ * **Chaque clé de `mods` doit être lue par le Virage**, le seul à recevoir les
+ * bonus de KOP (`ferveur/index.js`, par `modsDe`). Il y en eut sept : « La
+ * quête » (`scarvesBonus`, 900 écharpes) et « Mur de bâches » (`parryBonus`,
+ * `parryResist`, 500) portaient des clés qu'aucun moteur ne lit, et un KOP qui
+ * les votait payait pour rien. Gaël les a retirés pour de bon le 6 octobre
+ * 2026, et ce qu'ils avaient coûté est rendu au pot au démarrage du serveur
+ * (`BONUS_RETIRES` et `rendreLesRetires`, `src/server/kop/index.js`).
+ * `scripts/kop-smoke.mjs` confronte chaque clé de cette liste au code du
+ * Virage : un bonus ajouté sur une clé que rien ne lit la fait rougir.
  */
 export const BONUS = [
   { id: 'corde', nom: 'La corde tient', prix: 400, portee: 'match',
@@ -76,17 +86,9 @@ export const BONUS = [
     texte: 'La fenêtre de tempo s’élargit d’un tiers pour tout le KOP.',
     mods: { tempoWindow: 1.33 } },
 
-  { id: 'contres', nom: 'Mur de bâches', prix: 500, portee: 'match',
-    texte: 'Les contres du KOP portent 40 % plus loin.',
-    mods: { parryBonus: 1.4, parryResist: 1.2 } },
-
   { id: 'ferveur', nom: 'La ferveur monte', prix: 700, portee: 'charges', charges: 3,
     texte: 'La ferveur gagnée augmente de 30 %. Trois matchs.',
     mods: { ferveurBonus: 1.3 } },
-
-  { id: 'echarpes', nom: 'La quête', prix: 900, portee: 'charges', charges: 3,
-    texte: 'Les écharpes gagnées augmentent de 25 %. Trois matchs.',
-    mods: { scarvesBonus: 1.25 } },
 
   { id: 'saison', nom: 'Le virage debout', prix: 5000, portee: 'saison',
     texte: 'Souffle, tempo et corde légèrement relevés, jusqu’à la fin de la saison.',

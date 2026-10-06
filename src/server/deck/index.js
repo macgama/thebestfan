@@ -2,8 +2,9 @@ import express from 'express';
 import { ACTIONS, ACTIONS_MARQUEES, ACTION_BY_ID, DECK_RULES, validerDeck }
   from '../../shared/duel/actions.js';
 /* Ce que les saisons ont ouvert. Renommé à l’import : `publies` désigne déjà
-   le catalogue Fanzzy dans les modules voisins. Voir `possessions`. */
-import { publies as jouables } from '../contenus/index.js';
+   le catalogue Fanzzy dans les modules voisins. Voir `possessions`. Et le
+   stade d'un match, celui où ses duels se joueront : voir `lieuServi`. */
+import { publies as jouables, stadeDuMatch } from '../contenus/index.js';
 import { parIdentifiant, racineDe, lignee } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 // La prime des grands formats se lit dans les réglages : elle s’ajuste depuis
@@ -153,6 +154,26 @@ export function baseDuDuel(mode, format, gagne) {
 export function enJeuDe(mode, mien) {
   return Object.fromEntries(Object.keys(FORMATS).map((f) =>
     [f, baseDuDuel(mode, f, true) * (mien ? DOUBLE_CLUB : 1)]));
+}
+
+/**
+ * Le stade d'un match, tel que la liste et la route d'un match le servent
+ * (`stade`, CONTRATS.md § 17) : `{ id, nom, effet }`, la forme du `stade` de
+ * `nvn:start` et de l'affiche du coup d'envoi.
+ *
+ * C'est celui où **tous** les duels de ce match se joueront, et celui de son
+ * Grand Virage : `stadeDuMatch`, la fonction même que le duel appelle à son
+ * ouverture. La préparation le montre avant l'entrée en file — ce qu'elle ne
+ * pouvait pas faire tant que le lieu se tirait sur l'identifiant du duel,
+ * inconnu avant l'appariement. Toujours servi : un match a toujours un stade,
+ * celui de départ quand une saison n'en a ouvert aucun autre.
+ *
+ * Le nom et la phrase partent avec lui (R7) : la page n'a à connaître ni la
+ * table des stades, ni ceux qu'une saison a ouverts.
+ */
+export function lieuServi(idDuMatch) {
+  const s = stadeDuMatch(idDuMatch);
+  return { id: s.id, nom: s.nom, effet: s.effet };
 }
 const LIVE = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'];
 
@@ -824,9 +845,13 @@ export function createDecks({ pool, requireAuth, niveau = null,
        jamais la journée entière. Une ou deux couleurs, jamais un tableau vide
        déguisé en couleur : la page teste la longueur et garde la sienne. */
     const teintes = await teintesDes(retenus.flatMap((f) => [f.home_id, f.away_id]));
+    /* **Le stade de chaque match**, où tous ses duels se joueront : celui que
+       l'affiche du match choisi montre avant l'entrée en file. Voir
+       `lieuServi` : un calcul en mémoire, sans lecture de plus. */
     return retenus.map((f) => ({ ...f,
       homeColors: teintes.get(Number(f.home_id)) ?? [],
-      awayColors: teintes.get(Number(f.away_id)) ?? [] }));
+      awayColors: teintes.get(Number(f.away_id)) ?? [],
+      stade: lieuServi(f.id) }));
   }
 
   let teintesTues = false;
@@ -1061,10 +1086,12 @@ export function createDecks({ pool, requireAuth, niveau = null,
       `matchSupport` : le duel emporte ce support tel quel, et un entraînement
       contre les bots, qui le recopie en changeant le mode, y garderait un
       montant classé qu'il ne paiera pas. Un match refusé n'a rien en jeu :
-      la route rend alors l'erreur, comme avant. */
+      la route rend alors l'erreur, comme avant. Et le stade où ses duels se
+      joueront, comme sur la liste (`lieuServi`) : le duel, lui, le tire à son
+      ouverture par la même fonction, et n'a rien à emporter d'ici. */
   router.get('/match/:id', requireAuth, safe(async (req, res) => {
     const s = await matchSupport(Number(req.params.id), req.user.id);
-    res.json({ ...s, enJeu: enJeuDe(s.mode, s.mien) });
+    res.json({ ...s, enJeu: enJeuDe(s.mode, s.mien), stade: lieuServi(s.fixture.id) });
   }));
 
   return { router, deckDe, loadout, enregistrer, placer, premierDeck, matchSupport,

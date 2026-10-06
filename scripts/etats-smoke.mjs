@@ -12,7 +12,7 @@
  *
  * Usage : node scripts/etats-smoke.mjs
  */
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { Script, createContext } from 'node:vm';
 
 let failures = 0;
@@ -21,10 +21,11 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 /* Un manifeste taillé pour les cas limites, pas pour ressembler au vrai :
    - TR1 : un stade complet, un stade presque vide au-dessus ;
    - TR2 : un skin partiel qui se replie sur `base` ;
-   - TR3 : deux skins qui se renvoient l'un à l'autre — la boucle. */
+   - TR3 : deux skins qui se renvoient l'un à l'autre — la boucle.
+   Le repos de TR1 au premier âge a des paupières ; aucun autre. */
 const INDEX = { fanzzy: {
   TR1: { rev: 4, evolutions: {
-    e1: { skins: { base: { etats: ['neutre', 'but', 'pousse'], portrait: true } } },
+    e1: { skins: { base: { etats: ['neutre', 'but', 'pousse'], portrait: true, cligne: true } } },
     e2: { skins: { base: { etats: ['victoire'], portrait: false } } },
   } },
   TR2: { rev: 1, evolutions: {
@@ -87,6 +88,8 @@ check('au dernier recours, le secours rend null plutôt que la même adresse',
 
 check('rien à résoudre tant que le manifeste n’est pas là',
   E.resoudre('TR1', { etat: 'but' }) === null);
+check('ni de paupières à poser',
+  E.paupieres('/img/fanzzy/TR1/e1/base/neutre.webp?v=4') === null);
 
 await E.charger();
 check('le manifeste est chargé', E.pret() !== null);
@@ -157,6 +160,34 @@ check('un stade sans portrait prend celui d’en dessous',
 check('un Fanzzy inconnu ne rend rien',
   E.resoudre('ZZ9', { etat: 'but' }) === null && E.portrait('ZZ9') === null);
 
+/* ------------------------------------------------------------- paupières
+
+   Des paupières ne valent que pour l'image d'où elles ont été découpées : le
+   repos exact d'une tenue d'un âge. `paupieres` part donc de l'adresse
+   affichée — `resoudre` a pu reculer d'une tenue ou d'un âge — et ne répond
+   que pour un repos qui en a. Posées sur une joie, elles tomberaient à côté
+   de ses yeux. */
+
+const CLIGNE_TR1 = '/img/fanzzy/TR1/e1/base/cligne.webp?v=4';
+check('un repos qui a des paupières les donne, à sa révision',
+  E.paupieres('/img/fanzzy/TR1/e1/base/neutre.webp?v=4') === CLIGNE_TR1);
+check('son PNG de secours aussi : c’est le même dessin',
+  E.paupieres('/img/fanzzy/TR1/e1/base/neutre.png?v=4') === CLIGNE_TR1);
+check('et son adresse absolue, telle que `img.src` la rend',
+  E.paupieres('https://thebestfan.online/img/fanzzy/TR1/e1/base/neutre.webp?v=4') === CLIGNE_TR1);
+check('ce que `resoudre` rend pour le repos se pose tel quel',
+  E.paupieres(E.resoudre('TR1', { evo: 1, etat: 'neutre' }).src) === CLIGNE_TR1);
+check('une expression n’en a pas',
+  E.paupieres('/img/fanzzy/TR1/e1/base/but.webp?v=4') === null);
+check('ni un autre âge du même personnage',
+  E.paupieres('/img/fanzzy/TR1/e2/base/neutre.webp?v=4') === null);
+check('ni un repos qui n’en a pas',
+  E.paupieres('/img/fanzzy/TR2/e1/base/neutre.webp?v=1') === null
+  && E.paupieres('/img/fanzzy/TR2/e1/hiver/neutre.webp?v=1') === null);
+check('ni le supporter générique, ni un plein-pied de carte',
+  E.paupieres('/img/supporter/idle.webp') === null && E.paupieres('/img/fanzzy/TR1.webp') === null);
+check('ni rien du tout', E.paupieres(null) === null && E.paupieres('') === null);
+
 /* ------------------------------------------ le vrai manifeste, s'il est là
 
    Ce contrôle-ci ne vérifie pas la logique mais l'accord entre les deux :
@@ -202,6 +233,32 @@ check('un Fanzzy inconnu ne rend rien',
     check(`les ${ids.length} Fanzzy du manifeste réel se résolvent tous`,
       muets.length === 0
       || (console.log('        ne rendent rien :', muets.join(', ')), false));
+
+    /* Chaque repos qui annonce des paupières les a sur le disque, dans les
+       trois formats : une page qui les demanderait sans les trouver ne
+       clignerait pas, et rien ne le dirait. */
+    const annonces = [];
+    for (const [id, f] of Object.entries(vrai.fanzzy)) {
+      for (const [e, ev] of Object.entries(f.evolutions ?? {})) {
+        for (const [skin, sk] of Object.entries(ev.skins ?? {})) {
+          if (sk.cligne === true) annonces.push(`${id}/${e}/${skin}`);
+        }
+      }
+    }
+    const manquent = [];
+    for (const a of annonces) {
+      for (const ext of ['webp', 'png', 'avif']) {
+        try { await access(new URL(`../public/img/fanzzy/${a}/cligne.${ext}`, import.meta.url)); }
+        catch { manquent.push(`${a}/cligne.${ext}`); }
+      }
+    }
+    check(annonces.length === 1 ? 'le repos qui cligne a ses paupières sur le disque'
+      : `les ${annonces.length} repos qui clignent ont leurs paupières sur le disque`,
+      manquent.length === 0 || (console.log('        manquent :', manquent.join(', ')), false));
+    const T = bac2.window.TBF_ETATS;
+    check('RP1 cligne au repos, dans sa tenue de base',
+      T.paupieres(T.resoudre('RP1', { evo: 1, etat: 'neutre' })?.src)
+        ?.startsWith('/img/fanzzy/RP1/e1/base/cligne.webp?v=') === true);
   }
 }
 
