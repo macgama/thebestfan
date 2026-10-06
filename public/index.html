@@ -6039,9 +6039,11 @@ function deClub(nom) {
 async function alerteDuel() {
   H.attente = 0;
   let a = null;
+  let derby = null;
   try {
     const r = await lire('/api/nvn/attentes', { credentials: 'same-origin' });
     a = r?.alerte ?? null;
+    derby = r?.derby?.clubs?.length === 2 ? r.derby : null;
     /* Toutes les files, pour le bandeau du monde : combien de duels
        attendent un joueur, et la plus remplie, au camp qui y manque — la
        règle de `campQuiManque`, côté serveur. */
@@ -6056,14 +6058,31 @@ async function alerteDuel() {
        départ de la demande : le bandeau aurait montré le duel le temps
        qu'elle revienne, puis l'aurait retiré — à chaque tour de veille. */
     H.duelAuBouton = Boolean(a?.clubs?.length) && presents(a) > 0;
-  } catch { return; }              // duels non montés : le bouton ne change pas
+  } catch { return false; }        // duels non montés : le bouton ne change pas
   /* Un match du joueur a commencé pendant qu'on attendait la réponse : le
      Virage passe avant, voir plus bas. */
-  if (H.live) return;
-  if (!a?.clubs?.length) { montrer(); return; }
+  if (H.live) return false;
+
+  /* **Le derby automatique.** Un supporter de l'autre club d'un match du
+     jour est en ligne, et personne n'attend encore sur un match de mes
+     clubs : le bouton le propose. Il passe devant une file d'un match qui
+     n'est pas le mien — un derby de son club vaut mieux qu'une place
+     ailleurs —, jamais devant quelqu'un qui attend déjà sur un des miens.
+     Le serveur ne dit pas qui : un club, un match, rien d'autre. */
+  if (derby && !a?.mien) {
+    const eux = derby.clubs[derby.monCamp ^ 1]?.name ?? '';
+    const q = new URLSearchParams({ match: String(derby.fixtureId), format: derby.format ?? '1v1' });
+    if (derby.monCamp === 0 || derby.monCamp === 1) q.set('camp', String(derby.monCamp));
+    bouton(`/duel-nvn?${q}`, 'Derby du jour',
+      `Un supporter ${deClub(eux)} est en ligne`, 'violet');
+    montrer();
+    return true;
+  }
+
+  if (!a?.clubs?.length) { montrer(); return false; }
 
   const combien = (a.camps?.[0] ?? 0) + (a.camps?.[1] ?? 0);
-  if (!combien) { montrer(); return; }
+  if (!combien) { montrer(); return false; }
 
   const affiche = `${a.clubs[0]?.name ?? ''} – ${a.clubs[1]?.name ?? ''}`;
 
@@ -6088,12 +6107,28 @@ async function alerteDuel() {
     ? `il manque ${manque} ${manque > 1 ? 'supporters' : 'supporter'} ${deClub(club)}`
     : affiche;
 
+  /* **Le derby qui attend** : un supporter de l'autre club est en file sur
+     un match de mes clubs, et ma tribune a de la place (`derby`, serveur).
+     C'est la suite du « Derby du jour » une fois que l'autre a appuyé : on
+     dit de quel club il est, et le lien porte mon camp, celui qu'impose le
+     club que je suis. */
+  if (a.derby && (a.monCamp === 0 || a.monCamp === 1)) {
+    const eux = a.clubs[a.monCamp ^ 1]?.name ?? '';
+    q.set('camp', String(a.monCamp));
+    bouton(`/duel-nvn?${q}`, 'Derby !',
+      `${a.format ? `${a.format} · ` : ''}un supporter ${deClub(eux)} t’attend`, 'violet');
+    H.attente = combien;
+    montrer();
+    return true;
+  }
+
   /* En violet : ce sont des gens qui attendent (amendement 18), et l'or ne dit
      plus qu'acheter, récompense prête et légendaire. */
   bouton(`/duel-nvn?${q}`, combien > 1 ? `${combien} t’attendent` : 'Quelqu’un t’attend',
     `${a.format ? `${a.format} · ` : ''}${ou}`, 'violet');
   H.attente = combien;
   montrer();
+  return false;
 }
 
   /**
@@ -6174,8 +6209,13 @@ async function alerteDuel() {
 
     if (!m) {
       bouton('/duel-nvn', 'Prendre ma place', 'Duel de tribunes');
-      // Et si quelqu'un attend vraiment, on le dit à sa place.
-      void alerteDuel();
+      /* Et si quelqu'un attend vraiment, on le dit à sa place. **Un derby
+         se relit vite** : trente secondes au lieu de trois minutes. Quand
+         l'un des deux appuie, l'autre a deux minutes avant les bots, et un
+         tour de trois minutes les lui ferait manquer. */
+      void alerteDuel().then((derby) => {
+        if (derby && !H.live && !document.hidden) planifier(30_000);
+      });
 
       /* Le coup de sifflet final.
          Un match fini sort de la liste des matchs ouverts : sans ce détour,
