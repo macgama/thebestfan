@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import express from 'express';
+import { STADES, STADE_DEFAUT } from '../src/shared/stades.js';
 import { createFanzzy, MAX_PACKS, PACKS_DEPART, PACK_PRICE, CHEMINS_NOUVEAUTES,
   SORTES_NOUVEAUTE, cleDeCarte } from '../src/server/fanzzy/index.js';
 import { DEX, BY_ID, SETS, POIGNEE_DE_REPLI } from '../src/shared/fanzzy/dex.js';
@@ -43,7 +44,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    les nomme pas. `saisons` aussi : la suite la rebâtit par son vrai fichier, que
    `quotidien.sql` complète. */
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
-  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
+  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_stades, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions,
@@ -53,7 +54,7 @@ await raw.end();
    ouvertes, et `saisons.sql` la lit. `saisons.sql` avant `quotidien.sql`, qui
    lui ajoute ses colonnes datées : c'est l'ordre de `scripts/ordre-schema.mjs`. */
 await appliquer('auth', 'souvenirs', 'billets', 'fanzzy', 'inventaire', 'skins', 'etats', 'tenues',
-  'admin', 'saisons', 'quotidien');
+  'admin', 'saisons', 'quotidien', 'collection-stades');
 
 const raw2 = await mysql.createConnection({ uri: DB, multipleStatements: true });
 /* La table des saisons est partagée par les suites, et c'est elle qui décide
@@ -118,7 +119,7 @@ check('collection vide', Object.keys(r.json.collection).length === 0);
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR' } });
 check('cinq cartes tirées', r.json.cards?.length === 5);
 check('toutes typées', r.json.cards.every((c) =>
-  ['fanzzy', 'skin', 'etat', 'stuff', 'action', 'echarpes'].includes(c.type)));
+  ['fanzzy', 'skin', 'etat', 'stuff', 'action', 'lieu', 'echarpes'].includes(c.type)));
 /* Un skin habille un Fanzzy déjà possédé : au tout premier booster, il n'y a
    rien à habiller, et la catégorie se replie donc sur un supporter. C'est ce
    qui empêche une première ouverture de donner une tenue pour personne.
@@ -210,6 +211,7 @@ check(`des écharpes tombent aussi (${echarpesTombees} poignées)`, echarpesTomb
 for (const t of ['fanzzy', 'skin', 'etat', 'stuff', 'action', 'echarpes']) {
   check(`la catégorie « ${t} » tombe vraiment`, vus.has(t));
 }
+
 
 const [skinsRecus] = await pool.query(
   `SELECT DISTINCT fanzzy_id FROM user_skins WHERE user_id = ? AND skin_id <> 'base'`, [U]);
@@ -636,8 +638,8 @@ check(`catalogue de l'équipement servi (${STUFF.length})`,
 {
   const lire = async () => (await call('/api/fanzzy/bibliotheque')).json;
   const avant = await lire();
-  const types = ['fanzzy', 'etats', 'tenues', 'stuff', 'actions'];
-  check('la bibliothèque range les cinq types',
+  const types = ['fanzzy', 'etats', 'tenues', 'stuff', 'actions', 'lieux'];
+  check('la bibliothèque range les six types',
     types.every((k) => Number.isFinite(avant.types?.[k]?.possibles))
     || (console.log('        elle rend :', Object.keys(avant.types ?? {}).join(', ')), false));
   const somme = types.reduce((s, k) => s + avant.types[k].possibles, 0);
@@ -662,7 +664,7 @@ check(`catalogue de l'équipement servi (${STUFF.length})`,
   const plus = (k) => apres.types[k].gagnes - avant.types[k].gagnes;
   check(`un gain compte pour un, à sa place (${types.map((k) => `${k} +${plus(k)}`).join(' · ')})`,
     plus('fanzzy') === 1 && plus('etats') === 1 && plus('tenues') === (tenue ? 1 : 0)
-      && plus('stuff') === 1 && plus('actions') === 0);
+      && plus('stuff') === 1 && plus('actions') === 0 && plus('lieux') === 0);
   check('et le personnage apparaît avec ses états et ses tenues',
     apres.parFanzzy.some((p) => p.id === X && p.etats.gagnes === 1));
 
@@ -920,13 +922,14 @@ console.log('\n  ce qu’une ouverture a prélevé');
 
    On l'éprouve sur le joueur qui a vraiment tout : chaque personnage de la
    série à son premier âge, chaque tenue et chaque état de cet âge, chaque
-   pièce et chaque carte d'action. Une place ouverte ne peut plus lui rendre
-   qu'un repli, une poignée ou une pièce en double, et le premier contrôle
-   vérifie d'abord ce décor : chez un joueur à qui il manque quelque chose,
-   un repli absent ne prouverait rien.
+   pièce, chaque carte d'action et chaque stade. Une place ouverte ne peut
+   plus lui rendre qu'un repli, une poignée, ou une pièce ou un stade en
+   double, et le premier contrôle vérifie d'abord ce décor : chez un joueur à
+   qui il manque quelque chose, un repli absent ne prouverait rien.
 
    Les replis doivent **l'emporter** sur les poignées, comme les catégories
-   qui se replient (action, tenue, état : 54 %) sur celle des écharpes (23 %).
+   qui se replient (action, tenue, état : 54 %) sur celle des écharpes (18 %,
+   depuis que les stades en ont pris cinq).
    Un repli posé dans une seule branche — l'action, et pas la tenue ni l'état
    — en donnerait moins que de poignées, et le second contrôle rougirait. */
 console.log('\n  le repli : deux écharpes, la catégorie épuisée');
@@ -945,6 +948,10 @@ console.log('\n  le repli : deux écharpes, la catégorie épuisée');
     [siens.flatMap((id) => ETATS_DESSINES.map((e) => [R, id, 1, e]))]);
   await pool.query('INSERT INTO user_stuff (user_id, stuff_id, copies) VALUES ?',
     [STUFF.map((s) => [R, s.id, 1])]);
+  /* Les stades aussi (la collection de stades) : sans eux, la catégorie des
+     lieux lui donnerait des cartes neuves, et le décor ne tiendrait pas. */
+  await pool.query('INSERT INTO user_stades (user_id, stade_id, copies) VALUES ?',
+    [STADES.filter((x) => x.id !== STADE_DEFAUT).map((x) => [R, x.id, 1])]);
   await pool.query('UPDATE user_wallet SET action_cards = ?, packs = 40 WHERE user_id = ?',
     [JSON.stringify(ACTIONS.map((a) => a.id)), R]);
 
@@ -967,6 +974,57 @@ console.log('\n  le repli : deux écharpes, la catégorie épuisée');
 /* ------------------------------------------------------- les nouveautés (§ 2) */
 console.log('\n  les nouveautés');
 const W = await joueur('Neuf');
+
+/* ------------------------------------------------------------- les lieux
+
+   Les stades où l'on joue se collectionnent : cinq pour cent des places
+   ouvertes. Sur quarante boosters, il arrive qu'aucun ne tombe : on en ouvre
+   d'autres jusqu'au premier, plutôt qu'un contrôle qui rougirait une fois sur
+   cent par malchance. */
+{
+  const L = await joueur('Lieux');
+  const lieuxVus = [];
+  for (let i = 0; i < 120 && !lieuxVus.length; i++) {
+    await pool.query('UPDATE user_wallet SET packs = 5 WHERE user_id = ?', [L]);
+    const o = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR' }, qui: L });
+    lieuxVus.push(...(o.json.cards ?? []).filter((c) => c.type === 'lieu'));
+  }
+  check('la catégorie « lieu » tombe vraiment', lieuxVus.length > 0);
+  const l = lieuxVus[0];
+  check('un lieu tiré est un stade du jeu, jamais celui de départ',
+    Boolean(l) && STADES.some((x) => x.id === l.id) && l.id !== STADE_DEFAUT);
+  const [rangs] = await pool.query('SELECT stade_id FROM user_stades WHERE user_id = ?', [L]);
+  check('il est rangé en base', Boolean(l) && rangs.some((x) => x.stade_id === l.id));
+
+  const b = (await call('/api/fanzzy/bibliotheque', { qui: L })).json;
+  const T = b.types?.lieux;
+  check('la bibliothèque compte les lieux, départ compris',
+    T?.possibles === STADES.length
+    && T.items.find((x) => x.id === STADE_DEFAUT)?.possede === true
+    && T.gagnes === 1 + new Set(rangs.map((x) => x.stade_id)).size);
+  check('le catalogue sert les lieux, sans leurs règles',
+    (await call('/api/fanzzy/dex')).json.lieux?.every((x) => x.nom && x.rar && x.effet && !x.mods));
+
+  /* Le décor de l'accueil : un lieu possédé, le départ, ou rien. */
+  const pas = STADES.find((x) => x.id !== STADE_DEFAUT && !rangs.some((y) => y.stade_id === x.id));
+  check('l’accueil n’a pas de décor tant qu’on n’en choisit pas',
+    (await call('/api/fanzzy/state', { qui: L })).json.wallet?.lieuAccueil === null);
+  const refus = await call('/api/fanzzy/lieu-accueil', { method: 'POST', body: { id: pas?.id }, qui: L });
+  check('un stade qu’on n’a pas ne décore pas l’accueil', refus.status === 400);
+  check('un stade inconnu non plus',
+    (await call('/api/fanzzy/lieu-accueil', { method: 'POST', body: { id: 'pas-un-stade' }, qui: L })).status === 400);
+  const pose = await call('/api/fanzzy/lieu-accueil', { method: 'POST', body: { id: l?.id }, qui: L });
+  check('un stade à soi décore l’accueil', pose.status === 200 && pose.json.lieuAccueil === l?.id
+    && (await call('/api/fanzzy/state', { qui: L })).json.wallet?.lieuAccueil === l?.id
+    && (await call('/api/fanzzy/bibliotheque', { qui: L })).json.lieuAccueil === l?.id);
+  check('le stade de départ aussi',
+    (await call('/api/fanzzy/lieu-accueil', { method: 'POST', body: { id: STADE_DEFAUT }, qui: L })).json?.lieuAccueil
+      === STADE_DEFAUT);
+  const retire = await call('/api/fanzzy/lieu-accueil', { method: 'POST', body: { id: null }, qui: L });
+  check('et l’on revient à l’image habituelle', retire.status === 200
+    && (await call('/api/fanzzy/state', { qui: L })).json.wallet?.lieuAccueil === null);
+}
+
 {
   const r = await call('/api/fanzzy/state', { qui: W });
   check('un joueur neuf : « rien de nouveau », et non « je ne sais pas »',
@@ -974,7 +1032,8 @@ const W = await joueur('Neuf');
 }
 await pool.execute('UPDATE user_wallet SET packs = 200 WHERE user_id = ?', [W]);
 const FORMES = { fanzzy: /^fanzzy:[^:]+$/, etat: /^etat:[^:]+:[1-3]:[^:]+$/,
-  skin: /^skin:[^:]+:[1-3]:[^:]+$/, stuff: /^stuff:[^:]+$/, action: /^action:[^:]+$/ };
+  skin: /^skin:[^:]+:[1-3]:[^:]+$/, stuff: /^stuff:[^:]+$/, action: /^action:[^:]+$/,
+  lieu: /^lieu:[^:]+$/ };
 const sortesDuBooster = new Set();
 {
   let clesJustes = true;

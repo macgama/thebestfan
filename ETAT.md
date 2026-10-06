@@ -2131,18 +2131,21 @@ Par ordre d'utilité.
    avant le coup d'envoi), et une invitation à les activer ailleurs que dans
    le compte — sur la page du KOP, au moment où l'on rejoint.
 
-7. **Brancher la collection de stades.** Le catalogue et les effets sont écrits
-   dans `src/shared/stades.js`, les cinq dessins sont rangés, les tribunes se
-   mesurent et s'allument. Il reste : la table de possession, le tirage dans
-   les boosters, l'application des `mods` dans les deux moteurs, et l'affichage
-   du stade en fond d'écran.
+7. **La collection de stades — faite le 6 octobre 2026.** Gaël a choisi
+   « album + décor d'accueil » : un stade possédé **ne décide pas où l'on
+   joue** (la rencontre se tient dans le stade de son match) et n'y donne
+   rien. Il sort des boosters (5 % des places ouvertes, pris sur les
+   écharpes ; un doublon rapporte des écharpes), se range dans le rayon
+   STADES de la collection, compte dans la jauge et les crans, et peut servir
+   de décor à l'accueil (`POST /api/fanzzy/lieu-accueil`). Le Chaudron est à
+   tout le monde et ne s'écrit nulle part. Schéma : `sql/collection-stades.sql`.
 
-   **Une décision d'orientation attend là.** La corde du Virage est verticale —
-   soi en bas, l'adversaire en haut — alors que les stades ont leurs tribunes à
-   gauche et à droite. Soit on fait pivoter le stade d'un quart de tour et l'on
-   perd du cadrage, soit on garde le terrain au milieu avec les deux tribunes
-   sur les côtés et la corde qui descend le long de la pelouse. La seconde est
-   plus lisible et ne coûte rien.
+   **Dans le code, un stade où l'on joue s'appelle un « lieu »** (carte
+   `lieu`, nouveauté `lieu:<id>`, `types.lieux`, `lieuAccueil`), parce que
+   « stade » y veut déjà dire l'âge d'un Fanzzy depuis `sql/stades.sql`.
+
+   L'orientation est tranchée depuis : le terrain reste vertical, tribunes sur
+   les côtés, la corde descend le long de la pelouse (`stade-art.js`).
 
 8. **L'équipement porté — fait le 6 octobre 2026, à côté du personnage.** Les
    deux pièces que le deck met à un Fanzzy sont accrochées à côté de lui, chacune

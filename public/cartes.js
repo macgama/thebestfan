@@ -224,6 +224,9 @@ let EVO_COST = {};
 let TENUES = new Map();
 let STUFFS = new Map();
 let ACTES = new Map();
+// Les lieux : les stades où l'on joue, qui se collectionnent aussi. Pas
+// exigés du catalogue — un serveur d'avant ne les sert pas, et la page tient.
+let LIEUX = new Map();
 
 /** Vide un tableau et le remplit, sans en fabriquer un autre. */
 const remplir = (cible, source) => { cible.length = 0; cible.push(...source); };
@@ -283,6 +286,7 @@ async function chargerCatalogue() {
   recharger(TENUES, (d.tenues ?? []).map((t) => [t.id, t]));
   recharger(STUFFS, (d.stuff ?? []).map((o) => [o.id, o]));
   recharger(ACTES, (d.actions ?? []).map((a) => [a.id, a]));
+  recharger(LIEUX, (d.lieux ?? []).map((l) => [l.id, l]));
 }
 
 /* ------------------------------------------------------------- état */
@@ -665,6 +669,11 @@ function rarMark(rar) {
  * qui porte la couleur. L'objet, lui, est détouré, donc il se pose dedans
  * plutôt que de le remplir.
  */
+/** Le dessin d'un stade, au format que ce navigateur lit (comme `stade-art.js`). */
+function lieuSrc(id, mini = false) {
+  return `/img/stade/${encodeURIComponent(id)}${mini ? '-mini' : ''}${IMG_EXT ?? '.jpg'}`;
+}
+
 function objetHTML(f) {
   return `<div class="illuwrap">${fondDeCarte(f)}
     ${window.TBF_STUFF.illustration(f.id, 'illu objet')}</div>`;
@@ -838,6 +847,11 @@ function dessinDeCarte(f, { etiquette = true, pied = false, silhouette = false }
     }
   }
   if (f.stuff) return objetHTML(f);
+  if (f.lieu) {
+    return `<div class="illuwrap">${fondDeCarte(f)}
+      <img class="illu fz-pleine" src="${lieuSrc(f.id, true)}" alt="" loading="lazy"
+           onerror="if(!/\\.jpg$/.test(this.src))this.src='/img/stade/${esc(f.id)}-mini.jpg';else this.remove()"></div>`;
+  }
   if (f.action && window.TBF_ACTION) {
     return `<div class="illuwrap">${fondDeCarte(f)}
       ${window.TBF_ACTION.illustration(f.id, 'illu fz-pleine')}</div>`;
@@ -900,6 +914,7 @@ function piedDe(f, t) {
   if (f.skin) return 'tenue';
   if (f.stuff) return 'équipement';
   if (f.action) return 'carte d’action';
+  if (f.lieu) return 'stade';
   if (f.echarpes) return '';
   const puissance = Number(f.cri?.power);
   return [t.nom, Number.isFinite(puissance) && puissance > 0 ? `poussée ${puissance}` : '']
@@ -972,7 +987,7 @@ function cardHTML(f, opts = {}) {
      pictogramme d'emprunt, et ne le dit pas au lecteur d'écran. */
   const proprio = (f.etat || f.skin) && f.pour ? BY_ID.get(f.pour) : null;
   const t = typeDe(proprio ?? f);
-  const famille = !(f.stuff || f.action || f.echarpes) && t.nom;
+  const famille = !(f.stuff || f.action || f.lieu || f.echarpes) && t.nom;
   /* **Le pictogramme du pin, et son repli.** Le tracé vient du catalogue
      (`TYPES[type].ico`). Une page qui ne charge pas le catalogue — la fiche,
      à l'adresse /fanzzy/<id> : une requête lourde de plus — ne connaît de la
@@ -1009,7 +1024,7 @@ function cardHTML(f, opts = {}) {
   /* L'âge : un Fanzzy, un état, une tenue en ont un. Une pièce, une action,
      une poignée d'écharpes n'en ont pas — « ÉVO 1 » sur un thermos ne disait
      rien —, et une légendaire n'en a qu'un, que sa forme dit déjà. */
-  const sansAge = verrou || rar === 'legendaire' || f.stuff || f.action || f.echarpes;
+  const sansAge = verrou || rar === 'legendaire' || f.stuff || f.action || f.lieu || f.echarpes;
   const stade = Math.max(1, Number(f.stage) || 1);
   const age = sansAge ? '' : `<div class="age a${stade}">ÉVO ${stade}</div>`;
 
@@ -1184,6 +1199,17 @@ function carteDuPaquet(c) {
     return { id: c.id, nom: o?.nom ?? c.id, texte: o?.texte, type: 'depl',
       rar: o?.rar ?? 'rare', stage: 1, stuff: true, mods: o?.mods };
   }
+  /* **Un lieu.** Un stade vu du dessus, qui remplit la carte comme une scène
+     de carte d'action. Son effet est écrit en clair : il change la même
+     règle pour les deux tribunes, et c'est ce qu'on veut savoir en le
+     gagnant. `depl` pour sa couleur, le vert de la pelouse, et son bus : on
+     se déplace pour aller dans un stade. Faute de famille propre — en
+     inventer une la ferait apparaître dans les filtres. */
+  if (c.type === 'lieu') {
+    const l = LIEUX.get(c.id);
+    return { id: c.id, nom: l?.nom ?? c.id, texte: l?.effet ?? l?.texte, type: 'depl',
+      rar: l?.rar ?? 'rare', stage: 1, lieu: true };
+  }
   if (c.type === 'action') {
     const a = ACTES.get(c.id);
     return { id: c.id, nom: a?.nom ?? c.id, texte: a?.texte, type: 'pyro',
@@ -1222,5 +1248,5 @@ function carteDuPaquet(c) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, LIEUX, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, lieuSrc, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid };
 })();

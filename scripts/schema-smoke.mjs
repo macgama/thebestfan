@@ -374,8 +374,11 @@ console.log('\n— les arènes —');
     JSON.stringify(auDemarrage) === JSON.stringify(Object.keys(ATTENDUES).sort())
     || (console.log('        vues :', auDemarrage.join(', ')), false));
 
-  check('sql/arenes.sql est le dernier de l’ordre d’application',
-    ORDRE.at(-1) === 'arenes' || (console.log('        dernier :', ORDRE.at(-1)), false));
+  /* Il l'était ; la collection de stades est venue après lui, sans rien lui
+     prendre. Ce qui compte est qu'il vienne après ce qu'il complète. */
+  check('sql/arenes.sql n’est suivi que de ce qui ne dépend pas de lui',
+    ORDRE.slice(ORDRE.indexOf('arenes') + 1).every((f) => f === 'collection-stades')
+    || (console.log('        après :', ORDRE.slice(ORDRE.indexOf('arenes') + 1).join(', ')), false));
   check('et vient après ce qu’il complète (souvenirs, quotidien)',
     ORDRE.indexOf('arenes') > Math.max(ORDRE.indexOf('souvenirs'), ORDRE.indexOf('quotidien')));
 
