@@ -2588,7 +2588,11 @@ if (process.env.CAPTURE) {
     check('une victoire depuis la dernière visite : il la raconte, fier',
       await jusqua(async () => (await visages(page)).includes('joie'), 6000)
       || (console.log('        visages :', (await visages(page)).join(' → ')), false));
-    check('et il saute', await sauts(page) >= 1);
+    /* Le saut part au même instant que le visage, mais son `animationstart`
+       n'est envoyé qu'à l'image suivante : lu dès que la joie s'affiche, il
+       pouvait manquer encore (deux passes sur six de cette section, seule).
+       On lui laisse une seconde. */
+    check('et il saute', await jusqua(async () => await sauts(page) >= 1, 1000));
     check('et il le dit, d’une ligne de victoire qui ne mène nulle part', await dit(page, 'victoire'));
     check('le temps du ticket, puis il rend la main à son repos',
       await jusqua(async () => nom((await scene(page)).src) === 'neutre', 6000)
@@ -2695,7 +2699,7 @@ if (process.env.CAPTURE) {
     check('trois jours sans venir : il salue, puis il fête le retour',
       fete.coucou !== null && fete.joie !== null && fete.joie - fete.coucou >= 1300
       || (console.log('        coucou à', fete.coucou, '· joie à', fete.joie), false));
-    check('d’un saut', await sauts(page) >= 1);
+    check('d’un saut', await jusqua(async () => await sauts(page) >= 1, 1000));
     check('et il dit qu’on lui a manqué', await dit(page, 'retour'));
     await page.close();
 
@@ -2847,19 +2851,32 @@ if (process.env.CAPTURE) {
          repos, et son retour aussi. Ces deux échanges, invisibles, réarmaient
          la minuterie, et le premier battement de la session venait huit à
          douze secondes après l'arrivée au lieu de trois à sept : c'est ce
-         qui faisait rougir le contrôle d'au-dessus une passe sur quatre. On
-         le rejoue juste après un battement, puisque le suivant est à trois
-         secondes au moins : la minuterie doit être la même avant, pendant et
-         après, et les calques doivent bien s'être croisés deux fois. */
-      await pause(400);
-      const salut = await page.evaluate(async () => {
-        const avant = { minuterie: battement, calque: devant };
-        await TBF.pose('salut', 500);
-        const pendant = { minuterie: battement, calque: devant };
-        await new Promise((r) => { setTimeout(r, 800); });
-        return { avant, pendant, apres: { minuterie: battement, calque: devant } };
-      });
-      const garde = salut.pendant.calque !== salut.avant.calque
+         qui faisait rougir le contrôle d'au-dessus une passe sur quatre.
+
+         On le rejoue **une fois l'arrivée finie** : le premier battement peut
+         maintenant tomber pendant elle, et un salut demandé pendant le salut
+         ne croise aucun calque. La minuterie doit être la même avant, pendant
+         et après, et les calques doivent s'être croisés deux fois. Un
+         battement tombé pendant l'essai change la minuterie pour de bon :
+         l'essai ne dit alors rien, et on le refait. */
+      const unSalut = async () => {
+        await jusqua(() => page.evaluate(() => salutJusqua > 0 && !retour
+          && poseActuelle === TBF.etatDeFond()
+          && !document.getElementById('paupieres').classList.contains('on')), 5000);
+        return page.evaluate(async () => {
+          const vus = window.__battements.length;
+          const avant = { minuterie: battement, calque: devant };
+          await TBF.pose('salut', 300);
+          const pendant = { minuterie: battement, calque: devant };
+          await new Promise((r) => { setTimeout(r, 700); });
+          return { avant, pendant, apres: { minuterie: battement, calque: devant },
+            battu: window.__battements.length !== vus };
+        });
+      };
+      let salut = await unSalut();
+      for (let essai = 1; essai < 3 && salut.battu; essai++) salut = await unSalut();
+      const garde = !salut.battu
+        && salut.pendant.calque !== salut.avant.calque
         && salut.apres.calque === salut.avant.calque
         && salut.avant.minuterie !== null
         && salut.pendant.minuterie === salut.avant.minuterie
