@@ -2113,10 +2113,22 @@ Par ordre d'utilité.
    sur les côtés et la corde qui descend le long de la pelouse. La seconde est
    plus lisible et ne coûte rien.
 
-8. **L'intégration de l'équipement sur les personnages.** Les sept objets sont
-   détourés pour ça — l'écharpe autour d'un cou, le mégaphone dans une main. Il
-   reste à décider des points d'ancrage et de la façon dont ils suivent les
-   poses de `fanzzy-scene.js`.
+8. **L'équipement porté — fait le 6 octobre 2026, à côté du personnage.** Les
+   deux pièces que le deck met à un Fanzzy sont accrochées à côté de lui, chacune
+   dans le cadre de sa rareté (`TBF_STUFF.porte`, `.tbf-porte` dans `ui.css`) :
+   à l'accueil (`wallet.stuffPorte`, le sac du deck pour le Fanzzy montré), au
+   Virage (les lignes `stuff` d'`apports`) et dans l'arène du duel, des deux
+   côtés (`equipes[].sac`). Gaël a choisi cette forme sur maquette
+   (`/mnt/project-files/equipement/porte-a-cote-ou-colle.jpg`) : posés sur le
+   personnage, les objets détourés se lisaient comme des autocollants sur des
+   rendus en volume, et le cou ou la main changent de place à chaque
+   expression. Des Fanzzy dessinés avec l'objet porté, produits dans Artlist,
+   restent possibles pour quelques pièces phares (l'écharpe les jours de
+   match, idée 6 des Fanzzy vivants).
+
+   Relevé en passant : la fiche d'un Fanzzy sert encore un `stuffPorte` tiré
+   de `user_stuff.slot`, l'ancien équipement global, qu'aucune page ne lit
+   plus ; le jeu joue le sac du deck.
 
 9. **Ce que les lots 3 et 5 et le chantier du quotidien laissent** (le détail
    est dans `HISTORIQUE.md`, 4 quadragies ter, « Ce qui reste »). Les documents
