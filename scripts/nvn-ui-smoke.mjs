@@ -1229,6 +1229,42 @@ check(`ils ne portent pas tous le même geste (${new Set(ouvert.chants.map((c) =
 check('ni le même prix',
   new Set(ouvert.chants.map((c) => c.cout)).size >= 2);
 
+/* **Le chant de son geste**, au milieu, porte le sceau de sa famille : entier,
+   à la couleur de la famille, sans toucher le coût. */
+{
+  const sien = await A.page.evaluate(() => {
+    const cartes = [...document.querySelectorAll('#chants [data-chant]')];
+    const i = cartes.findIndex((c) => c.hasAttribute('data-sien'));
+    const c = cartes[i];
+    const s = c?.querySelector('.carte-sien');
+    const r = s?.getBoundingClientRect();
+    const cout = c?.querySelector('.tbf-carte-cout')?.getBoundingClientRect();
+    // Ce qui est réellement au centre du sceau : lui, et pas une voisine.
+    const dessus = r ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+    return { i, n: cartes.filter((x) => x.hasAttribute('data-sien')).length,
+      geste: S.vue.moi.sienGeste, gesteCarte: S.vue.chants[i]?.gest,
+      famille: S.vue.chants[i]?.sien?.famille ?? null,
+      actif: (S.vue.moi.fanzzy ?? []).find((f) => f.actif)?.type ?? null,
+      vu: Boolean(r && r.width > 0 && getComputedStyle(s).display !== 'none'),
+      chemin: s?.querySelector('path')?.getAttribute('d') ?? '',
+      entier: Boolean(dessus && s.contains(dessus)),
+      separe: Boolean(r && cout && (r.left >= cout.right || r.right <= cout.left)),
+      label: c?.getAttribute('aria-label') ?? '' };
+  });
+  check(`le chant du geste de son Fanzzy est au milieu, et il est seul marqué (${sien.geste}, place ${sien.i + 1})`,
+    sien.i === 2 && sien.n === 1 && sien.gesteCarte === sien.geste && sien.famille === sien.actif
+    || (console.log('        ', JSON.stringify(sien)), false));
+  check('il porte le sceau de sa famille, entier, sans toucher le coût',
+    sien.vu && sien.chemin.length > 10 && sien.entier && sien.separe
+    || (console.log('        ', JSON.stringify(sien)), false));
+  check(`et il le dit à qui ne le voit pas (« ${sien.label} »)`, /le geste de ton Fanzzy$/.test(sien.label));
+  if (process.env.CAPTURE) {
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    await A.page.screenshot({ path: join(tmpdir(), 'nvn-chants.png') });
+  }
+}
+
 /* ------------------------------------------ les Fanzzy ont un visage */
 
 /**
@@ -1744,6 +1780,28 @@ check('la corde a bougé', bouge);
     pousse.eux.pose === 'pousse' && pousse.eux.geste === 'hisse' && /^-4deg$/.test(pousse.eux.rotate ?? '')
     || (console.log('        ', JSON.stringify(pousse.eux)), false));
 
+  /* **Son geste** : le chant réussi de sa spécialité le fait chanter à la
+     manière de sa famille — la Percussion frappe —, et la poussée qui suit
+     ne le coupe pas pour se pencher. Raté, rien de plus que d'habitude. */
+  await jusqua(() => A.page.evaluate(() => ['fzMoi', 'fzEux']
+    .every((id) => document.getElementById(id)?.dataset.pose === 'neutre')), 6000);
+  await A.page.evaluate(() => {
+    const side = S.vue.moi.side;
+    raconter({ t: 'chant', side, userId: 'personne', cardId: 'roulement', geste: 'mash',
+      verdict: 'bon', sien: true, famille: 'perc' });
+    raconter({ t: 'push', side, valeur: 12 });
+  });
+  await dodo(150);
+  const sien = await lireFz();
+  check(`son geste réussi : le mien chante à la manière de sa famille (${sien.moi.geste}, ${sien.moi.animation})`,
+    sien.moi.pose === 'pousse' && sien.moi.geste === 'frappe' && sien.moi.animation === 'fzDuelFrappe'
+    || (console.log('        ', JSON.stringify(sien.moi)), false));
+  await jusqua(() => A.page.evaluate(() => document.getElementById('fzEux')?.dataset.pose === 'neutre'), 6000);
+  await A.page.evaluate(() => raconter({ t: 'chant', side: S.vue.moi.side ^ 1, userId: 'personne',
+    cardId: 'reprise', geste: 'tempo', verdict: 'rate', sien: true, famille: 'voix' }));
+  const rate = await lireFz();
+  check(`son geste raté : celui d’en face ne crie pas (${rate.eux.geste ?? 'rien'})`, rate.eux.geste !== 'crie');
+
   /* Un coup d'en face sur ma tribune : la vue le porte (`equipes[][].effets`),
      et c'est **son arrivée** qui met en colère, pas sa durée. */
   await A.page.evaluate(() => {
@@ -1815,6 +1873,33 @@ check('la corde a bougé', bouge);
   check('sur l’affiche aussi, chacun paraît comme il l’a habillé',
     dessin.affiche.includes('/RP1/e1/halloween/') && !dessin.afficheBase.includes('halloween')
     || (console.log('        ', dessin.affiche, dessin.afficheBase), false));
+}
+
+/* **Ce qu'il porte, accroché à côté de lui** : le Sédunois a mis les
+   Jumelles à son Choriste ; la Bâloise n'a rien mis au sien. Chacun voit le
+   sac du Fanzzy de son côté et celui d'en face, et un Fanzzy sans pièce n'a
+   rien d'accroché — pas un cadre vide. */
+{
+  const lire = (P) => P.page.evaluate(() => {
+    const ids = (id) => [...document.querySelectorAll(`#${id} .tbf-porte .tbf-piece img`)]
+      .map((i) => /\/img\/stuff\/([^.]+)\./.exec(i.getAttribute('src'))?.[1] ?? '?');
+    const e = S.vue.equipes.flat().find((x) => x.sac?.length);
+    return { moi: ids('fzMoi'), eux: ids('fzEux'), servi: e?.sac ?? null,
+      vide: document.querySelectorAll('#fzMoi .tbf-porte, #fzEux .tbf-porte').length };
+  });
+  await jusqua(async () => (await lire(A)).moi.length > 0, 4000);
+  const a = await lire(A);
+  const b = await lire(B);
+  if (process.env.SHOT) {
+    await A.page.screenshot({ path: process.env.SHOT + '/duel-sac-moi.png' });
+    await B.page.screenshot({ path: process.env.SHOT + '/duel-sac-eux.png' });
+  }
+  check(`la vue sert le sac de chacun, avec la rareté (${JSON.stringify(a.servi)})`,
+    a.servi?.[0]?.id === 'jumelles' && a.servi[0].rar === 'commune' && a.servi[0].nom === 'Jumelles');
+  check(`dans mon arène, mes Jumelles sont accrochées à mon Fanzzy (${a.moi.join(',')})`,
+    a.moi.join() === 'jumelles' && a.eux.length === 0 && a.vide === 1);
+  check(`chez celui d’en face, elles sont accrochées au mien, de son côté à lui (${b.eux.join(',')})`,
+    b.eux.join() === 'jumelles' && b.moi.length === 0);
 }
 
 /* Le bandeau d'annonce, en partie : sous les deux rangées du HUD, hors des
