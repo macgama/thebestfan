@@ -2074,13 +2074,17 @@ Par ordre d'utilité.
    largeur) sont dans le dossier du projet, `ecran-large/`. Le contenu des
    pages garde pour l'instant sa largeur de téléphone.
 
-3. **Répartir les dix gestes sur le catalogue.** `cri.gest` ne vaut encore que
-   `tempo`, `mash` ou `hold` dans `dex.js` et `dex-2026.js` — les sept nouveaux
-   gestes n'appartiennent à aucun personnage. Le duel les fait tourner de
-   lui-même, donc le joueur les rencontre quand même ; ce qui manque, c'est que
-   le geste dise quelque chose du Fanzzy qui le porte. **Ce n'est pas une
-   migration mécanique** : attribuer un geste, c'est décrire un caractère, et
-   cela se décide personnage par personnage.
+3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
+   765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
+   (`TYPES` dans `dex.js`, éprouvé par `catalogue:test`). Ce qui manquait, c'est
+   que le joueur le voie : depuis que le duel offre cinq chants au choix, le
+   geste du personnage n'y décidait plus de rien. Depuis le 6 octobre 2026, le
+   chant réussi de sa spécialité le fait chanter dans l'arène à la manière de
+   sa famille (la Voix crie, la Percussion frappe…), sans dessin de plus, et
+   ce chant est toujours dans la main, au milieu, avec le sceau de la famille
+   (règle « Toujours là », choisie par Gaël : sans bonus de poussée).
+   `offreDe()` dans `src/server/nvn/engine.js`. Le Virage n'est pas concerné :
+   sa rangée de chants est commune à toute la tribune.
 
 4. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
    suivent les deux clubs qui s'affrontent réellement. Conçu, pas commencé.
