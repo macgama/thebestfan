@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**Les tuiles de l'accueil sur grand écran** (branche
+`claude/ecran-large-pkbkwj`, 6 octobre 2026). Elles se déposent avec ce qui
+est en dessous, ou seules.
+
+- `public/menu.js`, `public/nav.js`, `public/ui.css` : sur un écran d'au
+  moins 1 180 pixels de large (un ordinateur), chaque page de contenu porte
+  les dix tuiles de l'accueil, cinq de chaque côté de sa colonne, avec les
+  mêmes stickers que le menu (boosters, monde au Virage, duels qui
+  attendent). On change de section en un clic, sans ouvrir le menu.
+  L'accueil, le Virage et le duel ne changent pas ; rien ne change sur
+  téléphone ni sur tablette. Contrôlé par `npm run menu:smoke` (onze
+  contrôles neufs) ; mesuré sous Firefox 136 et Chrome.
+
+**Aucun schéma ni réglage, sans redémarrage** : ce sont trois fichiers
+statiques, et leur empreinte se recalcule quand ils changent sur le disque.
+
+---
+
 **Les notifications** (branche `claude/notifications-pkpvy9`, 6 octobre 2026,
 demandées par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
 
