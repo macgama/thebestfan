@@ -103,6 +103,12 @@ export const SECTIONS = [
       'ou en duel — trois états grossiers, sans match ni heure, jamais écrits en ' +
       'base. Livrée éteinte : à allumer seulement après la mise en ligne de la ' +
       'nouvelle politique de confidentialité.' },
+  { id: 'notifications', titre: 'LES NOTIFICATIONS',
+    aide: 'Ce qui prévient un joueur l’appli fermée : un vote de son KOP qui ' +
+      's’ouvre, un duel classé qui attend un supporter de son club. Rien ne part ' +
+      'vers un appareil qui n’a pas dit oui, case par case, depuis la page du compte, ' +
+      'et rien ne part la nuit (de 22 h à 8 h, heure de Zurich).' },
+
   { id: 'pronostic', titre: 'LE PRONOSTIC',
     aide: 'Le score qu’on attend d’un match de son club, donné avant le coup ' +
       'd’envoi. Gratuit, sans mise : un pronostic juste rapporte des écharpes, la ' +
@@ -765,6 +771,23 @@ export const REGLAGES = [
     aide: 'Une activité, c’est une requête au jeu ou une connexion en direct. Rien ' +
       'n’est écrit : la marque vit en mémoire, est effacée au plus une minute après ' +
       'ce délai, et disparaît au redémarrage.' },
+
+  /* Les notifications (`src/server/notifications/index.js`). Allumées à la
+     livraison : rien ne part sans le oui du joueur, donné sur l'appareil même,
+     et la fenêtre du navigateur le demande une seconde fois. L'interrupteur
+     est le disjoncteur d'un soir où elles déraperaient. */
+  { cle: 'notifications.actif', section: 'notifications', type: 'booleen',
+    titre: 'Envoyer les notifications', defaut: true,
+    aide: 'Éteint, rien ne part et la page du compte ne propose plus de les activer. ' +
+      'Les appareils déjà inscrits le restent : rallumer suffit. Sans ' +
+      'sql/notifications.sql, elles restent éteintes même allumées ici.' },
+
+  { cle: 'notifications.duel_pause_min', section: 'notifications', type: 'entier',
+    titre: 'Entre deux duels annoncés au même joueur', unite: 'minutes',
+    min: 10, max: 1440, defaut: 60,
+    aide: 'Un duel qui attend un supporter de ton club, c’est une invitation ; dix ' +
+      'dans la soirée, c’est du bruit, et le joueur coupe tout. Un même match ' +
+      'n’est de toute façon annoncé qu’une fois.' },
 
   /* ------------------------------------------------------- le pronostic
 

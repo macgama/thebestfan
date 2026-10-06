@@ -1421,6 +1421,10 @@ titre('depuis ta dernière visite');
   await q(`INSERT INTO kops (id, team_id, nom, createur) VALUES (?, 92, 'Autre', ?)`, [KOP2, F1]);
   await q('INSERT INTO kop_invites (kop_id, user_id, par) VALUES (?, ?, ?)', [KOP2, T, F1]);
   await match(9001, { home: 85, away: 91, coupDEnvoiMin: -120, statut: 'FT', buts: [2, 1] });
+  /* Un rouge pour l'adversaire, un jaune pour soi : rien à dire de rouge. */
+  await q(`INSERT INTO fixture_events (fixture_id, seq, type, detail, team_id, player, minute)
+           VALUES (9001, 1, 'Card', 'Red Card', 91, 'Keller', 66),
+                  (9001, 2, 'Card', 'Yellow Card', 85, 'Fayulu', 70)`);
   const [{ insertId: sv }] = await pool.query(
     `INSERT INTO souvenirs (fixture_id, seq, league_id, family, scorer_team, home_id, away_id,
                             score_home, score_away, kickoff_at, expires_at, price)
@@ -1454,6 +1458,22 @@ titre('depuis ta dernière visite');
   await poster(T, 'visite');
   e = await lire(T, true);
   check('le POST la déplace : plus de ticket', !('depuis' in e) || voir(e.depuis));
+
+  /* Le carton rouge (lot 7) : ceux que le club suivi a pris, le second jaune
+     compris, et pas ceux de l'adversaire. */
+  await figer('2027-03-15 18:00:00');
+  await match(9002, { home: 91, away: 85, coupDEnvoiMin: -120, statut: 'FT', buts: [1, 0] });
+  await q(`INSERT INTO fixture_events (fixture_id, seq, type, detail, team_id, player, minute)
+           VALUES (9002, 1, 'Card', 'Red Card', 85, 'Fayulu', 12),
+                  (9002, 2, 'Card', 'Second Yellow card', 85, 'Kabashi', 80),
+                  (9002, 3, 'Card', 'Yellow Card', 85, 'Cipriano', 81),
+                  (9002, 4, 'Card', 'Red Card', 91, 'Keller', 85)`);
+  e = await lire(T, true);
+  check('deux rouges pris par son club (dont un second jaune) : `rouges: 2`',
+    e.depuis?.matchs?.[0]?.fixtureId === 9002 && e.depuis.matchs[0].rouges === 2
+      && e.depuis.matchs[0].issue === 'perdu' && e.depuis.matchs[0].club === 'FC Sion'
+    || voir(e.depuis?.matchs));
+  await poster(T, 'visite');
   await q('DELETE FROM saisons WHERE id = ?', [S9]);
   await chargerSaisons(pool);
 }

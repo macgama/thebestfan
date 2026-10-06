@@ -151,6 +151,15 @@ button.go{width:100%;margin-top:24px;padding:14px;font-size:16px;letter-spacing:
    Les écrans de jeu ne passent pas par ici : ils ne défilent pas, leur budget
    vertical est compté au pixel, et leur ajouter de la marge couperait ce
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
+/* Les notifications : une carte sous celle du compte, ses deux interrupteurs
+   l'un sous l'autre, sur toute la largeur — la phrase du duel est longue. */
+.card.notif{margin-top:18px}
+.card.notif p{margin-bottom:8px}
+#notifCases{display:flex;flex-direction:column;gap:2px}
+#notifCases .tbf-interrupteur{width:100%}
+#notifCases .tbf-interrupteur[disabled]{opacity:.55;cursor:wait}
+#notifNote:empty{display:none}
+
 /* tbf-degagement */
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
@@ -175,6 +184,22 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
       <div class="row"><span data-t="account.pseudo"></span><b id="acPseudo"></b></div>
       <div class="row"><span data-t="account.email"></span><b id="acEmail"></b></div>
       <div class="row"><span data-t="account.status"></span><b id="acStatus"></b></div>
+    </div>
+    <!-- **Les notifications.** Cachées tant que le serveur ne dit pas qu'il
+         peut en envoyer (`notifications.actif`, `sql/notifications.sql`).
+         Les cases valent pour **cet appareil** : c'est lui qui reçoit, et l'on
+         peut vouloir être prévenu sur son téléphone sans l'être au bureau.
+         Voir `TBF_NOTIF` dans `pwa.js`. -->
+    <div class="card notif hide" id="notifCarte">
+      <h2 data-t="notif.titre"></h2>
+      <p data-t="notif.texte"></p>
+      <div id="notifCases">
+        <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+          data-sujet="kop"><i aria-hidden="true"></i><span data-t="notif.kop"></span></button>
+        <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+          data-sujet="duel"><i aria-hidden="true"></i><span data-t="notif.duel"></span></button>
+      </div>
+      <div class="hint" id="notifNote"></div>
     </div>
     <button class="go tbf-plaque" data-ton="flare" id="btnLogout" data-t="account.logout"></button>
     <button class="link" id="btnResend" data-t="account.resend"></button>
@@ -287,6 +312,12 @@ const I18N = {
     'account.pseudo':'Pseudo','account.email':'Adresse','account.status':'Adresse vérifiée',
     'account.logout':'SE DÉCONNECTER','account.resend':'Renvoyer le mail de vérification',
     'account.delete':'Supprimer mon compte',
+    'notif.titre':'NOTIFICATIONS','notif.texte':'Sur cet appareil, même le jeu fermé. Jamais la nuit, de 22 h à 8 h.',
+    'notif.kop':'Un vote de mon KOP s’ouvre','notif.duel':'Un duel classé attend un supporter de mon club',
+    'notif.ios':'Sur iPhone, installe d’abord le jeu sur l’écran d’accueil (Partager, puis « Sur l’écran d’accueil ») et ouvre-le de là.',
+    'notif.navigateur':'Ce navigateur ne reçoit pas de notifications.',
+    'notif.refusees':'Tu les as refusées dans le navigateur. Pour changer d’avis, autorise-les dans les réglages du site, puis recharge la page.',
+    'notif.erreur':'Ça n’a pas marché. Réessaie dans un instant.',
     'delete.warn':'Ton pseudo et ton adresse seront effacés, et tu ne pourras plus te connecter. Les parties déjà jouées restent dans l’historique de tes adversaires, sans ton nom — les effacer reviendrait à réécrire leurs soirées. C’est définitif.',
     'delete.confirm':'SUPPRIMER DÉFINITIVEMENT',
     'delete.done':'Ton compte est supprimé. Merci d’être passé.',
@@ -319,6 +350,12 @@ const I18N = {
     'account.pseudo':'Username','account.email':'Address','account.status':'Address verified',
     'account.logout':'SIGN OUT','account.resend':'Resend the verification email',
     'account.delete':'Delete my account',
+    'notif.titre':'NOTIFICATIONS','notif.texte':'On this device, even with the game closed. Never at night, from 10 pm to 8 am.',
+    'notif.kop':'A vote opens in my KOP','notif.duel':'A ranked duel is waiting for a fan of my club',
+    'notif.ios':'On iPhone, first add the game to your home screen (Share, then “Add to Home Screen”) and open it from there.',
+    'notif.navigateur':'This browser cannot receive notifications.',
+    'notif.refusees':'You blocked them in the browser. To change your mind, allow them in the site settings, then reload the page.',
+    'notif.erreur':'That didn’t work. Try again in a moment.',
     'delete.warn':'Your nickname and address will be erased, and you will no longer be able to sign in. Games already played stay in your opponents’ history, without your name — erasing them would rewrite their evenings. This cannot be undone.',
     'delete.confirm':'DELETE PERMANENTLY',
     'delete.done':'Your account has been deleted. Thanks for stopping by.',
@@ -351,6 +388,12 @@ const I18N = {
     'account.pseudo':'Benutzername','account.email':'Adresse','account.status':'Adresse bestätigt',
     'account.logout':'ABMELDEN','account.resend':'Bestätigungsmail erneut senden',
     'account.delete':'Mein Konto löschen',
+    'notif.titre':'BENACHRICHTIGUNGEN','notif.texte':'Auf diesem Gerät, auch wenn das Spiel geschlossen ist. Nie nachts, von 22 bis 8 Uhr.',
+    'notif.kop':'In meinem KOP beginnt eine Abstimmung','notif.duel':'Ein Ranglistenduell wartet auf einen Fan meines Klubs',
+    'notif.ios':'Auf dem iPhone füge das Spiel zuerst zum Home-Bildschirm hinzu (Teilen, dann „Zum Home-Bildschirm“) und öffne es von dort.',
+    'notif.navigateur':'Dieser Browser kann keine Benachrichtigungen empfangen.',
+    'notif.refusees':'Du hast sie im Browser blockiert. Erlaube sie in den Website-Einstellungen und lade die Seite neu.',
+    'notif.erreur':'Das hat nicht geklappt. Versuch es gleich noch einmal.',
     'delete.warn':'Dein Name und deine Adresse werden gelöscht, und du kannst dich nicht mehr anmelden. Bereits gespielte Partien bleiben ohne deinen Namen im Verlauf deiner Gegner. Das lässt sich nicht rückgängig machen.',
     'delete.confirm':'ENDGÜLTIG LÖSCHEN',
     'delete.done':'Dein Konto wurde gelöscht. Danke fürs Vorbeischauen.',
@@ -383,6 +426,12 @@ const I18N = {
     'account.pseudo':'Nombre','account.email':'Dirección','account.status':'Dirección verificada',
     'account.logout':'SALIR','account.resend':'Reenviar el correo de verificación',
     'account.delete':'Eliminar mi cuenta',
+    'notif.titre':'NOTIFICACIONES','notif.texte':'En este dispositivo, incluso con el juego cerrado. Nunca de noche, de 22 h a 8 h.',
+    'notif.kop':'Se abre una votación en mi KOP','notif.duel':'Un duelo clasificatorio espera a un hincha de mi club',
+    'notif.ios':'En iPhone, añade primero el juego a la pantalla de inicio (Compartir y luego «Añadir a pantalla de inicio») y ábrelo desde allí.',
+    'notif.navigateur':'Este navegador no recibe notificaciones.',
+    'notif.refusees':'Las bloqueaste en el navegador. Para cambiar de opinión, permítelas en los ajustes del sitio y recarga la página.',
+    'notif.erreur':'No ha funcionado. Inténtalo de nuevo en un momento.',
     'delete.warn':'Tu apodo y tu dirección se borrarán, y ya no podrás iniciar sesión. Las partidas ya jugadas permanecen en el historial de tus rivales, sin tu nombre. Es definitivo.',
     'delete.confirm':'ELIMINAR DEFINITIVAMENTE',
     'delete.done':'Tu cuenta ha sido eliminada. Gracias por pasar.',
@@ -541,7 +590,54 @@ function render() {
     ligne('acEmail', user.email);
     ligne('acStatus', user.verified ? t('yes') : t('no'));
     show('btnResend', !user.verified);
+    notifications();
   }
+}
+
+/* ------------------------------------------------------ les notifications
+
+   `TBF_NOTIF` vient de `pwa.js`, chargé en `defer` après ce script : on
+   l'attend. Si le serveur n'en envoie pas, la carte reste cachée ; si cet
+   appareil ne peut pas en recevoir, elle le dit, sans interrupteurs. */
+const pret = () => new Promise((ok) => {
+  if (window.TBF_NOTIF) ok();
+  else document.addEventListener('DOMContentLoaded', ok, { once: true });
+});
+
+async function notifications() {
+  await pret();
+  const n = window.TBF_NOTIF;
+  if (!n || !user) return;
+  const e = await n.etat().catch(() => ({ possible: false, raison: 'eteintes' }));
+  if (!e.possible && e.raison === 'eteintes') { show('notifCarte', false); return; }
+  show('notifCarte', true);
+  $('notifCases').hidden = !e.possible;
+  $('notifNote').textContent = e.possible ? '' : t(`notif.${e.raison}`);
+  if (e.possible) poserCases(e.sujets);
+}
+
+const cases = () => [...document.querySelectorAll('#notifCases [data-sujet]')];
+function poserCases(sujets) {
+  for (const b of cases()) b.setAttribute('aria-checked', String(Boolean(sujets?.[b.dataset.sujet])));
+}
+
+for (const b of cases()) {
+  b.onclick = async () => {
+    const voulu = Object.fromEntries(cases().map((c) => [c.dataset.sujet,
+      c === b ? c.getAttribute('aria-checked') !== 'true' : c.getAttribute('aria-checked') === 'true']));
+    cases().forEach((c) => { c.disabled = true; });
+    $('notifNote').textContent = '';
+    try {
+      poserCases(await window.TBF_NOTIF.poser(voulu));
+    } catch (err) {
+      /* Le refus dans la fenêtre du navigateur est définitif pour ce site :
+         la carte le dit, et les interrupteurs n'ont plus d'objet. */
+      if (err.message === 'refusees') { notifications(); return; }
+      if (err.message !== 'sans_reponse') $('notifNote').textContent = t('notif.erreur');
+    } finally {
+      cases().forEach((c) => { c.disabled = false; });
+    }
+  };
 }
 
 function tab(which) {
@@ -648,6 +744,8 @@ $('btnLogout').onclick = async () => {
     texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
     oui: 'SE DÉCONNECTER', ton: 'flare',
   }))) return;
+  // Cet appareil n'est plus prévenu pour ce joueur : voir `pwa.js`.
+  await window.TBF_NOTIF?.oublier();
   await api('/logout'); user = null; tab('login'); render();
 };
 $('btnResend').onclick = async () => { await api('/resend-verification'); say('acMsg', 'sent.verify', 'ok'); };

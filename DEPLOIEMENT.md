@@ -50,7 +50,7 @@ node_modules/
 
 ## Étape 2 — Le schéma
 
-Les **trente-quatre** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
+Les **trente-cinq** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
 du précédent. Ils sont tous idempotents — les rejouer sur une base déjà à jour ne
 casse rien.
 
@@ -350,6 +350,18 @@ que `raretes` les a rangées.
   ligne « [souvenirs] les chants du Virage se comptent de nouveau » le
   confirme.
 
+- `notifications.sql` (6 octobre 2026) pose deux tables neuves, et ne touche
+  à rien d'existant : `notif_appareils` (les appareils qui ont dit oui aux
+  notifications, avec leurs deux cases) et `notif_cles` (les deux clés qui
+  signent les envois, créées seules au premier démarrage : **rien à saisir
+  dans le Manager**). Il vient après `quotidien.sql` et avant `arenes.sql`,
+  qui doit rester le dernier.
+
+  **Sans lui, rien ne casse** : les notifications restent éteintes, la page du
+  compte ne les propose pas, et le journal le dit une fois
+  (« [notifications] table absente : appliquer sql/notifications.sql »). Le
+  fichier appliqué, elles reviennent d'elles-mêmes dans les dix minutes.
+
 - `arenes.sql` (vague 2 du chantier serveur, lot 6) pose ce que les arènes
   comptent : le **bilan de tribune** du Virage et la **préférence de
   présence**. Aucune table neuve, six instructions, rien de renommé, aucune
@@ -399,7 +411,7 @@ que `raretes` les a rangées.
   Appliqué, le pronostic paraît sans redémarrage de plus que celui que le
   contrôle de démarrage demande.
 
-Contrôle : `SHOW TABLES;` doit en lister **48**.
+Contrôle : `SHOW TABLES;` doit en lister **50**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
