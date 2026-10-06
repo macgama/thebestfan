@@ -1320,6 +1320,10 @@
         texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
         oui: 'SE DÉCONNECTER', ton: 'flare',
       }))) return;
+      /* Cet appareil cesse d'être prévenu pour ce joueur : un téléphone
+         prêté n'annonce plus les votes du KOP de celui qui l'a rendu. Avant
+         la déconnexion, qui ferme la session dont l'oubli a besoin. */
+      await window.TBF_NOTIF?.oublier();
       try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
       catch { /* hors ligne : on recharge quand même, la session locale ne sert plus */ }
       /* Ce que l'onglet retenait de ce joueur part avec lui : les états du
