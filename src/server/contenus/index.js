@@ -30,10 +30,11 @@
  *
  * ## Ce qui lit ce module, et ce qui ne le lit pas
  *
- * **Les tirages, et eux seuls.** Six endroits distribuent : le booster, le
- * paquet de bienvenue, la boutique, les communes offertes au deck, et les deux
- * moteurs qui choisissent le stade d'une rencontre. Tous les six passent par
- * `publies` ou `ouverts`.
+ * **Les tirages, et eux seuls.** Cinq endroits distribuent : le booster, le
+ * paquet de bienvenue, la boutique, les communes offertes au deck, et le stade
+ * d'un match — celui de son Grand Virage et de tous ses duels, tiré ici même
+ * (`stadeDuMatch`, en bas du fichier). Tous les cinq passent par `publies` ou
+ * `ouverts`.
  *
  * Tout le reste continue de lire les listes du code : le moteur qui résout une
  * carte déjà jouée, le classeur qui affiche ce qu'on possède, l'écran de deck
@@ -54,7 +55,7 @@
  */
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STUFF } from '../../shared/fanzzy/inventaire.js';
-import { STADES } from '../../shared/stades.js';
+import { STADES, stadeDeLaRencontre } from '../../shared/stades.js';
 
 /** Les trois familles, et ce que le code en dit. */
 export const FAMILLES = {
@@ -227,9 +228,9 @@ export function publies(famille) {
 /**
  * Les identifiants jouables, en Set.
  *
- * C'est la forme dont les **tirages** ont besoin, et ils sont six à en avoir
- * besoin : le booster, le paquet de bienvenue, la boutique, les cartes offertes
- * au deck, et les deux endroits qui choisissent le stade d'une rencontre.
+ * C'est la forme dont les **tirages** ont besoin : le booster, le paquet de
+ * bienvenue, la boutique, les cartes offertes au deck, et le stade d'une
+ * rencontre (`stadeDuMatch`, juste en dessous, et le repli du duel sans match).
  * Chacun reconstruisait sinon le même Set à sa façon, et il aurait suffi qu'un
  * seul oublie pour que la saison fuie par là.
  *
@@ -241,6 +242,46 @@ export function publies(famille) {
  */
 export function ouverts(famille) {
   return new Set(publies(famille).map((o) => o.id));
+}
+
+/**
+ * **Le stade d'un match** : celui de son Grand Virage, et de tous ses duels.
+ *
+ * Tiré parmi les stades ouverts, sur l'identifiant du match et sur rien
+ * d'autre — ni l'identifiant d'un duel, ni ce que possèdent ses joueurs. Une
+ * fonction, trois lecteurs : la salle du Virage (`stade()`), le duel à son
+ * ouverture (`DuelNvN`), et la liste des matchs du duel, qui l'annonce avant
+ * l'entrée en file (`deck/index.js`).
+ *
+ * ## Pourquoi une seule fonction
+ *
+ * Le duel tirait le sien sur **son** identifiant, un `randomUUID`, pendant que
+ * le Virage tirait sur celui du match : deux duels sur la même rencontre
+ * tombaient dans deux stades, contre la règle écrite en tête de `stades.js`, et
+ * la préparation du duel n'en pouvait montrer aucun, puisqu'il n'existait
+ * qu'après l'appariement. Gaël a tranché le 6 octobre 2026 : tous les duels
+ * d'un match se jouent dans son stade, et la préparation le montre avant
+ * l'entrée en file. Deux appels écrits chacun de son côté avaient fait l'écart ;
+ * un seul l'empêche de revenir. Il vit ici parce que c'est un tirage dans ce
+ * que les saisons ont ouvert, et que les trois lecteurs lisaient déjà ce
+ * module.
+ *
+ * ## Ce que la décision fixe
+ *
+ * **Aucune possession.** `stadeDeLaRencontre` sait tirer dans ce que les deux
+ * camps possèdent, et `stades.js` le prévoyait pour le duel. Un lieu qui
+ * dépendrait de l'adversaire ne se connaîtrait qu'après l'appariement, et la
+ * préparation ne pourrait plus le montrer : le jour où les stades se
+ * gagneront, c'est cette décision qu'il faudra rouvrir, pas cette ligne.
+ *
+ * **Les stades ouverts sont relus à chaque appel.** La salle du Virage garde
+ * le sien d'un bout à l'autre du match ; une saison lancée en plein match peut
+ * donc donner aux duels qui suivent, et à la liste qui les annonce, un autre
+ * lieu que celui du Virage déjà ouvert. C'est le seul écart qui reste : il ne
+ * vient que d'un lancement de saison, et ne dure que jusqu'au coup de sifflet.
+ */
+export function stadeDuMatch(idDuMatch) {
+  return stadeDeLaRencontre([], idDuMatch, ouverts('stade'));
 }
 
 /** Uniquement pour les suites : repartir sans mémoire. */

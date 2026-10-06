@@ -306,6 +306,27 @@
     `/img/fanzzy/${id}/e${evo}/${skin}/${nom}${EXT_ALPHA}?v=${rev ?? 1}`;
 
   /**
+   * Les paupières d'une image de repos, quand elle en a : l'image à poser
+   * par-dessus le temps d'un clignement, ou `null`.
+   *
+   * On part de **l'adresse affichée**, pas d'une identité. `resoudre` a pu
+   * reculer d'une tenue ou d'un âge, et des paupières ne valent que pour
+   * l'image exacte d'où elles ont été découpées (`scripts/fanzzy-cligne.mjs`) :
+   * posées sur un autre repos, elles tomberaient à côté de ses yeux. Une
+   * joie, une poussée, un plein-pied de carte n'en ont donc jamais. Le PNG
+   * de secours d'un repos est le même dessin que son WebP : il en a autant.
+   */
+  function paupieres(src) {
+    const m = /\/img\/fanzzy\/([^/?#]+)\/e([123])\/([^/?#]+)\/neutre\.(?:avif|webp|png)(?=$|\?)/
+      .exec(String(src ?? ''));
+    if (!m) return null;
+    const [, id, evo, skin] = m;
+    const f = index?.fanzzy?.[id];
+    if (f?.evolutions?.[`e${evo}`]?.skins?.[skin]?.cligne !== true) return null;
+    return url(id, Number(evo), skin, 'cligne', f.rev);
+  }
+
+  /**
    * Précharge quelques états. À appeler pour ceux qui doivent apparaître sans
    * délai — le but, l'encaissé : ils arrivent au pire moment pour attendre.
    */
@@ -317,5 +338,5 @@
   }
 
   window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, REPLI, REPLI_ALPHA, secours,
-    charger, pret, resoudre, portrait, precharger, possedes };
+    charger, pret, resoudre, portrait, paupieres, precharger, possedes };
 })();
