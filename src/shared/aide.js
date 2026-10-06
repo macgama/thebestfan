@@ -29,7 +29,7 @@
  * `src/server/aide/index.js`. Une étape est donc soit vraie, soit fausse ; il
  * n'y a pas d'état « vu » à conserver, et rien à remettre à zéro.
  */
-import { EVO_COST, SCARVES } from './fanzzy/dex.js';
+import { EVO_COST, SCARVES, POIGNEE_DE_REPLI } from './fanzzy/dex.js';
 import { DECK_RULES } from './duel/actions.js';
 import { reglage } from './reglages.js';
 
@@ -177,8 +177,10 @@ const RUBRIQUES = [
       ['Il y a quoi dans un booster ?',
         () => 'Cinq cartes. La première est toujours un supporter, la deuxième l’est '
           + 'sept fois sur dix. Les trois dernières donnent une carte d’action, une '
-          + 'pièce d’équipement, une tenue ou une poignée d’écharpes — jamais un '
-          + 'supporter de plus.'],
+          + 'pièce d’équipement, une tenue, un état ou une poignée d’écharpes — '
+          + 'jamais un supporter de plus. Si tu as déjà toutes les tenues, tous les '
+          + 'états ou toutes les cartes d’action que la carte pouvait te donner, '
+          + `elle se change en ${POIGNEE_DE_REPLI} écharpes.`],
       ['Que valent mes doubles ?',
         () => 'Ils deviennent des écharpes, au tarif de la rareté : '
           + `${SCARVES.commune} pour une commune, ${SCARVES.rare} pour une rare, `

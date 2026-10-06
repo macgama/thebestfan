@@ -140,12 +140,15 @@ que l'on juge mal soi-même.
    et impossible à acheter seul ?
 5. **Le ricochet par les écharpes.** L'abonnement double à peu près le nombre
    de boosters qu'un joueur assidu ouvre, et chaque booster rend des écharpes
-   (les doublons) : en régime établi, un abonné assidu gagne par ce ricochet
-   environ 2 700 écharpes de plus par jour, qui achètent à leur tour des
-   boosters. Aucune écharpe ne s'achète, mais l'argent en fait gagner
-   davantage. Est-ce une monnaie achetable par la bande ? Le quotidien
-   n'aggrave rien — il verse la même chose à tous —, mais le point mérite
-   d'être posé avec les autres.
+   (les doublons, et 2 écharpes pour chaque carte dont la catégorie n'a plus
+   rien à lui donner) : en régime établi, un abonné assidu gagne par ce
+   ricochet environ 1 700 écharpes de plus par jour, qui achètent à leur tour
+   des boosters. (C'était 2 700 avant le 6 octobre 2026 : une catégorie
+   épuisée rendait alors une poignée entière, 11,5 écharpes en moyenne.)
+   Aucune écharpe ne s'achète, mais l'argent en fait gagner davantage. Est-ce
+   une monnaie achetable par la bande ? Le quotidien n'aggrave rien — il
+   verse la même chose à tous —, mais le point mérite d'être posé avec les
+   autres.
 
 ---
 

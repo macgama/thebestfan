@@ -75,8 +75,15 @@ ALTER TABLE user_wallet
 -- Ses séries : celles que `reglages.series_actives` nommait, ou **toutes**
 -- quand ce réglage était absent — c'est exactement ce que le jeu faisait, une
 -- liste vide ou absente valant « aucune restriction ».
+--
+-- Son nom est celui que la saison 1 porte en production (relevé le 4 octobre
+-- 2026) et que les écrans et les documents emploient : « La reprise ». Elle
+-- s'appelait ici « Le premier virage », si bien qu'une installation neuve
+-- démarrait sous un nom que personne d'autre n'emploie (aligné le 6 octobre
+-- 2026). Une base où la ligne existe déjà n'est pas touchée : l'`INSERT` ne
+-- joue que sur une table vide, et aucune reprise ne renomme rien.
 INSERT INTO saisons (numero, nom, texte, series, tenues, lancee_a)
-SELECT 1, 'Le premier virage',
+SELECT 1, 'La reprise',
        'Tout ce qui existait avant que les saisons existent.',
        COALESCE((SELECT valeur FROM reglages WHERE cle = 'series_actives'), JSON_ARRAY()),
        JSON_ARRAY(),
