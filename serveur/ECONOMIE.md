@@ -53,8 +53,8 @@ Il en découle trois règles pour le contenu :
 | Missions du jour | 3 tirées par jour (une facile, une moyenne, une difficile) dans un catalogue de 15, plus 1 relance gratuite | 30 / 60 / 100 écharpes, 20 / 40 / 60 XP, 1 / 1 / 2 tampons ; **1 booster** quand les trois sont faites |
 | Bonus quotidien | une carte de présence de 7 cases qui **n'est jamais remise à zéro** | 20, 25, 30, 35, 40, 45 puis 50 écharpes + 1 booster |
 | Jour | minuit, **heure de Zurich**, donné par `CURDATE()` de MySQL (la même horloge que les quotas) | — |
-| Saison 1 « La reprise » | fin le **dimanche 20 décembre 2026 à 23 h 59**, dernier week-end avant la trêve | carnet de tampons à 5 paliers (de 100 écharpes à 4 boosters + 600 écharpes + titre) |
-| Saison 2 | « La trêve », du **lundi 21 décembre 2026** au 28 février 2027 ; ouvre **LES HÉROS DU CANAPÉ** | 2 boosters offerts au lancement à qui a ≥ 10 tampons en S1 |
+| Saison 1 « La reprise » | fin le **jeudi 31 décembre 2026** (tranché le 6 octobre 2026 : des saisons de quatre mois ; proposé ici, le dimanche 20 décembre, dernier week-end avant la trêve) | carnet de tampons à 5 paliers (de 100 écharpes à 4 boosters + 600 écharpes + titre) |
+| Saison 2 | du **1er janvier au 30 avril 2027** (tranché le 6 octobre 2026) ; sa série et son nom restent à choisir (proposé ici : « La trêve », du 21 décembre au 28 février, qui ouvrait **LES HÉROS DU CANAPÉ**) | 2 boosters offerts au lancement à qui a ≥ 10 tampons en S1 |
 | Paliers de collection | **oui, un cran tous les 25 objets**, sur toute la bibliothèque (635 objets en RP, soit 25 crans) | 25 écharpes par cran, 1 booster tous les 4 crans, 1 booster + 100 pour une série complète |
 | Paliers de rang | 5 divisions de ferveur de saison, à seuils absolus qu'on ne perd jamais | de 50 écharpes à 3 boosters + 200, et l'insigne |
 
@@ -390,7 +390,15 @@ compteur), pas une source de revenu.
 
 ## 6. La saison 1 « La reprise », et ce qui s'ouvre ensuite
 
-### 6.1 La fin : dimanche 20 décembre 2026, 23 h 59, heure de Zurich
+### 6.1 La fin : jeudi 31 décembre 2026
+
+**Tranché le 6 octobre 2026 : des saisons de quatre mois**, du 1er janvier au
+30 avril, du 1er mai au 31 août et du 1er septembre au 31 décembre. La
+saison 1 finit le jeudi 31 décembre 2026, et Gaël saisit lui-même la date dans
+l'onglet Saisons (`saisons.fin_le`, un jour : la saison finit avec ce jour de
+jeu). Ce qui suit est la proposition d'origine — le dimanche 20 décembre — et
+n'a plus cours ; un calendrier fixe ne demande plus de vérifier celui des
+championnats.
 
 - **Pourquoi là** : « La reprise », c'est la première journée après la coupure
   d'été. La fin naturelle est la **dernière journée avant la trêve d'hiver**.
@@ -422,6 +430,11 @@ Calibré sur les 9 semaines restantes de la saison 1 : un assidu fait environ
 4,7 tampons par jour joué (≈ 290 au total), un joueur moyen 2,8 (≈ 125), un
 occasionnel 1,6 (≈ 45).
 
+*Avec la fin au 31 décembre et les missions en ligne depuis le 3 octobre, la
+saison 1 compte 90 jours de missions au lieu de 63 : au même rythme, environ
+410, 180 et 65 tampons. Les paliers arrivent plus tôt ; le carnet, figé depuis
+son premier palier versé, n'est pas à recaler (`SERVEUR.md`, § 5).*
+
 | Palier | Tampons | Nom (propre à S1) | Récompense | Qui l'atteint |
 |---|---|---|---|---|
 | 1 | 10 | De retour | 100 écharpes | tout le monde, en 2 à 6 jours |
@@ -449,7 +462,17 @@ moins **10 tampons en S1** reçoit **2 boosters** (« les sachets de la trêve �
 annoncés avec la saison. C'est ce qui ramène les joueurs le jour où il se
 passe quelque chose.
 
-### 6.3 La saison 2 : « La trêve », du 21 décembre 2026 au 28 février 2027
+### 6.3 La saison 2 : du 1er janvier au 30 avril 2027
+
+**Tranché le 6 octobre 2026 pour les dates** : du vendredi 1er janvier au
+vendredi 30 avril 2027, dix-sept semaines, puis la saison 3 du 1er mai au
+31 août et la 4 du 1er septembre au 31 décembre. **Sa série et son nom restent
+à choisir** : ce qui suit — « La trêve », du 21 décembre 2026 au 28 février
+2027, qui ouvrait LES HÉROS DU CANAPÉ — est la proposition d'origine. Trois
+de ses points tenaient aux anciennes dates : le carnet S2 « sur 10 semaines »
+est à recalculer par le gabarit (jours × 4,7) sur dix-sept ; l'annonce se
+poserait au 1er janvier 2027, et non au 21 décembre ; et la « cadence
+ensuite » est désormais celle des quatre mois.
 
 - **Ce qu'elle ouvre** : **une seule** des douze séries fermées. Il ne s'agit
   pas de rouvrir les douze ; c'est le lancement voulu, et la question a déjà

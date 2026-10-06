@@ -3340,27 +3340,32 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
 
    **Après la livraison du quotidien, à faire par Gaël** (`DEPLOIEMENT.md`,
    « Après la livraison du quotidien ») : **saisir la fin de la saison 1** dans
-   l'onglet Saisons (proposée : le 20 décembre 2026, à vérifier sur `/matchs`)
-   — au 4 octobre, `/api/fanzzy/dex` en production ne sert aucune `fin` : elle
-   n'est pas saisie ; recaler les seuils de division sur la ferveur des joueurs
-   **sans abonnement**. Le carnet de la saison 1 n'a pas à être recalé : les
-   missions sont en ligne depuis le 3 octobre, avant le 19. La ligne du jour de
-   jeu est lue : `jourDeJeu.changeA` vaut `00:00`.
+   l'onglet Saisons, **le 31 décembre 2026** — les saisons durent quatre mois
+   (1er janvier–30 avril, 1er mai–31 août, 1er septembre–31 décembre), tranché
+   le 6 octobre ; au 4 octobre, `/api/fanzzy/dex` en production ne sert
+   aucune `fin` : elle n'est pas saisie ; recaler les seuils de division sur la
+   ferveur des joueurs **sans abonnement**. Le carnet de la saison 1 n'a pas à
+   être recalé : les missions sont en ligne depuis le 3 octobre, avant le 19,
+   et la saison en compte maintenant 90 jours au lieu de 63 — les paliers
+   arrivent plus tôt (`serveur/SERVEUR.md`, § 5). La ligne du jour de jeu est
+   lue : `jourDeJeu.changeA` vaut `00:00`.
 
    **Les décisions que le chantier rend à Gaël** (`HISTORIQUE.md`, 4 quadragies
-   ter, « Ce qui reste ») : la saison 2 et sa série ; payer ou non les
-   divisions ; le dossier du juriste ;
-   un bonus de KOP voté après la fin d'une saison ; le rang de la racine de
-   `/api/rank/moi`, qui compte les comptes supprimés ; les tenues prises par
-   l'abonnement ; le nom de la saison 1 (« Le premier virage » dans
-   `sql/saisons.sql`, « La reprise » partout ailleurs — et en production,
-   relevé le 4 octobre). **Tranchées le 6 octobre 2026, et faites** :
+   ter, « Ce qui reste ») : la série et le nom de la saison 2 ; le dossier du
+   juriste ; un bonus de KOP voté après la fin d'une saison ; le rang de la
+   racine de `/api/rank/moi`, qui compte les comptes supprimés ; les tenues
+   prises par l'abonnement. **Tranchées le 6 octobre 2026, et faites** :
    l'inflation des écharpes avant la saison 2 — une place de booster dont la
    catégorie est épuisée rend deux écharpes au lieu d'une poignée, et un
    booster établi environ 29 au lieu de 46 (`serveur/ECONOMIE.md`, § 12) ;
    « La quête » et « Mur de bâches », retirés du catalogue, leur prix rendu au
    pot des KOP qui les avaient payés au démarrage qui suit la livraison
-   (`serveur/ECONOMIE.md`, § 12.3).
+   (`serveur/ECONOMIE.md`, § 12.3) ; les divisions ne paient toujours que de
+   l'honneur ; le nom de la saison 1 est « La reprise », que la graine de
+   `sql/saisons.sql` donne maintenant aussi à une installation neuve (elle
+   disait « Le premier virage » ; une base existante n'est pas touchée) ; et
+   le calendrier : des saisons de quatre mois, la 1 jusqu'au 31 décembre 2026,
+   la 2 du 1er janvier au 30 avril 2027 (`serveur/SERVEUR.md`, § 5).
    L'XP du Virage est tranchée et réglée (le 3 octobre :
    quinze par match poussé, dix chants au moins, trois matchs par jour), et la
    ferveur arrondie à zéro dans une grande tribune aussi (le plancher d'un

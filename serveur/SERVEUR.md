@@ -42,8 +42,10 @@ des arènes.
 4. **Une carte de présence de 7 cases** qui ne recule jamais : 20, 25, 30, 35,
    40, 45 puis 50 écharpes, et 1 booster à la septième. La série de jours
    s'affiche, mais **rien ne se perd** quand elle casse.
-5. **La saison 1 « La reprise » finit le dimanche 20 décembre 2026**, dernier
-   week-end avant la trêve. Date à confirmer sur `/matchs` avant de l'écrire.
+5. **La saison 1 « La reprise » finit le jeudi 31 décembre 2026.** Les
+   saisons durent quatre mois : du 1er janvier au 30 avril, du 1er mai au
+   31 août, du 1er septembre au 31 décembre (tranché le 6 octobre 2026). Gaël
+   saisit la date dans l'onglet Saisons.
 6. **Un carnet de tampons** pour la saison : chaque mission en rapporte. Cinq
    paliers vont de 100 écharpes à 4 boosters, 600 écharpes et un titre.
 7. **Un cran de collection tous les 25 objets** : 25 écharpes, et 1 booster
@@ -210,12 +212,19 @@ une absence.
 
 ## 5. La saison 1 « La reprise », et la suite
 
-### La fin : dimanche 20 décembre 2026
+### La fin : jeudi 31 décembre 2026
 
-« La reprise », c'est la première journée après la coupure d'été. Sa fin
-naturelle est **la dernière journée avant la trêve d'hiver**. Super League et
-Ligue 1 jouent vraisemblablement leur dernier week-end de l'année vers le
-19-20 décembre : **à vérifier sur `/matchs` avant de l'écrire**.
+**Tranché le 6 octobre 2026 : des saisons de quatre mois**, calées sur
+l'année civile — du 1er janvier au 30 avril, du 1er mai au 31 août, du
+1er septembre au 31 décembre. La saison 1 « La reprise » occupe la dernière
+case de 2026 et finit le **jeudi 31 décembre 2026** ; Gaël saisit lui-même la
+date dans l'onglet Saisons.
+
+Ce document proposait auparavant le dimanche 20 décembre, dernier week-end de
+championnat avant la trêve d'hiver (« La reprise », c'est la première journée
+après la coupure d'été, et sa fin naturelle aurait été la dernière avant la
+suivante). Un calendrier fixe a l'avantage de ne rien demander au calendrier
+des championnats : il n'y a plus de date à vérifier sur `/matchs`.
 
 - La date se saisit dans l'onglet **Saisons** de l'administration (un jour, pas
   une heure). La saison se termine à la fin de ce jour de jeu.
@@ -269,20 +278,34 @@ carnet dans l'onglet Saisons, seuils multipliés par « jours restants / 63 »,
 modifie plus. L'écran le refuse et dit pourquoi : un seuil relevé ou un gain
 baissé après coup reprendrait une promesse déjà faite.
 
+*Avec la fin au 31 décembre, la saison 1 compte **90 jours de missions** (en
+ligne depuis le 3 octobre) au lieu des 63 du calibrage. Au même rythme, un
+assidu ferait environ 410 tampons, un joueur moyen 180 et un occasionnel 65 :
+les paliers arrivent plus tôt, le joueur moyen frôle le quatrième et
+l'occasionnel atteint le deuxième. Le carnet n'est pas à recaler (son premier
+palier est versé depuis longtemps, il ne se modifie plus), et c'est sans
+risque : ce sont des tampons gagnés en jouant, et le carnet entier ne
+rapporte que 10 boosters et 1 500 écharpes.*
+
 ### Le passage de relais
 
 Au lancement de la saison 2, tout joueur qui a gagné **au moins 10 tampons en
 saison 1** reçoit **2 boosters**, « les sachets de la trêve ». C'est ce qui
 fait revenir les joueurs le jour où il se passe quelque chose.
 
-### La saison 2, proposée : « La trêve »
+### La saison 2 : du 1er janvier au 30 avril 2027
 
-- Du **lundi 21 décembre 2026 au 28 février 2027**.
-- Elle ouvre **une seule** des douze séries fermées. Proposition : **LES HÉROS
-  DU CANAPÉ** (« ils n'y étaient pas, et ils savent mieux »), dix lignées et
-  cinq légendaires déjà écrites. Pendant la trêve, le supporter regarde les
-  autres championnats depuis son canapé. Alternative d'hiver : **LES
-  PHÉNOMÈNES MÉTÉO**. À vérifier dans le catalogue tel qu'il est.
+- **Tranché le 6 octobre 2026** : du **vendredi 1er janvier au vendredi
+  30 avril 2027**, la première case du calendrier de quatre mois. Les
+  suivantes : la saison 3 du 1er mai au 31 août 2027, la 4 du 1er septembre
+  au 31 décembre 2027. Ce qui était proposé ici, « La trêve » du lundi
+  21 décembre 2026 au 28 février 2027, ne l'est plus.
+- **Sa série et son nom restent à choisir.** Elle ouvre **une seule** des
+  douze séries fermées. Proposition, qui n'est qu'une proposition : **LES
+  HÉROS DU CANAPÉ** (« ils n'y étaient pas, et ils savent mieux »), dix
+  lignées et cinq légendaires déjà écrites — pendant la trêve, le supporter
+  regarde les autres championnats depuis son canapé. Alternative d'hiver :
+  **LES PHÉNOMÈNES MÉTÉO**. À vérifier dans le catalogue tel qu'il est.
 - Elle s'annonce quand son contenu est prêt, et seulement à ce moment-là :
   poser sa date d'ouverture dans l'administration, c'est la promettre. Avant
   cela, le kiosque n'affiche aucune date.
@@ -517,6 +540,12 @@ dessiné.
 5. **Le minuit du jeu**, une fois la sonde lue (§ 2).
 6. **La saison 2** : la série ouverte (LES HÉROS DU CANAPÉ proposée), et la
    date de fin de la saison 1, après vérification du calendrier.
+
+   **Tranché le 6 octobre 2026 pour les dates** : des saisons de quatre mois
+   (1er janvier–30 avril, 1er mai–31 août, 1er septembre–31 décembre). La
+   saison 1 finit le 31 décembre 2026, et c'est Gaël qui saisit la date ; la
+   saison 2 court du 1er janvier au 30 avril 2027 (§ 5). **Sa série et son nom
+   restent à choisir.**
 7. **Le dossier du juriste** : l'abonnement, qui double les boosters, fait
    gagner par ricochet environ 2 700 écharpes par jour à un assidu en régime
    établi (environ 1 700 depuis la poignée réduite du point 1). Et plus de
@@ -543,6 +572,9 @@ dessiné.
    premiers duels classés et les deux premiers Virages comptés de chaque jour.
    C'est faisable en SQL, mais c'est une requête de plus et une seconde
    définition de la ferveur. Je ne le propose pas pour cette vague.
+
+   **Tranché le 6 octobre 2026 : rien ne change.** Les divisions ne paient
+   que de l'honneur.
 
 ---
 
