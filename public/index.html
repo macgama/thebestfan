@@ -619,6 +619,11 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   transform:translate(-50%,-50%);pointer-events:none;
   background:radial-gradient(circle,rgba(245,195,59,.28) 0%,rgba(224,64,44,.14) 32%,
     rgba(60,130,232,.06) 54%,rgba(4,6,10,0) 70%)}
+/* **Ce qu'il porte**, accroché à sa gauche, à hauteur de hanche : les deux
+   pièces du deck (`TBF_STUFF.porte`, `ui.css`). Au-dessus du sol, sous le
+   défilé des âges ; la scène reste touchable à travers. */
+.sac{position:absolute;inset:0;z-index:3;pointer-events:none}
+.sac .tbf-porte{left:max(4px,calc(50% - 128px));bottom:calc(9% + 8px);--piece:38px}
 .sol{position:absolute;left:50%;bottom:calc(9% - 10px);width:min(44%,180px);height:24px;
   transform:translateX(-50%);border-radius:50%;pointer-events:none;
   background:radial-gradient(ellipse at center,rgba(0,0,0,.6),rgba(0,0,0,0) 70%)}
@@ -2183,6 +2188,9 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
         <div class="soir" id="soir" aria-hidden="true" hidden>
           <div class="tbf-bache-club"></div><div class="tbf-fumee"></div></div>
         <div class="sol"></div>
+        <!-- Ce qu'il porte : les deux pièces que le deck lui a mises
+             (`poserSac`). Vide tant que le portefeuille n'a rien dit. -->
+        <div class="sac" id="sac" aria-hidden="true"></div>
         <div class="flotte">
           <div class="bascule">
             <!-- Un calque par geste : l'arrivée et le saut, le rebond de pose,
@@ -2351,6 +2359,8 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
      le supporter générique, qui est quelqu'un d'autre. -->
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<!-- Les pièces d'équipement : ce que le Fanzzy porte, accroché à côté de lui. -->
+<script src="/stuff-art.js"></script>
 <!-- L ouverture : l éventail de Fanzzy, et le moment où l écran s en va.
      Après fanzzy-art.js, dont il lit la liste des personnages dessinés. -->
 <script src="/ouverture.js"></script>
@@ -3974,6 +3984,22 @@ function nommer(p) {
   commandes();
   /* L'avatar suit : tout changement de personnage passe par ici. */
   poserAvatar();
+}
+
+/**
+ * Accroche à côté du personnage les deux pièces que son deck lui a mises
+ * (`wallet.stuffPorte`). Ne redessine que si le sac a changé : les pièces
+ * arrivent avec un petit geste, et le rejouer à chaque relecture du
+ * portefeuille le ferait passer pour une nouveauté.
+ */
+let cleSacPose = null;
+function poserSac(pieces) {
+  const el = $('sac');
+  if (!el || !window.TBF_STUFF?.porte) return;
+  const cle = window.TBF_STUFF.cleSac(pieces);
+  if (cle === cleSacPose) return;
+  cleSacPose = cle;
+  el.innerHTML = window.TBF_STUFF.porte(pieces);
 }
 
 /** Le lieu, la famille et la rareté de l'âge montré — ce que lit le décor. */
@@ -5736,6 +5762,7 @@ function feterNiveau(niveau) {
        d'illustration pour cette carte — dans les trois cas le supporter reste à
        l'écran et l'accueil ne s'en aperçoit pas.                             */
     const actif = coll?.wallet?.active;
+    poserSac(actif ? coll?.wallet?.stuffPorte : null);
     if (actif) {
       /* ----------------------------------------- la lignée, avant le reste
 

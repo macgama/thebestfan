@@ -5,6 +5,7 @@ import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
 /* Les chants, partagés avec le Virage. Le duel les impose plus : il les offre,
    comme lui, et c'est la dernière différence entre les deux modes qui tombe. */
 import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
+import { TYPES } from '../../shared/fanzzy/dex.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
@@ -13,6 +14,7 @@ import { ouverts } from '../contenus/index.js';
    deux arènes composent les mêmes modificateurs, elles doivent les nommer
    pareil. Voir `src/shared/apports.js`. */
 import { apportsDe, seulsLesMods } from '../../shared/apports.js';
+import { piecesPortees } from '../../shared/fanzzy/inventaire.js';
 
 /**
  * Moteur de duel N contre N.
@@ -458,6 +460,37 @@ export class DuelNvN {
   /* --------------------------------------------------------------- chant */
 
   /**
+   * **Les cinq chants qu'un joueur a en main** : le répertoire du duel, où le
+   * chant du geste de son Fanzzy tient toujours **la place du milieu**.
+   *
+   * Le répertoire tire cinq chants sur vingt-six : le geste du personnage n'y
+   * tombait qu'environ une fois sur cinq, et sa spécialité ne se voyait donc
+   * presque jamais. Quand il n'y est pas, il prend la place du cinquième — la
+   * main reste de cinq cartes, l'éventail n'a pas à changer. Au milieu parce
+   * que c'est la seule carte que ses voisines ne recouvrent pas : sa marque se
+   * lit entière.
+   *
+   * Il suit le Fanzzy en tribune : un changement, et la carte change avec lui.
+   * Aucun bonus — le chant coûte et pousse comme ailleurs.
+   */
+  offreDe(j) {
+    const sienne = this.chantSien(j);
+    const r = this.repertoire;
+    if (!sienne) return r;
+    const autres = r.filter((id) => id !== sienne).slice(0, 4);
+    return [...autres.slice(0, 2), sienne, ...autres.slice(2)];
+  }
+
+  /** Le chant de la spécialité de son Fanzzy : celui du répertoire s'il y en
+      a un, sinon le premier de l'ordre qui porte son geste. */
+  chantSien(j) {
+    const geste = j?.fanzzy?.[j.actif]?.cri?.gest;
+    if (!geste) return null;
+    return this.repertoire.find((id) => CHANTS[id].gest === geste)
+      ?? ORDRE.find((id) => CHANTS[id].gest === geste) ?? null;
+  }
+
+  /**
    * Un chant. Le geste est noté ici, et **choisi ici**.
    *
    * Le client l'annonçait — `chanter(userId, { geste, taps })` — alors que le
@@ -487,7 +520,7 @@ export class DuelNvN {
     /* Le répertoire est une règle, pas une suggestion de la page — même raison
        qu'au Virage : un client modifié demanderait sinon le chant le plus
        rentable des dix-neuf à chaque fois. */
-    if (!this.repertoire.includes(cardId)) throw new Cheat('chant_hors_repertoire');
+    if (!this.offreDe(j).includes(cardId)) throw new Cheat('chant_hors_repertoire');
 
     this.regen(j, t);
     if (aEffet(j, 'silence', t)) throw new Cheat('silenced');
@@ -515,9 +548,17 @@ export class DuelNvN {
     j.chants++;
     j.motif = (j.motif + 1) % MOTIFS.length;
 
+    /* **Son geste.** Le chant qui porte le geste du Fanzzy en tribune est sa
+       spécialité : la page le fait chanter à la manière de sa famille (la
+       Voix crie, la Percussion frappe). L'évènement le dit plutôt que de
+       laisser la page le déduire — celui d'en face, elle n'en connaît que
+       l'identifiant. Rien ne se calcule dessus. */
+    const fz = j.fanzzy[j.actif];
+    const sien = Boolean(fz?.cri?.gest) && fz.cri.gest === geste;
     const evenements = [this.ev('chant', {
       userId, side: j.side, geste, cardId,
       quality: Number(quality.toFixed(3)), backfire,
+      ...(sien ? { sien: true, famille: fz.type ?? null } : {}),
     })];
 
     // Les charges d'un modificateur temporaire se consomment au chant.
@@ -1050,6 +1091,10 @@ export class DuelNvN {
          L'identifiant seul est la lignée, et disait toujours le premier âge. */
       stade: j.fanzzy[j.actif]?.stade ?? 1,
       skin: tenueDe(j.fanzzy[j.actif]),
+      /* Les deux pièces que son joueur lui a mises au deck : l'arène les
+         accroche à côté du personnage, des deux côtés de la corde. Elles se
+         voient comme son Fanzzy se voit — c'est ce qu'il a choisi d'emporter. */
+      sac: piecesPortees(j.fanzzy[j.actif]?.stuff),
       // Le souffle des autres est visible : c'est une information de jeu.
       breath: Math.round(j.breath),
     }));
@@ -1064,7 +1109,13 @@ export class DuelNvN {
          comme les envoie le Virage. La page n'a pas à connaître la table des
          chants : le jour où l'un change de coût, les deux écrans suivent sans
          déploiement du client. */
-      chants: this.repertoire.map((id) => ({ id, ...CHANTS[id] })),
+      /* Le chant de son geste porte la famille du Fanzzy, son sceau et sa
+         couleur : la page n'a pas à attendre le catalogue pour le marquer. */
+      chants: (moi ? this.offreDe(moi) : this.repertoire).map((id) => {
+        if (!moi || id !== this.chantSien(moi)) return { id, ...CHANTS[id] };
+        const type = moi.fanzzy[moi.actif]?.type;
+        return { id, ...CHANTS[id], sien: { famille: type ?? null, c: TYPES[type]?.c ?? null, ico: TYPES[type]?.ico ?? null } };
+      }),
       stade: this.stade
         ? { id: this.stade.id, nom: this.stade.nom, effet: this.stade.effet }
         : null,
