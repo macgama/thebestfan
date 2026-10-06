@@ -12,6 +12,20 @@ seul. **Serveur + page**, sans schéma : redémarrer, hors d'un match en direct.
 
 ---
 
+**Les classements qui refusaient une ligne sans équipe** (branche
+`claude/contenus-sql-q1sziv`, 6 octobre 2026, vu dans le journal de Gaël :
+« [foot] classement 3/2017 : Column 'team_id' cannot be null »). Il se dépose
+avec ce qui est en dessous, ou seul.
+
+- `src/server/football/poller.js` : l'API rend parfois une ligne de
+  classement dont l'équipe a un identifiant nul. Le filtre la laissait passer
+  et la compétition entière n'était plus rafraîchie. La ligne est maintenant
+  écartée. Contrôlé par `npm run foot:smoke` (la forme réelle rejouée).
+
+**Aucun schéma ni réglage.** Un redémarrage, hors d'un match en direct.
+
+---
+
 **Les décisions de Gaël du 6 octobre au matin** (branche
 `claude/project-thread-iatg2m`, fusionnée dans `main` le 6 octobre 2026).
 Quatre changements, qui partent ensemble au prochain build :
