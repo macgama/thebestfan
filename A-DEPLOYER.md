@@ -18,6 +18,72 @@ dessous, ou seul.
 modifié ailleurs). Après la construction : `npm run schema:appliquer` en SSH,
 puis **redémarrer**, hors d'un match en direct. Sans le schéma, rien ne casse :
 le pronostic ne paraît pas, et le démarrage nomme le fichier.
+**Les tuiles de l'accueil sur grand écran** (branche
+`claude/ecran-large-pkbkwj`, 6 octobre 2026). Elles se déposent avec ce qui
+est en dessous, ou seules.
+
+- `public/menu.js`, `public/nav.js`, `public/ui.css` : sur un écran d'au
+  moins 1 180 pixels de large (un ordinateur), chaque page de contenu porte
+  les dix tuiles de l'accueil, cinq de chaque côté de sa colonne, avec les
+  mêmes stickers que le menu (boosters, monde au Virage, duels qui
+  attendent). On change de section en un clic, sans ouvrir le menu.
+  L'accueil, le Virage et le duel ne changent pas ; rien ne change sur
+  téléphone ni sur tablette. Contrôlé par `npm run menu:smoke` (onze
+  contrôles neufs) ; mesuré sous Firefox 136 et Chrome.
+
+**Aucun schéma ni réglage, sans redémarrage** : ce sont trois fichiers
+statiques, et leur empreinte se recalcule quand ils changent sur le disque.
+
+---
+
+**Les notifications** (branche `claude/notifications-pkpvy9`, 6 octobre 2026,
+demandées par Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+
+- Prévenir un joueur dont le jeu est fermé, sur son téléphone ou son
+  ordinateur, pour deux choses : **un vote de son KOP qui s'ouvre** (les
+  membres, sauf celui qui l'ouvre) et **un duel classé qui attend un supporter
+  de son club** (une fois par match, et pas plus d'un duel par heure, réglable
+  dans `/admin`). Jamais la nuit, de 22 h à 8 h. Un message ne nomme jamais
+  un joueur.
+- Rien ne part sans le oui du joueur : deux interrupteurs sur la page **Mon
+  compte**, valables pour cet appareil, puis la fenêtre du navigateur. Sur
+  iPhone, seulement depuis le jeu installé sur l'écran d'accueil (la carte le
+  dit). Se déconnecter coupe les notifications de cet appareil ; supprimer son
+  compte les efface toutes.
+- `src/server/notifications/index.js`, `public/sw.js` (l'affichage),
+  `public/pwa.js` (l'inscription), `public/compte.html`, `public/menu.js` (la
+  déconnexion), le KOP et les duels qui préviennent. Un paquet neuf,
+  `web-push`, que la construction du Manager installe. `CONFIDENTIALITE.md` a
+  son paragraphe, à faire relire. Contrôlé par `npm run notifications:smoke`
+  (37 contrôles neufs) et `npm run pwa:ui` (7).
+
+**Un schéma : `sql/notifications.sql`**, deux tables neuves, rien de touché
+ailleurs. `npm run schema:appliquer` en SSH, puis **un redémarrage** hors d'un
+match en direct. **Rien à saisir dans le Manager** : les clés d'envoi se
+créent seules au premier démarrage. Sans le fichier, rien ne casse : la carte
+ne s'affiche pas, et le journal dit « appliquer sql/notifications.sql ».
+Interrupteur d'urgence : `/admin`, section Les notifications.
+
+---
+
+**Le carton rouge au Fanzzy de l'accueil** (branche
+`claude/carton-rouge-q3bnc0`, 6 octobre 2026, lot 7, confié par Gaël). Il se
+dépose avec ce qui est en dessous, ou seul.
+
+- `src/server/quotidien/depuis.js` : le résumé « Depuis ta dernière visite »
+  compte les cartons rouges que le club suivi a pris dans chaque match (le
+  rouge direct et le second jaune ; pas ceux de l'adversaire). Contrôlé par
+  `npm run quotidien:smoke` (un contrôle neuf).
+- `public/index.html` : le ticket l'écrit (« FC Sion perd 0–1 · carton
+  rouge », raccourci en « · rouge » si la ligne est trop longue), et le
+  Fanzzy se fâche à l'arrivée, sans sauter, après une défaite ou un nul où
+  son club a pris un rouge. Après une victoire, il reste fier. Contrôlé par
+  `npm run accueil:ui` (huit contrôles neufs).
+
+**Aucun schéma ni réglage** : les cartons sont déjà rangés dans
+`fixture_events`. **Un redémarrage** pour le serveur, hors d'un match en
+direct ; la page seule n'en demande pas, mais sans le serveur à jour elle ne
+reçoit aucun rouge à raconter.
 
 ---
 

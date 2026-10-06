@@ -94,6 +94,10 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      saisons.sql, parce qu'il ne fait rien dont un autre fichier dépende — le
      dernier rang est celui qui ne peut gêner personne. */
   'quotidien',
+  /* Les notifications : les appareils qui ont dit oui, et les clés qui
+     signent les envois. Clées sur `users.public_id` (auth.sql), et rien n'en
+     dépend. Avant les arènes, qui doivent rester les dernières. */
+  'notifications',
   /* Les arènes (vague 2, lot 6) : le bilan de tribune et la préférence de
      présence. Il ajoute des colonnes à `virage_presence` et à `user_wallet`
      (souvenirs.sql), et il prolonge l'upsert des chants que quotidien.sql a

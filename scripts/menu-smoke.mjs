@@ -69,7 +69,7 @@ app.get('/api/version', (_q, s) => s.json(VERSION_PUBLIQUE));
 app.use('/api', (_q, s) => s.json({}));
 
 for (const [route, fichier] of [['/', 'index.html'], ['/carnet', 'carnet.html'],
-  ['/admin', 'admin.html']]) {
+  ['/admin', 'admin.html'], ['/virage', 'virage.html']]) {
   app.get(route, (_q, s) => s.sendFile(path.join(RACINE, 'public', fichier)));
 }
 app.use(express.static(path.join(RACINE, 'public')));
@@ -325,6 +325,96 @@ for (const [nom, m] of [['l’accueil', accueil], ['une page de contenu', carnet
   check('le bouton du menu annonce le duel, et jamais le monde', e.menu === 'attend'
     || (console.log('        menu :', e.menu), false));
   check('sans erreur de script', erreurs.length === 0
+    || (console.log('   ', erreurs.slice(0, 4)), false));
+  enDirect = [];
+  enAttente = [];
+  await page.close();
+}
+
+/* ------------------------------------------- les rails du grand écran
+
+   Au-delà de 1 180 px, les pages de contenu portent les dix tuiles de
+   l'accueil de part et d'autre de leur colonne (`RAILS`, dans menu.js). Ce
+   qu'on éprouve : que ce soient **les mêmes** que sur l'accueil — mêmes
+   portes, mêmes tons, mêmes libellés, mêmes dessins, dans le même ordre —,
+   car une liste recopiée finit par ne plus dire la même chose (voir l'en-tête
+   de menu.js) ; qu'elles tiennent hors de la colonne et dans l'écran ; qu'on
+   les touche vraiment (rien de la page ne les couvre) ; qu'elles disent ce
+   que dit le tiroir ; et qu'elles n'existent ni sur un écran plus étroit, ni
+   dans une arène, ni sur l'accueil, qui a les siennes. */
+{
+  enDirect = [{ id: 40, open: true, fini: false, mien: false, crowd: [30, 7] }];
+  enAttente = [{ fixtureId: 51, format: '3v3', camps: [2, 1] }];
+  const tuiles = (sel) => [...document.querySelectorAll(sel)].map((a) => ({
+    href: a.getAttribute('href'), ton: a.dataset.ton,
+    lib: a.querySelector('.lib')?.textContent.trim(),
+    dessin: a.querySelector('svg')?.innerHTML.replace(/\s+/g, ' ').trim(),
+  }));
+  const page = await nav.newPage();
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  await page.setViewport({ width: 1366, height: 682 });
+  await page.goto(`${base}/`, { waitUntil: 'networkidle0' });
+  const duHub = await page.evaluate(`(${tuiles})('.centre > nav.rail .tbf-case')`);
+  const railsAuHub = await page.evaluate(() => document.querySelectorAll('.tbf-rails').length);
+
+  await page.goto(`${base}/carnet`, { waitUntil: 'networkidle0' });
+  const lire = () => page.evaluate(`(() => {
+    const t = (${tuiles})('.tbf-rails .tbf-case');
+    const col = document.getElementById('app').getBoundingClientRect();
+    const boites = [...document.querySelectorAll('.tbf-rails .tbf-case')].map((a) => {
+      const b = a.getBoundingClientRect();
+      const x = b.left + b.width / 2;
+      const y = b.top + b.height / 2;
+      return { l: b.left, r: b.right, t: b.top, b: b.bottom, w: b.width, h: b.height,
+        touche: document.elementFromPoint(x, y)?.closest('a') === a };
+    });
+    const v = document.querySelector('.tbf-rails .tbf-case[href="/virage"]');
+    return { t, col: { l: col.left, r: col.right }, boites,
+      ici: [...document.querySelectorAll('.tbf-rails [aria-current="page"]')].map((a) => a.getAttribute('href')),
+      virage: (v?.dataset.etat ?? '') + ':' + (v?.dataset.pastille ?? '') };
+  })()`);
+  let r = await lire();
+  for (let i = 0; i < 50 && r.virage === ':'; i++) {
+    await new Promise((ok) => { setTimeout(ok, 60); });
+    r = await lire();
+  }
+  check('à 1 366 px, une page de contenu porte les dix tuiles de l’accueil',
+    r.t.length === 10 || (console.log('        vu :', r.t.length), false));
+  check('les mêmes portes, tons, libellés et dessins, dans le même ordre',
+    duHub.length === 10 && JSON.stringify(r.t) === JSON.stringify(duHub)
+    || (console.log('        hub :', JSON.stringify(duHub.map((x) => x.lib)),
+      '· rails :', JSON.stringify(r.t.map((x) => x.lib))), false));
+  check('cinq de chaque côté de la colonne, sans la toucher',
+    r.boites.slice(0, 5).every((b) => b.r <= r.col.l - 8)
+    && r.boites.slice(5).every((b) => b.l >= r.col.r + 8)
+    || (console.log('        colonne :', r.col, r.boites.map((b) => [b.l, b.r])), false));
+  check('toutes dans l’écran, à une taille qui se touche',
+    r.boites.every((b) => b.l >= 0 && b.r <= 1366 && b.t >= 0 && b.b <= 682 && b.w >= 64 && b.h >= 64)
+    || (console.log('       ', r.boites), false));
+  check('rien de la page ne les couvre', r.boites.every((b) => b.touche));
+  check('la page où l’on est s’y marque', JSON.stringify(r.ici) === '["/carnet"]'
+    || (console.log('        vu :', r.ici), false));
+  check('elles disent ce que dit le tiroir (le monde au Virage)', r.virage === 'monde:37'
+    || (console.log('        virage :', r.virage), false));
+  check('et l’accueil, qui a les siennes, n’en reçoit pas d’autres', railsAuHub === 0);
+
+  await page.setViewport({ width: 1100, height: 800 });
+  const etroit = await page.evaluate(() => [...document.querySelectorAll('.tbf-rails .tbf-case')]
+    .filter((a) => a.getBoundingClientRect().width > 0).length);
+  check('sous 1 180 px, elles ne s’affichent pas', etroit === 0);
+
+  await page.setViewport({ width: 1366, height: 682 });
+  await page.goto(`${base}/virage`, { waitUntil: 'networkidle0' });
+  await new Promise((ok) => { setTimeout(ok, 400); });
+  const auVirage = await page.evaluate(() => ({
+    rails: document.querySelectorAll('.tbf-rails').length,
+    tiroir: document.querySelectorAll('.tbf-tiroir').length,
+  }));
+  check('ni dans l’arène du Virage, qui a pourtant son menu',
+    auVirage.rails === 0 && auVirage.tiroir === 1
+    || (console.log('        vu :', auVirage), false));
+  check('sans erreur de script sur le carnet', erreurs.length === 0
     || (console.log('   ', erreurs.slice(0, 4)), false));
   enDirect = [];
   enAttente = [];
