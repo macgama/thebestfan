@@ -505,6 +505,12 @@ dessiné.
    tribune, avec le lot 6. C'est une règle, pas un montant.
 3. **Le bonus de KOP « La quête »** ne fait rien aujourd'hui : un KOP qui le
    vote perd 900 écharpes. Il faut le brancher ou le retirer.
+
+   **Tranché le 6 octobre 2026, et fait : retiré**, avec « Mur de bâches »
+   (500), qui ne faisait rien non plus. Les deux quittent le catalogue, et ce
+   qu'ils avaient coûté revient au pot de chaque KOP qui les avait achetés,
+   une fois, au démarrage du serveur qui suit la livraison. Le journal le
+   dit, KOP par KOP (`ECONOMIE.md`, § 12.3).
 4. **La ferveur arrondie à zéro** dans une tribune de plus de 34 personnes
    environ (67 pour un supporter du club). C'est invisible tant que les
    tribunes sont petites, mais les divisions en dépendront.

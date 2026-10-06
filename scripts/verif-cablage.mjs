@@ -839,6 +839,27 @@ check('server.js dit au virage les matchs que l’API ne rend plus',
   }
 }
 
+/* ------------------------- les bonus retirés : rendus au pot, au démarrage
+
+   « La quête » et « Mur de bâches » ont quitté le catalogue du KOP le
+   6 octobre 2026, et ce qu'ils avaient coûté revient au pot par
+   `kop.rendreLesRetires`, que `scripts/kop-smoke.mjs` éprouve. Encore faut-il
+   que `server.js` l'appelle : c'est le seul chemin par lequel le
+   remboursement arrive en production, puisqu'une livraison par le Manager
+   (la construction tire `main`, puis redémarre) ne passe aucun script de
+   données. Et qu'il l'**attende**, une fois le KOP construit et avant
+   d'écouter : appelé sans attendre, un membre pourrait lire son pot pendant
+   qu'il se crédite. Une ligne effacée par mégarde ne se verrait nulle part
+   ailleurs : les KOP garderaient leur pot amputé, sans un mot au journal. */
+{
+  const appel = serveur.search(/await\s+kop\.rendreLesRetires\(\)/);
+  check('server.js rend au pot les bonus retirés, en attendant la fin',
+    appel > 0 || (console.log('        aucun « await kop.rendreLesRetires() »'), false));
+  check('une fois le KOP construit, et avant que le serveur écoute',
+    appel > serveur.indexOf('kop = createKop(') && serveur.indexOf('kop = createKop(') > 0
+    && appel < serveur.indexOf('http.listen('));
+}
+
 /* ---------------------------- le serveur n'emporte que ses cinq paquets
 
    **La panne que ce contrôle empêche n'arrive qu'en production.**
