@@ -5,8 +5,8 @@ import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOu
 import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
 import { chargerSaisons, toutesLesSaisons, saisonEnCours, saisonProchaine }
   from '../fanzzy/saisons.js';
-import { CARNET_DEFAUT, LIMITES_CARNET, validerCarnet, memeCarnet }
-  from '../../shared/saison.js';
+import { CARNET_DEFAUT, LIMITES_CARNET, validerCarnet, memeCarnet, finDeFenetre,
+  dansLaFenetre, proposerSeuils, seuilsDivisions } from '../../shared/saison.js';
 import { STUFF } from '../../shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STADES } from '../../shared/stades.js';
@@ -324,6 +324,83 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       [cle, JSON.stringify(valeur ?? null), acteur]);
     await journal(acteur, 'reglage.modifie', cle, { valeur }, adresseIp);
     return { cle, valeur };
+  }
+
+  /* ---------------------------------------- recaler les seuils de division
+
+     L'annexe A d'`ECONOMIE.md`, sans SSH : la ferveur classée de la saison en
+     cours, par joueur **sans abonnement**, et les quatre seuils que la règle
+     de `shared/saison.js` en tire. Lire ne change rien ; poser écrit les
+     quatre réglages par le chemin ordinaire, chacun au journal.
+
+     La liste des abonnés se lit ici en une requête, et non joueur par joueur
+     par `estAbonne` : c'est une statistique, elle n'ouvre rien à personne.
+     La règle est la même (`fin` nulle ou à venir). */
+  async function recalageDivisions() {
+    let s;
+    try {
+      [s] = await q(`
+        SELECT f.id, f.numero, f.nom, DATE_FORMAT(f.fin_le, '%Y-%m-%d') AS fin_le,
+               TIMESTAMPDIFF(SECOND, f.lancee_a, LEAST(NOW(3), f.fin)) / 86400 AS ecoules,
+               IF(f.fin_le IS NULL, NULL,
+                  TIMESTAMPDIFF(SECOND, f.lancee_a, f.fin) / 86400) AS totaux
+          FROM (SELECT s.*, ${finDeFenetre('s')} AS fin
+                  FROM saisons s WHERE s.lancee_a IS NOT NULL) f
+         ORDER BY f.lancee_a DESC, f.id DESC LIMIT 1`);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE' || e?.code === 'ER_BAD_FIELD_ERROR') {
+        throw fail('admin.error.recalage_sans_schema', 409);
+      }
+      throw e;
+    }
+    const actuels = Object.fromEntries(seuilsDivisions()
+      .filter((d) => d.n > 1).map((d) => [`rang.${d.id}`, d.seuil]));
+    if (!s) return { saison: null, actuels, ...proposerSeuils({ joursTotaux: null }) };
+    const saison = { id: s.id, numero: s.numero, nom: s.nom, fin_le: s.fin_le };
+    /* Sans dernier jour de jeu, rien ne se projette : on ne compte personne,
+       pour ne pas afficher un effectif qui ne mène à aucune proposition. */
+    if (s.totaux == null) {
+      return { saison, actuels, ...proposerSeuils({ joursEcoules: Number(s.ecoules),
+        joursTotaux: null }), joueurs: null };
+    }
+
+    const source = `
+      SELECT user_id, ferveur, last_push_at AS quand FROM virage_presence WHERE classe = 1
+      UNION ALL
+      SELECT user_id, ferveur, ended_at FROM duel_results WHERE mode = 'classe'`;
+    const lire = (sansAbonnes) => q(`
+      SELECT x.user_id, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT DATE(x.quand)) AS jours
+        FROM (${source}) x JOIN saisons s ON s.id = ?
+       WHERE ${dansLaFenetre('x.quand', 's')} ${sansAbonnes ? `
+         AND x.user_id NOT IN (SELECT user_id FROM abonnements
+                                WHERE fin IS NULL OR fin > NOW(3))` : ''}
+       GROUP BY x.user_id`, [s.id]);
+    let joueurs;
+    try {
+      try { joueurs = await lire(true); } catch (e) {
+        // Sans table des abonnements, personne n'est abonné.
+        if (e?.code !== 'ER_NO_SUCH_TABLE' || !/abonnements/.test(e.message)) throw e;
+        joueurs = await lire(false);
+      }
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE' || e?.code === 'ER_BAD_FIELD_ERROR') {
+        throw fail('admin.error.recalage_sans_schema', 409);
+      }
+      throw e;
+    }
+    return { saison, actuels, ...proposerSeuils({ joueurs,
+      joursEcoules: Number(s.ecoules), joursTotaux: Number(s.totaux) }) };
+  }
+
+  /* Les valeurs posées sont celles que le serveur recalcule à l'instant, pas
+     celles qu'un écran ouvert depuis une heure aurait affichées. */
+  async function poserRecalage(acteur, adresseIp) {
+    const r = await recalageDivisions();
+    if (!r.seuils) throw fail('admin.error.recalage_impossible', 409);
+    for (const [cle, valeur] of Object.entries(r.seuils)) {
+      await fixerReglage(acteur, cle, valeur, adresseIp);
+    }
+    return { ...r, actuels: { ...r.seuils }, pose: true };
   }
 
   /* ------------------------------------------------ catalogue Fanzzy
@@ -1114,6 +1191,12 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     await journal(req.user.id, 'reglage.defaut', req.params.cle, { valeur }, ip(req));
     return res.json({ cle: req.params.cle, valeur, defaut: true });
   }));
+
+  router.get('/divisions/recalage', safe(async (_req, res) =>
+    res.json(await recalageDivisions())));
+
+  router.post('/divisions/recalage', safe(async (req, res) =>
+    res.json(await poserRecalage(req.user.id, ip(req)))));
 
   router.get('/journal', safe(async (req, res) => res.json({
     journal: await q(
