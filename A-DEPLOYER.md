@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Les classements qui refusaient une ligne sans équipe** (branche
+`claude/contenus-sql-q1sziv`, 6 octobre 2026, vu dans le journal de Gaël :
+« [foot] classement 3/2017 : Column 'team_id' cannot be null »). Il se dépose
+avec ce qui est en dessous, ou seul.
+
+- `src/server/football/poller.js` : l'API rend parfois une ligne de
+  classement dont l'équipe a un identifiant nul. Le filtre la laissait passer
+  et la compétition entière n'était plus rafraîchie. La ligne est maintenant
+  écartée. Contrôlé par `npm run foot:smoke` (la forme réelle rejouée).
+
+**Aucun schéma ni réglage.** Un redémarrage, hors d'un match en direct.
+
+---
+
 **Le pronostic** (branche `claude/pronostic-th5gjy`, 6 octobre 2026, demandé
 par Gaël, version gratuite choisie par lui). Il se dépose avec ce qui est en
 dessous, ou seul.
