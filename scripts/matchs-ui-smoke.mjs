@@ -610,6 +610,50 @@ selections = true;
 await controlerLarge(page, check, { nom: 'la page des matchs', liste: '#liste>.ligue',
   pret: () => jusqua(async () => (await page.$$('#liste>.ligue')).length === 2) });
 selections = false;
+
+/* La fiche d'un match, sur grand écran, est une page comme les autres : elle
+   se pose dans la colonne, sous la barre du haut, entre les tuiles qui
+   restent à portée ; l'affiche à gauche, le fil à droite. La flèche de la
+   barre la referme, sans quitter les matchs (Gaël, 6 octobre 2026 : une
+   fenêtre de téléphone au milieu d'un écran noir). */
+{
+  await page.setViewport({ width: 1366, height: 682 });
+  await page.reload({ waitUntil: 'networkidle0' });
+  await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
+  await page.evaluate((id) => ouvrirFiche(id), MATCH);
+  await jusqua(async () => await page.$('#souspage') !== null);
+  await dodo(300);
+  if (process.env.TBF_CAPTURES) {
+    await page.screenshot({ path: path.join(process.env.TBF_CAPTURES, 'fiche-match-large.png') });
+  }
+  const g = await page.evaluate(() => {
+    const b = (s) => document.querySelector(s)?.getBoundingClientRect();
+    const [fiche, aff, sous, haut] = [b('#fiche'), b('#fcorps .aff'), b('#souspage'), b('#app>.tbf-haut')];
+    const tuiles = [...document.querySelectorAll('.tbf-rails .tbf-case')].map((a) => {
+      const r = a.getBoundingClientRect();
+      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.tbf-case') === a;
+    });
+    return { fiche: { l: fiche.left, r: fiche.right, t: fiche.top }, haut: haut?.bottom,
+      aff: { r: aff.right, t: aff.top }, sous: { l: sous.left, t: sous.top }, tuiles,
+      fermer: getComputedStyle(document.getElementById('ferme')).display };
+  });
+  check('à 1 366 px, la fiche du match se pose dans la colonne, sous la barre',
+    g.fiche.l > 120 && g.fiche.r < 1246 && Math.abs(g.fiche.t - g.haut) < 2
+    || (console.log('        ', JSON.stringify(g)), false));
+  check('les dix tuiles restent visibles et cliquables autour d’elle',
+    g.tuiles.length === 10 && g.tuiles.every(Boolean) || (console.log('        ', g.tuiles), false));
+  check('l’affiche à gauche, le fil à droite, à la même hauteur',
+    g.sous.l > g.aff.r && Math.abs(g.sous.t - g.aff.t) < 40 || (console.log('        ', JSON.stringify(g)), false));
+  check('sa propre flèche s’efface devant celle de la barre', g.fermer === 'none');
+  await page.click('#app>.tbf-haut .tbf-retour');
+  await dodo(300);
+  check('la flèche de la barre referme la fiche sans quitter les matchs',
+    await page.evaluate(() => !document.getElementById('fiche').classList.contains('on')
+      && location.pathname === '/matchs'
+      && getComputedStyle(document.getElementById('liste')).visibility === 'visible'));
+  await page.setViewport({ width: 400, height: 880 });
+}
+
 await page.reload({ waitUntil: 'networkidle0' });
 await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
 
