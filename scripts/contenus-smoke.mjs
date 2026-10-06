@@ -64,7 +64,10 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
   check('sans la table, le chargement ne lève pas', r.charge === false);
   check('et toutes les cartes d’action restent jouables',
     publies('action').length === ACTIONS.length);
-  check('tout l’équipement aussi', publies('stuff').length === STUFF.length);
+  check('tout l’équipement aussi, sauf ce que le code dit fermé',
+    publies('stuff').length === STUFF.filter((s) => s.publie !== false).length);
+  check('et une pièce neuve qui attend sa saison n’est pas distribuée',
+    !STUFF.some((s) => s.publie === false) || !publies('stuff').some((s) => s.publie === false));
   check('et tous les stades', publies('stade').length === STADES.length);
 }
 
@@ -97,10 +100,11 @@ const contenus = createContenus({ pool });
      en attendant qu'une saison le rouvre retirerait du jour au lendemain des
      cartes que les joueurs jouent. */
   for (const [famille, { source, nom }] of Object.entries(FAMILLES)) {
+    const ouvertsEnCode = source.filter((o) => o.publie !== false).length;
     check(`tout ce qui existait reste jouable — ${nom}`,
-      publies(famille).length === source.length
+      publies(famille).length === ouvertsEnCode
       || (console.log('        publiés', publies(famille).length,
-        'sur', source.length), false));
+        'sur', ouvertsEnCode), false));
   }
 
   /* La forme survit au passage en base : une carte d'action garde son coût et
