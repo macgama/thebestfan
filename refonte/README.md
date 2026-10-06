@@ -68,11 +68,12 @@ temporaire de la session ; ce qui doit durer est ici.*
    4 quadragies octies) : il raconte le dernier match de son club, il répond
    autrement quand on insiste à le toucher, il fête le retour du joueur. **Il
    cligne des yeux** depuis le 6 octobre, RP1 seulement et à l'accueil
-   (4 quinquagies) : une retouche Artlist de sa tête, dont on ne garde que
-   les paupières ; les autres Fanzzy attendent la leur (`npm run cligne --
-   tete <ID>` dit quoi demander). **Au duel aussi**, filmé pour Gaël le même
-   jour (`HISTORIQUE.md`, 4 quadragies novies) : les deux Fanzzy en tribune
-   se tiennent dans l'arène et vivent poussées, buts et coups d'en face.
+   (4 quinquagies quater) : une retouche Artlist de sa tête, dont on ne
+   garde que les paupières ; les autres Fanzzy attendent la leur (`npm run
+   cligne -- tete <ID>` dit quoi demander). **Au duel aussi**, filmé pour
+   Gaël le même jour (`HISTORIQUE.md`, 4 quadragies novies) : les deux
+   Fanzzy en tribune se tiennent dans l'arène et vivent poussées, buts et
+   coups d'en face.
 3. **Les sons Artlist** (la rumeur, le but, les tambours) : Gaël doit les
    écouter et dire lesquels on garde (`art/son/_src/artlist/A-ECOUTER.md`).
 4. **Les vieux buts** : fait, dans `main`. Le relevé redemande les
@@ -85,7 +86,7 @@ temporaire de la session ; ce qui doit durer est ici.*
    (inflation des écharpes, saison 2…). Le stade du duel est tranché le
    6 octobre : celui du match, le même que son Grand Virage, et la
    préparation le montre avant l'entrée en file (`HISTORIQUE.md`,
-   4 quinquagies).
+   4 quinquagies bis).
 6. **Rouges connues** : `deck:ui` (un contrôle, depuis avant le lot 0 ; un
    correctif dort dans la copie `.claude/worktrees/funny-herschel-18c485`
    d'une autre session) ; `accueil:ui` intermittente. **Dans un conteneur

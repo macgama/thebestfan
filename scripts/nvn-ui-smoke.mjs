@@ -107,6 +107,13 @@ for (const [i, id] of U.entries()) {
       actions: dix })]);
 }
 
+/* **Une tenue mise par celui d'en face** : la Bâloise a habillé son Choriste
+   pour Halloween, à son premier âge. Le Choriste n'a pas cette tenue
+   dessinée — il reste au dessin de base, et les contrôles de l'arène ne
+   bougent pas —, mais la vue doit la dire. */
+await raw.query(`INSERT INTO user_skins (user_id,fanzzy_id,stage,skin_id,equipped)
+                 VALUES (?,'TR32',1,'halloween',1)`, [U[1]]);
+
 /* Les couleurs des deux clubs du match support (`sql/couleurs.sql`) : la
    liste et la vue les servent, et la page en fait l'écharpe de l'affiche,
    la corde et les bâches du HUD (lot 6). Le second match n'en a pas : sans
@@ -1834,6 +1841,47 @@ check('la corde a bougé', bouge);
     && calme.moi.animation === 'none' && calme.eux.animation === 'none'
     && calme.moi.rotate === 'none' && terni < 0.9
     || (console.log('        ', JSON.stringify({ moi: calme.moi, eux: calme.eux })), false));
+}
+
+/* **La tenue d'en face** : l'arène et l'affiche dessinaient le Fanzzy
+   adverse en tenue de base, faute de connaître la sienne. La vue la dit
+   maintenant (`equipes[].skin`, à son âge `equipes[].stade`), et la page la
+   dessine. Le Choriste n'a pas de tenue dessinée : on regarde le dessin sur
+   un Fanzzy de LA REPRISE, qui a son Halloween à chaque âge. */
+{
+  const servi = await A.page.evaluate(() => {
+    const e = S.vue.equipes[S.vue.moi.side ^ 1]?.[0];
+    return { skin: e?.skin ?? null, stade: e?.stade ?? null };
+  });
+  check(`la vue dit la tenue que celui d’en face a mise, à son âge (${servi.skin}, âge ${servi.stade})`,
+    servi.skin === 'halloween' && servi.stade === 1);
+  /* Une vue changée et rendue dans la même tâche : la suivante du serveur
+     la remplacerait, on lit donc l'image demandée (`voulu`), pas celle qui
+     finit de charger. */
+  const dessin = await A.page.evaluate(() => {
+    const avant = S.vue;
+    const habiller = (stade, skin) => {
+      const v = JSON.parse(JSON.stringify(avant));
+      Object.assign(v.equipes[v.moi.side ^ 1][0], { fanzzy: 'RP1', stade, skin });
+      S.vue = v;
+      rendreDuel();
+      return fzArene.eux.voulu;
+    };
+    const r = { e1: habiller(1, 'halloween'), e2: habiller(2, 'halloween'), base: habiller(1, 'base') };
+    S.vue = avant;
+    rendreDuel();
+    r.affiche = vignetteFz({ id: 'RP1', nom: 'RP1', stade: 1, skin: 'halloween' }, false, 'var(--or)');
+    r.afficheBase = vignetteFz({ id: 'RP1', nom: 'RP1', stade: 1, skin: 'base' }, false, 'var(--or)');
+    return r;
+  });
+  check(`dans l’arène, le Fanzzy d’en face porte sa tenue (${dessin.e1.split('/img/fanzzy/')[1] ?? dessin.e1})`,
+    dessin.e1.includes('/RP1/e1/halloween/'));
+  check(`et celle de l’âge où sa Relève l’a mené (${dessin.e2.split('/img/fanzzy/')[1] ?? dessin.e2})`,
+    dessin.e2.includes('/RP1/e2/halloween/'));
+  check('sans tenue mise, sa base', !dessin.base.includes('halloween') && dessin.base.includes('RP1'));
+  check('sur l’affiche aussi, chacun paraît comme il l’a habillé',
+    dessin.affiche.includes('/RP1/e1/halloween/') && !dessin.afficheBase.includes('halloween')
+    || (console.log('        ', dessin.affiche, dessin.afficheBase), false));
 }
 
 /* Le bandeau d'annonce, en partie : sous les deux rangées du HUD, hors des

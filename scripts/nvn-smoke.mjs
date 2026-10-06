@@ -378,6 +378,26 @@ check('un entraînement ne compte pas',
   check('et le moteur dit qu’il n’y a plus rien après',
     evR.find((x) => x.t === 'evolve')?.encore === false);
 
+  /* **La tenue d'en face.** La vue dit, pour chaque joueur, l'âge de son
+     personnage en tribune et la tenue que son joueur lui a mise à cet âge
+     (`tenues`, lue par `loadout`) : l'arène le dessinait en tenue de base. */
+  {
+    const dT = duelR({ TR32: 3 });
+    dT.joueurs.get('0-0').fanzzy[0].tenues = { 1: 'carnaval', 3: 'retro' };
+    const enFace = () => vuePour(dT, '1-0', t).equipes[0][0];
+    check(`la vue d’en face porte la tenue de son premier âge (${enFace().skin}, âge ${enFace().stade})`,
+      enFace().skin === 'carnaval' && enFace().stade === 1);
+    const jT = dT.joueurs.get('0-0');
+    jT.fanzzy[0].stade = 2;
+    check(`à un âge sans tenue mise, la base (${enFace().skin}, âge ${enFace().stade})`,
+      enFace().skin === 'base' && enFace().stade === 2);
+    jT.fanzzy[0].stade = 3;
+    check(`et la Relève l’habille comme son joueur l’a habillé à cet âge (${enFace().skin})`,
+      enFace().skin === 'retro');
+    check('un deck sans tenues entre en base',
+      vuePour(dT, '0-0', t).equipes[1][0].skin === 'base');
+  }
+
   j.main.push('a-releve');
   j.breath = 100;
   j.cooldowns['a-releve'] = 0;

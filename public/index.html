@@ -4599,14 +4599,29 @@ function saluer() {
  * match à raconter, une longue absence se fête — après le coucou, pour que
  * le salut garde son geste.
  *
+ * **Le carton rouge** (lot 7 ; 6 octobre 2026, confié par Gaël) : un rouge
+ * pris par son club le met en colère — le visage du carton, `decision`, qui
+ * se sert dans la colère de sa famille —, sans sauter. Après une défaite ou
+ * un nul, pas après une victoire : on est fâché d'avoir perdu à dix, on ne
+ * l'est plus d'avoir gagné à dix. Sans colère dessinée, une défaite garde
+ * son dépit, et un nul ne dit toujours rien. Le rouge doit être écrit sur le
+ * ticket (`ecrit`) : une colère que rien n'explique ressemble à une panne.
+ *
  * @param {object|null} depuis  le `depuis` du ticket montré, ou `null`
  * @param {number|null} absent  la durée de l'absence, en millisecondes
+ * @param {string[]} [ecrit]    les lignes que le ticket a vraiment écrites ;
+ *                              sans elles, on suppose tout écrit
  */
-function recitDe(depuis, absent) {
+function recitDe(depuis, absent, ecrit) {
   const m = (Array.isArray(depuis?.matchs) ? depuis.matchs : [])
     .find((x) => typeof x?.club === 'string' && x.club.trim()
       && ['gagne', 'nul', 'perdu'].includes(x.issue));
-  const r = m?.issue === 'gagne' ? { etat: expression('victoire', 'but'), saute: true, tenue: RECIT_MS }
+  const lignes = m ? lignesDuMatch(m) : [];
+  const rouge = lignes.length > 1
+    && (!ecrit || lignes.slice(0, -1).some((l) => ecrit.includes(l)));
+  const fache = rouge && m.issue !== 'gagne' ? expression('decision') : null;
+  const r = fache ? { etat: fache, saute: false, tenue: RECIT_MS }
+    : m?.issue === 'gagne' ? { etat: expression('victoire', 'but'), saute: true, tenue: RECIT_MS }
     : m?.issue === 'perdu' ? { etat: expression('defaite', 'encaisse'), saute: false, tenue: RECIT_MS }
     : absent >= ABSENCE_FETEE ? { etat: expression('joie', 'but'), saute: true, tenue: FETE_MS, fete: true }
     : null;
@@ -4614,8 +4629,8 @@ function recitDe(depuis, absent) {
 }
 
 /** Le récit, ou la fête, joué à l'arrivée (voir `recitDe`). */
-function raconter(depuis, absent) {
-  const r = recitDe(depuis, absent);
+function raconter(depuis, absent, ecrit) {
+  const r = recitDe(depuis, absent, ecrit);
   if (!r) return;
   const attente = r.fete ? Math.max(0, salutJusqua - performance.now()) : 0;
   recitJusqua = performance.now() + attente + r.tenue;
@@ -5123,15 +5138,9 @@ function nouvellesDepuis(d) {
   const pluriel = (x, un, plusieurs) => `${x} ${x > 1 ? plusieurs : un}`;
   const saison = mot(d.saison?.nom);
   if (saison) L.push(n(d.saison.numero) ? `Saison ${n(d.saison.numero)} : ${saison}` : `Saison : ${saison}`);
-  /* Le score du point de vue du club suivi (`club`) : l'issue en est dite. */
-  const ISSUES = { gagne: 'gagne', nul: 'fait nul', perdu: 'perd' };
   for (const m of Array.isArray(d.matchs) ? d.matchs : []) {
-    const club = mot(m?.club);
-    const issue = ISSUES[m?.issue];
-    if (!club || !issue) continue;
-    const s = Array.isArray(m.score) && m.score.length === 2 && m.score.every(Number.isInteger) ? m.score : null;
-    const vu = s && club === mot(m.exterieur) ? [s[1], s[0]] : s;
-    L.push(vu ? `${club} ${issue} ${vu[0]}–${vu[1]}` : `${club} ${issue}`);
+    const lignes = lignesDuMatch(m);
+    if (lignes.length) L.push(lignes);
   }
   if (n(d.souvenirs)) L.push(`+${pluriel(n(d.souvenirs), 'souvenir', 'souvenirs')}`);
   const amis = (Array.isArray(d.amis?.nouveaux) ? d.amis.nouveaux : []).map((a) => mot(a?.pseudo)).filter(Boolean);
@@ -5157,7 +5166,34 @@ function nouvellesDepuis(d) {
   if (n(d.invitationsKop)) L.push(pluriel(n(d.invitationsKop), 'invitation à un KOP', 'invitations à un KOP'));
   return L;
 }
-/** Pose le ticket de retour s'il a quelque chose à dire. @returns {boolean} posé */
+/**
+ * Un match du ticket, du point de vue du club suivi (`club`) : l'issue en est
+ * dite. Avec les rouges qu'il a pris, la ligne a trois façons de s'écrire, de
+ * la plus complète à la plus courte — le ticket prend la première qui tient
+ * (`montrerRetour`) ; sans rouge, une seule. Vide si le match ne se dit pas.
+ */
+function lignesDuMatch(m) {
+  const ISSUES = { gagne: 'gagne', nul: 'fait nul', perdu: 'perd' };
+  const club = typeof m?.club === 'string' ? m.club.trim() : '';
+  const issue = ISSUES[m?.issue];
+  if (!club || !issue) return [];
+  const s = Array.isArray(m.score) && m.score.length === 2 && m.score.every(Number.isInteger) ? m.score : null;
+  const vu = s && club === (typeof m.exterieur === 'string' ? m.exterieur.trim() : '') ? [s[1], s[0]] : s;
+  const base = vu ? `${club} ${issue} ${vu[0]}–${vu[1]}` : `${club} ${issue}`;
+  const rouges = Math.max(0, Math.floor(Number(m.rouges) || 0));
+  if (!rouges) return [base];
+  return [rouges > 1 ? `${base} · ${rouges} cartons rouges` : `${base} · carton rouge`,
+    rouges > 1 ? `${base} · ${rouges} rouges` : `${base} · rouge`, base];
+}
+
+/**
+ * Pose le ticket de retour s'il a quelque chose à dire.
+ *
+ * Une nouvelle peut s'écrire de plusieurs façons (un tableau, la plus
+ * complète d'abord) : la première qui tient est gardée.
+ *
+ * @returns {string[]|false} les lignes écrites, ou `false` si rien n'est posé
+ */
 function montrerRetour(d) {
   if (!d || typeof d !== 'object') return false;
   const nouvelles = nouvellesDepuis(d);
@@ -5173,17 +5209,22 @@ function montrerRetour(d) {
   pileDesTickets().append(t);
   /* Les positions de mise en page, pas les rectangles : le ticket monte en
      glissant, et ses enfants avec lui. */
-  for (const texte of nouvelles) {
-    const li = document.createElement('li');
-    li.textContent = texte;
-    ul.append(li);
-    const rangs = new Set([...ul.children].map((x) => x.offsetTop));
-    if (rangs.size > 2 || li.offsetWidth > ul.clientWidth + 0.5) li.remove();
+  const ecrites = [];
+  for (const nouvelle of nouvelles) {
+    for (const texte of [nouvelle].flat()) {
+      const li = document.createElement('li');
+      li.textContent = texte;
+      ul.append(li);
+      const rangs = new Set([...ul.children].map((x) => x.offsetTop));
+      if (rangs.size > 2 || li.offsetWidth > ul.clientWidth + 0.5) { li.remove(); continue; }
+      ecrites.push(texte);
+      break;
+    }
   }
   if (!ul.children.length) { t.remove(); return false; }
   rejouerSur(t, 'tbf-glisse');
   setTimeout(() => t.remove(), 3320);
-  return true;
+  return ecrites;
 }
 
 /** La marque de visite (§ 8.2) : après le ticket, ou après la lecture s'il n'y en a pas. */
@@ -5231,7 +5272,7 @@ async function arriverAuHub(lecture) {
     marquerVisite();
     /* Il ne raconte que ce que le ticket écrit : sans ticket, un visage
        défait ne s'expliquerait pas. */
-    raconter(montre ? depuis : null, absent);
+    raconter(montre ? depuis : null, absent, montre || undefined);
     if (montre) await pause(3400);
   } else {
     raconter(null, absent);

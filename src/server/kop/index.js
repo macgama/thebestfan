@@ -99,7 +99,10 @@ export function createKop({ pool, requireAuth, io = null,
 
      Et rien de ce qu’un KOP apporte en jeu n’est réservé : ses bonus valent
      pour tous ses membres, abonnés ou non. Voir `abonnement/index.js`. */
-  abonnement = null }) {
+  abonnement = null,
+  /* Les notifications : un vote qui s'ouvre prévient les membres dont
+     l'onglet est fermé. Sans elles, seul le socket prévient. */
+  notifications = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -473,6 +476,10 @@ export function createKop({ pool, requireAuth, io = null,
        membres rafraîchissent leur page, la moitié d'entre eux voterait après la
        clôture. */
     if (io) io.to(`kop:${kopId}`).emit('kop:vote', vote);
+    /* Et hors de la page, pour ceux qui l'ont demandé. Pas attendu : le vote
+       est ouvert, celui qui l'a proposé n'a pas à patienter pendant qu'on
+       prévient les autres. */
+    notifications?.voteOuvert(kopId, vote);
     return vote;
   }
 
