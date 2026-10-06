@@ -2086,8 +2086,13 @@ Par ordre d'utilité.
    écran » dans `ui.css`, contrôlés par `menu:smoke`). L'accueil, le Virage
    et le duel n'en ont pas. Les maquettes des deux formes proposées à Gaël
    (les tuiles seules, ou les tuiles et des pages réorganisées pour la
-   largeur) sont dans le dossier du projet, `ecran-large/`. Le contenu des
-   pages garde pour l'instant sa largeur de téléphone.
+   largeur) sont dans le dossier du projet, `ecran-large/`. Gaël a choisi la
+   seconde : une page réorganisée pour la largeur le dit par
+   `<body class="tbf-large">` (« Les pages larges » dans `ui.css`), et sa
+   colonne prend alors jusqu'à 1 320 px. Faits : le profil (deux colonnes),
+   la boutique (l'étal s'allonge), la répétition (les familles deux par
+   rangée). Les autres pages gardent leur colonne, tuiles autour ; le deck
+   est revu à part (fil « Interface des pages du deck »).
 
 3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
    765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
@@ -2101,8 +2106,19 @@ Par ordre d'utilité.
    `offreDe()` dans `src/server/nvn/engine.js`. Le Virage n'est pas concerné :
    sa rangée de chants est commune à toute la tribune.
 
-4. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
-   suivent les deux clubs qui s'affrontent réellement. Conçu, pas commencé.
+4. ~~**Le derby automatique**~~ — **fait le 6 octobre 2026.** Deux joueurs
+   sur le jeu au même moment, l'un suivant chaque club d'un match du jour :
+   le bouton de l'accueil propose à chacun « Derby du jour · Un supporter de
+   Bâle est en ligne », qui mène à ce match en 1v1 classé, dans la tribune de
+   son club ; l'écran du duel le marque DERBY. Quand l'un entre en file,
+   l'autre lit « Derby ! · un supporter de Sion t'attend » (l'accueil relit
+   alors toutes les trente secondes). Jamais qui, rien en base : une marque
+   « vu sur le jeu » en mémoire, quatre minutes, posée par la lecture de
+   `/api/nvn/attentes`. Voir `derbyPour` dans `src/server/nvn/index.js`, et
+   `npm run derby:smoke`. Hors de l'accueil, c'est la notification du duel
+   classé qui prend le relais (point 6) : celui qui a appuyé le premier
+   attend en file, et les supporters de l'autre club qui l'ont demandé sont
+   prévenus, l'appli fermée.
 
 5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
    d'envoi. Conçu, pas commencé.
