@@ -7685,3 +7685,126 @@ n'ont aucune rouge nouvelle : celles qui restent rougissent à l'identique sur
 - **Le clignement**, ici aussi, quand les images « yeux fermés » existeront.
 
 ---
+
+## 4 quinquagies. Trois décisions de Gaël — le reste des boosters, les bonus de KOP retirés, des saisons de quatre mois
+
+*6 octobre 2026, session cloud, branche `worktree-agent-af387e839b2515aa4`.
+Gaël a tranché ce jour-là les décisions que le chantier lui rendait
+(`ETAT.md`, § 7 bis) : « Oui, les trois ». Trois commits — les boosters, les
+KOP, les saisons —, puis celui de cette trace.*
+
+### Ce qui a changé
+
+- **Une catégorie épuisée rend deux écharpes.** Une place ouverte de booster
+  dont la catégorie n'a plus rien à donner au joueur — toutes ses tenues, tous
+  ses états ou toutes ses cartes d'action — retombait sur une poignée entière,
+  11,5 écharpes en moyenne. Elle rend `POIGNEE_DE_REPLI`, 2 écharpes
+  (`src/shared/fanzzy/dex.js`), que lisent le tirage, la simulation et l'aide,
+  qui le dit maintenant au joueur. La catégorie des écharpes garde sa poignée
+  de 6, 14 ou 30, et une pièce d'équipement en double son tarif de doublon.
+- **« La quête » et « Mur de bâches » quittent le catalogue des KOP**, et ce
+  qu'ils avaient coûté revient au pot : 900 et 500 écharpes par achat, une
+  fois, rendues par le serveur à son démarrage (`rendreLesRetires`,
+  `src/server/kop/index.js`). Le catalogue sert cinq bonus, `proposer()`
+  refuse un identifiant inconnu, et ce qui ne servait qu'à tenir les deux
+  hors de vente (`MODS_DU_VIRAGE`, `agit`, `EN_VENTE`) est parti avec eux.
+- **La saison 1 s'appelle « La reprise » jusque dans la graine** :
+  `sql/saisons.sql` la créait sous « Le premier virage », si bien qu'une
+  installation neuve démarrait sous un nom que personne n'emploie. Une base
+  existante n'est pas touchée.
+- **Des saisons de quatre mois**, calées sur l'année : du 1er janvier au
+  30 avril, du 1er mai au 31 août, du 1er septembre au 31 décembre. La
+  saison 1 finit le jeudi 31 décembre 2026, date que Gaël saisit dans
+  `/admin` ; la saison 2 court du 1er janvier au 30 avril 2027. Cela remplace
+  la fin au 20 décembre et la saison 2 « La trêve », du 21 décembre au
+  28 février, que les documents proposaient. Aucun code ne porte de date de
+  saison.
+- **Les divisions ne changent pas** : elles ne paient que de l'honneur.
+
+### Pourquoi comme ça
+
+- **Le repli payait d'avoir tout.** Chez un joueur qui possède tout, plus de
+  la moitié des places ouvertes tombaient dans ce repli, et un booster
+  rendait 45,8 écharpes pour un prix de 45 : les vétérans seraient arrivés à
+  la saison 2 avec de quoi la payer entière dans la minute. Relancée,
+  `serveur/sim-eco.mjs` donne 28,8 écharpes par booster établi, et environ
+  1 700 par jour à un assidu au lieu de 2 400 ; le ricochet de l'abonnement
+  (`JURIDIQUE.md`, Q5) tombe d'environ 2 700 à 1 700. Le second levier — la
+  légendaire en double à 20 au lieu de 45 — n'est pas pris.
+- **Le nouveau venu y perd aussi**, et c'est écrit plutôt que découvert : ses
+  vingt premiers boosters rendent 12,3 écharpes au lieu de 18,2, parce que
+  les sept cartes d'action de LA REPRISE sont vite toutes gagnées et que la
+  catégorie se replie dès lors. Un occasionnel fait grandir pour 760
+  écharpes la première semaine au lieu de 1 020, et ses trente lignées
+  atteignent toujours le troisième âge vers le 28ᵉ jour.
+- **Deux écharpes, pas une place blanche.** Une carte vide dans un booster
+  serait pire qu'une carte banale : les écharpes, le seul lot qui ne peut pas
+  être vide, restent le recours, à un tarif qui ne rapporte plus. Le nombre
+  vit dans `dex.js`, à côté des doublons, parce que l'aide le cite : il s'y
+  lit, il ne s'y recopie pas.
+- **Le remboursement passe par le démarrage, pas par un script.** Une
+  livraison par le Manager tire `main` et redémarre, sans passer aucun script
+  de données : le démarrage est le seul chemin sûr d'arriver en production.
+  `server.js` attend la fonction une fois le KOP construit et avant
+  d'écouter, pour qu'aucun membre ne lise un pot à moitié crédité.
+- **La marque s'écrit avec le crédit, sans schéma neuf.** Dans une
+  transaction par KOP, chaque achat retiré devient `rendu:echarpes` ou
+  `rendu:contres` dans `kop_bonus` — `restant` à zéro, épuisé — et le pot
+  reçoit la somme. Interrompue, la transaction ne laisse ni un pot crédité
+  sans marque, que le démarrage suivant créditerait encore, ni une marque
+  sans crédit, qu'il ne créditerait jamais. Le pot se prend sous verrou
+  d'abord, dans l'ordre du dépouillement : quatre démarrages simultanés
+  rendent une fois.
+- **Tout est rendu**, même les achats que des matchs avaient décomptés avant
+  le 3 octobre : ces matchs n'ont rien reçu. `verse_total` ne bouge pas, ce
+  n'est pas un versement, et aucune ligne n'est effacée.
+- **La fonction ne lève jamais** : une exception au démarrage coupe `/api`.
+  Un KOP en échec est annulé entier, nommé au journal, et repris au
+  démarrage suivant.
+- **La garde du dépouillement reste** : un vote ouvert avant le déploiement
+  sur un bonus retiré est rejeté à son échéance sans débiter le pot.
+- **Aucune série inventée pour la saison 2.** LES HÉROS DU CANAPÉ n'était
+  qu'une proposition ; le choix revient à Gaël.
+- **Le carnet ne se recale pas.** Avec la fin au 31 décembre, la saison 1
+  compte 90 jours de missions au lieu des 63 de son calibrage, et ses paliers
+  arrivent plus tôt ; mais il est figé depuis son premier palier versé, et
+  ne rapporte en tout que 10 boosters et 1 500 écharpes.
+
+### Contrôles
+
+`fanzzy:smoke` 216, dont deux neufs : un joueur qui a tout d'une série ouvre
+quarante boosters, ses replis valent deux écharpes, ses poignées davantage,
+et les replis l'emportent. `kop:smoke` 126 : « ce qui est en vente »
+réécrit pour un catalogue sans les deux, et une section neuve, « les
+retirés, rendus au pot » — un remboursement, un second démarrage qui ne rend
+rien, quatre démarrages simultanés, une panne entre la marque et le crédit,
+une base sans la table. `cablage` 73, dont deux neufs :
+l'appel attendu, après la construction du KOP et avant l'écoute. Verts aussi :
+`aide:smoke` 47, `aide:ui` 38, `niveau:smoke` 99, `quotidien:smoke` 216,
+`boosters:ui` 74, `kop:ui` 23, `schema:smoke` 47, `admin:smoke` 194,
+`economie` et `securite`. Chaque contrôle neuf a été cassé exprès et a rougi.
+Un serveur démarré deux fois sur la base de test a rendu 1 400 écharpes au
+premier démarrage, puis dit « rien à rendre ». `npm test` n'a pas tourné dans
+cette session : une autre le faisait dans la copie principale.
+
+### Ce qui reste
+
+- **La série et le nom de la saison 2**, à choisir par Gaël avant le
+  1er janvier 2027. « Les sachets de la trêve », les boosters du passage de
+  relais (l'aide du réglage, `src/shared/reglages.js`), et les exemples de
+  `serveur/CONTRATS.md` qui nomment « La trêve » suivront ce nom.
+- **`parryBonus` et `parryResist`** restent portés par des Fanzzy, des pièces
+  et la carte « Filet de chantier », sans que rien les lise
+  (`serveur/ECARTS.md`, social § 6, point 3).
+- **La table des taux de `CGV.md`** décrit encore cinq places de supporter
+  (« 1 à 3 : commune 100 % ») ; le code tire un supporter sûr, un second sept
+  fois sur dix, et trois places ouvertes. C'est le retard que
+  `serveur/ECONOMIE.md` (§ 12, point 5) relève dans `JURIDIQUE.md`, plus
+  ancien que cette session, dans un texte que Gaël signe : relevé, pas
+  touché. Le repli à deux écharpes n'y figure pas.
+- **`boosters:ui` ne vide pas `saisons`.** Une saison laissée en base par la
+  suite d'avant (`quotidien:smoke`) a fait rougir « le kiosque annonce le bon
+  nombre de Fanzzy par set » sans que rien ne soit cassé ; la table vidée, la
+  suite est verte. La suite n'est pas corrigée.
+
+---

@@ -1,5 +1,84 @@
 # À déposer sur Infomaniak
 
+**Les trois décisions du 6 octobre : le reste des boosters, les bonus de KOP
+retirés, des saisons de quatre mois** (branche
+`worktree-agent-af387e839b2515aa4`, 6 octobre 2026, tranchées par Gaël). Elle
+se dépose avec ce qui est en dessous, ou seule.
+
+- `src/shared/fanzzy/dex.js`, `src/server/fanzzy/index.js`,
+  `src/shared/aide.js` : une place de booster dont la catégorie n'a plus rien
+  à donner au joueur (toutes ses tenues, tous ses états ou toutes ses cartes
+  d'action) rend **2 écharpes** au lieu d'une poignée de 6, 14 ou 30 ; la
+  catégorie des écharpes garde sa poignée. Un booster établi rend environ 29
+  écharpes au lieu de 46 ; un nouveau venu, sur ses vingt premiers, 12 au
+  lieu de 18. L'aide le dit (« Il y a quoi dans un booster ? »). Contrôlé par
+  `npm run fanzzy:smoke` (deux contrôles neufs) et `npm run aide:smoke`.
+- `src/shared/kop.js`, `src/server/kop/index.js`, `server.js` : « La quête »
+  (900 écharpes) et « Mur de bâches » (500) quittent le catalogue des KOP. La
+  page du KOP ne les propose plus, le serveur refuse de les mettre aux voix,
+  et **ce qu'ils avaient coûté revient au pot, au premier démarrage**
+  (ci-dessous). Contrôlé par `npm run kop:smoke` et `npm run cablage`.
+- `sql/saisons.sql` : la graine nomme la saison 1 « La reprise », comme la
+  production. Elle ne joue que sur une table vide : la base en ligne n'est
+  pas touchée, et rejouer `schema:appliquer` ne renomme rien.
+- Documents : `serveur/ECONOMIE.md`, `serveur/SERVEUR.md`,
+  `serveur/ECARTS.md`, `serveur/DONNEES.md`, `JURIDIQUE.md`,
+  `DEPLOIEMENT.md`, `ETAT.md`, `HISTORIQUE.md`, ce fichier.
+
+**Aucun schéma ni réglage**, aucune page : tout passe par le serveur, qui ne
+le prend qu'à son démarrage. Un redémarrage, **hors d'un match en direct**,
+puis relever `/healthz`.
+
+**Ce que fait ce premier démarrage.** Avant d'écouter, le serveur rend au pot
+de chaque KOP qui les avait achetés 900 écharpes par « La quête » et 500 par
+« Mur de bâches », même quand des matchs les avaient décomptés : ils n'ont
+rien reçu. Une transaction par KOP : chaque achat est marqué rendu dans
+`kop_bonus` (`rendu:echarpes`, `rendu:contres`) en même temps que le pot est
+crédité, si bien que les démarrages suivants n'ont plus rien à rendre. Rien
+n'est effacé, et le cumul versé (`verse_total`) ne bouge pas : ce n'est pas
+un versement. Les membres voient leur pot plus haut sur la page du KOP ; rien
+ne le leur annonce.
+
+**Au journal de démarrage**, après « KOP actifs » : une ligne par KOP
+remboursé, puis le bilan.
+
+```
+[kop] bonus retirés : 900 écharpes rendues au pot du KOP « … » (<id>) pour 1 × « La quête » ; pot 120 → 1020
+[kop] bonus retirés : 1000 écharpes rendues au pot du KOP « … » (<id>) pour 2 × « Mur de bâches » ; pot 40 → 1040
+[kop] bonus retirés : 1900 écharpes rendues à 2 KOP pour 3 achat(s)
+```
+
+Ou `[kop] bonus retirés : rien à rendre`, si aucun KOP ne les avait achetés ;
+c'est aussi ce que diront tous les redémarrages suivants. Une ligne qui finit
+par « repris au prochain démarrage » dit un échec, pour un KOP (« le KOP …
+n'a pas été remboursé (…) — rien n'est écrit ») ou pour tous (« rien n'a pu
+être rendu (…) ») : l'application démarre quand même, rien n'est écrit pour
+ce qui a échoué, et le redémarrage suivant le reprend, sans rien faire
+d'autre.
+
+```bash
+T=$(date +%s)
+curl -s "https://thebestfan.online/healthz?v=$T"                                   # "ok":true
+curl -s "https://thebestfan.online/api/aide/faq?v=$T" | grep -c 'se change en 2'   # 1
+```
+
+**Dans la base**, en lecture seule, si Gaël veut voir ce qui a été rendu :
+
+```sql
+SELECT k.nom, b.bonus_id, b.achete, b.epuise
+  FROM kop_bonus b JOIN kops k ON k.id = b.kop_id
+ WHERE b.bonus_id LIKE 'rendu:%';                                         -- les achats rendus
+SELECT COUNT(*) FROM kop_bonus WHERE bonus_id IN ('echarpes', 'contres'); -- 0
+```
+
+**Dans `/admin`, sans lien avec ce dépôt** : la fin de la saison 1,
+`2026-12-31`, dans l'onglet Saisons, sur la ligne de « La reprise »
+(`DEPLOIEMENT.md`, « Après la livraison du quotidien », point 3). Les
+saisons durent désormais quatre mois ; la saison 2 court du 1er janvier au
+30 avril 2027, et sa série et son nom restent à choisir.
+
+---
+
 **Le personnage de l'accueil au milieu, sur téléphone** (branche
 `claude/project-thread-iatg2m`, 6 octobre 2026, choisi par Gaël sur la
 capture avant/après). Il se dépose avec ce qui est en dessous, ou seul.
