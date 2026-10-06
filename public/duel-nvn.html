@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <title>Duel de tribunes — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -21,7 +22,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    finissent sous le pli et le joueur ne les trouve plus. La gouttière de la
    colonne (quatorze pixels, `ui.css`) reste : le HUD de match la rend de
    lui-même pour aller d'un bord à l'autre. */
-#app{position:relative;width:100%;max-width:var(--colonne);height:100dvh;overflow:hidden;
+#app{position:relative;width:100%;max-width:var(--colonne);height:max(100dvh,var(--ecran-min));overflow:hidden;
   display:flex;flex-direction:column;
   background:radial-gradient(120% 40% at 50% -4%,rgba(224,64,44,.14),transparent 60%),
              linear-gradient(180deg,#141A21,#0A0D11 45%,#0A0D11)}

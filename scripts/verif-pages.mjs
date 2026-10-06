@@ -249,6 +249,15 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     ['apple-touch-icon', 'l’icône d’iOS — sans elle, iPhone pose une capture d’écran'],
     ['theme-color', 'la couleur de la barre d’état'],
   ];
+  /* **Les barres du téléphone** (ui.css) : sur Android, chaque page retire
+     `viewport-fit=cover` avant d'être dessinée, pour que Chrome la tienne
+     lui-même entre la barre d'état et les boutons du bas. Une page qui l'oublie
+     redevient celle que Gaël voyait coupée sur son Samsung, en haut ou en bas. */
+  if (!/<meta name="viewport"[^>]*>\n<script>[^<]*if\(\/Android\/i\.test\(navigator\.userAgent\)\)[^<]*viewport-fit=cover[^<]*<\/script>/.test(html)) {
+    ko(nom, 'le script des barres du téléphone manque juste après la balise viewport : '
+      + 'sur Android, la page passerait sous la barre d’état et les boutons du bas');
+    propre = false;
+  }
   for (const [motif, quoi] of POUR_INSTALLER) {
     if (!html.includes(motif)) {
       ko(nom, `${quoi} manque : installée depuis cette page, l’application `
@@ -981,7 +990,7 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
   for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     const html = await readFile(path.join(DOSSIER, nom), 'utf8');
     // Un écran sans défilement se reconnaît à sa hauteur fixe et à sa coupe.
-    const fige = /height:\s*100dvh/.test(html) && /overflow:\s*hidden/.test(html)
+    const fige = /height:\s*(?:max\()?100dvh/.test(html) && /overflow:\s*hidden/.test(html)
       && !/min-height:\s*100dvh/.test(html);
     if (fige) continue;
     const degage = /padding[^;}]*env\(safe-area-inset-bottom\)/.test(html)

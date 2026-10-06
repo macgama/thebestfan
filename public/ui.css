@@ -149,6 +149,26 @@
  */
 
 :root{
+  /* **Les barres du téléphone.**
+
+     Sur un Samsung (S24+, Chrome et l'icône de l'écran d'accueil), Gaël
+     voyait le haut ou le bas des écrans mangé par la barre d'état et par les
+     boutons du bas, sans pouvoir faire défiler pour retrouver les boutons.
+     Deux causes, deux réponses :
+
+       — `viewport-fit=cover` laisse la page se dessiner sous les barres, et
+         chaque bord doit alors se garder lui-même avec `env(safe-area-…)`.
+         Les pages le font, pas toutes les fenêtres qui s'ouvrent par-dessus.
+         Sur Android, un script en tête de chaque page retire donc `cover` :
+         Chrome tient lui-même la page entre les barres. iPhone le garde, sa
+         barre d'état translucide en a besoin. `verif-pages` exige ce script.
+       — les écrans de jeu (accueil, Fanzzy et sa fiche, Virage, duel,
+         bienvenue) font exactement la hauteur de la fenêtre et ne défilent
+         pas. Une fenêtre courte — le zoom ou le grand texte du téléphone,
+         qui rétrécit la page — les écrasait jusqu'à couper leurs boutons.
+         Ils ne descendent plus sous `--ecran-min` : en deçà, la page garde
+         sa mise en page et défile. */
+  --ecran-min:560px;
   /* **La hauteur de la barre du bas : zéro, et déclarée ici.**
 
      Elle n'existe plus — voir nav.js, qui l'a retirée. Neuf pages calculent
