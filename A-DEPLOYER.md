@@ -12,6 +12,149 @@ seul. **Serveur + page**, sans schéma : redémarrer, hors d'un match en direct.
 
 ---
 
+**Les décisions de Gaël du 6 octobre au matin** (branche
+`claude/project-thread-iatg2m`, fusionnée dans `main` le 6 octobre 2026).
+Quatre changements, qui partent ensemble au prochain build :
+
+1. Gosier Rouillé (RP1) cligne des yeux à l'accueil (une page, des images) ;
+2. au Virage, les moments d'un même geste se montrent l'un après l'autre
+   (une page) ;
+3. au duel, le stade du match, montré dès la préparation (serveur et page) ;
+4. le reste des boosters à 2 écharpes, « La quête » et « Mur de bâches »
+   retirés et remboursés aux KOP, des saisons de quatre mois (serveur).
+
+**Aucun schéma ni réglage.** Un redémarrage, **hors d'un match en direct**
+où des joueurs sont au Virage ou en duel (les salles du Virage, les duels et
+leurs files vivent en mémoire), puis relever `/healthz`. Le premier
+démarrage rembourse les KOP (plus bas, « Ce que fait ce premier
+démarrage »).
+
+### 1. Il cligne des yeux
+
+- `public/index.html`, `public/fanzzy-etats.js` : à l'accueil, au repos,
+  Gosier Rouillé (RP1, âge 1, tenue de base) cligne des yeux toutes les
+  trois à sept secondes, une fois sur cinq deux fois de suite. Pas sous le
+  calme (`data-calme`, `prefers-reduced-motion`), ni dans un onglet caché ;
+  ni sur une joie, un dépit ou le supporter générique. Contrôlé par `npm run
+  accueil:ui` (9 contrôles neufs) et `npm run etats:test` ; filmé pour Gaël
+  (`lot7/cligne/rp1-cligne.mp4` dans les fichiers du projet).
+- `public/img/fanzzy/RP1/e1/base/cligne.{avif,webp,png}` (images neuves),
+  `public/img/fanzzy/RP1/manifeste.json` (`rev` 7) et
+  `public/img/fanzzy/index.json` : ses paupières, et l'index qui les
+  annonce à la page.
+- `scripts/fanzzy-cligne.mjs`, `scripts/fanzzy-art.mjs`, `art/RP1/cligne/` :
+  la chaîne qui pose les paupières, et la retouche Artlist dont elles
+  viennent. Rien que le site lise. Contrôlé par `npm run cligne:test`.
+
+### 2. Au Virage, le jeu d'abord
+
+- `public/virage.html` : quand plusieurs moments tombent pendant un même
+  geste, ils se montrent l'un après l'autre, 3,5 secondes chacun : la corde
+  qui cède d'abord, puis ce que le match a fait (la vidéo, un rouge, le coup
+  de sifflet final), et le but réel en dernier, qui reste à l'écran ses
+  quinze secondes. Avant, on ne voyait que le dernier. La carte-souvenir d'un
+  but attend la fin du défilé. Contrôlé par `npm run virage:ui` (4 contrôles
+  neufs).
+
+### 3. Le stade du match, au duel
+
+- `src/server/contenus/index.js`, `src/server/nvn/engine.js` : tous les duels
+  d'un match se jouent dans son stade, celui de son Grand Virage. Le duel
+  tirait son lieu sur son propre identifiant, neuf à chaque partie : deux
+  duels d'un même match tombaient dans deux stades, presque jamais dans
+  celui du Virage. Une seule fonction tire maintenant le stade d'un match
+  (`stadeDuMatch`), pour le Virage comme pour le duel. Contrôlé par `npm run
+  nvn:smoke` (2 contrôles neufs) et `npm run contenus:smoke`.
+- `src/server/deck/index.js` : la liste des matchs du duel
+  (`/api/deck/matchs`) et la route d'un match (`/api/deck/match/:id`)
+  servent ce `stade` : `{ id, nom, effet }`. Contrat : `serveur/CONTRATS.md`,
+  § 17. Contrôlé par `npm run deck:smoke` (un contrôle neuf).
+- `public/duel-nvn.html` : avant l'entrée en file, l'affiche du match choisi
+  montre son stade, le dessin en fond et le nom au pied, et les règles du
+  « i » disent ce qu'il change. Contrôlé par `npm run nvn:ui` (4 contrôles
+  neufs) ; photographié pour Gaël (`duel/stade-preparation.jpg` dans les
+  fichiers du projet).
+- `src/server/ferveur/virage.js` : le Virage tire le même stade qu'avant,
+  maintenant par `stadeDuMatch` ; rien ne change à l'écran.
+  `src/shared/stades.js` : des commentaires.
+
+La page et le serveur se tolèrent (sans `stade` dans la liste, l'affiche
+reste sans lieu ; la page d'avant ignore le champ), mais c'est ensemble que
+la préparation annonce le stade où le duel se jouera.
+
+### 4. Les boosters, les KOP, les saisons
+
+- `src/shared/fanzzy/dex.js`, `src/server/fanzzy/index.js`,
+  `src/shared/aide.js` : une place de booster dont la catégorie n'a plus rien
+  à donner au joueur (toutes ses tenues, tous ses états ou toutes ses cartes
+  d'action) rend **2 écharpes** au lieu d'une poignée de 6, 14 ou 30 ; la
+  catégorie des écharpes garde sa poignée. Un booster établi rend environ 29
+  écharpes au lieu de 46 ; un nouveau venu, sur ses vingt premiers, 12 au
+  lieu de 18. L'aide le dit (« Il y a quoi dans un booster ? »). Contrôlé par
+  `npm run fanzzy:smoke` (deux contrôles neufs) et `npm run aide:smoke`.
+- `src/shared/kop.js`, `src/server/kop/index.js`, `server.js` : « La quête »
+  (900 écharpes) et « Mur de bâches » (500) quittent le catalogue des KOP. La
+  page du KOP ne les propose plus, le serveur refuse de les mettre aux voix,
+  et **ce qu'ils avaient coûté revient au pot, au premier démarrage**
+  (ci-dessous). Contrôlé par `npm run kop:smoke` et `npm run cablage`.
+- `sql/saisons.sql` : la graine nomme la saison 1 « La reprise », comme la
+  production. Elle ne joue que sur une table vide : la base en ligne n'est
+  pas touchée, et rejouer `schema:appliquer` ne renomme rien.
+- Documents : `serveur/ECONOMIE.md`, `serveur/SERVEUR.md`,
+  `serveur/ECARTS.md`, `serveur/DONNEES.md`, `JURIDIQUE.md`,
+  `DEPLOIEMENT.md`, `ETAT.md`, `HISTORIQUE.md`, ce fichier.
+
+### Ce que fait ce premier démarrage
+
+Avant d'écouter, le serveur rend au pot de chaque KOP qui les avait achetés
+900 écharpes par « La quête » et 500 par « Mur de bâches », même quand des
+matchs les avaient décomptés : ils n'ont rien reçu. Une transaction par KOP :
+chaque achat est marqué rendu dans `kop_bonus` (`rendu:echarpes`,
+`rendu:contres`) en même temps que le pot est crédité, si bien que les
+démarrages suivants n'ont plus rien à rendre. Rien n'est effacé, et le cumul
+versé (`verse_total`) ne bouge pas : ce n'est pas un versement. Les membres
+voient leur pot plus haut sur la page du KOP ; rien ne le leur annonce.
+
+**Au journal de démarrage**, après « KOP actifs » : une ligne par KOP
+remboursé, puis le bilan.
+
+```
+[kop] bonus retirés : 900 écharpes rendues au pot du KOP « … » (<id>) pour 1 × « La quête » ; pot 120 → 1020
+[kop] bonus retirés : 1000 écharpes rendues au pot du KOP « … » (<id>) pour 2 × « Mur de bâches » ; pot 40 → 1040
+[kop] bonus retirés : 1900 écharpes rendues à 2 KOP pour 3 achat(s)
+```
+
+Ou `[kop] bonus retirés : rien à rendre`, si aucun KOP ne les avait achetés ;
+c'est aussi ce que diront tous les redémarrages suivants. Une ligne qui finit
+par « repris au prochain démarrage » dit un échec, pour un KOP (« le KOP …
+n'a pas été remboursé (…) — rien n'est écrit ») ou pour tous (« rien n'a pu
+être rendu (…) ») : l'application démarre quand même, rien n'est écrit pour
+ce qui a échoué, et le redémarrage suivant le reprend, sans rien faire
+d'autre.
+
+```bash
+T=$(date +%s)
+curl -s "https://thebestfan.online/healthz?v=$T"                                   # "ok":true
+curl -s "https://thebestfan.online/api/aide/faq?v=$T" | grep -c 'se change en 2'   # 1
+```
+
+**Dans la base**, en lecture seule, si Gaël veut voir ce qui a été rendu :
+
+```sql
+SELECT k.nom, b.bonus_id, b.achete, b.epuise
+  FROM kop_bonus b JOIN kops k ON k.id = b.kop_id
+ WHERE b.bonus_id LIKE 'rendu:%';                                         -- les achats rendus
+SELECT COUNT(*) FROM kop_bonus WHERE bonus_id IN ('echarpes', 'contres'); -- 0
+```
+
+**Dans `/admin`, sans lien avec ce dépôt** : la fin de la saison 1,
+`2026-12-31`, dans l'onglet Saisons, sur la ligne de « La reprise »
+(`DEPLOIEMENT.md`, « Après la livraison du quotidien », point 3). Les
+saisons durent désormais quatre mois ; la saison 2 court du 1er janvier au
+30 avril 2027, et sa série et son nom restent à choisir.
+
+---
+
 **Le pronostic** (branche `claude/pronostic-th5gjy`, 6 octobre 2026, demandé
 par Gaël, version gratuite choisie par lui). Il se dépose avec ce qui est en
 dessous, ou seul.
@@ -746,7 +889,8 @@ n'est pas une arène.**
    ce moment-là. **Allumée sans `sql/arenes.sql`, elle ne montre rien** : le journal
    nomme le fichier.
 5. **Trancher le stade du duel** (`HISTORIQUE.md`, « Ce qui reste ») : il n'est pas
-   bloquant pour la livraison.
+   bloquant pour la livraison. Tranché le 6 octobre 2026 — celui du match —, et
+   déposé à part (« Le stade du match, au duel », en tête de ce fichier).
 6. **Les premiers jours, la requête de détection du grand livre** (`DEPLOIEMENT.md`,
    « Le grand livre des récompenses ») : une ligne `source = 'virage'` par joueur et par
    match, jamais deux.
@@ -844,11 +988,13 @@ lui-même (`0638fb5`) rouvrirait D1 à D3.
 
 Dans `ETAT.md`, § 7 bis, avec le détail dans `HISTORIQUE.md`, 4 quadragies sexies,
 « Ce qui reste » : **le stade du duel**, tiré sur l'identifiant du duel et non sur le
-match (une ligne dans `engine.js`, une règle de jeu) ; **`gains.wallet`** dans `nvn:fin`,
+match (une ligne dans `engine.js`, une règle de jeu ; tranché le 6 octobre 2026, en
+tête de ce fichier) ; **`gains.wallet`** dans `nvn:fin`,
 non servi ; **un combo en jeu au duel** (`serie` sur l'évènement `chant`), refusé tant
 qu'aucune page ne le lit ; **`nvn:net`** hors de `npm test` ; les trois questions du
 correctif d'urgence du Virage (la priorité du but réel sur les autres moments d'un
-même geste, les cartes-souvenirs d'un but ancien, un trou de suite). Et, comme avant :
+même geste, tranchée le 6 octobre 2026, en tête de ce fichier ; les cartes-souvenirs
+d'un but ancien, un trou de suite). Et, comme avant :
 `paliers.series` avec l'état et la chance d'une carte, que les écrans du lot 4 attendent ;
 les boosters d'un abonnement acheté ; le contrôle de démarrage qui ne vérifie que la
 première des trois colonnes de `sql/couleurs.sql` ; faire suivre `comments` dans les

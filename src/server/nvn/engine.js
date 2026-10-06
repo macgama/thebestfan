@@ -9,7 +9,7 @@ import { TYPES } from '../../shared/fanzzy/dex.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
-import { ouverts } from '../contenus/index.js';
+import { ouverts, stadeDuMatch } from '../contenus/index.js';
 /* La ventilation de ce qu'un joueur porte, partagée avec le Grand Virage : les
    deux arènes composent les mêmes modificateurs, elles doivent les nommer
    pareil. Voir `src/shared/apports.js`. */
@@ -52,11 +52,15 @@ const now0 = () => Date.now();
 /**
  * Un nombre stable tiré d'un identifiant de duel.
  *
- * `stadeDeLaRencontre` attend une graine numérique — le Virage lui donne
- * l'identifiant du match, qui en est un. Celui d'un duel est une chaîne, et
- * `Number('d-7f3a')` vaut `NaN` : la fonction retombe alors sur zéro, donc sur
- * le premier stade, **pour tous les duels du jeu**. Le lieu aurait existé sans
- * jamais changer, ce qui est la façon la plus discrète de ne pas exister.
+ * Il tire les cinq chants offerts (voir le constructeur), et le lieu d'un duel
+ * **sans match** — aucun aujourd'hui : le stade d'un duel est celui de son
+ * match, tiré sur l'identifiant du match comme au Virage.
+ *
+ * `stadeDeLaRencontre` attend une graine numérique, et l'identifiant d'un
+ * match en est une. Celui d'un duel est une chaîne, et `Number('d-7f3a')` vaut
+ * `NaN` : la fonction retombe alors sur zéro, donc sur le premier stade, **pour
+ * tous les duels sans match**. Le lieu aurait existé sans jamais changer, ce
+ * qui est la façon la plus discrète de ne pas exister.
  */
 function hachage(texte) {
   let h = 0;
@@ -244,27 +248,30 @@ export class DuelNvN {
        aucun écran ne pouvait dire « tes 2v2 ». */
     this.format = format;
 
-    /* **Le lieu de la rencontre.**
+    /* **Le lieu de la rencontre : le stade du match.**
      *
-     * Le duel n'en avait aucun. `stades.js` explique pourtant, en tête, que le
-     * stade appartient au match et qu'« en duel, il est tiré parmi ceux que les
-     * deux joueurs possèdent » : c'était écrit, documenté, et personne ne
-     * l'appelait. Le duel se jouait dans le vide, sans décor et sans règle de
-     * lieu, pendant que le Virage en affichait un.
+     * Le duel n'en a d'abord eu aucun : il se jouait dans le vide, sans décor
+     * et sans règle de lieu, pendant que le Virage en affichait un. Puis il en
+     * a eu un, tiré sur **son propre identifiant** — un `randomUUID` — quand
+     * le Virage tirait le sien sur celui du match. Deux duels sur la même
+     * rencontre tombaient dans deux stades, contre la règle écrite en tête de
+     * `stades.js` (« le stade appartient au match »), et la préparation n'en
+     * pouvait montrer aucun : il n'existait qu'après l'appariement.
      *
-     * Tiré sur l'identifiant du duel, comme le Virage le tire sur celui du
-     * match : les deux clients trouvent le même lieu sans avoir à se parler, et
-     * la même rencontre rejouée donne le même stade.
+     * Il vient maintenant du match, par la fonction même du Virage
+     * (`stadeDuMatch`) : même graine, aucune possession, mêmes stades ouverts
+     * par les saisons. Tous les duels d'un match se jouent dans son stade,
+     * celui de son Grand Virage, et la liste des matchs le sert avant l'entrée
+     * en file (décision de Gaël, 6 octobre 2026).
      *
-     * Les possessions sont vides tant que les stades ne se collectionnent pas —
-     * c'est exactement ce que fait le Virage, et la ligne à changer le jour où
-     * ils se gagneront est celle-ci.
-     *
-     * Le troisième argument, lui, est déjà là : les stades qu'une saison a
-     * ouverts. Sans lui, un stade livré avec le code se jouait dès la
-     * livraison, et la saison censée l'annoncer annonçait un lieu où l'on
-     * jouait depuis des semaines. */
-    this.stade = stadeDeLaRencontre([], hachage(id), ouverts('stade'));
+     * L'identifiant du duel ne sert plus qu'au duel **sans match**, et il n'y
+     * en a aucun : l'entrée en file refuse un match illisible. Ce repli garde
+     * un lieu qui change d'une partie à l'autre plutôt que le premier stade
+     * pour toutes (voir `hachage`), et passe par les mêmes stades ouverts : un
+     * stade livré avec le code ne se joue pas avant la saison qui l'annonce. */
+    this.stade = fixture?.id != null && Number.isFinite(Number(fixture.id))
+      ? stadeDuMatch(fixture.id)
+      : stadeDeLaRencontre([], hachage(id), ouverts('stade'));
 
     /* **Les cinq chants offerts.**
      *

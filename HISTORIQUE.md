@@ -7736,6 +7736,347 @@ cent vingt jours comptés, le plafond, la pose et le journal). `admin:ui` :
 
 ---
 
+## 4 quinquagies bis. Le stade du match, au duel — celui de son Virage, montré dès la préparation
+
+*6 octobre 2026. Gaël a tranché sur la carte « Au duel, jouer dans le stade du
+match, comme au Virage ? » : « Celui du match » — tous les duels d'un match se
+jouent dans son stade, et la préparation le montre avant d'entrer en file.
+Photographié pour lui à la taille d'un téléphone (390 × 844), Sion – Bâle en
+direct au Chaudron, règles du « i » ouvertes : `duel/stade-preparation.jpg`,
+dans les fichiers du projet.*
+
+### Ce qui a changé
+
+- **Tous les duels d'un match se jouent dans son stade**, celui de son Grand
+  Virage. Le duel tirait son lieu sur son propre identifiant, un
+  `randomUUID` neuf à chaque partie : deux duels d'un même match tombaient
+  dans deux stades, presque jamais dans celui du Virage d'à côté, contre
+  « le stade appartient au match » (`stades.js`, `ETAT.md` § 3). Le risque
+  était ouvert depuis le lot 6 (4 quadragies sexies, « Ce qui reste ») ; la
+  correction est celle qu'il décrivait : la graine du match dans
+  `engine.js`, l'identifiant du duel en repli.
+- **Une seule fonction tire le stade d'un match** : `stadeDuMatch`, en bas
+  de `src/server/contenus/index.js`. La graine du Virage (l'identifiant du
+  match), aucune possession, les stades ouverts relus à chaque appel. La
+  salle du Virage, le moteur du duel et le deck l'appellent. Le duel ne
+  retombe sur son identifiant que sans match, ce qui n'arrive pas
+  aujourd'hui : seul `ouvrir` (`nvn/index.js`) crée un duel, et toujours sur
+  le support d'un match.
+- **La liste des matchs du duel sert le stade de chacun**, et la route d'un
+  match aussi : `stade`, `{ id, nom, effet }` (`CONTRATS.md`, § 17).
+- **La préparation le montre.** Sur l'affiche du match choisi, le dessin
+  réduit du stade passe en fond, sous le voile de la brique `tbf-affiche`,
+  comme sur l'affiche du coup d'envoi ; son nom se lit au pied, « STADE » en
+  petit devant, sur la ligne du compte de la file quand quelqu'un attend.
+  Les règles du « i » disent ce qu'il change : « Le stade : Le Chaudron.
+  Tout le monde pousse plus fort, et se fatigue plus vite. Tous les duels de
+  ce match s'y jouent, et son Grand Virage aussi. »
+
+### Pourquoi comme ça
+
+- **Une fonction, pas deux tirages qui s'accordent.** Le Virage et le duel
+  tiraient chacun le leur ; deux copies d'un même tirage finissent par se
+  séparer — un filtre de saison ajouté d'un côté, une graine convertie de
+  l'autre —, et l'écart ne se voit qu'en jouant les deux le même soir. Les
+  suites éprouvent la vraie salle du Virage et le vrai moteur, jamais une
+  copie de la règle.
+- **Le serveur tire, la page lit.** Les stades qu'une saison a ouverts ne se
+  connaissent qu'en base : une page qui tirerait le sien sur l'identifiant
+  du match tomberait juste tant qu'aucune saison ne ferme de stade, puis
+  annoncerait un lieu où personne ne joue. Sans `stade` dans la liste (un
+  serveur d'avant), l'affiche reste sans lieu et les règles n'en parlent pas.
+- **Pas d'intersection des possessions.** `ETAT.md` § 3 la promettait au
+  duel ; elle n'a jamais été écrite, et elle n'est plus à écrire : un lieu
+  qui dépendrait de l'adversaire ne se connaîtrait qu'après l'appariement,
+  et la préparation ne pourrait pas l'annoncer. Collectionner n'achète pas
+  le lieu : il change avec les matchs.
+- **Le nom au pied, l'effet derrière le « i ».** « STADE » devant le nom,
+  parce que « LE CHAUDRON » seul, sous deux clubs, se lirait comme un
+  troisième. La phrase de l'effet, jusqu'à quatre-vingt-cinq signes, aurait
+  pris deux lignes juste au-dessus d'ENTRER EN FILE ; elle va dans les
+  règles, comme en partie dans « ce que tu portes ». Le nom coûte une ligne
+  quand personne n'attend, aucune quand il tient à côté du compte de la
+  file, et il ne s'abrège jamais. À 360 × 640, ENTRER EN FILE reste à
+  l'écran sans rien faire défiler, et sa rangée ne cache rien de lisible.
+- **Le dessin réduit en fond**, comme le brief du lot 6 dessinait l'affiche
+  de la préparation (« le stade-mini en fond », attendu depuis faute d'un
+  stade connu avant l'appariement) et comme l'affiche du coup d'envoi le
+  prenait déjà : aucune image neuve, et la préparation montre en petit le
+  stade que la partie montrera en grand.
+
+### Contrôles
+
+`nvn:smoke` : deux contrôles de plus. Pour douze matchs, deux duels aux
+identifiants tirés comme en production, un classé et un d'entraînement, se
+jouent dans le stade de la salle du Virage du même match (douze matchs, douze
+lieux), et la vue des deux camps l'annonce. Les rejeux de la note, qui
+passaient par les dix-huit stades grâce aux identifiants de leurs duels,
+prennent chacun un match (7001 à 7024), `marin` compris. `deck:smoke` : un de
+plus — chaque match de la liste, et sa route, servent le stade d'un vrai duel
+ouvert sur lui. `nvn:ui` : quatre de plus — l'affiche montre le stade du match
+choisi (le dessin en fond, le nom au pied), les règles du « i » disent son
+effet, un autre match montre le sien, et le duel se joue là où l'affiche
+l'annonçait. `contenus:smoke` tire ses deux cents lieux par `stadeDuMatch`.
+
+**Chaque contrôle ajouté a été vu rouge sur l'ancien code** : le moteur d'avant
+fait rougir les deux de `nvn:smoke`, celui de `deck:smoke` et le dernier de
+`nvn:ui` ; le deck d'avant, celui de `deck:smoke` ; la page d'avant, les quatre
+de `nvn:ui`.
+
+Les suites touchées, et elles seules — une autre session lançait `npm test`
+dans la copie principale : `nvn:smoke` (113), `deck:smoke` (91),
+`contenus:smoke` (34), `niveau:smoke` (99), `virage:smoke` (357), `salles:test`
+(142), `nvn:net` (167), `catalogue:test` (35), `pages` (84) et `cablage` (71),
+toutes vertes ; `nvn:ui`, 206 vertes et une rouge, « et elle dit le Fanzzy, le
+camp et la sorte de partie », rouge à l'identique sur `main` dans un conteneur
+cloud (`refonte/README.md` § 6). `audit:ui --arenes` ne relève rien sur
+`/duel-nvn` à 360 × 640, 400 × 800 et 768 × 1024, ni dans les états du duel.
+
+### Ce qui reste
+
+- **Une saison qui s'ouvre en plein match.** Les stades ouverts sont relus à
+  chaque tirage, et la salle du Virage garde le sien tout le match : une
+  saison lancée pendant un match peut donner aux duels qui suivent, et à la
+  liste, un autre lieu que celui du Virage déjà ouvert (`CONTRATS.md`,
+  § 17).
+- **Le vrai lieu du match.** Le stade se tire sur l'identifiant du match, pas
+  sur l'endroit où il se joue. Le jour où il en viendra, c'est `stadeDuMatch`
+  qui changera, et le Virage, le duel et la liste suivront ensemble.
+- **Le camp choisi en touchant une tribune du stade-mini**, que le brief du
+  lot 6 prévoyait (`ECARTS.md`, `duel-tribunes`, 1) : le stade est sur
+  l'affiche, mais le camp se choisit toujours par les deux bâches, et rien
+  n'en a changé ici.
+
+---
+
+## 4 quinquagies ter. Trois décisions de Gaël — le reste des boosters, les bonus de KOP retirés, des saisons de quatre mois
+
+*6 octobre 2026, session cloud « Lot 7 : images Artlist ».
+Gaël a tranché ce jour-là les décisions que le chantier lui rendait
+(`ETAT.md`, § 7 bis) : « Oui, les trois ». Trois commits — les boosters, les
+KOP, les saisons —, puis celui de cette trace.*
+
+### Ce qui a changé
+
+- **Une catégorie épuisée rend deux écharpes.** Une place ouverte de booster
+  dont la catégorie n'a plus rien à donner au joueur — toutes ses tenues, tous
+  ses états ou toutes ses cartes d'action — retombait sur une poignée entière,
+  11,5 écharpes en moyenne. Elle rend `POIGNEE_DE_REPLI`, 2 écharpes
+  (`src/shared/fanzzy/dex.js`), que lisent le tirage, la simulation et l'aide,
+  qui le dit maintenant au joueur. La catégorie des écharpes garde sa poignée
+  de 6, 14 ou 30, et une pièce d'équipement en double son tarif de doublon.
+- **« La quête » et « Mur de bâches » quittent le catalogue des KOP**, et ce
+  qu'ils avaient coûté revient au pot : 900 et 500 écharpes par achat, une
+  fois, rendues par le serveur à son démarrage (`rendreLesRetires`,
+  `src/server/kop/index.js`). Le catalogue sert cinq bonus, `proposer()`
+  refuse un identifiant inconnu, et ce qui ne servait qu'à tenir les deux
+  hors de vente (`MODS_DU_VIRAGE`, `agit`, `EN_VENTE`) est parti avec eux.
+- **La saison 1 s'appelle « La reprise » jusque dans la graine** :
+  `sql/saisons.sql` la créait sous « Le premier virage », si bien qu'une
+  installation neuve démarrait sous un nom que personne n'emploie. Une base
+  existante n'est pas touchée.
+- **Des saisons de quatre mois**, calées sur l'année : du 1er janvier au
+  30 avril, du 1er mai au 31 août, du 1er septembre au 31 décembre. La
+  saison 1 finit le jeudi 31 décembre 2026, date que Gaël saisit dans
+  `/admin` ; la saison 2 court du 1er janvier au 30 avril 2027. Cela remplace
+  la fin au 20 décembre et la saison 2 « La trêve », du 21 décembre au
+  28 février, que les documents proposaient. Aucun code ne porte de date de
+  saison.
+- **Les divisions ne changent pas** : elles ne paient que de l'honneur.
+
+### Pourquoi comme ça
+
+- **Le repli payait d'avoir tout.** Chez un joueur qui possède tout, plus de
+  la moitié des places ouvertes tombaient dans ce repli, et un booster
+  rendait 45,8 écharpes pour un prix de 45 : les vétérans seraient arrivés à
+  la saison 2 avec de quoi la payer entière dans la minute. Relancée,
+  `serveur/sim-eco.mjs` donne 28,8 écharpes par booster établi, et environ
+  1 700 par jour à un assidu au lieu de 2 400 ; le ricochet de l'abonnement
+  (`JURIDIQUE.md`, Q5) tombe d'environ 2 700 à 1 700. Le second levier — la
+  légendaire en double à 20 au lieu de 45 — n'est pas pris.
+- **Le nouveau venu y perd aussi**, et c'est écrit plutôt que découvert : ses
+  vingt premiers boosters rendent 12,3 écharpes au lieu de 18,2, parce que
+  les sept cartes d'action de LA REPRISE sont vite toutes gagnées et que la
+  catégorie se replie dès lors. Un occasionnel fait grandir pour 760
+  écharpes la première semaine au lieu de 1 020, et ses trente lignées
+  atteignent toujours le troisième âge vers le 28ᵉ jour.
+- **Deux écharpes, pas une place blanche.** Une carte vide dans un booster
+  serait pire qu'une carte banale : les écharpes, le seul lot qui ne peut pas
+  être vide, restent le recours, à un tarif qui ne rapporte plus. Le nombre
+  vit dans `dex.js`, à côté des doublons, parce que l'aide le cite : il s'y
+  lit, il ne s'y recopie pas.
+- **Le remboursement passe par le démarrage, pas par un script.** Une
+  livraison par le Manager tire `main` et redémarre, sans passer aucun script
+  de données : le démarrage est le seul chemin sûr d'arriver en production.
+  `server.js` attend la fonction une fois le KOP construit et avant
+  d'écouter, pour qu'aucun membre ne lise un pot à moitié crédité.
+- **La marque s'écrit avec le crédit, sans schéma neuf.** Dans une
+  transaction par KOP, chaque achat retiré devient `rendu:echarpes` ou
+  `rendu:contres` dans `kop_bonus` — `restant` à zéro, épuisé — et le pot
+  reçoit la somme. Interrompue, la transaction ne laisse ni un pot crédité
+  sans marque, que le démarrage suivant créditerait encore, ni une marque
+  sans crédit, qu'il ne créditerait jamais. Le pot se prend sous verrou
+  d'abord, dans l'ordre du dépouillement : quatre démarrages simultanés
+  rendent une fois.
+- **Tout est rendu**, même les achats que des matchs avaient décomptés avant
+  le 3 octobre : ces matchs n'ont rien reçu. `verse_total` ne bouge pas, ce
+  n'est pas un versement, et aucune ligne n'est effacée.
+- **La fonction ne lève jamais** : une exception au démarrage coupe `/api`.
+  Un KOP en échec est annulé entier, nommé au journal, et repris au
+  démarrage suivant.
+- **La garde du dépouillement reste** : un vote ouvert avant le déploiement
+  sur un bonus retiré est rejeté à son échéance sans débiter le pot.
+- **Aucune série inventée pour la saison 2.** LES HÉROS DU CANAPÉ n'était
+  qu'une proposition ; le choix revient à Gaël.
+- **Le carnet ne se recale pas.** Avec la fin au 31 décembre, la saison 1
+  compte 90 jours de missions au lieu des 63 de son calibrage, et ses paliers
+  arrivent plus tôt ; mais il est figé depuis son premier palier versé, et
+  ne rapporte en tout que 10 boosters et 1 500 écharpes.
+
+### Contrôles
+
+`fanzzy:smoke` 216, dont deux neufs : un joueur qui a tout d'une série ouvre
+quarante boosters, ses replis valent deux écharpes, ses poignées davantage,
+et les replis l'emportent. `kop:smoke` 126 : « ce qui est en vente »
+réécrit pour un catalogue sans les deux, et une section neuve, « les
+retirés, rendus au pot » — un remboursement, un second démarrage qui ne rend
+rien, quatre démarrages simultanés, une panne entre la marque et le crédit,
+une base sans la table. `cablage` 73, dont deux neufs :
+l'appel attendu, après la construction du KOP et avant l'écoute. Verts aussi :
+`aide:smoke` 47, `aide:ui` 38, `niveau:smoke` 99, `quotidien:smoke` 216,
+`boosters:ui` 74, `kop:ui` 23, `schema:smoke` 47, `admin:smoke` 194,
+`economie` et `securite`. Chaque contrôle neuf a été cassé exprès et a rougi.
+Un serveur démarré deux fois sur la base de test a rendu 1 400 écharpes au
+premier démarrage, puis dit « rien à rendre ». `npm test` n'a pas tourné dans
+cette session : une autre le faisait dans la copie principale.
+
+### Ce qui reste
+
+- **La série et le nom de la saison 2**, à choisir par Gaël avant le
+  1er janvier 2027. « Les sachets de la trêve », les boosters du passage de
+  relais (l'aide du réglage, `src/shared/reglages.js`), et les exemples de
+  `serveur/CONTRATS.md` qui nomment « La trêve » suivront ce nom.
+- **`parryBonus` et `parryResist`** restent portés par des Fanzzy, des pièces
+  et la carte « Filet de chantier », sans que rien les lise
+  (`serveur/ECARTS.md`, social § 6, point 3).
+- **La table des taux de `CGV.md`** décrit encore cinq places de supporter
+  (« 1 à 3 : commune 100 % ») ; le code tire un supporter sûr, un second sept
+  fois sur dix, et trois places ouvertes. C'est le retard que
+  `serveur/ECONOMIE.md` (§ 12, point 5) relève dans `JURIDIQUE.md`, plus
+  ancien que cette session, dans un texte que Gaël signe : relevé, pas
+  touché. Le repli à deux écharpes n'y figure pas.
+- **`boosters:ui` ne vide pas `saisons`.** Une saison laissée en base par la
+  suite d'avant (`quotidien:smoke`) a fait rougir « le kiosque annonce le bon
+  nombre de Fanzzy par set » sans que rien ne soit cassé ; la table vidée, la
+  suite est verte. La suite n'est pas corrigée.
+
+---
+
+## 4 quinquagies quater. Il cligne des yeux, et le Virage montre le jeu d'abord
+
+*6 octobre 2026, session cloud « Lot 7 : images Artlist ». Réponses de Gaël du
+matin : « Tu peux gérer le clignement pour RP1 », et « au virage, quand
+plusieurs moments tombent pendant un même geste, on affiche toujours en
+premier ce qui est lié au jeu ». Le clignement est filmé pour Gaël avant la
+fusion : `lot7/cligne/rp1-cligne.mp4`, dans les fichiers du projet.*
+
+### Ce qui a changé
+
+- **Gosier Rouillé (RP1) cligne des yeux à l'accueil**, au repos, toutes les
+  trois à sept secondes ; une fois sur cinq, deux fois de suite. Un
+  troisième calque sur la pile (`#paupieres`), montré 130 ms.
+- **Seulement les paupières.** Une retouche Artlist de sa tête (Nano Banana 2,
+  512 px, « ferme les yeux, ne change rien d'autre », 440 crédits en tout)
+  est recalée sur son image de repos, et l'on n'en garde que ce qui a
+  changé autour des yeux : `cligne.{avif,webp,png}`, une image de la taille
+  du repos, transparente partout ailleurs. Le reste du visage est celui du
+  repos, au pixel près.
+- **La chaîne sait les refaire.** `npm run cligne -- tete <ID>` découpe la
+  tête et dit quoi demander à Artlist ; `npm run cligne -- poser <ID>
+  <retouche>` pose les paupières et range la retouche dans
+  `art/<ID>/cligne/`, dans le dépôt. `fanzzy-art.mjs` les garde quand il
+  republie un repos à l'identique, les repose depuis la retouche quand le
+  repos a bougé (une tenue de plus agrandit le cadre de l'âge), et les
+  retire en le disant quand le visage a changé.
+- **Au Virage, les moments tombés pendant un geste se montrent l'un après
+  l'autre**, 3,5 secondes chacun : la corde qui cède d'abord, puis ce que le
+  match a fait (la vidéo, un rouge, le coup de sifflet final), et les buts
+  réels en dernier — c'est le dernier qui reste à l'écran ses quinze
+  secondes. Avant, la file se vidait d'un coup et seul le dernier restait :
+  un rouge arrivé après le but le couvrait. La carte-souvenir d'un but
+  attend la fin du défilé.
+
+### Pourquoi comme ça
+
+- **Des paupières, pas une image « yeux fermés » entière.** Le modèle rend
+  le visage à un ou deux tons près, un sourcil un peu plus haut : posée
+  130 ms sur le repos, l'image entière ferait tressaillir tout le visage.
+- **Sur le repos seulement.** Les paupières sont découpées dans cette
+  image-là : une joie, une poussée ou le supporter générique ne clignent
+  pas. `TBF_ETATS.paupieres` part de l'adresse affichée, pas d'une identité,
+  parce que `resoudre` a pu reculer d'une tenue ou d'un âge.
+- **Pas sous le calme** (`data-calme~="animations"`, `prefers-reduced-motion`),
+  ni dans un onglet caché ; le calme se relit à chaque battement.
+- **Le même visage ne remet pas le compte à zéro.** Le salut d'arrivée n'a
+  pas de dessin à lui : il pose le repos sur le repos, et son retour aussi.
+  Ces deux échanges invisibles réarmaient la minuterie, et le premier
+  battement de la session venait huit à douze secondes après l'arrivée au
+  lieu de trois à sept (douze ouvertures mesurées avant, douze après). Le
+  contrôle « il cligne des yeux de lui-même » rougissait ainsi une passe sur
+  quatre, et c'est la passe complète qui l'a montré : seul, il avait eu de
+  la chance. La minuterie qui tourne continue maintenant à travers ces
+  échanges, tant que les yeux sont ouverts sur ce repos-là.
+- **La boîte de la tête peut déborder de l'image.** Ramenée dedans, elle se
+  décalait par rapport à la tête quand le cadre pose le personnage tout en
+  haut : six pixels pour RP1 recadré, et des paupières à 1,8 % de leur
+  place. La découpe borde maintenant l'image d'une marge transparente.
+- **Le jeu d'abord, le but en dernier.** Un moment qui arrive pendant le
+  défilé y prend son rang au lieu de le couper ; hors d'un geste et d'un
+  défilé, rien ne change. Une entrée du fil qui ne montre rien (un jaune,
+  un changement) ne prend pas de place.
+
+### Contrôles
+
+`accueil:ui` : 9 contrôles de plus (les paupières prêtes avant le premier
+battement, posées sur la boîte exacte du repos, sans lueur ni fondu, un
+battement de lui-même, sa durée, jamais sur un autre visage, le salut sans
+dessin qui ne repousse pas la minuterie, un moment qui rouvre les yeux, le
+calme sans battement) et un pour le supporter. Le contrôle du salut rougit
+sans le correctif : la minuterie change à chaque échange de calques. Le
+diagnostic du clignement s'écrit maintenant après sa ligne rouge, là où
+`tout-tester` le remonte. « et il saute » et « d'un saut », du Fanzzy
+vivant, lisaient le saut à l'instant où la joie s'affiche, alors que son
+`animationstart` n'arrive qu'à l'image suivante : deux passes sur six de la
+section seule le manquaient, et ils lui laissent une seconde.
+`etats:test` : 12, `paupieres` sur un manifeste fabriqué et sur le vrai.
+`cligne:test` (neuf, 13 contrôles) : la chaîne sur RP1 recadré, republié,
+puis redessiné. `virage:ui` : 4, la corde, la carte-souvenir qui attend, puis
+le rouge, puis « GOAL ! » qui reste.
+
+Les 74 suites (`npm test`, 6 053 contrôles), passées sur la branche une fois
+fondus le stade du match, les trois décisions de saison 2 et le `main` du
+jour (notifications, carton rouge, tenue d'en face, seuils de division,
+collection de stades, le Fanzzy qui parle, le pronostic, les tenues en
+boutique, les pages en largeur), n'ont aucune rouge nouvelle :
+celles qui restent rougissent à l'identique sur `main` dans un conteneur
+cloud (`equipes:ui` 3, `deck:ui` 1, `nvn:ui` 1, `virage:ui` 4). Deux
+fusions ont demandé plus que des conflits de texte : la suite des
+notifications importait `EN_VENTE`, parti avec « La quête », et lit
+maintenant le catalogue partagé ; le tirage d'un stade, venu avec la
+collection, rend lui aussi le repli de 2 écharpes quand il n'a rien à
+donner.
+
+### Ce qui reste
+
+- **Les autres Fanzzy** : une retouche par repos (`npm run cligne -- tete`),
+  environ 120 crédits chacun ; et le clignement au duel et au Virage, où les
+  Fanzzy ont leurs propres calques.
+- **« Le jeu », compris comme la corde.** Si Gaël entendait par là le vrai
+  match, l'ordre se change d'une ligne (`RANG_DES_MOMENTS`,
+  `public/virage.html`), et le contrôle de `virage:ui` avec.
+
+---
+
 ## Le Fanzzy parle — un mot à chaque moment
 
 *6 octobre 2026, session cloud « Dialogues du Fanzzy », à la demande de Gaël
