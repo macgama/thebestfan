@@ -1229,6 +1229,42 @@ check(`ils ne portent pas tous le même geste (${new Set(ouvert.chants.map((c) =
 check('ni le même prix',
   new Set(ouvert.chants.map((c) => c.cout)).size >= 2);
 
+/* **Le chant de son geste**, au milieu, porte le sceau de sa famille : entier,
+   à la couleur de la famille, sans toucher le coût. */
+{
+  const sien = await A.page.evaluate(() => {
+    const cartes = [...document.querySelectorAll('#chants [data-chant]')];
+    const i = cartes.findIndex((c) => c.hasAttribute('data-sien'));
+    const c = cartes[i];
+    const s = c?.querySelector('.carte-sien');
+    const r = s?.getBoundingClientRect();
+    const cout = c?.querySelector('.tbf-carte-cout')?.getBoundingClientRect();
+    // Ce qui est réellement au centre du sceau : lui, et pas une voisine.
+    const dessus = r ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+    return { i, n: cartes.filter((x) => x.hasAttribute('data-sien')).length,
+      geste: S.vue.moi.sienGeste, gesteCarte: S.vue.chants[i]?.gest,
+      famille: S.vue.chants[i]?.sien?.famille ?? null,
+      actif: (S.vue.moi.fanzzy ?? []).find((f) => f.actif)?.type ?? null,
+      vu: Boolean(r && r.width > 0 && getComputedStyle(s).display !== 'none'),
+      chemin: s?.querySelector('path')?.getAttribute('d') ?? '',
+      entier: Boolean(dessus && s.contains(dessus)),
+      separe: Boolean(r && cout && (r.left >= cout.right || r.right <= cout.left)),
+      label: c?.getAttribute('aria-label') ?? '' };
+  });
+  check(`le chant du geste de son Fanzzy est au milieu, et il est seul marqué (${sien.geste}, place ${sien.i + 1})`,
+    sien.i === 2 && sien.n === 1 && sien.gesteCarte === sien.geste && sien.famille === sien.actif
+    || (console.log('        ', JSON.stringify(sien)), false));
+  check('il porte le sceau de sa famille, entier, sans toucher le coût',
+    sien.vu && sien.chemin.length > 10 && sien.entier && sien.separe
+    || (console.log('        ', JSON.stringify(sien)), false));
+  check(`et il le dit à qui ne le voit pas (« ${sien.label} »)`, /le geste de ton Fanzzy$/.test(sien.label));
+  if (process.env.CAPTURE) {
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    await A.page.screenshot({ path: join(tmpdir(), 'nvn-chants.png') });
+  }
+}
+
 /* ------------------------------------------ les Fanzzy ont un visage */
 
 /**
@@ -1743,6 +1779,28 @@ check('la corde a bougé', bouge);
   check(`leur poussée : leur Fanzzy se penche vers la corde (${pousse.eux.pose}, ${pousse.eux.rotate})`,
     pousse.eux.pose === 'pousse' && pousse.eux.geste === 'hisse' && /^-4deg$/.test(pousse.eux.rotate ?? '')
     || (console.log('        ', JSON.stringify(pousse.eux)), false));
+
+  /* **Son geste** : le chant réussi de sa spécialité le fait chanter à la
+     manière de sa famille — la Percussion frappe —, et la poussée qui suit
+     ne le coupe pas pour se pencher. Raté, rien de plus que d'habitude. */
+  await jusqua(() => A.page.evaluate(() => ['fzMoi', 'fzEux']
+    .every((id) => document.getElementById(id)?.dataset.pose === 'neutre')), 6000);
+  await A.page.evaluate(() => {
+    const side = S.vue.moi.side;
+    raconter({ t: 'chant', side, userId: 'personne', cardId: 'roulement', geste: 'mash',
+      verdict: 'bon', sien: true, famille: 'perc' });
+    raconter({ t: 'push', side, valeur: 12 });
+  });
+  await dodo(150);
+  const sien = await lireFz();
+  check(`son geste réussi : le mien chante à la manière de sa famille (${sien.moi.geste}, ${sien.moi.animation})`,
+    sien.moi.pose === 'pousse' && sien.moi.geste === 'frappe' && sien.moi.animation === 'fzDuelFrappe'
+    || (console.log('        ', JSON.stringify(sien.moi)), false));
+  await jusqua(() => A.page.evaluate(() => document.getElementById('fzEux')?.dataset.pose === 'neutre'), 6000);
+  await A.page.evaluate(() => raconter({ t: 'chant', side: S.vue.moi.side ^ 1, userId: 'personne',
+    cardId: 'reprise', geste: 'tempo', verdict: 'rate', sien: true, famille: 'voix' }));
+  const rate = await lireFz();
+  check(`son geste raté : celui d’en face ne crie pas (${rate.eux.geste ?? 'rien'})`, rate.eux.geste !== 'crie');
 
   /* Un coup d'en face sur ma tribune : la vue le porte (`equipes[][].effets`),
      et c'est **son arrivée** qui met en colère, pas sa durée. */
