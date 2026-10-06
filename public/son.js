@@ -800,6 +800,634 @@
     });
   }
 
+
+  /* ================================== les cartes d'action et les épreuves
+
+     Le 6 octobre 2026, Gaël : « Il manque des sons pour les duels. Chaque
+     carte action devrait avoir un son associé. Chaque mini-jeu devrait avoir
+     un son associé. » Puis, à la question des fichiers : « synthèse ». Rien
+     n'est donc téléchargé ici, rien n'a de licence : chaque son est fait des
+     mêmes gestes que le reste de la banque, et il part à l'instant même où on
+     l'appelle (la règle d'en-tête).
+
+     **Une carte** sonne quand elle part (`TBF_ACTION.jouee`), chez celui qui
+     la joue comme chez celui qui la subit, au duel comme au Virage : le son
+     dit ce qui vient de tomber avant qu'on ait lu la carte. Son nom est
+     l'identifiant de la carte (« a-fumigene ») ; une carte sans son garde le
+     claquement ordinaire (« carte »).
+
+     **Une épreuve** sonne à son ouverture (`TBF_GESTE.jouer`), partout où
+     elle s'ouvre — le duel, le Virage, la salle de répétition. Son nom est
+     « epreuve- » suivi du geste. Les quatre épreuves de rythme (tempo,
+     contretemps, écho, crescendo) ont la tribune qui chante leurs temps :
+     leur son d'ouverture tient en moins de deux dixièmes de seconde, et se
+     tait avant le premier temps (un intervalle plus loin : 280 ms au plus
+     court, à l'écho), pour ne jamais passer pour une pulsation.
+
+     Chacun est un **bruitage**, pas un air : la carte du capo n'est pas une
+     mélodie, c'est une corne. Tous sont de la famille du jeu (fenêtre −25 à
+     −20 LUFS), mesurés au banc comme les autres ; leurs gains sont dans
+     MIX_CARTES, plus bas. */
+
+  /** La sortie, posée à gauche ou à droite quand le navigateur le sait. */
+  function cote(c, s, pan) {
+    if (pan == null || typeof c.createStereoPanner !== 'function') return s;
+    const p = c.createStereoPanner();
+    p.pan.value = pan;
+    p.connect(s);
+    return p;
+  }
+
+  /** Une enveloppe de bruit : « monte » (à l'envers, coupée net) ou « bosse ». */
+  function forme(vol, sorte, points = 32) {
+    const e = new Float32Array(points);
+    for (let i = 0; i < points; i++) {
+      const x = i / (points - 1);
+      e[i] = sorte === 'monte' ? vol * x ** 2 * (i === points - 1 ? 0 : 1) : vol * Math.sin(Math.PI * x);
+    }
+    return e;
+  }
+
+  /** Un bruit dont le filtre glisse de `de` à `a` : souffle, flamme, tissu. */
+  function balaye(c, s, t, { duree, de, a, vol, q = 1, filtre = 'bandpass', delai = 0, sorte = null, pan = null }) {
+    const t0 = t + delai;
+    const f = bruit(c, cote(c, s, pan), t, { duree, freq: de, vol, q, filtre, delai,
+      courbe: sorte ? forme(vol, sorte) : null });
+    f.frequency.setValueAtTime(de, t0);
+    f.frequency.exponentialRampToValueAtTime(a, t0 + duree);
+    return f;
+  }
+
+  /** Un sifflet d'arbitre : la bille qui roule fait trembler la note. */
+  function sifflet(c, s, t, { duree = 0.25, freq = 2900, vol = 0.1, delai = 0 }) {
+    const t0 = t + delai;
+    const o = c.createOscillator();
+    o.frequency.value = freq;
+    const bille = c.createOscillator();
+    bille.frequency.value = 27;
+    const prof = c.createGain();
+    prof.gain.value = freq * 0.05;
+    bille.connect(prof).connect(o.frequency);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol, t0 + 0.015);
+    g.gain.setValueAtTime(vol, t0 + Math.max(0.02, duree - 0.03));
+    g.gain.linearRampToValueAtTime(0.0001, t0 + duree);
+    o.connect(g).connect(s);
+    lancer(c, o, t0);
+    lancer(c, bille, t0);
+    o.stop(t0 + duree + 0.02);
+    bille.stop(t0 + duree + 0.02);
+    bruit(c, s, t, { duree, freq, q: 4, vol: vol * 0.25, delai });
+  }
+
+  /** Un métal frappé : des partiels qui ne s'accordent pas, les aigus brefs. */
+  function metal(c, s, t, { freq = 400, duree = 0.6, vol = 0.08, delai = 0, rapports = [1, 2.32, 3.86, 5.4] }) {
+    rapports.forEach((r, i) =>
+      ton(c, s, t, { freq: freq * r, duree: duree / (1 + i * 0.5), vol: vol / (1 + i * 0.6), delai }));
+    bruit(c, s, t, { duree: 0.03, freq: Math.min(8000, freq * 4), q: 1, vol: vol * 0.8, delai });
+  }
+
+  /** Un claquement sec : bois, plastique, mécanisme. */
+  function clic(c, s, t, { freq = 1500, vol = 0.1, delai = 0, pan = null }) {
+    const d = cote(c, s, pan);
+    ton(c, d, t, { freq, vers: freq * 0.7, duree: 0.035, type: 'triangle', vol, delai });
+    bruit(c, d, t, { duree: 0.02, freq: freq * 2, q: 1.5, vol: vol * 0.7, delai });
+  }
+
+  /** Un fût frappé (tom, grosse caisse) : la peau qui tombe, la baguette. */
+  function fut(c, s, t, { de = 160, a = 80, duree = 0.3, vol = 0.3, delai = 0, pan = null }) {
+    const d = cote(c, s, pan);
+    ton(c, d, t, { freq: de, vers: a, duree, vol, delai });
+    ton(c, d, t, { freq: de * 1.6, vers: a * 1.6, duree: duree * 0.4, type: 'triangle', vol: vol * 0.3, delai });
+    bruit(c, d, t, { duree: 0.04, freq: 1200, q: 0.8, vol: vol * 0.5, delai });
+  }
+
+  /** Des grains : papier qui crisse, mèche qui grésille, pièces qui roulent. */
+  function grains(c, s, t, { n = 12, duree = 0.5, freq = 4000, vol = 0.08, q = 2, long = 0.012, delai = 0 }) {
+    for (let i = 0; i < n; i++) {
+      const x = delai + alea() * duree;
+      bruit(c, s, t, { duree: long * (0.6 + alea()), freq: freq * (0.7 + alea() * 0.6), q, vol: vol * (0.5 + alea() * 0.5), delai: x });
+    }
+  }
+
+  Object.assign(BANQUE, {
+    /* ------------------------------------------------ les poussées */
+    // Le fumigène : la mèche qui prend, puis le sifflement de la fumée qui monte.
+    'a-fumigene': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 900, vol: 0.12 });
+        balaye(c, s, t, { duree: 0.8, de: 1800, a: 5200, vol: 0.12, q: 1.4, delai: 0.03 });
+        bruit(c, s, t, { duree: 0.7, freq: 500, filtre: 'lowpass', q: 0.7, vol: 0.06, delai: 0.03 });
+      } },
+    // Le craquage : un gros pétard, sa détonation, ses éclats qui retombent.
+    'a-craquage': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.22, freq: 1400, filtre: 'lowpass', q: 0.7, vol: 0.5 });
+        ton(c, s, t, { freq: 140, vers: 38, duree: 0.35, vol: 0.4 });
+        grains(c, s, t, { n: 9, duree: 0.5, freq: 2500, vol: 0.12, q: 1, long: 0.02, delai: 0.12 });
+      } },
+    // La torche : une flamme qui s'allume d'un coup et ronfle.
+    'a-torche': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.55, de: 300, a: 1600, vol: 0.2, q: 0.6, sorte: 'bosse' });
+        bruit(c, s, t, { duree: 0.7, freq: 260, filtre: 'lowpass', q: 0.8, vol: 0.18, delai: 0.05 });
+      } },
+    // Le long chant : un roulement de caisse claire qui enfle, dix frappes.
+    'a-longchant': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 10; i++) {
+          bruit(c, s, t, { duree: 0.06, freq: 1900, q: 0.9, vol: 0.05 + i * 0.012, delai: i * 0.07 });
+          ton(c, s, t, { freq: 220, vers: 160, duree: 0.05, type: 'triangle', vol: 0.03 + i * 0.006, delai: i * 0.07 });
+        }
+      } },
+    // Le tifo : une toile géante qui se déplie au-dessus de la tribune.
+    'a-tifo': { famille: 'jeu', duree: 1.1,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.95, de: 250, a: 900, vol: 0.2, q: 0.7, sorte: 'bosse' });
+        [0.15, 0.42, 0.7].forEach((d, i) =>
+          bruit(c, s, t, { duree: 0.09, freq: 700 - i * 80, filtre: 'lowpass', q: 0.8, vol: 0.18, delai: d }));
+      } },
+    // Le coup d'envoi : le long coup de sifflet.
+    'a-rp-coupdenvoi': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => sifflet(c, s, t, { duree: 0.7, freq: 2800, vol: 0.09 }) },
+
+    /* ------------------------------------------------- les entraves */
+    // Le silence radio : l'écran qu'on éteint, la note qui s'effondre.
+    'a-silence': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 110, duree: 0.08, type: 'square', vol: 0.06 });
+        ton(c, s, t, { freq: 2400, vers: 60, duree: 0.3, vol: 0.12, delai: 0.06 });
+        clic(c, s, t, { freq: 700, vol: 0.1, delai: 0.36 });
+      } },
+    // Le brouillard : une nappe sourde qui enfle et recouvre tout.
+    'a-brouillard': { famille: 'jeu', duree: 1.1,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 1, de: 1400, a: 350, vol: 0.2, q: 0.5, filtre: 'lowpass', sorte: 'bosse' });
+        balaye(c, s, t, { duree: 0.9, de: 3000, a: 1500, vol: 0.05, q: 1, sorte: 'bosse', delai: 0.05 });
+      } },
+    // Le parcage fermé : la grille qui claque, puis le verrou.
+    'a-parcage': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.1, freq: 500, filtre: 'lowpass', q: 0.8, vol: 0.3 });
+        metal(c, s, t, { freq: 180, duree: 0.7, vol: 0.12 });
+        clic(c, s, t, { freq: 2200, vol: 0.1, delai: 0.3 });
+        clic(c, s, t, { freq: 1600, vol: 0.08, delai: 0.36 });
+      } },
+    // La rouille : une mécanique grippée qui grince.
+    'a-rp-rouille': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        const o = c.createOscillator();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(620, t);
+        [0.08, 0.17, 0.25, 0.36, 0.45].forEach((d, i) =>
+          o.frequency.linearRampToValueAtTime(i % 2 ? 640 : 880, t + d));
+        const f = c.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.value = 1700;
+        f.Q.value = 4;
+        const g = c.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.2, t + 0.04);
+        g.gain.setValueAtTime(0.2, t + 0.4);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+        o.connect(f).connect(g).connect(s);
+        lancer(c, o, t);
+        o.stop(t + 0.58);
+      } },
+    // Le hors-jeu : le drapeau de l'assistant qui claque en l'air.
+    'a-rp-horsjeu': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [0, 0.11, 0.2].forEach((d, i) =>
+          bruit(c, s, t, { duree: 0.07, freq: 1300 - i * 150, q: 0.9, vol: 0.2 - i * 0.04, delai: d }));
+        sifflet(c, s, t, { duree: 0.14, freq: 3000, vol: 0.06, delai: 0.32 });
+      } },
+
+    /* --------------------------------------------------- le souffle */
+    // Le vol de souffle : une aspiration à l'envers, coupée net.
+    'a-vol': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.5, de: 500, a: 3200, vol: 0.2, q: 1, sorte: 'monte' });
+        ton(c, s, t, { freq: 180, vers: 520, duree: 0.5, type: 'triangle', vol: 0.05 });
+        clic(c, s, t, { freq: 600, vol: 0.1, delai: 0.5 });
+      } },
+    // Le thermos : on verse, le gobelet se remplit — la note monte.
+    'a-thermos': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.75, de: 900, a: 2200, vol: 0.06, q: 2.5 });
+        for (let i = 0; i < 9; i++) {
+          const f = 380 + i * 55 + alea() * 40;
+          ton(c, s, t, { freq: f, vers: f * 1.3, duree: 0.05, vol: 0.06, delai: i * 0.08 + alea() * 0.02 });
+        }
+      } },
+    // La collecte : des pièces qui tombent dans la boîte en fer.
+    'a-collecte': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        [0, 0.09, 0.15, 0.27, 0.34].forEach((d, i) =>
+          metal(c, s, t, { freq: 2300 + alea() * 1500, duree: 0.25, vol: 0.05, delai: d,
+            rapports: [1, 1.52, 2.4] }));
+        metal(c, s, t, { freq: 420, duree: 0.5, vol: 0.05, delai: 0.02, rapports: [1, 2.1] });
+      } },
+    // Le changement de chant : un paquet de cartes qu'on bat.
+    'a-relais': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 14; i++) {
+          bruit(c, s, t, { duree: 0.018, freq: 3200 + alea() * 1500, q: 1.5, vol: 0.13, delai: i * 0.03 });
+        }
+        bruit(c, s, t, { duree: 0.06, freq: 800, filtre: 'lowpass', q: 0.8, vol: 0.2, delai: 0.46 });
+      } },
+    // Le nouveau souffle : une recharge qui monte, et l'éclat quand c'est plein.
+    'a-souffleneuf': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 220, vers: 1500, duree: 0.45, type: 'sawtooth', vol: 0.05 });
+        balaye(c, s, t, { duree: 0.45, de: 800, a: 4000, vol: 0.06, q: 1.2, sorte: 'monte' });
+        ton(c, s, t, { freq: 1568, duree: 0.3, vol: 0.08, delai: 0.44 });
+        ton(c, s, t, { freq: 2349, duree: 0.25, vol: 0.04, delai: 0.44 });
+      } },
+    // La tournée : deux pintes qui trinquent.
+    'a-tournee': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        metal(c, s, t, { freq: 1900, duree: 0.6, vol: 0.07, rapports: [1, 2.7, 4.1] });
+        metal(c, s, t, { freq: 2150, duree: 0.5, vol: 0.06, delai: 0.13, rapports: [1, 2.7, 4.1] });
+      } },
+
+    /* ---------------------------------------------------- les gestes */
+    // Le métronome : tic, tac.
+    'a-metronome': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 1700, vol: 0.2 });
+        clic(c, s, t, { freq: 1250, vol: 0.2, delai: 0.3 });
+      } },
+    // Le vent de face : une rafale lourde qui passe.
+    'a-vent': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        const f = balaye(c, s, t, { duree: 0.9, de: 380, a: 520, vol: 0.22, q: 0.9, sorte: 'bosse' });
+        f.frequency.linearRampToValueAtTime(1100, t + 0.4);
+        bruit(c, s, t, { duree: 0.8, freq: 200, filtre: 'lowpass', q: 0.7, vol: 0.12, delai: 0.05 });
+      } },
+    // Le second souffle : une grande inspiration, puis l'air qu'on relâche.
+    'a-secondsouffle': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.45, de: 900, a: 1700, vol: 0.14, q: 1.6, sorte: 'monte' });
+        balaye(c, s, t, { duree: 0.4, de: 1300, a: 600, vol: 0.12, q: 1.2, delai: 0.5 });
+      } },
+    // La mise : des jetons posés sur la table.
+    'a-mise': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        [0, 0.07, 0.12, 0.2].forEach((d) => clic(c, s, t, { freq: 2600 + alea() * 900, vol: 0.12, delai: d }));
+      } },
+    // L'échauffement : des baskets qui crissent sur le parquet.
+    'a-rp-echauffement': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [[0, 1900], [0.2, 2300]].forEach(([d, f]) => {
+          ton(c, s, t, { freq: f, vers: f * 1.25, duree: 0.09, type: 'square', vol: 0.04, delai: d });
+          bruit(c, s, t, { duree: 0.09, freq: f * 1.5, q: 3, vol: 0.06, delai: d });
+        });
+      } },
+    // La routine d'avant-match : le casier qu'on ouvre, la porte en fer.
+    'a-rp-routine': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 1800, vol: 0.14 });
+        metal(c, s, t, { freq: 330, duree: 0.6, vol: 0.09, delai: 0.12 });
+        bruit(c, s, t, { duree: 0.08, freq: 600, filtre: 'lowpass', q: 0.8, vol: 0.2, delai: 0.12 });
+      } },
+
+    /* ------------------------------------------------------ la garde */
+    // La bâche : une grosse toile déployée d'un coup sec.
+    'a-bache': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [0, 0.09, 0.17].forEach((d, i) =>
+          bruit(c, s, t, { duree: 0.13, freq: 1000 - i * 120, filtre: 'lowpass', q: 1, vol: 0.3 - i * 0.07, delai: d }));
+      } },
+    // Le renvoi : un ricochet, l'attaque qui repart vers l'envoyeur.
+    'a-miroir': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 2600, vol: 0.12 });
+        ton(c, s, t, { freq: 2800, vers: 900, duree: 0.35, vol: 0.08, delai: 0.02 });
+        ton(c, s, t, { freq: 2200, vers: 800, duree: 0.25, vol: 0.035, delai: 0.3 });
+      } },
+    // L'ancre : une lourde chaîne qui tombe, et tout s'arrête.
+    'a-ancre': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 10; i++) {
+          metal(c, s, t, { freq: 700 + alea() * 900, duree: 0.12, vol: 0.04, delai: i * 0.03 + alea() * 0.02,
+            rapports: [1, 2.3] });
+        }
+        fut(c, s, t, { de: 90, a: 45, duree: 0.45, vol: 0.35, delai: 0.32 });
+      } },
+    // La bâche neuve : un emballage neuf qui crisse sous les doigts.
+    'a-rp-bache-neuve': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        grains(c, s, t, { n: 26, duree: 0.55, freq: 4500, vol: 0.14, q: 1.2, long: 0.01 });
+        balaye(c, s, t, { duree: 0.5, de: 2500, a: 3500, vol: 0.03, q: 1, sorte: 'bosse' });
+      } },
+    // Le filet de chantier : le choc encaissé, et le filet qui vibre.
+    'a-rp-filet': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.06, freq: 700, filtre: 'lowpass', q: 0.8, vol: 0.25 });
+        for (let i = 0; i < 6; i++) {
+          metal(c, s, t, { freq: 520, duree: 0.09, vol: 0.06 * (1 - i * 0.14), delai: 0.03 + i * 0.07, rapports: [1, 2.9] });
+        }
+      } },
+
+    /* ------------------------------------------------- le collectif */
+    // L'appel du capo : la corne de tribune, courte.
+    'a-appel': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        [466, 470, 233].forEach((f) => ton(c, s, t, { freq: f, duree: 0.5, type: 'sawtooth', vol: 0.06 }));
+      } },
+    // La mosaïque : les cartons qu'on retourne, un à un.
+    'a-mosaique': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 6; i++) {
+          bruit(c, s, t, { duree: 0.035, freq: 2400 + i * 150, q: 1.2, vol: 0.16, delai: i * 0.07 });
+        }
+      } },
+    // Le chœur : toute la tribune claque des mains, ensemble, trois fois.
+    'a-choeur': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        [0, 0.24, 0.48].forEach((d) => { clap(c, s, t + d, 0.35); clap(c, s, t + d + 0.006, 0.3); });
+      } },
+    // La présentation de l'effectif : une clameur courte qui salue un joueur.
+    'a-rp-presentation': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        eclats(c, s, t, 5, 0.9);
+        balaye(c, s, t, { duree: 0.85, de: 600, a: 900, vol: 0.12, q: 0.6, sorte: 'bosse' });
+      } },
+    // Le premier chant de l'année : la tribune entière qui s'embrase.
+    'a-rp-premier-chant': { famille: 'jeu', duree: 1.2,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 1.1, de: 400, a: 1100, vol: 0.18, q: 0.6, sorte: 'bosse' });
+        eclats(c, s, t + 0.05, 7, 0.9);
+        fut(c, s, t, { de: 130, a: 55, duree: 0.4, vol: 0.25 });
+      } },
+
+    /* ------------------------------------------------- les bascules */
+    // La remontada : l'élan qui monte, puis le grand coup.
+    'a-remontada': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.4, de: 400, a: 2500, vol: 0.12, q: 1, sorte: 'monte' });
+        fut(c, s, t, { de: 120, a: 45, duree: 0.45, vol: 0.4, delai: 0.4 });
+        bruit(c, s, t, { duree: 0.25, freq: 1800, filtre: 'lowpass', q: 0.7, vol: 0.18, delai: 0.4 });
+      } },
+    // L'arbitre : le changement, deux coups de sifflet.
+    'a-arbitre': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        sifflet(c, s, t, { duree: 0.13, freq: 3000, vol: 0.09 });
+        sifflet(c, s, t, { duree: 0.22, freq: 3000, vol: 0.09, delai: 0.2 });
+      } },
+    // La relève : une montée qui vibre, le Fanzzy change d'âge.
+    'a-releve': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 260, vers: 1040, duree: 0.7, type: 'triangle', vol: 0.08 });
+        ton(c, s, t, { freq: 390, vers: 1560, duree: 0.7, vol: 0.04, delai: 0.02 });
+        balaye(c, s, t, { duree: 0.7, de: 600, a: 3000, vol: 0.06, q: 1, sorte: 'monte' });
+        ton(c, s, t, { freq: 1047, duree: 0.25, vol: 0.06, delai: 0.68 });
+      } },
+    // Les prolongations : la pendule qu'on relance, tic-tac-tic-tac.
+    'a-prolongations': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 900, vol: 0.18 });
+        [0.22, 0.42, 0.62, 0.82].forEach((d, i) => clic(c, s, t, { freq: i % 2 ? 1300 : 1700, vol: 0.1, delai: d }));
+      } },
+    // Le retournement : deux souffles en sens contraire, la tendance bascule.
+    'a-retournement': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.26, de: 700, a: 2600, vol: 0.14, q: 1.2, sorte: 'bosse', pan: -0.6 });
+        balaye(c, s, t, { duree: 0.3, de: 2600, a: 600, vol: 0.14, q: 1.2, sorte: 'bosse', delai: 0.24, pan: 0.6 });
+      } },
+    // Jour Un : une montée d'air creuse, tout repart de zéro.
+    'a-rp-jour-un': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.8, de: 200, a: 2800, vol: 0.14, q: 2, sorte: 'monte' });
+        ton(c, s, t, { freq: 196, vers: 392, duree: 0.8, vol: 0.07 });
+        ton(c, s, t, { freq: 784, duree: 0.2, vol: 0.05, delai: 0.78 });
+      } },
+
+    /* ============================================= les épreuves (ouverture)
+       Les quatre de rythme d'abord : brèves, voir plus haut. */
+    // Le tempo : le compte des baguettes qui se frappent.
+    'epreuve-tempo': { famille: 'jeu', duree: 0.3,
+      jouer: (c, s, t) => clic(c, s, t, { freq: 2100, vol: 0.3 }) },
+    // Le contretemps : un coup de cercle sec.
+    'epreuve-contretemps': { famille: 'jeu', duree: 0.3,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 3200, vol: 0.2 });
+        bruit(c, s, t, { duree: 0.06, freq: 2500, q: 2, vol: 0.18 });
+      } },
+    // L'écho : un claquement qui résonne — écoute.
+    'epreuve-echo': { famille: 'jeu', duree: 0.3,
+      jouer: (c, s, t) => {
+        clap(c, s, t, 0.5);
+        clap(c, s, t + 0.07, 0.15);
+      } },
+    // Le crescendo : un fla qui enfle, deux coups serrés.
+    'epreuve-crescendo': { famille: 'jeu', duree: 0.3,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.05, freq: 1900, q: 0.9, vol: 0.12 });
+        bruit(c, s, t, { duree: 0.08, freq: 1900, q: 0.9, vol: 0.25, delai: 0.035 });
+      } },
+    // Le martelage : un roulement serré de caisse claire.
+    'epreuve-mash': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 8; i++) bruit(c, s, t, { duree: 0.04, freq: 2000, q: 0.9, vol: 0.12 + i * 0.01, delai: i * 0.045 });
+      } },
+    // L'endurance : un élastique qu'on tend, et qui tient.
+    'epreuve-hold': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 140, vers: 300, duree: 0.6, type: 'sawtooth', vol: 0.05 });
+        balaye(c, s, t, { duree: 0.6, de: 700, a: 1400, vol: 0.06, q: 3 });
+      } },
+    // La relance : la corde tendue, lâchée — le claquement.
+    'epreuve-relance': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 160, vers: 230, duree: 0.25, type: 'sawtooth', vol: 0.04 });
+        bruit(c, s, t, { duree: 0.05, freq: 1500, q: 0.8, vol: 0.22, delai: 0.24 });
+        ton(c, s, t, { freq: 180, vers: 140, duree: 0.3, type: 'triangle', vol: 0.14, delai: 0.24 });
+      } },
+    // Les salves : trois coups de sifflet brefs.
+    'epreuve-salves': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [0, 0.15, 0.3].forEach((d) => sifflet(c, s, t, { duree: 0.09, freq: 3100, vol: 0.09, delai: d }));
+      } },
+    // Le sang-froid : la mèche qui grésille.
+    'epreuve-tenue': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        grains(c, s, t, { n: 30, duree: 0.7, freq: 5000, vol: 0.12, q: 1, long: 0.008 });
+        bruit(c, s, t, { duree: 0.7, freq: 3500, q: 1, vol: 0.03 });
+      } },
+    // La mesure : des touches de machine à écrire, chacune comptée.
+    'epreuve-retenue': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [0, 0.14, 0.28].forEach((d) => {
+          clic(c, s, t, { freq: 1300, vol: 0.14, delai: d });
+          metal(c, s, t, { freq: 3000, duree: 0.06, vol: 0.02, delai: d + 0.01, rapports: [1, 1.7] });
+        });
+      } },
+    // Le tifo : un trait continu tracé d'un geste.
+    'epreuve-tifo': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        const f = balaye(c, s, t, { duree: 0.5, de: 2200, a: 3200, vol: 0.12, q: 2.5, sorte: 'bosse' });
+        f.frequency.linearRampToValueAtTime(1800, t + 0.25);
+      } },
+    // Les visages : le déclic de l'appareil photo.
+    'epreuve-memoire': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 2400, vol: 0.18 });
+        bruit(c, s, t, { duree: 0.05, freq: 1500, q: 1, vol: 0.12, delai: 0.03 });
+        clic(c, s, t, { freq: 1600, vol: 0.14, delai: 0.11 });
+      } },
+    // La mosaïque : des pièces de bois posées une à une.
+    'epreuve-mosaique': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [0, 0.1, 0.17, 0.3].forEach((d, i) => clic(c, s, t, { freq: 700 + i * 120 + alea() * 80, vol: 0.2, delai: d }));
+      } },
+    // L'écharpe : le tissu qui tourne au-dessus de la tête.
+    'epreuve-echarpe': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        [[0, -0.7], [0.2, 0.7], [0.4, -0.3]].forEach(([d, p]) =>
+          balaye(c, s, t, { duree: 0.2, de: 600, a: 1800, vol: 0.14, q: 1, sorte: 'bosse', delai: d, pan: p }));
+      } },
+    // Le capo : son appel de tambour, un fla et un coup.
+    'epreuve-capo': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        fut(c, s, t, { de: 200, a: 120, duree: 0.2, vol: 0.2 });
+        fut(c, s, t, { de: 200, a: 120, duree: 0.2, vol: 0.25, delai: 0.06 });
+        fut(c, s, t, { de: 150, a: 90, duree: 0.3, vol: 0.3, delai: 0.26 });
+      } },
+    // Le tri : un carton qui glisse.
+    'epreuve-tri': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.4, de: 600, a: 1000, vol: 0.18, q: 0.8, filtre: 'lowpass', sorte: 'bosse' });
+        bruit(c, s, t, { duree: 0.06, freq: 500, filtre: 'lowpass', q: 0.8, vol: 0.2, delai: 0.38 });
+      } },
+    // Le compte : le tic-tac qui décompte.
+    'epreuve-compte': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 1500, vol: 0.18 });
+        clic(c, s, t, { freq: 1100, vol: 0.18, delai: 0.25 });
+      } },
+    // La bascule : un levier qui grince et retombe d'un côté.
+    'epreuve-bascule': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 900, vers: 1300, duree: 0.2, type: 'sawtooth', vol: 0.03 });
+        fut(c, s, t, { de: 220, a: 110, duree: 0.2, vol: 0.22, delai: 0.22 });
+        clic(c, s, t, { freq: 1100, vol: 0.12, delai: 0.22 });
+      } },
+    // La visée : le briquet, puis la flamme du fumigène.
+    'epreuve-visee': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 2600, vol: 0.14 });
+        balaye(c, s, t, { duree: 0.5, de: 500, a: 1300, vol: 0.14, q: 0.7, sorte: 'bosse', delai: 0.06 });
+      } },
+    // La jauge : la molette qui cranne.
+    'epreuve-jauge': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 7; i++) clic(c, s, t, { freq: 2000 + i * 120, vol: 0.1, delai: i * 0.05 });
+      } },
+    // La ola : le « whooo » de la foule qui passe de gauche à droite.
+    'epreuve-ola': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        const d = cote(c, s, 0);
+        if (d !== s) {
+          d.pan.setValueAtTime(-0.8, t);
+          d.pan.linearRampToValueAtTime(0.8, t + 0.9);
+        }
+        balaye(c, d, t, { duree: 0.9, de: 500, a: 900, vol: 0.16, q: 0.7, sorte: 'bosse' });
+        eclats(c, d, t + 0.1, 3, 0.6);
+      } },
+    // L'écho inversé : un son joué à l'envers.
+    'epreuve-miroir': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.55, de: 3000, a: 7000, vol: 0.12, q: 0.7, sorte: 'monte' });
+        ton(c, s, t, { freq: 500, vers: 1000, duree: 0.55, vol: 0.04 });
+      } },
+    // Les rouleaux : le papier qui claque et s'envole.
+    'epreuve-rouleaux': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 7; i++) {
+          bruit(c, s, t, { duree: 0.04, freq: 1600 + alea() * 1200, q: 1, vol: 0.14 - i * 0.012, delai: i * 0.07 });
+        }
+      } },
+    // Les deux voix : un tom à gauche, un tom à droite.
+    'epreuve-deuxvoix': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        fut(c, s, t, { de: 170, a: 95, duree: 0.25, vol: 0.3, pan: -0.8 });
+        fut(c, s, t, { de: 130, a: 75, duree: 0.3, vol: 0.3, delai: 0.2, pan: 0.8 });
+      } },
+  });
+
+  /* Les gains des sons des cartes et des épreuves, tirés du banc (graine 1,
+     chaîne chaude) le 6 octobre 2026 : chacun posé au milieu de la fenêtre
+     du jeu (−22,5 LUFS), sauf la bâche, que sa crête retient un peu plus bas.
+     En commentaire : crête (dBFS) · sonie (LUFS, 100 ms) · durée. */
+  const MIX_CARTES = {
+    'a-fumigene': 2.34,            //  −11,5 · −22,5 · 0,42 s
+    'a-craquage': 0.442,           //  −14,1 · −22,5 · 0,62 s
+    'a-torche': 1.41,              //  −16,1 · −22,5 · 0,55 s
+    'a-longchant': 2.72,           //  −12,8 · −22,5 · 0,68 s
+    'a-tifo': 1.95,                //  −14,7 · −22,5 · 0,95 s
+    'a-rp-coupdenvoi': 0.582,      //  −25,1 · −22,5 · 0,71 s
+    'a-silence': 1.02,             //  −18,3 · −22,6 · 0,39 s
+    'a-brouillard': 1.76,          //  −15,3 · −22,4 · 1,00 s
+    'a-parcage': 0.832,            //  −14,0 · −22,5 · 0,43 s
+    'a-rp-rouille': 1.16,          //  −20,4 · −22,5 · 0,48 s
+    'a-rp-horsjeu': 0.881,         //  −21,2 · −22,5 · 0,47 s
+    'a-vol': 1.11,                 //  −16,3 · −22,5 · 0,53 s
+    'a-thermos': 3.47,             //  −13,5 · −22,5 · 0,70 s
+    'a-collecte': 1.27,            //  −16,3 · −22,6 · 0,51 s
+    'a-relais': 5.89,              //   −8,0 · −22,5 · 0,50 s
+    'a-souffleneuf': 1.35,         //  −16,2 · −22,5 · 0,65 s
+    'a-tournee': 1.01,             //  −17,3 · −22,5 · 0,45 s
+    'a-metronome': 1.64,           //  −10,1 · −22,5 · 0,34 s
+    'a-vent': 1.29,                //  −15,9 · −22,5 · 0,90 s
+    'a-secondsouffle': 2.75,       //  −14,7 · −22,5 · 0,68 s
+    'a-mise': 1.58,                //  −15,0 · −22,5 · 0,24 s
+    'a-rp-echauffement': 3.51,     //  −16,3 · −22,5 · 0,28 s
+    'a-rp-routine': 1.1,           //  −13,3 · −22,5 · 0,50 s
+    'a-bache': 3.43,               //   −7,3 · −23,8 · 0,24 s
+    'a-miroir': 1.12,              //  −18,1 · −22,5 · 0,45 s
+    'a-ancre': 0.507,              //  −14,3 · −22,5 · 0,60 s
+    'a-rp-bache-neuve': 4.42,      //  −10,3 · −22,5 · 0,55 s
+    'a-rp-filet': 2.63,            //  −12,8 · −22,5 · 0,45 s
+    'a-appel': 1.72,               //  −13,2 · −22,5 · 0,34 s
+    'a-mosaique': 5.13,            //   −7,4 · −22,5 · 0,38 s
+    'a-choeur': 2.19,              //  −11,6 · −22,5 · 0,62 s
+    'a-rp-presentation': 1.82,     //  −12,3 · −22,5 · 0,85 s
+    'a-rp-premier-chant': 0.653,   //  −13,8 · −22,5 · 1,09 s
+    'a-remontada': 0.403,          //  −13,8 · −22,5 · 0,66 s
+    'a-arbitre': 0.582,            //  −25,4 · −22,5 · 0,43 s
+    'a-releve': 1.57,              //  −16,1 · −22,5 · 0,85 s
+    'a-prolongations': 2.21,       //   −8,5 · −22,6 · 0,86 s
+    'a-retournement': 2.88,        //  −14,0 · −22,5 · 0,54 s
+    'a-rp-jour-un': 1.68,          //  −18,4 · −22,5 · 0,92 s
+    'epreuve-tempo': 1,            //  −11,0 · −22,5 · 0,04 s
+    'epreuve-contretemps': 1.33,   //  −12,2 · −22,5 · 0,04 s
+    'epreuve-echo': 2.51,          //   −8,6 · −22,5 · 0,18 s
+    'epreuve-crescendo': 3.72,     //   −9,4 · −22,5 · 0,09 s
+    'epreuve-mash': 3.85,          //   −8,8 · −22,5 · 0,35 s
+    'epreuve-hold': 3.47,          //  −16,1 · −22,4 · 0,43 s
+    'epreuve-relance': 1.48,       //  −13,7 · −22,5 · 0,45 s
+    'epreuve-salves': 0.75,        //  −23,3 · −22,5 · 0,40 s
+    'epreuve-tenue': 6.31,         //   −8,3 · −22,5 · 0,69 s
+    'epreuve-retenue': 2.45,       //   −9,2 · −22,5 · 0,34 s
+    'epreuve-tifo': 2.66,          //  −17,6 · −22,5 · 0,51 s
+    'epreuve-memoire': 1.57,       //  −11,5 · −22,5 · 0,15 s
+    'epreuve-mosaique': 1.4,       //  −11,4 · −22,5 · 0,34 s
+    'epreuve-echarpe': 3.27,       //  −13,4 · −22,6 · 0,61 s
+    'epreuve-capo': 0.603,         //  −12,9 · −22,5 · 0,45 s
+    'epreuve-tri': 2.26,           //  −15,8 · −22,5 · 0,41 s
+    'epreuve-compte': 1.91,        //   −9,7 · −22,5 · 0,29 s
+    'epreuve-bascule': 0.891,      //  −10,5 · −22,5 · 0,36 s
+    'epreuve-visee': 1.97,         //  −11,8 · −22,6 · 0,56 s
+    'epreuve-jauge': 1.95,         //  −14,6 · −22,5 · 0,34 s
+    'epreuve-ola': 1.74,           //  −13,9 · −22,5 · 0,90 s
+    'epreuve-miroir': 1.15,        //  −17,6 · −22,4 · 0,56 s
+    'epreuve-rouleaux': 6.38,      //   −8,1 · −22,6 · 0,45 s
+    'epreuve-deuxvoix': 0.871,     //  −10,1 · −22,5 · 0,39 s
+  };
+  Object.assign(MIX, MIX_CARTES);
+
   /** Joue un son de la banque dans un contexte et une chaîne donnés.
       `fichiers` : les sons enregistrés décodés pour ce contexte — la
       clameur, si elle l'est, remplace l'ovation synthétisée. */
