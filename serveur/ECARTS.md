@@ -2181,7 +2181,9 @@ renommé ni retiré.**
   pour un serveur d'avant. Vérifiés dans le code (`vuePour`, `jouerEtMarquer`,
   `effetsVus`, le bilan par socket, la liste de `deck/index.js`). Et deux
   phrases : pas de `serie` sur le chant (8, ci-dessus), pas de stade avant le
-  coup d'envoi (`serveur-duel`, 9).
+  coup d'envoi (`serveur-duel`, 9). *(La seconde a quitté le § 17 le
+  6 octobre 2026 : le stade du match est servi avec la liste et la route
+  d'un match — voir `serveur-duel`, 9.)*
 - **§ 18.2, l'écran après un `POST /api/presence`** (besoin de
   `barre-tiroir`) : seule `{ actif: true, visible }` garde l'interrupteur ;
   `{ actif: false }`, 400, 401, 503 ou une coupure le retirent, et l'ouverture
@@ -2261,7 +2263,8 @@ ni retiré.** Leurs écarts sont versés sous leur clé, plus bas.
   demande le combo, au § 17, comme au § 16.2.
 - **Le stade du duel** (`serveur-duel`, 9) : déjà versé à la partie A, et
   toujours à trancher par Gaël ; rien de plus au contrat que la phrase du
-  § 17 (« pas de stade avant le coup d'envoi »).
+  § 17 (« pas de stade avant le coup d'envoi »). *(Tranché le 6 octobre
+  2026 : voir `serveur-duel`, 9.)*
 
 `scripts/verdict-smoke.mjs` gagne une section : la note écrite en millièmes
 (`enMilliemes`, `ferveur/virage.js`) garde son verdict, parce que les seuils
@@ -2331,6 +2334,12 @@ viennent.
    jeu : **à trancher par Gaël**. C'est pourquoi la préparation n'a pas de
    stade-mini (`duel-tribunes`, plus bas) ; écrire `duel.stade` après coup
    depuis `nvn/index.js` ferait le même changement en cachette.
+   *(Tranché par Gaël le 6 octobre 2026 : le stade du match, celui de son
+   Grand Virage. La correction est celle-ci, dans `engine.js`, par une
+   fonction que le Virage et la liste du duel appellent aussi
+   (`stadeDuMatch`, `contenus/index.js`) ; la liste sert le `stade` de chaque
+   match, et la préparation le pose sur l'affiche du match choisi. Voir
+   `CONTRATS.md`, § 17, et `HISTORIQUE.md`, 4 quinquagies.)*
 
 Deux constats de la partie A, non corrigés, antérieurs au lot *(corrigés à
 la partie B : voir 10 et 11, plus bas)* :
@@ -2378,7 +2387,8 @@ couleurs dans la vue sont servis et versés au contrat : voir 14 et 15.
     `randomUUID` (`engine.js`) et dans l'intersection des possessions
     (`ETAT.md` § 3) ; il n'est donc connu qu'après l'appariement, d'où
     l'absence de stade-mini à la préparation. C'est le point 9, à trancher par
-    Gaël ; rien de plus dans cette partie.
+    Gaël ; rien de plus dans cette partie. *(Tranché le 6 octobre 2026 : voir
+    9.)*
 13. **`gains.wallet` n'est pas servi dans `nvn:fin`** : R6 veut la réserve de
     packs recharge comprise, qu'il faudrait relire pour chaque joueur à la fin
     du duel. `tbf:bourse` part donc sans `wallet`, et `nav.js` relit le solde
@@ -2667,7 +2677,10 @@ nommés, parce que des suites les lisent.*
    tribunes du stade-mini : le stade du duel n'appartient pas au match
    (`serveur-duel`, 9) — en poser un serait inventer un lieu dont les effets ne
    s'appliqueront pas. Le camp se choisit par deux bâches de même poids, la
-   choisie en flare.
+   choisie en flare. *(Le 6 octobre 2026, le stade du duel est devenu celui
+   du match (`serveur-duel`, 9) : la préparation le pose sur l'affiche du
+   match choisi, le dessin réduit en fond et le nom au pied. Le camp se
+   choisit toujours par les deux bâches.)*
 2. **L'arène fait 33 % de l'écran en jeu** (213 px à 360 × 640 ; 146 à
    320 × 568), et non 45 % : la règle du brief — l'arène cède avant la main
    et les chants — l'emporte. La main et les chants restent entiers partout.
