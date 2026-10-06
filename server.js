@@ -44,6 +44,7 @@ import { createRepetition } from './src/server/repetition/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createPresence } from './src/server/presence/index.js';
+import { createNotifications } from './src/server/notifications/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
 import { createBoutique } from './src/server/boutique/index.js';
@@ -200,6 +201,7 @@ let niveau = null;
 let kop = null;
 let amis = null;
 let presence = null;
+let notifications = null;
 let admin = null;
 let boutique = null;
 let nvn = null;
@@ -347,7 +349,16 @@ if (process.env.DATABASE_URL) {
     //
     // Monté avant les duels et le virage, qui le consultent : le premier y
     // verse la part du club, le second y lit les bonus actifs.
-    kop = createKop({ pool, io, requireAuth: auth.requireAuth, abonnement });
+    /* ---- les notifications
+
+       Montées avant le KOP et les duels, qui les préviennent : un vote qui
+       s'ouvre, un duel classé qui attend un supporter. Reçues à `null`, ils
+       ne préviendraient personne hors de la page, sans un mot — d'où le
+       contrôle de `verif-cablage.mjs`. Leurs routes se montent plus bas,
+       après la fermeture du jeu. */
+    notifications = createNotifications({ pool, requireAuth: auth.requireAuth, origine: ORIGIN });
+
+    kop = createKop({ pool, io, requireAuth: auth.requireAuth, abonnement, notifications });
     app.use('/api/kop', kop.router);
     console.log('KOP actifs');
 
@@ -380,7 +391,7 @@ if (process.env.DATABASE_URL) {
        duel ne plafonne rien — et personne ne s'en apercevrait, ce qui est
        exactement la panne que `verif-cablage.mjs` surveille. */
     nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth, niveau, kop,
-      abonnement });
+      abonnement, notifications });
     app.use('/api/nvn', nvn.router);
     console.log('duels NvN actifs');
 
@@ -458,6 +469,10 @@ if (process.env.DATABASE_URL) {
        Après la fermeture du jeu, comme toute route nouvelle : un jeu fermé
        ferme aussi l'interrupteur, et le tiroir lit le 503 comme une absence. */
     app.use('/api/presence', presence.router);
+
+    /* ---- les notifications : l'inscription d'un appareil, depuis le compte.
+       Après la fermeture du jeu, comme l'interrupteur de présence. */
+    app.use('/api/notifications', notifications.router);
 
     // Entretien quotidien : sessions, jetons et tentatives périmés.
     setInterval(() => auth.store.cleanup().catch((e) => console.error('[auth] purge', e.message)),

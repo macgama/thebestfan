@@ -204,6 +204,27 @@ app.get('/img/essai.png', (_q, s) => {
     'base64'));
 });
 
+/* Les notifications, côté serveur : ce que `TBF_NOTIF` (pwa.js) lui demande.
+   Les vraies routes sont éprouvées par `notifications:smoke` ; ici, on regarde
+   ce que la page envoie et ce que le service worker affiche. */
+const { default: webpush } = await import('web-push');
+const CLE_NOTIF = webpush.generateVAPIDKeys().publicKey;
+const recuNotif = { put: [], del: [] };
+let sujetsNotif = null;
+app.use('/api/notifications', express.json());
+app.get('/api/notifications', (_q, s) => s.json({ actif: true, cle: CLE_NOTIF, sujets: ['kop', 'duel'] }));
+app.post('/api/notifications/etat', (_q, s) => s.json({ sujets: sujetsNotif }));
+app.put('/api/notifications/appareil', (q, s) => {
+  recuNotif.put.push(q.body);
+  sujetsNotif = q.body.sujets;
+  s.json({ sujets: sujetsNotif });
+});
+app.delete('/api/notifications/appareil', (q, s) => {
+  recuNotif.del.push(q.body);
+  sujetsNotif = null;
+  s.json({ ok: true });
+});
+
 app.use(express.static(path.join(RACINE, 'public')));
 
 const http = createServer(app);
@@ -259,6 +280,88 @@ check('et la page sait dire si le jeu est déjà installé',
   await charger();
   check('un dessin déjà vu ne redemande rien au serveur', appelsImage === apresUn
     || (console.log('        demandes :', apresUn, 'puis', appelsImage), false));
+}
+
+/* ------------------------------------------------------- les notifications
+
+   **L'inscription** : la fenêtre du navigateur est acceptée d'avance, et
+   l'inscription chez le service de notification est doublée — un Chrome de
+   test n'en a pas. Ce qu'on éprouve, c'est ce que `TBF_NOTIF` en fait.
+
+   **L'affichage** : un vrai message poussé au service worker par le protocole
+   de débogage. Le jeu ouvert sous les yeux, il ne montre rien ; un autre
+   onglet devant, il montre le titre, la phrase et l'adresse où aller. */
+{
+  await nav.defaultBrowserContext().overridePermissions(base, ['notifications']);
+  await page.evaluate(() => {
+    const faux = {
+      endpoint: 'https://push.exemple.net/banc',
+      toJSON() { return { endpoint: this.endpoint, keys: { p256dh: 'BOr' + 'a'.repeat(84), auth: 'c2VjcmV0c2VjcmV0' } }; },
+      unsubscribe: async () => { window.desinscrit = true; faux.actif = false; return true; },
+      actif: false,
+    };
+    PushManager.prototype.subscribe = async function (o) {
+      window.cleRecue = o?.applicationServerKey?.byteLength ?? 0;
+      faux.actif = true;
+      return faux;
+    };
+    PushManager.prototype.getSubscription = async () => (faux.actif ? faux : null);
+  });
+
+  let e = await page.evaluate(() => window.TBF_NOTIF.etat());
+  check('un appareil neuf peut s’inscrire, rien n’est coché',
+    e.possible === true && e.sujets?.kop === false && e.sujets?.duel === false
+    || (console.log('        état :', JSON.stringify(e)), false));
+
+  const poses = await page.evaluate(() => window.TBF_NOTIF.poser({ kop: true, duel: false }));
+  check('cocher le KOP inscrit l’appareil avec la clé du serveur (65 octets)',
+    await page.evaluate(() => window.cleRecue) === 65 && poses.kop === true && poses.duel === false);
+  const envoye = recuNotif.put.at(-1);
+  check('et envoie au serveur l’adresse, les deux clés et les cases',
+    envoye?.abonnement?.endpoint === 'https://push.exemple.net/banc'
+    && typeof envoye.abonnement.keys?.p256dh === 'string'
+    && envoye.sujets?.kop === true && envoye.sujets?.duel === false);
+  e = await page.evaluate(() => window.TBF_NOTIF.etat());
+  check('relu, l’appareil dit ses cases', e.sujets?.kop === true);
+
+  await page.evaluate(() => window.TBF_NOTIF.oublier());
+  check('la déconnexion oublie l’appareil, chez nous et chez le navigateur',
+    recuNotif.del.at(-1)?.endpoint === 'https://push.exemple.net/banc'
+    && await page.evaluate(() => window.desinscrit === true));
+
+  /* L'affichage. L'identifiant d'inscription du service worker se lit par le
+     protocole de débogage, qui sait aussi lui pousser un message. */
+  const cdp = await page.createCDPSession();
+  const inscrits = [];
+  cdp.on('ServiceWorker.workerRegistrationUpdated', (ev) => inscrits.push(...ev.registrations));
+  await cdp.send('ServiceWorker.enable');
+  await jusqua(async () => inscrits.length > 0);
+  const registrationId = inscrits.find((r) => r.scopeURL.startsWith(base))?.registrationId;
+  const pousser = (m) => cdp.send('ServiceWorker.deliverPushMessage',
+    { origin: base, registrationId, data: JSON.stringify(m) });
+  const affichees = () => page.evaluate(async () =>
+    (await (await navigator.serviceWorker.ready).getNotifications())
+      .map((n) => ({ titre: n.title, corps: n.body, tag: n.tag, url: n.data?.url })));
+
+  await pousser({ titre: 'Vote du KOP', corps: 'Un bonus', url: '/kop', tag: 'kop-1' });
+  await dodo(600);
+  check('le jeu sous les yeux, le service worker ne montre rien',
+    (await affichees()).length === 0
+    || (console.log('        montrées :', JSON.stringify(await affichees())), false));
+
+  const autre = await nav.newPage();
+  await autre.goto('about:blank');
+  await autre.bringToFront();
+  await pousser({ titre: 'Un duel t’attend', corps: 'Il manque un supporter', url: '/duel-nvn?match=7',
+    tag: 'duel-7' });
+  const vue = await jusqua(async () => (await affichees()).length > 0, 4000);
+  const n = (await affichees())[0];
+  check('un autre onglet devant, il montre le titre, la phrase et où aller',
+    vue && n?.titre === 'Un duel t’attend' && n.corps === 'Il manque un supporter'
+    && n.tag === 'duel-7' && n.url === '/duel-nvn?match=7'
+    || (console.log('        montrées :', JSON.stringify(await affichees())), false));
+  await autre.close();
+  await page.bringToFront();
 }
 
 /* --------------------------------------------------------- sans réseau
