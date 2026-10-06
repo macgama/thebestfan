@@ -589,7 +589,9 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
         for (const group of groups) {
           /* Sans identifiant d'equipe, la ligne ne designe personne : on ne
              peut ni l'ecrire ni la lire, et l'inventer serait pire. */
-          const utiles = (group ?? []).filter((s) => Number.isFinite(Number(s?.team?.id)));
+          /* `team: { id: null }` aussi, et c'est la forme que l'API rend :
+             `Number(null)` vaut 0, fini, et la ligne passait le filtre. */
+          const utiles = (group ?? []).filter((s) => Number(s?.team?.id) > 0);
           ecartees += (group ?? []).length - utiles.length;
           if (!utiles.length) continue;
           await store.upsertStandings(leagueId, season, utiles.map((s) => ({

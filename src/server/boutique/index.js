@@ -363,7 +363,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
      séparation qu'il fallait tenir, elle est coupée à la racine — il n'y a plus
      de monnaie achetable du tout. */
   router.get('/etal', requireAuth, async (req, res) => {
-    const ont = await q('SELECT stuff_id FROM user_stuff WHERE user_id = ?', [req.user.id]);
+    const ont = await q('SELECT stuff_id, copies FROM user_stuff WHERE user_id = ?', [req.user.id]);
     const [bourse] = await q(
       'SELECT scarves FROM user_wallet WHERE user_id = ?', [req.user.id]);
     /* Les tenues déjà posées, pour que la cabine ne propose pas de racheter
@@ -378,7 +378,10 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
          garder aurait fait une page qui affiche des écharpes sous une étiquette
          qui n'existe plus. */
       echarpes: bourse?.scarves ?? 0,
-      stuff: etalStuff(new Set(ont.map((o) => o.stuff_id))),
+      /* Le nombre d'exemplaires, et pas seulement « possédé » : on achète une
+         pièce plusieurs fois, et la page doit dire combien on en a. Une ligne
+         existe parce qu'on a la pièce (même règle que `stuffCopies` du deck). */
+      stuff: etalStuff(new Map(ont.map((o) => [o.stuff_id, Math.max(1, Number(o.copies) || 1)]))),
       tenues: etalTenues(tenuesPubliees()),
       posees: posees.map((r) => ({ fanzzy: r.fanzzy_id, stade: Number(r.stage), tenue: r.skin_id })),
     });
