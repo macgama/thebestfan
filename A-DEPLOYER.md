@@ -16,6 +16,9 @@ schéma ni redémarrage : la construction suffit.
   était réduit et paraissait plus petit que l'âge 1.
 - Accueil : le Fanzzy repose sur son ombre ; le second rond, sous lui
   (`public/fanzzy-fond.js`, pied d'ombre du décor), n'y est plus montré.
+- La lueur de l'âge (accord de Gaël) : aucune à l'âge 1, un halo bleu de rare à
+  l'âge 2, un halo violet d'épique plus large à l'âge 3, collé au dessin, sur
+  l'accueil, la carte et dans les scènes.
 ---
 
 **Les légendaires : entrée en jeu et vraie rareté** (branche
