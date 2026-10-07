@@ -13,6 +13,7 @@ import { BY_ID, RATES } from '../src/shared/fanzzy/dex.js';
 import { STUFF_BY_ID, combine } from '../src/shared/fanzzy/inventaire.js';
 import { CHANTS } from '../src/shared/duel/chants.js';
 import { poserReglages, reglagesVivants } from '../src/shared/reglages.js';
+import { etalStuff, prixDe } from '../src/shared/etal.js';
 
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
@@ -186,6 +187,13 @@ console.log('\nLes légendaires sont rares');
   check('les taux partent en JSON', JSON.stringify(RATES).includes('"4"'));
   poserReglages(avant);
 }
+
+console.log('\nL\'étal ne vend plus de légendaire');
+check('aucune pièce légendaire à l\'étal', !etalStuff().some((x) => x.rar === 'legendaire'));
+check('les autres raretés y restent',
+  ['commune', 'rare', 'epique'].every((r) => etalStuff().some((x) => x.rar === r)));
+check('l\'achat direct d\'une légendaire est refusé', prixDe('stuff', 'bache') === null);
+check('une épique s\'achète toujours', prixDe('stuff', 'megaphone') > 0);
 
 if (failures) { console.error(`\n${failures} échec(s)`); process.exit(1); }
 console.log('\nlegende:smoke — tout passe');
