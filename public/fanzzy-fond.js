@@ -697,7 +697,7 @@
         ${aura(f.rar, u, r)}
         <!-- Le pied d'ombre. Sans lui le personnage flotte : il est détouré,
              donc rien ne le rattache au sol du décor. -->
-        <ellipse cx="50" cy="97" rx="30" ry="5" fill="#000" opacity=".5"/>
+        <ellipse class="pied" cx="50" cy="97" rx="30" ry="5" fill="#000" opacity=".5"/>
       </g>
     </svg>`;
   }

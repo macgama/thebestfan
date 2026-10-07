@@ -1055,6 +1055,7 @@ function cardHTML(f, opts = {}) {
   const jeton = window.TBF_STUFF?.gain?.('echarpes') ?? '/img/gains/echarpes.webp';
 
   return `<div class="${classes}" style="--tc:${t.c}" data-id="${esc(f.id)}" data-rar="${rar}"${
+    sansAge ? '' : ` data-age="${stade}"`}${
     dos ? ` data-dos="${esc(dos)}"` : ''}>
     <div class="body">
       <div class="art">${dessinDeCarte(f, { etiquette: false, pied: enPied, silhouette: verrou })}</div>

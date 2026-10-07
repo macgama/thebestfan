@@ -204,6 +204,20 @@
    grande carte) : en entier, posé sur le sol de la carte, la tête sous le
    pin et la forme. Recadré comme un buste, il perdait sa tête. */
 .fz .illuwrap .illu.fz-pied{height:88%;object-fit:contain}
+/* **À la taille de son âge** (7 octobre 2026, demandé par Gaël) : 72 %, 80 %,
+   88 % de la carte. Chaque dessin tient en entier dans la même boîte ; un
+   âge 3 plus large ou plus haut (un mégaphone sur l'épaule) y était réduit,
+   et le Fanzzy paraissait rapetisser en grandissant. */
+/* Et une fois et demie sa largeur, centré : la pose d'une tenue large a un
+   cadre plus large que la carte, que `contain` réduisait sur sa largeur. */
+.fz[data-age] .illuwrap .illu.fz-pied{left:-25%;width:150%}
+/* La lueur de l'âge, aux couleurs de rareté : bleu, puis violet, plus large. */
+.fz[data-age="2"]:not(.fz-secret) .illuwrap .illu.fz-pied{filter:drop-shadow(0 0 4px rgba(95,168,255,.75))
+  drop-shadow(0 0 12px rgba(95,168,255,.4)) drop-shadow(0 3px 8px rgba(0,0,0,.6))}
+.fz[data-age="3"]:not(.fz-secret) .illuwrap .illu.fz-pied{filter:drop-shadow(0 0 5px rgba(185,140,255,.9))
+  drop-shadow(0 0 18px rgba(185,140,255,.55)) drop-shadow(0 3px 8px rgba(0,0,0,.6))}
+.fz[data-age="1"] .illuwrap .illu.fz-pied{height:72%}
+.fz[data-age="2"] .illuwrap .illu.fz-pied{height:80%}
 /* Une illustration de carte d'action est un tableau : elle couvre tout. */
 .fz .illuwrap .illu.fz-pleine{height:100%;object-position:50% 50%}
 /* L'objet monte au-dessus de la bande du nom, qui le coupait à mi-hauteur :
