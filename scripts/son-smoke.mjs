@@ -82,6 +82,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ouvrirBanc, mesurerTout, juger, RETOMBEE_MIN, RAFALE, RAFALE_MS, NAISSANCE_ECART } from './son-banc.mjs';
 import { GESTES, resoudreGeste } from '../src/server/ferveur/gestures.js';
+import { ACTIONS } from '../src/shared/duel/actions.js';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const PUBLIC = path.join(RACINE, 'public');
@@ -173,6 +174,7 @@ function espion({ sansAudio = false } = {}) {
      respiration de la rumeur qui brouille l'écoute. Les rendus hors ligne
      n'en posent pas (ils posent leurs niveaux d'un coup). */
   window.__sonCibles = [];
+  window.__sonTampons = [];
   if (sansAudio) {
     for (const nom of ['AudioContext', 'webkitAudioContext', 'OfflineAudioContext',
       'webkitOfflineAudioContext']) {
@@ -215,6 +217,12 @@ function espion({ sansAudio = false } = {}) {
           window.__sonQuand.push(ts && ts.performanceTime > 0
             ? Math.round((ts.performanceTime + (q - ts.contextTime) * 1000) * 10) / 10 : null);
         } catch { window.__sonQuand.push(null); }
+        /* Les tampons qui partent (la tribune enregistrée, 6 octobre 2026) :
+           une boucle dit ses bornes, un son entier sa durée. */
+        if (this instanceof AudioBufferSourceNode && this.buffer && window.__sonTampons.length < 400) {
+          window.__sonTampons.push({ boucle: this.loop, debut: this.loopStart, fin: this.loopEnd,
+            duree: this.buffer.duration, depart: a[1] ?? 0 });
+        }
         const vivantes = window.__sonVivantes;
         vivantes.add(this);
         this.addEventListener('ended', () => vivantes.delete(this));
@@ -733,6 +741,10 @@ if (banc) try {
     /* Au niveau 1, le premier éclat de voix vient au plus tôt quatre secondes
        et demie après le départ : en une seconde et demie, une ambiance qui
        ne recrée rien ne crée aucun nœud. */
+    /* L'enregistrée relaie la synthèse dès qu'elle est décodée (voir « la
+       tribune enregistrée ») : ce relais crée ses nœuds, une fois. On
+       l'attend, puis plus rien ne doit naître. */
+    await jusqua(page, (x) => x.ambiance.source === 'enregistree', 4000);
     const n0 = (await compte(page)).noeuds;
     await attendre(1500);
     const n1 = (await compte(page)).noeuds;
@@ -1112,13 +1124,23 @@ if (banc) try {
         const origine = performance.now();
         const p = window.TBF_SON.chantDuGeste(g, gestes, { origine });
         const grille = window.TBF_GESTE.grille(g, gestes);
-        await window.TBF_GESTE.jouer(g, gestes, { zone, origine });
+        /* Le bruitage d'ouverture de l'épreuve (6 octobre 2026) part dans
+           l'appel même, avant tout temps : il est mis à part — ce n'est pas
+           une frappe du chant —, et jugé plus bas. */
+        const avant = window.__sonQuand.length;
+        const fin = window.TBF_GESTE.jouer(g, gestes, { zone, origine });
+        const ouverture = window.__sonQuand.splice(avant, window.__sonQuand.length - avant);
+        await fin;
         p.arreter();
         veille.disconnect();
-        return { origine, quand: window.__sonQuand.slice(), vus, joue: p.joue,
+        return { origine, quand: window.__sonQuand.slice(), vus, joue: p.joue, ouverture,
           pulsations: grille?.pulsations ?? null };
       }, g, gestes);
       const pulsations = cale.pulsations ?? [];
+      const ouvre = cale.ouverture.filter((x) => x !== null).map((x) => x - cale.origine);
+      check(`${g} : le bruitage d’ouverture part avec l’épreuve, avant son premier temps`,
+        ouvre.length > 0 && pulsations.length > 0 && Math.max(...ouvre) < pulsations[0] - 100,
+        { ouverture: ouvre.map(Math.round), premierTemps: pulsations[0] });
       /* Ce qui doit s'entendre : un coup par pulsation ; au contretemps,
          les claps entre deux, une demi-mesure après chaque coup. */
       const pas = Number(gestes[g]?.interval);
@@ -1312,13 +1334,17 @@ if (banc) try {
     /* La fin : la tribune se vide, en un fondu qu'une page qui la redit à
        chaque rendu ne relance pas. 1,5 s demandées : démontée vers 2,5 s.
        Redite à 1,5 s, elle repartirait et se démonterait vers 4 s. */
-    const vers0 = await page.evaluate(() => {
+    const { vers0, source } = await page.evaluate(() => {
       window.__sonCibles.length = 0;
+      const src = window.TBF_SON.etat().ambiance.source;
       window.TBF_SON.rumeur('fin', { ms: 1500 });
-      return window.__sonCibles.filter((x) => x.v === 0).map((x) => x.tc);
+      return { vers0: window.__sonCibles.filter((x) => x.v === 0).map((x) => x.tc), source: src };
     });
+    /* Cinq gains vers zéro pour la synthèse (ses couches et sa
+       respiration), un pour l'enregistrée (son niveau). */
     check('la fin se vide à son pas : la rumeur vise le silence en ms / 3 (0,5 s pour 1,5 s)',
-      vers0.filter((tc) => Math.abs(tc - 0.5) < 0.001).length >= 5, vers0);
+      vers0.filter((tc) => Math.abs(tc - 0.5) < 0.001).length >= (source === 'enregistree' ? 1 : 5),
+      { vers0, source });
     await attendre(400);
     check('à la fin, la tribune se vide en fondu : elle s’entend encore un instant',
       ((await ecoute(page))?.rms ?? -200) > -60 && (await compte(page)).sansFin > 0);
@@ -1526,6 +1552,8 @@ if (banc) try {
       hors('variante').length === 0, ...hors('variante'));
     check(`aucun son seul ne dépasse ${mix.creteSeule} dBFS, variantes comprises`,
       [...parSorte('son'), ...parSorte('variante')].every((j) => j.crete <= mix.creteSeule));
+    check('la clameur enregistrée est rendue et jugée comme l’ovation qu’elle remplace (un moment)',
+      jugees.some((j) => j.id === 'clameur' && j.sorte === 'son' && j.famille === 'moment' && !j.erreur));
     check(`rien ne sature : les superpositions restent sous ${mix.creteMax} dBFS`,
       hors('superposition').length === 0, ...hors('superposition'));
     const tous = parSorte('superposition').find((j) => j.id === 'tous-les-moments');
@@ -1556,13 +1584,19 @@ if (banc) try {
     /* La rumeur ne couvre jamais l'interface, sauf au but : jugée sur sa
        moyenne de huit secondes seulement, celle du niveau 2 montait sur cent
        millisecondes à −30,3 LUFS, dans la fenêtre du tic. */
-    const plafonnes = parSorte('ambiance').filter((j) => j.plafond != null);
-    check('la rumeur des niveaux 1 et 2 reste sous l’interface, crêtes comprises (sonie sur 100 ms)',
-      plafonnes.map((j) => j.niveau).join() === '1,2'
-        && plafonnes.every((j) => j.plafond < mix.familles.interface.fenetre[0] && j.sonie <= j.plafond),
-      plafonnes.map((j) => ({ niveau: j.niveau, sonie: j.sonie, plafond: j.plafond })));
-    const amb = parSorte('ambiance').map((j) => j.moyen);
-    check('et chaque niveau sonne plus fort que le précédent', amb.length === 3 && amb[0] < amb[1] && amb[1] < amb[2], amb);
+    /* Pour chacune des deux rumeurs, la synthétisée et l'enregistrée
+       (6 octobre 2026) : l'une remplace l'autre, chacune tient la règle. */
+    for (const [quelle, source] of [['synthétisée', undefined], ['enregistrée', 'enregistree']]) {
+      const ses = parSorte('ambiance').filter((j) => j.source === source);
+      const plafonnes = ses.filter((j) => j.plafond != null);
+      check(`la rumeur ${quelle} des niveaux 1 et 2 reste sous l’interface, crêtes comprises (sonie sur 100 ms)`,
+        plafonnes.map((j) => j.niveau).join() === '1,2'
+          && plafonnes.every((j) => j.plafond < mix.familles.interface.fenetre[0] && j.sonie <= j.plafond),
+        plafonnes.map((j) => ({ niveau: j.niveau, sonie: j.sonie, plafond: j.plafond })));
+      const amb = ses.map((j) => j.moyen);
+      check(`et chaque niveau de la rumeur ${quelle} sonne plus fort que le précédent`,
+        amb.length === 3 && amb[0] < amb[1] && amb[1] < amb[2], amb);
+    }
     /* Lot 6 : la mi-temps et le vestiaire vide creusent la rumeur. Assez
        pour qu'on l'entende, et sans rien dépasser — une échelle ne fait que
        baisser. */
@@ -1624,6 +1658,178 @@ if (banc) try {
     });
     check('un rendu est reproductible : même graine, même son (à −100 dB près)',
       ecart.meme < 1e-5 && ecart.autre > 1e-3, ecart);
+  }
+
+  /* ============================================ la tribune enregistrée */
+
+  /* 6 octobre 2026 : la rumeur et la clameur du but viennent de deux
+     fichiers (`public/son/`), choisis par Gaël à l'écoute. Ce qu'on tient :
+     rien ne se télécharge sous le calme, ni sur une page sans tribune, et
+     une seule fois par page malgré l'appel de chaque seconde ; la boucle
+     se joue entre ses bornes, jamais le fichier entier ; un fichier qui ne
+     se décode pas laisse la synthèse jouer, sans erreur ; le calme arrête
+     la source enregistrée ; la clameur part au but une fois décodée. */
+  console.log('\n  la tribune enregistrée (6 octobre 2026)');
+  {
+    const telechargements = (page) => {
+      const vus = [];
+      page.on('request', (r) => { if (new URL(r.url()).pathname.startsWith('/son/')) vus.push(new URL(r.url()).pathname); });
+      return vus;
+    };
+    {
+      const { page, erreurs } = await nouvellePage();
+      const vus = telechargements(page);
+      await page.click('#geste');
+      await jusqua(page, (x) => x.contexte === 'running');
+      await page.evaluate(() => window.TBF_SON.jouer('tic'));
+      await attendre(500);
+      check('une page sans tribune ne télécharge aucun son', vus.length === 0, vus);
+      await page.evaluate(() => { for (let i = 0; i < 5; i++) window.TBF_SON.ambiance(1); });
+      const passee = await jusqua(page, (x) => x.ambiance.source === 'enregistree', 5000);
+      for (let i = 0; i < 3; i++) {
+        await page.evaluate(() => { window.TBF_SON.ambiance(1); window.TBF_SON.rumeur('jeu'); });
+        await attendre(100);
+      }
+      check('la tribune demandée, la rumeur enregistrée relaie la synthèse', passee, await etat(page));
+      check('chaque fichier n’est téléchargé qu’une fois par page, malgré l’appel répété',
+        vus.length === 2 && new Set(vus).size === 2, vus);
+      const boucles = await page.evaluate(() => window.__sonTampons.filter((x) => x.boucle && x.duree > 10));
+      check('la boucle se joue entre ses bornes (0,25 s et 12,25 s), jamais le fichier entier',
+        boucles.length >= 1 && boucles.every((b) => Math.abs(b.debut - 0.25) < 0.001
+          && Math.abs(b.fin - 12.25) < 0.001 && b.depart >= b.debut && b.depart <= b.fin), boucles);
+      // Le relais démonte la synthèse au bout de trois secondes (PASSAGE, dans son.js).
+      await attendre(3500);
+      let c = await compte(page);
+      check('le relais fini, il ne reste que la boucle enregistrée (la synthèse est démontée)', c.sansFin === 1, c);
+      check('l’ovation sera la clameur : elle est déjà décodée', (await etat(page)).fichiers.clameur === true,
+        (await etat(page)).fichiers);
+      await page.evaluate(() => { window.__sonTampons.length = 0; window.TBF_SON.ambiance(3, { pendant: 600 }); });
+      const parties = await page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+      check('au but, la clameur part (3,75 s), à la place de l’ovation synthétisée',
+        parties.some((x) => x.duree > 3.7 && x.duree < 3.8), parties);
+      await page.evaluate(() => document.documentElement.setAttribute('data-calme', 'sons'));
+      await attendre(100);
+      c = await compte(page);
+      check('le calme arrête la boucle enregistrée et la clameur', c.sansFin === 0
+        && (await etat(page)).ambiance.joue === 0, c);
+      await page.evaluate(() => document.documentElement.removeAttribute('data-calme'));
+      const revenue = await jusqua(page, (x) => x.ambiance.source === 'enregistree' && x.ambiance.joue === 1, 2000);
+      check('le calme levé, l’enregistrée revient tout de suite, sans rien retélécharger', revenue && vus.length === 2,
+        { revenue, vus });
+      check('aucune erreur de script', erreurs.length === 0, ...erreurs);
+      await page.close();
+    }
+    {
+      // Sous le calme : la tribune demandée ne télécharge rien.
+      const page = await banc.nav.newPage();
+      const erreurs = [];
+      page.on('pageerror', (e) => erreurs.push(e.message));
+      const vus = telechargements(page);
+      await page.evaluateOnNewDocument(espion, {});
+      await page.evaluateOnNewDocument(() => {
+        document.addEventListener('DOMContentLoaded', () => document.documentElement.setAttribute('data-calme', 'sons'));
+      });
+      await page.goto(banc.base + '/__son', { waitUntil: 'load' });
+      await page.waitForFunction(() => Boolean(window.TBF_SON && window.FX), { timeout: 10000 });
+      await page.evaluate(() => document.documentElement.setAttribute('data-calme', 'sons'));
+      await page.click('#geste');
+      await page.evaluate(() => { window.TBF_SON.ambiance(1); window.TBF_SON.rumeur('jeu'); });
+      await attendre(600);
+      check('sous le calme, la tribune demandée ne télécharge rien', vus.length === 0, vus);
+      check('aucune erreur de script (calme)', erreurs.length === 0, ...erreurs);
+      await page.close();
+    }
+    {
+      // Un fichier qui ne se décode pas : la synthèse joue, sans erreur.
+      const page = await banc.nav.newPage();
+      const erreurs = [];
+      page.on('pageerror', (e) => erreurs.push(e.message));
+      await page.setRequestInterception(true);
+      page.on('request', (r) => (new URL(r.url()).pathname.startsWith('/son/')
+        ? r.respond({ status: 200, contentType: 'audio/ogg', body: 'pas du son' }) : r.continue()));
+      await page.evaluateOnNewDocument(espion, {});
+      await page.goto(banc.base + '/__son', { waitUntil: 'load' });
+      await page.waitForFunction(() => Boolean(window.TBF_SON && window.FX), { timeout: 10000 });
+      await page.click('#geste');
+      await jusqua(page, (x) => x.contexte === 'running');
+      await page.evaluate(() => window.TBF_SON.ambiance(1));
+      await attendre(1500);
+      const e = await etat(page);
+      check('un fichier illisible laisse la synthèse jouer', e.ambiance.source === 'synthese' && e.ambiance.joue === 1
+        && e.fichiers.rumeur === false && e.fichiers.clameur === false, e);
+      check('aucune erreur de script (fichier illisible)', erreurs.length === 0, ...erreurs);
+      await page.close();
+    }
+  }
+
+  /* ===================================== les cartes et les épreuves
+
+     6 octobre 2026, à la demande de Gaël : chaque carte d'action a son
+     bruitage, joué quand elle part (`TBF_ACTION.jouee`, des deux côtés), et
+     chaque épreuve le sien, joué à son ouverture (`TBF_GESTE.jouer`). Tous
+     synthétisés. Leurs niveaux sont jugés plus haut avec la banque ; ici, ce
+     qui les relie au jeu : une carte ou un geste de plus sans bruitage, une
+     page qui ne l'appelle plus, un bruitage de rythme qui déborderait sur le
+     premier temps. */
+  console.log('\n  les cartes et les épreuves (6 octobre 2026)');
+  {
+    const sansCarte = ACTIONS.filter((a) => mix.sons[a.id]?.famille !== 'jeu').map((a) => a.id);
+    check(`chaque carte d’action a son bruitage, de la famille du jeu (${ACTIONS.length} cartes)`,
+      ACTIONS.length > 0 && sansCarte.length === 0, ...sansCarte);
+    const sansEpreuve = GESTES.filter((g) => mix.sons[`epreuve-${g}`]?.famille !== 'jeu');
+    check(`chaque épreuve a son bruitage d’ouverture, de la famille du jeu (${GESTES.length} épreuves)`,
+      GESTES.length > 0 && sansEpreuve.length === 0, ...sansEpreuve);
+    /* Les quatre de rythme : la tribune chante leurs temps, le premier un
+       intervalle après l'ouverture — 280 ms au plus court (l'écho). Leur
+       bruitage doit s'être tu avant : rendu seul, il retombe sous −60 dBFS
+       en moins de 250 ms. */
+    const durees = await banc.page.evaluate(async (noms) => {
+      const r = {};
+      for (const nom of noms) {
+        const b = await window.TBF_SON.rendre({ son: nom }, { duree: 0.6 });
+        const x = b.getChannelData(0);
+        let der = 0;
+        for (let i = 0; i < x.length; i++) if (Math.abs(x[i]) > 0.001) der = i;
+        r[nom] = Math.round((der / b.sampleRate - 0.02) * 1000);
+      }
+      return r;
+    }, ['tempo', 'contretemps', 'echo', 'crescendo'].map((g) => `epreuve-${g}`));
+    check('les bruitages des épreuves de rythme se taisent en moins de 250 ms (avant le premier temps)',
+      Object.values(durees).every((ms) => ms > 0 && ms < 250), durees);
+
+    const { page, erreurs } = await nouvellePage('/__son-geste');
+    await page.addScriptTag({ url: '/action-art.js' });
+    await page.click('#geste');
+    await jusqua(page, (x) => x.contexte === 'running');
+    const joues = (fn, ...args) => page.evaluate(async (fn, args) => {
+      const vus = [];
+      const S = window.TBF_SON;
+      const jouer = S.jouer;
+      S.jouer = (nom, o) => { vus.push(nom); return jouer(nom, o); };
+      try { await new Function(`return (${fn})`)()(...args); } finally { S.jouer = jouer; }
+      return vus;
+    }, fn.toString(), args);
+    const carte = (id, pour) => window.TBF_ACTION.jouee({ id, nom: id, fam: 'pousse', cost: 20, texte: '' }, { pour });
+    let vus = await joues(carte, 'a-fumigene', true);
+    check('une carte jouée fait entendre son bruitage (le fumigène)', vus.includes('a-fumigene') && !vus.includes('carte'), vus);
+    vus = await joues(carte, 'a-arbitre', false);
+    check('celle de l’adversaire aussi (l’arbitre)', vus.includes('a-arbitre'), vus);
+    vus = await joues(carte, 'a-carte-inconnue', true);
+    check('une carte sans bruitage garde le claquement ordinaire', vus.includes('carte'), vus);
+    await page.evaluate(() => document.documentElement.setAttribute('data-calme', 'animations'));
+    vus = await joues(carte, 'a-ancre', true);
+    check('le calme des animations retire le vol de la carte, pas son bruitage', vus.includes('a-ancre'), vus);
+    await page.evaluate(() => document.documentElement.removeAttribute('data-calme'));
+    const gestes = resoudreGeste({}, { motif: 1 });
+    vus = await joues((g, gestes) => {
+      const zone = document.getElementById('zone');
+      const p = window.TBF_GESTE.jouer(g, gestes, { zone });
+      zone.querySelector('#valider')?.click();
+      return Promise.race([p, new Promise((r) => setTimeout(r, 50))]);
+    }, 'tifo', gestes);
+    check('une épreuve qui s’ouvre fait entendre son bruitage (le tifo)', vus[0] === 'epreuve-tifo', vus);
+    check('aucune erreur de script (cartes et épreuves)', erreurs.length === 0, ...erreurs);
+    await page.close();
   }
 
   /* ============================== 9. la scène tient sa célébration (fx)

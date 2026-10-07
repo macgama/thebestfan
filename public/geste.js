@@ -460,6 +460,12 @@
     const t0 = Number.isFinite(origine) && origine <= ici && ici - origine <= ORIGINE_MAX ? origine : ici;
     const taps = [];
     const maintenant = () => Math.round(performance.now() - t0);
+    /* **Le bruitage de l'épreuve, à son ouverture** (6 octobre 2026) : le
+       même au duel, au Virage et en salle de répétition, puisque tous
+       passent par ici. Chaque épreuve a le sien dans la banque (`son.js`,
+       « epreuve- » et le geste) ; ceux des quatre épreuves de rythme se
+       taisent avant leur premier temps. */
+    try { window.FX?.son?.(`epreuve-${kind}`); } catch { /* le son ne casse jamais un geste */ }
     /* L'instant (`performance.now()`) de la frappe d'où se comptera
        l'attente du verdict : la dernière prise par un geste de rythme, le
        lâcher qui finit la relance ou le sang-froid. Nul pour les autres

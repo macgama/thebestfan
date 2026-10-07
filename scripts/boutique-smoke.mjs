@@ -534,6 +534,20 @@ const evenement = (sessionId) => ({
   check('un objet inconnu est refusé', d.code === 400
     && d.json.error === 'boutique.error.objet_inconnu');
 
+  /* Une pièce fermée (neuve, qui attend sa saison) ne se vend pas : la
+     boutique est un tirage comme un autre, elle suit `contenus`. */
+  const fermee = STUFF.find((x) => x.publie === false);
+  if (fermee) {
+    await q('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [prix * 10, U]);
+    check('une pièce fermée n’est pas à l’étal',
+      !(etal.stuff ?? []).some((o) => o.id === fermee.id));
+    const f = await depenser({ type: 'stuff', id: fermee.id });
+    check('et elle ne s’achète pas', f.code === 400
+      && f.json.error === 'boutique.error.objet_inconnu'
+      || (console.log('        ', f.code, JSON.stringify(f.json)), false));
+    await q('UPDATE user_wallet SET scarves = 5 WHERE user_id = ?', [U]);
+  }
+
   /* Et le refus vient bien du tarif, pas de la remise qui suit. Les deux
      rendent le même code — c'est de la défense en profondeur, et c'est très
      bien — mais un contrôle qui ne les distingue pas ne dit pas lequel des deux

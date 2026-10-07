@@ -42,6 +42,8 @@ const TTL = {
   saison: 12 * 3600,
   day: 300,
   dayLive: 60,
+  // Une saison close depuis plus d'une semaine : voir `ttlDe`.
+  saisonClose: 7 * 24 * 3600,
 };
 
 export function createTeletext({ pool, client, footballStore = null }) {
@@ -146,7 +148,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
    * saison est plus sûre. Hors saison, on garde la dernière connue — c'est ce
    * qu'un supporter veut voir en juillet.
    */
-  async function seasonOf(leagueId) {
+  async function seasonOf(leagueId, voulue = null) {
     const rows = await q(
       `SELECT season, starts_on, ends_on, name, country, country_code, family, type,
               has_standings, has_top_scorers, has_top_assists, has_top_cards
@@ -162,7 +164,26 @@ export function createTeletext({ pool, client, footballStore = null }) {
     const enCours = rows.find((r) => r.starts_on && r.ends_on
       && jourDeColonne(r.starts_on) <= today
       && today <= jourDeColonne(r.ends_on));
-    return enCours ?? rows[0];
+    const courante = enCours ?? rows[0];
+    /* **Les saisons finies se revoient.** La page ne montrait que la saison
+       en cours : dès qu'une nouvelle commençait, l'ancienne — son classement,
+       ses résultats, le classement de ferveur des joueurs — ne s'ouvrait plus,
+       bien que rien n'en soit effacé. `voulue` en choisit une autre parmi
+       celles que l'inventaire connaît ; `seasons` les nomme toutes, la plus
+       récente d'abord, pour que la page propose le choix. Une saison inconnue
+       retombe sur la courante. */
+    const choisie = (voulue && rows.find((r) => Number(r.season) === Number(voulue))) || courante;
+    return { ...choisie, seasons: rows.map((r) => r.season), courante: courante.season };
+  }
+
+  /**
+   * Une saison close depuis plus d'une semaine ne bouge plus : la garder six
+   * heures ferait repayer un appel à chaque visiteur venu la revoir, comme un
+   * match terminé gardé vingt-cinq secondes (`TTL.matchFini`).
+   */
+  function ttlDe(s, ttl) {
+    const fin = s.ends_on ? Date.parse(jourDeColonne(s.ends_on)) : NaN;
+    return Number.isFinite(fin) && Date.now() - fin > 7 * 864e5 ? TTL.saisonClose : ttl;
   }
 
   /** Un match de cette compétition est-il en cours ? Décide de la fraîcheur. */
@@ -484,13 +505,13 @@ export function createTeletext({ pool, client, footballStore = null }) {
 
   /* ------------------------------------------------------------- lecture */
 
-  async function standings(leagueId) {
-    const s = await seasonOf(leagueId);
+  async function standings(leagueId, { saison = null } = {}) {
+    const s = await seasonOf(leagueId, saison);
     if (!s) return null;
     if (!s.has_standings) return { league: s, groups: [], unsupported: true };
 
     const { data, stale } = await cached(`standings:${leagueId}:${s.season}`,
-      TTL.standings, () => client.standings(leagueId, s.season));
+      ttlDe(s, TTL.standings), () => client.standings(leagueId, s.season));
 
     const groups = (data[0]?.league?.standings ?? []).map((g) => g.map((r) => ({
       rank: r.rank, teamId: r.team.id, name: r.team.name, logo: r.team.logo,
@@ -501,8 +522,8 @@ export function createTeletext({ pool, client, footballStore = null }) {
     return { league: s, groups, stale: Boolean(stale) };
   }
 
-  async function ranking(leagueId, kind) {
-    const s = await seasonOf(leagueId);
+  async function ranking(leagueId, kind, { saison = null } = {}) {
+    const s = await seasonOf(leagueId, saison);
     if (!s) return null;
     const drapeau = { scorers: 'has_top_scorers', assists: 'has_top_assists',
                       cards: 'has_top_cards' }[kind];
@@ -514,7 +535,8 @@ export function createTeletext({ pool, client, footballStore = null }) {
       cards: () => client.call('/players/topyellowcards', { league: leagueId, season: s.season }),
     }[kind];
 
-    const { data, stale } = await cached(`${kind}:${leagueId}:${s.season}`, TTL[kind], appel);
+    const { data, stale } = await cached(`${kind}:${leagueId}:${s.season}`,
+      ttlDe(s, TTL[kind]), appel);
 
     const players = (data ?? []).slice(0, 25).map((p) => {
       const st = p.statistics?.[0] ?? {};
@@ -615,12 +637,12 @@ export function createTeletext({ pool, client, footballStore = null }) {
       ?? journees.at(-1))?.round ?? null;
   }
 
-  async function results(leagueId, { journee = null } = {}) {
-    const s = await seasonOf(leagueId);
+  async function results(leagueId, { journee = null, saison: voulue = null } = {}) {
+    const s = await seasonOf(leagueId, voulue);
     if (!s) return null;
 
     const { data: saison, stale } = await cached(
-      `saison:${leagueId}:${s.season}`, TTL.saison,
+      `saison:${leagueId}:${s.season}`, ttlDe(s, TTL.saison),
       async () => {
         const rows = await client.call('/fixtures',
           { league: leagueId, season: s.season, timezone: 'UTC' });
@@ -904,20 +926,29 @@ export function createTeletext({ pool, client, footballStore = null }) {
     res.json({ leagues: await favorisDe(req.user.id) });
   }));
 
+  /** La saison demandée (`?saison=2025`), ou `null` pour la courante. */
+  const saisonDe = (req) => (/^\d{4}$/.test(String(req.query.saison ?? ''))
+    ? Number(req.query.saison) : null);
+
   router.get('/league/:id', (req, res) =>
-    send(res, standings(Number(req.params.id)), BROWSER['']));
+    send(res, standings(Number(req.params.id), { saison: saisonDe(req) }), BROWSER['']));
   /* La journée voulue voyage dans l’adresse : le navigateur garde alors
-     chacune pour son compte, et revenir à la précédente ne redemande rien. */
+     chacune pour son compte, et revenir à la précédente ne redemande rien.
+     La saison aussi. */
   router.get('/league/:id/results', (req, res) =>
     send(res, results(Number(req.params.id),
-      { journee: req.query.journee ? String(req.query.journee) : null }),
+      { journee: req.query.journee ? String(req.query.journee) : null,
+        saison: saisonDe(req) }),
       BROWSER['/results']));
   router.get('/league/:id/scorers', (req, res) =>
-    send(res, ranking(Number(req.params.id), 'scorers'), BROWSER['/scorers']));
+    send(res, ranking(Number(req.params.id), 'scorers', { saison: saisonDe(req) }),
+      BROWSER['/scorers']));
   router.get('/league/:id/assists', (req, res) =>
-    send(res, ranking(Number(req.params.id), 'assists'), BROWSER['/assists']));
+    send(res, ranking(Number(req.params.id), 'assists', { saison: saisonDe(req) }),
+      BROWSER['/assists']));
   router.get('/league/:id/cards', (req, res) =>
-    send(res, ranking(Number(req.params.id), 'cards'), BROWSER['/cards']));
+    send(res, ranking(Number(req.params.id), 'cards', { saison: saisonDe(req) }),
+      BROWSER['/cards']));
 
   /** État du cache et du quota : utile pour surveiller la consommation. */
   /** Les matchs d'une journée. `mien` marque ceux des clubs suivis. */

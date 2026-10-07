@@ -298,6 +298,150 @@ export const INVITES = {
   'ap-cle': 'a heavy rusty adjustable wrench, worn grip wrapped in old tape, oil stains, scratched steel jaw',
   'ap-compteur': 'a battered handheld Geiger counter with a round analogue dial, a coiled cable to a probe wand, yellow casing with chipped paint, no readable text',
   'ap-drapeau': 'a torn and many-times-patched supporter flag knotted to a bent metal pole, faded stripes, singed edges, no text and no crest',
+  /* -------------------------------------- les cinq séries neuves, cinquante et une
+
+     Les deux pièges valent toujours : un vêtement, un coussin ou un fauteuil
+     se retrouvent occupés si l'on ne dit pas deux fois qu'ils sont vides, et
+     tout ce qui a une surface reçoit un écusson ou un texte inventé si l'on
+     n'écrit pas qu'il n'y a rien dessus. Un écran (téléphone, tablette,
+     grand écran) s'allume sur des chiffres : il est demandé éteint. Aucun
+     objet n'est vert : le fond de studio les détoure tous. */
+  'vp-flute': 'a single tall crystal champagne flute half full of pale golden bubbling '
+    + 'champagne, a fine stream of bubbles rising, a faint lipstick smudge on the rim',
+  'vp-badge': 'a glossy VIP access badge on a wide satin lanyard coiled beside it, gold '
+    + 'foil edges and a clear plastic sleeve, the card surface completely blank with no '
+    + 'text, no photograph and no logo',
+  'vp-coussin': 'a plump velvet seat cushion with gold piping and a tassel at each corner, '
+    + 'deep burgundy, slightly dented in the middle, empty, nobody sitting on it, no '
+    + 'crest and no lettering',
+  'vp-telephone': 'a modern smartphone clipped onto a short extended selfie stick, the '
+    + 'screen switched off and dark, a cracked corner on the case, no logo and no text',
+  'vp-jumelles-opera': 'a small pair of antique opera glasses with mother-of-pearl barrels, '
+    + 'gilded brass fittings and a folding lorgnette handle',
+  'vp-plaid': 'a soft folded cashmere blanket in camel and cream with a neat fringe, '
+    + 'luxuriously thick, folded into a square, no crest and no lettering',
+  'vp-carte-or': 'a single heavy metal membership card in polished gold with a subtle '
+    + 'brushed texture and a small embedded chip, standing at an angle and catching a '
+    + 'warm highlight, the surface completely blank with no writing and no numbers',
+  'vp-montre': 'an elegant luxury wristwatch with a polished steel case, a leather strap '
+    + 'curved as if around an invisible wrist, a plain dial with simple baton markers '
+    + 'and no numbers, no brand name and no text',
+  'vp-cigare': 'a single fat cigar resting on a heavy crystal ashtray, a thin curl of '
+    + 'smoke rising from the lit end, a plain gold band around it with no writing',
+  'vp-cles-loge': 'a heavy ornate antique key ring holding three large brass keys, a '
+    + 'velvet tassel and a polished metal tag, all of it gleaming, the tag completely '
+    + 'blank with no engraving and no lettering',
+
+  'gc-frites': 'a paper cone overflowing with golden french fries, a dollop of mayonnaise '
+    + 'on top and a small wooden fork stuck in, grease spots on the paper, no logo and '
+    + 'no text on the paper',
+  'gc-gobelet': 'a reusable hard plastic stadium beer cup, slightly dented and scuffed, a '
+    + 'last finger of beer and foam at the bottom, the cup completely plain with no '
+    + 'logo and no text',
+  'gc-moutarde': 'a squat glass jar of strong yellow mustard with its metal lid tilted '
+    + 'open, a small wooden spoon standing in it, no label and no text',
+  'gc-saucisse': 'a grilled sausage in a split bread roll, char lines on the sausage, a '
+    + 'stripe of ketchup and mustard, wrapped halfway in a paper napkin with no writing',
+  'gc-biere-tiede': 'a flimsy plastic cup of flat lukewarm beer with almost no foam, '
+    + 'slightly squeezed out of shape, a drip running down the side, no logo and no text',
+  'gc-sandwich': 'a triangle sandwich half out of its torn plastic packaging, white bread, '
+    + 'a limp slice of ham and lettuce, the packaging completely blank with no label',
+  'gc-plateau': 'a battered cardboard carrying tray holding four plastic cups of beer, '
+    + 'one tilting dangerously, foam spilling over the rims, no text on anything',
+  'gc-piment': 'a small squeeze bottle of bright red homemade chilli sauce with a pointed '
+    + 'nozzle, a red drip on the side, a fresh chilli pepper lying beside it, no label '
+    + 'and no text',
+  'gc-chocolat': 'a steaming paper cup of hot chocolate with a cardboard sleeve, a swirl '
+    + 'of whipped cream on top, the cup and sleeve completely plain with no logo and no '
+    + 'text',
+  'gc-recette': 'a battered old recipe tin box with its lid propped open, a few stained '
+    + 'handwritten recipe cards standing inside with illegible scribbles and no readable '
+    + 'words, a wooden spoon resting across it, a warm glow from inside',
+
+  'gd-billet-train': 'a single paper train ticket with a punched clipped corner and a '
+    + 'magnetic stripe on the back, creased from a pocket, the printed surface completely '
+    + 'blank with no writing and no numbers',
+  'gd-coussin-nuque': 'a U-shaped inflatable travel neck pillow, slightly deflated, with a '
+    + 'little dangling valve, soft fleece cover, empty and unworn, no logo and no text',
+  'gd-carte-routiere': 'a large paper road map folded badly into a bulging lump, edges torn '
+    + 'at the folds, coloured roads and blank areas visible, no readable place names and '
+    + 'no text',
+  'gd-sac-couchage': 'a rolled-up sleeping bag bound with two elastic straps, a quilted '
+    + 'nylon shell, one end coming loose, no logo and no text',
+  'gd-glaciere': 'a rugged plastic picnic cool box with its lid cracked open, ice cubes '
+    + 'and a few plain cans inside, a fold-down handle, scuffed sides, no label and no text',
+  'gd-gilet': 'a bright orange high-visibility safety vest with silver reflective stripes, '
+    + 'empty and unworn, lying flat and slightly crumpled. Nobody is wearing it, there is '
+    + 'no body inside it, and there is no logo and no lettering on it',
+  'gd-batterie': 'a chunky portable power bank with a short charging cable plugged in and '
+    + 'coiled beside it, four small indicator lights glowing on its side, scratched '
+    + 'casing, no logo and no text',
+  'gd-valise': 'a small hard-shell wheeled suitcase tilted on its one remaining wheel, the '
+    + 'other wheel missing, the telescopic handle half extended, covered in old travel '
+    + 'stickers that are blank with no writing on them',
+  'gd-gps': 'a small dashboard satellite navigation unit on a suction-cup mount, its screen '
+    + 'showing only a simple coloured map with a looping route line and no text and no '
+    + 'numbers, the cable dangling',
+  'gd-car': 'a small toy-like model of an old coach bus, chunky and slightly battered, '
+    + 'scarves hanging out of the windows, one headlight cracked, completely plain sides '
+    + 'with no logo, no text and no crest',
+
+  'mt-poncho': 'a transparent plastic rain poncho, empty and unworn, crumpled into a '
+    + 'loose heap with its hood flopped over, raindrops beading on it. Nobody is wearing '
+    + 'it, there is no body inside it, and there is no logo and no text',
+  'mt-parapluie': 'a cheap umbrella blown inside out, two of its spokes bent and one '
+    + 'panel torn, the curved handle at the bottom, plain fabric with no logo and no text',
+  'mt-chaufferette': 'a pair of small fabric hand warmer pouches, one torn open and '
+    + 'glowing faintly orange from the inside, a soft wisp of heat rising, no text',
+  'mt-bottes': 'a pair of tall rubber rain boots, splashed with mud and standing in a small '
+    + 'puddle, one leaning against the other, completely plain with no logo and no text',
+  'mt-girouette': 'an old cast-iron rooftop weather vane with a rooster on top and the four '
+    + 'compass arms below, flecks of rust, the arms plain with no letters on them',
+  'mt-eventail': 'a folding paper hand fan spread wide open, thin bamboo ribs, the paper '
+    + 'slightly torn at one edge, a plain warm colour with no writing and no pattern',
+  'mt-paratonnerre': 'a small pointed copper lightning rod mounted on a short stand, tiny '
+    + 'blue electric sparks crackling around its tip, a coil of copper wire at its base',
+  'mt-barometre': 'an antique round aneroid barometer in a carved wooden case, a brass '
+    + 'bezel and a single needle, the dial plain with simple tick marks and no numbers '
+    + 'and no words',
+  'mt-grelons': 'a dented metal bucket filled to the brim with big white hailstones, a few '
+    + 'hailstones scattered around it and melting into small drops',
+  'mt-manche-a-air': 'a striped windsock on a short metal pole, the fabric cone fully '
+    + 'inflated and streaming sideways as if in a strong gust, bold stripes in two plain '
+    + 'colours, no lettering',
+
+  'hc-telecommande': 'a chunky television remote control, its rubber buttons worn shiny, '
+    + 'the battery cover held on with a strip of tape, the buttons completely blank with '
+    + 'no symbols, no numbers and no text',
+  'hc-chips': 'an open crinkled bag of potato chips with a few chips spilling out beside '
+    + 'it, the bag completely blank with no label, no logo and no text',
+  'hc-pantoufles': 'a pair of fluffy slippers with a thick sole, slightly flattened at the '
+    + 'heel, empty and unworn, nobody wearing them, no crest and no lettering on them',
+  'hc-casque': 'a pair of large over-ear headphones with padded cushions, the coiled cable '
+    + 'hanging down, slightly worn headband, no logo and no text',
+  'hc-tablette': 'a tablet computer propped up on its folding cover stand, the screen '
+    + 'switched off and dark with a reflection on it, a few crumbs on the cover, no logo '
+    + 'and no text',
+  'hc-canette': 'a single aluminium drinks can freshly opened, a burst of foam spilling '
+    + 'over the ring pull, condensation on the metal, the can completely plain with no '
+    + 'label and no text',
+  'hc-fauteuil': 'a big worn leather recliner armchair tilted back with its footrest '
+    + 'raised, a cup holder in the armrest, the seat deeply dented, empty, nobody sitting '
+    + 'in it, no logo',
+  'hc-ecran': 'a large flat-screen television on a small stand, the screen switched off and '
+    + 'dark with a soft reflection, a thin layer of dust on the top edge, no logo and no '
+    + 'text',
+  'hc-pizza': 'an open cardboard pizza box with one slice missing from the pizza inside, '
+    + 'stretchy melted cheese, a grease stain on the lid, the box completely blank with no '
+    + 'logo and no text',
+  'hc-canape': 'a deep old three-seat sofa with sagging cushions and a knitted throw '
+    + 'draped over one arm, a remote control wedged between two cushions, empty, nobody '
+    + 'sitting on it, no crest and no lettering',
+
+  'boite-souvenirs': 'an old wooden keepsake box with its lid open, crammed with small '
+    + 'supporter treasures: a folded striped scarf, a few blank match tickets, a small '
+    + 'pennant, a whistle and a badge, everything plain with no text, no crest and no '
+    + 'numbers, a warm glow rising from inside',
 };
 
 export const inviteDe = (id) => (INVITES[id]

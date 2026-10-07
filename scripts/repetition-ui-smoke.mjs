@@ -1011,6 +1011,10 @@ const ANCIENS = /PARFAIT|TRÈS BIEN|ÇA VIENT|À REPRENDRE|\bBON\b|MOYEN|RATÉ/;
     o = releve(z);
     window.__vib.length = 0; window.__sons.length = 0;
     const p = G.jouer('tempo', { tempo: { interval: 500, beats: 3, window: 150 } }, { zone: z });
+    /* L'épreuve fait son bruitage d'ouverture (6 octobre 2026) en s'ouvrant :
+       relevé, puis vidé — c'est la frappe du décompte qu'on écoute ici. */
+    out.ouverture = [...window.__sons];
+    window.__sons.length = 0;
     const pad = z.querySelector('#pad');
     pad.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     out.decompte = { compte: z.querySelector('#n')?.textContent, hit: pad.classList.contains('hit'),
@@ -1067,6 +1071,8 @@ const ANCIENS = /PARFAIT|TRÈS BIEN|ÇA VIENT|À REPRENDRE|\bBON\b|MOYEN|RATÉ/;
   const pres = (a, b, tol) => a.length === b.length && a.every((x, i) => Math.abs(x - b[i]) <= tol);
   check(`à 250 ms d’intervalle, quatre pulsations pour quatre temps (${r.vite.join(', ')})`,
     pres(r.vite, [250, 500, 750, 1000], 30));
+  check(`l’épreuve s’ouvre sur son bruitage (${JSON.stringify(r.ouverture)})`,
+    r.ouverture.length === 1 && r.ouverture[0] === 'epreuve-tempo');
   check(`une frappe du décompte n’est pas prise (${JSON.stringify(r.decompte)})`,
     r.decompte.compte === '0' && !r.decompte.hit && !r.decompte.bouffee
     && r.decompte.sons === 0 && r.decompte.vib === 0);

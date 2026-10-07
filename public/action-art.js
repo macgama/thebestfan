@@ -267,6 +267,14 @@
       <div class="tbf-jouee-texte">${echappe(a.texte ?? '')}</div>`;
     document.body.appendChild(el);
 
+    /* **Son bruitage** (6 octobre 2026) : chaque carte a le sien dans la
+       banque (`son.js`, sous son identifiant), chez celui qui la joue comme
+       chez celui qui la subit. Une carte sans bruitage garde le claquement
+       ordinaire. Il part avant le choix du mouvement : le calme des
+       animations retire le vol de la carte, pas son son — celui-là a son
+       propre calme, que le moteur garde. */
+    window.FX?.son?.(window.TBF_SON?.existe?.(a.id) ? a.id : 'carte');
+
     /**
      * Le retrait passe par une minuterie, jamais par `onfinish`.
      *
@@ -332,7 +340,6 @@
       window.FX?.particules?.({ x: cx, y: cy, n: 20, distance: 150, taille: 5,
         couleurs: [fam.c, '#F2EEE4'] });
     }, 280);
-    window.FX?.son?.('carte');
   }
 
   window.TBF_ACTION = { FAM, famDe, resume, adresse, illustration, jouee, suspendre, reprendre };

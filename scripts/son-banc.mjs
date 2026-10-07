@@ -199,7 +199,11 @@ async function rendreEtMesurer(travaux, avecWav) {
     // `chauffe` : rendu depuis la naissance de la chaîne (voir « la naissance »).
     const tampon = await S.rendre(t.quoi, { duree: t.duree, graine: t.graine ?? 1,
       ...(t.chauffe != null ? { chauffe: t.chauffe } : {}) });
-    if (!tampon) { sorties.push({ ...t, erreur: 'pas de rendu hors ligne' }); continue; }
+    if (!tampon) {
+      sorties.push({ ...t, erreur: t.quoi.enregistre
+        ? 'les fichiers de public/son/ ne se décodent pas' : 'pas de rendu hors ligne' });
+      continue;
+    }
     sorties.push({ ...t, ...mesurer(tampon, 0.02), ...(avecWav ? { wav: wav(tampon) } : {}) });
   }
   return sorties;
@@ -234,6 +238,12 @@ export function travaux(mix) {
      (« bache ») et le PARFAIT sonne — au pire, tous trois au même instant. */
   sup('verdict', ['tic', 'bache', 'parfait'], 0.9);
   sup('tous-les-moments', Object.keys(mix.sons).filter((n) => mix.sons[n].famille === 'moment'), 5.9);
+  /* La tribune enregistrée (6 octobre 2026) : la clameur qui remplace
+     l'ovation, seule et au but réel, jugée comme l'ovation — un moment. */
+  t.push({ id: 'clameur', sorte: 'son', famille: 'moment', source: 'enregistree',
+    quoi: { son: 'ovation', enregistre: true }, duree: 4.5 });
+  t.push({ id: 'butReel+clameur+pousse', sorte: 'superposition', source: 'enregistree',
+    quoi: { sons: ['butReel', 'ovation', 'pousse'], enregistre: true }, duree: 4.5 });
   /* L'ambiance, niveau par niveau, assez longtemps pour respirer. Avec sa
      fenêtre (la moyenne) et, aux niveaux qui restent sous l'interface, son
      plafond : la sonie sur cent millisecondes, celle d'une crête de la
@@ -242,6 +252,15 @@ export function travaux(mix) {
     if (n > 0) {
       t.push({ id: `ambiance-${n}`, sorte: 'ambiance', niveau: n, quoi: { ambiance: n }, duree: 8, fenetre,
         plafond: mix.ambiancePlafonds?.[n] ?? null });
+    }
+  });
+  /* La rumeur enregistrée, aux trois mêmes niveaux, contre les mêmes
+     fenêtres et les mêmes plafonds : elle remplace la synthèse là où elle
+     se décode, et doit tenir ce que la synthèse tenait. */
+  mix.ambiance.forEach((fenetre, n) => {
+    if (n > 0) {
+      t.push({ id: `rumeur-enregistree-${n}`, sorte: 'ambiance', source: 'enregistree', niveau: n,
+        quoi: { ambiance: n, enregistre: true }, duree: 8, fenetre, plafond: mix.ambiancePlafonds?.[n] ?? null });
     }
   });
   /* Les échelles de la rumeur (lot 6) : la mi-temps et le vestiaire vide,
@@ -359,7 +378,7 @@ export function juger({ mix, mesures }) {
       /* Une rumeur creusée (lot 6) : sous la rumeur pleine du même niveau,
          d'au moins RETOMBEE_MIN. Sans la pleine, rien à quoi la comparer —
          c'est une faute, pas un vert. */
-      const pleine = mesures.find((x) => x.sorte === 'ambiance' && x.niveau === m.niveau && !x.erreur);
+      const pleine = mesures.find((x) => x.sorte === 'ambiance' && !x.source && x.niveau === m.niveau && !x.erreur);
       if (!pleine) fautes.push(`pas de rumeur pleine au niveau ${m.niveau} à laquelle la comparer`);
       else if (pleine.moyen - m.moyen < RETOMBEE_MIN) {
         fautes.push(`seulement ${Math.round((pleine.moyen - m.moyen) * 10) / 10} dB sous la rumeur pleine `
@@ -486,14 +505,14 @@ function rapport({ mix, mesures }, jugees) {
   bloc('La chaîne', 'chaine', ['rendu', 'crête', 'verdict'],
     (j) => [j.id, nombre(j.crete), verdict(j)]);
   bloc('La banque', 'son', ['son', 'famille', 'gain', 'crête', 'sonie', 'moyen', 'durée (s)', 'verdict'],
-    (j) => [j.id, j.famille, String(mix.sons[j.id].gain).replace('.', ','), nombre(j.crete),
+    (j) => [j.id, j.famille, String(mix.sons[j.id]?.gain ?? mix.clameur ?? 1).replace('.', ','), nombre(j.crete),
       nombre(j.sonie), nombre(j.moyen), secondes(j.duree), verdict(j)]);
   bloc('Les variantes', 'variante', ['son', 'options', 'famille', 'crête', 'sonie', 'verdict'],
     (j) => [j.id, `\`${JSON.stringify(j.options)}\``, j.famille, nombre(j.crete), nombre(j.sonie), verdict(j)]);
   bloc('Les superpositions', 'superposition', ['ensemble', 'crête', 'sonie', 'verdict'],
     (j) => [j.id, nombre(j.crete), nombre(j.sonie), verdict(j)]);
   bloc('L’ambiance', 'ambiance', ['niveau', 'fenêtre (moyen)', 'moyen', 'plafond (sonie)', 'sonie', 'crête', 'verdict'],
-    (j) => [String(j.niveau), `${nombre(j.fenetre[0])} à ${nombre(j.fenetre[1])}`, nombre(j.moyen),
+    (j) => [`${j.niveau}${j.source ? ' (enregistrée)' : ''}`, `${nombre(j.fenetre[0])} à ${nombre(j.fenetre[1])}`, nombre(j.moyen),
       j.plafond == null ? 'aucun (le but)' : nombre(j.plafond), nombre(j.sonie), nombre(j.crete), verdict(j)]);
   bloc('Les échelles de la rumeur (lot 6)', 'echelle', ['rendu', 'échelle', 'moyen', 'sonie', 'crête', 'verdict'],
     (j) => [j.id, String(j.echelle).replace('.', ','), nombre(j.moyen), nombre(j.sonie), nombre(j.crete), verdict(j)]);
