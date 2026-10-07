@@ -242,6 +242,33 @@ function detourer(px, l, h, c, fond, seuilBas, seuilHaut) {
   return alpha;
 }
 
+/**
+ * Le reflet d'un fond vert, retiré.
+ *
+ * Les Fanzzy du nouveau dessin portent une aura aux âges 2 et 3 : une lueur
+ * large, que le détourage garde en demi-teinte, et qui garde le vert du fond
+ * derrière elle. Au bord, on retire la part du fond (1 − alpha) puis on ramène
+ * le vert vers la chaleur de la lueur ; dedans, le vert ne dépasse plus le
+ * plus fort des deux autres canaux (presque : le bronze
+ * qui reflétait le vert redevient bronze). Un Fanzzy vert est dessiné sur magenta,
+ * jamais sur vert : rien de son costume ne se perd.
+ */
+function sansVert(rgba, n, fond) {
+  for (let p = 0; p < n; p++) {
+    const i = p * 4;
+    const a = rgba[i + 3] / 255;
+    if (a === 0) continue;
+    if (a < 1) {
+      for (let k = 0; k < 3; k++) {
+        rgba[i + k] = Math.min(255, Math.max(0, Math.round((rgba[i + k] - (1 - a) * fond[k]) / a)));
+      }
+    }
+    const [hi, lo] = rgba[i] > rgba[i + 2] ? [rgba[i], rgba[i + 2]] : [rgba[i + 2], rgba[i]];
+    const plafond = a < 1 ? (hi + lo) / 2 : 0.75 * hi + 0.25 * lo;
+    rgba[i + 1] = Math.min(rgba[i + 1], Math.round(plafond));
+  }
+}
+
 /* -------------------------------------------------------------- cadrage */
 
 /** Boîte du sujet : ce qui reste après détourage. */
@@ -336,6 +363,7 @@ async function produire(fichier, id) {
     rgba[i * 4 + 2] = data[i * c + 2];
     rgba[i * 4 + 3] = alpha[i];
   }
+  if (fond && fond[1] > fond[0] && fond[1] > fond[2]) sansVert(rgba, l * h, fond);
   const base = sharp(rgba, { raw: { width: l, height: h, channels: 4 } });
 
   /* -- plein pied : le sujet entier, posé sur la base du cadre -- */
