@@ -8183,6 +8183,14 @@ contrôle du démarrage rougit quand on retire l'appel. `auth:smoke` : 4 de
 plus, l'entretien efface les tentatives de plus d'un jour et les sessions
 échues, et garde les autres.
 
+`tour:ui` rougissait trois fois, « les liens internes mènent à un écran
+connu » : la vitrine et le compte menaient à une page que son tour ne servait
+pas. Elle est dans ses écrans, où elle passe les douze contrôles de chaque
+page (rien ne déborde à 360 px, la barre du haut est là…), et dans ceux de
+`large:ui` (la largeur du téléphone à 1 366 et 1 920 px). Toutes les suites,
+sur `main` à jour de la PR #46 : seules restent les rouges connues de `main`,
+`equipes:ui` ×3, `deck:ui` ×1, `nvn:ui` ×1, `virage:ui` ×4.
+
 ### Ce qui reste
 
 - La relecture par un juriste, que Gaël n'a pas demandée.
