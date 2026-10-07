@@ -605,6 +605,10 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   mask-image:radial-gradient(ellipse 58% 56% at 50% 54%,#000 58%,transparent 100%)}
 .decor.on{opacity:1}
 .decor svg{display:block;width:100%;height:100%}
+/* Le pied d'ombre du décor est celui de la fiche, où le personnage se tient
+   au bas de la carte. Ici, l'ombre est `.sol`, sous ses pieds : le second
+   rond, plus bas, se lisait comme un socle vide (Gaël, 7 octobre 2026). */
+.decor .pied{display:none}
 /* Le halo et l'ombre au sol ne bougent plus (lot 2). **Trois animations
    infinies au plus par écran** : sur le hub, ce sont le flottement du
    personnage, la fumée des soirs de match et le sticker des boosters qui
@@ -709,6 +713,14 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   transition:opacity .24s ease;
   filter:drop-shadow(0 0 22px rgba(245,195,59,.26)) drop-shadow(0 14px 26px rgba(0,0,0,.55))}
 .pose.on{opacity:1}
+/* **La lueur de l'âge** (7 octobre 2026, accord de Gaël) : aucune au premier
+   âge, un halo bleu de rare au deuxième, un halo violet d'épique, plus large,
+   au troisième, aux couleurs de rareté de la carte. Collée au contour du
+   dessin, sans animation : le budget de trois boucles par écran est pris. */
+.pile[data-evo="2"] .pose{filter:drop-shadow(0 0 6px rgba(95,168,255,.7))
+  drop-shadow(0 0 22px rgba(95,168,255,.38)) drop-shadow(0 14px 26px rgba(0,0,0,.55))}
+.pile[data-evo="3"] .pose{filter:drop-shadow(0 0 7px rgba(185,140,255,.9))
+  drop-shadow(0 0 30px rgba(185,140,255,.55)) drop-shadow(0 14px 26px rgba(0,0,0,.55))}
 /* Les paupières tombent sur les yeux du repos au pixel près parce qu'elles en
    ont tout : la même boîte, le même `object-fit`, une image de la même
    taille. Ni lueur ni ombre — elles ne couvrent que les yeux, et le contour
@@ -718,6 +730,26 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 .cligne{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   opacity:0;pointer-events:none}
 .cligne.on{opacity:1}
+/* **Posé sur ses pieds, à la taille de son âge** (7 octobre 2026, demandé par
+   Gaël). Les images d'un âge n'ont pas la proportion de la pile : un âge 3
+   large (un mégaphone sur l'épaule) se centrait en hauteur et flottait loin
+   au-dessus de son ombre. On le pose donc en bas. Et chaque âge prend sa
+   part de la hauteur — 80 %, 90 %, 100 % : sans cela, l'âge 3, plus large,
+   était réduit pour tenir et paraissait plus petit que l'âge 1. Quand
+   l'âge est mesuré (`TBF_ETATS.taille`), c'est le personnage lui-même, et
+   non son cadre, qui prend cette part : `--taille` et `--sous` sont alors
+   posées sur la pile par `source`. Le
+   clignement suit les mêmes règles, sans quoi ses paupières tomberaient à
+   côté des yeux. */
+.pile[data-evo="1"]{--taille:80%}
+.pile[data-evo="2"]{--taille:90%}
+/* **Deux fois la largeur de la pile**, centrées : un âge en costume large
+   (une cape d'Halloween, un mégaphone) a un cadre bien plus large que la
+   pile, et `contain` le réduisait sur sa largeur, quelle que soit la
+   hauteur demandée. Le surplus est transparent. */
+.pose,.cligne{top:auto;bottom:var(--sous,0);left:-50%;width:200%;height:var(--taille,100%);
+  object-position:50% 100%;
+  pointer-events:none}
 /* Le saut s'étire depuis les pieds (voir `saut`) : étiré depuis le milieu du
    personnage, il abaissait ses pieds de 4 % de sa hauteur au moment même où
    il décollait de vingt-six pixels. Passé 650 pixels de personnage,
@@ -3773,6 +3805,15 @@ let equipe = null;
  * Fanzzy n'a aucun dessin et on repasse au supporter — pas de cadre vide.
  */
 function source(etat) {
+  // La taille de son âge : voir `.pile[data-evo]`.
+  const pile = document.getElementById('pile');
+  if (pile) {
+    pile.dataset.evo = equipe ? String(equipe.evo) : '';
+    const t = equipe ? window.TBF_ETATS?.taille?.(equipe.id, equipe.evo) : null;
+    pile.style.setProperty('--taille', t?.hauteur ?? '');
+    // Les pieds sur l'ombre (`.sol`, à 9 % du bas de la scène), pas sous elle.
+    pile.style.setProperty('--sous', t ? `calc(${t.bas} + 9%)` : '');
+  }
   if (equipe) {
     const trouve = window.TBF_ETATS.resoudre(equipe.id, { evo: equipe.evo, skin: equipe.skin, etat });
     /* **L'âge exact, ou le plein-pied de cet âge.** `resoudre` redescend

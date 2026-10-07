@@ -18,9 +18,41 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import sharp from 'sharp';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 export const SORTIE_DEFAUT = path.join(RACINE, 'public', 'img', 'fanzzy');
+
+/**
+ * La place du personnage dans le cadre de son âge : `[haut, sous]`.
+ *
+ * `haut` est la part de la hauteur du cadre qu'occupe son repos, des pieds au
+ * sommet du dessin ; `sous`, la part laissée sous ses pieds. Toutes les tenues
+ * et tous les états d'un âge partagent un cadre, que la tenue la plus large
+ * ou la plus haute décide : sans cette mesure, le jeu ne sait pas quelle
+ * taille a vraiment le personnage, et un âge 3 en cape paraît plus petit que
+ * son âge 1 (Gaël, 7 octobre 2026). Mesuré sur le repos de la tenue de base,
+ * le même pour toutes les tenues de l'âge.
+ *
+ * @returns {Promise<[number, number] | null>}
+ */
+async function mesurerPieds(dossierAge, skins) {
+  const tenue = skins.base?.etats?.includes('neutre') ? 'base'
+    : Object.keys(skins).find((t) => skins[t].etats?.includes('neutre'));
+  if (!tenue) return null;
+  let data; let info;
+  try {
+    ({ data, info } = await sharp(path.join(dossierAge, tenue, 'neutre.png'))
+      .ensureAlpha().extractChannel(3).raw().toBuffer({ resolveWithObject: true }));
+  } catch { return null; }
+  const { width: l, height: h } = info;
+  const plein = (y) => { for (let x = 0; x < l; x++) if (data[y * l + x] > 128) return true; return false; };
+  let y0 = 0; while (y0 < h && !plein(y0)) y0++;
+  let y1 = h - 1; while (y1 > y0 && !plein(y1)) y1--;
+  if (y0 >= h) return null;
+  const r = (v) => Math.round(v * 1000) / 1000;
+  return [r((y1 - y0 + 1) / h), r((h - 1 - y1) / h)];
+}
 
 /**
  * Recolle les manifestes de `dossier` en un `index.json`.
@@ -50,7 +82,8 @@ export async function agreger(dossier = SORTIE_DEFAUT) {
           ...(s.repli ? { repli: s.repli } : {}),
           ...(s.cligne === true ? { cligne: true } : {}) };
       }
-      evolutions[evo] = { skins };
+      const pieds = await mesurerPieds(path.join(dossier, e.name, evo), contenu.skins ?? {});
+      evolutions[evo] = { skins, ...(pieds ? { pieds } : {}) };
     }
     fanzzy[m.id ?? e.name] = { rev: m.rev ?? 1, evolutions };
   }
