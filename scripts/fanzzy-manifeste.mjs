@@ -24,7 +24,7 @@ const RACINE = fileURLToPath(new URL('..', import.meta.url));
 export const SORTIE_DEFAUT = path.join(RACINE, 'public', 'img', 'fanzzy');
 
 /**
- * La place du personnage dans le cadre de son âge : `[haut, sous]`.
+ * La place du personnage dans le cadre de son âge : `[haut, sous, decal]`.
  *
  * `haut` est la part de la hauteur du cadre qu'occupe son repos, des pieds au
  * sommet du dessin ; `sous`, la part laissée sous ses pieds. Toutes les tenues
@@ -32,9 +32,10 @@ export const SORTIE_DEFAUT = path.join(RACINE, 'public', 'img', 'fanzzy');
  * ou la plus haute décide : sans cette mesure, le jeu ne sait pas quelle
  * taille a vraiment le personnage, et un âge 3 en cape paraît plus petit que
  * son âge 1 (Gaël, 7 octobre 2026). Mesuré sur le repos de la tenue de base,
- * le même pour toutes les tenues de l'âge.
+ * le même pour toutes les tenues de l'âge. `decal` est l'écart entre le
+ * milieu de ses jambes et celui du cadre, en hauteurs de cadre.
  *
- * @returns {Promise<[number, number] | null>}
+ * @returns {Promise<[number, number, number] | null>}
  */
 async function mesurerPieds(dossierAge, skins) {
   const tenue = skins.base?.etats?.includes('neutre') ? 'base'
@@ -50,8 +51,17 @@ async function mesurerPieds(dossierAge, skins) {
   let y0 = 0; while (y0 < h && !plein(y0)) y0++;
   let y1 = h - 1; while (y1 > y0 && !plein(y1)) y1--;
   if (y0 >= h) return null;
+  /* Le milieu de ses jambes, sur le bas du dessin : c'est lui qu'on centre.
+     Le milieu du cadre ne l'est pas toujours — un mégaphone sur l'épaule de
+     RP1, à l'âge 3, étire le dessin d'un côté et le corps partait à gauche
+     (Gaël, 7 octobre 2026). Exprimé en hauteurs de cadre, comme le reste. */
+  let x0 = l; let x1 = -1;
+  for (let y = Math.round(y1 - (y1 - y0) * 0.3); y <= y1; y++) {
+    for (let x = 0; x < l; x++) if (data[y * l + x] > 128) { if (x < x0) x0 = x; if (x > x1) x1 = x; }
+  }
   const r = (v) => Math.round(v * 1000) / 1000;
-  return [r((y1 - y0 + 1) / h), r((h - 1 - y1) / h)];
+  const decal = x1 >= x0 ? r(((x0 + x1) / 2 - (l - 1) / 2) / h) : 0;
+  return [r((y1 - y0 + 1) / h), r((h - 1 - y1) / h), decal];
 }
 
 /**
