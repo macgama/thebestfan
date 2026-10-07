@@ -192,20 +192,21 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    * paquet soit plus large que les suivants — au contraire.
    *
    * Au premier âge, il n'existe que deux raretés : commune et légendaire. Le
-   * « beau » Fanzzy du paquet est donc une **légendaire**, ce qui tient la
-   * promesse d'origine — un cran au-dessus de commun — sans rien court-
-   * circuiter : une légendaire de stade 1 est un personnage, pas une avance
-   * sur son évolution.
+   * second Fanzzy du paquet était une légendaire garantie. **Plus depuis le
+   * 7 octobre 2026** : Gaël veut qu'une légendaire se gagne en ouvrant des
+   * boosters, jamais offerte d'office (`shared/legende.js`). Le paquet donne
+   * donc **deux communs différents**.
    *
-   * Les replis existent parce qu'une série ouverte peut n'avoir aucune
-   * légendaire : mieux vaut deux communes qu'une erreur au premier écran.
+   * Le repli sur tout l'ouvrable n'existe que pour une saison sans commune :
+   * mieux vaut une légendaire qu'une erreur au premier écran.
    */
   function tirerBienvenue() {
     const ouvrables = obtenables();
     const communs = ouvrables.filter((f) => f.rar === 'commune');
-    const beaux = ouvrables.filter((f) => f.rar !== 'commune');
     const premier = communs.length ? communs : ouvrables;
-    const second = beaux.length ? beaux : premier;
+    const lePremier = rnd(premier);
+    const autres = premier.filter((f) => f.id !== lePremier.id);
+    const second = autres.length ? autres : premier;
     /* **Ce qu'une saison a ouvert, ici comme dans le booster.** Le paquet de
        bienvenue est le premier tirage d'un joueur : s'il était le seul à ignorer
        les saisons, il livrerait à chaque nouvel inscrit, et à lui seul, du
@@ -246,7 +247,7 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     const arbitre = debut.some((a) => a.id === OUVRE_LE_CHANGEMENT);
 
     return [
-      { type: 'fanzzy', id: rnd(premier).id },
+      { type: 'fanzzy', id: lePremier.id },
       { type: 'fanzzy', id: rnd(second).id },
       { type: 'stuff', id: rnd(equipement).id },
       ...(arbitre ? [{ type: 'action', id: OUVRE_LE_CHANGEMENT }] : []),
