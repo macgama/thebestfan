@@ -105,8 +105,12 @@ check(`le paquet est complet (${cartes.length} lots)`,
   ['fanzzy', 'stuff', 'action', 'scarves'].every(
     (t) => cartes.some((c) => c.type === t)));
 check('deux Fanzzy', cartes.filter((c) => c.type === 'fanzzy').length === 2);
-check('au moins un Fanzzy peu commun ou mieux',
-  cartes.some((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar !== 'commune'));
+/* **Pas de légendaire offerte** (Gaël, 7 octobre 2026) : elle se gagne en
+   ouvrant des boosters. Deux communs, et pas deux fois le même. */
+check('aucun Fanzzy légendaire dans le paquet',
+  cartes.every((c) => c.type !== 'fanzzy' || BY_ID.get(c.id).rar !== 'legendaire'));
+check('deux Fanzzy différents',
+  new Set(cartes.filter((c) => c.type === 'fanzzy').map((c) => c.id)).size === 2);
 
 /* **Ce qu'il ne doit pas contenir**, et c'est là que le paquet était faux.
 
