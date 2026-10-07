@@ -211,6 +211,11 @@
 /* Et une fois et demie sa largeur, centré : la pose d'une tenue large a un
    cadre plus large que la carte, que `contain` réduisait sur sa largeur. */
 .fz[data-age] .illuwrap .illu.fz-pied{left:-25%;width:150%}
+/* La lueur de l'âge, aux couleurs de rareté : bleu, puis violet, plus large. */
+.fz[data-age="2"]:not(.fz-secret) .illuwrap .illu.fz-pied{filter:drop-shadow(0 0 4px rgba(95,168,255,.75))
+  drop-shadow(0 0 12px rgba(95,168,255,.4)) drop-shadow(0 3px 8px rgba(0,0,0,.6))}
+.fz[data-age="3"]:not(.fz-secret) .illuwrap .illu.fz-pied{filter:drop-shadow(0 0 5px rgba(185,140,255,.9))
+  drop-shadow(0 0 18px rgba(185,140,255,.55)) drop-shadow(0 3px 8px rgba(0,0,0,.6))}
 .fz[data-age="1"] .illuwrap .illu.fz-pied{height:72%}
 .fz[data-age="2"] .illuwrap .illu.fz-pied{height:80%}
 /* Une illustration de carte d'action est un tableau : elle couvre tout. */
