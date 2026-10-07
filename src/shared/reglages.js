@@ -470,8 +470,9 @@ export const REGLAGES = [
 
   { cle: 'etal.stuff_legendaire', section: 'etal', type: 'entier',
     titre: 'Pièce légendaire', unite: 'écharpes', min: 1, max: 9999, defaut: 520,
-    aide: 'Une pièce légendaire porte les modificateurs les plus francs : son prix ' +
-      'est ce qui tient la distance entre un joueur qui paie et un joueur qui joue.' },
+    aide: 'Sans effet depuis le 7 octobre 2026 : une pièce légendaire ne se vend plus ' +
+      'à l’étal, elle ne se gagne qu’en ouvrant des boosters. Le prix d’un doublon ' +
+      'rendu en écharpes ne passe pas par ici.' },
 
   { cle: 'etal.tenue', section: 'etal', type: 'entier',
     titre: 'Une tenue, sur un Fanzzy', unite: 'écharpes', min: 1, max: 9999, defaut: 130,
