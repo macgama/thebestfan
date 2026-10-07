@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**RP1 refait par Gaël, avec son aura** (branche `claude/project-thread-j45ndm`,
+7 octobre 2026 au soir). Images seules : construction, ni schéma ni
+redémarrage.
+
+- `public/img/fanzzy/RP1*` : ses trois cartes et ses états des trois âges, en
+  tenue de base et dans ses trois skins, découpés des douze planches de Gaël ;
+  il cligne toujours à l'âge 1.
+- Le découpage (`scripts/fanzzy-planche.mjs`, `scripts/fanzzy-images.mjs`)
+  retire l'ombre au sol et le reflet vert de l'aura des âges 2 et 3.
+
+---
+
 **La politique de confidentialité, publiée** (branche
 `claude/project-thread-iatg2m`, 7 octobre 2026, avec les informations d'éditeur
 de Gaël). Elle se dépose avec ce qui est en dessous, ou seule. **Serveur et

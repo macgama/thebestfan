@@ -127,15 +127,40 @@ function couleurDuFond(px, l, h) {
  */
 function detourer(px, l, h, fond) {
   const [fr, fg, fb] = fond;
+  const n2 = fr * fr + fg * fg + fb * fb;
+  const vert = fg > fr && fg > fb;
   for (let p = 0; p < l * h; p++) {
     const i = p * 4;
-    const d = Math.hypot(px[i] - fr, px[i + 1] - fg, px[i + 2] - fb);
+    let d = Math.hypot(px[i] - fr, px[i + 1] - fg, px[i + 2] - fb);
+    /* L'ombre au sol est le fond assombri (k fois sa couleur) : c'est du fond.
+       Le jeu dessine sa propre ombre sous le Fanzzy. */
+    const k = (px[i] * fr + px[i + 1] * fg + px[i + 2] * fb) / n2;
+    let ref = fond;
+    if (k >= 0.35 && k < 1) {
+      // Seulement une ombre franche : un gris foncé (un pantalon) en est loin.
+      const dk = Math.hypot(px[i] - k * fr, px[i + 1] - k * fg, px[i + 2] - k * fb);
+      if (dk < SEUIL_BAS / 2 && dk < d) { d = dk; ref = fond.map((c) => k * c); }
+    }
     const a = Math.min(1, Math.max(0, (d - SEUIL_BAS) / (SEUIL_HAUT - SEUIL_BAS)));
     if (a < 1 && a > 0) {
       for (let c = 0; c < 3; c++) {
-        const v = (px[i + c] - (1 - a) * fond[c]) / a;
+        const v = (px[i + c] - (1 - a) * ref[c]) / a;
         px[i + c] = Math.min(255, Math.max(0, Math.round(v)));
       }
+    }
+    /* Une aura est une lueur, pas un mélange : elle garde un reflet du fond
+       que le calcul du bord ne retire pas. Le Fanzzy ne porte jamais la
+       couleur de son fond (le prompt le demande), on la retire partout. */
+    if (vert) {
+      // Au bord, la lueur prend sa couleur chaude ; dedans, le vert est retiré.
+      const [hi, lo] = px[i] > px[i + 2] ? [px[i], px[i + 2]] : [px[i + 2], px[i]];
+      const plafond = a < 1 ? (hi + lo) / 2 : 0.75 * hi + 0.25 * lo;
+      px[i + 1] = Math.min(px[i + 1], Math.round(plafond));
+    }
+    else if (a < 1) {
+      // Le violet d'une tenue ressemble au magenta : on ne touche qu'au bord.
+      const trop = Math.min(px[i], px[i + 2]) - px[i + 1];
+      if (trop > 0) { px[i] -= trop; px[i + 2] -= trop; }
     }
     px[i + 3] = Math.round(a * px[i + 3]);
   }
@@ -179,6 +204,47 @@ function composantes(px, l, h) {
   return { etiq, liste };
 }
 
+/**
+ * Le personnage dont un morceau détaché touche presque un pixel : on s'étend
+ * autour du morceau, pas à pas. Une boîte ne suffit pas : la semelle d'une
+ * figure de la rangée du haut tombe dans la boîte de la figure d'en dessous
+ * quand celle-ci lève un mégaphone.
+ */
+function plusProche(c, etiq, l, h, proprietaire) {
+  const vu = new Set();
+  let front = [];
+  for (let y = c.y0; y <= c.y1; y++) for (let x = c.x0; x <= c.x1; x++) {
+    const p = y * l + x;
+    if (etiq[p] === c.id) { vu.add(p); front.push(p); }
+  }
+  for (let pas = 0; pas < 80 && front.length; pas++) {
+    const suivant = [];
+    for (const q of front) {
+      const x = q % l, y = (q - x) / l;
+      for (const v of [x > 0 ? q - 1 : -1, x < l - 1 ? q + 1 : -1, y > 0 ? q - l : -1, y < h - 1 ? q + l : -1]) {
+        if (v < 0 || vu.has(v)) continue;
+        vu.add(v);
+        const o = etiq[v] >= 0 ? proprietaire.get(etiq[v]) : null;
+        if (o && etiq[v] === o.id) return o;
+        suivant.push(v);
+      }
+    }
+    front = suivant;
+  }
+  return null;
+}
+
+function parBoite(c, grands, centre) {
+  const [cx, cy] = centre(c);
+  let meilleur = null, dmin = Infinity;
+  for (const g of grands) {
+    const dx = Math.max(g.x0 - cx, 0, cx - g.x1), dy = Math.max(g.y0 - cy, 0, cy - g.y1);
+    const d = Math.hypot(dx, dy);
+    if (d < dmin) { dmin = d; meilleur = g; }
+  }
+  return meilleur;
+}
+
 /** Les personnages d'une image : les grosses composantes, et ce qui s'y rattache. */
 function personnages(img) {
   const { px, l, h } = img;
@@ -189,14 +255,7 @@ function personnages(img) {
   const proprietaire = new Map(grands.map((g) => [g.id, g]));
   for (const c of liste) {
     if (proprietaire.has(c.id) || c.n < 30) continue;
-    const [cx, cy] = centre(c);
-    let meilleur = null, dmin = Infinity;
-    for (const g of grands) {
-      const dx = Math.max(g.x0 - cx, 0, cx - g.x1), dy = Math.max(g.y0 - cy, 0, cy - g.y1);
-      const d = Math.hypot(dx, dy);
-      if (d < dmin) { dmin = d; meilleur = g; }
-    }
-    proprietaire.set(c.id, meilleur);
+    proprietaire.set(c.id, plusProche(c, etiq, l, h, proprietaire) ?? parBoite(c, grands, centre));
   }
   return grands.map((g) => {
     const ids = new Set([...proprietaire].filter(([, o]) => o === g).map(([id]) => id));
@@ -299,6 +358,27 @@ if (repos || accord) {
    les pieds du repos et axe sur son axe. On calcule d'abord où chacune tombe,
    pour agrandir la toile commune d'autant qu'il faut : un bras levé peut
    dépasser le haut du repos, et rien ne doit être coupé. */
+/* La frange (alpha sous la moitié) n'a pas d'étiquette. Avec une aura, elle
+   est large, et celle d'une figure voisine entrerait dans la boîte : chaque
+   pixel de frange va à l'étiquette la plus proche, de proche en proche. */
+const proche = Int32Array.from(figures[0].etiq);
+{
+  const { l: L0, h: H0, px } = planche;
+  let front = [];
+  for (let p = 0; p < proche.length; p++) if (proche[p] >= 0) front.push(p);
+  while (front.length) {
+    const suivant = [];
+    for (const q of front) {
+      const x = q % L0, y = (q - x) / L0;
+      for (const v of [x > 0 ? q - 1 : -1, x < L0 - 1 ? q + 1 : -1, y > 0 ? q - L0 : -1, y < H0 - 1 ? q + L0 : -1]) {
+        if (v < 0 || proche[v] >= 0 || px[v * 4 + 3] === 0) continue;
+        proche[v] = proche[q];
+        suivant.push(v);
+      }
+    }
+    front = suivant;
+  }
+}
 const places = [];
 for (const [k, f] of figures.entries()) {
   if (ORDRE[k] === '-') continue;
@@ -307,9 +387,8 @@ for (const [k, f] of figures.entries()) {
   const isole = Buffer.alloc(l * h * 4);
   for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) {
     const p = (f.y0 + y) * planche.l + (f.x0 + x);
-    // Un pixel franc d'un voisin reste dehors ; les pixels du bord (alpha sous
-    // la moitié) n'ont pas d'étiquette, on les garde : c'est la frange.
-    if (!f.ids.has(f.etiq[p]) && planche.px[p * 4 + 3] >= 128) continue;
+    // Un pixel d'un voisin, franc ou de sa frange, reste dehors.
+    if (proche[p] >= 0 && !f.ids.has(proche[p])) continue;
     for (let c = 0; c < 4; c++) isole[(y * l + x) * 4 + c] = planche.px[p * 4 + c];
   }
   const L = Math.max(1, Math.round(l * echelle)), H = Math.max(1, Math.round(h * echelle));
