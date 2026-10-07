@@ -260,17 +260,9 @@ h2{margin:24px 2px 9px}
 /* tbf-degagement */
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 
-/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
-   règle commune des pages larges : la colonne de lecture s'ouvre, et les KOP
-   comme les clubs sans KOP se rangent en colonnes de la largeur d'un
-   téléphone. */
-@media (min-width:1180px) and (min-height:560px){
-  .colonne{max-width:none}
-  .kops-liste,.clubs-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));column-gap:18px;align-items:start}
-}
 </style>
 </head>
-<body class="tbf-large">
+<body>
 <main id="app"><div class="colonne">
   <p class="tbf-sous">La caisse du virage</p>
   <div id="corps"><div class="charge" id="charge">Chargement…</div></div>

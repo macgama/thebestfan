@@ -169,12 +169,6 @@
 #setLine{position:absolute;z-index:4;left:50%;bottom:2px;translate:-50% 0;max-width:calc(100% - 24px)}
 #setLine b{font-weight:700}
 
-/* Un écran plus large : le sachet grandit avec la scène, le socle avec lui. */
-@media (min-width:600px){
-  .kscene{height:300px}
-  .slide{width:150px}
-  .kscene>.tbf-socle{top:236px;width:196px}
-}
 
 /* **La scène se resserre quand le bouton OUVRIR n'a plus la place.**
 
@@ -227,12 +221,6 @@
 .kscene>.tbf-plaque--rond{position:absolute;z-index:5;top:80px}
 #prevSet{left:8px}
 #nextSet{right:8px}
-/* Plus large, elles suivent les sachets de côté au lieu de partir aux bords. */
-@media (min-width:600px){
-  .kscene>.tbf-plaque--rond{top:104px}
-  #prevSet{left:calc(50% - 292px)}
-  #nextSet{right:calc(50% - 292px)}
-}
 
 /* La minuterie et l'achat immédiat : deux bâches côte à côte (la brique
    `.tbf-minuterie`), au lieu d'une ligne de texte sous le bouton. La page
@@ -589,14 +577,6 @@
 .summary .tbf-album-case>.tbf-sticker.tbf-sticker--prix{left:auto;right:2px;top:40%;bottom:auto;
   --rot:5deg}
 
-/* **Sur une tablette, des cartes de tablette.** À 768 px, la page d'album
-   rangeait les cinq cartes sur une bande de quatre-vingt-quinze pixels de
-   large — la taille d'un téléphone — au milieu de l'écran. Des colonnes de
-   cent vingt au moins (trois par rangée), la case jusqu'à cent cinquante. */
-@media (min-width:600px){
-  .summary .tbf-album{--carte:120px}
-  .summary .tbf-album-case{max-width:150px}
-}
 
 /* **Une carte qu'on ne lit pas ne bouge pas.** La carte de la révélation
    (`cardHTML` sans `mini`) respire et fait tourner sa matière — la dérive
@@ -682,7 +662,7 @@ html[data-calme~="animations"] .reveal .flip{transition:none}
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
 </head>
-<body class="tbf-large">
+<body>
 <main id="app">
   <!-- La réserve : sous la barre (que nav.js pose en tête de la colonne),
        hors de tout conteneur réécrit. Cachée jusqu'à ce que l'état soit

@@ -109,13 +109,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 
-/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
-   règle commune des pages larges : les souvenirs se rangent en colonnes de
-   la largeur d'un téléphone. */
-@media (min-width:1180px) and (min-height:560px){
-  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));align-content:start}
-  .list>.empty{grid-column:1/-1}
-}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -125,7 +118,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="tbf-large">
+<body>
 <main id="app">
   <div class="top">
     <p class="tbf-sous">Ce que tu as vécu</p>

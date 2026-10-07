@@ -272,20 +272,6 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 
-/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
-   règle commune des pages larges : le sommaire des compétitions se range en
-   colonnes de la largeur d'un téléphone. Une compétition ouverte garde sa
-   feuille, mais ses matchs d'une journée s'y rangent en deux colonnes (une
-   ligne de match étirée sur mille pixels séparait les deux équipes de toute
-   la largeur de l'écran), et les groupes d'une coupe aussi. */
-@media (min-width:1180px) and (min-height:560px){
-  .list:has(>.lg){display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));column-gap:14px;align-content:start}
-  .list.feuille:has(>.m){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;align-content:start}
-  .list.feuille:has(>.m)>:not(.m){grid-column:1/-1}
-  .list.feuille:has(>table ~ table){columns:2 440px;column-gap:28px}
-  .list.feuille:has(>table ~ table)>table{break-inside:avoid}
-  .list.feuille:has(>table ~ table)>.round{break-after:avoid}
-}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -295,7 +281,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="tbf-large">
+<body>
 <main id="app">
   <div class="top">
     <button class="back tbf-plaque" id="back" aria-label="Revenir à toutes les compétitions">‹</button>

@@ -147,13 +147,6 @@
 .fiche .head .galon-mot{display:inline-grid;justify-items:start}
 .fiche .head .galon-mot>*{grid-area:1/1}
 .fiche .head .galon-mot>:not(:first-child){visibility:hidden}
-/* **Le solde, une seule fois à l'écran.** À partir de 560 pixels, la barre
-   du jeu déplie ses compteurs (`.tbf-hud-bande`, ui.css) : le sticker de la
-   fiche les répétait juste dessous. Il ne vit donc qu'en dessous, là où la
-   barre les replie derrière l'avatar ; au-dessus, c'est le compteur de la
-   barre qui décompte, la fiche lui annonçant le nouveau solde
-   (`tbf:bourse`). */
-@media (min-width:560px){ .fiche .head>.tbf-monnaie{display:none} }
 
 /* -------------------------------------------------------- la carte en main
 
