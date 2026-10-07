@@ -958,14 +958,25 @@ export function createDecks({ pool, requireAuth, niveau = null,
    * Il ne fait rien si un deck existe déjà : c'est un point de départ, jamais
    * une remise à zéro.
    */
-  async function premierDeck(userId, fanzzyId) {
+  async function premierDeck(userId, fanzzyId, remplacants = []) {
     if (await deckDe(userId)) return null;
     const id = racineDe(String(fanzzyId ?? ''));
     if (!parIdentifiant(id)) return null;
     const possede = await possessions(userId);
     if (!possede.fanzzy.has(id)) return null;
+    /* Les remplaçants offerts avec lui, dans la limite des places et de la
+       règle des légendaires : un de trop est simplement laissé hors du deck. */
+    const places = Math.min(DECK_RULES.fanzzy, possede.fanzzyMax);
+    const rangs = [{ id, stuff: [] }];
+    for (const r of remplacants.map((x) => racineDe(String(x ?? '')))) {
+      if (rangs.length >= places || rangs.some((f) => f.id === r)) continue;
+      if (!possede.fanzzy.has(r)) continue;
+      const essai = [...rangs, { id: r, stuff: [] }];
+      if (refusLegendes({ fanzzy: essai }, RARETE).length) continue;
+      rangs.push({ id: r, stuff: [] });
+    }
     try {
-      return await enregistrer(userId, { ...deckNeuf(possede), fanzzy: [{ id, stuff: [] }] });
+      return await enregistrer(userId, { ...deckNeuf(possede), fanzzy: rangs });
     } catch {
       /* Un deck de départ qu'on ne peut pas écrire ne doit pas faire échouer
          l'ouverture du paquet : le joueur perdrait ses cinq cartes pour une
