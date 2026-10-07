@@ -506,6 +506,11 @@
         skin: p.skin || 'base',
         plein: null,
       };
+      // La taille de son âge : voir `.tbf-scene[data-evo]`, ui.css.
+      el.dataset.evo = String(perso.evo);
+      const t = window.TBF_ETATS?.taille?.(perso.id, perso.evo);
+      el.style.setProperty('--taille', t?.hauteur ?? '');
+      el.style.setProperty('--sous', t?.bas ?? '');
       /* **L'expression de l'avatar devient le repos de la scène.** Nulle, elle
          ne touche à rien : le Virage passe l'avatar « en jeu », sans
          expression, et garde son propre repos — la poussée pendant le match.

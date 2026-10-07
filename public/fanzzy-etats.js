@@ -337,6 +337,33 @@
     }
   }
 
+  /* La part de la boîte que le personnage occupe à chaque âge, des pieds au
+     sommet du dessin : il grandit à vue d'œil (Gaël, 7 octobre 2026). Pas
+     plus des trois quarts : le haut de la boîte garde la place de la bulle
+     et des sauts, et c'est la taille qu'avait un âge 3 avant la mesure. */
+  const TAILLE_AGE = { 1: 0.6, 2: 0.68, 3: 0.76 };
+
+  /**
+   * La hauteur et le décalage d'une image d'état, pour que **le personnage**
+   * (et non son cadre) prenne la taille de son âge, pieds au bas de la boîte.
+   *
+   * Le cadre d'un âge est commun à toutes ses tenues : une cape ou un
+   * mégaphone l'élargit et l'agrandit, et le repos de base n'en occupe
+   * parfois que les trois cinquièmes. `pieds` (index.json) dit quelle part ;
+   * on agrandit l'image d'autant, et on la descend de la marge sous ses pieds.
+   *
+   * @returns {{hauteur:string, bas:string} | null} en pourcentages de la
+   *   boîte, ou `null` si l'âge n'est pas mesuré : la page garde alors la
+   *   taille de l'âge appliquée au cadre entier.
+   */
+  function taille(id, evo) {
+    const e = Math.min(3, Math.max(1, Number(evo) || 1));
+    const p = index?.fanzzy?.[id]?.evolutions?.[`e${e}`]?.pieds;
+    if (!Array.isArray(p) || !(p[0] > 0)) return null;
+    const h = TAILLE_AGE[e] / p[0];
+    return { hauteur: `${(h * 100).toFixed(2)}%`, bas: `${(-p[1] * h * 100).toFixed(2)}%` };
+  }
+
   window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, REPLI, REPLI_ALPHA, secours,
-    charger, pret, resoudre, portrait, paupieres, precharger, possedes };
+    charger, pret, resoudre, portrait, paupieres, precharger, possedes, taille };
 })();
