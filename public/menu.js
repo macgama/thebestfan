@@ -305,57 +305,6 @@
      les libellés du tiroir d'une page à l'autre, et l'état d'une tuile —
      LIVE, « 4 », « 2 » — n'en fait pas partie, puisque c'est la feuille qui
      l'écrit (`::after`, à partir de `data-etat` et `data-pastille`). */
-  /**
-   * **Les rails du grand écran** : les dix tuiles de l'accueil, rangées comme
-   * sur l'accueil — à gauche ce qui se joue d'abord, à droite ce qui lui
-   * répond, rangée par rangée (voir la note « Les deux rails se répondent
-   * rangée par rangée » dans `index.html`).
-   *
-   * Sur un ordinateur, la colonne du jeu laissait les deux tiers de l'écran
-   * vides (`ETAT.md`, « Une mise en page pour écran large »), et changer de
-   * section demandait d'ouvrir le menu. Au-delà de 1 180 pixels, ces deux
-   * rails tiennent de part et d'autre de la colonne de chaque page de
-   * contenu : la porte du Virage est à un clic d'où qu'on soit, comme sur
-   * l'accueil. En dessous, ils n'existent pas à l'écran (`ui.css`, « Les
-   * rails du grand écran ») : le téléphone garde le tiroir.
-   *
-   * **Les dessins sont ceux des rails de l'accueil, pas ceux du tiroir.**
-   * Les deux diffèrent pour FANZZY et CARNET (une fiche et un cœur sur
-   * l'accueil), et c'est l'accueil qu'on reconnaît d'un écran à l'autre :
-   * une porte qui change de dessin en changeant de page se lit comme une
-   * autre porte. `menu-smoke` vérifie que cette liste et les rails de
-   * `index.html` disent la même chose, dans le même ordre.
-   *
-   * Chaque tuile : [adresse, ton, libellé, dessin] — le dessin est le
-   * contenu du `<svg>` de l'accueil, recopié tel quel.
-   */
-  const RAILS = [
-    [
-      ['/virage', 'flare', 'VIRAGE',
-        '<path d="M3 20l9-16 9 16zM7 20l5-9 5 9"/>'],
-      ['/fanzzy', 'bleu', 'FANZZY',
-        '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/>'],
-      ['/matchs', 'vert', 'MATCHS',
-        '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 9v10"/>'],
-      ['/kop', 'violet', 'KOP',
-        '<path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 20a5 5 0 0 0-3-4.6M16 11a3 3 0 0 0 0-6"/>'],
-      ['/boosters', 'or', 'BOOSTERS',
-        '<path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/>'],
-    ],
-    [
-      ['/duel-nvn', 'flare', 'DUEL',
-        '<path d="M4 4l7 7M20 4l-7 7M12 13v7M8 20h8"/>'],
-      ['/carnet', 'bleu', 'CARNET',
-        '<path d="M12 21s-7-4.6-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.4c0 5-7 9.6-7 9.6z"/>'],
-      ['/classement', 'vert', 'CLASSEMENT',
-        '<path d="M6 21V9M12 21V4M18 21v-7M3 21h18"/>'],
-      ['/amis', 'violet', 'AMIS',
-        '<path d="M9 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M2 20a7 7 0 0 1 14 0M18 8v6M15 11h6"/>'],
-      ['/boutique', 'or', 'BOUTIQUE',
-        '<path d="M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>'],
-    ],
-  ];
-
   const tuile = (href, cle, texte, ton, ici) =>
     `<a class="tbf-case${ici ? ' on' : ''}" data-ton="${ton}" href="${href}"`
     + `${ici ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path`
@@ -706,7 +655,7 @@
    *   `nouveau`, `monde`, ou rien pour l'éteindre), et le bouton prend le
    *   plus urgent (`monde`, du monde au Virage, n'en est jamais un).
    */
-  function monter(bouton, { qui = null, rails: rails_ = false } = {}) {
+  function monter(bouton, { qui = null } = {}) {
     if (!document.getElementById('tbf-menu-css')) {
       const feuille = document.createElement('style');
       feuille.id = 'tbf-menu-css';
@@ -921,23 +870,6 @@
     voile.className = 'tbf-voile';
     document.body.append(tiroir, voile);
 
-    /* Les rails du grand écran (voir `RAILS`), pour la page qui les demande :
-       `nav.js` les demande sur les pages de contenu, pas sur les deux arènes,
-       où une tuile à côté de la corde serait une sortie en plein chant, ni
-       sur l'accueil, qui porte les siens. Avant le contenu dans le document
-       et sous lui à l'écran : une fenêtre de la page (le booster qu'on ouvre,
-       le panneau du deck) les recouvre comme elle recouvre le décor. */
-    const rails = rails_ ? document.createElement('div') : null;
-    if (rails) {
-      rails.className = 'tbf-rails';
-      rails.innerHTML = RAILS.map((rangee, i) =>
-        `<nav class="tbf-rail" aria-label="${i ? 'Les autres' : 'Le jeu'}">`
-        + rangee.map(([href, ton, lib, dessin]) => `<a class="tbf-case" data-ton="${ton}" href="${href}"`
-          + `${chemin === href ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true">`
-          + `${dessin}</svg><span class="lib">${lib}</span></a>`).join('')
-        + '</nav>').join('');
-      document.body.append(rails);
-    }
 
     bouton.setAttribute('aria-controls', 'tbf-tiroir');
     bouton.setAttribute('aria-expanded', 'false');
@@ -1469,13 +1401,9 @@
       delete bouton.dataset.urgence;
       delete bouton.dataset.pastille;
     }
-    /* La même tuile peut être deux fois à l'écran — dans le tiroir et dans
-       un rail du grand écran : l'état se pose sur les deux, qui ne doivent
-       jamais dire deux choses différentes de la même porte. */
     function poser(href, etat, pastilleTexte) {
       const toutes = [
         ...tiroir.querySelectorAll(`.tbf-case[href="${href}"], .tbf-tiroir-missions[href="${href}"]`),
-        ...(rails?.querySelectorAll(`.tbf-case[href="${href}"]`) ?? []),
       ];
       if (!toutes.length) return;
       for (const t of toutes) {
@@ -1587,6 +1515,6 @@
      et ne fait rien tant qu'aucun ne l'est. Voir `poser`, dans `monter`. */
   const poser = (href, etat, pastilleTexte) => monte?.poser(href, etat, pastilleTexte);
 
-  window.TBF_MENU = { chemin, TITRES, ICONES, MENU, RAILS, item, monter, poser, suisJeAdmin,
+  window.TBF_MENU = { chemin, TITRES, ICONES, MENU, item, monter, poser, suisJeAdmin,
     auVirage, duelsEnAttente };
 })();
