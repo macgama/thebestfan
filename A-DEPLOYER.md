@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**RP1 redessiné** (branche `claude/project-thread-j45ndm`, 7 octobre 2026,
+images de Gaël dans le nouveau design). Il se dépose avec ce qui est en
+dessous, ou seul. **Images seules**, sans schéma ni redémarrage : la
+construction suffit.
+
+- `public/img/fanzzy/RP1*` : ses trois cartes (RP1, RP1B, RP1C) et leurs bustes.
+- `public/img/fanzzy/RP1/` : ses états des trois âges, en tenue de base et dans
+  les trois skins (Halloween, Préhistorique, Apocalyptique), découpés de ses
+  douze planches par `npm run planche`. Il cligne des yeux à l'âge 1, comme avant.
+- `public/fanzzy-art.js` et `public/img/fanzzy/index.json` : les nouvelles
+  versions des images, pour que les téléphones ne gardent pas les anciennes.
+- Contrôlé par `npm run etats:test` et `npm run cligne:test`.
+
+---
+
 **Les barres du téléphone** (branche `claude/affichage-mobile-z3oflp`,
 6 octobre 2026, signalé par Gaël sur son Samsung S24+). Il se dépose avec ce
 qui est en dessous, ou seul. **Pages seules**, sans schéma ni redémarrage.

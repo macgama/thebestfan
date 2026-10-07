@@ -17,7 +17,7 @@
  *
  * Usage : node scripts/cligne-smoke.mjs
  */
-import { copyFile, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -58,14 +58,25 @@ try {
   await mkdir(SRC, { recursive: true });
   await mkdir(SORTIE, { recursive: true });
 
-  /* Les sources : les cinq expressions publiées de RP1, tenue de base.
-     Sans les trois autres tenues de l'âge 1, le cadre commun rétrécit et le
-     personnage ressort plus grand — exactement le recadrage à rattraper. */
+  /* Les sources : les cinq expressions publiées de RP1, tenue de base, plus
+     une tenue qui déborde jusque dans les coins de l'image. Le cadre commun
+     de l'âge s'élargit et le personnage ressort plus petit — exactement le
+     recadrage à rattraper. Se contenter d'ôter les autres tenues ne suffit
+     pas : quand la tenue de base est la plus large, le cadre ne bouge pas. */
   const reel = JSON.parse(await readFile(path.join(PUBLIC, 'RP1', 'manifeste.json'), 'utf8'));
   const etats = reel.evolutions.e1.skins.base.etats;
+  // Toutes les sources d'un âge ont la même taille : on les élargit toutes.
+  const vide = { r: 0, g: 0, b: 0, alpha: 0 };
+  const marge = (f) => sharp(f).extend({ left: 60, right: 60, top: 60, bottom: 60, background: vide });
   for (const e of etats) {
-    await copyFile(path.join(PUBLIC, 'RP1', 'e1', 'base', `${e}.png`), path.join(SRC, `RP1-e1-base-${e}.png`));
+    await marge(path.join(PUBLIC, 'RP1', 'e1', 'base', `${e}.png`)).toFile(path.join(SRC, `RP1-e1-base-${e}.png`));
   }
+  const elargi = await marge(path.join(PUBLIC, 'RP1', 'e1', 'base', 'neutre.png')).png().toBuffer();
+  const { width, height } = await sharp(elargi).metadata();
+  const coin = await sharp({ create: { width: 8, height: 8, channels: 4, background: '#808080' } }).png().toBuffer();
+  await sharp(elargi)
+    .composite([{ input: coin, left: 0, top: 0 }, { input: coin, left: width - 8, top: height - 8 }])
+    .toFile(path.join(SRC, 'RP1-e1-debordante-neutre.png'));
 
   // Où tombent les paupières publiées, rapportées à la tête du repos publié.
   const repere = await ouSontLesPaupieres(path.join(PUBLIC, 'RP1', 'e1', 'base', 'cligne.png'),
@@ -110,7 +121,7 @@ try {
 
   /* ------------------------------------------------------------ redessiné */
 
-  await copyFile(path.join(PUBLIC, 'RP2', 'e1', 'base', 'neutre.png'), path.join(SRC, 'RP1-e1-base-neutre.png'));
+  await marge(path.join(PUBLIC, 'RP2', 'e1', 'base', 'neutre.png')).toFile(path.join(SRC, 'RP1-e1-base-neutre.png'));
   r = await lancer(SRC, SORTIE);
   m = JSON.parse(await readFile(path.join(SORTIE, 'RP1', 'manifeste.json'), 'utf8'));
   check('redessiné, il perd ses paupières', m.evolutions.e1.skins.base.cligne === undefined);
