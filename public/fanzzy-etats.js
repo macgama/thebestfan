@@ -352,7 +352,7 @@
    * parfois que les trois cinquièmes. `pieds` (index.json) dit quelle part ;
    * on agrandit l'image d'autant, et on la descend de la marge sous ses pieds.
    *
-   * @returns {{hauteur:string, bas:string} | null} en pourcentages de la
+   * @returns {{hauteur:string, bas:string, decale:string} | null} en pourcentages de la
    *   boîte, ou `null` si l'âge n'est pas mesuré : la page garde alors la
    *   taille de l'âge appliquée au cadre entier.
    */
@@ -361,7 +361,11 @@
     const p = index?.fanzzy?.[id]?.evolutions?.[`e${e}`]?.pieds;
     if (!Array.isArray(p) || !(p[0] > 0)) return null;
     const h = TAILLE_AGE[e] / p[0];
-    return { hauteur: `${(h * 100).toFixed(2)}%`, bas: `${(-p[1] * h * 100).toFixed(2)}%` };
+    /* `decale` recentre ses jambes : un écart en hauteurs de cadre, rendu en
+       hauteurs de boîte (`cqh` : la boîte doit être un conteneur de taille). */
+    const decale = -(Number(p[2]) || 0) * h * 100;
+    return { hauteur: `${(h * 100).toFixed(2)}%`, bas: `${(-p[1] * h * 100).toFixed(2)}%`,
+      decale: `${decale.toFixed(2)}cqh` };
   }
 
   window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, REPLI, REPLI_ALPHA, secours,
