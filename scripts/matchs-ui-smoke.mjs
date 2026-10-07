@@ -725,6 +725,17 @@ selections = false;
   check('l’affiche à gauche, le fil à droite, à la même hauteur',
     g.sous.l > g.aff.r && Math.abs(g.sous.t - g.aff.t) < 40 || (console.log('        ', JSON.stringify(g)), false));
   check('sa propre flèche s’efface devant celle de la barre', g.fermer === 'none');
+  /* Le Fanzzy qui regarde le match, sous les deux portes et au milieu de
+     l'affiche, grand : il traînait dans le coin, à 96 px (Gaël, 7 octobre). */
+  const spect = await page.evaluate(() => {
+    const w = document.getElementById('fwatch').getBoundingClientRect();
+    const portes = document.querySelector('#fcorps .allers').getBoundingClientRect();
+    return { haut: w.top - portes.bottom, centre: (w.left + w.right) / 2 - (portes.left + portes.right) / 2,
+      h: w.height, bas: w.bottom, fenetre: innerHeight };
+  });
+  check('le Fanzzy regarde sous Virage et Duel, au milieu, en grand',
+    spect.haut >= 0 && spect.haut < 40 && Math.abs(spect.centre) < 3 && spect.h >= 220
+    && spect.bas <= spect.fenetre || (console.log('        ', JSON.stringify(spect)), false));
   await page.click('#app>.tbf-haut .tbf-retour');
   await dodo(300);
   check('la flèche de la barre referme la fiche sans quitter les matchs',
