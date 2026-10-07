@@ -748,8 +748,10 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    pile, et `contain` le réduisait sur sa largeur, quelle que soit la
    hauteur demandée. Le surplus est transparent. */
 .pose,.cligne{top:auto;bottom:var(--sous,0);left:-50%;width:200%;height:var(--taille,100%);
-  object-position:50% 100%;
+  object-position:50% 100%;translate:var(--decale,0) 0;
   pointer-events:none}
+/* Une boîte de taille : `--decale` (le corps recentré) se compte en `cqh`. */
+.pile{container-type:size}
 /* Le saut s'étire depuis les pieds (voir `saut`) : étiré depuis le milieu du
    personnage, il abaissait ses pieds de 4 % de sa hauteur au moment même où
    il décollait de vingt-six pixels. Passé 650 pixels de personnage,
@@ -3813,6 +3815,7 @@ function source(etat) {
     pile.style.setProperty('--taille', t?.hauteur ?? '');
     // Les pieds sur l'ombre (`.sol`, à 9 % du bas de la scène), pas sous elle.
     pile.style.setProperty('--sous', t ? `calc(${t.bas} + 9%)` : '');
+    pile.style.setProperty('--decale', t?.decale ?? '');
   }
   if (equipe) {
     const trouve = window.TBF_ETATS.resoudre(equipe.id, { evo: equipe.evo, skin: equipe.skin, etat });

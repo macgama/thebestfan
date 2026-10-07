@@ -17,7 +17,21 @@ pages, sans schéma** : construction, puis redémarrage hors d'un match.
 - **Après le redémarrage** : ouvrir https://thebestfan.online/confidentialite,
   puis, si Gaël le veut, allumer la présence des amis : `/admin`, RÉGLAGES,
   LA PRÉSENCE, « Montrer la présence des amis ».
-- Contrôlé par `npm run confidentialite:smoke` (neuve) et `auth:smoke`.
+- Contrôlé par `npm run confidentialite:smoke` (neuve) et `auth:smoke` ;
+  `tour:ui` et `large:ui` la parcourent comme les autres pages.
+
+---
+
+**Le Fanzzy au milieu à l'âge 3** (branche `claude/project-thread-j45ndm`,
+7 octobre 2026, signalé par Gaël). Pages seules : construction, ni schéma
+ni redémarrage.
+
+- Quand un objet étire le dessin d'un côté (le mégaphone de RP1 à l'âge 3),
+  le corps du Fanzzy reste au milieu, à l'accueil et dans l'arène.
+  `public/img/fanzzy/index.json` garde le décalage des jambes de chaque âge
+  (`pieds`, troisième valeur, mesurée par `scripts/fanzzy-manifeste.mjs`) ;
+  `public/fanzzy-etats.js`, `public/index.html`, `public/fanzzy-scene.js` et
+  `public/ui.css` s'en servent.
 
 ---
 
