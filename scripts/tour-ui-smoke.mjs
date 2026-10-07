@@ -700,16 +700,13 @@ for (const [route, nom] of tousLesEcrans) {
 
 /* ------------------------------------------------- le tour sur tablette
 
-   La colonne du jeu s'élargit avec l'écran depuis que `--colonne` a cessé
-   d'être écrite en dur dans chaque page. C'est un changement qu'aucune suite ne
-   voyait : toutes visitent le jeu à trois cent soixante pixels, et une page qui
-   se casserait à neuf cents serait livrée sans que rien ne proteste.
-
-   On refait donc le tour à la largeur d'une tablette, et on y cherche les deux
-   seules choses qui ne se voient pas autrement : **que la colonne remplisse la
-   largeur** — sinon l'élargissement n'a servi à rien — et **que rien ne
-   déborde**. Une page qui s'étale mal à neuf cents pixels déborde ; une page
-   qui ignore la colonne reste à sa largeur de téléphone au milieu du noir. */
+   La colonne du jeu est celle d'un grand téléphone, 480 px, sur toutes les
+   pages (Gaël, 7 octobre 2026 : « pour toutes les pages, la même
+   largeur »). Toutes les autres suites visitent le jeu à trois cent soixante
+   pixels : on refait donc le tour à la largeur d'une tablette, et on y
+   cherche les deux choses qui ne se voient pas autrement : **que chaque page
+   tienne la colonne commune** — une page qui écrit sa largeur en dur s'en
+   écarte — et **que rien ne déborde**. */
 {
   const LARGEUR = 834;          // iPad en portrait, l'écran de la capture
   const page = await nav.newPage();
@@ -728,16 +725,16 @@ for (const [route, nom] of tousLesEcrans) {
         ecran: document.documentElement.clientWidth,
       };
     });
-    /* Le plancher est à sept cents : c'est le seuil où `--colonne` bascule, et
-       une page qui reste en dessous est une page qui ne l'emploie pas. */
-    if (vu.colonne && vu.colonne < 700) etroites.push(`${route} ${vu.colonne}px`);
+    /* L'administration garde sa colonne de bureau : c'est l'outil de Gaël,
+       pas une page du jeu. */
+    if (route !== '/admin' && vu.colonne && Math.abs(vu.colonne - 480) > 1) etroites.push(`${route} ${vu.colonne}px`);
     if (vu.large > vu.ecran + 1) debordent.push(`${route} ${vu.large}>${vu.ecran}`);
   }
   await page.close();
 
-  check(`sur tablette, chaque écran remplit la colonne (${LARGEUR} px)`,
+  check(`sur tablette (${LARGEUR} px), chaque écran tient la colonne commune de 480 px`,
     etroites.length === 0
-    || (console.log('        restés étroits :', etroites.join(', ')), false));
+    || (console.log('        hors de la colonne :', etroites.join(', ')), false));
   check('et aucun ne déborde en largeur',
     debordent.length === 0
     || (console.log('        débordent :', debordent.join(', ')), false));
