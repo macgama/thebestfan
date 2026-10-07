@@ -776,6 +776,12 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          Renseigné plus bas, avec le deck : les deux lectures partagent le même
          appel, et une seule panne. */
       let sac = [];
+      /* **Ce qu'il porte tant que sa légende dort** (`shared/legende.js`) :
+         sans les modificateurs d'un Fanzzy légendaire, sans ceux d'une pièce
+         légendaire. Rempli seulement s'il y a une légende ; sinon `null`. */
+      const heroLegende = hero?.rar === 'legendaire';
+      const modsBanc = heroLegende ? { id: hero.id } : { ...mods };
+      let pieceLegende = null;
       /* Le personnage, séparément du barème : c'est lui qu'on voit pousser
          dans la tribune, et il est montré **à l'âge atteint** — comme partout
          ailleurs dans le jeu. Une absence n'empêche rien : le virage se joue
@@ -814,6 +820,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
              éviter. `id` est repris du personnage : le barème du Virage suit la
              racine, quel que soit l'âge que le deck a en tribune. */
           Object.assign(mods, place.mods, { id: hero.id });
+          if (place.stuffLegende) pieceLegende = place.stuffLegende;
+          if (place.modsBanc) Object.assign(modsBanc, place.modsBanc, { id: hero.id });
         }
       } catch (e) {
         // Un deck illisible ne doit pas fermer la porte du virage.
@@ -835,8 +843,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         const club = side ? room.fixture.awayId : room.fixture.homeId;
         bonusKop = await kop.modsDe(u.userId, club, room.fixture.id);
         for (const [cle, v] of Object.entries(bonusKop)) {
-          if (typeof v !== 'number') { mods[cle] = v; continue; }
+          if (typeof v !== 'number') { mods[cle] = v; modsBanc[cle] = v; continue; }
           mods[cle] = (mods[cle] ?? 1) * v;
+          modsBanc[cle] = (modsBanc[cle] ?? 1) * v;
         }
       }
 
@@ -929,7 +938,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
 
       socket.emit('virage:state',
         room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions,
-          classe, apports }));
+          classe, apports,
+          modsBanc: (heroLegende || pieceLegende) ? modsBanc : null }));
       /* **Plus de `virage:crowd` à toute la salle** (D4). Un entrant n'a
          jamais poussé et ne change pas la foule, qui ne compte que les actifs ;
          et `join` lève `dirty`, si bien que le battement suivant — cent

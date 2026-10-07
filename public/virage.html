@@ -1115,7 +1115,19 @@ function contenuApports() {
     ? `<p class="ecartees"><b>${ecartees}</b> carte${ecartees > 1 ? 's' : ''} de ton deck ne se joue${ecartees > 1 ? 'nt' : ''}
        qu’en duel — elle${ecartees > 1 ? 's visent' : ' vise'} quelqu’un en face, et ici il n’y a personne à viser.
        <a href="/deck" data-quitter-virage>Changer mon deck</a></p>` : '';
-  return (M?.resume(apports).texte ? M.panneauHTML(apports, S?.you?.mods) : '') + deck;
+  return (M?.resume(apports).texte ? M.panneauHTML(apports, S?.you?.mods) : '') + deck
+    + legendeHTML();
+}
+
+/* Sa légende dort jusqu'à ses chants réussis (`shared/legende.js`) : ses
+   apports sont listés, mais ne comptent qu'à l'éveil. */
+function legendeHTML() {
+  const l = S?.you?.legende;
+  if (!l) return '';
+  return l.eveillee
+    ? '<p class="ecartees"><b>Ta légende est éveillée</b> : elle compte jusqu’au coup de sifflet.</p>'
+    : `<p class="ecartees"><b>Ta légende dort</b> : ${l.reussis}/${l.seuil} chants réussis
+       (BON ou PARFAIT) pour l’éveiller. Jusque-là, ses bonus ne comptent pas.</p>`;
 }
 
 function renderApports() {
@@ -1125,17 +1137,19 @@ function renderApports() {
   const apports = S?.you?.apports ?? [];
   const r = M ? M.resume(apports) : { texte: '' };
   const ecartees = S?.you?.ecartees ?? 0;
-  if (!r.texte && !ecartees) {
+  const legende = S?.you?.legende ?? null;
+  if (!r.texte && !ecartees && !legende) {
     ligne.hidden = true;
     panneau.hidden = true;
     return;
   }
   ligne.hidden = false;
   const dit = ['Ce que tu portes', r.plus ? `${r.plus} bonus` : '', r.moins ? `${r.moins} malus` : '',
-    ecartees ? `${ecartees} carte${ecartees > 1 ? 's' : ''} restée${ecartees > 1 ? 's' : ''} au duel` : '']
+    ecartees ? `${ecartees} carte${ecartees > 1 ? 's' : ''} restée${ecartees > 1 ? 's' : ''} au duel` : '',
+    legende && !legende.eveillee ? `légende ${legende.reussis} sur ${legende.seuil}` : '']
     .filter(Boolean).join(', ');
   poserAttr(ligne, 'aria-label', dit);
-  const empreinte = JSON.stringify([apports, S?.you?.mods ?? null, ecartees]);
+  const empreinte = JSON.stringify([apports, S?.you?.mods ?? null, ecartees, legende]);
   if (empreinte !== apportsVus) {
     apportsVus = empreinte;
     if (!panneau.hidden) panneau.innerHTML = contenuApports();

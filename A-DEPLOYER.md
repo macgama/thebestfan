@@ -16,6 +16,24 @@ schéma ni redémarrage : la construction suffit.
   était réduit et paraissait plus petit que l'âge 1.
 - Accueil : le Fanzzy repose sur son ombre ; le second rond, sous lui
   (`public/fanzzy-fond.js`, pied d'ombre du décor), n'y est plus montré.
+---
+
+**Les légendaires : entrée en jeu et vraie rareté** (branche
+`claude/legendaires-acces-rarete-bxduel`, 7 octobre 2026, choix de Gaël).
+Il se dépose avec ce qui est en dessous, ou seul. **Serveur et pages, sans
+schéma** : construction, puis redémarrage hors d'un match.
+
+- Un seul légendaire par deck (Fanzzy ou pièce), jamais titulaire. Il dort
+  jusqu'à 5 chants réussis (BON ou PARFAIT) du joueur, au duel comme au Virage ;
+  l'éveil offre au Fanzzy légendaire du banc un changement gratuit. Un deck
+  d'avant la règle se joue selon elle, sans rien perdre. Réglage :
+  /admin, LA COMPOSITION DU DECK.
+- Boosters : 2 % de Fanzzy légendaire et 3 % de pièce légendaire par booster
+  (avant : environ 19 % et 10 %). Réglages : /admin, BOOSTERS ET ÉCHARPES.
+- L'étal ne vend plus de pièce légendaire.
+- Paquet de bienvenue : le commun est titulaire, le légendaire offert attend
+  sur le banc.
+- Contrôlé par `npm run legende:smoke` (neuve).
 
 ---
 

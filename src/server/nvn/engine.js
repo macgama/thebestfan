@@ -7,6 +7,7 @@ import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
 import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
+import { seuilLegende, chantReussi } from '../../shared/legende.js';
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
 import { ouverts, stadeDuMatch } from '../contenus/index.js';
@@ -135,6 +136,14 @@ function creerJoueur(p, side) {
        même chose dès qu'un joueur garde un remplaçant sur le banc. */
     vus: [loadout.fanzzy[0]?.id].filter(Boolean),
 
+    /* La légende de son deck, et où il en est de l'éveiller
+       (`shared/legende.js`). Sans légendaire au deck, rien ne dort. */
+    legende: (() => {
+      const dort = loadout.fanzzy.some((f) => f.legende || f.stuffLegende);
+      const seuil = seuilLegende();
+      return { seuil, reussis: 0, eveillee: !dort || seuil === 0, presente: dort };
+    })(),
+
     breath: 40,
     ferveur: 0,
     main: pioche.slice(0, RULES.mainVisible),
@@ -172,7 +181,13 @@ function creerJoueur(p, side) {
  * qu'ils soient là, et des deux côtés.
  */
 const modsDe = (j, t, stade = null) =>
-  modsAvecEffets(avecLieu(j.fanzzy[j.actif]?.mods, stade), j.effets, t);
+  modsAvecEffets(avecLieu(modsPortes(j), stade), j.effets, t);
+
+/** Les modificateurs du Fanzzy en tribune : sans la légende tant qu'elle dort. */
+export function modsPortes(j) {
+  const f = j.fanzzy[j.actif];
+  return (!j.legende?.eveillee && f?.modsBanc) ? f.modsBanc : f?.mods;
+}
 
 /**
  * Compose les modificateurs d'un lieu avec ceux d'un Fanzzy.
@@ -567,6 +582,8 @@ export class DuelNvN {
       quality: Number(quality.toFixed(3)), backfire,
       ...(sien ? { sien: true, famille: fz.type ?? null } : {}),
     })];
+    // Sur la note du geste, comme le verdict du Virage : avant les modificateurs.
+    if (chantReussi(q)) this.eveiller(j, evenements);
 
     // Les charges d'un modificateur temporaire se consomment au chant.
     for (const e of j.effets) if (e.charges !== undefined && e.mods) e.charges--;
@@ -931,6 +948,8 @@ export class DuelNvN {
            ligne, le panneau « ce que tu portes » continuerait d'attribuer au
            Choriste les chiffres du Capo qui vient de le remplacer. */
         f.modsBase = suivant.modsBase;
+        // Ce qu'il porte tant que la légende dort suit l'âge, comme le total.
+        f.modsBanc = suivant.modsBanc;
         f.stage = suivant.stage;
         evenements.push(this.ev('evolve', {
           userId: j.userId, side: j.side, fanzzy: f.id,
@@ -954,6 +973,32 @@ export class DuelNvN {
     }
   }
 
+  /* --------------------------------------------------------- légende */
+
+  /**
+   * Un chant réussi de plus vers l'éveil de la légende (`shared/legende.js`).
+   *
+   * À l'éveil, la pièce légendaire se met à compter d'elle-même (`modsDe`) ;
+   * un Fanzzy légendaire resté sur le banc reçoit un changement gratuit, pour
+   * entrer quand son joueur le décide.
+   */
+  eveiller(j, evenements) {
+    const l = j.legende;
+    if (!l || l.eveillee) return;
+    l.reussis++;
+    if (l.reussis < l.seuil) {
+      evenements.push(this.ev('legende', { userId: j.userId, side: j.side,
+        reussis: l.reussis, seuil: l.seuil, eveillee: false }));
+      return;
+    }
+    l.eveillee = true;
+    const banc = j.fanzzy.findIndex((f, i) => f.legende && i !== j.actif);
+    if (banc >= 0) poserEffet(j, { type: 'peut_changer', charges: 1 });
+    evenements.push(this.ev('legende', { userId: j.userId, side: j.side,
+      reussis: l.reussis, seuil: l.seuil, eveillee: true,
+      fanzzy: banc >= 0 ? j.fanzzy[banc].id : null, index: banc >= 0 ? banc : null }));
+  }
+
   /* ------------------------------------------------------ changement */
 
   changer(userId, index, t = now0()) {
@@ -961,6 +1006,8 @@ export class DuelNvN {
     const droit = j.effets.find((e) => e.type === 'peut_changer' && e.charges > 0);
     if (!droit) throw new Cheat('no_substitution');
     if (!j.fanzzy[index] || index === j.actif) throw new Cheat('bad_fanzzy');
+    // Un légendaire n'entre qu'éveillé.
+    if (j.fanzzy[index].legende && !j.legende?.eveillee) throw new Cheat('legend_asleep');
     droit.charges--;
     nettoyerEffets(j, t);
     j.actif = index;
@@ -1177,14 +1224,22 @@ export class DuelNvN {
          * total avec le sac, et l'afficher ferait compter l'équipement deux
          * fois — une fois dans sa propre ligne, une fois dans celle du Fanzzy.
          * C'est exactement pour ce panneau que `loadout` garde les deux. */
-        apports: apportsDe({
-          fanzzy: moi.fanzzy[moi.actif]
-            ? { nom: moi.fanzzy[moi.actif].nom, mods: moi.fanzzy[moi.actif].modsBase }
-            : null,
-          stuff: moi.fanzzy[moi.actif]?.stuff ?? [],
-          stade: this.stade,
-        }),
+        apports: (() => {
+          const f = moi.fanzzy[moi.actif];
+          // Tant que la légende dort, ses apports ne comptent pas : on les tait.
+          const dort = !moi.legende?.eveillee;
+          return apportsDe({
+            fanzzy: f ? { nom: f.nom, mods: dort && f.legende ? {} : f.modsBase } : null,
+            stuff: (f?.stuff ?? []).filter((x) => !(dort && x === f.stuffLegende)),
+            stade: this.stade,
+          });
+        })(),
         mods: seulsLesMods(modsDe(moi, t, this.stade)),
+        /* Où en est sa légende : `null` sans légendaire au deck. */
+        legende: moi.legende?.presente
+          ? { reussis: moi.legende.reussis, seuil: moi.legende.seuil,
+            eveillee: moi.legende.eveillee }
+          : null,
       } : null,
     };
   }
