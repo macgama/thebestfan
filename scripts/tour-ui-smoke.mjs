@@ -213,6 +213,10 @@ const ECRANS = [
   ['/teletext', 'télétexte'],
   ['/bienvenue', 'inscription'],
   ['/aide', 'aide'],
+  /* La politique de confidentialité : la vitrine, la porte de connexion et
+     « Mon compte » y renvoient, et sans elle ici le tour les comptait en
+     impasse. Elle se lit sans compte, comme l’aide. */
+  ['/confidentialite', 'confidentialité'],
   ['/repetition', 'répétition'],
   ['/diagnostic', 'diagnostic'],
   ['/admin', 'administration'],

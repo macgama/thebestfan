@@ -63,7 +63,8 @@ const PAGES = [['/', 'index', 'l’accueil'], ['/classement', 'classement', 'le 
   ['/deck', 'deck', 'le deck'], ['/boosters', 'boosters', 'les boosters'],
   ['/boutique', 'boutique', 'la boutique'], ['/fanzzy', 'fanzzy', 'la page du Fanzzy'],
   ['/fanzzy/RP1', 'fanzzy-fiche', 'la fiche d’un Fanzzy'], ['/virage', 'virage', 'le Virage'],
-  ['/duel-nvn', 'duel-nvn', 'le duel']];
+  ['/duel-nvn', 'duel-nvn', 'le duel'],
+  ['/confidentialite', 'confidentialite', 'la politique de confidentialité']];
 for (const [url, fichier] of PAGES) {
   app.get(url, (_q, s) => s.sendFile(path.join(RACINE, 'public', `${fichier}.html`)));
 }
