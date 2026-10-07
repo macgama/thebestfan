@@ -28,7 +28,8 @@ import { assurerBourse } from '../bourse.js';
  *   — **livrée éteinte** : tant que `presence.actif` est faux, rien n'est
  *     servi, rien n'est gardé, et `/api/presence` répond `{ actif: false }`
  *     pour que le tiroir ne dessine pas l'interrupteur. On l'allume après la
- *     mise en ligne de la nouvelle `CONFIDENTIALITE.md`, pas avant.
+ *     mise en ligne de la politique de confidentialité
+ *     (`public/confidentialite.html`, à `/confidentialite`), pas avant.
  *
  * ## Qui lit quoi
  *

@@ -1,285 +1,130 @@
-# Politique de confidentialité
+# Politique de confidentialité — les notes de travail
 
-> **Projet à faire relire.** Ce texte décrit fidèlement ce que le code fait —
-> chaque affirmation a été lue dans `sql/`, `src/server/auth/` et
-> `src/server/boutique/`, et les plus importantes sont vérifiées par
-> `npm run auth:smoke` (ce que la suppression d'un compte efface, quotidien et
-> choix de présence compris, et ce qu'elle garde). Les durées du quotidien (400 jours, 60 jours)
-> sont celles que le chantier serveur d'octobre 2026 écrit dans ses modules ;
-> elles se relisent à sa livraison. Il n'a pas été relu par un juriste, et il doit l'être
-> avant d'être publié. Les passages entre crochets attendent une information que
-> seul l'éditeur possède.
+**Publiée le 7 octobre 2026**, à l'adresse `/confidentialite`. Le texte que lisent
+les joueurs est `public/confidentialite.html`, et **c'est lui qui fait foi**. Ce
+fichier garde ce que la page ne dit pas : d'où vient chaque phrase dans le code,
+ce qui a changé à la publication, et ce qui reste ouvert.
 
-**Dernière mise à jour : [à dater à la publication]**
+L'éditeur : **Gaël Manigley, entreprise individuelle, 1085 Vulliens (Suisse),
+info@thebestfan.online**, donnés par Gaël le 7 octobre 2026. Il écrivait
+« société individuelle » : en droit suisse, une personne seule exploite une
+*entreprise individuelle* (sa raison de commerce est une « raison individuelle »).
 
----
-
-## Qui traite tes données
-
-**[Nom de l'éditeur], [forme juridique], [adresse]** — ci-après « nous ».
-
-Contact : **[adresse e-mail de contact]**
-
-Le site est hébergé par **Infomaniak Network SA**, Rue Eugène-Marziano 25,
-1227 Les Acacias, Genève, Suisse. Les données sont stockées en Suisse.
+Le texte n'a pas été relu par un juriste. Gaël a choisi de le publier d'abord
+(« Publier d'abord », 6 octobre 2026), puis d'allumer lui-même la présence des
+amis (`presence.actif`, dans `/admin`).
 
 ---
 
-## Ce que nous collectons, et pourquoi
+## Si tu changes une durée, un cookie ou ce que les autres voient
 
-Nous ne collectons **que ce dont le jeu a besoin pour fonctionner**. Il n'y a ni
-publicité, ni traceur publicitaire, ni revente de données à qui que ce soit.
-
-### À l'inscription
-
-| donnée | pourquoi | base légale |
-|---|---|---|
-| adresse e-mail | te connecter, te renvoyer un mot de passe oublié, confirmer que l'adresse existe | exécution du contrat |
-| pseudo | t'identifier auprès des autres joueurs — il est **visible publiquement** | exécution du contrat |
-| mot de passe | te connecter. Il est stocké **haché**, jamais en clair, et nous ne pouvons pas le lire | exécution du contrat |
-| langue | afficher le jeu dans ta langue | exécution du contrat |
-
-Si tu passes par **Se connecter avec Google**, nous recevons de Google ton
-adresse e-mail, ton prénom et le fait que l'adresse est vérifiée. Nous ne
-recevons ni ton mot de passe Google, ni tes contacts, ni quoi que ce soit
-d'autre.
-
-### En jouant
-
-| donnée | pourquoi |
-|---|---|
-| les clubs que tu suis | te proposer leurs matchs |
-| ta collection, ton deck, tes écharpes | c'est le jeu |
-| tes parties : adversaires, scores, dates, durées | ton parcours, et celui de tes adversaires |
-| ta présence dans un virage, et le nombre de tes chants | la corde partagée, les cartes-souvenirs, les missions du Virage |
-| ce que ton geste a donné pendant un match du Virage : tes PARFAITS, ta meilleure série, ton meilleur chant | le bilan de tribune qu'on te montre à la sortie et au coup de sifflet, et le départage de ton rang dans ta tribune. Gardés avec ta présence de ce match, comme elle |
-| ton groupe (KOP), tes amis | les fonctions de groupe, que tu choisis d'utiliser |
-| ton activité du jour : boosters ouverts, évolutions, missions tirées et leur avancement | les missions du jour, qui se comptent sur ce que tu as fait |
-| ce que le jeu t'a versé : missions, bonus de présence, carnet de saison, paliers de collection, divisions | ne jamais payer deux fois la même récompense, et repérer un abus |
-| la date de ta dernière visite, et l'état des pots de tes KOP à ce moment-là | le ticket « depuis ta dernière visite » |
-| ton rang aux classements, d'un jour sur l'autre | la flèche qui dit si tu as monté |
-| ce que tu n'as pas encore regardé | le mot « NOUVEAU » sur tes cartes |
-
-### Ce que les autres joueurs voient de toi
-
-Ton **pseudo** et tes scores aux classements, comme toujours. Le chantier du
-quotidien y ajoute trois choses, montrées dans les classements (qui sont
-publics), dans la liste des membres d'un KOP et chez tes amis : **le Fanzzy que
-tu as équipé** (son nom, son âge, sa tenue, son expression, sa rareté), **ton
-niveau**, et, dans le classement de la saison, **ta division**. Ni ta
-collection, ni ta garde-robe, ni ton XP exacte n'en font partie. Un compte
-supprimé n'y montre plus son personnage.
-
-### La présence de tes amis
-
-> **À faire relire — pas encore en service.** Ce paragraphe décrit une fonction
-> livrée **éteinte** : tant qu'elle l'est, rien de ce qui suit n'est montré à
-> personne. Elle ne s'allumera qu'une fois ce texte relu par un juriste et mis
-> en ligne, la question des mineurs comprise (voir « Les mineurs »). Il a été lu
-> dans `src/server/presence/index.js`, `src/shared/reglages.js` et
-> `serveur/CONTRATS.md` (§ 18) ; `npm run presence:smoke` vérifie que rien
-> n'est servi ni gardé tant qu'elle est éteinte, et qu'aucune activité ne
-> s'écrit en base.
-
-Quand elle sera allumée, **tes amis** — seulement ceux dont tu as accepté
-l'amitié et qui ont accepté la tienne — verront si tu es **en ligne**, **au
-Virage** ou **en duel**. Rien de plus : ni le match que tu regardes, ni l'heure,
-ni « vu il y a ». Un joueur qui n'est pas ton ami, ou à qui tu as seulement
-envoyé une demande, ne voit rien. Dans une tribune du Virage, un ami présent
-dans la même tribune voit que tu y es — vous y êtes tous les deux.
-
-**Rien de tout cela n'est écrit** : la présence vit dans la mémoire du serveur,
-et disparaît à son redémarrage. Pour dire « en ligne », il garde l'instant de
-ta dernière action dans le jeu (une page qui lui demande quelque chose, une
-connexion en direct). Cette marque cesse de dire « en ligne » après deux
-minutes sans action (c'est le réglage par défaut), puis elle est effacée au
-plus une minute plus tard tant que le site a des joueurs. « Au Virage » et
-« en duel » se lisent dans ce que le serveur tient déjà pour faire tourner le
-match, et cessent quand tu en sors (en duel, une coupure de réseau te garde ta
-place, et l'état, une minute et demie). **Tant que la fonction est éteinte, rien
-n'est gardé**, pas même cette marque.
-
-**La seule chose écrite, c'est ton choix** : par défaut tu es visible de tes
-amis, et tu peux **apparaître hors ligne** depuis le menu, à tout moment.
-Caché, tu n'apparais chez personne, et tu vois tes amis comme avant. Le choix
-vaut tout de suite pour la liste de tes amis ; dans une tribune où tu es déjà,
-il vaut à ta prochaine entrée : les amis qui t'y ont vu entrer le savent
-déjà, et apprennent seulement ton départ. Ce choix est gardé tant que ton
-compte existe ; il est effacé avec lui.
-
-### Les notifications
-
-> **À faire relire.** Paragraphe écrit d'après `src/server/notifications/index.js`
-> et `sql/notifications.sql` ; `npm run notifications:smoke` vérifie ce qu'il
-> promet.
-
-Si tu les actives dans **Mon compte**, ton appareil peut être prévenu même le
-jeu fermé, pour deux choses seulement : **un vote de ton KOP qui s'ouvre**, et
-**un duel classé qui attend un supporter de ton club**. Tu choisis l'une, l'autre
-ou les deux, appareil par appareil, et ton navigateur te le redemande par sa
-propre fenêtre. Rien n'est envoyé **la nuit**, de 22 h à 8 h (heure de Zurich).
-Un message ne nomme jamais un joueur : il parle de clubs, de ton KOP, d'un
-bonus.
-
-Pour cela nous gardons, **par appareil**, l'adresse d'envoi que ton navigateur
-nous donne et ses deux clés de chiffrement, avec tes deux choix. Rien d'autre :
-ni le modèle de l'appareil, ni l'heure des messages. Les messages passent par le
-service de notification de ton navigateur (Google pour Chrome, Apple pour
-Safari, Mozilla pour Firefox), qui les reçoit chiffrés et ne peut pas les lire.
-
-Tu peux les couper à tout moment, au même endroit. **Te déconnecter** les coupe
-aussi pour cet appareil, et **supprimer ton compte** les efface toutes.
-
-### Pour la sécurité
-
-| donnée | pourquoi | durée |
-|---|---|---|
-| adresse IP et navigateur de tes sessions | reconnaître tes appareils connectés et te permettre de les fermer | le temps de la session |
-| tentatives de connexion (adresse ou IP, succès ou échec) | freiner les attaques par force brute | **[à fixer — 30 jours proposés]** |
-
-C'est notre **intérêt légitime** à protéger les comptes. Sans ces traces, un
-attaquant pourrait essayer des milliers de mots de passe sans être ralenti.
-
-### Si tu t'abonnes
-
-Le paiement passe par **Stripe Payments Europe Ltd** (Irlande). **Nous ne voyons
-jamais ton numéro de carte** : il ne transite pas par nos serveurs. Nous
-conservons la date, le montant, la formule et l'identifiant Stripe de la
-transaction — ce qui est nécessaire pour la comptabilité et pour te rembourser
-si besoin.
-
-Stripe agit comme sous-traitant, et sa propre politique s'applique à ce qu'il
-détient : <https://stripe.com/fr/privacy>
+**Change la page dans le même commit.** `npm run confidentialite:smoke` relit
+dans le code chaque nombre que la page annonce — sessions, tentatives de
+connexion, derby, présence, quotidien, nouveautés, nuit des notifications,
+cookie — et rougit quand les deux divergent. `npm run auth:smoke` vérifie ce que
+la suppression d'un compte efface et garde, et l'entretien des sessions et des
+tentatives ; `presence:smoke` et `notifications:smoke`, ce que promettent leurs
+rubriques.
 
 ---
 
-## Ce que nous ne collectons pas
+## Où chaque rubrique a été lue
 
-- **Aucun traceur publicitaire.** Pas de Google Analytics, pas de pixel, pas de
-  régie.
-- **Aucune donnée de localisation** autre que l'adresse IP de connexion.
-- **Aucune donnée sensible** au sens du RGPD.
-- **Aucun profilage** : rien ne décide de quoi que ce soit à ton sujet
-  automatiquement.
-
-### Les cookies
-
-Un seul, `tbf_session`, qui te garde connecté. Il est **strictement nécessaire**
-au fonctionnement du site, et c'est pourquoi aucune bannière ne te demande de
-l'accepter — le droit n'en exige pas pour ceux-là.
-
-Le jeu range aussi quelques préférences dans la mémoire de ton navigateur
-(`localStorage`) : ta langue, le dernier personnage affiché. Ces informations
-**ne quittent jamais ton appareil** et ne nous parviennent pas.
-
----
-
-## D'où viennent les données sportives
-
-Les scores, les compositions et les calendriers viennent d'**API-Football**. Ce
-sont des données publiques sur des matchs de football ; elles ne te concernent
-pas et ne sont pas croisées avec ton compte.
-
----
-
-## Combien de temps nous gardons tout ça
-
-- **Ton compte et tes parties** : tant que le compte existe.
-- **Ton activité du jour et tes missions tirées** : **400 jours**, puis elles
-  sont effacées.
-- **Ce que tu n'as pas encore regardé** : jusqu'à ce que tu l'aies vu, et
-  **60 jours** au plus.
-- **Ta dernière visite et tes rangs de la veille** : remplacés à chaque visite ;
-  le jeu n'en garde que la dernière.
-- **Le registre de ce que le jeu t'a versé** : tant que le compte existe ; après
-  sa suppression, voir plus bas.
-- **Ta présence auprès de tes amis** (pas encore en service) : jamais écrite ;
-  en mémoire, la marque de ta dernière action est effacée au plus une minute
-  après avoir cessé de dire « en ligne » (tant que le site a des joueurs), et
-  rien n'est gardé tant que la fonction est éteinte ; **ton choix d'apparaître hors
-  ligne** : tant que le compte existe.
-- **Les appareils qui reçoivent tes notifications** : tant que tu ne les coupes
-  pas, que tu ne te déconnectes pas de cet appareil, ou que son navigateur ne
-  les refuse pas.
-- **Tes sessions** : jusqu'à leur expiration ou ta déconnexion.
-- **Les traces de connexion** : **[à fixer — 30 jours proposés]**.
-- **Les factures et paiements** : **[à confirmer — 10 ans en France, 10 ans en
-  Suisse, obligation comptable]**. Cette durée s'impose à nous et nous ne pouvons
-  pas la raccourcir, même à ta demande.
-
----
-
-## Ce qui se passe quand tu supprimes ton compte
-
-Tu peux le faire toi-même, depuis **Mon compte**, en confirmant ton mot de passe.
-C'est immédiat et définitif.
-
-**Ce qui est effacé, tout de suite :**
-
-- ton adresse e-mail,
-- ton pseudo,
-- ton mot de passe,
-- le club que tu suivais,
-- toutes tes sessions et tous les liens en attente,
-- ton activité du jour, tes missions tirées, ce que tu n'avais pas encore
-  regardé, ta dernière visite et tes rangs de la veille,
-- ton choix d'apparaître hors ligne auprès de tes amis,
-- les appareils qui recevaient tes notifications.
-
-**Ce qui reste, et pourquoi.** Les parties que tu as jouées restent dans
-l'historique de tes adversaires, **sans ton nom** — et, de la même façon, ta
-présence dans les matchs du Virage, avec ce que ton geste y a donné (PARFAITS,
-meilleure série, meilleur chant) : c'est l'histoire de ces tribunes. Elles ne t'appartiennent pas
-seulement à toi : effacer un duel reviendrait à réécrire la soirée de la
-personne d'en face, qui n'a rien demandé. Ces lignes ne portent plus aucune
-information permettant de te reconnaître.
-
-Le **registre de ce que le jeu a versé** reste aussi, pour la même raison
-qu'une comptabilité : c'est la trace de ce que le jeu a donné, et il ne porte
-ni ton adresse, ni ton pseudo — un identifiant que plus rien ne relie à toi.
-
-Les factures, elles, sont conservées pour la durée légale.
-
-C'est ce que le RGPD appelle une **anonymisation** plutôt qu'un effacement, et
-c'est un équilibre assumé entre ton droit à l'oubli et celui des autres à garder
-leur histoire. Si tu estimes que cet équilibre est mal placé dans ton cas, écris
-à **[adresse de contact]** : nous en discuterons.
+- **Qui** : l'hébergement et le stockage en Suisse, `DEPLOIEMENT.md`.
+- **À l'inscription** : `sql/auth.sql` (`users` : adresse, pseudo, hachage,
+  langue) et `src/server/auth/routes.js`. Google, `src/server/auth/google.js` :
+  portée `openid email profile` ; le serveur ne lit que l'adresse, sa
+  vérification, le prénom (ou le nom, ou le début de l'adresse) pour le pseudo
+  de départ, et la langue. Le compte reçoit un mot de passe aléatoire que
+  personne ne connaît.
+- **En jouant** : les tables de `sql/` ; le quotidien, `sql/quotidien.sql` ;
+  les pronostics, `sql/pronostics.sql` ; le grand livre, `src/server/recompenses.js`.
+- **Ce que les autres voient** : les classements, `src/server/classements/index.js`
+  (pseudo, club principal, scores ; les comptes supprimés en sont écartés) ; les
+  amis, `src/server/amis/index.js` (suggestions par club commun : pseudo, Fanzzy,
+  niveau et clubs communs seulement ; lien d'invitation : pseudo et Fanzzy) ; le
+  KOP, `src/server/kop/index.js` (ce que chacun a versé au pot, sa date
+  d'entrée) ; le duel, `src/server/nvn/index.js` (`affiche` : pseudo, Fanzzy du
+  deck et leurs tenues ; `forme` : cinq derniers résultats ; les effets portés) ;
+  le derby, au même endroit (`DERBY_FRAIS_MS` : quatre minutes en mémoire, un
+  club et jamais un nom).
+- **La présence** : `src/server/presence/index.js`, `src/shared/reglages.js`
+  (`presence.*`), `serveur/CONTRATS.md` § 18.
+- **Les notifications** : `src/server/notifications/index.js` (`estLaNuit`) et
+  `sql/notifications.sql`.
+- **La sécurité** : `sql/auth.sql` (`sessions` : l'IP et le navigateur à
+  l'ouverture ; `login_attempts` : les échecs seulement, qu'une connexion réussie
+  efface) ; `cleanup()`, dans `src/server/auth/store.js`, que `server.js` lance au
+  démarrage puis toutes les vingt-quatre heures ; le débit par adresse, en
+  mémoire, dans `src/server/garde/index.js` ; le journal d'administration,
+  `admin_audit` (`src/server/admin/index.js`), qui nomme un joueur par son
+  identifiant public.
+- **Le paiement** : `src/server/boutique/index.js`. Stripe Checkout : la carte et
+  l'adresse se saisissent chez Stripe ; `achats` garde l'article, le montant, la
+  session Stripe et l'identifiant public.
+- **Les autres services** : la politique de contenu de `src/server/garde/index.js`
+  (polices Google, images de `media.api-sports.io`, rien d'autre) et sa
+  `Referrer-Policy` (`strict-origin-when-cross-origin`).
+- **Les cookies** : `tbf_session` seul (`COOKIE`, posé par `routes.js` et
+  `google.js`). La mémoire du navigateur : la langue (`tbf_locale`), le son
+  (`tbf-son`, `tbf-volume`), le calme (`tbf-calme`), des marques « déjà vu », et
+  le code d'un lien d'invitation (`tbf.parrainage`), envoyé une fois à
+  l'inscription.
+- **Les durées** : le quotidien, 400 jours (`src/server/quotidien/index.js`, au
+  tirage du jour du joueur) ; les nouveautés, 60 jours (`src/server/fanzzy/index.js`,
+  à la lecture). Ces deux purges sont **paresseuses** : un joueur qui ne revient
+  pas garde ses lignes avec son compte, et la page le dit (« à ta visite
+  suivante »).
+- **La suppression** : `deleteUser`, `src/server/auth/store.js`. Restent, attachés
+  au compte anonymisé : la collection, les clubs suivis, les pronostics, la place
+  dans un KOP et chez des amis (sous « supprime_N », sans Fanzzy : `habiller` dans
+  `amis`, `avatar.js`), les parties, les présences du Virage, le grand livre, les
+  achats.
+- **Les factures** : dix ans, art. 958f CO.
 
 ---
 
-## Tes droits
+## Ce qui a changé à la publication
 
-Tu peux à tout moment :
-
-- **accéder** à tes données et en demander une copie ;
-- les **corriger** — le pseudo et l'adresse se changent depuis ton compte ;
-- les **effacer**, en supprimant ton compte ;
-- t'**opposer** à un traitement fondé sur l'intérêt légitime ;
-- demander la **portabilité** de tes données, dans un format lisible par une
-  machine.
-
-Écris à **[adresse de contact]**. Nous répondons sous un mois.
-
-Si notre réponse ne te satisfait pas, tu peux saisir :
-
-- en France, la **CNIL** — <https://www.cnil.fr/fr/plaintes> ;
-- en Suisse, le **PFPDT** — <https://www.edoeb.admin.ch>.
+- L'éditeur, la date et le contact, à la place des crochets.
+- **Les tentatives de connexion : deux jours au plus**, au lieu des trente jours
+  proposés : le code les efface au-delà d'un jour. L'entretien passe désormais
+  aussi **au démarrage** ; avant, seul un minuteur de vingt-quatre heures le
+  lançait, et un serveur relancé chaque jour ne purgeait jamais.
+- **Les sessions** : l'IP et le navigateur servent à savoir d'où un compte a été
+  ouvert. Le brouillon promettait de « fermer ses appareils », mais aucun écran
+  ne les liste.
+- **Le pseudo et l'adresse ne se changent pas depuis le compte** (seuls la langue
+  et les clubs) : il faut écrire.
+- **Google** transmet aussi le nom, la langue et la photo. Seuls l'adresse et la
+  langue sont gardés ; le prénom devient le pseudo de départ. Un compte ouvert par
+  Google n'a pas de mot de passe : pour le supprimer, « Mot de passe oublié ? »
+  d'abord, ou écrire.
+- **Ajouté** : les pronostics ; le club aux classements ; ce que voit un
+  adversaire en duel ; les suggestions d'amis et le lien d'invitation ; le KOP ; le
+  derby ; le débit par adresse ; le journal d'administration ; les autres services
+  (Google Fonts, les images d'API-Football, Infomaniak pour les e-mails) ; la
+  mémoire du navigateur, précisée.
+- Les purges paresseuses du quotidien, dites telles qu'elles sont.
+- **Les mineurs** : la règle annoncée à Gaël le 6 octobre (« le jeu est ouvert à
+  tous ; un mineur demande l'accord d'un parent avant de s'abonner »), et un
+  parent peut écrire.
+- Les autorités : celle du pays de chacun (le jeu parle aussi allemand et
+  espagnol), plus seulement la CNIL et le PFPDT. La réponse, sous trente jours
+  (le délai suisse ; le RGPD dit un mois).
 
 ---
 
-## Les mineurs
+## Ce qui reste ouvert
 
-**[Section à trancher avec un juriste.]** Le jeu n'impose aujourd'hui aucune
-barrière d'âge. Selon la règle retenue — treize ans, quinze ans, consentement
-parental pour l'abonnement d'un mineur — cette section devra dire laquelle, et
-le formulaire d'inscription devra l'appliquer.
-
-En l'état, **le jeu est accessible à des mineurs et rien ne le vérifie.** C'est
-une lacune connue, pas un choix.
-
----
-
-## Si ce texte change
-
-Nous te préviendrons sur le site. Une politique de confidentialité qui change en
-silence est une politique à laquelle on ne peut pas se fier.
+- La relecture par un juriste.
+- La page est en français seulement ; la porte de connexion le dit dans ses trois
+  autres langues.
+- Les polices viennent de Google : les servir depuis le site retirerait Google de
+  la liste des services que le navigateur appelle.
+- Un compte supprimé garde sa place chez ses amis et dans son KOP, sous
+  « supprime_N » : l'en retirer serait plus propre.
+- Si Gaël change `presence.visible_defaut`, la page, qui dit « par défaut tu es
+  visible de tes amis », est à réécrire : `confidentialite:smoke` le rappelle.
+- `MENTIONS-LEGALES.md` et `CGV.md` restent à compléter (numéro IDE, TVA,
+  téléphone) et ne sont pas publiés.

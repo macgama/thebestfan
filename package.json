@@ -30,6 +30,7 @@
     "amis:smoke": "node scripts/amis-smoke.mjs",
     "presence:smoke": "node scripts/presence-smoke.mjs",
     "notifications:smoke": "node scripts/notifications-smoke.mjs",
+    "confidentialite:smoke": "node scripts/confidentialite-smoke.mjs",
     "amis:ui": "node scripts/amis-ui-smoke.mjs",
     "equipes:ui": "node scripts/equipes-ui-smoke.mjs",
     "matchs:ui": "node scripts/matchs-ui-smoke.mjs",

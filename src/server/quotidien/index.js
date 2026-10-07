@@ -396,7 +396,8 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
       return (await q(SQL_CONTRAT, [userId])).filter((l) => Number(l.k) === 0);
     }
     /* Le ménage, une fois par jour et par joueur, au tirage : quatre cents
-       jours d'activité gardés, pas davantage (`CONFIDENTIALITE.md`). */
+       jours d'activité gardés, pas davantage (`public/confidentialite.html`,
+       que `confidentialite:smoke` relit contre ces deux lignes). */
     await q('DELETE FROM missions_jour WHERE user_id = ? AND jour < CURDATE() - INTERVAL 400 DAY',
       [userId]);
     await q('DELETE FROM compteurs_jour WHERE user_id = ? AND jour < CURDATE() - INTERVAL 400 DAY',

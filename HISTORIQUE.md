@@ -8117,3 +8117,77 @@ qui cède), tous verts.
 
 - Des répliques à leurs âges 2 et 3, et pour les autres séries : ils parlent
   pour l'instant comme leur famille.
+
+---
+
+## 4 quinquagies quinquies. La politique de confidentialité, publiée
+
+*7 octobre 2026, session cloud « Lot 7 : images Artlist ». Gaël : « Mes
+informations pour la confidentialité : Gaël Manigley, Société individuelle,
+1085 Vulliens (Suisse), info@thebestfan.online. » La veille, il avait choisi
+de publier la page d'abord, puis d'allumer lui-même la présence des amis.*
+
+### Ce qui a changé
+
+- **`/confidentialite`**, une page du jeu lisible sans compte et sans base
+  (`public/confidentialite.html`) : qui traite les données, ce que le jeu
+  collecte et pourquoi, ce que les autres joueurs voient, la présence, les
+  notifications, la sécurité, le paiement, les autres services, les cookies,
+  les durées, la suppression d'un compte, les droits, les mineurs.
+- **Des liens** : au pied de la vitrine, sous la porte de connexion (dans ses
+  quatre langues, avec « en français » dans les trois autres) et dans « Mon
+  compte », au-dessus de « Supprimer mon compte ». La barre du haut la nomme.
+- **L'entretien des sessions et des tentatives de connexion passe aussi au
+  démarrage**, puis toutes les vingt-quatre heures comme avant.
+- `CONFIDENTIALITE.md` devient les notes de travail de la page : où chaque
+  rubrique a été lue, ce qui a changé à la publication, ce qui reste ouvert.
+
+### Pourquoi comme ça
+
+- **Relue contre le code, pas recopiée.** Le brouillon disait que le pseudo et
+  l'adresse se changent depuis le compte (aucun écran ne le permet), que l'IP
+  des sessions servait à « fermer ses appareils » (aucun écran ne les liste),
+  que Google ne transmet que l'adresse et le prénom ; il taisait les
+  pronostics, le club aux classements, ce que voit un adversaire en duel, les
+  suggestions d'amis, le derby, le journal d'administration, et les services
+  que le navigateur appelle lui-même (Google Fonts, les écussons
+  d'API-Football). La page dit ce que le code fait.
+- **« Deux jours au plus », et l'entretien au démarrage pour le tenir.** Le
+  code efface les tentatives manquées au-delà d'un jour, mais il ne passait
+  que par un minuteur de vingt-quatre heures : un serveur redémarré chaque
+  jour ne purgeait jamais, et la promesse aurait menti sans qu'aucune ligne
+  rougisse. Les trente jours annoncés à Gaël le 6 octobre étaient un plafond
+  proposé ; le code fait mieux, la page le dit.
+- **Les purges paresseuses, dites telles qu'elles sont.** Le quotidien (400
+  jours) et les nouveautés (60 jours) s'effacent à la visite suivante du
+  joueur, pas à date fixe : la page écrit « à ta visite suivante » plutôt
+  qu'un délai que le code ne tient pas pour un joueur parti.
+- **« Entreprise individuelle »**, le terme suisse, pour la « société
+  individuelle » de Gaël : une société demande au moins deux personnes, hors
+  sociétés de capitaux.
+- **Les mineurs** : la règle annoncée à Gaël le 6 octobre (un mineur demande
+  l'accord d'un parent avant de s'abonner), sans barrière d'âge inventée ; un
+  parent peut écrire pour savoir ce qui est gardé ou faire supprimer.
+- **En français seulement**, comme l'aide : un texte juridique traduit trois
+  fois, ce sont trois textes à tenir justes.
+
+### Contrôles
+
+`confidentialite:smoke` (neuve, 24 contrôles) : l'éditeur, la date, aucune
+marque de brouillon ; chaque durée annoncée relue dans le code qui la tient
+(`SESSION_TTL_MS`, la purge d'un jour et son passage au démarrage,
+`DERBY_FRAIS_MS`, les réglages `presence.*`, les deux purges du quotidien,
+`estLaNuit`, le seul cookie) ; la page servie par le vrai `server.js` sans
+base, en `no-store`, et appelée depuis la vitrine, la porte et le compte. Le
+contrôle du démarrage rougit quand on retire l'appel. `auth:smoke` : 4 de
+plus, l'entretien efface les tentatives de plus d'un jour et les sessions
+échues, et garde les autres.
+
+### Ce qui reste
+
+- La relecture par un juriste, que Gaël n'a pas demandée.
+- Servir les polices depuis le site : Google sortirait de la liste des
+  services que le navigateur appelle.
+- Un compte supprimé garde sa place chez ses amis et dans son KOP, sous
+  « supprime_N » : l'en retirer serait plus propre.
+- `MENTIONS-LEGALES.md` et `CGV.md`, à compléter (numéro IDE, TVA, téléphone).

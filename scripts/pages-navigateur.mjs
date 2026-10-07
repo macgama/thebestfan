@@ -59,7 +59,7 @@ const ECRANS = [
   '/classement', '/boutique', '/abonnement', '/boosters', '/admin',
   '/compte', '/diagnostic', '/equipes', '/kop', '/amis', '/deck',
   '/duel-nvn', '/fanzzy', '/fanzzy/TR32', '/virage', '/carnet', '/aide',
-  '/repetition',
+  '/repetition', '/confidentialite',
 ];
 
 /* ------------------------------------------------------------- le serveur */
