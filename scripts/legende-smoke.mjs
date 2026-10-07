@@ -9,7 +9,7 @@ import { VirageRoom } from '../src/server/ferveur/virage.js';
 import { refusLegendes, selonLaRegle, seuilLegende, chantReussi }
   from '../src/shared/legende.js';
 import { validerDeck, ACTION_BY_ID } from '../src/shared/duel/actions.js';
-import { BY_ID, RATES } from '../src/shared/fanzzy/dex.js';
+import { BY_ID, RATES, tauxDuMoment } from '../src/shared/fanzzy/dex.js';
 import { STUFF_BY_ID, combine } from '../src/shared/fanzzy/inventaire.js';
 import { CHANTS } from '../src/shared/duel/chants.js';
 import { poserReglages, reglagesVivants } from '../src/shared/reglages.js';
@@ -175,16 +175,18 @@ console.log('\nAu Virage');
 console.log('\nLes légendaires sont rares');
 {
   const avant = reglagesVivants();
-  const parBooster = () => 1 - RATES[4][0][1] * RATES[5][0][1];
+  const parBooster = () => { const T = tauxDuMoment(); return 1 - T[4][0][1] * T[5][0][1]; };
+  check('les taux par défaut du module valent 2 %',
+    Math.abs(1 - RATES[4][0][1] * RATES[5][0][1] - 0.02) < 1e-9);
   check('par défaut, 2 % des boosters donnent un Fanzzy légendaire',
     Math.abs(parBooster() - 0.02) < 1e-9);
   poserReglages({ ...avant, 'pack.legendaire_fanzzy': 3 });
   check('le taux suit /admin', Math.abs(parBooster() - 0.03) < 1e-9);
   check('les tables restent des probabilités',
-    [4, 5].every((k) => Math.abs(RATES[k][0][1] + RATES[k][1][1] - 1) < 1e-12));
+    [4, 5].every((k) => Math.abs(tauxDuMoment()[k][0][1] + tauxDuMoment()[k][1][1] - 1) < 1e-12));
   check('le réglage de la pièce existe, à 3 % par défaut',
     avant['pack.legendaire_stuff'] === 3);
-  check('les taux partent en JSON', JSON.stringify(RATES).includes('"4"'));
+  check('les taux se clonent (aucun accesseur)', structuredClone(tauxDuMoment())[4][1][1] > 0);
   poserReglages(avant);
 }
 

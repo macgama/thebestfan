@@ -695,19 +695,27 @@ const DEX = [
  * rendait un Fanzzy légendaire. Gaël a voulu le 7 octobre 2026 qu'on se
  * réjouisse d'en ouvrir un (1 à 3 % par booster) : `pack.legendaire_fanzzy`
  * dit la chance **par booster**, partagée à parts égales entre les deux
- * places. Lus à chaque tirage, d'où les accesseurs.
+ * places. Le tirage les relit à chaque booster (`tauxDuMoment`).
  */
-const partParPlace = () => {
-  const p = Number(reglage('pack.legendaire_fanzzy'));
+const partParPlace = (pourcent) => {
+  const p = Number(pourcent);
   const parBooster = Number.isFinite(p) ? Math.min(100, Math.max(0, p)) / 100 : 0.02;
   // 1 − (1 − x)² = parBooster : la chance qu'au moins une des deux places tombe.
   return 1 - Math.sqrt(1 - parBooster);
 };
-const RATES = {
-  get 4() { const x = partParPlace(); return [['commune', 1 - x], ['legendaire', x]]; },
-  get 5() { const x = partParPlace(); return [['commune', 1 - x], ['legendaire', x]]; },
-  toJSON() { return { 4: this[4], 5: this[5] }; },
+const table = (pourcent) => {
+  const x = partParPlace(pourcent);
+  return { 4: [['commune', 1 - x], ['legendaire', x]], 5: [['commune', 1 - x], ['legendaire', x]] };
 };
+
+/** Les taux **du moment**, tels que /admin les a réglés : c'est eux que le
+    tirage lit et que le catalogue annonce. Un objet simple, sans accesseur :
+    il voyage en JSON et se clone sans surprise. */
+export const tauxDuMoment = () => table(reglage('pack.legendaire_fanzzy'));
+
+/* Les taux au réglage par défaut, pour qui lit le module sans serveur (les
+   scripts d'économie, les contrôles). */
+const RATES = table(2);
 
 /* ------------------------------------------------- le lot de septembre 2026
 
