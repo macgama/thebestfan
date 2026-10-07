@@ -2896,57 +2896,6 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
 }
 .tbf-tiroir{max-height:100dvh}
 
-/* ------------------------------------------------ les rails du grand écran
-
-   Les dix tuiles de l'accueil, de part et d'autre de la colonne, sur chaque
-   page de contenu d'un écran large (`RAILS`, dans `menu.js`, qui les monte
-   avec le tiroir). Sur un ordinateur, la colonne laissait les deux tiers de
-   l'écran vides, et changer de section demandait d'ouvrir le menu.
-
-   **Au-delà de 1 180 px de large et de 560 de haut, et nulle part ailleurs.**
-   La colonne fait 900 px au plus ; un rail de 96 px, son écart de 28 et une
-   marge au bord en demandent 140 de chaque côté : 1 180. En dessous, une
-   tuile mordrait sur la colonne ou sur le bord de l'écran, et le téléphone
-   comme la tablette gardent le tiroir. En dessous de 560 de haut, cinq
-   tuiles et leurs écarts ne tiennent plus à une taille qui se touche.
-
-   **Sous la colonne, au-dessus du décor** : `z-index:0` et posés après le
-   voile dans le document, ils se peignent sur la tribune ; la colonne
-   (`#app`, `z-index:1`) passe devant eux. Une fenêtre de la page — le
-   booster qu'on ouvre, le panneau du deck — les couvre donc comme elle
-   couvre le décor, au lieu de laisser deux colonnes de portes ouvertes
-   autour d'un moment qui demande qu'on reste.
-
-   **Ancrés au bord de la colonne, pas de l'écran** : `--tbf-colonne` est la
-   largeur que `nav.js` lit sur la page (le kiosque n'a pas celle du profil).
-   En `%` et non en `vw` : un élément fixe se place dans la fenêtre sans sa
-   barre de défilement, comme la colonne qu'il borde ; sous Windows, 50vw
-   les aurait décalés de huit pixels vers la droite.
-
-   **Les tuiles du hub, à la taille du hub.** 96 px au plus, comme on les
-   voit autour du personnage sur un écran de bureau, et une hauteur qui
-   cède avec la fenêtre (13 % : 89 px à 682 de haut, le bureau d'un
-   portable). Le libellé garde ses 12,5 px : « CLASSEMENT » y tient.
-
-   **Ici, la page où l'on est** : le même pointillé que dans le tiroir. Et le
-   sticker « prêt » ne respire pas : ces tuiles restent à l'écran pendant
-   toute la page, et une animation sans fin au bord de l'œil se lit comme
-   une alerte qu'on n'arrive pas à faire taire (la règle des trois animations
-   de l'audit). */
-.tbf-rails{display:none}
-@media (min-width:1180px) and (min-height:560px){
-  .tbf-rails{display:contents}
-  .tbf-rail{
-    --rail-l:96px;--rail-ecart:28px;
-    position:fixed;z-index:0;top:50%;translate:0 -50%;
-    display:flex;flex-direction:column;gap:10px;width:var(--rail-l);
-  }
-  .tbf-rail:first-child{right:calc(50% + var(--tbf-colonne,var(--colonne)) / 2 + var(--rail-ecart))}
-  .tbf-rail:last-child{left:calc(50% + var(--tbf-colonne,var(--colonne)) / 2 + var(--rail-ecart))}
-  .tbf-rail .tbf-case{--ico:24px;--epaisseur:4px;aspect-ratio:auto;height:min(96px,13vh);font-size:12.5px}
-  .tbf-rail .tbf-case[aria-current]:not(:focus-visible){outline:2px dashed var(--lettre);outline-offset:-5px}
-  .tbf-rail .tbf-case[data-etat=pret]::after{animation:none}
-}
 
 .tbf-tiroir.on{translate:0 0;pointer-events:auto}
 @starting-style{
