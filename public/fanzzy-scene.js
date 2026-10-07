@@ -511,6 +511,7 @@
       const t = window.TBF_ETATS?.taille?.(perso.id, perso.evo);
       el.style.setProperty('--taille', t?.hauteur ?? '');
       el.style.setProperty('--sous', t?.bas ?? '');
+      el.style.setProperty('--decale', t?.decale ?? '');
       /* **L'expression de l'avatar devient le repos de la scène.** Nulle, elle
          ne touche à rien : le Virage passe l'avatar « en jeu », sans
          expression, et garde son propre repos — la poussée pendant le match.
