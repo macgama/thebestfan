@@ -775,20 +775,23 @@ export const REGLAGES = [
      l'interrupteur « apparaître hors ligne », pas de « REJOINDRE ».
 
      **Livrée éteinte**, et c'est le défaut qui le porte : `presence.actif`
-     reste faux jusqu'à la mise en ligne de la nouvelle `CONFIDENTIALITE.md`.
+     reste faux jusqu'à ce que Gaël l'allume, une fois la politique de
+     confidentialité en ligne (`public/confidentialite.html`, publiée le
+     7 octobre 2026).
      Éteinte, rien n'est servi (`CONTRATS.md`, § 18). `reglages-smoke` refuse
      qu'elle parte allumée. */
   { cle: 'presence.actif', section: 'presence', type: 'booleen',
     titre: 'Montrer la présence des amis', defaut: false,
     aide: 'Éteint, aucun écran ne montre de présence et rien n’est servi. À allumer ' +
-      'seulement après la mise en ligne de la nouvelle politique de confidentialité ' +
-      '(CONFIDENTIALITE.md). Sans sql/arenes.sql, elle reste éteinte même allumée ici : ' +
-      'personne ne pourrait s’y cacher.' },
+      'une fois la politique de confidentialité en ligne : la page /confidentialite ' +
+      'doit répondre sur le site. Sans sql/arenes.sql, elle reste éteinte même allumée ' +
+      'ici : personne ne pourrait s’y cacher.' },
 
   { cle: 'presence.visible_defaut', section: 'presence', type: 'booleen',
     titre: 'Un joueur est visible de ses amis par défaut', defaut: true,
     aide: 'Vaut pour qui n’a jamais touché l’interrupteur « apparaître hors ligne ». Un ' +
-      'joueur qui a choisi garde son choix.' },
+      'joueur qui a choisi garde son choix. La page /confidentialite dit « par défaut ' +
+      'tu es visible de tes amis » : à réécrire si tu changes ceci.' },
 
   { cle: 'presence.en_ligne_sec', section: 'presence', type: 'entier',
     titre: 'Un joueur reste « en ligne »', unite: 'secondes après sa dernière activité',

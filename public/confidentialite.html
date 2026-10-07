@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<title>Confidentialité — thebestfan</title>
+<meta name="description" content="Ce que thebestfan garde de toi, pourquoi, combien de temps, et comment l’effacer.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* ==================================================== la confidentialité
+
+   La politique de confidentialité, publiée le 7 octobre 2026 avec les
+   informations d'éditeur de Gaël. Sa source de travail est `CONFIDENTIALITE.md`
+   (ce qui a été lu dans le code pour chaque phrase) ; **c'est cette page qui
+   fait foi** pour les joueurs, et `confidentialite:smoke` vérifie que les
+   durées qu'elle annonce sont celles du code.
+
+   Une page de lecture, en français seulement (comme l'aide) : pas de script,
+   rien à charger. Chaque rubrique a son titre cousu et son panneau — un texte
+   ne se pose pas sur la photo de tribune que `nav.js` met sous chaque écran. */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+
+.rub{margin:18px 0 0}
+.rub h2{margin:0 2px 10px}
+.bloc{background:var(--panneau);border:1px solid var(--trait);border-radius:12px;
+  padding:14px 16px;margin:0 0 10px;font-size:13.5px;line-height:1.65}
+.bloc p{margin:0 0 10px}
+.bloc p:last-child,.bloc ul:last-child,.bloc dl:last-child{margin-bottom:0}
+.bloc h3{font-family:var(--banner);font-weight:600;font-size:14px;letter-spacing:.06em;
+  margin:4px 0 8px}
+.bloc ul{margin:0 0 10px;padding-left:20px}
+.bloc li{margin:0 0 6px}
+.bloc li:last-child{margin-bottom:0}
+/* Une donnée, puis ce qu'elle sert : une liste et non un tableau. Trois
+   colonnes ne tiennent pas dans trois cent soixante pixels — la première se
+   serait écrite une lettre par ligne. */
+.donnees{margin:0 0 10px}
+.donnees dt{font-weight:700;margin-top:10px}
+.donnees dt:first-child{margin-top:0}
+.donnees dd{margin:2px 0 0}
+/* La base légale, sous la liste qu'elle couvre. Plus petite, pas plus pâle :
+   le plancher de lecture du jeu reste 0,85. */
+.base{font-size:12.5px}
+.bloc b{font-weight:700}
+/* Les liens de texte du jeu : craie grasse soulignée (arbitrage du 2 octobre
+   2026 — l'or ne s'écrit plus qu'en grand). Un lien dans une phrase n'a pas
+   de zone de touche à lui ; l'audit l'exempte des 44 pixels. */
+.bloc a{color:var(--craie);font-weight:600;text-decoration:underline;text-underline-offset:3px;
+  overflow-wrap:anywhere}
+.date{font-weight:600}
+
+/* tbf-degagement */
+#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+  <p class="tbf-sous">Ce que le jeu garde de toi, et pourquoi</p>
+
+  <section class="rub" id="qui">
+    <h2 class="tbf-cousu">Qui traite tes données</h2>
+    <div class="bloc">
+      <p class="date">Dernière mise à jour&nbsp;: 7&nbsp;octobre&nbsp;2026</p>
+      <p><b>Gaël Manigley</b>, entreprise individuelle, 1085&nbsp;Vulliens, Suisse — ci-après «&nbsp;nous&nbsp;».</p>
+      <p>Contact&nbsp;: <a href="mailto:info@thebestfan.online">info@thebestfan.online</a></p>
+      <p>Le site est hébergé par <b>Infomaniak Network SA</b>, rue Eugène-Marziano 25,
+        1227&nbsp;Les Acacias (Genève), Suisse. Tes données sont stockées en Suisse.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="collecte">
+    <h2 class="tbf-cousu">Ce que nous collectons, et pourquoi</h2>
+    <div class="bloc">
+      <p>Nous ne collectons <b>que ce dont le jeu a besoin pour fonctionner</b>. Il n’y a ni
+        publicité, ni traceur publicitaire, ni revente de données à qui que ce soit.</p>
+    </div>
+    <div class="bloc">
+      <h3>À l’inscription</h3>
+      <dl class="donnees">
+        <dt>Ton adresse e-mail</dt>
+        <dd>Pour te connecter, te renvoyer un mot de passe oublié et vérifier que l’adresse existe.</dd>
+        <dt>Ton pseudo</dt>
+        <dd>Pour te nommer auprès des autres joueurs. Il est <b>visible publiquement</b>.</dd>
+        <dt>Ton mot de passe</dt>
+        <dd>Pour te connecter. Il est gardé <b>haché</b>, jamais en clair&nbsp;: nous ne pouvons pas le lire.</dd>
+        <dt>Ta langue</dt>
+        <dd>Pour afficher le jeu dans ta langue.</dd>
+      </dl>
+      <p class="base">Base légale&nbsp;: l’exécution du contrat, c’est-à-dire ce qu’il faut pour te faire jouer.</p>
+      <p>Si tu passes par <b>«&nbsp;Continuer avec Google&nbsp;»</b>, Google nous transmet ton adresse e-mail
+        et le fait qu’elle est vérifiée, ton nom, ta langue et l’adresse de ta photo de profil.
+        Nous gardons ton adresse et ta langue. Ton prénom sert à te donner un pseudo de départ,
+        que les autres joueurs verront&nbsp;: écris-nous si tu veux en changer. Ton nom complet et ta
+        photo ne sont pas gardés, et nous ne recevons ni ton mot de passe Google, ni tes contacts.</p>
+    </div>
+    <div class="bloc">
+      <h3>En jouant</h3>
+      <dl class="donnees">
+        <dt>Les clubs que tu suis</dt>
+        <dd>Te proposer leurs matchs, et te placer dans leur tribune.</dd>
+        <dt>Ta collection (Fanzzy, tenues, équipement, stades), ton deck, tes écharpes</dt>
+        <dd>C’est le jeu.</dd>
+        <dt>Tes parties&nbsp;: adversaires, scores, dates, durées</dt>
+        <dd>Ton parcours, et celui de tes adversaires.</dd>
+        <dt>Ta présence dans un virage, et le nombre de tes chants</dt>
+        <dd>La corde partagée, les cartes-souvenirs, les missions du Virage.</dd>
+        <dt>Ce que ton geste a donné pendant un match du Virage&nbsp;: tes PARFAITS, ta meilleure série, ton meilleur chant</dt>
+        <dd>Le bilan de tribune qu’on te montre à la sortie et au coup de sifflet, et le départage
+          de ton rang dans ta tribune. Ils sont gardés avec ta présence de ce match.</dd>
+        <dt>Tes pronostics&nbsp;: le score que tu as annoncé, et ce qu’il t’a rapporté</dt>
+        <dd>Régler ton pronostic au coup de sifflet final.</dd>
+        <dt>Ton KOP et tes amis</dt>
+        <dd>Les fonctions de groupe, que tu choisis d’utiliser.</dd>
+        <dt>Ton activité du jour&nbsp;: boosters ouverts, évolutions, missions tirées et leur avancement</dt>
+        <dd>Les missions du jour, qui se comptent sur ce que tu as fait.</dd>
+        <dt>Ce que le jeu t’a versé&nbsp;: missions, bonus de présence, carnet de saison, paliers de collection, divisions, pronostics</dt>
+        <dd>Ne jamais payer deux fois la même récompense, et repérer un abus.</dd>
+        <dt>La date de ta dernière visite, et l’état des pots de tes KOP à ce moment-là</dt>
+        <dd>Le ticket «&nbsp;depuis ta dernière visite&nbsp;».</dd>
+        <dt>Ton rang aux classements, d’un jour sur l’autre</dt>
+        <dd>La flèche qui dit si tu as monté.</dd>
+        <dt>Ce que tu n’as pas encore regardé</dt>
+        <dd>Le mot «&nbsp;NOUVEAU&nbsp;» sur tes cartes.</dd>
+      </dl>
+      <p class="base">Base légale&nbsp;: l’exécution du contrat pour faire tourner le jeu&nbsp;; notre intérêt
+        légitime à garder un jeu équitable pour repérer les abus.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="visible">
+    <h2 class="tbf-cousu">Ce que les autres joueurs voient de toi</h2>
+    <div class="bloc">
+      <p>Ton <b>pseudo</b>, partout où tu joues avec d’autres&nbsp;: en duel, dans les classements
+        (qui sont publics), dans ton KOP et chez tes amis.</p>
+      <p>Dans les classements, avec ton pseudo, <b>ton club</b> et tes scores. Dans les classements,
+        la liste des membres d’un KOP et chez tes amis, <b>le Fanzzy que tu as équipé</b> (son nom,
+        son âge, sa tenue, son expression, sa rareté), <b>ton niveau</b> et, dans le classement de
+        la saison, <b>ta division</b>.</p>
+      <p>En duel, tes adversaires voient les Fanzzy de ton deck avec leurs tenues, l’équipement
+        qu’ils portent, et ta forme récente&nbsp;: tes cinq derniers résultats. Dans ton KOP, les autres
+        membres voient aussi ce que tu as versé au pot, et depuis quand tu en es.</p>
+      <p>Les supporters d’un club que tu suis peuvent te voir parmi leurs suggestions d’amis&nbsp;: ton
+        pseudo, ton Fanzzy, ton niveau et les clubs que vous avez en commun, jamais les autres. Ton
+        lien d’invitation montre ton pseudo et ton Fanzzy à qui l’ouvre.</p>
+      <p>Ni ton adresse e-mail, ni ta collection, ni ta garde-robe, ni ton XP exacte ne sont montrées.</p>
+      <p>Un jour de match d’un de tes clubs, quand tu passes sur le jeu, les supporters du club d’en
+        face peuvent lire «&nbsp;un supporter de Sion est en ligne&nbsp;» (si tu suis Sion), pour vous proposer
+        un derby. C’est un club, jamais un nom. Cette marque reste quatre minutes dans la mémoire du serveur,
+        et n’est écrite nulle part. Les nombres que le jeu affiche (les supporters au Virage, les
+        duels qui attendent un joueur) ne nomment personne non plus.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="presence">
+    <h2 class="tbf-cousu">La présence de tes amis</h2>
+    <div class="bloc">
+      <p><b>Tes amis</b>, seulement ceux dont tu as accepté l’amitié et qui ont accepté la tienne,
+        voient si tu es <b>en ligne</b>, <b>au Virage</b> ou <b>en duel</b>. Rien de plus&nbsp;: ni le
+        match que tu regardes, ni l’heure, ni «&nbsp;vu il y a&nbsp;». Un joueur qui n’est pas ton ami, ou à
+        qui tu as seulement envoyé une demande, ne voit rien. Dans une tribune du Virage, un ami
+        présent dans la même tribune voit que tu y es&nbsp;: vous y êtes tous les deux.</p>
+      <p><b>Rien de tout cela n’est écrit</b>&nbsp;: la présence vit dans la mémoire du serveur et
+        disparaît à son redémarrage. Pour dire «&nbsp;en ligne&nbsp;», il garde l’instant de ta dernière
+        action dans le jeu (une page qui lui demande quelque chose, une connexion en direct). Cette
+        marque cesse de dire «&nbsp;en ligne&nbsp;» après quelques minutes sans action (deux par défaut,
+        jamais plus de quinze), puis elle est effacée au plus une minute plus tard tant que le site
+        a des joueurs. «&nbsp;Au Virage&nbsp;» et «&nbsp;en duel&nbsp;» se lisent dans ce que le serveur tient déjà pour
+        faire tourner le match, et cessent quand tu en sors (en duel, une coupure de réseau te garde
+        ta place, et l’état, une minute et demie).</p>
+      <p><b>La seule chose écrite, c’est ton choix</b>&nbsp;: par défaut tu es visible de tes amis, et
+        tu peux <b>apparaître hors ligne</b> depuis le menu, à tout moment. Caché, tu n’apparais
+        chez personne, et tu vois tes amis comme avant. Le choix vaut tout de suite pour la liste
+        de tes amis&nbsp;; dans une tribune où tu es déjà, il vaut à ta prochaine entrée&nbsp;: les amis qui
+        t’y ont vu entrer le savent déjà, et apprennent seulement ton départ. Ce choix est gardé
+        tant que ton compte existe&nbsp;; il est effacé avec lui.</p>
+      <p>Tant que cette fonction n’est pas ouverte, rien de tout cela n’est montré à personne, et
+        rien n’est gardé, pas même la marque de ta dernière action.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="notifications">
+    <h2 class="tbf-cousu">Les notifications</h2>
+    <div class="bloc">
+      <p>Si tu les actives dans <b>Mon compte</b>, ton appareil peut être prévenu même le jeu fermé,
+        pour deux choses seulement&nbsp;: <b>un vote de ton KOP qui s’ouvre</b>, et <b>un duel classé qui
+        attend un supporter de ton club</b>. Tu choisis l’une, l’autre ou les deux, appareil par
+        appareil, et ton navigateur te le redemande par sa propre fenêtre. Rien n’est envoyé
+        <b>la nuit</b>, de 22&nbsp;h à 8&nbsp;h (heure de Zurich). Un message ne nomme jamais un joueur&nbsp;: il
+        parle de clubs, de ton KOP, d’un bonus.</p>
+      <p>Pour cela nous gardons, <b>par appareil</b>, l’adresse d’envoi que ton navigateur nous donne
+        et ses deux clés de chiffrement, avec tes deux choix. Rien d’autre&nbsp;: ni le modèle de
+        l’appareil, ni l’heure des messages. Les messages passent par le service de notification de
+        ton navigateur (Google pour Chrome, Apple pour Safari, Mozilla pour Firefox), qui les reçoit
+        chiffrés et ne peut pas les lire.</p>
+      <p>Tu peux les couper à tout moment, au même endroit. <b>Te déconnecter</b> les coupe aussi
+        pour cet appareil, et <b>supprimer ton compte</b> les efface toutes.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="securite">
+    <h2 class="tbf-cousu">Pour la sécurité</h2>
+    <div class="bloc">
+      <dl class="donnees">
+        <dt>L’adresse IP et le navigateur qui ont ouvert chacune de tes sessions</dt>
+        <dd>Savoir d’où ton compte a été ouvert, si quelque chose cloche. Gardés jusqu’à la fin de
+          la session&nbsp;: ta déconnexion, ou trente jours sans visite.</dd>
+        <dt>Tes tentatives de connexion manquées&nbsp;: l’adresse e-mail essayée, et l’adresse IP</dt>
+        <dd>Freiner ceux qui essaient des mots de passe à la chaîne. Une connexion réussie les
+          efface&nbsp;; sinon, elles sont effacées en deux jours au plus.</dd>
+        <dt>Le nombre de requêtes de chaque adresse IP, sur la dernière minute</dt>
+        <dd>Freiner les abus. En mémoire seulement&nbsp;: rien n’est écrit.</dd>
+        <dt>Les gestes de l’administration sur un compte&nbsp;: un abonnement offert, des écharpes ajoutées, une adresse confirmée à la main, un compte suspendu</dt>
+        <dd>Savoir qui a fait quoi. Le journal nomme ton compte par un identifiant, pas par ton
+          adresse ni ton pseudo.</dd>
+      </dl>
+      <p class="base">Base légale&nbsp;: notre intérêt légitime à protéger les comptes et le jeu. Sans
+        ces traces, un attaquant pourrait essayer des milliers de mots de passe sans être ralenti.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="paiement">
+    <h2 class="tbf-cousu">Si tu paies</h2>
+    <div class="bloc">
+      <p>Les paiements passent par <b>Stripe Payments Europe Ltd</b> (Irlande). Tu donnes ta carte
+        et ton adresse e-mail sur la page de Stripe&nbsp;: <b>ton numéro de carte ne passe jamais par nos
+        serveurs</b>. Nous gardons la date, le montant, ce que tu as acheté, l’identifiant Stripe de
+        la transaction et celui de ton compte&nbsp;: ce qu’il faut pour la comptabilité, et pour te
+        rembourser si besoin.</p>
+      <p>Pour ce que Stripe détient, c’est sa propre politique qui s’applique&nbsp;:
+        <a href="https://stripe.com/fr/privacy" rel="noopener">stripe.com/fr/privacy</a></p>
+      <p class="base">Base légale&nbsp;: l’exécution du contrat, et nos obligations comptables.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="services">
+    <h2 class="tbf-cousu">Les autres services</h2>
+    <div class="bloc">
+      <p>Pour afficher le jeu, ton navigateur s’adresse directement à deux services, qui voient alors
+        ton adresse IP, comme tout site qu’on visite&nbsp;:</p>
+      <ul>
+        <li><b>Google Fonts</b> (Google), pour les polices de caractères&nbsp;;</li>
+        <li>le serveur d’images d’<b>API-Football</b>, pour les écussons des clubs.</li>
+      </ul>
+      <p>Nous ne leur envoyons rien d’autre. Notre serveur, lui, ne parle de toi qu’à ceux-ci, et
+        seulement quand c’est utile&nbsp;:</p>
+      <ul>
+        <li><b>Infomaniak</b>, qui envoie nos e-mails (vérifier ton adresse, retrouver ton mot de
+          passe)&nbsp;;</li>
+        <li><b>Google</b>, si tu te connectes avec lui&nbsp;;</li>
+        <li><b>Stripe</b>, si tu paies&nbsp;;</li>
+        <li>le service de notification de ton navigateur, si tu as activé les notifications.</li>
+      </ul>
+      <p>Comme tout hébergeur, Infomaniak peut aussi tenir ses propres journaux techniques des
+        connexions au site. Google, Stripe, Apple et Mozilla sont établis hors de Suisse, dans
+        l’Union européenne ou aux États-Unis.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="pas">
+    <h2 class="tbf-cousu">Ce que nous ne collectons pas</h2>
+    <div class="bloc">
+      <ul>
+        <li><b>Aucun traceur publicitaire.</b> Pas de Google Analytics, pas de pixel, pas de régie.</li>
+        <li><b>Aucune donnée de localisation</b> autre que l’adresse IP de connexion.</li>
+        <li><b>Aucune donnée sensible</b>&nbsp;: ni santé, ni opinions, ni religion.</li>
+        <li><b>Aucun profilage</b>&nbsp;: rien ne décide automatiquement de quoi que ce soit d’important
+          à ton sujet.</li>
+      </ul>
+    </div>
+    <div class="bloc">
+      <h3>Les cookies</h3>
+      <p>Un seul, <b>tbf_session</b>, qui te garde connecté. Il est <b>strictement nécessaire</b>
+        au fonctionnement du site, et c’est pourquoi aucune bannière ne te demande de l’accepter&nbsp;:
+        le droit n’en exige pas pour ceux-là.</p>
+      <p>Le jeu range aussi quelques réglages dans la mémoire de ton navigateur&nbsp;: ta langue, le son,
+        le mode calme, ce que tu as déjà vu. Ils <b>restent sur ton appareil</b> et ne nous
+        parviennent pas. Seule exception&nbsp;: le code d’un lien d’invitation, gardé le temps de ton
+        inscription, puis envoyé une fois pour vous rendre amis.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="sport">
+    <h2 class="tbf-cousu">D’où viennent les données sportives</h2>
+    <div class="bloc">
+      <p>Les scores, les compositions et les calendriers viennent d’<b>API-Football</b>. Ce sont des
+        données publiques sur des matchs de football&nbsp;: elles ne te concernent pas, et ne sont pas
+        croisées avec ton compte. Notre serveur demande des matchs à API-Football, jamais des
+        joueurs.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="duree">
+    <h2 class="tbf-cousu">Combien de temps nous gardons tout ça</h2>
+    <div class="bloc">
+      <ul>
+        <li><b>Ton compte, ta collection, tes parties et tes pronostics</b>&nbsp;: tant que le compte existe.</li>
+        <li><b>Ton activité du jour et tes missions tirées</b>&nbsp;: 400&nbsp;jours. Au-delà, le jeu les
+          efface à ta visite suivante.</li>
+        <li><b>Ce que tu n’as pas encore regardé</b>&nbsp;: jusqu’à ce que tu l’aies vu. Au-delà de
+          60&nbsp;jours, le jeu l’oublie à ta visite suivante.</li>
+        <li><b>Ta dernière visite et tes rangs de la veille</b>&nbsp;: remplacés à chaque visite&nbsp;; le jeu
+          ne garde que la dernière.</li>
+        <li><b>Le registre de ce que le jeu t’a versé</b>&nbsp;: tant que le compte existe&nbsp;; après sa
+          suppression, voir plus bas.</li>
+        <li><b>Ta présence auprès de tes amis</b>&nbsp;: jamais écrite. <b>Ton choix d’apparaître hors
+          ligne</b>&nbsp;: tant que le compte existe.</li>
+        <li><b>La marque du derby</b>&nbsp;: quatre minutes, en mémoire seulement.</li>
+        <li><b>Les appareils qui reçoivent tes notifications</b>&nbsp;: tant que tu ne les coupes pas,
+          que tu ne te déconnectes pas de cet appareil, ou que son navigateur ne les refuse pas.</li>
+        <li><b>Tes sessions</b>, avec l’adresse IP et le navigateur qui les ont ouvertes&nbsp;: jusqu’à
+          ta déconnexion, ou trente jours sans visite.</li>
+        <li><b>Tes tentatives de connexion manquées</b>&nbsp;: deux jours au plus.</li>
+        <li><b>Le journal de l’administration</b>&nbsp;: tant que le site existe.</li>
+        <li><b>Les factures et paiements</b>&nbsp;: dix ans, la durée que la loi suisse impose aux pièces
+          comptables. Cette durée s’impose à nous, et nous ne pouvons pas la raccourcir, même à ta
+          demande.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="rub" id="suppression">
+    <h2 class="tbf-cousu">Quand tu supprimes ton compte</h2>
+    <div class="bloc">
+      <p>Tu peux le faire toi-même, depuis <b>Mon compte</b>, en confirmant ton mot de passe. C’est
+        immédiat et définitif. Si tu t’es inscrit avec Google, tu n’as pas de mot de passe&nbsp;:
+        choisis-en un d’abord avec «&nbsp;Mot de passe oublié ?&nbsp;», ou écris-nous.</p>
+      <p><b>Ce qui est effacé, tout de suite&nbsp;:</b></p>
+      <ul>
+        <li>ton adresse e-mail, ton pseudo et ton mot de passe&nbsp;;</li>
+        <li>ton club principal&nbsp;;</li>
+        <li>toutes tes sessions, et tous les liens en attente&nbsp;;</li>
+        <li>ton activité du jour, tes missions tirées, ce que tu n’avais pas encore regardé, ta
+          dernière visite et tes rangs de la veille&nbsp;;</li>
+        <li>ton choix d’apparaître hors ligne auprès de tes amis&nbsp;;</li>
+        <li>les appareils qui recevaient tes notifications.</li>
+      </ul>
+      <p><b>Ce qui reste, et pourquoi.</b> Les parties que tu as jouées restent dans l’historique de
+        tes adversaires, <b>sans ton nom</b>, et de la même façon ta présence dans les matchs du
+        Virage, avec ce que ton geste y a donné&nbsp;: c’est l’histoire de ces tribunes. Elle ne
+        t’appartient pas qu’à toi&nbsp;: effacer un duel reviendrait à réécrire la soirée de la personne
+        d’en face, qui n’a rien demandé.</p>
+      <p>Ce qui ne servait qu’au jeu (ta collection, tes clubs suivis, tes pronostics, ta place dans
+        ton KOP et chez tes amis) reste attaché à ce compte devenu anonyme&nbsp;: tes amis et ton KOP y
+        voient un nom neutre, «&nbsp;supprime_&nbsp;» suivi d’un numéro, sans ton Fanzzy.</p>
+      <p>Le <b>registre de ce que le jeu a versé</b> reste aussi, comme une comptabilité&nbsp;: il ne
+        porte ni ton adresse, ni ton pseudo, seulement un identifiant que plus rien ne relie à toi.
+        Les factures, elles, sont gardées dix ans, comme la loi l’exige.</p>
+      <p>C’est ce que le droit appelle une <b>anonymisation</b> plutôt qu’un effacement&nbsp;: un
+        équilibre entre ton droit à l’oubli et celui des autres à garder leur histoire. Si tu
+        estimes que cet équilibre est mal placé dans ton cas, écris à
+        <a href="mailto:info@thebestfan.online">info@thebestfan.online</a> : nous en discuterons.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="droits">
+    <h2 class="tbf-cousu">Tes droits</h2>
+    <div class="bloc">
+      <p>Tu peux à tout moment&nbsp;:</p>
+      <ul>
+        <li><b>accéder</b> à tes données, et en demander une copie&nbsp;;</li>
+        <li>les <b>corriger</b>&nbsp;: ta langue et tes clubs se changent dans le jeu&nbsp;; pour ton pseudo
+          ou ton adresse e-mail, écris-nous&nbsp;;</li>
+        <li>les <b>effacer</b>, en supprimant ton compte&nbsp;;</li>
+        <li>t’<b>opposer</b> à un traitement fondé sur notre intérêt légitime&nbsp;;</li>
+        <li>demander la <b>portabilité</b> de tes données, dans un format lisible par une machine.</li>
+      </ul>
+      <p>Écris à <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>. Nous répondons
+        sous trente jours.</p>
+      <p>Si notre réponse ne te satisfait pas, tu peux t’adresser à l’autorité de protection des
+        données de ton pays&nbsp;: en Suisse, le <b>PFPDT</b>
+        (<a href="https://www.edoeb.admin.ch" rel="noopener">edoeb.admin.ch</a>)&nbsp;; en France, la
+        <b>CNIL</b> (<a href="https://www.cnil.fr/fr/plaintes" rel="noopener">cnil.fr</a>)&nbsp;; ailleurs
+        dans l’Union européenne, celle de ton pays.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="mineurs">
+    <h2 class="tbf-cousu">Les mineurs</h2>
+    <div class="bloc">
+      <p>Le jeu est ouvert à tous, et ne demande pas ton âge. Si tu es mineur, demande l’accord d’un
+        de tes parents <b>avant de t’abonner</b> ou de payer quoi que ce soit.</p>
+      <p>Un parent qui veut savoir ce que nous gardons du compte de son enfant, ou le faire
+        supprimer, peut nous écrire à
+        <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="changement">
+    <h2 class="tbf-cousu">Si ce texte change</h2>
+    <div class="bloc">
+      <p>Nous te préviendrons sur le site, et la date en haut de cette page changera. Une politique
+        de confidentialité qui change en silence est une politique à laquelle on ne peut pas se
+        fier.</p>
+    </div>
+  </section>
+</main>
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

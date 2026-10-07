@@ -1,5 +1,27 @@
 # À déposer sur Infomaniak
 
+**La politique de confidentialité, publiée** (branche
+`claude/project-thread-iatg2m`, 7 octobre 2026, avec les informations d'éditeur
+de Gaël). Elle se dépose avec ce qui est en dessous, ou seule. **Serveur et
+pages, sans schéma** : construction, puis redémarrage hors d'un match.
+
+- `/confidentialite` (`public/confidentialite.html`) : ce que le jeu garde,
+  pourquoi, combien de temps, ce que les autres joueurs voient, et comment tout
+  effacer. Éditeur : Gaël Manigley, entreprise individuelle, 1085 Vulliens
+  (Suisse), info@thebestfan.online. Lisible sans compte et sans base.
+- Les liens : au pied de la vitrine, sous la porte de connexion (dans ses
+  quatre langues) et dans « Mon compte », au-dessus de « Supprimer mon compte ».
+- `server.js` : la route, et l'entretien des sessions et des tentatives de
+  connexion, qui passe aussi au démarrage (la page promet « deux jours au plus »
+  pour les tentatives manquées).
+- **Après le redémarrage** : ouvrir https://thebestfan.online/confidentialite,
+  puis, si Gaël le veut, allumer la présence des amis : `/admin`, RÉGLAGES,
+  LA PRÉSENCE, « Montrer la présence des amis ».
+- Contrôlé par `npm run confidentialite:smoke` (neuve) et `auth:smoke` ;
+  `tour:ui` et `large:ui` la parcourent comme les autres pages.
+
+---
+
 **Le Fanzzy au milieu à l'âge 3** (branche `claude/project-thread-j45ndm`,
 7 octobre 2026, signalé par Gaël). Pages seules : construction, ni schéma
 ni redémarrage.

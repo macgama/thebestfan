@@ -423,6 +423,39 @@ check('ticket inutilisable après suppression du compte', apresSuppression === n
     || (console.log('        lève :', leve?.message ?? 'non', '· reste :', JSON.stringify(w)), false));
 }
 
+/* ================ l'entretien : les durées que la page publique annonce
+
+   `public/confidentialite.html` promet « deux jours au plus » pour les
+   tentatives de connexion manquées, et la fin d'une session à son terme.
+   C'est `cleanup()` qui le tient, au démarrage puis chaque jour (`server.js`,
+   que `confidentialite:smoke` relit). Une tentative de plus d'un jour part,
+   une récente reste ; une session échue part, une vivante reste. */
+{
+  const [[u]] = await pool.query('SELECT id FROM users ORDER BY id LIMIT 1');
+  await pool.query(`INSERT INTO login_attempts (key_type, key_value, success, at) VALUES
+      ('ip', 'entretien-vieille', 0, NOW(3) - INTERVAL 25 HOUR),
+      ('ip', 'entretien-recente', 0, NOW(3) - INTERVAL 23 HOUR)`);
+  const [echue, vivante] = ['e', 'f'].map((c) => c.repeat(64));
+  await pool.query(`INSERT INTO sessions (token_hash, user_id, expires_at) VALUES
+      (?, ?, UTC_TIMESTAMP(3) - INTERVAL 1 MINUTE), (?, ?, UTC_TIMESTAMP(3) + INTERVAL 1 DAY)`,
+  [echue, u.id, vivante, u.id]);
+  await auth.store.cleanup();
+  const [tentatives] = await pool.query(
+    `SELECT key_value FROM login_attempts WHERE key_value LIKE 'entretien-%'`);
+  const restent = tentatives.map((t) => t.key_value);
+  check('l’entretien efface les tentatives manquées de plus d’un jour',
+    !restent.includes('entretien-vieille'));
+  check('et garde celles du jour', restent.includes('entretien-recente'));
+  if (restent.length !== 1) console.log('        restent :', restent.join(', ') || 'aucune');
+  const [ouvertes] = await pool.query(
+    'SELECT token_hash FROM sessions WHERE token_hash IN (?, ?)', [echue, vivante]);
+  const gardees = ouvertes.map((s) => s.token_hash);
+  check('il efface les sessions échues', !gardees.includes(echue));
+  check('et garde les vivantes', gardees.includes(vivante));
+  await pool.query(`DELETE FROM login_attempts WHERE key_value LIKE 'entretien-%'`);
+  await pool.query('DELETE FROM sessions WHERE token_hash = ?', [vivante]);
+}
+
 /* --------------------------------------------------- vie privée en base */
 
 const [rows] = await pool.query(`SELECT email, pseudo, password_hash FROM users WHERE status = 'deleted'`);

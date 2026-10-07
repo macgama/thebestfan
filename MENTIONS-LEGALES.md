@@ -82,7 +82,8 @@ Nous traitons les signalements dans les meilleurs délais.
 
 ## Données personnelles
 
-Voir `CONFIDENTIALITE.md`.
+Voir la politique de confidentialité, publiée à `/confidentialite`
+(`public/confidentialite.html`).
 
 ## Conditions de vente
 

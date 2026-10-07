@@ -486,9 +486,18 @@ if (process.env.DATABASE_URL) {
        Après la fermeture du jeu, comme l'interrupteur de présence. */
     app.use('/api/notifications', notifications.router);
 
-    // Entretien quotidien : sessions, jetons et tentatives périmés.
-    setInterval(() => auth.store.cleanup().catch((e) => console.error('[auth] purge', e.message)),
-      24 * 60 * 60 * 1000).unref();
+    /* Entretien quotidien : sessions, jetons et tentatives périmés.
+
+       **Une première fois au démarrage**, puis toutes les vingt-quatre heures.
+       Le minuteur seul ne passait qu'au bout d'un jour entier sans
+       redémarrage : un serveur relancé plus souvent ne purgeait jamais, et la
+       politique de confidentialité, qui promet « deux jours au plus » pour les
+       tentatives de connexion manquées, aurait menti. Sans `await` : le
+       démarrage n'attend pas le ménage. */
+    const entretien = () => auth.store.cleanup()
+      .catch((e) => console.error('[auth] purge', e.message));
+    entretien();
+    setInterval(entretien, 24 * 60 * 60 * 1000).unref();
 
     console.log('authentification active');
 
@@ -1135,6 +1144,10 @@ app.get('/carnet', (_req, res) => page(res, 'carnet.html'));
    ce qu'il est en train de faire, et la réponse est à côté de l'étape. */
 app.get('/aide', (_req, res) => page(res, 'aide.html'));
 app.get('/repetition', (_req, res) => page(res, 'repetition.html'));
+/* La politique de confidentialité, lisible sans compte et sans base : on la
+   cherche aussi le jour où le reste du jeu ne répond plus. La vitrine, la
+   porte de connexion et « Mon compte » y mènent. */
+app.get('/confidentialite', (_req, res) => page(res, 'confidentialite.html'));
 
 /* -------------------------------------------------------------- socket.io */
 
