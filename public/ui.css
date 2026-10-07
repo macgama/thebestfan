@@ -528,7 +528,10 @@
 .tbf-scene[data-evo="1"]{--taille-age:80%}
 .tbf-scene[data-evo="2"]{--taille-age:90%}
 .tbf-scene[data-evo] .tbf-pose{left:-50%;width:200%;pointer-events:none;top:auto;
-  bottom:var(--sous,0);height:var(--taille,var(--taille-age,100%))}
+  bottom:var(--sous,0);height:var(--taille,var(--taille-age,100%));translate:var(--decale,0) 0}
+/* `--decale` recentre le corps quand un objet étire le dessin d'un côté ; il
+   se compte en hauteurs de la scène (`cqh`). */
+.tbf-scene[data-evo]{container-type:size}
 
 /* ------------------------------------------------------------- LE MOMENT FORT
 
