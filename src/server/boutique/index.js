@@ -43,6 +43,7 @@ import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, MONNAIE, RAYONS, enEuro
 import { etalStuff, etalTenues, prixDe } from '../../shared/etal.js';
 import { STUFF_BY_ID } from '../../shared/fanzzy/inventaire.js';
 import { tenuesPubliees } from '../fanzzy/tenues.js';
+import { ouverts } from '../contenus/index.js';
 
 const API = 'https://api.stripe.com/v1';
 
@@ -381,7 +382,10 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       /* Le nombre d'exemplaires, et pas seulement « possédé » : on achète une
          pièce plusieurs fois, et la page doit dire combien on en a. Une ligne
          existe parce qu'on a la pièce (même règle que `stuffCopies` du deck). */
-      stuff: etalStuff(new Map(ont.map((o) => [o.stuff_id, Math.max(1, Number(o.copies) || 1)]))),
+      /* Ce qui est ouvert, et rien d'autre : une pièce fermée (neuve, qui
+         attend sa saison) ne se vend pas plus qu'elle ne se tire. */
+      stuff: etalStuff(new Map(ont.map((o) => [o.stuff_id, Math.max(1, Number(o.copies) || 1)])))
+        .filter((s) => ouverts('stuff').has(s.id)),
       tenues: etalTenues(tenuesPubliees()),
       posees: posees.map((r) => ({ fanzzy: r.fanzzy_id, stade: Number(r.stage), tenue: r.skin_id })),
     });
@@ -414,7 +418,8 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
   router.post('/depenser', requireAuth, async (req, res) => {
     const type = String(req.body?.type ?? '');
     const id = String(req.body?.id ?? '');
-    const prix = prixDe(type, id, tenuesPubliees());
+    const prix = type === 'stuff' && !ouverts('stuff').has(id)
+      ? null : prixDe(type, id, tenuesPubliees());
     if (prix === null) return res.status(400).json({ error: 'boutique.error.objet_inconnu' });
 
     const conn = await pool.getConnection();

@@ -112,7 +112,8 @@ export const estUnBut = (e) => e.type === 'Goal'
  */
 export function createPoller({ client, store, broadcast, onGoal, onFinished,
                                onEvents, onStatus, onAbsent,
-                               fixturesAuFil = () => [], log = console }) {
+                               fixturesAuFil = () => [], inventaire = null,
+                               log = console }) {
   // Matchs dont la fin a déjà été signalée. Sans ce garde, chaque tour
   // d'horloge réinvaliderait le cache d'une compétition déjà à jour.
   const finis = new Set();
@@ -634,6 +635,15 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
     return ids.length;
   }
 
+  /* --------------------------------------------------------- compétitions */
+
+  /** L'inventaire des compétitions et de leurs saisons : `inventaire.js`. */
+  async function passerInventaire() {
+    const { ecrites, nouvelles } = await inventaire();
+    if (nouvelles) log.log?.(`[foot] competitions : ${nouvelles} saison(s) nouvelle(s) sur ${ecrites}`);
+    return ecrites;
+  }
+
   /* ----------------------------------------------------------- boucles */
 
   async function safely(name, fn) {
@@ -664,9 +674,25 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
     timers.push(setInterval(() => safely('classements', refreshStandings), 6 * 3600_000));
     timers.push(setInterval(() => safely('calendriers', refreshAllTeams), 24 * 3600_000));
     timers.push(setInterval(() => client.resetDay(), 24 * 3600_000));
+    if (inventaire) {
+      timers.push(setInterval(() => safely('competitions', passerInventaire), 24 * 3600_000));
+    }
 
-    // Premier remplissage peu après le démarrage.
+    /* Premier remplissage peu après le démarrage.
+
+       **Les calendriers aussi.** Ils n'avaient que leur tour de vingt-quatre
+       heures, compté depuis le démarrage : un serveur redémarré chaque jour —
+       une mise en ligne, un réglage — ne le passait jamais. Les clubs suivis
+       gardaient le calendrier lu le jour où on les avait suivis, et le match
+       d'au-delà de sa fenêtre de quarante-cinq jours n'arrivait jamais en
+       base, donc jamais au direct. Trois appels par club suivi, une fois par
+       démarrage. L'inventaire des compétitions, un appel, suit le même
+       chemin : voir `inventaire.js`. */
     timers.push(setTimeout(() => safely('classements', refreshStandings), 30_000));
+    timers.push(setTimeout(() => safely('calendriers', refreshAllTeams), 120_000));
+    if (inventaire) {
+      timers.push(setTimeout(() => safely('competitions', passerInventaire), 300_000));
+    }
     return this;
   }
 
@@ -676,7 +702,8 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
     timers = [];
   }
 
-  return { start, stop, refreshTeam, refreshAllTeams, pollLive, refreshStandings };
+  return { start, stop, refreshTeam, refreshAllTeams, pollLive, refreshStandings,
+           passerInventaire };
 }
 
 /** Forme envoyée aux clients : pas de données brutes de l'API. */

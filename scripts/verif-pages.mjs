@@ -249,6 +249,15 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     ['apple-touch-icon', 'l’icône d’iOS — sans elle, iPhone pose une capture d’écran'],
     ['theme-color', 'la couleur de la barre d’état'],
   ];
+  /* **Les barres du téléphone** (ui.css) : sur Android, chaque page retire
+     `viewport-fit=cover` avant d'être dessinée, pour que Chrome la tienne
+     lui-même entre la barre d'état et les boutons du bas. Une page qui l'oublie
+     redevient celle que Gaël voyait coupée sur son Samsung, en haut ou en bas. */
+  if (!/<meta name="viewport"[^>]*>\n<script>[^<]*if\(\/Android\/i\.test\(navigator\.userAgent\)\)[^<]*viewport-fit=cover[^<]*<\/script>/.test(html)) {
+    ko(nom, 'le script des barres du téléphone manque juste après la balise viewport : '
+      + 'sur Android, la page passerait sous la barre d’état et les boutons du bas');
+    propre = false;
+  }
   for (const [motif, quoi] of POUR_INSTALLER) {
     if (!html.includes(motif)) {
       ko(nom, `${quoi} manque : installée depuis cette page, l’application `
@@ -545,19 +554,31 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
      Le format de secours est le PNG et non le JPEG : ces objets sont détourés
      et ont une transparence à garder. Chercher un `.jpg` ici passerait au vert
      sur des fichiers qui n'existent pas. */
+  /* Une pièce **fermée dans le code** (`publie: false`, neuve, qui attend sa
+     saison) peut attendre son dessin : personne ne la tire ni ne l'achète.
+     Elle est nommée, sans rougir — c'est la liste que Gaël dessine. Ouverte,
+     elle rentre dans la règle commune. */
   const pieces = STUFF.map((s) => s.id);
+  const fermees = new Set(STUFF.filter((s) => s.publie === false).map((s) => s.id));
   const nues = [];
+  const enAttente = new Set();
   for (const id of pieces) {
     for (const ext of ['.avif', '.webp', '.png']) {
       const f = path.join(DOSSIER, 'img', 'stuff', id + ext);
-      try { await readFile(f); } catch { nues.push(id + ext); }
+      try { await readFile(f); } catch {
+        if (fermees.has(id)) enAttente.add(id); else nues.push(id + ext);
+      }
     }
+  }
+  if (enAttente.size) {
+    ok('stuff-art.js', `${enAttente.size} pièce(s) fermée(s) attendent leur dessin`
+      + ' (scripts/stuff-images.mjs --invites)');
   }
   if (nues.length) {
     ko('stuff-art.js', `pièces sans dessin : ${nues.join(', ')}`
       + ' — les invites sont dans scripts/stuff-images.mjs --invites');
   } else if (pieces.length) {
-    ok('stuff-art.js', `${pieces.length} pièce(s) d’équipement détourées en trois formats`);
+    ok('stuff-art.js', `${pieces.length - enAttente.size} pièce(s) d’équipement détourées en trois formats`);
   }
 
   /* Les dessins des chants, même raison et même forme que les cartes d'action.
@@ -969,7 +990,7 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
   for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     const html = await readFile(path.join(DOSSIER, nom), 'utf8');
     // Un écran sans défilement se reconnaît à sa hauteur fixe et à sa coupe.
-    const fige = /height:\s*100dvh/.test(html) && /overflow:\s*hidden/.test(html)
+    const fige = /height:\s*(?:max\()?100dvh/.test(html) && /overflow:\s*hidden/.test(html)
       && !/min-height:\s*100dvh/.test(html);
     if (fige) continue;
     const degage = /padding[^;}]*env\(safe-area-inset-bottom\)/.test(html)
