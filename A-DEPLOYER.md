@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**Les légendaires : entrée en jeu et vraie rareté** (branche
+`claude/legendaires-acces-rarete-bxduel`, 7 octobre 2026, choix de Gaël).
+Il se dépose avec ce qui est en dessous, ou seul. **Serveur et pages, sans
+schéma** : construction, puis redémarrage hors d'un match.
+
+- Un seul légendaire par deck (Fanzzy ou pièce), jamais titulaire. Il dort
+  jusqu'à 5 chants réussis (BON ou PARFAIT) du joueur, au duel comme au Virage ;
+  l'éveil offre au Fanzzy légendaire du banc un changement gratuit. Un deck
+  d'avant la règle se joue selon elle, sans rien perdre. Réglage :
+  /admin, LA COMPOSITION DU DECK.
+- Boosters : 2 % de Fanzzy légendaire et 3 % de pièce légendaire par booster
+  (avant : environ 19 % et 10 %). Réglages : /admin, BOOSTERS ET ÉCHARPES.
+- L'étal ne vend plus de pièce légendaire.
+- Paquet de bienvenue : le commun est titulaire, le légendaire offert attend
+  sur le banc.
+- Contrôlé par `npm run legende:smoke` (neuve).
+
+---
+
 **Le Fanzzy regarde le match en grand** (branche `claude/ecran-large-pkbkwj`,
 7 octobre 2026, demandé par Gaël). Page seule (`public/aujourdhui.html`) :
 ni schéma ni redémarrage.

@@ -49,6 +49,9 @@ import { STUFF, STUFF_BY_ID } from './fanzzy/inventaire.js';
 /** Les raretés que l'étal sait tarifer, de la plus commune à la plus rare. */
 export const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
 
+/** Celles que l'étal vend : toutes sauf la légendaire, qui se tire. */
+export const RARETES_EN_VENTE = ['commune', 'rare', 'epique'];
+
 /**
  * Le prix d'une pièce d'équipement, **en écharpes**.
  *
@@ -58,6 +61,10 @@ export const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
  */
 export function prixStuff(rarete) {
   if (!RARETES.includes(rarete)) return null;
+  /* **Une pièce légendaire ne s'achète pas.** Elle ne se gagne qu'en ouvrant
+     des boosters : la vendre 520 écharpes contournait sa rareté (décision de
+     Gaël du 7 octobre 2026). `null` la retire de l'étal et refuse l'achat. */
+  if (!RARETES_EN_VENTE.includes(rarete)) return null;
   return reglage(`etal.stuff_${rarete}`) ?? null;
 }
 

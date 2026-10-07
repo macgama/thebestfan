@@ -864,6 +864,8 @@ const MESSAGES = {
   'deck.error.action_unknown':    'Cette carte n\u2019existe pas.',
   'deck.error.action_not_owned':  'Tu ne possèdes pas cette carte.',
   'deck.error.too_many_copies':   'Trop d’exemplaires d’une même carte.',
+  'deck.error.legende_une_seule': 'Un seul légendaire par deck, Fanzzy ou pièce d\u2019équipement.',
+  'deck.error.legende_titulaire': 'Un Fanzzy légendaire ne peut pas être titulaire : il entre en cours de partie.',
   'deck.error.invalid':           'Le deck a été refusé :',
   'deck.error.none':              'Aucun deck enregistré pour l\u2019instant.',
   'deck.error.server':            'Le serveur n\u2019a pas pu enregistrer le deck.',
@@ -1055,6 +1057,12 @@ async function charger() {
  * Une seule fonction pour les six endroits qui comptaient ces places : c'est
  * la divergence entre elles qui a produit la panne.
  */
+/* Les chants réussis qui éveillent un légendaire (`shared/legende.js`). */
+const legendeChants = () => {
+  const n = Number(S.regles?.legende);
+  return Number.isFinite(n) ? n : 5;
+};
+
 const placesFanzzy = () =>
   Math.min(S.regles.fanzzy, S.possede?.fanzzyMax ?? S.regles.fanzzy);
 
@@ -1228,7 +1236,10 @@ function tribuneHTML() {
     <b>Arbitre</b>. Un personnage et ses âges sont
     <b>une seule carte</b> : un évolué n\u2019occupe pas un second rang.
     Tout le monde entre au premier âge, et c\u2019est la carte
-    <b>Relève</b> qui le fait grandir en cours de partie.</p>`);
+    <b>Relève</b> qui le fait grandir en cours de partie.
+    <b>Un seul légendaire</b> par deck, Fanzzy ou pièce : il dort jusqu\u2019à
+    ${legendeChants()} chants réussis de ta part, et un Fanzzy légendaire ne
+    peut pas être titulaire.</p>`);
 
   if (S.deck.fanzzy.length === placesFanzzy() && !S.deck.actions.includes('a-arbitre')) {
     out.push(`<div class="avert doux"><b>TES REMPLAÇANTS NE JOUERONT PAS</b>

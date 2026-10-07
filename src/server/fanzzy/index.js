@@ -2,7 +2,7 @@ import express from 'express';
 // Les cartes viennent de la base ; les barèmes — séries, types, raretés, taux,
 // coûts — restent du code, parce qu'ils décrivent les règles du jeu et non son
 // contenu. On ne change pas un taux de tirage depuis un écran d'administration.
-import { SETS, TYPES, RAR, RATES, SCARVES, POIGNEE_DE_REPLI, EVO_COST }
+import { SETS, TYPES, RAR, SCARVES, POIGNEE_DE_REPLI, EVO_COST, tauxDuMoment }
   from '../../shared/fanzzy/dex.js';
 import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
   racineDe, lignee, auStade } from './catalogue.js';
@@ -652,8 +652,28 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   function pickRarity(slot) {
     const r = Math.random();
     let acc = 0;
-    for (const [rar, p] of RATES[slot]) { acc += p; if (r < acc) return rar; }
+    for (const [rar, p] of (OBJETS[slot] ?? tauxDuMoment()[slot])) { acc += p; if (r < acc) return rar; }
     return 'rare';
+  }
+
+  /* Les cartes d'action et les lieux gardent la table d'avant (15 % de
+     légendaire) : la rareté demandée le 7 octobre 2026 vise les Fanzzy et
+     l'équipement, et `tauxDuMoment` se règle désormais pour les Fanzzy. */
+  const OBJETS = { objet: [['commune', 0.85], ['legendaire', 0.15]] };
+
+  /**
+   * Une place ouverte tombée sur l'équipement vise-t-elle une légendaire ?
+   *
+   * `pack.legendaire_stuff` est la chance **par booster**. Trois places
+   * ouvertes, dont chacune tombe sur l'équipement avec la part de
+   * `PLACES_OUVERTES` : la chance par tirage d'équipement s'en déduit, pour que
+   * le booster entier tienne le taux affiché dans /admin.
+   */
+  function stuffLegendaireVise() {
+    const p = Math.min(100, Math.max(0, Number(reglage('pack.legendaire_stuff')) || 0)) / 100;
+    const part = PLACES_OUVERTES.find(([c]) => c === 'stuff')?.[1] ?? 0.23;
+    const parPlace = 1 - Math.pow(1 - p, 1 / 3);
+    return Math.random() < Math.min(1, parPlace / part);
   }
 
   /**
@@ -893,8 +913,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          liste du code tant que `sql/contenus.sql` n'est pas appliqué, donc une
          base incomplète joue exactement comme avant au lieu de se vider. */
       const ouvert = jouables('stuff');
-      const def = ouvert.find((s) => s.rar === pickRarity(5) && !stuffPris.has(s.id))
-        ?? ouvert.find((s) => !stuffPris.has(s.id));
+      /* **Une légendaire ne sort que si le tirage la vise**, et le repli ne
+         la donne plus : il prenait la première pièce non possédée de la
+         liste, qui pouvait être la Bâche dès qu'on avait les communes. Au
+         hasard parmi les pièces visées, plus dans l'ordre du code. */
+      const leg = stuffLegendaireVise();
+      const libres = ouvert.filter((s) => !stuffPris.has(s.id)
+        && (s.rar === 'legendaire') === leg);
+      const def = libres.length ? rnd(libres) : null;
       // Tout possédé : un doublon d'équipement rapporte des écharpes, comme un
       // doublon de supporter, au tarif de sa rareté. Il ne se perd pas — et ce
       // n'est pas un repli : la poignée de repli ne le touche pas.
@@ -926,7 +952,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       const ouvert = jouables('stade').filter((l) => l.id !== LIEU_DEFAUT);
       if (!ouvert.length) return repli();
       const libres = ouvert.filter((l) => !lieuxPris.has(l.id));
-      const vise = pickRarity(5);
+      const vise = pickRarity('objet');
       const def = libres.find((l) => l.rar === vise) ?? (libres.length ? rnd(libres) : null);
       // Tout possédé : un doublon rapporte des écharpes, comme l'équipement.
       if (!def) {
@@ -959,7 +985,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const libres = jouables('action')
       .filter((a) => a.rar !== 'commune' && !actionsPrises.has(a.id));
     if (!libres.length) return repli();
-    const vise = pickRarity(5);
+    const vise = pickRarity('objet');
     const def = rnd(libres.filter((a) => a.rar === vise).length
       ? libres.filter((a) => a.rar === vise) : libres);
     actionsPrises.add(def.id);
@@ -1633,7 +1659,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       // c'est précisément le genre de copie que ce projet a déjà payé.
       aCollectionner: obtenables().length,
       seriesOuvertes: ouvertes,
-      types: TYPES, scarves: SCARVES, evoCost: EVO_COST, rar: RAR, rates: RATES,
+      types: TYPES, scarves: SCARVES, evoCost: EVO_COST, rar: RAR, rates: tauxDuMoment(),
       // Un booster ne tire pas que des supporters : ses places 4 et 5
       // donnent des tenues, de l’équipement et des cartes d’action. La page
       // ne recevait que le catalogue Fanzzy, si bien qu’elle traitait les
