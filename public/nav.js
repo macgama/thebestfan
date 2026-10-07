@@ -1549,10 +1549,10 @@
        (contrat R10). La même valeur pour les deux, et pour les pages qui
        écrivent ces clés. */
     const qui = user ? (user.id ?? user.pseudo) : null;
-    /* Sans les rails du grand écran (`RAILS`, dans menu.js) depuis le
-       7 octobre 2026 : Gaël veut sur un ordinateur l'application du
-       téléphone, au milieu de l'écran, sans rien autour (ui.css, « La
-       largeur de la colonne »). Le menu est le tiroir, partout. */
+    /* Le menu est le tiroir, partout : sur un ordinateur, Gaël veut
+       l'application du téléphone au milieu de l'écran, sans les tuiles de
+       l'accueil autour (7 octobre 2026 ; ui.css, « La largeur de la
+       colonne »). */
     const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger'), { qui }) : null;
 
     /* **Le HUD replié**, pour un joueur connecté, hors des deux écrans de jeu :
