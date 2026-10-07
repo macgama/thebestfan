@@ -70,8 +70,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    la place, pour qu'aucun mot ne passe sous elle. */
 .une{position:relative}
 .une>.relancer{position:absolute;z-index:2;top:-6px;right:-4px}
-@media (max-width:559px){ .une>.tbf-mission .tbf-mission-titre{padding-right:34px} }
-@media (min-width:560px){ .une>.tbf-mission>.tbf-mission-gain{margin-right:36px} }
+.une>.tbf-mission .tbf-mission-titre{padding-right:34px}
 
 /* Ce que « fait » compte, dit une fois sous les missions du jour. */
 .regle{margin-top:18px;padding:12px 14px 13px}
@@ -159,7 +158,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    mot revient dès qu'il tient (une colonne de cent pixels à 560), et le
    ticket du palier prêt, au-dessus, l'écrit toujours en entier ; le lecteur
    d'écran entend la phrase partout. */
-@media (max-width:559px){ .tbf-noeud>.insigne .mot{display:none} }
+.tbf-noeud>.insigne .mot{display:none}
 
 /* La case de BD d'un palier du carnet : le tampon d'un titre gagné, et celui
    de l'insigne posé (« LISERÉ S1 »), sous la ligne de la case. Il peut
@@ -279,16 +278,9 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 
-/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
-   règle commune des pages larges : les missions se rangent en colonnes de la
-   largeur d'un téléphone, le bonus du jour et la règle gardent toute la
-   largeur. */
-@media (min-width:1180px) and (min-height:560px){
-  .tbf-missions{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:10px 14px;align-items:start}
-}
 </style>
 </head>
-<body class="tbf-large">
+<body>
 <main id="app">
   <p class="tbf-sous">Ce qu’il y a à faire, et ce que ça rapporte</p>
 

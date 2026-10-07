@@ -30,7 +30,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
-import { controlerLarge } from './large-ui.mjs';
+import { controlerColonne } from './colonne-ui.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 let failures = 0;
@@ -681,21 +681,14 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   pronoServi = null;
 }
 
-/* ---------------------------------------------------------- grand écran
+/* ------------------------------------------------------- sur un ordinateur
 
-   La page des matchs est une page large (`tbf-large`) : ses compétitions
-   se rangent en colonnes de la largeur d'un téléphone, chacune avec ses
-   matchs. Deux compétitions servies, pour qu'il y ait deux colonnes. */
-selections = true;
-await controlerLarge(page, check, { nom: 'la page des matchs', liste: '#liste>.ligue',
-  pret: () => jusqua(async () => (await page.$$('#liste>.ligue')).length === 2) });
-selections = false;
+   La page des matchs garde la largeur du téléphone (Gaël, 7 octobre 2026). */
+await controlerColonne(page, check, { nom: 'la page des matchs',
+  pret: () => jusqua(async () => (await page.$$('#liste>.ligue')).length === 1) });
 
-/* La fiche d'un match, sur grand écran, est une page comme les autres : elle
-   se pose dans la colonne, sous la barre du haut, entre les tuiles qui
-   restent à portée ; l'affiche à gauche, le fil à droite. La flèche de la
-   barre la referme, sans quitter les matchs (Gaël, 6 octobre 2026 : une
-   fenêtre de téléphone au milieu d'un écran noir). */
+/* La fiche d'un match aussi : sa colonne au milieu de l'écran, et le Fanzzy
+   qui regarde le match au coin de cette colonne, pas à celui de l'écran. */
 {
   await page.setViewport({ width: 1366, height: 682 });
   await page.reload({ waitUntil: 'networkidle0' });
@@ -704,44 +697,20 @@ selections = false;
   await jusqua(async () => await page.$('#souspage') !== null);
   await dodo(300);
   if (process.env.TBF_CAPTURES) {
-    await page.screenshot({ path: path.join(process.env.TBF_CAPTURES, 'fiche-match-large.png') });
+    await page.screenshot({ path: path.join(process.env.TBF_CAPTURES, 'fiche-match-ordinateur.png') });
   }
   const g = await page.evaluate(() => {
-    const b = (s) => document.querySelector(s)?.getBoundingClientRect();
-    const [fiche, aff, sous, haut] = [b('#fiche'), b('#fcorps .aff'), b('#souspage'), b('#app>.tbf-haut')];
-    const tuiles = [...document.querySelectorAll('.tbf-rails .tbf-case')].map((a) => {
-      const r = a.getBoundingClientRect();
-      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.tbf-case') === a;
-    });
-    return { fiche: { l: fiche.left, r: fiche.right, t: fiche.top }, haut: haut?.bottom,
-      aff: { r: aff.right, t: aff.top }, sous: { l: sous.left, t: sous.top }, tuiles,
-      fermer: getComputedStyle(document.getElementById('ferme')).display };
+    const f = document.querySelector('#fiche>.f').getBoundingClientRect();
+    const w = document.getElementById('fwatch');
+    const r = w.getBoundingClientRect();
+    return { l: f.left, r: f.right, w: f.width, milieu: innerWidth / 2,
+      fanzzy: w.hidden ? null : r.left - f.left };
   });
-  check('à 1 366 px, la fiche du match se pose dans la colonne, sous la barre',
-    g.fiche.l > 120 && g.fiche.r < 1246 && Math.abs(g.fiche.t - g.haut) < 2
-    || (console.log('        ', JSON.stringify(g)), false));
-  check('les dix tuiles restent visibles et cliquables autour d’elle',
-    g.tuiles.length === 10 && g.tuiles.every(Boolean) || (console.log('        ', g.tuiles), false));
-  check('l’affiche à gauche, le fil à droite, à la même hauteur',
-    g.sous.l > g.aff.r && Math.abs(g.sous.t - g.aff.t) < 40 || (console.log('        ', JSON.stringify(g)), false));
-  check('sa propre flèche s’efface devant celle de la barre', g.fermer === 'none');
-  /* Le Fanzzy qui regarde le match, sous les deux portes et au milieu de
-     l'affiche, grand : il traînait dans le coin, à 96 px (Gaël, 7 octobre). */
-  const spect = await page.evaluate(() => {
-    const w = document.getElementById('fwatch').getBoundingClientRect();
-    const portes = document.querySelector('#fcorps .allers').getBoundingClientRect();
-    return { haut: w.top - portes.bottom, centre: (w.left + w.right) / 2 - (portes.left + portes.right) / 2,
-      h: w.height, bas: w.bottom, fenetre: innerHeight };
-  });
-  check('le Fanzzy regarde sous Virage et Duel, au milieu, en grand',
-    spect.haut >= 0 && spect.haut < 40 && Math.abs(spect.centre) < 3 && spect.h >= 220
-    && spect.bas <= spect.fenetre || (console.log('        ', JSON.stringify(spect)), false));
-  await page.click('#app>.tbf-haut .tbf-retour');
-  await dodo(300);
-  check('la flèche de la barre referme la fiche sans quitter les matchs',
-    await page.evaluate(() => !document.getElementById('fiche').classList.contains('on')
-      && location.pathname === '/matchs'
-      && getComputedStyle(document.getElementById('liste')).visibility === 'visible'));
+  check('à 1 366 px, la fiche du match garde la largeur du téléphone, au milieu',
+    g.w <= 480 && Math.abs((g.l + g.r) / 2 - g.milieu) <= 2 || (console.log('        ', g), false));
+  check('le Fanzzy qui regarde se tient au coin de la fiche',
+    g.fanzzy == null || (g.fanzzy >= 0 && g.fanzzy < 20) || (console.log('        ', g), false));
+  await page.evaluate(() => document.getElementById('ferme').click());
   await page.setViewport({ width: 400, height: 880 });
 }
 

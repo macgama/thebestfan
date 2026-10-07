@@ -658,21 +658,6 @@ h2{margin:20px 16px 9px}
 .gcArt .gcIllu{position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);
   object-fit:contain;object-position:50% 42%;border-radius:6px}
 
-/* **Sur un écran large, la carte à gauche et sa légende à droite**, comme on
-   tient une carte à côté de sa règle. Empilées, la légende passait sous le
-   bord de l'écran d'un ordinateur portable (768 px de haut, barre comprise),
-   et les trois chiffres s'étiraient chacun sur un tiers de neuf cents pixels. */
-@media (min-width:700px){
-  .grandeCarte{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:24px;
-    align-content:start;align-items:start}
-  .grandeCarte>*{grid-column:2}
-  .grandeCarte>.gcArt{grid-column:1;grid-row:1 / span 8;align-self:start}
-  .grandeCarte>.gcRang{margin-top:8px}
-  /* À côté de sa légende, la carte n'a plus à laisser de place dessous : elle
-     prend la hauteur que le panneau lui laisse. */
-  .grandeCarte>.gcArt{width:min(300px,calc(60dvh * 63 / 80));max-height:60dvh}
-  .gcChiffres{max-width:420px}
-}
 .gcRang{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.14em;
   text-transform:uppercase}
 .gcFam{color:var(--fc,#8257DA);font-weight:700}
@@ -713,12 +698,6 @@ h2{margin:20px 16px 9px}
 .carte{cursor:pointer}
 .carte:active{transform:translateY(2px)}
 
-/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
-   barre du bas suit la colonne élargie, ENREGISTRER sous le bord droit de
-   la page comme sur le téléphone. */
-@media (min-width:1180px) and (min-height:560px){
-  .barre .in{max-width:var(--colonne-large)}
-}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -728,7 +707,7 @@ h2{margin:20px 16px 9px}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="tbf-large">
+<body>
 <main id="app">
   <!-- **Le même rail que /fanzzy**, au pixel : MON FANZZY et CLASSEUR dans le
        creux, DECK en plaque à côté. Seul change ce qui est allumé — ici la

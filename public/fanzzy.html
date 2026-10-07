@@ -68,30 +68,16 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 #s-dex{margin-inline:calc(-1 * var(--gouttiere,14px));padding-inline:var(--gouttiere,14px);
   overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain}
 #s-dex.on{display:block}
-/* **Trois colonnes, puis six — une lignée par rangée, puis deux.**
+/* **Trois colonnes, une lignée par rangée.**
 
    La brique compte ses colonnes à la largeur (trois à 360 px, cinq au plus).
    Le classeur range ses cartes par lignée — TR1, TR1B, TR1C — et c'est ce qui
    rend la progression lisible d'un coup d'œil : trois âges, une rangée. À
    cinq colonnes, les lignées se coupaient en travers des rangées, et l'on ne
-   savait plus où commençait le personnage suivant. Six colonnes de cent
-   onze pixels à 768 px gardent deux lignées par rangée ; sous 640 px, six
-   colonnes tomberaient sous les quatre-vingt-huit pixels d'une carte lisible,
-   et la page garde les trois. C'est la grille, donc la place : la case et sa
+   savait plus où commençait le personnage suivant. C'est la grille, donc la
+   place : la case et sa
    carte restent celles de la brique. */
 #s-dex .tbf-album-cartes{grid-template-columns:repeat(3,minmax(0,1fr))}
-/* **Les vitrines, deux par rangée sur une tablette.** Une série ferme sur
-   ses cinq légendaires, chacune en case VITRINE : à 768 px, cinq vitrines
-   pleine largeur (560 au plus, au milieu) faisaient six cents pixels de
-   rangées à moitié vides. Sur six colonnes, chacune en prend trois — sa
-   carte garde la largeur d'une case, son mot tient à côté —, et la première
-   repart d'une rangée propre, pour ne pas se coller au bout de la dernière
-   lignée. À trois colonnes, elle prend toute la rangée, comme la brique. */
-@media (min-width:640px){
-  #s-dex .tbf-album-cartes{grid-template-columns:repeat(6,minmax(0,1fr))}
-  #s-dex .tbf-album-vitrine{grid-column:span 3}
-  #s-dex .tbf-album-cartes>:not(.tbf-album-vitrine)+.tbf-album-vitrine{grid-column:1 / span 3}
-}
 /* Une case possédée ouvre la fiche, comme la pochette : la main du doigt, et
    le contour du clavier. Le reste de la case est la brique. */
 #s-dex .tbf-album-case[data-open]{cursor:pointer}
@@ -261,9 +247,6 @@ html[data-calme~="animations"] .toast.on{animation:none}
   rotate:var(--rot);padding:9px 16px 7px;background:var(--craie);color:var(--encre);white-space:nowrap;
   box-shadow:0 0 0 1.5px var(--encre),3px 3px 0 1.5px rgba(7,9,12,.6)}
 .tvide-mot>.tbf-marqueur{font-size:16px;line-height:20px}
-/* Sur une tablette, la scène fait sept cents pixels de côté et un mot de
-   seize s'y perd : celui de la place du classement, vingt-deux. */
-@media (min-width:600px){ .tvide-mot>.tbf-marqueur{font-size:22px;line-height:26px} }
 /* La réserve en sticker sur le coin de la bâche — « 4 », les boosters qui
    attendent —, en craie comme le compte des fentes du kiosque. Pas le rouge
    de la pastille : ce n'est pas un direct, c'est un compte. */
@@ -341,7 +324,7 @@ html[data-calme~="animations"] .toast.on{animation:none}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="tbf-large">
+<body>
 <main id="app">
   <!-- Plus de bandeau « FANZZY / collection » : la barre du haut dit
        maintenant où l'on est, et le répéter trente pixels plus bas ne faisait

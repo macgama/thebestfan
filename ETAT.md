@@ -2101,6 +2101,17 @@ Par ordre d'utilité.
    1 366 et 1 100 px (`scripts/large-ui.mjs`). Restent en colonne : l'accueil
    (ses tuiles), le Virage et le duel (leur scène).
 
+   **Défait le 7 octobre 2026, à la demande de Gaël** (« trop large, trop
+   d'informations ; je préfère un affichage style mobile », puis « pour toutes
+   les pages, la même largeur ») : la colonne fait **480 px au plus, sur
+   toutes les pages** (`--colonne`, « La largeur de la colonne » dans
+   `ui.css`), au milieu de l'écran, sans les tuiles autour ; le menu est le
+   tiroir, partout. Plus de `tbf-large`, et les règles écrites pour une
+   colonne plus large que le téléphone (`min-width` au-delà de 480 px) sont
+   parties. Contrôle : `controlerColonne` (`scripts/colonne-ui.mjs`), à
+   1 366 et 1 920 px, dans `large:ui` (l'accueil et les arènes compris) et
+   les suites des pages. `RAILS` reste dans `menu.js`, monté par personne.
+
 3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
    765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
    (`TYPES` dans `dex.js`, éprouvé par `catalogue:test`). Ce qui manquait, c'est

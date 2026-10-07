@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Sur ordinateur, toutes les pages à la largeur du téléphone** (branche
+`claude/ecran-large-pkbkwj`, 7 octobre 2026, demandé par Gaël). Pages
+seules : construction, ni schéma ni redémarrage.
+
+- Sur un ordinateur comme sur une tablette, chaque page (accueil, Virage et
+  duel compris) a la largeur d'un grand téléphone, 480 px, au milieu de
+  l'écran. Les pages larges, les listes en colonnes et les tuiles de
+  l'accueil autour des pages sont retirées ; le menu est le tiroir, partout.
+- La fiche d'un match reprend sa forme de téléphone, son Fanzzy au coin de
+  la fiche (ce qui défait l'entrée « Le Fanzzy regarde le match en grand »
+  plus bas).
+- Contrôlé par `npm run large:ui` et les suites des pages.
+
+---
+
 **RP2 redessiné, et le Fanzzy grandit d'un âge à l'autre** (branche
 `claude/project-thread-j45ndm`, 7 octobre 2026, demandé par Gaël). Il se
 dépose avec ce qui est en dessous, ou seul. **Pages et images seules**, sans
@@ -19,6 +34,7 @@ schéma ni redémarrage : la construction suffit.
 - La lueur de l'âge (accord de Gaël) : aucune à l'âge 1, un halo bleu de rare à
   l'âge 2, un halo violet d'épique plus large à l'âge 3, collé au dessin, sur
   l'accueil, la carte et dans les scènes.
+
 ---
 
 **Les légendaires : entrée en jeu et vraie rareté** (branche

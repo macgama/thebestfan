@@ -58,6 +58,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
+import { controlerColonne } from './colonne-ui.mjs';
 import { createRepetition } from '../src/server/repetition/index.js';
 import { GESTES } from '../src/server/ferveur/gestures.js';
 
@@ -1173,33 +1174,12 @@ const ANCIENS = /PARFAIT|TRÈS BIEN|ÇA VIENT|À REPRENDRE|\bBON\b|MOYEN|RATÉ/;
     r.calme !== null && r.calme < 40);
 }
 
-/* ================================================== sur grand écran
+/* ===================================================== sur un ordinateur
 
-   Au-delà de 1 180 px, la salle est une page large (`tbf-large`) : les
-   familles se rangent deux par rangée, chacune avec ses tuiles sous son
-   titre, et rien ne déborde. En dessous, une famille par rangée. */
-{
-  const familles = () => page.evaluate(() => ({
-    f: [...document.querySelectorAll('#vue .fam')].map((f) => {
-      const b = f.getBoundingClientRect();
-      return { l: Math.round(b.left), t: Math.round(b.top) };
-    }),
-    deborde: document.documentElement.scrollWidth > window.innerWidth,
-  }));
-  await page.setViewport({ width: 1366, height: 682 });
-  await page.goto(`${base}/repetition`, { waitUntil: 'networkidle0' });
-  const g = await familles();
-  check('à 1 366 px, les deux premières familles se tiennent côte à côte',
-    g.f.length >= 2 && g.f[0].t === g.f[1].t && g.f[1].l > g.f[0].l
-    || (console.log('        vu :', JSON.stringify(g.f.slice(0, 3))), false));
-  check('et rien ne déborde de l’écran', !g.deborde);
-  await page.setViewport({ width: 1100, height: 800 });
-  const e = await familles();
-  check('à 1 100 px, une famille par rangée',
-    e.f.length >= 2 && e.f[1].t > e.f[0].t && e.f[1].l === e.f[0].l
-    || (console.log('        vu :', JSON.stringify(e.f.slice(0, 3))), false));
-  await page.setViewport({ width: 390, height: 860 });
-}
+   La salle garde la largeur du téléphone (Gaël, 7 octobre 2026). */
+await page.goto(`${base}/repetition`, { waitUntil: 'networkidle0' });
+await controlerColonne(page, check, { nom: 'la salle de répétition' });
+await page.setViewport({ width: 390, height: 860 });
 
 /* ================================================= rien ne fuit à l'écran */
 {
