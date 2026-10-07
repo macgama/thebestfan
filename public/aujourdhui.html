@@ -331,6 +331,11 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
   #fiche #souscontenu{margin-top:10px;padding:4px 12px 8px}
   #fiche #souscontenu:empty{display:none}
   #fwatch{left:calc(50% - var(--colonne-large) / 2 + 6px);bottom:6px}
+  /* **Le Fanzzy regarde le match avec toi** (Gaël, 7 octobre 2026 : « si
+     petit » dans son coin, il ne participait à rien). Sous les deux portes,
+     au milieu de l'affiche, aussi grand que la place libre le permet
+     (`poserSpectateur`) ; il garde le coin quand elle manque. */
+  #fwatch.sous-affiche{left:var(--fw-x);top:var(--fw-y);bottom:auto;width:var(--fw-l);height:var(--fw-h)}
 }
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -744,6 +749,32 @@ document.addEventListener('click', (e) => {
   fermerFiche();
 }, true);
 
+/**
+ * Sur grand écran, le Fanzzy qui regarde se pose sous les deux portes, au
+ * milieu de l'affiche, à la taille de la place qui reste jusqu'au bas de
+ * l'écran (270 px de large au plus, le rapport de son coin : 96 × 150).
+ * Moins de 220 px de haut : il reprend son coin. Fixe comme dans son coin,
+ * il suit l'affiche quand la fiche défile.
+ */
+const SPECTATEUR = { l: 96, h: 150, max: 270, min: 220 };
+function poserSpectateur() {
+  const w = $('fwatch');
+  const affiche = $('fcorps').querySelector('.cote-affiche');
+  if (!matchMedia(LARGE).matches || !FICHE.id || !affiche) { w.classList.remove('sous-affiche'); return; }
+  const r = affiche.getBoundingClientRect();
+  const haut = r.bottom + 14;
+  const h = Math.min(innerHeight - haut - 10, SPECTATEUR.max * SPECTATEUR.h / SPECTATEUR.l);
+  if (h < SPECTATEUR.min) { w.classList.remove('sous-affiche'); return; }
+  const l = Math.min(r.width, h * SPECTATEUR.l / SPECTATEUR.h);
+  w.style.setProperty('--fw-x', `${Math.round(r.left + (r.width - l) / 2)}px`);
+  w.style.setProperty('--fw-y', `${Math.round(haut)}px`);
+  w.style.setProperty('--fw-l', `${Math.round(l)}px`);
+  w.style.setProperty('--fw-h', `${Math.round(h)}px`);
+  w.classList.add('sous-affiche');
+}
+addEventListener('resize', poserSpectateur);
+$('fiche').addEventListener('scroll', poserSpectateur, { passive: true });
+
 function fermerFiche() {
   /* On efface le match de l’adresse : sans cela, recharger la page
      rouvrirait la fiche qu’on vient de fermer. */
@@ -1044,6 +1075,7 @@ function dessinerFiche() {
   dessinerVolet();
   dessinerProno();
   $('fcorps').scrollTop = defile;
+  poserSpectateur();
 
   $('souspage').onclick = (ev) => {
     const b = ev.target.closest('[data-s]');
