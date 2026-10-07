@@ -25,6 +25,9 @@
 .fin .link{color:var(--craie);opacity:.9;font-size:12px;font-weight:400}
 .fin .link:hover{opacity:1}
 .prevenu{font-size:12.5px;line-height:1.6;opacity:.9;margin:10px 0 14px}
+/* Le lien vers la confidentialité, sous la porte : centré, à l'écart des
+   formulaires, en lien de texte comme « Mot de passe oublié ? ». */
+.confid{margin:22px 0 0;text-align:center}
 
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
@@ -218,6 +221,9 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
          En bas de page, en discret, derrière deux gestes. Ce n'est pas une
          action qu'on propose, c'est une action qu'on ne doit pas empêcher. -->
     <div class="fin">
+      <!-- Ce que le jeu garde de toi : à côté de la sortie, parce que c'est
+           là qu'on le cherche — avant de partir, ou pour savoir ce qui part. -->
+      <div><a class="link" href="/confidentialite" data-t="account.privacy"></a></div>
       <button class="link" id="btnSupprimer" data-t="account.delete"></button>
       <form id="formSupprimer" class="hide">
         <p class="prevenu" data-t="delete.warn"></p>
@@ -296,6 +302,10 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
     </div>
 
     <div class="msg" id="gateMsg"></div>
+
+    <!-- La politique de confidentialité, avant de créer un compte : sous les
+         deux portes, connexion et inscription, et sous Google. -->
+    <p class="confid"><a class="link" href="/confidentialite" data-t="account.privacy"></a></p>
   </section>
 </main>
 
@@ -314,6 +324,7 @@ const I18N = {
     'account.pseudo':'Pseudo','account.email':'Adresse','account.status':'Adresse vérifiée',
     'account.logout':'SE DÉCONNECTER','account.resend':'Renvoyer le mail de vérification',
     'account.delete':'Supprimer mon compte',
+    'account.privacy':'Ce que le jeu garde de toi',
     'notif.titre':'NOTIFICATIONS','notif.texte':'Sur cet appareil, même le jeu fermé. Jamais la nuit, de 22 h à 8 h.',
     'notif.kop':'Un vote de mon KOP s’ouvre','notif.duel':'Un duel classé attend un supporter de mon club',
     'notif.ios':'Sur iPhone, installe d’abord le jeu sur l’écran d’accueil (Partager, puis « Sur l’écran d’accueil ») et ouvre-le de là.',
@@ -352,6 +363,7 @@ const I18N = {
     'account.pseudo':'Username','account.email':'Address','account.status':'Address verified',
     'account.logout':'SIGN OUT','account.resend':'Resend the verification email',
     'account.delete':'Delete my account',
+    'account.privacy':'What the game keeps about you (in French)',
     'notif.titre':'NOTIFICATIONS','notif.texte':'On this device, even with the game closed. Never at night, from 10 pm to 8 am.',
     'notif.kop':'A vote opens in my KOP','notif.duel':'A ranked duel is waiting for a fan of my club',
     'notif.ios':'On iPhone, first add the game to your home screen (Share, then “Add to Home Screen”) and open it from there.',
@@ -390,6 +402,7 @@ const I18N = {
     'account.pseudo':'Benutzername','account.email':'Adresse','account.status':'Adresse bestätigt',
     'account.logout':'ABMELDEN','account.resend':'Bestätigungsmail erneut senden',
     'account.delete':'Mein Konto löschen',
+    'account.privacy':'Was das Spiel über dich speichert (auf Französisch)',
     'notif.titre':'BENACHRICHTIGUNGEN','notif.texte':'Auf diesem Gerät, auch wenn das Spiel geschlossen ist. Nie nachts, von 22 bis 8 Uhr.',
     'notif.kop':'In meinem KOP beginnt eine Abstimmung','notif.duel':'Ein Ranglistenduell wartet auf einen Fan meines Klubs',
     'notif.ios':'Auf dem iPhone füge das Spiel zuerst zum Home-Bildschirm hinzu (Teilen, dann „Zum Home-Bildschirm“) und öffne es von dort.',
@@ -428,6 +441,7 @@ const I18N = {
     'account.pseudo':'Nombre','account.email':'Dirección','account.status':'Dirección verificada',
     'account.logout':'SALIR','account.resend':'Reenviar el correo de verificación',
     'account.delete':'Eliminar mi cuenta',
+    'account.privacy':'Lo que el juego guarda de ti (en francés)',
     'notif.titre':'NOTIFICACIONES','notif.texte':'En este dispositivo, incluso con el juego cerrado. Nunca de noche, de 22 h a 8 h.',
     'notif.kop':'Se abre una votación en mi KOP','notif.duel':'Un duelo clasificatorio espera a un hincha de mi club',
     'notif.ios':'En iPhone, añade primero el juego a la pantalla de inicio (Compartir y luego «Añadir a pantalla de inicio») y ábrelo desde allí.',

@@ -686,10 +686,10 @@ Gaël :
 2. **Lire au journal** que les chants du Virage se comptent toujours : aucune
    ligne « [souvenirs] chants du Virage non comptés ».
 3. **`/admin`, RÉGLAGES** : la section **LA PRÉSENCE** existe, et
-   `presence.actif` y est **éteint**. Il le reste jusqu'à la mise en ligne de la
-   nouvelle `CONFIDENTIALITE.md` (paragraphe « La présence de tes amis »), et
-   selon la décision de Gaël (Q2) ; l'allumer est un geste dans `/admin`, sans
-   livraison. Allumée sans `sql/arenes.sql`, elle ne montre rien : le journal
+   `presence.actif` y est **éteint**. Il le reste jusqu'à ce que la politique
+   de confidentialité soit en ligne (la page `/confidentialite` répond sur le
+   site), et selon la décision de Gaël (Q2) ; l'allumer est un geste dans
+   `/admin`, sans livraison. Allumée sans `sql/arenes.sql`, elle ne montre rien : le journal
    nomme alors le fichier.
 4. Dans LA PROGRESSION, `xp.virage` (15), `xp.virage_chants` (10) et
    `xp.virage_matchs_jour` (3) ; dans LE GRAND VIRAGE, `virage.bilan_min` (5).

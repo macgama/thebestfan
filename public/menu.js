@@ -133,6 +133,7 @@
        La collection et l'abonnement s'ouvraient donc sur une barre muette,
        alors que les vingt autres écrans se nomment. */
     '/collection': 'Collection', '/abonnement': 'Abonnement',
+    '/confidentialite': 'Confidentialité',
   };
 
   const ICONES = {

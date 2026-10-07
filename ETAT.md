@@ -1054,9 +1054,11 @@ la livraison.** Trois états (en ligne, au Virage, en duel), jamais le match, ja
 l'heure, **jamais écrite en base** — seul le choix de se cacher l'est
 (`user_wallet.presence`, `NULL` = le défaut du registre). Visible par défaut pour
 les seuls amis mutuels, avec l'interrupteur « apparaître hors ligne » au tiroir ;
-**pas de REJOINDRE**. `presence.actif` est **faux** tant que la nouvelle
-`CONFIDENTIALITE.md` n'est pas relue par un juriste et en ligne (le jeu est ouvert
-aux mineurs, dossier L5). Éteinte — ou sans `sql/arenes.sql` — rien n'est servi :
+**pas de REJOINDRE**. `presence.actif` est **faux** jusqu'à ce que Gaël
+l'allume dans `/admin` : il a choisi de publier d'abord la politique de
+confidentialité (6 octobre 2026), ce qui est fait depuis le 7 octobre
+(`public/confidentialite.html`, à `/confidentialite`), sans relecture d'un
+juriste (le jeu est ouvert aux mineurs, dossier L5). Éteinte — ou sans `sql/arenes.sql` — rien n'est servi :
 `/api/presence` répond `{ actif: false }`, aucun écran n'en montre, aucune
 activité n'est gardée en mémoire. Aucune socket de plus sur les autres pages.
 
@@ -3386,11 +3388,12 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
   tableau de résultats est un usage normal ; en vendre un exemplaire est autre
   chose.
 - **La présence des amis, et les mineurs.** La fonction est livrée **éteinte**
-  (`presence.actif` faux). Elle ne s'allume qu'une fois la nouvelle
-  `CONFIDENTIALITE.md` (paragraphe « La présence de tes amis », marqué « à faire
-  relire — pas encore en service ») relue par un juriste et mise en ligne, **la
-  question des mineurs comprise** — le jeu leur est ouvert sans barrière (dossier
-  L5). Ce que le texte affirme est lu dans `src/server/presence/index.js` et vérifié
+  (`presence.actif` faux). Gaël a choisi de la publier d'abord, puis de
+  l'allumer : la politique de confidentialité est en ligne depuis le 7 octobre
+  2026 (`public/confidentialite.html`, rubrique « La présence de tes amis »),
+  **sans relecture d'un juriste**, et sa rubrique « Les mineurs » dit qu'un
+  mineur demande l'accord d'un parent avant de s'abonner — le jeu leur est
+  ouvert sans barrière (dossier L5). Ce que le texte affirme est lu dans `src/server/presence/index.js` et vérifié
   par `presence:smoke` : jamais écrite, trois états, amis mutuels, un choix gardé
   tant que le compte existe et effacé avec lui. À poser au juriste : « je sais où
   tu vas le week-end » — pourquoi il n'y a pas de REJOINDRE —, et un ami qui se
@@ -3398,7 +3401,7 @@ révision où l'on revient n'ignore pas (`.tbf-base-de-test`) : le recréer.
   départ.
 - **Ce que le jeu garde d'un match du Virage** : les PARFAITS, la meilleure série
   et le meilleur chant, avec la ligne de présence de ce match, qui survit à la
-  suppression d'un compte, **sans le nom** (`CONFIDENTIALITE.md`).
+  suppression d'un compte, **sans le nom** (`public/confidentialite.html`).
 
 ## 7 bis. À faire sur le serveur, en attente
 
