@@ -29,6 +29,8 @@ seules : construction, ni schéma ni redémarrage.
   duel compris) a la largeur d'un grand téléphone, 480 px, au milieu de
   l'écran. Les pages larges, les listes en colonnes et les tuiles de
   l'accueil autour des pages sont retirées ; le menu est le tiroir, partout.
+  Gaël a confirmé le retrait des tuiles : leur code est supprimé
+  (`menu.js`, `ui.css`).
 - La fiche d'un match reprend sa forme de téléphone, son Fanzzy au coin de
   la fiche (ce qui défait l'entrée « Le Fanzzy regarde le match en grand »
   plus bas).
