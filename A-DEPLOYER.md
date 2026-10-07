@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Le Fanzzy au milieu à l'âge 3** (branche `claude/project-thread-j45ndm`,
+7 octobre 2026, signalé par Gaël). Pages seules : construction, ni schéma
+ni redémarrage.
+
+- Quand un objet étire le dessin d'un côté (le mégaphone de RP1 à l'âge 3),
+  le corps du Fanzzy reste au milieu, à l'accueil et dans l'arène.
+  `public/img/fanzzy/index.json` garde le décalage des jambes de chaque âge
+  (`pieds`, troisième valeur, mesurée par `scripts/fanzzy-manifeste.mjs`) ;
+  `public/fanzzy-etats.js`, `public/index.html`, `public/fanzzy-scene.js` et
+  `public/ui.css` s'en servent.
+
+---
+
 **Sur ordinateur, toutes les pages à la largeur du téléphone** (branche
 `claude/ecran-large-pkbkwj`, 7 octobre 2026, demandé par Gaël). Pages
 seules : construction, ni schéma ni redémarrage.
