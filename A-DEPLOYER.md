@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Le Fanzzy regarde le match en grand** (branche `claude/ecran-large-pkbkwj`,
+7 octobre 2026, demandé par Gaël). Page seule (`public/aujourdhui.html`) :
+ni schéma ni redémarrage.
+
+- Sur PC, dans la fiche d'un match, le Fanzzy équipé quitte son coin : il se
+  pose sous GRAND VIRAGE et DUEL, au milieu, aussi grand que la place libre
+  (jusqu'à 270 × 420 px). Sur téléphone, rien ne change. Contrôlé par
+  `npm run matchs:ui`.
+
+---
+
 **RP1 redessiné** (branche `claude/project-thread-j45ndm`, 7 octobre 2026,
 images de Gaël dans le nouveau design). Il se dépose avec ce qui est en
 dessous, ou seul. **Images seules**, sans schéma ni redémarrage : la
