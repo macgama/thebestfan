@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import express from 'express';
-import { DuelNvN, RULES, avecLieu } from './engine.js';
+import { DuelNvN, RULES, avecLieu, modsPortes } from './engine.js';
 import { Cheat, grade, applyHeroMods } from '../ferveur/gestures.js';
 /* Le barème du duel vit dans `deck` depuis qu'il s'annonce avant l'entrée en
    file (`enJeu`, CONTRATS.md § 17) : un seul endroit pour le chiffre promis et
@@ -91,7 +91,8 @@ export function noteMesuree(duel, userId, p, t) {
   const card = CHANTS[p?.cardId];
   if (!j || !card) return null;
   // Les mêmes modificateurs que `modsDe` dans le moteur, au même instant.
-  const mods = modsAvecEffets(avecLieu(j.fanzzy[j.actif]?.mods, duel.stade), j.effets, t);
+  // La légende endormie comprise (`modsPortes`) : sinon le rejeu diverge.
+  const mods = modsAvecEffets(avecLieu(modsPortes(j), duel.stade), j.effets, t);
   let brut;
   try { brut = grade(card.gest, p.taps, mods, { motif: j.motif }); }
   catch { return null; }

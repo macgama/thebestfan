@@ -287,8 +287,15 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
         }
       }
 
-      const premier = cartes.find((c) => c.type === 'fanzzy' && parIdentifiant(c.id).rar !== 'commune')
-        ?? cartes.find((c) => c.type === 'fanzzy');
+      /* **Le titulaire est le commun, le beau entre en remplaçant.** Le
+         second Fanzzy du paquet est presque toujours une légendaire, et une
+         légendaire ne peut plus être titulaire : elle dort sur le banc
+         jusqu'à ses chants réussis (`shared/legende.js`). Le commun devient
+         donc l'avatar et le titulaire ; l'autre attend son entrée. */
+      const fanzzyRecus = cartes.filter((c) => c.type === 'fanzzy');
+      const premier = fanzzyRecus.find((c) => parIdentifiant(c.id).rar !== 'legendaire')
+        ?? fanzzyRecus[0];
+      const remplacants = fanzzyRecus.filter((c) => c.id !== premier.id).map((c) => c.id);
 
       await conn.query(
         `UPDATE user_wallet
@@ -314,7 +321,7 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
          écrit et validé ; perdre cinq cartes parce qu'un deck de commodité n'a
          pas pu s'enregistrer serait absurde. Voir `premierDeck`, qui ne touche
          à rien si un deck existe déjà. */
-      try { await module.decks?.premierDeck(userId, premier.id); }
+      try { await module.decks?.premierDeck(userId, premier.id, remplacants); }
       catch { /* il montera sa tribune lui-même. */ }
 
 

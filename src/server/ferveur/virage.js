@@ -14,6 +14,7 @@ import { apportsDe, seulsLesMods } from '../../shared/apports.js';
 // L'échelle unique du verdict (`CONTRATS.md`, § 16.1) : le mot, le Cri, le
 // PARFAIT qui fait la série, et la note qu'ils mesurent tous les trois.
 import { verdictDe, estParfait, criDe, auMoins, noteDuVerdict } from '../../shared/verdict.js';
+import { seuilLegende, chantReussi } from '../../shared/legende.js';
 
 /**
  * Les trois fins d'un match, celles que le contrat appelle « le coup de
@@ -489,7 +490,7 @@ export class VirageRoom {
    *   chanter dans les trois au rang « classé » d'un plafond à une.
    */
   join(userId, { side, name, mods = {}, neutre = false, perso = null, actions = [],
-                 classe = true, apports = [] }) {
+                 classe = true, apports = [], modsBanc = null }) {
     /* Présent dans un autre onglet, parti et revenu, ou tout neuf — dans cet
        ordre. Celui qui revient reprend **son** état : souffle, main, pioche,
        recharges, fatigue, effets, ferveur.
@@ -541,7 +542,20 @@ export class VirageRoom {
        `classe`, plus haut, et `crediter`. */
     if (!m.presenceEcrite) m.classe = classe;
     m.name = name;
-    m.mods = mods;
+    /* **La légende dort jusqu'à ses chants réussis** (`shared/legende.js`).
+       L'état se garde d'une entrée à l'autre dans le même match : ressortir
+       et revenir ne rendort pas une légende éveillée, et ne remet pas le
+       compte à zéro. */
+    if (modsBanc) {
+      const seuil = seuilLegende();
+      m.legende ??= { seuil, reussis: 0, eveillee: seuil === 0 };
+      m.legende.presente = true;
+    } else if (m.legende) {
+      m.legende.presente = false;
+    }
+    m.modsPleins = mods;
+    m.modsBanc = modsBanc;
+    m.mods = (m.legende?.presente && !m.legende.eveillee) ? modsBanc : mods;
     /* **Le lieu, composé une fois pour toutes.**
 
        Il ne change pas d'un bout à l'autre d'un match — voir `stade()` — et il
@@ -671,6 +685,21 @@ export class VirageRoom {
    * `modsLieu` est mémorisé à l'entrée ; seuls les effets, qui changent, se
    * composent à la volée — et seulement quand il y en a.
    */
+  /**
+   * Un chant réussi de plus vers l'éveil de sa légende. À l'éveil, ses
+   * modificateurs pleins remplacent ceux du banc, lieu compris.
+   */
+  eveiller(m) {
+    const l = m.legende;
+    if (!l?.presente || l.eveillee) return;
+    l.reussis++;
+    if (l.reussis < l.seuil) return;
+    l.eveillee = true;
+    m.mods = m.modsPleins;
+    m.modsLieu = avecLieu(m.mods, this.stade());
+    m.legendeEveilleeA = Date.now();
+  }
+
   modsDe(m, now = Date.now()) {
     const base = m.modsLieu ?? m.mods ?? {};
     return m.effets?.length ? modsAvecEffets(base, m.effets, now) : base;
@@ -756,6 +785,7 @@ export class VirageRoom {
        pas (voir `crediter`), un chant d'un autre verdict la remet à zéro. */
     const mesuree = noteDuVerdict(brut, plancherMordu);
     const verdict = verdictDe(mesuree);
+    if (chantReussi(mesuree)) this.eveiller(m);
     const parfait = estParfait(mesuree);
     m.chants = (m.chants ?? 0) + 1;
     if (parfait) {
@@ -1854,6 +1884,12 @@ export class VirageRoom {
          * modificateurs, et n'ont rien à faire dans une liste de bonus. */
         apports: [...(m.apports ?? []), ...apportsDe({ stade: this.stade() })],
         mods: seulsLesMods(this.modsDe(m)),
+        /* Où en est sa légende : `null` sans légendaire. Tant qu'elle dort,
+           `apports` la montre quand même — c'est ce qui l'attend. */
+        legende: m.legende?.presente
+          ? { reussis: m.legende.reussis, seuil: m.legende.seuil,
+            eveillee: m.legende.eveillee }
+          : null,
 
         /* La main, ses recharges et ce qui est posé sur lui. `reste` est en
            secondes plutôt qu'en instant : la page n'a pas à connaître
