@@ -49,7 +49,7 @@
  * en suit un autre (`-` : figure laissée) ; `--echelle 1.1` corrige l'échelle trouvée si l'œil n'est pas
  * d'accord ; `--sortie <dossier>` écrit ailleurs que dans `art/<ID>/_src/`.
  */
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -256,19 +256,40 @@ for (const f of figures) {
 }
 figures = rangees.flatMap((r) => r.sort((a, b) => a.x0 - b.x0));
 
-/* Le repère : le repos, ses pieds et son axe. Repos à part : sa propre image,
-   et l'échelle qui ramène la planche à sa taille. Repos dans la planche : sa
-   boîte, et aucune mise à l'échelle — tout vient du même tirage. */
+/* **Les autres tenues du même âge.** `fanzzy-art.mjs` exige que toutes les
+   sources d'un âge aient la même taille, toutes tenues confondues. Une planche
+   Halloween découpée à sa propre taille, à côté d'un repos de base de
+   1536 × 2752, ferait refuser l'âge entier : c'est arrivé au premier RP1 du
+   nouveau style. Quand le dossier porte déjà des sources de cet âge dans une
+   autre tenue, on s'y accorde : leur repos donne l'échelle, les pieds et la
+   taille de la toile. */
+const motif = new RegExp(`^${ID}-e${AGE}-([a-z]+)-([a-z]+)\\.png$`);
+const voisins = (await readdir(SORTIE).catch(() => []))
+  .filter((n) => { const m = n.match(motif); return m && m[1] !== TENUE; })
+  .sort((a, b) => Number(!a.includes('-base-')) - Number(!b.includes('-base-')));
+const accord = !repos && voisins.find((n) => n.endsWith('-neutre.png'));
+
+/* Le repère : le repos, ses pieds et son axe.
+   - Repos à part (`--repos`) : sa propre image, et l'échelle qui ramène la
+     planche à sa taille.
+   - Repos d'une autre tenue déjà dans le dossier : pareil, mais l'échelle se
+     prend repos contre repos, ce qui est plus juste qu'une médiane de poses.
+   - Sinon : le repos de la planche, et aucune mise à l'échelle. */
+const tailleMediane = () => {
+  const t = figures.map((g) => mesurer(planche, g).taille).sort((a, b) => a - b);
+  return (t[(t.length - 1) >> 1] + t[t.length >> 1]) / 2;
+};
+const iNeutre = ORDRE.indexOf('neutre');
 let reference, echelle;
-if (repos) {
-  const [f] = personnages(repos).sort((a, b) => (b.x1 - b.x0) * (b.y1 - b.y0) - (a.x1 - a.x0) * (a.y1 - a.y0));
-  const tailles = figures.map((g) => mesurer(planche, g).taille).sort((a, b) => a - b);
-  const mediane = (tailles[(tailles.length - 1) >> 1] + tailles[tailles.length >> 1]) / 2;
-  const m = mesurer(repos, f);
-  reference = { axe: m.axe, sol: m.sol, l: repos.l, h: repos.h };
-  echelle = (m.taille / mediane) * ECHELLE;
+if (repos || accord) {
+  const image = repos ?? await lire(path.join(SORTIE, accord));
+  const [f] = personnages(image).sort((a, b) => (b.x1 - b.x0) * (b.y1 - b.y0) - (a.x1 - a.x0) * (a.y1 - a.y0));
+  const m = mesurer(image, f);
+  reference = { axe: m.axe, sol: m.sol, l: image.l, h: image.h };
+  const enFace = iNeutre >= 0 ? mesurer(planche, figures[iNeutre]).taille : tailleMediane();
+  echelle = (m.taille / enFace) * ECHELLE;
 } else {
-  const f = figures[ORDRE.indexOf('neutre')];
+  const f = figures[iNeutre];
   const m = mesurer(planche, f);
   reference = { axe: m.axe - f.x0, sol: m.sol - f.y0, l: f.x1 - f.x0 + 1, h: f.y1 - f.y0 + 1 };
   echelle = ECHELLE;
@@ -319,6 +340,25 @@ for (const p of places) {
     .png().toFile(nom(p.etat));
 }
 
+/* La toile a grandi (un bras tendu dépasse) : les autres tenues de l'âge
+   reçoivent la même marge transparente, pour garder une seule taille. Leur
+   dessin ne bouge pas d'un pixel par rapport au repos ; `fanzzy-art.mjs`
+   recadre de toute façon sur l'union des personnages. */
+const agrandis = [];
+if (accord && (ext.g || ext.h || ext.d || ext.b)) {
+  for (const n of voisins) {
+    const fichier = path.join(SORTIE, n);
+    const meta = await sharp(fichier).metadata();
+    if (meta.width !== reference.l || meta.height !== reference.h) continue;
+    const png = await sharp(await readFile(fichier)).ensureAlpha()
+      .extend({ left: ext.g, top: ext.h, right: ext.d, bottom: ext.b, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png().toBuffer();
+    await writeFile(fichier, png);
+    agrandis.push(n);
+  }
+}
+
 console.log(`Planche découpée : ${[...(repos ? ['neutre (à part)'] : []), ...places.map((p) => p.etat)].join(', ')}, échelle ${echelle.toFixed(3)}.`);
 console.log(`${places.length + (repos ? 1 : 0)} sources de ${toile.width} × ${toile.height} dans ${path.relative(RACINE, SORTIE) || SORTIE}.`);
+if (accord) console.log(`Accordée à ${accord}${agrandis.length ? ` ; marge ajoutée à ${agrandis.length} source(s) des autres tenues` : ''}.`);
 console.log(`Suite : npm run art ${path.relative(RACINE, SORTIE)}`);
