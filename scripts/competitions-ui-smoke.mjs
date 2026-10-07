@@ -37,7 +37,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
-import { controlerLarge } from './large-ui.mjs';
+import { controlerColonne } from './colonne-ui.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 let failures = 0;
@@ -243,11 +243,10 @@ await jusqua(async () => await page.$('.lg') !== null);
 check('la page se charge sans erreur de script', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
-/* ---------------------------------------------------------- grand écran
+/* ------------------------------------------------------- sur un ordinateur
 
-   La page des compétitions est une page large (`tbf-large`) : son sommaire
-   se range en colonnes de la largeur d'un téléphone. */
-await controlerLarge(page, check, { nom: 'la page des compétitions', liste: '.list>.lg',
+   La page des compétitions garde la largeur du téléphone. */
+await controlerColonne(page, check, { nom: 'la page des compétitions',
   pret: () => jusqua(async () => await page.$('.lg') !== null) });
 
 /* ------------------------------------------------------------- les pays */
@@ -535,8 +534,7 @@ await controlerLarge(page, check, { nom: 'la page des compétitions', liste: '.l
    La page s'ouvrait sur CLASSEMENT, et une coupe n'en a souvent pas : la
    première chose qu'on voyait d'elle était « Cette donnée n'existe pas »
    (Gaël, 6 octobre 2026). Elle s'ouvre maintenant sur ses résultats ; un
-   classement demandé du doigt garde sa phrase. Sur grand écran, ses matchs
-   se rangent en deux colonnes. */
+   classement demandé du doigt garde sa phrase. */
 {
   await page.goto(base + '/teletext?ligue=811', { waitUntil: 'networkidle0' });
   const resultats = () => jusqua(async () => (await page.$$('.list .m')).length === 4);
@@ -544,7 +542,7 @@ await controlerLarge(page, check, { nom: 'la page des compétitions', liste: '.l
     && await page.$eval('#tabs .on', (n) => n.dataset.t) === 'resultats');
   check('et rien ne dit qu’une donnée manque',
     !/n'existe pas/.test(await page.$eval('#list', (n) => n.textContent)));
-  await controlerLarge(page, check, { nom: 'une coupe ouverte', liste: '.list>.m', pret: resultats });
+  await controlerColonne(page, check, { nom: 'une coupe ouverte', pret: resultats });
 
   await page.evaluate(() => document.querySelector('[data-t=classement]').click());
   await jusqua(async () => await page.$('.list .empty') !== null);

@@ -389,31 +389,23 @@
 
   /* ## La largeur de la colonne
    *
-   * Le jeu se joue sur téléphone, et la colonne y fait toute la largeur. Sur
-   * une tablette, elle restait à 520 px : l'application tenait dans un rail
-   * étroit au milieu d'un écran noir, avec deux cents pixels de vide de chaque
-   * côté. Ce n'est pas de la lisibilité, c'est du gâchis — on ne lit pas un
-   * classement dans une bande de cinq cents pixels quand on en a mille.
+   * **Celle d'un grand téléphone, partout : 480 px au plus** (Gaël, le
+   * 7 octobre 2026, sur un ordinateur : « trop large, trop d'informations ;
+   * je préfère un affichage style mobile », et « pour toutes les pages, la
+   * même largeur »). Le jeu se joue sur téléphone ; sur une tablette ou un
+   * ordinateur, c'est la même application, au milieu de l'écran, sur la
+   * tribune.
    *
-   * Elle remplit donc l'écran, **jusqu'à 900 px**. Le plafond n'est pas de la
-   * timidité : au-delà, une ligne de texte dépasse la centaine de caractères et
-   * l'œil perd le début de la ligne suivante. Neuf cents pixels remplissent une
-   * tablette en portrait comme en paysage, et centrent proprement sur un écran
-   * de bureau.
+   * Elle a fait 900 px (pour remplir une tablette), puis jusqu'à 1 320 sur
+   * un ordinateur, listes en colonnes et tuiles de l'accueil autour : trop
+   * de choses à la fois. Depuis, aucune page ne s'élargit, et les règles
+   * écrites pour une colonne plus large que le téléphone (`min-width` au-delà
+   * de 480 px) ont été retirées : une requête sur l'écran ne dit plus rien
+   * de la colonne.
    *
-   * **Sans palier.** Il y en a eu un, à sept cents pixels : en dessous, la
-   * colonne restait à 520. Une tablette de cinq cent soixante-dix-huit pixels
-   * tombait donc pile dans l'angle mort — trop large pour le téléphone, trop
-   * étroite pour le palier — et gardait trente pixels de noir de chaque côté
-   * pour rien. Un seuil qui découpe les écrans en deux familles se trompe
-   * toujours sur ceux du milieu ; `min()` n'a pas ce défaut.
-   *
-   * **Elle est la seule vérité sur ce point.** Chaque page portait la sienne —
-   * 440, 460 ou 520 selon l'écran et le jour — ce qui faisait trois largeurs
-   * différentes dans la même application, et rendait ce réglage-ci sans effet.
-   * Une page qui écrit sa largeur en dur redevient une exception qu'il faudra
-   * retrouver. */
-  --colonne:min(100vw, 900px);
+   * **Elle est la seule vérité sur ce point.** Une page qui écrit sa largeur
+   * en dur redevient une exception qu'il faudra retrouver. */
+  --colonne:min(100vw, 480px);
 }
 
 /* **Le béton aux écrans denses** : les deux tailles de la tuile, et le
@@ -2956,35 +2948,6 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
   .tbf-rail .tbf-case[data-etat=pret]::after{animation:none}
 }
 
-/* **Les pages larges** (choisi par Gaël le 6 octobre 2026 : « tuiles + pages
-   larges »). Les tuiles seules laissaient le contenu à sa largeur de
-   téléphone au milieu d'un écran de 1 920 : le vide restait, il changeait
-   seulement de place. Une page qui sait se tenir en largeur le dit par
-   `<body class="tbf-large">`, et sa colonne prend alors toute la place que
-   les rails lui laissent : 1 320 px au plus, et jamais moins que les 900
-   de la colonne commune.
-
-   **Toutes les pages de l'application la portent** (Gaël, le même jour :
-   « sur PC, toutes les pages, pour la cohérence ») : d'une page à l'autre,
-   la barre, la colonne et les tuiles restent à la même place. Les écrans
-   de jeu (le Virage, le duel) gardent leur scène, et l'accueil ses tuiles.
-
-   **La règle commune** : une liste ne s'étire pas sur 1 300 pixels, elle se
-   range en colonnes de la largeur d'un téléphone (une grille
-   `auto-fill, minmax(440px, 1fr)`, ou `columns` pour des blocs de hauteurs
-   inégales) ; une pièce seule (une scène, un bandeau) prend la largeur ou
-   reste au milieu. Chaque page écrit sa part dans sa feuille, sous le même
-   `@media` ; `large:ui` et les suites des pages le vérifient.
-
-   `--tbf-colonne` suit : les rails et le tiroir s'ancrent au bord de la
-   colonne réelle, et non à celui des 900 px qu'elle avait. Posé sur `body`,
-   il l'emporte pour tout ce qui est dedans sur la valeur que `nav.js` écrit
-   sur la racine. */
-@media (min-width:1180px) and (min-height:560px){
-  :root{--colonne-large:min(max(900px, calc(100vw - 296px)), 1320px)}
-  body.tbf-large{--tbf-colonne:var(--colonne-large)}
-  body.tbf-large>:is(main,#app){max-width:var(--colonne-large)}
-}
 .tbf-tiroir.on{translate:0 0;pointer-events:auto}
 @starting-style{
   .tbf-tiroir.on{translate:0 calc(-100% - 14px);opacity:0}
@@ -3380,17 +3343,15 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
    **La présence servie ne coûte rien** (lot 6) : « Apparaître hors ligne »
    se range à côté du volume (voir le balisage du tiroir), et le tiroir
    reste à 957 px à 360 × 640 ; sur sa propre ligne, il passait à 1 008. */
-@media (max-width:599px){
-  .tbf-tiroir{padding-bottom:calc(env(safe-area-inset-bottom) + 12px)}
-  .tbf-tiroir-tete{margin-bottom:10px}
-  .tbf-tiroir-rub{margin-bottom:10px}
-  .tbf-tiroir-rub>.tbf-rubrique{margin-bottom:6px;padding-bottom:8px}
-  .tbf-tiroir-grille{gap:8px 10px}
-  .tbf-tiroir .tbf-case{min-height:70px;gap:5px}
-  .tbf-tiroir .tbf-tiroir-pied{padding-top:12px;padding-bottom:10px}
-  .tbf-tiroir-pied .tbf-rubrique{padding-top:10px}
-  .tbf-tiroir-pied .tbf-version{padding-top:6px}
-}
+.tbf-tiroir{padding-bottom:calc(env(safe-area-inset-bottom) + 12px)}
+.tbf-tiroir-tete{margin-bottom:10px}
+.tbf-tiroir-rub{margin-bottom:10px}
+.tbf-tiroir-rub>.tbf-rubrique{margin-bottom:6px;padding-bottom:8px}
+.tbf-tiroir-grille{gap:8px 10px}
+.tbf-tiroir .tbf-case{min-height:70px;gap:5px}
+.tbf-tiroir .tbf-tiroir-pied{padding-top:12px;padding-bottom:10px}
+.tbf-tiroir-pied .tbf-rubrique{padding-top:10px}
+.tbf-tiroir-pied .tbf-version{padding-top:6px}
 
 /* La page où l'on est, dans une liste calme sur la bâche (le balisage
    d'avant le lot 2) : marquée, et volontairement pas cliquable au regard —
@@ -5320,13 +5281,9 @@ html[data-calme~="animations"] .tbf-bouffee:not(.tbf-bouffee--fixe){display:none
    posés dessus, jamais du kraft (amendement 2). Elle pend sous l'avatar, à
    six pixels du bord droit de la zone, et s'étend vers la gauche.
 
-   **À partir de 560 px, rien ne se déplie** : la bande devient une rangée de
-   la barre, avant l'avatar, et les compteurs y sont toujours visibles. La
-   direction écrit « sous 400 px, seul le sticker reste » ; mais à 400 px, les
-   deux compteurs et leurs écarts — près de deux cents pixels avec un solde à
-   quatre chiffres — ne laisseraient plus rien au titre, à qui elle en
-   garantit cent vingt. C'est à 560 que tout tient. La page n'a rien à
-   changer : la même bande, la même classe, qui n'a plus d'effet au-delà.
+   **Elle se déplie à toutes les tailles** : la colonne fait 480 px au plus
+   (« La largeur de la colonne »). Au-delà de 560, elle devenait une rangée
+   de la barre, compteurs toujours visibles ; la colonne n'y arrive plus.
 
    **z-index 30, dans la colonne** : la bande pend sous la barre, par-dessus
    la page, et doit passer devant ce que la page y pose (ses panneaux, ses
@@ -5349,28 +5306,6 @@ html[data-calme~="animations"] .tbf-bouffee:not(.tbf-bouffee--fixe){display:none
 }
 .tbf-hud-bande.ouverte{scale:1 1;visibility:visible;
   transition:scale .24s cubic-bezier(.2,1.3,.35,1),visibility 0s}
-@media (min-width:560px){
-  .tbf-hud-bande{position:static;order:-1;scale:none;visibility:visible;transition:none;
-    padding:0 8px 0 0;background:none;clip-path:none}
-  .tbf-hud-bande::before,.tbf-hud-bande::after{content:none}
-}
-/* **De 560 à 600 px, la rangée se serre** (lot 4). La réserve de boosters
-   de la bande est devenue la brique commune (« la réserve de boosters, une
-   seule brique ») : son anneau de recharge la porte à 83 px, contre 68 pour
-   l'ancien jeton. Les quinze pixels ont été pris au titre de la barre :
-   entre 560 et 571 px, avec un solde d'écharpes à quatre chiffres et un
-   booster en route, « Compétitions » (/teletext) se coupait — 145 px de
-   texte pour 134 de place (banc de la barre, `titres.mjs`). Six pixels de
-   moins entre la bande et l'avatar, six entre les deux compteurs, et le
-   titre retrouve ses douze : le « + » des écharpes, qui passe de neuf
-   pixels le bord de son sticker, garde encore six pixels d'air avant les
-   boosters. Au-delà de 600 px, la place revient d'elle-même et les écarts
-   d'origine aussi. Le seuil de la bande (560) ne bouge pas : `nav.js` le
-   lit (`matchMedia`) pour savoir s'il déplie. */
-@media (min-width:560px) and (max-width:599.98px){
-  .tbf-hud{gap:10px}
-  .tbf-hud-bande{gap:16px}
-}
 
 /* ------------------------------------------------ le toast et la pile (lot 2)
 
@@ -6861,14 +6796,15 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
    ticket qui mène quelque part ») : ni soulignement, un pixel sous le
    doigt, le focus dedans.
 
-   **Sous 560 px, le gain passe sur sa ligne.** Un gain du contrat porte
+   **Le gain passe sur sa ligne.** Un gain du contrat porte
    souvent trois valeurs — écharpes, XP, tampons : deux cent vingt pixels de
    stickers —, et sur la ligne du titre (« v t g ») il ne restait au titre
    qu'une vingtaine de pixels à 360. Un ticket qui porte un gain range alors
    le titre sur toute sa ligne, la jauge et la case d'action sur la
    suivante, et les stickers du gain sur une troisième, de bord à bord, qui
    passe à la ligne entre deux stickers s'il le faut. Un ticket sans gain
-   garde ses deux lignes. Au-delà de 560, la place y est. */
+   garde ses deux lignes. La colonne ne dépasse plus 480 px : c'est la
+   seule forme. */
 .tbf-missions{display:flex;flex-direction:column;gap:14px}
 .tbf-mission{
   display:grid;grid-template-columns:auto minmax(0,1fr) auto;
@@ -6902,10 +6838,8 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
 .tbf-mission>.tbf-sticker{--rot:-3deg;margin-right:4px}
 .tbf-mission-note{font-weight:600;font-size:11px;line-height:1.2;letter-spacing:.05em;text-align:right;
   text-transform:uppercase}
-@media (max-width:559px){
-  .tbf-mission:has(>.tbf-mission-gain){grid-template-areas:"v t t" "v j a" "g g g"}
-  .tbf-mission:has(>.tbf-mission-gain)>.tbf-mission-gain{justify-self:start;flex-wrap:wrap;row-gap:8px;min-width:0}
-}
+.tbf-mission:has(>.tbf-mission-gain){grid-template-areas:"v t t" "v j a" "g g g"}
+.tbf-mission:has(>.tbf-mission-gain)>.tbf-mission-gain{justify-self:start;flex-wrap:wrap;row-gap:8px;min-width:0}
 
 /* --------------------------------------- le bonus du jour, la série
 

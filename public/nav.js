@@ -652,7 +652,11 @@
    */
   function monterHud(haut, menu, qui) {
     joueur = qui == null ? null : String(qui);
-    const large = window.matchMedia('(min-width:560px)');
+    /* La bande dépliée dans la barre demandait 560 px de colonne ; la
+       colonne en fait 480 au plus depuis le 7 octobre 2026 (ui.css, « La
+       largeur de la colonne ») : elle se replie partout, sur un ordinateur
+       comme sur un téléphone. */
+    const large = { matches: false };
     let boite = null;
     let vu = null;
 
@@ -1545,11 +1549,11 @@
        (contrat R10). La même valeur pour les deux, et pour les pages qui
        écrivent ces clés. */
     const qui = user ? (user.id ?? user.pseudo) : null;
-    /* Les rails du grand écran (`RAILS`, dans menu.js) : sur les pages de
-       contenu seulement : dans une arène, une tuile à côté de la corde serait
-       une sortie en plein chant. */
-    const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger'),
-      { qui, rails: !ECRANS_DE_JEU.includes(chemin) }) : null;
+    /* Sans les rails du grand écran (`RAILS`, dans menu.js) depuis le
+       7 octobre 2026 : Gaël veut sur un ordinateur l'application du
+       téléphone, au milieu de l'écran, sans rien autour (ui.css, « La
+       largeur de la colonne »). Le menu est le tiroir, partout. */
+    const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger'), { qui }) : null;
 
     /* **Le HUD replié**, pour un joueur connecté, hors des deux écrans de jeu :
        pendant un duel, son solde d'écharpes n'intéresse personne, et la

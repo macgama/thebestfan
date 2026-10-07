@@ -356,17 +356,14 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    beaucoup. Sur un téléphone la rangée passe à cinq, et les trois autres
    partent — cinq visages de soixante pixels valent mieux que huit de
    trente-cinq, où l'on ne distingue plus un chapeau d'une casquette. */
-.eventail{display:grid;grid-template-columns:repeat(8,1fr);gap:clamp(4px,.8vh,7px);
+.eventail{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(4px,.8vh,7px);
   justify-items:center}
 .eventail i{width:100%;max-width:clamp(46px,9.8vh,100px);aspect-ratio:1;
   display:grid;place-items:center;overflow:hidden;
   border:1px solid var(--trait);border-radius:12px;
   background:radial-gradient(circle at 50% 32%,rgba(245,195,59,.13),transparent 70%),var(--panneau)}
 .eventail img{width:100%;height:100%;object-fit:contain}
-@media (max-width:520px){
-  .eventail{grid-template-columns:repeat(5,1fr)}
-  .eventail i:nth-child(n+6){display:none}
-}
+.eventail i:nth-child(n+6){display:none}
 /* Pleine craie sur son panneau : à 0,9, elle tombait à 4,1:1 au plein jour. */
 .combien{text-align:center;font-size:11px;
   margin:clamp(5px,.95vh,9px) 0 0;line-height:1.5}
@@ -1287,37 +1284,6 @@ html[data-calme~="animations"] .direct[data-quoi="bonus"]:active #directPlaque:n
   .duo{grid-template-columns:1fr 1fr}
 }
 
-/* ## La tablette
- *
- * La colonne grandit avec l'écran — c'est `--colonne`, dans `ui.css`. Ce qu'elle
- * ne peut pas faire seule, c'est **remplir** la largeur gagnée : le rail est en
- * `16vw`, donc il grandissait bien, mais les tuiles gardaient leur taille de
- * téléphone au milieu d'un rail devenu large, et le personnage flottait entre
- * deux colonnes vides.
- *
- * On élargit donc le rail et on grossit ce qu'il porte. Le `16vw` du téléphone
- * devient une largeur fixe : à mille pixels d'écran, seize pour cent feraient
- * un rail de cent soixante, ce qui est un panneau, pas une colonne de boutons. */
-/* ## Ce qui reste à régler quand l'écran est large
- *
- * Presque rien, et c'est voulu. Le rail suit la colonne par son `clamp`, et les
- * tuiles suivent le rail : icône et libellé sont déjà en `clamp` dans `ui.css`,
- * ils atteignent leur taille maximale et s'y arrêtent. C'est la bonne
- * proportion — une tuile d'accueil est un point de départ, pas la chose qu'on
- * regarde.
- *
- * Le premier jet forçait ici un rail de 104 px, des icônes de 30 et des
- * libellés de 12. À l'écran, les tuiles écrasaient le personnage. Elles sont
- * revenues à ce que les `clamp` communs donnent. La barre du haut, qui
- * s'épaississait ici, garde ses quarante-quatre pixels depuis le lot 2 :
- * l'avatar et les compteurs de `ui.css` ont cette taille partout.
- */
-@media (min-width:700px){
-  .rail{ gap:6px }
-  /* Le personnage a plus de place : il la prend. Sans ça, la colonne du milieu
-     s'élargit et lui reste à sa taille, seul au centre d'un vide. */
-  .pile{ max-width:420px }
-}
 @media (prefers-reduced-motion:reduce){
   .flotte,.pile,.bascule,.salut{animation:none !important}
   .pose{transition:none}

@@ -26,7 +26,7 @@ import { createAmis } from '../src/server/amis/index.js';
 import { createKop } from '../src/server/kop/index.js';
 import { charger as chargerCatalogue, auStade } from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
-import { controlerLarge } from './large-ui.mjs';
+import { controlerColonne } from './colonne-ui.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -516,12 +516,12 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
     || (console.log('        il montre :', (await texte(p)).slice(0, 120)), false));
   await p.close();
 
-  /* **La place**, sur les trois largeurs du banc : 320 et 360 en liste, 768
-     en cartes. Tout le sticker — son bord de craie et son cerne, que sa
+  /* **La place**, sur trois largeurs : 320 et 360, et un ordinateur, où la
+     colonne fait 480 px (la liste du téléphone, plus de cartes). Tout le sticker — son bord de craie et son cerne, que sa
      boîte ne compte pas (3,5 px) — dans la carte, à l'écart du buste, du
      niveau qui en déborde, du nom et de « ⋯ ». Mesuré sur le rectangle
      tourné, que `getBoundingClientRect` rend englobant. */
-  for (const largeur of [320, 360, 768]) {
+  for (const largeur of [320, 360, 1366]) {
     allumee();
     p = await ouvrir({ largeur });
     const place = await p.evaluate(() => [...document.querySelectorAll('#corps .gars [data-presence-ami]')].map((s) => {
@@ -553,14 +553,15 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
         air: kop ? kop.top - r.bottom - 5.5 : null,
       };
     }));
-    /* Les deux chemins sont éprouvés à chaque largeur : un nom court garde
-       son sticker sur sa ligne, celui de Wolfgang le fait descendre. */
+    /* Les deux chemins sont éprouvés sur le téléphone : un nom court garde
+       son sticker sur sa ligne, celui de Wolfgang le fait descendre. Dans
+       les 480 px d'un ordinateur, Wolfgang tient avec le sien. */
     const court = place.find((x) => x.qui === 'Tarek');
     const long = place.find((x) => x.qui === 'Wolfgang Maximiliens');
     check(`à ${largeur} px, le sticker tient dans la carte, sans couvrir ni couper le nom, sans toucher le buste, son niveau, « ⋯ » ni l’invitation`,
       (place.length === 3 && place.every((x) => x.dedans && !x.surPlus && !x.surBuste && x.surNiv === false
         && !x.surNom && (x.nomEntier || !x.memeLigne) && x.plusALEcran && x.air !== null && x.air >= 2)
-        && court?.memeLigne && long && !long.memeLigne)
+        && court?.memeLigne && long && (largeur > 480 || !long.memeLigne))
       || (console.log('        il pose :', JSON.stringify(place)), false));
     await p.close();
   }
@@ -591,13 +592,12 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
   etatsServis.clear();
 }
 
-/* ---------------------------------------------------------- grand écran
+/* ------------------------------------------------------- sur un ordinateur
 
-   La page des amis est une page large (`tbf-large`) : sa colonne s'ouvre
-   entre les tuiles, et la tribune de bustes y gagne des places. */
+   La page des amis garde la largeur du téléphone. */
 {
   const p = await ouvrir();
-  await controlerLarge(p, check, { nom: 'la page des amis' });
+  await controlerColonne(p, check, { nom: 'la page des amis' });
   await p.close();
 }
 
