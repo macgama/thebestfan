@@ -519,6 +519,19 @@
   opacity:0;transition:opacity .24s ease;
   filter:drop-shadow(0 10px 26px rgba(0,0,0,.7))}
 .tbf-pose.on{opacity:1}
+/* **À la taille de son âge** (7 octobre 2026, demandé par Gaël) : 80 %, 90 %,
+   100 % de la boîte, posé sur ses pieds. Chaque dessin tient en entier dans
+   la même boîte ; sans cela, un âge 3 plus large y était réduit et le Fanzzy
+   paraissait rapetisser en grandissant. Quand l'âge est mesuré, c'est le
+   personnage et non son cadre qui prend cette part (`--taille`, `--sous`,
+   posées par `fanzzy-scene.js` d'après `TBF_ETATS.taille`). */
+/* Deux fois la largeur de la boîte, centrée : un costume large (une cape,
+   un mégaphone) élargit le cadre de son âge, et `contain` le réduisait sur
+   sa largeur. Le surplus est transparent, et le doigt passe au travers. */
+.tbf-scene[data-evo="1"]{--taille-age:80%}
+.tbf-scene[data-evo="2"]{--taille-age:90%}
+.tbf-scene[data-evo] .tbf-pose{left:-50%;width:200%;pointer-events:none;top:auto;
+  bottom:var(--sous,0);height:var(--taille,var(--taille-age,100%))}
 
 /* ------------------------------------------------------------- LE MOMENT FORT
 
