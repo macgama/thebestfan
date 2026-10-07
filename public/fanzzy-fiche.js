@@ -1147,7 +1147,11 @@
               ? 'Il n’est pas encore à toi.'
               : e.code === 'deck.error.place_vide_avant'
                 ? 'Remplis d’abord la place précédente.'
-                : 'Impossible pour le moment.', { erreur: true });
+                : e.code === 'deck.error.legende_titulaire'
+                  ? 'Un légendaire entre en cours de partie : place-le en remplaçant.'
+                  : e.code === 'deck.error.legende_une_seule'
+                    ? 'Un seul légendaire par deck, Fanzzy ou pièce.'
+                    : 'Impossible pour le moment.', { erreur: true });
             return false;
           }
           dire(voulue === 0 ? `${nom} est titulaire.` : `${nom} entre en remplaçant ${voulue}.`);

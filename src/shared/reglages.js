@@ -146,6 +146,20 @@ export const REGLAGES = [
     aide: 'Au-delà, la recharge s’arrête. Sans plafond, une absence d’un mois ' +
       'rapporterait quatre mille boosters.' },
 
+  /* Les légendaires. Elles sortaient d'un booster sur cinq (Fanzzy) et d'un
+     sur dix (pièce) : Gaël veut qu'on se réjouisse d'en ouvrir une. */
+  { cle: 'pack.legendaire_fanzzy', section: 'boosters', type: 'decimal',
+    titre: 'Chance d’un Fanzzy légendaire', unite: '% par booster',
+    min: 0, max: 100, pas: 0.5, defaut: 2,
+    aide: 'Choisi entre 1 et 3 % le 7 octobre 2026. À 2 %, un booster sur cinquante.' },
+
+  { cle: 'pack.legendaire_stuff', section: 'boosters', type: 'decimal',
+    titre: 'Chance d’une pièce d’équipement légendaire', unite: '% par booster',
+    min: 0, max: 100, pas: 0.5, defaut: 3,
+    aide: 'Choisi entre 1 et 5 % le 7 octobre 2026. À 3 %, un booster sur trente-trois. ' +
+      'Une pièce légendaire déjà possédée en entier ne se retire pas : ce tirage ' +
+      'rend alors une autre pièce, ou des écharpes.' },
+
   { cle: 'pack.prix_echarpes', section: 'boosters', type: 'entier',
     titre: 'Acheter un booster coûte', unite: 'écharpes', min: 1, max: 999, defaut: 45,
     aide: 'En écharpes, la monnaie du jeu. Le prix en euros, lui, vit dans le ' +
@@ -368,6 +382,16 @@ export const REGLAGES = [
   { cle: 'deck.fanzzy', section: 'deck', type: 'entier',
     titre: 'Fanzzy par deck', unite: 'personnages', min: 1, max: 8, defaut: 3 },
 
+  /* La légende entre en jeu, elle n'y est pas au coup d'envoi. Voir
+     `shared/legende.js` : un seul légendaire par deck (Fanzzy ou pièce),
+     jamais titulaire, et ses modificateurs dorment jusqu'à ce nombre de
+     chants réussis du joueur, au duel comme au Virage. */
+  { cle: 'legende.chants', section: 'deck', type: 'entier',
+    titre: 'Un légendaire s’éveille après', unite: 'chants réussis (BON ou PARFAIT)',
+    min: 0, max: 30, defaut: 5,
+    aide: 'Compté pour chaque joueur, à chaque duel et à chaque match de Virage. ' +
+      'Zéro : le légendaire joue dès la première seconde, comme avant.' },
+
   { cle: 'deck.actions', section: 'deck', type: 'entier',
     titre: 'Cartes d’action par deck', unite: 'cartes', min: 1, max: 30, defaut: 10 },
 
@@ -446,8 +470,9 @@ export const REGLAGES = [
 
   { cle: 'etal.stuff_legendaire', section: 'etal', type: 'entier',
     titre: 'Pièce légendaire', unite: 'écharpes', min: 1, max: 9999, defaut: 520,
-    aide: 'Une pièce légendaire porte les modificateurs les plus francs : son prix ' +
-      'est ce qui tient la distance entre un joueur qui paie et un joueur qui joue.' },
+    aide: 'Sans effet depuis le 7 octobre 2026 : une pièce légendaire ne se vend plus ' +
+      'à l’étal, elle ne se gagne qu’en ouvrant des boosters. Le prix d’un doublon ' +
+      'rendu en écharpes ne passe pas par ici.' },
 
   { cle: 'etal.tenue', section: 'etal', type: 'entier',
     titre: 'Une tenue, sur un Fanzzy', unite: 'écharpes', min: 1, max: 9999, defaut: 130,

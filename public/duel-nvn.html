@@ -2720,7 +2720,11 @@ function rendreEquipe(moi, effets) {
       <span class="tbf-vh nom"></span><b class="tbf-carte-nom etat"></b></div>`),
     (el, _cle, i) => {
       const f = fanzzy[i];
-      const entre = !f.actif && peutChanger;
+      /* Un légendaire dort sur le banc jusqu'à ses chants réussis
+         (`shared/legende.js`) : il n'entre qu'éveillé. */
+      const lg = moi.legende;
+      const dort = Boolean(f.legende && lg && !lg.eveillee);
+      const entre = !f.actif && peutChanger && !dort;
       el.classList.toggle('actif', Boolean(f.actif));
       el.classList.toggle('dispo', entre);
       // L'état de la pièce : un seul à la fois, posé seulement s'il change.
@@ -2747,7 +2751,8 @@ function rendreEquipe(moi, effets) {
       else if (!vig.hasAttribute('data-fige')) vig.setAttribute('data-fige', '');
       ecrire(el.querySelector('.nom'), f.nom ?? f.id);
       if (el.title !== (f.nom ?? f.id)) el.title = f.nom ?? f.id;
-      ecrire(el.querySelector('.etat'), f.actif ? 'EN JEU' : entre ? 'ENTRER' : 'BANC');
+      ecrire(el.querySelector('.etat'), f.actif ? 'EN JEU' : entre ? 'ENTRER'
+        : dort ? `ÉVEIL ${lg.reussis}/${lg.seuil}` : 'BANC');
       /* « Silence radio » : la bouche barrée au marqueur, sur le visage de
          celui qui chante — l'active. Son chrono en anneau. */
       let bouche = el.querySelector(':scope > .tbf-effet[data-effet=silence]');
@@ -3630,6 +3635,15 @@ function raconter(e) {
 
     case 'swap':
       FX?.son?.('tic');
+      break;
+
+    /* La légende de son deck s'éveille : le Fanzzy légendaire peut entrer,
+       ou la pièce légendaire se met à compter. */
+    case 'legende':
+      if (!e.eveillee || e.userId !== monId()) break;
+      FX?.son?.('but');
+      poserMoment('LA LÉGENDE S’ÉVEILLE', 'or',
+        { sous: e.fanzzy ? 'Ton légendaire peut entrer' : 'Ta pièce légendaire compte' });
       break;
 
     case 'disconnected':

@@ -20,6 +20,7 @@
  * ont un revers. Une carte sans revers finit toujours par être la seule jouée.
  */
 import { reglage } from '../reglages.js';
+import { refusLegendes, seuilLegende } from '../legende.js';
 
 
 export const ACTIONS = [
@@ -481,6 +482,8 @@ export const DECK_RULES = {
   get actions() { return reglage('deck.actions'); },
   // Visibles à la fois ; les autres arrivent en remplacement.
   get mainVisible() { return reglage('deck.main_visible'); },
+  // Les chants réussis qui éveillent le légendaire du deck (`legende.js`).
+  get legende() { return seuilLegende(); },
   // Plus de plafond par carte : dix exemplaires de la même sont permis. La
   // limite de deux venait d'un temps où l'on supposait un large choix de
   // cartes ; en pratique un débutant en possède cinq, et dix emplacements à
@@ -563,6 +566,9 @@ export function validerDeck(deck, possede) {
     const a = Number(copies?.get?.(s) ?? 1);
     if (n > a) pb.push({ code: 'deck.error.stuff_shared', id: s, a, demande: n });
   }
+
+  /* Un seul légendaire, jamais titulaire : voir `shared/legende.js`. */
+  pb.push(...refusLegendes(deck, possede?.rarete));
 
   if (actions.length !== DECK_RULES.actions) {
     pb.push({ code: 'deck.error.actions_count', attendu: DECK_RULES.actions });
