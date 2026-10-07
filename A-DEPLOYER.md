@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**RP2 redessiné, et le Fanzzy grandit d'un âge à l'autre** (branche
+`claude/project-thread-j45ndm`, 7 octobre 2026, demandé par Gaël). Il se
+dépose avec ce qui est en dessous, ou seul. **Pages et images seules**, sans
+schéma ni redémarrage : la construction suffit.
+
+- `public/img/fanzzy/RP2*` : ses trois cartes, ses états des trois âges en
+  tenue de base et dans les trois skins ; il cligne à l'âge 1.
+- `public/img/fanzzy/index.json` : la place du personnage dans le cadre de
+  chaque âge (`pieds`), mesurée par `scripts/fanzzy-manifeste.mjs`.
+- `public/fanzzy-etats.js` (`taille`), `public/index.html`, `public/fanzzy-scene.js`,
+  `public/ui.css`, `public/cartes.js`, `public/cartes.css` : à l'accueil, au duel et
+  sur la fiche d'un match, le personnage occupe 60, 68 puis 76 % de sa boîte selon
+  son âge, pieds au sol ; sur la carte, 72, 80 puis 88 %. Avant, un âge 3 large
+  était réduit et paraissait plus petit que l'âge 1.
+- Accueil : le Fanzzy repose sur son ombre ; le second rond, sous lui
+  (`public/fanzzy-fond.js`, pied d'ombre du décor), n'y est plus montré.
+
+---
+
 **Le Fanzzy regarde le match en grand** (branche `claude/ecran-large-pkbkwj`,
 7 octobre 2026, demandé par Gaël). Page seule (`public/aujourdhui.html`) :
 ni schéma ni redémarrage.
