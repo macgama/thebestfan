@@ -24,23 +24,6 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    de cent soixante-dix pixels et une carte de supporter de sept cents ne se
    liraient plus comme des objets qu'on tient dans la main. */
 #page{width:100%;max-width:600px;margin:0 auto}
-/* **Sur grand écran, deux colonnes de lecture** (`tbf-large`, voir « Les
-   pages larges » dans ui.css). À gauche, qui je suis et où j'en suis : la
-   carte, les stickers, le bonus, le niveau, la saison ; à droite, ce que
-   j'ai fait et ce que je possède : le parcours, le Fanzzy, l'équipement, le
-   deck et les réglages. Chaque colonne garde à peu près la largeur de la
-   colonne d'avant — la règle du dessus tient toujours, c'est la page qui
-   en porte deux.
-
-   Des colonnes CSS et non une grille : le HTML garde son ordre, qui est
-   celui du téléphone et du lecteur d'écran, et la coupure se pose avant
-   MON PARCOURS, reconnu à ce qui le suit plutôt qu'à son rang — un bloc
-   ajouté plus haut ne déplacerait pas la coupure. */
-@media (min-width:1180px) and (min-height:560px){
-  #page{max-width:none;columns:2;column-gap:36px}
-  #page>*{break-inside:avoid}
-  #page>h2:has(+ #serie){break-before:column}
-}
 /* **Une seule gouttière.** `#app` pose déjà ses quatorze pixels de chaque
    côté (`--gouttiere`, ui.css) ; cette page en ajoutait quatorze autres à
    chaque bloc, et la carte, les stickers et les tickets perdaient
@@ -414,7 +397,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="tbf-large">
+<body>
 <main id="app"><div class="spin" id="spin"></div><div id="page" style="display:none">
 
   <section class="carte tbf-cadre" id="carte" data-echarpe aria-label="Ma carte de supporter">

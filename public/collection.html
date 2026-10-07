@@ -75,16 +75,6 @@ html[data-calme~="animations"] .spin{animation:none}
    eux : la pastille « +2 » d'un rayon pend de huit pixels au-dessus de sa
    bâche, et l'ombre dure du cadre descend de trois. */
 #accueil{display:flex;flex-direction:column;gap:26px;padding-top:18px}
-/* **Une colonne de 560 pixels au-delà de 600, au milieu** — la largeur de la
-   fiche (fanzzy-fiche.css). Sur une tablette, chaque rayon devenait une dalle
-   de 370 × 130 pixels dont l'anneau et le nom tenaient au coin bas-gauche,
-   le reste de la face vide ; le collectionneur, une bande de 740 pixels
-   remplie au tiers. L'accueil n'a que six objets à montrer : il garde la
-   proportion du téléphone. Les sous-vues, elles, prennent toute la largeur
-   — un album gagne à montrer deux lignées par rangée. */
-@media (min-width:600px){
-  #accueil{box-sizing:border-box;width:100%;max-width:560px;margin-inline:auto}
-}
 /* **Provisoire** (demandé à la feuille commune) : le nom et le compte d'un
    rayon, sur un bout de gaffer. À la craie sur la face de leur ton, ils
    tombaient à 2,4–2,6:1 sous le voile blanc de l'audit — dix textes au
@@ -127,25 +117,13 @@ html[data-calme~="animations"] .spin{animation:none}
 /* Le contenu d'une sous-vue qui n'a qu'une page (l'équipement, les
    actions) : la page d'album sans le défilement des pages. */
 .vue-seule>.tbf-album-page{padding-top:12px}
-/* **Trois colonnes, puis six — une lignée par rangée, puis deux** : la
-   grille du classeur (fanzzy.html, `#s-dex`), puisque c'est le même album,
-   et qu'il range comme lui les trois âges de chaque personnage à la suite.
-   La brique compte ses colonnes à la largeur, jusqu'à cinq : à quatre ou à
-   cinq, un personnage se coupait en travers de deux rangées. Seulement dans
-   les pages d'une série : l'équipement et les actions n'ont pas d'âges, ils
-   gardent la grille de la brique.
-
-   **Les vitrines, deux par rangée sur une tablette.** Une série ferme sur
-   ses cinq légendaires : à 768 px, cinq cases VITRINE pleine largeur
-   faisaient six cents pixels de rangées à moitié vides. Sur six colonnes,
-   chacune en prend trois, et la première repart d'une rangée propre. À
-   trois colonnes, elle prend toute la rangée, comme la brique. */
+/* **Trois colonnes, une lignée par rangée** : la grille du classeur
+   (fanzzy.html, `#s-dex`), puisque c'est le même album, et qu'il range comme
+   lui les trois âges de chaque personnage à la suite. La brique compte ses
+   colonnes à la largeur : à quatre, un personnage se coupait en travers de
+   deux rangées. Seulement dans les pages d'une série : l'équipement et les
+   actions n'ont pas d'âges, ils gardent la grille de la brique. */
 #vue .tbf-album-pages .tbf-album-cartes{grid-template-columns:repeat(3,minmax(0,1fr))}
-@media (min-width:640px){
-  #vue .tbf-album-pages .tbf-album-cartes{grid-template-columns:repeat(6,minmax(0,1fr))}
-  #vue .tbf-album-pages .tbf-album-vitrine{grid-column:span 3}
-  #vue .tbf-album-pages .tbf-album-cartes>:not(.tbf-album-vitrine)+.tbf-album-vitrine{grid-column:1 / span 3}
-}
 /* **Les six familles et MANQUANTS sur une seule rangée**, comme au classeur
    (fanzzy.html, la règle des filtres) : c'est le même album, il a le même
    mot et la même rangée. L'interrupteur s'y appelait « Ce qu'il me reste » :
@@ -216,20 +194,9 @@ html[data-calme~="animations"] .spin{animation:none}
    servis par ui.css depuis le lot 4 : leurs règles provisoires sont parties
    d'ici. */
 
-/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
-   règle commune des pages larges : l'accueil du classeur prend la largeur :
-   le collectionneur en bandeau, puis les rayons trois par rangée (six
-   rayons, deux rangées pleines ; un rayon seul sur la sienne la prend
-   entière, comme sur le téléphone). */
-@media (min-width:1180px) and (min-height:560px){
-  #accueil{max-width:none}
-  #accueil .tbf-rayons{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #accueil .tbf-rayons>.tbf-rayon:last-child:nth-child(odd){grid-column:auto}
-  #accueil .tbf-rayons>.tbf-rayon:last-child:nth-child(3n+1){grid-column:1/-1}
-}
 </style>
 </head>
-<body class="tbf-large">
+<body>
 <main id="app">
   <h1 class="tbf-vh">Ma collection</h1>
   <!-- L'accueil de la page : le niveau de collectionneur et les cinq rayons. -->

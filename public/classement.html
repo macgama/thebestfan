@@ -254,19 +254,6 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 
-/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
-   colonne de lecture s'ouvre en deux, le podium et ta place à gauche, la
-   liste à droite. Ta place reste épinglée en bas de l'écran tant que la
-   liste défile, comme sur le téléphone. Sans liste (la place vide, ou trois
-   noms au plus), tout garde sa largeur de lecture, au milieu. */
-@media (min-width:1180px) and (min-height:560px){
-  .colonne{max-width:none}
-  .mur{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;align-items:start}
-  .mur>*{grid-column:1}
-  .mur>.lignes{grid-column:2;grid-row:1 / span 4}
-  .mur>#moi{grid-row:2 / span 3;align-self:end}
-  .mur:not(:has(>.lignes))>*{grid-column:1/-1;grid-row:auto;width:100%;max-width:600px;margin-inline:auto}
-}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -276,7 +263,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="tbf-large">
+<body>
 <main id="app"><div class="colonne">
   <!-- Le nom de la saison n'a pas l'identifiant « saison » : c'est l'ancre
        de la page (/classement#saison), et le navigateur défilerait jusqu'à

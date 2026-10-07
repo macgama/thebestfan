@@ -1,19 +1,14 @@
 /**
- * Les pages larges sans suite de navigateur à elles, dans un vrai navigateur.
+ * Sur un ordinateur, toutes les pages ont la largeur du téléphone.
  *
- * Sur grand écran (≥ 1 180 × 560), chaque page de l'application porte
- * `<body class="tbf-large">` : sa colonne s'élargit, les dix tuiles de
- * l'accueil la bordent, et ses listes se rangent en colonnes de la largeur
- * d'un téléphone (« Les pages larges » dans public/ui.css). Les pages qui ont
- * leur suite (amis, KOP, matchs, compétitions, clubs, missions, profil,
- * répétition) y font ce contrôle ; celles-ci n'en ont pas, et le font ici,
- * sur des réponses de serveur écrites à la main :
- *
- *   - le classement : le podium à gauche, la liste à droite, ta place
- *     épinglée sous le podium ; vide, la place vide au milieu ;
- *   - le carnet : les souvenirs en deux colonnes ;
- *   - le classeur, l'abonnement et le compte : la colonne élargie ;
- *   - le deck, les boosters, le Fanzzy et sa fiche : leur cadre.
+ * Gaël, le 7 octobre 2026 : « trop large, trop d'informations ; je préfère
+ * un affichage style mobile », et « pour toutes les pages de notre
+ * application, la même largeur ». La colonne fait 480 px au plus
+ * (`--colonne`, ui.css, « La largeur de la colonne »), au milieu de l'écran,
+ * sans les tuiles de l'accueil autour. Les pages qui ont leur suite (amis,
+ * KOP, matchs, compétitions, clubs, missions, profil, répétition) y font ce
+ * contrôle (`controlerColonne`) ; les autres le font ici, sur des réponses
+ * de serveur écrites à la main, l'accueil et les deux arènes compris.
  *
  * Aucune base : rien ici ne passe par le serveur du jeu.
  * Avant de lancer :  npm install --no-save puppeteer
@@ -23,7 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
-import { controlerLarge } from './large-ui.mjs';
+import { controlerColonne } from './colonne-ui.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
@@ -62,9 +57,14 @@ app.get('/api/rank/:onglet', (_q, s) => s.json({
 app.get('/api/souvenirs/mine', (_q, s) => s.json({ souvenirs: [1, 2, 3, 4, 5].map(souvenir) }));
 app.get('/api/souvenirs/market', (_q, s) => s.json({ souvenirs: [] }));
 app.get('/api/fanzzy/state', (_q, s) => s.json({ wallet: { scarves: 25 } }));
-for (const [url, fichier] of [['/classement', 'classement'], ['/carnet', 'carnet'],
-  ['/collection', 'collection'], ['/abonnement', 'abonnement'], ['/compte', 'compte'],
-  ['/deck', 'deck'], ['/boosters', 'boosters'], ['/fanzzy', 'fanzzy'], ['/fanzzy/RP1', 'fanzzy-fiche']]) {
+const PAGES = [['/', 'index', 'l’accueil'], ['/classement', 'classement', 'le classement'],
+  ['/carnet', 'carnet', 'le carnet'], ['/collection', 'collection', 'le classeur'],
+  ['/abonnement', 'abonnement', 'l’abonnement'], ['/compte', 'compte', 'le compte'],
+  ['/deck', 'deck', 'le deck'], ['/boosters', 'boosters', 'les boosters'],
+  ['/boutique', 'boutique', 'la boutique'], ['/fanzzy', 'fanzzy', 'la page du Fanzzy'],
+  ['/fanzzy/RP1', 'fanzzy-fiche', 'la fiche d’un Fanzzy'], ['/virage', 'virage', 'le Virage'],
+  ['/duel-nvn', 'duel-nvn', 'le duel']];
+for (const [url, fichier] of PAGES) {
   app.get(url, (_q, s) => s.sendFile(path.join(RACINE, 'public', `${fichier}.html`)));
 }
 app.use(express.static(path.join(RACINE, 'public')));
@@ -83,82 +83,22 @@ async function ouvrir(url) {
   return page;
 }
 
-/* ------------------------------------------------------------ le classement */
+/* ------------------------------------------------------------ les pages
 
-const lignesPretes = (page) => () => jusqua(async () =>
-  page.evaluate(() => document.querySelectorAll('.lignes .row').length > 0));
-let page = await ouvrir('/classement');
-await lignesPretes(page)();
-await controlerLarge(page, check, { nom: 'le classement', pret: lignesPretes(page) });
-
-await page.setViewport({ width: 1366, height: 682 });
-await page.reload({ waitUntil: 'networkidle0' });
-await lignesPretes(page)();
-const mur = () => page.evaluate(() => {
-  const b = (s) => document.querySelector(s)?.getBoundingClientRect();
-  const [podium, lignes, moi] = [b('.tbf-podium'), b('.lignes'), b('#moi')];
-  return {
-    podium: podium && { l: podium.left, r: podium.right, t: podium.top },
-    lignes: lignes && { l: lignes.left, t: lignes.top },
-    moi: moi && { l: moi.left, r: moi.right, b: moi.bottom },
-    fenetre: innerHeight,
-  };
-});
-let m = await mur();
-check('la liste du classement se range à droite du podium, à sa hauteur',
-  m.podium && m.lignes && m.lignes.l > m.podium.r && Math.abs(m.lignes.t - m.podium.t) < 30
-  || (console.log('        ', m), false));
-check('ta place est épinglée sous le podium, en bas de l’écran',
-  m.moi && Math.abs(m.moi.l - m.podium.l) < 4 && m.moi.r <= m.podium.r + 1
-  && m.moi.b <= m.fenetre && m.moi.b > m.fenetre - 80
-  || (console.log('        ', m), false));
-await page.close();
-
-classes = 0;
-page = await ouvrir('/classement');
-await page.setViewport({ width: 1366, height: 682 });
-await page.reload({ waitUntil: 'networkidle0' });
-await jusqua(async () => page.evaluate(() => Boolean(document.querySelector('.place'))));
-const vide = await page.evaluate(() => {
-  const p = document.querySelector('.place').getBoundingClientRect();
-  return { centre: (p.left + p.right) / 2, w: p.width, milieu: innerWidth / 2 };
-});
-check('vide, la place vide garde sa largeur de lecture, au milieu',
-  vide.w <= 600 && Math.abs(vide.centre - vide.milieu) < 30 || (console.log('        ', vide), false));
-await page.close();
-
-/* ---------------------------------------------------------------- le carnet */
-
-page = await ouvrir('/carnet');
-const souvenirsPrets = () => jusqua(async () =>
-  page.evaluate(() => document.querySelectorAll('.list>.sv').length === 5));
-await souvenirsPrets();
-await controlerLarge(page, check, { nom: 'le carnet', liste: '.list>.sv', pret: souvenirsPrets });
-await page.close();
-
-/* ------------------------------- le classeur, l'abonnement et le compte */
-
-for (const [url, nom] of [['/collection', 'le classeur'], ['/abonnement', 'l’abonnement'],
-  ['/compte', 'le compte']]) {
-  page = await ouvrir(url);
-  await controlerLarge(page, check, { nom });
+   Sans serveur derrière, la plupart disent qu'elles n'ont rien pu lire ;
+   c'est leur colonne qu'on regarde. Le classement et le carnet ont leurs
+   lignes, pour qu'une liste pleine ne pousse pas la colonne. */
+for (const [url, , nom] of PAGES) {
+  const page = await ouvrir(url);
+  const pret = url === '/classement'
+    ? () => jusqua(async () => page.evaluate(() => document.querySelectorAll('.lignes .row').length > 0))
+    : url === '/carnet'
+      ? () => jusqua(async () => page.evaluate(() => document.querySelectorAll('.list>.sv').length === 5))
+      : undefined;
+  await controlerColonne(page, check, { nom, pret });
   await page.close();
 }
 
-/* ---------------- le deck, les boosters, le Fanzzy et sa fiche
-
-   Des scènes plus que des listes : elles ne s'étalent pas en colonnes, mais
-   leur colonne, leur barre et leurs tuiles se posent au même endroit que sur
-   toutes les autres pages. Sans serveur derrière, elles disent qu'elles
-   n'ont rien pu lire ; c'est leur cadre qu'on regarde. */
-const avantScenes = erreurs.length;
-for (const [url, nom] of [['/deck', 'le deck'], ['/boosters', 'les boosters'],
-  ['/fanzzy', 'la page du Fanzzy'], ['/fanzzy/RP1', 'la fiche d’un Fanzzy']]) {
-  page = await ouvrir(url);
-  await controlerLarge(page, check, { nom });
-  await page.close();
-}
-erreurs.length = avantScenes;
 
 const fautes = erreurs.filter((e) => !/Failed to fetch|JSON/.test(e));
 check('aucune erreur de script', fautes.length === 0);

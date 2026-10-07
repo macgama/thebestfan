@@ -196,8 +196,10 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    #fiche portait un backdrop-filter, ce qui en faisait le bloc de référence
    des descendants fixes. Il n'en porte plus : « fixed » se règle donc sur
    l'écran, que #fiche couvre de toute façon en entier (« inset:0 ») — le
-   coin est le même. Le personnage reste dans son coin, le fil passe dessous. */
-#fwatch{position:fixed;left:6px;bottom:calc(var(--nav-h,62px) + 6px);
+   coin est le même. Le personnage reste dans son coin, le fil passe dessous.
+   Le coin de la colonne, et non de l'écran : sur un ordinateur, la fiche a
+   la largeur du téléphone au milieu, et le coin de l'écran est loin d'elle. */
+#fwatch{position:fixed;left:max(6px,calc(50% - var(--colonne) / 2 + 6px));bottom:calc(var(--nav-h,62px) + 6px);
   width:96px;height:150px;z-index:3;pointer-events:none}
 /* Sur un écran étroit, cent pixels de personnage au-dessus d'une liste pleine
    largeur couvrent une ligne entière. Il rétrécit plutôt que de cacher. */
@@ -297,46 +299,6 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 
-/* **Sur grand écran** (`tbf-large`, « Les pages larges » dans ui.css) : la
-   règle commune des pages larges : les compétitions du jour se rangent en
-   colonnes de la largeur d'un téléphone, chacune avec ses matchs.
-
-   **La fiche d'un match y est une page comme les autres**, et non plus une
-   fenêtre de téléphone au milieu d'un écran noir : elle se pose dans la
-   colonne, sous la barre du haut, entre les tuiles qui restent ouvertes.
-   L'affiche à gauche (le score, l'heure, les deux portes), le fil, les
-   statistiques et les compositions à droite. La flèche de la barre la
-   referme (voir `fermerParLaBarre`), la sienne n'a plus lieu d'être. Le
-   Fanzzy qui regarde se range dans le coin de la colonne. */
-@media (min-width:1180px) and (min-height:560px){
-  #liste:has(>.ligue){columns:2 440px;column-gap:16px}
-  #liste>.ligue{break-inside:avoid}
-
-  html:has(#fiche.on){overflow:hidden}
-  body:has(#fiche.on) #app>:not(.tbf-haut){visibility:hidden}
-  #fiche{z-index:2;top:var(--fiche-haut,64px);bottom:0;background:none;overscroll-behavior:contain;
-    left:calc(50% - var(--colonne-large) / 2);right:auto;width:var(--colonne-large)}
-  #fiche>.f{max-width:none;display:grid;align-content:start;align-items:start;
-    grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:32px;padding:6px 10px 40px}
-  /* Les deux côtés tiennent chacun leur pile : rangés dans une grille commune,
-     la hauteur de l'affiche creusait un trou entre les onglets et le fil. */
-  #fiche>.f>.cote-affiche{grid-column:1}
-  #fiche>.f>.cote-volets{grid-column:2}
-  #fiche>.f>.fermer{display:none}
-  #fiche>.f>.spin{grid-column:1/-1}
-  #fiche .cote-affiche>.aff,#fiche #souscontenu{border:1px solid var(--trait);border-radius:12px;
-    background:var(--panneau)}
-  #fiche .cote-affiche>.aff{margin-top:12px;padding:16px 14px 14px}
-  #fiche .cote-volets>.souspage{margin-top:12px}
-  #fiche #souscontenu{margin-top:10px;padding:4px 12px 8px}
-  #fiche #souscontenu:empty{display:none}
-  #fwatch{left:calc(50% - var(--colonne-large) / 2 + 6px);bottom:6px}
-  /* **Le Fanzzy regarde le match avec toi** (Gaël, 7 octobre 2026 : « si
-     petit » dans son coin, il ne participait à rien). Sous les deux portes,
-     au milieu de l'affiche, aussi grand que la place libre le permet
-     (`poserSpectateur`) ; il garde le coin quand elle manque. */
-  #fwatch.sous-affiche{left:var(--fw-x);top:var(--fw-y);bottom:auto;width:var(--fw-l);height:var(--fw-h)}
-}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -346,7 +308,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="tbf-large">
+<body>
 <main id="app">
   <!-- Le nom de la page dans un `span` : c'est lui que la règle `:has` efface
        quand la barre du haut le dit déjà. Le sous-titre reste — il nomme la
@@ -649,7 +611,7 @@ const ICONES = { Goal:'⚽', Card:'▮', subst:'⇄', Var:'▣' };
 /** Tout ce que la fiche tient entre deux relectures. */
 const FICHE = {
   id: null, d: null, minuterie: null, chrono: null,
-  volet: 'fil', scene: null, vus: null, cote: null, finVue: false, defilement: null,
+  volet: 'fil', scene: null, vus: null, cote: null, finVue: false,
 };
 
 /**
@@ -695,20 +657,7 @@ async function persoEquipe() {
   return monPerso;
 }
 
-/** Le grand écran, tel que la feuille le nomme (« Les pages larges »). */
-const LARGE = '(min-width:1180px) and (min-height:560px)';
-
 async function ouvrirFiche(id) {
-  /* Sur grand écran, la fiche se pose sous la barre du haut (voir la
-     feuille) : on lui dit où celle-ci s'arrête. */
-  const haut = document.querySelector('#app>.tbf-haut');
-  if (matchMedia(LARGE).matches && !FICHE.id) {
-    /* La barre défile avec la page : on remonte à elle, et l'on reviendra
-       là où l'on était dans la liste en refermant. */
-    FICHE.defilement = scrollY;
-    scrollTo(0, 0);
-  }
-  if (haut) $('fiche').style.setProperty('--fiche-haut', `${Math.round(haut.getBoundingClientRect().bottom)}px`);
   $('fiche').classList.add('on');
   $('fcorps').innerHTML = '<div class="spin"></div>';
   FICHE.id = id;
@@ -736,51 +685,11 @@ async function ouvrirFiche(id) {
   await relire({ premier: true });
 }
 
-/* **Sur grand écran, la flèche de la barre referme la fiche**, comme le
-   ferait la sienne : la barre reste visible au-dessus d'elle, et sa flèche
-   quittait les matchs d'un coup, fiche comprise. En phase de capture, avant
-   la règle du retour de `nav.js`, comme le font les écrans de jeu. Sur un
-   téléphone la fiche couvre la barre : ce clic n'y arrive pas. */
-document.addEventListener('click', (e) => {
-  if (!FICHE.id || !e.target.closest?.('.tbf-retour')) return;
-  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-  e.preventDefault();
-  e.stopPropagation();
-  fermerFiche();
-}, true);
-
-/**
- * Sur grand écran, le Fanzzy qui regarde se pose sous les deux portes, au
- * milieu de l'affiche, à la taille de la place qui reste jusqu'au bas de
- * l'écran (270 px de large au plus, le rapport de son coin : 96 × 150).
- * Moins de 220 px de haut : il reprend son coin. Fixe comme dans son coin,
- * il suit l'affiche quand la fiche défile.
- */
-const SPECTATEUR = { l: 96, h: 150, max: 270, min: 220 };
-function poserSpectateur() {
-  const w = $('fwatch');
-  const affiche = $('fcorps').querySelector('.cote-affiche');
-  if (!matchMedia(LARGE).matches || !FICHE.id || !affiche) { w.classList.remove('sous-affiche'); return; }
-  const r = affiche.getBoundingClientRect();
-  const haut = r.bottom + 14;
-  const h = Math.min(innerHeight - haut - 10, SPECTATEUR.max * SPECTATEUR.h / SPECTATEUR.l);
-  if (h < SPECTATEUR.min) { w.classList.remove('sous-affiche'); return; }
-  const l = Math.min(r.width, h * SPECTATEUR.l / SPECTATEUR.h);
-  w.style.setProperty('--fw-x', `${Math.round(r.left + (r.width - l) / 2)}px`);
-  w.style.setProperty('--fw-y', `${Math.round(haut)}px`);
-  w.style.setProperty('--fw-l', `${Math.round(l)}px`);
-  w.style.setProperty('--fw-h', `${Math.round(h)}px`);
-  w.classList.add('sous-affiche');
-}
-addEventListener('resize', poserSpectateur);
-$('fiche').addEventListener('scroll', poserSpectateur, { passive: true });
-
 function fermerFiche() {
   /* On efface le match de l’adresse : sans cela, recharger la page
      rouvrirait la fiche qu’on vient de fermer. */
   if (location.search.includes('match=')) history.replaceState({}, '', '/matchs');
   $('fiche').classList.remove('on');
-  if (FICHE.defilement != null) { scrollTo(0, FICHE.defilement); FICHE.defilement = null; }
   FICHE.id = null;
   clearTimeout(FICHE.minuterie);
   clearInterval(FICHE.chrono);
@@ -1002,9 +911,6 @@ function dessinerFiche() {
 
   $('fcorps').innerHTML = `
     <button class="fermer tbf-plaque" id="ferme" aria-label="Fermer la fiche">‹</button>
-    <!-- Deux côtés, qui ne se distinguent que sur grand écran (voir la
-         feuille) : l'affiche, puis ce qu'on lit du match. -->
-    <div class="cote-affiche">
     <div class="aff">
       ${ligneCompetition}
       <div class="sc">
@@ -1062,20 +968,16 @@ function dessinerFiche() {
       <a class="aller tbf-plaque" data-ton="flare" data-porte="duel" href="/duel-nvn?match=${f.id}">DUEL<small>tribune contre tribune</small></a>
     </div>
     <section class="prono" id="prono" hidden aria-live="polite"></section>
-    </div>
-    <div class="cote-volets">
     <div class="souspage tbf-onglets" data-ton="vert" id="souspage">
       <button data-s="fil" class="tbf-onglet ${FICHE.volet === 'fil' ? 'on' : ''}">LE FIL</button>
       <button data-s="stats" class="tbf-onglet ${FICHE.volet === 'stats' ? 'on' : ''}">STATISTIQUES</button>
       <button data-s="compo" class="tbf-onglet ${FICHE.volet === 'compo' ? 'on' : ''}">COMPOSITIONS</button>
     </div>
-    <div id="souscontenu"></div>
-    </div>`;
+    <div id="souscontenu"></div>`;
 
   dessinerVolet();
   dessinerProno();
   $('fcorps').scrollTop = defile;
-  poserSpectateur();
 
   $('souspage').onclick = (ev) => {
     const b = ev.target.closest('[data-s]');

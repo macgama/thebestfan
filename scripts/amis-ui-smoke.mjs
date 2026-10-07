@@ -26,7 +26,7 @@ import { createAmis } from '../src/server/amis/index.js';
 import { createKop } from '../src/server/kop/index.js';
 import { charger as chargerCatalogue, auStade } from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
-import { controlerLarge } from './large-ui.mjs';
+import { controlerColonne } from './colonne-ui.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -591,13 +591,12 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
   etatsServis.clear();
 }
 
-/* ---------------------------------------------------------- grand écran
+/* ------------------------------------------------------- sur un ordinateur
 
-   La page des amis est une page large (`tbf-large`) : sa colonne s'ouvre
-   entre les tuiles, et la tribune de bustes y gagne des places. */
+   La page des amis garde la largeur du téléphone. */
 {
   const p = await ouvrir();
-  await controlerLarge(p, check, { nom: 'la page des amis' });
+  await controlerColonne(p, check, { nom: 'la page des amis' });
   await p.close();
 }
 
