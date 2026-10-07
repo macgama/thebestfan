@@ -11,6 +11,7 @@ import { SETS_NEUVES, DEX_NEUVES } from './dex-series-neuves.js';
 import { SET_SAISON, DEX_SAISON } from './dex-saison.js';
 import { AGES } from './dex-ages.js';
 import { agesDe, idDuStade } from './ages.js';
+import { reglage } from '../reglages.js';
 
 /**
  * Les six familles — et **les gestes que chacune sait faire**.
@@ -688,9 +689,24 @@ const DEX = [
  * Ces deux places ne sont donc pas « meilleures » : elles sont seulement les
  * seules qui peuvent tomber sur une légendaire.
  */
+/*
+ * **Les légendaires sont rares, et le taux se règle dans /admin.** Il était de
+ * 5 % sur la première place et de 15 % sur la deuxième : un booster sur cinq
+ * rendait un Fanzzy légendaire. Gaël a voulu le 7 octobre 2026 qu'on se
+ * réjouisse d'en ouvrir un (1 à 3 % par booster) : `pack.legendaire_fanzzy`
+ * dit la chance **par booster**, partagée à parts égales entre les deux
+ * places. Lus à chaque tirage, d'où les accesseurs.
+ */
+const partParPlace = () => {
+  const p = Number(reglage('pack.legendaire_fanzzy'));
+  const parBooster = Number.isFinite(p) ? Math.min(100, Math.max(0, p)) / 100 : 0.02;
+  // 1 − (1 − x)² = parBooster : la chance qu'au moins une des deux places tombe.
+  return 1 - Math.sqrt(1 - parBooster);
+};
 const RATES = {
-  4: [['commune',.95],['legendaire',.05]],
-  5: [['commune',.85],['legendaire',.15]],
+  get 4() { const x = partParPlace(); return [['commune', 1 - x], ['legendaire', x]]; },
+  get 5() { const x = partParPlace(); return [['commune', 1 - x], ['legendaire', x]]; },
+  toJSON() { return { 4: this[4], 5: this[5] }; },
 };
 
 /* ------------------------------------------------- le lot de septembre 2026

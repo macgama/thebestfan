@@ -19,6 +19,13 @@ import { journeeParId, TERMINE } from '../football/journee.js';
 import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 import { packsDepart } from '../bourse.js';
 import { PALIERS } from '../../shared/niveau.js';
+import { selonLaRegle, refusLegendes } from '../../shared/legende.js';
+
+/** Où lire la rareté d'un Fanzzy et d'une pièce : `shared/legende.js`. */
+const RARETE = Object.freeze({
+  fanzzy: (id) => parIdentifiant(racineDe(String(id ?? '')))?.rar,
+  stuff: (id) => STUFF_BY_ID.get(id)?.rar,
+});
 
 /**
  * Le palier qui ouvrira l'emplacement de tribune suivant.
@@ -332,6 +339,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
          cesser de distribuer, pas confisquer. */
       actions: new Set([...actions,
         ...jouables('action').filter((a) => a.rar === 'commune').map((a) => a.id)]),
+      // La rareté, pour la règle des légendaires (`shared/legende.js`).
+      rarete: RARETE,
     };
   }
 
@@ -395,8 +404,16 @@ export function createDecks({ pool, requireAuth, niveau = null,
     }
 
     return {
-      fanzzy: deck.fanzzy.map((f) => {
+      /* La règle des légendaires appliquée au deck tel qu'il est enregistré :
+         un deck d'avant la règle se joue selon elle (`selonLaRegle`). */
+      fanzzy: selonLaRegle(deck.fanzzy, RARETE).map((f) => {
         const stuff = f.stuff ?? [];
+        /* **Ce qu'il porte tant que la légende dort** : ni ses propres
+           modificateurs s'il est légendaire, ni ceux de la pièce légendaire.
+           Le moteur prend `modsBanc` jusqu'à l'éveil, `mods` ensuite. Absent
+           quand rien ne dort : il n'y a alors qu'un total. */
+        const dort = f.legende || f.stuffLegende;
+        const sacBanc = f.stuffLegende ? stuff.filter((s) => s !== f.stuffLegende) : stuff;
         // L'équipement suit le personnage à travers ses âges : c'est déjà ce que
         // promet la carte de remplacement, et il serait incompréhensible qu'il
         // tombe au moment précis où le personnage grandit.
@@ -417,6 +434,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
              partir de 1,5. Les deux écrans de jeu montrent maintenant cette
              ventilation, et c'est ici qu'elle se conserve. */
           modsBase: def?.mods ?? {},
+          ...(dort ? { modsBanc: { id: f.id,
+            ...combine(f.legende ? {} : (def?.mods ?? {}), sacBanc) } } : {}),
         });
 
         const ages = lignee(f.id);
@@ -433,6 +452,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
           stade: 1,
           ages: jouables,
           tenues: tenues[f.id] ?? {},
+          legende: f.legende,
+          stuffLegende: f.stuffLegende,
         };
       }),
       actions: deck.actions.map((id) => ACTION_BY_ID.get(id)).filter(Boolean),
@@ -1003,6 +1024,10 @@ export function createDecks({ pool, requireAuth, niveau = null,
     rangs[place] = entrant;
 
     const propre = { ...deck, fanzzy: rangs.filter(Boolean) };
+    /* La règle des légendaires nommée telle quelle : la fiche dit alors
+       pourquoi, au lieu d'un « impossible pour le moment ». */
+    const refus = refusLegendes(propre, RARETE)[0];
+    if (refus) throw fail(refus.code, refus);
     const r = await enregistrer(userId, propre);
     return {
       ...r,
