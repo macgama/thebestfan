@@ -2815,99 +2815,19 @@ amputer = null;
   const r = await lire();
   check('et redevient invisible', r?.bande?.visible === false && r.avatar?.deplie === 'false');
 
-  /* À partir de 560 px, rien ne se déplie : le sticker mène au profil, et
-     les soldes sont à demeure. La même page, élargie : c'est aussi le
-     passage d'une largeur à l'autre qu'on éprouve (`matchMedia`, `regler`
-     dans nav.js).
-
-     **Où ils sont à demeure dépend de l'écran montré** (lot 4). Le vestiaire
-     a sa poche, juste sous la barre (`#bourse` : écharpes, boosters,
-     l'anneau du classeur) ; nav.js range donc /fanzzy avec la boutique et
-     le kiosque (`BOURSE_EN_PAGE`) et cache la bande des jetons tant que
-     cette poche est à l'écran — sans quoi le même solde s'affichait deux
-     fois, à cinquante pixels d'écart. Le classeur n'a pas de poche, et il
-     montre des prix (les âges secrets) : la bande y revient. Ce contrôle
-     attendait les jetons dans la barre sur le vestiaire, c'est-à-dire
-     exactement le doublon que le lot a retiré.
-
-     On éprouve donc la règle entière, sur les deux écrans et au passage de
-     l'un à l'autre : **les soldes du serveur sont à l'écran une fois,
-     jamais deux, jamais zéro**, toujours touchables et menant au même
-     endroit. Une bande cachée sans poche qui la remplace rougit, une poche
-     à côté d'une bande visible aussi. Le passage se fait par l'onglet,
-     comme un joueur : il change `.on` sans changer l'adresse, et c'est ce
-     changement que nav.js doit suivre (`MutationObserver`, `brancher`). */
-  await hud.setViewport({ width: 768, height: 1024 });
+  /* **Sur un ordinateur, la barre du téléphone** (Gaël, 7 octobre 2026 :
+     toutes les pages à la largeur du téléphone). La colonne y fait 480 px :
+     la bande ne se range plus dans la barre comme elle le faisait au-delà
+     de 560 px, elle reste repliée derrière le sticker, comme à 320. */
+  await hud.setViewport({ width: 1366, height: 768 });
   await dodo(400);
   const v = await lire();
-  check('à 768 px sur le vestiaire, la bande des jetons se range : la page a sa bourse',
-    (v?.montre === 's-equipe' && v.bande?.cachee === true
-      && v.jetons.length === 2 && v.jetons.every((j) => !j.touchable))
-    || (console.log(`        écran ${v?.montre}, bande`, JSON.stringify(v?.bande),
-      'jetons', JSON.stringify(v?.jetons)), false));
-  check('sans rien à déplier', v?.bande?.ouverte === false && v.avatar?.deplie === null);
-  check('la poche du vestiaire mène à la boutique et au kiosque',
-    JSON.stringify(v?.poche.map((j) => j.href)) === JSON.stringify(['/boutique', '/boosters'])
-    || (console.log('        poche :', JSON.stringify(v?.poche)), false));
-  check('et elle dit les soldes du serveur',
-    (v?.serveur.scarves != null
-      && JSON.stringify(v.poche.map((j) => j.chiffre))
-        === JSON.stringify([String(v.serveur.scarves), String(v.serveur.packs)]))
-    || (console.log(`        poche ${v?.poche.map((j) => j.chiffre).join(' / ')}, `
-      + `serveur ${v?.serveur.scarves} / ${v?.serveur.packs}`), false));
-  check('visibles, entiers dans l’écran, et touchables',
-    (v?.poche.length === 2 && v.poche.every((j) => j.w > 0 && j.h > 0
-      && j.l >= 0 && j.r <= v.ecran && j.touchable))
-    || (console.log('        poche', JSON.stringify(v?.poche)), false));
-  check('le titre garde sa place à côté du sticker seul',
+  check('à 1 366 px, la bande des jetons reste repliée derrière le sticker',
+    (v?.bande?.ouverte === false && v.bande.visible === false && v.avatar?.deplie === 'false')
+    || (console.log('        bande', JSON.stringify(v?.bande), 'avatar', JSON.stringify(v?.avatar)), false));
+  check('le titre garde sa place, et rien de la barre ne sort de l’écran',
     (Boolean(v?.titre) && !v.titre.coupe && v.titre.r <= v.hud.l + 1 && v.barre.sort === false)
     || (console.log('        titre', JSON.stringify(v?.titre), 'HUD', JSON.stringify(v?.hud)), false));
-
-  /* Le classeur, par son onglet : la poche n'est plus à l'écran, la bande
-     revient dans la barre — et c'est là que l'épreuve d'avant se rejoue,
-     entière : à demeure, touchable, aux soldes du serveur, sans voler sa
-     place au titre. */
-  await hud.evaluate(() => document.querySelector('.nav [data-go="dex"]')?.click());
-  await jusqua(() => hud.evaluate(() =>
-    document.querySelector('.tbf-hud-bande')?.hidden === false), 3000);
-  await dodo(400);
-  const l = await lire();
-  check('sur le classeur, qui n’a pas de poche, la bande revient',
-    (l?.montre === 's-dex' && l.bande?.cachee === false
-      && l.poche.every((j) => j.w === 0 && j.h === 0))
-    || (console.log(`        écran ${l?.montre}, bande`, JSON.stringify(l?.bande),
-      'poche', JSON.stringify(l?.poche)), false));
-  check('à 768 px, les deux jetons sont dans la barre, à demeure',
-    (l?.bande?.visible === true && l.jetons.length === 2
-      && l.jetons.every((j) => (j.t + j.b) / 2 > l.barre.t && (j.t + j.b) / 2 < l.barre.b
-        && j.touchable))
-    || (console.log('        jetons', JSON.stringify(l?.jetons), 'barre', JSON.stringify(l?.barre)), false));
-  check('et ils y disent les soldes du serveur',
-    (l?.serveur.scarves != null
-      && JSON.stringify(l.jetons.map((j) => j.chiffre))
-        === JSON.stringify([String(l.serveur.scarves), String(l.serveur.packs)]))
-    || (console.log(`        HUD ${l?.jetons.map((j) => j.chiffre).join(' / ')}, `
-      + `serveur ${l?.serveur.scarves} / ${l?.serveur.packs}`), false));
-  check('toujours sans rien à déplier', l?.bande?.ouverte === false && l.avatar?.deplie === null);
-  check('et le titre garde encore sa place',
-    (Boolean(l?.titre) && !l.titre.coupe
-      && l.jetons.every((j) => l.titre.r <= j.l + 1) && l.barre.sort === false)
-    || (console.log('        titre', JSON.stringify(l?.titre), 'jetons', JSON.stringify(l?.jetons)), false));
-
-  /* Et retour : le vestiaire remontré, sa poche reprend les soldes et la
-     bande se range de nouveau. Sans ce retour, une bande qui ne se cache
-     qu'au chargement passerait, et doublerait la poche à la première visite
-     du classeur. */
-  await hud.evaluate(() => document.querySelector('.nav [data-go="equipe"]')?.click());
-  await jusqua(() => hud.evaluate(() =>
-    document.querySelector('.tbf-hud-bande')?.hidden === true), 3000);
-  await dodo(400);
-  const retour = await lire();
-  check('revenu au vestiaire, la bande se range de nouveau derrière la poche',
-    (retour?.montre === 's-equipe' && retour.bande?.cachee === true
-      && retour.poche.length === 2 && retour.poche.every((j) => j.w > 0 && j.touchable))
-    || (console.log(`        écran ${retour?.montre}, bande`, JSON.stringify(retour?.bande),
-      'poche', JSON.stringify(retour?.poche)), false));
   await hud.close();
 }
 
