@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Sur ordinateur, toutes les pages à la largeur du téléphone** (branche
+`claude/ecran-large-pkbkwj`, 7 octobre 2026, demandé par Gaël). Pages
+seules : construction, ni schéma ni redémarrage.
+
+- Sur un ordinateur comme sur une tablette, chaque page (accueil, Virage et
+  duel compris) a la largeur d'un grand téléphone, 480 px, au milieu de
+  l'écran. Les pages larges, les listes en colonnes et les tuiles de
+  l'accueil autour des pages sont retirées ; le menu est le tiroir, partout.
+- La fiche d'un match reprend sa forme de téléphone, son Fanzzy au coin de
+  la fiche (ce qui défait l'entrée « Le Fanzzy regarde le match en grand »
+  plus bas).
+- Contrôlé par `npm run large:ui` et les suites des pages.
+
+---
+
 **Les légendaires : entrée en jeu et vraie rareté** (branche
 `claude/legendaires-acces-rarete-bxduel`, 7 octobre 2026, choix de Gaël).
 Il se dépose avec ce qui est en dessous, ou seul. **Serveur et pages, sans
