@@ -2110,7 +2110,8 @@ Par ordre d'utilité.
    colonne plus large que le téléphone (`min-width` au-delà de 480 px) sont
    parties. Contrôle : `controlerColonne` (`scripts/colonne-ui.mjs`), à
    1 366 et 1 920 px, dans `large:ui` (l'accueil et les arènes compris) et
-   les suites des pages. `RAILS` reste dans `menu.js`, monté par personne.
+   les suites des pages. Les tuiles autour des pages (`RAILS`) sont
+   supprimées (Gaël l’a confirmé le même jour).
 
 3. **Que le geste du Fanzzy se sente en jeu.** La répartition est faite : les
    765 cartes se partagent les vingt-quatre gestes, chacune dans sa famille
