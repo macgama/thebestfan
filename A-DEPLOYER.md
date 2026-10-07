@@ -13,8 +13,8 @@ schéma** : construction, puis redémarrage hors d'un match.
 - Boosters : 2 % de Fanzzy légendaire et 3 % de pièce légendaire par booster
   (avant : environ 19 % et 10 %). Réglages : /admin, BOOSTERS ET ÉCHARPES.
 - L'étal ne vend plus de pièce légendaire.
-- Paquet de bienvenue : le commun est titulaire, le légendaire offert attend
-  sur le banc.
+- Paquet de bienvenue : plus de légendaire offerte (choix de Gaël), deux
+  Fanzzy communs différents.
 - Contrôlé par `npm run legende:smoke` (neuve).
 
 ---
