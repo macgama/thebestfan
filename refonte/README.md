@@ -90,12 +90,12 @@ temporaire de la session ; ce qui doit durer est ici.*
    paient que l'honneur, des saisons de quatre mois (4 quinquagies ter) ; au
    Virage, le jeu d'abord et le but réel en dernier (4 quinquagies quater) ;
    les seuils de division, que Gaël recale lui-même dans `/admin`
-   (4 quinquagies). **Ce qui reste à Gaël** : saisir le 31 décembre 2026
-   comme fin de la saison 1 dans `/admin` ; donner les informations d'éditeur
-   de `CONFIDENTIALITE.md` (nom, forme juridique, adresse, e-mail de
-   contact) : la page se publie d'abord, puis il allume la présence des amis
-   (`presence.actif`, dans `/admin`) ; choisir la série et le nom de la
-   saison 2.
+   (4 quinquagies). La politique de confidentialité, avec les informations
+   d'éditeur de Gaël, est publiée à `/confidentialite` (4 quinquagies
+   quinquies). **Ce qui reste à Gaël** : saisir le 31 décembre 2026 comme fin
+   de la saison 1 dans `/admin` ; une fois la page en ligne, allumer la
+   présence des amis (`presence.actif`, dans `/admin`) ; choisir la série et
+   le nom de la saison 2.
 6. **Rouges connues** : `deck:ui` (un contrôle, depuis avant le lot 0 ; un
    correctif dort dans la copie `.claude/worktrees/funny-herschel-18c485`
    d'une autre session) ; `accueil:ui` intermittente. **Dans un conteneur
