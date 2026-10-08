@@ -47,7 +47,8 @@
  *
  * `--ordre neutre,joie,depit,pousse,colere,-` change l'ordre si la planche
  * en suit un autre (`-` : figure laissée) ; `--echelle 1.1` corrige l'échelle trouvée si l'œil n'est pas
- * d'accord ; `--sortie <dossier>` écrit ailleurs que dans `art/<ID>/_src/`.
+ * d'accord ; `--sortie <dossier>` écrit ailleurs que dans `art/<ID>/_src/` ;
+ * `--lueur`, sur fond magenta, rend sa couleur chaude à une aura devenue rose.
  */
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -75,7 +76,11 @@ const drapeau = (nom) => {
   const i = args.indexOf(`--${nom}`);
   return i >= 0 ? args[i + 1] : null;
 };
-const libres = args.filter((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--'));
+const SANS_VALEUR = ['--lueur'];
+const libres = args.filter((a, i) => !a.startsWith('--')
+  && (!args[i - 1]?.startsWith('--') || SANS_VALEUR.includes(args[i - 1])));
+/* `--lueur` : le Fanzzy a une aura lumineuse, rendue rose par le magenta. */
+const LUEUR = args.includes('--lueur');
 const [ID, AGE, TENUE, PLANCHE] = libres;
 const REPOS = drapeau('repos');
 /* Sans `--repos`, le repos est dans la planche : c'est la meilleure façon de
@@ -129,6 +134,7 @@ function detourer(px, l, h, fond) {
   const [fr, fg, fb] = fond;
   const n2 = fr * fr + fg * fg + fb * fb;
   const vert = fg > fr && fg > fb;
+  const orig = vert ? null : px.slice();
   for (let p = 0; p < l * h; p++) {
     const i = p * 4;
     let d = Math.hypot(px[i] - fr, px[i + 1] - fg, px[i + 2] - fb);
@@ -140,6 +146,15 @@ function detourer(px, l, h, fond) {
       // Seulement une ombre franche : un gris foncé (un pantalon) en est loin.
       const dk = Math.hypot(px[i] - k * fr, px[i + 1] - k * fg, px[i + 2] - k * fb);
       if (dk < SEUIL_BAS / 2 && dk < d) { d = dk; ref = fond.map((c) => k * c); }
+    }
+    if (!vert && ref === fond) {
+      /* Sur le magenta, l'ombre perd son vert plus vite que le reste : on la
+         reconnaît au rapport rouge/bleu du fond, avec moins de vert que lui. */
+      const kb = (px[i] * fr + px[i + 2] * fb) / (fr * fr + fb * fb);
+      if (kb >= 0.3 && kb < 1 && px[i + 1] <= kb * fg + 5) {
+        const dk = Math.hypot(px[i] - kb * fr, px[i + 2] - kb * fb);
+        if (dk < SEUIL_BAS / 2 && dk < d) { d = dk; ref = [kb * fr, Math.min(px[i + 1], kb * fg), kb * fb]; }
+      }
     }
     const a = Math.min(1, Math.max(0, (d - SEUIL_BAS) / (SEUIL_HAUT - SEUIL_BAS)));
     if (a < 1 && a > 0) {
@@ -161,8 +176,49 @@ function detourer(px, l, h, fond) {
       // Le violet d'une tenue ressemble au magenta : on ne touche qu'au bord.
       const trop = Math.min(px[i], px[i + 2]) - px[i + 1];
       if (trop > 0) { px[i] -= trop; px[i + 2] -= trop; }
+      // Une lueur chaude (plus rouge que bleue) garde du rose : son bleu vient du fond.
+      if (px[i] > px[i + 2]) px[i + 2] = Math.min(px[i + 2], px[i + 1]);
     }
     px[i + 3] = Math.round(a * px[i + 3]);
+  }
+  if (!vert && LUEUR) lueurSurMagenta(px, orig, l, h, fond);
+}
+
+/* Une lueur chaude rendue sur le magenta en devient rose, et assez loin du
+   fond pour paraître opaque. Avec `--lueur`, près du bord seulement (une joue
+   rose est loin dedans), on la lit comme une lueur orangée (bleu = moitié du
+   vert) posée sur le fond : on en tire sa transparence et sa vraie couleur.
+   Sans l'option, un jean lavande ou une frange rose resteraient intacts. */
+const BORD_LUEUR = 200;
+function lueurSurMagenta(px, orig, l, h, [fr, fg, fb]) {
+  const dist = new Uint8Array(l * h).fill(255);
+  let file = [];
+  for (let p = 0; p < l * h; p++) if (px[p * 4 + 3] < 128) { dist[p] = 0; file.push(p); }
+  for (let n = 1; n <= BORD_LUEUR && file.length; n++) {
+    const suite = [];
+    for (const p of file) {
+      const x = p % l;
+      for (const q of [p - 1, p + 1, p - l, p + l]) {
+        if (q < 0 || q >= l * h || dist[q] !== 255) continue;
+        if ((q === p - 1 && x === 0) || (q === p + 1 && x === l - 1)) continue;
+        dist[q] = n; suite.push(q);
+      }
+    }
+    file = suite;
+  }
+  const mf = fb - 0.5 * fg;
+  for (let p = 0; p < l * h; p++) {
+    if (dist[p] > BORD_LUEUR || px[p * 4 + 3] === 0) continue;
+    const i = p * 4;
+    const [r, g, b] = [orig[i], orig[i + 1], orig[i + 2]];
+    if (b - g < 25 || r <= b || r - g < 80) continue;
+    const f = Math.min(1, Math.max(0, (b - 0.5 * g) / mf));
+    const a = 1 - f;
+    if (a < 0.02) { px[i + 3] = 0; continue; }
+    px[i] = Math.min(255, Math.round((r - f * fr) / a));
+    px[i + 1] = Math.min(255, Math.max(0, Math.round((g - f * fg) / a)));
+    px[i + 2] = Math.min(255, Math.max(0, Math.round((b - f * fb) / a)));
+    px[i + 3] = Math.min(px[i + 3], Math.round(a * 255));
   }
 }
 
@@ -379,6 +435,9 @@ const proche = Int32Array.from(figures[0].etiq);
     front = suivant;
   }
 }
+// Une miette (moins de 30 pixels) n'a pas de propriétaire : elle ne compte pour personne.
+const proprio = new Map();
+for (const f of figures) for (const id of f.ids) proprio.set(id, f);
 const places = [];
 for (const [k, f] of figures.entries()) {
   if (ORDRE[k] === '-') continue;
@@ -388,7 +447,7 @@ for (const [k, f] of figures.entries()) {
   for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) {
     const p = (f.y0 + y) * planche.l + (f.x0 + x);
     // Un pixel d'un voisin, franc ou de sa frange, reste dehors.
-    if (proche[p] >= 0 && !f.ids.has(proche[p])) continue;
+    if (proche[p] >= 0 && (proprio.get(proche[p]) ?? f) !== f) continue;
     for (let c = 0; c < 4; c++) isole[(y * l + x) * 4 + c] = planche.px[p * 4 + c];
   }
   const L = Math.max(1, Math.round(l * echelle)), H = Math.max(1, Math.round(h * echelle));

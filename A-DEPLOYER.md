@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Cinq légendaires redessinés : RP13 à RP17** (branche
+`claude/project-thread-j45ndm`, 8 octobre 2026, demandé par Gaël). Images
+seules : construction, ni schéma ni redémarrage.
+
+- `public/img/fanzzy/RP13` à `RP17` et leurs cartes : nouveau dessin, cinq
+  états et trois skins (Halloween, Préhistorique, Apocalyptique) chacun.
+  RP13, RP14 et RP16 clignent des yeux ; RP15 (yeux trop petits pour être
+  trouvés) et RP17 (visage hors du cadre de la tête) pas encore.
+- `scripts/fanzzy-planche.mjs` : sur fond magenta, l'ombre au sol part avec
+  le fond, et `--lueur` rend sa couleur chaude à une aura devenue rose ; une
+  miette sans propriétaire ne troue plus la frange d'une figure.
+
+---
+
 **Le Fanzzy en grand sur « Mon Fanzzy »** (branche
 `claude/serveur-pas-a-jour-fcvbnf`, 8 octobre 2026, demandé par Gaël). Pages
 seules : construction, ni schéma ni redémarrage.
