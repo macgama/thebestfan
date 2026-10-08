@@ -38,9 +38,9 @@ export const CANAL = 'beta';
  * joueur, et d'un entier le jour où la bêta se ferme. Les quatre décimales sont
  * volontaires : elles disent « on livre souvent » mieux qu'une phrase.
  */
-export const NUMERO = '0.0100';
+export const NUMERO = '0.0200';
 
-/** Ce qui s'affiche, tel quel : « version bêta — 0.0100 ». */
+/** Ce qui s'affiche, tel quel : « version bêta — 0.0200 ». */
 export const ETIQUETTE = `version ${CANAL === 'beta' ? 'bêta' : CANAL} — ${NUMERO}`;
 
 export const VERSION_PUBLIQUE = { canal: CANAL, numero: NUMERO, etiquette: ETIQUETTE };
