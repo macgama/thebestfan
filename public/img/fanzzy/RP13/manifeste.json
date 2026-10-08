@@ -1,6 +1,6 @@
 {
   "id": "RP13",
-  "rev": 3,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,15 +13,44 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "ed8b96e58676"
+          "sha": "80504bc6a91f",
+          "cligne": true
         },
         "halloween": {
           "etats": [
-            "neutre"
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "58a7123b0a78"
+          "sha": "3cf003d3ba20"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "fd5c8e021b11"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "0fff05a428dc"
         }
       }
     }
