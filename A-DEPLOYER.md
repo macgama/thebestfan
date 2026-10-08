@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Le Fanzzy plus grand sur sa carte** (branche `claude/project-thread-j45ndm`,
+8 octobre 2026, demandé par Gaël). Pages seules : construction, ni schéma ni
+redémarrage.
+
+- `public/cartes.js`, `public/cartes.css`, `public/fanzzy-etats.js` : en
+  grande carte (fiche, vitrine), le Fanzzy prend presque toute la hauteur et
+  descend derrière la bande du nom ; aux âges 2 et 3, son repos est agrandi
+  d'après sa mesure (`pieds`), il ne rapetisse plus dans le cadre de l'âge.
+
+---
+
 **RP1 refait par Gaël, avec son aura** (branche `claude/project-thread-j45ndm`,
 7 octobre 2026 au soir). Images seules : construction, ni schéma ni
 redémarrage.
