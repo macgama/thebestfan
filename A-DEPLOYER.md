@@ -1,5 +1,12 @@
 # À déposer sur Infomaniak
 
+**Le numéro de version passe à 0.0200** (8 octobre 2026). Il ne bouge qu'à
+la main (`src/shared/version.js`) et n'avait pas changé depuis le
+27 septembre : au menu, « version bêta — 0.0200 » dit que la mise en ligne
+a eu lieu. Serveur : il se lit au redémarrage.
+
+---
+
 **Le Fanzzy plus grand sur sa carte** (branche `claude/project-thread-j45ndm`,
 8 octobre 2026, demandé par Gaël). Pages seules : construction, ni schéma ni
 redémarrage.
