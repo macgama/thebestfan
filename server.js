@@ -970,12 +970,17 @@ app.get('/api/public/reglages', (_req, res) => {
  * base et le nombre de sockets. Celle-ci ne rend qu'un nom, et elle est
  * publique — le menu l'affiche à qui ouvre le tiroir.
  *
- * Une heure de cache : le numéro ne bouge qu'à une livraison, et un joueur
- * qui vient de recharger a de toute façon rechargé. Ce n'est pas `no-store`
- * comme les réglages, parce que rien ici ne dépend du joueur ni de l'instant.
+ * **Jamais gardée.** Elle l'était une heure, au motif que le numéro ne bouge
+ * qu'à une livraison — mais c'est justement après une livraison qu'on la lit :
+ * le 8 octobre 2026, après construction, schéma et redémarrage, le menu
+ * disait encore 0.0100, l'ancienne réponse pouvant venir du cache. Le
+ * numéro est la preuve que la mise en ligne a eu lieu ; une preuve vieille
+ * d'une heure n'en est pas une. La
+ * réponse tient en quelques octets : la redemander à chaque ouverture du menu
+ * ne coûte rien.
  */
 app.get('/api/version', (_req, res) => {
-  res.set('cache-control', 'public, max-age=3600');
+  res.set('cache-control', 'no-store');
   res.json(VERSION_PUBLIQUE);
 });
 
