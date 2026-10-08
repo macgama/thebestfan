@@ -204,8 +204,8 @@
    grande carte) : en entier, posé sur le sol de la carte, la tête sous le
    pin et la forme. Recadré comme un buste, il perdait sa tête. */
 .fz .illuwrap .illu.fz-pied{height:88%;object-fit:contain}
-/* **À la taille de son âge** (7 octobre 2026, demandé par Gaël) : 72 %, 80 %,
-   88 % de la carte. Chaque dessin tient en entier dans la même boîte ; un
+/* **À la taille de son âge** (7 octobre 2026, demandé par Gaël) : 90 %, 97 %,
+   104 % de la carte (8 octobre, plus bas). Chaque dessin tient en entier dans la même boîte ; un
    âge 3 plus large ou plus haut (un mégaphone sur l'épaule) y était réduit,
    et le Fanzzy paraissait rapetisser en grandissant. */
 /* Et une fois et demie sa largeur, centré : la pose d'une tenue large a un
@@ -216,8 +216,18 @@
   drop-shadow(0 0 12px rgba(95,168,255,.4)) drop-shadow(0 3px 8px rgba(0,0,0,.6))}
 .fz[data-age="3"]:not(.fz-secret) .illuwrap .illu.fz-pied{filter:drop-shadow(0 0 5px rgba(185,140,255,.9))
   drop-shadow(0 0 18px rgba(185,140,255,.55)) drop-shadow(0 3px 8px rgba(0,0,0,.6))}
-.fz[data-age="1"] .illuwrap .illu.fz-pied{height:72%}
-.fz[data-age="2"] .illuwrap .illu.fz-pied{height:80%}
+/* **Plus grand, les pieds sous la bande du nom** (8 octobre 2026, demandé
+   par Gaël : « ça doit être l'élément principal »). En entier, il ne prenait
+   que l'espace entre le pin et la bande, moins de la moitié de la carte ; on
+   le laisse descendre derrière la bande, qui cache ses pieds, et il gagne un
+   bon quart. Les âges gardent leur écart : la tête monte de 16 % à 2 % du
+   haut de la carte. */
+.fz[data-age] .illuwrap .illu.fz-pied{bottom:-6%;height:104%}
+/* Le repos d'un âge (`cadrerEtat`, cartes.js) se recentre en hauteurs de
+   boîte : la boîte doit être un conteneur de taille. */
+.fz .illuwrap{container-type:size}
+.fz[data-age="1"] .illuwrap .illu.fz-pied{height:90%}
+.fz[data-age="2"] .illuwrap .illu.fz-pied{height:97%}
 /* Une illustration de carte d'action est un tableau : elle couvre tout. */
 .fz .illuwrap .illu.fz-pleine{height:100%;object-position:50% 50%}
 /* L'objet monte au-dessus de la bande du nom, qui le coupait à mi-hauteur :

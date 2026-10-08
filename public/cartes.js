@@ -708,12 +708,35 @@ function fondDeCarte(f) {
  * buste : quatre fois moins lourd (RP1 : 55 Ko contre 14), et lisible à
  * quatre-vingt-six pixels. Voir `cardHTML`, option `pied`.
  */
+/**
+ * **Le personnage d'une image d'état, à la taille de la carte.**
+ *
+ * Aux âges 2 et 3, la carte d'un Fanzzy dessiné montre le repos de son âge
+ * (`/img/fanzzy/RP1/e2/base/neutre.webp`), pas une carte détourée au ras du
+ * personnage : ce repos vit dans le cadre commun de l'âge, assez grand pour
+ * un bras levé ou une cape, et le personnage n'en occupe que les deux tiers.
+ * À la taille de la carte, il paraissait plus petit qu'à l'âge 1 (8 octobre
+ * 2026, Gaël : « ça doit être l'élément principal »). On agrandit l'image
+ * de ce que mesure `pieds`, comme à l'accueil, pour que **le personnage**
+ * prenne la hauteur de son âge, pieds au même endroit.
+ */
+const PART_CARTE = { 1: 0.9, 2: 0.97, 3: 1.04 };
+function cadrerEtat(html) {
+  return html.replace(/<img class="illu fz-pied([^"]*)"([^>]*?) src="(\/img\/fanzzy\/([A-Z]+\d+)\/e(\d)\/[^"]+)"/g,
+    (tout, cls, entre, src, racine, evo) => {
+      const t = window.TBF_ETATS?.taille?.(racine, evo, PART_CARTE[evo]);
+      if (!t) return tout;
+      return `<img class="illu fz-pied${cls}" style="height:${t.hauteur};`
+        + `bottom:calc(${t.bas} - 6%);translate:${t.decale} 0"${entre} src="${src}"`;
+    });
+}
+
 function portraitDeCarte(f, pied = false) {
   const dessin = illustration(f, pied ? 'plein' : 'buste');
   if (!dessin) return artProcedural(f);
   /* La classe de cadrage du personnage en pied (voir `cartes.css`). Le
      balisage vient de fanzzy-art.js et commence toujours ainsi. */
-  const img = pied ? dessin.split('<img class="illu"').join('<img class="illu fz-pied"') : dessin;
+  const img = pied ? cadrerEtat(dessin.split('<img class="illu"').join('<img class="illu fz-pied"')) : dessin;
   return `<div class="illuwrap">${fondDeCarte(f)}${img}</div>`;
 }
 
@@ -799,10 +822,10 @@ function dessinDeCarte(f, { etiquette = true, pied = false, silhouette = false }
     const src = r?.src ?? window.FZART?.adresse?.(f.pour, silhouette ? 'plein' : 'buste');
     if (src) {
       const enPied = r?.src ? !/portrait\.\w+(\?|$)/.test(r.src) : silhouette;
-      return `<div class="illuwrap">${fondDeCarte(f)}
+      return cadrerEtat(`<div class="illuwrap">${fondDeCarte(f)}
         <img class="illu${enPied ? ' fz-pied' : ''}" src="${src}" alt="" loading="lazy"
              onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
-        ${etiquette && f.etatMot ? `<span class="tbf-etiq">${esc(f.etatMot)}</span>` : ''}</div>`;
+        ${etiquette && f.etatMot ? `<span class="tbf-etiq">${esc(f.etatMot)}</span>` : ''}</div>`);
     }
   }
   /* **Et la cinquième sorte tombait encore sur la silhouette.**
@@ -840,10 +863,10 @@ function dessinDeCarte(f, { etiquette = true, pied = false, silhouette = false }
       /* `fz-pied` seulement quand c'est la pose en pied : `portrait`, le
          second repli, rend un buste, que le cadrage du buste pose mieux. */
       const enPied = r?.src ? !/portrait\.\w+(\?|$)/.test(r.src) : silhouette;
-      return `<div class="illuwrap">${fondDeCarte(f)}
+      return cadrerEtat(`<div class="illuwrap">${fondDeCarte(f)}
         <img class="illu${enPied ? ' fz-pied' : ''}" src="${src}" alt="" loading="lazy"
              onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
-        ${etiquette && f.skinMot ? `<span class="tbf-etiq">${esc(f.skinMot)}</span>` : ''}</div>`;
+        ${etiquette && f.skinMot ? `<span class="tbf-etiq">${esc(f.skinMot)}</span>` : ''}</div>`);
     }
   }
   if (f.stuff) return objetHTML(f);
