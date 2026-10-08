@@ -211,7 +211,15 @@ html[data-calme~="animations"] .toast.on{animation:none}
    habillé par `ui.css` : c'est la même mécanique que dans le virage, et le
    jour où elle change, elle change pour les deux. La page ne décide ici que
    de la place. */
-.tpile{position:absolute;left:6%;right:6%;top:6%;bottom:0;z-index:1}
+/* **Le Fanzzy debout sur son nom, et grand** (8 octobre 2026, Gaël : « il
+   fait tout petit dans cette grande case »). La boîte s'arrête au-dessus de
+   la banderole, qui lui cachait les pieds, et il en prend 80, 88 puis 96 %
+   selon son âge (`TAILLE_VESTIAIRE` plus bas) au lieu des 60 à 76 % de
+   l'accueil, où la bulle et les sauts ont besoin du haut. */
+.tpile{position:absolute;left:6%;right:6%;top:3%;bottom:15%;z-index:1}
+/* Un dessin de l'ancien style, sans mesure de ses pieds, prend toute la
+   boîte : elle a raccourci, il ne doit pas rapetisser pour autant. */
+.tpile .tbf-scene[data-evo]{--taille-age:100%}
 /* Le repli dessiné, pour les personnages qui n'ont ni états ni illustration :
    il tient la même place, pour que l'écran ne change pas de forme selon le
    Fanzzy qu'on a choisi. */
@@ -1556,11 +1564,15 @@ let sceneEquipe = null;
  * états sont rangés sous la première, l'illustration en pied sous la seconde :
  * confondre les deux montre le Choriste à qui a payé pour le Meneur de chant.
  */
+/* La part de sa boîte que le Fanzzy prend à chaque âge : voir `.tpile`. */
+const TAILLE_VESTIAIRE = { 1: 0.8, 2: 0.88, 3: 0.96 };
+
 async function habiller(perso, age, stade) {
   sceneEquipe?.arreter?.();
   /* C'est l'écran du personnage : il répond au toucher. Ailleurs la zone
      sert à autre chose, et un saut non demandé s'y lirait comme un défaut. */
-  sceneEquipe = window.TBF_SCENE?.creer?.($('tpile'), { fond: 'neutre', reagitAuToucher: true }) ?? null;
+  sceneEquipe = window.TBF_SCENE?.creer?.($('tpile'),
+    { fond: 'neutre', reagitAuToucher: true, taille: TAILLE_VESTIAIRE }) ?? null;
   /* L'avatar tel que le serveur le résout — âge, tenue **et expression**. */
   const vu = await sceneEquipe?.definir(S.avatar?.id === perso.id ? S.avatar
     : { id: perso.id, age: age.id, evo: stade, skin: 'base' });

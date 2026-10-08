@@ -94,6 +94,9 @@
    *   au centre de l'écran — voir plus bas. Le paramètre reste accepté pour que
    *   les pages qui le passent encore ne lèvent pas.
    * @param {string}      [opts.fond]  l'état de repos, `neutre` par défaut.
+   * @param {Object<number,number>} [opts.taille]  la part de la boîte que le
+   *   personnage prend à chaque âge (`{ 1: .8, 2: .88, 3: .96 }`), si la page
+   *   le veut plus grand que l'accueil. Voir `TBF_ETATS.taille`.
    */
   function creer(hote, opts = {}) {
     if (!hote) {
@@ -508,7 +511,7 @@
       };
       // La taille de son âge : voir `.tbf-scene[data-evo]`, ui.css.
       el.dataset.evo = String(perso.evo);
-      const t = window.TBF_ETATS?.taille?.(perso.id, perso.evo);
+      const t = window.TBF_ETATS?.taille?.(perso.id, perso.evo, opts.taille?.[perso.evo]);
       el.style.setProperty('--taille', t?.hauteur ?? '');
       el.style.setProperty('--sous', t?.bas ?? '');
       el.style.setProperty('--decale', t?.decale ?? '');
