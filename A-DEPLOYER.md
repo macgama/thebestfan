@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**RP2, RP18 et RP19 redessinés** (branche `claude/project-thread-j45ndm`,
+8 octobre 2026, demandé par Gaël). Images seules : construction, ni schéma ni
+redémarrage.
+
+- `public/img/fanzzy/RP2`, `RP18`, `RP19` et leurs cartes (B et C comprises) :
+  nouveau dessin aux trois âges, cinq états et trois skins par âge ; les trois
+  clignent des yeux à l'âge 1.
+
+---
+
 **Cinq légendaires redessinés : RP13 à RP17** (branche
 `claude/project-thread-j45ndm`, 8 octobre 2026, demandé par Gaël). Images
 seules : construction, ni schéma ni redémarrage.
