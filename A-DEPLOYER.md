@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Le numéro du menu n'est plus gardé en cache** (branche
+`claude/serveur-pas-a-jour-fcvbnf`, 8 octobre 2026). Gaël voyait encore
+0.0100 après construction, schéma et redémarrage : `/api/version` était
+gardée une heure par le navigateur. **Serveur seul, sans schéma** :
+construction, puis redémarrage hors d'un match.
+
+- `server.js` : `/api/version` répond `no-store`, comme `/healthz`.
+
+---
+
 **Le numéro de version passe à 0.0200** (8 octobre 2026). Il ne bouge qu'à
 la main (`src/shared/version.js`) et n'avait pas changé depuis le
 27 septembre : au menu, « version bêta — 0.0200 » dit que la mise en ligne
