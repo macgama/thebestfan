@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Le Fanzzy en grand sur « Mon Fanzzy »** (branche
+`claude/serveur-pas-a-jour-fcvbnf`, 8 octobre 2026, demandé par Gaël). Pages
+seules : construction, ni schéma ni redémarrage.
+
+- `public/fanzzy.html` : la boîte du personnage s'arrête au-dessus de la
+  banderole (elle lui cachait les pieds) et il en prend 80, 88 puis 96 % selon
+  son âge, au lieu des 60 à 76 % de l'accueil.
+- `public/fanzzy-scene.js` : `creer(hote, { taille })` laisse une page choisir
+  cette part par âge.
+
+---
+
 **Le numéro du menu n'est plus gardé en cache** (branche
 `claude/serveur-pas-a-jour-fcvbnf`, 8 octobre 2026). Gaël voyait encore
 0.0100 après construction, schéma et redémarrage : `/api/version` était
