@@ -41,7 +41,7 @@
   /* Les empreintes des dictionnaires : écrites par `npm run langues`, pour
      qu'un dictionnaire changé ait une autre adresse et ne sorte jamais d'un
      cache. */
-  const VERSIONS = /*versions*/{"en":"0e7964d613","de":"a77cc68245","it":"bb8cc7ff3a","es":"39b69613e6"}/*fin*/;
+  const VERSIONS = /*versions*/{"en":"5fb8e6f60f","de":"8a59a2d60b","it":"70fd113731","es":"15c82527be"}/*fin*/;
 
   const lire = () => {
     try {
@@ -202,7 +202,14 @@
         else { re += m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); litteral += m; }
       });
       const repere = morceaux.filter((m, i) => !(i % 2)).sort((a, b) => b.length - a.length)[0];
-      return { fr, re: new RegExp(re + '$'), ordre, tr, poids: litteral.length, repere };
+      /* Deux trous collés (« SAISON {0} — {1}{2} ») : la limite entre eux
+         se cherche à la traduction. */
+      const colles = [];
+      for (let i = 2; i < morceaux.length - 1; i += 2) if (morceaux[i] === '') colles.push(i / 2 - 1);
+      /* Un mot et un trou (« {0} jour », « pour {0} ») attraperaient
+         n'importe quelle phrase qui finit ou commence par ce mot. */
+      const etroit = /^\{\d+\} ?[^\s{}]+$|^[^\s{}]+ ?\{\d+\}$/.test(fr);
+      return { fr, re: new RegExp(re + '$'), ordre, tr, poids: litteral.length, repere, colles, etroit };
     }).sort((a, b) => b.poids - a.poids);
     parCle = new Map(motifs.map((m) => [m.fr, m]));
   }
@@ -211,12 +218,17 @@
     return tr.replace(/\{(\d+)(?:\?([^|}]*)\|([^}]*))?\}/g, (_, i, un, plusieurs) => {
       const v = valeurs[Number(i)] ?? '';
       if (un !== undefined) return /^\s*1\s*$/.test(v) ? un : plusieurs;
-      return profondeur < 2 ? (traduire(v, profondeur + 1) ?? v) : v;
+      /* « SAISON {0} — {1}{2} » prend « · 84 JOURS » avec son espace : la
+         valeur se cherche sans ses bords, qui restent autour. */
+      const coeur = v.trim();
+      if (!coeur || profondeur >= 2) return v;
+      const tv = traduire(coeur, profondeur + 1);
+      return tv == null ? v : v.replace(coeur, () => tv);
     });
   }
 
   /* Rend la traduction d'une clé normalisée, ou null. */
-  function traduire(cle, profondeur = 0) {
+  function traduire(cle, profondeur = 0, muet = false) {
     if (!A_TEXTE.test(cle)) return null;
     if (cache.has(cle)) return cache.get(cle);
     let tr = exacts.get(cle) ?? null;
@@ -239,13 +251,25 @@
         if (m.repere && !cle.includes(m.repere)) continue;
         const r = m.re.exec(cle);
         if (!r) continue;
+        const vus = r.slice(1);
+        for (const k of m.colles) {
+          const tout = vus[k] + vus[k + 1];
+          for (let c = 1; c < tout.length; c++) {
+            const d = tout.slice(c);
+            if (!/^\s/.test(d) || traduire(d.trim(), profondeur + 1, true) == null) continue;
+            vus[k] = tout.slice(0, c); vus[k + 1] = d;
+            break;
+          }
+        }
+        if (m.etroit && !vus.every((v) => /^[\d\s.,+−-]*$/.test(v) || !/\s/.test(v.trim())
+          || traduire(v.trim(), profondeur + 1, true) != null)) continue;
         const valeurs = [];
-        m.ordre.forEach((n, k) => { valeurs[n] = r[k + 1]; });
+        m.ordre.forEach((n, k) => { valeurs[n] = vus[k]; });
         tr = remplir(m.tr, valeurs, profondeur);
         break;
       }
     }
-    if (tr === null) manque(cle);
+    if (tr === null && !muet) manque(cle);
     if (cache.size > 5000) cache.clear();
     cache.set(cle, tr);
     return tr;
