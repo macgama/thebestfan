@@ -34,8 +34,10 @@ const esc = (s) => String(s ?? '').replace(/[<>&"']/g,
  * @param {string} [o.lien]   L'adresse à transformer en bouton.
  * @param {string} [o.bouton] Le libellé du bouton.
  * @param {boolean} [o.tribune] La grande image de tribune en tête.
+ * @param {string} [o.langue] La langue du mail ; `copie` et `pied`, ses deux lignes fixes.
  */
-export function habiller({ origin, titre, texte, lien = null, bouton = null, tribune = false }) {
+export function habiller({ origin, titre, texte, lien = null, bouton = null, tribune = false,
+  langue = 'fr', copie = 'Le bouton ne marche pas ? Copie ce lien :', pied = 'le jeu des supporters' }) {
   const c = COULEURS;
   const blocs = String(texte).split(/\n{2,}/)
     .map((b) => b.split('\n').filter((l) => l.trim() && l.trim() !== lien).join('\n'))
@@ -51,10 +53,10 @@ export function habiller({ origin, titre, texte, lien = null, bouton = null, tri
                 <a href="${esc(lien)}" style="display:inline-block;padding:14px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:${c.encre};text-decoration:none">${esc(bouton)}</a>
               </td></tr>
             </table>
-            <p style="margin:0 0 16px;font-size:12px;line-height:1.5;color:${c.gris}">Le bouton ne marche pas ? Copie ce lien :<br><a href="${esc(lien)}" style="color:${c.projo};word-break:break-all">${esc(lien)}</a></p>` : '';
+            <p style="margin:0 0 16px;font-size:12px;line-height:1.5;color:${c.gris}">${esc(copie)}<br><a href="${esc(lien)}" style="color:${c.projo};word-break:break-all">${esc(lien)}</a></p>` : '';
 
   return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="${esc(langue)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
 <title>${esc(titre)}</title></head>
 <body style="margin:0;padding:0;background:${c.fond}">
@@ -77,7 +79,7 @@ export function habiller({ origin, titre, texte, lien = null, bouton = null, tri
         </table>
       </td></tr>
       <tr><td align="center" style="padding:18px 10px 0;font-size:12px;line-height:1.6;color:${c.gris}">
-        <a href="${esc(origin)}" style="color:${c.gris};text-decoration:underline">thebestfan.online</a> · le jeu des supporters
+        <a href="${esc(origin)}" style="color:${c.gris};text-decoration:underline">thebestfan.online</a> · ${esc(pied)}
       </td></tr>
     </table>
   </td></tr>

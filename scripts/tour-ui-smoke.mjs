@@ -237,7 +237,7 @@ const base = `http://127.0.0.1:${http.address().port}`;
 
 /* ------------------------------------------------------- le navigateur */
 
-const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 
 /** Les mots qui ne doivent jamais atteindre l'œil d'un joueur. */
 const FUITES = [

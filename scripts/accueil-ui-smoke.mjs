@@ -316,7 +316,7 @@ const base = `http://localhost:${http.address().port}`;
 
 /* -------------------------------------------------------------- la page */
 
-const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 const erreurs = [];
 
 /** Le premier dessin qui s'affiche pour de bon, ou '' si rien ne vient. */

@@ -2,6 +2,7 @@ import express from 'express';
 import { createHash } from 'node:crypto';
 import webpush from 'web-push';
 import { reglage } from '../../shared/reglages.js';
+import { traduire } from '../langues.js';
 
 /**
  * Les notifications : prévenir un joueur dont l'onglet est fermé.
@@ -203,7 +204,7 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
     let appareils;
     try {
       appareils = await q(
-        `SELECT a.id, a.endpoint, a.p256dh, a.auth FROM notif_appareils a
+        `SELECT a.id, a.endpoint, a.p256dh, a.auth, u.locale FROM notif_appareils a
            JOIN users u ON u.public_id = a.user_id AND u.status = 'active'
           WHERE a.${sujet} = 1 AND a.user_id IN (${ids.map(() => '?').join(',')})`, ids);
     } catch (e) {
@@ -212,7 +213,21 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
     }
     if (!appareils.length) return 0;
 
-    const corps = JSON.stringify(message);
+    /* Chaque appareil reçoit le message dans la langue de son joueur. Un
+       message peut fournir sa propre traduction (`traduction(langue)`)
+       quand le français ne se laisse pas découper ; sinon le titre et le
+       corps passent par les dictionnaires. */
+    const { traduction, ...base } = message;
+    const parLangue = new Map();
+    const corpsEn = (l) => {
+      if (!parLangue.has(l)) {
+        const m = l === 'fr' || !l ? base
+          : { ...base, ...(traduction ? traduction(l)
+            : { titre: traduire(l, base.titre), corps: traduire(l, base.corps) }) };
+        parLangue.set(l, JSON.stringify(m));
+      }
+      return parLangue.get(l);
+    };
     const options = {
       TTL: TTL[sujet],
       urgency: 'high',
@@ -229,7 +244,7 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
       for (let a = file.shift(); a; a = file.shift()) {
         try {
           await envoyer({ endpoint: a.endpoint, keys: { p256dh: a.p256dh, auth: a.auth } },
-            corps, options);
+            corpsEn(a.locale), options);
           partis++;
         } catch (e) {
           if (e?.statusCode === 404 || e?.statusCode === 410) {
@@ -322,6 +337,15 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
         titre: 'Un duel t’attend',
         corps: `${contre?.name ? `${contre.name} contre ${club.name}` : club.name}`
           + ` : il manque un supporter ${deClub(club.name)}. Viens tenir la tribune ›`,
+        /* « il manque un supporter de Sion » : la préposition française ne
+           se traduit pas, la phrase est donc reprise entière. */
+        traduction: (l) => {
+          const match = contre?.name ? `${contre.name} – ${club.name}` : club.name;
+          return {
+            titre: traduire(l, 'Un duel t’attend'),
+            corps: traduire(l, `${match} : il manque un supporter de ${club.name}. Viens tenir la tribune ›`),
+          };
+        },
         url: `/duel-nvn?${lien}`,
         tag: `duel-${fixtureId}`,
       });

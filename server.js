@@ -6,7 +6,7 @@
  */
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import { Server } from 'socket.io';
@@ -860,6 +860,29 @@ app.get('/img/fanzzy/index.json', (_req, res) => {
  * Et `typer` reste en place derrière — c'est lui qui donne son type MIME à
  * l'AVIF, qu'Express ne connaît toujours pas. */
 app.use('/img', negocierAvif(path.join(__dirname, 'public/img')));
+
+/* **Les dictionnaires des langues, compressés d'avance.** Un dictionnaire
+   pèse un demi-mégaoctet : la page de chaque joueur qui ne joue pas en
+   français le charge, une fois (son adresse est estampillée, le navigateur le
+   garde un an). `npm run langues` en écrit aussi la version brotli et gzip ;
+   on sert la plus petite que le navigateur accepte. */
+app.get('/i18n/:fichier', (req, res, next) => {
+  if (!/^(en|de|it|es)\.js$/.test(req.params.fichier)) return next();
+  const accepte = String(req.headers['accept-encoding'] ?? '');
+  for (const [ext, codage] of [['br', 'br'], ['gz', 'gzip']]) {
+    if (!accepte.includes(codage)) continue;
+    const fichier = path.join(__dirname, 'public/i18n', `${req.params.fichier}.${ext}`);
+    if (!existsSync(fichier)) continue;
+    res.set({
+      'content-type': 'text/javascript; charset=utf-8',
+      'content-encoding': codage,
+      vary: 'accept-encoding',
+      'cache-control': req.query.v ? 'public, max-age=31536000, immutable' : 'no-cache',
+    });
+    return res.sendFile(fichier);
+  }
+  next();
+});
 
 // Les visuels ne changent jamais : un an de cache.
 app.use('/img', express.static(path.join(__dirname, 'public/img'),

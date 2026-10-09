@@ -70,7 +70,7 @@ export async function ouvrirBanc({ routes } = {}) {
   const http = createServer(app);
   await new Promise((r) => http.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${http.address().port}`;
-  const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+  const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
   const page = await nav.newPage();
   await page.goto(`${base}/__son`, { waitUntil: 'load' });
   try {

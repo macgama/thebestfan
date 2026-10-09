@@ -80,7 +80,7 @@ const base = `http://localhost:${http.address().port}`;
 
 /* -------------------------------------------------------------- la page */
 
-const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 
 /**
  * Ouvre une page, déplie le menu, et rend ce qu'il contient vraiment.
@@ -157,7 +157,7 @@ check('et les libellés sont les mêmes, mot pour mot',
    toutes lettres, pour la même raison que `ATTENDUS` plus bas. */
 check('les rubriques y sont aussi',
   JSON.stringify(accueil.rubriques)
-    === JSON.stringify(['JOUER', 'MA COLLECTION', 'LE FOOTBALL', 'MODE CALME'])
+    === JSON.stringify(['JOUER', 'MA COLLECTION', 'LE FOOTBALL', 'MODE CALME', 'LANGUE'])
   || (console.log('    rubriques :', accueil.rubriques), false));
 check('et la page de contenu a les mêmes',
   JSON.stringify(carnet.rubriques) === JSON.stringify(accueil.rubriques));

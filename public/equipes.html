@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <title>Mes équipes — thebestfan</title>
@@ -200,9 +201,9 @@ const I18N = {
     pleinSans:'Ya no te queda ninguna plaza libre. Quita un club o compra una plaza desde tu perfil.',
     panne:'El servidor no responde. Tus clubes siguen ahí — la página se actualiza sola.'},
 };
-const LOCALES = ['fr','en','de','es'];
-let locale = LOCALES.find(l => navigator.language.toLowerCase().startsWith(l)) || 'fr';
-try { const s = localStorage.getItem('tbf_locale'); if (LOCALES.includes(s)) locale = s; } catch {}
+/* La langue de `langue.js`. Pour l'italien, ces textes retombent sur le
+   français, que le dictionnaire traduit à l'affichage. */
+const locale = window.TBF_LANGUE?.langue ?? 'fr';
 
 let feed = [];
 /* Le nombre d'emplacements. `null` tant qu'on ne l'a pas : on n'empêche alors

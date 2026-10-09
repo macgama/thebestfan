@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <title>thebestfan</title>
@@ -363,7 +364,7 @@ const I18N = {
     'account.pseudo':'Username','account.email':'Address','account.status':'Address verified',
     'account.logout':'SIGN OUT','account.resend':'Resend the verification email',
     'account.delete':'Delete my account',
-    'account.privacy':'What the game keeps about you (in French)',
+    'account.privacy':'What the game keeps about you',
     'notif.titre':'NOTIFICATIONS','notif.texte':'On this device, even with the game closed. Never at night, from 10 pm to 8 am.',
     'notif.kop':'A vote opens in my KOP','notif.duel':'A ranked duel is waiting for a fan of my club',
     'notif.ios':'On iPhone, first add the game to your home screen (Share, then “Add to Home Screen”) and open it from there.',
@@ -402,7 +403,7 @@ const I18N = {
     'account.pseudo':'Benutzername','account.email':'Adresse','account.status':'Adresse bestätigt',
     'account.logout':'ABMELDEN','account.resend':'Bestätigungsmail erneut senden',
     'account.delete':'Mein Konto löschen',
-    'account.privacy':'Was das Spiel über dich speichert (auf Französisch)',
+    'account.privacy':'Was das Spiel über dich speichert',
     'notif.titre':'BENACHRICHTIGUNGEN','notif.texte':'Auf diesem Gerät, auch wenn das Spiel geschlossen ist. Nie nachts, von 22 bis 8 Uhr.',
     'notif.kop':'In meinem KOP beginnt eine Abstimmung','notif.duel':'Ein Ranglistenduell wartet auf einen Fan meines Klubs',
     'notif.ios':'Auf dem iPhone füge das Spiel zuerst zum Home-Bildschirm hinzu (Teilen, dann „Zum Home-Bildschirm“) und öffne es von dort.',
@@ -441,7 +442,7 @@ const I18N = {
     'account.pseudo':'Nombre','account.email':'Dirección','account.status':'Dirección verificada',
     'account.logout':'SALIR','account.resend':'Reenviar el correo de verificación',
     'account.delete':'Eliminar mi cuenta',
-    'account.privacy':'Lo que el juego guarda de ti (en francés)',
+    'account.privacy':'Lo que el juego guarda de ti',
     'notif.titre':'NOTIFICACIONES','notif.texte':'En este dispositivo, incluso con el juego cerrado. Nunca de noche, de 22 h a 8 h.',
     'notif.kop':'Se abre una votación en mi KOP','notif.duel':'Un duelo clasificatorio espera a un hincha de mi club',
     'notif.ios':'En iPhone, añade primero el juego a la pantalla de inicio (Compartir y luego «Añadir a pantalla de inicio») y ábrelo desde allí.',
@@ -470,9 +471,12 @@ const I18N = {
 };
 
 const $ = (id) => document.getElementById(id);
-const LOCALES = ['fr','en','de','es'];
-let locale = LOCALES.find(l => (localStorage?.getItem?.('tbf_locale') ?? '') === l)
-  || LOCALES.find(l => navigator.language.toLowerCase().startsWith(l)) || 'fr';
+/* La langue est celle de `langue.js`, qui la choisit pour tout le jeu. Les
+   textes de cette page restent tenus ici pour l'anglais, l'allemand et
+   l'espagnol ; l'italien prend le français, que le dictionnaire traduit à
+   l'affichage comme sur les autres pages. */
+const LOCALES = window.TBF_LANGUE?.LANGUES ?? ['fr','en','de','it','es'];
+let locale = window.TBF_LANGUE?.langue ?? 'fr';
 
 function t(key, params = {}) {
   const s = (I18N[locale] ?? I18N.fr)[key] ?? key;
@@ -553,7 +557,11 @@ function applyLocale() {
 }
 $('langs').onclick = e => {
   const b = e.target.closest('[data-l]');
-  if (b) { locale = b.dataset.l; applyLocale(); render(); }
+  if (!b || b.dataset.l === locale) return;
+  /* `langue.js` retient le choix (l'appareil, et le compte quand on est
+     connecté) et recharge la page dans la nouvelle langue. */
+  if (window.TBF_LANGUE) { window.TBF_LANGUE.changer(b.dataset.l); return; }
+  locale = b.dataset.l; applyLocale(); render();
 };
 
 function say(box, key, kind = 'err', params = {}) {

@@ -127,7 +127,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
   /* `lien`, `bouton`, `tribune` habillent la version HTML (`mail-habit.js`) ;
      le texte brut part toujours avec elle, pour les messageries qui n'en
      veulent pas. */
-  async function send({ to, subject, text, lien = null, bouton = null, tribune = false }) {
+  async function send({ to, subject, text, lien = null, bouton = null, tribune = false, locale = 'fr' }) {
     const t = await getTransport();
     if (!t) {
       // Repli console : le lien reste utilisable, il faut juste aller le
@@ -139,7 +139,8 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
       const info = await t.sendMail({
         from: from ?? 'thebestfan <no-reply@thebestfan.online>', to, subject, text,
         html: habiller({ origin, titre: subject.replace(/\s*—\s*thebestfan$/i, ''),
-          texte: text, lien, bouton, tribune }) });
+          texte: text, lien, bouton, tribune, langue: messages[locale] ? locale : 'fr',
+          copie: t(locale, 'mail.html.copie'), pied: t(locale, 'mail.html.pied') }) });
       return { delivered: true, logged: false, id: info.messageId };
     } catch (e) {
       retenir(e.message);
@@ -152,9 +153,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
   /* Une échéance, telle qu'on l'écrit dans un mail : en toutes lettres, à
      l'heure de Zurich. */
   const dateMail = (d, locale) => (d ? new Date(d).toLocaleDateString(
-    /* Les mails d'abonnement n'existent qu'en français et en anglais : une
-       date allemande dans un texte français se lirait comme une erreur. */
-    locale === 'en' ? 'en-GB' : 'fr-FR',
+    ({ en: 'en-GB', de: 'de-DE', it: 'it-IT', es: 'es-ES' })[locale] ?? 'fr-FR',
     { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Zurich' }) : '—');
 
   const t = (locale, key, params = {}) => {
@@ -192,7 +191,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
 
     async sendVerification({ to, pseudo, locale, token }) {
       const link = `${origin}/compte?verifier=${encodeURIComponent(token)}`;
-      return send({
+      return send({ locale,
         to,
         subject: t(locale, 'mail.verify.subject'),
         text: t(locale, 'mail.verify.body', { pseudo, link }),
@@ -202,7 +201,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
 
     async sendReset({ to, pseudo, locale, token }) {
       const link = `${origin}/compte?reinitialiser=${encodeURIComponent(token)}`;
-      return send({
+      return send({ locale,
         to,
         subject: t(locale, 'mail.reset.subject'),
         text: t(locale, 'mail.reset.body', { pseudo, link }),
@@ -215,11 +214,11 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
        demande de confirmer une résiliation sur un support durable, avec la
        date à laquelle le contrat prend fin. */
     async sendAbonnement({ to, pseudo, locale, formule, fin, packs = 0 }) {
-      return send({
+      return send({ locale,
         to,
         subject: t(locale, 'mail.abo.subject'),
         text: t(locale, 'mail.abo.body', {
-          pseudo, formule: formule ?? '', fin: dateMail(fin, locale),
+          pseudo, formule: formule ? t(locale, `mail.formule.${formule}`).replace(/^mail\.formule\./, '') : '', fin: dateMail(fin, locale),
           packs: packs ? t(locale, packs > 1 ? 'mail.abo.packs' : 'mail.abo.pack', { n: packs }) : '',
           link: `${origin}/abonnement`,
         }),
@@ -228,7 +227,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
     },
 
     async sendResiliation({ to, pseudo, locale, fin }) {
-      return send({
+      return send({ locale,
         to,
         subject: t(locale, 'mail.resil.subject'),
         text: t(locale, 'mail.resil.body', {
@@ -239,7 +238,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
     },
 
     async sendPasswordChanged({ to, pseudo, locale }) {
-      return send({
+      return send({ locale,
         to,
         subject: t(locale, 'mail.changed.subject'),
         text: t(locale, 'mail.changed.body', { pseudo }),

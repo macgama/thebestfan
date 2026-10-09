@@ -4,7 +4,7 @@ import { issueTicket, parseCookies } from './tokens.js';
 import { createStore, SESSION_TTL_MS, SESSION_REFRESH_MS, VERIFY_TTL_MS, RESET_TTL_MS } from './store.js';
 
 export const COOKIE = 'tbf_session';
-const LOCALES = ['fr', 'en', 'de', 'es'];
+const LOCALES = ['fr', 'en', 'de', 'it', 'es'];
 
 /* ----------------------------------------------------------- validation */
 
@@ -73,9 +73,10 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
   const secure = String(origin).startsWith('https://');
 
   /** Charge la session sur chaque requête, sans jamais échouer. */
-  async function attachUser(req, _res, next) {
+  async function attachUser(req, res, next) {
     try {
-      const token = parseCookies(req.headers.cookie)[COOKIE];
+      const cookies = parseCookies(req.headers.cookie);
+      const token = cookies[COOKIE];
       if (!token) return next();
       const s = await store.findSession(token);
       if (!s) return next();
@@ -83,6 +84,11 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
       req.user = publicUser(s);
       req.userId = s.user_id;
       req.sessionToken = token;
+
+      /* La langue du compte, lisible par `public/langue.js` sans une
+         requête de plus : un appareil où le joueur n'a rien choisi la
+         prend. Réécrite seulement quand elle change. */
+      if (cookies.tbf_langue !== s.locale) langueAuCookie(res, s.locale);
 
       // Prolongation glissante, au plus une fois par jour pour épargner la base.
       if (Date.now() - new Date(s.last_seen_at).getTime() > SESSION_REFRESH_MS) {
@@ -92,6 +98,10 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
       console.error('[auth] session', e.message);
     }
     next();
+  }
+
+  function langueAuCookie(res, locale) {
+    res.cookie('tbf_langue', locale, { secure, sameSite: 'lax', maxAge: SESSION_TTL_MS, path: '/' });
   }
 
   function requireAuth(req, res, next) {
@@ -203,6 +213,7 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
     const token = parseCookies(req.headers.cookie)[COOKIE];
     if (token) await store.destroySession(token).catch(() => {});
     res.clearCookie(COOKIE, { path: '/' });
+    res.clearCookie('tbf_langue', { path: '/' });
     res.json({ ok: true });
   });
 
@@ -217,6 +228,7 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
     const locale = req.body?.locale === undefined ? null : checkLocale(req.body.locale);
     const team = req.body?.mainTeamId === undefined ? null : Number(req.body.mainTeamId) || null;
     await store.updateProfile(req.userId, { locale, mainTeamId: team });
+    if (locale) langueAuCookie(res, locale);
     const row = await store.findByPublicId(req.user.id);
     res.json({ user: publicUser(row) });
   });
@@ -227,6 +239,7 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
     if (!ok) return res.status(403).json({ error: 'auth.error.bad_credentials' });
     await store.deleteUser(req.userId);
     res.clearCookie(COOKIE, { path: '/' });
+    res.clearCookie('tbf_langue', { path: '/' });
     res.json({ ok: true });
   });
 

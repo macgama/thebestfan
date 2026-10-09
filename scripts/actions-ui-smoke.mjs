@@ -63,7 +63,7 @@ const http = createServer(app);
 await new Promise((r) => http.listen(0, r));
 const base = `http://localhost:${http.address().port}`;
 
-const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 const erreurs = [];
 const page = await nav.newPage();
 page.on('pageerror', (e) => erreurs.push(e.message));

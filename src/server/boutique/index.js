@@ -44,6 +44,8 @@ import { etalStuff, etalTenues, prixDe } from '../../shared/etal.js';
 import { STUFF_BY_ID } from '../../shared/fanzzy/inventaire.js';
 import { tenuesPubliees } from '../fanzzy/tenues.js';
 import { ouverts } from '../contenus/index.js';
+import { traduire, LANGUES } from '../langues.js';
+
 
 const API = 'https://api.stripe.com/v1';
 
@@ -549,8 +551,10 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
         ...(abonne
           ? { 'line_items[0][price_data][recurring][interval]': article.recurrence }
           : {}),
-        'line_items[0][price_data][product_data][name]': article.nom,
-        'line_items[0][price_data][product_data][description]': article.texte,
+        /* La page de paiement dans la langue du joueur, l'article aussi. */
+        locale: LANGUES.includes(req.user.locale) ? req.user.locale : 'auto',
+        'line_items[0][price_data][product_data][name]': traduire(req.user.locale, article.nom),
+        'line_items[0][price_data][product_data][description]': traduire(req.user.locale, article.texte),
         /* Le joueur voyage dans les métadonnées **et** dans notre table. La
            table fait foi ; les métadonnées servent à retrouver une commande
            depuis le tableau de bord de Stripe, un jour où quelque chose aura
