@@ -522,9 +522,11 @@ check('tous les formats de duel restent ouverts à tous',
 
      `renouveler` a été ajoutée ici le jour où Stripe est passé en abonnement,
      et l'y ajouter est le geste que ce contrôle réclame : on ne grossit pas la
-     liste sans venir dire pourquoi. */
+     liste sans venir dire pourquoi. `noterDepart` et `departs` gardent la
+     réponse anonyme à « pourquoi tu pars » : ils n'ouvrent rien non plus. */
   const portes = Object.keys(abonnement).filter((k) =>
-    !['router', 'estAbonne', 'etat', 'accorder', 'renouveler', 'retirer'].includes(k));
+    !['router', 'estAbonne', 'etat', 'accorder', 'renouveler', 'retirer',
+      'noterDepart', 'departs'].includes(k));
   const attendues = ['plafondPacks', 'regenMs', 'profondeurParcours',
     'profondeurSouvenirs', 'clubsEnPlus',
     /* **Ces trois-là ne sont pas des portes, ce sont des plafonds**, et
@@ -807,6 +809,48 @@ const { createOnboarding } = await import('../src/server/onboarding/index.js');
         || (console.log('        il annonce :', JSON.stringify(st3.wallet)), false));
     }
   }
+}
+
+/* -------------------------------------------- pourquoi on part
+
+   La question posée après la résiliation : facultative, anonyme, et réservée
+   à qui a un abonnement. */
+{
+  const partir = (corps) => fetch(`${base}/api/abonnement/depart`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps) });
+  await pool.query('DELETE FROM abonnement_departs');
+  const ecran = await get('/api/abonnement');
+  check('l’écran reçoit les cinq raisons', ecran.raisonsDepart?.length === 5);
+
+  moi = LIBRE;
+  check('un joueur sans abonnement ne remplit pas la statistique',
+    (await partir({ raison: 'trop_cher' })).status === 400);
+  await abonnement.accorder(ABO, { formule: 'mensuel', jours: 30, source: 'admin' });
+  moi = ABO;
+  check('une raison inconnue est refusée', (await partir({ raison: 'nimporte' })).status === 400);
+  check('un abonné laisse sa raison', (await partir({ raison: 'trop_cher' })).status === 200);
+  check('avec un mot, s’il veut', (await partir({ raison: 'manque',
+    texte: '  Un mode à quatre  ' + 'x'.repeat(600) })).status === 200);
+
+  const [lignes] = await pool.query('SELECT * FROM abonnement_departs ORDER BY id');
+  check('la réponse ne porte pas le joueur',
+    lignes.length === 2 && lignes.every((l) => !Object.values(l).includes(ABO)));
+  check('mais la formule quittée', lignes[0].formule === 'mensuel');
+  check('et le mot est nettoyé et borné',
+    lignes[1].texte.startsWith('Un mode à quatre') && lignes[1].texte.length === 500);
+
+  const d = await abonnement.departs();
+  check('l’administration lit le compte par raison',
+    d.raisons.find((r) => r.cle === 'trop_cher').n === 1
+    && d.raisons.find((r) => r.cle === 'manque').n === 1
+    && d.raisons.find((r) => r.cle === 'pause').n === 0);
+  check('et les derniers mots, avec leur raison',
+    d.mots.length === 1 && d.mots[0].libelle === 'Il manque quelque chose');
+
+  await pool.query('DROP TABLE abonnement_departs');
+  check('sans la table, l’administration n’a rien à lire et rien ne lève',
+    (await abonnement.departs()) === null);
 }
 
 /* Une base sans la table ne casse rien : tout le monde y est joueur inscrit,
