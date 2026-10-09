@@ -704,6 +704,101 @@ const evenement = (sessionId) => ({
   await q(TABLE_NOUVEAUTES);
 }
 
+/* ================================ l'abonnement après son premier jour
+
+   **La ligne se posait sans référence.** `checkout.session.completed` porte
+   l'identifiant de l'abonnement Stripe et on ne le gardait pas : `invoice.paid`
+   ne retrouvait donc jamais la ligne, et l'abonné perdait l'accès au bout d'un
+   mois pendant que Stripe continuait de le débiter. Aucun contrôle ne
+   l'éprouvait. */
+{
+  /* Stripe ne répond pas ici : on se met à sa place pour les seules adresses
+     de son API, et on note ce qui lui est demandé. */
+  const vraiFetch = globalThis.fetch;
+  const appels = [];
+  const subs = new Map([['sub_ancien', { id: 'sub_ancien', cancel_at_period_end: false }]]);
+  globalThis.fetch = async (url, opts = {}) => {
+    if (!String(url).startsWith('https://api.stripe.com/')) return vraiFetch(url, opts);
+    const chemin = String(url).slice('https://api.stripe.com/v1'.length);
+    appels.push({ chemin, corps: opts.body ?? null });
+    const json = (o, status = 200) => new Response(JSON.stringify(o), { status });
+    const sess = chemin.match(/^\/checkout\/sessions\/(.+)$/);
+    if (sess) return json({ id: sess[1], subscription: 'sub_ancien' });
+    const sub = chemin.match(/^\/subscriptions\/(.+)$/);
+    if (sub && subs.has(sub[1])) {
+      const s = subs.get(sub[1]);
+      if (opts.body) s.cancel_at_period_end = new URLSearchParams(opts.body).get('cancel_at_period_end') === 'true';
+      return json(s);
+    }
+    return json({ error: { message: 'inconnu' } }, 404);
+  };
+
+  try {
+    const ref = async () => (await q('SELECT reference FROM abonnements WHERE user_id = ?', [U]))[0]?.reference ?? null;
+    const ecran = () => fetch(`${base}/api/boutique/abonnement`).then((r) => r.json());
+    const geste = (g) => fetch(`${base}/api/boutique/${g}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then((r) => r.json());
+
+    /* Une ligne d'avant le correctif, sans référence : on la retrouve par la
+       session Checkout qui l'a ouverte, et on la recopie. */
+    await q('UPDATE abonnements SET reference = NULL, source = ? WHERE user_id = ?', ['stripe', U]);
+    const e1 = await ecran();
+    check('l’écran sait gérer un abonnement payé', e1.gerable === true && e1.resilie === false
+      || (console.log('        il dit :', JSON.stringify(e1)), false));
+    check('et une ligne sans référence la retrouve par sa session', await ref() === 'sub_ancien');
+
+    const r1 = await geste('resilier');
+    check('résilier passe à Stripe, à l’échéance', r1.resilie === true
+      && appels.some((x) => x.chemin === '/subscriptions/sub_ancien'
+        && String(x.corps).includes('cancel_at_period_end=true')));
+    const finAvant = (await abo())?.fin;
+    check('et l’accès court jusqu’au terme payé', await abonnement.estAbonne(U)
+      && finAvant && new Date(finAvant) > new Date()
+      || (console.log('        la base dit :', JSON.stringify(await abo())), false));
+    check('l’écran le relit', (await ecran()).resilie === true);
+    const r2 = await geste('reprendre');
+    check('et changer d’avis rouvre le renouvellement', r2.resilie === false
+      && subs.get('sub_ancien').cancel_at_period_end === false);
+
+    /* Un abonnement offert n'a rien à résilier chez Stripe. */
+    await q('UPDATE abonnements SET source = ? WHERE user_id = ?', ['admin', U]);
+    check('un abonnement offert ne se résilie pas chez Stripe', (await ecran()).gerable === false);
+    const nb = appels.length;
+    const refus = await fetch(`${base}/api/boutique/resilier`, { method: 'POST' });
+    check('et la route le refuse sans appeler Stripe', refus.status === 404 && appels.length === nb);
+
+    /* Un paiement neuf : la référence part avec la session. */
+    await q('DELETE FROM abonnements WHERE user_id = ?', [U]);
+    await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
+             VALUES (?, 'abo-mensuel', ?, 'eur', 'cs_ref')`, [U, ARTICLE_PAR_ID.get('abo-mensuel').prix]);
+    await poster({ type: 'checkout.session.completed',
+      data: { object: { id: 'cs_ref', payment_status: 'paid', subscription: 'sub_neuf' } } });
+    check('un abonnement payé garde son identifiant Stripe', await ref() === 'sub_neuf');
+
+    /* Et le renouvellement le retrouve, dans la forme que l'API envoie
+       aujourd'hui comme dans l'ancienne. */
+    const dans = (j) => Math.floor(Date.now() / 1000) + j * 86400;
+    await poster({ type: 'invoice.paid', data: { object: {
+      parent: { subscription_details: { subscription: 'sub_neuf' } },
+      lines: { data: [{ period: { end: dans(60) } }] } } } });
+    const j60 = (new Date((await abo())?.fin) - Date.now()) / 86400000;
+    check(`le renouvellement repousse l’échéance (${Math.round(j60)} j)`, j60 > 59 && j60 < 61);
+    await poster({ type: 'invoice.paid', data: { object: {
+      subscription: 'sub_neuf', lines: { data: [{ period: { end: dans(90) } }] } } } });
+    const j90 = (new Date((await abo())?.fin) - Date.now()) / 86400000;
+    check('dans l’ancienne forme aussi', j90 > 89 && j90 < 91);
+
+    /* La résiliation arrivée à son terme : la fin vient des lignes. */
+    await poster({ type: 'customer.subscription.deleted', data: { object: {
+      id: 'sub_neuf', items: { data: [{ current_period_end: dans(5) }] } } } });
+    const j5 = (new Date((await abo())?.fin) - Date.now()) / 86400000;
+    check('la fin d’un abonnement résilié vient de Stripe', j5 > 4 && j5 < 6);
+  } finally {
+    globalThis.fetch = vraiFetch;
+  }
+}
+
 /* ================================ l'adresse où Stripe ramène le client
 
    **Deux noms pour la même chose finissent toujours par se contredire.**

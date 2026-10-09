@@ -79,16 +79,16 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
    * accepte. On n'ajoute pas la bibliothèque officielle pour trois requêtes :
    * elle pèse plus que ce fichier, et la signature se vérifie en six lignes.
    */
-  async function stripe(chemin, champs) {
-    const corps = new URLSearchParams(champs).toString();
-    const r = await fetch(API + chemin, {
+  async function stripe(chemin, champs = null) {
+    /* Sans champs, c'est une lecture : `GET`, et pas de corps. */
+    const r = await fetch(API + chemin, champs ? {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${cle()}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: corps,
-    });
+      body: new URLSearchParams(champs).toString(),
+    } : { headers: { Authorization: `Bearer ${cle()}` } });
     const json = await r.json();
     if (!r.ok) {
       // Le message de Stripe est nommé et utile ; le perdre oblige à deviner.
@@ -138,7 +138,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
      se monte quand même, son catalogue est vide, et l'écran le dit. Ce qu'elle
      ne fait dans aucun cas, c'est encaisser un abonnement sans savoir le
      poser — voir `livrer`. */
-  async function livrer(conn, userId, article) {
+  async function livrer(conn, userId, article, { reference = null } = {}) {
     const l = article.livraison;
 
     /* Un seul type, et c'est la moitié du sujet. **L'argent réel n'achète que
@@ -170,7 +170,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
          payé — et six encaissements simultanés s'attendraient sur le verrou de
          la même ligne jusqu'au `Lock wait timeout`. */
       await abonnement.accorder(userId, {
-        formule: l.formule, jours: l.jours, source: 'stripe', conn,
+        formule: l.formule, jours: l.jours, source: 'stripe', reference, conn,
       });
       /* **Dans `conn`**, comme l'abonnement lui-même. Un booster crédité
          hors transaction survivrait au `rollback` de l'achat qui l'a payé,
@@ -211,7 +211,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
    * Si la remise échoue après la prise, tout est annulé — la commande redevient
    * payée et non livrée, et le prochain rejeu la reprendra.
    */
-  async function encaisser(sessionId) {
+  async function encaisser(sessionId, { reference = null } = {}) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
@@ -243,7 +243,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
         return { article_retire: true };
       }
 
-      const remis = await livrer(conn, cmd.user_id, article);
+      const remis = await livrer(conn, cmd.user_id, article, { reference });
       await conn.query(`UPDATE achats SET livraison = ? WHERE id = ?`,
         [JSON.stringify(remis), cmd.id]);
       await conn.commit();
@@ -283,7 +283,14 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
           const s = evt.data?.object;
           // `payment_status` et non `status` : une session peut être complète
           // et impayée — un virement en attente, par exemple.
-          if (s?.payment_status === 'paid') await encaisser(s.id);
+          /* **L'identifiant de l'abonnement Stripe part avec.** Il manquait :
+             la ligne se posait sans `reference`, `invoice.paid` ne la
+             retrouvait donc jamais, et l'abonné perdait l'accès au bout d'un
+             mois pendant que Stripe continuait de le débiter. C'est aussi lui
+             qui permet de résilier depuis le jeu. */
+          const ref = typeof s?.subscription === 'string' ? s.subscription
+            : s?.subscription?.id ?? null;
+          if (s?.payment_status === 'paid') await encaisser(s.id, { reference: ref });
         }
         if (evt.type === 'checkout.session.expired') {
           await q(`UPDATE achats SET etat = 'abandonne'
@@ -306,7 +313,11 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
            repli sur `jours` ne sert que si la facture n'en dit rien. */
         if (evt.type === 'invoice.paid' && abonnement) {
           const inv = evt.data?.object;
-          const ref = inv?.subscription ?? null;
+          /* Deux places selon la version de l'API du compte : à la racine
+             avant 2025, sous `parent` depuis. Un compte ouvert aujourd'hui
+             reçoit la seconde. */
+          const ref = inv?.parent?.subscription_details?.subscription
+            ?? inv?.subscription ?? null;
           const fin = inv?.lines?.data?.[0]?.period?.end ?? null;
           if (ref) await abonnement.renouveler(ref, fin ? new Date(fin * 1000) : null);
         }
@@ -317,7 +328,9 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
            distinction — `cancel_at_period_end` — et on la suit. */
         if (evt.type === 'customer.subscription.deleted' && abonnement) {
           const sub = evt.data?.object;
-          const fin = sub?.current_period_end ?? null;
+          /* Même déménagement : la fin de période est passée sur les lignes. */
+          const fin = sub?.current_period_end
+            ?? sub?.items?.data?.[0]?.current_period_end ?? null;
           if (sub?.id) {
             await abonnement.renouveler(sub.id, fin ? new Date(fin * 1000) : new Date());
           }
@@ -523,6 +536,96 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       res.status(502).json({ error: 'boutique.error.paiement_indisponible' });
     }
   });
+
+  /* ============================================== résilier depuis le jeu
+
+     L'écran de l'abonnement promettait « résiliable quand tu veux, depuis ton
+     compte », et rien ne le permettait : ni bouton, ni portail. La loi
+     française (article L215-1-1 du code de la consommation) demande pourtant
+     que la résiliation se fasse en ligne, aussi simplement que l'abonnement.
+
+     **On résilie à l'échéance, pas sur-le-champ** (`cancel_at_period_end`) :
+     le joueur garde ce qu'il a payé, et Stripe envoie
+     `customer.subscription.deleted` le jour venu, que le webhook sait lire.
+     Rien ne s'écrit chez nous à la résiliation : c'est Stripe qui tient
+     l'état « résilié », et on le lui demande quand l'écran s'ouvre. Pas de
+     colonne en plus, donc pas de schéma à appliquer.
+
+     L'abonnement offert par l'administration n'a rien à résilier chez Stripe :
+     ces routes répondent `gerable: false`, et l'écran ne montre pas de bouton. */
+
+  const ARTICLES_ABONNEMENT = CATALOGUE.filter((a) => a.recurrence).map((a) => a.id);
+
+  /**
+   * L'abonnement Stripe du joueur : sa référence, ou `null` s'il n'en a pas.
+   *
+   * **Une ligne posée avant ce correctif n'a pas de référence** — c'était le
+   * défaut. On la retrouve alors par la dernière commande d'abonnement livrée :
+   * la session Checkout connaît l'abonnement qu'elle a ouvert. On la recopie
+   * dans la ligne au passage, et `invoice.paid` la retrouvera ensuite.
+   */
+  async function referenceStripe(userId) {
+    let ligne;
+    try {
+      [ligne] = await q('SELECT source, reference FROM abonnements WHERE user_id = ?', [userId]);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return null;
+      throw e;
+    }
+    if (!ligne || ligne.source !== 'stripe') return null;
+    if (ligne.reference) return ligne.reference;
+
+    const [cmd] = await q(
+      `SELECT stripe_session FROM achats
+        WHERE user_id = ? AND etat = 'livre' AND article IN (?)
+        ORDER BY id DESC LIMIT 1`, [userId, ARTICLES_ABONNEMENT]);
+    if (!cmd?.stripe_session) return null;
+    const session = await stripe(`/checkout/sessions/${encodeURIComponent(cmd.stripe_session)}`);
+    const ref = typeof session?.subscription === 'string' ? session.subscription
+      : session?.subscription?.id ?? null;
+    if (ref) {
+      await q('UPDATE abonnements SET reference = ? WHERE user_id = ?', [ref, userId]);
+    }
+    return ref;
+  }
+
+  /** Ce que l'écran dit de l'abonnement Stripe, à partir de ce que Stripe en sait. */
+  const etatStripe = (sub) => ({
+    gerable: true,
+    /* `cancel_at` couvre une résiliation datée posée depuis le tableau de
+       bord de Stripe ; `canceled`, un abonnement déjà terminé. */
+    resilie: Boolean(sub?.cancel_at_period_end || sub?.cancel_at || sub?.status === 'canceled'),
+  });
+
+  router.get('/abonnement', requireAuth, async (req, res) => {
+    if (!configure()) return res.json({ gerable: false });
+    try {
+      const ref = await referenceStripe(req.user.id);
+      if (!ref) return res.json({ gerable: false });
+      res.json(etatStripe(await stripe(`/subscriptions/${encodeURIComponent(ref)}`)));
+    } catch (e) {
+      console.error('[boutique] abonnement', e.message);
+      res.status(502).json({ error: 'boutique.error.paiement_indisponible' });
+    }
+  });
+
+  /* Résilier, et changer d'avis : le même appel, l'interrupteur inversé. */
+  const basculer = (resilier) => async (req, res) => {
+    if (!configure()) return res.status(503).json({ error: 'boutique.error.non_configuree' });
+    try {
+      const ref = await referenceStripe(req.user.id);
+      if (!ref) return res.status(404).json({ error: 'boutique.error.pas_d_abonnement' });
+      const sub = await stripe(`/subscriptions/${encodeURIComponent(ref)}`, {
+        cancel_at_period_end: String(resilier),
+      });
+      res.json(etatStripe(sub));
+    } catch (e) {
+      console.error('[boutique] résiliation', e.message);
+      res.status(502).json({ error: 'boutique.error.paiement_indisponible' });
+    }
+  };
+  router.post('/resilier', requireAuth, basculer(true));
+  router.post('/reprendre', requireAuth, basculer(false));
 
   /*  `livrer` est exporté pour être éprouvé directement.
 
