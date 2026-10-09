@@ -65,10 +65,15 @@ function ajouter(brut, fichier) {
   if (!/[A-Za-zÀ-ÿ]{2}/.test(litteral)) return;
   const accent = /[À-ÿ’«»]/.test(litteral);
   if (!accent) {
-    if (/^\s*[a-z][\w-]*\s*$/.test(litteral)) return;                 // un identifiant
-    if (/[(=:;]|px\b|\.\w|\/\w|^#|\b(var|rgba?|calc|url)\b/.test(litteral) && CODE.test(t)) return;
+    /* Un identifiant. Avec un trou, « encore {0} » reste un texte ; « tbf-{0} »,
+       « {0}ms », non. */
+    if (/^\s*[a-z][\w-]*\s*$/.test(litteral)
+      && (!/\{\d+\}/.test(t) || /[-_]/.test(litteral) || !/[a-zà-ÿ]{4}/.test(litteral))) return;
+    // du code ; « Cri : {0} », avec l'espace française avant les deux-points, est un texte
+    if (/[(=:;]|px\b|\.\w|\/\w|^#|\b(var|rgba?|calc|url)\b/.test(litteral) && CODE.test(t)
+      && !/[A-Za-zà-ÿ]{2} [:;!?](\s|$)/.test(litteral)) return;
     if (/^[\w-]+(\s[\w-]+)*$/.test(litteral) && /[_]|[a-z][A-Z]/.test(litteral)) return; // nom_de_code
-    if (/^[a-z-]+(\s+[a-z-]+)+$/.test(litteral.trim()) && /\b(on|off|hide|is|tbf|btn|fx|js)\b|-/.test(litteral)) return; // des classes
+    if (/^[a-z-]+(\s+[a-z-]+)+$/.test(litteral.trim()) && /\b(on|off|hide|is|tbf|btn|fx|js)\b|--|\b[a-z]{1,4}-/.test(litteral)) return; // des classes (« cartes-souvenirs » n'en est pas)
   }
   if (/^(https?:|mailto:|\/[\w/-]*$|data:)/.test(t)) return;
   if (/^[\w.-]+\.(js|css|png|avif|svg|mp3|mp4|html|json|webp|jpg)(\?.*)?$/.test(t)) return;
