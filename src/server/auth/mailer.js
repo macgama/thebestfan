@@ -1,4 +1,5 @@
 import { messages } from '../../shared/i18n/authMessages.js';
+import { habiller } from './mail-habit.js';
 
 /**
  * Envoi d'e-mails. Tant que SMTP_URL n'est pas défini, les messages sont
@@ -123,7 +124,10 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
     return ready;
   }
 
-  async function send({ to, subject, text }) {
+  /* `lien`, `bouton`, `tribune` habillent la version HTML (`mail-habit.js`) ;
+     le texte brut part toujours avec elle, pour les messageries qui n'en
+     veulent pas. */
+  async function send({ to, subject, text, lien = null, bouton = null, tribune = false }) {
     const t = await getTransport();
     if (!t) {
       // Repli console : le lien reste utilisable, il faut juste aller le
@@ -133,7 +137,9 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
     }
     try {
       const info = await t.sendMail({
-        from: from ?? 'thebestfan <no-reply@thebestfan.online>', to, subject, text });
+        from: from ?? 'thebestfan <no-reply@thebestfan.online>', to, subject, text,
+        html: habiller({ origin, titre: subject.replace(/\s*—\s*thebestfan$/i, ''),
+          texte: text, lien, bouton, tribune }) });
       return { delivered: true, logged: false, id: info.messageId };
     } catch (e) {
       retenir(e.message);
@@ -190,6 +196,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
         to,
         subject: t(locale, 'mail.verify.subject'),
         text: t(locale, 'mail.verify.body', { pseudo, link }),
+        lien: link, bouton: t(locale, 'mail.btn.verify'), tribune: true,
       });
     },
 
@@ -199,6 +206,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
         to,
         subject: t(locale, 'mail.reset.subject'),
         text: t(locale, 'mail.reset.body', { pseudo, link }),
+        lien: link, bouton: t(locale, 'mail.btn.reset'),
       });
     },
 
@@ -215,6 +223,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
           packs: packs ? t(locale, packs > 1 ? 'mail.abo.packs' : 'mail.abo.pack', { n: packs }) : '',
           link: `${origin}/abonnement`,
         }),
+        lien: `${origin}/abonnement`, bouton: t(locale, 'mail.btn.abo'), tribune: true,
       });
     },
 
@@ -225,6 +234,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
         text: t(locale, 'mail.resil.body', {
           pseudo, fin: dateMail(fin, locale), link: `${origin}/abonnement`,
         }),
+        lien: `${origin}/abonnement`, bouton: t(locale, 'mail.btn.resil'),
       });
     },
 
