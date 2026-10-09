@@ -86,8 +86,9 @@ que tu l'arrêtes.
 prend effet **à la fin de la période déjà payée** : tu gardes l'accès jusque-là.
 Nous ne coupons pas un accès que tu as réglé.
 
-**[Où résilier : à préciser — portail client Stripe, ou écran du jeu, selon ce
-qui sera branché.]**
+**Où résilier :** sur l'écran de l'abonnement (menu, « L'abonnement »), bouton
+« Résilier mon abonnement », puis « Confirmer la résiliation ». Tu peux changer
+d'avis jusqu'à l'échéance avec « Garder mon abonnement ».
 
 ### Le droit de rétractation
 
