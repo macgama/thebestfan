@@ -838,6 +838,10 @@
       + item('#', 'sortie', 'Se déconnecter', 'sortie')
       + calmeHTML
       + volumeHTML
+      /* **La langue**, sur toutes les pages : cinq plaques, une par langue
+         (voir `langue.js`). Toucher l'une recharge la page traduite. */
+      + '<div class="tbf-rubrique" id="tbf-langue-titre">LANGUE</div>'
+      + '<div class="tbf-langues" id="tbf-langues" role="group" aria-labelledby="tbf-langue-titre"></div>'
       /* Ici, entre le volume et la version, la ligne « apparaître hors
          ligne » quand le serveur la permet (`presenceHTML`, plus haut), sur
          la rangée du volume à partir de 350 px. */
@@ -865,6 +869,10 @@
          rien ne le signale. */
       + '<div class="tbf-version" id="tbf-version"></div>'
       + '</div>';
+
+    const plaquesLangue = tiroir.querySelector('#tbf-langues');
+    if (window.TBF_LANGUE) window.TBF_LANGUE.plaques(plaquesLangue);
+    else plaquesLangue.previousElementSibling.remove(), plaquesLangue.remove();
 
     const voile = document.createElement('div');
     voile.className = 'tbf-voile';

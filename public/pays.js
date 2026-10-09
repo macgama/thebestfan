@@ -29,7 +29,7 @@
    ======================================================================= */
 
 window.TBF_PAYS = (() => {
-  const LOCALES = ['fr', 'en', 'de', 'es'];
+  const LOCALES = ['fr', 'en', 'de', 'it', 'es'];
 
   /* La langue est celle que le joueur a choisie au compte, retenue par
      `compte.html` sous cette clé. On la lit ici plutôt que d'attendre

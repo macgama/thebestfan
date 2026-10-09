@@ -97,6 +97,9 @@
     "pages": "node scripts/verif-pages.mjs",
     "pages:test": "node scripts/verif-pages.mjs",
     "pages:navigateur": "node scripts/pages-navigateur.mjs",
+    "langues": "node scripts/langues.mjs",
+    "langues:test": "node scripts/langues.mjs --verifier",
+    "langues:pages": "node scripts/langues-pages.mjs",
     "pwa:ui": "node scripts/pwa-ui-smoke.mjs",
     "barres:ui": "node scripts/barres-ui-smoke.mjs",
     "menu:smoke": "node scripts/menu-smoke.mjs",
@@ -140,6 +143,8 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "acorn": "^8.19.0",
+    "acorn-walk": "^8.3.5",
     "jsdom": "^26.0.0",
     "puppeteer": "^25.12.0",
     "sharp": "^0.35.5"

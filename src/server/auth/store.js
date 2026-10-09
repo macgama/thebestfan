@@ -1,6 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import { hashToken, randomToken } from './tokens.js';
 
+/**
+ * L'italien est arrivé après la colonne `locale` : tant que `sql/auth.sql`
+ * n'a pas été rejoué, la base le refuse (« Data truncated »). Une inscription
+ * ne doit pas échouer pour ça — elle passe en français, et la langue reste
+ * retenue sur l'appareil.
+ */
+async function sansLangueInconnue(locale, faire) {
+  try {
+    return await faire(locale);
+  } catch (e) {
+    if (locale && locale !== 'fr' && (e.errno === 1265 || e.code === 'WARN_DATA_TRUNCATED')) {
+      return faire('fr');
+    }
+    throw e;
+  }
+}
+
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
 export const SESSION_REFRESH_MS = 24 * 60 * 60 * 1000;  // prolongée au plus 1×/jour
 export const VERIFY_TTL_MS = 48 * 60 * 60 * 1000;
@@ -65,11 +82,11 @@ export function createStore(pool) {
 
     async createUser({ email, pseudo, passwordHash, locale }) {
       const publicId = randomUUID();
-      const res = await q(
+      const res = await sansLangueInconnue(locale, (l) => q(
         `INSERT INTO users (public_id, email, pseudo, password_hash, locale)
          VALUES (?, ?, ?, ?, ?)`,
-        [publicId, email, pseudo, passwordHash, locale],
-      );
+        [publicId, email, pseudo, passwordHash, l],
+      ));
       return { id: res.insertId, publicId };
     },
 
@@ -86,11 +103,11 @@ export function createStore(pool) {
     },
 
     async updateProfile(userId, { locale, mainTeamId }) {
-      await q(
+      await sansLangueInconnue(locale, (l) => q(
         `UPDATE users SET locale = COALESCE(?, locale), main_team_id = COALESCE(?, main_team_id)
          WHERE id = ?`,
-        [locale ?? null, mainTeamId ?? null, userId],
-      );
+        [l ?? null, mainTeamId ?? null, userId],
+      ));
     },
 
     /**

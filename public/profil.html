@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <title>Mon profil — thebestfan</title>
@@ -1667,8 +1668,9 @@ function rendre() {
   $('verif').textContent = user.verified ? 'oui' : 'pas encore';
   $('resend').style.display = user.verified ? 'none' : 'block';
   // Des onglets du rail commun : `.on` est l'état que ui.css peint.
-  $('langues').innerHTML = ['fr','en','de','es'].map((l) =>
-    `<button data-lang="${l}" class="tbf-onglet ${user.locale === l ? 'on' : ''}">${l.toUpperCase()}</button>`).join('');
+  const langue = window.TBF_LANGUE?.langue ?? user.locale;
+  $('langues').innerHTML = (window.TBF_LANGUE?.LANGUES ?? ['fr','en','de','it','es']).map((l) =>
+    `<button data-lang="${l}" class="tbf-onglet ${langue === l ? 'on' : ''}" translate="no">${l.toUpperCase()}</button>`).join('');
 }
 
 /* ---------------------------------------------------------- actions */
@@ -1721,6 +1723,8 @@ $('clubs').addEventListener('click', async (e) => {
 $('langues').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-lang]');
   if (!b) return;
+  /* `langue.js` l'enregistre au compte et recharge la page traduite. */
+  if (window.TBF_LANGUE) { window.TBF_LANGUE.changer(b.dataset.lang); return; }
   try {
     const r = await auth('/me', { locale: b.dataset.lang }, 'PATCH');
     user = r.user;

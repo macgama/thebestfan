@@ -383,7 +383,7 @@ check('l\u2019équipement a bien un revers',
   await new Promise((r) => http2.listen(0, r));
   const chez = `http://localhost:${http2.address().port}`;
 
-  const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+  const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
   const page = await nav.newPage();
   await page.setViewport({ width: 420, height: 880 });
   const soucis = [];

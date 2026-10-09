@@ -125,7 +125,7 @@ export function createGoogleAuth({ pool, store, origin, clientId, clientSecret }
         const hash = await hashPassword(randomUUID() + randomUUID());
         await store.createUser({
           email, pseudo, passwordHash: hash,
-          locale: ['fr', 'en', 'de', 'es'].includes(String(charge.locale).slice(0, 2))
+          locale: ['fr', 'en', 'de', 'it', 'es'].includes(String(charge.locale).slice(0, 2))
             ? String(charge.locale).slice(0, 2) : 'fr',
         });
         user = await store.findByEmail(email);
