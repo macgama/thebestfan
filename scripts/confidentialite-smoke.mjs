@@ -111,16 +111,16 @@ check('les notifications se taisent de 22 h à 8 h, heure de Zurich',
     && !estLaNuit(zurich(21, 59)) && !estLaNuit(zurich(8))
     && dit('de 22 h à 8 h (heure de Zurich)'));
 
-/* Un seul cookie : aucun `res.cookie(` du serveur ne pose autre chose que
-   celui de la session. */
+/* Deux cookies : aucun `res.cookie(` du serveur ne pose autre chose que
+   celui de la session et celui de la langue. */
 const fichiers = ['server.js', ...readdirSync(path.join(RACINE, 'src/server'), { recursive: true })
   .filter((f) => f.endsWith('.js')).map((f) => path.join('src/server', f))];
 const poses = fichiers.flatMap((f) => [...lire(f).matchAll(/res\.cookie\(\s*([^,]+),/g)]
   .map((m) => `${f} : ${m[1].trim()}`));
-const autres = poses.filter((p) => !/: COOKIE$/.test(p));
-check(`un seul cookie, ${COOKIE}, comme la page le dit`,
+const autres = poses.filter((p) => !/: (COOKIE|'tbf_langue')$/.test(p));
+check(`deux cookies, ${COOKIE} et tbf_langue, comme la page le dit`,
   COOKIE === 'tbf_session' && poses.length > 0 && autres.length === 0
-    && dit('Un seul, tbf_session'));
+    && dit('Deux, tbf_session') && dit('et tbf_langue'));
 if (autres.length) console.log('        ailleurs :', autres.join(' · '));
 
 /* --------------------------------------------------------- la publication */

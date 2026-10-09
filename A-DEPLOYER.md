@@ -1,5 +1,28 @@
 # À déposer sur Infomaniak
 
+**Le site en cinq langues : français, anglais, allemand, italien, espagnol**
+(branche `claude/site-cinq-langues-jdxall`, 9 octobre 2026, demandé par Gaël).
+Construction, **schéma** (`npm run schema:appliquer`), puis redémarrage. Sans
+le schéma, un joueur qui choisit l'italien est gardé en français dans son
+compte (rien ne casse).
+
+- `public/langue.js` et `public/i18n/` : chaque page joueur se traduit dans la
+  langue du navigateur à la première visite ; la rubrique LANGUE du menu, la
+  page du compte et le profil la changent. `/admin` reste en français.
+- `i18n/<langue>.json` : les traductions (le français sert de clé). Après un
+  ajout de Fanzzy, de pièce ou de stade, `npm run langues` liste dans
+  `i18n/a-traduire.json` ce qui reste en français ; un fil le traduit.
+- `sql/auth.sql` : `users.locale` accepte l'italien.
+- `src/server/auth/` : la langue du compte suit le joueur d'un appareil à
+  l'autre ; les mails (compte et abonnement, en HTML) partent dans sa langue.
+- `src/server/boutique/index.js` : la page de paiement Stripe s'ouvre dans la
+  langue du joueur, avec le nom de l'article traduit.
+- `src/server/notifications/index.js` : les notifications partent traduites.
+- `package.json` : deux paquets de développement (`acorn`, `acorn-walk`)
+  pour `npm run langues`, installés par la construction.
+
+---
+
 **Mails d'abonnement : confirmation et résiliation** (branche
 `claude/abonnement-desabonnement-j7vmji`, 9 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, sans schéma. Ne partent que si le SMTP est

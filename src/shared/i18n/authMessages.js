@@ -4,6 +4,10 @@
  */
 export const messages = {
   fr: {
+    'mail.formule.mensuel': 'mensuel',
+    'mail.formule.annuel': 'annuel',
+    'mail.html.copie': 'Le bouton ne marche pas ? Copie ce lien :',
+    'mail.html.pied': 'le jeu des supporters',
     'mail.btn.verify': 'Confirmer mon adresse',
     'mail.btn.reset': 'Choisir un mot de passe',
     'mail.btn.abo': 'Voir mon abonnement',
@@ -45,6 +49,10 @@ export const messages = {
       'thebestfan.online',
   },
   en: {
+    'mail.formule.mensuel': 'monthly',
+    'mail.formule.annuel': 'yearly',
+    'mail.html.copie': 'Button not working? Copy this link:',
+    'mail.html.pied': 'the fans’ game',
     'mail.btn.verify': 'Confirm my address',
     'mail.btn.reset': 'Choose a password',
     'mail.btn.abo': 'See my subscription',
@@ -86,6 +94,27 @@ export const messages = {
       'thebestfan.online',
   },
   de: {
+    'mail.btn.abo': 'Mein Abo ansehen',
+    'mail.btn.resil': 'Mein Abo behalten',
+    'mail.formule.mensuel': 'Monatsabo',
+    'mail.formule.annuel': 'Jahresabo',
+    'mail.html.copie': 'Der Button geht nicht? Kopiere diesen Link:',
+    'mail.html.pied': 'das Spiel der Fans',
+    'mail.abo.subject': 'Dein Abo ist aktiv — thebestfan',
+    'mail.abo.body':
+      'Hallo {pseudo},\n\n' +
+      'Willkommen beim TRIBÜNEN-PASS: Dein {formule} ist bis zum {fin} aktiv.{packs}\n' +
+      'Es verlängert sich automatisch zu jedem Termin, zum gleichen Preis.\n\n' +
+      'Du kannst jederzeit kündigen, mit zwei Klicks, auf der Abo-Seite:\n{link}\n\n' +
+      'thebestfan.online',
+    'mail.abo.pack': ' Ein Booster ist gerade in deinem Vorrat gelandet.',
+    'mail.abo.packs': ' {n} Booster sind gerade in deinem Vorrat gelandet.',
+    'mail.resil.subject': 'Deine Kündigung ist eingegangen — thebestfan',
+    'mail.resil.body':
+      'Hallo {pseudo},\n\n' +
+      'Wir haben deine Kündigung erhalten. Dein Abo endet am {fin}: Es wird nichts mehr abgebucht, und bis dahin behältst du alles.\n\n' +
+      'Doch anders entschieden? Bis zu diesem Datum kannst du es auf der Abo-Seite behalten:\n{link}\n\n' +
+      'thebestfan.online',
     'mail.btn.verify': 'Adresse bestätigen',
     'mail.btn.reset': 'Passwort wählen',
     'mail.verify.subject': 'Bestätige deine Adresse — thebestfan',
@@ -110,6 +139,29 @@ export const messages = {
       'thebestfan.online',
   },
   it: {
+    'mail.btn.verify': 'Conferma il mio indirizzo',
+    'mail.btn.reset': 'Scegli una password',
+    'mail.btn.abo': 'Vedi il mio abbonamento',
+    'mail.btn.resil': 'Tieni il mio abbonamento',
+    'mail.formule.mensuel': 'mensile',
+    'mail.formule.annuel': 'annuale',
+    'mail.html.copie': 'Il pulsante non funziona? Copia questo link:',
+    'mail.html.pied': 'il gioco dei tifosi',
+    'mail.abo.subject': 'Il tuo abbonamento è attivo — thebestfan',
+    'mail.abo.body':
+      'Ciao {pseudo},\n\n' +
+      'Benvenuto nel PASS DI CURVA: il tuo abbonamento {formule} è attivo fino al {fin}.{packs}\n' +
+      'Si rinnova da solo a ogni scadenza, allo stesso prezzo.\n\n' +
+      'Puoi disdirlo quando vuoi, in due gesti, dalla pagina dell’abbonamento:\n{link}\n\n' +
+      'thebestfan.online',
+    'mail.abo.pack': ' Un booster è appena arrivato nella tua riserva.',
+    'mail.abo.packs': ' {n} booster sono appena arrivati nella tua riserva.',
+    'mail.resil.subject': 'La tua disdetta è registrata — thebestfan',
+    'mail.resil.body':
+      'Ciao {pseudo},\n\n' +
+      'Abbiamo ricevuto la tua disdetta. Il tuo abbonamento termina il {fin}: non verrà addebitato più nulla e tieni tutto fino ad allora.\n\n' +
+      'Hai cambiato idea? Puoi tenerlo fino a quella data, dalla pagina dell’abbonamento:\n{link}\n\n' +
+      'thebestfan.online',
     'mail.verify.subject': 'Conferma il tuo indirizzo — thebestfan',
     'mail.verify.body':
       'Ciao {pseudo},\n\n' +
@@ -132,6 +184,27 @@ export const messages = {
       'thebestfan.online',
   },
   es: {
+    'mail.btn.abo': 'Ver mi suscripción',
+    'mail.btn.resil': 'Mantener mi suscripción',
+    'mail.formule.mensuel': 'mensual',
+    'mail.formule.annuel': 'anual',
+    'mail.html.copie': '¿No funciona el botón? Copia este enlace:',
+    'mail.html.pied': 'el juego de los hinchas',
+    'mail.abo.subject': 'Tu suscripción está activa — thebestfan',
+    'mail.abo.body':
+      'Hola {pseudo}:\n\n' +
+      'Bienvenido al PASS DE GRADA: tu suscripción {formule} está activa hasta el {fin}.{packs}\n' +
+      'Se renueva sola en cada vencimiento, al mismo precio.\n\n' +
+      'Puedes cancelarla cuando quieras, en dos toques, en la página de la suscripción:\n{link}\n\n' +
+      'thebestfan.online',
+    'mail.abo.pack': ' Acaba de llegar un sobre a tu reserva.',
+    'mail.abo.packs': ' Acaban de llegar {n} sobres a tu reserva.',
+    'mail.resil.subject': 'Tu cancelación está registrada — thebestfan',
+    'mail.resil.body':
+      'Hola {pseudo}:\n\n' +
+      'Hemos recibido tu cancelación. Tu suscripción termina el {fin}: no se cobrará nada más y lo conservas todo hasta entonces.\n\n' +
+      '¿Has cambiado de opinión? Puedes mantenerla hasta esa fecha desde la página de la suscripción:\n{link}\n\n' +
+      'thebestfan.online',
     'mail.btn.verify': 'Confirmar mi dirección',
     'mail.btn.reset': 'Elegir una contraseña',
     'mail.verify.subject': 'Confirma tu dirección — thebestfan',
