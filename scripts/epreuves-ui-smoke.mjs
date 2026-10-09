@@ -18,7 +18,7 @@ import { readFileSync } from 'node:fs';
 import { resoudreGeste, grade } from '../src/server/ferveur/gestures.js';
 import { EPREUVES } from '../src/server/ferveur/epreuves.js';
 
-const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 const page = await nav.newPage();
 const erreurs = [];
 page.on('pageerror', (e) => erreurs.push(e.message));

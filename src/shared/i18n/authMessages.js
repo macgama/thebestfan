@@ -69,6 +69,28 @@ export const messages = {
       'Warst du das nicht, setze es sofort über die Anmeldeseite zurück.\n\n' +
       'thebestfan.online',
   },
+  it: {
+    'mail.verify.subject': 'Conferma il tuo indirizzo — thebestfan',
+    'mail.verify.body':
+      'Ciao {pseudo},\n\n' +
+      'Conferma il tuo indirizzo per attivare il tuo account:\n{link}\n\n' +
+      'Questo link scade tra 48 ore.\n' +
+      'Se non ti sei iscritto tu, ignora questo messaggio.\n\n' +
+      'thebestfan.online',
+    'mail.reset.subject': 'Reimposta la tua password — thebestfan',
+    'mail.reset.body':
+      'Ciao {pseudo},\n\n' +
+      'Ecco il link per scegliere una nuova password:\n{link}\n\n' +
+      'Scade tra 1 ora e funziona una sola volta.\n' +
+      'Se non l’hai chiesto tu, la tua password attuale resta valida.\n\n' +
+      'thebestfan.online',
+    'mail.changed.subject': 'La tua password è cambiata — thebestfan',
+    'mail.changed.body':
+      'Ciao {pseudo},\n\n' +
+      'La tua password è appena stata modificata e tutte le tue sessioni sono state chiuse.\n' +
+      'Se non sei stato tu, reimpostala subito dalla pagina di accesso.\n\n' +
+      'thebestfan.online',
+  },
   es: {
     'mail.verify.subject': 'Confirma tu dirección — thebestfan',
     'mail.verify.body':

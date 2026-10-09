@@ -105,7 +105,7 @@ if (!debout) {
 
 const navigateur = await puppeteer.launch({
   headless: true,
-  args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  args: ['--no-sandbox', '--disable-dev-shm-usage', '--accept-lang=fr-FR'],
 });
 
 const dossier = IMAGES ? await mkdtemp(path.join(tmpdir(), 'tbf-ecrans-')) : null;

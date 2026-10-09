@@ -307,7 +307,7 @@ if (SERVIR !== null) {
 /* ------------------------------------------------------------- la mesure */
 
 async function mesurer(puppeteer) {
-  const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+  const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
   const erreurs = [];
   const page = await nav.newPage();
   page.on('pageerror', (e) => erreurs.push(e.message));

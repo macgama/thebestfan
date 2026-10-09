@@ -3247,6 +3247,10 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
    soleil ce que le papier lui laissait déjà à peine (2,7:1 au lieu de 3,3) ;
    pleine sur le kraft éclairci, elle tient 4,58. */
 .tbf-tiroir-pied .tbf-version{padding:10px 0 0;color:var(--encre-kraft);opacity:1}
+/* La langue : cinq plaques sur une rangée, au pied du tiroir. */
+.tbf-langues{display:flex;gap:6px;flex-wrap:wrap;padding:4px 0 2px}
+.tbf-langues .tbf-plaque{--epaisseur:2px;min-height:44px;min-width:44px;padding:0 8px;flex:1 1 0;
+  font-size:13px;letter-spacing:.06em}
 /* MODE CALME, dans le pied : un titre cousu au noir du kraft, avec son bout
    d'écharpe devant — moins de vingt pixels, donc pas de pochoir. */
 .tbf-tiroir-pied .tbf-rubrique{
