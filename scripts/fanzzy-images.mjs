@@ -384,12 +384,21 @@ async function produire(fichier, id) {
   const tete = centreTete(alpha, l, h, b, rayon);
   const cote = Math.round((b.y1 - b.y0) * 0.42);
   let gx = Math.round(tete.x - cote / 2);
-  let gy = Math.round(tete.y - cote * 0.08);
+  /* **De l'air au-dessus du crâne** (9 octobre 2026, Gaël : « on ne voit pas
+     bien le haut des têtes »). Sur la carte, le haut du buste se fond dans la
+     plaque sur 12 % (`cartes.css`) ; avec 8 % de marge, le fondu mangeait le
+     haut de la tête. Dix-huit pour cent la posent sous le fondu. Un rendu
+     dont la tête touche le haut de l'image reçoit cette marge en vide. */
+  let gy = Math.round(tete.y - cote * 0.18);
   gx = Math.max(0, Math.min(l - cote, gx));
-  gy = Math.max(0, Math.min(h - cote, gy));
-
-  const buste = sharp(rgba, { raw: { width: l, height: h, channels: 4 } })
-    .extract({ left: gx, top: gy, width: Math.min(cote, l - gx), height: Math.min(cote, h - gy) })
+  gy = Math.min(h - cote, gy);
+  const vide = Math.max(0, -gy);
+  const source = vide
+    ? await sharp(rgba, { raw: { width: l, height: h, channels: 4 } })
+      .extend({ top: vide, background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer()
+    : sharp(rgba, { raw: { width: l, height: h, channels: 4 } });
+  const buste = (vide ? sharp(source) : source)
+    .extract({ left: gx, top: gy + vide, width: Math.min(cote, l - gx), height: Math.min(cote, h - gy) })
     .resize(BUSTE.l, BUSTE.h, { fit: 'cover' });
 
   await mkdir(SORTIE, { recursive: true });
