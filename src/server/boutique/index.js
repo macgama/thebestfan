@@ -624,6 +624,42 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       res.status(502).json({ error: 'boutique.error.paiement_indisponible' });
     }
   };
+  /* ============================================ rattraper un webhook perdu
+
+     L'abonnement ne se pose qu'à l'arrivée du webhook. S'il n'arrive pas —
+     adresse mal déclarée chez Stripe, secret différent, serveur redémarré au
+     mauvais moment —, le joueur a payé et le jeu ne le sait pas : c'est ce
+     qu'a vécu Gaël le 9 octobre 2026.
+
+     L'écran de l'abonnement appelle donc cette route quand il ne voit pas
+     d'abonnement : on reprend les commandes **en attente** du joueur, on
+     demande à Stripe si elles sont payées, et on encaisse celles qui le sont.
+     `encaisser` ne livre qu'une fois : si le webhook arrive ensuite, il ne
+     fait rien. Rien ne vient du client : ni montant, ni identifiant de
+     session — seulement les commandes que notre table lui attribue. */
+  router.post('/rattraper', requireAuth, async (req, res) => {
+    if (!configure()) return res.json({ livre: 0 });
+    try {
+      const attente = await q(
+        `SELECT stripe_session FROM achats
+          WHERE user_id = ? AND etat IN ('en_attente', 'paye')
+            AND cree_le > NOW(3) - INTERVAL 7 DAY
+          ORDER BY id DESC LIMIT 3`, [req.user.id]);
+      let livre = 0;
+      for (const { stripe_session: id } of attente) {
+        const s = await stripe(`/checkout/sessions/${encodeURIComponent(id)}`);
+        if (s?.payment_status !== 'paid') continue;
+        const ref = typeof s.subscription === 'string' ? s.subscription
+          : s.subscription?.id ?? null;
+        if ((await encaisser(id, { reference: ref })).livre) livre++;
+      }
+      res.json({ livre });
+    } catch (e) {
+      console.error('[boutique] rattrapage', e.message);
+      res.status(502).json({ error: 'boutique.error.paiement_indisponible' });
+    }
+  });
+
   router.post('/resilier', requireAuth, basculer(true));
   router.post('/reprendre', requireAuth, basculer(false));
 

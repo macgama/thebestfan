@@ -478,6 +478,10 @@ export function createAbonnement({ pool, requireAuth }) {
           .filter((a) => a.livraison?.type === 'abonnement')
           .map((a) => ({
             id: a.id,
+            /* La formule que la ligne d'abonnement portera une fois payée :
+               c'est ce qui permet à l'accueil d'après paiement de dire
+               combien de boosters viennent d'arriver. */
+            formule: a.livraison.formule ?? null,
             nom: a.nom,
             prixTexte: enEuros(a.prix),
             marque: a.marque ?? null,
