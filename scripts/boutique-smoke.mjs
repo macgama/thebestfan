@@ -104,7 +104,16 @@ const fanzzy = createFanzzy({ pool, requireAuth: (req, _res, next) => next() });
    cette suite n'aurait plus d'objet. */
 const abonnement = createAbonnement({ pool, requireAuth: (_q, _s, n) => n() });
 
+/* Un faux facteur : il note ce qu'on lui confie, pour vérifier que l'abonné
+   reçoit sa confirmation et sa résiliation par écrit. */
+const mails = [];
+const facteur = {
+  sendAbonnement: async (m) => { mails.push({ quoi: 'debut', ...m }); },
+  sendResiliation: async (m) => { mails.push({ quoi: 'fin', ...m }); },
+};
+
 const boutique = createBoutique({
+  mailer: facteur,
   pool,
   requireAuth: (req, _res, next) => { req.user = { id: U }; next(); },
   fanzzy,
@@ -750,7 +759,11 @@ const evenement = (sessionId) => ({
       || (console.log('        il dit :', JSON.stringify(e1)), false));
     check('et une ligne sans référence la retrouve par sa session', await ref() === 'sub_ancien');
 
+    mails.length = 0;
     const r1 = await geste('resilier');
+    check('la résiliation est confirmée par mail, avec sa date',
+      mails.length === 1 && mails[0].quoi === 'fin' && mails[0].to === 'a@b.c' && mails[0].fin
+      || (console.log('        mails :', JSON.stringify(mails)), false));
     check('résilier passe à Stripe, à l’échéance', r1.resilie === true
       && appels.some((x) => x.chemin === '/subscriptions/sub_ancien'
         && String(x.corps).includes('cancel_at_period_end=true')));
@@ -804,7 +817,12 @@ const evenement = (sessionId) => ({
       await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
                VALUES (?, 'abo-mensuel', ?, 'eur', ?)`, [U, ARTICLE_PAR_ID.get('abo-mensuel').prix, id]);
     }
+    mails.length = 0;
     const rr = await geste('rattraper');
+    check('l’abonnement posé est confirmé par mail',
+      mails.length === 1 && mails[0].quoi === 'debut' && mails[0].formule === 'mensuel'
+        && mails[0].packs === 1
+      || (console.log('        mails :', JSON.stringify(mails)), false));
     check('une commande payée sans webhook est rattrapée', rr.livre === 1
       && await abonnement.estAbonne(U) && await ref() === 'sub_ratt'
       || (console.log('        il rend :', JSON.stringify(rr)), false));
