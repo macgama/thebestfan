@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**De l'air au-dessus des têtes sur les petites cartes** (branche
+`claude/project-thread-j45ndm`, 9 octobre 2026, demandé par Gaël : « on ne
+voit pas bien le haut des têtes »). Images seules : construction.
+
+- Bustes des 17 cartes redessinées (RP1, RP2, RP13 à RP19, avec B et C) : la
+  tête descend sous le fondu du haut de carte.
+- `scripts/fanzzy-images.mjs` : 18 % de marge au-dessus du crâne (8 %
+  avant), en vide si le rendu touche le haut de l'image.
+
+---
+
 **RP2, RP18 et RP19 redessinés** (branche `claude/project-thread-j45ndm`,
 8 octobre 2026, demandé par Gaël). Images seules : construction, ni schéma ni
 redémarrage.
