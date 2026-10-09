@@ -517,7 +517,8 @@ if (process.env.DATABASE_URL) {
        qu on ait pu vérifier la signature. On accepterait alors n importe
        quel appel prétendant venir de Stripe, ce qui revient à offrir des
        boosters à qui connaît l adresse. */
-    boutique = createBoutique({ pool, requireAuth: auth.requireAuth, fanzzy, abonnement });
+    boutique = createBoutique({ pool, requireAuth: auth.requireAuth, fanzzy, abonnement,
+      mailer: globalThis.mailer });
     app.use("/api/boutique", boutique.webhook);
     app.use("/api/boutique", boutique.router);
     console.log(boutique.configure()
