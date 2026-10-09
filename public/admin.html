@@ -505,11 +505,28 @@ const VUES = {
    */
   async apercu() {
     const d = await api('/apercu');
-    const [sai, fz, cont] = await Promise.all([
+    const [sai, fz, cont, dep] = await Promise.all([
       api('/saisons').catch(() => null),
       api('/fanzzy').catch(() => null),
       api('/contenus').catch(() => null),
+      api('/departs').catch(() => null),
     ]);
+
+    /* Pourquoi les abonnés partent : la question facultative posée après une
+       résiliation. Anonyme ; le compte des 90 derniers jours, puis les
+       derniers mots laissés. Sans table, rien. */
+    const departs = () => {
+      if (!dep) return '';
+      const total = dep.raisons.reduce((n, r) => n + r.n, 0);
+      return `<h3 class="h3">POURQUOI ILS SE DÉSABONNENT (${dep.jours} JOURS)</h3>
+      <div class="tbl"><table><tbody>
+        ${total ? dep.raisons.map((r) => `<tr><td>${esc(r.libelle)}</td><td>${r.n}</td></tr>`).join('')
+          : '<tr><td>Aucune réponse pour l’instant.</td></tr>'}
+        ${dep.mots.map((m) => `<tr><td style="opacity:.6;font-size:11px;white-space:nowrap">${
+          esc(new Date(m.cree).toLocaleDateString('fr'))} · ${esc(m.libelle)}${
+          m.formule ? ' · ' + esc(m.formule) : ''}</td><td>${esc(m.texte)}</td></tr>`).join('')}
+      </tbody></table></div>`;
+    };
 
     const enJeu = () => {
       if (!sai) return '';
@@ -544,7 +561,7 @@ const VUES = {
     };
 
     const c = (v, l) => `<div class="card"><b>${v ?? 0}</b><span>${l}</span></div>`;
-    $('main').innerHTML = enJeu() + `
+    $('main').innerHTML = enJeu() + departs() + `
       <div class="cards">
         ${c(d.joueurs.total,'JOUEURS')}${c(d.joueurs.nouveaux,'CETTE SEMAINE')}
         ${c(d.joueurs.verifies,'ADRESSES VÉRIFIÉES')}${c(d.joueurs.admins,'ADMINS')}

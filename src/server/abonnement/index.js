@@ -68,6 +68,22 @@ import { CATALOGUE, enEuros } from '../../shared/boutique.js';
  * à éprouver les deux côtés du jeu. `source` dit d'où vient la ligne, et le
  * jour où Stripe arrive il écrit ici par le même chemin.
  */
+/**
+ * Pourquoi on part : les choix de la question posée après la résiliation.
+ *
+ * Choisis par Gaël le 9 octobre 2026, sans offre pour retenir. L'ordre est
+ * celui de l'écran. La clé va en base, le libellé n'y va pas : il peut changer
+ * sans rendre les réponses passées illisibles.
+ */
+export const RAISONS_DEPART = [
+  ['trop_cher', 'C’est trop cher'],
+  ['joue_peu', 'Je ne joue plus assez'],
+  ['manque', 'Il manque quelque chose'],
+  ['pause', 'Une pause pour l’intersaison'],
+  ['autre', 'Autre chose'],
+];
+const RAISON_CONNUE = new Set(RAISONS_DEPART.map(([k]) => k));
+
 export function createAbonnement({ pool, requireAuth }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
@@ -325,9 +341,60 @@ export function createAbonnement({ pool, requireAuth }) {
   const tailleClasseeMax = (abonne) => (abonne ? Infinity
     : Math.max(1, reglage('abo.taille_classe_libre')));
 
+  /* --------------------------------------------------- pourquoi on part
+
+     **Après** la résiliation, jamais avant : la question est facultative et
+     ne retarde rien. La réponse est anonyme — la table ne porte pas le
+     joueur —, mais seul un joueur qui a (ou vient d'avoir) un abonnement
+     peut en laisser une : sans ça, n'importe quel compte remplirait la
+     statistique. */
+  async function noterDepart(userId, { raison, texte } = {}) {
+    if (!RAISON_CONNUE.has(raison)) return { erreur: 'abo.error.raison_inconnue' };
+    const [a] = await q('SELECT formule FROM abonnements WHERE user_id = ?', [userId]);
+    if (!a) return { erreur: 'abo.error.pas_abonne' };
+    const libre = String(texte ?? '').trim().slice(0, 500) || null;
+    await q('INSERT INTO abonnement_departs (raison, texte, formule) VALUES (?, ?, ?)',
+      [raison, libre, a.formule ?? null]);
+    return { ok: true };
+  }
+
+  /** Ce que l'administration en lit : le compte par raison, et les derniers mots. */
+  async function departs({ jours = 90 } = {}) {
+    try {
+      const comptes = await q(
+        `SELECT raison, COUNT(*) AS n FROM abonnement_departs
+          WHERE cree > NOW(3) - INTERVAL ? DAY GROUP BY raison`, [jours]);
+      const mots = await q(
+        `SELECT raison, texte, formule, cree FROM abonnement_departs
+          WHERE texte IS NOT NULL ORDER BY id DESC LIMIT 20`);
+      const par = new Map(comptes.map((c) => [c.raison, Number(c.n)]));
+      return {
+        jours,
+        raisons: RAISONS_DEPART.map(([cle, libelle]) => ({ cle, libelle, n: par.get(cle) ?? 0 })),
+        mots: mots.map((m) => ({ ...m,
+          libelle: RAISONS_DEPART.find(([k]) => k === m.raison)?.[1] ?? m.raison })),
+      };
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return null;
+      throw e;
+    }
+  }
+
   /* ---------------------------------------------------------------- routes */
 
   const router = express.Router();
+  router.use(express.json({ limit: '4kb' }));
+
+  router.post('/depart', requireAuth, async (req, res) => {
+    try {
+      const r = await noterDepart(req.user.id, req.body ?? {});
+      if (r.erreur) return res.status(400).json({ error: r.erreur });
+      res.json(r);
+    } catch (e) {
+      console.error('[abonnement] départ', e.message);
+      res.status(503).json({ error: 'abo.error.unavailable' });
+    }
+  });
 
   router.get('/', requireAuth, async (req, res) => {
     try {
@@ -383,6 +450,9 @@ export function createAbonnement({ pool, requireAuth }) {
 
            Les nombres viennent des réglages, comme partout : une promesse
            recopiée est une promesse qui ment au premier ajustement. */
+        /* Les choix de la question posée après une résiliation. */
+        raisonsDepart: RAISONS_DEPART.map(([cle, libelle]) => ({ cle, libelle })),
+
         libre: [
           'toutes les cartes, tous les âges, tous les formats',
           'le Grand Virage en entier, autant de matchs que tu veux',
@@ -428,7 +498,7 @@ export function createAbonnement({ pool, requireAuth }) {
     }
   });
 
-  return { router, estAbonne, etat, accorder, renouveler, retirer,
+  return { router, estAbonne, etat, accorder, renouveler, retirer, noterDepart, departs,
     plafondPacks, regenMs, profondeurParcours, profondeurSouvenirs, clubsEnPlus,
     duelsClassesRestants, viragesClassesRestants, tailleClasseeMax };
 }

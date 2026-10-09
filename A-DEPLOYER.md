@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**La question « pourquoi tu pars ? » après une résiliation** (branche
+`claude/abonnement-desabonnement-j7vmji`, 9 octobre 2026, demandé par Gaël).
+Construction, **schéma** (`npm run schema:appliquer`), puis redémarrage.
+
+- `sql/abonnement.sql` : nouvelle table `abonnement_departs` (réponses
+  anonymes, sans le joueur) ; 52 tables.
+- `public/abonnement.html` : après « Confirmer la résiliation », cinq choix et
+  un mot libre, facultatifs (« Passer »), sans offre pour retenir.
+- `public/admin.html` : l'APERÇU montre « Pourquoi ils se désabonnent » (90
+  jours) et les derniers mots.
+
+---
+
 **Résilier l'abonnement depuis le jeu, et le renouvellement Stripe réparé**
 (branche `claude/abonnement-desabonnement-j7vmji`, 9 octobre 2026, demandé par
 Gaël). Construction puis redémarrage, sans schéma.
