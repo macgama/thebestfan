@@ -53,3 +53,24 @@ CREATE TABLE IF NOT EXISTS abonnements (
   KEY idx_fin (fin),
   CONSTRAINT fk_abo_user FOREIGN KEY (user_id) REFERENCES users(public_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pourquoi on part : la question facultative posée **après** la résiliation.
+--
+-- Elle ne retarde jamais la résiliation (la loi française le veut : résilier
+-- en ligne aussi simplement qu'on s'est abonné), et la réponse est
+-- **anonyme** : ni joueur, ni adresse. On veut savoir pourquoi les gens
+-- partent, pas qui ; une ligne sans personne dedans n'a rien à effacer le
+-- jour où un compte est supprimé, et aucune suite n'a à la nommer dans ses
+-- `DROP TABLE users` (pas de clé étrangère).
+CREATE TABLE IF NOT EXISTS abonnement_departs (
+  id       INT UNSIGNED  NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  -- Une des raisons de `RAISONS_DEPART` (abonnement/index.js).
+  raison   VARCHAR(16)   NOT NULL,
+  -- Le champ libre, facultatif.
+  texte    VARCHAR(500)  NULL,
+  -- La formule quittée : un départ du mensuel ne se lit pas comme un départ
+  -- de l'annuel.
+  formule  VARCHAR(16)   NULL,
+  cree     DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  KEY idx_cree (cree)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

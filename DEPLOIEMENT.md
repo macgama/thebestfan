@@ -419,7 +419,7 @@ que `raretes` les a rangées.
   Appliqué, le pronostic paraît sans redémarrage de plus que celui que le
   contrôle de démarrage demande.
 
-Contrôle : `SHOW TABLES;` doit en lister **51**.
+Contrôle : `SHOW TABLES;` doit en lister **52**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

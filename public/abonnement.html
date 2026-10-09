@@ -260,6 +260,11 @@ main [hidden]{display:none}
   font-size:12.5px;line-height:1.55;text-align:center}
 .gerer p{margin:0 0 10px}
 .gerer .tbf-plaque{width:100%;margin-top:8px}
+.gerer fieldset{border:0;margin:0;padding:0;text-align:left}
+.gerer legend{font-weight:700;margin:0 0 6px}
+.gerer label{display:flex;gap:8px;align-items:center;padding:5px 0}
+.gerer textarea{width:100%;box-sizing:border-box;margin-top:6px;min-height:64px;font:inherit;
+  padding:8px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit}
 
 .vide{font-size:13px;text-align:center;padding:26px 16px;border-radius:14px;
   background:var(--panneau)}
@@ -668,6 +673,22 @@ function formulesHTML(d, { ouvert } = {}) {
       return;
     }
     if (geste === 'annuler') { etatGerer({ gerable: true, resilie: false }); return; }
+    if (geste === 'passer') { etatGerer({ gerable: true, resilie: true }); return; }
+    if (geste === 'raison') {
+      const raison = gerer.querySelector('input[name="raison"]:checked')?.value;
+      if (!raison) { toast('Choisis une réponse, ou passe.'); return; }
+      b.disabled = true;
+      /* Ce qui arrive à la réponse ne change rien à la résiliation, déjà faite :
+         on remercie dans tous les cas. */
+      await fetch('/api/abonnement/depart', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raison, texte: gerer.querySelector('textarea')?.value ?? '' }),
+      }).catch(() => null);
+      etatGerer({ gerable: true, resilie: true });
+      toast('Merci, c’est noté.');
+      return;
+    }
     b.disabled = true;
     try {
       const r = await fetch(`/api/boutique/${geste}`, {
@@ -676,9 +697,22 @@ function formulesHTML(d, { ouvert } = {}) {
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.gerable) throw new Error();
-      etatGerer(j);
       toast(j.resilie ? `Résiliation enregistrée : ton abonnement s’arrête ${fin}.`
         : 'Ton abonnement continue.');
+      /* **La question vient après**, une fois la résiliation faite : elle est
+         facultative et ne retarde rien (la loi le veut). */
+      if (j.resilie && geste === 'resilier' && (d.raisonsDepart ?? []).length) {
+        gerer.innerHTML = `<fieldset><legend>C’est fait. Une question, si tu veux bien :
+            pourquoi tu pars ?</legend>
+          ${d.raisonsDepart.map((r) => `<label><input type="radio" name="raison"
+            value="${esc(r.cle)}">${esc(r.libelle)}</label>`).join('')}
+          <textarea maxlength="500" aria-label="Un mot de plus (facultatif)"
+            placeholder="Un mot de plus (facultatif)"></textarea></fieldset>
+          <button type="button" class="tbf-plaque tbf-bloc" data-gerer="raison">Envoyer</button>
+          <button type="button" class="tbf-plaque tbf-bloc" data-gerer="passer">Passer</button>`;
+        return;
+      }
+      etatGerer(j);
     } catch {
       b.disabled = false;
       toast('Stripe ne répond pas. Réessaie dans un instant.');

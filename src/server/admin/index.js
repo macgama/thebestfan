@@ -1096,6 +1096,10 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   router.use(requireAdmin);
 
   router.get('/apercu', safe(async (_req, res) => res.json(await apercu())));
+  /* Pourquoi les abonnés partent : la réponse anonyme à la question posée
+     après une résiliation (`abonnement/index.js`, `RAISONS_DEPART`). */
+  router.get('/departs', safe(async (_req, res) =>
+    res.json(deps.abonnement ? await deps.abonnement.departs() : null)));
 
   router.get('/joueurs', safe(async (req, res) => res.json({
     joueurs: await joueurs({ q: String(req.query.q ?? ''),
