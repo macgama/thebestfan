@@ -723,6 +723,8 @@ const evenement = (sessionId) => ({
     appels.push({ chemin, corps: opts.body ?? null });
     const json = (o, status = 200) => new Response(JSON.stringify(o), { status });
     const sess = chemin.match(/^\/checkout\/sessions\/(.+)$/);
+    if (sess && sess[1] === 'cs_ratt') return json({ id: sess[1], payment_status: 'paid', subscription: 'sub_ratt' });
+    if (sess && sess[1] === 'cs_impaye') return json({ id: sess[1], payment_status: 'unpaid' });
     if (sess) return json({ id: sess[1], subscription: 'sub_ancien' });
     const sub = chemin.match(/^\/subscriptions\/(.+)$/);
     if (sub && subs.has(sub[1])) {
@@ -794,6 +796,25 @@ const evenement = (sessionId) => ({
       id: 'sub_neuf', items: { data: [{ current_period_end: dans(5) }] } } } });
     const j5 = (new Date((await abo())?.fin) - Date.now()) / 86400000;
     check('la fin d’un abonnement résilié vient de Stripe', j5 > 4 && j5 < 6);
+
+    /* **Le webhook perdu.** Gaël a payé et le jeu ne l'a jamais su : l'écran
+       demande alors au serveur de vérifier lui-même chez Stripe. */
+    await q('DELETE FROM abonnements WHERE user_id = ?', [U]);
+    for (const id of ['cs_impaye', 'cs_ratt']) {
+      await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
+               VALUES (?, 'abo-mensuel', ?, 'eur', ?)`, [U, ARTICLE_PAR_ID.get('abo-mensuel').prix, id]);
+    }
+    const rr = await geste('rattraper');
+    check('une commande payée sans webhook est rattrapée', rr.livre === 1
+      && await abonnement.estAbonne(U) && await ref() === 'sub_ratt'
+      || (console.log('        il rend :', JSON.stringify(rr)), false));
+    const [[imp]] = [await q('SELECT etat FROM achats WHERE stripe_session = ?', ['cs_impaye'])];
+    check('mais pas une commande impayée', imp.etat === 'en_attente');
+    const finR = (await abo())?.fin;
+    await poster({ type: 'checkout.session.completed',
+      data: { object: { id: 'cs_ratt', payment_status: 'paid', subscription: 'sub_ratt' } } });
+    check('et le webhook arrivé après ne livre pas une seconde fois',
+      String((await abo())?.fin) === String(finR) && (await geste('rattraper')).livre === 0);
   } finally {
     globalThis.fetch = vraiFetch;
   }

@@ -252,6 +252,8 @@ main [hidden]{display:none}
    formules : ce sont les deux questions qu'on se pose la main sur la carte
    bancaire — ce qu'on gagne tout de suite (le PASS le dit), et ce qui se
    passe si l'on arrête. */
+.bienvenue{margin:0 0 12px;padding-left:18px;text-align:left;font-size:13px;line-height:1.5}
+.bienvenue small{opacity:.65}
 .fin-mot{margin:14px 0 0;padding:10px 13px;border-radius:10px;background:var(--panneau);
   font-size:11.5px;line-height:1.55;text-align:center}
 /* Gérer l'abonnement : en bas de page, lisible, sans rien cacher. La loi veut
@@ -565,6 +567,60 @@ function formulesHTML(d, { ouvert } = {}) {
      le paiement donne, sans prix ni bouton : l'objet de la page se voit au
      premier écran, et ce qui se paie attend en bas. */
   const pass = passHTML(d, { ouvert });
+
+  /* **Le retour de Stripe.** On revenait du paiement sur une page muette : ni
+     « tu es abonné », ni ce que ça donne. Stripe ramène ici avec `?paye=1` ;
+     mais l'abonnement n'est posé qu'à l'arrivée du webhook, qui peut suivre
+     le retour de quelques secondes. On redemande donc l'état tant qu'il ne dit
+     pas « abonné », puis on recharge avec `?bienvenue=1` — la page se
+     redessine abonnée, et l'accueil s'ouvre par-dessus. */
+  const retour = new URLSearchParams(location.search);
+  if (retour.has('paye') || retour.has('annule') || retour.has('bienvenue')) {
+    history.replaceState(null, '', location.pathname);
+  }
+  if (retour.has('annule')) toast('Paiement annulé. Rien n’a été débité.');
+  /* **Et si le webhook s'est perdu**, le serveur demande lui-même à Stripe
+     si une commande en attente est payée (`/api/boutique/rattraper`). Sans
+     commande en attente, il ne demande rien à personne. */
+  const rattraper = () => fetch('/api/boutique/rattraper', {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' }, body: '{}',
+  }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  if (!d.abonne && !retour.has('paye')) {
+    rattraper().then((r) => { if (r?.livre) location.replace('/abonnement?bienvenue=1'); });
+  }
+  if (retour.has('paye') && !d.abonne) {
+    (async () => {
+      for (let i = 0; i < 12; i++) {
+        if (i === 2 && (await rattraper())?.livre) {
+          location.replace('/abonnement?bienvenue=1'); return;
+        }
+        await new Promise((r) => setTimeout(r, 1500));
+        const e = await fetch('/api/abonnement', { credentials: 'same-origin' })
+          .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+        if (e?.abonne) { location.replace('/abonnement?bienvenue=1'); return; }
+      }
+      toast('Paiement reçu. Ton abonnement arrive dans un instant : recharge la page.');
+    })();
+  }
+  if ((retour.has('paye') || retour.has('bienvenue')) && d.abonne) {
+    const f = (d.formules ?? []).find((x) => x.formule === d.formule);
+    const lignes = [
+      f?.packs ? `<li><b>+${esc(pluriel(f.packs, 'booster', 'boosters'))}</b> dans ta réserve, tout de suite</li>` : '',
+      ...portes(d.ouvre ?? {}, d.sans ?? {}).map((p) =>
+        `<li><b>${esc(p.n)}</b> : ${esc(p.avec)} <small>(au lieu de ${esc(p.sans)})</small></li>`),
+    ].join('');
+    const attendre = () => (window.TBF_DIALOGUE ? Promise.resolve()
+      : new Promise((r) => window.addEventListener('load', r, { once: true })));
+    attendre().then(async () => {
+      if (await window.TBF_DIALOGUE?.confirmer({
+        titre: 'BIENVENUE DANS LE PASS DE TRIBUNE',
+        texte: `Ton abonnement ${d.formule ?? ''} est actif${d.fin ? ` jusqu’au ${jour(d.fin)}` : ''}. Il se renouvelle seul, et tu peux le résilier ici quand tu veux.`,
+        corps: lignes ? `<ul class="bienvenue">${lignes}</ul>` : '',
+        oui: 'JOUER', non: 'FERMER', ton: 'or',
+      })) location.href = '/';
+    });
+  }
 
   /* **Ce qui reste libre, avant ce qui s'ouvre.** Un joueur qui arrive ici se
      demande d'abord ce qu'on lui retire s'il ne paie pas. Tant qu'il n'a pas la
