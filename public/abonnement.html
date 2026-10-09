@@ -254,6 +254,12 @@ main [hidden]{display:none}
    passe si l'on arrête. */
 .fin-mot{margin:14px 0 0;padding:10px 13px;border-radius:10px;background:var(--panneau);
   font-size:11.5px;line-height:1.55;text-align:center}
+/* Gérer l'abonnement : en bas de page, lisible, sans rien cacher. La loi veut
+   une résiliation aussi simple que l'abonnement — un bouton, une confirmation. */
+.gerer{margin:18px 0 0;padding:12px 13px;border-radius:10px;background:var(--panneau);
+  font-size:12.5px;line-height:1.55;text-align:center}
+.gerer p{margin:0 0 10px}
+.gerer .tbf-plaque{width:100%;margin-top:8px}
 
 .vide{font-size:13px;text-align:center;padding:26px 16px;border-radius:14px;
   background:var(--panneau)}
@@ -602,7 +608,7 @@ function formulesHTML(d, { ouvert } = {}) {
       </table></div>
     </div>
 
-    ${d.abonne ? '' : `<div class="prendre" id="prendre">
+    ${d.abonne ? '<div class="gerer" id="gerer" hidden></div>' : `<div class="prendre" id="prendre">
       <!-- Les formules du PASS, en dernier : ce qui reste libre et ce qui
            s'élargit sont réglés, on peut proposer. Les formules sont côte à
            côte — une seule mènerait au mensuel sans jamais dire que l'annuel
@@ -617,11 +623,67 @@ function formulesHTML(d, { ouvert } = {}) {
       ${(d.formules ?? []).length ? '' : `<a class="tbf-plaque tbf-bloc tbf-grande"
         data-ton="or" href="/boutique#abonnement" style="width:100%">Voir les formules
         à la boutique</a>`}
-      <p class="fin-mot">Résiliable quand tu veux, depuis ton compte :
+      <p class="fin-mot">Résiliable quand tu veux, depuis cet écran :
         l’échéance déjà payée court jusqu’au bout, tu gardes les tenues que tu
         portes, et tes parties ne sont jamais effacées — c’est la lecture qui
         raccourcit, et elle rouvre entièrement si tu reviens.</p>
     </div>`}`;
+
+  /* **Résilier, depuis cet écran.** La page le promettait et rien ne le
+   * permettait. Un abonnement offert par l'administration n'a rien à
+   * résilier : on le dit, sans bouton. Un abonnement payé demande son état à
+   * Stripe (résilié ou non), puis offre le bouton et une confirmation — deux
+   * gestes, pas plus.
+   */
+  const gerer = $('gerer');
+  const fin = d.fin ? `le ${jour(d.fin)}` : 'à la fin de la période payée';
+  async function etatGerer(r) {
+    if (!r?.gerable) {
+      if (d.source === 'admin') {
+        gerer.innerHTML = '<p>Ton abonnement t’est offert : rien n’est prélevé, rien à résilier.</p>';
+        gerer.hidden = false;
+      }
+      return;
+    }
+    gerer.hidden = false;
+    gerer.innerHTML = r.resilie
+      ? `<p>Abonnement résilié : il s’arrête ${esc(fin)}, et plus rien ne sera prélevé.
+           Tu gardes tout jusque-là.</p>
+         <button type="button" class="tbf-plaque tbf-bloc" data-gerer="reprendre">Garder mon abonnement</button>`
+      : `<button type="button" class="tbf-plaque tbf-bloc" data-gerer="demander">Résilier mon abonnement</button>`;
+  }
+  if (d.abonne && gerer) {
+    fetch('/api/boutique/abonnement', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null).then(etatGerer);
+  }
+  gerer?.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-gerer]');
+    if (!b || b.disabled) return;
+    const geste = b.dataset.gerer;
+    if (geste === 'demander') {
+      gerer.innerHTML = `<p>Ton abonnement s’arrêtera ${esc(fin)}. Plus rien ne sera
+          prélevé, et tu gardes tout jusque-là.</p>
+        <button type="button" class="tbf-plaque tbf-bloc" data-gerer="resilier">Confirmer la résiliation</button>
+        <button type="button" class="tbf-plaque tbf-bloc" data-gerer="annuler">Ne rien changer</button>`;
+      return;
+    }
+    if (geste === 'annuler') { etatGerer({ gerable: true, resilie: false }); return; }
+    b.disabled = true;
+    try {
+      const r = await fetch(`/api/boutique/${geste}`, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: '{}',
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.gerable) throw new Error();
+      etatGerer(j);
+      toast(j.resilie ? `Résiliation enregistrée : ton abonnement s’arrête ${fin}.`
+        : 'Ton abonnement continue.');
+    } catch {
+      b.disabled = false;
+      toast('Stripe ne répond pas. Réessaie dans un instant.');
+    }
+  });
 
   /* **Le bouton menait à une boîte de dialogue disant « bientôt ».**
    *
