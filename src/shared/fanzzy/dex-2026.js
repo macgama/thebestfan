@@ -420,7 +420,7 @@ export const DEX_2026 = [
     cri: { label: 'HORS-JEU', gest: 'ola', power: 60 } },
 
   { id: 'MS20', nom: 'Le Vendeur à la Sauvette', type: 'depl', set: 'MS', stage: 1, rar: 'commune',
-    histoire: 'Vingt maillets de vingt clubs sous un manteau. Il vend celui du club '
+    histoire: 'Vingt maillots de vingt clubs sous un manteau. Il vend celui du club '
       + 'adverse aux nôtres et l’inverse, avec le même sourire.',
     mods: { refundBonus: 1.55, breathBonus: 1.1, parryResist: 0.9 },
     cri: { label: 'TOUTES LES TAILLES', gest: 'miroir', power: 66 } },
