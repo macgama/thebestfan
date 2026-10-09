@@ -4,6 +4,10 @@
  */
 export const messages = {
   fr: {
+    'mail.btn.verify': 'Confirmer mon adresse',
+    'mail.btn.reset': 'Choisir un mot de passe',
+    'mail.btn.abo': 'Voir mon abonnement',
+    'mail.btn.resil': 'Garder mon abonnement',
     'mail.verify.subject': 'Confirme ton adresse — thebestfan',
     'mail.verify.body':
       'Salut {pseudo},\n\n' +
@@ -41,6 +45,10 @@ export const messages = {
       'thebestfan.online',
   },
   en: {
+    'mail.btn.verify': 'Confirm my address',
+    'mail.btn.reset': 'Choose a password',
+    'mail.btn.abo': 'See my subscription',
+    'mail.btn.resil': 'Keep my subscription',
     'mail.verify.subject': 'Confirm your address — thebestfan',
     'mail.verify.body':
       'Hi {pseudo},\n\n' +
@@ -78,6 +86,8 @@ export const messages = {
       'thebestfan.online',
   },
   de: {
+    'mail.btn.verify': 'Adresse bestätigen',
+    'mail.btn.reset': 'Passwort wählen',
     'mail.verify.subject': 'Bestätige deine Adresse — thebestfan',
     'mail.verify.body':
       'Hallo {pseudo},\n\n' +
@@ -100,6 +110,8 @@ export const messages = {
       'thebestfan.online',
   },
   es: {
+    'mail.btn.verify': 'Confirmar mi dirección',
+    'mail.btn.reset': 'Elegir una contraseña',
     'mail.verify.subject': 'Confirma tu dirección — thebestfan',
     'mail.verify.body':
       'Hola {pseudo}:\n\n' +
