@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Résilier l'abonnement depuis le jeu, et le renouvellement Stripe réparé**
+(branche `claude/abonnement-desabonnement-j7vmji`, 9 octobre 2026, demandé par
+Gaël). Construction puis redémarrage, sans schéma.
+
+- `src/server/boutique/index.js` : un abonnement payé garde son identifiant
+  Stripe (il ne le gardait pas, et `invoice.paid` ne prolongeait donc jamais
+  l'accès) ; les factures et résiliations au format actuel de l'API Stripe sont
+  lues ; nouvelles routes `/api/boutique/abonnement`, `/resilier`, `/reprendre`.
+- `public/abonnement.html` : bouton « Résilier mon abonnement », confirmation,
+  puis « Garder mon abonnement » jusqu'à l'échéance.
+- `CGV.md` : la phrase « où résilier » est remplie.
+
+---
+
 **De l'air au-dessus des têtes sur les petites cartes** (branche
 `claude/project-thread-j45ndm`, 9 octobre 2026, demandé par Gaël : « on ne
 voit pas bien le haut des têtes »). Images seules : construction.
