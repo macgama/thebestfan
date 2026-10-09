@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Mails d'abonnement : confirmation et résiliation** (branche
+`claude/abonnement-desabonnement-j7vmji`, 9 octobre 2026, demandé par Gaël).
+Construction puis redémarrage, sans schéma. Ne partent que si le SMTP est
+réglé (APERÇU de /admin, ligne Messagerie, puis « Envoi de contrôle »).
+
+- `src/server/boutique/index.js` : un abonnement posé (webhook ou rattrapage)
+  envoie « Ton abonnement est actif » ; une résiliation envoie « Ta
+  résiliation est enregistrée » avec sa date de fin.
+- `src/server/auth/mailer.js`, `src/shared/i18n/authMessages.js` : les deux
+  mails, en français et en anglais.
+
+---
+
 **Un paiement que le webhook n'a pas apporté est rattrapé, et l'abonné est
 accueilli** (branche `claude/abonnement-desabonnement-j7vmji`, 9 octobre 2026,
 demandé par Gaël, débité de 3,99 € sans abonnement posé). Construction puis
