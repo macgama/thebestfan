@@ -4,6 +4,10 @@
  */
 export const messages = {
   fr: {
+    'mail.btn.verify': 'Confirmer mon adresse',
+    'mail.btn.reset': 'Choisir un mot de passe',
+    'mail.btn.abo': 'Voir mon abonnement',
+    'mail.btn.resil': 'Garder mon abonnement',
     'mail.verify.subject': 'Confirme ton adresse — thebestfan',
     'mail.verify.body':
       'Salut {pseudo},\n\n' +
@@ -24,8 +28,27 @@ export const messages = {
       'Ton mot de passe vient d\'être modifié et toutes tes sessions ont été fermées.\n' +
       "Si ce n'est pas toi, réinitialise-le immédiatement depuis la page de connexion.\n\n" +
       'thebestfan.online',
+    'mail.abo.subject': 'Ton abonnement est actif — thebestfan',
+    'mail.abo.body':
+      'Salut {pseudo},\n\n' +
+      'Bienvenue dans le PASS DE TRIBUNE : ton abonnement {formule} est actif jusqu\'au {fin}.{packs}\n' +
+      'Il se renouvelle seul à chaque échéance, au même prix.\n\n' +
+      'Tu peux le résilier quand tu veux, en deux gestes, sur la page de l\'abonnement :\n{link}\n\n' +
+      'thebestfan.online',
+    'mail.abo.pack': ' Un booster vient d\'arriver dans ta réserve.',
+    'mail.abo.packs': ' {n} boosters viennent d\'arriver dans ta réserve.',
+    'mail.resil.subject': 'Ta résiliation est enregistrée — thebestfan',
+    'mail.resil.body':
+      'Salut {pseudo},\n\n' +
+      'Nous avons bien reçu ta résiliation. Ton abonnement s\'arrête le {fin} : plus rien ne sera prélevé, et tu gardes tout jusque-là.\n\n' +
+      'Tu changes d\'avis ? Tu peux le garder jusqu\'à cette date, depuis la page de l\'abonnement :\n{link}\n\n' +
+      'thebestfan.online',
   },
   en: {
+    'mail.btn.verify': 'Confirm my address',
+    'mail.btn.reset': 'Choose a password',
+    'mail.btn.abo': 'See my subscription',
+    'mail.btn.resil': 'Keep my subscription',
     'mail.verify.subject': 'Confirm your address — thebestfan',
     'mail.verify.body':
       'Hi {pseudo},\n\n' +
@@ -46,8 +69,25 @@ export const messages = {
       'Your password was just changed and all your sessions were closed.\n' +
       "If this wasn't you, reset it immediately from the sign-in page.\n\n" +
       'thebestfan.online',
+    'mail.abo.subject': 'Your subscription is active — thebestfan',
+    'mail.abo.body':
+      'Hi {pseudo},\n\n' +
+      'Welcome to the STAND PASS: your {formule} subscription is active until {fin}.{packs}\n' +
+      'It renews automatically at the same price.\n\n' +
+      'You can cancel any time, in two taps, on the subscription page:\n{link}\n\n' +
+      'thebestfan.online',
+    'mail.abo.pack': ' A booster just landed in your stock.',
+    'mail.abo.packs': ' {n} boosters just landed in your stock.',
+    'mail.resil.subject': 'Your cancellation is confirmed — thebestfan',
+    'mail.resil.body':
+      'Hi {pseudo},\n\n' +
+      'We received your cancellation. Your subscription ends on {fin}: nothing more will be charged, and you keep everything until then.\n\n' +
+      'Changed your mind? You can keep it until that date on the subscription page:\n{link}\n\n' +
+      'thebestfan.online',
   },
   de: {
+    'mail.btn.verify': 'Adresse bestätigen',
+    'mail.btn.reset': 'Passwort wählen',
     'mail.verify.subject': 'Bestätige deine Adresse — thebestfan',
     'mail.verify.body':
       'Hallo {pseudo},\n\n' +
@@ -70,6 +110,8 @@ export const messages = {
       'thebestfan.online',
   },
   es: {
+    'mail.btn.verify': 'Confirmar mi dirección',
+    'mail.btn.reset': 'Elegir una contraseña',
     'mail.verify.subject': 'Confirma tu dirección — thebestfan',
     'mail.verify.body':
       'Hola {pseudo}:\n\n' +

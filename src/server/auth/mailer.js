@@ -1,4 +1,5 @@
 import { messages } from '../../shared/i18n/authMessages.js';
+import { habiller } from './mail-habit.js';
 
 /**
  * Envoi d'e-mails. Tant que SMTP_URL n'est pas défini, les messages sont
@@ -123,7 +124,10 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
     return ready;
   }
 
-  async function send({ to, subject, text }) {
+  /* `lien`, `bouton`, `tribune` habillent la version HTML (`mail-habit.js`) ;
+     le texte brut part toujours avec elle, pour les messageries qui n'en
+     veulent pas. */
+  async function send({ to, subject, text, lien = null, bouton = null, tribune = false }) {
     const t = await getTransport();
     if (!t) {
       // Repli console : le lien reste utilisable, il faut juste aller le
@@ -133,7 +137,9 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
     }
     try {
       const info = await t.sendMail({
-        from: from ?? 'thebestfan <no-reply@thebestfan.online>', to, subject, text });
+        from: from ?? 'thebestfan <no-reply@thebestfan.online>', to, subject, text,
+        html: habiller({ origin, titre: subject.replace(/\s*—\s*thebestfan$/i, ''),
+          texte: text, lien, bouton, tribune }) });
       return { delivered: true, logged: false, id: info.messageId };
     } catch (e) {
       retenir(e.message);
@@ -143,11 +149,19 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
     }
   }
 
+  /* Une échéance, telle qu'on l'écrit dans un mail : en toutes lettres, à
+     l'heure de Zurich. */
+  const dateMail = (d, locale) => (d ? new Date(d).toLocaleDateString(
+    /* Les mails d'abonnement n'existent qu'en français et en anglais : une
+       date allemande dans un texte français se lirait comme une erreur. */
+    locale === 'en' ? 'en-GB' : 'fr-FR',
+    { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Zurich' }) : '—');
+
   const t = (locale, key, params = {}) => {
     const dict = messages[locale] ?? messages.fr;
     return Object.entries(params).reduce(
       (s, [k, v]) => s.replaceAll(`{${k}}`, String(v)),
-      dict[key] ?? key,
+      dict[key] ?? messages.fr[key] ?? key,
     );
   };
 
@@ -182,6 +196,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
         to,
         subject: t(locale, 'mail.verify.subject'),
         text: t(locale, 'mail.verify.body', { pseudo, link }),
+        lien: link, bouton: t(locale, 'mail.btn.verify'), tribune: true,
       });
     },
 
@@ -191,6 +206,35 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
         to,
         subject: t(locale, 'mail.reset.subject'),
         text: t(locale, 'mail.reset.body', { pseudo, link }),
+        lien: link, bouton: t(locale, 'mail.btn.reset'),
+      });
+    },
+
+    /* L'abonnement : la confirmation du paiement, puis celle de la
+       résiliation. La seconde n'est pas une politesse : la loi française
+       demande de confirmer une résiliation sur un support durable, avec la
+       date à laquelle le contrat prend fin. */
+    async sendAbonnement({ to, pseudo, locale, formule, fin, packs = 0 }) {
+      return send({
+        to,
+        subject: t(locale, 'mail.abo.subject'),
+        text: t(locale, 'mail.abo.body', {
+          pseudo, formule: formule ?? '', fin: dateMail(fin, locale),
+          packs: packs ? t(locale, packs > 1 ? 'mail.abo.packs' : 'mail.abo.pack', { n: packs }) : '',
+          link: `${origin}/abonnement`,
+        }),
+        lien: `${origin}/abonnement`, bouton: t(locale, 'mail.btn.abo'), tribune: true,
+      });
+    },
+
+    async sendResiliation({ to, pseudo, locale, fin }) {
+      return send({
+        to,
+        subject: t(locale, 'mail.resil.subject'),
+        text: t(locale, 'mail.resil.body', {
+          pseudo, fin: dateMail(fin, locale), link: `${origin}/abonnement`,
+        }),
+        lien: `${origin}/abonnement`, bouton: t(locale, 'mail.btn.resil'),
       });
     },
 
