@@ -49,8 +49,43 @@ import { traduire, LANGUES } from '../langues.js';
 
 const API = 'https://api.stripe.com/v1';
 
-export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = null }) {
+export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = null,
+  mailer = null }) {
   const q = (sql, args) => pool.query(sql, args).then(([r]) => r);
+
+  /**
+   * Prévenir le joueur par mail : abonnement posé, ou résiliation enregistrée.
+   *
+   * **Jamais bloquant.** Le paiement ou la résiliation est déjà fait quand on
+   * arrive ici ; un SMTP en panne ne doit ni faire rejouer le webhook par
+   * Stripe, ni refuser la résiliation. Sans SMTP, le mailer écrit le message
+   * dans la console du serveur.
+   */
+  async function prevenir(userId, quoi, { packs = 0 } = {}) {
+    const m = mailer ?? globalThis.mailer;
+    if (!m) return;
+    try {
+      const [u] = await q('SELECT email, pseudo, locale FROM users WHERE public_id = ?', [userId]);
+      if (!u?.email) return;
+      const [a] = await q('SELECT formule, fin FROM abonnements WHERE user_id = ?', [userId]);
+      if (quoi === 'debut') {
+        await m.sendAbonnement?.({ to: u.email, pseudo: u.pseudo, locale: u.locale,
+          formule: a?.formule, fin: a?.fin, packs });
+      } else {
+        await m.sendResiliation?.({ to: u.email, pseudo: u.pseudo, locale: u.locale, fin: a?.fin });
+      }
+    } catch (e) {
+      console.error('[boutique] mail', e.message);
+    }
+  }
+
+  /** Après un encaissement : un abonnement posé reçoit sa confirmation. */
+  async function apresEncaisse(r) {
+    if (r?.livre?.abonnement && r.userId) {
+      await prevenir(r.userId, 'debut', { packs: r.livre.packs ?? 0 });
+    }
+    return r;
+  }
 
   const cle = () => process.env.STRIPE_SECRET_KEY || '';
   const secretHook = () => process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -292,7 +327,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
              qui permet de résilier depuis le jeu. */
           const ref = typeof s?.subscription === 'string' ? s.subscription
             : s?.subscription?.id ?? null;
-          if (s?.payment_status === 'paid') await encaisser(s.id, { reference: ref });
+          if (s?.payment_status === 'paid') await apresEncaisse(await encaisser(s.id, { reference: ref }));
         }
         if (evt.type === 'checkout.session.expired') {
           await q(`UPDATE achats SET etat = 'abandonne'
@@ -622,7 +657,9 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       const sub = await stripe(`/subscriptions/${encodeURIComponent(ref)}`, {
         cancel_at_period_end: String(resilier),
       });
-      res.json(etatStripe(sub));
+      const etat = etatStripe(sub);
+      if (resilier && etat.resilie) await prevenir(req.user.id, 'fin');
+      res.json(etat);
     } catch (e) {
       console.error('[boutique] résiliation', e.message);
       res.status(502).json({ error: 'boutique.error.paiement_indisponible' });
@@ -655,7 +692,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
         if (s?.payment_status !== 'paid') continue;
         const ref = typeof s.subscription === 'string' ? s.subscription
           : s.subscription?.id ?? null;
-        if ((await encaisser(id, { reference: ref })).livre) livre++;
+        if ((await apresEncaisse(await encaisser(id, { reference: ref }))).livre) livre++;
       }
       res.json({ livre });
     } catch (e) {
