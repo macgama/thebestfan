@@ -10,6 +10,8 @@ réglé (APERÇU de /admin, ligne Messagerie, puis « Envoi de contrôle »).
   résiliation est enregistrée » avec sa date de fin.
 - `src/server/auth/mailer.js`, `src/shared/i18n/authMessages.js` : les deux
   mails, en français et en anglais.
+- `src/server/auth/mail-habit.js` : tous les mails partent aussi en HTML, aux
+  couleurs du jeu (logo, tribune, bouton) ; les images viennent du site.
 
 ---
 
