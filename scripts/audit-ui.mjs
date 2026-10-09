@@ -579,7 +579,7 @@ const SESSIONS = { joueur: jeton, nouveau: jetonNouveau };
 
 /* ------------------------------------------------------------ la mesure */
 
-const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 const trouvailles = [];
 const note = (page, largeur, genre, quoi) =>
   trouvailles.push({ page, largeur, genre, quoi });

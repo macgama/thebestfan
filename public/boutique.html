@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <link rel="manifest" href="/manifest.webmanifest">
@@ -809,7 +810,9 @@ const formePetite = (r) => (r === 'commune' ? '' : `<span class="tbf-forme" data
   role="img" aria-label="${RAR_NOM[r]}"><i></i></span>`);
 /** Le nom d'un objet et sa forme, le dernier mot lié à la forme (`.nom-fin`). */
 function nomHTML(nom, rar) {
-  const n = String(nom ?? '');
+  /* Traduit avant d'être coupé : coupé, le nom ne se retrouverait plus
+     dans le dictionnaire (voir langue.js). */
+  const n = String(window.TBF_LANGUE?.t(nom ?? '') ?? nom ?? '');
   const forme = formePetite(rar);
   if (!forme) return esc(n);
   const i = n.lastIndexOf(' ');

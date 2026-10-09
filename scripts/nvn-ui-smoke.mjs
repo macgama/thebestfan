@@ -216,7 +216,7 @@ const base = `http://localhost:${http.address().port}`;
 
 /* ------------------------------------------------------- les navigateurs */
 
-const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 
 /**
  * Un joueur, avec son propre navigateur.

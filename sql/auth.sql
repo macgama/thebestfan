@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   email           VARCHAR(190) NOT NULL,
   pseudo          VARCHAR(20)  NOT NULL,
   password_hash   VARCHAR(255) NOT NULL,
-  locale          ENUM('fr','en','de','es') NOT NULL DEFAULT 'fr',
+  locale          ENUM('fr','en','de','it','es') NOT NULL DEFAULT 'fr',
   status          ENUM('active','locked','deleted') NOT NULL DEFAULT 'active',
   email_verified_at DATETIME(3) NULL,
   main_team_id    INT          NULL,          -- club suivi (id API-Football)
@@ -59,3 +59,7 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   at        DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   KEY idx_lookup (key_type, key_value, at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- L'italien (octobre 2026) : la cinquième langue du jeu. Rejouable : MODIFY
+-- réécrit la même liste, et une langue déjà retenue ne change pas.
+ALTER TABLE users MODIFY COLUMN locale ENUM('fr','en','de','it','es') NOT NULL DEFAULT 'fr';
