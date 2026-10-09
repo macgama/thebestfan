@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Un paiement que le webhook n'a pas apporté est rattrapé, et l'abonné est
+accueilli** (branche `claude/abonnement-desabonnement-j7vmji`, 9 octobre 2026,
+demandé par Gaël, débité de 3,99 € sans abonnement posé). Construction puis
+redémarrage, sans schéma.
+
+- `src/server/boutique/index.js` : `POST /api/boutique/rattraper` demande à
+  Stripe si les commandes en attente du joueur (7 derniers jours) sont payées,
+  et les encaisse ; l'écran de l'abonnement l'appelle quand il ne voit pas
+  d'abonnement.
+- `public/abonnement.html` : au retour de Stripe, attend l'abonnement puis
+  ouvre « Bienvenue dans le PASS de tribune » (boosters reçus, ce qui
+  s'élargit) ; « Paiement annulé » au retour d'une annulation.
+
+---
+
 **La question « pourquoi tu pars ? » après une résiliation** (branche
 `claude/abonnement-desabonnement-j7vmji`, 9 octobre 2026, demandé par Gaël).
 Construction, **schéma** (`npm run schema:appliquer`), puis redémarrage.
