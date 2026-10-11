@@ -1,4 +1,6 @@
 import express from 'express';
+import { avatarsDe } from '../fanzzy/avatar.js';
+import { estCharge, parIdentifiant } from '../fanzzy/catalogue.js';
 
 /**
  * Cartes-souvenirs.
@@ -317,7 +319,47 @@ export function createSouvenirs({ pool, requireAuth,
         ORDER BY s.kickoff_at DESC, s.seq`,
       [userId],
     );
-    return profondeur === null ? rows : rows.slice(0, profondeur);
+    const vus = profondeur === null ? rows : rows.slice(0, profondeur);
+    return habiller(userId, vus);
+  }
+
+  /**
+   * **Le Fanzzy de la carte, tel qu'il est entré dans le Virage.**
+   *
+   * La carte ne gardait que l'identifiant du personnage (`RP19`), et l'écran
+   * l'écrivait tel quel : « avec RP19 ». Une carte dont on est fier montre
+   * qui chantait, avec son nom et son dessin.
+   *
+   * L'âge est exact : on entre toujours au Virage au **premier âge**
+   * (`personnageActif`, `enJeu`), c'est la règle des effets. La tenue, elle,
+   * n'est pas gardée par la carte : c'est celle que ce Fanzzy porte
+   * aujourd'hui à cet âge — `avatarsDe`, la seule réponse du jeu à « qui
+   * montrer », sous sa forme `enJeu`.
+   *
+   * Une lecture par personnage distinct, pas par carte : un carnet de vingt
+   * buts tient en deux ou trois Fanzzy. Sans catalogue chargé (une suite qui
+   * monte le carnet seul), ou si la lecture échoue, la carte reste sans
+   * Fanzzy dessiné — elle se lit très bien sans lui, jamais l'inverse.
+   */
+  async function habiller(userId, rows) {
+    const ids = [...new Set(rows.map((r) => r.fanzzy_id).filter(Boolean))];
+    if (!ids.length || !estCharge()) return rows;
+    const formes = new Map();
+    try {
+      for (const id of ids) {
+        const r = await avatarsDe(q, [{ userId, active_fanzzy: id, active_evo: 1 }]);
+        const e = r.get(userId)?.enJeu;
+        const fiche = e && parIdentifiant(e.age);
+        if (e) {
+          formes.set(id, { id: e.id, age: e.age, evo: 1, nom: e.nom, skin: e.skin || 'base',
+            rar: e.rar ?? null, set: fiche?.set ?? null, type: fiche?.type ?? null });
+        }
+      }
+    } catch (e) {
+      console.warn('[souvenirs] Fanzzy des cartes illisibles :', e?.message ?? e);
+      return rows;
+    }
+    return rows.map((r) => (formes.has(r.fanzzy_id) ? { ...r, fanzzy: formes.get(r.fanzzy_id) } : r));
   }
 
   /** Combien il en a vraiment, quelle que soit la profondeur lue. Sans ce
@@ -430,7 +472,7 @@ export function createSouvenirs({ pool, requireAuth,
          LEFT JOIN user_souvenirs us ON us.souvenir_id = s.id AND us.user_id = ?
         WHERE s.fixture_id = ? ORDER BY s.seq`,
       [req.user.id, Number(req.params.id)]);
-    res.json({ souvenirs: rows });
+    res.json({ souvenirs: await habiller(req.user.id, rows) });
   });
 
   return { router, mintGoal, recordPush, collection, market, buy };
