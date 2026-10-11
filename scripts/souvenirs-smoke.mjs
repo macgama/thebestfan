@@ -17,7 +17,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS pronostics, fanzzy, parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -117,6 +117,31 @@ check('le buteur et la minute sont sur la carte',
   r.json.souvenirs.some((s) => s.player === 'Diallo' && s.minute === 87));
 check('le score final figure',
   r.json.souvenirs.some((s) => s.score_home === 2 && s.score_away === 1));
+
+/* **Le Fanzzy de la carte, nommé et dessinable** (11 octobre 2026). La carte
+   écrivait le code du personnage (« avec RP19 ») ; elle reçoit maintenant sa
+   forme au premier âge — on entre toujours au Virage au premier âge — avec
+   son nom, sa tenue et sa série. Sans catalogue chargé, rien n'est ajouté
+   (vérifié juste au-dessus, où le code seul revient). */
+check('sans catalogue, la carte n’invente pas de Fanzzy', r.json.souvenirs.every((s) => !s.fanzzy));
+{
+  const cx = await mysql.createConnection({ uri: DB, multipleStatements: true });
+  await cx.query(readFileSync(new URL('../sql/fanzzy.sql', import.meta.url), 'utf8'));
+  await cx.end();
+  const { charger, oublier, auStade } = await import('../src/server/fanzzy/catalogue.js');
+  await charger(pool);
+  await pool.query(`INSERT INTO user_fanzzy (user_id, fanzzy_id, stage) VALUES (?, 'TR32', 3)
+    ON DUPLICATE KEY UPDATE stage = 3`, [U[0]]);
+  r = await call('/api/souvenirs/mine');
+  const f = r.json.souvenirs[0].fanzzy;
+  check('la carte reçoit le Fanzzy du Virage, au premier âge, avec son nom',
+    f?.id === 'TR32' && f.evo === 1 && f.age === auStade('TR32', 1)?.id
+      && f.nom === auStade('TR32', 1)?.nom && f.skin === 'base' && f.set === 'TR'
+    || (console.log('        fanzzy :', JSON.stringify(f)), false));
+  r = await call('/api/souvenirs/fixture/5001');
+  check('la page du match la reçoit aussi', r.json.souvenirs.some((s) => s.fanzzy?.id === 'TR32'));
+  oublier();
+}
 
 who = U[1];
 r = await call('/api/souvenirs/mine');
