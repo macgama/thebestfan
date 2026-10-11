@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Les cartes-souvenirs du Carnet, de vraies cartes avec le Fanzzy du Virage**
+(PR #64, 11 octobre 2026, demandé par Gaël). Construction puis redémarrage,
+sans schéma.
+
+- `public/carnet.html` : chaque souvenir est une carte en portrait, Fanzzy en
+  pied au premier âge et dans sa tenue, minute, buteur, score, nom du Fanzzy ;
+  toucher une carte l'ouvre en grand.
+- `src/server/souvenirs/index.js` : les cartes reçoivent la forme du Fanzzy
+  (nom, tenue, série) au lieu de son seul code.
+
+---
+
 **Le site en cinq langues : français, anglais, allemand, italien, espagnol**
 (branche `claude/site-cinq-langues-jdxall`, 9 octobre 2026, demandé par Gaël).
 Construction, **schéma** (`npm run schema:appliquer`), puis redémarrage. Sans
