@@ -55,11 +55,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .list{flex:1;padding:0 14px 26px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start}
 .list>.empty{grid-column:1/-1}
 .sv{--cadre:rgba(242,238,228,.42);--cadre2:rgba(242,238,228,.14);position:relative;container-type:inline-size;
-  border-radius:4.5cqw;padding:2.6cqw;background:linear-gradient(155deg,var(--cadre),var(--cadre2) 45%,var(--cadre) 100%);
+  border-radius:10px;padding:6px;background:linear-gradient(155deg,var(--cadre),var(--cadre2) 45%,var(--cadre) 100%);
   box-shadow:0 6px 18px rgba(0,0,0,.55);cursor:pointer;color:var(--craie);font-family:var(--ui)}
 .sv.presence{--cadre:#F5C33B;--cadre2:#7A5A12}
-.sv .in{position:relative;border-radius:3cqw;overflow:hidden;background:#0B0E13;display:flex;flex-direction:column;height:100%}
-.sv .lg{display:flex;justify-content:space-between;gap:2cqw;padding:2.6cqw 3.4cqw 2cqw;font-size:4.4cqw;letter-spacing:.08em;
+.sv .in{position:relative;border-radius:6px;overflow:hidden;background:#0B0E13;display:flex;flex-direction:column;height:100%}
+.sv .lg{display:flex;justify-content:space-between;gap:4px;padding:5.2px 6.8px 4px;font-size:8.8px;letter-spacing:.08em;
   text-transform:uppercase;background:#11161D;border-bottom:1px solid rgba(242,238,228,.1)}
 .sv .lg span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sv .lg .d{flex:none;opacity:.8}
@@ -69,46 +69,46 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .sv .art .ecu{position:absolute;left:50%;top:50%;width:52%;height:52%;translate:-50% -50%;object-fit:contain;
   filter:drop-shadow(0 6px 10px rgba(0,0,0,.7))}
-.sv .art .club{position:absolute;left:3cqw;top:3cqw;width:13cqw;height:13cqw;object-fit:contain;
+.sv .art .club{position:absolute;left:6px;top:6px;width:26px;height:26px;object-fit:contain;
   filter:drop-shadow(0 2px 3px rgba(0,0,0,.8))}
 /* La minute, en grand, en bas à gauche du dessin : c'est le moment qu'on a
    vécu, et le premier chiffre qu'on cherche. */
-.sv .art .mn{position:absolute;left:3cqw;bottom:2cqw;font-family:var(--banner);font-weight:700;font-size:15cqw;line-height:1;
+.sv .art .mn{position:absolute;left:6px;bottom:4px;font-family:var(--banner);font-weight:700;font-size:30px;line-height:1;
   color:var(--craie);text-shadow:0 2px 0 #000,0 0 10px rgba(0,0,0,.8)}
-.sv .bd{padding:2.4cqw 3.4cqw 0;background:linear-gradient(180deg,#151B23,#0B0E13)}
-.sv .bt{font-family:var(--banner);font-weight:700;font-size:7.4cqw;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;
+.sv .bd{padding:4.8px 6.8px 0;background:linear-gradient(180deg,#151B23,#0B0E13)}
+.sv .bt{font-family:var(--banner);font-weight:700;font-size:14.8px;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sv .mt{display:flex;align-items:center;gap:2.4cqw;margin:2cqw 0 1cqw}
-.sv .mt img{width:8.5cqw;height:8.5cqw;object-fit:contain;flex:none}
-.sv .mt .sc{flex:1;text-align:center;font-family:var(--banner);font-weight:700;font-size:8.5cqw;letter-spacing:.04em}
-.sv .eq{display:flex;justify-content:space-between;gap:2cqw;font-size:4.2cqw;opacity:.85}
+.sv .mt{display:flex;align-items:center;gap:4.8px;margin:4px 0 2px}
+.sv .mt img{width:17px;height:17px;object-fit:contain;flex:none}
+.sv .mt .sc{flex:1;text-align:center;font-family:var(--banner);font-weight:700;font-size:17px;letter-spacing:.04em}
+.sv .eq{display:flex;justify-content:space-between;gap:4px;font-size:8.4px;opacity:.85}
 .sv .eq span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:48%}
 .sv .eq span:last-child{text-align:right}
 .sv .eq .but{opacity:1;font-weight:700}
-.sv .foot{display:flex;align-items:center;gap:2cqw;padding:2.4cqw 3.4cqw 3cqw;font-size:4.2cqw;margin-top:auto;
+.sv .foot{display:flex;align-items:center;gap:4px;padding:4.8px 6.8px 6px;font-size:8.4px;margin-top:auto;
   border-top:1px solid rgba(242,238,228,.08);background:#0B0E13}
 .sv .foot .qui{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.92}
 .sv .foot .qui b{font-weight:700}
 .sv .foot .qui>span{display:inline-block}
 .sv .foot .qui>span::first-letter{text-transform:uppercase}
-.sv .foot .fv{flex:none;font-family:var(--banner);font-weight:700;font-size:5cqw}
-.sv .foot .fv small{font-family:var(--ui);font-weight:400;font-size:3.2cqw;letter-spacing:.06em;opacity:.8;margin-left:1cqw}
+.sv .foot .fv{flex:none;font-family:var(--banner);font-weight:700;font-size:10px}
+.sv .foot .fv small{font-family:var(--ui);font-weight:400;font-size:6.4px;letter-spacing:.06em;opacity:.8;margin-left:2px}
 /* « TU Y ÉTAIS » est un sticker craie (`.tbf-sticker`, ui.css), collé de
    travers dans le coin du dessin : c'est le seul objet collé de la carte, et
    le cadre d'or dit le reste. « VIGNETTE », elle, reste une mention au trait. */
-.stamp{position:absolute;top:13cqw;right:3cqw;font-family:var(--banner);z-index:2}
-.stamp.tbf-sticker{font-size:4.2cqw;letter-spacing:.04em;--rot:5deg}
-.stamp.v{font-size:4cqw;letter-spacing:.1em;border:1px solid rgba(242,238,228,.45);background:rgba(7,9,12,.7);
-  color:var(--craie);border-radius:1.4cqw;padding:.8cqw 2cqw}
+.stamp{position:absolute;top:26px;right:6px;font-family:var(--banner);z-index:2}
+.stamp.tbf-sticker{font-size:8.4px;letter-spacing:.04em;--rot:5deg}
+.stamp.v{font-size:8px;letter-spacing:.1em;border:1px solid rgba(242,238,228,.45);background:rgba(7,9,12,.7);
+  color:var(--craie);border-radius:2.8px;padding:1.6px 4px}
 /* Au marché, la plaque d'achat et le temps qui reste, sous la carte. */
-.achat{display:flex;flex-direction:column;align-items:stretch;gap:2cqw;padding:2.4cqw 3.4cqw 3cqw;background:#0B0E13}
-.achat .left{font-size:4.2cqw;text-align:center}
+.achat{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:4.8px 6.8px 6px;background:#0B0E13}
+.achat .left{font-size:8.4px;text-align:center}
 .buy{padding:7px 8px;font-size:12px;min-height:40px}
 .left.urgent{color:var(--flare)}
 
 /* La carte touchée s'ouvre en grand, au-dessus de tout. */
 .zoom{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:20px;
-  background:rgba(4,6,9,.86);backdrop-filter:blur(3px)}
+  background:rgba(4,6,9,.92)}
 .zoom.on{display:flex}
 .zoom .sv{width:min(84vw,340px);cursor:default;box-shadow:0 12px 40px rgba(0,0,0,.8)}
 .sv.presence.brille .in::after{content:"";position:absolute;inset:0;pointer-events:none;
@@ -117,6 +117,28 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @keyframes reflet{from{background-position:120% 0}to{background-position:-120% 0}}
 @media (prefers-reduced-motion:reduce){.sv.presence.brille .in::after{animation:none}}
 html[data-calme~="animations"] .sv.presence.brille .in::after{animation:none}
+/* Les mesures en largeur de carte : celles en pixels, au-dessus, sont le
+   repli d'un navigateur sans confinement (une carte d'environ 200 px). */
+@container (min-width:1px){
+  .sv .in{border-radius:3cqw}
+  .sv .lg{gap:2cqw;padding:2.6cqw 3.4cqw 2cqw;font-size:4.4cqw}
+  .sv .art .club{left:3cqw;top:3cqw;width:13cqw;height:13cqw}
+  .sv .art .mn{left:3cqw;bottom:2cqw;font-size:15cqw}
+  .sv .bd{padding:2.4cqw 3.4cqw 0}
+  .sv .bt{font-size:7.4cqw}
+  .sv .mt{gap:2.4cqw;margin:2cqw 0 1cqw}
+  .sv .mt img{width:8.5cqw;height:8.5cqw}
+  .sv .mt .sc{font-size:8.5cqw}
+  .sv .eq{gap:2cqw;font-size:4.2cqw}
+  .sv .foot{gap:2cqw;padding:2.4cqw 3.4cqw 3cqw;font-size:4.2cqw}
+  .sv .foot .fv{font-size:5cqw}
+  .sv .foot .fv small{font-size:3.2cqw;margin-left:1cqw}
+  .stamp{top:13cqw;right:3cqw}
+  .stamp.tbf-sticker{font-size:4.2cqw}
+  .stamp.v{font-size:4cqw;border-radius:1.4cqw;padding:.8cqw 2cqw}
+  .achat{gap:2cqw;padding:2.4cqw 3.4cqw 3cqw}
+  .achat .left{font-size:4.2cqw}
+}
 
 .empty{text-align:center;padding:52px 24px;opacity:.9;font-size:13px;line-height:1.8;
   background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r)}
