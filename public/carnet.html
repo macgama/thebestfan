@@ -40,47 +40,105 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   background:var(--panneau)}
 .stats b{display:block;font-family:var(--banner);font-size:17px;font-weight:700;color:var(--craie)}
 
-.list{flex:1;padding:0 14px 26px;display:flex;flex-direction:column;gap:9px}
-.sv{position:relative;border-radius:11px;overflow:hidden;border:1px solid rgba(242,238,228,.13);
-  background:linear-gradient(150deg,#171D25,#0D1116);padding:13px 14px}
-.sv.presence{border-color:rgba(245,195,59,.5);
-  background:linear-gradient(150deg,#1E2129,#12161C 60%,#1A1512)}
-/* La compétition et la date, au-dessus du match. À onze pixels elles
-   prennent plus de place : la réserve à droite les empêche de courir sous le
-   tampon « TU Y ÉTAIS », qui est posé en absolu dans ce coin. */
-.sv .lg{font-size:11px;letter-spacing:.1em;opacity:.88;text-transform:uppercase;padding-right:96px}
-.sv .mt{display:flex;align-items:center;gap:9px;margin:8px 0 6px}
-.sv .mt img{width:24px;height:24px;object-fit:contain;flex:none}
-.sv .mt .n{flex:1;min-width:0;font-family:var(--banner);font-size:14px;letter-spacing:.02em;
+/* **La carte-souvenir, une vraie carte** (11 octobre 2026, Gaël : « une
+   carte dont le joueur serait fier dans sa collection »).
+
+   C'était une ligne de résultat dans un cadre d'or, et le Fanzzy y tenait en
+   un code (« avec RP19 »). C'est maintenant une carte en portrait, deux par
+   rangée comme dans un classeur : le personnage qui chantait, debout devant
+   la plaque des cartes du jeu, la minute du but en grand, le buteur sur le
+   bandeau, puis le match. Une vignette, achetée, n'a pas de Fanzzy : c'est
+   l'écusson du club qui a marqué qui se tient devant la plaque.
+
+   Tout est mesuré en largeur de carte (`cqw`) : la même carte s'agrandit
+   telle quelle quand on la touche. */
+.list{flex:1;padding:0 14px 26px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start}
+.list>.empty{grid-column:1/-1}
+.sv{--cadre:rgba(242,238,228,.42);--cadre2:rgba(242,238,228,.14);position:relative;container-type:inline-size;
+  border-radius:10px;padding:6px;background:linear-gradient(155deg,var(--cadre),var(--cadre2) 45%,var(--cadre) 100%);
+  box-shadow:0 6px 18px rgba(0,0,0,.55);cursor:pointer;color:var(--craie);font-family:var(--ui)}
+.sv.presence{--cadre:#F5C33B;--cadre2:#7A5A12}
+.sv .in{position:relative;border-radius:6px;overflow:hidden;background:#0B0E13;display:flex;flex-direction:column;height:100%}
+.sv .lg{display:flex;justify-content:space-between;gap:4px;padding:5.2px 6.8px 4px;font-size:8.8px;letter-spacing:.08em;
+  text-transform:uppercase;background:#11161D;border-bottom:1px solid rgba(242,238,228,.1)}
+.sv .lg span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv .lg .d{flex:none;opacity:.8}
+.sv .art{position:relative;aspect-ratio:1/1.08;overflow:hidden;container-type:size}
+.sv .art>svg{position:absolute;inset:0;width:100%;height:100%}
+.sv .art .fz{position:absolute;left:0;bottom:0;width:100%;height:92%;object-fit:contain;object-position:50% 100%;
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.sv .art .ecu{position:absolute;left:50%;top:50%;width:52%;height:52%;translate:-50% -50%;object-fit:contain;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.7))}
+.sv .art .club{position:absolute;left:6px;top:6px;width:26px;height:26px;object-fit:contain;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.8))}
+/* La minute, en grand, en bas à gauche du dessin : c'est le moment qu'on a
+   vécu, et le premier chiffre qu'on cherche. */
+.sv .art .mn{position:absolute;left:6px;bottom:4px;font-family:var(--banner);font-weight:700;font-size:30px;line-height:1;
+  color:var(--craie);text-shadow:0 2px 0 #000,0 0 10px rgba(0,0,0,.8)}
+.sv .bd{padding:4.8px 6.8px 0;background:linear-gradient(180deg,#151B23,#0B0E13)}
+.sv .bt{font-family:var(--banner);font-weight:700;font-size:14.8px;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sv .sc{font-family:var(--banner);font-size:20px;letter-spacing:.04em}
-.sv .goal{font-size:12.5px;opacity:.9;line-height:1.5}
-/* La minute du but, en craie grasse : en or et en quinze pixels, elle ne
-   tenait pas au soleil (arbitrage du 2 octobre 2026). */
-.sv .goal b{color:var(--craie);font-weight:700;font-family:var(--banner);font-size:15px}
-/* L'opacité est posée sur les mots du pied, plus sur le pied entier : elle
-   s'y multipliait avec tout ce qu'il contient, et la plaque d'achat du
-   marché s'affichait à moitié éteinte alors qu'elle était active. */
-.sv .foot{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px}
-.sv .foot>span{opacity:.88}
-.sv .foot .sep{flex:1}
-/* « TU Y ÉTAIS » est un sticker craie (`.tbf-sticker`, ui.css) : il était
-   écrit en or, en onze pixels, et l'or ne s'écrit plus qu'en grand
-   (arbitrage du 2 octobre 2026). Le sticker garde l'accent — c'est le seul
-   objet collé de la carte —, et le cadre d'or du souvenir reste autour.
-   « VIGNETTE », lui, reste une mention au trait. Le sticker déborde de
-   cinq pixels et demi (bord, cerne, ombre) : il se pose d'autant plus loin
-   du coin. */
-.stamp{position:absolute;top:11px;right:11px;font-family:var(--banner);font-size:11px;letter-spacing:.12em}
-.stamp.tbf-sticker{top:14px;right:16px;font-size:13px;letter-spacing:.04em;--rot:4deg}
-.stamp.v{border:1px solid rgba(242,238,228,.3);color:rgba(242,238,228,.88);border-radius:4px;padding:3px 7px}
-/* Récupérer une vignette, c'est l'acheter : une plaque d'or, comme tout ce
-   qui coûte. Elle était rouge, la couleur de ce qui se joue. Il ne reste ici
-   que son format ; l'état éteint — pas assez d'écharpes — est celui de la
-   plaque. */
-.buy{padding:9px 15px;font-size:12.5px;min-height:44px}
-.left{font-size:11px}
+.sv .mt{display:flex;align-items:center;gap:4.8px;margin:4px 0 2px}
+.sv .mt img{width:17px;height:17px;object-fit:contain;flex:none}
+.sv .mt .sc{flex:1;text-align:center;font-family:var(--banner);font-weight:700;font-size:17px;letter-spacing:.04em}
+.sv .eq{display:flex;justify-content:space-between;gap:4px;font-size:8.4px;opacity:.85}
+.sv .eq span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:48%}
+.sv .eq span:last-child{text-align:right}
+.sv .eq .but{opacity:1;font-weight:700}
+.sv .foot{display:flex;align-items:center;gap:4px;padding:4.8px 6.8px 6px;font-size:8.4px;margin-top:auto;
+  border-top:1px solid rgba(242,238,228,.08);background:#0B0E13}
+.sv .foot .qui{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.92}
+.sv .foot .qui b{font-weight:700}
+.sv .foot .qui>span{display:inline-block}
+.sv .foot .qui>span::first-letter{text-transform:uppercase}
+.sv .foot .fv{flex:none;font-family:var(--banner);font-weight:700;font-size:10px}
+.sv .foot .fv small{font-family:var(--ui);font-weight:400;font-size:6.4px;letter-spacing:.06em;opacity:.8;margin-left:2px}
+/* « TU Y ÉTAIS » est un sticker craie (`.tbf-sticker`, ui.css), collé de
+   travers dans le coin du dessin : c'est le seul objet collé de la carte, et
+   le cadre d'or dit le reste. « VIGNETTE », elle, reste une mention au trait. */
+.stamp{position:absolute;top:26px;right:6px;font-family:var(--banner);z-index:2}
+.stamp.tbf-sticker{font-size:8.4px;letter-spacing:.04em;--rot:5deg}
+.stamp.v{font-size:8px;letter-spacing:.1em;border:1px solid rgba(242,238,228,.45);background:rgba(7,9,12,.7);
+  color:var(--craie);border-radius:2.8px;padding:1.6px 4px}
+/* Au marché, la plaque d'achat et le temps qui reste, sous la carte. */
+.achat{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:4.8px 6.8px 6px;background:#0B0E13}
+.achat .left{font-size:8.4px;text-align:center}
+.buy{padding:7px 8px;font-size:12px;min-height:40px}
 .left.urgent{color:var(--flare)}
+
+/* La carte touchée s'ouvre en grand, au-dessus de tout. */
+.zoom{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:20px;
+  background:rgba(4,6,9,.92)}
+.zoom.on{display:flex}
+.zoom .sv{width:min(84vw,340px);cursor:default;box-shadow:0 12px 40px rgba(0,0,0,.8)}
+.sv.presence.brille .in::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,229,150,.22) 45%,transparent 60%);
+  background-size:250% 100%;animation:reflet 3.2s ease-in-out infinite}
+@keyframes reflet{from{background-position:120% 0}to{background-position:-120% 0}}
+@media (prefers-reduced-motion:reduce){.sv.presence.brille .in::after{animation:none}}
+html[data-calme~="animations"] .sv.presence.brille .in::after{animation:none}
+/* Les mesures en largeur de carte : celles en pixels, au-dessus, sont le
+   repli d'un navigateur sans confinement (une carte d'environ 200 px). */
+@container (min-width:1px){
+  .sv .in{border-radius:3cqw}
+  .sv .lg{gap:2cqw;padding:2.6cqw 3.4cqw 2cqw;font-size:4.4cqw}
+  .sv .art .club{left:3cqw;top:3cqw;width:13cqw;height:13cqw}
+  .sv .art .mn{left:3cqw;bottom:2cqw;font-size:15cqw}
+  .sv .bd{padding:2.4cqw 3.4cqw 0}
+  .sv .bt{font-size:7.4cqw}
+  .sv .mt{gap:2.4cqw;margin:2cqw 0 1cqw}
+  .sv .mt img{width:8.5cqw;height:8.5cqw}
+  .sv .mt .sc{font-size:8.5cqw}
+  .sv .eq{gap:2cqw;font-size:4.2cqw}
+  .sv .foot{gap:2cqw;padding:2.4cqw 3.4cqw 3cqw;font-size:4.2cqw}
+  .sv .foot .fv{font-size:5cqw}
+  .sv .foot .fv small{font-size:3.2cqw;margin-left:1cqw}
+  .stamp{top:13cqw;right:3cqw}
+  .stamp.tbf-sticker{font-size:4.2cqw}
+  .stamp.v{font-size:4cqw;border-radius:1.4cqw;padding:.8cqw 2cqw}
+  .achat{gap:2cqw;padding:2.4cqw 3.4cqw 3cqw}
+  .achat .left{font-size:4.2cqw}
+}
 
 .empty{text-align:center;padding:52px 24px;opacity:.9;font-size:13px;line-height:1.8;
   background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r)}
@@ -135,7 +193,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <div class="list" id="list"></div>
 </main>
 <div class="toast" id="toast"></div>
+<div class="zoom" id="zoom" role="dialog" aria-modal="true"></div>
 
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
+<script src="/fanzzy-fond.js"></script>
 <script>
 /* =======================================================================
    Le carnet.
@@ -181,39 +243,96 @@ function restant(expires) {
   return j >= 1 ? `${j} jour${j > 1 ? 's' : ''}` : `${Math.max(1, Math.floor(ms / 36e5))} h`;
 }
 
+/**
+ * Le Fanzzy qui chantait, en pied, au premier âge — celui avec lequel on
+ * entre au Virage — et dans sa tenue. Le serveur rend sa forme (`fanzzy`) ;
+ * sans elle (une vignette, ou un serveur d'avant), la carte montre l'écusson
+ * du club qui a marqué.
+ *
+ * Même chemin que les cartes du classeur : la pose au repos du manifeste
+ * d'images (`TBF_ETATS.resoudre`), sinon le plein-pied du catalogue — un
+ * Fanzzy pas encore redessiné reste lui-même, dans l'ancien dessin.
+ */
+function dessinFanzzy(f) {
+  const E = window.TBF_ETATS;
+  const r = E?.pret?.() ? E.resoudre(f.id, { evo: 1, skin: f.skin || 'base', etat: 'neutre' }) : null;
+  const src = r?.src ?? window.FZART?.adresse?.(f.age ?? f.id, 'plein', { skin: f.skin || 'base' });
+  if (!src) return '';
+  /* La pose d'un âge vit dans un cadre plus grand que le personnage :
+     `taille` le ramène à la hauteur voulue, pieds au même endroit. */
+  const t = r?.src ? E?.taille?.(f.id, 1, 0.9) : null;
+  const style = t ? ` style="height:${t.hauteur};bottom:${t.bas};translate:${t.decale} 0"` : '';
+  return `<img class="fz" src="${esc(src)}" alt=""${style} loading="lazy" decoding="async"
+    onerror="this.onerror=null;this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">`;
+}
+
+function fondDe(s) {
+  const f = s.fanzzy
+    ? { ...s.fanzzy, stage: 1 }
+    : { id: `souvenir-${s.id}`, skin: 'base', rar: s.kind === 'presence' ? 'legendaire' : 'commune', stage: 1 };
+  return window.TBF_FOND?.fond?.(f, { carte: true }) ?? '';
+}
+
 function carte(s, mode) {
   const marque = s.kind === 'presence'
     ? '<div class="stamp tbf-sticker">TU Y ÉTAIS</div>'
     : s.kind === 'vignette' ? '<div class="stamp v">VIGNETTE</div>' : '';
   const reste = restant(s.expires_at);
+  const marqueur = s.scorer_team === s.away_id ? 'away' : 'home';
+  const logoBut = marqueur === 'away' ? s.away_logo : s.home_logo;
+  const nomBut = marqueur === 'away' ? s.away_name : s.home_name;
 
-  /* Ce qui manque se retire, avec son séparateur ou sa ponctuation : une
-     compétition sans nom laissait « · 13 septembre », une minute inconnue
-     « ?' » devant le buteur — deux signes qui annoncent une donnée absente. */
-  const entete = [s.league_name, jour(s.kickoff_at)].filter(Boolean).map(esc).join(' · ');
-  const minute = s.minute == null ? '' : `<b>${s.minute}'</b> `;
+  /* Ce qui manque se retire : une compétition sans nom ne laisse pas un
+     bandeau vide, une minute inconnue pas un « ?' » sur le dessin. */
+  const art = s.fanzzy
+    ? `${dessinFanzzy(s.fanzzy)}${logoBut ? `<img class="club" src="${esc(logoBut)}" alt="">` : ''}`
+    : (logoBut ? `<img class="ecu" src="${esc(logoBut)}" alt="">` : '');
 
-  return `<div class="sv ${s.kind === 'presence' ? 'presence' : ''}">
-    ${marque}
-    ${entete ? `<div class="lg">${entete}</div>` : ''}
-    <div class="mt">
-      <img src="${esc(s.home_logo)}" alt="">
-      <span class="n">${esc(s.home_name)}</span>
-      <span class="sc">${s.score_home} – ${s.score_away}</span>
-      <span class="n" style="text-align:right">${esc(s.away_name)}</span>
-      <img src="${esc(s.away_logo)}" alt="">
-    </div>
-    <div class="goal">${minute}${esc(s.player ?? 'But')}</div>
-    <div class="foot">
-      ${s.fanzzy_id ? `<span>avec ${esc(s.fanzzy_id)}</span>` : ''}
-      ${s.ferveur ? `<span>${s.fanzzy_id ? '· ' : ''}${s.ferveur} de ferveur</span>` : ''}
-      <span class="sep"></span>
-      ${mode === 'market'
-        ? `<span class="left ${reste && reste.includes('h') ? 'urgent' : ''}">${reste ? 'encore ' + reste : 'expirée'}</span>
-           <button class="buy tbf-plaque" data-ton="or" data-buy="${s.id}" ${scarves < s.price ? 'disabled' : ''}>${s.price} ÉCHARPES</button>`
-        : `<span>${s.kind === 'presence' ? 'acquise sur le terrain' : 'récupérée au marché'}</span>`}
+  const pied = mode === 'market'
+    ? `<div class="achat">
+        <span class="left ${reste && reste.includes('h') ? 'urgent' : ''}">${reste ? 'encore ' + reste : 'expirée'}</span>
+        <button class="buy tbf-plaque" data-ton="or" data-buy="${s.id}" ${scarves < s.price ? 'disabled' : ''}>${s.price} ÉCHARPES</button>
+      </div>`
+    : `<div class="foot">
+        <span class="qui">${s.fanzzy?.nom ? `<b>${esc(s.fanzzy.nom)}</b>`
+          : `<span>${s.kind === 'presence' ? 'acquise sur le terrain' : 'récupérée au marché'}</span>`}</span>
+        ${s.ferveur ? `<span class="fv">${s.ferveur}<small>FERVEUR</small></span>` : ''}
+      </div>`;
+
+  return `<div class="sv ${s.kind === 'presence' ? 'presence' : ''}" data-carte="${s.id}">
+    <div class="in">
+      <div class="lg"><span>${esc(s.league_name ?? '')}</span><span class="d">${esc(jour(s.kickoff_at))}</span></div>
+      <div class="art">
+        ${fondDe(s)}
+        ${art}
+        ${s.minute == null ? '' : `<span class="mn">${s.minute}'</span>`}
+      </div>
+      ${marque}
+      <div class="bd">
+        <div class="bt">${esc(s.player ?? 'But')}</div>
+        <div class="mt">
+          <img src="${esc(s.home_logo)}" alt="">
+          <span class="sc">${s.score_home} – ${s.score_away}</span>
+          <img src="${esc(s.away_logo)}" alt="">
+        </div>
+        <div class="eq">
+          <span class="${marqueur === 'home' ? 'but' : ''}">${esc(s.home_name)}</span>
+          <span class="${marqueur === 'away' ? 'but' : ''}">${esc(s.away_name)}</span>
+        </div>
+      </div>
+      ${pied}
     </div>
   </div>`;
+}
+
+/** La carte touchée, en grand. Un second toucher, n'importe où, la referme. */
+function ouvrir(el) {
+  const z = $('zoom');
+  const copie = el.cloneNode(true);
+  copie.querySelector('.achat')?.remove();
+  copie.classList.add('brille');
+  z.replaceChildren(copie);
+  z.classList.add('on');
 }
 
 function toast(txt) {
@@ -230,6 +349,10 @@ async function load() {
       api('/market'),
       fetch('/api/fanzzy/state', { credentials: 'same-origin' })
         .then((r) => r.json()).catch(() => ({ wallet: { scarves: 0 } })),
+      /* Le manifeste des dessins, attendu avec le reste : sans lui, le
+         Fanzzy retomberait sur l'ancien plein-pied et perdrait sa tenue. Il
+         ne lève jamais. */
+      window.TBF_ETATS?.charger?.(),
     ]);
     scarves = fz.wallet?.scarves ?? 0;
     /* La barre ne porte plus la bourse — le carnet affiche la sienne. */
@@ -258,9 +381,16 @@ async function load() {
   }
 }
 
+$('zoom').addEventListener('click', () => $('zoom').classList.remove('on'));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('zoom').classList.remove('on'); });
+
 $('list').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-buy]');
-  if (!b) return;
+  if (!b) {
+    const c = e.target.closest('[data-carte]');
+    if (c) ouvrir(c);
+    return;
+  }
   b.disabled = true;
   try {
     const r = await api('/buy', { souvenirId: Number(b.dataset.buy) });
