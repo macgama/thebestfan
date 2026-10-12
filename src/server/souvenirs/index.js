@@ -1,6 +1,6 @@
 import express from 'express';
 import { avatarsDe } from '../fanzzy/avatar.js';
-import { estCharge, parIdentifiant } from '../fanzzy/catalogue.js';
+import { auStade, estCharge, parIdentifiant, racineDe } from '../fanzzy/catalogue.js';
 
 /**
  * Cartes-souvenirs.
@@ -228,6 +228,45 @@ export function createSouvenirs({ pool, requireAuth,
    * Idempotent : rejouer le même but ne crée ni doublon ni seconde
    * distribution, ce qui compte parce que le worker peut relire un match.
    */
+  /**
+   * **Le Fanzzy de chaque présent, tel qu'il le montrait au moment du but** :
+   * l'âge choisi sur sa fiche (borné par l'âge atteint) et la tenue de cet
+   * âge. C'est `avatarsDe`, la seule réponse du jeu à « qui montrer », sous
+   * sa forme `avatar`. Gardé sur la carte (`fanzzy_evo`, `fanzzy_skin`) :
+   * changer de tenue demain ne change plus le souvenir d'hier.
+   *
+   * Le personnage est celui de la présence, qui a poussé — pas forcément
+   * celui du portefeuille, si le joueur en a changé depuis. L'âge choisi ne
+   * vaut que pour le personnage du portefeuille ; un autre est montré à
+   * l'âge qu'il a atteint.
+   *
+   * Rien ne bloque la frappe : sans catalogue ou sur une lecture en échec,
+   * les cartes partent sans âge figé, et se dessinent comme avant.
+   */
+  async function formesAuBut(presents) {
+    const avec = presents.filter((p) => p.fanzzy_id);
+    if (!avec.length || !estCharge()) return [];
+    try {
+      const ids = [...new Set(avec.map((p) => p.user_id))];
+      const portefeuilles = new Map((await q(
+        `SELECT user_id, active_fanzzy, active_evo FROM user_wallet
+          WHERE user_id IN (${ids.map(() => '?').join(',')})`, ids))
+        .map((w) => [w.user_id, w]));
+      const formes = await avatarsDe(q, avec.map((p) => {
+        const w = portefeuilles.get(p.user_id);
+        const meme = w?.active_fanzzy && racineDe(w.active_fanzzy) === racineDe(p.fanzzy_id);
+        return { userId: p.user_id, active_fanzzy: p.fanzzy_id, active_evo: meme ? w.active_evo : null };
+      }));
+      return presents.map((p) => {
+        const a = p.fanzzy_id ? formes.get(p.user_id)?.avatar : null;
+        return a ? { evo: a.evo, skin: a.skin || 'base' } : null;
+      });
+    } catch (e) {
+      console.warn('[souvenirs] âge des Fanzzy au but illisible :', e?.message ?? e);
+      return [];
+    }
+  }
+
   async function mintGoal(goal) {
     const family = (await q(
       `SELECT family FROM souvenir_leagues WHERE league_id = ? AND enabled = 1 LIMIT 1`,
@@ -263,11 +302,23 @@ export function createSouvenirs({ pool, requireAuth,
     );
 
     if (presents.length) {
-      await pool.query(
-        `INSERT IGNORE INTO user_souvenirs (user_id, souvenir_id, kind, fanzzy_id, ferveur)
-         VALUES ?`,
-        [presents.map((p) => [p.user_id, souvenirId, 'presence', p.fanzzy_id, p.ferveur])],
-      );
+      const fige = await formesAuBut(presents);
+      const lignes = presents.map((p) => [p.user_id, souvenirId, 'presence', p.fanzzy_id, p.ferveur]);
+      try {
+        await pool.query(
+          `INSERT IGNORE INTO user_souvenirs
+             (user_id, souvenir_id, kind, fanzzy_id, ferveur, fanzzy_evo, fanzzy_skin)
+           VALUES ?`,
+          [lignes.map((l, i) => [...l, fige[i]?.evo ?? null, fige[i]?.skin ?? null])],
+        );
+      } catch (e) {
+        /* Le schéma d'avant ces deux colonnes : la carte se frappe quand
+           même, sans l'âge ni la tenue — la perdre serait bien pire. */
+        if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+        await pool.query(
+          `INSERT IGNORE INTO user_souvenirs (user_id, souvenir_id, kind, fanzzy_id, ferveur)
+           VALUES ?`, [lignes]);
+      }
     }
     /* **Les receveurs, nommés** (`userIds`, défaut D5). La page annonçait la
        carte à chaque but de son club — « Elle est dans ton carnet » — alors
@@ -311,14 +362,14 @@ export function createSouvenirs({ pool, requireAuth,
   async function collection(userId) {
     const abonne = abonnement ? await abonnement.estAbonne(userId) : true;
     const profondeur = abonnement ? abonnement.profondeurSouvenirs(abonne) : null;
-    const rows = await q(
-      `SELECT ${CARD}, us.kind, us.fanzzy_id, us.ferveur, us.acquired_at
+    const rows = await lireFigee((fige) => q(
+      `SELECT ${CARD}, us.kind, us.fanzzy_id, us.ferveur, us.acquired_at${fige}
          ${JOINS}
          JOIN user_souvenirs us ON us.souvenir_id = s.id
         WHERE us.user_id = ?
         ORDER BY s.kickoff_at DESC, s.seq`,
       [userId],
-    );
+    ));
     const vus = profondeur === null ? rows : rows.slice(0, profondeur);
     return habiller(userId, vus);
   }
@@ -330,19 +381,46 @@ export function createSouvenirs({ pool, requireAuth,
    * l'écrivait tel quel : « avec RP19 ». Une carte dont on est fier montre
    * qui chantait, avec son nom et son dessin.
    *
-   * L'âge est exact : on entre toujours au Virage au **premier âge**
-   * (`personnageActif`, `enJeu`), c'est la règle des effets. La tenue, elle,
-   * n'est pas gardée par la carte : c'est celle que ce Fanzzy porte
-   * aujourd'hui à cet âge — `avatarsDe`, la seule réponse du jeu à « qui
-   * montrer », sous sa forme `enJeu`.
+   * Depuis `fanzzy_evo` et `fanzzy_skin`, la carte garde l'âge que le
+   * Fanzzy montrait au moment du but et la tenue de cet âge (`formesAuBut`) :
+   * c'est ce qu'elle dessine. Une carte frappée avant ces colonnes n'a que le
+   * personnage ; elle le montre au premier âge — celui avec lequel on entre
+   * au Virage —, dans la tenue qu'il porte aujourd'hui à cet âge.
    *
    * Une lecture par personnage distinct, pas par carte : un carnet de vingt
    * buts tient en deux ou trois Fanzzy. Sans catalogue chargé (une suite qui
    * monte le carnet seul), ou si la lecture échoue, la carte reste sans
    * Fanzzy dessiné — elle se lit très bien sans lui, jamais l'inverse.
    */
-  async function habiller(userId, rows) {
-    const ids = [...new Set(rows.map((r) => r.fanzzy_id).filter(Boolean))];
+  /** Les colonnes figées au but, lues si le schéma les a — sinon sans. */
+  async function lireFigee(lire) {
+    try {
+      return await lire(', us.fanzzy_evo, us.fanzzy_skin');
+    } catch (e) {
+      if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      return lire('');
+    }
+  }
+
+  /** Le Fanzzy d'une carte frappée avec son âge et sa tenue, ou `null`. */
+  function formeFigee(r) {
+    if (!r.fanzzy_id || r.fanzzy_evo == null) return null;
+    const id = racineDe(r.fanzzy_id);
+    const evo = Number(r.fanzzy_evo) || 1;
+    const age = auStade(id, evo) ?? parIdentifiant(id);
+    if (!age) return null;
+    return { id, age: age.id, evo: auStade(id, evo) ? evo : 1, nom: age.nom,
+      skin: r.fanzzy_skin || 'base', rar: age.rar ?? null, set: age.set ?? null,
+      type: age.type ?? null };
+  }
+
+  async function habiller(userId, lues) {
+    /* Les colonnes figées ne partent pas telles quelles : la forme les porte. */
+    const rows = lues.map(({ fanzzy_evo, fanzzy_skin, ...r }) => {
+      const f = estCharge() ? formeFigee({ ...r, fanzzy_evo, fanzzy_skin }) : null;
+      return f ? { ...r, fanzzy: f } : r;
+    });
+    const ids = [...new Set(rows.filter((r) => !r.fanzzy).map((r) => r.fanzzy_id).filter(Boolean))];
     if (!ids.length || !estCharge()) return rows;
     const formes = new Map();
     try {
@@ -359,7 +437,7 @@ export function createSouvenirs({ pool, requireAuth,
       console.warn('[souvenirs] Fanzzy des cartes illisibles :', e?.message ?? e);
       return rows;
     }
-    return rows.map((r) => (formes.has(r.fanzzy_id) ? { ...r, fanzzy: formes.get(r.fanzzy_id) } : r));
+    return rows.map((r) => (!r.fanzzy && formes.has(r.fanzzy_id) ? { ...r, fanzzy: formes.get(r.fanzzy_id) } : r));
   }
 
   /** Combien il en a vraiment, quelle que soit la profondeur lue. Sans ce
@@ -466,12 +544,12 @@ export function createSouvenirs({ pool, requireAuth,
 
   /** Ce qu'un joueur a vécu d'un match : utile pour la page du match. */
   router.get('/fixture/:id', requireAuth, async (req, res) => {
-    const rows = await q(
-      `SELECT ${CARD}, us.kind, us.fanzzy_id
+    const rows = await lireFigee((fige) => q(
+      `SELECT ${CARD}, us.kind, us.fanzzy_id${fige}
          ${JOINS}
          LEFT JOIN user_souvenirs us ON us.souvenir_id = s.id AND us.user_id = ?
         WHERE s.fixture_id = ? ORDER BY s.seq`,
-      [req.user.id, Number(req.params.id)]);
+      [req.user.id, Number(req.params.id)]));
     res.json({ souvenirs: await habiller(req.user.id, rows) });
   });
 
