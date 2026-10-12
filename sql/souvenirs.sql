@@ -119,3 +119,14 @@ ALTER TABLE virage_presence ADD INDEX IF NOT EXISTS idx_team (team_id);
 -- la ferveur de tout le monde.
 ALTER TABLE virage_presence ADD COLUMN IF NOT EXISTS classe TINYINT(1) NOT NULL DEFAULT 1;
 ALTER TABLE virage_presence ADD INDEX IF NOT EXISTS idx_jour (user_id, joined_at);
+
+-- Le Fanzzy de la carte **tel qu'il était au moment du but** (11 octobre 2026,
+-- demandé par Gaël : « le Fanzzy joué et son évolution au moment du but »).
+-- `fanzzy_id` ne gardait que le personnage : la carte le redessinait au
+-- premier âge, dans la tenue qu'il porte aujourd'hui, et changer de tenue
+-- changeait toutes les anciennes cartes. L'âge qu'il montrait et la tenue de
+-- cet âge sont désormais figés à la frappe.
+--
+-- Nuls pour les cartes frappées avant : elles gardent l'ancien dessin.
+ALTER TABLE user_souvenirs ADD COLUMN IF NOT EXISTS fanzzy_evo TINYINT NULL;
+ALTER TABLE user_souvenirs ADD COLUMN IF NOT EXISTS fanzzy_skin VARCHAR(24) NULL;
