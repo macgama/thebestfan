@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Les cartes-souvenirs gardent l'âge et la tenue du Fanzzy au moment du but**
+(12 octobre 2026, demandé par Gaël). Construction, **schéma**
+(`npm run schema:appliquer`), puis redémarrage. Sans le schéma, les cartes se
+frappent comme avant, au premier âge (rien ne casse).
+
+- `sql/souvenirs.sql` : `user_souvenirs.fanzzy_evo` et `fanzzy_skin`.
+- `src/server/souvenirs/index.js` et `public/carnet.html` : la carte garde et
+  dessine l'âge que le Fanzzy montrait au but, avec sa tenue et la lueur de
+  l'âge. Les cartes d'avant restent au premier âge.
+
+---
+
 **Les cartes-souvenirs du Carnet, de vraies cartes avec le Fanzzy du Virage**
 (PR #64, 11 octobre 2026, demandé par Gaël). Construction puis redémarrage,
 sans schéma.

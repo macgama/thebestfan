@@ -67,6 +67,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .sv .art>svg{position:absolute;inset:0;width:100%;height:100%}
 .sv .art .fz{position:absolute;left:0;bottom:0;width:100%;height:92%;object-fit:contain;object-position:50% 100%;
   filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+/* La lueur de l'âge, celle des cartes du classeur : aucune, bleue, violette. */
+.sv .art .fz[data-age="2"]{filter:drop-shadow(0 0 4px rgba(95,168,255,.75)) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.sv .art .fz[data-age="3"]{filter:drop-shadow(0 0 5px rgba(185,140,255,.9)) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .sv .art .ecu{position:absolute;left:50%;top:50%;width:52%;height:52%;translate:-50% -50%;object-fit:contain;
   filter:drop-shadow(0 6px 10px rgba(0,0,0,.7))}
 .sv .art .club{position:absolute;left:6px;top:6px;width:26px;height:26px;object-fit:contain;
@@ -244,8 +247,9 @@ function restant(expires) {
 }
 
 /**
- * Le Fanzzy qui chantait, en pied, au premier âge — celui avec lequel on
- * entre au Virage — et dans sa tenue. Le serveur rend sa forme (`fanzzy`) ;
+ * Le Fanzzy qui chantait, en pied, à l'âge qu'il montrait au moment du but
+ * et dans la tenue de cet âge (le premier âge pour une carte frappée avant
+ * qu'on les garde). Le serveur rend sa forme (`fanzzy`) ;
  * sans elle (une vignette, ou un serveur d'avant), la carte montre l'écusson
  * du club qui a marqué.
  *
@@ -253,22 +257,29 @@ function restant(expires) {
  * d'images (`TBF_ETATS.resoudre`), sinon le plein-pied du catalogue — un
  * Fanzzy pas encore redessiné reste lui-même, dans l'ancien dessin.
  */
+/* Le personnage grandit d'un âge à l'autre, comme sur les cartes du classeur
+   (`PART_CARTE`, cartes.js). */
+const PART_AGE = { 1: 0.9, 2: 0.97, 3: 1.04 };
 function dessinFanzzy(f) {
   const E = window.TBF_ETATS;
-  const r = E?.pret?.() ? E.resoudre(f.id, { evo: 1, skin: f.skin || 'base', etat: 'neutre' }) : null;
-  const src = r?.src ?? window.FZART?.adresse?.(f.age ?? f.id, 'plein', { skin: f.skin || 'base' });
+  const evo = Math.min(3, Math.max(1, Number(f.evo) || 1));
+  const r = E?.pret?.() ? E.resoudre(f.id, { evo, skin: f.skin || 'base', etat: 'neutre' }) : null;
+  /* Un âge pas encore redessiné : `resoudre` rendrait un autre âge ; c'est
+     alors la carte de l'âge, dans l'ancien dessin (comme `dessinAvatar`). */
+  const exact = r?.src && r.evo === evo ? r : null;
+  const src = exact?.src ?? window.FZART?.adresse?.(f.age ?? f.id, 'plein', { skin: f.skin || 'base' });
   if (!src) return '';
   /* La pose d'un âge vit dans un cadre plus grand que le personnage :
      `taille` le ramène à la hauteur voulue, pieds au même endroit. */
-  const t = r?.src ? E?.taille?.(f.id, 1, 0.9) : null;
+  const t = exact ? E?.taille?.(f.id, evo, PART_AGE[evo]) : null;
   const style = t ? ` style="height:${t.hauteur};bottom:${t.bas};translate:${t.decale} 0"` : '';
-  return `<img class="fz" src="${esc(src)}" alt=""${style} loading="lazy" decoding="async"
+  return `<img class="fz" data-age="${evo}" src="${esc(src)}" alt=""${style} loading="lazy" decoding="async"
     onerror="this.onerror=null;this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">`;
 }
 
 function fondDe(s) {
   const f = s.fanzzy
-    ? { ...s.fanzzy, stage: 1 }
+    ? { ...s.fanzzy, stage: s.fanzzy.evo ?? 1 }
     : { id: `souvenir-${s.id}`, skin: 'base', rar: s.kind === 'presence' ? 'legendaire' : 'commune', stage: 1 };
   return window.TBF_FOND?.fond?.(f, { carte: true }) ?? '';
 }

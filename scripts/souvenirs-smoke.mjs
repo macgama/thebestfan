@@ -426,6 +426,52 @@ check('et qui n’a pas chanté dans la fenêtre n’est pas nommé',
   }
 }
 
+/* --------------------------------- l'âge et la tenue, figés au moment du but
+
+   Demandé par Gaël le 12 octobre 2026 : « le Fanzzy joué et son évolution au
+   moment du but ». La carte garde l'âge que le Fanzzy montrait et la tenue
+   de cet âge ; changer d'âge ou de tenue ensuite ne la change plus. */
+{
+  const { charger, oublier, auStade } = await import('../src/server/fanzzy/catalogue.js');
+  await charger(pool);
+  who = U[0];
+  await pool.query(`UPDATE user_wallet SET active_fanzzy = 'TR32', active_evo = 2 WHERE user_id = ?`, [U[0]]);
+  await pool.query(`UPDATE user_fanzzy SET stage = 3 WHERE user_id = ? AND fanzzy_id = 'TR32'`, [U[0]]);
+  const but = (fixtureId, seq) => ({ ...goal(seq, 50, 85, 1, 0, 'Figé'), fixtureId });
+  await S.recordPush({ userId: U[0], fixtureId: 7001, side: 0, fanzzyId: 'TR32', amount: 12 });
+  r = await S.mintGoal(but(7001, 1));
+  check('un but frappé après coup va au présent', r.minted === true && r.presents === 1);
+  const [[l]] = await pool.query(
+    `SELECT fanzzy_evo, fanzzy_skin FROM user_souvenirs WHERE user_id = ? AND souvenir_id = ?`,
+    [U[0], r.souvenirId]);
+  check('la carte garde l’âge montré au but et sa tenue',
+    l.fanzzy_evo === 2 && l.fanzzy_skin === 'base' || (console.log('        ligne :', JSON.stringify(l)), false));
+
+  await pool.query(`UPDATE user_wallet SET active_evo = 3 WHERE user_id = ?`, [U[0]]);
+  r = await call('/api/souvenirs/fixture/7001');
+  const f = r.json.souvenirs[0]?.fanzzy;
+  check('et la dessine à cet âge, même après avoir changé d’âge',
+    f?.evo === 2 && f.age === auStade('TR32', 2)?.id && f.nom === auStade('TR32', 2)?.nom
+    || (console.log('        fanzzy :', JSON.stringify(f)), false));
+  check('les colonnes figées ne partent pas telles quelles',
+    !('fanzzy_evo' in r.json.souvenirs[0]) && !('fanzzy_skin' in r.json.souvenirs[0]));
+  r = await call('/api/souvenirs/fixture/5001');
+  check('une carte d’avant reste au premier âge', r.json.souvenirs.every((s) => !s.fanzzy || s.fanzzy.evo === 1));
+
+  /* Un serveur redémarré avant le schéma : la carte se frappe et se lit
+     quand même, sans l'âge. */
+  await pool.query('ALTER TABLE user_souvenirs DROP COLUMN fanzzy_evo, DROP COLUMN fanzzy_skin');
+  await S.recordPush({ userId: U[0], fixtureId: 7002, side: 0, fanzzyId: 'TR32', amount: 12 });
+  r = await S.mintGoal(but(7002, 1));
+  check('sans les colonnes, la carte se frappe encore', r.minted === true && r.presents === 1);
+  r = await call('/api/souvenirs/fixture/7002');
+  check('et se lit, au premier âge', r.json.souvenirs[0]?.kind === 'presence' && r.json.souvenirs[0]?.fanzzy?.evo === 1);
+  const cx = await mysql.createConnection({ uri: DB, multipleStatements: true });
+  await cx.query(readFileSync(new URL('../sql/souvenirs.sql', import.meta.url), 'utf8'));
+  await cx.end();
+  oublier();
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 /* `exitCode` et non `process.exit()` : sous Windows, couper la boucle pendant
    que le pool rend ses sockets fait échouer la suite une fois sur cinq quand
