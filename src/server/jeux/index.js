@@ -469,13 +469,15 @@ export function createJeux({ pool, requireAuth }) {
 
   /* ------------------------------------------------------------ le club
 
-     Le tifo et le boss se jouent pour le club suivi (`users.main_team_id`).
-     Sans club suivi, la page invite à en choisir un. */
+     Le tifo et le boss se jouent pour le club du supporter : son club de
+     cœur (`user_follows.is_main`), sinon le premier qu'il a suivi. Sans club
+     suivi, la page invite à en choisir un. La même règle dans `voix.js`. */
 
   async function clubDe(userId) {
     const [u] = await q(
       `SELECT t.id, t.name, t.code, t.color1, t.color2
-         FROM users u JOIN teams t ON t.id = u.main_team_id WHERE u.public_id = ?`, [userId]);
+         FROM user_follows f JOIN teams t ON t.id = f.team_id
+        WHERE f.user_id = ? ORDER BY f.is_main DESC, f.created_at, f.team_id LIMIT 1`, [userId]);
     if (!u) return null;
     const c1 = u.color1 || '#C8102E';
     const c2 = u.color2 && u.color2.toLowerCase() !== c1.toLowerCase() ? u.color2 : '#F2EEE4';
@@ -614,7 +616,8 @@ export function createJeux({ pool, requireAuth }) {
 
   async function voixDuBoss(teamId) {
     const [r] = await q(
-      `SELECT COUNT(*) AS n FROM users WHERE main_team_id = ? AND status = 'active'`, [teamId]);
+      `SELECT COUNT(*) AS n FROM user_follows f JOIN users u ON u.public_id = f.user_id
+        WHERE f.team_id = ? AND u.status = 'active'`, [teamId]);
     return Math.max(reglage('jeux.boss_voix_min'),
       reglage('jeux.boss_voix_par_supporter') * Number(r?.n ?? 0));
   }
