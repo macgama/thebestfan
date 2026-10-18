@@ -472,6 +472,19 @@ if (process.env.DATABASE_URL) {
     }
     console.log('administration active');
 
+    /* Les saisons se lancent seules à leur jour d'ouverture (choix de Gaël,
+       18 octobre 2026). Au démarrage, pour un serveur arrêté ce jour-là, puis
+       toutes les cinq minutes : le 1er janvier, la saison 2 ouvre peu après
+       minuit, jour de la base. Sans `await` : le démarrage n'attend pas. */
+    const saisonsAuto = () => admin.lancerAuto()
+      .catch((e) => console.error('[saisons] lancement automatique', e.message));
+    /* D'abord les saisons du calendrier (`shared/saisons-prevues.js`), posées
+       en brouillon une fois chacune ; ensuite le premier passage. */
+    admin.amorcerSaisonsPrevues()
+      .catch((e) => console.error('[saisons] saisons prévues', e.message))
+      .then(saisonsAuto);
+    setInterval(saisonsAuto, 5 * 60 * 1000).unref();
+
     // ---- classements
     classements = createClassements({ pool, requireAuth: auth.requireAuth, abonnement });
     app.use('/api/rank', classements.router);

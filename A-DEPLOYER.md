@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**Les saisons de trois mois, qui se lancent seules à leur date**
+(18 octobre 2026, demandé par Gaël). Construction puis redémarrage, sans
+schéma.
+
+- Au redémarrage, les saisons 2 à 5 de 2027 apparaissent en préparation dans
+  `/admin`, onglet SAISONS (`src/shared/saisons-prevues.js`) : Les héros du
+  canapé (1er janvier au 31 mars), Les phénomènes météo (1er avril au
+  30 juin), Les galères de déplacement (1er juillet au 30 septembre), Les
+  revenants (1er octobre au 31 décembre), chacune avec un carnet sur trois
+  mois et les pièces neuves de sa série. Posées une seule fois : ce qu'on y
+  change ou supprime dans /admin n'est jamais réécrit.
+- Le serveur lance seul, toutes les cinq minutes, une saison en préparation
+  dont le jour d'ouverture est arrivé. La saison 1 « La reprise » doit finir le
+  31 décembre 2026 (à saisir dans /admin si ce n'est pas fait).
+- Les joueurs voient dès maintenant l'annonce de la saison 2 (« SAISON 2 » et
+  son jour d'ouverture), comme toute saison qui porte une date.
+
+---
+
 **Les cartes-souvenirs gardent l'âge et la tenue du Fanzzy au moment du but**
 (12 octobre 2026, demandé par Gaël). Construction, **schéma**
 (`npm run schema:appliquer`), puis redémarrage. Sans le schéma, les cartes se
