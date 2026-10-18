@@ -116,23 +116,11 @@ const chctx = chc.getContext('2d');
 const COULEURS_TAMBOURS = ['#E5484D', '#F5C33B', '#3FA7F5'];
 const LIGNE = 0.82;
 
-/* Un coup de tambour synthétisé : le chant se joue aussi à l'oreille. */
-let audioCh = null;
-function tambour(c, fort = 1) {
-  try {
-    audioCh ??= new (window.AudioContext || window.webkitAudioContext)();
-    const t = audioCh.currentTime;
-    const o = audioCh.createOscillator();
-    const g = audioCh.createGain();
-    o.type = 'sine';
-    o.frequency.setValueAtTime([110, 150, 200][c] * 1.6, t);
-    o.frequency.exponentialRampToValueAtTime([110, 150, 200][c] * 0.6, t + 0.12);
-    g.gain.setValueAtTime(0.32 * fort, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-    o.connect(g).connect(audioCh.destination);
-    o.start(t);
-    o.stop(t + 0.18);
-  } catch { /* sans son, on joue quand même */ }
+/* Le son passe par le moteur commun (`son.js`, chargé par `fx.js`) : un
+   coup de tambour à chaque frappe, plus brillant sur un PARFAIT. */
+function tambour(verdict) {
+  const nom = { parfait: 'parfait', bon: 'chant', fausse: 'sourd' }[verdict];
+  if (nom) window.TBF_SON?.jouer?.(nom);
 }
 
 const maintenant = () => performance.now() - CH.t0;
@@ -213,7 +201,6 @@ function frapperChant(c) {
   if (CH.fini) return;
   const t = Math.round(maintenant() * 10) / 10;
   CH.frappes.push({ c, t });
-  tambour(c);
   /* La note la plus proche sur ce tambour, pas encore jugée. */
   const notes = CH.partition.notes;
   let meilleure = -1;
@@ -224,8 +211,9 @@ function frapperChant(c) {
     const e = Math.abs(notes[i].t - t);
     if (e <= CHANT.BON_MS && e < ecart) { ecart = e; meilleure = i; }
   }
-  if (meilleure < 0) { compter('fausse', c); return; }
+  if (meilleure < 0) { compter('fausse', c); tambour('fausse'); return; }
   const v = ecart <= CHANT.PARFAIT_MS ? 'parfait' : 'bon';
+  tambour(v);
   CH.jugees[meilleure] = v;
   compter(v, c);
 }
