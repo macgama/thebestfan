@@ -112,6 +112,6 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      de quotidien.sql, qu'il ne modifie pas. Rien n'en dépend : le dernier
      rang. */
   'pronostics',
-  /* Les mini-jeux d’entre les matchs (18 octobre 2026) : deux tables neuves,
+  /* Les mini-jeux d’entre les matchs (18 octobre 2026) : cinq tables neuves,
      sans clé étrangère. */
   'mini-jeux'];

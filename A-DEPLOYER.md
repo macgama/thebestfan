@@ -1,17 +1,26 @@
 # À déposer sur Infomaniak
 
-**Les mini-jeux : les jongles et les tirs au but** (18 octobre 2026, demandés
-par Gaël). Construction, **schéma** (`npm run schema:appliquer`), puis
-redémarrage. Sans le schéma, la page `/jeux` dit « Les mini-jeux arrivent
-bientôt » (rien ne casse).
+**Les mini-jeux : jongles, tirs au but, chant en rythme, déplacement, tifo
+du club et boss de la semaine** (18 octobre 2026, demandés par Gaël).
+Construction, **schéma** (`npm run schema:appliquer`), puis redémarrage. Sans
+le schéma, la page `/jeux` dit « Les mini-jeux arrivent bientôt » (rien ne
+casse).
 
-- `sql/mini-jeux.sql` : deux tables neuves, `jeux_jongles` et `jeux_tirs`.
-- `/jeux` (menu, rubrique JOUER, « Les mini-jeux ») : les jongles, seul pour
-  un record ; les tirs au but, cinq tirs et cinq arrêts contre un inconnu ou
-  un ami, chacun quand il veut. Un classement par jeu, qui repart de zéro à
-  chaque saison.
-- Des écharpes à chaque partie, au plus 40 par jour pour les deux jeux.
-  Réglages dans `/admin`, LE JEU, RÉGLAGES, LES MINI-JEUX.
+- `sql/mini-jeux.sql` : cinq tables neuves, `jeux_jongles`, `jeux_tirs`,
+  `jeux_parties`, `jeux_tifo` et `jeux_boss` (57 tables en tout).
+- `/jeux` (menu, rubrique JOUER, « Les mini-jeux »), six onglets :
+  les jongles ; les tirs au but façon FIFA (jauge de visée, jauge de
+  puissance, plongeon au doigt), contre un inconnu ou un ami, chacun quand il
+  veut ; le chant en rythme (trois tambours) ; le déplacement (course sans
+  fin) ; le tifo du club, peint ensemble avant le prochain match du club et
+  levé au coup d'envoi ; la tribune contre le boss, que les chants réussis du
+  club (Virage, duel, chant en rythme) font taire dans la semaine. Un
+  classement par jeu seul, qui repart de zéro à chaque saison.
+- Le tifo et le boss se jouent avec le club de cœur du joueur (sinon le
+  premier club qu'il suit).
+- Des écharpes à chaque partie, au plus 40 par jour pour les jeux seuls et
+  les tirs au but ; le tifo réussi (15) et le boss tombé (20) se paient en
+  plus. Réglages dans `/admin`, LE JEU, RÉGLAGES, LES MINI-JEUX.
 
 ---
 
