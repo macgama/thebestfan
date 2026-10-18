@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<script src="/langue.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<title>Les mini-jeux — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* =======================================================================
+   Les mini-jeux d'entre les matchs (18 octobre 2026, demandés par Gaël) :
+   les jongles, seul pour un record, et les tirs au but, en 1 contre 1 sans
+   jouer en même temps. Un classement par jeu, qui repart de zéro à chaque
+   saison ; des écharpes à la fin de chaque partie, plafonnées par jour.
+
+   Tout tient dans la colonne du téléphone, comme le reste du jeu. Le terrain
+   est un <canvas> dessiné à la craie : aucune image neuve.
+   ======================================================================= */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 6px;flex:none}
+.jour{font-size:11px;color:rgba(242,238,228,.88);text-align:right;line-height:1.35}
+.jour b{font-family:var(--banner);font-size:15px;color:var(--craie)}
+
+.vue{padding:4px 14px 18px;display:flex;flex-direction:column;gap:12px}
+.vue[hidden]{display:none}
+.bloc{background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r);padding:14px}
+.bloc h2{font-family:var(--banner);font-size:15px;letter-spacing:.12em;margin:0 0 8px}
+.bloc p{margin:0 0 10px;font-size:13px;line-height:1.5;color:rgba(242,238,228,.9)}
+.chiffres{display:flex;gap:9px}
+.chiffres div{flex:1;text-align:center;border:1px solid var(--trait);border-radius:7px;padding:8px 4px;font-size:11px}
+.chiffres b{display:block;font-family:var(--banner);font-size:20px;font-weight:700}
+.actions{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.actions .tbf-plaque{width:100%}
+
+/* ------------------------------------------------------------ le terrain */
+.terrain{position:relative;width:100%;aspect-ratio:2/3;border-radius:var(--r);overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 100%,#14402B 0,#0B2418 55%,#081510 100%);
+  border:1px solid var(--trait);touch-action:none;user-select:none;-webkit-user-select:none}
+.terrain canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.terrain .compte{position:absolute;left:0;right:0;top:10px;text-align:center;font-family:var(--banner);
+  font-weight:700;font-size:56px;line-height:1;text-shadow:0 3px 0 #000;pointer-events:none}
+#t-compte{top:auto;bottom:44px;font-size:30px;opacity:.9}
+.terrain .consigne{position:absolute;left:12px;right:12px;bottom:14px;text-align:center;font-size:13px;
+  font-weight:600;letter-spacing:.04em;pointer-events:none;text-shadow:0 2px 0 #000}
+.terrain .fz{position:absolute;left:4%;bottom:0;height:34%;max-width:40%;object-fit:contain;object-position:0 100%;
+  pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.terrain .bulle{position:absolute;left:36%;bottom:26%;font-family:var(--marqueur);font-size:15px;color:#000;
+  background:var(--kraft);padding:5px 9px;border-radius:8px;pointer-events:none;rotate:-3deg;max-width:56%}
+.terrain .bulle:empty{display:none}
+.fin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:rgba(4,6,9,.82);padding:20px;text-align:center}
+.fin[hidden]{display:none}
+.fin .grand{font-family:var(--banner);font-weight:700;font-size:64px;line-height:1}
+.fin .sous{font-size:13px;line-height:1.5}
+.fin .tbf-sticker{font-size:13px}
+.fin .tbf-plaque{min-width:200px}
+
+/* -------------------------------------------------------- les classements */
+.portee{display:flex;gap:6px;margin-bottom:8px}
+.portee button{flex:1;background:transparent;border:1px solid var(--trait);border-radius:7px;color:var(--craie);
+  font:600 11px var(--ui);letter-spacing:.08em;padding:8px 4px;cursor:pointer;min-height:36px}
+.portee button.on{background:var(--craie);color:var(--encre)}
+.lignes{display:flex;flex-direction:column;gap:4px}
+.ligne{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;font-size:13px;
+  border:1px solid transparent}
+.ligne.moi{border-color:var(--projo)}
+.ligne .rg{width:26px;text-align:right;font-family:var(--banner);font-weight:700}
+.ligne .av{width:30px;height:30px;object-fit:contain;flex:none}
+.ligne .av.vide{background:rgba(242,238,228,.08);border-radius:50%}
+.ligne .ps{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ligne .vl{font-family:var(--banner);font-weight:700;font-size:15px}
+.ligne .vl small{font-family:var(--ui);font-weight:400;font-size:10px;opacity:.8;margin-left:3px}
+.vide-liste{font-size:12.5px;opacity:.85;text-align:center;padding:14px 4px}
+.mapl{font-size:12px;margin-top:8px;text-align:center;opacity:.9}
+
+/* ----------------------------------------------------------- les séries */
+.serie{display:flex;align-items:center;gap:10px;padding:9px 6px;border-top:1px solid var(--trait);font-size:13px}
+.serie:first-child{border-top:0}
+.serie .qui{flex:1;min-width:0}
+.serie .qui b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.serie .qui span{font-size:11px;opacity:.8}
+.serie .sc{font-family:var(--banner);font-weight:700;font-size:18px}
+.serie .tbf-plaque{min-height:38px;padding:8px 12px;font-size:12px}
+.serie.nouveau{background:rgba(245,195,59,.08);border-radius:7px}
+.issue-victoire{color:var(--vert-clair)}
+.issue-defaite{color:var(--flare-clair)}
+.amis{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;margin-top:10px}
+.amis button{display:flex;align-items:center;gap:9px;text-align:left;background:transparent;color:var(--craie);
+  border:1px solid var(--trait);border-radius:7px;padding:8px;font:600 13px var(--ui);cursor:pointer;min-height:44px}
+.amis[hidden]{display:none}
+
+/* Le déroulé d'une série jouée : chaque tir, dans l'ordre. */
+.deroule{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0 2px}
+.deroule .rang{font-size:10px;letter-spacing:.06em;opacity:.8;grid-column:1/-1;margin-top:4px}
+.deroule i{font-style:normal;text-align:center;font-family:var(--banner);font-weight:700;font-size:13px;
+  border:1px solid var(--trait);border-radius:5px;padding:4px 0}
+.deroule i.but{background:var(--vert-encre)}
+.deroule i.arret,.deroule i.dessus{background:rgba(242,238,228,.06);opacity:.85}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#171C23;z-index:20;
+  border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;display:none}
+.toast.on{display:block}
+
+/* tbf-degagement */
+#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+  <div class="top">
+    <p class="tbf-sous" id="saison">Entre deux matchs</p>
+    <div class="jour" id="jour"></div>
+  </div>
+  <div class="tabs tbf-onglets" data-ton="flare">
+    <button class="tab tbf-onglet on" data-tab="jongles">JONGLES</button>
+    <button class="tab tbf-onglet" data-tab="tirs">TIRS AU BUT</button>
+  </div>
+
+  <!-- ============================================================ jongles -->
+  <section class="vue" id="v-jongles">
+    <div class="bloc" id="j-accueil">
+      <h2>LES JONGLES</h2>
+      <p>Tape sous le ballon pour le relancer. Plus tu jongles, plus il retombe vite. Il touche le sol : c’est fini.</p>
+      <div class="chiffres">
+        <div><b id="j-record">–</b>ton record</div>
+        <div><b id="j-rang">–</b>au classement</div>
+        <div><b id="j-gain">–</b>jongles par écharpe</div>
+      </div>
+      <div class="actions"><button class="tbf-plaque" data-ton="flare" id="j-jouer">JOUER</button></div>
+    </div>
+    <div class="terrain" id="j-terrain" hidden>
+      <canvas id="j-canvas"></canvas>
+      <div class="compte" id="j-compte">0</div>
+      <img class="fz" id="j-fz" alt="" hidden>
+      <div class="bulle" id="j-bulle"></div>
+      <div class="consigne" id="j-consigne">Tape le ballon pour commencer</div>
+      <div class="fin" id="j-fin" hidden>
+        <div class="grand" id="j-score">0</div>
+        <div class="sous" id="j-bilan"></div>
+        <button class="tbf-plaque" data-ton="flare" id="j-rejouer">REJOUER</button>
+        <button class="tbf-plaque" id="j-quitter">LE CLASSEMENT</button>
+      </div>
+    </div>
+    <div class="bloc">
+      <h2>LE CLASSEMENT DES JONGLES</h2>
+      <div class="portee" data-jeu="jongles">
+        <button class="on" data-portee="tous">TOUT LE MONDE</button>
+        <button data-portee="amis">MES AMIS</button>
+      </div>
+      <div class="lignes" id="c-jongles"></div>
+      <div class="mapl" id="m-jongles"></div>
+    </div>
+  </section>
+
+  <!-- ======================================================== tirs au but -->
+  <section class="vue" id="v-tirs" hidden>
+    <div class="bloc" id="t-accueil">
+      <h2>LES TIRS AU BUT</h2>
+      <p>Cinq tirs, cinq arrêts. Glisse le doigt du ballon vers le coin du but : plus vite tu glisses, plus il part fort. Trop fort, il passe au-dessus. Dans les buts, touche le coin où tu plonges.</p>
+      <p>Ton adversaire joue sa série de son côté, quand il veut. La victoire rapporte <b id="t-gain">–</b> écharpes.</p>
+      <div class="chiffres">
+        <div><b id="t-points">–</b>points</div>
+        <div><b id="t-rang">–</b>au classement</div>
+        <div><b id="t-bilan">–</b>V · N · D</div>
+      </div>
+      <div class="actions">
+        <button class="tbf-plaque" data-ton="flare" id="t-hasard">CONTRE UN INCONNU</button>
+        <button class="tbf-plaque" data-ton="violet" id="t-ami">DÉFIER UN AMI</button>
+      </div>
+      <div class="amis" id="t-amis" hidden></div>
+    </div>
+    <div class="terrain" id="t-terrain" hidden>
+      <canvas id="t-canvas"></canvas>
+      <div class="compte" id="t-compte"></div>
+      <div class="consigne" id="t-consigne"></div>
+      <div class="fin" id="t-fin" hidden>
+        <div class="grand" id="t-score"></div>
+        <div class="sous" id="t-resume"></div>
+        <button class="tbf-plaque" data-ton="flare" id="t-fermer">CONTINUER</button>
+      </div>
+    </div>
+    <div class="bloc">
+      <h2>MES SÉRIES</h2>
+      <div id="t-series"></div>
+    </div>
+    <div class="bloc">
+      <h2>LE CLASSEMENT DES TIRS AU BUT</h2>
+      <div class="portee" data-jeu="tirs">
+        <button class="on" data-portee="tous">TOUT LE MONDE</button>
+        <button data-portee="amis">MES AMIS</button>
+      </div>
+      <div class="lignes" id="c-tirs"></div>
+      <div class="mapl" id="m-tirs"></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+const api = async (path, body) => {
+  const r = await fetch('/api/jeux' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const j = await r.json().catch(() => ({}));
+  if (j.error) throw Object.assign(new Error(j.error), { code: j.error });
+  if (!r.ok) throw new Error(`http ${r.status}`);
+  return j;
+};
+let toastT = 0;
+function toast(t) {
+  const el = $('toast');
+  el.textContent = t;
+  el.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('on'), 2600);
+}
+const ERREURS = {
+  'jeux.error.inactif': 'Les mini-jeux sont fermés pour le moment',
+  'jeux.error.trop_de_series': 'Tu as déjà cinq séries qui attendent',
+  'jeux.error.defi_en_cours': 'Tu as déjà défié cet ami',
+  'jeux.error.pas_ami': 'Vous n’êtes pas encore amis',
+  'jeux.error.serie_jouee': 'Cette série est déjà jouée',
+  'jeux.error.schema': 'Les mini-jeux arrivent bientôt',
+};
+const dire = (e) => toast(ERREURS[e?.code] ?? 'Impossible pour le moment');
+
+/* Les mêmes règles que le serveur (`src/shared/mini-jeux.js`). Recopiées
+   ici parce que la page n'importe pas de module : la suite `jeux:ui` vérifie
+   que les deux disent la même chose. */
+const JONGLES = { largeur: 360, hauteur: 540, rayon: 30, gravite: 900, graviteParJongle: 14,
+  graviteMax: 2200, elan: 760, deviation: 9, vent: 70, portee: 52 };
+const TIRS = { NOMBRE: 5, FORCE_MAX: 0.92 };
+
+function hasard(graine) {
+  let s = (Number(graine) >>> 0) || 1;
+  return () => {
+    s ^= s << 13; s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5; s >>>= 0;
+    return s / 4294967296;
+  };
+}
+
+/** Le Fanzzy du joueur, en pied, dans la pose demandée. */
+function imageFanzzy(av, etat = 'neutre') {
+  if (!av) return null;
+  const E = window.TBF_ETATS;
+  const evo = Math.min(3, Math.max(1, Number(av.evo) || 1));
+  const r = E?.pret?.() ? E.resoudre(av.id, { evo, skin: av.skin || 'base', etat }) : null;
+  return r?.src ?? window.FZART?.adresse?.(av.age ?? av.id, 'plein', { skin: av.skin || 'base' }) ?? null;
+}
+
+/* Ce que dit le Fanzzy, au ton de la tribune : quatre mots au plus. */
+const CRIS = {
+  debut: ['Allez, on jongle !', 'Montre-leur !'],
+  serie: ['Encore !', 'Plus haut !', 'Ne lâche rien !', 'Quel toucher !'],
+  record: ['Record battu !', 'Tu es énorme !'],
+  rate: ['Oh non…', 'Ça arrive !', 'On recommence ?'],
+};
+const cri = (k) => CRIS[k][Math.floor(Math.random() * CRIS[k].length)];
+
+let etat = null;
+let avatar = null;
+
+/* ====================================================== l'état et les listes */
+
+async function charger() {
+  try {
+    etat = await api('');
+  } catch (e) {
+    if (e.message === 'auth') return;
+    $('saison').textContent = 'Les mini-jeux arrivent bientôt';
+    return;
+  }
+  if (!etat?.echarpes) {
+    $('saison').textContent = 'Les mini-jeux arrivent bientôt';
+    return;
+  }
+  avatar = etat.avatar;
+  $('saison').textContent = etat.saison ? `Saison ${etat.saison.numero} · ${etat.saison.nom}` : 'Entre deux matchs';
+  $('jour').innerHTML = `<b>${etat.echarpes.aujourdhui} / ${etat.echarpes.plafond}</b><br>écharpes aujourd’hui`;
+  $('j-record').textContent = etat.jongles.record ?? '–';
+  $('j-gain').textContent = etat.gains.jongles.parEcharpe;
+  $('t-gain').textContent = etat.gains.tirs.victoire;
+  ['j-jouer', 't-hasard', 't-ami'].forEach((id) => { $(id).disabled = !etat.actif; });
+  dessinerSeries(etat.tirs.series);
+  if (etat.tirs.nouveaux) api('/tirs-vus', {}).catch(() => {});
+  await Promise.all([classement('jongles'), classement('tirs')]);
+}
+
+const portees = { jongles: 'tous', tirs: 'tous' };
+async function classement(jeu) {
+  let c;
+  try { c = await api(`/classement/${jeu}?portee=${portees[jeu]}`); } catch { return; }
+  const el = $(`c-${jeu}`);
+  if (!c.lignes.length) {
+    el.innerHTML = `<div class="vide-liste">${jeu === 'jongles'
+      ? 'Personne n’a encore jonglé cette saison. Sois le premier.'
+      : 'Aucune série jouée cette saison. Lance la première.'}</div>`;
+  } else {
+    el.innerHTML = c.lignes.map((l) => {
+      const src = imageFanzzy(l.avatar);
+      const valeur = jeu === 'jongles'
+        ? `${l.valeur}<small>jongles</small>` : `${l.valeur}<small>pts</small>`;
+      return `<div class="ligne${l.moi ? ' moi' : ''}"><span class="rg">${l.rang}</span>${src
+        ? `<img class="av" src="${esc(src)}" alt="" loading="lazy">` : '<span class="av vide"></span>'}`
+        + `<span class="ps">${esc(l.pseudo)}</span><span class="vl">${valeur}</span></div>`;
+    }).join('');
+  }
+  const rang = c.moi ? `${c.moi.rang}<sup>e</sup>` : '–';
+  if (jeu === 'jongles') $('j-rang').innerHTML = rang;
+  else {
+    $('t-rang').innerHTML = rang;
+    $('t-points').textContent = c.moi ? c.moi.valeur : 0;
+    const l = c.lignes.find((x) => x.moi);
+    $('t-bilan').textContent = l ? `${l.victoires} · ${l.nuls} · ${l.defaites}` : '0 · 0 · 0';
+  }
+  $(`m-${jeu}`).textContent = c.moi && c.moi.rang > c.lignes.length
+    ? `Toi : ${c.moi.rang}e sur ${c.total}` : (c.total ? `${c.total} joueur${c.total > 1 ? 's' : ''} classé${c.total > 1 ? 's' : ''}` : '');
+}
+
+document.querySelectorAll('.portee').forEach((p) => p.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-portee]');
+  if (!b) return;
+  portees[p.dataset.jeu] = b.dataset.portee;
+  p.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+  classement(p.dataset.jeu);
+}));
+
+document.querySelector('.tabs').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab]');
+  if (!t) return;
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === t));
+  $('v-jongles').hidden = t.dataset.tab !== 'jongles';
+  $('v-tirs').hidden = t.dataset.tab !== 'tirs';
+});
+
+/* ============================================================== les jongles
+
+   Une aire logique de 360 × 540, mise à l'échelle du terrain. Le ballon ne se
+   relance que s'il redescend : une frappe pendant qu'il monte ne compte pas
+   (le serveur, lui, refuse deux frappes trop rapprochées). */
+
+const J = { partie: null, balle: null, compte: 0, frappes: [], t0: 0, dernier: 0, fini: true,
+  graviteAct: JONGLES.gravite, rnd: Math.random, raf: 0, record: null };
+const jc = $('j-canvas');
+const jctx = jc.getContext('2d');
+
+function tailleCanvas(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  c.width = Math.round(r.width * dpr);
+  c.height = Math.round(r.height * dpr);
+  return { w: r.width, h: r.height, dpr };
+}
+
+function dessinerBallon(ctx, x, y, r) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = '#F2EEE4';
+  ctx.strokeStyle = '#07090C';
+  ctx.lineWidth = r * 0.09;
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#07090C';
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+    ctx.lineTo(Math.cos(a) * r * 0.36, Math.sin(a) * r * 0.36);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function dessinerJongles() {
+  const { w, h, dpr } = J.taille;
+  const k = w / JONGLES.largeur;
+  jctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  jctx.clearRect(0, 0, w, h);
+  /* La ligne de craie du sol. */
+  jctx.strokeStyle = 'rgba(242,238,228,.55)';
+  jctx.lineWidth = 2;
+  jctx.setLineDash([10, 7]);
+  jctx.beginPath(); jctx.moveTo(10, h - 8); jctx.lineTo(w - 10, h - 8); jctx.stroke();
+  jctx.setLineDash([]);
+  if (J.balle) {
+    /* L'ombre au sol dit où le ballon va tomber. */
+    const ombre = Math.max(0.15, 1 - (JONGLES.hauteur - J.balle.y) / JONGLES.hauteur);
+    jctx.fillStyle = `rgba(0,0,0,${0.45 * ombre})`;
+    jctx.beginPath();
+    jctx.ellipse(J.balle.x * k, h - 8, JONGLES.rayon * k * (0.5 + ombre * 0.5), 6, 0, 0, Math.PI * 2);
+    jctx.fill();
+    dessinerBallon(jctx, J.balle.x * k, J.balle.y * k, JONGLES.rayon * k);
+  }
+}
+
+function boucleJongles(t) {
+  if (J.fini) return;
+  const dt = Math.min(0.033, (t - J.dernier) / 1000);
+  J.dernier = t;
+  const b = J.balle;
+  if (J.compte > 0) {
+    b.vy += J.graviteAct * dt;
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    const r = JONGLES.rayon;
+    if (b.x < r) { b.x = r; b.vx = Math.abs(b.vx) * 0.8; }
+    if (b.x > JONGLES.largeur - r) { b.x = JONGLES.largeur - r; b.vx = -Math.abs(b.vx) * 0.8; }
+    if (b.y > JONGLES.hauteur - r) { b.y = JONGLES.hauteur - r; finirJongles(); }
+  }
+  dessinerJongles();
+  J.raf = requestAnimationFrame(boucleJongles);
+}
+
+function frapper(e) {
+  if (J.fini || !J.balle) return;
+  const r = jc.getBoundingClientRect();
+  const k = JONGLES.largeur / r.width;
+  const x = (e.clientX - r.left) * k;
+  const y = (e.clientY - r.top) * k;
+  const b = J.balle;
+  if (Math.hypot(x - b.x, y - b.y) > JONGLES.portee) return;
+  /* Il monte encore : pas de frappe. Le premier toucher lance la partie. */
+  if (J.compte > 0 && b.vy < 0) return;
+  const t = performance.now();
+  if (!J.compte) J.t0 = t;
+  J.frappes.push(Math.round(t - J.t0));
+  J.compte++;
+  J.graviteAct = Math.min(JONGLES.graviteMax, JONGLES.gravite + J.compte * JONGLES.graviteParJongle);
+  b.vy = -JONGLES.elan;
+  b.vx = (b.x - x) * JONGLES.deviation + (J.rnd() - 0.5) * JONGLES.vent * 2;
+  $('j-compte').textContent = J.compte;
+  $('j-consigne').textContent = '';
+  if (J.compte % 10 === 0) $('j-bulle').textContent = cri('serie');
+  else if (J.compte === 3) $('j-bulle').textContent = '';
+  window.FX?.vibrer?.(12);
+}
+
+async function lancerJongles() {
+  $('j-jouer').disabled = true;
+  let p;
+  try { p = await api('/jongles', {}); } catch (e) { dire(e); $('j-jouer').disabled = false; return; }
+  $('j-jouer').disabled = false;
+  $('j-accueil').hidden = true;
+  $('j-terrain').hidden = false;
+  $('j-fin').hidden = true;
+  J.partie = p.id;
+  J.rnd = hasard(p.graine);
+  J.balle = { x: JONGLES.largeur / 2, y: JONGLES.hauteur * 0.55, vx: 0, vy: 0 };
+  J.compte = 0;
+  J.frappes = [];
+  J.graviteAct = JONGLES.gravite;
+  J.fini = false;
+  J.taille = tailleCanvas(jc);
+  $('j-compte').textContent = '0';
+  $('j-consigne').textContent = 'Tape le ballon pour commencer';
+  $('j-bulle').textContent = cri('debut');
+  const src = imageFanzzy(avatar);
+  $('j-fz').hidden = !src;
+  if (src) $('j-fz').src = src;
+  J.dernier = performance.now();
+  J.raf = requestAnimationFrame(boucleJongles);
+  $('j-terrain').scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+async function finirJongles() {
+  J.fini = true;
+  cancelAnimationFrame(J.raf);
+  dessinerJongles();
+  let r = null;
+  try { r = await api(`/jongles/${J.partie}`, { score: J.compte, frappes: J.frappes }); }
+  catch (e) { if (e.message !== 'auth') toast('Score non enregistré'); }
+  $('j-score').textContent = J.compte;
+  const lignes = [`jongle${J.compte > 1 ? 's' : ''}`];
+  if (r?.nouveauRecord) lignes.push('<span class="tbf-sticker">NOUVEAU RECORD</span>');
+  else if (r) lignes.push(`Ton record : ${r.record}`);
+  if (r?.echarpes) {
+    lignes.push(`+${r.echarpes} écharpes`);
+    window.dispatchEvent(new Event('tbf:bourse'));
+  }
+  else if (r && J.compte >= (etat?.gains?.jongles?.parEcharpe ?? 5)) lignes.push('Plafond du jour atteint : on joue pour la gloire');
+  $('j-bilan').innerHTML = lignes.join('<br>');
+  $('j-bulle').textContent = r?.nouveauRecord ? cri('record') : cri('rate');
+  if (avatar) {
+    const src = imageFanzzy(avatar, r?.nouveauRecord ? 'joie' : 'depit');
+    if (src) $('j-fz').src = src;
+  }
+  $('j-fin').hidden = false;
+  charger();
+}
+
+jc.addEventListener('pointerdown', frapper);
+$('j-jouer').addEventListener('click', lancerJongles);
+$('j-rejouer').addEventListener('click', lancerJongles);
+$('j-quitter').addEventListener('click', () => {
+  $('j-terrain').hidden = true;
+  $('j-accueil').hidden = false;
+  $('c-jongles').scrollIntoView({ block: 'start', behavior: 'smooth' });
+});
+
+/* ========================================================== les tirs au but
+
+   Le but en haut du terrain, coupé en six zones (trois colonnes, deux rangs).
+   Tirer : glisser du ballon vers la zone visée ; la vitesse du geste donne la
+   force. Plonger : toucher une zone avant la fin du compte à rebours, sinon le
+   gardien reste au milieu, au ras du sol. Rien n'est réglé ici : le serveur
+   reçoit les cinq tirs et les cinq plongeons, et règle la série. */
+
+const tc = $('t-canvas');
+const tctx = tc.getContext('2d');
+const T = { tirs: [], arrets: [], tour: 0, phase: null, ami: null, releve: null,
+  glisse: null, plongeonT: 0, anim: null, taille: null };
+/* Le but, en fractions du terrain. */
+const BUT = { x: 0.1, y: 0.1, w: 0.8, h: 0.3 };
+
+function zoneDe(px, py) {
+  const { w, h } = T.taille;
+  const gx = (px / w - BUT.x) / BUT.w;
+  const gy = (py / h - BUT.y) / BUT.h;
+  if (gx < 0 || gx >= 1 || gy < 0 || gy >= 1) return null;
+  const col = Math.min(2, Math.floor(gx * 3));
+  const rang = gy < 0.5 ? 1 : 0;
+  return rang * 3 + col;
+}
+
+function centreZone(z) {
+  const { w, h } = T.taille;
+  const col = z % 3;
+  const rang = Math.floor(z / 3);
+  return { x: (BUT.x + BUT.w * (col + 0.5) / 3) * w, y: (BUT.y + BUT.h * (rang ? 0.25 : 0.75)) * h };
+}
+
+function dessinerTirs() {
+  const { w, h, dpr } = T.taille;
+  tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  tctx.clearRect(0, 0, w, h);
+  const bx = BUT.x * w; const by = BUT.y * h; const bw = BUT.w * w; const bh = BUT.h * h;
+  /* Le filet, puis les montants à la craie. */
+  tctx.strokeStyle = 'rgba(242,238,228,.16)';
+  tctx.lineWidth = 1;
+  for (let i = 1; i < 16; i++) {
+    tctx.beginPath(); tctx.moveTo(bx + bw * i / 16, by); tctx.lineTo(bx + bw * i / 16, by + bh); tctx.stroke();
+  }
+  for (let i = 1; i < 7; i++) {
+    tctx.beginPath(); tctx.moveTo(bx, by + bh * i / 7); tctx.lineTo(bx + bw, by + bh * i / 7); tctx.stroke();
+  }
+  if (T.phase === 'arret') {
+    tctx.strokeStyle = 'rgba(245,195,59,.5)';
+    tctx.setLineDash([6, 6]);
+    for (let c = 1; c < 3; c++) {
+      tctx.beginPath(); tctx.moveTo(bx + bw * c / 3, by); tctx.lineTo(bx + bw * c / 3, by + bh); tctx.stroke();
+    }
+    tctx.beginPath(); tctx.moveTo(bx, by + bh / 2); tctx.lineTo(bx + bw, by + bh / 2); tctx.stroke();
+    tctx.setLineDash([]);
+  }
+  tctx.strokeStyle = '#F2EEE4';
+  tctx.lineWidth = 5;
+  tctx.lineCap = 'round';
+  tctx.beginPath(); tctx.moveTo(bx, by + bh); tctx.lineTo(bx, by); tctx.lineTo(bx + bw, by); tctx.lineTo(bx + bw, by + bh);
+  tctx.stroke();
+  /* Le point de penalty et la surface. */
+  tctx.lineWidth = 2;
+  tctx.strokeStyle = 'rgba(242,238,228,.45)';
+  tctx.beginPath(); tctx.moveTo(0, by + bh + 4); tctx.lineTo(w, by + bh + 4); tctx.stroke();
+  tctx.fillStyle = 'rgba(242,238,228,.6)';
+  tctx.beginPath(); tctx.arc(w / 2, h * 0.82, 3, 0, Math.PI * 2); tctx.fill();
+
+  /* Le gardien : un trait de craie, bras écartés. */
+  const g = T.anim?.gardien ?? { x: w / 2, y: by + bh * 0.72 };
+  tctx.strokeStyle = T.phase === 'arret' ? '#F5C33B' : '#C2CAD6';
+  tctx.lineWidth = 6;
+  tctx.beginPath(); tctx.arc(g.x, g.y - bh * 0.32, bh * 0.1, 0, Math.PI * 2); tctx.stroke();
+  tctx.beginPath(); tctx.moveTo(g.x, g.y - bh * 0.2); tctx.lineTo(g.x, g.y + bh * 0.12);
+  tctx.moveTo(g.x - bw * 0.1, g.y - bh * 0.16); tctx.lineTo(g.x + bw * 0.1, g.y - bh * 0.16);
+  tctx.moveTo(g.x, g.y + bh * 0.12); tctx.lineTo(g.x - bw * 0.04, g.y + bh * 0.25);
+  tctx.moveTo(g.x, g.y + bh * 0.12); tctx.lineTo(g.x + bw * 0.04, g.y + bh * 0.25);
+  tctx.stroke();
+
+  const b = T.anim?.balle ?? { x: w / 2, y: h * 0.82 };
+  dessinerBallon(tctx, b.x, b.y, w * 0.045 * (T.anim?.echelle ?? 1));
+  if (T.glisse) {
+    tctx.strokeStyle = 'rgba(245,195,59,.8)';
+    tctx.lineWidth = 3;
+    tctx.beginPath(); tctx.moveTo(T.glisse.x0, T.glisse.y0); tctx.lineTo(T.glisse.x, T.glisse.y); tctx.stroke();
+  }
+}
+
+/** Le ballon (et le gardien) vont où le tir et le plongeon les envoient. */
+function animer(versBalle, versGardien, ms = 520) {
+  const { w, h } = T.taille;
+  const de = { x: w / 2, y: h * 0.82 };
+  const g0 = { x: w / 2, y: (BUT.y + BUT.h * 0.72) * h };
+  return new Promise((fin) => {
+    const t0 = performance.now();
+    const pas = (t) => {
+      const p = Math.min(1, (t - t0) / ms);
+      const e = 1 - (1 - p) ** 3;
+      T.anim = {
+        balle: { x: de.x + (versBalle.x - de.x) * e, y: de.y + (versBalle.y - de.y) * e },
+        gardien: versGardien ? { x: g0.x + (versGardien.x - g0.x) * e, y: g0.y + (versGardien.y - g0.y) * e } : g0,
+        echelle: 1 - 0.35 * e,
+      };
+      dessinerTirs();
+      if (p < 1) requestAnimationFrame(pas); else setTimeout(fin, 380);
+    };
+    requestAnimationFrame(pas);
+  });
+}
+
+function consigne() {
+  const n = T.tour + 1;
+  $('t-compte').textContent = `${n} / ${TIRS.NOMBRE}`;
+  if (T.phase === 'tir') $('t-consigne').textContent = 'À toi de tirer : glisse le ballon vers le but';
+  else $('t-consigne').textContent = 'Dans les buts : touche le coin où tu plonges';
+}
+
+function commencerTirs({ ami = null, releve = null } = {}) {
+  T.tirs = []; T.arrets = []; T.tour = 0; T.phase = 'tir'; T.ami = ami; T.releve = releve;
+  T.anim = null; T.glisse = null;
+  $('t-accueil').hidden = true;
+  $('t-terrain').hidden = false;
+  $('t-fin').hidden = true;
+  T.taille = tailleCanvas(tc);
+  consigne();
+  dessinerTirs();
+  $('t-terrain').scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+const posTerrain = (e) => {
+  const r = tc.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+};
+
+tc.addEventListener('pointerdown', (e) => {
+  if (!T.taille || T.anim?.occupe) return;
+  const p = posTerrain(e);
+  if (T.phase === 'tir') {
+    tc.setPointerCapture?.(e.pointerId);
+    T.glisse = { x0: p.x, y0: p.y, x: p.x, y: p.y, t0: performance.now() };
+  } else if (T.phase === 'arret') {
+    const z = zoneDe(p.x, p.y);
+    if (z != null) plonger(z);
+  }
+});
+tc.addEventListener('pointermove', (e) => {
+  if (!T.glisse) return;
+  const p = posTerrain(e);
+  T.glisse.x = p.x; T.glisse.y = p.y;
+  dessinerTirs();
+});
+tc.addEventListener('pointerup', async (e) => {
+  if (!T.glisse) return;
+  const g = T.glisse;
+  T.glisse = null;
+  const p = posTerrain(e);
+  const dist = Math.hypot(p.x - g.x0, p.y - g.y0);
+  if (dist < 30 || p.y > g.y0) { dessinerTirs(); return; }
+  const ms = Math.max(1, performance.now() - g.t0);
+  /* La force : la vitesse du geste, mesurée en hauteurs de terrain par
+     seconde. Un geste vif et franc tombe vers 0,7 ; au-delà de 0,92, le
+     ballon passe au-dessus. */
+  const vitesse = dist / T.taille.h / (ms / 1000);
+  const force = Math.max(0, Math.min(1, vitesse / 4));
+  let zone = zoneDe(p.x, p.y);
+  /* Relâché hors du cadre : le tir part à côté ou au-dessus. */
+  const hors = zone == null;
+  if (hors) zone = p.x < T.taille.w / 2 ? 3 : 5;
+  T.tirs.push({ zone, force: hors ? 1 : Math.round(force * 100) / 100 });
+  T.anim = { occupe: true };
+  const cible = hors || force > TIRS.FORCE_MAX
+    ? { x: p.x, y: (BUT.y * T.taille.h) - 26 } : centreZone(zone);
+  await animer(cible, null);
+  $('t-consigne').textContent = hors ? 'À côté !' : force > TIRS.FORCE_MAX ? 'Au-dessus !'
+    : force < 0.55 ? 'Un peu mou…' : 'Bien frappé !';
+  setTimeout(() => {
+    T.anim = null;
+    T.phase = 'arret';
+    consigne();
+    dessinerTirs();
+    T.plongeonT = setTimeout(() => plonger(1), 3000);
+  }, 650);
+});
+
+async function plonger(z) {
+  if (T.phase !== 'arret') return;
+  clearTimeout(T.plongeonT);
+  T.arrets.push(z);
+  T.phase = null;
+  const c = centreZone(z);
+  T.anim = { occupe: true };
+  await animer({ x: T.taille.w / 2, y: T.taille.h * 0.82 }, c, 360);
+  T.anim = null;
+  T.tour++;
+  if (T.tour >= TIRS.NOMBRE) return envoyerTirs();
+  T.phase = 'tir';
+  consigne();
+  dessinerTirs();
+}
+
+async function envoyerTirs() {
+  $('t-consigne').textContent = 'Le règlement de la série…';
+  const jeu = { tirs: T.tirs, arrets: T.arrets };
+  let r;
+  try {
+    r = T.releve ? await api(`/tirs/${T.releve}`, { jeu })
+      : await api('/tirs', T.ami ? { jeu, ami: T.ami } : { jeu });
+  } catch (e) {
+    dire(e);
+    fermerTirs();
+    return;
+  }
+  if (r.echarpes) window.dispatchEvent(new Event('tbf:bourse'));
+  if (r.etat === 'jouee') {
+    $('t-score').textContent = `${r.mesButs} – ${r.sesButs}`;
+    const mot = { victoire: 'Victoire !', nul: 'Match nul', defaite: 'Perdu, de peu' }[r.issue];
+    $('t-resume').innerHTML = `<b class="issue-${r.issue}">${mot}</b>${
+      r.echarpes ? `<br>+${r.echarpes} écharpes` : ''}<br>${deroule(r.coups)}`;
+  } else {
+    $('t-score').textContent = '⏳';
+    $('t-resume').innerHTML = T.ami
+      ? 'Ton défi est lancé. Ton ami tirera à son tour, et tu verras le résultat ici.'
+      : 'Ta série attend un adversaire. Tu verras le résultat ici dès qu’il aura tiré.';
+  }
+  $('t-fin').hidden = false;
+  charger();
+}
+
+function fermerTirs() {
+  clearTimeout(T.plongeonT);
+  T.phase = null;
+  $('t-terrain').hidden = true;
+  $('t-accueil').hidden = false;
+  $('t-amis').hidden = true;
+}
+$('t-fermer').addEventListener('click', fermerTirs);
+
+function deroule(coups) {
+  const lettre = { but: 'BUT', arret: 'ARRÊT', dessus: 'RATÉ' };
+  const mes = coups.filter((c) => c.moi);
+  const ses = coups.filter((c) => !c.moi);
+  return `<div class="deroule"><span class="rang">TES TIRS</span>${
+    mes.map((c) => `<i class="${c.issue}">${lettre[c.issue]}</i>`).join('')
+  }<span class="rang">SES TIRS</span>${ses.map((c) => `<i class="${c.issue}">${lettre[c.issue]}</i>`).join('')}</div>`;
+}
+
+function dessinerSeries(series) {
+  const el = $('t-series');
+  if (!series?.length) {
+    el.innerHTML = '<div class="vide-liste">Aucune série pour l’instant.</div>';
+    return;
+  }
+  el.innerHTML = series.map((s) => {
+    const qui = s.adversaire?.machine ? 'Le Fanzzy de la machine'
+      : s.adversaire?.pseudo ? esc(s.adversaire.pseudo) : 'Un inconnu';
+    if (s.etat === 'a_relever') {
+      return `<div class="serie nouveau"><div class="qui"><b>${qui}</b><span>te défie aux tirs au but</span></div>`
+        + `<button class="tbf-plaque" data-ton="flare" data-relever="${s.id}">RELEVER</button></div>`;
+    }
+    if (s.etat === 'attend') {
+      return `<div class="serie"><div class="qui"><b>${s.ami ? qui : 'Un adversaire'}</b>`
+        + `<span>${s.ami ? 'n’a pas encore tiré' : 'attendu'}</span></div><span class="sc">⏳</span></div>`;
+    }
+    const mot = { victoire: 'gagnée', nul: 'nulle', defaite: 'perdue' }[s.issue];
+    return `<div class="serie${s.nouveau ? ' nouveau' : ''}"><div class="qui"><b>${qui}</b>`
+      + `<span class="issue-${s.issue}">${s.nouveau ? 'Nouveau · ' : ''}série ${mot}</span></div>`
+      + `<span class="sc">${s.mesButs} – ${s.sesButs}</span></div>`;
+  }).join('');
+}
+
+$('t-series').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-relever]');
+  if (b) commencerTirs({ releve: Number(b.dataset.relever) });
+});
+$('t-hasard').addEventListener('click', () => commencerTirs());
+$('t-ami').addEventListener('click', async () => {
+  const el = $('t-amis');
+  if (!el.hidden) { el.hidden = true; return; }
+  let amis = [];
+  try {
+    const r = await fetch('/api/amis', { credentials: 'same-origin' });
+    amis = (await r.json()).amis ?? [];
+  } catch { /* la liste reste vide */ }
+  el.innerHTML = amis.length
+    ? amis.map((a) => `<button data-ami="${esc(a.id)}">${esc(a.pseudo)}</button>`).join('')
+    : '<div class="vide-liste">Pas encore d’amis. Ajoute-les depuis <a href="/amis">Mes amis</a>.</div>';
+  el.hidden = false;
+});
+$('t-amis').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ami]');
+  if (b) commencerTirs({ ami: b.dataset.ami });
+});
+
+window.addEventListener('resize', () => {
+  if (!$('j-terrain').hidden) { J.taille = tailleCanvas(jc); dessinerJongles(); }
+  if (!$('t-terrain').hidden) { T.taille = tailleCanvas(tc); dessinerTirs(); }
+});
+
+charger();
+</script>
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

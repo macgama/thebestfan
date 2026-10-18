@@ -39,6 +39,7 @@ import { createAbonnement } from './src/server/abonnement/index.js';
 import { createContenus } from './src/server/contenus/index.js';
 import { createAide } from './src/server/aide/index.js';
 import { createPronostics } from './src/server/pronostics/index.js';
+import { createJeux } from './src/server/jeux/index.js';
 import { createQuotidien, sonderJourDeJeu, phraseJourDeJeu }
   from './src/server/quotidien/index.js';
 import { createRepetition } from './src/server/repetition/index.js';
@@ -472,6 +473,19 @@ if (process.env.DATABASE_URL) {
     }
     console.log('administration active');
 
+    /* Les saisons se lancent seules à leur jour d'ouverture (choix de Gaël,
+       18 octobre 2026). Au démarrage, pour un serveur arrêté ce jour-là, puis
+       toutes les cinq minutes : le 1er janvier, la saison 2 ouvre peu après
+       minuit, jour de la base. Sans `await` : le démarrage n'attend pas. */
+    const saisonsAuto = () => admin.lancerAuto()
+      .catch((e) => console.error('[saisons] lancement automatique', e.message));
+    /* D'abord les saisons du calendrier (`shared/saisons-prevues.js`), posées
+       en brouillon une fois chacune ; ensuite le premier passage. */
+    admin.amorcerSaisonsPrevues()
+      .catch((e) => console.error('[saisons] saisons prévues', e.message))
+      .then(saisonsAuto);
+    setInterval(saisonsAuto, 5 * 60 * 1000).unref();
+
     // ---- classements
     classements = createClassements({ pool, requireAuth: auth.requireAuth, abonnement });
     app.use('/api/rank', classements.router);
@@ -580,6 +594,11 @@ if (process.env.DATABASE_URL) {
        est branché plus bas (`onFinished`). */
     const pronostics = createPronostics({ pool, requireAuth: auth.requireAuth });
     app.use('/api/pronostics', pronostics.router);
+
+    /* Les mini-jeux d'entre les matchs : jongles et tirs au but (18 octobre
+       2026). Des écharpes par le grand livre, comme le pronostic. */
+    const jeux = createJeux({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/jeux', jeux.router);
 
     /* **La sonde du jour de jeu.** Le jour change au minuit de la base, celui
        des quotas gratuits : si la base n'est pas à l'heure de Zurich, missions
@@ -1168,6 +1187,7 @@ app.get('/duel-nvn', (_req, res) => page(res, 'duel-nvn.html'));
 app.get('/fanzzy', (_req, res) => page(res, 'fanzzy.html'));
 app.get('/virage', (_req, res) => page(res, 'virage.html'));
 app.get('/carnet', (_req, res) => page(res, 'carnet.html'));
+app.get('/jeux', (_req, res) => page(res, 'jeux.html'));
 /* L'aide porte les deux : le parcours des premiers pas et la FAQ. Une seule
    page parce qu'un joueur bloque rarement sur une question pure — il bloque sur
    ce qu'il est en train de faire, et la réponse est à côté de l'étape. */
