@@ -2747,6 +2747,9 @@ function connect() {
     // qui s'est passé avant, pas un écran vide.
     renderFil();
     if (premier) entrer(); else ambianceDuMatch();
+    /* Le tifo du club se lève à l'entrée du match commencé, ou à son coup
+       d'envoi si l'on est là avant (`tifo.js`). */
+    if (premier) window.TBF_TIFO?.auMatch(S.fixture.id);
     /* Entré, ou revenu, après le coup de sifflet : l'état le dit, et
        `virage:fin` ne viendra pas (§ 15.3). */
     if (FINS_DE_MATCH.includes(s.statut)) coupDeSifflet();
@@ -3324,6 +3327,7 @@ function connect() {
 <script src="/fx.js" defer></script>
 <!-- La fête de niveau, après fx.js dont elle emploie les compteurs. -->
 <script src="/niveau-fete.js" defer></script>
+<script src="/tifo.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 <script src="/pwa.js" defer></script>
