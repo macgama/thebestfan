@@ -856,8 +856,9 @@ export const REGLAGES = [
 
   { cle: 'jeux.echarpes_jour', section: 'minijeux', type: 'entier',
     titre: 'Au plus, par jour et par joueur', unite: 'écharpes', min: 0, max: 500, defaut: 40,
-    aide: 'Les jongles et les tirs au but ensemble. Au-delà, on joue encore pour le ' +
-      'classement, sans écharpe.' },
+    aide: 'Les jongles, les tirs au but, le chant en rythme et le déplacement ensemble. ' +
+      'Au-delà, on joue encore pour le classement, sans écharpe. Le tifo et le boss se ' +
+      'paient en plus.' },
 
   { cle: 'jeux.jongles_par_echarpe', section: 'minijeux', type: 'entier',
     titre: 'Une écharpe tous les', unite: 'jongles', min: 1, max: 100, defaut: 5,
@@ -885,6 +886,54 @@ export const REGLAGES = [
     aide: 'Une série contre un inconnu attend ce temps qu’un autre joueur la relève. Un ' +
       'défi à un ami attend trois fois plus. Contre la machine, la série ne compte pas au ' +
       'classement.' },
+
+  /* Les quatre jeux suivants (18 octobre 2026) : le chant en rythme et le
+     déplacement, seuls pour un record, sous le même plafond du jour ; le tifo
+     et le boss, ensemble pour le club, payés en plus du plafond, une fois par
+     match ou par semaine. */
+  { cle: 'jeux.chant_par_echarpe', section: 'minijeux', type: 'entier',
+    titre: 'Chant en rythme : une écharpe tous les', unite: 'points', min: 100, max: 100000,
+    defaut: 2000, aide: 'Un chant joué proprement fait dans les 15 000 points ; un chant parfait, ' +
+      'plus de 30 000.' },
+
+  { cle: 'jeux.chant_max_partie', section: 'minijeux', type: 'entier',
+    titre: 'Un chant rapporte au plus', unite: 'écharpes', min: 0, max: 200, defaut: 12,
+    aide: 'Pour qu’un seul chant ne fasse pas la journée.' },
+
+  { cle: 'jeux.deplacement_par_echarpe', section: 'minijeux', type: 'entier',
+    titre: 'Déplacement : une écharpe tous les', unite: 'mètres', min: 10, max: 10000,
+    defaut: 100, aide: 'Les tickets ramassés en route comptent pour 20 mètres chacun.' },
+
+  { cle: 'jeux.deplacement_max_partie', section: 'minijeux', type: 'entier',
+    titre: 'Un déplacement rapporte au plus', unite: 'écharpes', min: 0, max: 200, defaut: 12,
+    aide: 'Pour qu’une seule course ne fasse pas la journée.' },
+
+  { cle: 'jeux.tifo_cases_jour', section: 'minijeux', type: 'entier',
+    titre: 'Tifo : cases peintes par jour et par supporter', unite: 'cases', min: 1, max: 240,
+    defaut: 15, aide: 'Le tifo compte 240 cases : il faut une bonne tribune pour le finir avant ' +
+      'le match.' },
+
+  { cle: 'jeux.tifo_seuil', section: 'minijeux', type: 'entier',
+    titre: 'Tifo réussi à partir de', unite: '%', min: 1, max: 100, defaut: 60,
+    aide: 'La part des cases à la bonne couleur au coup d’envoi. En dessous, le tifo se lève ' +
+      'quand même, sans récompense.' },
+
+  { cle: 'jeux.tifo_gain', section: 'minijeux', type: 'entier',
+    titre: 'Un tifo réussi rapporte', unite: 'écharpes', min: 0, max: 500, defaut: 15,
+    aide: 'À chaque supporter qui a peint au moins une case.' },
+
+  { cle: 'jeux.boss_voix_par_supporter', section: 'minijeux', type: 'entier',
+    titre: 'La voix du boss, par supporter du club', unite: 'chants', min: 1, max: 500,
+    defaut: 8, aide: 'Le boss de la semaine a autant de voix que de chants réussis à faire, ' +
+      'au moins le minimum ci-dessous. Compte : les supporters qui suivent ce club.' },
+
+  { cle: 'jeux.boss_voix_min', section: 'minijeux', type: 'entier',
+    titre: 'La voix du boss, au moins', unite: 'chants', min: 1, max: 100000, defaut: 40,
+    aide: 'Pour qu’un club de deux supporters ait aussi un vrai boss.' },
+
+  { cle: 'jeux.boss_gain', section: 'minijeux', type: 'entier',
+    titre: 'Faire taire le boss rapporte', unite: 'écharpes', min: 0, max: 500, defaut: 20,
+    aide: 'À chaque supporter qui a réussi au moins un chant contre lui cette semaine-là.' },
 ];
 
 /** Le registre indexé par clé. */
