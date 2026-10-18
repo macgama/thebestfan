@@ -52,9 +52,13 @@ import { grandLivreFerme } from './auth/schema.js';
     l'idempotence par match tient dans la clé primaire qui existe.
 
     `prono` (6 octobre 2026) : les écharpes d'un pronostic juste, une fois par
-    match — la clé est l'identifiant du match, comme `virage`. */
+    match — la clé est l'identifiant du match, comme `virage`.
+
+    `jongles` et `tirs` (18 octobre 2026) : les écharpes des mini-jeux, une
+    fois par partie — la clé est l'identifiant de la partie (des tirs : la
+    série). */
 export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
-  'virage', 'prono'];
+  'virage', 'prono', 'jongles', 'tirs'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',

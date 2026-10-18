@@ -379,7 +379,7 @@ console.log('\n— les arènes —');
      complète. */
   const apresArenes = ORDRE.slice(ORDRE.indexOf('arenes') + 1);
   check('sql/arenes.sql n’est suivi que de ce qui ne dépend pas de lui',
-    apresArenes.every((f) => f === 'collection-stades' || f === 'pronostics')
+    apresArenes.every((f) => f === 'collection-stades' || f === 'pronostics' || f === 'mini-jeux')
     || (console.log('        après :', apresArenes.join(', ')), false));
   check('et vient après ce qu’il complète (souvenirs, quotidien)',
     ORDRE.indexOf('arenes') > Math.max(ORDRE.indexOf('souvenirs'), ORDRE.indexOf('quotidien')));
