@@ -219,6 +219,8 @@ const ECRANS = [
   ['/confidentialite', 'confidentialité'],
   ['/repetition', 'répétition'],
   ['/jeux', 'mini-jeux'],
+  // La page « Comment jouer » (18 octobre 2026), au pied du menu de chaque page.
+  ['/comment-jouer', 'comment jouer'],
   ['/diagnostic', 'diagnostic'],
   ['/admin', 'administration'],
 ];
