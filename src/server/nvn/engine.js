@@ -8,6 +8,7 @@ import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 import { seuilLegende, chantReussi } from '../../shared/legende.js';
+import { chantReussiPour } from '../jeux/voix.js';
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
 import { ouverts, stadeDuMatch } from '../contenus/index.js';
@@ -583,7 +584,11 @@ export class DuelNvN {
       ...(sien ? { sien: true, famille: fz.type ?? null } : {}),
     })];
     // Sur la note du geste, comme le verdict du Virage : avant les modificateurs.
-    if (chantReussi(q)) this.eveiller(j, evenements);
+    if (chantReussi(q)) {
+      this.eveiller(j, evenements);
+      // Contre le boss de la semaine (`jeux/voix.js`).
+      chantReussiPour(userId);
+    }
 
     // Les charges d'un modificateur temporaire se consomment au chant.
     for (const e of j.effets) if (e.charges !== undefined && e.mods) e.charges--;

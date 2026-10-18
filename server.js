@@ -40,6 +40,7 @@ import { createContenus } from './src/server/contenus/index.js';
 import { createAide } from './src/server/aide/index.js';
 import { createPronostics } from './src/server/pronostics/index.js';
 import { createJeux } from './src/server/jeux/index.js';
+import { brancherLaVoix } from './src/server/jeux/voix.js';
 import { createQuotidien, sonderJourDeJeu, phraseJourDeJeu }
   from './src/server/quotidien/index.js';
 import { createRepetition } from './src/server/repetition/index.js';
@@ -595,10 +596,12 @@ if (process.env.DATABASE_URL) {
     const pronostics = createPronostics({ pool, requireAuth: auth.requireAuth });
     app.use('/api/pronostics', pronostics.router);
 
-    /* Les mini-jeux d'entre les matchs : jongles et tirs au but (18 octobre
-       2026). Des écharpes par le grand livre, comme le pronostic. */
+    /* Les mini-jeux d'entre les matchs (18 octobre 2026). Des écharpes par le
+       grand livre, comme le pronostic. Les chants réussis au Virage et au
+       duel nourrissent la tribune contre le boss (`jeux/voix.js`). */
     const jeux = createJeux({ pool, requireAuth: auth.requireAuth });
     app.use('/api/jeux', jeux.router);
+    brancherLaVoix(pool);
 
     /* **La sonde du jour de jeu.** Le jour change au minuit de la base, celui
        des quotas gratuits : si la base n'est pas à l'heure de Zurich, missions

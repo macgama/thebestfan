@@ -15,6 +15,7 @@ import { apportsDe, seulsLesMods } from '../../shared/apports.js';
 // PARFAIT qui fait la série, et la note qu'ils mesurent tous les trois.
 import { verdictDe, estParfait, criDe, auMoins, noteDuVerdict } from '../../shared/verdict.js';
 import { seuilLegende, chantReussi } from '../../shared/legende.js';
+import { chantReussiPour } from '../jeux/voix.js';
 
 /**
  * Les trois fins d'un match, celles que le contrat appelle « le coup de
@@ -785,7 +786,10 @@ export class VirageRoom {
        pas (voir `crediter`), un chant d'un autre verdict la remet à zéro. */
     const mesuree = noteDuVerdict(brut, plancherMordu);
     const verdict = verdictDe(mesuree);
-    if (chantReussi(mesuree)) this.eveiller(m);
+    if (chantReussi(mesuree)) {
+      this.eveiller(m);
+      chantReussiPour(m.userId);
+    }
     const parfait = estParfait(mesuree);
     m.chants = (m.chants ?? 0) + 1;
     if (parfait) {
