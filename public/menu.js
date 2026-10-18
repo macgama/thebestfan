@@ -134,6 +134,7 @@
        alors que les vingt autres écrans se nomment. */
     '/collection': 'Collection', '/abonnement': 'Abonnement',
     '/confidentialite': 'Confidentialité',
+    '/comment-jouer': 'Comment jouer',
   };
 
   const ICONES = {
@@ -167,6 +168,8 @@
     /* L'abonnement : une carte d'abonné, sa bande et son nom. Il prenait le
        panier de la boutique, sa voisine de rubrique — même raison. */
     abonnement: 'M3 6h18v12H3zM3 10h18M7 14h5',
+    // Un point d'interrogation dans un rond : la page qui explique tout.
+    comment: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.8M12 17v.5',
     compte: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3',
     admin: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6zM9 12l2 2 4-4',
     sortie: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l-4 4 4 4M6 12h9',
@@ -838,6 +841,10 @@
       + 'Installer l’application</button>'
       + '<p class="tbf-installer-ios" id="tbf-installer-ios" hidden>Pour l’avoir en plein écran : '
       + '<b>Partager</b>, puis <b>Sur l’écran d’accueil</b>.</p>'
+      /* **Comment jouer** (18 octobre 2026) : tout ce que le jeu permet,
+         expliqué, et la visite guidée à relancer. En tête des liens du pied :
+         c'est ce qu'on y vient chercher quand on est perdu. */
+      + item('/comment-jouer', 'comment', 'Comment jouer', ici('/comment-jouer') ? 'on' : '')
       + item('/profil', 'profil', 'Mon profil', ici('/profil') ? 'on' : '')
       + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
       + item('#', 'sortie', 'Se déconnecter', 'sortie')
