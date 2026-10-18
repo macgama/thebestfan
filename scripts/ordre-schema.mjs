@@ -111,4 +111,7 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      (auth.sql), et rien d'autre. Ses versements passent par le grand livre
      de quotidien.sql, qu'il ne modifie pas. Rien n'en dépend : le dernier
      rang. */
-  'pronostics'];
+  'pronostics',
+  /* Les mini-jeux d’entre les matchs (18 octobre 2026) : deux tables neuves,
+     sans clé étrangère. */
+  'mini-jeux'];

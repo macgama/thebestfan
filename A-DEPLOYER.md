@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Les mini-jeux : les jongles et les tirs au but** (18 octobre 2026, demandés
+par Gaël). Construction, **schéma** (`npm run schema:appliquer`), puis
+redémarrage. Sans le schéma, la page `/jeux` dit « Les mini-jeux arrivent
+bientôt » (rien ne casse).
+
+- `sql/mini-jeux.sql` : deux tables neuves, `jeux_jongles` et `jeux_tirs`.
+- `/jeux` (menu, rubrique JOUER, « Les mini-jeux ») : les jongles, seul pour
+  un record ; les tirs au but, cinq tirs et cinq arrêts contre un inconnu ou
+  un ami, chacun quand il veut. Un classement par jeu, qui repart de zéro à
+  chaque saison.
+- Des écharpes à chaque partie, au plus 40 par jour pour les deux jeux.
+  Réglages dans `/admin`, LE JEU, RÉGLAGES, LES MINI-JEUX.
+
+---
+
 **Les saisons de trois mois, qui se lancent seules à leur date**
 (18 octobre 2026, demandé par Gaël). Construction puis redémarrage, sans
 schéma.
