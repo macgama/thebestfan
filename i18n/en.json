@@ -5503,5 +5503,10 @@
  "ton record": "your record",
  "au classement": "in the ranking",
  "points": "points",
- "V · N · D": "W · D · L"
+ "V · N · D": "W · D · L",
+ "Cinq tirs, cinq arrêts. Touche pour arrêter la visée sous le but, puis garde le doigt posé : la jauge de puissance monte, lâche pour tirer. Dans l’or, le ballon monte dans la lucarne ; dans le rouge, il passe au-dessus. Dans les buts, glisse le doigt vers le coin où tu plonges.": "Five shots, five saves. Tap to stop the aim under the goal, then keep your finger down: the power gauge rises, let go to shoot. In the gold, the ball flies into the top corner; in the red, it goes over. In goal, swipe toward the corner you dive to.",
+ "Touche pour arrêter la visée": "Tap to stop the aim",
+ "Garde le doigt posé, lâche pour tirer": "Keep your finger down, let go to shoot",
+ "Dans les buts : glisse le doigt pour plonger": "In goal: swipe to dive",
+ "Dans la lucarne !": "Top corner!"
 }

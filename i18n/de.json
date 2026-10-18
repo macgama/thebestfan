@@ -5503,5 +5503,10 @@
  "ton record": "dein Rekord",
  "au classement": "in der Rangliste",
  "points": "Punkte",
- "V · N · D": "S · U · N"
+ "V · N · D": "S · U · N",
+ "Cinq tirs, cinq arrêts. Touche pour arrêter la visée sous le but, puis garde le doigt posé : la jauge de puissance monte, lâche pour tirer. Dans l’or, le ballon monte dans la lucarne ; dans le rouge, il passe au-dessus. Dans les buts, glisse le doigt vers le coin où tu plonges.": "Fünf Schüsse, fünf Paraden. Tippe, um das Zielen unter dem Tor zu stoppen, und lass dann den Finger liegen: Die Kraftanzeige steigt, lass los zum Schießen. Im Gold fliegt der Ball in den Winkel, im Roten drüber. Im Tor wischst du in die Ecke, in die du springst.",
+ "Touche pour arrêter la visée": "Tippe, um das Zielen zu stoppen",
+ "Garde le doigt posé, lâche pour tirer": "Finger liegen lassen, loslassen zum Schießen",
+ "Dans les buts : glisse le doigt pour plonger": "Im Tor: wische, um zu springen",
+ "Dans la lucarne !": "In den Winkel!"
 }
