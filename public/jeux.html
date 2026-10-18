@@ -170,7 +170,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <section class="vue" id="v-tirs" hidden>
     <div class="bloc" id="t-accueil">
       <h2>LES TIRS AU BUT</h2>
-      <p>Cinq tirs, cinq arrêts. Glisse le doigt du ballon vers le coin du but : plus vite tu glisses, plus il part fort. Trop fort, il passe au-dessus. Dans les buts, touche le coin où tu plonges.</p>
+      <p>Cinq tirs, cinq arrêts. Touche pour arrêter la visée sous le but, puis garde le doigt posé : la jauge de puissance monte, lâche pour tirer. Dans l’or, le ballon monte dans la lucarne ; dans le rouge, il passe au-dessus. Dans les buts, glisse le doigt vers le coin où tu plonges.</p>
       <p>Ton adversaire joue sa série de son côté, quand il veut. La victoire rapporte <b id="t-gain">–</b> écharpes.</p>
       <div class="chiffres">
         <div><b id="t-points">–</b>points</div>
@@ -251,7 +251,7 @@ const dire = (e) => toast(ERREURS[e?.code] ?? 'Impossible pour le moment');
    que les deux disent la même chose. */
 const JONGLES = { largeur: 360, hauteur: 540, rayon: 30, gravite: 900, graviteParJongle: 14,
   graviteMax: 2200, elan: 760, deviation: 9, vent: 70, portee: 52 };
-const TIRS = { NOMBRE: 5, FORCE_MAX: 0.92 };
+const TIRS = { NOMBRE: 5, FORCE_MAX: 0.92, FORCE_ARRET: 0.55 };
 
 function hasard(graine) {
   let s = (Number(graine) >>> 0) || 1;
@@ -521,34 +521,78 @@ $('j-quitter').addEventListener('click', () => {
 
 /* ========================================================== les tirs au but
 
-   Le but en haut du terrain, coupé en six zones (trois colonnes, deux rangs).
-   Tirer : glisser du ballon vers la zone visée ; la vitesse du geste donne la
-   force. Plonger : toucher une zone avant la fin du compte à rebours, sinon le
-   gardien reste au milieu, au ras du sol. Rien n'est réglé ici : le serveur
-   reçoit les cinq tirs et les cinq plongeons, et règle la série. */
+   Le but en haut du terrain, coupé en six zones (trois colonnes, deux rangs),
+   et les tirs comme dans FIFA (demande de Gaël, 18 octobre 2026) :
+     — la visée : un curseur file d'un bout à l'autre de la jauge sous le but,
+       un peu plus large que le cadre ; on touche pour l'arrêter. Arrêté
+       au-delà d'un poteau, le tir part à côté ;
+     — la puissance : on garde le doigt posé, la jauge à côté du ballon monte,
+       on lâche pour tirer. Mou, le ballon reste au ras du sol et un gardien
+       du bon côté l'arrête ; plus fort, il file au ras du sol ; dans la bande
+       d'or, il monte dans la lucarne ; tout en haut, il passe au-dessus.
+   Dans les buts, on plonge en glissant le doigt vers le coin choisi (en
+   haut pour un plongeon haut) ; sans geste avant la fin du compte à rebours,
+   le gardien reste au milieu, au ras du sol. Rien n'est réglé ici : le
+   serveur reçoit les cinq tirs et les cinq plongeons, et règle la série. */
 
 const tc = $('t-canvas');
 const tctx = tc.getContext('2d');
 const T = { tirs: [], arrets: [], tour: 0, phase: null, ami: null, releve: null,
-  glisse: null, plongeonT: 0, anim: null, taille: null };
+  curseur: 0.5, visee: null, puissance: 0, charge: 0, glisse: null, plongeonT: 0,
+  finArret: 0, anim: null, taille: null, raf: 0, t0: 0 };
 /* Le but, en fractions du terrain. */
 const BUT = { x: 0.1, y: 0.1, w: 0.8, h: 0.3 };
-
-function zoneDe(px, py) {
-  const { w, h } = T.taille;
-  const gx = (px / w - BUT.x) / BUT.w;
-  const gy = (py / h - BUT.y) / BUT.h;
-  if (gx < 0 || gx >= 1 || gy < 0 || gy >= 1) return null;
-  const col = Math.min(2, Math.floor(gx * 3));
-  const rang = gy < 0.5 ? 1 : 0;
-  return rang * 3 + col;
-}
+/* La jauge de visée déborde du cadre de cette fraction de sa largeur, de
+   chaque côté ; le curseur la parcourt en `VISEE_MS` (un peu plus vite à
+   chaque tir). La puissance monte de zéro au plein en `PUISSANCE_MS`. */
+const VISEE_DEBORD = 0.15;
+const VISEE_MS = 1500;
+const PUISSANCE_MS = 1100;
+/* Au-delà de cette puissance, le ballon monte dans le rang du haut. */
+const LUCARNE = 0.7;
+const ATTENTE_PLONGEON_MS = 3000;
 
 function centreZone(z) {
   const { w, h } = T.taille;
   const col = z % 3;
   const rang = Math.floor(z / 3);
   return { x: (BUT.x + BUT.w * (col + 0.5) / 3) * w, y: (BUT.y + BUT.h * (rang ? 0.25 : 0.75)) * h };
+}
+
+/** Le tir que donnent une visée (en fractions du cadre) et une puissance. */
+function tirDe(gx, puissance) {
+  const force = Math.round(Math.max(0, Math.min(1, puissance)) * 100) / 100;
+  if (gx < 0 || gx >= 1) return { zone: gx < 0 ? 3 : 5, force: 1, hors: true };
+  const col = Math.min(2, Math.floor(gx * 3));
+  return { zone: (force >= LUCARNE ? 3 : 0) + col, force, hors: false };
+}
+
+/** Le plongeon que donne un geste du doigt : le côté, et le haut s'il monte. */
+function plongeonDe(dx, dy) {
+  const { w, h } = T.taille;
+  const col = dx < -w * 0.06 ? 0 : dx > w * 0.06 ? 2 : 1;
+  return (dy < -h * 0.05 ? 3 : 0) + col;
+}
+
+const triangle = (x) => 1 - Math.abs(2 * (x - Math.floor(x)) - 1);
+
+function dessinerGardien(g, bw, bh, enGarde) {
+  const { w } = T.taille;
+  /* Il penche du côté où il plonge, jusqu'à se coucher presque à plat. */
+  const penche = Math.max(-1, Math.min(1, (g.x - w / 2) / (bw * 0.33))) * 1.15;
+  tctx.save();
+  tctx.translate(g.x, g.y);
+  tctx.rotate(penche);
+  tctx.strokeStyle = enGarde ? '#F5C33B' : '#C2CAD6';
+  tctx.lineWidth = 6;
+  tctx.lineCap = 'round';
+  tctx.beginPath(); tctx.arc(0, -bh * 0.32, bh * 0.1, 0, Math.PI * 2); tctx.stroke();
+  tctx.beginPath(); tctx.moveTo(0, -bh * 0.2); tctx.lineTo(0, bh * 0.12);
+  tctx.moveTo(-bw * 0.1, -bh * 0.16); tctx.lineTo(bw * 0.1, -bh * 0.16);
+  tctx.moveTo(0, bh * 0.12); tctx.lineTo(-bw * 0.04, bh * 0.25);
+  tctx.moveTo(0, bh * 0.12); tctx.lineTo(bw * 0.04, bh * 0.25);
+  tctx.stroke();
+  tctx.restore();
 }
 
 function dessinerTirs() {
@@ -565,45 +609,93 @@ function dessinerTirs() {
   for (let i = 1; i < 7; i++) {
     tctx.beginPath(); tctx.moveTo(bx, by + bh * i / 7); tctx.lineTo(bx + bw, by + bh * i / 7); tctx.stroke();
   }
-  if (T.phase === 'arret') {
-    tctx.strokeStyle = 'rgba(245,195,59,.5)';
-    tctx.setLineDash([6, 6]);
-    for (let c = 1; c < 3; c++) {
-      tctx.beginPath(); tctx.moveTo(bx + bw * c / 3, by); tctx.lineTo(bx + bw * c / 3, by + bh); tctx.stroke();
-    }
-    tctx.beginPath(); tctx.moveTo(bx, by + bh / 2); tctx.lineTo(bx + bw, by + bh / 2); tctx.stroke();
-    tctx.setLineDash([]);
-  }
   tctx.strokeStyle = '#F2EEE4';
   tctx.lineWidth = 5;
   tctx.lineCap = 'round';
   tctx.beginPath(); tctx.moveTo(bx, by + bh); tctx.lineTo(bx, by); tctx.lineTo(bx + bw, by); tctx.lineTo(bx + bw, by + bh);
   tctx.stroke();
-  /* Le point de penalty et la surface. */
+  /* La ligne de but et le point de penalty. */
   tctx.lineWidth = 2;
   tctx.strokeStyle = 'rgba(242,238,228,.45)';
   tctx.beginPath(); tctx.moveTo(0, by + bh + 4); tctx.lineTo(w, by + bh + 4); tctx.stroke();
   tctx.fillStyle = 'rgba(242,238,228,.6)';
   tctx.beginPath(); tctx.arc(w / 2, h * 0.82, 3, 0, Math.PI * 2); tctx.fill();
 
-  /* Le gardien : un trait de craie, bras écartés. */
   const g = T.anim?.gardien ?? { x: w / 2, y: by + bh * 0.72 };
-  tctx.strokeStyle = T.phase === 'arret' ? '#F5C33B' : '#C2CAD6';
-  tctx.lineWidth = 6;
-  tctx.beginPath(); tctx.arc(g.x, g.y - bh * 0.32, bh * 0.1, 0, Math.PI * 2); tctx.stroke();
-  tctx.beginPath(); tctx.moveTo(g.x, g.y - bh * 0.2); tctx.lineTo(g.x, g.y + bh * 0.12);
-  tctx.moveTo(g.x - bw * 0.1, g.y - bh * 0.16); tctx.lineTo(g.x + bw * 0.1, g.y - bh * 0.16);
-  tctx.moveTo(g.x, g.y + bh * 0.12); tctx.lineTo(g.x - bw * 0.04, g.y + bh * 0.25);
-  tctx.moveTo(g.x, g.y + bh * 0.12); tctx.lineTo(g.x + bw * 0.04, g.y + bh * 0.25);
-  tctx.stroke();
+  dessinerGardien(g, bw, bh, T.phase === 'arret');
+
+  /* La jauge de visée, sous le but : rouge au-delà des poteaux, et le
+     curseur, arrêté ou qui file, avec sa ligne dans le cadre. */
+  if (T.phase === 'visee' || T.phase === 'puissance') {
+    const gy = by + bh + 26;
+    const x0 = bx - bw * VISEE_DEBORD; const x1 = bx + bw * (1 + VISEE_DEBORD);
+    tctx.lineWidth = 10;
+    tctx.lineCap = 'butt';
+    tctx.strokeStyle = 'rgba(229,72,77,.55)';
+    tctx.beginPath(); tctx.moveTo(x0, gy); tctx.lineTo(x1, gy); tctx.stroke();
+    tctx.strokeStyle = 'rgba(242,238,228,.35)';
+    tctx.beginPath(); tctx.moveTo(bx, gy); tctx.lineTo(bx + bw, gy); tctx.stroke();
+    tctx.strokeStyle = 'rgba(10,13,17,.7)';
+    tctx.lineWidth = 2;
+    for (let c = 1; c < 3; c++) {
+      tctx.beginPath(); tctx.moveTo(bx + bw * c / 3, gy - 5); tctx.lineTo(bx + bw * c / 3, gy + 5); tctx.stroke();
+    }
+    const u = T.visee ?? T.curseur;
+    const cx = bx + bw * u;
+    tctx.setLineDash([5, 6]);
+    tctx.strokeStyle = 'rgba(245,195,59,.55)';
+    tctx.beginPath(); tctx.moveTo(cx, by); tctx.lineTo(cx, gy - 8); tctx.stroke();
+    tctx.setLineDash([]);
+    tctx.fillStyle = '#F5C33B';
+    tctx.beginPath(); tctx.moveTo(cx, gy - 7); tctx.lineTo(cx - 8, gy + 9); tctx.lineTo(cx + 8, gy + 9);
+    tctx.closePath(); tctx.fill();
+  }
+
+  /* La jauge de puissance, debout à droite du ballon : grise (mou), craie
+     (ras du sol), or (lucarne), rouge (au-dessus). */
+  if (T.phase === 'puissance') {
+    const px = w * 0.7; const pw = 16; const pbas = h * 0.9; const ph = h * 0.26;
+    const bandes = [[0, TIRS.FORCE_ARRET, 'rgba(194,202,214,.35)'],
+      [TIRS.FORCE_ARRET, LUCARNE, 'rgba(242,238,228,.55)'],
+      [LUCARNE, TIRS.FORCE_MAX, 'rgba(245,195,59,.75)'],
+      [TIRS.FORCE_MAX, 1, 'rgba(229,72,77,.75)']];
+    for (const [a, b, c] of bandes) {
+      tctx.fillStyle = c;
+      tctx.fillRect(px, pbas - ph * b, pw, ph * (b - a));
+    }
+    tctx.strokeStyle = '#F2EEE4';
+    tctx.lineWidth = 2;
+    tctx.strokeRect(px, pbas - ph, pw, ph);
+    tctx.fillStyle = '#F2EEE4';
+    tctx.fillRect(px - 5, pbas - ph * T.puissance - 2, pw + 10, 4);
+  }
+
+  /* Dans les buts : le temps qui reste pour plonger, et le geste en cours. */
+  if (T.phase === 'arret') {
+    const reste = Math.max(0, (T.finArret - performance.now()) / ATTENTE_PLONGEON_MS);
+    tctx.fillStyle = 'rgba(245,195,59,.8)';
+    tctx.fillRect(bx, by - 12, bw * reste, 4);
+    if (T.glisse) {
+      tctx.strokeStyle = 'rgba(245,195,59,.8)';
+      tctx.lineWidth = 3;
+      tctx.beginPath(); tctx.moveTo(T.glisse.x0, T.glisse.y0); tctx.lineTo(T.glisse.x, T.glisse.y); tctx.stroke();
+    }
+  }
 
   const b = T.anim?.balle ?? { x: w / 2, y: h * 0.82 };
   dessinerBallon(tctx, b.x, b.y, w * 0.045 * (T.anim?.echelle ?? 1));
-  if (T.glisse) {
-    tctx.strokeStyle = 'rgba(245,195,59,.8)';
-    tctx.lineWidth = 3;
-    tctx.beginPath(); tctx.moveTo(T.glisse.x0, T.glisse.y0); tctx.lineTo(T.glisse.x, T.glisse.y); tctx.stroke();
+}
+
+/** La boucle du terrain : le curseur qui file, la jauge qui monte. */
+function boucleTirs(t) {
+  if ($('t-terrain').hidden) { T.raf = 0; return; }
+  if (T.phase === 'visee') {
+    const periode = Math.max(900, VISEE_MS - T.tour * 100);
+    T.curseur = -VISEE_DEBORD + (1 + 2 * VISEE_DEBORD) * triangle((t - T.t0) / periode / 2);
   }
+  if (T.phase === 'puissance' && T.charge) T.puissance = Math.min(1, (t - T.charge) / PUISSANCE_MS);
+  if (!T.anim) dessinerTirs();
+  T.raf = requestAnimationFrame(boucleTirs);
 }
 
 /** Le ballon (et le gardien) vont où le tir et le plongeon les envoient. */
@@ -629,21 +721,28 @@ function animer(versBalle, versGardien, ms = 520) {
 }
 
 function consigne() {
-  const n = T.tour + 1;
-  $('t-compte').textContent = `${n} / ${TIRS.NOMBRE}`;
-  if (T.phase === 'tir') $('t-consigne').textContent = 'À toi de tirer : glisse le ballon vers le but';
-  else $('t-consigne').textContent = 'Dans les buts : touche le coin où tu plonges';
+  $('t-compte').textContent = `${T.tour + 1} / ${TIRS.NOMBRE}`;
+  $('t-consigne').textContent = {
+    visee: 'Touche pour arrêter la visée',
+    puissance: 'Garde le doigt posé, lâche pour tirer',
+    arret: 'Dans les buts : glisse le doigt pour plonger',
+  }[T.phase] ?? '';
+}
+
+function viser() {
+  T.phase = 'visee'; T.visee = null; T.puissance = 0; T.charge = 0; T.t0 = performance.now();
+  consigne();
 }
 
 function commencerTirs({ ami = null, releve = null } = {}) {
-  T.tirs = []; T.arrets = []; T.tour = 0; T.phase = 'tir'; T.ami = ami; T.releve = releve;
+  T.tirs = []; T.arrets = []; T.tour = 0; T.ami = ami; T.releve = releve;
   T.anim = null; T.glisse = null;
   $('t-accueil').hidden = true;
   $('t-terrain').hidden = false;
   $('t-fin').hidden = true;
   T.taille = tailleCanvas(tc);
-  consigne();
-  dessinerTirs();
+  viser();
+  if (!T.raf) T.raf = requestAnimationFrame(boucleTirs);
   $('t-terrain').scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
@@ -655,67 +754,68 @@ const posTerrain = (e) => {
 tc.addEventListener('pointerdown', (e) => {
   if (!T.taille || T.anim?.occupe) return;
   const p = posTerrain(e);
-  if (T.phase === 'tir') {
+  if (T.phase === 'visee') {
+    T.visee = T.curseur;
+    T.phase = 'puissance';
+    consigne();
+  } else if (T.phase === 'puissance') {
     tc.setPointerCapture?.(e.pointerId);
-    T.glisse = { x0: p.x, y0: p.y, x: p.x, y: p.y, t0: performance.now() };
+    T.charge = performance.now();
   } else if (T.phase === 'arret') {
-    const z = zoneDe(p.x, p.y);
-    if (z != null) plonger(z);
+    tc.setPointerCapture?.(e.pointerId);
+    T.glisse = { x0: p.x, y0: p.y, x: p.x, y: p.y };
   }
 });
 tc.addEventListener('pointermove', (e) => {
   if (!T.glisse) return;
   const p = posTerrain(e);
   T.glisse.x = p.x; T.glisse.y = p.y;
-  dessinerTirs();
 });
-tc.addEventListener('pointerup', async (e) => {
-  if (!T.glisse) return;
-  const g = T.glisse;
-  T.glisse = null;
-  const p = posTerrain(e);
-  const dist = Math.hypot(p.x - g.x0, p.y - g.y0);
-  if (dist < 30 || p.y > g.y0) { dessinerTirs(); return; }
-  const ms = Math.max(1, performance.now() - g.t0);
-  /* La force : la vitesse du geste, mesurée en hauteurs de terrain par
-     seconde. Un geste vif et franc tombe vers 0,7 ; au-delà de 0,92, le
-     ballon passe au-dessus. */
-  const vitesse = dist / T.taille.h / (ms / 1000);
-  const force = Math.max(0, Math.min(1, vitesse / 4));
-  let zone = zoneDe(p.x, p.y);
-  /* Relâché hors du cadre : le tir part à côté ou au-dessus. */
-  const hors = zone == null;
-  if (hors) zone = p.x < T.taille.w / 2 ? 3 : 5;
-  T.tirs.push({ zone, force: hors ? 1 : Math.round(force * 100) / 100 });
+tc.addEventListener('pointerup', (e) => {
+  if (T.phase === 'puissance' && T.charge) return tirer();
+  if (T.phase === 'arret' && T.glisse) {
+    const g = T.glisse;
+    T.glisse = null;
+    const p = posTerrain(e);
+    plonger(plongeonDe(p.x - g.x0, p.y - g.y0));
+  }
+});
+
+async function tirer() {
+  const tir = tirDe(T.visee, T.puissance);
+  T.phase = null;
+  T.charge = 0;
+  T.tirs.push({ zone: tir.zone, force: tir.force });
   T.anim = { occupe: true };
-  const cible = hors || force > TIRS.FORCE_MAX
-    ? { x: p.x, y: (BUT.y * T.taille.h) - 26 } : centreZone(zone);
+  const { w, h } = T.taille;
+  const vise = (BUT.x + BUT.w * T.visee) * w;
+  const cible = tir.hors || tir.force > TIRS.FORCE_MAX
+    ? { x: vise, y: BUT.y * h - 26 } : { x: vise, y: centreZone(tir.zone).y };
   await animer(cible, null);
-  $('t-consigne').textContent = hors ? 'À côté !' : force > TIRS.FORCE_MAX ? 'Au-dessus !'
-    : force < 0.55 ? 'Un peu mou…' : 'Bien frappé !';
+  $('t-consigne').textContent = tir.hors ? 'À côté !' : tir.force > TIRS.FORCE_MAX ? 'Au-dessus !'
+    : tir.force < TIRS.FORCE_ARRET ? 'Un peu mou…' : tir.force >= LUCARNE ? 'Dans la lucarne !' : 'Bien frappé !';
   setTimeout(() => {
     T.anim = null;
     T.phase = 'arret';
+    T.finArret = performance.now() + ATTENTE_PLONGEON_MS;
     consigne();
-    dessinerTirs();
-    T.plongeonT = setTimeout(() => plonger(1), 3000);
+    T.plongeonT = setTimeout(() => plonger(1), ATTENTE_PLONGEON_MS);
   }, 650);
-});
+}
 
 async function plonger(z) {
   if (T.phase !== 'arret') return;
   clearTimeout(T.plongeonT);
   T.arrets.push(z);
   T.phase = null;
+  T.glisse = null;
   const c = centreZone(z);
   T.anim = { occupe: true };
   await animer({ x: T.taille.w / 2, y: T.taille.h * 0.82 }, c, 360);
   T.anim = null;
   T.tour++;
   if (T.tour >= TIRS.NOMBRE) return envoyerTirs();
-  T.phase = 'tir';
-  consigne();
-  dessinerTirs();
+  viser();
 }
 
 async function envoyerTirs() {

@@ -1,7 +1,8 @@
 /**
  * La page des mini-jeux, dans un vrai navigateur, sur des réponses de serveur
- * écrites à la main : on jongle en touchant le ballon, on tire en glissant le
- * doigt, on plonge en touchant le but, et l'on regarde ce que la page envoie.
+ * écrites à la main : on jongle en touchant le ballon, on tire en
+ * arrêtant la visée puis en chargeant la puissance, on plonge en glissant le
+ * doigt, et l'on regarde ce que la page envoie.
  *
  * Aucune base : rien ici ne passe par le serveur du jeu.
  */
@@ -35,8 +36,8 @@ const pageJ = lu('JONGLES');
 const pageT = lu('TIRS');
 check('la page joue avec la physique des jongles du serveur', pageJ
   && Object.entries(pageJ).every(([k, v]) => JONGLES[k] === v));
-check('et avec la force maximale des tirs', pageT && pageT.FORCE_MAX === TIRS.FORCE_MAX
-  && pageT.NOMBRE === TIRS.NOMBRE);
+check('et avec les forces des tirs', pageT && pageT.FORCE_MAX === TIRS.FORCE_MAX
+  && pageT.FORCE_ARRET === TIRS.FORCE_ARRET && pageT.NOMBRE === TIRS.NOMBRE);
 
 /* --------------------------------------------------- les réponses servies */
 
@@ -144,29 +145,45 @@ const terrain = await page.evaluate(() => {
   const r = document.getElementById('t-canvas').getBoundingClientRect();
   return { x: r.left, y: r.top, w: r.width, h: r.height };
 });
+/* Viser, charger, plonger : chaque geste part de la page elle-même, à l'image
+   près où le curseur ou la jauge passe dans la bande voulue (`T`, déclaré au
+   niveau du script), pour ne pas dépendre du temps que met Puppeteer. */
+const geste = (type, quand, x, y) => page.evaluate((type, quand, x, y) => new Promise((ok) => {
+  const c = document.getElementById('t-canvas');
+  const r = c.getBoundingClientRect();
+  const pas = () => {
+    // eslint-disable-next-line no-new-func
+    if (!Function('T', `return ${quand}`)(T)) { requestAnimationFrame(pas); return; } // eslint-disable-line no-undef
+    c.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1,
+      clientX: r.left + r.width * x, clientY: r.top + r.height * y }));
+    ok();
+  };
+  pas();
+}), type, quand, x, y);
+const phase = (p) => jusqua(() => page.evaluate((p) => T.phase === p, p), 5000); // eslint-disable-line no-undef
 for (let i = 0; i < TIRS.NOMBRE; i++) {
-  /* Un geste du point de penalty vers le haut à gauche du but. */
-  const de = { x: terrain.x + terrain.w / 2, y: terrain.y + terrain.h * 0.82 };
-  const vers = { x: terrain.x + terrain.w * 0.2, y: terrain.y + terrain.h * 0.16 };
-  await page.mouse.move(de.x, de.y);
-  await page.mouse.down();
-  for (let k = 1; k <= 6; k++) {
-    await page.mouse.move(de.x + (vers.x - de.x) * k / 6, de.y + (vers.y - de.y) * k / 6);
-    await dodo(30);
-  }
-  await page.mouse.up();
-  await jusqua(() => page.evaluate(() => T.phase === 'arret'), 4000); // eslint-disable-line no-undef
+  await phase('visee');
+  /* La visée arrêtée dans le tiers gauche du cadre. */
+  await geste('pointerdown', "T.phase === 'visee' && T.curseur > 0.08 && T.curseur < 0.25", 0.5, 0.6);
+  await geste('pointerup', 'true', 0.5, 0.6);
+  if (i === 0) await capture(page, 'tirs-visee');
+  /* La puissance lâchée dans la bande d'or : la lucarne. */
+  await geste('pointerdown', "T.phase === 'puissance'", 0.5, 0.6);
+  await geste('pointerup', 'T.puissance > 0.76 && T.puissance < 0.86', 0.5, 0.6);
+  await phase('arret');
   if (i === 0) await capture(page, 'tirs-plongeon');
-  /* Plonger en bas à droite. */
-  await page.mouse.click(terrain.x + terrain.w * 0.8, terrain.y + terrain.h * 0.36);
-  await jusqua(() => page.evaluate(() => T.phase === 'tir' || T.tour >= 5), 4000); // eslint-disable-line no-undef
+  /* Un geste vers la droite, sans monter : plongeon au ras du sol à droite. */
+  await geste('pointerdown', 'true', 0.5, 0.5);
+  await geste('pointermove', 'true', 0.8, 0.52);
+  await geste('pointerup', 'true', 0.8, 0.52);
+  await jusqua(() => page.evaluate(() => T.phase === 'visee' || T.tour >= 5), 4000); // eslint-disable-line no-undef
 }
 check('la série s’envoie après cinq tirs et cinq plongeons', await jusqua(async () => recu.tirs != null));
 const jeu = jeuDeTirs(recu.tirs?.jeu);
 check('le jeu envoyé est valide', jeu !== null && !recu.tirs.ami);
-check('les tirs vont où le doigt les envoie, en haut à gauche',
-  jeu?.tirs.every((t) => t.zone === 3 && t.force > 0));
-check('les plongeons aussi, en bas à droite', jeu?.arrets.every((z) => z === 2));
+check('visée à gauche et puissance dans l’or : la lucarne gauche',
+  jeu?.tirs.every((t) => t.zone === 3 && t.force >= 0.7 && t.force <= TIRS.FORCE_MAX));
+check('le doigt glissé à droite plonge en bas à droite', jeu?.arrets.every((z) => z === 2));
 check('le résultat s’affiche', await jusqua(() => page.evaluate(() =>
   !document.getElementById('t-fin').hidden
   && document.getElementById('t-score').textContent === '3 – 2'

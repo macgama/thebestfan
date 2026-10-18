@@ -5503,5 +5503,10 @@
  "ton record": "il tuo record",
  "au classement": "in classifica",
  "points": "punti",
- "V · N · D": "V · N · P"
+ "V · N · D": "V · N · P",
+ "Cinq tirs, cinq arrêts. Touche pour arrêter la visée sous le but, puis garde le doigt posé : la jauge de puissance monte, lâche pour tirer. Dans l’or, le ballon monte dans la lucarne ; dans le rouge, il passe au-dessus. Dans les buts, glisse le doigt vers le coin où tu plonges.": "Cinque tiri, cinque parate. Tocca per fermare la mira sotto la porta, poi tieni il dito giù: la barra della potenza sale, lascia per tirare. Nell’oro, il pallone va all’incrocio; nel rosso, finisce alto. In porta, scorri il dito verso l’angolo dove ti tuffi.",
+ "Touche pour arrêter la visée": "Tocca per fermare la mira",
+ "Garde le doigt posé, lâche pour tirer": "Tieni il dito giù, lascia per tirare",
+ "Dans les buts : glisse le doigt pour plonger": "In porta: scorri il dito per tuffarti",
+ "Dans la lucarne !": "All’incrocio!"
 }
