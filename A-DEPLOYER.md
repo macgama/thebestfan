@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Le tutoriel : la visite guidée et la page « Comment jouer »** (18 octobre
+2026, demandé par Gaël). Construction puis redémarrage, sans schéma.
+
+- Une visite guidée de l'accueil en sept arrêts (le Fanzzy, le Grand Virage,
+  le duel, les écharpes et les boosters, le menu), avec un projecteur sur
+  chaque élément. Elle paraît une fois par appareil, se passe d'un doigt, et
+  se relance depuis « Comment jouer ». Les joueurs déjà inscrits la verront
+  aussi une fois, à leur prochaine visite de l'accueil.
+- `/comment-jouer` (menu, en tête des liens du bas) : tout ce que le jeu
+  permet, une rubrique par chose à faire, chacune avec son bouton « Y aller ».
+  Traduite dans les cinq langues.
+
+---
+
 **Les mini-jeux : jongles, tirs au but, chant en rythme, déplacement, tifo
 du club et boss de la semaine** (18 octobre 2026, demandés par Gaël).
 Construction, **schéma** (`npm run schema:appliquer`), puis redémarrage. Sans
