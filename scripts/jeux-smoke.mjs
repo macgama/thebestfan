@@ -359,7 +359,8 @@ await pool.query(`INSERT INTO teams (id, name, code, color1, color2) VALUES (85,
 await pool.query(`INSERT INTO fixtures (id, league_id, season, home_id, away_id, status_short, kickoff_at) VALUES
   (900, 61, 2026, 85, 91, 'NS', UTC_TIMESTAMP() + INTERVAL 2 DAY),
   (899, 61, 2026, 91, 85, 'FT', UTC_TIMESTAMP() - INTERVAL 1 DAY)`);
-await pool.query(`UPDATE users SET main_team_id = 85 WHERE public_id IN (?, ?)`, [A, B]);
+await pool.query(`INSERT INTO user_follows (user_id, team_id, is_main) VALUES (?, 91, 0), (?, 85, 1), (?, 85, 0)`,
+  [A, A, B]);
 moi = C;
 x = await call('/api/jeux/tifo');
 check('sans club suivi, pas de tifo', x.status === 200 && x.json.club === null);

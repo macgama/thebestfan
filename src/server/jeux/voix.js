@@ -25,7 +25,8 @@ export function chantReussiPour(userId, n = 1) {
 }
 
 /**
- * Écrit les chants en attente : une ligne par supporter, sur son club suivi
+ * Écrit les chants en attente : une ligne par supporter, sur son club (son
+ * club de cœur, sinon le premier qu'il a suivi : `clubDe` dans `index.js`)
  * et le lundi de la semaine. Un supporter sans club ne nourrit aucun boss.
  */
 export async function verserLaVoix() {
@@ -36,8 +37,9 @@ export async function verserLaVoix() {
     try {
       await pool.execute(
         `INSERT INTO jeux_boss (team_id, semaine, user_id, coups)
-         SELECT main_team_id, CURDATE() - INTERVAL WEEKDAY(CURDATE()) DAY, public_id, ?
-           FROM users WHERE public_id = ? AND main_team_id IS NOT NULL
+         SELECT team_id, CURDATE() - INTERVAL WEEKDAY(CURDATE()) DAY, user_id, ?
+           FROM user_follows WHERE user_id = ?
+          ORDER BY is_main DESC, created_at, team_id LIMIT 1
          ON DUPLICATE KEY UPDATE coups = coups + VALUES(coups)`, [n, userId]);
     } catch (e) {
       if (e?.code !== 'ER_NO_SUCH_TABLE') console.error('[jeux] voix', e.message);

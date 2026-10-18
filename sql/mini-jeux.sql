@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS jeux_parties (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Le tifo du club : une case de la mosaïque que les supporters d'un club
--- (`team_id`, leur club suivi) peignent ensemble avant un match
+-- (`team_id` : le club de cœur, sinon le premier suivi) peignent ensemble avant un match
 -- (`fixture_id`). Une case n'a qu'une couleur, celle du dernier qui l'a
 -- peinte ; le nombre de cases par jour et par joueur se compte dans
 -- `compteurs_jour` (clé `tifo`).
