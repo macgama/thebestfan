@@ -1,6 +1,8 @@
 /**
- * Les mini-jeux d'entre les matchs : les jongles (seul, pour un record) et
- * les tirs au but (en 1 contre 1, pas en même temps).
+ * Les mini-jeux d'entre les matchs : les jongles, le chant en rythme et le
+ * déplacement (seul, pour un record), les tirs au but (en 1 contre 1, pas en
+ * même temps), le tifo du club et la tribune contre le boss (tout le club
+ * ensemble).
  *
  * Demandés par Gaël le 18 octobre 2026 : « des jeux à jouer entre les matchs,
  * à jouer seul ou en 1v1 avec classement ; on gagne des écharpes ; à chaque
@@ -35,12 +37,18 @@ import { saisonEnCours } from '../fanzzy/saisons.js';
 import { habillerJoueurs } from '../fanzzy/avatar.js';
 import {
   JONGLES, scoreDeJongles, gainDeJongles, TIRS, jeuDeTirs, reglerTirs, jeuDeLaMachine,
+  CHANT, partitionDuChant, noterChant, COURSE, rejouerCourse, gainDeScore,
+  TIFO, lettresDuClub, motifDuTifo, fideliteDuTifo,
 } from '../../shared/mini-jeux.js';
+import { chantReussiPour } from './voix.js';
 
 const SCHEMA_INCOMPLET = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR']);
 
 /** Au plus tant de séries ouvertes à la fois par joueur, défis compris. */
 export const SERIES_OUVERTES_MAX = 5;
+
+/** Les jeux seuls de `jeux_parties`, et ce que chacun rapporte. */
+const SEULS = new Set(['chant', 'deplacement']);
 
 /** La taille d'un classement servi. */
 const CLASSEMENT = 50;
@@ -66,7 +74,8 @@ export function createJeux({ pool, requireAuth }) {
   async function versesDuJour(userId) {
     const [r] = await q(
       `SELECT COALESCE(SUM(echarpes), 0) AS n FROM recompenses
-        WHERE user_id = ? AND source IN ('jongles', 'tirs') AND verse_a >= CURDATE()`, [userId]);
+        WHERE user_id = ? AND source IN ('jongles', 'tirs', 'chant', 'deplacement')
+          AND verse_a >= CURDATE()`, [userId]);
     return Number(r?.n ?? 0);
   }
 
@@ -117,6 +126,13 @@ export function createJeux({ pool, requireAuth }) {
           WHERE j.saison_id <=> ? AND j.score IS NOT NULL
           GROUP BY j.user_id, u.pseudo
           ORDER BY valeur DESC, parties ASC, j.user_id`, [sid]);
+    } else if (SEULS.has(jeu)) {
+      rows = await q(
+        `SELECT j.user_id AS id, u.pseudo, MAX(j.score) AS valeur, COUNT(*) AS parties
+           FROM jeux_parties j JOIN users u ON u.public_id = j.user_id AND u.status = 'active'
+          WHERE j.jeu = ? AND j.saison_id <=> ? AND j.score IS NOT NULL
+          GROUP BY j.user_id, u.pseudo
+          ORDER BY valeur DESC, parties ASC, j.user_id`, [jeu, sid]);
     } else {
       rows = await q(
         `SELECT t.id, u.pseudo, SUM(t.pts) AS valeur, SUM(t.v) AS victoires, SUM(t.n) AS nuls,
@@ -375,6 +391,264 @@ export function createJeux({ pool, requireAuth }) {
     };
   }
 
+
+  /* ---------------------------------------- chant en rythme, déplacement
+
+     Deux jeux seuls de plus, dans une seule table (`jeux_parties`). Le
+     serveur ouvre la partie avec sa graine ; à la fin, il retrouve la
+     partition ou la route, et calcule le score lui-même à partir des gestes.
+     Le score annoncé par la page n'est jamais lu. */
+
+  const GAINS_SEULS = () => ({
+    chant: { parEcharpe: reglage('jeux.chant_par_echarpe'), maxPartie: reglage('jeux.chant_max_partie') },
+    deplacement: { parEcharpe: reglage('jeux.deplacement_par_echarpe'),
+      maxPartie: reglage('jeux.deplacement_max_partie') },
+  });
+
+  async function ouvrirPartie(userId, jeu) {
+    const graine = Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+    const r = await q(`INSERT INTO jeux_parties (jeu, user_id, saison_id, graine) VALUES (?, ?, ?, ?)`,
+      [jeu, userId, saisonId(), graine]);
+    return { id: Number(r.insertId), graine };
+  }
+
+  /** Le score que donnent les gestes, ou `null` s'ils sont impossibles. */
+  function juger(jeu, graine, gestes, duree) {
+    if (jeu === 'chant') {
+      const b = noterChant(partitionDuChant(graine), gestes);
+      /* La dernière frappe ne peut pas venir après l'envoi. */
+      if (!b || (gestes.length && gestes.at(-1).t > duree + 1000)) return null;
+      return { score: b.score, detail: b };
+    }
+    const c = rejouerCourse(graine, gestes);
+    /* Une course ne va pas plus vite que le temps : une image dure 1/60 s. */
+    if (!c || c.images * 1000 / COURSE.IMAGES_S > duree * 1.05 + 2000) return null;
+    return { score: c.score, detail: c };
+  }
+
+  async function finirPartie(userId, jeu, id, gestes) {
+    const [p] = await q(
+      `SELECT id, saison_id, graine, fin_a,
+              ROUND((UNIX_TIMESTAMP(NOW(3)) - UNIX_TIMESTAMP(debut_a)) * 1000) AS ms
+         FROM jeux_parties WHERE id = ? AND user_id = ? AND jeu = ?`, [id, userId, jeu]);
+    if (!p) return { erreur: 'jeux.error.partie_inconnue', status: 404 };
+    if (p.fin_a != null) return { erreur: 'jeux.error.partie_finie', status: 409 };
+    const duree = Number(p.ms);
+    if (duree > JONGLES.DUREE_MAX_MS) return { erreur: 'jeux.error.partie_perimee', status: 409 };
+    const jugement = juger(jeu, Number(p.graine), gestes, duree);
+    if (!jugement) return { erreur: 'jeux.error.score_invalide', status: 400 };
+
+    const [avant] = await q(
+      `SELECT MAX(score) AS m FROM jeux_parties
+        WHERE user_id = ? AND jeu = ? AND saison_id <=> ? AND score IS NOT NULL`,
+      [userId, jeu, p.saison_id]);
+    const ferme = await q(
+      `UPDATE jeux_parties SET fin_a = NOW(3), score = ? WHERE id = ? AND fin_a IS NULL`,
+      [jugement.score, id]);
+    if (!ferme.affectedRows) return { erreur: 'jeux.error.partie_finie', status: 409 };
+
+    const echarpes = await payer(userId, jeu, id, gainDeScore(jugement.score, GAINS_SEULS()[jeu]));
+    await q(`UPDATE jeux_parties SET echarpes = ? WHERE id = ?`, [echarpes, id]);
+    /* Le chant en rythme pousse aussi contre le boss : un coup toutes les dix
+       notes réussies. */
+    if (jeu === 'chant') chantReussiPour(userId, Math.floor(jugement.detail.reussis / 10));
+    const ancien = avant?.m == null ? null : Number(avant.m);
+    return {
+      score: jugement.score, ...jugement.detail, echarpes,
+      record: Math.max(jugement.score, ancien ?? 0),
+      nouveauRecord: jugement.score > 0 && (ancien == null || jugement.score > ancien),
+    };
+  }
+
+  async function etatSeul(userId, jeu) {
+    const [r] = await q(
+      `SELECT MAX(score) AS record, COUNT(score) AS parties FROM jeux_parties
+        WHERE user_id = ? AND jeu = ? AND saison_id <=> ?`, [userId, jeu, saisonId()]);
+    return { record: r?.record == null ? null : Number(r.record), parties: Number(r?.parties ?? 0) };
+  }
+
+  /* ------------------------------------------------------------ le club
+
+     Le tifo et le boss se jouent pour le club suivi (`users.main_team_id`).
+     Sans club suivi, la page invite à en choisir un. */
+
+  async function clubDe(userId) {
+    const [u] = await q(
+      `SELECT t.id, t.name, t.code, t.color1, t.color2
+         FROM users u JOIN teams t ON t.id = u.main_team_id WHERE u.public_id = ?`, [userId]);
+    if (!u) return null;
+    const c1 = u.color1 || '#C8102E';
+    const c2 = u.color2 && u.color2.toLowerCase() !== c1.toLowerCase() ? u.color2 : '#F2EEE4';
+    /* La craie, sauf si la seconde couleur est déjà blanche : alors l'encre. */
+    const clair = (h) => parseInt(h.slice(1, 3), 16) + parseInt(h.slice(3, 5), 16)
+      + parseInt(h.slice(5, 7), 16) > 600;
+    const c3 = clair(c2) ? '#0A0D11' : '#F2EEE4';
+    return { id: Number(u.id), nom: u.name, lettres: lettresDuClub(u.code, u.name),
+      couleurs: [c1, c2, c3] };
+  }
+
+  /* ------------------------------------------------------------ le tifo */
+
+  const NOMBRE_CASES = TIFO.COLONNES * TIFO.RANGS;
+
+  /** Le prochain match du club, celui dont on peint le tifo. */
+  async function matchAPeindre(teamId) {
+    const [f] = await q(
+      `SELECT f.id, f.kickoff_at, f.home_id, h.name AS home, a.name AS away
+         FROM fixtures f LEFT JOIN teams h ON h.id = f.home_id LEFT JOIN teams a ON a.id = f.away_id
+        WHERE (f.home_id = ? OR f.away_id = ?) AND f.kickoff_at > UTC_TIMESTAMP()
+          AND f.status_short IN ('NS', 'TBD')
+        ORDER BY f.kickoff_at LIMIT 1`, [teamId, teamId]);
+    return f ?? null;
+  }
+
+  /** Le dernier match commencé depuis moins de trois jours : son tifo est levé. */
+  async function matchLeve(teamId) {
+    const [f] = await q(
+      `SELECT f.id, f.kickoff_at, f.home_id, h.name AS home, a.name AS away
+         FROM fixtures f LEFT JOIN teams h ON h.id = f.home_id LEFT JOIN teams a ON a.id = f.away_id
+        WHERE (f.home_id = ? OR f.away_id = ?) AND f.kickoff_at <= UTC_TIMESTAMP()
+          AND f.kickoff_at > UTC_TIMESTAMP() - INTERVAL 3 DAY
+        ORDER BY f.kickoff_at DESC LIMIT 1`, [teamId, teamId]);
+    return f ?? null;
+  }
+
+  async function casesDuTifo(teamId, fixtureId) {
+    const rows = await q(
+      `SELECT case_n, couleur FROM jeux_tifo WHERE team_id = ? AND fixture_id = ?`,
+      [teamId, fixtureId]);
+    const cases = new Array(NOMBRE_CASES).fill(null);
+    for (const r of rows) {
+      if (r.case_n < NOMBRE_CASES) cases[r.case_n] = Number(r.couleur);
+    }
+    const p = await q(
+      `SELECT COUNT(DISTINCT user_id) AS n FROM jeux_tifo WHERE team_id = ? AND fixture_id = ?`,
+      [teamId, fixtureId]);
+    return { cases, peintres: Number(p[0]?.n ?? 0) };
+  }
+
+  async function casesDuJour(userId) {
+    const [r] = await q(
+      `SELECT n FROM compteurs_jour WHERE user_id = ? AND jour = CURDATE() AND cle = 'tifo'`, [userId]);
+    return Number(r?.n ?? 0);
+  }
+
+  const vueMatch = (f, teamId) => ({
+    id: Number(f.id), coupEnvoi: f.kickoff_at,
+    adversaire: Number(f.home_id) === teamId ? f.away : f.home,
+    domicile: Number(f.home_id) === teamId,
+  });
+
+  async function etatTifo(userId) {
+    const club = await clubDe(userId);
+    if (!club) return { club: null };
+    const motif = motifDuTifo(club.lettres);
+    const [prochain, leve] = await Promise.all([matchAPeindre(club.id), matchLeve(club.id)]);
+    const r = { club, motif, casesJour: reglage('jeux.tifo_cases_jour'),
+      mesCasesAujourdhui: await casesDuJour(userId), seuil: reglage('jeux.tifo_seuil'),
+      gain: reglage('jeux.tifo_gain'), prochain: null, leve: null };
+    if (prochain) {
+      const t = await casesDuTifo(club.id, prochain.id);
+      r.prochain = { ...vueMatch(prochain, club.id), cases: t.cases, peintres: t.peintres,
+        fidelite: fideliteDuTifo(motif, t.cases) };
+    }
+    if (leve) {
+      const t = await casesDuTifo(club.id, leve.id);
+      const fidelite = fideliteDuTifo(motif, t.cases);
+      const reussi = t.peintres > 0 && fidelite * 100 >= reglage('jeux.tifo_seuil');
+      let verse = 0;
+      if (reussi) {
+        const [moi] = await q(
+          `SELECT 1 AS ok FROM jeux_tifo WHERE team_id = ? AND fixture_id = ? AND user_id = ? LIMIT 1`,
+          [club.id, leve.id, userId]);
+        if (moi && reglage('jeux.actif')) {
+          const v = await verser(pool, { userId, source: 'tifo', cle: `${club.id}:${leve.id}`,
+            saisonId: saisonId(), gain: { echarpes: reglage('jeux.tifo_gain') } });
+          verse = v.verse ? reglage('jeux.tifo_gain') : 0;
+        }
+      }
+      r.leve = { ...vueMatch(leve, club.id), cases: t.cases, peintres: t.peintres, fidelite,
+        reussi, verse };
+    }
+    return r;
+  }
+
+  /** Peindre une case du tifo du prochain match. */
+  async function peindre(userId, fixtureId, n, couleur) {
+    if (!Number.isInteger(n) || n < 0 || n >= NOMBRE_CASES
+      || !Number.isInteger(couleur) || couleur < 0 || couleur >= TIFO.COULEURS) {
+      return { erreur: 'jeux.error.case_invalide', status: 400 };
+    }
+    const club = await clubDe(userId);
+    if (!club) return { erreur: 'jeux.error.sans_club', status: 409 };
+    const prochain = await matchAPeindre(club.id);
+    if (!prochain || Number(prochain.id) !== fixtureId) {
+      return { erreur: 'jeux.error.tifo_ferme', status: 409 };
+    }
+    /* Le compte du jour d'abord, sous sa limite : deux poses en même temps
+       n'en passent pas une de trop. */
+    const limite = reglage('jeux.tifo_cases_jour');
+    const plus = await q(
+      `UPDATE compteurs_jour SET n = n + 1
+        WHERE user_id = ? AND jour = CURDATE() AND cle = 'tifo' AND n < ?`, [userId, limite]);
+    if (!plus.affectedRows) {
+      const neuf = await q(
+        `INSERT IGNORE INTO compteurs_jour (user_id, jour, cle, n) VALUES (?, CURDATE(), 'tifo', 1)`,
+        [userId]);
+      if (!neuf.affectedRows) return { erreur: 'jeux.error.tifo_plus_de_cases', status: 409 };
+    }
+    await q(
+      `INSERT INTO jeux_tifo (team_id, fixture_id, case_n, couleur, user_id) VALUES (?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE couleur = VALUES(couleur), user_id = VALUES(user_id), pose_a = NOW(3)`,
+      [club.id, fixtureId, n, couleur, userId]);
+    return { ok: true, mesCasesAujourdhui: await casesDuJour(userId) };
+  }
+
+  /* ------------------------------------------------------------- le boss
+
+     Une tribune rivale par semaine, du lundi au dimanche. Sa voix : tant de
+     chants réussis par supporter du club, au moins un minimum. Le club la
+     fait taire en réussissant ce nombre de chants dans la semaine ; chaque
+     supporter qui a poussé reçoit alors sa récompense, à sa prochaine visite
+     (pendant la semaine, ou la suivante pour la semaine passée). */
+
+  async function voixDuBoss(teamId) {
+    const [r] = await q(
+      `SELECT COUNT(*) AS n FROM users WHERE main_team_id = ? AND status = 'active'`, [teamId]);
+    return Math.max(reglage('jeux.boss_voix_min'),
+      reglage('jeux.boss_voix_par_supporter') * Number(r?.n ?? 0));
+  }
+
+  async function semaineDuBoss(teamId, userId, decalage) {
+    const [r] = await q(
+      `SELECT DATE_FORMAT(CURDATE() - INTERVAL WEEKDAY(CURDATE()) DAY - INTERVAL ? WEEK, '%Y-%m-%d') AS lundi`,
+      [decalage]);
+    const lundi = r.lundi;
+    const [s] = await q(
+      `SELECT COALESCE(SUM(coups), 0) AS total, COALESCE(SUM(IF(user_id = ?, coups, 0)), 0) AS moi
+         FROM jeux_boss WHERE team_id = ? AND semaine = ?`, [userId, teamId, lundi]);
+    return { lundi, retire: Number(s?.total ?? 0), mesCoups: Number(s?.moi ?? 0) };
+  }
+
+  async function etatBoss(userId) {
+    const club = await clubDe(userId);
+    if (!club) return { club: null };
+    const voix = await voixDuBoss(club.id);
+    const gain = reglage('jeux.boss_gain');
+    const vue = async (decalage) => {
+      const s = await semaineDuBoss(club.id, userId, decalage);
+      const tombe = s.retire >= voix;
+      let verse = 0;
+      if (tombe && s.mesCoups > 0 && reglage('jeux.actif')) {
+        const v = await verser(pool, { userId, source: 'boss', cle: `${club.id}:${s.lundi}`,
+          saisonId: saisonId(), gain: { echarpes: gain } });
+        verse = v.verse ? gain : 0;
+      }
+      return { ...s, voix, tombe, verse };
+    };
+    return { club, gain, semaine: await vue(0), precedente: await vue(1) };
+  }
+
   /* -------------------------------------------------------------- routes */
 
   const router = express.Router();
@@ -398,9 +672,9 @@ export function createJeux({ pool, requireAuth }) {
   /** L'état des deux jeux pour ce joueur, et les règles du moment. */
   router.get('/', requireAuth, safe(async (req, res) => {
     const moi = req.user.id;
-    const [jongles, tirs, aujourdhui, formes] = await Promise.all([
-      etatJongles(moi), etatTirs(moi), versesDuJour(moi),
-      habillerJoueurs(q, [moi]).catch(() => new Map()),
+    const [jongles, tirs, chant, deplacement, aujourdhui, formes] = await Promise.all([
+      etatJongles(moi), etatTirs(moi), etatSeul(moi, 'chant'), etatSeul(moi, 'deplacement'),
+      versesDuJour(moi), habillerJoueurs(q, [moi]).catch(() => new Map()),
     ]);
     res.json({
       actif: Boolean(reglage('jeux.actif')),
@@ -408,8 +682,8 @@ export function createJeux({ pool, requireAuth }) {
       avatar: formes.get(moi)?.avatar ?? null,
       echarpes: { aujourdhui, plafond: reglage('jeux.echarpes_jour') },
       gains: { jongles: { parEcharpe: reglage('jeux.jongles_par_echarpe'),
-        maxPartie: reglage('jeux.jongles_max_partie') }, tirs: GAINS_TIRS() },
-      jongles, tirs,
+        maxPartie: reglage('jeux.jongles_max_partie') }, tirs: GAINS_TIRS(), ...GAINS_SEULS() },
+      jongles, tirs, chant, deplacement,
     });
   }));
 
@@ -425,7 +699,9 @@ export function createJeux({ pool, requireAuth }) {
 
   router.get('/classement/:jeu', requireAuth, safe(async (req, res) => {
     const jeu = req.params.jeu;
-    if (jeu !== 'jongles' && jeu !== 'tirs') return res.status(404).json({ error: 'jeux.error.jeu_inconnu' });
+    if (jeu !== 'jongles' && jeu !== 'tirs' && !SEULS.has(jeu)) {
+      return res.status(404).json({ error: 'jeux.error.jeu_inconnu' });
+    }
     const portee = req.query.portee === 'amis' ? 'amis' : 'tous';
     res.json({ jeu, portee, saison: saisonVue(), ...await classement(jeu, req.user.id, portee) });
   }));
@@ -467,8 +743,39 @@ export function createJeux({ pool, requireAuth }) {
     res.json({ ok: true });
   }));
 
+  /** Ouvrir une partie de chant en rythme ou de déplacement. */
+  router.post('/partie/:jeu', requireAuth, safe(async (req, res) => {
+    if (!SEULS.has(req.params.jeu)) return res.status(404).json({ error: 'jeux.error.jeu_inconnu' });
+    if (!reglage('jeux.actif')) return ferme(res);
+    res.json(await ouvrirPartie(req.user.id, req.params.jeu));
+  }));
+
+  /** La finir avec ses gestes : `frappes` (chant) ou `gestes` (déplacement). */
+  router.post('/partie/:jeu/:id', requireAuth, safe(async (req, res) => {
+    const jeu = req.params.jeu;
+    if (!SEULS.has(jeu)) return res.status(404).json({ error: 'jeux.error.jeu_inconnu' });
+    const id = idDe(req);
+    if (!id) return res.status(400).json({ error: 'jeux.error.partie_inconnue' });
+    const gestes = jeu === 'chant' ? req.body?.frappes : req.body?.gestes;
+    repondre(res, await finirPartie(req.user.id, jeu, id, gestes));
+  }));
+
+  router.get('/tifo', requireAuth, safe(async (req, res) => {
+    res.json({ actif: Boolean(reglage('jeux.actif')), ...await etatTifo(req.user.id) });
+  }));
+
+  router.post('/tifo', requireAuth, safe(async (req, res) => {
+    if (!reglage('jeux.actif')) return ferme(res);
+    repondre(res, await peindre(req.user.id, Number(req.body?.match), Number(req.body?.case),
+      Number(req.body?.couleur)));
+  }));
+
+  router.get('/boss', requireAuth, safe(async (req, res) => {
+    res.json({ actif: Boolean(reglage('jeux.actif')), ...await etatBoss(req.user.id) });
+  }));
+
   return { router, classement, finirJongles, ouvrirJongles, tirerAuHasard, defier, releverDefi,
-    mesSeries, reglerLesAttentes };
+    mesSeries, reglerLesAttentes, ouvrirPartie, finirPartie, etatTifo, peindre, etatBoss };
 }
 
-export { TIRS, JONGLES };
+export { TIRS, JONGLES, CHANT, COURSE };

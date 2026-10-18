@@ -56,9 +56,11 @@ import { grandLivreFerme } from './auth/schema.js';
 
     `jongles` et `tirs` (18 octobre 2026) : les écharpes des mini-jeux, une
     fois par partie — la clé est l'identifiant de la partie (des tirs : la
-    série). */
+    série). `chant` et `deplacement` de même ; `tifo` et `boss`, une fois
+    par match ou par semaine et par club — la clé dit le club et le match, ou
+    le club et le lundi de la semaine. */
 export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
-  'virage', 'prono', 'jongles', 'tirs'];
+  'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',
