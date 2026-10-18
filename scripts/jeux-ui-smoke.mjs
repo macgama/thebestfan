@@ -104,9 +104,9 @@ app.post('/api/jeux/partie/deplacement/:id', (q, s) => {
 app.get('/api/jeux/tifo', (_q, s) => s.json({ actif: true,
   club: { id: 80, nom: 'Lyon', lettres: 'OL', couleurs: ['#1B3A8C', '#E5484D', '#F2EEE4'] },
   motif, casesJour: 15, mesCasesAujourdhui: 2, seuil: 60, gain: 15,
-  prochain: { id: 900, coupEnvoi: '2026-10-20 19:00:00', adversaire: 'Monaco', domicile: true,
+  prochain: { id: 900, coupEnvoi: '2026-10-20 19:00:00', dans: 7200, adversaire: 'Monaco', domicile: true,
     cases: new Array(240).fill(null), peintres: 3, fidelite: 0.12 },
-  leve: { id: 899, coupEnvoi: '2026-10-17 19:00:00', adversaire: 'Nice', domicile: false,
+  leve: { id: 899, coupEnvoi: '2026-10-17 19:00:00', dans: -3600, adversaire: 'Nice', domicile: false,
     cases: casesLevees, peintres: 9, fidelite: 0.8, reussi: true, verse: 15 } }));
 app.post('/api/jeux/tifo', (q, s) => { recu.tifo.push(q.body); s.json({ ok: true, mesCasesAujourdhui: 3 }); });
 app.get('/api/jeux/boss', (_q, s) => s.json({ actif: true, club: { id: 80, nom: 'Lyon' }, gain: 20,
@@ -343,6 +343,37 @@ await capture(page, 'boss');
 await page.click('[data-aller="chant"]');
 check('le boss envoie vers le chant en rythme', await page.evaluate(() =>
   !document.getElementById('v-chant').hidden));
+
+/* ------------------------------------------- le tifo levé, accueil et Virage */
+
+const leve = () => page.evaluate(() => {
+  const v = document.querySelector('.tifo-leve');
+  return v ? { cases: v.querySelectorAll('.tifo i').length, texte: v.textContent } : null;
+});
+await page.evaluate(() => { try { localStorage.clear(); } catch { /* rien */ } });
+await page.evaluate(() => window.TBF_TIFO.aLaccueil());
+const scene = await leve();
+check('sur l’accueil, le tifo du dernier match se lève en grand', scene?.cases === 240
+  && scene.texte.includes('LE TIFO SE LÈVE') && scene.texte.includes('Nice')
+  && scene.texte.includes('TIFO RÉUSSI') && scene.texte.includes('+15 écharpes pour toi'));
+if (process.env.CAPTURES) { await dodo(2600); await capture(page, 'tifo-leve'); }
+await page.click('.tifo-leve .tbf-plaque');
+check('ALLEZ ! le referme', await leve() === null);
+await page.evaluate(() => window.TBF_TIFO.aLaccueil());
+check('une seule fois sur l’accueil', await leve() === null);
+await page.evaluate(() => window.TBF_TIFO.auMatch(900));
+check('au Virage d’un match pas commencé, rien ne se lève encore', await leve() === null);
+await page.evaluate(() => window.TBF_TIFO.auMatch(899));
+check('au Virage du match commencé, il se lève aussi, une fois', (await leve())?.cases === 240);
+await page.keyboard.press('Escape');
+await page.evaluate(() => window.TBF_TIFO.auMatch(899));
+check('et pas deux', await leve() === null);
+for (const f of ['index.html', 'virage.html']) {
+  const src = readFileSync(path.join(RACINE, 'public', f), 'utf8');
+  check(`${f === 'index.html' ? 'l’accueil' : 'le Virage'} charge le tifo et le lève`,
+    src.includes('<script src="/tifo.js"') && src.includes(f === 'index.html'
+      ? 'TBF_TIFO?.aLaccueil()' : 'TBF_TIFO?.auMatch(S.fixture.id)'));
+}
 
 await page.close();
 const p2 = await nav.newPage();
