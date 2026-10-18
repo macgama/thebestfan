@@ -12,7 +12,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
-import { JONGLES, TIRS, jeuDeTirs, scoreDeJongles } from '../src/shared/mini-jeux.js';
+import {
+  JONGLES, TIRS, jeuDeTirs, scoreDeJongles, partitionDuChant, noterChant, rejouerCourse, motifDuTifo,
+} from '../src/shared/mini-jeux.js';
 import { controlerColonne } from './colonne-ui.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -39,9 +41,25 @@ check('la page joue avec la physique des jongles du serveur', pageJ
 check('et avec les forces des tirs', pageT && pageT.FORCE_MAX === TIRS.FORCE_MAX
   && pageT.FORCE_ARRET === TIRS.FORCE_ARRET && pageT.NOMBRE === TIRS.NOMBRE);
 
+/* Le chant et la course sont recopiés mot pour mot dans leurs scripts. */
+const partage = readFileSync(path.join(RACINE, 'src/shared/mini-jeux.js'), 'utf8');
+const bloc = (texte, nom) => {
+  const a = texte.indexOf(`/* @page:debut ${nom} */`);
+  const b = texte.indexOf(`/* @page:fin ${nom} */`);
+  return a < 0 || b < 0 ? null : texte.slice(a, b);
+};
+for (const [nom, fichier] of [['chant', 'jeux-chant.js'], ['course', 'jeux-course.js']]) {
+  const page = readFileSync(path.join(RACINE, 'public', fichier), 'utf8');
+  check(`la page recopie les règles du ${nom === 'chant' ? 'chant' : 'déplacement'} mot pour mot`,
+    bloc(partage, nom) !== null && bloc(page, nom) === bloc(partage, nom));
+}
+
 /* --------------------------------------------------- les réponses servies */
 
-const recu = { jongles: null, tirs: null, vus: 0 };
+const recu = { jongles: null, tirs: null, vus: 0, chant: null, course: null, tifo: [] };
+const GRAINE = 4242;
+const motif = motifDuTifo('OL');
+const casesLevees = motif.map((c, i) => (i % 5 ? c : null));
 const etat = () => ({
   actif: true, saison: { id: 1, numero: 1, nom: 'La reprise' }, avatar: null,
   echarpes: { aujourdhui: 6, plafond: 40 },
@@ -72,6 +90,28 @@ app.post('/api/jeux/tirs', (q, s) => {
   s.json({ id: 3, etat: 'jouee', mesButs: 3, sesButs: 2, issue: 'victoire', echarpes: 10,
     coups: Array.from({ length: 10 }, (_, i) => ({ tireur: i % 2 ? 'b' : 'a', moi: !(i % 2), issue: 'but' })) });
 });
+app.post('/api/jeux/partie/:jeu', (q, s) => s.json({ id: 50, graine: GRAINE }));
+app.post('/api/jeux/partie/chant/:id', (q, s) => {
+  recu.chant = q.body;
+  const b = noterChant(partitionDuChant(GRAINE), q.body.frappes);
+  s.json({ ...b, echarpes: 3, record: b.score, nouveauRecord: true });
+});
+app.post('/api/jeux/partie/deplacement/:id', (q, s) => {
+  recu.course = q.body;
+  const c = rejouerCourse(GRAINE, q.body.gestes);
+  s.json({ ...c, echarpes: 1, record: c.score, nouveauRecord: false });
+});
+app.get('/api/jeux/tifo', (_q, s) => s.json({ actif: true,
+  club: { id: 80, nom: 'Lyon', lettres: 'OL', couleurs: ['#1B3A8C', '#E5484D', '#F2EEE4'] },
+  motif, casesJour: 15, mesCasesAujourdhui: 2, seuil: 60, gain: 15,
+  prochain: { id: 900, coupEnvoi: '2026-10-20 19:00:00', adversaire: 'Monaco', domicile: true,
+    cases: new Array(240).fill(null), peintres: 3, fidelite: 0.12 },
+  leve: { id: 899, coupEnvoi: '2026-10-17 19:00:00', adversaire: 'Nice', domicile: false,
+    cases: casesLevees, peintres: 9, fidelite: 0.8, reussi: true, verse: 15 } }));
+app.post('/api/jeux/tifo', (q, s) => { recu.tifo.push(q.body); s.json({ ok: true, mesCasesAujourdhui: 3 }); });
+app.get('/api/jeux/boss', (_q, s) => s.json({ actif: true, club: { id: 80, nom: 'Lyon' }, gain: 20,
+  semaine: { lundi: '2026-10-12', voix: 40, retire: 10, mesCoups: 3, tombe: false, verse: 0 },
+  precedente: { lundi: '2026-10-05', voix: 40, retire: 41, mesCoups: 2, tombe: true, verse: 0 } }));
 app.get('/jeux', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'jeux.html')));
 app.use(express.static(path.join(RACINE, 'public')));
 const http = createServer(app);
@@ -190,6 +230,120 @@ check('le résultat s’affiche', await jusqua(() => page.evaluate(() =>
   && document.getElementById('t-resume').textContent.includes('+10 écharpes'))));
 
 await capture(page, 'tirs-fin');
+
+/* ------------------------------------------------------- le chant en rythme */
+
+await page.evaluate(() => window.scrollTo(0, 0));
+await page.click('[data-tab="chant"]');
+check('l’onglet du chant s’ouvre, et l’adresse le garde', await page.evaluate(() =>
+  !document.getElementById('v-chant').hidden && document.getElementById('v-jongles').hidden
+  && location.hash === '#chant'));
+await page.click('#ch-jouer');
+await jusqua(() => page.evaluate(() => !document.getElementById('ch-terrain').hidden && CH.partition)); // eslint-disable-line no-undef
+/* Chaque note frappée à son instant, sur son tambour : la page programme
+   elle-même ses toucher, pour ne pas dépendre du temps que met Puppeteer. */
+await page.evaluate(() => {
+  const c = document.getElementById('ch-canvas');
+  const r = c.getBoundingClientRect();
+  /* eslint-disable no-undef */
+  for (const n of CH.partition.notes) {
+    setTimeout(() => c.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 2,
+      clientX: r.left + r.width * (n.c + 0.5) / 3, clientY: r.top + r.height * 0.8 })),
+    CH.t0 + n.t - performance.now());
+  }
+  /* eslint-enable no-undef */
+});
+await dodo(6000);
+await capture(page, 'chant-jeu');
+check('le chant joué s’envoie à la fin', await jusqua(async () => recu.chant != null, 45000));
+const noteChant = noterChant(partitionDuChant(GRAINE), recu.chant?.frappes ?? []);
+check('ce que la page envoie, le serveur le note presque tout PARFAIT', noteChant
+  && noteChant.reussis === partitionDuChant(GRAINE).notes.length
+  && noteChant.parfaits >= noteChant.reussis * 0.9);
+check('le bilan dit le score, le record et les écharpes', await jusqua(() => page.evaluate((sc) =>
+  !document.getElementById('ch-fin').hidden && document.getElementById('ch-total').textContent === String(sc)
+  && document.getElementById('ch-bilan').textContent.includes('+3 écharpes'), noteChant?.score)));
+await capture(page, 'chant-fin');
+
+/* ------------------------------------------------------------ le déplacement */
+
+await page.evaluate(() => window.scrollTo(0, 0));
+await page.click('[data-tab="deplacement"]');
+await page.click('#d-jouer');
+await jusqua(() => page.evaluate(() => !document.getElementById('d-terrain').hidden && D.course)); // eslint-disable-line no-undef
+/* Un coureur appliqué pendant huit secondes, puis plus rien : il finit par
+   tomber. La page lit la route et touche l'écran au bon moment. */
+await page.evaluate(() => new Promise((ok) => {
+  const c = document.getElementById('d-canvas');
+  const fin = performance.now() + 8000;
+  /* eslint-disable no-undef */
+  const pas = () => {
+    if (performance.now() > fin || D.fini) { ok(); return; }
+    const s = D.course.etat;
+    const devant = s.route.find((o) => o.type !== 'ticket' && o.x + o.l > s.dist + COURSE.X);
+    if (devant && s.y === 0 && !D.attente) {
+      const d = devant.x - (s.dist + COURSE.X + COURSE.LARGEUR);
+      if (devant.type === 'peage' && d < s.v * 0.2 && s.glisse < 2) {
+        c.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientY: 100 }));
+        c.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientY: 160 }));
+        c.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientY: 160 }));
+      } else if (devant.type !== 'peage' && d < s.v * 0.12 + 8 && d > 0) {
+        c.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientY: 100 }));
+        c.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientY: 100 }));
+      }
+    }
+    requestAnimationFrame(pas);
+  };
+  /* eslint-enable no-undef */
+  pas();
+}));
+await capture(page, 'deplacement-jeu');
+check('la course finit par tomber, et s’envoie', await jusqua(async () => recu.course != null, 30000));
+const local = await page.evaluate(() => ({ ...scoreDeCourse(D.course.etat), images: D.course.etat.image })); // eslint-disable-line no-undef
+const rejoue = rejouerCourse(GRAINE, recu.course?.gestes ?? []);
+check('le serveur rejoue exactement la course de la page', rejoue && rejoue.images === local.images
+  && rejoue.score === local.score && local.metres > 60 && recu.course.gestes.length > 0);
+check('le bilan dit les mètres', await jusqua(() => page.evaluate((m) =>
+  !document.getElementById('d-fin').hidden && document.getElementById('d-total').textContent === `${m} m`,
+local.metres)));
+await capture(page, 'deplacement-fin');
+
+/* -------------------------------------------------------------------- le tifo */
+
+await page.evaluate(() => window.scrollTo(0, 0));
+await page.click('[data-tab="tifo"]');
+check('le tifo du prochain match : 240 cases, la palette du club', await jusqua(() => page.evaluate(() =>
+  document.querySelectorAll('#tf-corps .tifo i').length === 240
+  && document.querySelectorAll('.palette button').length === 3
+  && document.getElementById('tf-corps').textContent.includes('Monaco'))));
+await page.click('.palette [data-couleur="1"]');
+await page.click('#tf-corps .tifo i[data-n="27"]');
+check('une case touchée part au serveur, de la couleur choisie', await jusqua(async () =>
+  recu.tifo.length === 1 && recu.tifo[0].case === 27 && recu.tifo[0].couleur === 1 && recu.tifo[0].match === 900));
+check('et se peint tout de suite', await page.evaluate(() => {
+  const i = document.querySelector('#tf-corps .tifo i[data-n="27"]');
+  return i.classList.contains('moi') && !i.classList.contains('vide')
+    && document.getElementById('tf-reste').textContent === '12';
+}));
+check('le tifo du dernier match est levé, réussi', await page.evaluate(() =>
+  !document.getElementById('tf-leve').hidden
+  && document.getElementById('tf-leve').textContent.includes('TIFO RÉUSSI')
+  && document.querySelectorAll('#tf-leve .tifo i.vide').length === 48));
+await capture(page, 'tifo');
+
+/* --------------------------------------------------------------------- le boss */
+
+await page.evaluate(() => window.scrollTo(0, 0));
+await page.click('[data-tab="boss"]');
+check('le boss de la semaine : son nom, sa voix qui baisse', await jusqua(() => page.evaluate(() =>
+  document.querySelector('.boss-nom')?.textContent.length > 3
+  && document.querySelector('.voix i')?.style.width === '75%'
+  && document.getElementById('b-corps').textContent.includes('Tes chants : 3'))));
+await capture(page, 'boss');
+await page.click('[data-aller="chant"]');
+check('le boss envoie vers le chant en rythme', await page.evaluate(() =>
+  !document.getElementById('v-chant').hidden));
+
 await page.close();
 const p2 = await nav.newPage();
 await p2.setViewport({ width: 1366, height: 900 });
