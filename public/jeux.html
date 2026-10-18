@@ -108,6 +108,34 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;display:none}
 .toast.on{display:block}
 
+/* Six onglets sur deux rangs, dans la largeur du téléphone. */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 14px 6px}
+.terrain .compte.petit{font-size:34px}
+.terrain .multi{position:absolute;right:12px;top:14px;font-family:var(--banner);font-weight:700;font-size:20px;
+  color:var(--projo);text-shadow:0 2px 0 #000;pointer-events:none}
+.terrain.route{aspect-ratio:4/5}
+
+/* Le tifo : la grille de cases, la palette. */
+.tifo{display:grid;grid-template-columns:repeat(20,1fr);gap:1px;background:rgba(242,238,228,.12);
+  border:1px solid var(--trait);border-radius:6px;overflow:hidden;touch-action:manipulation}
+.tifo i{aspect-ratio:1;display:block;cursor:pointer;position:relative}
+.tifo i.vide::after{content:'';position:absolute;inset:0;background:rgba(5,7,10,.72)}
+.tifo i.moi{outline:2px solid var(--projo);outline-offset:-2px;z-index:1}
+.tifo.leve i{cursor:default}
+.palette{display:flex;gap:10px;justify-content:center;margin:12px 0 6px}
+.palette button{width:46px;height:46px;border-radius:50%;border:3px solid rgba(242,238,228,.3);cursor:pointer}
+.palette button.on{border-color:var(--projo);transform:scale(1.08)}
+.tifo-infos{display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.92;margin-top:6px}
+.match{font-size:13px;margin:0 0 10px}
+.match b{font-family:var(--banner);letter-spacing:.06em}
+
+/* Le boss : sa silhouette au pochoir, sa voix. */
+.boss-art{display:block;width:100%;height:auto;margin:4px 0 8px}
+.voix{height:16px;border-radius:8px;background:rgba(242,238,228,.1);overflow:hidden;border:1px solid var(--trait)}
+.voix i{display:block;height:100%;background:linear-gradient(90deg,var(--flare),#F5C33B);transition:width .6s}
+.boss-nom{font-family:var(--banner);font-size:20px;letter-spacing:.06em;margin:2px 0 6px;text-align:center}
+.boss-tombe{text-align:center;margin:10px 0}
+
 /* tbf-degagement */
 #app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
@@ -128,6 +156,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <div class="tabs tbf-onglets" data-ton="flare">
     <button class="tab tbf-onglet on" data-tab="jongles">JONGLES</button>
     <button class="tab tbf-onglet" data-tab="tirs">TIRS AU BUT</button>
+    <button class="tab tbf-onglet" data-tab="chant">CHANT</button>
+    <button class="tab tbf-onglet" data-tab="deplacement">DÉPLACEMENT</button>
+    <button class="tab tbf-onglet" data-tab="tifo">TIFO</button>
+    <button class="tab tbf-onglet" data-tab="boss">BOSS</button>
   </div>
 
   <!-- ============================================================ jongles -->
@@ -207,6 +239,92 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <div class="mapl" id="m-tirs"></div>
     </div>
   </section>
+
+  <!-- ==================================================== chant en rythme -->
+  <section class="vue" id="v-chant" hidden>
+    <div class="bloc" id="ch-accueil">
+      <h2>LE CHANT EN RYTHME</h2>
+      <p>Les notes descendent sur trois tambours. Tape le bon tambour quand la note touche la ligne : PARFAIT, BON ou raté. Les notes réussies d’affilée multiplient les points ; une frappe dans le vide casse la série. Chaque dizaine de notes réussies pousse aussi contre le boss de la semaine.</p>
+      <div class="chiffres">
+        <div><b id="ch-record">–</b>ton record</div>
+        <div><b id="ch-rang">–</b>au classement</div>
+        <div><b id="ch-gain">–</b>points par écharpe</div>
+      </div>
+      <div class="actions"><button class="tbf-plaque" data-ton="flare" id="ch-jouer">JOUER</button></div>
+    </div>
+    <div class="terrain" id="ch-terrain" hidden>
+      <canvas id="ch-canvas"></canvas>
+      <div class="compte petit" id="ch-score">0</div>
+      <div class="multi" id="ch-multi"></div>
+      <div class="consigne" id="ch-consigne">Tape le tambour quand la note touche la ligne</div>
+      <div class="fin" id="ch-fin" hidden>
+        <div class="grand" id="ch-total">0</div>
+        <div class="sous" id="ch-bilan"></div>
+        <button class="tbf-plaque" data-ton="flare" id="ch-rejouer">REJOUER</button>
+        <button class="tbf-plaque" id="ch-quitter">LE CLASSEMENT</button>
+      </div>
+    </div>
+    <div class="bloc">
+      <h2>LE CLASSEMENT DU CHANT</h2>
+      <div class="portee" data-jeu="chant">
+        <button class="on" data-portee="tous">TOUT LE MONDE</button>
+        <button data-portee="amis">MES AMIS</button>
+      </div>
+      <div class="lignes" id="c-chant"></div>
+      <div class="mapl" id="m-chant"></div>
+    </div>
+  </section>
+
+  <!-- ======================================================== déplacement -->
+  <section class="vue" id="v-deplacement" hidden>
+    <div class="bloc" id="d-accueil">
+      <h2>LE DÉPLACEMENT</h2>
+      <p>Ton Fanzzy court vers le stade adverse. Touche l’écran pour sauter la barrière et le car en panne, glisse le doigt vers le bas pour passer sous la barrière du péage. Ramasse les tickets en route. Plus tu vas loin, plus ça va vite.</p>
+      <div class="chiffres">
+        <div><b id="d-record">–</b>ton record</div>
+        <div><b id="d-rang">–</b>au classement</div>
+        <div><b id="d-gain">–</b>mètres par écharpe</div>
+      </div>
+      <div class="actions"><button class="tbf-plaque" data-ton="flare" id="d-jouer">EN ROUTE</button></div>
+    </div>
+    <div class="terrain route" id="d-terrain" hidden>
+      <canvas id="d-canvas"></canvas>
+      <div class="compte petit" id="d-metres">0 m</div>
+      <div class="consigne" id="d-consigne">Touche pour sauter, glisse vers le bas pour passer dessous</div>
+      <div class="fin" id="d-fin" hidden>
+        <div class="grand" id="d-total">0</div>
+        <div class="sous" id="d-bilan"></div>
+        <button class="tbf-plaque" data-ton="flare" id="d-rejouer">REPARTIR</button>
+        <button class="tbf-plaque" id="d-quitter">LE CLASSEMENT</button>
+      </div>
+    </div>
+    <div class="bloc">
+      <h2>LE CLASSEMENT DU DÉPLACEMENT</h2>
+      <div class="portee" data-jeu="deplacement">
+        <button class="on" data-portee="tous">TOUT LE MONDE</button>
+        <button data-portee="amis">MES AMIS</button>
+      </div>
+      <div class="lignes" id="c-deplacement"></div>
+      <div class="mapl" id="m-deplacement"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================== tifo -->
+  <section class="vue" id="v-tifo" hidden>
+    <div class="bloc" id="tf-bloc">
+      <h2>LE TIFO DU CLUB</h2>
+      <div id="tf-corps"><div class="vide-liste">Chargement…</div></div>
+    </div>
+    <div class="bloc" id="tf-leve" hidden></div>
+  </section>
+
+  <!-- ============================================================== boss -->
+  <section class="vue" id="v-boss" hidden>
+    <div class="bloc" id="b-bloc">
+      <h2>LA TRIBUNE CONTRE LE BOSS</h2>
+      <div id="b-corps"><div class="vide-liste">Chargement…</div></div>
+    </div>
+  </section>
 </main>
 <div class="toast" id="toast"></div>
 <script src="/fanzzy-art.js"></script>
@@ -243,6 +361,11 @@ const ERREURS = {
   'jeux.error.pas_ami': 'Vous n’êtes pas encore amis',
   'jeux.error.serie_jouee': 'Cette série est déjà jouée',
   'jeux.error.schema': 'Les mini-jeux arrivent bientôt',
+  'jeux.error.score_invalide': 'Cette partie n’a pas pu être comptée',
+  'jeux.error.sans_club': 'Choisis d’abord ton club dans Mes clubs',
+  'jeux.error.tifo_ferme': 'Ce tifo est déjà levé',
+  'jeux.error.tifo_plus_de_cases': 'Plus de case pour aujourd’hui, reviens demain',
+  'jeux.error.case_invalide': 'Cette case n’existe pas',
 };
 const dire = (e) => toast(ERREURS[e?.code] ?? 'Impossible pour le moment');
 
@@ -304,33 +427,42 @@ async function charger() {
   $('j-record').textContent = etat.jongles.record ?? '–';
   $('j-gain').textContent = etat.gains.jongles.parEcharpe;
   $('t-gain').textContent = etat.gains.tirs.victoire;
-  ['j-jouer', 't-hasard', 't-ami'].forEach((id) => { $(id).disabled = !etat.actif; });
+  $('ch-record').textContent = etat.chant?.record ?? '–';
+  $('ch-gain').textContent = etat.gains.chant?.parEcharpe ?? '–';
+  $('d-record').textContent = etat.deplacement?.record ?? '–';
+  $('d-gain').textContent = etat.gains.deplacement?.parEcharpe ?? '–';
+  ['j-jouer', 't-hasard', 't-ami', 'ch-jouer', 'd-jouer'].forEach((id) => { $(id).disabled = !etat.actif; });
   dessinerSeries(etat.tirs.series);
   if (etat.tirs.nouveaux) api('/tirs-vus', {}).catch(() => {});
-  await Promise.all([classement('jongles'), classement('tirs')]);
+  await Promise.all(Object.keys(portees).map(classement));
 }
 
-const portees = { jongles: 'tous', tirs: 'tous' };
+const portees = { jongles: 'tous', tirs: 'tous', chant: 'tous', deplacement: 'tous' };
+/* Ce que dit un classement, jeu par jeu : l'unité, la phrase d'une saison
+   vide, et la case du rang dans l'accueil du jeu. */
+const CLASSEMENTS = {
+  jongles: { unite: 'jongles', vide: 'Personne n’a encore jonglé cette saison. Sois le premier.', rang: 'j-rang' },
+  tirs: { unite: 'pts', vide: 'Aucune série jouée cette saison. Lance la première.', rang: 't-rang' },
+  chant: { unite: 'pts', vide: 'Personne n’a encore chanté cette saison. Lance le premier chant.', rang: 'ch-rang' },
+  deplacement: { unite: 'm', vide: 'Personne n’est encore parti cette saison. Prends la route.', rang: 'd-rang' },
+};
 async function classement(jeu) {
   let c;
   try { c = await api(`/classement/${jeu}?portee=${portees[jeu]}`); } catch { return; }
   const el = $(`c-${jeu}`);
   if (!c.lignes.length) {
-    el.innerHTML = `<div class="vide-liste">${jeu === 'jongles'
-      ? 'Personne n’a encore jonglé cette saison. Sois le premier.'
-      : 'Aucune série jouée cette saison. Lance la première.'}</div>`;
+    el.innerHTML = `<div class="vide-liste">${CLASSEMENTS[jeu].vide}</div>`;
   } else {
     el.innerHTML = c.lignes.map((l) => {
       const src = imageFanzzy(l.avatar);
-      const valeur = jeu === 'jongles'
-        ? `${l.valeur}<small>jongles</small>` : `${l.valeur}<small>pts</small>`;
+      const valeur = `${l.valeur}<small>${CLASSEMENTS[jeu].unite}</small>`;
       return `<div class="ligne${l.moi ? ' moi' : ''}"><span class="rg">${l.rang}</span>${src
         ? `<img class="av" src="${esc(src)}" alt="" loading="lazy">` : '<span class="av vide"></span>'}`
         + `<span class="ps">${esc(l.pseudo)}</span><span class="vl">${valeur}</span></div>`;
     }).join('');
   }
   const rang = c.moi ? `${c.moi.rang}<sup>e</sup>` : '–';
-  if (jeu === 'jongles') $('j-rang').innerHTML = rang;
+  if (jeu !== 'tirs') $(CLASSEMENTS[jeu].rang).innerHTML = rang;
   else {
     $('t-rang').innerHTML = rang;
     $('t-points').textContent = c.moi ? c.moi.valeur : 0;
@@ -352,10 +484,17 @@ document.querySelectorAll('.portee').forEach((p) => p.addEventListener('click', 
 document.querySelector('.tabs').addEventListener('click', (e) => {
   const t = e.target.closest('[data-tab]');
   if (!t) return;
-  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === t));
-  $('v-jongles').hidden = t.dataset.tab !== 'jongles';
-  $('v-tirs').hidden = t.dataset.tab !== 'tirs';
+  montrer(t.dataset.tab);
 });
+
+/** Un onglet, par son nom ; l'adresse le garde (`/jeux#tifo`). */
+function montrer(tab) {
+  if (!document.getElementById(`v-${tab}`)) tab = 'jongles';
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x.dataset.tab === tab));
+  document.querySelectorAll('.vue').forEach((v) => { v.hidden = v.id !== `v-${tab}`; });
+  if (location.hash.slice(1) !== tab) history.replaceState(null, '', tab === 'jongles' ? location.pathname : `#${tab}`);
+  window.dispatchEvent(new CustomEvent('jeux:onglet', { detail: tab }));
+}
 
 /* ============================================================== les jongles
 
@@ -916,8 +1055,15 @@ window.addEventListener('resize', () => {
   if (!$('t-terrain').hidden) { T.taille = tailleCanvas(tc); dessinerTirs(); }
 });
 
-charger();
+/* Après les scripts des autres jeux (`jeux-*.js`), qui s'y abonnent. */
+document.addEventListener('DOMContentLoaded', () => {
+  montrer(location.hash.slice(1) || 'jongles');
+  charger();
+});
 </script>
+<script src="/jeux-chant.js"></script>
+<script src="/jeux-course.js"></script>
+<script src="/jeux-club.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
