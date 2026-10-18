@@ -128,6 +128,7 @@
     "securite": "node scripts/securite.mjs",
     "garde:smoke": "node scripts/garde-smoke.mjs",
     "admin:smoke": "node scripts/admin-smoke.mjs",
+    "saisons-auto:smoke": "node scripts/saisons-auto-smoke.mjs",
     "fanzzy:smoke": "node scripts/fanzzy-smoke.mjs",
     "images:smoke": "node scripts/images-smoke.mjs",
     "classement:smoke": "node scripts/classement-smoke.mjs",
