@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<script src="/langue.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<title>Comment jouer — thebestfan</title>
+<meta name="description" content="Apprendre à jouer à thebestfan : les gestes, les Fanzzy, le Grand Virage, les duels, les mini-jeux, et tout ce que le jeu permet.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* ==================================================== comment jouer
+
+   Demandée par Gaël le 18 octobre 2026 (fil « Tutoriel du joueur ») : une
+   page qui apprend à jouer et dit tout ce que le jeu permet. Une rubrique par
+   chose à faire, chacune avec sa porte (« Y aller ») ; en tête, de quoi
+   relancer la visite guidée de l'accueil (`visite.js`).
+
+   **Aucun nombre réglable ici** : les prix, réserves et plafonds se changent
+   depuis l'administration, et une page de lecture qui les recopie devient
+   fausse sans que rien ne lève. Ceux-là vivent dans la FAQ des MISSIONS
+   (`src/shared/aide.js`), qui les lit en direct ; cette page y renvoie. */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+
+.rub{margin:18px 0 0;scroll-margin-top:70px}
+.rub h2{margin:0 2px 10px}
+.bloc{background:var(--panneau);border:1px solid var(--trait);border-radius:12px;
+  padding:14px 16px;margin:0 0 10px;font-size:14px;line-height:1.6}
+.bloc p{margin:0 0 10px}
+.bloc p:last-child,.bloc ul:last-child{margin-bottom:0}
+.bloc ul{margin:0 0 10px;padding-left:20px}
+.bloc li{margin:0 0 6px}
+.bloc li:last-child{margin-bottom:0}
+.bloc b{font-weight:700}
+.bloc a:not(.tbf-plaque):not(.sommaire a):not(.aller a){color:var(--craie);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+/* La porte de la rubrique : un lien plein, à droite, assez grand pour le doigt. */
+.aller{display:flex;justify-content:flex-end;margin-top:12px}
+.aller a{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;
+  font-family:var(--banner);font-weight:600;font-size:15px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--projo);text-decoration:none}
+/* Le départ : trois phrases, et les deux boutons qui lancent. */
+.depart .boutons{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.depart .boutons .tbf-plaque{width:100%;text-align:center;justify-content:center}
+/* Le sommaire : des pastilles qui mènent aux rubriques. */
+.sommaire{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.sommaire li{margin:0}
+.sommaire a{display:inline-flex;align-items:center;min-height:44px;padding:0 13px;border-radius:999px;
+  background:rgba(242,238,228,.07);box-shadow:inset 0 0 0 1px var(--trait);
+  color:var(--craie);font-size:13.5px;font-weight:600;text-decoration:none}
+/* Les gestes : le nom au pochoir, la consigne à côté. */
+.gestes{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0 0 10px;font-size:13.5px}
+.gestes dt{font-family:var(--banner);font-weight:600;letter-spacing:.04em;white-space:nowrap}
+.gestes dd{margin:0}
+
+/* tbf-degagement */
+#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+  <p class="tbf-sous">Tout ce que tu peux faire, expliqué simplement</p>
+
+  <section class="rub depart" id="principe">
+    <h2 class="tbf-cousu">Le jeu en trente secondes</h2>
+    <div class="bloc">
+      <p>Ici, tu ne joues pas les joueurs&nbsp;: tu joues <b>les supporters</b>. Pendant les vrais
+        matchs de football, ta tribune affronte celle d’en face, et c’est <b>ta main</b> qui fait le
+        bruit&nbsp;: chaque chant est un petit geste à réussir sur l’écran.</p>
+      <p>Ton supporter s’appelle un <b>Fanzzy</b>. Tu en gagnes d’autres dans les boosters, tu les fais
+        grandir avec des écharpes, tu les équipes, et tu les emmènes au Grand Virage et en duel.</p>
+      <p><b>Rien ne s’achète en puissance</b>&nbsp;: un joueur qui débute peut battre un ancien,
+        s’il joue bien. Ce que tu gagnes en jouant, ce sont des écharpes, des boosters, de la ferveur et des
+        souvenirs.</p>
+      <div class="boutons">
+        <a class="tbf-plaque" data-ton="or" href="/?visite=1">Revoir la visite guidée</a>
+        <a class="tbf-plaque" href="/aide">Voir mes missions</a>
+      </div>
+    </div>
+    <div class="bloc">
+      <ul class="sommaire" aria-label="Les rubriques">
+        <li><a href="#gestes">Les gestes</a></li>
+        <li><a href="#fanzzy">Les Fanzzy</a></li>
+        <li><a href="#boosters">Boosters et écharpes</a></li>
+        <li><a href="#deck">Le deck</a></li>
+        <li><a href="#virage">Le Grand Virage</a></li>
+        <li><a href="#duel">Le duel</a></li>
+        <li><a href="#jeux">Les mini-jeux</a></li>
+        <li><a href="#missions">Missions et niveau</a></li>
+        <li><a href="#football">Le football</a></li>
+        <li><a href="#ensemble">KOP et amis</a></li>
+        <li><a href="#saisons">Classements et saisons</a></li>
+        <li><a href="#collection">Collection et souvenirs</a></li>
+        <li><a href="#boutique">Boutique et abonnement</a></li>
+        <li><a href="#reglages">Ton compte</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="rub" id="gestes">
+    <h2 class="tbf-cousu">Les gestes, le cœur du jeu</h2>
+    <div class="bloc">
+      <p>Chaque chant te demande un geste&nbsp;: taper en rythme, tenir le doigt, retenir un motif, suivre
+        un trait… Le jeu le note <b>PARFAIT</b>, <b>BON</b> ou raté, et c’est cette note qui pousse ta
+        tribune. Quelques exemples&nbsp;:</p>
+      <dl class="gestes">
+        <dt>TEMPO</dt><dd>taper sur chaque pulsation</dd>
+        <dt>ÉCHO</dt><dd>écouter le motif, puis le refaire</dd>
+        <dt>ENDURANCE</dt><dd>garder le doigt appuyé</dd>
+        <dt>MOSAÏQUE</dt><dd>retenir la mosaïque, puis la refaire</dd>
+        <dt>TIFO</dt><dd>suivre le trait du doigt sans le quitter</dd>
+        <dt>LA OLA</dt><dd>toucher quand la vague passe devant ta tribune</dd>
+      </dl>
+      <p>Un geste te résiste&nbsp;? <b>La répétition</b> te laisse essayer tous les gestes, autant de fois que
+        tu veux. Rien n’y compte et rien ne t’y aide&nbsp;: c’est ta main, notée par le même moteur qu’en
+        match.</p>
+      <p class="aller"><a href="/repetition">Répéter les gestes&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="fanzzy">
+    <h2 class="tbf-cousu">Les Fanzzy</h2>
+    <div class="bloc">
+      <p>Un Fanzzy est un supporter. Il n’a ni attaque ni défense&nbsp;: il a un <b>cri</b>, et ce cri désigne
+        les gestes que tu vas faire. Chaque Fanzzy appartient à une <b>famille</b> (la Voix, la Percussion,
+        la Fidélité, le Tifo, la Pyro, le Déplacement), et chaque famille a ses gestes préférés.</p>
+      <ul>
+        <li><b>Il grandit</b>&nbsp;: un Fanzzy a trois âges (commune, rare, épique). Tu paies le passage
+          d’un âge à l’autre en écharpes&nbsp;; c’est la seule façon d’avoir une rare ou une épique.</li>
+        <li><b>Les légendaires</b> sont à part&nbsp;: elles arrivent entières, au hasard d’un booster, et
+          c’est rare. Une seule par deck, et elle se réveille sur le banc après quelques chants réussis.</li>
+        <li><b>Les tenues et les expressions</b> changent son allure, jamais sa force.</li>
+        <li><b>Ton Fanzzy de l’accueil</b> est ton titulaire&nbsp;: choisis-le dans «&nbsp;Mes Fanzzy&nbsp;», et
+          ouvre sa fiche pour voir ses âges, ses tenues et le faire évoluer.</li>
+      </ul>
+      <p class="aller"><a href="/fanzzy">Mes Fanzzy&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="boosters">
+    <h2 class="tbf-cousu">Les boosters et les écharpes</h2>
+    <div class="bloc">
+      <p>Un <b>booster</b> contient cinq cartes&nbsp;: un ou deux Fanzzy, puis de l’équipement, des cartes
+        d’action, des tenues, des expressions ou des écharpes. Ta réserve de boosters se remplit toute
+        seule avec le temps&nbsp;: reviens l’ouvrir.</p>
+      <p>Les <b>écharpes</b> sont la monnaie du jeu. Tu les gagnes en jouant (missions, duels, mini-jeux,
+        pronostics, niveaux…), et un <b>double</b> se change en écharpes&nbsp;: rien ne se perd. Elles font
+        grandir tes Fanzzy, et s’échangent à la boutique contre un booster, une pièce d’équipement ou une
+        tenue.</p>
+      <p class="aller"><a href="/boosters">Ouvrir un booster&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="deck">
+    <h2 class="tbf-cousu">Ton deck</h2>
+    <div class="bloc">
+      <p>Le deck, c’est la tribune que tu emmènes en duel&nbsp;:</p>
+      <ul>
+        <li><b>tes Fanzzy</b>&nbsp;: le premier est ton titulaire, c’est lui qui entre sur le terrain&nbsp;;
+          une place de plus s’ouvre avec ton niveau&nbsp;;</li>
+        <li><b>l’équipement</b>&nbsp;: quelques pièces sur chaque Fanzzy. Chaque pièce donne quelque chose
+          et en retire une autre&nbsp;: choisis celles qui vont avec les gestes de ton titulaire&nbsp;;</li>
+        <li><b>les cartes d’action</b>&nbsp;: Fumigène, Torche, Remontada… Elles se jouent pendant le duel
+          pour gêner l’adversaire ou relancer ta tribune. Tu peux mettre plusieurs fois la même.</li>
+      </ul>
+      <p class="aller"><a href="/deck">Monter mon deck&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="virage">
+    <h2 class="tbf-cousu">Le Grand Virage</h2>
+    <div class="bloc">
+      <p>Une salle par <b>vrai match en direct</b>. Les deux tribunes tirent sur la même <b>corde</b>
+        pendant toute la rencontre&nbsp;: tu entres d’un côté et tu chantes avec tous ceux qui sont là.
+        Chaque chant use ton <b>souffle</b>, qui revient tout seul.</p>
+      <ul>
+        <li>Quand un camp tire la corde jusqu’au bout, il marque.</li>
+        <li>Quand un <b>vrai but</b> tombe dans le match, la corde se secoue et tout compte double pendant
+          une minute.</li>
+        <li>Il faut chanter pour être compté&nbsp;: sans geste un moment, tu sors de la foule.</li>
+        <li>Tu peux pousser pour n’importe quel club&nbsp;; c’est chez ton club que tu gagnes le plus de
+          <b>ferveur</b>, celle qui fait monter au classement.</li>
+      </ul>
+      <p class="aller"><a href="/virage">Entrer dans un virage&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="duel">
+    <h2 class="tbf-cousu">Le duel de tribunes</h2>
+    <div class="bloc">
+      <p>Ta tribune contre une autre, en un contre un ou à plusieurs. Ton deck entre tel que tu l’as
+        rangé&nbsp;: ta main mêle les chants de tes Fanzzy et tes cartes d’action. Réussis les gestes pour
+        faire marquer ta tribune, joue tes cartes au bon moment&nbsp;: le premier camp qui marque assez de
+        buts gagne.</p>
+      <ul>
+        <li>Un duel s’adosse à un <b>vrai match</b>&nbsp;: sur un match du jour ou en cours, il est
+          <b>classé</b> et compte au classement&nbsp;; sur un autre jour, c’est un <b>entraînement</b>.</li>
+        <li>Le chant de ton titulaire est toujours dans ta main.</li>
+        <li>Gagner rapporte des écharpes, perdre aussi un peu&nbsp;; un duel joué pour ton club rapporte le
+          double.</li>
+        <li><b>Derby</b>&nbsp;: quand un supporter de l’autre club d’un match du jour est en ligne, le jeu te
+          le dit. Entre dans la file&nbsp;: il le verra.</li>
+      </ul>
+      <p class="aller"><a href="/duel-nvn">Chercher un duel&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="jeux">
+    <h2 class="tbf-cousu">Les mini-jeux</h2>
+    <div class="bloc">
+      <p>Entre deux matchs, seul ou contre un ami. Ils rapportent des écharpes (avec un plafond par jour),
+        et chacun a son classement de la saison, entre tout le monde ou entre amis.</p>
+      <ul>
+        <li><b>Jongles</b>&nbsp;: tape sous le ballon, qui retombe de plus en plus vite.</li>
+        <li><b>Tirs au but</b>&nbsp;: cinq tirs et cinq plongeons, contre un inconnu ou un ami. Arrête la
+          visée, puis dose la puissance.</li>
+        <li><b>Chant en rythme</b>&nbsp;: frappe les tambours quand les notes arrivent, et tiens la série.</li>
+        <li><b>Déplacement</b>&nbsp;: saute et baisse-toi pour aller le plus loin possible.</li>
+        <li><b>Tifo du club</b>&nbsp;: avec les supporters de ton club, peins une mosaïque avant le match.
+          Si elle ressemble au modèle au coup d’envoi, chaque peintre est récompensé.</li>
+        <li><b>Boss de la semaine</b>&nbsp;: une tribune rivale à faire taire. Chaque chant réussi, au
+          Virage, en duel ou au chant en rythme, lui retire de la voix.</li>
+      </ul>
+      <p class="aller"><a href="/jeux">Jouer aux mini-jeux&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="missions">
+    <h2 class="tbf-cousu">Missions, carnet et niveau</h2>
+    <div class="bloc">
+      <ul>
+        <li><b>Les missions du jour</b>&nbsp;: trois choses à faire chaque jour, de la plus facile à la plus
+          dure. Chacune rapporte des écharpes et de l’expérience, et les trois ensemble un booster.</li>
+        <li><b>La carte de présence</b>&nbsp;: reviens chaque jour pour la remplir&nbsp;; elle rapporte un peu
+          plus à chaque case.</li>
+        <li><b>Les premiers pas</b>&nbsp;: six étapes pour découvrir le jeu, récompensées à la fin.</li>
+        <li><b>Le carnet de la saison</b>&nbsp;: chaque mission te donne des tampons, et chaque palier du
+          carnet des écharpes et des boosters.</li>
+        <li><b>Ton niveau</b> monte avec l’expérience (boosters ouverts, duels, Virage, missions). Chaque
+          niveau rapporte des écharpes et ouvre des droits&nbsp;: une place de deck, des clubs en plus.
+          Jamais de la puissance.</li>
+      </ul>
+      <p>Toutes les règles et les nombres exacts sont dans l’onglet <b>QUESTIONS</b> des missions.</p>
+      <p class="aller"><a href="/aide">Voir mes missions&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="football">
+    <h2 class="tbf-cousu">Le football, en vrai</h2>
+    <div class="bloc">
+      <ul>
+        <li><b>Mes clubs</b>&nbsp;: choisis les clubs que tu suis, et ton club principal. C’est lui qui te
+          place dans une tribune.</li>
+        <li><b>Les matchs du jour</b>&nbsp;: les scores en direct, les compositions, le fil du match et les
+          statistiques.</li>
+        <li><b>Le pronostic</b>&nbsp;: gratuit, sur les matchs de tes clubs, jusqu’au coup d’envoi. Le bon
+          vainqueur rapporte des écharpes, le score exact encore plus.</li>
+        <li><b>Toutes les compétitions</b>&nbsp;: classements, résultats, buteurs et passeurs de chaque
+          championnat et coupe.</li>
+      </ul>
+      <p class="aller"><a href="/matchs">Les matchs du jour&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="ensemble">
+    <h2 class="tbf-cousu">Le KOP et les amis</h2>
+    <div class="bloc">
+      <ul>
+        <li><b>Tes amis</b>&nbsp;: trouve-les par leur pseudo, défie-les aux tirs au but, invite-les dans
+          ton KOP, et vois s’ils sont au Virage ou en duel. Tu peux apparaître hors ligne depuis le menu.</li>
+        <li><b>Ton KOP</b>&nbsp;: le groupe de supporters de ton club. Chacun verse une part de ses
+          écharpes dans la caisse, et le KOP vote pour acheter des bonus qui aident tout le monde au
+          Virage. On n’est que d’un seul KOP.</li>
+      </ul>
+      <p class="aller"><a href="/kop">Mon KOP&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="saisons">
+    <h2 class="tbf-cousu">Les classements et les saisons</h2>
+    <div class="bloc">
+      <p>Le jeu avance par <b>saisons</b> de trois mois. Chaque saison ouvre de nouvelles séries de Fanzzy
+        et d’équipement, remet à zéro les classements et le carnet, et ne te retire jamais rien de ce que
+        tu possèdes.</p>
+      <ul>
+        <li>Ta <b>ferveur</b> de la saison te fait monter de division&nbsp;: Sympathisant, Habitué, Fervent,
+          Ultra, puis Capo. Une division atteinte reste acquise jusqu’à la fin de la saison.</li>
+        <li>Les classements comparent les supporters, les tribunes et les duels, sur la saison ou depuis
+          toujours.</li>
+      </ul>
+      <p class="aller"><a href="/classement">Voir les classements&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="collection">
+    <h2 class="tbf-cousu">La collection et les cartes-souvenirs</h2>
+    <div class="bloc">
+      <ul>
+        <li><b>Ma collection</b> compte tout ce que tu as gagné. Plus elle grandit, plus elle rapporte, et
+          une série complète vaut une belle récompense.</li>
+        <li><b>Les cartes-souvenirs</b>&nbsp;: chaque vrai but crée une carte. Si tu poussais au Virage à ce
+          moment-là, tu la reçois à ton nom, avec ton Fanzzy de ce soir-là. Sinon, tu peux l’acheter
+          quelque temps dans ton carnet.</li>
+      </ul>
+      <p class="aller"><a href="/collection">Ma collection&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="boutique">
+    <h2 class="tbf-cousu">La boutique et l’abonnement</h2>
+    <div class="bloc">
+      <ul>
+        <li><b>La boutique</b>&nbsp;: des pièces d’équipement et des tenues choisies, sans hasard, payées en
+          écharpes.</li>
+        <li><b>Le PASS de tribune</b>&nbsp;: un abonnement, au mois ou à l’année, pour plus de confort&nbsp;:
+          une réserve de boosters plus grande qui se remplit plus vite, plus de clubs suivis, plus de
+          parties classées, et la création d’un KOP. Il ne donne aucune puissance, et se résilie en deux
+          touches.</li>
+      </ul>
+      <p class="aller"><a href="/boutique">La boutique&nbsp;›</a></p>
+    </div>
+  </section>
+
+  <section class="rub" id="reglages">
+    <h2 class="tbf-cousu">Ton compte et tes réglages</h2>
+    <div class="bloc">
+      <ul>
+        <li><b>Mon profil</b>&nbsp;: ton niveau, ta saison, tes clubs, ton parcours et tes souvenirs.</li>
+        <li><b>La langue</b>&nbsp;: français, anglais, allemand, italien ou espagnol, dans le menu.</li>
+        <li><b>Le mode calme</b>&nbsp;: coupe les sons, les vibrations ou les animations, dans le menu.</li>
+        <li><b>Les notifications</b>&nbsp;: dans ton compte, jamais la nuit.</li>
+        <li><b>L’application</b>&nbsp;: installe le jeu sur ton téléphone depuis le menu, pour l’avoir en
+          plein écran.</li>
+      </ul>
+      <p class="aller"><a href="/profil">Mon profil&nbsp;›</a></p>
+    </div>
+  </section>
+</main>
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>
