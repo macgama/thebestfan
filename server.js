@@ -1196,6 +1196,7 @@ app.get('/jeux', (_req, res) => page(res, 'jeux.html'));
    ce qu'il est en train de faire, et la réponse est à côté de l'étape. */
 app.get('/aide', (_req, res) => page(res, 'aide.html'));
 app.get('/repetition', (_req, res) => page(res, 'repetition.html'));
+app.get('/comment-jouer', (_req, res) => page(res, 'comment-jouer.html'));
 /* La politique de confidentialité, lisible sans compte et sans base : on la
    cherche aussi le jour où le reste du jeu ne répond plus. La vitrine, la
    porte de connexion et « Mon compte » y mènent. */

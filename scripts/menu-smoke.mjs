@@ -225,7 +225,7 @@ for (const [nom, m] of [['l’accueil', accueil], ['une page de contenu', carnet
    serveur et liés depuis l'accueil, n'étaient réclamés par personne. */
 const ATTENDUS = ['/', '/virage', '/duel-nvn', '/kop', '/deck', '/boosters', '/boutique',
   '/abonnement', '/collection', '/fanzzy', '/carnet', '/amis', '/matchs', '/equipes',
-  '/teletext', '/classement', '/profil', '/compte', '/aide', '/repetition', '/jeux'];
+  '/teletext', '/classement', '/profil', '/compte', '/aide', '/repetition', '/jeux', '/comment-jouer'];
 const manquants = ATTENDUS.filter((h) => !accueil.liens.includes(h));
 check('toutes les destinations du jeu y sont', manquants.length === 0);
 if (manquants.length) console.log('    manquent :', manquants.join(' '));
