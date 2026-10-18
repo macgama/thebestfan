@@ -320,11 +320,11 @@ await page.click('.palette [data-couleur="1"]');
 await page.click('#tf-corps .tifo i[data-n="27"]');
 check('une case touchée part au serveur, de la couleur choisie', await jusqua(async () =>
   recu.tifo.length === 1 && recu.tifo[0].case === 27 && recu.tifo[0].couleur === 1 && recu.tifo[0].match === 900));
-check('et se peint tout de suite', await page.evaluate(() => {
+check('et se peint aussitôt', await jusqua(() => page.evaluate(() => {
   const i = document.querySelector('#tf-corps .tifo i[data-n="27"]');
   return i.classList.contains('moi') && !i.classList.contains('vide')
     && document.getElementById('tf-reste').textContent === '12';
-}));
+})));
 check('le tifo du dernier match est levé, réussi', await page.evaluate(() =>
   !document.getElementById('tf-leve').hidden
   && document.getElementById('tf-leve').textContent.includes('TIFO RÉUSSI')

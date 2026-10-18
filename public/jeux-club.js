@@ -117,7 +117,7 @@ const nomDuBoss = (lundi) => BOSS[Math.floor(Date.parse(`${lundi}T00:00:00Z`) / 
 /** La tribune rivale au pochoir : des gradins, une foule, un mégaphone géant. */
 function silhouette(tombe) {
   const tetes = [];
-  for (let r = 0; r < 4; r++) {
+  for (let r = 0; r < 3; r++) {
     for (let i = 0; i < 14; i++) {
       tetes.push(`<circle cx="${18 + i * 24 + (r % 2) * 12}" cy="${120 - r * 22}" r="7"/>`);
     }
@@ -126,7 +126,8 @@ function silhouette(tombe) {
     <g fill="${tombe ? 'rgba(242,238,228,.18)' : 'rgba(229,72,77,.85)'}">
       <path d="M0 170 L0 130 L360 70 L360 170 Z" opacity=".45"/>
       ${tetes.join('')}
-      <path d="M150 64 L210 40 L210 92 L150 72 Z"/><rect x="132" y="60" width="20" height="16" rx="3"/>
+      <circle cx="160" cy="22" r="10"/><path d="M150 36 h20 v24 h-20 Z"/>
+      <path d="M172 30 L222 10 L222 52 L172 38 Z"/>
     </g>
     ${tombe ? '<path d="M120 30 L240 120 M240 30 L120 120" stroke="#F2EEE4" stroke-width="10" stroke-linecap="round"/>' : ''}
   </svg>`;
