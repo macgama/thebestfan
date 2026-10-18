@@ -28,15 +28,8 @@ const adversaire = (m) => (m.domicile ? `Contre <b>${esc(m.adversaire ?? '')}</b
 const fidele = (m) => `Fidèle à ${Math.round(m.fidelite * 100)} % · Peintres : ${m.peintres}`;
 const pourToi = (n) => (n ? `<br>+${n} écharpes pour toi` : '');
 
-/** La grille : chaque case peinte de sa couleur, les autres en ombre du modèle. */
-function grille(cases, motif, couleurs, { leve = false } = {}) {
-  return `<div class="tifo${leve ? ' leve' : ''}">${motif.map((m, i) => {
-    const c = cases[i];
-    return c == null
-      ? `<i class="vide" data-n="${i}" style="background:${couleurs[m]}"></i>`
-      : `<i data-n="${i}" style="background:${couleurs[c]}"></i>`;
-  }).join('')}</div>`;
-}
+/* La grille, la même que celle qui se lève au Virage et sur l'accueil. */
+const grille = (...a) => window.TBF_TIFO.grille(...a);
 
 function dessinerTifo() {
   const t = TF.etat;
