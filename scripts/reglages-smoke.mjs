@@ -193,6 +193,7 @@ const PLAN = [
        par se contredire. */
     virage: 'xp.virage',
     prono: 'prono.actif',
+    jongles: 'jeux.actif', tirs: 'jeux.actif',
   };
   /* Un interrupteur est une bascule — ou un montant qui descend à 0 et dont
      l'aide dit qu'à 0 la source s'arrête : c'est ce que lira celui qui

@@ -8,6 +8,7 @@ import { chargerSaisons, toutesLesSaisons, saisonEnCours, saisonProchaine }
 import { CARNET_DEFAUT, LIMITES_CARNET, validerCarnet, memeCarnet, finDeFenetre,
   dansLaFenetre, proposerSeuils, seuilsDivisions } from '../../shared/saison.js';
 import { STUFF } from '../../shared/fanzzy/inventaire.js';
+import { SAISONS_PREVUES, CARNET_TRIMESTRE } from '../../shared/saisons-prevues.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STADES } from '../../shared/stades.js';
 import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
@@ -34,6 +35,9 @@ import { assurerBourse } from '../bourse.js';
  * et ne permet pas d'en fixer un : un administrateur qui peut choisir le mot
  * de passe d'un joueur peut se connecter à sa place.
  */
+
+/** L'acteur du journal quand c'est le serveur qui lance une saison à sa date. */
+export const ACTEUR_AUTO = 'auto:saison';
 
 export function createAdmin({ pool, requireAuth, deps = {} }) {
   // Les dépendances d'exploitation (client API, salles du virage) sont
@@ -865,7 +869,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
    * Sans ce calcul, remettre la saison 1 au brouillon fermerait un lieu que la
    * saison 2 annonce — et la saison 2, elle, ne se relance pas.
    */
-  async function lancerSaison(acteur, id, lancer, ip_) {
+  async function lancerSaison(acteur, id, lancer, ip_, { auto = false } = {}) {
     const s = toutesLesSaisons().find((x) => x.id === Number(id));
     if (!s) throw fail('admin.error.saison_inconnue', 404);
 
@@ -884,6 +888,26 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
           throw Object.assign(fail('admin.error.fin_passee'), {
             raison: `La saison ${s.numero} finit le ${s.fin}, jour déjà passé : lancée `
               + 'maintenant, elle s’ouvrirait close. Corrige sa date de fin d’abord.' });
+        }
+      }
+      /* **Le lancement automatique est additif, y compris la première
+         fois.** Tant qu'aucune saison lancée ne nomme de série, tout est
+         ouvert (l'union vide vaut « aucune restriction », `chargerSeries`).
+         Lancer alors une saison qui nomme LES HÉROS DU CANAPÉ ferait de
+         l'union `{HC}` : les douze autres séries se refermeraient d'un coup,
+         collections en cours comprises, une nuit de 1er janvier, sans
+         personne devant l'écran. Les saisons déjà lancées reçoivent donc
+         d'abord, par écrit, les séries qu'elles ouvraient sans les nommer :
+         toutes. Un lancement à la main garde son sens d'avant : restreindre
+         ainsi est alors un choix qu'on fait en le voyant. */
+      if (auto && s.series.length) {
+        const lanceesIci = toutesLesSaisons().filter((x) => x.lancee && x.id !== s.id);
+        if (lanceesIci.length && !lanceesIci.some((x) => x.series.length)) {
+          const toutes = SETS.map((x) => x.id);
+          await pool.query(`UPDATE saisons SET series = ? WHERE id IN (?)`,
+            [JSON.stringify(toutes), lanceesIci.map((x) => x.id)]);
+          await journal(acteur, 'saison.series_ecrites', lanceesIci.map((x) => x.id).join(','),
+            { series: toutes }, ip_);
         }
       }
       await q(`UPDATE saisons SET lancee_a = NOW(3) WHERE id = ?`, [s.id]);
@@ -926,6 +950,82 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     await journal(acteur, lancer ? 'saison.lancee' : 'saison.retiree', String(s.id),
       { nom: s.nom, numero: s.numero, series: s.series, tenues: s.tenues }, ip_);
     return listerSaisons();
+  }
+
+  /**
+   * Pose en brouillon les saisons prévues (`shared/saisons-prevues.js`) qui
+   * n'existent pas encore, **une seule fois chacune** : le journal garde la
+   * trace (`saison.prevue`, cible = le numéro), si bien qu'une fiche
+   * supprimée dans l'onglet SAISONS n'est pas recréée au redémarrage suivant,
+   * et qu'une fiche modifiée n'est jamais réécrite. Une saison existante au
+   * même numéro (créée à la main) l'emporte aussi.
+   *
+   * Une saison refusée (une série sans carte publiée, une base sans
+   * `sql/quotidien.sql`) n'est pas posée et le journal du serveur le dit ;
+   * elle sera retentée au démarrage suivant.
+   */
+  async function amorcerSaisonsPrevues() {
+    const posees = [];
+    for (const p of SAISONS_PREVUES) {
+      if (toutesLesSaisons().some((x) => x.numero === p.numero)) continue;
+      const [deja] = await q(
+        `SELECT 1 AS ok FROM admin_audit WHERE action = 'saison.prevue' AND cible = ? LIMIT 1`,
+        [String(p.numero)]);
+      if (deja) continue;
+      const stuff = p.stuff ? STUFF.filter((x) => x.id.startsWith(p.stuff)).map((x) => x.id) : [];
+      try {
+        await creerSaison(ACTEUR_AUTO, { numero: p.numero, nom: p.nom, texte: p.texte,
+          series: p.series, stuff, ouvre_le: p.ouvre, fin_le: p.fin,
+          carnet: CARNET_TRIMESTRE }, null);
+        await journal(ACTEUR_AUTO, 'saison.prevue', String(p.numero), { nom: p.nom }, null);
+        posees.push(p.numero);
+      } catch (e) {
+        console.error(`[saisons] saison prévue ${p.numero} non posée :`,
+          e.raison ?? e.code ?? e.message);
+      }
+    }
+    if (posees.length) console.log(`[saisons] posées en brouillon : ${posees.join(', ')}`);
+    return posees;
+  }
+
+  /**
+   * Le lancement automatique : une saison en préparation dont le jour
+   * d'ouverture (`ouvre_le`) est arrivé se lance seule, sans attendre qu'on
+   * appuie sur « Lancer » ce jour-là (choix de Gaël, 18 octobre 2026). Le
+   * jour est celui de la base, comme partout ailleurs.
+   *
+   * Une saison dont le dernier jour est déjà passé ne se lance pas : elle
+   * s'ouvrirait close, et `lancerSaison` le refuserait de toute façon. Une
+   * saison refusée (une série vidée depuis sa préparation, par exemple) reste
+   * en brouillon et le journal du serveur le dit une fois par jour : le bouton
+   * « Lancer » de l'onglet SAISONS donne alors la raison exacte.
+   *
+   * L'acteur du journal est {@link ACTEUR_AUTO} : aucun compte n'a appuyé.
+   */
+  const refusAuto = new Map();
+  async function lancerAuto() {
+    const rows = await q(
+      `SELECT id FROM saisons
+        WHERE lancee_a IS NULL AND ouvre_le IS NOT NULL AND ouvre_le <= CURDATE()
+          AND (fin_le IS NULL OR fin_le >= CURDATE())
+        ORDER BY ouvre_le, numero, id`);
+    const lancees = [];
+    for (const { id } of rows) {
+      try {
+        await lancerSaison(ACTEUR_AUTO, id, true, null, { auto: true });
+        lancees.push(Number(id));
+        refusAuto.delete(Number(id));
+      } catch (e) {
+        const jour = new Date().toISOString().slice(0, 10);
+        if (refusAuto.get(Number(id)) !== jour) {
+          refusAuto.set(Number(id), jour);
+          console.error(`[saisons] lancement automatique de la saison ${id} refusé :`,
+            e.raison ?? e.code ?? e.message);
+        }
+      }
+    }
+    if (lancees.length) console.log(`[saisons] lancée(s) à leur date : ${lancees.join(', ')}`);
+    return lancees;
   }
 
   /**
@@ -1204,7 +1304,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   router.get('/journal', safe(async (req, res) => res.json({
     journal: await q(
-      `SELECT a.id, a.action, a.cible, a.detail, a.au, u.pseudo AS acteur
+      `SELECT a.id, a.action, a.cible, a.detail, a.au, COALESCE(u.pseudo, a.acteur) AS acteur
          FROM admin_audit a LEFT JOIN users u ON u.public_id = a.acteur
         ORDER BY a.au DESC LIMIT ?`, [Number(req.query.limite) || 100]),
   })));
@@ -1341,6 +1441,6 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   return Object.assign(module, { router, requireAdmin, estAdmin, amorcer, apercu, joueurs,
     modifier, competitions, modifierCompetition, reglages, fixerReglage, journal,
     listerFanzzy, creerFanzzy, modifierFanzzy, listerSeries,
-    listerSaisons, creerSaison, modifierSaison, lancerSaison, supprimerSaison,
+    listerSaisons, creerSaison, modifierSaison, lancerSaison, lancerAuto, amorcerSaisonsPrevues, supprimerSaison,
     creerTenue, modifierTenue });
 }

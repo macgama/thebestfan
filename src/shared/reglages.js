@@ -109,6 +109,11 @@ export const SECTIONS = [
       'vers un appareil qui n’a pas dit oui, case par case, depuis la page du compte, ' +
       'et rien ne part la nuit (de 22 h à 8 h, heure de Zurich).' },
 
+  { id: 'minijeux', titre: 'LES MINI-JEUX',
+    aide: 'Les jongles et les tirs au but, à jouer entre deux matchs, seul ou en ' +
+      '1 contre 1. Leurs classements repartent de zéro à chaque saison. Les écharpes ' +
+      'gagnées passent par le grand livre et son disjoncteur, comme le reste.' },
+
   { id: 'pronostic', titre: 'LE PRONOSTIC',
     aide: 'Le score qu’on attend d’un match de son club, donné avant le coup ' +
       'd’envoi. Gratuit, sans mise : un pronostic juste rapporte des écharpes, la ' +
@@ -838,6 +843,48 @@ export const REGLAGES = [
     titre: 'Le score exact rapporte', unite: 'écharpes', min: 0, max: 600, defaut: 50,
     aide: 'À la place du bon vainqueur, pas en plus. Un score exact tombe environ ' +
       'une fois sur dix : c’est le coup qu’on raconte.' },
+
+  /* ------------------------------------------------------- les mini-jeux
+
+     Gaël, 18 octobre 2026 : des jeux entre les matchs, seul ou en 1 contre 1,
+     avec un classement, qui rapportent des écharpes. Les montants valent à la
+     fin de la partie. Le plafond du jour vaut pour les deux jeux ensemble : on
+     joue pour le classement, pas pour remplir sa bourse. */
+  { cle: 'jeux.actif', section: 'minijeux', type: 'booleen',
+    titre: 'Proposer les mini-jeux', defaut: true,
+    aide: 'Éteint : plus de partie neuve, et rien n’est versé. Les classements restent.' },
+
+  { cle: 'jeux.echarpes_jour', section: 'minijeux', type: 'entier',
+    titre: 'Au plus, par jour et par joueur', unite: 'écharpes', min: 0, max: 500, defaut: 40,
+    aide: 'Les jongles et les tirs au but ensemble. Au-delà, on joue encore pour le ' +
+      'classement, sans écharpe.' },
+
+  { cle: 'jeux.jongles_par_echarpe', section: 'minijeux', type: 'entier',
+    titre: 'Une écharpe tous les', unite: 'jongles', min: 1, max: 100, defaut: 5,
+    aide: 'Vingt jongles, c’est un bon début ; cinquante, un vrai joueur.' },
+
+  { cle: 'jeux.jongles_max_partie', section: 'minijeux', type: 'entier',
+    titre: 'Une partie de jongles rapporte au plus', unite: 'écharpes', min: 0, max: 200,
+    defaut: 15, aide: 'Pour qu’une seule partie ne fasse pas la journée.' },
+
+  { cle: 'jeux.tirs_victoire', section: 'minijeux', type: 'entier',
+    titre: 'Une série de tirs au but gagnée rapporte', unite: 'écharpes', min: 0, max: 200,
+    defaut: 10, aide: 'Contre un joueur. Contre la machine, la moitié.' },
+
+  { cle: 'jeux.tirs_nul', section: 'minijeux', type: 'entier',
+    titre: 'Une série nulle rapporte', unite: 'écharpes', min: 0, max: 200, defaut: 4,
+    aide: 'À chacun des deux.' },
+
+  { cle: 'jeux.tirs_defaite', section: 'minijeux', type: 'entier',
+    titre: 'Une série perdue rapporte', unite: 'écharpes', min: 0, max: 200, defaut: 1,
+    aide: 'Pour être venu tirer.' },
+
+  { cle: 'jeux.tirs_attente_h', section: 'minijeux', type: 'entier',
+    titre: 'Sans adversaire, la machine joue la série après', unite: 'heures',
+    min: 1, max: 168, defaut: 12,
+    aide: 'Une série contre un inconnu attend ce temps qu’un autre joueur la relève. Un ' +
+      'défi à un ami attend trois fois plus. Contre la machine, la série ne compte pas au ' +
+      'classement.' },
 ];
 
 /** Le registre indexé par clé. */

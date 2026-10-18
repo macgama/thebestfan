@@ -2551,6 +2551,23 @@ function etatsDuHub() {
      `/aide` dans le tiroir, l'appel ne fait rien. */
   const aPrendre = Number(H.quotidien?.aReclamer) || 0;
   MENU?.poser?.('/aide', aPrendre > 0 ? 'pret' : null, aPrendre);
+  /* Les mini-jeux (18 octobre 2026) : un défi d'ami à relever, ou le
+     résultat d'une série jouée pendant qu'on n'était pas là. Lu une fois par
+     visite : ce n'est pas un direct. */
+  if (!poserLesJeux.fait) {
+    poserLesJeux.fait = true;
+    poserLesJeux();
+  }
+}
+
+function poserLesJeux() {
+  fetch('/api/jeux/attente', { credentials: 'same-origin' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((a) => {
+      const n = (Number(a?.defis) || 0) + (Number(a?.resultats) || 0);
+      MENU?.poser?.('/jeux', n > 0 ? 'attend' : null, n);
+    })
+    .catch(() => {});
 }
 
 /**

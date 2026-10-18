@@ -139,6 +139,8 @@
   const ICONES = {
     virage: 'M3 20l9-16 9 16zM7 20l5-9 5 9',
     duel: 'M4 4l7 7M20 4l-7 7M12 13v7M8 20h8',
+    // Un ballon sur un pied : les mini-jeux, jongles et tirs au but.
+    jeux: 'M12 3a5 5 0 1 0 0 10a5 5 0 1 0 0-10M10 6l2 1.5L14 6M10 10l2-1.5L14 10M4 21h7l3-4',
     fanzzy: 'M4 4h13l3 3v13H4zM8 8h6M8 12h8M8 16h5',
     carnet: 'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18h14M9 8h6',
     /* Une grille de quatre cases : ce qu'on voit en ouvrant un classeur de
@@ -248,6 +250,9 @@
     { titre: 'JOUER', ton: 'flare', liens: [
       ['/virage', 'virage', 'Le Grand Virage'],
       ['/duel-nvn', 'duel', 'Duel de tribunes'],
+      /* Les mini-jeux d'entre les matchs (18 octobre 2026) : juste après les
+         deux grands modes, parce qu'on y joue aussi, seul ou à deux. */
+      ['/jeux', 'jeux', 'Les mini-jeux'],
       // Le KOP est au centre du jeu : il ouvre la rubrique de ce qu'on fait à
       // plusieurs, et il n'est plus derrière un second menu.
       ['/kop', 'kop', 'Mon KOP', 'violet'],
