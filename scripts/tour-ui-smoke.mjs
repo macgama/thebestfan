@@ -218,6 +218,7 @@ const ECRANS = [
      impasse. Elle se lit sans compte, comme l’aide. */
   ['/confidentialite', 'confidentialité'],
   ['/repetition', 'répétition'],
+  ['/jeux', 'mini-jeux'],
   ['/diagnostic', 'diagnostic'],
   ['/admin', 'administration'],
 ];
