@@ -496,7 +496,8 @@ export function createJeux({ pool, requireAuth }) {
   /** Le prochain match du club, celui dont on peint le tifo. */
   async function matchAPeindre(teamId) {
     const [f] = await q(
-      `SELECT f.id, f.kickoff_at, f.home_id, h.name AS home, a.name AS away
+      `SELECT f.id, f.kickoff_at, f.home_id, h.name AS home, a.name AS away,
+              TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), f.kickoff_at) AS dans_s
          FROM fixtures f LEFT JOIN teams h ON h.id = f.home_id LEFT JOIN teams a ON a.id = f.away_id
         WHERE (f.home_id = ? OR f.away_id = ?) AND f.kickoff_at > UTC_TIMESTAMP()
           AND f.status_short IN ('NS', 'TBD')
@@ -507,7 +508,8 @@ export function createJeux({ pool, requireAuth }) {
   /** Le dernier match commencé depuis moins de trois jours : son tifo est levé. */
   async function matchLeve(teamId) {
     const [f] = await q(
-      `SELECT f.id, f.kickoff_at, f.home_id, h.name AS home, a.name AS away
+      `SELECT f.id, f.kickoff_at, f.home_id, h.name AS home, a.name AS away,
+              TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), f.kickoff_at) AS dans_s
          FROM fixtures f LEFT JOIN teams h ON h.id = f.home_id LEFT JOIN teams a ON a.id = f.away_id
         WHERE (f.home_id = ? OR f.away_id = ?) AND f.kickoff_at <= UTC_TIMESTAMP()
           AND f.kickoff_at > UTC_TIMESTAMP() - INTERVAL 3 DAY
@@ -537,6 +539,10 @@ export function createJeux({ pool, requireAuth }) {
 
   const vueMatch = (f, teamId) => ({
     id: Number(f.id), coupEnvoi: f.kickoff_at,
+    /* Les secondes jusqu'au coup d'envoi (négatives une fois le match
+       commencé), à l'horloge de la base : la page n'a pas à deviner le
+       fuseau de `coupEnvoi`. */
+    dans: Number(f.dans_s),
     adversaire: Number(f.home_id) === teamId ? f.away : f.home,
     domicile: Number(f.home_id) === teamId,
   });

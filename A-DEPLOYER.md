@@ -32,6 +32,8 @@ casse).
   classement par jeu seul, qui repart de zéro à chaque saison.
 - Le tifo et le boss se jouent avec le club de cœur du joueur (sinon le
   premier club qu'il suit).
+- Au coup d'envoi, le tifo se lève en grand au Virage (à l'entrée du match,
+  ou à l'heure si l'on est là avant) et, une fois, sur l'accueil (PR #69).
 - Des écharpes à chaque partie, au plus 40 par jour pour les jeux seuls et
   les tirs au but ; le tifo réussi (15) et le boss tombé (20) se paient en
   plus. Réglages dans `/admin`, LE JEU, RÉGLAGES, LES MINI-JEUX.
