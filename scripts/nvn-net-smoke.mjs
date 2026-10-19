@@ -1384,6 +1384,42 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
       && Number(l.elo_after) === COTE_DEPART));
   }
 
+  /* ------------------ le coup de sifflet tombé pendant une coupure
+
+     Un téléphone en veille au moment où le duel finit : `nvn:fin` ne trouvait
+     personne, la salle se fermait, et la reprise répondait « aucun duel ». La
+     page restait figée sur une partie terminée. Le bilan est gardé, et la
+     reprise le rend, une fois. Celui qui était là le reçoit en direct, et
+     rien n'est gardé pour lui. */
+  {
+    const coupe = { ...fausse(), connected: false };
+    const la = fausse();
+    const salle = N2.ouvrir([
+      [await joueur(V[0], coupe, { neutre: false, teamId: 85, bonus: 1 })],
+      [await joueur(V[1], la, { neutre: true, teamId: null, bonus: 1 })],
+    ], support, '1v1');
+    salle.duel.finir(1, 'temps', []);
+    const fermeture = N2.pourLesTests.fermer(salle);
+    const R = co(V[0], url2), L = co(V[1], url2);
+    await until(() => R.socket.connected && L.socket.connected);
+    R.socket.emit('nvn:resume');
+    await fermeture;
+    check('coupé au coup de sifflet, sa reprise lui rend le bilan',
+      await until(() => R.fins === 1) && R.fin?.vainqueur === 1
+      && R.fin.joueurs.some((j) => j.moi === true && j.userId === V[0])
+      && !R.errors.includes('nvn.error.not_in_duel')
+      || (console.log('        fins :', R.fins, '· refus :', R.errors.join(', ') || '(aucun)'), false));
+    check('celui qui était là l’a reçu en direct', la.fins.length === 1 && coupe.fins.length === 0);
+    R.errors.length = 0;
+    R.socket.emit('nvn:resume');
+    check('le bilan n’est rendu qu’une fois',
+      await until(() => R.errors.includes('nvn.error.not_in_duel')) && R.fins === 1);
+    L.socket.emit('nvn:resume');
+    check('et rien n’était gardé pour celui qui l’a vu',
+      await until(() => L.errors.includes('nvn.error.not_in_duel')) && L.fins === 0);
+    R.socket.disconnect(); L.socket.disconnect();
+  }
+
   /* ------------------------- P7 : vingt parties, et la cote reste juste
 
      V[4] a vingt parties classées derrière lui, la plus récente à 1100 et les
