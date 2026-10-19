@@ -165,6 +165,10 @@ for (const chemin of ECRANS) {
    * ce contrôle-ci n'a pas à connaître cette règle-là.
    */
   const sortie = await page.$('.tbf-retour').catch(() => null);
+  /* La maison, à côté de la flèche (Gaël, 19 octobre 2026 : « il manque le
+     bouton HOME sur toutes les pages ») : un lien vers l'accueil, et rien
+     d'autre. */
+  const maison = await page.$eval('.tbf-haut .tbf-maison', (a) => a.getAttribute('href')).catch(() => null);
   /* **L'adresse où l'on a vraiment atterri.** Sans base, le profil et
      l'administration renvoient vers la connexion : le contrôle mesurait alors
      `/compte` en croyant mesurer `/profil`, et rapportait trois écrans en faute
@@ -179,7 +183,7 @@ for (const chemin of ECRANS) {
   }
   await page.close();
 
-  bilan.push({ chemin, arrivee, leves, rejets, consoleErreurs, sortie: Boolean(sortie) });
+  bilan.push({ chemin, arrivee, leves, rejets, consoleErreurs, sortie: Boolean(sortie), maison });
 }
 
 await navigateur.close();
@@ -210,6 +214,17 @@ check(enferme.length
     enferme.map((b) => (b.arrivee === b.chemin ? b.chemin : `${b.chemin} → ${b.arrivee}`)).join(', ')}`
   : 'chaque écran porte sa flèche de retour, sauf les deux qui s’en passent',
 enferme.length === 0);
+
+/* La maison est partout où est la flèche, sauf sur les deux écrans de jeu
+   (leur rangée de match ne garde qu'une case à chaque bout, et leur flèche y
+   rentre déjà à l'accueil) et l'administration, qui écrit sa propre barre. */
+const SANS_MAISON = new Set([...SANS_FLECHE, '/virage', '/duel-nvn', '/admin']);
+const sansMaison = bilan.filter((b) => !SANS_MAISON.has(b.arrivee) && b.maison !== '/');
+check(sansMaison.length
+  ? `${sansMaison.length} écran(s) sans maison vers l’accueil : ${sansMaison.map((b) => b.arrivee).join(', ')}`
+  : 'chaque écran de contenu porte sa maison vers l’accueil', sansMaison.length === 0);
+const maisonEnJeu = bilan.filter((b) => ['/virage', '/duel-nvn'].includes(b.arrivee) && b.maison);
+check('pas de maison sur les deux écrans de jeu', maisonEnJeu.length === 0);
 
 const redirigees = bilan.filter((b) => b.arrivee !== b.chemin);
 if (redirigees.length) {
