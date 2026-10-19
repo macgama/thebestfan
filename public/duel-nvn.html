@@ -2229,6 +2229,10 @@ function connecter() {
        monte quand même, un peu plus tard, sur des bâches déjà posées. */
     const commence = S.enFile;
     S.enFile = false;
+    /* **Le duel guidé** se reconnaît à son match fictif : la page le sait
+       aussi à la reprise, sans paramètre dans l'adresse. Voir `lancerTuto`. */
+    S.tuto = Boolean(vue.fixture?.fictif);
+    if (S.tuto) window.TBF_GUIDE?.debut?.();
     // Le rebours du vestiaire n'a plus rien à compter.
     clearInterval(reboursTimer);
     reboursTimer = null;
@@ -2730,12 +2734,15 @@ function rendreDuel() {
   /* CLASSÉ en face d'or — la seule hors achat : c'est l'enjeu ; à
      l'entraînement, le sticker est de craie. Sans mode servi, rien. */
   const tag = $('modeTag');
-  if (tag.dataset.mode !== (v.mode ?? '')) {
-    tag.dataset.mode = v.mode ?? '';
-    tag.hidden = !v.mode;
+  // Le duel guidé dit ce qu'il est : il ne compte pas plus qu'un entraînement.
+  const mode = S.tuto ? 'tuto' : v.mode ?? '';
+  if (tag.dataset.mode !== mode) {
+    tag.dataset.mode = mode;
+    tag.hidden = !mode;
     /* Deux formes, comme les libellés du HUD : sous 390 px, « ENTRAÎNEMENT »
        entier écrasait les deux bâches de part et d'autre de la plaque. */
-    if (v.mode === 'classe') { tag.textContent = 'CLASSÉ'; tag.dataset.ton = 'or'; }
+    if (mode === 'tuto') { tag.textContent = 'GUIDÉ'; tag.removeAttribute('data-ton'); }
+    else if (v.mode === 'classe') { tag.textContent = 'CLASSÉ'; tag.dataset.ton = 'or'; }
     else {
       tag.innerHTML = v.mode ? '<span class="long">ENTRAÎNEMENT</span>'
         + '<span class="court" aria-hidden="true">ENTRAÎN.</span>' : '';
@@ -4063,7 +4070,8 @@ function montrerBilan(b) {
   if (src) fz.src = src; else fz.removeAttribute('src');
 
   /* --- la tête de la feuille : le lieu, la sorte de duel, le tampon --- */
-  ecrire($('bilanLieu'), [b.stade?.nom, b.mode === 'classe' ? 'CLASSÉ' : b.mode ? 'ENTRAÎNEMENT' : '']
+  ecrire($('bilanLieu'), [b.stade?.nom,
+    S.tuto ? 'DUEL GUIDÉ' : b.mode === 'classe' ? 'CLASSÉ' : b.mode ? 'ENTRAÎNEMENT' : '']
     .filter(Boolean).join(' · '));
   const tampon = $('bilanTampon');
   tampon.dataset.ton = ton;
@@ -4139,8 +4147,10 @@ function montrerBilan(b) {
       }).join('')}
   </div>` : '';
 
-  const notes = g?.kop?.sansKop && Number(g.kop.perdu) > 0
-    ? `<p class="tbf-bilan-note">${Number(g.kop.perdu)} écharpes perdues — pas de KOP pour les recevoir</p>` : '';
+  const notes = S.tuto
+    ? `<p class="tbf-bilan-note tuto-fin">Ton premier duel est joué. Les vrais duels se jouent sur les matchs de tes clubs, contre d’autres supporters, et rapportent des écharpes.</p>`
+    : g?.kop?.sansKop && Number(g.kop.perdu) > 0
+      ? `<p class="tbf-bilan-note">${Number(g.kop.perdu)} écharpes perdues — pas de KOP pour les recevoir</p>` : '';
 
   /* Tout glisse l'un après l'autre, à sept cents millisecondes d'écart. */
   const blocs = [
@@ -4163,8 +4173,13 @@ function montrerBilan(b) {
      page : REVENIR rend la préparation, REJOUER rentre en file sur le même
      match, dans le même format. */
   window.TBF_BARRE?.enPartie?.(false);
-  $('bilanSortir').onclick = revenir;
-  $('bilanRejouer').onclick = rejouer;
+  /* Le duel guidé fini mène au vrai : la page des duels, fraîche, et
+     REJOUER relance le guidé plutôt qu'une file sur un match qui n'existe
+     pas. Ses bulles se taisent. */
+  if (S.tuto) window.TBF_GUIDE?.fin?.();
+  ecrire($('bilanSortir'), S.tuto ? 'UN VRAI DUEL' : 'REVENIR');
+  $('bilanSortir').onclick = S.tuto ? () => { location.href = '/duel-nvn'; } : revenir;
+  $('bilanRejouer').onclick = S.tuto ? rejouerTuto : rejouer;
   $('affiche').hidden = true;
   $('bilan').hidden = false;
   $('bilan').scrollTop = 0;
@@ -4274,6 +4289,8 @@ function poseDuBilan(id, etat) {
  * revient. Le duel suivant repart d'une page propre.
  */
 function quitterLaPartie() {
+  window.TBF_GUIDE?.fin?.();
+  S.tuto = false;
   clearTimeout(S.entreeT);
   clearTimeout(S.afficheT);
   S.vue = null;
@@ -4316,6 +4333,26 @@ function revenir() {
   window.TBF_SON?.ambiance?.(0);
   preparerRendu();
   lireAttentes().then(() => { if (!S.vue) preparerRendu(); });
+}
+
+/**
+ * **Le premier duel guidé** (`/duel-nvn?tuto=1`) : un match fictif, contre
+ * un bot patient, avec des bulles qui disent quoi faire (`duel-guide.js`).
+ * Il part juste après le sachet de bienvenue, et se rejoue depuis « Comment
+ * jouer ». Le serveur le monte sans file ni attente : voir « le premier
+ * duel » dans `src/server/nvn/index.js`.
+ */
+function lancerTuto() {
+  if (!socket) return toast('Pas de connexion au serveur.');
+  S.enFile = true;
+  voile('Ton premier duel', 'On prépare le match…');
+  socket.emit('nvn:tuto');
+}
+
+function rejouerTuto() {
+  quitterLaPartie();
+  preparerRendu();
+  lancerTuto();
 }
 
 /** REJOUER : le même match, le même format, la même tribune — droit au
@@ -4666,7 +4703,15 @@ $('equipe').addEventListener('click', (e) => {
 
     // Un duel peut être en cours si on revient sur la page.
     const etat = await api('/api/nvn/etat').catch(() => null);
+    const tuto = new URLSearchParams(location.search).has('tuto');
     if (etat?.duelEnCours) socket.emit('nvn:resume');
+    /* Le duel guidé demandé par l'adresse : sans deck il ne part pas, et la
+       préparation dit déjà comment en monter un. On retire le paramètre :
+       recharger la page ne doit pas relancer un duel qu'on vient de finir. */
+    else if (tuto && !sansDeckMemo) {
+      try { history.replaceState(null, '', location.pathname); } catch { /* tant pis */ }
+      lancerTuto();
+    }
     /* **Un duel qui m'attendait**, ou **un lien d'invitation** : on va droit
        au vestiaire. Sa propre place d'abord — un lien vers un autre duel ne
        la fait pas perdre sans qu'on l'ait quittée. Sans deck, rien : la
@@ -4683,6 +4728,7 @@ $('equipe').addEventListener('click', (e) => {
   }
 })();
 </script>
+<script src="/duel-guide.js" defer></script>
 <script src="/fx.js" defer></script>
 <script src="/niveau-fete.js" defer></script>
 <script src="/menu.js" defer></script>
