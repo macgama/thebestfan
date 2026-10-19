@@ -1466,7 +1466,7 @@ function renderTeam() {
           style="width:${Math.min(100, puissance)}%"></i></span></span>` : '',
     t?.nom ? `<span class="tbf-sticker"><span class="tbf-pin"${teinte(t.c) ? ` style="--fam:${t.c}"` : ''}
         aria-hidden="true">${window.TBF_LOGO?.type?.(montre.type, '') ?? ''}</span>${esc(t.nom)}</span>` : '',
-    ages > 1 ? `<span class="tbf-sticker">ÉTAGE<span class="tbf-etage" data-n="${stade}" role="img"
+    ages > 1 ? `<span class="tbf-sticker">ÂGE<span class="tbf-etage" data-n="${stade}" role="img"
         aria-label="${stade} sur ${ages}">${'<i></i>'.repeat(ages)}</span></span>` : '',
   ].join('');
 

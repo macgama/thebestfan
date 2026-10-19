@@ -918,6 +918,11 @@ $('formSupprimer').onsubmit = async (e) => {
      « connexion » d'abord, c'est lui demander un mot de passe qu'il n'a pas.
      À moins qu'il soit déjà connecté, auquel cas il ne voit pas ces onglets. */
   else if (venuParUnAmi && !user) tab('register');
+  /* « PRENDRE MA PLACE », sur la vitrine, mène ici avec `?inscription` : celui
+     qui l'a touché vient de dire qu'il n'a pas de place. Lui ouvrir
+     « connexion », comme au lien « Se connecter » juste dessous, l'obligeait
+     à trouver l'onglet lui-même. */
+  else if (params.has('inscription') && !user) tab('register');
   else tab('login');
   render();
 })();
