@@ -806,7 +806,7 @@ for (const [nom, l, h, plancher] of [
   /* L'évolution ne s'annonce que si la lignée en a plusieurs : promettre
      « 1 / 3 » à un Fanzzy qui n'évolue jamais est une promesse en l'air. */
   check('son âge est annoncé, et par rapport au nombre d’âges qu’il a',
-    /^ÉVOLUTION \d+ \/ \d+$/.test(qui.evo)
+    /^ÂGE \d+ \/ \d+$/.test(qui.evo)
     || (console.log('        elle dit :', qui.evo), false));
   check('la plaque tient dans l’écran', qui.dansLEcran);
   /* Et **rien ne la recouvre**. Posée dans la scène, elle tombait sous le
@@ -4075,7 +4075,7 @@ check('aucune erreur de script pendant ces contrôles du hub', erreurs.length ==
   check('ni de bouton à valider', v.valider === false);
   /* La plaque reste : elle dit ce qu'il est et ce qu'il peut devenir. C'est
      elle qui donne envie d'aller voir le prix. */
-  check('mais la plaque dit toujours où il en est', /^ÉVOLUTION 1 \/ 3$/.test(v.plaque)
+  check('mais la plaque dit toujours où il en est', /^ÂGE 1 \/ 3$/.test(v.plaque)
     || (console.log('        elle dit :', v.plaque), false));
   await page.close();
 }
@@ -4185,7 +4185,7 @@ check('aucune erreur de script pendant ces contrôles du hub', erreurs.length ==
     /dessin à venir/i.test(v.plaque)
     || (console.log('        elle dit :', v.plaque), false));
   check('elle dit quand même où en est le personnage',
-    /ÉVOLUTION 2 \/ \d/.test(v.plaque)
+    /ÂGE 2 \/ \d/.test(v.plaque)
     || (console.log('        elle dit :', v.plaque), false));
   /* La mention rallonge la plaque : elle doit rester dans l'écran. */
   check('et la plaque rallongée tient toujours dans l’écran', v.dansLEcran);

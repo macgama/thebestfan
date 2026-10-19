@@ -607,7 +607,7 @@ await jusqua(async () => await page.evaluate(() =>
 
   check("les cartes possédées annoncent leur âge", ages.length > 0);
   check("et il est écrit en clair, pas en abrégé",
-    ages.every((a) => /^(ÉVO \d|LÉGENDAIRE)$/.test(a.texte))
+    ages.every((a) => /^(ÂGE \d|LÉGENDAIRE)$/.test(a.texte))
     || (console.log("        vu :", [...new Set(ages.map((a) => a.texte))].join(" · ")), false));
   check("il se voit vraiment", ages.every((a) => a.visible));
   /* La pastille du deck occupe le coin en haut à gauche. L âge y était aussi,

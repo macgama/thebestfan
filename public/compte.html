@@ -29,6 +29,7 @@
 /* Le lien vers la confidentialité, sous la porte : centré, à l'écart des
    formulaires, en lien de texte comme « Mot de passe oublié ? ». */
 .confid{margin:22px 0 0;text-align:center}
+.confid.conditions{margin-top:10px}
 
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
@@ -307,6 +308,9 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
     <!-- La politique de confidentialité, avant de créer un compte : sous les
          deux portes, connexion et inscription, et sous Google. -->
     <p class="confid"><a class="link" href="/confidentialite" data-t="account.privacy"></a></p>
+    <!-- Les conditions, au même endroit et pour la même raison : on les accepte
+         en créant le compte, il faut donc pouvoir les lire avant. -->
+    <p class="confid conditions"><a class="link" href="/conditions" data-t="account.terms"></a></p>
   </section>
 </main>
 
@@ -326,6 +330,7 @@ const I18N = {
     'account.logout':'SE DÉCONNECTER','account.resend':'Renvoyer le mail de vérification',
     'account.delete':'Supprimer mon compte',
     'account.privacy':'Ce que le jeu garde de toi',
+    'account.terms':'Créer un compte, c’est accepter les conditions',
     'notif.titre':'NOTIFICATIONS','notif.texte':'Sur cet appareil, même le jeu fermé. Jamais la nuit, de 22 h à 8 h.',
     'notif.kop':'Un vote de mon KOP s’ouvre','notif.duel':'Un duel classé attend un supporter de mon club',
     'notif.ios':'Sur iPhone, installe d’abord le jeu sur l’écran d’accueil (Partager, puis « Sur l’écran d’accueil ») et ouvre-le de là.',
@@ -365,6 +370,7 @@ const I18N = {
     'account.logout':'SIGN OUT','account.resend':'Resend the verification email',
     'account.delete':'Delete my account',
     'account.privacy':'What the game keeps about you',
+    'account.terms':'Creating an account means accepting the terms',
     'notif.titre':'NOTIFICATIONS','notif.texte':'On this device, even with the game closed. Never at night, from 10 pm to 8 am.',
     'notif.kop':'A vote opens in my KOP','notif.duel':'A ranked duel is waiting for a fan of my club',
     'notif.ios':'On iPhone, first add the game to your home screen (Share, then “Add to Home Screen”) and open it from there.',
@@ -404,6 +410,7 @@ const I18N = {
     'account.logout':'ABMELDEN','account.resend':'Bestätigungsmail erneut senden',
     'account.delete':'Mein Konto löschen',
     'account.privacy':'Was das Spiel über dich speichert',
+    'account.terms':'Mit dem Konto akzeptierst du die Bedingungen',
     'notif.titre':'BENACHRICHTIGUNGEN','notif.texte':'Auf diesem Gerät, auch wenn das Spiel geschlossen ist. Nie nachts, von 22 bis 8 Uhr.',
     'notif.kop':'In meinem KOP beginnt eine Abstimmung','notif.duel':'Ein Ranglistenduell wartet auf einen Fan meines Klubs',
     'notif.ios':'Auf dem iPhone füge das Spiel zuerst zum Home-Bildschirm hinzu (Teilen, dann „Zum Home-Bildschirm“) und öffne es von dort.',
@@ -443,6 +450,7 @@ const I18N = {
     'account.logout':'SALIR','account.resend':'Reenviar el correo de verificación',
     'account.delete':'Eliminar mi cuenta',
     'account.privacy':'Lo que el juego guarda de ti',
+    'account.terms':'Crear una cuenta es aceptar las condiciones',
     'notif.titre':'NOTIFICACIONES','notif.texte':'En este dispositivo, incluso con el juego cerrado. Nunca de noche, de 22 h a 8 h.',
     'notif.kop':'Se abre una votación en mi KOP','notif.duel':'Un duelo clasificatorio espera a un hincha de mi club',
     'notif.ios':'En iPhone, añade primero el juego a la pantalla de inicio (Compartir y luego «Añadir a pantalla de inicio») y ábrelo desde allí.',
@@ -918,6 +926,11 @@ $('formSupprimer').onsubmit = async (e) => {
      « connexion » d'abord, c'est lui demander un mot de passe qu'il n'a pas.
      À moins qu'il soit déjà connecté, auquel cas il ne voit pas ces onglets. */
   else if (venuParUnAmi && !user) tab('register');
+  /* « PRENDRE MA PLACE », sur la vitrine, mène ici avec `?inscription` : celui
+     qui l'a touché vient de dire qu'il n'a pas de place. Lui ouvrir
+     « connexion », comme au lien « Se connecter » juste dessous, l'obligeait
+     à trouver l'onglet lui-même. */
+  else if (params.has('inscription') && !user) tab('register');
   else tab('login');
   render();
 })();

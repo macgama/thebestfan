@@ -1,9 +1,10 @@
 # Mentions légales
 
-> **Projet à compléter.** Tout ce qui est entre crochets attend une information
-> que seul l'éditeur possède. Les mentions d'hébergement et de sous-traitance
-> sont exactes — elles ont été lues dans `DEPLOIEMENT.md` et
-> `src/server/boutique/`. À faire relire avant publication.
+> **Publié le 19 octobre 2026** : `public/mentions-legales.html`, à l’adresse `/mentions-legales`, avec les
+> informations d’éditeur données par Gaël (adresse, ni registre du commerce ni
+> TVA, pas de téléphone, accord d’un parent pour s’abonner avant 18 ans).
+> **C’est la page qui fait foi** ; ce fichier reste le projet d’origine, et ses
+> crochets ont été tranchés dans la page. `legal:smoke` vérifie la page.
 
 **Dernière mise à jour : [à dater à la publication]**
 

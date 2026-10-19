@@ -1555,9 +1555,19 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     appliquer(q);
 
     /* Le rail de départ : celui que l'adresse demande s'il existe, sinon
-       les missions du jour quand le serveur les sert, sinon les premiers pas. */
+       les premiers pas **tant qu'ils ne sont pas finis**, sinon les missions
+       du jour quand le serveur les sert.
+
+       Les premiers pas passent devant depuis le 19 octobre 2026. La visite
+       guidée et la fin du sachet de bienvenue envoient le débutant ici
+       (« Commence par les missions »), et il tombait sur DU JOUR : « Gagne
+       un duel », « Joue 5 duels », avant d'avoir appris à jouer. La liste
+       faite pour lui était le troisième onglet. */
     const voulu = location.hash.slice(1);
-    onglet = disponibles().includes(voulu) ? voulu : (aJour() ? 'jour' : 'pas');
+    const debutant = parcours && parcours.faites < parcours.total;
+    onglet = disponibles().includes(voulu) ? voulu
+      : debutant && disponibles().includes('pas') ? 'pas'
+        : (aJour() ? 'jour' : 'pas');
 
     /* Ce qui est neuf depuis la dernière visite. Lu **avant** d'écrire la
        nouvelle valeur, faute de quoi rien ne serait jamais neuf. */
