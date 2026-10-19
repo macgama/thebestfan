@@ -5702,5 +5702,8 @@
  "TON DUEL T’ATTEND <0>{0} · on te prévient si quelqu’un arrive</0>": "TU DUELO TE ESPERA <0>{0} · te avisamos si llega alguien</0>",
  "Y ALLER": "IR",
  "<0>Ton duel reste ouvert</0> si tu quittes la page d’attente : les autres le voient toujours, et le jeu te rappelle dès que quelqu’un arrive en face.": "<0>Tu duelo sigue abierto</0> si sales de la página de espera: los demás lo siguen viendo, y el juego te avisa en cuanto llega alguien enfrente.",
- "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Jugar con un amigo</0>: en el vestuario, invítalo desde el juego o mándale el enlace. Un toque lo lleva directo a tu duelo."
+ "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Jugar con un amigo</0>: en el vestuario, invítalo desde el juego o mándale el enlace. Un toque lo lleva directo a tu duelo.",
+ "Duel terminé": "Duelo terminado",
+ "Le coup de sifflet est tombé pendant ta coupure.": "El pitido final llegó mientras estabas desconectado.",
+ "Ton résultat est dans ton parcours, sur ton profil.": "Tu resultado está en tu trayectoria, en tu perfil."
 }

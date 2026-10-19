@@ -5763,11 +5763,20 @@ function feterNiveau(niveau) {
 }
 
 (async () => {
+  /* **Seul un 401 veut dire « pas de compte ».** Toute autre réponse — une
+     base qui hoquette (503), le proxy de l'hébergeur qui s'impatiente en fin
+     de duel (502, 504), un réseau qui se cherche au retour d'une page —
+     montrait la vitrine des non-connectés à un joueur qui l'était toujours.
+     On redemande donc, trois fois en tout, avant de s'y résoudre. */
   let user = null;
-  try {
-    const r = await fetch('/api/auth/me', { credentials:'same-origin' });
-    if (r.ok) user = (await r.json()).user;
-  } catch { /* hors ligne : la vitrine suffit */ }
+  for (let essai = 0; essai < 3; essai++) {
+    if (essai) await new Promise((ok) => setTimeout(ok, 400 * essai));
+    try {
+      const r = await fetch('/api/auth/me', { credentials:'same-origin', cache:'no-store' });
+      if (r.ok) { user = (await r.json()).user; break; }
+      if (r.status === 401) break;
+    } catch { /* hors ligne : on redemande, puis la vitrine suffit */ }
+  }
 
   /* Pas de compte : la vitrine reste, et elle se garnit. C'est décidé ici
      plutôt que dans un second appel à `/api/auth/me` — deux fois la même

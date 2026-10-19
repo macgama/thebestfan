@@ -2164,8 +2164,13 @@ function connecter() {
 
   /* Le bilan, une fois, au coup de sifflet. Il remplace le voile gris que
      finir() posait ; celui-ci reste en repli si le bilan n arrive pas. */
-  socket.on('nvn:fin', (b) => { try { montrerBilan(b); } catch (e) {
-    console.error('bilan', e); } });
+  socket.on('nvn:fin', (b) => { try {
+    /* Il peut arriver à la reprise, d'un duel fini pendant la coupure : la
+       vue n'a alors jamais su qu'il était terminé, et une reconnexion de
+       plus redemanderait à y entrer. */
+    if (S.vue) S.vue.termine = true;
+    montrerBilan(b);
+  } catch (e) { console.error('bilan', e); } });
 
   /**
    * La file, et ce qu'elle annonce.
@@ -2275,6 +2280,22 @@ function connecter() {
       /* Reporté ou annulé depuis le chargement : la liste du serveur ne le
          porte plus, on la relit plutôt que de le laisser choisi. */
       if (e?.code === 'duel.error.fixture_annule') rechargerMatchs();
+    }
+    /* **Le duel a fini sans nous**, et le serveur n'en a plus le bilan (un
+       redémarrage, une coupure trop longue). La page restait figée sur la
+       partie, chrono arrêté, sans porte de sortie : un écran de fin la rend,
+       et le résultat se lit dans le parcours, où il est écrit. */
+    if (e?.code === 'nvn.error.not_in_duel' && S.vue) {
+      S.vue.termine = true;
+      if (!S.bilanVu) {
+        S.bilanVu = true;
+        window.TBF_BARRE?.enPartie?.(false);
+        window.TBF_SON?.rumeur?.('fin');
+        voile('Duel terminé', 'Le coup de sifflet est tombé pendant ta coupure.<br>'
+          + 'Ton résultat est dans ton parcours, sur ton profil.',
+          { texte: 'Revenir', action: revenir });
+      }
+      return;
     }
     dire(e?.code ?? 'nvn.error.server');
     if (e?.code === 'nvn.error.slot_lost') {
