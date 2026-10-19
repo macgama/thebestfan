@@ -5702,5 +5702,8 @@
  "TON DUEL T’ATTEND <0>{0} · on te prévient si quelqu’un arrive</0>": "DEIN DUELL WARTET <0>{0} · wir sagen Bescheid, wenn jemand kommt</0>",
  "Y ALLER": "HIN",
  "<0>Ton duel reste ouvert</0> si tu quittes la page d’attente : les autres le voient toujours, et le jeu te rappelle dès que quelqu’un arrive en face.": "<0>Dein Duell bleibt offen</0>, wenn du die Warteseite verlässt: Die anderen sehen es weiterhin, und das Spiel ruft dich, sobald jemand gegenüber ankommt.",
- "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Mit einem Freund spielen</0>: Lade ihn in der Kabine im Spiel ein oder schick ihm den Link. Ein Tipp bringt ihn direkt in dein Duell."
+ "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Mit einem Freund spielen</0>: Lade ihn in der Kabine im Spiel ein oder schick ihm den Link. Ein Tipp bringt ihn direkt in dein Duell.",
+ "Duel terminé": "Duell vorbei",
+ "Le coup de sifflet est tombé pendant ta coupure.": "Der Schlusspfiff kam, als du weg warst.",
+ "Ton résultat est dans ton parcours, sur ton profil.": "Dein Ergebnis steht in deiner Bilanz, auf deinem Profil."
 }

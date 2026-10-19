@@ -5702,5 +5702,8 @@
  "TON DUEL T’ATTEND <0>{0} · on te prévient si quelqu’un arrive</0>": "IL TUO DUELLO TI ASPETTA <0>{0} · ti avvisiamo se arriva qualcuno</0>",
  "Y ALLER": "VAI",
  "<0>Ton duel reste ouvert</0> si tu quittes la page d’attente : les autres le voient toujours, et le jeu te rappelle dès que quelqu’un arrive en face.": "<0>Il tuo duello resta aperto</0> se lasci la pagina d’attesa: gli altri continuano a vederlo, e il gioco ti richiama appena arriva qualcuno di fronte.",
- "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Giocare con un amico</0>: nello spogliatoio, invitalo dal gioco o mandagli il link. Un tocco lo porta dritto nel tuo duello."
+ "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Giocare con un amico</0>: nello spogliatoio, invitalo dal gioco o mandagli il link. Un tocco lo porta dritto nel tuo duello.",
+ "Duel terminé": "Duello finito",
+ "Le coup de sifflet est tombé pendant ta coupure.": "Il fischio finale è arrivato mentre eri disconnesso.",
+ "Ton résultat est dans ton parcours, sur ton profil.": "Il tuo risultato è nel tuo percorso, sul tuo profilo."
 }
