@@ -7,7 +7,8 @@ puis redémarrage, sans schéma.
   match fictif (L'Académie contre Les Anciens), contre un bot lent, avec trois
   bulles qui montrent quoi faire (chanter, la corde, une carte d'action). Il
   ne rapporte rien et ne compte nulle part ; il se rejoue depuis « Comment
-  jouer » (`/duel-nvn?tuto=1`).
+  jouer » (`/duel-nvn?tuto=1`). Il ne se perd pas : le bot ne marque
+  jamais, et une fin à son avantage devient un nul.
 - Après la mise en ligne : ouvrir `/duel-nvn?tuto=1` et suivre les bulles.
 
 ---
