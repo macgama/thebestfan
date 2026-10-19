@@ -217,6 +217,9 @@ const ECRANS = [
      « Mon compte » y renvoient, et sans elle ici le tour les comptait en
      impasse. Elle se lit sans compte, comme l’aide. */
   ['/confidentialite', 'confidentialité'],
+  // Les mentions légales et les conditions (19 octobre 2026), au pied du menu.
+  ['/mentions-legales', 'mentions légales'],
+  ['/conditions', 'conditions'],
   ['/repetition', 'répétition'],
   ['/jeux', 'mini-jeux'],
   // La page « Comment jouer » (18 octobre 2026), au pied du menu de chaque page.

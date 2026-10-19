@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<script src="/langue.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<title>Conditions — thebestfan</title>
+<meta name="description" content="Les conditions d’utilisation et de vente de thebestfan : le compte, l’abonnement, la résiliation.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* ========================================= les conditions d'utilisation et de vente
+
+   Publiées le 19 octobre 2026 (fil « Analyse de l'appli et premiers pas »),
+   d'après le projet `CGV.md` et ce que le code fait. Les nombres réglables
+   depuis /admin (réserve, délais, plafonds, taux des boosters) n'y sont
+   **pas** recopiés : la page de l'abonnement les lit au serveur, et une
+   page juridique qui annonce un chiffre que l'administration a changé ment.
+   Seuls les prix y sont, parce qu'ils vivent dans `src/shared/boutique.js` et
+   ne se règlent pas : `legal:smoke` vérifie qu'ils y sont toujours. */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+
+.rub{margin:18px 0 0}
+.rub h2{margin:0 2px 10px}
+.bloc{background:var(--panneau);border:1px solid var(--trait);border-radius:12px;
+  padding:14px 16px;margin:0 0 10px;font-size:13.5px;line-height:1.65}
+.bloc p{margin:0 0 10px}
+.bloc p:last-child,.bloc ul:last-child,.bloc dl:last-child{margin-bottom:0}
+.bloc h3{font-family:var(--banner);font-weight:600;font-size:14px;letter-spacing:.06em;
+  margin:4px 0 8px}
+.bloc ul{margin:0 0 10px;padding-left:20px}
+.bloc li{margin:0 0 6px}
+.bloc li:last-child{margin-bottom:0}
+/* Une donnée, puis ce qu'elle sert : une liste et non un tableau. Trois
+   colonnes ne tiennent pas dans trois cent soixante pixels — la première se
+   serait écrite une lettre par ligne. */
+.donnees{margin:0 0 10px}
+.donnees dt{font-weight:700;margin-top:10px}
+.donnees dt:first-child{margin-top:0}
+.donnees dd{margin:2px 0 0}
+/* La base légale, sous la liste qu'elle couvre. Plus petite, pas plus pâle :
+   le plancher de lecture du jeu reste 0,85. */
+.base{font-size:12.5px}
+.bloc b{font-weight:700}
+/* Les liens de texte du jeu : craie grasse soulignée (arbitrage du 2 octobre
+   2026 — l'or ne s'écrit plus qu'en grand). Un lien dans une phrase n'a pas
+   de zone de touche à lui ; l'audit l'exempte des 44 pixels. */
+.bloc a{color:var(--craie);font-weight:600;text-decoration:underline;text-underline-offset:3px;
+  overflow-wrap:anywhere}
+.date{font-weight:600}
+
+/* tbf-degagement */
+#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+  <p class="tbf-sous">Les règles du jeu, côté contrat</p>
+
+  <section class="rub" id="qui">
+    <h2 class="tbf-cousu">Qui vend, et quoi</h2>
+    <div class="bloc">
+      <p class="date">Dernière mise à jour&nbsp;: 19&nbsp;octobre&nbsp;2026</p>
+      <p>thebestfan.online est édité par <b>Gaël Manigley</b>, entreprise individuelle, Chemin les
+        Jordils 2, 1085&nbsp;Vulliens, Suisse — ci-après «&nbsp;nous&nbsp;». Contact&nbsp;:
+        <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>. Le détail est dans les
+        <a href="/mentions-legales">mentions légales</a>.</p>
+      <p><b>Le jeu est gratuit.</b> On peut y jouer entièrement, aussi longtemps qu’on veut, sans
+        jamais payer. La seule chose que nous vendons est un <b>abonnement</b>, le PASS de tribune.</p>
+      <p>En créant un compte, tu acceptes ces conditions. En t’abonnant, tu acceptes aussi celles
+        de la partie «&nbsp;L’abonnement&nbsp;».</p>
+    </div>
+  </section>
+
+  <section class="rub" id="compte">
+    <h2 class="tbf-cousu">Ton compte</h2>
+    <div class="bloc">
+      <p>L’inscription est gratuite. Elle demande une adresse e-mail, un pseudo et un mot de passe,
+        ou un compte Google.</p>
+      <p>Ton pseudo est <b>visible par les autres joueurs</b>&nbsp;: choisis-le en conséquence.</p>
+      <p>Tu es responsable de ton mot de passe. Si tu penses qu’il a fui, change-le depuis ton
+        compte&nbsp;: toutes tes sessions seront fermées.</p>
+      <p>Le jeu est ouvert à tous les âges. <b>Si tu as moins de 18&nbsp;ans, demande l’accord d’un
+        de tes parents avant de t’abonner.</b></p>
+    </div>
+  </section>
+
+  <section class="rub" id="abonnement">
+    <h2 class="tbf-cousu">L’abonnement</h2>
+    <div class="bloc">
+      <h3>Ce qu’il coûte</h3>
+      <ul>
+        <li><b>Mensuel&nbsp;: 3,99&nbsp;€</b> par mois.</li>
+        <li><b>Annuel&nbsp;: 39,90&nbsp;€</b> par an.</li>
+      </ul>
+      <p>Les prix sont en euros, toutes taxes comprises. Le paiement passe par Stripe&nbsp;: nous
+        ne voyons jamais ton numéro de carte.</p>
+      <h3>Ce qu’il donne</h3>
+      <p>Des boosters tout de suite au paiement qui l’ouvre (un avec le mensuel, six avec l’annuel),
+        puis du confort&nbsp;: des boosters qui reviennent plus vite et une réserve plus grande, plus
+        de clubs suivis, tout ton parcours et toutes tes cartes-souvenirs, toutes les tenues
+        publiées, et la création d’un KOP. Sans abonnement, quelques parties classées sont
+        plafonnées chaque jour&nbsp;; elles restent jouables en entraînement.</p>
+      <p>Le détail chiffré, toujours à jour, est sur <a href="/abonnement">la page de
+        l’abonnement</a>. Si nous réduisons ce que l’abonnement donne, nous te prévenons avant, et
+        tu peux résilier.</p>
+      <p>Abonné ou non, on joue au même jeu, avec les mêmes cartes et les mêmes chances dans les
+        boosters.</p>
+      <h3>Le renouvellement</h3>
+      <p>L’abonnement se renouvelle tout seul à chaque échéance, au même prix, jusqu’à ce que tu
+        l’arrêtes.</p>
+      <h3>Résilier</h3>
+      <p><b>Tu peux résilier à tout moment</b>, sans motif et sans frais&nbsp;: sur
+        <a href="/abonnement">la page de l’abonnement</a>, bouton «&nbsp;Résilier mon
+        abonnement&nbsp;», puis «&nbsp;Confirmer&nbsp;». La résiliation prend effet <b>à la fin de
+        la période déjà payée</b>&nbsp;: tu gardes l’accès jusque-là, et tu peux changer d’avis
+        avant.</p>
+      <h3>Changer d’avis dans les quatorze jours</h3>
+      <p>Si tu regrettes ton abonnement dans les <b>quatorze jours</b> qui suivent ton premier
+        paiement, écris à <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>&nbsp;:
+        nous te remboursons entièrement, sans que tu aies à te justifier.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="jeu">
+    <h2 class="tbf-cousu">Les écharpes, les boosters, ta collection</h2>
+    <div class="bloc">
+      <p><b>Les écharpes ne s’achètent pas.</b> Elles se gagnent en jouant, et uniquement. Elles
+        n’ont aucune valeur hors du jeu&nbsp;: elles ne s’échangent pas entre joueurs, ne se
+        revendent pas et ne se remboursent pas.</p>
+      <p><b>Un booster contient des cartes tirées au hasard</b>, avec les mêmes chances pour tout le
+        monde, abonné ou non. Il ne s’achète pas avec de l’argent&nbsp;: il revient tout seul avec
+        le temps, se gagne en jouant, s’échange contre des écharpes, ou arrive avec l’abonnement.</p>
+      <p>Tes Fanzzy, tes cartes, ton deck et tes écharpes sont des <b>éléments de jeu</b>, pas des
+        biens&nbsp;: tu en as l’usage tant que ton compte et le jeu existent, sans en devenir
+        propriétaire.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="conduite">
+    <h2 class="tbf-cousu">Ce que nous te demandons de ne pas faire</h2>
+    <div class="bloc">
+      <ul>
+        <li>Utiliser un compte qui n’est pas le tien.</li>
+        <li>Faire jouer un robot, un script ou un outil à ta place.</li>
+        <li>Chercher à contourner les règles, les limites ou les protections du jeu.</li>
+        <li>Choisir un pseudo injurieux, haineux, ou qui se fait passer pour quelqu’un d’autre.</li>
+        <li>Gêner le jeu ou les autres joueurs.</li>
+      </ul>
+      <p>En cas de manquement, nous pouvons suspendre ou fermer ton compte. Si un abonnement est en
+        cours, nous te remboursons la période qui reste, sauf fraude sur le paiement.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="garanties">
+    <h2 class="tbf-cousu">Ce que nous ne garantissons pas</h2>
+    <div class="bloc">
+      <p>Le jeu est en version bêta. Nous faisons de notre mieux pour qu’il soit disponible et juste,
+        mais nous ne pouvons garantir ni qu’il le soit sans interruption, ni qu’il soit sans
+        défaut.</p>
+      <p>Les données sportives viennent d’un fournisseur (API-Football). Un score faux, en retard ou
+        manquant ne donne pas droit à un dédommagement.</p>
+      <p>Le jeu évolue&nbsp;: nous pouvons ajouter, changer ou retirer du contenu. Si nous devions
+        fermer le jeu, nous te préviendrions <b>trente jours</b> à l’avance et rembourserions la
+        part non utilisée des abonnements en cours.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="desaccord">
+    <h2 class="tbf-cousu">En cas de désaccord</h2>
+    <div class="bloc">
+      <p>Écris-nous d’abord à <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>&nbsp;:
+        la plupart des choses se règlent comme ça.</p>
+      <p>Ces conditions sont soumises au <b>droit suisse</b>. Si tu vis dans un autre pays, tu
+        gardes toutes les protections que la loi de ton pays donne aux consommateurs.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="changement">
+    <h2 class="tbf-cousu">Si ces conditions changent</h2>
+    <div class="bloc">
+      <p>Nous te préviendrons dans le jeu <b>trente jours</b> avant, et la date en haut de cette page
+        changera. Si tu n’acceptes pas les nouvelles conditions, tu peux résilier&nbsp;: ton
+        abonnement ira jusqu’au bout de la période payée.</p>
+      <p>Ces conditions sont écrites en français. Leurs traductions sont là pour t’aider à les
+        lire&nbsp;; en cas de doute, la version française fait foi.</p>
+    </div>
+  </section>
+</main>
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

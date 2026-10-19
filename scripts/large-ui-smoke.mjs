@@ -65,7 +65,9 @@ const PAGES = [['/', 'index', 'l’accueil'], ['/classement', 'classement', 'le 
   ['/fanzzy/RP1', 'fanzzy-fiche', 'la fiche d’un Fanzzy'], ['/virage', 'virage', 'le Virage'],
   ['/duel-nvn', 'duel-nvn', 'le duel'], ['/jeux', 'jeux', 'les mini-jeux'],
   ['/confidentialite', 'confidentialite', 'la politique de confidentialité'],
-  ['/comment-jouer', 'comment-jouer', 'la page « Comment jouer »']];
+  ['/comment-jouer', 'comment-jouer', 'la page « Comment jouer »'],
+  ['/mentions-legales', 'mentions-legales', 'les mentions légales'],
+  ['/conditions', 'conditions', 'les conditions d’utilisation et de vente']];
 for (const [url, fichier] of PAGES) {
   app.get(url, (_q, s) => s.sendFile(path.join(RACINE, 'public', `${fichier}.html`)));
 }

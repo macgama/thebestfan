@@ -3247,6 +3247,16 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
    soleil ce que le papier lui laissait déjà à peine (2,7:1 au lieu de 3,3) ;
    pleine sur le kraft éclairci, elle tient 4,58. */
 .tbf-tiroir-pied .tbf-version{padding:10px 0 0;color:var(--encre-kraft);opacity:1}
+/* Les textes juridiques, juste au-dessus de la version : à l'encre du kraft,
+   petits, soulignés pour qu'on y voie des liens. */
+.tbf-tiroir-pied .tbf-tiroir-legal{margin:12px 0 0;font-size:11px;line-height:1.6;
+  color:var(--encre-kraft);text-align:center}
+/* Trois classes : la règle des liens du pied (une ligne par lien, en
+   capitales, quarante-quatre pixels de haut) les aurait faits trois entrées
+   de menu. Ce sont des liens dans une phrase. */
+.tbf-tiroir .tbf-tiroir-pied .tbf-tiroir-legal a{display:inline;min-height:0;padding:0;border:0;
+  font-family:var(--ui);font-weight:600;font-size:inherit;line-height:inherit;letter-spacing:0;
+  text-transform:none;color:inherit;text-decoration:underline;text-underline-offset:2px}
 /* La langue : cinq plaques sur une rangée, au pied du tiroir. */
 .tbf-langues{display:flex;gap:6px;flex-wrap:wrap;padding:4px 0 2px}
 .tbf-langues .tbf-plaque{--epaisseur:2px;min-height:44px;min-width:44px;padding:0 8px;flex:1 1 0;

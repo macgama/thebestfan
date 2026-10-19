@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<script src="/langue.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<title>Mentions légales — thebestfan</title>
+<meta name="description" content="Qui édite thebestfan, qui l’héberge, et comment nous écrire.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* ==================================================== les mentions légales
+
+   Publiées le 19 octobre 2026 avec les informations d'éditeur de Gaël (fil
+   « Analyse de l'appli et premiers pas »). Sa source de travail est
+   `MENTIONS-LEGALES.md` ; **c'est cette page qui fait foi**, et
+   `legal:smoke` vérifie qu'elle est servie, appelée et d'accord avec la
+   politique de confidentialité sur l'éditeur. Même habit que la
+   confidentialité. */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+
+.rub{margin:18px 0 0}
+.rub h2{margin:0 2px 10px}
+.bloc{background:var(--panneau);border:1px solid var(--trait);border-radius:12px;
+  padding:14px 16px;margin:0 0 10px;font-size:13.5px;line-height:1.65}
+.bloc p{margin:0 0 10px}
+.bloc p:last-child,.bloc ul:last-child,.bloc dl:last-child{margin-bottom:0}
+.bloc h3{font-family:var(--banner);font-weight:600;font-size:14px;letter-spacing:.06em;
+  margin:4px 0 8px}
+.bloc ul{margin:0 0 10px;padding-left:20px}
+.bloc li{margin:0 0 6px}
+.bloc li:last-child{margin-bottom:0}
+/* Une donnée, puis ce qu'elle sert : une liste et non un tableau. Trois
+   colonnes ne tiennent pas dans trois cent soixante pixels — la première se
+   serait écrite une lettre par ligne. */
+.donnees{margin:0 0 10px}
+.donnees dt{font-weight:700;margin-top:10px}
+.donnees dt:first-child{margin-top:0}
+.donnees dd{margin:2px 0 0}
+/* La base légale, sous la liste qu'elle couvre. Plus petite, pas plus pâle :
+   le plancher de lecture du jeu reste 0,85. */
+.base{font-size:12.5px}
+.bloc b{font-weight:700}
+/* Les liens de texte du jeu : craie grasse soulignée (arbitrage du 2 octobre
+   2026 — l'or ne s'écrit plus qu'en grand). Un lien dans une phrase n'a pas
+   de zone de touche à lui ; l'audit l'exempte des 44 pixels. */
+.bloc a{color:var(--craie);font-weight:600;text-decoration:underline;text-underline-offset:3px;
+  overflow-wrap:anywhere}
+.date{font-weight:600}
+
+/* tbf-degagement */
+#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+  <p class="tbf-sous">Qui édite le jeu, et qui l’héberge</p>
+
+  <section class="rub" id="editeur">
+    <h2 class="tbf-cousu">L’éditeur</h2>
+    <div class="bloc">
+      <p class="date">Dernière mise à jour&nbsp;: 19&nbsp;octobre&nbsp;2026</p>
+      <p><b>Gaël Manigley</b>, entreprise individuelle<br>
+        Chemin les Jordils 2, 1085&nbsp;Vulliens, Suisse</p>
+      <p>Entreprise non inscrite au registre du commerce, non assujettie à la TVA.</p>
+      <p>Contact&nbsp;: <a href="mailto:info@thebestfan.online">info@thebestfan.online</a></p>
+      <p>Responsable de la publication&nbsp;: Gaël Manigley.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="hebergeur">
+    <h2 class="tbf-cousu">L’hébergeur</h2>
+    <div class="bloc">
+      <p><b>Infomaniak Network SA</b><br>
+        Rue Eugène-Marziano 25, 1227&nbsp;Les Acacias (Genève), Suisse<br>
+        <a href="https://www.infomaniak.com" rel="noopener">infomaniak.com</a></p>
+      <p>Les données du jeu sont hébergées en Suisse.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="prestataires">
+    <h2 class="tbf-cousu">Les prestataires</h2>
+    <div class="bloc">
+      <dl class="donnees">
+        <dt>Paiement&nbsp;: Stripe Payments Europe, Ltd (Irlande)</dt>
+        <dd>Encaisse les abonnements. Ton numéro de carte ne passe jamais par nous.</dd>
+        <dt>Données sportives&nbsp;: API-Football (API-Sports)</dt>
+        <dd>Scores, calendriers, compositions et classements.</dd>
+        <dt>Connexion Google&nbsp;: Google Ireland Limited</dt>
+        <dd>La connexion par un compte Google, si tu la choisis.</dd>
+        <dt>Envoi des e-mails&nbsp;: Infomaniak</dt>
+        <dd>Vérifier ton adresse, retrouver ton mot de passe, confirmer ton abonnement.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="rub" id="propriete">
+    <h2 class="tbf-cousu">Propriété intellectuelle</h2>
+    <div class="bloc">
+      <p>Les textes, les illustrations, les personnages et le code de thebestfan.online appartiennent
+        à Gaël Manigley, sauf mention contraire. Les reproduire demande son accord.</p>
+      <p>Les noms des clubs et des compétitions viennent des données sportives et appartiennent à
+        leurs détenteurs&nbsp;: ils ne servent qu’à dire quels matchs se jouent et leurs résultats.
+        thebestfan.online n’est lié à aucun club, aucune ligue ni aucune fédération.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="signaler">
+    <h2 class="tbf-cousu">Signaler un contenu</h2>
+    <div class="bloc">
+      <p>Un pseudo injurieux, un comportement abusif, un contenu illicite&nbsp;: écris à
+        <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>, avec le pseudo en cause.
+        Nous traitons chaque signalement.</p>
+    </div>
+  </section>
+
+  <section class="rub" id="voir-aussi">
+    <h2 class="tbf-cousu">Voir aussi</h2>
+    <div class="bloc">
+      <p><a href="/conditions">Les conditions d’utilisation et de vente</a></p>
+      <p><a href="/confidentialite">La politique de confidentialité</a></p>
+    </div>
+  </section>
+</main>
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>
