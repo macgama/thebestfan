@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**Les duels qui attendent, et l'invitation d'un ami** (19 octobre 2026,
+demandés par Gaël). Construction puis redémarrage, sans schéma.
+
+- Quitter la page d'attente ne ferme plus le duel : il reste affiché pour
+  les autres, et un rappel suit le joueur sur les autres pages (« TON DUEL
+  T'ATTEND », puis « TON ADVERSAIRE EST LÀ » quand quelqu'un arrive en
+  face). Le duel ne part jamais sans lui : il revient, et ça commence. Passé
+  dix minutes sans revenir, le duel disparaît (réglable dans `/admin`, LE
+  JEU, RÉGLAGES, « Un duel qui attend son créateur parti ailleurs »).
+- Dans la salle d'attente, INVITER UN AMI (l'ami voit l'invitation sur la
+  page où il est, REJOINDRE l'amène dans ce duel) et ENVOYER LE LIEN (le lien
+  mène directement à la salle d'attente de ce duel). L'invité prend la
+  tribune d'en face, sauf s'il est fan du même club que celui qui invite.
+
+---
+
 **Le tutoriel : la visite guidée et la page « Comment jouer »** (18 octobre
 2026, demandé par Gaël). Construction puis redémarrage, sans schéma.
 

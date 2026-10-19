@@ -723,6 +723,19 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .renfort{text-align:center;font-family:var(--banner);font-size:12px;letter-spacing:.1em}
 .renfort b{font-weight:700}
 .inviter{align-self:center}
+/* Le duel reste ouvert quand on part : on le dit dans le vestiaire. */
+.ailleurs{margin:0;text-align:center;font-size:12.5px;color:var(--craie-2,#bbb);line-height:1.4}
+.inviters{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+/* Les amis à inviter, sous le bouton : une ligne chacun. */
+.amis-duel{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;
+  max-height:180px;overflow:auto}
+.amis-duel li{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:6px 10px;border:1px dashed rgba(255,255,255,.25)}
+.amis-duel li b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.amis-duel .vide-amis{justify-content:center;font-size:12.5px}
+/* Une place tenue par quelqu'un parti voir ailleurs : rappelé, pas parti. */
+.place-att.absent .tbf-buste{opacity:.45}
+.place-att.absent .tbf-siege-nom::after{content:" · rappelé";font-weight:400}
 
 /* Même règle que `.grand` : le voile couvre l’écran, son contenu tient dans
    la colonne. Opaque, comme le voile du Virage. */
@@ -1054,6 +1067,11 @@ const MESSAGES = {
     'Ce format ne se joue pas en classé sans abonnement. Sur un match d\u2019un autre '
     + 'jour, il reste ouvert à tout le monde.',
   'ferveur.error.unauthenticated':'Session expirée. Reconnecte-toi.',
+  /* L'invitation : un lien vers un duel déjà parti, un ami à inviter. */
+  'ferveur.error.duel_parti':     'Ce duel n\u2019attend plus personne. Le match est choisi : entre en file, ou choisis-en un autre.',
+  'ferveur.error.pas_en_file':    'Entre d\u2019abord en file pour inviter quelqu\u2019un.',
+  'ferveur.error.pas_ami':        'Tu ne peux inviter que tes amis.',
+  'ferveur.error.trop_d_invitations':'Tu as déjà invité beaucoup de monde pour ce duel.',
   'ferveur.error.not_in_duel':    'Tu n\u2019es dans aucun duel.',
   'ferveur.error.duel_over':      'Le duel est terminé.',
   'ferveur.error.silenced':       'Silence radio : tu ne peux pas chanter.',
@@ -1151,6 +1169,11 @@ function lienDeMaFile(p) {
     match: String(p?.fixtureId ?? S.fixtureId ?? ''),
     format: String(p?.format ?? S.format),
   });
+  /* **Le code de ma place** : le lien mène droit au vestiaire de ce duel-ci
+     (voir `entrerParLien`). Match, format et camp restent dans le lien pour
+     le cas où le duel serait parti entre-temps : la page s'ouvre alors sur
+     le bon match. */
+  if (p?.code) params.set('duel', String(p.code));
   // Le camp d'en face, pour que le duel parte au lieu de s'allonger.
   if (p?.camp === 0 || p?.camp === 1) params.set('camp', String(p.camp ^ 1));
   return `/duel-nvn?${params}`;
@@ -1167,6 +1190,36 @@ async function inviterAuDuel(p) {
   });
   if (quoi === 'copie') toast('Lien copié.');
   else if (quoi === null) toast('Impossible de partager ici.');
+}
+
+/* ------------------------------------------------- inviter un ami du jeu
+
+   La liste de mes amis, lue une fois à l'ouverture, avec un INVITER pour
+   chacun. Le serveur vérifie l'amitié (`nvn:inviter`) ; l'ami voit
+   l'invitation sur la page où il est, et un appui l'amène ici. Ceux déjà
+   invités restent marqués tant que la file dure. */
+async function ouvrirAmisDuel() {
+  S.amisOuverts = !S.amisOuverts;
+  if (S.amisOuverts && !S.amisDuel) {
+    try {
+      const r = await api('/api/amis');
+      S.amisDuel = (r.amis ?? []).map((g) => ({ id: String(g.id), pseudo: g.pseudo }));
+    } catch { S.amisDuel = []; }
+  }
+  if (S.derniereSalle && S.enFile) rendreSalle(S.derniereSalle);
+}
+
+function listeAmisDuel() {
+  const amis = S.amisDuel ?? [];
+  if (!amis.length) {
+    return `<ul class="amis-duel"><li class="vide-amis">Pas encore d’amis dans le jeu.
+      <a href="/amis">Trouver des amis</a></li></ul>`;
+  }
+  return `<ul class="amis-duel">${amis.map((a) => {
+    const fait = S.invites.has(a.id);
+    return `<li><b>${esc(a.pseudo)}</b><button class="tbf-plaque" data-ton="violet"
+      data-inviter-ami="${esc(a.id)}"${fait ? ' disabled' : ''}>${fait ? 'INVITÉ' : 'INVITER'}</button></li>`;
+  }).join('')}</ul>`;
 }
 
 function voile(titre, texte, bouton) {
@@ -1277,7 +1330,7 @@ function placeAttente(joueur, club, court = false) {
   /* Sans nom connu, le nom du Fanzzy ou le club dit qui occupe la place.
      Jamais un « — ». */
   const nom = joueur.nom ?? joueur.fanzzy?.nom ?? club ?? '';
-  return `<li class="tbf-siege place-att pris">
+  return `<li class="tbf-siege place-att pris${joueur.absent ? ' absent' : ''}">
     <span class="tbf-buste" aria-hidden="true">${src ? `<img src="${esc(src)}" alt="" decoding="async">` : ''}</span>
     ${nom ? `<span class="tbf-siege-nom">${esc(nom)}</span>` : ''}</li>`;
 }
@@ -1314,16 +1367,35 @@ function rendreSalle(p) {
     corps.push(`<div class="renfort">Renfort · ta ferveur compte
       <b>×${String(p.renfort).replace('.', ',')}</b></div>`);
   }
+  /* **Inviter, de deux façons** (19 octobre 2026) : un ami du jeu, qui voit
+     l'invitation sur la page où il est (`duel-rappel.js`), ou n'importe qui
+     par un lien (WhatsApp, un message). Les deux mènent droit ici. Une bâche
+     au ton violet : celui des gens, comme partout ailleurs. */
+  const boutons = ['<button class="inviter tbf-plaque" data-ton="violet" id="inviterAmi"'
+    + ` aria-expanded="${Boolean(S.amisOuverts)}">INVITER UN AMI</button>`];
   if (window.TBF_PARTAGE?.possible) {
-    /* Une bâche au ton violet : celui des gens, comme partout ailleurs. */
-    corps.push('<button class="inviter tbf-plaque" data-ton="violet" id="inviter">'
-      + 'INVITER QUELQU’UN</button>');
+    boutons.push('<button class="inviter tbf-plaque" data-ton="violet" id="inviter">'
+      + 'ENVOYER LE LIEN</button>');
   }
+  corps.push(`<div class="inviters">${boutons.join('')}</div>`);
+  if (S.amisOuverts) corps.push(listeAmisDuel());
+  /* **Le duel reste ouvert quand on part** : la place attend, les autres la
+     voient, et le joueur est rappelé quand quelqu'un arrive en face. */
+  corps.push('<p class="ailleurs">Tu peux aller voir ailleurs : ton duel reste ouvert, '
+    + 'et on te rappelle dès que quelqu’un arrive.</p>');
 
   voile('LE VESTIAIRE', `<div class="salle">${corps.join('')}</div>`,
     { texte: 'Quitter la file', action: quitterFile });
+  S.derniereSalle = p;
 
   if ($('inviter')) $('inviter').onclick = () => inviterAuDuel(p);
+  $('inviterAmi').onclick = () => ouvrirAmisDuel();
+  for (const b of document.querySelectorAll('[data-inviter-ami]')) {
+    b.onclick = () => {
+      socket?.emit('nvn:inviter', { ami: b.dataset.inviterAmi });
+      b.disabled = true;
+    };
+  }
 
   /* **La rumeur qui monte à chaque arrivée** (`son.js`, lot 6) : la mesure
      est la part des places prises, des deux côtés ; une arrivée la fait
@@ -1377,6 +1449,13 @@ const S = {
   format: '1v1', fixtureId: null, camp: null, matchs: [], catalogue: [],
   // Ce qui attend, par match et par format. Voir `lireAttentes`.
   attentes: [],
+  /* L'invitation (19 octobre 2026) : la liste d'amis dépliée dans le
+     vestiaire, les amis déjà invités, et le dernier état de la salle pour
+     la redessiner quand la liste s'ouvre. */
+  amisOuverts: false,
+  amisDuel: null,
+  invites: new Set(),
+  derniereSalle: null,
   derby: null,
   vue: null, enFile: false, dernierSeq: 0, occupe: false,
   /* Vrai quand la bibliothèque du direct n'a pas pu se charger. La page
@@ -2057,7 +2136,10 @@ function connecter() {
 
   socket.on('connect', () => {
     rassurer();
-    fermerVoile();
+    /* En file, une coupure a laissé la place absente côté serveur : on la
+       reprend, et le vestiaire reste à l'écran. */
+    if (S.enFile && !S.vue) socket.emit('nvn:reprendre');
+    else fermerVoile();
     // Reprise : si un duel nous attendait, le serveur nous y remet — sans
     // affiche ni entrée : on revient dans une tribune déjà pleine.
     if (S.vue && !S.vue.termine) { S.entree = true; socket.emit('nvn:resume'); }
@@ -2113,6 +2195,21 @@ function connecter() {
      On ne repeint que si l'on est encore devant la préparation — pendant un
      duel, la liste des matchs n'est pas à l'écran et la refaire ne servirait
      qu'à travailler pour rien. */
+  /* Un ami invité : son bouton passe à INVITÉ. */
+  socket.on('nvn:invite', (d) => {
+    if (d?.refus) dire(d.refus);
+    else if (d?.ami) S.invites.add(String(d.ami));
+    if (S.derniereSalle && S.enFile) rendreSalle(S.derniereSalle);
+  });
+
+  /* Revenu sur la page, mais la place n'attendait plus (expirée, ou le
+     joueur a quitté la file ailleurs) : la préparation, simplement. */
+  socket.on('nvn:hors_file', () => {
+    if (S.vue) return;
+    S.enFile = false;
+    fermerVoile();
+  });
+
   socket.on('nvn:attentes', (d) => {
     S.attentes = d?.attentes ?? [];
     if (!S.vue) preparerRendu();
@@ -2251,6 +2348,7 @@ function entrerEnFile() {
   if (!S.fixtureId) return toast('Choisis d\u2019abord un match support.');
   if (!socket?.connected) return toast('Pas de connexion au serveur.');
   presentsAvant = 0;
+  S.invites = new Set();
   socket.emit('nvn:queue',
     { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0, souple:S.souple });
   S.enFile = true;
@@ -2261,11 +2359,44 @@ function entrerEnFile() {
 function quitterFile() {
   socket?.emit('nvn:leave_queue');
   S.enFile = false;
+  S.amisOuverts = false;
+  S.derniereSalle = null;
   clearInterval(reboursTimer);
   reboursTimer = null;
   // Rien ne joue en préparation : la rumeur du vestiaire se tait.
   window.TBF_SON?.ambiance?.(0);
   fermerVoile();
+}
+
+/**
+ * **Arriver par une invitation** : le lien porte le code d'une place qui
+ * attend (`?duel=`). On entre tout de suite dans ce duel-là, sans passer par
+ * la liste : le serveur prend le match et le format de celui qui invite, et
+ * place l'invité en face quand son club le permet. Un duel parti entre-temps
+ * se dit (`ferveur.error.duel_parti`), et la page reste sur le bon match.
+ */
+function entrerParLien(code) {
+  if (!socket) return toast('Pas de connexion au serveur.');
+  presentsAvant = 0;
+  S.invites = new Set();
+  socket.emit('nvn:queue', { duel: code });
+  S.enFile = true;
+  voile('Dans la file', 'On te place dans le duel de ton ami…',
+    { texte:'Quitter la file', action: quitterFile });
+}
+
+/**
+ * **Revenir à sa place** : le joueur avait un duel en attente et il était
+ * parti voir ailleurs. La place l'attendait (`nvn:reprendre`) ; le vestiaire
+ * se rouvre au premier `nvn:file`, et si quelqu'un l'attendait en face, le
+ * duel part aussitôt.
+ */
+function reprendreFile() {
+  if (!socket) return;
+  S.enFile = true;
+  voile('Dans la file', 'Ton duel t\u2019attendait…',
+    { texte:'Quitter la file', action: quitterFile });
+  socket.emit('nvn:reprendre');
 }
 
 /**
@@ -4515,6 +4646,15 @@ $('equipe').addEventListener('click', (e) => {
     // Un duel peut être en cours si on revient sur la page.
     const etat = await api('/api/nvn/etat').catch(() => null);
     if (etat?.duelEnCours) socket.emit('nvn:resume');
+    /* **Un duel qui m'attendait**, ou **un lien d'invitation** : on va droit
+       au vestiaire. Sa propre place d'abord — un lien vers un autre duel ne
+       la fait pas perdre sans qu'on l'ait quittée. Sans deck, rien : la
+       préparation dit déjà comment en monter un. */
+    else if (etat?.enFile) reprendreFile();
+    else {
+      const code = new URLSearchParams(location.search).get('duel');
+      if (code && !sansDeckMemo) entrerParLien(code);
+    }
   } catch (e) {
     if (e.message === 'auth') return;
     $('prepaCorps').innerHTML = `<div class="vide">Impossible de préparer le duel.<br>
