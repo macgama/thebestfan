@@ -3396,7 +3396,7 @@ html[data-calme~="animations"] .tbf-tiroir-fermer:active{translate:none;filter:b
    Virage et du Duel ne s'ouvrait donc plus : les clics traversaient le bouton.
    Un écran de jeu sans menu est un cul-de-sac — c'est justement le défaut que
    cette barre existe pour éviter. */
-.tbf-haut-jeu .tbf-burger,.tbf-haut-jeu .tbf-retour{pointer-events:auto}
+.tbf-haut-jeu .tbf-burger,.tbf-haut-jeu .tbf-retour,.tbf-haut-jeu .tbf-maison{pointer-events:auto}
 /* **Pas de titre sur un écran de jeu.**
 
    La barre commune écrit le nom de l'écran entre les deux boutons. Sur une page
@@ -3414,11 +3414,11 @@ html[data-calme~="animations"] .tbf-tiroir-fermer:active{translate:none;filter:b
 /* La flèche de retour. Même taille et même matière que le bouton de menu :
    ce sont les deux seules commandes qui flottent au-dessus d'un écran de jeu,
    et deux tailles différentes les feraient lire comme deux choses. */
-.tbf-retour{
+.tbf-retour,.tbf-maison{
   width:44px;height:44px;flex:none;display:grid;place-items:center;
   text-decoration:none;color:var(--craie);
 }
-.tbf-retour svg{
+.tbf-retour svg,.tbf-maison svg{
   width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round;
 }
@@ -3454,7 +3454,7 @@ html[data-calme~="animations"] .tbf-tiroir-fermer:active{translate:none;filter:b
    `position:relative` pour que la flèche, qui ne l'avait pas, porte son coin.
    Deux tracés différents, pour que les deux boutons de la même barre ne
    tremblent pas pareil. */
-.pan:is(.tbf-burger,.tbf-retour){
+.pan:is(.tbf-burger,.tbf-retour,.tbf-maison){
   --epaisseur:3px;
   position:relative;
   background:var(--grain-toile) 0 0/256px 256px repeat,var(--parpaing);
@@ -3464,7 +3464,13 @@ html[data-calme~="animations"] .tbf-tiroir-fermer:active{translate:none;filter:b
   transition:transform .08s ease,box-shadow .08s ease;
 }
 .pan.tbf-retour{border-image-source:var(--trace-c)}
-.pan:is(.tbf-burger,.tbf-retour)::before{
+/* La maison, collée à la flèche (nav.js) : un troisième tracé, pour que les
+   deux bâches voisines ne tremblent pas pareil. */
+.pan.tbf-maison{border-image-source:var(--trace-b)}
+/* Collée à la flèche : deux pixels de moins entre elles qu'entre les autres
+   boutons, une paire et non deux commandes de plus. */
+.tbf-retour+.tbf-maison{margin-left:-2px}
+.pan:is(.tbf-burger,.tbf-retour,.tbf-maison)::before{
   content:"";position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;
   pointer-events:none;
   background:linear-gradient(135deg,transparent 0 calc(50% - 1px),
@@ -3473,16 +3479,16 @@ html[data-calme~="animations"] .tbf-tiroir-fermer:active{translate:none;filter:b
 /* L'enfoncement de la bâche : vertical, de son épaisseur, l'ombre plaquée
    contre elle. Cette règle pèse plus que l'écrasement des panneaux
    (`button.pan:active`, plus haut), qui ne vaut donc plus pour eux. */
-.pan:is(.tbf-burger,.tbf-retour):active{
+.pan:is(.tbf-burger,.tbf-retour,.tbf-maison):active{
   transform:translateY(var(--epaisseur));
   box-shadow:inset 0 1px 0 rgba(242,238,228,.35),2px 0 0 var(--encre);
 }
 @media (prefers-reduced-motion:reduce){
-  .pan:is(.tbf-burger,.tbf-retour){transition:none}
-  .pan:is(.tbf-burger,.tbf-retour):active{transform:none;filter:brightness(.88)}
+  .pan:is(.tbf-burger,.tbf-retour,.tbf-maison){transition:none}
+  .pan:is(.tbf-burger,.tbf-retour,.tbf-maison):active{transform:none;filter:brightness(.88)}
 }
-html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour){transition:none}
-html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour):active{transform:none;filter:brightness(.88)}
+html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour,.tbf-maison){transition:none}
+html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour,.tbf-maison):active{transform:none;filter:brightness(.88)}
 
 /* ------------------------------------------------------- petites briques
 

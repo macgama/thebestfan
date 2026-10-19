@@ -2655,7 +2655,7 @@ function coupDeSifflet(statut) {
    socket la couvre. `a[href^="/"]` et non `a` : la déconnexion porte
    `href="#"` et a sa propre confirmation. */
 document.addEventListener('click', (e) => {
-  const sortie = e.target.closest('.tbf-retour, .tbf-tiroir a[href^="/"], [data-quitter-virage]');
+  const sortie = e.target.closest('.tbf-retour, .tbf-maison, .tbf-tiroir a[href^="/"], [data-quitter-virage]');
   if (!sortie || !dansLaTribune()) return;
   e.preventDefault();
   e.stopPropagation();

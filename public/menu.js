@@ -151,7 +151,8 @@
        lignes voisines avec le même dessin ne se distinguent plus. */
     collection: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
     classement: 'M6 21V9M12 21V4M18 21v-7M3 21h18',
-    accueil: 'M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+    // Une maison et sa porte : la porte la distingue d'une simple flèche vers le haut.
+    accueil: 'M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM10 22v-6h4v6',
     deck: 'M4 7h10v13H4zM8 4h10v13',
     profil: 'M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0',
     clubs: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z',
