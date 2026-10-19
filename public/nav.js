@@ -1379,6 +1379,17 @@
        Le menu reste donc réservé à ceux qui ont un compte, et la sortie
        s'ouvre à tout le monde — c'est justement le visiteur qui en a le
        plus besoin, puisque c'est le seul qui ne connaît pas les lieux. */
+    /* **Le rappel du duel** (`duel-rappel.js`), pour qui a un compte : un
+       duel qui attend pendant qu'on regarde ailleurs, l'adversaire arrivé
+       en face, l'invitation d'un ami. Chargé ici une fois pour toutes les
+       pages plutôt qu'écrit dans chacune ; il se tait de lui-même sur
+       l'écran du duel. */
+    if (user && !document.querySelector('script[src="/duel-rappel.js"]')) {
+      const rappel = document.createElement('script');
+      rappel.src = '/duel-rappel.js';
+      rappel.defer = true;
+      document.head.append(rappel);
+    }
     const boutonHTML = user
       ? `<button class="pan tbf-burger" aria-label="Menu" aria-expanded="false"
           aria-controls="tbf-tiroir"><span></span><span></span><span></span></button>`

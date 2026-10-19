@@ -284,6 +284,14 @@ export const REGLAGES = [
       'n’en laissent aucun, et on jouerait toujours contre des machines. Trop ' +
       'long, et le joueur repart avant que le duel commence.' },
 
+  { cle: 'duel.attente_absent_min', section: 'duel', type: 'entier',
+    titre: 'Un duel qui attend son créateur parti ailleurs', unite: 'minutes',
+    min: 1, max: 60, defaut: 10,
+    aide: 'Le joueur qui quitte l’écran du duel garde sa place : son duel reste ' +
+      'affiché, et on le rappelle quand quelqu’un arrive en face. Passé ce ' +
+      'délai sans revenir, le duel disparaît : il ne reste pas affiché pour ' +
+      'quelqu’un qui a fermé le jeu.' },
+
   /* La prime des grands formats.
 
      Un 2v2 demandait de réunir quatre personnes au lieu de deux, et payait

@@ -47,6 +47,38 @@ const TICK_MS = 500;
 const BOT_APRES_MS = 20_000;
 const GRACE_MS = 90_000;
 
+/* ================================================== un duel qui attend
+
+   **Il ne meurt plus quand on quitte la page.** Une file vivait sur la
+   socket de l'écran du duel : aller voir sa collection le temps qu'un
+   adversaire arrive coupait la socket, et la place disparaissait sans un
+   mot. Le joueur croyait son duel ouvert ; personne ne pouvait plus le
+   rejoindre.
+
+   La place reste donc dans la file, **marquée absente** (`socket: null`),
+   et tout le monde continue de la voir. Trois règles en découlent :
+
+     — **on n'apparie que des présents.** Un duel ne part jamais avec
+       quelqu'un qui n'est pas devant l'écran : il chanterait contre une
+       tribune vide. Quand un adversaire arrive, l'absent est rappelé sur
+       la page où il se trouve (`/api/nvn/moi`, lu par `duel-rappel.js`),
+       et le duel part dès qu'il revient sur l'écran du duel ;
+     — **les bots ne remplacent pas un absent qu'on a rappelé** : celui qui
+       vient d'arriver en face lui laisse au moins `RAPPEL_MS` pour revenir ;
+     — **une place absente expire** au bout de `duel.attente_absent_min`
+       minutes (réglage, dix par défaut) : un duel ne reste pas affiché
+       pour quelqu'un qui a fermé le jeu.
+
+   Chaque place porte aussi **un code** : celui du lien d'invitation
+   (`/duel-nvn?duel=<code>`). Le lien mène droit au vestiaire de ce duel-là,
+   dans la tribune d'en face quand le club de l'invité le permet. */
+const RAPPEL_MS = 60_000;
+/** Invitations « en jeu » qu'une place peut envoyer : de quoi inviter tous
+    ses amis, pas de quoi en faire un moyen de harceler. */
+const INVITATIONS_MAX = 30;
+const present = (f) => Boolean(f?.socket);
+const nouveauCode = () => randomUUID().replace(/-/g, '').slice(0, 10);
+
 /* ================================================== le verdict d'un chant
 
    **Le moteur ne sert que la note finale**, `quality`, celle qui pousse la
@@ -309,8 +341,22 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
   /* ------------------------------------------------------- appariement */
 
-  async function entrerEnFile(socket, { format, fixtureId, camp, contreBot, souple }) {
+  async function entrerEnFile(socket, { format, fixtureId, camp, contreBot, souple, duel }) {
     const u = socket.data?.user;
+    /* **Par un lien d'invitation** : le code désigne une place qui attend.
+       Format et match sont les siens ; le camp, celui d'en face — le club
+       de l'invité a encore le dernier mot, plus bas. Un code inconnu est
+       un duel déjà parti ou abandonné : la page le dit et montre le match. */
+    if (duel !== undefined && duel !== null && duel !== '') {
+      const hote = placeDuCode(String(duel));
+      if (!hote) throw new Cheat('duel_parti');
+      if (hote.userId === u?.userId) { reprendre(socket); return null; }
+      format = hote.format;
+      fixtureId = hote.support.fixture.id;
+      camp = hote.camp ^ 1;
+      contreBot = false;
+      souple = false;
+    }
     // On vérifie l'identifiant, pas seulement la présence de l'objet : une
     // session à moitié montée donnait un `{ userId: undefined }` bien truthy,
     // qui passait la garde et allait mourir au bind SQL. Le joueur recevait
@@ -406,7 +452,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
                    `tenterLarge`. */
                 souple: Boolean(souple),
                 neutre: club.neutre, teamId: club.teamId, bonus,
-                contreBot: Boolean(contreBot) });
+                contreBot: Boolean(contreBot),
+                /* Le code du lien d'invitation, et les amis déjà invités :
+                   voir « un duel qui attend », en tête de module. */
+                code: nouveauCode(), invites: new Set(), absentDepuis: null });
     files.set(c, file);
 
     /* À toute la file, et non au seul arrivant : ceux qui attendaient déjà ne
@@ -494,6 +543,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       /* Depuis quand il attend. Voir arriver quelqu'un est la moitié de
          l'intérêt ; savoir qu'il est là depuis une minute est l'autre. */
       depuis: f.depuis,
+      /* Parti voir ailleurs : sa place l'attend, et il est rappelé. */
+      ...(present(f) ? {} : { absent: true }),
     });
 
     return {
@@ -526,6 +577,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     for (const camp of [0, 1]) {
       const file = files.get(cle(format, fixtureId, camp)) ?? [];
       for (const f of file) {
+        // Une place absente n'a personne à qui parler : elle lira `/moi`.
+        if (!present(f)) continue;
         /* Le renfort est **celui de chacun**, figé à son entrée : le recalculer
            ici donnerait à tout le monde celui du dernier arrivé. */
         f.socket.emit('nvn:file', {
@@ -533,6 +586,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
           neutre: f.neutre,
           renfort: Number(f.bonus.toFixed(2)),
           moi: f.userId,
+          // Le code de son lien d'invitation : voir `placeDuCode`.
+          code: f.code,
         });
       }
     }
@@ -581,6 +636,77 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       }
       annoncerAttentes();
     }
+  }
+
+  /** Retire ces places de ces files, et les files vidées avec elles. */
+  function retirer(cles, places) {
+    const parties = new Set(places);
+    for (const k of cles) {
+      const reste = (files.get(k) ?? []).filter((f) => !parties.has(f));
+      if (reste.length) files.set(k, reste);
+      else files.delete(k);
+    }
+  }
+
+  /** La place d'un joueur en file, où qu'elle soit, ou `null`. */
+  function placeDe(userId) {
+    for (const file of files.values()) {
+      const f = file.find((x) => x.userId === userId);
+      if (f) return f;
+    }
+    return null;
+  }
+
+  /** La place qui porte ce code d'invitation, ou `null`. */
+  function placeDuCode(code) {
+    if (!code) return null;
+    for (const file of files.values()) {
+      const f = file.find((x) => x.code === code);
+      if (f) return f;
+    }
+    return null;
+  }
+
+  /**
+   * La socket de l'écran du duel s'en va : la place reste, absente.
+   *
+   * Seulement si c'est **cette** socket qui la tenait : un second onglet qui
+   * se ferme, ou une vieille socket qui meurt après le retour du joueur, ne
+   * doit pas retirer la place que tient la nouvelle.
+   */
+  function detacher(userId, socket) {
+    const f = placeDe(userId);
+    if (!f || f.socket !== socket) return;
+    f.socket = null;
+    f.absentDepuis = Date.now();
+    diffuserFile(f.format, Number(f.support.fixture.id));
+  }
+
+  /**
+   * Le joueur revient sur l'écran du duel : sa place l'attendait.
+   *
+   * Son attente repart de zéro — les paliers et les bots se comptent depuis
+   * son retour, sinon une absence de deux minutes le jetterait contre des
+   * machines à la seconde où il revient — et l'appariement est tenté tout de
+   * suite : si quelqu'un l'attendait en face, le duel part.
+   *
+   * @returns {boolean} faux s'il n'était dans aucune file
+   */
+  function reprendre(socket) {
+    const u = socket.data?.user;
+    const f = u?.userId ? placeDe(u.userId) : null;
+    if (!f) return false;
+    f.socket = socket;
+    f.absentDepuis = null;
+    f.depuis = Date.now();
+    const fixtureId = Number(f.support.fixture.id);
+    diffuserFile(f.format, fixtureId);
+    annoncerAttentes();
+    if (tenterAppariement(f.format, fixtureId)) return true;
+    for (let k = Math.max(...Object.values(FORMATS)); k >= 1; k--) {
+      if (tenterLarge(fixtureId, k)) break;
+    }
+    return true;
   }
 
   /**
@@ -634,7 +760,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   function tenterAppariement(format, fixtureId, minimum = null) {
     const taille = FORMATS[format];
     const cles = [cle(format, fixtureId, 0), cle(format, fixtureId, 1)];
-    const camps = cles.map((k) => files.get(k) ?? []);
+    // Les présents seulement : un absent n'entre en duel qu'en revenant.
+    const camps = cles.map((k) => (files.get(k) ?? []).filter(present));
 
     /* Le nombre qu'on peut aligner **des deux côtés** : un duel se joue à
        nombre égal, sinon un camp pousse à trois contre deux et le score ne veut
@@ -643,8 +770,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const seuil = Math.max(1, Math.min(taille, minimum ?? taille));
     if (possible < seuil) return null;
 
-    const equipes = camps.map((f) => f.splice(0, possible));
-    cles.forEach((k, i) => { if (!camps[i].length) files.delete(k); });
+    const equipes = camps.map((f) => f.slice(0, possible));
+    retirer(cles, equipes.flat());
     // Les deux files se vident d'un coup : ceux qui regardaient doivent le voir.
     annoncerAttentes();
     /* Le format **joué** : un 3v3 parti à deux contre deux est un 2v2, et c'est
@@ -703,7 +830,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       const pris = [];
       for (const [k, file] of files) {
         if (!k.includes(suffixe) || !k.endsWith(`:${camp}`)) continue;
-        for (const f of file) if (accepte(f, taille, t)) pris.push({ k, f });
+        for (const f of file) if (present(f) && accepte(f, taille, t)) pris.push({ k, f });
       }
       return pris.sort((a, b) => a.f.depuis - b.f.depuis).slice(0, taille);
     });
@@ -755,14 +882,13 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     /* Les deux files du même match et du même format. Celle qui a déclenché la
        minuterie n'a aucune priorité : ce qui compte est qu'un maximum de gens
        jouent ensemble. */
-    const parCamp = [0, 1].map((camp) => files.get(cle(format, fixtureId, camp)) ?? []);
-    const humains = parCamp.map((f) => f.splice(0, taille));
+    const cles = [0, 1].map((camp) => cle(format, fixtureId, camp));
+    /* Les présents seulement : un bot ne remplace pas quelqu'un parti voir
+       ailleurs, et un absent ne joue pas contre des bots sans le savoir. */
+    const humains = cles.map((k) => (files.get(k) ?? []).filter(present).slice(0, taille));
     if (!humains.some((h) => h.length)) return null;
 
-    for (const camp of [0, 1]) {
-      const k = cle(format, fixtureId, camp);
-      if (!(files.get(k) ?? []).length) files.delete(k);
-    }
+    retirer(cles, humains.flat());
     annoncerAttentes();
 
     /* Le modèle de deck que copient les bots : celui d'un humain présent, quel
@@ -1605,10 +1731,46 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         [{ seq: ++salle.duel.seq, t: 'back', userId: u.userId }]);
     });
 
+    /* Retour sur l'écran du duel : la place qui attendait, s'il y en a une.
+       `nvn:hors_file` dit à la page qu'il n'y en a plus (expirée, ou partie
+       en duel) : elle montre alors la préparation. */
+    socket.on('nvn:reprendre', () => {
+      try { if (!reprendre(socket)) socket.emit('nvn:hors_file'); }
+      catch (e) { erreur(e); }
+    });
+
+    /* Inviter un ami **dans le jeu** : il voit l'invitation sur la page où il
+       est (`/api/nvn/moi`), et un appui l'amène au vestiaire de ce duel.
+       Seulement un ami mutuel, et seulement depuis une place qui attend. */
+    socket.on('nvn:inviter', async (p = {}) => {
+      const u = moi();
+      try {
+        const f = u?.userId ? placeDe(u.userId) : null;
+        if (!f) throw new Cheat('pas_en_file');
+        const ami = String(p?.ami ?? '');
+        if (!ami || ami === u.userId) throw new Cheat('pas_ami');
+        if (f.invites.size >= INVITATIONS_MAX && !f.invites.has(ami)) {
+          throw new Cheat('trop_d_invitations');
+        }
+        const [x, y] = u.userId < ami ? [u.userId, ami] : [ami, u.userId];
+        const ok = await q(`SELECT 1 FROM amities WHERE a = ? AND b = ? AND etat = 'amis'`, [x, y]);
+        if (!ok.length) throw new Cheat('pas_ami');
+        f.invites.add(ami);
+        socket.emit('nvn:invite', { ami });
+      } catch (e) {
+        if (!(e instanceof Cheat)) console.error('[nvn] invitation', e.message);
+        /* Pas `nvn:error` : en file, la page y lit un refus d'entrer et
+           quitterait la file. Une invitation refusée ne coûte pas sa place. */
+        socket.emit('nvn:invite', { ami: String(p?.ami ?? ''),
+          refus: e instanceof Cheat ? e.code : 'nvn.error.server' });
+      }
+    });
+
     socket.on('disconnect', () => {
       const u = moi();
       if (!u) return;
-      quitterFile(u.userId);
+      /* La place en file **reste**, absente : voir « un duel qui attend ». */
+      detacher(u.userId, socket);
       const salle = maSalle();
       const m = salle?.membres.get(u.userId);
       if (!m) return;
@@ -1629,6 +1791,14 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        deux camps ensemble, et les traiter séparément le ferait deux fois — ou
        ouvrirait deux duels là où un seul devait partir. */
     const vus = new Set();
+    /* Les places absentes depuis trop longtemps s'en vont : un duel ne reste
+       pas affiché pour quelqu'un qui a fermé le jeu. */
+    const absentMax = reglage('duel.attente_absent_min') * 60_000;
+    for (const file of [...files.values()]) {
+      for (const f of [...file]) {
+        if (!present(f) && t - (f.absentDepuis ?? t) > absentMax) quitterFile(f.userId);
+      }
+    }
     for (const [c, file] of [...files]) {
       if (!file.length) continue;
       const fixtureId = Number(file[0].support?.fixture?.id);
@@ -1636,12 +1806,18 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       if (vus.has(paire)) continue;
       vus.add(paire);
 
-      const attente = attenteAvantBots(file[0].support?.mode);
       /* Le plus ancien des **deux** camps : celui qui attend depuis le début
-         est celui dont la patience décide, quel que soit son côté. */
-      const deux = [0, 1].map((camp) =>
+         est celui dont la patience décide, quel que soit son côté. Parmi les
+         présents : l'attente d'un absent ne compte pas, il n'attend rien. */
+      const tous = [0, 1].map((camp) =>
         files.get(cle(file[0].format, fixtureId, camp)) ?? []).flat();
+      const deux = tous.filter(present);
       if (!deux.length) continue;
+      /* Un absent est rappelé : on lui laisse le temps de revenir avant que
+         les bots prennent sa place. */
+      const attente = tous.some((f) => !present(f))
+        ? Math.max(RAPPEL_MS, attenteAvantBots(file[0].support?.mode))
+        : attenteAvantBots(file[0].support?.mode);
       const ecoule = t - Math.min(...deux.map((f) => f.depuis));
 
       /* **Le repli d'abord, les bots ensuite.** Un 3v3 accepte de partir à 2v2
@@ -1913,12 +2089,52 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     }
   });
 
+  /**
+   * Ce qui m'attend, lu par chaque page (`duel-rappel.js`) : ma place en
+   * file si j'en ai une — et si quelqu'un est arrivé en face pendant que
+   * j'étais ailleurs —, et les duels où un ami m'invite. Mémoire seule,
+   * aucune requête : la page le relit toutes les quelques secondes.
+   */
+  router.get('/moi', requireAuth, (req, res) => {
+    res.set('cache-control', 'no-store');
+    const userId = req.user.id;
+    const f = placeDe(userId);
+    let file = null;
+    if (f) {
+      const fixtureId = Number(f.support.fixture.id);
+      const face = files.get(cle(f.format, fixtureId, f.camp ^ 1)) ?? [];
+      const clubs = [f.support.fixture.home, f.support.fixture.away];
+      file = {
+        format: f.format, fixtureId, camp: f.camp, absent: !present(f),
+        club: clubs[f.camp] ?? null, enFaceClub: clubs[f.camp ^ 1] ?? null,
+        // Quelqu'un de présent en face : le duel n'attend plus que moi.
+        adversaire: face.some(present),
+      };
+    }
+    const invitations = [];
+    if (!f) {
+      for (const file2 of files.values()) {
+        for (const h of file2) {
+          if (!h.invites.has(userId)) continue;
+          const clubs = [h.support.fixture.home, h.support.fixture.away];
+          invitations.push({ code: h.code, de: h.nom, format: h.format,
+            fixtureId: Number(h.support.fixture.id),
+            club: clubs[h.camp] ?? null, enFaceClub: clubs[h.camp ^ 1] ?? null });
+        }
+      }
+    }
+    res.json({ file, invitations, duelEnCours: salleDe.get(userId) ?? null });
+  });
+
   router.get('/etat', requireAuth, (req, res) => {
     res.json({
       formats: Object.keys(FORMATS),
       files: [...files].map(([c, f]) => ({ cle: c, presents: f.length })),
       salles: salles.size,
       duelEnCours: salleDe.get(req.user.id) ?? null,
+      /* Ma place en file, si j'en ai une : la page y revient (`nvn:reprendre`)
+         au lieu de me montrer la préparation. */
+      enFile: Boolean(placeDe(req.user.id)),
     });
   });
 
@@ -1950,6 +2166,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      grand que ce qui a été demandé » — ne se voit pas depuis une socket, et
      c’est pourtant elle qui empêche un 1v1 de finir dans un 5v5. */
   return { router, salles, files, filesParMatch, alertePour, derbyPour, guetteurs, accepte,
+           reprendre, placeDe,
            ouvrir, ouvrirAvecBots, tenterAppariement, butReel, estEnDuel,
            /* `fermer` n'est appelée par aucun autre module : elle n'est exposée
               qu'aux suites, qui doivent pouvoir la frapper deux fois de suite
