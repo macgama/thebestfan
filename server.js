@@ -1201,6 +1201,11 @@ app.get('/comment-jouer', (_req, res) => page(res, 'comment-jouer.html'));
    cherche aussi le jour où le reste du jeu ne répond plus. La vitrine, la
    porte de connexion et « Mon compte » y mènent. */
 app.get('/confidentialite', (_req, res) => page(res, 'confidentialite.html'));
+/* Les mentions légales et les conditions d'utilisation et de vente, publiées
+   le 19 octobre 2026 : lisibles sans compte ni base, comme la confidentialité.
+   La vitrine, la porte d'inscription, l'abonnement et le pied du menu y mènent. */
+app.get('/mentions-legales', (_req, res) => page(res, 'mentions-legales.html'));
+app.get('/conditions', (_req, res) => page(res, 'conditions.html'));
 
 /* -------------------------------------------------------------- socket.io */
 
