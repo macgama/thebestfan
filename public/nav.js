@@ -1307,6 +1307,55 @@
   }
 
   /**
+   * Le titre qui ne tient plus se serre, au lieu de se couper.
+   *
+   * La maison a pris quarante-huit pixels à la barre, et ils venaient du
+   * titre : à 360 px, « COMPÉTITIONS » perdait ses dernières lettres, à
+   * 384 (le téléphone de Gaël) « COMMENT JOUER » et « CONFIDENTIALITÉ » ;
+   * dans les autres langues, d'autres mots. Le titre se serre donc d'abord
+   * dans ses capitales, puis dans sa lettre, demi-pixel par demi-pixel,
+   * jusqu'à dix pixels (mesuré au banc : à 360 px et plus, tous les titres
+   * des cinq langues tiennent à onze et demi au moins ; c'est à 320 que
+   * les plus longs descendent à dix). En dessous, on ne lit plus : il garde
+   * ses points de suspension, comme avant.
+   *
+   * Recalculé quand le texte change (la traduction de `langue.js` le
+   * réécrit après coup) et quand l'écran change de largeur.
+   */
+  function serrerTitre(ou) {
+    if (!ou?.textContent) return;
+    const deborde = () => ou.scrollWidth > ou.clientWidth + 0.5;
+    const serrer = () => {
+      ou.style.letterSpacing = ou.style.fontSize = ou.style.whiteSpace = ou.style.lineHeight = '';
+      if (!deborde()) return;
+      ou.style.letterSpacing = '.04em';
+      let taille = parseFloat(getComputedStyle(ou).fontSize);
+      while (deborde() && taille > 10) {
+        taille -= 0.5;
+        ou.style.fontSize = `${taille}px`;
+      }
+      /* Toujours trop long, et en plusieurs mots (« COMMENT JOUER », « SO
+         WIRD GESPIELT », à 320 px) : sur deux lignes, qui tiennent dans les
+         quarante-quatre pixels de la barre. Un seul mot trop long garde ses
+         points de suspension. */
+      if (deborde() && /\s/.test(ou.textContent.trim())) {
+        ou.style.whiteSpace = 'normal';
+        ou.style.lineHeight = '1.05';
+        ou.style.fontSize = '12px';
+      }
+    };
+    serrer();
+    new MutationObserver(serrer).observe(ou, { childList: true, characterData: true, subtree: true });
+    let image = 0;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(image);
+      image = requestAnimationFrame(serrer);
+    });
+    // Les polices arrivent après : Oswald est plus étroite que son repli.
+    document.fonts?.ready?.then(serrer);
+  }
+
+  /**
    * Monte la barre du haut, si le joueur est connecté.
    *
    * On interroge le compte avant de construire quoi que ce soit : afficher un
@@ -1422,6 +1471,24 @@
       `<a class="pan tbf-retour" href="${parent}" aria-label="Revenir"
           ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.retour}"/></svg></a>`;
 
+    /* **La maison, juste à côté de la flèche** (Gaël, 19 octobre 2026 : « il
+     * manque le bouton HOME sur toutes les pages »). La flèche revient d'où
+     * l'on vient, et c'est voulu (voir plus haut) ; mais trois écrans plus
+     * loin, rentrer demandait trois flèches, ou le menu puis sa première
+     * case. La maison rentre d'un geste, toujours au même endroit.
+     *
+     * Un vrai lien vers `/`, sans poignée : il fait ce qu'il dit, sur toutes
+     * les pages. Pas sur l'accueil, pour la raison de la flèche. **Pas sur
+     * les deux écrans de jeu** : leur rangée de match ne garde qu'une case
+     * à chaque bout (`.tbf-hudm`, ui.css), et, pendant une partie, leur
+     * flèche mène déjà à l'accueil après la confirmation qui protège la
+     * partie. Le duel et le Virage reconnaissent quand même `.tbf-maison`
+     * comme une sortie, pour qu'une maison qui y viendrait un jour passe
+     * par la même confirmation. */
+    const maisonHTML = chemin === '/' || enJeu ? '' :
+      `<a class="pan tbf-maison" href="/" aria-label="L’accueil"
+          ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.accueil}"/></svg></a>`;
+
     /* Une flèche, un titre, un menu — et, replié, ce que je possède.
 
        Elle portait aussi l'avatar avec le pseudo et le club, et deux jetons de
@@ -1460,13 +1527,14 @@
      * eux-mêmes, comme l'accueil, qui n'a même pas cette barre. */
     const titre = TITRES[chemin] ?? '';
     const balise = titre ? 'h1' : 'span';
-    haut.innerHTML = `${retourHTML}<${balise} class="tbf-ou"></${balise}>${boutonHTML}`;
+    haut.innerHTML = `${retourHTML}${maisonHTML}<${balise} class="tbf-ou"></${balise}>${boutonHTML}`;
     /* `textContent` et non une interpolation : le titre vient d'une table
        écrite ici, mais la règle vaut pour tout ce qu'on pose dans du HTML
        assemblé à la main — on ne fait pas d'exception « parce que cette
        valeur-là est sûre », c'est ainsi qu'on finit par en faire une mauvaise. */
     haut.querySelector('.tbf-ou').textContent = titre;
     app.prepend(haut);
+    serrerTitre(haut.querySelector('.tbf-ou'));
     if (!enJeu) {
       caler(haut, app);
       let image = 0;
