@@ -1277,7 +1277,7 @@ document.addEventListener('click', async (e) => {
 
      `a[href^="/"]` écarte la déconnexion, qui porte `href="#"` et demande déjà
      la sienne. */
-  const sortie = e.target.closest('.tbf-retour, .tbf-tiroir a[href^="/"], [data-quitter-duel]');
+  const sortie = e.target.closest('.tbf-retour, .tbf-maison, .tbf-tiroir a[href^="/"], [data-quitter-duel]');
   if (!sortie || !enDuel()) return;
   e.preventDefault();
   e.stopPropagation();

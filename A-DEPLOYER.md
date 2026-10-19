@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Le bouton Accueil sur toutes les pages** (19 octobre 2026, demandé par
+Gaël). Construction puis redémarrage, sans schéma.
+
+- Une maison juste à côté de la flèche, en haut de chaque page de contenu :
+  un toucher ramène à l'accueil. Pas sur l'accueil lui-même, ni sur le
+  Virage et le duel, où la flèche ramène déjà à l'accueil après la
+  confirmation qui protège la partie. Les titres longs de la barre se
+  resserrent pour ne pas être coupés.
+
+---
+
 **Deux bugs : le duel figé après sa fin, et l'accueil des non-connectés**
 (19 octobre 2026, signalés par Gaël). Construction puis redémarrage, sans
 schéma.
