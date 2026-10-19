@@ -1,12 +1,10 @@
 # Conditions générales de vente et d'utilisation
 
-> **Projet à faire relire.** Ce texte décrit ce que le code fait réellement :
-> les prix, ce que l'abonnement ouvre et ce qu'il n'ouvre pas ont été lus dans
-> `src/shared/boutique.js`, `src/shared/reglages.js` et
-> `src/server/abonnement/`, et les règles les plus importantes sont vérifiées
-> par `npm run abo:smoke` et `npm run boutique:smoke`. Il n'a pas été relu par
-> un juriste, et il doit l'être avant d'être publié. Les passages entre crochets
-> attendent une information que seul l'éditeur possède.
+> **Publié le 19 octobre 2026** : `public/conditions.html`, à l’adresse `/conditions`, avec les
+> informations d’éditeur données par Gaël (adresse, ni registre du commerce ni
+> TVA, pas de téléphone, accord d’un parent pour s’abonner avant 18 ans).
+> **C’est la page qui fait foi** ; ce fichier reste le projet d’origine, et ses
+> crochets ont été tranchés dans la page. `legal:smoke` vérifie la page.
 
 **Dernière mise à jour : [à dater à la publication]**
 

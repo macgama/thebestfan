@@ -134,6 +134,7 @@
        alors que les vingt autres écrans se nomment. */
     '/collection': 'Collection', '/abonnement': 'Abonnement',
     '/confidentialite': 'Confidentialité',
+    '/mentions-legales': 'Mentions légales', '/conditions': 'Conditions',
     '/comment-jouer': 'Comment jouer',
   };
 
@@ -880,6 +881,11 @@
          (0,85), où l'audit doit continuer à le tenir plutôt que de le laisser
          redescendre sous la tolérance des mentions légales (0,55) sans que
          rien ne le signale. */
+      /* Les trois textes juridiques, en une ligne discrète au pied de toutes
+         les pages (19 octobre 2026) : un site qui vend doit dire qui il est,
+         et où se lisent ses conditions, partout où l'on peut payer. */
+      + '<p class="tbf-tiroir-legal" data-legal><a href="/mentions-legales">Mentions légales</a>'
+      + ' · <a href="/conditions">Conditions</a> · <a href="/confidentialite">Confidentialité</a></p>'
       + '<div class="tbf-version" id="tbf-version"></div>'
       + '</div>';
 

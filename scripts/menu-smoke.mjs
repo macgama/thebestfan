@@ -108,8 +108,11 @@ async function menuDe(chemin) {
     if (!t) return null;
     return {
       visible: t.classList.contains('on') && !t.hidden,
-      liens: [...t.querySelectorAll('a')].map((a) => a.getAttribute('href')),
-      libelles: [...t.querySelectorAll('a')].map((a) => a.textContent.trim()),
+      /* Les liens du menu, sans la ligne légale du pied (mentions,
+         conditions, confidentialité) : elle est relevée à part, plus bas. */
+      liens: [...t.querySelectorAll('a:not([data-legal] a)')].map((a) => a.getAttribute('href')),
+      libelles: [...t.querySelectorAll('a:not([data-legal] a)')].map((a) => a.textContent.trim()),
+      legal: [...t.querySelectorAll('[data-legal] a')].map((a) => a.getAttribute('href')),
       rubriques: [...t.querySelectorAll('.tbf-rubrique')].map((d) => d.textContent.trim()),
       /* Les interrupteurs du mode calme (lot 0, chantier 13, contrat C4).
          Des boutons et non des liens : ils ne mènent nulle part, ils changent
@@ -231,6 +234,8 @@ check('toutes les destinations du jeu y sont', manquants.length === 0);
 if (manquants.length) console.log('    manquent :', manquants.join(' '));
 
 check('la déconnexion ferme la liste', accueil.liens.at(-1) === '#');
+check('le pied du menu mène aux pages légales',
+  ['/mentions-legales', '/conditions', '/confidentialite'].every((h) => accueil.legal?.includes(h)));
 check('la page où l’on est se marque, et elle seule',
   JSON.stringify(carnet.marquee) === JSON.stringify(['/carnet'])
   || (console.log('    marqué :', carnet.marquee), false));

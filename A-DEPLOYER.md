@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Les mentions légales, les conditions, et les premiers pas d'un débutant**
+(19 octobre 2026, demandés par Gaël). Construction puis redémarrage, sans
+schéma.
+
+- Deux pages publiées : `/mentions-legales` (éditeur, adresse, hébergeur,
+  prestataires) et `/conditions` (conditions d'utilisation et de vente :
+  abonnement, résiliation, remboursement sur demande sous quatorze jours,
+  accord d'un parent avant 18 ans, droit suisse). Liens en pied de menu, sur
+  la vitrine, à l'inscription, sur `/abonnement` et en boutique.
+- « Prendre ma place » ouvre l'inscription ; l'arrêt « duel » de la visite
+  guidée éclaire la bonne tuile ; l'aide s'ouvre sur PREMIERS PAS tant
+  qu'ils ne sont pas finis ; un seul mot, « âge », partout pour l'évolution.
+- Après la mise en ligne : ouvrir `/mentions-legales` et `/conditions`, et
+  vérifier les liens en bas du menu.
+
+---
+
 **Le bouton Accueil sur toutes les pages** (19 octobre 2026, demandé par
 Gaël). Construction puis redémarrage, sans schéma.
 

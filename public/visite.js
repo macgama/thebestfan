@@ -51,7 +51,10 @@
       titre: 'Le Grand Virage',
       texte: 'Pendant un vrai match, deux tribunes tirent sur la même corde. '
         + 'Entre, choisis ton camp et chante en faisant les gestes.' },
-    { cible: '#entrer',
+    /* La tuile, et non le grand bouton du bas : celui-ci devient « ENTRER
+       DANS LE VIRAGE » pendant un match du club, et la bulle du duel
+       éclairait alors le Virage. */
+    { cible: '.rail .tbf-case[href="/duel-nvn"]',
       titre: 'Le duel de tribunes',
       texte: 'Ton deck contre celui d’autres supporters, sur un vrai match du jour. '
         + 'Les gestes réussis et les cartes d’action font gagner ta tribune.' },

@@ -1049,7 +1049,7 @@ function cardHTML(f, opts = {}) {
      rien —, et une légendaire n'en a qu'un, que sa forme dit déjà. */
   const sansAge = verrou || rar === 'legendaire' || f.stuff || f.action || f.lieu || f.echarpes;
   const stade = Math.max(1, Number(f.stage) || 1);
-  const age = sansAge ? '' : `<div class="age a${stade}">ÉVO ${stade}</div>`;
+  const age = sansAge ? '' : `<div class="age a${stade}">ÂGE ${stade}</div>`;
 
   /* Ce qui se pose **sur** la bande du nom, dans son flux : la bande les
      porte, elle ne peut donc plus passer dessous, quel que soit le nombre de

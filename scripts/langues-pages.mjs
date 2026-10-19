@@ -3,7 +3,7 @@
 import puppeteer from 'puppeteer';
 import fs from 'node:fs';
 const [base, cookie, langue = 'en', pseudo = '0'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-const PAGES = (process.env.PAGES ?? '/,/matchs,/teletext,/bienvenue,/profil,/collection,/classement,/boutique,/abonnement,/boosters,/compte,/equipes,/kop,/amis,/deck,/duel-nvn,/fanzzy,/fanzzy/TR32,/virage,/carnet,/aide,/repetition,/confidentialite').split(',');
+const PAGES = (process.env.PAGES ?? '/,/matchs,/teletext,/bienvenue,/profil,/collection,/classement,/boutique,/abonnement,/boosters,/compte,/equipes,/kop,/amis,/deck,/duel-nvn,/fanzzy,/fanzzy/TR32,/virage,/carnet,/aide,/repetition,/confidentialite,/mentions-legales,/conditions').split(',');
 const nav = await puppeteer.launch({ executablePath: process.env.PUPPETEER_EXECUTABLE_PATH, args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 const page = await nav.newPage();
 await page.setViewport({ width: 400, height: 860 });

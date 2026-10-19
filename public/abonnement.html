@@ -140,6 +140,10 @@ main [hidden]{display:none}
   letter-spacing:.08em;text-transform:uppercase}
 .pass-etat{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .pass-bientot{position:absolute;top:16px;right:14px;--rot:5deg}
+/* Les conditions, sous les formules et avant le paiement : on les accepte en
+   touchant une formule, il faut pouvoir les lire à cet endroit-là. */
+.pass-conditions{margin:8px 0 0;font-size:12px;line-height:1.5;text-align:center}
+.pass-conditions a{color:var(--craie);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .pass-formules{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:16px 12px;margin:0 0 6px}
 .pass-formule.tbf-plaque{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:5px;
   min-height:98px;padding:14px 14px 13px;text-align:left}
@@ -514,6 +518,9 @@ function formulesHTML(d, { ouvert } = {}) {
   };
   return `<h2 class="tbf-cousu">Les formules</h2>
     <div class="pass-formules">${formules.map(bache).join('')}</div>
+    ${vitrine ? '' : `<p class="pass-conditions">En t’abonnant, tu acceptes les
+      <a href="/conditions">conditions de vente</a>. Tu peux résilier quand tu veux, et tu es
+      remboursé si tu changes d’avis dans les quatorze jours.</p>`}
     ${vitrine ? '<p class="pass-beta">Pendant la bêta, l’abonnement s’offre depuis l’administration : demande-le.</p>' : ''}`;
 }
 
