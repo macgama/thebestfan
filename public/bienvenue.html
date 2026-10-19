@@ -435,7 +435,12 @@ html[data-calme~="animations"] #burstvid{display:none}
       <h1 class="title" style="font-size:26px">BIENVENUE<br>DANS LA <span class="em">TRIBUNE</span></h1>
       <div class="recap" id="recap"></div>
       <p class="sub" id="final"></p>
-      <button class="go tbf-plaque" data-ton="flare" id="b4">ENTRER</button>
+      <!-- **Le premier duel guidé**, tout de suite : le joueur vient d’ouvrir
+           ses cartes, c’est le moment de les jouer. Un match fictif contre un
+           bot patient, avec des bulles (voir `duel-guide.js`). ENTRER reste
+           juste dessous, pour qui veut d’abord visiter. -->
+      <button class="go tbf-plaque" data-ton="flare" id="b4d">JOUER MON PREMIER DUEL</button>
+      <button class="ghost" id="b4">Entrer dans la tribune</button>
       <!-- Le seul endroit où proposer le guide ait une chance d’être lu : le
            joueur vient d’ouvrir cinq cartes et ne sait pas encore quoi en faire.
            Discret, sous ENTRER, et jamais un passage obligé — on ne fait pas
@@ -985,6 +990,7 @@ function final() {
   buzz([40, 60, 40, 60, 120]);
 }
 
+$('b4d').onclick = () => { location.href = '/duel-nvn?tuto=1'; };
 $('b4').onclick = () => { location.href = '/'; };
 $('b4c').onclick = () => { location.href = '/aide'; };
 $('b4b').onclick = () => { location.href = '/equipes'; };

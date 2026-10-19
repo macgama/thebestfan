@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Le premier duel guidé** (19 octobre 2026, demandé par Gaël). Construction
+puis redémarrage, sans schéma.
+
+- Après le sachet de bienvenue, JOUER MON PREMIER DUEL : trois minutes sur un
+  match fictif (L'Académie contre Les Anciens), contre un bot lent, avec trois
+  bulles qui montrent quoi faire (chanter, la corde, une carte d'action). Il
+  ne rapporte rien et ne compte nulle part ; il se rejoue depuis « Comment
+  jouer » (`/duel-nvn?tuto=1`).
+- Après la mise en ligne : ouvrir `/duel-nvn?tuto=1` et suivre les bulles.
+
+---
+
 **Les mentions légales, les conditions, et les premiers pas d'un débutant**
 (19 octobre 2026, demandés par Gaël). Construction puis redémarrage, sans
 schéma.
