@@ -958,7 +958,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      salle.
 
      **Il ne rapporte rien et ne s'écrit nulle part** : ni écharpes, ni XP,
-     ni ligne de résultat. Rejouable à volonté, il ne doit pas devenir la
+     ni ligne de résultat. **Et il ne se perd pas** (choix de Gaël du 19
+     octobre 2026) : le bot ne marque jamais, et une fin à son avantage
+     devient un nul — voir `epargne` dans le moteur. Rejouable à volonté, il ne doit pas devenir la
      façon la plus rapide de gagner des écharpes, et l'étape « Joue un
      duel » des Premiers pas reste à faire pour de vrai. Le match fictif n'a
      pas d'identifiant : rien de ce qui suit les vrais matchs (buts réels,
@@ -1016,6 +1018,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const id = randomUUID();
     const duel = new DuelNvN({
       ...(duree ? { duree } : {}),
+      // Le débutant tient le camp 0 et ne peut pas perdre son duel guidé.
+      ...(tuto ? { epargne: 0 } : {}),
       id,
       equipes: equipes.map((eq) => eq.map((p) => ({
         userId: p.userId, nom: p.nom, loadout: p.loadout }))),

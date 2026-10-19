@@ -240,8 +240,14 @@ export class DuelNvN {
    * @param opts.mode     'classe' ou 'entrainement'
    */
   constructor({ id, equipes, fixture, mode = 'entrainement', format = null,
-    duree = RULES.dureeMs, now = now0() }) {
+    duree = RULES.dureeMs, now = now0(), epargne = null }) {
     this.id = id;
+    /* **Le camp qui ne peut pas perdre** : celui du débutant, au duel guidé
+       (voir « le premier duel » dans `index.js`, choix de Gaël du 19 octobre
+       2026). L'autre camp ne marque jamais — la corde s'arrête juste avant
+       son but — et une fin qui lui donnerait la victoire devient un nul.
+       `null` partout ailleurs : un vrai duel se perd. */
+    this.epargne = epargne;
     this.fixture = fixture;
     this.mode = mode;
 
@@ -450,6 +456,10 @@ export class DuelNvN {
   }
 
   but(side, evenements) {
+    if (this.epargne != null && side !== this.epargne) {
+      this.rope = (side === 1 ? 1 : -1) * RULES.goalAt * 0.85;
+      return;
+    }
     this.goals[side]++;
     this.rope = 0;
     evenements.push(this.ev('goal', { side, goals: [...this.goals] }));
@@ -473,6 +483,7 @@ export class DuelNvN {
   finir(vainqueur, raison, evenements) {
     if (this.termine) return;
     this.termine = true;
+    if (this.epargne != null && vainqueur != null && vainqueur !== this.epargne) vainqueur = null;
     this.vainqueur = vainqueur;
     evenements.push(this.ev('over', {
       vainqueur, raison, goals: [...this.goals], mode: this.mode,

@@ -9,6 +9,8 @@
  *     identifiant, en 1v1 contre un bot, en trois minutes ;
  *   — le bot laisse le temps d'apprendre (premier chant à quinze secondes) ;
  *   — le redemander remet dans le même duel, sans en ouvrir un second ;
+ *   — le débutant ne peut pas le perdre : le bot ne marque jamais, et une
+ *     fin à son avantage devient un nul ;
  *   — à la fin, le bilan part, sans écharpes, sans XP, sans ligne de
  *     résultat ;
  *   — sans deck, le serveur refuse ;
@@ -22,6 +24,7 @@ import { Server } from 'socket.io';
 import { io as client } from 'socket.io-client';
 import { createDecks } from '../src/server/deck/index.js';
 import { createNvN } from '../src/server/nvn/index.js';
+import { RULES } from '../src/server/nvn/engine.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
@@ -134,6 +137,17 @@ check('puis chante lentement, et rate beaucoup',
 const reste = salle ? salle.duel.fin - Date.now() : 0;
 check('trois minutes, et non cinq', reste > 170_000 && reste <= 180_000);
 
+check('le débutant ne peut pas perdre : son camp est épargné', salle?.duel.epargne === 0);
+{
+  // Sur la salle même : le bot arrive au but, rien ne se marque.
+  const d = salle.duel;
+  const ev = [];
+  d.but(1, ev);
+  check('un but du bot ne compte pas, la corde reste juste avant',
+    d.goals[1] === 0 && ev.length === 0 && d.rope > 0 && d.rope < RULES.goalAt);
+  d.rope = 0;
+}
+
 /* ------------------------------------------- le redemander n'en ouvre pas */
 
 j.socket.emit('nvn:tuto');
@@ -142,8 +156,12 @@ check('le redemander remet dans le même duel',
 
 /* ------------------------------------------------- la fin ne paie rien */
 
+// La corde penche du côté du bot au coup de sifflet : ce serait sa victoire.
+salle.duel.rope = 30;
 salle.duel.fin = Date.now() - 1;
 check('à la fin, le bilan part', await until(() => j.fin, 5000));
+check('une fin à l’avantage du bot devient un nul', salle.duel.vainqueur === null
+  || (console.log('        vainqueur :', salle.duel.vainqueur), false));
 check('sans gains', j.fin?.gains === null);
 await wait(500);
 const [[w]] = await pool.query(`SELECT scarves, xp FROM user_wallet WHERE user_id = ?`, [NOUVEAU]);
