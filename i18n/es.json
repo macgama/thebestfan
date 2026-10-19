@@ -5705,5 +5705,8 @@
  "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Jugar con un amigo</0>: en el vestuario, invítalo desde el juego o mándale el enlace. Un toque lo lleva directo a tu duelo.",
  "Duel terminé": "Duelo terminado",
  "Le coup de sifflet est tombé pendant ta coupure.": "El pitido final llegó mientras estabas desconectado.",
- "Ton résultat est dans ton parcours, sur ton profil.": "Tu resultado está en tu trayectoria, en tu perfil."
+ "Ton résultat est dans ton parcours, sur ton profil.": "Tu resultado está en tu trayectoria, en tu perfil.",
+ "{0} · âge {1}": "{0} · edad {1}",
+ "ÂGE<0>{0}</0>": "EDAD<0>{0}</0>",
+ "ÂGE {0} / {1}": "EDAD {0} / {1}"
 }

@@ -395,10 +395,12 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 /* 1. La légende du compte : la rangée de visages dit déjà « il y en a
       beaucoup », et elle le dit mieux qu'une phrase. */
 @media (max-height:1020px){.combien{display:none}}
-/* 2. Les sous-titres des trois promesses. Les trois mots en capitales se
-      lisent seuls — et les blocs qui suivent montrent ce que les
-      sous-titres expliquaient. */
-@media (max-height:1000px){.bullet span{display:none}}
+/* 2. (Retiré le 19 octobre 2026.) Les sous-titres des trois promesses
+      partaient sous 1 000 px de haut, donc sur tous les téléphones : il ne
+      restait que EN DIRECT, FANZZY, SOUVENIRS dans trois cases, qu'un
+      débutant prenait pour trois boutons qui ne répondaient pas. Avec leur
+      phrase, ce sont des promesses ; la page tient encore sans défiler à
+      360 × 640. Ils partent avec les promesses entières, en 5. */
 /* 3. Le troisième match. Le tri met le plus vivant en premier, donc ce qui
       part est toujours le moins intéressant des trois. */
 @media (max-height:960px){.sc:nth-child(3){display:none}}
@@ -2103,7 +2105,7 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
     </section>
 
     <a class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="flare"
-      href="/compte">PRENDRE MA PLACE</a>
+      href="/compte?inscription">PRENDRE MA PLACE</a>
     <!-- Le `<span>` porte le panneau de la phrase : voir `.second`. -->
     <a class="second" href="/compte"><span>Déjà une place ? <b>Se connecter</b></span></a>
 
@@ -4216,7 +4218,7 @@ function nommer(p) {
   const evo = $('quiEvo');
   evo.replaceChildren();
   if ((p?.ages ?? 1) > 1) {
-    evo.append(`ÉVOLUTION ${p.evo} / ${p.ages}`);
+    evo.append(`ÂGE ${p.evo} / ${p.ages}`);
     if (coche) {
       evo.append(' ');
       evo.insertAdjacentHTML('beforeend', '<i class="tbf-ico tbf-ico-coche" role="img"'
