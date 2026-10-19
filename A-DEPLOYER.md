@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Deux bugs : le duel figé après sa fin, et l'accueil des non-connectés**
+(19 octobre 2026, signalés par Gaël). Construction puis redémarrage, sans
+schéma.
+
+- Un joueur dont le téléphone décrochait au coup de sifflet restait bloqué
+  sur un duel terminé. Il reçoit maintenant son bilan à son retour (gardé dix
+  minutes), sinon un écran « Duel terminé » avec « Revenir ».
+- Un raté passager de la base faisait passer un joueur connecté pour un
+  visiteur : l'accueil montrait l'écran des non-connectés. La lecture de
+  session est réessayée, le serveur répond « indisponible » plutôt que « pas
+  connecté », et l'accueil redemande avant de montrer la vitrine.
+
+---
+
 **Les duels qui attendent, et l'invitation d'un ami** (19 octobre 2026,
 demandés par Gaël). Construction puis redémarrage, sans schéma.
 

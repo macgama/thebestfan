@@ -5702,5 +5702,8 @@
  "TON DUEL T’ATTEND <0>{0} · on te prévient si quelqu’un arrive</0>": "YOUR DUEL IS WAITING <0>{0} · we’ll tell you if someone shows up</0>",
  "Y ALLER": "GO",
  "<0>Ton duel reste ouvert</0> si tu quittes la page d’attente : les autres le voient toujours, et le jeu te rappelle dès que quelqu’un arrive en face.": "<0>Your duel stays open</0> if you leave the waiting page: others still see it, and the game calls you back as soon as someone arrives on the other side.",
- "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Play with a friend</0>: in the waiting room, invite them from the game or send them the link. One tap takes them straight into your duel."
+ "<0>Jouer avec un ami</0> : dans la salle d’attente, invite-le depuis le jeu ou envoie-lui le lien. Un appui l’amène directement dans ton duel.": "<0>Play with a friend</0>: in the waiting room, invite them from the game or send them the link. One tap takes them straight into your duel.",
+ "Duel terminé": "Match over",
+ "Le coup de sifflet est tombé pendant ta coupure.": "The final whistle went while you were offline.",
+ "Ton résultat est dans ton parcours, sur ton profil.": "Your result is in your record, on your profile."
 }

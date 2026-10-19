@@ -157,6 +157,28 @@ check('jeton non rejouable', r.status === 400);
 r = await alice.call('/api/auth/me', { method: 'GET' });
 check('compte marqué vérifié', r.json.user.verified === true);
 
+/* ------------------------------------- une base qui hoquette ne déconnecte pas
+
+   Une lecture de session qui échouait une fois faisait passer la requête
+   pour anonyme : l'accueil montrait l'écran des non-connectés. Un raté est
+   rattrapé par un second essai ; deux ratés donnent 503, jamais 401. */
+{
+  const lire = auth.store.lireSession;
+  let rates = 1;
+  auth.store.lireSession = function (...a) {
+    if (rates-- > 0) return Promise.reject(new Error('connexion coupée (banc)'));
+    return lire.apply(this, a);
+  };
+  r = await alice.call('/api/auth/me', { method: 'GET' });
+  check('un raté de la base est rattrapé : toujours connecté', r.status === 200 && r.json.user?.verified === true);
+  rates = 2;
+  r = await alice.call('/api/auth/me', { method: 'GET' });
+  check('deux ratés : 503, pas « pas connecté »', r.status === 503 && r.json.error === 'auth.error.unavailable');
+  auth.store.lireSession = lire;
+  r = await alice.call('/api/auth/me', { method: 'GET' });
+  check('la base revenue, la session est intacte', r.status === 200);
+}
+
 /* ------------------------------------------------------------- CSRF */
 
 r = await alice.call('/api/auth/logout', { origin: 'https://site-malveillant.example' });

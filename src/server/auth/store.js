@@ -211,7 +211,28 @@ export function createStore(pool) {
       return token;
     },
 
+    /**
+     * **Une base qui hoquette ne déconnecte personne.**
+     *
+     * Cette lecture passe à chaque requête et à chaque ouverture de socket.
+     * Quand elle échouait une fois — une connexion du pool coupée par
+     * l'hébergeur, une seconde de trop-plein en fin de duel —, la requête
+     * partait sans joueur : l'accueil montrait l'écran des non-connectés, et
+     * le socket d'un duel en cours ne retrouvait plus sa place. Le joueur,
+     * lui, était toujours connecté. On réessaie donc une fois avant de
+     * laisser l'erreur remonter, et l'appelant la distingue d'une session
+     * absente (voir `attachUser`).
+     */
     async findSession(token) {
+      try {
+        return await this.lireSession(token);
+      } catch {
+        await new Promise((r) => setTimeout(r, 150));
+        return this.lireSession(token);
+      }
+    },
+
+    async lireSession(token) {
       const rows = await q(
         `SELECT s.token_hash, s.user_id, s.expires_at, s.last_seen_at,
                 u.public_id, u.pseudo, u.email, u.locale, u.status,

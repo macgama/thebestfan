@@ -95,6 +95,12 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
         await store.refreshSession(s.token_hash);
       }
     } catch (e) {
+      /* La base n'a pas répondu, même au second essai : on ne sait pas qui
+         est là, ce qui n'est pas la même chose que « personne ». `/me` et
+         `requireAuth` répondent alors 503, que les pages lisent comme une
+         panne passagère, et non 401, qui les renvoie à l'écran des
+         non-connectés. */
+      if (!req.user) req.sessionIllisible = true;
       console.error('[auth] session', e.message);
     }
     next();
@@ -105,6 +111,9 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
   }
 
   function requireAuth(req, res, next) {
+    if (!req.user && req.sessionIllisible) {
+      return res.status(503).json({ error: 'auth.error.unavailable' });
+    }
     if (!req.user) return res.status(401).json({ error: 'auth.error.unauthenticated' });
     next();
   }
@@ -220,6 +229,9 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
   /* ------------------------------------------------------------ compte */
 
   router.get('/me', (req, res) => {
+    if (!req.user && req.sessionIllisible) {
+      return res.status(503).json({ error: 'auth.error.unavailable' });
+    }
     if (!req.user) return res.status(401).json({ error: 'auth.error.unauthenticated' });
     res.json({ user: req.user });
   });

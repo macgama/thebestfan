@@ -330,6 +330,19 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
                             notifications = null }) {
   const salles = new Map();          // duelId -> { duel, membres, timer }
   const salleDe = new Map();         // userId -> duelId
+  /* **Le bilan de ceux qui n'étaient pas là au coup de sifflet.**
+
+     Un téléphone qui se met en veille, un réseau qui décroche une minute : le
+     duel finit sans le joueur, `nvn:fin` ne part que vers les sockets
+     branchés, et la salle est fermée. À son retour, `nvn:resume` ne trouvait
+     plus rien et répondait « pas en duel » : la page restait figée sur un
+     duel terminé, sans résultat et sans porte de sortie. Le bilan de chacun
+     est donc gardé quelques minutes, et rendu à la reprise. `enCloture` tient
+     ceux dont le bilan se calcule encore (récompenses, cote) : une reprise
+     qui tombe pendant ce temps reçoit le bilan dès qu'il est prêt. */
+  const bilansGardes = new Map();    // userId -> { envoi, at }
+  const enCloture = new Map();       // userId -> socket revenu pendant la clôture
+  const BILAN_GARDE_MS = 10 * 60_000;
   const files = new Map();           // clé -> [candidats]
   const cadence = new WeakMap();     // socket -> horodatages
 
@@ -1430,7 +1443,25 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        remettait plus. */
     for (const userId of salle.membres.keys()) {
       if (salleDe.get(userId) === d.id) salleDe.delete(userId);
+      enCloture.set(userId, null);
     }
+    try {
+      await cloturer(salle);
+    } finally {
+      /* Un bilan qui n'a pas pu se faire (une base en panne) : celui qui est
+         revenu entre-temps l'apprend, au lieu d'attendre une réponse qui ne
+         viendra pas. */
+      for (const userId of salle.membres.keys()) {
+        const revenu = enCloture.get(userId);
+        enCloture.delete(userId);
+        if (revenu?.connected) revenu.emit('nvn:error', { code: 'nvn.error.not_in_duel' });
+      }
+    }
+  }
+
+  /** Ce qui reste à faire une fois la salle fermée : voir `fermer`. */
+  async function cloturer(salle) {
+    const d = salle.duel;
 
     // Un duel rapporte toujours quelque chose, classé ou non.
     //
@@ -1479,14 +1510,25 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          `bilan()` : le moteur ne connaît pas le verdict. */
       bilan.joueurs = bilan.joueurs.map((j) =>
         ({ ...j, ...resumeDuCompte(salle.comptes?.get(j.userId)) }));
+      const t = Date.now();
+      for (const [userId, g] of bilansGardes) {
+        if (t - g.at > BILAN_GARDE_MS) bilansGardes.delete(userId);
+      }
       for (const [userId, m] of salle.membres) {
-        if (!m.socket?.connected) continue;
-        m.socket.emit('nvn:fin', { ...bilan, gains: gains.get(userId) ?? null,
+        if (m.bot) continue;
+        const envoi = { ...bilan, gains: gains.get(userId) ?? null,
           /* **Sa ligne porte `moi: true`**, celle de chacun dans son envoi :
              TOI/LUI, son meilleur geste et sa carte préférée se lisent sur
              elle. La page la cherchait au camp et à la ferveur, ce qui ne
              départage pas deux joueurs d'une même tribune à égalité. */
-          joueurs: bilan.joueurs.map((j) => (j.userId === userId ? { ...j, moi: true } : j)) });
+          joueurs: bilan.joueurs.map((j) => (j.userId === userId ? { ...j, moi: true } : j)) };
+        const revenu = enCloture.get(userId);
+        enCloture.delete(userId);
+        const sock = revenu?.connected ? revenu : m.socket?.connected ? m.socket : null;
+        /* Parti pour de bon (forfait, grâce épuisée) : il a quitté ce duel,
+           il ne le retrouvera pas à sa prochaine reprise. */
+        if (sock || m.parti) { bilansGardes.delete(userId); sock?.emit('nvn:fin', envoi); }
+        else bilansGardes.set(userId, { envoi, at: t });
       }
     }
 
@@ -1720,6 +1762,16 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     socket.on('nvn:resume', () => {
       const u = moi();
       const salle = maSalle();
+      if (u && !salle) {
+        /* Le duel a fini pendant la coupure : son bilan, s'il se calcule
+           encore ou s'il a été gardé. */
+        if (enCloture.has(u.userId)) return void enCloture.set(u.userId, socket);
+        const g = bilansGardes.get(u.userId);
+        if (g) {
+          bilansGardes.delete(u.userId);
+          if (Date.now() - g.at <= BILAN_GARDE_MS) return void socket.emit('nvn:fin', g.envoi);
+        }
+      }
       if (!u || !salle) return socket.emit('nvn:error', { code: 'nvn.error.not_in_duel' });
       const m = salle.membres.get(u.userId);
       if (!m || m.parti) return socket.emit('nvn:error', { code: 'nvn.error.slot_lost' });
