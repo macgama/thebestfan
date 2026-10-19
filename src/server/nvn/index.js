@@ -942,11 +942,80 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     };
   }
 
+  /* ------------------------------------------------- le premier duel
+
+     **Le duel guidé**, joué juste après le sachet de bienvenue et rejouable
+     depuis « Comment jouer ». Un débutant n'avait aucun duel à lui : il
+     fallait trouver un match à venir, attendre vingt secondes, et jouer
+     sans un mot d'aide. Sans match de ses clubs dans la semaine, il n'y
+     avait pas de duel du tout.
+
+     Ici, **un match fictif** toujours disponible, un contre un, contre un
+     bot qui laisse le temps d'apprendre : il attend quinze secondes avant
+     son premier chant, en pousse un toutes les quinze à vingt secondes et
+     rate beaucoup. Trois minutes au lieu de cinq. Les bulles qui
+     expliquent vivent dans la page ; le serveur ne fait que monter la
+     salle.
+
+     **Il ne rapporte rien et ne s'écrit nulle part** : ni écharpes, ni XP,
+     ni ligne de résultat. Rejouable à volonté, il ne doit pas devenir la
+     façon la plus rapide de gagner des écharpes, et l'étape « Joue un
+     duel » des Premiers pas reste à faire pour de vrai. Le match fictif n'a
+     pas d'identifiant : rien de ce qui suit les vrais matchs (buts réels,
+     duels en cours d'un match, stade du match) ne le voit. */
+  const TUTO = Object.freeze({
+    dureeMs: 3 * 60_000,
+    premierChantMs: 15_000,
+    pas: [15_000, 5_000],
+    adresse: 0.15,
+    actions: 0.2,
+  });
+
+  const matchFictif = () => ({
+    id: null, fictif: true, jour: null, status: 'NS', elapsed: null,
+    goals: [0, 0], kickoffAt: null, league: null,
+    home: { id: null, name: 'L’Académie', logo: null },
+    away: { id: null, name: 'Les Anciens', logo: null },
+    homeColors: ['#2F6FD6', '#F4F1E8'],
+    awayColors: ['#8C2F39', '#E8C547'],
+  });
+
+  async function ouvrirTuto(socket) {
+    const u = socket.data?.user;
+    if (!u?.userId) throw new Cheat('unauthenticated');
+    // Déjà dans un duel : on l'y remet, on n'en ouvre pas un second.
+    const enCours = salles.get(salleDe.get(u.userId));
+    if (enCours) {
+      const m = enCours.membres.get(u.userId);
+      if (m && !m.parti) {
+        m.socket = socket;
+        m.coupeA = null;
+        socket.join(enCours.room);
+        socket.emit('nvn:start', vuePour(enCours.duel, u.userId));
+        return enCours;
+      }
+    }
+    const loadout = await decks.loadout(u.userId);
+    if (!loadout) throw new Cheat('no_deck');
+    quitterFile(u.userId);
+    annoncerAttentes();
+
+    const humain = { userId: u.userId, nom: u.name, socket, loadout,
+      neutre: true, teamId: null, bonus: 1 };
+    const bot = faireBot(loadout, 0, 1);
+    bot.nom = 'Papy Kop';
+    bot.bot = { prochain: Date.now() + TUTO.premierChantMs, adresse: TUTO.adresse,
+      pas: TUTO.pas, actions: TUTO.actions };
+    return ouvrir([[humain], [bot]], { fixture: matchFictif(), mode: 'entrainement' },
+      '1v1', { duree: TUTO.dureeMs, tuto: true });
+  }
+
   /* ------------------------------------------------------------ salles */
 
-  function ouvrir(equipes, support, format) {
+  function ouvrir(equipes, support, format, { duree, tuto = false } = {}) {
     const id = randomUUID();
     const duel = new DuelNvN({
+      ...(duree ? { duree } : {}),
       id,
       equipes: equipes.map((eq) => eq.map((p) => ({
         userId: p.userId, nom: p.nom, loadout: p.loadout }))),
@@ -972,7 +1041,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     /* `comptes` : ce que les gestes de chacun ont donné — PARFAITS, série,
        meilleur chant — tenu ici et non dans le moteur, qui ne bouge pas.
        Voir `chanterEtNommer` en tête de module. Les bots ont le leur. */
-    const salle = { duel, membres, room: `nvn:${id}`, comptes: new Map() };
+    const salle = { duel, membres, room: `nvn:${id}`, comptes: new Map(), tuto };
     salles.set(id, salle);
 
     for (const [userId, m] of membres) {
@@ -1050,12 +1119,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       // Les bots jouent : un entraînement sans adversaire actif n'apprend rien.
       for (const [userId, m] of salle.membres) {
         if (!m.bot || salle.duel.termine || t < m.bot.prochain) continue;
-        m.bot.prochain = t + 6000 + Math.random() * 5000;
+        m.bot.prochain = t + (m.bot.pas?.[0] ?? 6000) + Math.random() * (m.bot.pas?.[1] ?? 5000);
         try {
           const j = salle.duel.joueur(userId);
           const carte = j.main[Math.floor(Math.random() * j.main.length)];
           // Par le même chemin que les joueurs : ses effets ont leur durée.
-          if (carte && Math.random() < 0.35) ev.push(...jouerEtMarquer(salle.duel, userId, carte, t));
+          if (carte && Math.random() < (m.bot.actions ?? 0.35)) ev.push(...jouerEtMarquer(salle.duel, userId, carte, t));
           else {
             /* Le bot choisit son chant comme un joueur : dans le répertoire du
                duel. Il envoyait `geste: 'tempo'`, un champ que le moteur
@@ -1470,7 +1539,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     // plutôt qu'une façon de jouer. Il paie maintenant, moins qu'un duel
     // classé, et il reste hors du classement — c'est là qu'est la différence,
     // pas dans la récompense.
-    const gains = await recompenser(salle);
+    // Le duel guidé ne paie pas : voir « le premier duel ».
+    const gains = salle.tuto ? new Map() : await recompenser(salle);
 
     /* **La cote, avant le bilan** (CONTRATS.md § 4.1).
 
@@ -1481,7 +1551,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     let cotes = new Map();
     let coteIllisible = false;
     try {
-      cotes = await coter(d);
+      if (!salle.tuto) cotes = await coter(d);
     } catch (e) {
       coteIllisible = true;
       console.error('[nvn] cote illisible, bilan envoyé sans elle', e.message);
@@ -1551,6 +1621,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      * décide. C'est le sens de ces deux colonnes : ne rien perdre à
      * l'écriture, et trier à la lecture.
      */
+    // Ni ligne de résultat, ni ferveur : le duel guidé ne s'écrit pas.
+    if (salle.tuto) return;
     try {
       /* **Le duel rapporte de la ferveur**, la même que le Virage — le moteur
          la compte par joueur depuis le premier jour, elle n'était simplement
@@ -1674,6 +1746,14 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
     const erreur = (e) => socket.emit('nvn:error',
       { code: e instanceof Cheat ? e.code : 'nvn.error.server' });
+
+    socket.on('nvn:tuto', async () => {
+      try { await ouvrirTuto(socket); }
+      catch (e) {
+        if (!(e instanceof Cheat)) console.error('[nvn] duel guidé', e.message);
+        socket.emit('nvn:error', { code: e.code ?? 'nvn.error.server' });
+      }
+    });
 
     socket.on('nvn:queue', async (p = {}) => {
       try { await entrerEnFile(socket, p); }
