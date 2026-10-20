@@ -1308,4 +1308,59 @@ export const AGES = {
       + 'la laisser passer, tous les samedis, sans qu’il ait rien demandé.',
       'ELLE ÉTAIT À ELLE'],
   ],
+
+  /* ========================================================== LES TERRACES
+
+     Le foot anglais vu des gradins debout (`dex-terraces.js`). Chaque lignée
+     monte dans un vieux métier ou une vieille tradition de son coin — la
+     garde de la forteresse, la péniche, la promenade, l'enseigne, la
+     confiserie — et le troisième âge en devient la figure, jusqu'à porter le
+     décor sur lui. **Il garde toujours un détail du premier** : le sachet de
+     miettes, le bonnet, le mouchoir noué, le petit pinceau, la dent qui
+     manque. C'est la règle de ce fichier, et la fiche de chaque dessin la
+     suit aussi.
+
+     Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
+     de `dex-terraces.js`.                                                    */
+
+  AN1: [
+    ['Le Garde Écarlate', 'Il a troqué le manteau pour la tunique et il veille maintenant sur toute '
+      + 'la volée. On dit que la forteresse tombera le jour où les corbeaux partiront : il ne manque '
+      + 'plus un match à domicile, au cas où.', 'PERSONNE NE S’ENVOLE'],
+    ['Le Maître des Corbeaux', 'Cinq corbeaux sur les épaules, et toute la nuée qui l’écoute. Il garde '
+      + 'un sachet de miettes dans la poche, pour le gamin qui viendra visiter un jour sans match.',
+      'TANT QU’ILS RESTENT'],
+  ],
+  AN2: [
+    ['Le Batelier des Roses', 'Son bateau est peint de roses et de châteaux, et c’est lui qui emmène '
+      + 'le déplacement par les canaux. Il arrive à la mi-temps, toujours, et personne n’a jamais '
+      + 'voulu prendre le car à sa place.', 'PAR LE CANAL'],
+    ['Le Capitaine du Long Bateau', 'Il porte la cabine comme une armure, et la cheminée fume derrière '
+      + 'son épaule. Quand il accoste devant le stade, tout le quai se lève — et il a gardé le bonnet '
+      + 'du gamin de l’écluse.', 'PERSONNE NE NOUS DOUBLE'],
+  ],
+  AN3: [
+    ['Le Roi de la Promenade', 'Canotier, veste rayée, cloche de cuivre : toute la promenade marche à '
+      + 'sa voix. Les jours de match, il donne le refrain à ceux qui montent au stade, et ils l’ont '
+      + 'encore en arrivant.', 'TOUTE LA PROMENADE'],
+    ['La Jetée Vivante', 'Il porte le pavillon de la jetée sur les épaules, ampoules allumées, et des '
+      + 'cabines de bain aux bras. Quand il entonne, la mer prend la mesure. Le mouchoir est toujours '
+      + 'noué sur sa tête.', 'LA MER SUIT'],
+  ],
+  AN4: [
+    ['Le Peintre d’Enseignes', 'Il repeint à la main les enseignes du quartier, une couronne après '
+      + 'l’autre. Les soirs de match, il peint la même sur une bâche, et la tribune la lève à son '
+      + 'signal.', 'ENCORE UNE COUCHE'],
+    ['Le Maître des Quatre Coins', 'Quatre enseignes tournent autour de lui — une couronne, un navire, '
+      + 'une cloche, une ancre —, et pas une lettre sur aucune. Le petit pinceau est toujours derrière '
+      + 'son oreille.', 'AUX QUATRE COINS'],
+  ],
+  AN5: [
+    ['La Confiseuse du Front de Mer', 'Elle tire le sucre bouillant au chaudron de cuivre, dans une '
+      + 'boutique face aux vagues. Les jours de match, elle donne les bâtons cassés à la tribune, qui '
+      + 'les lance au bon moment.', 'TOUT CHAUD, TOUT RAYÉ'],
+    ['La Reine des Bâtons de Sucre', 'Couronne de sucre, cape de sucre filé, une cartouchière de bâtons '
+      + 'à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui '
+      + 'manque.', 'SERVEZ-VOUS'],
+  ],
 };

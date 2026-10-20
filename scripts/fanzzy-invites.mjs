@@ -287,7 +287,18 @@ const SERIE = {
     + 'cold: short sleeves or a thin shirt under an unzipped jacket, a scarf '
     + 'still stiff from its packet, sunglasses pushed up into the hair, pale '
     + 'lighter colours than the rest of the crowd',
+  /* LES TERRACES : la tribune debout anglaise, sous le crachin. Pas de
+     maillot — jamais, dans cette série : les couleurs du club passent par
+     l'écharpe tricotée à bandes et par le costume d'un vieux métier ou d'une
+     tradition, sans écusson ni lettre (voir `dex-terraces.js`). */
+  AN: 'an English standing terrace in the drizzle, never a football shirt: '
+    + 'a knitted bar scarf in the club colours with no text and no crest, a '
+    + 'small enamel pin badge, a wool coat, flat cap or knitted beanie, the '
+    + 'costume of an old trade or seaside tradition, damp shoulders',
 };
+
+/** Les séries où le personnage n'a pas de corps humain : rien à tirer. */
+const SANS_CORPS = new Set(['OB', 'GC', 'MT', 'BG', 'IM']);
 
 /* Une série sans costume ne se voit pas : la phrase disparaît, l'invite reste
    valide, et le générateur comble le vide avec sa moyenne. C'est arrivé à LA
@@ -389,8 +400,9 @@ const CORPS = {
     'brick red', 'dusty teal'],
 };
 
-/** Les séries où le personnage n'a pas de corps humain : rien à tirer. */
-const SANS_CORPS = new Set(['OB', 'GC', 'MT', 'BG', 'IM']);
+/* `SANS_CORPS` est déclaré plus haut, avant le contrôle des costumes qui le
+   lit au chargement : déclaré ici, il levait une ReferenceError dès qu'une
+   série manquait de costume, au lieu de l'ARRÊT qui la nomme. */
 
 /** L'indice à partir duquel les poils grisonnent, dans CORPS.age. */
 const AGE_GRIS = 5;

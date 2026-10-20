@@ -1,5 +1,27 @@
 # À déposer sur Infomaniak
 
+**La série LES TERRACES (AN), fermée** (branche
+`claude/serie-fanzzy-angleterre-k0bgzs`, 20 octobre 2026, demandée par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- Cinq Fanzzy anglais aux trois âges (AN1 à AN5), avec leurs cartes, leurs
+  cinq états par âge, le clignement à l'âge 1, le dos de carte de la série et
+  leurs textes dans les cinq langues. Le redémarrage est nécessaire : c'est
+  au démarrage que les quinze cartes neuves s'écrivent dans le catalogue en
+  base (`INSERT IGNORE`, rien d'autre ne bouge).
+- **La série arrive fermée** : aucun booster ni kiosque ne la distribue tant
+  qu'aucune saison lancée ne la nomme. Le classeur la montre comme les autres
+  séries fermées.
+- Pour l'ouvrir, quand tu veux, sans livraison : /admin → LE CONTENU →
+  SAISONS → sur la carte « Saison 1 — La reprise » (lancée), **Modifier** →
+  cocher **LES TERRACES** dans « SÉRIES — elles s'ouvrent » → **Enregistrer**.
+  Elle s'ouvre à l'instant pour tout le monde (la ligne « SÉRIES OUVERTES EN
+  CE MOMENT » la montre). La décocher et enregistrer la referme.
+- Après la mise en ligne : /admin → SAISONS, vérifier que LES TERRACES ne
+  figure **pas** dans « SÉRIES OUVERTES EN CE MOMENT ».
+
+---
+
 **Le premier duel guidé** (19 octobre 2026, demandé par Gaël). Construction
 puis redémarrage, sans schéma.
 

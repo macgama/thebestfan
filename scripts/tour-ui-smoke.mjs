@@ -561,8 +561,11 @@ for (const [route, nom] of tousLesEcrans) {
 
   console.log(`— ${nom} (${route})`);
 
-  check(`  aucune erreur de script`, erreurs.length === 0
-    || (console.log('        ', erreurs.slice(0, 2).join(' | ')), false));
+  /* Le diagnostic **après** le FAIL : `tout-tester` ne remonte que la ligne
+     FAIL et les lignes indentées qui la suivent. Écrit avant, il se perdait,
+     et un rouge de passe complète ne disait ni quelle erreur ni d'où. */
+  check(`  aucune erreur de script`, erreurs.length === 0);
+  if (erreurs.length) console.log(`        ${nom} : ${erreurs.slice(0, 2).join(' | ')}`);
 
   /* Un écran qui n'écrit rien s'affiche exactement comme un écran qui charge
      encore : c'est le défaut le plus facile à laisser passer. */

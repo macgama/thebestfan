@@ -154,12 +154,34 @@ console.log('\nLes séries');
  * capo, la bâche, le tambour, le muret, la torche — sont les archétypes de la
  * tribune, LA TRIBUNE en compte donc dix, et c'est très bien ainsi. La plus
  * ancienne série est aussi la plus profonde. */
+/* **Une exemption, une seule, et nommée : LES TERRACES (`AN`).**
+ *
+ * La série arrive en cours de production (20 octobre 2026) : cinq lignées sur
+ * vingt, et aucune légendaire, parce qu'aucune n'est encore conçue ni
+ * dessinée — sa fiche le dit, « pas de légendaire dans cette série pour
+ * l'instant ». La raison de la règle reste vraie pour elle aussi : le jour où
+ * elle s'ouvre aux boosters, mieux vaut qu'elle ait son sommet.
+ *
+ * L'exemption **tombe d'elle-même** : dès que la série compte cinq
+ * légendaires, elle ne sert plus, et le contrôle le dit en rouge pour qu'on
+ * la retire. Une exemption qu'on oublie là devient une règle morte. */
+const SANS_SOMMET_ENCORE = new Set(['AN']);
 {
   const manque = [];
+  const exemptees = [];
   for (const s of SETS) {
     const n = DEX.filter((f) => f.set === s.id && f.stage === 1
       && f.rar === 'legendaire' && f.publie !== false).length;
+    if (n < 5 && SANS_SOMMET_ENCORE.has(s.id)) { exemptees.push(s.id); continue; }
     if (n < 5) manque.push(`${s.id} ${n}`);
+  }
+  const perimees = [...SANS_SOMMET_ENCORE].filter((id) =>
+    SETS.some((s) => s.id === id) && !exemptees.includes(id));
+  check('l’exemption des cinq légendaires ne vise qu’une série qui en manque encore',
+    perimees.length === 0);
+  if (perimees.length) {
+    console.log(`        ${perimees.join(', ')} a ses cinq légendaires : retire-la de `
+      + 'SANS_SOMMET_ENCORE');
   }
   check(`chaque série a au moins cinq légendaires de stade 1 (${SETS.length} séries)`,
     manque.length === 0
