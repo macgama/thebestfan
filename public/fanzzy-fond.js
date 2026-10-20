@@ -305,6 +305,31 @@
       <circle cx="90" cy="42" r="14" fill="#F5C33B" opacity=".13"/>`,
   };
 
+  /* LES TERRACES ont leur lieu à elles, plutôt que les gradins de LA TRIBUNE
+     où une série inconnue retomberait : on y est **debout**. Des marches
+     sans sièges, deux barrières où l'on s'appuie, et le crachin de biais.
+     C'est ce qui distingue d'un coup d'œil la tribune anglaise de celle de
+     tous les jours. */
+  LIEUX.AN = (p, r) => {
+    let s = '';
+    for (let i = 0; i < 6; i++) {
+      s += `<rect x="-4" y="${22 + i * 11}" width="108" height="11" fill="#000"
+        opacity="${(0.18 + i * 0.1).toFixed(2)}"/>
+        <rect x="-4" y="${22 + i * 11}" width="108" height=".8" fill="${p.brume}" opacity=".35"/>`;
+    }
+    for (const [x, y] of [[14, 40], [62, 62]]) {
+      s += `<rect x="${x}" y="${y}" width="26" height="1.6" rx=".8" fill="${p.brume}" opacity=".8"/>
+        <rect x="${x + 2}" y="${y}" width="1.4" height="9" fill="#000" opacity=".85"/>
+        <rect x="${x + 22.6}" y="${y}" width="1.4" height="9" fill="#000" opacity=".85"/>`;
+    }
+    for (let i = 0; i < 22; i++) {
+      const x = r() * 108 - 4, y = r() * 70;
+      s += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x - 2.5).toFixed(1)}"
+        y2="${(y + 6).toFixed(1)}" stroke="#DCEAF8" stroke-width=".8" opacity=".35"/>`;
+    }
+    return `${s}<rect x="-4" y="88" width="108" height="12" fill="#000" opacity=".6"/>`;
+  };
+
   /* Une série inconnue — il en arrive — prend les gradins. C'est le lieu le plus
      neutre du jeu, et il ne ment sur rien. */
   const lieu = (set) => LIEUX[set] ?? LIEUX.TR;
