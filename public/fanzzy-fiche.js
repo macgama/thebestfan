@@ -389,6 +389,7 @@
           </div>
           <div class="corps">
             <div class="vitrine" id="fiche-vitrine">
+              ${lienClub()}
               <div class="tbf-vitrine-scene" id="fiche-scene">
                 <div class="tbf-vitrine-tilt" id="fiche-art"></div>
               </div>
@@ -403,6 +404,27 @@
       carteMontree = '';
       brancher();
       peindre();
+    }
+
+    /* **Lié à un club** (demande de Gaël du 21 octobre 2026 ;
+       `src/shared/fanzzy/clubs.js`). Un tampon et une phrase sous la carte,
+       et jamais le nom du club : c'est la prudence juridique des séries de
+       championnat. Le serveur dit seulement s'il est lié, et si c'est à un
+       club que ce joueur suit. Un Fanzzy neutre n'a pas de ligne. */
+    function lienClub() {
+      const c = d.club;
+      if (!c?.lie) return '';
+      const force = Number(c.force) || 0;
+      const gain = Number(c.gain) || 0;
+      const phrase = c.tonClub
+        ? `Dans les matchs de ton club, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel.`
+        : `Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`;
+      /* **Posé sur la vitrine, pas sous elle** : la colonne n'a pas un pixel
+         à donner (le budget de hauteur, fanzzy-fiche.css). Le tampon se lit
+         d'un coup d'œil, et la phrase vient au toucher, dans la pile. */
+      return `<button type="button" class="tbf-tampon fiche-club" id="fiche-club" data-ton="vert"
+        data-club="${c.tonClub ? 'sien' : 'autre'}" data-phrase="${esc(phrase)}" aria-label="${esc(phrase)}">${
+  c.tonClub ? 'LIÉ À TON CLUB' : 'LIÉ À UN CLUB'}</button>`;
     }
 
     /** Tout ce qui suit un toucher : la carte, ses côtés, l'inventaire, le détail, les actions. */
@@ -935,6 +957,8 @@
 
       const corps = hote.querySelector('.corps');
       corps?.addEventListener('click', (e) => {
+        const lien = e.target.closest('#fiche-club');
+        if (lien) { e.stopPropagation(); dire(lien.dataset.phrase); return; }
         if (e.target.closest('[data-cri]')) { crier(); return; }
         if (e.target.closest('[data-tourner]')) { tourner(); return; }
         if (e.target.closest('[data-montrer]')) { montrer(e.target.closest('[data-montrer]')); return; }

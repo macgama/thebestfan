@@ -4082,7 +4082,8 @@ function montrerBilan(b) {
   const lignes = [];
   if (g && Number(g.echarpes) > 0) {
     lignes.push(`<li class="tbf-bilan-l gain"><span>TU REPARS AVEC${g.pourSonClub
-      ? ' <span class="tbf-tampon" data-ton="vert">×2 TON CLUB</span>' : ''}</span>
+      ? ' <span class="tbf-tampon" data-ton="vert">×2 TON CLUB</span>' : ''}${g.lie
+      ? ' <span class="tbf-tampon" data-ton="vert">FANZZY LIÉ</span>' : ''}</span>
       <b data-compte="${Number(g.echarpes)}" data-signe="+" data-vole>+${Number(g.echarpes)}</b><small>ÉCHARPES</small></li>`);
   }
   if (Number(g?.kop?.verse) > 0) {
