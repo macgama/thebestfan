@@ -1247,6 +1247,8 @@ export class DuelNvN {
           return apportsDe({
             fanzzy: f ? { nom: f.nom, mods: dort && f.legende ? {} : f.modsBase } : null,
             stuff: (f?.stuff ?? []).filter((x) => !(dort && x === f.stuffLegende)),
+            // Le lien à son club, posé par `lierLeDeck` à l'entrée en file.
+            club: f?.lien ?? null,
             stade: this.stade,
           });
         })(),

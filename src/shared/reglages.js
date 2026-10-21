@@ -214,6 +214,20 @@ export const REGLAGES = [
       'classements de compétition n’ont plus de chez-soi ; à 0, plus personne ' +
       'n’a de raison d’entrer dans un match qui n’est pas le sien.' },
 
+  /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
+     `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et
+     « pousser plus fort » ne pèsent pas pareil sur l'équilibre. */
+  { cle: 'fanzzy.lien_gain', section: 'virage', type: 'entier',
+    titre: 'Un Fanzzy lié à son club rapporte en plus', unite: '%', min: 0, max: 50, defaut: 10,
+    aide: 'Au Virage comme au Duel, quand le joueur joue un match de son club avec ' +
+      'un Fanzzy lié à ce club : la ferveur au Virage, les écharpes au Duel (si le ' +
+      'titulaire est lié). À 0, le lien ne rapporte rien de plus.' },
+
+  { cle: 'fanzzy.lien_force', section: 'virage', type: 'entier',
+    titre: 'Un Fanzzy lié à son club pousse plus fort de', unite: '%', min: 0, max: 30, defaut: 5,
+    aide: 'Au Virage comme au Duel, tant que le Fanzzy lié est en tribune. Au-delà ' +
+      'de 10 %, un deck de son club devient le seul deck qui vaille.' },
+
   { cle: 'virage.tribune_min', section: 'virage', type: 'entier',
     titre: 'Une tribune partage la ferveur par au moins', unite: 'supporters',
     min: 1, max: 200, defaut: 10,

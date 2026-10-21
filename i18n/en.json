@@ -5857,5 +5857,15 @@
  "Elle tire le sucre bouillant au chaudron de cuivre, dans une boutique face aux vagues. Les jours de match, elle donne les bâtons cassés à la tribune, qui les lance au bon moment.": "She pulls boiling sugar from a copper pan in a shop facing the waves. On match days she gives the broken sticks to the stand, and the stand throws them at just the right moment.",
  "TOUT CHAUD, TOUT RAYÉ": "HOT AND STRIPY",
  "La Reine des Bâtons de Sucre": "The Queen of Rock",
- "Couronne de sucre, cape de sucre filé, une cartouchière de bâtons à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui manque.": "A crown of sugar, a cape of spun sugar, a bandolier of candy sticks at her waist. She aims true at the whistle, and she still smiles with that missing tooth."
+ "Couronne de sucre, cape de sucre filé, une cartouchière de bâtons à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui manque.": "A crown of sugar, a cape of spun sugar, a bandolier of candy sticks at her waist. She aims true at the whistle, and she still smiles with that missing tooth.",
+ "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort et rapporte un peu plus, au Grand Virage comme en duel. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe.": "<0>Club-bound Fanzzy</0> wear a team’s colours. Play one in a match of your club, and it pushes a little harder and earns a little more, in the Big End and in duels. Its card shows a stamp: “BOUND TO YOUR CLUB” if you follow that team.",
+ "FANZZY LIÉ": "BOUND FANZZY",
+ "TU REPARS AVEC <0>×2 TON CLUB</0> <1>FANZZY LIÉ</1>": "YOU LEAVE WITH <0>×2 YOUR CLUB</0> <1>BOUND FANZZY</1>",
+ "TU REPARS AVEC <0>FANZZY LIÉ</0>": "YOU LEAVE WITH <0>BOUND FANZZY</0>",
+ "Dans les matchs de ton club, il pousse {0} % plus fort et rapporte {1} % de plus, au Virage comme en duel.": "In your club’s matches, it pushes {0}% harder and earns {1}% more, in the End and in duels.",
+ "Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera {0} % plus fort et rapportera {1} % de plus.": "It wears the colours of a club you don’t follow. Follow that club, and in its matches it will push {0}% harder and earn {1}% more.",
+ "LIÉ À TON CLUB": "BOUND TO YOUR CLUB",
+ "LIÉ À UN CLUB": "BOUND TO A CLUB",
+ "Ton club": "Your club",
+ "Fanzzy lié à ton club": "Fanzzy bound to your club"
 }
