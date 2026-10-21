@@ -17,6 +17,7 @@ import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 // La ventilation de ce qu'un joueur porte, partagée avec le duel : les deux
 // arènes composent les mêmes modificateurs, elles doivent les nommer pareil.
 import { apportsDe } from '../../shared/apports.js';
+import { lieA, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
 
 /**
  * Couche réseau du Grand Virage.
@@ -849,6 +850,19 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         }
       }
 
+      /* **Le Fanzzy lié à son club** (`shared/fanzzy/clubs.js`) : il pousse
+         plus fort et rapporte plus, mais seulement chez soi — `teamId` est nul
+         pour un neutre. Composé comme le KOP, sur les deux totaux : la légende
+         qui dort reste liée à son club. */
+      const lien = hero && !neutre && lieA(hero.id, teamId)
+        ? modsDuLien(tauxDuLien()) : null;
+      if (lien) {
+        for (const [cle, v] of Object.entries(lien)) {
+          mods[cle] = (mods[cle] ?? 1) * v;
+          modsBanc[cle] = (modsBanc[cle] ?? 1) * v;
+        }
+      }
+
       /* **Ce Virage comptera-t-il au classement ?**
 
          La question se pose ici, une seule fois, à l'entrée : au-delà de
@@ -892,6 +906,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         fanzzy: hero ? { nom: perso?.nom ?? hero.nom, mods: hero.mods } : null,
         stuff: sac,
         kop: bonusKop,
+        club: lien,
       });
 
       /* **D'ici à la fin, plus aucune attente** : ce qui suit doit voir la

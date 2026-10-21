@@ -59,11 +59,12 @@ const garni = (mods) => Object.keys(mods ?? {}).length > 0;
  * @param {string[]} [o.stuff]  les identifiants des pièces portées.
  * @param {object}  [o.kop]     le total des bonus de groupe, tel que
  *   `kop.modsDe` le rend — étiquettes comprises, elles sont retirées ici.
+ * @param {object}  [o.club]    le bonus du Fanzzy lié à son club, s'il l'est.
  * @param {object}  [o.stade]   le lieu de la rencontre.
  * @returns {Array<{quoi:string, nom:string, texte?:string, mods:object}>}
- *   dans l'ordre où on les lit : soi, son sac, son groupe, le lieu.
+ *   dans l'ordre où on les lit : soi, son sac, son groupe, son club, le lieu.
  */
-export function apportsDe({ fanzzy = null, stuff = [], kop = null, stade = null } = {}) {
+export function apportsDe({ fanzzy = null, stuff = [], kop = null, club = null, stade = null } = {}) {
   const out = [];
 
   const siens = seulsLesMods(fanzzy?.mods);
@@ -84,6 +85,12 @@ export function apportsDe({ fanzzy = null, stuff = [], kop = null, stade = null 
   const duKop = seulsLesMods(kop);
   if (garni(duKop)) {
     out.push({ quoi: 'kop', nom: kop?.kopNom ?? 'Ton KOP', mods: duKop });
+  }
+
+  /* Le lien du Fanzzy à son club (`fanzzy/clubs.js`) : sans nom de club, par
+     la prudence juridique des séries de championnat. */
+  if (garni(club)) {
+    out.push({ quoi: 'club', nom: 'Fanzzy lié à ton club', mods: club });
   }
 
   if (garni(stade?.mods)) {
