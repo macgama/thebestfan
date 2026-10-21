@@ -17,6 +17,7 @@ import { apres as coteApres, moyenne as coteMoyenne, COTE_DEPART }
 // La même règle qu'au Virage : le club qu'on soutient dans cette
 // rencontre, ou rien du tout si on n'en suit aucun des deux.
 import { clubSoutenu, clubParmi, campDe } from '../football/suivis.js';
+import { lierLeDeck, tauxDuLien } from '../../shared/fanzzy/clubs.js';
 import { assurerBourse } from '../bourse.js';
 
 /**
@@ -433,6 +434,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       ? (Number(camp) === 1 ? 1 : 0)
       : campDe(club.teamId, maison, exterieur);
 
+    /* **Les Fanzzy liés à son club** (`shared/fanzzy/clubs.js`) poussent plus
+       fort, chez soi seulement : un neutre n'a pas de club dans ce match. Le
+       deck est lié ici, une fois, pour ce match-là — le moteur n'a rien à en
+       savoir, il lit des totaux. */
+    const deck = lierLeDeck(loadout, club.neutre ? null : club.teamId, tauxDuLien());
+
     quitterFile(u.userId);
 
     const taille = FORMATS[format];
@@ -457,7 +464,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const manque = Math.max(0, Math.min(taille, enFace.length - file.length));
     const bonus = 1 + (manque / taille) * (reglage('duel.renfort_max') - 1);
 
-    file.push({ userId: u.userId, nom: u.name, socket, loadout, support,
+    file.push({ userId: u.userId, nom: u.name, socket, loadout: deck, support,
                 depuis: Date.now(), format, camp: monCamp,
                 /* « Peu importe le format » : ce joueur accepte tout dès la
                    première seconde, et devient appariable avec ceux qui
@@ -1318,11 +1325,17 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            de préparation : ce qui est promis est ce qui est versé. */
         const base = aFuit ? 0 : baseDuDuel(d.mode, d.format, gagne);
         const pourSonClub = clubs.has(userId);
-        const montant = base * (pourSonClub ? DOUBLE_CLUB : 1);
+        /* **Un titulaire lié à son club** (`shared/fanzzy/clubs.js`) rapporte
+           un peu plus. Le titulaire et non le Fanzzy de la fin : c'est lui que
+           le joueur a choisi d'aligner, et c'est lui dont la ligne se souvient.
+           `lie` n'est posé qu'à l'entrée en file, et seulement chez soi. */
+        const lie = Boolean(pourSonClub && j.fanzzy?.[0]?.lie);
+        const montant = Math.round(base * (pourSonClub ? DOUBLE_CLUB : 1)
+          * (lie ? 1 + tauxDuLien().gain : 1));
         await assurerBourse(q, userId);
         await q(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
           [montant, userId]);
-        verse.set(userId, { echarpes: montant, pourSonClub, xp: 0, kop: null });
+        verse.set(userId, { echarpes: montant, pourSonClub, lie, xp: 0, kop: null });
 
         /* L'XP, elle, **ne double pas** pour son club.
            Les écharpes récompensent la ferveur, et il est juste qu'elles

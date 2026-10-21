@@ -5857,5 +5857,15 @@
  "Elle tire le sucre bouillant au chaudron de cuivre, dans une boutique face aux vagues. Les jours de match, elle donne les bâtons cassés à la tribune, qui les lance au bon moment.": "Tira lo zucchero bollente nel paiolo di rame, in una bottega di fronte alle onde. Nei giorni di partita regala i bastoncini rotti alla tribuna, che li lancia al momento giusto.",
  "TOUT CHAUD, TOUT RAYÉ": "CALDO E A RIGHE",
  "La Reine des Bâtons de Sucre": "La Regina dei Bastoncini di Zucchero",
- "Couronne de sucre, cape de sucre filé, une cartouchière de bâtons à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui manque.": "Corona di zucchero, mantello di zucchero filato, una cartucciera di bastoncini alla cintura. Mira giusto al fischio, e sorride sempre con il dente che manca."
+ "Couronne de sucre, cape de sucre filé, une cartouchière de bâtons à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui manque.": "Corona di zucchero, mantello di zucchero filato, una cartucciera di bastoncini alla cintura. Mira giusto al fischio, e sorride sempre con il dente che manca.",
+ "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort et rapporte un peu plus, au Grand Virage comme en duel. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe.": "<0>I Fanzzy legati a un club</0> portano i colori di una squadra. Giocalo in una partita del tuo club, e spinge un po’ più forte e rende un po’ di più, nella Grande Curva come in duello. La sua scheda lo dice con un timbro: «LEGATO AL TUO CLUB» se segui quella squadra.",
+ "FANZZY LIÉ": "FANZZY LEGATO",
+ "TU REPARS AVEC <0>×2 TON CLUB</0> <1>FANZZY LIÉ</1>": "TE NE VAI CON <0>×2 IL TUO CLUB</0> <1>FANZZY LEGATO</1>",
+ "TU REPARS AVEC <0>FANZZY LIÉ</0>": "TE NE VAI CON <0>FANZZY LEGATO</0>",
+ "Dans les matchs de ton club, il pousse {0} % plus fort et rapporte {1} % de plus, au Virage comme en duel.": "Nelle partite del tuo club spinge il {0}% più forte e rende il {1}% in più, nella Curva come in duello.",
+ "Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera {0} % plus fort et rapportera {1} % de plus.": "Porta i colori di un club che non segui. Segui quel club, e nelle sue partite spingerà il {0}% più forte e renderà il {1}% in più.",
+ "LIÉ À TON CLUB": "LEGATO AL TUO CLUB",
+ "LIÉ À UN CLUB": "LEGATO A UN CLUB",
+ "Ton club": "Il tuo club",
+ "Fanzzy lié à ton club": "Fanzzy legato al tuo club"
 }

@@ -43,6 +43,7 @@ import { saisonsLancees, saisonEnCours } from './saisons.js';
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
 import { verser, verserTout } from '../recompenses.js';
+import { clubDe } from '../../shared/fanzzy/clubs.js';
 
 /* ------------------------------------------------------------ le journal
 
@@ -2286,7 +2287,18 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const portes = stuff.filter((s) => s.slot).sort((a, b) => a.slot - b.slot)
       .map((s) => s.stuff_id);
 
+    /* **Lié à un club ?** (`shared/fanzzy/clubs.js`) Le numéro du club ne
+       part pas à la page : la fiche dit seulement s'il est lié, et si c'est à
+       un club que ce joueur suit — jamais lequel, par la prudence juridique
+       des séries de championnat. */
+    const sonClub = clubDe(id);
+    const suit = sonClub == null ? false : (await q(
+      `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id = ? LIMIT 1`,
+      [userId, sonClub]).catch(() => [])).length > 0;
+
     return {
+      club: sonClub == null ? null : { lie: true, tonClub: suit,
+        force: reglage('fanzzy.lien_force'), gain: reglage('fanzzy.lien_gain') },
       fanzzy: {
         id,
         /* `ageId` est la carte du catalogue à l'âge atteint — `id`, lui, est la

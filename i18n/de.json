@@ -5857,5 +5857,15 @@
  "Elle tire le sucre bouillant au chaudron de cuivre, dans une boutique face aux vagues. Les jours de match, elle donne les bâtons cassés à la tribune, qui les lance au bon moment.": "Sie zieht kochenden Zucker im Kupferkessel, in einem Laden mit Blick auf die Wellen. An Spieltagen schenkt sie die zerbrochenen Stangen der Tribüne, und die wirft sie im richtigen Moment.",
  "TOUT CHAUD, TOUT RAYÉ": "HEISS UND GESTREIFT",
  "La Reine des Bâtons de Sucre": "Die Zuckerstangen-Königin",
- "Couronne de sucre, cape de sucre filé, une cartouchière de bâtons à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui manque.": "Eine Krone aus Zucker, ein Umhang aus gesponnenem Zucker, ein Patronengurt voller Zuckerstangen. Beim Pfiff zielt sie genau, und sie lächelt immer noch mit der Zahnlücke."
+ "Couronne de sucre, cape de sucre filé, une cartouchière de bâtons à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui manque.": "Eine Krone aus Zucker, ein Umhang aus gesponnenem Zucker, ein Patronengurt voller Zuckerstangen. Beim Pfiff zielt sie genau, und sie lächelt immer noch mit der Zahnlücke.",
+ "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort et rapporte un peu plus, au Grand Virage comme en duel. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe.": "<0>Vereinsgebundene Fanzzy</0> tragen die Farben eines Teams. Spiel ihn in einem Spiel deines Vereins, und er drückt etwas stärker und bringt etwas mehr ein, in der Großen Kurve wie im Duell. Seine Karte zeigt es mit einem Stempel: „AN DEINEN VEREIN GEBUNDEN“, wenn du diesem Team folgst.",
+ "FANZZY LIÉ": "GEBUNDENER FANZZY",
+ "TU REPARS AVEC <0>×2 TON CLUB</0> <1>FANZZY LIÉ</1>": "DU GEHST MIT <0>×2 DEIN CLUB</0> <1>GEBUNDENER FANZZY</1>",
+ "TU REPARS AVEC <0>FANZZY LIÉ</0>": "DU GEHST MIT <0>GEBUNDENER FANZZY</0>",
+ "Dans les matchs de ton club, il pousse {0} % plus fort et rapporte {1} % de plus, au Virage comme en duel.": "In den Spielen deines Vereins drückt er {0} % stärker und bringt {1} % mehr ein, in der Kurve wie im Duell.",
+ "Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera {0} % plus fort et rapportera {1} % de plus.": "Er trägt die Farben eines Vereins, dem du nicht folgst. Folge diesem Verein, und in seinen Spielen drückt er {0} % stärker und bringt {1} % mehr ein.",
+ "LIÉ À TON CLUB": "AN DEINEN VEREIN GEBUNDEN",
+ "LIÉ À UN CLUB": "AN EINEN VEREIN GEBUNDEN",
+ "Ton club": "Dein Verein",
+ "Fanzzy lié à ton club": "An deinen Verein gebundener Fanzzy"
 }

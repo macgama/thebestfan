@@ -193,6 +193,18 @@
   top:50%;translate:0 -50%;max-width:calc(50% - var(--l) / 2 - 24px);margin:0}
 .fiche .vitrine>.paquet>img{width:min(64px,100%)}
 
+/* **LIÉ À TON CLUB** (`src/shared/fanzzy/clubs.js`) : dans la gouttière de
+   gauche, en haut de la carte — TON AVATAR tient le bas. Posé sur la vitrine
+   et non dessous, parce que la colonne n'a pas un pixel à donner (le budget
+   de hauteur, en tête). Un bouton : la phrase qui l'explique vient au toucher.
+   Un club que le joueur ne suit pas prend l'encre bleue, pour que « le mien »
+   se reconnaisse d'un coup d'œil. */
+.fiche .vitrine>.fiche-club{position:absolute;z-index:3;right:calc(50% + var(--l) / 2 + 12px);
+  top:calc(50% - var(--l) * 44 / 63 * .6);translate:0 -50%;
+  max-width:calc(50% - var(--l) / 2 - 18px);font-size:14px;line-height:1.1;
+  white-space:normal;--rot:-6deg;cursor:pointer}
+.fiche .vitrine>.fiche-club[data-club=autre]{--teinte:var(--bleu-clair)}
+
 /* Le tampon TON AVATAR : un acquis, pas un bouton éteint. En deux lignes,
    à seize pixels — le plancher du tampon en contour sur un fond sombre. */
 .fiche .cote-g.tbf-tampon{font-size:16px;line-height:1.1}

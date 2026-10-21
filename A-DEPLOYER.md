@@ -1,5 +1,25 @@
 # À déposer sur Infomaniak
 
+**Les Fanzzy liés à un club** (branche `claude/project-thread-v83ym1`,
+21 octobre 2026, demandés par Gaël). Construction puis redémarrage, **sans
+schéma**.
+
+- Un Fanzzy de LES TERRACES (AN1 à AN60, trois par club) est lié au club dont
+  il porte les couleurs. Joué dans un match de son club (un club que le joueur
+  suit et qui joue), il pousse 5 % plus fort, au Virage comme au duel, et
+  rapporte 10 % de plus : la ferveur au Virage, les écharpes au duel quand le
+  titulaire est lié. Un neutre, un Fanzzy à thème : rien ne change.
+- La fiche d'un Fanzzy lié porte un tampon, « LIÉ À TON CLUB » (vert) ou
+  « LIÉ À UN CLUB » (bleu, un club que le joueur ne suit pas) ; le toucher
+  explique le bonus. **Jamais le nom du club.** Le panneau des bonus du duel
+  et du Virage montre une ligne « Ton club », le bilan du duel « FANZZY LIÉ ».
+- Les deux taux se règlent dans /admin → RÉGLAGES → LE GRAND VIRAGE
+  (« Un Fanzzy lié à son club… »). À 0, le lien ne fait plus rien.
+- Après la mise en ligne : ouvrir la fiche d'AN1 avec un compte qui suit son
+  club, puis avec un autre ; vérifier les deux tampons.
+
+---
+
 **La série LES TERRACES (AN), fermée** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 20 octobre 2026, demandée par Gaël).
 Construction puis redémarrage, **sans schéma**.
