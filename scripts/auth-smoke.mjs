@@ -550,6 +550,55 @@ console.log('\n— ce que la sonde publique laisse voir —');
     || (console.log('        il publie :', m3.status.erreur), false));
 }
 
+/* ---------------------------------------------- un mail part vraiment
+
+   Depuis les mails en cinq langues, `send` rangeait le transport SMTP dans
+   une variable nommée `t` — le nom de la fonction de traduction juste en
+   dessous. L'habillage HTML appelait donc le transport comme une fonction,
+   l'envoi échouait sur « t is not a function », et chaque mail retombait dans
+   la console : inscription, mot de passe oublié, abonnement. Aucune suite ne
+   le voyait, parce qu'aucune n'avait de serveur SMTP en face.
+
+   En voici un, minimal, sur la machine : il accepte tout et garde ce qu'il
+   reçoit. */
+console.log('\n— un mail part vraiment par SMTP —');
+{
+  const net = await import('node:net');
+  const { createMailer } = await import('../src/server/auth/mailer.js');
+  const recus = [];
+  const smtp = net.createServer((c) => {
+    let tampon = '';
+    let corps = null;
+    c.write('220 essai ESMTP\r\n');
+    c.on('data', (d) => {
+      tampon += d.toString('utf8');
+      let i;
+      while ((i = tampon.indexOf('\r\n')) !== -1) {
+        const ligne = tampon.slice(0, i);
+        tampon = tampon.slice(i + 2);
+        if (corps !== null) {
+          if (ligne === '.') { recus.push(corps); corps = null; c.write('250 reçu\r\n'); }
+          else corps += ligne + '\n';
+        } else if (/^(EHLO|HELO)/i.test(ligne)) c.write('250 essai\r\n');
+        else if (/^DATA/i.test(ligne)) { corps = ''; c.write('354 vas-y\r\n'); }
+        else if (/^QUIT/i.test(ligne)) { c.write('221 salut\r\n'); c.end(); }
+        else c.write('250 ok\r\n');
+      }
+    });
+  });
+  await new Promise((r) => smtp.listen(0, '127.0.0.1', r));
+  const m = createMailer({
+    host: '127.0.0.1', port: smtp.address().port, secure: false,
+    user: 'compte@exemple.fr', pass: 'secret', origin: 'https://thebestfan.online' });
+  // Le serveur d'essai n'annonce pas AUTH : nodemailer s'en passe alors.
+  const r = await m.sendReset({ to: 'joueur@exemple.fr', pseudo: 'Joueur', locale: 'de', token: 'abc' });
+  check('le mail est remis au serveur SMTP',
+    r?.delivered === true || (console.log('        il dit :', JSON.stringify(r)), false));
+  check('il porte sa version HTML',
+    recus.some((x) => /text\/html/i.test(x)));
+  smtp.close();
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end();
 http.close();
