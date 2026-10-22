@@ -128,15 +128,15 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
      le texte brut part toujours avec elle, pour les messageries qui n'en
      veulent pas. */
   async function send({ to, subject, text, lien = null, bouton = null, tribune = false, locale = 'fr' }) {
-    const t = await getTransport();
-    if (!t) {
+    const transporteur = await getTransport();
+    if (!transporteur) {
       // Repli console : le lien reste utilisable, il faut juste aller le
       // chercher dans les logs du Manager.
       console.log(`\n[mail → ${to}] ${subject}\n${text}\n`);
       return { delivered: false, logged: true, etat, erreur: derniereErreur };
     }
     try {
-      const info = await t.sendMail({
+      const info = await transporteur.sendMail({
         from: from ?? 'thebestfan <no-reply@thebestfan.online>', to, subject, text,
         html: habiller({ origin, titre: subject.replace(/\s*—\s*thebestfan$/i, ''),
           texte: text, lien, bouton, tribune, langue: messages[locale] ? locale : 'fr',
