@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Lier un Fanzzy neutre à son club** (branche `claude/project-thread-v83ym1`,
+22 octobre 2026, choix de Gaël). Construction, **schéma** (`sql/fanzzy.sql`
+ajoute la colonne `user_fanzzy.club_id`), puis redémarrage.
+
+- Sur la fiche d'un Fanzzy neutre qu'il possède, le joueur voit LIER À MON
+  CLUB (120 écharpes) : le Fanzzy est lié pour toujours à son club principal
+  et gagne le même bonus qu'un Fanzzy AN dans les matchs de ce club. Sans
+  club principal, la fiche lui dit de le choisir dans « Mes équipes ».
+- Le prix se règle dans /admin → RÉGLAGES → L'ÉTAL EN ÉCHARPES.
+- Sans le schéma, rien ne casse : le bouton refuse, et personne n'a de lien
+  acheté.
+- Après la mise en ligne : avec un compte qui a un club principal et 120
+  écharpes, ouvrir la fiche d'un Fanzzy TR, LIER À MON CLUB, puis vérifier le
+  tampon LIÉ À TON CLUB.
+
+---
+
 **Les Fanzzy liés à un club** (branche `claude/project-thread-v83ym1`,
 21 octobre 2026, demandés par Gaël). Construction puis redémarrage, **sans
 schéma**.

@@ -55,6 +55,15 @@ CREATE TABLE IF NOT EXISTS user_fanzzy (
   CONSTRAINT fk_uf_user FOREIGN KEY (user_id) REFERENCES users(public_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- **Le club auquel le joueur a lié ce Fanzzy** (identifiant API-Football),
+-- contre des écharpes, depuis sa fiche. Choix de Gaël du 22 octobre 2026 : un
+-- Fanzzy neutre se lie au club principal du joueur, pour toujours. Nul pour
+-- un Fanzzy jamais lié ; un Fanzzy d'une série de championnat n'en a pas
+-- besoin, son club est écrit dans le code (`src/shared/fanzzy/clubs.js`).
+-- Une colonne et non une table : on lie un Fanzzy qu'on possède, et la ligne
+-- de possession part déjà avec le compte.
+ALTER TABLE user_fanzzy ADD COLUMN IF NOT EXISTS club_id INT NULL;
+
 -- La référence d'amorçage : ce que le code disait la dernière fois qu'il a
 -- écrit cette carte.
 --

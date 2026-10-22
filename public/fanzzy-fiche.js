@@ -413,6 +413,13 @@
        club que ce joueur suit. Un Fanzzy neutre n'a pas de ligne. */
     function lienClub() {
       const c = d.club;
+      /* **Un Fanzzy neutre se lie contre des écharpes** (choix de Gaël du
+         22 octobre 2026), au club principal du joueur, pour toujours. Le
+         bouton prend la place du tampon, dans la même gouttière. */
+      if (c && !c.lie && aMoi() && Number.isFinite(Number(c.prix))) {
+        return `<button type="button" class="tbf-tampon fiche-club" id="fiche-lier" data-ton="or"
+          data-club="lier">LIER À MON CLUB<small>${Number(c.prix)} écharpes</small></button>`;
+      }
       if (!c?.lie) return '';
       const force = Number(c.force) || 0;
       const gain = Number(c.gain) || 0;
@@ -425,6 +432,52 @@
       return `<button type="button" class="tbf-tampon fiche-club" id="fiche-club" data-ton="vert"
         data-club="${c.tonClub ? 'sien' : 'autre'}" data-phrase="${esc(phrase)}" aria-label="${esc(phrase)}">${
   c.tonClub ? 'LIÉ À TON CLUB' : 'LIÉ À UN CLUB'}</button>`;
+    }
+
+    /** LIER À MON CLUB : la demande, puis l'achat. */
+    function demanderLien() {
+      const c = d.club;
+      if (!c?.clubPrincipal) {
+        dire('Choisis d’abord ton club principal dans « Mes équipes ».', { erreur: true });
+        return;
+      }
+      const prix = Number(c.prix);
+      const panneau = document.createElement('div');
+      panneau.className = 'demande';
+      panneau.setAttribute('role', 'dialog');
+      panneau.setAttribute('aria-modal', 'true');
+      panneau.setAttribute('aria-label', 'Lier à ton club');
+      panneau.innerHTML = `
+        <h3>LIER À TON CLUB ?</h3>
+        <div class="tbf-ticket tbf-detail"><div class="tbf-detail-t"><b>Ce qu’il gagne</b><small>${
+          prix} écharpes</small></div>
+          <p>Dans les matchs de ton club principal, il poussera ${Number(c.force)} % plus fort et rapportera ${
+  Number(c.gain)} % de plus, au Virage comme en duel. C’est pour toujours.</p></div>
+        <div class="quoi">
+          <button type="button" class="bt tbf-plaque" data-non>ANNULER</button>
+          <button type="button" class="bt or tbf-plaque" data-ton="or" data-oui>LIER<small>${
+            Number(d.echarpes)} → ${Number(d.echarpes) - prix} écharpes</small></button>
+        </div>`;
+      hote.querySelector('.fiche').appendChild(panneau);
+      panneau.querySelector('[data-oui]').focus({ preventScroll: true });
+      const fermer = () => panneau.remove();
+      panneau.querySelector('[data-non]').onclick = fermer;
+      panneau.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); fermer(); } });
+      panneau.querySelector('[data-oui]').onclick = async () => {
+        panneau.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+        try {
+          await api('/lier', { id: d.fanzzy.id });
+          fermer();
+          dire('Il est lié à ton club.');
+        } catch (e) {
+          if (e.message === 'auth') return;
+          fermer();
+          dire(e.code === 'fanzzy.error.not_enough_scarves' ? 'Pas assez d’écharpes.'
+            : e.code === 'fanzzy.error.sans_club' ? 'Choisis d’abord ton club principal dans « Mes équipes ».'
+              : 'Impossible de le lier.', { erreur: true });
+        }
+        await recharger();
+      };
     }
 
     /** Tout ce qui suit un toucher : la carte, ses côtés, l'inventaire, le détail, les actions. */
@@ -957,6 +1010,7 @@
 
       const corps = hote.querySelector('.corps');
       corps?.addEventListener('click', (e) => {
+        if (e.target.closest('#fiche-lier')) { e.stopPropagation(); demanderLien(); return; }
         const lien = e.target.closest('#fiche-club');
         if (lien) { e.stopPropagation(); dire(lien.dataset.phrase); return; }
         if (e.target.closest('[data-cri]')) { crier(); return; }

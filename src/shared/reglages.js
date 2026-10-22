@@ -223,6 +223,11 @@ export const REGLAGES = [
       'un Fanzzy lié à ce club : la ferveur au Virage, les écharpes au Duel (si le ' +
       'titulaire est lié). À 0, le lien ne rapporte rien de plus.' },
 
+  { cle: 'fanzzy.lien_prix', section: 'etal', type: 'entier',
+    titre: 'Lier un Fanzzy neutre à son club coûte', unite: 'écharpes', min: 0, max: 2000, defaut: 120,
+    aide: 'Depuis la fiche du Fanzzy, une seule fois : il est lié pour toujours au club ' +
+      'principal du joueur et en gagne le bonus dans les matchs de ce club.' },
+
   { cle: 'fanzzy.lien_force', section: 'virage', type: 'entier',
     titre: 'Un Fanzzy lié à son club pousse plus fort de', unite: '%', min: 0, max: 30, defaut: 5,
     aide: 'Au Virage comme au Duel, tant que le Fanzzy lié est en tribune. Au-delà ' +

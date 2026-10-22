@@ -2114,6 +2114,10 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     send(res, evolve(req.user.id, String(req.body?.id ?? ''))
       .then(async (r) => ({ ...r, wallet: await wallet(req.user.id) }))));
 
+  router.post('/lier', requireAuth, (req, res) =>
+    send(res, lierAuClub(req.user.id, String(req.body?.id ?? ''))
+      .then(async (r) => ({ ...r, wallet: await wallet(req.user.id) }))));
+
   router.get('/fiche/:id', requireAuth, (req, res) => {
     // Un identifiant inexistant est une ressource absente, pas une requête
     // invalide : 404, et non 400.
@@ -2249,6 +2253,60 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     }
   }
 
+  /* ------------------------------------------------- le lien à un club
+
+     `shared/fanzzy/clubs.js`. Un Fanzzy d'une série de championnat est lié
+     d'office ; un Fanzzy neutre se lie au club principal du joueur, contre
+     des écharpes, une fois pour toutes. Une base sans la colonne
+     (`sql/fanzzy.sql` pas encore appliqué) n'a aucun lien acheté. */
+  async function clubAchete(userId, id) {
+    const r = await q(`SELECT club_id FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+      [userId, id]).catch((e) => { if (e?.code === 'ER_BAD_FIELD_ERROR') return []; throw e; });
+    return r[0]?.club_id == null ? null : Number(r[0].club_id);
+  }
+
+  /** Le club principal du joueur, ou `null` s'il n'en a pas choisi. */
+  async function clubPrincipal(userId) {
+    const r = await q(`SELECT team_id FROM user_follows WHERE user_id = ? AND is_main = 1 LIMIT 1`,
+      [userId]).catch(() => []);
+    return r[0]?.team_id == null ? null : Number(r[0].team_id);
+  }
+
+  async function lierAuClub(userId, idDemande) {
+    const id = racineDe(String(idDemande));
+    if (!parIdentifiant(id)) throw fail('fanzzy.error.unknown');
+    // Un Fanzzy de club a déjà le sien : on ne le rachète pas, on n'en change pas.
+    if (clubDe(id) != null) throw fail('fanzzy.error.deja_lie');
+    const club = await clubPrincipal(userId);
+    if (club == null) throw fail('fanzzy.error.sans_club');
+    const prix = reglage('fanzzy.lien_prix');
+
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const [[have]] = await conn.query(
+        `SELECT copies, club_id FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ? FOR UPDATE`,
+        [userId, id]);
+      if (!have || have.copies < 1) throw fail('fanzzy.error.not_owned');
+      if (have.club_id != null) throw fail('fanzzy.error.deja_lie');
+      const [d] = await conn.query(
+        `UPDATE user_wallet SET scarves = scarves - ? WHERE user_id = ? AND scarves >= ?`,
+        [prix, userId, prix]);
+      if (!d.affectedRows) throw fail('fanzzy.error.not_enough_scarves');
+      // `club_id IS NULL` : deux achats lancés ensemble ne paient pas deux fois.
+      await conn.query(
+        `UPDATE user_fanzzy SET club_id = ? WHERE user_id = ? AND fanzzy_id = ? AND club_id IS NULL`,
+        [club, userId, id]);
+      await conn.commit();
+    } catch (e) {
+      await conn.rollback().catch(() => {});
+      throw e;
+    } finally {
+      conn.release();
+    }
+    return { id, spent: prix };
+  }
+
   async function fiche(userId, fanzzyId) {
     // La fiche d'un âge supérieur est la fiche de son personnage : c'est le
     // même individu, et le joueur n'en possède qu'un.
@@ -2291,14 +2349,22 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        part pas à la page : la fiche dit seulement s'il est lié, et si c'est à
        un club que ce joueur suit — jamais lequel, par la prudence juridique
        des séries de championnat. */
-    const sonClub = clubDe(id);
+    const achete = await clubAchete(userId, id);
+    const sonClub = clubDe(id) ?? achete;
     const suit = sonClub == null ? false : (await q(
       `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id = ? LIMIT 1`,
       [userId, sonClub]).catch(() => [])).length > 0;
+    const taux = { force: reglage('fanzzy.lien_force'), gain: reglage('fanzzy.lien_gain') };
 
     return {
-      club: sonClub == null ? null : { lie: true, tonClub: suit,
-        force: reglage('fanzzy.lien_force'), gain: reglage('fanzzy.lien_gain') },
+      /* **Un Fanzzy neutre se lie contre des écharpes** (choix de Gaël du
+         22 octobre 2026) : au club principal, pour toujours. `prix` et
+         `clubPrincipal` ne servent qu'à proposer LIER À MON CLUB ; un joueur
+         sans club principal lit pourquoi le bouton ne fait rien. */
+      club: sonClub != null
+        ? { lie: true, tonClub: suit, achete: achete != null, ...taux }
+        : { lie: false, prix: reglage('fanzzy.lien_prix'),
+          clubPrincipal: (await clubPrincipal(userId)) != null, ...taux },
       fanzzy: {
         id,
         /* `ageId` est la carte du catalogue à l'âge atteint — `id`, lui, est la
@@ -2621,7 +2687,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   }
 
   return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
-    personnageActif, construireAvatar, fiche, offrir, remettreStuff, remettreTenue, bibliotheque,
+    personnageActif, construireAvatar, fiche, lierAuClub, offrir, remettreStuff, remettreTenue, bibliotheque,
     /* `recharger(conn, userId)` : la porte du grand livre et du quotidien
        avant tout booster offert (`PLAN.md`, § 5, étape 7). */
     recharger,
