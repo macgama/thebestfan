@@ -381,9 +381,18 @@ export function createDecks({ pool, requireAuth, niveau = null,
     // Jusqu'où chaque personnage a été fait grandir. Le duel ne s'en sert pas
     // pour renforcer qui que ce soit au coup d'envoi — tout le monde entre au
     // premier âge — mais pour savoir **jusqu'où la carte Relève peut aller**.
-    const stades = Object.fromEntries((await q(
-      `SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]))
-      .map((r) => [r.fanzzy_id, Number(r.stage)]));
+    /* `club_id` : le club auquel le joueur a lié un Fanzzy neutre
+       (`shared/fanzzy/clubs.js`). Une base où `sql/fanzzy.sql` n'a pas encore
+       ajouté la colonne joue sans lien plutôt que de refuser le duel. */
+    const possede = await q(
+      `SELECT fanzzy_id, stage, club_id FROM user_fanzzy WHERE user_id = ?`, [userId])
+      .catch((e) => {
+        if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+        return q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]);
+      });
+    const stades = Object.fromEntries(possede.map((r) => [r.fanzzy_id, Number(r.stage)]));
+    const clubs = Object.fromEntries(possede.filter((r) => r.club_id != null)
+      .map((r) => [r.fanzzy_id, Number(r.club_id)]));
 
     /* **La tenue portée à chaque âge**, `{ 1: 'carnaval' }` — les âges sans
        tenue sont absents et se dessinent en `base`. La vue du duel la donne
@@ -452,6 +461,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
           stade: 1,
           ages: jouables,
           tenues: tenues[f.id] ?? {},
+          // Le club acheté pour un Fanzzy neutre, nul sinon : `lierLeDeck` le lit.
+          club: clubs[f.id] ?? null,
           legende: f.legende,
           stuffLegende: f.stuffLegende,
         };

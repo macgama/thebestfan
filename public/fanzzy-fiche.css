@@ -204,6 +204,8 @@
   max-width:calc(50% - var(--l) / 2 - 18px);font-size:14px;line-height:1.1;
   white-space:normal;--rot:-6deg;cursor:pointer}
 .fiche .vitrine>.fiche-club[data-club=autre]{--teinte:var(--bleu-clair)}
+.fiche .vitrine>.fiche-club[data-club=lier]{--teinte:var(--projo)}
+.fiche .vitrine>.fiche-club>small{display:block;margin-top:3px;font-size:11px;letter-spacing:.04em}
 
 /* Le tampon TON AVATAR : un acquis, pas un bouton éteint. En deux lignes,
    à seize pixels — le plancher du tampon en contour sur un fond sombre. */

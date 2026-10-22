@@ -104,5 +104,92 @@ console.log('\nLe panneau des bonus');
     .some((x) => x.quoi === 'club'));
 }
 
+console.log('\nUn Fanzzy neutre lié contre des écharpes, hors base');
+check('lieA lit le club acheté pour un neutre', lieA('TR32', 85, 85) && !lieA('TR32', 91, 85)
+  && !lieA('TR32', 85, null));
+check('le club écrit d\'un Fanzzy de série passe devant un club acheté',
+  lieA('AN1', CLUB, 85) && !lieA('AN1', 85, 85));
+{
+  const brut = loadout(['TR32', 'TR33']);
+  brut.fanzzy[0].club = 85;
+  const lie = lierLeDeck(brut, 85, tauxDuLien());
+  check('lierLeDeck lie le neutre acheté, pas l\'autre', lie.fanzzy[0].lie && !lie.fanzzy[1].lie);
+}
+
+/* ------------------------------------------------------------ en base */
+
+console.log('\nEn base : acheter le lien, le deck, la fiche');
+const { readFileSync } = await import('node:fs');
+const { createFanzzy } = await import('../src/server/fanzzy/index.js');
+const { createDecks } = await import('../src/server/deck/index.js');
+const { charger: chargerCatalogue } = await import('../src/server/fanzzy/catalogue.js');
+const { chargerTenues } = await import('../src/server/fanzzy/tenues.js');
+const { baseDeTest, OPTIONS_BASE } = await import('./base-de-test.mjs');
+const mysql = await import('mysql2/promise');
+const DB = baseDeTest();
+const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
+await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites, amities,
+  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
+                 souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
+                 duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
+                 leagues, api_quota, login_attempts, auth_tokens, sessions, users,
+                 recompenses, missions_jour, compteurs_jour, user_nouveautes`);
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql',
+  'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql']) {
+  await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
+}
+const U = 'cccccccc-0000-0000-0000-000000000001';
+const SANS = 'cccccccc-0000-0000-0000-000000000002';
+for (const [u, e] of [[U, 'c@ex.fr'], [SANS, 's@ex.fr']]) {
+  await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`, [u, e, e]);
+  await raw.query(`INSERT INTO user_wallet (user_id,scarves) VALUES (?,200)`, [u]);
+  for (const f of ['TR32', 'MS30', 'AN1']) {
+    await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [u, f]);
+  }
+}
+await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
+await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,0),(?,85,1)`, [U, U]);
+await raw.end();
+
+const pool = mysql.createPool({ uri: DB, connectionLimit: 4, ...OPTIONS_BASE });
+await chargerCatalogue(pool);
+await chargerTenues(pool);
+const F = createFanzzy({ pool, requireAuth: (_q, _s, n) => n() });
+const D = createDecks({ pool, requireAuth: (_q, _s, n) => n() });
+const echarpes = async (u) => Number((await pool.query(
+  `SELECT scarves FROM user_wallet WHERE user_id = ?`, [u]))[0][0].scarves);
+const refus = async (p) => { try { await p; return null; } catch (e) { return e.code; } };
+
+let f = await F.fiche(U, 'TR32');
+check('la fiche d\'un neutre propose le lien, à 120 écharpes', f.club?.lie === false
+  && f.club.prix === 120 && f.club.clubPrincipal === true);
+f = await F.fiche(U, 'AN1');
+check('la fiche d\'un AN est liée d\'office, à un club que ce joueur ne suit pas',
+  f.club?.lie === true && f.club.tonClub === false && f.club.achete === false);
+check('un Fanzzy de série ne s\'achète pas', await refus(F.lierAuClub(U, 'AN1')) === 'fanzzy.error.deja_lie');
+check('sans club principal, refusé sans rien prendre',
+  await refus(F.lierAuClub(SANS, 'TR32')) === 'fanzzy.error.sans_club' && await echarpes(SANS) === 200);
+check('un Fanzzy qu\'on n\'a pas ne se lie pas', await refus(F.lierAuClub(U, 'TR33')) === 'fanzzy.error.not_owned');
+
+const r = await F.lierAuClub(U, 'TR32B');
+check('lier coûte 120 écharpes', r.spent === 120 && await echarpes(U) === 80);
+check('au club principal, pas au premier suivi', Number((await pool.query(
+  `SELECT club_id FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = 'TR32'`, [U]))[0][0].club_id) === 85);
+check('une seconde fois : refusé, rien de pris',
+  await refus(F.lierAuClub(U, 'TR32')) === 'fanzzy.error.deja_lie' && await echarpes(U) === 80);
+check('pas assez d\'écharpes : refusé',
+  await refus(F.lierAuClub(U, 'MS30')) === 'fanzzy.error.not_enough_scarves' && await echarpes(U) === 80);
+f = await F.fiche(U, 'TR32');
+check('la fiche dit LIÉ À TON CLUB', f.club?.lie === true && f.club.tonClub === true && f.club.achete === true);
+
+await pool.query(`INSERT INTO user_decks (user_id,nom,contenu,actif) VALUES (?, 'd', ?, 1)`,
+  [U, JSON.stringify({ fanzzy: [{ id: 'TR32' }, { id: 'MS30' }], actions: [] })]);
+const l = await D.loadout(U);
+check('le deck porte le club acheté', l.fanzzy[0].club === 85 && l.fanzzy[1].club === null);
+const lie = lierLeDeck(l, 85, tauxDuLien());
+check('et le duel d\'un match de son club le lie', lie.fanzzy[0].lie && !lie.fanzzy[1].lie);
+check('pas dans un match d\'un autre club', !lierLeDeck(l, 91, tauxDuLien()).fanzzy[0].lie);
+await pool.end();
+
 console.log(failures ? `\n${failures} échec(s)` : '\nTout est bon.');
 process.exit(failures ? 1 : 0);

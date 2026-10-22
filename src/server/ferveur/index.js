@@ -17,7 +17,8 @@ import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 // La ventilation de ce qu'un joueur porte, partagée avec le duel : les deux
 // arènes composent les mêmes modificateurs, elles doivent les nommer pareil.
 import { apportsDe } from '../../shared/apports.js';
-import { lieA, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
+import { clubDe, lieA, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
+import { racineDe } from '../fanzzy/catalogue.js';
 
 /**
  * Couche réseau du Grand Virage.
@@ -854,7 +855,14 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          plus fort et rapporte plus, mais seulement chez soi — `teamId` est nul
          pour un neutre. Composé comme le KOP, sur les deux totaux : la légende
          qui dort reste liée à son club. */
-      const lien = hero && !neutre && lieA(hero.id, teamId)
+      /* Le club auquel le joueur a lié ce Fanzzy neutre, s'il l'a fait — lu
+         ici et non dans le deck : on entre au Virage avec son avatar, qu'il
+         soit au deck ou non. Sans la colonne, pas de lien. */
+      const clubAchete = hero && !neutre && clubDe(hero.id) == null
+        ? (await q(`SELECT club_id FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+          [u.userId, racineDe(hero.id)]).catch(() => []))[0]?.club_id ?? null
+        : null;
+      const lien = hero && !neutre && lieA(hero.id, teamId, clubAchete)
         ? modsDuLien(tauxDuLien()) : null;
       if (lien) {
         for (const [cle, v] of Object.entries(lien)) {
