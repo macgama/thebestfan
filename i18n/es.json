@@ -5858,7 +5858,6 @@
  "TOUT CHAUD, TOUT RAYÉ": "CALENTITO Y A RAYAS",
  "La Reine des Bâtons de Sucre": "La Reina del Caramelo",
  "Couronne de sucre, cape de sucre filé, une cartouchière de bâtons à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui manque.": "Corona de azúcar, capa de azúcar hilado, una cartuchera de bastones a la cintura. Apunta certera al pitido y sigue sonriendo con el diente que le falta.",
- "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort et rapporte un peu plus, au Grand Virage comme en duel. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe.": "<0>Los Fanzzy ligados a un club</0> llevan los colores de un equipo. Juégalo en un partido de tu club, y empuja un poco más fuerte y rinde un poco más, en el Gran Fondo y en duelo. Su ficha lo dice con un sello: «LIGADO A TU CLUB» si sigues a ese equipo.",
  "FANZZY LIÉ": "FANZZY LIGADO",
  "TU REPARS AVEC <0>×2 TON CLUB</0> <1>FANZZY LIÉ</1>": "TE LLEVAS <0>×2 TU CLUB</0> <1>FANZZY LIGADO</1>",
  "TU REPARS AVEC <0>FANZZY LIÉ</0>": "TE LLEVAS <0>FANZZY LIGADO</0>",
@@ -5867,5 +5866,14 @@
  "LIÉ À TON CLUB": "LIGADO A TU CLUB",
  "LIÉ À UN CLUB": "LIGADO A UN CLUB",
  "Ton club": "Tu club",
- "Fanzzy lié à ton club": "Fanzzy ligado a tu club"
+ "Fanzzy lié à ton club": "Fanzzy ligado a tu club",
+ "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort et rapporte un peu plus, au Grand Virage comme en duel. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe. Un Fanzzy neutre peut se lier à ton club principal depuis sa fiche, contre des écharpes, et pour toujours.": "<0>Los Fanzzy ligados a un club</0> llevan los colores de un equipo. Juégalo en un partido de tu club, y empuja un poco más fuerte y rinde un poco más, en el Gran Fondo y en duelo. Su ficha lo dice con un sello: «LIGADO A TU CLUB» si sigues a ese equipo. Un Fanzzy neutro puede ligarse a tu club principal desde su ficha, a cambio de bufandas, y para siempre.",
+ "LIER À MON CLUB<0>{0} écharpes</0>": "LIGAR A MI CLUB<0>{0} bufandas</0>",
+ "Choisis d’abord ton club principal dans « Mes équipes ».": "Elige primero tu club principal en «Mis equipos».",
+ "Lier à ton club": "Ligar a tu club",
+ "LIER À TON CLUB ?": "¿LIGARLO A TU CLUB?",
+ "Dans les matchs de ton club principal, il poussera {0} % plus fort et rapportera {1} % de plus, au Virage comme en duel. C’est pour toujours.": "En los partidos de tu club principal empujará un {0} % más fuerte y rendirá un {1} % más, en el Fondo y en duelo. Es para siempre.",
+ "LIER<0>{0} → {1} écharpes</0>": "LIGAR<0>{0} → {1} bufandas</0>",
+ "Il est lié à ton club.": "Está ligado a tu club.",
+ "Impossible de le lier.": "No se puede ligar."
 }

@@ -67,9 +67,15 @@ export function clubDe(fanzzyId) {
   return CLUB_DE.get(racine(fanzzyId)) ?? null;
 }
 
-/** Ce Fanzzy est-il lié au club `teamId` ? Faux pour un neutre ou un match sans club. */
-export function lieA(fanzzyId, teamId) {
-  const c = clubDe(fanzzyId);
+/**
+ * Ce Fanzzy est-il lié au club `teamId` ? Faux pour un neutre ou un match sans club.
+ *
+ * `clubAchete` : le club auquel le joueur a lié lui-même un Fanzzy neutre,
+ * contre des écharpes (`user_fanzzy.club_id`). Le club d'une série de
+ * championnat passe devant : il ne s'achète pas, il est écrit sur la carte.
+ */
+export function lieA(fanzzyId, teamId, clubAchete = null) {
+  const c = clubDe(fanzzyId) ?? (clubAchete == null ? null : Number(clubAchete));
   return c != null && teamId != null && c === Number(teamId);
 }
 
@@ -127,7 +133,7 @@ export function lierLeDeck(loadout, teamId, taux) {
   });
   return {
     ...loadout,
-    fanzzy: loadout.fanzzy.map((f) => (!lieA(f.id, teamId) ? f : {
+    fanzzy: loadout.fanzzy.map((f) => (!lieA(f.id, teamId, f.club) ? f : {
       ...lier(f),
       ages: (f.ages ?? []).map(lier),
     })),
