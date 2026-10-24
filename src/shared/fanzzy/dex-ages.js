@@ -1322,8 +1322,10 @@ export const AGES = {
      impériale, les émaux des bijoutiers, le ballon captif de la falaise, la
      pompe à vapeur du fleuve, le tram du bord de mer, le bal masqué des
      artistes, les horlogers de la ville, le feu d'artifice du parc, les
-     réverbères au gaz, les fouilleurs de vase du fleuve — et le troisième âge
-     en devient la figure, jusqu'à porter le décor sur lui.
+     réverbères au gaz, les fouilleurs de vase du fleuve, la foire d'automne,
+     les tertres du comté, la faïence ajourée, les caves de la musique beat,
+     les premières machines à calculer — et le troisième âge en devient la
+     figure, jusqu'à porter le décor sur lui.
      **Il garde toujours un détail du premier** : le sachet de miettes, le
      bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
      baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
@@ -1333,8 +1335,10 @@ export const AGES = {
      moustache du salon, les boutons de nacre, les baskets rouges, la bague
      de fer-blanc, les baskets blanches, le foulard noué, les tongs, les
      mocassins éraflés, les lunettes cerclées de fer, le bonnet à pompon, la
-     vieille casquette plate, les bottes de caoutchouc noires. C'est la règle
-     de ce fichier, et la fiche de chaque dessin la suit aussi.
+     vieille casquette plate, les bottes de caoutchouc noires, le jeton de
+     laiton, les chaussures de marche boueuses, le crayon dans le chignon, le
+     petit micro rouge, les lunettes d'écaille. C'est la règle de ce fichier,
+     et la fiche de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
      de `dex-terraces.js`.                                                    */
@@ -1616,5 +1620,70 @@ export const AGES = {
       + 'cape de soie gris vase et le grand seau blanc qui luit à sa hanche. Le fleuve lui rend '
       + 'tout ce qu’il a pris — et les bottes de caoutchouc noires sont toujours à ses pieds.',
       'LE FLEUVE REND TOUT'],
+  ],
+  AN31: [
+    ['Le Forain des Autos-Tamponneuses', 'Gilet rayé ambre et noir sur une chemise blanche à '
+      + 'fixe-manches, bourse de cuir, couronne de jetons de laiton à la ceinture et la haute '
+      + 'perche à étincelles d’une auto-tamponneuse tenue comme une canne. Son haut-de-forme '
+      + 'ambre brille, et quand il cogne la perche au sol, toute la piste repart.',
+      'EN PISTE !'],
+    ['Le Roi de la Foire', 'Une cape en chapiteau rayé ambre et noir bordée de rangées d’ampoules '
+      + 'qui brillent, des épaulettes en pare-chocs d’autos-tamponneuses, un haut-de-forme géant '
+      + 'couronné de petites lumières et la perche devenue un grand bâton lumineux. Quand il '
+      + 'frappe, toute la foire s’allume d’un coup — et le jeton de laiton pend toujours à son '
+      + 'cou.',
+      'TOUTE LA FOIRE TOURNE'],
+  ],
+  AN32: [
+    ['L’Archéologue du Tertre', 'Veste de toile bleue délavée aux poches sans nombre, chapeau à '
+      + 'large bord, mètre ruban et pinceaux à la ceinture, jalon de bois dans le dos et petites '
+      + 'trouvailles d’argent épinglées sur la poitrine. Sa truelle au manche bleu qui luit ne '
+      + 'gratte jamais au hasard : il se souvient de chaque couche.',
+      'COUCHE PAR COUCHE'],
+    ['Le Roi du Tertre', 'Une armure ancienne de fer et d’argent aux entrelacs gravés qui luisent '
+      + 'de bleu, un lourd manteau de laine bleue fermé d’une broche d’argent ronde, un haut '
+      + 'casque de fer à crête, visière relevée, et la truelle géante portée droite comme un '
+      + 'sceptre. Le vieux roi de la colline se souvient de tout, et la tribune avec lui — et les '
+      + 'chaussures de marche boueuses sont toujours à ses pieds.',
+      'LA COLLINE SE SOUVIENT'],
+  ],
+  AN33: [
+    ['La Potière du Tour', 'Long tablier de toile crème taché d’émail bleu et jaune, manches '
+      + 'retroussées, fil à couper et outils de bois à la ceinture, et le grand bol ajouré posé '
+      + 'sur l’avant-bras, qui luit doucement par chacun de ses trous. Elle perce ses motifs un à '
+      + 'un, et la dentelle apparaît d’un coup.',
+      'LA DENTELLE APPARAÎT'],
+    ['La Reine de la Faïence Ajourée', 'Une armure de plaques de faïence crème percées comme de la '
+      + 'dentelle, une lumière bleu roi qui passe par chaque trou, des filets d’émail jaune sur '
+      + 'les bords, une haute couronne de corbeilles ajourées empilées, une cape d’écailles de '
+      + 'porcelaine et le bol géant porté comme un bouclier. Chaque trou s’allume, et toute la '
+      + 'tribune dessine avec elle — le crayon est toujours planté dans son chignon.',
+      'TOUTE LA DENTELLE BRILLE'],
+  ],
+  AN34: [
+    ['La Chanteuse de Beat', 'Courte robe droite rouge à col blanc, bottes blanches, grands '
+      + 'anneaux aux oreilles, une choucroute plus haute que jamais, le micro rouge sur son pied '
+      + 'chromé et un tambourin rouge à la hanche. Elle chante entre les temps, et toute la cave '
+      + 'frappe dans ses mains avec elle.',
+      'TOUT LE MONDE TAPE'],
+    ['La Reine du Beat', 'Une robe de paillettes rouges aux panneaux géométriques blancs qui '
+      + 'luisent, un haut col de petits projecteurs ronds dressé derrière sa tête, une cape de '
+      + 'velours rouge et le micro géant, chromé et rouge, tenu droit comme un sceptre, qui '
+      + 's’allume de l’intérieur. Elle lance le contretemps et toute la tribune le prend — et '
+      + 'c’est toujours le petit micro rouge de la cave.',
+      'ENTRE LES TEMPS'],
+  ],
+  AN35: [
+    ['La Programmeuse des Lampes', 'Longue blouse blanche sur le twin-set marine, planchette sous '
+      + 'le bras, câbles à fiches enroulés sur l’épaule et la grande bobine bleu ciel qui tourne '
+      + 'lentement à sa taille, son ruban perforé faiblement lumineux. Elle compte les lampes qui '
+      + 's’allument une à une, et la machine répond au dernier chiffre.',
+      'À LA DERNIÈRE LAMPE'],
+    ['La Reine de la Machine', 'Une armure de hautes rangées de lampes de verre qui luisent dans '
+      + 'des cadres bleu ciel et blancs, des rangs d’interrupteurs et de voyants qui clignotent '
+      + 'sur la poitrine, une coiffe de lampes dressées, une longue cape de ruban perforé et la '
+      + 'bobine géante au bras comme un bouclier. Elle compte, la machine calcule, et toute la '
+      + 'tribune part au même chiffre — les lunettes d’écaille sont toujours sur son nez.',
+      'TOUTE LA MACHINE S’ALLUME'],
   ],
 };
