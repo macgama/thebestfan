@@ -29,6 +29,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP31 : nouveau dessin aux trois âges (petit nuage d’orage, puis tornade électrique, puis titan de l’orage), cinq états par âge, cartes B et C.
 - RP33 : nouveau dessin aux trois âges (pigeon voyageur, puis aviateur, puis as ailé aux ailes de métal), cinq états par âge, cartes B et C.
 - RP34 : nouveau dessin aux trois âges (vieux bus, puis bus de voyage chargé, puis bus festif à banderoles), cinq états par âge, cartes B et C.
+- RP32 : nouveau dessin aux trois âges (briquet bandana, puis briquet costaud à flamme vivante, puis génie de flamme), cinq états par âge, cartes B et C.
 
 ---
 
