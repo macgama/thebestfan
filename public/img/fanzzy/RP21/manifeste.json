@@ -1,6 +1,6 @@
 {
   "id": "RP21",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -10,7 +10,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f8b3029141cf"
+          "sha": "37b75e5a784a"
         },
         "base": {
           "etats": [
@@ -21,7 +21,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "3f2914e48752"
+          "sha": "65e656295a5f"
         }
       }
     },
@@ -33,7 +33,18 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "358c61fa7a14"
+          "sha": "7ed3dc703a9b"
+        },
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "c923737263e8"
         }
       }
     },
@@ -45,7 +56,18 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "bb0459a7beda"
+          "sha": "49bdca54717f"
+        },
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "11677741db67"
         }
       }
     }
