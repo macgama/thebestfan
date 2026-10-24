@@ -1,12 +1,16 @@
 # À déposer sur Infomaniak
 
-**Trois cartes au son de tribune** (branche `claude/sons-fid6tr`,
-24 octobre 2026, gardés par Gaël à l'écoute). Construction seule, **sans
-schéma ni redémarrage**.
+**Toutes les cartes et épreuves du duel au son de tribune** (branche
+`claude/sons-fid6tr`, 24 octobre 2026, générés dans Artlist avec l'accord
+de Gaël). Construction seule, **sans schéma ni redémarrage**.
 
-- Au duel, le Fumigène, l'Arbitre et le Chœur jouent un son tiré de vidéos
-  Artlist (Veo) à la place de leur bruitage fabriqué, qui reste le repli.
-- Après la mise en ligne : jouer une de ces cartes au duel, son allumé.
+- Au duel, les 39 cartes et les 24 épreuves jouent un son tiré de vidéos
+  Artlist (Veo) à la place de leur bruitage fabriqué, qui reste le repli
+  (le Fumigène, l'Arbitre et le Chœur d'abord, puis les 60 autres).
+- Les sons se chargent au premier geste sur une page de duel (environ
+  1 Mo en tout), jamais en mode calme ni en économie de données.
+- Après la mise en ligne : jouer quelques cartes et une épreuve de rythme
+  au duel, son allumé.
 
 ---
 
