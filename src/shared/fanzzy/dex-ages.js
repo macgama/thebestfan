@@ -1317,14 +1317,24 @@ export const AGES = {
      confiserie, la grande rue punk, le grand-bi, les dinosaures de plâtre du
      parc, la danse aux grelots, le parapluie du gentleman, les filets du
      port, le moulin, le cricket du village, la course de haies, le laitier
-     de l'aube — et le troisième âge en devient la figure, jusqu'à porter le
-     décor sur lui. **Il garde toujours un détail du premier** : le sachet de
-     miettes, le bonnet, le mouchoir noué, le petit pinceau, la dent qui
-     manque, le baladeur à cassettes, la sonnette de laiton, les lunettes
-     rondes, le mouchoir blanc, la moustache, le petit filet noir, la farine
-     sur la joue, la casquette bleue, le cheval-bâton, la casquette plate.
-     C'est la règle de ce fichier, et la fiche de chaque dessin la suit
-     aussi.
+     de l'aube, la boxe d'antan, les échecs du parc, le hors-la-loi des
+     ballades, le salon du barbier, les rois de nacre des marchés, le bus à
+     impériale, les émaux des bijoutiers, le ballon captif de la falaise, la
+     pompe à vapeur du fleuve, le tram du bord de mer, le bal masqué des
+     artistes, les horlogers de la ville, le feu d'artifice du parc, les
+     réverbères au gaz, les fouilleurs de vase du fleuve — et le troisième âge
+     en devient la figure, jusqu'à porter le décor sur lui.
+     **Il garde toujours un détail du premier** : le sachet de miettes, le
+     bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
+     baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
+     mouchoir blanc, la moustache, le petit filet noir, la farine sur la
+     joue, la casquette bleue, le cheval-bâton, la casquette plate, la
+     moustache cirée, le petit pion blanc, la plume blanche, la fine
+     moustache du salon, les boutons de nacre, les baskets rouges, la bague
+     de fer-blanc, les baskets blanches, le foulard noué, les tongs, les
+     mocassins éraflés, les lunettes cerclées de fer, le bonnet à pompon, la
+     vieille casquette plate, les bottes de caoutchouc noires. C'est la règle
+     de ce fichier, et la fiche de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
      de `dex-terraces.js`.                                                    */
@@ -1451,5 +1461,160 @@ export const AGES = {
       + 'tête, des phares ronds sur la poitrine, des casiers de bouteilles aux épaules et de petites '
       + 'roues aux bottes. Il ouvre la marche sous l’averse — et la casquette plate est toujours là, '
       + 'sous le toit.', 'TOUT LE MONDE EN TOURNÉE'],
+  ],
+  AN16: [
+    ['Le Boxeur de Foire', 'Culotte longue rayée rouge et noir, bretelles noires, serviette blanche '
+      + 'au cou et la moustache cirée en crocs. Sous la tente de la foire, il affronte qui veut, '
+      + 'trois rounds à la loyale, et il serre toujours la main d’abord.', 'À LA LOYALE'],
+    ['Le Champion des Règles', 'Une ceinture de champion large comme un bouclier, un long peignoir '
+      + 'rouge et noir, des gants qui brillent de l’intérieur. Il n’a jamais frappé sous la '
+      + 'ceinture ni après la cloche — et la moustache est toujours cirée.', 'SELON LES RÈGLES'],
+  ],
+  AN17: [
+    ['Le Joueur du Parc', 'Long manteau noir, casquette plate, une pendule d’échecs en bois à la '
+      + 'ceinture et un grand cavalier blanc sous le bras. Il joue contre tout le parc à la fois, '
+      + 'et il ne laisse jamais tomber son drapeau.', 'LA PENDULE TOURNE'],
+    ['Le Roi Noir et Blanc', 'Une armure en damier aux cases lumineuses, une cape pliée comme un '
+      + 'échiquier, une couronne de roi d’échecs et une grande pièce de roi pour sceptre. Il ne '
+      + 'bouge que d’une case à la fois, et personne ne le met en échec — le petit pion blanc pend '
+      + 'toujours à sa ceinture.', 'ÉCHEC ET MAT'],
+  ],
+  AN18: [
+    ['L’Archer des Fanions', 'Longue tunique rouge bordée de blanc, pourpoint de cuir, un grand arc '
+      + 'dans le dos et un carquois de flèches qui finissent en petits fanions rouges et blancs, '
+      + 'jamais en pointe. Il tire par-dessus la tribune et ses fanions retombent en pluie.',
+      'LES FANIONS EN L’AIR'],
+    ['Le Hors-la-Loi Écarlate', 'Une armure de cuir rouge aux coutures lumineuses, un haut '
+      + 'capuchon, un arc immense dressé dans le dos et un carquois plein de longs fanions. Il '
+      + 'sonne du cor avant chaque volée et toute la tribune lève les bras — la plume blanche n’a '
+      + 'jamais quitté son capuchon.', 'TOUT LE CIEL EN ROUGE'],
+  ],
+  AN19: [
+    ['Le Barbier à l’Enseigne', 'Gilet rayé rouge et blanc sur la blouse blanche, nœud papillon '
+      + 'noir, un blaireau et un peigne dans la poche, et l’enseigne rayée qui tourne en lumière '
+      + 'sur son épaule. Au salon, il lance la chanson et tous les fauteuils la reprennent.',
+      'À QUATRE VOIX'],
+    ['Le Maître Barbier', 'Une armure blanche et rouge taillée comme un fauteuil de barbier, '
+      + 'leviers chromés et coussins de cuir, une grande enseigne rayée qui tourne dans son dos et '
+      + 'un blaireau géant pour sceptre. Il chante, et tout le salon chante derrière lui — la '
+      + 'moustache cirée est parfaite.', 'TOUT LE SALON CHANTE'],
+  ],
+  AN20: [
+    ['Le Prince des Boutons', 'Le costume marine est maintenant couvert de motifs de nacre — '
+      + 'étoiles, fers à cheval, fleurs —, la casquette entièrement boutonnée, une tirelire de '
+      + 'quête à la ceinture. Au marché, chacun lui donne un bouton, et il le coud à sa place.',
+      'QUE ÇA BRILLE'],
+    ['Le Roi Nacré', 'Des milliers de boutons de nacre lumineux en grandes spirales, une haute '
+      + 'coiffe boutonnée couronnée de plumes blanches, une longue cape marine et un bouclier en '
+      + 'forme de bouton géant. Quand il lève le bras, toute la tribune scintille — et les premiers '
+      + 'boutons de la casquette sont toujours sur sa coiffe.', 'TOUS EN NACRE'],
+  ],
+  AN21: [
+    ['La Receveuse de l’Impériale', 'Veste rouge à liseré blanc, casquette à bande blanche, '
+      + 'sacoche de cuir à la hanche et la machine à tickets rouge qui brille sur sa poitrine. '
+      + 'Elle tire le cordon de la cloche, et tout l’étage du haut repart en chantant.',
+      'DING DING, ON REPART'],
+    ['La Reine de la Ligne', 'Un long manteau rouge aux épaulettes en forme de toit d’autobus, '
+      + 'une rangée de petites fenêtres lumineuses à l’ourlet, une écharpe de tickets qui '
+      + 'brillent et une grosse cloche de laiton à la hanche. Quand elle sonne, toute la ligne '
+      + 'chante avec elle — et les baskets rouges sont toujours à ses pieds.',
+      'TOUTE LA LIGNE CHANTE'],
+  ],
+  AN22: [
+    ['La Sertisseuse d’Émail', 'Long tablier de cuir bordeaux, loupe vissée sur l’œil, un '
+      + 'plateau de broches bordeaux et bleu ciel en bandoulière et une fine pince d’argent à la '
+      + 'main. Elle pose chaque goutte d’émail à sa place, et la broche s’allume.',
+      'UNE GOUTTE, PAS DEUX'],
+    ['La Reine des Émaux', 'Une armure de plaques d’émail bordeaux et bleu ciel serties '
+      + 'd’argent, qui brillent comme un vitrail, un haut diadème et une longue cape bordée de '
+      + 'petits carreaux. Elle vise à travers sa grande loupe et toute la tribune s’allume d’un '
+      + 'coup — la bague de fer-blanc est toujours à son doigt.', 'TOUT S’ALLUME'],
+  ],
+  AN23: [
+    ['L’Aéronaute de la Falaise', 'Blouson d’aviateur au col de mouton, lunettes de laiton sur '
+      + 'le front, une corde et un altimètre à la ceinture, et la grande enveloppe rayée rouge et '
+      + 'noir sur son dos. Elle compte les secondes avant de lâcher les amarres, jamais une de '
+      + 'trop.', 'LARGUEZ LES AMARRES'],
+    ['La Reine du Grand Ballon', 'Une nacelle d’osier pour armure, un grand ballon rayé rouge et '
+      + 'noir qui s’allume derrière sa tête et un brûleur de laiton qui rougeoie à l’épaule. Elle '
+      + 'compte à rebours et toute la tribune s’envole avec elle — les baskets blanches sont '
+      + 'toujours à ses pieds.', 'TOUT LE MONDE DÉCOLLE'],
+  ],
+  AN24: [
+    ['La Chauffeuse de la Grande Pompe', 'Bleu de chauffe noir aux poignets rouges, gros gants de '
+      + 'cuir, un manomètre de laiton à la ceinture et une pelle de charbon sur l’épaule. Elle '
+      + 'charge le foyer d’une main, frappe la cadence de l’autre, et la grande pompe repart.',
+      'PLEINE PRESSION'],
+    ['La Machine à Vapeur Vivante', 'Des épaules de fer rouge et blanc rivetées de laiton, un '
+      + 'grand balancier qui bascule au-dessus d’elle, des pistons pour avant-bras et des '
+      + 'manomètres lumineux sur la poitrine. Ses deux pistons frappent l’un après l’autre et '
+      + 'toute la tribune bat avec — le foulard noué est toujours sur sa tête.',
+      'TOUTE LA VAPEUR'],
+  ],
+  AN25: [
+    ['Le Conducteur du Train des Vagues', 'Veste de chemin de fer bleu marine à liseré blanc et '
+      + 'boutons de laiton, casquette bleue, une cloche à la ceinture et des fanions de signal '
+      + 'sous le bras. Il conduit le petit train du front de mer et n’oublie jamais un arrêt, ni '
+      + 'un visage.', 'EN VOITURE !'],
+    ['Le Train sur Échasses', 'Ses jambes sont devenues de hautes échasses de fer à petites '
+      + 'roues, son torse une plate-forme de tramway à rambarde blanche, un auvent rayé au-dessus '
+      + 'de la tête. Il traverse les vagues sans jamais se tromper de route — et les tongs sont '
+      + 'toujours à ses pieds.', 'À TRAVERS LES VAGUES'],
+  ],
+  AN26: [
+    ['Le Costumier du Bal des Arts', 'Queue-de-pie de velours bleu roi à revers de satin blanc, '
+      + 'jabot blanc, mètre ruban autour du cou et pelote d’épingles au poignet. Il habille tout '
+      + 'le bal à la main, et son masque de soie bleu roi à plumes blanches se lève le premier.',
+      'QUE LE BAL COMMENCE'],
+    ['Le Roi du Bal Masqué', 'Un manteau de brocart bleu roi brodé de volutes blanches qui '
+      + 'brillent, de larges épaulettes de satin blanc, une haute couronne de plumes blanches et '
+      + 'de rubans bleus, et le grand masque bleu roi au bout d’un long bâton, qui s’allume de '
+      + 'l’intérieur. Quand il le lève, toute la tribune se masque d’un bout à l’autre — et les '
+      + 'mocassins éraflés sont toujours à ses pieds.', 'TOUS AU BAL'],
+  ],
+  AN27: [
+    ['L’Horloger de la Ville', 'Longue blouse de travail bleu ciel à passepoil blanc, loupe sur '
+      + 'un bandeau, trousse d’outils de cuir à la ceinture et des rouages épinglés en rangs sur '
+      + 'la poitrine. Sa montre au cadran bleu ciel pend à une lourde chaîne, et toute la ville se '
+      + 'règle sur elle.', 'À L’HEURE PILE'],
+    ['Le Grand Rouage', 'Une armure de rouages de laiton et d’émail bleu ciel qui tournent '
+      + 'lentement en brillant, un grand cadran sans chiffres sur la poitrine, une crête de '
+      + 'ressorts au-dessus des épaules et la montre géante tenue comme un bouclier. Tous ses '
+      + 'rouages battent entre les temps, et la tribune avec — les petites lunettes rondes sont '
+      + 'toujours sur son nez.', 'TOUT TOURNE ENSEMBLE'],
+  ],
+  AN28: [
+    ['L’Artificière du Parc', 'Long manteau de toile bleue à pièces rouges, aux poches pleines '
+      + 'de tubes rayés, gros gants de cuir, lunettes de protection sur le front et une longue '
+      + 'lance de laiton à la main. La grande fusée rayée rouge et bleu sur son dos crépite de '
+      + 'plus en plus vite avant de partir.', 'MÈCHE ALLUMÉE'],
+    ['La Reine du Bouquet Final', 'Une armure de tubes de feu d’artifice rayés rouge et bleu, une '
+      + 'haute couronne de petites fusées aux pointes lumineuses, une longue cape bleue doublée '
+      + 'd’étoiles rouges et la fusée géante tenue comme un sceptre. Elle lance le bouquet final '
+      + 'de plus en plus vite, et toute la tribune s’allume avec — le bonnet rouge à pompon est '
+      + 'toujours sur sa tête.', 'LE BOUQUET FINAL'],
+  ],
+  AN29: [
+    ['L’Allumeur de Réverbères', 'Long pardessus de laine bleue à boutons blancs, une petite '
+      + 'échelle sur le dos, une lanterne de laiton à la ceinture et la perche bleue au crochet de '
+      + 'laiton qui brille. Il fait sa tournée chaque soir, par tous les temps, et pas un '
+      + 'réverbère ne reste éteint.', 'PAS UN DANS LE NOIR'],
+    ['Le Gardien des Lumières', 'Un long manteau bleu aux épaules en globes de vieux réverbères '
+      + 'qui brillent d’un blanc chaud, une crête de petits verres de lampe au-dessus de la tête, '
+      + 'une cape de nuit bleue piquée de fenêtres allumées et la perche géante dressée, sa '
+      + 'flamme bien haute. Il tient la lumière toute la nuit, et toute la colline avec — la '
+      + 'casquette plate est toujours sur sa tête.', 'TOUTE LA COLLINE BRILLE'],
+  ],
+  AN30: [
+    ['La Chercheuse de la Grève', 'Long manteau ciré noir à surpiqûres blanches, gros gants de '
+      + 'caoutchouc, une truelle et un tamis à la ceinture, de petits trésors épinglés en rangs '
+      + 'sur le manteau et le seau blanc plein de trouvailles qui brillent. Elle descend avec la '
+      + 'marée, et remonte avec elle.', 'À MARÉE BASSE'],
+    ['La Reine des Trésors de Vase', 'Un long manteau noir et blanc cuirassé de centaines de '
+      + 'trouvailles qui brillent — pipes en terre, vieux boutons, tessons, clés, petites '
+      + 'bouteilles — cousues en volutes, une haute couronne de pipes blanches et de galets, une '
+      + 'cape de soie gris vase et le grand seau blanc qui luit à sa hanche. Le fleuve lui rend '
+      + 'tout ce qu’il a pris — et les bottes de caoutchouc noires sont toujours à ses pieds.',
+      'LE FLEUVE REND TOUT'],
   ],
 };
