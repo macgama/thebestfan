@@ -37,15 +37,15 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Trente-cinq lignées sur soixante, et pourquoi elle arrive fermée
+ * ## Quarante lignées sur soixante, et pourquoi elle arrive fermée
  *
- * Les trente-cinq premières (AN1 à AN35) ont leurs dessins : trois cartes en
+ * Les quarante premières (AN1 à AN40) ont leurs dessins : trois cartes en
  * pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
- * états au deuxième âge, AN9, AN22, AN26, AN29 et AN35 quatre au premier :
- * leurs planches sont à refaire). Elles entrent par lots de cinq, à mesure
- * que leurs dessins arrivent : une lignée sans dessin aurait mis au catalogue
- * une silhouette procédurale. Les vingt-cinq autres suivront de la même
- * façon.
+ * états au deuxième âge et AN38 quatre, AN9, AN22, AN26, AN29 et AN35 quatre
+ * au premier : leurs planches sont à refaire). Elles entrent par lots de
+ * cinq, à mesure que leurs dessins arrivent : une lignée sans dessin aurait
+ * mis au catalogue une silhouette procédurale. Les vingt autres suivront de
+ * la même façon.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -156,6 +156,27 @@
  * au même bord (dix-neuf relances sur trente-huit, pile la moitié) : la
  * prochaine Pyro devra relancer.
  *
+ * Le lot suivant remet la Fidélité en tête et donne une lignée à quatre des
+ * cinq autres familles ; seules les Percussions attendent : la petite
+ * bobineuse (fide), qui suit des yeux le fil qui monte et descend sans le
+ * lâcher, d'où la jauge — la plus rare des variantes de la Fidélité, onze
+ * sur quatre-vingt-cinq, à un cheveu du plancher ; la gamine au pipeau
+ * (voix), qui bat la mesure du pied même quand ses notes sont fausses, d'où
+ * le tempo ; la gamine à la lampe de poche (depl), qui reprend à l'envers ce
+ * que la grotte lui renvoie, d'où le miroir ; la gamine à la bille (pyro),
+ * qui retient son souffle et ne lâche qu'au bon moment, d'où la relance ; et
+ * la gamine au cerf-volant (tifo), qui sent venir chaque rafale, d'où la
+ * ola. Quarante lignées : sept dans quatre familles, six en fide et en perc ;
+ * les Percussions passent en tête pour le lot suivant.
+ *
+ * La gamine à la bille n'avait pas le choix de son geste : une variante de
+ * plus aurait mis les Pyro sous la moitié de relances. Elle relance, et la
+ * relance passe à vingt sur trente-neuf. Trois familles restent pile au
+ * bord après ce lot : la garde à quarante-trois sur quatre-vingt-six,
+ * l'écharpe à trente-deux sur soixante-quatre et le tifo à trente et un sur
+ * soixante-deux. La prochaine lignée de chacune de ces trois familles devra
+ * prendre le geste éponyme.
+ *
  * La burette n'a pas le choix de son geste. Les Percussions comptaient
  * quarante-huit personnages de premier âge dont six aux `deuxvoix` — pile le
  * huitième. Une quarante-neuvième au geste éponyme aurait fait passer les
@@ -196,10 +217,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les trente-cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les quarante premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : trente-cinq
- * fois le même mot, ce sont trente-cinq occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : quarante
+ * fois le même mot, ce sont quarante occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -611,6 +632,68 @@ const PREMIERS_AGES = [
       + 'voix basse, et au dernier, elle a la réponse.',
     mods: { perfectBonus: 1.17, costPenalty: 1.06 },
     cri: { label: 'UN, DEUX, TROIS… TROUVÉ !', gest: 'compte', power: 54 } },
+
+  /* AN36 — la fidélité des filatures : la gamine qui rattrapait les bobines
+     tombées dans l'allée de la filature et finit reine des mille métiers à
+     tisser. Rouge, blanc et noir ; ni cornes, ni fourche, ni trident. Le
+     foulard de coton rouge reste dans ses cheveux jusqu'au troisième âge.
+     Elle suit des yeux le fil qui monte et descend sans jamais le lâcher,
+     d'où la jauge (voir l'en-tête) ; son défaut : elle en perd le temps. */
+  { id: 'AN36', nom: 'La Petite Bobineuse', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Dans l’allée poussiéreuse de la filature, elle court ramasser les bobines blanches '
+      + 'qui tombent des métiers, la petite navette rouge à la main et du coton plein les '
+      + 'cheveux. Quand le fil monte et descend, elle le suit des yeux sans jamais le lâcher.',
+    mods: { holdBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'LE FIL NE CASSE PAS', gest: 'jauge', power: 53 } },
+
+  /* AN37 — la voix de la petite cornemuse du Nord : la gamine qui soufflait
+     faux dans un pipeau en plastique et finit reine des bourdons, ceux qui se
+     jouent au soufflet. Noir et blanc. La mèche blanche reste dans ses
+     cheveux jusqu'au troisième âge. Ses notes sont fausses mais son pied bat
+     juste, d'où le tempo ; son défaut : elle ne sait pas presser. */
+  { id: 'AN37', nom: 'La Gamine au Pipeau', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'Sur le quai battu par le vent, elle souffle dans un pipeau en plastique, le petit '
+      + 'sac de cornemuse à carreaux coincé sous le bras. Les notes sortent fausses, mais elle '
+      + 'bat la mesure du pied, et elle ne la perd jamais.',
+    mods: { tempoWindow: 1.16, mashBonus: 0.92 },
+    cri: { label: 'UN, DEUX, ET SOUFFLE !', gest: 'tempo', power: 53 } },
+
+  /* AN38 — le déplacement sous la ville : la gamine qui descendait avec une
+     lampe de poche dans les grottes creusées sous la ville et finit reine du
+     grès rouge. Rouge et blanc. Les vieilles chaussures éraflées restent à
+     ses pieds jusqu'au troisième âge. Elle reprend à l'envers ce que la
+     grotte lui renvoie, d'où le miroir ; son défaut : elle encaisse mal. */
+  { id: 'AN38', nom: 'La Gamine à la Lampe de Poche', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'Sur les vieilles marches de grès qui descendent sous la ville, son casque rouge '
+      + 'trop grand de travers, elle braque sa petite lampe de poche dans le noir et chante. La '
+      + 'grotte lui renvoie son chant, et elle le reprend à l’envers, pour rire.',
+    mods: { breathBonus: 1.16, parryResist: 0.92 },
+    cri: { label: 'EH HO… OH HE !', gest: 'miroir', power: 53 } },
+
+  /* AN39 — la pyro des verreries : la gamine qui regardait le monde à
+     travers une bille de verre et finit reine du verre soufflé au bord du
+     fleuve. Rouge et blanc. Les baskets rouges restent à ses pieds jusqu'au
+     troisième âge. Elle retient son souffle et ne lâche la bille qu'au bon
+     moment, d'où la relance (voir l'en-tête) ; son défaut : chaque tir lui
+     coûte. */
+  { id: 'AN39', nom: 'La Gamine à la Bille', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Elle regarde le monde à travers une bille de verre rouge et blanche, un œil fermé, '
+      + 'une petite bourse de billes à la ceinture. Avant de tirer, elle retient son souffle, '
+      + 'longtemps, et ne lâche la bille qu’au tout dernier moment.',
+    mods: { perfectBonus: 1.17, costPenalty: 1.06 },
+    cri: { label: 'PILE DANS LE ROND !', gest: 'relance', power: 54 } },
+
+  /* AN40 — le tifo de la colline : la gamine dont le cerf-volant finissait
+     toujours dans les arbres et qui finit reine des vents au-dessus de la
+     ville. Bleu marine et blanc. Le bandeau bleu marine reste dans ses
+     cheveux jusqu'au troisième âge. Elle sent venir chaque rafale avant tout
+     le monde, d'où la ola ; son défaut : elle s'essouffle à courir après. */
+  { id: 'AN40', nom: 'La Gamine au Cerf-Volant', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Au sommet de la colline venteuse, elle serre contre elle un petit cerf-volant de '
+      + 'papier bleu marine et blanc tout froissé, la ficelle emmêlée au poignet. Il finit '
+      + 'toujours dans les arbres, mais elle sent venir chaque rafale avant tout le monde.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'LA VOILÀ, LA RAFALE !', gest: 'ola', power: 52 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
