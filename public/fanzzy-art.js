@@ -117,10 +117,12 @@
     'RP11C', 'RP12', 'RP12B', 'RP12C', 'RP33', 'RP33B', 'RP33C', 'RP34',
     'RP34B', 'RP34C', 'RP35', 'RP35B', 'RP35C', 'RP13', 'RP14', 'RP15',
     'RP16', 'RP17', 'AN1', 'AN2', 'AN3', 'AN4', 'AN5', 'AN6',
-    'AN7', 'AN8', 'AN9', 'AN10', 'TR1B', 'TR1C', 'TR3B', 'TR3C',
-    'TR23B', 'TR23C', 'TR50B', 'TR50C', 'AN1B', 'AN1C', 'AN2B', 'AN2C',
-    'AN3B', 'AN3C', 'AN4B', 'AN4C', 'AN5B', 'AN5C', 'AN6B', 'AN6C',
-    'AN7B', 'AN7C', 'AN8B', 'AN8C', 'AN9B', 'AN9C', 'AN10B', 'AN10C',
+    'AN7', 'AN8', 'AN9', 'AN10', 'AN11', 'AN12', 'AN13', 'AN14',
+    'AN15', 'TR1B', 'TR1C', 'TR3B', 'TR3C', 'TR23B', 'TR23C', 'TR50B',
+    'TR50C', 'AN1B', 'AN1C', 'AN2B', 'AN2C', 'AN3B', 'AN3C', 'AN4B',
+    'AN4C', 'AN5B', 'AN5C', 'AN6B', 'AN6C', 'AN7B', 'AN7C', 'AN8B',
+    'AN8C', 'AN9B', 'AN9C', 'AN10B', 'AN10C', 'AN11B', 'AN11C', 'AN12B',
+    'AN12C', 'AN13B', 'AN13C', 'AN14B', 'AN14C', 'AN15B', 'AN15C',
   ]);
 
   /**
@@ -216,13 +218,17 @@
     RP16: '326db622b1', RP17: 'cd0dca177c', AN1: 'af35339763', AN2: '3701609829',
     AN3: 'bf76357b07', AN4: '9a7186f901', AN5: '9b443283f1', AN6: '056bf58585',
     AN7: '26773f4c6e', AN8: 'c67c931184', AN9: 'bac8873cb6', AN10: '39c82285ff',
-    TR1B: 'b631f5efed', TR1C: '2c36567b61', TR3B: '553f88c22a', TR3C: '017bf8b281',
-    TR23B: '53b5dcb30e', TR23C: 'bc86bd410c', TR50B: 'c416c02c3f', TR50C: '2abca26f16',
-    AN1B: '054480eab6', AN1C: '4fdb96cc74', AN2B: '6c2d4b8ed7', AN2C: '6ab17fc74a',
-    AN3B: '71d845d2e8', AN3C: '4f0c82ef52', AN4B: 'cad6d63478', AN4C: 'bb28256c7c',
-    AN5B: '525de731fd', AN5C: 'c04bcd7ad5', AN6B: 'b25acb05eb', AN6C: '0794d72792',
-    AN7B: '58732dcf46', AN7C: 'a2b2e46edb', AN8B: 'e71795820e', AN8C: 'a33ed98743',
-    AN9B: '3f3820e6b2', AN9C: '0e7baecc7d', AN10B: 'ef0b11b245', AN10C: '115392c283',
+    AN11: '7b872e9a93', AN12: '2bd00dead0', AN13: '721eb3330b', AN14: '4825717de0',
+    AN15: '3b45b130b5', TR1B: 'b631f5efed', TR1C: '2c36567b61', TR3B: '553f88c22a',
+    TR3C: '017bf8b281', TR23B: '53b5dcb30e', TR23C: 'bc86bd410c', TR50B: 'c416c02c3f',
+    TR50C: '2abca26f16', AN1B: '054480eab6', AN1C: '4fdb96cc74', AN2B: '6c2d4b8ed7',
+    AN2C: '6ab17fc74a', AN3B: '71d845d2e8', AN3C: '4f0c82ef52', AN4B: 'cad6d63478',
+    AN4C: 'bb28256c7c', AN5B: '525de731fd', AN5C: 'c04bcd7ad5', AN6B: 'b25acb05eb',
+    AN6C: '0794d72792', AN7B: '58732dcf46', AN7C: 'a2b2e46edb', AN8B: 'e71795820e',
+    AN8C: 'a33ed98743', AN9B: '3f3820e6b2', AN9C: '0e7baecc7d', AN10B: 'ef0b11b245',
+    AN10C: '115392c283', AN11B: '75e35b3b16', AN11C: 'fbd8d0d651', AN12B: 'eba667e213',
+    AN12C: 'e0fbb71827', AN13B: '1e4ed9ac08', AN13C: '577b17f5e3', AN14B: '2fd8e91c3a',
+    AN14C: '5423ba0bbc', AN15B: '1b78e14c65', AN15C: 'de2e556dc8',
   };
 
   /**
