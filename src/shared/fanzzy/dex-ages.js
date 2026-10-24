@@ -1314,11 +1314,11 @@ export const AGES = {
      Le foot anglais vu des gradins debout (`dex-terraces.js`). Chaque lignée
      monte dans un vieux métier ou une vieille tradition de son coin — la
      garde de la forteresse, la péniche, la promenade, l'enseigne, la
-     confiserie — et le troisième âge en devient la figure, jusqu'à porter le
-     décor sur lui. **Il garde toujours un détail du premier** : le sachet de
-     miettes, le bonnet, le mouchoir noué, le petit pinceau, la dent qui
-     manque. C'est la règle de ce fichier, et la fiche de chaque dessin la
-     suit aussi.
+     confiserie, la grande rue punk — et le troisième âge en devient la
+     figure, jusqu'à porter le décor sur lui. **Il garde toujours un détail du
+     premier** : le sachet de miettes, le bonnet, le mouchoir noué, le petit
+     pinceau, la dent qui manque, le baladeur à cassettes. C'est la règle de
+     ce fichier, et la fiche de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
      de `dex-terraces.js`.                                                    */
@@ -1362,5 +1362,13 @@ export const AGES = {
     ['La Reine des Bâtons de Sucre', 'Couronne de sucre, cape de sucre filé, une cartouchière de bâtons '
       + 'à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui '
       + 'manque.', 'SERVEZ-VOUS'],
+  ],
+  AN6: [
+    ['La Punk à Épingles', 'Le blouson, elle le porte maintenant, couvert de clous et d’épingles à '
+      + 'nourrice. Elle tape des bottes sur les marches au rythme de sa cassette, et toute la travée '
+      + 'finit par taper avec elle.', 'TAPEZ DES PIEDS'],
+    ['La Reine du Grand Boulevard', 'Crête bleue, épaulettes cloutées, des épingles grandes comme des '
+      + 'sabres. Quand ses semelles frappent le béton, la tribune tremble — et le petit baladeur pend '
+      + 'toujours à son cou.', 'TOUT LE BOULEVARD'],
   ],
 };
