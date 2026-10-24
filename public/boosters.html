@@ -688,6 +688,13 @@
 #opener::before{content:"";position:absolute;inset:0;z-index:1;background:#000;opacity:0;
   pointer-events:none;transition:opacity .35s}
 #opener.kq-nuit::before{opacity:.7}
+/* Le fond filmé (Artlist, 24 octobre 2026) : une gerbe d'or derrière la
+   légendaire, un tourbillon violet derrière l'épique, posés en « screen »
+   sur le noir de l'écran, sous la carte. Jamais chargé sans mouvement ni en
+   économie de données (voir `fondFilme`). */
+#opener>#kqFond{position:absolute;inset:0;z-index:1;width:100%;height:100%;max-width:none;margin:0;
+  object-fit:cover;mix-blend-mode:screen;opacity:0;transition:opacity .35s;pointer-events:none}
+#opener>#kqFond.on{opacity:.85}
 
 /* L'entrée de chaque sorte, posée sur la carte une fois retournée. */
 .reveal.kq-entree[data-sorte=fanzzy] .flip{animation:kq-saut .62s cubic-bezier(.3,.7,.4,1)}
@@ -731,10 +738,12 @@
   .reveal.kq-charge .flip{scale:1;translate:0}
   .flash.go{animation:none}
   .slide,.reveal,.reveal .flip{transition:none}
+  #opener>#kqFond{display:none}
 }
 html[data-calme~="animations"] .slide.center .foil,
 html[data-calme~="animations"] .tearpack .grip,
 html[data-calme~="animations"] .flash.go{animation:none}
+html[data-calme~="animations"] #opener>#kqFond{display:none}
 html[data-calme~="animations"] .ostage::before,
 html[data-calme~="animations"] .ostage>.reveal,
 html[data-calme~="animations"] .reveal .flip,
@@ -845,6 +854,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
       <span class="tbf-avatar tbf-avatar--barre" id="oNiv" role="img" hidden><span
         class="tbf-anneau"></span><b class="tbf-sticker tbf-sticker--rond tbf-avatar-niv"></b></span>
       <button type="button" class="tbf-plaque" id="oClose">FERMER</button></div>
+    <video id="kqFond" muted playsinline preload="none" aria-hidden="true"></video>
     <div class="ostage" id="ostage"></div>
     <div class="butintitre" id="butinTitre" hidden></div>
     <div class="summary" id="summary"></div>
@@ -2234,6 +2244,8 @@ async function openPack() {
   /* Ce que le booster a coûté, s'il s'est payé : un ticket « −45 », comme à
      l'étal de la boutique. Le kiosque, couvert, ne le compte qu'au retour. */
   if (paye > 0) ticket({ montant: `−${paye}`, nom: 'ÉCHARPES', origine: 'le booster acheté' });
+  // Les jingles se décodent pendant le suspense : le toucher a créé le contexte.
+  window.TBF_SON?.jingles?.();
   suspense();
   /* La barre et le tiroir ont leur bourse : la réponse du serveur leur est
      relayée (R6), **après** que l'écran d'ouverture couvre le kiosque — qui
@@ -2437,6 +2449,32 @@ function entree(cur, f) {
   }
 }
 
+/* Les fonds filmés, par rareté : seules l'épique et la légendaire en ont un. */
+const FONDS = {
+  epique: '/video/fond-epique.802306fa.mp4',
+  legendaire: '/video/fond-legendaire.942fde94.mp4',
+};
+/** Le fond filmé derrière la carte qui se retourne, trois secondes. */
+function fondFilme(rar) {
+  const v = $('kqFond');
+  if (!v) return;
+  clearTimeout(v._t);
+  const src = FONDS[rar];
+  if (!src || sansMouvement() || navigator.connection?.saveData) { eteindreFond(); return; }
+  if (v.getAttribute('src') !== src) { v.src = src; v.load(); }
+  try { v.currentTime = 0; } catch { /* pas encore chargée */ }
+  v.classList.add('on');
+  v.play?.()?.catch?.(() => {});
+  v._t = setTimeout(eteindreFond, 3200);
+}
+function eteindreFond() {
+  const v = $('kqFond');
+  if (!v) return;
+  clearTimeout(v._t);
+  v.classList.remove('on');
+  v.pause?.();
+}
+
 /** Retourner la carte du dessus : la rareté (`FX.reveler`), puis son entrée. */
 function retournerCarte(cur) {
   $('opener').classList.remove('kq-nuit');
@@ -2461,7 +2499,12 @@ function retournerCarte(cur) {
      « TOUT RÉVÉLER » l'interrompt, la carte quittant l'écran. */
   const moi = paquet;
   enCeremonie = true;
-  Promise.resolve(window.FX?.reveler?.(rar, cur)).catch(() => {})
+  /* Le jingle de la rareté, s'il est prêt, remplace le son de la cérémonie
+     (le tic, le carillon, le rugissement) ; sinon la cérémonie garde le sien. */
+  let chante = false;
+  try { chante = window.TBF_SON?.jingle?.(rar) === true; } catch { /* le son ne casse rien */ }
+  fondFilme(rar);
+  Promise.resolve(window.FX?.reveler?.(rar, cur, { son: !chante })).catch(() => {})
     .then(() => { if (moi === paquet) enCeremonie = false; });
   /* L'entrée part quand le demi-tour est fini (`.reveal .flip`, 550 ms) :
      plus tôt, le geste se jouerait sur une carte encore de profil. La
@@ -2490,6 +2533,7 @@ $('ostage').onclick = () => {
     cur.classList.remove('kq-dessus');
     cur.style.transform = 'translateX(-130%) rotate(-14deg)';
     cur.style.opacity = '0';
+    eteindreFond();
     if (++idx >= pull.length) return finishPack();
     cards[idx].classList.add('kq-dessus');
     cards.forEach((el, i) => { if (i >= idx) el.style.transform = `translateY(${(i - idx) * 7}px) scale(${1 - (i - idx) * .03})`; });
@@ -2504,6 +2548,7 @@ function fermerOpener() {
   finirSuspense();
   if (charge) { clearTimeout(charge.t); charge = null; }
   $('opener').classList.remove('on', 'kq-nuit');
+  eteindreFond();
   renderKiosque();
 }
 $('oClose').onclick = () => fermerOpener();
@@ -2522,6 +2567,7 @@ function finishPack() {
   finirSuspense();
   if (charge) { clearTimeout(charge.t); charge = null; }
   $('opener').classList.remove('kq-nuit');
+  eteindreFond();
   $('ostage').innerHTML = '';
   /* La scène vidée gardait six cents pixels de noir au-dessus du butin. On la
      replie : la page d'album prend la place, et c'est elle qu'on est venu voir. */
