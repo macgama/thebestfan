@@ -23,6 +23,84 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 
 ---
 
+**Le jeu plus vivant : vestiaire, fins de duel, évolutions, buts**
+(branche `claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- Le vestiaire du duel devient un couloir de stade (projecteurs, fumée, VS
+  entre les tribunes, une place qui se remplit s'allume).
+- Fin de duel et fin du Virage : la victoire claque sous les confettis et
+  l'or filmé, la défaite tombe de travers sous la pluie, le nul hésite.
+- Une évolution vers l'âge 2 ou 3 a son fond filmé et ses rayons ; un but
+  pour soi, sa gerbe filmée ; un carton rouge au Virage est brandi.
+- Après la mise en ligne : entrer en file d'un duel, puis le finir ; faire
+  évoluer un Fanzzy.
+
+---
+
+**LES TERRACES : AN6 à AN10, cinq Fanzzy de plus** (branche
+`claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- AN6 La Timide du Grand Boulevard (Percussion, bleu roi et blanc), AN7 La
+  Coursière à Vélo (Déplacement, bleu ciel), AN8 Le Gamin au Dinosaure en
+  Plâtre (Tifo, rouge et bleu), AN9 La Danseuse aux Grelots (Percussion,
+  bleu et blanc), AN10 Le Banlieusard au Parapluie (Fidélité, blanc et
+  noir) : trois cartes chacun, les expressions des trois âges, le
+  clignement à l'âge 1, et leurs textes dans les cinq langues. Le
+  redémarrage écrit leurs quinze cartes dans le catalogue en base
+  (`INSERT IGNORE`, rien d'autre ne bouge). La série compte dix lignées sur
+  vingt.
+- La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
+  à faire de plus, ils s'ouvriront avec elle.
+- Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
+  AN10 et vérifier leurs trois âges (les cartes et les expressions), puis
+  qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
+  « pousse » au premier âge (la planche n'en avait pas) : elle reste au
+  repos pendant qu'on chante.
+
+---
+
+**Toutes les cartes et épreuves du duel au son de tribune** (branche
+`claude/sons-fid6tr`, 24 octobre 2026, générés dans Artlist avec l'accord
+de Gaël). Construction seule, **sans schéma ni redémarrage**.
+
+- Au duel, les 39 cartes et les 24 épreuves jouent un son tiré de vidéos
+  Artlist (Veo) à la place de leur bruitage fabriqué, qui reste le repli
+  (le Fumigène, l'Arbitre et le Chœur d'abord, puis les 60 autres).
+- Les sons se chargent au premier geste sur une page de duel (environ
+  1 Mo en tout), jamais en mode calme ni en économie de données.
+- Après la mise en ligne : jouer quelques cartes et une épreuve de rythme
+  au duel, son allumé.
+
+---
+
+**Les jingles et les fonds filmés des boosters** (branche
+`claude/project-thread-nk6bu3`, 24 octobre 2026, générés dans Artlist avec
+l'accord de Gaël). Construction puis redémarrage, **sans schéma**.
+
+- Quand une carte se retourne, un court jingle joue selon sa rareté
+  (commune, rare, épique, légendaire), à la place du son synthétisé ; un
+  tourbillon violet passe derrière une épique, une gerbe d'or derrière une
+  légendaire. Rien ne se télécharge en mode calme ni en économie de données.
+- Après la mise en ligne : ouvrir un booster, son allumé, et écouter.
+
+---
+
+**L'ouverture des boosters en spectacle** (branche
+`claude/project-thread-nk6bu3`, 24 octobre 2026, demandée par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- Le paquet tombe et tremble dans la couleur de sa meilleure carte ; une
+  épique se soulève avant de se retourner, une légendaire une seconde, la
+  salle éteinte. Chaque sorte de carte a son geste, son mot sous la carte
+  et son bruit (Fanzzy, expression, tenue, équipement, stade, carte action,
+  écharpes).
+- Après la mise en ligne : ouvrir un booster sur le téléphone, son allumé,
+  et toucher les cartes une à une.
+
+---
+
 **Lier un Fanzzy neutre à son club** (branche `claude/project-thread-v83ym1`,
 22 octobre 2026, choix de Gaël). Construction, **schéma** (`sql/fanzzy.sql`
 ajoute la colonne `user_fanzzy.club_id`), puis redémarrage.

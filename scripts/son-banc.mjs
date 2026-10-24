@@ -242,6 +242,12 @@ export function travaux(mix) {
      l'ovation, seule et au but réel, jugée comme l'ovation — un moment. */
   t.push({ id: 'clameur', sorte: 'son', famille: 'moment', source: 'enregistree',
     quoi: { son: 'ovation', enregistre: true }, duree: 4.5 });
+  /* Les cartes enregistrées (24 octobre 2026) : chacune jugée dans la
+     fenêtre de sa famille, comme la synthèse qu'elle remplace. */
+  for (const [nom, e] of Object.entries(mix.enregistres ?? {})) {
+    t.push({ id: `${nom}~enregistre`, sorte: 'son', famille: e.famille, source: 'enregistree',
+      quoi: { son: nom, enregistre: true }, duree: 2.6 });
+  }
   t.push({ id: 'butReel+clameur+pousse', sorte: 'superposition', source: 'enregistree',
     quoi: { sons: ['butReel', 'ovation', 'pousse'], enregistre: true }, duree: 4.5 });
   /* L'ambiance, niveau par niveau, assez longtemps pour respirer. Avec sa

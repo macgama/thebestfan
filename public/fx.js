@@ -428,6 +428,49 @@
      ne disent rien que la forme, la couleur et le mot ne disent déjà ; ils
      partent. Le script ne les pose même pas (voir « reveler ») : ces règles-ci
      tiennent pour un réglage changé pendant qu'une cérémonie se joue. */
+  /* ------------------------------------------------- les fonds filmés
+
+     Des nappes de lumière filmées sur du noir (Artlist, octobre 2026),
+     posées en « screen » : seul ce qui brille se voit. Voir « fond ». */
+  .fx-fond{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;
+    opacity:0;transition:opacity .35s;pointer-events:none;z-index:89}
+  .fx-fond.on{opacity:.9}
+  .fx-fond.dans{position:absolute;z-index:-1}
+  html.tbf-vitrine-ouverte .fx-fond:not(.dans){z-index:128}
+
+  /* ------------------------------------------------- la fin d'un duel
+
+     Voir « fin ». La case du résultat entre selon l'issue : la victoire
+     claque d'en haut, la défaite tombe et reste de travers, le nul hésite.
+     Le Fanzzy saute ou s'affaisse ; la défaite fait tomber une pluie fine. */
+  .fx-fin-victoire{animation:fxfinv .7s cubic-bezier(.2,1.5,.35,1) both}
+  @keyframes fxfinv{0%{scale:2.6;rotate:-8deg;opacity:0}60%{scale:.94;opacity:1}100%{scale:1;rotate:0deg}}
+  .fx-fin-defaite{transform-origin:50% 0;animation:fxfind 1.2s cubic-bezier(.3,.6,.4,1) both}
+  @keyframes fxfind{0%{translate:0 -60vh;opacity:0}35%{translate:0 0;rotate:0deg;opacity:1}
+    50%{rotate:7deg}65%{rotate:-4deg}80%{rotate:4deg}100%{rotate:3deg}}
+  .fx-fin-nul{animation:fxfinn .8s ease-out both}
+  @keyframes fxfinn{0%{scale:.4;opacity:0}45%{scale:1.06;opacity:1}60%{rotate:-3deg}
+    80%{rotate:3deg}100%{scale:1;rotate:0deg}}
+  .fx-fin-saute{animation:fxsaute .9s cubic-bezier(.3,1.4,.5,1) .25s both}
+  @keyframes fxsaute{0%{translate:0 40px;opacity:0}40%{translate:0 -30px;opacity:1}
+    70%{translate:0 4px}100%{translate:0 0}}
+  .fx-fin-affaisse{animation:fxaffaisse 1.2s ease-out .4s both}
+  @keyframes fxaffaisse{0%{translate:0 24px;opacity:0}100%{translate:0 0;opacity:1;
+    filter:grayscale(.55) brightness(.85)}}
+  .fx-pluie{position:fixed;inset:-20% 0 0;z-index:-1;pointer-events:none;opacity:0;
+    background:repeating-linear-gradient(104deg,transparent 0 14px,rgba(190,205,225,.13) 14px 15px,
+      transparent 15px 37px);background-size:100% 220px;animation:fxpluie 3.4s linear forwards}
+  @keyframes fxpluie{0%{opacity:0;background-position:0 0}15%{opacity:1}75%{opacity:.8}
+    100%{opacity:0;background-position:-60px 660px}}
+  .fx-rayons-fin{position:absolute;left:50%;top:50%;width:min(170vw,760px);aspect-ratio:1;z-index:-1;
+    translate:-50% -50%;pointer-events:none;opacity:0;border-radius:50%;
+    background:repeating-conic-gradient(var(--fx-c,#F5C33B) 0 7deg,transparent 7deg 18deg);
+    -webkit-mask:radial-gradient(closest-side,#000 20%,transparent 75%);
+    mask:radial-gradient(closest-side,#000 20%,transparent 75%);
+    animation:fxrayonsfin 2.6s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes fxrayonsfin{0%{opacity:0;rotate:-20deg;scale:.5}20%{opacity:.5}
+    100%{opacity:0;rotate:40deg;scale:1.1}}
+
   @keyframes fxdoux{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
   @keyframes fxbandeaudoux{0%{transform:none;opacity:0}8%{opacity:1}
     90%{opacity:1}100%{transform:none;opacity:0}}
@@ -441,6 +484,8 @@
     .fx-charge:not(#fx-nul){animation:fxchargedoux 1s ease forwards}
     .fx-arrive:not(#fx-nul){animation:fxarrivedoux .5s ease backwards}
     .fx-rev-plastique,.fx-rev-nappe,.fx-rev-halo,.fx-rev-flash,.fx-rev-rayons{display:none}
+    .fx-fond,.fx-pluie,.fx-rayons-fin{display:none}
+    .fx-fin-victoire,.fx-fin-defaite,.fx-fin-nul,.fx-fin-saute,.fx-fin-affaisse{animation:fxarrivedoux .5s ease backwards}
   }
   html[data-calme~="animations"] .fx-shake{animation:none}
   html[data-calme~="animations"] .fx-titre.go{animation:fxdoux 1.6s ease}
@@ -450,7 +495,12 @@
   html[data-calme~="animations"] .fx-arrive:not(#fx-nul){animation:fxarrivedoux .5s ease backwards}
   html[data-calme~="animations"] .fx-rev-plastique,html[data-calme~="animations"] .fx-rev-nappe,
   html[data-calme~="animations"] .fx-rev-halo,html[data-calme~="animations"] .fx-rev-flash,
-  html[data-calme~="animations"] .fx-rev-rayons{display:none}`;
+  html[data-calme~="animations"] .fx-rev-rayons{display:none}
+  html[data-calme~="animations"] .fx-fond,html[data-calme~="animations"] .fx-pluie,
+  html[data-calme~="animations"] .fx-rayons-fin{display:none}
+  html[data-calme~="animations"] .fx-fin-victoire,html[data-calme~="animations"] .fx-fin-defaite,
+  html[data-calme~="animations"] .fx-fin-nul,html[data-calme~="animations"] .fx-fin-saute,
+  html[data-calme~="animations"] .fx-fin-affaisse{animation:fxarrivedoux .5s ease backwards}`;
 
   /* ------------------------------------------------- personnages vivants
      Un Fanzzy figé sur une carte a l'air d'un autocollant. Trois animations
@@ -1330,7 +1380,54 @@
     });
   }
 
+  /* ------------------------------------------------- les fonds filmés
+
+     Une vidéo courte, sans son, sur du noir, jouée en « screen » derrière
+     un grand moment (24 octobre 2026, fil « Rendre le jeu visuellement
+     vivant »). Les adresses portent l'empreinte du fichier : le serveur sert
+     /video un an. **Jamais sans mouvement, ni en économie de données** :
+     rien n'est même téléchargé. Un nom sans fichier ne fait rien ; un
+     fichier absent non plus (le reste du moment suffit, comme pour le Cri). */
+  const FONDS = {
+    or: '/video/fond-legendaire.942fde94.mp4',
+    violet: '/video/fond-epique.802306fa.mp4',
+    rare: '/video/fond-rare.fcda8ceb.mp4',
+    'evolution-2': '/video/fond-evolution-2.529c96b1.mp4',
+    'evolution-3': '/video/fond-evolution-3.84788376.mp4',
+    but: '/video/fond-but.674104d5.mp4',
+    victoire: '/video/fond-victoire.bd7ba4d8.mp4',
+    defaite: '/video/fond-defaite.6fb9d4e0.mp4',
+    rouge: '/video/fond-rouge.2d14231c.mp4',
+  };
+  const videos = new Map();
+  function fond(nom, { dans = null, ms = 3000, opacite = null } = {}) {
+    const src = FONDS[nom];
+    if (!src || doux() || navigator.connection?.saveData) return false;
+    const hote = dans ?? document.body;
+    let v = videos.get(hote);
+    if (!v || !v.isConnected) {
+      v = document.createElement('video');
+      v.className = `fx-fond${dans ? ' dans' : ''}`;
+      v.muted = true; v.playsInline = true; v.preload = 'none';
+      v.setAttribute('aria-hidden', 'true');
+      v.onerror = () => { v.classList.remove('on'); };
+      hote.prepend(v);
+      videos.set(hote, v);
+    }
+    if (v.getAttribute('src') !== src) { v.src = src; v.load(); }
+    try { v.currentTime = 0; } catch { /* pas encore chargée */ }
+    v.style.opacity = opacite == null ? '' : String(opacite);
+    v.classList.add('on');
+    v.play?.()?.catch?.(() => {});
+    clearTimeout(v._t);
+    v._t = setTimeout(() => { v.classList.remove('on'); v.pause?.(); }, ms);
+    return true;
+  }
+
   const FX = {
+    /** Un fond filmé derrière un grand moment (voir « les fonds filmés »). */
+    fond,
+
     couleurs: COULEURS,
 
     /**
@@ -1466,6 +1563,8 @@
       // Un seul motif pour les deux formes : un but se sent pareil sous le
       // doigt, qu'on le lise dans la case ou dans le titre d'ici.
       const vibration = pour ? [45, 55, 130] : 220;
+      // La gerbe filmée derrière la case : un but pour soi, seulement.
+      if (pour) fond(FONDS.but ? 'but' : 'or', { ms: 2800, opacite: 0.75 });
       if (vignette) {
         secousse(1.4);
         buzz(vibration);
@@ -1503,6 +1602,10 @@
       requestAnimationFrame(() => c.classList.add('go'));
       setTimeout(() => c.remove(), 1600);
       buzz(couleur === 'rouge' ? [40, 40, 40] : 25);
+      if (couleur === 'rouge') {
+        flash('rgba(224,64,44,.45)');
+        fond('rouge', { ms: 2400 });
+      }
       if (joueur) {
         setTimeout(() => titre(couleur === 'rouge' ? 'ROUGE' : 'JAUNE',
           [joueur, minute ? `${minute}'` : null].filter(Boolean).join(' · '),
@@ -1621,7 +1724,7 @@
      * @param {string}  o.nom     le nom du nouvel âge, annoncé en grand
      * @param {string}  o.rar     la rareté d'arrivée : elle donne la couleur
      */
-    evolution(portrait, { nom = '', rar = 'commune' } = {}) {
+    evolution(portrait, { nom = '', rar = 'commune', age = 0 } = {}) {
       const PALETTE = {
         commune:    [COULEURS.craie],
         rare:       [COULEURS.bleu, COULEURS.craie],
@@ -1655,6 +1758,18 @@
             distance: rar === 'legendaire' ? 260 : 190 });
           buzz(rar === 'legendaire' ? [40, 50, 40, 50, 120] : [30, 40, 60]);
           son('evolue');
+          /* L'âge atteint, filmé derrière : le deuxième en bleu-violet, le
+             troisième dans l'or. Seulement quand l'appelant dit l'âge (la
+             fiche) : la Relève du duel se joue sans. */
+          if (age >= 2) {
+            const n = Number(age) >= 3 ? (FONDS['evolution-3'] ? 'evolution-3' : 'or')
+              : (FONDS['evolution-2'] ? 'evolution-2' : 'violet');
+            fond(n, { ms: 3200 });
+            const r = document.createElement('i');
+            r.className = 'fx-rayons-fin';
+            r.style.cssText = `position:fixed;left:${x}px;top:${y}px;z-index:88;--fx-c:${couleur}`;
+            if (!doux()) { document.body.appendChild(r); setTimeout(() => r.remove(), 2700); }
+          }
 
           /* On rend la main **ici** : l'appelant remplace l'image pendant que
              le blanc la couvre. Le titre tombe juste après, sur le personnage
@@ -1738,16 +1853,59 @@
       v._t = setTimeout(() => { v.style.opacity = '0'; v.pause?.(); }, 2600);
     },
 
-    /** Fin de duel. */
-    fin(gagne, { score } = {}) {
-      if (gagne) {
-        flash();
-        particules({ x: innerWidth / 2, y: innerHeight * 0.35, n: 110, distance: 340,
-          taille: 7, duree: 1600, couleurs: [COULEURS.or, '#FFF3D0', COULEURS.feu] });
+    /**
+     * **La fin d'un duel** (24 octobre 2026). Le bilan du duel et la fin du
+     * Virage la jouent sur leur case du résultat.
+     *
+     * @param {'victoire'|'defaite'|'nul'} issue
+     * @param {object} o
+     * @param {Element} [o.carte]  la case du résultat : elle entre selon l'issue
+     * @param {Element} [o.fz]     le Fanzzy : il saute, ou s'affaisse
+     * @param {Element} [o.dans]   l'écran du résultat, quand c'est un calque
+     *   (le bilan, à 150, passe au-dessus du calque commun) : le fond filmé,
+     *   la pluie et les confettis s'y posent.
+     */
+    fin(issue, { carte = null, fz = null, dans = null } = {}) {
+      const rejouer = (el, cls) => {
+        if (!el) return;
+        el.classList.remove('fx-fin-victoire', 'fx-fin-defaite', 'fx-fin-nul', 'fx-fin-saute', 'fx-fin-affaisse');
+        void el.offsetWidth;
+        el.classList.add(cls);
+      };
+      rejouer(carte, `fx-fin-${issue === 'victoire' ? 'victoire' : issue === 'defaite' ? 'defaite' : 'nul'}`);
+      if (issue !== 'nul') rejouer(fz, issue === 'victoire' ? 'fx-fin-saute' : 'fx-fin-affaisse');
+      if (issue === 'victoire') {
+        buzz([60, 60, 60, 60, 180]);
+        fond(FONDS.victoire ? 'victoire' : 'or', { dans, ms: 3600 });
+        if (doux()) return;
+        const r = carte?.getBoundingClientRect?.();
+        const x = r ? r.left + r.width / 2 : innerWidth / 2;
+        const y = r ? r.top + r.height / 2 : innerHeight * 0.3;
+        if (carte) {
+          const ray = document.createElement('i');
+          ray.className = 'fx-rayons-fin';
+          ray.style.setProperty('--fx-c', COULEURS.or);
+          carte.parentElement?.appendChild(ray);
+          setTimeout(() => ray.remove(), 2700);
+        }
+        const papier = { couleurs: [COULEURS.or, COULEURS.craie, COULEURS.vert, '#E4D3B5'], papier: true,
+          dans: dans ?? null };
+        setTimeout(() => particules({ ...papier, x, y, n: 70, distance: 260, duree: 1800 }), 250);
+        setTimeout(() => particules({ ...papier, x: innerWidth * 0.2, y: innerHeight * 0.1, n: 30,
+          distance: 200, duree: 2000 }), 650);
+        setTimeout(() => particules({ ...papier, x: innerWidth * 0.8, y: innerHeight * 0.1, n: 30,
+          distance: 200, duree: 2000 }), 800);
+      } else if (issue === 'defaite') {
+        buzz(200);
+        fond('defaite', { dans, ms: 3400 });
+        if (doux()) return;
+        const p = document.createElement('i');
+        p.className = 'fx-pluie';
+        (dans ?? document.body).appendChild(p);
+        setTimeout(() => p.remove(), 3600);
+      } else {
+        buzz([30, 80, 30]);
       }
-      titre(gagne ? 'VICTOIRE' : 'DÉFAITE', score ? `${score[0]} – ${score[1]}` : null,
-        gagne ? COULEURS.or : COULEURS.craie, 50);
-      buzz(gagne ? [60, 60, 60, 60, 180] : 200);
     },
   };
 

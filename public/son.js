@@ -207,6 +207,16 @@
     grondement: 3.02,             //  −8,1 · −16,5 · 1,80 s
     niveau: 1.65,                 //  −8,6 · −16,1 · 1,15 s
     ovation: 1.19,                //  −8,4 · −16,5 · 3,20 s
+    /* L'ouverture d'un booster (octobre 2026), visés au milieu de la
+       fenêtre du jeu ; mesurés au banc le 24 octobre 2026. */
+    tremble: 1.53,                // −12,4 · −22,5 · 0,20 s
+    saut: 1.62,                   // −13,3 · −22,5 · 0,26 s
+    bulle: 2.04,                  // −11,2 · −22,5 · 0,17 s
+    metal: 1.17,                  // −18,3 · −22,6 · 0,38 s
+    tissu: 2.85,                  // −13,1 · −22,5 · 0,25 s
+    projecteur: 5.5,              // −14,0 · −22,5 · 0,74 s
+    eclair: 2.32,                 // −14,4 · −22,5 · 0,14 s
+    butin: 1.43,                  // −19,2 · −22,5 · 0,26 s
   };
 
   /* Les gains des trois bus. À l'unité : le mixage est dans MIX. Ils
@@ -670,6 +680,67 @@
           [3.18, 0.12, 0.9], [4.3, 0.08, 0.6]]
           .forEach(([r, v, d]) => ton(c, s, t, { freq: 98 * r, duree: d, type: 'sine', vol: v * 0.3 }));
         bruit(c, s, t, { duree: 0.08, freq: 300, filtre: 'lowpass', q: 0.7, vol: 0.25 });
+      } },
+
+    /* ------------------------------------------ l'ouverture d'un booster
+
+       Le suspense et l'entrée de chaque sorte de carte (boosters.html,
+       octobre 2026). Le paquet tremble une fois par degré de sa meilleure
+       carte, puis chaque carte retournée a son geste et son bruit : on
+       doit entendre, sans regarder, si c'est un Fanzzy, une pièce ou une
+       tenue. La rareté, elle, garde ses sons (FX.reveler). */
+    // Le paquet qui tremble : un choc sourd dans le carton, et sa vibration.
+    tremble: { famille: 'jeu', duree: 0.45,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.3, freq: 170, filtre: 'lowpass', q: 0.8, vol: 0.3 });
+        ton(c, s, t, { freq: 82, vers: 128, duree: 0.28, type: 'triangle', vol: 0.16 });
+      } },
+    // Le Fanzzy qui saute hors de sa carte : un rebond qui monte, et un « hé ! » de tribune.
+    saut: { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 240, vers: 640, duree: 0.14, type: 'sine', vol: 0.14 });
+        ton(c, s, t, { freq: 640, vers: 500, duree: 0.16, type: 'sine', vol: 0.1, delai: 0.13 });
+        bruit(c, s, t, { duree: 0.38, freq: 1250, q: 0.7, vol: 0.07, delai: 0.08 });
+      } },
+    // L'expression : deux bulles qui éclatent, une humeur qui passe.
+    bulle: { famille: 'jeu', duree: 0.35,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 420, vers: 980, duree: 0.07, type: 'sine', vol: 0.14 });
+        ton(c, s, t, { freq: 560, vers: 1300, duree: 0.07, type: 'sine', vol: 0.12, delai: 0.11 });
+      } },
+    // La pièce d'équipement : du métal qu'on fait tinter, partiels de cloche courte.
+    metal: { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        [[2350, 0.06, 0.6], [2350 * 2.76, 0.025, 0.3], [3520, 0.03, 0.4]]
+          .forEach(([f, v, d]) => ton(c, s, t, { freq: f, duree: d, type: 'sine', vol: v }));
+        bruit(c, s, t, { duree: 0.03, freq: 4200, q: 0.9, vol: 0.12 });
+      } },
+    // La tenue : le rideau qui tombe puis se lève, un froissé d'étoffe.
+    tissu: { famille: 'jeu', duree: 0.55,
+      jouer: (c, s, t) => {
+        const f = bruit(c, s, t, { duree: 0.45, freq: 700, q: 0.6, vol: 0.2 });
+        f.frequency.setValueAtTime(700, t);
+        f.frequency.exponentialRampToValueAtTime(2600, t + 0.45);
+      } },
+    // Le stade : trois projecteurs qui s'allument l'un après l'autre, et leur bourdon.
+    projecteur: { famille: 'jeu', duree: 0.95,
+      jouer: (c, s, t) => {
+        [0, 0.16, 0.32].forEach((d) =>
+          bruit(c, s, t, { duree: 0.07, freq: 240, filtre: 'lowpass', q: 0.8, vol: 0.32, delai: d }));
+        ton(c, s, t, { freq: 100, duree: 0.5, type: 'sawtooth', vol: 0.035, delai: 0.34 });
+      } },
+    // La carte action, quand elle n'a pas de bruitage à elle : un éclair qui claque.
+    eclair: { famille: 'jeu', duree: 0.35,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 1900, vers: 110, duree: 0.2, type: 'sawtooth', vol: 0.07 });
+        bruit(c, s, t, { duree: 0.16, freq: 3200, q: 0.7, vol: 0.12 });
+      } },
+    // Les écharpes : une poignée qui tombe dans la bourse, en notes claires.
+    butin: { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [1319, 1568, 2093].forEach((f, i) =>
+          ton(c, s, t, { freq: f, duree: 0.2, type: 'sine', vol: 0.07, delai: i * 0.06 }));
+        bruit(c, s, t, { duree: 0.12, freq: 5200, q: 0.8, vol: 0.05 });
       } },
 
     /* ------------------------------------------------- les moments */
@@ -1433,6 +1504,7 @@
       clameur, si elle l'est, remplace l'ovation synthétisée. */
   function jouerDans(c, ch, nom, options, t, fichiers = null) {
     if (nom === 'ovation' && fichiers?.clameur) { clameur(c, ch, fichiers.clameur, t); return; }
+    if (ENREGISTRES.has(nom) && fichiers?.[nom]) { enregistre(c, ch, nom, fichiers[nom], t); return; }
     const s = BANQUE[nom];
     const mix = c.createGain();
     mix.gain.value = MIX[nom] ?? 1;
@@ -1526,6 +1598,7 @@
     vuGeste = true;
     dernierGeste = performance.now();
     if (!ouvrir()) return;   // sous le calme, rien : voir « ouvrir »
+    if (window.TBF_GESTE) chargerCartes(ctx);   // une page de duel
     poserVolume();
     appliquer();
   }
@@ -1588,7 +1661,9 @@
     if (derniers.size > 64) derniers.clear();
     derniers.set(cle, maintenant);
     try {
-      jouerDans(c, chaine, nom, options, c.currentTime, { clameur: pret(c, 'clameur') });
+      // La première carte enregistrée demandée fait charger les autres.
+      if (ENREGISTRES.has(nom)) chargerCartes(c);
+      jouerDans(c, chaine, nom, options, c.currentTime, { clameur: pret(c, 'clameur'), [nom]: pret(c, nom) });
       return true;
     } catch { return false; /* le son ne doit jamais casser le jeu */ }
   }
@@ -1732,7 +1807,185 @@
   const FICHIERS = {
     rumeur: { opus: '/son/ambiance-tribune.84ff833c.ogg', repli: '/son/ambiance-tribune.70e5801e.m4a' },
     clameur: { opus: '/son/clameur-but.3a391fd2.ogg', repli: '/son/clameur-but.c2a59d53.mp3' },
+    'a-fumigene': { opus: '/son/carte-fumigene.5e092a1d.ogg', repli: '/son/carte-fumigene.36bcb906.mp3' },
+    'a-arbitre': { opus: '/son/carte-arbitre.ecf8911e.ogg', repli: '/son/carte-arbitre.13b3f60a.mp3' },
+    'a-choeur': { opus: '/son/carte-choeur.8e4869d8.ogg', repli: '/son/carte-choeur.0d14b582.mp3' },
+    /* Les 60 autres cartes et épreuves du duel (Artlist, 24 octobre 2026),
+       coupées et nivelées de même : voir « les cartes enregistrées ». */
+    'a-ancre': { opus: '/son/carte-ancre.c4bec8df.ogg', repli: '/son/carte-ancre.8b7ffb53.mp3' },
+    'a-appel': { opus: '/son/carte-appel.d49864f0.ogg', repli: '/son/carte-appel.1eef8568.mp3' },
+    'a-bache': { opus: '/son/carte-bache.c81c4bb8.ogg', repli: '/son/carte-bache.6dd31776.mp3' },
+    'a-brouillard': { opus: '/son/carte-brouillard.df8fcc27.ogg', repli: '/son/carte-brouillard.ba13944d.mp3' },
+    'a-collecte': { opus: '/son/carte-collecte.828a6660.ogg', repli: '/son/carte-collecte.a9a4ab2f.mp3' },
+    'a-craquage': { opus: '/son/carte-craquage.fa197b39.ogg', repli: '/son/carte-craquage.5ee578eb.mp3' },
+    'a-longchant': { opus: '/son/carte-longchant.364a142d.ogg', repli: '/son/carte-longchant.e51d0bdc.mp3' },
+    'a-metronome': { opus: '/son/carte-metronome.9d028c48.ogg', repli: '/son/carte-metronome.ef5c5a1b.mp3' },
+    'a-miroir': { opus: '/son/carte-miroir.e0fb422d.ogg', repli: '/son/carte-miroir.7075d4ee.mp3' },
+    'a-mise': { opus: '/son/carte-mise.97b25b0c.ogg', repli: '/son/carte-mise.291805f8.mp3' },
+    'a-mosaique': { opus: '/son/carte-mosaique.61f6ec9e.ogg', repli: '/son/carte-mosaique.b1ca0a05.mp3' },
+    'a-parcage': { opus: '/son/carte-parcage.4d5dcf86.ogg', repli: '/son/carte-parcage.b7548f3a.mp3' },
+    'a-prolongations': { opus: '/son/carte-prolongations.a2f26c4e.ogg', repli: '/son/carte-prolongations.eeba0e08.mp3' },
+    'a-relais': { opus: '/son/carte-relais.e928eeec.ogg', repli: '/son/carte-relais.84af5c80.mp3' },
+    'a-releve': { opus: '/son/carte-releve.9e2dc39c.ogg', repli: '/son/carte-releve.9f29e89e.mp3' },
+    'a-remontada': { opus: '/son/carte-remontada.83ac5bcf.ogg', repli: '/son/carte-remontada.77536af8.mp3' },
+    'a-retournement': { opus: '/son/carte-retournement.21dc05c2.ogg', repli: '/son/carte-retournement.04371be1.mp3' },
+    'a-rp-bache-neuve': { opus: '/son/carte-rp-bache-neuve.ed6c1373.ogg', repli: '/son/carte-rp-bache-neuve.f7867c35.mp3' },
+    'a-rp-coupdenvoi': { opus: '/son/carte-rp-coupdenvoi.2e394177.ogg', repli: '/son/carte-rp-coupdenvoi.b13709ea.mp3' },
+    'a-rp-echauffement': { opus: '/son/carte-rp-echauffement.9f3ea9c4.ogg', repli: '/son/carte-rp-echauffement.53058c7a.mp3' },
+    'a-rp-filet': { opus: '/son/carte-rp-filet.7ca0602a.ogg', repli: '/son/carte-rp-filet.06a5f878.mp3' },
+    'a-rp-horsjeu': { opus: '/son/carte-rp-horsjeu.17734a80.ogg', repli: '/son/carte-rp-horsjeu.da3e84ab.mp3' },
+    'a-rp-jour-un': { opus: '/son/carte-rp-jour-un.9ddfb42e.ogg', repli: '/son/carte-rp-jour-un.7a2e72aa.mp3' },
+    'a-rp-premier-chant': { opus: '/son/carte-rp-premier-chant.155a2ea9.ogg', repli: '/son/carte-rp-premier-chant.2fea6b7d.mp3' },
+    'a-rp-presentation': { opus: '/son/carte-rp-presentation.eee0075f.ogg', repli: '/son/carte-rp-presentation.e33b5aeb.mp3' },
+    'a-rp-rouille': { opus: '/son/carte-rp-rouille.71837922.ogg', repli: '/son/carte-rp-rouille.c47ba086.mp3' },
+    'a-rp-routine': { opus: '/son/carte-rp-routine.d3f29c21.ogg', repli: '/son/carte-rp-routine.c1e697b7.mp3' },
+    'a-secondsouffle': { opus: '/son/carte-secondsouffle.6ef7b488.ogg', repli: '/son/carte-secondsouffle.0bfc9249.mp3' },
+    'a-silence': { opus: '/son/carte-silence.31f5d710.ogg', repli: '/son/carte-silence.6aa6845b.mp3' },
+    'a-souffleneuf': { opus: '/son/carte-souffleneuf.62cfd877.ogg', repli: '/son/carte-souffleneuf.19cf5450.mp3' },
+    'a-thermos': { opus: '/son/carte-thermos.0f0f44c2.ogg', repli: '/son/carte-thermos.c14ff3b3.mp3' },
+    'a-tifo': { opus: '/son/carte-tifo.5275aaac.ogg', repli: '/son/carte-tifo.04e7e3b4.mp3' },
+    'a-torche': { opus: '/son/carte-torche.669689ac.ogg', repli: '/son/carte-torche.5ae48d98.mp3' },
+    'a-tournee': { opus: '/son/carte-tournee.7848d28a.ogg', repli: '/son/carte-tournee.377481c3.mp3' },
+    'a-vent': { opus: '/son/carte-vent.1d232e1b.ogg', repli: '/son/carte-vent.24bbdc04.mp3' },
+    'a-vol': { opus: '/son/carte-vol.c48dc3ac.ogg', repli: '/son/carte-vol.bcfac459.mp3' },
+    'epreuve-bascule': { opus: '/son/epreuve-bascule.120206d4.ogg', repli: '/son/epreuve-bascule.c3f20771.mp3' },
+    'epreuve-capo': { opus: '/son/epreuve-capo.ffd52e2b.ogg', repli: '/son/epreuve-capo.7423251b.mp3' },
+    'epreuve-compte': { opus: '/son/epreuve-compte.85d2458f.ogg', repli: '/son/epreuve-compte.0b3b9d20.mp3' },
+    'epreuve-contretemps': { opus: '/son/epreuve-contretemps.d067ffac.ogg', repli: '/son/epreuve-contretemps.90fd8747.mp3' },
+    'epreuve-crescendo': { opus: '/son/epreuve-crescendo.b035493e.ogg', repli: '/son/epreuve-crescendo.a39e6f61.mp3' },
+    'epreuve-deuxvoix': { opus: '/son/epreuve-deuxvoix.a149c6bb.ogg', repli: '/son/epreuve-deuxvoix.12035b5c.mp3' },
+    'epreuve-echarpe': { opus: '/son/epreuve-echarpe.f4f44044.ogg', repli: '/son/epreuve-echarpe.13c3ddf3.mp3' },
+    'epreuve-echo': { opus: '/son/epreuve-echo.22775c58.ogg', repli: '/son/epreuve-echo.a3067571.mp3' },
+    'epreuve-hold': { opus: '/son/epreuve-hold.d7a5716b.ogg', repli: '/son/epreuve-hold.732f4498.mp3' },
+    'epreuve-jauge': { opus: '/son/epreuve-jauge.562c906f.ogg', repli: '/son/epreuve-jauge.3052137e.mp3' },
+    'epreuve-mash': { opus: '/son/epreuve-mash.b941fc58.ogg', repli: '/son/epreuve-mash.4e56a4d1.mp3' },
+    'epreuve-memoire': { opus: '/son/epreuve-memoire.4b5ef938.ogg', repli: '/son/epreuve-memoire.9b88888f.mp3' },
+    'epreuve-miroir': { opus: '/son/epreuve-miroir.583f20e0.ogg', repli: '/son/epreuve-miroir.01d50f7a.mp3' },
+    'epreuve-mosaique': { opus: '/son/epreuve-mosaique.c0e5afaf.ogg', repli: '/son/epreuve-mosaique.57a38964.mp3' },
+    'epreuve-ola': { opus: '/son/epreuve-ola.c140a3cb.ogg', repli: '/son/epreuve-ola.1c0dc93e.mp3' },
+    'epreuve-relance': { opus: '/son/epreuve-relance.14512e47.ogg', repli: '/son/epreuve-relance.027ee413.mp3' },
+    'epreuve-retenue': { opus: '/son/epreuve-retenue.39b102a3.ogg', repli: '/son/epreuve-retenue.3b0c8730.mp3' },
+    'epreuve-rouleaux': { opus: '/son/epreuve-rouleaux.f3a0fad8.ogg', repli: '/son/epreuve-rouleaux.d68a542c.mp3' },
+    'epreuve-salves': { opus: '/son/epreuve-salves.ebeb2a68.ogg', repli: '/son/epreuve-salves.85d995f1.mp3' },
+    'epreuve-tempo': { opus: '/son/epreuve-tempo.7c6df730.ogg', repli: '/son/epreuve-tempo.fe7f5f08.mp3' },
+    'epreuve-tenue': { opus: '/son/epreuve-tenue.d16bdf87.ogg', repli: '/son/epreuve-tenue.6832274a.mp3' },
+    'epreuve-tifo': { opus: '/son/epreuve-tifo.8ca53160.ogg', repli: '/son/epreuve-tifo.a582ca26.mp3' },
+    'epreuve-tri': { opus: '/son/epreuve-tri.85ebe480.ogg', repli: '/son/epreuve-tri.41202762.mp3' },
+    'epreuve-visee': { opus: '/son/epreuve-visee.3cd53f83.ogg', repli: '/son/epreuve-visee.26d974fb.mp3' },
+    /* Les jingles de l'ouverture des boosters (Artlist, 24 octobre 2026), un
+       par rareté : voir « les jingles », plus bas. */
+    'jingle-commune': { opus: '/son/jingle-commune.ac9f24e4.ogg', repli: '/son/jingle-commune.73b33944.mp3' },
+    'jingle-rare': { opus: '/son/jingle-rare.e5fad34a.ogg', repli: '/son/jingle-rare.f644a508.mp3' },
+    'jingle-epique': { opus: '/son/jingle-epique.229d062a.ogg', repli: '/son/jingle-epique.90a177f9.mp3' },
+    'jingle-legendaire': { opus: '/son/jingle-legendaire.512a74a6.ogg', repli: '/son/jingle-legendaire.f28e2a87.mp3' },
   };
+
+  /* ------------------------------------------ les cartes enregistrées
+
+     Le 24 octobre 2026, Gaël, à l'écoute d'un essai de trois cartes : « On
+     garde les sons Artlist (coupé pour le jeu). » Chacun est le son d'une
+     vidéo Veo de quatre secondes générée sur Artlist le 19 octobre (sources
+     dans `art/son/_src/artlist/duel/`), coupé à la partie utile, fondu aux
+     deux bouts et nivelé à −22,5 LUFS. Ils remplacent la synthèse de leur
+     carte, qui reste le repli. Le même jour, Gaël a voulu les 60 autres
+     (« Les 60 ») : toutes les cartes et toutes les épreuves du duel, coupées
+     de même (une à deux secondes ; 230 ms pour les quatre épreuves de
+     rythme, qui doivent se taire avant le premier temps). Huit d'entre
+     elles, trop pointues pour atteindre la fenêtre du jeu sans dépasser
+     la crête, sont passées par un limiteur (−7,5 dBFS) avant l'encodage.
+
+     **La règle de la clameur tient** : une carte a un instant, celui où elle
+     part. Le fichier ne joue donc que s'il est **déjà décodé** ; sinon, la
+     synthèse. Les fichiers se chargent au premier geste sur une page de
+     duel (celles qui chargent `geste.js` : le Virage, le duel, la
+     répétition), ailleurs à la première carte enregistrée jouée — qui sonne,
+     elle, en synthèse. Jamais sous le calme ni en économie de données
+     (`telecharger`). */
+  const ENREGISTRES = new Set(Object.keys(FICHIERS).filter((n) => /^(a|epreuve)-/.test(n)));
+  /* Le gain de chacun, tiré du banc (« <nom>~enregistre ») le 24 octobre
+     2026 : au milieu de la fenêtre du jeu (−22,5 LUFS), ou plus bas quand
+     la crête (−6,9 dBFS au plus) l'arrête. En commentaire : crête (dBFS) ·
+     sonie (LUFS, 100 ms) · durée. */
+  const MIX_ENREGISTRES = {
+    'a-fumigene': 0.712,          // −15,0 · −22,5 · 1,97 s
+    'a-arbitre': 0.69,            // −18,3 · −22,5 · 1,03 s
+    'a-choeur': 1.02,             // −7,6 · −22,6 · 1,97 s
+    'a-ancre': 0.519,             // −16,6 · −22,5 · 1,46 s
+    'a-appel': 0.61,              // −14,0 · −22,5 · 1,49 s
+    'a-bache': 0.692,             // −9,7 · −22,5 · 1,49 s
+    'a-brouillard': 0.822,        // −14,7 · −22,5 · 2,0 s
+    'a-collecte': 0.7,            // −11,6 · −22,5 · 1,96 s
+    'a-craquage': 0.32,           // −15,0 · −22,5 · 1,45 s
+    'a-longchant': 0.861,         // −7,9 · −22,5 · 1,97 s
+    'a-metronome': 0.804,         // −9,8 · −22,5 · 1,0 s
+    'a-miroir': 0.432,            // −15,1 · −22,5 · 1,42 s
+    'a-mise': 1.023,              // −6,9 · −23,1 · 0,87 s
+    'a-mosaique': 0.661,          // −10,7 · −22,5 · 1,47 s
+    'a-parcage': 0.305,           // −16,9 · −22,5 · 1,49 s
+    'a-prolongations': 0.966,     // −8,3 · −22,5 · 1,71 s
+    'a-relais': 1.047,            // −6,9 · −23,4 · 1,46 s
+    'a-releve': 0.631,            // −12,4 · −22,5 · 1,99 s
+    'a-remontada': 0.668,         // −16,6 · −22,5 · 1,99 s
+    'a-retournement': 0.589,      // −11,6 · −22,5 · 0,3 s
+    'a-rp-bache-neuve': 1.047,    // −7,1 · −22,5 · 1,34 s
+    'a-rp-coupdenvoi': 0.832,     // −14,2 · −22,5 · 1,49 s
+    'a-rp-echauffement': 0.822,   // −8,6 · −22,5 · 1,43 s
+    'a-rp-filet': 0.661,          // −10,6 · −22,5 · 1,32 s
+    'a-rp-horsjeu': 0.759,        // −9,6 · −22,5 · 1,0 s
+    'a-rp-jour-un': 0.668,        // −14,5 · −22,5 · 1,43 s
+    'a-rp-premier-chant': 0.822,  // −14,6 · −22,5 · 2,0 s
+    'a-rp-presentation': 0.724,   // −15,3 · −22,5 · 1,48 s
+    'a-rp-rouille': 0.646,        // −14,4 · −22,5 · 1,5 s
+    'a-rp-routine': 0.452,        // −13,8 · −22,5 · 1,42 s
+    'a-secondsouffle': 0.708,     // −14,0 · −22,5 · 1,49 s
+    'a-silence': 0.646,           // −11,9 · −22,5 · 1,0 s
+    'a-souffleneuf': 0.813,       // −9,1 · −22,5 · 2,0 s
+    'a-thermos': 0.902,           // −8,3 · −22,5 · 1,49 s
+    'a-tifo': 0.676,              // −10,5 · −22,5 · 1,99 s
+    'a-torche': 0.708,            // −13,7 · −22,5 · 1,5 s
+    'a-tournee': 0.525,           // −12,6 · −22,5 · 0,94 s
+    'a-vent': 0.582,              // −13,1 · −22,5 · 1,99 s
+    'a-vol': 0.437,               // −14,2 · −22,5 · 1,48 s
+    'epreuve-bascule': 0.537,     // −16,2 · −22,5 · 0,98 s
+    'epreuve-capo': 0.668,        // −10,6 · −22,5 · 1,2 s
+    'epreuve-compte': 1.202,      // −6,9 · −22,8 · 1,05 s
+    'epreuve-contretemps': 0.569, // −11,9 · −22,5 · 0,22 s
+    'epreuve-crescendo': 0.617,   // −11,7 · −22,5 · 0,24 s
+    'epreuve-deuxvoix': 0.741,    // −12,3 · −22,5 · 1,5 s
+    'epreuve-echarpe': 0.562,     // −11,2 · −22,5 · 0,48 s
+    'epreuve-echo': 0.631,        // −11,1 · −22,5 · 0,24 s
+    'epreuve-hold': 1.059,        // −6,9 · −23,1 · 1,97 s
+    'epreuve-jauge': 1.059,       // −6,9 · −24,3 · 0,89 s
+    'epreuve-mash': 0.741,        // −9,8 · −22,5 · 1,47 s
+    'epreuve-memoire': 0.944,     // −8,8 · −22,5 · 1,18 s
+    'epreuve-miroir': 0.525,      // −14,2 · −22,5 · 1,48 s
+    'epreuve-mosaique': 1.096,    // −6,9 · −23,4 · 1,14 s
+    'epreuve-ola': 0.708,         // −14,5 · −22,5 · 1,98 s
+    'epreuve-relance': 1.035,     // −6,9 · −22,7 · 1,18 s
+    'epreuve-retenue': 1.035,     // −6,9 · −23,6 · 1,12 s
+    'epreuve-rouleaux': 0.741,    // −9,8 · −22,5 · 1,48 s
+    'epreuve-salves': 0.638,      // −19,6 · −22,5 · 1,41 s
+    'epreuve-tempo': 0.724,       // −14,9 · −22,5 · 0,23 s
+    'epreuve-tenue': 1.047,       // −6,9 · −23,6 · 1,99 s
+    'epreuve-tifo': 0.638,        // −12,2 · −22,5 · 1,5 s
+    'epreuve-tri': 0.741,         // −9,5 · −22,5 · 1,01 s
+    'epreuve-visee': 0.813,       // −10,4 · −22,5 · 1,2 s
+  };
+  /** Lance le chargement des cartes enregistrées pour ce contexte. */
+  function chargerCartes(c) {
+    for (const nom of ENREGISTRES) charger(c, nom);
+  }
+  /** Une carte enregistrée, sur le bus de sa famille comme sa synthèse. */
+  function enregistre(c, ch, nom, b, t) {
+    const s = BANQUE[nom];
+    const g = c.createGain();
+    g.gain.value = MIX_ENREGISTRES[nom] ?? 1;
+    g.connect(ch.bus[s.bus ?? FAMILLES[s.famille].bus]);
+    const src = c.createBufferSource();
+    src.buffer = b;
+    src.connect(g);
+    lancer(c, src, t);
+  }
   /* La boucle de la rumeur, en échantillons à 48 kHz : [marge 0,25 s |
      boucle 12 s | marge 0,25 s], et le fondu de reprise (50 ms). Les marges
      sont cycliques (la fin de la boucle, puis son début) : elles absorbent le
@@ -1817,14 +2070,14 @@
      calme ou de l'onglet, la rumeur repart sans rien retélécharger ni
      redécoder. */
   const decodes = new WeakMap();
-  const PREPARER = { rumeur: (b) => preparerBoucle(b), clameur: (b) => b };
+  const PREPARER = { rumeur: (b) => preparerBoucle(b) };
   function charger(c, nom) {
     let m = decodes.get(c);
     if (!m) { m = new Map(); decodes.set(c, m); }
     if (!m.has(nom)) {
       if (!telecharger(nom)) return null;
       const e = { fini: false, valeur: null, promesse: null };
-      e.promesse = decoderPour(c, nom, PREPARER[nom])
+      e.promesse = decoderPour(c, nom, PREPARER[nom] ?? ((b) => b))
         .catch(() => null)
         .then((v) => { e.valeur = v; e.fini = true; return v; });
       m.set(nom, e);
@@ -1890,6 +2143,54 @@
     s.buffer = b;
     s.connect(g);
     lancer(c, s, t);
+  }
+
+  /* ============================================================ les jingles
+
+     Quatre courtes musiques, une par rareté, jouées quand une carte se
+     retourne à l'ouverture d'un booster (24 octobre 2026). Coupées dans les
+     morceaux générés par Artlist (art/boosters/_src/, hors git) : commune
+     1,5 s, rare 2,5 s, épique 2,6 s, légendaire 3,2 s, avec un fondu de fin.
+     Nivelées hors ligne (sonie la plus forte sur 400 ms) : commune −25,7,
+     rare −20,0 — la fenêtre du jeu —, épique −17,0, légendaire −15,3 — celle
+     des moments ; crêtes sous −7,5 dBFS.
+
+     **Même règle que la clameur** : un jingle a un instant, il ne joue que
+     s'il est déjà décodé. Sinon `jingle()` rend faux, et la page garde le
+     son synthétisé de la cérémonie. `jingles()` les télécharge (la page des
+     boosters l'appelle en arrivant) et les décode dès qu'un contexte existe
+     (au toucher qui déchire le booster). Un jingle en chasse un autre : on
+     peut retourner les cartes plus vite qu'elles ne chantent. */
+  const RARETES_JINGLE = ['commune', 'rare', 'epique', 'legendaire'];
+  const MIX_JINGLE = 1;
+  let jingleEnCours = null;
+  function jingles() {
+    for (const r of RARETES_JINGLE) telecharger(`jingle-${r}`);
+    if (ctx && ctx.state !== 'closed') for (const r of RARETES_JINGLE) charger(ctx, `jingle-${r}`);
+  }
+  /** Joue le jingle de cette rareté s'il est prêt : vrai s'il est parti. */
+  function jingle(rarete) {
+    const nom = `jingle-${rarete}`;
+    if (!FICHIERS[nom] || document.hidden) return false;
+    const c = ouvrir();
+    if (!c || !chaine || !pretAJouer(c)) return false;
+    const b = pret(c, nom);
+    if (!b) { charger(c, nom); return false; }
+    try {
+      if (jingleEnCours?.c === c) {
+        jingleEnCours.g.gain.setTargetAtTime(0, c.currentTime, 0.04);
+        try { jingleEnCours.s.stop(c.currentTime + 0.25); } catch { /* déjà fini */ }
+      }
+      const g = c.createGain();
+      g.gain.value = MIX_JINGLE;
+      g.connect(chaine.bus.effets);
+      const s = c.createBufferSource();
+      s.buffer = b;
+      s.connect(g);
+      lancer(c, s, c.currentTime);
+      jingleEnCours = { c, g, s };
+      return true;
+    } catch { return false; /* le son ne doit jamais casser le jeu */ }
   }
 
   /** Le graphe de la rumeur, éteint (tous ses gains à zéro). `echelle` : voir
@@ -2779,6 +3080,10 @@
         decoderPour(c, 'rumeur', preparerBoucle), decoderPour(c, 'clameur', (b) => b)]);
       if (!rumeurE || !clameurE) return null;
       fichiers = { rumeur: rumeurE, clameur: clameurE };
+      for (const nom of [quoi.son, ...(quoi.sons ?? [])].filter((n) => ENREGISTRES.has(n))) {
+        fichiers[nom] = await decoderPour(c, nom, (b) => b);
+        if (!fichiers[nom]) return null;
+      }
     }
     if (Number.isFinite(quoi.sinus)) {
       const o = c.createOscillator();
@@ -2850,7 +3155,8 @@
       /** La rumeur qui joue : « enregistree », « synthese », ou rien. */
       source: amb.lit ? (amb.lit.enregistre ? 'enregistree' : 'synthese') : null },
     /** Les sons enregistrés décodés pour le contexte vivant. */
-    fichiers: { rumeur: Boolean(ctx && pret(ctx, 'rumeur')), clameur: Boolean(ctx && pret(ctx, 'clameur')) },
+    fichiers: { rumeur: Boolean(ctx && pret(ctx, 'rumeur')), clameur: Boolean(ctx && pret(ctx, 'clameur')),
+      ...Object.fromEntries([...ENREGISTRES].map((n) => [n, Boolean(ctx && pret(ctx, n))])) },
     /** La phase de « rumeur » et l'échelle voulue (1 : la tribune pleine). */
     rumeur: { phase: amb.phase, echelle: amb.echelle },
     chant: Boolean(chantEnCours),
@@ -2871,6 +3177,9 @@
     existe,
     /** Les noms de la banque. */
     noms: () => Object.keys(BANQUE),
+    /** Les jingles des boosters (voir « les jingles »). */
+    jingle,
+    jingles,
     /** Les types de chant. */
     chants: () => Object.keys(CHANTS),
     /** Les moments de la rumeur (voir « rumeur »). */
@@ -2899,6 +3208,9 @@
       echelles: { creux: CREUX, vestiaire: VESTIAIRE_VIDE },
       /** Le gain de la clameur enregistrée (voir « la tribune enregistrée »). */
       clameur: MIX_CLAMEUR,
+      /** Les cartes enregistrées (voir « les cartes enregistrées »). */
+      enregistres: Object.fromEntries([...ENREGISTRES].map((n) => [n,
+        { famille: BANQUE[n].famille, gain: MIX_ENREGISTRES[n] ?? 1 }])),
       creteSeule: CRETE_SEULE,
       creteMax: CRETE_MAX,
       limiteur: { ...LIMITEUR },
