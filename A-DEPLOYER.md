@@ -22,6 +22,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP20 : nouveau dessin aux trois âges (station radar, puis astronaute aux ailes solaires), cinq états par âge, cartes B et C.
 - RP25 : nouveau dessin aux trois âges (grillage couvert de lierre, puis arbre-gardien de la tribune), cinq états par âge, cartes B et C.
 - RP26 : nouveau dessin aux trois âges (siège de stade, puis trône royal), cinq états par âge, cartes B et C.
+- RP27 : nouveau dessin aux trois âges (pile de cartons, puis champion en origami), cinq états par âge, cartes B et C.
 
 ---
 
