@@ -20,6 +20,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP23 : nouveau dessin aux trois âges (barrière couronnée, puis reine des tribunes), cinq états par âge, cartes B et C.
 - RP24 : nouveau dessin aux trois âges (chien en gilet de chantier, puis chef de meute en armure), cinq états par âge, cartes B et C.
 - RP20 : nouveau dessin aux trois âges (station radar, puis astronaute aux ailes solaires), cinq états par âge, cartes B et C.
+- RP25 : nouveau dessin aux trois âges (grillage couvert de lierre, puis arbre-gardien de la tribune), cinq états par âge, cartes B et C.
 
 ---
 
