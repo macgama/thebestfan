@@ -1092,9 +1092,11 @@
       if (doux()) return;
       const suivre = (e) => {
         const r = scene.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width - 0.5;
-        const y = (e.clientY - r.top) / r.height - 0.5;
         scene.classList.add('touche');
+        poser((e.clientX - r.left) / r.width - 0.5, (e.clientY - r.top) / r.height - 0.5);
+      };
+      /* Le doigt et le téléphone posent la même chose (`FX.gyro`). */
+      const poser = (x, y) => {
         scene.style.setProperty('--ry', `${(x * 17).toFixed(2)}deg`);
         scene.style.setProperty('--rx', `${(-y * 17).toFixed(2)}deg`);
         scene.style.setProperty('--lx', `${((x + 0.5) * 100).toFixed(1)}%`);
@@ -1112,6 +1114,7 @@
       scene.addEventListener('pointerleave', reposer);
       scene.addEventListener('pointercancel', reposer);
       scene.addEventListener('pointerup', reposer);
+      window.FX?.gyro?.(scene, poser);
     }
 
     /* **Le personnage, son âge et ce qu'il montre, en un seul envoi.** Le

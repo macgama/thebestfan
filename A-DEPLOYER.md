@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**Encore plus vivant : holo, carte vers sa fiche, série, classement** (branche
+`claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**, sans un crédit Artlist.
+
+- Les cartes de la vitrine et de la fiche suivent aussi le téléphone qu'on
+  incline (Android ; sur iPhone, le doigt seul, comme avant).
+- Dans FANZZY, la carte touchée s'envole vers sa fiche (Chrome, Edge ;
+  ailleurs la fiche s'ouvre comme avant).
+- Au Virage, la série de PARFAITS chauffe (3, 5, 10), un « ×N » jaillit à
+  chaque PARFAIT de plus, et tous les cinq la tribune fait la ola.
+- Au classement, quand tu as gagné des places depuis ta dernière visite,
+  ta ligne remonte en doublant les autres et un « +N » vert jaillit.
+- Après la mise en ligne : ouvrir une carte dans FANZZY ; faire cinq PARFAITS d'affilée au Virage.
+
+---
+
 **Fanzzy RP redessinés** (branche `claude/project-thread-tf95wg`, 24 octobre 2026,
 demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 
@@ -63,7 +79,7 @@ Construction puis redémarrage, **sans schéma**.
 
 ---
 
-**LES TERRACES : AN6 à AN25, vingt Fanzzy de plus** (branche
+**LES TERRACES : AN6 à AN30, vingt-cinq Fanzzy de plus** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
 
@@ -82,19 +98,24 @@ Construction puis redémarrage, **sans schéma**.
   Petite Poinçonneuse (Voix, rouge et blanc), AN22 La Gamine à la Bague en
   Fer-Blanc (Pyro, bordeaux et bleu ciel), AN23 La Gamine au Ballon Rouge
   (Pyro, rouge et noir), AN24 La Gamine à la Burette (Percussion, rouge et
-  blanc), AN25 Le Gamin au Petit Train (Déplacement, bleu et blanc) : trois
-  cartes chacun, les expressions des trois âges, le clignement à l'âge 1,
-  et leurs textes dans les cinq langues. Le redémarrage écrit leurs
-  soixante cartes dans le catalogue en base (`INSERT IGNORE`, rien d'autre
-  ne bouge). La série passe de vingt à soixante lignées (trois Fanzzy par
-  club, demandé par Gaël le 21 octobre) : vingt-cinq sont dans le jeu, les
-  autres arrivent par lots de cinq.
+  blanc), AN25 Le Gamin au Petit Train (Déplacement, bleu et blanc), AN26
+  Le Gamin au Masque de Carton (Tifo, bleu roi et blanc), AN27 Le Gamin à
+  la Montre Démontée (Voix, bleu ciel et blanc), AN28 La Gamine au Cierge
+  Magique (Percussion, rouge et bleu), AN29 Le Petit Allumeur (Fidélité,
+  bleu et blanc), AN30 La Petite Fouilleuse de Vase (Déplacement, blanc et
+  noir) : trois cartes chacun, les expressions des trois âges, le
+  clignement à l'âge 1, et leurs textes dans les cinq langues. Le
+  redémarrage écrit leurs soixante-quinze cartes dans le catalogue en base
+  (`INSERT IGNORE`, rien d'autre ne bouge). La série passe de vingt à
+  soixante lignées (trois Fanzzy par club, demandé par Gaël le 21
+  octobre) : trente sont dans le jeu, les autres arrivent par lots de cinq.
 - La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
   à faire de plus, ils s'ouvriront avec elle.
 - Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
-  AN25 et vérifier leurs trois âges (les cartes et les expressions), puis
+  AN30 et vérifier leurs trois âges (les cartes et les expressions), puis
   qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
-  « pousse » au premier âge, AN22 pas de « colère » au premier âge, et AN17
+  « pousse » au premier âge, AN22 et AN26 pas de « colère » au premier âge,
+  AN29 pas de « joie » au premier âge, et AN17
   n'a que le repos et la joie au deuxième âge (planches à refaire) : ils
   restent au repos dans les expressions qui manquent.
 
