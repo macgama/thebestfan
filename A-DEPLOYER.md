@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Trois cartes au son de tribune** (branche `claude/sons-fid6tr`,
+24 octobre 2026, gardés par Gaël à l'écoute). Construction seule, **sans
+schéma ni redémarrage**.
+
+- Au duel, le Fumigène, l'Arbitre et le Chœur jouent un son tiré de vidéos
+  Artlist (Veo) à la place de leur bruitage fabriqué, qui reste le repli.
+- Après la mise en ligne : jouer une de ces cartes au duel, son allumé.
+
+---
+
 **AN6, sixième Fanzzy de LES TERRACES** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
