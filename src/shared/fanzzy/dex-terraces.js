@@ -32,12 +32,13 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Quinze lignées sur vingt, et pourquoi elle arrive fermée
+ * ## Vingt lignées sur vingt, et pourquoi elle arrive fermée
  *
- * Les quinze premières (AN1 à AN15) ont leurs dessins : trois cartes en pied
- * et cinq états par âge, en tenue de base. Les cinq autres arriveront avec
- * les leurs ; les écrire maintenant mettrait au catalogue cinq silhouettes
- * procédurales, et une série dont le quart n'est pas dessiné.
+ * Les vingt (AN1 à AN20) ont leurs dessins : trois cartes en pied et cinq
+ * états par âge, en tenue de base (AN17 n'a encore que deux états au
+ * deuxième âge : sa planche est à refaire). Elles sont entrées par lots, à
+ * mesure que leurs dessins arrivaient : une lignée sans dessin aurait mis au
+ * catalogue une silhouette procédurale.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -87,6 +88,16 @@
  * depl et tifo, deux en voix, pyro et perc : ces trois-là passent en tête
  * pour les cinq dernières.
  *
+ * Les cinq dernières les rattrapent, et deux familles en prennent une de
+ * plus : le gamin aux gants trop grands (perc), qui frappe par séries de
+ * quatre comme au sac de sable, d'où les salves ; le gamin au pion (fide),
+ * qui joue à la pendule sans jamais la laisser tomber, d'où la tenue ;
+ * le gamin à l'arc en bois (pyro), qui bande l'arc et lâche au bon temps,
+ * d'où la relance ; le gamin du fauteuil tournant (voix), qui reprend en écho
+ * la chanson du salon ; et le gamin aux boutons (tifo), qui coud ses motifs
+ * de nacre bouton par bouton, d'où la mosaïque. La série finit à quatre
+ * lignées en fide et tifo, trois dans les quatre autres familles.
+ *
  * Le geste de la confiseuse n'est pas libre. Les Pyro comptaient trente-deux
  * personnages de premier âge dont quatre aux `rouleaux` — pile le huitième que
  * `catalogue:smoke` exige d'une variante. Un trente-troisième Pyro au geste
@@ -120,10 +131,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les quinze premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les vingt premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : quinze fois
- * le même mot, ce sont quinze occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : vingt fois
+ * le même mot, ce sont vingt occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -290,6 +301,66 @@ const PREMIERS_AGES = [
       + 'et toute la rue se réveille en mesure.',
     mods: { tempoWindow: 1.16, mashBonus: 0.92 },
     cri: { label: 'LE LAIT, LE LAIT !', gest: 'tempo', power: 53 } },
+
+  /* AN16 — la percussion des poings : le gamin perdu dans des gants trop
+     grands qui finit champion à l'ancienne, à la loyale. Rouge, blanc et
+     noir. La moustache cirée reste jusqu'au troisième âge. Il frappe par
+     séries de quatre, comme au sac de sable, d'où les salves ; son défaut :
+     il s'emballe et perd la cadence. */
+  { id: 'AN16', nom: 'Le Gamin aux Gants Trop Grands', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Les gants rouges lui arrivent aux coudes et il a peur de son ombre. Il lève quand '
+      + 'même la garde, comme sur les vieilles photos, et il tape quatre fois de suite sur le sac '
+      + 'du club de boxe, jamais plus, jamais moins.',
+    mods: { mashBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'GARDE HAUTE !', gest: 'salves', power: 53 } },
+
+  /* AN17 — la fidélité de l'échiquier : le gamin au pion du jeu d'échecs
+     géant du parc, qui finit roi noir et blanc. Rayures noir et blanc. Le
+     petit pion blanc pend à sa ceinture jusqu'au troisième âge. Il joue à la
+     pendule sans jamais laisser tomber son temps, d'où la tenue ; son défaut :
+     il réfléchit avant de frapper. */
+  { id: 'AN17', nom: 'Le Gamin au Pion', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Sous la pluie du parc, il serre contre lui un grand pion blanc du jeu d’échecs '
+      + 'géant, le seul qu’on lui laisse jouer. Il attend son tour sans bouger, une heure s’il le '
+      + 'faut, et il n’a encore jamais perdu son pion.',
+    mods: { holdBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'À MOI DE JOUER', gest: 'tenue', power: 52 } },
+
+  /* AN18 — la pyro des fanions : le gamin qui jouait au hors-la-loi des
+     vieilles ballades, en rouge et pas en vert, et dont les flèches portent
+     des fanions au lieu de pointes. Rouge et blanc. La plume blanche reste à
+     son capuchon jusqu'au troisième âge. Il bande l'arc, tient, et lâche au
+     bon temps, d'où la relance ; son défaut : chaque flèche lui coûte. */
+  { id: 'AN18', nom: 'Le Gamin à l’Arc en Bois', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Capuchon rouge trop grand, plume blanche, un petit arc de bois et des flèches '
+      + 'au bout de feutre rouge : il joue au hors-la-loi des vieilles ballades dans la rue. Il '
+      + 'vise longtemps, il rit avant de tirer, et le fanion retombe toujours pile dans le virage.',
+    mods: { perfectBonus: 1.17, costPenalty: 1.06 },
+    cri: { label: 'TENEZ… ET LÂCHEZ !', gest: 'relance', power: 54 } },
+
+  /* AN19 — la voix du salon : le gamin qui tournait sur le fauteuil du
+     barbier en attendant son père et finit maître barbier. Rayures rouge et
+     blanc. La moustache cirée reste jusqu'au troisième âge. Au salon, on
+     chante à plusieurs voix et chacune reprend la phrase de l'autre, d'où
+     l'écho ; son défaut : il rend moins qu'il ne prend. */
+  { id: 'AN19', nom: 'Le Gamin du Fauteuil Tournant', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'Il tourne sur le vieux fauteuil du barbier en attendant son père, le petit poteau '
+      + 'rayé sur les genoux et un peigne derrière l’oreille. Les clients chantent à plusieurs '
+      + 'voix en attendant leur tour, et lui reprend chaque phrase juste après eux.',
+    mods: { tempoWindow: 1.16, refundBonus: 0.92 },
+    cri: { label: 'ET UN TOUR DE PLUS', gest: 'echo', power: 53 } },
+
+  /* AN20 — le tifo de nacre : le gamin qui cousait des boutons de nacre sur
+     sa casquette et finit roi des marchés, couvert de milliers de boutons
+     qui brillent. Bleu marine et blanc. Les boutons blancs restent sur sa
+     coiffe jusqu'au troisième âge. Il coud ses motifs bouton par bouton,
+     d'où la mosaïque ; son défaut : il s'essouffle à la tâche. */
+  { id: 'AN20', nom: 'Le Gamin aux Boutons', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Dans la rue du marché, il coud des boutons de nacre sur sa casquette marine, un '
+      + 'par semaine, avec l’aiguille de sa grand-mère. Il n’en a encore que quatre, mais au '
+      + 'soleil ils dessinent déjà une étoile.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'ENCORE UN BOUTON', gest: 'mosaique', power: 53 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
