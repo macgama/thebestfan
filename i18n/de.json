@@ -5875,5 +5875,10 @@
  "Dans les matchs de ton club principal, il poussera {0} % plus fort et rapportera {1} % de plus, au Virage comme en duel. C’est pour toujours.": "In den Spielen deines Hauptvereins drückt er {0} % stärker und bringt {1} % mehr ein, in der Kurve wie im Duell. Das gilt für immer.",
  "LIER<0>{0} → {1} écharpes</0>": "BINDEN<0>{0} → {1} Schals</0>",
  "Il est lié à ton club.": "Er ist an deinen Verein gebunden.",
- "Impossible de le lier.": "Er lässt sich nicht binden."
+ "Impossible de le lier.": "Er lässt sich nicht binden.",
+ "EXPRESSION": "AUSDRUCK",
+ "TENUE": "OUTFIT",
+ "CARTE ACTION": "AKTIONSKARTE",
+ "Elle arrive…": "Gleich ist sie da…",
+ "Ça brille…": "Es glänzt…"
 }

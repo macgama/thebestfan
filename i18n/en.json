@@ -5875,5 +5875,10 @@
  "Dans les matchs de ton club principal, il poussera {0} % plus fort et rapportera {1} % de plus, au Virage comme en duel. C’est pour toujours.": "In your main club’s matches, it will push {0}% harder and earn {1}% more, in the End and in duels. It’s for good.",
  "LIER<0>{0} → {1} écharpes</0>": "BIND<0>{0} → {1} scarves</0>",
  "Il est lié à ton club.": "It’s bound to your club.",
- "Impossible de le lier.": "It can’t be bound."
+ "Impossible de le lier.": "It can’t be bound.",
+ "EXPRESSION": "EXPRESSION",
+ "TENUE": "OUTFIT",
+ "CARTE ACTION": "ACTION CARD",
+ "Elle arrive…": "Here it comes…",
+ "Ça brille…": "It's glowing…"
 }
