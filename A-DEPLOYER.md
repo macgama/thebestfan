@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**L'accueil et la montée de niveau animés** (branche
+`claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**, sans un crédit Artlist.
+
+- L'accueil : les tuiles se posent l'une après l'autre à l'arrivée ; toutes
+  les dix secondes environ, des flashs de photographes crépitent dans la
+  tribune, un projecteur balaie la scène ou un reflet passe sur PRENDRE MA
+  PLACE ; la pastille de niveau saute après une montée.
+- La fête de niveau : l'or filmé de la victoire et les rayons derrière la
+  case, et le nouveau niveau qui claque.
+- Après la mise en ligne : rester une minute sur l'accueil ; réclamer une
+  mission qui fait monter de niveau.
+
+---
+
 **Le jeu plus vivant : vestiaire, fins de duel, évolutions, buts**
 (branche `claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
