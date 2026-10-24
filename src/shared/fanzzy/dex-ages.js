@@ -1318,16 +1318,19 @@ export const AGES = {
      parc, la danse aux grelots, le parapluie du gentleman, les filets du
      port, le moulin, le cricket du village, la course de haies, le laitier
      de l'aube, la boxe d'antan, les échecs du parc, le hors-la-loi des
-     ballades, le salon du barbier, les rois de nacre des marchés — et le
-     troisième âge en devient la figure, jusqu'à porter le décor sur lui.
+     ballades, le salon du barbier, les rois de nacre des marchés, le bus à
+     impériale, les émaux des bijoutiers, le ballon captif de la falaise, la
+     pompe à vapeur du fleuve, le tram du bord de mer — et le troisième âge en
+     devient la figure, jusqu'à porter le décor sur lui.
      **Il garde toujours un détail du premier** : le sachet de miettes, le
      bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
      baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
      mouchoir blanc, la moustache, le petit filet noir, la farine sur la
      joue, la casquette bleue, le cheval-bâton, la casquette plate, la
      moustache cirée, le petit pion blanc, la plume blanche, la fine
-     moustache du salon, les boutons de nacre. C'est la règle de ce fichier,
-     et la fiche de chaque dessin la suit aussi.
+     moustache du salon, les boutons de nacre, les baskets rouges, la bague
+     de fer-blanc, les baskets blanches, le foulard noué, les tongs. C'est la
+     règle de ce fichier, et la fiche de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
      de `dex-terraces.js`.                                                    */
@@ -1501,5 +1504,57 @@ export const AGES = {
       + 'coiffe boutonnée couronnée de plumes blanches, une longue cape marine et un bouclier en '
       + 'forme de bouton géant. Quand il lève le bras, toute la tribune scintille — et les premiers '
       + 'boutons de la casquette sont toujours sur sa coiffe.', 'TOUS EN NACRE'],
+  ],
+  AN21: [
+    ['La Receveuse de l’Impériale', 'Veste rouge à liseré blanc, casquette à bande blanche, '
+      + 'sacoche de cuir à la hanche et la machine à tickets rouge qui brille sur sa poitrine. '
+      + 'Elle tire le cordon de la cloche, et tout l’étage du haut repart en chantant.',
+      'DING DING, ON REPART'],
+    ['La Reine de la Ligne', 'Un long manteau rouge aux épaulettes en forme de toit d’autobus, '
+      + 'une rangée de petites fenêtres lumineuses à l’ourlet, une écharpe de tickets qui '
+      + 'brillent et une grosse cloche de laiton à la hanche. Quand elle sonne, toute la ligne '
+      + 'chante avec elle — et les baskets rouges sont toujours à ses pieds.',
+      'TOUTE LA LIGNE CHANTE'],
+  ],
+  AN22: [
+    ['La Sertisseuse d’Émail', 'Long tablier de cuir bordeaux, loupe vissée sur l’œil, un '
+      + 'plateau de broches bordeaux et bleu ciel en bandoulière et une fine pince d’argent à la '
+      + 'main. Elle pose chaque goutte d’émail à sa place, et la broche s’allume.',
+      'UNE GOUTTE, PAS DEUX'],
+    ['La Reine des Émaux', 'Une armure de plaques d’émail bordeaux et bleu ciel serties '
+      + 'd’argent, qui brillent comme un vitrail, un haut diadème et une longue cape bordée de '
+      + 'petits carreaux. Elle vise à travers sa grande loupe et toute la tribune s’allume d’un '
+      + 'coup — la bague de fer-blanc est toujours à son doigt.', 'TOUT S’ALLUME'],
+  ],
+  AN23: [
+    ['L’Aéronaute de la Falaise', 'Blouson d’aviateur au col de mouton, lunettes de laiton sur '
+      + 'le front, une corde et un altimètre à la ceinture, et la grande enveloppe rayée rouge et '
+      + 'noir sur son dos. Elle compte les secondes avant de lâcher les amarres, jamais une de '
+      + 'trop.', 'LARGUEZ LES AMARRES'],
+    ['La Reine du Grand Ballon', 'Une nacelle d’osier pour armure, un grand ballon rayé rouge et '
+      + 'noir qui s’allume derrière sa tête et un brûleur de laiton qui rougeoie à l’épaule. Elle '
+      + 'compte à rebours et toute la tribune s’envole avec elle — les baskets blanches sont '
+      + 'toujours à ses pieds.', 'TOUT LE MONDE DÉCOLLE'],
+  ],
+  AN24: [
+    ['La Chauffeuse de la Grande Pompe', 'Bleu de chauffe noir aux poignets rouges, gros gants de '
+      + 'cuir, un manomètre de laiton à la ceinture et une pelle de charbon sur l’épaule. Elle '
+      + 'charge le foyer d’une main, frappe la cadence de l’autre, et la grande pompe repart.',
+      'PLEINE PRESSION'],
+    ['La Machine à Vapeur Vivante', 'Des épaules de fer rouge et blanc rivetées de laiton, un '
+      + 'grand balancier qui bascule au-dessus d’elle, des pistons pour avant-bras et des '
+      + 'manomètres lumineux sur la poitrine. Ses deux pistons frappent l’un après l’autre et '
+      + 'toute la tribune bat avec — le foulard noué est toujours sur sa tête.',
+      'TOUTE LA VAPEUR'],
+  ],
+  AN25: [
+    ['Le Conducteur du Train des Vagues', 'Veste de chemin de fer bleu marine à liseré blanc et '
+      + 'boutons de laiton, casquette bleue, une cloche à la ceinture et des fanions de signal '
+      + 'sous le bras. Il conduit le petit train du front de mer et n’oublie jamais un arrêt, ni '
+      + 'un visage.', 'EN VOITURE !'],
+    ['Le Train sur Échasses', 'Ses jambes sont devenues de hautes échasses de fer à petites '
+      + 'roues, son torse une plate-forme de tramway à rambarde blanche, un auvent rayé au-dessus '
+      + 'de la tête. Il traverse les vagues sans jamais se tromper de route — et les tongs sont '
+      + 'toujours à ses pieds.', 'À TRAVERS LES VAGUES'],
   ],
 };

@@ -53,7 +53,7 @@ Construction puis redémarrage, **sans schéma**.
 
 ---
 
-**LES TERRACES : AN6 à AN20, quinze Fanzzy de plus** (branche
+**LES TERRACES : AN6 à AN25, vingt Fanzzy de plus** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
 
@@ -68,19 +68,25 @@ Construction puis redémarrage, **sans schéma**.
   Le Gamin aux Gants Trop Grands (Percussion, rouge, blanc et noir), AN17 Le
   Gamin au Pion (Fidélité, noir et blanc), AN18 Le Gamin à l'Arc en Bois
   (Pyro, rouge et blanc), AN19 Le Gamin du Fauteuil Tournant (Voix, rouge
-  et blanc), AN20 Le Gamin aux Boutons (Tifo, marine et blanc) : trois
+  et blanc), AN20 Le Gamin aux Boutons (Tifo, marine et blanc), AN21 La
+  Petite Poinçonneuse (Voix, rouge et blanc), AN22 La Gamine à la Bague en
+  Fer-Blanc (Pyro, bordeaux et bleu ciel), AN23 La Gamine au Ballon Rouge
+  (Pyro, rouge et noir), AN24 La Gamine à la Burette (Percussion, rouge et
+  blanc), AN25 Le Gamin au Petit Train (Déplacement, bleu et blanc) : trois
   cartes chacun, les expressions des trois âges, le clignement à l'âge 1,
   et leurs textes dans les cinq langues. Le redémarrage écrit leurs
-  quarante-cinq cartes dans le catalogue en base (`INSERT IGNORE`, rien
-  d'autre ne bouge). La série est complète : vingt lignées sur vingt.
+  soixante cartes dans le catalogue en base (`INSERT IGNORE`, rien d'autre
+  ne bouge). La série passe de vingt à soixante lignées (trois Fanzzy par
+  club, demandé par Gaël le 21 octobre) : vingt-cinq sont dans le jeu, les
+  autres arrivent par lots de cinq.
 - La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
   à faire de plus, ils s'ouvriront avec elle.
 - Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
-  AN20 et vérifier leurs trois âges (les cartes et les expressions), puis
+  AN25 et vérifier leurs trois âges (les cartes et les expressions), puis
   qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
-  « pousse » au premier âge, et AN17 n'a que le repos et la joie au
-  deuxième âge (planches à refaire) : ils restent au repos dans les
-  expressions qui manquent.
+  « pousse » au premier âge, AN22 pas de « colère » au premier âge, et AN17
+  n'a que le repos et la joie au deuxième âge (planches à refaire) : ils
+  restent au repos dans les expressions qui manquent.
 
 ---
 
