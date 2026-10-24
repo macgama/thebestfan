@@ -69,7 +69,7 @@ Construction puis redémarrage, **sans schéma**.
 
 ---
 
-**LES TERRACES : AN6 à AN35, trente Fanzzy de plus** (branche
+**LES TERRACES : AN6 à AN40, trente-cinq Fanzzy de plus** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
 
@@ -97,23 +97,27 @@ Construction puis redémarrage, **sans schéma**.
   Le Gamin à la Truelle (Déplacement, bleu et blanc), AN33 La Gamine à la
   Motte d'Argile (Tifo, blanc, jaune et bleu), AN34 La Choriste de la Cave
   (Voix, rouge et blanc), AN35 La Gamine au Ruban Perforé (Pyro, bleu ciel
-  et blanc) : trois cartes chacun, les expressions des trois âges, le
+  et blanc), AN36 La Petite Bobineuse (Fidélité, rouge, blanc et noir), AN37
+  La Gamine au Pipeau (Voix, noir et blanc), AN38 La Gamine à la Lampe de
+  Poche (Déplacement, rouge et blanc), AN39 La Gamine à la Bille (Pyro,
+  rouge et blanc), AN40 La Gamine au Cerf-Volant (Tifo, bleu marine et
+  blanc) : trois cartes chacun, les expressions des trois âges, le
   clignement à l'âge 1, et leurs textes dans les cinq langues. Le
-  redémarrage écrit leurs quatre-vingt-dix cartes dans le catalogue en base
+  redémarrage écrit leurs cent cinq cartes dans le catalogue en base
   (`INSERT IGNORE`, rien d'autre ne bouge). La série passe de vingt à
   soixante lignées (trois Fanzzy par club, demandé par Gaël le 21
-  octobre) : trente-cinq sont dans le jeu, les autres arrivent par lots de
+  octobre) : quarante sont dans le jeu, les autres arrivent par lots de
   cinq.
 - La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
   à faire de plus, ils s'ouvriront avec elle.
 - Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
-  AN35 et vérifier leurs trois âges (les cartes et les expressions), puis
+  AN40 et vérifier leurs trois âges (les cartes et les expressions), puis
   qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
   « pousse » au premier âge, AN22, AN26 et AN35 pas de « colère » au premier
-  âge,
-  AN29 pas de « joie » au premier âge, et AN17
-  n'a que le repos et la joie au deuxième âge (planches à refaire) : ils
-  restent au repos dans les expressions qui manquent.
+  âge, AN29 pas de « joie » au premier âge, AN38 pas de « dépit » au
+  deuxième âge, et AN17 n'a que le repos et la joie au deuxième âge
+  (planches à refaire) : ils restent au repos dans les expressions qui
+  manquent.
 
 ---
 
