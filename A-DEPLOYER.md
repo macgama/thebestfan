@@ -4,7 +4,8 @@
 demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 
 - `public/img/fanzzy/RP3` et ses cartes (B et C comprises) : nouveau dessin
-  aux trois âges, cinq états par âge ; pas encore de clignement.
+  aux trois âges (invites v2 : fanfare puis roi de la batucada), cinq états
+  par âge ; pas encore de clignement.
 
 ---
 
