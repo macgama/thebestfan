@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Les jingles et les fonds filmés des boosters** (branche
+`claude/project-thread-nk6bu3`, 24 octobre 2026, générés dans Artlist avec
+l'accord de Gaël). Construction puis redémarrage, **sans schéma**.
+
+- Quand une carte se retourne, un court jingle joue selon sa rareté
+  (commune, rare, épique, légendaire), à la place du son synthétisé ; un
+  tourbillon violet passe derrière une épique, une gerbe d'or derrière une
+  légendaire. Rien ne se télécharge en mode calme ni en économie de données.
+- Après la mise en ligne : ouvrir un booster, son allumé, et écouter.
+
+---
+
 **L'ouverture des boosters en spectacle** (branche
 `claude/project-thread-nk6bu3`, 24 octobre 2026, demandée par Gaël).
 Construction puis redémarrage, **sans schéma**.
