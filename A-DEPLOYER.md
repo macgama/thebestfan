@@ -1,5 +1,28 @@
 # À déposer sur Infomaniak
 
+**LES TERRACES : AN6 à AN10, cinq Fanzzy de plus** (branche
+`claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- AN6 La Timide du Grand Boulevard (Percussion, bleu roi et blanc), AN7 La
+  Coursière à Vélo (Déplacement, bleu ciel), AN8 Le Gamin au Dinosaure en
+  Plâtre (Tifo, rouge et bleu), AN9 La Danseuse aux Grelots (Percussion,
+  bleu et blanc), AN10 Le Banlieusard au Parapluie (Fidélité, blanc et
+  noir) : trois cartes chacun, les expressions des trois âges, le
+  clignement à l'âge 1, et leurs textes dans les cinq langues. Le
+  redémarrage écrit leurs quinze cartes dans le catalogue en base
+  (`INSERT IGNORE`, rien d'autre ne bouge). La série compte dix lignées sur
+  vingt.
+- La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
+  à faire de plus, ils s'ouvriront avec elle.
+- Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
+  AN10 et vérifier leurs trois âges (les cartes et les expressions), puis
+  qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
+  « pousse » au premier âge (la planche n'en avait pas) : elle reste au
+  repos pendant qu'on chante.
+
+---
+
 **Trois cartes au son de tribune** (branche `claude/sons-fid6tr`,
 24 octobre 2026, gardés par Gaël à l'écoute). Construction seule, **sans
 schéma ni redémarrage**.
@@ -7,23 +30,6 @@ schéma ni redémarrage**.
 - Au duel, le Fumigène, l'Arbitre et le Chœur jouent un son tiré de vidéos
   Artlist (Veo) à la place de leur bruitage fabriqué, qui reste le repli.
 - Après la mise en ligne : jouer une de ces cartes au duel, son allumé.
-
----
-
-**AN6, sixième Fanzzy de LES TERRACES** (branche
-`claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
-Construction puis redémarrage, **sans schéma**.
-
-- La Timide du Grand Boulevard → La Punk à Épingles → La Reine du Grand
-  Boulevard (famille Percussion, bleu roi et blanc) : trois cartes, cinq
-  états par âge, le clignement à l'âge 1, et ses textes dans les cinq
-  langues. Le redémarrage écrit ses trois cartes dans le catalogue en base
-  (`INSERT IGNORE`, rien d'autre ne bouge).
-- La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
-  à faire de plus, AN6 s'ouvrira avec elle.
-- Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 et
-  vérifier ses trois âges (les cartes et les expressions), puis qu'elle
-  cligne des yeux au premier âge.
 
 ---
 
