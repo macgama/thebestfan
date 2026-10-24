@@ -17,6 +17,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP12 : nouveau dessin aux trois âges (explorateur polaire, puis roi des glaces), cinq états par âge, cartes B et C.
 - RP21 : nouveau dessin aux trois âges (forgeron, puis pivert en armure de forge), cinq états par âge, cartes B et C.
 - RP22 : nouveau dessin aux trois âges (aviateur aux bras mécaniques, puis cuirassé de cuivre), cinq états par âge, cartes B et C.
+- RP23 : nouveau dessin aux trois âges (barrière couronnée, puis reine des tribunes), cinq états par âge, cartes B et C.
 
 ---
 
