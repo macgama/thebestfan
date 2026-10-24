@@ -440,6 +440,26 @@
           { ms: 700, format: (v) => `+${Math.round(v)}` }), 760));
       }
       if (sans) return;
+      /* **L'or filmé et les rayons** (24 octobre 2026, « animer la montée de
+         niveau ») : la gerbe dorée de la victoire (`FX.fond`) passe derrière
+         la case, sur le fond sombre, et les rayons de fin de duel tournent
+         une fois derrière elle. Les deux sont de fx.js, avec leurs gardes :
+         rien en économie de données pour la vidéo, rien sans mouvement. */
+      F?.fond?.('victoire', { dans: fond, ms: 3600, opacite: 0.65 });
+      if (F) {
+        const rayons = document.createElement('i');
+        rayons.className = 'fx-rayons-fin';
+        rayons.setAttribute('aria-hidden', 'true');
+        kase.before(rayons);
+      }
+      /* Le chiffre **claque** quand il a fini de compter : le nouveau
+         niveau se pose comme un tampon, il n'apparaît pas. */
+      nombre.style.display = 'inline-block';
+      try {
+        nombre.animate([{ scale: '1' }, { scale: '1.45', offset: 0.35 }, { scale: '.94', offset: 0.7 },
+          { scale: '1' }], { duration: 520, delay: compte && avant < n ? 1000 : 420,
+          easing: 'cubic-bezier(.3,1.4,.4,1)' });
+      } catch { /* il est là, sans claquer */ }
       /* La case tombe et se cale, comme celle du moment fort : la propriété
          « scale » se compose avec son inclinaison de repos (−1,6°) sans
          l'écraser, et l'animation finit où la case se tient. */
