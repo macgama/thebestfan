@@ -1,5 +1,43 @@
 # À déposer sur Infomaniak
 
+**Fanzzy RP redessinés** (branche `claude/project-thread-tf95wg`, 24 octobre 2026,
+demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
+
+- RP3 : `public/img/fanzzy/RP3` et ses cartes (B et C comprises) : nouveau dessin
+  aux trois âges (invites v2 : fanfare puis roi de la batucada), cinq états
+  par âge ; pas encore de clignement.
+- RP4 : nouveau dessin aux trois âges (moine batteur, puis maître du temple de montagne), cinq états par âge, cartes B et C.
+- RP5 : nouveau dessin aux trois âges (mécène de sa rangée, puis roi de sa tribune), cinq états par âge, cartes B et C.
+- RP6 : nouveau dessin aux trois âges (héritière de la troisième rangée, puis cheffe de tribune avec le fantôme de son père), cinq états par âge, cartes B et C.
+- RP7 : nouveau dessin aux trois âges (graffeur, puis titan du street art), cinq états par âge, cartes B et C.
+- RP8 : nouveau dessin aux trois âges (costume de cubes colorés, puis roi des cubes au carton rouge), cinq états par âge, cartes B et C.
+- RP9 : nouveau dessin aux trois âges (artificier en tablier, puis maître du feu), cinq états par âge, cartes B et C.
+- RP10 : nouveau dessin aux trois âges (horloger aux montres, puis maître du temps), cinq états par âge, cartes B et C.
+- RP11 : nouveau dessin aux trois âges (steward en uniforme, puis capitaine au gouvernail), cinq états par âge, cartes B et C.
+- RP12 : nouveau dessin aux trois âges (explorateur polaire, puis roi des glaces), cinq états par âge, cartes B et C.
+- RP21 : nouveau dessin aux trois âges (forgeron, puis pivert en armure de forge), cinq états par âge, cartes B et C.
+- RP22 : nouveau dessin aux trois âges (aviateur aux bras mécaniques, puis cuirassé de cuivre), cinq états par âge, cartes B et C.
+- RP23 : nouveau dessin aux trois âges (barrière couronnée, puis reine des tribunes), cinq états par âge, cartes B et C.
+- RP24 : nouveau dessin aux trois âges (chien en gilet de chantier, puis chef de meute en armure), cinq états par âge, cartes B et C.
+- RP20 : nouveau dessin aux trois âges (station radar, puis astronaute aux ailes solaires), cinq états par âge, cartes B et C.
+
+---
+
+**L'accueil et la montée de niveau animés** (branche
+`claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**, sans un crédit Artlist.
+
+- L'accueil : les tuiles se posent l'une après l'autre à l'arrivée ; toutes
+  les dix secondes environ, des flashs de photographes crépitent dans la
+  tribune, un projecteur balaie la scène ou un reflet passe sur PRENDRE MA
+  PLACE ; la pastille de niveau saute après une montée.
+- La fête de niveau : l'or filmé de la victoire et les rayons derrière la
+  case, et le nouveau niveau qui claque.
+- Après la mise en ligne : rester une minute sur l'accueil ; réclamer une
+  mission qui fait monter de niveau.
+
+---
+
 **Le jeu plus vivant : vestiaire, fins de duel, évolutions, buts**
 (branche `claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
