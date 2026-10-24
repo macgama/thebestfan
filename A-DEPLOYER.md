@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Le jeu plus vivant : vestiaire, fins de duel, évolutions, buts**
+(branche `claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- Le vestiaire du duel devient un couloir de stade (projecteurs, fumée, VS
+  entre les tribunes, une place qui se remplit s'allume).
+- Fin de duel et fin du Virage : la victoire claque sous les confettis et
+  l'or filmé, la défaite tombe de travers sous la pluie, le nul hésite.
+- Une évolution vers l'âge 2 ou 3 a son fond filmé et ses rayons ; un but
+  pour soi, sa gerbe filmée ; un carton rouge au Virage est brandi.
+- Après la mise en ligne : entrer en file d'un duel, puis le finir ; faire
+  évoluer un Fanzzy.
+
+---
+
 **LES TERRACES : AN6 à AN15, dix Fanzzy de plus** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
@@ -26,13 +41,17 @@ Construction puis redémarrage, **sans schéma**.
 
 ---
 
-**Trois cartes au son de tribune** (branche `claude/sons-fid6tr`,
-24 octobre 2026, gardés par Gaël à l'écoute). Construction seule, **sans
-schéma ni redémarrage**.
+**Toutes les cartes et épreuves du duel au son de tribune** (branche
+`claude/sons-fid6tr`, 24 octobre 2026, générés dans Artlist avec l'accord
+de Gaël). Construction seule, **sans schéma ni redémarrage**.
 
-- Au duel, le Fumigène, l'Arbitre et le Chœur jouent un son tiré de vidéos
-  Artlist (Veo) à la place de leur bruitage fabriqué, qui reste le repli.
-- Après la mise en ligne : jouer une de ces cartes au duel, son allumé.
+- Au duel, les 39 cartes et les 24 épreuves jouent un son tiré de vidéos
+  Artlist (Veo) à la place de leur bruitage fabriqué, qui reste le repli
+  (le Fumigène, l'Arbitre et le Chœur d'abord, puis les 60 autres).
+- Les sons se chargent au premier geste sur une page de duel (environ
+  1 Mo en tout), jamais en mode calme ni en économie de données.
+- Après la mise en ligne : jouer quelques cartes et une épreuve de rythme
+  au duel, son allumé.
 
 ---
 
