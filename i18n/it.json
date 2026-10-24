@@ -5875,5 +5875,10 @@
  "Dans les matchs de ton club principal, il poussera {0} % plus fort et rapportera {1} % de plus, au Virage comme en duel. C’est pour toujours.": "Nelle partite del tuo club principale spingerà il {0}% più forte e renderà il {1}% in più, nella Curva come in duello. È per sempre.",
  "LIER<0>{0} → {1} écharpes</0>": "LEGA<0>{0} → {1} sciarpe</0>",
  "Il est lié à ton club.": "È legato al tuo club.",
- "Impossible de le lier.": "Impossibile legarlo."
+ "Impossible de le lier.": "Impossibile legarlo.",
+ "EXPRESSION": "ESPRESSIONE",
+ "TENUE": "DIVISA",
+ "CARTE ACTION": "CARTA AZIONE",
+ "Elle arrive…": "Sta arrivando…",
+ "Ça brille…": "Brilla…"
 }

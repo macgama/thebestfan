@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**L'ouverture des boosters en spectacle** (branche
+`claude/project-thread-nk6bu3`, 24 octobre 2026, demandée par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- Le paquet tombe et tremble dans la couleur de sa meilleure carte ; une
+  épique se soulève avant de se retourner, une légendaire une seconde, la
+  salle éteinte. Chaque sorte de carte a son geste, son mot sous la carte
+  et son bruit (Fanzzy, expression, tenue, équipement, stade, carte action,
+  écharpes).
+- Après la mise en ligne : ouvrir un booster sur le téléphone, son allumé,
+  et toucher les cartes une à une.
+
+---
+
 **Lier un Fanzzy neutre à son club** (branche `claude/project-thread-v83ym1`,
 22 octobre 2026, choix de Gaël). Construction, **schéma** (`sql/fanzzy.sql`
 ajoute la colonne `user_fanzzy.club_id`), puis redémarrage.
