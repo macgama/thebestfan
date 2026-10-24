@@ -5875,5 +5875,10 @@
  "Dans les matchs de ton club principal, il poussera {0} % plus fort et rapportera {1} % de plus, au Virage comme en duel. C’est pour toujours.": "En los partidos de tu club principal empujará un {0} % más fuerte y rendirá un {1} % más, en el Fondo y en duelo. Es para siempre.",
  "LIER<0>{0} → {1} écharpes</0>": "LIGAR<0>{0} → {1} bufandas</0>",
  "Il est lié à ton club.": "Está ligado a tu club.",
- "Impossible de le lier.": "No se puede ligar."
+ "Impossible de le lier.": "No se puede ligar.",
+ "EXPRESSION": "EXPRESIÓN",
+ "TENUE": "ATUENDO",
+ "CARTE ACTION": "CARTA DE ACCIÓN",
+ "Elle arrive…": "Ya llega…",
+ "Ça brille…": "Brilla…"
 }
