@@ -11,6 +11,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP6 : nouveau dessin aux trois âges (héritière de la troisième rangée, puis cheffe de tribune avec le fantôme de son père), cinq états par âge, cartes B et C.
 - RP7 : nouveau dessin aux trois âges (graffeur, puis titan du street art), cinq états par âge, cartes B et C.
 - RP8 : nouveau dessin aux trois âges (costume de cubes colorés, puis roi des cubes au carton rouge), cinq états par âge, cartes B et C.
+- RP9 : nouveau dessin aux trois âges (artificier en tablier, puis maître du feu), cinq états par âge, cartes B et C.
 
 ---
 
