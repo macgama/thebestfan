@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Le jeu plus vivant : vestiaire, fins de duel, évolutions, buts**
+(branche `claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- Le vestiaire du duel devient un couloir de stade (projecteurs, fumée, VS
+  entre les tribunes, une place qui se remplit s'allume).
+- Fin de duel et fin du Virage : la victoire claque sous les confettis et
+  l'or filmé, la défaite tombe de travers sous la pluie, le nul hésite.
+- Une évolution vers l'âge 2 ou 3 a son fond filmé et ses rayons ; un but
+  pour soi, sa gerbe filmée ; un carton rouge au Virage est brandi.
+- Après la mise en ligne : entrer en file d'un duel, puis le finir ; faire
+  évoluer un Fanzzy.
+
+---
+
 **Trois cartes au son de tribune** (branche `claude/sons-fid6tr`,
 24 octobre 2026, gardés par Gaël à l'écoute). Construction seule, **sans
 schéma ni redémarrage**.
