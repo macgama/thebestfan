@@ -1,11 +1,12 @@
 # À déposer sur Infomaniak
 
-**RP3 redessiné** (branche `claude/project-thread-tf95wg`, 24 octobre 2026,
+**Fanzzy RP redessinés** (branche `claude/project-thread-tf95wg`, 24 octobre 2026,
 demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 
-- `public/img/fanzzy/RP3` et ses cartes (B et C comprises) : nouveau dessin
+- RP3 : `public/img/fanzzy/RP3` et ses cartes (B et C comprises) : nouveau dessin
   aux trois âges (invites v2 : fanfare puis roi de la batucada), cinq états
   par âge ; pas encore de clignement.
+- RP4 : nouveau dessin aux trois âges (moine batteur, puis maître du temple de montagne), cinq états par âge, cartes B et C.
 
 ---
 
