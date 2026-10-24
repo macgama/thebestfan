@@ -1023,6 +1023,17 @@ function renderCombo() {
     el._n = s;
     ecrire(el, `${s} PARFAITS`);
     if (avant != null) rejouer(el, 'tbf-vibre');
+    /* **La série qui s'enflamme** (24 octobre 2026). Le sticker chauffe par
+       paliers (`data-feu` : 3, 5, 10 d'affilée, ui.css), un « ×N » jaillit
+       de lui à chaque PARFAIT de plus, et tous les cinq la tribune fait la
+       ola. Rien ne tourne en boucle : tout se joue une fois. */
+    const feu = s >= 10 ? '3' : s >= 5 ? '2' : s >= 3 ? '1' : '';
+    if (feu) el.dataset.feu = feu; else delete el.dataset.feu;
+    if (avant != null && s > avant) {
+      window.FX?.plus?.(el, `×${s}`, s >= 5 ? (window.FX?.couleurs?.or ?? '#F5C33B')
+        : (window.FX?.couleurs?.craie ?? '#F2EEE4'), Math.min(40, 22 + s * 2));
+      if (s % 5 === 0) window.FX?.ola?.();
+    }
   }
 }
 
