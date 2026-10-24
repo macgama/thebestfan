@@ -32,12 +32,12 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Dix lignées sur vingt, et pourquoi elle arrive fermée
+ * ## Quinze lignées sur vingt, et pourquoi elle arrive fermée
  *
- * Les dix premières (AN1 à AN10) ont leurs dessins : trois cartes en pied et
- * cinq états par âge, en tenue de base. Les dix autres arriveront avec les
- * leurs ; les écrire maintenant mettrait au catalogue dix silhouettes
- * procédurales, et une série dont la moitié n'est pas dessinée.
+ * Les quinze premières (AN1 à AN15) ont leurs dessins : trois cartes en pied
+ * et cinq états par âge, en tenue de base. Les cinq autres arriveront avec
+ * les leurs ; les écrire maintenant mettrait au catalogue cinq silhouettes
+ * procédurales, et une série dont le quart n'est pas dessiné.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -78,6 +78,15 @@
  * (tifo), la danseuse aux grelots (perc) et le banlieusard au parapluie
  * (fide). La voix et la pyro passent en tête pour les suivantes.
  *
+ * Les cinq d'après les rattrapent d'abord, puis en reprennent trois : la
+ * ramendeuse du port (pyro), qui jette son filet pile quand la vague retombe ;
+ * la gamine au moulinet (tifo) ; le gamin à la batte (fide), qui tient son
+ * guichet sans frapper ; le gamin au cheval-bâton (depl), qui se balance
+ * avant chaque haie ; et le petit livreur de lait (voix), qui fait sa tournée
+ * au même pas tous les matins. La série compte alors trois lignées en fide,
+ * depl et tifo, deux en voix, pyro et perc : ces trois-là passent en tête
+ * pour les cinq dernières.
+ *
  * Le geste de la confiseuse n'est pas libre. Les Pyro comptaient trente-deux
  * personnages de premier âge dont quatre aux `rouleaux` — pile le huitième que
  * `catalogue:smoke` exige d'une variante. Un trente-troisième Pyro au geste
@@ -111,10 +120,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les dix premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les quinze premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : dix fois le
- * même mot, ce sont dix occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : quinze fois
+ * le même mot, ce sont quinze occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -223,6 +232,64 @@ const PREMIERS_AGES = [
       + 'manqué un coup d’envoi.',
     mods: { holdBonus: 1.17, mashBonus: 0.91 },
     cri: { label: 'PARDON, EXCUSEZ-MOI', gest: 'tenue', power: 52 } },
+  /* AN11 — la pyro du port : la ramendeuse qui raccommodait les filets sur le
+     quai et finit par porter le grand chalut comme un manteau. Ambre et noir.
+     Le petit filet noir reste à son bras jusqu'au troisième âge. Elle jette
+     son filet à l'instant juste, d'où la visée ; son défaut : chaque maille
+     lui coûte. */
+  { id: 'AN11', nom: 'La Ramendeuse du Port', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Sur le quai mouillé, elle raccommode les filets maille après maille, l’aiguille '
+      + 'de bois à la main. Elle ne lève les yeux qu’à l’instant où le bateau passe la jetée, '
+      + 'et elle ne s’est jamais trompée d’une seconde.',
+    mods: { perfectBonus: 1.17, costPenalty: 1.06 },
+    cri: { label: 'MAILLE APRÈS MAILLE', gest: 'visee', power: 53 } },
+
+  /* AN12 — le tifo du vent : la gamine au moulinet de papier qui finit par
+     porter un vrai moulin. Bleu et blanc. La farine reste sur sa joue jusqu'au
+     troisième âge. Ses ailes dessinent la forme au-dessus de la tribune ; son
+     défaut : elle tourne au vent, et elle perd le tempo. */
+  { id: 'AN12', nom: 'La Gamine au Moulinet', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Elle courait contre le vent dans les champs, un moulinet de papier bleu et blanc '
+      + 'tendu à bout de bras, de la farine plein la joue. Les jours de match, elle le fait '
+      + 'tourner au-dessus de la tribune, et elle rit avant tout le monde.',
+    mods: { parryBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'PLUS DE VENT !', gest: 'tifo', power: 53 } },
+
+  /* AN13 — la fidélité du guichet : le gamin qui ratait toutes les balles sur
+     la pelouse du village et finit capitaine de tout le comté. Blanc, jaune et
+     bleu. La casquette bleue reste dans son casque jusqu'au troisième âge. Il
+     tient son guichet sans frapper chaque balle, d'où la retenue ; son
+     défaut : il garde son souffle pour plus tard. */
+  { id: 'AN13', nom: 'Le Gamin à la Batte', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Sur la pelouse du village, il rate toutes les balles avec une batte bien trop '
+      + 'grande pour lui et une seule jambière. Il reste quand même au guichet jusqu’au soir, '
+      + 'sans jamais lâcher, au cas où la prochaine serait la bonne.',
+    mods: { holdBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'ENCORE UNE BALLE', gest: 'retenue', power: 53 } },
+
+  /* AN14 — le déplacement au galop : le gamin au cheval-bâton qui finit dans
+     un grand costume de cheval de pantomime. Rouge et blanc. Le petit
+     cheval-bâton ne le quitte pas jusqu'au troisième âge. Il se balance
+     d'avant en arrière avant chaque haie, d'où la bascule ; son défaut : il ne
+     tient pas en place. */
+  { id: 'AN14', nom: 'Le Gamin au Cheval-Bâton', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'Il galope dans les rues sur un cheval-bâton à bonnet rouge, une casaque trop '
+      + 'grande sur le dos, et il saute chaque bordure de trottoir comme une haie. Les jours '
+      + 'de match, il fait tout le chemin jusqu’au stade au petit galop.',
+    mods: { breathBonus: 1.15, holdBonus: 0.92 },
+    cri: { label: 'HOP, UNE HAIE', gest: 'bascule', power: 54 } },
+
+  /* AN15 — la voix de l'aube : le petit livreur de lait qui finit par porter
+     toute la voiture de livraison. Bleu ciel, blanc et un peu de marine. La
+     casquette plate reste sous le toit jusqu'au troisième âge. Il fait sa
+     tournée au même pas tous les matins, d'où le tempo ; son défaut : il est
+     encore à moitié endormi quand il faut frapper. */
+  { id: 'AN15', nom: 'Le Petit Livreur de Lait', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'À l’aube, sous la pluie, il dépose quatre bouteilles de lait sur chaque perron, '
+      + 'la casquette trempée, à moitié endormi. Il siffle toujours le même air, au même pas, '
+      + 'et toute la rue se réveille en mesure.',
+    mods: { tempoWindow: 1.16, mashBonus: 0.92 },
+    cri: { label: 'LE LAIT, LE LAIT !', gest: 'tempo', power: 53 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));

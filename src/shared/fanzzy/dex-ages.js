@@ -1315,13 +1315,16 @@ export const AGES = {
      monte dans un vieux métier ou une vieille tradition de son coin — la
      garde de la forteresse, la péniche, la promenade, l'enseigne, la
      confiserie, la grande rue punk, le grand-bi, les dinosaures de plâtre du
-     parc, la danse aux grelots, le parapluie du gentleman — et le troisième
-     âge en devient la figure, jusqu'à porter le décor sur lui. **Il garde
-     toujours un détail du premier** : le sachet de miettes, le bonnet, le
-     mouchoir noué, le petit pinceau, la dent qui manque, le baladeur à
-     cassettes, la sonnette de laiton, les lunettes rondes, le mouchoir blanc,
-     la moustache. C'est la règle de ce fichier, et la fiche de chaque dessin
-     la suit aussi.
+     parc, la danse aux grelots, le parapluie du gentleman, les filets du
+     port, le moulin, le cricket du village, la course de haies, le laitier
+     de l'aube — et le troisième âge en devient la figure, jusqu'à porter le
+     décor sur lui. **Il garde toujours un détail du premier** : le sachet de
+     miettes, le bonnet, le mouchoir noué, le petit pinceau, la dent qui
+     manque, le baladeur à cassettes, la sonnette de laiton, les lunettes
+     rondes, le mouchoir blanc, la moustache, le petit filet noir, la farine
+     sur la joue, la casquette bleue, le cheval-bâton, la casquette plate.
+     C'est la règle de ce fichier, et la fiche de chaque dessin la suit
+     aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
      de `dex-terraces.js`.                                                    */
@@ -1405,5 +1408,48 @@ export const AGES = {
     ['Le Grand Parapluie', 'Son parapluie abrite maintenant tout le virage, et les gouttes s’allument '
       + 'au bout des baleines. Il reste droit sous l’averse, sans un pli — et la moustache blanche est '
       + 'toujours impeccable.', 'TOUT LE MONDE À L’ABRI'],
+  ],
+  AN11: [
+    ['La Matelote des Filets', 'Ciré ambre, lanterne de laiton à la ceinture, un filet noir jeté sur '
+      + 'les épaules avec ses flotteurs de verre. Par gros temps, elle lance le filet d’un seul geste, '
+      + 'pile quand la vague retombe.', 'À LA VAGUE, ON JETTE'],
+    ['La Reine du Grand Chalut', 'Le grand chalut lui fait un manteau, ses flotteurs de verre luisent '
+      + 'comme des fanaux, et l’aiguille de ramendeuse est devenue un sceptre. Elle tient toute la '
+      + 'tribune dans ses mailles — et le petit filet noir pend toujours à son bras.',
+      'TOUT LE MONDE DANS LE FILET'],
+  ],
+  AN12: [
+    ['La Meunière', 'Tablier blanc de farine, casquette bleue, un sac sur l’épaule et un petit moulin '
+      + 'de bois sur le dos dont les ailes tournent toutes seules. Elle moud son grain au lever du '
+      + 'jour, et le soir elle déploie ses ailes au-dessus du virage.', 'LES AILES AU VENT'],
+    ['Le Moulin Qui Marche', 'Elle porte maintenant le moulin entier, un toit bleu pour casque, quatre '
+      + 'grandes ailes dressées dans le dos et une meule pour boucle de ceinture. Quand elle avance, '
+      + 'toute la tribune tourne avec elle — et la farine n’a jamais quitté sa joue.',
+      'QUE TOUT TOURNE'],
+  ],
+  AN13: [
+    ['Le Batteur du Dimanche', 'Tout en blanc, deux jambières sanglées de bleu et de jaune, la batte '
+      + 'polie posée sur l’épaule. Il ne frappe pas tout : il laisse passer les mauvaises balles et il '
+      + 'attend la bonne, un après-midi entier s’il le faut.', 'ON LAISSE PASSER'],
+    ['Le Grand Capitaine du Comté', 'Une armure de jambières blanches aux coutures lumineuses, une cape '
+      + 'de laine torsadée, une batte aussi grande que lui. Il mène tout le comté sans hausser le ton '
+      + '— et la casquette bleue du gamin est restée dans son casque.', 'TENEZ LE GUICHET'],
+  ],
+  AN14: [
+    ['Le Jockey des Haies', 'Casaque rouge à manches bouffantes, bombe à pompon blanc, et le '
+      + 'cheval-bâton devenu une grande tête rembourrée au bout d’une perche. Il se balance d’avant en '
+      + 'arrière avant chaque obstacle, et il le franchit toujours en tête.', 'EN AVANT, PAR-DESSUS'],
+    ['Le Cheval de Pantomime', 'Il porte maintenant le cheval tout entier : une tête de tissu rouge, '
+      + 'une crinière blanche en cape, des fers à cheval sur les bottes. Il fait le tour du terrain au '
+      + 'galop sous les rires — et le petit cheval-bâton ne le quitte jamais.', 'TOUT LE MONDE AU GALOP'],
+  ],
+  AN15: [
+    ['Le Laitier de l’Aube', 'Long manteau blanc à boutons bleu ciel, casquette à visière, une grande '
+      + 'caisse de bouteilles lumineuses sur l’épaule. Il annonce chaque rue d’un cri, toujours à la '
+      + 'même cadence, et les fenêtres s’allument une à une derrière lui.', 'C’EST L’HEURE DU LAIT'],
+    ['Le Grand Chariot de Lait', 'Il porte maintenant toute la voiture de livraison : un toit sur la '
+      + 'tête, des phares ronds sur la poitrine, des casiers de bouteilles aux épaules et de petites '
+      + 'roues aux bottes. Il ouvre la marche sous l’averse — et la casquette plate est toujours là, '
+      + 'sous le toit.', 'TOUT LE MONDE EN TOURNÉE'],
   ],
 };
