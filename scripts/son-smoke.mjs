@@ -1880,6 +1880,44 @@ if (banc) try {
     await page.close();
   }
 
+  /* 24 octobre 2026 : trois cartes jouent un son enregistré (Artlist),
+     gardé par Gaël à l'écoute. Comme la clameur : seulement déjà décodé,
+     la synthèse sinon. Une page de duel les charge au premier geste ; une
+     autre, à la première carte enregistrée jouée. */
+  console.log('\n  les cartes enregistrées (24 octobre 2026)');
+  {
+    const ENR = Object.keys(mix.enregistres ?? {});
+    check('trois cartes ont un son enregistré, chacune jugée au banc',
+      ENR.length === 3 && ENR.every((n) => mix.sons[n]?.famille === 'jeu'), ENR);
+    const { page, erreurs } = await nouvellePage('/__son-geste');
+    const vus = [];
+    page.on('request', (r) => { if (new URL(r.url()).pathname.startsWith('/son/carte-')) vus.push(new URL(r.url()).pathname); });
+    await page.click('#geste');
+    const prets = await jusqua(page, (x) => ['a-fumigene', 'a-arbitre', 'a-choeur'].every((n) => x.fichiers[n]), 5000);
+    check('une page de duel charge les cartes enregistrées au premier geste, une fois chacune',
+      prets && vus.length === 3 && new Set(vus).size === 3, vus);
+    await page.evaluate(() => { window.__sonTampons.length = 0; window.TBF_SON.jouer('a-fumigene'); });
+    let t = await page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('décodé, le fumigène joue son fichier (1,98 s)', t.some((x) => x.duree > 1.9 && x.duree < 2.05), t);
+    check('aucune erreur de script (cartes enregistrées)', erreurs.length === 0, ...erreurs);
+    await page.close();
+
+    const autre = await nouvellePage();
+    await autre.page.click('#geste');
+    await jusqua(autre.page, (x) => x.contexte === 'running');
+    await autre.page.evaluate(() => { window.__sonTampons.length = 0; window.TBF_SON.jouer('a-arbitre'); });
+    t = await autre.page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('ailleurs, la première carte enregistrée sonne en synthèse (rien n’est encore décodé)',
+      !t.some((x) => x.duree > 1 && x.duree < 1.06), t);
+    const ensuite = await jusqua(autre.page, (x) => x.fichiers['a-arbitre'], 5000);
+    await attendre(300);
+    await autre.page.evaluate(() => { window.__sonTampons.length = 0; window.TBF_SON.jouer('a-arbitre'); });
+    t = await autre.page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('… et la suivante, son fichier (1,03 s)', ensuite && t.some((x) => x.duree > 1 && x.duree < 1.06), t);
+    check('aucune erreur de script (première carte ailleurs)', autre.erreurs.length === 0, ...autre.erreurs);
+    await autre.page.close();
+  }
+
   /* ============================== 9. la scène tient sa célébration (fx)
 
      Pas du son, mais du même périmètre, et sans autre suite pour elle :
