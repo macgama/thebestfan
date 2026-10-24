@@ -1506,6 +1506,8 @@ function reagirAuFil(e) {
 
   if (e.type === 'Card' && /red/i.test(e.detail ?? '')) {
     celebrer();
+    // Le carton brandi, comme l'arbitre, et l'écran qui rougit (voir `FX.carton`).
+    window.FX?.carton?.('rouge');
     scene.moment(mien ? 'decision' : 'progression',
       mien ? 'CARTON ROUGE' : 'ROUGE POUR EUX', {
         couleur: mien ? 'var(--flare)' : 'var(--vert)',
@@ -2441,6 +2443,10 @@ function montrerBilan(b, { ou = '/' } = {}) {
       boite.querySelector('.tbf-bouffee')?.remove();
       boite.insertAdjacentHTML('afterbegin', `<span class="tbf-bouffee" aria-hidden="true"
         style="--c1:var(--${ton});--c2:var(--${ton})"></span>`);
+      // Et l'issue se joue sur la case, une fois (voir `FX.fin`).
+      const issueFin = issue;
+      requestAnimationFrame(() => window.FX?.fin?.(issueFin,
+        { carte: vignette, fz: fz.hidden ? null : fz, dans: bilanEl }));
     }
   }
   const src = fin ? poseDuBilan(issue === 'nul' || !issue ? 'neutre' : issue) : null;
