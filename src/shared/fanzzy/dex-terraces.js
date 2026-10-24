@@ -37,14 +37,15 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Trente lignées sur soixante, et pourquoi elle arrive fermée
+ * ## Trente-cinq lignées sur soixante, et pourquoi elle arrive fermée
  *
- * Les trente premières (AN1 à AN30) ont leurs dessins : trois cartes en
+ * Les trente-cinq premières (AN1 à AN35) ont leurs dessins : trois cartes en
  * pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
- * états au deuxième âge, AN9, AN22, AN26 et AN29 quatre au premier : leurs
- * planches sont à refaire). Elles entrent par lots de cinq, à mesure que
- * leurs dessins arrivent : une lignée sans dessin aurait mis au catalogue une
- * silhouette procédurale. Les trente autres suivront de la même façon.
+ * états au deuxième âge, AN9, AN22, AN26, AN29 et AN35 quatre au premier :
+ * leurs planches sont à refaire). Elles entrent par lots de cinq, à mesure
+ * que leurs dessins arrivent : une lignée sans dessin aurait mis au catalogue
+ * une silhouette procédurale. Les vingt-cinq autres suivront de la même
+ * façon.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -135,6 +136,26 @@
  * garde (`hold`), pile la moitié. Un quatre-vingt-cinquième à une variante
  * aurait mis le geste éponyme en minorité, ce que `catalogue:smoke` refuse.
  *
+ * Le lot d'après donne encore une lignée à cinq familles sur six, et laisse
+ * la Fidélité, déjà la plus grosse du catalogue (quatre-vingt-cinq
+ * personnages de premier âge) : le gamin au jeton de manège (perc), qui cogne
+ * la barrière à chaque choc des autos-tamponneuses ; le gamin à la truelle
+ * (depl), qui se souvient de l'endroit de chaque chose déterrée, d'où la
+ * mémoire ; la gamine à la motte d'argile (tifo), qui perce son bol trou par
+ * trou jusqu'au motif, d'où la mosaïque ; la choriste de la cave (voix), qui
+ * frappe dans ses mains entre les temps, d'où le contretemps ; et la gamine
+ * au ruban perforé (pyro), qui compte chaque trou avant de donner la réponse,
+ * d'où le compte. Trente-cinq lignées : six dans cinq familles, cinq en
+ * fide ; la Fidélité passe en tête pour le lot suivant.
+ *
+ * Le gamin au jeton n'avait pas le choix de son geste : les Percussions
+ * comptaient cinquante personnages de premier âge dont vingt-cinq au
+ * martelage (`mash`), pile la moitié. Une cinquante et unième à une variante
+ * aurait mis le geste éponyme en minorité ; il cogne donc, et le martelage
+ * passe à vingt-six sur cinquante et un. La gamine au ruban laisse les Pyro
+ * au même bord (dix-neuf relances sur trente-huit, pile la moitié) : la
+ * prochaine Pyro devra relancer.
+ *
  * La burette n'a pas le choix de son geste. Les Percussions comptaient
  * quarante-huit personnages de premier âge dont six aux `deuxvoix` — pile le
  * huitième. Une quarante-neuvième au geste éponyme aurait fait passer les
@@ -175,10 +196,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les trente premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les trente-cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : trente fois
- * le même mot, ce sont trente occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : trente-cinq
+ * fois le même mot, ce sont trente-cinq occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -527,6 +548,69 @@ const PREMIERS_AGES = [
       + 'tout à la marée haute, et le lui rend à la suivante.',
     mods: { breathBonus: 1.16, parryResist: 0.92 },
     cri: { label: 'CE QUE LE FLEUVE REND', gest: 'miroir', power: 53 } },
+
+  /* AN31 — la percussion de la foire : le gamin qui serrait son unique jeton
+     devant les autos-tamponneuses et finit roi de la grande foire d'automne.
+     Ambre et noir. Le jeton de laiton reste à son cou jusqu'au troisième âge.
+     Il cogne la barrière à chaque choc des petites voitures, d'où le
+     martelage (voir l'en-tête) ; son défaut : il cogne à côté du temps. */
+  { id: 'AN31', nom: 'Le Gamin au Jeton de Manège', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Devant la piste des autos-tamponneuses, sous le crachin, il serre son unique jeton '
+      + 'de laiton. En attendant son tour, il tape du poing sur la barrière à chaque choc des '
+      + 'petites voitures, et toute la barrière tremble avec lui.',
+    mods: { mashBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'ENCORE UN TOUR !', gest: 'mash', power: 53 } },
+
+  /* AN32 — le déplacement du tertre : le gamin qui creusait le champ avec une
+     truelle et finit par ressembler au vieux roi trouvé sous la colline. Bleu
+     et blanc. Les chaussures de marche boueuses restent à ses pieds jusqu'au
+     troisième âge. Il sait où était chaque chose qu'il a déterrée, d'où la
+     mémoire ; son défaut : il lâche trop tôt ce qu'il tient. */
+  { id: 'AN32', nom: 'Le Gamin à la Truelle', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'Accroupi dans le champ de sable derrière chez lui, il gratte la terre avec une '
+      + 'petite truelle au manche bleu. Il n’a trouvé qu’un vieux rivet rouillé, mais il se '
+      + 'souvient de l’endroit exact de chaque chose qu’il a déterrée.',
+    mods: { breathBonus: 1.15, holdBonus: 0.92 },
+    cri: { label: 'ICI, IL Y AVAIT…', gest: 'memoire', power: 53 } },
+
+  /* AN33 — le tifo de la faïence ajourée : la gamine qui pétrissait une motte
+     d'argile toute tordue et finit reine de la faïence crème percée de
+     dentelles. Blanc, jaune et bleu. Le crayon planté dans son chignon y reste
+     jusqu'au troisième âge. Elle perce son bol trou par trou jusqu'à ce que
+     les trous fassent un motif, d'où la mosaïque ; son défaut : elle se
+     perd dans le détail et rate le temps. */
+  { id: 'AN33', nom: 'La Gamine à la Motte d’Argile', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Devant un petit tour de potier, elle pétrit une motte d’argile toute tordue, de '
+      + 'l’argile jusqu’au bout du nez. Sur l’étagère sèche un bol crème qu’elle a percé de '
+      + 'petits trous, un par un, jusqu’à ce qu’ils dessinent une dentelle.',
+    mods: { parryBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'TROU PAR TROU', gest: 'mosaique', power: 53 } },
+
+  /* AN34 — la voix des caves : la gamine qui chantait en sourdine au fond de
+     la cave aux concerts et finit reine de la scène beat. Rouge et blanc. Le
+     petit micro rouge de la cave reste dans sa main jusqu'au troisième âge.
+     Elle frappe dans ses mains entre les temps, là où tape la batterie, d'où
+     le contretemps ; son défaut : elle n'ose pas encore, et rend mal ce
+     qu'on lui donne. */
+  { id: 'AN34', nom: 'La Choriste de la Cave', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'Tout au fond d’une cave de brique où l’on joue très fort, elle serre contre elle un '
+      + 'petit micro rouge et chante en sourdine, la bouche presque fermée. Elle frappe dans ses '
+      + 'mains entre les temps, là où tape la batterie, et personne ne l’entend encore.',
+    mods: { tempoWindow: 1.16, refundBonus: 0.92 },
+    cri: { label: 'SUR LE DEUX ET LE QUATRE', gest: 'contretemps', power: 53 } },
+
+  /* AN35 — la pyro des premières machines : la gamine qui perçait des trous
+     dans des rubans de papier et finit reine de la première grande machine à
+     calculer de la ville. Bleu ciel et blanc, un peu de marine. Les lunettes à
+     monture d'écaille restent sur son nez jusqu'au troisième âge. Elle compte
+     chaque trou à voix basse avant de donner la réponse, d'où le compte ;
+     son défaut : chaque calcul lui coûte. */
+  { id: 'AN35', nom: 'La Gamine au Ruban Perforé', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Un jour de pluie, à son bureau, elle perce de petits trous dans un ruban de papier '
+      + 'qui sort d’une bobine bleu ciel, un crayon derrière l’oreille. Elle compte chaque trou à '
+      + 'voix basse, et au dernier, elle a la réponse.',
+    mods: { perfectBonus: 1.17, costPenalty: 1.06 },
+    cri: { label: 'UN, DEUX, TROIS… TROUVÉ !', gest: 'compte', power: 54 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
