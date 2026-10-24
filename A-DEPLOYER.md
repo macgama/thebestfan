@@ -16,6 +16,29 @@ Construction seule, **sans schéma**, sans un crédit Artlist.
 
 ---
 
+**Fanzzy RP redessinés** (branche `claude/project-thread-tf95wg`, 24 octobre 2026,
+demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
+
+- RP3 : `public/img/fanzzy/RP3` et ses cartes (B et C comprises) : nouveau dessin
+  aux trois âges (invites v2 : fanfare puis roi de la batucada), cinq états
+  par âge ; pas encore de clignement.
+- RP4 : nouveau dessin aux trois âges (moine batteur, puis maître du temple de montagne), cinq états par âge, cartes B et C.
+- RP5 : nouveau dessin aux trois âges (mécène de sa rangée, puis roi de sa tribune), cinq états par âge, cartes B et C.
+- RP6 : nouveau dessin aux trois âges (héritière de la troisième rangée, puis cheffe de tribune avec le fantôme de son père), cinq états par âge, cartes B et C.
+- RP7 : nouveau dessin aux trois âges (graffeur, puis titan du street art), cinq états par âge, cartes B et C.
+- RP8 : nouveau dessin aux trois âges (costume de cubes colorés, puis roi des cubes au carton rouge), cinq états par âge, cartes B et C.
+- RP9 : nouveau dessin aux trois âges (artificier en tablier, puis maître du feu), cinq états par âge, cartes B et C.
+- RP10 : nouveau dessin aux trois âges (horloger aux montres, puis maître du temps), cinq états par âge, cartes B et C.
+- RP11 : nouveau dessin aux trois âges (steward en uniforme, puis capitaine au gouvernail), cinq états par âge, cartes B et C.
+- RP12 : nouveau dessin aux trois âges (explorateur polaire, puis roi des glaces), cinq états par âge, cartes B et C.
+- RP21 : nouveau dessin aux trois âges (forgeron, puis pivert en armure de forge), cinq états par âge, cartes B et C.
+- RP22 : nouveau dessin aux trois âges (aviateur aux bras mécaniques, puis cuirassé de cuivre), cinq états par âge, cartes B et C.
+- RP23 : nouveau dessin aux trois âges (barrière couronnée, puis reine des tribunes), cinq états par âge, cartes B et C.
+- RP24 : nouveau dessin aux trois âges (chien en gilet de chantier, puis chef de meute en armure), cinq états par âge, cartes B et C.
+- RP20 : nouveau dessin aux trois âges (station radar, puis astronaute aux ailes solaires), cinq états par âge, cartes B et C.
+
+---
+
 **L'accueil et la montée de niveau animés** (branche
 `claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**, sans un crédit Artlist.
@@ -46,7 +69,7 @@ Construction puis redémarrage, **sans schéma**.
 
 ---
 
-**LES TERRACES : AN6 à AN15, dix Fanzzy de plus** (branche
+**LES TERRACES : AN6 à AN30, vingt-cinq Fanzzy de plus** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
 
@@ -57,18 +80,34 @@ Construction puis redémarrage, **sans schéma**.
   noir), AN11 La Ramendeuse du Port (Pyro, ambre et noir), AN12 La Gamine
   au Moulinet (Tifo, bleu et blanc), AN13 Le Gamin à la Batte (Fidélité,
   blanc, jaune et bleu), AN14 Le Gamin au Cheval-Bâton (Déplacement, rouge
-  et blanc), AN15 Le Petit Livreur de Lait (Voix, bleu ciel et blanc) :
-  trois cartes chacun, les expressions des trois âges, le clignement à
-  l'âge 1, et leurs textes dans les cinq langues. Le redémarrage écrit leurs
-  trente cartes dans le catalogue en base (`INSERT IGNORE`, rien d'autre ne
-  bouge). La série compte quinze lignées sur vingt.
+  et blanc), AN15 Le Petit Livreur de Lait (Voix, bleu ciel et blanc), AN16
+  Le Gamin aux Gants Trop Grands (Percussion, rouge, blanc et noir), AN17 Le
+  Gamin au Pion (Fidélité, noir et blanc), AN18 Le Gamin à l'Arc en Bois
+  (Pyro, rouge et blanc), AN19 Le Gamin du Fauteuil Tournant (Voix, rouge
+  et blanc), AN20 Le Gamin aux Boutons (Tifo, marine et blanc), AN21 La
+  Petite Poinçonneuse (Voix, rouge et blanc), AN22 La Gamine à la Bague en
+  Fer-Blanc (Pyro, bordeaux et bleu ciel), AN23 La Gamine au Ballon Rouge
+  (Pyro, rouge et noir), AN24 La Gamine à la Burette (Percussion, rouge et
+  blanc), AN25 Le Gamin au Petit Train (Déplacement, bleu et blanc), AN26
+  Le Gamin au Masque de Carton (Tifo, bleu roi et blanc), AN27 Le Gamin à
+  la Montre Démontée (Voix, bleu ciel et blanc), AN28 La Gamine au Cierge
+  Magique (Percussion, rouge et bleu), AN29 Le Petit Allumeur (Fidélité,
+  bleu et blanc), AN30 La Petite Fouilleuse de Vase (Déplacement, blanc et
+  noir) : trois cartes chacun, les expressions des trois âges, le
+  clignement à l'âge 1, et leurs textes dans les cinq langues. Le
+  redémarrage écrit leurs soixante-quinze cartes dans le catalogue en base
+  (`INSERT IGNORE`, rien d'autre ne bouge). La série passe de vingt à
+  soixante lignées (trois Fanzzy par club, demandé par Gaël le 21
+  octobre) : trente sont dans le jeu, les autres arrivent par lots de cinq.
 - La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
   à faire de plus, ils s'ouvriront avec elle.
 - Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
-  AN15 et vérifier leurs trois âges (les cartes et les expressions), puis
+  AN30 et vérifier leurs trois âges (les cartes et les expressions), puis
   qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
-  « pousse » au premier âge (la planche n'en avait pas) : elle reste au
-  repos pendant qu'on chante.
+  « pousse » au premier âge, AN22 et AN26 pas de « colère » au premier âge,
+  AN29 pas de « joie » au premier âge, et AN17
+  n'a que le repos et la joie au deuxième âge (planches à refaire) : ils
+  restent au repos dans les expressions qui manquent.
 
 ---
 
