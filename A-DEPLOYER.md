@@ -22,7 +22,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP3 : `public/img/fanzzy/RP3` et ses cartes (B et C comprises) : nouveau dessin
   aux trois âges (invites v2 : fanfare puis roi de la batucada), cinq états
   par âge ; pas encore de clignement.
-- RP4 : nouveau dessin aux trois âges (moine batteur, puis maître du temple de montagne), cinq états par âge, cartes B et C.
+- RP4 : nouveau dessin aux trois âges (moine batteur, puis maître du temple de montagne), cinq états par âge, cartes B et C. Cartes RP4 et RP4B redessinées sans la barrière.
 - RP5 : nouveau dessin aux trois âges (mécène de sa rangée, puis roi de sa tribune), cinq états par âge, cartes B et C.
 - RP6 : nouveau dessin aux trois âges (héritière de la troisième rangée, puis cheffe de tribune avec le fantôme de son père), cinq états par âge, cartes B et C.
 - RP7 : nouveau dessin aux trois âges (graffeur, puis titan du street art), cinq états par âge, cartes B et C.
@@ -36,6 +36,16 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP23 : nouveau dessin aux trois âges (barrière couronnée, puis reine des tribunes), cinq états par âge, cartes B et C.
 - RP24 : nouveau dessin aux trois âges (chien en gilet de chantier, puis chef de meute en armure), cinq états par âge, cartes B et C.
 - RP20 : nouveau dessin aux trois âges (station radar, puis astronaute aux ailes solaires), cinq états par âge, cartes B et C.
+- RP25 : nouveau dessin aux trois âges (grillage couvert de lierre, puis arbre-gardien de la tribune), cinq états par âge, cartes B et C.
+- RP26 : nouveau dessin aux trois âges (siège de stade, puis trône royal), cinq états par âge, cartes B et C.
+- RP27 : nouveau dessin aux trois âges (pile de cartons, puis champion en origami), cinq états par âge, cartes B et C.
+- RP28 : nouveau dessin aux trois âges (drapeau rayé, puis étendard impérial à l’aigle), cinq états par âge, cartes B et C.
+- RP29 : nouveau dessin aux trois âges (drone aux cartons, puis drone cuirassé), cinq états par âge, cartes B et C.
+- RP30 : nouveau dessin aux trois âges (salamandre en sweat, puis baroudeur de lave, puis chevalier draconique à flamme bleue), cinq états par âge, cartes B et C.
+- RP31 : nouveau dessin aux trois âges (petit nuage d’orage, puis tornade électrique, puis titan de l’orage), cinq états par âge, cartes B et C.
+- RP33 : nouveau dessin aux trois âges (pigeon voyageur, puis aviateur, puis as ailé aux ailes de métal), cinq états par âge, cartes B et C.
+- RP34 : nouveau dessin aux trois âges (vieux bus, puis bus de voyage chargé, puis bus festif à banderoles), cinq états par âge, cartes B et C.
+- RP32 : nouveau dessin aux trois âges (briquet bandana, puis briquet costaud à flamme vivante, puis génie de flamme), cinq états par âge, cartes B et C.
 
 ---
 
