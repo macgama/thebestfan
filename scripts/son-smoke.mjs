@@ -1762,6 +1762,54 @@ if (banc) try {
     }
   }
 
+  /* ======================================= les jingles des boosters */
+
+  /* 24 octobre 2026 : un jingle par rareté, joué au retournement d'une
+     carte (boosters.html). Il ne part que décodé ; rien ne se télécharge
+     sous le calme ; un jingle en chasse un autre. */
+  console.log('\n  les jingles des boosters (24 octobre 2026)');
+  {
+    const { page, erreurs } = await nouvellePage();
+    const vus = [];
+    page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/jingle-')) vus.push(u); });
+    await page.click('#geste');
+    await jusqua(page, (x) => x.contexte === 'running');
+    check('avant d’être décodé, un jingle ne joue pas (la cérémonie garde son son)',
+      await page.evaluate(() => window.TBF_SON.jingle('legendaire')) === false);
+    await page.evaluate(() => window.TBF_SON.jingles());
+    let parti = false;
+    for (let i = 0; i < 40 && !parti; i++) {
+      await attendre(100);
+      parti = await page.evaluate(() => { window.__sonTampons.length = 0; return window.TBF_SON.jingle('legendaire'); });
+    }
+    const t = await page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('décodé, le jingle de la légendaire part (3,2 s)', parti && t.some((x) => x.duree > 3.1 && x.duree < 3.3), t);
+    check('les quatre jingles, une fois chacun', new Set(vus).size === 4 && vus.length === 4, vus);
+    const d = await page.evaluate(async () => {
+      for (let i = 0; i < 30 && !window.TBF_SON.jingle('commune'); i++) await new Promise((r) => setTimeout(r, 100));
+      return true;
+    });
+    await attendre(400);
+    const c = await etat(page);
+    check('un jingle en chasse un autre : un seul sonne encore', d && c.enCours === 1, c);
+    check('aucune erreur de script (jingles)', erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+  {
+    const page = await banc.nav.newPage();
+    const vus = [];
+    page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/jingle-')) vus.push(u); });
+    await page.evaluateOnNewDocument(espion, {});
+    await page.goto(banc.base + '/__son', { waitUntil: 'load' });
+    await page.waitForFunction(() => Boolean(window.TBF_SON && window.FX), { timeout: 10000 });
+    await page.evaluate(() => document.documentElement.setAttribute('data-calme', 'sons'));
+    await page.click('#geste');
+    const joue = await page.evaluate(() => { window.TBF_SON.jingles(); return window.TBF_SON.jingle('rare'); });
+    await attendre(400);
+    check('sous le calme, aucun jingle ne se télécharge ni ne joue', vus.length === 0 && joue === false, vus);
+    await page.close();
+  }
+
   /* ===================================== les cartes et les épreuves
 
      6 octobre 2026, à la demande de Gaël : chaque carte d'action a son
@@ -1785,16 +1833,16 @@ if (banc) try {
        en moins de 250 ms. */
     const durees = await banc.page.evaluate(async (noms) => {
       const r = {};
-      for (const nom of noms) {
-        const b = await window.TBF_SON.rendre({ son: nom }, { duree: 0.6 });
+      for (const [nom, enregistre] of noms.flatMap((n) => [[n, false], [n, true]])) {
+        const b = await window.TBF_SON.rendre({ son: nom, enregistre }, { duree: 0.6 });
         const x = b.getChannelData(0);
         let der = 0;
         for (let i = 0; i < x.length; i++) if (Math.abs(x[i]) > 0.001) der = i;
-        r[nom] = Math.round((der / b.sampleRate - 0.02) * 1000);
+        r[nom + (enregistre ? '~enregistre' : '')] = Math.round((der / b.sampleRate - 0.02) * 1000);
       }
       return r;
     }, ['tempo', 'contretemps', 'echo', 'crescendo'].map((g) => `epreuve-${g}`));
-    check('les bruitages des épreuves de rythme se taisent en moins de 250 ms (avant le premier temps)',
+    check('les bruitages des épreuves de rythme se taisent en moins de 250 ms (avant le premier temps), synthèse et fichier',
       Object.values(durees).every((ms) => ms > 0 && ms < 250), durees);
 
     const { page, erreurs } = await nouvellePage('/__son-geste');
@@ -1830,6 +1878,45 @@ if (banc) try {
     check('une épreuve qui s’ouvre fait entendre son bruitage (le tifo)', vus[0] === 'epreuve-tifo', vus);
     check('aucune erreur de script (cartes et épreuves)', erreurs.length === 0, ...erreurs);
     await page.close();
+  }
+
+  /* 24 octobre 2026 : les cartes et les épreuves du duel jouent un son
+     enregistré (Artlist) — trois gardés par Gaël à l'écoute, puis les 60
+     autres. Comme la clameur : seulement déjà décodé,
+     la synthèse sinon. Une page de duel les charge au premier geste ; une
+     autre, à la première carte enregistrée jouée. */
+  console.log('\n  les cartes enregistrées (24 octobre 2026)');
+  {
+    const ENR = Object.keys(mix.enregistres ?? {});
+    check('les 63 cartes et épreuves du duel ont un son enregistré, chacune jugée au banc',
+      ENR.length === 63 && ENR.every((n) => mix.sons[n]?.famille === 'jeu'), ENR);
+    const { page, erreurs } = await nouvellePage('/__son-geste');
+    const vus = [];
+    page.on('request', (r) => { if (/^\/son\/(carte|epreuve)-/.test(new URL(r.url()).pathname)) vus.push(new URL(r.url()).pathname); });
+    await page.click('#geste');
+    const prets = await jusqua(page, (x) => ENR.every((n) => x.fichiers[n]), 10000);
+    check('une page de duel charge les cartes enregistrées au premier geste, une fois chacune',
+      prets && vus.length === ENR.length && new Set(vus).size === ENR.length, vus.length);
+    await page.evaluate(() => { window.__sonTampons.length = 0; window.TBF_SON.jouer('a-fumigene'); });
+    let t = await page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('décodé, le fumigène joue son fichier (1,98 s)', t.some((x) => x.duree > 1.9 && x.duree < 2.05), t);
+    check('aucune erreur de script (cartes enregistrées)', erreurs.length === 0, ...erreurs);
+    await page.close();
+
+    const autre = await nouvellePage();
+    await autre.page.click('#geste');
+    await jusqua(autre.page, (x) => x.contexte === 'running');
+    await autre.page.evaluate(() => { window.__sonTampons.length = 0; window.TBF_SON.jouer('a-arbitre'); });
+    t = await autre.page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('ailleurs, la première carte enregistrée sonne en synthèse (rien n’est encore décodé)',
+      !t.some((x) => x.duree > 1 && x.duree < 1.06), t);
+    const ensuite = await jusqua(autre.page, (x) => x.fichiers['a-arbitre'], 5000);
+    await attendre(300);
+    await autre.page.evaluate(() => { window.__sonTampons.length = 0; window.TBF_SON.jouer('a-arbitre'); });
+    t = await autre.page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('… et la suivante, son fichier (1,03 s)', ensuite && t.some((x) => x.duree > 1 && x.duree < 1.06), t);
+    check('aucune erreur de script (première carte ailleurs)', autre.erreurs.length === 0, ...autre.erreurs);
+    await autre.page.close();
   }
 
   /* ============================== 9. la scène tient sa célébration (fx)

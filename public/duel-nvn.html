@@ -737,6 +737,52 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .place-att.absent .tbf-buste{opacity:.45}
 .place-att.absent .tbf-siege-nom::after{content:" · rappelé";font-weight:400}
 
+/* **Le vestiaire vivant** (24 octobre 2026, demandé par Gaël : « rendre
+   l'application visuellement vivante »). Le voile d'attente devient un
+   couloir de stade : deux projecteurs qui balaient depuis le toit, une
+   lueur chaude au ras du sol, une fumée qui passe. Trois animations sans
+   fin au plus : les projecteurs, la fumée, et le radar de la place libre
+   (le rond d'attente est caché dans la salle, elle a son bouton). Entre les
+   deux tribunes, le VS ; une place qui se remplit s'allume. */
+.voile{isolation:isolate}
+.voile::before,.voile::after{content:"";position:fixed;z-index:-1;pointer-events:none;opacity:0;
+  transition:opacity .8s}
+.voile::before{inset:-10% -30% 0;transform-origin:50% 0;background:
+  conic-gradient(from 168deg at 22% 0,transparent 0 6deg,rgba(255,236,190,.15) 11deg,transparent 17deg),
+  conic-gradient(from 175deg at 78% 0,transparent 0 6deg,rgba(255,236,190,.15) 11deg,transparent 17deg)}
+.voile::after{inset:0;background:
+  radial-gradient(90% 34% at 50% 104%,rgba(255,170,70,.20),transparent 70%),
+  radial-gradient(40% 16% at 20% 88%,rgba(220,225,235,.07),transparent 70%),
+  radial-gradient(46% 18% at 78% 80%,rgba(220,225,235,.06),transparent 70%);
+  background-size:100% 100%,140% 100%,150% 100%}
+.voile.ambiance::before{opacity:1;animation:vs-projos 7s ease-in-out infinite alternate}
+.voile.ambiance::after{opacity:1;animation:vs-fumee 14s ease-in-out infinite alternate}
+@keyframes vs-projos{from{rotate:-5deg}to{rotate:5deg}}
+@keyframes vs-fumee{from{background-position:0 0,0 0,100% 0}to{background-position:0 0,100% 0,0 0}}
+/* Le fond filmé du couloir (Artlist, 24 octobre 2026) : un projecteur dans
+   la fumée, en boucle. Quand il joue, les projecteurs dessinés s'effacent. */
+#voileFond{position:fixed;inset:0;z-index:-1;width:100%;height:100%;max-width:none;object-fit:cover;
+  mix-blend-mode:screen;opacity:0;transition:opacity .8s;pointer-events:none}
+.voile.filme #voileFond{opacity:.6}
+.voile.filme::before{opacity:0}
+.voile.ambiance h2{text-shadow:0 0 18px rgba(255,214,140,.45)}
+.voile.ambiance .place-att.libre .tbf-siege-place{animation:vs-radar 1.8s ease-out infinite}
+@keyframes vs-radar{0%{box-shadow:0 0 0 0 rgba(242,238,228,.45)}100%{box-shadow:0 0 0 16px rgba(242,238,228,0)}}
+/* Une place qui vient de se remplir : le buste saute sur son siège, cerclé d'or. */
+.place-att.arrive .tbf-buste{animation:vs-arrive .7s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes vs-arrive{0%{scale:.2;opacity:0;box-shadow:0 0 0 0 rgba(245,195,59,.9)}
+  60%{scale:1.15;opacity:1;box-shadow:0 0 0 10px rgba(245,195,59,.35)}
+  100%{scale:1;box-shadow:0 0 0 18px rgba(245,195,59,0)}}
+/* Le VS entre les deux tribunes, sur une ligne de craie. */
+.vs-att{display:flex;align-items:center;gap:10px;margin:-4px 0}
+.vs-att::before,.vs-att::after{content:"";flex:1;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(242,238,228,.35))}
+.vs-att::after{background:linear-gradient(270deg,transparent,rgba(242,238,228,.35))}
+.vs-att b{font-family:var(--banner);font-size:22px;letter-spacing:.06em;color:var(--or,#F5C33B);
+  padding:2px 10px;border:2px solid currentColor;rotate:-4deg;
+  text-shadow:0 0 14px rgba(245,195,59,.55);animation:vs-claque .5s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes vs-claque{from{scale:2.2;opacity:0}to{scale:1;opacity:1}}
+
 /* Même règle que `.grand` : le voile couvre l’écran, son contenu tient dans
    la colonne. Opaque, comme le voile du Virage. */
 .voile>*{max-width:var(--colonne)}
@@ -785,6 +831,17 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 }
 html[data-calme~="animations"] .compte,
 html[data-calme~="animations"] .spin{animation:none}
+@media (prefers-reduced-motion:reduce){
+  .voile.ambiance::before,.voile.ambiance::after,.voile.ambiance .place-att.libre .tbf-siege-place,
+  .place-att.arrive .tbf-buste,.vs-att b{animation:none}
+  #voileFond{display:none}
+}
+html[data-calme~="animations"] #voileFond{display:none}
+html[data-calme~="animations"] .voile.ambiance::before,
+html[data-calme~="animations"] .voile.ambiance::after,
+html[data-calme~="animations"] .voile.ambiance .place-att.libre .tbf-siege-place,
+html[data-calme~="animations"] .place-att.arrive .tbf-buste,
+html[data-calme~="animations"] .vs-att b{animation:none}
 /* Les Fanzzy de l'arène ne bougent plus ; ils changent encore d'expression
    (un fondu, pas un mouvement), et le dépit les ternit toujours. */
 html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:none;rotate:none;scale:none}
@@ -955,6 +1012,7 @@ html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:n
 </section>
 
 <div class="voile" id="voile">
+  <video id="voileFond" muted playsinline loop preload="none" aria-hidden="true"></video>
   <div class="spin" id="voileSpin"></div>
   <h2 id="voileTitre"></h2>
   <div class="texte" id="voileTexte"></div>
@@ -1223,6 +1281,10 @@ function listeAmisDuel() {
 }
 
 function voile(titre, texte, bouton) {
+  // L'ambiance du couloir est celle de l'attente seule (voir `.voile.ambiance`).
+  const ambiance = titre === 'LE VESTIAIRE' || titre === 'Dans la file';
+  $('voile').classList.toggle('ambiance', ambiance);
+  fondDuCouloir(ambiance);
   $('voileTitre').textContent = titre;
   $('voileTexte').innerHTML = texte ?? '';
   const b = $('voileBtn');
@@ -1231,7 +1293,23 @@ function voile(titre, texte, bouton) {
   $('voileSpin').style.display = bouton ? 'none' : '';
   $('voile').classList.add('on');
 }
-const fermerVoile = () => $('voile').classList.remove('on');
+const fermerVoile = () => { $('voile').classList.remove('on'); fondDuCouloir(false); };
+/** Le fond filmé du couloir : jamais sans mouvement ni en économie de données. */
+function fondDuCouloir(on) {
+  const v = $('voileFond');
+  if (!v) return;
+  const sans = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    || document.documentElement.dataset.calme?.split(' ').includes('animations')
+    || navigator.connection?.saveData;
+  if (on && !sans) {
+    if (!v.getAttribute('src')) { v.src = '/video/fond-vestiaire.98fe5397.mp4'; v.load(); }
+    v.play?.()?.catch?.(() => {});
+    $('voile').classList.add('filme');
+  } else {
+    $('voile').classList.remove('filme');
+    v.pause?.();
+  }
+}
 
 /* ------------------------------------------------- quitter un duel en cours
 
@@ -1317,10 +1395,13 @@ let reboursTimer = null;
    rumeur, un départ la laisse retomber à sa mesure. Remis à zéro à chaque
    entrée en file. */
 let presentsAvant = 0;
+/* Combien de places étaient prises dans chaque tribune au message
+   précédent : les suivantes viennent d'arriver, et s'allument. */
+let prisesAvant = { moi: 0, eux: 0 };
 
 /** Une place du vestiaire. `court` : à quatre ou cinq places par gradin,
     « LIBRE » seul tient sous le siège. */
-function placeAttente(joueur, club, court = false) {
+function placeAttente(joueur, club, court = false, arrive = false) {
   if (!joueur) {
     return `<li class="tbf-siege tbf-siege--libre place-att libre">
       <span class="tbf-siege-place" aria-hidden="true">+</span>
@@ -1330,14 +1411,15 @@ function placeAttente(joueur, club, court = false) {
   /* Sans nom connu, le nom du Fanzzy ou le club dit qui occupe la place.
      Jamais un « — ». */
   const nom = joueur.nom ?? joueur.fanzzy?.nom ?? club ?? '';
-  return `<li class="tbf-siege place-att pris${joueur.absent ? ' absent' : ''}">
+  return `<li class="tbf-siege place-att pris${joueur.absent ? ' absent' : ''}${arrive ? ' arrive' : ''}">
     <span class="tbf-buste" aria-hidden="true">${src ? `<img src="${esc(src)}" alt="" decoding="async">` : ''}</span>
     ${nom ? `<span class="tbf-siege-nom">${esc(nom)}</span>` : ''}</li>`;
 }
 
 function tribuneAttente(titre, joueurs, attendus, club, cote) {
+  const avant = prisesAvant[cote] ?? 0;
   const places = Array.from({ length: attendus },
-    (_, i) => placeAttente(joueurs[i], club, attendus > 3)).join('');
+    (_, i) => placeAttente(joueurs[i], club, attendus > 3, i >= avant)).join('');
   return `<div class="tribune-att" data-tribune="${cote}">
     <h4 class="tbf-cousu">${esc(titre)}<em>${joueurs.length}/${attendus}</em></h4>
     <ul class="tbf-gradins tbf-gradins--entiers places-att" style="--places:${Math.max(1, attendus)}">${places}</ul>
@@ -1355,6 +1437,7 @@ function rendreSalle(p) {
   const avecClub = (titre, club) => (club ? `${titre} · ${club}` : titre);
   corps.push(tribuneAttente(avecClub('MA TRIBUNE', p.club?.name),
     t.moi, p.attendus, p.club?.name, 'moi'));
+  corps.push('<div class="vs-att" aria-hidden="true"><b>VS</b></div>');
   corps.push(tribuneAttente(avecClub('EN FACE', p.enFaceClub?.name),
     t.eux, p.attendus, p.enFaceClub?.name, 'eux'));
 
@@ -1405,7 +1488,10 @@ function rendreSalle(p) {
   const places = Math.max(1, 2 * (Number(p.attendus) || 1));
   const part = Math.max(0, Math.min(1, presents / places));
   window.TBF_SON?.rumeur?.(presents > presentsAvant ? 'arrivee' : 'vestiaire', { part });
+  // Quelqu'un vient d'arriver (pas moi, à mon entrée) : un bruit de siège.
+  if (presents > presentsAvant && presentsAvant > 0) window.FX?.son?.('saut');
   presentsAvant = presents;
+  prisesAvant = { moi: t.moi?.length ?? 0, eux: t.eux?.length ?? 0 };
 
   clearInterval(reboursTimer);
   reboursTimer = null;
@@ -2373,6 +2459,7 @@ function entrerEnFile() {
   if (!S.fixtureId) return toast('Choisis d\u2019abord un match support.');
   if (!socket?.connected) return toast('Pas de connexion au serveur.');
   presentsAvant = 0;
+  prisesAvant = { moi: 0, eux: 0 };
   S.invites = new Set();
   socket.emit('nvn:queue',
     { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0, souple:S.souple });
@@ -2403,6 +2490,7 @@ function quitterFile() {
 function entrerParLien(code) {
   if (!socket) return toast('Pas de connexion au serveur.');
   presentsAvant = 0;
+  prisesAvant = { moi: 0, eux: 0 };
   S.invites = new Set();
   socket.emit('nvn:queue', { duel: code });
   S.enFile = true;
@@ -4185,6 +4273,10 @@ function montrerBilan(b) {
   $('bilan').hidden = false;
   $('bilan').scrollTop = 0;
   window.FX?.son?.(gagne ? 'but' : nul ? 'tic' : 'encaisse');
+  /* L'issue se joue sur la case (voir `FX.fin`) : la victoire claque sous
+     les confettis et l'or filmé, la défaite tombe sous la pluie. */
+  window.FX?.fin?.(nul ? 'nul' : gagne ? 'victoire' : 'defaite',
+    { carte: $('bilanCase'), fz: src ? fz : null, dans: $('bilan') });
   /* **La barre l'apprend** (R6) : le duel vient de verser des écharpes ou de
      l'XP, et c'est à la page de le dire — sans quoi le HUD garde l'ancien
      solde, et l'écran suivant avec lui. Le portefeuille et la jauge tels que

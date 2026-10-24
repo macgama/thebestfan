@@ -32,12 +32,12 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Cinq lignées sur vingt, et pourquoi elle arrive fermée
+ * ## Dix lignées sur vingt, et pourquoi elle arrive fermée
  *
- * Les cinq premières (AN1 à AN5) ont leurs dessins : trois cartes en pied et
- * cinq états par âge, en tenue de base. Les quinze autres arriveront avec les
- * leurs ; les écrire maintenant mettrait au catalogue quinze silhouettes
- * procédurales, et une série dont les trois quarts ne sont pas dessinés.
+ * Les dix premières (AN1 à AN10) ont leurs dessins : trois cartes en pied et
+ * cinq états par âge, en tenue de base. Les dix autres arriveront avec les
+ * leurs ; les écrire maintenant mettrait au catalogue dix silhouettes
+ * procédurales, et une série dont la moitié n'est pas dessinée.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -69,9 +69,14 @@
  *
  * ## Les familles, et le geste des bâtons de sucre
  *
- * Cinq lignées, cinq familles : la garde (fide), la péniche (depl), le crieur
- * de promenade (voix), le peintre d'enseignes (tifo), la confiseuse (pyro).
- * La percussion attendra une des quinze suivantes.
+ * Les six premières lignées ont pris les six familles : la garde (fide), la
+ * péniche (depl), le crieur de promenade (voix), le peintre d'enseignes
+ * (tifo), la confiseuse (pyro), et la punk du grand boulevard (perc), qui bat
+ * la mesure du talon de ses bottes sur le béton des marches. Les quatre
+ * suivantes en reprennent quatre, une chacune, pour que la série reste
+ * équilibrée : la coursière à vélo (depl), le gamin aux dinosaures de plâtre
+ * (tifo), la danseuse aux grelots (perc) et le banlieusard au parapluie
+ * (fide). La voix et la pyro passent en tête pour les suivantes.
  *
  * Le geste de la confiseuse n'est pas libre. Les Pyro comptaient trente-deux
  * personnages de premier âge dont quatre aux `rouleaux` — pile le huitième que
@@ -79,6 +84,12 @@
  * éponyme aurait fait passer les rouleaux sous le plancher. Elle lance donc
  * ses bâtons de sucre par-dessus la rambarde, ce qui est exactement le geste,
  * et les rouleaux remontent à cinq sur trente-trois.
+ *
+ * Même calcul pour le gamin aux dinosaures : les Tifo comptaient cinquante-six
+ * personnages de premier âge dont sept à l'`ola`, pile le huitième. Un
+ * cinquante-septième au geste éponyme l'aurait fait passer dessous. Il lève
+ * donc la vague — l'échine de plâtre qui se dresse d'un bout à l'autre de la
+ * tribune —, et l'ola passe à huit sur cinquante-sept.
  */
 
 /**
@@ -100,10 +111,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les dix premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : cinq fois le
- * même mot, ce sont cinq occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : dix fois le
+ * même mot, ce sont dix occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -153,6 +164,65 @@ const PREMIERS_AGES = [
       + 'regrette jusqu’à la mi-temps.',
     mods: { perfectBonus: 1.18, costPenalty: 1.06 },
     cri: { label: 'ATTENTION, ÇA COLLE', gest: 'rouleaux', power: 54 } },
+
+  /* AN6 — la percussion des bottes : la lycéenne trop sage de la grande rue
+     des boutiques, qui finit reine punk, épingles comprises. Bleu roi et
+     blanc. Le petit baladeur à cassettes la suit jusqu'au troisième âge. Son
+     défaut : elle tape si fort qu'elle s'essouffle avant le refrain. */
+  { id: 'AN6', nom: 'La Timide du Grand Boulevard', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Elle remonte la grande rue des boutiques en uniforme, le blouson de cuir bleu '
+      + 'plié sur le bras : elle n’ose pas encore le mettre. Dans son baladeur, une cassette '
+      + 'prêtée, et le pied qui bat la mesure sans qu’elle s’en rende compte.',
+    mods: { mashBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'J’OSE PAS ENCORE', gest: 'mash', power: 53 } },
+
+  /* AN7 — le déplacement à vélo : la coursière qui crève sous la pluie et
+     finit reine du vélodrome sur une roue géante. Bleu ciel et blanc. La
+     petite sonnette de laiton la suit jusqu'au troisième âge. Elle fait
+     tourner sa roue comme on fait tourner l'écharpe ; son défaut : elle part
+     si vite qu'elle se fait surprendre au premier contre. */
+  { id: 'AN7', nom: 'La Coursière à Vélo', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'Elle livre des plis dans toute la ville, sous la pluie, et elle crève toujours '
+      + 'au pied des trois clochers. Elle finit le chemin à pied jusqu’au stade, la roue sous '
+      + 'le bras, la pompe à la main, et elle sourit quand même.',
+    mods: { breathBonus: 1.16, parryResist: 0.92 },
+    cri: { label: 'ENCORE UNE CREVAISON', gest: 'echarpe', power: 53 } },
+
+  /* AN8 — le tifo de plâtre : le gamin fasciné par les vieux dinosaures
+     sculptés du parc, qui finit par en devenir un. Rayures rouges et bleues.
+     Les lunettes rondes restent sur son nez jusqu'au troisième âge. Il lève
+     la vague (voir l'en-tête) ; son défaut : il s'émerveille, et il oublie de
+     souffler. */
+  { id: 'AN8', nom: 'Le Gamin au Dinosaure en Plâtre', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Dans le vieux parc embrumé, il connaît chaque monstre de plâtre par son nom. '
+      + 'Il garde une petite figurine rayée tout contre ses lunettes, et quand la tribune se '
+      + 'lève, il la lève avec elle.',
+    mods: { parryBonus: 1.17, breathBonus: 0.92 },
+    cri: { label: 'ILS SONT VIVANTS', gest: 'ola', power: 52 } },
+
+  /* AN9 — la percussion des grelots : la danseuse folklorique qu'on
+     n'entendait que de loin, et dont les grelots finissent par faire trembler
+     la tribune. Bleu et blanc. Le mouchoir blanc reste à sa ceinture jusqu'au
+     troisième âge. Elle accélère à chaque refrain, d'où le crescendo ; son
+     défaut : elle ne sait pas rester immobile. */
+  { id: 'AN9', nom: 'La Danseuse aux Grelots', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Mouchoirs blancs, grelots aux tibias, baudriers bleus un peu de travers : elle '
+      + 'débute dans la troupe de danse du village. On ne l’entend encore que de loin, mais '
+      + 'elle accélère à chaque refrain.',
+    mods: { mashBonus: 1.15, holdBonus: 0.92 },
+    cri: { label: 'ÉCOUTEZ LES GRELOTS', gest: 'crescendo', power: 53 } },
+
+  /* AN10 — la fidélité du parapluie : le monsieur du train de 7 h 42,
+     toujours trop poli, qui finit par abriter tout le virage. Blanc et noir.
+     La moustache blanche reste impeccable jusqu'au troisième âge. Il tient
+     son parapluie sans jamais le lâcher trop tôt, d'où la tenue ; son
+     défaut : il ne se presse jamais. */
+  { id: 'AN10', nom: 'Le Banlieusard au Parapluie', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Il prend le train de 7 h 42 depuis trente ans, costume rayé, chapeau melon, '
+      + 'parapluie blanc plié au bras. Il s’excuse quand on le bouscule, et il n’a jamais '
+      + 'manqué un coup d’envoi.',
+    mods: { holdBonus: 1.17, mashBonus: 0.91 },
+    cri: { label: 'PARDON, EXCUSEZ-MOI', gest: 'tenue', power: 52 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));

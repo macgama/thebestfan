@@ -1314,11 +1314,14 @@ export const AGES = {
      Le foot anglais vu des gradins debout (`dex-terraces.js`). Chaque lignée
      monte dans un vieux métier ou une vieille tradition de son coin — la
      garde de la forteresse, la péniche, la promenade, l'enseigne, la
-     confiserie — et le troisième âge en devient la figure, jusqu'à porter le
-     décor sur lui. **Il garde toujours un détail du premier** : le sachet de
-     miettes, le bonnet, le mouchoir noué, le petit pinceau, la dent qui
-     manque. C'est la règle de ce fichier, et la fiche de chaque dessin la
-     suit aussi.
+     confiserie, la grande rue punk, le grand-bi, les dinosaures de plâtre du
+     parc, la danse aux grelots, le parapluie du gentleman — et le troisième
+     âge en devient la figure, jusqu'à porter le décor sur lui. **Il garde
+     toujours un détail du premier** : le sachet de miettes, le bonnet, le
+     mouchoir noué, le petit pinceau, la dent qui manque, le baladeur à
+     cassettes, la sonnette de laiton, les lunettes rondes, le mouchoir blanc,
+     la moustache. C'est la règle de ce fichier, et la fiche de chaque dessin
+     la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
      de `dex-terraces.js`.                                                    */
@@ -1362,5 +1365,45 @@ export const AGES = {
     ['La Reine des Bâtons de Sucre', 'Couronne de sucre, cape de sucre filé, une cartouchière de bâtons '
       + 'à la ceinture. Elle vise juste au coup de sifflet, et elle sourit toujours avec la dent qui '
       + 'manque.', 'SERVEZ-VOUS'],
+  ],
+  AN6: [
+    ['La Punk à Épingles', 'Le blouson, elle le porte maintenant, couvert de clous et d’épingles à '
+      + 'nourrice. Elle tape des bottes sur les marches au rythme de sa cassette, et toute la travée '
+      + 'finit par taper avec elle.', 'TAPEZ DES PIEDS'],
+    ['La Reine du Grand Boulevard', 'Crête bleue, épaulettes cloutées, des épingles grandes comme des '
+      + 'sabres. Quand ses semelles frappent le béton, la tribune tremble — et le petit baladeur pend '
+      + 'toujours à son cou.', 'TOUT LE BOULEVARD'],
+  ],
+  AN7: [
+    ['La Championne du Grand-Bi', 'Perchée sur sa roue géante, elle boucle les tours de piste en '
+      + 'maillot de laine rayé. Les jours de déplacement, elle part la veille à la force des mollets, '
+      + 'et elle arrive avant le car.', 'PLACE AU GRAND-BI'],
+    ['La Reine du Vélodrome', 'Une armure de cadres et de rayons, une roue lumineuse dans le dos, un '
+      + 'casque à ailettes. Elle mène le cortège jusqu’au stade d’en face — et la petite sonnette de '
+      + 'laiton tinte toujours à son poignet.', 'DRING, ON ARRIVE'],
+  ],
+  AN8: [
+    ['Le Sculpteur de Monstres', 'Blouse tachée de plâtre, haut-de-forme, maillet à la ceinture : il '
+      + 'sculpte des têtes de monstres comme au temps des crinolines. Il en peint une par match, et la '
+      + 'tribune la fait passer de main en main, d’un bout à l’autre.', 'FAITES-LA PASSER'],
+    ['L’Iguanodon de Plâtre', 'Il porte maintenant le monstre entier, cornes, griffes et rayures '
+      + 'peintes, le plâtre craquelé aux coutures. Quand il se dresse, la tribune se lève derrière lui '
+      + 'comme une échine — et les lunettes rondes n’ont jamais quitté son nez.', 'TOUTE L’ÉCHINE'],
+  ],
+  AN9: [
+    ['La Danseuse de Mai', 'Chapeau de paille fleuri, rubans bleus et blancs, baudriers couverts de '
+      + 'grelots de laiton. Elle frappe le sol du bâton, lentement d’abord, puis de plus en plus vite, '
+      + 'et toute la travée prend la cadence.', 'PLUS VITE, PLUS VITE'],
+    ['La Reine des Grelots', 'Des centaines de grelots en armure, une coiffe de rubans, un bâton '
+      + 'couronné de clochettes. Quand elle danse, la tribune sonne jusqu’à l’estuaire — et le mouchoir '
+      + 'blanc dépasse toujours de sa ceinture.', 'QUE TOUT SONNE'],
+  ],
+  AN10: [
+    ['Le Gentleman du Fleuve', 'Redingote noire à liseré blanc, gants blancs, montre de gousset : il '
+      + 'regarde passer les avirons sur le fleuve, son parapluie ouvert sur l’épaule. Il ne le referme '
+      + 'jamais avant le coup de sifflet final.', 'TENEZ BON, MESSIEURS'],
+    ['Le Grand Parapluie', 'Son parapluie abrite maintenant tout le virage, et les gouttes s’allument '
+      + 'au bout des baleines. Il reste droit sous l’averse, sans un pli — et la moustache blanche est '
+      + 'toujours impeccable.', 'TOUT LE MONDE À L’ABRI'],
   ],
 };
