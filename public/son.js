@@ -207,6 +207,16 @@
     grondement: 3.02,             //  −8,1 · −16,5 · 1,80 s
     niveau: 1.65,                 //  −8,6 · −16,1 · 1,15 s
     ovation: 1.19,                //  −8,4 · −16,5 · 3,20 s
+    /* L'ouverture d'un booster (octobre 2026), visés au milieu de la
+       fenêtre du jeu ; mesurés au banc le 24 octobre 2026. */
+    tremble: 1.53,                // −12,4 · −22,5 · 0,20 s
+    saut: 1.62,                   // −13,3 · −22,5 · 0,26 s
+    bulle: 2.04,                  // −11,2 · −22,5 · 0,17 s
+    metal: 1.17,                  // −18,3 · −22,6 · 0,38 s
+    tissu: 2.85,                  // −13,1 · −22,5 · 0,25 s
+    projecteur: 5.5,              // −14,0 · −22,5 · 0,74 s
+    eclair: 2.32,                 // −14,4 · −22,5 · 0,14 s
+    butin: 1.43,                  // −19,2 · −22,5 · 0,26 s
   };
 
   /* Les gains des trois bus. À l'unité : le mixage est dans MIX. Ils
@@ -670,6 +680,67 @@
           [3.18, 0.12, 0.9], [4.3, 0.08, 0.6]]
           .forEach(([r, v, d]) => ton(c, s, t, { freq: 98 * r, duree: d, type: 'sine', vol: v * 0.3 }));
         bruit(c, s, t, { duree: 0.08, freq: 300, filtre: 'lowpass', q: 0.7, vol: 0.25 });
+      } },
+
+    /* ------------------------------------------ l'ouverture d'un booster
+
+       Le suspense et l'entrée de chaque sorte de carte (boosters.html,
+       octobre 2026). Le paquet tremble une fois par degré de sa meilleure
+       carte, puis chaque carte retournée a son geste et son bruit : on
+       doit entendre, sans regarder, si c'est un Fanzzy, une pièce ou une
+       tenue. La rareté, elle, garde ses sons (FX.reveler). */
+    // Le paquet qui tremble : un choc sourd dans le carton, et sa vibration.
+    tremble: { famille: 'jeu', duree: 0.45,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.3, freq: 170, filtre: 'lowpass', q: 0.8, vol: 0.3 });
+        ton(c, s, t, { freq: 82, vers: 128, duree: 0.28, type: 'triangle', vol: 0.16 });
+      } },
+    // Le Fanzzy qui saute hors de sa carte : un rebond qui monte, et un « hé ! » de tribune.
+    saut: { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 240, vers: 640, duree: 0.14, type: 'sine', vol: 0.14 });
+        ton(c, s, t, { freq: 640, vers: 500, duree: 0.16, type: 'sine', vol: 0.1, delai: 0.13 });
+        bruit(c, s, t, { duree: 0.38, freq: 1250, q: 0.7, vol: 0.07, delai: 0.08 });
+      } },
+    // L'expression : deux bulles qui éclatent, une humeur qui passe.
+    bulle: { famille: 'jeu', duree: 0.35,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 420, vers: 980, duree: 0.07, type: 'sine', vol: 0.14 });
+        ton(c, s, t, { freq: 560, vers: 1300, duree: 0.07, type: 'sine', vol: 0.12, delai: 0.11 });
+      } },
+    // La pièce d'équipement : du métal qu'on fait tinter, partiels de cloche courte.
+    metal: { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        [[2350, 0.06, 0.6], [2350 * 2.76, 0.025, 0.3], [3520, 0.03, 0.4]]
+          .forEach(([f, v, d]) => ton(c, s, t, { freq: f, duree: d, type: 'sine', vol: v }));
+        bruit(c, s, t, { duree: 0.03, freq: 4200, q: 0.9, vol: 0.12 });
+      } },
+    // La tenue : le rideau qui tombe puis se lève, un froissé d'étoffe.
+    tissu: { famille: 'jeu', duree: 0.55,
+      jouer: (c, s, t) => {
+        const f = bruit(c, s, t, { duree: 0.45, freq: 700, q: 0.6, vol: 0.2 });
+        f.frequency.setValueAtTime(700, t);
+        f.frequency.exponentialRampToValueAtTime(2600, t + 0.45);
+      } },
+    // Le stade : trois projecteurs qui s'allument l'un après l'autre, et leur bourdon.
+    projecteur: { famille: 'jeu', duree: 0.95,
+      jouer: (c, s, t) => {
+        [0, 0.16, 0.32].forEach((d) =>
+          bruit(c, s, t, { duree: 0.07, freq: 240, filtre: 'lowpass', q: 0.8, vol: 0.32, delai: d }));
+        ton(c, s, t, { freq: 100, duree: 0.5, type: 'sawtooth', vol: 0.035, delai: 0.34 });
+      } },
+    // La carte action, quand elle n'a pas de bruitage à elle : un éclair qui claque.
+    eclair: { famille: 'jeu', duree: 0.35,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 1900, vers: 110, duree: 0.2, type: 'sawtooth', vol: 0.07 });
+        bruit(c, s, t, { duree: 0.16, freq: 3200, q: 0.7, vol: 0.12 });
+      } },
+    // Les écharpes : une poignée qui tombe dans la bourse, en notes claires.
+    butin: { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [1319, 1568, 2093].forEach((f, i) =>
+          ton(c, s, t, { freq: f, duree: 0.2, type: 'sine', vol: 0.07, delai: i * 0.06 }));
+        bruit(c, s, t, { duree: 0.12, freq: 5200, q: 0.8, vol: 0.05 });
       } },
 
     /* ------------------------------------------------- les moments */
