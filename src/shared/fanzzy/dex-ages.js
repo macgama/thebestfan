@@ -1324,8 +1324,10 @@ export const AGES = {
      artistes, les horlogers de la ville, le feu d'artifice du parc, les
      réverbères au gaz, les fouilleurs de vase du fleuve, la foire d'automne,
      les tertres du comté, la faïence ajourée, les caves de la musique beat,
-     les premières machines à calculer — et le troisième âge en devient la
-     figure, jusqu'à porter le décor sur lui.
+     les premières machines à calculer, les filatures de coton, la petite
+     cornemuse du Nord, les grottes de grès sous la ville, les verreries du
+     fleuve, les cerfs-volants de la colline — et le troisième âge en devient
+     la figure, jusqu'à porter le décor sur lui.
      **Il garde toujours un détail du premier** : le sachet de miettes, le
      bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
      baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
@@ -1337,8 +1339,10 @@ export const AGES = {
      mocassins éraflés, les lunettes cerclées de fer, le bonnet à pompon, la
      vieille casquette plate, les bottes de caoutchouc noires, le jeton de
      laiton, les chaussures de marche boueuses, le crayon dans le chignon, le
-     petit micro rouge, les lunettes d'écaille. C'est la règle de ce fichier,
-     et la fiche de chaque dessin la suit aussi.
+     petit micro rouge, les lunettes d'écaille, le foulard de coton rouge, la
+     mèche blanche, les vieilles chaussures éraflées, d'autres baskets
+     rouges, le bandeau bleu marine. C'est la règle de ce fichier, et la fiche
+     de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
      de `dex-terraces.js`.                                                    */
@@ -1685,5 +1689,74 @@ export const AGES = {
       + 'bobine géante au bras comme un bouclier. Elle compte, la machine calcule, et toute la '
       + 'tribune part au même chiffre — les lunettes d’écaille sont toujours sur son nez.',
       'TOUTE LA MACHINE S’ALLUME'],
+  ],
+  AN36: [
+    ['La Tisserande du Coton', 'Long tablier de coton blanc sur une robe noire, manches rouges '
+      + 'retroussées, sabots de bois, ciseaux pendus à un ruban, un rouleau d’étoffe rouge et '
+      + 'blanche sur l’épaule et la grande navette rouge polie, son fil blanc lumineux tendu '
+      + 'derrière elle. Le fil monte, le fil descend, et elle ne le laisse jamais filer.',
+      'TENDU, TOUJOURS'],
+    ['La Reine des Mille Navettes', 'Une robe tissée d’étoffe rouge, blanche et noire qui luit, '
+      + 'dont les fils courent encore sur sa poitrine comme sur un métier, des ensouples de bois '
+      + 'en épaulettes, des rangées de petites navettes rouges sur le corsage, une haute coiffe '
+      + 'de bobines blanches et la navette géante tenue comme un sceptre. Mille métiers battent à '
+      + 'son rythme — et le foulard de coton rouge est toujours dans ses cheveux.',
+      'MILLE MÉTIERS BATTENT'],
+  ],
+  AN37: [
+    ['La Joueuse de Cornemuse du Nord', 'Longue cape de laine noire sur un chemisier blanc, châle '
+      + 'à carreaux noirs et blancs épinglé à l’épaule, la cornemuse sous un bras et le petit '
+      + 'soufflet de cuir sanglé à l’autre, ses bourdons d’ébène posés sur l’épaule et leurs '
+      + 'bagues blanches qui luisent. Elle joue au soufflet, sans souffler, et tout le quai '
+      + 'marche à son pas.',
+      'AU PAS DU SOUFFLET'],
+    ['La Reine des Bourdons', 'Une robe d’armure à carreaux noirs et blancs aux coutures blanches '
+      + 'qui luisent, de hauts bourdons d’ébène cerclés d’argent dressés derrière les épaules '
+      + 'comme des tuyaux d’orgue, un grand soufflet de cuir en brassard, une longue cape noire '
+      + 'et le sac à carreaux géant sous le bras, qui luit de l’intérieur. Ses bourdons tiennent '
+      + 'la note et toute la tribune tient le temps — la mèche blanche est toujours dans ses '
+      + 'cheveux.',
+      'TOUS LES BOURDONS'],
+  ],
+  AN38: [
+    ['La Spéléologue des Grottes', 'Combinaison rouge aux genoux et aux coudes blancs renforcés, '
+      + 'rouleau de corde blanche à l’épaule, baudrier à anneaux d’acier, genouillères et le '
+      + 'casque rouge bien ajusté, sa lampe frontale qui brille blanc. Elle connaît chaque '
+      + 'galerie sous la ville, et chaque écho qui en revient.',
+      'L’ÉCHO REVIENT'],
+    ['La Reine des Caves de Grès', 'Une armure de plaques de grès rouge sculptées aux veines '
+      + 'blanches qui luisent, une haute couronne d’arches de grès comme des entrées de grotte, '
+      + 'une cape de corde blanche tressée, le casque rouge géant à la lampe éclatante et un '
+      + 'bâton taillé dans un pilier de grès. Toutes les grottes lui répondent, et toute la '
+      + 'tribune avec elles — et les vieilles chaussures éraflées sont toujours à ses pieds.',
+      'TOUTES LES GROTTES RÉPONDENT'],
+  ],
+  AN39: [
+    ['La Souffleuse de Verre', 'Lourd tablier de cuir sur une chemise blanche aux manches '
+      + 'retroussées, épais gants contre la chaleur, lunettes de protection sur le front, la '
+      + 'longue canne de souffleur et sa bulle de verre rouge incandescente au bout, et l’orbe à '
+      + 'spirales, gros comme un melon, qui luit dans un filet à sa hanche. Elle retient son '
+      + 'souffle, puis souffle d’un coup, juste quand le verre est prêt.',
+      'QUAND LE VERRE EST PRÊT'],
+    ['La Reine du Verre Soufflé', 'Une armure d’épaisses plaques de verre clair aux spirales '
+      + 'rouges et blanches qui luisent de l’intérieur, une haute couronne de fines flèches de '
+      + 'verre torsadé, une cape de perles de verre claires et l’orbe géant serré à deux bras '
+      + 'contre sa poitrine, qui brille comme une lanterne. Elle retient, elle lâche, et toute la '
+      + 'tribune s’embrase — et les baskets rouges sont toujours à ses pieds.',
+      'TOUT LE VERRE S’ALLUME'],
+  ],
+  AN40: [
+    ['La Lanceuse de Cerfs-Volants', 'Long coupe-vent bleu marine aux bandes blanches sur les '
+      + 'manches, mitaines, dévidoir de bois à la ceinture et le grand cerf-volant de soie bleu '
+      + 'marine et blanche aux bords lumineux, tenu droit contre elle, sa queue de rubans '
+      + 'enroulée au bras. Elle voit la rafale arriver et lève le cerf-volant pile au bon moment.',
+      'PILE DANS LE VENT'],
+    ['La Reine des Vents', 'Une armure bleu marine et blanche en voiles de cerf-volant pliées, aux '
+      + 'baguettes blanches qui luisent, un immense cerf-volant en losange dressé derrière ses '
+      + 'épaules comme des ailes, de longues queues de rubans enroulées autour d’elle, une crête '
+      + 'de petits cerfs-volants au-dessus de la tête et un dévidoir géant au bras comme un '
+      + 'bouclier. Le vent fait le tour du stade et toute la tribune se lève avec lui — le '
+      + 'bandeau bleu marine est toujours dans ses cheveux.',
+      'TOUTE LA COLLINE SE LÈVE'],
   ],
 };
