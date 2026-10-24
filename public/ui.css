@@ -8330,6 +8330,8 @@ html.tbf-vitrine-ouverte,html.tbf-vitrine-ouverte body{overflow:hidden}
     rgba(255,255,255,.05) 34%,transparent 58%);
   opacity:0;transition:opacity .2s ease}
 .tbf-vitrine-scene.touche .tbf-vitrine-lustre{opacity:1}
+/* Le téléphone penché (`FX.gyro`) allume le lustre aussi, un peu moins fort. */
+.tbf-vitrine-scene.penche .tbf-vitrine-lustre{opacity:.75}
 .tbf-vitrine-scene>.tbf-tampon{position:absolute;z-index:6;right:-10px;top:36%;--rot:9deg}
 .tbf-vitrine-scene>.tbf-tampon.tbf-tampon--plein{padding:5px 9px 4px;font-size:20px}
 
@@ -10930,6 +10932,11 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 .tbf-jauge>.tbf-sticker{position:absolute;z-index:3;right:-2px;top:50%;translate:0 -50%;
   --rot:-3deg;height:18px;padding:0 5px;font-size:11px}
 .tbf-sticker.tbf-combo{--rot:-4deg;height:26px;padding:0 7px;font-size:12px}
+/* La série qui chauffe (virage.html, `renderCombo`) : 3 d'affilée, une
+   lueur ; 5, l'or ; 10, le feu. Une lueur posée, pas une animation. */
+.tbf-sticker.tbf-combo[data-feu="1"]{box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6),0 0 12px 5px rgba(30,158,106,.75)}
+.tbf-sticker.tbf-combo[data-feu="2"]{box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6),0 0 14px 6px rgba(245,195,59,.85)}
+.tbf-sticker.tbf-combo[data-feu="3"]{box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6),0 0 14px 7px rgba(224,64,44,.9),0 0 28px 10px rgba(245,195,59,.5)}
 .tbf-souvenirs{position:relative;display:inline-block;flex:none;width:40px;height:46px}
 .tbf-souvenirs>span{position:absolute;left:3px;top:4px;width:26px;height:39px;border-radius:3px;
   background:var(--dos,url("/img/dos/RP.webp")) 50% 50%/cover no-repeat,var(--encre);
@@ -11710,3 +11717,15 @@ html[data-calme~="animations"] :where(.tbf-hudm-club,.tbf-hudm-score).tbf-colle{
 html[data-calme~="animations"] .tbf-carte--fanzzy[data-etat=dispo]{animation:none}
 html[data-calme~="animations"] .tbf-souvenir-carte{transition:none}
 html[data-calme~="animations"] [data-double] .tbf-fumee{opacity:.2}
+
+/* ================================================ la carte vers sa fiche
+
+   (24 octobre 2026.) Dans FANZZY, la carte touchée glisse jusqu'à la grande
+   carte de sa fiche (`ouvrirAvecPassage`, fanzzy.html) : un passage du
+   navigateur dans la même page. Le passage d'une page à l'autre
+   (`@view-transition`) a été essayé et retiré : Chrome l'interrompt dès
+   qu'on change de page vite, et le dit en erreur de script. */
+::view-transition-group(tbf-fiche-carte){animation-duration:.38s;animation-timing-function:cubic-bezier(.2,1.1,.35,1)}
+html[data-calme~="animations"]::view-transition-group(*),
+html[data-calme~="animations"]::view-transition-old(*),
+html[data-calme~="animations"]::view-transition-new(*){animation:none}
