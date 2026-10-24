@@ -462,6 +462,15 @@
       transparent 15px 37px);background-size:100% 220px;animation:fxpluie 3.4s linear forwards}
   @keyframes fxpluie{0%{opacity:0;background-position:0 0}15%{opacity:1}75%{opacity:.8}
     100%{opacity:0;background-position:-60px 660px}}
+  .fx-ola{position:fixed;left:0;right:0;bottom:0;height:min(26vh,190px);z-index:91;pointer-events:none;
+    display:flex;justify-content:space-between;align-items:flex-end;padding:0 1%;overflow:hidden}
+  .fx-ola i{flex:0 0 4.6%;height:100%;translate:0 102%;border-radius:6px 6px 0 0;
+    background:repeating-linear-gradient(180deg,var(--a) 0 16%,var(--b) 16% 32%);
+    box-shadow:0 0 0 2px #0b0d10;-webkit-mask:linear-gradient(#000 70%,transparent);
+    mask:linear-gradient(#000 70%,transparent)}
+  .fx-plus{position:fixed;z-index:92;pointer-events:none;translate:-50% -50%;
+    font:900 26px/1 var(--banner,system-ui);color:var(--c,#F2EEE4);letter-spacing:.02em;
+    text-shadow:0 2px 0 #0b0d10,0 0 12px var(--c,#F2EEE4)}
   .fx-rayons-fin{position:absolute;left:50%;top:50%;width:min(170vw,760px);aspect-ratio:1;z-index:-1;
     translate:-50% -50%;pointer-events:none;opacity:0;border-radius:50%;
     background:repeating-conic-gradient(var(--fx-c,#F5C33B) 0 7deg,transparent 7deg 18deg);
@@ -1424,9 +1433,115 @@
     return true;
   }
 
+  /* ------------------------------------------------ l'inclinaison du téléphone
+
+     (24 octobre 2026.) Dans la vitrine et sur la fiche, la carte suivait le
+     doigt : il fallait la toucher pour voir l'holo bouger. Elle suit
+     maintenant aussi le téléphone qu'on tourne dans la main, comme une vraie
+     carte brillante sous la lampe. `poser(x, y)` reçoit deux nombres de −0,5
+     à 0,5, les mêmes que le doigt donne ; le doigt garde la main tant qu'il
+     touche (`.touche`). La position de départ du téléphone est le « droit » :
+     on ne demande pas au joueur de tenir son téléphone à plat.
+
+     iPhone : Safari exige une permission demandée sur un geste, avec sa
+     propre fenêtre. Une carte brillante ne vaut pas cette question : là, le
+     doigt seul, comme avant. Rien sans mouvement, ni en mode calme. Le
+     guetteur se retire de lui-même quand la scène quitte la page. */
+  function gyro(scene, poser) {
+    if (!scene || typeof poser !== 'function' || doux()) return;
+    if (typeof DeviceOrientationEvent === 'undefined') return;
+    /* Safari d'iPhone et d'iPad (un iPad se dit « Mac » avec un écran tactile). */
+    const pomme = /iP(hone|ad|od)/.test(navigator.platform ?? '')
+      || (/Mac/.test(navigator.platform ?? '') && navigator.maxTouchPoints > 1);
+    if (pomme) return;
+    let zero = null;
+    let image = 0;
+    const borne = (v) => Math.max(-0.5, Math.min(0.5, v));
+    const lire = (e) => {
+      if (!scene.isConnected) { removeEventListener('deviceorientation', lire); return; }
+      if (e.beta == null || e.gamma == null || scene.classList.contains('touche')) return;
+      zero ??= { b: e.beta, g: e.gamma };
+      if (image) return;
+      image = requestAnimationFrame(() => {
+        image = 0;
+        const x = borne((e.gamma - zero.g) / 40);
+        const y = borne((e.beta - zero.b) / 40);
+        scene.classList.toggle('penche', Math.abs(x) + Math.abs(y) > 0.06);
+        poser(x, y);
+      });
+    };
+    /* Chrome porte lui aussi `requestPermission`, qui y répond « oui » sans
+       rien demander : on la passe quand elle existe. */
+    const ecouter = () => addEventListener('deviceorientation', lire);
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      Promise.resolve().then(() => DeviceOrientationEvent.requestPermission())
+        .then((r) => { if (r === 'granted') ecouter(); }, () => {});
+    } else ecouter();
+  }
+
+  /* ------------------------------------------------------------ la ola
+
+     (24 octobre 2026, la série au Virage.) Une rangée d'écharpes levées
+     traverse le bas de l'écran de gauche à droite, chacune un peu après sa
+     voisine : la tribune fait la ola pour une belle série. Une seule fois,
+     une seconde et demie, et rien sans mouvement. `couleurs` : les deux
+     couleurs des écharpes, celles du club quand la page les connaît. */
+  function ola({ couleurs = [COULEURS.or, COULEURS.feu] } = {}) {
+    if (doux()) return;
+    const rang = document.createElement('div');
+    rang.className = 'fx-ola';
+    rang.setAttribute('aria-hidden', 'true');
+    const n = 15;
+    for (let k = 0; k < n; k++) {
+      const e = document.createElement('i');
+      e.style.setProperty('--a', couleurs[k % 2 ? 1 : 0] ?? COULEURS.or);
+      e.style.setProperty('--b', couleurs[k % 2 ? 0 : 1] ?? COULEURS.craie);
+      e.style.height = `${70 + Math.round(Math.random() * 30)}%`;
+      e.style.rotate = `${k % 2 ? 5 : -5}deg`;
+      rang.append(e);
+      try {
+        e.animate([{ translate: '0 102%', easing: 'cubic-bezier(.2,.9,.4,1)' },
+          { translate: '0 8%', offset: 0.45, easing: 'ease-in' }, { translate: '0 102%' }],
+        { duration: 760, delay: k * 55, fill: 'backwards' });
+      } catch { /* sans animations de script : pas de ola */ }
+    }
+    document.body.append(rang);
+    setTimeout(() => rang.remove(), n * 55 + 900);
+  }
+
+  /** Un « ×3 » qui jaillit d'un élément et monte en s'effaçant. */
+  function plus(el, texte, couleur = COULEURS.craie, taille = 26) {
+    if (doux() || !el?.getBoundingClientRect) return;
+    const r = el.getBoundingClientRect();
+    const t = document.createElement('b');
+    t.className = 'fx-plus';
+    t.textContent = texte;
+    t.setAttribute('aria-hidden', 'true');
+    t.style.left = `${r.left + r.width / 2}px`;
+    t.style.top = `${r.top + r.height / 2}px`;
+    t.style.setProperty('--c', couleur);
+    t.style.fontSize = `${taille}px`;
+    document.body.append(t);
+    try {
+      t.animate([{ opacity: 0, scale: '.4', translate: '-50% -50%', easing: 'cubic-bezier(.2,1.4,.4,1)' },
+        { opacity: 1, scale: '1.25', translate: '-50% -120%', offset: 0.3, easing: 'ease-in' },
+        { opacity: 0, scale: '1', translate: '-50% -260%' }],
+      { duration: 1100 }).onfinish = () => t.remove();
+    } catch { t.remove(); }
+  }
+
   const FX = {
     /** Un fond filmé derrière un grand moment (voir « les fonds filmés »). */
     fond,
+
+    /** La carte qui suit le téléphone (voir « l'inclinaison du téléphone »). */
+    gyro,
+
+    /** La ola des écharpes, pour une belle série (voir « la ola »). */
+    ola,
+
+    /** Un nombre qui jaillit d'un élément (« ×3 »). */
+    plus,
 
     couleurs: COULEURS,
 

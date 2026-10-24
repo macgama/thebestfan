@@ -913,6 +913,68 @@ function maPlace() {
   el.toggleAttribute('data-div', Boolean(el.querySelector('.moi-div')));
   el.setAttribute('aria-label', dit);
   el.hidden = false;
+  feterMontee(el);
+}
+
+/**
+ * **Les places gagnées se voient** (24 octobre 2026, « classement vivant »).
+ * Le serveur dit déjà de combien on a monté depuis la dernière visite (le
+ * ▲ de l'épingle). Une fois par onglet et par visite, on le joue : ma
+ * ligne de la liste part d'en dessous et remonte en doublant celles qu'elle
+ * a dépassées, qui glissent d'un cran vers le bas ; mon rang claque dans
+ * l'épingle et un « +N » vert en jaillit. On ne montre jamais plus de six
+ * lignes doublées : au-delà, le geste se lit pareil et dure trop. Rien sans
+ * mouvement, rien quand on a descendu.
+ */
+const montees = new Set();
+function feterMontee(el) {
+  const calme = matchMedia('(prefers-reduced-motion: reduce)').matches
+    || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
+  const d = el.querySelector('.tbf-delta[data-sens="monte"]');
+  const k = Number(d?.textContent);
+  if (calme || !d || !(k > 0) || montees.has(onglet)) return;
+  montees.add(onglet);
+  const anim = (x, images, o) => { try { return x.animate(images, o); } catch { return null; } };
+  requestAnimationFrame(() => {
+    const rang = el.querySelector('.tbf-epingle-rang');
+    if (rang) {
+      anim(rang, [{ scale: '1' }, { scale: '1.4', offset: 0.35 }, { scale: '.94', offset: 0.7 }, { scale: '1' }],
+        { duration: 560, delay: 450, easing: 'cubic-bezier(.3,1.4,.4,1)' });
+    }
+    anim(d, [{ opacity: 0, scale: '.3' }, { opacity: 1, scale: '1.3', offset: 0.6 }, { opacity: 1, scale: '1' }],
+      { duration: 420, delay: 650, easing: 'cubic-bezier(.2,1.3,.35,1)', fill: 'backwards' });
+    setTimeout(() => window.FX?.plus?.(d, `+${k}`, window.FX?.couleurs?.vert ?? '#1E9E6A', 24), 700);
+
+    const moi = $('list')?.querySelector('.row.moi');
+    if (!moi) return;
+    const lignes = [...moi.parentElement.children].filter((x) => x.classList?.contains('row'));
+    const i = lignes.indexOf(moi);
+    const doubles = lignes.slice(i + 1, i + 1 + Math.min(6, k));
+    if (!doubles.length) return;
+    const pas = moi.getBoundingClientRect().height + (doubles[0].getBoundingClientRect().top
+      - moi.getBoundingClientRect().bottom);
+    /* Une ligne est transparente sur son panneau : pendant qu'elle passe
+       sur les autres, elle prend le fond du mur, et une ombre la soulève. */
+    moi.style.position = 'relative';
+    moi.style.zIndex = '2';
+    moi.style.background = 'var(--parpaing)';
+    moi.style.boxShadow = 'inset 3px 0 0 var(--craie),0 6px 14px rgba(7,9,12,.7)';
+    const ms = 500 + doubles.length * 90;
+    const fin = anim(moi, [{ translate: `0 ${pas * doubles.length}px`, scale: '1.03' },
+      { translate: '0 0', scale: '1.03', offset: 0.85 }, { translate: '0 0', scale: '1' }],
+    { duration: ms, delay: 250, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'backwards' });
+    doubles.forEach((x, j) => {
+      anim(x, [{ translate: `0 ${-pas}px` }, { translate: '0 0' }],
+        { duration: 260, delay: 250 + (ms * 0.85 * (doubles.length - j - 0.5)) / doubles.length,
+          easing: 'ease-out', fill: 'backwards' });
+    });
+    const rendre = () => {
+      moi.style.zIndex = '';
+      moi.style.background = '';
+      moi.style.boxShadow = '';
+    };
+    if (fin) fin.onfinish = rendre; else rendre();
+  });
 }
 
 /* Ma place et mon identité arrivent avant la liste, ou après : chacune se

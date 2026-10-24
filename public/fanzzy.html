@@ -1076,8 +1076,46 @@ $('grid').addEventListener('click', (e) => {
   if (!c || !BY_ID.has(c.dataset.open)) return;
   buzz(8);
   window.FX?.son?.(c.classList.contains('tbf-album-pochette') ? 'tic' : 'carte');
-  ouvrirFiche(c.dataset.open);
+  ouvrirAvecPassage(c, c.dataset.open);
 });
+
+/**
+ * **La carte s'envole vers sa fiche** (24 octobre 2026). La fiche
+ * s'ouvrait par-dessus la grille d'un coup ; le navigateur sait maintenant
+ * faire glisser la carte touchée jusqu'à la grande carte de la fiche
+ * (`startViewTransition`) : le même nom de passage est porté par l'une,
+ * puis par l'autre. La fiche lit le serveur : on lui laisse 450 ms au plus
+ * pour se peindre, après quoi le passage se joue avec ce qui est là. Sans
+ * le navigateur qui sait le faire, sans mouvement ou en mode calme : la
+ * fiche s'ouvre comme avant.
+ */
+function ouvrirAvecPassage(c, id) {
+  const calme = matchMedia('(prefers-reduced-motion: reduce)').matches
+    || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
+  const carte = c.querySelector('.fz') ?? c;
+  if (calme || typeof document.startViewTransition !== 'function') { ouvrirFiche(id); return; }
+  carte.style.viewTransitionName = 'tbf-fiche-carte';
+  let arrivee = null;
+  try {
+    const passage = document.startViewTransition(async () => {
+      carte.style.viewTransitionName = '';
+      const p = ouvrirFiche(id);
+      await Promise.race([p, new Promise((r) => { setTimeout(r, 450); })]).catch(() => {});
+      arrivee = document.querySelector('#detail #fiche-art');
+      if (arrivee) arrivee.style.viewTransitionName = 'tbf-fiche-carte';
+    });
+    /* Un passage interrompu (une autre fiche touchée, l'onglet caché) rejette
+       ses promesses : on les attrape, la fiche s'ouvre de toute façon. */
+    passage.ready.catch(() => {});
+    passage.finished.catch(() => {}).then(() => {
+      carte.style.viewTransitionName = '';
+      if (arrivee) arrivee.style.viewTransitionName = '';
+    });
+  } catch {
+    carte.style.viewTransitionName = '';
+    ouvrirFiche(id);
+  }
+}
 /* Une case possédée est un `div` (une carte n'entre pas dans un bouton) :
    elle répond au clavier comme un bouton. */
 $('grid').addEventListener('keydown', (e) => {
