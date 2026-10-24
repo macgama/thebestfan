@@ -6,7 +6,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP3 : `public/img/fanzzy/RP3` et ses cartes (B et C comprises) : nouveau dessin
   aux trois âges (invites v2 : fanfare puis roi de la batucada), cinq états
   par âge ; pas encore de clignement.
-- RP4 : nouveau dessin aux trois âges (moine batteur, puis maître du temple de montagne), cinq états par âge, cartes B et C.
+- RP4 : nouveau dessin aux trois âges (moine batteur, puis maître du temple de montagne), cinq états par âge, cartes B et C. Cartes RP4 et RP4B redessinées sans la barrière.
 - RP5 : nouveau dessin aux trois âges (mécène de sa rangée, puis roi de sa tribune), cinq états par âge, cartes B et C.
 - RP6 : nouveau dessin aux trois âges (héritière de la troisième rangée, puis cheffe de tribune avec le fantôme de son père), cinq états par âge, cartes B et C.
 - RP7 : nouveau dessin aux trois âges (graffeur, puis titan du street art), cinq états par âge, cartes B et C.
