@@ -1803,6 +1803,12 @@
   const FICHIERS = {
     rumeur: { opus: '/son/ambiance-tribune.84ff833c.ogg', repli: '/son/ambiance-tribune.70e5801e.m4a' },
     clameur: { opus: '/son/clameur-but.3a391fd2.ogg', repli: '/son/clameur-but.c2a59d53.mp3' },
+    /* Les jingles de l'ouverture des boosters (Artlist, 24 octobre 2026), un
+       par rareté : voir « les jingles », plus bas. */
+    'jingle-commune': { opus: '/son/jingle-commune.ac9f24e4.ogg', repli: '/son/jingle-commune.73b33944.mp3' },
+    'jingle-rare': { opus: '/son/jingle-rare.e5fad34a.ogg', repli: '/son/jingle-rare.f644a508.mp3' },
+    'jingle-epique': { opus: '/son/jingle-epique.229d062a.ogg', repli: '/son/jingle-epique.90a177f9.mp3' },
+    'jingle-legendaire': { opus: '/son/jingle-legendaire.512a74a6.ogg', repli: '/son/jingle-legendaire.f28e2a87.mp3' },
   };
   /* La boucle de la rumeur, en échantillons à 48 kHz : [marge 0,25 s |
      boucle 12 s | marge 0,25 s], et le fondu de reprise (50 ms). Les marges
@@ -1888,14 +1894,14 @@
      calme ou de l'onglet, la rumeur repart sans rien retélécharger ni
      redécoder. */
   const decodes = new WeakMap();
-  const PREPARER = { rumeur: (b) => preparerBoucle(b), clameur: (b) => b };
+  const PREPARER = { rumeur: (b) => preparerBoucle(b) };
   function charger(c, nom) {
     let m = decodes.get(c);
     if (!m) { m = new Map(); decodes.set(c, m); }
     if (!m.has(nom)) {
       if (!telecharger(nom)) return null;
       const e = { fini: false, valeur: null, promesse: null };
-      e.promesse = decoderPour(c, nom, PREPARER[nom])
+      e.promesse = decoderPour(c, nom, PREPARER[nom] ?? ((b) => b))
         .catch(() => null)
         .then((v) => { e.valeur = v; e.fini = true; return v; });
       m.set(nom, e);
@@ -1961,6 +1967,54 @@
     s.buffer = b;
     s.connect(g);
     lancer(c, s, t);
+  }
+
+  /* ============================================================ les jingles
+
+     Quatre courtes musiques, une par rareté, jouées quand une carte se
+     retourne à l'ouverture d'un booster (24 octobre 2026). Coupées dans les
+     morceaux générés par Artlist (art/boosters/_src/, hors git) : commune
+     1,5 s, rare 2,5 s, épique 2,6 s, légendaire 3,2 s, avec un fondu de fin.
+     Nivelées hors ligne (sonie la plus forte sur 400 ms) : commune −25,7,
+     rare −20,0 — la fenêtre du jeu —, épique −17,0, légendaire −15,3 — celle
+     des moments ; crêtes sous −7,5 dBFS.
+
+     **Même règle que la clameur** : un jingle a un instant, il ne joue que
+     s'il est déjà décodé. Sinon `jingle()` rend faux, et la page garde le
+     son synthétisé de la cérémonie. `jingles()` les télécharge (la page des
+     boosters l'appelle en arrivant) et les décode dès qu'un contexte existe
+     (au toucher qui déchire le booster). Un jingle en chasse un autre : on
+     peut retourner les cartes plus vite qu'elles ne chantent. */
+  const RARETES_JINGLE = ['commune', 'rare', 'epique', 'legendaire'];
+  const MIX_JINGLE = 1;
+  let jingleEnCours = null;
+  function jingles() {
+    for (const r of RARETES_JINGLE) telecharger(`jingle-${r}`);
+    if (ctx && ctx.state !== 'closed') for (const r of RARETES_JINGLE) charger(ctx, `jingle-${r}`);
+  }
+  /** Joue le jingle de cette rareté s'il est prêt : vrai s'il est parti. */
+  function jingle(rarete) {
+    const nom = `jingle-${rarete}`;
+    if (!FICHIERS[nom] || document.hidden) return false;
+    const c = ouvrir();
+    if (!c || !chaine || !pretAJouer(c)) return false;
+    const b = pret(c, nom);
+    if (!b) { charger(c, nom); return false; }
+    try {
+      if (jingleEnCours?.c === c) {
+        jingleEnCours.g.gain.setTargetAtTime(0, c.currentTime, 0.04);
+        try { jingleEnCours.s.stop(c.currentTime + 0.25); } catch { /* déjà fini */ }
+      }
+      const g = c.createGain();
+      g.gain.value = MIX_JINGLE;
+      g.connect(chaine.bus.effets);
+      const s = c.createBufferSource();
+      s.buffer = b;
+      s.connect(g);
+      lancer(c, s, c.currentTime);
+      jingleEnCours = { c, g, s };
+      return true;
+    } catch { return false; /* le son ne doit jamais casser le jeu */ }
   }
 
   /** Le graphe de la rumeur, éteint (tous ses gains à zéro). `echelle` : voir
@@ -2942,6 +2996,9 @@
     existe,
     /** Les noms de la banque. */
     noms: () => Object.keys(BANQUE),
+    /** Les jingles des boosters (voir « les jingles »). */
+    jingle,
+    jingles,
     /** Les types de chant. */
     chants: () => Object.keys(CHANTS),
     /** Les moments de la rumeur (voir « rumeur »). */
