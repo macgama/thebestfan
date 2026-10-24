@@ -1317,14 +1317,17 @@ export const AGES = {
      confiserie, la grande rue punk, le grand-bi, les dinosaures de plâtre du
      parc, la danse aux grelots, le parapluie du gentleman, les filets du
      port, le moulin, le cricket du village, la course de haies, le laitier
-     de l'aube — et le troisième âge en devient la figure, jusqu'à porter le
-     décor sur lui. **Il garde toujours un détail du premier** : le sachet de
-     miettes, le bonnet, le mouchoir noué, le petit pinceau, la dent qui
-     manque, le baladeur à cassettes, la sonnette de laiton, les lunettes
-     rondes, le mouchoir blanc, la moustache, le petit filet noir, la farine
-     sur la joue, la casquette bleue, le cheval-bâton, la casquette plate.
-     C'est la règle de ce fichier, et la fiche de chaque dessin la suit
-     aussi.
+     de l'aube, la boxe d'antan, les échecs du parc, le hors-la-loi des
+     ballades, le salon du barbier, les rois de nacre des marchés — et le
+     troisième âge en devient la figure, jusqu'à porter le décor sur lui.
+     **Il garde toujours un détail du premier** : le sachet de miettes, le
+     bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
+     baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
+     mouchoir blanc, la moustache, le petit filet noir, la farine sur la
+     joue, la casquette bleue, le cheval-bâton, la casquette plate, la
+     moustache cirée, le petit pion blanc, la plume blanche, la fine
+     moustache du salon, les boutons de nacre. C'est la règle de ce fichier,
+     et la fiche de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
      de `dex-terraces.js`.                                                    */
@@ -1451,5 +1454,52 @@ export const AGES = {
       + 'tête, des phares ronds sur la poitrine, des casiers de bouteilles aux épaules et de petites '
       + 'roues aux bottes. Il ouvre la marche sous l’averse — et la casquette plate est toujours là, '
       + 'sous le toit.', 'TOUT LE MONDE EN TOURNÉE'],
+  ],
+  AN16: [
+    ['Le Boxeur de Foire', 'Culotte longue rayée rouge et noir, bretelles noires, serviette blanche '
+      + 'au cou et la moustache cirée en crocs. Sous la tente de la foire, il affronte qui veut, '
+      + 'trois rounds à la loyale, et il serre toujours la main d’abord.', 'À LA LOYALE'],
+    ['Le Champion des Règles', 'Une ceinture de champion large comme un bouclier, un long peignoir '
+      + 'rouge et noir, des gants qui brillent de l’intérieur. Il n’a jamais frappé sous la '
+      + 'ceinture ni après la cloche — et la moustache est toujours cirée.', 'SELON LES RÈGLES'],
+  ],
+  AN17: [
+    ['Le Joueur du Parc', 'Long manteau noir, casquette plate, une pendule d’échecs en bois à la '
+      + 'ceinture et un grand cavalier blanc sous le bras. Il joue contre tout le parc à la fois, '
+      + 'et il ne laisse jamais tomber son drapeau.', 'LA PENDULE TOURNE'],
+    ['Le Roi Noir et Blanc', 'Une armure en damier aux cases lumineuses, une cape pliée comme un '
+      + 'échiquier, une couronne de roi d’échecs et une grande pièce de roi pour sceptre. Il ne '
+      + 'bouge que d’une case à la fois, et personne ne le met en échec — le petit pion blanc pend '
+      + 'toujours à sa ceinture.', 'ÉCHEC ET MAT'],
+  ],
+  AN18: [
+    ['L’Archer des Fanions', 'Longue tunique rouge bordée de blanc, pourpoint de cuir, un grand arc '
+      + 'dans le dos et un carquois de flèches qui finissent en petits fanions rouges et blancs, '
+      + 'jamais en pointe. Il tire par-dessus la tribune et ses fanions retombent en pluie.',
+      'LES FANIONS EN L’AIR'],
+    ['Le Hors-la-Loi Écarlate', 'Une armure de cuir rouge aux coutures lumineuses, un haut '
+      + 'capuchon, un arc immense dressé dans le dos et un carquois plein de longs fanions. Il '
+      + 'sonne du cor avant chaque volée et toute la tribune lève les bras — la plume blanche n’a '
+      + 'jamais quitté son capuchon.', 'TOUT LE CIEL EN ROUGE'],
+  ],
+  AN19: [
+    ['Le Barbier à l’Enseigne', 'Gilet rayé rouge et blanc sur la blouse blanche, nœud papillon '
+      + 'noir, un blaireau et un peigne dans la poche, et l’enseigne rayée qui tourne en lumière '
+      + 'sur son épaule. Au salon, il lance la chanson et tous les fauteuils la reprennent.',
+      'À QUATRE VOIX'],
+    ['Le Maître Barbier', 'Une armure blanche et rouge taillée comme un fauteuil de barbier, '
+      + 'leviers chromés et coussins de cuir, une grande enseigne rayée qui tourne dans son dos et '
+      + 'un blaireau géant pour sceptre. Il chante, et tout le salon chante derrière lui — la '
+      + 'moustache cirée est parfaite.', 'TOUT LE SALON CHANTE'],
+  ],
+  AN20: [
+    ['Le Prince des Boutons', 'Le costume marine est maintenant couvert de motifs de nacre — '
+      + 'étoiles, fers à cheval, fleurs —, la casquette entièrement boutonnée, une tirelire de '
+      + 'quête à la ceinture. Au marché, chacun lui donne un bouton, et il le coud à sa place.',
+      'QUE ÇA BRILLE'],
+    ['Le Roi Nacré', 'Des milliers de boutons de nacre lumineux en grandes spirales, une haute '
+      + 'coiffe boutonnée couronnée de plumes blanches, une longue cape marine et un bouclier en '
+      + 'forme de bouton géant. Quand il lève le bras, toute la tribune scintille — et les premiers '
+      + 'boutons de la casquette sont toujours sur sa coiffe.', 'TOUS EN NACRE'],
   ],
 };
