@@ -1504,6 +1504,7 @@
       clameur, si elle l'est, remplace l'ovation synthétisée. */
   function jouerDans(c, ch, nom, options, t, fichiers = null) {
     if (nom === 'ovation' && fichiers?.clameur) { clameur(c, ch, fichiers.clameur, t); return; }
+    if (ENREGISTRES.has(nom) && fichiers?.[nom]) { enregistre(c, ch, nom, fichiers[nom], t); return; }
     const s = BANQUE[nom];
     const mix = c.createGain();
     mix.gain.value = MIX[nom] ?? 1;
@@ -1597,6 +1598,7 @@
     vuGeste = true;
     dernierGeste = performance.now();
     if (!ouvrir()) return;   // sous le calme, rien : voir « ouvrir »
+    if (window.TBF_GESTE) chargerCartes(ctx);   // une page de duel
     poserVolume();
     appliquer();
   }
@@ -1659,7 +1661,9 @@
     if (derniers.size > 64) derniers.clear();
     derniers.set(cle, maintenant);
     try {
-      jouerDans(c, chaine, nom, options, c.currentTime, { clameur: pret(c, 'clameur') });
+      // La première carte enregistrée demandée fait charger les autres.
+      if (ENREGISTRES.has(nom)) chargerCartes(c);
+      jouerDans(c, chaine, nom, options, c.currentTime, { clameur: pret(c, 'clameur'), [nom]: pret(c, nom) });
       return true;
     } catch { return false; /* le son ne doit jamais casser le jeu */ }
   }
@@ -1803,7 +1807,51 @@
   const FICHIERS = {
     rumeur: { opus: '/son/ambiance-tribune.84ff833c.ogg', repli: '/son/ambiance-tribune.70e5801e.m4a' },
     clameur: { opus: '/son/clameur-but.3a391fd2.ogg', repli: '/son/clameur-but.c2a59d53.mp3' },
+    'a-fumigene': { opus: '/son/carte-fumigene.5e092a1d.ogg', repli: '/son/carte-fumigene.36bcb906.mp3' },
+    'a-arbitre': { opus: '/son/carte-arbitre.ecf8911e.ogg', repli: '/son/carte-arbitre.13b3f60a.mp3' },
+    'a-choeur': { opus: '/son/carte-choeur.8e4869d8.ogg', repli: '/son/carte-choeur.0d14b582.mp3' },
   };
+
+  /* ------------------------------------------ les cartes enregistrées
+
+     Le 24 octobre 2026, Gaël, à l'écoute d'un essai de trois cartes : « On
+     garde les sons Artlist (coupé pour le jeu). » Chacun est le son d'une
+     vidéo Veo de quatre secondes générée sur Artlist le 19 octobre (sources
+     dans `art/son/_src/artlist/duel/`), coupé à la partie utile, fondu aux
+     deux bouts et nivelé à −22,5 LUFS. Ils remplacent la synthèse de leur
+     carte, qui reste le repli.
+
+     **La règle de la clameur tient** : une carte a un instant, celui où elle
+     part. Le fichier ne joue donc que s'il est **déjà décodé** ; sinon, la
+     synthèse. Les fichiers se chargent au premier geste sur une page de
+     duel (celles qui chargent `geste.js` : le Virage, le duel, la
+     répétition), ailleurs à la première carte enregistrée jouée — qui sonne,
+     elle, en synthèse. Jamais sous le calme ni en économie de données
+     (`telecharger`). */
+  const ENREGISTRES = new Set(['a-fumigene', 'a-arbitre', 'a-choeur']);
+  /* Le gain de chacun, tiré du banc (« <nom>~enregistre ») le 24 octobre
+     2026 : au milieu de la fenêtre du jeu. En commentaire : crête (dBFS) ·
+     sonie (LUFS, 100 ms) · durée. */
+  const MIX_ENREGISTRES = {
+    'a-fumigene': 0.712,   //  −15,1 · −22,5 · 1,98 s
+    'a-arbitre': 0.69,     //  −18,2 · −22,5 · 1,03 s
+    'a-choeur': 1.02,      //   −7,6 · −22,5 · 1,97 s
+  };
+  /** Lance le chargement des cartes enregistrées pour ce contexte. */
+  function chargerCartes(c) {
+    for (const nom of ENREGISTRES) charger(c, nom);
+  }
+  /** Une carte enregistrée, sur le bus de sa famille comme sa synthèse. */
+  function enregistre(c, ch, nom, b, t) {
+    const s = BANQUE[nom];
+    const g = c.createGain();
+    g.gain.value = MIX_ENREGISTRES[nom] ?? 1;
+    g.connect(ch.bus[s.bus ?? FAMILLES[s.famille].bus]);
+    const src = c.createBufferSource();
+    src.buffer = b;
+    src.connect(g);
+    lancer(c, src, t);
+  }
   /* La boucle de la rumeur, en échantillons à 48 kHz : [marge 0,25 s |
      boucle 12 s | marge 0,25 s], et le fondu de reprise (50 ms). Les marges
      sont cycliques (la fin de la boucle, puis son début) : elles absorbent le
@@ -1895,7 +1943,7 @@
     if (!m.has(nom)) {
       if (!telecharger(nom)) return null;
       const e = { fini: false, valeur: null, promesse: null };
-      e.promesse = decoderPour(c, nom, PREPARER[nom])
+      e.promesse = decoderPour(c, nom, PREPARER[nom] ?? ((b) => b))
         .catch(() => null)
         .then((v) => { e.valeur = v; e.fini = true; return v; });
       m.set(nom, e);
@@ -2850,6 +2898,10 @@
         decoderPour(c, 'rumeur', preparerBoucle), decoderPour(c, 'clameur', (b) => b)]);
       if (!rumeurE || !clameurE) return null;
       fichiers = { rumeur: rumeurE, clameur: clameurE };
+      for (const nom of [quoi.son, ...(quoi.sons ?? [])].filter((n) => ENREGISTRES.has(n))) {
+        fichiers[nom] = await decoderPour(c, nom, (b) => b);
+        if (!fichiers[nom]) return null;
+      }
     }
     if (Number.isFinite(quoi.sinus)) {
       const o = c.createOscillator();
@@ -2921,7 +2973,8 @@
       /** La rumeur qui joue : « enregistree », « synthese », ou rien. */
       source: amb.lit ? (amb.lit.enregistre ? 'enregistree' : 'synthese') : null },
     /** Les sons enregistrés décodés pour le contexte vivant. */
-    fichiers: { rumeur: Boolean(ctx && pret(ctx, 'rumeur')), clameur: Boolean(ctx && pret(ctx, 'clameur')) },
+    fichiers: { rumeur: Boolean(ctx && pret(ctx, 'rumeur')), clameur: Boolean(ctx && pret(ctx, 'clameur')),
+      ...Object.fromEntries([...ENREGISTRES].map((n) => [n, Boolean(ctx && pret(ctx, n))])) },
     /** La phase de « rumeur » et l'échelle voulue (1 : la tribune pleine). */
     rumeur: { phase: amb.phase, echelle: amb.echelle },
     chant: Boolean(chantEnCours),
@@ -2970,6 +3023,9 @@
       echelles: { creux: CREUX, vestiaire: VESTIAIRE_VIDE },
       /** Le gain de la clameur enregistrée (voir « la tribune enregistrée »). */
       clameur: MIX_CLAMEUR,
+      /** Les cartes enregistrées (voir « les cartes enregistrées »). */
+      enregistres: Object.fromEntries([...ENREGISTRES].map((n) => [n,
+        { famille: BANQUE[n].famille, gain: MIX_ENREGISTRES[n] ?? 1 }])),
       creteSeule: CRETE_SEULE,
       creteMax: CRETE_MAX,
       limiteur: { ...LIMITEUR },
