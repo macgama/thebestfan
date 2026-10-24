@@ -1,6 +1,6 @@
 # À déposer sur Infomaniak
 
-**LES TERRACES : AN6 à AN10, cinq Fanzzy de plus** (branche
+**LES TERRACES : AN6 à AN15, dix Fanzzy de plus** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
 
@@ -8,15 +8,18 @@ Construction puis redémarrage, **sans schéma**.
   Coursière à Vélo (Déplacement, bleu ciel), AN8 Le Gamin au Dinosaure en
   Plâtre (Tifo, rouge et bleu), AN9 La Danseuse aux Grelots (Percussion,
   bleu et blanc), AN10 Le Banlieusard au Parapluie (Fidélité, blanc et
-  noir) : trois cartes chacun, les expressions des trois âges, le
-  clignement à l'âge 1, et leurs textes dans les cinq langues. Le
-  redémarrage écrit leurs quinze cartes dans le catalogue en base
-  (`INSERT IGNORE`, rien d'autre ne bouge). La série compte dix lignées sur
-  vingt.
+  noir), AN11 La Ramendeuse du Port (Pyro, ambre et noir), AN12 La Gamine
+  au Moulinet (Tifo, bleu et blanc), AN13 Le Gamin à la Batte (Fidélité,
+  blanc, jaune et bleu), AN14 Le Gamin au Cheval-Bâton (Déplacement, rouge
+  et blanc), AN15 Le Petit Livreur de Lait (Voix, bleu ciel et blanc) :
+  trois cartes chacun, les expressions des trois âges, le clignement à
+  l'âge 1, et leurs textes dans les cinq langues. Le redémarrage écrit leurs
+  trente cartes dans le catalogue en base (`INSERT IGNORE`, rien d'autre ne
+  bouge). La série compte quinze lignées sur vingt.
 - La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
   à faire de plus, ils s'ouvriront avec elle.
 - Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
-  AN10 et vérifier leurs trois âges (les cartes et les expressions), puis
+  AN15 et vérifier leurs trois âges (les cartes et les expressions), puis
   qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
   « pousse » au premier âge (la planche n'en avait pas) : elle reste au
   repos pendant qu'on chante.
