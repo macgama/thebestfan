@@ -26,6 +26,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP28 : nouveau dessin aux trois âges (drapeau rayé, puis étendard impérial à l’aigle), cinq états par âge, cartes B et C.
 - RP29 : nouveau dessin aux trois âges (drone aux cartons, puis drone cuirassé), cinq états par âge, cartes B et C.
 - RP30 : nouveau dessin aux trois âges (salamandre en sweat, puis baroudeur de lave, puis chevalier draconique à flamme bleue), cinq états par âge, cartes B et C.
+- RP31 : nouveau dessin aux trois âges (petit nuage d’orage, puis tornade électrique, puis titan de l’orage), cinq états par âge, cartes B et C.
 
 ---
 
