@@ -8,6 +8,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
   par âge ; pas encore de clignement.
 - RP4 : nouveau dessin aux trois âges (moine batteur, puis maître du temple de montagne), cinq états par âge, cartes B et C.
 - RP5 : nouveau dessin aux trois âges (mécène de sa rangée, puis roi de sa tribune), cinq états par âge, cartes B et C.
+- RP6 : nouveau dessin aux trois âges (héritière de la troisième rangée, puis cheffe de tribune avec le fantôme de son père), cinq états par âge, cartes B et C.
 
 ---
 
