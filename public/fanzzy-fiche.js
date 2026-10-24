@@ -1344,7 +1344,7 @@
       const portefeuille = reponse?.wallet ?? null;
       const portrait = hote.querySelector('#fiche-art .illu');
       const suite = window.FX?.evolution
-        ? await window.FX.evolution(portrait, { nom: vers.nom, rar: vers.rar }) : null;
+        ? await window.FX.evolution(portrait, { nom: vers.nom, rar: vers.rar, age: Number(vers.stage) }) : null;
 
       /* **Et c'est le nouveau qui arrive** : on regarde l'âge qu'on vient
          d'acheter, dans sa tenue de base et au repos. L'avatar, lui, ne bouge
