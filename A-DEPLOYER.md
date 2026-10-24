@@ -10,6 +10,23 @@ schéma ni redémarrage**.
 
 ---
 
+**AN6, sixième Fanzzy de LES TERRACES** (branche
+`claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
+Construction puis redémarrage, **sans schéma**.
+
+- La Timide du Grand Boulevard → La Punk à Épingles → La Reine du Grand
+  Boulevard (famille Percussion, bleu roi et blanc) : trois cartes, cinq
+  états par âge, le clignement à l'âge 1, et ses textes dans les cinq
+  langues. Le redémarrage écrit ses trois cartes dans le catalogue en base
+  (`INSERT IGNORE`, rien d'autre ne bouge).
+- La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
+  à faire de plus, AN6 s'ouvrira avec elle.
+- Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 et
+  vérifier ses trois âges (les cartes et les expressions), puis qu'elle
+  cligne des yeux au premier âge.
+
+---
+
 **Les jingles et les fonds filmés des boosters** (branche
 `claude/project-thread-nk6bu3`, 24 octobre 2026, générés dans Artlist avec
 l'accord de Gaël). Construction puis redémarrage, **sans schéma**.
