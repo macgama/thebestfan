@@ -32,12 +32,12 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Cinq lignées sur vingt, et pourquoi elle arrive fermée
+ * ## Six lignées sur vingt, et pourquoi elle arrive fermée
  *
- * Les cinq premières (AN1 à AN5) ont leurs dessins : trois cartes en pied et
- * cinq états par âge, en tenue de base. Les quinze autres arriveront avec les
- * leurs ; les écrire maintenant mettrait au catalogue quinze silhouettes
- * procédurales, et une série dont les trois quarts ne sont pas dessinés.
+ * Les six premières (AN1 à AN6) ont leurs dessins : trois cartes en pied et
+ * cinq états par âge, en tenue de base. Les quatorze autres arriveront avec
+ * les leurs ; les écrire maintenant mettrait au catalogue quatorze silhouettes
+ * procédurales, et une série dont les deux tiers ne sont pas dessinés.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -69,9 +69,10 @@
  *
  * ## Les familles, et le geste des bâtons de sucre
  *
- * Cinq lignées, cinq familles : la garde (fide), la péniche (depl), le crieur
- * de promenade (voix), le peintre d'enseignes (tifo), la confiseuse (pyro).
- * La percussion attendra une des quinze suivantes.
+ * Six lignées, six familles : la garde (fide), la péniche (depl), le crieur
+ * de promenade (voix), le peintre d'enseignes (tifo), la confiseuse (pyro),
+ * et la punk du grand boulevard (perc), qui bat la mesure du talon de ses
+ * bottes sur le béton des marches.
  *
  * Le geste de la confiseuse n'est pas libre. Les Pyro comptaient trente-deux
  * personnages de premier âge dont quatre aux `rouleaux` — pile le huitième que
@@ -100,10 +101,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les six premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : cinq fois le
- * même mot, ce sont cinq occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : six fois le
+ * même mot, ce sont six occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -153,6 +154,17 @@ const PREMIERS_AGES = [
       + 'regrette jusqu’à la mi-temps.',
     mods: { perfectBonus: 1.18, costPenalty: 1.06 },
     cri: { label: 'ATTENTION, ÇA COLLE', gest: 'rouleaux', power: 54 } },
+
+  /* AN6 — la percussion des bottes : la lycéenne trop sage de la grande rue
+     des boutiques, qui finit reine punk, épingles comprises. Bleu roi et
+     blanc. Le petit baladeur à cassettes la suit jusqu'au troisième âge. Son
+     défaut : elle tape si fort qu'elle s'essouffle avant le refrain. */
+  { id: 'AN6', nom: 'La Timide du Grand Boulevard', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Elle remonte la grande rue des boutiques en uniforme, le blouson de cuir bleu '
+      + 'plié sur le bras : elle n’ose pas encore le mettre. Dans son baladeur, une cassette '
+      + 'prêtée, et le pied qui bat la mesure sans qu’elle s’en rende compte.',
+    mods: { mashBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'J’OSE PAS ENCORE', gest: 'mash', power: 53 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
