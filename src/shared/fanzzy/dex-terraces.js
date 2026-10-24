@@ -37,14 +37,14 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Vingt-cinq lignées sur soixante, et pourquoi elle arrive fermée
+ * ## Trente lignées sur soixante, et pourquoi elle arrive fermée
  *
- * Les vingt-cinq premières (AN1 à AN25) ont leurs dessins : trois cartes en
+ * Les trente premières (AN1 à AN30) ont leurs dessins : trois cartes en
  * pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
- * états au deuxième âge, AN9 et AN22 quatre au premier : leurs planches sont
- * à refaire). Elles entrent par lots de cinq, à mesure que leurs dessins
- * arrivent : une lignée sans dessin aurait mis au catalogue une silhouette
- * procédurale. Les trente-cinq autres suivront de la même façon.
+ * états au deuxième âge, AN9, AN22, AN26 et AN29 quatre au premier : leurs
+ * planches sont à refaire). Elles entrent par lots de cinq, à mesure que
+ * leurs dessins arrivent : une lignée sans dessin aurait mis au catalogue une
+ * silhouette procédurale. Les trente autres suivront de la même façon.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -117,6 +117,24 @@
  * catalogue. Vingt-cinq lignées : cinq en pyro, quatre dans chacune des cinq
  * autres familles ; les suivantes reprennent par celles-là.
  *
+ * Le lot suivant donne donc une lignée à chacune des cinq : le gamin au
+ * masque de carton (tifo), qui lève son masque et toute la pièce lève le sien,
+ * d'où l'ola ; le gamin à la montre démontée (voix), qui fait le tic-tac
+ * lui-même entre les secondes, d'où le contretemps ; la gamine au cierge
+ * magique (perc), qui tape du pied de plus en plus vite à chaque étincelle
+ * jusqu'au bouquet final, d'où le crescendo ; le petit allumeur (fide), qui
+ * tient à deux mains une perche trop grande sans la lâcher, d'où la garde ;
+ * et la petite fouilleuse de vase (depl), à qui le fleuve rend à la marée
+ * suivante ce qu'il a repris, d'où le miroir. Trente lignées : cinq dans
+ * chacune des six familles. Les trois variantes prises étaient les plus
+ * minces de leur famille (huit chacune), ce qui laisse de la marge aux lots
+ * suivants.
+ *
+ * L'allumeur, lui, n'avait pas le choix : les Fidélités comptaient
+ * quatre-vingt-quatre personnages de premier âge dont quarante-deux à la
+ * garde (`hold`), pile la moitié. Un quatre-vingt-cinquième à une variante
+ * aurait mis le geste éponyme en minorité, ce que `catalogue:smoke` refuse.
+ *
  * La burette n'a pas le choix de son geste. Les Percussions comptaient
  * quarante-huit personnages de premier âge dont six aux `deuxvoix` — pile le
  * huitième. Une quarante-neuvième au geste éponyme aurait fait passer les
@@ -157,10 +175,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les vingt-cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les trente premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : vingt-cinq
- * fois le même mot, ce sont vingt-cinq occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : trente fois
+ * le même mot, ce sont trente occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -447,6 +465,68 @@ const PREMIERS_AGES = [
       + 'la ligne du bord de mer, et il les annonce tous, dans l’ordre.',
     mods: { breathBonus: 1.16, mashBonus: 0.92 },
     cri: { label: 'PROCHAIN ARRÊT, LA PLAGE', gest: 'memoire', power: 53 } },
+  /* AN26 — le tifo du bal masqué : le gamin qui découpait des masques dans
+     les boîtes de céréales et finit roi du grand bal costumé des artistes du
+     quartier. Bleu roi et blanc. Les mocassins éraflés restent à ses pieds
+     jusqu'au troisième âge. Il lève son masque et toute la pièce lève le
+     sien, d'où l'ola ; son défaut : il se met en scène et oublie de souffler. */
+  { id: 'AN26', nom: 'Le Gamin au Masque de Carton', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Dans son petit appartement en désordre, il découpe des masques dans les boîtes de '
+      + 'céréales et les peint en bleu roi. Quand il en lève un, tout le monde dans la pièce lève '
+      + 'le sien après lui, l’un après l’autre, comme une vague.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'TOUT LE MONDE MASQUÉ !', gest: 'ola', power: 52 } },
+
+  /* AN27 — la voix des horlogers : le gamin qui démontait la montre de son
+     grand-père sans savoir la remonter et finit couvert de rouages qui
+     tournent tous à l'heure. Bleu ciel et blanc. Les petites lunettes rondes
+     cerclées de fer restent sur son nez jusqu'au troisième âge. Il fait le
+     tic-tac lui-même entre les secondes, d'où le contretemps ; son défaut :
+     il s'inquiète, et il ne tient pas la note. */
+  { id: 'AN27', nom: 'Le Gamin à la Montre Démontée', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'À la table de la cuisine, il a ouvert la montre de son grand-père et trois petits '
+      + 'rouages sont tombés. Il ne sait pas la remonter, alors il fait le tic-tac lui-même, entre '
+      + 'les secondes, pour qu’elle ne s’arrête pas.',
+    mods: { tempoWindow: 1.15, holdBonus: 0.92 },
+    cri: { label: 'TIC… ET TAC', gest: 'contretemps', power: 53 } },
+
+  /* AN28 — la percussion du feu d'artifice : la gamine qui avait peur de son
+     cierge magique et finit reine du grand feu d'artifice du parc. Rayures
+     rouge et bleu. Le bonnet rouge à pompon reste sur sa tête jusqu'au
+     troisième âge. Elle tape du pied de plus en plus vite à chaque étincelle,
+     jusqu'au bouquet final, d'où le crescendo ; son défaut : elle tient mal
+     la distance. */
+  { id: 'AN28', nom: 'La Gamine au Cierge Magique', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Par un soir de brume, dans le parc, elle tient son cierge magique à bout de bras, '
+      + 'morte de peur. Mais à chaque étincelle elle tape du pied un peu plus vite, et quand il '
+      + 's’éteint, elle danse.',
+    mods: { mashBonus: 1.15, holdBonus: 0.92 },
+    cri: { label: 'ENCORE UNE ÉTINCELLE', gest: 'crescendo', power: 53 } },
+
+  /* AN29 — la fidélité des réverbères : le gamin qui courait derrière
+     l'allumeur et finit par allumer toutes les lumières de la colline. Bleu
+     et blanc. La vieille casquette plate reste sur sa tête jusqu'au troisième
+     âge. Il tient à deux mains une perche trop grande sans jamais la lâcher,
+     d'où la garde (voir l'en-tête) ; son défaut : il frappe sans force. */
+  { id: 'AN29', nom: 'Le Petit Allumeur', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Sur les pavés, à la tombée du jour, il court derrière l’allumeur de réverbères '
+      + 'avec une perche bleue bien trop grande pour lui. Il la tient à deux mains, la petite '
+      + 'flamme tremble, mais il ne la lâche pas avant que toute la rue soit allumée.',
+    mods: { holdBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'JE LA TIENS !', gest: 'hold', power: 52 } },
+
+  /* AN30 — le déplacement de la grève : la gamine qui fouillait la vase à
+     marée basse et finit reine des trésors que le fleuve rend. Blanc et
+     noir. Les bottes de caoutchouc noires restent à ses pieds jusqu'au
+     troisième âge. Le fleuve lui rend à la marée suivante ce qu'il a repris,
+     d'où le miroir ; son défaut : elle se laisse surprendre au premier
+     contre. */
+  { id: 'AN30', nom: 'La Petite Fouilleuse de Vase', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'À marée basse, sur la rive boueuse du fleuve, elle remplit son petit seau blanc de '
+      + 'ce que l’eau a laissé : un bout de pipe en terre, un bouton, une clé. Le fleuve reprend '
+      + 'tout à la marée haute, et le lui rend à la suivante.',
+    mods: { breathBonus: 1.16, parryResist: 0.92 },
+    cri: { label: 'CE QUE LE FLEUVE REND', gest: 'miroir', power: 53 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
