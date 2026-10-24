@@ -11,8 +11,13 @@
  * troisième âge garde toujours un détail du premier.
  *
  * Demandée par Gaël le 19 octobre 2026 : un Fanzzy par club, vingt lignées.
- * Les fiches (noms, histoires, invites des dessins) sont dans
- * `/mnt/project-files/fanzzy-prompts/AN-les-terraces.md`.
+ * Le 21 octobre, il en a voulu trois par club — une femme, un homme et une
+ * créature (un animal ou un objet vivant de la ville) —, soit soixante
+ * lignées. Les fiches (noms, histoires, invites des dessins) sont dans
+ * `/mnt/project-files/fanzzy-prompts/AN-les-terraces.md` pour AN1 à AN20, et
+ * dans `AN-les-terraces-2.md` pour les quarante autres : AN21 à AN40 le
+ * second humain de chaque club, AN41 à AN60 les créatures, dans le même ordre
+ * des clubs (`clubs.js`).
  *
  * ## La prudence juridique, et pourquoi elle est écrite ici aussi
  *
@@ -32,13 +37,14 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Vingt lignées sur vingt, et pourquoi elle arrive fermée
+ * ## Vingt-cinq lignées sur soixante, et pourquoi elle arrive fermée
  *
- * Les vingt (AN1 à AN20) ont leurs dessins : trois cartes en pied et cinq
- * états par âge, en tenue de base (AN17 n'a encore que deux états au
- * deuxième âge : sa planche est à refaire). Elles sont entrées par lots, à
- * mesure que leurs dessins arrivaient : une lignée sans dessin aurait mis au
- * catalogue une silhouette procédurale.
+ * Les vingt-cinq premières (AN1 à AN25) ont leurs dessins : trois cartes en
+ * pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
+ * états au deuxième âge, AN9 et AN22 quatre au premier : leurs planches sont
+ * à refaire). Elles entrent par lots de cinq, à mesure que leurs dessins
+ * arrivent : une lignée sans dessin aurait mis au catalogue une silhouette
+ * procédurale. Les trente-cinq autres suivront de la même façon.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -95,8 +101,28 @@
  * le gamin à l'arc en bois (pyro), qui bande l'arc et lâche au bon temps,
  * d'où la relance ; le gamin du fauteuil tournant (voix), qui reprend en écho
  * la chanson du salon ; et le gamin aux boutons (tifo), qui coud ses motifs
- * de nacre bouton par bouton, d'où la mosaïque. La série finit à quatre
- * lignées en fide et tifo, trois dans les quatre autres familles.
+ * de nacre bouton par bouton, d'où la mosaïque. Les vingt premières finissent
+ * à quatre lignées en fide et tifo, trois dans les quatre autres familles.
+ *
+ * Les seconds humains (AN21 à AN40) commencent par rattraper ces quatre-là :
+ * la petite poinçonneuse (voix), qui fait monter toute la file à son signal,
+ * d'où le capo ; la gamine à la bague en fer-blanc (pyro), qui vise le
+ * moindre reflet à la loupe avant de poser sa goutte d'émail, d'où la
+ * visée ; la gamine à la burette (perc), qui tape sur les tuyaux des deux
+ * mains l'une après l'autre comme les pistons de la grande pompe, d'où les
+ * deux voix ; et le gamin au petit train (depl), qui connaît par cœur chaque
+ * arrêt de la ligne du bord de mer, d'où la mémoire. La gamine au ballon rouge
+ * (pyro), qui compte jusqu'à trois avant de lâcher la ficelle, d'où le
+ * compte, donne une lignée de plus à la Pyro, la famille la plus mince du
+ * catalogue. Vingt-cinq lignées : cinq en pyro, quatre dans chacune des cinq
+ * autres familles ; les suivantes reprennent par celles-là.
+ *
+ * La burette n'a pas le choix de son geste. Les Percussions comptaient
+ * quarante-huit personnages de premier âge dont six aux `deuxvoix` — pile le
+ * huitième. Une quarante-neuvième au geste éponyme aurait fait passer les
+ * deux voix sous le plancher de `catalogue:smoke` ; elle les remonte à sept
+ * sur quarante-neuf, ce qui laisse la place à une Percussion au martelage
+ * dans le lot suivant.
  *
  * Le geste de la confiseuse n'est pas libre. Les Pyro comptaient trente-deux
  * personnages de premier âge dont quatre aux `rouleaux` — pile le huitième que
@@ -131,10 +157,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les vingt premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les vingt-cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : vingt fois
- * le même mot, ce sont vingt occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : vingt-cinq
+ * fois le même mot, ce sont vingt-cinq occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -361,6 +387,66 @@ const PREMIERS_AGES = [
       + 'soleil ils dessinent déjà une étoile.',
     mods: { parryBonus: 1.16, breathBonus: 0.92 },
     cri: { label: 'ENCORE UN BOUTON', gest: 'mosaique', power: 53 } },
+  /* AN21 — la voix de l'impériale : la gamine qui jouait à poinçonner les
+     tickets et finit receveuse en chef du bus à impériale, la cloche en main.
+     Rouge vif et blanc. Les baskets rouges restent jusqu'au troisième âge.
+     Elle fait monter toute la file à son signal, d'où le capo ; son défaut :
+     elle ne tient pas en place. */
+  { id: 'AN21', nom: 'La Petite Poinçonneuse', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'À l’arrêt de bus, sous la pluie, elle poinçonne des tickets de papier blanc avec '
+      + 'sa petite machine rouge en bandoulière. Toute la file attend son signal pour monter, et '
+      + 'personne ne monte avant qu’elle l’ait dit.',
+    mods: { tempoWindow: 1.16, holdBonus: 0.92 },
+    cri: { label: 'TOUT LE MONDE MONTE !', gest: 'capo', power: 53 } },
+
+  /* AN22 — la pyro de l'émail : la gamine à la bague de pacotille qui finit
+     reine des émaux du vieux quartier des bijoutiers. Bordeaux et bleu ciel.
+     La bague de fer-blanc reste à son doigt jusqu'au troisième âge. Elle vise
+     le moindre reflet à la loupe avant de poser sa goutte, d'où la visée ;
+     son défaut : chaque goutte lui coûte. */
+  { id: 'AN22', nom: 'La Gamine à la Bague en Fer-Blanc', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Dans l’atelier encombré du quartier des bijoutiers, elle lève une bague de '
+      + 'fer-blanc à la lumière, la petite loupe remontée sur le front. Elle vise longtemps le '
+      + 'moindre reflet avant de poser sa goutte d’émail, et elle ne la rate jamais.',
+    mods: { perfectBonus: 1.17, costPenalty: 1.06 },
+    cri: { label: 'PILE DANS LE SERTI', gest: 'visee', power: 54 } },
+
+  /* AN23 — la pyro du grand ballon : la gamine au ballon rouge de la falaise
+     qui finit aéronaute, sa nacelle d'osier autour de la taille. Rayures
+     rouge et noir. Les baskets blanches restent jusqu'au troisième âge. Elle
+     compte jusqu'à trois avant de lâcher la ficelle, d'où le compte ; son
+     défaut : chaque envol lui coûte. */
+  { id: 'AN23', nom: 'La Gamine au Ballon Rouge', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Sur la falaise, dans le vent, elle serre la ficelle d’un petit ballon rayé rouge '
+      + 'et noir. Elle compte jusqu’à trois avant chaque rafale, et le ballon monte toujours pile '
+      + 'au bon moment, jamais avant.',
+    mods: { perfectBonus: 1.18, costPenalty: 1.06 },
+    cri: { label: 'TROIS, DEUX, UN…', gest: 'compte', power: 53 } },
+
+  /* AN24 — la percussion des pistons : la gamine qui graissait tout ce qui
+     grince et finit par devenir la grande machine à vapeur du bord du
+     fleuve. Rayures rouge et blanc. Le foulard noué reste sur sa tête
+     jusqu'au troisième âge. Elle frappe des deux mains l'une après l'autre,
+     comme les deux pistons du balancier, d'où les deux voix ; son défaut :
+     elle rend moins qu'elle ne prend. */
+  { id: 'AN24', nom: 'La Gamine à la Burette', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Dans l’atelier humide, une trace de suie sur la joue, elle tient à deux mains une '
+      + 'petite burette rouge et graisse tout ce qui grince. Puis elle tape sur les vieux tuyaux, '
+      + 'une main après l’autre, comme les pistons de la grande pompe.',
+    mods: { mashBonus: 1.16, refundBonus: 0.92 },
+    cri: { label: 'ÇA NE GRINCE PLUS', gest: 'deuxvoix', power: 53 } },
+
+  /* AN25 — le déplacement du bord de mer : le gamin au petit train de bois
+     qui finit par marcher dans les vagues comme le vieux tram sur échasses.
+     Rayures bleu et blanc. Les tongs restent à ses pieds jusqu'au troisième
+     âge. Il connaît par cœur chaque arrêt de la ligne, d'où la mémoire ; son
+     défaut : il frappe sans force. */
+  { id: 'AN25', nom: 'Le Gamin au Petit Train', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'Sur la promenade, il fait rouler un petit train de bois dans le sable mouillé, une '
+      + 'poignée de conduite au manche bleu dans l’autre main. Il connaît par cœur chaque arrêt de '
+      + 'la ligne du bord de mer, et il les annonce tous, dans l’ordre.',
+    mods: { breathBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'PROCHAIN ARRÊT, LA PLAGE', gest: 'memoire', power: 53 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));

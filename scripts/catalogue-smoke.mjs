@@ -157,7 +157,8 @@ console.log('\nLes séries');
 /* **Une exemption, une seule, et nommée : LES TERRACES (`AN`).**
  *
  * La série arrive en cours de production (20 octobre 2026) : cinq lignées sur
- * vingt, et aucune légendaire, parce qu'aucune n'est encore conçue ni
+ * vingt — sur soixante depuis qu'elle compte trois Fanzzy par club —, et
+ * aucune légendaire, parce qu'aucune n'est encore conçue ni
  * dessinée — sa fiche le dit, « pas de légendaire dans cette série pour
  * l'instant ». La raison de la règle reste vraie pour elle aussi : le jour où
  * elle s'ouvre aux boosters, mieux vaut qu'elle ait son sommet.
