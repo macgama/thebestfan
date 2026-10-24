@@ -14,6 +14,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP9 : nouveau dessin aux trois âges (artificier en tablier, puis maître du feu), cinq états par âge, cartes B et C.
 - RP10 : nouveau dessin aux trois âges (horloger aux montres, puis maître du temps), cinq états par âge, cartes B et C.
 - RP11 : nouveau dessin aux trois âges (steward en uniforme, puis capitaine au gouvernail), cinq états par âge, cartes B et C.
+- RP12 : nouveau dessin aux trois âges (explorateur polaire, puis roi des glaces), cinq états par âge, cartes B et C.
 
 ---
 
