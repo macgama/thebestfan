@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**RP3 redessiné** (branche `claude/project-thread-tf95wg`, 24 octobre 2026,
+demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
+
+- `public/img/fanzzy/RP3` et ses cartes (B et C comprises) : nouveau dessin
+  aux trois âges, cinq états par âge ; pas encore de clignement.
+
+---
+
 **Lier un Fanzzy neutre à son club** (branche `claude/project-thread-v83ym1`,
 22 octobre 2026, choix de Gaël). Construction, **schéma** (`sql/fanzzy.sql`
 ajoute la colonne `user_fanzzy.club_id`), puis redémarrage.
