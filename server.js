@@ -400,7 +400,7 @@ if (process.env.DATABASE_URL) {
        la présence a gardé d'une amitié qui vient de changer. Reçue à `null`,
        la liste resterait sans pastille, sans un mot — d'où le contrôle de
        `verif-cablage.mjs`. */
-    amis = createAmis({ pool, requireAuth: auth.requireAuth, kop, presence });
+    amis = createAmis({ pool, requireAuth: auth.requireAuth, kop, presence, notifications });
     app.use('/api/amis', amis.router);
     console.log('amis actifs');
 
@@ -705,7 +705,13 @@ if (process.env.DATABASE_URL) {
            tour. `onEvents` porte les cartons et les remplacements, qui eux se
            paient — d'où `fixturesAuFil`, qui répond « seulement pour les
            matchs dont une salle est occupée ». */
-        onStatus: (fixtureId, etat) => virage.matchStatus(fixtureId, etat),
+        /* Et le coup d'envoi : ceux qui suivent l'un des deux clubs sont
+           prévenus que le Virage s'ouvre (`notifications.coupDEnvoi`, qui
+           ne retient que le premier tour du match). Sans être attendu. */
+        onStatus: (fixtureId, etat) => {
+          void notifications?.coupDEnvoi(fixtureId, etat);
+          return virage.matchStatus(fixtureId, etat);
+        },
         onAbsent: (fixtureId) => virage.matchAbsent(fixtureId),
         onEvents: (fixtureId, events) => virage.matchEvents(fixtureId, events),
         fixturesAuFil: () => virage.sallesOccupees(),
@@ -808,6 +814,8 @@ if (process.env.DATABASE_URL) {
 
       football.poller.start();
       console.log('suivi des equipes actif');
+      // « Ton club joue bientôt » lit les matchs que le suivi range.
+      notifications?.demarrer();
 
       // ---- teletexte : classements, resultats, buteurs de toutes les ligues
       // Le télétexte range ce qu'il lit : les équipes et les matchs alimentent

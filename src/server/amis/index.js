@@ -88,7 +88,8 @@ const MAX_SUGGESTIONS = 40;
  *   Avec lui, chaque ami mutuel peut recevoir `presence` (`CONTRATS.md`,
  *   § 18.1), et ce module lui dit quand une amitié change.
  */
-export function createAmis({ pool, requireAuth, kop = null, presence = null }) {
+export function createAmis({ pool, requireAuth, kop = null, presence = null,
+  notifications = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -418,6 +419,7 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null }) {
       await q(`UPDATE amities SET par = ?, etat = 'demande', demande_le = NOW(3),
                                   repondu_le = NULL WHERE a = ? AND b = ?`,
         [userId, a, b]);
+      void notifications?.amiDemande(autreId, userId);
       return { etat: 'demande' };
     }
 
@@ -431,6 +433,8 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null }) {
       if (e.code === 'ER_DUP_ENTRY') throw fail('amis.error.deja_demande');
       throw e;
     }
+    // Hors de la page : celui qu'on demande le sait même le jeu fermé.
+    void notifications?.amiDemande(autreId, userId);
     return { etat: 'demande' };
   }
 
@@ -449,6 +453,8 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null }) {
     await q(`UPDATE amities SET etat = ?, repondu_le = NOW(3) WHERE a = ? AND b = ?`,
       [oui ? 'amis' : 'refuse', a, b]);
     amitieChangee(userId, autreId);
+    // Un oui se dit à celui qui avait demandé ; un non, jamais.
+    if (oui) void notifications?.amiAccepte(autreId);
     return { etat: oui ? 'amis' : 'refuse' };
   }
 
@@ -650,6 +656,17 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null }) {
 
   router.get('/', requireAuth, safe(async (req, res) =>
     res.json(await tableau(req.user.id))));
+
+  /* Combien de demandes attendent une réponse : le sticker du menu, sur la
+     tuile des amis. Un seul compte, sans pseudo ni avatar — le menu le
+     demande sur chaque page, et `/` (le tableau entier) coûte bien plus. */
+  router.get('/demandes', requireAuth, safe(async (req, res) => {
+    const id = req.user.id;
+    const [l] = await q(
+      `SELECT COUNT(*) AS n FROM amities
+        WHERE (a = ? OR b = ?) AND etat = 'demande' AND par <> ?`, [id, id, id]);
+    res.json({ recues: Number(l?.n ?? 0) });
+  }));
 
   router.get('/suggestions', requireAuth, safe(async (req, res) =>
     res.json({ gens: await suggestions(req.user.id) })));

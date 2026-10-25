@@ -1904,6 +1904,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         const [x, y] = u.userId < ami ? [u.userId, ami] : [ami, u.userId];
         const ok = await q(`SELECT 1 FROM amities WHERE a = ? AND b = ? AND etat = 'amis'`, [x, y]);
         if (!ok.length) throw new Cheat('pas_ami');
+        /* Le jeu fermé, l'ami ne verrait pas l'invitation : elle part aussi
+           sur son téléphone, une fois par place — réinviter ne la redit pas. */
+        if (!f.invites.has(ami)) void notifications?.inviteDuel(ami, f.code);
         f.invites.add(ami);
         socket.emit('nvn:invite', { ami });
       } catch (e) {
