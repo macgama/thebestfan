@@ -17,7 +17,7 @@ import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 // La ventilation de ce qu'un joueur porte, partagée avec le duel : les deux
 // arènes composent les mêmes modificateurs, elles doivent les nommer pareil.
 import { apportsDe } from '../../shared/apports.js';
-import { clubDe, lieA, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
+import { avecCriDuClub, clubDe, lieA, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
 import { racineDe } from '../fanzzy/catalogue.js';
 
 /**
@@ -792,7 +792,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          des effets — un deck entre toujours au premier âge — et le dessin la
          suit désormais : on poussait avec les chiffres du gamin sous les traits
          du Capo, et rien ne le disait. */
-      const perso = await fanzzy.personnageActif?.(u.userId, { enJeu: true }) ?? null;
+      let perso = await fanzzy.personnageActif?.(u.userId, { enJeu: true }) ?? null;
 
       /* Le deck : ses cartes d'action, et le sac du personnage qui entre.
        *
@@ -865,6 +865,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       const lien = hero && !neutre && lieA(hero.id, teamId, clubAchete)
         ? modsDuLien(tauxDuLien()) : null;
       if (lien) {
+        // Le cri de son club, à la place du sien : sa voix, pas son geste.
+        perso = avecCriDuClub(perso, teamId);
         for (const [cle, v] of Object.entries(lien)) {
           mods[cle] = (mods[cle] ?? 1) * v;
           modsBanc[cle] = (modsBanc[cle] ?? 1) * v;
