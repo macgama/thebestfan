@@ -1281,23 +1281,38 @@ for (const [route, nom] of tousLesEcrans) {
 
    On cherche donc un personnage **dans ce cas précis** — expressions au
    premier âge, aucune au second en tenue de base, carte du second âge
-   illustrée — et on vérifie que chaque écran montre la carte. */
+   illustrée — et on vérifie que chaque écran montre la carte.
+
+   Le cas réel disparaît à mesure qu'on redessine les Fanzzy : RP35 était
+   le dernier. Faute de mieux, on prend un personnage dessiné aux deux âges
+   et la page reçoit un `index.json` où son deuxième âge n'a plus rien. */
 {
   const { readdir } = await import('node:fs/promises');
   const IMG = path.join(RACINE, 'public', 'img', 'fanzzy');
   let Y = null;
-  for (const d of await readdir(IMG, { withFileTypes: true })) {
-    if (!d.isDirectory()) continue;
-    let m = null;
-    try { m = JSON.parse(await readFile(path.join(IMG, d.name, 'manifeste.json'), 'utf8')); }
-    catch { continue; }
-    if (!(m.evolutions?.e1?.skins?.base?.etats ?? []).length) continue;
-    if ((m.evolutions?.e2?.skins?.base?.etats ?? []).length) continue;
-    try { await readFile(path.join(IMG, `${d.name}B.webp`)); } catch { continue; }
-    const [[n]] = await pool.query(
-      'SELECT COUNT(*) AS n FROM fanzzy WHERE id IN (?, ?) AND publie = 1',
-      [d.name, d.name + 'B']);
-    if (Number(n.n) >= 2) { Y = d.name; break; }
+  let simule = false;
+  for (const passe of ['reel', 'simule']) {
+    for (const d of await readdir(IMG, { withFileTypes: true })) {
+      if (!d.isDirectory()) continue;
+      let m = null;
+      try { m = JSON.parse(await readFile(path.join(IMG, d.name, 'manifeste.json'), 'utf8')); }
+      catch { continue; }
+      if (!(m.evolutions?.e1?.skins?.base?.etats ?? []).length) continue;
+      if (passe === 'reel' && (m.evolutions?.e2?.skins?.base?.etats ?? []).length) continue;
+      try { await readFile(path.join(IMG, `${d.name}B.webp`)); } catch { continue; }
+      const [[n]] = await pool.query(
+        'SELECT COUNT(*) AS n FROM fanzzy WHERE id IN (?, ?) AND publie = 1',
+        [d.name, d.name + 'B']);
+      if (Number(n.n) >= 2) { Y = d.name; simule = passe === 'simule'; break; }
+    }
+    if (Y) break;
+  }
+  let indexSansDeuxiemeAge = null;
+  if (simule) {
+    const j = JSON.parse(await readFile(path.join(IMG, 'index.json'), 'utf8'));
+    const e2 = j.fanzzy?.[Y]?.evolutions?.e2;
+    if (e2) e2.skins = {};
+    indexSansDeuxiemeAge = JSON.stringify(j);
   }
 
   check('un personnage se prête à l’épreuve de l’âge sans expressions', Boolean(Y));
@@ -1319,6 +1334,12 @@ for (const [route, nom] of tousLesEcrans) {
       await pg.evaluateOnNewDocument(() => {
         try { sessionStorage.setItem('tbf.ouverture', '1'); } catch { /* rien */ }
       });
+      if (indexSansDeuxiemeAge) {
+        await pg.setRequestInterception(true);
+        pg.on('request', (req) => (new URL(req.url()).pathname === '/img/fanzzy/index.json'
+          ? req.respond({ status: 200, contentType: 'application/json', body: indexSansDeuxiemeAge })
+          : req.continue()));
+      }
       await pg.setViewport({ width: 400, height: 880 });
       await pg.goto(base + route, { waitUntil: 'networkidle0' });
       await pg.waitForFunction((s) => document.querySelector(`${s} [src]`),
