@@ -438,7 +438,7 @@
          à donner (le budget de hauteur, fanzzy-fiche.css). Le tampon se lit
          d'un coup d'œil, et la phrase vient au toucher, dans la pile. */
       return `<button type="button" class="tbf-tampon fiche-club" id="fiche-club" data-ton="vert"
-        data-club="${c.tonClub ? 'sien' : 'autre'}" data-phrase="${esc(phrase)}" aria-label="${esc(phrase)}">${logo}${
+        data-club="${c.tonClub ? 'sien' : 'autre'}" data-phrase="${esc(phrase)}"${c.cri ? ` data-cri="${esc(c.cri)}"` : ''} aria-label="${esc(phrase)}">${logo}${
   c.tonClub ? 'LIÉ À TON CLUB' : nom ? 'LIÉ À' : 'LIÉ À UN CLUB'}${qui}</button>`;
     }
 
@@ -1020,7 +1020,24 @@
       corps?.addEventListener('click', (e) => {
         if (e.target.closest('#fiche-lier')) { e.stopPropagation(); demanderLien(); return; }
         const lien = e.target.closest('#fiche-club');
-        if (lien) { e.stopPropagation(); dire(lien.dataset.phrase); return; }
+        if (lien) {
+          e.stopPropagation();
+          dire(lien.dataset.phrase);
+          /* Le cri de son club, qu'il pousse à la place du sien dans ses
+             matchs : un second mot dans la pile, le cri en gras dans son
+             propre nœud, pour que la traduction le trouve tel qu'il est. */
+          if (lien.dataset.cri) {
+            const t = document.createElement('div');
+            t.className = 'tbf-toast';
+            t.setAttribute('role', 'status');
+            const b = document.createElement('b');
+            b.textContent = lien.dataset.cri;
+            t.append(document.createTextNode('Son cri dans ces matchs : '), b);
+            pile().append(t);
+            setTimeout(() => t.remove(), 4000);
+          }
+          return;
+        }
         if (e.target.closest('[data-cri]')) { crier(); return; }
         if (e.target.closest('[data-tourner]')) { tourner(); return; }
         if (e.target.closest('[data-montrer]')) { montrer(e.target.closest('[data-montrer]')); return; }
