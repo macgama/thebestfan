@@ -2490,6 +2490,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       lignee: ages.map((x, i) => ({
         id: x.id, nom: x.nom, stage: i + 1, rar: x.rar,
         mods: x.mods ?? {}, cri: x.cri ?? null,
+        // Son histoire, que la fiche dit pour l'âge regardé.
+        histoire: x.histoire ?? null,
         possede: mien.length > 0 && stade >= i + 1,
         cout: i ? (EVO_COST[i + 1] ?? 90) : 0,
       })),

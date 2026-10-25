@@ -249,11 +249,13 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     ['apple-touch-icon', 'l’icône d’iOS — sans elle, iPhone pose une capture d’écran'],
     ['theme-color', 'la couleur de la barre d’état'],
   ];
-  /* **Les barres du téléphone** (ui.css) : sur Android, chaque page retire
-     `viewport-fit=cover` avant d'être dessinée, pour que Chrome la tienne
-     lui-même entre la barre d'état et les boutons du bas. Une page qui l'oublie
+  /* **Les barres du téléphone** (ui.css) : dans un onglet Android, chaque page
+     retire `viewport-fit=cover` avant d'être dessinée, pour que Chrome la
+     tienne lui-même entre la barre d'état et les boutons du bas ; depuis
+     l'icône, elle le garde, et `env(safe-area-inset-bottom)` dit la hauteur
+     des boutons. Une page qui l'oublie
      redevient celle que Gaël voyait coupée sur son Samsung, en haut ou en bas. */
-  if (!/<meta name="viewport"[^>]*>\n<script>[^<]*if\(\/Android\/i\.test\(navigator\.userAgent\)\)[^<]*viewport-fit=cover[^<]*<\/script>/.test(html)) {
+  if (!/<meta name="viewport"[^>]*>\n<script>[^<]*if\(\/Android\/i\.test\(navigator\.userAgent\)&&matchMedia\('\(display-mode: browser\)'\)\.matches\)[^<]*viewport-fit=cover[^<]*<\/script>/.test(html)) {
     ko(nom, 'le script des barres du téléphone manque juste après la balise viewport : '
       + 'sur Android, la page passerait sous la barre d’état et les boutons du bas');
     propre = false;

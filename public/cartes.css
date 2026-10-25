@@ -256,12 +256,19 @@
 /* Le holo de l'épique : la nappe de couleurs, et la bande claire posée où
    `--mx` et `--my` la mettent (50 % et 40 % au repos). Une vitrine qui
    incline la carte peut les déplacer : c'est une variable lue au rendu,
-   pas une animation. */
+   pas une animation.
+
+   **Un reflet, pas un voile** (25 octobre 2026, Gaël : « les cartes épiques
+   ne sortent pas très nettes »). La nappe passait en `screen` à 14-17 % sur
+   toute l'image : elle éclaircissait chaque noir, le dessin perdait son
+   contraste et la carte semblait floue à côté d'une rare. Elle reste, à
+   peine teintée, et la bande claire garde l'éclat du holo sur une diagonale
+   étroite. */
 .fz.r-epique:not(.fz-verrou) .art::after{inset:-25%;mix-blend-mode:screen;
   background:
-    linear-gradient(115deg,transparent 36%,rgba(242,238,228,.36) 46%,rgba(160,220,255,.26) 53%,transparent 64%)
+    linear-gradient(115deg,transparent 40%,rgba(242,238,228,.24) 47%,rgba(160,220,255,.16) 52%,transparent 60%)
       var(--mx,50%) var(--my,40%)/250% 250% no-repeat,
-    linear-gradient(125deg,rgba(255,110,210,.16),rgba(110,200,255,.14) 40%,rgba(255,236,140,.14) 70%,rgba(185,140,255,.17))}
+    linear-gradient(125deg,rgba(255,110,210,.05),rgba(110,200,255,.04) 40%,rgba(255,236,140,.04) 70%,rgba(185,140,255,.05))}
 /* Le liseré d'or de la légendaire : un anneau découpé par un masque dans un
    disque conique d'or, de craie et d'or d'encre (les trois jetons de la
    forme légendaire). Le disque déborde l'anneau de partout pour qu'aucun
