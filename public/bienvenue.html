@@ -993,10 +993,15 @@ function final() {
   buzz([40, 60, 40, 60, 120]);
 }
 
-$('b4d').onclick = () => { location.href = '/duel-nvn?tuto=1'; };
-$('b4').onclick = () => { location.href = '/'; };
-$('b4c').onclick = () => { location.href = '/aide'; };
-$('b4b').onclick = () => { location.href = '/equipes'; };
+/* **La cérémonie finie ne reste pas dans l'historique** (25 octobre 2026) :
+   chaque sortie la *remplace*. Avec `location.href`, la flèche de retour du
+   duel guidé — et le bouton retour du téléphone — ramenaient ici, et le
+   joueur retombait sur « Tu n'as pas encore de place » le temps que la page
+   s'aperçoive qu'il en avait une. */
+$('b4d').onclick = () => { location.replace('/duel-nvn?tuto=1'); };
+$('b4').onclick = () => { location.replace('/'); };
+$('b4c').onclick = () => { location.replace('/aide'); };
+$('b4b').onclick = () => { location.replace('/equipes'); };
 
 /* ------------------------------------------------------- démarrage */
 
@@ -1036,12 +1041,18 @@ async function reclamerLeParrainage() {
   } catch { /* réseau : on garde le code pour la prochaine fois */ }
 }
 
+/* **Déjà inscrit ? On le sait avant de rien montrer.** L'état passe avant
+   le catalogue, qui est lourd : un joueur qui revenait ici par l'historique
+   voyait « Tu n'as pas encore de place » tout le temps du catalogue, puis
+   seulement partait. La page reste masquée le temps de la réponse — une
+   seconde et demie au plus, pour qu'un réseau lent ne laisse pas un nouveau
+   venu devant du noir. */
+const appMasquee = $('app');
+appMasquee.style.visibility = 'hidden';
+const montrer = () => { appMasquee.style.visibility = ''; };
+setTimeout(montrer, 1500);
 (async () => {
   try {
-    catalogue = await fetch('/api/me/catalogue').then((r) => r.json());
-    window.TBF_CARTES?.chargerCatalogue?.()
-      .then(() => { pret = true; })
-      .catch((e) => console.warn('[bienvenue] catalogue des cartes', e.message));
     const st = await fetch('/api/me/state', { credentials:'same-origin' }).then((r) => r.json());
     /* Avant la redirection, et sans l'attendre : un compte déjà inscrit qui
        repasse ici avec un code en attente — il vient de suivre le lien d'un
@@ -1049,9 +1060,20 @@ async function reclamerLeParrainage() {
        refusera si la fenêtre est passée, et c'est lui que ça regarde. */
     reclamerLeParrainage();
     // Déjà inscrit : on ne rejoue pas la cérémonie.
-    if (st.onboarded) location.href = '/';
+    if (st.onboarded) { location.replace('/'); return; }
+    montrer();
+    catalogue = await fetch('/api/me/catalogue').then((r) => r.json());
+    window.TBF_CARTES?.chargerCatalogue?.()
+      .then(() => { pret = true; })
+      .catch((e) => console.warn('[bienvenue] catalogue des cartes', e.message));
   } catch { location.href = '/compte'; }
 })();
+/* Revenue du cache de retour arrière, la page ne relit rien : on redemande. */
+addEventListener('pageshow', (e) => {
+  if (!e.persisted) return;
+  fetch('/api/me/state', { credentials:'same-origin' }).then((r) => r.json())
+    .then((st) => { if (st.onboarded) location.replace('/'); }).catch(() => {});
+});
 </script>
 <!-- Sans « defer » : `faceCarte` lit TBF_STUFF au premier retournement de
      carte, et la première carte se retourne avant qu'un script différé ait

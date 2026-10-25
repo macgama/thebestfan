@@ -47,8 +47,24 @@ const lire = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
   const bienvenue = lire('public/bienvenue.html');
   check('le sachet de bienvenue finit sur JOUER MON PREMIER DUEL',
     /id="b4d">JOUER MON PREMIER DUEL</.test(bienvenue)
-    && bienvenue.includes(`$('b4d').onclick = () => { location.href = '/duel-nvn?tuto=1'; };`));
-  check('et garde une sortie vers l’accueil', bienvenue.includes(`$('b4').onclick = () => { location.href = '/'; };`));
+    && bienvenue.includes(`$('b4d').onclick = () => { location.replace('/duel-nvn?tuto=1'); };`));
+  check('et garde une sortie vers l’accueil', bienvenue.includes(`$('b4').onclick = () => { location.replace('/'); };`));
+  /* 25 octobre 2026 : la flèche de retour du duel guidé ramenait sur la
+     cérémonie, « Tu n'as pas encore de place ». */
+  check('la cérémonie ne reste pas dans l’historique (aucune sortie en location.href)',
+    !/\$\('b4[a-d]?'\)\.onclick = \(\) => \{ location\.href/.test(bienvenue));
+  check('un joueur déjà inscrit repart avant le catalogue, sans voir la cérémonie',
+    bienvenue.indexOf("if (st.onboarded) { location.replace('/'); return; }")
+      < bienvenue.indexOf("catalogue = await fetch('/api/me/catalogue')")
+    && bienvenue.includes("if (st.onboarded) { location.replace('/'); return; }"));
+  const pageDuel = lire('public/duel-nvn.html');
+  check('après le duel guidé, la flèche rentre à l’accueil',
+    pageDuel.includes("const APRES_TUTO = 'tbf.apresTuto';") && pageDuel.includes("sessionStorage.setItem(APRES_TUTO, '1')"));
+  check('la consigne de l’épreuve met ses **gras** en gras, sans astérisques',
+    !pageDuel.includes("$('miniAide').textContent") && pageDuel.includes("$('miniAide').replaceChildren("));
+  const fx = lire('public/fx.js');
+  check('un fond filmé s’éteint même avec une opacité choisie (la gerbe du but)',
+    !fx.includes('v.style.opacity = opacite') && fx.includes('.fx-fond.on{opacity:var(--fx-fond-op,.9)}'));
   const cj = lire('public/comment-jouer.html');
   check('« Comment jouer » le propose à nouveau', cj.includes('href="/duel-nvn?tuto=1"'));
   const duel = lire('public/duel-nvn.html');

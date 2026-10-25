@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**La fin du duel guidé réparée** (branche `claude/project-thread-ok4tcv`,
+25 octobre 2026, demandé par Gaël). Construction seule (le Manager redémarre
+de lui-même), **sans schéma**.
+
+- Après le duel guidé, la flèche de retour et le bouton retour du téléphone
+  mènent à l'accueil, et non plus à « Tu n'as pas encore de place » : la
+  cérémonie d'accueil et le formulaire d'inscription ne restent plus dans
+  l'historique, et un joueur déjà inscrit qui repasse sur /bienvenue part
+  sans la voir.
+- La gerbe d'un but (feu d'artifice) s'éteint au bout de trois secondes au
+  lieu de rester figée par-dessus tout le duel.
+- La consigne de l'épreuve écrit « **et** » en gras, sans astérisques (La
+  Visée, Le Contretemps…).
+- Après la mise en ligne : sur le S24+, créer un compte de test, jouer le
+  duel guidé jusqu'au bout, puis toucher la flèche en haut à gauche.
+
+---
+
 **La remise à zéro pour la Saison 1** (branche `claude/project-thread-0tjnbf`,
 25 octobre 2026, demandé par Gaël). Rien ne change sur le site : c'est un
 script que Gaël lance **lui-même**, une fois, en SSH, **après** la mise en
