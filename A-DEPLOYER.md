@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Le menu réordonné** (branche `claude/project-thread-inbro1`, 25 octobre
+2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- JOUER : La répétition vient juste après Les mini-jeux.
+- Mon deck quitte JOUER pour MA COLLECTION, juste après Mes Fanzzy.
+
+---
+
 **Deux correctifs avant les bêta-testeurs** (branche
 `claude/project-thread-hsgz8a`, 25 octobre 2026, demandé par Gaël).
 Construction puis **redémarrage** (le serveur change), **sans schéma**.

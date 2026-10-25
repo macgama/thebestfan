@@ -231,8 +231,9 @@
      amendement 4), passaient au rouge et au bleu ; les boosters et la
      boutique, or sur le hub (« l'or : acheter », amendements 3 et 18),
      passaient au rouge. Le code couleur ne tenait plus d'un écran à
-     l'autre. Le deck suit la même règle : bleu, parce qu'on le possède
-     (amendement 18), même rangé parmi ce qu'on joue. La rubrique garde son
+     l'autre. Le deck était bleu pour la même raison, parce qu'on le possède
+     (amendement 18), quand il était rangé parmi ce qu'on joue ; il est
+     depuis sous MA COLLECTION (25 octobre 2026). La rubrique garde son
      écharpe, son ordre et ses autres tuiles.
 
      **Des rangées pleines : six, six et quatre** (reliquat du lot 2). Le
@@ -258,17 +259,18 @@
       /* Les mini-jeux d'entre les matchs (18 octobre 2026) : juste après les
          deux grands modes, parce qu'on y joue aussi, seul ou à deux. */
       ['/jeux', 'jeux', 'Les mini-jeux'],
+      /* Bien dans JOUER : on y va pour jouer, pas parce qu'on est perdu. Après
+         les écrans qu'elle prépare et jamais avant eux — ce n'est pas une
+         étape à franchir pour entrer au Virage, c'est un endroit où revenir
+         quand un geste résiste. Juste après les mini-jeux (Gaël, 25 octobre
+         2026) : les quatre portes rouges, celles où l'on joue, sur une rangée,
+         puis les deux portes violettes. */
+      ['/repetition', 'repetition', 'La répétition'],
       // Le KOP est au centre du jeu : il ouvre la rubrique de ce qu'on fait à
       // plusieurs, et il n'est plus derrière un second menu.
       ['/kop', 'kop', 'Mon KOP', 'violet'],
       // Juste après le KOP : les deux portes violettes, celles des gens.
       ['/amis', 'amis', 'Mes amis', 'violet'],
-      ['/deck', 'deck', 'Mon deck', 'bleu'],
-      /* Dernière de JOUER, et bien dans JOUER : on y va pour jouer, pas parce
-         qu'on est perdu. Après les deux écrans qu'elle prépare et jamais avant
-         eux — ce n'est pas une étape à franchir pour entrer au Virage, c'est
-         un endroit où revenir quand un geste résiste. */
-      ['/repetition', 'repetition', 'La répétition'],
     ] },
     { titre: 'MA COLLECTION', ton: 'bleu', liens: [
       /* **Elle n'était dans aucun menu.** L'en-tête de ce fichier promet « la
@@ -283,6 +285,9 @@
          chacune qu'une part. */
       ['/collection', 'collection', 'Ma collection'],
       ['/fanzzy', 'fanzzy', 'Mes Fanzzy'],
+      /* Le deck, juste après les Fanzzy qui le composent (Gaël, 25 octobre
+         2026) : il quittait JOUER, où il était la seule porte bleue. */
+      ['/deck', 'deck', 'Mon deck'],
       ['/carnet', 'carnet', 'Mon carnet'],
       // La rangée or : de quoi remplir ce qui précède (voir plus haut).
       ['/boosters', 'pack', 'Mes boosters', 'or'],
