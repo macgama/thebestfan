@@ -1,6 +1,6 @@
 {
   "id": "AN35",
-  "rev": 2,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -9,10 +9,11 @@
             "neutre",
             "pousse",
             "joie",
-            "depit"
+            "depit",
+            "colere"
           ],
           "portrait": true,
-          "sha": "e7d95c14f85f",
+          "sha": "e77f273c9a7d",
           "cligne": true
         }
       }
