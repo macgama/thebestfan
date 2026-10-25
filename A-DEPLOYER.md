@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Notifications : ton club, son Virage, tes amis** (branche
+`claude/project-thread-dxjvy4`, 25 octobre 2026, demandé par Gaël).
+**Avec schéma** : `npm run schema:appliquer` (trois colonnes ajoutées à
+`notif_appareils` dans `sql/notifications.sql`), puis redémarrage.
+
+- Trois cases de plus dans le Compte, allumées sur les appareils déjà inscrits :
+  mon club joue dans 30 minutes ; le Virage d'un match de mon club s'ouvre (au
+  coup d'envoi) ; mes amis (une demande, un oui, une invitation en duel).
+  Jamais la nuit, jamais le nom d'un joueur.
+- Jeu ouvert : la notification devient un bandeau dans la page ; les demandes
+  d'ami en attente mettent un chiffre violet sur « Mes amis » dans le menu.
+- Après la mise en ligne : ouvrir le Compte et voir les cinq cases.
+
+---
+
 **Les joueurs passent seuls à la dernière version** (branche
 `claude/project-thread-s0yr76`, 25 octobre 2026, demandé par Gaël).
 Construction puis **redémarrage** (le serveur change), **sans schéma**.

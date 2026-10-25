@@ -47,3 +47,17 @@ CREATE TABLE IF NOT EXISTS notif_cles (
   cree_le   DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Les trois cases du 25 octobre 2026 (Gaël : « que le joueur sache quand ses
+-- équipes favorites jouent, quand un Virage est en cours avec elles, quand une
+-- personne le demande en ami ») :
+--
+--   `club`    son club joue dans trente minutes ;
+--   `virage`  le Virage d'un match de son club s'ouvre, au coup d'envoi ;
+--   `amis`    une demande d'ami, une demande acceptée, un ami qui l'invite en duel.
+--
+-- Allumées d'office, comme les deux premières : un appareil déjà inscrit a dit
+-- oui aux notifications, et chaque case se coupe depuis la page du compte.
+ALTER TABLE notif_appareils ADD COLUMN IF NOT EXISTS club   TINYINT(1) NOT NULL DEFAULT 1;
+ALTER TABLE notif_appareils ADD COLUMN IF NOT EXISTS virage TINYINT(1) NOT NULL DEFAULT 1;
+ALTER TABLE notif_appareils ADD COLUMN IF NOT EXISTS amis   TINYINT(1) NOT NULL DEFAULT 1;
