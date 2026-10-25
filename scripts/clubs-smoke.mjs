@@ -6,7 +6,7 @@
  * panneau des bonus.
  */
 import { DuelNvN } from '../src/server/nvn/engine.js';
-import { CLUB_DE, CRI_DU_CLUB, avecCriDuClub, clubDe, lieA, modsDuLien, avecLien, lierLeDeck, tauxDuLien }
+import { CLUB_DE, CRI_DU_CLUB, CRIS_TYPES, criDuClub, avecCriDuClub, clubDe, lieA, modsDuLien, avecLien, lierLeDeck, tauxDuLien }
   from '../src/shared/fanzzy/clubs.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { ACTION_BY_ID } from '../src/shared/duel/actions.js';
@@ -81,6 +81,17 @@ const CLUB = clubDe('AN1');
   check('un neutre (club nul) garde son deck tel quel', lierLeDeck(brut, null, tauxDuLien()) === brut);
 }
 
+console.log('\nLes championnats qui ont leurs Fanzzy');
+{
+  const { serieDeLigue, criDeSerie } = await import('../src/shared/fanzzy/series-ligues.js');
+  const pl = serieDeLigue(39);
+  check('la Premier League a sa série, LES TERRACES, à ses couleurs',
+    pl?.code === 'AN' && pl.nom === 'LES TERRACES' && /^#/.test(pl.c1) && /^#/.test(pl.c2));
+  check('vingt clubs, trois Fanzzy et un cri chacun',
+    pl.clubs.length === 20 && pl.clubs.every((c) => c.fanzzy.length === 3 && c.cri === CRI_DU_CLUB.get(c.club)));
+  check('une compétition sans série n\'en a pas', serieDeLigue(61) === null && serieDeLigue('x') === null);
+  check('le cri de série d\'un club anglais, rien pour un autre', criDeSerie(40) === CRI_DU_CLUB.get(40) && criDeSerie(85) === null);
+}
 console.log('\nLe cri du club');
 check('vingt cris, un par club, quatre mots au plus et sans chiffre',
   CRI_DU_CLUB.size === 20 && [...CRI_DU_CLUB.values()].every((c) =>
@@ -94,8 +105,13 @@ check('chaque club de la série a le sien', [...new Set(CLUB_DE.values())].every
   check('son geste et sa puissance restent les siens',
     lie.fanzzy[0].cri.gest === BY_ID.get('AN1').cri.gest && lie.fanzzy[0].cri.power === BY_ID.get('AN1').cri.power);
   check('le neutre garde son cri', lie.fanzzy[1].cri.label === BY_ID.get('TR32').cri.label);
-  check('un club hors de la table : le cri ne change pas',
-    avecCriDuClub({ cri: { label: 'X' } }, 85).cri.label === 'X');
+  check('un club hors de la table pousse son cri type, toujours le même',
+    avecCriDuClub({ cri: { label: 'X' } }, 85).cri.label === CRIS_TYPES[85 % CRIS_TYPES.length]
+    && criDuClub(85) === criDuClub('85'));
+  check('sans club, le cri ne change pas', avecCriDuClub({ cri: { label: 'X' } }, null).cri.label === 'X');
+  check('huit cris types, quatre mots au plus et sans chiffre, distincts des cris de série',
+    CRIS_TYPES.length === 8 && CRIS_TYPES.every((c) => c.replace(/[,!’']/g, ' ').trim().split(/\s+/).length <= 4 && !/\d/.test(c))
+    && CRIS_TYPES.every((c) => ![...CRI_DU_CLUB.values()].includes(c)));
 }
 
 console.log('\nAu duel, il pousse plus fort');
@@ -204,7 +220,7 @@ check('pas assez d\'écharpes : refusé',
 f = await F.fiche(U, 'TR32');
 check('la fiche dit LIÉ À TON CLUB', f.club?.lie === true && f.club.tonClub === true && f.club.achete === true);
 check('et nomme le club acheté', f.club.nom === 'Sion');
-check('un club hors de la table n\'a pas de cri de club', f.club.cri === null);
+check('un club hors de la table a son cri type', f.club.cri === criDuClub(85) && CRIS_TYPES.includes(f.club.cri));
 check('la fiche d\'un AN donne le cri de son club', (await F.fiche(U, 'AN1')).club.cri === CRI_DU_CLUB.get(clubDe('AN1')));
 
 await pool.query(`INSERT INTO user_decks (user_id,nom,contenu,actif) VALUES (?, 'd', ?, 1)`,

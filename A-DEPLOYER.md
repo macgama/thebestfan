@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**La marque des championnats à Fanzzy, et le cri et le son des autres clubs**
+(branche `claude/project-thread-v83ym1`, 25 octobre 2026, demandé par Gaël ;
+un son Artlist, 376 crédits, avec son accord). Construction seule, **sans
+schéma**.
+
+- Matchs du jour : le bloc de la Premier League porte une écharpe aux
+  couleurs des TERRACES, le tampon de la série, trois visages de Fanzzy qui
+  se relaient et « Ce championnat a ses Fanzzy et ses cris » ; sous chaque
+  match, le cri des clubs anglais.
+- Page de la Premier League : un bandeau avec les 20 clubs, leurs trois
+  Fanzzy et leur cri, qui mène à la série dans la collection.
+- Un Fanzzy lié à un club hors série pousse un cri type (huit cris, toujours
+  le même pour un club) et joue un son type de tribune avec l'écharpe.
+- Après la mise en ligne : ouvrir les matchs du jour un jour de Premier
+  League, puis la page de la Premier League.
+
+---
+
 **Cartes et fiches des Fanzzy, et le bas de l'écran sur Android** (branche
 `claude/project-thread-g9hq66`, 25 octobre 2026, demandé par Gaël).
 Construction puis **redémarrage** (le serveur envoie l'histoire de chaque âge),

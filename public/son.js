@@ -1903,6 +1903,9 @@
     'club-66': { opus: '/son/club-66.4ffeca0f.ogg', repli: '/son/club-66.b01eb4f5.mp3' },
     'club-746': { opus: '/son/club-746.05f9a3cc.ogg', repli: '/son/club-746.ab8d9afb.mp3' },
     'club-1346': { opus: '/son/club-1346.8ef5d256.ogg', repli: '/son/club-1346.e6ff4dd2.mp3' },
+    /* Le son type (Artlist, 25 octobre 2026, demande de Gaël) : pour tous les
+       autres clubs, des tambours de tribune puis la clameur. */
+    'club-type': { opus: '/son/club-type.288411b6.ogg', repli: '/son/club-type.ee4e3cd4.mp3' },
   };
 
   /* ------------------------------------------ les cartes enregistrées
@@ -2226,15 +2229,20 @@
      (`FX.club`). Chacun vient d'une vidéo Veo de quatre secondes générée sur
      Artlist (sources hors git, `art/son/_src/clubs/`), coupée et nivelée
      comme les cartes du duel. Le fichier s'appelle `club-<id>`, l'identifiant
-     API-Football du club : les 20 de la série AN en ont un. Un club sans son
-     garde l'éclat seul.
+     API-Football du club : les 20 de la série AN en ont un ; tous les autres
+     prennent le son type, `club-type`.
 
      **Même règle que les jingles** : il ne joue que déjà décodé. `clubs()`
      télécharge ceux d'une liste de clubs (l'entrée dans la tribune, avec un
      Fanzzy lié) ; `club()` rend faux quand le sien n'est pas prêt. */
   // Un peu au-dessus des cartes (−22,5 LUFS) : il part avec la clameur du but.
   const MIX_CLUB = 1.25;
-  const sonDuClub = (id) => (FICHIERS[`club-${Number(id)}`] ? `club-${Number(id)}` : null);
+  /* Un club sans son à lui prend le son type ; sans club, rien. */
+  const sonDuClub = (id) => {
+    const n = Number(id);
+    if (id == null || !Number.isInteger(n) || n <= 0) return null;
+    return FICHIERS[`club-${n}`] ? `club-${n}` : 'club-type';
+  };
   function clubs(ids = []) {
     for (const nom of ids.map(sonDuClub).filter(Boolean)) {
       telecharger(nom);
