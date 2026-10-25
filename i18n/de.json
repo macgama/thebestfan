@@ -6430,5 +6430,22 @@
  "PLUS FORT, ENSEMBLE": "LAUTER, GEMEINSAM",
  "CHEZ NOUS, ON CHANTE": "BEI UNS WIRD GESUNGEN",
  "TOUS POUR LE MAILLOT": "ALLE FÜRS TRIKOT",
- "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort, rapporte un peu plus et pousse le cri de son club, au Grand Virage comme en duel. Quand ta tribune fait céder la corde ou que ton club marque, son écharpe traverse l’écran à ses couleurs. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe. Un Fanzzy neutre peut se lier à ton club principal depuis sa fiche, contre des écharpes, et pour toujours. Un championnat qui a ses propres Fanzzy, comme la Premier League, porte leur marque dans les matchs du jour.": "<0>Vereinsgebundene Fanzzy</0> tragen die Farben eines Teams. Spiel ihn in einem Spiel deines Vereins, und er drückt etwas stärker, bringt etwas mehr ein und ruft den Ruf seines Vereins, in der Großen Kurve wie im Duell. Wenn deine Kurve das Seil reißen lässt oder dein Verein ein Tor schießt, zieht sein Schal in seinen Farben über den Bildschirm. Seine Karte zeigt es mit einem Stempel: „AN DEINEN VEREIN GEBUNDEN“, wenn du diesem Team folgst. Ein neutraler Fanzzy lässt sich auf seiner Karte an deinen Hauptverein binden, gegen Schals und für immer. Eine Liga mit eigenen Fanzzy, wie die Premier League, trägt ihr Zeichen in den Spielen des Tages."
+ "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort, rapporte un peu plus et pousse le cri de son club, au Grand Virage comme en duel. Quand ta tribune fait céder la corde ou que ton club marque, son écharpe traverse l’écran à ses couleurs. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe. Un Fanzzy neutre peut se lier à ton club principal depuis sa fiche, contre des écharpes, et pour toujours. Un championnat qui a ses propres Fanzzy, comme la Premier League, porte leur marque dans les matchs du jour.": "<0>Vereinsgebundene Fanzzy</0> tragen die Farben eines Teams. Spiel ihn in einem Spiel deines Vereins, und er drückt etwas stärker, bringt etwas mehr ein und ruft den Ruf seines Vereins, in der Großen Kurve wie im Duell. Wenn deine Kurve das Seil reißen lässt oder dein Verein ein Tor schießt, zieht sein Schal in seinen Farben über den Bildschirm. Seine Karte zeigt es mit einem Stempel: „AN DEINEN VEREIN GEBUNDEN“, wenn du diesem Team folgst. Ein neutraler Fanzzy lässt sich auf seiner Karte an deinen Hauptverein binden, gegen Schals und für immer. Eine Liga mit eigenen Fanzzy, wie die Premier League, trägt ihr Zeichen in den Spielen des Tages.",
+ "Signaler un problème": "Problem melden",
+ "SIGNALER UN PROBLÈME": "PROBLEM MELDEN",
+ "Un bug, une idée, un mot qui cloche : dis ce que tu as vu. La page et ton appareil partent avec ton message.": "Ein Bug, eine Idee, ein Wort, das nicht passt: Sag, was du gesehen hast. Die Seite und dein Gerät werden mit deiner Nachricht geschickt.",
+ "Ce que tu faisais, ce qui s’est passé…": "Was du gemacht hast, was passiert ist…",
+ "Ton message": "Deine Nachricht",
+ "ENVOYER": "SENDEN",
+ "Écris quelques mots de plus.": "Schreib ein paar Wörter mehr.",
+ "Connecte-toi pour envoyer un signalement.": "Melde dich an, um eine Meldung zu senden.",
+ "Tu en as envoyé beaucoup : réessaie dans une heure.": "Du hast schon viele geschickt: Versuch es in einer Stunde wieder.",
+ "Le message n’est pas parti. Réessaie dans un instant.": "Die Nachricht wurde nicht gesendet. Versuch es gleich noch einmal.",
+ "MERCI !": "DANKE!",
+ "Ton message est parti. On le lit, et on te répond par mail si besoin.": "Deine Nachricht ist unterwegs. Wir lesen sie und antworten dir bei Bedarf per E-Mail.",
+ "OK": "OK",
+ "Signalement de {0} — thebestfan": "Meldung von {0} — thebestfan",
+ "{0} — {1} Répondre à ce mail, c’est répondre à {2}.": "{0} — {1} Wer auf diese E-Mail antwortet, antwortet {2}.",
+ "Écran : {0}": "Bildschirm: {0}",
+ "Écran : —": "Bildschirm: —"
 }
