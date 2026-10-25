@@ -1733,6 +1733,15 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
     check('et son nom va avec', /Meneur/.test(age.nom)
       || (console.log('        elle nomme :', age.nom), false));
 
+    /* **Son histoire** (25 octobre 2026, Gaël : « sur la fiche du personnage,
+       il n'y a pas sa description ») : celle de l'âge atteint, sous la carte. */
+    const histoire = await evolue.evaluate(() =>
+      document.getElementById('fiche-histoire')?.textContent.trim() ?? '');
+    const attendue = DEX.find((f) => f.id === 'TR32B')?.histoire ?? '';
+    check('elle raconte son histoire, celle de l’âge atteint',
+      Boolean(attendue) && histoire === attendue
+      || (console.log('        elle dit :', histoire, '— attendu :', attendue), false));
+
     /* **On peut revenir voir l'enfant.**
 
        La rangee ÂGES n'existe que pour regarder les trois visages d'une

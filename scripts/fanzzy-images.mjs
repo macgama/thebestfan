@@ -42,6 +42,7 @@ import { readdir, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CADRAGES, bustCadre } from './cadrage-bustes.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
@@ -397,9 +398,13 @@ async function produire(fichier, id) {
     ? await sharp(rgba, { raw: { width: l, height: h, channels: 4 } })
       .extend({ top: vide, background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer()
     : sharp(rgba, { raw: { width: l, height: h, channels: 4 } });
-  const buste = (vide ? sharp(source) : source)
-    .extract({ left: gx, top: gy + vide, width: Math.min(cote, l - gx), height: Math.min(cote, h - gy) })
-    .resize(BUSTE.l, BUSTE.h, { fit: 'cover' });
+  /* Un visage qui n'est pas en haut — un objet, une créature — a son cadre
+     écrit à la main : `cadrage-bustes.mjs`. */
+  const buste = CADRAGES[id]
+    ? await bustCadre(sharp, rgba, l, h, b, CADRAGES[id], BUSTE)
+    : (vide ? sharp(source) : source)
+      .extract({ left: gx, top: gy + vide, width: Math.min(cote, l - gx), height: Math.min(cote, h - gy) })
+      .resize(BUSTE.l, BUSTE.h, { fit: 'cover' });
 
   await mkdir(SORTIE, { recursive: true });
   const ecrire = async (img, nom) => {
