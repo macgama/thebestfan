@@ -635,26 +635,20 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 
 /* ## Le soir de match, derrière le personnage (lot 2)
 
-   Quand un club suivi joue — en direct, ou dans les deux heures —, une bâche
-   à ses deux couleurs se tend sur le mur derrière la tête et les épaules, et
+   Quand un club suivi joue — en direct, ou dans les deux heures —,
    la nappe de fumée (`.tbf-fumee`, `ui.css`) monte du sol, dans le quart bas
    de la scène et nulle part ailleurs (amendement 7). Les couleurs sont
    celles que le serveur a lues sur le blason, posées en ligne sur `.soir`
-   (`--e1`, `--e2`) : la bâche et la fumée les lisent, et les écharpes du
+   (`--e1`, `--e2`) : la fumée les lit, et les écharpes du
    reste de l'écran gardent les leurs. Sans couleur connue, rien ne se pose.
 
    `.soir` est un calque de la scène, sous le personnage (`.flotte` passe
    devant, z-index 2) : la fumée le baigne par le bas sans jamais le couvrir.
 
-   **La bâche est la brique de `ui.css`** (`.tbf-bache-club`) : rayures,
-   voile d'encre, cerne, ombre, coin déchiré, les deux scotchs et la
-   rotation sont à elle. Cette page n'écrit que sa place et sa taille, à
-   hauteur de la tête et des épaules. Ses scotchs débordent de huit pixels
-   de chaque côté et de sept au-dessus : la largeur leur laisse ces seize
-   pixels, sans quoi ils passeraient sous les rails. */
+   **La bâche n'est plus posée** (Gaël, 25 octobre 2026 : derrière le
+   Fanzzy, « cela donne trop d'information sur la page ») : il reste la
+   fumée. */
 .soir{position:absolute;inset:0;z-index:1;pointer-events:none}
-.soir .tbf-bache-club{position:absolute;left:50%;top:calc(34px + 13%);
-  width:min(100% - 16px,60vw);height:22%;translate:-50% 0}
 /* Les calques de gestes prennent toute la hauteur de la scène. Sans ça, une
    hauteur en pourcentage sur la pile se résout contre un parent de hauteur
    automatique — c'est-à-dire contre rien — et retombe silencieusement sur
@@ -2197,10 +2191,12 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
       <div class="scene" id="scene">
         <div class="decor" id="decor" aria-hidden="true"></div>
         <div class="halo"></div>
-        <!-- Le soir de match : la bâche du club et la fumée. Né caché, montré
-             seulement quand les couleurs du club sont connues. -->
+        <!-- Le soir de match : la fumée aux couleurs du club. Né caché, montré
+             seulement quand les couleurs du club sont connues. La bâche qui
+             se tendait derrière lui est retirée (Gaël, 25 octobre 2026 :
+             « trop d'informations sur la page »). -->
         <div class="soir" id="soir" aria-hidden="true" hidden>
-          <div class="tbf-bache-club"></div><div class="tbf-fumee"></div></div>
+          <div class="tbf-fumee"></div></div>
         <div class="sol"></div>
         <!-- Ce qu'il porte : les deux pièces que le deck lui a mises
              (`poserSac`). Vide tant que le portefeuille n'a rien dit. -->
@@ -3267,10 +3263,10 @@ function bacheDuJour() {
 
 /* ------------------------------------------- le soir de match
 
-   La bâche du club derrière le personnage, et la fumée à ses pieds, les
+   La fumée à ses pieds, aux couleurs du club, les
    soirs où un club suivi joue : de l'ouverture de sa tribune au coup de
    sifflet. Aux couleurs du blason, que le direct apporte ; sans elles, rien
-   — une bâche aux couleurs du jeu ne serait celle d'aucun club. */
+   — une fumée aux couleurs du jeu ne serait celle d'aucun club. */
 function soirDeMatch() {
   const s = H.live ?? H.soir;
   const c = s ? (H.clubs.has(s.home_id) ? s.homeColors : s.awayColors) ?? [] : [];
