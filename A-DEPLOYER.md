@@ -15,6 +15,9 @@ Construction puis **redémarrage** (le serveur envoie l'histoire de chaque âge)
 - Après la mise en ligne : rouvrir le jeu depuis l'icône (accueil, Mon
   Fanzzy, une fiche) et vérifier que le bas se voit ; ouvrir le Car Remisé
   dans le classeur.
+
+---
+
 **Le son et l'éclat d'un club** (branche `claude/project-thread-v83ym1`,
 25 octobre 2026, demandé par Gaël ; vingt sons Artlist, 7 520 crédits, avec
 son accord). Construction seule, **sans schéma**.
