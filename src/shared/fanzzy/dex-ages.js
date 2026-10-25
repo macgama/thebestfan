@@ -1331,8 +1331,11 @@ export const AGES = {
      écureuils roux de l'île, les perruches de l'ouest de la ville, la plage
      de galets, la porcelaine des manufactures, les mystères joués sur des
      chariots, la première exposition féline du parc, les phoques gris de
-     l'estuaire, les anguilles qui remontent le fleuve — et le troisième âge
-     en devient la figure, jusqu'à porter le décor sur lui.
+     l'estuaire, les anguilles qui remontent le fleuve, les cabines
+     téléphoniques crème du port, les loutres revenues dans la rivière, la
+     rhubarbe forcée des remises obscures, le ragoût des marins, la tarte de
+     la cantine — et le troisième âge en devient la figure, jusqu'à porter le
+     décor sur lui.
      **Il garde toujours un détail du premier** : le sachet de miettes, le
      bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
      baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
@@ -1350,7 +1353,9 @@ export const AGES = {
      d'encre bordeaux, la noisette derrière l'oreille, le bonnet à pompon, le
      coquillage sur le bord du seau, la fêlure du couvercle, la petite
      lanterne sous le toit, le peigne dans la queue, les grains de sable sur
-     le nez, le galet du fleuve. C'est la règle de ce fichier, et la fiche
+     le nez, le galet du fleuve, la vitre fêlée, le galet plat au sommet de
+     la pile, la petite feuille tombante, la bosse sur le flanc, le petit
+     trou dans la noix de coco. C'est la règle de ce fichier, et la fiche
      de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
@@ -1906,5 +1911,72 @@ export const AGES = {
       + 'déroule, et toute la tribune part avec le courant — le galet du fleuve est toujours dans '
       + 'sa nageoire.',
       'TOUT LE FLEUVE SE DÉROULE'],
+  ],
+  AN51: [
+    ['La Cabine du Coin', 'Plus grande et repeinte de frais, ses vitres qui luisent d’un ambre '
+      + 'chaud de l’intérieur, un monnayeur de laiton sur le ventre, un rouleau de câbles noirs '
+      + 'bien enroulé sur l’épaule et le combiné ambre poli, qui luit doucement au bout de son '
+      + 'fil. Elle compose chaque numéro du port de mémoire, sans jamais se tromper.',
+      'DE MÉMOIRE, SANS ME TROMPER'],
+    ['La Grande Cabine Téléphonique', 'Immense, des épaules de fonte crème massives, des rangées '
+      + 'de vitres ambre lumineuses le long du corps, un haut toit en dôme couronné de petites '
+      + 'lampes ambre, une cape de fils téléphoniques noirs tressés dans le dos et le combiné '
+      + 'géant porté comme un sceptre, qui luit de l’intérieur. Elle appelle, et toute la tribune '
+      + 'décroche — la vitre fêlée est toujours dans sa porte.',
+      'TOUT LE PORT DÉCROCHE'],
+  ],
+  AN52: [
+    ['La Loutre de l’Estuaire', 'Plus grande et lisse, un court pull bleu tricoté aux anneaux '
+      + 'blancs, un sac étanche sur le dos, un rouleau de corde sur l’épaule et la lanterne bleue '
+      + 'devenue grande, à la lumière blanche, portée haut au bout d’une perche. Elle veille sur '
+      + 'l’estuaire toute la nuit, sans jamais baisser sa lanterne.',
+      'JE NE LA BAISSE PAS'],
+    ['La Grande Loutre du Fleuve', 'Immense et forte, un large poitrail, une longue cape de toile '
+      + 'cirée bleue doublée de blanc, une haute pile de galets du fleuve en équilibre sur la '
+      + 'tête, un harnais de corde bleue aux anneaux de laiton et la lanterne géante portée comme '
+      + 'un phare, qui luit de l’intérieur. Elle veille, et toute la tribune tient avec elle — le '
+      + 'galet plat est toujours en haut de la pile.',
+      'PAS UN GALET NE TOMBE'],
+  ],
+  AN53: [
+    ['La Rhubarbe de la Remise', 'Plus haute et d’un cramoisi luisant, sa petite feuille jaune '
+      + 'dépliée comme un chapeau à plumes, un tablier de récolte blanc à bande bleue noué autour '
+      + 'de la tige, un petit panier de tiges roses coupées à la hanche et la lanterne bleue '
+      + 'devenue grande, à la flamme jaune qui luit. Elle pousse à la lueur de la bougie, plus '
+      + 'vite à chaque craquement.',
+      'PLUS VITE À CHAQUE CRAC'],
+    ['La Grande Reine Rose', 'Immense et d’un cramoisi éclatant, une gerbe de hautes tiges roses '
+      + 'dressées derrière ses épaules comme une couronne de flèches, une large feuille jaune '
+      + 'pâle froissée en manteau dans le dos, une ceinture de petites lanternes lumineuses et la '
+      + 'lanterne géante portée haut, à la flamme jaune qui luit. Elle pousse, et toute la '
+      + 'tribune craque avec elle — la petite feuille tombante est toujours sur sa tête.',
+      'TOUTE LA REMISE CRAQUE'],
+  ],
+  AN54: [
+    ['La Marmite du Port', 'Plus grande et polie, un tablier de cuisinier blanc à bande rouge noué '
+      + 'autour du ventre, une botte de carottes et un oignon pendus à son côté, un torchon à '
+      + 'carreaux rouges et blancs plié sur le couvercle et la louche rouge devenue grande, qui '
+      + 'luit doucement. Elle mijote tout l’après-midi, et sert pile à l’heure du coup d’envoi.',
+      'PILE AU COUP D’ENVOI'],
+    ['La Grande Marmite de Ragoût', 'Immense et ronde, des épaules de fonte massives en forme '
+      + 'd’anses, des coutures rouges qui luisent comme des braises le long du corps, un haut '
+      + 'couvercle couronné de volutes de vapeur, un torchon à carreaux rouges et blancs en cape '
+      + 'dans le dos et la louche géante tenue droite comme un sceptre. Elle soulève son '
+      + 'couvercle, et toute la tribune mange à sa faim — la bosse est toujours sur son flanc.',
+      'TOUTE LA VILLE À TABLE'],
+  ],
+  AN55: [
+    ['La Tarte de la Cantine', 'Entière, ronde et plus grande, sa noix de coco toute duveteuse qui '
+      + 'luit doucement, une coiffe blanche de dame de cantine sur sa croûte, un pot de crème '
+      + 'anglaise jaune à la main et le plat bleu ciel désormais sous ses pieds comme une scène. '
+      + 'Elle dessine son rond de noix de coco sur chaque part, sans jamais déborder.',
+      'SANS JAMAIS DÉBORDER'],
+    ['La Grande Tarte', 'Immense et ronde, des épaules massives de croûte dorée déployées comme '
+      + 'des ailes, une haute crête de crème fouettée blanche au-dessus de la tête, un ruban de '
+      + 'confiture rouge lumineuse enroulé autour d’elle comme une écharpe de cérémonie, des '
+      + 'rangées de petits plats bleu ciel en épaulières et le plat géant porté comme un '
+      + 'bouclier, qui luit de l’intérieur. Elle dessine, et toute la tribune lève sa part — le '
+      + 'petit trou dans la noix de coco est toujours sur son flanc.',
+      'TOUTE LA TRIBUNE AU DESSERT'],
   ],
 };
