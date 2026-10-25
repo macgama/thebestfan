@@ -1329,8 +1329,10 @@ export const AGES = {
      fleuve, les cerfs-volants de la colline ; puis, pour les créatures, la
      boîte aux lettres de fonte, les plumes d'acier des ateliers, les
      écureuils roux de l'île, les perruches de l'ouest de la ville, la plage
-     de galets — et le troisième âge en devient la figure, jusqu'à porter le
-     décor sur lui.
+     de galets, la porcelaine des manufactures, les mystères joués sur des
+     chariots, la première exposition féline du parc, les phoques gris de
+     l'estuaire, les anguilles qui remontent le fleuve — et le troisième âge
+     en devient la figure, jusqu'à porter le décor sur lui.
      **Il garde toujours un détail du premier** : le sachet de miettes, le
      bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
      baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
@@ -1346,7 +1348,9 @@ export const AGES = {
      mèche blanche, les vieilles chaussures éraflées, d'autres baskets
      rouges, le bandeau bleu marine, la carte postale dans la fente, la tache
      d'encre bordeaux, la noisette derrière l'oreille, le bonnet à pompon, le
-     coquillage sur le bord du seau. C'est la règle de ce fichier, et la fiche
+     coquillage sur le bord du seau, la fêlure du couvercle, la petite
+     lanterne sous le toit, le peigne dans la queue, les grains de sable sur
+     le nez, le galet du fleuve. C'est la règle de ce fichier, et la fiche
      de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
@@ -1833,5 +1837,74 @@ export const AGES = {
       + 'serti le long du dos et le seau géant porté au bras. Il retient la marée, puis la lâche, '
       + 'et toute la tribune déferle — le coquillage est toujours sur le bord du seau.',
       'TOUTE LA MARÉE DÉFERLE'],
+  ],
+  AN46: [
+    ['La Théière de Porcelaine', 'Plus grande et luisante, ses bateaux et ses nuages bleu roi '
+      + 'peints avec finesse et qui luisent doucement, une soucoupe blanche portée en collerette '
+      + 'autour du cou, une passoire à thé d’argent au bout d’une chaînette et le couvre-théière '
+      + 'enfin ajusté, brodé de volutes blanches. Elle sert chaque tasse à point, sans jamais la '
+      + 'laisser trop infuser.',
+      'CHAQUE TASSE À POINT'],
+    ['La Grande Théière Bleue', 'Immense et arrondie, des épaules de porcelaine massives aux '
+      + 'motifs bleu roi qui luisent, un haut couvercle couronné de fleurs de porcelaine blanche, '
+      + 'une pile de soucoupes bleues et blanches dans le dos, un ruban de vapeur lumineuse '
+      + 'enroulé autour du bec, une longue cape bleu roi et le couvre-théière à pompon blanc '
+      + 'toujours sur la tête. Elle sert le thé à toute la tribune, et toute la tribune tient '
+      + 'jusqu’au bout — la petite fêlure est toujours sur son couvercle.',
+      'LE THÉ POUR TOUTE LA TRIBUNE'],
+  ],
+  AN47: [
+    ['Le Chariot des Mystères', 'Plus grand et repeint de frais en blanc et bleu ciel, ses rideaux '
+      + 'bleu ciel ouverts sur un petit décor peint de nuages et d’étoiles et une rangée de '
+      + 'petites rampes lumineuses le long de la scène. De place en place, il joue la même scène, '
+      + 'et toute la rue le suit.',
+      'DE PLACE EN PLACE'],
+    ['Le Grand Char de la Procession', 'Immense sur ses grandes roues sculptées, deux étages de '
+      + 'scène de bois peint aux rideaux bleu ciel lumineux, un haut toit couronné de nuages de '
+      + 'bois sculpté et d’une étoile bleu ciel, des bras sculptés aux épaules massives et des '
+      + 'rangées de rampes lumineuses le long de ses bords. Il fait le tour de la ville, et toute '
+      + 'la tribune tourne avec lui — la petite lanterne pend toujours sous son toit.',
+      'TOUTE LA VILLE FAIT LE TOUR'],
+  ],
+  AN48: [
+    ['Le Persan Primé', 'Plus grand, la fourrure brossée en une collerette lustrée, un coussin '
+      + 'd’exposition de velours rouge sous la patte, un petit nœud de satin bleu sur une oreille '
+      + 'et la rosette rouge et bleue devenue grande, qui luit doucement sur sa poitrine. Il '
+      + 'défile devant le jury sans jamais perdre la mesure.',
+      'SANS PERDRE LA MESURE'],
+    ['Le Grand Champion de l’Exposition', 'Immense et majestueux, une énorme collerette de '
+      + 'fourrure crème autour des épaules, une longue cape de velours rouge et bleu, une petite '
+      + 'couronne de velours rouge en forme de coussin sur la tête, des dizaines de rosettes '
+      + 'rouges et bleues épinglées en rangs sur sa poitrine et la rosette géante qui luit de '
+      + 'l’intérieur. Il ronronne, et toute la tribune bat sa mesure — le peigne est toujours '
+      + 'coincé dans sa queue.',
+      'TOUTE LA TRIBUNE RONRONNE'],
+  ],
+  AN49: [
+    ['Le Phoque du Banc de Sable', 'Plus grand et lisse, un pull de pêcheur bleu marine enfilé sur '
+      + 'les épaules, un sifflet de laiton au bout d’un cordon, la bouée devenue grande, portée '
+      + 'en bandoulière et qui luit doucement, et de longues moustaches fières. Il veille sur le '
+      + 'banc, et ses nageoires battent l’alerte plus vite que la marée.',
+      'PLUS VITE QUE LA MARÉE'],
+    ['Le Grand Phoque de l’Estuaire', 'Immense et puissant, des épaules massives gris argent sous '
+      + 'des épaulières, une longue cape de toile cirée bleue, une crête de coquillages blancs '
+      + 'comme de l’écume sur la tête, un lourd rouleau de cordage en travers de la poitrine et '
+      + 'la bouée géante portée comme un bouclier, qui luit de l’intérieur. Il frappe, et toute '
+      + 'la tribune claque avec lui — quelques grains de sable sont toujours sur son nez.',
+      'TOUT L’ESTUAIRE CLAQUE'],
+  ],
+  AN50: [
+    ['L’Anguille du Fleuve', 'Plus longue et argentée, lovée en spirale avec assurance, un court '
+      + 'gilet noir aux boutons blancs, une petite boussole de laiton au bout d’une chaînette et '
+      + 'la casquette blanche enfin ajustée, dont le bandeau luit doucement. Elle se déroule en '
+      + 'travers du courant, et retombe pile où elle voulait.',
+      'PILE OÙ JE VOULAIS'],
+    ['La Grande Anguille d’Argent', 'Une haute spirale d’argent luisant, aux épaules massives et '
+      + 'arrondies, une longue nageoire rayée noir et blanc en crête le long du dos, des lignes '
+      + 'blanches lumineuses qui courent sur son corps comme des rides sur l’eau, une cape de '
+      + 'soie noire derrière ses anneaux et la casquette géante au bandeau lumineux. Elle se '
+      + 'déroule, et toute la tribune part avec le courant — le galet du fleuve est toujours dans '
+      + 'sa nageoire.',
+      'TOUT LE FLEUVE SE DÉROULE'],
   ],
 };
