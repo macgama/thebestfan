@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**Cartes et fiches des Fanzzy, et le bas de l'écran sur Android** (branche
+`claude/project-thread-g9hq66`, 25 octobre 2026, demandé par Gaël).
+Construction puis **redémarrage** (le serveur envoie l'histoire de chaque âge),
+**sans schéma**.
+
+- 56 bustes et portraits refaits sur le visage : le Car, le Briquet, la
+  Bannière (RP28), le Robot (RP29), la Théière (AN46), la Cabane (AN47), la
+  Cabine (AN51), la Rhubarbe (AN53), le Crabe (BG5), le Bocal (RV1).
+- Les cartes épiques ne sont plus voilées par leur reflet holo.
+- La fiche d'un Fanzzy dit son histoire, sous la carte.
+- Depuis l'icône du téléphone, le bas des écrans ne passe plus sous les
+  boutons d'Android.
+- Après la mise en ligne : rouvrir le jeu depuis l'icône (accueil, Mon
+  Fanzzy, une fiche) et vérifier que le bas se voit ; ouvrir le Car Remisé
+  dans le classeur.
+
+---
+
 **La carte commune a son animation** (branche `claude/project-thread-nk6bu3`,
 25 octobre 2026, demandé par Gaël ; fond filmé Artlist, 252 crédits, avec
 son accord). Construction seule, **sans schéma**.
