@@ -6,7 +6,7 @@
  * panneau des bonus.
  */
 import { DuelNvN } from '../src/server/nvn/engine.js';
-import { CLUB_DE, clubDe, lieA, modsDuLien, avecLien, lierLeDeck, tauxDuLien }
+import { CLUB_DE, CRI_DU_CLUB, avecCriDuClub, clubDe, lieA, modsDuLien, avecLien, lierLeDeck, tauxDuLien }
   from '../src/shared/fanzzy/clubs.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { ACTION_BY_ID } from '../src/shared/duel/actions.js';
@@ -77,6 +77,23 @@ const CLUB = clubDe('AN1');
     lie.fanzzy[0].modsBase === brut.fanzzy[0].modsBase && lie.fanzzy[0].lien?.pushMult === 1.05);
   check('le deck lu en base n\'est pas touché', brut.fanzzy[0].mods.pushMult === undefined);
   check('un neutre (club nul) garde son deck tel quel', lierLeDeck(brut, null, tauxDuLien()) === brut);
+}
+
+console.log('\nLe cri du club');
+check('vingt cris, un par club, quatre mots au plus et sans chiffre',
+  CRI_DU_CLUB.size === 20 && [...CRI_DU_CLUB.values()].every((c) =>
+    c.replace(/[,!’']/g, ' ').trim().split(/\s+/).length <= 4 && !/\d/.test(c)));
+check('chaque club de la série a le sien', [...new Set(CLUB_DE.values())].every((c) => CRI_DU_CLUB.has(c)));
+{
+  const lie = lierLeDeck(loadout(['AN1', 'TR32']), CLUB, tauxDuLien());
+  const cri = CRI_DU_CLUB.get(CLUB);
+  check('au duel, le Fanzzy lié pousse le cri de son club, à tous ses âges',
+    lie.fanzzy[0].cri.label === cri && lie.fanzzy[0].ages.every((a) => a.cri.label === cri));
+  check('son geste et sa puissance restent les siens',
+    lie.fanzzy[0].cri.gest === BY_ID.get('AN1').cri.gest && lie.fanzzy[0].cri.power === BY_ID.get('AN1').cri.power);
+  check('le neutre garde son cri', lie.fanzzy[1].cri.label === BY_ID.get('TR32').cri.label);
+  check('un club hors de la table : le cri ne change pas',
+    avecCriDuClub({ cri: { label: 'X' } }, 85).cri.label === 'X');
 }
 
 console.log('\nAu duel, il pousse plus fort');
@@ -185,6 +202,8 @@ check('pas assez d\'écharpes : refusé',
 f = await F.fiche(U, 'TR32');
 check('la fiche dit LIÉ À TON CLUB', f.club?.lie === true && f.club.tonClub === true && f.club.achete === true);
 check('et nomme le club acheté', f.club.nom === 'Sion');
+check('un club hors de la table n\'a pas de cri de club', f.club.cri === null);
+check('la fiche d\'un AN donne le cri de son club', (await F.fiche(U, 'AN1')).club.cri === CRI_DU_CLUB.get(clubDe('AN1')));
 
 await pool.query(`INSERT INTO user_decks (user_id,nom,contenu,actif) VALUES (?, 'd', ?, 1)`,
   [U, JSON.stringify({ fanzzy: [{ id: 'TR32' }, { id: 'MS30' }], actions: [] })]);
