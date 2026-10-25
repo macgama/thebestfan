@@ -1334,8 +1334,10 @@ export const AGES = {
      l'estuaire, les anguilles qui remontent le fleuve, les cabines
      téléphoniques crème du port, les loutres revenues dans la rivière, la
      rhubarbe forcée des remises obscures, le ragoût des marins, la tarte de
-     la cantine — et le troisième âge en devient la figure, jusqu'à porter le
-     décor sur lui.
+     la cantine, le terrier des filatures, les macareux des îles, les oies
+     de la grande foire, le ver de la vieille légende, les pigeons voyageurs
+     des colombiers — et le troisième âge en devient la figure, jusqu'à
+     porter le décor sur lui.
      **Il garde toujours un détail du premier** : le sachet de miettes, le
      bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
      baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
@@ -1355,7 +1357,9 @@ export const AGES = {
      lanterne sous le toit, le peigne dans la queue, les grains de sable sur
      le nez, le galet du fleuve, la vitre fêlée, le galet plat au sommet de
      la pile, la petite feuille tombante, la bosse sur le flanc, le petit
-     trou dans la noix de coco. C'est la règle de ce fichier, et la fiche
+     trou dans la noix de coco, l'oreille rabattue, le flotteur blanc cerclé
+     de noir, les petits chaussons de toile, la goutte d'eau de rivière, les
+     quelques plumes dressées. C'est la règle de ce fichier, et la fiche
      de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
@@ -1978,5 +1982,76 @@ export const AGES = {
       + 'bouclier, qui luit de l’intérieur. Elle dessine, et toute la tribune lève sa part — le '
       + 'petit trou dans la noix de coco est toujours sur son flanc.',
       'TOUTE LA TRIBUNE AU DESSERT'],
+  ],
+  AN56: [
+    ['Le Terrier des Filatures', 'Plus grand, sec et musclé, debout, un court manteau de laine '
+      + 'noire bordé de rouge, une petite lanterne de laiton pendue à la ceinture, le collier '
+      + 'rouge désormais à sa taille, aux clous de laiton qui luisent, et les deux oreilles bien '
+      + 'dressées. Il fait sa ronde dans les entrepôts, et chaque mur lui renvoie son aboiement à '
+      + 'la note près.',
+      'COUP POUR COUP'],
+    ['Le Grand Terrier de la Ville', 'Immense et puissant, des épaules massives au poil noir et '
+      + 'feu luisant, une longue cape rouge et noire serrée dans le dos, un haut collier de cuir '
+      + 'rouge aux clous de laiton lumineux dressé autour du cou comme un gorgerin, une crête de '
+      + 'poil noir entre les oreilles et un harnais de cuir rouge aux anneaux de laiton. Il '
+      + 'aboie, et toute la tribune lui répond — l’oreille rabattue est toujours rabattue.',
+      'TOUTE LA VILLE RÉPOND'],
+  ],
+  AN57: [
+    ['Le Macareux des Îles', 'Plus grand et lisse, le bec désormais aux couleurs vives, un court '
+      + 'pull de pêcheur blanc à bandes noires, une petite longue-vue de laiton au bout d’un '
+      + 'cordon, trois poissons d’argent alignés dans le bec et le flotteur devenu grand, qui '
+      + 'luit doucement à sa hanche. Il file au ras des vagues, les ailes plus rapides que le '
+      + 'vent.',
+      'PLUS VITE QUE LE VENT'],
+    ['Le Grand Macareux', 'Immense, un large poitrail, ses ailes noires repliées haut sur les '
+      + 'épaules comme un manteau, une crête de courtes plumes noires, un énorme bec rayé '
+      + 'lumineux qui tient une rangée de poissons d’argent, une longue cape noire et blanche '
+      + 'serrée dans le dos et le flotteur géant porté comme un bouclier, qui luit de '
+      + 'l’intérieur. Il bat des ailes, et toute la tribune tape avec lui — le flotteur blanc '
+      + 'cerclé de noir ne l’a jamais quitté.',
+      'TOUTE LA FALAISE BAT'],
+  ],
+  AN58: [
+    ['L’Oie du Chemin de la Foire', 'Plus grande et fière, ses plumes blanches lustrées, un châle '
+      + 'de bouvier rouge à franges blanches sur les épaules, une petite clochette au bout d’un '
+      + 'ruban, le bonnet rouge devenu large, au liseré qui luit doucement, et les petits '
+      + 'chaussons toujours aux pattes. Elle mène le troupeau sur la route de la foire, d’un bout '
+      + 'à l’autre, sans jamais s’arrêter.',
+      'JUSQU’À LA FOIRE !'],
+    ['La Reine des Oies', 'Immense et large, ses ailes blanches repliées haut sur les épaules '
+      + 'comme un manteau royal, une longue cape rayée rouge et blanc serrée dans le dos, un haut '
+      + 'bonnet rouge couronné de plumes blanches, une lourde chaîne de jetons de cuivre sur la '
+      + 'poitrine et une longue houlette portée droite. Elle se met en marche, et toute la '
+      + 'tribune la suit — les petits chaussons de toile sont toujours à ses pattes.',
+      'TOUT LE TROUPEAU SUIT'],
+  ],
+  AN59: [
+    ['Le Ver de la Rivière', 'Plus grand et long, le corps enroulé debout en trois boucles, une '
+      + 'petite casquette de pêcheur rayée rouge et blanc sur la tête, une clochette de laiton au '
+      + 'bout d’un cordon et le seau rouge devenu grand, posé à côté de ses anneaux comme un '
+      + 'trône, au bord qui luit doucement. Il fait onduler ses boucles, et la vague remonte la '
+      + 'rivière.',
+      'LA VAGUE REMONTE'],
+    ['Le Grand Ver Enroulé', 'Immense spirale d’anneaux gris rosé, le haut du corps large comme '
+      + 'des épaules, ses anneaux cerclés de bandes rouges et blanches lumineuses, une crête de '
+      + 'galets de rivière blancs sur la tête, une longue cape rouge drapée sur ses boucles et le '
+      + 'seau géant tenu comme un bouclier, qui luit de l’intérieur. Il ondule, et toute la '
+      + 'tribune se lève en vague — la goutte d’eau de rivière est toujours sur sa tête.',
+      'TOUTE LA TRIBUNE ONDULE'],
+  ],
+  AN60: [
+    ['Le Pigeon de Course', 'Plus grand et lisse, ses plumes lustrées, une petite veste de course '
+      + 'bleu marine passepoilée de blanc, des lunettes d’aviateur relevées sur la tête, une '
+      + 'bague blanche à l’autre patte et le tube à message devenu grand, qui luit doucement. Il '
+      + 'file au-dessus des toits, droit sur le colombier, quel que soit le vent.',
+      'DROIT SUR LE COLOMBIER'],
+    ['Le Grand Champion du Colombier', 'Immense, un large poitrail, ses ailes gris-bleu repliées '
+      + 'haut sur les épaules comme un manteau, une crête de plumes blanches dressée sur la tête, '
+      + 'une longue cape bleu marine passepoilée de blanc, une bandoulière blanche de champion en '
+      + 'travers de la poitrine et le tube géant porté comme un bouclier sur l’avant-bras, qui '
+      + 'luit de l’intérieur. Il rentre le premier, et toute la tribune tient le cap avec lui — '
+      + 'quelques plumes sont toujours dressées sur sa tête.',
+      'TOUS LES MESSAGES RENTRENT'],
   ],
 };
