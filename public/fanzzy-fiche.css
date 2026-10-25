@@ -248,6 +248,17 @@
    gouttières) : entre 608 et 638 pixels de haut, le repli ne lui rend rien,
    et le cri y reste à portée, en plaque ronde. Une seconde condition pour
    ces trente pixels d'un téléphone de 320 ne vaudrait pas sa lecture. */
+/* **Son histoire**, sous la carte et au-dessus du cri : deux ou trois lignes
+   d'italique à la craie, comme dans la vitrine du classeur. Elle ne grandit
+   pas la page : c'est la carte, au-dessus, qui lui cède la place (`flex:1`).
+   Trois lignes au plus — l'histoire la plus longue du catalogue en prend
+   trois à 320 pixels —, et sur un écran trop court, elle s'efface avant le
+   cri. */
+.fiche .histoire{flex:none;margin:2px var(--marge) 10px;font-family:var(--ui);font-size:13px;line-height:1.45;
+  font-style:italic;text-align:center;color:var(--craie);opacity:.88;text-wrap:balance;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
+.fiche .histoire[hidden]{display:none}
+@container fiche-corps (height < 520px){ .fiche .histoire{display:none} }
 .fiche .vitrine>.cri-court{display:none}
 @container fiche-corps (height < 460px){
   .fiche .corps>.tbf-cri{display:none}
