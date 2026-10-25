@@ -2223,6 +2223,16 @@ function connecter() {
      veut que les autres soient tentés plutôt qu'un abandon sec. */
   socket = io({ transports: ['polling', 'websocket'], tryAllTransports: true });
 
+  /* **Partir, c'est couper.** Chrome garde désormais en mémoire la page qu'on
+     quitte (le cache de retour arrière), socket ouverte comprise : le serveur
+     ne voyait plus partir le joueur avant la fin du battement de socket.io, une
+     quarantaine de secondes. Pendant ce temps sa place passait pour présente,
+     et l'ami qui rejoignait par l'invitation lançait le duel contre une
+     tribune vide. Revenu par la flèche, la page se rebranche ; `connect`
+     reprend alors la place qui attendait. */
+  addEventListener('pagehide', () => socket?.disconnect());
+  addEventListener('pageshow', (e) => { if (e.persisted && socket?.disconnected) socket.connect(); });
+
   /* **On ne crie pas au loup.**
 
      Un joueur l'a dit en une phrase : « j'ai le message de connexion
