@@ -76,6 +76,8 @@ const CLUB = clubDe('AN1');
   check('ses modificateurs propres ne bougent pas (le panneau les montre à part)',
     lie.fanzzy[0].modsBase === brut.fanzzy[0].modsBase && lie.fanzzy[0].lien?.pushMult === 1.05);
   check('le deck lu en base n\'est pas touché', brut.fanzzy[0].mods.pushMult === undefined);
+  check('le Fanzzy lié porte son club, pour le son et l\'éclat de la page',
+    lie.fanzzy[0].lieAuClub === CLUB && lie.fanzzy[1].lieAuClub === undefined);
   check('un neutre (club nul) garde son deck tel quel', lierLeDeck(brut, null, tauxDuLien()) === brut);
 }
 

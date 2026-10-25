@@ -15,6 +15,16 @@ Construction puis **redémarrage** (le serveur envoie l'histoire de chaque âge)
 - Après la mise en ligne : rouvrir le jeu depuis l'icône (accueil, Mon
   Fanzzy, une fiche) et vérifier que le bas se voit ; ouvrir le Car Remisé
   dans le classeur.
+**Le son et l'éclat d'un club** (branche `claude/project-thread-v83ym1`,
+25 octobre 2026, demandé par Gaël ; vingt sons Artlist, 7 520 crédits, avec
+son accord). Construction seule, **sans schéma**.
+
+- Un Fanzzy lié qui joue le match de son club : quand ta tribune fait céder
+  la corde, ou que ton club marque, son écharpe traverse l'écran à ses deux
+  couleurs, avec un son de sa ville (sirène de navire pour Liverpool, orgue
+  de manège pour Brighton…) : les 20 clubs de la série AN. Virage et duel.
+- Après la mise en ligne : un Virage ou un duel d'un match d'un club anglais,
+  avec un Fanzzy lié à ce club.
 
 ---
 
