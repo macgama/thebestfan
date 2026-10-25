@@ -46,6 +46,7 @@ demandé par Gaël). Images seules : construction, ni schéma ni redémarrage.
 - RP33 : nouveau dessin aux trois âges (pigeon voyageur, puis aviateur, puis as ailé aux ailes de métal), cinq états par âge, cartes B et C.
 - RP34 : nouveau dessin aux trois âges (vieux bus, puis bus de voyage chargé, puis bus festif à banderoles), cinq états par âge, cartes B et C.
 - RP32 : nouveau dessin aux trois âges (briquet bandana, puis briquet costaud à flamme vivante, puis génie de flamme), cinq états par âge, cartes B et C.
+- RP35 : nouveau dessin aux trois âges (fantôme supporter en salopette, puis contrôleur du car fantôme, puis capitaine spectral à la lanterne), cinq états par âge, cartes B et C.
 
 ---
 
