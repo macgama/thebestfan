@@ -423,15 +423,23 @@
       if (!c?.lie) return '';
       const force = Number(c.force) || 0;
       const gain = Number(c.gain) || 0;
+      /* **Le club se montre**, nom et logo (demande de Gaël du 25 octobre
+         2026), qu'on le suive ou non. Le nom est celui de la liste des
+         matchs ; sans lui, le tampon reste celui d'avant. */
+      const nom = c.nom ? String(c.nom) : '';
       const phrase = c.tonClub
         ? `Dans les matchs de ton club, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel.`
-        : `Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`;
+        : nom
+          ? `Il est lié à ${nom}, un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`
+          : `Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`;
+      const logo = c.logo ? `<img class="fiche-club-logo" src="${esc(c.logo)}" alt="" onerror="this.remove()">` : '';
+      const qui = nom ? `<small class="fiche-club-nom">${esc(nom)}</small>` : '';
       /* **Posé sur la vitrine, pas sous elle** : la colonne n'a pas un pixel
          à donner (le budget de hauteur, fanzzy-fiche.css). Le tampon se lit
          d'un coup d'œil, et la phrase vient au toucher, dans la pile. */
       return `<button type="button" class="tbf-tampon fiche-club" id="fiche-club" data-ton="vert"
-        data-club="${c.tonClub ? 'sien' : 'autre'}" data-phrase="${esc(phrase)}" aria-label="${esc(phrase)}">${
-  c.tonClub ? 'LIÉ À TON CLUB' : 'LIÉ À UN CLUB'}</button>`;
+        data-club="${c.tonClub ? 'sien' : 'autre'}" data-phrase="${esc(phrase)}" aria-label="${esc(phrase)}">${logo}${
+  c.tonClub ? 'LIÉ À TON CLUB' : nom ? 'LIÉ À' : 'LIÉ À UN CLUB'}${qui}</button>`;
     }
 
     /** LIER À MON CLUB : la demande, puis l'achat. */

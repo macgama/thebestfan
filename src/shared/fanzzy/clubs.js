@@ -20,7 +20,9 @@
  * C'est la prudence juridique des séries de championnat (`dex-terraces.js`) :
  * le nom du club n'apparaît nulle part dans le jeu. Le lien passe donc par
  * l'identifiant API-Football du club, celui que portent déjà `user_follows`
- * et `fixtures`, et la carte dit « lié à ton club » sans nommer personne.
+ * et `fixtures`. La carte elle-même ne porte rien du club ; **la fiche, elle,
+ * le nomme** depuis le 25 octobre 2026 (demande de Gaël) : son nom et son logo
+ * tels que la liste des matchs les affiche déjà, lus dans `teams`.
  *
  * L'ordre des clubs est celui des fiches (`fanzzy-prompts/AN-les-terraces.md`
  * et `AN-les-terraces-2.md`) : vingt clubs par ordre alphabétique, et trois
