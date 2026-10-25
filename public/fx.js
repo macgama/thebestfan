@@ -488,8 +488,8 @@
     box-shadow:0 0 0 3px #0b0d10,0 0 28px var(--c1);
     -webkit-mask:linear-gradient(90deg,transparent,#000 12% 88%,transparent);
     mask:linear-gradient(90deg,transparent,#000 12% 88%,transparent);
-    animation:fxclub 2.2s cubic-bezier(.3,.6,.35,1) forwards}
-  @keyframes fxclub{0%{translate:-110% -50%}35%{translate:-4% -50%}65%{translate:4% -50%}
+    animation:fxclub 2.3s cubic-bezier(.3,.6,.35,1) forwards}
+  @keyframes fxclub{0%{translate:-110% -50%}12%{translate:-3% -50%}80%{translate:3% -50%}
     100%{translate:110% -50%}}
   .fx-club-rayons{position:fixed;left:50%;top:42%;width:min(190vw,900px);aspect-ratio:1;z-index:88;
     translate:-50% -50%;pointer-events:none;opacity:0;border-radius:50%;
@@ -499,6 +499,24 @@
     mask:radial-gradient(closest-side,#000 15%,transparent 72%);
     mix-blend-mode:screen;animation:fxrayonsfin 2.4s cubic-bezier(.2,.7,.3,1) forwards}
   html.tbf-vitrine-ouverte .fx-club,html.tbf-vitrine-ouverte .fx-club-rayons{z-index:129}
+  html.tbf-vitrine-ouverte .fx-club-titre{z-index:130}
+  /* Le titre du moment, en jeu vidéo : il claque sur l'écharpe, en biais
+     comme elle, lettres pleines cerclées de noir, relief à la couleur du club
+     et un reflet qui passe. */
+  .fx-club-titre{position:fixed;left:50%;top:42%;z-index:94;pointer-events:none;
+    translate:-50% -50%;rotate:-11deg;text-align:center;white-space:nowrap;
+    font:italic 700 min(21vw,96px)/.9 var(--banner,'Oswald',system-ui);letter-spacing:.01em;
+    text-transform:uppercase;color:#fff;-webkit-text-stroke:7px #0b0d10;paint-order:stroke fill;
+    text-shadow:2px 3px 0 #0b0d10,4px 6px 0 #0b0d10,6px 9px 0 #0b0d10,0 0 34px var(--c1),0 0 60px #0b0d10;
+    animation:fxclubtitre 2.3s cubic-bezier(.2,.9,.3,1.2) forwards}
+  .fx-club-titre b{display:block;font:inherit;animation:fxclubreflet .9s .3s ease-out backwards}
+  .fx-club-titre small{display:block;margin-top:8px;font:italic 700 min(5.4vw,24px)/1 var(--banner,'Oswald',system-ui);
+    -webkit-text-stroke:4px #0b0d10;text-shadow:3px 3px 0 #0b0d10;letter-spacing:.06em}
+  .fx-club-titre b,.fx-club-titre small{color:inherit}
+  @keyframes fxclubtitre{0%{opacity:0;scale:3.2;filter:blur(6px)}14%{opacity:1;scale:.9;filter:none}
+    22%{scale:1.06}30%{scale:1}82%{opacity:1;scale:1;translate:-50% -50%}
+    100%{opacity:0;scale:1.08;translate:-30% -50%}}
+  @keyframes fxclubreflet{0%{color:var(--c2)}100%{color:#fff}}
 
   @keyframes fxdoux{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
   @keyframes fxbandeaudoux{0%{transform:none;opacity:0}8%{opacity:1}
@@ -514,6 +532,7 @@
     .fx-arrive:not(#fx-nul){animation:fxarrivedoux .5s ease backwards}
     .fx-rev-plastique,.fx-rev-nappe,.fx-rev-halo,.fx-rev-flash,.fx-rev-rayons{display:none}
     .fx-fond,.fx-pluie,.fx-rayons-fin,.fx-club,.fx-club-rayons{display:none}
+    .fx-club-titre{animation:fxdoux 2.3s ease forwards}
     .fx-fin-victoire,.fx-fin-defaite,.fx-fin-nul,.fx-fin-saute,.fx-fin-affaisse{animation:fxarrivedoux .5s ease backwards}
   }
   html[data-calme~="animations"] .fx-shake{animation:none}
@@ -528,6 +547,7 @@
   html[data-calme~="animations"] .fx-fond,html[data-calme~="animations"] .fx-pluie,
   html[data-calme~="animations"] .fx-rayons-fin,html[data-calme~="animations"] .fx-club,
   html[data-calme~="animations"] .fx-club-rayons{display:none}
+  html[data-calme~="animations"] .fx-club-titre{animation:fxdoux 2.3s ease forwards}
   html[data-calme~="animations"] .fx-fin-victoire,html[data-calme~="animations"] .fx-fin-defaite,
   html[data-calme~="animations"] .fx-fin-nul,html[data-calme~="animations"] .fx-fin-saute,
   html[data-calme~="animations"] .fx-fin-affaisse{animation:fxarrivedoux .5s ease backwards}`;
@@ -1998,28 +2018,48 @@
      * image, et le son du club part avec (`TBF_SON.club`).
      *
      * `couleurs` : une ou deux couleurs « #RRGGBB », celles du blason.
-     * Sans couleur connue, l'or et la craie du jeu. Pas de titre : la case
-     * de BD dit déjà « LA CORDE CÈDE ! » ou « GOAL ! ».
+     * Sans couleur connue, l'or et la craie du jeu. `titre` (« LA CORDE
+     * CÈDE ! », « GOAL ! ») claque sur l'écharpe, en jeu vidéo, avec `sous`
+     * (le buteur, la minute) dessous : la page ne pose alors pas sa case de
+     * BD, le même moment ne s'écrit pas deux fois (Gaël, 25 octobre 2026 :
+     * « plus gaming »). Le titre se montre même sous le calme, sans bouger.
      */
-    club(couleurs = []) {
+    club(couleurs = [], { titre = '', sous = '' } = {}) {
       const cs = (Array.isArray(couleurs) ? couleurs : [])
         .filter((c) => /^#[0-9a-f]{6}$/i.test(String(c ?? ''))).slice(0, 2)
         .map((c) => lisible(c) ?? c);
       const c1 = cs[0] ?? COULEURS.or;
       const c2 = cs[1] ?? COULEURS.craie;
       buzz([40, 30, 40, 30, 120]);
-      if (doux()) return;
-      const x = innerWidth / 2, y = innerHeight * 0.42;
-      const poser = (cls, ms) => {
-        const el = document.createElement('i');
+      const poser = (cls, ms, tag = 'i') => {
+        const el = document.createElement(tag);
         el.className = cls;
         el.style.setProperty('--c1', c1);
         el.style.setProperty('--c2', c2);
         document.body.appendChild(el);
         setTimeout(() => el.remove(), ms);
+        return el;
       };
+      if (titre) {
+        // Du texte, jamais du balisage : le buteur vient de l'API sportive.
+        const t = poser('fx-club-titre', 2400, 'div');
+        // À la largeur de l'écran : « LA CORDE CÈDE ! » tient sur un téléphone.
+        const largeur = Math.min(innerWidth, 480) * 0.86;
+        t.style.fontSize = `${Math.min(96, Math.round(largeur / (String(titre).length * 0.46)))}px`;
+        const b = document.createElement('b');
+        b.textContent = String(titre);
+        t.appendChild(b);
+        if (sous) {
+          const s = document.createElement('small');
+          s.textContent = String(sous);
+          t.appendChild(s);
+        }
+      }
+      if (doux()) return;
+      const x = innerWidth / 2, y = innerHeight * 0.42;
       poser('fx-club-rayons', 2500);
-      poser('fx-club', 2300);
+      poser('fx-club', 2400);
+      if (titre) secousse(1.2);
       onde({ x, y, couleur: c1, taille: 560 });
       setTimeout(() => onde({ x, y, couleur: c2, taille: 420 }), 180);
       setTimeout(() => particules({ x, y, n: 60, distance: 240, duree: 1700,

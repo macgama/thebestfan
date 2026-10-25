@@ -1658,16 +1658,18 @@ function prechargerSonDuClub(v) {
   sonDuClubCharge = f.lieAuClub;
   window.TBF_SON?.clubs?.([f.lieAuClub]);
 }
-function eclatDuClub() {
+/* Vrai s'il a joué : son titre remplace alors la case de BD. */
+function eclatDuClub(titre, sous = '') {
   const f = fanzzyLie();
-  if (!f) return;
+  if (!f || !window.FX?.club) return false;
   const v = S.vue;
   const fx = v?.fixture;
   const m = Array.isArray(fx?.homeColors) || Array.isArray(fx?.awayColors) ? fx
     : S.matchs.find((x) => x.id === fx?.id) ?? null;
   const brutes = m?.[(v.moi?.side ?? 0) === 0 ? 'homeColors' : 'awayColors'];
-  window.FX?.club?.(Array.isArray(brutes) ? brutes : []);
+  window.FX.club(Array.isArray(brutes) ? brutes : [], { titre, sous });
   window.TBF_SON?.club?.(f.lieAuClub);
+  return true;
 }
 /* `FX.lisible` arrive en différé : une fois là, les couleurs se reposent
    éclaircies (la clé change avec elles). */
@@ -3893,9 +3895,11 @@ function raconter(e) {
       FX?.son?.(nous ? 'butReel' : 'encaisse');
       if (nous) window.TBF_SON?.rumeur?.('but');
       const qui = [e.joueur, e.minute != null ? `${e.minute}′` : ''].filter(Boolean).join(' · ');
-      if (nous) eclatDuClub();
-      poserMoment(nous && eux ? 'LES DEUX TRIBUNES' : nous ? 'GOAL !' : 'ON ENCAISSE',
-        nous ? 'or' : 'flare', { sous: qui, ms: MOMENT_REEL_MS });
+      // Avec un Fanzzy lié, le titre claque sur l'écharpe du club, sans case.
+      if (!(nous && eclatDuClub(eux ? 'LES DEUX TRIBUNES' : 'GOAL !', qui))) {
+        poserMoment(nous && eux ? 'LES DEUX TRIBUNES' : nous ? 'GOAL !' : 'ON ENCAISSE',
+          nous ? 'or' : 'flare', { sous: qui, ms: MOMENT_REEL_MS });
+      }
       break;
     }
 
@@ -3909,8 +3913,9 @@ function raconter(e) {
       FX?.son?.(pour ? 'but' : 'encaisse');
       // L'ovation, pour la corde que sa tribune fait céder : voir « but_reel ».
       if (pour) window.TBF_SON?.rumeur?.('but');
-      if (pour) eclatDuClub();
-      poserMoment(pour ? 'LA CORDE CÈDE !' : 'ILS ONT FAIT CÉDER LA CORDE', pour ? 'or' : 'flare');
+      if (!(pour && eclatDuClub('LA CORDE CÈDE !'))) {
+        poserMoment(pour ? 'LA CORDE CÈDE !' : 'ILS ONT FAIT CÉDER LA CORDE', pour ? 'or' : 'flare');
+      }
       break;
 
     case 'swap':
