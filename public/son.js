@@ -1878,6 +1878,12 @@
     'jingle-rare': { opus: '/son/jingle-rare.e5fad34a.ogg', repli: '/son/jingle-rare.f644a508.mp3' },
     'jingle-epique': { opus: '/son/jingle-epique.229d062a.ogg', repli: '/son/jingle-epique.90a177f9.mp3' },
     'jingle-legendaire': { opus: '/son/jingle-legendaire.512a74a6.ogg', repli: '/son/jingle-legendaire.f28e2a87.mp3' },
+    /* Les sons des clubs (Artlist, 25 octobre 2026), par identifiant
+       API-Football : voir « les clubs », plus bas. 40 Liverpool, la sirène
+       d'un navire aux docks puis la foule ; 51 Brighton, l'orgue de manège
+       de la jetée, le ressac et la foule. 3,6 s, −22,5 LUFS. */
+    'club-40': { opus: '/son/club-40.fa468c48.ogg', repli: '/son/club-40.20aa0c1f.mp3' },
+    'club-51': { opus: '/son/club-51.c9ecb2d8.ogg', repli: '/son/club-51.672ea641.mp3' },
   };
 
   /* ------------------------------------------ les cartes enregistrées
@@ -2189,6 +2195,48 @@
       s.connect(g);
       lancer(c, s, c.currentTime);
       jingleEnCours = { c, g, s };
+      return true;
+    } catch { return false; /* le son ne doit jamais casser le jeu */ }
+  }
+
+  /* ============================================================ les clubs
+
+     Le son d'un club (25 octobre 2026) : quand un Fanzzy lié joue le match
+     de son club, et que sa tribune fait céder la corde ou que son club marque
+     pour de vrai, un son tiré de sa ville part avec l'éclat de ses couleurs
+     (`FX.club`). Chacun vient d'une vidéo Veo de quatre secondes générée sur
+     Artlist (sources hors git, `art/son/_src/clubs/`), coupée et nivelée
+     comme les cartes du duel. Le fichier s'appelle `club-<id>`, l'identifiant
+     API-Football du club. Un club sans son garde l'éclat seul.
+
+     **Même règle que les jingles** : il ne joue que déjà décodé. `clubs()`
+     télécharge ceux d'une liste de clubs (l'entrée dans la tribune, avec un
+     Fanzzy lié) ; `club()` rend faux quand le sien n'est pas prêt. */
+  // Un peu au-dessus des cartes (−22,5 LUFS) : il part avec la clameur du but.
+  const MIX_CLUB = 1.25;
+  const sonDuClub = (id) => (FICHIERS[`club-${Number(id)}`] ? `club-${Number(id)}` : null);
+  function clubs(ids = []) {
+    for (const nom of ids.map(sonDuClub).filter(Boolean)) {
+      telecharger(nom);
+      if (ctx && ctx.state !== 'closed') charger(ctx, nom);
+    }
+  }
+  /** Joue le son de ce club s'il en a un et qu'il est prêt : vrai s'il est parti. */
+  function club(id) {
+    const nom = sonDuClub(id);
+    if (!nom || document.hidden) return false;
+    const c = ouvrir();
+    if (!c || !chaine || !pretAJouer(c)) return false;
+    const b = pret(c, nom);
+    if (!b) { charger(c, nom); return false; }
+    try {
+      const g = c.createGain();
+      g.gain.value = MIX_CLUB;
+      g.connect(chaine.bus.effets);
+      const s = c.createBufferSource();
+      s.buffer = b;
+      s.connect(g);
+      lancer(c, s, c.currentTime);
       return true;
     } catch { return false; /* le son ne doit jamais casser le jeu */ }
   }
@@ -3180,6 +3228,11 @@
     /** Les jingles des boosters (voir « les jingles »). */
     jingle,
     jingles,
+    /** Le son d'un club (voir « les clubs »). */
+    club,
+    clubs,
+    /** Ce club a-t-il son son ? */
+    aUnSon: (id) => Boolean(sonDuClub(id)),
     /** Les types de chant. */
     chants: () => Object.keys(CHANTS),
     /** Les moments de la rumeur (voir « rumeur »). */

@@ -1640,6 +1640,35 @@ function poserCouleursDuDuel(v) {
   poserVar(bacheEux, '--e1', v ? eux[0] ?? 'var(--bleu)' : null);
   poserVar(bacheEux, '--e2', v ? eux[1] ?? 'var(--bleu-clair)' : null);
 }
+/**
+ * **L'éclat de mon club** (25 octobre 2026) : mon Fanzzy en tribune est lié
+ * à mon club (`lie`, posé par le serveur à l'entrée en file, seulement dans
+ * un match de mon club), et ma tribune fait céder la corde ou mon club
+ * marque. Son écharpe traverse l'écran à ses couleurs (`FX.club`), et son son
+ * part avec quand il en a un (`TBF_SON.club`). Rien sans Fanzzy lié.
+ */
+function fanzzyLie(v = S.vue) {
+  const f = v?.moi?.fanzzy?.find?.((x) => x.actif);
+  return f?.lie && f.lieAuClub != null ? f : null;
+}
+let sonDuClubCharge = null;
+function prechargerSonDuClub(v) {
+  const f = fanzzyLie(v);
+  if (!f || sonDuClubCharge === f.lieAuClub) return;
+  sonDuClubCharge = f.lieAuClub;
+  window.TBF_SON?.clubs?.([f.lieAuClub]);
+}
+function eclatDuClub() {
+  const f = fanzzyLie();
+  if (!f) return;
+  const v = S.vue;
+  const fx = v?.fixture;
+  const m = Array.isArray(fx?.homeColors) || Array.isArray(fx?.awayColors) ? fx
+    : S.matchs.find((x) => x.id === fx?.id) ?? null;
+  const brutes = m?.[(v.moi?.side ?? 0) === 0 ? 'homeColors' : 'awayColors'];
+  window.FX?.club?.(Array.isArray(brutes) ? brutes : []);
+  window.TBF_SON?.club?.(f.lieAuClub);
+}
 /* `FX.lisible` arrive en différé : une fois là, les couleurs se reposent
    éclaircies (la clé change avec elles). */
 addEventListener('load', () => { couleursPosees = null; if (S.vue) poserCouleursDuDuel(S.vue); });
@@ -2840,6 +2869,7 @@ function rendreDuel() {
 
   monterStade();
   poserCouleursDuDuel(v);
+  prechargerSonDuClub(v);
   rendreApports(moi);
 
   /* **La corde** (`.tbf-corde`, `.tbf-maree`, les briques). Le moteur compte
@@ -3863,6 +3893,7 @@ function raconter(e) {
       FX?.son?.(nous ? 'butReel' : 'encaisse');
       if (nous) window.TBF_SON?.rumeur?.('but');
       const qui = [e.joueur, e.minute != null ? `${e.minute}′` : ''].filter(Boolean).join(' · ');
+      if (nous) eclatDuClub();
       poserMoment(nous && eux ? 'LES DEUX TRIBUNES' : nous ? 'GOAL !' : 'ON ENCAISSE',
         nous ? 'or' : 'flare', { sous: qui, ms: MOMENT_REEL_MS });
       break;
@@ -3878,6 +3909,7 @@ function raconter(e) {
       FX?.son?.(pour ? 'but' : 'encaisse');
       // L'ovation, pour la corde que sa tribune fait céder : voir « but_reel ».
       if (pour) window.TBF_SON?.rumeur?.('but');
+      if (pour) eclatDuClub();
       poserMoment(pour ? 'LA CORDE CÈDE !' : 'ILS ONT FAIT CÉDER LA CORDE', pour ? 'or' : 'flare');
       break;
 
