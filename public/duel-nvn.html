@@ -1334,7 +1334,26 @@ function enDuel() {
     && $('bilan')?.hidden !== false;
 }
 
+/* **Après le duel guidé, la flèche rentre à l'accueil** (25 octobre 2026).
+   Elle faisait `history.back()` (nav.js), et derrière le duel guidé il n'y
+   avait que la cérémonie d'accueil : le joueur retombait sur « Tu n'as pas
+   encore de place ». Le drapeau tient le temps de l'onglet, pour survivre à
+   UN VRAI DUEL, qui recharge la page. */
+const APRES_TUTO = 'tbf.apresTuto';
+document.addEventListener('click', (e) => {
+  if (!e.target.closest?.('.tbf-retour') || enDuel()) return;
+  let apres = false;
+  try { apres = sessionStorage.getItem(APRES_TUTO) === '1'; } catch { /* navigation privée */ }
+  if (!apres) return;
+  e.preventDefault();
+  e.stopPropagation();
+  try { sessionStorage.removeItem(APRES_TUTO); } catch { /* tant pis */ }
+  location.href = '/';
+}, true);
+
 async function confirmerForfait() {
+  /* Le duel guidé ne se perd pas et ne paie rien : rien à confirmer. */
+  if (S.tuto) return true;
   const prime = S.vue?.mode === 'classe' ? 'classé' : 'd’entraînement';
   return window.TBF_DIALOGUE?.confirmer({
     titre: 'QUITTER LE DUEL ?',
@@ -4314,7 +4333,9 @@ function montrerBilan(b) {
      pas. Ses bulles se taisent. */
   if (S.tuto) window.TBF_GUIDE?.fin?.();
   ecrire($('bilanSortir'), S.tuto ? 'UN VRAI DUEL' : 'REVENIR');
-  $('bilanSortir').onclick = S.tuto ? () => { location.href = '/duel-nvn'; } : revenir;
+  /* `replace` : la page fraîche prend la place du duel guidé dans
+     l'historique, au lieu de s'y empiler. */
+  $('bilanSortir').onclick = S.tuto ? () => { location.replace('/duel-nvn'); } : revenir;
   $('bilanRejouer').onclick = S.tuto ? rejouerTuto : rejouer;
   $('affiche').hidden = true;
   $('bilan').hidden = false;
@@ -4484,6 +4505,13 @@ function revenir() {
  */
 function lancerTuto() {
   if (!socket) return toast('Pas de connexion au serveur.');
+  /* Venu de « Comment jouer », la flèche y revient d'elle-même ; venu de la
+     cérémonie d'accueil, il n'y a derrière que des pages d'inscription. */
+  let depuis = '';
+  try { depuis = new URL(document.referrer).pathname; } catch { /* pas de référent */ }
+  if (depuis !== '/comment-jouer') {
+    try { sessionStorage.setItem(APRES_TUTO, '1'); } catch { /* navigation privée */ }
+  }
   S.enFile = true;
   voile('Ton premier duel', 'On prépare le match…');
   socket.emit('nvn:tuto');
@@ -4516,7 +4544,14 @@ function ouvrirGeste(kind, cfg) {
     const m = $('mini');
     m.style.setProperty('--c', COULEUR_GESTE[kind] ?? '#F5C33B');
     $('miniTitre').textContent = LABEL_GESTE[kind] ?? kind;
-    $('miniAide').textContent = AIDE_GESTE[kind] ?? '';
+    /* La consigne porte des `**gras**` (geste.js) : en texte brut, le joueur
+       lisait les astérisques. Même découpage que le Virage. */
+    $('miniAide').replaceChildren(...String(AIDE_GESTE[kind] ?? '').split('**').map((bout, i) => {
+      if (!(i % 2)) return document.createTextNode(bout);
+      const b = document.createElement('b');
+      b.textContent = bout;
+      return b;
+    }));
     $('miniZone').innerHTML = '';
     // L’épreuve prend l’écran : rien ne doit passer devant. Voir `fermerGeste`.
     window.TBF_ACTION?.suspendre?.();
