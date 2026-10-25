@@ -159,9 +159,18 @@
        — `viewport-fit=cover` laisse la page se dessiner sous les barres, et
          chaque bord doit alors se garder lui-même avec `env(safe-area-…)`.
          Les pages le font, pas toutes les fenêtres qui s'ouvrent par-dessus.
-         Sur Android, un script en tête de chaque page retire donc `cover` :
-         Chrome tient lui-même la page entre les barres. iPhone le garde, sa
-         barre d'état translucide en a besoin. `verif-pages` exige ce script.
+         Dans un onglet Android, un script en tête de chaque page retire donc
+         `cover` : Chrome tient lui-même la page entre les barres. iPhone le
+         garde, sa barre d'état translucide en a besoin. `verif-pages` exige
+         ce script.
+         **Depuis l'icône, Android le garde aussi** (25 octobre 2026). Chrome
+         y dessine maintenant la page jusqu'au bord de l'écran, sous les trois
+         boutons du bas (« edge-to-edge », Android 15) ; sans `cover`, il ne
+         dit pas leur hauteur — `env(safe-area-inset-bottom)` vaut zéro — et
+         le bas de chaque écran de jeu passait sous eux, cinquante-deux pixels
+         sur le S24+ de Gaël, sans défilement pour l'en sortir. Avec `cover`,
+         l'inset dit leur hauteur et les pages s'en gardent déjà, comme sur
+         iPhone.
        — les écrans de jeu (accueil, Fanzzy et sa fiche, Virage, duel,
          bienvenue) font exactement la hauteur de la fenêtre et ne défilent
          pas. Une fenêtre courte — le zoom ou le grand texte du téléphone,

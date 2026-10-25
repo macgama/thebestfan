@@ -6,8 +6,10 @@
  * bas, sans pouvoir faire défiler pour retrouver les boutons (« Les barres du
  * téléphone », public/ui.css). Deux règles, éprouvées ici :
  *
- *   - sur Android, chaque page retire `viewport-fit=cover` avant d'être
- *     dessinée : Chrome la tient alors entre les barres. Un iPhone le garde ;
+ *   - dans un onglet Android, chaque page retire `viewport-fit=cover` avant
+ *     d'être dessinée : Chrome la tient alors entre les barres. Un iPhone le
+ *     garde, et Android depuis l'icône aussi : la page y passe sous les
+ *     boutons du bas, et s'en garde par `env(safe-area-inset-bottom)` ;
  *   - un écran de jeu ne s'écrase plus sous `--ecran-min` : dans une fenêtre
  *     courte (zoom ou grand texte du téléphone), il garde sa mise en page et
  *     la page défile jusqu'à son dernier bouton ; dans une fenêtre de
@@ -49,9 +51,20 @@ const ANDROID = 'Mozilla/5.0 (Linux; Android 15; SM-S926B) AppleWebKit/537.36 '
   + '(KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36';
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 '
   + '(KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
-for (const [ua, nom, garde] of [[ANDROID, 'Android', false], [IPHONE, 'iPhone', true]]) {
+/* Depuis l'icône (`display-mode: standalone`), Android garde `cover` : Chrome
+   y dessine la page sous les boutons du bas, et seul `cover` lui fait dire leur
+   hauteur. Puppeteer ne sait pas émuler `display-mode` : on répond à la place
+   de `matchMedia`, avant le script de la page. */
+const ICONE = () => {
+  const vrai = window.matchMedia.bind(window);
+  window.matchMedia = (q) => (/display-mode:\s*browser/.test(q)
+    ? { matches: false, media: q, addEventListener() {}, removeEventListener() {} } : vrai(q));
+};
+for (const [ua, nom, garde, icone] of [[ANDROID, 'Android, dans un onglet', false],
+  [ANDROID, 'Android, depuis l’icône', true, true], [IPHONE, 'iPhone', true]]) {
   for (const url of ['/', '/virage', '/boutique']) {
     const page = await nav.newPage();
+    if (icone) await page.evaluateOnNewDocument(ICONE);
     await page.setUserAgent(ua);
     await page.setViewport({ width: 384, height: 780, isMobile: true, hasTouch: true });
     await page.goto(base + url, { waitUntil: 'domcontentloaded' });
@@ -81,6 +94,38 @@ const mesurer = async (url, w, h) => {
   await page.close();
   return m;
 };
+/* **Les boutons du bas d'Android, depuis l'icône** (25 octobre 2026) : la
+   page va jusqu'au bord de l'écran et `env(safe-area-inset-bottom)` dit la
+   hauteur des boutons — 52 px sur le S24+ de Gaël, à 411 × 855. Aucun
+   bouton d'un écran de jeu ne descend dessous. */
+const sousLesBoutons = async (url) => {
+  const page = await nav.newPage();
+  page.on('dialog', (d) => d.dismiss());
+  await page.evaluateOnNewDocument(ICONE);
+  await page.setUserAgent(ANDROID);
+  await page.setViewport({ width: 411, height: 855, isMobile: true, hasTouch: true });
+  const cdp = await page.createCDPSession();
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 0, bottom: 52, left: 0, right: 0 } });
+  try { await page.goto(base + url, { waitUntil: 'networkidle2', timeout: 15000 }); } catch {}
+  await new Promise((r) => setTimeout(r, 600));
+  const m = await page.evaluate(() => {
+    let bas = 0, qui = '';
+    for (const e of document.querySelectorAll('button, a, [role=button]')) {
+      const r = e.getBoundingClientRect();
+      if (!r.width || !r.height || r.top >= innerHeight || getComputedStyle(e).visibility === 'hidden') continue;
+      if (r.bottom > bas) { bas = r.bottom; qui = String(e.className || e.textContent).trim().slice(0, 40); }
+    }
+    return { bas: Math.round(bas), qui, fenetre: innerHeight };
+  });
+  await page.close();
+  return m;
+};
+for (const [url, , nom] of ECRANS) {
+  const m = await sousLesBoutons(url);
+  check(`${nom}, depuis l’icône sur Android : rien sous les boutons du bas (${m.bas} ≤ ${m.fenetre - 52})`,
+    m.bas <= m.fenetre - 52 || (console.log('        ', m), false));
+}
+
 for (const [url, , nom] of ECRANS) {
   const court = await mesurer(url, 296, 480);
   check(`${nom}, fenêtre courte (296 × 480) : l’écran garde 560 px et défile jusqu’à son bas`,

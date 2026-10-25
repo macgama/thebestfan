@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : sur Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <title>Mon carnet — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
