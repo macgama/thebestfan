@@ -1,15 +1,15 @@
 # À déposer sur Infomaniak
 
 **Le son et l'éclat d'un club** (branche `claude/project-thread-v83ym1`,
-25 octobre 2026, demandé par Gaël ; deux sons Artlist, 752 crédits, avec son
-accord). Construction seule, **sans schéma**.
+25 octobre 2026, demandé par Gaël ; vingt sons Artlist, 7 520 crédits, avec
+son accord). Construction seule, **sans schéma**.
 
 - Un Fanzzy lié qui joue le match de son club : quand ta tribune fait céder
   la corde, ou que ton club marque, son écharpe traverse l'écran à ses deux
-  couleurs (les 20 clubs), avec son son pour Liverpool (sirène de navire puis
-  la foule) et Brighton (orgue de manège, ressac, la foule). Virage et duel.
-- Après la mise en ligne : un Virage ou un duel d'un match de Liverpool ou de
-  Brighton, avec un Fanzzy lié à ce club.
+  couleurs, avec un son de sa ville (sirène de navire pour Liverpool, orgue
+  de manège pour Brighton…) : les 20 clubs de la série AN. Virage et duel.
+- Après la mise en ligne : un Virage ou un duel d'un match d'un club anglais,
+  avec un Fanzzy lié à ce club.
 
 ---
 

@@ -1773,12 +1773,13 @@ if (banc) try {
     page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/club-')) vus.push(u); });
     await page.click('#geste');
     await jusqua(page, (x) => x.contexte === 'running');
-    check('Liverpool et Brighton ont leur son, pas Arsenal',
-      await page.evaluate(() => [40, 51, 42].map((id) => window.TBF_SON.aUnSon(id)).join()) === 'true,true,false');
+    check('les vingt clubs de la série AN ont leur son, pas un autre club',
+      await page.evaluate(() => [33, 34, 35, 36, 40, 42, 45, 47, 49, 50, 51, 52, 55, 57, 63, 64, 65, 66, 746, 1346]
+        .every((id) => window.TBF_SON.aUnSon(id)) && !window.TBF_SON.aUnSon(85)));
     check('avant d’être décodé, le son du club ne joue pas',
       await page.evaluate(() => window.TBF_SON.club(40)) === false);
-    check('un club sans son ne joue rien', await page.evaluate(() => window.TBF_SON.club(42)) === false);
-    await page.evaluate(() => window.TBF_SON.clubs([40, 42]));
+    check('un club sans son ne joue rien', await page.evaluate(() => window.TBF_SON.club(85)) === false);
+    await page.evaluate(() => window.TBF_SON.clubs([40, 85]));
     let parti = false;
     for (let i = 0; i < 40 && !parti; i++) {
       await attendre(100);
