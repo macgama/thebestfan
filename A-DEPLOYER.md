@@ -79,7 +79,7 @@ Construction puis redémarrage, **sans schéma**.
 
 ---
 
-**LES TERRACES : AN6 à AN55, cinquante Fanzzy de plus** (branche
+**LES TERRACES : AN6 à AN60, cinquante-cinq Fanzzy de plus, la série complète** (branche
 `claude/serie-fanzzy-angleterre-k0bgzs`, 24 et 25 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
 
@@ -122,18 +122,22 @@ Construction puis redémarrage, **sans schéma**.
   blanc et noir), AN51 La Petite Cabine Crème (Déplacement, ambre et noir),
   AN52 La Petite Loutre (Fidélité, bleu et blanc), AN53 La Petite Tige de
   Rhubarbe (Percussion, blanc, jaune et bleu), AN54 La Petite Marmite
-  (Pyro, rouge et blanc), AN55 La Petite Tarte (Tifo, bleu ciel et blanc) :
-  trois cartes chacun, les expressions des trois âges, le clignement à
-  l'âge 1 (sauf AN44, AN46, AN47, AN51, AN53 et AN54), et leurs textes dans
-  les cinq langues. Le redémarrage écrit leurs cent cinquante cartes dans le catalogue en base
-  (`INSERT IGNORE`, rien d'autre ne bouge). La série passe de vingt à
+  (Pyro, rouge et blanc), AN55 La Petite Tarte (Tifo, bleu ciel et blanc),
+  AN56 Le Petit Terrier (Voix, rouge, blanc et noir), AN57 Le Petit Macareux
+  (Percussion, noir et blanc), AN58 La Petite Oie (Déplacement, rouge et
+  blanc), AN59 Le Petit Ver du Puits (Tifo, rouge et blanc), AN60 Le Petit
+  Pigeon Voyageur (Fidélité, bleu marine et blanc) : trois cartes chacun,
+  les expressions des trois âges, le clignement à l'âge 1 (sauf AN44, AN46,
+  AN47, AN51, AN53, AN54 et AN56), et leurs textes dans les cinq langues.
+  Le redémarrage écrit leurs cent soixante-cinq cartes dans le catalogue en
+  base (`INSERT IGNORE`, rien d'autre ne bouge). La série passe de vingt à
   soixante lignées (trois Fanzzy par club, demandé par Gaël le 21
-  octobre) : cinquante-cinq sont dans le jeu, les autres arrivent par lots de
-  cinq.
+  octobre) : les soixante sont dans le jeu, dix dans chacune des six
+  familles.
 - La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
   à faire de plus, ils s'ouvriront avec elle.
 - Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
-  AN55 et vérifier leurs trois âges (les cartes et les expressions), puis
+  AN60 et vérifier leurs trois âges (les cartes et les expressions), puis
   qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
   « pousse » au premier âge, AN22, AN26 et AN35 pas de « colère » au premier
   âge, AN29 pas de « joie » au premier âge, AN38 pas de « dépit » au
@@ -142,7 +146,11 @@ Construction puis redémarrage, **sans schéma**.
   manquent. AN44 ne cligne pas encore des yeux (sa figure yeux fermés porte
   le bonnet, son repos le tient à la main), ni AN46, AN47, AN51, AN53 et
   AN54 (leurs yeux sont trop bas sous le bonnet, le toit, la feuille ou le
-  couvercle pour la boîte du clignement).
+  couvercle pour la boîte du clignement), ni AN56 (ses yeux sombres sur le
+  poil noir ne se distinguent pas assez des paupières). Au troisième âge
+  d'AN57 (cartes et expressions), des signes lumineux en forme de lettres
+  ont été effacés sur une copie : quelques traces floues restent sur les
+  bras et le poitrail, ses planches sont à refaire.
 
 ---
 
