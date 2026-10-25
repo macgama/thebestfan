@@ -218,6 +218,30 @@ td.pts{font-family:var(--banner);font-size:15px}
    `flex:1 0 auto` garde les deux comportements : sur un écran large les six
    se partagent le rail, sur un écran étroit ils gardent leur texte et le rail
    défile. L'onglet choisi est ramené dans la vue par le clic. */
+/* **Un championnat qui a ses Fanzzy** (demande de Gaël du 25 octobre 2026).
+   En tête de sa page, un bandeau aux couleurs de la série : son tampon, sa
+   ligne, et ses clubs l'un après l'autre, chacun avec ses trois Fanzzy et son
+   cri. Tout le bandeau mène à la série dans la collection. */
+.serie-bandeau{position:relative;display:block;margin:2px 0 10px;padding:14px 0 10px;border-radius:12px;
+  overflow:hidden;text-decoration:none;color:var(--craie);border:1px solid var(--s1);
+  background:linear-gradient(160deg,color-mix(in srgb,var(--s1) 34%,var(--panneau)),var(--s2))}
+.serie-bandeau::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;
+  background:repeating-linear-gradient(90deg,var(--s1) 0 14px,var(--craie) 14px 20px,var(--s2) 20px 34px,var(--craie) 34px 40px)}
+.serie-bandeau .sb-t{display:flex;align-items:center;gap:9px;padding:0 12px}
+.serie-bandeau .tampon{flex:none;font-family:var(--banner);font-size:12px;letter-spacing:.14em;padding:4px 8px 3px;
+  border-radius:5px;border:2px solid var(--craie);transform:rotate(-4deg);background:color-mix(in srgb,var(--s1) 60%,transparent)}
+.serie-bandeau .sb-t b{font-family:var(--banner);font-size:14px;letter-spacing:.06em;font-weight:700}
+.serie-bandeau .sb-l{margin:5px 12px 8px;font-size:12px;font-style:italic;opacity:.9}
+.serie-bandeau .sb-rail{display:flex;gap:8px;overflow-x:auto;padding:0 12px 2px;scrollbar-width:none}
+.serie-bandeau .sb-rail::-webkit-scrollbar{display:none}
+.serie-bandeau .sb-club{flex:none;width:108px;padding:7px 6px 6px;border-radius:9px;text-align:center;
+  background:rgba(0,0,0,.28);border:1px solid rgba(242,238,228,.12)}
+.serie-bandeau .sb-v{display:flex;justify-content:center}
+.serie-bandeau .sb-v img{width:32px;height:32px;border-radius:50%;object-fit:cover;object-position:50% 20%;
+  background:var(--s2);border:1.5px solid var(--s1);margin-left:-9px}
+.serie-bandeau .sb-v img:first-child{margin-left:0}
+.serie-bandeau .sb-cri{margin-top:5px;font-family:var(--banner);font-size:10px;letter-spacing:.06em;line-height:1.25}
+.serie-bandeau .sb-fin{display:block;margin:8px 12px 0;font-size:11.5px;font-weight:700;text-align:right}
 .tabs.tbf-onglets{overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
 .tabs.tbf-onglets::-webkit-scrollbar{display:none}
 .tabs .tbf-onglet{flex:1 0 auto;padding-left:13px;padding-right:13px}
@@ -546,6 +570,41 @@ function debounce(fn, ms) {
 
 /* ---------------------------------------------------------- une ligue */
 
+/* ------------------------------------------ un championnat à Fanzzy */
+
+/** Une couleur de série, seulement si c'est bien un hexadécimal. */
+const couleurSerie = (c) => (/^#[0-9a-f]{3,8}$/i.test(String(c)) ? c : '#3B7A57');
+
+/** Le portrait d'un Fanzzy, au premier âge. */
+const visageFanzzy = (id) => window.TBF_ETATS?.portrait?.(id, { evo: 1 })?.src
+  ?? `/img/fanzzy/${encodeURIComponent(id)}/e1/base/portrait.webp`;
+
+/**
+ * Le bandeau d'un championnat qui a sa série de Fanzzy (`/league/:id/serie`).
+ * Posé au-dessus des onglets, dans `#head` : le sommaire le remplace en
+ * revenant. Rien pour une compétition sans série, ni si l'on est déjà parti.
+ */
+async function bandeauSerie(id) {
+  let serie = null;
+  try { serie = (await api(`/league/${id}/serie`))?.serie ?? null; } catch { return; }
+  if (!serie || ligue !== id || vue !== 'ligue' || document.querySelector('.serie-bandeau')) return;
+  await window.TBF_ETATS?.charger?.();
+  if (ligue !== id || vue !== 'ligue') return;
+  const a = document.createElement('a');
+  a.className = 'serie-bandeau';
+  a.href = `/collection?serie=${encodeURIComponent(serie.code)}`;
+  a.style.setProperty('--s1', couleurSerie(serie.c1));
+  a.style.setProperty('--s2', couleurSerie(serie.c2));
+  a.innerHTML = `<div class="sb-t"><span class="tampon">${esc(serie.nom)}</span>
+      <b>Ce championnat a ses Fanzzy</b></div>
+    ${serie.ligne ? `<div class="sb-l">${esc(serie.ligne)}</div>` : ''}
+    <div class="sb-rail">${serie.clubs.map((c) => `<div class="sb-club">
+      <div class="sb-v">${c.fanzzy.map((f) => `<img src="${esc(visageFanzzy(f))}" alt="" loading="lazy">`).join('')}</div>
+      ${c.cri ? `<div class="sb-cri">${esc(c.cri)}</div>` : ''}</div>`).join('')}</div>
+    <span class="sb-fin">Chaque club a ses trois Fanzzy et son cri ›</span>`;
+  $('head').prepend(a);
+}
+
 async function ouvrir(id) {
   vue = 'ligue'; ligue = id; onglet = 'classement'; journee = null; ongletChoisi = false;
   /* La saison et les classements appartiennent à la compétition qu'on
@@ -567,6 +626,7 @@ async function ouvrir(id) {
          supporters ont donné dans cette compétition. -->
     <button data-t="ferveur" class="tbf-onglet">FERVEUR</button>
   </div>`;
+  bandeauSerie(id);
   $('tabs').onclick = (e) => {
     const b = e.target.closest('[data-t]');
     if (!b) return;

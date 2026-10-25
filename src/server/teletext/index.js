@@ -1,4 +1,5 @@
 import express from 'express';
+import { serieDeLigue, criDeSerie } from '../../shared/fanzzy/series-ligues.js';
 // Renommé à l'import : la fonction jour() plus bas a déjà une variable
 // locale nommée jourISO, et deux noms identiques dans le même fichier se
 // lisent mal même quand la portée les sépare.
@@ -955,8 +956,15 @@ export function createTeletext({ pool, client, footballStore = null }) {
   router.get('/jour', safe(async (req, res) => {
     const d = await jour(String(req.query.date ?? ''), { userId: req.user?.id ?? null });
     res.set('cache-control', 'private, max-age=30');
-    res.json(d);
+    res.json(avecSeries(d));
   }));
+
+  /* **Les championnats qui ont leurs Fanzzy** (`shared/fanzzy/series-ligues.js`) :
+     la page du championnat montre leur bandeau. `null` pour les autres. */
+  router.get('/league/:id/serie', (req, res) => {
+    res.set('cache-control', 'public, max-age=3600');
+    res.json({ serie: serieDeLigue(Number(req.params.id)) });
+  });
 
   router.get('/match/:id', safe(async (req, res) => {
     res.set('cache-control', 'private, max-age=20');
@@ -975,6 +983,27 @@ export function createTeletext({ pool, client, footballStore = null }) {
   /** Purge des entrées périmées depuis longtemps. À lancer une fois par jour. */
   async function cleanup() {
     await q(`DELETE FROM api_cache WHERE expires_at < NOW(3) - INTERVAL 7 DAY`);
+  }
+
+  /**
+   * La liste du jour, avec la marque des championnats qui ont leurs Fanzzy :
+   * la série sur le groupe (son nom, ses couleurs, ses Fanzzy), le cri de son
+   * club sur chaque équipe de série. Posé ici et non dans `jour()` : ce qui
+   * vient du jeu ne va pas dans le cache du football.
+   */
+  function avecSeries(d) {
+    if (!Array.isArray(d?.groupes)) return d;
+    const equipe = (e) => {
+      const cri = e ? criDeSerie(e.id) : null;
+      return cri ? { ...e, cri } : e;
+    };
+    return { ...d, groupes: d.groupes.map((g) => {
+      const serie = serieDeLigue(g.ligue?.id);
+      return { ...g,
+        ...(serie ? { serie: { code: serie.code, nom: serie.nom, c1: serie.c1, c2: serie.c2,
+          fanzzy: serie.clubs.flatMap((c) => c.fanzzy) } } : {}),
+        matchs: (g.matchs ?? []).map((m) => ({ ...m, home: equipe(m.home), away: equipe(m.away) })) };
+    }) };
   }
 
   return { router, standings, ranking, results, seasonOf, cleanup, jour, match, invalider };

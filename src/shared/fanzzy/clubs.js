@@ -89,8 +89,32 @@ const CRIS_TERRACES = [
   'BLANC NACRÉ, BLEU NUIT',
 ];
 
-/** Club → son cri. Un club hors de la table n'en a pas : le Fanzzy garde le sien. */
+/** Club → son cri, pour les clubs d'une série de championnat. */
 export const CRI_DU_CLUB = new Map(TERRACES.map((club, i) => [club, CRIS_TERRACES[i]]));
+
+/**
+ * **Le cri type** (demande de Gaël du 25 octobre 2026 : « des cris types pour
+ * toutes les équipes qui n'en ont pas encore »). Un club sans série a quand
+ * même une voix : l'un de ces cris, toujours le même pour un club donné
+ * (tiré de son identifiant). Mêmes règles que les cris de série.
+ */
+export const CRIS_TYPES = [
+  'TOUTE LA VILLE DEBOUT',
+  'NOS COULEURS, NOTRE VOIX',
+  'LE STADE GRONDE',
+  'ON NE LÂCHE RIEN',
+  'LA TRIBUNE S’EMBRASE',
+  'PLUS FORT, ENSEMBLE',
+  'CHEZ NOUS, ON CHANTE',
+  'TOUS POUR LE MAILLOT',
+];
+
+/** Le cri d'un club : celui de sa série, sinon son cri type ; `null` sans club. */
+export function criDuClub(teamId) {
+  const id = Number(teamId);
+  if (teamId == null || !Number.isInteger(id) || id <= 0) return null;
+  return CRI_DU_CLUB.get(id) ?? CRIS_TYPES[id % CRIS_TYPES.length];
+}
 
 /**
  * Le même personnage, avec le cri de son club à tous ses âges — seulement
@@ -98,7 +122,7 @@ export const CRI_DU_CLUB = new Map(TERRACES.map((club, i) => [club, CRIS_TERRACE
  * qui change, pas ce qu'il sait faire.
  */
 export function avecCriDuClub(perso, teamId) {
-  const label = CRI_DU_CLUB.get(Number(teamId));
+  const label = criDuClub(teamId);
   if (!perso || !label) return perso;
   const crier = (x) => (x?.cri ? { ...x, cri: { ...x.cri, label } } : x);
   return { ...crier(perso), ...(Array.isArray(perso.ages) ? { ages: perso.ages.map(crier) } : {}) };

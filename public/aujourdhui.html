@@ -84,6 +84,35 @@ input:focus{outline:none;border-color:var(--projo)}
    du 2 octobre 2026). Leurs matchs gardent leur cadre d'or, juste dessous. */
 .ligue.mien .t{opacity:1;font-weight:700}
 
+/* **Un championnat qui a ses Fanzzy** (demande de Gaël du 25 octobre 2026 :
+   « un effet visuel sur le championnat pour montrer qu'il a ses propres
+   Fanzzy, ses propres cris »). Son panneau porte une écharpe aux couleurs de
+   la série, le tampon de la série et trois visages qui se relaient ; sous
+   chaque match, le cri des deux clubs. Les couleurs viennent du serveur
+   (`--s1`, `--s2`, `shared/fanzzy/series-ligues.js`). */
+.ligue.serie{position:relative;overflow:hidden;padding-top:12px;
+  border-color:color-mix(in srgb,var(--s1) 70%,transparent);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--s1) 16%,var(--panneau)),var(--panneau) 90px)}
+.ligue.serie::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;
+  background:repeating-linear-gradient(90deg,var(--s1) 0 14px,var(--craie) 14px 20px,var(--s2) 20px 34px,var(--craie) 34px 40px)}
+.ligue .t .tampon{flex:none;font-size:9.5px;letter-spacing:.14em;padding:3px 6px 2px;border-radius:4px;
+  border:1.5px solid var(--s1);color:var(--craie);background:color-mix(in srgb,var(--s1) 45%,transparent);
+  transform:rotate(-4deg);white-space:nowrap}
+.ligue .t .visages{display:flex;flex:none;margin-left:2px}
+.ligue .t .visages img{width:24px;height:24px;border-radius:50%;object-fit:cover;object-position:50% 20%;
+  background:var(--s2);border:1.5px solid var(--s1);margin-left:-7px;transition:opacity .5s}
+.ligue .t .visages img:first-child{margin-left:0}
+.ligue .t .visages img.passe{opacity:0}
+.ligue .serie-lien{display:block;margin:-2px 6px 6px;font-size:11.5px;color:var(--craie);opacity:.9;text-decoration:none}
+.ligue .serie-lien b{color:color-mix(in srgb,var(--s1) 40%,var(--craie))}
+.m .cris{display:flex;gap:10px;margin-top:3px;font-family:var(--banner);font-size:9.5px;letter-spacing:.08em;
+  color:color-mix(in srgb,var(--s1) 35%,var(--craie));opacity:.92;overflow:hidden;white-space:nowrap}
+.m .cris span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.m .cris span::before{content:"« "}
+.m .cris span::after{content:" »"}
+@media (prefers-reduced-motion:reduce){.ligue .t .visages img{transition:none}}
+html[data-calme~="animations"] .ligue .t .visages img{transition:none}
+
 .m{display:flex;align-items:center;gap:9px;padding:11px 8px;border-radius:9px;cursor:pointer;
   border:1px solid transparent}
 .m:active{background:rgba(255,255,255,.04)}
@@ -452,6 +481,53 @@ function heure(d) {
   return new Date(d).toLocaleTimeString('fr', { hour:'2-digit', minute:'2-digit' });
 }
 
+/* --------------------------------------- les championnats à Fanzzy */
+
+/** Une couleur de série, seulement si c'est bien un hexadécimal. */
+const couleur = (c) => (/^#[0-9a-f]{3,8}$/i.test(String(c)) ? c : '#3B7A57');
+
+/** Trois Fanzzy de la série, tirés au hasard. */
+function trois(liste = []) {
+  const l = [...liste];
+  for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; }
+  return l.slice(0, 3);
+}
+
+/** L'adresse du portrait d'un Fanzzy, au premier âge. */
+function visage(id) {
+  return window.TBF_ETATS?.portrait?.(id, { evo: 1 })?.src
+    ?? `/img/fanzzy/${encodeURIComponent(id)}/e1/base/portrait.webp`;
+}
+
+function visages(liste) {
+  return trois(liste).map((id) => `<img src="${esc(visage(id))}" alt="" loading="lazy" data-id="${esc(id)}">`).join('');
+}
+
+/* Les visages se relaient : toutes les 4 s, l'un d'eux cède la place à un
+   autre Fanzzy de la série. Au script et non en boucle CSS, et jamais sous
+   le calme ni quand la page est cachée. */
+const calme = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+  || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
+setInterval(() => {
+  if (document.hidden || calme() || !data) return;
+  for (const bloc of document.querySelectorAll('.visages[data-serie]')) {
+    const serie = data.groupes?.find((g) => g.serie?.code === bloc.dataset.serie)?.serie;
+    const imgs = [...bloc.querySelectorAll('img')];
+    if (!serie || !imgs.length) continue;
+    const vus = new Set(imgs.map((i) => i.dataset.id));
+    const libre = (serie.fanzzy ?? []).filter((id) => !vus.has(id));
+    if (!libre.length) continue;
+    const img = imgs[Math.floor(Math.random() * imgs.length)];
+    const id = libre[Math.floor(Math.random() * libre.length)];
+    img.classList.add('passe');
+    setTimeout(() => {
+      img.onload = () => img.classList.remove('passe');
+      img.dataset.id = id; img.src = visage(id);
+    }, 500);
+  }
+}, 4000);
+window.TBF_ETATS?.charger?.();
+
 function rendre() {
   if (!data) return;
   let groupes = data.groupes;
@@ -502,12 +578,15 @@ function rendre() {
       : `${total} MATCH${total > 1 ? 'S' : ''}`;
 
   $('liste').innerHTML = groupes.length ? groupes.map((g) => `
-    <div class="ligue ${g.mien ? 'mien' : ''}">
+    <div class="ligue ${g.mien ? 'mien' : ''}${g.serie ? ' serie' : ''}"${g.serie
+      ? ` style="--s1:${couleur(g.serie.c1)};--s2:${couleur(g.serie.c2)}"` : ''}>
       <!-- Le nom de la compétition mène à sa page : classement, buteurs,
            calendrier. On voyait un match de Liga 1 sans pouvoir savoir qui
            mène le championnat, alors que la page existe. -->
       <a class="t" href="/teletext?ligue=${g.ligue.id}">${esc(g.ligue.name)}<span class="pays">${esc(pays(g.ligue.country, g.ligue.drapeau))}</span>
-        <span class="sep"></span><span class="fl">›</span></a>
+        <span class="sep"></span>${g.serie ? `<span class="tampon">${esc(g.serie.nom)}</span>
+        <span class="visages" data-serie="${esc(g.serie.code)}">${visages(g.serie.fanzzy)}</span>` : ''}<span class="fl">›</span></a>
+      ${g.serie ? `<a class="serie-lien" href="/collection?serie=${encodeURIComponent(g.serie.code)}"><b>Ce championnat a ses Fanzzy</b> et ses cris ›</a>` : ''}
       ${g.matchs.map((m) => {
         const min = minute(m);
         /* Sans minute — l'horloge se tait quand le relevé n'a plus rien dit
@@ -524,6 +603,8 @@ function rendre() {
             <div class="r ${m.fini && m.home.vainqueur ? 'perd' : ''}">
               <img src="${esc(m.away.logo)}" alt=""><span>${esc(m.away.name)}</span>
               <b>${m.away.goals ?? ''}</b></div>
+            ${m.home.cri || m.away.cri ? `<div class="cris">${[m.home.cri, m.away.cri].filter(Boolean)
+              .map((c) => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
           </div></div>`;
       }).join('')}
     </div>`).join('')
