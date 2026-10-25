@@ -22,7 +22,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { baseDeTest } from './base-de-test.mjs';
-import { calendrier, VIDER } from './remise-a-zero-saison1.mjs';
+import { calendrier, carnetRecale, VIDER } from './remise-a-zero-saison1.mjs';
 
 const DB = baseDeTest();
 const ICI = path.dirname(fileURLToPath(import.meta.url));
@@ -41,6 +41,12 @@ check('fin mars : avril-juin, juillet-septembre, octobre-décembre, janvier-mars
   ]));
 check('une fin au 30 mars : la saison 2 ouvre le 31 et finit le 30 juin',
   meme(calendrier('2027-03-30', [2]), [{ numero: 2, ouvre_le: '2027-03-31', fin_le: '2027-06-30' }]));
+
+check('le carnet sur 63 jours reste celui du code',
+  meme(carnetRecale(63).map((p) => p.tampons), [10, 40, 100, 180, 260]));
+check('sur 157 jours, les seuils sont multipliés par 2,5 environ, les gains inchangés',
+  meme(carnetRecale(157).map((p) => [p.tampons, p.echarpes, p.packs]),
+    [[25, 100, 0], [100, 150, 1], [250, 250, 2], [450, 400, 3], [650, 600, 4]]));
 
 /* ------------------------------------------------------- la base complète */
 
@@ -176,6 +182,10 @@ const saisons = await q(`SELECT numero, DATE_FORMAT(ouvre_le, '%Y-%m-%d') AS o, 
   ouvre_le = CURDATE() AS ajd FROM saisons ORDER BY numero`);
 check('la saison 1 est relancée à l’instant, ouverte aujourd’hui, dernier jour le 31 mars 2027',
   saisons[0].lancee === 1 && Number(saisons[0].age) < 60 && saisons[0].ajd === 1 && saisons[0].f === '2027-03-31');
+const [{ carnet, jours }] = await q(`SELECT carnet, DATEDIFF('2027-03-31', CURDATE()) + 1 AS jours
+  FROM saisons WHERE numero = 1`);
+check('la saison 1 a son carnet recalé sur ses jours',
+  meme(typeof carnet === 'string' ? JSON.parse(carnet) : carnet, carnetRecale(Number(jours))));
 check('les saisons 2 à 5 sont repoussées d’un trimestre, et pas lancées',
   meme(saisons.slice(1).map((s) => [s.numero, s.o, s.f, s.lancee]), [
     [2, '2027-04-01', '2027-06-30', 0], [3, '2027-07-01', '2027-09-30', 0],
