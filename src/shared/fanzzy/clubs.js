@@ -179,6 +179,8 @@ export function lierLeDeck(loadout, teamId, taux) {
     ...(age.modsBanc ? { modsBanc: avecLien(age.modsBanc, taux, 'duel') } : {}),
     lie: true,
     lien,
+    // Le club : la page du duel en tire son son et l'éclat de ses couleurs.
+    lieAuClub: teamId,
   });
   return {
     ...loadout,

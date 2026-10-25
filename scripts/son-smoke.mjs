@@ -1762,6 +1762,36 @@ if (banc) try {
     }
   }
 
+  /* ======================================= les sons des clubs */
+
+  /* 25 octobre 2026 : le son d'un club (Fanzzy lié, corde qui cède ou vrai
+     but). Il ne part que décodé ; un club sans son rend faux. */
+  console.log('\n  les sons des clubs (25 octobre 2026)');
+  {
+    const { page, erreurs } = await nouvellePage();
+    const vus = [];
+    page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/club-')) vus.push(u); });
+    await page.click('#geste');
+    await jusqua(page, (x) => x.contexte === 'running');
+    check('les vingt clubs de la série AN ont leur son, pas un autre club',
+      await page.evaluate(() => [33, 34, 35, 36, 40, 42, 45, 47, 49, 50, 51, 52, 55, 57, 63, 64, 65, 66, 746, 1346]
+        .every((id) => window.TBF_SON.aUnSon(id)) && !window.TBF_SON.aUnSon(85)));
+    check('avant d’être décodé, le son du club ne joue pas',
+      await page.evaluate(() => window.TBF_SON.club(40)) === false);
+    check('un club sans son ne joue rien', await page.evaluate(() => window.TBF_SON.club(85)) === false);
+    await page.evaluate(() => window.TBF_SON.clubs([40, 85]));
+    let parti = false;
+    for (let i = 0; i < 40 && !parti; i++) {
+      await attendre(100);
+      parti = await page.evaluate(() => { window.__sonTampons.length = 0; return window.TBF_SON.club(40); });
+    }
+    const t = await page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('décodé, le son de Liverpool part (3,6 s)', parti && t.some((x) => x.duree > 3.5 && x.duree < 3.7), t);
+    check('seul le son demandé se télécharge', vus.length >= 1 && vus.every((u) => u.startsWith('/son/club-40.')), vus);
+    check('aucune erreur de script (clubs)', erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+
   /* ======================================= les jingles des boosters */
 
   /* 24 octobre 2026 : un jingle par rareté, joué au retournement d'une

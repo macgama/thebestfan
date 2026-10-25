@@ -1461,6 +1461,28 @@ function couleurDuCamp(cote, defaut = 'var(--projo)') {
   return c[0] ? (window.FX?.lisible?.(c[0]) ?? c[0]) : defaut;
 }
 
+/**
+ * **L'éclat de mon club** (25 octobre 2026) : mon Fanzzy est lié à mon club
+ * et c'est son match (le serveur pose alors la ligne « club » dans mes
+ * apports), et ma tribune fait céder la corde ou mon club marque. Son
+ * écharpe traverse l'écran à ses couleurs (`FX.club`), et son son part avec
+ * quand il en a un (`TBF_SON.club`). Rien sans Fanzzy lié.
+ */
+function monClubLie() {
+  if (!S?.you || !(S.you.apports ?? []).some((a) => a?.quoi === 'club')) return null;
+  const id = S.you.side ? S.fixture?.awayId : S.fixture?.homeId;
+  return id == null ? null : Number(id);
+}
+/* Vrai s'il a joué : son titre remplace alors la case de BD. */
+function eclatDuClub(titre, sous = '') {
+  const id = monClubLie();
+  if (id == null || !window.FX?.club) return false;
+  const c = S.fixture?.[S.you.side ? 'awayColors' : 'homeColors'];
+  window.FX.club(Array.isArray(c) ? c : [], { titre, sous });
+  window.TBF_SON?.club?.(id);
+  return true;
+}
+
 /** La minute du match à l'entrée dans la tribune, posée par « virage:state »
     et relevée par `minuteApprise`. Nulle tant qu'on ne la connaît pas : rien
     n'est alors écarté. */
@@ -2757,6 +2779,8 @@ function connect() {
     minuteApprise(s.minute);
     $('veil').classList.remove('on');
     if (s.surgeMs > 0) noterDouble(s.surgeMs); else if (!s.surge) P.doubleFin = null;
+    // Le son de mon club, s'il en a un : prêt avant le premier but.
+    if (monClubLie() != null) window.TBF_SON?.clubs?.([monClubLie()]);
     renderStatic(); render();
     /* Le personnage entre avec la tribune, à l'âge que le serveur donne. */
     if (S.you?.fanzzy) scene?.definir(S.you.fanzzy);
@@ -2900,7 +2924,11 @@ function connect() {
        commune n'ajoute que la secousse et la vibration, sans second titre. */
     apresLaFenetre(() => {
       window.FX?.but?.({ pour: mien, vignette: true });
-      if (scene) {
+      // Avec un Fanzzy lié, le titre claque sur l'écharpe du club, sans case.
+      const club = mien && eclatDuClub('LA CORDE CÈDE !');
+      if (club) {
+        if (scene) celebrer();
+      } else if (scene) {
         celebrer();
         scene.moment(mien ? 'but' : 'encaisse',
           mien ? 'LA CORDE CÈDE !' : 'ILS ONT FAIT CÉDER LA CORDE',
@@ -2933,11 +2961,14 @@ function connect() {
        rumeur, eux, sont déjà partis. */
     apresLaFenetre(() => {
       window.FX?.but?.({ pour: mien, vignette: true });
+      const qui = [g.player, g.minute != null ? `${g.minute}′` : ''].filter(Boolean).join(' · ');
       celebrer();
-      scene?.moment(mien ? 'but' : 'encaisse', mien ? 'GOAL !' : 'ON ENCAISSE', {
-        couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)',
-        sous: [g.player, g.minute != null ? `${g.minute}′` : ''].filter(Boolean).join(' · '),
-      });
+      // Avec un Fanzzy lié, le titre claque sur l'écharpe du club, sans case.
+      if (!(mien && eclatDuClub('GOAL !', qui))) {
+        scene?.moment(mien ? 'but' : 'encaisse', mien ? 'GOAL !' : 'ON ENCAISSE', {
+          couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)', sous: qui,
+        });
+      }
     }, { moment: 'but' });
     render();
   });
