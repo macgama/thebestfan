@@ -15,6 +15,23 @@
 
 ---
 
+**Les joueurs passent seuls à la dernière version** (branche
+`claude/project-thread-s0yr76`, 25 octobre 2026, demandé par Gaël).
+Construction puis **redémarrage** (le serveur change), **sans schéma**.
+
+- Chaque page porte l'empreinte du jeu qui l'a servie, calculée par le
+  serveur à son démarrage. Une page restée ouverte (l'application du
+  téléphone qu'on rouvre, un onglet oublié) la compare à celle du serveur à
+  l'ouverture, au retour au premier plan et toutes les cinq minutes : si le
+  jeu a changé, un écran « MISE À JOUR DU JEU » la recouvre une seconde et
+  elle se recharge. Un joueur en train d'écrire n'est pas coupé.
+- `/healthz` dit enfin le commit en ligne (`version`, lu dans `.git`) et
+  l'empreinte servie (`construction`) ; `/api/version` aussi, pour la seconde.
+- Après la mise en ligne : ouvrir `/healthz` ; `version` doit être le dernier
+  commit de main. Un téléphone resté sur le jeu doit se recharger seul.
+
+---
+
 **Encore plus vivant : holo, carte vers sa fiche, série, classement** (branche
 `claude/project-thread-nk6bu3`, 24 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**, sans un crédit Artlist.
