@@ -252,7 +252,14 @@ self.addEventListener('push', (e) => {
   try { m = e.data?.json() ?? {}; } catch { m = { corps: e.data?.text() ?? '' }; }
   e.waitUntil((async () => {
     const fenetres = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    if (fenetres.some((f) => f.visibilityState === 'visible' && f.focused)) return;
+    const devant = fenetres.filter((f) => f.visibilityState === 'visible' && f.focused);
+    /* Sauf qu'une page ne dit pas tout : ton club qui joue, une demande
+       d'ami… On passe donc le message à la fenêtre, qui le montre en bandeau
+       si elle n'est pas déjà la page dont il parle (`pwa.js`). */
+    if (devant.length) {
+      for (const f of devant) f.postMessage({ type: 'tbf-notif', ...m });
+      return;
+    }
     await self.registration.showNotification(m.titre || 'thebestfan', {
       body: m.corps || '',
       tag: m.tag || undefined,

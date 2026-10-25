@@ -20,6 +20,20 @@ import { traduire } from '../langues.js';
  *     entrent au bout de vingt secondes, avant qu'on ait déverrouillé son
  *     téléphone.
  *
+ * Et, depuis le 25 octobre 2026 (demande de Gaël : « que le joueur sache
+ * quand ses équipes favorites jouent, quand un Virage est en cours avec
+ * elles, quand une personne le demande en ami ») :
+ *
+ *   — **son club joue bientôt** : trente minutes avant le coup d'envoi d'un
+ *     match d'un club qu'il suit (`avantMatch`, à la minute) ;
+ *   — **le Virage de son club s'ouvre** : au coup d'envoi, le lien mène droit
+ *     à la tribune du match (`coupDEnvoi`, branché sur le relevé du direct) ;
+ *   — **ses amis** : une demande d'ami, une demande acceptée, un ami qui
+ *     l'invite dans son duel.
+ *
+ * Les deux messages d'un même match portent le même `tag` : le second
+ * remplace le premier sur l'écran, il ne s'empile pas.
+ *
  * Un message ne nomme **jamais** un joueur : le public compte des mineurs, et
  * un écran verrouillé se lit par-dessus l'épaule. Il nomme des clubs, un KOP,
  * un bonus. C'est assez pour décider de venir.
@@ -54,13 +68,21 @@ import { traduire } from '../langues.js';
  */
 
 /** Les sujets, tels que les cases de la page du compte les nomment. */
-export const SUJETS = ['kop', 'duel'];
+export const SUJETS = ['kop', 'duel', 'club', 'virage', 'amis'];
+
+/** Combien de minutes avant le coup d'envoi part « ton club joue bientôt ». */
+export const AVANT_MATCH_MIN = 30;
+
+/** Au-delà de cette minute de jeu, un match en cours n'est plus « qui commence » :
+    un redémarrage du serveur en plein match n'annonce pas un coup d'envoi passé. */
+export const COUP_D_ENVOI_MAX_MIN = 10;
 
 /** Combien d'envois en vol à la fois : un coup d'envoi ne doit pas ouvrir mille connexions. */
 const EN_VOL = 8;
 
 /** Le temps de vie d'un message chez le service de notification, en secondes. */
-const TTL = { kop: 3 * 60, duel: 2 * 60 };
+const TTL = { kop: 3 * 60, duel: 2 * 60, club: AVANT_MATCH_MIN * 60, virage: 20 * 60,
+  amis: 12 * 60 * 60 };
 
 /** Une table absente éteint pour dix minutes, le délai des autres replis. */
 const REPLI_MS = 10 * 60_000;
@@ -186,6 +208,18 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
     return clesEnVol;
   }
 
+  /* Une case neuve dont la colonne manque encore (le code mis en ligne avant
+     `npm run schema:appliquer`) : ce sujet se tait, les autres continuent. */
+  let colonneDite = false;
+  function colonneAbsente(e) {
+    if (e?.code !== 'ER_BAD_FIELD_ERROR') return false;
+    if (!colonneDite) {
+      log.warn('[notifications] colonne absente : appliquer sql/notifications.sql.', e.message);
+      colonneDite = true;
+    }
+    return true;
+  }
+
   const actives = () => reglage('notifications.actif') && horloge() >= sansTableJusqua;
 
   /* ------------------------------------------------------------ l'envoi */
@@ -208,6 +242,7 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
            JOIN users u ON u.public_id = a.user_id AND u.status = 'active'
           WHERE a.${sujet} = 1 AND a.user_id IN (${ids.map(() => '?').join(',')})`, ids);
     } catch (e) {
+      if (colonneAbsente(e)) return 0;
       if (!tableAbsente(e)) log.error('[notifications] appareils illisibles :', e.message);
       return 0;
     }
@@ -217,7 +252,7 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
        message peut fournir sa propre traduction (`traduction(langue)`)
        quand le français ne se laisse pas découper ; sinon le titre et le
        corps passent par les dictionnaires. */
-    const { traduction, ...base } = message;
+    const { traduction, ttl: _ttl, ...base } = message;
     const parLangue = new Map();
     const corpsEn = (l) => {
       if (!parLangue.has(l)) {
@@ -229,7 +264,7 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
       return parLangue.get(l);
     };
     const options = {
-      TTL: TTL[sujet],
+      TTL: message.ttl ?? TTL[sujet],
       urgency: 'high',
       // Le même `tag` remplace au lieu d'empiler, côté appareil ; le `topic`
       // fait de même chez le service de notification, s'il n'est pas encore
@@ -355,6 +390,169 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
     }
   }
 
+  /* ------------------------------------------------------------ les clubs */
+
+  /** Les deux clubs d'un match, par leurs noms, et ceux qui suivent l'un ou l'autre. */
+  async function leMatch(fixtureId) {
+    const f = (await q(
+      `SELECT f.id, f.home_id, f.away_id, h.name AS home, a.name AS away
+         FROM fixtures f
+         LEFT JOIN teams h ON h.id = f.home_id
+         LEFT JOIN teams a ON a.id = f.away_id
+        WHERE f.id = ?`, [fixtureId]))[0];
+    if (!f) return null;
+    const suiveurs = (await q(
+      'SELECT DISTINCT user_id FROM user_follows WHERE team_id IN (?, ?)',
+      [f.home_id, f.away_id])).map((r) => r.user_id);
+    const affiche = [f.home, f.away].filter(Boolean).join(' – ');
+    return { ...f, affiche, suiveurs };
+  }
+
+  /** `sujet:match` → instant : un match ne s'annonce qu'une fois par sujet. */
+  const matchsDits = new Map();
+  function dejaDit(cle, t) {
+    for (const [c, v] of matchsDits) if (t - v > 24 * 60 * 60_000) matchsDits.delete(c);
+    if (matchsDits.has(cle)) return true;
+    matchsDits.set(cle, t);
+    return false;
+  }
+
+  /**
+   * « Ton club joue bientôt » : les matchs des clubs suivis dont le coup
+   * d'envoi tombe dans `AVANT_MATCH_MIN` minutes, à cinq près. Appelé chaque
+   * minute (`demarrer`) ; un match vu deux fois ne part qu'une.
+   *
+   * La fenêtre de dix minutes couvre un tour manqué ou un serveur lent. Un
+   * redémarrage au milieu de la fenêtre peut redire un match : le même `tag`
+   * remplace alors l'ancien message sur l'écran, il ne s'en ajoute pas.
+   */
+  async function avantMatch() {
+    if (!actives()) return 0;
+    const t = horloge();
+    if (estLaNuit(t)) return 0;
+    try {
+      const debut = new Date(t + (AVANT_MATCH_MIN - 5) * 60_000);
+      const fin = new Date(t + (AVANT_MATCH_MIN + 5) * 60_000);
+      const sql = (d) => d.toISOString().slice(0, 19).replace('T', ' ');
+      const matchs = await q(
+        `SELECT DISTINCT f.id FROM fixtures f
+          WHERE f.status_short IN ('NS','TBD')
+            AND f.kickoff_at >= ? AND f.kickoff_at < ?
+            AND (f.home_id IN (SELECT team_id FROM user_follows)
+              OR f.away_id IN (SELECT team_id FROM user_follows))`,
+        [sql(debut), sql(fin)]);
+      let partis = 0;
+      for (const { id } of matchs) {
+        if (dejaDit(`club:${id}`, t)) continue;
+        const m = await leMatch(id);
+        if (!m?.suiveurs.length) continue;
+        partis += await prevenir(m.suiveurs, 'club', {
+          titre: 'Ton club joue bientôt',
+          corps: `${m.affiche} : coup d’envoi dans ${AVANT_MATCH_MIN} minutes. Le Virage ouvre au coup d’envoi ›`,
+          traduction: (l) => ({
+            titre: traduire(l, 'Ton club joue bientôt'),
+            corps: traduire(l, `${m.affiche} : coup d’envoi dans ${AVANT_MATCH_MIN} minutes. Le Virage ouvre au coup d’envoi ›`),
+          }),
+          url: '/aujourdhui',
+          tag: `match-${id}`,
+        });
+      }
+      return partis;
+    } catch (e) {
+      log.error('[notifications] avant-match :', e.message);
+      return 0;
+    }
+  }
+
+  /**
+   * « Le Virage de ton club s'ouvre » : le relevé du direct vient de voir ce
+   * match commencer. Branché sur `onStatus` (server.js), qui part à chaque
+   * tour pour chaque match relevé : seul le premier tour en première
+   * mi-temps, dans les `COUP_D_ENVOI_MAX_MIN` premières minutes, prévient.
+   */
+  async function coupDEnvoi(fixtureId, etat = {}) {
+    if (etat.status !== '1H' || (etat.elapsed ?? 0) > COUP_D_ENVOI_MAX_MIN) return 0;
+    if (!actives()) return 0;
+    const t = horloge();
+    if (estLaNuit(t) || dejaDit(`virage:${fixtureId}`, t)) return 0;
+    try {
+      const m = await leMatch(fixtureId);
+      if (!m?.suiveurs.length) return 0;
+      return await prevenir(m.suiveurs, 'virage', {
+        titre: 'Le Virage est ouvert',
+        corps: `${m.affiche} a commencé. Viens pousser avec la tribune ›`,
+        traduction: (l) => ({
+          titre: traduire(l, 'Le Virage est ouvert'),
+          corps: traduire(l, `${m.affiche} a commencé. Viens pousser avec la tribune ›`),
+        }),
+        url: `/virage?match=${encodeURIComponent(fixtureId)}`,
+        tag: `match-${fixtureId}`,
+      });
+    } catch (e) {
+      log.error('[notifications] coup d’envoi :', e.message);
+      return 0;
+    }
+  }
+
+  /* ------------------------------------------------------------ les amis
+
+     Jamais le pseudo de l'autre : « un supporter », « un ami ». La page des
+     amis le dit, une fois le téléphone déverrouillé. */
+
+  /** `demandeur:demandé` → instant. Demander, retirer, redemander : la page
+      des amis le permet, et chaque fois ferait vibrer le téléphone de
+      l'autre. Une paire ne prévient qu'une fois par jour. */
+  const demandesDites = new Map();
+
+  /** Quelqu'un (`deQui`) vient de demander ce joueur en ami. */
+  async function amiDemande(userId, deQui = '') {
+    const t = horloge();
+    for (const [c, v] of demandesDites) if (t - v > 24 * 60 * 60_000) demandesDites.delete(c);
+    const cle = `${deQui}:${userId}`;
+    if (deQui && demandesDites.has(cle)) return 0;
+    if (deQui) demandesDites.set(cle, t);
+    return prevenir([userId], 'amis', {
+      titre: 'Nouvelle demande d’ami',
+      corps: 'Un supporter veut devenir ton ami. Réponds-lui ›',
+      url: '/amis',
+      tag: 'amis-demande',
+    }).catch(() => 0);
+  }
+
+  /** Une demande de ce joueur vient d'être acceptée. */
+  function amiAccepte(userId) {
+    return prevenir([userId], 'amis', {
+      titre: 'Demande acceptée',
+      corps: 'Tu as un nouvel ami dans la tribune ›',
+      url: '/amis',
+      tag: 'amis-accepte',
+    }).catch(() => 0);
+  }
+
+  /** Un ami invite ce joueur dans son duel, qui attend. Une place ne se garde
+      que quelques minutes : un message plus vieux ne mènerait à rien. */
+  function inviteDuel(userId, code) {
+    return prevenir([userId], 'amis', {
+      titre: 'Un ami t’invite en duel',
+      corps: 'Une place t’attend dans sa tribune. Viens vite ›',
+      url: `/duel-nvn?${new URLSearchParams({ duel: String(code ?? '') })}`,
+      tag: 'amis-duel',
+      ttl: 5 * 60,
+    }).catch(() => 0);
+  }
+
+  /** La minute qui cherche les matchs à annoncer. Arrêtée par `arreter`. */
+  let minute = null;
+  function demarrer() {
+    if (minute) return;
+    minute = setInterval(() => { void avantMatch(); }, 60_000);
+    minute.unref?.();
+  }
+  function arreter() {
+    if (minute) clearInterval(minute);
+    minute = null;
+  }
+
   /* ------------------------------------------------------------ les routes */
 
   const router = express.Router();
@@ -380,9 +578,12 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
     const endpoint = req.body?.endpoint;
     if (typeof endpoint !== 'string') return res.json({ sujets: null });
     try {
-      const l = (await q('SELECT kop, duel FROM notif_appareils WHERE id = ? AND user_id = ?',
+      /* `*` et non la liste des cases : une colonne pas encore ajoutée ne
+         doit pas faire disparaître celles qui existent. */
+      const l = (await q('SELECT * FROM notif_appareils WHERE id = ? AND user_id = ?',
         [empreinteAppareil(endpoint), req.user.id]))[0];
-      res.json({ sujets: l ? { kop: Boolean(l.kop), duel: Boolean(l.duel) } : null });
+      res.json({ sujets: l
+        ? Object.fromEntries(SUJETS.map((s) => [s, Boolean(l[s] ?? false)])) : null });
     } catch (e) {
       tableAbsente(e);
       res.json({ sujets: null });
@@ -390,29 +591,37 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
   });
 
   /**
-   * Inscrire cet appareil, ou changer ses cases. Les deux cases à faux
+   * Inscrire cet appareil, ou changer ses cases. Toutes les cases à faux
    * désinscrivent : un appareil qui ne veut rien n'a rien à faire en base.
+   *
+   * Une case que la page n'envoie pas vaut non : la page dit toutes celles
+   * qu'elle montre, et un joueur n'est pas prévenu d'un sujet qu'il n'a pas
+   * vu. (La colonne vaut oui par défaut pour les appareils inscrits avant la
+   * case, qui avaient déjà dit oui aux notifications.)
    */
   router.put('/appareil', requireAuth, async (req, res) => {
     if (!actives()) return res.status(409).json({ error: 'notifications.error.eteintes' });
     const a = abonnementValide(req.body?.abonnement);
     if (!a) return res.status(400).json({ error: 'notifications.error.appareil' });
     const s = req.body?.sujets ?? {};
-    const kop = s.kop ? 1 : 0;
-    const duel = s.duel ? 1 : 0;
     const id = empreinteAppareil(a.endpoint);
     try {
-      if (!kop && !duel) {
+      /* Les colonnes réellement présentes : le code peut tourner une heure
+         avant que le schéma ait reçu les cases neuves. */
+      const cases = Object.fromEntries((await colonnesPresentes())
+        .map((x) => [x, s[x] ? 1 : 0]));
+      if (!Object.values(cases).some(Boolean)) {
         await q('DELETE FROM notif_appareils WHERE id = ?', [id]);
         return res.json({ sujets: null });
       }
+      const noms = Object.keys(cases);
       await q(
-        `INSERT INTO notif_appareils (id, user_id, endpoint, p256dh, auth, kop, duel)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO notif_appareils (id, user_id, endpoint, p256dh, auth, ${noms.join(', ')})
+         VALUES (?, ?, ?, ?, ?, ${noms.map(() => '?').join(', ')})
          ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), p256dh = VALUES(p256dh),
-           auth = VALUES(auth), kop = VALUES(kop), duel = VALUES(duel)`,
-        [id, req.user.id, a.endpoint, a.p256dh, a.auth, kop, duel]);
-      res.json({ sujets: { kop: Boolean(kop), duel: Boolean(duel) } });
+           auth = VALUES(auth), ${noms.map((x) => `${x} = VALUES(${x})`).join(', ')}`,
+        [id, req.user.id, a.endpoint, a.p256dh, a.auth, ...Object.values(cases)]);
+      res.json({ sujets: Object.fromEntries(SUJETS.map((x) => [x, Boolean(cases[x])])) });
     } catch (e) {
       if (!tableAbsente(e)) log.error('[notifications] inscription :', e.message);
       res.status(503).json({ error: 'notifications.error.serveur' });
@@ -434,5 +643,20 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
     res.json({ ok: true });
   });
 
-  return { router, prevenir, voteOuvert, duelAttend, lesCles };
+  /** Les cases que la table porte déjà, lues une fois. */
+  let presentes = null;
+  async function colonnesPresentes() {
+    if (presentes) return presentes;
+    const cols = await q(
+      `SELECT column_name AS c FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = 'notif_appareils'`);
+    const vues = new Set(cols.map((r) => String(r.c).toLowerCase()));
+    const l = SUJETS.filter((x) => vues.has(x));
+    /* Toutes là : on retient. Sinon on relira, le schéma peut arriver. */
+    if (l.length === SUJETS.length) presentes = l;
+    return l;
+  }
+
+  return { router, prevenir, voteOuvert, duelAttend, avantMatch, coupDEnvoi,
+    amiDemande, amiAccepte, inviteDuel, demarrer, arreter, lesCles };
 }

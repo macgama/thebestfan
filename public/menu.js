@@ -1498,6 +1498,18 @@
       });
     }
 
+    /* **Et les demandes d'ami qui attendent** (25 octobre 2026, à la demande
+       de Gaël : que le joueur sache quand quelqu'un le demande en ami). Le
+       téléphone le dit par une notification quand le jeu est fermé ; ouvert,
+       c'est ce sticker violet sur la tuile des amis — des gens qui attendent
+       une réponse, comme au duel. Pas sur la page des amis, qui les montre. */
+    if (chemin !== '/amis') {
+      void pastille('tbf-etat-amis', '/api/amis/demandes',
+        (d) => (d?.recues > 0 ? d.recues : null)).then((n) => {
+        if (n) poser('/amis', 'attend', n);
+      });
+    }
+
     /* Les missions à récupérer, lues dans la clé que le hub et l'écran des
        MISSIONS retiennent (contrat R10, voir `missionsDe`) : au montage ;
        après chaque annonce `tbf:bourse` — une réclamation réécrit la clé,
