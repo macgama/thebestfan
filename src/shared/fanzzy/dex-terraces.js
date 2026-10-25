@@ -37,15 +37,15 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Cinquante lignées sur soixante, et pourquoi elle arrive fermée
+ * ## Cinquante-cinq lignées sur soixante, et pourquoi elle arrive fermée
  *
- * Les cinquante premières (AN1 à AN50) ont leurs dessins : trois cartes
+ * Les cinquante-cinq premières (AN1 à AN55) ont leurs dessins : trois cartes
  * en pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
  * états au deuxième âge et AN38 quatre, AN9, AN22, AN26, AN29 et AN35 quatre
  * au premier : leurs planches sont à refaire). Elles entrent par lots de
  * cinq, à mesure que leurs dessins arrivent : une lignée sans dessin aurait
- * mis au catalogue une silhouette procédurale. Les dix autres suivront de
- * la même façon.
+ * mis au catalogue une silhouette procédurale. Les cinq dernières suivront
+ * de la même façon.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -224,6 +224,31 @@
  * garder. Le chaton prend le tempo, trente-trois sur soixante-trois.
  * Toutes les variantes restent au-dessus du plancher de `catalogue:smoke`.
  *
+ * Le lot suivant met le Tifo en tête, puis donne une lignée à la Fidélité,
+ * au Déplacement, aux Percussions et à la Pyro ; la Voix attend : la petite
+ * tarte de cantine (tifo), qui saupoudre sa noix de coco en traçant un
+ * grand rond sans en perdre un grain, d'où le tifo ; la petite loutre
+ * (fide), qui tient un galet plat en équilibre sur sa tête sans jamais le
+ * laisser tomber, d'où la garde ; la petite cabine crème (depl), qui
+ * apprend par cœur tous les numéros du port, d'où la mémoire ; la petite
+ * tige de rhubarbe (perc), qu'on entend pousser dans le noir de la remise,
+ * craquement après craquement, de plus en plus vite, d'où le crescendo ; et
+ * la petite marmite (pyro), qui mijote longtemps et soulève son couvercle
+ * pile quand c'est prêt, d'où la relance. Cinquante-cinq lignées : dix en
+ * pyro, neuf dans les cinq autres familles ; la Pyro attend le dernier lot,
+ * qui donnera une lignée à chacune des cinq autres.
+ *
+ * La loutre n'avait pas le choix (voir le lot précédent) : la garde passe à
+ * quarante-cinq sur quatre-vingt-neuf. La tarte prend le geste éponyme, le
+ * tifo passe à trente-trois sur soixante-quatre. La cabine et la rhubarbe
+ * prennent des variantes, la mémoire à quatorze sur soixante-six et le
+ * crescendo à dix sur cinquante-quatre ; elles laissent l'écharpe et le
+ * martelage pile à la moitié (trente-trois sur soixante-six, vingt-sept sur
+ * cinquante-quatre) : la prochaine lignée du Déplacement devra prendre
+ * l'écharpe, la prochaine Percussion marteler. La marmite relance, vingt-deux
+ * sur quarante-deux. Aucun geste principal ne passe en minorité, et toutes
+ * les variantes restent au-dessus du plancher de `catalogue:smoke`.
+ *
  * La burette n'a pas le choix de son geste. Les Percussions comptaient
  * quarante-huit personnages de premier âge dont six aux `deuxvoix` — pile le
  * huitième. Une quarante-neuvième au geste éponyme aurait fait passer les
@@ -264,10 +289,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les cinquante premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les cinquante-cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : cinquante
- * fois le même mot, ce sont cinquante occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : cinquante-cinq
+ * fois le même mot, ce sont cinquante-cinq occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -882,6 +907,77 @@ const PREMIERS_AGES = [
       + 'l’aurait cru.',
     mods: { perfectBonus: 1.17, costPenalty: 1.06 },
     cri: { label: 'ET JE ME DÉROULE !', gest: 'rouleaux', power: 54 } },
+
+  /* AN51 — le déplacement des cabines téléphoniques crème, les seules du
+     pays qui ne soient pas rouges : la petite cabine qui sonnait dans le
+     vide au coin du quai et finit par relier tout le port. Ambre et noir ;
+     aucune partie rouge, ni lettres ni enseigne sur le toit. La vitre fêlée
+     reste dans sa porte jusqu'au troisième âge. Elle apprend par cœur tous
+     les numéros du port, d'où la mémoire (voir l'en-tête) ; son défaut :
+     elle perd la cadence quand personne ne répond. */
+  { id: 'AN51', nom: 'La Petite Cabine Crème', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'Un peu cabossée, une vitre fêlée dans sa porte, le combiné ambre emmêlé dans son '
+      + 'fil, elle attend un appel au coin du quai. Personne n’appelle, alors elle apprend par '
+      + 'cœur tous les numéros du port, l’un après l’autre, et ne s’en trompe jamais.',
+    mods: { breathBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'JE CONNAIS CE NUMÉRO !', gest: 'memoire', power: 53 } },
+
+  /* AN52 — la fidélité des loutres revenues dans la rivière et l'estuaire :
+     la petite nageuse maladroite qui finit grande loutre qui veille sur les
+     eaux, une pile de galets sur la tête. Bleu et blanc ; ni cheval, ni
+     tracteur, ni plante. Le galet plat reste au sommet de la pile jusqu'au
+     troisième âge. Elle tient son galet en équilibre sans jamais le lâcher,
+     d'où la garde (voir l'en-tête) ; son défaut : elle ne frappe pas
+     fort. */
+  { id: 'AN52', nom: 'La Petite Loutre', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Toute mouillée sur la berge de vase, la petite lanterne bleue serrée dans les deux '
+      + 'pattes, elle a posé un galet plat sur sa tête. Elle peut nager, plonger, se rouler dans '
+      + 'la boue : le galet ne tombe jamais.',
+    mods: { holdBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'IL NE TOMBERA PAS !', gest: 'hold', power: 53 } },
+
+  /* AN53 — la percussion de la rhubarbe forcée, poussée dans des remises
+     obscures et cueillie à la bougie : la tige pâle qui finit reine rose
+     qui éclaire le noir. Blanc, jaune et bleu ; rien de vert, ni rose
+     héraldique. Le troisième âge de la fiche porte le nom d'un lieu : le
+     jeu ne le dit pas. La petite feuille tombante reste sur sa
+     tête jusqu'au troisième âge. Dans la remise, on l'entend pousser,
+     craquement après craquement, de plus en plus vite, d'où le crescendo
+     (voir l'en-tête) ; son défaut : elle ne tient pas longtemps. */
+  { id: 'AN53', nom: 'La Petite Tige de Rhubarbe', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Poussée dans le noir d’une remise, pâle et un peu courbée, la petite feuille jaune '
+      + 'qui lui tombe sur les yeux, elle serre sa lanterne bleue à deux mains. Dans le silence, '
+      + 'on l’entend pousser : un craquement, puis un autre, de plus en plus vite.',
+    mods: { mashBonus: 1.15, holdBonus: 0.92 },
+    cri: { label: 'CRAC… CRAC, CRAC-CRAC !', gest: 'crescendo', power: 53 } },
+
+  /* AN54 — la pyro du ragoût des marins du port, celui qui a donné leur
+     surnom aux gens de la ville (le jeu ne dit ni le plat ni le surnom) : la
+     petite marmite cabossée qui finit grande marmite fumante qui nourrit
+     tout le monde. Rouge et blanc ; aucun oiseau. La bosse reste sur son
+     flanc jusqu'au troisième âge. Elle mijote longtemps, puis soulève son
+     couvercle pile quand c'est prêt, d'où la relance (voir l'en-tête) ; son
+     défaut : chaque fournée lui coûte. */
+  { id: 'AN54', nom: 'La Petite Marmite', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Cabossée sur le côté, le couvercle de travers, la petite louche rouge à la main, '
+      + 'elle laisse échapper un filet de vapeur qui sent le ragoût des marins. Elle mijote '
+      + 'longtemps, longtemps, et soulève son couvercle pile quand c’est prêt.',
+    mods: { perfectBonus: 1.17, costPenalty: 1.06 },
+    cri: { label: 'ÇA MIJOTE… C’EST PRÊT !', gest: 'relance', power: 54 } },
+
+  /* AN55 — le tifo de la tarte de cantine de la ville, confiture, crème
+     anglaise et noix de coco : la part écrasée dans la gamelle qui finit
+     grand dessert de fête. Bleu ciel et blanc, un liseré bleu marine ; pas
+     de cerise. Le petit trou dans la noix de coco reste sur son flanc
+     jusqu'au troisième âge. Elle saupoudre sa noix de coco en traçant un
+     grand rond sans en perdre un grain, d'où le tifo (voir l'en-tête) ; son
+     défaut : elle perd la cadence. */
+  { id: 'AN55', nom: 'La Petite Tarte', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Une part écrasée assise dans son plat bleu ciel comme dans une baignoire, un peu de '
+      + 'noix de coco tombée sur le côté, elle a l’air toute penaude. Mais quand elle saupoudre '
+      + 'sa noix de coco, elle trace un grand rond parfait, sans en perdre un grain.',
+    mods: { parryBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'UN ROND PARFAIT !', gest: 'tifo', power: 52 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
