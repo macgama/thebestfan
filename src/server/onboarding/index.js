@@ -19,6 +19,17 @@ import { publies as jouables } from '../contenus/index.js';
 import { toutesTenues, tenuesPubliees } from '../fanzzy/tenues.js';
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 import { assurerBourse } from '../bourse.js';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+/* **Un Fanzzy dessiné.** Le buste est l'image que montrent la carte, le menu
+   et le deck ; sans lui, la carte tombe sur une silhouette géométrique. Le
+   25 octobre 2026, un nouvel inscrit recevait L'Agent en Tribune d'Honneur
+   (VP15), sans dessin, comme avatar : son tout premier Fanzzy était une
+   ombre. Lu sur le disque à chaque tirage, pour qu'un lot d'images déposé
+   compte dès la construction suivante. */
+const DOSSIER_FANZZY = fileURLToPath(new URL('../../../public/img/fanzzy/', import.meta.url));
+const estDessine = (id) => existsSync(`${DOSSIER_FANZZY}${id}-buste.webp`);
 
 /**
  * L'arrivée d'un joueur, et ce qu'il possède.
@@ -202,7 +213,11 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    */
   function tirerBienvenue() {
     const ouvrables = obtenables();
-    const communs = ouvrables.filter((f) => f.rar === 'commune');
+    const tousCommuns = ouvrables.filter((f) => f.rar === 'commune');
+    /* Les deux Fanzzy du paquet sont dessinés : le premier devient l'avatar
+       du joueur. Une saison sans un seul commun dessiné retombe sur tous. */
+    const dessines = tousCommuns.filter((f) => estDessine(f.id));
+    const communs = dessines.length >= 2 ? dessines : tousCommuns;
     const premier = communs.length ? communs : ouvrables;
     const lePremier = rnd(premier);
     const autres = premier.filter((f) => f.id !== lePremier.id);
