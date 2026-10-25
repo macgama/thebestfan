@@ -37,14 +37,14 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Quarante lignées sur soixante, et pourquoi elle arrive fermée
+ * ## Quarante-cinq lignées sur soixante, et pourquoi elle arrive fermée
  *
- * Les quarante premières (AN1 à AN40) ont leurs dessins : trois cartes en
- * pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
+ * Les quarante-cinq premières (AN1 à AN45) ont leurs dessins : trois cartes
+ * en pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
  * états au deuxième âge et AN38 quatre, AN9, AN22, AN26, AN29 et AN35 quatre
  * au premier : leurs planches sont à refaire). Elles entrent par lots de
  * cinq, à mesure que leurs dessins arrivent : une lignée sans dessin aurait
- * mis au catalogue une silhouette procédurale. Les vingt autres suivront de
+ * mis au catalogue une silhouette procédurale. Les quinze autres suivront de
  * la même façon.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
@@ -177,6 +177,31 @@
  * soixante-deux. La prochaine lignée de chacune de ces trois familles devra
  * prendre le geste éponyme.
  *
+ * Les créatures (AN41 à AN60) commencent par les Percussions, qui avaient
+ * attendu, puis donnent une lignée à la Fidélité et à trois des quatre
+ * autres familles ; le Déplacement attend : le petit écureuil roux (perc),
+ * qui frappe le sol des deux pattes arrière, chacune à son rythme, d'où les
+ * deux voix — la plus rare des variantes des Percussions, sept sur
+ * cinquante et un ; la petite boîte aux lettres (fide), qui garde ce qu'on
+ * lui confie jusqu'au facteur, d'où la garde ; la petite plume d'acier
+ * (tifo), qui trace sa boucle sans lever la pointe, d'où le tifo ; la petite
+ * perruche (voix), dont la nuée reprend les cris dans l'ordre, d'où le
+ * capo — la plus rare des variantes de la Voix, neuf sur soixante et un ; et
+ * le petit galet (pyro), qui attend que la vague se retire et part pile avec
+ * elle, d'où la relance. Quarante-cinq lignées : huit en voix, pyro et tifo,
+ * sept en perc, fide et depl ; ces trois-là passent en tête pour le lot
+ * suivant.
+ *
+ * La boîte aux lettres et la plume n'avaient pas le choix (voir le lot
+ * précédent) : la garde passe à quarante-quatre sur quatre-vingt-sept, le
+ * tifo à trente-deux sur soixante-trois. L'écureuil laisse le martelage pile
+ * à la moitié, vingt-six sur cinquante-deux : la prochaine Percussion devra
+ * marteler. Le galet relance, vingt et une sur quarante ; mais les rouleaux
+ * restent à cinq, pile le huitième de quarante : la prochaine Pyro devra
+ * lancer des rouleaux. Le Déplacement, qui attend, reste au bord (l'écharpe à
+ * trente-deux sur soixante-quatre) : sa prochaine lignée devra encore
+ * prendre l'écharpe.
+ *
  * La burette n'a pas le choix de son geste. Les Percussions comptaient
  * quarante-huit personnages de premier âge dont six aux `deuxvoix` — pile le
  * huitième. Une quarante-neuvième au geste éponyme aurait fait passer les
@@ -217,10 +242,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les quarante premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les quarante-cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : quarante
- * fois le même mot, ce sont quarante occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : quarante-cinq
+ * fois le même mot, ce sont quarante-cinq occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -694,6 +719,76 @@ const PREMIERS_AGES = [
       + 'toujours dans les arbres, mais elle sent venir chaque rafale avant tout le monde.',
     mods: { parryBonus: 1.16, breathBonus: 0.92 },
     cri: { label: 'LA VOILÀ, LA RAFALE !', gest: 'ola', power: 52 } },
+
+  /* AN41 — la fidélité de la boîte aux lettres de fonte : la petite boîte
+     du mur qui avalait les cartes postales des touristes et finit grande
+     poste rouge, gardienne de tout le courrier de la ville. Rouge vif et
+     blanc ; ni lettres, ni chiffre royal. La carte postale dépasse de sa
+     fente jusqu'au troisième âge. Ce qu'on lui confie, elle le garde jusqu'au
+     facteur, d'où la garde (voir l'en-tête) ; son défaut : elle ne se presse
+     jamais. */
+  { id: 'AN41', nom: 'La Petite Boîte aux Lettres', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Fixée au mur sous la pluie, elle avale une à une les cartes postales des touristes '
+      + '; il y en a toujours une qui dépasse de sa fente, et le petit sac postal rouge ne quitte '
+      + 'jamais son épaule. Ce qu’on lui confie, elle le garde, et elle ne le rend qu’au facteur.',
+    mods: { holdBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'RIEN NE SE PERD', gest: 'hold', power: 53 } },
+
+  /* AN42 — le tifo des ateliers de plumes : la petite plume d'acier qui
+     faisait des pâtés d'encre et finit grande plume, maîtresse de la belle
+     écriture, dans la ville qui fabriquait les plumes du monde entier.
+     Bordeaux et bleu ciel ; ni lettres ni mots dans ses arabesques. La petite
+     tache bordeaux reste au bout de sa pointe jusqu'au troisième âge. Elle
+     trace sa boucle sans lever la pointe, d'où le tifo (voir l'en-tête) ;
+     son défaut : elle en perd le rythme. */
+  { id: 'AN42', nom: 'La Petite Plume d’Acier', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Un peu tordue, une grosse tache d’encre bordeaux au bout de la pointe, elle serre '
+      + 'contre elle son petit flacon d’encre et fait des pâtés partout. Mais quand elle trace '
+      + 'enfin une boucle sans lever la pointe, toute la page s’arrête pour la regarder.',
+    mods: { parryBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'SANS LEVER LA POINTE !', gest: 'tifo', power: 52 } },
+
+  /* AN43 — la percussion de l'île aux écureuils : le petit écureuil roux
+     qui perdait toujours ses noisettes et finit gardien de l'île de la baie,
+     où vivent les derniers de son espèce. Rouge et noir ; ni arbres ni
+     feuilles. La noisette reste glissée derrière son oreille jusqu'au
+     troisième âge. Il frappe le sol des deux pattes arrière, chacune à son
+     rythme, d'où les deux voix (voir l'en-tête) ; son défaut : rien ne lui
+     revient. */
+  { id: 'AN43', nom: 'Le Petit Écureuil Roux', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Assis sur ses pattes arrière, une noisette serrée entre les pattes de devant, il '
+      + 'laisse filer toutes les autres par sa sacoche ouverte. Quand quelque chose bouge, il '
+      + 'frappe le sol des deux pattes arrière, chacune à son rythme, et toute l’île l’entend.',
+    mods: { mashBonus: 1.16, refundBonus: 0.92 },
+    cri: { label: 'TAP… TAP-TAP !', gest: 'deuxvoix', power: 53 } },
+
+  /* AN44 — la voix des perruches sauvages de l'ouest de la ville : la petite
+     perruche échappée qui criait sur les toits et finit reine de toutes les
+     nuées qui volent au-dessus du fleuve. Rouge et blanc sur plumage vert
+     (dessinée sur fond magenta). Le bonnet à pompon rouge et blanc reste sur
+     sa tête jusqu'au troisième âge. Elle lance un cri, puis deux, puis trois,
+     et la nuée les reprend dans l'ordre, d'où le capo ; son défaut : elle ne
+     tient pas en place. */
+  { id: 'AN44', nom: 'La Petite Perruche', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'Échappée on ne sait d’où, ébouriffée de froid sur les toits de l’ouest de la ville, '
+      + 'le bonnet à pompon rouge et blanc trop grand qui lui glisse sur l’œil, elle crie plus '
+      + 'fort que toute la nuée. Elle lance un cri, puis deux, puis trois, et les autres les '
+      + 'reprennent dans l’ordre.',
+    mods: { tempoWindow: 1.16, holdBonus: 0.92 },
+    cri: { label: 'TOUTE LA NUÉE, AVEC MOI !', gest: 'capo', power: 53 } },
+
+  /* AN45 — la pyro de la plage de galets : le petit caillou gris que la mer
+     roule sur la plage et qui finit gros rocher poli, piqué de verres de mer.
+     Bleu et blanc ; ni algues ni plantes. Le coquillage reste sur le bord de
+     son seau jusqu'au troisième âge. Il attend que la vague se retire et
+     part pile avec elle, d'où la relance (voir l'en-tête) ; son défaut :
+     chaque roulade lui coûte. */
+  { id: 'AN45', nom: 'Le Petit Galet', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Tout mouillé, un peu bancal sur ses jambes courtes, un flocon d’écume sur la tête, '
+      + 'il tient devant lui son petit seau bleu avec un seul coquillage dedans. Il attend que la '
+      + 'vague se retire, longtemps, et se laisse rouler avec elle pile au bon moment.',
+    mods: { perfectBonus: 1.17, costPenalty: 1.06 },
+    cri: { label: 'ATTENDS LA VAGUE…', gest: 'relance', power: 54 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
