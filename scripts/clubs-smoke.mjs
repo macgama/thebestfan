@@ -147,7 +147,8 @@ for (const [u, e] of [[U, 'c@ex.fr'], [SANS, 's@ex.fr']]) {
     await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [u, f]);
   }
 }
-await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
+await raw.query(`INSERT INTO teams (id,name,logo) VALUES (85,'Sion',NULL),(91,'Bâle',NULL),
+  (${clubDe('AN1')},'Club Témoin','https://exemple.test/logo.png')`);
 await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,0),(?,85,1)`, [U, U]);
 await raw.end();
 
@@ -166,6 +167,8 @@ check('la fiche d\'un neutre propose le lien, à 120 écharpes', f.club?.lie ===
 f = await F.fiche(U, 'AN1');
 check('la fiche d\'un AN est liée d\'office, à un club que ce joueur ne suit pas',
   f.club?.lie === true && f.club.tonClub === false && f.club.achete === false);
+check('la fiche d\'un AN nomme son club et montre son logo, même non suivi',
+  f.club.nom === 'Club Témoin' && f.club.logo === 'https://exemple.test/logo.png');
 check('un Fanzzy de série ne s\'achète pas', await refus(F.lierAuClub(U, 'AN1')) === 'fanzzy.error.deja_lie');
 check('sans club principal, refusé sans rien prendre',
   await refus(F.lierAuClub(SANS, 'TR32')) === 'fanzzy.error.sans_club' && await echarpes(SANS) === 200);
@@ -181,6 +184,7 @@ check('pas assez d\'écharpes : refusé',
   await refus(F.lierAuClub(U, 'MS30')) === 'fanzzy.error.not_enough_scarves' && await echarpes(U) === 80);
 f = await F.fiche(U, 'TR32');
 check('la fiche dit LIÉ À TON CLUB', f.club?.lie === true && f.club.tonClub === true && f.club.achete === true);
+check('et nomme le club acheté', f.club.nom === 'Sion');
 
 await pool.query(`INSERT INTO user_decks (user_id,nom,contenu,actif) VALUES (?, 'd', ?, 1)`,
   [U, JSON.stringify({ fanzzy: [{ id: 'TR32' }, { id: 'MS30' }], actions: [] })]);
