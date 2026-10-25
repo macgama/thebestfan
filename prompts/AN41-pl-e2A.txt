@@ -1,21 +1,21 @@
 Character sheet of the same character as the reference image.
 
-Stylised 3D animated-film rendering with a premium game-hero finish: slightly caricatured proportions, expressive face, a bold silhouette readable at thumbnail size, rich material detail on fabric, leather, fur, metal and paint, warm key light and a bright rim light.
+Stylised 3D animated-film rendering, premium game-hero finish, expressive face, bold silhouette, rich material detail, warm key light and bright rim light.
 
 A living cast-iron pillar box: a short round red cylindrical body with a domed cap like a hat, a narrow letter slot across its face like a closed mouth, two round friendly eyes above it, thin black iron arms and stubby black legs with little iron feet, a small white collection plate on its belly without any text. It is clearly a living object, not a person in costume: no human inside. Around its neck, always and at every level, a knitted football supporter's bar scarf in red (#EF0107) with white bars, plain knit with no text, no letters and no crest, worn close to the body; pinned on it, a small enamel badge of a black taxi cab. Its signature item is a postman's canvas mail sack in bright red (#EF0107): keep exactly this colour.
 
 A proud street-corner pillar box: taller and broader, its cap now crowned with a polished white crown-shaped finial without letters, white enamel bands around its body, a brass lamp fixed to its side, the red mail sack now big and full, glowing softly, sealed with a white cord, envelopes tucked in neat rows under its arms, a confident guardian look.
 
-With exactly its body proportions from the reference: same build, same head size relative to the body, not chubbier, not more cartoonish. Same outfit and same signature item, held in every figure. Same aura and glowing details as the reference, if it has any, pressed against the body in every figure.
+Exactly its proportions, outfit, signature item and aura from the reference, in every figure.
 Correct anatomy in every figure: no extra or duplicated limbs, wings, fins or heads.
 Only the objects it has on the reference: never add an instrument, scarf, flag or prop it does not carry.
-Exactly three (IT'S VERY IMPORTANT, EXACTLY THREE FULL-BODY FIGURES) full-body figures, no more, no less, side by side in one single row, each figure centred in its own third of the image width and filling only the middle of it. Head to toe, front view, same scale and same height in every figure, feet on the same line, wide empty background gaps between the figures, at least half a figure wide, so that no part, prop, cape or glow of one figure ever touches the next one, nothing overlapping, nothing cut by the edges.
+Exactly three full-body figures, no more, no less, side by side in one single row, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line, wide empty gaps between the figures, nothing touching, nothing cut by the edges.
 Every figure stays compact and narrow, hardly wider than the rest pose: arms raised straight up or bent close to the body, never stretched out to the sides.
-Each figure is sharp and drawn once: exactly one head per figure, no motion blur, no ghost, no double image, no transparency.
+One head per figure, no motion blur, no double image.
 Left to right: 1. rest: in its rest pose, calm, eyes open, mouth or beak closed. 2. joy: jumping with both arms, wings, paws, flippers or fins raised straight up above its head, mouth or beak wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one arm, wing, paw, flipper or fin over its face.
 
-Wide 16:9 image, one row. Background: a completely flat, uniform, saturated studio green (#00B140), the exact same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the characters, no green glow or green rim light on the characters. No grid lines, no borders, no frames, no labels.
+Wide 16:9 image, one row. Background: a completely flat, uniform, saturated studio green (#00B140), the same colour everywhere. No gradient, floor, shadow, reflection, smoke or green glow on the characters. No borders, frames or labels.
 
-No captions, name tags or words under or above the figures. No glowing symbols, runes, letters or letter-like signs anywhere, on the character or in the background.
+No captions or name tags. No glowing symbols, runes or letter-like signs anywhere.
 
-No text, no letters, no numbers, no logos, no brand marks, no club crests, no team names, no sponsor logos, no identifiable jerseys, no real people.
+No text, letters, numbers, logos, crests, team names or real people.

@@ -1,21 +1,21 @@
 Character sheet of the same character as the reference image.
 
-Stylised 3D animated-film rendering with a premium game-hero finish: slightly caricatured proportions, expressive face, a bold silhouette readable at thumbnail size, rich material detail on fabric, leather, fur, metal and paint, warm key light and a bright rim light.
+Stylised 3D animated-film rendering, premium game-hero finish, expressive face, bold silhouette, rich material detail, warm key light and bright rim light.
 
 A thin, quick young man with pale skin, a sharp face, big curious blue eyes, a long neck, untidy dark blond hair under a flat cap and a quiet determined smile. He never wears a football shirt. Around his neck, always and at every level, a knitted football supporter's bar scarf in blue (#003399) and white bars, plain knit with no text, no letters and no crest, worn close to the body; pinned on it, a small enamel badge of a dockside crane. His signature item is a long lamplighter's pole in blue (#003399) with a small brass hook and a little flame at its tip: keep exactly this colour.
 
 Everyday clothes: a blue knitted jumper with a hole at the elbow, grey trousers, black boots, the flat cap. On a cobbled street at dusk, holding the blue lamplighter's pole, much too tall for him, with both hands, the tiny flame wobbling, an earnest worried face.
 
-With exactly his body proportions from the reference: same build, same head size relative to the body, not chubbier, not more cartoonish. Same outfit and same signature item, held in every figure. Same aura and glowing details as the reference, if he has any, pressed against the body in every figure.
+Exactly his proportions, outfit, signature item and aura from the reference, in every figure.
 Correct anatomy in every figure: exactly two arms, two legs, two hands with five fingers each, no extra or duplicated limbs.
 Only the objects he has on the reference: never add an instrument, scarf, flag or prop he does not carry.
-Exactly three (IT'S VERY IMPORTANT, EXACTLY THREE FULL-BODY FIGURES) full-body figures, no more, no less, side by side in one single row, each figure centred in its own third of the image width and filling only the middle of it. Head to toe, front view, same scale and same height in every figure, feet on the same line, wide empty background gaps between the figures, at least half a figure wide, so that no part, prop, cape or glow of one figure ever touches the next one, nothing overlapping, nothing cut by the edges.
+Exactly three full-body figures, no more, no less, side by side in one single row, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line, wide empty gaps between the figures, nothing touching, nothing cut by the edges.
 Every figure stays compact and narrow, hardly wider than the rest pose: arms raised straight up or bent close to the body, never stretched out to the sides.
-Each figure is sharp and drawn once: exactly one head per figure, no motion blur, no ghost, no double image, no transparency.
+One head per figure, no motion blur, no double image.
 Left to right: 1. rest: standing calm, arms by the sides, eyes open, mouth closed. 2. joy: jumping with both fists raised straight up above his head, mouth wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one hand over his face.
 
-Wide 16:9 image, one row. Background: a completely flat, uniform, saturated studio green (#00B140), the exact same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the characters, no green glow or green rim light on the characters. No grid lines, no borders, no frames, no labels.
+Wide 16:9 image, one row. Background: a completely flat, uniform, saturated studio green (#00B140), the same colour everywhere. No gradient, floor, shadow, reflection, smoke or green glow on the characters. No borders, frames or labels.
 
-No captions, name tags or words under or above the figures. No glowing symbols, runes, letters or letter-like signs anywhere, on the character or in the background.
+No captions or name tags. No glowing symbols, runes or letter-like signs anywhere.
 
-No text, no letters, no numbers, no logos, no brand marks, no club crests, no team names, no sponsor logos, no identifiable jerseys, no real people.
+No text, letters, numbers, logos, crests, team names or real people.
