@@ -106,6 +106,7 @@
     "langues:test": "node scripts/langues.mjs --verifier",
     "langues:pages": "node scripts/langues-pages.mjs",
     "pwa:ui": "node scripts/pwa-ui-smoke.mjs",
+    "mise-a-jour:ui": "node scripts/mise-a-jour-ui-smoke.mjs",
     "barres:ui": "node scripts/barres-ui-smoke.mjs",
     "menu:smoke": "node scripts/menu-smoke.mjs",
     "son:smoke": "node scripts/son-smoke.mjs",

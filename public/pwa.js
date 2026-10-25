@@ -89,6 +89,168 @@
     });
   }
 
+  /* ---------------------------------------------------- la mise à jour
+
+     **Une page ouverte ne savait pas qu'elle était d'hier.** Les pages sont
+     servies neuves à chaque navigation (`no-store`, adresses estampillées :
+     voir `src/server/empreintes.js`). Mais une application posée sur l'écran
+     d'un téléphone ne navigue pas : on la rouvre, elle revient telle qu'on
+     l'avait laissée, parfois des jours plus tard, avec le code d'avant la mise
+     en ligne — un client d'hier qui parle au serveur d'aujourd'hui.
+
+     Chaque page porte donc la construction dont elle est faite
+     (`<meta name="tbf-construction">`, posé par `page()` dans `server.js`), et
+     `/api/version` dit celle que le serveur sert. Quand elles diffèrent, un
+     écran « mise à jour » recouvre le jeu une seconde et la page se recharge.
+
+     On demande quand ça peut avoir changé : à l'ouverture, au retour de
+     l'application au premier plan, au retour du réseau, et toutes les cinq
+     minutes tant qu'elle est sous les yeux — une mise en ligne coupe de toute
+     façon le direct, le serveur redémarre.
+
+     **Comme le service worker, ça échoue ouvert.** Pas de réponse, une réponse
+     sans construction, un serveur d'essai sans cette route : rien ne se passe.
+     Et deux rechargements qui ne ramènent pas la bonne construction (un proxy
+     qui s'obstine) font abandonner : mieux vaut une page d'hier qu'une page
+     qui se recharge sans fin. */
+  (() => {
+    const SUIVI = 'tbf-maj';
+    const lireSuivi = () => {
+      try { return JSON.parse(sessionStorage.getItem(SUIVI) || 'null'); } catch { return null; }
+    };
+    const ecrireSuivi = (v) => {
+      try {
+        if (v) sessionStorage.setItem(SUIVI, JSON.stringify(v));
+        else sessionStorage.removeItem(SUIVI);
+      } catch { /* navigation privée : pas de garde, on n'insiste pas */ }
+    };
+
+    /* La construction de cette page. Sans la balise — une page servie hors de
+       `page()` —, la première réponse du serveur sert de repère : la page ne
+       se rechargera qu'à la mise en ligne suivante. */
+    let mienne = document.querySelector('meta[name="tbf-construction"]')?.content || null;
+
+    /* Revenue d'une mise à jour : le suivi n'a plus d'objet, et l'adresse perd
+       le `?maj=` du second essai, qui n'a servi qu'à passer à côté d'un cache. */
+    const suivi = lireSuivi();
+    if (suivi && mienne && suivi.cible === mienne) ecrireSuivi(null);
+    try {
+      const u = new URL(location.href);
+      if (u.searchParams.has('maj')) {
+        u.searchParams.delete('maj');
+        history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+      }
+    } catch { /* l'adresse reste telle quelle : sans conséquence */ }
+
+    let lancee = false;
+    let derniere = 0;
+
+    /* Un joueur qui écrit (un message, un nom de KOP, un réglage) ne perd pas
+       ce qu'il tape : on attend qu'il quitte le champ. */
+    const ecrit = () => {
+      const a = document.activeElement;
+      return Boolean(a && (a.isContentEditable
+        || (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)
+          && !/^(button|submit|checkbox|radio|range)$/i.test(a.type || ''))));
+    };
+
+    const ECRAN_STYLE = `
+      #tbf-maj{position:fixed;inset:0;z-index:2147483647;display:flex;
+        align-items:center;justify-content:center;text-align:center;
+        background:#05070A;color:#F2EEE4;
+        font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+        animation:tbf-maj-entre .25s ease-out}
+      #tbf-maj div{padding:32px;max-width:340px;line-height:1.7}
+      #tbf-maj b{display:block;font-size:19px;letter-spacing:.12em;margin-bottom:14px;color:#F5C33B}
+      #tbf-maj small{display:block;opacity:.7;font-size:13px}
+      #tbf-maj i{display:block;height:4px;margin:24px auto 0;width:180px;border-radius:2px;
+        background:rgba(245,195,59,.18);overflow:hidden}
+      #tbf-maj i::after{content:"";display:block;height:100%;width:100%;background:#F5C33B;
+        transform-origin:left;animation:tbf-maj-charge 1.4s ease-in-out forwards}
+      @keyframes tbf-maj-entre{from{opacity:0}to{opacity:1}}
+      @keyframes tbf-maj-charge{from{transform:scaleX(.05)}to{transform:scaleX(1)}}
+      @media (prefers-reduced-motion:reduce){#tbf-maj,#tbf-maj i::after{animation:none}}`;
+
+    const montrer = () => {
+      if (document.getElementById('tbf-maj') || !document.body) return;
+      const style = document.createElement('style');
+      style.textContent = ECRAN_STYLE;
+      const ecran = document.createElement('section');
+      ecran.id = 'tbf-maj';
+      ecran.setAttribute('role', 'status');
+      ecran.setAttribute('aria-live', 'assertive');
+      ecran.innerHTML = '<div><b>MISE À JOUR DU JEU</b>'
+        + '<small>Une nouvelle version vient d’arriver. On recharge, tu ne perds rien.</small>'
+        + '<i aria-hidden="true"></i></div>';
+      document.head.appendChild(style);
+      document.body.appendChild(ecran);
+    };
+
+    const lancer = async (cible) => {
+      const avant = lireSuivi();
+      const essais = avant?.cible === cible ? avant.essais : 0;
+      if (essais >= 2) {
+        // Deux rechargements pour rien : on n'insiste plus pour cette construction.
+        mienne = cible;
+        console.warn('[maj] la nouvelle construction ne vient pas :', cible);
+        return;
+      }
+      lancee = true;
+      ecrireSuivi({ cible, essais: essais + 1 });
+      montrer();
+      /* Le service worker d'à côté d'abord, s'il a changé lui aussi : la page
+         rechargée doit tomber sur le nouveau. Plafonné, il ne doit pas retenir
+         l'écran. */
+      const sw = (async () => {
+        try { await (await navigator.serviceWorker?.getRegistration?.('/'))?.update?.(); }
+        catch { /* il se mettra à jour à son tour */ }
+      })();
+      await Promise.all([
+        Promise.race([sw, new Promise((ok) => setTimeout(ok, 3000))]),
+        new Promise((ok) => setTimeout(ok, 1400)),
+      ]);
+      if (essais === 0) { location.reload(); return; }
+      /* Le second essai change l'adresse : un proxy qui a gardé l'ancienne page
+         ne peut pas la rendre pour celle-ci. */
+      const u = new URL(location.href);
+      u.searchParams.set('maj', cible);
+      location.replace(u.href);
+    };
+
+    const verifier = async (presse = false) => {
+      if (lancee || document.visibilityState === 'hidden') return;
+      if (!presse && Date.now() - derniere < 30_000) return;
+      derniere = Date.now();
+      let servie;
+      try {
+        const r = await fetch('/api/version', { cache: 'no-store', credentials: 'same-origin' });
+        if (!r.ok) return;
+        servie = (await r.json())?.construction;
+      } catch { return; }
+      if (typeof servie !== 'string' || !/^[0-9a-f]{6,40}$/.test(servie)) return;
+      if (!mienne) { mienne = servie; return; }
+      if (servie === mienne) return;
+      if (ecrit()) {
+        document.addEventListener('focusout', () => setTimeout(() => verifier(true), 300),
+          { once: true });
+        return;
+      }
+      await lancer(servie);
+    };
+
+    window.TBF_MAJ = { verifier: () => verifier(true) };
+
+    if (document.readyState === 'complete') verifier(true);
+    else window.addEventListener('load', () => verifier(true));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') verifier(true);
+    });
+    // Revenue du cache arrière du navigateur : c'est la page d'avant, telle quelle.
+    window.addEventListener('pageshow', (e) => { if (e.persisted) verifier(true); });
+    window.addEventListener('online', () => verifier(true));
+    setInterval(() => verifier(), 5 * 60_000);
+  })();
+
   /* -------------------------------------------------------- l'orientation
 
      Six cents pixels sur le petit côté : c'est la frontière habituelle entre
