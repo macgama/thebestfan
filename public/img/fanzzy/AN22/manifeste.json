@@ -1,6 +1,6 @@
 {
   "id": "AN22",
-  "rev": 2,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -9,10 +9,11 @@
             "neutre",
             "pousse",
             "joie",
-            "depit"
+            "depit",
+            "colere"
           ],
           "portrait": true,
-          "sha": "9c12b1b24781",
+          "sha": "d70cba0b93ce",
           "cligne": true
         }
       }
