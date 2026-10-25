@@ -25,6 +25,7 @@ import { charger as chargerCatalogue, ecartsCatalogue }
 import { chargerReglages, reglagesPublics } from './src/server/reglages/index.js';
 import { VERSION_PUBLIQUE } from './src/shared/version.js';
 import { empreinte, estampiller, releverEmpreintes } from './src/server/empreintes.js';
+import { empreinteDuJeu, commitDuDepot } from './src/server/construction.js';
 import { reglage } from './src/shared/reglages.js';
 import { entetesDeSecurite, debitMaximal } from './src/server/garde/index.js';
 import { chargerTenues } from './src/server/fanzzy/tenues.js';
@@ -169,12 +170,26 @@ process.on('uncaughtException', (e) => noter('erreur non rattrapée', e));
  * croyait fini, la correction n'était pas en ligne, et on le découvrait le
  * lendemain.
  *
- * Absent en développement, et c'est normal : on n'y déploie rien.
+ * Absent en développement, et c'est normal : on n'y déploie rien. Absent aussi
+ * avec le Manager Infomaniak, qui ne lance pas `deployer.sh` : on lit alors le
+ * commit dans `.git`, que sa construction met à jour par `git pull` — voir
+ * `src/server/construction.js`.
  */
 const VERSION = (() => {
   try { return readFileSync(path.join(__dirname, 'VERSION'), 'utf8').trim() || null; }
   catch { return null; }
-})();
+})() ?? commitDuDepot(__dirname);
+
+/**
+ * L'empreinte de ce que le navigateur reçoit, prise une fois au démarrage.
+ *
+ * C'est le repère que les pages comparent pour savoir qu'elles sont d'hier
+ * (`public/pwa.js`) : chaque page le porte en `<meta name="tbf-construction">`,
+ * et `/api/version` dit celui du serveur. Une fois, et pas à chaque requête :
+ * le serveur qui tourne sert les fichiers qu'il avait au démarrage, et une
+ * empreinte qui bougerait sous lui ferait recharger des pages pour rien.
+ */
+const CONSTRUCTION = empreinteDuJeu(path.join(__dirname, 'public'));
 
 /**
  * Ce qui a empêché le démarrage d'aller au bout, s'il y a lieu.
@@ -1035,7 +1050,9 @@ app.get('/api/public/reglages', (_req, res) => {
  */
 app.get('/api/version', (_req, res) => {
   res.set('cache-control', 'no-store');
-  res.json(VERSION_PUBLIQUE);
+  /* `construction` : ce que `pwa.js` compare à la page ouverte. Douze
+     caractères de hachage, qui ne disent rien du serveur à qui les lit. */
+  res.json({ ...VERSION_PUBLIQUE, construction: CONSTRUCTION });
 });
 
 /**
@@ -1081,6 +1098,8 @@ app.get('/healthz', (_req, res) => {
     // Le commit en ligne : c'est lui que le déploiement attend pour se
     // déclarer terminé. Voir `VERSION` plus haut.
     version: VERSION,
+    // L'empreinte des pages servies : celle que les joueurs doivent avoir.
+    construction: CONSTRUCTION,
     node: process.version,
     /* **Le premier chiffre à regarder quand le site a eu l'air de tomber.**
        Quelques secondes de fonctionnement veut dire que le processus vient de
@@ -1137,6 +1156,14 @@ app.get('/healthz', (_req, res) => {
  * autorise à garder en obligeant à revalider. La nuance compte à travers un
  * proxy d'hébergement, qui répond volontiers à la place du serveur.
  */
+/* La construction dont la page est faite, en tête de `<head>` : `pwa.js` la
+   lit pour savoir, plus tard, si le serveur en sert une autre. */
+function marquer(html) {
+  if (!CONSTRUCTION) return html;
+  return html.replace(/<head(\s[^>]*)?>/i,
+    (m) => `${m}\n<meta name="tbf-construction" content="${CONSTRUCTION}">`);
+}
+
 function page(res, fichier) {
   const chemin = path.join(__dirname, 'public', fichier);
   try {
@@ -1150,8 +1177,8 @@ function page(res, fichier) {
        Il est parti avec la règle qui le lisait — voir `sw.js`, qui ne se fie
        plus qu'au code de statut. On ne rajoute pas ici un en-tête que personne
        ne lit : c'est ce genre de reste qui survit à sa raison d'être. */
-    res.type('html').send(estampiller(readFileSync(chemin, 'utf8'),
-      path.join(__dirname, 'public')));
+    res.type('html').send(marquer(estampiller(readFileSync(chemin, 'utf8'),
+      path.join(__dirname, 'public'))));
   } catch {
     // Le fichier manque : on laisse Express rendre son 404 plutôt que
     // d'envoyer une page à moitié écrite.
