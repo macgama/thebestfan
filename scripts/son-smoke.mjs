@@ -1773,13 +1773,13 @@ if (banc) try {
     page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/club-')) vus.push(u); });
     await page.click('#geste');
     await jusqua(page, (x) => x.contexte === 'running');
-    check('les vingt clubs de la série AN ont leur son, pas un autre club',
+    check('les vingt clubs de la série AN ont leur son, les autres le son type, et sans club rien',
       await page.evaluate(() => [33, 34, 35, 36, 40, 42, 45, 47, 49, 50, 51, 52, 55, 57, 63, 64, 65, 66, 746, 1346]
-        .every((id) => window.TBF_SON.aUnSon(id)) && !window.TBF_SON.aUnSon(85)));
+        .every((id) => window.TBF_SON.aUnSon(id)) && window.TBF_SON.aUnSon(85) && !window.TBF_SON.aUnSon(null)));
     check('avant d’être décodé, le son du club ne joue pas',
       await page.evaluate(() => window.TBF_SON.club(40)) === false);
-    check('un club sans son ne joue rien', await page.evaluate(() => window.TBF_SON.club(85)) === false);
-    await page.evaluate(() => window.TBF_SON.clubs([40, 85]));
+    check('sans club, rien ne joue', await page.evaluate(() => window.TBF_SON.club(null)) === false);
+    await page.evaluate(() => window.TBF_SON.clubs([40]));
     let parti = false;
     for (let i = 0; i < 40 && !parti; i++) {
       await attendre(100);
@@ -1788,6 +1788,13 @@ if (banc) try {
     const t = await page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
     check('décodé, le son de Liverpool part (3,6 s)', parti && t.some((x) => x.duree > 3.5 && x.duree < 3.7), t);
     check('seul le son demandé se télécharge', vus.length >= 1 && vus.every((u) => u.startsWith('/son/club-40.')), vus);
+    await page.evaluate(() => window.TBF_SON.clubs([85]));
+    let type = false;
+    for (let i = 0; i < 40 && !type; i++) {
+      await attendre(100);
+      type = await page.evaluate(() => window.TBF_SON.club(85));
+    }
+    check('un club sans son à lui joue le son type', type && vus.some((u) => u.startsWith('/son/club-type.')), vus);
     check('aucune erreur de script (clubs)', erreurs.length === 0, ...erreurs);
     await page.close();
   }

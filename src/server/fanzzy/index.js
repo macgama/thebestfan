@@ -43,7 +43,7 @@ import { saisonsLancees, saisonEnCours } from './saisons.js';
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
 import { verser, verserTout } from '../recompenses.js';
-import { clubDe, CRI_DU_CLUB } from '../../shared/fanzzy/clubs.js';
+import { clubDe, criDuClub } from '../../shared/fanzzy/clubs.js';
 
 /* ------------------------------------------------------------ le journal
 
@@ -2370,8 +2370,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       club: sonClub != null
         ? { lie: true, tonClub: suit, achete: achete != null, ...taux,
           nom: equipe?.name ?? null, logo: equipe?.logo ?? null,
-          // Le cri qu'il pousse dans les matchs de ce club (`CRI_DU_CLUB`).
-          cri: CRI_DU_CLUB.get(sonClub) ?? null }
+          // Le cri qu'il pousse dans les matchs de ce club (`criDuClub`).
+          cri: criDuClub(sonClub) }
         : { lie: false, prix: reglage('fanzzy.lien_prix'),
           clubPrincipal: (await clubPrincipal(userId)) != null, ...taux },
       fanzzy: {
