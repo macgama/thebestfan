@@ -7,6 +7,19 @@ fumée aux couleurs du club derrière le Fanzzy.
 
 ---
 
+**Deux correctifs avant les bêta-testeurs** (branche
+`claude/project-thread-hsgz8a`, 25 octobre 2026, demandé par Gaël).
+Construction puis **redémarrage** (le serveur change), **sans schéma**.
+
+- Le paquet de bienvenue donne toujours deux Fanzzy dessinés : un nouvel
+  inscrit pouvait recevoir comme avatar un Fanzzy sans image (une silhouette).
+- Duel qui attend : sur le Chrome actuel, quitter la page ne libérait pas la
+  place pendant une quarantaine de secondes, et l'ami invité lançait le duel
+  contre une tribune vide. La page coupe maintenant sa connexion en partant.
+- Après la mise en ligne : créer un compte de test et ouvrir le paquet.
+
+---
+
 **La marque des championnats à Fanzzy, et le cri et le son des autres clubs**
 (branche `claude/project-thread-v83ym1`, 25 octobre 2026, demandé par Gaël ;
 un son Artlist, 376 crédits, avec son accord). Construction seule, **sans

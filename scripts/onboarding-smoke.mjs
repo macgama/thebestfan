@@ -1,5 +1,5 @@
 /** Test de l'inscription, des emplacements de suivi et de l'inventaire. */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
 import { createOnboarding, SLOTS_DEPART } from '../src/server/onboarding/index.js';
@@ -454,6 +454,32 @@ check('l\u2019équipement a bien un revers',
   await nav.close();
   await new Promise((r) => http2.close(r));
   await pool.query('DELETE FROM users WHERE public_id = ?', [V]);
+}
+
+/* ------------------------------------- deux Fanzzy dessinés, toujours
+
+   Le 25 octobre 2026, un nouvel inscrit a reçu L'Agent en Tribune d'Honneur
+   (VP15), qui n'a pas de dessin : son avatar, sur l'accueil et au menu, était
+   une silhouette. LES VIP (VP) ont dix communs dont quatre
+   dessinés : ouverte seule, la série tire un commun sans dessin dans six
+   paquets sur dix. Douze paquets, et pas un seul. */
+{
+  const { chargerSeries } = await import('../src/server/fanzzy/catalogue.js');
+  await pool.query(`UPDATE saisons SET series = ? WHERE id = 1`, [JSON.stringify(['VP'])]);
+  await chargerSeries(pool);
+  const recus = [];
+  for (let i = 0; i < 12; i++) {
+    await pool.query(`UPDATE user_wallet SET onboarded_at = NULL WHERE user_id = ?`, [U]);
+    const rv = await call('/api/me/welcome', { body: { teamId: 85 } });
+    recus.push(...(rv.json.cartes ?? []).filter((c) => c.type === 'fanzzy').map((c) => c.id));
+  }
+  const nus = recus.filter((id) => !existsSync(
+    new URL(`../public/img/fanzzy/${id}-buste.webp`, import.meta.url)));
+  check(`les Fanzzy du paquet de bienvenue sont dessinés (${recus.length} reçus)`,
+    recus.length === 24 && nus.length === 0);
+  if (recus.length !== 24 || nus.length) console.log('        sans dessin :', nus.join(' ') || '—', '· reçus :', recus.length);
+  await pool.query(`UPDATE saisons SET series = ? WHERE id = 1`, [JSON.stringify(['TR'])]);
+  await chargerSeries(pool);
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
