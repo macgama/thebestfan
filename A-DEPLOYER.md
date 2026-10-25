@@ -11,7 +11,8 @@ ligne de tout main (construction, schéma, redémarrage) et hors d'un match.
 - `npm run saison1:remise`, puis taper `SAISON 1` : sauvegarde complète dans
   `~/sauvegardes/`, abonnements Stripe résiliés, comptes joueurs et tout ce
   qui est à eux supprimés (les comptes admin restent, remis à neuf), saison 1
-  lancée à l'instant jusqu'au 31 mars 2027, saisons suivantes repoussées d'un
+  lancée à l'instant jusqu'au 31 mars 2027 avec un carnet de tampons recalé
+  sur sa durée (seuils × jours / 63), saisons suivantes repoussées d'un
   trimestre.
 - Puis redémarrer dans l'onglet Node.js, et se reconnecter : le paquet de
   bienvenue revient.

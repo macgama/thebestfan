@@ -21,7 +21,8 @@
  *   3. Dans **une seule transaction** : il vide les tables des joueurs, supprime
  *      les comptes qui ne sont pas admin, remet les comptes admin à neuf (ils
  *      repasseront par le paquet de bienvenue), relance la saison 1 maintenant
- *      et repousse les saisons suivantes. Puis il vérifie qu'il ne reste aucune
+ *      avec un carnet de tampons recalé sur sa durée, et repousse les saisons
+ *      suivantes. Puis il vérifie qu'il ne reste aucune
  *      ligne orpheline ; sinon il annule tout.
  *
  * ## Ce qu'il garde
@@ -57,6 +58,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CATALOGUE } from '../src/shared/boutique.js';
+import { CARNET_DEFAUT, validerCarnet } from '../src/shared/saison.js';
 
 /* ===================================================== les listes de tables */
 
@@ -132,6 +134,21 @@ export function calendrier(finSaison1, suivantes) {
     out.push({ numero, ouvre_le: ouvre, fin_le: fin });
   }
   return out;
+}
+
+/**
+ * Le carnet de la saison 1 recalé sur sa vraie durée. Le carnet par défaut
+ * est calibré sur 63 jours ; ses seuils se multiplient par « jours / 63 »
+ * (arrondis à 5), ses gains restent les mêmes (`src/shared/saison.js`). Le
+ * carnet rendu passe la validation de l'onglet Saisons, comme une saisie.
+ */
+export function carnetRecale(jours) {
+  let avant = 0;
+  return validerCarnet(CARNET_DEFAUT.map((p) => {
+    const tampons = Math.max(avant + 1, Math.round((p.tampons * jours) / 63 / 5) * 5);
+    avant = tampons;
+    return { ...p, tampons };
+  }));
 }
 
 /* ================================================================ le script */
@@ -227,6 +244,8 @@ async function principal() {
   const [{ aujourdhui }] = await q(`SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS aujourdhui`);
   if (FIN_S1 <= aujourdhui) sortir(`La fin de la saison 1 (${FIN_S1}) doit venir après aujourd'hui (${aujourdhui}).`);
   const plan = calendrier(FIN_S1, suivantes.map((s) => Number(s.numero)));
+  const jours = Math.round((lireJour(FIN_S1) - lireJour(aujourdhui)) / 86400000) + 1;
+  const carnet = carnetRecale(jours);
   console.log('  Saisons :');
   console.log(`    1 « ${s1[0].nom} » : lancée maintenant (${aujourdhui}), dernier jour ${FIN_S1}`
     + `  (avant : ${s1[0].fin_le ?? 'sans fin'})`);
@@ -332,8 +351,8 @@ async function principal() {
     await q(`UPDATE users SET main_team_id = NULL`);
     await q('SET FOREIGN_KEY_CHECKS = 1');
 
-    await q(`UPDATE saisons SET lancee_a = NOW(3), ouvre_le = CURDATE(), fin_le = ? WHERE id = ?`,
-      [FIN_S1, s1[0].id]);
+    await q(`UPDATE saisons SET lancee_a = NOW(3), ouvre_le = CURDATE(), fin_le = ?, carnet = ?
+              WHERE id = ?`, [FIN_S1, JSON.stringify(carnet), s1[0].id]);
     for (let i = 0; i < suivantes.length; i++) {
       await q(`UPDATE saisons SET ouvre_le = ?, fin_le = ? WHERE id = ?`,
         [plan[i].ouvre_le, plan[i].fin_le, suivantes[i].id]);
