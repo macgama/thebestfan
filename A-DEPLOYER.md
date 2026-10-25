@@ -195,19 +195,18 @@ Construction puis redémarrage, **sans schéma**.
   à faire de plus, ils s'ouvriront avec elle.
 - Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
   AN60 et vérifier leurs trois âges (les cartes et les expressions), puis
-  qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
-  « pousse » au premier âge, AN22, AN26 et AN35 pas de « colère » au premier
-  âge, AN29 pas de « joie » au premier âge, AN38 pas de « dépit » au
-  deuxième âge, et AN17 n'a que le repos et la joie au deuxième âge
-  (planches à refaire) : ils restent au repos dans les expressions qui
-  manquent. AN44 ne cligne pas encore des yeux (sa figure yeux fermés porte
-  le bonnet, son repos le tient à la main), ni AN46, AN47, AN51, AN53 et
-  AN54 (leurs yeux sont trop bas sous le bonnet, le toit, la feuille ou le
-  couvercle pour la boîte du clignement), ni AN56 (ses yeux sombres sur le
-  poil noir ne se distinguent pas assez des paupières). Au troisième âge
-  d'AN57 (cartes et expressions), des signes lumineux en forme de lettres
-  ont été effacés sur une copie : quelques traces floues restent sur les
-  bras et le poitrail, ses planches sont à refaire.
+  qu'ils clignent des yeux au premier âge. AN44 ne cligne pas encore des
+  yeux (sa figure yeux fermés porte le bonnet, son repos le tient à la
+  main), ni AN46, AN47, AN51, AN53 et AN54 (leurs yeux sont trop bas sous
+  le bonnet, le toit, la feuille ou le couvercle pour la boîte du
+  clignement), ni AN56 (ses yeux sombres sur le poil noir ne se distinguent
+  pas assez des paupières).
+- Planches refaites (25 octobre) : les expressions d'AN9, AN22, AN26, AN29
+  et AN35 au premier âge, d'AN17, AN38 et AN41 au deuxième et d'AN57 au
+  troisième viennent de nouvelles planches, les cinq expressions au complet
+  (plus d'état qui reste au repos, plus de signes effacés sur AN57), et les
+  cinq du premier âge clignent avec de nouvelles paupières ; images seules,
+  rien de plus que la construction et le redémarrage ci-dessus.
 
 ---
 

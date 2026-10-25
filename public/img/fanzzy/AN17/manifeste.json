@@ -1,6 +1,6 @@
 {
   "id": "AN17",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -23,10 +23,13 @@
         "base": {
           "etats": [
             "neutre",
-            "joie"
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
           ],
           "portrait": true,
-          "sha": "1797db8c9f6f"
+          "sha": "a1041d99268d"
         }
       }
     },
