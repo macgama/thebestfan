@@ -37,15 +37,16 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Cinquante-cinq lignées sur soixante, et pourquoi elle arrive fermée
+ * ## Soixante lignées sur soixante, et pourquoi elle arrive fermée
  *
- * Les cinquante-cinq premières (AN1 à AN55) ont leurs dessins : trois cartes
- * en pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
- * états au deuxième âge et AN38 quatre, AN9, AN22, AN26, AN29 et AN35 quatre
- * au premier : leurs planches sont à refaire). Elles entrent par lots de
- * cinq, à mesure que leurs dessins arrivent : une lignée sans dessin aurait
- * mis au catalogue une silhouette procédurale. Les cinq dernières suivront
- * de la même façon.
+ * Les soixante (AN1 à AN60) ont leurs dessins : trois cartes en pied et
+ * cinq états par âge, en tenue de base (AN17 n'a encore que deux états au
+ * deuxième âge et AN38 quatre, AN9, AN22, AN26, AN29 et AN35 quatre au
+ * premier ; AN41 au deuxième âge et AN57 au troisième sont passés par une
+ * copie dont on a effacé des légendes ou des signes en forme de lettres :
+ * toutes ces planches sont à refaire). Elles sont entrées par lots de cinq,
+ * à mesure que leurs dessins arrivaient : une lignée sans dessin aurait
+ * mis au catalogue une silhouette procédurale.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
  * booster ni aucun kiosque ne la distribue (`chargerSeries`, dans
@@ -249,6 +250,28 @@
  * sur quarante-deux. Aucun geste principal ne passe en minorité, et toutes
  * les variantes restent au-dessus du plancher de `catalogue:smoke`.
  *
+ * Le dernier lot donne une lignée à chacune des cinq autres familles ; la
+ * Pyro, déjà à dix, attend : le petit terrier des filatures (voix), qui
+ * aboie dans la grande salle vide et refait coup pour coup ce que l'écho
+ * lui renvoie, d'où l'écho ; le petit macareux (perc), qui bat des ailes
+ * aussi vite qu'il peut pour repartir de sa falaise, d'où le martelage ; la
+ * petite oie (depl), qui marche des jours entiers jusqu'à la grande foire,
+ * d'où l'écharpe ; le petit ver du puits (tifo), qu'une vague parcourt
+ * anneau après anneau quand il se dresse, d'où l'ola ; et le petit pigeon
+ * voyageur (fide), qui corrige son cap au moindre coup de vent, ni trop ni
+ * trop peu, d'où la jauge. Soixante lignées : dix dans chacune des six
+ * familles.
+ *
+ * L'oie et le macareux n'avaient pas le choix (voir le lot précédent) :
+ * l'écharpe passe à trente-quatre sur soixante-sept, le martelage à
+ * vingt-huit sur cinquante-cinq. Le terrier, le ver et le pigeon prennent
+ * des variantes : l'écho passe à onze sur soixante-quatre, l'ola à onze sur
+ * soixante-cinq, la jauge à treize sur quatre-vingt-dix. Le tempo reste à
+ * trente-trois sur soixante-quatre, le tifo à trente-trois sur
+ * soixante-cinq, et la garde pile à la moitié, quarante-cinq sur
+ * quatre-vingt-dix. Aucun geste principal ne passe en minorité, et toutes
+ * les variantes restent au-dessus du plancher de `catalogue:smoke`.
+ *
  * La burette n'a pas le choix de son geste. Les Percussions comptaient
  * quarante-huit personnages de premier âge dont six aux `deuxvoix` — pile le
  * huitième. Une quarante-neuvième au geste éponyme aurait fait passer les
@@ -289,10 +312,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les cinquante-cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les soixante premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : cinquante-cinq
- * fois le même mot, ce sont cinquante-cinq occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : soixante
+ * fois le même mot, ce sont soixante occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -978,6 +1001,81 @@ const PREMIERS_AGES = [
       + 'sa noix de coco, elle trace un grand rond parfait, sans en perdre un grain.',
     mods: { parryBonus: 1.16, tempoWindow: 0.92 },
     cri: { label: 'UN ROND PARFAIT !', gest: 'tifo', power: 52 } },
+
+  /* AN56 — la voix du terrier noir et feu des filatures et des entrepôts :
+     le chiot maigre qui chassait les souris entre les métiers et finit fier
+     gardien de toute la ville. Rouge, blanc et noir ; ni cornes, ni fourche,
+     ni trident, ni navire. L'oreille rabattue reste rabattue jusqu'au
+     troisième âge. Il aboie dans la grande salle vide et refait coup pour
+     coup ce que l'écho lui renvoie, d'où l'écho (voir l'en-tête) ; son
+     défaut : il ne tient pas longtemps. */
+  { id: 'AN56', nom: 'Le Petit Terrier', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'Tout maigre, le collier rouge trop grand pour lui, un brin de coton collé à la '
+      + 'truffe et une oreille rabattue, il court la filature d’un métier à l’autre. Il aboie '
+      + 'dans la grande salle vide, l’écho lui répond, et il refait l’aboiement coup pour coup, '
+      + 'sans en manquer un.',
+    mods: { tempoWindow: 1.16, holdBonus: 0.92 },
+    cri: { label: 'OUAF… OUAF-OUAF !', gest: 'echo', power: 53 } },
+
+  /* AN57 — la percussion des macareux des îles au large de la côte : le
+     petit maladroit des falaises qui rate tous ses atterrissages et finit
+     grand pêcheur, le bec plein de poissons d'argent. Rayures noir et blanc ;
+     ni pie ni hippocampe. Le flotteur blanc cerclé de noir reste avec lui
+     jusqu'au troisième âge. Pour décoller, il bat des ailes aussi vite qu'il
+     peut, d'où le martelage (voir l'en-tête) ; son défaut : il s'essouffle.
+     Les planches du troisième âge portaient des signes lumineux en forme de
+     lettres sur les bras et le poitrail : effacés sur une copie, la planche
+     est à refaire. */
+  { id: 'AN57', nom: 'Le Petit Macareux', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Tout rond, un peu de travers sur la falaise après un atterrissage raté, le petit '
+      + 'flotteur blanc et noir serré sous l’aile et un seul poisson d’argent dans le bec, il a '
+      + 'l’air tout étonné. Pour repartir, il bat des ailes aussi vite qu’il peut, si vite qu’on '
+      + 'ne les voit plus.',
+    mods: { mashBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'PLUS VITE, LES AILES !', gest: 'mash', power: 53 } },
+
+  /* AN58 — le déplacement des oies menées à pied, des jours durant,
+     jusqu'à la grande foire d'octobre de la ville : l'oison perdu qui finit
+     reine de tout le troupeau. Rouge et blanc ; ni arbre, ni feuille, ni
+     hors-la-loi. Les petits chaussons de toile restent à ses pattes jusqu'au
+     troisième âge. Elle marche des jours entiers jusqu'à la foire, d'où
+     l'écharpe (voir l'en-tête) ; son défaut : elle cède sous la pression. */
+  { id: 'AN58', nom: 'La Petite Oie', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'Encore en duvet, un peu vacillante, le petit bonnet rouge noué sous le bec et de '
+      + 'minuscules chaussons de toile aux pattes pour la longue route, elle s’est perdue sur le '
+      + 'chemin de la foire. Têtue, elle marche quand même, des jours entiers, un pas après '
+      + 'l’autre.',
+    mods: { breathBonus: 1.16, parryResist: 0.92 },
+    cri: { label: 'ENCORE UN PAS !', gest: 'echarpe', power: 53 } },
+
+  /* AN59 — le tifo du ver géant de la vieille légende du pays : le petit
+     ver pêché dans la rivière et jeté au fond d'un puits qui grandit jusqu'à
+     s'enrouler sur lui-même, devenu gentil. Rayures rouge et blanc ; ni
+     ailes, ni crocs, ni dragon, ni colline, ni monument, ni pont, ni roue de
+     mine. La goutte d'eau de rivière reste sur sa tête jusqu'au troisième
+     âge. Quand il se dresse, une vague lui parcourt le corps, anneau après
+     anneau, d'où l'ola (voir l'en-tête) ; son défaut : il s'essouffle. */
+  { id: 'AN59', nom: 'Le Petit Ver du Puits', type: 'tifo', stage: 1, rar: 'commune',
+    histoire: 'Tout rose et un peu timide, une goutte d’eau de rivière sur la tête, il tient à la '
+      + 'main le petit seau rouge au bord blanc où il a grandi. Quand il se dresse, une vague lui '
+      + 'parcourt tout le corps, anneau après anneau, de la queue jusqu’à la tête.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'ANNEAU APRÈS ANNEAU !', gest: 'ola', power: 52 } },
+
+  /* AN60 — la fidélité des pigeons voyageurs des colombiers sur les toits
+     et de leurs courses : le pigeonneau qui se perd à chaque course et finit
+     grand champion, rentré le premier avec tous les messages. Bleu marine
+     et blanc ; ni coq, ni ergot, ni ballon sous la patte. Les quelques
+     plumes dressées restent sur sa tête jusqu'au troisième âge. En vol, il
+     corrige son cap au moindre coup de vent, ni trop ni trop peu, d'où la
+     jauge (voir l'en-tête) ; son défaut : il perd la cadence. */
+  { id: 'AN60', nom: 'Le Petit Pigeon Voyageur', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Un peu ébouriffé, quelques plumes dressées sur la tête, le petit tube à message '
+      + 'bleu marine à la patte et un papier roulé qui en dépasse, il se tient tout perdu sur un '
+      + 'toit. Mais en vol, il garde son cap : au moindre coup de vent, il corrige d’un '
+      + 'battement, ni trop ni trop peu.',
+    mods: { holdBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'JE GARDE LE CAP !', gest: 'jauge', power: 53 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
