@@ -1473,12 +1473,14 @@ function monClubLie() {
   const id = S.you.side ? S.fixture?.awayId : S.fixture?.homeId;
   return id == null ? null : Number(id);
 }
-function eclatDuClub() {
+/* Vrai s'il a joué : son titre remplace alors la case de BD. */
+function eclatDuClub(titre, sous = '') {
   const id = monClubLie();
-  if (id == null) return;
+  if (id == null || !window.FX?.club) return false;
   const c = S.fixture?.[S.you.side ? 'awayColors' : 'homeColors'];
-  window.FX?.club?.(Array.isArray(c) ? c : []);
+  window.FX.club(Array.isArray(c) ? c : [], { titre, sous });
   window.TBF_SON?.club?.(id);
+  return true;
 }
 
 /** La minute du match à l'entrée dans la tribune, posée par « virage:state »
@@ -2922,8 +2924,11 @@ function connect() {
        commune n'ajoute que la secousse et la vibration, sans second titre. */
     apresLaFenetre(() => {
       window.FX?.but?.({ pour: mien, vignette: true });
-      if (mien) eclatDuClub();
-      if (scene) {
+      // Avec un Fanzzy lié, le titre claque sur l'écharpe du club, sans case.
+      const club = mien && eclatDuClub('LA CORDE CÈDE !');
+      if (club) {
+        if (scene) celebrer();
+      } else if (scene) {
         celebrer();
         scene.moment(mien ? 'but' : 'encaisse',
           mien ? 'LA CORDE CÈDE !' : 'ILS ONT FAIT CÉDER LA CORDE',
@@ -2956,12 +2961,14 @@ function connect() {
        rumeur, eux, sont déjà partis. */
     apresLaFenetre(() => {
       window.FX?.but?.({ pour: mien, vignette: true });
-      if (mien) eclatDuClub();
+      const qui = [g.player, g.minute != null ? `${g.minute}′` : ''].filter(Boolean).join(' · ');
       celebrer();
-      scene?.moment(mien ? 'but' : 'encaisse', mien ? 'GOAL !' : 'ON ENCAISSE', {
-        couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)',
-        sous: [g.player, g.minute != null ? `${g.minute}′` : ''].filter(Boolean).join(' · '),
-      });
+      // Avec un Fanzzy lié, le titre claque sur l'écharpe du club, sans case.
+      if (!(mien && eclatDuClub('GOAL !', qui))) {
+        scene?.moment(mien ? 'but' : 'encaisse', mien ? 'GOAL !' : 'ON ENCAISSE', {
+          couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)', sous: qui,
+        });
+      }
     }, { moment: 'but' });
     render();
   });
