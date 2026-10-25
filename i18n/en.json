@@ -6430,5 +6430,22 @@
  "PLUS FORT, ENSEMBLE": "LOUDER, TOGETHER",
  "CHEZ NOUS, ON CHANTE": "AT HOME, WE SING",
  "TOUS POUR LE MAILLOT": "ALL FOR THE SHIRT",
- "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort, rapporte un peu plus et pousse le cri de son club, au Grand Virage comme en duel. Quand ta tribune fait céder la corde ou que ton club marque, son écharpe traverse l’écran à ses couleurs. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe. Un Fanzzy neutre peut se lier à ton club principal depuis sa fiche, contre des écharpes, et pour toujours. Un championnat qui a ses propres Fanzzy, comme la Premier League, porte leur marque dans les matchs du jour.": "<0>Club-bound Fanzzy</0> wear a team’s colours. Play one in a match of your club, and it pushes a little harder, earns a little more and shouts its club’s cry, in the Big End and in duels. When your stand makes the rope give way or your club scores, its scarf sweeps across the screen in its colours. Its card shows a stamp: “BOUND TO YOUR CLUB” if you follow that team. A neutral Fanzzy can be bound to your main club from its card, for scarves, and for good. A league with its own Fanzzy, like the Premier League, carries their mark in the day’s matches."
+ "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort, rapporte un peu plus et pousse le cri de son club, au Grand Virage comme en duel. Quand ta tribune fait céder la corde ou que ton club marque, son écharpe traverse l’écran à ses couleurs. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe. Un Fanzzy neutre peut se lier à ton club principal depuis sa fiche, contre des écharpes, et pour toujours. Un championnat qui a ses propres Fanzzy, comme la Premier League, porte leur marque dans les matchs du jour.": "<0>Club-bound Fanzzy</0> wear a team’s colours. Play one in a match of your club, and it pushes a little harder, earns a little more and shouts its club’s cry, in the Big End and in duels. When your stand makes the rope give way or your club scores, its scarf sweeps across the screen in its colours. Its card shows a stamp: “BOUND TO YOUR CLUB” if you follow that team. A neutral Fanzzy can be bound to your main club from its card, for scarves, and for good. A league with its own Fanzzy, like the Premier League, carries their mark in the day’s matches.",
+ "Signaler un problème": "Report a problem",
+ "SIGNALER UN PROBLÈME": "REPORT A PROBLEM",
+ "Un bug, une idée, un mot qui cloche : dis ce que tu as vu. La page et ton appareil partent avec ton message.": "A bug, an idea, a word that feels off: tell us what you saw. The page and your device are sent with your message.",
+ "Ce que tu faisais, ce qui s’est passé…": "What you were doing, what happened…",
+ "Ton message": "Your message",
+ "ENVOYER": "SEND",
+ "Écris quelques mots de plus.": "Write a few more words.",
+ "Connecte-toi pour envoyer un signalement.": "Log in to send a report.",
+ "Tu en as envoyé beaucoup : réessaie dans une heure.": "You’ve sent a lot: try again in an hour.",
+ "Le message n’est pas parti. Réessaie dans un instant.": "The message wasn’t sent. Try again in a moment.",
+ "MERCI !": "THANKS!",
+ "Ton message est parti. On le lit, et on te répond par mail si besoin.": "Your message is on its way. We read it, and we’ll reply by email if needed.",
+ "OK": "OK",
+ "Signalement de {0} — thebestfan": "Report from {0} — thebestfan",
+ "{0} — {1} Répondre à ce mail, c’est répondre à {2}.": "{0} — {1} Replying to this email replies to {2}.",
+ "Écran : {0}": "Screen: {0}",
+ "Écran : —": "Screen: —"
 }
