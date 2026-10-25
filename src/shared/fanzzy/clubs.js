@@ -57,6 +57,53 @@ const TERRACES = [
   47,    // Tottenham Hotspur
 ];
 
+/**
+ * **Le cri du club** (choix de Gaël du 25 octobre 2026 : « les cris
+ * d'abord, sons plus tard »). Un Fanzzy lié qui joue un match de son club
+ * pousse ce cri à la place du sien. Inventés, quatre mots au plus, sans
+ * chiffre : ni un vrai chant, ni un surnom, ni ce que dessine l'écusson — les
+ * couleurs ou la ville, comme les fiches. Liste validée par Gaël :
+ * `/mnt/project-files/fanzzy-clubs/cris-des-clubs.md`. Même ordre que
+ * `TERRACES`.
+ */
+const CRIS_TERRACES = [
+  'MANCHES BLANCHES, CŒURS ROUGES',
+  'BORDEAUX ET CIEL, DEBOUT',
+  'LA CÔTE SE LÈVE',
+  'RAYÉS JUSQU’AU BOUT',
+  'LA JETÉE GRONDE',
+  'BLEU ROI, VOIX ROYALE',
+  'EN SELLE, LA VILLE !',
+  'ROUGE, BLEU, À FOND',
+  'BLEU COMME LA MARÉE',
+  'PARAPLUIES OUVERTS, ON CHANTE',
+  'LE PORT EN AMBRE',
+  'LES AILES DU MOULIN',
+  'TOUT LE COMTÉ DEBOUT',
+  'LE PORT ROUGE CHANTE',
+  'CIEL CLAIR, VILLE DEBOUT',
+  'LES FILATURES TREMBLENT',
+  'LES PONTS CHANTENT',
+  'LA FLÈCHE EST PARTIE',
+  'LE VERRE VIBRE ENCORE',
+  'BLANC NACRÉ, BLEU NUIT',
+];
+
+/** Club → son cri. Un club hors de la table n'en a pas : le Fanzzy garde le sien. */
+export const CRI_DU_CLUB = new Map(TERRACES.map((club, i) => [club, CRIS_TERRACES[i]]));
+
+/**
+ * Le même personnage, avec le cri de son club à tous ses âges — seulement
+ * l'étiquette : le geste et la puissance restent les siens, c'est sa voix
+ * qui change, pas ce qu'il sait faire.
+ */
+export function avecCriDuClub(perso, teamId) {
+  const label = CRI_DU_CLUB.get(Number(teamId));
+  if (!perso || !label) return perso;
+  const crier = (x) => (x?.cri ? { ...x, cri: { ...x.cri, label } } : x);
+  return { ...crier(perso), ...(Array.isArray(perso.ages) ? { ages: perso.ages.map(crier) } : {}) };
+}
+
 /** Lignée → club (identifiant API-Football). */
 export const CLUB_DE = new Map(
   [0, 20, 40].flatMap((d) => TERRACES.map((club, i) => ['AN'.concat(d + i + 1), club])));
@@ -135,9 +182,7 @@ export function lierLeDeck(loadout, teamId, taux) {
   });
   return {
     ...loadout,
-    fanzzy: loadout.fanzzy.map((f) => (!lieA(f.id, teamId, f.club) ? f : {
-      ...lier(f),
-      ages: (f.ages ?? []).map(lier),
-    })),
+    fanzzy: loadout.fanzzy.map((f) => (!lieA(f.id, teamId, f.club) ? f
+      : avecCriDuClub({ ...lier(f), ages: (f.ages ?? []).map(lier) }, teamId))),
   };
 }
