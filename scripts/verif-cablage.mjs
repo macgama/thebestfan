@@ -95,6 +95,10 @@ check('server.js dit au virage les matchs que l’API ne rend plus',
   const nvnIci = serveur.search(/nvn = createNvN\(\{[^}]*notifications/);
   check('server.js passe les notifications au KOP', kopIci > construites && construites > 0);
   check('server.js passe les notifications aux duels', nvnIci > construites && construites > 0);
+  const amisIci = serveur.search(/amis = createAmis\(\{[^}]*notifications/);
+  check('server.js passe les notifications aux amis', amisIci > construites && construites > 0);
+  check('server.js prévient du coup d’envoi et lance l’avant-match',
+    /notifications\?\.coupDEnvoi\(/.test(serveur) && /notifications\?\.demarrer\(\)/.test(serveur));
   check('server.js monte les routes des notifications',
     /app\.use\('\/api\/notifications',\s*notifications\.router\)/.test(serveur));
 }
