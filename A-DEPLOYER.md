@@ -1,5 +1,12 @@
 # À déposer sur Infomaniak
 
+**Accueil : la bâche du club retirée** (branche `claude/project-thread-v83ym1`,
+25 octobre 2026, demandé par Gaël : « trop d'information sur la page »).
+Construction seule, **sans schéma**. Les soirs de match, il ne reste que la
+fumée aux couleurs du club derrière le Fanzzy.
+
+---
+
 **La marque des championnats à Fanzzy, et le cri et le son des autres clubs**
 (branche `claude/project-thread-v83ym1`, 25 octobre 2026, demandé par Gaël ;
 un son Artlist, 376 crédits, avec son accord). Construction seule, **sans
