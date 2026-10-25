@@ -19,6 +19,10 @@
  *      nommer personne — et c'est le vrai `proposer` du KOP qui l'appelle.
  *   6. **Le duel** prévient ceux qui suivent le club qui manque, une fois par
  *      match, et pas deux duels de suite dans la pause.
+ *   6b. **Le club qui joue** : trente minutes avant, puis le Virage au coup
+ *      d'envoi, à ceux qui suivent l'un des deux clubs, une fois par match.
+ *   6c. **Les amis** : une demande, un oui (jamais un non), une invitation
+ *      en duel — par le vrai module des amis, sans nommer personne.
  *   7. **Supprimer son compte** efface ses appareils.
  *   8. **Une table absente** éteint sans lever.
  *
@@ -38,6 +42,7 @@ import {
    Virage applique depuis que « La quête » et « Mur de bâches » en sont
    sortis (`EN_VENTE` a disparu avec eux). */
 import { createKop } from '../src/server/kop/index.js';
+import { createAmis } from '../src/server/amis/index.js';
 import { BONUS } from '../src/shared/kop.js';
 import { createStore } from '../src/server/auth/store.js';
 import { poserReglages } from '../src/shared/reglages.js';
@@ -54,10 +59,11 @@ const mysql = await import('mysql2/promise');
 {
   const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
   await raw.query('SET FOREIGN_KEY_CHECKS = 0');
-  await raw.query(`DROP TABLE IF EXISTS notif_appareils, notif_cles, kop_invites, kop_bulletins,
+  await raw.query(`DROP TABLE IF EXISTS notif_appareils, notif_cles, parrainages, amities,
+    fixtures, kop_invites, kop_bulletins,
     kop_votes, kop_bonus, kop_membres, kops, user_follows, teams, sessions, auth_tokens, users`);
   await raw.query('SET FOREIGN_KEY_CHECKS = 1');
-  for (const f of ['auth', 'football', 'kop', 'notifications']) {
+  for (const f of ['auth', 'football', 'kop', 'amis', 'notifications']) {
     await raw.query(readFileSync(path.join(RACINE, 'sql', `${f}.sql`), 'utf8'));
   }
   await raw.end();
@@ -173,7 +179,7 @@ check('une ligne par appareil, clée sur l’empreinte de l’adresse',
   lignes.length === 2
   && lignes.some((l) => l.id === empreinteAppareil('https://push.exemple.net/bob')));
 check('rien d’autre n’est gardé que l’adresse, les clés, les cases et la date',
-  Object.keys(lignes[0]).sort().join() === 'auth,cree_le,duel,endpoint,id,kop,p256dh,user_id');
+  Object.keys(lignes[0]).sort().join() === 'amis,auth,club,cree_le,duel,endpoint,id,kop,p256dh,user_id,virage');
 
 /* ------------------------------------------- 2. son propre appareil */
 
@@ -299,6 +305,123 @@ console.log('\n— le duel qui attend');
   check('« de », « du », « d’ » : la même règle que l’accueil',
     deClub('FC Sion') === 'de FC Sion' && deClub('Le Servette') === 'du Servette'
     && deClub('Arsenal') === 'd’Arsenal');
+}
+
+/* ------------------------------------------------ 6b. le club qui joue */
+
+console.log('\n— le club qui joue, et son Virage');
+{
+  const tout = { kop: true, duel: true, club: true, virage: true, amis: true };
+  r = await appel(CLA, '/appareil', 'PUT', { abonnement: appareil('cla'), sujets: tout });
+  check('les trois cases neuves s’inscrivent et se relisent',
+    r.json.sujets?.club === true && r.json.sujets?.virage === true && r.json.sujets?.amis === true
+    && (await appel(CLA, '/etat', 'POST', { endpoint: appareil('cla').endpoint }))
+      .json.sujets?.amis === true);
+  await appel(EVE, '/appareil', 'PUT', { abonnement: appareil('eve'),
+    sujets: { club: true, virage: false } });
+  r = await appel(EVE, '/etat', 'POST', { endpoint: appareil('eve').endpoint });
+  check('une case que la page n’envoie pas vaut non',
+    r.json.sujets?.club === true && r.json.sujets?.kop === false && r.json.sujets?.amis === false);
+
+  /* Sion – Servette à 10 h 30 UTC, un autre à 13 h : il est 10 h. */
+  await ligne(`INSERT INTO fixtures (id, league_id, season, home_id, away_id, status_short, kickoff_at)
+    VALUES (900, 207, 2026, 85, 91, 'NS', '2026-10-06 10:30:00'),
+           (901, 207, 2026, 85, 91, 'NS', '2026-10-06 13:00:00')`);
+  envois.length = 0;
+  n = await N.avantMatch();
+  check('trente minutes avant, ceux qui suivent l’un des deux clubs et ont coché la case',
+    vers() === 'cla,eve' || (console.log('        partis vers :', vers()), false));
+  let m = envois[0]?.message ?? {};
+  check('le message nomme le match, sans heure ni joueur, et mène aux matchs du jour',
+    m.titre === 'Ton club joue bientôt' && m.corps.startsWith('FC Sion – Servette FC')
+    && m.corps.includes('30 minutes') && m.url === '/aujourdhui' && m.tag === 'match-900'
+    && !Object.keys(U).some((nom) => JSON.stringify(m).includes(nom)));
+  envois.length = 0;
+  maintenant = MIDI + 2 * 60_000;
+  await N.avantMatch();
+  check('la minute suivante ne le redit pas, et le match de 13 h attend son heure',
+    envois.length === 0);
+
+  envois.length = 0;
+  await N.coupDEnvoi(900, { status: 'NS', elapsed: null });
+  check('avant le coup d’envoi, le Virage ne s’annonce pas', envois.length === 0);
+  await N.coupDEnvoi(900, { status: '1H', elapsed: 1 });
+  check('au coup d’envoi, le Virage s’ouvre pour ceux qui ont coché sa case',
+    vers() === 'cla' || (console.log('        partis vers :', vers()), false));
+  m = envois[0]?.message ?? {};
+  check('il mène droit à la tribune du match, et remplace le message d’avant',
+    m.titre === 'Le Virage est ouvert' && m.url === '/virage?match=900' && m.tag === 'match-900');
+  envois.length = 0;
+  await N.coupDEnvoi(900, { status: '1H', elapsed: 2 });
+  await N.coupDEnvoi(901, { status: '1H', elapsed: 35 });
+  check('le tour suivant ne le redit pas, et un match déjà bien entamé non plus',
+    envois.length === 0);
+  maintenant = MIDI;
+}
+
+/* ------------------------------------------------------ 6c. les amis */
+
+console.log('\n— les amis');
+{
+  const A = createAmis({ pool, requireAuth, notifications: N });
+  const attendre = async () => {
+    for (let i = 0; i < 50 && !envois.length; i++) await new Promise((ok) => setTimeout(ok, 20));
+  };
+  envois.length = 0;
+  await A.demander(ANA, CLA);
+  await attendre();
+  check('une demande d’ami prévient celui qu’on demande',
+    vers() === 'cla' || (console.log('        partis vers :', vers()), false));
+  const m = envois[0]?.message ?? {};
+  check('sans nommer celui qui demande, et mène aux amis',
+    m.titre === 'Nouvelle demande d’ami' && m.url === '/amis'
+    && !Object.keys(U).some((nom) => JSON.stringify(m).includes(nom)));
+  envois.length = 0;
+  await A.retirer(ANA, CLA);
+  await A.demander(ANA, CLA);
+  await new Promise((ok) => setTimeout(ok, 100));
+  check('demander, retirer, redemander : le téléphone ne vibre qu’une fois', envois.length === 0);
+
+  await A.demander(CLA, EVE);
+  envois.length = 0;
+  await A.repondre(EVE, CLA, true);
+  await attendre();
+  check('un oui prévient celui qui avait demandé',
+    vers() === 'cla' && envois[0].message.titre === 'Demande acceptée');
+  envois.length = 0;
+  await A.repondre(CLA, ANA, false);
+  await new Promise((ok) => setTimeout(ok, 100));
+  check('un non ne prévient personne', envois.length === 0);
+
+  envois.length = 0;
+  await N.inviteDuel(CLA, 'abc123');
+  check('l’invitation d’un ami en duel mène au vestiaire, et ne vit que cinq minutes',
+    envois[0]?.message.url === '/duel-nvn?duel=abc123' && envois[0].options.TTL === 300);
+}
+
+/* ------------------------------------- 6d. une case neuve pas encore en base */
+
+console.log('\n— le code en ligne avant le schéma');
+{
+  await ligne('ALTER TABLE notif_appareils DROP COLUMN amis');
+  const N4 = createNotifications({ pool, requireAuth, envoyer, horloge, log });
+  const app4 = express();
+  app4.use((req, _r, next) => { req.user = { id: CLA }; next(); });
+  app4.use('/n', N4.router);
+  const h4 = createServer(app4);
+  await new Promise((ok) => h4.listen(0, ok));
+  const u4 = `http://127.0.0.1:${h4.address().port}/n`;
+  const lu = await fetch(`${u4}/etat`, { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ endpoint: appareil('cla').endpoint }) }).then((x) => x.json());
+  check('sans la colonne « amis », les autres cases se lisent encore',
+    lu.sujets?.kop === true && lu.sujets?.amis === false);
+  const pose = await fetch(`${u4}/appareil`, { method: 'PUT', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ abonnement: appareil('cla'), sujets: { kop: true, amis: true } }) });
+  check('et s’inscrivent encore', pose.status === 200);
+  envois.length = 0;
+  check('ce sujet se tait sans lever', (await N4.inviteDuel(CLA, 'x')) === 0 && envois.length === 0);
+  h4.close();
+  await ligne('ALTER TABLE notif_appareils ADD COLUMN amis TINYINT(1) NOT NULL DEFAULT 1');
 }
 
 /* --------------------------------------------- 7. supprimer son compte */

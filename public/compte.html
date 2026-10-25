@@ -205,6 +205,12 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
           data-sujet="kop"><i aria-hidden="true"></i><span data-t="notif.kop"></span></button>
         <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
           data-sujet="duel"><i aria-hidden="true"></i><span data-t="notif.duel"></span></button>
+        <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+          data-sujet="club"><i aria-hidden="true"></i><span data-t="notif.club"></span></button>
+        <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+          data-sujet="virage"><i aria-hidden="true"></i><span data-t="notif.virage"></span></button>
+        <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+          data-sujet="amis"><i aria-hidden="true"></i><span data-t="notif.amis"></span></button>
       </div>
       <div class="hint" id="notifNote"></div>
     </div>
@@ -333,6 +339,7 @@ const I18N = {
     'account.terms':'Créer un compte, c’est accepter les conditions',
     'notif.titre':'NOTIFICATIONS','notif.texte':'Sur cet appareil, même le jeu fermé. Jamais la nuit, de 22 h à 8 h.',
     'notif.kop':'Un vote de mon KOP s’ouvre','notif.duel':'Un duel classé attend un supporter de mon club',
+    'notif.club':'Mon club joue dans 30 minutes','notif.virage':'Le Virage d’un match de mon club s’ouvre','notif.amis':'Mes amis : une demande, un oui, une invitation en duel',
     'notif.ios':'Sur iPhone, installe d’abord le jeu sur l’écran d’accueil (Partager, puis « Sur l’écran d’accueil ») et ouvre-le de là.',
     'notif.navigateur':'Ce navigateur ne reçoit pas de notifications.',
     'notif.refusees':'Tu les as refusées dans le navigateur. Pour changer d’avis, autorise-les dans les réglages du site, puis recharge la page.',
@@ -373,6 +380,7 @@ const I18N = {
     'account.terms':'Creating an account means accepting the terms',
     'notif.titre':'NOTIFICATIONS','notif.texte':'On this device, even with the game closed. Never at night, from 10 pm to 8 am.',
     'notif.kop':'A vote opens in my KOP','notif.duel':'A ranked duel is waiting for a fan of my club',
+    'notif.club':'My club plays in 30 minutes','notif.virage':'The End opens for my club’s match','notif.amis':'My friends: a request, a yes, a duel invite',
     'notif.ios':'On iPhone, first add the game to your home screen (Share, then “Add to Home Screen”) and open it from there.',
     'notif.navigateur':'This browser cannot receive notifications.',
     'notif.refusees':'You blocked them in the browser. To change your mind, allow them in the site settings, then reload the page.',
@@ -413,6 +421,7 @@ const I18N = {
     'account.terms':'Mit dem Konto akzeptierst du die Bedingungen',
     'notif.titre':'BENACHRICHTIGUNGEN','notif.texte':'Auf diesem Gerät, auch wenn das Spiel geschlossen ist. Nie nachts, von 22 bis 8 Uhr.',
     'notif.kop':'In meinem KOP beginnt eine Abstimmung','notif.duel':'Ein Ranglistenduell wartet auf einen Fan meines Klubs',
+    'notif.club':'Mein Klub spielt in 30 Minuten','notif.virage':'Die Kurve eines Spiels meines Klubs öffnet','notif.amis':'Meine Freunde: eine Anfrage, ein Ja, eine Duell-Einladung',
     'notif.ios':'Auf dem iPhone füge das Spiel zuerst zum Home-Bildschirm hinzu (Teilen, dann „Zum Home-Bildschirm“) und öffne es von dort.',
     'notif.navigateur':'Dieser Browser kann keine Benachrichtigungen empfangen.',
     'notif.refusees':'Du hast sie im Browser blockiert. Erlaube sie in den Website-Einstellungen und lade die Seite neu.',
@@ -453,6 +462,7 @@ const I18N = {
     'account.terms':'Crear una cuenta es aceptar las condiciones',
     'notif.titre':'NOTIFICACIONES','notif.texte':'En este dispositivo, incluso con el juego cerrado. Nunca de noche, de 22 h a 8 h.',
     'notif.kop':'Se abre una votación en mi KOP','notif.duel':'Un duelo clasificatorio espera a un hincha de mi club',
+    'notif.club':'Mi club juega en 30 minutos','notif.virage':'Se abre el Fondo de un partido de mi club','notif.amis':'Mis amigos: una solicitud, un sí, una invitación a duelo',
     'notif.ios':'En iPhone, añade primero el juego a la pantalla de inicio (Compartir y luego «Añadir a pantalla de inicio») y ábrelo desde allí.',
     'notif.navigateur':'Este navegador no recibe notificaciones.',
     'notif.refusees':'Las bloqueaste en el navegador. Para cambiar de opinión, permítelas en los ajustes del sitio y recarga la página.',
