@@ -434,7 +434,7 @@
      posées en « screen » : seul ce qui brille se voit. Voir « fond ». */
   .fx-fond{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;
     opacity:0;transition:opacity .35s;pointer-events:none;z-index:89}
-  .fx-fond.on{opacity:.9}
+  .fx-fond.on{opacity:var(--fx-fond-op,.9)}
   .fx-fond.dans{position:absolute;z-index:-1}
   html.tbf-vitrine-ouverte .fx-fond:not(.dans){z-index:128}
 
@@ -1466,7 +1466,11 @@
     }
     if (v.getAttribute('src') !== src) { v.src = src; v.load(); }
     try { v.currentTime = 0; } catch { /* pas encore chargée */ }
-    v.style.opacity = opacite == null ? '' : String(opacite);
+    /* L'opacité voulue passe par une variable que seule `.on` lit. Posée en
+       `style.opacity`, elle survivait au retrait de `.on` : la gerbe d'un but
+       restait figée par-dessus tout le duel (25 octobre 2026). */
+    if (opacite == null) v.style.removeProperty('--fx-fond-op');
+    else v.style.setProperty('--fx-fond-op', String(opacite));
     v.classList.add('on');
     v.play?.()?.catch?.(() => {});
     clearTimeout(v._t);

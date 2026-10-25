@@ -741,8 +741,10 @@ $('formLogin').onsubmit = async (e) => {
      * que la page des boosters le dit en toutes lettres : sans le `aouvrir`
      * qui suit, arriver là ressemble à une erreur de navigation.
      */
-    if (!fait) { location.href = '/bienvenue'; return; }
-    location.href = aOuvrir > 0 ? '/boosters?aouvrir=1' : '/';
+    /* `replace` : le formulaire de connexion ne reste pas derrière le joueur.
+       Le bouton retour du téléphone, depuis le duel guidé, l'y ramenait. */
+    if (!fait) { location.replace('/bienvenue'); return; }
+    location.replace(aOuvrir > 0 ? '/boosters?aouvrir=1' : '/');
     return;
   }
   else say('gateMsg', r.json.error ?? 'auth.error.server');
@@ -757,7 +759,7 @@ $('formRegister').onsubmit = async (e) => {
   busy(e.target, false);
   if (r.status === 201) {
     // Nouvel inscrit : on l'emmène choisir son club et ouvrir son paquet.
-    location.href = '/bienvenue';
+    location.replace('/bienvenue');
     return;
   }
   else say('gateMsg', r.json.error ?? 'auth.error.server');
