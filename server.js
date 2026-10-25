@@ -39,6 +39,7 @@ import { createNiveau } from './src/server/niveau/index.js';
 import { createAbonnement } from './src/server/abonnement/index.js';
 import { createContenus } from './src/server/contenus/index.js';
 import { createAide } from './src/server/aide/index.js';
+import { createSignalement } from './src/server/signalement/index.js';
 import { createPronostics } from './src/server/pronostics/index.js';
 import { createJeux } from './src/server/jeux/index.js';
 import { brancherLaVoix } from './src/server/jeux/voix.js';
@@ -581,6 +582,11 @@ if (process.env.DATABASE_URL) {
        `aide-smoke.mjs` lisent cet appel. */
     const aide = createAide({ pool, requireAuth: auth.requireAuth, fanzzy });
     app.use('/api/aide', aide.router);
+
+    /* « Signaler un problème », depuis le menu de toutes les pages : un mail
+       à Gaël, avec la page et l'appareil. */
+    const signalement = createSignalement({ pool, requireAuth: auth.requireAuth, mailer: globalThis.mailer });
+    app.use('/api/signalement', signalement.router);
     console.log('aide et premiers pas actifs');
 
     /* ---- le quotidien : missions du jour, sachet, carte de présence,
