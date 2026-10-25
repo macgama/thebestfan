@@ -37,14 +37,14 @@
  * garder cette règle — c'est la seule de cette série qui ne se rattrape pas
  * après coup.
  *
- * ## Quarante-cinq lignées sur soixante, et pourquoi elle arrive fermée
+ * ## Cinquante lignées sur soixante, et pourquoi elle arrive fermée
  *
- * Les quarante-cinq premières (AN1 à AN45) ont leurs dessins : trois cartes
+ * Les cinquante premières (AN1 à AN50) ont leurs dessins : trois cartes
  * en pied et cinq états par âge, en tenue de base (AN17 n'a encore que deux
  * états au deuxième âge et AN38 quatre, AN9, AN22, AN26, AN29 et AN35 quatre
  * au premier : leurs planches sont à refaire). Elles entrent par lots de
  * cinq, à mesure que leurs dessins arrivent : une lignée sans dessin aurait
- * mis au catalogue une silhouette procédurale. Les quinze autres suivront de
+ * mis au catalogue une silhouette procédurale. Les dix autres suivront de
  * la même façon.
  *
  * Elle arrive **fermée** : aucune saison lancée ne la nomme, donc aucun
@@ -202,6 +202,28 @@
  * trente-deux sur soixante-quatre) : sa prochaine lignée devra encore
  * prendre l'écharpe.
  *
+ * Le lot suivant met le Déplacement en tête, puis donne une lignée aux
+ * Percussions, à la Fidélité, à la Voix et à la Pyro ; le Tifo attend : le
+ * petit chariot de théâtre (depl), qui fait le tour des places de la ville,
+ * station après station, et recommence, d'où l'écharpe ; le petit phoque
+ * gris (perc), qui claque le sable de ses nageoires aussi vite qu'il peut,
+ * d'où le martelage ; la petite théière (fide), qui laisse infuser le temps
+ * qu'il faut et pas une seconde de plus, d'où la tenue ; le chaton de
+ * concours (voix), qui ronronne en mesure d'un bout à l'autre du jugement,
+ * d'où le tempo ; et la petite anguille (pyro), qui se love puis se déroule
+ * d'un coup dans le courant, d'où les rouleaux. Cinquante lignées : neuf en
+ * voix et pyro, huit dans les quatre autres familles ; le Tifo passe en tête
+ * pour le lot suivant.
+ *
+ * Le chariot, le phoque et l'anguille n'avaient pas le choix (voir le lot
+ * précédent) : l'écharpe passe à trente-trois sur soixante-cinq, le
+ * martelage à vingt-sept sur cinquante-trois, les rouleaux à six sur
+ * quarante et un. La théière prend une variante, la seule chose que la
+ * Fidélité pouvait encore se permettre : la garde reste à quarante-quatre,
+ * pile la moitié de quatre-vingt-huit, et la prochaine Fidélité devra
+ * garder. Le chaton prend le tempo, trente-trois sur soixante-trois.
+ * Toutes les variantes restent au-dessus du plancher de `catalogue:smoke`.
+ *
  * La burette n'a pas le choix de son geste. Les Percussions comptaient
  * quarante-huit personnages de premier âge dont six aux `deuxvoix` — pile le
  * huitième. Une quarante-neuvième au geste éponyme aurait fait passer les
@@ -242,10 +264,10 @@ export const SET_TERRACES = {
 };
 
 /**
- * Les quarante-cinq premiers âges. Leurs suites sont dans `dex-ages.js`.
+ * Les cinquante premiers âges. Leurs suites sont dans `dex-ages.js`.
  *
- * `set` est posé une fois, en bas, comme dans `dex-saison.js` : quarante-cinq
- * fois le même mot, ce sont quarante-cinq occasions de l'oublier.
+ * `set` est posé une fois, en bas, comme dans `dex-saison.js` : cinquante
+ * fois le même mot, ce sont cinquante occasions de l'oublier.
  */
 const PREMIERS_AGES = [
 
@@ -789,6 +811,77 @@ const PREMIERS_AGES = [
       + 'vague se retire, longtemps, et se laisse rouler avec elle pile au bon moment.',
     mods: { perfectBonus: 1.17, costPenalty: 1.06 },
     cri: { label: 'ATTENDS LA VAGUE…', gest: 'relance', power: 54 } },
+
+  /* AN46 — la fidélité de la porcelaine des anciennes manufactures du
+     quartier : la petite théière ébréchée du marché aux puces qui finit
+     grande théière bleue, le chef-d'œuvre qui sert le thé à tout le monde.
+     Bleu roi et blanc ; des bateaux et des nuages, ni lettres ni marque de
+     manufacture. La petite fêlure reste sur son couvercle jusqu'au troisième
+     âge. Elle laisse infuser le temps qu'il faut et pas une seconde de plus,
+     d'où la tenue (voir l'en-tête) ; son défaut : elle ne suit pas la
+     cadence. */
+  { id: 'AN46', nom: 'La Petite Théière', type: 'fide', stage: 1, rar: 'commune',
+    histoire: 'Achetée pour trois sous au marché aux puces, une petite fêlure sur le couvercle, '
+      + 'elle a enfoncé son couvre-théière bleu roi jusqu’aux yeux comme un bonnet. Elle laisse '
+      + 'infuser le temps qu’il faut, et pas une seconde de plus : un thé trop infusé, c’est un '
+      + 'thé perdu.',
+    mods: { holdBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'PAS UNE SECONDE DE PLUS', gest: 'tenue', power: 53 } },
+
+  /* AN47 — le déplacement des mystères joués sur des chariots : le petit
+     chariot de bois bancal qui servait de scène aux vieux mystères de rue et
+     finit grand char de procession, rideaux ouverts. Bleu ciel et blanc ; ni
+     texte, ni personne sur la scène. La petite lanterne reste pendue sous son
+     toit jusqu'au troisième âge. Il fait le tour des places de la ville,
+     station après station, et recommence, d'où l'écharpe (voir l'en-tête) ;
+     son défaut : le trac. */
+  { id: 'AN47', nom: 'Le Petit Chariot de Théâtre', type: 'depl', stage: 1, rar: 'commune',
+    histoire: 'Une roue qui branle, ses petits rideaux bleu ciel bien fermés, une seule lanterne '
+      + 'pendue sous son toit : il a le trac avant chaque représentation. Mais une fois parti, il '
+      + 'fait le tour de toutes les places de la ville, station après station, et il recommence.',
+    mods: { breathBonus: 1.16, parryResist: 0.92 },
+    cri: { label: 'ON FAIT LE TOUR DE LA VILLE !', gest: 'echarpe', power: 53 } },
+
+  /* AN48 — la voix de la première exposition féline, au parc : le chaton
+     tout ébouriffé qui boudait le jury et finit grand champion couvert de
+     rosettes. Rouge et bleu ; une fourrure crème, ni lion ni crinière de
+     lion. Le peigne reste coincé dans sa queue jusqu'au troisième âge. Il
+     ronronne en mesure d'un bout à l'autre du jugement, d'où le tempo (voir
+     l'en-tête) ; son défaut : il boude. */
+  { id: 'AN48', nom: 'Le Chaton de Concours', type: 'voix', stage: 1, rar: 'commune',
+    histoire: 'Ébouriffé, un peigne coincé dans la queue, la petite rosette rouge et bleue '
+      + 'épinglée de travers sur son écharpe, il boude tout le jury. Mais dès qu’on le brosse, il '
+      + 'ronronne, toujours à la même mesure, et toute l’exposition se met à son pas.',
+    mods: { tempoWindow: 1.16, refundBonus: 0.92 },
+    cri: { label: 'RON-RON, EN MESURE', gest: 'tempo', power: 53 } },
+
+  /* AN49 — la percussion des phoques gris de l'estuaire : le petit phoque
+     qui pointait le nez entre les bancs de sable et finit gardien des
+     marées, une bouée autour du cou. Bleu et blanc ; ni lettres ni nom sur
+     la bouée. Les grains de sable restent sur son nez jusqu'au troisième âge.
+     Il claque le sable de ses nageoires aussi vite qu'il peut, d'où le
+     martelage (voir l'en-tête) ; son défaut : il s'essouffle. */
+  { id: 'AN49', nom: 'Le Petit Phoque Gris', type: 'perc', stage: 1, rar: 'commune',
+    histoire: 'Encore mouillé, assis sur son banc de sable, la petite bouée bleue et blanche '
+      + 'autour de la taille, quelques grains de sable sur le nez. Quand la marée monte, il '
+      + 'claque le sable de ses nageoires, aussi vite qu’il peut, et tout l’estuaire l’entend.',
+    mods: { mashBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'CLAC-CLAC-CLAC !', gest: 'mash', power: 53 } },
+
+  /* AN50 — la pyro des anguilles qui remontent le fleuve depuis la mer :
+     la petite civelle presque transparente qui finit grande anguille
+     d'argent, enroulée sur elle-même. Blanc et noir ; ni hippocampe, ni
+     pie, ni château, et le fleuve n'a pas de nom. Le galet du fleuve reste
+     dans sa nageoire jusqu'au troisième âge. Elle se love, puis se déroule
+     d'un coup, et le courant l'emporte comme un rouleau lancé, d'où les
+     rouleaux (voir l'en-tête) ; son défaut : chaque élan lui coûte. */
+  { id: 'AN50', nom: 'La Petite Anguille', type: 'pyro', stage: 1, rar: 'commune',
+    histoire: 'Presque transparente, lovée sur elle-même, la casquette de marin blanche bien trop '
+      + 'grande sur sa petite tête, elle serre un galet du fleuve dans sa nageoire. Elle se love, '
+      + 'se love encore, puis se déroule d’un coup, et le courant l’emporte plus loin qu’elle ne '
+      + 'l’aurait cru.',
+    mods: { perfectBonus: 1.17, costPenalty: 1.06 },
+    cri: { label: 'ET JE ME DÉROULE !', gest: 'rouleaux', power: 54 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
