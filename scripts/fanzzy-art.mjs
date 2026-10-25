@@ -67,6 +67,7 @@ import sharp from 'sharp';
    que les quatre. */
 import { PAR_NUMERO, ETATS_ACCEPTES as ETATS } from '../src/shared/fanzzy/rendus.js';
 import { agreger } from './fanzzy-manifeste.mjs';
+import { CADRAGES, carteDAge, bustCadre } from './cadrage-bustes.mjs';
 import { poserLesPaupieres, dossierDesRetouches, nomDeRetouche } from './fanzzy-cligne.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -554,7 +555,13 @@ for (const { evo, lus, l, h, cadre } of ages) {
      * stade précédent, ou sur le plein-pied.
      */
     const source = nus.get('neutre');
-    if (source) {
+    /* Un visage qui n'est pas en haut — un objet, une créature — a son cadre
+       écrit à la main : `cadrage-bustes.mjs`. */
+    const cadrage = CADRAGES[carteDAge(ID, evo)];
+    if (source && cadrage) {
+      await ecrire(await bustCadre(sharp, source.rgba, l, h, source.boite, cadrage, PORTRAIT),
+        dossier, 'portrait', empreinte);
+    } else if (source) {
       const rayon = Math.max(3, Math.round((source.boite.x1 - source.boite.x0) * 0.035));
       const tete = centreTete(source.alpha, l, h, source.boite, rayon);
       const cote = Math.round((source.boite.y1 - source.boite.y0) * 0.42);

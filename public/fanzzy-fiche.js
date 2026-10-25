@@ -394,6 +394,7 @@
                 <div class="tbf-vitrine-tilt" id="fiche-art"></div>
               </div>
             </div>
+            <p class="histoire" id="fiche-histoire" hidden></p>
             <div id="fiche-cri" hidden></div>
             <div class="tbf-inventaire rangs" id="fiche-inventaire"${
               aMoi() ? '' : ' aria-hidden="true"'}></div>
@@ -500,6 +501,7 @@
       peindreTete();
       peindreCarte();
       peindreCotes();
+      peindreHistoire();
       peindreCri();
       peindreInventaire();
       peindreDetail();
@@ -721,6 +723,21 @@
     function criVu() {
       const a = ageDe(vu());
       return (a?.possede ? a.cri?.label : null) ?? d.fanzzy.cri?.label ?? '';
+    }
+
+    /* **Son histoire** (25 octobre 2026, Gaël : « sur la fiche du personnage,
+       il n'y a pas sa description, c'est dommage »). La phrase du catalogue,
+       celle de la vitrine du classeur, sous la carte : celle de l'âge
+       regardé s'il est atteint, de l'âge atteint sinon — comme le nom, elle
+       ne raconte pas d'avance ce qu'il deviendra. Sur un Fanzzy qu'on n'a
+       pas, celle de son premier âge : elle donne envie de l'avoir. */
+    function peindreHistoire() {
+      const n = hote.querySelector('#fiche-histoire');
+      if (!n) return;
+      const a = ageDe(vu());
+      const h = (a?.possede ? a.histoire : null) ?? d.fanzzy.histoire ?? '';
+      n.textContent = h;
+      n.hidden = !h;
     }
 
     /* Le cri se **crie** quand on touche la bande : sur un Fanzzy qu'on n'a
