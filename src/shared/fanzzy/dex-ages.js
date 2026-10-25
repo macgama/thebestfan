@@ -1326,8 +1326,11 @@ export const AGES = {
      les tertres du comté, la faïence ajourée, les caves de la musique beat,
      les premières machines à calculer, les filatures de coton, la petite
      cornemuse du Nord, les grottes de grès sous la ville, les verreries du
-     fleuve, les cerfs-volants de la colline — et le troisième âge en devient
-     la figure, jusqu'à porter le décor sur lui.
+     fleuve, les cerfs-volants de la colline ; puis, pour les créatures, la
+     boîte aux lettres de fonte, les plumes d'acier des ateliers, les
+     écureuils roux de l'île, les perruches de l'ouest de la ville, la plage
+     de galets — et le troisième âge en devient la figure, jusqu'à porter le
+     décor sur lui.
      **Il garde toujours un détail du premier** : le sachet de miettes, le
      bonnet, le mouchoir noué, le petit pinceau, la dent qui manque, le
      baladeur à cassettes, la sonnette de laiton, les lunettes rondes, le
@@ -1341,7 +1344,9 @@ export const AGES = {
      laiton, les chaussures de marche boueuses, le crayon dans le chignon, le
      petit micro rouge, les lunettes d'écaille, le foulard de coton rouge, la
      mèche blanche, les vieilles chaussures éraflées, d'autres baskets
-     rouges, le bandeau bleu marine. C'est la règle de ce fichier, et la fiche
+     rouges, le bandeau bleu marine, la carte postale dans la fente, la tache
+     d'encre bordeaux, la noisette derrière l'oreille, le bonnet à pompon, le
+     coquillage sur le bord du seau. C'est la règle de ce fichier, et la fiche
      de chaque dessin la suit aussi.
 
      Rien ici ne nomme un club, un stade, un joueur ni un chant : voir l'en-tête
@@ -1758,5 +1763,75 @@ export const AGES = {
       + 'bouclier. Le vent fait le tour du stade et toute la tribune se lève avec lui — le '
       + 'bandeau bleu marine est toujours dans ses cheveux.',
       'TOUTE LA COLLINE SE LÈVE'],
+  ],
+  AN41: [
+    ['La Boîte du Coin de la Rue', 'Plus haute et plus large, un fleuron blanc en couronne sur son '
+      + 'chapeau, des bandes d’émail blanc autour du corps, une lanterne de laiton fixée au flanc '
+      + 'et le sac postal rouge devenu gros et plein, scellé d’un cordon blanc, qui luit '
+      + 'doucement. Elle tient le coin de la rue par tous les temps, et pas une lettre ne '
+      + 's’égare.',
+      'PAS UNE LETTRE NE S’ÉGARE'],
+    ['La Grande Poste Rouge', 'Une colonne de fonte deux fois plus haute, aux épaules massives et '
+      + 'aux coutures blanches qui luisent, un haut chapeau cannelé comme un casque, des rangées '
+      + 'de fentes lumineuses le long du corps, des enveloppes scellées de cire rouge qui '
+      + 'tournent autour d’elle et le sac postal géant sanglé dans le dos. Tout le courrier de la '
+      + 'ville passe par elle, et toute la tribune tient avec elle — la carte postale dépasse '
+      + 'toujours de sa fente.',
+      'TOUT LE COURRIER TIENT'],
+  ],
+  AN42: [
+    ['La Plume Calligraphe', 'Droite et polie, montée sur un porte-plume de bois bordeaux sculpté '
+      + 'qui se dresse au-dessus d’elle comme un long chapeau, des volutes bleu ciel gravées le '
+      + 'long de son acier, le flacon d’encre bordeaux devenu grand et lumineux à son côté et un '
+      + 'ruban d’encre qui s’enroule autour d’elle. Elle trace d’un seul trait, et la page '
+      + 'entière suit.',
+      'D’UN SEUL TRAIT'],
+    ['La Grande Plume d’Acier', 'Immense et étincelante, des épaules d’acier aux volutes gravées '
+      + 'qui luisent bleu ciel, un haut porte-plume bordeaux dressé en cimier, le cœur ajouré qui '
+      + 'brille de l’intérieur, de larges rubans d’encre bordeaux enroulés autour d’elle comme '
+      + 'une cape et le flacon géant porté comme une lanterne. Elle trace, et toute la tribune se '
+      + 'dessine avec elle — la petite tache bordeaux est toujours au bout de sa pointe.',
+      'TOUTE LA TRIBUNE SE DESSINE'],
+  ],
+  AN43: [
+    ['L’Écureuil de l’Île', 'Plus grand et plus hardi, debout, une courte cape de toile cirée '
+      + 'noire doublée de rouge, une petite longue-vue de laiton pendue à un cordon, la sacoche '
+      + 'rouge et noire devenue grande, bien bouclée et qui luit doucement, et la queue plus '
+      + 'fournie portée haut. Il guette la baie, et ses deux pattes battent chacune leur mesure.',
+      'UNE PATTE, PUIS L’AUTRE'],
+    ['Le Gardien de l’Île aux Écureuils', 'Immense pour un écureuil, la poitrine large, une énorme '
+      + 'queue rousse dressée derrière la tête comme une flamme, une longue cape rayée noir et '
+      + 'rouge, un harnais de garde forestier aux anneaux de laiton et la sacoche géante qui luit '
+      + 'de rouge de l’intérieur. Ses deux pattes font battre l’île entière, et toute la tribune '
+      + 'avec — la noisette est toujours glissée derrière son oreille.',
+      'TOUTE L’ÎLE BAT'],
+  ],
+  AN44: [
+    ['La Perruche du Fleuve', 'Plus grande et plus lisse, un court gilet noir aux boutons rouges, '
+      + 'une guirlande de fanions rouges et blancs autour des épaules, le bonnet enfin bien '
+      + 'ajusté et son pompon qui luit doucement, et de longues plumes de queue portées '
+      + 'fièrement. Au-dessus du fleuve, c’est elle qui lance le cri, et toute la nuée le '
+      + 'reprend.',
+      'LA NUÉE REPREND'],
+    ['La Reine des Perruches', 'Immense, les ailes vertes repliées haut sur les épaules comme un '
+      + 'manteau, une longue traîne de rubans rouges et blancs lumineux mêlés à ses plumes, une '
+      + 'crête de petites plumes rouges et blanches qui jaillit du bonnet, un collier de laque '
+      + 'noire aux pierres rouges et le bec toujours rouge corail. Elle crie une fois, et toutes '
+      + 'les nuées du fleuve répondent — le bonnet à pompon rouge et blanc est toujours sur sa '
+      + 'tête.',
+      'TOUTES LES NUÉES RÉPONDENT'],
+  ],
+  AN45: [
+    ['Le Galet Poli', 'Plus gros, plus rond et luisant comme s’il sortait de l’eau, sa veine de '
+      + 'quartz blanc qui luit doucement, une ceinture de verres de mer bleus et blancs sertis '
+      + 'dans la pierre et le seau bleu devenu grand, plein de verre de mer lumineux. Il laisse '
+      + 'passer sept vagues, et part sur la huitième.',
+      'SUR LA HUITIÈME'],
+    ['Le Rocher de la Plage', 'Un rocher deux fois plus gros, aux épaules de pierre massives et '
+      + 'arrondies, des veines de quartz blanc qui luisent en travers du corps, une crête de '
+      + 'petits galets empilés en équilibre sur la tête, un manteau de verre de mer bleu et blanc '
+      + 'serti le long du dos et le seau géant porté au bras. Il retient la marée, puis la lâche, '
+      + 'et toute la tribune déferle — le coquillage est toujours sur le bord du seau.',
+      'TOUTE LA MARÉE DÉFERLE'],
   ],
 };

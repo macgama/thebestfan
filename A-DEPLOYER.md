@@ -79,8 +79,8 @@ Construction puis redémarrage, **sans schéma**.
 
 ---
 
-**LES TERRACES : AN6 à AN40, trente-cinq Fanzzy de plus** (branche
-`claude/serie-fanzzy-angleterre-k0bgzs`, 24 octobre 2026, demandé par Gaël).
+**LES TERRACES : AN6 à AN45, quarante Fanzzy de plus** (branche
+`claude/serie-fanzzy-angleterre-k0bgzs`, 24 et 25 octobre 2026, demandé par Gaël).
 Construction puis redémarrage, **sans schéma**.
 
 - AN6 La Timide du Grand Boulevard (Percussion, bleu roi et blanc), AN7 La
@@ -111,23 +111,28 @@ Construction puis redémarrage, **sans schéma**.
   La Gamine au Pipeau (Voix, noir et blanc), AN38 La Gamine à la Lampe de
   Poche (Déplacement, rouge et blanc), AN39 La Gamine à la Bille (Pyro,
   rouge et blanc), AN40 La Gamine au Cerf-Volant (Tifo, bleu marine et
-  blanc) : trois cartes chacun, les expressions des trois âges, le
-  clignement à l'âge 1, et leurs textes dans les cinq langues. Le
-  redémarrage écrit leurs cent cinq cartes dans le catalogue en base
+  blanc), puis les premières créatures : AN41 La Petite Boîte aux Lettres
+  (Fidélité, rouge et blanc), AN42 La Petite Plume d'Acier (Tifo, bordeaux
+  et bleu ciel), AN43 Le Petit Écureuil Roux (Percussion, rouge et noir),
+  AN44 La Petite Perruche (Voix, rouge et blanc), AN45 Le Petit Galet
+  (Pyro, bleu et blanc) : trois cartes chacun, les expressions des trois
+  âges, le clignement à l'âge 1 (sauf AN44), et leurs textes dans les cinq
+  langues. Le redémarrage écrit leurs cent vingt cartes dans le catalogue en base
   (`INSERT IGNORE`, rien d'autre ne bouge). La série passe de vingt à
   soixante lignées (trois Fanzzy par club, demandé par Gaël le 21
-  octobre) : quarante sont dans le jeu, les autres arrivent par lots de
+  octobre) : quarante-cinq sont dans le jeu, les autres arrivent par lots de
   cinq.
 - La série reste **fermée** tant qu'aucune saison lancée ne la nomme : rien
   à faire de plus, ils s'ouvriront avec elle.
 - Après la mise en ligne : /collection, série LES TERRACES, ouvrir AN6 à
-  AN40 et vérifier leurs trois âges (les cartes et les expressions), puis
+  AN45 et vérifier leurs trois âges (les cartes et les expressions), puis
   qu'ils clignent des yeux au premier âge. AN9 n'a pas encore d'expression
   « pousse » au premier âge, AN22, AN26 et AN35 pas de « colère » au premier
   âge, AN29 pas de « joie » au premier âge, AN38 pas de « dépit » au
   deuxième âge, et AN17 n'a que le repos et la joie au deuxième âge
   (planches à refaire) : ils restent au repos dans les expressions qui
-  manquent.
+  manquent. AN44 ne cligne pas encore des yeux (sa figure yeux fermés porte
+  le bonnet, son repos le tient à la main).
 
 ---
 
