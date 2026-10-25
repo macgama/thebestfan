@@ -175,6 +175,7 @@
     compte: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3',
     admin: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6zM9 12l2 2 4-4',
     sortie: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l-4 4 4 4M6 12h9',
+    signaler: 'M5 21V4M5 4h11l-2 4 2 4H5',
     // Une croix : ce qui referme le tiroir (lot 2), là où était le menu.
     fermer: 'M6 6l12 12M18 6L6 18',
     // Un panier : deux roues et une anse. Reconnaissable à vingt pixels.
@@ -852,6 +853,9 @@
          expliqué, et la visite guidée à relancer. En tête des liens du pied :
          c'est ce qu'on y vient chercher quand on est perdu. */
       + item('/comment-jouer', 'comment', 'Comment jouer', ici('/comment-jouer') ? 'on' : '')
+      /* **Signaler un problème** (25 octobre 2026, avant la bêta) : un mail à
+         Gaël, avec la page et l'appareil. Voir `server/signalement`. */
+      + item('#', 'signaler', 'Signaler un problème', 'signaler')
       + item('/profil', 'profil', 'Mon profil', ici('/profil') ? 'on' : '')
       + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
       + item('#', 'sortie', 'Se déconnecter', 'sortie')
@@ -1302,6 +1306,58 @@
         }
       } catch { /* stockage fermé : il n'y avait rien de retenu */ }
       location.href = '/';
+    });
+
+    /* **Signaler un problème.** La boîte de confirmation du jeu, avec un
+       champ de texte : ce qu'on écrit part en mail à Gaël, accompagné de ce
+       que le joueur ne saurait pas dire (la page, l'écran, le navigateur, la
+       version). Le tiroir se range d'abord : la boîte s'ouvre sur la page dont
+       on parle. */
+    tiroir.querySelector('.signaler').addEventListener('click', (e) => {
+      e.preventDefault();
+      ouvrir(false);
+      let aDit = null;
+      window.TBF_DIALOGUE?.confirmer({
+        titre: 'SIGNALER UN PROBLÈME',
+        texte: 'Un bug, une idée, un mot qui cloche : dis ce que tu as vu. La page et ton appareil partent avec ton message.',
+        corps: '<textarea class="tbf-signal" maxlength="2000" rows="6"'
+          + ' placeholder="Ce que tu faisais, ce qui s’est passé…" aria-label="Ton message"></textarea>'
+          + '<p class="tbf-signal-dit" role="status" aria-live="polite"></p>',
+        oui: 'ENVOYER',
+        apres: (boite) => {
+          aDit = boite.querySelector('.tbf-signal-dit');
+          setTimeout(() => boite.querySelector('.tbf-signal')?.focus({ preventScroll: true }), 60);
+        },
+        surOui: async (boite) => {
+          const texte = boite.querySelector('.tbf-signal').value.trim();
+          if (texte.length < 5) { aDit.textContent = 'Écris quelques mots de plus.'; return false; }
+          try {
+            const r = await fetch('/api/signalement', {
+              method: 'POST', credentials: 'same-origin',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                texte,
+                page: location.pathname + location.search,
+                ecran: `${innerWidth}×${innerHeight} @${devicePixelRatio}`,
+                navigateur: navigator.userAgent,
+                langue: document.documentElement.lang,
+                construction: document.querySelector('meta[name="tbf-construction"]')?.content ?? '',
+              }),
+            });
+            if (r.status === 401) { aDit.textContent = 'Connecte-toi pour envoyer un signalement.'; return false; }
+            if (r.status === 429) { aDit.textContent = 'Tu en as envoyé beaucoup : réessaie dans une heure.'; return false; }
+            if (!r.ok) throw new Error(String(r.status));
+          } catch {
+            aDit.textContent = 'Le message n’est pas parti. Réessaie dans un instant.';
+            return false;
+          }
+          window.TBF_DIALOGUE.confirmer({
+            titre: 'MERCI !', texte: 'Ton message est parti. On le lit, et on te répond par mail si besoin.',
+            oui: 'OK', apres: (b) => { b.querySelector('[data-non]').hidden = true; },
+          });
+          return true;
+        },
+      });
     });
 
     /* L'entrée d'administration, si le compte y a droit.

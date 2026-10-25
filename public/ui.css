@@ -9140,6 +9140,14 @@ html[data-calme~="animations"] .tbf-visee .cible.vue.passe{transform:scale(1);tr
 .tbf-dial p{margin:9px 0 0;font-size:13px;line-height:1.6;color:var(--craie)}
 
 .tbf-dial-quoi{display:flex;gap:9px;margin-top:17px}
+.tbf-dial-bt[hidden]{display:none}
+/* « Signaler un problème » (menu.js) : le champ du message. 16 px : en
+   dessous, Safari zoome sur la page au premier appui. */
+.tbf-signal{display:block;box-sizing:border-box;width:100%;margin-top:12px;padding:10px 12px;
+  border:1px solid rgba(242,238,228,.22);border-radius:10px;background:#0A0E13;color:var(--craie);
+  font:16px/1.45 var(--ui);resize:vertical;min-height:110px}
+.tbf-signal:focus-visible{outline:3px solid var(--projo);outline-offset:2px}
+.tbf-dial p.tbf-signal-dit{margin-top:8px;color:var(--projo);min-height:1.6em}
 /* `min-height` : sans lui, la hauteur du bouton ne tenait qu'au rembourrage
    et à l'interligne de la police, et tombait sous la pulpe du doigt dès
    qu'Oswald n'était pas encore chargée — trente-neuf pixels avec la police de

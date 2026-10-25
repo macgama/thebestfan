@@ -127,7 +127,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
   /* `lien`, `bouton`, `tribune` habillent la version HTML (`mail-habit.js`) ;
      le texte brut part toujours avec elle, pour les messageries qui n'en
      veulent pas. */
-  async function send({ to, subject, text, lien = null, bouton = null, tribune = false, locale = 'fr' }) {
+  async function send({ to, subject, text, lien = null, bouton = null, tribune = false, locale = 'fr', replyTo = null }) {
     const transporteur = await getTransport();
     if (!transporteur) {
       // Repli console : le lien reste utilisable, il faut juste aller le
@@ -138,6 +138,7 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
     try {
       const info = await transporteur.sendMail({
         from: from ?? 'thebestfan <no-reply@thebestfan.online>', to, subject, text,
+        ...(replyTo ? { replyTo } : {}),
         html: habiller({ origin, titre: subject.replace(/\s*—\s*thebestfan$/i, ''),
           texte: text, lien, bouton, tribune, langue: messages[locale] ? locale : 'fr',
           copie: t(locale, 'mail.html.copie'), pied: t(locale, 'mail.html.pied') }) });
@@ -234,6 +235,16 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
           pseudo, fin: dateMail(fin, locale), link: `${origin}/abonnement`,
         }),
         lien: `${origin}/abonnement`, bouton: t(locale, 'mail.btn.resil'),
+      });
+    },
+
+    /* « Signaler un problème » (`server/signalement`) : écrit pour Gaël, donc
+       en français, et la réponse va au joueur. */
+    async sendSignalement({ to, replyTo, pseudo, texte, contexte }) {
+      return send({
+        to, replyTo,
+        subject: `Signalement de ${pseudo} — thebestfan`,
+        text: `${texte}\n\n—\n${contexte}\n\nRépondre à ce mail, c’est répondre à ${pseudo}.`,
       });
     },
 
