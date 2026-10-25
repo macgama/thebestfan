@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Signaler un problème** (branche `claude/project-thread-hsgz8a`,
+25 octobre 2026, demandé par Gaël). Construction seule (le Manager redémarre
+de lui-même), **sans schéma**.
+
+- Dans le menu de toutes les pages, sous « Comment jouer » : « Signaler un
+  problème ». Le joueur écrit son message ; il part en mail aux comptes
+  administrateurs (ou à `SIGNALEMENTS_A` si cette variable est posée), avec la
+  page, l'écran, le navigateur, la langue et la version. Répondre au mail,
+  c'est répondre au joueur. Cinq par heure et par joueur.
+- Après la mise en ligne : envoyer un signalement depuis ton téléphone et
+  vérifier qu'il arrive dans ta boîte.
+
+---
+
 **Accueil : la bâche du club retirée** (branche `claude/project-thread-v83ym1`,
 25 octobre 2026, demandé par Gaël : « trop d'information sur la page »).
 Construction seule, **sans schéma**. Les soirs de match, il ne reste que la
