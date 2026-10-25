@@ -319,6 +319,9 @@
       .replace(/-/g, '+').replace(/_/g, '/'));
     return Uint8Array.from(brut, (c) => c.charCodeAt(0));
   };
+  /* Les cases, telles que le serveur les nomme (`SUJETS`). */
+  const SUJETS = ['kop', 'duel', 'club', 'virage', 'amis'];
+  const aucune = () => Object.fromEntries(SUJETS.map((s) => [s, false]));
   const inscription = async () => {
     if (!('serviceWorker' in navigator)) return null;
     const reg = await navigator.serviceWorker.getRegistration('/');
@@ -344,7 +347,7 @@
       const ins = await inscription().catch(() => null);
       const lu = ins ? await appel('/etat', 'POST', { endpoint: ins.endpoint })
         .catch(() => ({ sujets: null })) : { sujets: null };
-      return { possible: true, sujets: lu.sujets ?? { kop: false, duel: false } };
+      return { possible: true, sujets: lu.sujets ?? aucune() };
     },
 
     /**
@@ -353,14 +356,14 @@
      * telles que le serveur les a gardées, ou lève avec la raison.
      */
     async poser(sujets) {
-      const veut = Boolean(sujets.kop || sujets.duel);
+      const veut = SUJETS.some((s) => sujets[s]);
       let ins = await inscription();
       if (!veut) {
         if (ins) {
           await appel('/appareil', 'DELETE', { endpoint: ins.endpoint }).catch(() => {});
           await ins.unsubscribe().catch(() => {});
         }
-        return { kop: false, duel: false };
+        return aucune();
       }
       if (Notification.permission !== 'granted') {
         const p = await Notification.requestPermission();
@@ -383,7 +386,7 @@
         }
       }
       const r = await appel('/appareil', 'PUT', { abonnement: ins.toJSON(), sujets });
-      return r.sujets ?? { kop: false, duel: false };
+      return r.sujets ?? aucune();
     },
 
     /** Oublie cet appareil : à appeler **avant** la déconnexion, qui ferme la session. */
@@ -396,6 +399,44 @@
       } catch { /* rien à oublier */ }
     },
   };
+
+  /* **Le jeu ouvert** : `sw.js` ne montre pas la notification par-dessus, il
+     nous la passe. On la pose en bandeau, sur un appui elle mène où elle
+     parle — sauf si l'on y est déjà, ou si `duel-rappel.js` la dit déjà
+     (l'invitation d'un ami en duel, avec son pseudo). */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      const m = e.data;
+      if (m?.type !== 'tbf-notif' || !m.titre) return;
+      if (m.tag === 'amis-duel') return;
+      let cible;
+      try { cible = new URL(m.url || '/', location.origin); } catch { return; }
+      if (cible.origin !== location.origin) return;
+      const ici = (p) => p.replace(/\/$/, '') || '/';
+      if (ici(cible.pathname) === ici(location.pathname)) return;
+      let pile = document.querySelector('body > .tbf-pile');
+      if (!pile) {
+        pile = document.createElement('div');
+        pile.className = 'tbf-pile';
+        document.body.append(pile);
+      }
+      pile.querySelector(`[data-notif="${CSS.escape(String(m.tag ?? ''))}"]`)?.remove();
+      const a = document.createElement('a');
+      a.className = 'tbf-toast tbf-notif-bandeau';
+      a.href = cible.pathname + cible.search;
+      a.dataset.notif = String(m.tag ?? '');
+      a.setAttribute('role', 'status');
+      a.style.cssText = 'flex-direction:column;align-items:flex-start;gap:2px;text-decoration:none';
+      const titre = document.createElement('span');
+      titre.textContent = m.titre;
+      const corps = document.createElement('small');
+      corps.textContent = m.corps || '';
+      corps.style.cssText = 'font-weight:400;letter-spacing:0;opacity:.85;font-size:12px';
+      a.append(titre, corps);
+      pile.append(a);
+      setTimeout(() => a.remove(), 10_000);
+    });
+  }
 
   window.addEventListener('appinstalled', () => {
     etat.installe = true;

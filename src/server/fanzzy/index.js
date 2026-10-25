@@ -2355,6 +2355,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id = ? LIMIT 1`,
       [userId, sonClub]).catch(() => [])).length > 0;
     const taux = { force: reglage('fanzzy.lien_force'), gain: reglage('fanzzy.lien_gain') };
+    /* **Le club se montre** (demande de Gaël du 25 octobre 2026, qui lève le
+       « sans le nommer » du 21) : son nom et son logo, tels que la liste des
+       matchs les montre déjà, depuis `teams`. Un club que la base ne connaît
+       pas encore garde le tampon sans nom. */
+    const equipe = sonClub == null ? null : (await q(
+      `SELECT name, logo FROM teams WHERE id = ?`, [sonClub]).catch(() => []))[0] ?? null;
 
     return {
       /* **Un Fanzzy neutre se lie contre des écharpes** (choix de Gaël du
@@ -2362,7 +2368,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          `clubPrincipal` ne servent qu'à proposer LIER À MON CLUB ; un joueur
          sans club principal lit pourquoi le bouton ne fait rien. */
       club: sonClub != null
-        ? { lie: true, tonClub: suit, achete: achete != null, ...taux }
+        ? { lie: true, tonClub: suit, achete: achete != null, ...taux,
+          nom: equipe?.name ?? null, logo: equipe?.logo ?? null }
         : { lie: false, prix: reglage('fanzzy.lien_prix'),
           clubPrincipal: (await clubPrincipal(userId)) != null, ...taux },
       fanzzy: {

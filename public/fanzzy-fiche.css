@@ -206,6 +206,12 @@
 .fiche .vitrine>.fiche-club[data-club=autre]{--teinte:var(--bleu-clair)}
 .fiche .vitrine>.fiche-club[data-club=lier]{--teinte:var(--projo)}
 .fiche .vitrine>.fiche-club>small{display:block;margin-top:3px;font-size:11px;letter-spacing:.04em}
+/* Le logo du club, au-dessus du mot ; le nom dessous, en clair (pas en
+   capitales tamponnées : c'est un nom propre, il doit se lire). */
+.fiche .vitrine>.fiche-club>.fiche-club-logo{display:block;width:30px;height:30px;
+  object-fit:contain;margin:0 auto 4px;rotate:calc(var(--rot) * -1)}
+.fiche .vitrine>.fiche-club>.fiche-club-nom{text-transform:none;font-size:12px;line-height:1.15;
+  overflow-wrap:anywhere}
 
 /* Le tampon TON AVATAR : un acquis, pas un bouton éteint. En deux lignes,
    à seize pixels — le plancher du tampon en contour sur un fond sombre. */
