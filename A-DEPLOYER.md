@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**La remise à zéro pour la Saison 1** (branche `claude/project-thread-0tjnbf`,
+25 octobre 2026, demandé par Gaël). Rien ne change sur le site : c'est un
+script que Gaël lance **lui-même**, une fois, en SSH, **après** la mise en
+ligne de tout main (construction, schéma, redémarrage) et hors d'un match.
+
+- `cd ~/sites/thebestfan.online && npm run saison1:essai` : il montre ce qui
+  sera vidé, les abonnements Stripe à résilier et les nouvelles dates des
+  saisons, sans rien toucher.
+- `npm run saison1:remise`, puis taper `SAISON 1` : sauvegarde complète dans
+  `~/sauvegardes/`, abonnements Stripe résiliés, comptes joueurs et tout ce
+  qui est à eux supprimés (les comptes admin restent, remis à neuf), saison 1
+  lancée à l'instant jusqu'au 31 mars 2027, saisons suivantes repoussées d'un
+  trimestre.
+- Puis redémarrer dans l'onglet Node.js, et se reconnecter : le paquet de
+  bienvenue revient.
+
+---
+
 **Le menu réordonné** (branche `claude/project-thread-inbro1`, 25 octobre
 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
