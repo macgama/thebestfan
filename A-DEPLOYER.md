@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**La carte commune a son animation** (branche `claude/project-thread-nk6bu3`,
+25 octobre 2026, demandé par Gaël ; fond filmé Artlist, 252 crédits, avec
+son accord). Construction seule, **sans schéma**.
+
+- Au booster, une commune qui se retourne lève une onde de craie, de la
+  poussière et des confettis de papier, sur une explosion de craie filmée
+  (plus discrète que les fonds des rares).
+- Après la mise en ligne : ouvrir un booster et regarder une commune.
+
+---
+
 **Notifications : ton club, son Virage, tes amis** (branche
 `claude/project-thread-dxjvy4`, 25 octobre 2026, demandé par Gaël).
 **Avec schéma** : `npm run schema:appliquer` (trois colonnes ajoutées à
