@@ -1146,7 +1146,8 @@
         gagnée, la courte sinon — celle que tout le monde a (`/ultime.js`). */
     function voirUltime(x) {
       window.TBF_ULTIME?.scene?.({ src: x.image ?? null, cri: x.titre, nom: ageDe(vu())?.nom ?? d.fanzzy.nom,
-        couleur: famille(d.fanzzy.type).c, grande: Boolean(x.grande) });
+        couleur: famille(d.fanzzy.type).c, grande: Boolean(x.grande),
+        racine: d.fanzzy.racine ?? d.fanzzy.id, age: vu() });
     }
 
     function crier() {

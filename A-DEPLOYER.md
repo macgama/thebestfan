@@ -15,6 +15,11 @@ puis redémarrage, **sans schéma** (la carte se range dans `user_etats`).
   puissance (70), bonus par âge (25 %).
 - Après la mise en ligne : un duel contre un bot, chanter juste jusqu'à
   ULTIMATE PRÊT, lancer le coup ; puis ouvrir une fiche, rang ULTIMATE.
+- Ajout du même jour (demande de Gaël) : un son propre à l'Ultimate (une
+  montée jusqu'au choc, puis l'impact), et la grande scène plein cadre,
+  animée au code, pour les images Ultimate d'Artlist. Elle ne se voit
+  qu'une fois les images branchées (`npm run ultime:images`) ; d'ici là, la
+  scène dessinée avec la carte reste.
 
 ---
 

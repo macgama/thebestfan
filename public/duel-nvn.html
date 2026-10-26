@@ -4878,7 +4878,7 @@ function sceneUltime(e, pour) {
   if (qui) vivreFz(pour ? 'moi' : 'eux', 'pousse', 2600, 'saut');
   window.TBF_SON?.rumeur?.('but');
   return window.TBF_ULTIME?.scene?.({ src, cri: e.cri ?? '', nom: e.nom ?? '',
-    couleur, grande: Boolean(e.grande), eux: !pour });
+    couleur, grande: Boolean(e.grande), eux: !pour, racine: qui?.racine, age: qui?.evo });
 }
 
 $('mainCartes').addEventListener('click', (e) => {
