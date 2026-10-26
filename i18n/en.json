@@ -6447,5 +6447,7 @@
  "Signalement de {0} — thebestfan": "Report from {0} — thebestfan",
  "{0} — {1} Répondre à ce mail, c’est répondre à {2}.": "{0} — {1} Replying to this email replies to {2}.",
  "Écran : {0}": "Screen: {0}",
- "Écran : —": "Screen: —"
+ "Écran : —": "Screen: —",
+ "Le chant de ton titulaire est toujours dans ta main, et il pousse autant que la poussée du cri de sa fiche.": "Your starter's chant is always in your hand, and it pushes as hard as the shout push on its card.",
+ "--fx-fond-op": "--fx-fond-op"
 }
