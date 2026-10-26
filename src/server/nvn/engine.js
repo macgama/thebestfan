@@ -4,7 +4,7 @@ import { grade, applyHeroMods, resoudreGeste, Cheat, GESTES, MOTIFS }
 import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
 /* Les chants, partagés avec le Virage. Le duel les impose plus : il les offre,
    comme lui, et c'est la dernière différence entre les deux modes qui tombe. */
-import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
+import { CHANTS, ORDRE, puissanceDuChant } from '../../shared/duel/chants.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 import { seuilLegende, chantReussi } from '../../shared/legende.js';
@@ -505,7 +505,8 @@ export class DuelNvN {
    * lit entière.
    *
    * Il suit le Fanzzy en tribune : un changement, et la carte change avec lui.
-   * Aucun bonus — le chant coûte et pousse comme ailleurs.
+   * Il coûte comme ailleurs, mais pousse **la poussée du cri** de son Fanzzy
+   * (choix de Gaël du 26 octobre 2026, voir `puissanceDuChant`).
    */
   offreDe(j) {
     const sienne = this.chantSien(j);
@@ -622,12 +623,15 @@ export class DuelNvN {
     }
 
     /* La poussée vient de **la carte**, plus d'une constante. C'est toute la
-       décision qu'on vient d'ajouter : un gros chant coûte plus et rend plus. */
+       décision qu'on vient d'ajouter : un gros chant coûte plus et rend plus.
+       Le chant de son geste, lui, pousse **la poussée de son cri** — le
+       nombre de sa fiche, qui grandit avec la Relève (`puissanceDuChant`). */
+    const puissance = sien ? puissanceDuChant(card, fz.cri) : card.power;
     if (backfire) {
       const faux = { ...j, side: j.side ^ 1 };
-      this.pousser(faux, card.power * 0.35, t, evenements);
+      this.pousser(faux, puissance * 0.35, t, evenements);
     } else {
-      this.pousser(j, card.power * quality * facteur, t, evenements);
+      this.pousser(j, puissance * quality * facteur, t, evenements);
     }
     return evenements;
   }
@@ -1184,7 +1188,8 @@ export class DuelNvN {
       chants: (moi ? this.offreDe(moi) : this.repertoire).map((id) => {
         if (!moi || id !== this.chantSien(moi)) return { id, ...CHANTS[id] };
         const type = moi.fanzzy[moi.actif]?.type;
-        return { id, ...CHANTS[id], sien: { famille: type ?? null, c: TYPES[type]?.c ?? null, ico: TYPES[type]?.ico ?? null } };
+        // Sa poussée est celle du cri : la carte affiche ce qu'elle poussera.
+        return { id, ...CHANTS[id], power: puissanceDuChant(CHANTS[id], moi.fanzzy[moi.actif]?.cri), sien: { famille: type ?? null, c: TYPES[type]?.c ?? null, ico: TYPES[type]?.ico ?? null } };
       }),
       stade: this.stade
         ? { id: this.stade.id, nom: this.stade.nom, effet: this.stade.effet }

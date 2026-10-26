@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**La poussée du cri compte enfin** (branche `claude/project-thread-08684b`,
+26 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- Au duel et au Virage, le chant du geste du Fanzzy en tribune pousse la
+  « poussée du cri » de sa fiche au lieu de celle de la carte (jamais moins
+  que la carte). Le coût ne change pas, les autres chants non plus.
+- Au duel, ce nombre suit la Relève : la lignée de la Reine de la Machine pousse 54 au
+  premier âge, 67 au deuxième, 80 au troisième. Au Virage, c'est le premier
+  âge (le barème du Virage suit la racine).
+- La carte de ce chant affiche la nouvelle poussée, et « Comment jouer » le
+  dit, dans les cinq langues.
+
+---
+
 **La fin du duel guidé réparée** (branche `claude/project-thread-ok4tcv`,
 25 octobre 2026, demandé par Gaël). Construction seule (le Manager redémarre
 de lui-même), **sans schéma**.

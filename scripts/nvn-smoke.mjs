@@ -538,6 +538,33 @@ check('un entraînement ne compte pas',
     check('un autre chant ne le dit pas', ev2 && !('sien' in ev2) && !('famille' in ev2));
   }
 
+  /* **Son chant pousse la poussée de son cri** (choix de Gaël du 26 octobre
+     2026). Le nombre de la fiche n'entrait dans aucun calcul : la poussée
+     venait de la seule carte. Mêmes frappes, même carte, même duel — seul le
+     geste du cri change, et la poussée suit le cri, jamais en dessous de la
+     carte. */
+  {
+    const pousse = (gest, power) => {
+      const d = duel(1, 'entrainement', t, 'cri-pousse');
+      const j = d.joueurs.get('0-0');
+      j.fanzzy[0].cri = { ...j.fanzzy[0].cri, gest, power };
+      d.repertoire[0] = 'reprise';
+      j.breath = 100;
+      const taps = Array.from({ length: 8 }, (_, i) => i * 560 + 7);
+      const ev = d.chanter('0-0', { cardId: 'reprise', taps }, t);
+      const chant = d.vue('0-0').chants.find((c) => c.id === 'reprise');
+      return { push: ev.find((e) => e.t === 'push')?.valeur ?? 0, affiche: chant?.power };
+    };
+    const sien = pousse('tempo', 90);
+    const autre = pousse('mash', 90);
+    const faible = pousse('tempo', 10);
+    const rapport = sien.push / autre.push;
+    check(`le chant de son geste pousse la poussée du cri (×${rapport.toFixed(2)}, attendu ×${(90 / 26).toFixed(2)})`,
+      Math.abs(rapport - 90 / 26) < 0.1);
+    check('la carte affiche ce qu’elle poussera', sien.affiche === 90 && autre.affiche === 26);
+    check('un cri plus faible que la carte ne la rend pas pire', faible.push === autre.push && faible.affiche === 26);
+  }
+
   /* **Son chant est toujours dans sa main, au milieu.** Le répertoire tire cinq
      chants sur vingt-six : sans cette place, le geste du Fanzzy n'y tombait
      qu'une fois sur cinq. La main reste de cinq cartes, et elle suit le Fanzzy
