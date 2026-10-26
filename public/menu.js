@@ -1563,11 +1563,22 @@
        de Gaël : que le joueur sache quand quelqu'un le demande en ami). Le
        téléphone le dit par une notification quand le jeu est fermé ; ouvert,
        c'est ce sticker violet sur la tuile des amis — des gens qui attendent
-       une réponse, comme au duel. Pas sur la page des amis, qui les montre. */
-    if (chemin !== '/amis') {
-      void pastille('tbf-etat-amis', '/api/amis/demandes',
-        (d) => (d?.recues > 0 ? d.recues : null)).then((n) => {
-        if (n) poser('/amis', 'attend', n);
+       une réponse, comme au duel. Pas sur la page des amis, qui les montre.
+
+       **Et les invitations dans un KOP** (26 octobre 2026, même demande) :
+       la même réponse les compte, et le sticker se pose sur la tuile du KOP.
+       On y répond sur la page des amis, où la page du KOP renvoie.
+
+       **Pas sur l'accueil non plus** : il pose lui-même ces deux stickers,
+       sur ses tuiles et dans le tiroir (`etatsDuHub`), comme les boosters. */
+    if (!['/', '/amis'].includes(chemin)) {
+      void pastille('tbf-etat-amis', '/api/amis/demandes', (d) => ({
+        recues: Number(d?.recues) || 0, kop: Number(d?.kop) || 0,
+      })).then((v) => {
+        /* Une valeur retenue d'avant (un nombre seul) se lit comme avant. */
+        const recues = typeof v === 'number' ? v : v?.recues;
+        if (recues > 0) poser('/amis', 'attend', recues);
+        if (v?.kop > 0) poser('/kop', 'attend', v.kop);
       });
     }
 

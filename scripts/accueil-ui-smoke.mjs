@@ -246,6 +246,11 @@ let derby = null;
 app.get('/api/nvn/attentes', (_q, s) => s.json({ attentes: [...(attente ? [attente] : []), ...autres],
                                                  alerte: attente, derby }));
 
+/* Les demandes d'ami et les invitations dans un KOP qui attendent une
+   réponse (26 octobre 2026) : les stickers d'AMIS et de KOP. */
+let demandes = { recues: 0, kop: 0 };
+app.get('/api/amis/demandes', (_q, s) => s.json(demandes));
+
 /* Le relevé d'événements, tel que la base le porte. L'accueil y lit le nom du
    buteur et sa minute — sans appel à l'API, le relevé du direct les a déjà
    écrits. Un talon rend le buteur pilotable, donc le but rejouable. */
@@ -4201,6 +4206,56 @@ check('aucune erreur de script pendant ces contrôles du hub', erreurs.length ==
     || (console.log('        elle dit :', bas), false));
   await page.close();
   await equiper(R, 1);
+}
+
+/* ---- les demandes qui attendent : AMIS et KOP portent leur nombre ----
+
+   Une demande d'ami sur AMIS, une invitation dans un KOP sur KOP, en
+   violet (`attend`), comme le nombre de BOOSTERS en or (26 octobre 2026, à
+   la demande de Gaël). Hors du plafond des trois : à côté de BOOSTERS, de
+   FANZZY et du direct, ils se posent quand même. Le tiroir les dit aussi.
+   Et rien du tout quand rien n'attend. */
+{
+  direct = null; attente = null; ailleurs = []; autres = [];
+  demandes = { recues: 0, kop: 0 };
+  const lire = (page) => page.evaluate(() => Object.fromEntries(['/amis', '/kop'].flatMap((h) => {
+    const r = document.querySelector(`.rail .tbf-case[href="${h}"]`);
+    const t = document.querySelector(`.tbf-tiroir .tbf-case[href="${h}"]`);
+    const s = r && getComputedStyle(r, '::after');
+    return [[h, `${r?.dataset.etat ?? ''}:${r?.dataset.pastille ?? ''}`],
+      [`dessine${h}`, Boolean(s) && !['none', 'normal'].includes(s.content)],
+      [`tiroir${h}`, `${t?.dataset.etat ?? ''}:${t?.dataset.pastille ?? ''}`]];
+  })));
+  const page = await ouvrir();
+  await new Promise((r) => setTimeout(r, 500));
+  let d = await lire(page);
+  check('rien n’attend : ni AMIS ni KOP ne portent de sticker',
+    d['/amis'] === ':' && d['/kop'] === ':'
+    || (console.log('        il dit :', JSON.stringify(d)), false));
+
+  demandes = { recues: 2, kop: 1 };
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => (await lire(page))['/kop'] !== ':', 3000);
+  d = await lire(page);
+  check('deux demandes d’ami : « 2 » violet sur AMIS',
+    d['/amis'] === 'attend:2' && d['dessine/amis']
+    || (console.log('        il dit :', JSON.stringify(d)), false));
+  check('une invitation dans un KOP : « 1 » violet sur KOP',
+    d['/kop'] === 'attend:1' && d['dessine/kop']
+    || (console.log('        il dit :', JSON.stringify(d)), false));
+  check('et le tiroir le dit aussi',
+    d['tiroir/amis'] === 'attend:2' && d['tiroir/kop'] === 'attend:1'
+    || (console.log('        il dit :', JSON.stringify(d)), false));
+  await page.screenshot({ path: path.join(tmpdir(), 'tbf-accueil-demandes.png') });
+
+  demandes = { recues: 0, kop: 0 };
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => (await lire(page))['/kop'] === ':', 3000);
+  d = await lire(page);
+  check('répondues : les deux stickers s’éteignent',
+    d['/amis'] === ':' && d['/kop'] === ':' && d['tiroir/amis'] === ':'
+    || (console.log('        il dit :', JSON.stringify(d)), false));
+  await page.close();
 }
 
 await nav.close();

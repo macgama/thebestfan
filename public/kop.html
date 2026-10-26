@@ -225,6 +225,9 @@ h2{margin:24px 2px 9px}
    le seul geste qui en découle est de suivre un club. La bâche est verte,
    le ton de « Mes clubs » dans le tiroir (le football) : la face dit la
    destination. */
+/* L'invitation dans un KOP : son nombre au violet des gens, comme le sticker
+   `attend` de la tuile KOP qui mène ici. */
+.kop-invit[data-pastille]::after{--pf:var(--face-violet);--pl:var(--craie);--pr:-3deg}
 .kop-vide{display:block;padding:18px 16px 14px}
 .kop-vide h2{margin:0 0 8px;font-family:var(--banner);font-weight:600;font-size:16px;letter-spacing:.1em}
 .kop-vide p{margin:0 0 4px;font-size:12.5px;line-height:1.7}
@@ -419,6 +422,12 @@ async function lire() {
          même question. Une route muette laisse « on ne sait pas » (`null`),
          et la création suit alors son chemin d'avant — le refus du serveur
          dit sa cause. */
+      /* Les invitations dans un KOP qui attendent ma réponse (26 octobre
+         2026) : le sticker de la tuile KOP mène ici, et on y répond sur la
+         page des amis. Muette, elle ne montre rien. */
+      fetch('/api/amis/demandes', { credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : null)).catch(() => null)
+        .then((d) => { S.invits = Number(d?.kop) || 0; }),
       aboDemande ? null : (aboDemande = true, (window.TBF_ABO ??= fetch('/api/abonnement',
         { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null)).catch(() => null))
         .then((a) => { S.abo = typeof a?.abonne === 'boolean' ? a.abonne : null; })),
@@ -1047,7 +1056,7 @@ function section(cle, html) {
   return sections[cle];
 }
 /* Rangées dans cet ordre, qu'elles arrivent ou non. */
-const ORDRE = ['err', 'kops', 'clubs', 'vide'];
+const ORDRE = ['err', 'invit', 'kops', 'clubs', 'vide'];
 function montrer(cle, el, oui) {
   if (!oui) { el.remove(); return; }
   if (el.isConnected) return;
@@ -1063,6 +1072,15 @@ function rendre() {
   const err = section('err', '<div class="err" role="alert"></div>');
   err.firstElementChild.textContent = S.erreur ? (MESSAGES[S.erreur] ?? S.erreur) : '';
   montrer('err', err, Boolean(S.erreur));
+
+  /* **On t'invite dans un KOP** (26 octobre 2026) : le sticker de la tuile
+     KOP, sur l'accueil et dans le menu, mène ici ; la plaque mène là où l'on
+     répond — les DEMANDES des amis, qui montrent qui invite et dans quel
+     KOP. Le nombre est le même sticker violet que sur la tuile. */
+  const invit = section('invit', `<a class="tbf-plaque tbf-bloc gros kop-invit" data-ton="violet"
+      href="/amis?vue=demandes">ON T’INVITE DANS UN KOP</a>`);
+  if (S.invits > 0) invit.firstElementChild.dataset.pastille = String(S.invits);
+  montrer('invit', invit, S.invits > 0);
 
   // Mes KOP : un nœud par KOP, gardé, rangé dans l'ordre du serveur.
   const kops = section('kops', `<h2 class="tbf-cousu">MES KOP</h2><div class="kops-liste"></div>
