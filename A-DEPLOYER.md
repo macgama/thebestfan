@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Pastilles des demandes d'ami et de KOP sur l'accueil** (branche
+`claude/project-thread-iiydep`, 26 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Une demande d'ami met son nombre en violet sur la case AMIS de l'accueil,
+  une invitation dans un KOP sur la case KOP (et dans le menu, comme
+  BOOSTERS). La page du KOP montre l'invitation et mène aux DEMANDES des
+  amis, où l'on répond.
+- Après la mise en ligne : demander Gaël en ami depuis le compte de test, ou
+  l'inviter dans un KOP, et regarder l'accueil du S24+.
+
+---
+
 **La poussée du cri compte enfin** (branche `claude/project-thread-08684b`,
 26 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
