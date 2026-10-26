@@ -1133,6 +1133,17 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         m.bot.prochain = t + (m.bot.pas?.[0] ?? 6000) + Math.random() * (m.bot.pas?.[1] ?? 5000);
         try {
           const j = salle.duel.joueur(userId);
+          const frappes = () => Array.from({ length: 8 }, (_, i) =>
+            i * 560 + (Math.random() * 2 - 1) * 260 * (1 - m.bot.adresse));
+          /* Son Ultimate, jauge pleine : un bot le lance un tour sur deux,
+             pour que le joueur voie le coup venir sans le subir à la seconde.
+             Pas au duel guidé — le débutant découvre le sien, pas celui d'en
+             face. */
+          if (j.ultime && !j.ultime.utilise && j.ultime.points >= j.ultime.seuil
+              && salle.duel.epargne == null && Math.random() < 0.5) {
+            ev.push(...salle.duel.ultimer(userId, { taps: frappes() }, t));
+            continue;
+          }
           const carte = j.main[Math.floor(Math.random() * j.main.length)];
           // Par le même chemin que les joueurs : ses effets ont leur durée.
           if (carte && Math.random() < (m.bot.actions ?? 0.35)) ev.push(...jouerEtMarquer(salle.duel, userId, carte, t));
@@ -1152,9 +1163,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
                part à la salle, et ses PARFAITS au bilan (« un bot a les
                siens », CONTRATS.md § 17). */
             ev.push(...chanterEtNommer(salle.duel, salle.comptes, userId, {
-              cardId: chant,
-              taps: Array.from({ length: 8 }, (_, i) =>
-                i * 560 + (Math.random() * 2 - 1) * 260 * (1 - m.bot.adresse)),
+              cardId: chant, taps: frappes(),
             }, t));
           }
         } catch { /* souffle insuffisant ou geste refusé : il attend */ }
@@ -1844,6 +1853,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       ['nvn:play', (salle, u, p) =>
         jouerEtMarquer(salle.duel, u.userId, String(p?.cardId), Date.now())],
       ['nvn:swap', (salle, u, p) => salle.duel.changer(u.userId, Number(p?.index))],
+      // L'Ultimate : le geste de sa spécialité, noté par le moteur.
+      ['nvn:ultime', (salle, u, p) =>
+        salle.duel.ultimer(u.userId, { taps: p?.taps }, Date.now())],
     ]) {
       socket.on(evt, (p = {}) => {
         const u = moi();

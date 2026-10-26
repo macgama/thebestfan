@@ -15,6 +15,9 @@ import { apportsDe, seulsLesMods } from '../../shared/apports.js';
 // PARFAIT qui fait la série, et la note qu'ils mesurent tous les trois.
 import { verdictDe, estParfait, criDe, auMoins, noteDuVerdict } from '../../shared/verdict.js';
 import { seuilLegende, chantReussi } from '../../shared/legende.js';
+// L'Ultimate, le coup fatal : la règle est celle du duel (`shared/ultime.js`).
+import { nouvelleJauge, chargerJauge, ultimePret, pousseeUltime, vueJauge }
+  from '../../shared/ultime.js';
 import { chantReussiPour } from '../jeux/voix.js';
 
 /**
@@ -491,7 +494,7 @@ export class VirageRoom {
    *   chanter dans les trois au rang « classé » d'un plafond à une.
    */
   join(userId, { side, name, mods = {}, neutre = false, perso = null, actions = [],
-                 classe = true, apports = [], modsBanc = null, cri = null }) {
+                 classe = true, apports = [], modsBanc = null, cri = null, ultime = null }) {
     /* Présent dans un autre onglet, parti et revenu, ou tout neuf — dans cet
        ordre. Celui qui revient reprend **son** état : souffle, main, pioche,
        recharges, fatigue, effets, ferveur.
@@ -554,6 +557,12 @@ export class VirageRoom {
     } else if (m.legende) {
       m.legende.presente = false;
     }
+    /* **L'Ultimate** : la jauge se garde d'une entrée à l'autre dans le même
+       match, comme la légende — ressortir ne la vide pas, et ne rend pas un
+       coup déjà lancé. Ce qu'il sera (geste, cri, grande scène) suit le
+       Fanzzy avec lequel on entre. Au Virage, toujours le premier âge. */
+    m.jauge ??= nouvelleJauge();
+    m.ultime = ultime;
     m.modsPleins = mods;
     m.modsBanc = modsBanc;
     m.mods = (m.legende?.presente && !m.legende.eveillee) ? modsBanc : mods;
@@ -794,6 +803,9 @@ export class VirageRoom {
       this.eveiller(m);
       chantReussiPour(m.userId);
     }
+    /* La jauge de l'Ultimate, sur la même note que le verdict : BON un point,
+       PARFAIT deux. Le chant qui la remplit le dit, à lui seul. */
+    const ultimeVientDEtrePret = Boolean(m.ultime) && chargerJauge(m.jauge, mesuree);
     const parfait = estParfait(mesuree);
     m.chants = (m.chants ?? 0) + 1;
     if (parfait) {
@@ -874,7 +886,61 @@ export class VirageRoom {
     return { quality: Number(quality.toFixed(3)), backfire, breath: Math.round(m.breath),
              ferveur: m.ferveur, push: Math.round(perCapita),
              verdict, ...(criDe(mesuree) ? { cri: true } : {}),
+             ...(ultimeVientDEtrePret ? { ultimePret: true } : {}),
+             ultime: this.vueUltime(m),
              serie: m.serie, rang, sur, ...(prochain ? { prochain } : {}) };
+  }
+
+  /** Ce que la page reçoit de son Ultimate : `null` sans Fanzzy équipé. */
+  vueUltime(m) {
+    if (!m?.ultime || !m.jauge) return null;
+    return { ...vueJauge(m.jauge), nom: m.ultime.nom ?? null,
+      geste: m.ultime.geste ?? 'tempo', grande: Boolean(m.ultime.grande) };
+  }
+
+  /**
+   * **L'Ultimate** au Virage : le coup fatal du Fanzzy équipé, une fois par
+   * match, jauge pleine (`shared/ultime.js`).
+   *
+   * Le geste est celui de sa spécialité, noté comme un chant (motifs admis
+   * compris) ; la poussée est celle du premier âge — on entre toujours au
+   * premier âge au Virage — et se partage comme celle d'une carte : divisée
+   * par l'effectif de la tribune, avec la minute double et la foule. Il ne
+   * compte pas comme un chant (ni série, ni mission), il rapporte sa ferveur.
+   *
+   * Rend le résultat pour le joueur et l'évènement pour la salle : la
+   * tribune voit le coup partir.
+   */
+  ultimer(userId, { taps } = {}) {
+    const m = this.members.get(userId);
+    if (!m) throw new Cheat('not_in_virage');
+    if (!m.ultime) throw new Cheat('ultime_sans_fanzzy');
+    if (!ultimePret(m.jauge)) throw new Cheat(m.jauge?.utilise ? 'ultime_utilise' : 'ultime_pas_pret');
+    const now = Date.now();
+    this.regen(m, now);
+    nettoyerEffets(m, now);
+    const mods = this.modsDe(m, now);
+    const geste = m.ultime.geste ?? 'tempo';
+    const brut = Math.max(...this.motifsAdmis(now)
+      .map((motif) => grade(geste, taps, mods, { motif })));
+    const { quality, backfire } = applyHeroMods(brut, mods);
+    const note = backfire ? 0 : quality;
+    m.jauge.utilise = true;
+    m.lastPush = now;
+
+    const evenements = [];
+    const push = this.pousserDepuisCarte(m, pousseeUltime(1, note), now, evenements);
+    const ev = { t: 'ultime', side: m.side, userId, nom: m.name ?? null,
+      fanzzy: m.ultime.fanzzy ?? null, cri: m.ultime.nom ?? null,
+      couleur: m.ultime.couleur ?? null, grande: Boolean(m.ultime.grande),
+      quality: Number(note.toFixed(3)) };
+    evenements.unshift(ev);
+    return {
+      resultat: { quality: Number(note.toFixed(3)), push: Math.round(push),
+        breath: Math.round(m.breath), ferveur: m.ferveur, ultime: this.vueUltime(m),
+        cri: ev.cri, couleur: ev.couleur, grande: ev.grande },
+      evenements,
+    };
   }
 
   /* --------------------------------------------------------- les cartes
@@ -1899,6 +1965,8 @@ export class VirageRoom {
           ? { reussis: m.legende.reussis, seuil: m.legende.seuil,
             eveillee: m.legende.eveillee }
           : null,
+        /* Sa jauge d'Ultimate, et ce que le coup sera. */
+        ultime: this.vueUltime(m),
 
         /* La main, ses recharges et ce qui est posé sur lui. `reste` est en
            secondes plutôt qu'en instant : la page n'a pas à connaître

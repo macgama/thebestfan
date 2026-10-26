@@ -8,6 +8,9 @@ import { CHANTS, ORDRE, puissanceDuChant } from '../../shared/duel/chants.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 import { seuilLegende, chantReussi } from '../../shared/legende.js';
+// L'Ultimate, le coup fatal du Fanzzy en tribune : la règle est commune au Virage.
+import { nouvelleJauge, chargerJauge, ultimePret, pousseeUltime, vueJauge }
+  from '../../shared/ultime.js';
 import { chantReussiPour } from '../jeux/voix.js';
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
@@ -144,6 +147,10 @@ function creerJoueur(p, side) {
       const seuil = seuilLegende();
       return { seuil, reussis: 0, eveillee: !dort || seuil === 0, presente: dort };
     })(),
+
+    /* **L'Ultimate** (`shared/ultime.js`) : la jauge que ses chants réussis
+       remplissent, et le coup fatal qu'elle ouvre une fois par duel. */
+    ultime: nouvelleJauge(),
 
     breath: 40,
     ferveur: 0,
@@ -601,6 +608,12 @@ export class DuelNvN {
       // Contre le boss de la semaine (`jeux/voix.js`).
       chantReussiPour(userId);
     }
+    /* La jauge de l'Ultimate, sur la même note : un BON vaut un point, un
+       PARFAIT deux. Le chant qui la remplit l'annonce, aux deux tribunes —
+       celle d'en face doit savoir que le coup arrive. */
+    if (chargerJauge(j.ultime, q)) {
+      evenements.push(this.ev('ultime_pret', { userId, side: j.side }));
+    }
 
     // Les charges d'un modificateur temporaire se consomment au chant.
     for (const e of j.effets) if (e.charges !== undefined && e.mods) e.charges--;
@@ -633,6 +646,55 @@ export class DuelNvN {
     } else {
       this.pousser(j, puissance * quality * facteur, t, evenements);
     }
+    return evenements;
+  }
+
+  /* ------------------------------------------------------------ ultime */
+
+  /**
+   * **L'Ultimate** : le coup fatal du Fanzzy en tribune (`shared/ultime.js`).
+   *
+   * Il se lance une fois par duel, jauge pleine, par **le geste de sa
+   * spécialité** — le serveur le choisit, comme pour un chant : un client
+   * qui choisirait son geste choisirait sa facilité. Il ne coûte pas de
+   * souffle (la jauge est son prix) et ne se joue pas sous Silence radio : on
+   * ne hurle pas la bouche barrée.
+   *
+   * La poussée suit l'âge du personnage **à cet instant**, Relève comprise,
+   * et passe par `pousser` comme tout le reste : modificateurs, effectif et
+   * Bâche d'en face. Un coup fatal qu'on a vu venir doit pouvoir se bâcher.
+   *
+   * `grande` dit si son joueur a la carte Ultimate de cet âge : elle
+   * débloque la grande scène, **et rien d'autre** — la poussée est la même.
+   */
+  ultimer(userId, { taps } = {}, t = now0()) {
+    if (this.termine) throw new Cheat('duel_over');
+    const j = this.joueur(userId);
+    if (!ultimePret(j.ultime)) throw new Cheat(j.ultime?.utilise ? 'ultime_utilise' : 'ultime_pas_pret');
+    this.regen(j, t);
+    if (aEffet(j, 'silence', t)) throw new Cheat('silenced');
+
+    const f = j.fanzzy[j.actif];
+    const geste = f?.cri?.gest ?? 'tempo';
+    const m = modsDe(j, t, this.stade);
+    const q = grade(geste, taps, m, { motif: j.motif });
+    const { quality, backfire } = applyHeroMods(q, m);
+    j.ultime.utilise = true;
+    j.motif = (j.motif + 1) % MOTIFS.length;
+
+    const stade = f?.stade ?? 1;
+    /* Un retour de flamme ne retourne pas l'Ultimate contre son camp : il
+       frappe au plancher. Le coup fatal est le seul geste du jeu qu'on ne
+       peut pas perdre — on a déjà payé la jauge. */
+    const note = backfire ? 0 : quality;
+    const evenements = [this.ev('ultime', {
+      userId, side: j.side, fanzzy: f?.id ?? null, stade,
+      nom: f?.nom ?? null, cri: f?.cri?.label ?? null, geste,
+      famille: f?.type ?? null, couleur: TYPES[f?.type]?.c ?? null, skin: tenueDe(f),
+      quality: Number(note.toFixed(3)),
+      grande: Boolean(f?.ultimes?.[stade]),
+    })];
+    this.pousser(j, pousseeUltime(stade, note), t, evenements);
     return evenements;
   }
 
@@ -1080,6 +1142,8 @@ export class DuelNvN {
         })(),
         changements: j.changements,
         releves: j.releves,
+        // L'Ultimate lancé ou non : l'écran de fin peut le raconter.
+        ultime: Boolean(j.ultime?.utilise),
         /* Les Fanzzy réellement montés, avec le nom qu'ils portaient à la fin :
            un personnage qui a grandi pendant le duel n'a plus le même. */
         fanzzy: j.vus.map((id) => {
@@ -1171,6 +1235,9 @@ export class DuelNvN {
       sac: piecesPortees(j.fanzzy[j.actif]?.stuff),
       // Le souffle des autres est visible : c'est une information de jeu.
       breath: Math.round(j.breath),
+      /* Son Ultimate prêt : la tribune d'en face voit venir le coup, comme
+         elle voit un tifo se déplier. */
+      ultimePret: ultimePret(j.ultime),
     }));
     const aveugle = moi ? aEffet(moi, 'blind', t) : false;
 
@@ -1258,6 +1325,14 @@ export class DuelNvN {
           });
         })(),
         mods: seulsLesMods(modsDe(moi, t, this.stade)),
+        /* Sa jauge d'Ultimate, et ce que le coup sera : le cri de l'âge en
+           tribune, et le geste de sa spécialité. */
+        ultime: {
+          ...vueJauge(moi.ultime),
+          nom: moi.fanzzy[moi.actif]?.cri?.label ?? null,
+          geste: moi.fanzzy[moi.actif]?.cri?.gest ?? 'tempo',
+          grande: Boolean(moi.fanzzy[moi.actif]?.ultimes?.[moi.fanzzy[moi.actif]?.stade ?? 1]),
+        },
         /* Où en est sa légende : `null` sans légendaire au deck. */
         legende: moi.legende?.presente
           ? { reussis: moi.legende.reussis, seuil: moi.legende.seuil,
