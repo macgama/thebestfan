@@ -657,15 +657,22 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
   router.get('/', requireAuth, safe(async (req, res) =>
     res.json(await tableau(req.user.id))));
 
-  /* Combien de demandes attendent une réponse : le sticker du menu, sur la
-     tuile des amis. Un seul compte, sans pseudo ni avatar — le menu le
-     demande sur chaque page, et `/` (le tableau entier) coûte bien plus. */
+  /* Combien de demandes attendent une réponse : le sticker du menu et de
+     l'accueil, sur la tuile des amis (`recues`) et sur celle du KOP (`kop`,
+     les invitations dans un KOP — 26 octobre 2026, à la demande de Gaël).
+     Deux comptes, sans pseudo ni avatar — le menu le demande sur chaque
+     page, et `/` (le tableau entier) coûte bien plus. */
   router.get('/demandes', requireAuth, safe(async (req, res) => {
     const id = req.user.id;
-    const [l] = await q(
-      `SELECT COUNT(*) AS n FROM amities
-        WHERE (a = ? OR b = ?) AND etat = 'demande' AND par <> ?`, [id, id, id]);
-    res.json({ recues: Number(l?.n ?? 0) });
+    const [[l], [k]] = await Promise.all([
+      q(`SELECT COUNT(*) AS n FROM amities
+          WHERE (a = ? OR b = ?) AND etat = 'demande' AND par <> ?`, [id, id, id]),
+      /* Comptées comme `invitationsDe` les liste : celles d'un KOP qui
+         existe encore. */
+      q(`SELECT COUNT(*) AS n FROM kop_invites i JOIN kops k ON k.id = i.kop_id
+          WHERE i.user_id = ?`, [id]),
+    ]);
+    res.json({ recues: Number(l?.n ?? 0), kop: Number(k?.n ?? 0) });
   }));
 
   router.get('/suggestions', requireAuth, safe(async (req, res) =>
