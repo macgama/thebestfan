@@ -1056,6 +1056,13 @@ function renderPile() {
    La main en éventail, par `accorder` comme la rangée d'actions : le
    répertoire tourne toutes les dix minutes de match (`virage:repertoire`),
    et une carte qu'on touche ne doit pas être remplacée sous le doigt. */
+/* Ce que ce chant poussera pour moi : le chant du geste de mon Fanzzy pousse
+   la poussée de son cri, jamais moins que la carte (`puissanceDuChant`). */
+function pousseeDe(c) {
+  const p = Number(S?.you?.cri?.power);
+  return c.gest === S?.you?.cri?.gest && Number.isFinite(p) ? Math.max(c.power, p) : c.power;
+}
+
 function renderChants() {
   const cartes = S?.cards ?? [];
   accorder($('hand'), clesDe(cartes.map((c) => c.id)),
@@ -1070,7 +1077,7 @@ function renderChants() {
       if (el.dataset.card !== c.id) el.dataset.card = c.id;
       poserVar(el, '--c', COLORS[c.gest]);
       ecrire(el.querySelector('.g'), LABEL[c.gest] ?? '');
-      ecrire(el.querySelector('.p'), c.power);
+      ecrire(el.querySelector('.p'), pousseeDe(c));
       ecrire(el.querySelector('b'), c.nom ?? c.id);
       ecrire(el.querySelector('.c'), c.cost);
       poserAttr(el, 'aria-label', `${c.nom ?? c.id}, ${sansCoupure(LABEL[c.gest])}, coûte ${c.cost}`);
@@ -1669,7 +1676,7 @@ function openMini(card) {
     m.style.setProperty('--c', COLORS[card.gest]);
     const [nom, geste] = $('miniTitle').children;
     ecrire(nom, card.nom ?? card.id);
-    ecrire(geste, `${sansCoupure(LABEL[card.gest])} · ${card.power}`);
+    ecrire(geste, `${sansCoupure(LABEL[card.gest])} · ${pousseeDe(card)}`);
     ecrireConsigne($('miniHint'), HINT[card.gest]);
     /* L’épreuve prend l’écran : les cartes jouées par les autres passaient
        par-dessus la grille. Elles reviennent à la fermeture. */

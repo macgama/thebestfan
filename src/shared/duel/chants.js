@@ -101,3 +101,24 @@ export const ORDRE = ['reprise', 'roulement', 'bache', 'repons', 'renverse',
 
 /** Tous, sous forme de liste — pour qui veut les parcourir. */
 export const LISTE_CHANTS = ORDRE.map((id) => ({ id, ...CHANTS[id] }));
+
+/**
+ * **Ce que pousse un chant, Fanzzy compris.**
+ *
+ * La fiche d'un Fanzzy affiche la « poussée du cri » — 54 au premier âge, 80
+ * au troisième pour la Reine de la Machine — et ce nombre n'entrait dans
+ * aucun calcul : la poussée venait de la seule carte de chant. Choix de Gaël
+ * (26 octobre 2026) : **le chant de son geste pousse la poussée de son cri.**
+ * Les autres chants gardent celle de leur carte, et le coût ne bouge pas.
+ *
+ * Jamais moins que la carte : un cri de premier âge plus faible qu'un gros
+ * chant de son geste ne doit pas rendre ce chant pire entre ses mains.
+ *
+ * @param {{gest:string, power:number}} card la carte de chant
+ * @param {{gest?:string, power?:number}|null} cri le cri du Fanzzy en tribune
+ */
+export function puissanceDuChant(card, cri) {
+  const p = Number(cri?.power);
+  if (!card || !cri?.gest || cri.gest !== card.gest || !Number.isFinite(p)) return card?.power;
+  return Math.max(card.power, p);
+}
