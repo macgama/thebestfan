@@ -1,7 +1,7 @@
 import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
-import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
+import { CHANTS, ORDRE, puissanceDuChant } from '../../shared/duel/chants.js';
 // Le stade du match, tiré dans ce qu'une saison a ouvert : voir `stade()`.
 // La même fonction donne le leur aux duels de ce match.
 import { stadeDuMatch } from '../contenus/index.js';
@@ -491,7 +491,7 @@ export class VirageRoom {
    *   chanter dans les trois au rang « classé » d'un plafond à une.
    */
   join(userId, { side, name, mods = {}, neutre = false, perso = null, actions = [],
-                 classe = true, apports = [], modsBanc = null }) {
+                 classe = true, apports = [], modsBanc = null, cri = null }) {
     /* Présent dans un autre onglet, parti et revenu, ou tout neuf — dans cet
        ordre. Celui qui revient reprend **son** état : souffle, main, pioche,
        recharges, fatigue, effets, ferveur.
@@ -570,6 +570,10 @@ export class VirageRoom {
        appartient à la salle, pas au supporter. */
     m.apports = apports;
     m.perso = perso;
+    /* **Son cri, en chiffres** : le geste et la poussée de la fiche. Le chant
+       de ce geste pousse cette poussée-là (`puissanceDuChant`, choix de Gaël
+       du 26 octobre 2026). `perso.cri` n'est que l'étiquette qu'on affiche. */
+    m.cri = cri?.gest ? { gest: cri.gest, power: Number(cri.power) || null } : null;
     // `neutre` : il soutient un club qu'il ne suit pas. Sa ferveur vaut moitié.
     m.neutre = neutre;
 
@@ -834,7 +838,8 @@ export class VirageRoom {
     const fenetre = this.rallies.find((r) => r.side === m.side && r.fin > now);
     const rally = fenetre ? (fenetre.sync ? RULES.collectifMax : fenetre.bonus) : 1;
 
-    const amount = card.power * quality * surge * crowdFactor(Math.max(1, n[m.side]))
+    /* Le chant du geste de son Fanzzy pousse la poussée de son cri. */
+    const amount = puissanceDuChant(card, m.cri) * quality * surge * crowdFactor(Math.max(1, n[m.side]))
       * (mods.pushMult ?? 1) * rally * facteurMise;
 
     // Divisée par l'effectif : le nombre aide, il ne décide pas.
@@ -1912,6 +1917,10 @@ export class VirageRoom {
            le virage. Le cri vit maintenant avec le reste du personnage, sous
            un seul nom, plutôt qu'en clé isolée qu'on oublie de remplir. */
         fanzzy: m.perso,
+        /* Le geste et la poussée de son cri : la main affiche, sur le chant de
+           ce geste, ce qu'il poussera vraiment (`cards` est le même pour toute
+           la salle, la différence se lit donc ici). */
+        cri: m.cri,
         /* Les cartes du deck qui ne sont pas entrées ici. Voir `join` : ce
            nombre existe pour que la rangée d'action puisse expliquer ses
            cases vides au lieu de les laisser passer pour une panne. */

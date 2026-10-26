@@ -6447,5 +6447,7 @@
  "Signalement de {0} — thebestfan": "Segnalazione di {0} — thebestfan",
  "{0} — {1} Répondre à ce mail, c’est répondre à {2}.": "{0} — {1} Rispondere a questa e-mail significa rispondere a {2}.",
  "Écran : {0}": "Schermo: {0}",
- "Écran : —": "Schermo: —"
+ "Écran : —": "Schermo: —",
+ "Le chant de ton titulaire est toujours dans ta main, et il pousse autant que la poussée du cri de sa fiche.": "Il coro del tuo titolare è sempre nella tua mano, e spinge quanto la spinta del grido della sua scheda.",
+ "--fx-fond-op": "--fx-fond-op"
 }
