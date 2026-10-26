@@ -1719,3 +1719,178 @@
   }
 
 })();
+
+/* Hors de l'habillage : l'accueil et la cérémonie d'arrivée sortent plus haut
+   (`SANS_BARRE`), et leurs rangées doivent défiler à la souris comme les autres. */
+(() => {
+  /* Les rangées qui défilent de côté, à la souris.
+
+     Gaël, le 26 octobre 2026, sur ordinateur : sur la fiche d'un Fanzzy, la
+     rangée ÂGES, EFFETS, ÉTATS est coupée à droite, « on ne peut pas voir les
+     boutons, images, autres qui se trouvent à droite », et c'est pareil
+     partout où il y a ces rangées. Elles défilent sous le doigt et cachent
+     leur barre exprès ; une souris n'avait aucun moyen de les faire bouger.
+
+     Sur un écran à souris seulement (un téléphone n'a rien à y gagner), trois
+     moyens, sans toucher au contenu des rangées :
+
+       — **la molette** fait défiler la rangée survolée de côté, tant qu'il lui
+         reste du chemin ; arrivée au bout, elle rend la main à la page. Pas
+         sur une rangée plus haute que 260 px : c'est un album à pages, et la
+         molette doit continuer à descendre l'écran ;
+       — **le glisser** : on attrape la rangée et on la tire, comme au doigt.
+         Un clic qui a servi à tirer n'ouvre rien ;
+       — **deux flèches**, à côté de la rangée survolée, qui avancent d'une
+         largeur à peu près. Celle d'un bout atteint s'éteint.
+
+     Une rangée est reconnue à ce qu'elle fait, pas à son nom : tout élément
+     qui défile de côté (`overflow-x` auto ou scroll) et déborde. `RANGEES`
+     ne sert qu'à poser le bord qui s'efface avant tout survol ; une rangée
+     nouvelle qui n'y est pas défile quand même à la souris. L'apparence vit
+     dans ui.css, « Les rangées qui défilent de côté ». */
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const RANGEES = '.tbf-inventaire,.tbf-album-rail,.jours,.chips,.sb-rail,'
+      + '.tabs.tbf-onglets,.series,.fermees-rang,.cabine-qui';
+    const HAUTEUR_MOLETTE = 260;
+
+    const deborde = (el) => {
+      const ox = getComputedStyle(el).overflowX;
+      return (ox === 'auto' || ox === 'scroll') && el.scrollWidth > el.clientWidth + 1;
+    };
+    const rangeeDe = (cible) => {
+      for (let el = cible instanceof Element ? cible : null; el && el !== document.body; el = el.parentElement) {
+        if (el.classList.contains('tbf-defile-fleche')) return null;
+        if (deborde(el)) return el;
+      }
+      return null;
+    };
+    const auDebut = (r) => r.scrollLeft <= 1;
+    const auBout = (r) => r.scrollLeft >= r.scrollWidth - r.clientWidth - 1;
+
+    /* Le bord qui s'efface, et la main. */
+    const marquer = (r) => {
+      const d = deborde(r);
+      r.classList.toggle('tbf-defile-main', d);
+      r.classList.toggle('tbf-defile-g', d && !auDebut(r));
+      r.classList.toggle('tbf-defile-d', d && !auBout(r));
+    };
+    let marquage = 0;
+    const toutMarquer = () => {
+      if (marquage) return;
+      marquage = requestAnimationFrame(() => {
+        marquage = 0;
+        document.querySelectorAll(RANGEES).forEach(marquer);
+        if (survolee) poserFleches();
+      });
+    };
+
+    /* Les flèches : une paire pour toute la page, posée sur la rangée
+       survolée. Dehors quand la place le permet, dedans sinon. */
+    const fleche = (sens) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tbf-defile-fleche';
+      b.setAttribute('aria-hidden', 'true');
+      b.tabIndex = -1;
+      b.innerHTML = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${sens < 0 ? 'M9 2 4 7l5 5' : 'M5 2l5 5-5 5'}"/></svg>`;
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!survolee) return;
+        survolee.scrollBy({ left: sens * Math.max(survolee.clientWidth * 0.8, 60), behavior: 'smooth' });
+      });
+      b.addEventListener('mouseenter', () => clearTimeout(cacher));
+      b.addEventListener('mouseleave', () => cacherBientot());
+      return b;
+    };
+    const gauche = fleche(-1);
+    const droite = fleche(1);
+    let survolee = null;
+    let cacher = 0;
+    const poserFleches = () => {
+      if (!survolee || !survolee.isConnected || !deborde(survolee)) { retirerFleches(); return; }
+      if (!gauche.isConnected) document.body.append(gauche, droite);
+      const r = survolee.getBoundingClientRect();
+      const larg = document.documentElement.clientWidth;
+      const y = Math.min(Math.max(r.top + r.height / 2 - 15, 4), window.innerHeight - 34);
+      gauche.style.left = `${r.left >= 38 ? r.left - 36 : r.left + 4}px`;
+      droite.style.left = `${r.right <= larg - 38 ? r.right + 6 : r.right - 34}px`;
+      gauche.style.top = droite.style.top = `${y}px`;
+      gauche.disabled = auDebut(survolee);
+      droite.disabled = auBout(survolee);
+      gauche.classList.add('on');
+      droite.classList.add('on');
+    };
+    const retirerFleches = () => {
+      survolee = null;
+      gauche.classList.remove('on');
+      droite.classList.remove('on');
+    };
+    const cacherBientot = () => {
+      clearTimeout(cacher);
+      cacher = setTimeout(retirerFleches, 450);
+    };
+
+    document.addEventListener('mouseover', (e) => {
+      if (e.target instanceof Element && e.target.closest('.tbf-defile-fleche')) return;
+      const r = rangeeDe(e.target);
+      if (r) {
+        clearTimeout(cacher);
+        if (r !== survolee) { survolee = r; marquer(r); }
+        poserFleches();
+      } else if (survolee) {
+        cacherBientot();
+      }
+    }, { passive: true });
+
+    /* La molette. */
+    window.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      const r = rangeeDe(e.target);
+      if (!r || r.clientHeight > HAUTEUR_MOLETTE) return;
+      if (e.deltaY > 0 ? auBout(r) : auDebut(r)) return;
+      e.preventDefault();
+      const pas = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * r.clientWidth : e.deltaY;
+      r.scrollBy({ left: pas, behavior: 'auto' });
+    }, { passive: false });
+
+    /* Le glisser. */
+    let prise = null;
+    document.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      if (e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable]')) return;
+      const r = rangeeDe(e.target);
+      if (r) prise = { r, x: e.clientX, depart: r.scrollLeft, tire: false };
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!prise) return;
+      const dx = e.clientX - prise.x;
+      if (!prise.tire && Math.abs(dx) < 6) return;
+      if (!prise.tire) { prise.tire = true; prise.r.classList.add('tbf-defile-tire'); }
+      prise.r.scrollLeft = prise.depart - dx;
+    });
+    const lacher = () => {
+      if (!prise) return;
+      const { r, tire } = prise;
+      prise = null;
+      if (!tire) return;
+      r.classList.remove('tbf-defile-tire');
+      /* Le clic qui suit le lâcher a servi à tirer : il n'ouvre rien. */
+      const avaler = (e) => { e.preventDefault(); e.stopPropagation(); };
+      window.addEventListener('click', avaler, { capture: true, once: true });
+      setTimeout(() => window.removeEventListener('click', avaler, { capture: true }), 0);
+    };
+    window.addEventListener('pointerup', lacher);
+    window.addEventListener('pointercancel', lacher);
+    /* Une image attrapée partirait en glisser-déposer au lieu de tirer la rangée. */
+    document.addEventListener('dragstart', (e) => { if (prise) e.preventDefault(); });
+
+    document.addEventListener('scroll', (e) => {
+      if (e.target instanceof Element && e.target.matches(RANGEES)) marquer(e.target);
+      if (survolee) poserFleches();
+    }, { capture: true, passive: true });
+    window.addEventListener('resize', toutMarquer);
+    new MutationObserver(toutMarquer).observe(document.body, { childList: true, subtree: true });
+    toutMarquer();
+  }
+})();

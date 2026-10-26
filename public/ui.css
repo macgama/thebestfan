@@ -11746,3 +11746,45 @@ html[data-calme~="animations"] [data-double] .tbf-fumee{opacity:.2}
 html[data-calme~="animations"]::view-transition-group(*),
 html[data-calme~="animations"]::view-transition-old(*),
 html[data-calme~="animations"]::view-transition-new(*){animation:none}
+
+/* ── Les rangées qui défilent de côté, à la souris ─────────────────────────
+
+   Gaël, le 26 octobre 2026, sur ordinateur : « on ne peut pas voir les
+   boutons, images, autres qui se trouvent à droite », sur la fiche d'un
+   Fanzzy (ÂGES, EFFETS, ÉTATS) et sur toutes les rangées du même genre. Le
+   doigt les fait glisser ; la souris n'avait rien : pas de barre (elles sont
+   cachées exprès), et la molette descend la page.
+
+   nav.js leur donne la molette, le glisser et deux flèches, sur un écran à
+   souris seulement. Ici, ce qui se voit :
+
+     — **le bord qui s'efface** du côté où il reste quelque chose à voir
+       (`tbf-defile-g`, `tbf-defile-d`, posés et retirés à chaque défilement),
+       pour qu'on devine la suite avant même de survoler la rangée ;
+     — **la main** qui dit qu'on peut attraper la rangée ;
+     — **les flèches**, posées à côté de la rangée survolée, dehors quand la
+       place le permet (la colonne fait 480 px au milieu d'un grand écran),
+       pour ne jamais couvrir une vignette. */
+.tbf-defile-g{-webkit-mask-image:linear-gradient(to right,transparent,#000 32px);
+  mask-image:linear-gradient(to right,transparent,#000 32px)}
+.tbf-defile-d{-webkit-mask-image:linear-gradient(to left,transparent,#000 32px);
+  mask-image:linear-gradient(to left,transparent,#000 32px)}
+.tbf-defile-g.tbf-defile-d{
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 32px,#000 calc(100% - 32px),transparent);
+  mask-image:linear-gradient(to right,transparent,#000 32px,#000 calc(100% - 32px),transparent)}
+.tbf-defile-main{cursor:grab}
+.tbf-defile-tire,.tbf-defile-tire *{cursor:grabbing!important;user-select:none}
+/* Pendant qu'on tire, l'aimant des vignettes lâche la rangée : il la
+   ramènerait sous la souris à chaque pixel. */
+.tbf-defile-tire{scroll-snap-type:none!important;scroll-behavior:auto!important}
+.tbf-defile-fleche{
+  position:fixed;z-index:2147483000;width:30px;height:30px;padding:0;margin:0;
+  display:none;align-items:center;justify-content:center;
+  border:2px solid var(--craie);border-radius:50%;background:var(--encre);color:var(--craie);
+  box-shadow:0 2px 8px rgba(0,0,0,.6);cursor:pointer;
+  transition:opacity .15s ease,transform .1s ease;
+}
+.tbf-defile-fleche.on{display:flex}
+.tbf-defile-fleche:hover{transform:scale(1.1)}
+.tbf-defile-fleche[disabled]{opacity:.3;cursor:default;transform:none}
+.tbf-defile-fleche svg{width:14px;height:14px;display:block}
