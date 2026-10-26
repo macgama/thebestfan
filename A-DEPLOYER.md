@@ -15,6 +15,19 @@ Construction seule (le Manager redémarre de lui-même), **sans schéma**.
 
 ---
 
+**Les 51 équipements sans image ont leur dessin** (branche
+`claude/project-thread-9swbtr`, 26 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Télécommande, Flûte de champagne, Cornet de frites… : les 51 pièces des
+  séries VP, GC, GD, MT, HC et la boîte à souvenirs s'affichaient sur une
+  tribune vide. Leurs dessins étaient déjà dans `art/stuff/` depuis le 18
+  octobre, mais jamais détourés : c'est fait, en trois formats.
+- Le détourage reconnaît aussi un fond vert assombri vers les coins (le
+  canapé, le fauteuil et l'éventail gardaient un disque vert).
+
+---
+
 **La fin du duel guidé réparée** (branche `claude/project-thread-ok4tcv`,
 25 octobre 2026, demandé par Gaël). Construction seule (le Manager redémarre
 de lui-même), **sans schéma**.
