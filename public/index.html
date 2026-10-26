@@ -2477,6 +2477,8 @@ const H = {
   monde: 0,          // les supporters de toutes les tribunes ouvertes (`TBF_MENU.auVirage`)
   mondeMatch: null,  // et la tribune où l'on chante le plus : { id, n }
   duels: 0,          // les duels où quelqu'un attend un joueur (`TBF_MENU.duelsEnAttente`)
+  amis: 0,           // les demandes d'ami qui attendent ma réponse (`/api/amis/demandes`)
+  kop: 0,            // et les invitations dans un KOP
   duelFile: null,    // et la file la plus remplie : { match, format, camp, n }
   duelAuBouton: false, // l'alerte de duel est sur le bouton d'entrée (voir `alerteDuel`)
   echarpes: null,    // le solde d'écharpes de la dernière bourse posée
@@ -2520,6 +2522,15 @@ function etatsDuHub() {
   if (H.packs > 0) voulus.push(['/boosters', 'pret', String(H.packs)]);
   if (H.nouveaux > 0) voulus.push(['/fanzzy', 'nouveau', `+${H.nouveaux}`]);
   const gardes = new Map(voulus.slice(0, 3).map(([h, e, p]) => [h, [e, p]]));
+  /* **Des gens qui attendent une réponse** (26 octobre 2026, à la demande de
+     Gaël : « une pastille sur les cases, comme sur BOOSTERS »). Une demande
+     d'ami sur AMIS, une invitation dans un KOP sur KOP, le nombre en violet
+     — l'état `attend` du tiroir, la couleur des gens. Ils passent **hors du
+     budget des trois** : c'est Gaël qui l'a décidé, et une demande qui
+     attend ne se cache pas derrière des cartes arrivées. Ils ne respirent
+     pas : seul le sticker des boosters le fait. */
+  if (H.amis > 0) gardes.set('/amis', ['attend', String(H.amis)]);
+  if (H.kop > 0) gardes.set('/kop', ['attend', String(H.kop)]);
   for (const a of document.querySelectorAll('.rail .tbf-case')) {
     if (a.dataset.etat === 'verrouille') continue;
     const v = gardes.get(a.getAttribute('href'));
@@ -2546,6 +2557,10 @@ function etatsDuHub() {
     direct ? null : H.monde);
   MENU?.poser?.('/boosters', H.packs > 0 ? 'pret' : null, H.packs);
   MENU?.poser?.('/duel-nvn', H.duels > 0 ? 'attend' : null, H.duels);
+  /* Les demandes d'ami et les invitations de KOP : `menu.js` ne les demande
+     pas sur l'accueil, qui les lit lui-même (`lireLesDemandes`). */
+  MENU?.poser?.('/amis', H.amis > 0 ? 'attend' : null, H.amis);
+  MENU?.poser?.('/kop', H.kop > 0 ? 'attend' : null, H.kop);
   /* Ce qu'un RÉCUPÉRER verserait aux MISSIONS (`aReclamer`, contrat § 6.1).
      La clé R10 le dit aussi aux autres écrans (voir `poserQuotidien`) ; ici,
      le tiroir est déjà monté quand la réponse arrive, et il ne relirait pas
@@ -5199,6 +5214,23 @@ async function lire(url, options) {
   return r.json().catch(() => null);
 }
 
+/**
+ * Les demandes d'ami et les invitations dans un KOP qui attendent ma réponse
+ * (26 octobre 2026) : les stickers d'AMIS et de KOP. Deux comptes, une
+ * lecture légère, relue à chaque tour de veille et au retour par la flèche
+ * du navigateur. Une route muette ne change rien à ce qu'on montrait.
+ */
+async function lireLesDemandes() {
+  const d = await lire('/api/amis/demandes', { credentials: 'same-origin' }).catch(() => null);
+  if (!d || d.error) return;
+  const amis = Number(d.recues) || 0;
+  const kop = Number(d.kop) || 0;
+  if (amis === H.amis && kop === H.kop) return;
+  H.amis = amis;
+  H.kop = kop;
+  montrer();
+}
+
 /* ============================================ le quotidien (lots 3 et 5)
 
    Ce que le chantier serveur apporte au hub (`serveur/CONTRATS.md`, § 6 et
@@ -5889,6 +5921,7 @@ function feterNiveau(niveau) {
   addEventListener('pageshow', async (e) => {
     if (!e.persisted) return;
     void arriverAuHub(lireQuotidien(true));
+    void lireLesDemandes();
     const c = await lire('/api/fanzzy/state', { credentials: 'same-origin' }).catch(() => null);
     const avant = H.nouveaux;
     poserNouveautes(user.id, c);
@@ -6461,6 +6494,9 @@ async function alerteDuel() {
 
   async function unTour() {
     if (document.hidden) { premierLive = null; planifier(30_000); return; }
+    /* Les demandes d'ami et de KOP, à chaque tour visible : elles arrivent
+       pendant qu'on regarde l'accueil. */
+    void lireLesDemandes();
     /* Le calendrier des clubs suivis, relu à chaque tour visible ; le cache
        ne laisse passer qu'une demande toutes les dix minutes. */
     relireProchains();

@@ -413,6 +413,18 @@ async function charger() {
     Object.assign(S, tableau);
     S.gens = suggestions.gens ?? [];
     S.kops = mesKops.kops ?? [];
+    /* **On arrive sur l'onglet qu'on demande** (26 octobre 2026) : la page
+       du KOP mène ici pour répondre à une invitation (`?vue=demandes`). Une
+       fois, à l'arrivée : un onglet choisi ensuite reste choisi. */
+    if (!charger.fait) {
+      charger.fait = true;
+      const voulue = new URLSearchParams(location.search).get('vue');
+      if (['amis', 'demandes', 'trouver'].includes(voulue)) S.vue = voulue;
+    }
+    /* Le compte que le menu retient trente secondes dans l'onglet
+       (`tbf-etat-amis`) est d'avant : on vient de lire le vrai, et un
+       geste ici le change. L'oublier, c'est que la page suivante redemande. */
+    try { sessionStorage.removeItem('tbf-etat-amis'); } catch { /* rien de retenu */ }
     rendre();
     feterLesNouveaux();
   } catch (e) {
