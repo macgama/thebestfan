@@ -86,9 +86,10 @@
 .tbf-ult.on .tbf-ult-cri{animation:tbfUltCri var(--d,1.6s) cubic-bezier(.2,1.6,.4,1) forwards}
 @keyframes tbfUltCri{0%,18%{opacity:0;transform:scale(2.4)}30%{opacity:1;transform:scale(.94)}
   36%{transform:scale(1)}86%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
-.tbf-ult[data-grande] .tbf-ult-cri span{display:inline-block;opacity:0}
+.tbf-ult[data-grande] .tbf-ult-cri .l{display:inline-block;opacity:0}
+.tbf-ult-cri .m{display:inline-block;white-space:nowrap}
 .tbf-ult[data-grande].on .tbf-ult-cri{animation:none;opacity:1}
-.tbf-ult[data-grande].on .tbf-ult-cri span{animation:tbfUltLettre .32s cubic-bezier(.2,1.8,.4,1) forwards}
+.tbf-ult[data-grande].on .tbf-ult-cri .l{animation:tbfUltLettre .32s cubic-bezier(.2,1.8,.4,1) forwards}
 @keyframes tbfUltLettre{0%{opacity:0;transform:translateY(-30px) scale(2)}100%{opacity:1;transform:none}}
 .tbf-ult[data-grande].sort .tbf-ult-cri{transition:opacity .3s;opacity:0}
 .tbf-ult-nom{display:block;margin-top:8px;font-size:15px;letter-spacing:.12em;opacity:0;color:var(--c)}
@@ -99,12 +100,109 @@
 @keyframes tbfUltEclair{0%{opacity:0}12%{opacity:.85}100%{opacity:0}}
 .tbf-ult.calme .tbf-ult-voile{opacity:1}
 .tbf-ult.calme .tbf-ult-fz,.tbf-ult.calme .tbf-ult-cri,.tbf-ult.calme .tbf-ult-bandeau,
-.tbf-ult.calme .tbf-ult-nom,.tbf-ult.calme .tbf-ult-cri span{opacity:1;animation:none!important;transform:translateX(-50%)}
+.tbf-ult.calme .tbf-ult-nom,.tbf-ult.calme .tbf-ult-cri .l{opacity:1;animation:none!important;transform:translateX(-50%)}
 .tbf-ult.calme .tbf-ult-cri,.tbf-ult.calme .tbf-ult-bandeau,.tbf-ult.calme .tbf-ult-nom,
-.tbf-ult.calme .tbf-ult-cri span{transform:none}
+.tbf-ult.calme .tbf-ult-cri .l{transform:none}
 .tbf-ult.calme .tbf-ult-rayons,.tbf-ult.calme .tbf-ult-vitesse,.tbf-ult.calme .tbf-ult-halo,
 .tbf-ult.calme .tbf-ult-eclair{display:none}
+
+/* La grande scène plein cadre : l'image Ultimate du Fanzzy (Artlist, 9:16),
+   animée au code. Tout tient sur --d (4,2 s) et le choc à 27 % (1,15 s). */
+.tbf-ult[data-plein] .tbf-ult-voile{background:#07090C}
+.tbf-ult-secoue{position:absolute;inset:0}
+.tbf-ult.choc .tbf-ult-secoue{animation:tbfUltSecoue .48s linear}
+@keyframes tbfUltSecoue{0%,100%{transform:none}10%{transform:translate(-9px,6px) rotate(-.6deg)}
+  25%{transform:translate(8px,-7px) rotate(.5deg)}40%{transform:translate(-6px,-4px)}
+  55%{transform:translate(5px,5px) rotate(-.3deg)}70%{transform:translate(-3px,2px)}85%{transform:translate(2px,-1px)}}
+.tbf-ult-plan{position:absolute;inset:0;overflow:hidden;opacity:0;
+  clip-path:inset(50% 0 50% 0);will-change:transform,filter,clip-path}
+.tbf-ult-plan img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:50% 30%}
+.tbf-ult.on .tbf-ult-plan{animation:tbfUltPlan var(--d) cubic-bezier(.3,.7,.3,1) forwards}
+@keyframes tbfUltPlan{
+  0%{opacity:1;clip-path:inset(50% 0 50% 0);transform:scale(1.42);filter:brightness(.35) saturate(.2) blur(5px)}
+  9%{clip-path:inset(47% 0 47% 0)}
+  25%{clip-path:inset(0);transform:scale(1.3);filter:brightness(.75) saturate(.75) blur(0)}
+  27.4%{transform:scale(1.13);filter:brightness(1.9) saturate(1.4)}
+  31%{transform:scale(1.06);filter:brightness(1.1) saturate(1.15)}
+  86%{opacity:1;clip-path:inset(0);transform:scale(1) translateY(-1.6%);filter:brightness(1) saturate(1.05)}
+  100%{opacity:0;clip-path:inset(0);transform:scale(1.2) translateY(-2%);filter:brightness(2.4) saturate(.6)}}
+/* La fente de lumière qui s'ouvre avant l'image, à la couleur de sa famille. */
+.tbf-ult-fente{position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;opacity:0;
+  background:var(--c);box-shadow:0 0 18px 4px var(--c),0 0 60px 10px var(--c)}
+.tbf-ult.on .tbf-ult-fente{animation:tbfUltFente 1.2s ease-out forwards}
+@keyframes tbfUltFente{0%{opacity:0;transform:scaleX(0)}12%{opacity:1;transform:scaleX(1)}
+  70%{opacity:.9;transform:scaleY(1)}100%{opacity:0;transform:scaleY(60)}}
+/* Le dédoublement rouge et bleu du choc : deux copies décalées, un instant. */
+.tbf-ult-plan .r,.tbf-ult-plan .b{opacity:0;mix-blend-mode:screen}
+.tbf-ult-plan .r{filter:sepia(1) saturate(9) hue-rotate(-45deg) brightness(.8)}
+.tbf-ult-plan .b{filter:sepia(1) saturate(9) hue-rotate(160deg) brightness(.8)}
+.tbf-ult.choc .tbf-ult-plan .r{animation:tbfUltR .34s ease-out}
+.tbf-ult.choc .tbf-ult-plan .b{animation:tbfUltB .34s ease-out}
+@keyframes tbfUltR{0%{opacity:.85;transform:translate(-14px,3px)}100%{opacity:0;transform:none}}
+@keyframes tbfUltB{0%{opacity:.85;transform:translate(14px,-3px)}100%{opacity:0;transform:none}}
+/* Le cœur qui bat : la couleur de la famille qui pulse sur l'image. */
+.tbf-ult-pouls{position:absolute;inset:0;opacity:0;mix-blend-mode:screen;
+  background:radial-gradient(ellipse 70% 55% at 50% 42%,var(--c),transparent 70%)}
+.tbf-ult.on .tbf-ult-pouls{animation:tbfUltPouls .56s ease-out 1.15s 4}
+@keyframes tbfUltPouls{0%{opacity:.55}100%{opacity:0}}
+.tbf-ult[data-plein] .tbf-ult-rayons{mix-blend-mode:screen;top:42%}
+.tbf-ult[data-plein].on .tbf-ult-rayons{animation:tbfUltRayonsPlein var(--d) linear forwards}
+@keyframes tbfUltRayonsPlein{0%,24%{opacity:0;transform:rotate(0) scale(.3)}
+  28%{opacity:.55;transform:rotate(8deg) scale(1)}80%{opacity:.25}100%{opacity:0;transform:rotate(60deg) scale(1.2)}}
+.tbf-ult[data-plein].on .tbf-ult-vitesse{animation:tbfUltVitesse .45s linear 1.15s 3}
+/* Les braises qui montent après le choc. */
+.tbf-ult-braises{position:absolute;inset:0}
+.tbf-ult-braises i{position:absolute;bottom:-12px;width:var(--t);height:var(--t);border-radius:50%;
+  background:var(--c);box-shadow:0 0 8px 2px var(--c);opacity:0}
+.tbf-ult.on .tbf-ult-braises i{animation:tbfUltBraise var(--v) ease-out var(--r) forwards}
+@keyframes tbfUltBraise{0%{opacity:0;transform:translate(0,0)}10%{opacity:1}
+  100%{opacity:0;transform:translate(var(--x),-85vh)}}
+/* Le bas assombri, pour que le cri se lise sur n'importe quelle image. */
+.tbf-ult-bas{position:absolute;left:0;right:0;bottom:0;height:42%;
+  background:linear-gradient(transparent,rgba(7,9,12,.88))}
+.tbf-ult[data-plein] .tbf-ult-texte{bottom:7%}
+.tbf-ult[data-plein].on .tbf-ult-bandeau,.tbf-ult[data-plein].on .tbf-ult-nom{
+  animation:tbfUltBandeauPlein var(--d) ease-out forwards}
+@keyframes tbfUltBandeauPlein{0%,27%{opacity:0;transform:skewX(-10deg) translateX(-40px)}
+  34%{opacity:1;transform:skewX(-10deg) translateX(0)}88%{opacity:1}100%{opacity:0}}
+.tbf-ult.calme .tbf-ult-plan{opacity:1;clip-path:none;animation:none!important}
+.tbf-ult.calme .tbf-ult-fente,.tbf-ult.calme .tbf-ult-pouls,.tbf-ult.calme .tbf-ult-braises{display:none}
 `;
+
+  /* **Les images Ultimate** (Artlist, plein cadre 9:16), par lignée et par
+     âge : `<racine>-e<âge>` → fichier dans `public/img/ultime/`. Le script
+     `npm run ultime:images` réécrit ce bloc ; un Fanzzy absent garde la
+     scène dessinée avec sa carte. */
+  /* IMAGES: début */
+  const IMAGES = {};
+  /* IMAGES: fin */
+
+  /** L'image Ultimate d'une lignée à un âge, ou null. Une légendaire n'a qu'un âge. */
+  function image(id, age = 1) {
+    // Un âge passé en identifiant (« RP4B ») revient à sa lignée (« RP4 »).
+    const racine = String(id ?? '').replace(/^([A-Z]{2}\d+)[B-Z]$/, '$1');
+    /* Une légendaire n'a qu'un âge, donc qu'une image : on la prend à tout
+       âge. Une lignée à trois âges ne prête jamais l'image d'un autre âge. */
+    const seule = !IMAGES[`${racine}-e2`] && !IMAGES[`${racine}-e3`];
+    const f = IMAGES[`${racine}-e${Math.max(1, Number(age) || 1)}`] ?? (seule ? IMAGES[`${racine}-e1`] : null);
+    return f && racine ? `/img/ultime/${f}` : null;
+  }
+
+  /* Charge l'image avant la scène : une scène qui s'ouvre sur du noir puis
+     saute à l'image perdrait sa révélation. Trop lente, la scène dessinée la
+     remplace. */
+  function precharger(src, ms = 700) {
+    return new Promise((ok) => {
+      const i = new Image();
+      let fait = false;
+      const finir = (v) => { if (!fait) { fait = true; ok(v); } };
+      i.onload = () => (i.decode ? i.decode().catch(() => {}) : Promise.resolve()).then(() => finir(true));
+      i.onerror = () => finir(false);
+      setTimeout(() => finir(false), ms);
+      i.src = src;
+    });
+  }
 
   /* Le texte se pose **en texte** : le cri vient du catalogue, le nom d'un
      Fanzzy aussi, et l'un comme l'autre se traduisent (`langue.js`). */
@@ -140,39 +238,82 @@
    * @param {string} [o.couleur] la couleur de sa famille
    * @param {boolean} [o.grande] la grande scène (la carte Ultimate de cet âge)
    * @param {boolean} [o.eux]    l'Ultimate de la tribune d'en face
+   * @param {string} [o.racine]  sa lignée, et
+   * @param {number} [o.age]     son âge : la grande scène prend alors son image
+   *                             Ultimate plein cadre, s'il en a une
    */
-  function scene({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}) {
+  function scene(o = {}) {
+    const fond = o.grande && o.racine ? image(o.racine, o.age) : null;
+    if (!fond) return jouer(o, null);
+    return precharger(fond).then((pret) => jouer(o, pret ? fond : null));
+  }
+
+  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond) {
     poserStyle();
     // Deux coups fatals à la suite : le second remplace le premier.
     enCours?.couper?.();
     const calme = doux();
-    const d = grande ? 3400 : 1600;
+    const plein = Boolean(grande && fond);
+    const d = plein ? 4200 : grande ? 3400 : 1600;
+    const choc = grande ? 1150 : 420;
     const el = document.createElement('div');
     el.className = 'tbf-ult';
     el.setAttribute('aria-hidden', 'true');
     el.style.setProperty('--c', couleur);
     el.style.setProperty('--d', `${d}ms`);
-    el.style.setProperty('--choc', grande ? '1.15s' : '.42s');
+    el.style.setProperty('--choc', `${choc}ms`);
     if (grande) el.dataset.grande = '';
+    if (plein) el.dataset.plein = '';
     if (eux) el.dataset.eux = '';
+    /* Plein cadre : l'image Ultimate fait toute la scène, le Fanzzy y est
+       déjà — pas de carte par-dessus. */
     el.innerHTML = `<div class="tbf-ult-voile"></div>
+      <div class="tbf-ult-secoue">
+      ${plein ? `<div class="tbf-ult-plan"><img alt="" class="p"><img alt="" class="r"><img alt="" class="b"></div>
+        <div class="tbf-ult-fente"></div><div class="tbf-ult-pouls"></div>` : ''}
       ${grande ? '<div class="tbf-ult-rayons"></div><div class="tbf-ult-vitesse"></div>' : ''}
-      <div class="tbf-ult-halo"></div>
-      ${src ? '<img class="tbf-ult-fz" alt="" decoding="async">' : ''}
+      ${plein ? '<div class="tbf-ult-braises"></div><div class="tbf-ult-bas"></div>' : '<div class="tbf-ult-halo"></div>'}
+      ${src && !plein ? '<img class="tbf-ult-fz" alt="" decoding="async">' : ''}
       <div class="tbf-ult-texte"><span class="tbf-ult-bandeau"></span>
         <b class="tbf-ult-cri"></b><span class="tbf-ult-nom"></span></div>
+      </div>
       <div class="tbf-ult-eclair"></div>`;
     el.querySelector('.tbf-ult-bandeau').textContent = eux ? 'ULTIMATE ADVERSE' : 'ULTIMATE';
     el.querySelector('.tbf-ult-nom').textContent = nom;
+    if (plein) {
+      el.querySelectorAll('.tbf-ult-plan img').forEach((i) => { i.src = fond; });
+      /* Trente braises, chacune sa taille, sa dérive et son départ : un
+         tirage par scène, pour qu'aucune ne se ressemble. */
+      const braises = el.querySelector('.tbf-ult-braises');
+      for (let k = 0; k < 30; k++) {
+        const b = document.createElement('i');
+        b.style.left = `${Math.random() * 100}%`;
+        b.style.setProperty('--t', `${3 + Math.random() * 5}px`);
+        b.style.setProperty('--x', `${Math.round((Math.random() - 0.5) * 120)}px`);
+        b.style.setProperty('--v', `${1300 + Math.random() * 1300}ms`);
+        b.style.setProperty('--r', `${choc + Math.random() * 1700}ms`);
+        braises.appendChild(b);
+      }
+    }
     const criEl = el.querySelector('.tbf-ult-cri');
     if (grande && !calme) {
       /* Lettre à lettre, chacune avec son retard : le cri tombe comme une
          banderole qu'on déroule. Les espaces restent des espaces. */
-      [...String(cri)].forEach((ch, i) => {
-        const s = document.createElement('span');
-        s.textContent = ch === ' ' ? ' ' : ch;
-        s.style.animationDelay = `${900 + i * 45}ms`;
-        criEl.appendChild(s);
+      /* Un mot ne se coupe jamais : ses lettres vivent dans un bloc
+         insécable, et la ligne ne casse qu'entre deux mots. */
+      let i = 0;
+      String(cri).split(' ').forEach((mot, k) => {
+        if (k) { criEl.append(' '); i++; }
+        const m = document.createElement('span');
+        m.className = 'm';
+        for (const ch of mot) {
+          const s = document.createElement('span');
+          s.className = 'l';
+          s.textContent = ch;
+          s.style.animationDelay = `${(plein ? 1350 : 900) + i++ * 45}ms`;
+          m.appendChild(s);
+        }
+        criEl.appendChild(m);
       });
     } else {
       criEl.textContent = cri;
@@ -200,27 +341,32 @@
       if (calme) {
         el.classList.add('calme', 'on');
         son('gong');
-        plus(1200, fin);
+        plus(plein ? 1800 : 1200, fin);
         return;
       }
       requestAnimationFrame(() => el.classList.add('on'));
-      son('charge');
       if (grande) {
+        /* Le son propre à l'Ultimate (`son.js`) : la montée tient jusqu'au
+           choc, l'impact tombe avec l'éclair, puis la tribune. */
+        son('ultime-montee');
         plus(450, () => son('grondement'));
-        plus(1150, () => {
-          son('rugissement');
-          window.FX?.secousse?.(2.2);
+        plus(choc, () => {
+          son('ultime-impact');
+          el.classList.add('choc');
+          if (!plein) window.FX?.secousse?.(2.2);
           vibrer([60, 40, 140]);
           const x = innerWidth / 2;
-          const y = innerHeight * 0.45;
+          const y = innerHeight * (plein ? 0.42 : 0.45);
           window.FX?.onde?.({ x, y, couleur, taille: Math.max(innerWidth, innerHeight) * 1.2 });
           window.FX?.particules?.({ x, y, n: 90, couleurs: [couleur, '#F5C33B', '#F2EEE4'],
             distance: Math.max(innerWidth, innerHeight) * 0.6, taille: 7, duree: 1400 });
         });
-        plus(2000, () => son(eux ? 'encaisse' : 'ovation'));
-        plus(2950, () => el.classList.add('sort'));
+        plus(choc + 520, () => el.classList.remove('choc'));
+        plus(choc + 650, () => son(eux ? 'encaisse' : 'ovation'));
+        plus(d - 450, () => el.classList.add('sort'));
       } else {
-        plus(420, () => {
+        son('charge');
+        plus(choc, () => {
           son('rugissement');
           window.FX?.secousse?.(1.4);
           vibrer([40, 30, 90]);
@@ -231,5 +377,5 @@
     });
   }
 
-  window.TBF_ULTIME = { scene };
+  window.TBF_ULTIME = { scene, image };
 })();

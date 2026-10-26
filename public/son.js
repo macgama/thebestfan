@@ -207,6 +207,10 @@
     grondement: 3.02,             //  −8,1 · −16,5 · 1,80 s
     niveau: 1.65,                 //  −8,6 · −16,1 · 1,15 s
     ovation: 1.19,                //  −8,4 · −16,5 · 3,20 s
+    /* L'Ultimate (octobre 2026) : la montée sous le choc, l'impact au niveau
+       du rugissement ; mesurés au banc le 26 octobre 2026. */
+    'ultime-montee': 2.36,        //  −7,8 · −17,0 · 1,21 s
+    'ultime-impact': 1.29,        //  −7,9 · −15,5 · 0,85 s
     /* L'ouverture d'un booster (octobre 2026), visés au milieu de la
        fenêtre du jeu ; mesurés au banc le 24 octobre 2026. */
     tremble: 1.53,                // −12,4 · −22,5 · 0,20 s
@@ -785,6 +789,34 @@
         ton(c, s, t, { freq: 144, vers: 70, duree: 0.9, type: 'square', vol: 0.035, delai: 0.04 });
         bruit(c, s, t, { duree: 1.25, freq: 280, vol: 0.09 });
         bruit(c, s, t, { duree: 0.8, freq: 900, vol: 0.05, delai: 0.1 });
+      } },
+    /* **L'Ultimate**, la grande scène (`ultime.js`), en deux temps comme
+       elle. La montée tient 1,15 s, jusqu'au choc : une dent de scie qui
+       grimpe de trois octaves avec sa quinte, un souffle dont le filtre
+       s'ouvre, et des coups de grosse caisse qui se rapprochent — le cœur
+       qui s'emballe. Puis l'impact : un grave qui s'effondre, le coup sec,
+       un accord de puissance qui reste en l'air et la cymbale qui s'éteint.
+       La tribune (`ovation`) vient après, à part. */
+    'ultime-montee': { famille: 'moment', duree: 1.25,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 110, vers: 880, duree: 1.15, type: 'sawtooth', vol: 0.05 });
+        ton(c, s, t, { freq: 165, vers: 1320, duree: 1.15, type: 'square', vol: 0.016 });
+        const monte = new Float32Array(24);
+        for (let k = 0; k < monte.length; k++) monte[k] = 0.0002 + 0.06 * (k / (monte.length - 1)) ** 2;
+        const f = bruit(c, s, t, { duree: 1.15, freq: 500, q: 0.8, courbe: monte });
+        f.frequency.setValueAtTime(500, t);
+        f.frequency.exponentialRampToValueAtTime(6000, t + 1.15);
+        [0, 0.42, 0.7, 0.88, 1.0, 1.08].forEach((d, i) =>
+          ton(c, s, t, { freq: 75, vers: 42, duree: 0.16, type: 'sine', vol: 0.09 + i * 0.012, delai: d }));
+      } },
+    'ultime-impact': { famille: 'moment', duree: 1.9,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 95, vers: 32, duree: 1.0, type: 'sine', vol: 0.2 });
+        ton(c, s, t, { freq: 190, vers: 55, duree: 0.32, type: 'sawtooth', vol: 0.08 });
+        bruit(c, s, t, { duree: 0.5, freq: 320, vol: 0.12 });
+        bruit(c, s, t, { duree: 1.6, freq: 5200, filtre: 'highpass', q: 0.7, vol: 0.05 });
+        [220, 330, 440].forEach((hz) =>
+          ton(c, s, t, { freq: hz, duree: 1.2, type: 'sawtooth', vol: 0.028, delai: 0.02 }));
       } },
     /* L'accord riche de la légendaire (« audio.chime('legendaire') ») : comme
        celui de l'épique, la collection seule l'appelle encore — au kiosque,
