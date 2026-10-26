@@ -36,6 +36,9 @@ import path from 'node:path';
  */
 export const TOLERANCE = 44;
 
+/** Avance minimale du vert sur le rouge et le bleu pour être du fond de studio. */
+export const VERT_STUDIO = 45;
+
 /** Largeur de l'adoucissement du bord, en pixels. */
 export const FRANGE = 1.2;
 
@@ -61,8 +64,26 @@ export function detourer({ data, width, height }, reference, { trous = false } =
   const fond = new Uint8Array(n);
   const pile = [];
 
+  /* Seulement sur le vert de studio : les premières pièces ont été rendues sur
+     du **noir**, et sur elles la même passe trouait les ombres intérieures —
+     jusqu’à un quart de la capuche. Jugé à la teinte, comme plus bas : le
+     coin assombri du fauteuil (1, 116, 59) n'avait pas soixante unités
+     d'avance sur le bleu, et n'était plus reconnu comme du studio. */
+  const studio = reference[1] - Math.max(reference[0], reference[2]) >= VERT_STUDIO;
+
+  /* **Le vert de studio se reconnaît aussi à sa teinte**, pour les équipements.
+     Certains rendus assombrissent le fond vers les coins (un vignetage que le
+     texte interdit pourtant) : 116 de vert au coin, 166 au centre — plus que
+     la tolérance, et le canapé, le fauteuil et l'éventail gardaient un disque
+     vert autour d'eux. Un vert qui dépasse nettement le rouge et le bleu n'est
+     porté par aucun objet du jeu ; l'olive d'un sac de couchage ou de bottes
+     de pluie reste loin du seuil (une vingtaine d'unités). */
+  const vertStudio = (p) => data[p + 1] >= 80
+    && data[p + 1] - Math.max(data[p], data[p + 2]) >= VERT_STUDIO;
+
   const ressemble = (i) => {
     const p = i * 4;
+    if (trous && studio && vertStudio(p)) return true;
     return Math.abs(data[p] - reference[0]) <= TOLERANCE
       && Math.abs(data[p + 1] - reference[1]) <= TOLERANCE
       && Math.abs(data[p + 2] - reference[2]) <= TOLERANCE;
@@ -91,10 +112,6 @@ export function detourer({ data, width, height }, reference, { trous = false } =
     if (y < height - 1) { const j = i + width; if (!fond[j] && ressemble(j)) { fond[j] = 1; pile.push(j); } }
   }
 
-  /* Seulement sur le vert de studio : les premières pièces ont été rendues sur
-     du **noir**, et sur elles la même passe trouait les ombres intérieures —
-     jusqu’à un quart de la capuche. */
-  const studio = reference[1] > reference[0] + 60 && reference[1] > reference[2] + 60;
   if (trous && studio) {
     for (let i = 0; i < n; i++) if (!fond[i] && ressemble(i)) fond[i] = 1;
   }
