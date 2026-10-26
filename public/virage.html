@@ -379,6 +379,11 @@ html[data-calme~="animations"] .float,html[data-calme~="animations"] .countdown{
 @keyframes ultimeBat{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
 @media (prefers-reduced-motion: reduce){.ultime[data-etat=pret]{animation:none}}
 html[data-calme~=animations] .ultime[data-etat=pret]{animation:none}
+/* Une rangée de plus dans la colonne des jauges : l'écart entre elles se
+   resserre, pour que le tableau ne prenne rien de plus à la corde, la seule
+   rangée qui cède (`virage:ui`, à 320 × 568 avec un deck). */
+.tbf-tableau-jauges:has(> .ultime:not([hidden])){gap:5px}
+.ultime:not([data-etat=pret]){min-height:14px}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
