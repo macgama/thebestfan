@@ -964,7 +964,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       socket.emit('virage:state',
         room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions,
           classe, apports,
-          modsBanc: (heroLegende || pieceLegende) ? modsBanc : null }));
+          modsBanc: (heroLegende || pieceLegende) ? modsBanc : null,
+          // Le cri du barème, au premier âge comme les modificateurs.
+          cri: hero?.cri ?? null }));
       /* **Plus de `virage:crowd` à toute la salle** (D4). Un entrant n'a
          jamais poussé et ne change pas la foule, qui ne compte que les actifs ;
          et `join` lève `dirty`, si bien que le battement suivant — cent

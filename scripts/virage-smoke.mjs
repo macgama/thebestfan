@@ -1467,6 +1467,31 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
     }
   }
 
+  /* **Le chant de son geste pousse la poussée de son cri**, comme au duel
+     (choix de Gaël du 26 octobre 2026). Mêmes frappes, même carte, deux
+     salles du même match, donc du même stade : seul le geste du cri change. */
+  {
+    const corde = (id, cri) => {
+      const x = new VirageRoom({
+        fixture: { id, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+        emit: () => {}, log: { warn() {}, error() {} } });
+      x.repertoire = () => ['reprise', 'roulement', 'bache', 'repons', 'renverse'];
+      x.join('p0', { side: 0, name: 'P0', cri });
+      const p0 = x.members.get('p0');
+      p0.breath = 100;
+      x.rope = 0;
+      x.chant('p0', { cardId: 'reprise', taps: Array.from({ length: 8 }, (_, i) => i * 560 + 7) });
+      return { rope: Math.abs(x.rope), vu: x.snapshotFor?.('p0')?.you?.cri ?? null };
+    };
+    const sien = corde(9010, { gest: 'tempo', power: 90, label: 'X' });
+    const autre = corde(9010, { gest: 'mash', power: 90, label: 'X' });
+    const rapport = sien.rope / autre.rope;
+    check(`au Virage aussi, le chant de son geste pousse la poussée du cri (×${rapport.toFixed(2)})`,
+      autre.rope > 0 && Math.abs(rapport - 90 / 26) < 0.1);
+    check('et l’état lui dit le geste et la poussée de son cri',
+      sien.vu?.gest === 'tempo' && sien.vu?.power === 90);
+  }
+
   /* La recharge, et le fait qu'elle soit plus longue qu'au duel : une salle
      dure quatre-vingt-dix minutes, un duel cinq. */
   forcer('a-fumigene');
