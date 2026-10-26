@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Les rangées qui défilent de côté, à la souris** (branche
+`claude/project-thread-q1kuwq`, 26 octobre 2026, demandé par Gaël).
+Construction seule (le Manager redémarre de lui-même), **sans schéma**.
+
+- Sur ordinateur, toutes les rangées qui débordent à droite (âges, effets,
+  états et tenues de la fiche d'un Fanzzy, onglets des albums, jours des
+  matchs, onglets du télétexte, séries des boosters, cabine de la boutique…)
+  se font défiler à la molette, en les attrapant à la souris, ou avec deux
+  flèches qui apparaissent à côté de la rangée survolée. Le bord s'efface du
+  côté où il reste quelque chose à voir. Rien ne change au doigt.
+- Après la mise en ligne : sur l'ordinateur, ouvrir la fiche d'un Fanzzy et
+  passer la souris sur la rangée ÂGES, EFFETS, ÉTATS.
+
+---
+
 **La fin du duel guidé réparée** (branche `claude/project-thread-ok4tcv`,
 25 octobre 2026, demandé par Gaël). Construction seule (le Manager redémarre
 de lui-même), **sans schéma**.

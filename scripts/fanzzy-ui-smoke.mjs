@@ -3225,6 +3225,63 @@ if (process.env.CAPTURE) {
  * DUEL » a vécu : une exception dans un écouteur ne remonte à personne, la
  * page continue, et le bouton ne fait simplement rien. Le seul témoin était
  * cette liste, que rien ne lisait. */
+/* ------------------------------------- la rangée de la fiche, à la souris
+
+   Gaël, le 26 octobre 2026, sur ordinateur : la rangée ÂGES, EFFETS, ÉTATS
+   était coupée à droite, sans moyen d'aller voir la suite. nav.js donne à
+   toute rangée qui défile de côté la molette, deux flèches et le glisser,
+   sur un écran à souris. Chrome sans fenêtre se dit sans souris
+   (`hover: none`) : la page croit ici en avoir une. */
+{
+  const p = await nav.newPage();
+  p.on('pageerror', (e) => erreurs.push(e.message));
+  await p.evaluateOnNewDocument(() => {
+    const mm = window.matchMedia.bind(window);
+    window.matchMedia = (q) => (q.includes('pointer: fine')
+      ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : mm(q));
+  });
+  await p.setViewport({ width: 1366, height: 800 });
+  await p.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.fiche .tbf-inventaire', { timeout: 8000 }).catch(() => null);
+  await new Promise((r) => setTimeout(r, 400));
+  const rang = () => p.evaluate(() => {
+    const r = document.querySelector('.fiche .tbf-inventaire');
+    const b = r.getBoundingClientRect();
+    const f = [...document.querySelectorAll('.tbf-defile-fleche.on')].map((x) => { const q = x.getBoundingClientRect(); return { left: q.left, right: q.right, top: q.top, width: q.width, height: q.height }; });
+    return { sl: r.scrollLeft, max: r.scrollWidth - r.clientWidth, x: b.left + b.width / 2,
+      y: b.top + b.height / 2, l: b.left, r: b.right, f, url: location.pathname };
+  });
+  const remettre = () => p.evaluate(() => {
+    document.querySelector('.fiche .tbf-inventaire').scrollLeft = 0;
+  }).then(() => new Promise((r) => setTimeout(r, 200)));
+  const d = await rang();
+  check(`à 1 366 px, la rangée de la fiche déborde (${d.max} px cachés)`, d.max > 40);
+  await p.mouse.move(d.x, d.y);
+  await new Promise((r) => setTimeout(r, 200));
+  const s = await rang();
+  check('la survoler pose deux flèches, à côté d’elle et non dessus', s.f.length === 2
+    && s.f[0].right <= s.l + 1 && s.f[1].left >= s.r - 1
+    || (console.log('        ', s), false));
+  await p.mouse.wheel({ deltaY: 120 });
+  await new Promise((r) => setTimeout(r, 400));
+  check('la molette la fait défiler de côté', (await rang()).sl > 0);
+  await remettre();
+  await p.mouse.click(s.f[1].left + s.f[1].width / 2, s.f[1].top + s.f[1].height / 2);
+  await new Promise((r) => setTimeout(r, 700));
+  check('la flèche de droite la fait avancer', (await rang()).sl > 0);
+  await remettre();
+  await p.mouse.move(d.x + 60, d.y);
+  await p.mouse.down();
+  await p.mouse.move(d.x - 40, d.y, { steps: 5 });
+  await p.mouse.move(d.x - 100, d.y, { steps: 5 });
+  await p.mouse.up();
+  await new Promise((r) => setTimeout(r, 400));
+  const g = await rang();
+  check('on peut l’attraper et la tirer à la souris', g.sl > 0);
+  check('et le clic qui a tiré n’ouvre rien', g.url === `/fanzzy/${ILLUSTRE}`);
+  await p.close();
+}
+
 check('aucune page n’a jeté d’erreur de script', erreurs.length === 0
   || (console.log('       ', erreurs.slice(0, 5)), false));
 
