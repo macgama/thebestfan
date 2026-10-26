@@ -2309,7 +2309,8 @@ function montrerUltime(f) {
     const r = window.TBF_ETATS?.resoudre?.(f.pour, { evo: f.stage ?? 1, etat: 'pousse' });
     src = r?.src ?? window.FZART?.adresse?.(f.pour, 'plein') ?? null;
   } catch { src = null; }
-  return window.TBF_ULTIME?.scene?.({ src, cri: u.cri, nom: u.nom, couleur: u.couleur, grande: true });
+  return window.TBF_ULTIME?.scene?.({ src, cri: u.cri, nom: u.nom, couleur: u.couleur, grande: true,
+    racine: f.pour, age: f.stage ?? 1 });
 }
 
 /** « NOUVEAU », tamponné sur la carte. */

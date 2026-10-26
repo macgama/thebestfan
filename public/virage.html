@@ -1940,7 +1940,8 @@ function sceneUltime(r) {
   const src = poseDuBilan('pousse');
   scene?.poserFond?.('pousse');
   return window.TBF_ULTIME?.scene?.({ src, cri: r.cri ?? S?.you?.ultime?.nom ?? '',
-    nom: f?.nom ?? '', couleur: r.couleur ?? '#F5C33B', grande: Boolean(r.grande) });
+    nom: f?.nom ?? '', couleur: r.couleur ?? '#F5C33B', grande: Boolean(r.grande),
+    racine: f?.racine ?? f?.id, age: 1 });
 }
 
 $('hand').addEventListener('pointerdown', async (e) => {
