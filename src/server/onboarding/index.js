@@ -481,6 +481,9 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     const s = stadeAffiche(atteint, stade);
 
     let pose = null;
+    /* La carte Ultimate se range parmi les états, mais ne se porte pas : elle
+       débloque la scène du coup fatal (`shared/ultime.js`). */
+    if (etat === 'ultime') throw fail('onboarding.error.not_owned');
     if (etat && etat !== 'neutre') {
       const a = await q(
         `SELECT 1 FROM user_etats

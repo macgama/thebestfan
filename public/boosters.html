@@ -2137,7 +2137,8 @@ async function openPack() {
      Le même geste sert au classeur et au kiosque rendus juste après, qui
      lisent la même table. */
   for (const f of pull) {
-    if (!f?.etat || !f.pour) continue;
+    // La carte Ultimate n'est pas une expression : rien à inscrire.
+    if (!f?.etat || !f.pour || f.ultime) continue;
     const parAge = (S.etats[f.pour] ??= {});
     const liste = (parAge[f.stage ?? 1] ??= []);
     if (!liste.includes(f.id)) liste.push(f.id);
@@ -2298,6 +2299,17 @@ function collerRarete(carte) {
   forme.style.setProperty('--d', `${COLLE_APRES_MS}ms`);
   forme.classList.add('tbf-colle');
   aLaFin(forme, 'tbf-colle', 'tbf-colle');
+}
+
+/** La grande scène d'une carte Ultimate qu'on vient de gagner. */
+function montrerUltime(f) {
+  const u = window.TBF_CARTES?.ultimeDe?.(f.pour, f.stage) ?? {};
+  let src = null;
+  try {
+    const r = window.TBF_ETATS?.resoudre?.(f.pour, { evo: f.stage ?? 1, etat: 'pousse' });
+    src = r?.src ?? window.FZART?.adresse?.(f.pour, 'plein') ?? null;
+  } catch { src = null; }
+  return window.TBF_ULTIME?.scene?.({ src, cri: u.cri, nom: u.nom, couleur: u.couleur, grande: true });
 }
 
 /** « NOUVEAU », tamponné sur la carte. */
@@ -2534,6 +2546,10 @@ function retournerCarte(cur) {
   try { chante = window.TBF_SON?.jingle?.(rar) === true; } catch { /* le son ne casse rien */ }
   fondFilme(rar);
   Promise.resolve(window.FX?.reveler?.(rar, cur, { son: !chante })).catch(() => {})
+    /* **Une carte Ultimate joue la scène qu'elle débloque** : c'est ce
+       qu'on vient de gagner, et la voir est tout l'intérêt de l'avoir
+       tirée (`/ultime.js`). */
+    .then(() => (f?.ultime ? montrerUltime(f) : null))
     .then(() => { if (moi === paquet) enCeremonie = false; });
   /* L'entrée part quand le demi-tour est fini (`.reveal .flip`, 550 ms) :
      plus tôt, le geste se jouerait sur une carte encore de profil. La
@@ -2975,6 +2991,7 @@ document.addEventListener('visibilitychange', () => {
 })();
 </script>
 <script src="/fx.js" defer></script>
+<script src="/ultime.js" defer></script>
 <script src="/niveau-fete.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>

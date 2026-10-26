@@ -6,6 +6,7 @@ import { ACTIONS, ACTIONS_MARQUEES, ACTION_BY_ID, DECK_RULES, validerDeck }
    stade d'un match, celui où ses duels se joueront : voir `lieuServi`. */
 import { publies as jouables, stadeDuMatch } from '../contenus/index.js';
 import { parIdentifiant, racineDe, lignee } from '../fanzzy/catalogue.js';
+import { ETAT_ULTIME } from '../../shared/ultime.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 // La prime des grands formats se lit dans les réglages : elle s’ajuste depuis
 // /admin, comme le reste du barème. Voir `primeDeFormat`.
@@ -412,6 +413,21 @@ export function createDecks({ pool, requireAuth, niveau = null,
       if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
     }
 
+    /* **Les cartes Ultimate** de ses âges (`shared/ultime.js`), rangées dans
+       `user_etats` sous l'état `ultime`. Elles ne changent rien à la poussée :
+       elles débloquent la grande scène du coup fatal. Même tolérance que les
+       tenues : une base sans `sql/etats.sql` joue la scène courte. */
+    const ultimes = {};
+    try {
+      for (const r of await q(
+        `SELECT fanzzy_id, stage FROM user_etats WHERE user_id = ? AND etat = ?`,
+        [userId, ETAT_ULTIME])) {
+        (ultimes[r.fanzzy_id] ??= {})[Number(r.stage) || 1] = true;
+      }
+    } catch (e) {
+      if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
+    }
+
     return {
       /* La règle des légendaires appliquée au deck tel qu'il est enregistré :
          un deck d'avant la règle se joue selon elle (`selonLaRegle`). */
@@ -461,6 +477,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
           stade: 1,
           ages: jouables,
           tenues: tenues[f.id] ?? {},
+          ultimes: ultimes[f.id] ?? {},
           // Le club acheté pour un Fanzzy neutre, nul sinon : `lierLeDeck` le lit.
           club: clubs[f.id] ?? null,
           legende: f.legende,
