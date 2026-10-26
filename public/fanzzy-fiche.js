@@ -323,6 +323,18 @@
         }
       }
 
+      /* **L'Ultimate de l'âge regardé** (`src/shared/ultime.js`) : son nom
+         est le cri de l'âge. Tout le monde a le coup — la tuile n'est donc
+         jamais sous scotch — ; la carte du booster débloque la grande scène,
+         et c'est ce que la tuile dit. La toucher joue la scène. */
+      if (d.ultimes) {
+        const a = ageDe(n);
+        liste.push({ cle: 'ultime', rang: 'ULTIMATE', titre: a?.cri?.label || 'Ultimate', id: 'ultime',
+          ok: true, grande: Boolean(d.ultimes?.[n]?.possede), atteint: Boolean(a?.possede ?? n <= d.stade),
+          image: dessinExact(n, { etat: 'pousse' })
+            ?? (aMoi() ? portraitAge(a ?? { id: d.fanzzy.ageId ?? d.fanzzy.id }) : null) });
+      }
+
       /* **Le repos, en tête des états.** Il ne se gagne pas — il est là dès
          le premier booster —, mais la rangée sert aussi à **choisir** : sans
          lui, une expression retenue ne se défaisait plus depuis la fiche. Sur
@@ -768,7 +780,7 @@
       /* L'ordre est celui de l'importance : ce qu'il devient, ce qu'il
          change, puis ce qu'il montre. Les tenues ferment la marche : ce sont
          les seules qui ne changent rien au jeu, et les plus nombreuses. */
-      const rangs = ['ÂGES', 'EFFETS', 'ÉTATS', 'TENUES']
+      const rangs = ['ÂGES', 'EFFETS', 'ULTIMATE', 'ÉTATS', 'TENUES']
         .map((r) => [r, pieces.filter((x) => x.rang === r)])
         .filter(([, l]) => l.length);
       n.innerHTML = rangs.map(([nom, l]) => `<section class="tbf-inventaire-rang rang">
@@ -815,6 +827,7 @@
       const tenue = x.rang === 'TENUES';
       const effet = x.rang === 'EFFETS';
       const choisi = x.cle === choisie;
+      if (x.rang === 'ULTIMATE') return tuileUltime(x, choisi);
       const retenu = aMoi() && x.ok && voulu
         && ((etat && x.id === (voulu.etat ?? 'neutre')) || (tenue && x.id === voulu.skin));
       /* **Un effet n'est pas peint de sa famille.** La face pleine à la
@@ -852,6 +865,20 @@
         x.ok ? 'ok' : 'verrou'}${choisi ? ' choisie' : ''}"${ton}${!x.ok || !aMoi() ? ' data-verrou' : ''}
         data-case="${esc(x.cle)}" title="${esc(x.titre)}" aria-label="${esc(nom)}"${
         choisi ? ' aria-current="true"' : ''}${(etat || tenue) && x.ok && aMoi() ? ` aria-pressed="${retenu}"` : ''}${mort()}>${dedans}${colle}</button>`;
+    }
+
+    /** La tuile de l'Ultimate : à l'or quand la grande scène est gagnée,
+        un sticker BOOSTER sinon — sans scotch, le coup est à tout le monde. */
+    function tuileUltime(x, choisi) {
+      const dedans = x.image ? `<img src="${esc(x.image)}" alt="" loading="lazy" onerror="this.remove()">`
+        : trait('etat');
+      const colle = !aMoi() ? ''
+        : x.grande ? '<span class="tbf-sticker" data-ton="or" aria-hidden="true">SCÈNE</span>'
+          : '<span class="tbf-sticker" aria-hidden="true">BOOSTER</span>';
+      const nom = `Ultimate : ${x.titre}${x.grande ? ', grande scène gagnée' : ''}`;
+      return `<button type="button" class="tbf-plaque tbf-tuile case ok${choisi ? ' choisie' : ''}"${
+        aMoi() && x.grande ? ' data-ton="or"' : ''} data-case="ultime" title="${esc(x.titre)}" aria-label="${esc(nom)}"${
+        choisi ? ' aria-current="true"' : ''}${mort()}>${dedans}${colle}</button>`;
     }
 
     /* **La bande défile, et elle le dit.** Une ombre au bord tant qu'il reste
@@ -895,6 +922,7 @@
       if (!x) { n.innerHTML = ''; return; }
       if (x.rang === 'ÂGES') n.innerHTML = detailAge(x);
       else if (x.rang === 'EFFETS') n.innerHTML = detailEffet(x);
+      else if (x.rang === 'ULTIMATE') n.innerHTML = detailUltime(x);
       else detailPose(n, x);
     }
 
@@ -924,6 +952,15 @@
       }
       return `<div class="tbf-detail-t"><b>Âge ${s} · ${statut}</b>${sous ? `<small>${esc(sous)}</small>` : ''}</div>
         ${lignes.slice(0, 2).join('')}`;
+    }
+
+    /* L'Ultimate : ce qu'il fait, et ce que la carte du booster ajoute. */
+    function detailUltime(x) {
+      const statut = x.grande ? 'grande scène gagnée' : 'grande scène dans un booster';
+      return `<div class="tbf-detail-t"><b>Ultimate · ${esc(x.titre)}</b><small>${esc(statut)}</small></div>
+        ${ligne('Une fois par duel et par Virage, jauge pleine')}
+        ${ligne(x.atteint ? 'Chante juste pour la remplir (PARFAIT compte double)'
+          : `Il vient avec l’âge ${vu()}`)}`;
     }
 
     /* Un effet : sa valeur, et d'où elle vient. L'échelle d'une écharpe
@@ -1102,6 +1139,14 @@
         voulu.stade = vu(); voulu.etat = x.id;
       }
       peindre();
+      if (x?.rang === 'ULTIMATE') voirUltime(x);
+    }
+
+    /** Joue la scène de l'Ultimate regardé : la grande si sa carte est
+        gagnée, la courte sinon — celle que tout le monde a (`/ultime.js`). */
+    function voirUltime(x) {
+      window.TBF_ULTIME?.scene?.({ src: x.image ?? null, cri: x.titre, nom: ageDe(vu())?.nom ?? d.fanzzy.nom,
+        couleur: famille(d.fanzzy.type).c, grande: Boolean(x.grande) });
     }
 
     function crier() {

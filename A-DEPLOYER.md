@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**L'Ultimate, le coup fatal des Fanzzy** (branche `claude/project-thread-epar0c`,
+26 octobre 2026, choix de Gaël : « Visuel à collectionner »). Construction
+puis redémarrage, **sans schéma** (la carte se range dans `user_etats`).
+
+- Au duel et au Virage, chaque chant BON remplit la jauge d'un point, un
+  PARFAIT de deux. Pleine, le bouton ULTIMATE s'allume : le geste de la
+  spécialité du Fanzzy, une fois par partie, une grosse poussée qui grandit
+  avec l'âge (la Relève au duel). Son nom est le cri de l'âge.
+- Tout le monde l'a, avec la même puissance. La carte Ultimate d'un âge (4 %
+  des places ouvertes des boosters, prises sur les actions) débloque la
+  grande scène et se range dans la fiche du Fanzzy, rang ULTIMATE.
+- Réglages dans /admin → RÉGLAGES → LA COMPOSITION DU DECK : points pour la remplir (8),
+  puissance (70), bonus par âge (25 %).
+- Après la mise en ligne : un duel contre un bot, chanter juste jusqu'à
+  ULTIMATE PRÊT, lancer le coup ; puis ouvrir une fiche, rang ULTIMATE.
 **Pastilles des demandes d'ami et de KOP sur l'accueil** (branche
 `claude/project-thread-iiydep`, 26 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.

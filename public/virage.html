@@ -361,6 +361,24 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    pièces de `ui.css` ont leurs doubles dans la feuille. */
 @media (prefers-reduced-motion:reduce){ .float,.countdown{animation:none} }
 html[data-calme~="animations"] .float,html[data-calme~="animations"] .countdown{animation:none}
+/* **L'Ultimate** (`shared/ultime.js`) : la jauge d'or sous le souffle, que
+   les chants réussis remplissent. Pleine, la ligne devient le bouton du coup
+   fatal, qui bat ; lancé, elle s'éteint pour le reste du match. */
+.ultime{width:100%;margin:0;padding:0;border:0;background:none;text-align:left;cursor:default;
+  -webkit-tap-highlight-color:transparent}
+.ultime .tbf-tableau-nom,.ultime .tbf-tableau-val{color:var(--projo)}
+.ultime .tbf-tableau-val{font-size:14px}
+.ultime .tbf-jauge{--e1:var(--flare);--e2:var(--projo)}
+.ultime[data-etat=pret]{grid-template-columns:1fr;padding:7px 10px;border-radius:6px;cursor:pointer;
+  background:var(--projo);box-shadow:0 0 0 2px var(--encre),0 0 18px var(--projo);
+  animation:ultimeBat 1.1s ease-in-out infinite}
+.ultime[data-etat=pret] .tbf-tableau-nom{color:var(--encre);font-size:13px;font-weight:700;
+  letter-spacing:.06em;text-align:center}
+.ultime[data-etat=pret] .tbf-jauge,.ultime[data-etat=pret] .tbf-tableau-val{display:none}
+.ultime[data-etat=lance]{opacity:.45}
+@keyframes ultimeBat{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@media (prefers-reduced-motion: reduce){.ultime[data-etat=pret]{animation:none}}
+html[data-calme~=animations] .ultime[data-etat=pret]{animation:none}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -443,6 +461,12 @@ html[data-calme~="animations"] .float,html[data-calme~="animations"] .countdown{
         <div class="tbf-jauge tbf-jauge--fine tbf-jauge--souffle" id="souffleJauge"><i id="breathBar"></i></div>
         <b class="tbf-tableau-val" id="breathVal">0</b>
       </div>
+      <!-- L'Ultimate : la jauge, puis le bouton du coup fatal. -->
+      <button type="button" class="tbf-tableau-l ultime" id="ultime" disabled hidden>
+        <span class="tbf-tableau-nom" id="ultimeNom">ULTIMATE</span>
+        <div class="tbf-jauge tbf-jauge--fine"><i id="ultimeBar" style="width:0%"></i></div>
+        <b class="tbf-tableau-val" id="ultimeVal">0/8</b>
+      </button>
       <div class="tbf-tableau-l" id="rank" hidden></div>
     </div>
     <div class="tbf-tableau-droite">
@@ -926,6 +950,7 @@ function render() {
   // Le souffle affiché est celui du serveur **plus le regain écoulé depuis**.
   const souffle = Math.round(souffleCourant());
   renderSouffle(souffle);
+  renderUltime();
   renderRang();
   renderCombo();
   renderPile();
@@ -1606,6 +1631,9 @@ function fail(code) {
     'ferveur.error.evolution_locked':'L’âge suivant de ton Fanzzy n’est pas débloqué',
     'ferveur.error.not_in_virage':'Tu n’es plus dans la tribune',
     'ferveur.error.chant_hors_repertoire':'Ce chant n’est plus au répertoire',
+    'ferveur.error.ultime_pas_pret':'Ton Ultimate n’est pas encore prêt',
+    'ferveur.error.ultime_utilise':'Ton Ultimate est déjà lancé pour ce match',
+    'ferveur.error.ultime_sans_fanzzy':'Équipe un Fanzzy pour avoir un Ultimate',
     /* La porte fermée : si elle arrive, « Refusé par le serveur » ne dit
        rien à personne. */
     'ferveur.error.no_fixture':'Ce match n’est pas ouvert pour l’instant',
@@ -1861,6 +1889,55 @@ function sentirLeBut(pour) {
   if (busy) buzz(pour ? [45, 55, 130] : 220);
 }
 
+/* ---------------------------------------------------- l'Ultimate
+
+   La jauge sous le souffle, puis le bouton du coup fatal (`shared/ultime.js`).
+   Le geste est celui de la spécialité du Fanzzy équipé, et le serveur le
+   choisit : la page ouvre la fenêtre qu'il dit. Une fois par match. */
+function renderUltime() {
+  const u = S?.you?.ultime;
+  const b = $('ultime');
+  if (!b) return;
+  if (!u || u.seuil == null) { b.hidden = true; return; }
+  b.hidden = false;
+  const etat = u.utilise ? 'lance' : u.pret ? 'pret' : 'charge';
+  if (b.dataset.etat !== etat) b.dataset.etat = etat;
+  b.disabled = etat !== 'pret' || Boolean(P.parti);
+  ecrire($('ultimeNom'), etat === 'pret' ? `ULTIMATE : ${u.nom ?? ''}`.replace(/ : $/, '')
+    : etat === 'lance' ? 'ULTIMATE LANCÉ' : 'ULTIMATE');
+  ecrire($('ultimeVal'), `${Math.min(u.points, u.seuil)}/${u.seuil}`);
+  const largeur = `${u.seuil ? Math.round(100 * Math.min(1, u.points / u.seuil)) : 100}%`;
+  if ($('ultimeBar').style.width !== largeur) $('ultimeBar').style.width = largeur;
+}
+
+$('ultime').addEventListener('click', async () => {
+  const u = S?.you?.ultime;
+  if (!u?.pret || busy || !S || P.sortie || P.parti) return;
+  busy = true;
+  render();
+  try {
+    const taps = await openMini({ id: 'ultime', nom: 'ULTIMATE', gest: u.geste ?? 'tempo',
+      power: u.nom ?? '' });
+    if (taps) socket.emit('virage:ultime', { taps });
+    else fail('ferveur.error.bad_taps');
+  } finally {
+    closeMini();
+    busy = false;
+    render();
+    viderApresLeGeste();
+  }
+});
+
+/** La scène de son Ultimate (`/ultime.js`), avec le Fanzzy équipé. */
+function sceneUltime(r) {
+  const f = S?.you?.fanzzy;
+  // Le même dessin que le bilan (`poseDuBilan`), dans la pose de la poussée.
+  const src = poseDuBilan('pousse');
+  scene?.poserFond?.('pousse');
+  return window.TBF_ULTIME?.scene?.({ src, cri: r.cri ?? S?.you?.ultime?.nom ?? '',
+    nom: f?.nom ?? '', couleur: r.couleur ?? '#F5C33B', grande: Boolean(r.grande) });
+}
+
 $('hand').addEventListener('pointerdown', async (e) => {
   const el = e.target.closest('[data-card]');
   /* Une sortie en cours — le bilan demandé, ou posé — : on n'ouvre pas un
@@ -2100,6 +2177,20 @@ function raconterActe(ev) {
       case 'effect':
         if (e.type === 'team_breath' && pour) float(`+${e.valeur} à la tribune`, 'var(--vert)');
         break;
+      /* **L'Ultimate d'un autre supporter** : la tribune le voit partir, sans
+         la scène — mille personnes en lanceraient chacune une. Le sien arrive
+         à part (`virage:ultime`). Un seul titre toutes les quatre secondes. */
+      case 'ultime': {
+        stade?.pulse(e.side);
+        pousser(pour ? 'moi' : 'eux');
+        const t = Date.now();
+        if (t - (P.ultimeVuA ?? 0) < 4000) break;
+        P.ultimeVuA = t;
+        window.FX?.titre?.(pour ? 'ULTIMATE DANS TA TRIBUNE' : 'ULTIMATE EN FACE',
+          [e.nom, e.cri].filter(Boolean).join(' · '), pour ? 'var(--projo)' : 'var(--bleu)', 24);
+        window.FX?.son?.(pour ? 'parfait' : 'tic');
+        break;
+      }
       default: break;
     }
   }
@@ -2882,6 +2973,14 @@ function connect() {
        avait — et sans `prochain` d'un serveur qui sert le rang, c'est la
        première place. */
     S.you.breath = r.breath; souffleVuA = Date.now(); S.you.ferveur = r.ferveur;
+    if (r.ultime !== undefined) S.you.ultime = r.ultime;
+    /* La jauge vient de se remplir : on le dit, après la fenêtre du geste. */
+    if (r.ultimePret) {
+      apresLaFenetre(() => {
+        window.FX?.titre?.('ULTIMATE PRÊT', 'Touche la ligne dorée pour le lancer', 'var(--projo)', 30);
+        window.FX?.son?.('evolue');
+      });
+    }
     if (r.serie != null) S.you.serie = r.serie;
     if (r.rang != null) { S.you.rank = r.rang; if (r.sur != null) S.you.of = r.sur; }
     if (r.prochain) S.you.prochain = r.prochain;
@@ -3024,6 +3123,19 @@ function connect() {
 
   /* Ce que fait une carte — la sienne comme celle d'un voisin. */
   socket.on('virage:events', (m) => { if (S) raconterActe(m.evenements ?? []); });
+  /* **Son Ultimate** : le résultat n'arrive qu'à lui, avec la scène. Celui
+     des autres passe par `virage:events` (voir « ultime » dans
+     `raconterActe`). */
+  socket.on('virage:ultime', (r) => {
+    if (!S || !r) return;
+    S.you.breath = r.breath; souffleVuA = Date.now(); S.you.ferveur = r.ferveur;
+    if (r.ultime) S.you.ultime = r.ultime;
+    render();
+    Promise.resolve(sceneUltime(r)).then(() => {
+      window.FX?.points?.(r.push, $('knot'), { couleur: window.FX.couleurs.or, quoi: 'ULTIMATE' });
+    });
+    celebrer(3400);
+  });
 
   /* Le répertoire a tourné : cinq autres chants, et un autre motif d'écho. */
   socket.on('virage:repertoire', ({ cards, echo } = {}) => {
@@ -3380,6 +3492,7 @@ function connect() {
 })();
 </script>
 <script src="/fx.js" defer></script>
+<script src="/ultime.js" defer></script>
 <!-- La fête de niveau, après fx.js dont elle emploie les compteurs. -->
 <script src="/niveau-fete.js" defer></script>
 <script src="/tifo.js" defer></script>

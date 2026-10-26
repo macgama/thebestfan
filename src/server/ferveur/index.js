@@ -19,6 +19,8 @@ import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 import { apportsDe } from '../../shared/apports.js';
 import { avecCriDuClub, clubDe, lieA, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
 import { racineDe } from '../fanzzy/catalogue.js';
+import { TYPES } from '../../shared/fanzzy/dex.js';
+import { ETAT_ULTIME } from '../../shared/ultime.js';
 
 /**
  * Couche réseau du Grand Virage.
@@ -919,6 +921,17 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         club: lien,
       });
 
+      /* **L'Ultimate** du Fanzzy équipé, au premier âge comme tout au Virage :
+         son geste, son cri, et la grande scène si le joueur en a la carte
+         (`shared/ultime.js`). Une base sans la table joue la scène courte. */
+      const ultime = hero ? {
+        fanzzy: hero.id, geste: hero.cri?.gest ?? 'tempo', nom: hero.cri?.label ?? null,
+        couleur: TYPES[hero.type]?.c ?? null,
+        grande: (await q(`SELECT 1 FROM user_etats
+          WHERE user_id = ? AND fanzzy_id = ? AND stage = 1 AND etat = ?`,
+        [u.userId, racineDe(hero.id), ETAT_ULTIME]).catch(() => [])).length > 0,
+      } : null;
+
       /* **D'ici à la fin, plus aucune attente** : ce qui suit doit voir la
          salle et la socket telles qu'elles sont, pas telles qu'elles étaient
          avant les lectures.
@@ -963,7 +976,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
 
       socket.emit('virage:state',
         room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions,
-          classe, apports,
+          classe, apports, ultime,
           modsBanc: (heroLegende || pieceLegende) ? modsBanc : null,
           // Le cri du barème, au premier âge comme les modificateurs.
           cri: hero?.cri ?? null }));
@@ -1067,6 +1080,38 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
           }
         } else {
           console.error('[virage] carte', e);
+          socket.emit('virage:error', { code: 'ferveur.error.server' });
+        }
+      }
+    });
+
+    /**
+     * L'Ultimate, lancé depuis le Virage (`shared/ultime.js`). Comme une
+     * carte : le résultat à celui qui l'a lancé, l'évènement à toute la
+     * salle — un coup fatal se voit de toute la tribune. Une fois par match :
+     * la règle suffit de filet, le seau des cartes borne le reste.
+     */
+    sur('virage:ultime', async ({ taps } = {}) => {
+      const u = me();
+      if (!u) return;
+      const { fixtureId, room } = salleDe(socket);
+      if (!room) return socket.emit('virage:error', { code: 'ferveur.error.not_in_virage' });
+      const now = Date.now();
+      const seau = (seauxCartes.get(socket) ?? []).filter((t) => now - t < 10_000);
+      if (seau.length >= MAX_CARTES_PER_10S) {
+        return socket.emit('virage:error', { code: 'ferveur.error.rate_limited' });
+      }
+      seau.push(now);
+      seauxCartes.set(socket, seau);
+      try {
+        const { resultat, evenements } = room.ultimer(u.userId, { taps });
+        socket.emit('virage:ultime', resultat);
+        // Aux autres seulement : sa propre page joue la scène sur le résultat.
+        socket.to(`virage:${fixtureId}`).emit('virage:events', { evenements });
+      } catch (e) {
+        if (e instanceof Cheat) socket.emit('virage:error', { code: e.code });
+        else {
+          console.error('[virage] ultime', e);
           socket.emit('virage:error', { code: 'ferveur.error.server' });
         }
       }
