@@ -979,7 +979,7 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
       m.vitrine > m.ecran * 0.34
       || (console.log(`        ${Math.round(m.vitrine)} px sur ${m.ecran}`), false));
     check('et le bouton d’action est visible sans chercher', m.bouton <= m.ecran + 1);
-    check('les quatre rangées de cases sont là',
+    check('les cinq rangées de cases sont là',
       /* L'ordre compte : la bande défile, et les tenues sont trop nombreuses
          pour tenir avant les effets. Placées au milieu, elles les repoussaient
          hors de l'écran.
@@ -987,8 +987,12 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
          Les états s'insèrent **avant** elles pour la même raison : ils sont
          quatre, toujours, donc ils ne repoussent rien. Et ils viennent après
          les effets parce que ce qui change le jeu se lit avant ce qui se
-         voit — un état ne donne aucun bonus, c'est même toute sa règle. */
-      m.rangs.join('/') === 'ÂGES/EFFETS/ÉTATS/TENUES'
+         voit — un état ne donne aucun bonus, c'est même toute sa règle.
+
+         L'Ultimate vient juste après les effets : c'est le coup fatal de
+         l'âge, la chose qu'un joueur vient voir (`shared/ultime.js`), et une
+         seule case — il ne repousse rien. */
+      m.rangs.join('/') === 'ÂGES/EFFETS/ULTIMATE/ÉTATS/TENUES'
       || (console.log('        rangées :', m.rangs.join(', ')), false));
     check('et il y a des cases à regarder', m.cases >= 4);
     check('celles qu’on n’a pas restent visibles, verrouillées', m.verrous > 0);

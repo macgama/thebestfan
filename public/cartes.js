@@ -808,7 +808,10 @@ function dessinDeCarte(f, { etiquette = true, pied = false, silhouette = false }
     /* Le dessin de l'état, s'il existe. Toutes les lignées ne sont pas
        dessinées dans les quatre expressions, et `resoudre` rend `null`
        plutôt que d'inventer. */
-    const r = window.TBF_ETATS?.resoudre?.(f.pour, { evo: f.stage ?? 1, etat: f.id });
+    /* La carte Ultimate n'a pas de dessin à elle : elle montre le
+       personnage qui pousse, la pose la plus proche du coup fatal. */
+    const r = window.TBF_ETATS?.resoudre?.(f.pour, { evo: f.stage ?? 1,
+      etat: f.id === 'ultime' ? 'pousse' : f.id });
     /* **Le repli est le portrait du personnage, pas une silhouette.**
      *
      * Sans cette ligne, la carte retombait sur `art(f)`, qui cherche un
@@ -933,6 +936,7 @@ const typeDe = (f) => TYPES[f?.type] ?? { nom: '', c: '#C2CAD6', ico: '' };
  * ligne disparaît, jamais un tiret.
  */
 function piedDe(f, t) {
+  if (f.ultime) return 'ultimate';
   if (f.etat) return 'état';
   if (f.skin) return 'tenue';
   if (f.stuff) return 'équipement';
@@ -1176,7 +1180,25 @@ const ETATS_CARTE = {
   depit: ['Le dépit', 'On encaisse, on perd — il se prend la tête.'],
   pousse: ['On pousse', 'Il chante, penché en avant, l’écharpe tendue.'],
   colere: ['Pas content', 'Carton contre nous — il conteste.'],
+  /* La carte Ultimate d'un âge (`src/shared/ultime.js`) : elle se range avec
+     les états, mais ce n'est pas une expression qu'on porte. Elle débloque la
+     grande scène du coup fatal, et rien d'autre — tout le monde a l'Ultimate. */
+  ultime: ['L’Ultimate', 'La grande scène de son coup fatal, au duel comme au Virage.'],
 };
+
+/**
+ * Ce que l'Ultimate d'un âge montre (`src/shared/ultime.js`) : le cri de cet
+ * âge, son nom, la couleur de sa famille. Pour la scène qu'on voit au
+ * booster et sur la fiche — le duel et le Virage reçoivent les leurs du
+ * serveur.
+ */
+function ultimeDe(pour, stade = 1) {
+  const s = Math.max(1, Number(stade) || 1);
+  const f = DEX.find((x) => (x.racine ?? x.id) === pour && Number(x.stage ?? 1) === s)
+    ?? BY_ID.get(pour);
+  if (!f) return null;
+  return { cri: f.cri?.label ?? '', nom: f.nom ?? '', couleur: TYPES[f.type]?.c ?? '#F5C33B' };
+}
 
 function carteDuPaquet(c) {
   /* **Un état.** Il appartient à un âge d'un personnage précis — d'où `pour`
@@ -1195,9 +1217,11 @@ function carteDuPaquet(c) {
      * `pour` est la racine de lignée ; le catalogue la connaît toujours, même
      * si le joueur n'a pas encore l'âge concerné. */
     const perso = BY_ID.get(c.pour);
+    // L'Ultimate se tire plus rarement qu'un état : sa carte le dit.
+    const ultime = c.id === 'ultime';
     return { id: c.id, nom: perso?.nom ?? mot, texte: `${mot} — ${texte}`,
-      type: 'fide', rar: 'rare', stage: c.stade ?? 1,
-      etat: true, etatMot: mot, pour: c.pour };
+      type: ultime ? 'pyro' : 'fide', rar: ultime ? 'epique' : 'rare', stage: c.stade ?? 1,
+      etat: true, etatMot: mot, pour: c.pour, ...(ultime ? { ultime: true } : {}) };
   }
   /* **Une tenue non plus n'existe pas toute seule.**
    *
@@ -1272,5 +1296,5 @@ function carteDuPaquet(c) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, LIEUX, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, lieuSrc, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, LIEUX, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, lieuSrc, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid, ultimeDe };
 })();

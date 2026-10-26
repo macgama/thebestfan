@@ -243,8 +243,10 @@ check('un état ne tombe que pour un Fanzzy possédé',
    c'est elle qui donne une raison d'évoluer. */
 check('et jamais pour un âge qu’il n’a pas débloqué',
   etatsRecus.every((e) => Number(e.stage) <= (stadeDe.get(e.fanzzy_id) ?? 1)));
-check('chaque état tiré est l’un des quatre dessinés',
-  etatsRecus.every((e) => ['joie', 'depit', 'pousse', 'colere'].includes(e.etat)));
+/* La carte Ultimate se range aussi dans `user_etats` (`shared/ultime.js`) :
+   c'est la pose du coup fatal d'un âge, tirée comme un état. */
+check('chaque état tiré est l’un des quatre dessinés, ou la carte Ultimate',
+  etatsRecus.every((e) => ['joie', 'depit', 'pousse', 'colere', 'ultime'].includes(e.etat)));
 check('aucun état annoncé deux fois dans le même paquet',
   etatsDoublesDansUnPaquet === 0);
 
@@ -928,7 +930,7 @@ console.log('\n  ce qu’une ouverture a prélevé');
    qui il manque quelque chose, un repli absent ne prouverait rien.
 
    Les replis doivent **l'emporter** sur les poignées, comme les catégories
-   qui se replient (action, tenue, état : 54 %) sur celle des écharpes (18 %,
+   qui se replient (action, tenue, état, Ultimate : 54 %) sur celle des écharpes (18 %,
    depuis que les stades en ont pris cinq).
    Un repli posé dans une seule branche — l'action, et pas la tenue ni l'état
    — en donnerait moins que de poignées, et le second contrôle rougirait. */
@@ -945,7 +947,7 @@ console.log('\n  le repli : deux écharpes, la catégorie épuisée');
       [siens.flatMap((id) => tenues.map((t) => [R, id, 1, t]))]);
   }
   await pool.query('INSERT INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES ?',
-    [siens.flatMap((id) => ETATS_DESSINES.map((e) => [R, id, 1, e]))]);
+    [siens.flatMap((id) => [...ETATS_DESSINES, 'ultime'].map((e) => [R, id, 1, e]))]);
   await pool.query('INSERT INTO user_stuff (user_id, stuff_id, copies) VALUES ?',
     [STUFF.map((s) => [R, s.id, 1])]);
   /* Les stades aussi (la collection de stades) : sans eux, la catégorie des

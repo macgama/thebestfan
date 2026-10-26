@@ -38,6 +38,7 @@
     "matchs:ui": "node scripts/matchs-ui-smoke.mjs",
     "competitions:ui": "node scripts/competitions-ui-smoke.mjs",
     "legende:smoke": "node scripts/legende-smoke.mjs",
+    "ultime:smoke": "node scripts/ultime-smoke.mjs",
     "clubs:smoke": "node scripts/clubs-smoke.mjs",
     "nvn:smoke": "node scripts/nvn-smoke.mjs",
     "derby:smoke": "node scripts/derby-smoke.mjs",

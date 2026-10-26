@@ -10,6 +10,7 @@ import { STUFF, STUFF_BY_ID, combine, piecesPortees } from '../../shared/fanzzy/
 /* Les quatre états dessinés. `rendus.js` fait foi : la même liste sert la
    chaîne d'images, la résolution côté client et, maintenant, le tirage. */
 import { ETATS_DESSINES, ETAT_DESSIN } from '../../shared/fanzzy/rendus.js';
+import { ETAT_ULTIME } from '../../shared/ultime.js';
 
 /* Le nom d'un état pour le joueur. `rendus.js` décrit le **dessin** — « bras
    levés… » — ce qui sert au dessinateur et ne se met pas sur une carte. Ici
@@ -642,6 +643,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     }
     const out = {};
     for (const r of rows) {
+      /* La carte Ultimate se range dans la même table, mais ce n'est pas une
+         expression qu'on porte : elle débloque la scène du coup fatal
+         (`shared/ultime.js`). Les écrans qui lisent les états ne la voient
+         pas ; la fiche la sert à part. */
+      if (r.etat === ETAT_ULTIME) continue;
       const parAge = out[r.fanzzy_id] ??= {};
       (parAge[Number(r.stage)] ??= []).push(r.etat);
     }
@@ -772,7 +778,10 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * @returns {{carte, scarves}}
    */
   const PLACES_OUVERTES = [
-    ['action', 0.28],
+    /* 0,28 jusqu'aux cartes Ultimate, qui ont pris leurs quatre points ici
+       et non sur les écharpes : celles-ci paient les évolutions, et une
+       carte d'action se possède une fois — la case se vide vite. */
+    ['action', 0.24],
     ['stuff', 0.23],
     ['skin', 0.14],
     /* **Les états.** Quatre dessins par âge — la joie, le dépit,
@@ -793,6 +802,13 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        quinzaine de lieux à gagner, la case ne doit pas se remplir en une
        semaine. */
     ['lieu', 0.05],
+    /* **Les cartes Ultimate** (`shared/ultime.js`, choix de Gaël du 26
+       octobre 2026 : « Visuel à collectionner »). Une par âge atteint de
+       chaque Fanzzy possédé : elle débloque la grande scène du coup fatal et
+       se range dans la collection, **sans rien donner au jeu** — tout le
+       monde a l'Ultimate, et il pousse pareil. Quatre pour cent, pris sur
+       les cartes d'action : la plus rare des places ouvertes. */
+    ['ultime', 0.04],
     ['echarpes', 0.18],
   ];
 
@@ -905,6 +921,29 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         `INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, ?, ?)`,
         [userId, p.id, p.stade, p.etat]);
       return { carte: { type: 'etat', id: p.etat, pour: p.id, stade: p.stade, new: true },
+        scarves: 0 };
+    }
+
+    /* **La carte Ultimate d'un âge.** Même règle qu'un état — elle se range
+       dans `user_etats`, sous l'état `ultime`, et ne vise que les âges
+       atteints des Fanzzy possédés —, et elle part sous la forme d'un état :
+       la page la reconnaît à son identifiant. */
+    if (cat === 'ultime') {
+      if (!etatsPris) return repli();
+      const places = [];
+      for (const id of avant) {
+        const stade = stadeDe.get(id) ?? 1;
+        for (let s = 1; s <= stade; s++) {
+          if (!etatsPris.has(`${id}:${s}:${ETAT_ULTIME}`)) places.push({ id, stade: s });
+        }
+      }
+      if (!places.length) return repli();
+      const p = rnd(places);
+      etatsPris.add(`${p.id}:${p.stade}:${ETAT_ULTIME}`);
+      await conn.query(
+        `INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, ?, ?)`,
+        [userId, p.id, p.stade, ETAT_ULTIME]);
+      return { carte: { type: 'etat', id: ETAT_ULTIME, pour: p.id, stade: p.stade, new: true },
         scarves: 0 };
     }
 
@@ -2478,8 +2517,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         return { id: e, nom: ETAT_NOM[e] ?? e, dessin: ETAT_DESSIN[e] ?? '',
                  possede: Boolean(m), depuis: m?.got_at ?? null };
       }),
-      etatsAutresAges: etats.filter((x) => Number(x.stage) !== stade)
+      etatsAutresAges: etats.filter((x) => Number(x.stage) !== stade && x.etat !== ETAT_ULTIME)
         .map((x) => ({ id: x.etat, stade: Number(x.stage) })),
+      /* **L'Ultimate de chaque âge** (`shared/ultime.js`) : son nom — le cri
+         de l'âge —, son geste, et la carte qui débloque la grande scène,
+         gagnée ou non. Tout le monde a le coup ; la carte est la scène. */
+      ultimes: Object.fromEntries([1, 2, 3].map((n) => {
+        const m = etats.find((x) => x.etat === ETAT_ULTIME && Number(x.stage) === n);
+        return [n, { possede: Boolean(m), depuis: m?.got_at ?? null }];
+      })),
       // `possede` par âge veut dire « atteint », pas « détenu à part ». Un âge
       // au-delà du stade actuel se lit donc comme un objectif chiffré, ce qui
       // est exactement ce que la page en fait.

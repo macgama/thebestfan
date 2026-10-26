@@ -424,6 +424,25 @@ export const REGLAGES = [
     aide: 'Compté pour chaque joueur, à chaque duel et à chaque match de Virage. ' +
       'Zéro : le légendaire joue dès la première seconde, comme avant.' },
 
+  /* L'Ultimate, le coup fatal d'un Fanzzy : voir `shared/ultime.js`. Une
+     fois par duel et par match de Virage, au duel comme au Virage. */
+  { cle: 'ultime.charge', section: 'deck', type: 'entier',
+    titre: 'L’Ultimate est prêt après', unite: 'points (BON = 1, PARFAIT = 2)',
+    min: 0, max: 60, defaut: 8,
+    aide: 'Compté pour chaque joueur, à chaque duel et à chaque match de Virage. ' +
+      'Un duel compte une quarantaine de chants : à 8, la jauge se remplit vers ' +
+      'la deuxième minute. Zéro : prêt dès le coup d’envoi.' },
+
+  { cle: 'ultime.puissance', section: 'deck', type: 'entier',
+    titre: 'Un Ultimate parfait pousse de', unite: 'points', min: 1, max: 400, defaut: 70,
+    aide: 'Au premier âge, avant les modificateurs et l’effectif. Un geste raté ' +
+      'pousse encore la moitié. Un chant parfait pousse de 44 au duel.' },
+
+  { cle: 'ultime.bonus_age', section: 'deck', type: 'entier',
+    titre: 'L’Ultimate grandit avec l’âge de', unite: '% par âge', min: 0, max: 200, defaut: 25,
+    aide: 'À 25, le deuxième âge pousse 25 % de plus que le premier, le troisième ' +
+      '50 %. Au duel, c’est la Relève qui fait grandir ; au Virage, on reste au premier âge.' },
+
   { cle: 'deck.actions', section: 'deck', type: 'entier',
     titre: 'Cartes d’action par deck', unite: 'cartes', min: 1, max: 30, defaut: 10 },
 
