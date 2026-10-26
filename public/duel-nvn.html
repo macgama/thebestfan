@@ -491,25 +491,28 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .souffle b{font-family:var(--banner);font-size:16px;font-weight:700;line-height:1;text-align:right;
   font-variant-numeric:tabular-nums}
 .souffle .tbf-jauge{grid-column:1 / -1}
-/* **L'Ultimate** (`shared/ultime.js`) : la jauge d'or que les chants réussis
-   remplissent, sous le souffle. Pleine, elle devient le bouton du coup
-   fatal, qui bat comme un cœur ; lancé, elle s'éteint pour le reste du duel. */
-.ultime{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:4px 8px;
-  width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;
+/* **L'Ultimate** (`shared/ultime.js`) : une pastille d'or posée sur la carte
+   EN JEU, que les chants réussis remplissent. Pleine, elle grossit et bat
+   comme un cœur : c'est le bouton du coup fatal ; lancée, elle s'éteint pour
+   le reste du duel. **Sur la carte, pas sous le souffle** : une rangée de plus
+   dans la colonne de l'équipe prenait dix pixels à l'arène, la seule qui
+   cède (le budget de hauteur, `nvn:ui`). Au-dessus du banc, plus bas que la
+   carte levée, la place est libre. */
+.ultime{position:absolute;z-index:4;top:-12px;left:-6px;isolation:isolate;overflow:hidden;
+  display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;margin:0;
+  border:2px solid var(--projo);border-radius:999px;background:var(--encre);color:var(--projo);
+  font-family:var(--banner);font-size:10px;font-weight:700;letter-spacing:.08em;line-height:1;white-space:nowrap;
   cursor:default;-webkit-tap-highlight-color:transparent}
-.ultime .nom{font-family:var(--banner);font-size:11px;font-weight:600;letter-spacing:.1em;line-height:1;
-  color:var(--projo)}
-.ultime b{font-family:var(--banner);font-size:13px;font-weight:700;line-height:1;text-align:right;
-  font-variant-numeric:tabular-nums;color:var(--projo)}
-.ultime .tbf-jauge{grid-column:1 / -1}
-.ultime .tbf-jauge>i{background:linear-gradient(90deg,var(--flare),var(--projo))}
-.ultime[data-etat=pret]{grid-template-columns:1fr;padding:7px 10px;border-radius:6px;cursor:pointer;
+.ultime .nom,.ultime b{font:inherit;color:inherit;font-variant-numeric:tabular-nums}
+.ultime .ultime-plein{position:absolute;z-index:-1;top:0;bottom:0;left:0;opacity:.5;
+  background:linear-gradient(90deg,var(--flare),var(--projo));transition:width .3s ease-out}
+.ultime[data-etat=pret]{top:-18px;height:28px;padding:0 11px;font-size:13px;cursor:pointer;
   background:var(--projo);color:var(--encre);box-shadow:0 0 0 2px var(--encre),0 0 18px var(--projo);
   animation:ultimeBat 1.1s ease-in-out infinite}
-.ultime[data-etat=pret] .nom{color:var(--encre);font-size:14px;font-weight:700;letter-spacing:.06em;text-align:center}
-.ultime[data-etat=pret] b,.ultime[data-etat=pret] .tbf-jauge{display:none}
-.ultime[data-etat=lance]{opacity:.45}
-@keyframes ultimeBat{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.ultime[data-etat=pret] b,.ultime[data-etat=pret] .ultime-plein{display:none}
+.ultime[data-etat=lance]{opacity:.5}
+.ultime[data-etat=lance] b,.ultime[data-etat=lance] .ultime-plein{display:none}
+@keyframes ultimeBat{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @media (prefers-reduced-motion: reduce){.ultime[data-etat=pret]{animation:none}}
 html[data-calme~=animations] .ultime[data-etat=pret]{animation:none}
 .apports-i{align-self:center}
@@ -958,10 +961,11 @@ html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:n
             <b id="souffleVal">40</b>
             <div class="tbf-jauge tbf-jauge--fine tbf-jauge--souffle" id="souffleJauge"><i id="souffleBar" style="width:40%"></i></div>
           </div>
-          <!-- L'Ultimate : la jauge, puis le bouton du coup fatal. -->
+          <!-- L'Ultimate : la pastille, puis le bouton du coup fatal. Le rendu
+               la pose sur la carte EN JEU (`rendreUltime`). -->
           <button class="ultime" id="ultime" type="button" disabled hidden>
+            <i class="ultime-plein" id="ultimeBar" style="width:0%"></i>
             <span class="nom" id="ultimeNom">ULTIMATE</span><b id="ultimeVal">0/8</b>
-            <div class="tbf-jauge tbf-jauge--fine"><i id="ultimeBar" style="width:0%"></i></div>
           </button>
         </div>
         <!-- **Ce que tu portes**, derrière un « i » (lot 6) : le détail au
@@ -2971,7 +2975,6 @@ function rendreDuel() {
     ...(moi.main ?? []).map((id) => Number(carteDef(id)?.cost)),
   ].filter((c) => Number.isFinite(c) && c > 0 && c <= 100));
   poserCoutsSouffle($('souffleJauge'), [...couts].sort((a, b) => a - b), souffle);
-  rendreUltime(moi, v.termine);
 
   // Les effets en cours, nommés : sans ça, un joueur silencié croit à un bug.
   const NOMS = {
@@ -2995,6 +2998,8 @@ function rendreDuel() {
     });
 
   rendreEquipe(moi, effets);
+  // Après l'équipe : la pastille se pose sur la carte EN JEU.
+  rendreUltime(moi, v.termine);
   rendreMain(moi, effets);
   rendreChants(v);
 
@@ -4823,7 +4828,10 @@ function rendreUltime(moi, termine) {
   const u = moi?.ultime;
   const b = $('ultime');
   if (!b) return;
-  if (!u || u.seuil == null) { b.hidden = true; return; }
+  /* Sur la carte EN JEU : une Relève ou un changement la déplace avec lui. */
+  const carte = $('equipe').querySelector('.fz.actif');
+  if (!u || u.seuil == null || !carte) { b.hidden = true; return; }
+  if (b.parentElement !== carte) carte.appendChild(b);
   b.hidden = false;
   const etat = u.utilise ? 'lance' : u.pret ? 'pret' : 'charge';
   if (b.dataset.etat !== etat) {
@@ -4831,8 +4839,12 @@ function rendreUltime(moi, termine) {
     if (etat === 'pret') FX_ULT_PRET();
   }
   b.disabled = etat !== 'pret' || Boolean(termine);
-  ecrire($('ultimeNom'), etat === 'pret' ? `ULTIMATE : ${u.nom ?? ''}`.replace(/ : $/, '')
-    : etat === 'lance' ? 'ULTIMATE LANCÉ' : 'ULTIMATE');
+  ecrire($('ultimeNom'), etat === 'lance' ? 'ULTIMATE LANCÉ' : 'ULTIMATE');
+  /* La pastille est courte : son nom complet, le cri de l'âge, se dit à qui
+     ne la voit pas, et la scène l'écrit en grand. */
+  const dit = etat === 'pret' ? `ULTIMATE : ${u.nom ?? ''}`.replace(/ : $/, '')
+    : etat === 'lance' ? 'ULTIMATE LANCÉ' : `ULTIMATE ${Math.min(u.points, u.seuil)}/${u.seuil}`;
+  if (b.getAttribute('aria-label') !== dit) b.setAttribute('aria-label', dit);
   ecrire($('ultimeVal'), `${Math.min(u.points, u.seuil)}/${u.seuil}`);
   $('ultimeBar').style.width = `${u.seuil ? Math.round(100 * Math.min(1, u.points / u.seuil)) : 100}%`;
 }

@@ -15,6 +15,9 @@ puis redémarrage, **sans schéma** (la carte se range dans `user_etats`).
   puissance (70), bonus par âge (25 %).
 - Après la mise en ligne : un duel contre un bot, chanter juste jusqu'à
   ULTIMATE PRÊT, lancer le coup ; puis ouvrir une fiche, rang ULTIMATE.
+
+---
+
 **Pastilles des demandes d'ami et de KOP sur l'accueil** (branche
 `claude/project-thread-iiydep`, 26 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.
