@@ -1,6 +1,6 @@
 {
   "id": "AN13",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,8 +13,32 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "915d8db49d08",
+          "sha": "f57e7efe24af",
           "cligne": true
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "c70e8e195b9d"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "34fa44cdadee"
         }
       }
     },
@@ -29,8 +53,20 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "57a82346fd25",
+          "sha": "d2419b1fcb74",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "9a7976538ae6"
         }
       }
     },
@@ -45,8 +81,32 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "96c91fb4d7ca",
+          "sha": "88d07bebfb74",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "83aa9082515b"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "4a4d84acf857"
         }
       }
     }
