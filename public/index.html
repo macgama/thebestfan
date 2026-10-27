@@ -848,7 +848,10 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   position:relative;z-index:4;min-width:0;min-height:44px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   text-align:center;pointer-events:none}
-.qui .tbf-banderole{max-width:100%}
+/* Le nom se touche : il ouvre la fiche. `.qui` coupe les gestes (voir
+   `.ages`), on les lui rend comme aux flèches. */
+.qui .tbf-banderole{max-width:100%;pointer-events:auto;text-decoration:none;cursor:pointer}
+.qui .tbf-banderole:active{translate:1px 1px}
 /* Les flèches prennent les deux bouts de la rangée : le nom et l'âge leur
    laissent leur place quand elles sont là, `--fl-place` de chaque côté
    (voir `.ages .fl`). */
@@ -2076,7 +2079,9 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
            la scène, elle passait sous le personnage, qui occupe toute sa
            hauteur ; elle a maintenant sa rangée à elle. -->
       <div class="qui" id="qui">
-        <b class="tbf-banderole" id="quiNom"></b>
+        <!-- Le nom ouvre la fiche du Fanzzy montré, à l'âge montré : les
+             flèches changent l'âge, et le lien le suit (`nommer`). -->
+        <a class="tbf-banderole" id="quiNom" href="/fanzzy"></a>
         <!-- Le défilé des âges. Trois pièces et pas une de plus : une flèche de
              chaque côté pour passer d'un âge à l'autre, la plaque qui dit lequel,
              et un bouton qui n'apparaît **que** lorsque ce qu'on regarde n'est pas
@@ -4014,6 +4019,10 @@ function retenir(p) {
 function nommer(p) {
   const nom = p?.nom ?? '';
   $('quiNom').textContent = nom;
+  /* **Le nom mène à la fiche**, celle de la carte de l'âge montré : la fiche
+     ouvre alors cet âge-là, et non celui que les autres voient. */
+  const carte = p?.carte ?? p?.id;
+  $('quiNom').href = carte ? '/fanzzy/' + encodeURIComponent(carte) : '/fanzzy';
   /* La coche dit « c'est celui-là qu'on voit de toi ». Elle tient lieu d'état
      au repos du bouton, qui n'est pas là : deux signes pour la même chose — un
      bouton grisé *et* une coche — feraient hésiter sur lequel lire.
