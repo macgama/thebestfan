@@ -1,6 +1,6 @@
 {
   "id": "RP32",
-  "rev": 6,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -45,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "724912f512d6"
+          "sha": "724912f512d6",
+          "cligne": true
         }
       }
     },
@@ -68,7 +69,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "276b067ffe3c"
+          "sha": "276b067ffe3c",
+          "cligne": true
         }
       }
     }

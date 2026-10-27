@@ -1,6 +1,6 @@
 {
   "id": "RP10",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -45,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7a2266a5bfad"
+          "sha": "7a2266a5bfad",
+          "cligne": true
         }
       }
     },

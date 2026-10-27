@@ -1,6 +1,6 @@
 {
   "id": "RP26",
-  "rev": 6,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -45,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "68efb4ef921e"
+          "sha": "68efb4ef921e",
+          "cligne": true
         }
       }
     },
@@ -68,7 +69,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f7b6c4eea315"
+          "sha": "f7b6c4eea315",
+          "cligne": true
         }
       }
     }

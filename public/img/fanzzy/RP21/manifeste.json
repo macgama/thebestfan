@@ -1,6 +1,6 @@
 {
   "id": "RP21",
-  "rev": 8,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -45,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "c923737263e8"
+          "sha": "c923737263e8",
+          "cligne": true
         }
       }
     },
