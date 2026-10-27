@@ -6,7 +6,7 @@ import { CHANTS, ORDRE, puissanceDuChant } from '../../shared/duel/chants.js';
 // La même fonction donne le leur aux duels de ce match.
 import { stadeDuMatch } from '../contenus/index.js';
 // La composition lieu + Fanzzy vit dans le moteur de duel : une seule règle.
-import { avecLieu } from '../nvn/engine.js';
+import { avecLieu, prixDuChant, repriseDuChant } from '../nvn/engine.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
 // La ventilation de ce qu'un supporter porte : le lieu s'y ajoute ici, les
 // trois autres sources arrivent avec l'entrée. Partagée avec le duel.
@@ -210,6 +210,21 @@ export const RULES = {
   collectifMax: 12,
 
   /**
+   * **La tribune de référence des cartes collectives : cinq supporters.**
+   *
+   * Mosaïque et Présentation poussent par coéquipier actif. Chaque coup était
+   * bien divisé par l'effectif, mais une tribune de deux cents les joue dix
+   * fois plus souvent qu'une tribune de vingt : leur poussée totale grandissait
+   * avec la foule, quand celle d'un chant n'en dépend pas. La simulation
+   * (`npm run simuler -- petits`) le montrait : 5 contre 50 finissait 2 – 63.
+   *
+   * Jusqu'à cinq supporters, rien ne change : la carte pousse par coéquipier
+   * actif, comme avant. Au-delà, elle pousse comme une tribune de cinq dont la
+   * même **part** serait debout (choix de Gaël, 27 octobre 2026).
+   */
+  collectifRef: 5,
+
+  /**
    * Ce que rapporte un chant quand on soutient un club qu'on ne suit pas.
    *
    * Le virage est ouvert à tous les matchs en direct : on choisit son camp,
@@ -303,6 +318,10 @@ export class VirageRoom {
        `ferveur/index.js`. C'est ce qui fait durer les partis tout le match. */
     this.partis = new Map();          // userId -> état du supporter parti
     this.rallies = [];                // fenêtres collectives ouvertes, par camp
+    /* **La recharge commune des fenêtres collectives**, par camp et par carte :
+       l'instant où la tribune peut rouvrir l'Appel du capo, le Chœur ou le
+       Premier chant. Voir `jouer`. */
+    this.collectifLibreA = [new Map(), new Map()];
     this.differes = [];               // poussées armées, qui frapperont plus tard
     this.geleeJusqua = 0;             // l’Ancre : la corde cesse de retomber
     this.rangChangeA = 0;             // quand le répertoire a tourné pour la dernière fois
@@ -832,7 +851,9 @@ export class VirageRoom {
       mise.fin = 0;                     // consommée, gagnée ou perdue
     }
 
-    m.breath -= card.cost;
+    /* Le prix et la reprise du Fanzzy, comme au duel : voir `prixDuChant`. */
+    m.breath = Math.max(0, m.breath - prixDuChant(card.cost, mods));
+    if (parfait) m.breath = Math.min(RULES.breathMax, m.breath + repriseDuChant(card.cost, mods));
     m.lastPush = now;
     m.dernierChant = now;
     if (card.effect === 'fatigue') m.fatigueUntil = now + 4000;
@@ -1195,6 +1216,20 @@ export class VirageRoom {
 
     if ((m.cooldowns[cardId] ?? 0) > now) throw new Cheat('card_on_cooldown');
 
+    /* **Une fenêtre collective se recharge pour toute la tribune** (choix de
+       Gaël, 27 octobre 2026). L'Appel du capo et le Chœur ouvrent une fenêtre
+       pour tout le camp, et chaque supporter qui les avait la rouvrait dès
+       qu'elle se fermait : dans une tribune de deux cents, une quarantaine de
+       Chœurs la tenaient ouverte en permanence — chaque chant comptait douze
+       fois — pendant qu'une tribune de cinq l'ouvrait de loin en loin. La
+       simulation donnait 20 contre 200 à 0 – 169. Désormais, une fois la carte
+       jouée, la tribune attend sa recharge entière avant de la rouvrir, quel
+       que soit celui qui la tient : le même rythme qu'un supporter seul. */
+    const collectif = carte.effet?.type === 'rally' || carte.effet?.type === 'sync';
+    if (collectif && (this.collectifLibreA[m.side].get(cardId) ?? 0) > now) {
+      throw new Cheat('collectif_en_recharge');
+    }
+
     const c = carte.condition ?? {};
     /* « Mené d'au moins un but » se lit sur le **vrai match**, pas sur la
        corde. La Remontada raconte une équipe qui court après le score : la
@@ -1235,6 +1270,7 @@ export class VirageRoom {
        ne doit pas consommer une gratuité que le joueur n’a pas utilisée. */
     if (tournee) tournee.valeur--;
     m.cooldowns[cardId] = now + carte.cd * 1000 * RULES.cardCooldownMult;
+    if (collectif) this.collectifLibreA[m.side].set(cardId, m.cooldowns[cardId]);
     /* Un exemplaire, pas tous : voir le même correctif dans `nvn/engine.js`.
        Deux Fumigènes en main, un joué, et l'autre disparaissait du Virage. */
     m.main.splice(m.main.indexOf(cardId), 1);
@@ -1308,7 +1344,12 @@ export class VirageRoom {
          pousse vaut moins qu'une tribune de dix entièrement debout. */
       case 'per_mate': {
         const mates = this.actifsDuCamp(m, e.fenetre, now);
-        if (mates > 0) this.pousserDepuisCarte(m, e.valeur * mates, now, evenements);
+        /* La part de ses coéquipiers qui chantent, rapportée à une tribune de
+           cinq : voir `RULES.collectifRef`. Jusqu'à cinq, c'est exactement
+           `valeur × mates`. */
+        const ref = RULES.collectifRef - 1;
+        const compte = mates * ref / Math.max(ref, this.effectif(m) - 1);
+        if (mates > 0) this.pousserDepuisCarte(m, e.valeur * compte, now, evenements);
         evenements.push({ t: 'effect', type: 'per_mate', userId, mates });
         break;
       }

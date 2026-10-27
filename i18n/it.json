@@ -6489,5 +6489,8 @@
  "ULTIMATE {0}/{1}": "ULTIMATE {0}/{1}",
  "Coup d’envoi !": "Calcio d’inizio!",
  "PRÊT !": "PRONTO!",
- "LANCÉ": "LANCIATO"
+ "LANCÉ": "LANCIATO",
+ "Ta tribune vient de lancer cette carte, elle se recharge pour tous": "La tua curva ha appena giocato questa carta, si ricarica per tutti",
+ "Filet tendu": "Rete tesa",
+ "Pendant 12 s, les entraves d’en face ne te touchent pas.": "Per 12 s, gli ostacoli avversari non ti toccano."
 }
