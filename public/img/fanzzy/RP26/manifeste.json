@@ -1,6 +1,6 @@
 {
   "id": "RP26",
-  "rev": 4,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f82b1a6ec33c"
+          "sha": "f82b1a6ec33c",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -44,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "68efb4ef921e"
+          "sha": "68efb4ef921e",
+          "cligne": true
         }
       }
     },
@@ -67,7 +69,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f7b6c4eea315"
+          "sha": "f7b6c4eea315",
+          "cligne": true
         }
       }
     }

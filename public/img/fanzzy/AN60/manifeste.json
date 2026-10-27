@@ -1,6 +1,6 @@
 {
   "id": "AN60",
-  "rev": 2,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -29,7 +29,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4f9e07db2048"
+          "sha": "4f9e07db2048",
+          "cligne": true
         }
       }
     },
@@ -44,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "240c05344274"
+          "sha": "240c05344274",
+          "cligne": true
         }
       }
     }

@@ -1,6 +1,6 @@
 {
   "id": "AN52",
-  "rev": 2,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -29,7 +29,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "e70665447399"
+          "sha": "e70665447399",
+          "cligne": true
         }
       }
     },
@@ -44,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "333ed4acfe63"
+          "sha": "333ed4acfe63",
+          "cligne": true
         }
       }
     }

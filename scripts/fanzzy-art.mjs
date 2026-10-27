@@ -68,7 +68,7 @@ import sharp from 'sharp';
 import { PAR_NUMERO, ETATS_ACCEPTES as ETATS } from '../src/shared/fanzzy/rendus.js';
 import { agreger } from './fanzzy-manifeste.mjs';
 import { CADRAGES, carteDAge, bustCadre } from './cadrage-bustes.mjs';
-import { poserLesPaupieres, dossierDesRetouches, nomDeRetouche } from './fanzzy-cligne.mjs';
+import { poserLesPaupieres, dossierDesRetouches, nomDeRetouche, reglageDeLaBoite } from './fanzzy-cligne.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const SORTIE_DEFAUT = path.join(RACINE, 'public', 'img', 'fanzzy');
@@ -429,7 +429,8 @@ async function paupieresDe(evo, tenue, repos) {
     return null;
   }
   try {
-    await poserLesPaupieres({ repos, retouche: path.join(dossierDesRetouches(ID), retouche) });
+    await poserLesPaupieres({ repos, retouche: path.join(dossierDesRetouches(ID), retouche),
+      reglage: await reglageDeLaBoite(ID, evo, tenue) });
     return 'reposees';
   } catch (e) {
     avertissements.push(`${cle} : paupières retirées, il ne clignera plus. ${e.message}`);

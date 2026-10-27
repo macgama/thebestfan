@@ -426,6 +426,10 @@
    et le tiroir (49) restent au-dessus de toute la colonne. */
 #opener{position:fixed;inset:0;z-index:31;display:none;flex-direction:column;
   background:radial-gradient(120% 70% at 50% 20%,#1D242D,#05070A 70%);
+  /* Sur un ordinateur, l'ouverture se joue dans la colonne du téléphone :
+     son fond filmé de 480 pixels sortait flou sur toute la fenêtre, et la
+     lumière débordait (27 octobre 2026, voir `--tbf-cote` dans ui.css). */
+  clip-path:inset(0 var(--tbf-cote));
   height:100vh;height:100dvh;
   padding-bottom:calc(env(safe-area-inset-bottom) + 10px)}
 #opener.on{display:flex}
@@ -692,7 +696,8 @@
    légendaire, un tourbillon violet derrière l'épique, posés en « screen »
    sur le noir de l'écran, sous la carte. Jamais chargé sans mouvement ni en
    économie de données (voir `fondFilme`). */
-#opener>#kqFond{position:absolute;inset:0;z-index:1;width:100%;height:100%;max-width:none;margin:0;
+#opener>#kqFond{position:absolute;top:0;left:50%;translate:-50% 0;z-index:1;
+  width:var(--colonne);height:100%;max-width:none;margin:0;
   object-fit:cover;mix-blend-mode:screen;opacity:0;transition:opacity .35s;pointer-events:none}
 #opener>#kqFond.on{opacity:var(--kq-op,.85)}
 

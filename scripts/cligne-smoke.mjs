@@ -127,6 +127,43 @@ try {
   check('redessiné, il perd ses paupières', m.evolutions.e1.skins.base.cligne === undefined);
   check('et la chaîne le dit', /paupières retirées/.test(r.sortie));
   check('sans faire échouer le reste du passage', r.code === 0);
+
+  /* --------------------------------------------- une boîte et des yeux réglés
+
+     RP28, la banderole : le haut du personnage est le manche, pas la tête,
+     et ses yeux sont nommés dans le réglage gardé à côté de la retouche
+     (`boiteDeLaTete`, `poserLesPaupieres`). Recadré, il doit les retrouver
+     au même endroit de sa tête réglée, sans que la recherche des yeux s'en
+     mêle. */
+  const { reglageDeLaBoite } = await import('./fanzzy-cligne.mjs');
+  const reglage = await reglageDeLaBoite('RP28', 1, 'base');
+  check('RP28 garde un réglage de boîte et ses yeux', Boolean(reglage?.y && reglage?.yeux?.length === 2));
+  const SRC28 = path.join(TMP, 'src28');
+  const SORTIE28 = path.join(TMP, 'public28');
+  await mkdir(SRC28, { recursive: true });
+  await mkdir(SORTIE28, { recursive: true });
+  const reel28 = JSON.parse(await readFile(path.join(PUBLIC, 'RP28', 'manifeste.json'), 'utf8'));
+  for (const e of reel28.evolutions.e1.skins.base.etats) {
+    await marge(path.join(PUBLIC, 'RP28', 'e1', 'base', `${e}.png`)).toFile(path.join(SRC28, `RP28-e1-base-${e}.png`));
+  }
+  const elargi28 = await marge(path.join(PUBLIC, 'RP28', 'e1', 'base', 'neutre.png')).png().toBuffer();
+  const t28 = await sharp(elargi28).metadata();
+  await sharp(elargi28)
+    .composite([{ input: coin, left: 0, top: 0 }, { input: coin, left: t28.width - 8, top: t28.height - 8 }])
+    .toFile(path.join(SRC28, 'RP28-e1-debordante-neutre.png'));
+  const repere28 = await ouSontLesPaupieres(path.join(PUBLIC, 'RP28', 'e1', 'base', 'cligne.png'),
+    await boiteDeLaTete(path.join(PUBLIC, 'RP28', 'e1', 'base', 'neutre.png'), reglage));
+  r = await lancer(SRC28, SORTIE28);
+  const m28 = JSON.parse(await readFile(path.join(SORTIE28, 'RP28', 'manifeste.json'), 'utf8'));
+  check('recadré, RP28 retrouve ses paupières', m28.evolutions.e1.skins.base.cligne === true
+    || (console.log(r.sortie), false));
+  const dossier28 = path.join(SORTIE28, 'RP28', 'e1', 'base');
+  const ici28 = await ouSontLesPaupieres(path.join(dossier28, 'cligne.png'),
+    await boiteDeLaTete(path.join(dossier28, 'neutre.png'), reglage));
+  const ecart28 = ici28 && repere28
+    && Math.max(...['x0', 'y0', 'x1', 'y1'].map((k) => Math.abs(ici28[k] - repere28[k])));
+  check(`elles tombent sur ses yeux (écart ${ecart28 == null ? '—' : (100 * ecart28).toFixed(1)} % de la tête)`,
+    ecart28 != null && ecart28 < 0.015);
 } finally {
   await rm(TMP, { recursive: true, force: true });
 }
