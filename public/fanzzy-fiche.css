@@ -205,6 +205,7 @@
 .fiche .vitrine>.cote-ult>small{display:flex;align-items:center;justify-content:center;gap:3px;
   font-size:10px;font-weight:600;letter-spacing:.04em}
 .fiche .vitrine>.cote-ult>small>svg{width:9px;height:9px;flex:none;fill:currentColor}
+.fiche .vitrine>.cote-ult>small>.tbf-ico{width:10px;height:10px;flex:none}
 .fiche .vitrine>.paquet{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 16px);
   top:50%;translate:0 -50%;max-width:calc(50% - var(--l) / 2 - 24px);margin:0}
 .fiche .vitrine>.paquet>img{width:min(64px,100%)}

@@ -35,6 +35,10 @@
  *                                 les durées que le serveur a servies et la
  *                                 pulsation que `geste.js` dessine
  *   TBF_SON.volume(v)             le volume du joueur, de 0 à 1, retenu
+ *   TBF_SON.victoire(oui)         la musique de victoire, au bilan d'un duel
+ *                                 gagné ; `false` la fait taire. La boucle
+ *                                 de musique, elle, se pose seule sur les
+ *                                 pages « normales » (voir « la musique »)
  *   TBF_SON.audio                 la façade de l'objet « audio » de
  *                                 cartes.js (ready, rip, flip, chime,
  *                                 roar), mêmes signatures : cartes.js lui
@@ -1631,8 +1635,10 @@
     dernierGeste = performance.now();
     if (!ouvrir()) return;   // sous le calme, rien : voir « ouvrir »
     if (window.TBF_GESTE) chargerCartes(ctx);   // une page de duel
+    if (mus.victoireVoulue && !musiqueCoupee()) charger(ctx, 'musique-victoire');
     poserVolume();
     appliquer();
+    musique();
   }
   for (const type of ['pointerdown', 'pointerup', 'touchend', 'keydown', 'click']) {
     window.addEventListener(type, geste, { capture: true, passive: true });
@@ -1938,6 +1944,10 @@
     /* Le son type (Artlist, 25 octobre 2026, demande de Gaël) : pour tous les
        autres clubs, des tambours de tribune puis la clameur. */
     'club-type': { opus: '/son/club-type.288411b6.ogg', repli: '/son/club-type.ee4e3cd4.mp3' },
+    /* La musique du jeu (27 octobre 2026) : « The Final Turn », une création
+       de Gaël, coupée en deux. Voir « la musique », plus bas. */
+    musique: { opus: '/son/musique-accueil.642afe74.ogg', repli: '/son/musique-accueil.07fdc38b.mp3' },
+    'musique-victoire': { opus: '/son/musique-victoire.845eb476.ogg', repli: '/son/musique-victoire.764bb75f.mp3' },
   };
 
   /* ------------------------------------------ les cartes enregistrées
@@ -2130,7 +2140,7 @@
      calme ou de l'onglet, la rumeur repart sans rien retélécharger ni
      redécoder. */
   const decodes = new WeakMap();
-  const PREPARER = { rumeur: (b) => preparerBoucle(b) };
+  const PREPARER = { rumeur: (b) => preparerBoucle(b), musique: (b) => preparerBoucle(b, BOUCLE_MUSIQUE) };
   function charger(c, nom) {
     let m = decodes.get(c);
     if (!m) { m = new Map(); decodes.set(c, m); }
@@ -2159,9 +2169,9 @@
      du tour) ; jamais de boucle sans le fondu ; jamais les deux méthodes
      mêlées (un tampon fondu joué avec loopStart à 0,25 s : un clic, et une
      boucle de 11,75 s). */
-  function preparerBoucle(t) {
+  function preparerBoucle(t, B = BOUCLE) {
     const k = t.sampleRate / 48000;
-    const p = Math.round(BOUCLE.P * k), l = Math.round(BOUCLE.L * k), x = Math.round(BOUCLE.X * k);
+    const p = Math.round(B.P * k), l = Math.round(B.L * k), x = Math.round(B.X * k);
     if (t.length < p + l + x) return null;      // un fichier tronqué : la synthèse reste
     for (let ch = 0; ch < t.numberOfChannels; ch++) {
       const d = t.getChannelData(ch);
@@ -2249,6 +2259,7 @@
       s.connect(g);
       lancer(c, s, c.currentTime);
       jingleEnCours = { c, g, s };
+      baisserMusique(b.duration);
       return true;
     } catch { return false; /* le son ne doit jamais casser le jeu */ }
   }
@@ -3019,6 +3030,191 @@
       ...(origine != null ? { origine } : {}) });
   }
 
+  /* ============================================================ la musique
+
+     « The Final Turn », une création de Gaël (27 octobre 2026), coupée en
+     deux à sa demande :
+
+       — **la boucle**, de 0:00 à 0:49,86 du morceau, sous les pages
+         « normales » du jeu : l'accueil, la collection, la boutique, le
+         football, le compte. Coupée juste avant le creux où le morceau
+         retombe : on repart de son début comme d'une nouvelle phrase.
+         Nivelée à −30 LUFS, sous l'interface : on la sent plus qu'on ne
+         l'écoute. Le fichier est fait comme celui de la rumeur : [0,25 s de
+         la fin | la boucle | 0,25 s du début] ;
+       — **la victoire**, de 1:11 à 1:40,5, le grand moment, jouée une fois
+         au bilan d'un duel gagné, avec un fondu de 2,5 s à la fin. Nivelée
+         à −21 LUFS : sous les moments (le but), au-dessus du jeu.
+
+     **Jamais pendant qu'on joue** (Gaël : pas durant le duel, le Virage et
+     les mini-jeux, « uniquement durant les pages normales ») : seules les
+     adresses de PAGES_MUSIQUE la jouent. La victoire part au bilan, quand
+     le duel est fini, et se tait dès qu'on rejoue ou qu'on revient.
+
+     **Le joueur la coupe** dans le tiroir : la facette « musique » du mode
+     calme (clé « tbf-calme »), à côté des sons. Couper les sons la coupe
+     aussi, et le volume la règle avec le reste. Rien ne se télécharge sous
+     le calme, en économie de données, ni avant le premier geste.
+
+     **D'une page à l'autre, elle reprend où elle en était** : sa place
+     dans la boucle est retenue pour l'onglet (sessionStorage) en quittant
+     la page, et la page suivante repart de là, en fondu, à son premier
+     geste — un navigateur ne laisse rien jouer avant. */
+  const BOUCLE_MUSIQUE = { P: 12000, L: 2393280, X: 2400 };
+  const PAGES_MUSIQUE = new RegExp('^/(?:teletext|matchs|bienvenue|profil|collection|classement|boutique'
+    + '|abonnement|boosters|fanzzy|fanzzy/[^/]+|compte|equipes|kop|amis|deck|carnet|aide|comment-jouer'
+    + '|confidentialite|mentions-legales|conditions)?$');
+  const pageMusicale = () => PAGES_MUSIQUE.test(location.pathname.replace(/\/+$/, '') || '/');
+  const MIX_MUSIQUE = 1;
+  const MIX_VICTOIRE = 1;
+  /** Les fondus de la musique (constantes de temps, en secondes). */
+  const TAU_MUSIQUE = { entre: 0.8, sort: 0.35, baisse: 0.08, remonte: 0.6 };
+  /** Sous un jingle des boosters, la musique s'efface de 15 dB le temps qu'il sonne. */
+  const BAISSE_MUSIQUE = 10 ** (-15 / 20);
+  const CLE_MUSIQUE = 'tbf-musique';
+  /** Au-delà d'une demi-heure, une visite reprend la boucle à son début. */
+  const MUSIQUE_OUBLI = 30 * 60 * 1000;
+  const musiqueCoupee = () => calme()
+    || (document.documentElement.dataset.calme ?? '').split(' ').includes('musique');
+  /* La page du duel décode la victoire à son premier geste : au bilan, elle
+     doit être prête (un fichier qui arrive en retard rate son instant). */
+  const mus = { lit: null, attente: null, victoire: null,
+    victoireVoulue: /^\/duel-nvn\/?$/.test(location.pathname) };
+
+  const musiqueVoulue = () => pageMusicale() && !musiqueCoupee() && !sansDonnees();
+
+  /** Où la boucle en est, en secondes depuis son début ; rien si elle ne joue pas. */
+  function placeMusique() {
+    const l = mus.lit;
+    if (!l || l.c.state === 'closed') return null;
+    return (l.place + Math.max(0, l.c.currentTime - l.t0)) % (l.fin - l.debut);
+  }
+  function lirePlace() {
+    try {
+      const d = JSON.parse(sessionStorage.getItem(CLE_MUSIQUE) || 'null');
+      if (d && Number.isFinite(d.place) && Date.now() - Number(d.t) < MUSIQUE_OUBLI) return Math.max(0, d.place);
+    } catch { /* stockage fermé : du début */ }
+    return 0;
+  }
+  function retenirPlace() {
+    const p = placeMusique();
+    if (p === null) return;
+    try { sessionStorage.setItem(CLE_MUSIQUE, JSON.stringify({ place: p, t: Date.now() })); } catch { /* rien */ }
+  }
+  window.addEventListener('pagehide', retenirPlace);
+
+  /** Pose la musique comme elle doit être : la lance si la page la veut, l'éteint sinon. */
+  function musique() {
+    if (!musiqueVoulue()) { eteindreMusique(); return; }
+    if (!ctx || !chaine || ctx.state === 'closed' || mus.lit?.c === ctx) return;
+    const e = charger(ctx, 'musique');
+    const r = pret(ctx, 'musique');
+    if (!r) {
+      if (e && !e.fini && mus.attente !== e) {
+        mus.attente = e;
+        e.promesse.then(() => { mus.attente = null; musique(); });
+      }
+      return;
+    }
+    try {
+      const c = ctx;
+      const g = c.createGain();
+      g.gain.value = 0;
+      g.connect(chaine.bus.ambiance);
+      const s = c.createBufferSource();
+      s.buffer = r.tampon;
+      s.loop = true;
+      s.loopStart = r.debut;
+      s.loopEnd = r.fin;
+      s.connect(g);
+      const place = lirePlace() % (r.fin - r.debut);
+      s.start(c.currentTime, r.debut + place);
+      g.gain.setTargetAtTime(MIX_MUSIQUE, c.currentTime, TAU_MUSIQUE.entre);
+      mus.lit = { c, g, s, t0: c.currentTime, place, debut: r.debut, fin: r.fin };
+    } catch { mus.lit = null; /* le son ne doit jamais casser le jeu */ }
+  }
+
+  /** L'éteint en fondu, en retenant sa place. */
+  function eteindreMusique() {
+    const l = mus.lit;
+    if (!l) return;
+    retenirPlace();
+    mus.lit = null;
+    try {
+      const t = l.c.currentTime;
+      l.g.gain.cancelScheduledValues(t);
+      l.g.gain.setTargetAtTime(0, t, TAU_MUSIQUE.sort);
+      l.s.stop(t + TAU_MUSIQUE.sort * 6);
+    } catch { /* déjà arrêtée */ }
+  }
+
+  /** L'efface sous un son qui doit passer seul (un jingle), `duree` secondes. */
+  function baisserMusique(duree) {
+    const l = mus.lit;
+    if (!l) return;
+    try {
+      const p = l.g.gain;
+      const t = l.c.currentTime;
+      if (typeof p.cancelAndHoldAtTime === 'function') p.cancelAndHoldAtTime(t);
+      else p.cancelScheduledValues(t);
+      p.setTargetAtTime(MIX_MUSIQUE * BAISSE_MUSIQUE, t, TAU_MUSIQUE.baisse);
+      p.setTargetAtTime(MIX_MUSIQUE, t + duree, TAU_MUSIQUE.remonte);
+    } catch { /* fermé */ }
+  }
+
+  /** La musique de victoire se téléchargera ; décodée au premier geste (la page du duel). */
+  function victoires() {
+    mus.victoireVoulue = true;
+    if (musiqueCoupee()) return;
+    telecharger('musique-victoire');
+    if (ctx && ctx.state !== 'closed') charger(ctx, 'musique-victoire');
+  }
+
+  /**
+   * Joue la musique de victoire (le bilan d'un duel gagné) : vrai si elle
+   * est partie. Pas encore décodée, elle part à son décodage, si c'est dans
+   * les quatre secondes. `false` la fait taire en fondu (on rejoue, on
+   * revient).
+   */
+  function victoire(oui = true) {
+    if (!oui) {
+      const v = mus.victoire;
+      mus.victoire = null;
+      if (v) {
+        try {
+          v.g.gain.setTargetAtTime(0, v.c.currentTime, TAU_MUSIQUE.sort);
+          v.s.stop(v.c.currentTime + TAU_MUSIQUE.sort * 6);
+        } catch { /* déjà finie */ }
+      }
+      return false;
+    }
+    if (document.hidden || musiqueCoupee()) return false;
+    const c = ouvrir();
+    if (!c || !chaine || !pretAJouer(c)) return false;
+    const b = pret(c, 'musique-victoire');
+    if (!b) {
+      const demande = performance.now();
+      charger(c, 'musique-victoire')?.promesse.then((v) => {
+        if (v && !mus.victoire && performance.now() - demande < 4000) victoire();
+      });
+      return false;
+    }
+    try {
+      victoire(false);
+      const g = c.createGain();
+      g.gain.value = MIX_VICTOIRE;
+      g.connect(chaine.bus.effets);
+      const s = c.createBufferSource();
+      s.buffer = b;
+      s.connect(g);
+      lancer(c, s, c.currentTime);
+      const v = { c, g, s };
+      s.addEventListener('ended', () => { if (mus.victoire === v) mus.victoire = null; }, { once: true });
+      mus.victoire = v;
+      return true;
+    } catch { return false; /* le son ne doit jamais casser le jeu */ }
+  }
+
   /* ===================================================== calme et onglet
 
      Le calme coupe tout, tout de suite : la sortie à zéro, les sons en
@@ -3054,6 +3250,9 @@
       poserVolume();
       appliquer();
     }
+    // La musique a sa facette à elle : couper la musique laisse les sons.
+    musique();
+    if (musiqueCoupee()) victoire(false);
   }
   if (typeof MutationObserver === 'function') {
     new MutationObserver(surCalme).observe(document.documentElement,
@@ -3072,6 +3271,7 @@
       ctx.resume().catch(() => {});
       poserVolume();
       appliquer();
+      musique();
     }
   });
 
@@ -3269,6 +3469,9 @@
     rumeur: { phase: amb.phase, echelle: amb.echelle },
     chant: Boolean(chantEnCours),
     volume: volumeJoueur,
+    /** La musique (voir « la musique ») : joue-t-elle, et où en est la boucle. */
+    musique: { page: pageMusicale(), joue: Boolean(mus.lit), place: placeMusique(),
+      decodee: Boolean(ctx && pret(ctx, 'musique')), victoire: Boolean(mus.victoire) },
   });
 
   window.TBF_SON = {
@@ -3288,6 +3491,9 @@
     /** Les jingles des boosters (voir « les jingles »). */
     jingle,
     jingles,
+    /** La musique de victoire, et son téléchargement d'avance (voir « la musique »). */
+    victoire,
+    victoires,
     /** Le son d'un club (voir « les clubs »). */
     club,
     clubs,

@@ -34,13 +34,44 @@ export const CANAL = 'beta';
 /**
  * Le numéro, et sa règle.
  *
- * Il monte d'un centième à chaque livraison qui change quelque chose pour le
- * joueur, et d'un entier le jour où la bêta se ferme. Les quatre décimales sont
- * volontaires : elles disent « on livre souvent » mieux qu'une phrase.
+ * Il monte d'un cran à **chaque mise en ligne**, tout seul : 0.0200, 0.0201,
+ * 0.0202… Le serveur compte ses livraisons au démarrage
+ * (`src/server/livraisons.js`) et pose le compte ici. Gaël l'a demandé le
+ * 27 octobre 2026 : le numéro restait à 0.0200, écrit à la main, et un joueur
+ * ne voyait pas que le jeu bougeait — alors qu'il bouge presque chaque jour.
+ *
+ * Les quatre décimales sont volontaires : elles disent « on livre souvent »
+ * mieux qu'une phrase. `BASE` est le point de départ ; on la monte à la main
+ * le jour où la bêta se ferme (1.0000), le compte repart de là.
  */
-export const NUMERO = '0.0200';
+export const BASE = 200;
 
-/** Ce qui s'affiche, tel quel : « version bêta — 0.0200 ». */
-export const ETIQUETTE = `version ${CANAL === 'beta' ? 'bêta' : CANAL} — ${NUMERO}`;
+/* Le nombre de mises en ligne depuis `BASE`. Zéro tant que le serveur ne l'a
+   pas lu — sans base, en développement, il le reste. */
+let livraisons = 0;
 
-export const VERSION_PUBLIQUE = { canal: CANAL, numero: NUMERO, etiquette: ETIQUETTE };
+/** Le numéro pour `n` livraisons : 0 → « 0.0200 », 7 → « 0.0207 ». */
+export function numeroPour(n) {
+  const cran = BASE + Math.max(0, Math.trunc(Number(n) || 0));
+  return `${Math.floor(cran / 10000)}.${String(cran % 10000).padStart(4, '0')}`;
+}
+
+/** Pose le compte des livraisons. Appelé une fois, au démarrage du serveur. */
+export function poserLivraisons(n) {
+  livraisons = Math.max(0, Math.trunc(Number(n) || 0));
+}
+
+/** Le numéro d'aujourd'hui, « 0.0207 ». */
+export function numero() {
+  return numeroPour(livraisons);
+}
+
+/** Ce qui s'affiche, tel quel : « version bêta — 0.0207 ». */
+export function etiquette() {
+  return `version ${CANAL === 'beta' ? 'bêta' : CANAL} — ${numero()}`;
+}
+
+/** Ce que rend `/api/version`. */
+export function versionPublique() {
+  return { canal: CANAL, numero: numero(), etiquette: etiquette() };
+}

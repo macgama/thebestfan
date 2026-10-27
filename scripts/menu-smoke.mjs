@@ -33,7 +33,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
-import { VERSION_PUBLIQUE, ETIQUETTE } from '../src/shared/version.js';
+import { versionPublique, etiquette } from '../src/shared/version.js';
+const ETIQUETTE = etiquette();
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
@@ -62,7 +63,7 @@ app.get('/api/public/reglages', (_q, s) => s.json({}));
    que le tiroir sait l'afficher, pas qu'un banc sait répondre. Le fourre-tout
    `/api` plus bas rendrait `{}`, et la ligne resterait vide — le contrôle
    passerait en ne prouvant rien. */
-app.get('/api/version', (_q, s) => s.json(VERSION_PUBLIQUE));
+app.get('/api/version', (_q, s) => s.json(versionPublique()));
 /* Le reste du jeu, en creux. Une page qui demande son contenu et reçoit un
    objet vide se monte quand même ; une page qui reçoit un 404 en HTML tombe
    sur `r.json()` et le contrôle mesurerait alors une page morte. */
@@ -174,13 +175,19 @@ check('et la page de contenu a les mêmes',
    éléments et non ce qui est affiché. */
 const FACETTES = ['sons', 'vibrations', 'animations'];
 for (const [nom, m] of [['l’accueil', accueil], ['une page de contenu', carnet]]) {
-  const inter = m.interrupteurs ?? [];
+  /* « Couper la musique » (27 octobre 2026) est une facette du calme rangée
+     au pied, hors de la rangée : relevée à part, plus bas. */
+  const inter = (m.interrupteurs ?? []).filter((i) => i.facette !== 'musique');
   check(`le mode calme a ses trois interrupteurs depuis ${nom}`,
     JSON.stringify(inter.map((i) => i.facette)) === JSON.stringify(FACETTES)
     && inter.every((i) => i.dansLeGroupe && (i.coche === 'true' || i.coche === 'false'))
     || (console.log('    vus :', JSON.stringify(inter)), false));
   check(`et chacun dit l’état réel du jeu depuis ${nom}`,
     inter.length === FACETTES.length && inter.every((i) => i.juste));
+  const musique = (m.interrupteurs ?? []).filter((i) => i.facette === 'musique');
+  check(`« Couper la musique » est là, une fois, et dit vrai depuis ${nom}`,
+    musique.length === 1 && musique[0].juste && !musique[0].dansLeGroupe
+    || (console.log('    vus :', JSON.stringify(musique)), false));
 }
 
 /* Un interrupteur se prouve en le touchant : il bascule, la racine du

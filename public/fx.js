@@ -41,7 +41,7 @@
      Ce qui fait foi pendant la visite est l'attribut, pas le stockage : le
      tiroir le réécrit à chaque interrupteur, et un stockage fermé (navigation
      privée) ne doit pas empêcher le réglage de valoir au moins pour la page. */
-  const FACETTES = ['sons', 'vibrations', 'animations'];
+  const FACETTES = ['sons', 'musique', 'vibrations', 'animations'];
   const normaliser = (brut) => {
     const jetons = String(brut ?? '').split(/\s+/);
     return FACETTES.filter((f) => jetons.includes(f)).join(' ');
