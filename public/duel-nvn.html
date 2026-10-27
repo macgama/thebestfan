@@ -4613,6 +4613,9 @@ function montrerBilan(b) {
   $('bilan').hidden = false;
   $('bilan').scrollTop = 0;
   window.FX?.son?.(gagne ? 'but' : nul ? 'tic' : 'encaisse');
+  /* La musique de victoire (27 octobre 2026) : le grand moment de « The
+     Final Turn », la création de Gaël. Seulement gagné, et le duel fini. */
+  if (gagne) window.TBF_SON?.victoire?.();
   /* L'issue se joue sur la case (voir `FX.fin`) : la victoire claque sous
      les confettis et l'or filmé, la défaite tombe sous la pluie. */
   window.FX?.fin?.(nul ? 'nul' : gagne ? 'victoire' : 'defaite',
@@ -4723,6 +4726,7 @@ function poseDuBilan(id, etat) {
  */
 function quitterLaPartie() {
   window.TBF_GUIDE?.fin?.();
+  window.TBF_SON?.victoire?.(false);
   S.tuto = false;
   clearTimeout(S.entreeT);
   clearTimeout(S.afficheT);
