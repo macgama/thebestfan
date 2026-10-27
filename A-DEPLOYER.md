@@ -1,5 +1,25 @@
 # À déposer sur Infomaniak
 
+**Un kop de Fanzzy au chargement, et le bas de l'accueil au-dessus des
+boutons du téléphone** (branche `claude/project-thread-fttg4d`, 27 octobre
+2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- L'écran de chargement montre un kop : des rangs de Fanzzy jouables qui
+  sautent derrière leurs barrières, la tribune du stade au loin (le tunnel
+  est parti). Seulement les séries ouvertes (aujourd'hui RP et AN), lues au
+  serveur (`/api/fanzzy/jouables`) : une saison qui ouvre une série la met
+  dans le kop toute seule.
+- Les visages « Les supporters à collectionner » de la page d'accueil ne
+  montrent plus que des Fanzzy jouables.
+- Depuis l'icône du S24+, la page d'accueil (non connecté), le chargement
+  et l'accueil connecté gardent 52 px au-dessus des trois boutons du
+  téléphone quand Chrome ne dit pas leur hauteur.
+- Après la mise en ligne : fermer l'application, la rouvrir depuis l'icône
+  du S24+ et regarder les trois écrans ; le bas de l'accueil (PRENDRE MA
+  PLACE, Duel de tribunes) doit se voir en entier.
+
+---
+
 **L'affiche du duel en face-à-face, et l'Ultimate en gros bouton rond**
 (branche `claude/project-thread-4kawd4`, 27 octobre 2026, demandé et validé
 par Gaël). Construction seule, **sans schéma** (une page et les traductions).

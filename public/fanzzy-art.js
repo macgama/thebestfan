@@ -517,8 +517,45 @@
     return adresse(av.age ?? av.id, variante, { skin });
   }
 
+  /**
+   * Les Fanzzy **jouables** et dessinés : ceux qu'un booster peut sortir
+   * aujourd'hui (série ouverte), dont on a le dessin.
+   *
+   * Les vitrines — le kop de l'écran d'ouverture, les visages de la page
+   * d'accueil — tiraient dans `ILLUSTRES`, qui dessine aussi les séries
+   * fermées : un visiteur y voyait des personnages qu'il ne pouvait pas
+   * avoir (Gaël, 27 octobre 2026 : « uniquement ceux activés »). La liste
+   * vient du serveur (`/api/fanzzy/jouables`), seul à savoir quelles séries
+   * sont ouvertes ; elle est gardée dans le téléphone pour la visite
+   * suivante, et sert de repli si le réseau ne répond pas à temps.
+   *
+   * Rend toujours une liste, vide au pire : une vitrine sans visages vaut
+   * mieux qu'une vitrine de personnages qu'on ne peut pas avoir.
+   */
+  const CLE_JOUABLES = 'tbf.jouables';
+  let jouablesEnCours = null;
+  const jouablesGardes = () => {
+    try {
+      const v = JSON.parse(localStorage.getItem(CLE_JOUABLES) ?? 'null');
+      return Array.isArray(v) ? v.filter((id) => ILLUSTRES.has(id)) : null;
+    } catch { return null; }
+  };
+  const jouables = ({ attente = 2500 } = {}) => {
+    jouablesEnCours ??= fetch('/api/fanzzy/jouables', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!Array.isArray(d?.ids)) return null;
+        try { localStorage.setItem(CLE_JOUABLES, JSON.stringify(d.ids)); } catch { /* privé */ }
+        return d.ids.filter((id) => ILLUSTRES.has(id));
+      })
+      .catch(() => null);
+    const delai = new Promise((r) => { setTimeout(() => r(null), attente); });
+    return Promise.race([jouablesEnCours, delai]).then((ids) => ids ?? jouablesGardes() ?? []);
+  };
+
   window.FZART = {
     dessinAvatar,
+    jouables,
     IMG_EXT,
     IMG_EXT_ALPHA,
     secours,
