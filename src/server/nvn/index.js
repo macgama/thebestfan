@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import express from 'express';
 import { DuelNvN, RULES, avecLieu, modsPortes } from './engine.js';
+import { frappesDuBot, chantDuBot, adresseDuBot } from './bot.js';
 import { Cheat, grade, applyHeroMods } from '../ferveur/gestures.js';
 /* Le barème du duel vit dans `deck` depuis qu'il s'annonce avant l'entrée en
    file (`enJeu`, CONTRATS.md § 17) : un seul endroit pour le chiffre promis et
@@ -938,11 +939,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          il poussait aussi fort. Les deux camps se neutralisaient, et cinq
          minutes de duel se terminaient sur un nul.
 
-         Il chante maintenant toutes les 7 à 13 secondes, moins juste. Un joueur
-         appliqué gagne ; un débutant marque une ou deux fois et perd — ce qui
-         est le but d'un entraînement. */
+         Il chante maintenant toutes les 6 à 11 secondes, moins juste, et fait
+         le geste de la carte (`bot.js`). Un joueur appliqué gagne ; un
+         débutant le bat à peu près six fois sur dix (choix de Gaël, 27
+         octobre 2026). */
       bot: { prochain: Date.now() + 2500 + Math.random() * 3000,
-        adresse: 0.30 + Math.random() * 0.25 },
+        adresse: adresseDuBot() },
       /* Le deck de l'humain, pas sa garde-robe : un bot habillé comme lui
          passerait pour son double. */
       loadout: { ...modele, fanzzy: modele.fanzzy.map((f) => ({ ...f, tenues: {} })) },
@@ -1133,15 +1135,16 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         m.bot.prochain = t + (m.bot.pas?.[0] ?? 6000) + Math.random() * (m.bot.pas?.[1] ?? 5000);
         try {
           const j = salle.duel.joueur(userId);
-          const frappes = () => Array.from({ length: 8 }, (_, i) =>
-            i * 560 + (Math.random() * 2 - 1) * 260 * (1 - m.bot.adresse));
+          /* Le geste de la carte, à son adresse : voir `bot.js`. */
+          const frappes = (geste) => frappesDuBot(geste, m.bot.adresse, modsPortes(j) ?? {}, j.motif);
           /* Son Ultimate, jauge pleine : un bot le lance un tour sur deux,
              pour que le joueur voie le coup venir sans le subir à la seconde.
              Pas au duel guidé — le débutant découvre le sien, pas celui d'en
              face. */
           if (j.ultime && !j.ultime.utilise && j.ultime.points >= j.ultime.seuil
               && salle.duel.epargne == null && Math.random() < 0.5) {
-            ev.push(...salle.duel.ultimer(userId, { taps: frappes() }, t));
+            ev.push(...salle.duel.ultimer(userId,
+              { taps: frappes(j.fanzzy[j.actif]?.cri?.gest ?? 'tempo') }, t));
             continue;
           }
           const carte = j.main[Math.floor(Math.random() * j.main.length)];
@@ -1156,14 +1159,15 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
                puisqu'un bot est censé rater.
 
                Il prend au hasard : un bot qui optimiserait son souffle serait
-               un adversaire d'entraînement plus dur qu'un humain. */
-            const offre = salle.duel.offreDe(salle.duel.joueurs.get(userId));
-            const chant = offre[Math.floor(Math.random() * offre.length)];
+               un adversaire d'entraînement plus dur qu'un humain. Au hasard
+               parmi les chants qu'il sait taper, et avec leur geste : il
+               tapait un tempo sur tout (voir `bot.js`). */
+            const chant = chantDuBot(salle.duel.offreDe(j));
             /* Par le même chemin que les joueurs : le verdict de son chant
                part à la salle, et ses PARFAITS au bilan (« un bot a les
                siens », CONTRATS.md § 17). */
             ev.push(...chanterEtNommer(salle.duel, salle.comptes, userId, {
-              cardId: chant, taps: frappes(),
+              cardId: chant, taps: frappes(CHANTS[chant].gest),
             }, t));
           }
         } catch { /* souffle insuffisant ou geste refusé : il attend */ }
