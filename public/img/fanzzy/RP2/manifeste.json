@@ -1,6 +1,6 @@
 {
   "id": "RP2",
-  "rev": 9,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -89,7 +89,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "ebc426370d26"
+          "sha": "ebc426370d26",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -140,7 +141,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "46b01058d7d9"
+          "sha": "46b01058d7d9",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
