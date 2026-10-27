@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Les Fanzzy clignent des yeux** (branche `claude/project-thread-j17xyz`,
+27 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
+des images et des réglages, aucun code du jeu.
+
+- 32 Fanzzy RP et AN de plus clignent au premier âge, et 44 âges 2 ou 3 des
+  RP clignent aussi (yeux fermés pris dans les planches, sans crédits).
+- Après la mise en ligne : regarder quelques secondes un Fanzzy RP à l'âge 2
+  ou 3 sur l'accueil, il doit cligner.
+
+---
+
 **Les animations restent dans la largeur du téléphone sur ordinateur**
 (branche `claude/project-thread-9p4wm0`, 27 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.

@@ -1,6 +1,6 @@
 {
   "id": "RP30",
-  "rev": 4,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "94a40cb3a969"
+          "sha": "94a40cb3a969",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -44,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "382aa95b972b"
+          "sha": "382aa95b972b",
+          "cligne": true
         }
       }
     },
@@ -67,7 +69,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b9a01d029fb4"
+          "sha": "b9a01d029fb4",
+          "cligne": true
         }
       }
     }

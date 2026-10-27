@@ -1,6 +1,6 @@
 {
   "id": "RP24",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -67,7 +67,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "030a4d63ef14"
+          "sha": "030a4d63ef14",
+          "cligne": true
         }
       }
     }
