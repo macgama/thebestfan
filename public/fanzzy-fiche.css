@@ -189,6 +189,22 @@
   max-width:calc(50% - var(--l) / 2 - 18px)}
 .fiche .vitrine>.tourne{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 10px);
   top:calc(50% - 22px)}
+/* **L'Ultimate**, dans la gouttière de droite, au-dessus de la plaque qui
+   retourne (`plaqueUltime`, fanzzy-fiche.js) : sa vignette, le mot, et ce
+   qu'on a. Le bas de la plaque tient à trente pixels au-dessus du milieu de
+   la carte, là où commence la plaque ronde ; sur une carte trop courte, elle
+   ne monte pas plus haut que le haut de la vitrine. */
+.fiche .vitrine>.cote-ult{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 10px);
+  top:max(calc(50% - 30px), 112px);translate:0 -100%;
+  width:min(84px, calc(50% - var(--l) / 2 - 16px));margin:0;padding:6px 5px 5px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:12px;line-height:1;letter-spacing:.06em;text-align:center;white-space:normal}
+.fiche .vitrine>.cote-ult>img{display:block;width:100%;max-width:56px;aspect-ratio:3/4;object-fit:cover;
+  object-position:50% 20%;border-radius:3px;box-shadow:0 0 0 2px var(--encre)}
+.fiche .vitrine>.cote-ult>b{font-weight:700;font-size:12px}
+.fiche .vitrine>.cote-ult>small{display:flex;align-items:center;justify-content:center;gap:3px;
+  font-size:10px;font-weight:600;letter-spacing:.04em}
+.fiche .vitrine>.cote-ult>small>svg{width:9px;height:9px;flex:none;fill:currentColor}
 .fiche .vitrine>.paquet{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 16px);
   top:50%;translate:0 -50%;max-width:calc(50% - var(--l) / 2 - 24px);margin:0}
 .fiche .vitrine>.paquet>img{width:min(64px,100%)}

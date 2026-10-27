@@ -231,6 +231,7 @@ html[data-calme~="animations"] .spin{animation:none}
 <!-- Les dessins par âge, par tenue et par expression : la joie d'un
      personnage plutôt que son nom, sur les planches et dans la vitrine. -->
 <script src="/fanzzy-etats.js"></script>
+<script src="/ultime.js" defer></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
@@ -405,7 +406,11 @@ const somme = (gains) => gains.reduce((s, g) => ({
 const toutes = (garder) => (E.nouv ?? []).filter((n) => typeof n?.cle === 'string' && garder(n));
 const nouvelles = (garder) => toutes((n) => !E.eteintes.has(n.cle) && garder(n));
 const SORTES = { fanzzy: ['fanzzy', 'age'], etats: ['etat'], tenues: ['skin'],
-  equipement: ['stuff'], actions: ['action'], lieux: ['lieu'] };
+  equipement: ['stuff'], actions: ['action'], lieux: ['lieu'], ultimes: ['etat'] };
+/* **La carte Ultimate arrive sous la forme d'un état** (`etat:<id>:<âge>:ultime`)
+   mais se range dans son rayon : ÉTATS ne la compte pas, ULTIMATE seulement. */
+const estUltime = (x) => x?.sorte === 'etat' && x.id === 'ultime';
+const deLaVue = (vue, x) => SORTES[vue]?.includes(x.sorte) && (vue === 'ultimes') === estUltime(x);
 const montrer = (cles) => { for (const c of cles) if (!E.eteintes.has(c)) E.montrees.add(c); };
 
 /* Ce qui est à l'écran depuis assez longtemps pour avoir été vu. Sans
@@ -578,6 +583,11 @@ const RAYONS = [
   /* Les stades : la face neutre, comme l'équipement. Ils ne se portent pas
      et ne donnent rien ; l'un d'eux peut habiller l'accueil. */
   { vue: 'lieux', type: 'lieux', nom: 'STADES', ton: null },
+  /* **L'Ultimate** (`src/shared/ultime.js`, 27 octobre 2026, Gaël : « dans la
+     collection, il n'y a pas de menu pour les ultimate ? ») : une carte par
+     âge de chaque Fanzzy, qui débloque la grande scène de son coup fatal.
+     À l'or de la scène ; en septième, il prend toute la largeur. */
+  { vue: 'ultimes', type: 'ultimes', nom: 'ULTIMATE', ton: 'or' },
 ];
 const VUES = new Set(RAYONS.map((r) => r.vue));
 
@@ -588,12 +598,16 @@ const VUES = new Set(RAYONS.map((r) => r.vue));
  */
 function derniere(vue) {
   /* `toutes` : la dernière pièce arrivée le reste, même une fois vue. */
-  const n = toutes((x) => SORTES[vue].includes(x.sorte))[0];
+  const n = toutes((x) => deLaVue(vue, x))[0];
   if (!n || !E.catalogue) return null;
   const dessins = window.TBF_ETATS;
   if (n.sorte === 'fanzzy' || n.sorte === 'age') {
     const f = lignee(n.id)[(n.stade ?? stadeDe(n.id)) - 1] ?? BY_ID.get(n.id);
     return f ? { src: buste(f.id), rar: f.rar } : null;
+  }
+  if (estUltime(n)) {
+    return { src: window.TBF_ULTIME?.image?.(n.pour, n.stade)
+      ?? dessins?.resoudre?.(n.pour, { evo: n.stade, etat: 'pousse' })?.src ?? buste(n.pour), rar: 'epique' };
   }
   if (n.sorte === 'etat') {
     return { src: dessins?.resoudre?.(n.pour, { evo: n.stade, etat: n.id })?.src ?? buste(n.pour),
@@ -618,7 +632,7 @@ function rayonsHTML() {
     const t = T[r.type] ?? {};
     const g = entier(t.gagnes);
     const p = entier(t.possibles);
-    const neufs = nouvelles((x) => SORTES[r.vue].includes(x.sorte)).length;
+    const neufs = nouvelles((x) => deLaVue(r.vue, x)).length;
     const pastille = neufs && etats < 3 ? (etats += 1, ` data-etat="nouveau" data-pastille="+${neufs}"`) : '';
     const d = derniere(r.vue);
     const objet = d?.src ? `<span class="tbf-objet" data-rar="${rareteSure(d.rar)}"><img src="${esc(d.src)}"
@@ -784,6 +798,7 @@ const EMBLEMES = {
   equipement: '<svg viewBox="0 0 24 24"><path d="M3 10v4h3l7 4V6l-7 4zM16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></svg>',
   actions: '<svg viewBox="0 0 24 24"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>',
   lieux: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18H6zM6 12h12M9.5 3v3h5V3M9.5 21v-3h5v3"/></svg>',
+  ultimes: '<svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
 };
 /* Ce que dit l'en-tête de chaque page. Pour les états et les tenues, la
    règle qui explique la planche — pourquoi un âge pas encore atteint n'y
@@ -794,6 +809,7 @@ const ACCROCHES = {
   equipement: 'Dans les boosters et à la boutique. Chaque pièce a un bonus et un revers.',
   actions: 'Les communes sont à tout le monde ; les autres sortent des boosters.',
   lieux: 'Dans les boosters. Le Chaudron est à tout le monde ; un stade à toi peut habiller ton accueil.',
+  ultimes: 'Tout le monde a l’Ultimate. Sa carte, dans un booster, débloque la grande scène de chaque âge atteint.',
 };
 
 /** Le chemin quand une sous-vue n'a rien à montrer : une phrase, et la bâche. */
@@ -831,6 +847,7 @@ function afficherVue(vue) {
       les cartes ne peuvent pas s’afficher. Recharge la page dans un instant.</p>`;
   } else if (vue === 'fanzzy') vueFanzzy(v, r);
   else if (vue === 'etats' || vue === 'tenues') vuePlanches(v, r, vue);
+  else if (vue === 'ultimes') vueUltimes(v, r);
   else vueCartes(v, r);
   window.scrollTo(0, 0);
   v.querySelector('.vue-tete h2')?.focus({ preventScroll: true });
@@ -1506,6 +1523,60 @@ function vueCartes(v, r) {
   surveiller(v);
 }
 
+/* ------------------------------------------------------------ l'Ultimate
+
+   **Une carte par âge atteint de chaque Fanzzy qu'on a** : ce sont les
+   seules qu'un booster peut donner (`fanzzy/index.js`, la carte Ultimate
+   d'un âge). Gagnée, elle est pleine ; à gagner, sous son pochoir. La
+   toucher l'ouvre en vitrine, où VOIR LA SCÈNE la joue. Le compte de
+   l'en-tête est celui de la bibliothèque, sur tout l'univers, comme les
+   états. */
+function vueUltimes(v, r) {
+  const T = E.B.types?.ultimes ?? {};
+  const liste = [];
+  for (const p of E.B.parFanzzy ?? []) {
+    const miennes = new Set((p.ultimes ?? []).map(Number));
+    const haut = Math.max(1, entier(p.stade), ...miennes);
+    for (let s = 1; s <= Math.min(haut, Math.max(1, entier(p.ages) || 1)); s++) {
+      liste.push({ k: 'etat', id: 'ultime', pour: p.id, stade: s, possede: miennes.has(s),
+        nom: window.TBF_CARTES?.ultimeDe?.(p.id, s)?.cri || 'L’Ultimate' });
+    }
+  }
+  /* Les gagnées d'abord : c'est l'album qu'on vient regarder. */
+  liste.sort((a, b) => Number(b.possede) - Number(a.possede));
+  const cle = r.vue;
+  E.listes.set(cle, liste);
+  const neufs = new Map(toutes(estUltime).map((x) => [`${x.pour}:${Number(x.stade)}`, x.cle]));
+  const cases = liste.map((o, k) => {
+    const c = carteDe(o);
+    if (!c) return '';
+    const vise = `data-liste="${esc(cle)}" data-i="${k}" role="button" tabindex="0"`;
+    const qui = `${o.nom}, ${c.nom}${lignee(o.pour).length > 1 ? `, âge ${o.stade}` : ''}`;
+    if (!o.possede) {
+      return `<div class="manque" ${vise} aria-label="${esc(qui)} — à gagner">${cardHTML(c, { mini: true, verrou: true })}</div>`;
+    }
+    const neuve = neufs.get(`${o.pour}:${o.stade}`) ?? null;
+    return `<div class="tbf-album-case" ${vise}${neuve ? ` data-cle="${esc(neuve)}"` : ''} aria-label="${esc(qui)} — à toi${
+      neuve ? ', nouveau' : ''}">${cardHTML(c, { mini: true })}${neuve ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : ''}</div>`;
+  });
+  v.innerHTML = `${teteVue(r.nom, { cache: true })}
+  <section class="tbf-album tbf-pleine-largeur vue-seule" aria-label="${r.nom}"><div class="tbf-album-page">
+    ${teteAlbum({ embleme: EMBLEMES.ultimes, nom: r.nom, ligne: ACCROCHES.ultimes, g: entier(T.gagnes), p: entier(T.possibles) })}
+    ${liste.length ? `<div class="tbf-album-cartes">${cases.join('')}</div>`
+    : vide('Ouvre un booster : chaque Fanzzy que tu obtiens a son Ultimate à collectionner.')}
+  </div></section>`;
+  surveiller(v);
+}
+
+/** Joue la scène d'une carte Ultimate : la grande si elle est gagnée, la
+    courte sinon — celle que tout le monde a (`/ultime.js`). */
+function jouerUltime(o) {
+  const u = window.TBF_CARTES?.ultimeDe?.(o.pour, o.stade) ?? {};
+  const src = window.TBF_ETATS?.resoudre?.(o.pour, { evo: o.stade, etat: 'pousse' })?.src ?? buste(o.pour);
+  window.TBF_ULTIME?.scene?.({ src, cri: u.cri, nom: u.nom, couleur: u.couleur, grande: Boolean(o.possede),
+    racine: o.pour, age: o.stade });
+}
+
 /* ====================================================================== la vitrine */
 
 /**
@@ -1745,6 +1816,10 @@ function vueCarte(vue) {
         actions.push('<a class="tbf-plaque tbf-bloc" href="/boutique">VOIR LA BOUTIQUE</a>');
       }
     }
+  }
+  if (o.k === 'etat' && o.id === 'ultime') {
+    actions.unshift(`<button type="button" class="tbf-plaque tbf-bloc" data-ton="flare" data-scene-ultime>${
+      possede ? 'VOIR LA GRANDE SCÈNE' : 'VOIR L’ULTIMATE'}</button>`);
   }
   if (o.k === 'etat' || o.k === 'skin') {
     actions.push(`<a class="tbf-plaque tbf-bloc" href="/fanzzy/${encodeURIComponent(o.pour)}">VOIR SA FICHE</a>`);
@@ -2085,6 +2160,13 @@ $('vitr').addEventListener('click', (e) => {
 
   const decor = e.target.closest('[data-lieu-accueil]');
   if (decor) { poserDecor(decor); return; }
+
+  if (e.target.closest('[data-scene-ultime]')) {
+    const vue = pileVues[pileVues.length - 1];
+    const o = vue?.liste?.[vue.i];
+    if (o) jouerUltime(o);
+    return;
+  }
 
   const porte = e.target.closest('[data-planche]');
   if (porte) {
