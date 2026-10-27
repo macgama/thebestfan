@@ -11,7 +11,7 @@ const SKIN = { halloween: bloc('Halloween :\n'), prehistorique: bloc('Préhistor
 const SKIN_FR = { halloween: 'Halloween', prehistorique: 'Préhistorique', apocalyptique: 'Apocalyptique' };
 const HEAD = 'Character sheet of the same character as the reference image, wearing the outfit described below.';
 // Modèle de planche donné par Gaël le 2026-10-27, mot pour mot.
-const COMMON = `With exactly his body proportions from the reference: same build, same head size relative to the body, not chubbier, not more cartoonish. Same outfit and same signature item, held in every figure. Same aura and glowing details as the reference, if he has any, pressed against the body in every figure.
+const COMMON = `With exactly his body proportions from the reference: same build, same head size relative to the body, not chubbier, not more cartoonish. Same skin costume and same signature item, held in every figure. Same aura and glowing details as the reference, if he has any, pressed against the body in every figure.
 Correct anatomy in every figure: exactly two arms, two legs, two hands with five fingers each, no extra or duplicated limbs.
 Only the objects he has on the reference: never add an instrument, scarf, flag or prop he does not carry.
 Exactly six (IT'S VERY IMPORTANT, EXACTLY SIX FULL-BODY FIGURES) full-body figures, no more, no less: two rows of three, three figures in the top row and three in the bottom row, evenly spaced, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line in each row, wide empty background gaps between the figures, nothing overlapping, nothing cut by the edges.
@@ -19,6 +19,9 @@ Every figure stays compact and narrow, hardly wider than the rest pose: arms rai
 Top row, left to right: 1. rest: standing calm, arms by the sides, eyes open, mouth closed. 2. joy: jumping with both fists raised straight up above his head, mouth wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one hand over his face.
 Bottom row, left to right: 4. pushing the chant: singing with his mouth wide open, pushing the chant with his own signature item from the reference (raising it, shouting into it or playing it hard, close to his body). 5. anger: leaning forward, protesting, one arm bent pointing forward towards the viewer, elbow close to his body. 6. rest with eyes closed: exactly the same as figure 1, eyes closed.`;
 const FOND = 'Wide 3:2 image. Background: a completely flat, uniform, saturated studio green (#00B140), the exact same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the characters, no green glow or green rim light on the characters. No grid lines, no borders, no frames, no labels.';
+// Ajout du 2026-10-27 après l'essai RP3 : la grosse caisse disparaissait de plusieurs figures,
+// et à l'âge 3 la tenue de base restait presque intacte sous le skin.
+const GARDE = 'VERY IMPORTANT: the skin is a complete makeover of the outfit of this level: every piece of his clothing, headwear and gear is remade in the skin style, nothing of the plain outfit stays unchanged. He keeps his face, build, hairstyle and colours from the reference. VERY IMPORTANT: his signature item and every object he carries on the reference are present in ALL six figures, held or worn, identical from one figure to the next. The skin costume is exactly the same in all six figures: same headwear, same clothes, same accessories, same colours.';
 const FIN = 'No text, no letters, no numbers, no logos, no brand marks, no club crests, no team names, no sponsor logos, no identifiable jerseys, no real people.';
 const it = s => s.replace(/\bhimself\b/g,'itself').replace(/\bhis\b/g,'its').replace(/\bhim\b/g,'it').replace(/\bhe\b/g,'it').replace(/\bHis\b/g,'Its').replace(/\bHe\b/g,'It');
 const she = s => s.replace(/\bhimself\b/g,'herself').replace(/\bhis\b/g,'her').replace(/\bhim\b/g,'her').replace(/\bhe\b/g,'she').replace(/\bHis\b/g,'Her').replace(/\bHe\b/g,'She');
@@ -68,7 +71,7 @@ const fix = (f, s) => {
 };
 // Ordre : l'âge 1 de tous d'abord (tous les joueurs l'ont), puis l'âge 2, puis l'âge 3 ; RP avant AN.
 for (let k = 0; k < 3; k++) for (const f of fiches) for (const sk of Object.keys(SKIN_FR)) {
-  const p = [HEAD, STYLE, f.ident, f.ages[k], SKIN[sk] + '\n\nHis own costume: ' + f.skins[sk], COMMON, FOND, FIN].join('\n\n');
+  const p = [HEAD, STYLE, f.ident, f.ages[k], SKIN[sk] + '\n\nHis own costume: ' + f.skins[sk], GARDE, COMMON, FOND, FIN].join('\n\n');
   const nom = `${f.id}-e${k+1}-${sk}-planche`;
   fs.writeFileSync(out + nom + '.txt', fix(f, p));
   liste.push([++ordre, nom + '.txt', f.id, k + 1, sk, f.id + ['', 'B', 'C'][k] + '.png', f.magenta ? 'magenta' : 'vert'].join('\t'));

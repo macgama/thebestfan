@@ -10,7 +10,9 @@ Skin: Desert wasteland road warrior. The same costume and the same level of powe
 
 Its own costume: A wasteland rock: bolts and washers stuck in its cracks, a bucket made of a blue oil can, dusty goggles on its head.
 
-With exactly its body proportions from the reference: same build, same head size relative to the body, not chubbier, not more cartoonish. Same outfit and same signature item, held in every figure. Same aura and glowing details as the reference, if it has any, pressed against the body in every figure.
+VERY IMPORTANT: the skin is a complete makeover of the outfit of this level: every piece of its clothing, headwear and gear is remade in the skin style, nothing of the plain outfit stays unchanged. It keeps its face, build, hairstyle and colours from the reference. VERY IMPORTANT: its signature item and every object it carries on the reference are present in ALL six figures, held or worn, identical from one figure to the next. The skin costume is exactly the same in all six figures: same headwear, same clothes, same accessories, same colours.
+
+With exactly its body proportions from the reference: same build, same head size relative to the body, not chubbier, not more cartoonish. Same skin costume and same signature item, held in every figure. Same aura and glowing details as the reference, if it has any, pressed against the body in every figure.
 Correct anatomy in every figure: no extra or duplicated limbs, wings, tails, wheels or heads.
 Only the objects it has on the reference: never add an instrument, scarf, flag or prop it does not carry.
 Exactly six (IT'S VERY IMPORTANT, EXACTLY SIX FULL-BODY FIGURES) full-body figures, no more, no less: two rows of three, three figures in the top row and three in the bottom row, evenly spaced, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line in each row, wide empty background gaps between the figures, nothing overlapping, nothing cut by the edges.
