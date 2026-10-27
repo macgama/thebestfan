@@ -1,6 +1,6 @@
 {
   "id": "RP20",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7fc8eaff0ac3"
+          "sha": "7fc8eaff0ac3",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -76,7 +77,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "0fc32991dbff"
+          "sha": "0fc32991dbff",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -127,7 +129,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "09f5606181b7"
+          "sha": "09f5606181b7",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

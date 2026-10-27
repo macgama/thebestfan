@@ -1,5 +1,46 @@
 # À déposer sur Infomaniak
 
+**Les sons de l'ouverture des boosters, version tribune** (branche
+`claude/project-thread-1xxwfz`, 27 octobre 2026, demandé par Gaël : les
+anciens n'étaient « pas du tout gaming » ni supporters ; validés à l'écoute).
+Construction seule, **sans schéma**.
+
+- Les quatre jingles de rareté sont refaits : fanfare de tambours et de
+  cuivres sous la clameur d'une tribune, de plus en plus fort de la commune
+  à la légendaire.
+- Le paquet qui tremble, et l'entrée de chaque sorte de carte (Fanzzy,
+  expression, tenue, équipement, stade, carte action, écharpes), ont
+  maintenant de vrais bruits de tribune (grosse caisse, « hey », drapeau,
+  rambarde, projecteurs, torche, chant).
+- Après la mise en ligne : sur le S24+, ouvrir deux ou trois boosters, son
+  allumé.
+
+---
+
+**Les Fanzzy clignent des yeux** (branche `claude/project-thread-j17xyz`,
+27 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
+des images et des réglages, aucun code du jeu.
+
+- 32 Fanzzy RP et AN de plus clignent au premier âge, et 114 âges 2 ou 3
+  clignent aussi (44 RP, 70 AN ; yeux fermés pris dans les planches, sans
+  crédits).
+- Après la mise en ligne : regarder quelques secondes un Fanzzy RP ou AN à
+  l'âge 2 ou 3 sur l'accueil, il doit cligner.
+
+---
+
+**Les animations restent dans la largeur du téléphone sur ordinateur**
+(branche `claude/project-thread-9p4wm0`, 27 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Ouverture des boosters, fonds filmés (but, évolution, fin de duel, carton),
+  Ultimate, écharpe du club, ondes et éclats, bilan, fête de niveau, vestiaire
+  et affiche du duel : tout se joue dans la colonne de 480 px, et les fonds
+  filmés prennent la largeur de la colonne au lieu d'être étirés et flous.
+  Sur téléphone, rien ne change.
+
+---
+
 **Le numéro de version monte à chaque mise en ligne** (branche
 `claude/project-thread-wy11c4`, 27 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.

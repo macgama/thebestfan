@@ -1,6 +1,6 @@
 {
   "id": "RP8",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "35a4ead98502"
+          "sha": "35a4ead98502",
+          "cligne": true
         },
         "halloween": {
           "etats": [

@@ -32,7 +32,11 @@
  */
 (() => {
   const STYLE = `
-.tbf-ult{position:fixed;inset:0;z-index:120;pointer-events:none;overflow:hidden;
+/* Dans la colonne du téléphone, sur un ordinateur aussi : l'image plein
+   cadre sortait floue, étirée sur toute la fenêtre (27 octobre 2026, voir
+   --tbf-cote dans ui.css ; nulle sur un téléphone). */
+.tbf-ult{position:fixed;top:0;bottom:0;left:var(--tbf-cote,max(0px,calc(50% - 240px)));
+  right:var(--tbf-cote,max(0px,calc(50% - 240px)));z-index:120;pointer-events:none;overflow:hidden;
   display:grid;place-items:center;--c:#F5C33B;contain:strict}
 .tbf-ult-voile{position:absolute;inset:0;background:rgba(7,9,12,.62);opacity:0;
   transition:opacity .18s ease-out}
