@@ -640,8 +640,8 @@ check(`catalogue de l'équipement servi (${STUFF.length})`,
 {
   const lire = async () => (await call('/api/fanzzy/bibliotheque')).json;
   const avant = await lire();
-  const types = ['fanzzy', 'etats', 'tenues', 'stuff', 'actions', 'lieux'];
-  check('la bibliothèque range les six types',
+  const types = ['fanzzy', 'etats', 'tenues', 'stuff', 'actions', 'lieux', 'ultimes'];
+  check('la bibliothèque range les sept types',
     types.every((k) => Number.isFinite(avant.types?.[k]?.possibles))
     || (console.log('        elle rend :', Object.keys(avant.types ?? {}).join(', ')), false));
   const somme = types.reduce((s, k) => s + avant.types[k].possibles, 0);
@@ -661,14 +661,20 @@ check(`catalogue de l'équipement servi (${STUFF.length})`,
       [U, X, tenue]);
   }
   await pool.execute(`INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, 1, 'joie')`, [U, X]);
+  // La carte Ultimate se range dans la même table, mais dans son rayon.
+  await pool.execute(`INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, 1, 'ultime')`, [U, X]);
   await pool.execute(`INSERT IGNORE INTO user_stuff (user_id, stuff_id) VALUES (?, ?)`, [U, piece]);
   const apres = await lire();
   const plus = (k) => apres.types[k].gagnes - avant.types[k].gagnes;
   check(`un gain compte pour un, à sa place (${types.map((k) => `${k} +${plus(k)}`).join(' · ')})`,
     plus('fanzzy') === 1 && plus('etats') === 1 && plus('tenues') === (tenue ? 1 : 0)
-      && plus('stuff') === 1 && plus('actions') === 0 && plus('lieux') === 0);
-  check('et le personnage apparaît avec ses états et ses tenues',
-    apres.parFanzzy.some((p) => p.id === X && p.etats.gagnes === 1));
+      && plus('stuff') === 1 && plus('actions') === 0 && plus('lieux') === 0 && plus('ultimes') === 1);
+  check('et le personnage apparaît avec ses états, ses tenues et son Ultimate',
+    apres.parFanzzy.some((p) => p.id === X && p.etats.gagnes === 1
+      && JSON.stringify(p.ultimes) === '[1]'));
+  check('la carte Ultimate ne compte pas dans les paliers',
+    !apres.paliers || apres.paliers.gagnes - (avant.paliers?.gagnes ?? 0)
+      === plus('fanzzy') + plus('etats') + plus('stuff'));
 
   await pool.execute('UPDATE user_fanzzy SET stage = 3 WHERE user_id = ? AND fanzzy_id = ?', [U, X]);
   const evolue = await lire();
@@ -1408,12 +1414,12 @@ const P = await joueur('Cran');
   const b = await biblio(P);
   const p = b.paliers;
   check('la bibliothèque sert ses paliers', Boolean(p));
-  /* Le total de la même réponse, tenues mises à part : elles se
-     collectionnent, elles ne paient pas (voir « ce que l'abonnement ouvre ne
+  /* Le total de la même réponse, tenues et cartes Ultimate mises à part :
+     elles se collectionnent, elles ne paient pas (voir « ce que l'abonnement ouvre ne
      paie pas », plus bas). */
-  check('« gagnes » et « possibles » : le total de la même réponse, sans les tenues',
-    p?.gagnes === b.total?.gagnes - b.types?.tenues?.gagnes
-    && p.possibles === b.total.possibles - b.types.tenues.possibles
+  check('« gagnes » et « possibles » : le total de la même réponse, sans les tenues ni les Ultimate',
+    p?.gagnes === b.total?.gagnes - b.types?.tenues?.gagnes - b.types?.ultimes?.gagnes
+    && p.possibles === b.total.possibles - b.types.tenues.possibles - b.types.ultimes.possibles
     && b.types.tenues.possibles > 0
     || (console.log('        paliers :', p?.gagnes, '/', p?.possibles, '· total :',
       JSON.stringify(b.total), '· tenues :', JSON.stringify(b.types?.tenues)), false));

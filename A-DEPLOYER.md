@@ -9,6 +9,27 @@
 
 ---
 
+**L'Ultimate visible sur la fiche et dans la collection** (branche
+`claude/project-thread-0u99uq`, 27 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Fiche d'un Fanzzy : une plaque ULTIMATE à droite de la carte, au-dessus du
+  bouton qui la retourne, avec sa vignette ; à l'or et « TA CARTE » quand la
+  carte Ultimate de l'âge regardé est gagnée, « BOOSTER » sinon. La toucher
+  joue la scène (la grande si la carte est gagnée). La colonne ULTIMATE de
+  la bande passe juste après ÂGES : elle n'est plus coupée au bord droit.
+- MA COLLECTION : un septième rayon ULTIMATE, à l'or, sur toute la largeur.
+  Une carte par âge atteint de chaque Fanzzy possédé, les gagnées d'abord ;
+  la vitrine propose VOIR LA GRANDE SCÈNE (ou VOIR L'ULTIMATE) et VOIR SA
+  FICHE. Les cartes Ultimate ne comptent pas dans les paliers de
+  collectionneur (les crans ne bougent pas).
+- Une carte Ultimate gagnée montre son image Ultimate (RP pour l'instant)
+  au lieu de la pose « pousse », dans l'album et à l'ouverture d'un booster.
+- Après la mise en ligne : ouvrir la fiche d'un Fanzzy RP, puis MA
+  COLLECTION, rayon ULTIMATE.
+
+---
+
 **Équilibrage des duels et du Virage** (branche `claude/project-thread-esqp0e`,
 27 octobre 2026, propositions acceptées par Gaël après la simulation des
 parties). Construction seule, **sans schéma**.

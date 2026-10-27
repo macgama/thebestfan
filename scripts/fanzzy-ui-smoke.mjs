@@ -972,6 +972,17 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
       verrous: document.querySelectorAll('.case.verrou').length,
       detail: document.getElementById('fiche-detail').textContent.replace(/\s+/g, ' ').trim(),
       choisies: document.querySelectorAll('.case.choisie').length,
+      /* La plaque ULTIMATE, à côté de la carte : dans l'écran, et sans
+         mordre sur la carte ni sur la plaque qui la retourne. */
+      ult: (() => {
+        const u = document.querySelector('#fiche-vitrine .cote-ult');
+        if (!u) return null;
+        const r = u.getBoundingClientRect();
+        const c = document.querySelector('#fiche-art')?.getBoundingClientRect();
+        const t = document.querySelector('#fiche-vitrine .tourne')?.getBoundingClientRect();
+        return { texte: u.textContent.replace(/\s+/g, ' ').trim(), dedans: r.top >= 0 && r.right <= innerWidth + 1,
+          carte: Boolean(c && r.left >= c.right - 1), tourne: !t || r.bottom <= t.top + 1 };
+      })(),
     }));
     check('elle tient dans l’écran, sans défilement',
       !m.defile || (console.log('        elle défile'), false));
@@ -989,11 +1000,17 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
          les effets parce que ce qui change le jeu se lit avant ce qui se
          voit — un état ne donne aucun bonus, c'est même toute sa règle.
 
-         L'Ultimate vient juste après les effets : c'est le coup fatal de
+         L'Ultimate vient juste après les âges : c'est le coup fatal de
          l'âge, la chose qu'un joueur vient voir (`shared/ultime.js`), et une
-         seule case — il ne repousse rien. */
-      m.rangs.join('/') === 'ÂGES/EFFETS/ULTIMATE/ÉTATS/TENUES'
+         seule case — il ne repousse rien. Derrière les effets, il tombait au
+         bord droit d'un téléphone, coupé (Gaël, 27 octobre 2026). */
+      m.rangs.join('/') === 'ÂGES/ULTIMATE/EFFETS/ÉTATS/TENUES'
       || (console.log('        rangées :', m.rangs.join(', ')), false));
+    check(`l’Ultimate a sa plaque à côté de la carte (${m.ult?.texte})`,
+      Boolean(m.ult && /ULTIMATE/.test(m.ult.texte) && /TA CARTE|BOOSTER/.test(m.ult.texte)));
+    check('dans l’écran, à droite de la carte, au-dessus de la plaque qui la retourne',
+      Boolean(m.ult?.dedans && m.ult.carte && m.ult.tourne)
+      || (console.log('        plaque :', JSON.stringify(m.ult)), false));
     check('et il y a des cases à regarder', m.cases >= 4);
     check('celles qu’on n’a pas restent visibles, verrouillées', m.verrous > 0);
     /* Une case est choisie d'entrée, sinon le bloc de détail s'ouvre vide et
