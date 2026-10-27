@@ -1,13 +1,13 @@
 /**
- * L'écran d'ouverture : le tunnel, la troupe de Fanzzy qui monte vers la
- * tribune, et le moment où il s'en va.
+ * L'écran d'ouverture : le kop de Fanzzy jouables, et le moment où il s'en
+ * va.
  *
  * ## Ce qu'il fait, et ce qu'il ne fait pas
  *
- * Le cadre est déjà dans la page — le tunnel, le titre sur sa bâche, la jauge
+ * Le cadre est déjà dans la page — la tribune au loin, le titre sur sa bâche, la jauge
  * et son premier libellé — et il est visible avant qu'une seule ligne d'ici ne
- * tourne. Ce fichier ajoute ce qui ne peut pas être écrit d'avance : les
- * visages (tirés au hasard), l'avancée de la jauge et ses deux libellés
+ * tourne. Ce fichier ajoute ce qui ne peut pas être écrit d'avance : le kop
+ * (des visages jouables, tirés au hasard), l'avancée de la jauge et ses deux libellés
  * suivants (ils suivent le temps, et l'écharpe se noue sur le dernier quand
  * l'écran part : voir `nouer`), « TOUCHE POUR ENTRER » (vrai seulement si
  * ce fichier est là pour l'entendre), l'astuce du jour (elle dépend de la
@@ -30,8 +30,8 @@
  * Si l'envie revient de les enlever, relire d'abord le récit du duel plus
  * bas — c'est le même symptôme.
  *
- * Tout ce que le lot 2 a ajouté ici (libellés, consigne, astuce, places de la
- * troupe) est du décor, et chaque morceau est dans son `try` : une faute dans
+ * Tout ce que le lot 2 a ajouté ici (libellés, consigne, astuce), et le kop,
+ * est du décor, et chaque morceau est dans son `try` : une faute dans
  * le décor ne doit jamais coûter une sortie.
  *
  * Script classique, pas module : comme tout ce qui vit dans `public/`.
@@ -105,12 +105,6 @@
 
   const depart = performance.now();
   let parti = false;
-
-  /* La lumière du bout du tunnel grandit pendant tout le plafond : la page
-     l'écrit à dix secondes pour qu'elle grandisse avant ce fichier, et on
-     lui redonne ici la vraie durée. Changer `DUREE` suffit donc à tout
-     accorder ; tant qu'elle vaut dix secondes, cette ligne ne change rien. */
-  try { ecran.style.setProperty('--duree', `${DUREE}ms`); } catch { /* décor */ }
 
   /* La jauge suit le temps réel.
    *
@@ -223,44 +217,94 @@
     }, reste);
   }
 
-  /* La troupe. Cinq Fanzzy tirés au hasard parmi ceux qui sont **dessinés** —
-     `FZART.ILLUSTRES` est la seule liste qui le sache, et la recopier ici
-     l'aurait fait mentir au premier dessin ajouté.
-     Si la bibliothèque n'est pas là, l'écran garde son titre et son tunnel :
-     ce sont des visages en plus, pas la condition de quoi que ce soit.
+  /* **Le kop.** Des rangs de bustes, du plus loin au plus près, tirés parmi
+     les Fanzzy **jouables** : `FZART.jouables()` croise les séries ouvertes
+     du serveur et les dessins (« uniquement ceux activés », Gaël, 27 octobre
+     2026). Elle répond en deux secondes et demie au plus, avec la liste de
+     la visite d'avant si le réseau traîne. Sans bibliothèque ni liste, le
+     kop reste vide : le titre et la tribune suffisent, ce sont des visages
+     en plus, pas la condition de quoi que ce soit.
 
-     Chacun reçoit sa marche (`data-place`, de 1, le plus loin, à 5, le plus
-     près, qui salue), dans l'ordre où ils se peignent : le plus près passe
-     devant. La place est écrite et non déduite du rang, pour qu'un visage
-     dont l'image manque s'en aille sans faire sauter les autres d'une
-     marche. Des éléments plutôt qu'une chaîne de balisage : l'image qui
-     échoue retire sa marche entière, ombre comprise, sans attribut
-     `onerror` écrit dans une chaîne. */
-  try {
-    const bande = document.getElementById('ouvBande');
-    const tous = [...(window.FZART?.ILLUSTRES ?? [])];
-    if (bande && tous.length) {
-      const pris = [];
-      while (pris.length < Math.min(5, tous.length)) {
-        const f = tous[Math.floor(Math.random() * tous.length)];
-        if (!pris.includes(f)) pris.push(f);
+     Les rangs se calculent sur la place réelle de la scène (voir « Le kop »,
+     dans la feuille de la page) : le premier prend la plus petite de deux
+     mesures — un peu plus du tiers de la hauteur, le tiers de la largeur —,
+     chacun des suivants les quatre cinquièmes du précédent, posé un peu
+     plus haut que les épaules de celui de devant ; on monte tant qu'il reste
+     de la hauteur, et pas au-delà de quarante-huit visages, pour ne pas
+     faire tirer cent images à un écran de chargement : ce sont alors les
+     rangs du fond qui restent vides, et la tribune de la photo s'y voit. Les visages se
+     répètent si la liste est courte : un kop à trous se lirait comme un
+     stade vide.
+
+     Chaque visage paraît quand son image est là (`.vu`), et part si elle
+     manque : un cadre d'image cassée au milieu d'une foule se voit. */
+  async function remplirKop() {
+    const gradins = document.getElementById('ouvKop');
+    if (!gradins || !window.FZART?.jouables) return;
+    const ids = await window.FZART.jouables();
+    if (!ids.length || parti) return;
+    const melange = [...ids];
+    for (let i = melange.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [melange[i], melange[j]] = [melange[j], melange[i]];
+    }
+    const { width: L, height: H } = gradins.getBoundingClientRect();
+    if (L < 40 || H < 40) return;
+    const rangs = [];
+    let s = Math.min(H * 0.4, L * 0.42);
+    let bas = 0;
+    let n = 0;
+    while (s >= 26 && bas + s * 0.5 < H) {
+      /* Un pas d'un peu plus des trois quarts d'un buste : les épaules se
+         touchent, les têtes non. Un rang sur deux décalé d'un demi-pas,
+         comme dans une vraie tribune. */
+      const pas = s * 0.78;
+      const decale = rangs.length % 2 ? pas / 2 : 0;
+      const places = [];
+      for (let x = -pas / 2 + decale + Math.random() * pas * 0.2; x < L + pas / 2; x += pas) {
+        places.push(x);
       }
-      pris.forEach((id, i) => {
-        const src = window.FZART.adresse(id, 'plein') ?? window.FZART.adresse(id, 'buste');
-        if (!src) return;
-        const marche = document.createElement('span');
-        marche.className = 'fz';
-        marche.dataset.place = String(i + 1);
+      /* Le plafond se compte depuis le premier rang : ce sont les rangs du
+         fond, les plus petits, qui cèdent. */
+      if (n + places.length > 48) break;
+      rangs.push({ s, bas, places });
+      n += places.length;
+      bas += s * 0.62;
+      s *= 0.82;
+    }
+    const total = rangs.length;
+    let k = 0;
+    /* Du plus loin au plus près : le plus près se peint en dernier. */
+    for (let r = total - 1; r >= 0; r--) {
+      const { s: taille, bas: b, places } = rangs[r];
+      const rang = document.createElement('div');
+      rang.className = 'rang';
+      rang.style.setProperty('--s', `${taille.toFixed(1)}px`);
+      rang.style.setProperty('--b', `${b.toFixed(1)}px`);
+      rang.style.setProperty('--z', String(total - r));
+      rang.style.setProperty('--lum', (1 - r / Math.max(1, total - 1) * 0.55).toFixed(2));
+      for (const x of places) {
+        const id = melange[k % melange.length];
+        k++;
+        const src = window.FZART.adresse(id, 'buste');
+        if (!src) continue;
+        const fan = document.createElement('span');
+        fan.className = 'fan';
+        fan.style.setProperty('--x', `${x.toFixed(1)}px`);
+        fan.style.setProperty('--d', `${Math.round(Math.random() * 700)}ms`);
         const img = document.createElement('img');
         img.alt = '';
         img.decoding = 'async';
-        img.addEventListener('error', () => marche.remove(), { once: true });
+        img.addEventListener('load', () => img.classList.add('vu'), { once: true });
+        img.addEventListener('error', () => fan.remove(), { once: true });
         img.src = src;
-        marche.append(img);
-        bande.append(marche);
-      });
+        fan.append(img);
+        rang.append(fan);
+      }
+      gradins.append(rang);
     }
-  } catch { /* pas de visages : le titre suffit */ }
+  }
+  try { remplirKop().catch(() => {}); } catch { /* pas de kop : le titre suffit */ }
 
   /* **Les trois sorties, et pourquoi elles reviennent.**
 
@@ -327,7 +371,7 @@
      ne l'annonce pas : elle paraîtrait au moment où tout s'efface. */
   setTimeout(() => { if (!parti) ecran.classList.add('entrable'); }, PLANCHER);
 
-  /* **L'astuce du jour**, sur un ticket kraft en bas du tunnel.
+  /* **L'astuce du jour**, sur un ticket kraft en bas de l’écran.
 
      Une table écrite en dur, et une par jour (la date locale, pour qu'elle
      change à minuit chez le joueur et pas à minuit à Greenwich). Chaque
