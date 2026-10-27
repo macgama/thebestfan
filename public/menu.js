@@ -67,7 +67,7 @@
 
      Pendant la visite, c'est l'attribut qui fait foi : un stockage fermé
      (navigation privée) laisse le réglage valoir au moins pour la page. */
-  const FACETTES = ['sons', 'vibrations', 'animations'];
+  const FACETTES = ['sons', 'musique', 'vibrations', 'animations'];
   const normaliser = (brut) => {
     const jetons = String(brut ?? '').split(/\s+/);
     return FACETTES.filter((f) => jetons.includes(f)).join(' ');
@@ -195,10 +195,12 @@
     // serve qu'à s'exercer — et il dit le rythme, qui est ce que la moitié des
     // gestes demandent.
     repetition: 'M9 21h6l-1.2-15h-3.6zM7 21h10M12 6v9M10.4 12h3.2',
-    /* Les trois facettes du mode calme. Chacune dessine ce qu'elle coupe —
+    /* Les facettes du mode calme. Chacune dessine ce qu'elle coupe —
        un haut-parleur, un téléphone qui tremble, une étincelle —, pas un
        interdit : l'interrupteur dit déjà si c'est coupé. */
     sons: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11',
+    // Deux croches liées : la musique du jeu (27 octobre 2026), pas ses bruits.
+    musique: 'M9 17.5V5.5l11-2v12M9 17.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM20 15.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z',
     vibrations: 'M8.5 3.5h7v17h-7zM11 17.5h2M5 9v6M19 9v6M2.5 10.5v3M21.5 10.5v3',
     animations: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
     // Une flèche qui descend dans l'appareil : ce qu'on télécharge chez soi.
@@ -326,7 +328,7 @@
     + `${ici ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path`
     + ` d="${ICONES[cle]}"/></svg><span class="lib">${texte}</span></a>`;
 
-  /* Les trois facettes du mode calme, dans l'ordre du tiroir. Le libellé dit
+  /* Les facettes du mode calme, dans l'ordre du tiroir. Le libellé dit
      ce que fait l'interrupteur quand on l'allume : il **coupe**. Un
      interrupteur « Sons » allumé laisserait deviner s'il veut dire « sons
      actifs » ou « mode calme actif » ; celui-ci ne laisse rien à deviner.
@@ -495,6 +497,16 @@
      bas. Un volume caché (un appareil sans son) laisse la ligne seule, sur
      toute la largeur, comme sous 350 px, où le pied n'a qu'une colonne :
      un filet tireté horizontal la sépare alors du volume. */
+  /* **Couper la musique** (27 octobre 2026) : dans la case libre du pied, à
+     côté de « Se déconnecter ». Le mot passe sur deux lignes, « COUPER »
+     puis « LA MUSIQUE » (espace insécable), et sous 420 px l'icône s'efface,
+     comme sur la ligne de la présence : la colonne n'a pas la place des
+     quatre. */
+  .tbf-musique .lib{min-width:0}
+  @media (max-width:419px){
+    .tbf-tiroir-pied>.tbf-musique{gap:8px}
+    .tbf-tiroir-pied>.tbf-musique svg{display:none}
+  }
   .tbf-presence{margin:6px 0 0;border-top:1.5px dashed rgba(7,9,12,.38)}
   .tbf-presence .lib{min-width:0}
   @media (min-width:350px){
@@ -804,6 +816,21 @@
        présence est éteinte (le cas de la livraison). Servie, le tiroir en
        compte quatre, dont trois dans le groupe du calme : un contrôle qui
        les relève tous doit alors le savoir. */
+    /* **Couper la musique** (27 octobre 2026, Gaël : « que le joueur puisse
+       couper la musique »). Une facette du calme (« musique » dans la clé
+       « tbf-calme »), mais pas dans la rangée du mode calme : à quatre, les
+       cases n'y tiennent plus leur mot (« ANIMATIONS » déborde dès 384 px).
+       Elle prend la place libre du pied, à côté de « Se déconnecter » : cinq
+       liens en deux colonnes laissaient une case vide, et le tiroir ne
+       grandit pas d'un pixel. Le libellé dit ce qu'elle fait allumée, comme
+       ceux du calme : elle **coupe**. Couper les sons la coupe aussi ;
+       couper la musique laisse les sons du jeu. */
+    const musiqueHTML = '<button type="button" class="tbf-tiroir-bt tbf-musique" role="switch" aria-checked="false"'
+      + ' aria-label="Couper la musique" data-facette="musique">'
+      + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.musique}"/></svg>`
+      + '<span class="lib">Couper la&nbsp;musique</span>'
+      + '<span class="tbf-inter" aria-hidden="true"></span></button>';
+
     const presenceHTML = '<button type="button" class="tbf-tiroir-bt" role="switch" aria-checked="false"'
       + ' aria-label="Apparaître hors ligne pour mes amis" data-presence>'
       + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.presence}"/></svg>`
@@ -859,6 +886,7 @@
       + item('/profil', 'profil', 'Mon profil', ici('/profil') ? 'on' : '')
       + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
       + item('#', 'sortie', 'Se déconnecter', 'sortie')
+      + musiqueHTML
       + calmeHTML
       + volumeHTML
       /* **La langue**, sur toutes les pages : cinq plaques, une par langue
@@ -928,6 +956,8 @@
     if (typeof navigator.vibrate !== 'function') {
       tiroir.querySelector('[data-facette="vibrations"]')?.setAttribute('hidden', '');
     }
+    // Sans Web Audio, pas de musique non plus : même règle que le volume.
+    if (!sonPossible()) tiroir.querySelector('[data-facette="musique"]')?.setAttribute('hidden', '');
     for (const b of interrupteurs) {
       b.addEventListener('click', () => {
         const facette = b.dataset.facette;
