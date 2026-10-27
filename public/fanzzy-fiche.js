@@ -730,18 +730,20 @@
         suis sur la fiche du fanzzy, je ne vois pas l'ultimate »). Dans la
         gouttière de droite, au-dessus de la plaque qui retourne : sa
         vignette, le mot ULTIMATE, et ce qu'on a — la carte gagnée à l'or
-        (TA CARTE), sinon BOOSTER. Le toucher fait comme la tuile de
-        l'inventaire : le détail dit la règle, et la scène se joue — la
-        grande si la carte est gagnée. */
+        (TA CARTE), sinon BOOSTER sous un cadenas. Le toucher fait comme la
+        tuile de l'inventaire : le détail dit la règle, et la grande scène
+        se joue **seulement si la carte est gagnée** (Gaël, 27 octobre 2026 :
+        « si on n'a pas gagné la carte Ultimate, on ne devrait pas pouvoir
+        voir l'Ultimate »). */
     function plaqueUltime() {
       if (!aMoi()) return '';
       const x = pieces.find((y) => y.rang === 'ULTIMATE');
       if (!x) return '';
       const img = x.art ?? x.image;
-      const nom = `Ultimate : ${x.titre} — ${x.grande ? 'carte gagnée, voir la grande scène' : 'voir la scène, sa carte est dans les boosters'}`;
+      const nom = `Ultimate : ${x.titre} — ${x.grande ? 'carte gagnée, voir la grande scène' : 'sa carte est dans les boosters'}`;
       return `<button type="button" class="tbf-plaque cote-ult"${x.grande ? ' data-ton="or"' : ''} data-case="ultime"
         aria-label="${esc(nom)}">${img ? `<img src="${esc(img)}" alt="" onerror="this.remove()">` : ''}<b>ULTIMATE</b><small>${
-        SVG.lecture}${x.grande ? 'TA CARTE' : 'BOOSTER'}</small></button>`;
+        x.grande ? `${SVG.lecture}TA CARTE` : '<i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>BOOSTER'}</small></button>`;
     }
 
     /** L'adresse de la vignette du paquet de la série, ou rien. */
@@ -1168,7 +1170,8 @@
         voulu.stade = vu(); voulu.etat = x.id;
       }
       peindre();
-      if (x?.rang === 'ULTIMATE') voirUltime(x);
+      // La scène ne se voit qu'avec sa carte : sans elle, le détail dit où la trouver.
+      if (x?.rang === 'ULTIMATE' && x.grande) voirUltime(x);
     }
 
     /** Joue la scène de l'Ultimate regardé : la grande si sa carte est
