@@ -279,7 +279,11 @@
      dans `public/img/ultime/`. Même script, même règle : sans clip, l'image
      fixe animée au code. */
   /* CLIPS: début */
-  const CLIPS = {};
+  const CLIPS = {
+    'RP4-e1': 'RP4-e1.9ead205f.mp4',
+    'RP4-e2': 'RP4-e2.7bcf1ebe.mp4',
+    'RP4-e3': 'RP4-e3.b8a2096d.mp4',
+  };
   /* CLIPS: fin */
 
   /* Le fichier d'une lignée à un âge dans une table, ou null. Une légendaire
