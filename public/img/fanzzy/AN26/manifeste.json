@@ -1,6 +1,6 @@
 {
   "id": "AN26",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,8 +13,20 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "e58590ab38a7",
+          "sha": "84770b32c7a2",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "0d19fd779705"
         }
       }
     },
@@ -29,7 +41,31 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "2ceb1374ee96"
+          "sha": "c374e21b90c3"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "4b85a18727cc"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "7501320a20be"
         }
       }
     },
@@ -44,7 +80,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "831d3f34be5b"
+          "sha": "61ef5fd18930"
         }
       }
     }
