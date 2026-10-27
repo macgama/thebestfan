@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Le nom du Fanzzy ouvre sa fiche** (branche `claude/project-thread-5rpxvz`,
+27 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- Sur l'accueil, toucher le nom sous le personnage (« LA REINE DE LA
+  MACHINE ») ouvre la fiche de ce Fanzzy, à l'âge montré : les flèches
+  changent l'âge, et le lien le suit.
+
+---
+
 **Équilibrage des duels et du Virage** (branche `claude/project-thread-esqp0e`,
 27 octobre 2026, propositions acceptées par Gaël après la simulation des
 parties). Construction seule, **sans schéma**.
