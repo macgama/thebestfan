@@ -415,6 +415,14 @@
    * **Elle est la seule vérité sur ce point.** Une page qui écrit sa largeur
    * en dur redevient une exception qu'il faudra retrouver. */
   --colonne:min(100vw, 480px);
+  /* **Les animations aussi** (27 octobre 2026, Gaël : « sur ordinateur, je
+   * ne mettrais pas les animations sur tout l'écran »). Un fond filmé de
+   * 480 pixels étiré sur mille neuf cents en sortait flou, et la lumière
+   * débordait de la colonne. La marge de chaque côté de la colonne, que les
+   * scènes plein écran retirent (`clip-path: inset(0 var(--tbf-cote))`) :
+   * nulle sur un téléphone, rien n'y change. Le pourcentage se lit sur la
+   * boîte qui s'en sert, posée sur toute la fenêtre. */
+  --tbf-cote:max(0px, calc(50% - var(--colonne) / 2));
 }
 
 /* **Le béton aux écrans denses** : les deux tailles de la tuile, et le
@@ -683,7 +691,7 @@
   padding:18px;pointer-events:none;color:var(--mc,var(--projo));opacity:0;
   /* La fumée et les confettis débordent de l'écran : rognés au bord, ils ne
      le font pas défiler. */
-  overflow:hidden;
+  overflow:hidden;clip-path:inset(0 var(--tbf-cote));
   /* Le voile. Assez pour que la case décolle, assez peu pour qu'on continue de
      voir le match derrière : c'est ce qu'on est en train de regarder. */
   background:radial-gradient(58% 42% at 50% 50%,rgba(4,6,10,.62),rgba(4,6,10,.12) 76%,
@@ -9291,7 +9299,7 @@ html[data-calme~="animations"] .tbf-dial{transform:none}
    ont leurs doubles plus haut. Aucune animation ici, donc rien à couper au
    calme que le fondu du fond. */
 .tbf-niv-fond{position:fixed;inset:0;z-index:170;display:grid;place-items:center;
-  padding:20px;background:rgba(4,6,10,.94);
+  padding:20px;background:rgba(4,6,10,.94);clip-path:inset(0 var(--tbf-cote));
   opacity:0;transition:opacity .2s ease}
 .tbf-niv-fond.on{opacity:1}
 @media (prefers-reduced-motion:reduce){
@@ -11083,6 +11091,8 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
    bâche est collée (voir plus bas). */
 .tbf-bilan{
   position:fixed;inset:0;z-index:150;box-sizing:border-box;overflow:hidden auto;overscroll-behavior:contain;
+  /* Ses rayons et son fond filmé restent dans la colonne (voir `--tbf-cote`). */
+  clip-path:inset(0 var(--tbf-cote));
   display:flex;flex-direction:column;align-items:center;gap:16px;
   padding:calc(env(safe-area-inset-top) + 20px) 14px calc(env(safe-area-inset-bottom) + 20px);
   background:radial-gradient(ellipse 90% 60% at 50% 30%,rgba(15,18,22,.9),rgba(4,6,10,.97));
