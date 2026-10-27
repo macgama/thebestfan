@@ -1909,7 +1909,7 @@ if (banc) try {
       parti = await page.evaluate(() => { window.__sonTampons.length = 0; return window.TBF_SON.jingle('legendaire'); });
     }
     const t = await page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
-    check('décodé, le jingle de la légendaire part (3,2 s)', parti && t.some((x) => x.duree > 3.1 && x.duree < 3.3), t);
+    check('décodé, le jingle de la légendaire part (4,0 s)', parti && t.some((x) => x.duree > 3.9 && x.duree < 4.1), t);
     check('les quatre jingles, une fois chacun', new Set(vus).size === 4 && vus.length === 4, vus);
     const d = await page.evaluate(async () => {
       for (let i = 0; i < 30 && !window.TBF_SON.jingle('commune'); i++) await new Promise((r) => setTimeout(r, 100));
@@ -1919,6 +1919,30 @@ if (banc) try {
     const c = await etat(page);
     check('un jingle en chasse un autre : un seul sonne encore', d && c.enCours === 1, c);
     check('aucune erreur de script (jingles)', erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+  /* 27 octobre 2026 : les bruits de l'ouverture (le paquet, chaque sorte de
+     carte) sont enregistrés ; `jingles()` les télécharge avec les jingles,
+     et la synthèse reste le repli tant qu'ils ne sont pas décodés. */
+  {
+    const { page, erreurs } = await nouvellePage();
+    const vus = [];
+    page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/booster-')) vus.push(u); });
+    await page.click('#geste');
+    await jusqua(page, (x) => x.contexte === 'running');
+    await page.evaluate(() => window.TBF_SON.jingles());
+    let t = [];
+    for (let i = 0; i < 40 && !t.length; i++) {
+      await attendre(150);
+      t = await page.evaluate(() => {
+        window.__sonTampons.length = 0;
+        window.TBF_SON.jouer('tremble');
+        return window.__sonTampons.filter((x) => !x.boucle && x.duree > 0.6 && x.duree < 0.7);
+      });
+    }
+    check('décodé, le paquet qui tremble joue sa grosse caisse enregistrée (0,65 s)', t.length === 1, t);
+    check('les huit bruits de l’ouverture, une fois chacun', new Set(vus).size === 8 && vus.length === 8, vus);
+    check('aucune erreur de script (bruits de l’ouverture)', erreurs.length === 0, ...erreurs);
     await page.close();
   }
   {
