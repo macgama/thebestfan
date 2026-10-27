@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Les sons de l'ouverture des boosters, version tribune** (branche
+`claude/project-thread-1xxwfz`, 27 octobre 2026, demandé par Gaël : les
+anciens n'étaient « pas du tout gaming » ni supporters ; validés à l'écoute).
+Construction seule, **sans schéma**.
+
+- Les quatre jingles de rareté sont refaits : fanfare de tambours et de
+  cuivres sous la clameur d'une tribune, de plus en plus fort de la commune
+  à la légendaire.
+- Le paquet qui tremble, et l'entrée de chaque sorte de carte (Fanzzy,
+  expression, tenue, équipement, stade, carte action, écharpes), ont
+  maintenant de vrais bruits de tribune (grosse caisse, « hey », drapeau,
+  rambarde, projecteurs, torche, chant).
+- Après la mise en ligne : sur le S24+, ouvrir deux ou trois boosters, son
+  allumé.
+
+---
+
 **Les Fanzzy clignent des yeux** (branche `claude/project-thread-j17xyz`,
 27 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
 des images et des réglages, aucun code du jeu.

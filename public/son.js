@@ -1541,6 +1541,7 @@
   function jouerDans(c, ch, nom, options, t, fichiers = null) {
     if (nom === 'ovation' && fichiers?.clameur) { clameur(c, ch, fichiers.clameur, t); return; }
     if (ENREGISTRES.has(nom) && fichiers?.[nom]) { enregistre(c, ch, nom, fichiers[nom], t); return; }
+    if (SONS_BOOSTER[nom] && fichiers?.[SONS_BOOSTER[nom]]) { enregistre(c, ch, nom, fichiers[SONS_BOOSTER[nom]], t); return; }
     const s = BANQUE[nom];
     const mix = c.createGain();
     mix.gain.value = MIX[nom] ?? 1;
@@ -1701,7 +1702,10 @@
     try {
       // La première carte enregistrée demandée fait charger les autres.
       if (ENREGISTRES.has(nom)) chargerCartes(c);
-      jouerDans(c, chaine, nom, options, c.currentTime, { clameur: pret(c, 'clameur'), [nom]: pret(c, nom) });
+      const booster = SONS_BOOSTER[nom];
+      if (booster) charger(c, booster);
+      jouerDans(c, chaine, nom, options, c.currentTime, { clameur: pret(c, 'clameur'), [nom]: pret(c, nom),
+        ...(booster ? { [booster]: pret(c, booster) } : {}) });
       return true;
     } catch { return false; /* le son ne doit jamais casser le jeu */ }
   }
@@ -1910,12 +1914,22 @@
     'epreuve-tifo': { opus: '/son/epreuve-tifo.8ca53160.ogg', repli: '/son/epreuve-tifo.a582ca26.mp3' },
     'epreuve-tri': { opus: '/son/epreuve-tri.85ebe480.ogg', repli: '/son/epreuve-tri.41202762.mp3' },
     'epreuve-visee': { opus: '/son/epreuve-visee.3cd53f83.ogg', repli: '/son/epreuve-visee.26d974fb.mp3' },
-    /* Les jingles de l'ouverture des boosters (Artlist, 24 octobre 2026), un
-       par rareté : voir « les jingles », plus bas. */
-    'jingle-commune': { opus: '/son/jingle-commune.ac9f24e4.ogg', repli: '/son/jingle-commune.73b33944.mp3' },
-    'jingle-rare': { opus: '/son/jingle-rare.e5fad34a.ogg', repli: '/son/jingle-rare.f644a508.mp3' },
-    'jingle-epique': { opus: '/son/jingle-epique.229d062a.ogg', repli: '/son/jingle-epique.90a177f9.mp3' },
-    'jingle-legendaire': { opus: '/son/jingle-legendaire.512a74a6.ogg', repli: '/son/jingle-legendaire.f28e2a87.mp3' },
+    /* Les jingles de l'ouverture des boosters (Artlist, refaits le 27 octobre
+       2026 en tribune), un par rareté : voir « les jingles », plus bas. */
+    'jingle-commune': { opus: '/son/jingle-commune.8d707331.ogg', repli: '/son/jingle-commune.ad394401.mp3' },
+    'jingle-rare': { opus: '/son/jingle-rare.abe1061b.ogg', repli: '/son/jingle-rare.8f395a9a.mp3' },
+    'jingle-epique': { opus: '/son/jingle-epique.3a790315.ogg', repli: '/son/jingle-epique.9747a1ef.mp3' },
+    'jingle-legendaire': { opus: '/son/jingle-legendaire.cad26933.ogg', repli: '/son/jingle-legendaire.3a4dbbfe.mp3' },
+    /* Les bruits de l'ouverture (Artlist, 27 octobre 2026) : le paquet qui
+       tremble et l'entrée de chaque sorte de carte. Voir « les jingles ». */
+    'booster-tremble': { opus: '/son/booster-tremble.c1928e7b.ogg', repli: '/son/booster-tremble.6fa1f1e9.mp3' },
+    'booster-saut': { opus: '/son/booster-saut.96364bb4.ogg', repli: '/son/booster-saut.97fb9a64.mp3' },
+    'booster-bulle': { opus: '/son/booster-bulle.eb4b005f.ogg', repli: '/son/booster-bulle.47b55d56.mp3' },
+    'booster-tissu': { opus: '/son/booster-tissu.fe3af95a.ogg', repli: '/son/booster-tissu.3de9b3cc.mp3' },
+    'booster-metal': { opus: '/son/booster-metal.f4b086de.ogg', repli: '/son/booster-metal.4259ac10.mp3' },
+    'booster-projecteur': { opus: '/son/booster-projecteur.a35d5309.ogg', repli: '/son/booster-projecteur.6df315c0.mp3' },
+    'booster-eclair': { opus: '/son/booster-eclair.e554cf5c.ogg', repli: '/son/booster-eclair.b6bcc53f.mp3' },
+    'booster-butin': { opus: '/son/booster-butin.b6c5e613.ogg', repli: '/son/booster-butin.7decdac3.mp3' },
     /* Les sons des clubs (Artlist, 25 octobre 2026), un par club de la série
        AN, par identifiant API-Football : voir « les clubs », plus bas. Une
        signature de la ville, puis la foule (40 Liverpool, la sirène d'un
@@ -2218,12 +2232,23 @@
   /* ============================================================ les jingles
 
      Quatre courtes musiques, une par rareté, jouées quand une carte se
-     retourne à l'ouverture d'un booster (24 octobre 2026). Coupées dans les
-     morceaux générés par Artlist (art/boosters/_src/, hors git) : commune
-     1,5 s, rare 2,5 s, épique 2,6 s, légendaire 3,2 s, avec un fondu de fin.
-     Nivelées hors ligne (sonie la plus forte sur 400 ms) : commune −25,7,
-     rare −20,0 — la fenêtre du jeu —, épique −17,0, légendaire −15,3 — celle
-     des moments ; crêtes sous −7,5 dBFS.
+     retourne à l'ouverture d'un booster. Refaites le 27 octobre 2026 (Gaël :
+     les premières n'étaient « pas du tout gaming » ni supporters) : une
+     fanfare de tambours et de cuivres (Lyria) sous la clameur d'une tribune
+     (vidéo Veo), avec un boum grave et un éclat synthétisés au mixage.
+     Sources dans art/boosters/_src/tribune/, hors git ; coupes et mixage :
+     commune 1,6 s, rare 2,6 s, épique 2,9 s (l'impact à 1 s), légendaire
+     4,0 s. Sonie intégrée : commune −23, rare −21, épique −19,5, légendaire
+     −17,5 LUFS ; crêtes sous −8 dBFS.
+
+     Les bruits de l'ouverture (`SONS_BOOSTER`) viennent des mêmes
+     générations : la grosse caisse d'un ultra pour le paquet qui tremble,
+     un « hey » de la tribune pour le Fanzzy, rires et sifflets pour
+     l'expression, un drapeau qui claque pour la tenue, une rambarde en
+     acier pour l'équipement, les projecteurs et leur « ooooh » pour le stade,
+     une torche pour la carte action et la charge, la tribune qui chante pour
+     les écharpes. Coupés à 0,6-1 s, nivelés entre −22 et −23,5 LUFS ; leur
+     synthèse reste le repli.
 
      **Même règle que la clameur** : un jingle a un instant, il ne joue que
      s'il est déjà décodé. Sinon `jingle()` rend faux, et la page garde le
@@ -2234,9 +2259,12 @@
   const RARETES_JINGLE = ['commune', 'rare', 'epique', 'legendaire'];
   const MIX_JINGLE = 1;
   let jingleEnCours = null;
+  const SONS_BOOSTER = Object.fromEntries(['tremble', 'saut', 'bulle', 'tissu', 'metal', 'projecteur', 'eclair', 'butin']
+    .map((n) => [n, `booster-${n}`]));
   function jingles() {
-    for (const r of RARETES_JINGLE) telecharger(`jingle-${r}`);
-    if (ctx && ctx.state !== 'closed') for (const r of RARETES_JINGLE) charger(ctx, `jingle-${r}`);
+    const noms = [...RARETES_JINGLE.map((r) => `jingle-${r}`), ...Object.values(SONS_BOOSTER)];
+    for (const n of noms) telecharger(n);
+    if (ctx && ctx.state !== 'closed') for (const n of noms) charger(ctx, n);
   }
   /** Joue le jingle de cette rareté s'il est prêt : vrai s'il est parti. */
   function jingle(rarete) {
