@@ -3864,6 +3864,28 @@ check('aucune erreur de script pendant ces contrôles du hub', erreurs.length ==
   check('et la plaque suit', /1 \/ 3/.test(v.plaque)
     || (console.log('        elle dit :', v.plaque), false));
 
+  /* **Le nom ouvre la fiche du Fanzzy montré**, à l'âge montré : la demande
+     de Gaël du 27 octobre 2026. Le lien suit les flèches — il menait au
+     troisième âge, il mène maintenant au premier. */
+  const lien = () => page.evaluate(() => {
+    const a = document.getElementById('quiNom');
+    const r = a?.getBoundingClientRect();
+    const el = r ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+    return { href: a?.getAttribute('href') ?? '', touche: Boolean(el && a.contains(el)) };
+  });
+  const l1 = await lien();
+  check('le nom mène à la fiche de l’âge montré', l1.href === '/fanzzy/TR32'
+    || (console.log('        il mène à :', l1.href), false));
+  check('et il se touche : rien ne lui prend le doigt', l1.touche);
+  await page.click('#ageApres');
+  await new Promise((r) => setTimeout(r, 350));
+  const l2 = await lien();
+  check('et il suit les flèches', l2.href === '/fanzzy/TR32B'
+    || (console.log('        il mène à :', l2.href), false));
+  await page.click('#ageAvant');
+  await new Promise((r) => setTimeout(r, 350));
+  v = await lire();
+
   /* **Rien n'a été écrit.** C'est la moitié qui compte : le défilé regarde. */
   const avantChoix = (await pool.query(
     'SELECT active_evo e FROM user_wallet WHERE user_id = ?', [U]))[0][0].e;
