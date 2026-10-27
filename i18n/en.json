@@ -6492,5 +6492,17 @@
  "LANCÉ": "USED",
  "Ta tribune vient de lancer cette carte, elle se recharge pour tous": "Your stand just played this card, it's recharging for everyone",
  "Filet tendu": "Net up",
- "Pendant 12 s, les entraves d’en face ne te touchent pas.": "For 12 s, the other side's hindrances can't touch you."
+ "Pendant 12 s, les entraves d’en face ne te touchent pas.": "For 12 s, the other side's hindrances can't touch you.",
+ "Tout le monde a l’Ultimate. Sa carte, dans un booster, débloque la grande scène de chaque âge atteint.": "Everyone has the Ultimate. Its card, found in a booster, unlocks the big scene of each age you’ve reached.",
+ "{0}, {1}, âge {2}": "{0}, {1}, age {2}",
+ "Ouvre un booster : chaque Fanzzy que tu obtiens a son Ultimate à collectionner.": "Open a booster: every Fanzzy you get has its Ultimate to collect.",
+ "VOIR LA GRANDE SCÈNE": "WATCH THE BIG SCENE",
+ "VOIR L’ULTIMATE": "WATCH THE ULTIMATE",
+ "carte gagnée, voir la grande scène": "card won, watch the big scene",
+ "voir la scène, sa carte est dans les boosters": "watch the scene, its card is in boosters",
+ "Ultimate : {0} — carte gagnée, voir la grande scène": "Ultimate: {0} — card won, watch the big scene",
+ "Ultimate : {0} — voir la scène, sa carte est dans les boosters": "Ultimate: {0} — watch the scene, its card is in boosters",
+ "TA CARTE": "YOUR CARD",
+ "{0}TA CARTE": "{0}YOUR CARD",
+ "{0}BOOSTER": "{0}BOOSTER"
 }

@@ -124,16 +124,20 @@ const biblio = (() => {
       items: persos.map((f) => ({ id: f.id, nom: f.nom, rar: f.rar, possede: MIENS.has(f.id) })) },
     etats: { gagnes: 3, possibles: 0 },
     tenues: { gagnes: 2, possibles: 0 },
+    // Une carte Ultimate gagnée : le premier âge du personnage de la suite.
+    ultimes: { gagnes: 1, possibles: 0 },
   };
   const parFanzzy = [];
   for (const f of persos) {
     const ages = agesDe(f.id);
     T.etats.possibles += ages * ETATS_DESSINES.length;
     T.tenues.possibles += ages * tenuesGagnables.length;
+    T.ultimes.possibles += ages;
     if (!MIENS.has(f.id)) continue;
     parFanzzy.push({ id: f.id, nom: f.nom, stade: 1, ages,
       etats: { gagnes: 1, possibles: ages * ETATS_DESSINES.length },
-      tenues: { gagnes: 1, possibles: ages * tenuesGagnables.length } });
+      tenues: { gagnes: 1, possibles: ages * tenuesGagnables.length },
+      ultimes: f.id === MIEN.id ? [1] : [] });
   }
   T.stuff = { possibles: STUFF.length, gagnes: 2,
     items: STUFF.map((s, i) => ({ id: s.id, nom: s.nom, rar: s.rar, possede: i < 2 })) };
@@ -160,8 +164,8 @@ const biblio = (() => {
      dû avec une collection à mi-chemin — RÉCUPÉRER ne s'éprouve qu'ainsi. */
   const gain = (echarpes, packs) => ({ echarpes, packs, xp: 0, tampons: 0 });
   const cran = 10;
-  const gagnes = total.gagnes - T.tenues.gagnes;
-  const possibles = total.possibles - T.tenues.possibles;
+  const gagnes = total.gagnes - T.tenues.gagnes - T.ultimes.gagnes;
+  const possibles = total.possibles - T.tenues.possibles - T.ultimes.possibles;
   const franchi = Math.floor(gagnes / cran) * cran;
   const paliers = {
     cran, gagnes, possibles,
@@ -440,16 +444,16 @@ async function revenirAccueil() {
 /* ======================================================= 1. l'accueil */
 
 console.log('\n  l’accueil : le collectionneur et ses rayons');
-await jusqua(() => D.querySelectorAll('.tbf-rayon[data-vue]').length >= 6);
+await jusqua(() => D.querySelectorAll('.tbf-rayon[data-vue]').length >= 7);
 /* La clé de la sous-vue, et celle du type dans la bibliothèque : elles ne
    s'écrivent pas pareil pour l'équipement. */
 const RAYONS = { fanzzy: 'fanzzy', etats: 'etats', tenues: 'tenues', equipement: 'stuff', actions: 'actions',
-  lieux: 'lieux' };
+  lieux: 'lieux', ultimes: 'ultimes' };
 {
   const rayons = [...D.querySelectorAll('#accueil .tbf-rayon[data-vue]')];
-  check('les six rayons sont rangés, dans l’ordre',
+  check('les sept rayons sont rangés, dans l’ordre',
     JSON.stringify(rayons.map((r) => r.dataset.vue)) === JSON.stringify(Object.keys(RAYONS)));
-  check('chacun est un bouton', rayons.length === 6 && rayons.every((r) => r.tagName === 'BUTTON'));
+  check('chacun est un bouton', rayons.length === 7 && rayons.every((r) => r.tagName === 'BUTTON'));
   const comptes = Object.entries(RAYONS).map(([vue, type]) => {
     const r = rayons.find((x) => x.dataset.vue === vue);
     const t = biblio.types[type];
@@ -990,6 +994,35 @@ await ouvrirRayon('lieux');
   await jusqua(vitrineOuverte);
   check('un stade qui manque mène au kiosque, sans décor à poser',
     Boolean(D.querySelector('#vitr a[href="/boosters"]')) && !D.querySelector('#vitr [data-lieu-accueil]'));
+  await fermerVitrine();
+}
+
+/* ======================================================= 9 ter. l'Ultimate */
+
+console.log('\n  l’Ultimate');
+await revenirAccueil();
+await ouvrirRayon('ultimes');
+{
+  const cases = [...D.querySelectorAll('#vue [data-liste="ultimes"][data-i]')];
+  /* Un âge atteint par Fanzzy possédé : tous sont au premier âge. */
+  check(`chaque Fanzzy à soi a sa carte Ultimate, âge par âge (${cases.length})`, cases.length === MIENS.size);
+  const pleines = cases.filter((c) => !c.querySelector('.fz-verrou'));
+  check('la carte gagnée est pleine, en tête ; les autres sous leur cadenas',
+    pleines.length === 1 && cases[0] === pleines[0]);
+  check('l’en-tête chiffre le compte de la bibliothèque',
+    /1\s*\/\s*\d+/.test(D.querySelector('#vue .tbf-album-compte')?.textContent ?? '')
+    && D.querySelector('#vue .tbf-album-compte')?.textContent.includes(String(biblio.types.ultimes.possibles)));
+  clic(pleines[0]);
+  await jusqua(vitrineOuverte);
+  check('elle s’ouvre en vitrine, dans la collection, avec sa grande scène',
+    /DANS TA COLLECTION/.test(vitrine()) && /VOIR LA GRANDE SCÈNE/.test(vitrine()));
+  check('et mène à la fiche du Fanzzy',
+    Boolean(D.querySelector(`#vitr a[href="/fanzzy/${encodeURIComponent(MIEN.id)}"]`)));
+  await fermerVitrine();
+  clic(cases[1]);
+  await jusqua(vitrineOuverte);
+  check('une carte à gagner mène au kiosque, et montre la scène de tous',
+    Boolean(D.querySelector('#vitr a[href="/boosters"]')) && /VOIR L’ULTIMATE/.test(vitrine()));
   await fermerVitrine();
 }
 
