@@ -292,12 +292,14 @@ export const ACTIONS = [
     effet: { type: 'shield', valeur: 70 } },
 
   { id: 'a-rp-filet', nom: 'Filet de chantier', fam: 'garde', rar: 'epique', cost: 30, cd: 32,
-    texte: 'Pendant 12 s, tu deviens très difficile à contrer.',
-    /* Une garde qui n'absorbe rien : elle rend le joueur mauvais à prendre.
-       C'est la seule carte de la famille qui protège **les gestes** plutôt que
-       la corde, et elle ne sert à rien contre un adversaire qui pousse au chant
-       plutôt qu'au contre. */
-    effet: { type: 'mod_self', mods: { parryResist: 1.8 }, duree: 12000 } },
+    texte: 'Pendant 12 s, les entraves d’en face ne te touchent pas.',
+    /* Une garde qui n'absorbe rien : elle protège **les gestes** plutôt que la
+       corde. Elle portait `parryResist: 1.8`, une clé qu'aucun moteur ne
+       lisait, et ne faisait donc rien ; depuis le 27 octobre 2026, les
+       entraves (silence, brouillard, parcage, vent, rouille, hors-jeu) ne
+       prennent pas sur toi pendant sa durée. Duel seulement : au Virage,
+       personne ne t'entrave. */
+    effet: { type: 'immunite', duree: 12000 } },
 
   /* ---------------------------------------------------------- collectif */
   { id: 'a-rp-presentation', nom: 'Présentation de l’effectif', fam: 'collectif', rar: 'rare', cost: 24, cd: 26,
@@ -357,6 +359,10 @@ const PORTEE = {
   /* Le tifo pousse, comme une carte de poussée : il la retarde, il ne la fait
      pas traverser. Il entre donc au Virage. */
   delayed_push: 'soi',
+
+  /* Le Filet de chantier : il agit sur soi, mais ne protège que des
+     entraves, et le Virage n'en a pas. Voir `SANS_OBJET_AU_VIRAGE`. */
+  immunite: 'soi',
 
   silence: 'adverse',
   blind: 'adverse',
@@ -425,7 +431,9 @@ const PORTEE = {
  * Le filtre est ici, à côté de la portée, parce que c'est le même geste :
  * décider une fois, sur la **sorte d'effet**, ce qui entre au Virage.
  */
-const SANS_OBJET_AU_VIRAGE = new Set(['swap_fanzzy', 'evolve']);
+/* `immunite` aussi : le Filet de chantier ne protège que des entraves, et
+   personne n'entrave au Virage. */
+const SANS_OBJET_AU_VIRAGE = new Set(['swap_fanzzy', 'evolve', 'immunite']);
 
 export function dansLeVirage(a) {
   if (!a?.effet) return false;

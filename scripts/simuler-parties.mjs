@@ -59,6 +59,7 @@ const { ultimePret } = await import('../src/shared/ultime.js');
 const { verdictDe } = await import('../src/shared/verdict.js');
 const MJ = await import('../src/shared/mini-jeux.js');
 const { reglage } = await import('../src/shared/reglages.js');
+const { frappesDuBot, chantDuBot, adresseDuBot } = await import('../src/server/nvn/bot.js');
 
 /* ---------------------------------------------------------- profils */
 
@@ -386,14 +387,17 @@ function duel(camps, { id = 'd', butsReels = 0 } = {}) {
       d.regen(j, T);
       try {
         if (x.bot) {
-          // Le bot du jeu, tel qu'il est écrit : tempo pour tout.
+          // Le bot du jeu, avec son code (`nvn/bot.js`) et son rythme (`horloge`).
           x.pret = T + 6000 + hasard() * 5000;
-          const tempo = () => Array.from({ length: 8 }, (_, i) =>
-            i * 560 + (hasard() * 2 - 1) * 260 * (1 - 0.42));
-          if (ultimePret(j.ultime) && hasard() < 0.5) { d.ultimer(x.id, { taps: tempo() }, T); ultimes++; continue; }
+          x.adresse ??= adresseDuBot();
+          const tape = (g) => frappesDuBot(g, x.adresse, j.fanzzy[j.actif]?.mods ?? {}, j.motif);
+          if (ultimePret(j.ultime) && hasard() < 0.5) {
+            d.ultimer(x.id, { taps: tape(j.fanzzy[j.actif]?.cri?.gest ?? 'tempo') }, T); ultimes++; continue;
+          }
           const c = pioche(j.main);
           if (c && hasard() < 0.35) { d.jouer(x.id, c, T); cartes++; continue; }
-          d.chanter(x.id, { cardId: pioche(d.offreDe(j)), taps: tempo() }, T);
+          const chant = chantDuBot(d.offreDe(j));
+          d.chanter(x.id, { cardId: chant, taps: tape(CHANTS[chant].gest) }, T);
           continue;
         }
         let attente = 800;
@@ -583,11 +587,14 @@ function deplacement() {
 
 function tifo() {
   const casesJour = reglage('jeux.tifo_cases_jour');
-  const seuil = reglage('jeux.tifo_seuil') / 100;
+  const part = reglage('jeux.tifo_seuil') / 100;
   const motif = MJ.motifDuTifo(MJ.lettresDuClub('FCB', 'Barcelona'));
   const cases = MJ.TIFO.COLONNES * MJ.TIFO.RANGS;
-  ligne(`  Tifo : ${cases} cases, ${casesJour} par supporter et par jour, réussi à ${seuil * 100} %.`);
+  ligne(`  Tifo : ${cases} cases, ${casesJour} par supporter et par jour, réussi à ${part * 100} %`
+    + ' de ce que la tribune peut peindre en une semaine.');
   for (const peintres of [1, 2, 3, 5, 10, 20]) {
+    // Comme seuilDuTifo (src/server/jeux/index.js), en part des 240 cases.
+    const seuil = Math.ceil(part * 100 * Math.min(cases, peintres * casesJour * 7) / cases) / 100;
     // Ils peignent chaque jour de la semaine, juste à 95 %.
     let jours = null;
     const grille = new Array(cases).fill(null);
@@ -680,15 +687,13 @@ if (tout || quoi.has('duels')) {
     serieDeDuels(60, () => [['debutant'], ['bot']]), 'le débutant', 'le bot');
   resumeDuels('3v3, moyens contre bots d’entraînement',
     serieDeDuels(40, () => [de('moyen', 3), de('bot', 3)]), 'les moyens', 'les bots');
-  /* Ce que le bot du jeu obtient, chant par chant : huit frappes de tempo
-     pour tout, ce que `horloge` envoie. */
-  ligne('\n▶ Le bot d’entraînement, chant par chant (huit frappes de tempo pour tout)');
-  const tempo = () => Array.from({ length: 8 }, (_, i) => i * 560 + (hasard() * 2 - 1) * 260 * (1 - 0.42));
+  /* Ce que le bot du jeu obtient, chant par chant, à adresse moyenne. */
+  ligne('\n▶ Le bot d’entraînement, chant par chant (adresse 0,42)');
   const parGeste = [];
   for (const [id, c] of Object.entries(CHANTS)) {
     let q = 0; let err = null;
     for (let i = 0; i < 40; i++) {
-      try { q += G.grade(c.gest, tempo(), {}, { motif: 0 }); } catch (e) { err = e.message; }
+      try { q += G.grade(c.gest, frappesDuBot(c.gest, 0.42), {}, { motif: 0 }); } catch (e) { err = e.message; }
     }
     parGeste.push(`${id} ${err ? `refusé (${err})` : arr(q / 40, 2)}`);
   }

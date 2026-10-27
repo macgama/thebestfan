@@ -961,8 +961,9 @@ export const REGLAGES = [
 
   { cle: 'jeux.tifo_seuil', section: 'minijeux', type: 'entier',
     titre: 'Tifo réussi à partir de', unite: '%', min: 1, max: 100, defaut: 60,
-    aide: 'La part des cases à la bonne couleur au coup d’envoi. En dessous, le tifo se lève ' +
-      'quand même, sans récompense.' },
+    aide: 'La part des cases à la bonne couleur au coup d’envoi, comptée sur ce que les ' +
+      'supporters du club peuvent peindre en sept jours (au plus les 240 cases). En dessous, ' +
+      'le tifo se lève quand même, sans récompense.' },
 
   { cle: 'jeux.tifo_gain', section: 'minijeux', type: 'entier',
     titre: 'Un tifo réussi rapporte', unite: 'écharpes', min: 0, max: 500, defaut: 15,
@@ -974,8 +975,9 @@ export const REGLAGES = [
       'au moins le minimum ci-dessous. Compte : les supporters qui suivent ce club.' },
 
   { cle: 'jeux.boss_voix_min', section: 'minijeux', type: 'entier',
-    titre: 'La voix du boss, au moins', unite: 'chants', min: 1, max: 100000, defaut: 40,
-    aide: 'Pour qu’un club de deux supporters ait aussi un vrai boss.' },
+    titre: 'La voix du boss, au moins', unite: 'chants', min: 1, max: 100000, defaut: 8,
+    aide: 'Le boss d’un club d’un seul supporter. Il était de 40 : un supporter seul devait ' +
+      'en faire cinq fois plus qu’un supporter d’un grand club (choix de Gaël, 27 octobre 2026).' },
 
   { cle: 'jeux.boss_gain', section: 'minijeux', type: 'entier',
     titre: 'Faire taire le boss rapporte', unite: 'écharpes', min: 0, max: 500, defaut: 20,

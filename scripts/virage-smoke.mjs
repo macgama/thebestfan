@@ -1380,8 +1380,11 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
        Elles étaient acceptées et traitées en « sans objet » : la carte
        partait de la main, coûtait son souffle, et ne faisait rien. Un deck
        de Virage pouvait porter deux cartes mortes sur dix sans que rien ne
-       le signale. Voir `SANS_OBJET_AU_VIRAGE` dans `shared/duel/actions.js`. */
-    'a-arbitre', 'a-releve'];
+       le signale. Voir `SANS_OBJET_AU_VIRAGE` dans `shared/duel/actions.js`.
+
+       Le Filet de chantier les a rejointes le 27 octobre 2026 : il protège
+       des entraves d'en face, et personne n'entrave au Virage. */
+    'a-arbitre', 'a-releve', 'a-rp-filet'];
 
   /* **Toute carte jouable ici a un effet que le moteur sait rendre.**
 

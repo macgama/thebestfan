@@ -547,13 +547,34 @@ export function createJeux({ pool, requireAuth }) {
     domicile: Number(f.home_id) === teamId,
   });
 
+  /**
+   * **Le seuil du tifo, à la taille du club**, en pour cent des 240 cases.
+   *
+   * Il était fixe : 60 % des 240 cases, soit 144 cases justes, quand un
+   * supporter n'en peint que quinze par jour. Un club d'un supporter ne
+   * levait jamais son tifo, un club de deux à peine en six jours
+   * (`npm run simuler -- jeux`). Le seuil porte désormais sur ce que la
+   * tribune **peut** peindre en une semaine — ses supporters × les cases du
+   * jour × sept —, plafonné aux 240 cases (choix de Gaël, 27 octobre 2026).
+   * Dès trois supporters, rien ne change.
+   */
+  async function seuilDuTifo(teamId) {
+    const [r] = await q(
+      `SELECT COUNT(*) AS n FROM user_follows f JOIN users u ON u.public_id = f.user_id
+        WHERE f.team_id = ? AND u.status = 'active'`, [teamId]);
+    const possible = Math.min(NOMBRE_CASES,
+      Math.max(1, Number(r?.n ?? 0)) * reglage('jeux.tifo_cases_jour') * 7);
+    return Math.ceil(reglage('jeux.tifo_seuil') * possible / NOMBRE_CASES);
+  }
+
   async function etatTifo(userId) {
     const club = await clubDe(userId);
     if (!club) return { club: null };
     const motif = motifDuTifo(club.lettres);
-    const [prochain, leve] = await Promise.all([matchAPeindre(club.id), matchLeve(club.id)]);
+    const [prochain, leve, seuil] = await Promise.all([matchAPeindre(club.id), matchLeve(club.id),
+      seuilDuTifo(club.id)]);
     const r = { club, motif, casesJour: reglage('jeux.tifo_cases_jour'),
-      mesCasesAujourdhui: await casesDuJour(userId), seuil: reglage('jeux.tifo_seuil'),
+      mesCasesAujourdhui: await casesDuJour(userId), seuil,
       gain: reglage('jeux.tifo_gain'), prochain: null, leve: null };
     if (prochain) {
       const t = await casesDuTifo(club.id, prochain.id);
@@ -563,7 +584,7 @@ export function createJeux({ pool, requireAuth }) {
     if (leve) {
       const t = await casesDuTifo(club.id, leve.id);
       const fidelite = fideliteDuTifo(motif, t.cases);
-      const reussi = t.peintres > 0 && fidelite * 100 >= reglage('jeux.tifo_seuil');
+      const reussi = t.peintres > 0 && fidelite * 100 >= seuil;
       let verse = 0;
       if (reussi) {
         const [moi] = await q(

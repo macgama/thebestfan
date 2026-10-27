@@ -8,6 +8,7 @@ import { CHANTS, ORDRE, puissanceDuChant } from '../../shared/duel/chants.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 import { seuilLegende, chantReussi } from '../../shared/legende.js';
+import { estParfait } from '../../shared/verdict.js';
 // L'Ultimate, le coup fatal du Fanzzy en tribune : la règle est commune au Virage.
 import { nouvelleJauge, chargerJauge, ultimePret, pousseeUltime, vueJauge }
   from '../../shared/ultime.js';
@@ -195,6 +196,40 @@ const modsDe = (j, t, stade = null) =>
 export function modsPortes(j) {
   const f = j.fanzzy[j.actif];
   return (!j.legende?.eveillee && f?.modsBanc) ? f.modsBanc : f?.mods;
+}
+
+/* Un facteur de Fanzzy borné : une fiche à 3,25 ne doit pas tripler une
+   entrave, ni une à 0,72 l'effacer. */
+const borne = (v, min = 0.5, max = 2) => Math.min(max, Math.max(min, Number(v) || 1));
+
+/**
+ * **La durée d'une entrave, contre et résistance comptés.**
+ *
+ * `parryBonus` (« Contre ») et `parryResist` (« Résistance au contre ») étaient
+ * portés par des centaines de Fanzzy et lus par aucun moteur (`ECARTS.md`,
+ * 6 octobre 2026). Ils agissent désormais sur les entraves du duel (choix de
+ * Gaël, 27 octobre 2026) : le contre de celui qui pose l'entrave l'allonge, la
+ * résistance de celui qui la subit la raccourcit.
+ */
+export function dureeDEntrave(duree, mPose = {}, mSubit = {}) {
+  return Math.round(duree * borne(mPose.parryBonus) / borne(mSubit.parryResist));
+}
+
+/**
+ * **Le prix et la reprise d'un chant**, au Fanzzy en tribune.
+ *
+ * `costPenalty` (« Prix des chants ») et `refundBonus` (« Reprise ») n'étaient
+ * lus nulle part non plus. Le prix monte du facteur de la fiche — sans faire
+ * descendre le souffle sous zéro, et sans changer ce que la page annonce :
+ * le chant se lance au prix affiché, la différence est prélevée ensuite. La
+ * reprise rend, sur un chant PARFAIT, une part du prix (au plus 60 %).
+ * Le Virage lit les mêmes règles.
+ */
+export function prixDuChant(cout, mods = {}) {
+  return cout * Math.min(1.5, Math.max(1, Number(mods.costPenalty) || 1));
+}
+export function repriseDuChant(cout, mods = {}) {
+  return cout * Math.min(0.6, Math.max(0, (Number(mods.refundBonus) || 1) - 1));
 }
 
 /**
@@ -577,7 +612,7 @@ export class DuelNvN {
     if (plancher && q < plancher.valeur) { q = plancher.valeur; plancher.charges--; }
 
     const { quality, backfire } = applyHeroMods(q, m);
-    j.breath -= card.cost;
+    j.breath = Math.max(0, j.breath - prixDuChant(card.cost, m));
     j.dernierChant = t;
     /* Ce qu'on racontera après : quels chants ce joueur a aimés. Même compteur
        que les cartes d'action, et il nourrit le même écran de fin. */
@@ -611,6 +646,8 @@ export class DuelNvN {
     /* La jauge de l'Ultimate, sur la même note : un BON vaut un point, un
        PARFAIT deux. Le chant qui la remplit l'annonce, aux deux tribunes —
        celle d'en face doit savoir que le coup arrive. */
+    // La reprise : un chant parfait rend une part de son souffle.
+    if (estParfait(q)) j.breath = Math.min(RULES.breathMax, j.breath + repriseDuChant(card.cost, m));
     if (chargerJauge(j.ultime, q)) {
       evenements.push(this.ev('ultime_pret', { userId, side: j.side }));
     }
@@ -794,10 +831,17 @@ export class DuelNvN {
       }
       case 'silence':
       case 'blind':
-      case 'lock_actions':
-        for (const a of adverses) poserEffet(a, { type: e.type, fin: t + e.duree });
+      case 'lock_actions': {
+        /* Le Filet de chantier protège ; le contre et la résistance règlent
+           la durée. Voir `dureeDEntrave`. */
+        const mPose = modsDe(j, t, this.stade);
+        for (const a of adverses) {
+          if (aEffet(a, 'immunite', t)) continue;
+          poserEffet(a, { type: e.type, fin: t + dureeDEntrave(e.duree, mPose, modsDe(a, t, this.stade)) });
+        }
         evenements.push(this.ev('effect', { cible: 'adverse', type: e.type, duree: e.duree }));
         break;
+      }
 
       case 'steal': {
         let total = 0;
@@ -826,13 +870,28 @@ export class DuelNvN {
         evenements.push(this.ev('effect', { type: 'mod_self', userId: j.userId, mods: e.mods }));
         break;
 
-      case 'mod_foe':
-        for (const a of adverses) poserEffet(a, { type: 'mod_foe', mods: e.mods, fin: t + e.duree });
+      case 'mod_foe': {
+        const mPose = modsDe(j, t, this.stade);
+        for (const a of adverses) {
+          if (aEffet(a, 'immunite', t)) continue;
+          poserEffet(a, { type: 'mod_foe', mods: e.mods,
+            fin: t + dureeDEntrave(e.duree, mPose, modsDe(a, t, this.stade)) });
+        }
         evenements.push(this.ev('effect', { type: 'mod_foe', mods: e.mods }));
         break;
+      }
 
       case 'floor_quality':
         poserEffet(j, { type: 'floor_quality', valeur: e.valeur, charges: e.charges });
+        break;
+
+      /* **Le Filet de chantier** : pendant sa durée, les entraves d'en face
+         (silence, brouillard, parcage, vent, rouille, hors-jeu) ne prennent
+         pas. Il portait `parryResist`, une clé qu'aucun moteur ne lisait : il
+         coûtait trente de souffle et ne faisait rien (27 octobre 2026). */
+      case 'immunite':
+        poserEffet(j, { type: 'immunite', fin: t + e.duree });
+        evenements.push(this.ev('effect', { type: 'immunite', userId: j.userId, duree: e.duree }));
         break;
 
       case 'shield':
