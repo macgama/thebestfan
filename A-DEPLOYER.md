@@ -17,6 +17,29 @@ Construction seule, **sans schéma**.
 
 ---
 
+**Les Fanzzy clignent des yeux** (branche `claude/project-thread-j17xyz`,
+27 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
+des images et des réglages, aucun code du jeu.
+
+- 32 Fanzzy RP et AN de plus clignent au premier âge, et 44 âges 2 ou 3 des
+  RP clignent aussi (yeux fermés pris dans les planches, sans crédits).
+- Après la mise en ligne : regarder quelques secondes un Fanzzy RP à l'âge 2
+  ou 3 sur l'accueil, il doit cligner.
+
+---
+
+**Les animations restent dans la largeur du téléphone sur ordinateur**
+(branche `claude/project-thread-9p4wm0`, 27 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Ouverture des boosters, fonds filmés (but, évolution, fin de duel, carton),
+  Ultimate, écharpe du club, ondes et éclats, bilan, fête de niveau, vestiaire
+  et affiche du duel : tout se joue dans la colonne de 480 px, et les fonds
+  filmés prennent la largeur de la colonne au lieu d'être étirés et flous.
+  Sur téléphone, rien ne change.
+
+---
+
 **Le numéro de version monte à chaque mise en ligne** (branche
 `claude/project-thread-wy11c4`, 27 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.
