@@ -23,7 +23,8 @@ import { createFanzzy } from './src/server/fanzzy/index.js';
 import { charger as chargerCatalogue, ecartsCatalogue }
   from './src/server/fanzzy/catalogue.js';
 import { chargerReglages, reglagesPublics } from './src/server/reglages/index.js';
-import { VERSION_PUBLIQUE } from './src/shared/version.js';
+import { poserLivraisons, numero, versionPublique } from './src/shared/version.js';
+import { compterLivraison } from './src/server/livraisons.js';
 import { empreinte, estampiller, releverEmpreintes } from './src/server/empreintes.js';
 import { empreinteDuJeu, commitDuDepot } from './src/server/construction.js';
 import { reglage } from './src/shared/reglages.js';
@@ -257,6 +258,16 @@ if (process.env.DATABASE_URL) {
 
     const reg = await chargerReglages(pool);
     console.log(`réglages : ${Object.keys(reg).length} clés effectives`);
+
+    /* Le numéro du menu monte d'un cran à chaque mise en ligne : un commit
+       qu'on n'avait pas encore vu démarrer en est une. Une panne ici ne doit
+       rien arrêter : le menu dirait le numéro de base, et c'est tout. */
+    try {
+      poserLivraisons(await compterLivraison(pool, VERSION ?? CONSTRUCTION));
+      console.log(`version : ${numero()}`);
+    } catch (e) {
+      console.error('version : compte des livraisons illisible', e?.message ?? e);
+    }
 
     // Le catalogue Fanzzy vient de la base et se lit en mémoire. Il doit être
     // chargé avant tout module qui s'en sert — collection, deck, inscription —
@@ -1058,7 +1069,7 @@ app.get('/api/version', (_req, res) => {
   res.set('cache-control', 'no-store');
   /* `construction` : ce que `pwa.js` compare à la page ouverte. Douze
      caractères de hachage, qui ne disent rien du serveur à qui les lit. */
-  res.json({ ...VERSION_PUBLIQUE, construction: CONSTRUCTION });
+  res.json({ ...versionPublique(), construction: CONSTRUCTION });
 });
 
 /**

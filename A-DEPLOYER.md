@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Le numéro de version monte à chaque mise en ligne** (branche
+`claude/project-thread-wy11c4`, 27 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Le bas du menu disait toujours « version bêta — 0.0200 ». Désormais le
+  serveur compte ses mises en ligne au démarrage (un commit qu'il n'avait pas
+  encore vu = +1) : la prochaine mise en ligne affiche 0.0201, la suivante
+  0.0202, etc. Un simple redémarrage ne change rien. Le compte est gardé dans
+  la table `reglages` (clé `version.livraisons`), que la remise à zéro garde.
+- Après la mise en ligne : ouvrir le menu, le bas doit dire 0.0201.
+
+---
+
 **La musique du jeu** (branche `claude/project-thread-qfzgoq`, 27 octobre
 2026, demandée par Gaël : « The Final Turn », sa création). Construction
 seule, **sans schéma**.
