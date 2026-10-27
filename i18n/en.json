@@ -6505,5 +6505,7 @@
  "TA CARTE": "YOUR CARD",
  "{0}TA CARTE": "{0}YOUR CARD",
  "{0}BOOSTER": "{0}BOOSTER",
+ "sa carte est dans les boosters": "its card is in boosters",
+ "Ultimate : {0} — sa carte est dans les boosters": "Ultimate: {0} — its card is in boosters",
  "Couper la musique": "Mute music"
 }
