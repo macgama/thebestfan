@@ -90,8 +90,18 @@ const PROMPT = 'Close his eyes: both upper eyelids fully lowered, as in the midd
  * pixels sur douze tolérés par le recalage pour RP1 recadré sur sa seule
  * tenue de base. Elle reste donc attachée à la tête, et ce qui dépasse est
  * vide (voir `decouper`).
+ *
+ * **Elle peut se régler**, quand le haut du personnage n'est pas sa tête :
+ * le bonnet d'une théière, le toit d'un chariot, une torche levée. La boîte
+ * calée sur le plus haut pixel prend alors le décor et laisse les yeux sous
+ * son bord bas. `reglage` la déplace et la resserre, en fractions de son
+ * côté : `{ y: 0.45 }` la descend de près de la moitié, `{ taille: 0.6 }`
+ * la resserre autour de son centre (des petits yeux en sortent plus grands).
+ * Relatif à la boîte calculée, il suit le personnage quand le repos est
+ * recadré. Il est gardé à côté de la retouche (voir `reglageDeLaBoite`), et
+ * peut aussi y nommer les yeux (voir `poserLesPaupieres`).
  */
-export async function boiteDeLaTete(repos) {
+export async function boiteDeLaTete(repos, reglage = null) {
   const { data, info } = await sharp(repos).ensureAlpha().raw()
     .toBuffer({ resolveWithObject: true });
   const { width: l, height: h } = info;
@@ -110,10 +120,15 @@ export async function boiteDeLaTete(repos) {
   }
   const cote = Math.min(l, Math.round(haut * 0.38));
   const cx = n ? somme / n : l / 2;
-  return {
+  const boite = {
     left: Math.round(cx - cote / 2), top: y0 - Math.round(cote * 0.19),
     width: cote, height: cote,
   };
+  if (!reglage) return boite;
+  const regle = Math.max(16, Math.round(cote * (reglage.taille ?? 1)));
+  const mx = boite.left + cote / 2 + (reglage.x ?? 0) * cote;
+  const my = boite.top + cote / 2 + (reglage.y ?? 0) * cote;
+  return { left: Math.round(mx - regle / 2), top: Math.round(my - regle / 2), width: regle, height: regle };
 }
 
 /** La tête découpée, transparente là où la boîte déborde de l'image. */
@@ -131,12 +146,31 @@ async function decouper(repos, boite) {
 export const dossierDesRetouches = (id) => path.join(RACINE, 'art', id, 'cligne');
 export const nomDeRetouche = (id, age, tenue) => `${id}-e${age}-${tenue}-retouche`;
 
+/** Le réglage d'une tenue d'un âge (boîte, yeux), ou `null`. */
+const fichierDeReglage = (id, age, tenue) =>
+  path.join(dossierDesRetouches(id), `${nomDeRetouche(id, age, tenue)}.reglage.json`);
+export async function reglageDeLaBoite(id, age, tenue) {
+  try {
+    return JSON.parse(await readFile(fichierDeReglage(id, age, tenue), 'utf8'));
+  } catch (e) {
+    if (e.code === 'ENOENT') return null;
+    throw e;
+  }
+}
+
 /* ------------------------------------------------------------------ tete */
 
-async function tete({ id, age, tenue }) {
+async function tete({ id, age, tenue, reglage }) {
   const repos = path.join(PUBLIC, id, `e${age}`, tenue, 'neutre.png');
   const src = path.join(RACINE, 'art', id, '_src');
-  const boite = await boiteDeLaTete(repos);
+  if (reglage) {
+    await mkdir(dossierDesRetouches(id), { recursive: true });
+    const avant = await reglageDeLaBoite(id, age, tenue);
+    await writeFile(fichierDeReglage(id, age, tenue), `${JSON.stringify(reglage)}\n`);
+    if (avant?.yeux) console.log('La boîte a changé : les yeux nommés dans le réglage sont oubliés.');
+  }
+  reglage ??= await reglageDeLaBoite(id, age, tenue);
+  const boite = await boiteDeLaTete(repos, reglage);
   await mkdir(src, { recursive: true });
   const sortie = path.join(src, `${id}-e${age}-${tenue}-tete.png`);
   await (await decouper(repos, boite)).flatten({ background: FOND })
@@ -277,8 +311,8 @@ const dans = (e, x, y) => ((x - e.cx) / e.rx) ** 2 + ((y - e.cy) / e.ry) ** 2;
  * @returns {{touches:number, l:number, h:number, recalage:object, yeux:object[],
  *   complet:Buffer}} `complet` est le repos les yeux fermés, en RGBA brut.
  */
-export async function poserLesPaupieres({ repos, retouche }) {
-  const boite = await boiteDeLaTete(repos);
+export async function poserLesPaupieres({ repos, retouche, reglage = null }) {
+  const boite = await boiteDeLaTete(repos, reglage);
   const O = await (await decouper(repos, boite)).flatten({ background: FOND })
     .resize(N, N, { kernel: 'lanczos3' }).removeAlpha().raw().toBuffer();
   const R = await sharp(retouche).flatten({ background: FOND })
@@ -286,7 +320,14 @@ export async function poserLesPaupieres({ repos, retouche }) {
 
   const recalage = recaler(O, R);
   const A = appliquer(R, recalage);
-  const yeux = trouverLesYeux(O, A);
+  /* Les yeux nommés dans le réglage, quand la recherche se trompe : un
+     visage d'objet, des yeux sombres sur un poil sombre, une paupière qui
+     ne diffère de l'œil que par endroits et se casse en miettes. Chacun est
+     une ellipse en fractions de la tête, déjà assez large pour la paupière. */
+  const nommes = reglage?.yeux?.map((e) => ({
+    cx: e.cx * N, cy: e.cy * N, rx: e.rx * N, ry: e.ry * N, aire: Math.PI * e.rx * e.ry * N * N,
+  }));
+  const yeux = nommes ?? trouverLesYeux(O, A);
   const aireTete = N * N;
   const aireYeux = yeux.reduce((t, o) => t + o.aire, 0);
 
@@ -299,13 +340,13 @@ export async function poserLesPaupieres({ repos, retouche }) {
     throw new Error(`La retouche ne se recale pas sur le repos (écart ${recalage.e.toFixed(0)}) : `
       + 'ce n’est pas la même tête, ou elle a été recadrée. Repars de la tête produite par « tete ».');
   }
-  if (aireYeux > aireTete * 0.06) {
+  if (!nommes && aireYeux > aireTete * 0.06) {
     throw new Error(`La retouche change ${(100 * aireYeux / aireTete).toFixed(1)} % de la tête : `
       + 'bien plus que les yeux. Choisis une variante plus sage.');
   }
 
   // Le masque, adouci : les paupières se fondent dans la peau d'origine.
-  const ellipses = yeux.map(ellipse);
+  const ellipses = nommes ?? yeux.map(ellipse);
   const M = Buffer.alloc(N * N);
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     if (ellipses.some((e) => dans(e, x, y) <= 1)) M[y * N + x] = 255;
@@ -379,7 +420,7 @@ export async function poserLesPaupieres({ repos, retouche }) {
 async function poser({ id, age, tenue, retouche }) {
   const nom = `${id}-e${age}-${tenue}`;
   const repos = path.join(PUBLIC, id, `e${age}`, tenue, 'neutre.png');
-  const r = await poserLesPaupieres({ repos, retouche });
+  const r = await poserLesPaupieres({ repos, retouche, reglage: await reglageDeLaBoite(id, age, tenue) });
   console.log(`recalage : échelle ${r.recalage.s.toFixed(4)}, décalage ${r.recalage.dx.toFixed(2)} × ${
     r.recalage.dy.toFixed(2)} px (écart ${r.recalage.sans.toFixed(1)} → ${r.recalage.e.toFixed(1)})`);
   console.log(`yeux : ${r.yeux.map((o) => `${Math.round(o.rx * 2)}×${Math.round(o.ry * 2)} en ${
@@ -437,16 +478,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const [ordre, id, retouche] = libres;
   const age = Number(drapeau('age', '1'));
   const tenue = drapeau('tenue', 'base');
+  const reglage = ['x', 'y', 'taille'].some((k) => drapeau(k) != null)
+    ? Object.fromEntries(['x', 'y', 'taille'].filter((k) => drapeau(k) != null)
+      .map((k) => [k, Number(drapeau(k))]))
+    : null;
 
   if (!['tete', 'poser'].includes(ordre) || !id || (ordre === 'poser' && !retouche)
     || ![1, 2, 3].includes(age)) {
     console.error('Usage :\n'
-      + '  npm run cligne -- tete <ID> [--age 1] [--tenue base]\n'
+      + '  npm run cligne -- tete <ID> [--age 1] [--tenue base] [--y 0.45] [--x 0] [--taille 0.6]\n'
       + '  npm run cligne -- poser <ID> <retouche> [--age 1] [--tenue base]');
     process.exit(1);
   }
   try {
-    await (ordre === 'tete' ? tete({ id, age, tenue }) : poser({ id, age, tenue, retouche }));
+    await (ordre === 'tete' ? tete({ id, age, tenue, reglage }) : poser({ id, age, tenue, retouche }));
   } catch (e) {
     console.error(e.message);
     process.exit(1);

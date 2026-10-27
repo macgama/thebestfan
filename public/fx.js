@@ -168,9 +168,15 @@
   /* ------------------------------------------------------------- styles */
 
   const css = `
-  .fx-layer{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}
+  /* **Dans la colonne, sur ordinateur aussi** (27 octobre 2026). Les calques
+     couvrent la fenêtre, parce que leurs éclats se posent au point touché ;
+     ils ne se montrent que dans la colonne du téléphone (« --tbf-cote » dans
+     ui.css, la marge de chaque côté, nulle sur un téléphone). Les fonds
+     filmés et les bandes, eux, prennent la largeur de la colonne. */
+  :root{--fx-cote:var(--tbf-cote,max(0px,calc(50% - 240px)));--fx-colonne:var(--colonne,min(100vw,480px))}
+  .fx-layer{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden;clip-path:inset(0 var(--fx-cote))}
   .fx-p{position:absolute;border-radius:50%;will-change:transform,opacity}
-  .fx-flash{position:fixed;inset:0;pointer-events:none;z-index:91;opacity:0}
+  .fx-flash{position:fixed;inset:0;pointer-events:none;z-index:91;opacity:0;clip-path:inset(0 var(--fx-cote))}
   .fx-flash.go{animation:fxflash .5s ease-out}
   @keyframes fxflash{0%{opacity:.85}100%{opacity:0}}
   /* ------------------------------------------------- l'évolution
@@ -286,7 +292,7 @@
     18%{opacity:1;transform:translate(-50%,-50%) rotate(-14deg) scale(1.06)}
     28%{transform:translate(-50%,-50%) rotate(-14deg) scale(1)}
     76%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) rotate(-8deg)}}
-  .fx-bandeau{position:fixed;left:0;right:0;top:0;z-index:93;padding:11px 16px;text-align:center;
+  .fx-bandeau{position:fixed;left:var(--fx-cote);right:var(--fx-cote);top:0;z-index:93;padding:11px 16px;text-align:center;
     font-family:"Oswald","Arial Narrow",Impact,sans-serif;font-size:13px;letter-spacing:.16em;
     color:#0B0E13;transform:translateY(-100%);pointer-events:none}
   .fx-bandeau.go{animation:fxbandeau 3s cubic-bezier(.2,.9,.3,1)}
@@ -324,7 +330,7 @@
      reste maîtresse — sa classe, ses enfants, sa rotation. La boîte qui suit
      l'objet (« .fx-rev ») est réécrite par le script à chaque image, à sa
      place et à sa taille ; elle ne s'anime jamais elle-même. */
-  .fx-ceremonie{position:fixed;inset:0;z-index:96;pointer-events:none;overflow:hidden}
+  .fx-ceremonie{position:fixed;inset:0;z-index:96;pointer-events:none;overflow:hidden;clip-path:inset(0 var(--fx-cote))}
   .fx-rev{position:absolute;left:0;top:0;width:0;height:0}
   /* La pluie de confettis de l'épique : une boîte de la taille du calque,
      posée sur lui et non sur l'objet (le papier lancé ne suit pas la carte),
@@ -411,7 +417,7 @@
      la fête de niveau (170). Rien à demander à la page : une option à
      passer à chaque appel aurait été oubliée au suivant. Ils ne prennent
      toujours pas le doigt : la vitrine reste à toucher. */
-  html.tbf-vitrine-ouverte .fx-onde{z-index:129}
+  html.tbf-vitrine-ouverte :is(.fx-onde,.fx-cadre-onde){z-index:129}
   html.tbf-vitrine-ouverte .fx-layer{z-index:130}
   html.tbf-vitrine-ouverte .fx-flash{z-index:131}
   html.tbf-vitrine-ouverte .fx-nombre{z-index:132}
@@ -437,10 +443,11 @@
 
      Des nappes de lumière filmées sur du noir (Artlist, octobre 2026),
      posées en « screen » : seul ce qui brille se voit. Voir « fond ». */
-  .fx-fond{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;
+  .fx-fond{position:fixed;top:0;left:50%;width:var(--fx-colonne);height:100%;translate:-50% 0;
+    object-fit:cover;mix-blend-mode:screen;
     opacity:0;transition:opacity .35s;pointer-events:none;z-index:89}
   .fx-fond.on{opacity:var(--fx-fond-op,.9)}
-  .fx-fond.dans{position:absolute;z-index:-1}
+  .fx-fond.dans{position:absolute;left:0;width:100%;translate:none;z-index:-1}
   html.tbf-vitrine-ouverte .fx-fond:not(.dans){z-index:128}
 
   /* ------------------------------------------------- la fin d'un duel
@@ -462,12 +469,12 @@
   .fx-fin-affaisse{animation:fxaffaisse 1.2s ease-out .4s both}
   @keyframes fxaffaisse{0%{translate:0 24px;opacity:0}100%{translate:0 0;opacity:1;
     filter:grayscale(.55) brightness(.85)}}
-  .fx-pluie{position:fixed;inset:-20% 0 0;z-index:-1;pointer-events:none;opacity:0;
+  .fx-pluie{position:fixed;inset:-20% var(--fx-cote) 0;z-index:-1;pointer-events:none;opacity:0;
     background:repeating-linear-gradient(104deg,transparent 0 14px,rgba(190,205,225,.13) 14px 15px,
       transparent 15px 37px);background-size:100% 220px;animation:fxpluie 3.4s linear forwards}
   @keyframes fxpluie{0%{opacity:0;background-position:0 0}15%{opacity:1}75%{opacity:.8}
     100%{opacity:0;background-position:-60px 660px}}
-  .fx-ola{position:fixed;left:0;right:0;bottom:0;height:min(26vh,190px);z-index:91;pointer-events:none;
+  .fx-ola{position:fixed;left:var(--fx-cote);right:var(--fx-cote);bottom:0;height:min(26vh,190px);z-index:91;pointer-events:none;
     display:flex;justify-content:space-between;align-items:flex-end;padding:0 1%;overflow:hidden}
   .fx-ola i{flex:0 0 4.6%;height:100%;translate:0 102%;border-radius:6px 6px 0 0;
     background:repeating-linear-gradient(180deg,var(--a) 0 16%,var(--b) 16% 32%);
@@ -503,8 +510,17 @@
     -webkit-mask:radial-gradient(closest-side,#000 15%,transparent 72%);
     mask:radial-gradient(closest-side,#000 15%,transparent 72%);
     mix-blend-mode:screen;animation:fxrayonsfin 2.4s cubic-bezier(.2,.7,.3,1) forwards}
-  html.tbf-vitrine-ouverte .fx-club,html.tbf-vitrine-ouverte .fx-club-rayons{z-index:129}
-  html.tbf-vitrine-ouverte .fx-club-titre{z-index:130}
+  html.tbf-vitrine-ouverte :is(.fx-cadre-club,.fx-cadre-club-rayons){z-index:129}
+  html.tbf-vitrine-ouverte .fx-cadre-club-titre{z-index:130}
+  /* Le cadre d'un éclat posé à la fenêtre (voir « encadrer ») : il couvre la
+     fenêtre, sans devenir le repère de l'éclat, et n'en montre que la
+     colonne. Il prend la hauteur de l'éclat dans la pile, et le « screen »
+     des rayons, que le cadre isolerait sinon du match derrière. */
+  .fx-cadre{position:fixed;inset:0;pointer-events:none;clip-path:inset(0 var(--fx-cote))}
+  .fx-cadre-onde{z-index:89}
+  .fx-cadre-club-rayons{z-index:88;mix-blend-mode:screen}
+  .fx-cadre-club{z-index:91}
+  .fx-cadre-club-titre{z-index:94}
   /* Le titre du moment, en jeu vidéo : il claque sur l'écharpe, en biais
      comme elle, lettres pleines cerclées de noir, relief à la couleur du club
      et un reflet qui passe. */
@@ -682,15 +698,27 @@
     }
   }
 
+  /* Un éclat posé à la fenêtre (une onde, l'écharpe d'un club) se montre
+     dans la colonne seulement, comme les calques : sur un écran d'ordinateur,
+     l'écharpe traversait les mille neuf cents pixels (27 octobre 2026). Sa
+     boîte (« .fx-cadre ») rogne les côtés ; l'éclat garde sa place. */
+  function encadrer(el, nom) {
+    const c = document.createElement('div');
+    c.className = `fx-cadre fx-cadre-${nom}`;
+    c.appendChild(el);
+    document.body.appendChild(c);
+    return c;
+  }
+
   function onde({ x, y, couleur = COULEURS.or, taille = 420 } = {}) {
     if (doux()) return;
     const o = document.createElement('div');
     o.className = 'fx-onde';
     o.style.cssText = `left:${x}px;top:${y}px;width:${taille}px;height:${taille}px;` +
       `border-color:${couleur}`;
-    document.body.appendChild(o);
+    const c = encadrer(o, 'onde');
     requestAnimationFrame(() => o.classList.add('go'));
-    setTimeout(() => o.remove(), 900);
+    setTimeout(() => c.remove(), 900);
   }
 
   function flash(couleur = '#fff') {
@@ -2031,8 +2059,8 @@
         el.className = cls;
         el.style.setProperty('--c1', c1);
         el.style.setProperty('--c2', c2);
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), ms);
+        const c = encadrer(el, cls.slice(3));
+        setTimeout(() => c.remove(), ms);
         return el;
       };
       if (titre) {

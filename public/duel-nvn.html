@@ -634,7 +634,7 @@ html[data-calme~=animations] :is(.ultime[data-etat=pret],.ultime[data-etat=pret]
      3, 4, 5 s  3 · 2 · 1, au tic ; 6 s, l'entrée en tribune.
    Au calme, rien ne bouge : l'affiche est posée d'un coup, entière. */
 .grand>*{width:100%;max-width:var(--colonne);margin-inline:auto}
-.grand{position:fixed;inset:0;height:100vh;height:100dvh;
+.grand{position:fixed;inset:0;height:100vh;height:100dvh;clip-path:inset(0 var(--tbf-cote));
   z-index:72;display:flex;flex-direction:column;overflow:hidden;
   background:radial-gradient(120% 55% at 50% -10%,rgba(224,64,44,.2),transparent 60%),
     linear-gradient(180deg,#11161D,#05070A 55%,#05070A);
@@ -967,7 +967,8 @@ html[data-calme~="animations"] #affiche.joue :is(*,.camps){animation:none!import
 @keyframes vs-fumee{from{background-position:0 0,0 0,100% 0}to{background-position:0 0,100% 0,0 0}}
 /* Le fond filmé du couloir (Artlist, 24 octobre 2026) : un projecteur dans
    la fumée, en boucle. Quand il joue, les projecteurs dessinés s'effacent. */
-#voileFond{position:fixed;inset:0;z-index:-1;width:100%;height:100%;max-width:none;object-fit:cover;
+#voileFond{position:fixed;top:0;left:50%;translate:-50% 0;z-index:-1;
+  width:var(--colonne);height:100%;max-width:none;object-fit:cover;
   mix-blend-mode:screen;opacity:0;transition:opacity .8s;pointer-events:none}
 .voile.filme #voileFond{opacity:.6}
 .voile.filme::before{opacity:0}
@@ -993,6 +994,9 @@ html[data-calme~="animations"] #affiche.joue :is(*,.camps){animation:none!import
    la colonne. Opaque, comme le voile du Virage. */
 .voile>*{max-width:var(--colonne)}
 .voile{position:fixed;inset:0;z-index:70;background:#04060A;display:none;
+  /* Ses projecteurs et son fond filmé restent dans la colonne, sur un
+     ordinateur aussi (voir `--tbf-cote` dans ui.css). */
+  clip-path:inset(0 var(--tbf-cote));
   flex-direction:column;align-items:center;justify-content:safe center;gap:12px;
   overflow-y:auto;text-align:center;height:100vh;height:100dvh;
   padding:calc(env(safe-area-inset-top) + 28px) 16px calc(env(safe-area-inset-bottom) + 28px)}
