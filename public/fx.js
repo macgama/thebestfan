@@ -1981,13 +1981,15 @@
     /**
      * Le Cri d'un Fanzzy.
      *
-     * Une vidéo par Cri serait ingérable : vingt-sept Fanzzy, vingt-sept
-     * fichiers à charger au pire moment. Une seule séquence d'ondes est donc
-     * partagée, teintée à la couleur du type et superposée en mode « screen »
-     * pour que seul ce qui brille apparaisse. Elle n'est chargée qu'au premier
-     * Cri de la session.
+     * Deux ondes, des étincelles et le titre, **à la couleur de sa famille**.
+     * Il y avait aussi une vidéo de flammes partagée (`/video/cri.mp4`), en
+     * mode « screen » : jamais teintée, elle posait le même cercle de feu
+     * orange sur tous les Fanzzy, quelle que soit leur couleur (Gaël,
+     * 27 octobre 2026 : « rien à voir avec ce qu'on a mis en place pour les
+     * effets liés aux équipes et aux couleurs »). Retirée. Un Fanzzy lié à un
+     * club crie, lui, avec l'écharpe de son club (`club`, voir la fiche).
      */
-    cri(label, { couleur = COULEURS.or, video = '/video/cri.mp4' } = {}) {
+    cri(label, { couleur = COULEURS.or } = {}) {
       const x = innerWidth / 2, y = innerHeight * 0.42;
       onde({ x, y, couleur, taille: 520 });
       particules({ x, y, n: 46, distance: 210, taille: 6, duree: 1100,
@@ -1999,26 +2001,7 @@
       secousse(1.1);
       buzz([30, 40, 30, 40, 90]);
       if (doux()) return;
-
-      let v = document.getElementById('fx-cri');
-      if (!v) {
-        v = document.createElement('video');
-        v.id = 'fx-cri';
-        v.muted = true; v.playsInline = true; v.preload = 'none';
-        v.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;' +
-          'mix-blend-mode:screen;opacity:0;transition:opacity .35s;pointer-events:none;z-index:92';
-        document.body.appendChild(v);
-      }
-      // Absence du fichier : les particules et le titre suffisent, le Cri
-      // reste lisible. Aucun effet ne doit dépendre d'un téléchargement.
-      v.onerror = () => { v.remove(); };
-      if (!v.src) { v.src = video; v.load(); }
-      v.style.filter = `hue-rotate(0deg) saturate(1.1)`;
-      v.currentTime = 0;
-      v.style.opacity = '1';
-      v.play?.().catch(() => {});
-      clearTimeout(v._t);
-      v._t = setTimeout(() => { v.style.opacity = '0'; v.pause?.(); }, 2600);
+      setTimeout(() => onde({ x, y, couleur, taille: 380 }), 180);
     },
 
     /**
