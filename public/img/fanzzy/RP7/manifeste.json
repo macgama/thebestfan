@@ -1,6 +1,6 @@
 {
   "id": "RP7",
-  "rev": 6,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -45,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "34333267d01d"
+          "sha": "34333267d01d",
+          "cligne": true
         }
       }
     },
@@ -68,7 +69,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "fac218691462"
+          "sha": "fac218691462",
+          "cligne": true
         }
       }
     }
