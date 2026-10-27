@@ -116,8 +116,8 @@
   55%{transform:translate(5px,5px) rotate(-.3deg)}70%{transform:translate(-3px,2px)}85%{transform:translate(2px,-1px)}}
 .tbf-ult-plan{position:absolute;inset:0;overflow:hidden;opacity:0;
   clip-path:inset(50% 0 50% 0);will-change:transform,filter,clip-path}
-.tbf-ult-plan img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  object-position:50% 30%}
+.tbf-ult-plan img,.tbf-ult-plan video{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:50% 30%}
 .tbf-ult.on .tbf-ult-plan{animation:tbfUltPlan var(--d) cubic-bezier(.3,.7,.3,1) forwards}
 @keyframes tbfUltPlan{
   0%{opacity:1;clip-path:inset(50% 0 50% 0);transform:scale(1.42);filter:brightness(.35) saturate(.2) blur(5px)}
@@ -274,16 +274,125 @@
   };
   /* IMAGES: fin */
 
-  /** L'image Ultimate d'une lignée à un âge, ou null. Une légendaire n'a qu'un âge. */
-  function image(id, age = 1) {
+  /* **Les clips Ultimate** (Artlist, 4 s, 9:16, sans son : le son vient de
+     `son.js`), tirés de l'image du même âge : `<racine>-e<âge>` → fichier
+     dans `public/img/ultime/`. Même script, même règle : sans clip, l'image
+     fixe animée au code. */
+  /* CLIPS: début */
+  const CLIPS = {
+    'RP1-e1': 'RP1-e1.aac09cdb.mp4',
+    'RP1-e2': 'RP1-e2.d353d8e7.mp4',
+    'RP1-e3': 'RP1-e3.ffa108e1.mp4',
+    'RP2-e1': 'RP2-e1.459bf483.mp4',
+    'RP2-e2': 'RP2-e2.00519807.mp4',
+    'RP2-e3': 'RP2-e3.998f28e1.mp4',
+    'RP3-e1': 'RP3-e1.b893fec6.mp4',
+    'RP3-e2': 'RP3-e2.00f34327.mp4',
+    'RP3-e3': 'RP3-e3.c284eb74.mp4',
+    'RP4-e1': 'RP4-e1.9ead205f.mp4',
+    'RP4-e2': 'RP4-e2.7bcf1ebe.mp4',
+    'RP4-e3': 'RP4-e3.b8a2096d.mp4',
+    'RP5-e1': 'RP5-e1.977ea1d3.mp4',
+    'RP5-e2': 'RP5-e2.acec4c98.mp4',
+    'RP5-e3': 'RP5-e3.fa9ada23.mp4',
+    'RP6-e1': 'RP6-e1.d64226af.mp4',
+    'RP6-e2': 'RP6-e2.e75692bd.mp4',
+    'RP6-e3': 'RP6-e3.6b34af76.mp4',
+    'RP7-e1': 'RP7-e1.af0f9956.mp4',
+    'RP7-e2': 'RP7-e2.72843e4e.mp4',
+    'RP7-e3': 'RP7-e3.dd121a0a.mp4',
+    'RP8-e1': 'RP8-e1.5b86fae8.mp4',
+    'RP8-e2': 'RP8-e2.ee4a465f.mp4',
+    'RP8-e3': 'RP8-e3.57289ba5.mp4',
+    'RP9-e1': 'RP9-e1.94ce116f.mp4',
+    'RP9-e2': 'RP9-e2.0ed9a1ed.mp4',
+    'RP9-e3': 'RP9-e3.ee139c01.mp4',
+    'RP10-e1': 'RP10-e1.09179c16.mp4',
+    'RP10-e2': 'RP10-e2.f7cb991c.mp4',
+    'RP10-e3': 'RP10-e3.cd2d7bb4.mp4',
+    'RP11-e1': 'RP11-e1.26480e4d.mp4',
+    'RP11-e2': 'RP11-e2.39b721aa.mp4',
+    'RP11-e3': 'RP11-e3.d67f592d.mp4',
+    'RP12-e1': 'RP12-e1.ca73ee27.mp4',
+    'RP12-e2': 'RP12-e2.1a1d8cb2.mp4',
+    'RP12-e3': 'RP12-e3.08f0f6dd.mp4',
+    'RP13-e1': 'RP13-e1.7ce9e094.mp4',
+    'RP14-e1': 'RP14-e1.66d7b167.mp4',
+    'RP15-e1': 'RP15-e1.ff93df7b.mp4',
+    'RP16-e1': 'RP16-e1.eb26e6ea.mp4',
+    'RP17-e1': 'RP17-e1.c7f868ff.mp4',
+    'RP18-e1': 'RP18-e1.2cfc972b.mp4',
+    'RP18-e2': 'RP18-e2.394168fe.mp4',
+    'RP18-e3': 'RP18-e3.7e8e5a36.mp4',
+    'RP19-e1': 'RP19-e1.71c41a14.mp4',
+    'RP19-e2': 'RP19-e2.f2ab0fd7.mp4',
+    'RP19-e3': 'RP19-e3.d1b5bc14.mp4',
+    'RP20-e1': 'RP20-e1.fcc2ebee.mp4',
+    'RP20-e2': 'RP20-e2.be34b08a.mp4',
+    'RP20-e3': 'RP20-e3.aea67def.mp4',
+    'RP21-e1': 'RP21-e1.f94f3dc5.mp4',
+    'RP21-e2': 'RP21-e2.eebfafa3.mp4',
+    'RP21-e3': 'RP21-e3.639b0017.mp4',
+    'RP22-e1': 'RP22-e1.5e0a14a5.mp4',
+    'RP22-e2': 'RP22-e2.b5175f49.mp4',
+    'RP22-e3': 'RP22-e3.dbfbb668.mp4',
+    'RP23-e1': 'RP23-e1.b7f8ec0f.mp4',
+    'RP23-e2': 'RP23-e2.e05334e0.mp4',
+    'RP23-e3': 'RP23-e3.a54540fc.mp4',
+    'RP24-e1': 'RP24-e1.346d43ed.mp4',
+    'RP24-e2': 'RP24-e2.63a0187e.mp4',
+    'RP24-e3': 'RP24-e3.90c6216d.mp4',
+    'RP25-e1': 'RP25-e1.a25cc69c.mp4',
+    'RP25-e2': 'RP25-e2.5c32a0eb.mp4',
+    'RP25-e3': 'RP25-e3.22d1f4f8.mp4',
+    'RP26-e1': 'RP26-e1.904fc1c5.mp4',
+    'RP26-e2': 'RP26-e2.eb8ca0c4.mp4',
+    'RP26-e3': 'RP26-e3.fffadc37.mp4',
+    'RP27-e1': 'RP27-e1.37376f56.mp4',
+    'RP27-e2': 'RP27-e2.44510e2f.mp4',
+    'RP27-e3': 'RP27-e3.279717fa.mp4',
+    'RP28-e1': 'RP28-e1.579c0dcd.mp4',
+    'RP28-e2': 'RP28-e2.1758d592.mp4',
+    'RP28-e3': 'RP28-e3.e1bd262c.mp4',
+    'RP29-e1': 'RP29-e1.4ddadbbd.mp4',
+    'RP29-e2': 'RP29-e2.b40aca26.mp4',
+    'RP29-e3': 'RP29-e3.08262e71.mp4',
+    'RP30-e1': 'RP30-e1.e181e8d4.mp4',
+    'RP30-e2': 'RP30-e2.eccc68cb.mp4',
+    'RP30-e3': 'RP30-e3.2ae9e2eb.mp4',
+    'RP31-e1': 'RP31-e1.83c86a50.mp4',
+    'RP31-e2': 'RP31-e2.4fc93994.mp4',
+    'RP31-e3': 'RP31-e3.570541a1.mp4',
+    'RP32-e1': 'RP32-e1.b3ff3480.mp4',
+    'RP32-e2': 'RP32-e2.7ae4f14d.mp4',
+    'RP32-e3': 'RP32-e3.e09ebf74.mp4',
+    'RP33-e1': 'RP33-e1.11864ff5.mp4',
+    'RP33-e2': 'RP33-e2.52ae0bb3.mp4',
+    'RP33-e3': 'RP33-e3.a396cfc5.mp4',
+    'RP34-e1': 'RP34-e1.89bcc51b.mp4',
+    'RP34-e2': 'RP34-e2.095c325b.mp4',
+    'RP34-e3': 'RP34-e3.9e5be62a.mp4',
+    'RP35-e1': 'RP35-e1.f746921b.mp4',
+    'RP35-e2': 'RP35-e2.0e67ecd9.mp4',
+    'RP35-e3': 'RP35-e3.59f1cd8a.mp4',
+  };
+  /* CLIPS: fin */
+
+  /* Le fichier d'une lignée à un âge dans une table, ou null. Une légendaire
+     n'a qu'un âge, donc qu'un fichier : on le prend à tout âge. Une lignée à
+     trois âges ne prête jamais le fichier d'un autre âge. */
+  function chercher(table, id, age) {
     // Un âge passé en identifiant (« RP4B ») revient à sa lignée (« RP4 »).
     const racine = String(id ?? '').replace(/^([A-Z]{2}\d+)[B-Z]$/, '$1');
-    /* Une légendaire n'a qu'un âge, donc qu'une image : on la prend à tout
-       âge. Une lignée à trois âges ne prête jamais l'image d'un autre âge. */
     const seule = !IMAGES[`${racine}-e2`] && !IMAGES[`${racine}-e3`];
-    const f = IMAGES[`${racine}-e${Math.max(1, Number(age) || 1)}`] ?? (seule ? IMAGES[`${racine}-e1`] : null);
+    const f = table[`${racine}-e${Math.max(1, Number(age) || 1)}`] ?? (seule ? table[`${racine}-e1`] : null);
     return f && racine ? `/img/ultime/${f}` : null;
   }
+
+  /** L'image Ultimate d'une lignée à un âge, ou null. */
+  const image = (id, age = 1) => chercher(IMAGES, id, age);
+  /** Le clip Ultimate d'une lignée à un âge, ou null. */
+  const clip = (id, age = 1) => chercher(CLIPS, id, age);
 
   /* Charge l'image avant la scène : une scène qui s'ouvre sur du noir puis
      saute à l'image perdrait sa révélation. Trop lente, la scène dessinée la
@@ -297,6 +406,26 @@
       i.onerror = () => finir(false);
       setTimeout(() => finir(false), ms);
       i.src = src;
+    });
+  }
+
+  /* Le clip aussi, prêt à jouer d'un trait : un clip qui hoquette au choc
+     ferait pire que l'image fixe. Trop lent, on garde l'image. */
+  function prechargerClip(src, ms = 1200) {
+    return new Promise((ok) => {
+      const v = document.createElement('video');
+      let fait = false;
+      const finir = (pret) => { if (!fait) { fait = true; ok(pret ? v : null); } };
+      v.muted = true;
+      v.playsInline = true;
+      v.preload = 'auto';
+      v.setAttribute('muted', '');
+      v.setAttribute('playsinline', '');
+      v.oncanplaythrough = () => finir(true);
+      v.onerror = () => finir(false);
+      setTimeout(() => finir(false), ms);
+      v.src = src;
+      v.load();
     });
   }
 
@@ -341,10 +470,13 @@
   function scene(o = {}) {
     const fond = o.grande && o.racine ? image(o.racine, o.age) : null;
     if (!fond) return jouer(o, null);
-    return precharger(fond).then((pret) => jouer(o, pret ? fond : null));
+    // Le clip ne joue pas sous le calme : l'image fixe suffit.
+    const film = doux() ? null : clip(o.racine, o.age);
+    return Promise.all([precharger(fond), film ? prechargerClip(film) : null])
+      .then(([pret, video]) => jouer(o, pret ? fond : null, pret ? video : null));
   }
 
-  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond) {
+  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond, video = null) {
     poserStyle();
     // Deux coups fatals à la suite : le second remplace le premier.
     enCours?.couper?.();
@@ -378,6 +510,12 @@
     el.querySelector('.tbf-ult-nom').textContent = nom;
     if (plein) {
       el.querySelectorAll('.tbf-ult-plan img').forEach((i) => { i.src = fond; });
+      /* Le clip se pose sur l'image, qui reste dessous : s'il cale, on voit
+         l'image fixe, jamais du noir. */
+      if (video && !calme) {
+        video.className = 'v';
+        el.querySelector('.tbf-ult-plan .p').after(video);
+      }
       /* Trente braises, chacune sa taille, sa dérive et son départ : un
          tirage par scène, pour qu'aucune ne se ressemble. */
       const braises = el.querySelector('.tbf-ult-braises');
@@ -440,7 +578,10 @@
         plus(plein ? 1800 : 1200, fin);
         return;
       }
-      requestAnimationFrame(() => el.classList.add('on'));
+      requestAnimationFrame(() => {
+        el.classList.add('on');
+        el.querySelector('.tbf-ult-plan .v')?.play?.()?.catch?.(() => {});
+      });
       if (grande) {
         /* Le son propre à l'Ultimate (`son.js`) : la montée tient jusqu'au
            choc, l'impact tombe avec l'éclair, puis la tribune. */
@@ -473,5 +614,5 @@
     });
   }
 
-  window.TBF_ULTIME = { scene, image };
+  window.TBF_ULTIME = { scene, image, clip };
 })();
