@@ -587,11 +587,14 @@ function deplacement() {
 
 function tifo() {
   const casesJour = reglage('jeux.tifo_cases_jour');
-  const seuil = reglage('jeux.tifo_seuil') / 100;
+  const part = reglage('jeux.tifo_seuil') / 100;
   const motif = MJ.motifDuTifo(MJ.lettresDuClub('FCB', 'Barcelona'));
   const cases = MJ.TIFO.COLONNES * MJ.TIFO.RANGS;
-  ligne(`  Tifo : ${cases} cases, ${casesJour} par supporter et par jour, réussi à ${seuil * 100} %.`);
+  ligne(`  Tifo : ${cases} cases, ${casesJour} par supporter et par jour, réussi à ${part * 100} %`
+    + ' de ce que la tribune peut peindre en une semaine.');
   for (const peintres of [1, 2, 3, 5, 10, 20]) {
+    // Comme seuilDuTifo (src/server/jeux/index.js), en part des 240 cases.
+    const seuil = Math.ceil(part * 100 * Math.min(cases, peintres * casesJour * 7) / cases) / 100;
     // Ils peignent chaque jour de la semaine, juste à 95 %.
     let jours = null;
     const grille = new Array(cases).fill(null);

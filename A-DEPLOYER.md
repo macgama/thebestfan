@@ -1,5 +1,26 @@
 # À déposer sur Infomaniak
 
+**Équilibrage des duels et du Virage** (branche `claude/project-thread-esqp0e`,
+27 octobre 2026, propositions acceptées par Gaël après la simulation des
+parties). Construction seule, **sans schéma**.
+
+- Virage : Mosaïque et Présentation de l'effectif comptent la part de la
+  tribune qui pousse, plus le nombre ; Chœur et Appel ne se lancent qu'une
+  fois par tribune, avec une recharge partagée. Un petit club tient tête au
+  FC Barcelone (3 contre 20 : 39 à 1 en simulation).
+- Le bot d'entraînement fait le geste de sa carte : un débutant le bat à
+  peu près six fois sur dix. Le duel guidé ne change pas.
+- Filet de chantier : 12 s pendant lesquelles les entraves d'en face
+  (Silence, Brouillard, Parcage, Vent contraire…) ne te touchent pas ; duel
+  seulement. Les bonus Contre, Parade, Reprise et Pénalité des Fanzzy
+  comptent enfin.
+- Tifo réussi à 60 % de ce que la tribune peut peindre en une semaine ; boss
+  à 8 chants par supporter, au moins 8 (était 40). Si /admin avait gardé 40
+  à la main, le remettre.
+- Après la mise en ligne : un duel contre un bot depuis /jeux ou l'accueil.
+
+---
+
 **L'Ultimate, le coup fatal des Fanzzy** (branche `claude/project-thread-epar0c`,
 26 octobre 2026, choix de Gaël : « Visuel à collectionner »). Construction
 puis redémarrage, **sans schéma** (la carte se range dans `user_etats`).
