@@ -175,13 +175,19 @@ check('et la page de contenu a les mêmes',
    éléments et non ce qui est affiché. */
 const FACETTES = ['sons', 'vibrations', 'animations'];
 for (const [nom, m] of [['l’accueil', accueil], ['une page de contenu', carnet]]) {
-  const inter = m.interrupteurs ?? [];
+  /* « Couper la musique » (27 octobre 2026) est une facette du calme rangée
+     au pied, hors de la rangée : relevée à part, plus bas. */
+  const inter = (m.interrupteurs ?? []).filter((i) => i.facette !== 'musique');
   check(`le mode calme a ses trois interrupteurs depuis ${nom}`,
     JSON.stringify(inter.map((i) => i.facette)) === JSON.stringify(FACETTES)
     && inter.every((i) => i.dansLeGroupe && (i.coche === 'true' || i.coche === 'false'))
     || (console.log('    vus :', JSON.stringify(inter)), false));
   check(`et chacun dit l’état réel du jeu depuis ${nom}`,
     inter.length === FACETTES.length && inter.every((i) => i.juste));
+  const musique = (m.interrupteurs ?? []).filter((i) => i.facette === 'musique');
+  check(`« Couper la musique » est là, une fois, et dit vrai depuis ${nom}`,
+    musique.length === 1 && musique[0].juste && !musique[0].dansLeGroupe
+    || (console.log('    vus :', JSON.stringify(musique)), false));
 }
 
 /* Un interrupteur se prouve en le touchant : il bascule, la racine du
