@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Les animations restent dans la largeur du téléphone sur ordinateur**
+(branche `claude/project-thread-9p4wm0`, 27 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Ouverture des boosters, fonds filmés (but, évolution, fin de duel, carton),
+  Ultimate, écharpe du club, ondes et éclats, bilan, fête de niveau, vestiaire
+  et affiche du duel : tout se joue dans la colonne de 480 px, et les fonds
+  filmés prennent la largeur de la colonne au lieu d'être étirés et flous.
+  Sur téléphone, rien ne change.
+
+---
+
 **L'Ultimate ne se voit qu'avec sa carte** (branche
 `claude/project-thread-0u99uq`, 27 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.
