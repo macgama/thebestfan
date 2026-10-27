@@ -1,6 +1,6 @@
 {
   "id": "AN48",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -29,7 +29,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f9dd86167c95"
+          "sha": "f9dd86167c95",
+          "cligne": true
         }
       }
     },
