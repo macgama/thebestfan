@@ -1749,152 +1749,72 @@ await page.close();
       bouton !== null && bouton.h >= 44 && bouton.l >= 44);
     check("et elle dit quoi faire", /recharger/i.test(bouton?.mot ?? ''));
 
-    /* ---- 1 bis. la photo du couloir ----
+    /* ---- 1 bis. le kop ----
 
-       Rien à voir avec la sortie de secours, mais c'est le seul écran
-       d'ouverture qui reste : sans `ouverture.js`, rien ne le lève, et on a le
-       temps de le mesurer. Trois choses que la lecture du code ne tranche
-       pas.
+       Le tunnel a laissé la place à un kop de Fanzzy (Gaël, 27 octobre
+       2026). Trois choses que la lecture du code ne tranche pas, sur un
+       écran gardé ouvert (l'accueil ne le congédie pas : `tbf:pret` est
+       retenu) :
 
-       **Elle se voit.** Posée d'abord sous la classe `.decor`, elle a hérité
-       de la règle du décor du hub — opacité nulle tant qu'il manque `.on`, et
-       une demi-largeur de décalage — et l'écran montrait le repli sans un
-       message (index.html, « La photo du couloir »). On la cherche donc par
-       son adresse, pas par sa classe : un contrôle qui suit la classe ne
-       verrait pas la même faute revenir sous un autre nom. Et elle remplit le
-       tunnel, dont la boîte a ses proportions : ni décalée, ni déformée.
+       **Seulement des jouables.** La liste vient du serveur
+       (`/api/fanzzy/jouables`) : on lui fait répondre trois Fanzzy, et le kop
+       ne doit montrer qu'eux — répétés, puisqu'il faut remplir des rangs.
+       Un kop qui tirerait encore dans tous les dessins montrerait des
+       personnages de séries fermées : c'est la demande de Gaël.
 
-       **Le trou de la photo tombe sur la sortie.** Ses coins sont écrits à la
-       main dans la feuille (`--tg`, `--td`, `--th`, `--tb`) : une photo
-       refaite ou un coin retouché, et le bout du couloir montre un pan de
-       béton ou un croissant noir. Le trou se lit dans l'image elle-même — là
-       où elle est plus qu'à moitié transparente —, puis on demande ce qui est
-       peint sous son centre.
+       **Il tient au-dessus de la jauge.** Le premier rang touche le bas de
+       la scène, pas le libellé de la jauge.
 
-       **Elle passe devant le sol et derrière le texte.** Sans son
-       `z-index:1`, le sol (`.tunnel::after`), peint après les enfants du
-       tunnel, recouvrirait le bas de la photo — et la lumière de la sortie
-       (`.sortie::before`, elle-même à z 1) passerait devant le bord adouci
-       du trou : la mutation l'a montré, d'où l'ordre lu aussi au centre.
-       Au-dessus de `.dedans`, elle cacherait le titre.
+       **La tribune est derrière, pas devant.** La photo du stade se voit,
+       sous `.dedans`. */
+    const ctxKop = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext());
+    const p4k = await ctxKop.newPage();
+    await p4k.evaluateOnNewDocument(() => {
+      const d = window.dispatchEvent.bind(window);
+      window.dispatchEvent = (e) => (e.type === 'tbf:pret' ? true : d(e));
+    });
+    await p4k.setViewport({ width: 400, height: 880 });
+    await p4k.setRequestInterception(true);
+    const TROIS = ['RP1', 'RP2', 'AN3'];
+    p4k.on('request', (r) => {
+      if (/\/api\/fanzzy\/jouables/.test(r.url())) {
+        r.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ ids: TROIS }) })
+          .catch(() => {});
+      } else r.continue().catch(() => {});
+    });
+    await p4k.goto(base + "/", { waitUntil: "domcontentloaded" });
+    await p4k.waitForFunction(() => document.querySelectorAll('#ouverture .fan img.vu').length >= 8,
+      { timeout: 8000 }).catch(() => {});
+    const kop = await p4k.evaluate(() => {
+      const fans = [...document.querySelectorAll('#ouverture .fan img')];
+      const ids = fans.map((i) => /\/img\/fanzzy\/([A-Z]+\d+[A-Z]?)-buste/.exec(i.getAttribute('src'))?.[1] ?? i.getAttribute('src'));
+      const scene = document.querySelector('#ouverture .kop').getBoundingClientRect();
+      const mot = document.querySelector('#ouverture .mot').getBoundingClientRect();
+      const rangs = [...document.querySelectorAll('#ouverture .rang')].map((r) => r.getBoundingClientRect());
+      const photo = document.querySelector('#ouverture .stade img');
+      return { n: fans.length, vus: fans.filter((i) => i.classList.contains('vu')).length,
+        ids: [...new Set(ids)], rangs: rangs.length,
+        premierBas: rangs.length ? Math.max(...rangs.map((r) => r.bottom)) : null,
+        scene: { haut: scene.top, bas: scene.bottom }, mot: mot.top,
+        photo: Boolean(photo?.complete && photo.naturalWidth > 0) };
+    });
+    check(`le kop se remplit (${kop.vus} visages sur ${kop.n}, ${kop.rangs} rangs)`,
+      kop.vus >= 8 && kop.rangs >= 3 || (console.log('        ', JSON.stringify(kop)), false));
+    check(`il ne montre que les Fanzzy jouables (${kop.ids.join(', ')})`,
+      kop.ids.length > 0 && kop.ids.every((id) => TROIS.includes(id)));
+    check('il tient au-dessus de la jauge',
+      kop.premierBas !== null && kop.premierBas <= kop.scene.bas + 1 && kop.premierBas <= kop.mot
+      || (console.log('        ', JSON.stringify({ premierBas: kop.premierBas, scene: kop.scene, mot: kop.mot })), false));
+    check('la tribune du stade est là, derrière lui', kop.photo);
+    await p4k.close();
 
-       `elementsFromPoint` ignore ce qui porte `pointer-events:none` — tout
-       l'écran d'ouverture (ETAT.md, § 2, les pièges de test) : on lui rend le
-       doigt le temps de la mesure, et l'ordre du survol redevient celui de la
-       peinture. */
-    const PHOTO = '#ouverture img[src*="/img/ecran/tunnel-"]';
-    await p4.waitForFunction((s) => {
-      const i = document.querySelector(s);
-      return Boolean(i?.complete && i.naturalWidth > 0);
-    }, { timeout: 8000 }, PHOTO).catch(() => {});
-    const couloir = await p4.evaluate((s) => {
-      const img = document.querySelector(s);
-      if (!img) return null;
-      const tunnel = img.closest('.tunnel');
-      const dedans = document.querySelector('#ouverture .dedans');
-      const sortie = document.querySelector('#ouverture .sortie');
-      /* L'opacité de tout ce qui la porte jusqu'au tunnel : un parent éteint
-         l'éteint aussi, et c'était le cas de `.decor`. */
-      let opacite = 1;
-      for (let n = img; n && n !== tunnel; n = n.parentElement) {
-        opacite *= Number(getComputedStyle(n).opacity);
-      }
-      const ri = img.getBoundingClientRect();
-      const rt = tunnel.getBoundingClientRect();
-      const so = sortie.getBoundingClientRect();
-
-      // Le trou, dans l'image servie (`currentSrc`), à sa taille naturelle.
-      const W = img.naturalWidth, H = img.naturalHeight;
-      const toile = document.createElement('canvas');
-      toile.width = W; toile.height = H;
-      const g = toile.getContext('2d', { willReadFrequently: true });
-      g.drawImage(img, 0, 0, W, H);
-      const px = g.getImageData(0, 0, W, H).data;
-      let x0 = W, x1 = -1, y0 = H, y1 = -1;
-      for (let y = 0; y < H; y++) {
-        for (let x = 0; x < W; x++) {
-          if (px[(y * W + x) * 4 + 3] >= 128) continue;
-          if (x < x0) x0 = x; if (x > x1) x1 = x;
-          if (y < y0) y0 = y; if (y > y1) y1 = y;
-        }
-      }
-      const trou = x1 < 0 ? null : {
-        g: ri.left + x0 / W * ri.width, d: ri.left + (x1 + 1) / W * ri.width,
-        h: ri.top + y0 / H * ri.height, b: ri.top + (y1 + 1) / H * ri.height,
-      };
-
-      const nom = (e) => e ? `${e.tagName.toLowerCase()}${e.className && typeof e.className === 'string'
-        ? '.' + e.className.trim().split(/\s+/).join('.') : ''}` : 'rien';
-      const sonde = document.createElement('style');
-      sonde.textContent = '#ouverture, #ouverture *{pointer-events:auto !important}';
-      document.head.append(sonde);
-      let centre = null, sol = null;
-      if (trou) {
-        const cx = (trou.g + trou.d) / 2, cy = (trou.h + trou.b) / 2;
-        const pile = document.elementsFromPoint(cx, cy);
-        // Ce qui est peint sous la photo : ni elle, ni ce qui passe devant elle.
-        const dessous = pile.find((e) => !dedans.contains(e) && e !== img && e !== img.parentElement);
-        centre = { dedans: pile.indexOf(dedans), photo: pile.indexOf(img),
-          dessous: pile.indexOf(dessous), quoi: nom(dessous), sortie: sortie.contains(dessous) };
-        /* Un point du sol : sous la sortie, à mi-chemin du bas de l'écran,
-           dans l'axe du trou. */
-        const pileSol = document.elementsFromPoint(cx, (so.bottom + Math.min(innerHeight, rt.bottom)) / 2);
-        sol = { photo: pileSol.indexOf(img), tunnel: pileSol.indexOf(tunnel),
-          devant: nom(pileSol.find((e) => !dedans.contains(e))) };
-      }
-      sonde.remove();
-      return {
-        src: img.currentSrc.replace(/^.*\/img\//, '/img/'),
-        complete: img.complete, largeur: W, hauteur: H, opacite,
-        boite: { dx: Math.round(ri.left - rt.left), dy: Math.round(ri.top - rt.top),
-          dl: Math.round(ri.width - rt.width), dh: Math.round(ri.height - rt.height) },
-        rapports: [W / H, ri.width / ri.height],
-        trou, sortie: { g: so.left, d: so.right, h: so.top, b: so.bottom }, centre, sol,
-      };
-    }, PHOTO);
-    check(`la photo du couloir est là, entière et visible (${couloir?.src ?? 'absente'})`,
-      couloir !== null && couloir.complete && couloir.largeur > 0 && couloir.opacite === 1
-      || (console.log('        elle est :', JSON.stringify(couloir && {
-        src: couloir.src, complete: couloir.complete, largeur: couloir.largeur, opacite: couloir.opacite })), false));
-    check('elle remplit le tunnel, sans décalage ni déformation',
-      couloir !== null && Object.values(couloir.boite).every((v) => Math.abs(v) <= 1)
-        && Math.abs(couloir.rapports[0] / couloir.rapports[1] - 1) < 0.01
-      || (console.log('        écart à la boîte du tunnel :', JSON.stringify(couloir?.boite),
-        '· rapports image / boîte :', JSON.stringify(couloir?.rapports)), false));
-    /* Le trou tient dans la sortie, au pixel près : la feuille la fait
-       déborder d'un pour cent de la largeur sous le bord adouci, exprès. */
-    const trou = couloir?.trou, bout = couloir?.sortie;
-    check('au centre de son trou, on voit la sortie, pas un pan de béton',
-      Boolean(trou && couloir.centre?.sortie && couloir.centre.photo < couloir.centre.dessous)
-        && trou.g >= bout.g - 1 && trou.d <= bout.d + 1 && trou.h >= bout.h - 1 && trou.b <= bout.b + 1
-      || (console.log('        sous le trou :', couloir?.centre?.quoi ?? '?',
-        '· trou', JSON.stringify(trou && Object.fromEntries(Object.entries(trou).map(([k, v]) => [k, Math.round(v)]))),
-        '· sortie', JSON.stringify(bout && Object.fromEntries(Object.entries(bout).map(([k, v]) => [k, Math.round(v)])))), false));
-    check('elle passe devant le sol, et derrière le texte de l’écran',
-      Boolean(couloir?.centre && couloir.sol)
-        && couloir.centre.dedans >= 0 && couloir.centre.dedans < couloir.centre.photo
-        && couloir.sol.photo >= 0 && (couloir.sol.tunnel < 0 || couloir.sol.photo < couloir.sol.tunnel)
-      || (console.log('        au centre :', JSON.stringify(couloir?.centre),
-        '· au sol :', JSON.stringify(couloir?.sol)), false));
-    await p4.close();
-
-    /* ---- 1 ter. sans sa photo ----
+    /* ---- 1 ter. sans la photo du stade ----
 
        Une photo qui manque ne doit pas rester en image cassée de la taille de
-       l'écran : Chrome la peindrait avec son icône et un cadre gris,
-       par-dessus le repli. Elle s'en va (`onerror`), et le béton peint
-       reprend. On ne refuse que les photos du couloir (et `ouverture.js`,
-       pour que l'écran reste à mesurer), dans un contexte neuf : une photo
-       déjà chargée par la page d'avant pourrait revenir sans requête.
-
-       « Le béton reprend » se lit en pixels, `.dedans` masqué le temps des
-       captures, sur le mur de gauche entre la bâche et le bas de la sortie.
-       **Par différence, et non contre une couleur** : le halo de la sortie
-       éclaire ce coin du tunnel, et un tunnel sans murs n'y est donc pas du
-       fond nu — le premier jet, qui comparait au fond, restait vert murs
-       éteints. On capture la zone telle quelle, puis murs masqués : si les
-       murs peignent, les deux diffèrent ; si leur règle est partie, ou si
-       quelque chose les couvre encore, elles sont identiques. */
+       l'écran : Chrome la peindrait avec son icône et un cadre gris. Elle
+       s'en va (`onerror`), et l'écran garde son noir. Dans un contexte neuf :
+       la photo déjà chargée par la page d'avant reviendrait sans requête. */
+    await ctxKop.close?.();
     const ctxSans = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext());
     const p4b = await ctxSans.newPage();
     await p4b.setViewport({ width: 400, height: 880 });
@@ -1902,55 +1822,17 @@ await page.close();
     let refusees = 0;
     p4b.on('request', (r) => {
       if (/\/ouverture\.js/.test(r.url())) r.abort().catch(() => {});
-      else if (/\/img\/ecran\/tunnel-/.test(r.url())) {
+      else if (/\/img\/ecran\/tribune/.test(r.url())) {
         refusees += 1;
         r.respond({ status: 404, contentType: 'text/plain', body: 'absente' }).catch(() => {});
       } else r.continue().catch(() => {});
     });
     await p4b.goto(base + "/", { waitUntil: "domcontentloaded" });
-    const retiree = await p4b.waitForFunction((s) => !document.querySelector(s),
-      { timeout: 6000 }, PHOTO).then(() => true).catch(() => false);
-    const sans = await p4b.evaluate(() => {
-      const tunnel = document.querySelector('#ouverture .tunnel');
-      const bache = document.querySelector('#ouverture .bache.g')?.getBoundingClientRect();
-      const so = document.querySelector('#ouverture .sortie')?.getBoundingClientRect();
-      const rt = tunnel?.getBoundingClientRect();
-      const zone = bache && so && rt ? {
-        x: Math.ceil(Math.max(0, rt.left) + 4), y: Math.ceil(bache.bottom + 4),
-        width: Math.floor(so.left - 4 - Math.max(0, rt.left) - 4),
-        height: Math.floor(so.bottom - 4 - bache.bottom - 4),
-      } : null;
-      const dedans = document.querySelector('#ouverture .dedans');
-      if (dedans) dedans.style.visibility = 'hidden';
-      return { ecran: Boolean(document.getElementById('ouverture')),
-        // Seule l'image part : ses sources restent, et le reste de l'écran aussi.
-        sources: document.querySelectorAll('#ouverture source[srcset*="/img/ecran/tunnel-"]').length,
-        zone };
-    });
-    let ecartAuTunnelNu = null;
-    if (sans.zone && sans.zone.width > 0 && sans.zone.height > 0) {
-      const sharp = (await import('sharp')).default;
-      const capture = async () => (await sharp(await p4b.screenshot({ clip: sans.zone, encoding: 'binary' }))
-        .removeAlpha().raw().toBuffer());
-      const avec = await capture();
-      await p4b.evaluate(() => {
-        const s = document.createElement('style');
-        s.textContent = '#ouverture .murs{visibility:hidden !important}';
-        document.head.append(s);
-      });
-      const nu = await capture();
-      let somme = 0;
-      for (let i = 0; i < avec.length; i += 3) {
-        somme += Math.max(...[0, 1, 2].map((c) => Math.abs(avec[i + c] - nu[i + c])));
-      }
-      ecartAuTunnelNu = somme / (avec.length / 3);
-    }
+    const retiree = await p4b.waitForFunction(() => !document.querySelector('#ouverture .stade img'),
+      { timeout: 6000 }).then(() => true).catch(() => false);
+    const ecranReste = await p4b.evaluate(() => Boolean(document.getElementById('ouverture')));
     check(`sans sa photo, elle s’en va au lieu de rester cassée (requêtes refusées : ${refusees})`,
-      refusees >= 1 && retiree && sans.ecran && sans.sources > 0
-      || (console.log('        écran :', sans.ecran, '· sources :', sans.sources, '· retirée :', retiree), false));
-    check(`et le béton peint reprend (écart moyen au tunnel sans murs : ${ecartAuTunnelNu?.toFixed(1) ?? '?'})`,
-      ecartAuTunnelNu !== null && ecartAuTunnelNu > 4
-      || (console.log('        zone :', JSON.stringify(sans.zone)), false));
+      refusees >= 1 && retiree && ecranReste);
     await p4b.close();
     await ctxSans.close?.();
 
