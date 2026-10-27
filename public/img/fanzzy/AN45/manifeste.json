@@ -1,6 +1,6 @@
 {
   "id": "AN45",
-  "rev": 2,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -29,7 +29,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b0e670c154fa"
+          "sha": "b0e670c154fa",
+          "cligne": true
         }
       }
     },
@@ -44,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1621a3be50aa"
+          "sha": "1621a3be50aa",
+          "cligne": true
         }
       }
     }
