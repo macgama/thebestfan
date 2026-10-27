@@ -1,6 +1,6 @@
 {
   "id": "RP31",
-  "rev": 4,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4575c72e5a6b"
+          "sha": "4575c72e5a6b",
+          "cligne": true
         },
         "halloween": {
           "etats": [
