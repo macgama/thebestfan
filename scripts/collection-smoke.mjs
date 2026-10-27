@@ -1021,8 +1021,8 @@ await ouvrirRayon('ultimes');
   await fermerVitrine();
   clic(cases[1]);
   await jusqua(vitrineOuverte);
-  check('une carte à gagner mène au kiosque, et montre la scène de tous',
-    Boolean(D.querySelector('#vitr a[href="/boosters"]')) && /VOIR L’ULTIMATE/.test(vitrine()));
+  check('une carte à gagner mène au kiosque, sans scène à voir',
+    Boolean(D.querySelector('#vitr a[href="/boosters"]')) && !D.querySelector('#vitr [data-scene-ultime]'));
   await fermerVitrine();
 }
 

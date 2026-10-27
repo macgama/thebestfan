@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**L'Ultimate ne se voit qu'avec sa carte** (branche
+`claude/project-thread-0u99uq`, 27 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Collection, vitrine d'une carte Ultimate à gagner : plus de bouton VOIR
+  L'ULTIMATE, seulement le chemin du booster. VOIR LA GRANDE SCÈNE reste sur
+  une carte gagnée.
+- Fiche : la plaque ULTIMATE d'une carte pas encore gagnée montre un cadenas
+  et BOOSTER ; la toucher dit où la trouver, sans jouer la scène.
+
+---
+
 **Le nom du Fanzzy ouvre sa fiche** (branche `claude/project-thread-5rpxvz`,
 27 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
