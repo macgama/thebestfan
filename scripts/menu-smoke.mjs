@@ -33,7 +33,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
-import { VERSION_PUBLIQUE, ETIQUETTE } from '../src/shared/version.js';
+import { versionPublique, etiquette } from '../src/shared/version.js';
+const ETIQUETTE = etiquette();
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
@@ -62,7 +63,7 @@ app.get('/api/public/reglages', (_q, s) => s.json({}));
    que le tiroir sait l'afficher, pas qu'un banc sait répondre. Le fourre-tout
    `/api` plus bas rendrait `{}`, et la ligne resterait vide — le contrôle
    passerait en ne prouvant rien. */
-app.get('/api/version', (_q, s) => s.json(VERSION_PUBLIQUE));
+app.get('/api/version', (_q, s) => s.json(versionPublique()));
 /* Le reste du jeu, en creux. Une page qui demande son contenu et reçoit un
    objet vide se monte quand même ; une page qui reçoit un 404 en HTML tombe
    sur `r.json()` et le contrôle mesurerait alors une page morte. */
