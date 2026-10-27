@@ -6492,5 +6492,17 @@
  "LANCÉ": "AUSGELÖST",
  "Ta tribune vient de lancer cette carte, elle se recharge pour tous": "Deine Kurve hat diese Karte gerade gespielt, sie lädt für alle",
  "Filet tendu": "Netz gespannt",
- "Pendant 12 s, les entraves d’en face ne te touchent pas.": "12 s lang können dir die Störungen der Gegenseite nichts anhaben."
+ "Pendant 12 s, les entraves d’en face ne te touchent pas.": "12 s lang können dir die Störungen der Gegenseite nichts anhaben.",
+ "Tout le monde a l’Ultimate. Sa carte, dans un booster, débloque la grande scène de chaque âge atteint.": "Jeder hat das Ultimate. Seine Karte aus einem Booster schaltet die große Szene jedes erreichten Alters frei.",
+ "{0}, {1}, âge {2}": "{0}, {1}, Alter {2}",
+ "Ouvre un booster : chaque Fanzzy que tu obtiens a son Ultimate à collectionner.": "Öffne einen Booster: Jeder Fanzzy, den du bekommst, hat sein Ultimate zum Sammeln.",
+ "VOIR LA GRANDE SCÈNE": "GROSSE SZENE ANSEHEN",
+ "VOIR L’ULTIMATE": "ULTIMATE ANSEHEN",
+ "carte gagnée, voir la grande scène": "Karte gewonnen, große Szene ansehen",
+ "voir la scène, sa carte est dans les boosters": "Szene ansehen, die Karte steckt in den Boostern",
+ "Ultimate : {0} — carte gagnée, voir la grande scène": "Ultimate: {0} — Karte gewonnen, große Szene ansehen",
+ "Ultimate : {0} — voir la scène, sa carte est dans les boosters": "Ultimate: {0} — Szene ansehen, die Karte steckt in den Boostern",
+ "TA CARTE": "DEINE KARTE",
+ "{0}TA CARTE": "{0}DEINE KARTE",
+ "{0}BOOSTER": "{0}BOOSTER"
 }

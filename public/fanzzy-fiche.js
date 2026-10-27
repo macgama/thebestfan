@@ -329,8 +329,13 @@
          et c'est ce que la tuile dit. La toucher joue la scène. */
       if (d.ultimes) {
         const a = ageDe(n);
+        const grande = Boolean(d.ultimes?.[n]?.possede);
+        /* La carte gagnée montre son image Ultimate (`/ultime.js`), quand le
+           Fanzzy en a une : c'est le visuel qu'on collectionne. Sinon, et
+           tant qu'elle est à gagner, la pose qui pousse. */
+        const art = grande && aMoi() ? window.TBF_ULTIME?.image?.(d.fanzzy.racine ?? d.fanzzy.id, n) : null;
         liste.push({ cle: 'ultime', rang: 'ULTIMATE', titre: a?.cri?.label || 'Ultimate', id: 'ultime',
-          ok: true, grande: Boolean(d.ultimes?.[n]?.possede), atteint: Boolean(a?.possede ?? n <= d.stade),
+          ok: true, grande, atteint: Boolean(a?.possede ?? n <= d.stade), art: art ?? null,
           image: dessinExact(n, { etat: 'pousse' })
             ?? (aMoi() ? portraitAge(a ?? { id: d.fanzzy.ageId ?? d.fanzzy.id }) : null) });
       }
@@ -679,7 +684,7 @@
     function peindreCotes() {
       const v = hote.querySelector('#fiche-vitrine');
       if (!v) return;
-      v.querySelectorAll(':scope > .cote-g, :scope > .tourne, :scope > .paquet, :scope > .cri-court')
+      v.querySelectorAll(':scope > .cote-g, :scope > .tourne, :scope > .paquet, :scope > .cri-court, :scope > .cote-ult')
         .forEach((n) => n.remove());
       const a = ageDe(vu());
       const atteint = aMoi() && Boolean(a?.possede ?? true);
@@ -698,6 +703,7 @@
           aria-pressed="false" aria-label="Retourner la carte">${SVG.tourne}</button>`;
       }
       claquerAvatar = false;
+      html += plaqueUltime();
       const cri = criVu();
       if (aMoi() && cri) {
         html += `<button type="button" class="tbf-plaque tbf-plaque--rond cri-court" data-cri
@@ -717,6 +723,24 @@
       v.insertAdjacentHTML('beforeend', html);
       v.querySelector('.cote-g.tbf-clac')?.addEventListener('animationend',
         (e) => e.currentTarget.classList.remove('tbf-clac'), { once: true });
+    }
+
+    /** **L'Ultimate, à côté de la carte** (27 octobre 2026, Gaël : « quand je
+        suis sur la fiche du fanzzy, je ne vois pas l'ultimate »). Dans la
+        gouttière de droite, au-dessus de la plaque qui retourne : sa
+        vignette, le mot ULTIMATE, et ce qu'on a — la carte gagnée à l'or
+        (TA CARTE), sinon BOOSTER. Le toucher fait comme la tuile de
+        l'inventaire : le détail dit la règle, et la scène se joue — la
+        grande si la carte est gagnée. */
+    function plaqueUltime() {
+      if (!aMoi()) return '';
+      const x = pieces.find((y) => y.rang === 'ULTIMATE');
+      if (!x) return '';
+      const img = x.art ?? x.image;
+      const nom = `Ultimate : ${x.titre} — ${x.grande ? 'carte gagnée, voir la grande scène' : 'voir la scène, sa carte est dans les boosters'}`;
+      return `<button type="button" class="tbf-plaque cote-ult"${x.grande ? ' data-ton="or"' : ''} data-case="ultime"
+        aria-label="${esc(nom)}">${img ? `<img src="${esc(img)}" alt="" onerror="this.remove()">` : ''}<b>ULTIMATE</b><small>${
+        SVG.lecture}${x.grande ? 'TA CARTE' : 'BOOSTER'}</small></button>`;
     }
 
     /** L'adresse de la vignette du paquet de la série, ou rien. */
@@ -779,8 +803,11 @@
       const gauche = n.scrollLeft;
       /* L'ordre est celui de l'importance : ce qu'il devient, ce qu'il
          change, puis ce qu'il montre. Les tenues ferment la marche : ce sont
-         les seules qui ne changent rien au jeu, et les plus nombreuses. */
-      const rangs = ['ÂGES', 'EFFETS', 'ULTIMATE', 'ÉTATS', 'TENUES']
+         les seules qui ne changent rien au jeu, et les plus nombreuses.
+         **L'Ultimate suit les âges** (27 octobre 2026, Gaël : « je ne vois
+         pas l'ultimate ») : derrière les effets, il tombait au bord droit,
+         coupé, sur un téléphone. */
+      const rangs = ['ÂGES', 'ULTIMATE', 'EFFETS', 'ÉTATS', 'TENUES']
         .map((r) => [r, pieces.filter((x) => x.rang === r)])
         .filter(([, l]) => l.length);
       n.innerHTML = rangs.map(([nom, l]) => `<section class="tbf-inventaire-rang rang">
@@ -870,7 +897,8 @@
     /** La tuile de l'Ultimate : à l'or quand la grande scène est gagnée,
         un sticker BOOSTER sinon — sans scotch, le coup est à tout le monde. */
     function tuileUltime(x, choisi) {
-      const dedans = x.image ? `<img src="${esc(x.image)}" alt="" loading="lazy" onerror="this.remove()">`
+      const img = x.art ?? x.image;
+      const dedans = img ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()">`
         : trait('etat');
       const colle = !aMoi() ? ''
         : x.grande ? '<span class="tbf-sticker" data-ton="or" aria-hidden="true">SCÈNE</span>'

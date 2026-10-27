@@ -808,8 +808,17 @@ function dessinDeCarte(f, { etiquette = true, pied = false, silhouette = false }
     /* Le dessin de l'état, s'il existe. Toutes les lignées ne sont pas
        dessinées dans les quatre expressions, et `resoudre` rend `null`
        plutôt que d'inventer. */
-    /* La carte Ultimate n'a pas de dessin à elle : elle montre le
-       personnage qui pousse, la pose la plus proche du coup fatal. */
+    /* **La carte Ultimate gagnée montre son image Ultimate** (`/ultime.js`,
+       plein cadre, son décor compris), quand la page l'a chargée et que le
+       Fanzzy en a une : c'est le visuel qu'on collectionne. Jamais sous le
+       pochoir — une image pleine n'y serait qu'une dalle grise. */
+    const ult = f.id === 'ultime' && !silhouette ? window.TBF_ULTIME?.image?.(f.pour, f.stage ?? 1) : null;
+    if (ult) {
+      return cadrerEtat(`<div class="illuwrap"><img class="illu fz-pleine" style="object-position:50% 35%" src="${ult}" alt="" loading="lazy">
+        ${etiquette && f.etatMot ? `<span class="tbf-etiq">${esc(f.etatMot)}</span>` : ''}</div>`);
+    }
+    /* Sinon, elle n'a pas de dessin à elle : elle montre le personnage qui
+       pousse, la pose la plus proche du coup fatal. */
     const r = window.TBF_ETATS?.resoudre?.(f.pour, { evo: f.stage ?? 1,
       etat: f.id === 'ultime' ? 'pousse' : f.id });
     /* **Le repli est le portrait du personnage, pas une silhouette.**

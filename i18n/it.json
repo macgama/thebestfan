@@ -6492,5 +6492,17 @@
  "LANCÉ": "LANCIATO",
  "Ta tribune vient de lancer cette carte, elle se recharge pour tous": "La tua curva ha appena giocato questa carta, si ricarica per tutti",
  "Filet tendu": "Rete tesa",
- "Pendant 12 s, les entraves d’en face ne te touchent pas.": "Per 12 s, gli ostacoli avversari non ti toccano."
+ "Pendant 12 s, les entraves d’en face ne te touchent pas.": "Per 12 s, gli ostacoli avversari non ti toccano.",
+ "Tout le monde a l’Ultimate. Sa carte, dans un booster, débloque la grande scène de chaque âge atteint.": "Tutti hanno l’Ultimate. La sua carta, in un booster, sblocca la grande scena di ogni età raggiunta.",
+ "{0}, {1}, âge {2}": "{0}, {1}, età {2}",
+ "Ouvre un booster : chaque Fanzzy que tu obtiens a son Ultimate à collectionner.": "Apri un booster: ogni Fanzzy che ottieni ha il suo Ultimate da collezionare.",
+ "VOIR LA GRANDE SCÈNE": "GUARDA LA GRANDE SCENA",
+ "VOIR L’ULTIMATE": "GUARDA L’ULTIMATE",
+ "carte gagnée, voir la grande scène": "carta vinta, guarda la grande scena",
+ "voir la scène, sa carte est dans les boosters": "guarda la scena, la sua carta è nei booster",
+ "Ultimate : {0} — carte gagnée, voir la grande scène": "Ultimate: {0} — carta vinta, guarda la grande scena",
+ "Ultimate : {0} — voir la scène, sa carte est dans les boosters": "Ultimate: {0} — guarda la scena, la sua carta è nei booster",
+ "TA CARTE": "TUA CARTA",
+ "{0}TA CARTE": "{0}TUA CARTA",
+ "{0}BOOSTER": "{0}BOOSTER"
 }

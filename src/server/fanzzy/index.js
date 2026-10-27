@@ -206,8 +206,12 @@ const rnd = (a) => a[Math.floor(Math.random() * a.length)];
  * Un ensemble de types de `compter()`, et non une soustraction écrite dans
  * `paliersDe` et dans le recompte du versement : la route et le grand livre
  * comptent avec la même liste.
+ *
+ * **Les cartes Ultimate non plus** (27 octobre 2026) : elles ont leur rayon
+ * dans la collection, mais elles sont arrivées après le calibrage des
+ * paliers ; les compter aurait avancé la jauge de tout le monde d'un coup.
  */
-const HORS_CRANS = new Set(['tenues']);
+const HORS_CRANS = new Set(['tenues', 'ultimes']);
 
 /**
  * Quelle saison a ouvert chaque série.
@@ -1797,6 +1801,17 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       etatsGagnes(userId, lecteur).catch(() => null),
       lire(`SELECT stade_id FROM user_stades WHERE user_id = ?`, [userId]),
     ]);
+    /* Les cartes Ultimate (`shared/ultime.js`) : rangées dans `user_etats`,
+       que `etatsGagnes` lit sans elles. Âge par âge, par lignée. */
+    const ult = await lire(`SELECT fanzzy_id, stage FROM user_etats WHERE user_id = ? AND etat = ?`,
+      [userId, ETAT_ULTIME]);
+    const ultimesDe = new Map();
+    for (const r of ult) {
+      const id = racineDe(r.fanzzy_id);
+      const s = Number(r.stage);
+      if (!Number.isInteger(s) || s < 1) continue;
+      (ultimesDe.get(id) ?? ultimesDe.set(id, new Set()).get(id)).add(s);
+    }
 
     const persos = obtenables();
     const atteint = new Map(fz.map((r) => [racineDe(r.fanzzy_id), Math.max(1, Number(r.stage) || 1)]));
@@ -1813,6 +1828,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       fanzzy: { gagnes: 0, possibles: persos.length, items: [] },
       etats: { gagnes: 0, possibles: 0 },
       tenues: { gagnes: 0, possibles: 0 },
+      /* Une carte Ultimate par âge de chaque lignée, tout l'univers compté
+         comme pour les états. */
+      ultimes: { gagnes: 0, possibles: 0 },
     };
     const parFanzzy = [];
     for (const f of persos) {
@@ -1827,10 +1845,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       const tG = tenuesDe.get(f.id) ?? 0;
       T.etats.possibles += eP; T.etats.gagnes += Math.min(eG, eP);
       T.tenues.possibles += tP; T.tenues.gagnes += Math.min(tG, tP);
+      const uG = [...(ultimesDe.get(f.id) ?? [])].filter((s) => s <= ages).sort((a, b) => a - b);
+      T.ultimes.possibles += ages; T.ultimes.gagnes += uG.length;
       if (possede) {
         parFanzzy.push({ id: f.id, nom: f.nom, stade: atteint.get(f.id), ages,
           etats: { gagnes: Math.min(eG, eP), possibles: eP },
-          tenues: { gagnes: Math.min(tG, tP), possibles: tP } });
+          tenues: { gagnes: Math.min(tG, tP), possibles: tP },
+          // Les âges dont la carte Ultimate est gagnée.
+          ultimes: uG });
       }
     }
 
