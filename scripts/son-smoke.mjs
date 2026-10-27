@@ -130,6 +130,14 @@ const PAGE_SCENE = '<!doctype html><html lang="fr"><head><meta charset="utf-8">'
   + '<title>scene</title></head><body><div id="hote" style="width:200px;height:300px"></div>'
   + '<script src="/fanzzy-scene.js"></script></body></html>';
 
+/* Une page « normale » du jeu (27 octobre 2026) : la musique y joue, et
+   seulement là. Servie aux adresses du jeu, puisque c'est l'adresse qui dit
+   si une page a sa musique. */
+const PAGE_MUSIQUE = '<!doctype html><html lang="fr"><head><meta charset="utf-8">'
+  + '<title>musique</title></head><body>'
+  + '<button id="geste" style="width:240px;height:120px">GESTE</button><a id="lien" href="/carnet">carnet</a>'
+  + '<script src="/fx.js" defer></script></body></html>';
+
 /* Sans moteur, rien d'autre ne se mesure : la panne est un contrôle rouge
    qui dit sa cause, pas une exception qui coupe la suite. */
 const banc = await ouvrirBanc({
@@ -138,6 +146,9 @@ const banc = await ouvrirBanc({
     app.get('/__son-cartes', (_q, s) => s.type('html').send(PAGE_CARTES));
     app.get('/__son-geste', (_q, s) => s.type('html').send(PAGE_GESTE));
     app.get('/__son-scene', (_q, s) => s.type('html').send(PAGE_SCENE));
+    for (const chemin of ['/kop', '/carnet', '/virage', '/jeux', '/duel-nvn']) {
+      app.get(chemin, (_q, s) => s.type('html').send(PAGE_MUSIQUE));
+    }
   },
 }).catch((e) => {
   check('fx.js charge le moteur (son.js) dans une page qui n’a que lui', false, e.message);
@@ -1760,6 +1771,84 @@ if (banc) try {
       check('aucune erreur de script (fichier illisible)', erreurs.length === 0, ...erreurs);
       await page.close();
     }
+  }
+
+  /* ============================================ la musique du jeu */
+
+  /* 27 octobre 2026 : « The Final Turn », la création de Gaël. La boucle
+     sous les pages « normales », jamais au duel, au Virage ni aux
+     mini-jeux ; rien avant le premier geste ; coupée par sa facette du
+     calme (et par celle des sons) ; reprise où elle en était à la page
+     suivante ; la victoire au bilan d'un duel gagné, décodée d'avance. */
+  console.log('\n  la musique du jeu (27 octobre 2026)');
+  {
+    const { page, erreurs } = await nouvellePage('/kop');
+    const vus = [];
+    page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/')) vus.push(u); });
+    const musique = () => page.evaluate(() => window.TBF_SON.etat().musique);
+    await attendre(300);
+    check('avant le premier geste, rien ne se télécharge et rien ne joue',
+      vus.length === 0 && (await musique()).joue === false, vus);
+    await page.click('#geste');
+    const partie = await jusqua(page, (x) => x.musique.joue, 5000);
+    check('au premier geste, la boucle part (une page normale)', partie, await musique());
+    check('un seul fichier, la boucle', vus.length === 1 && vus[0].startsWith('/son/musique-accueil.'), vus);
+    const boucles = await page.evaluate(() => window.__sonTampons.filter((x) => x.boucle && x.duree > 40));
+    check('elle se joue entre ses bornes (0,25 s et 50,11 s), jamais le fichier entier',
+      boucles.length === 1 && Math.abs(boucles[0].debut - 0.25) < 0.001
+        && Math.abs(boucles[0].fin - 50.11) < 0.001, boucles);
+    await page.evaluate(() => document.documentElement.setAttribute('data-calme', 'musique'));
+    await attendre(100);
+    check('couper la musique l’arrête', (await musique()).joue === false, await musique());
+    check('et laisse les sons', await page.evaluate(() => window.TBF_SON.jouer('tic')) === true);
+    await page.evaluate(() => document.documentElement.removeAttribute('data-calme'));
+    await attendre(100);
+    check('rétablie, elle revient sans rien retélécharger', (await musique()).joue === true && vus.length === 1, vus);
+    await page.evaluate(() => document.documentElement.setAttribute('data-calme', 'sons'));
+    await attendre(100);
+    check('couper les sons la coupe aussi', (await musique()).joue === false);
+    await page.evaluate(() => document.documentElement.removeAttribute('data-calme'));
+    await jusqua(page, (x) => x.musique.joue, 2000);
+    await attendre(1200);
+    const avant = (await musique()).place;
+    await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), page.click('#lien')]);
+    await page.waitForFunction(() => Boolean(window.TBF_SON && window.FX), { timeout: 10000 });
+    await page.click('#geste');
+    await jusqua(page, (x) => x.musique.joue, 5000);
+    const apres = (await musique()).place;
+    check('à la page suivante, elle reprend où elle en était', avant > 0.5 && apres >= avant && apres < avant + 3,
+      { avant, apres });
+    check('aucune erreur de script (musique)', erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+  for (const chemin of ['/virage', '/jeux', '/duel-nvn']) {
+    const { page, erreurs } = await nouvellePage(chemin);
+    const vus = [];
+    page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/musique-accueil')) vus.push(u); });
+    await page.click('#geste');
+    await attendre(800);
+    const m = await page.evaluate(() => window.TBF_SON.etat().musique);
+    check(`pas de musique sur ${chemin}, et rien de téléchargé pour elle`, !m.page && !m.joue && vus.length === 0, m, vus);
+    check(`aucune erreur de script (${chemin})`, erreurs.length === 0, ...erreurs);
+    await page.close();
+  }
+  {
+    const { page, erreurs } = await nouvellePage('/duel-nvn');
+    const vus = [];
+    page.on('request', (r) => { const u = new URL(r.url()).pathname; if (u.startsWith('/son/musique-')) vus.push(u); });
+    await page.click('#geste');
+    let partie = false;
+    for (let i = 0; i < 40 && !partie; i++) {
+      await attendre(100);
+      partie = await page.evaluate(() => { window.__sonTampons.length = 0; return window.TBF_SON.victoire(); });
+    }
+    const t = await page.evaluate(() => window.__sonTampons.filter((x) => !x.boucle));
+    check('au duel, la victoire est décodée d’avance et part (29,5 s)', partie && t.some((x) => x.duree > 29.4 && x.duree < 29.6), t);
+    check('seule la victoire se télécharge au duel', vus.length === 1 && vus[0].startsWith('/son/musique-victoire.'), vus);
+    await page.evaluate(() => window.TBF_SON.victoire(false));
+    check('elle se tait quand on rejoue ou qu’on revient', (await page.evaluate(() => window.TBF_SON.etat().musique)).victoire === false);
+    check('aucune erreur de script (victoire)', erreurs.length === 0, ...erreurs);
+    await page.close();
   }
 
   /* ======================================= les sons des clubs */
