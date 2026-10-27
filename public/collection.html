@@ -1528,9 +1528,9 @@ function vueCartes(v, r) {
    **Une carte par âge atteint de chaque Fanzzy qu'on a** : ce sont les
    seules qu'un booster peut donner (`fanzzy/index.js`, la carte Ultimate
    d'un âge). Gagnée, elle est pleine ; à gagner, sous son pochoir. La
-   toucher l'ouvre en vitrine, où VOIR LA SCÈNE la joue. Le compte de
-   l'en-tête est celui de la bibliothèque, sur tout l'univers, comme les
-   états. */
+   toucher l'ouvre en vitrine, où VOIR LA GRANDE SCÈNE la joue — gagnée
+   seulement. Le compte de l'en-tête est celui de la bibliothèque, sur tout
+   l'univers, comme les états. */
 function vueUltimes(v, r) {
   const T = E.B.types?.ultimes ?? {};
   const liste = [];
@@ -1568,12 +1568,11 @@ function vueUltimes(v, r) {
   surveiller(v);
 }
 
-/** Joue la scène d'une carte Ultimate : la grande si elle est gagnée, la
-    courte sinon — celle que tout le monde a (`/ultime.js`). */
+/** Joue la grande scène d'une carte Ultimate gagnée (`/ultime.js`). */
 function jouerUltime(o) {
   const u = window.TBF_CARTES?.ultimeDe?.(o.pour, o.stade) ?? {};
   const src = window.TBF_ETATS?.resoudre?.(o.pour, { evo: o.stade, etat: 'pousse' })?.src ?? buste(o.pour);
-  window.TBF_ULTIME?.scene?.({ src, cri: u.cri, nom: u.nom, couleur: u.couleur, grande: Boolean(o.possede),
+  window.TBF_ULTIME?.scene?.({ src, cri: u.cri, nom: u.nom, couleur: u.couleur, grande: true,
     racine: o.pour, age: o.stade });
 }
 
@@ -1817,9 +1816,10 @@ function vueCarte(vue) {
       }
     }
   }
-  if (o.k === 'etat' && o.id === 'ultime') {
-    actions.unshift(`<button type="button" class="tbf-plaque tbf-bloc" data-ton="flare" data-scene-ultime>${
-      possede ? 'VOIR LA GRANDE SCÈNE' : 'VOIR L’ULTIMATE'}</button>`);
+  /* La grande scène ne se voit qu'avec sa carte (Gaël, 27 octobre 2026) :
+     une carte à gagner montre le chemin du kiosque, et rien d'autre. */
+  if (o.k === 'etat' && o.id === 'ultime' && possede) {
+    actions.unshift('<button type="button" class="tbf-plaque tbf-bloc" data-ton="flare" data-scene-ultime>VOIR LA GRANDE SCÈNE</button>');
   }
   if (o.k === 'etat' || o.k === 'skin') {
     actions.push(`<a class="tbf-plaque tbf-bloc" href="/fanzzy/${encodeURIComponent(o.pour)}">VOIR SA FICHE</a>`);
@@ -2164,7 +2164,7 @@ $('vitr').addEventListener('click', (e) => {
   if (e.target.closest('[data-scene-ultime]')) {
     const vue = pileVues[pileVues.length - 1];
     const o = vue?.liste?.[vue.i];
-    if (o) jouerUltime(o);
+    if (o?.possede) jouerUltime(o);
     return;
   }
 

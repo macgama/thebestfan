@@ -1011,6 +1011,19 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
     check('dans l’écran, à droite de la carte, au-dessus de la plaque qui la retourne',
       Boolean(m.ult?.dedans && m.ult.carte && m.ult.tourne)
       || (console.log('        plaque :', JSON.stringify(m.ult)), false));
+    /* Sans la carte, pas de scène (Gaël, 27 octobre 2026) : la plaque
+       dit la règle dans le détail, et rien ne se joue. */
+    const sansCarte = await fiche.evaluate(async () => {
+      const avant = document.querySelector('.case.choisie')?.dataset.case;
+      document.querySelector('#fiche-vitrine .cote-ult')?.click();
+      await new Promise((r) => setTimeout(r, 500));
+      const r = { scene: Boolean(document.querySelector('.tbf-ult')),
+        detail: document.getElementById('fiche-detail').textContent.replace(/\s+/g, ' ').trim() };
+      document.querySelector(`[data-case="${avant}"]:not(.cote-ult)`)?.click();
+      return r;
+    });
+    check(`sans sa carte, la plaque ne joue pas la scène (${sansCarte.detail.slice(0, 50)})`,
+      !sansCarte.scene && /booster/i.test(sansCarte.detail));
     check('et il y a des cases à regarder', m.cases >= 4);
     check('celles qu’on n’a pas restent visibles, verrouillées', m.verrous > 0);
     /* Une case est choisie d'entrée, sinon le bloc de détail s'ouvre vide et
