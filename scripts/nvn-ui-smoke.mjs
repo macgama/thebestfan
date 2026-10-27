@@ -1108,18 +1108,26 @@ const ouvert = await A.page.evaluate(() => ({
           const r = s.getBoundingClientRect(); return r.top < i.bottom && r.bottom > i.top; });
       return { fautes, lus, cote };
     });
-    /* Les vignettes glissent en cascade (`.tbf-glisse`, 320 ms après au plus
-       800 ms de retard) : on mesure une fois posées. */
+    /* L'affiche se joue (27 octobre 2026) : les camps glissent, le VS
+       claque, les noms tombent au tampon — jusqu'à près de trois secondes.
+       On mesure une fois tout posé : quand plus rien n'y bouge, hormis la
+       respiration des deux héros, qui ne s'arrête pas. */
+    const posee = () => A.page.waitForFunction(() => document.getElementById('affiche')
+      .getAnimations({ subtree: true })
+      .every((x) => x.playState !== 'running' || x.effect?.getComputedTiming?.().iterations === Infinity),
+    { timeout: 6000, polling: 100 }).catch(() => {});
     await A.page.setViewport({ width: 320, height: 568 });
     await poser('trois');
-    await dodo(1300);
+    await dodo(100);
+    await posee();
     const etroit = await mesurer();
     await A.page.setViewport({ width: 412, height: 915 });
     await dodo(300);
     const moyen = await mesurer();
     await A.page.setViewport({ width: 320, height: 568 });
     await poser('un');
-    await dodo(1300);
+    await dodo(100);
+    await posee();
     const seul = await mesurer();
     await A.page.setViewport(avant);
     await A.page.evaluate((sauve) => {

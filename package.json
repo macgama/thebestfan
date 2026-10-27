@@ -13,6 +13,7 @@
     "schema:appliquer": "node --env-file-if-exists=.env scripts/appliquer-schema.mjs",
     "schema:smoke": "node scripts/schema-smoke.mjs",
     "catalogue:diag": "node --env-file-if-exists=.env scripts/catalogue-diag.mjs",
+    "simuler": "node scripts/simuler-parties.mjs",
     "prefixes:smoke": "node scripts/prefixes-smoke.mjs",
     "auth:smoke": "node scripts/auth-smoke.mjs",
     "bienvenue:smoke": "node scripts/onboarding-smoke.mjs",
