@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**L'affiche du duel en face-à-face, et l'Ultimate en gros bouton rond**
+(branche `claude/project-thread-4kawd4`, 27 octobre 2026, demandé et validé
+par Gaël). Construction seule, **sans schéma** (une page et les traductions).
+
+- L'affiche avant le duel : les deux camps entrent par les côtés (or chez
+  moi, bleu en face), celui qui entre en grand dans sa pose de poussée, le
+  banc en deux cartes, le VS qui claque au gong, un compte à rebours 3-2-1.
+- Au duel, l'ULTIMATE est un bouton rond au bout de la rangée de l'équipe
+  (anneau qui se remplit, tout or quand il est prêt) ; le « i » de
+  l'équipement passe au coin haut gauche de l'arène.
+- Après la mise en ligne : un duel contre un bot, regarder l'affiche puis le
+  bouton se remplir.
+
+---
+
 **L'Ultimate, le coup fatal des Fanzzy** (branche `claude/project-thread-epar0c`,
 26 octobre 2026, choix de Gaël : « Visuel à collectionner »). Construction
 puis redémarrage, **sans schéma** (la carte se range dans `user_etats`).
