@@ -98,19 +98,19 @@ const mesurer = async (url, w, h) => {
    page va jusqu'au bord de l'écran et `env(safe-area-inset-bottom)` dit la
    hauteur des boutons — 52 px sur le S24+ de Gaël, à 411 × 855. Aucun
    bouton d'un écran de jeu ne descend dessous. */
-const sousLesBoutons = async (url) => {
+const sousLesBoutons = async (url, { inset = 52 } = {}) => {
   const page = await nav.newPage();
   page.on('dialog', (d) => d.dismiss());
   await page.evaluateOnNewDocument(ICONE);
   await page.setUserAgent(ANDROID);
   await page.setViewport({ width: 411, height: 855, isMobile: true, hasTouch: true });
   const cdp = await page.createCDPSession();
-  await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 0, bottom: 52, left: 0, right: 0 } });
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 0, bottom: inset, left: 0, right: 0 } });
   try { await page.goto(base + url, { waitUntil: 'networkidle2', timeout: 15000 }); } catch {}
   await new Promise((r) => setTimeout(r, 600));
   const m = await page.evaluate(() => {
     let bas = 0, qui = '';
-    for (const e of document.querySelectorAll('button, a, [role=button]')) {
+    for (const e of document.querySelectorAll('button, a, [role=button], .ouverture .pied')) {
       const r = e.getBoundingClientRect();
       if (!r.width || !r.height || r.top >= innerHeight || getComputedStyle(e).visibility === 'hidden') continue;
       if (r.bottom > bas) { bas = r.bottom; qui = String(e.className || e.textContent).trim().slice(0, 40); }
@@ -123,6 +123,19 @@ const sousLesBoutons = async (url) => {
 for (const [url, , nom] of ECRANS) {
   const m = await sousLesBoutons(url);
   check(`${nom}, depuis l’icône sur Android : rien sous les boutons du bas (${m.bas} ≤ ${m.fenetre - 52})`,
+    m.bas <= m.fenetre - 52 || (console.log('        ', m), false));
+}
+
+/* **Et quand Chrome ne la dit pas** (27 octobre 2026). Les captures de
+   Gaël du 26 montraient encore le bas de l'accueil sous les boutons :
+   depuis l'icône, sur son S24+, l'inset vaut zéro alors que la fenêtre
+   descend jusqu'au bas de l'écran. L'accueil le déduit (`--bas-cache`, en
+   tête de `index.html`) : une fenêtre à moins de 60 px du bas de l'écran,
+   c'est une fenêtre qui passe sous les boutons. Ici l'écran émulé a la
+   hauteur de la fenêtre, le cas exact. */
+{
+  const m = await sousLesBoutons('/', { inset: 0 });
+  check(`l’accueil, depuis l’icône, inset à zéro : rien sous les boutons du bas (${m.bas} ≤ ${m.fenetre - 52})`,
     m.bas <= m.fenetre - 52 || (console.log('        ', m), false));
 }
 

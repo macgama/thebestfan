@@ -17,8 +17,9 @@
  *      jouer, puis ce qui vient de finir. C'est tout l'intérêt du bloc : un
  *      match en direct relégué en troisième position ne sert à rien.
  *
- *   3. **Le compte des visages**, qui se lit sur `FZART.ILLUSTRES` et ne
- *      s'écrit pas à la main. Recopié, il mentirait au premier dessin ajouté.
+ *   3. **Le compte des visages**, qui se lit sur `FZART.jouables()` (les
+ *      dessins des séries ouvertes) et ne s'écrit pas à la main. Recopié, il
+ *      mentirait au premier dessin ajouté.
  *
  * Ni base, ni navigateur : on prend le HTML réel de la page et le vrai code
  * des fonctions, lus dans `public/index.html`. Recopier l'un ou l'autre ici
@@ -81,8 +82,12 @@ async function monter(reponse) {
   w.$ = (id) => w.document.getElementById(id);
   w.esc = (s) => String(s ?? '').replace(/[<>&"]/g,
     (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+  /* 211 dessins, dont 95 jouables : la vitrine ne montre et ne compte que
+     les jouables (les séries ouvertes, demande de Gaël du 27 octobre 2026). */
+  const illustres = Array.from({ length: 211 }, (_, i) => `TR${i + 1}`);
   w.FZART = {
-    ILLUSTRES: new Set(Array.from({ length: 211 }, (_, i) => `TR${i + 1}`)),
+    ILLUSTRES: new Set(illustres),
+    jouables: async () => illustres.slice(0, 95),
     adresse: (id, v) => `/img/fanzzy/${id}${v === 'buste' ? '-buste' : ''}.avif`,
   };
   w.TBF_HORLOGE = { texte: (e) => (e.statut === '2H' ? `${e.minute}'` : '') };
@@ -125,8 +130,10 @@ const dit = (bon, quoi) => {
   dit(cadres.length === 8, `huit visages (${cadres.length})`);
   dit(new Set(cadres.map((c) => c.querySelector('img').getAttribute('src'))).size === 8,
     'huit visages différents');
-  dit(/Plus de 210 supporters/.test(d.getElementById('vCombien').textContent),
-    `le compte suit la liste des dessins (${d.getElementById('vCombien').textContent})`);
+  dit(/Plus de 90 supporters/.test(d.getElementById('vCombien').textContent),
+    `le compte suit la liste des jouables (${d.getElementById('vCombien').textContent})`);
+  dit(cadres.every((c) => Number(/TR(\d+)-/.exec(c.querySelector('img').getAttribute('src'))?.[1]) <= 95),
+    'les visages ne sont que des jouables');
 }
 
 /* -------------------------------------------------- une journée sans direct */

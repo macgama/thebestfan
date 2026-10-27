@@ -1714,6 +1714,22 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   });
 
   /**
+   * Les Fanzzy jouables : les personnages qu'un booster peut sortir
+   * aujourd'hui, c'est-à-dire publiés et dans une série ouverte.
+   *
+   * Pour les vitrines du jeu — le kop de l'écran d'ouverture, les visages de
+   * la page d'accueil —, qui ne montrent que ce qu'on peut vraiment avoir
+   * (demande de Gaël, 27 octobre 2026). `/dex` porte la même information,
+   * mais avec tout le catalogue : trop lourd pour un écran de chargement.
+   * Une minute de cache, comme `/dex` : une série s'ouvre depuis
+   * l'administration.
+   */
+  router.get('/jouables', (_req, res) => {
+    res.set('cache-control', 'public, max-age=60');
+    res.json({ ids: obtenables().map((f) => f.id) });
+  });
+
+  /**
    * L'état du joueur.
    *
    * `series` y portait **les séries que ce joueur-là avait débloquées**, tirées

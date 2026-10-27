@@ -5,6 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (env(safe-area-inset-bottom) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>thebestfan — le jeu des tribunes</title>
 <!-- **Permanent Marker, dans la même ligne qu'Oswald** (lot 2, fin de
      l'hypothèse H3). L'accueil est la seule page de ce lot qui l'emploie, et
@@ -41,6 +42,11 @@
  * Mesuré à 320, 390 et 400 px de large, avant et après : un pixel de haut
  * d'écart au plus. */
 :root{--rail:clamp(64px,calc(var(--colonne) * .155),88px)}
+/* **Le bas qu'on garde** sous les trois pages de cet écran (vitrine, hub,
+   ouverture) : la barre du téléphone telle que Chrome la dit
+   (`env(safe-area-inset-bottom)`), ou celle que le script de tête a
+   déduite quand il ne la dit pas (`--bas-cache`, voir en tête de page). */
+:root{--bas:max(env(safe-area-inset-bottom,0px),var(--bas-cache,0px))}
 /* L'accueil est un écran **plein cadre** : ses deux rails touchent les bords
    par construction, et la scène occupe tout ce qui reste. La gouttière commune
    de `ui.css` — quatorze pixels de chaque côté — y rétrécissait la grille au
@@ -90,7 +96,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    la soupape : sur un écran de trois cents pixels, ou avec un corps de texte
    forcé par le système, il vaudra toujours mieux faire défiler que rogner la
    mention légale au ciseau.                                                 */
-.wrap{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;overflow-y:auto}
+.wrap{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;overflow-y:auto;
+  padding-bottom:var(--bas)}
 /* ## Chaque ligne de la vitrine a son panneau
 
    Le socle ne laisse aucun texte à même la photo de tribune. La vitrine en
@@ -445,7 +452,7 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    Mesuré au banc : 388 px à 360 × 640, soit 60,6 %. */
 
 .hub{position:relative;z-index:3;display:none;flex-direction:column;height:100%;
-  padding:env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 4px);
+  padding:env(safe-area-inset-top) 10px calc(var(--bas) + 4px);
   gap:8px;
   /* La rangée du haut : sa distance au bord de l'écran, sa hauteur, et ce
      qu'il faut laisser sous elle — c'est là que commencent les rails, la
@@ -1293,19 +1300,17 @@ html[data-calme~="animations"] .pose{transition:none}
 
 /* ================================================== l'écran d'ouverture
 
-   Ce qu'on voit en arrivant de dehors : le tunnel qui mène à la tribune. Un
-   couloir de béton, la lumière du stade au bout, qui grandit pendant qu'on
-   attend ; la fumée rouge et or au sol ; une poignée de Fanzzy qui montent
-   les marches ; et le nom du jeu peint sur une bâche scotchée au mur (lot 2).
+   Ce qu'on voit en arrivant de dehors : un kop. Des rangs de Fanzzy jouables
+   qui sautent derrière leurs barrières, la tribune du stade au loin, la
+   fumée rouge et or entre les têtes, et le nom du jeu peint sur une bâche
+   (lot 2 ; le kop a remplacé le tunnel le 27 octobre 2026).
 
    ## Pourquoi il est dans la page et non après elle
 
    Il est **écrit dans le HTML**, visible avant que la moindre ligne de script
    ne tourne, et c'est tout l'intérêt : un écran d'ouverture qu'il faut charger
-   pour voir arrive après ce qu'il était censé couvrir. Le tunnel est d'abord
-   du CSS, et sa photo de béton se pose dessus quand elle arrive : le couloir
-   peint reste dessous, et tient seul si elle manque (voir « le tunnel »). Le
-   titre et la jauge sont du texte et des boîtes, la photo du stade une image
+   pour voir arrive après ce qu'il était censé couvrir. Le fond est une
+   couleur, le titre et la jauge sont du texte et des boîtes, la photo du stade une image
    qui arrive quand elle peut ; rien ici n'attend le réseau pour exister. Ce
    que `ouverture.js` ajoute — les visages, les libellés qui changent par
    tiers, « TOUCHE POUR ENTRER », l'astuce du jour — vient en plus, jamais
@@ -1345,10 +1350,6 @@ html[data-calme~="animations"] .pose{transition:none}
   background:#05070A;
   color:var(--craie,#F2EEE4);font-family:var(--ui,system-ui,sans-serif);
   transition:opacity .5s ease,visibility .5s ease;
-  /* La durée du plafond, reprise par la lumière du tunnel. `ouverture.js`
-     la réécrit depuis `DUREE` dès qu'il arrive : la lumière finit de grandir
-     quand l'écran s'en va, et changer la constante suffit. */
-  --duree:10s;
 }
 .ouverture.partie{opacity:0;visibility:hidden;pointer-events:none}
 /* **Le doigt ne touche que l'écran entier.** Tout ce qu'il contient est du
@@ -1358,175 +1359,30 @@ html[data-calme~="animations"] .pose{transition:none}
    le bouton de la sortie de secours reprend le doigt. */
 .ouverture > *{pointer-events:none}
 
-/* ------------------------------------------------------------ le tunnel
+/* ------------------------------------------------------------ le stade
 
-   **Une photo, et le béton CSS dessous, en repli.** La photo
-   (`/img/ecran/tunnel-portrait` debout, `tunnel-paysage` couché) porte tout
-   le couloir : le plafond à poutres, les murs, l'escalier, les deux mains
-   courantes et les deux bâches unies. Au bout, un trou transparent, par
-   lequel on voit la sortie. Elle est posée en `<picture>` (`.couloir`) et non
-   en fond : un fond se peint sous les enfants et sous les pseudo-éléments,
-   et le sol (`::after`) la recouvrirait.
+   **Un kop de Fanzzy, et non plus un tunnel** (Gaël, 27 octobre 2026 : « je
+   ne trouve pas la page de loading jolie et représentative de notre
+   application ; il faudrait plutôt afficher un kop avec les images de nos
+   Fanzzy »). Le couloir de béton disait « on arrive au stade » ; le kop dit
+   ce qu'est le jeu : une tribune pleine de supporters à collectionner.
 
-   Deux images et non une : une seule composition ne met pas le trou et les
-   marches de la troupe au bon endroit à la fois en 9:16 et en 16:9. Le
-   `<picture>` choisit par l'orientation, et la boîte ci-dessous suit la même
-   règle (`orientation:landscape`) : jamais une photo couchée dans une boîte
-   debout.
+   Derrière eux, la photo de la tribune du jeu (`/img/ecran/tribune`, celle
+   que voyait la sortie du tunnel) : les projecteurs et la fumée au loin. Elle
+   est éteinte de moitié — c'est un fond, les visages sont devant — et se fond
+   dans le noir de l'écran en haut, sous la bâche, et en bas, sous la jauge :
+   le libellé et la consigne se posent sur ce noir, jamais sur la photo.
 
-   **Le tunnel est la boîte de l'image.** 9:16 debout, 16:9 couché, en
-   « cover » : assez large pour l'écran, assez haute pour lui, centrée en x,
-   le centre du trou posé à `--yc` de la hauteur (c'est l'`object-position`
-   d'une image, écrit à la main). Tout ce qui vit dedans — les quatre pans,
-   les bâches, la sortie, la photo — est en pour cent de cette boîte. Les
-   coins du trou (`--tg`, `--td`, `--th`, `--tb`) sont ceux que le détourage
-   a mesurés (`geo.json`), plus une marge d'un pour cent de la largeur sous le
-   bord adouci, et ils valent pour la photo comme pour le repli : la sortie
-   tombe dans le trou à tous les formats, et le couloir ne saute pas quand
-   la photo arrive.
-
-   **Le repli.** Les quatre pans et les bâches restent, sous la photo : on
-   les voit le temps qu'elle arrive, ou pour de bon si elle manque. Ils ont
-   sa géométrie — le même trou, les bâches aux mêmes places. Le jour où la
-   photo manque, l'écran perd son béton, pas son couloir.
-
-   Quatre pans, quatre pseudo-éléments sur deux boîtes : le plafond et le sol
-   sur le tunnel, les deux murs sur `.murs`. Les murs passent après le
-   plafond, les bâches et la sortie après les murs ; le sol est peint en
-   dernier, mais il ne touche ni les bâches ni la sortie.
-
-   `--vh` vaut `1dvh` là où l'unité existe (la hauteur visible), `1vh`
-   ailleurs : une variable qui désignerait une unité inconnue invaliderait
-   la largeur, et la boîte tomberait à zéro. */
-.ouverture .tunnel{
-  position:absolute;
-  --vh:1vh;--r:calc(9 / 16);--yc:.435;
-  --bw:max(100vw,100 * var(--vh) * var(--r));
-  --bh:max(100 * var(--vh),100vw / var(--r));
-  width:var(--bw);height:var(--bh);
-  left:calc((100% - var(--bw)) / 2);top:calc((100% - var(--bh)) * var(--yc));
-  --tg:33.96%;--td:66.04%;--th:34.41%;--tb:52.56%;
-  background:#0B0D10;
-}
-@supports (height:1dvh){.ouverture .tunnel{--vh:1dvh}}
-@media (orientation:landscape){
-  .ouverture .tunnel{--r:calc(16 / 9);--yc:.485;--tg:38.47%;--td:61.56%;--th:37.35%;--tb:59.79%}
-}
-.ouverture .murs{position:absolute;inset:0}
-.ouverture .tunnel::before,.ouverture .tunnel::after,
-.ouverture .murs::before,.ouverture .murs::after{content:"";position:absolute;inset:0}
-/* Le plafond, et ses poutres. */
-.ouverture .tunnel::before{
-  clip-path:polygon(0 0,100% 0,var(--td) var(--th),var(--tg) var(--th));
-  background:repeating-linear-gradient(180deg,transparent 0 22px,rgba(242,238,228,.06) 22px 24px),
-    linear-gradient(180deg,#0A0C0F,#1E2328);
-}
-/* Le sol : des marches. On monte vers la tribune. */
-.ouverture .tunnel::after{
-  clip-path:polygon(0 100%,var(--tg) var(--tb),var(--td) var(--tb),100% 100%);
-  background:linear-gradient(180deg,rgba(242,238,228,.1) 0 1px,transparent 1px) 0 0/100% 7px,
-    linear-gradient(180deg,rgba(7,9,12,.6) 0 2px,transparent 2px) 0 0/100% 12px,
-    linear-gradient(180deg,#2A2F35,#121519);
-}
-/* Les murs : du béton, avec ses joints. Le grain est celui des panneaux du
-   jeu ; le repli `none` garde le mur peint le jour où la feuille manque (une
-   variable absente dans une liste de fonds invaliderait toute la liste). */
-.ouverture .murs::before{
-  clip-path:polygon(0 0,var(--tg) var(--th),var(--tg) var(--tb),0 100%);
-  background:repeating-linear-gradient(90deg,transparent 0 30px,rgba(7,9,12,.45) 30px 32px),
-    var(--grain-beton,none) 0 0/256px 256px repeat,
-    linear-gradient(90deg,#15191D,#2B3137);
-}
-.ouverture .murs::after{
-  clip-path:polygon(100% 0,var(--td) var(--th),var(--td) var(--tb),100% 100%);
-  background:repeating-linear-gradient(90deg,rgba(7,9,12,.45) 0 2px,transparent 2px 32px),
-    var(--grain-beton,none) 0 0/256px 256px repeat,
-    linear-gradient(270deg,#15191D,#2B3137);
-}
-/* Les bâches unies tendues aux murs, rouge à gauche, or à droite : les deux
-   couleurs de la fumée. Sans texte — on est encore dans le couloir. Ce sont
-   celles de la photo, mesurées sur elle (boîte englobante, puis le trapèze
-   que la perspective en fait) : le repli les pose exactement où la photo les
-   montrera. Pas de cerne : un trapèze découpé ne garde pas sa bordure. */
-.ouverture .bache{
-  position:absolute;top:33%;height:14.4%;width:16%;
-  background:repeating-linear-gradient(0deg,rgba(7,9,12,.1) 0 1px,transparent 1px 3px),var(--c);
-}
-.ouverture .bache.g{left:15%;--c:var(--flare,#E0402C);clip-path:polygon(0 0,100% 32.1%,100% 88.4%,0 100%)}
-.ouverture .bache.d{right:15%;--c:var(--projo,#F5C33B);clip-path:polygon(0 32.1%,100% 0,100% 100%,0 88.4%)}
-@media (orientation:landscape){
-  .ouverture .bache{top:35.5%;height:20.6%;width:14%}
-  .ouverture .bache.g{left:19.8%;clip-path:polygon(0 0,100% 29.1%,100% 83%,0 100%)}
-  .ouverture .bache.d{right:19.8%;clip-path:polygon(0 29.1%,100% 0,100% 100%,0 83%)}
-}
-
-/* ## La sortie, et la lumière qui grandit
-
-   Au bout du couloir, la tribune : la photo du stade, voilée, vue par
-   l'ouverture — c'est sa place, ce qu'on aperçoit derrière le mur
-   (amendement 8). Devant elle, la lumière des projecteurs **grandit pendant
-   toute la durée de l'écran** : on avance vers elle. C'est un pseudo-élément
-   qui change d'échelle, jamais un dégradé animé — un dégradé animé se
-   repeint à chaque image ; une échelle se compose, sans repeindre.
-
-   Elle part de 60 % et finit à sa taille quand le plafond tombe ; si
-   l'écran part avant, elle s'arrête où elle en était. Sans mouvement, elle
-   est simplement à sa taille. **Pourquoi 60 % et un voile léger** (de .12 à
-   .35) : le béton de la photo est éclairé par cette sortie — 0,35 de
-   luminance autour du trou debout, 0,30 couché. Partie de 30 % sous
-   l'ancien voile (.25 à .55), la sortie était plus sombre que le mur
-   qu'elle éclaire (0,20 debout, 0,28 couché) : une lumière qui ne vient de
-   nulle part. Elle part maintenant à 0,45 et 0,52.
-
-   Le halo autour de l'ouverture est une ombre portée, fixe ; avec la
-   photo, lui et l'anneau d'encre passent sous le béton opaque et ne
-   servent plus qu'au repli. */
-.ouverture .sortie{
-  position:absolute;overflow:hidden;
-  left:var(--tg);right:calc(100% - var(--td));top:var(--th);bottom:calc(100% - var(--tb));
-  background:#0F1216;
-  box-shadow:0 0 0 2px #07090C,0 0 70px 18px rgba(255,226,160,.14);
-}
-.ouverture .sortie img{position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;object-position:50% 35%}
-.ouverture .sortie::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(15,18,22,.12),rgba(15,18,22,.35))}
-.ouverture .sortie::before{
-  content:"";position:absolute;z-index:1;left:50%;top:40%;width:330%;aspect-ratio:1;
-  translate:-50% -50%;border-radius:50%;
-  background:radial-gradient(closest-side,rgba(255,246,220,.95),rgba(255,226,160,.45) 45%,transparent 75%);
-  animation:ouvLumiere var(--duree) cubic-bezier(.2,.6,.3,1) backwards;
-}
-@keyframes ouvLumiere{from{scale:.6}}
-
-/* ## La photo du couloir
-
-   Au-dessus des pans et de la sortie, sous `.dedans`. `z-index:1` et non
-   l'ordre du document : le sol (`.tunnel::after`) se peint après les
-   enfants du tunnel et passerait devant le bas de la photo. Elle remplit la
-   boîte, qui a exactement ses proportions : ni rognée ni déformée ici, c'est
-   la boîte qui déborde de l'écran.
-
-   Elle ne bouge pas : rien à couper au calme ni sous
-   `prefers-reduced-motion`. Un fondu d'arrivée, s'il en vient un, irait
-   dans les deux listes du bas de cette feuille.
-
-   **L'audit ne la voit pas.** Le fond qu'il lit sous un texte est celui des
-   ancêtres, et la photo est une sœur de `.dedans` : il mesure la craie sur
-   le #05070A de l'écran. Le contraste réel — 4,5:1 au moins sous le libellé
-   et la consigne, posés à même le couloir — est tenu par l'image elle-même :
-   son bas est assombri au traitement, au-delà de 58 % (debout) ou de 62 %
-   (couché) de sa hauteur. Une photo refaite doit refaire cette mesure, et
-   changer d'adresse (un `?v=`) : `/img` part avec un an de cache.
-
-   **Elle s'appelle `.couloir`, pas `.decor`.** `.decor` est déjà le décor
-   derrière le personnage du hub, une règle sans portée : posée sur la photo,
-   elle l'éteignait (opacité nulle tant qu'il manque `.on`) et la décalait
-   d'une demi-largeur, et l'écran montrait le repli sans un message. La
-   maquette de l'intégration, qui n'avait que la feuille de l'ouverture, ne
-   pouvait pas le voir ; le banc sur la vraie page, si. */
-.ouverture .couloir{position:absolute;inset:0;z-index:1;pointer-events:none}
-.ouverture .couloir img{display:block;width:100%;height:100%}
+   **Le fond de l'écran reste une couleur seule** (`.ouverture`) : l'audit lit
+   ce fond sous chaque texte. La photo est une sœur de `.dedans`, qu'il ne
+   voit pas ; le noir de son voile, en bas, tient le contraste réel. Si elle
+   manque, elle s'en va (`onerror`), et le kop se tient sur le noir. */
+.ouverture .stade{position:absolute;inset:0;overflow:hidden;background:#05070A}
+.ouverture .stade img{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:50% 46%;opacity:.5}
+.ouverture .stade::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,#05070A 0%,rgba(5,7,10,.35) 22%,rgba(5,7,10,0) 40%,
+    rgba(5,7,10,.25) 62%,#05070A 84%)}
 
 /* ------------------------------------------------------------ dedans
 
@@ -1539,7 +1395,7 @@ html[data-calme~="animations"] .pose{transition:none}
   max-width:460px;margin:0 auto;
   display:flex;flex-direction:column;align-items:center;
   padding:calc(env(safe-area-inset-top,0px) + clamp(18px,6.5vh,64px)) 16px
-    calc(env(safe-area-inset-bottom,0px) + 10px);
+    calc(var(--bas) + 10px);
   padding-top:calc(env(safe-area-inset-top,0px) + clamp(18px,6.5dvh,64px));
 }
 
@@ -1594,90 +1450,67 @@ html[data-calme~="animations"] .pose{transition:none}
   font-size:12px;line-height:1.2;letter-spacing:.2em;text-transform:uppercase;
 }
 
-/* ## La scène : les Fanzzy montent les marches
+/* ## Le kop : les Fanzzy jouables, rang par rang
 
-   Cinq visages tirés au hasard par `ouverture.js`, du plus loin au plus
-   près : petits sous la lumière, grands devant nous ; le dernier salue. Leurs
-   places sont celles de la maquette, en pour cent d'une boîte aux
-   proportions de la maquette (360 × 290), posée au fond de la scène et
-   centrée — pour que la troupe ne s'étire pas sur une tablette ni ne se
-   tasse sur un petit téléphone. La boîte se mesure aux unités de conteneur,
-   **dans un bloc `@container`** : là où le confinement ne prend pas, ces
-   unités se rabattraient sans bruit sur la fenêtre (le piège que
-   `verif-pages` garde), et la troupe garde alors la scène entière, déclarée
-   hors du bloc.
+   Des rangs de bustes, du plus loin au plus près : petits et sombres en haut
+   des gradins, grands devant nous. Chaque rang cache le bas du rang de
+   derrière, comme dans une vraie tribune debout, et une barrière de
+   sécurité court devant chacun — l'objet qui dit « kop » plus sûrement
+   qu'un mot.
 
-   La place est un attribut (`data-place`) et non un rang : un visage dont
-   l'image manque s'en va, et les autres ne sautent pas d'une marche.
+   **Seulement des Fanzzy jouables** (Gaël : « uniquement ceux activés,
+   actuellement les Fanzzy RP et AN ») : `ouverture.js` les demande à
+   `FZART.jouables()`, qui croise les séries ouvertes du serveur avec les
+   dessins. Pas une liste écrite ici : la saison qui ouvre une série la met
+   dans le kop, sans qu'on touche à cette page.
 
-   La fumée (`.tbf-fumee`, la brique commune) est au pied de la troupe, dans
-   le quart bas de la scène — jamais sous la jauge ni sous un texte. Ses deux
-   nappes prennent le rouge et l'or des bâches du couloir.
+   **Les rangs se calculent sur la place qu'il y a** (`ouverture.js`) : la
+   taille du premier rang suit la plus petite des deux mesures de la scène,
+   chaque rang suivant en fait les quatre cinquièmes, et l'on monte jusqu'à
+   remplir la hauteur. Un téléphone haut a donc plus de rangs, pas des
+   visages plus gros ; un téléphone couché, des rangs plus serrés. Les
+   places et les tailles sont écrites sur chaque élément (`--x`, `--b`,
+   `--s`) : la feuille ne fait que les lire.
 
-   **Le quart bas de la troupe, et non de la scène entière.** La brique
-   prend le quart de son parent, et ici le parent est la scène, qui grandit
-   en hauteur avec la tablette quand la troupe (`.bande`), elle, est bornée
-   par la largeur : à 768 × 1024, la scène fait 648 px de haut pour une
-   troupe de 345, et la nappe montait à 162 px, bien au-dessus des pieds —
-   ses deux taches se lisaient comme deux rectangles posés au sol. Elle prend
-   donc la boîte de la troupe — sa largeur, et le quart de sa hauteur, 86 px
-   —, comme sur un téléphone, où les deux se confondent ; et ses bords se
-   fondent sur un cinquième de sa largeur, et non sur sept pour cent, pour
-   qu'aucun ne se lise comme un trait. Sans unités de conteneur, elle garde
-   la boîte de la brique. */
-.ouverture .troupe{
-  position:relative;flex:1 1 0;min-height:0;width:100%;
-  container:ouv-troupe / size;
+   Le kop saute, doucement et pas tous ensemble (`--d`, tiré par visage) :
+   c'est l'animation infinie de la scène, coupée au calme. Chaque rang est
+   d'autant plus sombre qu'il est loin (`--lum`) — un filtre par rang, qui
+   se compose en un calque, plutôt qu'un par visage, qui en ferait quarante.
+
+   La fumée (`.tbf-fumee`, la brique commune) monte derrière le kop : elle
+   est peinte avant les rangs, et se voit entre les têtes. */
+.ouverture .kop{
+  position:relative;flex:1 1 0;min-height:0;width:calc(100% + 32px);margin:6px -16px 0;
+  overflow:hidden;
   --e1:var(--flare,#E0402C);--e2:var(--projo,#F5C33B);
 }
-.ouverture .bande{
-  position:absolute;z-index:2;left:50%;bottom:0;translate:-50% 0;
-  width:100%;height:100%;
-}
-@container ouv-troupe (min-width:0px){
-  .ouverture .bande{width:min(100cqw,124cqh);height:min(100cqh,80.6cqw)}
-  .ouverture .troupe>.tbf-fumee{
-    left:50%;right:auto;translate:-50% 0;
-    width:min(100cqw,124cqh);height:calc(min(100cqh,80.6cqw) / 4);
-    -webkit-mask-image:linear-gradient(0deg,transparent,#000 14%,#000 40%,transparent),
-      linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);
-    mask-image:linear-gradient(0deg,transparent,#000 14%,#000 40%,transparent),
-      linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);
-  }
-}
-.ouverture .fz{position:absolute;isolation:isolate;aspect-ratio:520/945;translate:-50% 0}
-.ouverture .fz img{
-  display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%;
-  filter:drop-shadow(0 6px 6px rgba(0,0,0,.6));
-  transform-origin:50% 100%;
-  animation:ouvMarche .42s cubic-bezier(.2,1.3,.35,1) var(--d,0ms) backwards;
-}
-/* L'ombre au sol, sous les pieds : sans elle, une silhouette détourée flotte. */
-.ouverture .fz::before{
-  content:"";position:absolute;z-index:-1;left:6%;right:6%;bottom:-3%;height:7%;
-  border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.75),transparent);
-}
-.ouverture .fz[data-place="1"]{left:56%;bottom:39%;height:24%;--d:100ms}
-.ouverture .fz[data-place="2"]{left:38%;bottom:30%;height:32%;--d:220ms}
-.ouverture .fz[data-place="3"]{left:64%;bottom:20%;height:41%;--d:340ms}
-.ouverture .fz[data-place="4"]{left:18%;bottom:11%;height:49%;--d:460ms}
-.ouverture .fz[data-place="5"]{left:71%;bottom:3%;height:61%;--d:600ms}
-/* Le dernier arrivé salue : le balancement du personnage, une fois, quand
-   il a fini de monter. Il se balance (`transform`) pendant que la montée
-   glisse (`translate`) : deux propriétés, deux animations qui ne s'écrasent
-   pas.
-
-   Par l'image clé commune, `tbf-coucou` (`ui.css`), et non par `coucou`,
-   celle du hub : `accueil:ui` compte les `coucou` qui démarrent pour savoir
-   si le hub a salué, et le rideau lui en aurait fourni un. Le coucou du hub
-   penche (`skewX`) au lieu de tourner depuis le lot 2, pour garder les pieds
-   au sol ; la brique commune tourne encore, et les deux ne se ressemblent
-   de nouveau que lorsqu'elle aura suivi. */
-.ouverture .fz[data-place="5"] img{
-  animation:ouvMarche .42s cubic-bezier(.2,1.3,.35,1) var(--d,0ms) backwards,
-    tbf-coucou 1.5s ease-in-out 1.15s;
-}
-@keyframes ouvMarche{from{opacity:0;translate:0 22px}}
+/* Le bas du premier rang se fond dans le noir de la bande du bas : un buste
+   coupé net au ras de la jauge se lirait comme une image rognée. */
+.ouverture .kop::after{content:"";position:absolute;z-index:20;left:0;right:0;bottom:0;height:16%;
+  background:linear-gradient(180deg,rgba(5,7,10,0),#05070A);pointer-events:none}
+.ouverture .gradins{position:absolute;inset:0}
+.ouverture .rang{position:absolute;left:0;right:0;bottom:var(--b);height:var(--s);z-index:var(--z);
+  filter:brightness(var(--lum,1))}
+/* L'ombre du rang de devant : le bas de chaque rang, là où les torses se
+   touchent, plonge dans le noir. Sans elle, les épaules serrées faisaient
+   une bande pleine sous chaque rang de têtes, et le kop se lisait en
+   rayures. */
+.ouverture .rang::after{content:"";position:absolute;z-index:1;left:0;right:0;bottom:0;height:48%;
+  background:linear-gradient(180deg,rgba(5,7,10,0),rgba(5,7,10,.72));pointer-events:none}
+/* La barrière : une main courante d'acier, devant le rang, à hauteur de
+   poitrine. Elle passe devant les bustes et leur ombre. */
+.ouverture .rang::before{content:"";position:absolute;z-index:2;left:0;right:0;bottom:16%;
+  height:max(3px,calc(var(--s) * .035));border-radius:2px;
+  background:linear-gradient(180deg,#9AA3AD,#4A525B 70%,#2A3037);
+  box-shadow:0 2px 3px rgba(0,0,0,.55)}
+.ouverture .fan{position:absolute;bottom:0;left:var(--x);width:var(--s);aspect-ratio:1;
+  translate:-50% 0}
+.ouverture .fan img{display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%;
+  opacity:0;transition:opacity .35s ease;
+  animation:ouvSaut .7s ease-in-out var(--d,0ms) infinite alternate}
+.ouverture .fan img.vu{opacity:1}
+@keyframes ouvSaut{to{translate:0 -5%}}
+.ouverture .kop>.tbf-fumee{z-index:0}
 
 /* ## La jauge est une écharpe qui se noue
 
@@ -1790,14 +1623,9 @@ html[data-calme~="animations"] .pose{transition:none}
   .ouverture .dedans{padding-top:calc(env(safe-area-inset-top,0px) + 14px)}
 }
 
-/* **Un téléphone couché** : le titre à 34 px, et le trou plus bas (57 %).
-   Le titre, à 46 px, mordait sur le haut du trou — jusqu'à 11 px à
-   780 × 360, la bâche posée sur la lumière ; à 34 px et le trou descendu,
-   il reste de 1 à 26 px entre les deux (de 667 × 375 à 932 × 430), et le
-   plus lointain de la troupe a les pieds au seuil (58,8 à 59,2 % de
-   l'image, pour un bas de trou à 58 %). */
+/* **Un téléphone couché** : le titre à 34 px. À 46 px, la bâche prenait le
+   tiers de la hauteur, et le kop n'avait plus qu'un rang. */
 @media (orientation:landscape) and (max-height:520px){
-  .ouverture .tunnel{--yc:.57}
   .ouverture .enseigne h1{font-size:34px}
 }
 
@@ -1858,20 +1686,18 @@ html[data-calme~="animations"] .pose{transition:none}
   pointer-events:auto}
 
 /* Qui a demandé moins d'animation n'en reçoit aucune : l'écran reste, lisible
-   et immobile, et s'en va pareil. La lumière est à sa taille, la troupe est
-   en place, les flèches ne clignotent pas. La bâche, la fumée et le ticket
+   et immobile, et s'en va pareil. Le kop ne saute pas, les flèches ne
+   clignotent pas. La bâche, la fumée et le ticket
    se taisent d'eux-mêmes : leurs doubles sont dans la feuille commune. La
    jauge avance toujours — c'est une information, pas un ornement —, et la
    sortie de secours n'est pas dans cette liste : son animation est la
    minuterie. */
 @media (prefers-reduced-motion:reduce){
-  .ouverture .sortie::before,.ouverture .consigne::before,.ouverture .consigne::after{animation:none}
-  .ouverture .fz img,.ouverture .fz[data-place="5"] img{animation:none}
+  .ouverture .consigne::before,.ouverture .consigne::after,.ouverture .fan img{animation:none}
 }
-html[data-calme~="animations"] .ouverture .sortie::before,
 html[data-calme~="animations"] .ouverture .consigne::before,
 html[data-calme~="animations"] .ouverture .consigne::after{animation:none}
-html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place="5"] img){animation:none}
+html[data-calme~="animations"] .ouverture .fan img{animation:none}
 
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -1887,39 +1713,21 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
 <!-- ================================================ l ouverture
 
      Écrit dans la page, pas monté par un script : il doit être là avant que
-     quoi que ce soit ne tourne. Le tunnel est du CSS, et la photo du couloir
-     se pose dessus quand elle arrive : sans elle, le béton peint tient seul.
-     Elle et la photo du stade, au bout du couloir, sont servies en trois
-     formats comme le reste du jeu — <picture> choisit, et le PNG ou le JPEG
-     couvre ce qui reste.
+     quoi que ce soit ne tourne. Le fond est une couleur, et la photo de la
+     tribune se pose dessus quand elle arrive, servie en trois formats comme
+     le reste du jeu — <picture> choisit, et le JPEG couvre ce qui reste. Si
+     elle manque, elle s en va : une image cassée de la taille de l écran,
+     Chrome la peint avec son icône et un cadre gris.
 
-     Les Fanzzy de la scène, les deux libellés suivants de la jauge, la
-     consigne et l astuce du jour sont posés par ouverture.js dès qu il se
-     charge : ils sont en plus, et l écran tient sans eux. -->
+     Le kop de Fanzzy, les deux libellés suivants de la jauge, la consigne et
+     l astuce du jour sont posés par ouverture.js dès qu il se charge : ils
+     sont en plus, et l écran tient sans eux. -->
 <div class="ouverture" id="ouverture" role="status" aria-label="Chargement">
-  <div class="tunnel" aria-hidden="true">
-    <div class="murs"></div>
-    <span class="bache g"></span><span class="bache d"></span>
-    <div class="sortie">
-      <picture>
-        <source srcset="/img/ecran/tribune.avif" type="image/avif">
-        <source srcset="/img/ecran/tribune.webp" type="image/webp">
-        <img src="/img/ecran/tribune.jpg" alt="">
-      </picture>
-    </div>
-    <!-- La photo du couloir, au-dessus de la sortie : voir « le tunnel »,
-         dans la feuille de cette page. Debout ou couchée selon l écran, et
-         en trois formats ; le béton CSS reste dessous, en repli. Si elle
-         manque, elle s en va : une image cassée de la taille de l écran,
-         Chrome la peint avec son icône et un cadre gris, par-dessus le repli
-         (alt vide ou non). -->
-    <picture class="couloir" aria-hidden="true">
-      <source media="(orientation: portrait)" srcset="/img/ecran/tunnel-portrait.avif" type="image/avif">
-      <source media="(orientation: portrait)" srcset="/img/ecran/tunnel-portrait.webp" type="image/webp">
-      <source media="(orientation: portrait)" srcset="/img/ecran/tunnel-portrait.png" type="image/png">
-      <source srcset="/img/ecran/tunnel-paysage.avif" type="image/avif">
-      <source srcset="/img/ecran/tunnel-paysage.webp" type="image/webp">
-      <img src="/img/ecran/tunnel-paysage.png" alt="" decoding="async" onerror="this.remove()">
+  <div class="stade" aria-hidden="true">
+    <picture>
+      <source srcset="/img/ecran/tribune.avif" type="image/avif">
+      <source srcset="/img/ecran/tribune.webp" type="image/webp">
+      <img src="/img/ecran/tribune.jpg" alt="" decoding="async" onerror="this.remove()">
     </picture>
   </div>
   <div class="dedans">
@@ -1929,9 +1737,11 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
       <h1>THEBESTFAN<span>.ONLINE</span></h1>
       <p>le jeu de cartes des tribunes</p>
     </div>
-    <div class="troupe" aria-hidden="true">
-      <div class="bande" id="ouvBande"></div>
+    <!-- Le kop : voir « Le kop : les Fanzzy jouables, rang par rang », dans
+         la feuille de cette page. Les rangs sont posés par ouverture.js. -->
+    <div class="kop" aria-hidden="true">
       <div class="tbf-fumee"></div>
+      <div class="gradins" id="ouvKop"></div>
     </div>
     <!-- Les libellés et la consigne sont cachés aux lecteurs d écran : l écran
          est une zone d état qui s annonce « Chargement », et un libellé qui
@@ -4946,19 +4756,21 @@ const MENU = window.TBF_MENU.monter($('burger'));
    des dessins est déjà dans la page, apporté par `fanzzy-art.js`.          */
 
 /**
- * Huit visages, tirés sans remise parmi les Fanzzy **dessinés**.
+ * Huit visages, tirés sans remise parmi les Fanzzy **jouables** et dessinés.
  *
- * `FZART.ILLUSTRES` est la seule liste qui sache lesquels le sont ; la
- * recopier ici l'aurait fait mentir au premier dessin ajouté. Un tirage et non
- * une rangée figée : huit cartes toujours les mêmes se retiennent au bout de
- * trois visites, et la collection paraît alors petite.
+ * `FZART.jouables()` les donne : les séries ouvertes viennent du serveur, les
+ * dessins de `FZART.ILLUSTRES`. Elle tirait dans `ILLUSTRES` seul, et montrait
+ * donc des personnages de séries fermées, qu'aucun booster ne donne
+ * (Gaël, 27 octobre 2026 : « uniquement les Fanzzy jouables »). Un tirage et
+ * non une rangée figée : huit cartes toujours les mêmes se retiennent au bout
+ * de trois visites, et la collection paraît alors petite.
  *
  * Rend `false` quand aucun dessin n'est disponible — la galerie reste fermée
  * plutôt que d'ouvrir huit cadres vides.
  */
-function visagesVitrine() {
+async function visagesVitrine() {
   const grille = $('vEventail');
-  const tous = [...(window.FZART?.ILLUSTRES ?? [])];
+  const tous = window.FZART?.jouables ? await window.FZART.jouables() : [];
   if (!grille || !tous.length) return false;
 
   const pris = [];
@@ -5094,8 +4906,7 @@ function direLaVersion() {
 
 async function garnirVitrine() {
   direLaVersion();
-  const visages = visagesVitrine();
-  const live = await scoresVitrine();
+  const [visages, live] = await Promise.all([visagesVitrine(), scoresVitrine()]);
   if (visages) $('vGalerie').hidden = false;
   /* Rien n'est arrivé du premier coup : il n'y a rien à rafraîchir, et un
      battement qui tourne dans le vide n'ouvrira pas un bloc qu'on a renoncé
