@@ -515,6 +515,7 @@
       peindreCotes();
       peindreHistoire();
       peindreCri();
+      prechargerSonDuClub();
       peindreInventaire();
       peindreDetail();
       peindreActions();
@@ -1150,9 +1151,31 @@
         racine: d.fanzzy.racine ?? d.fanzzy.id, age: vu() });
     }
 
+    /* **Le cri d'un Fanzzy lié est celui de son club** (choix de Gaël du
+       27 octobre 2026 : le cercle de feu « n'a rien à voir » avec les effets
+       des clubs) : son écharpe traverse l'écran aux couleurs du club, le cri
+       claque dessus, et le son du club part avec. Les autres crient aux
+       couleurs de leur famille. Le son du club n'est joué que déjà décodé :
+       il est demandé dès que la fiche le connaît (`prechargerSonDuClub`). */
     function crier() {
-      window.FX?.cri?.(criVu() || 'CRI', { couleur: famille(d.fanzzy.type).c });
+      const cri = criVu() || 'CRI';
+      const c = d.club;
+      if (c?.lie && window.FX?.club) {
+        window.FX.club(Array.isArray(c.couleurs) ? c.couleurs : [], { titre: cri });
+        if (window.TBF_SON?.club?.(c.id) === false) prechargerSonDuClub(true);
+        return;
+      }
+      window.FX?.cri?.(cri, { couleur: famille(d.fanzzy.type).c });
     }
+    let sonDemande = null;
+    function prechargerSonDuClub(encore = false) {
+      const id = d?.club?.lie && aMoi() ? d.club.id : null;
+      if (id == null || !window.TBF_SON?.clubs || (sonDemande === id && !encore)) return;
+      sonDemande = id;
+      window.TBF_SON.clubs([id]);
+    }
+    // Le moteur du son arrive en différé, après fx.js.
+    addEventListener('load', () => prechargerSonDuClub());
 
     /* **La carte se retourne** : le dos de sa série, construit au premier
        retournement (`TBF_CARTES.retourner`). Sans mouvement, elle change de
