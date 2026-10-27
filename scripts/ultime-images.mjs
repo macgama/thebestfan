@@ -57,6 +57,23 @@ function ecrire(cle, ext, tampon) {
   return sortie;
 }
 
+/* L'encodeur H.264 : libx264 s'il est là ; sinon libopenh264 (le ffmpeg
+   livré avec certains logiciels n'a que lui), à débit fixe. */
+let ENCODEUR = null;
+function encodeur() {
+  if (ENCODEUR) return ENCODEUR;
+  const liste = execFileSync(FFMPEG, ['-hide_banner', '-encoders'], { encoding: 'utf8' });
+  if (/\slibx264\s/.test(liste)) {
+    ENCODEUR = ['-c:v', 'libx264', '-profile:v', 'main', '-crf', '26', '-preset', 'slow'];
+  } else if (/\slibopenh264\s/.test(liste)) {
+    ENCODEUR = ['-c:v', 'libopenh264', '-b:v', '1400k'];
+  } else {
+    console.error(`${FFMPEG} n'a ni libx264 ni libopenh264 : impossible d'encoder les clips.`);
+    process.exit(1);
+  }
+  return ENCODEUR;
+}
+
 const table = {};
 const clips = {};
 for (const fichier of fs.readdirSync(SOURCE).sort()) {
@@ -64,10 +81,10 @@ for (const fichier of fs.readdirSync(SOURCE).sort()) {
   if (!m) continue;
   const cle = `${m[1].toUpperCase()}-e${m[2]}`;
   const tmp = path.join(os.tmpdir(), `ultime-${process.pid}-${cle}.mp4`);
+  encodeur();
   execFileSync(FFMPEG, ['-y', '-loglevel', 'error', '-i', path.join(SOURCE, fichier),
     '-vf', `scale=540:960:force_original_aspect_ratio=increase,crop=540:960`,
-    '-c:v', 'libx264', '-profile:v', 'main', '-pix_fmt', 'yuv420p', '-crf', '26', '-preset', 'slow',
-    '-an', '-movflags', '+faststart', tmp]);
+    ...ENCODEUR, '-pix_fmt', 'yuv420p', '-an', '-movflags', '+faststart', tmp]);
   const tampon = fs.readFileSync(tmp);
   fs.unlinkSync(tmp);
   clips[cle] = ecrire(cle, 'mp4', tampon);
