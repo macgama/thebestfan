@@ -3058,8 +3058,9 @@
 
      **D'une page à l'autre, elle reprend où elle en était** : sa place
      dans la boucle est retenue pour l'onglet (sessionStorage) en quittant
-     la page, et la page suivante repart de là, en fondu, à son premier
-     geste — un navigateur ne laisse rien jouer avant. */
+     la page, et la page suivante repart de là, au temps près, dès son
+     chargement là où le navigateur le permet (voir « reprendreSansGeste »),
+     sinon à son premier geste. */
   const BOUCLE_MUSIQUE = { P: 12000, L: 2393280, X: 2400 };
   const PAGES_MUSIQUE = new RegExp('^/(?:teletext|matchs|bienvenue|profil|collection|classement|boutique'
     + '|abonnement|boosters|fanzzy|fanzzy/[^/]+|compte|equipes|kop|amis|deck|carnet|aide|comment-jouer'
@@ -3068,7 +3069,7 @@
   const MIX_MUSIQUE = 1;
   const MIX_VICTOIRE = 1;
   /** Les fondus de la musique (constantes de temps, en secondes). */
-  const TAU_MUSIQUE = { entre: 0.8, sort: 0.35, baisse: 0.08, remonte: 0.6 };
+  const TAU_MUSIQUE = { entre: 0.8, reprise: 0.12, sort: 0.35, baisse: 0.08, remonte: 0.6 };
   /** Sous un jingle des boosters, la musique s'efface de 15 dB le temps qu'il sonne. */
   const BAISSE_MUSIQUE = 10 ** (-15 / 20);
   const CLE_MUSIQUE = 'tbf-musique';
@@ -3092,16 +3093,66 @@
   function lirePlace() {
     try {
       const d = JSON.parse(sessionStorage.getItem(CLE_MUSIQUE) || 'null');
-      if (d && Number.isFinite(d.place) && Date.now() - Number(d.t) < MUSIQUE_OUBLI) return Math.max(0, d.place);
+      const ecoule = Date.now() - Number(d?.t);
+      // Elle a continué pendant le changement de page : on la reprend au temps près.
+      if (d && Number.isFinite(d.place) && ecoule >= 0 && ecoule < MUSIQUE_OUBLI) {
+        return Math.max(0, d.place) + ecoule / 1000;
+      }
     } catch { /* stockage fermé : du début */ }
     return 0;
   }
-  function retenirPlace() {
+  /** La musique jouait-elle dans cet onglet il y a peu (la page d'avant) ? */
+  function musiqueRecente() {
+    try {
+      const d = JSON.parse(sessionStorage.getItem(CLE_MUSIQUE) || 'null');
+      return Boolean(d?.joue) && Date.now() - Number(d.t) < MUSIQUE_OUBLI;
+    } catch { return false; }
+  }
+  function retenirPlace(joue = Boolean(mus.lit)) {
     const p = placeMusique();
     if (p === null) return;
-    try { sessionStorage.setItem(CLE_MUSIQUE, JSON.stringify({ place: p, t: Date.now() })); } catch { /* rien */ }
+    try {
+      sessionStorage.setItem(CLE_MUSIQUE, JSON.stringify({ place: p, t: Date.now(), joue }));
+    } catch { /* rien */ }
   }
-  window.addEventListener('pagehide', retenirPlace);
+  window.addEventListener('pagehide', () => retenirPlace());
+
+  /* **D'une page à l'autre, sans attendre le toucher** (27 octobre 2026,
+     Gaël : « la musique se coupe quand je passe d'une page à l'autre »).
+     Chaque page du jeu est un document neuf : son contexte audio meurt avec
+     l'ancienne. Chrome laisse pourtant démarrer un contexte sans geste quand
+     le joueur a touché la page d'avant, sur le même site — c'est le cas
+     d'un lien suivi. Si la musique jouait à la page d'avant, on tente donc
+     un contexte tout de suite : s'il tourne, la musique reprend au temps
+     près ; s'il naît suspendu (Safari, ou une page ouverte d'un lien
+     extérieur), on le ferme sans rien y avoir posé, et le premier geste
+     reprend la main comme avant. Rien n'est confié à un contexte qui ne
+     tourne pas (voir « le contexte vivant »). */
+  function reprendreSansGeste() {
+    if (ctx || document.hidden || !musiqueVoulue() || !musiqueRecente()) return;
+    const C = window.AudioContext ?? window.webkitAudioContext;
+    if (typeof C !== 'function') return;
+    telecharger('musique');
+    let c;
+    try {
+      try { c = new C({ latencyHint: 'interactive' }); } catch { c = new C(); }
+    } catch { return; }
+    const garder = () => {
+      if (ctx || c.state !== 'running' || !musiqueVoulue()) return false;
+      try {
+        ctx = c;
+        chaine = construireChaine(ctx, document.hidden ? 0 : gainDuVolume(volumeJoueur));
+      } catch { ctx = null; chaine = null; return false; }
+      musique();
+      return true;
+    };
+    if (garder()) return;
+    // Un contexte permis peut ne passer à « running » qu'un instant plus tard.
+    c.resume?.().catch(() => {});
+    setTimeout(() => {
+      if (!garder() && ctx !== c) c.close?.().catch(() => {});
+    }, 250);
+  }
 
   /** Pose la musique comme elle doit être : la lance si la page la veut, l'éteint sinon. */
   function musique() {
@@ -3127,9 +3178,11 @@
       s.loopStart = r.debut;
       s.loopEnd = r.fin;
       s.connect(g);
+      // Reprise d'une page à l'autre : un fondu court, elle ne fait que continuer.
+      const reprise = musiqueRecente();
       const place = lirePlace() % (r.fin - r.debut);
       s.start(c.currentTime, r.debut + place);
-      g.gain.setTargetAtTime(MIX_MUSIQUE, c.currentTime, TAU_MUSIQUE.entre);
+      g.gain.setTargetAtTime(MIX_MUSIQUE, c.currentTime, reprise ? TAU_MUSIQUE.reprise : TAU_MUSIQUE.entre);
       mus.lit = { c, g, s, t0: c.currentTime, place, debut: r.debut, fin: r.fin };
     } catch { mus.lit = null; /* le son ne doit jamais casser le jeu */ }
   }
@@ -3138,7 +3191,7 @@
   function eteindreMusique() {
     const l = mus.lit;
     if (!l) return;
-    retenirPlace();
+    retenirPlace(false);
     mus.lit = null;
     try {
       const t = l.c.currentTime;
@@ -3473,6 +3526,8 @@
     musique: { page: pageMusicale(), joue: Boolean(mus.lit), place: placeMusique(),
       decodee: Boolean(ctx && pret(ctx, 'musique')), victoire: Boolean(mus.victoire) },
   });
+
+  reprendreSansGeste();
 
   window.TBF_SON = {
     jouer,
