@@ -1,6 +1,6 @@
 // Prompts des planches de skins (Halloween, Préhistorique, Apocalyptique) des séries RP et AN,
-// en deux demi-planches 16:9 2K par âge et par skin (mode rapide Artlist, Nano Banana 2).
-// node build.mjs  -> prompts/<ID>-e<âge>-<skin>-<A|B>.txt  +  liste.tsv (ordre de génération)
+// une planche 3:2 de six figures par âge et par skin (mode rapide Artlist, Nano Banana 2, 2K).
+// node build.mjs  -> prompts/<ID>-e<âge>-<skin>-planche.txt  +  liste.tsv (ordre de génération)
 import fs from 'fs';
 const DIR = '/mnt/project-files/fanzzy-prompts/';
 const met = fs.readFileSync(DIR + '00-METHODE.md', 'utf8');
@@ -9,17 +9,17 @@ const STYLE = bloc('### 2. STYLE');
 const INTERDITS = bloc('### 8. INTERDITS');
 const SKIN = { halloween: bloc('Halloween :\n'), prehistorique: bloc('Préhistorique :\n'), apocalyptique: bloc('Apocalyptique (style') };
 const SKIN_FR = { halloween: 'Halloween', prehistorique: 'Préhistorique', apocalyptique: 'Apocalyptique' };
-const HEAD = [
-  'Character sheet of the same character as the reference image, wearing the costume described below.',
-  'Character sheet of the same character as both reference images (first: his look at this level, second: the same costume at his first level), wearing the costume described below at this level.',
-];
-const COMMON = 'With exactly his body proportions and face from the first reference: same build, same head size relative to the body, not chubbier, not more cartoonish. The costume described above replaces his usual clothes, identical in every figure; his signature item stays the same object in the same colour, held in every figure. Same aura colour as the reference, if he has any, pressed against the body in every figure.\nCorrect anatomy in every figure: exactly two arms, two legs, two hands with five fingers each, no extra or duplicated limbs.\nOnly his own signature item and the costume pieces described above: never add an instrument, scarf, flag or prop that is not described.\nExactly three full-body figures, no more, no less, side by side in one single row, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line, wide empty gaps between the figures, nothing touching, nothing cut by the edges.\nEvery figure stays compact and narrow, hardly wider than the rest pose: arms raised straight up or bent close to the body, never stretched out to the sides; capes and coats hang close to the body.\nOne head per figure, no motion blur, no double image.';
-const PL = {
-  A: 'Left to right: 1. rest: standing calm, arms by the sides, eyes open, mouth closed. 2. joy: jumping with both fists raised straight up above his head, mouth wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one hand over his face.',
-  B: 'Left to right: 1. pushing the chant: singing with his mouth wide open, pushing the chant with his own signature item (raising it, shouting into it or playing it hard, close to his body). 2. anger: leaning forward, protesting, one arm bent pointing forward towards the viewer, elbow close to his body. 3. rest with eyes closed: standing calm, arms by the sides, eyes closed, mouth closed.',
-};
-const FOND = 'Wide 16:9 image, one row. Background: a completely flat, uniform, saturated studio green (#00B140), the same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no smoke or particles around the characters, no green glow or green rim light on the characters. No borders, frames or labels.';
-const EXTRA = 'No captions or name tags. No glowing symbols, runes or letter-like signs anywhere.';
+const HEAD = 'Character sheet of the same character as the reference image, wearing the outfit described below.';
+// Modèle de planche donné par Gaël le 2026-10-27, mot pour mot.
+const COMMON = `With exactly his body proportions from the reference: same build, same head size relative to the body, not chubbier, not more cartoonish. Same outfit and same signature item, held in every figure. Same aura and glowing details as the reference, if he has any, pressed against the body in every figure.
+Correct anatomy in every figure: exactly two arms, two legs, two hands with five fingers each, no extra or duplicated limbs.
+Only the objects he has on the reference: never add an instrument, scarf, flag or prop he does not carry.
+Exactly six (IT'S VERY IMPORTANT, EXACTLY SIX FULL-BODY FIGURES) full-body figures, no more, no less: two rows of three, three figures in the top row and three in the bottom row, evenly spaced, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line in each row, wide empty background gaps between the figures, nothing overlapping, nothing cut by the edges.
+Every figure stays compact and narrow, hardly wider than the rest pose: arms raised straight up or bent close to the body, never stretched out to the sides.
+Top row, left to right: 1. rest: standing calm, arms by the sides, eyes open, mouth closed. 2. joy: jumping with both fists raised straight up above his head, mouth wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one hand over his face.
+Bottom row, left to right: 4. pushing the chant: singing with his mouth wide open, pushing the chant with his own signature item from the reference (raising it, shouting into it or playing it hard, close to his body). 5. anger: leaning forward, protesting, one arm bent pointing forward towards the viewer, elbow close to his body. 6. rest with eyes closed: exactly the same as figure 1, eyes closed.`;
+const FOND = 'Wide 3:2 image. Background: a completely flat, uniform, saturated studio green (#00B140), the exact same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the characters, no green glow or green rim light on the characters. No grid lines, no borders, no frames, no labels.';
+const FIN = 'No text, no letters, no numbers, no logos, no brand marks, no club crests, no team names, no sponsor logos, no identifiable jerseys, no real people.';
 const it = s => s.replace(/\bhimself\b/g,'itself').replace(/\bhis\b/g,'its').replace(/\bhim\b/g,'it').replace(/\bhe\b/g,'it').replace(/\bHis\b/g,'Its').replace(/\bHe\b/g,'It');
 const she = s => s.replace(/\bhimself\b/g,'herself').replace(/\bhis\b/g,'her').replace(/\bhim\b/g,'her').replace(/\bhe\b/g,'she').replace(/\bHis\b/g,'Her').replace(/\bHe\b/g,'She');
 const section = (md, id) => { const s = md.indexOf(`### ${id} ·`); if (s < 0) throw new Error(id); let e = md.indexOf('\n### ', s + 5); if (e < 0) e = md.length; return md.slice(s, e); };
@@ -52,7 +52,7 @@ for (let n = 1; n <= 60; n++) {
 }
 
 const out = DIR + 'SKINS-generation/prompts/'; fs.mkdirSync(out, { recursive: true });
-const liste = ['ordre\tfichier\tid\tage\tskin\tdemi\treferences\tfond'];
+const liste = ['ordre\tfichier\tid\tage\tskin\treference\tfond'];
 let ordre = 0;
 const fix = (f, s) => {
   if (f.nonHuman) s = s
@@ -63,18 +63,15 @@ const fix = (f, s) => {
     .replace('one hand over his face', 'one little arm over his face')
     .replace('one arm bent pointing forward', 'one little arm bent pointing forward');
   if (f.g === 'it') s = it(s); else if (f.g === 'she') s = she(s);
-  if (f.magenta) s = s.replace(/ No weapons, no skulls, no blood, no green\./, ' No weapons, no skulls, no blood.').replace(/\(no green skin, no zombie\)/, '(no zombie)').replace(/studio green \(#00B140\)/g, 'studio magenta (#FF00FF)').replace(/no green glow or green rim light/g, 'no magenta glow or magenta rim light');
-  else s = s.replace('no green glow or green rim light on the characters.', 'no green glow or green rim light on the characters, no green in the costume.');
+  if (f.magenta) s = s.replace(/studio green \(#00B140\)/g, 'studio magenta (#FF00FF)').replace(/no green glow or green rim light/g, 'no magenta glow or magenta rim light');
   return s;
 };
 // Ordre : l'âge 1 de tous d'abord (tous les joueurs l'ont), puis l'âge 2, puis l'âge 3 ; RP avant AN.
-for (let k = 0; k < 3; k++) for (const f of fiches) for (const sk of Object.keys(SKIN_FR)) for (const L of ['A', 'B']) {
-  const p = [HEAD[k ? 1 : 0], STYLE, f.ident, 'Theme: ' + f.ages[k], SKIN[sk] + '\nHis own costume: ' + f.skins[sk], COMMON + '\n' + PL[L], FOND, EXTRA, INTERDITS].join('\n\n');
-  const nom = `${f.id}-e${k+1}-${sk}-${L}`;
+for (let k = 0; k < 3; k++) for (const f of fiches) for (const sk of Object.keys(SKIN_FR)) {
+  const p = [HEAD, STYLE, f.ident, f.ages[k], SKIN[sk] + '\n\nHis own costume: ' + f.skins[sk], COMMON, FOND, FIN].join('\n\n');
+  const nom = `${f.id}-e${k+1}-${sk}-planche`;
   fs.writeFileSync(out + nom + '.txt', fix(f, p));
-  const carte = f.id + ['', 'B', 'C'][k] + '.png';
-  const refs = k ? `${carte} + ${f.id}-e1-${sk}-planche-A.png` : carte;
-  liste.push([++ordre, nom + '.txt', f.id, k + 1, sk, L, refs, f.magenta ? 'magenta' : 'vert'].join('\t'));
+  liste.push([++ordre, nom + '.txt', f.id, k + 1, sk, f.id + ['', 'B', 'C'][k] + '.png', f.magenta ? 'magenta' : 'vert'].join('\t'));
 }
 fs.writeFileSync(DIR + 'SKINS-generation/liste.tsv', liste.join('\n') + '\n');
-console.log(fiches.length, 'Fanzzy,', ordre, 'demi-planches');
+console.log(fiches.length, 'Fanzzy,', ordre, 'planches');
