@@ -1,6 +1,6 @@
 {
   "id": "AN35",
-  "rev": 4,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -29,7 +29,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "ac6004ecdffe"
+          "sha": "ac6004ecdffe",
+          "cligne": true
         }
       }
     },
@@ -44,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "9bab4e496f68"
+          "sha": "9bab4e496f68",
+          "cligne": true
         }
       }
     }

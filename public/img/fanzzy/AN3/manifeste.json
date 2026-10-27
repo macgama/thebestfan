@@ -1,6 +1,6 @@
 {
   "id": "AN3",
-  "rev": 4,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -29,7 +29,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "e3f91823834b"
+          "sha": "e3f91823834b",
+          "cligne": true
         }
       }
     },
@@ -44,7 +45,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "9a2bdc25a6d0"
+          "sha": "9a2bdc25a6d0",
+          "cligne": true
         }
       }
     }

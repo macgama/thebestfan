@@ -1,6 +1,6 @@
 {
   "id": "AN4",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -29,7 +29,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "53c7ccb57bf4"
+          "sha": "53c7ccb57bf4",
+          "cligne": true
         }
       }
     },
