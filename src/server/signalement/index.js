@@ -25,7 +25,7 @@
  * comme tous les mails du jeu : il n'est pas perdu, il est dans les journaux.
  */
 import express from 'express';
-import { ETIQUETTE } from '../../shared/version.js';
+import { etiquette } from '../../shared/version.js';
 
 /** Bornes : un signalement se lit d'une traite, et le mail reste un mail. */
 export const TEXTE_MIN = 5;
@@ -69,7 +69,7 @@ export function createSignalement({ pool, requireAuth, mailer, destinataires = p
       `Écran : ${borne(req.body?.ecran, 40) || '—'}`,
       `Navigateur : ${borne(req.body?.navigateur, 300) || '—'}`,
       `Langue : ${borne(req.body?.langue, 10) || u.locale || '—'}`,
-      `Version : ${ETIQUETTE}${borne(req.body?.construction, 40) ? ` (${borne(req.body?.construction, 40)})` : ''}`,
+      `Version : ${etiquette()}${borne(req.body?.construction, 40) ? ` (${borne(req.body?.construction, 40)})` : ''}`,
     ].join('\n');
 
     try {
