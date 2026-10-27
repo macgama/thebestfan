@@ -11,10 +11,12 @@
  * atteint) est éprouvé par `boutique:smoke`. Ici, on regarde ce que la page
  * propose, ce qu'elle envoie, et qu'elle ne s'en va pas.
  *
- * Les dessins sont ceux du dépôt (`public/img/fanzzy/index.json`) : au
- * 6 octobre 2026, Préhistorique n'est dessinée que pour RP1 et RP2. Si elle
- * l'est un jour pour RP3, le contrôle « pas encore dessinée » le dira.
+ * Les dessins sont ceux du dépôt (`public/img/fanzzy/index.json`), à un
+ * détail près : le bouchon retire Préhistorique de RP3. Le 27 octobre 2026,
+ * RP3 a reçu ses skins, et le cas « pas encore dessinée » n'avait plus de
+ * Fanzzy pour l'éprouver ; tous les RP les recevront.
  */
+import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -79,6 +81,10 @@ app.post('/api/onboarding/avatar', (q, s) => { avatars.push(q.body); s.json({ ok
 app.use('/api', (_q, s) => s.json({ ok: true, items: [], liste: [] }));
 app.get('/boutique', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'boutique.html')));
 app.get('/fanzzy', (_q, s) => s.send('<!doctype html><title>classeur</title>'));
+// Un Fanzzy sans Préhistorique, quel que soit l'avancement des dessins.
+const index = JSON.parse(await readFile(path.join(RACINE, 'public', 'img', 'fanzzy', 'index.json'), 'utf8'));
+for (const e of Object.values(index.fanzzy.RP3?.evolutions ?? {})) delete e.skins?.prehistorique;
+app.get('/img/fanzzy/index.json', (_q, s) => s.json(index));
 app.use(express.static(path.join(RACINE, 'public')));
 
 const http = createServer(app);
