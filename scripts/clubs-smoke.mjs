@@ -204,6 +204,10 @@ check('la fiche d\'un AN est liée d\'office, à un club que ce joueur ne suit p
   f.club?.lie === true && f.club.tonClub === false && f.club.achete === false);
 check('la fiche d\'un AN nomme son club et montre son logo, même non suivi',
   f.club.nom === 'Club Témoin' && f.club.logo === 'https://exemple.test/logo.png');
+await pool.query(`UPDATE teams SET color1 = '#C8102E', color2 = '#FFFFFF' WHERE id = ?`, [clubDe('AN1')]);
+f = await F.fiche(U, 'AN1');
+check('la fiche donne le club et ses couleurs, pour l\'écharpe et le son du CRI',
+  f.club.id === clubDe('AN1') && f.club.couleurs.join() === '#C8102E,#FFFFFF');
 check('un Fanzzy de série ne s\'achète pas', await refus(F.lierAuClub(U, 'AN1')) === 'fanzzy.error.deja_lie');
 check('sans club principal, refusé sans rien prendre',
   await refus(F.lierAuClub(SANS, 'TR32')) === 'fanzzy.error.sans_club' && await echarpes(SANS) === 200);
