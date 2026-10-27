@@ -116,8 +116,8 @@
   55%{transform:translate(5px,5px) rotate(-.3deg)}70%{transform:translate(-3px,2px)}85%{transform:translate(2px,-1px)}}
 .tbf-ult-plan{position:absolute;inset:0;overflow:hidden;opacity:0;
   clip-path:inset(50% 0 50% 0);will-change:transform,filter,clip-path}
-.tbf-ult-plan img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  object-position:50% 30%}
+.tbf-ult-plan img,.tbf-ult-plan video{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:50% 30%}
 .tbf-ult.on .tbf-ult-plan{animation:tbfUltPlan var(--d) cubic-bezier(.3,.7,.3,1) forwards}
 @keyframes tbfUltPlan{
   0%{opacity:1;clip-path:inset(50% 0 50% 0);transform:scale(1.42);filter:brightness(.35) saturate(.2) blur(5px)}
@@ -274,16 +274,29 @@
   };
   /* IMAGES: fin */
 
-  /** L'image Ultimate d'une lignée à un âge, ou null. Une légendaire n'a qu'un âge. */
-  function image(id, age = 1) {
+  /* **Les clips Ultimate** (Artlist, 4 s, 9:16, sans son : le son vient de
+     `son.js`), tirés de l'image du même âge : `<racine>-e<âge>` → fichier
+     dans `public/img/ultime/`. Même script, même règle : sans clip, l'image
+     fixe animée au code. */
+  /* CLIPS: début */
+  const CLIPS = {};
+  /* CLIPS: fin */
+
+  /* Le fichier d'une lignée à un âge dans une table, ou null. Une légendaire
+     n'a qu'un âge, donc qu'un fichier : on le prend à tout âge. Une lignée à
+     trois âges ne prête jamais le fichier d'un autre âge. */
+  function chercher(table, id, age) {
     // Un âge passé en identifiant (« RP4B ») revient à sa lignée (« RP4 »).
     const racine = String(id ?? '').replace(/^([A-Z]{2}\d+)[B-Z]$/, '$1');
-    /* Une légendaire n'a qu'un âge, donc qu'une image : on la prend à tout
-       âge. Une lignée à trois âges ne prête jamais l'image d'un autre âge. */
     const seule = !IMAGES[`${racine}-e2`] && !IMAGES[`${racine}-e3`];
-    const f = IMAGES[`${racine}-e${Math.max(1, Number(age) || 1)}`] ?? (seule ? IMAGES[`${racine}-e1`] : null);
+    const f = table[`${racine}-e${Math.max(1, Number(age) || 1)}`] ?? (seule ? table[`${racine}-e1`] : null);
     return f && racine ? `/img/ultime/${f}` : null;
   }
+
+  /** L'image Ultimate d'une lignée à un âge, ou null. */
+  const image = (id, age = 1) => chercher(IMAGES, id, age);
+  /** Le clip Ultimate d'une lignée à un âge, ou null. */
+  const clip = (id, age = 1) => chercher(CLIPS, id, age);
 
   /* Charge l'image avant la scène : une scène qui s'ouvre sur du noir puis
      saute à l'image perdrait sa révélation. Trop lente, la scène dessinée la
@@ -297,6 +310,26 @@
       i.onerror = () => finir(false);
       setTimeout(() => finir(false), ms);
       i.src = src;
+    });
+  }
+
+  /* Le clip aussi, prêt à jouer d'un trait : un clip qui hoquette au choc
+     ferait pire que l'image fixe. Trop lent, on garde l'image. */
+  function prechargerClip(src, ms = 1200) {
+    return new Promise((ok) => {
+      const v = document.createElement('video');
+      let fait = false;
+      const finir = (pret) => { if (!fait) { fait = true; ok(pret ? v : null); } };
+      v.muted = true;
+      v.playsInline = true;
+      v.preload = 'auto';
+      v.setAttribute('muted', '');
+      v.setAttribute('playsinline', '');
+      v.oncanplaythrough = () => finir(true);
+      v.onerror = () => finir(false);
+      setTimeout(() => finir(false), ms);
+      v.src = src;
+      v.load();
     });
   }
 
@@ -341,10 +374,13 @@
   function scene(o = {}) {
     const fond = o.grande && o.racine ? image(o.racine, o.age) : null;
     if (!fond) return jouer(o, null);
-    return precharger(fond).then((pret) => jouer(o, pret ? fond : null));
+    // Le clip ne joue pas sous le calme : l'image fixe suffit.
+    const film = doux() ? null : clip(o.racine, o.age);
+    return Promise.all([precharger(fond), film ? prechargerClip(film) : null])
+      .then(([pret, video]) => jouer(o, pret ? fond : null, pret ? video : null));
   }
 
-  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond) {
+  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond, video = null) {
     poserStyle();
     // Deux coups fatals à la suite : le second remplace le premier.
     enCours?.couper?.();
@@ -378,6 +414,12 @@
     el.querySelector('.tbf-ult-nom').textContent = nom;
     if (plein) {
       el.querySelectorAll('.tbf-ult-plan img').forEach((i) => { i.src = fond; });
+      /* Le clip se pose sur l'image, qui reste dessous : s'il cale, on voit
+         l'image fixe, jamais du noir. */
+      if (video && !calme) {
+        video.className = 'v';
+        el.querySelector('.tbf-ult-plan .p').after(video);
+      }
       /* Trente braises, chacune sa taille, sa dérive et son départ : un
          tirage par scène, pour qu'aucune ne se ressemble. */
       const braises = el.querySelector('.tbf-ult-braises');
@@ -440,7 +482,10 @@
         plus(plein ? 1800 : 1200, fin);
         return;
       }
-      requestAnimationFrame(() => el.classList.add('on'));
+      requestAnimationFrame(() => {
+        el.classList.add('on');
+        el.querySelector('.tbf-ult-plan .v')?.play?.()?.catch?.(() => {});
+      });
       if (grande) {
         /* Le son propre à l'Ultimate (`son.js`) : la montée tient jusqu'au
            choc, l'impact tombe avec l'éclair, puis la tribune. */
@@ -473,5 +518,5 @@
     });
   }
 
-  window.TBF_ULTIME = { scene, image };
+  window.TBF_ULTIME = { scene, image, clip };
 })();
