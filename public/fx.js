@@ -227,12 +227,17 @@
      demie pendant qu'on tape, elle ne doit pas masquer le geste. */
   .fx-titre{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:93;
     font-family:"Oswald","Arial Narrow",Impact,sans-serif;letter-spacing:.08em;text-align:center;
-    pointer-events:none;opacity:0;white-space:nowrap;
+    pointer-events:none;opacity:0;line-height:1.12;
     padding:11px 22px;border-radius:4px;border:2px solid rgba(4,7,11,.9);
     background:linear-gradient(178deg,rgba(18,23,31,.94),rgba(8,11,15,.94));
     box-shadow:0 0 0 1.5px currentColor,0 16px 40px rgba(0,0,0,.72);
-    text-shadow:0 3px 0 rgba(4,7,11,.85);max-width:calc(100vw - 32px);
-    overflow:hidden;text-overflow:ellipsis}
+    text-shadow:0 3px 0 rgba(4,7,11,.85);
+    /* **Le titre se lit en entier** (Gaël, 27 octobre 2026 : le cri
+       « Toute la machine s'allume » finissait en « S'… ») : sur une ligne
+       tant qu'il tient dans la largeur du téléphone, sur deux lignes
+       équilibrées sinon, jamais coupé de points de suspension. */
+    width:max-content;max-width:min(calc(100vw - 32px),448px);box-sizing:border-box;
+    white-space:normal;text-wrap:balance;overflow-wrap:break-word}
   .fx-titre.go{animation:fxtitre 1.7s cubic-bezier(.2,.9,.3,1)}
   @keyframes fxtitre{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}
     16%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
@@ -1976,41 +1981,27 @@
     /**
      * Le Cri d'un Fanzzy.
      *
-     * Une vidéo par Cri serait ingérable : vingt-sept Fanzzy, vingt-sept
-     * fichiers à charger au pire moment. Une seule séquence d'ondes est donc
-     * partagée, teintée à la couleur du type et superposée en mode « screen »
-     * pour que seul ce qui brille apparaisse. Elle n'est chargée qu'au premier
-     * Cri de la session.
+     * Deux ondes, des étincelles et le titre, **à la couleur de sa famille**.
+     * Il y avait aussi une vidéo de flammes partagée (`/video/cri.mp4`), en
+     * mode « screen » : jamais teintée, elle posait le même cercle de feu
+     * orange sur tous les Fanzzy, quelle que soit leur couleur (Gaël,
+     * 27 octobre 2026 : « rien à voir avec ce qu'on a mis en place pour les
+     * effets liés aux équipes et aux couleurs »). Retirée. Un Fanzzy lié à un
+     * club crie, lui, avec l'écharpe de son club (`club`, voir la fiche).
      */
-    cri(label, { couleur = COULEURS.or, video = '/video/cri.mp4' } = {}) {
+    cri(label, { couleur = COULEURS.or } = {}) {
       const x = innerWidth / 2, y = innerHeight * 0.42;
       onde({ x, y, couleur, taille: 520 });
       particules({ x, y, n: 46, distance: 210, taille: 6, duree: 1100,
         couleurs: [couleur, '#FFF3D0'] });
-      titre(label, null, couleur, 40);
+      /* Un cri long (« Toute la machine s'allume », ses traductions) passe
+         sur deux lignes et descend d'une taille, pour ne pas couvrir la carte. */
+      const lettres = String(label ?? '').length;
+      titre(label, null, couleur, lettres > 34 ? 28 : lettres > 18 ? 34 : 40);
       secousse(1.1);
       buzz([30, 40, 30, 40, 90]);
       if (doux()) return;
-
-      let v = document.getElementById('fx-cri');
-      if (!v) {
-        v = document.createElement('video');
-        v.id = 'fx-cri';
-        v.muted = true; v.playsInline = true; v.preload = 'none';
-        v.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;' +
-          'mix-blend-mode:screen;opacity:0;transition:opacity .35s;pointer-events:none;z-index:92';
-        document.body.appendChild(v);
-      }
-      // Absence du fichier : les particules et le titre suffisent, le Cri
-      // reste lisible. Aucun effet ne doit dépendre d'un téléchargement.
-      v.onerror = () => { v.remove(); };
-      if (!v.src) { v.src = video; v.load(); }
-      v.style.filter = `hue-rotate(0deg) saturate(1.1)`;
-      v.currentTime = 0;
-      v.style.opacity = '1';
-      v.play?.().catch(() => {});
-      clearTimeout(v._t);
-      v._t = setTimeout(() => { v.style.opacity = '0'; v.pause?.(); }, 2600);
+      setTimeout(() => onde({ x, y, couleur, taille: 380 }), 180);
     },
 
     /**

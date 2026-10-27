@@ -2400,10 +2400,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const portes = stuff.filter((s) => s.slot).sort((a, b) => a.slot - b.slot)
       .map((s) => s.stuff_id);
 
-    /* **Lié à un club ?** (`shared/fanzzy/clubs.js`) Le numéro du club ne
-       part pas à la page : la fiche dit seulement s'il est lié, et si c'est à
-       un club que ce joueur suit — jamais lequel, par la prudence juridique
-       des séries de championnat. */
+    /* **Lié à un club ?** (`shared/fanzzy/clubs.js`) La fiche dit s'il est
+       lié, et si c'est à un club que ce joueur suit ; depuis le 25 octobre
+       2026, elle nomme aussi le club (voir plus bas). */
     const achete = await clubAchete(userId, id);
     const sonClub = clubDe(id) ?? achete;
     const suit = sonClub == null ? false : (await q(
@@ -2416,6 +2415,13 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        pas encore garde le tampon sans nom. */
     const equipe = sonClub == null ? null : (await q(
       `SELECT name, logo FROM teams WHERE id = ?`, [sonClub]).catch(() => []))[0] ?? null;
+    /* **Le cri d'un Fanzzy lié est celui de son club** (choix de Gaël du
+       27 octobre 2026) : sur la fiche, CRI fait traverser l'écharpe aux
+       couleurs du club (`FX.club`) avec son son (`TBF_SON.club`, rangé sous
+       l'identifiant du club). Lues à part : une base sans `sql/couleurs.sql`
+       garde le nom et le logo, l'écharpe prend alors l'or et la craie. */
+    const teinte = sonClub == null ? null : (await q(
+      `SELECT color1, color2 FROM teams WHERE id = ?`, [sonClub]).catch(() => []))[0] ?? null;
 
     return {
       /* **Un Fanzzy neutre se lie contre des écharpes** (choix de Gaël du
@@ -2425,6 +2431,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       club: sonClub != null
         ? { lie: true, tonClub: suit, achete: achete != null, ...taux,
           nom: equipe?.name ?? null, logo: equipe?.logo ?? null,
+          id: Number(sonClub), couleurs: [teinte?.color1, teinte?.color2].filter(Boolean),
           // Le cri qu'il pousse dans les matchs de ce club (`criDuClub`).
           cri: criDuClub(sonClub) }
         : { lie: false, prix: reglage('fanzzy.lien_prix'),
