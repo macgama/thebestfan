@@ -1813,11 +1813,13 @@ if (banc) try {
     const avant = (await musique()).place;
     await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), page.click('#lien')]);
     await page.waitForFunction(() => Boolean(window.TBF_SON && window.FX), { timeout: 10000 });
-    await page.click('#geste');
-    await jusqua(page, (x) => x.musique.joue, 5000);
+    /* Sans toucher (Gaël, 27 octobre 2026 : « la musique se coupe quand je
+       passe d'une page à l'autre ») : Chrome laisse démarrer le contexte
+       après un lien suivi sur le même site. */
+    const seule = await jusqua(page, (x) => x.musique.joue, 5000);
+    check('à la page suivante, elle reprend seule, sans attendre le toucher', seule, await musique());
     const apres = (await musique()).place;
-    check('à la page suivante, elle reprend où elle en était', avant > 0.5 && apres >= avant && apres < avant + 3,
-      { avant, apres });
+    check('et où elle en était', avant > 0.5 && apres >= avant && apres < avant + 4, { avant, apres });
     check('aucune erreur de script (musique)', erreurs.length === 0, ...erreurs);
     await page.close();
   }
