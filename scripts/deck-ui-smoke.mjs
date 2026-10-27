@@ -336,7 +336,8 @@ check('dix emplacements de cartes', T(dom).querySelectorAll('.emp').length === 1
 
 /* -------------------------- duel ou Virage : ça doit se voir
 
-   Treize cartes sur trente-neuf ne se jouent pas au Grand Virage, et le
+   Treize cartes sur trente-neuf ne se jouent pas au Grand Virage (quatorze
+   depuis le Filet de chantier, 27 octobre 2026), et le
    serveur les écartait de la main **en silence**. Un joueur pouvait garnir
    ses dix emplacements sans qu'aucune n'y entre, et ne le découvrir qu'en
    voyant sa rangée vide au milieu d'un match. Ce n'était pas un cas rare :
@@ -351,7 +352,7 @@ check('dix emplacements de cartes', T(dom).querySelectorAll('.emp').length === 1
   await jusqua(() => T(dom).querySelectorAll('.cat .carte').length === ACTIONS.length);
 
   const marquees = await dom.window.eval('S.catalogue.filter((a) => a.virage === false).length');
-  check('le catalogue dit de chaque carte où elle se joue', marquees === 13);
+  check('le catalogue dit de chaque carte où elle se joue', marquees === 14);
 
   /* La Bâche vise la prochaine poussée adverse : au Virage, « la prochaine
      poussée adverse » n'est pas un événement, c'est du bruit de fond. */

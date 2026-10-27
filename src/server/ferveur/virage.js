@@ -6,7 +6,7 @@ import { CHANTS, ORDRE, puissanceDuChant } from '../../shared/duel/chants.js';
 // La même fonction donne le leur aux duels de ce match.
 import { stadeDuMatch } from '../contenus/index.js';
 // La composition lieu + Fanzzy vit dans le moteur de duel : une seule règle.
-import { avecLieu } from '../nvn/engine.js';
+import { avecLieu, prixDuChant, repriseDuChant } from '../nvn/engine.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
 // La ventilation de ce qu'un supporter porte : le lieu s'y ajoute ici, les
 // trois autres sources arrivent avec l'entrée. Partagée avec le duel.
@@ -851,7 +851,9 @@ export class VirageRoom {
       mise.fin = 0;                     // consommée, gagnée ou perdue
     }
 
-    m.breath -= card.cost;
+    /* Le prix et la reprise du Fanzzy, comme au duel : voir `prixDuChant`. */
+    m.breath = Math.max(0, m.breath - prixDuChant(card.cost, mods));
+    if (parfait) m.breath = Math.min(RULES.breathMax, m.breath + repriseDuChant(card.cost, mods));
     m.lastPush = now;
     m.dernierChant = now;
     if (card.effect === 'fatigue') m.fatigueUntil = now + 4000;
