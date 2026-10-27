@@ -15,11 +15,18 @@
  * Une lignée sans image garde la scène dessinée avec sa carte : rien ne
  * casse tant que la série n'est pas complète.
  *
+ * Les clips (Artlist, 4 s, 9:16, sans son) suivent la même règle : source
+ * `<racine>-e<âge>.mp4` dans le même dossier, réencodée par ffmpeg en MP4
+ * H.264 de 540 × 960 sans piste son (`FFMPEG` pour un autre ffmpeg que celui
+ * du PATH), puis la table `CLIPS` de `public/ultime.js`.
+ *
  *   node scripts/ultime-images.mjs
  */
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import os from 'os';
+import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 
@@ -30,6 +37,8 @@ const SCENE = path.join(RACINE, 'public', 'ultime.js');
 const LARGEUR = 720;
 const HAUTEUR = 1280;
 const NOM = /^([A-Z]{2}\d+)-e([1-3])\.(png|jpe?g|webp)$/i;
+const NOM_CLIP = /^([A-Z]{2}\d+)-e([1-3])\.mp4$/i;
+const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 
 if (!fs.existsSync(SOURCE)) {
   console.error(`Pas de sources dans ${path.relative(RACINE, SOURCE)} : rien à faire.`);
@@ -37,7 +46,33 @@ if (!fs.existsSync(SOURCE)) {
 }
 fs.mkdirSync(CIBLE, { recursive: true });
 
+/** Écrit `tampon` sous `<clé>.<empreinte>.<ext>` et retire les anciennes versions. */
+function ecrire(cle, ext, tampon) {
+  const empreinte = crypto.createHash('sha1').update(tampon).digest('hex').slice(0, 8);
+  const sortie = `${cle}.${empreinte}.${ext}`;
+  for (const vieux of fs.readdirSync(CIBLE)) {
+    if (vieux.startsWith(`${cle}.`) && vieux.endsWith(`.${ext}`) && vieux !== sortie) fs.unlinkSync(path.join(CIBLE, vieux));
+  }
+  fs.writeFileSync(path.join(CIBLE, sortie), tampon);
+  return sortie;
+}
+
 const table = {};
+const clips = {};
+for (const fichier of fs.readdirSync(SOURCE).sort()) {
+  const m = NOM_CLIP.exec(fichier);
+  if (!m) continue;
+  const cle = `${m[1].toUpperCase()}-e${m[2]}`;
+  const tmp = path.join(os.tmpdir(), `ultime-${process.pid}-${cle}.mp4`);
+  execFileSync(FFMPEG, ['-y', '-loglevel', 'error', '-i', path.join(SOURCE, fichier),
+    '-vf', `scale=540:960:force_original_aspect_ratio=increase,crop=540:960`,
+    '-c:v', 'libx264', '-profile:v', 'main', '-pix_fmt', 'yuv420p', '-crf', '26', '-preset', 'slow',
+    '-an', '-movflags', '+faststart', tmp]);
+  const tampon = fs.readFileSync(tmp);
+  fs.unlinkSync(tmp);
+  clips[cle] = ecrire(cle, 'mp4', tampon);
+  console.log(`  clip ${cle.padEnd(8)} ${Math.round(tampon.length / 1024)} ko`);
+}
 for (const fichier of fs.readdirSync(SOURCE).sort()) {
   const m = NOM.exec(fichier);
   if (!m) continue;
@@ -46,26 +81,28 @@ for (const fichier of fs.readdirSync(SOURCE).sort()) {
     .resize(LARGEUR, HAUTEUR, { fit: 'cover', position: 'attention' })
     .webp({ quality: 80 })
     .toBuffer();
-  const empreinte = crypto.createHash('sha1').update(tampon).digest('hex').slice(0, 8);
-  const sortie = `${cle}.${empreinte}.webp`;
   // Les versions précédentes de la même image partent : une seule par clé.
-  for (const vieux of fs.readdirSync(CIBLE)) {
-    if (vieux.startsWith(`${cle}.`) && vieux !== sortie) fs.unlinkSync(path.join(CIBLE, vieux));
-  }
-  fs.writeFileSync(path.join(CIBLE, sortie), tampon);
-  table[cle] = sortie;
+  table[cle] = ecrire(cle, 'webp', tampon);
   console.log(`  ok   ${cle.padEnd(8)} ${Math.round(tampon.length / 1024)} ko`);
 }
 
-const cles = Object.keys(table).sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
-const bloc = cles.length
-  ? `  const IMAGES = {\n${cles.map((k) => `    '${k}': '${table[k]}',`).join('\n')}\n  };`
-  : '  const IMAGES = {};';
-const scene = fs.readFileSync(SCENE, 'utf8');
-const avant = /(\/\* IMAGES: début \*\/\n)[\s\S]*?(\n {2}\/\* IMAGES: fin \*\/)/;
-if (!avant.test(scene)) {
-  console.error('Les repères « IMAGES: début / fin » manquent dans public/ultime.js.');
-  process.exit(1);
+/** Réécrit la table `nom` de la scène entre ses deux repères. */
+function reecrire(scene, nom, t) {
+  const cles = Object.keys(t).sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
+  const bloc = cles.length
+    ? `  const ${nom} = {\n${cles.map((k) => `    '${k}': '${t[k]}',`).join('\n')}\n  };`
+    : `  const ${nom} = {};`;
+  const avant = new RegExp(`(/\\* ${nom}: début \\*/\\n)[\\s\\S]*?(\\n {2}/\\* ${nom}: fin \\*/)`);
+  if (!avant.test(scene)) {
+    console.error(`Les repères « ${nom}: début / fin » manquent dans public/ultime.js.`);
+    process.exit(1);
+  }
+  console.log(`  ${cles.length} ${nom === 'IMAGES' ? 'image(s)' : 'clip(s)'} dans public/ultime.js`);
+  return scene.replace(avant, `$1${bloc}$2`);
 }
-fs.writeFileSync(SCENE, scene.replace(avant, `$1${bloc}$2`));
-console.log(`\n  ${cles.length} image(s) dans public/ultime.js`);
+
+console.log('');
+let scene = fs.readFileSync(SCENE, 'utf8');
+scene = reecrire(scene, 'IMAGES', table);
+scene = reecrire(scene, 'CLIPS', clips);
+fs.writeFileSync(SCENE, scene);
