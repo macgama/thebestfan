@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**La musique du jeu** (branche `claude/project-thread-qfzgoq`, 27 octobre
+2026, demandée par Gaël : « The Final Turn », sa création). Construction
+seule, **sans schéma**.
+
+- La boucle (0:00 à 0:50 du morceau) joue sur les pages « normales » :
+  l'accueil, les Fanzzy, la collection, le deck, les boosters, la boutique,
+  le football, les amis, le profil, le compte, les missions. Jamais au duel,
+  au Virage ni aux mini-jeux. Elle part au premier toucher sur la page et
+  reprend d'une page à l'autre où elle en était.
+- Le grand moment (1:11 à 1:40) joue au bilan d'un duel gagné.
+- Menu : « Couper la musique », dans le pied, à côté de « Se déconnecter ».
+  Couper les sons la coupe aussi ; le volume la règle avec le reste.
+- Après la mise en ligne : sur le S24+, toucher l'accueil, ouvrir deux ou
+  trois pages, puis gagner un duel.
+
+---
+
 **L'Ultimate ne se voit qu'avec sa carte** (branche
 `claude/project-thread-0u99uq`, 27 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.
