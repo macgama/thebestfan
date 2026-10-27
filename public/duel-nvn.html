@@ -4291,8 +4291,7 @@ function vignetteFz(f, entre, couleur, rang = 0, heros = false) {
     skin: f.skin || (mien ? monAvatar?.skin : null) || 'base' };
   const image = heros ? (imageFz(qui, 'pousse') ?? src) : src;
   const ton = couleur === 'var(--bleu)' ? 'data-ton="bleu"' : 'data-ton="or"';
-  return `<div class="fz-aff ${heros ? 'heros' : 'tbf-glisse'} ${entre ? 'entre' : ''}" style="--ac:${couleur};--d:${rang * 160}ms;--i:${rang % 3}${
-    heros && image ? `;--src:url('${image}')` : ''}">
+  return `<div class="fz-aff ${heros ? 'heros' : 'tbf-glisse'} ${entre ? 'entre' : ''}" style="--ac:${couleur};--d:${rang * 160}ms;--i:${rang % 3};--src:url('${image ?? ''}')">
     ${image ? `<img alt="" ${heros ? 'decoding="async"' : 'loading="lazy"'} src="${image}">` : ''}
     ${heros && image ? '<span class="eclat" aria-hidden="true"></span>' : ''}
     ${entre ? `<span class="tag tbf-sticker" ${ton}>ENTRE</span>` : ''}
