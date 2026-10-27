@@ -1,6 +1,6 @@
 {
   "id": "RP3",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "edac8387a7a1"
+          "sha": "7a7a64200450"
         },
         "halloween": {
           "etats": [
@@ -25,7 +25,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "54063600434d"
+          "sha": "d642228e0527"
         },
         "apocalyptique": {
           "etats": [
@@ -37,7 +37,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8ca85a2a6a43"
+          "sha": "38491f9cda97"
         },
         "prehistorique": {
           "etats": [
@@ -49,7 +49,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "267d2bc0913b"
+          "sha": "817d6b071c6a"
         }
       }
     },
@@ -116,7 +116,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8ad2148648cb"
+          "sha": "260d98e5e3b5"
         },
         "base": {
           "etats": [
@@ -127,7 +127,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "907262527fd2"
+          "sha": "d58f6efe7967"
         },
         "apocalyptique": {
           "etats": [
@@ -139,7 +139,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "111c504df0f9"
+          "sha": "42ce0646058d"
         },
         "prehistorique": {
           "etats": [
@@ -151,7 +151,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b3a41b853720"
+          "sha": "3323d447a6cf"
         }
       }
     }
