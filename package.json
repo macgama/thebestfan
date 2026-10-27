@@ -34,6 +34,7 @@
     "confidentialite:smoke": "node scripts/confidentialite-smoke.mjs",
     "legal:smoke": "node scripts/legal-smoke.mjs",
     "signalement:smoke": "node scripts/signalement-smoke.mjs",
+    "livraisons:smoke": "node scripts/livraisons-smoke.mjs",
     "amis:ui": "node scripts/amis-ui-smoke.mjs",
     "equipes:ui": "node scripts/equipes-ui-smoke.mjs",
     "matchs:ui": "node scripts/matchs-ui-smoke.mjs",

@@ -1,5 +1,47 @@
 # À déposer sur Infomaniak
 
+**Le numéro de version monte à chaque mise en ligne** (branche
+`claude/project-thread-wy11c4`, 27 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Le bas du menu disait toujours « version bêta — 0.0200 ». Désormais le
+  serveur compte ses mises en ligne au démarrage (un commit qu'il n'avait pas
+  encore vu = +1) : la prochaine mise en ligne affiche 0.0201, la suivante
+  0.0202, etc. Un simple redémarrage ne change rien. Le compte est gardé dans
+  la table `reglages` (clé `version.livraisons`), que la remise à zéro garde.
+- Après la mise en ligne : ouvrir le menu, le bas doit dire 0.0201.
+
+---
+
+**La musique du jeu** (branche `claude/project-thread-qfzgoq`, 27 octobre
+2026, demandée par Gaël : « The Final Turn », sa création). Construction
+seule, **sans schéma**.
+
+- La boucle (0:00 à 0:50 du morceau) joue sur les pages « normales » :
+  l'accueil, les Fanzzy, la collection, le deck, les boosters, la boutique,
+  le football, les amis, le profil, le compte, les missions. Jamais au duel,
+  au Virage ni aux mini-jeux. Elle part au premier toucher sur la page et
+  reprend d'une page à l'autre où elle en était.
+- Le grand moment (1:11 à 1:40) joue au bilan d'un duel gagné.
+- Menu : « Couper la musique », dans le pied, à côté de « Se déconnecter ».
+  Couper les sons la coupe aussi ; le volume la règle avec le reste.
+- Après la mise en ligne : sur le S24+, toucher l'accueil, ouvrir deux ou
+  trois pages, puis gagner un duel.
+
+---
+
+**L'Ultimate ne se voit qu'avec sa carte** (branche
+`claude/project-thread-0u99uq`, 27 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Collection, vitrine d'une carte Ultimate à gagner : plus de bouton VOIR
+  L'ULTIMATE, seulement le chemin du booster. VOIR LA GRANDE SCÈNE reste sur
+  une carte gagnée.
+- Fiche : la plaque ULTIMATE d'une carte pas encore gagnée montre un cadenas
+  et BOOSTER ; la toucher dit où la trouver, sans jouer la scène.
+
+---
+
 **Le nom du Fanzzy ouvre sa fiche** (branche `claude/project-thread-5rpxvz`,
 27 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
