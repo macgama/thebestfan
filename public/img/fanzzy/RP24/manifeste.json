@@ -1,6 +1,6 @@
 {
   "id": "RP24",
-  "rev": 9,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b83eddabb840"
+          "sha": "b83eddabb840",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -76,7 +77,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f6e103d5419f"
+          "sha": "f6e103d5419f",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
