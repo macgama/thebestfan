@@ -1,6 +1,6 @@
 {
   "id": "SU31",
-  "rev": 9,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6e522ef66eda"
+          "sha": "4ba753460d20"
         }
       }
     },
