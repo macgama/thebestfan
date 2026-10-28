@@ -1,6 +1,6 @@
 {
   "id": "RP10",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "2ab6c58fab79",
+          "sha": "163e5505133a",
           "cligne": true
         },
         "halloween": {
@@ -38,7 +38,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1a627e998476"
+          "sha": "b04c7f699ce8"
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +50,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b91ee07894c6"
+          "sha": "1629db48e7b3"
         }
       }
     },
