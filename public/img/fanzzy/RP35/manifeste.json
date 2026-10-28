@@ -1,6 +1,6 @@
 {
   "id": "RP35",
-  "rev": 8,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ad83eec316bd"
+          "sha": "ad83eec316bd",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -102,7 +103,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d19ba0da048e"
+          "sha": "d19ba0da048e",
+          "cligne": true
         }
       }
     },

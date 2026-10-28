@@ -1,6 +1,6 @@
 {
   "id": "RP3",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0fafed03ebaf"
+          "sha": "0fafed03ebaf",
+          "cligne": true
         }
       }
     },
