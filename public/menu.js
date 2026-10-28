@@ -1587,6 +1587,17 @@
       }).then((n) => {
         if (n) poser('/duel-nvn', 'attend', n);
       });
+      /* Et en direct : le rappel du duel relit les files toutes les dix
+         secondes et prévient quand elles changent (`duel-rappel.js`). Le
+         sticker suit, et la mémoire de l'onglet avec, pour que la page
+         suivante ne rallume pas un duel déjà parti. */
+      window.addEventListener('tbf:attentes', (e) => {
+        const n = duelsEnAttente(e.detail?.attentes);
+        poser('/duel-nvn', n > 0 ? 'attend' : null, n > 0 ? n : null);
+        try {
+          sessionStorage.setItem('tbf-etat-duel', JSON.stringify({ t: Date.now(), v: n > 0 ? n : null }));
+        } catch { /* tant pis : la page suivante redemandera */ }
+      });
     }
 
     /* **Et les demandes d'ami qui attendent** (25 octobre 2026, à la demande

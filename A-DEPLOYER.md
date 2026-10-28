@@ -14,6 +14,18 @@ Gaël). Il se dépose avec ce qui est en dessous, ou seul.
 
 ---
 
+**Les duels qui attendent se voient sans recharger** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, demandé par Gaël : il
+fallait rafraîchir la page pour savoir que quelqu'un attendait un duel).
+Construction seule, **sans schéma**.
+
+- Sur l'accueil, « Quelqu'un t'attend » s'allume (et s'éteint) dans les dix
+  secondes, et le sticker du duel du menu aussi sur les autres pages.
+- Après la mise en ligne : sur le PC, entrer en file d'un duel ; sur le S24+,
+  rester sur l'accueil sans recharger, le bandeau doit venir tout seul.
+
+---
+
 **MES SAISONS sur le profil** (branche `claude/project-thread-chiok9`,
 28 octobre 2026, demandé par Gaël : garder l'historique des saisons d'avant).
 Construction seule, **sans schéma**.
