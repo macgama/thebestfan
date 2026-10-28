@@ -291,7 +291,8 @@
       if (!d.length) continue;
       blocs.push(`<div class="tbf-ap-bloc">
         <div class="tbf-ap-qui"><span class="tbf-ap-ou">${esc(SOURCES[a.quoi] ?? '')}</span>
-          <b>${esc(a.nom ?? '')}</b></div>
+          <b>${esc(a.nom ?? '')}</b>${a.combo
+    ? ' <span class="tbf-tampon" data-ton="vert">COMBO</span>' : ''}</div>
         ${a.texte ? `<p class="tbf-ap-dit">${esc(a.texte)}</p>` : ''}
         <ul class="tbf-ap-liste">${d.map((x) =>
     `<li class="${x.sens}">${esc(x.texte)}</li>`).join('')}</ul>

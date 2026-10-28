@@ -11798,3 +11798,27 @@ html[data-calme~="animations"]::view-transition-new(*){animation:none}
 .tbf-defile-fleche:hover{transform:scale(1.1)}
 .tbf-defile-fleche[disabled]{opacity:.3;cursor:default;transform:none}
 .tbf-defile-fleche svg{width:14px;height:14px;display:block}
+
+/* ---------------------------------------------------------------- Où jouer
+   Les pastilles VIRAGE et DUEL sous un match, sur MATCHS et COMPÉTITIONS
+   (`a-jouer.js`). L'emplacement vide ne prend aucune place : la plupart des
+   matchs n'en ont pas, et une ligne vide sous chacun allongerait la liste
+   d'un tiers. Vert pour la tribune ouverte, violet pour le duel qui attend,
+   le violet de l'onglet EN ATTENTE. */
+.tbf-jeu{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;min-width:0}
+.tbf-jeu:empty{display:none}
+.tbf-jeu a{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:3px 10px;
+  border-radius:999px;border:1.5px solid currentColor;text-decoration:none;
+  font-family:var(--banner);font-size:11px;letter-spacing:.08em;line-height:1;
+  max-width:100%;white-space:nowrap;overflow:hidden}
+.tbf-jeu a span,.tbf-jeu a small{overflow:hidden;text-overflow:ellipsis}
+.tbf-jeu a small{font-size:10px;opacity:.92;letter-spacing:.06em}
+.tbf-jeu .virage{color:var(--vert-clair);background:rgba(30,158,106,.14)}
+.tbf-jeu .virage::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;
+  flex:none;animation:tbf-jeu-bat 1.4s ease-in-out infinite}
+.tbf-jeu .duel{color:var(--violet-clair);background:rgba(130,87,218,.18)}
+.tbf-jeu a:active{transform:scale(.97)}
+.tbf-jeu a:focus-visible{outline:2px solid var(--craie);outline-offset:2px}
+@keyframes tbf-jeu-bat{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){ .tbf-jeu .virage::before{animation:none} }
+html[data-calme~="animations"] .tbf-jeu .virage::before{animation:none}
