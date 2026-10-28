@@ -111,7 +111,7 @@ async function raccrocherLignees(pool) {
  * Pas de cache : une requête au démarrage, et les suites qui refont la table
  * entre deux appels obtiennent la vérité du moment plutôt qu'un souvenir.
  */
-async function colonneAmorce(pool) {
+export async function colonneAmorce(pool) {
   const [rows] = await pool.query(`SHOW COLUMNS FROM fanzzy LIKE 'amorce'`);
   return rows.length > 0;
 }
@@ -199,21 +199,15 @@ async function cartesTouchees(pool) {
 }
 
 /**
- * Fait redescendre le code dans la base, champ par champ.
+ * Le plan de la réconciliation, sans rien écrire.
  *
- * Ne lève jamais pour une raison de schéma : sans la colonne `amorce`, elle se
- * désactive en le disant. Le jeu tourne exactement comme avant — il ne reprend
- * simplement rien — et c'est le bon comportement pour une pièce qui s'ajoute :
- * la panne du 8 septembre 2026 est partie d'un fichier de schéma non appliqué
- * qui a éteint toutes les routes `/api`.
+ * Le démarrage l'exécute ; `npm run reconciliation:voir` le montre. Lire les
+ * deux par la même fonction, c'est ce qui garantit que l'aperçu dit ce que le
+ * démarrage fera. `max` remplace le disjoncteur : l'aperçu passe `Infinity`
+ * pour voir toutes les cartes, même celles qu'il bloquerait.
  */
-async function reconcilier(pool, avecAmorce) {
-  if (!avecAmorce) {
-    console.warn('catalogue : colonne `amorce` absente, réconciliation désactivée '
-      + '— applique sql/fanzzy.sql pour que les corrections du code atteignent '
-      + 'les cartes déjà en base.');
-    return null;
-  }
+export async function planifierReconciliation(pool,
+  { max = Number(process.env.TBF_RECONCILIATION_MAX) || MAX_DEFAUT } = {}) {
   /* sql-sur : `colonnes` est la liste des colonnes gérées, construite à
      partir de COLONNE — une table de constantes écrite cinquante lignes plus
      haut, dans ce fichier. Aucune donnée de requête ne la touche, et elle ne
@@ -235,8 +229,26 @@ async function reconcilier(pool, avecAmorce) {
     toucheeAdmin: touchees.connu ? touchees.ids.has(r.id) : true,
   }));
 
-  const max = Number(process.env.TBF_RECONCILIATION_MAX) || MAX_DEFAUT;
-  const plan = fusionner({ code: AMORCE, base, max });
+  return fusionner({ code: AMORCE, base, max });
+}
+
+/**
+ * Fait redescendre le code dans la base, champ par champ.
+ *
+ * Ne lève jamais pour une raison de schéma : sans la colonne `amorce`, elle se
+ * désactive en le disant. Le jeu tourne exactement comme avant — il ne reprend
+ * simplement rien — et c'est le bon comportement pour une pièce qui s'ajoute :
+ * la panne du 8 septembre 2026 est partie d'un fichier de schéma non appliqué
+ * qui a éteint toutes les routes `/api`.
+ */
+async function reconcilier(pool, avecAmorce) {
+  if (!avecAmorce) {
+    console.warn('catalogue : colonne `amorce` absente, réconciliation désactivée '
+      + '— applique sql/fanzzy.sql pour que les corrections du code atteignent '
+      + 'les cartes déjà en base.');
+    return null;
+  }
+  const plan = await planifierReconciliation(pool);
   for (const ligne of resumerFusion(plan)) console.warn(ligne);
   if (plan.bloque) return plan;
 
