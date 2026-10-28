@@ -164,6 +164,22 @@ check('la base reflète le changement', c.enabled === 0 && c.tier === 1);
 r = await call('/api/admin/competition/999/2026', { method:'PATCH', body:{ debut:'pas-une-date' } });
 check('date invalide refusée', r.json.error === 'admin.error.nothing_to_do');
 
+/* La page range par pays, en français : elle cherche « suisse » en passant
+   aussi le nom anglais et le code, lit les dates en « AAAA-MM-JJ » et peut ne
+   montrer que les actives ou les inactives. */
+r = await call('/api/admin/competitions?q=suisse&pays=Switzerland&codes=CH');
+check('un pays en français trouve sa compétition',
+  r.json.competitions.length === 1 && r.json.competitions[0].league_id === 207);
+r = await call('/api/admin/competitions');
+const petite = r.json.competitions.find((x) => x.league_id === 999);
+check('les dates partent en texte, sans heure', petite?.starts_on === '2026-08-01');
+r = await call('/api/admin/competitions?etat=inactives');
+check('le filtre des inactives', r.json.competitions.length === 1
+  && r.json.competitions[0].league_id === 999);
+r = await call('/api/admin/competitions?etat=actives');
+check('le filtre des actives', r.json.competitions.every((x) => x.enabled === 1)
+  && r.json.competitions.some((x) => x.league_id === 207));
+
 /* -------------------------------------------------------- réglages */
 
 r = await call('/api/admin/reglage/annonce', { method:'PUT',

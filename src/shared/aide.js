@@ -61,7 +61,7 @@ export const ETAPES = [
     visuel: 'dos',
     quoi: 'Cinq cartes. Une ou deux sont des supporters — la deuxième sept fois '
       + 'sur dix. Les trois dernières donnent autre chose : de l’équipement, une '
-      + 'carte d’action, une tenue, ou des écharpes.',
+      + 'carte d’action, une tenue, une expression, une carte Ultimate ou des écharpes.',
     pourquoi: () => 'Un double ne se perd pas : il se change en écharpes, '
       + `${SCARVES.commune} pour une commune et jusqu’à ${SCARVES.legendaire} `
       + 'pour une légendaire. Et les écharpes sont ce qui fait grandir tes '
@@ -88,7 +88,8 @@ export const ETAPES = [
     visuel: 'deck',
     quoi: () => `${DECK_RULES.fanzzy} Fanzzy, ${DECK_RULES.stuffParFanzzy} pièces `
       + `d’équipement pour chacun, et ${DECK_RULES.actions} cartes d’action. `
-      + 'Le premier Fanzzy est ton titulaire : c’est lui qui entre sur le terrain.',
+      + 'Le premier Fanzzy est ton titulaire : c’est lui qui entre sur le terrain. '
+      + 'Un seul légendaire par deck, et jamais titulaire.',
     pourquoi: 'Chaque pièce d’équipement a un revers — elle donne quelque chose '
       + 'et en retire un autre. Il n’existe pas de meilleur équipement, seulement '
       + 'celui qui va avec le geste de ton titulaire.',
@@ -193,10 +194,12 @@ const RUBRIQUES = [
     questions: [
       ['C’est quoi, l’Ultimate ?',
         () => 'Le coup fatal de ton Fanzzy : il porte le nom de son cri et pousse la '
-          + 'corde très fort. Sous ton souffle, une jauge dorée monte à chaque chant '
-          + 'réussi — un BON compte un point, un PARFAIT deux — et elle est pleine à '
-          + `${reglage('ultime.charge')} points. Touche alors le bouton doré, réussis `
-          + 'le geste de ton Fanzzy, et la corde part d’un coup. Raté, il pousse encore la moitié.'],
+          + 'corde très fort. Une jauge d’or se remplit à chaque chant réussi — un BON '
+          + `compte un point, un PARFAIT deux — et elle est pleine à ${reglage('ultime.charge')} `
+          + 'points. En duel, c’est l’anneau du gros bouton rond, au bout de tes chants ; '
+          + 'au Grand Virage, la ligne sous ton souffle. Pleine, elle s’allume et bat : '
+          + 'touche-la, réussis le geste de ton Fanzzy, et la corde part d’un coup. Raté, '
+          + 'il pousse encore la moitié.'],
       ['Combien de fois puis-je le lancer ?',
         () => 'Une fois par duel, et une fois par match de Virage : choisis bien ton '
           + 'moment. En duel, la Relève fait grandir ton Fanzzy et son Ultimate avec '
@@ -265,6 +268,13 @@ const RUBRIQUES = [
         () => 'Les communes sont offertes à tout le monde. Sans elles, un joueur qui '
           + `débute ne pourrait pas remplir ses ${DECK_RULES.actions} emplacements le `
           + 'premier jour.'],
+      ['C’est quoi, une pièce de club ?',
+        () => 'Une pièce d’équipement aux couleurs d’un club, deux par club des Terraces '
+          + 'pour commencer. Portée par un Fanzzy lié au même club, c’est le COMBO : son '
+          + `revers perd ${reglage('stuff.club_revers')} %, dans tous les matchs. Et dans un `
+          + `match de ton club principal, c’est PLEIN CLUB : chacune rapporte ${reglage('stuff.club_gain')} % `
+          + 'd’écharpes en duel, ou de ferveur au Virage, en plus du lien du Fanzzy. '
+          + 'La force, elle, ne change pas.'],
       ['Mon deck change-t-il quelque chose au Grand Virage ?',
         () => 'Très peu : le Virage se joue au chant, pas au deck. Il compte pour le '
           + 'duel, où ton titulaire et ton équipement pèsent sur chaque geste.'],
@@ -294,6 +304,15 @@ const RUBRIQUES = [
             ? ` Sans PASS de tribune, ${reglage('abo.duels_classes_jour')} duels classés `
               + 'comptent par jour ; au-delà, tu joues toujours, en entraînement.'
             : '')],
+      ['Comment savoir où l’on joue en ce moment ?',
+        'Sur MATCHS et dans les compétitions, sous chaque match : la pastille verte '
+          + 'VIRAGE dit que sa tribune est ouverte et combien de supporters y poussent, '
+          + 'la violette DUEL qu’un joueur y attend un adversaire. Un appui t’y emmène. '
+          + 'Le filtre À JOUER de MATCHS ne garde que ces matchs-là.'],
+      ['Quelqu’un attend un duel : où le trouver ?',
+        'Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend '
+          + 'un joueur. Un appui choisit le match, le format et la tribune qui manque : '
+          + 'il ne reste qu’à entrer en file.'],
       ['Si je quitte la salle d’attente, mon duel disparaît-il ?',
         () => 'Non. Il reste ouvert et les autres le voient toujours ; le jeu te '
           + 'rappelle dès que quelqu’un arrive en face. S’il ne te voit pas revenir '

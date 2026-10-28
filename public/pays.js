@@ -40,6 +40,9 @@ window.TBF_PAYS = (() => {
     const s = localStorage.getItem('tbf_locale');
     if (LOCALES.includes(s)) locale = s;
   } catch { /* stockage refusé : la langue du navigateur suffit */ }
+  /* Une page qui n'a qu'une langue l'impose avant de charger ce fichier :
+     /admin est en français, quelle que soit la langue choisie au compte. */
+  if (LOCALES.includes(window.TBF_PAYS_LANGUE)) locale = window.TBF_PAYS_LANGUE;
 
   /* Les quatre nations britanniques n'ont pas de code ISO, et l'API range les
      compétitions internationales sous « World ». Leurs noms sont écrits ici,

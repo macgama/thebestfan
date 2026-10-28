@@ -44,7 +44,7 @@ await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, contenus, abonnem
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users,
   admin_audit, reglages, recompenses, missions_jour, compteurs_jour, user_nouveautes`);
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql', 'admin.sql',
+                 'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql', 'teletext.sql', 'deck.sql', 'admin.sql',
                  'kop.sql', 'amis.sql',
                  // Sans elle, l'onglet SAISONS se monte sur une table absente et
                  // le contrôle mesurerait un écran vide plutôt que l'écran.
@@ -1001,6 +1001,49 @@ await jusqua(async () =>
     const [r] = await pool.query('SELECT COUNT(*) AS n FROM user_fanzzy WHERE user_id = ?', [J]);
     return Number(r[0].n) === 1;
   }));
+  check('sans erreur de script en chemin', erreurs.length === 0
+    || (console.log('        erreurs :', erreurs), false));
+}
+
+/* ==================================================== l'onglet COMPÉTITIONS
+
+   Il montrait les pays en anglais (« England »), les dates en instants UTC
+   (« 2026-08-21T00:00:00.000Z ») et un bouton pour seul état. On le veut
+   rangé par pays, en français, avec des dates lisibles et l'état écrit. */
+{
+  await pool.query(`DELETE FROM souvenir_leagues`);
+  await pool.query(`INSERT INTO souvenir_leagues
+      (league_id,season,name,country,country_code,family,tier,enabled,has_events,starts_on,ends_on)
+    VALUES (39,2026,'Premier League','England',NULL,'championnat',1,1,1,'2026-08-21','2027-05-30'),
+           (207,2026,'Super League','Switzerland','CH','championnat',2,1,1,'2026-07-19','2027-05-23'),
+           (1,2026,'World Cup','World',NULL,'international',1,1,1,'2026-06-11','2026-07-19'),
+           (667,2026,'Friendlies Clubs','World',NULL,'amical',3,0,1,'2026-01-01','2026-12-31')`);
+  await page.evaluate(() => [...document.querySelectorAll('nav button')]
+    .find((b) => /COMPÉTITIONS/i.test(b.textContent))?.click());
+  check('l’onglet des compétitions se monte', await jusqua(async () =>
+    page.evaluate(() => document.querySelectorAll('tr.cmp-pays').length === 3)));
+  const pays = await page.evaluate(() =>
+    [...document.querySelectorAll('tr.cmp-pays th')].map((t) => t.firstChild.textContent.trim()));
+  check('rangées par pays, en français, les sélections d’abord',
+    JSON.stringify(pays) === JSON.stringify(['International', 'Angleterre', 'Suisse'])
+    || (console.log('        vu :', JSON.stringify(pays)), false));
+  const t = await page.evaluate(() => document.getElementById('main').textContent);
+  check('les dates se lisent', /21\.08\.2026/.test(t) && /30\.05\.2027/.test(t) && !/T00:00/.test(t));
+  check('l’état est écrit', /INACTIVE/.test(t) && /ACTIVE/.test(t));
+  if (process.env.TBF_CAPTURES) {
+    await page.screenshot({ path: path.join(process.env.TBF_CAPTURES, 'admin-competitions.png'),
+      fullPage: true }).catch(() => {});
+  }
+  await page.select('#etat', 'inactives');
+  check('le filtre des inactives', await jusqua(async () => page.evaluate(() =>
+    document.querySelectorAll('tr[data-id]').length === 1)));
+  await page.select('#etat', '');
+  await jusqua(async () => page.evaluate(() => document.querySelectorAll('tr[data-id]').length === 4));
+  await page.evaluate(() => { document.getElementById('q').value = 'angleterre'; });
+  await page.click('#go');
+  check('« angleterre » trouve la Premier League', await jusqua(async () => page.evaluate(() =>
+    document.querySelectorAll('tr[data-id]').length === 1
+    && /Premier League/.test(document.getElementById('main').textContent))));
   check('sans erreur de script en chemin', erreurs.length === 0
     || (console.log('        erreurs :', erreurs), false));
 }

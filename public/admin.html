@@ -74,6 +74,18 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 .log{font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.7;opacity:.75}
 .log b{color:var(--projo);font-family:var(--banner)}
 .vide{opacity:.45;padding:36px;text-align:center}
+/* Les compétitions, rangées par pays : un bandeau par pays, l'état écrit en
+   toutes lettres, une ligne inactive en retrait. */
+.cmp-total{font-size:12px;opacity:.6;margin:0 0 10px}
+tr.cmp-pays th{position:sticky;top:0;background:#14161a;text-align:left;padding:14px 6px 6px;
+  font-size:13px;letter-spacing:.06em;color:var(--projo);border-bottom:1px solid rgba(242,238,228,.15)}
+tr.cmp-pays th span{opacity:.5;font-size:11px;margin-left:6px}
+.cmp-sous{opacity:.45;font-size:11px}
+td.cmp-dates{font-size:12px;line-height:1.5;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cmp-etat{display:inline-block;min-width:62px;font-size:10px;border-radius:4px;padding:2px 6px;
+  margin-right:6px;border:1px solid currentColor;color:var(--flare);text-align:center}
+.cmp-etat.on{color:var(--vert,#5FDFA6)}
+tr.cmp-off td:not(.act){opacity:.5}
 
 /* ------------------------------------------------------------ réglages
    Une ligne par réglage : ce qu'il gouverne à gauche, sa valeur à droite.
@@ -281,6 +293,9 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 <!-- Sans « defer » : la vue du catalogue lit FZART.ILLUSTRES pour savoir quels
      Fanzzy sont dessinés, et elle le lit dès sa première exécution. -->
 <script src="/fanzzy-art.js"></script>
+<!-- Les pays des compétitions, en français : /admin n'a qu'une langue. -->
+<script>window.TBF_PAYS_LANGUE = 'fr';</script>
+<script src="/pays.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
@@ -1636,40 +1651,85 @@ const VUES = {
     };
   },
 
-  async competitions(terme = '') {
-    const d = await api('/competitions?q=' + encodeURIComponent(terme));
-    $('main').innerHTML = `
-      <div class="bar"><input id="q" placeholder="nom ou pays" value="${esc(terme)}">
-        <button class="mini" id="go">Chercher</button></div>
-      <div class="tbl"><table><thead><tr><th>COMPÉTITION</th><th>SAISON</th><th>COUVERTURE</th><th>PALIER</th><th>ÉTAT</th></tr></thead>
-      <tbody>${d.competitions.map((c) => `
-        <tr data-id="${c.league_id}" data-s="${c.season}">
-          <td><b>${esc(c.name)}</b><br><span style="opacity:.45;font-size:11px">${esc(c.country ?? '')} · ${esc(c.family)}</span></td>
-          <td>${c.season}<br><span style="opacity:.45;font-size:11px">${c.starts_on ?? '?'} → ${c.ends_on ?? '?'}</span></td>
+  async competitions(terme = '', etat = '') {
+    /* Le terme part tel quel et avec les pays qu'il désigne, en anglais et en
+       code ISO : la base range « England », l'administrateur tape
+       « angleterre ». Voir public/pays.js. */
+    const P = window.TBF_PAYS;
+    const designes = terme && P ? P.designes(terme) : [];
+    const d = await api('/competitions?q=' + encodeURIComponent(terme)
+      + '&etat=' + encodeURIComponent(etat)
+      + (designes.length ? '&pays=' + encodeURIComponent(designes.map((x) => x.nom).join(','))
+        + '&codes=' + encodeURIComponent([...new Set(designes.map((x) => x.code))].join(',')) : ''));
+    const nomPays = (c) => (P ? P.nom(c.country, c.country_code) : c.country) || 'Sans pays';
+    /* « 2026-08-21 » devient « 21.08.2026 », comme on l'écrit en Suisse. */
+    const date = (x) => (/^\d{4}-\d{2}-\d{2}/.test(x ?? '')
+      ? x.slice(0, 10).split('-').reverse().join('.') : '?');
+    const FAMILLES = { championnat: 'championnat', coupe: 'coupe', international: 'sélections',
+      amical: 'amical' };
+    /* Par pays, dans l'ordre alphabétique français ; les compétitions de
+       sélections (« World » pour l'API) d'abord. Dans un pays, le palier
+       puis le nom, la saison la plus récente en tête. */
+    const groupes = new Map();
+    for (const c of d.competitions) {
+      const n = nomPays(c);
+      if (!groupes.has(n)) groupes.set(n, { monde: c.country === 'World', lignes: [] });
+      groupes.get(n).lignes.push(c);
+    }
+    const ordre = [...groupes.entries()].sort(([na, a], [nb, b]) =>
+      (b.monde - a.monde) || na.localeCompare(nb, 'fr'));
+    for (const [, g] of ordre) {
+      g.lignes.sort((a, b) => (a.tier - b.tier) || a.name.localeCompare(b.name, 'fr')
+        || (b.season - a.season));
+    }
+    const actives = d.competitions.filter((c) => c.enabled).length;
+    const ligne = (c) => `
+        <tr data-id="${c.league_id}" data-s="${c.season}" class="${c.enabled ? '' : 'cmp-off'}">
+          <td><b>${esc(c.name)}</b><br><span class="cmp-sous">${esc(FAMILLES[c.family] ?? c.family ?? '')}
+            · saison ${esc(c.season)}</span></td>
+          <td class="cmp-dates">${date(c.starts_on)}<br>${date(c.ends_on)}</td>
           <td style="font-size:11px;opacity:.6">${[c.has_events&&'buts',c.has_standings&&'classement',
              c.has_top_scorers&&'buteurs'].filter(Boolean).join(' · ') || 'aucune'}</td>
           <td><select data-a="tier">${[1,2,3].map((t)=>
             `<option value="${t}" ${c.tier===t?'selected':''}>palier ${t}</option>`).join('')}</select></td>
-          <td class="act"><button class="mini ${c.enabled?'rouge':'vert'}" data-a="toggle"
+          <td class="act"><span class="cmp-etat ${c.enabled ? 'on' : ''}">${c.enabled ? 'ACTIVE' : 'INACTIVE'}</span>
+            <button class="mini ${c.enabled?'rouge':'vert'}" data-a="toggle"
             data-on="${c.enabled}">${c.enabled?'Désactiver':'Activer'}</button></td>
-        </tr>`).join('')}</tbody></table></div>`;
+        </tr>`;
+    $('main').innerHTML = `
+      <div class="bar"><input id="q" placeholder="nom ou pays" value="${esc(terme)}">
+        <select id="etat" aria-label="État">${[['', 'toutes'], ['actives', 'actives'],
+          ['inactives', 'inactives']].map(([v, l]) =>
+          `<option value="${v}"${v === etat ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <button class="mini" id="go">Chercher</button></div>
+      <p class="cmp-total">${d.competitions.length} ligne${d.competitions.length > 1 ? 's' : ''}
+        dans ${groupes.size} pays · ${actives} active${actives > 1 ? 's' : ''}.
+        Le palier ne règle que l’ordre d’affichage ; une compétition inactive disparaît des pages des joueurs.</p>
+      ${d.competitions.length ? `<div class="tbl"><table><thead><tr><th>COMPÉTITION</th>
+        <th>DÉBUT · FIN</th><th>COUVERTURE</th><th>PALIER</th><th>ÉTAT</th></tr></thead>
+      ${ordre.map(([n, g]) => `<tbody><tr class="cmp-pays"><th colspan="5">${esc(n)}
+        <span>${g.lignes.length}</span></th></tr>${g.lignes.map(ligne).join('')}</tbody>`).join('')}
+      </table></div>`
+      : '<div class="vide">Aucune compétition' + (terme || etat ? ' pour cette recherche.' : '.') + '</div>'}`;
     /* La touche Entrée aussi. Les deux écrans de recherche de cette page sont
        jumeaux, et seul celui des joueurs y répondait : ici, taper un nom et
        valider ne faisait rien, il fallait viser le bouton. Rien ne justifiait
        la différence — c'était un oubli, pas un choix. */
-    const chercher = () => sansPerdreLaMain(() => VUES.competitions($('q').value.trim()));
+    const relire = () => VUES.competitions($('q')?.value.trim() ?? '', $('etat')?.value ?? '');
+    const chercher = () => sansPerdreLaMain(relire);
     $('go').onclick = chercher;
     $('q').onkeydown = (e) => { if (e.key === 'Enter') chercher(); };
     const maj = async (tr, corps) => {
       await api(`/competition/${tr.dataset.id}/${tr.dataset.s}`, corps, 'PATCH');
       recu('compétition ' + tr.dataset.id + ' : ' + Object.keys(corps).join(', ') + '.');
-      VUES.competitions($('q')?.value ?? '');
+      relire();
     };
     $('main').onclick = async (e) => {
       const b = e.target.closest('button[data-a="toggle"]'); if (!b) return;
       await maj(b.closest('tr'), { enabled: b.dataset.on !== '1' });
     };
     $('main').onchange = async (e) => {
+      if (e.target.id === 'etat') { chercher(); return; }
       const s = e.target.closest('select[data-a="tier"]'); if (!s) return;
       await maj(s.closest('tr'), { tier: Number(s.value) });
     };
