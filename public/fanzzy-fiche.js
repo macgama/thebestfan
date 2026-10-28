@@ -445,8 +445,15 @@
          2026), qu'on le suive ou non. Le nom est celui de la liste des
          matchs ; sans lui, le tampon reste celui d'avant. */
       const nom = c.nom ? String(c.nom) : '';
+      /* Les pièces de son club : leur revers s'adoucit sur lui (COMBO), et
+         elles rapportent en plus dans les matchs du club principal. Une
+         phrase entière par cas : la traduction se fait phrase par phrase. */
+      const combo = Number(c.combo) || 0;
+      const plein = Number(c.pleinGain) || 0;
       const phrase = c.tonClub
-        ? `Dans les matchs de ton club, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel.`
+        ? (plein
+          ? `Dans les matchs de ton club, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel. Les pièces de son club, sur lui, gênent ${combo} % moins ; dans les matchs de ton club principal, chacune rapporte ${plein} % de plus.`
+          : `Dans les matchs de ton club, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel.`)
         : nom
           ? `Il est lié à ${nom}, un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`
           : `Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`;

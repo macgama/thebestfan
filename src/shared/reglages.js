@@ -223,6 +223,22 @@ export const REGLAGES = [
       'un Fanzzy lié à ce club : la ferveur au Virage, les écharpes au Duel (si le ' +
       'titulaire est lié). À 0, le lien ne rapporte rien de plus.' },
 
+  /* Les pièces de club (demande de Gaël du 28 octobre 2026) : voir
+     `modsDeLaPiece` (`shared/fanzzy/inventaire.js`) et `pleinClub`
+     (`shared/fanzzy/clubs.js`). Le COMBO adoucit, le PLEIN CLUB rapporte :
+     ni l'un ni l'autre ne fait pousser plus fort. */
+  { cle: 'stuff.club_revers', section: 'virage', type: 'entier',
+    titre: 'COMBO : revers d’une pièce de club retiré', unite: '%', min: 0, max: 100, defaut: 50,
+    aide: 'Quand une pièce de club est portée par un Fanzzy lié au même club, dans ' +
+      'tout match : la part de son revers qui disparaît. À 50, un revers de −12 % ' +
+      'devient −6 %. Le bonus de la pièce ne bouge pas.' },
+  { cle: 'stuff.club_gain', section: 'virage', type: 'entier',
+    titre: 'PLEIN CLUB : gain par pièce de club', unite: '%', min: 0, max: 50, defaut: 15,
+    aide: 'Le COMBO, dans un match du club principal du joueur : chaque pièce de ' +
+      'club portée ajoute ce gain, en plus du lien du Fanzzy (ferveur au Virage, ' +
+      'écharpes au Duel). Deux pièces à 15 % et le lien à 10 % : environ +45 %. ' +
+      'La force ne change pas.' },
+
   { cle: 'fanzzy.lien_prix', section: 'etal', type: 'entier',
     titre: 'Lier un Fanzzy neutre à son club coûte', unite: 'écharpes', min: 0, max: 2000, defaut: 120,
     aide: 'Depuis la fiche du Fanzzy, une seule fois : il est lié pour toujours au club ' +

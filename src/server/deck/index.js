@@ -14,6 +14,7 @@ import { reglage } from '../../shared/reglages.js';
 // Le club qu'on soutient dans une rencontre, et de quel côté il joue :
 // la même règle qu'au Virage et qu'au Duel, écrite une seule fois.
 import { clubParmi, campDe } from '../football/suivis.js';
+import { clubDe } from '../../shared/fanzzy/clubs.js';
 // La journée du football : la seule source complète de ce qui se joue
 // aujourd'hui. La table `fixtures` ne connaît que les clubs suivis.
 import { journeeParId, TERMINE } from '../football/journee.js';
@@ -439,6 +440,9 @@ export function createDecks({ pool, requireAuth, niveau = null,
            quand rien ne dort : il n'y a alors qu'un total. */
         const dort = f.legende || f.stuffLegende;
         const sacBanc = f.stuffLegende ? stuff.filter((s) => s !== f.stuffLegende) : stuff;
+        /* Son club, pour le COMBO des pièces de club (`modsDeLaPiece`) : celui
+           de sa série, sinon celui que le joueur lui a acheté. */
+        const club = clubDe(f.id) ?? clubs[f.id] ?? null;
         // L'équipement suit le personnage à travers ses âges : c'est déjà ce que
         // promet la carte de remplacement, et il serait incompréhensible qu'il
         // tombe au moment précis où le personnage grandit.
@@ -451,7 +455,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
           // l'âge. Sans lui, l'écran de duel dessine un Fanzzy à l'échelle NaN,
           // c'est-à-dire rien du tout.
           stage: i + 1,
-          mods: { id: f.id, ...combine(def?.mods ?? {}, stuff) },
+          mods: { id: f.id, ...combine(def?.mods ?? {}, stuff, { club }) },
           /* **Les modificateurs du personnage seuls**, avant le sac.
              `mods` est le total, et c'est lui que le moteur applique — mais un
              total ne se décompose pas après coup : on ne peut pas dire au joueur
@@ -460,7 +464,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
              ventilation, et c'est ici qu'elle se conserve. */
           modsBase: def?.mods ?? {},
           ...(dort ? { modsBanc: { id: f.id,
-            ...combine(f.legende ? {} : (def?.mods ?? {}), sacBanc) } } : {}),
+            ...combine(f.legende ? {} : (def?.mods ?? {}), sacBanc, { club }) } } : {}),
         });
 
         const ages = lignee(f.id);
