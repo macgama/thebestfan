@@ -1,6 +1,6 @@
 {
   "id": "SU5",
-  "rev": 9,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -78,7 +78,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e89be1fed89e"
+          "sha": "501ceda7e751"
         },
         "halloween": {
           "etats": [
@@ -102,7 +102,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "48697632da8e"
+          "sha": "91bb9c08fc32"
         }
       }
     },
@@ -130,7 +130,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8b607d965755"
+          "sha": "a78260462240"
         },
         "apocalyptique": {
           "etats": [
