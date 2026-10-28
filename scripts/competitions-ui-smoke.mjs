@@ -220,6 +220,16 @@ app.get('/teletext', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'teletext
 // La fiche d'un match vit sur la page des matchs : on éprouve qu'on y arrive,
 // pas ce qu'on y trouve — c'est le sujet de `matchs-ui-smoke`.
 app.get('/matchs', (_q, s) => s.type('html').send('<h1>matchs</h1>'));
+/* Où jouer (`a-jouer.js`) : sur le match en cours de la cinquième journée,
+   neuf supporters poussent et un joueur attend en 1v1 dans la tribune qui
+   reçoit. Les deux destinations sont des talons : on éprouve où l'on arrive. */
+app.get('/api/virage/a-jouer', (_q, s) => s.json({
+  foules: [{ fixtureId: 501, crowd: [4, 5] }],
+  duels: [{ fixtureId: 501, format: '1v1', attendus: 1, camps: [1, 0] }],
+}));
+for (const ou of ['/virage', '/duel-nvn']) {
+  app.get(ou, (_q, s) => s.type('html').send('<h1>' + ou + '</h1>'));
+}
 app.use(express.static(path.join(RACINE, 'public')));
 
 const http = createServer(app);
@@ -439,6 +449,35 @@ await controlerColonne(page, check, { nom: 'la page des compétitions',
   check('un match mène à sa fiche', page.url().includes('/matchs?match=601'));
 }
 
+
+/* ------------------------------------------------------------ les pastilles
+
+   28 octobre 2026, Gaël : dans les résultats aussi, voir qu'un Virage est
+   ouvert ou qu'un duel attend, et y aller d'un appui. */
+{
+  await page.goto(base + '/teletext?ligue=207', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('#tabs') !== null);
+  await page.evaluate(() => document.querySelector('[data-t=resultats]').click());
+  await jusqua(async () => await page.$('.tbf-jeu[data-jeu="501"] .duel') !== null);
+  const liens = await page.evaluate(() => [...document.querySelectorAll('.tbf-jeu[data-jeu="501"] a')]
+    .map((a) => ({ c: a.className, t: a.textContent.replace(/\s+/g, ' ').trim(),
+      href: a.getAttribute('href') })));
+  check('le match en cours a sa pastille VIRAGE, avec la tribune',
+    liens.some((l) => l.c === 'virage' && l.href === '/virage?match=501'
+      && /9 EN TRIBUNE/.test(l.t)) || (console.log('        ', JSON.stringify(liens)), false));
+  check('et sa pastille DUEL, sur la tribune qui manque',
+    liens.some((l) => l.c === 'duel' && l.href === '/duel-nvn?match=501&format=1v1&camp=1'
+      && /1 T’ATTEND/.test(l.t)) || (console.log('        ', JSON.stringify(liens)), false));
+  const large = await page.evaluate(() => [...document.querySelectorAll('.tbf-jeu a')].every((a) => {
+    const r = a.getBoundingClientRect();
+    return r.left >= 0 && r.right <= innerWidth;
+  }) && document.documentElement.scrollWidth <= innerWidth);
+  check('les pastilles tiennent dans la largeur', large);
+  await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }),
+    page.evaluate(() => document.querySelector('.tbf-jeu .virage').click())]);
+  check('toucher VIRAGE mène à la tribune, pas à la fiche',
+    page.url().endsWith('/virage?match=501') || (console.log('        ', page.url()), false));
+}
 
 /* --------------------------------------------------------- la ferveur
 
