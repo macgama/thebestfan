@@ -265,6 +265,45 @@ const A = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
     await refus(() => A.demander(ANA, BOB)) === 'amis.error.deja_amis');
 }
 
+/* ------------------------------------------------- chercher par pseudo */
+
+/* Dan ne suit aucun club d'Ana : les suggestions ne le montreront jamais.
+   La recherche par pseudo est le seul chemin vers lui — sans devenir pour
+   autant un annuaire des inscrits. */
+{
+  check('la recherche ne répond pas avant trois lettres',
+    (await A.chercher(ANA, 'Da')).length === 0 && (await A.chercher(ANA, '  ')).length === 0);
+  const dan = await A.chercher(ANA, 'dAn');
+  check('elle trouve quelqu’un sans club commun, majuscules ou non',
+    dan.length === 1 && dan[0].id === DAN && dan[0].pseudo === 'Dan'
+    || (console.log('        il y a :', JSON.stringify(dan)), false));
+  check('sans ses clubs ni son adresse',
+    !('clubs' in dan[0]) && !/@|Lugano/.test(JSON.stringify(dan)));
+  check('et sans lien tant qu’on ne se connaît pas', !('lien' in dan[0]));
+  check('elle part du début du pseudo, pas du milieu',
+    (await A.chercher(ANA, 'ara')).length === 0);
+  check('on ne se trouve pas soi-même', (await A.chercher(ANA, 'Ana')).length === 0);
+  check('% et _ sont des lettres, pas des jokers',
+    (await A.chercher(ANA, '%%%')).length === 0 && (await A.chercher(ANA, '___')).length === 0);
+  check('un ami se dit ami', (await A.chercher(ANA, 'Bob'))[0]?.lien === 'amis');
+
+  await A.demander(ANA, DAN);
+  check('la demande se dit des deux côtés',
+    (await A.chercher(ANA, 'Dan'))[0]?.lien === 'envoyee'
+    && (await A.chercher(DAN, 'Ana'))[0]?.lien === 'recue');
+  await A.retirer(ANA, DAN);
+
+  await pool.query(`UPDATE users SET status = 'locked' WHERE public_id = ?`, [DAN]);
+  check('un compte bloqué ne se trouve pas', (await A.chercher(ANA, 'Dan')).length === 0);
+  await pool.query(`UPDATE users SET status = 'active' WHERE public_id = ?`, [DAN]);
+
+  const presse = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
+  let code = '';
+  for (let i = 0; i < 31 && !code; i++) code = await refus(() => presse.chercher(CLA, 'Dan'));
+  check('trente recherches par minute, pas une de plus',
+    code === 'amis.error.trop_de_recherches');
+}
+
 /* --------------------------------------------------- les demandes croisées */
 
 {
