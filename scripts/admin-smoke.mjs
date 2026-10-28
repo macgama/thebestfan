@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import express from 'express';
 import { createAdmin } from '../src/server/admin/index.js';
 import { SETS } from '../src/shared/fanzzy/dex.js';
-import { charger as chargerCatalogue, parIdentifiant, publies }
+import { charger as chargerCatalogue, parIdentifiant, publies, chargerSeries }
   from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE, figerHorloge } from './base-de-test.mjs';
@@ -325,12 +325,31 @@ check('un brouillon ne change rien à ce qui est ouvert', r.json.ouvertes === nu
 r = await call('/api/admin/saisons', { method: 'POST', body: { series: [uneSerie] } });
 check('une saison sans nom est refusée', r.json.error === 'admin.error.saison_sans_nom');
 
+/* **Un lancement à la main ne ferme rien** (choix de Gaël, 28 octobre 2026).
+   La saison 1 de la base ne nomme aucune série, ce qui veut dire « toutes ».
+   Lancer à la main une saison qui en nomme une seule restreignait l'union à
+   celle-là : toutes les autres séries quittaient les boosters d'un coup. */
 r = await call(`/api/admin/saison/${essai.id}/lancer`, { method: 'POST', body: { lancer: true } });
 check('la lancer ouvre ses séries', r.status === 200
-  && r.json.ouvertes?.length === 1 && r.json.ouvertes[0] === uneSerie);
+  && r.json.ouvertes?.includes(uneSerie));
+check('sans fermer celles qui étaient ouvertes',
+  r.json.ouvertes?.length === new Set([...SETS.map((x) => x.id), uneSerie]).size
+  || (console.log('        ouvertes :', r.json.ouvertes), false));
+{
+  const [[s1]] = await pool.query(`SELECT series FROM saisons WHERE numero = 1`);
+  const ecrites = typeof s1.series === 'string' ? JSON.parse(s1.series) : s1.series;
+  check('la saison déjà lancée reçoit par écrit les séries qu’elle ouvrait',
+    ecrites.length === SETS.length);
+}
+
+/* La suite reprend ensuite sur une saison 1 qui ne nomme rien, mais avec une
+   saison lancée qui nomme sa série : l'union est alors celle-là, et le
+   lancement suivant n'écrit plus rien (une saison nomme déjà ses séries). */
+await pool.query(`UPDATE saisons SET series = JSON_ARRAY() WHERE numero = 1`);
+await chargerSeries(pool);
 
 r = await call('/api/admin/fanzzy');
-check('et les autres sont fermées',
+check('une saison qui nomme ses séries restreint à elles, faute d’autres',
   r.json.series.filter((x) => x.ouverte).length === 1);
 
 // Le point qui compte : le catalogue ne perd rien. Une carte d'une série
@@ -868,6 +887,11 @@ console.log('\n— la saison datée —');
     || montre('rendu', r.json));
   r = await call(`/api/admin/saison/${datee.id}/lancer`, { body: { lancer: true } });
   check('et se lance le jour même de sa fin', r.status === 200 || montre('rendu', r.json));
+  /* Le lancement a écrit toutes les séries dans la saison 1, qui n'en nommait
+     aucune : rien ne se ferme. On la vide de nouveau pour que l'essai, seul à
+     nommer sa série, en laisse d'autres fermées à annoncer. */
+  await pool.query(`UPDATE saisons SET series = JSON_ARRAY() WHERE numero = 1`);
+  await chargerSeries(pool);
   r = await call('/api/admin/saisons', { body: { nom: 'Saison annoncée', numero: 91,
     series: [uneSerie, autre], ouvre_le: '2027-04-02' } });
   const annoncee = r.json.saisons?.find((x) => x.nom === 'Saison annoncée');

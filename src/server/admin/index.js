@@ -869,7 +869,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
    * Sans ce calcul, remettre la saison 1 au brouillon fermerait un lieu que la
    * saison 2 annonce — et la saison 2, elle, ne se relance pas.
    */
-  async function lancerSaison(acteur, id, lancer, ip_, { auto = false } = {}) {
+  async function lancerSaison(acteur, id, lancer, ip_) {
     const s = toutesLesSaisons().find((x) => x.id === Number(id));
     if (!s) throw fail('admin.error.saison_inconnue', 404);
 
@@ -890,17 +890,18 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
               + 'maintenant, elle s’ouvrirait close. Corrige sa date de fin d’abord.' });
         }
       }
-      /* **Le lancement automatique est additif, y compris la première
-         fois.** Tant qu'aucune saison lancée ne nomme de série, tout est
-         ouvert (l'union vide vaut « aucune restriction », `chargerSeries`).
-         Lancer alors une saison qui nomme LES HÉROS DU CANAPÉ ferait de
-         l'union `{HC}` : les douze autres séries se refermeraient d'un coup,
-         collections en cours comprises, une nuit de 1er janvier, sans
-         personne devant l'écran. Les saisons déjà lancées reçoivent donc
-         d'abord, par écrit, les séries qu'elles ouvraient sans les nommer :
-         toutes. Un lancement à la main garde son sens d'avant : restreindre
-         ainsi est alors un choix qu'on fait en le voyant. */
-      if (auto && s.series.length) {
+      /* **Un lancement est additif, y compris la première fois.** Tant
+         qu'aucune saison lancée ne nomme de série, tout est ouvert (l'union
+         vide vaut « aucune restriction », `chargerSeries`). Lancer alors une
+         saison qui nomme LES HÉROS DU CANAPÉ ferait de l'union `{HC}` : les
+         douze autres séries se refermeraient d'un coup, collections en cours
+         comprises. Les saisons déjà lancées reçoivent donc d'abord, par écrit,
+         les séries qu'elles ouvraient sans les nommer : toutes.
+
+         Le lancement à la main suit la même règle depuis le 28 octobre 2026
+         (choix de Gaël) : il restreignait, et la confirmation ne le disait
+         pas. Une saison ajoute au jeu, elle ne lui retire rien. */
+      if (s.series.length) {
         const lanceesIci = toutesLesSaisons().filter((x) => x.lancee && x.id !== s.id);
         if (lanceesIci.length && !lanceesIci.some((x) => x.series.length)) {
           const toutes = SETS.map((x) => x.id);
@@ -1012,7 +1013,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const lancees = [];
     for (const { id } of rows) {
       try {
-        await lancerSaison(ACTEUR_AUTO, id, true, null, { auto: true });
+        await lancerSaison(ACTEUR_AUTO, id, true, null);
         lancees.push(Number(id));
         refusAuto.delete(Number(id));
       } catch (e) {

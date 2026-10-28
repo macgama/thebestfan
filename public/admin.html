@@ -736,7 +736,8 @@ const VUES = {
           <span>${d.ouvertes
             ? esc(noms(d.ouvertes, 'series'))
             : 'toutes — aucune saison lancée n’en nomme'}</span></p>
-        <p class="series-n">Une saison ouvre ses séries et publie <b>tout le reste</b> —
+        <p class="series-n">Une saison <b>ajoute</b> au jeu : les séries déjà
+          ouvertes le restent, et personne ne perd ce qu'il possède. Elle ouvre ses séries et publie <b>tout le reste</b> —
           tenues, équipement, cartes d'action, stades — pour tout le monde, à
           l'instant du lancement. Remettre en brouillon referme les séries et
           <b>elles seules</b> : ce qui a été publié reste publié, parce que
@@ -878,7 +879,9 @@ const VUES = {
         } : {
           titre: `LANCER LA SAISON ${s.numero} ?`,
           texte: `« ${s.nom} » s’ouvre pour tous les joueurs, maintenant.\n\n`
-            + (ouvre || 'Elle n’ouvre aucun contenu — elle ne fera qu’annoncer.') + finDite,
+            + (ouvre || 'Elle n’ouvre aucun contenu — elle ne fera qu’annoncer.')
+            + '\n\nRien ne se ferme : les séries déjà ouvertes le restent, et chacun garde ce qu’il possède.'
+            + finDite,
           oui: 'LANCER', ton: 'vert',
         });
         if (!ok) return;
