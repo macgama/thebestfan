@@ -1,6 +1,6 @@
 {
   "id": "AN17",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -65,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "63da6555945f"
+          "sha": "63da6555945f",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
