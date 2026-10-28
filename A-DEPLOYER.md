@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Plus de Fanzzy RP et SU clignent** (branche `claude/project-thread-j17xyz`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
+des images et des réglages, sans crédits.
+
+- RP de base : 5 âges de plus (84 sur 95). Skins RP : 40 âges de plus.
+- SU « Die Kurve » de base : 35 âges de plus (69). Skins SU : 138 sur 244
+  (aucun avant).
+
+---
+
 **Les Fanzzy en skins Halloween, Préhistorique et Apocalyptique clignent**
 (branche `claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** : des images et des réglages.
