@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Classement des clubs : les neutres comptent, et TRIBUNES suit la saison**
+(branche `claude/project-thread-2v1fvo`, 28 octobre 2026, demandé par Gaël :
+que les matchs joués pour un club qu'on ne suit pas rapportent un peu à ce
+club). Construction seule, **sans schéma**.
+
+- Un joueur qui pousse un club qu'il ne suit pas lui apporte un dixième de
+  sa ferveur classée, au Virage comme au duel classé, à l'onglet TRIBUNES et
+  dans les compétitions (pas aux KOP). Il ne compte pas parmi les supporters.
+- La moyenne se divise par les supporters **actifs** (les comptes fermés ne
+  comptent plus), et par au moins 5.
+- TRIBUNES compte la saison en cours, comme SUPPORTERS : il repart au
+  lancement de chaque saison.
+- Deux réglages dans /admin, section LE GRAND VIRAGE : « Un neutre apporte au
+  club qu'il pousse » (0,1) et « La moyenne d'une tribune se divise par au
+  moins » (5).
+---
+
 **Le club principal qui se change, et la sélection principale** (branche
 `claude/project-thread-rftsbq`, 28 octobre 2026, choix de Gaël : changer
 une fois par saison, plus une sélection nationale). Construction, puis
