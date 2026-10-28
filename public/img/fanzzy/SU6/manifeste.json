@@ -1,6 +1,6 @@
 {
   "id": "SU6",
-  "rev": 3,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4aefcca4a1ba"
+          "sha": "4aefcca4a1ba",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -52,7 +53,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "6b7d10c25da8"
+          "sha": "6b7d10c25da8",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -91,7 +93,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7c9ef00bc4d4"
+          "sha": "7c9ef00bc4d4",
+          "cligne": true
         }
       }
     }
