@@ -419,7 +419,11 @@ que `raretes` les a rangées.
   Appliqué, le pronostic paraît sans redémarrage de plus que celui que le
   contrôle de démarrage demande.
 
-Contrôle : `SHOW TABLES;` doit en lister **57**.
+- `amis-ensemble.sql` (28 octobre 2026) pose les quatre tables du jeu entre
+  amis (gestes, cadeau du jour, échanges de doubles, Fanzzy emprunté), sans
+  clé étrangère. Il vient après `mini-jeux.sql`.
+
+Contrôle : `SHOW TABLES;` doit en lister **61**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

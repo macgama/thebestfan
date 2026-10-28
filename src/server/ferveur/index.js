@@ -17,7 +17,7 @@ import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 // La ventilation de ce qu'un joueur porte, partagée avec le duel : les deux
 // arènes composent les mêmes modificateurs, elles doivent les nommer pareil.
 import { apportsDe } from '../../shared/apports.js';
-import { avecCriDuClub, clubDe, lieA, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
+import { avecCriDuClub, lieA, lienEcrit, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
 import { racineDe } from '../fanzzy/catalogue.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { ETAT_ULTIME } from '../../shared/ultime.js';
@@ -860,11 +860,16 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       /* Le club auquel le joueur a lié ce Fanzzy neutre, s'il l'a fait — lu
          ici et non dans le deck : on entre au Virage avec son avatar, qu'il
          soit au deck ou non. Sans la colonne, pas de lien. */
-      const clubAchete = hero && !neutre && clubDe(hero.id) == null
+      const clubAchete = hero && !neutre && lienEcrit(hero.id) == null
         ? (await q(`SELECT club_id FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
           [u.userId, racineDe(hero.id)]).catch(() => []))[0]?.club_id ?? null
         : null;
-      const lien = hero && !neutre && lieA(hero.id, teamId, clubAchete)
+      // Les légendaires des sélections et du championnat lisent le match lui-même.
+      const match = {
+        leagueId: room.fixture.leagueId,
+        nomDuClub: teamId === room.fixture.awayId ? room.fixture.awayName : room.fixture.homeName,
+      };
+      const lien = hero && !neutre && lieA(hero.id, teamId, clubAchete, match)
         ? modsDuLien(tauxDuLien()) : null;
       if (lien) {
         // Le cri de son club, à la place du sien : sa voix, pas son geste.
@@ -990,6 +995,18 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       /* Les amis : après l'état, sans l'attendre — une présence lente ou en
          panne ne retarde ni ne ferme l'entrée. */
       const m = room.members.get(u.userId);
+      /* **Côte à côte** (`virage.js`, `coteACote`) : ses amis mutuels, et s'il se
+         montre à eux — caché, il ne compte pour personne. Sans attendre : une
+         lecture lente retarde le bonus, jamais l'entrée. */
+      if (m && presence?.amisMutuels) {
+        Promise.all([presence.amisMutuels(u.userId), presence.visible(u.userId)])
+          .then(([ids, montre]) => {
+            if (room.members.get(u.userId) !== m) return;
+            m.amis = ids;
+            m.montre = Boolean(montre);
+          })
+          .catch((e) => console.warn('[virage] amis du côte à côte illisibles :', e.message));
+      }
       if (premiere && presence && m) {
         annoncerArrivee(room, m).catch((e) =>
           console.error(`[virage ${room.fixture.id}] amis dans la tribune :`, e.message));

@@ -248,7 +248,8 @@
     (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
   /** D'où vient chaque apport, en un mot — l'ordre est celui d'`apportsDe`. */
-  const SOURCES = { fanzzy: 'Ton Fanzzy', stuff: 'Ton sac', kop: 'Ton KOP', club: 'Ton club', lieu: 'Le stade' };
+  const SOURCES = { fanzzy: 'Ton Fanzzy', stuff: 'Ton sac', kop: 'Ton KOP', club: 'Ton club', lieu: 'Le stade',
+    amis: 'Tes amis' };
 
   /**
    * Ce que dit la ligne repliée.

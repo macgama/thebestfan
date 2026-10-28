@@ -10,6 +10,61 @@ Construction seule, **sans schéma** : des images et des réglages.
 
 ---
 
+**Six légendaires dans LES TERRACES** (branche `claude/project-thread-qn6nh1`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- AN61 La Dame des Falaises Blanches, AN62 Le Chevalier à la Croix Rouge,
+  AN63 Le Bouledogue au Grand Tambour : liées aux équipes nationales
+  d'Angleterre (hommes, femmes, espoirs), bonus de lien dans leurs matchs.
+- AN64 La Tisseuse des Vingt Écharpes, AN65 La Voix des Résultats, AN66 Le
+  Rouge-Gorge du Lendemain de Noël : liées au championnat anglais, bonus de
+  lien dans chaque match de championnat du club qu'on soutient.
+- Elles sortent du booster LES TERRACES au taux des légendaires (2 %).
+- Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
+  lire le tampon « LIÉ À ».
+
+---
+
+**/admin complété, et une saison ne ferme plus rien** (branche
+`claude/project-thread-g68rqt`, 28 octobre 2026, demandé par Gaël : vérifier
+que l'admin suit les nouveautés et que personne ne perd rien à une nouvelle
+saison). Construction seule, **sans schéma**.
+
+- SAISONS : « Lancer la saison » à la main garde ouvertes toutes les séries
+  déjà ouvertes (avant, lancer la Saison 2 aurait laissé HC seule en
+  booster). La confirmation le dit.
+- JOUEURS : un bouton « Collection » montre ce que le joueur possède (Fanzzy
+  par série, skins, cartes Ultimate, équipement, stades, amis, KOP) et permet
+  de lui offrir un Fanzzy, un skin, une carte Ultimate ou une pièce.
+- Nouvel onglet KOP : chercher, renommer ou supprimer un KOP (ses membres ne
+  perdent rien). L'onglet TENUES s'appelle maintenant SKINS.
+- Après la mise en ligne : dans /admin, JOUEURS, ouvrir « Collection » sur
+  son propre compte de test et s'offrir un Fanzzy.
+---
+
+**Jouer entre amis : les sept idées** (branche `claude/project-thread-hl4hic`,
+28 octobre 2026, demandé par Gaël : que les amis puissent jouer ensemble,
+s'entraider et communiquer sans texte). **Avec schéma** : nouveau fichier
+`sql/amis-ensemble.sql` (quatre tables, accord de Gaël). Après la
+construction, en SSH : `npm run schema:appliquer`, puis redémarrer. Sans
+cela, le site tourne quand même : la fiche d'un ami dit « en pause », les
+gestes, cadeaux, échanges et prêts ne partent pas, et /healthz le signale.
+
+- Dans AMIS, chaque ami porte JOUER ENSEMBLE, qui ouvre sa fiche : gestes
+  (une liste fermée, jamais de texte), cadeau du jour (écharpes offertes par
+  le jeu), défi de la semaine (chants au Virage à deux), échange de doubles,
+  prêt d'un Fanzzy jusqu'à minuit, sa collection, son deck, ses souvenirs.
+- Au Grand Virage, chaque ami visible dans ta tribune ajoute 3 % à ta
+  poussée (3 amis au plus). Un ami hors ligne ne compte pas.
+- La page AMIS dit ce que l'amitié ouvre ; QUESTIONS a une rubrique « Les
+  amis », Comment jouer une ligne « Jouer ensemble ». Réglages dans /admin,
+  section ENTRE AMIS (tout peut s'éteindre).
+- Après la mise en ligne : avec deux comptes amis, envoyer un geste, offrir
+  le cadeau, emprunter un Fanzzy et le mettre dans le deck, proposer un
+  échange et l'accepter de l'autre côté.
+
+---
+
 **17 Fanzzy de plus clignent en tenue de base** (branche
 `claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** : des images et des réglages.
