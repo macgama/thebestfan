@@ -2054,4 +2054,425 @@ export const AGES = {
       + 'quelques plumes sont toujours dressées sur sa tête.',
       'TOUS LES MESSAGES RENTRENT'],
   ],
+  /* ============================================================ DIE KURVE
+
+     Le foot suisse vu du virage debout (`dex-kurve.js`). Chaque lignée monte
+     dans un vieux métier ou une vieille fête de sa ville — le carnaval aux
+     lanternes, le bateau à aubes, le guet de la cathédrale, le pont couvert,
+     le funiculaire, la broderie, l'horloge fleurie, le glacier, la fête des
+     cadets, les timbres, le car des cols, la parade techno, le bac du
+     fleuve, les corporations, les vignes en terrasses, la fanfare masquée,
+     les marrons chauds, la bibliothèque de l'abbaye, le jet d'eau, la
+     raclette, la lutte à la culotte, les pistes, le marché aux oignons, les
+     pralines — et ses créatures viennent de la même ville. Le troisième âge
+     garde toujours un détail du premier. */
+  SU1: [
+    ['Le Porteur de Lanterne', 'Un long costume de carnaval en patchwork rouge et bleu, des '
+      + 'pompons de feutre, un grand masque au long nez relevé sur la tête et des confettis sur '
+      + 'les épaules. Sa lanterne est devenue un grand tambour de papier peint qu’il porte sur '
+      + 'une perche, et elle éclaire toute la rue.',
+      'LES LANTERNES, LEVEZ-LES'],
+    ['La Grande Lanterne du Carnaval', 'Il porte une lanterne géante en armure, ses panneaux '
+      + 'peints rouges et bleus allumés de l’intérieur entre les côtes de bois, et une couronne '
+      + 'de lanternes au-dessus de la tête. Quand il entre dans le virage, toute la nuit '
+      + 's’allume — et le petit lampion pend toujours à sa ceinture.',
+      'TOUTE LA NUIT S’ALLUME'],
+  ],
+  SU2: [
+    ['La Matelote du Bateau à Aubes', 'Veste bleu nuit à double rangée de boutons de laiton, '
+      + 'casquette blanche de marin, un rouleau de cordage sur l’épaule et un sifflet au cou. Le '
+      + 'télégraphe du bateau est devenu grand et poli, sa manette luit, et elle le porte à deux '
+      + 'mains jusqu’au stade.',
+      'EN AVANT TOUTE'],
+    ['La Capitaine du Lac', 'Une armure en forme de coque de vieux bateau à aubes, la grande '
+      + 'roue à aubes dans le dos comme un bouclier aux rayons lumineux, une cheminée blanche '
+      + 'derrière l’épaule. Elle mène toute la flotte du lac jusqu’au match d’en face — et le '
+      + 'petit levier jouet est toujours glissé à sa ceinture.',
+      'TOUTE LA FLOTTE SUIT'],
+  ],
+  SU3: [
+    ['Le Guet de la Cathédrale', 'Une longue capote bleu roi à revers blancs, un large chapeau '
+      + 'de feutre noir et un porte-voix de laiton au côté. Il lève sa lanterne au bout d’un '
+      + 'bâton crochu, et chaque nuit, à chaque heure, il crie l’heure à toute la ville.',
+      'IL A SONNÉ L’HEURE'],
+    ['Le Grand Guet de la Nuit', 'Une armure bleu roi en forme de haut de tour, des arcs de '
+      + 'pierre blanche qui luisent sur la poitrine et un chapeau pointu comme une flèche de '
+      + 'cathédrale. Sa voix tombe de si haut que toute la tribune se cale dessus — et il '
+      + 'compte encore les marches sur ses doigts.',
+      'TOUTE LA VILLE À L’HEURE'],
+  ],
+  SU4: [
+    ['La Fleuriste du Pont Couvert', 'Une robe bleu lac à tablier blanc et manches bouffantes, '
+      + 'une couronne de géraniums rouges dans les cheveux et une longue jardinière de fleurs '
+      + 'sur la hanche. Son arrosoir est devenu grand et luit doucement : le pont n’a jamais été '
+      + 'aussi fleuri.',
+      'TOUT LE PONT FLEURIT'],
+    ['La Reine du Vieux Pont', 'Une armure de poutres sombres et un toit pointu de bardeaux sur '
+      + 'les épaules, des jardinières de géraniums lumineux le long des bras et une petite tour '
+      + 'de pierre derrière elle. Elle déploie le pont tout entier au-dessus du virage — et le '
+      + 'petit arrosoir bleu pend toujours à son bras.',
+      'LE PONT TRAVERSE LE VIRAGE'],
+  ],
+  SU5: [
+    ['Le Conducteur du Funiculaire', 'Uniforme noir passepoilé de blanc, boutons d’argent, '
+      + 'casquette blanche et gants blancs. Il porte devant lui un petit pupitre de commande '
+      + 'noir et blanc dont le cadran luit, et il ne lâche le frein qu’au dernier chiffre.',
+      'DERNIER CHIFFRE, ON PART'],
+    ['Le Funiculaire de la Montagne', 'Une armure en cabine de funiculaire à gradins, des rangées '
+      + 'de fenêtres lumineuses qui descendent sur sa poitrine comme un escalier et une grande '
+      + 'roue de câble dans le dos. Il compte, et toute la tribune monte la montagne d’un seul '
+      + 'coup — le petit levier jouet est toujours dans sa poche.',
+      'TROIS, DEUX, UN… AU SOMMET'],
+  ],
+  SU6: [
+    ['La Brodeuse', 'Une longue robe verte au col blanc brodé, un tablier aux poches pleines de '
+      + 'bobines et une pelote d’épingles au poignet. Son tambour est devenu grand et luit de '
+      + 'fines fleurs de dentelle blanche, posées point après point.',
+      'UN POINT DE PLUS'],
+    ['La Reine de la Broderie', 'Une armure de dentelle blanche brodée sur de la soie verte, des '
+      + 'épaulettes de dentelle en éventail et une couronne de fil blanc. Elle brode la tribune '
+      + 'entière, motif après motif — et le fil est toujours pris dans ses lunettes.',
+      'TOUTE LA TRIBUNE BRODÉE'],
+  ],
+  SU7: [
+    ['Le Jardinier de l’Horloge Fleurie', 'Une salopette grenat sur une chemise blanche, un '
+      + 'chapeau de paille, une ceinture d’outils pleine de petits pots de fleurs et une longue '
+      + 'aiguille d’horloge en laiton sur l’épaule. Il replante l’horloge du parc à la minute '
+      + 'près.',
+      'À LA MINUTE PRÈS'],
+    ['L’Horloge Fleurie Vivante', 'Un grand cadran de fleurs rouges et blanches en guise de '
+      + 'cuirasse, deux aiguilles de laiton lumineuses, une couronne de fleurs ouvertes derrière '
+      + 'la tête. Toute la tribune chante à son heure — et il a toujours de la terre sur le '
+      + 'nez.',
+      'C’EST L’HEURE DE CHANTER'],
+  ],
+  SU8: [
+    ['La Guide de Glacier', 'Veste d’alpinisme rouge et blanche, casque blanc, baudrier et '
+      + 'mousquetons, crampons aux pieds et un piolet à manche de bois tenu comme un bâton. La '
+      + 'corde rouge est devenue épaisse et luit en travers de sa poitrine.',
+      'CORDÉE, EN AVANT'],
+    ['La Reine du Glacier', 'Une armure de glace bleue et de neige aux coutures rouges, des '
+      + 'épaulettes en pics gelés et une couronne de cristaux. Elle tend la corde, attend que '
+      + 'tout le virage soit prêt, et elle lâche — la gourde cabossée pend toujours à sa '
+      + 'ceinture.',
+      'TOUT LE GLACIER LÂCHE'],
+  ],
+  SU9: [
+    ['Le Bouffon de la Fête', 'Un costume moulant en losanges rouges et blancs, une courte cape '
+      + 'de lanières de feutre, des grelots de laiton cousus aux épaules et un masque de bois au '
+      + 'gros nez relevé sur la tête. C’est lui qui poursuit les enfants, maintenant, et de plus '
+      + 'en plus vite.',
+      'ATTRAPEZ-LES TOUS'],
+    ['Le Grand Bouffon de la Ville', 'Une armure en losanges rouges et blancs, un immense '
+      + 'capuchon à trois pointes aux grelots lumineux et un long bâton à boule rouge. Il '
+      + 'accélère et toute la ville court derrière lui — et le masque de carton du gamin est '
+      + 'toujours glissé dans sa ceinture.',
+      'TOUTE LA VILLE COURT'],
+  ],
+  SU10: [
+    ['La Graveuse de Timbres', 'Une longue blouse d’atelier blanche aux poignets rouges, un '
+      + 'foulard de soie rouge, une loupe baissée sur l’œil et des feuilles de timbres blancs '
+      + 'épinglées sur la blouse. Son burin est devenu grand et luit : elle perce chaque dent au '
+      + 'trou près.',
+      'AU TROU PRÈS'],
+    ['La Reine des Timbres', 'Une armure de grands timbres rouges et blancs qui se chevauchent, '
+      + 'leurs dents lumineuses, des épaulettes perforées et une couronne en rangée de timbres. '
+      + 'Rien ne dépasse, rien ne manque — et la petite pince est toujours dans sa poche.',
+      'PAS UN DE PLUS'],
+  ],
+  SU11: [
+    ['Le Chauffeur du Car des Cols', 'Uniforme noir passepoilé de jaune, casquette jaune, gants '
+      + 'de conduite noirs et sacoche à billets. Son volant est devenu grand et luit d’un jaune '
+      + 'citron ; à chaque lacet, il lance ses trois notes, et la vallée les lui renvoie.',
+      'LA VALLÉE RÉPOND'],
+    ['Le Grand Car des Cols', 'Une armure en avant de car jaune arrondi, deux gros phares '
+      + 'allumés sur la poitrine, un pare-chocs noir en ceinture et une galerie à bagages sur '
+      + 'les épaules. Ses trois notes partent, et toute la montagne les chante après lui — le '
+      + 'petit volant jouet est toujours accroché à sa ceinture.',
+      'TOUTE LA MONTAGNE RÉPOND'],
+  ],
+  SU12: [
+    ['La DJ du Char de la Parade', 'Une veste bleu roi brillante à bandes lumineuses, des '
+      + 'mitaines blanches, une petite platine portative sanglée devant elle et des bâtons '
+      + 'lumineux dans les tresses. Son casque est devenu grand et luit : tout le char danse sur '
+      + 'son temps.',
+      'TOUT LE CHAR SUR LE TEMPS'],
+    ['La Reine de la Parade', 'Une armure en char de parade couvert de haut-parleurs blancs et '
+      + 'bleus aux membranes lumineuses, une crête de barres de lumière derrière la tête et une '
+      + 'longue cape chatoyante. Elle fait le tour du lac sans perdre un temps — et la petite '
+      + 'platine jouet est toujours accrochée à sa ceinture.',
+      'TOUT LE LAC DANSE'],
+  ],
+  SU13: [
+    ['La Passeuse du Bac', 'Une épaisse vareuse de laine bleue passepoilée de rouge, un chapeau '
+      + 'imperméable rouge à large bord, une longue perche de bois et une poulie sur l’épaule. '
+      + 'Sa cloche est devenue grande et polie : elle traverse, revient, et ne lutte jamais '
+      + 'contre le courant.',
+      'LE COURANT NOUS PORTE'],
+    ['La Reine du Bac', 'Une armure en coque de bac de bois rouge et bleu aux coutures '
+      + 'lumineuses, un petit toit de cabine sur le dos et un arc de câble au-dessus de la tête, '
+      + 'une poulie lumineuse à son sommet. Elle fait passer toute la tribune d’une rive à '
+      + 'l’autre — et ses pieds sont toujours mouillés.',
+      'TOUTE LA RIVE TRAVERSE'],
+  ],
+  SU14: [
+    ['Le Cavalier de la Corporation', 'Un pourpoint de velours bleu nuit aux manches blanches '
+      + 'bouffantes, une fraise blanche et un béret à plume. Il porte la grande bannière de la '
+      + 'corporation sur une haute hampe, et tout le cortège règle son pas sur le sien.',
+      'AU PAS DE LA BANNIÈRE'],
+    ['Le Maître des Corporations', 'Un lourd manteau de cérémonie en velours, d’immenses manches '
+      + 'blanches brodées de lignes lumineuses, une chaîne d’argent sur la poitrine et un haut '
+      + 'chapeau à plumes. Il lève la bannière géante et toutes les corporations le suivent — '
+      + 'et le petit bouquet blanc est toujours à sa boutonnière.',
+      'TOUTES LES BANNIÈRES SUIVENT'],
+  ],
+  SU15: [
+    ['La Vendangeuse des Terrasses', 'Une robe de travail bleu roi, un grand chapeau de paille '
+      + 'à ruban bleu et un sécateur à la ceinture. Sa hotte est devenue grande et pleine de '
+      + 'raisins qui luisent ; quand elle se penche sur une vigne, la terrasse d’en dessous se '
+      + 'penche aussi.',
+      'TOUTE LA VIGNE SE PENCHE'],
+    ['La Reine des Terrasses', 'Une armure de murets de pierre sèche posés en gradins, une '
+      + 'couronne de grappes et de feuilles de vigne et la hotte géante débordant de raisins '
+      + 'lumineux. Elle se lève, et les terrasses se lèvent l’une après l’autre jusqu’au lac — '
+      + 'il lui reste toujours du jus sur le menton.',
+      'JUSQU’AU LAC'],
+  ],
+  SU16: [
+    ['Le Tromboniste de la Fanfare Masquée', 'Un costume fou de lanières bleues et blanches et '
+      + 'de pompons, un énorme masque de monstre en papier mâché relevé sur la tête. Son trombone '
+      + 'est devenu grand et brillant, et il joue toujours entre les temps, avec toute la '
+      + 'fanfare.',
+      'ENTRE LES TEMPS'],
+    ['Le Géant de la Fanfare', 'Des couches de lanières bleues et blanches comme une immense '
+      + 'crinière, un masque de monstre géant aux yeux lumineux dressé au-dessus de la tête et '
+      + 'un trombone énorme. Il joue faux, à contretemps, et toute la tribune le suit — il a '
+      + 'toujours des confettis dans les cheveux.',
+      'FAUX, ET TOUS ENSEMBLE'],
+  ],
+  SU17: [
+    ['La Marchande de Marrons Chauds', 'Un long tablier noir sur un chemisier blanc, un foulard '
+      + 'blanc, des mitaines noires et un petit brasero de fonte sur roues qui rougeoie à côté '
+      + 'd’elle. Sa poêle est devenue grande ; elle lance les marrons de loin, et ils retombent '
+      + 'tous dans les cornets.',
+      'DANS LE CORNET !'],
+    ['La Reine du Brasero', 'Une armure de fonte noire en forme de grand brasero, des rangées de '
+      + 'trous qui rougeoient sur la poitrine, une courte cheminée derrière l’épaule et une '
+      + 'couronne de marrons grillés. Elle lance, et pas un marron ne tombe à côté — le cornet '
+      + 'de papier est toujours sous son bras.',
+      'PAS UN À CÔTÉ'],
+  ],
+  SU18: [
+    ['Le Bibliothécaire de l’Abbaye', 'Une longue robe verte aux poignets blancs, une ceinture '
+      + 'de corde, une petite lampe de lecture et un trousseau de clés de laiton. Ses patins de '
+      + 'feutre sont devenus grands et luisent de blanc ; il range une pile de vieux livres sans '
+      + 'jamais se tromper de rayon.',
+      'PAS LE MAUVAIS RAYON'],
+    ['Le Gardien des Mille Livres', 'Une armure en rayonnages baroques sculptés, des rangées de '
+      + 'livres aux dos lumineux sur la poitrine et un grand livre ouvert. Il remet toute la '
+      + 'tribune en ordre, rang par rang — et il glisse toujours sur ses patins de feutre.',
+      'TOUT EST RANGÉ'],
+  ],
+  SU19: [
+    ['La Gardienne du Jet d’Eau', 'Une combinaison imperméable grenat à bandes blanches, des '
+      + 'gants et des bottes blancs, un tuyau enroulé sur l’épaule et un fin arc d’eau au-dessus '
+      + 'de sa lance. Sa roue de vanne est devenue grande et luit : elle règle le jet au doigt '
+      + 'près.',
+      'AU DOIGT PRÈS'],
+    ['La Reine du Grand Jet', 'Une armure grenat en forme de bassin de fontaine, une haute '
+      + 'colonne d’eau blanche qui jaillit de sa couronne et retombe autour d’elle comme une '
+      + 'cape. On voit son jet de toute la ville, ni trop haut, ni trop bas — et le petit '
+      + 'pistolet à eau est toujours à sa ceinture.',
+      'TOUT LE JET, PAS PLUS'],
+  ],
+  SU20: [
+    ['Le Maître Racleur', 'Une veste de cuisinier blanche aux boutons rouges, un long tablier '
+      + 'rouge et un bonnet de feutre rouge. Une demi-meule fond sur son petit support de fer, '
+      + 'et son racloir est devenu grand : il sert tout le village à toute vitesse.',
+      'TOUT LE VILLAGE EST SERVI'],
+    ['Le Seigneur de la Meule', 'Une armure en meule de fromage géante à la croûte qui luit, un '
+      + 'casque en demi-meule aux coulures figées en crête et le racloir géant tenu comme un '
+      + 'sceptre. Il racle et toute la tribune frappe avec lui — il a toujours du fromage sur le '
+      + 'menton.',
+      'RACLEZ TOUS ENSEMBLE'],
+  ],
+  SU21: [
+    ['La Lutteuse à la Culotte', 'Une chemise blanche à bord rouge, la solide culotte de toile '
+      + 'rouge sur un pantalon sombre, de gros avant-bras et une couronne de fleurs blanches. Dans '
+      + 'le rond de sciure, on la pousse, on la tire, et elle reste debout.',
+      'TOUJOURS DEBOUT'],
+    ['La Reine du Rond de Sciure', 'Des épaules et des bras immenses, des épaulettes de toile '
+      + 'rouge roulées comme des culottes de lutte, une grande couronne de fleurs et une cloche '
+      + 'd’honneur sur la poitrine. Toute la tribune s’appuie sur elle sans la faire plier — il '
+      + 'y a toujours de la sciure dans ses cheveux.',
+      'PERSONNE NE NOUS COUCHE'],
+  ],
+  SU22: [
+    ['Le Moniteur de Ski', 'Une combinaison de ski rouge à chevrons blancs, des gants blancs, '
+      + 'des skis courts sur l’épaule et des petits fanions rouges et blancs glissés dans la '
+      + 'ceinture. Ses lunettes rouges luisent sur son front : il se ramasse et part pile au '
+      + 'signal.',
+      'AU SIGNAL, PARTEZ'],
+    ['Le Roi des Pistes', 'Une armure de neige tassée et de pans de combinaison rouge, des '
+      + 'épaulettes en piquets de slalom croisés et une couronne de cristaux de neige. Les grandes '
+      + 'lunettes rouges brillent comme une visière, et toute la tribune part avec lui — la petite '
+      + 'luge est toujours accrochée dans son dos.',
+      'TOUTE LA PISTE S’ÉLANCE'],
+  ],
+  SU23: [
+    ['La Tresseuse du Marché aux Oignons', 'Un long tablier noir sur un chemisier jaune, des '
+      + 'mitaines noires et de longues tresses d’oignons dorés sur les épaules comme une étole. '
+      + 'Son marteau jaune est devenu grand et luit ; il couine sur toutes les têtes du marché, '
+      + 'de plus en plus vite.',
+      'TOUT LE MARCHÉ COUINE'],
+    ['La Reine des Oignons', 'Un lourd manteau de tresses d’oignons qui luisent, une couronne '
+      + 'de petits oignons et de rubans jaunes et noirs, une cape couverte de confettis et le '
+      + 'marteau géant qui couine. Elle tape, et toute la tribune tape avec elle — elle a '
+      + 'toujours des confettis dans les cheveux.',
+      'COUIC POUR TOUT LE MONDE'],
+  ],
+  SU24: [
+    ['Le Chocolatier', 'Une veste de confiseur blanche aux boutons bleu roi, une haute toque, un '
+      + 'tablier bleu, une poche à douille à la ceinture et un plateau de pralines brillantes. '
+      + 'Sa boîte de pralines est devenue grande et luit : il démoule à la seconde exacte.',
+      'À LA SECONDE EXACTE'],
+    ['Le Maître des Pralines', 'Une armure de plaques de chocolat noir aux volutes de chocolat '
+      + 'blanc, des épaulettes de pralines empilées et une toque immense comme une couronne. Il '
+      + 'tient sa boîte géante ouverte comme un bouclier, et il lâche tout au bon moment — il a '
+      + 'toujours du chocolat au coin des lèvres.',
+      'TOUT EST PRÊT, LÂCHEZ'],
+  ],
+  SU25: [
+    ['Le Poisson du Rhin', 'Bien gonflé et luisant, debout et fier, une rangée de petites '
+      + 'nageoires sur le dos et un coin de serviette rayée qui dépasse de son col roulé. Sa '
+      + 'bouée bleue est devenue grande et luit : il nage la brasse, une nageoire après l’autre.',
+      'UNE NAGEOIRE, PUIS L’AUTRE'],
+    ['Le Grand Poisson Flotteur', 'Immense, une armure de grandes écailles rouges et bleues aux '
+      + 'coutures lumineuses, une haute nageoire dorsale en crête, son col roulé devenu couronne '
+      + 'à boucle brillante et la bouée géante en bouclier. Toute la baignade d’été descend le '
+      + 'fleuve derrière lui — il garde une goutte d’eau sur la peau.',
+      'TOUT LE FLEUVE NAGE'],
+  ],
+  SU26: [
+    ['Le Bonhomme du Bûcher', 'Plus grand et tout rond, debout sur une petite pile de bûches, '
+      + 'le coton plus touffu, une rangée de pétards de papier cousus le long des bras et une '
+      + 'collerette de papier sous l’écharpe. Son chapeau haut de forme a grandi, et ses pétards '
+      + 'éclatent par trois.',
+      'PAN-PAN-PAN, ET ENCORE'],
+    ['Le Grand Bonhomme du Printemps', 'Immense, des épaules de coton comme des congères, une '
+      + 'couronne d’étincelles inoffensives qui crépite autour du chapeau géant et des rangées de '
+      + 'pétards en bandoulière. Il éclate par salves, et toute la tribune éclate avec lui — le '
+      + 'petit serpentin dépasse toujours de sa tête.',
+      'LE PRINTEMPS ÉCLATE'],
+  ],
+  SU27: [
+    ['La Rame des Pentes', 'Plus longue et plus forte, accrochée à la pente par ses roues '
+      + 'solides, ses panneaux blancs à bandes bleu roi bien polis et un phare allumé. Son frein '
+      + 'bleu est devenu grand et luit : elle monte la colline sans s’arrêter.',
+      'SANS S’ARRÊTER'],
+    ['La Grande Rame de la Colline', 'Immense, une armure de panneaux blancs et bleu roi aux '
+      + 'coutures lumineuses, un toit arrondi couronné de feux et des rangées de fenêtres '
+      + 'allumées. Elle emmène toute la tribune jusqu’en haut de la colline — et la petite bosse '
+      + 'inquiète de son pare-chocs est toujours là.',
+      'TOUT LE MONDE EN HAUT'],
+  ],
+  SU28: [
+    ['Le Cygne du Quai', 'Devenu blanc et élancé, plus grand, le cou fièrement dressé, un petit '
+      + 'col de marin bleu lac rayé de blanc sur les épaules. Sa cloche est devenue grande et luit '
+      + 'doucement ; il glisse sur le lac, et son reflet fait exactement la même chose.',
+      'LE LAC ME RÉPOND'],
+    ['Le Grand Cygne du Lac', 'Immense et le poitrail large, de grandes ailes blanches repliées '
+      + 'haut comme un manteau aux bords bleus lumineux, une crête de plumes blanches et la '
+      + 'cloche géante sur la poitrine. Toute la tribune refait ses gestes comme le lac — une '
+      + 'seule plume grise de duvet est restée sur sa tête.',
+      'TOUT LE LAC REFAIT'],
+  ],
+  SU29: [
+    ['La Chèvre des Vallées', 'Plus grande et le pied sûr, debout sur une corniche, les cornes '
+      + 'plus longues et polies et une couverture tissée noire et blanche sur le dos. Sa cloche '
+      + 'est devenue grande et luit : elle passe de rocher en rocher sans plus jamais tomber.',
+      'DE ROCHER EN ROCHER'],
+    ['La Grande Chèvre des Cimes', 'Immense, d’énormes cornes noires enroulées en couronne aux '
+      + 'lignes lumineuses, un manteau de fourrure noire et une courte cape à carreaux noirs et '
+      + 'blancs. Elle mène tout le virage jusqu’au plus haut sommet — et une touffe de foin est '
+      + 'toujours prise dans sa barbiche.',
+      'TOUT LE MONDE AU SOMMET'],
+  ],
+  SU30: [
+    ['Le Biscuit Brodé', 'Plus grand et plus épais, glacé et brillant, le ventre couvert de '
+      + 'fines fleurs de sucre comme une broderie, un napperon de papier en collerette et un '
+      + 'ruban vert. Son moule est devenu grand et luit de blanc : son dessin est enfin fini.',
+      'LE DESSIN EST FINI'],
+    ['Le Grand Biscuit des Fêtes', 'Immense, un corps de pain d’épices brillant cuirassé de '
+      + 'broderies de sucre qui luisent, de hautes volutes de glaçage en couronne et le moule '
+      + 'géant en bouclier. Il dessine la tribune entière en sucre blanc — et son coin grignoté '
+      + 'manque toujours.',
+      'TOUTE LA TRIBUNE EN SUCRE'],
+  ],
+  SU31: [
+    ['La Marmite de l’Escalade', 'Plus grande et plus brillante, un ruban de sucre blanc noué '
+      + 'd’un nœud grenat autour du ventre, un petit chou en pâte d’amande sur le couvercle. Sa '
+      + 'louche est devenue grande et luit ; elle tient bon jusqu’au coup, pas une seconde de '
+      + 'moins.',
+      'ON TIENT JUSQU’AU COUP'],
+    ['La Grande Marmite des Remparts', 'Immense, un corps de chocolat moulé cuirassé de plaques '
+      + 'grenat aux coutures de sucre lumineuses, un couvercle crénelé comme le haut des remparts '
+      + 'et la louche géante en sceptre. Elle tient la tribune jusqu’à la dernière seconde — sa '
+      + 'petite fêlure est toujours sur son flanc.',
+      'LES REMPARTS TIENNENT'],
+  ],
+  SU32: [
+    ['La Vache des Alpages', 'Plus grande et massive, plantée sur ses pattes, une couverture '
+      + 'brodée rouge et blanche sur le dos et une couronne de fleurs entre les cornes. Sa '
+      + 'cloche est devenue grande et polie ; elle pousse, et le troupeau recule.',
+      'LE TROUPEAU RECULE'],
+    ['La Reine des Alpages', 'Immense et musclée, d’énormes cornes aux lignes lumineuses, une '
+      + 'haute couronne de fleurs et de rubans et un lourd manteau brodé rouge. Personne ne fait '
+      + 'reculer la tribune derrière elle — la petite pâquerette est toujours sur sa corne.',
+      'LA REINE NE RECULE PAS'],
+  ],
+  SU33: [
+    ['Le Bouvier de la Montagne', 'Grand et fort, debout, un harnais de cuir rouge aux coutures '
+      + 'blanches et aux boucles de laiton, une courte cape blanche sur le dos. Son bidon rouge '
+      + 'est devenu grand et luit : il le porte jusqu’au lac sans jamais le poser.',
+      'JUSQU’AU LAC SANS POSER'],
+    ['Le Grand Bouvier des Alpages', 'Immense, une épaisse fourrure tricolore comme une crinière '
+      + 'de lion, une armure de harnais rouge, une roue de charrette à lait sur chaque épaule et '
+      + 'le bidon géant sur la poitrine. Il tire toute la tribune derrière lui — une goutte de lait '
+      + 'est toujours sur sa truffe.',
+      'TOUTE LA CHARRETTE TIENT'],
+  ],
+  SU34: [
+    ['Le Chamois des Crêtes', 'Plus grand et agile, fièrement debout sur un rocher, une courte '
+      + 'cape rouge bordée de blanc et une corde blanche sur l’épaule. Son sac à dos est devenu '
+      + 'grand et luit doucement ; il vise la crête d’en face et retombe pile dessus.',
+      'PILE SUR LA CRÊTE'],
+    ['Le Grand Chamois des Sommets', 'Immense et puissant, de longues cornes crochues aux lignes '
+      + 'lumineuses, une épaisse crinière d’hiver et le sac à dos géant sanglé sur la poitrine '
+      + 'comme une cuirasse. Il saute de crête en crête sans jamais manquer — un petit caillou est '
+      + 'toujours pris dans sa fourrure.',
+      'DE CRÊTE EN CRÊTE'],
+  ],
+  SU35: [
+    ['Le Bateau de la Rivière', 'Gonflé à bloc et brillant, plus haut et ferme, un gilet de '
+      + 'sauvetage noir sanglé autour du ventre et des poignées noires sur les côtés. Sa pagaie '
+      + 'est devenue grande et luit d’un jaune citron ; il pagaie si vite qu’il file droit.',
+      'TOUT DROIT, PAGAIE'],
+    ['Le Grand Radeau de l’Été', 'Immense, un corps de boudins jaunes gonflés comme des plaques '
+      + 'd’armure, une haute crête gonflable, une grosse corde noire en écharpe et la pagaie géante '
+      + 'en sceptre. Toute la ville descend la rivière derrière lui — la petite valve dépasse '
+      + 'toujours de sa tête.',
+      'TOUTE LA RIVIÈRE PAGAIE'],
+  ],
+  SU36: [
+    ['Le Tram de la Ville', 'Plus long et plus fort, ses panneaux bleus et blancs polis, un '
+      + 'pantographe brillant sur le toit et des petits rideaux blancs aux fenêtres. Sa cloche '
+      + 'est devenue grande et luit ; il annonce chaque arrêt avant même d’y arriver.',
+      'JE CONNAIS LA LIGNE'],
+    ['Le Grand Tram du Lac', 'Immense, une armure de panneaux bleu roi et blancs aux coutures '
+      + 'lumineuses, un haut pantographe en crête et des rangées de fenêtres rondes allumées. Il '
+      + 'fait le tour de toutes les lignes sans jamais se tromper d’arrêt — et ses sourcils '
+      + 'gardent leur petite inquiétude.',
+      'TOUTES LES LIGNES PAR CŒUR'],
+  ],
 };
