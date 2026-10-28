@@ -220,6 +220,25 @@ export const REGLAGES = [
       'classements de compétition n’ont plus de chez-soi ; à 0, plus personne ' +
       'n’a de raison d’entrer dans un match qui n’est pas le sien.' },
 
+  /* La part d'un neutre pour le club qu'il pousse (Gaël, 28 octobre 2026) :
+     elle ne remontait à aucune tribune. Lue par `classements/index.js`, au
+     classement TRIBUNES comme à celui d'une compétition — jamais aux KOP,
+     dont le neutre n'est pas membre. */
+  { cle: 'ferveur.neutre_tribune', section: 'virage', type: 'decimal',
+    titre: 'Un neutre apporte au club qu’il pousse', unite: '× sa ferveur',
+    min: 0, max: 1, pas: 0.05, defaut: 0.1,
+    aide: 'Au classement des tribunes et à celui des compétitions, sur la ferveur ' +
+      'classée du neutre (déjà réduite par le réglage du dessus). Le neutre ne ' +
+      'compte pas parmi les supporters du club. À 0, un neutre ne rapporte à ' +
+      'aucune tribune, comme avant.' },
+
+  { cle: 'tribune.plancher', section: 'virage', type: 'entier',
+    titre: 'La moyenne d’une tribune se divise par au moins', unite: 'supporters',
+    min: 1, max: 100, defaut: 5,
+    aide: 'Sans plancher, un club d’un seul supporter actif et quelques neutres ' +
+      'passerait devant tout le monde. À 1, la moyenne se divise par le vrai ' +
+      'nombre de supporters actifs.' },
+
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
      `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et
      « pousser plus fort » ne pèsent pas pareil sur l'équilibre. */
