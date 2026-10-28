@@ -1,6 +1,6 @@
 {
   "id": "RP34",
-  "rev": 13,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -131,7 +131,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "2d9cd60ac4ea"
+          "sha": "2d9cd60ac4ea",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

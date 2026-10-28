@@ -254,19 +254,45 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   /* ----------------------------------------------------- compétitions */
 
-  async function competitions({ q: terme = '', pays = '', palier = '', limite = 100 } = {}) {
+  /* La page se range par pays et le nom du pays s'écrit en français dans le
+     navigateur (pays.js) : il lui faut toutes les lignes, pas les cent
+     premières. Les dates partent en texte « AAAA-MM-JJ » : un DATE lu par le
+     pilote devient un instant UTC, que la page affichait tel quel. Comme le
+     télétexte, la recherche reçoit aussi les pays que le terme désigne, en
+     anglais et en code ISO : « angleterre » trouve « England ». */
+  async function competitions({ q: terme = '', pays = '', codes = '', palier = '', etat = '',
+    limite = 3000 } = {}) {
     const w = [];
     const a = [];
-    if (terme) { w.push('(name LIKE ? OR country LIKE ?)'); a.push(`%${terme}%`, `%${terme}%`); }
-    if (pays) { w.push('country = ?'); a.push(pays); }
+    const liste = (v, ok) => String(v ?? '').split(',').map((x) => x.trim())
+      .filter(ok).slice(0, 40);
+    const paysCherches = liste(pays, Boolean);
+    const codesCherches = liste(codes, (c) => /^[A-Za-z]{2}$/.test(c)).map((c) => c.toUpperCase());
+    if (terme || paysCherches.length || codesCherches.length) {
+      const ou = ['name LIKE ?', 'country LIKE ?'];
+      a.push(`%${terme}%`, `%${terme}%`);
+      if (paysCherches.length) {
+        ou.push(`country IN (${paysCherches.map(() => '?').join(',')})`);
+        a.push(...paysCherches);
+      }
+      if (codesCherches.length) {
+        ou.push(`country_code IN (${codesCherches.map(() => '?').join(',')})`);
+        a.push(...codesCherches);
+      }
+      w.push(`(${ou.join(' OR ')})`);
+    }
     if (palier) { w.push('tier = ?'); a.push(Number(palier)); }
+    if (etat === 'actives') w.push('enabled = 1');
+    if (etat === 'inactives') w.push('enabled = 0');
     return q(
-      `SELECT league_id, season, name, country, type, family, tier, enabled,
-              has_events, has_standings, has_top_scorers, starts_on, ends_on
+      `SELECT league_id, season, name, country, country_code, type, family, tier, enabled,
+              has_events, has_standings, has_top_scorers,
+              DATE_FORMAT(starts_on, '%Y-%m-%d') AS starts_on,
+              DATE_FORMAT(ends_on, '%Y-%m-%d') AS ends_on
          FROM souvenir_leagues
          ${w.length ? 'WHERE ' + w.join(' AND ') : ''}
-        ORDER BY tier, country, name
-        LIMIT ${Number(limite) || 100}`, a);
+        ORDER BY country, tier, name, season DESC
+        LIMIT ${Math.min(Number(limite) || 3000, 5000)}`, a);
   }
 
   async function modifierCompetition(acteur, leagueId, season, champs, adresseIp) {
@@ -1281,7 +1307,8 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   router.get('/competitions', safe(async (req, res) => res.json({
     competitions: await competitions({
       q: String(req.query.q ?? ''), pays: String(req.query.pays ?? ''),
-      palier: req.query.palier }),
+      codes: String(req.query.codes ?? ''), palier: req.query.palier,
+      etat: String(req.query.etat ?? '') }),
   })));
 
   router.patch('/competition/:id/:season', safe(async (req, res) =>

@@ -405,9 +405,10 @@ const JOURNEE = () => [
   { id: 7002, ligue: 207, dansH: 4, status: 'NS', home: 300, away: 301 },
 ];
 /* Ce qui est faisable pour un joueur sans club, sans Fanzzy, un jour de
-   matchs : tout sauf « Fais grandir » et les deux missions de club. */
+   matchs : tout sauf « Fais grandir », les deux missions de club et le
+   pronostic (il se donne sur un match d'un club suivi). */
 const SANS_CLUB = new Set(Q.MISSIONS.map((x) => x.id)
-  .filter((id) => !['grandir', 'club_virage', 'club_duel'].includes(id)));
+  .filter((id) => !['grandir', 'club_virage', 'club_duel', 'prono'].includes(id)));
 
 /* ============================================================ le catalogue */
 
@@ -416,14 +417,16 @@ titre('le catalogue');
   const CONTRAT = [
     ['boosters', 'facile', 3, 'boosters'], ['duel', 'facile', 1, 'duels'],
     ['virage', 'facile', 10, 'chants'], ['grandir', 'facile', 1, 'evolutions'],
+    ['minijeu', 'facile', 1, 'parties'], ['prono', 'facile', 1, 'pronostics'],
     ['tribune', 'moyenne', 40, 'chants'], ['victoire', 'moyenne', 1, 'victoires'],
     ['classes', 'moyenne', 2, 'duels'], ['club_virage', 'moyenne', 20, 'chants'],
-    ['club_duel', 'moyenne', 1, 'duels'], ['victoires', 'difficile', 3, 'victoires'],
+    ['club_duel', 'moyenne', 1, 'duels'], ['ultime', 'moyenne', 1, 'ultimes'],
+    ['victoires', 'difficile', 3, 'victoires'],
     ['endurance', 'difficile', 5, 'duels'], ['mitemps', 'difficile', 10, 'chants_par_mi_temps'],
     ['ailleurs', 'difficile', 2, 'competitions'],
   ];
   const vu = Q.MISSIONS.map((x) => [x.id, x.difficulte, x.cible, x.unite]);
-  check('treize missions, identifiants, difficultés, cibles et unités du contrat (§ 6.1)',
+  check('seize missions, identifiants, difficultés, cibles et unités du contrat (§ 6.1)',
     JSON.stringify(vu) === JSON.stringify(CONTRAT) || voir(vu));
   check('chaque mission compte une source de la liste fermée',
     Q.MISSIONS.every((x) => Q.SOURCES.includes(x.source)));
@@ -1042,7 +1045,7 @@ titre('la relance');
 
   const R3 = await joueur();
   await contrat(R3, ['boosters', 'victoire', 'endurance']);
-  poserReglages({ 'mission.tribune': false, 'mission.classes': false });
+  poserReglages({ 'mission.tribune': false, 'mission.classes': false, 'mission.ultime': false });
   e = await lire(R3);
   check('aucune autre mission moyenne faisable : pas relançable', mission(e, 1)?.relancable === false
     && mission(e, 0)?.relancable === true);
@@ -1055,7 +1058,8 @@ titre('la relance');
      demanderait une connexion au pool en en tenant une. */
   const R4 = await joueur();
   await contrat(R4, ['boosters', 'victoire', 'endurance']);
-  poserReglages({ 'mission.duel': false, 'mission.grandir': false });
+  poserReglages({ 'mission.duel': false, 'mission.grandir': false, 'mission.minijeu': false,
+    'mission.prono': false });
   const lues = journeeLue;
   journeeSousVerrou = 0;
   surveille = R4;
@@ -1124,7 +1128,8 @@ titre('« relançable » se juge sans lire la journée du football');
      vérification rougit. */
   await figer('2027-01-06 12:00:00');
   matchs = [];
-  poserReglages({ 'mission.duel': false, 'mission.grandir': false });
+  poserReglages({ 'mission.duel': false, 'mission.grandir': false, 'mission.minijeu': false,
+    'mission.prono': false, 'mission.ultime': false });
   const V = await joueur();
   await contrat(V, ['boosters', 'victoire', 'endurance']);
   const lues = journeeLue;
