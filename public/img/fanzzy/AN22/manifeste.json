@@ -1,6 +1,6 @@
 {
   "id": "AN22",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -116,7 +116,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b04a1b73b7b4",
+          "sha": "920db52f2d7d",
           "cligne": true
         },
         "apocalyptique": {
@@ -129,7 +129,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "42508247d5a8"
+          "sha": "967a94bf526e"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "002de4b3cf7b"
         }
       }
     }

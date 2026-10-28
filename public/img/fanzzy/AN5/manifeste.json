@@ -1,6 +1,6 @@
 {
   "id": "AN5",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -91,6 +91,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "5e1ee47b39d0"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "b1edce0485c5"
         }
       }
     },
