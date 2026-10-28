@@ -578,6 +578,13 @@ if (process.env.DATABASE_URL) {
     souvenirs = createSouvenirs({ pool, requireAuth: auth.requireAuth, abonnement });
     app.use('/api/souvenirs', souvenirs.router);
     console.log('cartes-souvenirs actives');
+    /* Les cartes des matchs finis remises dans le bon camp (`reparerCamps`) :
+       toutes au démarrage, puis chaque heure celles de la semaine — un match
+       fini depuis le dernier tour, ou un but que l'API a corrigé. */
+    const reparerCamps = (o) => souvenirs.reparerCamps(o)
+      .catch((e) => console.error('[souvenirs] camps', e.message));
+    void reparerCamps();
+    setInterval(() => void reparerCamps({ jours: 7 }), 60 * 60 * 1000).unref();
 
     // ---- inscription, emplacements de suivi, inventaire
     onboarding = createOnboarding({ pool, requireAuth: auth.requireAuth, football: null,
@@ -780,6 +787,15 @@ if (process.env.DATABASE_URL) {
             const annonce = virage.realGoal(g);
             tu = salle && annonce !== true;
           } catch (e) { console.error('[virage]', e.message); }
+          /* 0 bis. **Un but déjà frappé qui revient sous l'autre camp**
+             (`souvenirs.corrigerBut`) : la salle le tait, et c'est voulu,
+             mais sa carte prend le camp et le score corrigés. */
+          try {
+            await souvenirs.corrigerBut({
+              fixtureId: g.fixtureId, seq: g.seq ?? 0, teamId: g.teamId, player: g.player,
+              scoreHome: g.score?.[0] ?? 0, scoreAway: g.score?.[1] ?? 0,
+            });
+          } catch (e) { console.error('[souvenir] correction', e.message); }
           if (tu) return;
 
           // 1. Frapper la carte-souvenir et la distribuer aux présents.

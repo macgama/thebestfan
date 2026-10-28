@@ -41,7 +41,7 @@ for (const [i, id] of U.entries()) {
     [id, `j${i}@ex.fr`, `Joueur${i}`]);
   await raw.query(`INSERT INTO user_wallet (user_id, scarves) VALUES (?, 200)`, [id]);
 }
-await raw.query(`INSERT INTO teams (id,name) VALUES (85,'FC Sion'),(91,'FC Bâle')`);
+await raw.query(`INSERT INTO teams (id,name) VALUES (85,'FC Sion'),(91,'FC Bâle'),(92,'Lausanne')`);
 await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
 await raw.query(`INSERT INTO souvenir_leagues (league_id,season,name,family,has_events,enabled)
                  VALUES (207,2026,'Super League','championnat',1,1),
@@ -470,6 +470,40 @@ check('et qui n’a pas chanté dans la fenêtre n’est pas nommé',
   await cx.query(readFileSync(new URL('../sql/souvenirs.sql', import.meta.url), 'utf8'));
   await cx.end();
   oublier();
+}
+
+/* -------------------------------------------- le camp du but, réparé
+
+   FC Sion – Lausanne, 25 octobre 2026, 1-0 : l'API avait rangé le but de
+   Blin (Sion) sous Lausanne, et la carte disait 0-1 avec l'écusson de
+   Lausanne. Le tableau fait foi : la carte est remise dans le bon camp. */
+{
+  const F = 8001;
+  r = await S.mintGoal({ fixtureId: F, seq: 1, leagueId: 207, teamId: 92, homeId: 85, awayId: 92,
+    minute: 30, player: 'A. Blin', scoreHome: 0, scoreAway: 1, kickoffAt: '2026-10-25 14:00:00' });
+  check('la carte mal rangée est frappée', r.minted === true);
+  await pool.query(`INSERT INTO fixtures (id, league_id, season, home_id, away_id, home_goals, away_goals,
+      status_short, kickoff_at) VALUES (?, 207, 2026, 85, 92, 1, 0, 'FT', '2026-10-25 14:00:00')`, [F]);
+  await pool.query(`INSERT INTO fixture_events (fixture_id, seq, type, detail, team_id, player, minute)
+      VALUES (?, 0, 'Card', 'Yellow Card', 85, 'X', 12), (?, 1, 'Goal', 'Normal Goal', 92, 'A. Blin', 30)`, [F, F]);
+  const n = await S.reparerCamps();
+  const [[c]] = await pool.query(`SELECT scorer_team, score_home, score_away FROM souvenirs WHERE fixture_id = ?`, [F]);
+  check('le but de Sion revient à Sion, 1-0',
+    n === 1 && c.scorer_team === 85 && c.score_home === 1 && c.score_away === 0
+    || (console.log('        carte :', n, JSON.stringify(c)), false));
+  const [[ev]] = await pool.query(`SELECT team_id FROM fixture_events WHERE fixture_id = ? AND seq = 1`, [F]);
+  check('le but rangé du match change de camp aussi', ev.team_id === 85);
+  check('relancée, la réparation ne réécrit rien', await S.reparerCamps() === 0);
+  check('les autres matchs ne bougent pas',
+    (await pool.query(`SELECT COUNT(*) n FROM souvenirs WHERE fixture_id = 5001 AND scorer_team = 91`))[0][0].n === 1);
+
+  /* Un but corrigé par l'API pendant le match : la carte suit. Un autre
+     buteur au même rang ne réécrit rien. */
+  await pool.query(`UPDATE souvenirs SET scorer_team = 92, score_home = 0, score_away = 1 WHERE fixture_id = ?`, [F]);
+  check('un autre buteur au même rang ne touche pas la carte',
+    await S.corrigerBut({ fixtureId: F, seq: 1, teamId: 85, player: 'Autre', scoreHome: 1, scoreAway: 0 }) === 0);
+  check('le même buteur, corrigé, la remet dans le bon camp',
+    await S.corrigerBut({ fixtureId: F, seq: 1, teamId: 85, player: 'A. Blin', scoreHome: 1, scoreAway: 0 }) === 1);
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
