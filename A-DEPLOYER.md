@@ -5,7 +5,8 @@
 s'entraider et communiquer sans texte). **Avec schéma** : nouveau fichier
 `sql/amis-ensemble.sql` (quatre tables, accord de Gaël). Après la
 construction, en SSH : `npm run schema:appliquer`, puis redémarrer. Sans
-cela, le site refuse de démarrer (contrôle du schéma).
+cela, le site tourne quand même : la fiche d'un ami dit « en pause », les
+gestes, cadeaux, échanges et prêts ne partent pas, et /healthz le signale.
 
 - Dans AMIS, chaque ami porte JOUER ENSEMBLE, qui ouvre sa fiche : gestes
   (une liste fermée, jamais de texte), cadeau du jour (écharpes offertes par
