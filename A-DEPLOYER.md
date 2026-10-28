@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Série SU « Die Kurve » (Super League suisse)** (branche
+`claude/project-thread-8di81x`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- 36 Fanzzy (trois par club), trois âges, qui clignent ; dos de carte SU.
+- 244 skins sur 324 (Halloween, Préhistorique, Apocalyptique) ; un skin
+  manquant montre la tenue de base. Liste des 80 à refaire :
+  fanzzy-prompts/SU-generation/skins-manquants.md.
+- Pour l'ouvrir aux joueurs : /admin, onglet des Fanzzy, cocher la série SU.
+- Ultimate SU : pas encore (après le 2 novembre).
+
+---
+
 **Six légendaires dans LES TERRACES** (branche `claude/project-thread-qn6nh1`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
