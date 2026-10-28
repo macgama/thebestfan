@@ -591,10 +591,18 @@ const P = () => window.TBF_PAYS;
    traduit donc, suffixe compris — l'API range l'équipe féminine sous
    « Switzerland W ». Le nom d'un club, lui, ne se traduit jamais : le Bayern
    s'appelle le Bayern dans toutes les langues. */
+const SUFFIXE = /^(.+?)\s+(W|U\d{2})$/;
 const nomEquipe = (x) => {
-  if (!Number(x.national) || !P()) return x.name;
-  const m = /^(.+?)\s+(W)$/.exec(x.name);
-  const traduit = P().nom(m ? m[1] : x.name);
+  if (!P()) return x.name;
+  const m = SUFFIXE.exec(x.name);
+  const base = m ? m[1] : x.name;
+  /* Sélection reconnue à sa marque, ou **à son nom** : la marque peut manquer
+     en base, et « Switzerland » sortait alors en anglais, après les clubs.
+     Pas un club qui porte le nom d'un pays : « Monaco » joue en France. */
+  const pays = P().code(base);
+  const sienne = pays && (!x.country || P().code(x.country) === pays);
+  if (!Number(x.national) && !sienne) return x.name;
+  const traduit = P().nom(base);
   return m ? `${traduit} ${m[2]}` : traduit;
 };
 
@@ -608,7 +616,7 @@ $('q').oninput = () => {
       /* Les pays que le mot désigne, en anglais. Le mot tapé continue de
          chercher un **nom** : un pays en plus, jamais à la place — sans quoi
          chercher « Paris » cesserait de trouver le club. */
-      const pays = P()?.cherches(terme) ?? [];
+      const pays = P()?.nomsApi(terme) ?? [];
       const r = await fetch('/api/football/search?q=' + encodeURIComponent(terme)
         + (pays.length ? '&pays=' + encodeURIComponent(pays.join(',')) : ''),
         { credentials:'same-origin' });

@@ -515,6 +515,22 @@ place à la lecture suivante. La fin d'une saison est la fin de son jour
 `fin`, ou le lancement de la saison suivante s'il vient avant (ou si `fin`
 n'a jamais été saisi).
 
+```json
+"historique": [
+  { "id": 1, "numero": 1, "nom": "La reprise", "tampons": 652, "ferveur": 48000,
+    "rang": 27, "sur": 140, "division": { "n": 3, "id": "fervent", "nom": "FERVENT" } } ]
+```
+
+`historique` (MES SAISONS du profil, 28 octobre 2026) : une ligne par saison
+**finie** (toutes celles lancées avant la saison en cours), la plus récente
+d'abord. `tampons` : les tampons du carnet (missions et sachet) ; `ferveur` :
+la ferveur classée de la saison ; `rang` et `sur` : la place dans la liste
+SAISON de cette saison, absents à ferveur nulle ; `division` : la plus haute
+division **portée** (récupérée), absente sinon ou quand les divisions sont
+éteintes — jamais celle que les seuils du moment donneraient. Une saison où
+l'on n'a rien fait n'a pas de ligne ; le champ est absent quand il n'y a
+aucune ligne. Il demande le grand livre (`recompenses`).
+
 **Réclamer** : `POST /api/rank/division`, avec `{ "saison": 1, "id": "fervent" }`
 ou `{ "tout": true }`. `saison` est l'**`id`** de la saison (pas son `numero`). Réponse R6, avec `saison` (et `saisonPassee` s'il
 existe) à jour à la racine. Pour une division, `verse` vaut vrai, `gain` vaut

@@ -1,6 +1,6 @@
 {
   "id": "AN3",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -65,7 +65,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "bc8ba6e00822",
+          "sha": "9ddcabc687f4",
           "cligne": true
         },
         "apocalyptique": {
@@ -78,7 +78,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f90e22204f7f"
+          "sha": "bcdea48a157c"
         },
         "halloween": {
           "etats": [
@@ -90,7 +90,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a743e6f8bd70"
+          "sha": "362b264c82f4"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "3947c586ee54"
         }
       }
     },

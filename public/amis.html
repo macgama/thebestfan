@@ -182,6 +182,16 @@ h2{margin:22px 2px 9px}
 .convier h3{font-family:var(--banner);font-size:12px;letter-spacing:.14em;margin:0 0 5px}
 .convier p{margin:0 0 11px;font-size:11.5px;line-height:1.65;opacity:.88}
 .convier button{width:100%;font-size:12px;letter-spacing:.1em}
+.chercher{border:1px solid var(--trait);border-radius:var(--r);padding:14px;margin-bottom:14px;
+  background:var(--panneau)}
+.chercher h3{font-family:var(--banner);font-size:12px;letter-spacing:.14em;margin:0 0 5px}
+.chercher p{margin:0 0 10px;font-size:11.5px;line-height:1.65;opacity:.88}
+.chercher input{display:block;width:100%;padding:11px 12px;border-radius:10px;
+  border:1px solid rgba(242,238,228,.16);background:rgba(0,0,0,.34);color:var(--craie);
+  font-family:var(--ui);font-size:15px}
+.chercher input:focus-visible{outline:2px solid var(--projo);outline-offset:1px}
+.chercher .gens{margin-top:10px}
+.chercher .rien{margin:10px 0 0;font-size:12px;opacity:.88}
 .vide{border:1px dashed var(--trait);border-radius:var(--r);padding:20px 16px;text-align:center;
   font-size:12.5px;line-height:1.8;opacity:.9;background:var(--panneau)}
 /* Le lien en craie grasse et soulignée, et non plus en or : l'or ne s'écrit
@@ -268,6 +278,7 @@ const MESSAGES = {
   'amis.error.pas_invite':    'Cette invitation n’existe plus.',
   'amis.error.invitation_inconnue': 'Ce lien d’invitation ne mène à personne.',
   'amis.error.invitation_tardive':  'Ce lien ne vaut que pour un compte tout neuf.',
+  'amis.error.trop_de_recherches': 'Doucement : attends une minute avant de chercher encore.',
   'amis.error.kop_indisponible':'Les KOP ne répondent pas pour l’instant.',
   'kop.error.pas_ton_club':   'Tu ne suis pas ce club. Suis-le d’abord depuis « Mes clubs ».',
   'kop.error.deja_membre':    'Tu es déjà dans un KOP de ce club. On n’en a qu’un par club.',
@@ -315,6 +326,8 @@ const S = {
   vue: 'amis',
   amis: [], recues: [], envoyees: [], invitations: [],
   gens: [],            // les suggestions
+  cherche: '',         // ce qui est tapé dans la recherche par pseudo
+  trouves: null,       // ce qu'elle a rendu, ou null tant qu'elle n'a rien cherché
   kops: [],            // mes KOP, pour pouvoir y inviter
   deplie: null,        // { id, quoi } : l'ami dont on choisit le KOP ('kop') ou ouvre « ⋯ » ('plus')
 };
@@ -617,13 +630,76 @@ function vueDemandes() {
   return html;
 }
 
+/**
+ * La recherche par pseudo (28 octobre 2026) : trouver quelqu'un qui ne suit
+ * aucun de mes clubs, et qui n'apparaît donc pas dans les suggestions.
+ *
+ * Le serveur ne répond qu'à partir de trois lettres, par le début du pseudo,
+ * et huit noms au plus : on retrouve quelqu'un qu'on connaît, on ne parcourt
+ * pas les inscrits. La ligne dit où on en est avec lui plutôt que d'offrir
+ * un bouton qui serait refusé.
+ */
+const MIN_CHERCHE = 3;
+function trouves() {
+  if (S.trouves === null) return '';
+  if (!S.trouves.length) return `<p class="rien">Aucun joueur à ce nom.</p>`;
+  return `<div class="gens">${S.trouves.map((g) => ligne(g,
+    g.lien === 'amis' ? '<small>déjà ami</small>'
+      : g.lien === 'envoyee' ? '<small>demande partie</small>'
+      : g.lien === 'recue'
+        ? `<button class="bt tbf-plaque" data-ton="vert" data-oui="${esc(g.id)}">ACCEPTER</button>`
+        : `<button class="bt tbf-plaque" data-ton="violet" data-demander="${esc(g.id)}">AJOUTER</button>`,
+  )).join('')}</div>`;
+}
+function chercher() {
+  return `<div class="chercher">
+    <h3>CHERCHER UN JOUEUR</h3>
+    <p>Tape le début de son pseudo, trois lettres au moins. Il n’a pas besoin
+       de suivre tes clubs.</p>
+    <input type="search" id="cherche" maxlength="20" autocomplete="off"
+      spellcheck="false" enterkeyhint="search" placeholder="Son pseudo"
+      aria-label="Pseudo du joueur à chercher" value="${esc(S.cherche)}">
+    <div id="trouves" aria-live="polite">${trouves()}</div>
+  </div>`;
+}
+
+/* Une recherche à la fois, et seulement quand on s'arrête de taper : une
+   réponse lente qui arrive après une plus récente ne l'écrase pas. */
+let attente = null;
+let numero = 0;
+async function lancerRecherche() {
+  const texte = S.cherche.trim();
+  const n = ++numero;
+  if ([...texte].length < MIN_CHERCHE) {
+    S.trouves = null;
+  } else {
+    try {
+      const { gens } = await api(`/chercher?q=${encodeURIComponent(texte)}`);
+      if (n !== numero) return;
+      S.trouves = gens ?? [];
+    } catch (err) {
+      if (err.message === 'auth' || n !== numero) return;
+      toast(dire(err), { erreur: true });
+      return;
+    }
+  }
+  const zone = $('trouves');
+  if (zone) zone.innerHTML = trouves();
+}
+$('corps').addEventListener('input', (e) => {
+  if (e.target.id !== 'cherche') return;
+  S.cherche = e.target.value;
+  clearTimeout(attente);
+  attente = setTimeout(lancerRecherche, 300);
+});
+
 function vueTrouver() {
   if (!S.gens.length) {
-    return convier() + `<div class="vide">Personne de neuf pour l’instant.<br>
+    return chercher() + convier() + `<div class="vide">Personne de neuf pour l’instant.<br>
       Suis d’autres clubs depuis <a href="/equipes">Mes clubs</a> :
       tu croiseras d’autres supporters.</div>`;
   }
-  return convier() + `<div class="gens">${S.gens.map((g) => ligne(g,
+  return chercher() + convier() + `<h2 class="tbf-cousu">ILS SUIVENT TES CLUBS</h2><div class="gens">${S.gens.map((g) => ligne(g,
     // Ajouter quelqu'un, c'est une affaire de gens : la plaque est violette.
     `<button class="bt tbf-plaque" data-ton="violet" data-demander="${esc(g.id)}">AJOUTER</button>`,
     `<span class="clubs">${(g.clubs ?? []).map((c) => `<span>${esc(c)}</span>`).join('')}</span>`,
@@ -753,6 +829,9 @@ $('corps').onclick = async (e) => {
       await api('/kop/reponse', { method:'POST', body:{ kopId: d.kopnon, ok:false } });
     }
     await charger();
+    // La ligne trouvée par pseudo change d'état elle aussi : AJOUTER devient
+    // « demande partie ». On la relit plutôt que de la deviner.
+    if (S.trouves) await lancerRecherche();
   } catch (err) {
     if (err.message === 'auth') return;
     b.disabled = false;
@@ -760,6 +839,7 @@ $('corps').onclick = async (e) => {
     // On recharge quand même : le refus vient souvent de ce que la page
     // montrait un état périmé, et le garder à l'écran ferait réessayer.
     await charger();
+    if (S.trouves) await lancerRecherche();
   }
 };
 
