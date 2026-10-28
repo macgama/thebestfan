@@ -295,6 +295,14 @@ const SERIE = {
     + 'a knitted bar scarf in the club colours with no text and no crest, a '
     + 'small enamel pin badge, a wool coat, flat cap or knitted beanie, the '
     + 'costume of an old trade or seaside tradition, damp shoulders',
+  /* DIE KURVE : le virage suisse, entre deux montagnes. Même règle que les
+     TERRACES — jamais de maillot, ni croix ni drapeau de canton : les couleurs
+     du club passent par l'écharpe tricotée et par l'objet porté (voir
+     `dex-kurve.js`). */
+  SU: 'a Swiss standing curve under the mountains, never a football shirt: '
+    + 'a knitted bar scarf in the club colours with no text, no crest and no '
+    + 'cross, a small enamel pin badge, a warm mountain jacket or knitted '
+    + 'jumper, the costume of an alpine trade or local tradition',
 };
 
 /** Les séries où le personnage n'a pas de corps humain : rien à tirer. */

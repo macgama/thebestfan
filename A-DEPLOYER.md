@@ -17,6 +17,21 @@ club). Construction seule, **sans schéma**.
   moins » (5).
 ---
 
+**Six légendaires dans LES TERRACES** (branche `claude/project-thread-qn6nh1`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- AN61 La Dame des Falaises Blanches, AN62 Le Chevalier à la Croix Rouge,
+  AN63 Le Bouledogue au Grand Tambour : liées aux équipes nationales
+  d'Angleterre (hommes, femmes, espoirs), bonus de lien dans leurs matchs.
+- AN64 La Tisseuse des Vingt Écharpes, AN65 La Voix des Résultats, AN66 Le
+  Rouge-Gorge du Lendemain de Noël : liées au championnat anglais, bonus de
+  lien dans chaque match de championnat du club qu'on soutient.
+- Elles sortent du booster LES TERRACES au taux des légendaires (2 %).
+- Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
+  lire le tampon « LIÉ À ».
+
+---
+
 **/admin complété, et une saison ne ferme plus rien** (branche
 `claude/project-thread-g68rqt`, 28 octobre 2026, demandé par Gaël : vérifier
 que l'admin suit les nouveautés et que personne ne perd rien à une nouvelle
