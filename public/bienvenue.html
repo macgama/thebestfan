@@ -322,13 +322,9 @@ input:focus{outline:none;border-color:var(--projo)}
    débordent de cinq pixels et demi, et la pente en ajoute deux à un bout —
    rien ne doit toucher le bord de la carte. */
 .newtag{position:absolute;top:-34px;left:50%;transform:translateX(-50%);z-index:2;--rot:-3deg}
-.burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:9}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
 #flash.go{animation:fl .55s ease-out}
 @keyframes fl{0%{opacity:.9}100%{opacity:0}}
-#burstvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;
-  opacity:0;transition:opacity .4s;pointer-events:none;z-index:7}
-#burstvid.on{opacity:1}
 /* Centrée par ses marges et taillée au texte : sa pastille (voir `.hint`)
    ne court pas d'un bord à l'autre. Vide avant le premier retournement, et
    alors sans pastille du tout. */
@@ -352,25 +348,21 @@ input:focus{outline:none;border-color:var(--projo)}
 .recap .c b{display:block;font-family:var(--banner);font-size:11px;letter-spacing:.04em;margin-bottom:2px}
 /* La légendaire : une face d'or, l'encre dessus (voir `final`). */
 .recap .c.leg{background:var(--projo);border-color:var(--projo);color:var(--encre);font-weight:600}
-#app.quake{animation:quake .7s}
-@keyframes quake{0%,100%{transform:translate(0,0)}14%{transform:translate(-7px,4px)}
-  38%{transform:translate(6px,-5px)}62%{transform:translate(-4px,-2px)}86%{transform:translate(3px,3px)}}
 
 /* **Moins de mouvement, la même cérémonie.** Qui a demandé moins d'animation
    au système — ou coupé les « animations » dans le mode calme du jeu, que
    fx.js recopie sur `<html>` — garde tout ce qui dit quelque chose : le
    paquet, la bande qui se déchire sous le doigt, les cartes qui se
    retournent. Il perd ce qui décore : l'entrée des textes, le halo qui
-   respire, la languette qui frétille, le tremblement, l'éclair et la gerbe.
-   Les étincelles, elles, sont retenues dans le script (`sansMouvement`). */
+   respire, la languette qui frétille et l'éclair. Le spectacle des cartes
+   (suspense, charge, entrées, fonds filmés) se tait de lui-même : voir
+   `/ouverture-booster.js`. */
 @media (prefers-reduced-motion:reduce){
   .up,.glowring,.pack .grip{animation:none}
-  #app.quake,#flash.go{animation:none}
-  #burstvid{display:none}
+  #flash.go{animation:none}
 }
 html[data-calme~="animations"] :is(.up,.glowring,.pack .grip){animation:none}
-html[data-calme~="animations"] :is(#app.quake,#flash.go){animation:none}
-html[data-calme~="animations"] #burstvid{display:none}
+html[data-calme~="animations"] #flash.go{animation:none}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -381,9 +373,10 @@ html[data-calme~="animations"] #burstvid{display:none}
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
-<main id="app">
+<main id="app" class="kq-salle">
   <div id="bg"></div><div id="vig"></div>
-  <video id="burstvid" muted playsinline preload="none"></video>
+  <!-- Le fond filmé de la rareté, derrière la carte (`/ouverture-booster.js`). -->
+  <video id="kqFond" class="kq-fond" muted playsinline preload="none" aria-hidden="true"></video>
   <div id="flash"></div>
 
   <!-- 1 -->
@@ -415,7 +408,7 @@ html[data-calme~="animations"] #burstvid{display:none}
   </section>
 
   <!-- 3 -->
-  <section class="scene" id="s3">
+  <section class="scene kq-scene" id="s3">
     <div class="prog" id="prog"></div>
     <div class="packwrap" id="packwrap">
       <div class="glowring"></div>
@@ -888,6 +881,7 @@ function faceCarte(c) {
 }
 
 function reveler() {
+  KQ = window.TBF_OUVERTURE ?? null;
   const s = $('s3');
   /* **Un seul dos pour tout le paquet, celui de sa série.** Les cartes de
      bienvenue ne sont pas toutes des Fanzzy — il y a des actions, du stuff,
@@ -906,6 +900,10 @@ function reveler() {
        qu'on vient de retourner bouge ; `suivante` la fige de nouveau quand
        elle s'en va. */
     el.className = 'reveal fz-fige';
+    // Sa rareté et sa sorte, pour la lueur du dos et le geste de l'entrée.
+    el.dataset.rar = rareteDe(c) ?? 'commune';
+    el.dataset.sorte = sorteDe(c);
+    el.style.setProperty('--rc', `var(--r-${el.dataset.rar})`);
     el.style.zIndex = 20 - i;
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
     el.innerHTML = `<div class="flip">
@@ -915,74 +913,97 @@ function reveler() {
       ${faceCarte(c)}</div>`;
     s.appendChild(el);
   });
+  s.querySelector('.reveal')?.classList.add('kq-dessus');
   $('hint').classList.add('sous-pile');
   $('hint').innerHTML = 'TOUCHE POUR RETOURNER';
   $('prog').textContent = `1 / ${cartes.length}`;
   s.addEventListener('click', suivante);
+  KQ?.suspense(s, [...s.querySelectorAll('.reveal')].map((el) => el.dataset.rar));
+}
+
+/* ------------------------------------------- l'ouverture, en spectacle
+
+   **Le premier paquet s'ouvre comme tous les autres** (28 octobre 2026,
+   Gaël : « l'ouverture du booster lors de l'inscription est différente des
+   autres »). Il avait gardé la cérémonie d'avant — la même gerbe filmée et
+   les mêmes étincelles pour toutes les cartes — quand le kiosque avait reçu
+   le suspense, la charge, l'entrée de chaque sorte, les jingles et les
+   fonds filmés. Tout cela vient maintenant de `/ouverture-booster.js`, le moteur du
+   kiosque ; la déchirure du sachet, elle, reste propre à cette page.
+
+   Le moteur se charge en bas de la page, après ce script : on le prend au
+   moment d'ouvrir le paquet (`reveler`), jamais à la lecture. */
+let KQ = null;
+
+/** La sorte d'une carte du paquet, pour son entrée et son mot. */
+function sorteDe(c) {
+  const V = window.TBF_CARTES;
+  if (V && pret && KQ) {
+    try { return KQ.sorteDe(V.carteDuPaquet(c)); } catch { /* carte inconnue : par son type */ }
+  }
+  return { stuff: 'stuff', action: 'action', scarves: 'echarpes' }[c.type] ?? 'fanzzy';
+}
+
+/** La charge en cours : l'abréger retourne la carte tout de suite. */
+let lacherCharge = null;
+/** La cérémonie de la rareté en cours : le toucher qui écarterait la carte l'attend. */
+let enCeremonie = false;
+
+function retourner(cur) {
+  $('app').classList.remove('kq-nuit');
+  cur.classList.add('flipped');
+  cur.classList.remove('fz-fige');
+  const c = cartes[idx];
+  const rar = cur.dataset.rar;
+  buzz(14);
+  if (c.type === 'fanzzy') {
+    const tag = document.createElement('div');
+    // Le sticker flare du kiosque : voir `.newtag`.
+    tag.className = 'newtag tbf-sticker'; tag.dataset.ton = 'flare';
+    tag.textContent = 'NOUVEAU';
+    cur.appendChild(tag);
+  }
+  if (KQ) {
+    enCeremonie = true;
+    KQ.ceremonie(cur, rar, $('kqFond')).then(() => { enCeremonie = false; });
+    /* L'entrée part quand le demi-tour est fini, comme au kiosque. */
+    setTimeout(() => {
+      if (!cur.isConnected) return;
+      KQ.entree(cur, c);
+      if (rar === 'commune') KQ.feteCommune(cur);
+    }, sansMouvement() ? 0 : 540);
+  }
+  $('hint').textContent = idx < cartes.length - 1 ? 'TOUCHE POUR LA SUIVANTE' : 'TOUCHE POUR ENTRER';
 }
 
 function suivante() {
   const els = [...$('s3').querySelectorAll('.reveal')];
   const cur = els[idx];
   if (!cur) return;
+  /* **Un toucher n'attend jamais** : il abrège le suspense, et retourne
+     tout de suite une carte qui se charge. */
+  if (KQ?.finirSuspense($('s3'))) return;
+  if (lacherCharge) { lacherCharge(); return; }
   if (!cur.classList.contains('flipped')) {
-    cur.classList.add('flipped');
-    cur.classList.remove('fz-fige');
-    const c = cartes[idx];
-    buzz(14);
-    etincelles(couleurDe(c), c.type === 'fanzzy' ? 26 : 16);
-    if (c.type === 'fanzzy') {
-      const tag = document.createElement('div');
-      // Le sticker flare du kiosque : voir `.newtag`.
-      tag.className = 'newtag tbf-sticker'; tag.dataset.ton = 'flare';
-      tag.textContent = 'NOUVEAU';
-      cur.appendChild(tag);
-      video();
-      $('app').classList.add('quake');
-      setTimeout(() => $('app').classList.remove('quake'), 700);
-    }
-    $('hint').textContent = idx < cartes.length - 1 ? 'TOUCHE POUR LA SUIVANTE' : 'TOUCHE POUR ENTRER';
+    const rar = cur.dataset.rar;
+    if (KQ && (rar === 'epique' || rar === 'legendaire') && !sansMouvement()) {
+      lacherCharge = KQ.charger(cur, { salle: $('app'), hint: $('hint'),
+        apres: () => { lacherCharge = null; retourner(cur); } });
+    } else retourner(cur);
     return;
   }
+  if (enCeremonie) return;
   cur.style.transform = 'translateX(-130%) rotate(-14deg)';
   cur.style.opacity = '0';
   cur.classList.add('fz-fige');
+  cur.classList.remove('kq-dessus');
+  KQ?.eteindreFond($('kqFond'));
   if (++idx >= cartes.length) return final();
+  els[idx].classList.add('kq-dessus');
   $('prog').textContent = `${idx + 1} / ${cartes.length}`;
   els.forEach((el, i) => { if (i >= idx) el.style.transform =
     `translateY(${(i - idx) * 7}px) scale(${1 - (i - idx) * .03})`; });
   $('hint').innerHTML = 'TOUCHE POUR RETOURNER';
-}
-
-function etincelles(couleur, n) {
-  // Des particules qui décorent : elles se taisent sous le calme. Voir `calme`.
-  if (sansMouvement()) return;
-  const s = $('s3'), r = s.getBoundingClientRect();
-  for (let i = 0; i < n; i++) {
-    const p = document.createElement('div');
-    p.className = 'burst';
-    p.style.background = i % 3 ? couleur : '#FFF3D0';
-    p.style.left = r.width / 2 + 'px'; p.style.top = r.height / 2 + 'px';
-    s.appendChild(p);
-    const a = Math.random() * Math.PI * 2, d = 70 + Math.random() * 140;
-    p.animate([{ transform:'translate(-50%,-50%) scale(1)', opacity:1 },
-               { transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(0)`, opacity:0 }],
-      { duration: 700 + Math.random() * 500, easing:'cubic-bezier(.15,.7,.3,1)' })
-      .onfinish = () => p.remove();
-  }
-}
-
-function video() {
-  /* La gerbe ne se charge même pas quand elle ne doit pas se voir : la
-     feuille la cache, et une vidéo cachée qu'on télécharge quand même coûte
-     des données à quelqu'un qui n'en veut pas. */
-  if (sansMouvement()) return;
-  const v = $('burstvid');
-  if (!v.src) { v.src = 'video/gerbe.mp4'; v.load(); }
-  v.currentTime = 0; v.classList.add('on');
-  v.play?.().catch(() => {});
-  clearTimeout(v._t);
-  v._t = setTimeout(() => { v.classList.remove('on'); v.pause?.(); }, 2400);
 }
 
 function final() {
@@ -1106,6 +1127,8 @@ addEventListener('pageshow', (e) => {
      c'est le premier paquet dont on se souvient. Sans « defer », comme les
      autres : la première carte se retourne vite. -->
 <script src="/cartes.js"></script>
+<!-- Le spectacle de l’ouverture, le même que celui du kiosque. -->
+<script src="/ouverture-booster.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/pwa.js" defer></script>
 </body>

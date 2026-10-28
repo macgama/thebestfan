@@ -27,19 +27,26 @@
  * est sauté : la visite ne pointe jamais le vide. Les textes sont en
  * français dans ce fichier ; `langue.js` les traduit quand ils entrent dans
  * la page, comme tout le reste.
+ *
+ * ## Et les autres pages
+ *
+ * Demandé par Gaël le 28 octobre 2026 (fil « Mettre le tutoriel à niveau »,
+ * choix « Bulles à la 1re visite ») : Mes Fanzzy, la fiche d'un Fanzzy (ses
+ * âges et l'évolution par les écharpes), la collection, les amis et le KOP
+ * ont chacun leur petite visite, la première fois qu'on les ouvre. Même
+ * moteur, même voile, une clé par page (`tbf.visite.<page>`), et la même
+ * porte : `?visite=1` sur l'adresse de la page. La fiche n'a pas d'adresse
+ * à elle seule : elle se guette sur /fanzzy (où elle s'ouvre par-dessus) et
+ * sur /fanzzy/<id>, et seulement pour un Fanzzy qu'on a — c'est là qu'elle
+ * a quelque chose à montrer.
  */
 (() => {
-  const CLE = 'tbf.visite';
   const params = new URLSearchParams(location.search);
   const forcee = params.get('visite') === '1';
 
-  let vue = false;
-  try { vue = localStorage.getItem(CLE) === '1'; } catch { /* sans stockage : on la montre */ }
-  if (!forcee && (vue || navigator.webdriver)) return;
-
   /* Les arrêts, dans l'ordre où l'œil parcourt l'accueil. `cible` est un
      sélecteur ; sans cible, la bulle se pose au milieu. */
-  const ARRETS = [
+  const ACCUEIL = [
     { titre: 'Bienvenue dans la tribune !',
       texte: 'Une petite visite pour savoir où tout se trouve. Tu peux la passer, '
         + 'et la revoir quand tu veux depuis « Comment jouer », dans le menu.' },
@@ -69,7 +76,127 @@
         + 'ton KOP, tes amis, la boutique, et « Comment jouer », qui explique tout.' },
     { titre: 'À toi de jouer !',
       texte: 'Commence par les missions : elles te guident pas à pas, et chacune rapporte quelque chose.',
-      fin: true },
+      fin: true,
+      liens: [['/aide', 'Voir les missions', 'or'], ['/comment-jouer', 'Comment jouer']],
+      bouton: 'C’est parti' },
+  ];
+
+  /* Mes Fanzzy : l'onglet MON FANZZY, celui qui s'ouvre. */
+  const FANZZY = [
+    { titre: 'Mes Fanzzy',
+      texte: 'Ici vivent tes supporters : celui qui te représente, et tous ceux que tu as gagnés.' },
+    { cible: '#tscene',
+      titre: 'Ton avatar',
+      texte: 'C’est lui qui entre au coup d’envoi. Ses stickers disent la poussée de son cri, '
+        + 'sa famille et son âge. Touche-le pour ouvrir sa fiche.' },
+    { cible: '#tvide',
+      titre: 'Ta place',
+      texte: 'Elle attend ton avatar, celui qui entre au coup d’envoi : '
+        + 'choisis-le dans le classeur, parmi les Fanzzy que tu as.' },
+    { cible: '#cri',
+      titre: 'Son cri',
+      texte: 'Touche-le pour l’entendre. En match, son cri désigne le geste que tu fais toi-même : '
+        + 'c’est ta main qui pousse la tribune.' },
+    { cible: '.nav [data-go="dex"]',
+      titre: 'Le classeur',
+      texte: 'Tous les Fanzzy du jeu, série par série. Ceux que tu as sont en couleur : '
+        + 'choisis-y ton avatar, ou ouvre la fiche d’un autre.' },
+    { cible: '.vers-deck',
+      titre: 'Ton deck',
+      texte: 'Les Fanzzy que tu emmènes en duel, avec leur équipement et tes cartes d’action. '
+        + 'Le premier est ton titulaire.' },
+    { titre: 'Faire grandir',
+      texte: 'Un Fanzzy grandit avec tes écharpes, depuis sa fiche : chaque âge lui donne un nouveau '
+        + 'dessin, un nouveau nom et une nouvelle histoire.',
+      fin: true, liens: [['/comment-jouer#fanzzy', 'Comment jouer']] },
+  ];
+
+  /* La fiche d'un Fanzzy qu'on a (celle d'un autre n'offre qu'OUVRIR UN
+     BOOSTER) : ses âges, et l'évolution. */
+  const FICHE = [
+    { cible: '#fiche-vitrine',
+      titre: 'Sa fiche',
+      texte: 'Ta carte, telle que les autres la voient. Tout ce que tu touches ici se montre '
+        + 'd’abord sur elle.' },
+    { cible: '#fiche-inventaire .tbf-ages',
+      titre: 'Ses âges',
+      texte: 'Chaque Fanzzy a trois âges : commune, rare, puis épique. La rareté, c’est son âge, '
+        + 'et aucun booster ne donne une rare ou une épique : il faut le faire grandir.' },
+    { cible: '#fiche-actions [data-evoluer]',
+      titre: 'Évoluer',
+      texte: 'Le passage à l’âge suivant se paie en écharpes, et le bouton dit combien. '
+        + 'Les écharpes se gagnent avec les missions, les duels, le Virage et la collection.' },
+    { cible: '#fiche-inventaire',
+      titre: 'Tenues et expressions',
+      texte: 'Touche une pièce pour l’essayer sur la carte, puis garde-la. Une tenue ne change que '
+        + 'l’allure : jamais la force.' },
+    { cible: '#fiche-lier',
+      titre: 'Ton club',
+      texte: 'Lié à ton club, il pousse plus fort et rapporte plus dans les matchs de ce club.' },
+    { titre: 'À toi de le faire grandir',
+      texte: 'Garde tes écharpes pour celui que tu joues le plus : c’est lui qui ira le plus loin.',
+      fin: true, liens: [['/comment-jouer#fanzzy', 'Comment jouer']] },
+  ];
+
+  /* La collection : le niveau de collectionneur, puis les rayons. */
+  const COLLECTION = [
+    { titre: 'Ta collection',
+      texte: 'Tout ce que tu as gagné, rangé et compté : les Fanzzy, mais aussi leurs états, leurs '
+        + 'tenues, l’équipement, les cartes d’action, les stades et les cartes Ultimate.' },
+    { cible: '#collectionneur',
+      titre: 'Collectionneur',
+      texte: 'Chaque objet différent te rapproche d’un cran, et chaque cran rapporte des écharpes, '
+        + 'parfois un booster. Quand un cran est prêt, RÉCUPÉRER le verse.' },
+    { cible: '#rayons',
+      titre: 'Les rayons',
+      texte: 'Ouvre un rayon pour feuilleter ses pages. Une case grise est à gagner ; une pastille '
+        + 'dit ce qui est nouveau depuis ta dernière visite.' },
+    { titre: 'Bonne chasse !',
+      texte: 'Les tenues et les cartes Ultimate se collectionnent aussi, mais ne comptent pas dans les crans.',
+      fin: true, liens: [['/comment-jouer#collection', 'Comment jouer']] },
+  ];
+
+  /* Les amis : les trois onglets. */
+  const AMIS = [
+    { titre: 'Tes amis',
+      texte: 'Un ami est un lien entre deux supporters. Tu vois s’il est au Virage ou en duel, '
+        + 'tu peux le défier aux tirs au but et l’inviter dans ton KOP.' },
+    { cible: '[data-vue="trouver"]',
+      titre: 'Trouver',
+      texte: 'Cherche un pseudo, ou parcours les supporters de tes clubs, puis demande-le en ami.' },
+    { cible: '[data-vue="demandes"]',
+      titre: 'Les demandes',
+      texte: 'Ceux qui veulent être tes amis, et les invitations dans un KOP, t’attendent ici.' },
+    { cible: '.convier [data-convier]',
+      titre: 'Faire venir quelqu’un',
+      texte: 'Envoie ton lien à quelqu’un qui ne joue pas encore : vous serez amis dès son arrivée.' },
+    { titre: 'Plus on est de fous…',
+      texte: 'Tu peux aussi te montrer hors ligne, depuis le menu.',
+      fin: true, liens: [['/comment-jouer#ensemble', 'Comment jouer']] },
+  ];
+
+  /* Le KOP : membre, sa bande ; sinon, les clubs où en rejoindre un. */
+  const KOP = [
+    { titre: 'Le KOP',
+      texte: 'La bande des supporters de ton club. Tu peux avoir des amis partout, '
+        + 'mais tu n’es que d’un seul KOP.' },
+    { cible: '.kop-chiffres',
+      titre: 'Le pot commun',
+      texte: 'Quand tu joues pour ton club, une part de tes gains tombe dans le pot. '
+        + 'Ce qui est versé y reste : le pot paie les bonus du KOP.' },
+    { cible: '.kop-tribune',
+      titre: 'Ta bande',
+      texte: 'Les membres du KOP, en tribune. Invite tes amis depuis la page Amis.' },
+    { cible: '.kop-vote, [data-proposer]',
+      titre: 'Les bonus votés',
+      texte: 'Un membre propose un bonus, le KOP vote, et le pot le paie. '
+        + 'Adopté, il aide tous les membres au Virage.' },
+    { cible: '.club[data-club]',
+      titre: 'Rejoins ton KOP',
+      texte: 'Rejoins un KOP de ton club, c’est libre. En créer un demande le PASS de tribune.' },
+    { titre: 'Ensemble, plus fort',
+      texte: 'Plus le KOP joue, plus le pot grossit, et plus ses bonus poussent fort.',
+      fin: true, liens: [['/comment-jouer#ensemble', 'Comment jouer']] },
   ];
 
   const CSS = `
@@ -117,8 +244,8 @@
     return { left, top, right, bottom, width: right - left, height: bottom - top };
   }
 
-  function lancer() {
-    const arrets = ARRETS.filter((a) => !a.cible || zone(a));
+  function lancer(v, fini) {
+    const arrets = v.arrets.filter((a) => !a.cible || zone(a));
     if (!document.getElementById('tbf-visite-css')) {
       const st = document.createElement('style');
       st.id = 'tbf-visite-css';
@@ -140,13 +267,14 @@
     let i = 0;
 
     const finir = () => {
-      try { localStorage.setItem(CLE, '1'); } catch { /* vaut pour la visite */ }
+      try { localStorage.setItem(v.cle, '1'); } catch { /* vaut pour la visite */ }
       racine.remove();
       removeEventListener('resize', placer);
       removeEventListener('keydown', clavier, true);
       if (forcee) {
-        try { history.replaceState(null, '', location.pathname); } catch { /* tant pis */ }
+        try { history.replaceState(null, '', location.pathname + location.hash); } catch { /* tant pis */ }
       }
+      fini?.();
     };
 
     function placer() {
@@ -177,9 +305,9 @@
       bulle.querySelector('p').textContent = a.texte;
       if (a.fin) {
         pied.className = 'tbf-visite-fin';
-        pied.innerHTML = '<a class="tbf-plaque" data-ton="or" href="/aide">Voir les missions</a>'
-          + '<a class="tbf-plaque" href="/comment-jouer">Comment jouer</a>'
-          + '<button type="button" class="tbf-visite-passer" data-fin>C’est parti</button>';
+        pied.innerHTML = (a.liens ?? []).map(([href, mot, ton]) =>
+          `<a class="tbf-plaque"${ton ? ` data-ton="${ton}"` : ''} href="${href}">${mot}</a>`).join('')
+          + `<button type="button" class="tbf-visite-passer" data-fin>${a.bouton ?? 'Compris'}</button>`;
         for (const l of pied.querySelectorAll('a')) l.addEventListener('click', finir);
         pied.querySelector('[data-fin]').addEventListener('click', finir);
       } else {
@@ -205,22 +333,72 @@
     montrer();
   }
 
-  /* On attend le hub, la fin de l'ouverture et un écran libre. Au plus une
-     demi-minute : passé ce délai, la visite attendra la prochaine fois. */
-  const debut = Date.now();
-  function pret() {
+  /* Un écran libre : ni dialogue, ni moment fort, ni visite déjà ouverte. */
+  const libre = () => !document.querySelector('dialog[open], .tbf-moment.on, .tbf-moment[data-on], .tbf-visite');
+
+  /* On attend le hub, la fin de l'ouverture et un écran libre. */
+  function accueilPret() {
     const hub = document.getElementById('hub');
     if (!hub || !hub.classList.contains('on')) return false;
     const ouv = document.getElementById('ouverture');
     if (ouv && ouv.isConnected && !ouv.classList.contains('partie') && getComputedStyle(ouv).display !== 'none'
       && getComputedStyle(ouv).visibility !== 'hidden') return false;
-    if (document.querySelector('dialog[open], .tbf-moment.on, .tbf-moment[data-on]')) return false;
+    if (!libre()) return false;
     return !!enVue(document.getElementById('burger'));
   }
-  function guetter() {
-    if (pret()) { setTimeout(() => { if (pret()) lancer(); else setTimeout(guetter, 400); }, 900); return; }
-    if (Date.now() - debut < 30000) setTimeout(guetter, 400);
+  const vu = (sel) => !!enVue(document.querySelector(sel));
+  /* Le « Chargement… » des amis, tel que la page l'écrit : parti, la liste
+     est là (la page refait son corps d'un bloc). */
+  const chargement = document.querySelector('#corps > .vide');
+
+  /* Les visites, page par page. `ici` dit si la page en porte une ; `pret`,
+     si l'écran est en état de la montrer. `guet` : combien de temps on la
+     guette — la fiche, qui s'ouvre quand le joueur la touche, tout le temps
+     de la page. */
+  const PAGES = [
+    { cle: 'tbf.visite', arrets: ACCUEIL, ici: () => location.pathname === '/', pret: accueilPret },
+    { cle: 'tbf.visite.fanzzy', arrets: FANZZY, ici: () => location.pathname === '/fanzzy',
+      pret: () => libre() && vu('#s-equipe.on #tscene, #s-equipe.on #tvide')
+        && !document.querySelector('#detail.on') },
+    { cle: 'tbf.visite.fiche', arrets: FICHE, ici: () => /^\/fanzzy(\/[^/]+)?\/?$/.test(location.pathname),
+      pret: () => libre() && vu('#fiche-vitrine')
+        && !!document.querySelector('#fiche-actions > *')
+        && !document.querySelector('#fiche-actions a[href="/boosters"]'),
+      guet: Infinity },
+    { cle: 'tbf.visite.collection', arrets: COLLECTION, ici: () => location.pathname === '/collection',
+      pret: () => libre() && vu('#rayons') && !document.querySelector('#vitr.on') },
+    { cle: 'tbf.visite.amis', arrets: AMIS, ici: () => location.pathname === '/amis',
+      pret: () => libre() && vu('#onglets') && !chargement?.isConnected },
+    { cle: 'tbf.visite.kop', arrets: KOP, ici: () => location.pathname === '/kop',
+      pret: () => libre() && !document.getElementById('charge') && vu('#corps') },
+  ];
+
+  const aVoir = PAGES.filter((v) => {
+    if (!v.ici()) return false;
+    if (forcee) return true;
+    let deja = false;
+    try { deja = localStorage.getItem(v.cle) === '1'; } catch { /* sans stockage : on la montre */ }
+    return !deja && !navigator.webdriver;
+  });
+  if (!aVoir.length) return;
+
+  /* Une à la fois, dans l'ordre : sur /fanzzy, celle de la page d'abord,
+     puis celle de la fiche quand le joueur en ouvre une. Au plus une
+     demi-minute par visite, sauf `guet` : passé ce délai, elle attendra la
+     prochaine fois. */
+  function guetter(v, suite) {
+    const debut = Date.now();
+    const tour = () => {
+      if (v.pret()) {
+        setTimeout(() => { if (v.pret()) lancer(v, suite); else setTimeout(tour, 400); }, 900);
+        return;
+      }
+      if (Date.now() - debut < (v.guet ?? 30000)) setTimeout(tour, 400);
+      else suite();
+    };
+    tour();
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', guetter);
-  else guetter();
+  const enchainer = () => { const v = aVoir.shift(); if (v) guetter(v, enchainer); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enchainer);
+  else enchainer();
 })();

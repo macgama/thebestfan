@@ -20,6 +20,7 @@ import { apres as coteApres, moyenne as coteMoyenne, COTE_DEPART }
 import { clubSoutenu, clubParmi, campDe } from '../football/suivis.js';
 import { lierLeDeck, tauxDuLien } from '../../shared/fanzzy/clubs.js';
 import { assurerBourse } from '../bourse.js';
+import { compterDuJour } from '../quotidien/compteurs.js';
 
 /**
  * Couche réseau du duel N contre N.
@@ -1858,8 +1859,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         jouerEtMarquer(salle.duel, u.userId, String(p?.cardId), Date.now())],
       ['nvn:swap', (salle, u, p) => salle.duel.changer(u.userId, Number(p?.index))],
       // L'Ultimate : le geste de sa spécialité, noté par le moteur.
-      ['nvn:ultime', (salle, u, p) =>
-        salle.duel.ultimer(u.userId, { taps: p?.taps }, Date.now())],
+      ['nvn:ultime', (salle, u, p) => {
+        const ev = salle.duel.ultimer(u.userId, { taps: p?.taps }, Date.now());
+        // Lancé : la mission « Lance ton Ultimate » le compte, hors duel guidé.
+        if (!salle.tuto) compterDuJour(q, u.userId, 'ultime');
+        return ev;
+      }],
     ]) {
       socket.on(evt, (p = {}) => {
         const u = moi();
