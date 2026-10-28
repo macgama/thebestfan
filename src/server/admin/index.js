@@ -16,6 +16,7 @@ import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
 import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
 import { ecrireReglage, rendreAuDefaut, tousLesReglages } from '../reglages/index.js';
 import { assurerBourse } from '../bourse.js';
+import { createCollectionAdmin } from './collection.js';
 
 /**
  * Administration.
@@ -869,7 +870,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
    * Sans ce calcul, remettre la saison 1 au brouillon fermerait un lieu que la
    * saison 2 annonce — et la saison 2, elle, ne se relance pas.
    */
-  async function lancerSaison(acteur, id, lancer, ip_, { auto = false } = {}) {
+  async function lancerSaison(acteur, id, lancer, ip_) {
     const s = toutesLesSaisons().find((x) => x.id === Number(id));
     if (!s) throw fail('admin.error.saison_inconnue', 404);
 
@@ -890,17 +891,18 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
               + 'maintenant, elle s’ouvrirait close. Corrige sa date de fin d’abord.' });
         }
       }
-      /* **Le lancement automatique est additif, y compris la première
-         fois.** Tant qu'aucune saison lancée ne nomme de série, tout est
-         ouvert (l'union vide vaut « aucune restriction », `chargerSeries`).
-         Lancer alors une saison qui nomme LES HÉROS DU CANAPÉ ferait de
-         l'union `{HC}` : les douze autres séries se refermeraient d'un coup,
-         collections en cours comprises, une nuit de 1er janvier, sans
-         personne devant l'écran. Les saisons déjà lancées reçoivent donc
-         d'abord, par écrit, les séries qu'elles ouvraient sans les nommer :
-         toutes. Un lancement à la main garde son sens d'avant : restreindre
-         ainsi est alors un choix qu'on fait en le voyant. */
-      if (auto && s.series.length) {
+      /* **Un lancement est additif, y compris la première fois.** Tant
+         qu'aucune saison lancée ne nomme de série, tout est ouvert (l'union
+         vide vaut « aucune restriction », `chargerSeries`). Lancer alors une
+         saison qui nomme LES HÉROS DU CANAPÉ ferait de l'union `{HC}` : les
+         douze autres séries se refermeraient d'un coup, collections en cours
+         comprises. Les saisons déjà lancées reçoivent donc d'abord, par écrit,
+         les séries qu'elles ouvraient sans les nommer : toutes.
+
+         Le lancement à la main suit la même règle depuis le 28 octobre 2026
+         (choix de Gaël) : il restreignait, et la confirmation ne le disait
+         pas. Une saison ajoute au jeu, elle ne lui retire rien. */
+      if (s.series.length) {
         const lanceesIci = toutesLesSaisons().filter((x) => x.lancee && x.id !== s.id);
         if (lanceesIci.length && !lanceesIci.some((x) => x.series.length)) {
           const toutes = SETS.map((x) => x.id);
@@ -1012,7 +1014,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const lancees = [];
     for (const { id } of rows) {
       try {
-        await lancerSaison(ACTEUR_AUTO, id, true, null, { auto: true });
+        await lancerSaison(ACTEUR_AUTO, id, true, null);
         lancees.push(Number(id));
         refusAuto.delete(Number(id));
       } catch (e) {
@@ -1254,6 +1256,24 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     await journal(req.user.id, 'abonnement.retirer', req.params.id, null, ip(req));
     res.json({ abonnement: etat });
   }));
+
+  /* La collection d'un joueur et les cadeaux, puis les KOP : `collection.js`. */
+  const coll = createCollectionAdmin({ q, pool, journal, fail });
+
+  router.get('/joueur/:id/collection', safe(async (req, res) =>
+    res.json({ ...(await coll.collection(req.params.id)), choix: coll.choix() })));
+
+  router.post('/joueur/:id/offrir', safe(async (req, res) =>
+    res.json(await coll.offrir(req.user.id, req.params.id, req.body, ip(req)))));
+
+  router.get('/kops', safe(async (req, res) =>
+    res.json({ kops: await coll.kops({ q: String(req.query.q ?? '').slice(0, 60) }) })));
+
+  router.patch('/kop/:id', safe(async (req, res) =>
+    res.json({ kops: await coll.renommerKop(req.user.id, req.params.id, req.body?.nom, ip(req)) })));
+
+  router.delete('/kop/:id', safe(async (req, res) =>
+    res.json({ kops: await coll.supprimerKop(req.user.id, req.params.id, ip(req)) })));
 
   router.get('/competitions', safe(async (req, res) => res.json({
     competitions: await competitions({
