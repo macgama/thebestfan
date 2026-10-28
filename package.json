@@ -29,6 +29,7 @@
     "kop:smoke": "node scripts/kop-smoke.mjs",
     "prono:smoke": "node scripts/pronostics-smoke.mjs",
     "amis:smoke": "node scripts/amis-smoke.mjs",
+    "ensemble:smoke": "node scripts/ensemble-smoke.mjs",
     "presence:smoke": "node scripts/presence-smoke.mjs",
     "notifications:smoke": "node scripts/notifications-smoke.mjs",
     "confidentialite:smoke": "node scripts/confidentialite-smoke.mjs",
