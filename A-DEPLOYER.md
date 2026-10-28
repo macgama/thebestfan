@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**/admin, COMPÉTITIONS lisible** (branche `claude/project-thread-wsfkz8`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- Rangées par pays, en français (International d'abord), dates « 21.08.2026 »,
+  état ACTIVE / INACTIVE écrit, filtre toutes / actives / inactives, et la
+  recherche trouve « angleterre » ou « suisse ».
+
+---
+
 **Plus de Fanzzy RP et SU clignent** (branche `claude/project-thread-j17xyz`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
 des images et des réglages, sans crédits.
