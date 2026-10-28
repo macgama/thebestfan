@@ -165,8 +165,11 @@ console.log('\nLes séries');
  *
  * L'exemption **tombe d'elle-même** : dès que la série compte cinq
  * légendaires, elle ne sert plus, et le contrôle le dit en rouge pour qu'on
- * la retire. Une exemption qu'on oublie là devient une règle morte. */
-const SANS_SOMMET_ENCORE = new Set(['AN']);
+ * la retire. Une exemption qu'on oublie là devient une règle morte.
+ *
+ * Tombée le 28 octobre 2026 : LES TERRACES a ses six légendaires (AN61 à
+ * AN66). La liste reste, vide, pour la prochaine série qui arrivera ainsi. */
+const SANS_SOMMET_ENCORE = new Set([]);
 {
   const manque = [];
   const exemptees = [];
