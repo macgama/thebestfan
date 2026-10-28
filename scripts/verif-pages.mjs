@@ -995,7 +995,7 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
     const fige = /height:\s*(?:max\()?100dvh/.test(html) && /overflow:\s*hidden/.test(html)
       && !/min-height:\s*100dvh/.test(html);
     if (fige) continue;
-    const degage = /padding[^;}]*env\(safe-area-inset-bottom\)/.test(html)
+    const degage = /padding[^;}]*(?:env\(safe-area-inset-bottom\)|var\(--bas\))/.test(html)
       || /padding[^;}]*var\(--nav-h/.test(html);
     if (!degage) nus.push(nom);
   }

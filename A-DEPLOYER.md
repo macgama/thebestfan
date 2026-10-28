@@ -13,6 +13,38 @@ PNG »). Construction seule, **sans schéma**.
   clubs relevés sans couleurs en production les reçoivent (RB Leipzig,
   Alavés, Partizan, Grèce, Chypre, Varnsdorf, Králův Dvůr, clubs omanais…),
   au prochain affichage de leur match. Monori SE reste par défaut.
+---
+
+**Plus de Fanzzy RP et SU clignent** (branche `claude/project-thread-j17xyz`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
+des images et des réglages, sans crédits.
+
+- RP de base : 5 âges de plus (84 sur 95). Skins RP : 40 âges de plus.
+- SU « Die Kurve » de base : 35 âges de plus (69). Skins SU : 138 sur 244
+  (aucun avant).
+
+---
+
+**Les dessins des 40 pièces de club des Terraces** (branche
+`claude/project-thread-rftsbq`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images.
+
+- Les 40 pièces `an-*` ont leur dessin (mode rapide, sans crédits).
+- Pour les ouvrir aux joueurs : /admin, CONTENUS, cocher les pièces de club
+  (le bloc « PIÈCES DE CLUB · AN » doit dire 40 dessinées).
+
+---
+
+**Le bas des pages sous les boutons du téléphone** (branche
+`claude/project-thread-uisaey`, 28 octobre 2026, demandé par Gaël : sur la
+fiche d'un Fanzzy, depuis l'icône du S24+, le bouton du bas restait sous les
+trois boutons d'Android). Construction seule, **sans schéma**.
+
+- Le repli de l'accueil (52 px gardés en bas quand Chrome ne dit pas la
+  hauteur des boutons) est maintenant sur toutes les pages : fiche, Mon
+  Fanzzy, Virage, duel, deck, boutique, fenêtres qui s'ouvrent par-dessus.
+- Après la mise en ligne : rouvrir le jeu depuis l'icône ; ÉVOLUER et EMMENER
+  EN DUEL doivent se voir au-dessus des boutons du téléphone.
 
 ---
 
