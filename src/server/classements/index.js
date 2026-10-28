@@ -887,6 +887,66 @@ export function createClassements({ pool, requireAuth,
     });
   }
 
+  /* ======================================================== mes saisons
+
+     « Qu'est-ce que j'ai fait la saison dernière ? » Au lancement d'une
+     saison, son bloc remplace celui de la précédente : le total de tampons,
+     la ferveur, la place et la division de la saison finie disparaissaient
+     de l'écran, alors que tout reste en base (Gaël, 28 octobre 2026). Le
+     profil les garde, une ligne par saison finie.
+
+     **La division d'une saison finie est celle qu'on a portée**, pas celle
+     que la ferveur atteindrait aujourd'hui : les seuils se recalent d'une
+     saison à l'autre, et les seuils du moment rendraient une division que
+     la saison n'a jamais donnée. Une division atteinte et pas encore
+     récupérée est dans `saisonPassee`, à porter ; une fois portée, elle
+     entre ici. */
+
+  /**
+   * Les ferveurs de la liste SAISON d'une saison finie, de la plus forte à la
+   * plus faible : mêmes lignes que `supporters` sous cette période (comptes
+   * actifs, ferveur classée, même fenêtre). Une saison finie ne bouge plus :
+   * le mémo sert tout le monde, et une place s'y lit sans agrégation.
+   */
+  function ferveursDe(saisonId) {
+    return memo(`hist:${saisonId}`, async () => (await q(
+      `SELECT SUM(x.ferveur) AS f
+         FROM (${FERVEUR}) x
+         JOIN users u ON u.public_id = x.user_id
+         JOIN (${FENETRES}) s ON s.id = ?
+        WHERE u.status = 'active' AND ${dansFenetre('x', 's')}
+        GROUP BY x.user_id
+       HAVING f > 0`, [saisonId])).map((r) => Number(r.f)).sort((a, b) => b - a));
+  }
+
+  /**
+   * Mes saisons finies, la plus récente d'abord (`CONTRATS.md`, § 5.2) :
+   * `[{ id, numero, nom, tampons, ferveur, rang?, sur?, division? }]`.
+   * La saison en cours n'y est jamais, même finie : son bloc `saison` la
+   * montre encore, « TERMINÉE », jusqu'au lancement de la suivante. Une
+   * saison où l'on n'a rien fait (ni tampon, ni ferveur, ni division) n'a
+   * pas de ligne : celui qui arrive en saison 3 n'a pas deux lignes à zéro.
+   */
+  async function mesSaisons(saisons, tampons, reclameesDe) {
+    const finies = saisons.slice(1);
+    if (!finies.length) return [];
+    const avecDivisions = reglage('rang.actif') === true;
+    const lignes = await Promise.all(finies.map(async (s) => {
+      const ligne = { id: s.id, numero: s.numero, nom: s.nom,
+        tampons: tampons.get(s.id) ?? 0, ferveur: s.ferveur };
+      if (s.ferveur > 0) {
+        const liste = await ferveursDe(s.id);
+        ligne.rang = liste.filter((f) => f > s.ferveur).length + 1;
+        ligne.sur = Math.max(liste.length, ligne.rang);
+      }
+      const portees = reclameesDe(s);
+      const d = [...DIVISIONS].reverse().find((x) => portees.has(x.id));
+      if (avecDivisions && d) ligne.division = { n: d.n, id: d.id, nom: d.nom };
+      return ligne;
+    }));
+    return lignes.filter((l) => l.tampons > 0 || l.ferveur > 0 || l.division);
+  }
+
   /**
    * Le bloc de la saison de `/moi`.
    *
@@ -932,10 +992,17 @@ export function createClassements({ pool, requireAuth,
        `schema`) : le bloc se tait, la place reste pour la photo. */
     let livre;
     try {
+      /* Dans la même lecture, les tampons de chaque saison (missions et
+         sachet), pour MES SAISONS : une ligne `tampons` par saison, sans
+         titre ni clé. */
       livre = await q(
-        `SELECT source, cle, saison_id, titre FROM recompenses
+        `SELECT source, cle, saison_id, titre, NULL AS n, verse_a FROM recompenses
           WHERE user_id = ? AND (source = 'division' OR titre IS NOT NULL)
-          ORDER BY verse_a, source, cle`, [userId]);
+         UNION ALL
+         SELECT 'tampons', NULL, saison_id, NULL, SUM(tampons), NULL FROM recompenses
+          WHERE user_id = ? AND source IN ('mission', 'sachet') AND saison_id IS NOT NULL
+          GROUP BY saison_id
+          ORDER BY verse_a, source, cle`, [userId, userId]);
     } catch (e) {
       if (!estSchema(e)) throw e;
       direUneFois('livre', '[classement] pas de divisions dans /moi, grand livre absent '
@@ -944,13 +1011,9 @@ export function createClassements({ pool, requireAuth,
     }
 
     const publics = {};
-    const titres = livre.filter((l) => l.titre).map((l) => ({
+    const titres = livre.filter((l) => l.titre && l.source !== 'tampons').map((l) => ({
       nom: l.titre, source: l.source, saison: l.saison_id == null ? null : Number(l.saison_id) }));
     if (titres.length) publics.titres = titres;
-
-    /* Éteintes : ni nœud ni insigne, et la réclamation refuse `inactif`. Les
-       titres restent : ils sont gagnés, et pour toujours. */
-    if (reglage('rang.actif') !== true) return { publics, place, saisons };
 
     const reclamees = new Map();
     for (const l of livre) {
@@ -961,6 +1024,15 @@ export function createClassements({ pool, requireAuth,
       reclamees.get(sid).add(m[2]);
     }
     const reclameesDe = (s) => reclamees.get(s.id) ?? new Set();
+
+    const tampons = new Map(livre.filter((l) => l.source === 'tampons')
+      .map((l) => [Number(l.saison_id), Number(l.n)]));
+    const historique = await mesSaisons(saisons, tampons, reclameesDe);
+    if (historique.length) publics.historique = historique;
+
+    /* Éteintes : ni nœud ni insigne, et la réclamation refuse `inactif`. Les
+       titres restent : ils sont gagnés, et pour toujours. */
+    if (reglage('rang.actif') !== true) return { publics, place, saisons };
 
     const seuils = seuilsDivisions();
     const paliers = paliersDe(enCours, reclameesDe(enCours), seuils);

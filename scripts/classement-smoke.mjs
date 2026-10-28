@@ -1260,6 +1260,47 @@ const PIA = ID(11);
   check('et quand tout est porté, il n’y a plus de saison passée',
     y.json?.verse === true && !('saisonPassee' in y.json) && y.json?.saison?.id === 13);
 
+  /* ------------------------------------------------- mes saisons
+
+     Une ligne par saison finie, la plus récente d'abord : les tampons des
+     missions et du sachet, la ferveur, la place dans la liste SAISON, et la
+     division **portée** (pas celle que les seuils du moment donneraient).
+     La saison en cours n'y est pas. */
+  await pool.query(`INSERT INTO recompenses (user_id, source, cle, saison_id, tampons) VALUES
+    (?, 'mission', 'h-1', 12, 2), (?, 'sachet', 'h-2', 12, 1), (?, 'mission', 'h-3', 13, 4),
+    (?, 'carnet', 'h-4', 12, 0)`, [PIA, PIA, PIA, PIA]);
+  const LOU = ID(40);
+  await joueur(LOU, 'Lou');
+  await pousser(LOU, 9002, 300, 'NOW(3) - INTERVAL 14 DAY');
+  C.oublier();
+  p = await get('/api/rank/moi');
+  const division = { n: 2, id: 'habitue', nom: 'HABITUÉ' };
+  /* La place se lit dans toute la liste de la saison 2, où d'autres joueurs
+     des blocs d'avant ont poussé : Lou, à 300, y est devant Pia. */
+  const h = p.historique ?? [];
+  const [h12, h11] = h;
+  check('historique : une ligne par saison finie, la plus récente d’abord',
+    h.length === 2 && memes({ ...h12, rang: 0, sur: 0 },
+      { id: 12, numero: 2, nom: 'La trêve', tampons: 3, ferveur: 150, rang: 0, sur: 0, division })
+    && memes(h11, { id: 11, numero: 1, nom: 'La reprise', tampons: 0, ferveur: 150, rang: 1, sur: 1,
+      division })
+    || (console.log('        il rend :', JSON.stringify(h)), false));
+  poserReglages({ ...SEUILS, 'rang.actif': false });
+  p = await get('/api/rank/moi');
+  check('divisions éteintes : l’historique reste, sans division',
+    p.historique?.length === 2 && p.historique.every((x) => !('division' in x)));
+  poserReglages({ ...SEUILS, 'rang.fervent': 155 });
+  moi = LOU;
+  p = await get('/api/rank/moi');
+  check('une saison où l’on n’a rien fait n’a pas de ligne, et la place suit la ferveur',
+    memes(p.historique, [{ id: 12, numero: 2, nom: 'La trêve', tampons: 0, ferveur: 300,
+      rang: p.historique?.[0]?.rang, sur: h12?.sur }]) && p.historique[0].rang < h12.rang
+    || (console.log('        il rend :', JSON.stringify(p.historique)), false));
+  await pool.query('DELETE FROM virage_presence WHERE user_id = ?', [LOU]);
+  await pool.query("DELETE FROM recompenses WHERE user_id = ? AND cle LIKE 'h-%'", [PIA]);
+  C.oublier();
+  moi = PIA;
+
   /* ------------------------------- une présence sans match connu compte
 
      `fixtures` n'est qu'un cache des compétitions suivies, et les poussées
