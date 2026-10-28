@@ -881,6 +881,7 @@ function faceCarte(c) {
 }
 
 function reveler() {
+  KQ = window.TBF_OUVERTURE ?? null;
   const s = $('s3');
   /* **Un seul dos pour tout le paquet, celui de sa série.** Les cartes de
      bienvenue ne sont pas toutes des Fanzzy — il y a des actions, du stuff,
@@ -917,7 +918,7 @@ function reveler() {
   $('hint').innerHTML = 'TOUCHE POUR RETOURNER';
   $('prog').textContent = `1 / ${cartes.length}`;
   s.addEventListener('click', suivante);
-  window.TBF_OUVERTURE?.suspense(s, [...s.querySelectorAll('.reveal')].map((el) => el.dataset.rar));
+  KQ?.suspense(s, [...s.querySelectorAll('.reveal')].map((el) => el.dataset.rar));
 }
 
 /* ------------------------------------------- l'ouverture, en spectacle
@@ -928,8 +929,11 @@ function reveler() {
    les mêmes étincelles pour toutes les cartes — quand le kiosque avait reçu
    le suspense, la charge, l'entrée de chaque sorte, les jingles et les
    fonds filmés. Tout cela vient maintenant de `/ouverture.js`, le moteur du
-   kiosque ; la déchirure du sachet, elle, reste propre à cette page. */
-const KQ = window.TBF_OUVERTURE;
+   kiosque ; la déchirure du sachet, elle, reste propre à cette page.
+
+   Le moteur se charge en bas de la page, après ce script : on le prend au
+   moment d'ouvrir le paquet (`reveler`), jamais à la lecture. */
+let KQ = null;
 
 /** La sorte d'une carte du paquet, pour son entrée et son mot. */
 function sorteDe(c) {

@@ -400,6 +400,8 @@ check('l\u2019équipement a bien un revers',
     const j = await r.json();
     if (j.error) throw new Error(j.error);
     cartes = j.cartes;
+    // Le club choisi à la deuxième scène, que la dernière nomme.
+    club = { id: 85, nom: 'Paris SG' };
     scene(3);
     preparerPaquet();
     reveler();

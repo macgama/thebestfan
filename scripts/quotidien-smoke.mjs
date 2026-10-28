@@ -1045,7 +1045,7 @@ titre('la relance');
 
   const R3 = await joueur();
   await contrat(R3, ['boosters', 'victoire', 'endurance']);
-  poserReglages({ 'mission.tribune': false, 'mission.classes': false });
+  poserReglages({ 'mission.tribune': false, 'mission.classes': false, 'mission.ultime': false });
   e = await lire(R3);
   check('aucune autre mission moyenne faisable : pas relançable', mission(e, 1)?.relancable === false
     && mission(e, 0)?.relancable === true);
@@ -1058,7 +1058,8 @@ titre('la relance');
      demanderait une connexion au pool en en tenant une. */
   const R4 = await joueur();
   await contrat(R4, ['boosters', 'victoire', 'endurance']);
-  poserReglages({ 'mission.duel': false, 'mission.grandir': false });
+  poserReglages({ 'mission.duel': false, 'mission.grandir': false, 'mission.minijeu': false,
+    'mission.prono': false });
   const lues = journeeLue;
   journeeSousVerrou = 0;
   surveille = R4;
@@ -1127,7 +1128,8 @@ titre('« relançable » se juge sans lire la journée du football');
      vérification rougit. */
   await figer('2027-01-06 12:00:00');
   matchs = [];
-  poserReglages({ 'mission.duel': false, 'mission.grandir': false });
+  poserReglages({ 'mission.duel': false, 'mission.grandir': false, 'mission.minijeu': false,
+    'mission.prono': false, 'mission.ultime': false });
   const V = await joueur();
   await contrat(V, ['boosters', 'victoire', 'endurance']);
   const lues = journeeLue;
