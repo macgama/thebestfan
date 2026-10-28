@@ -114,4 +114,12 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
   'pronostics',
   /* Les mini-jeux d’entre les matchs (18 octobre 2026) : cinq tables neuves,
      sans clé étrangère. */
-  'mini-jeux'];
+  'mini-jeux',
+  /* Jouer entre amis (28 octobre 2026) : gestes, cadeaux, échanges, prêts.
+     Quatre tables neuves, sans clé étrangère. Rien n'en dépend. */
+  'amis-ensemble',
+  /* Le club principal qui se change une fois par saison, et la sélection
+     principale (28 octobre 2026) : une colonne sur `user_follows`
+     (football.sql), deux sur `user_wallet` (souvenirs.sql). Rien n'en
+     dépend : le dernier rang. */
+  'principal'];

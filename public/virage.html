@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Grand Virage — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
@@ -177,7 +178,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Le bas garde l'air des deux cartes du bout, que l'éventail penche et
    abaisse de huit pixels : leurs coins sortaient de l'écran. */
 .hand{flex:none;--carte-l:min(64px,calc((100vw - 48px) / 4.76));
-  padding:22px 10px calc(16px + env(safe-area-inset-bottom));margin:0 calc(-1 * var(--gouttiere,0px))}
+  padding:22px 10px calc(16px + var(--bas));margin:0 calc(-1 * var(--gouttiere,0px))}
 
 /* ------------------------------------------------- la fenêtre du geste
 
@@ -220,7 +221,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    `.tbf-apports-p--flottant` ; la page n'écrit que sa place. La
    carte-souvenir (`.tbf-souvenir`) n'a rien à placer : la pièce la pose au
    centre, au calque 96. */
-#apportsP{position:fixed;z-index:44;left:50%;translate:-50% 0;bottom:calc(env(safe-area-inset-bottom) + 12px);
+#apportsP{position:fixed;z-index:44;left:50%;translate:-50% 0;bottom:calc(var(--bas) + 12px);
   width:min(420px,calc(100vw - 24px))}
 #apportsP .ecartees{margin:8px 0 2px;font-size:12px;line-height:1.5}
 #apportsP .ecartees a{color:var(--craie);font-weight:700;text-decoration:underline;text-underline-offset:2px;
@@ -258,9 +259,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    tient, le fondu ne couvrait que le mur, et s'y voyait en plaque sombre
    autour des deux bâches (768 × 1024). Les marges négatives rendent l'air
    que le fondu prend : poser ou retirer l'attribut ne déplace rien. */
-#bilan[data-defile] .tbf-bilan-sortie{position:sticky;z-index:2;bottom:calc(-1 * (env(safe-area-inset-bottom) + 20px));
-  margin:-16px 0 calc(-1 * (env(safe-area-inset-bottom) + 20px));
-  padding:16px 0 calc(env(safe-area-inset-bottom) + 20px);
+#bilan[data-defile] .tbf-bilan-sortie{position:sticky;z-index:2;bottom:calc(-1 * (var(--bas) + 20px));
+  margin:-16px 0 calc(-1 * (var(--bas) + 20px));
+  padding:16px 0 calc(var(--bas) + 20px);
   background:linear-gradient(rgba(4,6,10,0),rgba(4,6,10,.97) 14px)}
 
 /* ------------------------------------------------------------- le fil
@@ -320,7 +321,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .veil .rech input:focus{outline:none;border-color:var(--projo)}
 .veil .liste{flex:1;min-height:0;width:100%;overflow-y:auto;overscroll-behavior:contain;
   display:flex;flex-direction:column;align-items:center;gap:16px;
-  padding:8px 18px calc(env(safe-area-inset-bottom) + 24px)}
+  padding:8px 18px calc(var(--bas) + 24px)}
 .veil .liste>*{flex:none;width:100%;max-width:400px}
 .veil .vide{font-size:12.5px;padding:18px 10px 0;line-height:1.7}
 /* Deux sections : chez soi, puis ailleurs. Ce que coûte « ailleurs » s'écrit
@@ -941,6 +942,7 @@ function render() {
   const ecart = Math.abs(Math.round(vers));
   ecrire($('knot').firstElementChild, ecart ? ecart : '');
   ecrire($('score'), `${S.goals[mine]} – ${S.goals[mine ^ 1]}`);
+  renderAmis();
   crans($('cransMoi'), S.goals[mine]);
   crans($('cransEux'), S.goals[mine ^ 1]);
   renderPhase();
@@ -2359,12 +2361,18 @@ function annoncerSouvenir() {
 function renderAmis() {
   const el = $('amisIci');
   const n = P.amis.size;
-  el.hidden = !n;
-  if (!n) return;
-  ecrire(el, `${n} AMI${n > 1 ? 'S' : ''} ICI`);
+  /* **Côte à côte** (28 octobre 2026) : des amis poussent dans ma tribune, et
+     chacun me fait pousser plus fort. Le serveur dit combien comptent
+     (`you.cote`) : seulement ceux qui se montrent à leurs amis. */
+  const cote = Number(S?.you?.cote) || 0;
+  el.hidden = !n && !cote;
+  if (!n && !cote) return;
+  ecrire(el, [n ? `${n} AMI${n > 1 ? 'S' : ''} ICI` : '', cote ? 'CÔTE À CÔTE' : '']
+    .filter(Boolean).join(' · '));
   const noms = [...P.amis.values()].map((a) => String(a.pseudo ?? '')).filter(Boolean);
   poserAttr(el, 'title', noms.join(', '));
-  poserAttr(el, 'aria-label', `${noms.join(', ') || n} dans cette tribune`);
+  poserAttr(el, 'aria-label', n ? `${noms.join(', ') || n} dans cette tribune`
+    : 'Côte à côte avec tes amis');
 }
 
 /* ------------------------------------------------------- le bilan de tribune
@@ -3236,6 +3244,9 @@ function connect() {
      Une équipe, une compétition, ou un pays **dans sa langue** (pays.js). */
   const { pli, cherches: paysCherches } = window.TBF_PAYS;
   const nomPays = (m) => window.TBF_PAYS.nom(m.pays, m.drapeau);
+  /* Une sélection nationale porte un nom de pays : « Switzerland » s'écrit
+     « Suisse » chez un lecteur français. Un club garde son nom. */
+  const eqNom = (nom) => window.TBF_PAYS.equipe({ name: nom });
 
   let terme = '';
 
@@ -3295,10 +3306,10 @@ function connect() {
     return `<div class="match tbf-cadre tbf-affiche${m.open ? '' : ' off'}${m.mien ? '' : ' ailleurs tbf-affiche--ailleurs'}"
       data-id="${m.id}" data-mien="${m.mien ? 1 : 0}" role="button" tabindex="${m.open ? 0 : -1}"
       ${couleurs ? `style="${couleurs}"` : ''}>
-      <span class="tbf-affiche-club"><img src="${esc(m.home_logo ?? '')}" alt=""><b>${esc(m.home_name)}</b></span>
+      <span class="tbf-affiche-club"><img src="${esc(m.home_logo ?? '')}" alt=""><b>${esc(eqNom(m.home_name))}</b></span>
       <span class="tbf-affiche-score">${score ? `<b class="tbf-banderole">${score}</b>` : ''}
         ${m.league_name ? `<small>${esc(m.league_name)}</small>` : ''}</span>
-      <span class="tbf-affiche-club"><img src="${esc(m.away_logo ?? '')}" alt=""><b>${esc(m.away_name)}</b></span>
+      <span class="tbf-affiche-club"><img src="${esc(m.away_logo ?? '')}" alt=""><b>${esc(eqNom(m.away_name))}</b></span>
       ${etat}
       <span class="tbf-affiche-pied">
         <span class="tbf-foule tbf-foule--frise" data-tribune="moi" aria-hidden="true">${frise(foule)}</span>

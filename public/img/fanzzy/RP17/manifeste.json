@@ -1,6 +1,6 @@
 {
   "id": "RP17",
-  "rev": 6,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "62d0354f18a7"
+          "sha": "62d0354f18a7",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b9a7601d8e56"
+          "sha": "b9a7601d8e56",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5b529f995c9e"
+          "sha": "5b529f995c9e",
+          "cligne": true
         }
       }
     }

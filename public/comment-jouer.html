@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Comment jouer — thebestfan</title>
 <meta name="description" content="Apprendre à jouer à thebestfan : les gestes, les Fanzzy, le Grand Virage, les duels, les mini-jeux, et tout ce que le jeu permet.">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -57,7 +58,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .gestes dd{margin:0}
 
 /* tbf-degagement */
-#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+#app{padding-bottom:calc(var(--bas) + 40px)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -243,6 +244,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
           le dit. Entre dans la file&nbsp;: il le verra.</li>
         <li><b>Ton duel reste ouvert</b> si tu quittes la page d’attente&nbsp;: les autres le voient
           toujours, et le jeu te rappelle dès que quelqu’un arrive en face.</li>
+        <li><b>En attente</b>&nbsp;: sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un
+          attend un joueur. Un appui choisit le match, le format et la tribune&nbsp;: il ne reste qu’à entrer en file.</li>
         <li><b>Jouer avec un ami</b>&nbsp;: dans la salle d’attente, invite-le depuis le jeu ou envoie-lui
           le lien. Un appui l’amène directement dans ton duel.</li>
         <li><b>Le duel guidé</b>&nbsp;: trois minutes sur un match fictif, contre un adversaire patient, avec
@@ -305,6 +308,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
           vainqueur rapporte des écharpes, le score exact encore plus.</li>
         <li><b>Toutes les compétitions</b>&nbsp;: classements, résultats, buteurs et passeurs de chaque
           championnat et coupe.</li>
+        <li><b>Où jouer</b>&nbsp;: sous un match, la pastille verte <b>VIRAGE</b> dit que sa tribune est
+          ouverte, avec le nombre de supporters qui poussent, et la violette <b>DUEL</b> qu’un joueur y attend
+          un adversaire. Un appui t’y emmène.</li>
       </ul>
       <p class="aller"><a href="/matchs">Les matchs du jour&nbsp;›</a></p>
     </div>
@@ -316,10 +322,14 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <ul>
         <li><b>Tes amis</b>&nbsp;: trouve-les par leur pseudo, défie-les aux tirs au but, invite-les dans
           ton KOP, et vois s’ils sont au Virage ou en duel. Tu peux apparaître hors ligne depuis le menu.</li>
+        <li><b>Jouer ensemble</b>&nbsp;: sur la fiche d’un ami, fais-lui signe d’un geste (jamais de texte),
+          offre-lui un cadeau du jour, relevez le défi de la semaine, échangez vos doubles ou emprunte-lui
+          un Fanzzy jusqu’à minuit. Au Virage, chaque ami dans ta tribune te fait pousser plus fort.</li>
         <li><b>Ton KOP</b>&nbsp;: le groupe de supporters de ton club. Chacun verse une part de ses
           écharpes dans la caisse, et le KOP vote pour acheter des bonus qui aident tout le monde au
           Virage. On n’est que d’un seul KOP.</li>
       </ul>
+      <p class="aller"><a href="/amis">Mes amis&nbsp;›</a></p>
       <p class="aller"><a href="/kop">Mon KOP&nbsp;›</a></p>
     </div>
   </section>

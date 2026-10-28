@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Classements — thebestfan</title>
 <!-- Permanent Marker dans la même ligne qu'Oswald : « TA PLACE EST LÀ », sur
      le classement vide, est l'un des six emplois du marqueur. Le fichier de
@@ -253,7 +254,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    vertical est compté au pixel, et leur ajouter de la marge couperait ce
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
 /* tbf-degagement */
-#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+#app{padding-bottom:calc(var(--bas) + 40px)}
 
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -316,7 +317,7 @@ const NOTES = {
      qui ne faisait que des duels lisait sinon une explication qui ne
      décrivait pas le classement qu'il avait sous les yeux. */
   supporters: 'La ferveur se gagne en chantant dans le Grand Virage et en gagnant des duels classés. Un joueur qui n’a jamais ouvert un booster peut être premier.',
-  tribunes: 'Les clubs sont classés sur la ferveur moyenne par supporter, pas sur le total. Trente fidèles qui chantent juste passent devant mille abonnés qui regardent.',
+  tribunes: 'Les clubs sont classés sur la ferveur moyenne par supporter, pas sur le total. Trente fidèles qui chantent juste passent devant mille abonnés qui regardent. Un joueur qui pousse un club qu’il ne suit pas lui apporte un dixième de sa ferveur.',
   duellistes: 'Classé sur la cote, pas sur le nombre de victoires : battre plus fort rapporte plus, perdre contre plus faible coûte plus. Tout le monde part de 1000. Duels contre de vrais adversaires uniquement — les entraînements ne comptent pas.',
   /* **Ce tableau classe sur les parties jouées, et il faut le dire** : on
      s'entraîne aussi contre des machines, et classer sur les victoires ferait
@@ -671,8 +672,10 @@ async function charger() {
      demande la saison quoi qu'il arrive** — c'est ce que promet le lien qui
      y mène —, et ma ligne n'y montre alors aucun rang plutôt que celui de
      toujours (voir `maPlace`). */
+  /* TRIBUNES suit la même saison que SUPPORTERS : le classement des clubs
+     repart lui aussi au lancement de chaque saison. */
   let periode = null;
-  if (onglet === 'supporters') {
+  if (onglet === 'supporters' || onglet === 'tribunes') {
     const m = await placeP;
     periode = m && !m.saison && motAncre() !== 'saison' ? 'toujours' : 'saison';
   }
@@ -697,7 +700,8 @@ async function charger() {
 function poserSaison() {
   const s = place?.saison;
   let t = '';
-  if (liste?.onglet === 'supporters' && liste.periode === 'saison' && s?.numero) {
+  if ((liste?.onglet === 'supporters' || liste?.onglet === 'tribunes')
+      && liste.periode === 'saison' && s?.numero) {
     /* Les jours qui restent, seulement si le serveur les compte : aucune
        page ne calcule une fin de saison avec l'horloge du téléphone (R3).
        Ma place les sert (le contrat, § 14.4), comptés comme au dex au même
@@ -716,7 +720,7 @@ function poserSaison() {
 function noteDe() {
   const c = liste?.classement ?? [];
   if (!c.length) return '';
-  const divisions = liste.periode === 'saison'
+  const divisions = liste.onglet === 'supporters' && liste.periode === 'saison'
     && (c.some((x) => divisionDe(x)) || Number(place?.saison?.division?.n) > 0);
   return NOTES[liste.onglet] + (divisions
     ? ' L’écharpe à nœuds dit la division de la saison : touche une ligne pour la lire.' : '');

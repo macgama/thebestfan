@@ -1,6 +1,6 @@
 {
   "id": "RP4",
-  "rev": 10,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4f47bbffa795",
+          "sha": "9386cb96e529",
           "cligne": true
         },
         "halloween": {
@@ -38,18 +38,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "dce333cfb24b"
+          "sha": "cf0d44622fcf"
         },
         "prehistorique": {
           "etats": [
             "neutre",
             "pousse",
             "joie",
-            "depit"
+            "depit",
+            "colere"
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "10403c1a486b"
+          "sha": "d49fc8af88e6"
         }
       }
     },
@@ -65,7 +66,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0e513d22d3c9"
+          "sha": "0e513d22d3c9",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -101,7 +103,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7f0294ce7f7f"
+          "sha": "7f0294ce7f7f",
+          "cligne": true
         }
       }
     },

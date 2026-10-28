@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Mon profil — thebestfan</title>
 <!-- Permanent Marker dans la même ligne qu'Oswald : la carte de supporter
      écrit « dans la tribune depuis » à la main (un des six emplois du
@@ -188,6 +189,10 @@ h2{margin:26px 2px 10px}
   .ligne.suivi{flex-wrap:nowrap}
   .ligne.suivi .n{flex:1 1 auto}
 }
+/* Le bouton pour devenir principal : la même craie, en lien, 44 px au doigt. */
+.ligne button.principal{background:none;border:0;color:var(--craie);font-family:var(--banner);
+  font-size:11px;letter-spacing:.12em;font-weight:700;min-height:44px;padding:0 4px;
+  text-decoration:underline;cursor:pointer;white-space:nowrap}
 /* « PRINCIPAL » : la craie en gras dans un cerne d'or plein. */
 .ligne .main{font-family:var(--banner);font-size:11px;letter-spacing:.12em;color:var(--craie);
   font-weight:700;border:1px solid var(--projo);border-radius:4px;padding:2px 6px}
@@ -404,7 +409,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    vertical est compté au pixel, et leur ajouter de la marge couperait ce
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
 /* tbf-degagement */
-#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+#app{padding-bottom:calc(var(--bas) + 40px)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -1604,6 +1609,18 @@ function prixSlot() {
   return typeof p === 'number' && Number.isFinite(p) ? p : null;
 }
 
+/* **Devenir principal** (choix de Gaël du 28 octobre 2026) : un club suivi
+   devient le club principal, une sélection la sélection principale — une
+   fois par saison chacun. Déjà changé cette saison : pas de bouton, la ligne
+   du principal le dit. */
+function boutonPrincipal(f) {
+  const selection = Number(f.national) === 1;
+  if (selection ? f.is_main_nation : f.is_main) return '';
+  if (etat.principalChange?.[selection ? 'selection' : 'club']) return '';
+  return `<button class="v principal" data-principal="${esc(f.team_id)}" data-nom="${esc(f.name ?? '')}"
+    data-selection="${selection ? '1' : ''}">${selection ? 'MA SÉLECTION' : 'PRINCIPAL ?'}</button>`;
+}
+
 function rendreClubs() {
   const libres = Math.max(0, etat.slots.total - etat.slots.used);
   const prix = prixSlot();
@@ -1613,6 +1630,8 @@ function rendreClubs() {
         ${f.logo ? `<img src="${esc(f.logo)}" alt="">` : ''}
         <span class="n">${esc(f.name ?? 'club ' + f.team_id)}</span>
         ${f.is_main ? '<span class="main">PRINCIPAL</span>' : ''}
+        ${f.is_main_nation ? '<span class="main">SÉLECTION</span>' : ''}
+        ${boutonPrincipal(f)}
         <button data-unfollow="${esc(f.team_id)}" data-nom="${esc(f.name ?? '')}"
           aria-label="Ne plus suivre ${esc(f.name ?? 'ce club')}">✕</button>
       </div>`).join('')
@@ -1748,6 +1767,29 @@ $('clubs').addEventListener('click', async (e) => {
     }))) return;
     try { etat = await me('/follow/' + u.dataset.unfollow, undefined, 'DELETE'); rendreClubs(); rendreCarte(); }
     catch (err) { if (err.message !== 'auth') dire('Impossible pour le moment', { erreur: true }); }
+    return;
+  }
+  const p = e.target.closest('[data-principal]');
+  if (p) {
+    const nom = p.dataset.nom || 'ce club';
+    const selection = p.dataset.selection === '1';
+    if (!(await window.TBF_DIALOGUE?.confirmer({
+      titre: selection ? `${nom.toLocaleUpperCase('fr')}, TA SÉLECTION ?` : `${nom.toLocaleUpperCase('fr')}, TON CLUB PRINCIPAL ?`,
+      texte: selection
+        ? 'Tu ne pourras plus changer de sélection principale avant la prochaine saison.'
+        : 'Tu ne pourras plus changer de club principal avant la prochaine saison.',
+      oui: 'OUI', non: 'PAS ENCORE',
+    }))) return;
+    try {
+      etat = await me('/principal', { teamId: Number(p.dataset.principal) });
+      rendreClubs(); rendreCarte();
+      dire(selection ? 'Sélection principale choisie' : 'Club principal changé');
+    } catch (err) {
+      if (err.message === 'auth') return;
+      dire(err.code === 'onboarding.error.principal_saison'
+        ? 'Déjà changé cette saison : à la prochaine'
+        : 'Impossible pour le moment', { erreur: true });
+    }
     return;
   }
   // `closest` : la plaque peut un jour porter une icône, et le clic tomberait

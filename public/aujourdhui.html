@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Les matchs du jour — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
@@ -331,7 +332,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    vertical est compté au pixel, et leur ajouter de la marge couperait ce
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
 /* tbf-degagement */
-#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+#app{padding-bottom:calc(var(--bas) + 40px)}
 
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -350,13 +351,16 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
   <div class="top"><h1><span>LES MATCHS</span><small id="sous">TOUTES COMPÉTITIONS</small></h1></div>
   <!-- Deux rails d'onglets au vert du foot, le ton de cet écran sur l'accueil. -->
   <div class="jours tbf-onglets" data-ton="vert" id="jours"></div>
-  <div class="filtres tbf-onglets" data-ton="vert">
+  <div class="filtres tbf-onglets" data-ton="vert" data-ajuste>
     <button data-f="tous" class="tbf-onglet on">TOUS</button>
     <!-- Caché par défaut : il ne paraît que pour qui suit des clubs. Voir
          `moi()` plus bas — un filtre qui ne peut rien filtrer est un
          bouton qui ment. -->
     <button data-f="mien" id="fMien" class="tbf-onglet" hidden>MES CLUBS</button>
     <button data-f="live" class="tbf-onglet direct">EN DIRECT</button>
+    <!-- Les matchs où l'on peut jouer maintenant : Virage ouvert, ou duel qui
+         attend un joueur (Gaël, 28 octobre 2026). Voir a-jouer.js. -->
+    <button data-f="jouer" class="tbf-onglet">À JOUER</button>
   </div>
   <div class="rech"><input id="q" placeholder="Chercher une équipe ou une compétition…"></div>
   <div class="liste" id="liste"><div class="spin"></div></div>
@@ -373,6 +377,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <!-- L’horloge du match, la même que dans le Grand Virage : elle fait courir
      la minute entre deux relevés, sans un appel de plus. -->
 <script src="/horloge.js"></script>
+<script src="/a-jouer.js" defer></script>
 <!-- Classique et sans « defer » : le rendu de la liste appelle TBF_PAYS dès la
      première journée reçue, donc il doit être là avant le bloc du bas. -->
 <script src="/pays.js"></script>
@@ -398,6 +403,9 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
    comme indice — c'est lui qui porte le code ISO dans cette page-ci. */
 const { pli, cherches: paysCherches } = window.TBF_PAYS;
 const pays = (nomApi, drapeau) => window.TBF_PAYS.nom(nomApi, drapeau);
+/* Une sélection nationale porte un nom de pays : « Switzerland » s'écrit
+   « Suisse » chez un lecteur français. Un club garde son nom. */
+const eqNom = (nom) => window.TBF_PAYS.equipe({ name: nom });
 
 
 let date = new Date().toISOString().slice(0, 10);
@@ -539,6 +547,11 @@ function rendre() {
     .map((g) => ({ ...g, matchs: g.matchs.filter((m) => m.mien) }));
   if (filtre === 'live') groupes = groupes.filter((g) => g.live)
     .map((g) => ({ ...g, matchs: g.matchs.filter((m) => m.live) }));
+  if (filtre === 'jouer') {
+    const jouable = (m) => window.TBF_A_JOUER?.jouable(m.id, m.status, m.date) ?? false;
+    groupes = groupes.map((g) => ({ ...g, matchs: g.matchs.filter(jouable) }))
+      .filter((g) => g.matchs.length);
+  }
   if (terme) {
     /* Un terme peut désigner un pays : « espagne » comme « spain ». On le
        traduit une fois pour toute la liste, et non par compétition — c'est
@@ -602,19 +615,23 @@ function rendre() {
             : `<div class="heure">${heure(m.date)}</div>`}</div>
           <div class="eq">
             <div class="r ${m.fini && m.away.vainqueur ? 'perd' : ''}">
-              <img src="${esc(m.home.logo)}" alt=""><span>${esc(m.home.name)}</span>
+              <img src="${esc(m.home.logo)}" alt=""><span>${esc(eqNom(m.home.name))}</span>
               <b>${m.home.goals ?? ''}</b></div>
             <div class="r ${m.fini && m.home.vainqueur ? 'perd' : ''}">
-              <img src="${esc(m.away.logo)}" alt=""><span>${esc(m.away.name)}</span>
+              <img src="${esc(m.away.logo)}" alt=""><span>${esc(eqNom(m.away.name))}</span>
               <b>${m.away.goals ?? ''}</b></div>
             ${m.home.cri || m.away.cri ? `<div class="cris">${[m.home.cri, m.away.cri].filter(Boolean)
               .map((c) => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
+            <div class="tbf-jeu" data-jeu="${m.id}" data-statut="${esc(m.status ?? '')}"
+              data-coup="${esc(m.date ?? '')}"></div>
           </div></div>`;
       }).join('')}
     </div>`).join('')
     : `<div class="vide">${filtre === 'mien'
         ? 'Aucun match de tes clubs ce jour-là.<br><a href="/equipes" style="color:var(--craie);font-weight:700">suivre un club</a>'
-        : filtre === 'live' ? 'Aucun match en cours.' : 'Aucun match ce jour-là.'}</div>`;
+        : filtre === 'live' ? 'Aucun match en cours.'
+        : filtre === 'jouer' ? 'Aucun Virage ouvert ni duel qui attend pour l’instant.<br>Les tribunes ouvrent une demi-heure avant le coup d’envoi.'
+        : 'Aucun match ce jour-là.'}</div>`;
 
   $('maj').textContent = data.stale
     ? 'Données un peu anciennes : le service n\u2019a pas répondu.'
@@ -673,7 +690,14 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------------------------------------------------------- fiche match */
 
+/* Le filtre À JOUER suit ce que `a-jouer.js` apprend : une tribune qui
+   s'ouvre, un duel qui se remplit ou se vide. */
+window.addEventListener('tbf:a-jouer', () => { if (filtre === 'jouer') rendre(); });
+
 $('liste').addEventListener('click', (e) => {
+  /* Une pastille VIRAGE ou DUEL (`a-jouer.js`) suit son lien : elle est là
+     pour aller jouer tout de suite, pas pour ouvrir la fiche. */
+  if (e.target.closest('.tbf-jeu a')) return;
   const m = e.target.closest('[data-m]');
   if (m) ouvrirFiche(Number(m.dataset.m));
 });
@@ -1005,7 +1029,7 @@ function dessinerFiche() {
           : heure(f.date)}</span>
         <img src="${esc(e.away.logo)}" alt="">
       </div>
-      <div class="nom"><span>${esc(e.home.name)}</span><span>${esc(e.away.name)}</span></div>
+      <div class="nom"><span>${esc(eqNom(e.home.name))}</span><span>${esc(eqNom(e.away.name))}</span></div>
       <div class="etat ${f.live ? '' : 'calme'}" id="fetat">${f.live ? (min ?? 'EN COURS')
         : f.fini ? 'TERMINÉ' : esc(f.statusLong ?? 'À VENIR')}</div>
     </div>
@@ -1118,9 +1142,9 @@ function dessinerProno() {
           : '<p class="pr-issue">RATÉ · ÇA NE COÛTE RIEN</p>';
     el.innerHTML = `<h3>TON PRONOSTIC</h3>
       <div class="pr-sc">
-        <div class="pr-eq"><span class="pr-nom">${esc(e.home.name)}</span><span class="pr-n">${P.prono.home}</span></div>
+        <div class="pr-eq"><span class="pr-nom">${esc(eqNom(e.home.name))}</span><span class="pr-n">${P.prono.home}</span></div>
         <span class="pr-tiret">–</span>
-        <div class="pr-eq"><span class="pr-nom">${esc(e.away.name)}</span><span class="pr-n">${P.prono.away}</span></div>
+        <div class="pr-eq"><span class="pr-nom">${esc(eqNom(e.away.name))}</span><span class="pr-n">${P.prono.away}</span></div>
       </div>${issue}`;
     return;
   }
@@ -1135,9 +1159,9 @@ function dessinerProno() {
   const deja = P.prono && !P.modifie;
   el.innerHTML = `<h3>TON PRONOSTIC</h3>
     <div class="pr-sc">
-      <div class="pr-eq"><span class="pr-nom">${esc(e.home.name)}</span>${cpt('home')}</div>
+      <div class="pr-eq"><span class="pr-nom">${esc(eqNom(e.home.name))}</span>${cpt('home')}</div>
       <span class="pr-tiret">–</span>
-      <div class="pr-eq"><span class="pr-nom">${esc(e.away.name)}</span>${cpt('away')}</div>
+      <div class="pr-eq"><span class="pr-nom">${esc(eqNom(e.away.name))}</span>${cpt('away')}</div>
     </div>
     <button type="button" class="tbf-plaque pr-valider" data-ton="vert" id="prValider"
       ${deja ? 'disabled' : ''}>${deja ? 'PRONOSTIC ENREGISTRÉ' : P.prono ? 'CHANGER MON PRONOSTIC' : 'VALIDER MON PRONOSTIC'}</button>

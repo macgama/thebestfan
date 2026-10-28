@@ -18,6 +18,262 @@
 
 ---
 
+**Plus de Fanzzy RP et SU clignent** (branche `claude/project-thread-j17xyz`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
+des images et des réglages, sans crédits.
+
+- RP de base : 5 âges de plus (84 sur 95). Skins RP : 40 âges de plus.
+- SU « Die Kurve » de base : 35 âges de plus (69). Skins SU : 138 sur 244
+  (aucun avant).
+
+---
+
+**Les dessins des 40 pièces de club des Terraces** (branche
+`claude/project-thread-rftsbq`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images.
+
+- Les 40 pièces `an-*` ont leur dessin (mode rapide, sans crédits).
+- Pour les ouvrir aux joueurs : /admin, CONTENUS, cocher les pièces de club
+  (le bloc « PIÈCES DE CLUB · AN » doit dire 40 dessinées).
+
+---
+
+**Le bas des pages sous les boutons du téléphone** (branche
+`claude/project-thread-uisaey`, 28 octobre 2026, demandé par Gaël : sur la
+fiche d'un Fanzzy, depuis l'icône du S24+, le bouton du bas restait sous les
+trois boutons d'Android). Construction seule, **sans schéma**.
+
+- Le repli de l'accueil (52 px gardés en bas quand Chrome ne dit pas la
+  hauteur des boutons) est maintenant sur toutes les pages : fiche, Mon
+  Fanzzy, Virage, duel, deck, boutique, fenêtres qui s'ouvrent par-dessus.
+- Après la mise en ligne : rouvrir le jeu depuis l'icône ; ÉVOLUER et EMMENER
+  EN DUEL doivent se voir au-dessus des boutons du téléphone.
+
+---
+
+**Les équipes nationales en français aussi sur la page CLUBS** (branche
+`claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : dans
+« Ajouter un club », la Suisse restait « Switzerland »). Construction seule,
+**sans schéma**.
+
+- « suisse » (ou « schweiz », « svizzera », « suiza ») trouve la sélection
+  dans « Ajouter un club », écrite dans la langue du joueur ; les matchs des
+  clubs suivis, les matchs du jour et le Virage écrivent aussi les sélections
+  dans sa langue.
+- Après la mise en ligne : sur le S24+, page CLUBS, chercher « suisse ».
+
+---
+
+**Les images Ultimate des Terraces** (branche `claude/project-thread-z4jtwl`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- 180 images plein cadre, une par Fanzzy AN et par âge, chacune avec un fond
+  tiré de l'histoire du Fanzzy. La grande scène Ultimate les montre à la
+  place du dessin fait avec la carte (pas encore de clip animé pour AN).
+- Après la mise en ligne : déclencher l'Ultimate d'un Fanzzy AN en duel, ou
+  ouvrir sa carte Ultimate dans la collection.
+
+---
+
+**Classement des clubs : les neutres comptent, et TRIBUNES suit la saison**
+(branche `claude/project-thread-2v1fvo`, 28 octobre 2026, demandé par Gaël :
+que les matchs joués pour un club qu'on ne suit pas rapportent un peu à ce
+club). Construction seule, **sans schéma**.
+
+- Un joueur qui pousse un club qu'il ne suit pas lui apporte un dixième de
+  sa ferveur classée, au Virage comme au duel classé, à l'onglet TRIBUNES et
+  dans les compétitions (pas aux KOP). Il ne compte pas parmi les supporters.
+- La moyenne se divise par les supporters **actifs** (les comptes fermés ne
+  comptent plus), et par au moins 5.
+- TRIBUNES compte la saison en cours, comme SUPPORTERS : il repart au
+  lancement de chaque saison.
+- Deux réglages dans /admin, section LE GRAND VIRAGE : « Un neutre apporte au
+  club qu'il pousse » (0,1) et « La moyenne d'une tribune se divise par au
+  moins » (5).
+---
+
+**Le club principal qui se change, et la sélection principale** (branche
+`claude/project-thread-rftsbq`, 28 octobre 2026, choix de Gaël : changer
+une fois par saison, plus une sélection nationale). Construction, puis
+**schéma** : `npm run schema:appliquer` en SSH (`sql/principal.sql`, trois
+colonnes, aucune table), puis redémarrage.
+
+- Profil, MES CLUBS : bouton PRINCIPAL ? sur un club suivi, MA SÉLECTION sur
+  une sélection suivie ; une confirmation, puis plus de changement avant la
+  saison suivante (le premier choix, au paquet de bienvenue, ne compte pas).
+- Le PLEIN CLUB marche aussi dans les matchs de la sélection principale.
+- Sans le schéma, rien ne casse : le bouton répond que ce n'est pas branché.
+- Après la mise en ligne : sur le profil, changer de club principal, puis
+  vérifier qu'un second changement est refusé jusqu'à la saison suivante.
+
+---
+
+**Les Fanzzy en skins Halloween, Préhistorique et Apocalyptique clignent**
+(branche `claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- Âges RP et AN qui clignent (aucun avant) : Halloween 159, Préhistorique
+  154, Apocalyptique 136, sur 258 par skin. Paupières tirées de la figure
+  « yeux fermés » des planches, sans crédits.
+
+---
+
+**Les pièces de club des Terraces** (branche `claude/project-thread-rftsbq`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- 40 pièces d'équipement, deux par club de la série AN, **fermées** tant que
+  leur dessin n'est pas fait (/admin CONTENUS les compte : écrites, dessinées,
+  ouvertes).
+- COMBO : une pièce de club portée par un Fanzzy du même club voit son revers
+  divisé par deux. PLEIN CLUB : dans un match de ton club principal, chacune
+  rapporte +15 % d'écharpes ou de ferveur. Réglages `stuff.club_revers` et
+  `stuff.club_gain` (LE GRAND VIRAGE).
+- Après la mise en ligne : rien à voir tant qu'aucune pièce n'est ouverte ;
+  la fiche d'un Fanzzy AN de ton club en dit un mot au toucher du tampon.
+
+---
+
+**Où jouer, sur MATCHS et COMPÉTITIONS** (branche
+`claude/project-thread-6dydyn`, 28 octobre 2026, demandé par Gaël : voir sur
+ces pages qu'un Virage est ouvert ou qu'un duel attend, et y aller d'un
+appui). Construction seule, **sans schéma**.
+
+- Sous chaque match : pastille verte VIRAGE quand la tribune est ouverte
+  (pendant le match et la demi-heure avant), avec « 12 EN TRIBUNE » quand
+  des supporters poussent ; pastille violette DUEL « 1 T'ATTEND » quand
+  quelqu'un attend un adversaire. Un appui mène au Virage du match, ou au
+  duel avec le format et la tribune qui manque déjà choisis. Le reste de la
+  ligne ouvre toujours la fiche.
+- Sur MATCHS, un filtre À JOUER à côté de TOUS / MES CLUBS / EN DIRECT.
+- Les pastilles se relisent toutes les 20 s (`/api/virage/a-jouer`,
+  mémoire seule) et tout de suite quand une file de duel bouge.
+- Comment jouer : une ligne « Où jouer ». Cinq langues.
+- Après la mise en ligne : pendant un match, ouvrir MATCHS et une
+  compétition, voir la pastille VIRAGE et la toucher ; avec un second compte
+  en file de duel, voir la pastille DUEL apparaître sans recharger.
+
+---
+
+**Série SU « Die Kurve » (Super League suisse)** (branche
+`claude/project-thread-8di81x`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- 36 Fanzzy (trois par club), trois âges, qui clignent ; dos de carte SU.
+- 244 skins sur 324 (Halloween, Préhistorique, Apocalyptique) ; un skin
+  manquant montre la tenue de base. Liste des 80 à refaire :
+  fanzzy-prompts/SU-generation/skins-manquants.md.
+- Pour l'ouvrir aux joueurs : /admin, onglet des Fanzzy, cocher la série SU.
+- Ultimate SU : pas encore (après le 2 novembre).
+
+---
+
+**Six légendaires dans LES TERRACES** (branche `claude/project-thread-qn6nh1`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- AN61 La Dame des Falaises Blanches, AN62 Le Chevalier à la Croix Rouge,
+  AN63 Le Bouledogue au Grand Tambour : liées aux équipes nationales
+  d'Angleterre (hommes, femmes, espoirs), bonus de lien dans leurs matchs.
+- AN64 La Tisseuse des Vingt Écharpes, AN65 La Voix des Résultats, AN66 Le
+  Rouge-Gorge du Lendemain de Noël : liées au championnat anglais, bonus de
+  lien dans chaque match de championnat du club qu'on soutient.
+- Elles sortent du booster LES TERRACES au taux des légendaires (2 %).
+- Leurs 18 skins (Halloween, Préhistorique, Apocalyptique) sont toutes
+  dessinées : les six dernières (AN61, AN62 préhistorique, AN65 Halloween et
+  apocalyptique) suivent dans une seconde fusion, images seules.
+- Elles clignent des yeux dans 19 tenues sur 24 (images seules).
+- Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
+  lire le tampon « LIÉ À ».
+
+---
+
+**/admin complété, et une saison ne ferme plus rien** (branche
+`claude/project-thread-g68rqt`, 28 octobre 2026, demandé par Gaël : vérifier
+que l'admin suit les nouveautés et que personne ne perd rien à une nouvelle
+saison). Construction seule, **sans schéma**.
+
+- SAISONS : « Lancer la saison » à la main garde ouvertes toutes les séries
+  déjà ouvertes (avant, lancer la Saison 2 aurait laissé HC seule en
+  booster). La confirmation le dit.
+- JOUEURS : un bouton « Collection » montre ce que le joueur possède (Fanzzy
+  par série, skins, cartes Ultimate, équipement, stades, amis, KOP) et permet
+  de lui offrir un Fanzzy, un skin, une carte Ultimate ou une pièce.
+- Nouvel onglet KOP : chercher, renommer ou supprimer un KOP (ses membres ne
+  perdent rien). L'onglet TENUES s'appelle maintenant SKINS.
+- Après la mise en ligne : dans /admin, JOUEURS, ouvrir « Collection » sur
+  son propre compte de test et s'offrir un Fanzzy.
+---
+
+**Jouer entre amis : les sept idées** (branche `claude/project-thread-hl4hic`,
+28 octobre 2026, demandé par Gaël : que les amis puissent jouer ensemble,
+s'entraider et communiquer sans texte). **Avec schéma** : nouveau fichier
+`sql/amis-ensemble.sql` (quatre tables, accord de Gaël). Après la
+construction, en SSH : `npm run schema:appliquer`, puis redémarrer. Sans
+cela, le site tourne quand même : la fiche d'un ami dit « en pause », les
+gestes, cadeaux, échanges et prêts ne partent pas, et /healthz le signale.
+
+- Dans AMIS, chaque ami porte JOUER ENSEMBLE, qui ouvre sa fiche : gestes
+  (une liste fermée, jamais de texte), cadeau du jour (écharpes offertes par
+  le jeu), défi de la semaine (chants au Virage à deux), échange de doubles,
+  prêt d'un Fanzzy jusqu'à minuit, sa collection, son deck, ses souvenirs.
+- Au Grand Virage, chaque ami visible dans ta tribune ajoute 3 % à ta
+  poussée (3 amis au plus). Un ami hors ligne ne compte pas.
+- La page AMIS dit ce que l'amitié ouvre ; QUESTIONS a une rubrique « Les
+  amis », Comment jouer une ligne « Jouer ensemble ». Réglages dans /admin,
+  section ENTRE AMIS (tout peut s'éteindre).
+- Après la mise en ligne : avec deux comptes amis, envoyer un geste, offrir
+  le cadeau, emprunter un Fanzzy et le mettre dans le deck, proposer un
+  échange et l'accepter de l'autre côté.
+
+---
+
+**17 Fanzzy de plus clignent en tenue de base** (branche
+`claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- 222 âges de base RP et AN sur 275 clignent (205 avant).
+
+---
+
+**L'onglet EN ATTENTE sur la page du duel** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, choix de Gaël : « un bouton
+de plus "Duel en attente de joueur" », toujours là). Construction seule,
+**sans schéma**.
+
+- À côté de MES CLUBS et TOUS LES MATCHS : EN ATTENTE, avec le nombre de
+  duels qui attendent un joueur (grisé à 0). Un appui choisit le match, le
+  format et la tribune qui manque ; traduit dans les cinq langues, et ajouté à
+  /comment-jouer.
+- Après la mise en ligne : sur le PC, entrer en file ; sur le S24+, ouvrir
+  DUEL, l'onglet doit dire 1, puis un appui sur EN ATTENTE.
+
+---
+
+**Voir ce que la réconciliation du catalogue ferait** (branche
+`claude/contenus-sql-q1sziv`, 28 octobre 2026, pour les 338 écarts relevés par
+Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `scripts/fanzzy-reconciliation.mjs`, `npm run reconciliation:voir` : en SSH,
+  il dit, sans rien écrire, quelles cartes le démarrage reprendrait du code et
+  lesquelles ont été corrigées à l'écran (celles-là restent telles quelles).
+  `src/server/fanzzy/catalogue.js` : le démarrage lit son plan par la même
+  fonction, sans rien changer à ce qu'il fait.
+
+**Aucun schéma ni réglage, sans redémarrage** (le script se lance à la main).
+
+---
+
+**Les duels qui attendent se voient sans recharger** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, demandé par Gaël : il
+fallait rafraîchir la page pour savoir que quelqu'un attendait un duel).
+Construction seule, **sans schéma**.
+
+- Sur l'accueil, « Quelqu'un t'attend » s'allume (et s'éteint) dans les dix
+  secondes, et le sticker du duel du menu aussi sur les autres pages.
+- Après la mise en ligne : sur le PC, entrer en file d'un duel ; sur le S24+,
+  rester sur l'accueil sans recharger, le bandeau doit venir tout seul.
+
+---
+
 **MES SAISONS sur le profil** (branche `claude/project-thread-chiok9`,
 28 octobre 2026, demandé par Gaël : garder l'historique des saisons d'avant).
 Construction seule, **sans schéma**.

@@ -1,6 +1,6 @@
 {
   "id": "AN26",
-  "rev": 7,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6a447539a251"
+          "sha": "6a447539a251",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9557b702a3b5"
+          "sha": "9557b702a3b5",
+          "cligne": true
         }
       }
     },
@@ -65,7 +67,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "bcfb27e5a7f2"
+          "sha": "bcfb27e5a7f2",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

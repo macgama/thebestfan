@@ -189,6 +189,11 @@ let connecte = true;
 app.get('/api/auth/me', (_q, s) => (connecte
   ? s.json({ user: { pseudo: 'Momo' } })
   : s.status(401).json({ error: 'auth.required' })));
+/* Où jouer (`a-jouer.js`) : rien par défaut, comme un serveur où personne ne
+   pousse ni n'attend. Le bloc « les pastilles » le remplit. */
+let aJouer = { foules: [], duels: [] };
+let aJouerLus = 0;
+app.get('/api/virage/a-jouer', (_q, s) => { aJouerLus++; s.json(aJouer); });
 app.get('/matchs', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'aujourdhui.html')));
 /* Les trois destinations qu'on peut atteindre depuis la fiche. Des talons : on
    éprouve **où l'on arrive**, pas ce qu'on y trouve. */
@@ -495,9 +500,10 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
 
   check('sans compte, le filtre « mes clubs » ne paraît pas',
     await page.evaluate(() => document.getElementById('fMien')?.hidden === true));
-  check('et il reste les deux filtres qui savent répondre',
+  // TOUS, EN DIRECT et À JOUER : un visiteur voit aussi les tribunes ouvertes.
+  check('et il reste les trois filtres qui savent répondre',
     await page.evaluate(() => [...document.querySelectorAll('.filtres button')]
-      .filter((b) => !b.hidden).length === 2));
+      .filter((b) => !b.hidden).length === 3));
 
   await page.evaluate(() => document.querySelector('.liste .m').click());
   await jusqua(async () => await page.$('#fcorps .aller') !== null);
@@ -597,7 +603,10 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
 
   const trouve = await chercher('espagne');
   check('« espagne » trouve la sélection espagnole', trouve.length === 1);
-  check('et c’est bien son match', /Spain/.test(trouve[0] ?? ''));
+  /* Écrite dans la langue du lecteur : « Spain » est l'Espagne en anglais. */
+  check('et c’est bien son match, écrit en français',
+    /Espagne/.test(trouve[0] ?? '') && !/Spain/.test(trouve[0] ?? '')
+    || (console.log('        ligne :', trouve[0]), false));
   check('un pays sans code ISO se dit quand même',
     (await page.evaluate(() => [...document.querySelectorAll('.ligue .pays')]
       .map((n) => n.textContent.trim()))).includes('International'));
@@ -679,6 +688,135 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   check('réglé : raté, et ça ne coûte rien', /RATÉ · ÇA NE COÛTE RIEN/.test((await panneau()).texte));
 
   pronoServi = null;
+}
+
+/* ------------------------------------------------------------ les pastilles
+
+   28 octobre 2026, Gaël : voir sur la liste qu'un Virage est ouvert ou qu'un
+   duel attend un joueur, et y aller d'un appui (`a-jouer.js`). */
+{
+  await page.goto(base + '/matchs', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('.liste .m') !== null);
+  const pastilles = () => page.evaluate(() => [...document.querySelectorAll('.tbf-jeu')]
+    .map((el) => ({ id: Number(el.dataset.jeu),
+      liens: [...el.querySelectorAll('a')].map((a) => ({ c: a.className,
+        t: a.textContent.replace(/\s+/g, ' ').trim(), href: a.getAttribute('href') })) })));
+  const de = (liste, id) => liste.find((x) => x.id === id)?.liens ?? [];
+
+  let p = await pastilles();
+  check('un match en cours a sa pastille VIRAGE, qui mène à sa tribune',
+    de(p, MATCH).some((l) => l.c === 'virage' && l.href === `/virage?match=${MATCH}`)
+    || (console.log('        ', JSON.stringify(p)), false));
+  check('sans personne en file, pas de pastille DUEL',
+    !de(p, MATCH).some((l) => l.c === 'duel'));
+
+  // Quelqu'un pousse, et deux attendent en 2v2 dans la tribune qui reçoit.
+  aJouer = {
+    foules: [{ fixtureId: MATCH, crowd: [7, 5] }],
+    duels: [{ fixtureId: MATCH, format: '1v1', attendus: 1, camps: [0, 1] },
+            { fixtureId: MATCH, format: '2v2', attendus: 2, camps: [2, 0] }],
+  };
+  const avant = aJouerLus;
+  // Le rappel du duel annonce que les files ont bougé : la page relit tout de suite.
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('tbf:attentes', { detail: {} })));
+  await jusqua(async () => de(await pastilles(), MATCH).some((l) => l.c === 'duel'));
+  p = await pastilles();
+  check('l’annonce des files fait relire, sans attendre le tour suivant', aJouerLus > avant);
+  check('le Virage dit combien de supporters poussent',
+    de(p, MATCH).some((l) => l.c === 'virage' && /VIRAGE\s*12 EN TRIBUNE/.test(l.t))
+    || (console.log('        ', JSON.stringify(de(p, MATCH))), false));
+  const duel = de(p, MATCH).find((l) => l.c === 'duel');
+  check('la pastille DUEL compte tous ceux qui attendent',
+    /DUEL\s*3 T’ATTENDENT/.test(duel?.t ?? '') || (console.log('        ', duel), false));
+  const q = new URL(duel?.href ?? '/', base).searchParams;
+  check('elle choisit la file la plus remplie et la tribune qui manque',
+    q.get('match') === String(MATCH) && q.get('format') === '2v2' && q.get('camp') === '1'
+    || (console.log('        ', duel?.href), false));
+
+  // Toucher la pastille suit son lien, et n'ouvre pas la fiche.
+  await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }),
+    page.evaluate(() => document.querySelector('.tbf-jeu .duel').click())]);
+  check('toucher DUEL mène au duel de ce match',
+    new URL(page.url()).pathname === '/duel-nvn' || (console.log('        ', page.url()), false));
+  await page.goto(base + '/matchs', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('.tbf-jeu .virage') !== null);
+  await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }),
+    page.evaluate(() => document.querySelector('.tbf-jeu .virage span').click())]);
+  check('toucher VIRAGE mène à la tribune de ce match',
+    page.url().endsWith(`/virage?match=${MATCH}`) || (console.log('        ', page.url()), false));
+
+  // Une sélection qui joue dans une heure et demie : la tribune n'est pas encore ouverte.
+  selections = true;
+  await page.goto(base + '/matchs', { waitUntil: 'networkidle0' });
+  await jusqua(async () => (await page.$$('.liste .m')).length === 2);
+  p = await pastilles();
+  check('un match dans une heure et demie n’a pas encore de pastille',
+    de(p, 9902).length === 0 || (console.log('        ', JSON.stringify(de(p, 9902))), false));
+  const coup = MONDIAL.matchs[0].date;
+  MONDIAL.matchs[0].date = new Date(Date.now() + 20 * 60_000).toISOString();
+  await page.evaluate(() => charger());
+  await jusqua(async () => de(await pastilles(), 9902).length > 0);
+  check('vingt minutes avant le coup d’envoi, la tribune est ouverte',
+    de(await pastilles(), 9902).some((l) => l.c === 'virage'));
+  MONDIAL.matchs[0].date = coup;
+  selections = false;
+
+  // Le coup de sifflet final éteint tout, même une file oubliée.
+  const garde = etat;
+  etat = { ...etat, status: 'FT', live: false, fini: true };
+  await page.evaluate(() => charger());
+  await jusqua(async () => de(await pastilles(), MATCH).length === 0);
+  check('un match terminé n’a plus de pastille', de(await pastilles(), MATCH).length === 0);
+  etat = garde;
+
+  // Sur le téléphone le plus étroit, les pastilles tiennent dans la ligne.
+  await page.setViewport({ width: 320, height: 700 });
+  await page.evaluate(() => charger());
+  await jusqua(async () => await page.$('.tbf-jeu .duel') !== null);
+  const large = await page.evaluate(() => {
+    const m = document.querySelector('.liste .m').getBoundingClientRect();
+    return [...document.querySelectorAll('.tbf-jeu a')].every((a) => {
+      const r = a.getBoundingClientRect();
+      return r.left >= m.left - 0.5 && r.right <= m.right + 0.5;
+    }) && document.documentElement.scrollWidth <= innerWidth;
+  });
+  check('à 320 px, les pastilles tiennent sous le match', large);
+  if (process.env.TBF_CAPTURES) {
+    await page.screenshot({ path: path.join(process.env.TBF_CAPTURES, 'matchs-pastilles.png') });
+  }
+  // Les quatre filtres tiennent aussi à 320 px.
+  const filtres = await page.evaluate(() => {
+    const f = document.querySelector('.filtres').getBoundingClientRect();
+    return [...document.querySelectorAll('.filtres button:not([hidden])')].every((b) => {
+      const r = b.getBoundingClientRect();
+      return r.left >= f.left - 0.5 && r.right <= f.right + 0.5 && b.scrollWidth <= b.clientWidth + 1;
+    });
+  });
+  check('à 320 px, le filtre À JOUER tient avec les autres', filtres);
+  await page.setViewport({ width: 400, height: 880 });
+
+  /* Le filtre À JOUER (Gaël, 28 octobre 2026) : le match en cours reste, la
+     sélection d'une heure et demie plus tard s'en va. */
+  selections = true;
+  await page.evaluate(() => charger());
+  await jusqua(async () => (await page.$$('.liste .m')).length === 2);
+  await page.evaluate(() => document.querySelector('[data-f=jouer]').click());
+  await jusqua(async () => (await page.$$('.liste .m')).length === 1);
+  check('À JOUER ne garde que les matchs où l’on peut jouer',
+    (await page.$$eval('.liste .m', (l) => l.map((n) => Number(n.dataset.m)))).join() === String(MATCH));
+  // Le match se termine : plus rien à jouer, et la page le dit.
+  const garde2 = etat;
+  etat = { ...etat, status: 'FT', live: false, fini: true };
+  await page.evaluate(() => charger());
+  await jusqua(async () => await page.$('.liste .vide') !== null);
+  check('sans rien à jouer, À JOUER le dit',
+    /Aucun Virage ouvert/.test(await page.$eval('.liste', (n) => n.textContent)));
+  etat = garde2;
+  selections = false;
+  await page.evaluate(() => document.querySelector('[data-f=tous]').click());
+  aJouer = { foules: [], duels: [] };
+  await page.goto(base + '/matchs', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('.liste .m') !== null);
 }
 
 /* ------------------------------------------------------- sur un ordinateur

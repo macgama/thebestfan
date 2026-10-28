@@ -118,6 +118,12 @@ export const SECTIONS = [
     aide: 'Le score qu’on attend d’un match de son club, donné avant le coup ' +
       'd’envoi. Gratuit, sans mise : un pronostic juste rapporte des écharpes, la ' +
       'même chose à tout le monde, et un pronostic faux ne coûte rien.' },
+  /* Jouer entre amis (Gaël, 28 octobre 2026) : les gestes, le cadeau du jour,
+     le bonus côte à côte, le défi de la semaine, les échanges et le prêt. */
+  { id: 'amis', titre: 'ENTRE AMIS',
+    aide: 'Ce que des amis mutuels peuvent faire ensemble : s’envoyer un geste, ' +
+      's’offrir des écharpes, pousser côte à côte au Virage, relever un défi à deux, ' +
+      'échanger des doubles, se prêter un Fanzzy. Jamais de texte libre.' },
 ];
 
 /* ------------------------------------------------------------ les réglages
@@ -214,6 +220,25 @@ export const REGLAGES = [
       'classements de compétition n’ont plus de chez-soi ; à 0, plus personne ' +
       'n’a de raison d’entrer dans un match qui n’est pas le sien.' },
 
+  /* La part d'un neutre pour le club qu'il pousse (Gaël, 28 octobre 2026) :
+     elle ne remontait à aucune tribune. Lue par `classements/index.js`, au
+     classement TRIBUNES comme à celui d'une compétition — jamais aux KOP,
+     dont le neutre n'est pas membre. */
+  { cle: 'ferveur.neutre_tribune', section: 'virage', type: 'decimal',
+    titre: 'Un neutre apporte au club qu’il pousse', unite: '× sa ferveur',
+    min: 0, max: 1, pas: 0.05, defaut: 0.1,
+    aide: 'Au classement des tribunes et à celui des compétitions, sur la ferveur ' +
+      'classée du neutre (déjà réduite par le réglage du dessus). Le neutre ne ' +
+      'compte pas parmi les supporters du club. À 0, un neutre ne rapporte à ' +
+      'aucune tribune, comme avant.' },
+
+  { cle: 'tribune.plancher', section: 'virage', type: 'entier',
+    titre: 'La moyenne d’une tribune se divise par au moins', unite: 'supporters',
+    min: 1, max: 100, defaut: 5,
+    aide: 'Sans plancher, un club d’un seul supporter actif et quelques neutres ' +
+      'passerait devant tout le monde. À 1, la moyenne se divise par le vrai ' +
+      'nombre de supporters actifs.' },
+
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
      `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et
      « pousser plus fort » ne pèsent pas pareil sur l'équilibre. */
@@ -222,6 +247,22 @@ export const REGLAGES = [
     aide: 'Au Virage comme au Duel, quand le joueur joue un match de son club avec ' +
       'un Fanzzy lié à ce club : la ferveur au Virage, les écharpes au Duel (si le ' +
       'titulaire est lié). À 0, le lien ne rapporte rien de plus.' },
+
+  /* Les pièces de club (demande de Gaël du 28 octobre 2026) : voir
+     `modsDeLaPiece` (`shared/fanzzy/inventaire.js`) et `pleinClub`
+     (`shared/fanzzy/clubs.js`). Le COMBO adoucit, le PLEIN CLUB rapporte :
+     ni l'un ni l'autre ne fait pousser plus fort. */
+  { cle: 'stuff.club_revers', section: 'virage', type: 'entier',
+    titre: 'COMBO : revers d’une pièce de club retiré', unite: '%', min: 0, max: 100, defaut: 50,
+    aide: 'Quand une pièce de club est portée par un Fanzzy lié au même club, dans ' +
+      'tout match : la part de son revers qui disparaît. À 50, un revers de −12 % ' +
+      'devient −6 %. Le bonus de la pièce ne bouge pas.' },
+  { cle: 'stuff.club_gain', section: 'virage', type: 'entier',
+    titre: 'PLEIN CLUB : gain par pièce de club', unite: '%', min: 0, max: 50, defaut: 15,
+    aide: 'Le COMBO, dans un match du club principal du joueur : chaque pièce de ' +
+      'club portée ajoute ce gain, en plus du lien du Fanzzy (ferveur au Virage, ' +
+      'écharpes au Duel). Deux pièces à 15 % et le lien à 10 % : environ +45 %. ' +
+      'La force ne change pas.' },
 
   { cle: 'fanzzy.lien_prix', section: 'etal', type: 'entier',
     titre: 'Lier un Fanzzy neutre à son club coûte', unite: 'écharpes', min: 0, max: 2000, defaut: 120,
@@ -995,6 +1036,71 @@ export const REGLAGES = [
   { cle: 'jeux.boss_gain', section: 'minijeux', type: 'entier',
     titre: 'Faire taire le boss rapporte', unite: 'écharpes', min: 0, max: 500, defaut: 20,
     aide: 'À chaque supporter qui a réussi au moins un chant contre lui cette semaine-là.' },
+
+  /* ------------------------------------------------------- entre amis
+
+     Gaël, 28 octobre 2026 : que les amis puissent jouer ensemble, s'entraider
+     et communiquer — sans texte, pour un public qui compte des mineurs. Tout
+     ne vaut qu'entre amis **mutuels** (`amities.etat = 'amis'`). */
+  { cle: 'amis.actif', section: 'amis', type: 'booleen',
+    titre: 'Proposer les jeux entre amis', defaut: true,
+    aide: 'Éteint : plus de geste, de cadeau, d’échange ni de prêt, le bonus côte à côte ' +
+      'tombe et le défi de la semaine ne paie plus. Rien n’est perdu : un défi relevé ' +
+      'se récupère quand on rallume, tant que sa semaine n’est pas finie.' },
+
+  { cle: 'amis.gestes_jour', section: 'amis', type: 'entier',
+    titre: 'Gestes envoyés par joueur', unite: 'par jour', min: 0, max: 500, defaut: 30,
+    aide: 'Tous amis confondus. Un même geste au même ami ne repart pas avant dix ' +
+      'minutes : c’est un signe, pas une sonnette. À 0, plus personne n’envoie de geste.' },
+
+  { cle: 'amis.cadeau_echarpes', section: 'amis', type: 'entier',
+    titre: 'Le cadeau du jour offre', unite: 'écharpes', min: 0, max: 200, defaut: 10,
+    aide: 'Une fois par jour et par ami. Ce n’est pas pris dans la bourse de celui qui ' +
+      'offre : le jeu les donne, pour que l’entraide ne coûte rien. À 0, plus de cadeau.' },
+
+  { cle: 'amis.cadeau_merci', section: 'amis', type: 'entier',
+    titre: 'Offrir un cadeau rapporte aussi à celui qui offre', unite: 'écharpes',
+    min: 0, max: 100, defaut: 2,
+    aide: 'Par cadeau offert : la générosité paie un peu, sans devenir une source de revenu.' },
+
+  { cle: 'amis.cadeaux_jour', section: 'amis', type: 'entier',
+    titre: 'Cadeaux offerts par joueur', unite: 'par jour', min: 1, max: 50, defaut: 5,
+    aide: 'Le plafond qui empêche dix comptes créés pour l’occasion de remplir une bourse.' },
+
+  { cle: 'amis.cote_force', section: 'amis', type: 'entier',
+    titre: 'Côte à côte au Virage, chaque ami du même camp pousse plus fort de',
+    unite: '%', min: 0, max: 10, defaut: 3,
+    aide: 'Un bonus de poussée par ami présent dans la même tribune, pour lui comme pour ' +
+      'moi. Un ami caché ne compte pas, et la présence éteinte n’en compte aucun : le ' +
+      'bonus dirait sinon qui est là. À 0, rien.' },
+
+  { cle: 'amis.cote_max', section: 'amis', type: 'entier',
+    titre: 'Côte à côte : amis comptés au plus', unite: 'amis', min: 0, max: 10, defaut: 3,
+    aide: 'Au-delà, le bonus ne grandit plus : venir à trente ne doit pas valoir trente fois plus.' },
+
+  { cle: 'amis.defi_cible', section: 'amis', type: 'entier',
+    titre: 'Le défi de la semaine demande, à deux', unite: 'chants réussis au Virage',
+    min: 1, max: 2000, defaut: 40,
+    aide: 'La somme des chants réussis des deux amis, du lundi au dimanche. Chacun doit ' +
+      'en avoir réussi au moins un : un défi à deux ne se relève pas seul.' },
+
+  { cle: 'amis.defi_echarpes', section: 'amis', type: 'entier',
+    titre: 'Le défi relevé rapporte à chacun', unite: 'écharpes', min: 0, max: 500, defaut: 30,
+    aide: 'Une fois par ami et par semaine, à récupérer depuis sa fiche. À 0, le défi ne paie plus.' },
+
+  { cle: 'amis.defis_semaine', section: 'amis', type: 'entier',
+    titre: 'Défis payés par joueur', unite: 'par semaine', min: 1, max: 20, defaut: 3,
+    aide: 'Le défi se relève avec chaque ami, mais ne paie que ce nombre de fois par semaine.' },
+
+  { cle: 'amis.echanges_jour', section: 'amis', type: 'entier',
+    titre: 'Échanges de doubles par joueur', unite: 'par jour', min: 0, max: 50, defaut: 3,
+    aide: 'Proposés ou acceptés. Un double contre un double : chacun garde au moins un ' +
+      'exemplaire de ce qu’il donne. À 0, plus d’échange.' },
+
+  { cle: 'amis.pret_actif', section: 'amis', type: 'booleen',
+    titre: 'Se prêter un Fanzzy', defaut: true,
+    aide: 'Un Fanzzy emprunté par jour, jusqu’à minuit, à jouer dans son deck au Duel à ' +
+      'l’âge où son ami l’a fait grandir. Celui qui prête ne perd rien.' },
 ];
 
 /** Le registre indexé par clé. */

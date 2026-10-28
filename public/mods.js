@@ -248,7 +248,8 @@
     (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
   /** D'où vient chaque apport, en un mot — l'ordre est celui d'`apportsDe`. */
-  const SOURCES = { fanzzy: 'Ton Fanzzy', stuff: 'Ton sac', kop: 'Ton KOP', club: 'Ton club', lieu: 'Le stade' };
+  const SOURCES = { fanzzy: 'Ton Fanzzy', stuff: 'Ton sac', kop: 'Ton KOP', club: 'Ton club', lieu: 'Le stade',
+    amis: 'Tes amis' };
 
   /**
    * Ce que dit la ligne repliée.
@@ -290,7 +291,8 @@
       if (!d.length) continue;
       blocs.push(`<div class="tbf-ap-bloc">
         <div class="tbf-ap-qui"><span class="tbf-ap-ou">${esc(SOURCES[a.quoi] ?? '')}</span>
-          <b>${esc(a.nom ?? '')}</b></div>
+          <b>${esc(a.nom ?? '')}</b>${a.combo
+    ? ' <span class="tbf-tampon" data-ton="vert">COMBO</span>' : ''}</div>
         ${a.texte ? `<p class="tbf-ap-dit">${esc(a.texte)}</p>` : ''}
         <ul class="tbf-ap-liste">${d.map((x) =>
     `<li class="${x.sens}">${esc(x.texte)}</li>`).join('')}</ul>

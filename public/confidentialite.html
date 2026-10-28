@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Confidentialité — thebestfan</title>
 <meta name="description" content="Ce que thebestfan garde de toi, pourquoi, combien de temps, et comment l’effacer.">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -56,7 +57,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .date{font-weight:600}
 
 /* tbf-degagement */
-#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+#app{padding-bottom:calc(var(--bas) + 40px)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -73,7 +74,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <section class="rub" id="qui">
     <h2 class="tbf-cousu">Qui traite tes données</h2>
     <div class="bloc">
-      <p class="date">Dernière mise à jour&nbsp;: 7&nbsp;octobre&nbsp;2026</p>
+      <p class="date">Dernière mise à jour&nbsp;: 28&nbsp;octobre&nbsp;2026</p>
       <p><b>Gaël Manigley</b>, entreprise individuelle, 1085&nbsp;Vulliens, Suisse — ci-après «&nbsp;nous&nbsp;».</p>
       <p>Contact&nbsp;: <a href="mailto:info@thebestfan.online">info@thebestfan.online</a></p>
       <p>Le site est hébergé par <b>Infomaniak Network SA</b>, rue Eugène-Marziano 25,
@@ -124,6 +125,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
         <dd>Régler ton pronostic au coup de sifflet final.</dd>
         <dt>Ton KOP et tes amis</dt>
         <dd>Les fonctions de groupe, que tu choisis d’utiliser.</dd>
+        <dt>Ce que tu fais avec tes amis&nbsp;: les gestes envoyés et reçus, les cadeaux offerts, les échanges proposés et les Fanzzy empruntés</dt>
+        <dd>Les jeux entre amis. Jamais de texte libre&nbsp;: un geste est un mot choisi dans une liste.</dd>
         <dt>Ton activité du jour&nbsp;: boosters ouverts, évolutions, missions tirées et leur avancement</dt>
         <dd>Les missions du jour, qui se comptent sur ce que tu as fait.</dd>
         <dt>Ce que le jeu t’a versé&nbsp;: missions, bonus de présence, carnet de saison, paliers de collection, divisions, pronostics</dt>
@@ -155,7 +158,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <p>Les supporters d’un club que tu suis peuvent te voir parmi leurs suggestions d’amis&nbsp;: ton
         pseudo, ton Fanzzy, ton niveau et les clubs que vous avez en commun, jamais les autres. Ton
         lien d’invitation montre ton pseudo et ton Fanzzy à qui l’ouvre.</p>
-      <p>Ni ton adresse e-mail, ni ta collection, ni ta garde-robe, ni ton XP exacte ne sont montrées.</p>
+      <p><b>Tes amis</b>, seulement ceux dont tu as accepté l’amitié et qui ont accepté la tienne, voient
+        aussi ta collection de Fanzzy (avec tes doubles), ton deck, le nombre de tes cartes-souvenirs,
+        les clubs que vous suivez tous les deux et tes chants réussis au Virage cette semaine, pour votre
+        défi. Ils voient les gestes que tu leur envoies, et c’est tout&nbsp;: on ne s’écrit pas.</p>
+      <p>Ni ton adresse e-mail, ni ta garde-robe, ni ton XP exacte ne sont montrées, et ta collection
+        ne l’est qu’à tes amis.</p>
       <p>Un jour de match d’un de tes clubs, quand tu passes sur le jeu, les supporters du club d’en
         face peuvent lire «&nbsp;un supporter de Sion est en ligne&nbsp;» (si tu suis Sion), pour vous proposer
         un derby. C’est un club, jamais un nom. Cette marque reste quatre minutes dans la mémoire du serveur,
@@ -319,6 +327,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
           ne garde que la dernière.</li>
         <li><b>Le registre de ce que le jeu t’a versé</b>&nbsp;: tant que le compte existe&nbsp;; après sa
           suppression, voir plus bas.</li>
+        <li><b>Les gestes entre amis</b>&nbsp;: trente jours. <b>Les cadeaux, échanges et prêts</b>&nbsp;:
+          tant que le compte existe.</li>
         <li><b>Ta présence auprès de tes amis</b>&nbsp;: jamais écrite. <b>Ton choix d’apparaître hors
           ligne</b>&nbsp;: tant que le compte existe.</li>
         <li><b>La marque du derby</b>&nbsp;: quatre minutes, en mémoire seulement.</li>
