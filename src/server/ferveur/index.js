@@ -990,6 +990,18 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       /* Les amis : après l'état, sans l'attendre — une présence lente ou en
          panne ne retarde ni ne ferme l'entrée. */
       const m = room.members.get(u.userId);
+      /* **Côte à côte** (`virage.js`, `coteACote`) : ses amis mutuels, et s'il se
+         montre à eux — caché, il ne compte pour personne. Sans attendre : une
+         lecture lente retarde le bonus, jamais l'entrée. */
+      if (m && presence?.amisMutuels) {
+        Promise.all([presence.amisMutuels(u.userId), presence.visible(u.userId)])
+          .then(([ids, montre]) => {
+            if (room.members.get(u.userId) !== m) return;
+            m.amis = ids;
+            m.montre = Boolean(montre);
+          })
+          .catch((e) => console.warn('[virage] amis du côte à côte illisibles :', e.message));
+      }
       if (premiere && presence && m) {
         annoncerArrivee(room, m).catch((e) =>
           console.error(`[virage ${room.fixture.id}] amis dans la tribune :`, e.message));
