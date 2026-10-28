@@ -6507,5 +6507,10 @@
  "{0}BOOSTER": "{0}BOOSTER",
  "sa carte est dans les boosters": "its card is in boosters",
  "Ultimate : {0} — sa carte est dans les boosters": "Ultimate: {0} — its card is in boosters",
- "Couper la musique": "Mute music"
+ "Couper la musique": "Mute music",
+ "MES SAISONS": "MY SEASONS",
+ "<0>1</0> tampon": "<0>1</0> stamp",
+ "<0>{0}</0> tampons": "<0>{0}</0> stamps",
+ "SAISON {0} — {1}": "SEASON {0} — {1}",
+ "<0>{0}</0> de ferveur": "<0>{0}</0> fervour"
 }
