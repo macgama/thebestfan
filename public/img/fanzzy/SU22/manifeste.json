@@ -1,6 +1,6 @@
 {
   "id": "SU22",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -131,6 +131,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "6f8bb963b017"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "15e6bcdc1bee"
         }
       }
     }
