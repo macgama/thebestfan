@@ -628,7 +628,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
               f.home_goals, f.away_goals,
               h.name AS home_name, h.logo AS home_logo, h.id AS home_id,
               a.name AS away_name, a.logo AS away_logo, a.id AS away_id,
-              l.name AS league_name
+              f.league_id, l.name AS league_name
          FROM fixtures f
          JOIN teams h ON h.id = f.home_id
          JOIN teams a ON a.id = f.away_id
@@ -670,7 +670,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
       kickoff_at: duJour.date,
       home_id: duJour.home.id, home_name: duJour.home.name, home_logo: duJour.home.logo,
       away_id: duJour.away.id, away_name: duJour.away.name, away_logo: duJour.away.logo,
-      league_name: duJour.leagueName,
+      league_id: duJour.leagueId, league_name: duJour.leagueName,
     } : base;
 
     /* Le jour UTC de l'instant du coup d'envoi, par la fonction même de la
@@ -760,6 +760,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
            tient ensuite à jour lui-même : voir `butReel` dans le moteur. */
         goals: [Number(f.home_goals) || 0, Number(f.away_goals) || 0],
         kickoffAt: f.kickoff_at, league: f.league_name,
+        // La compétition : les légendaires liées au championnat la lisent.
+        leagueId: f.league_id == null ? null : Number(f.league_id),
         home: { id: f.home_id, name: f.home_name, logo: f.home_logo },
         away: { id: f.away_id, name: f.away_name, logo: f.away_logo },
         /* **Les couleurs des deux clubs**, sous la forme du Virage
