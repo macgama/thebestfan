@@ -251,6 +251,8 @@ check('pas assez d\'écharpes : refusé',
   await refus(F.lierAuClub(U, 'MS30')) === 'fanzzy.error.not_enough_scarves' && await echarpes(U) === 80);
 f = await F.fiche(U, 'TR32');
 check('la fiche dit LIÉ À TON CLUB', f.club?.lie === true && f.club.tonClub === true && f.club.achete === true);
+check('et nomme le club acheté', f.club.nom === 'Sion');
+check('un club hors de la table a son cri type', f.club.cri === criDuClub(85) && CRIS_TYPES.includes(f.club.cri));
 f = await F.fiche(U, 'AN64');
 check('la fiche d\'une légendaire du championnat nomme la compétition, liée à ton club',
   f.club?.lie === true && f.club.portee === 'championnat' && f.club.tonClub === true
@@ -261,8 +263,6 @@ check('la fiche d\'une légendaire des sélections : liée, à des équipes que 
 check('une légendaire des sélections ou du championnat ne s\'achète pas',
   await refus(F.lierAuClub(U, 'AN62')) === 'fanzzy.error.deja_lie'
   && await refus(F.lierAuClub(U, 'AN64')) === 'fanzzy.error.deja_lie');
-check('et nomme le club acheté', f.club.nom === 'Sion');
-check('un club hors de la table a son cri type', f.club.cri === criDuClub(85) && CRIS_TYPES.includes(f.club.cri));
 check('la fiche d\'un AN donne le cri de son club', (await F.fiche(U, 'AN1')).club.cri === CRI_DU_CLUB.get(clubDe('AN1')));
 
 await pool.query(`INSERT INTO user_decks (user_id,nom,contenu,actif) VALUES (?, 'd', ?, 1)`,

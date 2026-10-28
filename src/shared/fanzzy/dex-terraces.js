@@ -1111,7 +1111,7 @@ const PREMIERS_AGES = [
       + 'pendent à son métier, une par tribune, toutes du même fil : quand quelqu’un tire trop '
       + 'fort, c’est toute la saison qui se défait.',
     mods: { holdBonus: 1.42, holdForgive: 3, parryResist: 1.2, tempoInterval: 90 },
-    cri: { label: 'TOUS DU MÊME FIL', gest: 'tenue', power: 80 } },
+    cri: { label: 'TOUS DU MÊME FIL', gest: 'hold', power: 80 } },
 
   { id: 'AN65', nom: 'La Voix des Résultats', type: 'voix', stage: 1, rar: 'legendaire',
     histoire: 'Chaque samedi à cinq heures, il lit les scores du pays entier. Il n’a jamais haussé '
