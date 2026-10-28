@@ -49,6 +49,7 @@ import { createQuotidien, sonderJourDeJeu, phraseJourDeJeu }
 import { createRepetition } from './src/server/repetition/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
+import { createEnsemble } from './src/server/amis/ensemble.js';
 import { createPresence } from './src/server/presence/index.js';
 import { createNotifications } from './src/server/notifications/index.js';
 import { createAdmin } from './src/server/admin/index.js';
@@ -412,7 +413,13 @@ if (process.env.DATABASE_URL) {
        la présence a gardé d'une amitié qui vient de changer. Reçue à `null`,
        la liste resterait sans pastille, sans un mot — d'où le contrôle de
        `verif-cablage.mjs`. */
-    amis = createAmis({ pool, requireAuth: auth.requireAuth, kop, presence, notifications });
+    /* Jouer entre amis (`amis/ensemble.js`) : la fiche d'un ami, les gestes,
+       le cadeau, le défi, les échanges et le prêt. Avant les amis, dont la
+       pastille compte aussi les gestes et les échanges qui attendent. */
+    const ensemble = createEnsemble({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/ensemble', ensemble.router);
+    amis = createAmis({ pool, requireAuth: auth.requireAuth, kop, presence, notifications,
+      ensemble });
     app.use('/api/amis', amis.router);
     console.log('amis actifs');
 
@@ -661,6 +668,9 @@ if (process.env.DATABASE_URL) {
        monde y entre avec sa voix pour seule arme. */
     virage = createVirage({ pool, io, requireAuth: auth.requireAuth,
       souvenirs, fanzzy, kop, couleurs, decks,
+      /* Les duels qui attendent, pour les pastilles des pages des matchs
+         (`/api/virage/a-jouer`). Le duel est monté plus haut. */
+      filesDuel: () => nvn?.filesParMatch?.() ?? [],
       /* Pour savoir si ce Virage-ci compte au classement. Absent, tout
          compte : voir le branchement du duel juste au-dessus. */
       abonnement,

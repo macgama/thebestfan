@@ -14,6 +14,7 @@ import { reglage } from '../../shared/reglages.js';
 // Le club qu'on soutient dans une rencontre, et de quel côté il joue :
 // la même règle qu'au Virage et qu'au Duel, écrite une seule fois.
 import { clubParmi, campDe } from '../football/suivis.js';
+import { clubDe } from '../../shared/fanzzy/clubs.js';
 // La journée du football : la seule source complète de ce qui se joue
 // aujourd'hui. La table `fixtures` ne connaît que les clubs suivis.
 import { journeeParId, TERMINE } from '../football/journee.js';
@@ -286,6 +287,35 @@ export function createDecks({ pool, requireAuth, niveau = null,
 
   /* ------------------------------------------------- ce que possède le joueur */
 
+  /**
+   * Le Fanzzy emprunté aujourd'hui, ou `null`. Une base sans
+   * `sql/amis-ensemble.sql` n'en prête aucun.
+   */
+  async function pretDuJour(userId) {
+    try {
+      const [l] = await q(
+        `SELECT p.fanzzy_id, p.stage, u.pseudo FROM amis_prets p
+           LEFT JOIN users u ON u.public_id = p.preteur
+          WHERE p.emprunteur = ? AND p.jour = CURDATE()`, [userId]);
+      return l ? { id: l.fanzzy_id, stage: Number(l.stage) || 1, preteur: l.pseudo ?? null } : null;
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return null;
+      throw e;
+    }
+  }
+
+  /** Les Fanzzy empruntés les jours d'avant. */
+  async function pretsPasses(userId) {
+    try {
+      return (await q(`SELECT DISTINCT fanzzy_id FROM amis_prets
+                        WHERE emprunteur = ? AND jour < CURDATE()`, [userId]))
+        .map((l) => l.fanzzy_id);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return [];
+      throw e;
+    }
+  }
+
   async function possessions(userId) {
     // Le plafond d’emplacements Fanzzy vient du niveau. Sans module de
     // progression, il vaut la règle — le comportement d’avant, exactement.
@@ -299,7 +329,15 @@ export function createDecks({ pool, requireAuth, niveau = null,
     ]);
     const brut = w[0]?.action_cards;
     const actions = typeof brut === 'string' ? JSON.parse(brut) : (brut ?? []);
+    /* **Le Fanzzy emprunté à un ami** (`amis/ensemble.js`), jusqu'à minuit :
+       il se met au deck comme un des siens, à l'âge où l'ami l'a fait
+       grandir. Après minuit, il n'est plus possédé, et le deck le perd. */
+    const pret = await pretDuJour(userId);
+    if (pret && !fz.some((f) => f.fanzzy_id === pret.id)) {
+      fz.push({ fanzzy_id: pret.id, stage: pret.stage });
+    }
     return {
+      pret,
       fanzzy: new Set(fz.map((f) => f.fanzzy_id)),
       fanzzyMax,
       // Jusqu'où chaque personnage a été fait grandir. Ne sert pas à valider —
@@ -391,6 +429,20 @@ export function createDecks({ pool, requireAuth, niveau = null,
         if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
         return q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]);
       });
+    /* Le prêt du jour compte comme une possession ; un prêt expiré ne compte
+       plus, et le Fanzzy sort du deck joué (voir plus bas). On ne retire que
+       ce qui a été **emprunté** et n'est pas à lui : un deck ne perd jamais
+       un Fanzzy pour une autre raison ici. */
+    const pret = await pretDuJour(userId);
+    if (pret && !possede.some((r) => r.fanzzy_id === pret.id)) {
+      possede.push({ fanzzy_id: pret.id, stage: pret.stage, club_id: null });
+    }
+    const possedes = new Set(possede.map((r) => r.fanzzy_id));
+    const rendus = new Set((await pretsPasses(userId)).filter((id) => !possedes.has(id)));
+    const garde = (f) => !rendus.has(f.id);
+    /* Un deck dont il ne reste aucun Fanzzy — le prêt d'hier était le seul —
+       n'est pas un deck : le duel dit alors d'en refaire un. */
+    if (rendus.size && !(deck.fanzzy ?? []).some(garde)) return null;
     const stades = Object.fromEntries(possede.map((r) => [r.fanzzy_id, Number(r.stage)]));
     const clubs = Object.fromEntries(possede.filter((r) => r.club_id != null)
       .map((r) => [r.fanzzy_id, Number(r.club_id)]));
@@ -431,7 +483,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
     return {
       /* La règle des légendaires appliquée au deck tel qu'il est enregistré :
          un deck d'avant la règle se joue selon elle (`selonLaRegle`). */
-      fanzzy: selonLaRegle(deck.fanzzy, RARETE).map((f) => {
+      fanzzy: selonLaRegle(deck.fanzzy.filter(garde), RARETE).map((f) => {
         const stuff = f.stuff ?? [];
         /* **Ce qu'il porte tant que la légende dort** : ni ses propres
            modificateurs s'il est légendaire, ni ceux de la pièce légendaire.
@@ -439,6 +491,9 @@ export function createDecks({ pool, requireAuth, niveau = null,
            quand rien ne dort : il n'y a alors qu'un total. */
         const dort = f.legende || f.stuffLegende;
         const sacBanc = f.stuffLegende ? stuff.filter((s) => s !== f.stuffLegende) : stuff;
+        /* Son club, pour le COMBO des pièces de club (`modsDeLaPiece`) : celui
+           de sa série, sinon celui que le joueur lui a acheté. */
+        const club = clubDe(f.id) ?? clubs[f.id] ?? null;
         // L'équipement suit le personnage à travers ses âges : c'est déjà ce que
         // promet la carte de remplacement, et il serait incompréhensible qu'il
         // tombe au moment précis où le personnage grandit.
@@ -451,7 +506,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
           // l'âge. Sans lui, l'écran de duel dessine un Fanzzy à l'échelle NaN,
           // c'est-à-dire rien du tout.
           stage: i + 1,
-          mods: { id: f.id, ...combine(def?.mods ?? {}, stuff) },
+          mods: { id: f.id, ...combine(def?.mods ?? {}, stuff, { club }) },
           /* **Les modificateurs du personnage seuls**, avant le sac.
              `mods` est le total, et c'est lui que le moteur applique — mais un
              total ne se décompose pas après coup : on ne peut pas dire au joueur
@@ -460,7 +515,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
              ventilation, et c'est ici qu'elle se conserve. */
           modsBase: def?.mods ?? {},
           ...(dort ? { modsBanc: { id: f.id,
-            ...combine(f.legende ? {} : (def?.mods ?? {}), sacBanc) } } : {}),
+            ...combine(f.legende ? {} : (def?.mods ?? {}), sacBanc, { club }) } } : {}),
         });
 
         const ages = lignee(f.id);
@@ -577,7 +632,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
               f.home_goals, f.away_goals,
               h.name AS home_name, h.logo AS home_logo, h.id AS home_id,
               a.name AS away_name, a.logo AS away_logo, a.id AS away_id,
-              l.name AS league_name
+              f.league_id, l.name AS league_name
          FROM fixtures f
          JOIN teams h ON h.id = f.home_id
          JOIN teams a ON a.id = f.away_id
@@ -619,7 +674,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
       kickoff_at: duJour.date,
       home_id: duJour.home.id, home_name: duJour.home.name, home_logo: duJour.home.logo,
       away_id: duJour.away.id, away_name: duJour.away.name, away_logo: duJour.away.logo,
-      league_name: duJour.leagueName,
+      league_id: duJour.leagueId, league_name: duJour.leagueName,
     } : base;
 
     /* Le jour UTC de l'instant du coup d'envoi, par la fonction même de la
@@ -709,6 +764,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
            tient ensuite à jour lui-même : voir `butReel` dans le moteur. */
         goals: [Number(f.home_goals) || 0, Number(f.away_goals) || 0],
         kickoffAt: f.kickoff_at, league: f.league_name,
+        // La compétition : les légendaires liées au championnat la lisent.
+        leagueId: f.league_id == null ? null : Number(f.league_id),
         home: { id: f.home_id, name: f.home_name, logo: f.home_logo },
         away: { id: f.away_id, name: f.away_name, logo: f.away_logo },
         /* **Les couleurs des deux clubs**, sous la forme du Virage
@@ -1125,6 +1182,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
            Un objet plutôt qu'une Map : c'est du JSON. */
         stuffCopies: Object.fromEntries(possede.stuffCopies),
         actions: [...possede.actions],
+        // Le Fanzzy emprunté du jour, pour que l'écran dise « prêté par ».
+        pret: possede.pret,
       },
       regles: DECK_RULES,
     });

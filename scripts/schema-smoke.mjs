@@ -374,12 +374,12 @@ console.log('\n— les arènes —');
     JSON.stringify(auDemarrage) === JSON.stringify(Object.keys(ATTENDUES).sort())
     || (console.log('        vues :', auDemarrage.join(', ')), false));
 
-  /* Il l'était ; la collection de stades et le pronostic sont venus après
-     lui, sans rien lui prendre. Ce qui compte est qu'il vienne après ce qu'il
+  /* Il l'était ; la collection de stades, le pronostic, les mini-jeux et le
+     jeu entre amis sont venus après lui, sans rien lui prendre. Ce qui compte est qu'il vienne après ce qu'il
      complète. */
   const apresArenes = ORDRE.slice(ORDRE.indexOf('arenes') + 1);
   check('sql/arenes.sql n’est suivi que de ce qui ne dépend pas de lui',
-    apresArenes.every((f) => f === 'collection-stades' || f === 'pronostics' || f === 'mini-jeux')
+    apresArenes.every((f) => ['collection-stades', 'pronostics', 'mini-jeux', 'amis-ensemble', 'principal'].includes(f))
     || (console.log('        après :', apresArenes.join(', ')), false));
   check('et vient après ce qu’il complète (souvenirs, quotidien)',
     ORDRE.indexOf('arenes') > Math.max(ORDRE.indexOf('souvenirs'), ORDRE.indexOf('quotidien')));

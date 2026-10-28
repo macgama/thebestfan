@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Toutes les compétitions — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
@@ -195,6 +196,9 @@ td.pts{font-family:var(--banner);font-size:15px}
 .m{display:flex;align-items:center;gap:9px;padding:9px 6px;border-top:1px solid rgba(242,238,228,.07);
   font-size:12.5px;cursor:pointer}
 .m:hover{background:rgba(242,238,228,.035)}
+/* Les pastilles VIRAGE et DUEL (`a-jouer.js`, ui.css « Où jouer ») : sous le
+   score, au milieu, comme la ligne qu'elles complètent. */
+.m + .tbf-jeu{justify-content:center;margin:-2px 0 0;padding:0 6px 9px}
 .m .s{flex:1;display:flex;align-items:center;gap:6px;min-width:0}
 .m .s.a{justify-content:flex-end;text-align:right}
 .m .s span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -295,7 +299,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    vertical est compté au pixel, et leur ajouter de la marge couperait ce
    qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
 /* tbf-degagement */
-#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+#app{padding-bottom:calc(var(--bas) + 40px)}
 
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -321,6 +325,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <!-- La minute d'un match en direct, la même que dans le Grand Virage et la
      page des matchs : elle court entre deux relevés, sans un appel de plus. -->
 <script src="/horloge.js"></script>
+<script src="/a-jouer.js" defer></script>
 <!-- Le nom des pays dans la langue du lecteur, partagé avec la page des
      matchs. Classique et sans « defer » : le rendu s'en sert tout de suite. -->
 <script src="/pays.js"></script>
@@ -756,7 +761,9 @@ function ligneMatch(m, luA) {
            : `<div class="when">${quand}</div>`}
     ${joue && m.live ? `<div class="when">${quand}</div>` : ''}
     <div class="s a"><span>${esc(m.away.name)}</span><img src="${esc(m.away.logo)}" alt=""></div>
-  </div>`;
+  </div>
+  <div class="tbf-jeu" data-jeu="${m.id}" data-statut="${esc(m.status ?? '')}"
+    data-coup="${esc(m.date ?? '')}"></div>`;
 }
 
 /**

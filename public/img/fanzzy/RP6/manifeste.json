@@ -1,6 +1,6 @@
 {
   "id": "RP6",
-  "rev": 7,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -66,7 +66,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b48f813b139f"
+          "sha": "b48f813b139f",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -102,7 +103,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fdd80060a73e"
+          "sha": "fdd80060a73e",
+          "cligne": true
         }
       }
     },
@@ -129,7 +131,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f9509c8dff0e"
+          "sha": "f9509c8dff0e",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

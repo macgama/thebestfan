@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
@@ -192,6 +193,60 @@ h2{margin:22px 2px 9px}
 .chercher input:focus-visible{outline:2px solid var(--projo);outline-offset:1px}
 .chercher .gens{margin-top:10px}
 .chercher .rien{margin:10px 0 0;font-size:12px;opacity:.88}
+/* ------------------------------------------------------ entre amis
+
+   Gaël, 28 octobre 2026 : jouer ensemble, s'entraider, se faire signe —
+   sans jamais s'écrire. Le nom d'un ami ouvre sa fiche ; la fiche porte tout
+   ce qu'on fait avec lui. */
+.ouvrir{all:unset;cursor:pointer;display:flex;align-items:center;gap:13px;flex:1;min-width:0}
+.ouvrir:focus-visible{outline:2px solid var(--projo);outline-offset:3px;border-radius:10px}
+.ensemble{border:1px solid rgba(130,87,218,.5);border-radius:var(--r);padding:13px 14px;margin-bottom:14px;
+  background:linear-gradient(rgba(130,87,218,.10),rgba(130,87,218,.10)),var(--panneau)}
+.ensemble h3{font-family:var(--banner);font-size:12px;letter-spacing:.14em;margin:0 0 7px}
+.ensemble ul{margin:0;padding-left:18px;font-size:11.5px;line-height:1.7;opacity:.92}
+.ensemble ul b{font-weight:700}
+.ensemble button.replier{margin-top:9px;font-size:11px}
+.fil{display:grid;gap:7px;margin-bottom:14px}
+.signe{display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:12px;
+  border:1px solid var(--trait);background:var(--panneau);font-size:12px}
+.signe.neuf{border-color:rgba(130,87,218,.7);
+  background:linear-gradient(rgba(130,87,218,.14),rgba(130,87,218,.14)),var(--panneau)}
+.signe>.tbf-buste{--taille:40px}
+.signe .mot{font-family:var(--banner);letter-spacing:.04em}
+.signe small{display:block;opacity:.75;font-size:10.5px;margin-top:2px}
+.fiche-tete{display:flex;align-items:center;gap:14px;margin:4px 0 14px}
+.fiche-tete>.tbf-buste{--taille:84px}
+.fiche-tete b{display:block;font-family:var(--banner);font-size:20px;letter-spacing:.02em}
+.fiche-tete small{display:block;font-size:11.5px;opacity:.85;margin-top:4px;line-height:1.5}
+.bloc{border:1px solid var(--trait);border-radius:var(--r);padding:13px 14px;margin-bottom:12px;
+  background:var(--panneau)}
+.bloc h3{font-family:var(--banner);font-size:12px;letter-spacing:.14em;margin:0 0 6px}
+.bloc p{margin:0 0 9px;font-size:11.5px;line-height:1.6;opacity:.9}
+.gestes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.gestes .bt{width:100%;text-align:center}
+.jauge{height:12px;border-radius:999px;background:rgba(242,238,228,.1);overflow:hidden;margin:4px 0 8px}
+.jauge i{display:block;height:100%;background:var(--violet,#8257DA)}
+.grille{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.carte{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:7px 4px 8px;border-radius:10px;border:1px solid var(--trait);background:rgba(0,0,0,.18);
+  text-align:center;font-size:10px;line-height:1.3;min-width:0}
+.carte:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+.carte.choisie{border-color:var(--projo)}
+.carte>.tbf-buste{--taille:46px}
+.carte span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.carte em{font-style:normal;font-family:var(--banner);font-size:9.5px;letter-spacing:.06em;opacity:.95}
+.carte em.manque{color:var(--flare,#E0402C)}
+.choix{margin-top:10px;display:grid;gap:7px}
+.choix .bt{width:100%}
+.echange{display:grid;gap:7px;padding:10px 0;border-top:1px dashed var(--trait);font-size:12px}
+.echange:first-of-type{border-top:0}
+.echange .quoi{display:flex;gap:7px}
+.echange .quoi .bt{flex:1;text-align:center}
+.retour{margin-bottom:10px}
+.gars.ami .actions{display:flex;flex-wrap:wrap;gap:6px;max-width:100%}
+button.buste-btn{all:unset;cursor:pointer;flex:none;border-radius:50%}
+button.buste-btn:focus-visible{outline:2px solid var(--projo);outline-offset:3px}
+button.buste-btn>.tbf-buste{--taille:52px}
 .vide{border:1px dashed var(--trait);border-radius:var(--r);padding:20px 16px;text-align:center;
   font-size:12.5px;line-height:1.8;opacity:.9;background:var(--panneau)}
 /* Le lien en craie grasse et soulignée, et non plus en or : l'or ne s'écrit
@@ -279,6 +334,31 @@ const MESSAGES = {
   'amis.error.invitation_inconnue': 'Ce lien d’invitation ne mène à personne.',
   'amis.error.invitation_tardive':  'Ce lien ne vaut que pour un compte tout neuf.',
   'amis.error.trop_de_recherches': 'Doucement : attends une minute avant de chercher encore.',
+  'amis.error.pas_ami':       'Vous n’êtes plus amis.',
+  'amis.error.ensemble_eteint':'Les jeux entre amis sont en pause pour l’instant.',
+  'amis.error.geste_inconnu': 'Ce geste n’existe pas.',
+  'amis.error.geste_recent':  'Tu viens de lui faire ce geste. Choisis-en un autre.',
+  'amis.error.trop_de_gestes':'Assez de gestes pour aujourd’hui. Reviens demain.',
+  'amis.error.deja_offert':   'Tu lui as déjà offert ton cadeau aujourd’hui.',
+  'amis.error.trop_de_cadeaux':'Tu as offert tous tes cadeaux du jour.',
+  'amis.error.plafond_ami':   'Il a déjà reçu tout ce qu’on peut recevoir aujourd’hui. Réessaie demain.',
+  'amis.error.cadeau_refuse': 'Le cadeau n’a pas pu partir.',
+  'amis.error.defi_incomplet':'Le défi n’est pas encore relevé.',
+  'amis.error.defi_deja':     'Tu as déjà récupéré ce défi cette semaine.',
+  'amis.error.defi_quota':    'Tu as récupéré tous tes défis de la semaine.',
+  'amis.error.plafond':       'Tu as reçu le maximum d’écharpes pour aujourd’hui. Récupère-le demain.',
+  'amis.error.defi_refuse':   'Le défi n’a pas pu être récupéré.',
+  'amis.error.echange_inconnu':'Ce Fanzzy n’existe pas.',
+  'amis.error.echange_meme':  'On n’échange pas un Fanzzy contre le même.',
+  'amis.error.pas_ton_double':'Tu n’as pas ce Fanzzy en double.',
+  'amis.error.pas_son_double':'Il n’a pas ce Fanzzy en double.',
+  'amis.error.trop_d_echanges':'Assez d’échanges pour aujourd’hui. Reviens demain.',
+  'amis.error.echange_en_cours':'Tu lui as déjà proposé un échange. Attends sa réponse.',
+  'amis.error.echange_introuvable':'Cet échange n’existe plus.',
+  'amis.error.plus_de_double':'L’un des deux n’a plus son double : l’échange est annulé.',
+  'amis.error.pret_inconnu':  'Il n’a pas ce Fanzzy.',
+  'amis.error.pret_deja_a_toi':'Tu as déjà ce Fanzzy.',
+  'amis.error.pret_deja':     'Tu as déjà emprunté un Fanzzy aujourd’hui.',
   'amis.error.kop_indisponible':'Les KOP ne répondent pas pour l’instant.',
   'kop.error.pas_ton_club':   'Tu ne suis pas ce club. Suis-le d’abord depuis « Mes clubs ».',
   'kop.error.deja_membre':    'Tu es déjà dans un KOP de ce club. On n’en a qu’un par club.',
@@ -295,7 +375,15 @@ function dire(e) {
 }
 
 async function api(chemin, { method = 'GET', body } = {}) {
-  const r = await fetch('/api/amis' + chemin, {
+  return appel('/api/amis' + chemin, { method, body });
+}
+/** Les jeux entre amis (`/api/ensemble`) : mêmes règles que `api`. */
+async function ensemble(chemin, { method = 'GET', body } = {}) {
+  return appel('/api/ensemble' + chemin, { method, body });
+}
+
+async function appel(adresse, { method = 'GET', body } = {}) {
+  const r = await fetch(adresse, {
     method, credentials: 'same-origin',
     headers: { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -315,7 +403,7 @@ async function api(chemin, { method = 'GET', body } = {}) {
    * `error`, et les gestes d'invitation en dépendent. */
   const json = await r.json().catch(() => null);
   if (!json) {
-    console.warn(`[amis] ${chemin} : ${r.status}, et ce n’est pas du JSON`);
+    console.warn(`[amis] ${adresse} : ${r.status}, et ce n’est pas du JSON`);
     throw Object.assign(new Error('reponse illisible'), { code: 'app.error.illisible' });
   }
   if (json?.error) throw Object.assign(new Error(json.error), { code: json.error, ...json });
@@ -328,6 +416,12 @@ const S = {
   gens: [],            // les suggestions
   cherche: '',         // ce qui est tapé dans la recherche par pseudo
   trouves: null,       // ce qu'elle a rendu, ou null tant qu'elle n'a rien cherché
+  fil: [],             // les gestes reçus (`/api/ensemble/fil`)
+  ficheId: null,       // l'ami dont la fiche est ouverte
+  fiche: null,         // sa fiche, telle que le serveur la sert
+  carte: null,         // le Fanzzy touché dans sa collection
+  echangeAvec: null,   // le Fanzzy de l'ami qu'on veut, en attendant de choisir le sien
+  ensembleOuvert: false,
   kops: [],            // mes KOP, pour pouvoir y inviter
   deplie: null,        // { id, quoi } : l'ami dont on choisit le KOP ('kop') ou ouvre « ⋯ » ('plus')
 };
@@ -401,6 +495,8 @@ async function feterLesNouveaux() {
   connus = new Set(ids);
   if (qui) retenirVus(qui, ids);
   if (!neufs.length) return;
+  // Un nouvel ami : ce que vous pouvez faire ensemble s'ouvre sur la liste.
+  if (!S.ensembleOuvert) { S.ensembleOuvert = true; rendre(); }
   const noms = neufs.slice(0, 3).map((g) => g.pseudo).join(' · ');
   moment(neufs.length > 1 ? 'NOUVEAUX AMIS' : 'NOUVEL AMI',
     neufs.length > 3 ? `${noms} et ${neufs.length - 3} de plus` : noms);
@@ -411,7 +507,7 @@ async function feterLesNouveaux() {
 
 async function charger() {
   try {
-    const [tableau, suggestions, mesKops] = await Promise.all([
+    const [tableau, suggestions, mesKops, , fil] = await Promise.all([
       api('/'),
       api('/suggestions'),
       // Les KOP ne sont pas indispensables : sans eux, on peut toujours
@@ -422,8 +518,11 @@ async function charger() {
          rendu retomberait sur la carte de l’âge et perdrait la tenue et
          l’expression. Il ne lève jamais. */
       window.TBF_ETATS?.charger?.(),
+      // Les gestes reçus : sans eux, la liste se dessine quand même.
+      ensemble('/fil').catch(() => ({ fil: [] })),
     ]);
     Object.assign(S, tableau);
+    S.fil = fil?.fil ?? [];
     S.gens = suggestions.gens ?? [];
     S.kops = mesKops.kops ?? [];
     /* **On arrive sur l'onglet qu'on demande** (26 octobre 2026) : la page
@@ -433,12 +532,19 @@ async function charger() {
       charger.fait = true;
       const voulue = new URLSearchParams(location.search).get('vue');
       if (['amis', 'demandes', 'trouver'].includes(voulue)) S.vue = voulue;
+      // `?ami=<id>` ouvre la fiche d'un ami : la pastille d'un geste y mène.
+      const ami = new URLSearchParams(location.search).get('ami');
+      if (ami && S.amis.some((g) => String(g.id) === ami)) {
+        S.vue = 'fiche';
+        S.ficheId = ami;
+      }
     }
     /* Le compte que le menu retient trente secondes dans l'onglet
        (`tbf-etat-amis`) est d'avant : on vient de lire le vrai, et un
        geste ici le change. L'oublier, c'est que la page suivante redemande. */
     try { sessionStorage.removeItem('tbf-etat-amis'); } catch { /* rien de retenu */ }
     rendre();
+    if (S.vue === 'fiche' && !S.fiche) chargerFiche();
     feterLesNouveaux();
   } catch (e) {
     if (e.message === 'auth') return;
@@ -551,10 +657,13 @@ function carteAmi(g) {
   const inviter = S.kops.length
     ? `<button class="bt tbf-plaque" data-ton="violet" data-kop="${esc(g.id)}"
         aria-expanded="${ouvert === 'kop'}">INVITER AU KOP</button>` : '';
+  /* Le buste et JOUER ENSEMBLE ouvrent sa fiche : c'est là que se font les
+     gestes, le cadeau, le défi, l'échange et le prêt. */
   return `
   <div class="gars ami${ouvert ? ' deplie' : ''}" data-id="${esc(g.id)}">
-    ${avatar(g)}
-    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${presence(g)}</span>${inviter}</span>
+    <button class="buste-btn" data-fiche="${esc(g.id)}" aria-label="La fiche de ${esc(g.pseudo)}">${avatar(g)}</button>
+    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${presence(g)}</span><span class="actions"><button
+      class="bt tbf-plaque" data-ton="violet" data-fiche="${esc(g.id)}">JOUER ENSEMBLE</button>${inviter}</span></span>
     <button class="bt tbf-plaque plus" data-plus="${esc(g.id)}" aria-expanded="${ouvert === 'plus'}"
       aria-label="Plus d’options pour ${esc(g.pseudo)}"><i class="tbf-ico ico-plus" aria-hidden="true"></i></button>
   </div>`;
@@ -562,10 +671,11 @@ function carteAmi(g) {
 
 function vueAmis() {
   if (!S.amis.length) {
-    return convier() + `<div class="vide">Tu n’as encore personne.<br>
+    return convier() + avantages(true) + `<div class="vide">Tu n’as encore personne.<br>
       Ouvre <b>TROUVER</b> : les supporters de tes clubs t’y attendent.</div>`;
   }
-  return `<div class="gens gens--amis">${S.amis.map((g) => {
+  return filGestes() + avantages(S.amis.length < 3 || S.ensembleOuvert)
+    + `<div class="gens gens--amis">${S.amis.map((g) => {
     const ouvert = deplie(g);
     return carteAmi(g) + (ouvert === 'kop' ? kopsPour(g) : ouvert === 'plus' ? plusPour(g) : '');
   }).join('')}</div>`;
@@ -627,6 +737,8 @@ function vueDemandes() {
       `<button class="bt tbf-plaque" data-retirer="${esc(g.id)}">ANNULER</button>`,
       '<small>en attente de sa réponse</small>')).join('') + '</div>';
   }
+  /* Ce que l'amitié ouvre, dit là où on la demande et où on l'accepte. */
+  if (S.recues.length || S.envoyees.length) html += avantages(true);
   return html;
 }
 
@@ -706,6 +818,213 @@ function vueTrouver() {
   )).join('')}</div>`;
 }
 
+/* =======================================================================
+   Entre amis (Gaël, 28 octobre 2026).
+
+   Ce qu'on fait avec un ami tient sur sa fiche : un geste, le cadeau du
+   jour, le défi de la semaine, sa collection (pour emprunter un Fanzzy ou
+   échanger un double), son deck et ses cartes-souvenirs. **Jamais de
+   texte** : un geste est un mot choisi dans une liste fermée, que le
+   personnage de celui qui l'envoie joue avec l'expression qui va avec.
+   ======================================================================= */
+
+/** Les mots des gestes, par identifiant (`shared/amis-ensemble.js`). */
+const GESTES = [
+  ['allez', 'ALLEZ !', 'pousse'], ['bravo', 'BRAVO !', 'joie'], ['merci', 'MERCI !', 'joie'],
+  ['courage', 'COURAGE !', 'pousse'], ['quel_match', 'QUEL MATCH !', 'joie'],
+  ['au_virage', 'ON SE VOIT AU VIRAGE ?', 'neutre'], ['un_duel', 'UN DUEL ?', 'colere'],
+  ['dommage', 'DOMMAGE…', 'depit'], ['respect', 'RESPECT', 'neutre'], ['echarpe', 'ÉCHARPE LEVÉE', 'joie'],
+];
+const GESTES_DU_JEU = new Map([
+  ['cadeau', ['t’a offert des écharpes', 'joie']],
+  ['pret', ['a emprunté un de tes Fanzzy', 'joie']],
+  ['echange', ['a accepté ton échange', 'joie']],
+]);
+const MOT_DU_GESTE = new Map(GESTES.map(([id, mot, etat]) => [id, { mot, etat }]));
+
+/** Le buste d'un joueur dans une expression donnée — celle du geste. */
+function busteEn(g, etat, taille = '') {
+  const src = g?.avatar && window.FZART?.dessinAvatar?.(g.avatar, 'buste', { etat });
+  const initiale = esc((String(g?.pseudo ?? '').trim().charAt(0) || '?').toUpperCase());
+  return src
+    ? `<span class="tbf-buste" aria-hidden="true" data-initiale="${initiale}"${taille}><img src="${esc(src)}" alt=""></span>`
+    : `<span class="tbf-buste" aria-hidden="true"${taille}>${initiale}</span>`;
+}
+
+/** Un Fanzzy d'une collection, à son âge. */
+function busteFanzzy(f) {
+  const age = f.stage > 1 ? f.id + (f.stage === 2 ? 'B' : 'C') : f.id;
+  const src = window.FZART?.dessinAvatar?.({ id: f.id, evo: f.stage, age, skin: 'base' }, 'buste');
+  return src ? `<span class="tbf-buste" aria-hidden="true"><img src="${esc(src)}" alt=""></span>`
+    : `<span class="tbf-buste" aria-hidden="true">?</span>`;
+}
+
+/**
+ * **Ce que des amis font ensemble**, dit en clair : Gaël voulait que chacun
+ * le sache dès qu'il envoie ou accepte une demande. Ouvert tant qu'on a peu
+ * d'amis, ou quand on le demande ; replié en un bouton sinon.
+ */
+function avantages(ouvert) {
+  if (!ouvert) {
+    return `<div class="ensemble"><button class="bt tbf-plaque replier" data-ensemble>CE QUE LES AMIS FONT ENSEMBLE</button></div>`;
+  }
+  return `<div class="ensemble">
+    <h3>ENTRE AMIS, VOUS POUVEZ</h3>
+    <ul>
+      <li><b>Vous faire signe</b> : un geste (« BRAVO ! », « ON SE VOIT AU VIRAGE ? »…), sans écrire.</li>
+      <li><b>Vous offrir un cadeau</b> chaque jour : des écharpes, offertes par le jeu.</li>
+      <li><b>Pousser côte à côte</b> au Virage : chaque ami dans ta tribune te fait pousser plus fort.</li>
+      <li><b>Relever le défi de la semaine</b> : des chants réussis à deux, des écharpes pour chacun.</li>
+      <li><b>Échanger vos doubles</b> : un Fanzzy en trop contre un des siens.</li>
+      <li><b>Emprunter un Fanzzy</b> pour la journée, et le jouer dans ton deck.</li>
+      <li><b>Voir sa collection</b>, son deck et ses cartes-souvenirs.</li>
+    </ul>
+    ${S.amis.length ? '<p style="margin:8px 0 0;font-size:11.5px;opacity:.9">Touche <b>JOUER ENSEMBLE</b> sous le nom d’un ami.</p>' : ''}
+  </div>`;
+}
+
+/** Les gestes reçus ces sept derniers jours : les neufs d'abord marqués. */
+function filGestes() {
+  if (!S.fil.length) return '';
+  return '<h2 class="tbf-cousu">ILS T’ONT FAIT SIGNE</h2><div class="fil">' + S.fil.slice(0, 6).map((f) => {
+    const g = MOT_DU_GESTE.get(f.geste);
+    const jeu = GESTES_DU_JEU.get(f.geste);
+    const etat = g?.etat ?? jeu?.[1] ?? 'neutre';
+    const mot = g ? `<span class="mot">${esc(g.mot)}</span>` : esc(jeu?.[0] ?? '');
+    return `<div class="signe${f.neuf ? ' neuf' : ''}">${busteEn(f.de, etat)}
+      <span><b>${esc(f.de.pseudo)}</b> ${mot}<small>${quand(f.le)}</small></span></div>`;
+  }).join('') + '</div>';
+}
+
+/** « il y a 5 min », « hier »… : grossier exprès. */
+function quand(t) {
+  const min = Math.max(0, Math.round((Date.now() - Number(t)) / 60000));
+  if (min < 1) return 'à l’instant';
+  if (min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `il y a ${h} h`;
+  const j = Math.round(h / 24);
+  return j === 1 ? 'hier' : `il y a ${j} jours`;
+}
+
+async function chargerFiche() {
+  try {
+    S.fiche = await ensemble(`/fiche/${encodeURIComponent(S.ficheId)}`);
+  } catch (e) {
+    if (e.message === 'auth') return;
+    S.fiche = null;
+    S.vue = 'amis';
+    toast(dire(e), { erreur: true });
+  }
+  rendre();
+}
+
+function vueFiche() {
+  const F = S.fiche;
+  const retour = '<button class="bt tbf-plaque retour" data-retour>‹ MES AMIS</button>';
+  if (!F || String(F.ami?.id) !== String(S.ficheId)) {
+    return retour + '<div class="vide">Chargement…</div>';
+  }
+  const a = F.ami;
+  const niv = Number.isInteger(a.niveau) ? `Niveau ${a.niveau}` : '';
+  const clubs = a.clubs?.length ? `Vous suivez ${a.clubs.map(esc).join(', ')}` : '';
+  let html = retour + `<div class="fiche-tete">${busteEn(a, 'joie')}
+    <span><b>${esc(a.pseudo)}</b><small>${[niv, clubs].filter(Boolean).join(' · ')}</small></span></div>`;
+  if (!F.actif) {
+    return html + '<div class="vide">Les jeux entre amis sont en pause pour l’instant.</div>';
+  }
+
+  // Les gestes.
+  html += `<div class="bloc"><h3>FAIS-LUI SIGNE</h3>
+    <p>Un geste, jamais un texte : il le verra sur sa page d’amis.</p>
+    <div class="gestes">${GESTES.map(([id, mot]) =>
+      `<button class="bt tbf-plaque" data-geste="${id}">${esc(mot)}</button>`).join('')}</div></div>`;
+
+  // Le cadeau du jour.
+  const c = F.cadeau;
+  html += `<div class="bloc"><h3>LE CADEAU DU JOUR</h3>
+    <p>Offre-lui ${c.echarpes} écharpes, une fois par jour. Le jeu les donne : ça ne te coûte rien,
+      et ça te rapporte un petit merci.</p>
+    ${c.offert ? '<p><b>Déjà offert aujourd’hui.</b> Reviens demain.</p>'
+      : c.restants > 0 ? `<button class="bt tbf-plaque plein" data-ton="vert" data-cadeau>OFFRIR ${c.echarpes} ÉCHARPES</button>`
+        : '<p><b>Tu as offert tous tes cadeaux du jour.</b></p>'}</div>`;
+
+  // Le défi de la semaine.
+  const d = F.defi;
+  const fait = Math.min(d.cible, d.moi + d.lui);
+  html += `<div class="bloc"><h3>LE DÉFI DE LA SEMAINE</h3>
+    <p>Réussissez ${d.cible} chants au Virage à vous deux d’ici dimanche soir : ${d.echarpes} écharpes
+      chacun. Chacun doit en réussir au moins un.</p>
+    <div class="jauge" role="img" aria-label="${fait} sur ${d.cible}"><i style="width:${Math.round(100 * fait / d.cible)}%"></i></div>
+    <p>Toi ${d.moi} · ${esc(a.pseudo)} ${d.lui} · ${fait} / ${d.cible}</p>
+    ${d.recupere ? '<p><b>Récupéré cette semaine.</b></p>'
+      : d.releve ? (d.restants > 0
+        ? `<button class="bt tbf-plaque plein" data-ton="vert" data-defi>RÉCUPÉRER ${d.echarpes} ÉCHARPES</button>`
+        : '<p><b>Tu as déjà récupéré tous tes défis de la semaine.</b></p>')
+        : ''}</div>`;
+
+  // Les échanges en cours.
+  if (F.echanges.length) {
+    html += `<div class="bloc"><h3>ÉCHANGES EN COURS</h3>${F.echanges.map((e) => `
+      <div class="echange">${e.deMoi
+        ? `<span>Tu proposes <b>${esc(e.donne.nom)}</b> contre son <b>${esc(e.demande.nom)}</b>.</span>
+          <div class="quoi"><button class="bt tbf-plaque" data-echnon="${esc(e.id)}">ANNULER</button></div>`
+        : `<span>${esc(a.pseudo)} te propose <b>${esc(e.donne.nom)}</b> contre ton <b>${esc(e.demande.nom)}</b>.</span>
+          <div class="quoi"><button class="bt tbf-plaque" data-ton="vert" data-echoui="${esc(e.id)}">ACCEPTER</button>
+          <button class="bt tbf-plaque" data-ton="flare" data-echnon="${esc(e.id)}">NON</button></div>`}</div>`).join('')}</div>`;
+  }
+
+  // Le prêt du jour.
+  const p = F.pret;
+  if (p.actif && p.mien) {
+    html += `<div class="bloc"><h3>TON FANZZY EMPRUNTÉ</h3>
+      <p>Aujourd’hui, tu joues <b>${esc(p.mien.nom)}</b>, prêté par ${esc(p.mien.preteur ?? '')}.
+        Mets-le dans ton <a href="/deck">deck</a> : il y reste jusqu’à minuit.</p></div>`;
+  }
+
+  // Sa collection.
+  const col = F.collection;
+  html += `<div class="bloc"><h3>SA COLLECTION</h3>
+    <p>${col.total} Fanzzy, dont ${col.communs} que tu as aussi. Touche un Fanzzy pour l’emprunter
+      ou l’échanger.</p>
+    <div class="grille">${col.siens.map((f) => `<button class="carte${S.carte === f.id ? ' choisie' : ''}"
+        data-carte="${esc(f.id)}">${busteFanzzy(f)}<span>${esc(f.nom)}</span>
+        ${!f.chezLautre ? '<em class="manque">TU NE L’AS PAS</em>' : ''}${f.double ? '<em>DOUBLE</em>' : ''}</button>`).join('')}</div>
+    ${choixSurCarte(F)}</div>`;
+
+  // Son deck et ses souvenirs.
+  html += `<div class="bloc"><h3>SON DECK</h3>
+    <p>${F.deck.length ? F.deck.map((f) => esc(f.nom)).join(' · ') : 'Pas encore de deck.'}</p>
+    <h3>SES CARTES-SOUVENIRS</h3>
+    <p>${F.souvenirs ? `${F.souvenirs} carte${F.souvenirs > 1 ? 's' : ''}-souvenir${F.souvenirs > 1 ? 's' : ''}.`
+      : 'Pas encore de carte-souvenir.'}</p></div>`;
+  return html;
+}
+
+/** Ce qu'on peut faire du Fanzzy touché : l'emprunter, l'échanger. */
+function choixSurCarte(F) {
+  const f = F.collection.siens.find((x) => x.id === S.carte);
+  if (!f) return '';
+  const lignes = [];
+  if (S.echangeAvec === f.id) {
+    const miens = F.collection.tesDoubles.filter((x) => x.id !== f.id);
+    return `<div class="choix"><p>Contre lequel de tes doubles ?</p>${miens.length
+      ? miens.map((m) => `<button class="bt tbf-plaque" data-donne="${esc(m.id)}">${esc(m.nom)}${
+        m.chezLautre ? '' : ' · il ne l’a pas'}</button>`).join('')
+      : '<p>Tu n’as pas de double à proposer.</p>'}</div>`;
+  }
+  if (F.pret.actif && !f.chezLautre) {
+    lignes.push(F.pret.mien
+      ? '<p>Tu as déjà emprunté un Fanzzy aujourd’hui.</p>'
+      : `<button class="bt tbf-plaque" data-ton="violet" data-emprunter="${esc(f.id)}">L’EMPRUNTER JUSQU’À MINUIT</button>`);
+  }
+  if (f.double) {
+    lignes.push(`<button class="bt tbf-plaque" data-ton="violet" data-echanger="${esc(f.id)}">L’ÉCHANGER CONTRE UN DE MES DOUBLES</button>`);
+  }
+  if (!lignes.length) lignes.push('<p>Tu l’as déjà, et il ne l’a pas en double.</p>');
+  return `<div class="choix"><p><b>${esc(f.nom)}</b></p>${lignes.join('')}</div>`;
+}
+
 function rendre() {
   document.querySelectorAll('.onglet').forEach((b) =>
     b.classList.toggle('on', b.dataset.vue === S.vue));
@@ -719,8 +1038,20 @@ function rendre() {
     onglet.insertAdjacentHTML('beforeend', `<b class="tbf-onglet-n pastille">${attend}</b>`);
   }
 
+  if (S.vue === 'fiche') {
+    document.querySelector('[data-vue="amis"]')?.classList.add('on');
+    $('corps').innerHTML = vueFiche();
+    return;
+  }
   $('corps').innerHTML = S.vue === 'amis' ? vueAmis()
     : S.vue === 'demandes' ? vueDemandes() : vueTrouver();
+  /* Les gestes neufs sont vus dès qu'ils s'affichent : la pastille du menu
+     ne doit plus les compter. */
+  if (S.vue === 'amis' && S.fil.some((f) => f.neuf)) {
+    ensemble('/fil/vu', { method: 'POST', body: {} }).catch(() => {});
+    S.fil = S.fil.map((f) => ({ ...f, neuf: false }));
+    try { sessionStorage.removeItem('tbf-etat-amis'); } catch { /* rien de retenu */ }
+  }
 }
 
 /* ------------------------------------------------------------- gestes */
@@ -743,9 +1074,74 @@ $('onglets').onclick = (e) => {
 $('corps').onclick = async (e) => {
   const b = e.target.closest('button[data-oui],button[data-non],button[data-demander],'
     + 'button[data-retirer],button[data-kop],button[data-plus],button[data-inviter],'
-    + 'button[data-kopoui],button[data-kopnon],button[data-convier]');
+    + 'button[data-kopoui],button[data-kopnon],button[data-convier],button[data-fiche],'
+    + 'button[data-retour],button[data-ensemble],button[data-carte],button[data-echanger],'
+    + 'button[data-geste],button[data-cadeau],button[data-defi],button[data-emprunter],'
+    + 'button[data-donne],button[data-echoui],button[data-echnon]');
   if (!b) return;
   const d = b.dataset;
+
+  /* Entre amis : la fiche, et ce qu'on y fait. Ce qui ne touche pas au
+     serveur se redessine sur place ; un geste relit la fiche. */
+  if (d.fiche) {
+    Object.assign(S, { vue: 'fiche', ficheId: d.fiche, fiche: null, carte: null, echangeAvec: null,
+      deplie: null });
+    rendre();
+    window.scrollTo?.(0, 0);
+    chargerFiche();
+    return;
+  }
+  if (d.retour !== undefined) { S.vue = 'amis'; rendre(); return; }
+  if (d.ensemble !== undefined) { S.ensembleOuvert = true; rendre(); return; }
+  if (d.carte) {
+    S.carte = S.carte === d.carte ? null : d.carte;
+    S.echangeAvec = null;
+    rendre();
+    return;
+  }
+  if (d.echanger) { S.echangeAvec = d.echanger; rendre(); return; }
+  const surLaFiche = d.geste || d.cadeau !== undefined || d.defi !== undefined || d.emprunter
+    || d.donne || d.echoui || d.echnon;
+  if (surLaFiche) {
+    b.disabled = true;
+    const id = S.ficheId;
+    try {
+      if (d.geste) {
+        await ensemble('/geste', { method: 'POST', body: { id, geste: d.geste } });
+        toast('Geste envoyé.');
+      } else if (d.cadeau !== undefined) {
+        const r = await ensemble('/cadeau', { method: 'POST', body: { id } });
+        window.FX?.son?.('parfait');
+        toast(r.merci ? `Cadeau offert. +${r.merci} écharpes pour toi.` : 'Cadeau offert.');
+      } else if (d.defi !== undefined) {
+        const r = await ensemble('/defi', { method: 'POST', body: { id } });
+        window.FX?.flash?.();
+        window.FX?.son?.('but');
+        moment('DÉFI RELEVÉ !', `+${r.echarpes} écharpes`);
+      } else if (d.emprunter) {
+        await ensemble('/pret', { method: 'POST', body: { id, fanzzy: d.emprunter } });
+        toast('Emprunté jusqu’à minuit. Mets-le dans ton deck.');
+        S.carte = null;
+      } else if (d.donne) {
+        await ensemble('/echange', { method: 'POST', body: { id, donne: d.donne, demande: S.echangeAvec } });
+        toast('Échange proposé. À lui de répondre.');
+        S.carte = null;
+        S.echangeAvec = null;
+      } else if (d.echoui || d.echnon) {
+        const r = await ensemble('/echange/reponse', { method: 'POST',
+          body: { echange: d.echoui ?? d.echnon, ok: Boolean(d.echoui) } });
+        if (r.etat === 'acceptee') {
+          window.FX?.son?.('parfait');
+          moment('ÉCHANGE FAIT !', r.recu?.nom ?? '');
+        }
+      }
+    } catch (err) {
+      if (err.message === 'auth') return;
+      toast(dire(err), { erreur: true });
+    }
+    await chargerFiche();
+    return;
+  }
 
   /* Les dépliages — le choix du KOP, « ⋯ » — ne touchent pas au serveur. Un
      seul à la fois : ouvrir l'un sous un ami referme l'autre. Le focus revient
@@ -789,7 +1185,7 @@ $('corps').onclick = async (e) => {
   b.disabled = true;
   try {
     if (d.demander) { await api('/demande', { method:'POST', body:{ id: d.demander } });
-      toast('Demande envoyée.'); }
+      toast('Demande envoyée. Dès qu’il accepte, vous pourrez jouer ensemble.'); }
     /* Accepter ne dit plus « Vous êtes amis » dans un toast : la relecture
        qui suit trouve le nouvel ami, et la case NOUVEL AMI le fête (voir
        `feterLesNouveaux`). Deux messages pour un geste, c'est un de trop. */

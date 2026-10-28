@@ -1,0 +1,60 @@
+{
+  "id": "AN66",
+  "rev": 8,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "b13075c2b4c5"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "bda04bf71ea5",
+          "cligne": true
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "af96406eaa8d",
+          "cligne": true
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "fe4f92e828cb",
+          "cligne": true
+        }
+      }
+    }
+  }
+}

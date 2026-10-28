@@ -204,7 +204,14 @@ for (const f of ['amisPresents', 'aPrevenir']) {
     } finally { appelsPresence.push({ f, t: 'fin', id: String(userId) }); }
   };
 }
+/* Les files du duel, telles que `nvn.filesParMatch` les rend : une qui
+   attend, une vide. Lues par `/a-jouer`. */
+let filesDuelFaux = [
+  { fixtureId: 7001, format: '2v2', attendus: 2, camps: [1, 0], clubs: [], mode: 'classe' },
+  { fixtureId: 7002, format: '1v1', attendus: 1, camps: [0, 0], clubs: [], mode: 'classe' },
+];
 const virage = createVirage({ pool, io, souvenirs, fanzzy, niveau, presence: presenceVue,
+  filesDuel: () => filesDuelFaux,
   requireAuth: (r, _s, n) => { r.user = { id: identite }; n(); },
   jourDuFoot: () => (typeof journee === 'function' ? journee() : journee) });
 presence.brancher({ estAuVirage: virage.estAuVirage, estEnDuel: () => false });
@@ -908,6 +915,27 @@ check('la foule compte les deux tribunes', crowd[0] === 2 && crowd[1] === 1);
   const r = await fetch(`${url}/api/virage/live`).then((x) => x.json());
   const par = (id) => (r.matchs ?? []).find((m) => Number(m.id) === id);
   const m = par(7001);
+
+  /* `/a-jouer` (pages MATCHS et COMPÉTITIONS) : les tribunes où l'on pousse,
+     comptées comme `/live`, et les seules files où quelqu'un attend. */
+  {
+    const aj = await fetch(`${url}/api/virage/a-jouer`).then((x) => x.json());
+    const pleines = (r.matchs ?? []).filter((x) => x.crowd[0] + x.crowd[1] > 0);
+    check('/a-jouer compte les tribunes comme /live',
+      pleines.every((x) => aj.foules.some((f) => f.fixtureId === Number(x.id)
+        && f.crowd.join() === x.crowd.join()))
+      && aj.foules.every((f) => f.crowd[0] + f.crowd[1] > 0)
+      || (console.log('        ', JSON.stringify(aj.foules)), false));
+    check('/a-jouer ne donne que les files où quelqu’un attend, sans nom',
+      JSON.stringify(aj.duels) === JSON.stringify([
+        { fixtureId: 7001, format: '2v2', attendus: 2, camps: [1, 0] }])
+      || (console.log('        ', JSON.stringify(aj.duels)), false));
+    const garde = filesDuelFaux;
+    filesDuelFaux = null;
+    const sans = await fetch(`${url}/api/virage/a-jouer`).then((x) => x.json());
+    check('/a-jouer tient sans le duel', Array.isArray(sans.duels) && sans.duels.length === 0);
+    filesDuelFaux = garde;
+  }
 
   check('/live nomme les deux équipes par leur identifiant',
     typeof m?.home_id === 'number' && typeof m?.away_id === 'number');

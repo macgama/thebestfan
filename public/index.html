@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (env(safe-area-inset-bottom) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>thebestfan — le jeu des tribunes</title>
 <!-- **Permanent Marker, dans la même ligne qu'Oswald** (lot 2, fin de
      l'hypothèse H3). L'accueil est la seule page de ce lot qui l'emploie, et
@@ -42,11 +42,6 @@
  * Mesuré à 320, 390 et 400 px de large, avant et après : un pixel de haut
  * d'écart au plus. */
 :root{--rail:clamp(64px,calc(var(--colonne) * .155),88px)}
-/* **Le bas qu'on garde** sous les trois pages de cet écran (vitrine, hub,
-   ouverture) : la barre du téléphone telle que Chrome la dit
-   (`env(safe-area-inset-bottom)`), ou celle que le script de tête a
-   déduite quand il ne la dit pas (`--bas-cache`, voir en tête de page). */
-:root{--bas:max(env(safe-area-inset-bottom,0px),var(--bas-cache,0px))}
 /* L'accueil est un écran **plein cadre** : ses deux rails touchent les bords
    par construction, et la scène occupe tout ce qui reste. La gouttière commune
    de `ui.css` — quatorze pixels de chaque côté — y rétrécissait la grille au
@@ -6513,6 +6508,16 @@ async function alerteDuel() {
   // marqué pendant que le téléphone était en poche se verrait trois minutes
   // plus tard, ce qui est pire que de ne rien montrer.
   document.addEventListener('visibilitychange', () => { if (!document.hidden) planifier(0); });
+  /* **Un duel qui s'ouvre ou se vide, sans recharger** (28 octobre 2026).
+     Le tour de veille ne passe que toutes les trois minutes hors match, et
+     une file de duel n'en vit que deux : « Quelqu'un t'attend » ne se
+     voyait qu'en rechargeant. Le rappel du duel lit les files toutes les dix
+     secondes et prévient quand elles changent (`duel-rappel.js`) : on refait
+     un tour tout de suite. Pas pendant un match du joueur — le Virage passe
+     avant, et le tour de vingt-cinq secondes continue. */
+  window.addEventListener('tbf:attentes', () => {
+    if (!document.hidden && !H.live) planifier(0);
+  });
 
   /**
    * La poignée de l'écran, comme `window.FX` pour les effets.

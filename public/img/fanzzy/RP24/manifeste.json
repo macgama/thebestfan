@@ -1,6 +1,6 @@
 {
   "id": "RP24",
-  "rev": 6,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -100,7 +100,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c07087119f22"
+          "sha": "c07087119f22",
+          "cligne": true
         }
       }
     },
@@ -116,7 +117,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "16d5ce20e6d1"
+          "sha": "16d5ce20e6d1",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -140,7 +142,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "984bc2b75917"
+          "sha": "984bc2b75917",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

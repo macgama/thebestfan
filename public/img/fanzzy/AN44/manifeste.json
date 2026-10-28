@@ -1,6 +1,6 @@
 {
   "id": "AN44",
-  "rev": 2,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -49,7 +49,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0525f01d4edd"
+          "sha": "0525f01d4edd",
+          "cligne": true
         }
       }
     },
@@ -100,7 +101,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5ee2452538e4"
+          "sha": "5ee2452538e4",
+          "cligne": true
         }
       }
     },
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "0286ba34992d"
+          "sha": "0286ba34992d",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -127,7 +130,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b084063cf2bc"
+          "sha": "b084063cf2bc",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -151,7 +155,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "785fbc775691"
+          "sha": "785fbc775691",
+          "cligne": true
         }
       }
     }
