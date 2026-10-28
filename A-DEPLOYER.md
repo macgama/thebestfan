@@ -13,6 +13,7 @@ PNG »). Construction seule, **sans schéma**.
   clubs relevés sans couleurs en production les reçoivent (RB Leipzig,
   Alavés, Partizan, Grèce, Chypre, Varnsdorf, Králův Dvůr, clubs omanais…),
   au prochain affichage de leur match. Monori SE reste par défaut.
+
 ---
 
 **Plus de Fanzzy RP et SU clignent** (branche `claude/project-thread-j17xyz`,
