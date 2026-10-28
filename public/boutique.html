@@ -195,11 +195,16 @@
    portent en dessin : on touche celui qu'on habille (c'est le couple
    Fanzzy + âge qui s'achète), puis la bâche or ACHETER, qui confirme ici. */
 .cabine{display:flex;flex-direction:column;align-items:center;gap:14px}
-.cabine-scene{position:relative;width:100%;max-width:360px;height:270px;overflow:hidden;border-radius:8px;
+/* La scène prend la largeur du téléphone, et le Fanzzy la hauteur de la
+   scène : les dessins en pied ont leur marge transparente (près de la moitié
+   pour une tenue), donc `cadrer` mesure ce qui est dessiné et l'agrandit
+   jusqu'à remplir la scène, pieds sur le socle. Avant la mesure, ou si elle
+   échoue, il garde la taille de l'image entière. */
+.cabine-scene{position:relative;width:100%;max-width:440px;height:340px;overflow:hidden;border-radius:8px;
   background:var(--encre);box-shadow:0 0 0 2px var(--encre)}
 .cabine-plaque{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 45%}
 .cabine-scene .tbf-socle{position:absolute;left:50%;bottom:14px;translate:-50% 0;z-index:2}
-.cabine-perso{position:absolute;left:50%;bottom:24px;z-index:3;height:224px;width:auto;max-width:78%;
+.cabine-perso{position:absolute;left:50%;bottom:24px;z-index:3;height:300px;width:auto;max-width:none;
   object-fit:contain;translate:-50% 0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 .cabine-scene .tbf-objet{position:absolute;left:50%;bottom:34px;translate:-50% 0;z-index:3}
 .cabine-scene .tbf-plaque--rond{position:absolute;top:50%;translate:0 -50%;z-index:4}
@@ -210,11 +215,11 @@
 .cabine-nom .tbf-forme{margin-bottom:8px}
 .cabine-nom .tbf-forme[data-rar=epique]{margin-inline:14px}
 .cabine-nom .tbf-forme[data-rar=legendaire]{margin-inline:28px}
-.cabine-effet{margin:0;max-width:360px;font-size:12.5px;line-height:1.45;text-align:center}
+.cabine-effet{margin:0;max-width:440px;font-size:12.5px;line-height:1.45;text-align:center}
 .cabine-pour{margin:0;font-size:13px;text-align:center}
 /* Les vignettes : une rangée qui défile sous le pouce quand il y en a
    beaucoup (Halloween est dessinée sur trente-cinq Fanzzy). */
-.cabine-qui{display:flex;gap:10px;width:100%;max-width:360px;overflow-x:auto;padding:4px 2px 8px;
+.cabine-qui{display:flex;gap:10px;width:100%;max-width:440px;overflow-x:auto;padding:4px 2px 8px;
   scrollbar-width:thin;scroll-snap-type:x proximity}
 .cabine-vignette{position:relative;flex:none;width:60px;height:60px;padding:0;border:0;border-radius:50%;
   background:var(--panneau);box-shadow:0 0 0 2px var(--encre);cursor:pointer;scroll-snap-align:start}
@@ -327,6 +332,29 @@
    puisque le geste n'est plus de payer. */
 .tbf-dial .achat-prix{display:flex;justify-content:center;margin-top:12px}
 
+/* ------------------------------------------------ la vitrine des Ultimate
+
+   Une carte Ultimate se vend par sa grande scène : l'image plein cadre, en
+   9:16 au centre, son propre flou derrière pour tenir la largeur. VOIR LA
+   SCÈNE la joue en vrai (`/ultime.js`) avant d'acheter. Choix de Gaël du
+   28 octobre 2026 : 300 écharpes, les légendaires restent aux boosters. */
+.ult-scene{position:relative;width:100%;max-width:440px;height:400px;overflow:hidden;border-radius:8px;
+  background:var(--encre);box-shadow:0 0 0 2px var(--encre)}
+.ult-flou{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);object-fit:cover;
+  filter:blur(18px) brightness(.55);transform:scale(1.05)}
+.ult-image{position:absolute;left:50%;top:14px;bottom:14px;translate:-50% 0;height:calc(100% - 28px);
+  aspect-ratio:9/16;object-fit:cover;border-radius:6px;box-shadow:0 0 0 2px var(--craie),0 0 0 4px var(--encre),
+  0 10px 24px rgba(0,0,0,.6)}
+.ult-scene .tbf-plaque--rond{position:absolute;top:50%;translate:0 -50%;z-index:4}
+.ult-scene .cabine-avant{left:6px}
+.ult-scene .cabine-apres{right:6px}
+.ult-scene .tbf-tampon{position:absolute;z-index:4;right:14px;top:14px;--rot:8deg}
+.ult-voir{min-width:200px}
+.cabine-vignette--ult>img{border-radius:50%;object-position:50% 25%}
+.tbf-objet--ult{overflow:hidden}
+.tbf-objet--ult>img{width:100%;height:100%;object-fit:cover;object-position:50% 25%;
+  border-radius:inherit;filter:none}
+
 /* tbf-degagement */
 body{padding-bottom:calc(var(--bas) + 40px)}
 .abo-conditions{margin:10px 0 0;font-size:12px;line-height:1.5;text-align:center}
@@ -356,6 +384,9 @@ body{padding-bottom:calc(var(--bas) + 40px)}
   </section>
   <section id="p-tenues" role="tabpanel" aria-labelledby="o-tenues" hidden>
     <div id="cabine"></div>
+  </section>
+  <section id="p-ultimes" role="tabpanel" aria-labelledby="o-ultimes" hidden>
+    <div id="vitrine-ult"></div>
   </section>
   <section id="p-abonnement" role="tabpanel" aria-labelledby="o-abonnement" hidden>
     <div id="rayons"></div>
@@ -462,6 +493,7 @@ const S = {
   tenue: 0,
   avecTenue: true,
   choix: {},         // par tenue, le Fanzzy et l'âge touchés dans la cabine (« RP1:2 »)
+  ult: null,         // la carte Ultimate regardée dans la vitrine (« RP1:2 »)
   dex: null,         // /api/fanzzy/dex — les noms des Fanzzy à chaque âge, pour la cabine
 };
 
@@ -770,6 +802,7 @@ window.addEventListener('tbf:bourse', (e) => {
   rendreUne();
   if (S.rayon === 'equipement') rendreEtal();
   if (S.rayon === 'tenues') rendreCabine();
+  if (S.rayon === 'ultimes') rendreUltimes();
 });
 
 /* ======================================================= l'objet, l'étal */
@@ -789,6 +822,11 @@ window.sansDessin = (img) => {
 function objetHTML(o, taille) {
   const rar = rarDe(o.rar);
   const style = taille ? ` style="--taille:${taille}px"` : '';
+  /* Une carte Ultimate se montre par sa grande scène. */
+  if (o.type === 'ultime' && o.image) {
+    return `<span class="tbf-objet tbf-objet--ult" data-rar="${rar}"${style}><img src="${esc(o.image)}"
+      alt="" decoding="async"></span>`;
+  }
   /* Une tenue se montre portée : le portrait du Fanzzy qui la reçoit. */
   if (o.type === 'tenue' && o.image) {
     return `<span class="tbf-objet" data-rar="${rar}"${style}><img src="${esc(o.image)}"
@@ -1146,6 +1184,7 @@ const MESSAGES = {
   'boutique.error.tenue_inconnue': 'Cette tenue n’est plus en vente.',
   'boutique.error.fanzzy_non_possede': 'Tu ne possèdes pas ce Fanzzy à cet âge.',
   'boutique.error.tenue_deja_posee': 'Ce Fanzzy porte déjà cette tenue.',
+  'boutique.error.ultime_deja': 'Cette carte Ultimate est déjà à toi.',
   'auth.error.unauthenticated': 'Connecte-toi pour acheter.',
 };
 
@@ -1224,6 +1263,7 @@ function ceremonie(o, prix, { geste = null } = {}) {
       const ici = document.querySelector(`#etal [data-id="${CSS.escape(o.id)}"]`)
         ?? (avant?.isConnected ? avant : null)
         ?? document.querySelector(o.type === 'tenue' ? '#cabine [aria-pressed="true"], #cabine button'
+          : o.type === 'ultime' ? '#vitrine-ult [aria-pressed="true"], #vitrine-ult button'
           : '#une .une-lire, #etal .tbf-marche');
       try { ici?.focus?.({ preventScroll: true }); } catch { /* parti */ }
       resoudre();
@@ -1360,6 +1400,53 @@ function choisi(t, liste) {
     ?? dessines.find((c) => !c.possede) ?? dessines[0] ?? null;
 }
 
+/** Ce qui est dessiné dans une image, en fractions de sa taille : la boîte
+    des pixels qui ne sont pas transparents, mesurée une fois par adresse. */
+const DESSINE = new Map();
+function dessine(img) {
+  if (DESSINE.has(img.src)) return DESSINE.get(img.src);
+  let b = null;
+  try {
+    const W = 140, H = Math.max(1, Math.round(W * img.naturalHeight / img.naturalWidth));
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(img, 0, 0, W, H);
+    const a = g.getImageData(0, 0, W, H).data;
+    let x0 = W, y0 = H, x1 = -1, y1 = -1;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (a[(y * W + x) * 4 + 3] < 24) continue;
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    }
+    if (x1 >= x0 && y1 >= y0) b = { x0: x0 / W, x1: (x1 + 1) / W, y0: y0 / H, y1: (y1 + 1) / H };
+  } catch { /* image d'ailleurs ou illisible : on garde l'image entière */ }
+  DESSINE.set(img.src, b);
+  return b;
+}
+
+/** Le Fanzzy de la cabine remplit la scène : le dessin, et non l'image avec
+    sa marge, fait la hauteur voulue ; ses pieds touchent le socle et il est
+    centré sur ce qui est dessiné, pas sur le cadre. */
+function cadrer(img) {
+  const scene = img.closest('.cabine-scene');
+  const b = img.naturalWidth && dessine(img);
+  if (!scene || !b) return;
+  const sol = 24, haut = 14;
+  const L = scene.clientWidth, H = scene.clientHeight;
+  const r = img.naturalWidth / img.naturalHeight;
+  let h = (H - sol - haut) / (b.y1 - b.y0);
+  /* Un dessin très large (une créature, un drapeau) ne sort pas de la scène
+     ni ne passe sous les flèches. */
+  const large = (L - 96) / ((b.x1 - b.x0) * r);
+  if (large < h) h = large;
+  img.style.height = `${h}px`;
+  img.style.bottom = `${sol - (1 - b.y1) * h}px`;
+  img.style.translate = `calc(-50% + ${(0.5 - (b.x0 + b.x1) / 2) * h * r}px) 0`;
+}
+
 function rendreCabine() {
   const tenues = S.etal?.tenues ?? [];
   const el = $('cabine');
@@ -1402,7 +1489,8 @@ function rendreCabine() {
       <div class="tbf-projecteurs" aria-hidden="true"></div>
       <span class="tbf-socle" aria-hidden="true"></span>
       ${montre
-        ? `<img class="cabine-perso" src="${esc(montre)}" alt="${esc(`${t.nom}, porté par ${m.nom}`)}" data-vivant="${esc(m.id)}">`
+        ? `<img class="cabine-perso" src="${esc(montre)}" alt="${esc(`${t.nom}, porté par ${m.nom}`)}" data-vivant="${esc(m.id)}"
+            onload="cadrer(this)">`
         : `<span class="tbf-objet tbf-objet--vide" data-rar="${rar}" style="--taille:140px" role="img"
             aria-label="${esc(`${t.nom} — aucun de tes Fanzzy ne la porte encore en dessin`)}"></span>`}
       ${tenues.length > 1 ? `<button type="button" class="tbf-plaque tbf-plaque--rond cabine-avant" data-tenue="-1"
@@ -1646,6 +1734,149 @@ $('rayons').addEventListener('click', async (e) => {
   }
 });
 
+/* ============================================================ les Ultimate
+
+   Une carte Ultimate par âge atteint de chaque Fanzzy du joueur, au même
+   prix (`etal.ultime`, 300 écharpes). Le serveur ne liste que celles qui se
+   vendent : pas de légendaire, et seulement là où l'image est faite. Celles
+   qu'on a déjà restent dans la rangée, marquées À TOI : la vitrine dit aussi
+   ce qu'on a. On arrive sur la première qui manque. */
+const cleUlt = (u) => `${u.fanzzy}:${u.stade}`;
+
+function ultRegardee() {
+  const l = S.etal?.ultimes ?? [];
+  return l.find((u) => cleUlt(u) === S.ult) ?? l.find((u) => !u.possede) ?? l[0] ?? null;
+}
+
+function rendreUltimes() {
+  const l = S.etal?.ultimes ?? [];
+  const el = $('vitrine-ult');
+  const u = ultRegardee();
+  if (!u) { el.innerHTML = ''; return; }
+  S.ult = cleUlt(u);
+  const assez = S.echarpes >= u.prix;
+  const geste = u.possede
+    ? `<span class="tbf-plaque tbf-bloc cabine-deja" aria-disabled="true">DÉJÀ À TOI</span>`
+    : `<button type="button" class="tbf-plaque tbf-bloc" data-ton="or" data-acheter-ult
+        aria-label="${esc(`Acheter l’Ultimate de ${u.nom}, âge ${u.stade} — ${u.prix} écharpes`)}">ACHETER${prixHTML(u.prix)}</button>`;
+  const qui = l.length > 1 ? `<div class="cabine-qui" role="group" aria-label="Quelle carte Ultimate">${
+    l.map((x) => `<button type="button" class="cabine-vignette cabine-vignette--ult" data-ult="${esc(cleUlt(x))}"
+      aria-pressed="${x === u}" aria-label="${esc(`${x.nom}, âge ${x.stade}${x.possede ? ', déjà à toi' : ''}`)}">
+      <img src="${esc(x.image)}" alt="" decoding="async" loading="lazy">
+      ${x.possede ? '<span class="tbf-tampon tbf-tampon--plein" data-ton="vert" aria-hidden="true">À TOI</span>' : ''}
+    </button>`).join('')}</div>` : '';
+
+  el.innerHTML = `<div class="cabine">
+    <div class="ult-scene">
+      <img class="ult-flou" src="${esc(u.image)}" alt="" aria-hidden="true">
+      <img class="ult-image" src="${esc(u.image)}" alt="${esc(`L’Ultimate de ${u.nom}, âge ${u.stade}`)}">
+      ${u.possede ? '<span class="tbf-tampon tbf-tampon--plein" data-ton="vert">À TOI</span>' : ''}
+      ${l.length > 1 ? `<button type="button" class="tbf-plaque tbf-plaque--rond cabine-avant" data-pas-ult="-1"
+          aria-label="L’Ultimate précédente">${CHEVRON('M15 5l-7 7 7 7')}</button>
+        <button type="button" class="tbf-plaque tbf-plaque--rond cabine-apres" data-pas-ult="1"
+          aria-label="L’Ultimate suivante">${CHEVRON('M9 5l7 7-7 7')}</button>` : ''}
+    </div>
+    <div class="cabine-nom">
+      <b class="tbf-banderole">${esc(u.cri ? u.cri.toUpperCase() : 'ULTIMATE')}</b>
+    </div>
+    <p class="cabine-effet">La grande scène de son coup fatal, en plein écran, et sa carte dans ton album. Elle ne pousse pas plus fort : tout le monde a son Ultimate.</p>
+    <button type="button" class="tbf-plaque ult-voir" data-ton="violet" data-voir-ult>VOIR LA SCÈNE</button>
+    <p class="cabine-pour">Pour <b>${esc(u.nom)}</b>, âge ${u.stade}</p>
+    ${qui}
+    <div class="cabine-achat">${geste}</div>
+    ${u.possede || assez ? '' : `<a class="cabine-gagner" href="/virage" aria-label="${esc(
+      `Il t’en manque ${u.prix - S.echarpes} : où gagner des écharpes`)}">${ecartHTML(u.prix)}${GAGNER}</a>`}
+  </div>`;
+  el.querySelector('[aria-pressed="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
+}
+
+/** La grande scène, jouée comme au duel : le Fanzzy qui pousse, son cri. */
+function jouerUltime(u) {
+  const src = window.TBF_ETATS?.resoudre?.(u.fanzzy, { evo: u.stade, etat: 'pousse' })?.src ?? u.image;
+  window.TBF_ULTIME?.scene?.({ src, cri: u.cri, nom: u.nom, grande: true, racine: u.fanzzy, age: u.stade });
+}
+
+$('vitrine-ult').addEventListener('click', (e) => {
+  const l = S.etal?.ultimes ?? [];
+  const pas = e.target.closest('[data-pas-ult]');
+  if (pas && l.length) {
+    const i = l.findIndex((x) => cleUlt(x) === S.ult);
+    S.ult = cleUlt(l[(i + Number(pas.dataset.pasUlt) + l.length) % l.length]);
+    rendreUltimes();
+    $('vitrine-ult').querySelector(`[data-pas-ult="${pas.dataset.pasUlt}"]`)?.focus({ preventScroll: true });
+    return;
+  }
+  const v = e.target.closest('[data-ult]');
+  if (v) {
+    S.ult = v.dataset.ult;
+    rendreUltimes();
+    $('vitrine-ult').querySelector('[aria-pressed="true"]')?.focus({ preventScroll: true });
+    return;
+  }
+  const u = ultRegardee();
+  if (u && e.target.closest('[data-voir-ult]')) { jouerUltime(u); return; }
+  const b = e.target.closest('[data-acheter-ult]');
+  if (b) acheterUltime(b);
+});
+
+/** Acheter la carte Ultimate regardée, sans quitter la boutique : le même
+    chemin que la tenue (la boîte, le débit relu par le serveur, la cérémonie). */
+async function acheterUltime(bouton) {
+  const u = ultRegardee();
+  if (!u || u.possede || enAchat) return;
+  const prix = Number(u.prix) || 0;
+  const o = { type: 'ultime', id: u.fanzzy, nom: `Ultimate de ${u.nom}`, rar: 'epique', image: u.image, prix,
+    texte: 'La grande scène de son coup fatal, et sa carte dans ton album.' };
+  const pour = `Pour ${u.nom}, à l’âge ${u.stade}.`;
+  if (S.echarpes < prix) {
+    const manque = prix - S.echarpes;
+    if (await window.TBF_DIALOGUE?.confirmer({
+      titre: 'ULTIMATE',
+      texte: `${pour} Il t’en manque ${manque} : les écharpes se gagnent en jouant, dans le Virage ou en duel.`,
+      corps: boiteObjet(o, { prix: true }),
+      oui: `GAGNER ${pluriel(manque, 'ÉCHARPE', 'ÉCHARPES')}`, non: 'FERMER', ton: 'vert',
+    })) location.href = '/virage';
+    return;
+  }
+  const ecr = pluriel(prix, 'écharpe', 'écharpes');
+  if (!(await window.TBF_DIALOGUE?.confirmer({
+    titre: 'ACHETER CETTE ULTIMATE ?',
+    texte: `${pour} ${ecr} seront débitées. Une écharpe dépensée ne revient pas — mais elle se regagne en jouant.`,
+    corps: boiteObjet(o),
+    oui: 'ACHETER', sousOui: ecr, ton: 'or',
+  }))) return;
+
+  enAchat = true;
+  bouton.disabled = true;
+  const avant = S.echarpes;
+  try {
+    const r = await fetch('/api/boutique/depenser', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'ultime', id: u.fanzzy, stage: u.stade }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      toast(MESSAGES[j.error] ?? 'Achat impossible.', { erreur: true });
+      bouton.disabled = false;
+      return;
+    }
+    const apres = Number.isFinite(Number(j.echarpes)) ? Number(j.echarpes) : Math.max(0, avant - prix);
+    S.echarpes = apres;
+    if (S.etat?.wallet) S.etat.wallet.scarves = apres;
+    annoncer({ scarves: apres });
+    const fete = ceremonie(o, prix, { geste: { libelle: 'VOIR LA SCÈNE', faire: () => jouerUltime(u) } });
+    await monterEtal();
+    await fete;
+  } catch {
+    toast('Le serveur n’a pas répondu — on ne sait pas si l’achat est passé. '
+      + 'Vérifie ton solde avant de réessayer.', { erreur: true, ms: 8000 });
+    await monterEtal().catch(() => { bouton.disabled = false; });
+  } finally {
+    enAchat = false;
+  }
+}
+
 /* ============================================================ les rayons
 
    Un onglet par rayon qui a quelque chose à montrer — jamais un onglet vide.
@@ -1658,6 +1889,7 @@ function rayons() {
   return [
     (S.etal?.stuff ?? []).length ? { id: 'equipement', nom: 'ÉQUIPEMENT' } : null,
     (S.etal?.tenues ?? []).length ? { id: 'tenues', nom: 'TENUES' } : null,
+    (S.etal?.ultimes ?? []).length ? { id: 'ultimes', nom: 'ULTIMATE' } : null,
     abo ? { id: 'abonnement', nom: 'ABONNEMENT' } : null,
   ].filter(Boolean);
 }
@@ -1675,10 +1907,11 @@ function montrerRayon(id, { colle = false } = {}) {
   const l = rayons();
   if (!l.some((r) => r.id === id)) id = l[0]?.id ?? null;
   S.rayon = id;
-  for (const r of ['equipement', 'tenues', 'abonnement']) $(`p-${r}`).hidden = r !== id;
+  for (const r of ['equipement', 'tenues', 'ultimes', 'abonnement']) $(`p-${r}`).hidden = r !== id;
   rendreRail();
   if (id === 'equipement') rendreEtal({ colle });
   if (id === 'tenues') rendreCabine();
+  if (id === 'ultimes') rendreUltimes();
   if (id) memoire.ecrire('tbf-boutique-rayon', id);
   if (id && l.length > 1) history.replaceState(null, '', `#${id}`);
 }
@@ -1727,6 +1960,7 @@ async function monterEtal() {
   rendreUne();
   if (S.rayon === 'equipement') rendreEtal();
   if (S.rayon === 'tenues') rendreCabine();
+  if (S.rayon === 'ultimes') rendreUltimes();
   rendreRail();
 }
 
@@ -1762,7 +1996,7 @@ async function monter() {
 
   const demande = location.hash.slice(1);
   const voulu = retourStripe ? 'abonnement'
-    : (['equipement', 'tenues', 'abonnement'].includes(demande) ? demande : memoire.lire('tbf-boutique-rayon'));
+    : (['equipement', 'tenues', 'ultimes', 'abonnement'].includes(demande) ? demande : memoire.lire('tbf-boutique-rayon'));
   montrerRayon(voulu, { colle: true });
 }
 
@@ -1772,6 +2006,8 @@ monter();
      cérémonie d'achat (`FX.reveler`). La page reste juste sans eux — le
      chiffre saute, rien ne vole, l'objet est simplement là. -->
 <script src="/fx.js" defer></script>
+<!-- La grande scène des Ultimate, que la vitrine fait voir avant l'achat. -->
+<script src="/ultime.js" defer></script>
 <script src="/pwa.js" defer></script>
 </body>
 </html>

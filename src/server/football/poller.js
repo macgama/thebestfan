@@ -1,4 +1,5 @@
 import { QuotaExhausted } from './client.js';
+import { remettreLesCamps } from './camps.js';
 
 /* ------------------------------------------------------- normalisation */
 
@@ -439,7 +440,15 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
        base, pas de l'API. */
     if (!histoires.has(f.id)) histoires.set(f.id, known.length > 0);
     const rows = await client.eventsOfFixture(f.id);
-    const events = rows.map(mapEvent);
+    /* **Le camp de chaque but, d'accord avec le tableau** (`camps.js`) :
+       l'API range parfois un but sous l'autre équipe. Corrigé avant tout le
+       reste — la base, le fil, la corde et la carte voient le même camp, et
+       le relevé suivant, corrigé pareil, garde la même identité. */
+    const { evenements: events, corriges } = remettreLesCamps(rows.map(mapEvent), {
+      homeId: f.teams?.home?.id, awayId: f.teams?.away?.id,
+      home: f.homeGoals, away: f.awayGoals,
+    }, estUnBut);
+    if (corriges) log.warn(`[foot] ${f.id} : ${corriges} but(s) changé(s) de camp pour suivre le tableau`);
     releves.set(f.id, Date.now());
 
     const dejaVus = new Set(known.map(identite));

@@ -16,6 +16,36 @@ Construction seule, **sans schéma** (images et index.json).
 
 ---
 
+**Les tenues en grand et les Ultimate en écharpes** (branche
+`claude/project-thread-mjslw4`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Boutique, TENUES : la scène est plus grande et le Fanzzy en tenue la remplit
+  (le dessin, pas sa marge transparente), pieds sur le socle.
+- Boutique, nouveau rayon ULTIMATE : la carte Ultimate d'un âge atteint d'un
+  Fanzzy possédé, 300 écharpes (réglage « Une carte Ultimate » dans /admin,
+  section de l'étal), seulement si son image existe, jamais celle d'un
+  légendaire. VOIR LA SCÈNE la joue avant l'achat. QUESTIONS et Comment jouer
+  le disent.
+- Après la mise en ligne : sur le S24+, /boutique#tenues puis #ultimes.
+
+---
+
+**Le but dans le bon camp** (branche `claude/project-thread-qjbce6`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- FC Sion – Lausanne du 25 octobre (1-0) : la carte du but de Blin portait
+  l'écusson de Lausanne et 0-1, parce que l'API avait rangé le but sous
+  Lausanne. Le score du match fait maintenant foi : un but que l'API range
+  dans le mauvais camp est remis dans le bon (corde, fil et carte compris).
+- Les cartes déjà frappées se réparent toutes seules au démarrage, puis
+  chaque heure. Le journal du serveur dit combien :
+  « [souvenirs] N carte(s) remise(s) dans le bon camp ».
+- Après la mise en ligne : rouvrir la carte de Blin dans le carnet, elle doit
+  montrer l'écusson de Sion et 1-0.
+
+---
+
 **Le tutoriel à niveau** (branche `claude/project-thread-7ad2lr`, 28 octobre
 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
@@ -213,8 +243,8 @@ appui). Construction seule, **sans schéma**.
 Construction seule, **sans schéma**.
 
 - 36 Fanzzy (trois par club), trois âges, qui clignent ; dos de carte SU.
-- 244 skins sur 324 (Halloween, Préhistorique, Apocalyptique) ; un skin
-  manquant montre la tenue de base. Liste des 80 à refaire :
+- 283 skins sur 324 (Halloween, Préhistorique, Apocalyptique) ; un skin
+  manquant montre la tenue de base. Liste des 41 à refaire :
   fanzzy-prompts/SU-generation/skins-manquants.md.
 - Pour l'ouvrir aux joueurs : /admin, onglet des Fanzzy, cocher la série SU.
 - Ultimate SU : pas encore (après le 2 novembre).

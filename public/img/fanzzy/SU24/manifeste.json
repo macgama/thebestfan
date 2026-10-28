@@ -1,6 +1,6 @@
 {
   "id": "SU24",
-  "rev": 9,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7a202908d739",
+          "sha": "661c13cce8f9",
           "cligne": true
         },
         "halloween": {
@@ -26,7 +26,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "bb163dcf76b0",
+          "sha": "5684b6ec9f2d",
           "cligne": true
         },
         "prehistorique": {
@@ -39,7 +39,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "28bd43d5ecd3"
+          "sha": "25d33b1ad0f0"
         }
       }
     },
@@ -54,7 +54,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "184aa5ea0893",
+          "sha": "9baccd8e54e2",
           "cligne": true
         },
         "apocalyptique": {
@@ -67,7 +67,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c00fa34b97b3",
+          "sha": "8a9f6751e685",
           "cligne": true
         },
         "halloween": {
@@ -80,8 +80,20 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4a7b7618e636",
+          "sha": "78fb3563bda9",
           "cligne": true
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "eac187c3d2f6"
         }
       }
     },
@@ -115,11 +127,16 @@
     }
   },
   "retailles": {
-    "e2/apocalyptique/neutre": 1.132,
-    "e2/apocalyptique/joie": 1.132,
-    "e2/apocalyptique/colere": 1.132,
-    "e2/apocalyptique/depit": 1.132,
-    "e2/apocalyptique/pousse": 1.132,
-    "e2/apocalyptique/cligne": 1.132
+    "e1/prehistorique/neutre": 0.929,
+    "e1/prehistorique/joie": 0.929,
+    "e1/prehistorique/colere": 0.929,
+    "e1/prehistorique/depit": 0.929,
+    "e1/prehistorique/pousse": 0.929,
+    "e2/apocalyptique/neutre": 1.133,
+    "e2/apocalyptique/joie": 1.133,
+    "e2/apocalyptique/colere": 1.133,
+    "e2/apocalyptique/depit": 1.133,
+    "e2/apocalyptique/pousse": 1.133,
+    "e2/apocalyptique/cligne": 1.133
   }
 }
