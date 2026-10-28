@@ -1,6 +1,6 @@
 {
   "id": "AN18",
-  "rev": 12,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -164,5 +164,17 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/joie": 1.235,
+    "e3/halloween/neutre": 0.929,
+    "e3/halloween/joie": 0.929,
+    "e3/halloween/colere": 0.929,
+    "e3/halloween/depit": 0.929,
+    "e3/halloween/pousse": 0.929,
+    "e3/halloween/cligne": 0.929,
+    "e1/prehistorique/colere": 1.45,
+    "e1/prehistorique/depit": 1.273,
+    "e1/prehistorique/pousse": 1.441
   }
 }

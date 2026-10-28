@@ -1,6 +1,6 @@
 {
   "id": "AN52",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -163,5 +163,13 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/neutre": 0.937,
+    "e1/prehistorique/joie": 0.937,
+    "e1/prehistorique/colere": 0.937,
+    "e1/prehistorique/depit": 0.937,
+    "e1/prehistorique/pousse": 0.937,
+    "e2/base/colere": 0.87
   }
 }

@@ -1,6 +1,6 @@
 {
   "id": "RP23",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -164,5 +164,19 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/neutre": 0.876,
+    "e1/prehistorique/joie": 0.876,
+    "e1/prehistorique/colere": 0.876,
+    "e1/prehistorique/depit": 0.876,
+    "e1/prehistorique/pousse": 0.876,
+    "e1/prehistorique/cligne": 0.876,
+    "e3/halloween/neutre": 1.072,
+    "e3/halloween/joie": 1.072,
+    "e3/halloween/colere": 1.072,
+    "e3/halloween/depit": 1.072,
+    "e3/halloween/pousse": 1.072,
+    "e3/halloween/cligne": 1.072
   }
 }

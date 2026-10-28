@@ -1,6 +1,6 @@
 {
   "id": "AN59",
-  "rev": 12,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -165,5 +165,26 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/halloween/neutre": 1.127,
+    "e1/halloween/joie": 1.127,
+    "e1/halloween/colere": 1.127,
+    "e1/halloween/depit": 1.127,
+    "e1/halloween/pousse": 1.127,
+    "e1/halloween/cligne": 1.127,
+    "e2/halloween/neutre": 1.076,
+    "e2/halloween/joie": 1.076,
+    "e2/halloween/colere": 1.076,
+    "e2/halloween/depit": 1.076,
+    "e2/halloween/pousse": 1.076,
+    "e2/halloween/cligne": 1.076,
+    "e3/base/depit": 1.45,
+    "e3/halloween/neutre": 1.071,
+    "e3/halloween/joie": 1.071,
+    "e3/halloween/colere": 1.071,
+    "e3/halloween/depit": 1.071,
+    "e3/halloween/pousse": 1.071,
+    "e3/halloween/cligne": 1.071
   }
 }

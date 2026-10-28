@@ -1,6 +1,6 @@
 {
   "id": "AN58",
-  "rev": 14,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -167,5 +167,11 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/prehistorique/joie": 1.45,
+    "e2/prehistorique/colere": 1.298,
+    "e2/prehistorique/depit": 1.45,
+    "e2/prehistorique/pousse": 1.435
   }
 }

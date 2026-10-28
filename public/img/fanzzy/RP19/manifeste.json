@@ -1,6 +1,6 @@
 {
   "id": "RP19",
-  "rev": 11,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -162,5 +162,12 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/halloween/neutre": 1.133,
+    "e3/halloween/joie": 1.133,
+    "e3/halloween/colere": 1.133,
+    "e3/halloween/depit": 1.133,
+    "e3/halloween/pousse": 1.133
   }
 }

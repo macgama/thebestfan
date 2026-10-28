@@ -1,6 +1,6 @@
 {
   "id": "RP6",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -160,5 +160,12 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/apocalyptique/neutre": 0.841,
+    "e2/apocalyptique/joie": 0.841,
+    "e2/apocalyptique/colere": 0.841,
+    "e2/apocalyptique/depit": 0.841,
+    "e2/apocalyptique/pousse": 0.841
   }
 }

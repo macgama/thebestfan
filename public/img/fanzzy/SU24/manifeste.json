@@ -1,6 +1,6 @@
 {
   "id": "SU24",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -125,5 +125,18 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/neutre": 0.929,
+    "e1/prehistorique/joie": 0.929,
+    "e1/prehistorique/colere": 0.929,
+    "e1/prehistorique/depit": 0.929,
+    "e1/prehistorique/pousse": 0.929,
+    "e2/apocalyptique/neutre": 1.133,
+    "e2/apocalyptique/joie": 1.133,
+    "e2/apocalyptique/colere": 1.133,
+    "e2/apocalyptique/depit": 1.133,
+    "e2/apocalyptique/pousse": 1.133,
+    "e2/apocalyptique/cligne": 1.133
   }
 }

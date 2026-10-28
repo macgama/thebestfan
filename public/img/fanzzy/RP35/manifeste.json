@@ -1,6 +1,6 @@
 {
   "id": "RP35",
-  "rev": 12,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -161,5 +161,12 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/apocalyptique/neutre": 0.915,
+    "e3/apocalyptique/joie": 0.915,
+    "e3/apocalyptique/colere": 0.915,
+    "e3/apocalyptique/depit": 0.915,
+    "e3/apocalyptique/pousse": 0.915
   }
 }
