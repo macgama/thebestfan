@@ -189,6 +189,10 @@ h2{margin:26px 2px 10px}
   .ligne.suivi{flex-wrap:nowrap}
   .ligne.suivi .n{flex:1 1 auto}
 }
+/* Le bouton pour devenir principal : la même craie, en lien, 44 px au doigt. */
+.ligne button.principal{background:none;border:0;color:var(--craie);font-family:var(--banner);
+  font-size:11px;letter-spacing:.12em;font-weight:700;min-height:44px;padding:0 4px;
+  text-decoration:underline;cursor:pointer;white-space:nowrap}
 /* « PRINCIPAL » : la craie en gras dans un cerne d'or plein. */
 .ligne .main{font-family:var(--banner);font-size:11px;letter-spacing:.12em;color:var(--craie);
   font-weight:700;border:1px solid var(--projo);border-radius:4px;padding:2px 6px}
@@ -1605,6 +1609,18 @@ function prixSlot() {
   return typeof p === 'number' && Number.isFinite(p) ? p : null;
 }
 
+/* **Devenir principal** (choix de Gaël du 28 octobre 2026) : un club suivi
+   devient le club principal, une sélection la sélection principale — une
+   fois par saison chacun. Déjà changé cette saison : pas de bouton, la ligne
+   du principal le dit. */
+function boutonPrincipal(f) {
+  const selection = Number(f.national) === 1;
+  if (selection ? f.is_main_nation : f.is_main) return '';
+  if (etat.principalChange?.[selection ? 'selection' : 'club']) return '';
+  return `<button class="v principal" data-principal="${esc(f.team_id)}" data-nom="${esc(f.name ?? '')}"
+    data-selection="${selection ? '1' : ''}">${selection ? 'MA SÉLECTION' : 'PRINCIPAL ?'}</button>`;
+}
+
 function rendreClubs() {
   const libres = Math.max(0, etat.slots.total - etat.slots.used);
   const prix = prixSlot();
@@ -1614,6 +1630,8 @@ function rendreClubs() {
         ${f.logo ? `<img src="${esc(f.logo)}" alt="">` : ''}
         <span class="n">${esc(f.name ?? 'club ' + f.team_id)}</span>
         ${f.is_main ? '<span class="main">PRINCIPAL</span>' : ''}
+        ${f.is_main_nation ? '<span class="main">SÉLECTION</span>' : ''}
+        ${boutonPrincipal(f)}
         <button data-unfollow="${esc(f.team_id)}" data-nom="${esc(f.name ?? '')}"
           aria-label="Ne plus suivre ${esc(f.name ?? 'ce club')}">✕</button>
       </div>`).join('')
@@ -1749,6 +1767,29 @@ $('clubs').addEventListener('click', async (e) => {
     }))) return;
     try { etat = await me('/follow/' + u.dataset.unfollow, undefined, 'DELETE'); rendreClubs(); rendreCarte(); }
     catch (err) { if (err.message !== 'auth') dire('Impossible pour le moment', { erreur: true }); }
+    return;
+  }
+  const p = e.target.closest('[data-principal]');
+  if (p) {
+    const nom = p.dataset.nom || 'ce club';
+    const selection = p.dataset.selection === '1';
+    if (!(await window.TBF_DIALOGUE?.confirmer({
+      titre: selection ? `${nom.toLocaleUpperCase('fr')}, TA SÉLECTION ?` : `${nom.toLocaleUpperCase('fr')}, TON CLUB PRINCIPAL ?`,
+      texte: selection
+        ? 'Tu ne pourras plus changer de sélection principale avant la prochaine saison.'
+        : 'Tu ne pourras plus changer de club principal avant la prochaine saison.',
+      oui: 'OUI', non: 'PAS ENCORE',
+    }))) return;
+    try {
+      etat = await me('/principal', { teamId: Number(p.dataset.principal) });
+      rendreClubs(); rendreCarte();
+      dire(selection ? 'Sélection principale choisie' : 'Club principal changé');
+    } catch (err) {
+      if (err.message === 'auth') return;
+      dire(err.code === 'onboarding.error.principal_saison'
+        ? 'Déjà changé cette saison : à la prochaine'
+        : 'Impossible pour le moment', { erreur: true });
+    }
     return;
   }
   // `closest` : la plaque peut un jour porter une icône, et le clic tomberait

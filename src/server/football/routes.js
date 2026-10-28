@@ -121,6 +121,10 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
       if (e.code === 'onboarding.error.no_slot') {
         return res.status(400).json({ error: e.code, suivis: e.suivis, slots: e.slots });
       }
+      // Le club principal ne change qu'une fois par saison (`principal.js`).
+      if (String(e.code ?? '').startsWith('onboarding.error.principal')) {
+        return res.status(400).json({ error: e.code });
+      }
       console.error('[foot] follow', e.message);
       return fail(res, 'football.error.follow_failed', 500);
     }
