@@ -1,6 +1,6 @@
 {
   "id": "RP10",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -117,7 +117,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e1b8244f1e51"
+          "sha": "6547b3ae39cc"
         },
         "base": {
           "etats": [
@@ -128,7 +128,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5c316f9f2684"
+          "sha": "39998e910bd7"
         },
         "apocalyptique": {
           "etats": [
@@ -140,7 +140,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "60df3c2250a2"
+          "sha": "3281e62b2205"
         },
         "prehistorique": {
           "etats": [
@@ -152,7 +152,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2980c813ab11"
+          "sha": "aa88df9e99a8"
         }
       }
     }

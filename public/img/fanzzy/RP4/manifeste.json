@@ -1,6 +1,6 @@
 {
   "id": "RP4",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -65,7 +65,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "daf6ad3b3e7f"
+          "sha": "0e513d22d3c9"
         },
         "base": {
           "etats": [
@@ -76,7 +76,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "61f6fddc2bc6"
+          "sha": "007169aa304c"
         },
         "apocalyptique": {
           "etats": [
@@ -88,7 +88,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f9b50e89f3a9"
+          "sha": "29133f7e8c99"
         },
         "prehistorique": {
           "etats": [
@@ -100,7 +100,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7c254d01cf63"
+          "sha": "7f0294ce7f7f"
         }
       }
     },
@@ -116,7 +116,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a7dd61990c3f"
+          "sha": "8b0edba211cd"
         },
         "base": {
           "etats": [
@@ -127,7 +127,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "af52c24f9aa1",
+          "sha": "3e9761e2fda5",
           "cligne": true
         },
         "apocalyptique": {
@@ -140,7 +140,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "523a11b1b45a"
+          "sha": "1ff075243086"
         },
         "prehistorique": {
           "etats": [
@@ -152,7 +152,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "48b462afef46"
+          "sha": "0baffc13adea"
         }
       }
     }
