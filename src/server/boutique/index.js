@@ -40,7 +40,7 @@ import express from 'express';
 import crypto from 'node:crypto';
 import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, MONNAIE, RAYONS, enEuros }
   from '../../shared/boutique.js';
-import { etalStuff, etalTenues, prixDe } from '../../shared/etal.js';
+import { etalStuff, etalTenues, prixDe, prixUltime } from '../../shared/etal.js';
 import { STUFF_BY_ID } from '../../shared/fanzzy/inventaire.js';
 import { tenuesPubliees } from '../fanzzy/tenues.js';
 import { ouverts } from '../contenus/index.js';
@@ -438,6 +438,10 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
         .filter((s) => ouverts('stuff').has(s.id)),
       tenues: etalTenues(tenuesPubliees()),
       posees: posees.map((r) => ({ fanzzy: r.fanzzy_id, stade: Number(r.stage), tenue: r.skin_id })),
+      /* Les cartes Ultimate des Fanzzy du joueur, à un prix unique (choix de
+         Gaël du 28 octobre 2026). Un serveur sans le chemin n'en vend pas. */
+      ultimes: prixUltime() === null || !fanzzy.ultimesEnVente ? []
+        : (await fanzzy.ultimesEnVente(req.user.id)).map((u) => ({ ...u, prix: prixUltime() })),
     });
   });
 
@@ -478,9 +482,11 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
 
       const rendu = type === 'stuff'
         ? await fanzzy.remettreStuff(conn, req.user.id, id)
-        : await fanzzy.remettreTenue(conn, req.user.id, {
-          tenue: id, fanzzy: String(req.body?.fanzzy ?? ''), stage: req.body?.stage,
-        });
+        : type === 'ultime'
+          ? await fanzzy.remettreUltime(conn, req.user.id, { fanzzy: id, stage: req.body?.stage })
+          : await fanzzy.remettreTenue(conn, req.user.id, {
+            tenue: id, fanzzy: String(req.body?.fanzzy ?? ''), stage: req.body?.stage,
+          });
 
       const [debit] = await conn.query(
         'UPDATE user_wallet SET scarves = scarves - ? WHERE user_id = ? AND scarves >= ?',

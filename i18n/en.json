@@ -7242,5 +7242,19 @@
  "Comment savoir où l’on joue en ce moment ?": "How do I know where people are playing right now?",
  "Sur MATCHS et dans les compétitions, sous chaque match : la pastille verte VIRAGE dit que sa tribune est ouverte et combien de supporters y poussent, la violette DUEL qu’un joueur y attend un adversaire. Un appui t’y emmène. Le filtre À JOUER de MATCHS ne garde que ces matchs-là.": "On MATCHES and in competitions, under each match: the green THE END badge says its stand is open and how many supporters are pushing, the purple DUEL one that a player is waiting there for an opponent. One tap takes you there. The TO PLAY filter on MATCHES keeps only those matches.",
  "Quelqu’un attend un duel : où le trouver ?": "Someone is waiting for a duel: where do I find it?",
- "Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune qui manque : il ne reste qu’à entrer en file.": "On the duel page, the WAITING tab shows the duels where someone is waiting for a player. One tap picks the match, the format and the missing stand: all that’s left is to join the queue."
+ "Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune qui manque : il ne reste qu’à entrer en file.": "On the duel page, the WAITING tab shows the duels where someone is waiting for a player. One tap picks the match, the format and the missing stand: all that’s left is to join the queue.",
+ "<0>En boutique</0> : la carte Ultimate d’un âge déjà atteint s’achète aussi en écharpes, dans le rayon ULTIMATE. Celles des légendaires restent réservées aux boosters.": "<0>In the shop</0>: the Ultimate card of an age you’ve already reached can also be bought with scarves, in the ULTIMATE aisle. Legendaries’ cards stay booster-only.",
+ "ACHETER CETTE ULTIMATE ?": "BUY THIS ULTIMATE?",
+ "Acheter l’Ultimate de {0}, âge {1} — {2} écharpes": "Buy {0}’s Ultimate, age {1} — {2} scarves",
+ "Cette carte Ultimate est déjà à toi.": "This Ultimate card is already yours.",
+ "La grande scène de son coup fatal, en plein écran, et sa carte dans ton album. Elle ne pousse pas plus fort : tout le monde a son Ultimate.": "The big scene of its finishing move, full screen, and its card in your album. It doesn’t push harder: everyone has their Ultimate.",
+ "La grande scène de son coup fatal, et sa carte dans ton album.": "The big scene of its finishing move, and its card in your album.",
+ "L’Ultimate de {0}, âge {1}": "{0}’s Ultimate, age {1}",
+ "L’Ultimate précédente": "Previous Ultimate",
+ "L’Ultimate suivante": "Next Ultimate",
+ "Oui, dans le rayon ULTIMATE de la boutique, pour {0} écharpes : celle d’un âge que ton Fanzzy a déjà atteint. VOIR LA SCÈNE la montre avant l’achat. Celles des légendaires ne s’achètent pas, elles ne sortent qu’en booster.": "Yes, in the shop’s ULTIMATE aisle, for {0} scarves: the one for an age your Fanzzy has already reached. WATCH THE SCENE shows it before you buy. Legendaries’ cards can’t be bought, they only come in boosters.",
+ "Puis-je acheter une carte Ultimate ?": "Can I buy an Ultimate card?",
+ "Quelle carte Ultimate": "Which Ultimate card",
+ "Ultimate de {0}": "{0}’s Ultimate",
+ "VOIR LA SCÈNE": "WATCH THE SCENE"
 }
