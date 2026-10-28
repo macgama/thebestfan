@@ -1,6 +1,6 @@
 {
   "id": "RP26",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -164,5 +164,19 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/apocalyptique/neutre": 0.925,
+    "e3/apocalyptique/joie": 0.925,
+    "e3/apocalyptique/colere": 0.925,
+    "e3/apocalyptique/depit": 0.925,
+    "e3/apocalyptique/pousse": 0.925,
+    "e3/apocalyptique/cligne": 0.925,
+    "e3/halloween/neutre": 0.936,
+    "e3/halloween/joie": 0.936,
+    "e3/halloween/colere": 0.936,
+    "e3/halloween/depit": 0.936,
+    "e3/halloween/pousse": 0.936,
+    "e3/halloween/cligne": 0.936
   }
 }

@@ -1,6 +1,6 @@
 {
   "id": "SU10",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -133,5 +133,12 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/neutre": 0.875,
+    "e1/prehistorique/joie": 0.875,
+    "e1/prehistorique/colere": 0.875,
+    "e1/prehistorique/depit": 0.875,
+    "e1/prehistorique/pousse": 0.875
   }
 }

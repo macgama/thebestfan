@@ -1,6 +1,6 @@
 {
   "id": "AN6",
-  "rev": 15,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -164,5 +164,26 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/halloween/neutre": 0.936,
+    "e1/halloween/joie": 0.936,
+    "e1/halloween/colere": 0.936,
+    "e1/halloween/depit": 0.936,
+    "e1/halloween/pousse": 0.936,
+    "e1/halloween/cligne": 0.936,
+    "e2/apocalyptique/neutre": 0.838,
+    "e2/apocalyptique/joie": 0.838,
+    "e2/apocalyptique/colere": 0.838,
+    "e2/apocalyptique/depit": 0.838,
+    "e2/apocalyptique/pousse": 0.838,
+    "e2/halloween/neutre": 1.091,
+    "e2/halloween/joie": 1.091,
+    "e2/halloween/colere": 1.091,
+    "e2/halloween/depit": 1.091,
+    "e2/halloween/pousse": 1.091,
+    "e2/halloween/cligne": 1.091,
+    "e3/halloween/joie": 0.87,
+    "e1/apocalyptique/colere": 1.45
   }
 }

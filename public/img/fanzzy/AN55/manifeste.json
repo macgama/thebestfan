@@ -1,6 +1,6 @@
 {
   "id": "AN55",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -163,5 +163,14 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/halloween/neutre": 1.214,
+    "e1/halloween/joie": 1.214,
+    "e1/halloween/colere": 1.214,
+    "e1/halloween/depit": 1.214,
+    "e1/halloween/pousse": 1.214,
+    "e1/halloween/cligne": 1.214,
+    "e2/base/joie": 1.145
   }
 }

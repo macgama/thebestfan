@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**La taille des Fanzzy par âge, skin et état** (branche
+`claude/project-thread-gtu1ix`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** (images et index.json).
+
+- Mesuré par les yeux sur les 139 Fanzzy : ce qui dépasse au-dessus de la
+  tête (chapeau de sorcière, canne, parapluie, couronne) ne fait plus
+  rapetisser le Fanzzy. 64 âges grandissent mieux d'un âge à l'autre, ~130
+  skins ont la taille de leur base, ~75 expressions de skins dessinées trop
+  petites ont la taille de leur repos.
+- Table : `scripts/tailles-fanzzy.mjs` ; outil : `npm run retailler` (à
+  relancer après avoir repassé un Fanzzy dans la chaîne) ; suite `tailles:test`.
+- Après la mise en ligne : sur le S24+, la fiche d'AN1 en Halloween à l'âge 2
+  (ses expressions), AN10 à l'âge 3.
+
+---
+
 **Les tenues en grand et les Ultimate en écharpes** (branche
 `claude/project-thread-mjslw4`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.

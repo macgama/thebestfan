@@ -1,6 +1,6 @@
 {
   "id": "SU31",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -159,5 +159,29 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/halloween/neutre": 1.067,
+    "e1/halloween/joie": 1.067,
+    "e1/halloween/colere": 1.067,
+    "e1/halloween/depit": 1.067,
+    "e1/halloween/pousse": 1.067,
+    "e2/apocalyptique/neutre": 0.831,
+    "e2/apocalyptique/joie": 0.831,
+    "e2/apocalyptique/colere": 0.831,
+    "e2/apocalyptique/depit": 0.831,
+    "e2/apocalyptique/pousse": 0.831,
+    "e2/prehistorique/neutre": 0.871,
+    "e2/prehistorique/joie": 0.871,
+    "e2/prehistorique/colere": 0.871,
+    "e2/prehistorique/depit": 0.871,
+    "e2/prehistorique/pousse": 0.871,
+    "e2/prehistorique/cligne": 0.871,
+    "e3/halloween/neutre": 1.098,
+    "e3/halloween/joie": 1.098,
+    "e3/halloween/colere": 1.098,
+    "e3/halloween/depit": 1.098,
+    "e3/halloween/pousse": 1.098,
+    "e3/halloween/cligne": 1.098
   }
 }

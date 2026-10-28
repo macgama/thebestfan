@@ -1,6 +1,6 @@
 {
   "id": "SU20",
-  "rev": 11,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -163,5 +163,13 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/neutre": 0.908,
+    "e1/prehistorique/joie": 0.908,
+    "e1/prehistorique/colere": 0.908,
+    "e1/prehistorique/depit": 0.908,
+    "e1/prehistorique/pousse": 0.908,
+    "e1/prehistorique/cligne": 0.908
   }
 }
