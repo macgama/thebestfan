@@ -10,6 +10,7 @@ import { AVATAR_PUBLIC } from '../fanzzy/avatar.js';
 // écrite une seule fois. Elle remplace un `suivis[0]` qui laissait l'ordre
 // de la base décider du camp dans un derby.
 import { clubSoutenu } from '../football/suivis.js';
+import { principauxDe } from '../football/principal.js';
 // La journée du football, lue une fois pour tous ceux qui en ont besoin :
 // le Virage ici, le choix du match support dans deck/.
 import { journeeParId } from '../football/journee.js';
@@ -882,9 +883,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         // Le cri de son club, à la place du sien : sa voix, pas son geste.
         perso = avecCriDuClub(perso, teamId);
         /* **Le PLEIN CLUB** : ses pièces de club, dans un match de son club
-           principal, rapportent en plus — de la ferveur, jamais de la force. */
-        const principal = (await q(`SELECT team_id FROM user_follows
-          WHERE user_id = ? AND is_main = 1 LIMIT 1`, [u.userId]).catch(() => []))[0]?.team_id ?? null;
+           principal ou de sa sélection principale, rapportent en plus — de la ferveur, jamais de la force. */
+        const principal = Object.values(await principauxDe(q, u.userId));
         plein = pleinClub({ fanzzyId: hero.id, clubAchete, stuff: sac, teamId, principal, match });
         if (plein) lien.ferveurBonus *= facteurPleinClub(plein);
         for (const [cle, v] of Object.entries(lien)) {
