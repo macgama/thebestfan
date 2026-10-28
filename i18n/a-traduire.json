@@ -1,1 +1,851 @@
-{}
+{
+ "Antigua and Barbuda": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bosnia and Herzegovina": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bosnia": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Brunei Darussalam": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bonaire": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Congo DR": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DR Congo": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Congo": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ivory Coast": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "China PR": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Cape Verde Islands": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Czech Republic": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Great Britain": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Hong Kong": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Republic of Ireland": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Kyrgyz Republic": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "St Kitts and Nevis": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Saint Kitts and Nevis": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Korea DPR": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Korea Republic": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Saint Lucia": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Macedonia": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FYR Macedonia": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Myanmar": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Macau": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Macao": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tahiti": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Palestine": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Sao Tome and Principe": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Swaziland": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "East Timor": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Turkey": {
+  "ou": [
+   "public/pays.js",
+   "src/server/football/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Trinidad and Tobago": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Chinese Taipei": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "USA": {
+  "ou": [
+   "public/pays.js",
+   "src/server/football/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "St Vincent and the Grenadines": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Saint Vincent and the Grenadines": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "US Virgin Islands": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "République tchèque": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tschechische Republik": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Repubblica Ceca": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "República Checa": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "RD Congo": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "RDC": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Amérique": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Amerika": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Grande-Bretagne": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Großbritannien": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Gran Bretagna": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Gran Bretaña": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "HK": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "MO": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "PS": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Taipei chinois": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "BU": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "CS": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DD": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DY": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "EU": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "EZ": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FX": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "HV": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "NH": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "QO": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "RH": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SU": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "TP": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UK": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UN": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VD": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "XA": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "XB": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "YD": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "YU": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "ZR": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "ZZ": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "name LIKE CONCAT(?, ’ %’)": {
+  "ou": [
+   "src/server/football/store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ }
+}
