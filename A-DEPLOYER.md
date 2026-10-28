@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**L'onglet EN ATTENTE sur la page du duel** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, choix de Gaël : « un bouton
+de plus "Duel en attente de joueur" », toujours là). Construction seule,
+**sans schéma**.
+
+- À côté de MES CLUBS et TOUS LES MATCHS : EN ATTENTE, avec le nombre de
+  duels qui attendent un joueur (grisé à 0). Un appui choisit le match, le
+  format et la tribune qui manque ; traduit dans les cinq langues, et ajouté à
+  /comment-jouer.
+- Après la mise en ligne : sur le PC, entrer en file ; sur le S24+, ouvrir
+  DUEL, l'onglet doit dire 1, puis un appui sur EN ATTENTE.
+
+---
+
 **Les duels qui attendent se voient sans recharger** (branche
 `claude/project-thread-sxsj06`, 28 octobre 2026, demandé par Gaël : il
 fallait rafraîchir la page pour savoir que quelqu'un attendait un duel).
