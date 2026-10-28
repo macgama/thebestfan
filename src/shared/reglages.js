@@ -571,6 +571,15 @@ export const REGLAGES = [
     aide: 'Le même prix quelle que soit la rareté : une tenue ne change rien au jeu, ' +
       'elle change ce qu’on regarde.' },
 
+  /* L'Ultimate d'un âge, en écharpes (choix de Gaël du 28 octobre 2026 :
+     « 300 écharpes, légendaires exclus »). Visuel à collectionner : il ne
+     pousse pas plus fort, il débloque la grande scène (`shared/ultime.js`). */
+  { cle: 'etal.ultime', section: 'etal', type: 'entier',
+    titre: 'Une carte Ultimate, pour un âge d’un Fanzzy', unite: 'écharpes', min: 1, max: 9999, defaut: 300,
+    aide: 'Le même prix à tous les âges. Seulement pour un âge déjà atteint d’un Fanzzy qu’on ' +
+      'possède, et dont l’image Ultimate est faite. Celles des légendaires ne s’achètent pas : ' +
+      'elles ne sortent qu’en booster, comme les pièces légendaires. Le booster continue d’en donner.' },
+
   /* ------------------------------------------------------- exploitation */
   { cle: 'annonce.actif', section: 'exploitation', type: 'booleen',
     titre: 'Afficher un bandeau d’annonce', defaut: false,

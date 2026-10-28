@@ -7242,5 +7242,19 @@
  "Comment savoir où l’on joue en ce moment ?": "Come so dove si gioca in questo momento?",
  "Sur MATCHS et dans les compétitions, sous chaque match : la pastille verte VIRAGE dit que sa tribune est ouverte et combien de supporters y poussent, la violette DUEL qu’un joueur y attend un adversaire. Un appui t’y emmène. Le filtre À JOUER de MATCHS ne garde que ces matchs-là.": "In PARTITE e nelle competizioni, sotto ogni partita: il bollino verde CURVA dice che la sua curva è aperta e quanti tifosi spingono, quello viola DUELLO che un giocatore aspetta un avversario. Un tocco ti ci porta. Il filtro DA GIOCARE di PARTITE tiene solo quelle partite.",
  "Quelqu’un attend un duel : où le trouver ?": "Qualcuno aspetta un duello: dove lo trovo?",
- "Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune qui manque : il ne reste qu’à entrer en file.": "Nella pagina del duello, la scheda IN ATTESA mostra i duelli in cui qualcuno aspetta un giocatore. Un tocco sceglie la partita, il formato e la curva che manca: resta solo da mettersi in coda."
+ "Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune qui manque : il ne reste qu’à entrer en file.": "Nella pagina del duello, la scheda IN ATTESA mostra i duelli in cui qualcuno aspetta un giocatore. Un tocco sceglie la partita, il formato e la curva che manca: resta solo da mettersi in coda.",
+ "<0>En boutique</0> : la carte Ultimate d’un âge déjà atteint s’achète aussi en écharpes, dans le rayon ULTIMATE. Celles des légendaires restent réservées aux boosters.": "<0>Nel negozio</0>: la carta Ultimate di un’età già raggiunta si compra anche con le sciarpe, nel reparto ULTIMATE. Quelle dei leggendari restano solo nei booster.",
+ "ACHETER CETTE ULTIMATE ?": "COMPRARE QUESTO ULTIMATE?",
+ "Acheter l’Ultimate de {0}, âge {1} — {2} écharpes": "Compra l’Ultimate di {0}, età {1} — {2} sciarpe",
+ "Cette carte Ultimate est déjà à toi.": "Questa carta Ultimate è già tua.",
+ "La grande scène de son coup fatal, en plein écran, et sa carte dans ton album. Elle ne pousse pas plus fort : tout le monde a son Ultimate.": "La grande scena del suo colpo finale, a schermo intero, e la sua carta nel tuo album. Non spinge più forte: tutti hanno il loro Ultimate.",
+ "La grande scène de son coup fatal, et sa carte dans ton album.": "La grande scena del suo colpo finale, e la sua carta nel tuo album.",
+ "L’Ultimate de {0}, âge {1}": "L’Ultimate di {0}, età {1}",
+ "L’Ultimate précédente": "Ultimate precedente",
+ "L’Ultimate suivante": "Ultimate successivo",
+ "Oui, dans le rayon ULTIMATE de la boutique, pour {0} écharpes : celle d’un âge que ton Fanzzy a déjà atteint. VOIR LA SCÈNE la montre avant l’achat. Celles des légendaires ne s’achètent pas, elles ne sortent qu’en booster.": "Sì, nel reparto ULTIMATE del negozio, per {0} sciarpe: quella di un’età che il tuo Fanzzy ha già raggiunto. GUARDA LA SCENA te la mostra prima dell’acquisto. Quelle dei leggendari non si comprano, escono solo nei booster.",
+ "Puis-je acheter une carte Ultimate ?": "Posso comprare una carta Ultimate?",
+ "Quelle carte Ultimate": "Quale carta Ultimate",
+ "Ultimate de {0}": "Ultimate di {0}",
+ "VOIR LA SCÈNE": "GUARDA LA SCENA"
 }

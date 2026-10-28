@@ -694,6 +694,48 @@ const evenement = (sessionId) => ({
     console.log('        une seule tenue en vente : l’achat à un âge plus jeune n’est pas éprouvé');
   }
 
+  /* **Les cartes Ultimate** (choix de Gaël du 28 octobre 2026 : « 300
+     écharpes, légendaires exclus »). Un âge atteint d'un Fanzzy possédé, dont
+     l'image est faite ; la carte arrive nouvelle, dans `user_etats`. */
+  await q(`INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, 'RP4', 1, 2)
+    ON DUPLICATE KEY UPDATE stage = 2`, [U]);
+  await q(`INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, 'RP13', 1, 1)
+    ON DUPLICATE KEY UPDATE stage = 1`, [U]);
+  await q(`DELETE FROM user_etats WHERE user_id = ? AND etat = 'ultime'`, [U]);
+  const vitrine = (await fetch(base + '/api/boutique/etal').then((r) => r.json())).ultimes ?? [];
+  const rp4 = vitrine.filter((x) => x.fanzzy === 'RP4').map((x) => x.stade).sort();
+  check('l’étal vend l’Ultimate de chaque âge atteint, à 300 écharpes',
+    JSON.stringify(rp4) === '[1,2]' && vitrine.every((x) => x.prix === 300 && x.image?.startsWith('/img/ultime/'))
+    || (console.log('        ', JSON.stringify(vitrine.slice(0, 4))), false));
+  check('mais pas celle d’un légendaire', !vitrine.some((x) => x.fanzzy === 'RP13'));
+
+  await q('DELETE FROM user_nouveautes WHERE user_id = ?', [U]);
+  await q('UPDATE user_wallet SET scarves = 299 WHERE user_id = ?', [U]);
+  const u0 = await depenser({ type: 'ultime', id: 'RP4', stage: 2 });
+  check('sans assez d’écharpes : ni carte, ni débit', u0.code === 400
+    && u0.json.error === 'boutique.error.echarpes_insuffisantes'
+    && (await q(`SELECT 1 FROM user_etats WHERE user_id = ? AND etat = 'ultime'`, [U])).length === 0);
+  await q('UPDATE user_wallet SET scarves = 300 WHERE user_id = ?', [U]);
+  const u1 = await depenser({ type: 'ultime', id: 'RP4', stage: 2 });
+  const [[w6]] = [await q('SELECT scarves FROM user_wallet WHERE user_id = ?', [U])];
+  check('avec : la carte Ultimate arrive, nouvelle, à son âge, pour 300 écharpes',
+    u1.code === 200 && Number(w6.scarves) === 0
+    && JSON.stringify(await nouveautes()) === JSON.stringify(['etat|etat:RP4:2:ultime'])
+    || (console.log('        ', u1.code, JSON.stringify(u1.json), JSON.stringify(await nouveautes())), false));
+  await q('UPDATE user_wallet SET scarves = 900 WHERE user_id = ?', [U]);
+  const u2 = await depenser({ type: 'ultime', id: 'RP4', stage: 2 });
+  const u3 = await depenser({ type: 'ultime', id: 'RP4', stage: 3 });
+  const u4 = await depenser({ type: 'ultime', id: 'RP13', stage: 1 });
+  const [[w7]] = [await q('SELECT scarves FROM user_wallet WHERE user_id = ?', [U])];
+  check('une seconde fois la même : refusée', u2.json.error === 'boutique.error.ultime_deja');
+  check('un âge pas encore atteint : refusé', u3.json.error === 'boutique.error.fanzzy_non_possede');
+  check('un légendaire : refusé', u4.json.error === 'boutique.error.objet_inconnu');
+  check('et les trois refus n’ont rien coûté', Number(w7.scarves) === 900);
+  const relue = (await fetch(base + '/api/boutique/etal').then((r) => r.json())).ultimes ?? [];
+  check('l’étal la dit à toi ensuite',
+    relue.find((x) => x.fanzzy === 'RP4' && x.stade === 2)?.possede === true
+    && relue.find((x) => x.fanzzy === 'RP4' && x.stade === 1)?.possede === false);
+
   /* Sans la table : l'achat se fait, sans sa nouveauté. Perdre une vente pour
      une pastille serait absurde, et l'erreur avalée est seulement celle-là. */
   await q('DROP TABLE user_nouveautes');

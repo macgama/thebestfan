@@ -12,6 +12,7 @@ import { STUFF, STUFF_BY_ID, combine, faitCombo, modsDeLaPiece, partDuCombo, pie
    chaîne d'images, la résolution côté client et, maintenant, le tirage. */
 import { ETATS_DESSINES, ETAT_DESSIN } from '../../shared/fanzzy/rendus.js';
 import { ETAT_ULTIME } from '../../shared/ultime.js';
+import { imageUltime } from './ultimes-dessines.js';
 
 /* Le nom d'un état pour le joueur. `rendus.js` décrit le **dessin** — « bras
    levés… » — ce qui sert au dessinateur et ne se met pas sur une carte. Ici
@@ -135,6 +136,7 @@ export const CHEMINS_NOUVEAUTES = Object.freeze({
     evolve: Object.freeze(['age']),
     remettreStuff: Object.freeze(['stuff']),
     remettreTenue: Object.freeze(['skin']),
+    remettreUltime: Object.freeze(['etat']),
   }),
   nEcriventPas: Object.freeze({
     /* `src/server/onboarding/index.js` pose lui-même le paquet de bienvenue :
@@ -2818,8 +2820,71 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     return { skins: [{ id: fanzzy, stade: etage, skin: tenue }] };
   }
 
+  /**
+   * Les cartes Ultimate qu'un joueur peut acheter à l'étal (choix de Gaël du
+   * 28 octobre 2026 : « 300 écharpes, légendaires exclus »).
+   *
+   * La même règle que le booster — un âge **atteint** d'un Fanzzy possédé —,
+   * plus deux : pas de légendaire (sa carte ne sort qu'en booster, comme les
+   * pièces légendaires), et seulement là où l'image de la grande scène est
+   * faite. Celles qu'on a déjà partent aussi, marquées : la vitrine dit ce
+   * qu'on a, comme l'étal de l'équipement.
+   */
+  async function ultimesEnVente(userId) {
+    const [ont, pris] = await Promise.all([
+      q('SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?', [userId]),
+      q('SELECT fanzzy_id, stage FROM user_etats WHERE user_id = ? AND etat = ?', [userId, ETAT_ULTIME]),
+    ]);
+    const deja = new Set(pris.map((r) => `${r.fanzzy_id}:${Number(r.stage)}`));
+    const liste = [];
+    for (const r of ont) {
+      const id = r.fanzzy_id;
+      if (!ultimeEnVente(id, 1)) continue;
+      const atteint = Math.min(3, Math.max(1, Number(r.stage) || 1));
+      for (let s = 1; s <= atteint; s++) {
+        const image = ultimeEnVente(id, s);
+        if (!image) continue;
+        const age = auStade(id, s) ?? parIdentifiant(id);
+        liste.push({ fanzzy: id, stade: s, nom: age?.nom ?? id, cri: age?.cri?.label ?? '',
+          type: age?.type ?? null, image, possede: deja.has(`${id}:${s}`) });
+      }
+    }
+    return liste;
+  }
+
+  /** L'image d'une carte Ultimate qui se vend, ou `null` : légendaire, âge
+      non écrit ou image pas encore faite. */
+  function ultimeEnVente(id, s) {
+    const l = lignee(id);
+    if (!l.length || l.some((x) => x.rar === 'legendaire') || s > l.length) return null;
+    return imageUltime(racineDe(id), s);
+  }
+
+  /**
+   * Remet une carte Ultimate achetée, pour un Fanzzy et un âge précis.
+   *
+   * Les refus de la tenue, plus un : celle d'un légendaire, ou sans image,
+   * ne se vend pas (`objet_inconnu`, comme une pièce légendaire).
+   */
+  async function remettreUltime(conn, userId, { fanzzy, stage }) {
+    const etage = Number(stage);
+    if (!Number.isInteger(etage) || etage < 1 || etage > 3) throw fail('boutique.error.fanzzy_non_possede');
+    if (!ultimeEnVente(fanzzy, etage)) throw fail('boutique.error.objet_inconnu');
+    const [a] = await conn.query(
+      `SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ? AND stage >= ?`,
+      [userId, fanzzy, etage]);
+    if (!a.length) throw fail('boutique.error.fanzzy_non_possede');
+    const [r] = await conn.query(
+      `INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, ?, ?)`,
+      [userId, fanzzy, etage, ETAT_ULTIME]);
+    if (!r.affectedRows) throw fail('boutique.error.ultime_deja');
+    await noterNouveauteDans(conn, userId, `etat:${fanzzy}:${etage}:${ETAT_ULTIME}`);
+    return { etats: [{ id: fanzzy, stade: etage, etat: ETAT_ULTIME }] };
+  }
+
   return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
     personnageActif, construireAvatar, fiche, lierAuClub, offrir, remettreStuff, remettreTenue, bibliotheque,
+    remettreUltime, ultimesEnVente,
     /* `recharger(conn, userId)` : la porte du grand livre et du quotidien
        avant tout booster offert (`PLAN.md`, § 5, étape 7). */
     recharger,
