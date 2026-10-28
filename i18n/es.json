@@ -6715,5 +6715,12 @@
  "Comment échanger des doubles ?": "¿Cómo intercambio repetidos?",
  "Sur la fiche d’un ami, touche un Fanzzy qu’il a en double, puis choisis lequel de tes doubles tu lui donnes en retour. Rien ne bouge avant qu’il accepte, et chacun garde au moins un exemplaire de chaque Fanzzy.": "En la ficha de un amigo, toca un Fanzzy que tenga repetido y luego elige cuál de tus repetidos le das a cambio. Nada se mueve antes de que acepte, y cada uno conserva al menos un ejemplar de cada Fanzzy.",
  "Si j’emprunte un Fanzzy, mon ami le perd-il ?": "Si tomo prestado un Fanzzy, ¿mi amigo lo pierde?",
- "Non. Tu le joues dans ton deck, à l’âge que ton ami lui a fait atteindre, jusqu’à minuit, et lui le garde. Un emprunt par jour, et seulement un Fanzzy que tu n’as pas.": "No. Lo juegas en tu deck, a la edad a la que tu amigo lo llevó, hasta medianoche, y él lo conserva. Un préstamo al día, y solo un Fanzzy que no tengas."
+ "Non. Tu le joues dans ton deck, à l’âge que ton ami lui a fait atteindre, jusqu’à minuit, et lui le garde. Un emprunt par jour, et seulement un Fanzzy que tu n’as pas.": "No. Lo juegas en tu deck, a la edad a la que tu amigo lo llevó, hasta medianoche, y él lo conserva. Un préstamo al día, y solo un Fanzzy que no tengas.",
+ "{0} EN TRIBUNE": "{0} EN LA GRADA",
+ "{0} T’ATTENDENT": "{0} TE ESPERAN",
+ "1 T’ATTEND": "1 TE ESPERA",
+ "À JOUER": "PARA JUGAR",
+ "Aucun Virage ouvert ni duel qui attend pour l’instant.": "Ahora no hay ningún Fondo abierto ni duelo esperando.",
+ "Les tribunes ouvrent une demi-heure avant le coup d’envoi.": "Las gradas abren media hora antes del pitido inicial.",
+ "<0>Où jouer</0> : sous un match, la pastille verte <1>VIRAGE</1> dit que sa tribune est ouverte, avec le nombre de supporters qui poussent, et la violette <2>DUEL</2> qu’un joueur y attend un adversaire. Un appui t’y emmène.": "<0>Dónde jugar</0>: bajo un partido, la insignia verde <1>FONDO</1> indica que su grada está abierta, con el número de aficionados que empujan, y la violeta <2>DUELO</2> que un jugador espera allí a un rival. Un toque te lleva."
 }
