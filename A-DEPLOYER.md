@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Voir ce que la réconciliation du catalogue ferait** (branche
+`claude/contenus-sql-q1sziv`, 28 octobre 2026, pour les 338 écarts relevés par
+Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `scripts/fanzzy-reconciliation.mjs`, `npm run reconciliation:voir` : en SSH,
+  il dit, sans rien écrire, quelles cartes le démarrage reprendrait du code et
+  lesquelles ont été corrigées à l'écran (celles-là restent telles quelles).
+  `src/server/fanzzy/catalogue.js` : le démarrage lit son plan par la même
+  fonction, sans rien changer à ce qu'il fait.
+
+**Aucun schéma ni réglage, sans redémarrage** (le script se lance à la main).
+
+---
+
 **Les duels qui attendent se voient sans recharger** (branche
 `claude/project-thread-sxsj06`, 28 octobre 2026, demandé par Gaël : il
 fallait rafraîchir la page pour savoir que quelqu'un attendait un duel).
