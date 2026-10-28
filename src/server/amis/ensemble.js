@@ -48,6 +48,16 @@ export function createEnsemble({ pool, requireAuth }) {
   };
   const fail = (code, extra) => Object.assign(new Error(code), { code, extra });
   const actif = () => Boolean(reglage('amis.actif'));
+  /* **Schéma pas encore appliqué** (`sql/amis-ensemble.sql`) : Gaël construit
+     souvent sans `schema:appliquer`. Comme le reste du jeu, la fonction reste
+     muette au lieu de lever : la fiche dit « en pause », le fil est vide, et
+     une action répond « en pause » plutôt qu'une erreur du serveur. */
+  const sansTable = (e) => e?.code === 'ER_NO_SUCH_TABLE';
+  const ouVide = (p, defaut, manque = null) => p.catch((e) => {
+    if (!sansTable(e)) throw e;
+    if (manque) manque.oui = true;
+    return defaut;
+  });
   const paire = (x, y) => (x < y ? [x, y] : [y, x]);
 
   /** Sont-ils amis mutuels, et l'autre est-il un compte actif ? */
@@ -155,16 +165,18 @@ export function createEnsemble({ pool, requireAuth }) {
     const brut = deck[0]?.contenu;
     const contenu = typeof brut === 'string' ? JSON.parse(brut) : brut;
 
-    const [cadeau] = await q(
+    const manque = { oui: false };
+    const [cadeau] = await ouVide(q(
       `SELECT 1 FROM amis_cadeaux WHERE de = ? AND a = ? AND jour = CURDATE()`,
-      [userId, autreId]);
-    const [{ n: offerts }] = await q(
-      `SELECT COUNT(*) AS n FROM amis_cadeaux WHERE de = ? AND jour = CURDATE()`, [userId]);
-    const echanges = await q(
+      [userId, autreId]), [], manque);
+    const [{ n: offerts }] = await ouVide(q(
+      `SELECT COUNT(*) AS n FROM amis_cadeaux WHERE de = ? AND jour = CURDATE()`, [userId]),
+    [{ n: 0 }], manque);
+    const echanges = await ouVide(q(
       `SELECT id, de, donne, demande FROM amis_echanges
         WHERE etat = 'proposee' AND ((de = ? AND a = ?) OR (de = ? AND a = ?))
-        ORDER BY le DESC`, [userId, autreId, autreId, userId]);
-    const pret = await pretDe(userId);
+        ORDER BY le DESC`, [userId, autreId, autreId, userId]), [], manque);
+    const pret = await ouVide(pretDe(userId), null, manque);
 
     return {
       ami: {
@@ -196,7 +208,7 @@ export function createEnsemble({ pool, requireAuth }) {
         actif: Boolean(reglage('amis.pret_actif')),
         mien: pret ? { ...pret, nom: nomDe(pret.id, pret.stage) } : null,
       },
-      actif: actif(),
+      actif: actif() && !manque.oui,
     };
   }
 
@@ -235,7 +247,7 @@ export function createEnsemble({ pool, requireAuth }) {
        sur les siens, à chaque lecture. */
     await q(`DELETE FROM amis_gestes WHERE a = ? AND le < NOW(3) - INTERVAL 30 DAY`, [userId])
       .catch(() => {});
-    const lignes = await q(
+    const lignes = await ouVide(q(
       `SELECT g.id, g.de AS userId, g.geste, g.vu,
               UNIX_TIMESTAMP(g.le) * 1000 AS le,
               u.pseudo, w.active_fanzzy, w.active_evo, w.active_etat
@@ -246,7 +258,7 @@ export function createEnsemble({ pool, requireAuth }) {
          LEFT JOIN user_wallet w ON w.user_id = g.de
         WHERE g.a = ? AND g.le > NOW(3) - INTERVAL 7 DAY
         ORDER BY g.le DESC, g.id DESC
-        LIMIT ${FIL_MAX}`, [userId]);
+        LIMIT ${FIL_MAX}`, [userId]), []);
     let av = new Map();
     try { av = await avatarsDe(q, lignes); } catch (e) {
       if (!/catalogue/i.test(e?.message ?? '')) throw e;
@@ -272,7 +284,7 @@ export function createEnsemble({ pool, requireAuth }) {
   }
 
   async function marquerVus(userId) {
-    await q(`UPDATE amis_gestes SET vu = 1 WHERE a = ? AND vu = 0`, [userId]);
+    await ouVide(q(`UPDATE amis_gestes SET vu = 1 WHERE a = ? AND vu = 0`, [userId]), null);
     return { ok: true };
   }
 
@@ -502,6 +514,7 @@ export function createEnsemble({ pool, requireAuth }) {
   router.use(express.json({ limit: '2kb' }));
   const safe = (fn) => (req, res) => Promise.resolve(fn(req, res)).catch((e) => {
     if (res.headersSent) return;
+    if (sansTable(e)) return res.status(400).json({ error: 'amis.error.ensemble_eteint' });
     const propre = String(e.code ?? '').startsWith('amis.');
     if (!propre) console.error('[amis ensemble]', e.message);
     res.status(400).json({ error: propre ? e.code : 'amis.error.server', ...(e.extra ?? {}) });
