@@ -1,6 +1,6 @@
 {
   "id": "RP7",
-  "rev": 7,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "09290fa9e513"
+          "sha": "09290fa9e513",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "dcd332a9c222"
+          "sha": "dcd332a9c222",
+          "cligne": true
         }
       }
     },
@@ -66,7 +68,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "60b322304473"
+          "sha": "60b322304473",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -90,7 +93,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6374e1da968e"
+          "sha": "6374e1da968e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -102,7 +106,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "3f424429dd21"
+          "sha": "3f424429dd21",
+          "cligne": true
         }
       }
     },
@@ -142,7 +147,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4c2708b37484"
+          "sha": "4c2708b37484",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -154,7 +160,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "133d65bbdafd"
+          "sha": "133d65bbdafd",
+          "cligne": true
         }
       }
     }
