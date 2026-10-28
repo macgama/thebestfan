@@ -736,7 +736,7 @@ export class VirageRoom {
   modsDe(m, now = Date.now()) {
     const base = m.modsLieu ?? m.mods ?? {};
     const avecEffets = m.effets?.length ? modsAvecEffets(base, m.effets, now) : base;
-    const cote = this.coteDe(m);
+    const cote = this.coteACote(m);
     return cote ? { ...avecEffets, pushMult: (avecEffets.pushMult ?? 1) * cote.mods.pushMult }
       : avecEffets;
   }
@@ -753,7 +753,7 @@ export class VirageRoom {
    * de ne pas le dire —, et la présence éteinte n'en compte aucun. Rend
    * `null` sans bonus, sinon `{ n, mods: { pushMult } }`.
    */
-  coteDe(m) {
+  coteACote(m) {
     if (!m?.amis?.size || !reglage('amis.actif')) return null;
     const force = reglage('amis.cote_force') / 100;
     const max = reglage('amis.cote_max');
@@ -2027,10 +2027,10 @@ export class VirageRoom {
          * Sans étiquettes : `id`, `kopNom` et les siennes ne sont pas des
          * modificateurs, et n'ont rien à faire dans une liste de bonus. */
         apports: [...(m.apports ?? []), ...apportsDe({ stade: this.stade(),
-          amis: this.coteDe(m) })],
+          amis: this.coteACote(m) })],
         /* Combien d'amis comptent pour son bonus côte à côte : la page l'écrit
            à côté de « 2 AMIS ICI ». */
-        cote: this.coteDe(m)?.n ?? 0,
+        cote: this.coteACote(m)?.n ?? 0,
         mods: seulsLesMods(this.modsDe(m)),
         /* Où en est sa légende : `null` sans légendaire. Tant qu'elle dort,
            `apports` la montre quand même — c'est ce qui l'attend. */

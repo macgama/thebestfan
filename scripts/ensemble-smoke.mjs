@@ -259,7 +259,7 @@ console.log('\n— côte à côte au Virage —');
   room.members.get(D).montre = true;
   const f = DEFAUTS['amis.cote_force'] / 100;
   check('un ami du même camp fait pousser plus fort, celui d’en face non',
-    Math.abs(room.modsDe(ma).pushMult - (1 + f)) < 1e-9 && room.coteDe(ma).n === 1);
+    Math.abs(room.modsDe(ma).pushMult - (1 + f)) < 1e-9 && room.coteACote(ma).n === 1);
   poserReglages({ ...DEFAUTS, 'amis.actif': false });
   check('éteint, plus de bonus', (room.modsDe(ma).pushMult ?? 1) === 1);
   poserReglages({ ...DEFAUTS });
