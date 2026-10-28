@@ -1,6 +1,6 @@
 {
   "id": "SU22",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "a5f2a159f1d6"
+          "sha": "e4cb19193ab6"
         },
         "apocalyptique": {
           "etats": [
@@ -25,7 +25,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "bac072520468"
+          "sha": "c0dc19f33da8"
         },
         "halloween": {
           "etats": [
@@ -37,7 +37,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "bb30a12a339b"
+          "sha": "0f944ad721cb"
         },
         "prehistorique": {
           "etats": [
@@ -49,7 +49,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b8fee221c4f8"
+          "sha": "21aa6bc8899e"
         }
       }
     },
@@ -106,7 +106,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f2eb390ecb84"
+          "sha": "21761b5965ce"
         },
         "apocalyptique": {
           "etats": [
@@ -118,7 +118,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e0754f074e33"
+          "sha": "c160a3a9b7a3"
         },
         "prehistorique": {
           "etats": [
@@ -130,7 +130,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f90efe532cd2"
+          "sha": "6f8bb963b017"
         }
       }
     }
