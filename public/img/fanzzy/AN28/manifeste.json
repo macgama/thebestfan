@@ -1,6 +1,6 @@
 {
   "id": "AN28",
-  "rev": 6,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4e080d160a8a"
+          "sha": "4e080d160a8a",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -142,7 +143,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b590939ac1c8"
+          "sha": "b590939ac1c8",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "RP28",
-  "rev": 10,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "327f48837236"
+          "sha": "327f48837236",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -66,7 +67,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "873aa01eca6d"
+          "sha": "873aa01eca6d",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -118,7 +120,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1c73519b5044"
+          "sha": "1c73519b5044",
+          "cligne": true
         },
         "base": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "RP25",
-  "rev": 9,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -118,7 +118,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b9d65d462730"
+          "sha": "b9d65d462730",
+          "cligne": true
         },
         "base": {
           "etats": [

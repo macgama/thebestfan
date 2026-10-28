@@ -1,6 +1,6 @@
 {
   "id": "AN10",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -90,7 +90,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9b36c5e1fb08"
+          "sha": "9b36c5e1fb08",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

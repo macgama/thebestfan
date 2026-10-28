@@ -1,6 +1,6 @@
 {
   "id": "AN39",
-  "rev": 5,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4f07ae21c12a"
+          "sha": "4f07ae21c12a",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -90,7 +91,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "535be9cc7abe"
+          "sha": "535be9cc7abe",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

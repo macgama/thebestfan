@@ -1,6 +1,6 @@
 {
   "id": "RP22",
-  "rev": 9,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -117,7 +117,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9b95bbf9136c"
+          "sha": "9b95bbf9136c",
+          "cligne": true
         },
         "base": {
           "etats": [

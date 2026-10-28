@@ -1,6 +1,6 @@
 {
   "id": "RP7",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -66,7 +66,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "60b322304473"
+          "sha": "60b322304473",
+          "cligne": true
         },
         "base": {
           "etats": [

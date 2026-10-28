@@ -1,6 +1,6 @@
 {
   "id": "AN38",
-  "rev": 6,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "480cb744bea4"
+          "sha": "480cb744bea4",
+          "cligne": true
         }
       }
     },
@@ -89,7 +90,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "37827e9c5b28"
+          "sha": "37827e9c5b28",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -141,7 +143,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9917bb2d0012"
+          "sha": "9917bb2d0012",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

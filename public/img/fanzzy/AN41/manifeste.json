@@ -1,6 +1,6 @@
 {
   "id": "AN41",
-  "rev": 6,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f9986597abea"
+          "sha": "f9986597abea",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -90,7 +91,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "afd519aaab1a"
+          "sha": "afd519aaab1a",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -142,7 +144,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1bb8e84dffd8"
+          "sha": "1bb8e84dffd8",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
