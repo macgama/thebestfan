@@ -1,6 +1,6 @@
 {
   "id": "AN64",
-  "rev": 2,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -25,7 +25,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "90b79dfa9c9c"
+          "sha": "90b79dfa9c9c",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -49,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "20e86604a4a3"
+          "sha": "20e86604a4a3",
+          "cligne": true
         }
       }
     }
