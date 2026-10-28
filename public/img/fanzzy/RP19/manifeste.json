@@ -1,6 +1,6 @@
 {
   "id": "RP19",
-  "rev": 9,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -92,7 +92,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "e3e29b17ac02"
+          "sha": "e3e29b17ac02",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -144,7 +145,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5b3922b3e294"
+          "sha": "5b3922b3e294",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

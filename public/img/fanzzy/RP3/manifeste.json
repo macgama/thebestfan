@@ -1,6 +1,6 @@
 {
   "id": "RP3",
-  "rev": 11,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -78,7 +78,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "8d3c1311b4e6"
+          "sha": "8d3c1311b4e6",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -129,7 +130,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "887a418c092d"
+          "sha": "887a418c092d",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

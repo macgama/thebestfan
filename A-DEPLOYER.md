@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Tous les Fanzzy RP de base clignent** (branche
+`claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- Les 11 derniers âges RP de base clignent (retouches payantes, 1 430
+  crédits, accord de Gaël) : RP de base 95 sur 95.
+
+---
+
 **Plus de Fanzzy RP et SU clignent** (branche `claude/project-thread-j17xyz`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
 des images et des réglages, sans crédits.
