@@ -12,7 +12,11 @@
   Virage) sont corrigés.
 - Une petite visite guidée la première fois qu'on ouvre Mes Fanzzy, la fiche
   d'un Fanzzy à soi (ses âges, évoluer avec les écharpes), la collection,
-  les amis et le KOP. `?visite=1` au bout de l'adresse la remontre.
+  les amis (dont JOUER ENSEMBLE) et le KOP. `?visite=1` au bout de
+  l'adresse la remontre.
+- QUESTIONS : les pièces de club (COMBO, PLEIN CLUB), les pastilles VIRAGE et
+  DUEL avec le filtre À JOUER, l'onglet EN ATTENTE du duel. Comment jouer :
+  les pièces de club dans « Ton deck ».
 - Après la mise en ligne : sur le S24+, ouvrir /fanzzy?visite=1 puis la fiche
   d'un Fanzzy, et créer un compte de test pour voir le paquet de bienvenue.
 

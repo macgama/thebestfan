@@ -160,10 +160,15 @@
   const AMIS = [
     { titre: 'Tes amis',
       texte: 'Un ami est un lien entre deux supporters. Tu vois s’il est au Virage ou en duel, '
-        + 'tu peux le défier aux tirs au but et l’inviter dans ton KOP.' },
+        + 'et chaque ami dans ta tribune te fait pousser plus fort au Virage.' },
+    { cible: '.gars [data-fiche]',
+      titre: 'Jouer ensemble',
+      texte: 'Sous le nom d’un ami : fais-lui signe d’un geste, offre-lui le cadeau du jour, '
+        + 'relevez le défi de la semaine, échangez vos doubles ou emprunte-lui un Fanzzy.' },
     { cible: '[data-vue="trouver"]',
       titre: 'Trouver',
-      texte: 'Cherche un pseudo, ou parcours les supporters de tes clubs, puis demande-le en ami.' },
+      texte: 'Cherche n’importe qui par son pseudo, ou parcours les supporters de tes clubs, '
+        + 'puis demande-le en ami.' },
     { cible: '[data-vue="demandes"]',
       titre: 'Les demandes',
       texte: 'Ceux qui veulent être tes amis, et les invitations dans un KOP, t’attendent ici.' },
