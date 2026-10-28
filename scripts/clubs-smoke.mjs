@@ -6,7 +6,7 @@
  * panneau des bonus.
  */
 import { DuelNvN } from '../src/server/nvn/engine.js';
-import { CLUB_DE, CRI_DU_CLUB, CRIS_TYPES, criDuClub, avecCriDuClub, clubDe, lieA, modsDuLien, avecLien, lierLeDeck, tauxDuLien }
+import { CLUB_DE, CRI_DU_CLUB, CRIS_TYPES, criDuClub, avecCriDuClub, clubDe, lieA, lienEcrit, estSelection, modsDuLien, avecLien, lierLeDeck, tauxDuLien }
   from '../src/shared/fanzzy/clubs.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { ACTION_BY_ID } from '../src/shared/duel/actions.js';
@@ -28,7 +28,33 @@ check('un âge supérieur garde le lien de sa lignée', clubDe('AN3C') === clubD
 check('une série à thème est neutre', clubDe('TR32') === null && clubDe('RP1') === null
   && clubDe('BG4') === null);
 check('chaque Fanzzy de LES TERRACES au catalogue est lié',
-  [...BY_ID.values()].filter((f) => f.set === 'AN').every((f) => clubDe(f.id) != null));
+  [...BY_ID.values()].filter((f) => f.set === 'AN').every((f) => lienEcrit(f.id) != null));
+
+// Les six légendaires de la série (demande de Gaël du 28 octobre 2026).
+check('six légendaires AN au catalogue, à un seul âge',
+  ['AN61', 'AN62', 'AN63', 'AN64', 'AN65', 'AN66'].every((id) =>
+    BY_ID.get(id)?.rar === 'legendaire' && BY_ID.get(id)?.set === 'AN' && !BY_ID.get(id)?.evo));
+check('les légendaires ne sont dans aucun club (ni la liste des clubs de la série)',
+  ['AN61', 'AN64'].every((id) => clubDe(id) === null) && !CLUB_DE.has('AN61'));
+check('AN61 à AN63 : liées aux sélections, hommes, femmes et espoirs',
+  lienEcrit('AN62')?.selection === 10
+  && lieA('AN61', 10) && lieA('AN63', 1234, null, { nomDuClub: 'England W' })
+  && lieA('AN62', 1234, null, { nomDuClub: 'England U21' })
+  && !lieA('AN62', 42, null, { nomDuClub: 'Arsenal' })
+  && !lieA('AN62', 1234, null, { nomDuClub: 'Englandia' }) && !lieA('AN62', null)
+  && estSelection(10) && !estSelection(42, 'Scotland'));
+check('AN64 à AN66 : liées au championnat, pour tout club qui y joue',
+  lienEcrit('AN65')?.ligue === 39
+  && lieA('AN64', 42, null, { leagueId: 39 }) && lieA('AN66', 40, null, { leagueId: 39 })
+  && !lieA('AN65', 42, null, { leagueId: 45 }) && !lieA('AN65', null, null, { leagueId: 39 })
+  && !lieA('AN65', 42));
+{
+  const deck = { fanzzy: [{ id: 'AN64', mods: { pushMult: 1 }, ages: [] },
+    { id: 'AN61', mods: { pushMult: 1 }, ages: [] }] };
+  const lie = lierLeDeck(deck, 42, { force: 0.05, gain: 0.1 }, { leagueId: 39, nomDuClub: 'Arsenal' });
+  check('le duel lie la légendaire du championnat, pas celle des sélections',
+    lie.fanzzy[0].lie === true && !lie.fanzzy[1].lie);
+}
 check('lieA : faux sans club, faux pour un autre club, vrai pour le sien',
   !lieA('AN1', null) && !lieA('TR32', clubDe('AN1')) && !lieA('AN1', clubDe('AN2'))
   && lieA('AN1', clubDe('AN1')) && lieA('AN1', String(clubDe('AN1'))));
@@ -178,13 +204,15 @@ const SANS = 'cccccccc-0000-0000-0000-000000000002';
 for (const [u, e] of [[U, 'c@ex.fr'], [SANS, 's@ex.fr']]) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`, [u, e, e]);
   await raw.query(`INSERT INTO user_wallet (user_id,scarves) VALUES (?,200)`, [u]);
-  for (const f of ['TR32', 'MS30', 'AN1']) {
+  for (const f of ['TR32', 'MS30', 'AN1', 'AN62', 'AN64']) {
     await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [u, f]);
   }
 }
 await raw.query(`INSERT INTO teams (id,name,logo) VALUES (85,'Sion',NULL),(91,'Bâle',NULL),
   (${clubDe('AN1')},'Club Témoin','https://exemple.test/logo.png')`);
 await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,0),(?,85,1)`, [U, U]);
+await raw.query(`INSERT INTO leagues (id,name,logo) VALUES (39,'Ligue Témoin','https://exemple.test/ligue.png')`);
+await raw.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (91,39,2026)`);
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 4, ...OPTIONS_BASE });
@@ -223,6 +251,16 @@ check('pas assez d\'écharpes : refusé',
   await refus(F.lierAuClub(U, 'MS30')) === 'fanzzy.error.not_enough_scarves' && await echarpes(U) === 80);
 f = await F.fiche(U, 'TR32');
 check('la fiche dit LIÉ À TON CLUB', f.club?.lie === true && f.club.tonClub === true && f.club.achete === true);
+f = await F.fiche(U, 'AN64');
+check('la fiche d\'une légendaire du championnat nomme la compétition, liée à ton club',
+  f.club?.lie === true && f.club.portee === 'championnat' && f.club.tonClub === true
+  && f.club.nom === 'Ligue Témoin' && f.club.logo === 'https://exemple.test/ligue.png' && f.club.id === null);
+f = await F.fiche(U, 'AN62');
+check('la fiche d\'une légendaire des sélections : liée, à des équipes que ce joueur ne suit pas',
+  f.club?.lie === true && f.club.portee === 'selection' && f.club.tonClub === false && f.club.id === 10);
+check('une légendaire des sélections ou du championnat ne s\'achète pas',
+  await refus(F.lierAuClub(U, 'AN62')) === 'fanzzy.error.deja_lie'
+  && await refus(F.lierAuClub(U, 'AN64')) === 'fanzzy.error.deja_lie');
 check('et nomme le club acheté', f.club.nom === 'Sion');
 check('un club hors de la table a son cri type', f.club.cri === criDuClub(85) && CRIS_TYPES.includes(f.club.cri));
 check('la fiche d\'un AN donne le cri de son club', (await F.fiche(U, 'AN1')).club.cri === CRI_DU_CLUB.get(clubDe('AN1')));
