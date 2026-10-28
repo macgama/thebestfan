@@ -6575,5 +6575,10 @@
  "Tape le début de son pseudo, trois lettres au moins. Il n’a pas besoin de suivre tes clubs.": "Scrivi l’inizio del suo nickname, almeno tre lettere. Non serve che segua i tuoi club.",
  "Son pseudo": "Il suo nickname",
  "Pseudo du joueur à chercher": "Nickname del giocatore da cercare",
- "ILS SUIVENT TES CLUBS": "SEGUONO I TUOI CLUB"
+ "ILS SUIVENT TES CLUBS": "SEGUONO I TUOI CLUB",
+ "MES SAISONS": "LE MIE STAGIONI",
+ "<0>1</0> tampon": "<0>1</0> timbro",
+ "<0>{0}</0> tampons": "<0>{0}</0> timbri",
+ "SAISON {0} — {1}": "STAGIONE {0} — {1}",
+ "<0>{0}</0> de ferveur": "<0>{0}</0> di fervore"
 }

@@ -6575,5 +6575,10 @@
  "Tape le début de son pseudo, trois lettres au moins. Il n’a pas besoin de suivre tes clubs.": "Type the start of their username, at least three letters. They don’t need to follow your clubs.",
  "Son pseudo": "Their username",
  "Pseudo du joueur à chercher": "Username of the player to find",
- "ILS SUIVENT TES CLUBS": "THEY FOLLOW YOUR CLUBS"
+ "ILS SUIVENT TES CLUBS": "THEY FOLLOW YOUR CLUBS",
+ "MES SAISONS": "MY SEASONS",
+ "<0>1</0> tampon": "<0>1</0> stamp",
+ "<0>{0}</0> tampons": "<0>{0}</0> stamps",
+ "SAISON {0} — {1}": "SEASON {0} — {1}",
+ "<0>{0}</0> de ferveur": "<0>{0}</0> fervour"
 }

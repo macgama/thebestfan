@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**MES SAISONS sur le profil** (branche `claude/project-thread-chiok9`,
+28 octobre 2026, demandé par Gaël : garder l'historique des saisons d'avant).
+Construction seule, **sans schéma**.
+
+- Sous MA SAISON, un bloc MES SAISONS montre une ligne par saison finie : la
+  place au classement de la saison, la division portée, les tampons du
+  carnet, la ferveur et les titres gagnés. Il n'apparaît qu'à partir de la
+  Saison 2 : avant, rien à montrer.
+
+---
+
 **Chercher un ami par pseudo dans AMIS, onglet TROUVER** (branche
 `claude/project-thread-hl4hic`, 28 octobre 2026, demandé par Gaël : on ne
 pouvait ajouter que des supporters des mêmes clubs). Construction seule,
