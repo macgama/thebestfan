@@ -18,6 +18,9 @@ appui). Construction seule, **sans schéma**.
 - Après la mise en ligne : pendant un match, ouvrir MATCHS et une
   compétition, voir la pastille VIRAGE et la toucher ; avec un second compte
   en file de duel, voir la pastille DUEL apparaître sans recharger.
+
+---
+
 **Série SU « Die Kurve » (Super League suisse)** (branche
 `claude/project-thread-8di81x`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.
