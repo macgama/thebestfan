@@ -37,6 +37,7 @@
     "signalement:smoke": "node scripts/signalement-smoke.mjs",
     "livraisons:smoke": "node scripts/livraisons-smoke.mjs",
     "amis:ui": "node scripts/amis-ui-smoke.mjs",
+    "ensemble:ui": "node scripts/ensemble-ui-smoke.mjs",
     "equipes:ui": "node scripts/equipes-ui-smoke.mjs",
     "matchs:ui": "node scripts/matchs-ui-smoke.mjs",
     "competitions:ui": "node scripts/competitions-ui-smoke.mjs",
