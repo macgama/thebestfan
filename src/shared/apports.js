@@ -27,7 +27,7 @@
  * celui du moteur, envoyé à côté. Si les deux divergeaient un jour, c'est le
  * total qui aurait raison — et c'est pour ça qu'on ne le recalcule pas ici.
  */
-import { STUFF_BY_ID } from './fanzzy/inventaire.js';
+import { STUFF_BY_ID, faitCombo, modsDeLaPiece } from './fanzzy/inventaire.js';
 
 /**
  * Ce qui voyage dans `mods` sans être un modificateur.
@@ -37,7 +37,7 @@ import { STUFF_BY_ID } from './fanzzy/inventaire.js';
  * Aucune n'a de phrase, et les laisser passer ferait apparaître « kopNom » dans
  * la liste des bonus.
  */
-const PAS_DES_MODS = new Set(['id', 'kopId', 'kopNom', 'kopBonus']);
+const PAS_DES_MODS = new Set(['id', 'kopId', 'kopNom', 'kopBonus', 'pleinClub']);
 
 /** Les seuls modificateurs, sans les étiquettes qui les accompagnent. */
 export function seulsLesMods(mods) {
@@ -60,12 +60,14 @@ const garni = (mods) => Object.keys(mods ?? {}).length > 0;
  * @param {object}  [o.kop]     le total des bonus de groupe, tel que
  *   `kop.modsDe` le rend — étiquettes comprises, elles sont retirées ici.
  * @param {object}  [o.club]    le bonus du Fanzzy lié à son club, s'il l'est.
+ * @param {number}  [o.clubPorteur] le club du Fanzzy qui porte le sac : une
+ *   pièce du même club fait COMBO, et sa ligne dit ses mods adoucis.
  * @param {object}  [o.stade]   le lieu de la rencontre.
  * @returns {Array<{quoi:string, nom:string, texte?:string, mods:object}>}
  *   dans l'ordre où on les lit : soi, son sac, son groupe, son club, le lieu.
  */
-export function apportsDe({ fanzzy = null, stuff = [], kop = null, club = null, stade = null,
-  amis = null } = {}) {
+export function apportsDe({ fanzzy = null, stuff = [], kop = null, club = null, clubPorteur = null,
+  stade = null, amis = null } = {}) {
   const out = [];
 
   const siens = seulsLesMods(fanzzy?.mods);
@@ -80,7 +82,10 @@ export function apportsDe({ fanzzy = null, stuff = [], kop = null, club = null, 
     const s = STUFF_BY_ID.get(id);
     /* `id` et `rar` : le Virage accroche ces pièces à côté de son Fanzzy, et
        c'est d'ici qu'il les tient — le même sac que celui qui compte. */
-    if (s && garni(s.mods)) out.push({ quoi: 'stuff', id: s.id, rar: s.rar, nom: s.nom, mods: s.mods });
+    if (s && garni(s.mods)) {
+      out.push({ quoi: 'stuff', id: s.id, rar: s.rar, nom: s.nom, mods: modsDeLaPiece(s, clubPorteur),
+        ...(faitCombo(s, clubPorteur) ? { combo: true } : {}) });
+    }
   }
 
   const duKop = seulsLesMods(kop);
@@ -91,7 +96,7 @@ export function apportsDe({ fanzzy = null, stuff = [], kop = null, club = null, 
   /* Le lien du Fanzzy à son club (`fanzzy/clubs.js`) : sans nom de club, par
      la prudence juridique des séries de championnat. */
   if (garni(club)) {
-    out.push({ quoi: 'club', nom: 'Fanzzy lié à ton club', mods: club });
+    out.push({ quoi: 'club', nom: club.pleinClub ? 'PLEIN CLUB' : 'Fanzzy lié à ton club', mods: seulsLesMods(club) });
   }
 
   /* Côte à côte avec ses amis, au Virage (`virage.js`, `coteACote`). */

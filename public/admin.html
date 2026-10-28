@@ -1331,6 +1331,16 @@ const VUES = {
           l'effacer. C'est le seul endroit d'où l'on referme ce qu'une saison a
           ouvert — <b>SAISONS</b> ouvre, il ne referme que les séries.</p>
       </div>
+      ${(d.piecesDeClub ?? []).map((p) => {
+        const manque = p.ecrites < p.attendues || p.dessinees < p.attendues || p.ouvertes < p.attendues;
+        return `<div class="series">
+          <p class="series-t">PIÈCES DE CLUB · ${esc(p.serie)}
+            <span${manque ? ' style="color:#e5484d"' : ''}>${p.ouvertes} ouvertes sur ${p.attendues}</span></p>
+          <p class="series-n">${p.clubs} clubs, deux pièces chacun : <b>${p.ecrites}/${p.attendues}</b> écrites,
+            <b>${p.dessinees}/${p.attendues}</b> dessinées, <b>${p.ouvertes}/${p.attendues}</b> ouvertes.
+            Une pièce s'ouvre ici, une fois son dessin fait (cherche « ${esc(p.serie.toLowerCase())}- »).</p>
+        </div>`;
+      }).join('')}
       <div class="bar">
         <select id="c-famille">${opt('', 'toutes les familles', f2.famille)}${
           familles.map(([k, v]) => opt(k, v.nom, f2.famille)).join('')}</select>
