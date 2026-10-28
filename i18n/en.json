@@ -7157,5 +7157,17 @@
  "Boutons nacrés": "Pearly Buttons",
  "Ils brillent au rythme du refrain. Ils sautent quand on tape.": "They shine in time with the chorus. They pop off when you drum.",
  "Gilet nacré bleu nuit": "Midnight Blue Pearly Waistcoat",
- "Cousu de mille boutons, il arrête tout. Il ne laisse pas danser.": "Sewn with a thousand buttons, it stops everything. It won’t let you dance."
+ "Cousu de mille boutons, il arrête tout. Il ne laisse pas danser.": "Sewn with a thousand buttons, it stops everything. It won’t let you dance.",
+ "MA SÉLECTION": "MY NATIONAL TEAM",
+ "PRINCIPAL ?": "MAIN CLUB?",
+ "SÉLECTION": "NATIONAL TEAM",
+ "{0}, TA SÉLECTION ?": "{0}, YOUR NATIONAL TEAM?",
+ "{0}, TON CLUB PRINCIPAL ?": "{0}, YOUR MAIN CLUB?",
+ "Tu ne pourras plus changer de sélection principale avant la prochaine saison.": "You won’t be able to change your national team again until next season.",
+ "Tu ne pourras plus changer de club principal avant la prochaine saison.": "You won’t be able to change your main club again until next season.",
+ "OUI": "YES",
+ "PAS ENCORE": "NOT YET",
+ "Sélection principale choisie": "National team chosen",
+ "Club principal changé": "Main club changed",
+ "Déjà changé cette saison : à la prochaine": "Already changed this season: next one"
 }
