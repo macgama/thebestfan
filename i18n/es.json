@@ -6580,5 +6580,10 @@
  "<0>1</0> tampon": "<0>1</0> sello",
  "<0>{0}</0> tampons": "<0>{0}</0> sellos",
  "SAISON {0} — {1}": "TEMPORADA {0} — {1}",
- "<0>{0}</0> de ferveur": "<0>{0}</0> de fervor"
+ "<0>{0}</0> de ferveur": "<0>{0}</0> de fervor",
+ "EN ATTENTE <0>{0}</0>": "EN ESPERA <0>{0}</0>",
+ "Personne n’attend pour l’instant.": "Ahora mismo no espera nadie.",
+ "Dès qu’un supporter entre en file, son duel apparaît ici.": "En cuanto un hincha entra en la cola, su duelo aparece aquí.",
+ "{0} · {1} EN FILE": "{0} · {1} EN COLA",
+ "<0>En attente</0> : sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune : il ne reste qu’à entrer en file.": "<0>En espera</0>: en la página del duelo, la pestaña EN ESPERA muestra los duelos donde alguien espera a un jugador. Un toque elige el partido, el formato y la grada: solo queda entrar en la cola."
 }
