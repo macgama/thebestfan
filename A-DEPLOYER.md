@@ -1,5 +1,26 @@
 # À déposer sur Infomaniak
 
+**Où jouer, sur MATCHS et COMPÉTITIONS** (branche
+`claude/project-thread-6dydyn`, 28 octobre 2026, demandé par Gaël : voir sur
+ces pages qu'un Virage est ouvert ou qu'un duel attend, et y aller d'un
+appui). Construction seule, **sans schéma**.
+
+- Sous chaque match : pastille verte VIRAGE quand la tribune est ouverte
+  (pendant le match et la demi-heure avant), avec « 12 EN TRIBUNE » quand
+  des supporters poussent ; pastille violette DUEL « 1 T'ATTEND » quand
+  quelqu'un attend un adversaire. Un appui mène au Virage du match, ou au
+  duel avec le format et la tribune qui manque déjà choisis. Le reste de la
+  ligne ouvre toujours la fiche.
+- Sur MATCHS, un filtre À JOUER à côté de TOUS / MES CLUBS / EN DIRECT.
+- Les pastilles se relisent toutes les 20 s (`/api/virage/a-jouer`,
+  mémoire seule) et tout de suite quand une file de duel bouge.
+- Comment jouer : une ligne « Où jouer ». Cinq langues.
+- Après la mise en ligne : pendant un match, ouvrir MATCHS et une
+  compétition, voir la pastille VIRAGE et la toucher ; avec un second compte
+  en file de duel, voir la pastille DUEL apparaître sans recharger.
+
+---
+
 **Série SU « Die Kurve » (Super League suisse)** (branche
 `claude/project-thread-8di81x`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.

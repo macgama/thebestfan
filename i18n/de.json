@@ -7063,5 +7063,12 @@
  "JE CONNAIS LA LIGNE": "ICH KENNE DIE LINIE",
  "Le Grand Tram du Lac": "Das Große Seetram",
  "Immense, une armure de panneaux bleu roi et blancs aux coutures lumineuses, un haut pantographe en crête et des rangées de fenêtres rondes allumées. Il fait le tour de toutes les lignes sans jamais se tromper d’arrêt — et ses sourcils gardent leur petite inquiétude.": "Riesig, eine Rüstung aus königsblauen und weißen Paneelen mit leuchtenden Nähten, ein hoher Stromabnehmer als Kamm und Reihen erleuchteter runder Fenster. Es fährt alle Linien ab, ohne sich je in einer Haltestelle zu irren – und seine Augenbrauen behalten ihre kleine Sorge.",
- "TOUTES LES LIGNES PAR CŒUR": "ALLE LINIEN AUSWENDIG"
+ "TOUTES LES LIGNES PAR CŒUR": "ALLE LINIEN AUSWENDIG",
+ "{0} EN TRIBUNE": "{0} IN DER KURVE",
+ "{0} T’ATTENDENT": "{0} WARTEN",
+ "1 T’ATTEND": "1 WARTET",
+ "À JOUER": "ZUM SPIELEN",
+ "Aucun Virage ouvert ni duel qui attend pour l’instant.": "Gerade keine offene Kurve und kein wartendes Duell.",
+ "Les tribunes ouvrent une demi-heure avant le coup d’envoi.": "Die Tribünen öffnen eine halbe Stunde vor Anpfiff.",
+ "<0>Où jouer</0> : sous un match, la pastille verte <1>VIRAGE</1> dit que sa tribune est ouverte, avec le nombre de supporters qui poussent, et la violette <2>DUEL</2> qu’un joueur y attend un adversaire. Un appui t’y emmène.": "<0>Wo spielen</0>: Unter einem Spiel zeigt das grüne <1>KURVE</1>-Abzeichen, dass seine Tribüne offen ist, mit der Zahl der Fans, die anfeuern, und das violette <2>DUELL</2>, dass dort ein Spieler auf einen Gegner wartet. Ein Tipp bringt dich hin."
 }
