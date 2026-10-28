@@ -16,7 +16,36 @@
  * est une régression qu'aucun joueur ne pardonne, pour un bénéfice qui est un
  * dégradé de couleur.
  */
-import { couleursDuBlason } from './blason.js';
+import { couleursDuBlason, FormatDeBlason } from './blason.js';
+
+/**
+ * Les couleurs posées à la main, par identifiant de club (celui de l'API).
+ *
+ * Pour les clubs dont le blason ne se lit pas (JPEG, page d'erreur…) ou se
+ * lit mal. Elles passent avant toute lecture et ne sont jamais écrasées par
+ * elle. Deux couleurs CSS, la seconde peut être `null`.
+ */
+export const COULEURS_A_LA_MAIN = {
+  /* Les clubs dont le blason n'a pas pu être lu en production (relevé du
+     28 octobre 2026). Monori SE (2411) manque : couleurs introuvables. */
+  173:   ['#DD0741', '#FFFFFF'],  // RB Leipzig : rouge et blanc
+  542:   ['#0761AF', '#FFFFFF'],  // Deportivo Alavés : bleu et blanc
+  573:   ['#111111', '#FFFFFF'],  // FK Partizan : noir et blanc
+  1106:  ['#1F4FA0', '#FFFFFF'],  // Chypre : bleu et blanc
+  1117:  ['#0D5EAF', '#FFFFFF'],  // Grèce : bleu et blanc
+  3684:  ['#9BD53A', '#111111'],  // FC Noah (Arménie) : vert clair et noir
+  3725:  ['#0073B4', '#FFFFFF'],  // 1. SK Prostějov : bleu et blanc
+  3728:  ['#04569C', '#ECE404'],  // FK Varnsdorf : bleu et jaune
+  5149:  ['#F5C400', '#0050A0'],  // FC Tiszaújváros : jaune et bleu
+  5273:  ['#1D3F8F', '#D4022C'],  // UD Poblense : rayé bleu et rouge
+  5327:  ['#00843D', '#FFFFFF'],  // Al-Nahda (Oman) : vert et blanc
+  5329:  ['#1B2A5C', '#FFFFFF'],  // Al-Shabab (Oman) : bleu marine et blanc
+  5330:  ['#D71920', '#FFFFFF'],  // Dhofar : rouge et blanc
+  5334:  ['#C8102E', '#FFFFFF'],  // Oman Club, « les Rouges » : rouge et blanc
+  5336:  ['#00843D', '#FFFFFF'],  // Sohar : vert et blanc
+  7312:  ['#FBE10D', '#0064AC'],  // FK Králův Dvůr : jaune et bleu
+  11020: ['#75AADB', '#000000'],  // Botswana U20 : bleu ciel et noir
+};
 
 /** Au plus ce nombre de blasons par vague : un soir de Coupe d'Europe en
     présente une quarantaine d'un coup, et rien ne presse. */
@@ -26,12 +55,35 @@ const PAR_VAGUE = 6;
 const TAILLE_MAX = 512 * 1024;
 const DELAI_MS = 6000;
 
-export function createCouleurs({ pool, fetchImpl = fetch, log = console }) {
+export function createCouleurs({ pool, fetchImpl = fetch, log = console,
+  aLaMain = COULEURS_A_LA_MAIN }) {
   const q = (sql, p) => pool.query(sql, p).then(([r]) => r);
 
   /* Les clubs dont on s'occupe déjà. Deux joueurs qui ouvrent le même match à
      la même seconde ne doivent pas télécharger deux fois le même blason. */
   const enCours = new Set();
+
+  /* Les couleurs à la main déjà vérifiées en base depuis le démarrage, et
+     les formats illisibles déjà signalés : un seul mot par format, pas un
+     par club. */
+  const mainFaites = new Set();
+  const formatsDits = new Set();
+
+  async function poserALaMain(liste) {
+    let faits = 0;
+    for (const id of liste) {
+      const c = aLaMain[id];
+      if (!c || mainFaites.has(id)) continue;
+      mainFaites.add(id);
+      const [c1, c2 = null] = c;
+      const r = await pool.query(
+        `UPDATE teams SET color1 = ?, color2 = ?, colors_at = NOW()
+          WHERE id = ? AND (color1 IS NULL OR color1 <> ? OR NOT (color2 <=> ?))`,
+        [c1, c2, id, c1, c2]);
+      faits += r[0]?.affectedRows ?? 0;
+    }
+    return faits;
+  }
 
   /**
    * Télécharge un blason et rend ses couleurs.
@@ -62,14 +114,17 @@ export function createCouleurs({ pool, fetchImpl = fetch, log = console }) {
     const liste = [...new Set(ids.map(Number).filter(Number.isInteger))];
     if (!liste.length) return 0;
 
+    let faits = await poserALaMain(liste);
+    const aLire = liste.filter((id) => !aLaMain[id]);
+    if (!aLire.length) return faits;
+
     const manquants = await q(
       `SELECT id, logo FROM teams
         WHERE id IN (?) AND logo IS NOT NULL
           AND ${rejouer ? 'color1 IS NULL' : 'colors_at IS NULL'}
         LIMIT ?`,
-      [liste, parVague]);
+      [aLire, parVague]);
 
-    let faits = 0;
     for (const t of manquants) {
       if (enCours.has(t.id)) continue;
       enCours.add(t.id);
@@ -83,7 +138,15 @@ export function createCouleurs({ pool, fetchImpl = fetch, log = console }) {
            club gardera la couleur par défaut du jeu — ce qui est un défaut
            acceptable, contrairement à un téléchargement répété sans fin. */
         await q(`UPDATE teams SET colors_at = NOW() WHERE id = ?`, [t.id]).catch(() => {});
-        log.warn?.(`[couleurs] club ${t.id} : ${e.message}`);
+        if (e instanceof FormatDeBlason) {
+          if (!formatsDits.has(e.format)) {
+            formatsDits.add(e.format);
+            log.warn?.(`[couleurs] club ${t.id} : ${e.message} — couleurs par défaut `
+              + `(les autres blasons ${e.format} ne seront pas signalés)`);
+          }
+        } else {
+          log.warn?.(`[couleurs] club ${t.id} : ${e.message}`);
+        }
       } finally {
         enCours.delete(t.id);
       }
