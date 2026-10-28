@@ -1,6 +1,6 @@
 {
   "id": "SU22",
-  "rev": 8,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -92,6 +92,18 @@
           "repli": "base",
           "sha": "2b3a172bd347",
           "cligne": true
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "1dfdd3f84075"
         }
       }
     },
