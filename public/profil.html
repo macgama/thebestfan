@@ -260,6 +260,22 @@ h2{margin:26px 2px 10px}
    ouvre le panneau. */
 .saison-titres:first-child{margin-top:0}
 
+/* **Mes saisons** : une ligne par saison finie, la plus récente en haut —
+   ce que la saison en cours remplace à son lancement, gardé. Le nom à
+   gauche, la place à droite, et dessous ce qu'on y a fait. */
+.historique{padding:4px 14px}
+.hist-ligne{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;padding:11px 0}
+.hist-ligne+.hist-ligne{border-top:1px dashed color-mix(in srgb,currentColor 28%,transparent)}
+.hist-nom{font-family:var(--banner);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;
+  min-width:0;overflow-wrap:anywhere}
+.hist-place{display:flex;align-items:center;gap:8px;justify-self:end;white-space:nowrap;
+  font-family:var(--banner);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.hist-place .tbf-division{width:22px;height:22px}
+.hist-faits{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:2px 14px;font-size:12px;line-height:1.35;
+  font-variant-numeric:tabular-nums}
+.hist-faits b{font-weight:700}
+.hist-titres{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:4px}
+
 /* ------------------------------------------------------- le parcours
 
    Ce qu'un joueur a joué, et ce que ça lui a rapporté : la feuille de match
@@ -432,6 +448,9 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 
   <h2 class="tbf-cousu" id="saisonTitre" hidden>MA SAISON</h2>
   <div class="pan bloc saison" id="saison" hidden></div>
+
+  <h2 class="tbf-cousu" id="historiqueTitre" hidden>MES SAISONS</h2>
+  <div class="pan bloc historique" id="historique" hidden></div>
 
   <h2 class="tbf-cousu">MON PARCOURS</h2>
   <div class="serie" id="serie"></div>
@@ -1198,7 +1217,46 @@ function poserAnneauInsigne() {
   }
 }
 
+/**
+ * Mes saisons finies, telles que `/moi` les sert dans `historique` : le
+ * nom, ma place dans la liste SAISON, la division portée, les tampons du
+ * carnet, la ferveur classée, et les titres gagnés pendant la saison. Rien
+ * ne se calcule ici (R7) ; sans saison finie jouée, le bloc ne se montre pas.
+ */
+function rendreHistorique() {
+  const liste = Array.isArray(place?.historique) ? place.historique : [];
+  const titres = Array.isArray(place?.titres) ? place.titres : [];
+  const hote = $('historique');
+  if (!liste.length) {
+    hote.hidden = true;
+    $('historiqueTitre').hidden = true;
+    return;
+  }
+  hote.innerHTML = liste.map((h) => {
+    const rang = Number(h.rang);
+    const d = h.division;
+    const siens = titres.filter((t) => Number(t.saison) === Number(h.id));
+    const tampons = Number(h.tampons) || 0;
+    const ferveur = Number(h.ferveur) || 0;
+    return `<div class="hist-ligne">
+      <div class="hist-nom">SAISON ${esc(h.numero ?? '')}${h.nom ? ` — ${esc(h.nom)}` : ''}</div>
+      <div class="hist-place">${d?.n ? `<span class="tbf-division" data-n="${Number(d.n)}" role="img" aria-label="Division ${esc(d.nom ?? d.n)}"></span>` : ''}${
+        rang === 1 ? `<span>${nombre(rang)}er sur ${nombre(h.sur)}</span>`
+          : rang > 1 ? `<span>${nombre(rang)}e sur ${nombre(h.sur)}</span>` : ''}</div>
+      <div class="hist-faits">
+        <span>${tampons === 1 ? '<b>1</b> tampon' : `<b>${nombre(tampons)}</b> tampons`}</span>
+        <span><b>${nombre(ferveur)}</b> de ferveur</span>
+        ${d?.nom ? `<span>${esc(d.nom)}</span>` : ''}
+      </div>
+      ${siens.length ? `<div class="hist-titres">${siens.map((t) => `<span class="tbf-sticker">${esc(t.nom)}</span>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  hote.hidden = false;
+  $('historiqueTitre').hidden = false;
+}
+
 function rendreSaison() {
+  rendreHistorique();
   const s = place?.saison;
   const passee = place?.saisonPassee?.paliers?.length ? place.saisonPassee : null;
   const titres = Array.isArray(place?.titres) ? place.titres : [];
@@ -1335,9 +1393,10 @@ document.addEventListener('click', async (e) => {
   if (r.verse) {
     const prets = [...(place?.saison?.paliers ?? []), ...(place?.saisonPassee?.paliers ?? [])]
       .filter((x) => x?.etat === 'pret');
-    /* Un titre gagné (Capo) n'est pas dans la réponse : on relit ma place,
-       une fois, pour l'afficher. Sinon la réponse suffit. */
-    if (prets.some((x) => x.titre)) await chargerMoi();
+    /* Un titre gagné (Capo) n'est pas dans la réponse, ni la division d'une
+       saison passée qui entre dans MES SAISONS : on relit ma place, une
+       fois, pour les afficher. Sinon la réponse suffit. */
+    if (prets.some((x) => x.titre) || place?.saisonPassee?.paliers?.length) await chargerMoi();
     else {
       place = { ...place, saison: r.saison ?? place?.saison };
       if ('saisonPassee' in r) place.saisonPassee = r.saisonPassee; else delete place.saisonPassee;
