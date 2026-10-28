@@ -100,6 +100,8 @@
     "invites:test": "node scripts/invites-smoke.mjs",
     "doublons": "node scripts/fanzzy-doublons.mjs",
     "etats:test": "node scripts/etats-smoke.mjs",
+    "tailles:test": "node scripts/tailles-smoke.mjs",
+    "retailler": "node scripts/retailler-fanzzy.mjs",
     "cligne:test": "node scripts/cligne-smoke.mjs",
     "repliques:test": "node scripts/repliques-smoke.mjs",
     "catalogue:test": "node scripts/catalogue-smoke.mjs",

@@ -19,6 +19,7 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
+import { AGES } from './tailles-fanzzy.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 export const SORTIE_DEFAUT = path.join(RACINE, 'public', 'img', 'fanzzy');
@@ -93,6 +94,12 @@ export async function agreger(dossier = SORTIE_DEFAUT) {
           ...(s.cligne === true ? { cligne: true } : {}) };
       }
       const pieds = await mesurerPieds(path.join(dossier, e.name, evo), contenu.skins ?? {});
+      /* Ce qu'il tient au-dessus de sa tête — une canne, une bannière, un
+         parapluie — compte dans la hauteur du dessin, pas dans celle du
+         personnage : `AGES` donne alors la hauteur de son corps, et c'est
+         elle qui prend la taille de l'âge (Gaël, 28 octobre 2026). */
+      const corps = AGES[m.id ?? e.name]?.[Number(evo.slice(1))];
+      if (pieds && corps > 0) pieds[0] = corps;
       evolutions[evo] = { skins, ...(pieds ? { pieds } : {}) };
     }
     fanzzy[m.id ?? e.name] = { rev: m.rev ?? 1, evolutions };

@@ -1,6 +1,6 @@
 {
   "id": "AN28",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -162,5 +162,23 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/neutre": 0.884,
+    "e1/prehistorique/joie": 0.884,
+    "e1/prehistorique/colere": 0.884,
+    "e1/prehistorique/depit": 0.884,
+    "e1/prehistorique/pousse": 0.884,
+    "e1/prehistorique/cligne": 0.884,
+    "e2/halloween/neutre": 1.093,
+    "e2/halloween/joie": 1.093,
+    "e2/halloween/colere": 1.093,
+    "e2/halloween/depit": 1.093,
+    "e2/halloween/pousse": 1.093,
+    "e3/apocalyptique/neutre": 0.925,
+    "e3/apocalyptique/joie": 0.925,
+    "e3/apocalyptique/colere": 0.925,
+    "e3/apocalyptique/depit": 0.925,
+    "e3/apocalyptique/pousse": 0.925
   }
 }

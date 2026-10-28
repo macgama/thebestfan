@@ -1,6 +1,6 @@
 {
   "id": "AN19",
-  "rev": 11,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -163,5 +163,13 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/neutre": 0.933,
+    "e1/prehistorique/joie": 0.933,
+    "e1/prehistorique/colere": 0.933,
+    "e1/prehistorique/depit": 0.933,
+    "e1/prehistorique/pousse": 0.933,
+    "e1/prehistorique/cligne": 0.933
   }
 }

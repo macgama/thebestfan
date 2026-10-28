@@ -1,6 +1,6 @@
 {
   "id": "SU30",
-  "rev": 16,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -167,5 +167,13 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/apocalyptique/neutre": 0.833,
+    "e3/apocalyptique/joie": 0.833,
+    "e3/apocalyptique/colere": 0.833,
+    "e3/apocalyptique/depit": 0.833,
+    "e3/apocalyptique/pousse": 0.833,
+    "e3/apocalyptique/cligne": 0.833
   }
 }

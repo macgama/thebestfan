@@ -1,6 +1,6 @@
 {
   "id": "AN7",
-  "rev": 9,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -161,5 +161,17 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/halloween/neutre": 1.072,
+    "e3/halloween/joie": 1.072,
+    "e3/halloween/colere": 1.072,
+    "e3/halloween/depit": 1.072,
+    "e3/halloween/pousse": 1.072,
+    "e3/halloween/cligne": 1.072,
+    "e3/apocalyptique/joie": 1.232,
+    "e3/apocalyptique/colere": 1.421,
+    "e3/apocalyptique/depit": 1.45,
+    "e3/apocalyptique/pousse": 1.393
   }
 }

@@ -1,6 +1,6 @@
 {
   "id": "SU8",
-  "rev": 9,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -149,5 +149,19 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/halloween/neutre": 0.932,
+    "e1/halloween/joie": 0.932,
+    "e1/halloween/colere": 0.932,
+    "e1/halloween/depit": 0.932,
+    "e1/halloween/pousse": 0.932,
+    "e1/halloween/cligne": 0.932,
+    "e1/prehistorique/neutre": 0.917,
+    "e1/prehistorique/joie": 0.917,
+    "e1/prehistorique/colere": 0.917,
+    "e1/prehistorique/depit": 0.917,
+    "e1/prehistorique/pousse": 0.917,
+    "e1/prehistorique/cligne": 0.917
   }
 }

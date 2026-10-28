@@ -1,6 +1,6 @@
 {
   "id": "AN29",
-  "rev": 8,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -158,5 +158,9 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/apocalyptique/depit": 1.385,
+    "e1/halloween/pousse": 1.204
   }
 }

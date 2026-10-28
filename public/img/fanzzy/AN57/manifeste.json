@@ -1,6 +1,6 @@
 {
   "id": "AN57",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -167,5 +167,19 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/halloween/neutre": 1.083,
+    "e2/halloween/joie": 1.083,
+    "e2/halloween/colere": 1.083,
+    "e2/halloween/depit": 1.083,
+    "e2/halloween/pousse": 1.083,
+    "e2/halloween/cligne": 1.083,
+    "e3/halloween/neutre": 1.25,
+    "e3/halloween/joie": 1.25,
+    "e3/halloween/colere": 1.25,
+    "e3/halloween/depit": 1.25,
+    "e3/halloween/pousse": 1.25,
+    "e3/halloween/cligne": 1.25
   }
 }

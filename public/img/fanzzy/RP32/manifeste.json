@@ -1,6 +1,6 @@
 {
   "id": "RP32",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -159,5 +159,18 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/apocalyptique/neutre": 0.764,
+    "e1/apocalyptique/joie": 0.764,
+    "e1/apocalyptique/colere": 0.764,
+    "e1/apocalyptique/depit": 0.764,
+    "e1/apocalyptique/pousse": 0.764,
+    "e1/apocalyptique/cligne": 0.764,
+    "e1/halloween/neutre": 1.121,
+    "e1/halloween/joie": 1.121,
+    "e1/halloween/colere": 1.121,
+    "e1/halloween/depit": 1.121,
+    "e1/halloween/pousse": 1.121
   }
 }

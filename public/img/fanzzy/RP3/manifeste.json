@@ -1,6 +1,6 @@
 {
   "id": "RP3",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -159,5 +159,12 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/halloween/neutre": 0.94,
+    "e1/halloween/joie": 0.94,
+    "e1/halloween/colere": 0.94,
+    "e1/halloween/depit": 0.94,
+    "e1/halloween/pousse": 0.94
   }
 }

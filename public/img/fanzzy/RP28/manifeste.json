@@ -1,6 +1,6 @@
 {
   "id": "RP28",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -162,5 +162,18 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/apocalyptique/neutre": 0.882,
+    "e1/apocalyptique/joie": 0.882,
+    "e1/apocalyptique/colere": 0.882,
+    "e1/apocalyptique/depit": 0.882,
+    "e1/apocalyptique/pousse": 0.882,
+    "e1/prehistorique/neutre": 0.919,
+    "e1/prehistorique/joie": 0.919,
+    "e1/prehistorique/colere": 0.919,
+    "e1/prehistorique/depit": 0.919,
+    "e1/prehistorique/pousse": 0.919,
+    "e1/prehistorique/cligne": 0.919
   }
 }

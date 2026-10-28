@@ -1,6 +1,6 @@
 {
   "id": "SU7",
-  "rev": 8,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -160,5 +160,13 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/apocalyptique/neutre": 1.079,
+    "e2/apocalyptique/joie": 1.079,
+    "e2/apocalyptique/colere": 1.079,
+    "e2/apocalyptique/depit": 1.079,
+    "e2/apocalyptique/pousse": 1.079,
+    "e2/apocalyptique/cligne": 1.079
   }
 }

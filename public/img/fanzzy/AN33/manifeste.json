@@ -1,6 +1,6 @@
 {
   "id": "AN33",
-  "rev": 14,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -165,5 +165,16 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/halloween/colere": 1.45,
+    "e2/halloween/depit": 1.145,
+    "e2/halloween/pousse": 1.45,
+    "e3/halloween/neutre": 1.06,
+    "e3/halloween/joie": 1.06,
+    "e3/halloween/colere": 1.06,
+    "e3/halloween/depit": 1.06,
+    "e3/halloween/pousse": 1.06,
+    "e3/halloween/cligne": 1.06
   }
 }
