@@ -17,7 +17,8 @@ import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 // La ventilation de ce qu'un joueur porte, partagée avec le duel : les deux
 // arènes composent les mêmes modificateurs, elles doivent les nommer pareil.
 import { apportsDe } from '../../shared/apports.js';
-import { avecCriDuClub, lieA, lienEcrit, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
+import { avecCriDuClub, clubDe, facteurPleinClub, lieA, lienEcrit, modsDuLien, pleinClub, tauxDuLien }
+  from '../../shared/fanzzy/clubs.js';
 import { racineDe } from '../fanzzy/catalogue.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { ETAT_ULTIME } from '../../shared/ultime.js';
@@ -66,7 +67,12 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
                                   seuls amis présents. Facultative : sans elle,
                                   rien ne part, et éteinte (`presence.actif`
                                   faux), elle ne rend rien. */
-                               presence = null }) {
+                               presence = null,
+                               /* Les files du duel (`nvn.filesParMatch`), pour
+                                  la route `/a-jouer` : les pages des matchs y
+                                  lisent qu'un duel attend. Facultatives : sans
+                                  elles, la route ne dit que le Virage. */
+                               filesDuel = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
   /* Le bilan lit la base, jamais la salle (voir `bilan.js`). `recharger` ne
      sert pas à l'XP — elle ne porte pas de booster — et part par principe. */
@@ -871,9 +877,16 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       };
       const lien = hero && !neutre && lieA(hero.id, teamId, clubAchete, match)
         ? modsDuLien(tauxDuLien()) : null;
+      let plein = 0;
       if (lien) {
         // Le cri de son club, à la place du sien : sa voix, pas son geste.
         perso = avecCriDuClub(perso, teamId);
+        /* **Le PLEIN CLUB** : ses pièces de club, dans un match de son club
+           principal, rapportent en plus — de la ferveur, jamais de la force. */
+        const principal = (await q(`SELECT team_id FROM user_follows
+          WHERE user_id = ? AND is_main = 1 LIMIT 1`, [u.userId]).catch(() => []))[0]?.team_id ?? null;
+        plein = pleinClub({ fanzzyId: hero.id, clubAchete, stuff: sac, teamId, principal, match });
+        if (plein) lien.ferveurBonus *= facteurPleinClub(plein);
         for (const [cle, v] of Object.entries(lien)) {
           mods[cle] = (mods[cle] ?? 1) * v;
           modsBanc[cle] = (modsBanc[cle] ?? 1) * v;
@@ -923,7 +936,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         fanzzy: hero ? { nom: perso?.nom ?? hero.nom, mods: hero.mods } : null,
         stuff: sac,
         kop: bonusKop,
-        club: lien,
+        club: lien && plein ? { ...lien, pleinClub: plein } : lien,
+        clubPorteur: hero ? clubDe(hero.id) ?? clubAchete : null,
       });
 
       /* **L'Ultimate** du Fanzzy équipé, au premier âge comme tout au Virage :
@@ -1612,6 +1626,37 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       })),
       ferveurNeutre: RULES.ferveurNeutre,
     });
+  });
+
+  /**
+   * **Où l'on peut jouer, match par match**, pour les pages MATCHS et
+   * COMPÉTITIONS (28 octobre 2026, Gaël : « pouvoir cliquer sur un match s'il
+   * y a un Virage ouvert ou un duel en manque de joueur »).
+   *
+   * Deux listes, rien que des nombres : les tribunes du Virage où quelqu'un
+   * pousse (`crowd`, la même mesure que `/live`), et les files du duel où
+   * quelqu'un attend. Mémoire seule, aucune requête en base, aucun nom : les
+   * pages la relisent toutes les vingt secondes, et un visiteur sans compte
+   * peut voir qu'une tribune chante — c'est une invitation, pas un secret.
+   *
+   * L'ouverture du Virage, elle, ne vient pas d'ici : la page la tire de la
+   * minute et du coup d'envoi qu'elle a déjà, par la règle de `/live`.
+   */
+  router.get('/a-jouer', (_req, res) => {
+    res.set('cache-control', 'no-store');
+    const foules = [];
+    for (const [id, room] of rooms) {
+      const crowd = room.crowd();
+      if (crowd[0] + crowd[1] > 0) foules.push({ fixtureId: Number(id), crowd });
+    }
+    let duels = [];
+    try {
+      duels = (filesDuel?.() ?? [])
+        .filter((a) => a.camps.some((n) => n > 0))
+        .map((a) => ({ fixtureId: a.fixtureId, format: a.format,
+          attendus: a.attendus, camps: a.camps }));
+    } catch (e) { console.error('[virage] files du duel', e.message); }
+    res.json({ foules, duels });
   });
 
   router.get('/stats', requireAuth, (_req, res) => {

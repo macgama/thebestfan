@@ -448,6 +448,11 @@
       /* **Les légendaires des sélections et du championnat** (demande de
          Gaël du 28 octobre 2026) : liées à toutes les équipes nationales du
          pays, ou à tous les clubs d'une compétition. */
+      /* Les pièces de son club : leur revers s'adoucit sur lui (COMBO), et
+         elles rapportent en plus dans les matchs du club principal. Une
+         phrase entière par cas : la traduction se fait phrase par phrase. */
+      const combo = Number(c.combo) || 0;
+      const plein = Number(c.pleinGain) || 0;
       const phrase = c.portee === 'championnat'
         ? (c.tonClub
           ? `Dans chaque match de ton club dans ce championnat, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel.`
@@ -457,7 +462,9 @@
           ? `Dans les matchs des sélections de ce pays (hommes, femmes, espoirs), il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel.`
           : `Il est lié aux sélections d’un pays (hommes, femmes, espoirs). Suis l’une d’elles, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`)
         : c.tonClub
-        ? `Dans les matchs de ton club, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel.`
+        ? (plein
+          ? `Dans les matchs de ton club, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel. Les pièces de son club, sur lui, gênent ${combo} % moins ; dans les matchs de ton club principal, chacune rapporte ${plein} % de plus.`
+          : `Dans les matchs de ton club, il pousse ${force} % plus fort et rapporte ${gain} % de plus, au Virage comme en duel.`)
         : nom
           ? `Il est lié à ${nom}, un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`
           : `Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`;
