@@ -61,7 +61,7 @@ export const ETAPES = [
     visuel: 'dos',
     quoi: 'Cinq cartes. Une ou deux sont des supporters — la deuxième sept fois '
       + 'sur dix. Les trois dernières donnent autre chose : de l’équipement, une '
-      + 'carte d’action, une tenue, ou des écharpes.',
+      + 'carte d’action, une tenue, une expression, une carte Ultimate ou des écharpes.',
     pourquoi: () => 'Un double ne se perd pas : il se change en écharpes, '
       + `${SCARVES.commune} pour une commune et jusqu’à ${SCARVES.legendaire} `
       + 'pour une légendaire. Et les écharpes sont ce qui fait grandir tes '
@@ -88,7 +88,8 @@ export const ETAPES = [
     visuel: 'deck',
     quoi: () => `${DECK_RULES.fanzzy} Fanzzy, ${DECK_RULES.stuffParFanzzy} pièces `
       + `d’équipement pour chacun, et ${DECK_RULES.actions} cartes d’action. `
-      + 'Le premier Fanzzy est ton titulaire : c’est lui qui entre sur le terrain.',
+      + 'Le premier Fanzzy est ton titulaire : c’est lui qui entre sur le terrain. '
+      + 'Un seul légendaire par deck, et jamais titulaire.',
     pourquoi: 'Chaque pièce d’équipement a un revers — elle donne quelque chose '
       + 'et en retire un autre. Il n’existe pas de meilleur équipement, seulement '
       + 'celui qui va avec le geste de ton titulaire.',
@@ -193,10 +194,12 @@ const RUBRIQUES = [
     questions: [
       ['C’est quoi, l’Ultimate ?',
         () => 'Le coup fatal de ton Fanzzy : il porte le nom de son cri et pousse la '
-          + 'corde très fort. Sous ton souffle, une jauge dorée monte à chaque chant '
-          + 'réussi — un BON compte un point, un PARFAIT deux — et elle est pleine à '
-          + `${reglage('ultime.charge')} points. Touche alors le bouton doré, réussis `
-          + 'le geste de ton Fanzzy, et la corde part d’un coup. Raté, il pousse encore la moitié.'],
+          + 'corde très fort. Une jauge d’or se remplit à chaque chant réussi — un BON '
+          + `compte un point, un PARFAIT deux — et elle est pleine à ${reglage('ultime.charge')} `
+          + 'points. En duel, c’est l’anneau du gros bouton rond, au bout de tes chants ; '
+          + 'au Grand Virage, la ligne sous ton souffle. Pleine, elle s’allume et bat : '
+          + 'touche-la, réussis le geste de ton Fanzzy, et la corde part d’un coup. Raté, '
+          + 'il pousse encore la moitié.'],
       ['Combien de fois puis-je le lancer ?',
         () => 'Une fois par duel, et une fois par match de Virage : choisis bien ton '
           + 'moment. En duel, la Relève fait grandir ton Fanzzy et son Ultimate avec '
