@@ -11,6 +11,7 @@ import { STUFF, SKIN_BY_ID, STUFF_BY_ID, combine }
    un nouveau joueur sur quatre recevait `a-relance`, une carte qui n'existe
    pas. Voir la note à l'endroit où cette liste se trouvait. */
 import { ACTIONS } from '../../shared/duel/actions.js';
+import { clubDe } from '../../shared/fanzzy/clubs.js';
 /* Ce que les saisons ont ouvert de l’équipement et des cartes d’action.
    Renommé à l’import : `publies` désigne déjà le catalogue Fanzzy dans les
    modules voisins, et deux sens pour un nom finissent par se confondre.
@@ -547,7 +548,7 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       fanzzy: f ? { id: f.id, nom: f.nom, type: f.type, cri: f.cri } : null,
       skin,
       stuff: portes.map((p) => p.stuff_id),
-      mods: f ? { id: f.id, ...combine(f.mods, portes.map((p) => p.stuff_id)) } : {},
+      mods: f ? { id: f.id, ...combine(f.mods, portes.map((p) => p.stuff_id), { club: clubDe(f.id) }) } : {},
     };
   }
 

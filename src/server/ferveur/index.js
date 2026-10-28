@@ -17,7 +17,8 @@ import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 // La ventilation de ce qu'un joueur porte, partagée avec le duel : les deux
 // arènes composent les mêmes modificateurs, elles doivent les nommer pareil.
 import { apportsDe } from '../../shared/apports.js';
-import { avecCriDuClub, clubDe, lieA, modsDuLien, tauxDuLien } from '../../shared/fanzzy/clubs.js';
+import { avecCriDuClub, clubDe, facteurPleinClub, lieA, modsDuLien, pleinClub, tauxDuLien }
+  from '../../shared/fanzzy/clubs.js';
 import { racineDe } from '../fanzzy/catalogue.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { ETAT_ULTIME } from '../../shared/ultime.js';
@@ -866,9 +867,16 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         : null;
       const lien = hero && !neutre && lieA(hero.id, teamId, clubAchete)
         ? modsDuLien(tauxDuLien()) : null;
+      let plein = 0;
       if (lien) {
         // Le cri de son club, à la place du sien : sa voix, pas son geste.
         perso = avecCriDuClub(perso, teamId);
+        /* **Le PLEIN CLUB** : ses pièces de club, dans un match de son club
+           principal, rapportent en plus — de la ferveur, jamais de la force. */
+        const principal = (await q(`SELECT team_id FROM user_follows
+          WHERE user_id = ? AND is_main = 1 LIMIT 1`, [u.userId]).catch(() => []))[0]?.team_id ?? null;
+        plein = pleinClub({ fanzzyId: hero.id, clubAchete, stuff: sac, teamId, principal });
+        if (plein) lien.ferveurBonus *= facteurPleinClub(plein);
         for (const [cle, v] of Object.entries(lien)) {
           mods[cle] = (mods[cle] ?? 1) * v;
           modsBanc[cle] = (modsBanc[cle] ?? 1) * v;
@@ -918,7 +926,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         fanzzy: hero ? { nom: perso?.nom ?? hero.nom, mods: hero.mods } : null,
         stuff: sac,
         kop: bonusKop,
-        club: lien,
+        club: lien && plein ? { ...lien, pleinClub: plein } : lien,
+        clubPorteur: hero ? clubDe(hero.id) ?? clubAchete : null,
       });
 
       /* **L'Ultimate** du Fanzzy équipé, au premier âge comme tout au Virage :

@@ -43,6 +43,7 @@
     "ultime:smoke": "node scripts/ultime-smoke.mjs",
     "ultime:images": "node scripts/ultime-images.mjs",
     "clubs:smoke": "node scripts/clubs-smoke.mjs",
+    "stuff-clubs:smoke": "node scripts/stuff-clubs-smoke.mjs",
     "nvn:smoke": "node scripts/nvn-smoke.mjs",
     "derby:smoke": "node scripts/derby-smoke.mjs",
     "duel-attente:smoke": "node scripts/duel-attente-smoke.mjs",

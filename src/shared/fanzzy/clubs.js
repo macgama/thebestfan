@@ -31,6 +31,7 @@
  */
 
 import { reglage } from '../reglages.js';
+import { STUFF_BY_ID } from './inventaire.js';
 
 /* Les vingt clubs de la saison 2026-2027, dans l'ordre des fiches. Le nom
    n'est là que pour qui relit cette table : il ne descend jamais plus bas. */
@@ -128,6 +129,14 @@ export function avecCriDuClub(perso, teamId) {
   return { ...crier(perso), ...(Array.isArray(perso.ages) ? { ages: perso.ages.map(crier) } : {}) };
 }
 
+/**
+ * **Les séries de clubs**, et leurs clubs. Une série ajoutée ici doit avoir
+ * ses deux pièces par club dans `inventaire.js` (demande de Gaël du 28 octobre
+ * 2026) : `stuff-clubs:smoke` échoue sinon, et rien n'entre dans main avec une
+ * suite rouge. C'est la façon de ne pas les oublier.
+ */
+export const SERIES_DE_CLUBS = Object.freeze({ AN: Object.freeze([...TERRACES]) });
+
 /** Lignée → club (identifiant API-Football). */
 export const CLUB_DE = new Map(
   [0, 20, 40].flatMap((d) => TERRACES.map((club, i) => ['AN'.concat(d + i + 1), club])));
@@ -185,30 +194,69 @@ export function avecLien(mods, taux, arene = 'virage') {
   return out;
 }
 
+/** Le gain du PLEIN CLUB par pièce, réglé dans /admin (`stuff.club_gain`), en fraction. */
+export function gainPleinClub() {
+  return (reglage('stuff.club_gain') ?? 15) / 100;
+}
+
+/**
+ * **Le PLEIN CLUB** (demande de Gaël du 28 octobre 2026) : les pièces de club
+ * que porte un Fanzzy lié, dans un match de ce club, quand ce club est le
+ * **club principal** du joueur. Le combo (pièce et Fanzzy du même club) chez
+ * le vrai fan : c'est là que ça « rapporte gros ».
+ *
+ * Rend le nombre de pièces qui comptent (0 à 2, la borne de `combine`).
+ * `principal` : `user_follows.is_main`, nul si le joueur n'en a pas.
+ */
+export function pleinClub({ fanzzyId, clubAchete = null, stuff = [], teamId, principal }) {
+  if (teamId == null || principal == null || Number(teamId) !== Number(principal)) return 0;
+  if (!lieA(fanzzyId, teamId, clubAchete)) return 0;
+  return (Array.isArray(stuff) ? stuff : []).slice(0, 2)
+    .filter((id) => Number(STUFF_BY_ID.get(id)?.club) === Number(teamId)).length;
+}
+
+/** Le facteur de gain de `n` pièces au PLEIN CLUB : elles se composent. */
+export function facteurPleinClub(n, gain = gainPleinClub()) {
+  return (1 + gain) ** (n || 0);
+}
+
 /**
  * Le deck d'un joueur pour **un** duel : chaque Fanzzy lié au club qu'il
  * soutient porte le bonus dans ses totaux, à tous ses âges — la Relève fait
  * grandir un Fanzzy lié sans qu'il cesse de l'être — et `lien`, le bonus seul,
  * pour que l'écran dise d'où il vient.
  *
+ * `principal` : le club principal du joueur. Si c'est le club du match, les
+ * pièces de club du Fanzzy lié font PLEIN CLUB : `pleinClub` (leur nombre) et
+ * `lien.scarvesBonus` grossi d'autant, que `recompenser` verse.
+ *
  * `teamId` nul (un neutre, un entraînement sans club) rend le deck tel quel.
  * Rend une copie : le loadout lu en base sert aussi à d'autres matchs.
  */
-export function lierLeDeck(loadout, teamId, taux) {
+export function lierLeDeck(loadout, teamId, taux, { principal = null } = {}) {
   if (!loadout?.fanzzy || teamId == null) return loadout;
-  const lien = modsDuLien(taux, 'duel');
-  const lier = (age) => ({
-    ...age,
-    mods: avecLien(age.mods, taux, 'duel'),
-    ...(age.modsBanc ? { modsBanc: avecLien(age.modsBanc, taux, 'duel') } : {}),
-    lie: true,
-    lien,
-    // Le club : la page du duel en tire son son et l'éclat de ses couleurs.
-    lieAuClub: teamId,
-  });
+  const lier = (f) => {
+    const plein = pleinClub({ fanzzyId: f.id, clubAchete: f.club, stuff: f.stuff,
+      teamId, principal });
+    const lien = modsDuLien(taux, 'duel');
+    if (plein) lien.scarvesBonus *= facteurPleinClub(plein);
+    return (age) => ({
+      ...age,
+      mods: avecLien(age.mods, taux, 'duel'),
+      ...(age.modsBanc ? { modsBanc: avecLien(age.modsBanc, taux, 'duel') } : {}),
+      lie: true,
+      lien,
+      pleinClub: plein,
+      // Le club : la page du duel en tire son son et l'éclat de ses couleurs.
+      lieAuClub: teamId,
+    });
+  };
   return {
     ...loadout,
-    fanzzy: loadout.fanzzy.map((f) => (!lieA(f.id, teamId, f.club) ? f
-      : avecCriDuClub({ ...lier(f), ages: (f.ages ?? []).map(lier) }, teamId))),
+    fanzzy: loadout.fanzzy.map((f) => {
+      if (!lieA(f.id, teamId, f.club)) return f;
+      const habiller = lier(f);
+      return avecCriDuClub({ ...habiller(f), ages: (f.ages ?? []).map(habiller) }, teamId);
+    }),
   };
 }

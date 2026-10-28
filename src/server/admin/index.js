@@ -8,6 +8,9 @@ import { chargerSaisons, toutesLesSaisons, saisonEnCours, saisonProchaine }
 import { CARNET_DEFAUT, LIMITES_CARNET, validerCarnet, memeCarnet, finDeFenetre,
   dansLaFenetre, proposerSeuils, seuilsDivisions } from '../../shared/saison.js';
 import { STUFF } from '../../shared/fanzzy/inventaire.js';
+import { SERIES_DE_CLUBS } from '../../shared/fanzzy/clubs.js';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { SAISONS_PREVUES, CARNET_TRIMESTRE } from '../../shared/saisons-prevues.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STADES } from '../../shared/stades.js';
@@ -1403,8 +1406,28 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     for (const [famille, { nom }] of Object.entries(FAMILLES)) {
       familles[famille] = { nom, liste: tousLes(famille) };
     }
-    res.json({ disponible: true, familles });
+    res.json({ disponible: true, familles, piecesDeClub: piecesDeClub(familles.stuff?.liste ?? []) });
   }));
+
+  /* **Les pièces de club, série par série** (demande de Gaël du 28 octobre
+     2026 : deux par club, sans en oublier). Écrites, dessinées, ouvertes —
+     les trois étapes d'une pièce, et ce qu'il en faut : deux par club de la
+     série (`SERIES_DE_CLUBS`). `stuff-clubs:smoke` refuse déjà une série sans
+     ses pièces écrites ; ce compteur dit le reste. */
+  const IMG_STUFF = fileURLToPath(new URL('../../../public/img/stuff/', import.meta.url));
+  function piecesDeClub(liste) {
+    const ouvertes = new Set(liste.filter((x) => x.publie !== false).map((x) => x.id));
+    return Object.entries(SERIES_DE_CLUBS).map(([serie, clubs]) => {
+      const ids = new Set(clubs.map(Number));
+      const pieces = STUFF.filter((s) => ids.has(Number(s.club)));
+      return {
+        serie, clubs: clubs.length, attendues: clubs.length * 2,
+        ecrites: pieces.length,
+        dessinees: pieces.filter((s) => existsSync(`${IMG_STUFF}${s.id}.webp`)).length,
+        ouvertes: pieces.filter((s) => ouvertes.has(s.id)).length,
+      };
+    });
+  }
 
   router.post('/contenus/publier', safe(async (req, res) => {
     if (!module.deps.contenus) throw fail('admin.error.contenus_absents');
