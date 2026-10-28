@@ -6715,5 +6715,12 @@
  "Comment échanger des doubles ?": "Come si scambiano i doppi?",
  "Sur la fiche d’un ami, touche un Fanzzy qu’il a en double, puis choisis lequel de tes doubles tu lui donnes en retour. Rien ne bouge avant qu’il accepte, et chacun garde au moins un exemplaire de chaque Fanzzy.": "Nella scheda di un amico, tocca un Fanzzy che ha doppio, poi scegli quale dei tuoi doppi gli dai in cambio. Nulla si muove prima che accetti, e ognuno tiene almeno una copia di ogni Fanzzy.",
  "Si j’emprunte un Fanzzy, mon ami le perd-il ?": "Se prendo in prestito un Fanzzy, il mio amico lo perde?",
- "Non. Tu le joues dans ton deck, à l’âge que ton ami lui a fait atteindre, jusqu’à minuit, et lui le garde. Un emprunt par jour, et seulement un Fanzzy que tu n’as pas.": "No. Lo giochi nel tuo deck, all’età a cui il tuo amico l’ha portato, fino a mezzanotte, e lui lo tiene. Un prestito al giorno, e solo un Fanzzy che non hai."
+ "Non. Tu le joues dans ton deck, à l’âge que ton ami lui a fait atteindre, jusqu’à minuit, et lui le garde. Un emprunt par jour, et seulement un Fanzzy que tu n’as pas.": "No. Lo giochi nel tuo deck, all’età a cui il tuo amico l’ha portato, fino a mezzanotte, e lui lo tiene. Un prestito al giorno, e solo un Fanzzy che non hai.",
+ "{0} EN TRIBUNE": "{0} IN CURVA",
+ "{0} T’ATTENDENT": "{0} TI ASPETTANO",
+ "1 T’ATTEND": "1 TI ASPETTA",
+ "À JOUER": "DA GIOCARE",
+ "Aucun Virage ouvert ni duel qui attend pour l’instant.": "Nessuna Curva aperta né duello in attesa per ora.",
+ "Les tribunes ouvrent une demi-heure avant le coup d’envoi.": "Le tribune aprono mezz’ora prima del calcio d’inizio.",
+ "<0>Où jouer</0> : sous un match, la pastille verte <1>VIRAGE</1> dit que sa tribune est ouverte, avec le nombre de supporters qui poussent, et la violette <2>DUEL</2> qu’un joueur y attend un adversaire. Un appui t’y emmène.": "<0>Dove giocare</0>: sotto una partita, il bollino verde <1>CURVA</1> dice che la sua tribuna è aperta, con il numero di tifosi che spingono, e quello viola <2>DUELLO</2> che un giocatore aspetta un avversario. Un tocco ti ci porta."
 }

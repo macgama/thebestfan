@@ -66,7 +66,12 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
                                   seuls amis présents. Facultative : sans elle,
                                   rien ne part, et éteinte (`presence.actif`
                                   faux), elle ne rend rien. */
-                               presence = null }) {
+                               presence = null,
+                               /* Les files du duel (`nvn.filesParMatch`), pour
+                                  la route `/a-jouer` : les pages des matchs y
+                                  lisent qu'un duel attend. Facultatives : sans
+                                  elles, la route ne dit que le Virage. */
+                               filesDuel = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
   /* Le bilan lit la base, jamais la salle (voir `bilan.js`). `recharger` ne
      sert pas à l'XP — elle ne porte pas de booster — et part par principe. */
@@ -1607,6 +1612,37 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       })),
       ferveurNeutre: RULES.ferveurNeutre,
     });
+  });
+
+  /**
+   * **Où l'on peut jouer, match par match**, pour les pages MATCHS et
+   * COMPÉTITIONS (28 octobre 2026, Gaël : « pouvoir cliquer sur un match s'il
+   * y a un Virage ouvert ou un duel en manque de joueur »).
+   *
+   * Deux listes, rien que des nombres : les tribunes du Virage où quelqu'un
+   * pousse (`crowd`, la même mesure que `/live`), et les files du duel où
+   * quelqu'un attend. Mémoire seule, aucune requête en base, aucun nom : les
+   * pages la relisent toutes les vingt secondes, et un visiteur sans compte
+   * peut voir qu'une tribune chante — c'est une invitation, pas un secret.
+   *
+   * L'ouverture du Virage, elle, ne vient pas d'ici : la page la tire de la
+   * minute et du coup d'envoi qu'elle a déjà, par la règle de `/live`.
+   */
+  router.get('/a-jouer', (_req, res) => {
+    res.set('cache-control', 'no-store');
+    const foules = [];
+    for (const [id, room] of rooms) {
+      const crowd = room.crowd();
+      if (crowd[0] + crowd[1] > 0) foules.push({ fixtureId: Number(id), crowd });
+    }
+    let duels = [];
+    try {
+      duels = (filesDuel?.() ?? [])
+        .filter((a) => a.camps.some((n) => n > 0))
+        .map((a) => ({ fixtureId: a.fixtureId, format: a.format,
+          attendus: a.attendus, camps: a.camps }));
+    } catch (e) { console.error('[virage] files du duel', e.message); }
+    res.json({ foules, duels });
   });
 
   router.get('/stats', requireAuth, (_req, res) => {

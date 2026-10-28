@@ -6715,5 +6715,12 @@
  "Comment échanger des doubles ?": "How do I trade doubles?",
  "Sur la fiche d’un ami, touche un Fanzzy qu’il a en double, puis choisis lequel de tes doubles tu lui donnes en retour. Rien ne bouge avant qu’il accepte, et chacun garde au moins un exemplaire de chaque Fanzzy.": "On a friend’s page, tap a Fanzzy they have as a double, then choose which of your doubles you give in return. Nothing moves until they accept, and everyone keeps at least one copy of each Fanzzy.",
  "Si j’emprunte un Fanzzy, mon ami le perd-il ?": "If I borrow a Fanzzy, does my friend lose it?",
- "Non. Tu le joues dans ton deck, à l’âge que ton ami lui a fait atteindre, jusqu’à minuit, et lui le garde. Un emprunt par jour, et seulement un Fanzzy que tu n’as pas.": "No. You play it in your deck, at the age your friend raised it to, until midnight, and they keep it. One loan a day, and only a Fanzzy you don’t have."
+ "Non. Tu le joues dans ton deck, à l’âge que ton ami lui a fait atteindre, jusqu’à minuit, et lui le garde. Un emprunt par jour, et seulement un Fanzzy que tu n’as pas.": "No. You play it in your deck, at the age your friend raised it to, until midnight, and they keep it. One loan a day, and only a Fanzzy you don’t have.",
+ "{0} EN TRIBUNE": "{0} IN THE STAND",
+ "{0} T’ATTENDENT": "{0} WAITING",
+ "1 T’ATTEND": "1 WAITING",
+ "À JOUER": "TO PLAY",
+ "Aucun Virage ouvert ni duel qui attend pour l’instant.": "No open End or waiting duel right now.",
+ "Les tribunes ouvrent une demi-heure avant le coup d’envoi.": "Stands open half an hour before kick-off.",
+ "<0>Où jouer</0> : sous un match, la pastille verte <1>VIRAGE</1> dit que sa tribune est ouverte, avec le nombre de supporters qui poussent, et la violette <2>DUEL</2> qu’un joueur y attend un adversaire. Un appui t’y emmène.": "<0>Where to play</0>: under a match, the green <1>END</1> badge means its stand is open, with the number of fans pushing, and the purple <2>DUEL</2> one means a player is waiting there for an opponent. One tap takes you there."
 }
