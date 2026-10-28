@@ -134,8 +134,13 @@ export function createFootballStore(pool) {
       if (isMain && actuel != null && Number(actuel) !== Number(teamId)) {
         await q(`INSERT IGNORE INTO user_follows (user_id, team_id, is_main) VALUES (?, ?, 0)`,
           [userId, teamId]);
-        await devenirPrincipal(q, userId, teamId);
-        return;
+        /* Sans sql/principal.sql, le changement libre d'avant. */
+        try {
+          await devenirPrincipal(q, userId, teamId);
+          return;
+        } catch (e) {
+          if (e?.code !== 'onboarding.error.principal_absent') throw e;
+        }
       }
       if (isMain) await q(`UPDATE user_follows SET is_main = 0 WHERE user_id = ?`, [userId]);
       await q(
