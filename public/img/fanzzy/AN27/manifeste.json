@@ -1,6 +1,6 @@
 {
   "id": "AN27",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4693fb453040",
+          "sha": "67649efe2615",
           "cligne": true
         },
         "prehistorique": {
@@ -26,7 +26,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cef9a503a7d9"
+          "sha": "0fd55304174a"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "83241e67beff"
         }
       }
     },

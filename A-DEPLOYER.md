@@ -14,6 +14,21 @@
 
 ---
 
+**Les équipes nationales dans la recherche « TON CLUB »** (branche
+`claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : il a dû
+taper « Switzerland » pour trouver la Suisse). Construction seule, **sans
+schéma**.
+
+- « Suisse », « Schweiz », « Svizzera », « Suiza » trouvent la sélection, en
+  tête, et elle s'affiche dans la langue du joueur ; de même pour tous les
+  pays, dont ceux que l'API écrit autrement (Turquie, États-Unis, Tchéquie,
+  Côte d'Ivoire, RD Congo…) et l'Angleterre, l'Écosse, le pays de Galles,
+  l'Irlande du Nord.
+- Après la mise en ligne : sur le S24+, chercher « suisse » au premier écran
+  d'un compte de test.
+
+---
+
 **Les sons de l'ouverture des boosters, version tribune** (branche
 `claude/project-thread-1xxwfz`, 27 octobre 2026, demandé par Gaël : les
 anciens n'étaient « pas du tout gaming » ni supporters ; validés à l'écoute).
