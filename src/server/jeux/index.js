@@ -41,6 +41,7 @@ import {
   TIFO, lettresDuClub, motifDuTifo, fideliteDuTifo,
 } from '../../shared/mini-jeux.js';
 import { chantReussiPour } from './voix.js';
+import { compterDuJour } from '../quotidien/compteurs.js';
 
 const SCHEMA_INCOMPLET = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR']);
 
@@ -693,6 +694,12 @@ export function createJeux({ pool, requireAuth }) {
   });
   const repondre = (res, r) => (r?.erreur
     ? res.status(r.status ?? 400).json({ error: r.erreur }) : res.json(r));
+  /* Une partie finie, des tirs tirés, une case peinte : la mission « Joue un
+     mini-jeu » le compte. Seulement ce qui a réussi. */
+  const joue = async (userId, r) => {
+    if (!r?.erreur) await compterDuJour(q, userId, 'minijeu');
+    return r;
+  };
   const ferme = (res) => res.status(409).json({ error: 'jeux.error.inactif' });
   const idDe = (req) => {
     const n = Number(req.params.id);
@@ -745,7 +752,7 @@ export function createJeux({ pool, requireAuth }) {
     const id = idDe(req);
     if (!id) return res.status(400).json({ error: 'jeux.error.partie_inconnue' });
     const score = Number(req.body?.score);
-    repondre(res, await finirJongles(req.user.id, id, score, req.body?.frappes));
+    repondre(res, await joue(req.user.id, await finirJongles(req.user.id, id, score, req.body?.frappes)));
   }));
 
   /** Tirer : contre un ami (`ami` : son identifiant), ou contre le premier venu. */
@@ -754,7 +761,8 @@ export function createJeux({ pool, requireAuth }) {
     const jeu = jeuDeTirs(req.body?.jeu);
     if (!jeu) return res.status(400).json({ error: 'jeux.error.jeu_invalide' });
     const ami = typeof req.body?.ami === 'string' && req.body.ami ? req.body.ami : null;
-    repondre(res, ami ? await defier(req.user.id, ami, jeu) : await tirerAuHasard(req.user.id, jeu));
+    repondre(res, await joue(req.user.id,
+      ami ? await defier(req.user.id, ami, jeu) : await tirerAuHasard(req.user.id, jeu)));
   }));
 
   /** Relever le défi d'un ami. */
@@ -763,7 +771,7 @@ export function createJeux({ pool, requireAuth }) {
     const id = idDe(req);
     const jeu = jeuDeTirs(req.body?.jeu);
     if (!id || !jeu) return res.status(400).json({ error: 'jeux.error.jeu_invalide' });
-    repondre(res, await releverDefi(req.user.id, id, jeu));
+    repondre(res, await joue(req.user.id, await releverDefi(req.user.id, id, jeu)));
   }));
 
   /** Le premier tireur a vu le résultat de ses séries. */
@@ -787,7 +795,7 @@ export function createJeux({ pool, requireAuth }) {
     const id = idDe(req);
     if (!id) return res.status(400).json({ error: 'jeux.error.partie_inconnue' });
     const gestes = jeu === 'chant' ? req.body?.frappes : req.body?.gestes;
-    repondre(res, await finirPartie(req.user.id, jeu, id, gestes));
+    repondre(res, await joue(req.user.id, await finirPartie(req.user.id, jeu, id, gestes)));
   }));
 
   router.get('/tifo', requireAuth, safe(async (req, res) => {
@@ -796,8 +804,8 @@ export function createJeux({ pool, requireAuth }) {
 
   router.post('/tifo', requireAuth, safe(async (req, res) => {
     if (!reglage('jeux.actif')) return ferme(res);
-    repondre(res, await peindre(req.user.id, Number(req.body?.match), Number(req.body?.case),
-      Number(req.body?.couleur)));
+    repondre(res, await joue(req.user.id, await peindre(req.user.id, Number(req.body?.match),
+      Number(req.body?.case), Number(req.body?.couleur))));
   }));
 
   router.get('/boss', requireAuth, safe(async (req, res) => {

@@ -14,7 +14,8 @@
 
      1. toucher une carte de chant, et faire le geste ;
      2. voir la corde : le chant la tire, au bout c'est un but ;
-     3. jouer une carte d'action quand elle s'allume.
+     3. jouer une carte d'action quand elle s'allume ;
+     4. puis, quand son anneau est plein, lancer l'Ultimate.
 
    Le jeu ne s'arrête jamais : les bulles ne couvrent rien et ne prennent
    aucun appui, sauf leur propre bouton. La page n'a qu'à appeler
@@ -168,6 +169,26 @@
           bouton: { texte: 'C’EST PARTI', action: () => suivant() } });
       },
       suivre: () => false,
+    },
+    /* 5. L'Ultimate (28 octobre 2026) : le gros bouton rond est à l'écran
+       depuis le coup d'envoi, et rien ne disait ce qu'il fait. La bulle ne
+       parle qu'au moment où il s'allume (et revient après un geste), se tait
+       pendant un geste et dès qu'on l'a lancé ; un
+       duel fini avant ne la montre jamais. */
+    {
+      montrer: () => taire(),
+      suivre(t) {
+        const b = $('ultime');
+        const etat = b && !b.hidden ? b.dataset.etat : null;
+        if (etat === 'lance') return true;
+        if (etat === 'pret' && !gesteOuvert() && (!t.dit || bulle?.hidden)) {
+          t.dit = true;
+          dire({ titre: 'L’Ultimate est prêt !', el: b,
+            texte: 'Tes chants réussis ont rempli l’anneau d’or. Touche le bouton rond et réussis le geste : c’est le coup fatal de ton Fanzzy, une seule fois par duel.' });
+        }
+        if (gesteOuvert() && t.dit) taire();
+        return false;
+      },
     },
   ];
   let tenue = {};

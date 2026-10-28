@@ -56,6 +56,10 @@ export const SOURCES = Object.freeze([
   'chants_club',   // les mêmes, pour un club suivi
   'mitemps',       // le moins chanté des deux mi-temps du meilleur match
   'competitions',  // compétitions où l'on a assez chanté
+  // Les nouveautés (28 octobre 2026, choix de Gaël « Trois nouvelles missions ») :
+  'ultimes',       // Ultimate lancés, au duel ou au Grand Virage (pas au duel guidé)
+  'minijeux',      // parties de mini-jeux finies (jongles, chant, déplacement, tirs) ou cases de tifo
+  'pronos',        // pronostics nouveaux (changer un score déjà donné ne compte pas)
 ]);
 
 /**
@@ -73,12 +77,14 @@ export const CONDITIONS = Object.freeze([
   'avant_seconde_mi_temps',  // un match du jour n'a pas commencé sa seconde mi-temps
   'deux_competitions',       // deux compétitions jouent encore dans le jour
   'grandir',                 // un Fanzzy peut grandir, et la bourse le paie
+  'minijeux',                // les mini-jeux sont ouverts
+  'prono',                   // le pronostic est ouvert, et un club suivi joue aujourd'hui sans avoir commencé
 ]);
 
 const m = (o) => Object.freeze(o);
 
 /**
- * Le catalogue : treize missions (`SERVEUR.md`, § 3 ; `CONTRATS.md`, § 6.1).
+ * Le catalogue : seize missions (`SERVEUR.md`, § 3 ; `CONTRATS.md`, § 6.1).
  *
  * `titre(cible)` écrit l'intitulé à partir de la cible : le nombre et le mot
  * ne peuvent pas se contredire. Le titre de chaque bascule du registre
@@ -102,6 +108,12 @@ export const MISSIONS = Object.freeze([
   m({ id: 'grandir', difficulte: 'facile', cible: 1, unite: 'evolutions',
     titre: () => 'Fais grandir un Fanzzy', ou: '/fanzzy', bouton: 'Faire grandir un Fanzzy',
     source: 'evolutions', condition: 'grandir' }),
+  m({ id: 'minijeu', difficulte: 'facile', cible: 1, unite: 'parties',
+    titre: () => 'Joue un mini-jeu', ou: '/jeux', bouton: 'Jouer à un mini-jeu',
+    source: 'minijeux', condition: 'minijeux' }),
+  m({ id: 'prono', difficulte: 'facile', cible: 1, unite: 'pronostics',
+    titre: () => 'Fais un pronostic', ou: '/matchs', bouton: 'Faire un pronostic',
+    source: 'pronos', condition: 'prono' }),
 
   m({ id: 'tribune', difficulte: 'moyenne', cible: 40, unite: 'chants',
     titre: (c) => `Chante ${c} fois au Grand Virage`, ou: '/virage',
@@ -118,6 +130,11 @@ export const MISSIONS = Object.freeze([
   m({ id: 'club_duel', difficulte: 'moyenne', cible: 1, unite: 'duels',
     titre: () => 'Joue un duel pour ton club', ou: '/duel-nvn', bouton: 'Jouer un duel',
     source: 'duels_club', condition: 'suit_un_club' }),
+  /* L'Ultimate se lance aussi au Grand Virage ; la mission mène au duel, qui
+     se joue à toute heure. */
+  m({ id: 'ultime', difficulte: 'moyenne', cible: 1, unite: 'ultimes',
+    titre: () => 'Lance ton Ultimate', ou: '/duel-nvn', bouton: 'Jouer un duel',
+    source: 'ultimes', condition: 'duel' }),
 
   m({ id: 'victoires', difficulte: 'difficile', cible: 3, unite: 'victoires',
     titre: (c) => `Gagne ${c} duels`, ou: '/duel-nvn', bouton: 'Jouer un duel',
@@ -358,6 +375,9 @@ export function valeurDe(mission, donnees, k) {
   switch (mission.source) {
     case 'boosters': return compteur('booster');
     case 'evolutions': return compteur('evolution');
+    case 'ultimes': return compteur('ultime');
+    case 'minijeux': return compteur('minijeu');
+    case 'pronos': return compteur('prono');
     case 'duels': return duels.length;
     case 'victoires': return duels.filter((d) => d.outcome === 'win').length;
     case 'classes': return duels.filter((d) => d.mode === 'classe').length;

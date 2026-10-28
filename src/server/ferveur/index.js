@@ -23,6 +23,7 @@ import { avecCriDuClub, clubDe, facteurPleinClub, lieA, lienEcrit, modsDuLien, p
 import { racineDe } from '../fanzzy/catalogue.js';
 import { TYPES } from '../../shared/fanzzy/dex.js';
 import { ETAT_ULTIME } from '../../shared/ultime.js';
+import { compterDuJour } from '../quotidien/compteurs.js';
 
 /**
  * Couche réseau du Grand Virage.
@@ -1136,6 +1137,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       seauxCartes.set(socket, seau);
       try {
         const { resultat, evenements } = room.ultimer(u.userId, { taps });
+        compterDuJour(q, u.userId, 'ultime');
         socket.emit('virage:ultime', resultat);
         // Aux autres seulement : sa propre page joue la scène sur le résultat.
         socket.to(`virage:${fixtureId}`).emit('virage:events', { evenements });
