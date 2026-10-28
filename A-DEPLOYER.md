@@ -129,6 +129,7 @@ Construction seule, **sans schéma**.
 - Leurs 18 skins (Halloween, Préhistorique, Apocalyptique) sont toutes
   dessinées : les six dernières (AN61, AN62 préhistorique, AN65 Halloween et
   apocalyptique) suivent dans une seconde fusion, images seules.
+- Elles clignent des yeux dans 19 tenues sur 24 (images seules).
 - Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
   lire le tampon « LIÉ À ».
 
