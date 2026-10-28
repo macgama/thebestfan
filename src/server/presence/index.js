@@ -511,6 +511,6 @@ export function createPresence({ pool, requireAuth, horloge = Date.now, log = co
     res.status(503).json({ error: 'presence.error.server' });
   });
 
-  return { noter, brancher, etatsPour, amisPresents, aPrevenir, visible,
+  return { noter, brancher, etatsPour, amisPresents, aPrevenir, visible, amisMutuels,
            oublierAmis, actif, router };
 }

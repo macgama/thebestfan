@@ -941,6 +941,7 @@ function render() {
   const ecart = Math.abs(Math.round(vers));
   ecrire($('knot').firstElementChild, ecart ? ecart : '');
   ecrire($('score'), `${S.goals[mine]} – ${S.goals[mine ^ 1]}`);
+  renderAmis();
   crans($('cransMoi'), S.goals[mine]);
   crans($('cransEux'), S.goals[mine ^ 1]);
   renderPhase();
@@ -2359,12 +2360,18 @@ function annoncerSouvenir() {
 function renderAmis() {
   const el = $('amisIci');
   const n = P.amis.size;
-  el.hidden = !n;
-  if (!n) return;
-  ecrire(el, `${n} AMI${n > 1 ? 'S' : ''} ICI`);
+  /* **Côte à côte** (28 octobre 2026) : des amis poussent dans ma tribune, et
+     chacun me fait pousser plus fort. Le serveur dit combien comptent
+     (`you.cote`) : seulement ceux qui se montrent à leurs amis. */
+  const cote = Number(S?.you?.cote) || 0;
+  el.hidden = !n && !cote;
+  if (!n && !cote) return;
+  ecrire(el, [n ? `${n} AMI${n > 1 ? 'S' : ''} ICI` : '', cote ? 'CÔTE À CÔTE' : '']
+    .filter(Boolean).join(' · '));
   const noms = [...P.amis.values()].map((a) => String(a.pseudo ?? '')).filter(Boolean);
   poserAttr(el, 'title', noms.join(', '));
-  poserAttr(el, 'aria-label', `${noms.join(', ') || n} dans cette tribune`);
+  poserAttr(el, 'aria-label', n ? `${noms.join(', ') || n} dans cette tribune`
+    : 'Côte à côte avec tes amis');
 }
 
 /* ------------------------------------------------------- le bilan de tribune
