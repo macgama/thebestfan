@@ -9,7 +9,8 @@
  *   - dans un onglet Android, chaque page retire `viewport-fit=cover` avant
  *     d'être dessinée : Chrome la tient alors entre les barres. Un iPhone le
  *     garde, et Android depuis l'icône aussi : la page y passe sous les
- *     boutons du bas, et s'en garde par `env(safe-area-inset-bottom)` ;
+ *     boutons du bas, et s'en garde par `var(--bas)` (l'inset, ou 52 px
+ *     déduits quand Chrome le dit nul) ;
  *   - un écran de jeu ne s'écrase plus sous `--ecran-min` : dans une fenêtre
  *     courte (zoom ou grand texte du téléphone), il garde sa mise en page et
  *     la page défile jusqu'à son dernier bouton ; dans une fenêtre de
@@ -132,10 +133,12 @@ for (const [url, , nom] of ECRANS) {
    descend jusqu'au bas de l'écran. L'accueil le déduit (`--bas-cache`, en
    tête de `index.html`) : une fenêtre à moins de 60 px du bas de l'écran,
    c'est une fenêtre qui passe sous les boutons. Ici l'écran émulé a la
-   hauteur de la fenêtre, le cas exact. */
-{
-  const m = await sousLesBoutons('/', { inset: 0 });
-  check(`l’accueil, depuis l’icône, inset à zéro : rien sous les boutons du bas (${m.bas} ≤ ${m.fenetre - 52})`,
+   hauteur de la fenêtre, le cas exact. Le 28, la fiche d'un Fanzzy avait
+   le même bas caché : chaque page porte maintenant ce script, et ui.css
+   déclare `--bas` pour toutes. */
+for (const [url, , nom] of ECRANS) {
+  const m = await sousLesBoutons(url, { inset: 0 });
+  check(`${nom}, depuis l’icône, inset à zéro : rien sous les boutons du bas (${m.bas} ≤ ${m.fenetre - 52})`,
     m.bas <= m.fenetre - 52 || (console.log('        ', m), false));
 }
 

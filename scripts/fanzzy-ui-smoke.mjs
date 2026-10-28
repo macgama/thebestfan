@@ -1147,6 +1147,48 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
       }
       await ctx.close();
     }
+    /* ============ le S24+ de Gaël, depuis l'icône, sans inset (28 octobre 2026)
+
+       Sa capture : la fiche se dessine jusqu'au bas de l'écran, sous les trois
+       boutons d'Android, et Chrome dit leur hauteur nulle
+       (`env(safe-area-inset-bottom)` à zéro). Le bas de la fiche — la rangée
+       d'actions — restait dessous, sans défilement pour l'en sortir. La tête de
+       page déduit alors 52 px (`--bas-cache`) et `#app` les garde par
+       `var(--bas)`. On rejoue sa fenêtre exacte, 411 × 855, l'écran à la
+       hauteur de la fenêtre, et l'on refuse de dire `display-mode: browser`
+       (Puppeteer ne sait pas émuler l'icône). */
+    {
+      const ctx = await nav.createBrowserContext();
+      const p = await ctx.newPage();
+      await p.evaluateOnNewDocument(() => {
+        const vrai = window.matchMedia.bind(window);
+        window.matchMedia = (q) => (/display-mode:\s*browser/.test(q)
+          ? { matches: false, media: q, addEventListener() {}, removeEventListener() {} } : vrai(q));
+      });
+      await p.setUserAgent('Mozilla/5.0 (Linux; Android 15; SM-S926B) AppleWebKit/537.36 '
+        + '(KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36');
+      await p.setViewport({ width: 411, height: 855, isMobile: true, hasTouch: true });
+      await ctx.setCookie({ name: 'tbf_test', value: U, domain: 'localhost', path: '/' });
+      await p.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
+      await p.waitForSelector('.fiche .case', { timeout: 8000 }).catch(() => null);
+      await dodo(300);
+      const m = await p.evaluate(() => {
+        let bas = 0, qui = '';
+        for (const e of document.querySelectorAll('#app button, #app a, #app [role=button]')) {
+          const r = e.getBoundingClientRect();
+          if (!r.width || !r.height || r.top >= innerHeight) continue;
+          if (r.bottom > bas) { bas = r.bottom; qui = String(e.className || e.textContent).trim().slice(0, 40); }
+        }
+        return { bas: Math.round(bas), qui, fenetre: innerHeight,
+          cache: getComputedStyle(document.documentElement).getPropertyValue('--bas-cache').trim() };
+      });
+      if (process.env.TBF_CAPTURE) await p.screenshot({ path: process.env.TBF_CAPTURE });
+      check(`S24+ depuis l’icône, inset nul : la fiche garde 52 px sous les boutons d’Android (${m.cache || 'rien'})`,
+        m.cache === '52px');
+      check(`et rien de la fiche ne passe sous ces boutons (${m.bas} ≤ ${m.fenetre - 52}, ${m.qui})`,
+        m.bas > 0 && m.bas <= m.fenetre - 52 || (console.log('        ', m), false));
+      await ctx.close();
+    }
     /* ================== et maintenant, la fiche sur un vrai téléphone
 
        Les trois mesures ci-dessus tournent dans un navigateur sans châssis,
