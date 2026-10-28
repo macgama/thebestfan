@@ -26,8 +26,25 @@ import { couleursDuBlason, FormatDeBlason } from './blason.js';
  * elle. Deux couleurs CSS, la seconde peut être `null`.
  */
 export const COULEURS_A_LA_MAIN = {
-  3728: ['#04569C', '#ECE404'],   // FK Varnsdorf (Tchéquie) : bleu et jaune
-  7312: ['#FBE10D', '#0064AC'],   // FK Králův Dvůr (Tchéquie) : jaune et bleu
+  /* Les clubs dont le blason n'a pas pu être lu en production (relevé du
+     28 octobre 2026). Monori SE (2411) manque : couleurs introuvables. */
+  173:   ['#DD0741', '#FFFFFF'],  // RB Leipzig : rouge et blanc
+  542:   ['#0761AF', '#FFFFFF'],  // Deportivo Alavés : bleu et blanc
+  573:   ['#111111', '#FFFFFF'],  // FK Partizan : noir et blanc
+  1106:  ['#1F4FA0', '#FFFFFF'],  // Chypre : bleu et blanc
+  1117:  ['#0D5EAF', '#FFFFFF'],  // Grèce : bleu et blanc
+  3684:  ['#9BD53A', '#111111'],  // FC Noah (Arménie) : vert clair et noir
+  3725:  ['#0073B4', '#FFFFFF'],  // 1. SK Prostějov : bleu et blanc
+  3728:  ['#04569C', '#ECE404'],  // FK Varnsdorf : bleu et jaune
+  5149:  ['#F5C400', '#0050A0'],  // FC Tiszaújváros : jaune et bleu
+  5273:  ['#1D3F8F', '#D4022C'],  // UD Poblense : rayé bleu et rouge
+  5327:  ['#00843D', '#FFFFFF'],  // Al-Nahda (Oman) : vert et blanc
+  5329:  ['#1B2A5C', '#FFFFFF'],  // Al-Shabab (Oman) : bleu marine et blanc
+  5330:  ['#D71920', '#FFFFFF'],  // Dhofar : rouge et blanc
+  5334:  ['#C8102E', '#FFFFFF'],  // Oman Club, « les Rouges » : rouge et blanc
+  5336:  ['#00843D', '#FFFFFF'],  // Sohar : vert et blanc
+  7312:  ['#FBE10D', '#0064AC'],  // FK Králův Dvůr : jaune et bleu
+  11020: ['#75AADB', '#000000'],  // Botswana U20 : bleu ciel et noir
 };
 
 /** Au plus ce nombre de blasons par vague : un soir de Coupe d'Europe en

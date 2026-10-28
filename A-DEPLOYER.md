@@ -9,7 +9,10 @@ PNG »). Construction seule, **sans schéma**.
   laisse le club à la couleur par défaut, avec un seul avertissement par
   format (« blason au format JPEG… »), plus un par club.
 - Les couleurs peuvent se poser à la main (`COULEURS_A_LA_MAIN` dans
-  `src/server/football/couleurs.js`), elles passent avant le blason.
+  `src/server/football/couleurs.js`), elles passent avant le blason. Les 17
+  clubs relevés sans couleurs en production les reçoivent (RB Leipzig,
+  Alavés, Partizan, Grèce, Chypre, Varnsdorf, Králův Dvůr, clubs omanais…),
+  au prochain affichage de leur match. Monori SE reste par défaut.
 
 ---
 
