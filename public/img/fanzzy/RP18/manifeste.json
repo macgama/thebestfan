@@ -1,6 +1,6 @@
 {
   "id": "RP18",
-  "rev": 9,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1a03bbaaa4bb"
+          "sha": "1a03bbaaa4bb",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -50,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d99fece1151d"
+          "sha": "d99fece1151d",
+          "cligne": true
         }
       }
     },
@@ -102,7 +104,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d7fe45ffc7e5"
+          "sha": "d7fe45ffc7e5",
+          "cligne": true
         }
       }
     },
@@ -118,7 +121,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "127f6da6d584"
+          "sha": "127f6da6d584",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -130,7 +134,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "942f9936457e"
+          "sha": "942f9936457e",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -154,7 +159,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c13825dce81b"
+          "sha": "c13825dce81b",
+          "cligne": true
         }
       }
     }
