@@ -68,10 +68,11 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
     const term = String(req.query.q ?? '').trim();
     if (term.length < 3) return fail(res, 'football.error.query_short');
 
-    /* Bornés à dix : au-delà, le mot tapé ne désigne plus un pays en
-       particulier, et la requête chercherait la moitié du monde. */
+    /* Bornés à quarante noms — chaque pays en apporte plusieurs : « Turkey »,
+       « Türkiye », avec et sans tirets. Au-delà, le mot tapé ne désigne plus un
+       pays en particulier, et la requête chercherait la moitié du monde. */
     const pays = String(req.query.pays ?? '').split(',')
-      .map((p) => p.trim()).filter(Boolean).slice(0, 10);
+      .map((p) => p.trim()).filter(Boolean).slice(0, 40);
 
     try {
       // La clé porte les pays : « suisse » et « suisse + Switzerland » ne sont

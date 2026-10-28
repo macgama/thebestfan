@@ -1,5 +1,58 @@
 # À déposer sur Infomaniak
 
+**MES SAISONS sur le profil** (branche `claude/project-thread-chiok9`,
+28 octobre 2026, demandé par Gaël : garder l'historique des saisons d'avant).
+Construction seule, **sans schéma**.
+
+- Sous MA SAISON, un bloc MES SAISONS montre une ligne par saison finie : la
+  place au classement de la saison, la division portée, les tampons du
+  carnet, la ferveur et les titres gagnés. Il n'apparaît qu'à partir de la
+  Saison 2 : avant, rien à montrer.
+
+---
+
+**Chercher un ami par pseudo dans AMIS, onglet TROUVER** (branche
+`claude/project-thread-hl4hic`, 28 octobre 2026, demandé par Gaël : on ne
+pouvait ajouter que des supporters des mêmes clubs). Construction seule,
+**sans schéma**.
+
+- Une case « CHERCHER UN JOUEUR » en haut de TROUVER : trois lettres au moins,
+  le début du pseudo, huit noms au plus ; AJOUTER envoie la demande d'ami.
+  Ni les clubs ni l'adresse de la personne ne s'affichent.
+- Après la mise en ligne : sur le S24+, chercher le pseudo d'un testeur qui
+  ne suit pas tes clubs et lui envoyer une demande.
+
+---
+
+**La page Questions à jour** (branche `claude/project-thread-7ad2lr`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- L'onglet QUESTIONS des missions répond maintenant sur l'Ultimate, les
+  Fanzzy liés à un club, les légendaires du deck, les duels qui attendent,
+  inviter un ami, le duel guidé, les mini-jeux, le pronostic, la saison, le
+  carnet, la collection, les cartes-souvenirs, la résiliation du PASS, la
+  musique et « Signaler un problème », dans les cinq langues. La réponse
+  sur le PASS est corrigée (deux clubs de plus, et les plafonds sans PASS).
+- Comment jouer : la musique, le rayon ULTIMATE et « Signaler un problème ».
+- Après la mise en ligne : ouvrir /aide, onglet QUESTIONS.
+
+---
+
+**Les équipes nationales dans la recherche « TON CLUB »** (branche
+`claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : il a dû
+taper « Switzerland » pour trouver la Suisse). Construction seule, **sans
+schéma**.
+
+- « Suisse », « Schweiz », « Svizzera », « Suiza » trouvent la sélection, en
+  tête, et elle s'affiche dans la langue du joueur ; de même pour tous les
+  pays, dont ceux que l'API écrit autrement (Turquie, États-Unis, Tchéquie,
+  Côte d'Ivoire, RD Congo…) et l'Angleterre, l'Écosse, le pays de Galles,
+  l'Irlande du Nord.
+- Après la mise en ligne : sur le S24+, chercher « suisse » au premier écran
+  d'un compte de test.
+
+---
+
 **Les sons de l'ouverture des boosters, version tribune** (branche
 `claude/project-thread-1xxwfz`, 27 octobre 2026, demandé par Gaël : les
 anciens n'étaient « pas du tout gaming » ni supporters ; validés à l'écoute).
