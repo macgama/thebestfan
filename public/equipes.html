@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <script src="/langue.js"></script>
+<!-- Les noms de pays dans la langue du joueur : la recherche s'en sert dès la
+     première frappe, et la liste des clubs suivis dès le premier rendu. -->
+<script src="/pays.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <title>Mes équipes — thebestfan</title>
@@ -334,11 +337,11 @@ function matchRow(f){
   const played = f.home_goals !== null && f.away_goals !== null;
   const min = enCours(f);
   return `<div class="match" data-fixture="${f.id}">
-    <div class="side"><img src="${esc(f.home_logo)}" alt=""><span>${esc(f.home_name)}</span></div>
+    <div class="side"><img src="${esc(f.home_logo)}" alt=""><span>${esc(nomEquipe({ name: f.home_name }))}</span></div>
     ${played ? `<div class="score">${f.home_goals} – ${f.away_goals}
                   ${min ? `<small class="live">${min}</small>` : ''}</div>`
              : `<div class="when">${when(f)}</div>`}
-    <div class="side away"><span>${esc(f.away_name)}</span><img src="${esc(f.away_logo)}" alt=""></div>
+    <div class="side away"><span>${esc(nomEquipe({ name: f.away_name }))}</span><img src="${esc(f.away_logo)}" alt=""></div>
   </div>`;
 }
 
@@ -369,7 +372,7 @@ function render(){
     <div class="team" data-team="${row.team.id}">
       <div class="club">
         <img src="${esc(row.team.logo)}" alt="">
-        <b>${esc(row.team.name)}</b>
+        <b>${esc(nomEquipe(row.team))}</b>
         ${row.team.is_main ? `<span class="main tbf-sticker">${t('main')}</span>` : ''}
         <button data-unfollow="${row.team.id}" title="✕">✕</button>
       </div>
@@ -396,13 +399,30 @@ $('feed').onclick = async e => {
 
 /* --------------------------------------------------------- recherche */
 
+/* Le nom d'une sélection et le pays d'un club, dans la langue du joueur.
+   Sous une sélection, le pays redit son nom : on le tait. */
+function nomEquipe(x) { return window.TBF_PAYS?.equipe(x) ?? x.name; }
+function sousTitre(x) {
+  if (!x.country) return '';
+  const P = window.TBF_PAYS;
+  if (!P) return x.country;
+  const pays = P.nom(x.country);
+  return pays === nomEquipe(x) || P.code(x.country) === P.code(String(x.name).replace(/\s+(W|U\d{2})$/, ''))
+    ? '' : pays;
+}
+
 let timer = null;
 $('q').oninput = () => {
   clearTimeout(timer);
   const term = $('q').value.trim();
   if (term.length < 3) { $('results').classList.remove('on'); return; }
   timer = setTimeout(async () => {
-    const r = await api('/search?q=' + encodeURIComponent(term));
+    /* Les pays que le mot désigne, sous les noms que l'API connaît : sans
+       eux, « suisse » ne trouvait pas la sélection, rangée « Switzerland ».
+       Voir pays.js, partagé avec le premier écran du jeu. */
+    const pays = window.TBF_PAYS?.nomsApi(term) ?? [];
+    const r = await api('/search?q=' + encodeURIComponent(term)
+      + (pays.length ? '&pays=' + encodeURIComponent(pays.join(',')) : ''));
     /* Une recherche qui n'aboutit pas n'est pas une recherche sans résultat :
        afficher « Aucun club trouvé » alors que le serveur n'a pas répondu
        apprend au joueur que son club n'existe pas. */
@@ -421,7 +441,7 @@ $('q').oninput = () => {
       ? list.map(x => `<button data-follow="${x.id}"
           ${plein && !feed.some((row) => row.team.id === x.id) ? 'disabled' : ''}>
           <img src="${esc(x.logo)}" alt="">
-          <span>${esc(x.name)}</span> <small>${esc(x.country ?? '')}</small></button>`).join('')
+          <span>${esc(nomEquipe(x))}</span> <small>${esc(sousTitre(x))}</small></button>`).join('')
       : `<button disabled style="opacity:.88">${t('nothing')}</button>`;
     $('results').classList.add('on');
   }, 320);
