@@ -10,6 +10,9 @@
   Rouge-Gorge du Lendemain de Noël : liées au championnat anglais, bonus de
   lien dans chaque match de championnat du club qu'on soutient.
 - Elles sortent du booster LES TERRACES au taux des légendaires (2 %).
+- Leurs 18 skins (Halloween, Préhistorique, Apocalyptique) sont toutes
+  dessinées : les six dernières (AN61, AN62 préhistorique, AN65 Halloween et
+  apocalyptique) suivent dans une seconde fusion, images seules.
 - Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
   lire le tampon « LIÉ À ».
 
