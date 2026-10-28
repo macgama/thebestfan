@@ -1,6 +1,6 @@
 {
   "id": "SU34",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -89,6 +89,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "e05b900bd367"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "f3eafa62e770"
         }
       }
     },
