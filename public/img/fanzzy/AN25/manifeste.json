@@ -1,6 +1,6 @@
 {
   "id": "AN25",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -166,5 +166,36 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/halloween/neutre": 0.89,
+    "e1/halloween/joie": 0.89,
+    "e1/halloween/colere": 0.89,
+    "e1/halloween/depit": 0.89,
+    "e1/halloween/pousse": 0.89,
+    "e1/prehistorique/neutre": 0.928,
+    "e1/prehistorique/joie": 0.928,
+    "e1/prehistorique/colere": 0.928,
+    "e1/prehistorique/depit": 0.928,
+    "e1/prehistorique/pousse": 0.928,
+    "e1/prehistorique/cligne": 0.928,
+    "e2/apocalyptique/neutre": 1.123,
+    "e2/apocalyptique/joie": 1.123,
+    "e2/apocalyptique/colere": 1.123,
+    "e2/apocalyptique/depit": 1.123,
+    "e2/apocalyptique/pousse": 1.123,
+    "e2/apocalyptique/cligne": 1.123,
+    "e3/apocalyptique/neutre": 0.864,
+    "e3/apocalyptique/joie": 0.864,
+    "e3/apocalyptique/colere": 0.864,
+    "e3/apocalyptique/depit": 0.864,
+    "e3/apocalyptique/pousse": 0.864,
+    "e3/apocalyptique/cligne": 0.864,
+    "e3/halloween/neutre": 0.917,
+    "e3/halloween/joie": 0.917,
+    "e3/halloween/colere": 0.917,
+    "e3/halloween/depit": 0.917,
+    "e3/halloween/pousse": 0.917,
+    "e3/halloween/cligne": 0.917
   }
 }

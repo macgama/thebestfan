@@ -1,6 +1,6 @@
 {
   "id": "RP7",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -166,5 +166,24 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/neutre": 0.932,
+    "e1/prehistorique/joie": 0.932,
+    "e1/prehistorique/colere": 0.932,
+    "e1/prehistorique/depit": 0.932,
+    "e1/prehistorique/pousse": 0.932,
+    "e1/prehistorique/cligne": 0.932,
+    "e3/apocalyptique/neutre": 0.921,
+    "e3/apocalyptique/joie": 0.921,
+    "e3/apocalyptique/colere": 0.921,
+    "e3/apocalyptique/depit": 0.921,
+    "e3/apocalyptique/pousse": 0.921,
+    "e3/apocalyptique/cligne": 0.921,
+    "e3/halloween/neutre": 0.936,
+    "e3/halloween/joie": 0.936,
+    "e3/halloween/colere": 0.936,
+    "e3/halloween/depit": 0.936,
+    "e3/halloween/pousse": 0.936
   }
 }

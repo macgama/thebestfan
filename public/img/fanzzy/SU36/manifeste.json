@@ -1,6 +1,6 @@
 {
   "id": "SU36",
-  "rev": 17,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -166,5 +166,13 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/prehistorique/neutre": 1.064,
+    "e3/prehistorique/joie": 1.064,
+    "e3/prehistorique/colere": 1.064,
+    "e3/prehistorique/depit": 1.064,
+    "e3/prehistorique/pousse": 1.064,
+    "e3/prehistorique/cligne": 1.064
   }
 }

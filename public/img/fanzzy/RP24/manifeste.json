@@ -1,6 +1,6 @@
 {
   "id": "RP24",
-  "rev": 16,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -161,5 +161,21 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/apocalyptique/neutre": 0.93,
+    "e1/apocalyptique/joie": 0.93,
+    "e1/apocalyptique/colere": 0.93,
+    "e1/apocalyptique/depit": 0.93,
+    "e1/apocalyptique/pousse": 0.93,
+    "e1/halloween/joie": 1.399,
+    "e1/halloween/colere": 1.399,
+    "e1/halloween/depit": 1.174,
+    "e1/halloween/pousse": 1.399,
+    "e2/apocalyptique/neutre": 0.899,
+    "e2/apocalyptique/joie": 0.899,
+    "e2/apocalyptique/colere": 0.899,
+    "e2/apocalyptique/depit": 0.899,
+    "e2/apocalyptique/pousse": 0.899
   }
 }
