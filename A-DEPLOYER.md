@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Les dessins des 40 pièces de club des Terraces** (branche
+`claude/project-thread-rftsbq`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images.
+
+- Les 40 pièces `an-*` ont leur dessin (mode rapide, sans crédits).
+- Pour les ouvrir aux joueurs : /admin, CONTENUS, cocher les pièces de club
+  (le bloc « PIÈCES DE CLUB · AN » doit dire 40 dessinées).
+
+---
+
 **Les équipes nationales en français aussi sur la page CLUBS** (branche
 `claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : dans
 « Ajouter un club », la Suisse restait « Switzerland »). Construction seule,
