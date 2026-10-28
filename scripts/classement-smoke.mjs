@@ -159,6 +159,11 @@ const post = async (p, corps) => {
   return { status: r.status, json: await r.json().catch(() => null) };
 };
 
+/* Les moyennes de tribune éprouvées plus bas sont celles d'avant le plancher
+   de supporters (`tribune.plancher`, 5 par défaut) : on le met à 1 pour
+   elles. Le plancher a son propre bloc, avec les neutres. */
+poserReglages({ 'tribune.plancher': 1 });
+
 let r = await get('/api/rank/supporters');
 check('classement des supporters', r.classement.length === 6);
 /* **900 de virage plus 5 100 de duels classés.** Ce contrôle attendait 900 :
@@ -366,6 +371,82 @@ check('et l’autre est là, à zéro, plutôt qu’absente',
 /* La compétition 61 n'a pas d'autre équipe : aucune ne doit s'y inviter. */
 check('et aucune équipe étrangère à la compétition ne s’y invite',
   noms.every((x) => ['Petit Club', 'Gros Club'].includes(x)));
+
+/* ---------------------------------------- les neutres, la saison, le plancher
+
+   Gaël, 28 octobre 2026 : un joueur qui pousse un club qu'il ne suit pas lui
+   apporte un dixième de sa ferveur, aux TRIBUNES comme dans la compétition,
+   jamais aux KOP. Il ne compte pas parmi les supporters. La moyenne se divise
+   par les supporters actifs, et au moins par cinq. TRIBUNES suit la saison. */
+{
+  C.oublier();
+  const kopNord = Number((await get('/api/rank/competition/61?saison=2026')).kops
+    .find((k) => k.nom === 'La Tribune Nord')?.ferveur);
+  const NEUTRE = 'n10000-0000-0000-0000-000000000099';
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
+                    VALUES (?,'neutre@ex.fr','Nina','x')`, [NEUTRE]);
+  /* Elle pousse le Gros Club (extérieur, camp 1) sans le suivre : 1 000. */
+  await pool.query(`INSERT INTO virage_presence (user_id,fixture_id,side,team_id,ferveur)
+                    VALUES (?,7001,1,NULL,1000)`, [NEUTRE]);
+  const lire = async (q = '') => {
+    C.oublier();
+    const t = (await get(`/api/rank/tribunes${q}`)).classement;
+    return { t, gros: t.find((x) => x.name === 'Gros Club'),
+      petit: t.find((x) => x.name === 'Petit Club') };
+  };
+  const g0 = { ferveur: Number(gros.ferveur), supporters: Number(gros.supporters) };
+  let { gros: g } = await lire();
+  check('un neutre apporte un dixième au club qu’il a poussé',
+    Number(g.ferveur) === g0.ferveur + 100 && Number(g.neutres) === 100
+    || (console.log('        gros :', JSON.stringify(g)), false));
+  check('sans compter parmi ses supporters', Number(g.supporters) === g0.supporters);
+  const comp = await get('/api/rank/competition/61?saison=2026');
+  const gc = comp.tribunes.find((x) => x.name === 'Gros Club');
+  check('et dans la compétition aussi', Number(gc.neutres) === 100
+    || (console.log('        compétition :', JSON.stringify(gc)), false));
+  check('mais rien au KOP',
+    Number(comp.kops.find((k) => k.nom === 'La Tribune Nord')?.ferveur) === kopNord
+    || (console.log('        KOP :', JSON.stringify(comp.kops)), false));
+
+  poserReglages({ 'tribune.plancher': 1, 'ferveur.neutre_tribune': 0 });
+  ({ gros: g } = await lire());
+  check('à 0, un neutre ne rapporte plus à aucune tribune',
+    Number(g.ferveur) === g0.ferveur && Number(g.neutres) === 0);
+
+  /* Le plancher : le Petit Club (2 supporters) se divise par 5. */
+  poserReglages({});
+  let { petit: p } = await lire();
+  check('la moyenne se divise par au moins cinq supporters',
+    Number(p.moyenne) === Math.round(Number(p.ferveur) / 5)
+    || (console.log('        petit :', JSON.stringify(p)), false));
+
+  /* Un compte fermé ne pèse plus. */
+  const lila = 'u40000-0000-0000-0000-000000000004';
+  poserReglages({ 'tribune.plancher': 1 });
+  await pool.query(`UPDATE users SET status = 'deleted' WHERE public_id = ?`, [lila]);
+  ({ gros: g } = await lire());
+  check('un compte fermé ne compte plus parmi les supporters',
+    Number(g.supporters) === g0.supporters - 1
+    || (console.log('        gros :', JSON.stringify(g)), false));
+  await pool.query(`UPDATE users SET status = 'active' WHERE public_id = ?`, [lila]);
+
+  /* La saison : une ferveur d'avant le lancement ne compte que sous TOUJOURS. */
+  await pool.query(`INSERT INTO virage_presence (user_id,fixture_id,side,team_id,ferveur,last_push_at)
+                    VALUES (?,7999,0,85,7000,NOW(3) - INTERVAL 3 DAY)`,
+    ['u10000-0000-0000-0000-000000000001']);
+  ({ petit: p } = await lire());
+  const saisonP = Number(p.ferveur);
+  ({ petit: p } = await lire('?periode=toujours'));
+  check('TRIBUNES compte la saison, et TOUJOURS le cumul',
+    Number(p.ferveur) === saisonP + 7000
+    || (console.log('        saison', saisonP, '· toujours', p.ferveur), false));
+  ({ petit: p } = await lire('?periode=mois'));
+  check('et MOIS les trente derniers jours', Number(p.ferveur) === saisonP + 7000);
+
+  await pool.query(`DELETE FROM virage_presence WHERE user_id = ? OR fixture_id = 7999`, [NEUTRE]);
+  await pool.query(`DELETE FROM users WHERE public_id = ?`, [NEUTRE]);
+  C.oublier();
+}
 
 /* Une compétition dont on n'a aucun match : une page vide, pas une panne. */
 r = await get('/api/rank/competition/4242');

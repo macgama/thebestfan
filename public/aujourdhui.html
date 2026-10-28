@@ -402,6 +402,9 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
    comme indice — c'est lui qui porte le code ISO dans cette page-ci. */
 const { pli, cherches: paysCherches } = window.TBF_PAYS;
 const pays = (nomApi, drapeau) => window.TBF_PAYS.nom(nomApi, drapeau);
+/* Une sélection nationale porte un nom de pays : « Switzerland » s'écrit
+   « Suisse » chez un lecteur français. Un club garde son nom. */
+const eqNom = (nom) => window.TBF_PAYS.equipe({ name: nom });
 
 
 let date = new Date().toISOString().slice(0, 10);
@@ -611,10 +614,10 @@ function rendre() {
             : `<div class="heure">${heure(m.date)}</div>`}</div>
           <div class="eq">
             <div class="r ${m.fini && m.away.vainqueur ? 'perd' : ''}">
-              <img src="${esc(m.home.logo)}" alt=""><span>${esc(m.home.name)}</span>
+              <img src="${esc(m.home.logo)}" alt=""><span>${esc(eqNom(m.home.name))}</span>
               <b>${m.home.goals ?? ''}</b></div>
             <div class="r ${m.fini && m.home.vainqueur ? 'perd' : ''}">
-              <img src="${esc(m.away.logo)}" alt=""><span>${esc(m.away.name)}</span>
+              <img src="${esc(m.away.logo)}" alt=""><span>${esc(eqNom(m.away.name))}</span>
               <b>${m.away.goals ?? ''}</b></div>
             ${m.home.cri || m.away.cri ? `<div class="cris">${[m.home.cri, m.away.cri].filter(Boolean)
               .map((c) => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
@@ -1025,7 +1028,7 @@ function dessinerFiche() {
           : heure(f.date)}</span>
         <img src="${esc(e.away.logo)}" alt="">
       </div>
-      <div class="nom"><span>${esc(e.home.name)}</span><span>${esc(e.away.name)}</span></div>
+      <div class="nom"><span>${esc(eqNom(e.home.name))}</span><span>${esc(eqNom(e.away.name))}</span></div>
       <div class="etat ${f.live ? '' : 'calme'}" id="fetat">${f.live ? (min ?? 'EN COURS')
         : f.fini ? 'TERMINÉ' : esc(f.statusLong ?? 'À VENIR')}</div>
     </div>
@@ -1138,9 +1141,9 @@ function dessinerProno() {
           : '<p class="pr-issue">RATÉ · ÇA NE COÛTE RIEN</p>';
     el.innerHTML = `<h3>TON PRONOSTIC</h3>
       <div class="pr-sc">
-        <div class="pr-eq"><span class="pr-nom">${esc(e.home.name)}</span><span class="pr-n">${P.prono.home}</span></div>
+        <div class="pr-eq"><span class="pr-nom">${esc(eqNom(e.home.name))}</span><span class="pr-n">${P.prono.home}</span></div>
         <span class="pr-tiret">–</span>
-        <div class="pr-eq"><span class="pr-nom">${esc(e.away.name)}</span><span class="pr-n">${P.prono.away}</span></div>
+        <div class="pr-eq"><span class="pr-nom">${esc(eqNom(e.away.name))}</span><span class="pr-n">${P.prono.away}</span></div>
       </div>${issue}`;
     return;
   }
@@ -1155,9 +1158,9 @@ function dessinerProno() {
   const deja = P.prono && !P.modifie;
   el.innerHTML = `<h3>TON PRONOSTIC</h3>
     <div class="pr-sc">
-      <div class="pr-eq"><span class="pr-nom">${esc(e.home.name)}</span>${cpt('home')}</div>
+      <div class="pr-eq"><span class="pr-nom">${esc(eqNom(e.home.name))}</span>${cpt('home')}</div>
       <span class="pr-tiret">–</span>
-      <div class="pr-eq"><span class="pr-nom">${esc(e.away.name)}</span>${cpt('away')}</div>
+      <div class="pr-eq"><span class="pr-nom">${esc(eqNom(e.away.name))}</span>${cpt('away')}</div>
     </div>
     <button type="button" class="tbf-plaque pr-valider" data-ton="vert" id="prValider"
       ${deja ? 'disabled' : ''}>${deja ? 'PRONOSTIC ENREGISTRÉ' : P.prono ? 'CHANGER MON PRONOSTIC' : 'VALIDER MON PRONOSTIC'}</button>
