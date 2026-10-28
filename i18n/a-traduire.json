@@ -1,1 +1,3944 @@
-{}
+{
+ "Antigua and Barbuda": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bosnia and Herzegovina": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bosnia": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Brunei Darussalam": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bonaire": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Congo DR": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DR Congo": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Congo": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ivory Coast": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "China PR": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Cape Verde Islands": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Czech Republic": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Great Britain": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Hong Kong": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Republic of Ireland": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Kyrgyz Republic": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "St Kitts and Nevis": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Saint Kitts and Nevis": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Korea DPR": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Korea Republic": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Saint Lucia": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Macedonia": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FYR Macedonia": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Myanmar": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Macau": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Macao": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tahiti": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Palestine": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Sao Tome and Principe": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Swaziland": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "East Timor": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Turkey": {
+  "ou": [
+   "public/pays.js",
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Trinidad and Tobago": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Chinese Taipei": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "USA": {
+  "ou": [
+   "public/pays.js",
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "St Vincent and the Grenadines": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Saint Vincent and the Grenadines": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "US Virgin Islands": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "République tchèque": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tschechische Republik": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Repubblica Ceca": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "República Checa": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "RD Congo": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "RDC": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Amérique": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Amerika": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Grande-Bretagne": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Großbritannien": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Gran Bretagna": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Gran Bretaña": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "HK": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "MO": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "PS": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Taipei chinois": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "BU": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "CS": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DD": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DY": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "EU": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "EZ": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FX": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "HV": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "NH": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "QO": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "RH": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "TP": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UK": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UN": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VD": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "XA": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "XB": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "YD": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "YU": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "ZR": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "ZZ": {
+  "ou": [
+   "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Je ne joue plus assez": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Autre chose": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "NULL": {
+  "ou": [
+   "src\\server\\abonnement\\index.js",
+   "src\\server\\amis\\index.js",
+   "src\\server\\fanzzy\\avatar.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DATE_ADD(GREATEST(NOW(3), COALESCE(fin, NOW(3))), INTERVAL ? DAY)": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DATE_ADD(GREATEST(NOW(3), COALESCE(abonnements.fin, NOW(3))), INTERVAL ? DAY)": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO abonnements (user_id, formule, fin, source, reference) VALUES (?, ?, NULL, ?, ?) ON DUPLICATE KEY UPDATE formule = VALUES(formule), source = VALUES(source), reference = VALUES(reference), fin = DATE_ADD(GREATEST(NOW(3), COALESCE(abonnements.fin, NOW(3))), INTERVAL ? DAY)": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO abonnements (user_id, formule, fin, source, reference) VALUES (?, ?, DATE_ADD(GREATEST(NOW(3), COALESCE(fin, NOW(3))), INTERVAL ? DAY), ?, ?) ON DUPLICATE KEY UPDATE formule = VALUES(formule), source = VALUES(source), reference = VALUES(reference), fin = NULL": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO abonnements (user_id, formule, fin, source, reference) VALUES (?, ?, DATE_ADD(GREATEST(NOW(3), COALESCE(fin, NOW(3))), INTERVAL ? DAY), ?, ?) ON DUPLICATE KEY UPDATE formule = VALUES(formule), source = VALUES(source), reference = VALUES(reference), fin = DATE_ADD(GREATEST(NOW(3), COALESCE(abonnements.fin, NOW(3))), INTERVAL ? DAY)": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS n FROM duel_results WHERE user_id = ? AND mode = ’classe’ AND ended_at >= CURDATE()": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT raison, COUNT(*) AS n FROM abonnement_departs WHERE cree > NOW(3) - INTERVAL ? DAY GROUP BY raison": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT raison, texte, formule, cree FROM abonnement_departs WHERE texte IS NOT NULL ORDER BY id DESC LIMIT 20": {
+  "ou": [
+   "src\\server\\abonnement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "4kb": {
+  "ou": [
+   "src\\server\\abonnement\\index.js",
+   "src\\server\\aide\\index.js",
+   "src\\server\\notifications\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 FROM amities am JOIN users u ON u.public_id = ? WHERE am.a = ? AND am.b = ? AND am.etat = ’amis’ AND u.status = ’active’": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DATE_FORMAT({0}, ’%y%m%d’) AS l": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 FROM recompenses WHERE user_id = ? AND source = ’defi’ AND cle = ?": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ? AND source = ’defi’ AND cle LIKE CONCAT(DATE_FORMAT({0}, ’%y%m%d’), ’:%’)": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT id, de, donne, demande FROM amis_echanges WHERE etat = ’proposee’ AND ((de = ? AND a = ?) OR (de = ? AND a = ?)) ORDER BY le DESC": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS n FROM amis_gestes WHERE de = ? AND le >= CURDATE() AND geste NOT IN (’cadeau’,’pret’,’echange’)": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 FROM amis_gestes WHERE de = ? AND a = ? AND geste = ? AND le > NOW(3) - INTERVAL ? SECOND": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT g.id, g.de AS userId, g.geste, g.vu, UNIX_TIMESTAMP(g.le) * 1000 AS le, u.pseudo, w.active_fanzzy, w.active_evo, w.active_etat FROM amis_gestes g JOIN users u ON u.public_id = g.de AND u.status = ’active’ JOIN amities am ON am.a = LEAST(g.de, g.a) AND am.b = GREATEST(g.de, g.a) AND am.etat = ’amis’ LEFT JOIN user_wallet w ON w.user_id = g.de WHERE g.a = ? AND g.le > NOW(3) - INTERVAL 7 DAY ORDER BY g.le DESC, g.id DESC LIMIT {0}": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS e FROM amis_echanges WHERE a = ? AND etat = ’proposee’": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS n FROM amis_echanges WHERE (de = ? AND le >= CURDATE()) OR (a = ? AND etat = ’acceptee’ AND repondu_le >= CURDATE())": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FOR UPDATE": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 FROM amis_echanges WHERE de = ? AND a = ? AND etat = ’proposee’": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT * FROM amis_echanges WHERE id = ? AND etat = ’proposee’": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UPDATE amis_echanges SET etat = ?, repondu_le = NOW(3) WHERE id = ? AND etat = ’proposee’": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO user_nouveautes (user_id, cle, sorte) VALUES (?, ?, ’fanzzy’), (?, ?, ’fanzzy’) ON DUPLICATE KEY UPDATE got_at = got_at": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "2kb": {
+  "ou": [
+   "src\\server\\amis\\ensemble.js",
+   "src\\server\\classements\\index.js",
+   "src\\server\\pronostics\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT am.a, am.b, am.par, am.etat, am.demande_le, u.public_id, u.pseudo, u.status, w.active_fanzzy, w.active_evo, w.active_etat, {0} AS xp FROM amities am JOIN users u ON u.public_id = IF(am.a = ?, am.b, am.a) LEFT JOIN user_wallet w ON w.user_id = u.public_id WHERE (am.a = ? OR am.b = ?) AND am.etat IN (’demande’,’amis’) ORDER BY am.demande_le DESC": {
+  "ou": [
+   "src\\server\\amis\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id AS id, u.pseudo, u.status, w.active_fanzzy, w.active_evo, w.active_etat, {0} AS xp, am.etat, am.par FROM users u LEFT JOIN user_wallet w ON w.user_id = u.public_id LEFT JOIN amities am ON (am.a = ? AND am.b = u.public_id) OR (am.a = u.public_id AND am.b = ?) WHERE u.pseudo LIKE ? AND u.status = ’active’ AND u.public_id <> ? ORDER BY u.pseudo = ? DESC, CHAR_LENGTH(u.pseudo), u.pseudo LIMIT {1}": {
+  "ou": [
+   "src\\server\\amis\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UPDATE amities SET par = ?, etat = ’demande’, demande_le = NOW(3), repondu_le = NULL WHERE a = ? AND b = ?": {
+  "ou": [
+   "src\\server\\amis\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO amities (a, b, par, etat) VALUES (?, ?, ?, ’demande’)": {
+  "ou": [
+   "src\\server\\amis\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DELETE FROM amities WHERE a = ? AND b = ? AND etat IN (’demande’,’amis’) AND (? = a OR ? = b)": {
+  "ou": [
+   "src\\server\\amis\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO amities (a, b, par, etat, repondu_le) VALUES (?, ?, ?, ’amis’, NOW(3))": {
+  "ou": [
+   "src\\server\\amis\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "8kb": {
+  "ou": [
+   "src\\server\\amis\\index.js",
+   "src\\server\\boutique\\index.js",
+   "src\\server\\fanzzy\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS n FROM amities WHERE (a = ? OR b = ?) AND etat = ’demande’ AND par <> ?": {
+  "ou": [
+   "src\\server\\amis\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Supporter": {
+  "ou": [
+   "src\\server\\auth\\google.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "NFKD": {
+  "ou": [
+   "src\\server\\auth\\google.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Supporter{0}": {
+  "ou": [
+   "src\\server\\auth\\google.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "openid email profile": {
+  "ou": [
+   "src\\server\\auth\\google.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "THEBEST<0>FAN</0>": {
+  "ou": [
+   "src\\server\\auth\\mail-habit.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SMTP_URL n’est pas une URL : il lui manque « smtps:// » et le nom du serveur. Préfère les quatre variables séparées — SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_PORT — qui évitent le piège de l’arobase dans l’identifiant. (La valeur n’est pas répétée ici : elle contient le mot de passe, et cet état est lisible depuis /healthz, qui est public.)": {
+  "ou": [
+   "src\\server\\auth\\mailer.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Test — thebestfan": {
+  "ou": [
+   "src\\server\\auth\\mailer.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Si tu lis ceci, la configuration SMTP fonctionne.": {
+  "ou": [
+   "src\\server\\auth\\mailer.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "NFKC": {
+  "ou": [
+   "src\\server\\auth\\password.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "16kb": {
+  "ou": [
+   "src\\server\\auth\\routes.js",
+   "src\\server\\deck\\index.js",
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} ({1}), vue : ({2})": {
+  "ou": [
+   "src\\server\\auth\\schema.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} ({1}), vue : aucune": {
+  "ou": [
+   "src\\server\\auth\\schema.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "la table recompenses n’a pas sa clé primaire ({0}) — sans elle, un même versement pourrait passer deux fois": {
+  "ou": [
+   "src\\server\\auth\\schema.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "sql/{0} — {1}": {
+  "ou": [
+   "src\\server\\auth\\schema.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Une clé primaire fausse ne se corrige PAS en rejouant le fichier : CREATE TABLE IF NOT EXISTS ne touche pas à une table qui existe. Il faut poser la clé à la main (ALTER TABLE … ADD PRIMARY KEY, après avoir retiré les doublons), puis redémarrer. D’ici là, le grand livre refuse tout versement plutôt que de payer deux fois.": {
+  "ou": [
+   "src\\server\\auth\\schema.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Une clé primaire fausse ne se corrige PAS en rejouant le fichier : CREATE TABLE IF NOT EXISTS ne touche pas à une table qui existe. Il faut poser la clé à la main (ALTER TABLE … ADD PRIMARY KEY, après avoir retiré les doublons), puis redémarrer.": {
+  "ou": [
+   "src\\server\\auth\\schema.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SCHÉMA INCOMPLET : la base ne contient pas tout ce que le code attend. {0} À appliquer dans phpMyAdmin, onglet SQL, dans cet ordre. Ces fichiers sont écrits en CREATE TABLE IF NOT EXISTS et ADD COLUMN IF NOT EXISTS : les rejouer sur une base déjà à jour ne casse rien.{1}": {
+  "ou": [
+   "src\\server\\auth\\schema.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT * FROM users WHERE email = ? AND status <> ’deleted’ LIMIT 1": {
+  "ou": [
+   "src\\server\\auth\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT * FROM users WHERE public_id = ? AND status <> ’deleted’ LIMIT 1": {
+  "ou": [
+   "src\\server\\auth\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UPDATE users SET status = ’deleted’, email = CONCAT(’supprime+’, id, ’@invalid’), pseudo = CONCAT(’supprime_’, id), password_hash = ’’, main_team_id = NULL WHERE id = ?": {
+  "ou": [
+   "src\\server\\auth\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT s.token_hash, s.user_id, s.expires_at, s.last_seen_at, u.public_id, u.pseudo, u.email, u.locale, u.status, u.email_verified_at, u.main_team_id, u.created_at FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > UTC_TIMESTAMP(3) AND u.status = ’active’ LIMIT 1": {
+  "ou": [
+   "src\\server\\auth\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT key_type, COUNT(*) AS n FROM login_attempts WHERE success = 0 AND at > (NOW(3) - INTERVAL ? SECOND) AND ((key_type = ’email’ AND key_value = ?) OR (key_type = ’ip’ AND key_value = ?)) GROUP BY key_type": {
+  "ou": [
+   "src\\server\\auth\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bearer {0}": {
+  "ou": [
+   "src\\server\\boutique\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UPDATE achats SET etat = ’paye’, paye_le = COALESCE(paye_le, NOW(3)) WHERE stripe_session = ?": {
+  "ou": [
+   "src\\server\\boutique\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "64kb": {
+  "ou": [
+   "src\\server\\boutique\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UPDATE achats SET etat = ’abandonne’ WHERE stripe_session = ? AND etat = ’en_attente’": {
+  "ou": [
+   "src\\server\\boutique\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT fanzzy_id, stage, skin_id FROM user_skins WHERE user_id = ? AND skin_id <> ’base’": {
+  "ou": [
+   "src\\server\\boutique\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO achats (user_id, article, montant, devise, stripe_session) VALUES (?, ?, ?, ’eur’, ?)": {
+  "ou": [
+   "src\\server\\boutique\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT stripe_session FROM achats WHERE user_id = ? AND etat = ’livre’ AND article IN (?) ORDER BY id DESC LIMIT 1": {
+  "ou": [
+   "src\\server\\boutique\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT stripe_session FROM achats WHERE user_id = ? AND etat IN (’en_attente’, ’paye’) AND cree_le > NOW(3) - INTERVAL 7 DAY ORDER BY id DESC LIMIT 3": {
+  "ou": [
+   "src\\server\\boutique\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT user_id, team_id, ferveur, fixture_id, last_push_at AS quand FROM virage_presence WHERE classe = 1 {0} UNION ALL SELECT user_id, team_id, ferveur, fixture_id, ended_at AS quand FROM duel_results WHERE mode = ’classe’ {1}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club , MAX(s.id) AS fenetre_saison FROM ({0}) x JOIN users u ON u.public_id = x.user_id LEFT JOIN ({1}) s ON 1 = 1 WHERE u.status = ’active’ AND x.quand > (NOW(3) - INTERVAL 30 DAY) AND (s.id IS NULL OR ({2})) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {3}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club , MAX(s.id) AS fenetre_saison FROM ({0}) x JOIN users u ON u.public_id = x.user_id LEFT JOIN ({1}) s ON 1 = 1 WHERE u.status = ’active’ AND x.quand > (NOW(3) - INTERVAL 30 DAY) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club , MAX(s.id) AS fenetre_saison FROM ({0}) x JOIN users u ON u.public_id = x.user_id LEFT JOIN ({1}) s ON 1 = 1 WHERE u.status = ’active’ AND (s.id IS NULL OR ({2})) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {3}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club , MAX(s.id) AS fenetre_saison FROM ({0}) x JOIN users u ON u.public_id = x.user_id LEFT JOIN ({1}) s ON 1 = 1 WHERE u.status = ’active’ GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club , MAX(s.id) AS fenetre_saison FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ AND x.quand > (NOW(3) - INTERVAL 30 DAY) AND (s.id IS NULL OR ({1})) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club , MAX(s.id) AS fenetre_saison FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ AND x.quand > (NOW(3) - INTERVAL 30 DAY) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {1}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club , MAX(s.id) AS fenetre_saison FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ AND (s.id IS NULL OR ({1})) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club , MAX(s.id) AS fenetre_saison FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {1}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id LEFT JOIN ({1}) s ON 1 = 1 WHERE u.status = ’active’ AND x.quand > (NOW(3) - INTERVAL 30 DAY) AND (s.id IS NULL OR ({2})) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {3}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id LEFT JOIN ({1}) s ON 1 = 1 WHERE u.status = ’active’ AND x.quand > (NOW(3) - INTERVAL 30 DAY) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id LEFT JOIN ({1}) s ON 1 = 1 WHERE u.status = ’active’ AND (s.id IS NULL OR ({2})) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {3}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id LEFT JOIN ({1}) s ON 1 = 1 WHERE u.status = ’active’ GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ AND x.quand > (NOW(3) - INTERVAL 30 DAY) AND (s.id IS NULL OR ({1})) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ AND x.quand > (NOW(3) - INTERVAL 30 DAY) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {1}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ AND (s.id IS NULL OR ({1})) GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(DISTINCT x.fixture_id) AS matchs, (SELECT COUNT(*) FROM user_souvenirs us WHERE us.user_id = u.public_id AND us.kind = ’presence’) AS vecus, (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ GROUP BY u.public_id, u.pseudo ORDER BY ferveur DESC LIMIT {1}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[classement] le classement « saison » compte sans fenêtre, schéma incomplet ({0}) : applique sql/saisons.sql puis sql/quotidien.sql": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(dr.outcome = ’win’) AS gagnes, COUNT(*) AS joues, ROUND(100 * SUM(dr.outcome = ’win’) / COUNT(*)) AS taux, (SELECT d2.elo_after FROM duel_results d2 WHERE d2.user_id = u.public_id AND d2.mode = ’classe’ ORDER BY d2.ended_at DESC LIMIT 1) AS cote, /* **Pour qui il se bat.** SUPPORTERS et ENTRAÎNEMENT nomment le club de chacun ; DUELS, seul des trois, le taisait — et c’est pourtant là qu’il compte le plus, puisqu’un duel classé ne se joue que pendant un match de son club. Trois tableaux côte à côte dont un seul omet la même donnée se lisent comme une donnée perdue, et c’en était une. */ (SELECT t.name FROM user_follows fo JOIN teams t ON t.id = fo.team_id WHERE fo.user_id = u.public_id ORDER BY fo.is_main DESC LIMIT 1) AS club FROM duel_results dr JOIN users u ON u.public_id = dr.user_id WHERE u.status = ’active’ AND dr.mode = ’classe’ GROUP BY u.public_id, u.pseudo HAVING joues >= {0} ORDER BY cote DESC, joues DESC LIMIT {1}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, COUNT(*) AS joues, SUM(dr.outcome = ’win’) AS gagnes, (SELECT t.name FROM user_follows fo JOIN teams t ON t.id = fo.team_id WHERE fo.user_id = u.public_id ORDER BY fo.is_main DESC LIMIT 1) AS club FROM duel_results dr JOIN users u ON u.public_id = dr.user_id WHERE u.status = ’active’ AND dr.mode = ’entrainement’ GROUP BY u.public_id, u.pseudo HAVING joues >= {0} ORDER BY joues DESC, gagnes DESC LIMIT {1}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT vp.user_id, vp.team_id, vp.ferveur, 0 AS duel FROM virage_presence vp JOIN fixtures f ON f.id = vp.fixture_id WHERE vp.classe = 1 AND f.league_id = ? AND f.season = ? UNION ALL SELECT dr.user_id, dr.team_id, dr.ferveur, 1 AS duel FROM duel_results dr JOIN fixtures f ON f.id = dr.fixture_id WHERE f.league_id = ? AND f.season = ? AND dr.mode = ’classe’": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id, u.pseudo, SUM(x.ferveur) AS ferveur, COUNT(*) AS seances, (SELECT t.name FROM user_follows fo JOIN teams t ON t.id = fo.team_id WHERE fo.user_id = u.public_id ORDER BY fo.is_main DESC LIMIT 1) AS club FROM ({0}) x JOIN users u ON u.public_id = x.user_id WHERE u.status = ’active’ GROUP BY u.public_id, u.pseudo HAVING ferveur > 0 ORDER BY ferveur DESC LIMIT {1}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT SUM(outcome = ’win’) AS gagnes, COUNT(*) AS joues, (SELECT d2.elo_after FROM duel_results d2 WHERE d2.user_id = ? AND d2.mode = ’classe’ ORDER BY d2.ended_at DESC LIMIT 1) AS cote FROM duel_results WHERE user_id = ? AND mode = ’classe’": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS joues, SUM(outcome = ’win’) AS gagnes FROM duel_results WHERE user_id = ? AND mode = ’entrainement’": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT dr.user_id, COUNT(*) AS joues, (SELECT d2.elo_after FROM duel_results d2 WHERE d2.user_id = dr.user_id AND d2.mode = ’{0}’ ORDER BY d2.ended_at DESC LIMIT 1) AS cote FROM duel_results dr JOIN users u ON u.public_id = dr.user_id WHERE u.status = ’active’ AND dr.mode = ’{1}’ GROUP BY dr.user_id HAVING joues >= {2}": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "NULL AS couleur1, NULL AS couleur2": {
+  "ou": [
+   "src\\server\\classements\\index.js",
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[classement] tribune servie sans les couleurs du club : {0} (applique sql/couleurs.sql)": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT SUM(x.ferveur) AS f FROM ({0}) x JOIN users u ON u.public_id = x.user_id JOIN ({1}) s ON s.id = ? WHERE u.status = ’active’ AND {2} GROUP BY x.user_id HAVING f > 0": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[classement] pas de saison dans /moi, schéma incomplet ({0}) : applique sql/saisons.sql puis sql/quotidien.sql": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COALESCE(SUM(z.f > ?), 0) + 1 AS rang, COUNT(*) AS sur FROM (SELECT x.user_id, SUM(x.ferveur) AS f FROM ({0}) x JOIN users u ON u.public_id = x.user_id JOIN ({1}) s ON s.id = ? WHERE u.status = ’active’ AND {2} GROUP BY x.user_id) z": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT source, cle, saison_id, titre, NULL AS n, verse_a FROM recompenses WHERE user_id = ? AND (source = ’division’ OR titre IS NOT NULL) UNION ALL SELECT ’tampons’, NULL, saison_id, NULL, SUM(tampons), NULL FROM recompenses WHERE user_id = ? AND source IN (’mission’, ’sachet’) AND saison_id IS NOT NULL GROUP BY saison_id ORDER BY verse_a, source, cle": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DATE_FORMAT(CURDATE(), ’%Y-%m-%d’) AS jour, (SELECT w.rangs_vus FROM user_wallet w WHERE w.user_id = ?) AS rangs_vus": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[classement] pas d’évolution de rang, colonne absente ({0}) : applique sql/quotidien.sql": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UPDATE user_wallet SET rangs_vus = ? WHERE user_id = ? AND (rangs_vus IS NULL OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT(rangs_vus, ’$.jour.jour’)), ’’) <> ?)": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT mode, format, COUNT(*) AS joues, SUM(outcome = ’win’) AS gagnes, SUM(outcome = ’draw’) AS nuls, SUM(outcome = ’loss’) AS perdus, COALESCE(SUM(ferveur), 0) AS ferveur, COALESCE(SUM(goals_for), 0) AS pour, COALESCE(SUM(goals_against), 0) AS contre FROM duel_results WHERE user_id = ? GROUP BY mode, format": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT quand FROM ( SELECT ended_at AS quand FROM duel_results WHERE user_id = ? UNION ALL SELECT joined_at AS quand FROM virage_presence WHERE user_id = ? ) x ORDER BY quand DESC LIMIT 1 OFFSET ?": {
+  "ou": [
+   "src\\server\\classements\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "HEAD": {
+  "ou": [
+   "src\\server\\construction.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[contenus] {0} : {1} absent(s) de la base, {2} que le code ne connaît plus, {3} dont le nom diffère": {
+  "ou": [
+   "src\\server\\contenus\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT famille, id, nom, rar, texte, donnees, publie FROM contenus": {
+  "ou": [
+   "src\\server\\contenus\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT f.id, f.status_short, f.elapsed, f.kickoff_at, f.home_goals, f.away_goals, DATE(f.kickoff_at) = UTC_DATE() AS aujourdhui, f.home_id, f.away_id, h.name AS home_name, h.logo AS home_logo, a.name AS away_name, a.logo AS away_logo, l.name AS league_name FROM fixtures f JOIN teams h ON h.id = f.home_id JOIN teams a ON a.id = f.away_id LEFT JOIN leagues l ON l.id = f.league_id -- Les matchs finis du jour restent, depuis que « classé » veut dire -- « le jour du match » : c’est le soir qu’on a envie de rejouer la -- rencontre qu’on vient de regarder. La borne sur la date suffit à -- écarter ceux d’hier. -- -- CANC et PST partent toujours : un match annulé ou reporté n’a pas eu -- lieu, il ne peut donc être le support de rien. Ce n’est pas la même -- chose qu’un match terminé. La liste vient de SANS_DUEL, et la -- journée superposée plus bas passe par le même filtre. WHERE f.status_short NOT IN ({0}) AND DATE(f.kickoff_at) >= UTC_DATE() AND f.kickoff_at < (UTC_TIMESTAMP() + INTERVAL 8 DAY) {1} ORDER BY aujourdhui DESC, f.kickoff_at LIMIT 60": {
+  "ou": [
+   "src\\server\\deck\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[avatar] colonne user_wallet.xp absente : les listes publiques servent les avatars sans niveau (applique sql/niveau.sql)": {
+  "ou": [
+   "src\\server\\fanzzy\\avatar.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[avatar] les listes publiques servent sans avatar : {0}": {
+  "ou": [
+   "src\\server\\fanzzy\\avatar.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "catalogue : {0} ligne(s) publiée(s) en base que le code ne connaît pas — {1} … — elles sont tirables, comptent dans la progression et n’ont pas de dessin. Reste d’un renommage : voir sql/prefixes.sql.": {
+  "ou": [
+   "src\\server\\fanzzy\\ecarts.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "catalogue : {0} ligne(s) publiée(s) en base que le code ne connaît pas — {1} — elles sont tirables, comptent dans la progression et n’ont pas de dessin. Reste d’un renommage : voir sql/prefixes.sql.": {
+  "ou": [
+   "src\\server\\fanzzy\\ecarts.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "catalogue : {0} carte(s) dont un champ diffère du code — correction faite à l’écran, ou texte changé dans le code et jamais arrivé. `npm run ecarts` dit lesquelles.": {
+  "ou": [
+   "src\\server\\fanzzy\\ecarts.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[fanzzy] {0} absente ou incomplète ({1}) : l’action a eu lieu, son écriture annexe est sautée. Applique sql/quotidien.sql (npm run schema:appliquer), puis redémarre.": {
+  "ou": [
+   "src\\server\\fanzzy\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[fanzzy] {0} : écriture annexe sautée, l’action a eu lieu ({1}).": {
+  "ou": [
+   "src\\server\\fanzzy\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "aucun appelant": {
+  "ou": [
+   "src\\server\\fanzzy\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT source, cle FROM recompenses WHERE user_id = ? AND source IN (’cran’, ’serie’)": {
+  "ou": [
+   "src\\server\\fanzzy\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT cle FROM recompenses WHERE user_id = ? AND source = ’cran’": {
+  "ou": [
+   "src\\server\\fanzzy\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 FROM user_follows uf JOIN teams t ON t.id = uf.team_id WHERE uf.user_id = ? AND (t.id = ? OR t.name REGEXP ’^England( W| U[0-9]{0})$’) LIMIT 1": {
+  "ou": [
+   "src\\server\\fanzzy\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "catalogue : {0} cartes seraient reprises du code, au-delà des {1} admises — rien n’a été écrit. Une fournée de contenu ne fait pas ça : regarde `npm run ecarts`, puis relève TBF_RECONCILIATION_MAX si c’est bien voulu.": {
+  "ou": [
+   "src\\server\\fanzzy\\reconciliation.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "catalogue : {0} carte(s) que le code voulait changer et qui ont été corrigées à l’écran — {1} … — la base garde sa version. `npm run ecarts` dit laquelle est laquelle.": {
+  "ou": [
+   "src\\server\\fanzzy\\reconciliation.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "catalogue : {0} carte(s) que le code voulait changer et qui ont été corrigées à l’écran — {1} — la base garde sa version. `npm run ecarts` dit laquelle est laquelle.": {
+  "ou": [
+   "src\\server\\fanzzy\\reconciliation.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT s.*, DATE_FORMAT(s.fin_le, ’%Y-%m-%d’) AS fin_jour, DATEDIFF(s.fin_le, CURDATE()) AS fin_jours, ROUND((UNIX_TIMESTAMP(s.fin_le + INTERVAL 1 DAY) - UNIX_TIMESTAMP(NOW(3))) * 1000) AS fin_ms, DATE_FORMAT(s.ouvre_le, ’%Y-%m-%d’) AS ouvre_jour, DATEDIFF(s.ouvre_le, CURDATE()) AS ouvre_jours, ROUND((UNIX_TIMESTAMP(s.ouvre_le) - UNIX_TIMESTAMP(NOW(3))) * 1000) AS ouvre_ms, ROUND((UNIX_TIMESTAMP(s.ouvre_le + INTERVAL 1 DAY) - UNIX_TIMESTAMP(NOW(3))) * 1000) AS ouvre_fin_ms, ROUND((UNIX_TIMESTAMP(CURDATE() + INTERVAL 1 DAY) - UNIX_TIMESTAMP(NOW(3))) * 1000) AS minuit_ms FROM saisons s ORDER BY s.numero, s.id": {
+  "ou": [
+   "src\\server\\fanzzy\\saisons.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "user_id, side, team_id, classe, ferveur, chants, parfaits, serie_max, meilleur_q, meilleur_chant": {
+  "ou": [
+   "src\\server\\ferveur\\bilan.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "user_id, side, team_id, classe, ferveur, chants": {
+  "ou": [
+   "src\\server\\ferveur\\bilan.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "user_id, side, team_id, classe, ferveur": {
+  "ou": [
+   "src\\server\\ferveur\\bilan.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "ferveur > ?": {
+  "ou": [
+   "src\\server\\ferveur\\bilan.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT us.user_id, s.id, s.minute, s.player FROM souvenirs s JOIN user_souvenirs us ON us.souvenir_id = s.id WHERE s.fixture_id = ? AND us.kind = ’presence’ ORDER BY s.seq": {
+  "ou": [
+   "src\\server\\ferveur\\bilan.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT s.id, s.minute, s.player FROM user_souvenirs us JOIN souvenirs s ON s.id = us.souvenir_id WHERE us.user_id = ? AND s.fixture_id = ? AND us.kind = ’presence’ ORDER BY s.seq": {
+  "ou": [
+   "src\\server\\ferveur\\bilan.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[virage] XP du match sans le compte des chants — appliquer sql/quotidien.sql (npm run schema:appliquer)": {
+  "ou": [
+   "src\\server\\ferveur\\bilan.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "NS": {
+  "ou": [
+   "src\\server\\ferveur\\index.js",
+   "src\\server\\football\\ancrage.js",
+   "src\\server\\football\\poller.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "· salle": {
+  "ou": [
+   "src\\server\\ferveur\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "· salles ouvertes": {
+  "ou": [
+   "src\\server\\ferveur\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT f.id, f.status_short, f.elapsed, f.elapsed_extra, UNIX_TIMESTAMP(f.polled_at) * 1000 AS luA, f.home_goals, f.away_goals, f.kickoff_at, f.home_id, f.away_id, h.name AS home_name, h.logo AS home_logo, a.name AS away_name, a.logo AS away_logo, l.name AS league_name FROM fixtures f JOIN teams h ON h.id = f.home_id JOIN teams a ON a.id = f.away_id LEFT JOIN leagues l ON l.id = f.league_id WHERE (f.status_short IN (’1H’,’HT’,’2H’,’ET’,’BT’,’P’,’LIVE’,’INT’) OR f.home_id IN (SELECT team_id FROM user_follows WHERE user_id = ?) OR f.away_id IN (SELECT team_id FROM user_follows WHERE user_id = ?)) AND f.kickoff_at BETWEEN (UTC_TIMESTAMP() - INTERVAL 3 HOUR) AND (UTC_TIMESTAMP() + INTERVAL 2 HOUR) ORDER BY f.kickoff_at": {
+  "ou": [
+   "src\\server\\ferveur\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Goal": {
+  "ou": [
+   "src\\server\\ferveur\\virage.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "color1 IS NULL": {
+  "ou": [
+   "src\\server\\football\\couleurs.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT id, logo FROM teams WHERE id IN (?) AND logo IS NOT NULL AND color1 IS NULL LIMIT ?": {
+  "ou": [
+   "src\\server\\football\\couleurs.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT id, logo FROM teams WHERE id IN (?) AND logo IS NOT NULL AND colors_at IS NULL LIMIT ?": {
+  "ou": [
+   "src\\server\\football\\couleurs.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UEFA Champions League": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "World Cup": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Euro Championship": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Copa America": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Africa Cup of Nations": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UEFA Nations League": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "England": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Premier League": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Spain": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Italy": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Serie A": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Germany": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bundesliga": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "France": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ligue 1": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Championship": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Serie B": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "2. Bundesliga": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ligue 2": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Switzerland": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Super League": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Netherlands": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Eredivisie": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Portugal": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Primeira Liga": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Belgium": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Jupiler Pro League": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Brazil": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Argentina": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Liga Profesional Argentina": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Scotland": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Premiership": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Austria": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Denmark": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Superliga": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Major League Soccer": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Mexico": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Liga MX": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UEFA Europa League": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UEFA Europa Conference League": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UEFA Conference League": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FA Cup": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Copa del Rey": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Coppa Italia": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DFB Pokal": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Copa Libertadores": {
+  "ou": [
+   "src\\server\\football\\inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "name LIKE ?": {
+  "ou": [
+   "src\\server\\football\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "name LIKE CONCAT(?, ’ %’)": {
+  "ou": [
+   "src\\server\\football\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DISTINCT f.id FROM fixtures f WHERE f.status_short IN (’1H’,’HT’,’2H’,’ET’,’BT’,’P’,’LIVE’,’INT’) AND (f.home_id IN (SELECT team_id FROM user_follows) OR f.away_id IN (SELECT team_id FROM user_follows))": {
+  "ou": [
+   "src\\server\\football\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DISTINCT f.id FROM fixtures f WHERE f.status_short IN (’NS’,’TBD’) AND f.kickoff_at <= (UTC_TIMESTAMP() + INTERVAL ? MINUTE) AND f.kickoff_at > (UTC_TIMESTAMP() - INTERVAL 4 HOUR) AND (f.home_id IN (SELECT team_id FROM user_follows) OR f.away_id IN (SELECT team_id FROM user_follows))": {
+  "ou": [
+   "src\\server\\football\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT {0} {1} WHERE (f.home_id = ? OR f.away_id = ?) AND f.status_short IN (’FT’,’AET’,’PEN’) ORDER BY f.kickoff_at DESC LIMIT {2}": {
+  "ou": [
+   "src\\server\\football\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT {0} {1} WHERE (f.home_id = ? OR f.away_id = ?) AND f.status_short NOT IN (’FT’,’AET’,’PEN’,’CANC’) ORDER BY f.kickoff_at ASC LIMIT {2}": {
+  "ou": [
+   "src\\server\\football\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DISTINCT tl.league_id, tl.season FROM team_leagues tl WHERE tl.team_id IN (SELECT team_id FROM user_follows) AND NOT EXISTS ( SELECT 1 FROM standings s WHERE s.league_id = tl.league_id AND s.season = tl.season AND s.updated_at > (NOW(3) - INTERVAL ? HOUR))": {
+  "ou": [
+   "src\\server\\football\\store.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Accept": {
+  "ou": [
+   "src\\server\\images\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COALESCE(SUM(echarpes), 0) AS n FROM recompenses WHERE user_id = ? AND source IN (’jongles’, ’tirs’, ’chant’, ’deplacement’) AND verse_a >= CURDATE()": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT IF(a = ?, b, a) AS id FROM amities WHERE (a = ? OR b = ?) AND etat = ’amis’": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 AS ok FROM amities WHERE ((a = ? AND b = ?) OR (a = ? AND b = ?)) AND etat = ’amis’": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT j.user_id AS id, u.pseudo, MAX(j.score) AS valeur, COUNT(*) AS parties FROM jeux_jongles j JOIN users u ON u.public_id = j.user_id AND u.status = ’active’ WHERE j.saison_id <=> ? AND j.score IS NOT NULL GROUP BY j.user_id, u.pseudo ORDER BY valeur DESC, parties ASC, j.user_id": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT j.user_id AS id, u.pseudo, MAX(j.score) AS valeur, COUNT(*) AS parties FROM jeux_parties j JOIN users u ON u.public_id = j.user_id AND u.status = ’active’ WHERE j.jeu = ? AND j.saison_id <=> ? AND j.score IS NOT NULL GROUP BY j.user_id, u.pseudo ORDER BY valeur DESC, parties ASC, j.user_id": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT t.id, u.pseudo, SUM(t.pts) AS valeur, SUM(t.v) AS victoires, SUM(t.n) AS nuls, SUM(t.d) AS defaites, COUNT(*) AS parties FROM (SELECT a_id AS id, IF(buts_a > buts_b, 3, IF(buts_a = buts_b, 1, 0)) AS pts, buts_a > buts_b AS v, buts_a = buts_b AS n, buts_a < buts_b AS d FROM jeux_tirs WHERE saison_id <=> ? AND joue_a IS NOT NULL AND machine = 0 UNION ALL SELECT b_id, IF(buts_b > buts_a, 3, IF(buts_a = buts_b, 1, 0)), buts_b > buts_a, buts_a = buts_b, buts_b < buts_a FROM jeux_tirs WHERE saison_id <=> ? AND joue_a IS NOT NULL AND machine = 0 AND b_id IS NOT NULL) t JOIN users u ON u.public_id = t.id AND u.status = ’active’ GROUP BY t.id, u.pseudo ORDER BY valeur DESC, victoires DESC, parties ASC, t.id": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT f.id, f.kickoff_at, f.home_id, h.name AS home, a.name AS away, TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), f.kickoff_at) AS dans_s FROM fixtures f LEFT JOIN teams h ON h.id = f.home_id LEFT JOIN teams a ON a.id = f.away_id WHERE (f.home_id = ? OR f.away_id = ?) AND f.kickoff_at > UTC_TIMESTAMP() AND f.status_short IN (’NS’, ’TBD’) ORDER BY f.kickoff_at LIMIT 1": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT n FROM compteurs_jour WHERE user_id = ? AND jour = CURDATE() AND cle = ’tifo’": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS n FROM user_follows f JOIN users u ON u.public_id = f.user_id WHERE f.team_id = ? AND u.status = ’active’": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "UPDATE compteurs_jour SET n = n + 1 WHERE user_id = ? AND jour = CURDATE() AND cle = ’tifo’ AND n < ?": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT IGNORE INTO compteurs_jour (user_id, jour, cle, n) VALUES (?, CURDATE(), ’tifo’, 1)": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DATE_FORMAT(CURDATE() - INTERVAL WEEKDAY(CURDATE()) DAY - INTERVAL ? WEEK, ’%Y-%m-%d’) AS lundi": {
+  "ou": [
+   "src\\server\\jeux\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[kop] KOP et clubs servis sans les couleurs du club : {0} (applique sql/couleurs.sql)": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT id, kop_id, bonus_id, prix FROM kop_votes WHERE kop_id = ? AND issue = ’en_cours’ AND ferme <= NOW(3)": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT id FROM kop_votes WHERE kop_id = ? AND issue = ’en_cours’": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO kop_votes (id, kop_id, bonus_id, prix, ouvert_par, ferme) VALUES (?, ?, ?, ?, ?, NOW(3) + INTERVAL ? MICROSECOND)": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT kop_id, (issue = ’en_cours’ AND ferme > NOW(3)) AS ouvert FROM kop_votes WHERE id = ?": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT b.* FROM kop_bonus b WHERE b.kop_id = ? AND b.epuise IS NULL AND (b.restant IS NULL OR b.restant > 0) AND (b.portee <> ’saison’ OR NOT EXISTS (SELECT 1 FROM saisons x WHERE x.lancee_a IS NOT NULL) OR EXISTS ( SELECT 1 FROM saisons s WHERE s.lancee_a IS NOT NULL AND NOT EXISTS (SELECT 1 FROM saisons t WHERE t.lancee_a IS NOT NULL AND t.lancee_a > s.lancee_a) AND b.achete >= s.lancee_a AND (s.fin_le IS NULL OR s.fin_le >= CURDATE())))": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[kop] les bonus de saison ne s’éteignent pas : {0} (applique sql/saisons.sql puis sql/quotidien.sql)": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT *, GREATEST(0, UNIX_TIMESTAMP(ferme) - UNIX_TIMESTAMP(NOW(3))) * 1000 AS ferme_dans_ms FROM kop_votes WHERE kop_id = ? AND issue = ’en_cours’ LIMIT 1": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[kop] membres servis sans avatar ni niveau : {0}": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[kop] bonus retirés : {0} écharpes rendues à {1} KOP pour {2} achat(s), {3} KOP en échec": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[kop] bonus retirés : {0} écharpes rendues à {1} KOP pour {2} achat(s)": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "[kop] bonus retirés : rien à rendre": {
+  "ou": [
+   "src\\server\\kop\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT a.id, a.endpoint, a.p256dh, a.auth, u.locale FROM notif_appareils a JOIN users u ON u.public_id = a.user_id AND u.status = ’active’ WHERE a.{0} = 1 AND a.user_id IN ({1})": {
+  "ou": [
+   "src\\server\\notifications\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} contre {1}": {
+  "ou": [
+   "src\\server\\notifications\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DISTINCT f.id FROM fixtures f WHERE f.status_short IN (’NS’,’TBD’) AND f.kickoff_at >= ? AND f.kickoff_at < ? AND (f.home_id IN (SELECT team_id FROM user_follows) OR f.away_id IN (SELECT team_id FROM user_follows))": {
+  "ou": [
+   "src\\server\\notifications\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT column_name AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ’notif_appareils’": {
+  "ou": [
+   "src\\server\\notifications\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Momo": {
+  "ou": [
+   "src\\server\\nvn\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Sarah": {
+  "ou": [
+   "src\\server\\nvn\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Nadia": {
+  "ou": [
+   "src\\server\\nvn\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tonio": {
+  "ou": [
+   "src\\server\\nvn\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Papy Kop": {
+  "ou": [
+   "src\\server\\nvn\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT user_id, outcome, goals_for, goals_against, ended_at FROM duel_results WHERE user_id IN ({0}) ORDER BY ended_at DESC LIMIT ?": {
+  "ou": [
+   "src\\server\\nvn\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 FROM amities WHERE a = ? AND b = ? AND etat = ’amis’": {
+  "ou": [
+   "src\\server\\nvn\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT u.public_id AS id, w.presence AS choix FROM amities am JOIN users u ON u.public_id = IF(am.a = ?, am.b, am.a) LEFT JOIN user_wallet w ON w.user_id = u.public_id WHERE (am.a = ? OR am.b = ?) AND am.etat = ’amis’ AND u.status = ’active’": {
+  "ou": [
+   "src\\server\\presence\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "1kb": {
+  "ou": [
+   "src\\server\\presence\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT echarpes FROM recompenses WHERE user_id = ? AND source = ’prono’ AND cle = ?": {
+  "ou": [
+   "src\\server\\pronostics\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "(SELECT ’ami’ AS sorte, u.public_id AS id, u.pseudo AS pseudo, 1 AS n FROM amities a JOIN users u ON u.public_id = IF(a.a = ?, a.b, a.a) WHERE (a.a = ? OR a.b = ?) AND a.etat = ’amis’ AND u.status = ’active’ AND a.repondu_le > {0} ORDER BY a.repondu_le DESC LIMIT 5) UNION ALL (SELECT ’demande’, NULL, NULL, COUNT(*) FROM amities a WHERE (a.a = ? OR a.b = ?) AND a.etat = ’demande’ AND a.par <> ? AND a.demande_le > {1})": {
+  "ou": [
+   "src\\server\\quotidien\\depuis.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "(SELECT ’arrivee’ AS sorte, m.kop_id, u.pseudo AS quoi, NULL AS issue, m.depuis AS quand FROM kop_membres m JOIN users u ON u.public_id = m.user_id WHERE m.kop_id IN (SELECT kop_id FROM kop_membres WHERE user_id = ?) AND m.user_id <> ? AND u.status = ’active’ AND m.depuis > {0}) UNION ALL (SELECT ’vote’, v.kop_id, v.bonus_id, v.issue, v.ferme FROM kop_votes v WHERE v.kop_id IN (SELECT kop_id FROM kop_membres WHERE user_id = ?) AND v.issue <> ’en_cours’ AND v.ferme > {1} AND v.ferme <= NOW(3)) ORDER BY quand DESC": {
+  "ou": [
+   "src\\server\\quotidien\\depuis.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT f.id, f.home_id, f.away_id, f.home_goals, f.away_goals, th.name AS domicile, ta.name AS exterieur, (SELECT COUNT(*) FROM fixture_events e WHERE e.fixture_id = f.id AND e.team_id = f.home_id AND e.type = ’Card’ AND e.detail IN (’Red Card’, ’Second Yellow card’)) AS rouges_domicile, (SELECT COUNT(*) FROM fixture_events e WHERE e.fixture_id = f.id AND e.team_id = f.away_id AND e.type = ’Card’ AND e.detail IN (’Red Card’, ’Second Yellow card’)) AS rouges_exterieur, (SELECT uf.team_id FROM user_follows uf WHERE uf.user_id = ? AND uf.team_id IN (f.home_id, f.away_id) ORDER BY uf.is_main DESC, uf.created_at LIMIT 1) AS club FROM fixtures f LEFT JOIN teams th ON th.id = f.home_id LEFT JOIN teams ta ON ta.id = f.away_id WHERE f.status_short IN (’FT’, ’AET’, ’PEN’) AND (f.home_id IN (SELECT team_id FROM user_follows WHERE user_id = ?) OR f.away_id IN (SELECT team_id FROM user_follows WHERE user_id = ?)) AND f.kickoff_at > UTC_TIMESTAMP() - INTERVAL (UNIX_TIMESTAMP() - UNIX_TIMESTAMP({0})) SECOND ORDER BY f.kickoff_at DESC LIMIT 3": {
+  "ou": [
+   "src\\server\\quotidien\\depuis.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT id, numero, nom FROM saisons WHERE lancee_a IS NOT NULL AND lancee_a > {0} ORDER BY lancee_a DESC LIMIT 1": {
+  "ou": [
+   "src\\server\\quotidien\\depuis.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DATE_FORMAT(CURDATE(), ’%Y-%m-%d’) AS jour, DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, ’%Y-%m-%d’) AS hier, UNIX_TIMESTAMP(CURDATE()) AS debut, UNIX_TIMESTAMP(CURDATE() + INTERVAL 1 DAY) AS fin, UNIX_TIMESTAMP(CURDATE() + INTERVAL 1 DAY) - UNIX_TIMESTAMP(NOW(3)) AS reste, w.scarves AS scarves, (w.visite_a IS NOT NULL AND w.visite_a <= NOW(3) - INTERVAL ? HOUR) AS ticket, UNIX_TIMESTAMP(NOW(3)) - UNIX_TIMESTAMP(w.visite_a) AS absence, w.instantane AS instantane, (SELECT GROUP_CONCAT(team_id) FROM user_follows WHERE user_id = ?) AS suivis, (SELECT NOW(3) >= {0} FROM saisons s WHERE s.id = ?) AS close FROM (SELECT 1) AS un LEFT JOIN user_wallet w ON w.user_id = ?": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DATEDIFF(CURDATE(), jour) AS k, DATE_FORMAT(jour, ’%Y-%m-%d’) AS jour, rang, mission, cible, echarpes, packs, xp, tampons, saison_id, relancee FROM missions_jour WHERE user_id = ? AND jour >= CURDATE() - INTERVAL 1 DAY": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT source, cle, saison_id, DATEDIFF(CURDATE(), cle) AS ecart, NULL AS somme, NULL AS insigne FROM recompenses WHERE user_id = ? AND source = ’bonus’ UNION ALL SELECT source, cle, saison_id, NULL, NULL, NULL FROM recompenses WHERE user_id = ? AND source IN (’mission’, ’sachet’) AND cle >= DATE_FORMAT(CURDATE() - INTERVAL 1 DAY, ’%Y-%m-%d’) UNION ALL SELECT source, cle, saison_id, NULL, NULL, insigne FROM recompenses WHERE user_id = ? AND source IN (’carnet’, ’relais’) UNION ALL SELECT ’tampons’, NULL, saison_id, NULL, SUM(tampons), NULL FROM recompenses WHERE user_id = ? AND source IN (’mission’, ’sachet’) AND saison_id IS NOT NULL GROUP BY saison_id": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses WHERE user_id = ? AND source IN (’mission’, ’sachet’) AND saison_id = ?": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DATE_FORMAT(CURDATE(), ’%Y-%m-%d’) = ? AS memeJour": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ? AND source = ’bonus’": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ? AND source = ’mission’ AND cle IN ({0})": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DATE_FORMAT(CURDATE(), ’%Y-%m-%d’) AS jour": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT DATE_FORMAT(jour, ’%Y-%m-%d’) AS jour, rang, mission, cible, relancee FROM missions_jour WHERE user_id = ? AND jour = CURDATE() FOR UPDATE": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 AS oui FROM recompenses WHERE user_id = ? AND source = ’mission’ AND cle = ?": {
+  "ou": [
+   "src\\server\\quotidien\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT UNIX_TIMESTAMP(CURDATE()) AS debut, UNIX_TIMESTAMP(CURDATE() + INTERVAL 1 DAY) AS fin, (SELECT scarves FROM user_wallet WHERE user_id = ?) AS scarves, (SELECT GROUP_CONCAT(team_id) FROM user_follows WHERE user_id = ?) AS suivis, (SELECT COUNT(*) FROM duel_results WHERE user_id = ? AND mode = ’classe’ AND ended_at >= CURDATE()) AS classes": {
+  "ou": [
+   "src\\server\\quotidien\\missions.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "mission.{0}": {
+  "ou": [
+   "src\\server\\quotidien\\missions.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "32kb": {
+  "ou": [
+   "src\\server\\repetition\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Joueur : {0} <{1}>": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Page : {0}": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Page : —": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Navigateur : {0}": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Navigateur : —": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Langue : {0}": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Langue : —": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Version : {0} ({1})": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Version : {0}": {
+  "ou": [
+   "src\\server\\signalement\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "les PARFAITS, la série et le meilleur geste du Virage se comptent de nouveau (colonnes de sql/arenes.sql trouvées)": {
+  "ou": [
+   "src\\server\\souvenirs\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "les chants du Virage se comptent de nouveau (colonnes de sql/quotidien.sql trouvées)": {
+  "ou": [
+   "src\\server\\souvenirs\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT user_id, fanzzy_id, ferveur FROM virage_presence WHERE fixture_id = ? AND last_push_at > (NOW(3) - INTERVAL ? SECOND)": {
+  "ou": [
+   "src\\server\\souvenirs\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSERT INTO api_cache (k, payload, expires_at) VALUES (?, ?, NOW(3) + INTERVAL ? SECOND) ON DUPLICATE KEY UPDATE payload = VALUES(payload), expires_at = VALUES(expires_at), fetched_at = NOW(3)": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "SELECT 1 FROM fixtures WHERE league_id = ? AND status_short IN (’1H’,’HT’,’2H’,’ET’,’BT’,’P’,’LIVE’) LIMIT 1": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DELETE FROM api_cache WHERE k LIKE ? OR k LIKE ? OR k LIKE ? OR k LIKE ?": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ball Possession": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Possession": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Total Shots": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tirs": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Buts attendus": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Corner Kicks": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Corners": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Goalkeeper Saves": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Fouls": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Fautes": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Offsides": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Yellow Cards": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Cartons jaunes": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Red Cards": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Cartons rouges": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Total passes": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Passes": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Passes %": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "(l.starts_on IS NULL OR l.ends_on IS NULL OR (l.starts_on <= ? AND ? <= l.ends_on))": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "l.name LIKE ?": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "l.country LIKE ?": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "({0} OR (l.family = ’international’ AND l.ends_on >= DATE_SUB(?, INTERVAL 4 YEAR)) OR f.user_id IS NOT NULL)": {
+  "ou": [
+   "src\\server\\teletext\\index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ }
+}

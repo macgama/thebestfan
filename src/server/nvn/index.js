@@ -439,7 +439,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        fort, chez soi seulement : un neutre n'a pas de club dans ce match. Le
        deck est lié ici, une fois, pour ce match-là — le moteur n'a rien à en
        savoir, il lit des totaux. */
-    const deck = lierLeDeck(loadout, club.neutre ? null : club.teamId, tauxDuLien());
+    const deck = lierLeDeck(loadout, club.neutre ? null : club.teamId, tauxDuLien(), {
+      leagueId: support.fixture.leagueId,
+      nomDuClub: club.teamId === exterieur ? support.fixture.away.name : support.fixture.home.name,
+    });
 
     quitterFile(u.userId);
 
