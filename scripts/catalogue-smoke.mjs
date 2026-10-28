@@ -154,7 +154,11 @@ console.log('\nLes séries');
  * capo, la bâche, le tambour, le muret, la torche — sont les archétypes de la
  * tribune, LA TRIBUNE en compte donc dix, et c'est très bien ainsi. La plus
  * ancienne série est aussi la plus profonde. */
-/* **Une exemption, une seule, et nommée : LES TERRACES (`AN`).**
+/* **Deux exemptions, nommées : LES TERRACES (`AN`) et DIE KURVE (`SU`).**
+ *
+ * DIE KURVE (28 octobre 2026) est dans le même cas : trente-six lignées,
+ * aucune légendaire conçue. Ce qui suit vaut pour les deux.
+ *
  *
  * La série arrive en cours de production (20 octobre 2026) : cinq lignées sur
  * vingt — sur soixante depuis qu'elle compte trois Fanzzy par club —, et
@@ -168,8 +172,9 @@ console.log('\nLes séries');
  * la retire. Une exemption qu'on oublie là devient une règle morte.
  *
  * Tombée le 28 octobre 2026 : LES TERRACES a ses six légendaires (AN61 à
- * AN66). La liste reste, vide, pour la prochaine série qui arrivera ainsi. */
-const SANS_SOMMET_ENCORE = new Set([]);
+ * AN66). DIE KURVE (SU) arrive sans les siens : elle y reste jusqu'à leur
+ * venue. */
+const SANS_SOMMET_ENCORE = new Set(['SU']);
 {
   const manque = [];
   const exemptees = [];
