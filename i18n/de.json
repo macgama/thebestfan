@@ -6580,5 +6580,10 @@
  "<0>1</0> tampon": "<0>1</0> Stempel",
  "<0>{0}</0> tampons": "<0>{0}</0> Stempel",
  "SAISON {0} — {1}": "SAISON {0} — {1}",
- "<0>{0}</0> de ferveur": "<0>{0}</0> Stimmung"
+ "<0>{0}</0> de ferveur": "<0>{0}</0> Stimmung",
+ "EN ATTENTE <0>{0}</0>": "WARTEND <0>{0}</0>",
+ "Personne n’attend pour l’instant.": "Gerade wartet niemand.",
+ "Dès qu’un supporter entre en file, son duel apparaît ici.": "Sobald ein Fan in die Warteschlange geht, erscheint sein Duell hier.",
+ "{0} · {1} EN FILE": "{0} · {1} WARTEN",
+ "<0>En attente</0> : sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune : il ne reste qu’à entrer en file.": "<0>Wartend</0>: Auf der Duellseite zeigt der Reiter WARTEND die Duelle, in denen jemand auf einen Spieler wartet. Ein Tipp wählt Spiel, Format und Tribüne: Du musst dich nur noch anstellen."
 }

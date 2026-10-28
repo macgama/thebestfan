@@ -90,6 +90,13 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .souple small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.02em;
   text-transform:none;margin-top:3px}
 .portee{margin:0 0 10px}
+/* Le nombre de duels qui attendent, en violet dans l'onglet EN ATTENTE ;
+   l'onglet entier pâlit à zéro, sans cesser d'être un onglet. */
+.portee .nb-attente{display:inline-block;min-width:18px;padding:1px 5px;margin-left:3px;
+  border-radius:9px;background:var(--violet,#8257DA);color:#fff;font-size:11px;line-height:16px;
+  text-align:center;vertical-align:1px}
+.portee [data-zero]{opacity:.55}
+.portee [data-zero] .nb-attente{background:rgba(242,238,228,.25)}
 
 /* **Les matchs, en tickets kraft de soixante pixels** (lot 6). Les blasons,
    les deux clubs, la sorte de duel et la file en dessous, **un seul sticker
@@ -1793,6 +1800,11 @@ const S = {
   // adversaire un mardi de trêve — mais on démarre sur ses clubs, parce que
   // c’est là que le duel rapporte le double.
   tousLesMatchs: false,
+  /* **L'onglet EN ATTENTE** (28 octobre 2026, choix de Gaël : « un bouton
+     de plus "Duel en attente de joueur" », toujours là, grisé à zéro). La
+     liste est alors celle de tous les matchs (`tousLesMatchs` vrai), réduite
+     à ceux où quelqu'un attend, dans n'importe quel format. */
+  enAttente: false,
   /* **L'entrée en tribune s'entend une fois** (`son.js`, lot 6) : la rumeur
      monte du vestiaire à la tribune pleine quand l'affiche se retire. Tant
      qu'elle n'a pas eu lieu, le rendu ne pose pas la phase « jeu » — posée
@@ -1958,6 +1970,35 @@ async function preparer() {
 const attenteDe = (m) => S.attentes.find(
   (a) => a.fixtureId === m.id && a.format === S.format) ?? null;
 
+/** La file la plus remplie de ce match, tous formats confondus, ou `null`.
+    C'est celle que l'onglet EN ATTENTE propose : la plus près de partir. */
+function meilleureFile(m) {
+  const presents = (a) => (Number(a.camps?.[0]) || 0) + (Number(a.camps?.[1]) || 0);
+  return S.attentes.filter((a) => a.fixtureId === m.id && presents(a) > 0)
+    .reduce((p, a) => (p && presents(p) >= presents(a) ? p : a), null);
+}
+
+/** Combien de duels attendent un joueur : le nombre du menu (`duelsEnAttente`). */
+const duelsQuiAttendent = () =>
+  S.attentes.filter((a) => a.camps?.some((n) => Number(n) > 0)).length;
+
+/** Les matchs que la liste montre : tous, ou ceux où quelqu'un attend. */
+const matchsMontres = () => (S.enAttente ? S.matchs.filter((m) => meilleureFile(m)) : S.matchs);
+
+/**
+ * Choisit un match depuis l'onglet EN ATTENTE : le format de sa file la plus
+ * remplie, et le camp où il manque du monde (la règle de `manqueDe`). Il ne
+ * reste qu'à appuyer sur ENTRER EN FILE. Chez soi, le camp reste imposé
+ * (`monCamp`) : `S.camp` n'y est pas lu.
+ */
+function choisirEnAttente(m) {
+  const f = m ? meilleureFile(m) : null;
+  S.fixtureId = m?.id ?? null;
+  if (!f) return;
+  S.format = f.format;
+  S.camp = Number(f.camps[0]) <= Number(f.camps[1]) ? 0 : 1;
+}
+
 /** Le camp qui manque de monde, et combien il en manque. */
 function manqueDe(a) {
   if (!a) return null;
@@ -2052,14 +2093,24 @@ function rendrePrepa(sansDeck, formats) {
   /* La portée de la liste. Jouer pour un match qui n'est pas celui de son
      club est permis — sans quoi il n'y aurait personne en file un mardi de
      trêve — mais ça rapporte moitié moins. Le rail flare des arènes. */
-  out.push(`<div class="portee tbf-onglets" data-ton="flare">
-    <button class="pt tbf-onglet ${S.tousLesMatchs ? '' : 'on'}" data-portee="miens"
-      aria-pressed="${!S.tousLesMatchs}">MES CLUBS</button>
-    <button class="pt tbf-onglet ${S.tousLesMatchs ? 'on' : ''}" data-portee="tous"
-      aria-pressed="${S.tousLesMatchs}">TOUS LES MATCHS</button>
+  const portee = S.enAttente ? 'attente' : S.tousLesMatchs ? 'tous' : 'miens';
+  const nAttente = duelsQuiAttendent();
+  const onglet = (cle, texte, plus = '') => `<button class="pt tbf-onglet ${portee === cle ? 'on' : ''}"
+      data-portee="${cle}" aria-pressed="${portee === cle}"${plus}>${texte}</button>`;
+  /* **EN ATTENTE**, avec le nombre de duels qui attendent un joueur, en
+     violet comme partout où des gens attendent. Toujours là, pour qu'on
+     apprenne où regarder ; grisé à zéro. */
+  out.push(`<div class="portee tbf-onglets" data-ton="flare" data-ajuste>
+    ${onglet('miens', 'MES CLUBS')}${onglet('tous', 'TOUS LES MATCHS')}${onglet('attente',
+      `EN ATTENTE <span class="nb-attente">${nAttente}</span>`,
+      nAttente ? '' : ' data-zero')}
   </div>`);
 
-  if (!S.matchs.length) {
+  const montres = matchsMontres();
+  if (S.enAttente && !montres.length) {
+    out.push(`<div class="vide">Personne n’attend pour l’instant.<br>
+      Dès qu’un supporter entre en file, son duel apparaît ici.</div>`);
+  } else if (!montres.length) {
     out.push(S.tousLesMatchs
       ? `<div class="vide">Aucun match dans les huit prochains jours.</div>`
       : `<div class="vide">Aucun match à venir pour tes clubs.<br>
@@ -2067,7 +2118,7 @@ function rendrePrepa(sansDeck, formats) {
          <b>tous les matchs</b> ci-dessus.</div>`);
   } else {
     out.push('<div class="matchs">');
-    for (const m of S.matchs) {
+    for (const m of montres) {
       const on = S.fixtureId === m.id;
       /* Le match choisi devient **l'affiche** (lot 6) ; les autres restent
          des tickets. **Le choix se déplie sous lui**, et non au bas de la
@@ -2120,11 +2171,14 @@ function etatDuMatch(m) {
 /** Ceux qui attendent sur ce match, dans ce format : des silhouettes et
     leur nombre. Jamais qui. Rien sans personne. */
 function fileDe(m) {
-  const att = attenteDe(m);
+  /* Dans l'onglet EN ATTENTE, la file la plus remplie, quel que soit le
+     format choisi : c'est elle qu'un appui proposera, et son format est dit. */
+  const att = S.enAttente ? meilleureFile(m) : attenteDe(m);
   const n = att ? att.camps[0] + att.camps[1] : 0;
   if (!n) return '';
   return `<span class="tbf-foule tbf-foule--frise" aria-hidden="true">${
-    '<i class="on"></i>'.repeat(Math.min(8, n))}</span><span class="q attente">${n} EN FILE</span>`;
+    '<i class="on"></i>'.repeat(Math.min(8, n))}</span><span class="q attente">${
+    S.enAttente ? `${esc(att.format)} · ` : ''}${n} EN FILE</span>`;
 }
 
 /** Les blasons d'un match, quand l'API en sert. */
@@ -2361,6 +2415,10 @@ $('prepaCorps').addEventListener('click', (e) => {
   // Changer de match remet la tribune à zéro : ce ne sont plus les mêmes clubs.
   if (m) {
     if (Number(m.dataset.fixture) === S.fixtureId) return undefined;
+    if (S.enAttente) {
+      choisirEnAttente(S.matchs.find((x) => x.id === Number(m.dataset.fixture)));
+      return preparerRendu();
+    }
     S.fixtureId = Number(m.dataset.fixture); S.camp = null; return preparerRendu();
   }
   const t = e.target.closest('[data-camp]');
@@ -2370,10 +2428,16 @@ $('prepaCorps').addEventListener('click', (e) => {
      choisi est remis à zéro — il peut très bien ne plus être dans la liste. */
   const p = e.target.closest('[data-portee]');
   if (p) {
-    const tous = p.dataset.portee === 'tous';
-    if (tous === S.tousLesMatchs) return undefined;
+    const attente = p.dataset.portee === 'attente';
+    const tous = attente || p.dataset.portee === 'tous';
+    if (tous === S.tousLesMatchs && attente === S.enAttente) return undefined;
+    const relire = tous !== S.tousLesMatchs;
     S.tousLesMatchs = tous;
+    S.enAttente = attente;
     S.fixtureId = null;
+    /* Entre TOUS LES MATCHS et EN ATTENTE, la liste est la même : seul le
+       filtre change. */
+    if (!relire) { choisirPremier(); return preparerRendu(); }
     return rechargerMatchs();
   }
   if (e.target.closest('#entrer')) entrerEnFile();
@@ -2394,8 +2458,15 @@ async function rechargerMatchs() {
   } catch {
     S.matchs = [];               // hors ligne : la liste vide dit déjà tout
   }
-  S.fixtureId = S.matchs.find((m) => m.mode === 'classe')?.id ?? S.matchs[0]?.id ?? null;
+  choisirPremier();
   preparerRendu();
+}
+
+/** Le match choisi d'office : le premier classé, ou, dans l'onglet EN
+    ATTENTE, le premier qui attend, avec son format et son camp. */
+function choisirPremier() {
+  if (S.enAttente) { choisirEnAttente(matchsMontres()[0] ?? null); return; }
+  S.fixtureId = S.matchs.find((m) => m.mode === 'classe')?.id ?? S.matchs[0]?.id ?? null;
 }
 
 // On ne recharge pas les catalogues à chaque clic : seul l'affichage change.
@@ -2584,6 +2655,9 @@ function connecter() {
 
   socket.on('nvn:attentes', (d) => {
     S.attentes = d?.attentes ?? [];
+    /* Dans l'onglet EN ATTENTE, un match qui n'attend plus personne sort de
+       la liste : le choix passe au suivant, s'il y en a un. */
+    if (S.enAttente && !matchsMontres().some((m) => m.id === S.fixtureId)) choisirPremier();
     if (!S.vue) preparerRendu();
   });
 

@@ -6580,5 +6580,10 @@
  "<0>1</0> tampon": "<0>1</0> stamp",
  "<0>{0}</0> tampons": "<0>{0}</0> stamps",
  "SAISON {0} — {1}": "SEASON {0} — {1}",
- "<0>{0}</0> de ferveur": "<0>{0}</0> fervour"
+ "<0>{0}</0> de ferveur": "<0>{0}</0> fervour",
+ "EN ATTENTE <0>{0}</0>": "WAITING <0>{0}</0>",
+ "Personne n’attend pour l’instant.": "Nobody is waiting right now.",
+ "Dès qu’un supporter entre en file, son duel apparaît ici.": "As soon as a supporter joins a queue, their duel shows up here.",
+ "{0} · {1} EN FILE": "{0} · {1} QUEUING",
+ "<0>En attente</0> : sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune : il ne reste qu’à entrer en file.": "<0>Waiting</0>: on the duel page, the WAITING tab shows the duels where someone is waiting for a player. One tap picks the match, the format and the stand: all that's left is to join the queue."
 }
