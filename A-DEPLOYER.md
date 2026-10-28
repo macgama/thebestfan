@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**Le club principal qui se change, et la sélection principale** (branche
+`claude/project-thread-rftsbq`, 28 octobre 2026, choix de Gaël : changer
+une fois par saison, plus une sélection nationale). Construction, puis
+**schéma** : `npm run schema:appliquer` en SSH (`sql/principal.sql`, trois
+colonnes, aucune table), puis redémarrage.
+
+- Profil, MES CLUBS : bouton PRINCIPAL ? sur un club suivi, MA SÉLECTION sur
+  une sélection suivie ; une confirmation, puis plus de changement avant la
+  saison suivante (le premier choix, au paquet de bienvenue, ne compte pas).
+- Le PLEIN CLUB marche aussi dans les matchs de la sélection principale.
+- Sans le schéma, rien ne casse : le bouton répond que ce n'est pas branché.
+- Après la mise en ligne : sur le profil, changer de club principal, puis
+  vérifier qu'un second changement est refusé jusqu'à la saison suivante.
+
+---
+
 **Les Fanzzy en skins Halloween, Préhistorique et Apocalyptique clignent**
 (branche `claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** : des images et des réglages.

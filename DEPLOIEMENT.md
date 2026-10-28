@@ -423,6 +423,14 @@ que `raretes` les a rangées.
   amis (gestes, cadeau du jour, échanges de doubles, Fanzzy emprunté), sans
   clé étrangère. Il vient après `mini-jeux.sql`.
 
+- `principal.sql` (28 octobre 2026) : le club principal qui se change une
+  fois par saison, et la sélection nationale principale. Trois colonnes
+  (`user_follows.is_main_nation`, `user_wallet.principal_saison`,
+  `user_wallet.selection_saison`), aucune table. Il vient en dernier.
+  **Sans lui, rien ne casse** : le club principal se lit comme avant, le
+  bouton du profil répond que le changement n'est pas branché, et le
+  démarrage nomme `sql/principal.sql`.
+
 Contrôle : `SHOW TABLES;` doit en lister **61**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
