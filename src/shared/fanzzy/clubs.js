@@ -279,10 +279,15 @@ export function gainPleinClub() {
  * le vrai fan : c'est là que ça « rapporte gros ».
  *
  * Rend le nombre de pièces qui comptent (0 à 2, la borne de `combine`).
- * `principal` : `user_follows.is_main`, nul si le joueur n'en a pas.
+ * `principal` : le club principal (`user_follows.is_main`) et la sélection
+ * principale (`is_main_nation`), un nombre ou une liste, nul s'il n'en a pas.
  */
 export function pleinClub({ fanzzyId, clubAchete = null, stuff = [], teamId, principal, match = {} }) {
-  if (teamId == null || principal == null || Number(teamId) !== Number(principal)) return 0;
+  /* `principal` : un club, ou plusieurs — le club principal et la sélection
+     principale (`football/principal.js`). */
+  const principaux = (Array.isArray(principal) ? principal : [principal])
+    .filter((x) => x != null).map(Number);
+  if (teamId == null || !principaux.includes(Number(teamId))) return 0;
   if (!lieA(fanzzyId, teamId, clubAchete, match)) return 0;
   return (Array.isArray(stuff) ? stuff : []).slice(0, 2)
     .filter((id) => Number(STUFF_BY_ID.get(id)?.club) === Number(teamId)).length;
