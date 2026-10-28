@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**17 Fanzzy de plus clignent en tenue de base** (branche
+`claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- 222 âges de base RP et AN sur 275 clignent (205 avant).
+
+---
+
 **L'onglet EN ATTENTE sur la page du duel** (branche
 `claude/project-thread-sxsj06`, 28 octobre 2026, choix de Gaël : « un bouton
 de plus "Duel en attente de joueur" », toujours là). Construction seule,
