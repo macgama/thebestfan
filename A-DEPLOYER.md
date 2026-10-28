@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Les duels qui attendent se voient sans recharger** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, demandé par Gaël : il
+fallait rafraîchir la page pour savoir que quelqu'un attendait un duel).
+Construction seule, **sans schéma**.
+
+- Sur l'accueil, « Quelqu'un t'attend » s'allume (et s'éteint) dans les dix
+  secondes, et le sticker du duel du menu aussi sur les autres pages.
+- Après la mise en ligne : sur le PC, entrer en file d'un duel ; sur le S24+,
+  rester sur l'accueil sans recharger, le bandeau doit venir tout seul.
+
+---
+
 **Les sons de l'ouverture des boosters, version tribune** (branche
 `claude/project-thread-1xxwfz`, 27 octobre 2026, demandé par Gaël : les
 anciens n'étaient « pas du tout gaming » ni supporters ; validés à l'écoute).
