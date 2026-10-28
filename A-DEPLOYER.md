@@ -1,5 +1,27 @@
 # À déposer sur Infomaniak
 
+**Jouer entre amis : les sept idées** (branche `claude/project-thread-hl4hic`,
+28 octobre 2026, demandé par Gaël : que les amis puissent jouer ensemble,
+s'entraider et communiquer sans texte). **Avec schéma** : nouveau fichier
+`sql/amis-ensemble.sql` (quatre tables, accord de Gaël). Après la
+construction, en SSH : `npm run schema:appliquer`, puis redémarrer. Sans
+cela, le site refuse de démarrer (contrôle du schéma).
+
+- Dans AMIS, chaque ami porte JOUER ENSEMBLE, qui ouvre sa fiche : gestes
+  (une liste fermée, jamais de texte), cadeau du jour (écharpes offertes par
+  le jeu), défi de la semaine (chants au Virage à deux), échange de doubles,
+  prêt d'un Fanzzy jusqu'à minuit, sa collection, son deck, ses souvenirs.
+- Au Grand Virage, chaque ami visible dans ta tribune ajoute 3 % à ta
+  poussée (3 amis au plus). Un ami hors ligne ne compte pas.
+- La page AMIS dit ce que l'amitié ouvre ; QUESTIONS a une rubrique « Les
+  amis », Comment jouer une ligne « Jouer ensemble ». Réglages dans /admin,
+  section ENTRE AMIS (tout peut s'éteindre).
+- Après la mise en ligne : avec deux comptes amis, envoyer un geste, offrir
+  le cadeau, emprunter un Fanzzy et le mettre dans le deck, proposer un
+  échange et l'accepter de l'autre côté.
+
+---
+
 **Les duels qui attendent se voient sans recharger** (branche
 `claude/project-thread-sxsj06`, 28 octobre 2026, demandé par Gaël : il
 fallait rafraîchir la page pour savoir que quelqu'un attendait un duel).
