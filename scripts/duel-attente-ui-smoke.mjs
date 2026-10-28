@@ -147,6 +147,18 @@ const capture = async (p, nom) => {
 };
 const texte = (p, sel) => p.evaluate((s) => document.querySelector(s)?.innerText ?? '', sel);
 
+/* 0. Un joueur est déjà sur une autre page quand le duel s'ouvre : il doit
+   l'apprendre sans recharger (Gaël, 28 octobre 2026). */
+const T = await ouvrir(AMI, '/comment-jouer');
+await T.page.evaluate(() => {
+  window.__attentes = null;
+  window.addEventListener('tbf:attentes', (e) => { window.__attentes = e.detail?.attentes ?? []; });
+});
+/* Le rappel retient l'état des files à sa première lecture : on la laisse
+   passer avant d'ouvrir le duel. */
+await jusqua(() => T.page.evaluate(() => performance.getEntriesByType('resource')
+  .some((r) => r.name.includes('/api/nvn/moi'))), 5000);
+
 /* 1. Le créateur entre en file. */
 const H = await ouvrir(HOTE, '/duel-nvn');
 await H.page.evaluate(() => entrerEnFile());
@@ -158,6 +170,12 @@ const lien = await H.page.evaluate(() => lienDeMaFile(S.derniereSalle));
 const code = await H.page.evaluate(() => S.derniereSalle?.code);
 check('le lien d’invitation porte le code du duel',
   Boolean(code) && lien.includes(`duel=${code}`) || (console.log('        lien :', lien), false));
+
+check('le joueur déjà ailleurs apprend le duel sans recharger', await jusqua(() =>
+  T.page.evaluate(() => (window.__attentes ?? []).some((a) => a.camps?.[0] === 1)), 15000));
+check('le sticker du duel s’allume dans son menu', await jusqua(() => T.page.evaluate(() =>
+  document.querySelector('#tbf-tiroir .tbf-case[href="/duel-nvn"]')?.dataset.etat === 'attend'), 3000));
+await T.page.browserContext().close();
 
 /* 2. Il invite son ami depuis le jeu. */
 await H.page.click('#inviterAmi');
