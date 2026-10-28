@@ -379,6 +379,52 @@ const RUBRIQUES = [
     ],
   },
   {
+    titre: 'Les amis',
+    questions: [
+      ['Comment ajouter un ami ?',
+        'Page Amis, onglet TROUVER : le jeu te propose des supporters de tes clubs, '
+          + 'et tu peux chercher n’importe qui par son pseudo, quel que soit son club. '
+          + 'L’amitié commence quand il accepte ta demande.'],
+      ['Que peut-on faire entre amis ?',
+        'Touche JOUER ENSEMBLE sous le nom d’un ami : tu y vois sa collection, son '
+          + 'deck et ses cartes-souvenirs, et tu peux lui faire signe, lui offrir un '
+          + 'cadeau, relever le défi de la semaine avec lui, échanger un double ou '
+          + 'emprunter un de ses Fanzzy.'],
+      ['Pourquoi ne peut-on pas s’écrire ?',
+        'Pour que personne ne reçoive un message blessant ou mal intentionné. On se '
+          + 'fait signe avec un geste choisi dans une liste (« BRAVO ! », « UN DUEL ? », '
+          + '« ON SE VOIT AU VIRAGE ? »…), que ton personnage joue pour toi.'],
+      ['Le cadeau du jour me coûte-t-il des écharpes ?',
+        () => `Non : c’est le jeu qui offre les ${reglage('amis.cadeau_echarpes')} `
+          + `écharpes à ton ami, et tu en reçois ${reglage('amis.cadeau_merci')} en `
+          + `remerciement. Un cadeau par ami et par jour, ${reglage('amis.cadeaux_jour')} `
+          + 'amis par jour au plus.'],
+      ['Pousser avec des amis, ça aide ?',
+        () => `Oui : au Grand Virage, chaque ami dans ta tribune ajoute `
+          + `${virgule(reglage('amis.cote_force'))} % à ta poussée, jusqu’à `
+          + `${reglage('amis.cote_max')} amis. Seuls comptent ceux qui se montrent en `
+          + 'ligne : un ami qui se cache ne trahit pas sa présence.'],
+      ['C’est quoi, le défi de la semaine ?',
+        () => `Réussissez ${reglage('amis.defi_cible')} chants au Virage à vous deux `
+          + 'entre lundi et dimanche soir, chacun au moins un, et chacun récupère '
+          + `${reglage('amis.defi_echarpes')} écharpes sur la fiche de l’autre. Jusqu’à `
+          + `${reglage('amis.defis_semaine')} défis par semaine, avec des amis `
+          + 'différents.'],
+      ['Comment échanger des doubles ?',
+        'Sur la fiche d’un ami, touche un Fanzzy qu’il a en double, puis choisis '
+          + 'lequel de tes doubles tu lui donnes en retour. Rien ne bouge avant qu’il '
+          + 'accepte, et chacun garde au moins un exemplaire de chaque Fanzzy.'],
+      ['Si j’emprunte un Fanzzy, mon ami le perd-il ?',
+        'Non. Tu le joues dans ton deck, à l’âge que ton ami lui a fait atteindre, '
+          + 'jusqu’à minuit, et lui le garde. Un emprunt par jour, et seulement un '
+          + 'Fanzzy que tu n’as pas.'],
+      ['Quelle différence entre mes amis et mon KOP ?',
+        () => 'Un ami est un lien entre deux personnes. Un KOP est un groupe qui '
+          + 'pousse ensemble et qui apparaît comme tel dans les classements. On peut '
+          + 'avoir des amis partout et n’être que d’un seul KOP.'],
+    ],
+  },
+  {
     titre: 'Mon compte',
     questions: [
       ['À quoi sert mon niveau ?',
@@ -404,10 +450,6 @@ const RUBRIQUES = [
         'Depuis la page du PASS, en deux touches, aussi simplement que tu t’es '
           + 'abonné. Il ne se renouvelle plus, tu le gardes jusqu’à la fin de la '
           + 'période déjà payée, et rien de ce que tu as gagné ne t’est repris.'],
-      ['Quelle différence entre mes amis et mon KOP ?',
-        () => 'Un ami est un lien entre deux personnes. Un KOP est un groupe qui '
-          + 'pousse ensemble et qui apparaît comme tel dans les classements. On peut '
-          + 'avoir des amis partout et n’être que d’un seul KOP.'],
       ['Puis-je changer de club ?',
         () => 'Tu peux en suivre plusieurs : tu commences avec deux emplacements, et '
           + 'les suivants s’achètent en écharpes. Ton club principal est celui qui te '

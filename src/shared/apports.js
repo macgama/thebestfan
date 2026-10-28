@@ -67,7 +67,7 @@ const garni = (mods) => Object.keys(mods ?? {}).length > 0;
  *   dans l'ordre où on les lit : soi, son sac, son groupe, son club, le lieu.
  */
 export function apportsDe({ fanzzy = null, stuff = [], kop = null, club = null, clubPorteur = null,
-  stade = null } = {}) {
+  stade = null, amis = null } = {}) {
   const out = [];
 
   const siens = seulsLesMods(fanzzy?.mods);
@@ -97,6 +97,11 @@ export function apportsDe({ fanzzy = null, stuff = [], kop = null, club = null, 
      la prudence juridique des séries de championnat. */
   if (garni(club)) {
     out.push({ quoi: 'club', nom: club.pleinClub ? 'PLEIN CLUB' : 'Fanzzy lié à ton club', mods: seulsLesMods(club) });
+  }
+
+  /* Côte à côte avec ses amis, au Virage (`virage.js`, `coteACote`). */
+  if (garni(amis?.mods)) {
+    out.push({ quoi: 'amis', nom: 'Côte à côte avec tes amis', mods: amis.mods });
   }
 
   if (garni(stade?.mods)) {
