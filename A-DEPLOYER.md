@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Tous les Fanzzy RP de base clignent** (branche
+`claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- Les 11 derniers âges RP de base clignent (retouches payantes, 1 430
+  crédits, accord de Gaël) : RP de base 95 sur 95.
+
+---
+
 **Les couleurs des clubs dont le blason n'est pas un PNG** (branche
 `claude/project-thread-k7c32b`, 28 octobre 2026, demandé par Gaël : le
 serveur écrivait « [couleurs] club 3728 : blason : ce fichier n’est pas un
