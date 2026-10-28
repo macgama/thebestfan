@@ -826,6 +826,17 @@
    "es"
   ]
  },
+ "blason au format {0}, que le jeu ne lit pas": {
+  "ou": [
+   "src/server/football/blason.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "name LIKE CONCAT(?, ’ %’)": {
   "ou": [
    "src/server/football/store.js"

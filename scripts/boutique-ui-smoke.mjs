@@ -41,6 +41,7 @@ let echarpes = 2009;
 const posees = [];
 const achats = [];
 const avatars = [];
+const ultimesAchetees = new Set();
 
 const etat = () => ({
   wallet: { scarves: echarpes, packs: 2, packs_at: null, active: 'RP1', activeStade: 2,
@@ -70,9 +71,20 @@ app.get('/api/boutique/etal', (_q, s) => s.json({
     { type: 'tenue', id: 'halloween', nom: 'Halloween', rar: 'epique', prix: PRIX },
   ],
   posees,
+  ultimes: [
+    { fanzzy: 'RP1', stade: 1, nom: 'Gosier Rouillé', cri: 'ON LÂCHE RIEN', image: '/img/ultime/RP1-e1.f2b92265.webp',
+      prix: 300, possede: true },
+    { fanzzy: 'RP1', stade: 2, nom: 'Gosier Retrouvé', cri: 'C’EST JAMAIS FINI', image: '/img/ultime/RP1-e2.3a3930a4.webp',
+      prix: 300, possede: ultimesAchetees.has('RP1:2') },
+  ],
 }));
 app.post('/api/boutique/depenser', (q, s) => {
   achats.push(q.body);
+  if (q.body.type === 'ultime') {
+    echarpes -= 300;
+    ultimesAchetees.add(`${q.body.id}:${q.body.stage}`);
+    return s.json({ ok: true, paye: 300, echarpes });
+  }
   echarpes -= PRIX;
   posees.push({ fanzzy: q.body.fanzzy, stade: q.body.stage, tenue: q.body.id });
   s.json({ ok: true, paye: PRIX, echarpes });
@@ -117,6 +129,27 @@ try {
     !(await page.$('#cabine a[href*="/fanzzy"]')));
 
   await page.click('#cabine [data-qui="RP2:1"]');
+  /* **Le Fanzzy remplit la scène** (Gaël, 28 octobre 2026 : « les skins sont
+     trop petits dans la boutique »). Le dessin a sa marge transparente :
+     c'est ce qui est dessiné, pas l'image, qui doit faire la hauteur. */
+  const remplit = await jusqua(() => page.$eval('#cabine .cabine-scene', (sc) => {
+    const img = sc.querySelector('.cabine-perso');
+    if (!img?.complete || !img.style.height) return false;
+    const c = document.createElement('canvas');
+    c.width = 70; c.height = Math.round(70 * img.naturalHeight / img.naturalWidth);
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0, c.width, c.height);
+    const a = g.getImageData(0, 0, c.width, c.height).data;
+    let y0 = c.height, y1 = -1;
+    for (let i = 3; i < a.length; i += 4) if (a[i] > 24) { const y = Math.floor((i >> 2) / c.width); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    const r = img.getBoundingClientRect();
+    const dessine = (y1 - y0 + 1) / c.height * r.height;
+    return dessine >= 0.8 * sc.clientHeight;
+  }).catch(() => false));
+  check('le Fanzzy en tenue remplit la scène (le dessin, pas sa marge)', remplit);
+  check('et la scène tient dans la page sans la déborder', await page.$eval('#cabine .cabine-scene',
+    (sc) => sc.getBoundingClientRect().right <= document.documentElement.clientWidth));
+
   check('toucher un Fanzzy le met dans la scène', await jusqua(() => page.$eval('#cabine .cabine-pour',
     (el) => el.textContent.includes('Chant Oublié')).catch(() => false)));
 
@@ -146,6 +179,24 @@ try {
   await page.click('#cabine [data-qui="RP2:1"]');
   check('et ce Fanzzy-là ne se rachète pas', await jusqua(async () => !(await page.$('#cabine [data-acheter]'))
     && (await page.$eval('#cabine .cabine-deja', (el) => el.textContent).catch(() => '')).includes('DÉJÀ')));
+
+  /* **Les cartes Ultimate en écharpes** (choix de Gaël du 28 octobre 2026). */
+  await page.click('#o-ultimes');
+  check('le rayon ULTIMATE montre la première carte qui manque', await jusqua(() => page.$eval('#vitrine-ult',
+    (el) => el.textContent.includes('Gosier Retrouvé') && el.textContent.includes('300')).catch(() => false)));
+  check('VOIR LA SCÈNE est là avant l’achat', Boolean(await page.$('#vitrine-ult [data-voir-ult]')));
+  await page.click('#vitrine-ult [data-acheter-ult]');
+  check('ACHETER demande confirmation', await jusqua(() => page.$eval('.tbf-dial',
+    (el) => el.textContent.includes('Pour Gosier Retrouvé, à l’âge 2')).catch(() => false)));
+  await page.click('.tbf-dial [data-oui]');
+  check('oui : l’achat part avec le Fanzzy et l’âge', await jusqua(() => achats.length === 2)
+    && JSON.stringify(achats[1]) === JSON.stringify({ type: 'ultime', id: 'RP1', stage: 2 })
+    || (console.log('        ', JSON.stringify(achats)), false));
+  check('la cérémonie propose VOIR LA SCÈNE', await jusqua(() => page.$eval('.tbf-calque [data-geste]',
+    (b) => !b.closest('[hidden]') && b.textContent.includes('VOIR LA SCÈNE')).catch(() => false), 10000));
+  await page.click('.tbf-calque [data-fermer]');
+  check('relue, elle est à toi et ne se rachète pas', await jusqua(async () => !(await page.$('#vitrine-ult [data-acheter-ult]'))
+    && (await page.$eval('#vitrine-ult .cabine-deja', (el) => el.textContent).catch(() => '')).includes('DÉJÀ')));
 
   check('aucune erreur dans la page', erreurs.length === 0 || (console.log('        ', erreurs), false));
 } finally {

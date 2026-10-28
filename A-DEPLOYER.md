@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Les tenues en grand et les Ultimate en écharpes** (branche
+`claude/project-thread-mjslw4`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Boutique, TENUES : la scène est plus grande et le Fanzzy en tenue la remplit
+  (le dessin, pas sa marge transparente), pieds sur le socle.
+- Boutique, nouveau rayon ULTIMATE : la carte Ultimate d'un âge atteint d'un
+  Fanzzy possédé, 300 écharpes (réglage « Une carte Ultimate » dans /admin,
+  section de l'étal), seulement si son image existe, jamais celle d'un
+  légendaire. VOIR LA SCÈNE la joue avant l'achat. QUESTIONS et Comment jouer
+  le disent.
+- Après la mise en ligne : sur le S24+, /boutique#tenues puis #ultimes.
+
+---
+
 **Le but dans le bon camp** (branche `claude/project-thread-qjbce6`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 

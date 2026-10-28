@@ -74,6 +74,12 @@ export function prixTenue() {
   return reglage('etal.tenue') ?? null;
 }
 
+/** Le prix d'une carte Ultimate, **en écharpes**. Le même à tous les âges :
+    elle ne change rien au jeu, elle débloque la grande scène du coup fatal. */
+export function prixUltime() {
+  return reglage('etal.ultime') ?? null;
+}
+
 /**
  * L'équipement en vente.
  *
@@ -141,5 +147,8 @@ export function prixDe(type, id, tenues = []) {
     if (!t || t.id === 'base' || t.publie === false || t.publie === 0) return null;
     return prixTenue();
   }
+  /* Le Fanzzy et l'âge visés se vérifient à la remise (`remettreUltime`) :
+     possédé, âge atteint, pas légendaire, image faite. */
+  if (type === 'ultime') return prixUltime();
   return null;
 }

@@ -211,6 +211,10 @@ const RUBRIQUES = [
           + 'grande scène : le coup fatal en plein écran, que la tribune d’en face voit '
           + 'aussi. Elle se range sur la fiche du Fanzzy et dans le rayon ULTIMATE de '
           + 'ta collection, sans compter dans les paliers de collection.'],
+      ['Puis-je acheter une carte Ultimate ?',
+        `Oui, dans le rayon ULTIMATE de la boutique, pour ${reglage('etal.ultime')} écharpes : `
+          + 'celle d’un âge que ton Fanzzy a déjà atteint. VOIR LA SCÈNE la montre avant '
+          + 'l’achat. Celles des légendaires ne s’achètent pas, elles ne sortent qu’en booster.'],
     ],
   },
   {
