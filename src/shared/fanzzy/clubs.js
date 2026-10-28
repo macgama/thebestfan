@@ -57,6 +57,27 @@ const TERRACES = [
   47,    // Tottenham Hotspur
 ];
 
+/* Les douze clubs suisses de 2026-2027 (DIE KURVE, `dex-kurve.js`), dans
+   l'ordre des fiches : SU1 à SU12, SU13 à SU24, SU25 à SU36. **Pas encore
+   d'identifiant** : ceux de LES TERRACES ont été écrits de mémoire et restent
+   à vérifier, on ne recommence pas. Un `null` laisse la lignée neutre ; on
+   remplit chaque case avec l'identifiant lu dans `teams` en production (ou
+   dans le classement de la compétition 207). */
+const KURVE = [
+  null,  // Bâle
+  null,  // Grasshopper
+  null,  // Lausanne-Sport
+  null,  // Lucerne
+  null,  // Lugano
+  null,  // Saint-Gall
+  null,  // Servette
+  null,  // Sion
+  null,  // Thoune
+  null,  // Vaduz
+  null,  // Young Boys
+  null,  // Zurich
+];
+
 /**
  * **Le cri du club** (choix de Gaël du 25 octobre 2026 : « les cris
  * d'abord, sons plus tard »). Un Fanzzy lié qui joue un match de son club
@@ -129,8 +150,11 @@ export function avecCriDuClub(perso, teamId) {
 }
 
 /** Lignée → club (identifiant API-Football). */
-export const CLUB_DE = new Map(
-  [0, 20, 40].flatMap((d) => TERRACES.map((club, i) => ['AN'.concat(d + i + 1), club])));
+export const CLUB_DE = new Map([
+  ...[0, 20, 40].flatMap((d) => TERRACES.map((club, i) => ['AN'.concat(d + i + 1), club])),
+  ...[0, 12, 24].flatMap((d) => KURVE.map((club, i) => ['SU'.concat(d + i + 1), club]))
+    .filter(([, club]) => club != null),
+]);
 
 /** La racine d'une lignée : « AN12C » → « AN12 », « AN3B » → « AN3 ». */
 const racine = (id) => String(id ?? '').replace(/^([A-Z]{2}\d+)[A-Z]?$/, '$1');
