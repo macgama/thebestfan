@@ -1,6 +1,6 @@
 {
   "id": "AN1",
-  "rev": 6,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "963b87e4c4fb"
+          "sha": "963b87e4c4fb",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b057a6f7387b"
+          "sha": "b057a6f7387b",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "447233344f06"
+          "sha": "447233344f06",
+          "cligne": true
         }
       }
     },
@@ -90,7 +93,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5ce095fccbd8"
+          "sha": "5ce095fccbd8",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -102,7 +106,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cd78fef0f45d"
+          "sha": "cd78fef0f45d",
+          "cligne": true
         }
       }
     },
@@ -141,7 +146,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2f2051cf4252"
+          "sha": "2f2051cf4252",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
