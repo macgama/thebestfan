@@ -20,6 +20,7 @@ import { publies as jouables } from '../contenus/index.js';
 import { toutesTenues, tenuesPubliees } from '../fanzzy/tenues.js';
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 import { assurerBourse } from '../bourse.js';
+import { changementsDeLaSaison, devenirPrincipal, principauxDe } from '../football/principal.js';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -90,9 +91,18 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
          FROM user_wallet WHERE user_id = ?`, [userId]))[0];
 
     const [suivis, skins, stuff] = await Promise.all([
-      q(`SELECT f.team_id, f.is_main, t.name, t.logo, t.country
+      /* `is_main_nation` et `national` : la sélection principale, à côté du
+         club principal (`football/principal.js`). Sans sql/principal.sql,
+         la liste d'avant. */
+      q(`SELECT f.team_id, f.is_main, f.is_main_nation, t.name, t.logo, t.country, t.national
            FROM user_follows f LEFT JOIN teams t ON t.id = f.team_id
-          WHERE f.user_id = ? ORDER BY f.is_main DESC`, [userId]),
+          WHERE f.user_id = ? ORDER BY f.is_main DESC, f.is_main_nation DESC`, [userId])
+        .catch((e) => {
+          if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+          return q(`SELECT f.team_id, f.is_main, t.name, t.logo, t.country, t.national
+               FROM user_follows f LEFT JOIN teams t ON t.id = f.team_id
+              WHERE f.user_id = ? ORDER BY f.is_main DESC`, [userId]);
+        }),
       q(`SELECT fanzzy_id, stage, skin_id, equipped FROM user_skins WHERE user_id = ?`, [userId]),
       q(`SELECT stuff_id, copies, slot FROM user_stuff WHERE user_id = ?`, [userId]),
     ]);
@@ -101,6 +111,9 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       onboarded: Boolean(w.onboarded_at),
       slots: { used: suivis.length, total: w.follow_slots, max: SLOTS_MAX },
       follows: suivis,
+      /* Ce qui a déjà changé cette saison : le profil le dit au lieu de
+         proposer un bouton qui refuserait. */
+      principalChange: await changementsDeLaSaison(q, userId),
       scarves: w.scarves,
       packs: w.packs,
       activeFanzzy: w.active_fanzzy,
@@ -125,10 +138,25 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    */
   async function follow(userId, teamId, { main = false } = {}) {
     await verifierEmplacement(q, userId, teamId);
+    /* Un club principal **qui change** passe par la règle de la saison
+       (`devenirPrincipal`) ; seul le premier choix, au paquet de bienvenue,
+       se pose librement. */
+    const actuel = main ? (await principauxDe(q, userId)).club : null;
+    if (main && actuel != null && Number(actuel) !== Number(teamId)) {
+      await q(`INSERT IGNORE INTO user_follows (user_id, team_id, is_main) VALUES (?, ?, 0)`,
+        [userId, teamId]);
+      /* Sans sql/principal.sql, le changement libre d'avant. */
+      try {
+        await devenirPrincipal(q, userId, teamId);
+        return;
+      } catch (e) {
+        if (e?.code !== 'onboarding.error.principal_absent') throw e;
+      }
+    }
     if (main) await q(`UPDATE user_follows SET is_main = 0 WHERE user_id = ?`, [userId]);
     await q(
       `INSERT INTO user_follows (user_id, team_id, is_main) VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE is_main = VALUES(is_main)`,
+       ON DUPLICATE KEY UPDATE is_main = GREATEST(is_main, VALUES(is_main))`,
       [userId, teamId, main ? 1 : 0]);
     // Premier suivi d'un club inconnu : on charge son calendrier en fond.
     // Sans lui, `fixtures` reste vide pour ce club jusqu'à la passe
@@ -582,11 +610,25 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     res.json(await state(req.user.id));
   }));
 
+  /* **Devenir principal** (choix de Gaël du 28 octobre 2026) : un club suivi
+     devient le club principal, une sélection suivie la sélection principale.
+     Une fois par saison chacun (`football/principal.js`). */
+  router.post('/principal', requireAuth, safe(async (req, res) => {
+    const teamId = Number(req.body?.teamId);
+    if (!Number.isInteger(teamId)) throw fail('onboarding.error.principal_non_suivi');
+    await devenirPrincipal(q, req.user.id, teamId);
+    res.json(await state(req.user.id));
+  }));
+
   router.post('/slot', requireAuth, safe(async (req, res) =>
     res.json(await buySlot(req.user.id))));
 
   router.post('/welcome', requireAuth, safe(async (req, res) => {
     const teamId = Number(req.body?.teamId);
+    /* Un paquet déjà ouvert ne repose pas le club principal : sans ce garde,
+       rejouer l'appel avec un autre club userait le changement de la saison. */
+    const [w] = await q(`SELECT onboarded_at FROM user_wallet WHERE user_id = ?`, [req.user.id]);
+    if (w?.onboarded_at) throw fail('onboarding.error.already_done');
     if (Number.isInteger(teamId)) await follow(req.user.id, teamId, { main: true });
     res.json(await openWelcome(req.user.id, teamId));
   }));

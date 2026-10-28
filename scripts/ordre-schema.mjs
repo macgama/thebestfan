@@ -117,4 +117,9 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
   'mini-jeux',
   /* Jouer entre amis (28 octobre 2026) : gestes, cadeaux, échanges, prêts.
      Quatre tables neuves, sans clé étrangère. Rien n'en dépend. */
-  'amis-ensemble'];
+  'amis-ensemble',
+  /* Le club principal qui se change une fois par saison, et la sélection
+     principale (28 octobre 2026) : une colonne sur `user_follows`
+     (football.sql), deux sur `user_wallet` (souvenirs.sql). Rien n'en
+     dépend : le dernier rang. */
+  'principal'];

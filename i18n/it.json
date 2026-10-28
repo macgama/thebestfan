@@ -7157,5 +7157,17 @@
  "Boutons nacrés": "Bottoni di madreperla",
  "Ils brillent au rythme du refrain. Ils sautent quand on tape.": "Brillano a ritmo di ritornello. Saltano quando si batte.",
  "Gilet nacré bleu nuit": "Gilet blu notte di madreperla",
- "Cousu de mille boutons, il arrête tout. Il ne laisse pas danser.": "Cucito con mille bottoni, ferma tutto. Non lascia ballare."
+ "Cousu de mille boutons, il arrête tout. Il ne laisse pas danser.": "Cucito con mille bottoni, ferma tutto. Non lascia ballare.",
+ "MA SÉLECTION": "LA MIA NAZIONALE",
+ "PRINCIPAL ?": "PRINCIPALE?",
+ "SÉLECTION": "NAZIONALE",
+ "{0}, TA SÉLECTION ?": "{0}, LA TUA NAZIONALE?",
+ "{0}, TON CLUB PRINCIPAL ?": "{0}, IL TUO CLUB PRINCIPALE?",
+ "Tu ne pourras plus changer de sélection principale avant la prochaine saison.": "Non potrai più cambiare nazionale prima della prossima stagione.",
+ "Tu ne pourras plus changer de club principal avant la prochaine saison.": "Non potrai più cambiare club principale prima della prossima stagione.",
+ "OUI": "SÌ",
+ "PAS ENCORE": "NON ANCORA",
+ "Sélection principale choisie": "Nazionale scelta",
+ "Club principal changé": "Club principale cambiato",
+ "Déjà changé cette saison : à la prochaine": "Già cambiato in questa stagione: alla prossima"
 }
