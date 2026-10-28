@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Le bas des pages sous les boutons du téléphone** (branche
+`claude/project-thread-uisaey`, 28 octobre 2026, demandé par Gaël : sur la
+fiche d'un Fanzzy, depuis l'icône du S24+, le bouton du bas restait sous les
+trois boutons d'Android). Construction seule, **sans schéma**.
+
+- Le repli de l'accueil (52 px gardés en bas quand Chrome ne dit pas la
+  hauteur des boutons) est maintenant sur toutes les pages : fiche, Mon
+  Fanzzy, Virage, duel, deck, boutique, fenêtres qui s'ouvrent par-dessus.
+- Après la mise en ligne : rouvrir le jeu depuis l'icône ; ÉVOLUER et EMMENER
+  EN DUEL doivent se voir au-dessus des boutons du téléphone.
+
+---
+
 **Les pièces de club des Terraces** (branche `claude/project-thread-rftsbq`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
