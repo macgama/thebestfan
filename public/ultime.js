@@ -180,6 +180,9 @@
      scène dessinée avec sa carte. */
   /* IMAGES: début */
   const IMAGES = {
+    'AN1-e1': 'AN1-e1.1559f314.webp',
+    'AN1-e2': 'AN1-e2.616eb71e.webp',
+    'AN1-e3': 'AN1-e3.9a4e11c0.webp',
     'RP1-e1': 'RP1-e1.f2b92265.webp',
     'RP1-e2': 'RP1-e2.3a3930a4.webp',
     'RP1-e3': 'RP1-e3.802e1807.webp',
