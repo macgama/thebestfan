@@ -32,7 +32,7 @@ await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, contenus, abonnem
 /* `quotidien.sql` en dernier, comme dans `ORDRE` : il ajoute à `saisons` les
    colonnes de la saison datée (`fin_le`, `ouvre_le`, `carnet`). */
 for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql',
-                 'teletext.sql','admin.sql','saisons.sql','contenus.sql','abonnement.sql',
+                 'teletext.sql','admin.sql','kop.sql','amis.sql','saisons.sql','contenus.sql','abonnement.sql',
                  'quotidien.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
@@ -300,6 +300,98 @@ check('toutes les séries sont ouvertes au départ',
    Ce qui se vérifie ici est ce qui se vérifiait avant — qui a le droit
    d'ouvrir, ce qu'on refuse d'ouvrir, et que le catalogue ne perde rien — plus
    ce que la saison ajoute : le brouillon, le lancement, et le retour. */
+
+/* ============================================ la collection d'un joueur
+
+   Demande de Gaël du 28 octobre 2026 : voir ce qu'un joueur possède et lui
+   offrir un Fanzzy, un skin, une carte Ultimate ou une pièce, depuis JOUEURS.
+   On offre, on ne retire jamais. */
+{
+  const perso = publies().find((f) => f.stage === 1);
+  const tenue = (await call('/api/admin/tenues')).json.tenues.find((t) => t.id !== 'base');
+  const { STUFF } = await import('../src/shared/fanzzy/inventaire.js');
+
+  r = await call(`/api/admin/joueur/${B}/collection`);
+  check('la collection d’un joueur se lit, avec de quoi lui offrir',
+    r.status === 200 && r.json.joueur?.pseudo === 'Joueur' && Array.isArray(r.json.fanzzy)
+    && r.json.choix?.fanzzy?.length > 0 && Array.isArray(r.json.choix?.skins)
+    || (console.log('        rendu :', JSON.stringify(r.json).slice(0, 160)), false));
+  const avant = r.json.fanzzy.length;
+
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'skin', fanzzy: perso.id,
+    skin: tenue?.id } });
+  check('un skin sur un Fanzzy qu’il n’a pas est refusé',
+    r.json.error === 'admin.error.fanzzy_pas_possede');
+
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'fanzzy', fanzzy: perso.id } });
+  check('un Fanzzy s’offre', r.status === 200
+    && r.json.fanzzy.length === avant + 1 && r.json.fanzzy.some((f) => f.id === perso.id));
+  {
+    const [[b]] = await pool.query(`SELECT equipped FROM user_skins
+      WHERE user_id = ? AND fanzzy_id = ? AND skin_id = 'base' AND stage = 1`, [B, perso.id]);
+    check('avec sa tenue de base, comme au booster', Number(b?.equipped) === 1);
+  }
+
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'skin', fanzzy: perso.id,
+    skin: tenue?.id, age: 1 } });
+  check('un skin s’offre sur un âge atteint',
+    r.status === 200 && r.json.skins.some((x) => x.id === tenue?.id && x.fanzzy === perso.id));
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'skin', fanzzy: perso.id,
+    skin: tenue?.id, age: 1 } });
+  check('deux fois le même skin : refusé, rien ne double', r.json.error === 'admin.error.deja_possede');
+
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'ultime', fanzzy: perso.id, age: 3 } });
+  check('une carte Ultimate sur un âge pas atteint est refusée',
+    r.json.error === 'admin.error.age_pas_atteint');
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'ultime', fanzzy: perso.id, age: 1 } });
+  check('une carte Ultimate s’offre',
+    r.status === 200 && r.json.ultimes.some((x) => x.fanzzy === perso.id && x.age === 1));
+
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'stuff', stuff: STUFF[0].id } });
+  check('une pièce d’équipement s’offre',
+    r.status === 200 && r.json.stuff.some((x) => x.id === STUFF[0].id));
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'or' } });
+  check('une sorte inconnue est refusée', r.json.error === 'admin.error.sorte_inconnue');
+
+  r = await call('/api/admin/journal');
+  check('chaque cadeau est journalisé',
+    r.json.journal.filter((l) => l.action === 'joueur.offert').length === 4);
+
+  moi = B;
+  r = await call(`/api/admin/joueur/${B}/offrir`, { body: { sorte: 'fanzzy', fanzzy: perso.id } });
+  check('un joueur ne s’offre rien', r.status === 403);
+  moi = A;
+}
+
+/* ================================================================ les KOP */
+{
+  const K = 'kkkk0000-0000-0000-0000-000000000001';
+  await pool.query(`INSERT INTO kops (id, team_id, nom, createur, pot) VALUES (?, 42, 'Les Ultras', ?, 30)`,
+    [K, B]);
+  await pool.query(`INSERT INTO kop_membres (kop_id, user_id, team_id) VALUES (?, ?, 42)`, [K, B]);
+
+  r = await call('/api/admin/kops?q=Ultras');
+  check('les KOP se cherchent, avec leurs membres et leur pot',
+    r.json.kops?.length === 1 && r.json.kops[0].membres === 1 && r.json.kops[0].pot === 30
+    && r.json.kops[0].createur === 'Joueur' || (console.log('        rendu :', JSON.stringify(r.json)), false));
+
+  r = await call(`/api/admin/joueur/${B}/collection`);
+  check('et la collection du joueur dit son KOP', r.json.kops?.[0]?.nom === 'Les Ultras');
+
+  r = await call(`/api/admin/kop/${K}`, { method: 'PATCH', body: { nom: '<b>' } });
+  check('un nom de KOP invalide est refusé', r.json.error === 'admin.error.kop_nom');
+  r = await call(`/api/admin/kop/${K}`, { method: 'PATCH', body: { nom: '  Le Virage  Nord ' } });
+  check('un KOP se renomme', r.json.kops?.some((k) => k.nom === 'Le Virage Nord'));
+
+  r = await call(`/api/admin/kop/${K}`, { method: 'DELETE' });
+  const [[m]] = await pool.query(`SELECT COUNT(*) AS n FROM kop_membres WHERE kop_id = ?`, [K]);
+  check('un KOP se supprime, ses membres avec lui', r.status === 200 && !r.json.kops.length
+    && Number(m.n) === 0);
+  const [[f]] = await pool.query(`SELECT COUNT(*) AS n FROM user_fanzzy WHERE user_id = ?`, [B]);
+  check('sans rien retirer à la collection de ses membres', Number(f.n) > 0);
+  r = await call(`/api/admin/kop/${K}`, { method: 'DELETE' });
+  check('un KOP inconnu répond 404', r.status === 404);
+}
 
 // La série de la carte d'essai : c'est elle qu'on va ouvrir.
 const uneSerie = parIdentifiant('ZZ9').set;
