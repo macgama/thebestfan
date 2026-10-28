@@ -25,6 +25,14 @@ const proche = (a, b) => Math.abs(a - b) < 1e-9;
 
 console.log('\nDeux pièces par club, dans chaque série de clubs');
 for (const [serie, clubs] of Object.entries(SERIES_DE_CLUBS)) {
+  /* Une série dont les clubs n'ont pas encore leur identifiant (SU, au
+     28 octobre 2026) est dite en attente, sans rougir : ses pièces ne
+     peuvent viser personne. Dès qu'un identifiant est écrit, la règle
+     s'applique à toute la série. */
+  if (clubs.every((c) => c == null)) {
+    console.log(`  ..   ${serie} : ${clubs.length} clubs sans identifiant, ses ${clubs.length * 2} pièces attendent`);
+    continue;
+  }
   const manquent = clubs.filter((c) => {
     const p = STUFF.filter((s) => Number(s.club) === Number(c));
     return p.length < 2 || !p.some((s) => s.rar === 'commune') || !p.some((s) => s.rar === 'rare');
@@ -33,7 +41,7 @@ for (const [serie, clubs] of Object.entries(SERIES_DE_CLUBS)) {
     + (manquent.length ? ` — manquent : ${manquent.join(', ')}` : ''), manquent.length === 0);
 }
 const deClub = STUFF.filter((s) => s.club != null);
-const connus = new Set(Object.values(SERIES_DE_CLUBS).flat().map(Number));
+const connus = new Set(Object.values(SERIES_DE_CLUBS).flat().filter((c) => c != null).map(Number));
 check('chaque pièce de club vise un club d’une série', deClub.every((s) => connus.has(Number(s.club))));
 check('aucune pièce de club n’est légendaire ni épique',
   deClub.every((s) => s.rar === 'commune' || s.rar === 'rare'));

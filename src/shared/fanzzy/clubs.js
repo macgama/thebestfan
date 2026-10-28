@@ -58,6 +58,27 @@ const TERRACES = [
   47,    // Tottenham Hotspur
 ];
 
+/* Les douze clubs suisses de 2026-2027 (DIE KURVE, `dex-kurve.js`), dans
+   l'ordre des fiches : SU1 à SU12, SU13 à SU24, SU25 à SU36. **Pas encore
+   d'identifiant** : ceux de LES TERRACES ont été écrits de mémoire et restent
+   à vérifier, on ne recommence pas. Un `null` laisse la lignée neutre ; on
+   remplit chaque case avec l'identifiant lu dans `teams` en production (ou
+   dans le classement de la compétition 207). */
+const KURVE = [
+  null,  // Bâle
+  null,  // Grasshopper
+  null,  // Lausanne-Sport
+  null,  // Lucerne
+  null,  // Lugano
+  null,  // Saint-Gall
+  null,  // Servette
+  null,  // Sion
+  null,  // Thoune
+  null,  // Vaduz
+  null,  // Young Boys
+  null,  // Zurich
+];
+
 /**
  * **Le cri du club** (choix de Gaël du 25 octobre 2026 : « les cris
  * d'abord, sons plus tard »). Un Fanzzy lié qui joue un match de son club
@@ -135,11 +156,19 @@ export function avecCriDuClub(perso, teamId) {
  * 2026) : `stuff-clubs:smoke` échoue sinon, et rien n'entre dans main avec une
  * suite rouge. C'est la façon de ne pas les oublier.
  */
-export const SERIES_DE_CLUBS = Object.freeze({ AN: Object.freeze([...TERRACES]) });
+export const SERIES_DE_CLUBS = Object.freeze({
+  AN: Object.freeze([...TERRACES]),
+  /* Identifiants pas encore lus (`KURVE`) : la suite dit la série en attente
+     tant qu'il en manque, et l'exige dès qu'ils sont remplis. */
+  SU: Object.freeze([...KURVE]),
+});
 
 /** Lignée → club (identifiant API-Football). */
-export const CLUB_DE = new Map(
-  [0, 20, 40].flatMap((d) => TERRACES.map((club, i) => ['AN'.concat(d + i + 1), club])));
+export const CLUB_DE = new Map([
+  ...[0, 20, 40].flatMap((d) => TERRACES.map((club, i) => ['AN'.concat(d + i + 1), club])),
+  ...[0, 12, 24].flatMap((d) => KURVE.map((club, i) => ['SU'.concat(d + i + 1), club]))
+    .filter(([, club]) => club != null),
+]);
 
 /** La racine d'une lignée : « AN12C » → « AN12 », « AN3B » → « AN3 ». */
 const racine = (id) => String(id ?? '').replace(/^([A-Z]{2}\d+)[A-Z]?$/, '$1');
@@ -149,14 +178,58 @@ export function clubDe(fanzzyId) {
   return CLUB_DE.get(racine(fanzzyId)) ?? null;
 }
 
+/*
+ * **Les légendaires de la série** (demande de Gaël du 28 octobre 2026) : trois
+ * liées aux équipes nationales du pays, trois au championnat sans club. Fiches :
+ * `fanzzy-prompts/AN-legendaires.md`.
+ *
+ * Les sélections ne sont pas une équipe mais plusieurs (masculine, féminine,
+ * espoirs…) : l'équipe A par son identifiant API-Football (10), les autres par
+ * leur nom tel qu'API-Football l'écrit (« England W », « England U21 »…), que
+ * l'appelant connaît déjà par le match.
+ *
+ * Le championnat (choix de Gaël du 28 octobre 2026, « Liées au championnat ») :
+ * le lien joue dans tout match de cette compétition du club que le joueur
+ * soutient, quel que soit ce club.
+ */
+const SELECTION = { equipeA: 10, nom: /^England(?: W| U\d{2})?$/i };
+const LEGENDES_SELECTION = new Set(['AN61', 'AN62', 'AN63']);
+const LEGENDES_CHAMPIONNAT = new Map([['AN64', 39], ['AN65', 39], ['AN66', 39]]);
+
+/** L'une des équipes nationales d'Angleterre ? */
+export function estSelection(teamId, nom = null) {
+  return Number(teamId) === SELECTION.equipeA || SELECTION.nom.test(String(nom ?? '').trim());
+}
+
+/**
+ * Ce à quoi un Fanzzy est lié par sa carte : `{ club }`, `{ selection }` (l'équipe
+ * A, pour la fiche), `{ ligue }`, ou `null` s'il est neutre — et alors seulement
+ * il peut se lier contre des écharpes.
+ */
+export function lienEcrit(fanzzyId) {
+  const r = racine(fanzzyId);
+  if (CLUB_DE.has(r)) return { club: CLUB_DE.get(r) };
+  if (LEGENDES_SELECTION.has(r)) return { selection: SELECTION.equipeA };
+  if (LEGENDES_CHAMPIONNAT.has(r)) return { ligue: LEGENDES_CHAMPIONNAT.get(r) };
+  return null;
+}
+
 /**
  * Ce Fanzzy est-il lié au club `teamId` ? Faux pour un neutre ou un match sans club.
  *
  * `clubAchete` : le club auquel le joueur a lié lui-même un Fanzzy neutre,
  * contre des écharpes (`user_fanzzy.club_id`). Le club d'une série de
  * championnat passe devant : il ne s'achète pas, il est écrit sur la carte.
+ *
+ * `match` : `{ leagueId, nomDuClub }` du match joué, que lisent les
+ * légendaires liées aux sélections ou au championnat.
  */
-export function lieA(fanzzyId, teamId, clubAchete = null) {
+export function lieA(fanzzyId, teamId, clubAchete = null, match = {}) {
+  if (teamId == null) return false;
+  const ecrit = lienEcrit(fanzzyId);
+  // `match` : la compétition et le nom du club soutenu, pour les légendaires.
+  if (ecrit?.selection != null) return estSelection(teamId, match.nomDuClub);
+  if (ecrit?.ligue != null) return Number(match.leagueId) === ecrit.ligue;
   const c = clubDe(fanzzyId) ?? (clubAchete == null ? null : Number(clubAchete));
   return c != null && teamId != null && c === Number(teamId);
 }
@@ -208,9 +281,9 @@ export function gainPleinClub() {
  * Rend le nombre de pièces qui comptent (0 à 2, la borne de `combine`).
  * `principal` : `user_follows.is_main`, nul si le joueur n'en a pas.
  */
-export function pleinClub({ fanzzyId, clubAchete = null, stuff = [], teamId, principal }) {
+export function pleinClub({ fanzzyId, clubAchete = null, stuff = [], teamId, principal, match = {} }) {
   if (teamId == null || principal == null || Number(teamId) !== Number(principal)) return 0;
-  if (!lieA(fanzzyId, teamId, clubAchete)) return 0;
+  if (!lieA(fanzzyId, teamId, clubAchete, match)) return 0;
   return (Array.isArray(stuff) ? stuff : []).slice(0, 2)
     .filter((id) => Number(STUFF_BY_ID.get(id)?.club) === Number(teamId)).length;
 }
@@ -226,18 +299,19 @@ export function facteurPleinClub(n, gain = gainPleinClub()) {
  * grandir un Fanzzy lié sans qu'il cesse de l'être — et `lien`, le bonus seul,
  * pour que l'écran dise d'où il vient.
  *
- * `principal` : le club principal du joueur. Si c'est le club du match, les
+ * `match.principal` : le club principal du joueur. Si c'est le club du match, les
  * pièces de club du Fanzzy lié font PLEIN CLUB : `pleinClub` (leur nombre) et
  * `lien.scarvesBonus` grossi d'autant, que `recompenser` verse.
  *
  * `teamId` nul (un neutre, un entraînement sans club) rend le deck tel quel.
  * Rend une copie : le loadout lu en base sert aussi à d'autres matchs.
  */
-export function lierLeDeck(loadout, teamId, taux, { principal = null } = {}) {
+export function lierLeDeck(loadout, teamId, taux, match = {}) {
+  const principal = match.principal ?? null;
   if (!loadout?.fanzzy || teamId == null) return loadout;
   const lier = (f) => {
     const plein = pleinClub({ fanzzyId: f.id, clubAchete: f.club, stuff: f.stuff,
-      teamId, principal });
+      teamId, principal, match });
     const lien = modsDuLien(taux, 'duel');
     if (plein) lien.scarvesBonus *= facteurPleinClub(plein);
     return (age) => ({
@@ -254,7 +328,7 @@ export function lierLeDeck(loadout, teamId, taux, { principal = null } = {}) {
   return {
     ...loadout,
     fanzzy: loadout.fanzzy.map((f) => {
-      if (!lieA(f.id, teamId, f.club)) return f;
+      if (!lieA(f.id, teamId, f.club, match)) return f;
       const habiller = lier(f);
       return avecCriDuClub({ ...habiller(f), ages: (f.ages ?? []).map(habiller) }, teamId);
     }),

@@ -399,6 +399,14 @@ const mods = (x) => jsonCol(x?.mods, {});
  * ouvrir le source pour comprendre ce qu'on a mal rempli.
  */
 const MSG_FANZZY = {
+  'admin.error.fanzzy_pas_possede': 'Ce joueur n’a pas ce Fanzzy : offre-lui d’abord le Fanzzy.',
+  'admin.error.age_pas_atteint': 'Ce Fanzzy n’a pas encore atteint cet âge chez ce joueur.',
+  'admin.error.deja_possede': 'Il l’a déjà : rien à offrir.',
+  'admin.error.skin_inconnu': 'Ce skin n’existe pas.',
+  'admin.error.sorte_inconnue': 'Choisis quoi offrir : un Fanzzy, un skin, une carte Ultimate ou une pièce.',
+  'admin.error.kop_inconnu': 'Ce KOP n’existe plus.',
+  'admin.error.kop_nom': 'Un nom de KOP fait de 3 à 40 caractères, sans < ni >.',
+  'admin.error.unknown_user': 'Ce joueur n’existe pas.',
   'admin.error.serie_inconnue': 'Cette série n’existe pas.',
   'admin.error.serie_sans_carte': 'Cette série n’a aucune carte de stade 1 publiée : '
     + 'elle ne pourrait pas distribuer de booster.',
@@ -455,10 +463,10 @@ const MSG_FANZZY = {
  */
 const FAMILLES_ONGLETS = [
   ['LE CONTENU', [['saisons','SAISONS'], ['fanzzy','FANZZY'],
-    ['contenus','CONTENUS'], ['tenues','TENUES']]],
+    ['contenus','CONTENUS'], ['tenues','SKINS']]],
   ['LE JEU', [['reglages','RÉGLAGES']]],
   ['L’EXPLOITATION', [['apercu','APERÇU'], ['joueurs','JOUEURS'],
-    ['competitions','COMPÉTITIONS'], ['journal','JOURNAL']]],
+    ['kops','KOP'], ['competitions','COMPÉTITIONS'], ['journal','JOURNAL']]],
 ];
 const ONGLETS = FAMILLES_ONGLETS.flatMap(([, liste]) => liste);
 let onglet = 'apercu';
@@ -483,6 +491,91 @@ async function rendre() {
     $('main').innerHTML = `<div class="vide">${e.status === 403
       ? 'Accès réservé aux administrateurs.' : 'Erreur : ' + esc(e.code ?? e.message)}</div>`;
   }
+}
+
+/* ============================================== la collection d'un joueur
+
+   Demande de Gaël du 28 octobre 2026 : voir ce qu'un joueur possède et lui
+   offrir un Fanzzy, un skin, une carte Ultimate ou une pièce d'équipement,
+   sans quitter l'onglet JOUEURS. Le panneau s'ouvre sous sa ligne. On offre,
+   on ne retire jamais : rien ici n'efface ce qu'un joueur a gagné. */
+let choixCollection = null;
+
+async function basculerCollection(tr, id) {
+  const deja = tr.nextElementSibling;
+  if (deja?.dataset.col === id) return deja.remove();
+  document.querySelectorAll('tr[data-col]').forEach((x) => x.remove());
+  tr.insertAdjacentHTML('afterend',
+    `<tr data-col="${esc(id)}"><td colspan="6"><div class="vide">Chargement…</div></td></tr>`);
+  try {
+    const d = await api('/joueur/' + encodeURIComponent(id) + '/collection');
+    choixCollection = d.choix ?? choixCollection;
+    peindreCollection(tr.nextElementSibling, d);
+  } catch (err) { tr.nextElementSibling?.remove(); recuRate(err); }
+}
+
+function peindreCollection(ligne, d) {
+  const SORTES = [['fanzzy', 'un Fanzzy'], ['skin', 'un skin'], ['ultime', 'une carte Ultimate'],
+    ['stuff', 'une pièce d’équipement']];
+  const parSerie = new Map();
+  for (const f of d.fanzzy) parSerie.set(f.set ?? '?', [...(parSerie.get(f.set ?? '?') ?? []), f]);
+  const puces = (liste) => liste.length
+    ? liste.map((t) => `<span class="pill" style="display:inline-block;margin:2px">${esc(t)}</span>`).join('')
+    : '<span style="opacity:.45">aucun</span>';
+  const c = choixCollection ?? { fanzzy: [], skins: [], stuff: [] };
+  const opt = (liste, f = (x) => `${x.nom} (${x.id})`) =>
+    liste.map((x) => `<option value="${esc(x.id)}">${esc(f(x))}</option>`).join('');
+  ligne.dataset.pseudo = d.joueur.pseudo;
+  ligne.firstElementChild.innerHTML = `
+    <div class="series" style="margin:0">
+      <p class="series-t">COLLECTION DE ${esc(d.joueur.pseudo).toUpperCase()}
+        <span>${d.fanzzy.length} Fanzzy · ${d.skins.length} skins · ${d.ultimes.length} cartes Ultimate
+          · ${d.stuff.length} pièces · ${d.stades.length} stades · ${d.amis} ami${d.amis > 1 ? 's' : ''}
+          · KOP : ${d.kops.length ? esc(d.kops.map((k) => k.nom).join(', ')) : 'aucun'}</span></p>
+      ${[...parSerie.entries()].map(([serie, liste]) => `<p class="series-n"><b>${esc(serie)}</b>
+        ${puces(liste.map((f) => `${f.nom} · âge ${f.age}/${f.ages}${f.copies > 1 ? ` · ×${f.copies}` : ''}`))}</p>`).join('')
+        || '<p class="series-n">Aucun Fanzzy.</p>'}
+      <p class="series-n"><b>Skins</b> ${puces(d.skins.map((x) => `${x.nom} · ${x.nomFanzzy} âge ${x.age}`))}</p>
+      <p class="series-n"><b>Cartes Ultimate</b> ${puces(d.ultimes.map((x) => `${x.nomFanzzy} âge ${x.age}`))}</p>
+      <p class="series-n"><b>Équipement</b> ${puces(d.stuff.map((x) => x.nom + (x.copies > 1 ? ` ×${x.copies}` : '')))}</p>
+      <p class="series-n"><b>Stades</b> ${puces(d.stades.map((x) => x.nom))}</p>
+      <div class="bar" style="flex-wrap:wrap;gap:6px">
+        <b style="font-size:12px">OFFRIR</b>
+        <select data-champ-offre="sorte">${SORTES.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select>
+        <select data-champ-offre="fanzzy" data-pour="fanzzy">${opt(c.fanzzy, (x) => `${x.nom} (${x.set})`)}</select>
+        <select data-champ-offre="possede" data-pour="skin ultime">${opt(d.fanzzy,
+          (x) => `${x.nom} (âge ${x.age})`)}</select>
+        <select data-champ-offre="skin" data-pour="skin">${opt(c.skins)}</select>
+        <select data-champ-offre="age" data-pour="skin ultime">
+          <option value="1">âge 1</option><option value="2">âge 2</option><option value="3">âge 3</option></select>
+        <select data-champ-offre="stuff" data-pour="stuff">${opt(c.stuff)}</select>
+        <button class="mini vert" data-offrir>Offrir</button>
+      </div>
+    </div>`;
+  const montrer = () => {
+    const sorte = ligne.querySelector('[data-champ-offre="sorte"]').value;
+    ligne.querySelectorAll('[data-pour]').forEach((el) => {
+      el.hidden = !el.dataset.pour.split(' ').includes(sorte);
+    });
+  };
+  ligne.querySelector('[data-champ-offre="sorte"]').onchange = montrer;
+  montrer();
+}
+
+async function offrirDepuis(ligne) {
+  if (!ligne) return;
+  const v = (k) => ligne.querySelector(`[data-champ-offre="${k}"]`)?.value;
+  const sorte = v('sorte');
+  const corps = { sorte,
+    fanzzy: sorte === 'fanzzy' ? v('fanzzy') : v('possede'),
+    skin: v('skin'), age: Number(v('age')), stuff: v('stuff') };
+  try {
+    const d = await api('/joueur/' + encodeURIComponent(ligne.dataset.col) + '/offrir', corps);
+    recu(`offert à ${d.joueur.pseudo}.`);
+    peindreCollection(ligne, d);
+    ligne.querySelector('[data-champ-offre="sorte"]').value = sorte;
+    ligne.querySelector('[data-champ-offre="sorte"]').onchange();
+  } catch (err) { recuRate(err); }
 }
 
 const VUES = {
@@ -736,7 +829,8 @@ const VUES = {
           <span>${d.ouvertes
             ? esc(noms(d.ouvertes, 'series'))
             : 'toutes — aucune saison lancée n’en nomme'}</span></p>
-        <p class="series-n">Une saison ouvre ses séries et publie <b>tout le reste</b> —
+        <p class="series-n">Une saison <b>ajoute</b> au jeu : les séries déjà
+          ouvertes le restent, et personne ne perd ce qu'il possède. Elle ouvre ses séries et publie <b>tout le reste</b> —
           tenues, équipement, cartes d'action, stades — pour tout le monde, à
           l'instant du lancement. Remettre en brouillon referme les séries et
           <b>elles seules</b> : ce qui a été publié reste publié, parce que
@@ -878,7 +972,9 @@ const VUES = {
         } : {
           titre: `LANCER LA SAISON ${s.numero} ?`,
           texte: `« ${s.nom} » s’ouvre pour tous les joueurs, maintenant.\n\n`
-            + (ouvre || 'Elle n’ouvre aucun contenu — elle ne fera qu’annoncer.') + finDite,
+            + (ouvre || 'Elle n’ouvre aucun contenu — elle ne fera qu’annoncer.')
+            + '\n\nRien ne se ferme : les séries déjà ouvertes le restent, et chacun garde ce qu’il possède.'
+            + finDite,
           oui: 'LANCER', ton: 'vert',
         });
         if (!ok) return;
@@ -1428,6 +1524,7 @@ const VUES = {
                u.abo_fin ? 'jusqu’au ' + jour(u.abo_fin) : 'sans terme'}</span>`
           : '<span style="opacity:.4">non</span>'}</td>
         <td class="act" data-id="${u.public_id}">
+          <button class="mini vert" data-a="collection">Collection</button>
           <button class="mini" data-a="scarves">+100 éch.</button>
           <button class="mini" data-a="packs">+5 pk</button>
           ${u.email_verified_at ? '' : '<button class="mini vert" data-a="verifier">Vérifier</button>'}
@@ -1449,8 +1546,12 @@ const VUES = {
     $('go').onclick = chercher;
     $('q').onkeydown = (e) => { if (e.key === 'Enter') chercher(); };
     $('main').onclick = async (e) => {
+      const offre = e.target.closest('[data-offrir]');
+      if (offre) return offrirDepuis(offre.closest('[data-col]'));
       const b = e.target.closest('[data-a]'); if (!b) return;
       const id = b.closest('[data-id]').dataset.id;
+
+      if (b.dataset.a === 'collection') return basculerCollection(b.closest('tr'), id);
 
       /* L'abonnement a ses propres routes : il ne se pose pas avec un `PATCH`
          sur le joueur, parce qu'il ne vit pas dans `users` mais dans sa propre
@@ -1488,6 +1589,50 @@ const VUES = {
           ? 'on ne change pas son propre compte depuis ici.'
           : (MSG_FANZZY[err.code] ?? err.raison ?? err.code), true);
       }
+    };
+  },
+
+  async kops(terme = '') {
+    const d = await api('/kops?q=' + encodeURIComponent(terme));
+    $('main').innerHTML = `
+      <div class="series"><p class="series-n">Les groupes de supporters des joueurs.
+        <b>Renommer</b> corrige un nom choquant ; <b>Supprimer</b> dissout le groupe :
+        ses membres gardent toute leur collection, seuls le groupe et son pot disparaissent.</p></div>
+      <div class="bar"><input id="q" placeholder="nom du KOP ou du club" value="${esc(terme)}">
+        <button class="mini" id="go">Chercher</button></div>
+      ${d.kops.length ? `<div class="tbl"><table><thead><tr><th>KOP</th><th>CLUB</th><th>MEMBRES</th>
+        <th>POT</th><th>ACTIONS</th></tr></thead><tbody>${d.kops.map((k) => `
+        <tr data-kop="${esc(k.id)}" data-nom="${esc(k.nom)}"><td><b>${esc(k.nom)}</b><br>
+          <span style="opacity:.45;font-size:11px">créé par ${esc(k.createur ?? '?')} le ${jour(k.cree)}</span></td>
+          <td>${esc(k.club ?? k.team_id)}</td><td>${k.membres}</td><td>${k.pot} éch.</td>
+          <td class="act"><button class="mini" data-k="renommer">Renommer</button>
+            <button class="mini rouge" data-k="supprimer">Supprimer</button></td></tr>`).join('')}
+        </tbody></table></div>`
+        : '<div class="vide">Aucun KOP' + (terme ? ' pour cette recherche.' : ' pour l’instant.') + '</div>'}`;
+    const chercher = () => sansPerdreLaMain(() => VUES.kops($('q').value.trim()));
+    $('go').onclick = chercher;
+    $('q').onkeydown = (e) => { if (e.key === 'Enter') chercher(); };
+    $('main').onclick = async (e) => {
+      const b = e.target.closest('[data-k]'); if (!b) return;
+      const tr = b.closest('[data-kop]');
+      try {
+        if (b.dataset.k === 'renommer') {
+          const nom = window.prompt('Nouveau nom du KOP', tr.dataset.nom);
+          if (!nom || nom.trim() === tr.dataset.nom) return;
+          await api('/kop/' + encodeURIComponent(tr.dataset.kop), { nom }, 'PATCH');
+          recu('KOP renommé.');
+        } else {
+          const ok = await window.TBF_DIALOGUE?.confirmer({
+            titre: 'SUPPRIMER CE KOP ?',
+            texte: `« ${tr.dataset.nom} » sera dissous pour tous ses membres, avec son pot. `
+              + 'Personne ne perd rien de sa collection.',
+            oui: 'SUPPRIMER', ton: 'flare' });
+          if (!ok) return;
+          await api('/kop/' + encodeURIComponent(tr.dataset.kop), undefined, 'DELETE');
+          recu('KOP supprimé.');
+        }
+        VUES.kops($('q')?.value ?? '');
+      } catch (err) { recuRate(err); }
     };
   },
 

@@ -330,6 +330,23 @@
     return `${s}<rect x="-4" y="88" width="108" height="12" fill="#000" opacity=".6"/>`;
   };
 
+  /* DIE KURVE a le sien aussi : la montagne en face, ses neiges, et le lac
+     au pied du virage. C'est ce que voient presque toutes les tribunes du
+     pays, et aucune autre série ne l'a. */
+  LIEUX.SU = (p, r) => {
+    let s = `<polygon points="-4,58 14,30 26,42 42,18 58,40 70,26 88,44 104,32 104,62 -4,62"
+      fill="#000" opacity=".42"/>`;
+    for (const [x, y] of [[14, 30], [42, 18], [70, 26]]) {
+      s += `<polygon points="${x - 5},${y + 7} ${x},${y} ${x + 5},${y + 7}" fill="${p.brume}" opacity=".55"/>`;
+    }
+    for (let i = 0; i < 5; i++) {
+      const y = 64 + i * 4 + r() * 2;
+      s += `<rect x="${(r() * 30 - 4).toFixed(1)}" y="${y.toFixed(1)}" width="${(40 + r() * 50).toFixed(1)}"
+        height=".7" fill="${p.brume}" opacity=".3"/>`;
+    }
+    return `${s}<rect x="-4" y="80" width="108" height="20" fill="#000" opacity=".6"/>`;
+  };
+
   /* Une série inconnue — il en arrive — prend les gradins. C'est le lieu le plus
      neutre du jeu, et il ne ment sur rien. */
   const lieu = (set) => LIEUX[set] ?? LIEUX.TR;

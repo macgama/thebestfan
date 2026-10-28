@@ -444,7 +444,11 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const principal = club.neutre ? null
       : (await q(`SELECT team_id FROM user_follows WHERE user_id = ? AND is_main = 1 LIMIT 1`,
         [u.userId]).catch(() => []))[0]?.team_id ?? null;
-    const deck = lierLeDeck(loadout, club.neutre ? null : club.teamId, tauxDuLien(), { principal });
+    const deck = lierLeDeck(loadout, club.neutre ? null : club.teamId, tauxDuLien(), {
+      leagueId: support.fixture.leagueId,
+      nomDuClub: club.teamId === exterieur ? support.fixture.away.name : support.fixture.home.name,
+      principal,
+    });
 
     quitterFile(u.userId);
 

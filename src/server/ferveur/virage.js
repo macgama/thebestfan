@@ -735,7 +735,35 @@ export class VirageRoom {
 
   modsDe(m, now = Date.now()) {
     const base = m.modsLieu ?? m.mods ?? {};
-    return m.effets?.length ? modsAvecEffets(base, m.effets, now) : base;
+    const avecEffets = m.effets?.length ? modsAvecEffets(base, m.effets, now) : base;
+    const cote = this.coteACote(m);
+    return cote ? { ...avecEffets, pushMult: (avecEffets.pushMult ?? 1) * cote.mods.pushMult }
+      : avecEffets;
+  }
+
+  /**
+   * **Côte à côte** (Gaël, 28 octobre 2026) : chaque ami mutuel présent dans
+   * la même tribune fait pousser un peu plus fort, jusqu'à `amis.cote_max`
+   * amis. Relu à chaque chant plutôt que posé à l'entrée : un ami qui arrive
+   * ou qui part change le bonus tout de suite, pour les deux.
+   *
+   * `m.amis` est l'ensemble de ses amis mutuels, posé par `ferveur/index.js`
+   * à l'entrée, avec `m.montre` : se montre-t-il à ses amis ? **Un ami caché
+   * ne compte pas** — le bonus dirait sinon qu'il est là, à qui il a choisi
+   * de ne pas le dire —, et la présence éteinte n'en compte aucun. Rend
+   * `null` sans bonus, sinon `{ n, mods: { pushMult } }`.
+   */
+  coteACote(m) {
+    if (!m?.amis?.size || !reglage('amis.actif')) return null;
+    const force = reglage('amis.cote_force') / 100;
+    const max = reglage('amis.cote_max');
+    if (!(force > 0) || !(max > 0)) return null;
+    let n = 0;
+    for (const id of m.amis) {
+      const ami = this.members.get(id);
+      if (ami?.side === m.side && ami.montre && ++n >= max) break;
+    }
+    return n ? { n, mods: { pushMult: 1 + n * force } } : null;
   }
 
   crowd() {
@@ -1998,7 +2026,11 @@ export class VirageRoom {
          *
          * Sans étiquettes : `id`, `kopNom` et les siennes ne sont pas des
          * modificateurs, et n'ont rien à faire dans une liste de bonus. */
-        apports: [...(m.apports ?? []), ...apportsDe({ stade: this.stade() })],
+        apports: [...(m.apports ?? []), ...apportsDe({ stade: this.stade(),
+          amis: this.coteACote(m) })],
+        /* Combien d'amis comptent pour son bonus côte à côte : la page l'écrit
+           à côté de « 2 AMIS ICI ». */
+        cote: this.coteACote(m)?.n ?? 0,
         mods: seulsLesMods(this.modsDe(m)),
         /* Où en est sa légende : `null` sans légendaire. Tant qu'elle dort,
            `apports` la montre quand même — c'est ce qui l'attend. */

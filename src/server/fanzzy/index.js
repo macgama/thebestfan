@@ -45,7 +45,7 @@ import { saisonsLancees, saisonEnCours } from './saisons.js';
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
 import { verser, verserTout } from '../recompenses.js';
-import { clubDe, criDuClub, gainPleinClub } from '../../shared/fanzzy/clubs.js';
+import { criDuClub, gainPleinClub, lienEcrit } from '../../shared/fanzzy/clubs.js';
 
 /* ------------------------------------------------------------ le journal
 
@@ -2353,8 +2353,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   async function lierAuClub(userId, idDemande) {
     const id = racineDe(String(idDemande));
     if (!parIdentifiant(id)) throw fail('fanzzy.error.unknown');
-    // Un Fanzzy de club a déjà le sien : on ne le rachète pas, on n'en change pas.
-    if (clubDe(id) != null) throw fail('fanzzy.error.deja_lie');
+    // Un Fanzzy de club (ou une légendaire des sélections, du championnat) a
+    // déjà le sien : on ne le rachète pas, on n'en change pas.
+    if (lienEcrit(id) != null) throw fail('fanzzy.error.deja_lie');
     const club = await clubPrincipal(userId);
     if (club == null) throw fail('fanzzy.error.sans_club');
     const prix = reglage('fanzzy.lien_prix');
@@ -2426,11 +2427,28 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     /* **Lié à un club ?** (`shared/fanzzy/clubs.js`) La fiche dit s'il est
        lié, et si c'est à un club que ce joueur suit ; depuis le 25 octobre
        2026, elle nomme aussi le club (voir plus bas). */
-    const achete = await clubAchete(userId, id);
-    const sonClub = clubDe(id) ?? achete;
-    const suit = sonClub == null ? false : (await q(
-      `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id = ? LIMIT 1`,
-      [userId, sonClub]).catch(() => [])).length > 0;
+    const ecrit = lienEcrit(id);
+    const achete = ecrit ? null : await clubAchete(userId, id);
+    const sonClub = ecrit?.club ?? ecrit?.selection ?? achete;
+    /* **Les légendaires des sélections et du championnat** (demande de Gaël
+       du 28 octobre 2026) : la fiche nomme l'équipe A du pays, ou la
+       compétition (nom et logo de `leagues`). « Ton club » : il suit une des
+       sélections, ou un club qui joue cette compétition. */
+    const suit = ecrit?.ligue != null
+      ? (await q(
+        `SELECT 1 FROM user_follows uf
+           JOIN team_leagues tl ON tl.team_id = uf.team_id AND tl.league_id = ?
+          WHERE uf.user_id = ? LIMIT 1`, [ecrit.ligue, userId]).catch(() => [])).length > 0
+      : ecrit?.selection != null
+        ? (await q(
+          `SELECT 1 FROM user_follows uf JOIN teams t ON t.id = uf.team_id
+            WHERE uf.user_id = ? AND (t.id = ? OR t.name REGEXP '^England( W| U[0-9]{2})$') LIMIT 1`,
+          [userId, ecrit.selection]).catch(() => [])).length > 0
+        : sonClub == null ? false : (await q(
+          `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id = ? LIMIT 1`,
+          [userId, sonClub]).catch(() => [])).length > 0;
+    const ligue = ecrit?.ligue == null ? null : (await q(
+      `SELECT name, logo FROM leagues WHERE id = ?`, [ecrit.ligue]).catch(() => []))[0] ?? {};
     const taux = { force: reglage('fanzzy.lien_force'), gain: reglage('fanzzy.lien_gain') };
     /* **Le club se montre** (demande de Gaël du 25 octobre 2026, qui lève le
        « sans le nommer » du 21) : son nom et son logo, tels que la liste des
@@ -2451,8 +2469,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          22 octobre 2026) : au club principal, pour toujours. `prix` et
          `clubPrincipal` ne servent qu'à proposer LIER À MON CLUB ; un joueur
          sans club principal lit pourquoi le bouton ne fait rien. */
-      club: sonClub != null
+      club: ligue
+        ? { lie: true, portee: 'championnat', tonClub: suit, achete: false, ...taux,
+          nom: ligue.name ?? null, logo: ligue.logo ?? null, id: null, couleurs: [], cri: null }
+        : sonClub != null
         ? { lie: true, tonClub: suit, achete: achete != null, ...taux,
+          ...(ecrit?.selection != null ? { portee: 'selection' } : {}),
           nom: equipe?.name ?? null, logo: equipe?.logo ?? null,
           id: Number(sonClub), couleurs: [teinte?.color1, teinte?.color2].filter(Boolean),
           // Le cri qu'il pousse dans les matchs de ce club (`criDuClub`).
