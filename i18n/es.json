@@ -6575,5 +6575,10 @@
  "Tape le début de son pseudo, trois lettres au moins. Il n’a pas besoin de suivre tes clubs.": "Escribe el principio de su apodo, tres letras como mínimo. No hace falta que siga tus clubs.",
  "Son pseudo": "Su apodo",
  "Pseudo du joueur à chercher": "Apodo del jugador que buscas",
- "ILS SUIVENT TES CLUBS": "SIGUEN TUS CLUBS"
+ "ILS SUIVENT TES CLUBS": "SIGUEN TUS CLUBS",
+ "MES SAISONS": "MIS TEMPORADAS",
+ "<0>1</0> tampon": "<0>1</0> sello",
+ "<0>{0}</0> tampons": "<0>{0}</0> sellos",
+ "SAISON {0} — {1}": "TEMPORADA {0} — {1}",
+ "<0>{0}</0> de ferveur": "<0>{0}</0> de fervor"
 }

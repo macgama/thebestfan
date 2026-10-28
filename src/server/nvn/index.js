@@ -2291,7 +2291,16 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         }
       }
     }
-    res.json({ file, invitations, duelEnCours: salleDe.get(userId) ?? null });
+    /* **Les files où quelqu'un attend**, pour toutes les pages (28 octobre
+       2026, Gaël : « il faut rafraîchir la page » pour savoir qu'un duel
+       attend). L'accueil ne relisait `/attentes` qu'à son tour de veille,
+       toutes les trois minutes, et une file n'en vit que deux : le joueur
+       arrivé avant elle ne la voyait presque jamais. Le rappel lit cette
+       route toutes les dix secondes sur chaque page ; il prévient la page
+       quand ces files changent (`tbf:attentes`). Mémoire seule, comme le
+       reste de la route : ni requête en base, ni nom de joueur. */
+    const attentes = filesParMatch().filter((a) => a.camps.some((n) => n > 0));
+    res.json({ file, invitations, duelEnCours: salleDe.get(userId) ?? null, attentes });
   });
 
   router.get('/etat', requireAuth, (req, res) => {
