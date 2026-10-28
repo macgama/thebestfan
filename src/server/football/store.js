@@ -10,15 +10,27 @@ export function createFootballStore(pool) {
   return {
     /* ------------------------------------------------------- référentiel */
 
+    /**
+     * Une équipe, **sans effacer ce qu'on sait déjà**.
+     *
+     * Les matchs n'apportent que le nom et le logo de leurs équipes. Écrits
+     * tels quels, ils remettaient à vide le pays et la marque de sélection :
+     * la Suisse, passée par un match, n'était plus une équipe nationale, et la
+     * recherche la rangeait après onze clubs, sous son nom anglais.
+     */
     async upsertTeam(t) {
+      const national = t.national == null ? null : (t.national ? 1 : 0);
       await q(
         `INSERT INTO teams (id, name, code, country, logo, founded, national)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE name=VALUES(name), code=VALUES(code),
-           country=VALUES(country), logo=VALUES(logo), founded=VALUES(founded),
-           national=VALUES(national)`,
+         VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, 0))
+         ON DUPLICATE KEY UPDATE name=VALUES(name),
+           code=COALESCE(VALUES(code), code),
+           country=COALESCE(VALUES(country), country),
+           logo=COALESCE(VALUES(logo), logo),
+           founded=COALESCE(VALUES(founded), founded),
+           national=COALESCE(?, national)`,
         [t.id, t.name, t.code ?? null, t.country ?? null, t.logo ?? null,
-         t.founded ?? null, t.national ? 1 : 0],
+         t.founded ?? null, national, national],
       );
     },
 
@@ -59,15 +71,24 @@ export function createFootballStore(pool) {
     async searchTeamsLocal(term, pays = []) {
       const ou = ['name LIKE ?'];
       const args = [`%${term}%`];
+      /* Une sélection se reconnaît aussi **à son nom** : la marque `national`
+         peut manquer (une équipe d'abord connue par un match), et la Suisse
+         s'appelle « Switzerland », « Switzerland W » ou « Switzerland U21 ». */
+      let estPays = '0';
+      const estPaysArgs = [];
       if (pays.length) {
-        ou.push(`country IN (${pays.map(() => '?').join(',')})`);
-        args.push(...pays);
+        const liste = pays.map(() => '?').join(',');
+        const prefixes = pays.map(() => `name LIKE CONCAT(?, ' %')`).join(' OR ');
+        ou.push(`country IN (${liste})`, `name IN (${liste})`, prefixes);
+        args.push(...pays, ...pays, ...pays);
+        estPays = `name IN (${liste}) OR ${prefixes}`;
+        estPaysArgs.push(...pays, ...pays);
       }
       return q(
         `SELECT id, name, country, logo, national FROM teams
           WHERE ${ou.join(' OR ')}
-          ORDER BY national DESC, CHAR_LENGTH(name) LIMIT 12`,
-        args,
+          ORDER BY (national = 1 OR ${estPays}) DESC, CHAR_LENGTH(name) LIMIT 12`,
+        [...args, ...estPaysArgs],
       );
     },
 
