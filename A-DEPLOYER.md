@@ -9,6 +9,9 @@ Construction seule, **sans schéma**.
   secondes, et le sticker du duel du menu aussi sur les autres pages.
 - Après la mise en ligne : sur le PC, entrer en file d'un duel ; sur le S24+,
   rester sur l'accueil sans recharger, le bandeau doit venir tout seul.
+
+---
+
 **La page Questions à jour** (branche `claude/project-thread-7ad2lr`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
