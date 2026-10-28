@@ -17,6 +17,55 @@ club). Construction seule, **sans schéma**.
   moins » (5).
 ---
 
+**Les pièces de club des Terraces** (branche `claude/project-thread-rftsbq`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- 40 pièces d'équipement, deux par club de la série AN, **fermées** tant que
+  leur dessin n'est pas fait (/admin CONTENUS les compte : écrites, dessinées,
+  ouvertes).
+- COMBO : une pièce de club portée par un Fanzzy du même club voit son revers
+  divisé par deux. PLEIN CLUB : dans un match de ton club principal, chacune
+  rapporte +15 % d'écharpes ou de ferveur. Réglages `stuff.club_revers` et
+  `stuff.club_gain` (LE GRAND VIRAGE).
+- Après la mise en ligne : rien à voir tant qu'aucune pièce n'est ouverte ;
+  la fiche d'un Fanzzy AN de ton club en dit un mot au toucher du tampon.
+
+---
+
+**Où jouer, sur MATCHS et COMPÉTITIONS** (branche
+`claude/project-thread-6dydyn`, 28 octobre 2026, demandé par Gaël : voir sur
+ces pages qu'un Virage est ouvert ou qu'un duel attend, et y aller d'un
+appui). Construction seule, **sans schéma**.
+
+- Sous chaque match : pastille verte VIRAGE quand la tribune est ouverte
+  (pendant le match et la demi-heure avant), avec « 12 EN TRIBUNE » quand
+  des supporters poussent ; pastille violette DUEL « 1 T'ATTEND » quand
+  quelqu'un attend un adversaire. Un appui mène au Virage du match, ou au
+  duel avec le format et la tribune qui manque déjà choisis. Le reste de la
+  ligne ouvre toujours la fiche.
+- Sur MATCHS, un filtre À JOUER à côté de TOUS / MES CLUBS / EN DIRECT.
+- Les pastilles se relisent toutes les 20 s (`/api/virage/a-jouer`,
+  mémoire seule) et tout de suite quand une file de duel bouge.
+- Comment jouer : une ligne « Où jouer ». Cinq langues.
+- Après la mise en ligne : pendant un match, ouvrir MATCHS et une
+  compétition, voir la pastille VIRAGE et la toucher ; avec un second compte
+  en file de duel, voir la pastille DUEL apparaître sans recharger.
+
+---
+
+**Série SU « Die Kurve » (Super League suisse)** (branche
+`claude/project-thread-8di81x`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- 36 Fanzzy (trois par club), trois âges, qui clignent ; dos de carte SU.
+- 244 skins sur 324 (Halloween, Préhistorique, Apocalyptique) ; un skin
+  manquant montre la tenue de base. Liste des 80 à refaire :
+  fanzzy-prompts/SU-generation/skins-manquants.md.
+- Pour l'ouvrir aux joueurs : /admin, onglet des Fanzzy, cocher la série SU.
+- Ultimate SU : pas encore (après le 2 novembre).
+
+---
+
 **Six légendaires dans LES TERRACES** (branche `claude/project-thread-qn6nh1`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
@@ -27,6 +76,9 @@ club). Construction seule, **sans schéma**.
   Rouge-Gorge du Lendemain de Noël : liées au championnat anglais, bonus de
   lien dans chaque match de championnat du club qu'on soutient.
 - Elles sortent du booster LES TERRACES au taux des légendaires (2 %).
+- Leurs 18 skins (Halloween, Préhistorique, Apocalyptique) sont toutes
+  dessinées : les six dernières (AN61, AN62 préhistorique, AN65 Halloween et
+  apocalyptique) suivent dans une seconde fusion, images seules.
 - Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
   lire le tampon « LIÉ À ».
 
