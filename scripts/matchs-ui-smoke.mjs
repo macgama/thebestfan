@@ -603,7 +603,10 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
 
   const trouve = await chercher('espagne');
   check('« espagne » trouve la sélection espagnole', trouve.length === 1);
-  check('et c’est bien son match', /Spain/.test(trouve[0] ?? ''));
+  /* Écrite dans la langue du lecteur : « Spain » est l'Espagne en anglais. */
+  check('et c’est bien son match, écrit en français',
+    /Espagne/.test(trouve[0] ?? '') && !/Spain/.test(trouve[0] ?? '')
+    || (console.log('        ligne :', trouve[0]), false));
   check('un pays sans code ISO se dit quand même',
     (await page.evaluate(() => [...document.querySelectorAll('.ligue .pays')]
       .map((n) => n.textContent.trim()))).includes('International'));

@@ -1,4 +1,5 @@
 import { verifierEmplacement } from '../onboarding/slots.js';
+import { devenirPrincipal, principauxDe } from './principal.js';
 
 /** Requêtes SQL du suivi des équipes. Aucun appel réseau ici. */
 export function createFootballStore(pool) {
@@ -126,10 +127,25 @@ export function createFootballStore(pool) {
      */
     async follow(userId, teamId, isMain) {
       await verifierEmplacement(q, userId, teamId);
+      /* Suivre de nouveau son club principal ne le retire plus (`GREATEST`) ;
+         et un club principal qui change passe par la règle de la saison
+         (`principal.js`) — seul le premier choix se pose librement. */
+      const actuel = isMain ? (await principauxDe(q, userId)).club : null;
+      if (isMain && actuel != null && Number(actuel) !== Number(teamId)) {
+        await q(`INSERT IGNORE INTO user_follows (user_id, team_id, is_main) VALUES (?, ?, 0)`,
+          [userId, teamId]);
+        /* Sans sql/principal.sql, le changement libre d'avant. */
+        try {
+          await devenirPrincipal(q, userId, teamId);
+          return;
+        } catch (e) {
+          if (e?.code !== 'onboarding.error.principal_absent') throw e;
+        }
+      }
       if (isMain) await q(`UPDATE user_follows SET is_main = 0 WHERE user_id = ?`, [userId]);
       await q(
         `INSERT INTO user_follows (user_id, team_id, is_main) VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE is_main = VALUES(is_main)`,
+         ON DUPLICATE KEY UPDATE is_main = GREATEST(is_main, VALUES(is_main))`,
         [userId, teamId, isMain ? 1 : 0],
       );
     },
