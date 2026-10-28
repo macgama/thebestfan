@@ -7242,5 +7242,19 @@
  "Comment savoir où l’on joue en ce moment ?": "Wie sehe ich, wo gerade gespielt wird?",
  "Sur MATCHS et dans les compétitions, sous chaque match : la pastille verte VIRAGE dit que sa tribune est ouverte et combien de supporters y poussent, la violette DUEL qu’un joueur y attend un adversaire. Un appui t’y emmène. Le filtre À JOUER de MATCHS ne garde que ces matchs-là.": "Auf SPIELE und in den Wettbewerben, unter jedem Spiel: Der grüne Punkt KURVE zeigt, dass die Tribüne offen ist und wie viele Fans antreiben, der violette DUELL, dass dort ein Spieler auf einen Gegner wartet. Ein Tippen bringt dich hin. Der Filter ZUM SPIELEN auf SPIELE zeigt nur diese Spiele.",
  "Quelqu’un attend un duel : où le trouver ?": "Jemand wartet auf ein Duell: Wo finde ich es?",
- "Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune qui manque : il ne reste qu’à entrer en file.": "Auf der Duellseite zeigt der Reiter WARTEND die Duelle, in denen jemand auf einen Spieler wartet. Ein Tippen wählt das Spiel, das Format und die fehlende Tribüne: Du musst dich nur noch einreihen."
+ "Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend un joueur. Un appui choisit le match, le format et la tribune qui manque : il ne reste qu’à entrer en file.": "Auf der Duellseite zeigt der Reiter WARTEND die Duelle, in denen jemand auf einen Spieler wartet. Ein Tippen wählt das Spiel, das Format und die fehlende Tribüne: Du musst dich nur noch einreihen.",
+ "<0>En boutique</0> : la carte Ultimate d’un âge déjà atteint s’achète aussi en écharpes, dans le rayon ULTIMATE. Celles des légendaires restent réservées aux boosters.": "<0>Im Shop</0>: Die Ultimate-Karte eines bereits erreichten Alters kannst du auch mit Schals kaufen, in der Abteilung ULTIMATE. Die der Legendären gibt es nur in Boostern.",
+ "ACHETER CETTE ULTIMATE ?": "DIESES ULTIMATE KAUFEN?",
+ "Acheter l’Ultimate de {0}, âge {1} — {2} écharpes": "Ultimate von {0} kaufen, Alter {1} — {2} Schals",
+ "Cette carte Ultimate est déjà à toi.": "Diese Ultimate-Karte gehört dir schon.",
+ "La grande scène de son coup fatal, en plein écran, et sa carte dans ton album. Elle ne pousse pas plus fort : tout le monde a son Ultimate.": "Die große Szene seines Finishers im Vollbild und seine Karte in deinem Album. Sie pusht nicht stärker: Jeder hat sein Ultimate.",
+ "La grande scène de son coup fatal, et sa carte dans ton album.": "Die große Szene seines Finishers und seine Karte in deinem Album.",
+ "L’Ultimate de {0}, âge {1}": "Ultimate von {0}, Alter {1}",
+ "L’Ultimate précédente": "Vorheriges Ultimate",
+ "L’Ultimate suivante": "Nächstes Ultimate",
+ "Oui, dans le rayon ULTIMATE de la boutique, pour {0} écharpes : celle d’un âge que ton Fanzzy a déjà atteint. VOIR LA SCÈNE la montre avant l’achat. Celles des légendaires ne s’achètent pas, elles ne sortent qu’en booster.": "Ja, in der Abteilung ULTIMATE des Shops, für {0} Schals: die eines Alters, das dein Fanzzy schon erreicht hat. SZENE ANSEHEN zeigt sie vor dem Kauf. Die der Legendären kann man nicht kaufen, sie gibt es nur in Boostern.",
+ "Puis-je acheter une carte Ultimate ?": "Kann ich eine Ultimate-Karte kaufen?",
+ "Quelle carte Ultimate": "Welche Ultimate-Karte",
+ "Ultimate de {0}": "Ultimate von {0}",
+ "VOIR LA SCÈNE": "SZENE ANSEHEN"
 }

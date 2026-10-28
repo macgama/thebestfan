@@ -1,6 +1,8 @@
 import express from 'express';
 import { avatarsDe } from '../fanzzy/avatar.js';
 import { auStade, estCharge, parIdentifiant, racineDe } from '../fanzzy/catalogue.js';
+import { remettreLesCamps } from '../football/camps.js';
+import { estUnBut } from '../football/poller.js';
 
 /**
  * Cartes-souvenirs.
@@ -333,6 +335,87 @@ export function createSouvenirs({ pool, requireAuth,
     return { minted: true, souvenirId, presents: presents.length, userIds, family, price };
   }
 
+  /* ------------------------------------------------------ correction */
+
+  /**
+   * **Un but déjà frappé dont l'API corrige le camp.**
+   *
+   * La frappe est idempotente (`INSERT IGNORE` sur le rang) : un but revenu
+   * sous l'autre équipe ne touchait plus la carte, qui gardait à jamais
+   * l'écusson et le score du premier relevé. La carte suit maintenant le
+   * dernier mot de l'API : l'équipe et le score à cet instant. Seulement si
+   * c'est bien le même buteur au même rang — un rang qui a glissé (un but
+   * ajouté plus tôt dans la liste) ne réécrit pas la carte d'un autre.
+   */
+  async function corrigerBut(goal) {
+    if (goal?.fixtureId == null || goal.seq == null || goal.teamId == null) return 0;
+    const res = await q(
+      `UPDATE souvenirs SET scorer_team = ?, score_home = ?, score_away = ?
+        WHERE fixture_id = ? AND seq = ? AND (player <=> ? OR player IS NULL)
+          AND (scorer_team <> ? OR score_home <> ? OR score_away <> ?)`,
+      [goal.teamId, goal.scoreHome ?? 0, goal.scoreAway ?? 0, goal.fixtureId, goal.seq,
+       goal.player ?? null, goal.teamId, goal.scoreHome ?? 0, goal.scoreAway ?? 0],
+    );
+    return res?.affectedRows ?? 0;
+  }
+
+  /**
+   * **Les cartes des matchs finis, remises d'accord avec le tableau.**
+   *
+   * Pour chaque match fini qui a des cartes : ses buts rangés en base, le
+   * camp de chacun remis d'accord avec le score final (`camps.js`), puis le
+   * score reconstitué but après but — exactement comme à la frappe. Une
+   * carte qui dit autre chose est réécrite. Répare les cartes frappées
+   * avant cette correction (FC Sion – Lausanne du 25 octobre 2026), et
+   * celles d'un but que l'API a corrigé après la frappe. Le but rangé en
+   * base (`fixture_events`) change de camp avec elles.
+   *
+   * Un match aux tirs au but est laissé : la base ne distingue pas les tirs
+   * de la séance des buts du match. Un match dont la liste ne compte pas
+   * autant de buts que le tableau aussi.
+   *
+   * `jours` borne la relecture aux matchs récents ; nul, tout est relu.
+   * Rend le nombre de cartes réécrites.
+   */
+  async function reparerCamps({ jours = null } = {}) {
+    const matchs = await q(
+      `SELECT DISTINCT f.id, f.home_id, f.away_id, f.home_goals, f.away_goals
+         FROM souvenirs s JOIN fixtures f ON f.id = s.fixture_id
+        WHERE f.status_short IN ('FT', 'AET')
+          ${jours ? 'AND s.kickoff_at > (UTC_TIMESTAMP() - INTERVAL ? DAY)' : ''}`,
+      jours ? [jours] : [],
+    );
+    let reecrites = 0;
+    for (const m of matchs) {
+      const rangs = await q(
+        `SELECT seq, type, detail, team_id, player, minute, extra
+           FROM fixture_events WHERE fixture_id = ? ORDER BY seq`, [m.id]);
+      const { evenements } = remettreLesCamps(rangs, {
+        homeId: m.home_id, awayId: m.away_id, home: m.home_goals, away: m.away_goals,
+      }, estUnBut);
+      /* La liste des buts du match aussi : la page du match la relit. */
+      for (const [i, e] of evenements.entries()) {
+        if (e === rangs[i]) continue;
+        await q(`UPDATE fixture_events SET team_id = ? WHERE fixture_id = ? AND seq = ?`,
+          [e.team_id, m.id, e.seq]);
+      }
+      const buts = evenements.filter(estUnBut).sort((a, b) =>
+        (a.minute ?? 0) - (b.minute ?? 0) || (a.extra ?? 0) - (b.extra ?? 0));
+      if (buts.length !== (m.home_goals ?? 0) + (m.away_goals ?? 0)) continue;
+      let h = 0;
+      let a = 0;
+      for (const [i, g] of buts.entries()) {
+        if (g.team_id === m.home_id) h += 1;
+        else if (g.team_id === m.away_id) a += 1;
+        else continue;
+        reecrites += await corrigerBut({ fixtureId: m.id, seq: i + 1, teamId: g.team_id,
+          player: g.player, scoreHome: h, scoreAway: a });
+      }
+    }
+    if (reecrites) console.warn(`[souvenirs] ${reecrites} carte(s) remise(s) dans le bon camp`);
+    return reecrites;
+  }
+
   /* --------------------------------------------------------- lecture */
 
   const CARD = `s.id, s.fixture_id, s.seq, s.league_id, s.family, s.minute, s.player,
@@ -553,5 +636,5 @@ export function createSouvenirs({ pool, requireAuth,
     res.json({ souvenirs: await habiller(req.user.id, rows) });
   });
 
-  return { router, mintGoal, recordPush, collection, market, buy };
+  return { router, mintGoal, corrigerBut, reparerCamps, recordPush, collection, market, buy };
 }

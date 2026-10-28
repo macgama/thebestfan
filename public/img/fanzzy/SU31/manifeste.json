@@ -1,6 +1,6 @@
 {
   "id": "SU31",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6e522ef66eda"
+          "sha": "4ba753460d20"
         }
       }
     },
@@ -161,6 +161,11 @@
     }
   },
   "retailles": {
+    "e1/halloween/neutre": 1.067,
+    "e1/halloween/joie": 1.067,
+    "e1/halloween/colere": 1.067,
+    "e1/halloween/depit": 1.067,
+    "e1/halloween/pousse": 1.067,
     "e2/apocalyptique/neutre": 0.831,
     "e2/apocalyptique/joie": 0.831,
     "e2/apocalyptique/colere": 0.831,

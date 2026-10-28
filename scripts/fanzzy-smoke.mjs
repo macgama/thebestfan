@@ -1218,6 +1218,15 @@ const base1W = DEX.find((f) => f.stage === 1 && f.evo);
       return new Set(l.filter((x) => x.cle === `skin:${base1W.id}:${f.stage}:${tenue.id}`)
         .map((x) => x.sorte));
     },
+    remettreUltime: async () => {
+      await pool.execute(`INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, 'RP4', 1, 1)
+        ON DUPLICATE KEY UPDATE stage = stage`, [E]);
+      await pool.execute(`DELETE FROM user_etats WHERE user_id = ? AND fanzzy_id = 'RP4' AND stage = 1
+        AND etat = 'ultime'`, [E]);
+      const l = await nouvelles(E, () => dansUneTransaction((c) => F.remettreUltime(c, E,
+        { fanzzy: 'RP4', stage: 1 })));
+      return new Set(l.filter((x) => x.cle === 'etat:RP4:1:ultime').map((x) => x.sorte));
+    },
   };
   for (const [chemin, sortes] of Object.entries(CHEMINS_NOUVEAUTES.ecrivent)) {
     if (!EPREUVES[chemin]) {

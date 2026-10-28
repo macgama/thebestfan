@@ -1,6 +1,6 @@
 {
   "id": "SU14",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -104,7 +104,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "75d88d9af1ea"
+          "sha": "b1b3b34affe5"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "5bf8b3377212"
         }
       }
     }
