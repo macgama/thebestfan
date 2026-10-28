@@ -1,6 +1,6 @@
 {
   "id": "RP23",
-  "rev": 9,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "22eb61a07fd1"
+          "sha": "22eb61a07fd1",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "518dbd7c16ed"
+          "sha": "518dbd7c16ed",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fb1272ad5765"
+          "sha": "fb1272ad5765",
+          "cligne": true
         }
       }
     },
@@ -66,7 +69,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "32db4fe71634"
+          "sha": "32db4fe71634",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -118,7 +122,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5f072db53075"
+          "sha": "5f072db53075",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -142,7 +147,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "115dcab22912"
+          "sha": "115dcab22912",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

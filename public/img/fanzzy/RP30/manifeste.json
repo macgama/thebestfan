@@ -1,6 +1,6 @@
 {
   "id": "RP30",
-  "rev": 9,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -90,7 +90,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "388e883ce309"
+          "sha": "388e883ce309",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -102,7 +103,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d68ed5a81fb8"
+          "sha": "d68ed5a81fb8",
+          "cligne": true
         }
       }
     },
@@ -154,7 +156,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7c3a47c59cbd"
+          "sha": "7c3a47c59cbd",
+          "cligne": true
         }
       }
     }
