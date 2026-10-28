@@ -149,7 +149,29 @@ const RUBRIQUES = [
       ['Et les légendaires, alors ?',
         () => 'Elles sont à part. Une légendaire n’a pas de lignée : elle ne grandit '
           + 'pas et elle n’est l’âge de personne. Elle arrive entière, directement '
-          + `dans un booster, et un double en rend ${SCARVES.legendaire} écharpes.`],
+          + `dans un booster — environ ${virgule(reglage('pack.legendaire_fanzzy'))} % `
+          + `des boosters en donnent une —, et un double en rend ${SCARVES.legendaire} `
+          + 'écharpes.'],
+      ['Pourquoi mon légendaire ne fait-il rien au coup d’envoi ?',
+        () => (reglage('legende.chants') > 0
+          ? 'Parce qu’il dort. Un deck n’accepte qu’un seul légendaire, Fanzzy ou '
+            + 'pièce d’équipement, et jamais comme titulaire : il attend sur le banc. '
+            + `Il se réveille après ${reglage('legende.chants')} chants réussis (BON ou `
+            + 'PARFAIT), à chaque duel et à chaque match de Virage. La légende entre '
+            + 'en jeu, elle n’y est pas au coup d’envoi.'
+          : 'Un deck n’accepte qu’un seul légendaire, Fanzzy ou pièce d’équipement, '
+            + 'et jamais comme titulaire : il attend sur le banc, mais ses effets '
+            + 'jouent dès la première seconde.')],
+      ['C’est quoi, un Fanzzy lié à un club ?',
+        () => 'Un Fanzzy qui porte les couleurs d’une équipe. Joue-le dans un match '
+          + `de ce club, quand c’est un club que tu suis : il pousse ${reglage('fanzzy.lien_force')} % `
+          + `plus fort, rapporte ${reglage('fanzzy.lien_gain')} % de plus et lance le cri `
+          + 'de son club, au Grand Virage comme en duel. Sa fiche le dit d’un tampon, '
+          + '« LIÉ À TON CLUB ». Ailleurs, il joue comme un autre.'],
+      ['Puis-je lier un Fanzzy neutre à mon club ?',
+        () => `Oui, depuis sa fiche, pour ${reglage('fanzzy.lien_prix')} écharpes. Il `
+          + 'se lie à ton club principal, une seule fois et pour toujours, et gagne '
+          + 'alors le même bonus qu’un Fanzzy né dans ses couleurs.'],
       ['C’est quoi une « famille » ?',
         () => 'Six façons de supporter : la Voix, la Percussion, la Fidélité, le '
           + 'Tifo, la Pyro et le Déplacement. Chaque famille annonce les gestes '
@@ -164,6 +186,28 @@ const RUBRIQUES = [
         () => 'Ce sont les âges que tu n’as pas encore payés. On te montre qu’ils '
           + 'existent sans te montrer qui ils sont : découvrir le personnage fait '
           + 'partie de l’évolution.'],
+    ],
+  },
+  {
+    titre: 'L’Ultimate',
+    questions: [
+      ['C’est quoi, l’Ultimate ?',
+        () => 'Le coup fatal de ton Fanzzy : il porte le nom de son cri et pousse la '
+          + 'corde très fort. Sous ton souffle, une jauge dorée monte à chaque chant '
+          + 'réussi — un BON compte un point, un PARFAIT deux — et elle est pleine à '
+          + `${reglage('ultime.charge')} points. Touche alors le bouton doré, réussis `
+          + 'le geste de ton Fanzzy, et la corde part d’un coup. Raté, il pousse encore la moitié.'],
+      ['Combien de fois puis-je le lancer ?',
+        () => 'Une fois par duel, et une fois par match de Virage : choisis bien ton '
+          + 'moment. En duel, la Relève fait grandir ton Fanzzy et son Ultimate avec '
+          + `lui, de ${reglage('ultime.bonus_age')} % par âge. Au Grand Virage, on joue `
+          + 'au premier âge.'],
+      ['La carte Ultimate rend-elle mon Fanzzy plus fort ?',
+        'Non. Tout le monde a l’Ultimate, et il pousse pareil pour tous. La carte, '
+          + 'une par âge de chaque Fanzzy, se trouve dans les boosters et débloque la '
+          + 'grande scène : le coup fatal en plein écran, que la tribune d’en face voit '
+          + 'aussi. Elle se range sur la fiche du Fanzzy et dans le rayon ULTIMATE de '
+          + 'ta collection, sans compter dans les paliers de collection.'],
     ],
   },
   {
@@ -188,8 +232,8 @@ const RUBRIQUES = [
           + 'légendaire. Rien ne se perd, jamais.'],
       ['À quoi servent les écharpes ?',
         () => 'À faire grandir tes supporters, d’abord — c’est leur premier emploi. '
-          + 'Ensuite à acheter un booster de plus, un emplacement de club, ou ce que '
-          + 'propose la boutique.'],
+          + 'Ensuite à acheter un booster de plus, un emplacement de club, à lier un '
+          + 'Fanzzy neutre à ton club, ou à ce que propose la boutique.'],
       ['Pourquoi je ne tire jamais de rare ni d’épique ?',
         () => 'Parce qu’aucun booster n’en donne. Une rare est le deuxième âge d’une '
           + 'commune que tu possèdes déjà, et une épique le troisième. Elles ne se '
@@ -245,7 +289,23 @@ const RUBRIQUES = [
       ['Mon duel compte-t-il au classement ?',
         () => 'Seulement s’il s’adosse à un match du jour ou en cours. Un match d’un '
           + 'autre jour donne un entraînement, qui ne compte pas — et un match déjà '
-          + 'passé est refusé.'],
+          + 'passé est refusé.'
+          + (reglage('abo.duels_classes_jour') > 0
+            ? ` Sans PASS de tribune, ${reglage('abo.duels_classes_jour')} duels classés `
+              + 'comptent par jour ; au-delà, tu joues toujours, en entraînement.'
+            : '')],
+      ['Si je quitte la salle d’attente, mon duel disparaît-il ?',
+        () => 'Non. Il reste ouvert et les autres le voient toujours ; le jeu te '
+          + 'rappelle dès que quelqu’un arrive en face. S’il ne te voit pas revenir '
+          + `dans les ${reglage('duel.attente_absent_min')} minutes, il se retire.`],
+      ['Comment jouer un duel contre un ami ?',
+        'Ouvre un duel, puis, dans la salle d’attente, invite ton ami depuis le jeu '
+          + 'ou envoie-lui le lien : un appui l’amène directement dans ton duel. Tu '
+          + 'peux aussi le défier aux tirs au but, dans les mini-jeux.'],
+      ['C’est quoi, le duel guidé ?',
+        'Trois minutes sur un match fictif, contre un adversaire patient, avec des '
+          + 'bulles qui te montrent quoi faire. Il ne rapporte rien, ne compte nulle '
+          + 'part, et se rejoue autant que tu veux depuis la page Comment jouer.'],
       ['Qui choisit le stade ?',
         () => 'Personne. Le stade appartient au match, pas à un joueur : il se '
           + 'déduit de la rencontre, les deux camps y ont exactement les mêmes '
@@ -263,18 +323,87 @@ const RUBRIQUES = [
     ],
   },
   {
+    titre: 'Les mini-jeux et le pronostic',
+    questions: [
+      ['Les mini-jeux rapportent-ils quelque chose ?',
+        () => 'Des écharpes : jongles, tirs au but, chant en rythme et déplacement '
+          + `en donnent jusqu’à ${reglage('jeux.echarpes_jour')} par jour en tout. `
+          + 'Chacun a aussi son classement de la saison, entre tout le monde ou entre '
+          + 'amis.'],
+      ['Comment marche le tifo du club ?',
+        () => 'Avec les supporters de ton club, vous peignez une mosaïque avant le '
+          + `match : chacun a ${reglage('jeux.tifo_cases_jour')} cases par jour. Si elle `
+          + `ressemble au modèle à ${reglage('jeux.tifo_seuil')} % au coup d’envoi, chaque `
+          + `peintre reçoit ${reglage('jeux.tifo_gain')} écharpes, et le tifo se lève `
+          + 'dans le stade au début du match.'],
+      ['Et le boss de la semaine ?',
+        () => 'Une tribune rivale à faire taire, pour tout ton club. Chaque chant '
+          + 'réussi, au Virage, en duel ou au chant en rythme, lui retire de la voix. '
+          + `S’il se tait avant la fin de la semaine, chacun de ceux qui l’ont fait `
+          + `taire reçoit ${reglage('jeux.boss_gain')} écharpes.`],
+      ['Le pronostic, c’est un pari ?',
+        () => 'Non : il est gratuit, sans mise, et on n’y perd jamais rien. Donne le '
+          + 'score d’un match de tes clubs jusqu’au coup d’envoi. Le bon vainqueur, ou '
+          + `le bon nul, rapporte ${reglage('prono.vainqueur_echarpes')} écharpes, et le `
+          + `score exact ${reglage('prono.exact_echarpes')}.`],
+    ],
+  },
+  {
+    titre: 'La saison et la collection',
+    questions: [
+      ['Combien dure une saison ?',
+        'Trois mois. Chaque saison ouvre de nouvelles séries de Fanzzy et '
+          + 'd’équipement, remet à zéro les classements, les divisions et le carnet, '
+          + 'et ne te retire rien de ce que tu possèdes.'],
+      ['Comment monter de division ?',
+        'Avec ta ferveur de la saison, gagnée au Virage et en duel : Sympathisant, '
+          + 'Habitué, Fervent, Ultra, puis Capo. Une division atteinte reste acquise '
+          + 'jusqu’à la fin de la saison.'],
+      ['C’est quoi, le carnet de la saison ?',
+        () => 'Chaque mission du jour y pose des tampons : '
+          + `${reglage('saison.tampons_facile')} pour une facile, `
+          + `${reglage('saison.tampons_moyenne')} pour une moyenne, `
+          + `${reglage('saison.tampons_difficile')} pour une difficile. Chaque palier `
+          + 'du carnet rapporte des écharpes ou des boosters, et qui a bien rempli le '
+          + 'sien reçoit des boosters au lancement de la saison suivante.'],
+      ['Que me rapporte ma collection ?',
+        () => `Tous les ${reglage('collection.cran')} objets différents gagnés, un `
+          + `cran te rapporte ${reglage('collection.cran_echarpes')} écharpes, et de `
+          + 'temps en temps un booster. Une série complète rapporte encore plus. Les '
+          + 'tenues et les cartes Ultimate se collectionnent, mais ne comptent pas '
+          + 'dans ces crans.'],
+      ['Comment avoir une carte-souvenir ?',
+        'Chaque vrai but crée une carte. Si tu poussais au Grand Virage à ce '
+          + 'moment-là, tu la reçois à ton nom, avec ton Fanzzy de ce soir-là. Sinon, '
+          + 'tu peux l’acheter quelque temps dans ton carnet.'],
+    ],
+  },
+  {
     titre: 'Mon compte',
     questions: [
       ['À quoi sert mon niveau ?',
         () => 'À ouvrir des droits, jamais à taper plus fort : une place de deck de '
           + 'plus, un emplacement de club de plus. Le niveau ne donne aucune '
           + 'puissance — c’est une règle du jeu, écrite et tenue.'],
-      ['Et l’abonnement, il donne un avantage ?',
-        () => `De la largeur et du confort, jamais de la puissance : une réserve de `
-          + `${reglage('abo.pack_max')} paquets au lieu de ${reglage('pack.max')}, qui `
-          + `se remplit toutes les ${reglage('abo.pack_regen_min')} minutes, un club `
-          + 'suivi de plus, et le droit de porter toute tenue publiée. Rien de tout '
-          + 'cela ne pèse sur la corde.'],
+      ['Et le PASS de tribune, il donne un avantage ?',
+        () => `Du confort, jamais de la puissance : une réserve de ${reglage('abo.pack_max')} `
+          + `boosters au lieu de ${reglage('pack.max')}, qui se remplit toutes les `
+          + `${reglage('abo.pack_regen_min')} minutes au lieu de ${reglage('pack.regen_min')}, `
+          + `${reglage('abo.clubs_en_plus')} clubs suivis de plus, tout ton parcours et `
+          + 'tous tes souvenirs, la création d’un KOP, et le droit de porter toute '
+          + 'tenue publiée. Rien de tout cela ne pèse sur la corde.'],
+      ['Que me manque-t-il sans le PASS ?',
+        () => 'Rien pour jouer : toutes les cartes, tous les âges, tous les formats '
+          + 'et le Grand Virage en entier. Ce qui est compté, c’est le classement'
+          + (reglage('abo.duels_classes_jour') > 0 && reglage('abo.virages_classes_jour') > 0
+            ? ` : ${reglage('abo.duels_classes_jour')} duels et `
+              + `${reglage('abo.virages_classes_jour')} matchs de Virage par jour y `
+              + 'comptent, et au-delà tu joues toujours, sans que ça compte.'
+            : ' : certaines parties s’y jouent en entraînement, sans compter.')],
+      ['Comment résilier le PASS ?',
+        'Depuis la page du PASS, en deux touches, aussi simplement que tu t’es '
+          + 'abonné. Il ne se renouvelle plus, tu le gardes jusqu’à la fin de la '
+          + 'période déjà payée, et rien de ce que tu as gagné ne t’est repris.'],
       ['Quelle différence entre mes amis et mon KOP ?',
         () => 'Un ami est un lien entre deux personnes. Un KOP est un groupe qui '
           + 'pousse ensemble et qui apparaît comme tel dans les classements. On peut '
@@ -287,12 +416,23 @@ const RUBRIQUES = [
         () => 'Rien de ce que tu possèdes ne disparaît. Une série qui se referme '
           + 'cesse d’être distribuée, elle ne se reprend pas : ta carte reste dans '
           + 'ton classeur, dans ton deck et sur ton accueil.'],
+      ['Comment couper la musique ?',
+        'En bas du menu, « Couper la musique ». Elle ne joue que sur les pages '
+          + 'calmes, jamais pendant un duel, au Grand Virage ou dans les mini-jeux, '
+          + 'pour que tu entendes la tribune. Le mode calme du menu coupe aussi les '
+          + 'sons, les vibrations ou les animations.'],
+      ['J’ai trouvé un bug. À qui le dire ?',
+        'Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le '
+          + 'message part directement à l’équipe du jeu.'],
     ],
   },
 ];
 
 /** Une réponse est une fonction quand elle cite un nombre, une chaîne sinon. */
 const rendre = (v) => (typeof v === 'function' ? v() : v);
+
+/** Un réglage décimal, écrit à la française : « 2,5 % » et non « 2.5 % ». */
+const virgule = (n) => String(n).replace('.', ',');
 
 /**
  * La FAQ, nombres à jour.
