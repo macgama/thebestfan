@@ -22,6 +22,40 @@
 
 ---
 
+**/admin, COMPÉTITIONS lisible** (branche `claude/project-thread-wsfkz8`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- Rangées par pays, en français (International d'abord), dates « 21.08.2026 »,
+  état ACTIVE / INACTIVE écrit, filtre toutes / actives / inactives, et la
+  recherche trouve « angleterre » ou « suisse ».
+
+---
+
+**Tous les Fanzzy RP de base clignent** (branche
+`claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- Les 11 derniers âges RP de base clignent (retouches payantes, 1 430
+  crédits, accord de Gaël) : RP de base 95 sur 95.
+
+---
+
+**Les couleurs des clubs dont le blason n'est pas un PNG** (branche
+`claude/project-thread-k7c32b`, 28 octobre 2026, demandé par Gaël : le
+serveur écrivait « [couleurs] club 3728 : blason : ce fichier n’est pas un
+PNG »). Construction seule, **sans schéma**.
+
+- Un blason en SVG se lit maintenant ; un JPEG, un GIF ou une page d'erreur
+  laisse le club à la couleur par défaut, avec un seul avertissement par
+  format (« blason au format JPEG… »), plus un par club.
+- Les couleurs peuvent se poser à la main (`COULEURS_A_LA_MAIN` dans
+  `src/server/football/couleurs.js`), elles passent avant le blason. Les 17
+  clubs relevés sans couleurs en production les reçoivent (RB Leipzig,
+  Alavés, Partizan, Grèce, Chypre, Varnsdorf, Králův Dvůr, clubs omanais…),
+  au prochain affichage de leur match. Monori SE reste par défaut.
+
+---
+
 **Plus de Fanzzy RP et SU clignent** (branche `claude/project-thread-j17xyz`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma** :
 des images et des réglages, sans crédits.
@@ -185,6 +219,7 @@ Construction seule, **sans schéma**.
   dessinées : les six dernières (AN61, AN62 préhistorique, AN65 Halloween et
   apocalyptique) suivent dans une seconde fusion, images seules.
 - Elles clignent des yeux dans 19 tenues sur 24 (images seules).
+- Leur Ultimate (image et clip de 4 s) est dans la collection (fichiers seuls).
 - Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
   lire le tampon « LIÉ À ».
 

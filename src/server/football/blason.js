@@ -189,17 +189,109 @@ const hex = (r, g, b) => '#' + [r, g, b]
   .join('').toUpperCase();
 
 /**
+ * Le format d'un fichier, lu dans ses premiers octets — jamais dans l'adresse
+ * ni dans l'en-tête HTTP, qui mentent : l'API sert parfois sous `….png` autre
+ * chose qu'un PNG.
+ *
+ * @returns {'PNG'|'SVG'|'JPEG'|'GIF'|'WebP'|'HTML'|'inconnu'}
+ */
+export function formatDuBlason(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 4) return 'inconnu';
+  if (buf.length >= 8 && buf.subarray(0, 8).equals(SIGNATURE)) return 'PNG';
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'JPEG';
+  if (buf.toString('ascii', 0, 4) === 'GIF8') return 'GIF';
+  if (buf.length >= 12 && buf.toString('ascii', 0, 4) === 'RIFF'
+    && buf.toString('ascii', 8, 12) === 'WEBP') return 'WebP';
+  const debut = buf.toString('utf8', 0, Math.min(buf.length, 1024))
+    .replace(/^\uFEFF/, '').trimStart().toLowerCase();
+  if (debut.includes('<svg')) return 'SVG';
+  if (debut.startsWith('<!doctype html') || debut.startsWith('<html')) return 'HTML';
+  /* Un SVG commence souvent par un long commentaire ou un `<?xml …>` : on
+     cherche la balise plus loin avant de renoncer. */
+  if (debut.startsWith('<') && buf.toString('utf8').toLowerCase().includes('<svg')) return 'SVG';
+  return 'inconnu';
+}
+
+/** Les couleurs CSS qu'on sait lire dans un SVG, en [r, g, b]. */
+const NOMMEES = {
+  black: [0, 0, 0], white: [255, 255, 255], red: [255, 0, 0], blue: [0, 0, 255],
+  green: [0, 128, 0], yellow: [255, 255, 0], navy: [0, 0, 128], maroon: [128, 0, 0],
+  gold: [255, 215, 0], orange: [255, 165, 0], purple: [128, 0, 128], gray: [128, 128, 128],
+  grey: [128, 128, 128], silver: [192, 192, 192], darkblue: [0, 0, 139],
+  darkred: [139, 0, 0], darkgreen: [0, 100, 0], skyblue: [135, 206, 235],
+};
+
+function lireCouleurCss(v) {
+  v = v.trim().toLowerCase();
+  let m = /^#([0-9a-f]{3,8})$/.exec(v);
+  if (m) {
+    let h = m[1];
+    if (h.length === 3 || h.length === 4) h = [...h].map((c) => c + c).join('');
+    if (h.length !== 6 && h.length !== 8) return null;
+    if (h.length === 8 && parseInt(h.slice(6, 8), 16) < 128) return null;   // presque transparent
+    return [0, 2, 4].map((k) => parseInt(h.slice(k, k + 2), 16));
+  }
+  m = /^rgba?\(([^)]+)\)$/.exec(v);
+  if (m) {
+    const p = m[1].split(/[\s,/]+/).filter(Boolean);
+    if (p.length < 3) return null;
+    if (p[3] !== undefined && parseFloat(p[3]) < 0.5) return null;
+    return p.slice(0, 3).map((x) => x.endsWith('%')
+      ? Math.round(parseFloat(x) * 2.55) : Math.round(parseFloat(x)));
+  }
+  return NOMMEES[v] ?? null;
+}
+
+/**
+ * Les couleurs d'un SVG, comptées une fois par endroit où elles sont
+ * employées (`fill`, `stroke`, `stop-color`, dans un attribut ou un style).
+ * On ne dessine pas l'image : la surface réelle de chaque couleur est
+ * inconnue, et le nombre d'emplois en est une approximation suffisante pour
+ * un écusson, fait de quelques aplats.
+ */
+function pixelsDuSvg(buf) {
+  const texte = buf.toString('utf8');
+  const re = /(?:fill|stroke|stop-color)\s*(?:=\s*["']|:\s*)([^"';}>]+)/gi;
+  const vus = [];
+  for (const m of texte.matchAll(re)) {
+    const c = lireCouleurCss(m[1]);
+    if (c && c.every((x) => Number.isFinite(x))) vus.push(c);
+  }
+  /* Un SVG sans aucune couleur écrite se peint en noir par défaut : c'est un
+     dessin au trait, pas une couleur de club. */
+  if (!vus.length) throw new Error('blason : SVG sans couleur lisible');
+  const rgba = new Uint8Array(vus.length * 4);
+  vus.forEach(([r, g, b], k) => { rgba.set([r, g, b, 255], k * 4); });
+  return rgba;
+}
+
+/** Erreur d'un blason dans un format que le jeu ne lit pas. */
+export class FormatDeBlason extends Error {
+  constructor(format) {
+    super(`blason au format ${format}, que le jeu ne lit pas`);
+    this.format = format;
+  }
+}
+
+/**
  * Les deux couleurs d'un blason.
  *
- * @param {Buffer} png
+ * Lit un PNG ou un SVG. Les autres formats (JPEG, GIF, WebP, page d'erreur)
+ * lèvent une `FormatDeBlason` : le club garde alors la couleur par défaut.
+ *
+ * @param {Buffer} buf
  * @returns {{ c1:string, c2:string|null }} `c2` est nulle quand le blason
  *   n'offre pas de seconde couleur franchement distincte — un écusson d'une
  *   seule teinte existe, et inventer un second ton donnerait un dégradé que
  *   personne n'a dessiné.
  * @throws {Error} si l'image n'est pas lisible, en nommant la cause.
  */
-export function couleursDuBlason(png) {
-  const { rgba } = decoderPng(png);
+export function couleursDuBlason(buf) {
+  const format = formatDuBlason(buf);
+  let rgba;
+  if (format === 'PNG') rgba = decoderPng(buf).rgba;
+  else if (format === 'SVG') rgba = pixelsDuSvg(buf);
+  else throw new FormatDeBlason(format);
 
   /* Les couleurs sont regroupées par paquets de seize valeurs par canal.
      Sans ce regroupement, l'anticrénelage d'un contour éparpille une même
