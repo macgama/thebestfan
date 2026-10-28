@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Les pièces de club des Terraces** (branche `claude/project-thread-rftsbq`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- 40 pièces d'équipement, deux par club de la série AN, **fermées** tant que
+  leur dessin n'est pas fait (/admin CONTENUS les compte : écrites, dessinées,
+  ouvertes).
+- COMBO : une pièce de club portée par un Fanzzy du même club voit son revers
+  divisé par deux. PLEIN CLUB : dans un match de ton club principal, chacune
+  rapporte +15 % d'écharpes ou de ferveur. Réglages `stuff.club_revers` et
+  `stuff.club_gain` (LE GRAND VIRAGE).
+- Après la mise en ligne : rien à voir tant qu'aucune pièce n'est ouverte ;
+  la fiche d'un Fanzzy AN de ton club en dit un mot au toucher du tampon.
+
+---
+
 **17 Fanzzy de plus clignent en tenue de base** (branche
 `claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** : des images et des réglages.
