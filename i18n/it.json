@@ -7063,5 +7063,12 @@
  "JE CONNAIS LA LIGNE": "CONOSCO LA LINEA",
  "Le Grand Tram du Lac": "Il Grande Tram del Lago",
  "Immense, une armure de panneaux bleu roi et blancs aux coutures lumineuses, un haut pantographe en crête et des rangées de fenêtres rondes allumées. Il fait le tour de toutes les lignes sans jamais se tromper d’arrêt — et ses sourcils gardent leur petite inquiétude.": "Enorme, un’armatura di pannelli blu reale e bianchi dalle cuciture luminose, un alto pantografo a cresta e file di finestrini tondi accesi. Fa il giro di tutte le linee senza mai sbagliare fermata — e le sue sopracciglia tengono la loro piccola preoccupazione.",
- "TOUTES LES LIGNES PAR CŒUR": "TUTTE LE LINEE A MEMORIA"
+ "TOUTES LES LIGNES PAR CŒUR": "TUTTE LE LINEE A MEMORIA",
+ "{0} EN TRIBUNE": "{0} IN CURVA",
+ "{0} T’ATTENDENT": "{0} TI ASPETTANO",
+ "1 T’ATTEND": "1 TI ASPETTA",
+ "À JOUER": "DA GIOCARE",
+ "Aucun Virage ouvert ni duel qui attend pour l’instant.": "Nessuna Curva aperta né duello in attesa per ora.",
+ "Les tribunes ouvrent une demi-heure avant le coup d’envoi.": "Le tribune aprono mezz’ora prima del calcio d’inizio.",
+ "<0>Où jouer</0> : sous un match, la pastille verte <1>VIRAGE</1> dit que sa tribune est ouverte, avec le nombre de supporters qui poussent, et la violette <2>DUEL</2> qu’un joueur y attend un adversaire. Un appui t’y emmène.": "<0>Dove giocare</0>: sotto una partita, il bollino verde <1>CURVA</1> dice che la sua tribuna è aperta, con il numero di tifosi che spingono, e quello viola <2>DUELLO</2> che un giocatore aspetta un avversario. Un tocco ti ci porta."
 }
