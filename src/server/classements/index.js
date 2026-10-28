@@ -134,8 +134,8 @@ export function createClassements({ pool, requireAuth,
      n'ait pas à savoir d'où vient la ligne.
 
      `team_id` nul veut dire neutre : la ligne compte pour le joueur et pour la
-     compétition, jamais pour une tribune. La règle s'applique d'elle-même, par
-     la condition de jointure, sans avoir à l'écrire deux fois. */
+     compétition, et pour une tribune à un dixième seulement — celle du camp
+     poussé (voir `tribunes`, Gaël le 28 octobre 2026). */
   /* **Les deux sources se filtrent de la même façon**, et c'est nouveau du
      côté du Virage : `duel_results` écartait déjà l'entraînement, la présence
      au Virage prenait tout. Elle porte désormais `classe`, posé à l'entrée
@@ -146,14 +146,34 @@ export function createClassements({ pool, requireAuth,
      qui commence par lui, plutôt qu'en filtrant après coup l'union de tout le
      monde. Le filtre de la ferveur classée (`classe`, `mode`) reste écrit une
      fois. */
+  /* `side` dit le camp poussé (0 domicile, 1 extérieur) : c'est lui qui
+     désigne le club d'un neutre, dont `team_id` est nul. Voir `tribunes`. */
   const sourceFerveur = (et = '') => `
-    SELECT user_id, team_id, ferveur, fixture_id, last_push_at AS quand
+    SELECT user_id, team_id, ferveur, fixture_id, side, last_push_at AS quand
       FROM virage_presence WHERE classe = 1 ${et}
     UNION ALL
-    SELECT user_id, team_id, ferveur, fixture_id, ended_at AS quand
+    SELECT user_id, team_id, ferveur, fixture_id, side, ended_at AS quand
       FROM duel_results WHERE mode = 'classe' ${et}`;
   const FERVEUR = sourceFerveur();
   const FERVEUR_DE = sourceFerveur('AND user_id = ?');
+
+  /* Les supporters d'un club qui comptent dans sa moyenne : comptes actifs
+     seulement. Un compte fermé suivait encore son club et divisait la
+     ferveur des autres. */
+  const SUPPORTERS_ACTIFS = `
+    SELECT f.team_id, COUNT(*) AS n
+      FROM user_follows f
+      JOIN users u ON u.public_id = f.user_id AND u.status = 'active'
+     GROUP BY f.team_id`;
+
+  /* Deux réglages, lus à chaque calcul et écrits en nombre dans la requête :
+     ce sont des nombres bornés par le registre, jamais une saisie. */
+  const borne = (v, min, max, defaut) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : defaut;
+  };
+  const partNeutre = () => borne(reglage('ferveur.neutre_tribune'), 0, 1, 0.1);
+  const plancherTribune = () => Math.round(borne(reglage('tribune.plancher'), 1, 100, 5));
 
   /* ================================================== la fenêtre d'une saison
 
@@ -286,23 +306,81 @@ export function createClassements({ pool, requireAuth,
    * classement par compétition l'utilise déjà (voir `SOURCE`). Les deux
    * lectures disent enfin la même chose.
    *
-   * Un neutre a `team_id` nul : sa ferveur ne remonte à aucune tribune, ce
-   * qui est la règle du jeu, et la condition l'applique sans avoir à l'écrire.
+   * ## Les neutres apportent un dixième (Gaël, 28 octobre 2026)
+   *
+   * Un neutre a `team_id` nul : sa ferveur ne remontait à aucune tribune.
+   * Elle remonte désormais au club qu'il a poussé — le camp (`side`) sur le
+   * match — à hauteur de `ferveur.neutre_tribune` (un dixième par défaut).
+   * Il ne devient pas supporter pour autant : la division ne le compte pas.
+   * `neutres` dit ce que les neutres ont apporté, inclus dans `ferveur`.
+   *
+   * ## La division : les supporters actifs, et au moins `tribune.plancher`
+   *
+   * Un compte fermé ne pèse plus, ni sur la ferveur ni sur le nombre de
+   * supporters. Le plancher (5 par défaut) empêche qu'un club d'un seul
+   * supporter et de quelques neutres passe devant tout le monde. Un club
+   * sans supporter actif figure dès que des neutres l'ont poussé.
+   *
+   * ## La période, comme SUPPORTERS
+   *
+   * `saison` (par défaut) repart au lancement de chaque saison, `mois` compte
+   * les trente derniers jours, `toujours` le cumul. Mêmes fenêtres, même
+   * repli sans schéma, que `supporters`.
    */
-  async function tribunes(limite = 50) {
-    return memo(`trib:${limite}`, () => q(
-      `SELECT t.id, t.name, t.logo, t.country,
-              COUNT(DISTINCT f.user_id) AS supporters,
-              COALESCE(SUM(x.ferveur), 0) AS ferveur,
-              ROUND(COALESCE(SUM(x.ferveur), 0) / GREATEST(COUNT(DISTINCT f.user_id), 1)) AS moyenne
-         FROM user_follows f
-         JOIN teams t ON t.id = f.team_id
-         LEFT JOIN (${FERVEUR}) x
-                ON x.user_id = f.user_id AND x.team_id = f.team_id
-         GROUP BY t.id, t.name, t.logo, t.country
-        HAVING supporters >= 1
-        ORDER BY moyenne DESC, ferveur DESC
-        LIMIT ${Number(limite) || 50}`));
+  async function tribunes(periode = 'saison', limite = 50) {
+    const p = periodeDe(periode);
+    const n = Number(limite) || 50;
+    const part = partNeutre();
+    const plancher = plancherTribune();
+    return memo(`trib:${p}:${n}:${part}:${plancher}`, async () => {
+      const lire = (fenetre) => {
+        const x = `(SELECT x.* FROM (${FERVEUR}) x
+                     ${fenetre ? `LEFT JOIN (${EN_COURS}) s ON 1 = 1` : ''}
+                    WHERE 1 = 1
+                          ${p === 'mois' ? 'AND x.quand > (NOW(3) - INTERVAL 30 DAY)' : ''}
+                          ${fenetre ? `AND (s.id IS NULL OR (${dansFenetre('x', 's')}))` : ''})`;
+        return q(
+          `SELECT t.id, t.name, t.logo, t.country,
+                  COALESCE(s.n, 0) AS supporters,
+                  ROUND(COALESCE(c.ferveur, 0)) AS ferveur,
+                  ROUND(COALESCE(c.neutres, 0)) AS neutres,
+                  ROUND(COALESCE(c.ferveur, 0) / GREATEST(COALESCE(s.n, 0), ${plancher})) AS moyenne
+             FROM teams t
+             LEFT JOIN (${SUPPORTERS_ACTIFS}) s ON s.team_id = t.id
+             LEFT JOIN (
+                   SELECT y.team_id, SUM(y.part) AS ferveur,
+                          SUM(CASE WHEN y.neutre = 1 THEN y.part ELSE 0 END) AS neutres
+                     FROM (
+                       SELECT x.team_id, x.ferveur AS part, 0 AS neutre
+                         FROM ${x} x
+                         JOIN users u ON u.public_id = x.user_id AND u.status = 'active'
+                         JOIN user_follows f ON f.user_id = x.user_id AND f.team_id = x.team_id
+                       UNION ALL
+                       SELECT CASE x.side WHEN 0 THEN fx.home_id WHEN 1 THEN fx.away_id END,
+                              x.ferveur * ${part}, 1
+                         FROM ${x} x
+                         JOIN users u ON u.public_id = x.user_id AND u.status = 'active'
+                         JOIN fixtures fx ON fx.id = x.fixture_id
+                        WHERE x.team_id IS NULL AND ${part} > 0
+                     ) y
+                    WHERE y.team_id IS NOT NULL
+                    GROUP BY y.team_id
+                  ) c ON c.team_id = t.id
+            WHERE COALESCE(s.n, 0) >= 1 OR COALESCE(c.ferveur, 0) > 0
+            ORDER BY moyenne DESC, ferveur DESC, t.name ASC
+            LIMIT ${n}`);
+      };
+      if (p !== 'saison') return lire(false);
+      try {
+        return await lire(true);
+      } catch (e) {
+        if (!estSchema(e)) throw e;
+        direUneFois('fenetre-tribunes', '[classement] les tribunes « saison » comptent sans '
+          + `fenêtre, schéma incomplet (${e.sqlMessage ?? e.message}) : applique `
+          + 'sql/saisons.sql puis sql/quotidien.sql');
+        return lire(false);
+      }
+    });
   }
 
   /* -------------------------------------------------------- duellistes */
@@ -427,8 +505,8 @@ export function createClassements({ pool, requireAuth,
      **Le club soutenu décide de ce qui remonte au groupe.** Un neutre — venu
      pousser sur un match dont aucun club n'est le sien — compte pour lui-même
      et pour la compétition, mais sa ligne porte `team_id` nul : elle ne
-     remonte ni à une tribune ni à un KOP, dont il n'est pas membre. C'est la
-     règle du jeu, et elle est écrite ici en une condition de jointure.
+     remonte à aucun KOP, dont il n'est pas membre, et à la tribune du camp
+     poussé pour un dixième seulement (`tribunesDe`).
 
      **L'entraînement ne compte pas.** Il s'écrit désormais — un joueur doit
      retrouver ses soirées dans son parcours — mais il ne rapporte rien à
@@ -442,13 +520,17 @@ export function createClassements({ pool, requireAuth,
      de duels se sont joués pour ce club » est une question qu'on pose devant
      une compétition, et à laquelle rien ne répondait. */
   /* Même filtre qu'à `FERVEUR` ci-dessus, et pour la même raison. */
+  /* `poussee` : le club que la ligne a poussé, celui du joueur ou, pour un
+     neutre, celui du camp choisi. Seules les tribunes s'en servent. */
   const SOURCE = `
-    SELECT vp.user_id, vp.team_id, vp.ferveur, 0 AS duel
+    SELECT vp.user_id, vp.team_id, vp.ferveur, 0 AS duel,
+           CASE vp.side WHEN 0 THEN f.home_id WHEN 1 THEN f.away_id END AS poussee
       FROM virage_presence vp
       JOIN fixtures f ON f.id = vp.fixture_id
      WHERE vp.classe = 1 AND f.league_id = ? AND f.season = ?
     UNION ALL
-    SELECT dr.user_id, dr.team_id, dr.ferveur, 1 AS duel
+    SELECT dr.user_id, dr.team_id, dr.ferveur, 1 AS duel,
+           CASE dr.side WHEN 0 THEN f.home_id WHEN 1 THEN f.away_id END AS poussee
       FROM duel_results dr
       JOIN fixtures f ON f.id = dr.fixture_id
      WHERE f.league_id = ? AND f.season = ? AND dr.mode = 'classe'`;
@@ -517,21 +599,35 @@ export function createClassements({ pool, requireAuth,
    * chantent. Sans cette division, le plus gros club gagne toujours et personne
    * ne défend le sien.
    */
+  /* **Les neutres y apportent leur part**, comme au classement TRIBUNES
+     (`ferveur.neutre_tribune`), et leurs duels comptent parmi ceux joués
+     pour le club qu'ils ont poussé. La division suit la même règle : les
+     supporters actifs, et au moins `tribune.plancher`. */
   async function tribunesDe(leagueId, saison, limite = 50) {
+    const part = partNeutre();
+    const plancher = plancherTribune();
     return q(
       `SELECT t.id, t.name, t.logo,
-              COALESCE(f.ferveur, 0) AS ferveur,
+              ROUND(COALESCE(f.ferveur, 0)) AS ferveur,
+              ROUND(COALESCE(f.neutres, 0)) AS neutres,
               COALESCE(f.duels, 0) AS duels,
               COALESCE(s.n, 0) AS supporters,
-              ROUND(COALESCE(f.ferveur, 0) / GREATEST(COALESCE(s.n, 1), 1)) AS moyenne
+              ROUND(COALESCE(f.ferveur, 0) / GREATEST(COALESCE(s.n, 0), ${plancher})) AS moyenne
          FROM (SELECT home_id AS team_id FROM fixtures WHERE league_id = ? AND season = ?
                UNION
                SELECT away_id FROM fixtures WHERE league_id = ? AND season = ?) plateau
          JOIN teams t ON t.id = plateau.team_id
-         LEFT JOIN (SELECT team_id, COUNT(*) AS n FROM user_follows GROUP BY team_id) s
+         LEFT JOIN (${SUPPORTERS_ACTIFS}) s
                 ON s.team_id = t.id
-         LEFT JOIN (SELECT y.team_id, SUM(y.ferveur) AS ferveur, SUM(y.duel) AS duels
-                      FROM (${SOURCE}) y GROUP BY y.team_id) f
+         LEFT JOIN (SELECT COALESCE(y.team_id, y.poussee) AS team_id,
+                           SUM(CASE WHEN y.team_id IS NULL THEN y.ferveur * ${part}
+                                    ELSE y.ferveur END) AS ferveur,
+                           SUM(CASE WHEN y.team_id IS NULL THEN y.ferveur * ${part}
+                                    ELSE 0 END) AS neutres,
+                           SUM(y.duel) AS duels
+                      FROM (${SOURCE}) y
+                     WHERE y.team_id IS NOT NULL OR y.poussee IS NOT NULL
+                     GROUP BY COALESCE(y.team_id, y.poussee)) f
                 ON f.team_id = t.id
         ORDER BY moyenne DESC, ferveur DESC, t.name ASC
         LIMIT ${Number(limite) || 50}`,
@@ -1604,9 +1700,9 @@ export function createClassements({ pool, requireAuth,
     res.json({ classement: await supporters(String(req.query.periode ?? 'saison')) });
   }));
 
-  router.get('/tribunes', safe(async (_req, res) => {
+  router.get('/tribunes', safe(async (req, res) => {
     res.set('cache-control', 'private, max-age=120');
-    res.json({ classement: await tribunes() });
+    res.json({ classement: await tribunes(String(req.query.periode ?? 'saison')) });
   }));
 
   /* **Le plancher voyage avec la liste.**
