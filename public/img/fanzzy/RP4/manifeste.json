@@ -1,6 +1,6 @@
 {
   "id": "RP4",
-  "rev": 12,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -102,7 +102,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7f0294ce7f7f"
+          "sha": "7f0294ce7f7f",
+          "cligne": true
         }
       }
     },

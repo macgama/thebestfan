@@ -1,6 +1,6 @@
 {
   "id": "RP28",
-  "rev": 13,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -51,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "64683a6dbd60"
+          "sha": "64683a6dbd60",
+          "cligne": true
         }
       }
     },

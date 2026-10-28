@@ -1,6 +1,6 @@
 {
   "id": "RP23",
-  "rev": 12,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "518dbd7c16ed"
+          "sha": "518dbd7c16ed",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -51,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fb1272ad5765"
+          "sha": "fb1272ad5765",
+          "cligne": true
         }
       }
     },
@@ -145,7 +147,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "115dcab22912"
+          "sha": "115dcab22912",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

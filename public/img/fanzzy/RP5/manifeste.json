@@ -1,6 +1,6 @@
 {
   "id": "RP5",
-  "rev": 9,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6f17a750bb8b"
+          "sha": "6f17a750bb8b",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -104,7 +105,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4e91b4033489"
+          "sha": "4e91b4033489",
+          "cligne": true
         }
       }
     },
@@ -156,7 +158,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fd4616085b57"
+          "sha": "fd4616085b57",
+          "cligne": true
         }
       }
     }

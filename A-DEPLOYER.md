@@ -1,11 +1,12 @@
 # À déposer sur Infomaniak
 
-**Les Fanzzy en skin Halloween clignent** (branche
-`claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+**Les Fanzzy en skins Halloween, Préhistorique et Apocalyptique clignent**
+(branche `claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** : des images et des réglages.
 
-- 159 âges Halloween RP et AN sur 258 clignent (aucun avant) ; paupières
-  tirées de la figure « yeux fermés » des planches, sans crédits.
+- Âges RP et AN qui clignent (aucun avant) : Halloween 159, Préhistorique
+  154, Apocalyptique 136, sur 258 par skin. Paupières tirées de la figure
+  « yeux fermés » des planches, sans crédits.
 
 ---
 

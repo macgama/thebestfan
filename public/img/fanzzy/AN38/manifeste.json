@@ -1,6 +1,6 @@
 {
   "id": "AN38",
-  "rev": 9,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ca51cec4e579"
+          "sha": "ca51cec4e579",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0f46d1512f52"
+          "sha": "0f46d1512f52",
+          "cligne": true
         },
         "halloween": {
           "etats": [

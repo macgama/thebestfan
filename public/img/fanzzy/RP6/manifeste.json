@@ -1,6 +1,6 @@
 {
   "id": "RP6",
-  "rev": 8,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -103,7 +103,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fdd80060a73e"
+          "sha": "fdd80060a73e",
+          "cligne": true
         }
       }
     },

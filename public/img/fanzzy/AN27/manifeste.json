@@ -1,6 +1,6 @@
 {
   "id": "AN27",
-  "rev": 8,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -78,7 +78,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "90dccf106f78"
+          "sha": "90dccf106f78",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -90,7 +91,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "195500ac68a3"
+          "sha": "195500ac68a3",
+          "cligne": true
         },
         "halloween": {
           "etats": [

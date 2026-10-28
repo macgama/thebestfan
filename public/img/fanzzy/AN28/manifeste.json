@@ -1,6 +1,6 @@
 {
   "id": "AN28",
-  "rev": 8,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b31ba9006d2b"
+          "sha": "b31ba9006d2b",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -51,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ad797a743d5d"
+          "sha": "ad797a743d5d",
+          "cligne": true
         }
       }
     },
