@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <title>Duel de tribunes — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -210,7 +211,7 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
    rembourrage du bas garde l'ombre dure de la bâche et l'encoche. */
 .entree{display:flex;align-items:center;gap:12px;margin:0 0 2px;padding-top:10px}
 .entree[data-colle]{position:sticky;z-index:5;bottom:0;
-  padding-bottom:calc(env(safe-area-inset-bottom) + 2px);
+  padding-bottom:calc(var(--bas) + 2px);
   background:linear-gradient(180deg,rgba(10,13,17,0),rgba(10,13,17,.94) 8px)}
 /* **Soixante pixels, sous-libellé compris** (la direction) : le rembourrage
    de `.tbf-bloc` en faisait soixante-quatorze, quatorze de plus à loger au
@@ -589,7 +590,7 @@ html[data-calme~=animations] :is(.ultime[data-etat=pret],.ultime[data-etat=pret]
    lisent entiers, et le geste se nomme en grand à l'ouverture de sa
    fenêtre. */
 .chants.tbf-eventail{--carte-l:min(64px,calc(100% / 4.8));
-  margin-bottom:calc(16px + env(safe-area-inset-bottom))}
+  margin-bottom:calc(16px + var(--bas))}
 /* Les cartes de chant gardent leur dessin plein et lisible : un chant n'est
    pas un personnage, il ne respire pas (`.fond`, et non `.illu`). Son
    cadrage, dessin par dessin, est à la feuille : la page n'en écrit pas. */
@@ -645,7 +646,7 @@ html[data-calme~=animations] :is(.ultime[data-etat=pret],.ultime[data-etat=pret]
   z-index:72;display:flex;flex-direction:column;overflow:hidden;
   background:radial-gradient(120% 55% at 50% -10%,rgba(224,64,44,.2),transparent 60%),
     linear-gradient(180deg,#11161D,#05070A 55%,#05070A);
-  padding:calc(env(safe-area-inset-top) + 10px) 0 calc(env(safe-area-inset-bottom) + 10px)}
+  padding:calc(env(safe-area-inset-top) + 10px) 0 calc(var(--bas) + 10px)}
 .grand-haut{flex:none;display:grid;justify-items:center;gap:6px;padding:0 16px 6px;overflow:clip}
 .grand-haut h2{margin:0;font-family:var(--banner);font-size:clamp(15px,4.4vw,19px);font-weight:700;
   letter-spacing:.28em;line-height:1;padding:4px 10px 3px 14px;background:var(--craie);color:var(--encre);
@@ -1006,7 +1007,7 @@ html[data-calme~="animations"] #affiche.joue :is(*,.camps){animation:none!import
   clip-path:inset(0 var(--tbf-cote));
   flex-direction:column;align-items:center;justify-content:safe center;gap:12px;
   overflow-y:auto;text-align:center;height:100vh;height:100dvh;
-  padding:calc(env(safe-area-inset-top) + 28px) 16px calc(env(safe-area-inset-bottom) + 28px)}
+  padding:calc(env(safe-area-inset-top) + 28px) 16px calc(var(--bas) + 28px)}
 .voile.on{display:flex}
 .voile h2{font-family:var(--banner);font-size:23px;letter-spacing:.1em;margin:0;opacity:1}
 /* **À pleine intensité** : le texte du voile porte aussi la salle d'attente
@@ -1025,7 +1026,7 @@ html[data-calme~="animations"] #affiche.joue :is(*,.camps){animation:none!import
    sert au premier rendu. Un ticket (lot 6) : on le lit, on ne le touche
    pas. */
 .toast{position:fixed;left:50%;z-index:90;transform:translateX(-50%);
-  bottom:calc(var(--chants-h, 124px) + 16px + 12px + env(safe-area-inset-bottom));
+  bottom:calc(var(--chants-h, 124px) + 16px + 12px + var(--bas));
   display:none;max-width:min(88vw,380px);text-align:center;font-size:13px;line-height:1.4;pointer-events:none}
 .toast.on{display:block}
 
@@ -1033,7 +1034,7 @@ html[data-calme~="animations"] #affiche.joue :is(*,.camps){animation:none!import
    main, et il défile seul. Sa matière est celle du panneau qui flotte
    (`.tbf-apports-p--flottant`, ui.css) : la page ne pose que sa place. */
 .tbf-apports-p.duel-apports{position:fixed;z-index:60;left:50%;translate:-50% 0;
-  bottom:calc(var(--chants-h, 124px) + 96px + env(safe-area-inset-bottom));
+  bottom:calc(var(--chants-h, 124px) + 96px + var(--bas));
   width:min(calc(100% - 28px),420px)}
 
 /* **Le mouvement part, l'information reste.** Sous `prefers-reduced-motion`
