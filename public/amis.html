@@ -966,9 +966,9 @@ function vueFiche() {
   if (F.echanges.length) {
     html += `<div class="bloc"><h3>ÉCHANGES EN COURS</h3>${F.echanges.map((e) => `
       <div class="echange">${e.deMoi
-        ? `Tu proposes <b>${esc(e.donne.nom)}</b> contre son <b>${esc(e.demande.nom)}</b>.
+        ? `<span>Tu proposes <b>${esc(e.donne.nom)}</b> contre son <b>${esc(e.demande.nom)}</b>.</span>
           <div class="quoi"><button class="bt tbf-plaque" data-echnon="${esc(e.id)}">ANNULER</button></div>`
-        : `${esc(a.pseudo)} te propose <b>${esc(e.donne.nom)}</b> contre ton <b>${esc(e.demande.nom)}</b>.
+        : `<span>${esc(a.pseudo)} te propose <b>${esc(e.donne.nom)}</b> contre ton <b>${esc(e.demande.nom)}</b>.</span>
           <div class="quoi"><button class="bt tbf-plaque" data-ton="vert" data-echoui="${esc(e.id)}">ACCEPTER</button>
           <button class="bt tbf-plaque" data-ton="flare" data-echnon="${esc(e.id)}">NON</button></div>`}</div>`).join('')}</div>`;
   }
