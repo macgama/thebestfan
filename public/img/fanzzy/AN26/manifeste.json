@@ -1,6 +1,6 @@
 {
   "id": "AN26",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -141,6 +141,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "046933176513"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "1b61a7781b2b"
         }
       }
     }
