@@ -222,6 +222,25 @@ r = await call('/api/football/search?q=Paris&pays=France');
 check('le nom cherché passe toujours',
   (r.json.teams ?? []).some((t) => t.id === 85));
 
+/* La Suisse **passée par un match**. Un match n'apporte que le nom et le
+   logo de ses équipes ; écrits tels quels, ils effaçaient le pays et la
+   marque de sélection. « suisse » ne trouvait plus rien, « switzer » la
+   rangeait après les clubs, sous son nom anglais. */
+await foot.store.upsertTeam({ id: 701, name: 'Switzerland', code: 'SUI', country: 'Switzerland', logo: 'ch.png', national: true });
+await foot.store.upsertTeam({ id: 701, name: 'Switzerland', logo: 'ch.png' });
+const [[suisse]] = await pool.query('SELECT country, national FROM teams WHERE id = 701');
+check('un match n’efface ni le pays ni la marque de sélection',
+  suisse.country === 'Switzerland' && Number(suisse.national) === 1);
+
+/* Et une ligne déjà abîmée en base : la sélection se reconnaît à son nom. */
+await pool.query(
+  `INSERT INTO teams (id,name,country,logo,national) VALUES
+     (702,'Switzerland W',NULL,'ch.png',0), (703,'Servette II','Switzerland','s.png',0)`);
+r = await call('/api/football/search?q=suisse&pays=Switzerland,Switzerland');
+check('« suisse » trouve la sélection, même sans marque ni pays',
+  (r.json.teams ?? []).slice(0, 2).map((t) => t.id).sort().join() === '701,702'
+  || (console.log('        rendu :', r.json.teams?.map((t) => t.name)), false));
+
 /* ------------------------------------------------------- abonnement */
 
 // Le club a déjà été enregistré par la recherche : son calendrier doit quand
