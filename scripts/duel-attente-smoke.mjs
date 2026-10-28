@@ -135,6 +135,12 @@ let code;
     m.file?.fixtureId === 901 && m.file?.absent === true && m.file?.adversaire === false
     || (console.log('        /moi :', JSON.stringify(m)), false));
   check('et /etat qu’il est en file', (await etat(HOTE)).enFile === true);
+  /* Les files de tous, sur /moi : c'est ce que le rappel relit sur chaque
+     page pour rallumer « Quelqu'un t'attend » sans recharger. */
+  const mt = await moi(TIERS);
+  check('/moi donne aussi aux autres les files où quelqu’un attend',
+    (mt.attentes ?? []).some((a) => a.fixtureId === 901 && a.camps[0] === 1)
+    || (console.log('        /moi :', JSON.stringify(mt)), false));
 }
 
 /* --------------------------------------- un adversaire arrive : on l'attend */

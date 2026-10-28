@@ -58,9 +58,14 @@ import { grandLivreFerme } from './auth/schema.js';
     fois par partie — la clé est l'identifiant de la partie (des tirs : la
     série). `chant` et `deplacement` de même ; `tifo` et `boss`, une fois
     par match ou par semaine et par club — la clé dit le club et le match, ou
-    le club et le lundi de la semaine. */
+    le club et le lundi de la semaine.
+
+    `cadeau` et `defi` (28 octobre 2026) : entre amis. Le cadeau du jour, une
+    fois par cadeau — la clé est son numéro, `C<id>` pour celui qui reçoit,
+    `M<id>` pour celui qui offre ; le défi de la semaine, une fois par ami et
+    par semaine — la clé dit le lundi et l'ami. */
 export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
-  'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss'];
+  'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',

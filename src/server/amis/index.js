@@ -103,7 +103,7 @@ const RECHERCHES_PAR_MINUTE = 30;
  *   § 18.1), et ce module lui dit quand une amitié change.
  */
 export function createAmis({ pool, requireAuth, kop = null, presence = null,
-  notifications = null }) {
+  notifications = null, ensemble = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -754,7 +754,12 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
       q(`SELECT COUNT(*) AS n FROM kop_invites i JOIN kops k ON k.id = i.kop_id
           WHERE i.user_id = ?`, [id]),
     ]);
-    res.json({ recues: Number(l?.n ?? 0), kop: Number(k?.n ?? 0) });
+    /* Ce qui attend aussi entre amis (`ensemble.js`) : les gestes pas encore
+       vus et les échanges proposés. Ils comptent sur la même pastille — c'est
+       sur la page des amis qu'on les trouve. */
+    const plus = ensemble ? await ensemble.nonVus(id).catch(() => null) : null;
+    res.json({ recues: Number(l?.n ?? 0) + (plus?.gestes ?? 0) + (plus?.echanges ?? 0),
+      kop: Number(k?.n ?? 0), ...(plus ?? {}) });
   }));
 
   router.get('/suggestions', requireAuth, safe(async (req, res) =>
