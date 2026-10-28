@@ -177,6 +177,25 @@ check('le sticker du duel s’allume dans son menu', await jusqua(() => T.page.e
   document.querySelector('#tbf-tiroir .tbf-case[href="/duel-nvn"]')?.dataset.etat === 'attend'), 3000));
 await T.page.browserContext().close();
 
+/* L'onglet EN ATTENTE de la page du duel (Gaël, 28 octobre 2026) : un joueur
+   qui prépare son duel voit combien attendent, et un appui le met sur la
+   bonne file — match, format et camp déjà choisis. */
+const D = await ouvrir(AMI, '/duel-nvn');
+const ongletAttente = () => D.page.evaluate(() => {
+  const b = document.querySelector('[data-portee="attente"]');
+  return b ? { texte: b.innerText.replace(/\s+/g, ' ').trim(), zero: b.hasAttribute('data-zero') } : null;
+});
+check('l’onglet EN ATTENTE compte le duel qui attend', await jusqua(async () => {
+  const o = await ongletAttente();
+  return o && /EN ATTENTE\s*1/.test(o.texte) && !o.zero;
+}, 8000) || (console.log('        onglet :', JSON.stringify(await ongletAttente())), false));
+await D.page.click('[data-portee="attente"]');
+check('un appui montre ce match, son format et le camp qui manque', await jusqua(() => D.page.evaluate(() =>
+  document.querySelectorAll('.matchs [data-fixture], .matchs .match-choisi').length >= 1
+  && S.enAttente && S.fixtureId === 7 && S.format === '1v1' && S.camp === 1)));
+await capture(D.page, '0-onglet-en-attente');
+await D.page.browserContext().close();
+
 /* 2. Il invite son ami depuis le jeu. */
 await H.page.click('#inviterAmi');
 check('la liste de ses amis se déplie', await jusqua(() => H.page.evaluate(() =>
