@@ -6507,5 +6507,10 @@
  "{0}BOOSTER": "{0}SOBRE",
  "sa carte est dans les boosters": "su carta está en los sobres",
  "Ultimate : {0} — sa carte est dans les boosters": "Ultimate: {0} — su carta está en los sobres",
- "Couper la musique": "Silenciar música"
+ "Couper la musique": "Silenciar música",
+ "MES SAISONS": "MIS TEMPORADAS",
+ "<0>1</0> tampon": "<0>1</0> sello",
+ "<0>{0}</0> tampons": "<0>{0}</0> sellos",
+ "SAISON {0} — {1}": "TEMPORADA {0} — {1}",
+ "<0>{0}</0> de ferveur": "<0>{0}</0> de fervor"
 }

@@ -422,6 +422,38 @@ if (vu.encore) {
   }
 }
 
+/* ------------------------------------------------------- mes saisons
+
+   La base de ce banc n'a pas de saison : le bloc reste caché. Puis on lui
+   sert deux saisons finies, comme `/moi` les rend (`classement:smoke`
+   éprouve le serveur), et l'on vérifie ce que l'écran en écrit. */
+check('sans saison finie, MES SAISONS ne se montre pas', await page.evaluate(() =>
+  document.getElementById('historique').hidden && document.getElementById('historiqueTitre').hidden));
+const hist = await page.evaluate(() => {
+  place = { ...place, titres: [{ nom: 'Revenu pour de bon', source: 'carnet', saison: 11 }],
+    historique: [
+      { id: 12, numero: 2, nom: 'La trêve', tampons: 1, ferveur: 0 },
+      { id: 11, numero: 1, nom: 'La reprise', tampons: 652, ferveur: 48000, rang: 27, sur: 140,
+        division: { n: 3, id: 'fervent', nom: 'FERVENT' } }] };
+  rendreSaison();
+  const bloc = document.getElementById('historique');
+  return { visible: !bloc.hidden && !document.getElementById('historiqueTitre').hidden,
+    lignes: [...bloc.querySelectorAll('.hist-ligne')].map((l) => l.textContent.replace(/\s+/g, ' ').trim()),
+    division: bloc.querySelector('.tbf-division')?.dataset.n,
+    large: bloc.scrollWidth, colonne: bloc.clientWidth };
+});
+check('MES SAISONS : une ligne par saison finie', hist.visible && hist.lignes.length === 2
+  || (console.log('        il montre :', JSON.stringify(hist)), false));
+check('la saison 1 dit sa place, sa division, ses tampons, sa ferveur et son titre',
+  /SAISON 1 — La reprise/i.test(hist.lignes[1]) && /27e sur 140/.test(hist.lignes[1])
+  && /652 tampons/.test(hist.lignes[1]) && /48\s000 de ferveur/.test(hist.lignes[1])
+  && /FERVENT/.test(hist.lignes[1]) && /Revenu pour de bon/.test(hist.lignes[1]) && hist.division === '3'
+  || (console.log('        il montre :', hist.lignes[1]), false));
+check('sans place ni division, la ligne dit seulement ce qu’on a fait (1 tampon, au singulier)',
+  /1 tampon\b/.test(hist.lignes[0]) && !/sur/.test(hist.lignes[0])
+  || (console.log('        il montre :', hist.lignes[0]), false));
+check('et le bloc tient dans la colonne', hist.large <= hist.colonne + 1);
+
 check('aucune erreur de script sur le profil', erreurs.length === 0
   || (console.log('       ', erreurs.slice(0, 3)), false));
 
