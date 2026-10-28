@@ -45,6 +45,7 @@ await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, contenus, abonnem
   admin_audit, reglages, recompenses, missions_jour, compteurs_jour, user_nouveautes`);
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql', 'admin.sql',
+                 'kop.sql', 'amis.sql',
                  // Sans elle, l'onglet SAISONS se monte sur une table absente et
                  // le contrôle mesurerait un écran vide plutôt que l'écran.
                  'saisons.sql','contenus.sql',
@@ -232,7 +233,7 @@ check('aucun bouton ne supprime une carte', await page.evaluate(() =>
    signale qu'il en manque. */
 
 await page.evaluate(() => [...document.querySelectorAll('nav button')]
-  .find((b) => /TENUES/i.test(b.textContent))?.click());
+  .find((b) => /SKINS/i.test(b.textContent))?.click());
 
 check('la liste des thèmes se peuple', await jusqua(async () =>
   await page.evaluate(() => document.querySelectorAll('#corps .fzrow').length >= 3)));
@@ -273,7 +274,7 @@ check('et en disant ce qui se passe s’il n’y en a pas',
 // L'identifiant devient un nom de dossier : il ne se renomme pas, sans quoi
 // les dessins déjà produits resteraient derrière lui.
 await page.evaluate(() => [...document.querySelectorAll('nav button')]
-  .find((b) => /TENUES/i.test(b.textContent))?.click());
+  .find((b) => /SKINS/i.test(b.textContent))?.click());
 await jusqua(async () => await page.evaluate(() =>
   [...document.querySelectorAll('#corps .fzrow')].some((r) => /zztest/.test(r.textContent))));
 await page.evaluate(() => [...document.querySelectorAll('#corps .fzrow')]
@@ -548,6 +549,8 @@ check('lancer une saison demande confirmation', await page.evaluate(() =>
   /LANCER LA SAISON/i.test(document.body.textContent)));
 check('et la confirmation nomme ce qui s’ouvre', await page.evaluate(() =>
   /série\(s\)/.test(document.body.textContent)));
+check('et dit que rien ne se ferme', await page.evaluate(() =>
+  /Rien ne se ferme/.test(document.body.textContent)));
 await dire('LANCER');
 
 check('la saison est lancée en base', await jusqua(async () => {
@@ -555,13 +558,21 @@ check('la saison est lancée en base', await jusqua(async () => {
   return r[0]?.lancee_a != null;
 }));
 
-/* Et le jeu l'applique : la série cochée est désormais la seule ouverte.
-   Sans ce contrôle, « lancée » ne serait qu'une date dans une colonne. */
+/* Et le jeu l'applique : la série cochée est ouverte, **et aucune autre ne
+   s'est fermée** (choix de Gaël du 28 octobre 2026 : une saison ajoute au jeu,
+   elle ne lui retire rien). Sans ce contrôle, « lancée » ne serait qu'une date
+   dans une colonne. */
 {
-  const { seriesOuvertes } = await import('../src/server/fanzzy/catalogue.js');
+  const { seriesOuvertes, chargerSeries } = await import('../src/server/fanzzy/catalogue.js');
+  const { SETS } = await import('../src/shared/fanzzy/dex.js');
   const ouvertes = seriesOuvertes();
-  check('et le jeu n’ouvre plus qu’elle',
-    Array.isArray(ouvertes) && ouvertes.length === 1 && ouvertes[0] === serieChoisie);
+  check('et le jeu l’ouvre sans fermer les autres séries',
+    Array.isArray(ouvertes) && ouvertes.includes(serieChoisie)
+    && SETS.every((x) => ouvertes.includes(x.id))
+    || (console.log('        ouvertes :', ouvertes), false));
+  // La suite reprend sur la saison 1 telle que la base la pose : sans série nommée.
+  await pool.query(`UPDATE saisons SET series = JSON_ARRAY() WHERE numero = 1`);
+  await chargerSeries(pool);
 }
 
 /* ------------------------------------------ le retour en arrière, et l'effacement
@@ -845,8 +856,8 @@ if (process.env.CAPTURE) {
      d'avoir perdu un onglet, alors qu'il en avait gagné un. Un nombre attendu
      se périme à chaque ajout ; une liste de noms dit ce qu'on veut vraiment
      savoir : **le rangement n'a fait disparaître personne.** */
-  const attendus = ['SAISONS', 'FANZZY', 'CONTENUS', 'TENUES', 'RÉGLAGES',
-    'APERÇU', 'JOUEURS', 'COMPÉTITIONS', 'JOURNAL'];
+  const attendus = ['SAISONS', 'FANZZY', 'CONTENUS', 'SKINS', 'RÉGLAGES',
+    'APERÇU', 'JOUEURS', 'KOP', 'COMPÉTITIONS', 'JOURNAL'];
   const vus = await page.evaluate(() =>
     [...document.querySelectorAll('#nav button')].map((b) => b.textContent.trim()));
   check('le rangement n’a fait disparaître aucun onglet',
@@ -940,6 +951,58 @@ await jusqua(async () =>
   check('le compte annonce ce qui est affiché et sur combien',
     /affichée\(s\) sur/.test(await page.evaluate(() =>
       document.querySelector('.compte')?.textContent ?? '')));
+}
+
+/* ------------------------------------- la collection d'un joueur, et les KOP
+
+   Demande de Gaël du 28 octobre 2026 : depuis JOUEURS, voir ce qu'un joueur
+   possède et lui offrir un Fanzzy ; un onglet KOP pour renommer ou dissoudre
+   un groupe. */
+{
+  const J = 'eeeeeeee-0000-0000-0000-0000000000e1';
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
+    [J, 'fan@ex.fr', 'Tifosi']);
+  await pool.query(`INSERT INTO user_wallet (user_id,scarves,packs) VALUES (?,0,0)`, [J]);
+  await pool.query(`INSERT INTO kops (id, team_id, nom, createur) VALUES ('k-ui', 7, 'Curva Sud', ?)`, [J]);
+
+  await page.evaluate(() => [...document.querySelectorAll('#nav button')]
+    .find((b) => b.textContent.trim() === 'JOUEURS')?.click());
+  await jusqua(async () => page.evaluate(() => Boolean(document.querySelector('[data-a="collection"]'))));
+  await page.evaluate((id) => document.querySelector(`[data-id="${id}"] [data-a="collection"]`)?.click(), J);
+  check('« Collection » ouvre le panneau du joueur sous sa ligne', await jusqua(async () =>
+    page.evaluate(() => /COLLECTION DE TIFOSI/.test(
+      document.querySelector('tr[data-col]')?.textContent ?? ''))));
+  check('et il dit tout ce qu’il possède, même vide', await page.evaluate(() =>
+    /0 Fanzzy · 0 skins · 0 cartes Ultimate/.test(document.querySelector('tr[data-col]')?.textContent ?? '')));
+  check('seuls les champs de ce qu’on offre se montrent', await page.evaluate(() => {
+    const l = document.querySelector('tr[data-col]');
+    return !l.querySelector('[data-champ-offre="fanzzy"]').hidden
+      && l.querySelector('[data-champ-offre="skin"]').hidden;
+  }));
+  await page.evaluate(() => document.querySelector('tr[data-col] [data-offrir]').click());
+  check('« Offrir » donne le Fanzzy choisi, et le panneau se met à jour', await jusqua(async () => {
+    const [r] = await pool.query('SELECT COUNT(*) AS n FROM user_fanzzy WHERE user_id = ?', [J]);
+    return Number(r[0].n) === 1 && await page.evaluate(() =>
+      /1 Fanzzy/.test(document.querySelector('tr[data-col]')?.textContent ?? ''));
+  }));
+
+  await page.evaluate(() => [...document.querySelectorAll('#nav button')]
+    .find((b) => b.textContent.trim() === 'KOP')?.click());
+  check('l’onglet KOP liste les groupes', await jusqua(async () =>
+    page.evaluate(() => /Curva Sud/.test(document.querySelector('main')?.textContent ?? ''))));
+  await page.evaluate(() => document.querySelector('[data-kop="k-ui"] [data-k="supprimer"]').click());
+  await dodo(400);
+  await dire('SUPPRIMER');
+  check('un KOP se supprime après confirmation', await jusqua(async () => {
+    const [r] = await pool.query(`SELECT COUNT(*) AS n FROM kops WHERE id = 'k-ui'`);
+    return Number(r[0].n) === 0;
+  }));
+  check('et la collection de son créateur reste entière', await jusqua(async () => {
+    const [r] = await pool.query('SELECT COUNT(*) AS n FROM user_fanzzy WHERE user_id = ?', [J]);
+    return Number(r[0].n) === 1;
+  }));
+  check('sans erreur de script en chemin', erreurs.length === 0
+    || (console.log('        erreurs :', erreurs), false));
 }
 
 await nav.close();

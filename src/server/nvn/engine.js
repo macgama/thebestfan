@@ -20,6 +20,7 @@ import { ouverts, stadeDuMatch } from '../contenus/index.js';
    deux arènes composent les mêmes modificateurs, elles doivent les nommer
    pareil. Voir `src/shared/apports.js`. */
 import { apportsDe, seulsLesMods } from '../../shared/apports.js';
+import { clubDe } from '../../shared/fanzzy/clubs.js';
 import { piecesPortees } from '../../shared/fanzzy/inventaire.js';
 
 /**
@@ -1379,7 +1380,9 @@ export class DuelNvN {
             fanzzy: f ? { nom: f.nom, mods: dort && f.legende ? {} : f.modsBase } : null,
             stuff: (f?.stuff ?? []).filter((x) => !(dort && x === f.stuffLegende)),
             // Le lien à son club, posé par `lierLeDeck` à l'entrée en file.
-            club: f?.lien ?? null,
+            club: f?.lien ? { ...f.lien, pleinClub: f.pleinClub ?? 0 } : null,
+            // Son club à lui, pour le COMBO de ses pièces de club.
+            clubPorteur: f ? clubDe(f.id) ?? f.club ?? null : null,
             stade: this.stade,
           });
         })(),

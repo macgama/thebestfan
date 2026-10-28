@@ -13,6 +13,8 @@
  *      choisir. Un débutant qui chante juste bat un vétéran mal équipé.
  */
 
+import { reglage } from '../reglages.js';
+
 /**
  * L'amorçage des tenues.
  *
@@ -515,6 +517,165 @@ export const STUFF = [
     texte: 'Il a vu toutes les finales. On ne le contre pas, on ne le soulève pas.',
     mods: { parryResist: 1.45, holdBonus: 1.4, mashBonus: 0.78, tempoWindow: 0.86 } },
 
+  /* ------------------------------------------- LES TERRACES, les pièces de club
+
+     Demande de Gaël du 28 octobre 2026 : deux pièces par club de la série AN,
+     une commune et une rare, **gagnables par tout le monde**. `club` est
+     l'identifiant API-Football du club, comme dans `shared/fanzzy/clubs.js` ;
+     le nom en commentaire n'est là que pour qui relit, il ne descend jamais
+     plus bas. Même prudence que les fiches et les cris : ni écusson, ni nom,
+     ni maillot, ni surnom — les couleurs ou la ville.
+
+     Portée par un Fanzzy lié au même club, une pièce de club fait **COMBO**
+     (son revers s'adoucit, `modsDeLaPiece`) ; dans un match du club
+     principal du joueur, elle rapporte en plus (`pleinClub`, `clubs.js`).
+     Jamais plus de force : la récompense du fan est dans ce qu'il gagne.
+
+     Fermées tant que leur dessin n'est pas fait : elles s'ouvrent une par une
+     dans CONTENUS. Une série de clubs sans ses deux pièces par club ne passe
+     pas `stuff-clubs:smoke`. */
+
+  // Arsenal
+  { id: 'an-mitaines', nom: 'Mitaines rouge et blanc', rar: 'commune', club: 42, publie: false,
+    texte: 'Les doigts au chaud jusqu’au bout. Ils tapent moins fort.',
+    mods: { holdBonus: 1.2, mashBonus: 0.88 } },
+  { id: 'an-horloge', nom: 'Horloge de la tribune', rar: 'rare', club: 42, publie: false,
+    texte: 'Elle bat la mesure au-dessus de toi. Tu retiens ton souffle pour l’entendre.',
+    mods: { tempoWindow: 1.28, breathBonus: 0.86 } },
+  // Aston Villa
+  { id: 'an-thermos', nom: 'Thermos bordeaux et ciel', rar: 'commune', club: 66, publie: false,
+    texte: 'Une gorgée et la voix revient. Les mains, elles, restent sur le gobelet.',
+    mods: { breathBonus: 1.18, parryBonus: 0.9 } },
+  { id: 'an-enclume', nom: 'Enclume de poche', rar: 'rare', club: 66, publie: false,
+    texte: 'Chaque coup sonne comme à la forge. Il faut le temps de relever le marteau.',
+    mods: { mashBonus: 1.28, tempoInterval: 70 } },
+  // Bournemouth
+  { id: 'an-seau-plage', nom: 'Seau de plage rayé', rar: 'commune', club: 35, publie: false,
+    texte: 'On y remet ce qu’on a perdu. Il y reste toujours un peu de sable.',
+    mods: { refundBonus: 1.18, perfectBonus: 0.88 } },
+  { id: 'an-transat', nom: 'Transat de la promenade', rar: 'rare', club: 35, publie: false,
+    texte: 'Tu tiens tout le match face à la mer. Tu en sors lentement.',
+    mods: { holdBonus: 1.28, mashTime: 400 } },
+  // Brentford
+  { id: 'an-bob', nom: 'Bob rayé rouge et blanc', rar: 'commune', club: 55, publie: false,
+    texte: 'Il garde l’œil sur le rythme. Il ne garde pas la tête au chaud.',
+    mods: { tempoWindow: 1.18, holdBonus: 0.9 } },
+  { id: 'an-rame', nom: 'Rame d’aviron', rar: 'rare', club: 55, publie: false,
+    texte: 'Tout le virage rame dans le même sens. Ça essouffle.',
+    mods: { mashBonus: 1.26, breathBonus: 0.86 } },
+  // Brighton
+  { id: 'an-sucre-orge', nom: 'Bâton de sucre d’orge', rar: 'commune', club: 51, publie: false,
+    texte: 'Le sucre redonne de la voix. Il colle un peu au refrain.',
+    mods: { breathBonus: 1.18, tempoWindow: 0.9 } },
+  { id: 'an-jeton', nom: 'Jeton d’arcade de la jetée', rar: 'rare', club: 51, publie: false,
+    texte: 'Un jeton, un geste parfait. Le suivant, il faut le gagner.',
+    mods: { perfectBonus: 1.3, holdBonus: 0.86 } },
+  // Chelsea
+  { id: 'an-gants-roi', nom: 'Gants bleu roi', rar: 'commune', club: 49, publie: false,
+    texte: 'Rien ne t’atteint dans ces gants-là. Rien ne claque non plus.',
+    mods: { parryResist: 1.2, mashBonus: 0.88 } },
+  { id: 'an-arrosoir', nom: 'Arrosoir du salon des fleurs', rar: 'rare', club: 49, publie: false,
+    texte: 'La voix repousse comme un massif au printemps. Pas d’épines pour piquer.',
+    mods: { breathBonus: 1.28, parryBonus: 0.84 } },
+  // Coventry City
+  { id: 'an-sonnette', nom: 'Sonnette de vélo bleu ciel', rar: 'commune', club: 1346, publie: false,
+    texte: 'Elle sonne pile à temps. Elle n’impressionne personne.',
+    mods: { tempoWindow: 1.18, parryBonus: 0.9 } },
+  { id: 'an-guidon', nom: 'Guidon chromé', rar: 'rare', club: 1346, publie: false,
+    texte: 'Tu prends le refrain en danseuse. Pas le temps de souffler dans la descente.',
+    mods: { tempoInterval: -60, refundBonus: 0.86 } },
+  // Crystal Palace
+  { id: 'an-bonnet-rb', nom: 'Bonnet rouge et bleu', rar: 'commune', club: 52, publie: false,
+    texte: 'Il tient chaud jusqu’au bout. Il tombe sur les yeux au mauvais moment.',
+    mods: { holdBonus: 1.18, perfectBonus: 0.9 } },
+  { id: 'an-dinosaure', nom: 'Dinosaure de pierre du parc', rar: 'rare', club: 52, publie: false,
+    texte: 'Rien ne le fait bouger depuis des siècles. Toi non plus.',
+    mods: { parryResist: 1.3, mashTime: 450 } },
+  // Everton
+  { id: 'an-cire', nom: 'Ciré bleu marine', rar: 'commune', club: 45, publie: false,
+    texte: 'Les embruns glissent dessus. Il serre un peu à la poitrine.',
+    mods: { parryResist: 1.2, breathBonus: 0.9 } },
+  { id: 'an-corne-brume', nom: 'Corne de brume du port', rar: 'rare', club: 45, publie: false,
+    texte: 'On l’entend de l’autre rive. Elle dit aussi où tu es.',
+    mods: { parryBonus: 1.28, parryResist: 0.86 } },
+  // Fulham
+  { id: 'an-parapluie', nom: 'Parapluie noir et blanc', rar: 'commune', club: 36, publie: false,
+    texte: 'Tu tiens sous l’averse. La main prise ne contre plus.',
+    mods: { holdBonus: 1.2, parryBonus: 0.88 } },
+  { id: 'an-theiere', nom: 'Théière du cottage', rar: 'rare', club: 36, publie: false,
+    texte: 'Une tasse au bord du fleuve et la voix revient. Le thé ne se presse jamais.',
+    mods: { breathBonus: 1.28, tempoInterval: 70 } },
+  // Hull City
+  { id: 'an-bonnet-pecheur', nom: 'Bonnet de pêcheur ambre et noir', rar: 'commune', club: 64, publie: false,
+    texte: 'Il a tenu des marées entières. Il pèse sur les bras.',
+    mods: { holdBonus: 1.18, mashBonus: 0.9 } },
+  { id: 'an-lanterne-chalutier', nom: 'Lanterne de chalutier', rar: 'rare', club: 64, publie: false,
+    texte: 'Elle montre le rythme dans la nuit. Il faut la tenir à deux mains.',
+    mods: { tempoWindow: 1.28, mashBonus: 0.86 } },
+  // Ipswich Town
+  { id: 'an-moulin', nom: 'Petit moulin à vent', rar: 'commune', club: 57, publie: false,
+    texte: 'Il tourne au moindre souffle. Au moindre coup aussi.',
+    mods: { breathBonus: 1.18, parryResist: 0.9 } },
+  { id: 'an-panier', nom: 'Panier de pique-nique', rar: 'rare', club: 57, publie: false,
+    texte: 'Il y a toujours de quoi repartir. Le temps de l’ouvrir, le refrain file.',
+    mods: { refundBonus: 1.26, tempoWindow: 0.86 } },
+  // Leeds United
+  { id: 'an-pudding', nom: 'Pudding du dimanche', rar: 'commune', club: 63, publie: false,
+    texte: 'Ça tient au corps et ça remet en voix. Le geste fin attendra.',
+    mods: { breathBonus: 1.18, perfectBonus: 0.88 } },
+  { id: 'an-lampe-mineur', nom: 'Lampe de mineur', rar: 'rare', club: 63, publie: false,
+    texte: 'Elle éclaire le geste juste au fond du bruit. Elle s’éteint si tu tiens trop.',
+    mods: { perfectBonus: 1.28, holdBonus: 0.86 } },
+  // Liverpool
+  { id: 'an-amarre', nom: 'Corde d’amarrage rouge', rar: 'commune', club: 40, publie: false,
+    texte: 'Amarré au virage, tu ne lâches rien. Tu ne bouges plus non plus.',
+    mods: { holdBonus: 1.2, tempoWindow: 0.9 } },
+  { id: 'an-guitare', nom: 'Guitare rouge des caves', rar: 'rare', club: 40, publie: false,
+    texte: 'Tout le monde suit ton tempo. Personne ne pense à se défendre.',
+    mods: { tempoWindow: 1.3, parryBonus: 0.84 } },
+  // Manchester City
+  { id: 'an-impermeable', nom: 'Imperméable bleu ciel', rar: 'commune', club: 50, publie: false,
+    texte: 'La pluie du Nord glisse dessus. Les bras restent raides.',
+    mods: { parryResist: 1.18, mashBonus: 0.9 } },
+  { id: 'an-lanterne-ecluse', nom: 'Lanterne d’écluse', rar: 'rare', club: 50, publie: false,
+    texte: 'Le souffle monte comme l’eau dans le sas. Il faut attendre que ça s’ouvre.',
+    mods: { breathBonus: 1.28, mashTime: 400 } },
+  // Manchester United
+  { id: 'an-bobine', nom: 'Bobine de coton rouge', rar: 'commune', club: 33, publie: false,
+    texte: 'Ça tape comme les métiers d’antan. Le fil coupe le souffle.',
+    mods: { mashBonus: 1.18, breathBonus: 0.9 } },
+  { id: 'an-navette', nom: 'Navette de tisserand', rar: 'rare', club: 33, publie: false,
+    texte: 'Elle file d’un bord à l’autre sans s’arrêter. Elle ne tient jamais en place.',
+    mods: { tempoInterval: -60, holdBonus: 0.86 } },
+  // Newcastle United
+  { id: 'an-echarpe-tricot', nom: 'Écharpe tricotée noir et blanc', rar: 'commune', club: 34, publie: false,
+    texte: 'Tricotée pour durer tout le match. Elle ne se dénoue pas pour repartir.',
+    mods: { holdBonus: 1.18, refundBonus: 0.9 } },
+  { id: 'an-cle-pont', nom: 'Clé à boulons du pont', rar: 'rare', club: 34, publie: false,
+    texte: 'Chaque coup serre un rivet de plus. Pas de place pour la finesse.',
+    mods: { mashBonus: 1.28, perfectBonus: 0.86 } },
+  // Nottingham Forest
+  { id: 'an-bonnet-plume', nom: 'Bonnet rouge à plume', rar: 'commune', club: 65, publie: false,
+    texte: 'La plume pointe le geste juste. Elle chatouille quand il faut tenir.',
+    mods: { perfectBonus: 1.18, holdBonus: 0.9 } },
+  { id: 'an-carquois', nom: 'Carquois de l’archer', rar: 'rare', club: 65, publie: false,
+    texte: 'Chaque contre part en flèche. Le carquois se vide, le souffle aussi.',
+    mods: { parryBonus: 1.3, breathBonus: 0.86 } },
+  // Sunderland
+  { id: 'an-chope', nom: 'Chope de verre soufflé', rar: 'commune', club: 746, publie: false,
+    texte: 'Elle rend la voix claire. Elle se casse au premier choc.',
+    mods: { breathBonus: 1.18, parryBonus: 0.9 } },
+  { id: 'an-boule-verre', nom: 'Boule de verre rouge', rar: 'rare', club: 746, publie: false,
+    texte: 'Soufflée d’un seul geste parfait. Elle ne supporte pas d’attendre.',
+    mods: { perfectBonus: 1.3, holdBonus: 0.84 } },
+  // Tottenham Hotspur
+  { id: 'an-boutons', nom: 'Boutons nacrés', rar: 'commune', club: 47, publie: false,
+    texte: 'Ils brillent au rythme du refrain. Ils sautent quand on tape.',
+    mods: { tempoWindow: 1.18, mashBonus: 0.88 } },
+  { id: 'an-gilet-nacre', nom: 'Gilet nacré bleu nuit', rar: 'rare', club: 47, publie: false,
+    texte: 'Cousu de mille boutons, il arrête tout. Il ne laisse pas danser.',
+    mods: { parryResist: 1.28, tempoWindow: 0.86 } },
+
   /* ----------------------------------------------------- la centième
 
      Hors série : elle ne s'ouvre avec aucune saison, mais quand on le
@@ -559,22 +720,75 @@ export function piecesPortees(stuffIds = []) {
  * comme tout le reste du jeu. */
 
 /**
+ * **Le revers d'une modification**, qui dépend de la clé : un facteur sous 1
+ * est un revers, sauf `costPenalty`, qui coûte au-dessus de 1 ; un décalage
+ * de cadence ou de martelage positif ralentit ; `holdForgive` négatif pardonne
+ * moins. `backfire` ne s'adoucit pas : aucune pièce de club n'en porte.
+ */
+const FACTEURS = ['tempoWindow', 'mashBonus', 'holdBonus', 'perfectBonus',
+  'parryBonus', 'parryResist', 'breathBonus', 'refundBonus', 'costPenalty'];
+const DECALAGES = ['tempoInterval', 'mashTime', 'holdForgive'];
+
+function estUnRevers(k, v) {
+  if (k === 'costPenalty') return v > 1;
+  if (FACTEURS.includes(k)) return v < 1;
+  if (k === 'holdForgive') return v < 0;
+  if (DECALAGES.includes(k)) return v > 0;
+  return false;
+}
+
+/** La part du revers qu'efface le COMBO, réglée dans /admin (`stuff.club_revers`). */
+export function partDuCombo() {
+  return (reglage('stuff.club_revers') ?? 50) / 100;
+}
+
+/**
+ * **Le COMBO** (demande de Gaël du 28 octobre 2026) : une pièce de club
+ * portée par un Fanzzy lié au même club. Partout, quel que soit le match :
+ * c'est le Fanzzy qui sait s'en servir, pas le joueur qui est chez lui.
+ *
+ * `clubDuPorteur` : le club du Fanzzy qui la porte (`clubDe`, ou le club
+ * acheté), nul pour un neutre.
+ */
+export function faitCombo(piece, clubDuPorteur) {
+  return piece?.club != null && clubDuPorteur != null
+    && Number(piece.club) === Number(clubDuPorteur);
+}
+
+/**
+ * Les modificateurs d'une pièce telle qu'elle est portée : ceux qu'elle
+ * déclare, et au COMBO, son revers adouci de `part` (0,5 : moitié moins). Le
+ * bonus ne bouge jamais — le combo ne rend pas plus fort, il gêne moins.
+ */
+export function modsDeLaPiece(piece, clubDuPorteur = null, part = partDuCombo()) {
+  if (!piece) return {};
+  if (!faitCombo(piece, clubDuPorteur) || !(part > 0)) return piece.mods;
+  const out = {};
+  for (const [k, v] of Object.entries(piece.mods)) {
+    if (typeof v !== 'number' || !estUnRevers(k, v)) { out[k] = v; continue; }
+    out[k] = FACTEURS.includes(k)
+      ? Math.round((1 + (v - 1) * (1 - part)) * 1000) / 1000
+      : Math.round(v * (1 - part));
+  }
+  return out;
+}
+
+/**
  * Combine les modificateurs du Fanzzy et des deux pièces portées.
  * Les facteurs se multiplient, les décalages s'additionnent : deux pièces qui
  * élargissent la fenêtre ne la rendent pas absurde, elles se composent.
+ *
+ * `club` : le club du Fanzzy qui les porte, pour le COMBO (`modsDeLaPiece`).
  */
-export function combine(fanzzyMods = {}, stuffIds = []) {
+export function combine(fanzzyMods = {}, stuffIds = [], { club = null } = {}) {
   const out = { ...fanzzyMods };
-  const facteurs = ['tempoWindow', 'mashBonus', 'holdBonus', 'perfectBonus',
-    'parryBonus', 'parryResist', 'breathBonus', 'refundBonus', 'costPenalty'];
-  const decalages = ['tempoInterval', 'mashTime', 'holdForgive'];
 
   for (const id of stuffIds.slice(0, 2)) {
     const s = STUFF_BY_ID.get(id);
     if (!s) continue;
-    for (const [k, v] of Object.entries(s.mods)) {
-      if (facteurs.includes(k)) out[k] = (out[k] ?? 1) * v;
-      else if (decalages.includes(k)) out[k] = (out[k] ?? 0) + v;
+    for (const [k, v] of Object.entries(modsDeLaPiece(s, club))) {
+      if (FACTEURS.includes(k)) out[k] = (out[k] ?? 1) * v;
+      else if (DECALAGES.includes(k)) out[k] = (out[k] ?? 0) + v;
       else out[k] = v;
     }
   }
