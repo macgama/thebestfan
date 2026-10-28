@@ -2182,6 +2182,16 @@ if (process.env.CAPTURE) {
     clubs: [{ id: 85, name: 'Sion' }, { id: 91, name: 'Bâle' }],
     mien: true, presents: 1, campQuiManque: 1, manque: 1,
   };
+  /* **Sans recharger** (Gaël, 28 octobre 2026) : la page déjà ouverte
+     l'apprend dès que le rappel du duel voit les files changer
+     (`tbf:attentes`), sans attendre son tour de veille de trois minutes. */
+  await page.evaluate((a) => window.dispatchEvent(
+    new CustomEvent('tbf:attentes', { detail: { attentes: [a] } })), attente);
+  check('la page déjà ouverte le dit sans recharger', await jusqua(async () =>
+    /attend/.test(await page.evaluate(() =>
+      document.getElementById('entrer').textContent)), 4000)
+    || (console.log('        il dit :', await page.evaluate(() =>
+      document.getElementById('entrer').textContent.trim())), false));
   page = await ouvrir();
   const dit = await jusqua(async () =>
     /attend/.test(await page.evaluate(() =>
