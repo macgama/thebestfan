@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Le but dans le bon camp** (branche `claude/project-thread-qjbce6`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- FC Sion – Lausanne du 25 octobre (1-0) : la carte du but de Blin portait
+  l'écusson de Lausanne et 0-1, parce que l'API avait rangé le but sous
+  Lausanne. Le score du match fait maintenant foi : un but que l'API range
+  dans le mauvais camp est remis dans le bon (corde, fil et carte compris).
+- Les cartes déjà frappées se réparent toutes seules au démarrage, puis
+  chaque heure. Le journal du serveur dit combien :
+  « [souvenirs] N carte(s) remise(s) dans le bon camp ».
+- Après la mise en ligne : rouvrir la carte de Blin dans le carnet, elle doit
+  montrer l'écusson de Sion et 1-0.
+
+---
+
 **Le tutoriel à niveau** (branche `claude/project-thread-7ad2lr`, 28 octobre
 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
