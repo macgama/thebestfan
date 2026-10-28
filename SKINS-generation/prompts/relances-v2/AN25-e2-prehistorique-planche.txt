@@ -1,0 +1,27 @@
+LAYOUT FIRST (VERY IMPORTANT): one wide 3:2 image divided into a 3×2 grid of six equal invisible cells, three cells on top and three cells below. Exactly one full-body figure in each cell, six figures in total. All six figures are drawn at exactly the same size and scale: no large hero figure, no close-up, no extra pose, no small duplicate, no turnaround, no single row. Each figure fits entirely inside its own cell with green space all around it; figures never touch each other or the cell borders, and nothing the character holds or wears crosses into another cell.
+
+Pose sheet of the same character as the reference image, wearing the outfit described below.
+
+Stylised 3D animated-film rendering with a premium game-hero finish: slightly caricatured proportions, expressive face, a bold silhouette readable at thumbnail size, rich material detail on fabric, leather, fur, metal and paint, warm key light and a bright rim light.
+
+A gangly young man with light brown skin, a long thin face, big ears, short black dreadlocks tied back, warm amber-brown eyes and a dreamy smile. He never wears a football shirt. Around his neck, always and at every level, a knitted football supporter's bar scarf in blue (#0057B8) and white bars, plain knit with no text, no letters and no crest, worn close to the body; pinned on it, a small enamel badge of a white Regency house with a curved bay window. His signature item is a tram driver's brass controller handle with a blue (#0057B8) enamel grip: keep exactly this colour.
+
+The driver of the seaside railway: a navy-blue Edwardian railway jacket with white piping and brass buttons, a blue peaked cap, a brass hand-bell at his belt, a bundle of small blue and white signal flags tucked under one arm, the controller handle now big and polished, held up with a glowing blue grip, a confident cheerful face.
+
+Skin: Prehistoric. The same costume and the same level of power as described in the theme, remade from the stone age: stitched animal hides, rough brown leather and fur, bare arms, leather foot wraps, bone, horn and stone details, his gear and instrument rebuilt in wood, bone, hide and stone. Same face, same build, same signature item in the same colour. No leaves, no plants.
+
+His own costume: A stone-age wader: stilts of lashed driftwood, a blue-dyed hide jacket, a bell made of a big shell.
+
+VERY IMPORTANT: the skin is a complete makeover of the outfit of this level: every piece of his clothing, headwear and gear is remade in the skin style, nothing of the plain outfit stays unchanged. He keeps his face, build, hairstyle and colours from the reference. VERY IMPORTANT: his signature item and every object he carries on the reference are present in ALL six figures, held or worn, identical from one figure to the next. The skin costume is exactly the same in all six figures: same headwear, same clothes, same accessories, same colours.
+
+With exactly his body proportions from the reference: same build, same head size relative to the body, not chubbier, not more cartoonish. Same skin costume and same signature item, held in every figure. Same aura and glowing details as the reference, if he has any, pressed against the body in every figure.
+Correct anatomy in every figure: no extra or duplicated limbs, wings, tails, wheels or heads.
+Only the objects he has on the reference: never add an instrument, scarf, flag or prop he does not carry.
+Exactly six (IT'S VERY IMPORTANT, EXACTLY SIX FULL-BODY FIGURES) full-body figures, no more, no less: two rows of three, three figures in the top row and three in the bottom row, evenly spaced, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line in each row, wide empty background gaps between the figures, nothing overlapping, nothing cut by the edges.
+Every figure stays compact and narrow, hardly wider than the rest pose: arms raised straight up or bent close to the body, never stretched out to the sides. VERY IMPORTANT: no figure is wider than the rest pose; capes, coats, scarves and costume pieces hang straight down close to the body, nothing sticks out sideways.
+Top row, left to right: 1. rest: in his rest pose, calm, eyes open, mouth closed, his signature item carried on him. 2. joy: bouncing up with both little arms raised straight up above his head, mouth wide open in a shout of joy, his signature item still carried on him. 3. dismay: shoulders dropped, head down, one little arm over his face, his signature item still carried on him.
+Bottom row, left to right: 4. pushing the chant: singing with his mouth wide open, pushing the chant with his own signature item from the reference (raising it, shouting into it or playing it hard, close to his body). 5. anger: leaning forward, protesting, one little arm bent pointing forward towards the viewer, elbow tucked against his body, his signature item still carried on him. 6. rest with eyes closed: exactly the same as figure 1, eyes closed.
+
+Wide 3:2 image. Background: a completely flat, uniform, saturated studio green (#00B140), the exact same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the characters, no green glow or green rim light on the characters. No grid lines, no borders, no frames, no labels.
+
+No text, no letters, no numbers, no logos, no brand marks, no club crests, no team names, no sponsor logos, no identifiable jerseys, no real people.
