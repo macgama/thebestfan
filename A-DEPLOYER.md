@@ -8,6 +8,46 @@ Construction seule, **sans schéma** : des images et des réglages.
 
 ---
 
+**L'onglet EN ATTENTE sur la page du duel** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, choix de Gaël : « un bouton
+de plus "Duel en attente de joueur" », toujours là). Construction seule,
+**sans schéma**.
+
+- À côté de MES CLUBS et TOUS LES MATCHS : EN ATTENTE, avec le nombre de
+  duels qui attendent un joueur (grisé à 0). Un appui choisit le match, le
+  format et la tribune qui manque ; traduit dans les cinq langues, et ajouté à
+  /comment-jouer.
+- Après la mise en ligne : sur le PC, entrer en file ; sur le S24+, ouvrir
+  DUEL, l'onglet doit dire 1, puis un appui sur EN ATTENTE.
+
+---
+
+**Voir ce que la réconciliation du catalogue ferait** (branche
+`claude/contenus-sql-q1sziv`, 28 octobre 2026, pour les 338 écarts relevés par
+Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `scripts/fanzzy-reconciliation.mjs`, `npm run reconciliation:voir` : en SSH,
+  il dit, sans rien écrire, quelles cartes le démarrage reprendrait du code et
+  lesquelles ont été corrigées à l'écran (celles-là restent telles quelles).
+  `src/server/fanzzy/catalogue.js` : le démarrage lit son plan par la même
+  fonction, sans rien changer à ce qu'il fait.
+
+**Aucun schéma ni réglage, sans redémarrage** (le script se lance à la main).
+
+---
+
+**Les duels qui attendent se voient sans recharger** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, demandé par Gaël : il
+fallait rafraîchir la page pour savoir que quelqu'un attendait un duel).
+Construction seule, **sans schéma**.
+
+- Sur l'accueil, « Quelqu'un t'attend » s'allume (et s'éteint) dans les dix
+  secondes, et le sticker du duel du menu aussi sur les autres pages.
+- Après la mise en ligne : sur le PC, entrer en file d'un duel ; sur le S24+,
+  rester sur l'accueil sans recharger, le bandeau doit venir tout seul.
+
+---
+
 **MES SAISONS sur le profil** (branche `claude/project-thread-chiok9`,
 28 octobre 2026, demandé par Gaël : garder l'historique des saisons d'avant).
 Construction seule, **sans schéma**.

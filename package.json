@@ -91,6 +91,7 @@
     "ecarts": "node scripts/fanzzy-ecarts.mjs",
     "ecarts:test": "node scripts/ecarts-smoke.mjs",
     "reconciliation:test": "node scripts/reconciliation-smoke.mjs",
+    "reconciliation:voir": "node --env-file-if-exists=.env scripts/fanzzy-reconciliation.mjs",
     "invites": "node scripts/fanzzy-invites.mjs",
     "invites:test": "node scripts/invites-smoke.mjs",
     "doublons": "node scripts/fanzzy-doublons.mjs",
