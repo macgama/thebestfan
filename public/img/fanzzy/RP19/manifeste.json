@@ -1,6 +1,6 @@
 {
   "id": "RP19",
-  "rev": 5,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ff6420766115"
+          "sha": "ff6420766115",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "25b5d8cb75f9"
+          "sha": "25b5d8cb75f9",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f32f9ad127fd"
+          "sha": "f32f9ad127fd",
+          "cligne": true
         }
       }
     },
@@ -101,7 +104,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "118e78e856db"
+          "sha": "118e78e856db",
+          "cligne": true
         }
       }
     },

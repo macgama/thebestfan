@@ -1,6 +1,6 @@
 {
   "id": "SU32",
-  "rev": 4,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -25,7 +25,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5e4ee1c25df3"
+          "sha": "5e4ee1c25df3",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -77,7 +78,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5f4696b31524"
+          "sha": "5f4696b31524",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -89,7 +91,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "169e25c4bc37"
+          "sha": "169e25c4bc37",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -101,7 +104,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9982592b2c05"
+          "sha": "9982592b2c05",
+          "cligne": true
         }
       }
     },
@@ -128,7 +132,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "bb145ed64d89"
+          "sha": "bb145ed64d89",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -140,7 +145,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "51b43c15b2cd"
+          "sha": "51b43c15b2cd",
+          "cligne": true
         }
       }
     }

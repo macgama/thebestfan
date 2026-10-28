@@ -1,6 +1,6 @@
 {
   "id": "RP2",
-  "rev": 11,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -78,7 +78,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6a5ef5e0aad6"
+          "sha": "6a5ef5e0aad6",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -130,7 +131,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "aa3a2822bb70"
+          "sha": "aa3a2822bb70",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -154,7 +156,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f092a86d4571"
+          "sha": "f092a86d4571",
+          "cligne": true
         }
       }
     }
