@@ -1,6 +1,6 @@
 {
   "id": "SU18",
-  "rev": 9,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -40,7 +40,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1b2e586e41db"
+          "sha": "c49e37ba57d8"
         },
         "apocalyptique": {
           "etats": [
@@ -52,7 +52,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "12ab79a2ec44"
+          "sha": "b656492aae65"
         },
         "halloween": {
           "etats": [
@@ -64,7 +64,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "54cd25c0000a"
+          "sha": "41917e36f1fb"
         }
       }
     },
