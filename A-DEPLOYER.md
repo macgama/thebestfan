@@ -10,6 +10,63 @@ des images et des réglages, sans crédits.
 
 ---
 
+**Les équipes nationales en français aussi sur la page CLUBS** (branche
+`claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : dans
+« Ajouter un club », la Suisse restait « Switzerland »). Construction seule,
+**sans schéma**.
+
+- « suisse » (ou « schweiz », « svizzera », « suiza ») trouve la sélection
+  dans « Ajouter un club », écrite dans la langue du joueur ; les matchs des
+  clubs suivis, les matchs du jour et le Virage écrivent aussi les sélections
+  dans sa langue.
+- Après la mise en ligne : sur le S24+, page CLUBS, chercher « suisse ».
+
+---
+
+**Les images Ultimate des Terraces** (branche `claude/project-thread-z4jtwl`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- 180 images plein cadre, une par Fanzzy AN et par âge, chacune avec un fond
+  tiré de l'histoire du Fanzzy. La grande scène Ultimate les montre à la
+  place du dessin fait avec la carte (pas encore de clip animé pour AN).
+- Après la mise en ligne : déclencher l'Ultimate d'un Fanzzy AN en duel, ou
+  ouvrir sa carte Ultimate dans la collection.
+
+---
+
+**Classement des clubs : les neutres comptent, et TRIBUNES suit la saison**
+(branche `claude/project-thread-2v1fvo`, 28 octobre 2026, demandé par Gaël :
+que les matchs joués pour un club qu'on ne suit pas rapportent un peu à ce
+club). Construction seule, **sans schéma**.
+
+- Un joueur qui pousse un club qu'il ne suit pas lui apporte un dixième de
+  sa ferveur classée, au Virage comme au duel classé, à l'onglet TRIBUNES et
+  dans les compétitions (pas aux KOP). Il ne compte pas parmi les supporters.
+- La moyenne se divise par les supporters **actifs** (les comptes fermés ne
+  comptent plus), et par au moins 5.
+- TRIBUNES compte la saison en cours, comme SUPPORTERS : il repart au
+  lancement de chaque saison.
+- Deux réglages dans /admin, section LE GRAND VIRAGE : « Un neutre apporte au
+  club qu'il pousse » (0,1) et « La moyenne d'une tribune se divise par au
+  moins » (5).
+---
+
+**Le club principal qui se change, et la sélection principale** (branche
+`claude/project-thread-rftsbq`, 28 octobre 2026, choix de Gaël : changer
+une fois par saison, plus une sélection nationale). Construction, puis
+**schéma** : `npm run schema:appliquer` en SSH (`sql/principal.sql`, trois
+colonnes, aucune table), puis redémarrage.
+
+- Profil, MES CLUBS : bouton PRINCIPAL ? sur un club suivi, MA SÉLECTION sur
+  une sélection suivie ; une confirmation, puis plus de changement avant la
+  saison suivante (le premier choix, au paquet de bienvenue, ne compte pas).
+- Le PLEIN CLUB marche aussi dans les matchs de la sélection principale.
+- Sans le schéma, rien ne casse : le bouton répond que ce n'est pas branché.
+- Après la mise en ligne : sur le profil, changer de club principal, puis
+  vérifier qu'un second changement est refusé jusqu'à la saison suivante.
+
+---
+
 **Les Fanzzy en skins Halloween, Préhistorique et Apocalyptique clignent**
 (branche `claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** : des images et des réglages.
@@ -82,6 +139,7 @@ Construction seule, **sans schéma**.
 - Leurs 18 skins (Halloween, Préhistorique, Apocalyptique) sont toutes
   dessinées : les six dernières (AN61, AN62 préhistorique, AN65 Halloween et
   apocalyptique) suivent dans une seconde fusion, images seules.
+- Elles clignent des yeux dans 19 tenues sur 24 (images seules).
 - Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
   lire le tampon « LIÉ À ».
 
