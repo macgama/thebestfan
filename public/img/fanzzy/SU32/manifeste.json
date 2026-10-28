@@ -1,6 +1,6 @@
 {
   "id": "SU32",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -147,6 +147,18 @@
           "repli": "base",
           "sha": "51b43c15b2cd",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "955f30390e18"
         }
       }
     }
