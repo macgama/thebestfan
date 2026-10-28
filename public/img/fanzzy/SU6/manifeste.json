@@ -1,6 +1,6 @@
 {
   "id": "SU6",
-  "rev": 12,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -158,5 +158,16 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/apocalyptique/neutre": 0.937,
+    "e3/apocalyptique/joie": 0.937,
+    "e3/apocalyptique/colere": 0.937,
+    "e3/apocalyptique/depit": 0.937,
+    "e3/apocalyptique/pousse": 0.937,
+    "e1/prehistorique/joie": 1.353,
+    "e1/prehistorique/colere": 1.351,
+    "e1/prehistorique/depit": 1.199,
+    "e1/prehistorique/pousse": 1.389
   }
 }

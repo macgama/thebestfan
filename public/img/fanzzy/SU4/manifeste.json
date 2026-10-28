@@ -1,6 +1,6 @@
 {
   "id": "SU4",
-  "rev": 13,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -163,5 +163,16 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/apocalyptique/joie": 1.242,
+    "e2/apocalyptique/colere": 1.266,
+    "e2/apocalyptique/depit": 1.438,
+    "e2/apocalyptique/pousse": 1.382,
+    "e3/apocalyptique/neutre": 0.861,
+    "e3/apocalyptique/joie": 0.861,
+    "e3/apocalyptique/colere": 0.861,
+    "e3/apocalyptique/depit": 0.861,
+    "e3/apocalyptique/pousse": 0.861
   }
 }

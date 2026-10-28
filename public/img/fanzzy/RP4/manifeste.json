@@ -1,6 +1,6 @@
 {
   "id": "RP4",
-  "rev": 14,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -160,5 +160,8 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/prehistorique/joie": 1.184
   }
 }

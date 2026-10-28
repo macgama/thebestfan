@@ -1,6 +1,6 @@
 {
   "id": "AN23",
-  "rev": 14,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -165,5 +165,15 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/halloween/neutre": 0.859,
+    "e2/halloween/joie": 0.859,
+    "e2/halloween/colere": 0.859,
+    "e2/halloween/depit": 0.859,
+    "e2/halloween/pousse": 0.859,
+    "e2/halloween/cligne": 0.859,
+    "e2/prehistorique/joie": 1.174,
+    "e1/apocalyptique/colere": 1.45
   }
 }

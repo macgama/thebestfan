@@ -1,6 +1,6 @@
 {
   "id": "SU19",
-  "rev": 14,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -161,5 +161,12 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/prehistorique/neutre": 0.936,
+    "e2/prehistorique/joie": 0.936,
+    "e2/prehistorique/colere": 0.936,
+    "e2/prehistorique/depit": 0.936,
+    "e2/prehistorique/pousse": 0.936
   }
 }
