@@ -701,7 +701,7 @@ export const REGLAGES = [
     aide: 'Les boosters offerts par les récompenses nouvelles, additionnés. La ' +
       'recharge gratuite et l’abonnement n’y entrent pas.' },
 
-  /* ------------------------------------------- les treize missions
+  /* ------------------------------------------- les seize missions
 
      Une bascule par identifiant du catalogue (`src/shared/quotidien.js`), et
      son titre est l'intitulé de la mission : c'est ce qu'on cherche des yeux
@@ -719,6 +719,15 @@ export const REGLAGES = [
   { cle: 'mission.grandir', section: 'missions', type: 'booleen',
     titre: 'Fais grandir un Fanzzy', defaut: true,
     aide: 'Facile. Proposée à qui a un Fanzzy qui peut grandir et de quoi le payer.' },
+  { cle: 'mission.minijeu', section: 'missions', type: 'booleen',
+    titre: 'Joue un mini-jeu', defaut: true,
+    aide: 'Facile. Une partie finie de jongles, de chant en rythme, de déplacement ' +
+      'ou de tirs au but, ou une case de tifo peinte. Proposée quand les mini-jeux ' +
+      'sont ouverts.' },
+  { cle: 'mission.prono', section: 'missions', type: 'booleen',
+    titre: 'Fais un pronostic', defaut: true,
+    aide: 'Facile. Un pronostic nouveau, pas un score changé. Proposée quand le ' +
+      'pronostic est ouvert et qu’un club suivi joue aujourd’hui sans avoir commencé.' },
   { cle: 'mission.tribune', section: 'missions', type: 'booleen',
     titre: 'Chante 40 fois au Grand Virage', defaut: true,
     aide: 'Moyenne. Proposée quand un match se joue encore aujourd’hui.' },
@@ -736,6 +745,10 @@ export const REGLAGES = [
   { cle: 'mission.club_duel', section: 'missions', type: 'booleen',
     titre: 'Joue un duel pour ton club', defaut: true,
     aide: 'Moyenne. Proposée à qui suit au moins un club.' },
+  { cle: 'mission.ultime', section: 'missions', type: 'booleen',
+    titre: 'Lance ton Ultimate', defaut: true,
+    aide: 'Moyenne, entraînement compris : au duel ou au Grand Virage, pas au duel ' +
+      'guidé.' },
   { cle: 'mission.victoires', section: 'missions', type: 'booleen',
     titre: 'Gagne 3 duels', defaut: true,
     aide: 'Difficile, entraînement compris.' },

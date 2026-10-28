@@ -161,14 +161,15 @@ const PLAN = [
     ecarts.length === 0 || (console.log('        écarts :', ecarts.join(' · ')), false));
 }
 
-/* Les treize bascules de mission : une par identifiant du catalogue, la liste
+/* Les seize bascules de mission : une par identifiant du catalogue, la liste
    fermée du contrat (`CONTRATS.md`, § 6.1). Une mission sans bascule ne
    pourrait pas être sortie du tirage un samedi soir. */
 {
-  const MISSIONS = ['boosters', 'duel', 'virage', 'grandir', 'tribune', 'victoire', 'classes',
-    'club_virage', 'club_duel', 'victoires', 'endurance', 'mitemps', 'ailleurs'];
+  const MISSIONS = ['boosters', 'duel', 'virage', 'grandir', 'minijeu', 'prono', 'tribune',
+    'victoire', 'classes', 'club_virage', 'club_duel', 'ultime', 'victoires', 'endurance',
+    'mitemps', 'ailleurs'];
   const bascules = REGLAGES.filter((r) => r.section === 'missions');
-  check('treize bascules de mission, une par identifiant du catalogue',
+  check('seize bascules de mission, une par identifiant du catalogue',
     bascules.length === MISSIONS.length
       && MISSIONS.every((id) => PAR_CLE.get(`mission.${id}`)?.section === 'missions')
     || (console.log('        vues :', bascules.map((r) => r.cle).join(', ')), false));

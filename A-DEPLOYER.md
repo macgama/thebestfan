@@ -1,5 +1,27 @@
 # À déposer sur Infomaniak
 
+**Le tutoriel à niveau** (branche `claude/project-thread-7ad2lr`, 28 octobre
+2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- Le booster du paquet de bienvenue s'ouvre comme les autres : suspense,
+  charge, entrée par sorte de carte, fond filmé et jingle de la rareté.
+- Trois nouvelles missions du jour, chacune avec son interrupteur dans
+  /admin : « Lance ton Ultimate », « Joue un mini-jeu », « Fais un pronostic ».
+- Le duel guidé montre une bulle quand l'Ultimate est prêt ; les premiers pas
+  et les textes de l'Ultimate (bouton rond en duel, ligne sous le souffle au
+  Virage) sont corrigés.
+- Une petite visite guidée la première fois qu'on ouvre Mes Fanzzy, la fiche
+  d'un Fanzzy à soi (ses âges, évoluer avec les écharpes), la collection,
+  les amis (dont JOUER ENSEMBLE) et le KOP. `?visite=1` au bout de
+  l'adresse la remontre.
+- QUESTIONS : les pièces de club (COMBO, PLEIN CLUB), les pastilles VIRAGE et
+  DUEL avec le filtre À JOUER, l'onglet EN ATTENTE du duel. Comment jouer :
+  les pièces de club dans « Ton deck ».
+- Après la mise en ligne : sur le S24+, ouvrir /fanzzy?visite=1 puis la fiche
+  d'un Fanzzy, et créer un compte de test pour voir le paquet de bienvenue.
+
+---
+
 **/admin, COMPÉTITIONS lisible** (branche `claude/project-thread-wsfkz8`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
