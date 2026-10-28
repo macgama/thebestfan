@@ -286,6 +286,35 @@ export function createDecks({ pool, requireAuth, niveau = null,
 
   /* ------------------------------------------------- ce que possède le joueur */
 
+  /**
+   * Le Fanzzy emprunté aujourd'hui, ou `null`. Une base sans
+   * `sql/amis-ensemble.sql` n'en prête aucun.
+   */
+  async function pretDuJour(userId) {
+    try {
+      const [l] = await q(
+        `SELECT p.fanzzy_id, p.stage, u.pseudo FROM amis_prets p
+           LEFT JOIN users u ON u.public_id = p.preteur
+          WHERE p.emprunteur = ? AND p.jour = CURDATE()`, [userId]);
+      return l ? { id: l.fanzzy_id, stage: Number(l.stage) || 1, preteur: l.pseudo ?? null } : null;
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return null;
+      throw e;
+    }
+  }
+
+  /** Les Fanzzy empruntés les jours d'avant. */
+  async function pretsPasses(userId) {
+    try {
+      return (await q(`SELECT DISTINCT fanzzy_id FROM amis_prets
+                        WHERE emprunteur = ? AND jour < CURDATE()`, [userId]))
+        .map((l) => l.fanzzy_id);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return [];
+      throw e;
+    }
+  }
+
   async function possessions(userId) {
     // Le plafond d’emplacements Fanzzy vient du niveau. Sans module de
     // progression, il vaut la règle — le comportement d’avant, exactement.
@@ -299,7 +328,15 @@ export function createDecks({ pool, requireAuth, niveau = null,
     ]);
     const brut = w[0]?.action_cards;
     const actions = typeof brut === 'string' ? JSON.parse(brut) : (brut ?? []);
+    /* **Le Fanzzy emprunté à un ami** (`amis/ensemble.js`), jusqu'à minuit :
+       il se met au deck comme un des siens, à l'âge où l'ami l'a fait
+       grandir. Après minuit, il n'est plus possédé, et le deck le perd. */
+    const pret = await pretDuJour(userId);
+    if (pret && !fz.some((f) => f.fanzzy_id === pret.id)) {
+      fz.push({ fanzzy_id: pret.id, stage: pret.stage });
+    }
     return {
+      pret,
       fanzzy: new Set(fz.map((f) => f.fanzzy_id)),
       fanzzyMax,
       // Jusqu'où chaque personnage a été fait grandir. Ne sert pas à valider —
@@ -391,6 +428,20 @@ export function createDecks({ pool, requireAuth, niveau = null,
         if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
         return q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]);
       });
+    /* Le prêt du jour compte comme une possession ; un prêt expiré ne compte
+       plus, et le Fanzzy sort du deck joué (voir plus bas). On ne retire que
+       ce qui a été **emprunté** et n'est pas à lui : un deck ne perd jamais
+       un Fanzzy pour une autre raison ici. */
+    const pret = await pretDuJour(userId);
+    if (pret && !possede.some((r) => r.fanzzy_id === pret.id)) {
+      possede.push({ fanzzy_id: pret.id, stage: pret.stage, club_id: null });
+    }
+    const possedes = new Set(possede.map((r) => r.fanzzy_id));
+    const rendus = new Set((await pretsPasses(userId)).filter((id) => !possedes.has(id)));
+    const garde = (f) => !rendus.has(f.id);
+    /* Un deck dont il ne reste aucun Fanzzy — le prêt d'hier était le seul —
+       n'est pas un deck : le duel dit alors d'en refaire un. */
+    if (rendus.size && !(deck.fanzzy ?? []).some(garde)) return null;
     const stades = Object.fromEntries(possede.map((r) => [r.fanzzy_id, Number(r.stage)]));
     const clubs = Object.fromEntries(possede.filter((r) => r.club_id != null)
       .map((r) => [r.fanzzy_id, Number(r.club_id)]));
@@ -431,7 +482,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
     return {
       /* La règle des légendaires appliquée au deck tel qu'il est enregistré :
          un deck d'avant la règle se joue selon elle (`selonLaRegle`). */
-      fanzzy: selonLaRegle(deck.fanzzy, RARETE).map((f) => {
+      fanzzy: selonLaRegle(deck.fanzzy.filter(garde), RARETE).map((f) => {
         const stuff = f.stuff ?? [];
         /* **Ce qu'il porte tant que la légende dort** : ni ses propres
            modificateurs s'il est légendaire, ni ceux de la pièce légendaire.
@@ -1127,6 +1178,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
            Un objet plutôt qu'une Map : c'est du JSON. */
         stuffCopies: Object.fromEntries(possede.stuffCopies),
         actions: [...possede.actions],
+        // Le Fanzzy emprunté du jour, pour que l'écran dise « prêté par ».
+        pret: possede.pret,
       },
       regles: DECK_RULES,
     });
