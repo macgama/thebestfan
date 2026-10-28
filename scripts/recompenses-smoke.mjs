@@ -530,7 +530,7 @@ console.log('\n— les fautes de l’appelant lèvent, sans rien écrire —');
     ['une clé de gain inconnue (echarpe)', mission(E, 'f1', { echarpe: 30 })],
     ['un gain négatif', mission(E, 'f2', { echarpes: -5 })],
     ['un gain décimal', mission(E, 'f3', { echarpes: 2.5 })],
-    ['une source hors liste', { ...mission(E, 'f4', { echarpes: 1 }), source: 'cadeau' }],
+    ['une source hors liste', { ...mission(E, 'f4', { echarpes: 1 }), source: 'pourboire' }],
     ['une clé de plus de 40 caractères', mission(E, 'x'.repeat(41), { echarpes: 1 })],
     ['des boosters sans recharger', { userId: E, source: 'sachet', cle: 'f5', gain: { packs: 1 }, niveau }],
     ['de l’XP sans le module niveau', { userId: E, source: 'mission', cle: 'f6', gain: { xp: 5 },
