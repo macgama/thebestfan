@@ -1,6 +1,6 @@
 {
   "id": "RP35",
-  "rev": 10,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -51,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1c0261f54a02"
+          "sha": "1c0261f54a02",
+          "cligne": true
         }
       }
     },
@@ -131,7 +132,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "33936f3f326b"
+          "sha": "33936f3f326b",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
