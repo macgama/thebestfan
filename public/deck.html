@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Mon deck — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
@@ -489,7 +490,7 @@ h2{margin:20px 16px 9px}
 /* --------------------------------------------------------- barre du bas */
 
 .barre{position:fixed;left:0;right:0;z-index:50;display:flex;justify-content:center;
-  bottom:calc(var(--nav-h,62px) + env(safe-area-inset-bottom));pointer-events:none}
+  bottom:calc(var(--nav-h,62px) + var(--bas));pointer-events:none}
 .barre .in{width:100%;max-width:var(--colonne);display:flex;align-items:center;gap:10px;padding:10px 14px;
   background:linear-gradient(180deg,rgba(4,6,10,.4),rgba(4,6,10,.94) 45%);pointer-events:auto;
   border-top:1px solid rgba(242,238,228,.08)}
@@ -531,7 +532,7 @@ h2{margin:20px 16px 9px}
   background:var(--grain-beton) 0 0/256px 256px repeat,var(--parpaing);
   border-image:var(--trace-c) 9 / 9px stretch;border-bottom:0;
   box-shadow:0 -10px 40px rgba(0,0,0,.6);
-  padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  padding-bottom:calc(18px + var(--bas))}
 .panneau::before{content:"";display:block;flex:none;height:4px;margin:12px 16px 0;border-radius:2px;
   background:repeating-linear-gradient(115deg,var(--projo) 0 9px,transparent 9px 18px)}
 /* `min-height:0` : sans lui, un enfant de flex refuse de descendre sous la
