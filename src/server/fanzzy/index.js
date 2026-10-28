@@ -6,7 +6,8 @@ import { SETS, TYPES, RAR, SCARVES, POIGNEE_DE_REPLI, EVO_COST, tauxDuMoment }
   from '../../shared/fanzzy/dex.js';
 import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
   racineDe, lignee, auStade } from './catalogue.js';
-import { STUFF, STUFF_BY_ID, combine, piecesPortees } from '../../shared/fanzzy/inventaire.js';
+import { STUFF, STUFF_BY_ID, combine, faitCombo, modsDeLaPiece, partDuCombo, piecesPortees }
+  from '../../shared/fanzzy/inventaire.js';
 /* Les quatre états dessinés. `rendus.js` fait foi : la même liste sert la
    chaîne d'images, la résolution côté client et, maintenant, le tirage. */
 import { ETATS_DESSINES, ETAT_DESSIN } from '../../shared/fanzzy/rendus.js';
@@ -44,7 +45,7 @@ import { saisonsLancees, saisonEnCours } from './saisons.js';
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
 import { verser, verserTout } from '../recompenses.js';
-import { criDuClub, lienEcrit } from '../../shared/fanzzy/clubs.js';
+import { criDuClub, gainPleinClub, lienEcrit } from '../../shared/fanzzy/clubs.js';
 
 /* ------------------------------------------------------------ le journal
 
@@ -2477,7 +2478,10 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
           nom: equipe?.name ?? null, logo: equipe?.logo ?? null,
           id: Number(sonClub), couleurs: [teinte?.color1, teinte?.color2].filter(Boolean),
           // Le cri qu'il pousse dans les matchs de ce club (`criDuClub`).
-          cri: criDuClub(sonClub) }
+          cri: criDuClub(sonClub),
+          /* Les pièces de son club (`inventaire.js`) : COMBO partout, PLEIN
+             CLUB dans les matchs du club principal. */
+          combo: Math.round(partDuCombo() * 100), pleinGain: Math.round(gainPleinClub() * 100) }
         : { lie: false, prix: reglage('fanzzy.lien_prix'),
           clubPrincipal: (await clubPrincipal(userId)) != null, ...taux },
       fanzzy: {
@@ -2610,8 +2614,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       })),
       // L'effet réel : les modificateurs du Fanzzy combinés à l'équipement
       // actuellement porté. C'est ce que le duel utilisera vraiment.
-      effetReel: combine(f.mods, portes),
-      stuffPorte: portes.map((id) => STUFF_BY_ID.get(id)).filter(Boolean),
+      effetReel: combine(f.mods, portes, { club: sonClub }),
+      /* `combo` : une pièce de son club, portée par lui — son revers
+         s'adoucit (`modsDeLaPiece`), et c'est ce que `mods` dit ici. */
+      stuffPorte: portes.map((id) => STUFF_BY_ID.get(id)).filter(Boolean)
+        .map((s) => (faitCombo(s, sonClub)
+          ? { ...s, combo: true, mods: modsDeLaPiece(s, sonClub) } : s)),
     };
   }
 

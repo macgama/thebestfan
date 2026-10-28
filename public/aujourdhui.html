@@ -350,13 +350,16 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
   <div class="top"><h1><span>LES MATCHS</span><small id="sous">TOUTES COMPÉTITIONS</small></h1></div>
   <!-- Deux rails d'onglets au vert du foot, le ton de cet écran sur l'accueil. -->
   <div class="jours tbf-onglets" data-ton="vert" id="jours"></div>
-  <div class="filtres tbf-onglets" data-ton="vert">
+  <div class="filtres tbf-onglets" data-ton="vert" data-ajuste>
     <button data-f="tous" class="tbf-onglet on">TOUS</button>
     <!-- Caché par défaut : il ne paraît que pour qui suit des clubs. Voir
          `moi()` plus bas — un filtre qui ne peut rien filtrer est un
          bouton qui ment. -->
     <button data-f="mien" id="fMien" class="tbf-onglet" hidden>MES CLUBS</button>
     <button data-f="live" class="tbf-onglet direct">EN DIRECT</button>
+    <!-- Les matchs où l'on peut jouer maintenant : Virage ouvert, ou duel qui
+         attend un joueur (Gaël, 28 octobre 2026). Voir a-jouer.js. -->
+    <button data-f="jouer" class="tbf-onglet">À JOUER</button>
   </div>
   <div class="rech"><input id="q" placeholder="Chercher une équipe ou une compétition…"></div>
   <div class="liste" id="liste"><div class="spin"></div></div>
@@ -373,6 +376,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <!-- L’horloge du match, la même que dans le Grand Virage : elle fait courir
      la minute entre deux relevés, sans un appel de plus. -->
 <script src="/horloge.js"></script>
+<script src="/a-jouer.js" defer></script>
 <!-- Classique et sans « defer » : le rendu de la liste appelle TBF_PAYS dès la
      première journée reçue, donc il doit être là avant le bloc du bas. -->
 <script src="/pays.js"></script>
@@ -539,6 +543,11 @@ function rendre() {
     .map((g) => ({ ...g, matchs: g.matchs.filter((m) => m.mien) }));
   if (filtre === 'live') groupes = groupes.filter((g) => g.live)
     .map((g) => ({ ...g, matchs: g.matchs.filter((m) => m.live) }));
+  if (filtre === 'jouer') {
+    const jouable = (m) => window.TBF_A_JOUER?.jouable(m.id, m.status, m.date) ?? false;
+    groupes = groupes.map((g) => ({ ...g, matchs: g.matchs.filter(jouable) }))
+      .filter((g) => g.matchs.length);
+  }
   if (terme) {
     /* Un terme peut désigner un pays : « espagne » comme « spain ». On le
        traduit une fois pour toute la liste, et non par compétition — c'est
@@ -609,12 +618,16 @@ function rendre() {
               <b>${m.away.goals ?? ''}</b></div>
             ${m.home.cri || m.away.cri ? `<div class="cris">${[m.home.cri, m.away.cri].filter(Boolean)
               .map((c) => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
+            <div class="tbf-jeu" data-jeu="${m.id}" data-statut="${esc(m.status ?? '')}"
+              data-coup="${esc(m.date ?? '')}"></div>
           </div></div>`;
       }).join('')}
     </div>`).join('')
     : `<div class="vide">${filtre === 'mien'
         ? 'Aucun match de tes clubs ce jour-là.<br><a href="/equipes" style="color:var(--craie);font-weight:700">suivre un club</a>'
-        : filtre === 'live' ? 'Aucun match en cours.' : 'Aucun match ce jour-là.'}</div>`;
+        : filtre === 'live' ? 'Aucun match en cours.'
+        : filtre === 'jouer' ? 'Aucun Virage ouvert ni duel qui attend pour l’instant.<br>Les tribunes ouvrent une demi-heure avant le coup d’envoi.'
+        : 'Aucun match ce jour-là.'}</div>`;
 
   $('maj').textContent = data.stale
     ? 'Données un peu anciennes : le service n\u2019a pas répondu.'
@@ -673,7 +686,14 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------------------------------------------------------- fiche match */
 
+/* Le filtre À JOUER suit ce que `a-jouer.js` apprend : une tribune qui
+   s'ouvre, un duel qui se remplit ou se vide. */
+window.addEventListener('tbf:a-jouer', () => { if (filtre === 'jouer') rendre(); });
+
 $('liste').addEventListener('click', (e) => {
+  /* Une pastille VIRAGE ou DUEL (`a-jouer.js`) suit son lien : elle est là
+     pour aller jouer tout de suite, pas pour ouvrir la fiche. */
+  if (e.target.closest('.tbf-jeu a')) return;
   const m = e.target.closest('[data-m]');
   if (m) ouvrirFiche(Number(m.dataset.m));
 });
