@@ -1,0 +1,81 @@
+# ordre	prompt	id	age	tenue	reference	fond	destination	adouci
+1	relances-SU/prompts/SU1-e3-apocalyptique-planche.txt	SU1	3	apocalyptique	art/neuves/SU1C.png	vert	art/SU1/_src/SU1-e3-apocalyptique-planche.png	
+2	relances-SU/prompts/SU2-e2-prehistorique-planche.txt	SU2	2	prehistorique	art/neuves/SU2B.png	vert	art/SU2/_src/SU2-e2-prehistorique-planche.png	
+3	relances-SU/prompts/SU2-e3-prehistorique-planche.txt	SU2	3	prehistorique	art/neuves/SU2C.png	vert	art/SU2/_src/SU2-e3-prehistorique-planche.png	oui
+4	relances-SU/prompts/SU3-e1-prehistorique-planche.txt	SU3	1	prehistorique	art/neuves/SU3.png	vert	art/SU3/_src/SU3-e1-prehistorique-planche.png	
+5	relances-SU/prompts/SU3-e1-apocalyptique-planche.txt	SU3	1	apocalyptique	art/neuves/SU3.png	vert	art/SU3/_src/SU3-e1-apocalyptique-planche.png	
+6	relances-SU/prompts/SU3-e2-apocalyptique-planche.txt	SU3	2	apocalyptique	art/neuves/SU3B.png	vert	art/SU3/_src/SU3-e2-apocalyptique-planche.png	
+7	relances-SU/prompts/SU4-e3-prehistorique-planche.txt	SU4	3	prehistorique	art/neuves/SU4C.png	magenta	art/SU4/_src/SU4-e3-prehistorique-planche.png	
+8	relances-SU/prompts/SU4-e3-apocalyptique-planche.txt	SU4	3	apocalyptique	art/neuves/SU4C.png	magenta	art/SU4/_src/SU4-e3-apocalyptique-planche.png	
+9	relances-SU/prompts/SU5-e1-prehistorique-planche.txt	SU5	1	prehistorique	art/neuves/SU5.png	vert	art/SU5/_src/SU5-e1-prehistorique-planche.png	
+10	relances-SU/prompts/SU5-e2-prehistorique-planche.txt	SU5	2	prehistorique	art/neuves/SU5B.png	vert	art/SU5/_src/SU5-e2-prehistorique-planche.png	
+11	relances-SU/prompts/SU5-e2-apocalyptique-planche.txt	SU5	2	apocalyptique	art/neuves/SU5B.png	vert	art/SU5/_src/SU5-e2-apocalyptique-planche.png	
+12	relances-SU/prompts/SU5-e3-halloween-planche.txt	SU5	3	halloween	art/neuves/SU5C.png	vert	art/SU5/_src/SU5-e3-halloween-planche.png	
+13	relances-SU/prompts/SU6-e1-halloween-planche.txt	SU6	1	halloween	art/neuves/SU6.png	magenta	art/SU6/_src/SU6-e1-halloween-planche.png	
+14	relances-SU/prompts/SU6-e1-apocalyptique-planche.txt	SU6	1	apocalyptique	art/neuves/SU6.png	magenta	art/SU6/_src/SU6-e1-apocalyptique-planche.png	
+15	relances-SU/prompts/SU6-e2-halloween-planche.txt	SU6	2	halloween	art/neuves/SU6B.png	magenta	art/SU6/_src/SU6-e2-halloween-planche.png	
+16	relances-SU/prompts/SU6-e2-prehistorique-planche.txt	SU6	2	prehistorique	art/neuves/SU6B.png	magenta	art/SU6/_src/SU6-e2-prehistorique-planche.png	
+17	relances-SU/prompts/SU6-e2-apocalyptique-planche.txt	SU6	2	apocalyptique	art/neuves/SU6B.png	magenta	art/SU6/_src/SU6-e2-apocalyptique-planche.png	
+18	relances-SU/prompts/SU6-e3-halloween-planche.txt	SU6	3	halloween	art/neuves/SU6C.png	magenta	art/SU6/_src/SU6-e3-halloween-planche.png	
+19	relances-SU/prompts/SU6-e3-apocalyptique-planche.txt	SU6	3	apocalyptique	art/neuves/SU6C.png	magenta	art/SU6/_src/SU6-e3-apocalyptique-planche.png	
+20	relances-SU/prompts/SU8-e1-apocalyptique-planche.txt	SU8	1	apocalyptique	art/neuves/SU8.png	vert	art/SU8/_src/SU8-e1-apocalyptique-planche.png	oui
+21	relances-SU/prompts/SU9-e1-halloween-planche.txt	SU9	1	halloween	art/neuves/SU9.png	vert	art/SU9/_src/SU9-e1-halloween-planche.png	
+22	relances-SU/prompts/SU9-e1-prehistorique-planche.txt	SU9	1	prehistorique	art/neuves/SU9.png	vert	art/SU9/_src/SU9-e1-prehistorique-planche.png	
+23	relances-SU/prompts/SU10-e1-halloween-planche.txt	SU10	1	halloween	art/neuves/SU10.png	vert	art/SU10/_src/SU10-e1-halloween-planche.png	
+24	relances-SU/prompts/SU10-e1-prehistorique-planche.txt	SU10	1	prehistorique	art/neuves/SU10.png	vert	art/SU10/_src/SU10-e1-prehistorique-planche.png	
+25	relances-SU/prompts/SU10-e1-apocalyptique-planche.txt	SU10	1	apocalyptique	art/neuves/SU10.png	vert	art/SU10/_src/SU10-e1-apocalyptique-planche.png	oui
+26	relances-SU/prompts/SU10-e2-halloween-planche.txt	SU10	2	halloween	art/neuves/SU10B.png	vert	art/SU10/_src/SU10-e2-halloween-planche.png	
+27	relances-SU/prompts/SU10-e2-apocalyptique-planche.txt	SU10	2	apocalyptique	art/neuves/SU10B.png	vert	art/SU10/_src/SU10-e2-apocalyptique-planche.png	
+28	relances-SU/prompts/SU11-e1-halloween-planche.txt	SU11	1	halloween	art/neuves/SU11.png	vert	art/SU11/_src/SU11-e1-halloween-planche.png	
+29	relances-SU/prompts/SU11-e1-prehistorique-planche.txt	SU11	1	prehistorique	art/neuves/SU11.png	vert	art/SU11/_src/SU11-e1-prehistorique-planche.png	
+30	relances-SU/prompts/SU12-e1-prehistorique-planche.txt	SU12	1	prehistorique	art/neuves/SU12.png	vert	art/SU12/_src/SU12-e1-prehistorique-planche.png	
+31	relances-SU/prompts/SU12-e1-apocalyptique-planche.txt	SU12	1	apocalyptique	art/neuves/SU12.png	vert	art/SU12/_src/SU12-e1-apocalyptique-planche.png	oui
+32	relances-SU/prompts/SU12-e2-apocalyptique-planche.txt	SU12	2	apocalyptique	art/neuves/SU12B.png	vert	art/SU12/_src/SU12-e2-apocalyptique-planche.png	
+33	relances-SU/prompts/SU12-e3-halloween-planche.txt	SU12	3	halloween	art/neuves/SU12C.png	vert	art/SU12/_src/SU12-e3-halloween-planche.png	
+34	relances-SU/prompts/SU12-e3-apocalyptique-planche.txt	SU12	3	apocalyptique	art/neuves/SU12C.png	vert	art/SU12/_src/SU12-e3-apocalyptique-planche.png	
+35	relances-SU/prompts/SU13-e1-prehistorique-planche.txt	SU13	1	prehistorique	art/neuves/SU13.png	vert	art/SU13/_src/SU13-e1-prehistorique-planche.png	
+36	relances-SU/prompts/SU13-e3-prehistorique-planche.txt	SU13	3	prehistorique	art/neuves/SU13C.png	vert	art/SU13/_src/SU13-e3-prehistorique-planche.png	
+37	relances-SU/prompts/SU13-e3-apocalyptique-planche.txt	SU13	3	apocalyptique	art/neuves/SU13C.png	vert	art/SU13/_src/SU13-e3-apocalyptique-planche.png	
+38	relances-SU/prompts/SU14-e1-prehistorique-planche.txt	SU14	1	prehistorique	art/neuves/SU14.png	vert	art/SU14/_src/SU14-e1-prehistorique-planche.png	
+39	relances-SU/prompts/SU14-e2-prehistorique-planche.txt	SU14	2	prehistorique	art/neuves/SU14B.png	vert	art/SU14/_src/SU14-e2-prehistorique-planche.png	
+40	relances-SU/prompts/SU14-e3-halloween-planche.txt	SU14	3	halloween	art/neuves/SU14C.png	vert	art/SU14/_src/SU14-e3-halloween-planche.png	
+41	relances-SU/prompts/SU14-e3-prehistorique-planche.txt	SU14	3	prehistorique	art/neuves/SU14C.png	vert	art/SU14/_src/SU14-e3-prehistorique-planche.png	
+42	relances-SU/prompts/SU14-e3-apocalyptique-planche.txt	SU14	3	apocalyptique	art/neuves/SU14C.png	vert	art/SU14/_src/SU14-e3-apocalyptique-planche.png	
+43	relances-SU/prompts/SU15-e2-prehistorique-planche.txt	SU15	2	prehistorique	art/neuves/SU15B.png	magenta	art/SU15/_src/SU15-e2-prehistorique-planche.png	
+44	relances-SU/prompts/SU15-e3-halloween-planche.txt	SU15	3	halloween	art/neuves/SU15C.png	magenta	art/SU15/_src/SU15-e3-halloween-planche.png	
+45	relances-SU/prompts/SU17-e1-halloween-planche.txt	SU17	1	halloween	art/neuves/SU17.png	vert	art/SU17/_src/SU17-e1-halloween-planche.png	
+46	relances-SU/prompts/SU17-e1-prehistorique-planche.txt	SU17	1	prehistorique	art/neuves/SU17.png	vert	art/SU17/_src/SU17-e1-prehistorique-planche.png	
+47	relances-SU/prompts/SU17-e2-apocalyptique-planche.txt	SU17	2	apocalyptique	art/neuves/SU17B.png	vert	art/SU17/_src/SU17-e2-apocalyptique-planche.png	
+48	relances-SU/prompts/SU18-e1-halloween-planche.txt	SU18	1	halloween	art/neuves/SU18.png	magenta	art/SU18/_src/SU18-e1-halloween-planche.png	
+49	relances-SU/prompts/SU18-e1-prehistorique-planche.txt	SU18	1	prehistorique	art/neuves/SU18.png	magenta	art/SU18/_src/SU18-e1-prehistorique-planche.png	
+50	relances-SU/prompts/SU18-e1-apocalyptique-planche.txt	SU18	1	apocalyptique	art/neuves/SU18.png	magenta	art/SU18/_src/SU18-e1-apocalyptique-planche.png	
+51	relances-SU/prompts/SU18-e2-halloween-planche.txt	SU18	2	halloween	art/neuves/SU18B.png	magenta	art/SU18/_src/SU18-e2-halloween-planche.png	
+52	relances-SU/prompts/SU18-e2-prehistorique-planche.txt	SU18	2	prehistorique	art/neuves/SU18B.png	magenta	art/SU18/_src/SU18-e2-prehistorique-planche.png	
+53	relances-SU/prompts/SU18-e3-halloween-planche.txt	SU18	3	halloween	art/neuves/SU18C.png	magenta	art/SU18/_src/SU18-e3-halloween-planche.png	
+54	relances-SU/prompts/SU19-e1-prehistorique-planche.txt	SU19	1	prehistorique	art/neuves/SU19.png	vert	art/SU19/_src/SU19-e1-prehistorique-planche.png	
+55	relances-SU/prompts/SU19-e1-apocalyptique-planche.txt	SU19	1	apocalyptique	art/neuves/SU19.png	vert	art/SU19/_src/SU19-e1-apocalyptique-planche.png	
+56	relances-SU/prompts/SU19-e2-halloween-planche.txt	SU19	2	halloween	art/neuves/SU19B.png	vert	art/SU19/_src/SU19-e2-halloween-planche.png	
+57	relances-SU/prompts/SU19-e2-apocalyptique-planche.txt	SU19	2	apocalyptique	art/neuves/SU19B.png	vert	art/SU19/_src/SU19-e2-apocalyptique-planche.png	
+58	relances-SU/prompts/SU19-e3-prehistorique-planche.txt	SU19	3	prehistorique	art/neuves/SU19C.png	vert	art/SU19/_src/SU19-e3-prehistorique-planche.png	
+59	relances-SU/prompts/SU21-e1-halloween-planche.txt	SU21	1	halloween	art/neuves/SU21.png	vert	art/SU21/_src/SU21-e1-halloween-planche.png	
+60	relances-SU/prompts/SU21-e1-prehistorique-planche.txt	SU21	1	prehistorique	art/neuves/SU21.png	vert	art/SU21/_src/SU21-e1-prehistorique-planche.png	
+61	relances-SU/prompts/SU21-e1-apocalyptique-planche.txt	SU21	1	apocalyptique	art/neuves/SU21.png	vert	art/SU21/_src/SU21-e1-apocalyptique-planche.png	
+62	relances-SU/prompts/SU22-e1-apocalyptique-planche.txt	SU22	1	apocalyptique	art/neuves/SU22.png	vert	art/SU22/_src/SU22-e1-apocalyptique-planche.png	
+63	relances-SU/prompts/SU22-e2-prehistorique-planche.txt	SU22	2	prehistorique	art/neuves/SU22B.png	vert	art/SU22/_src/SU22-e2-prehistorique-planche.png	
+64	relances-SU/prompts/SU22-e3-halloween-planche.txt	SU22	3	halloween	art/neuves/SU22C.png	vert	art/SU22/_src/SU22-e3-halloween-planche.png	
+65	relances-SU/prompts/SU22-e3-apocalyptique-planche.txt	SU22	3	apocalyptique	art/neuves/SU22C.png	vert	art/SU22/_src/SU22-e3-apocalyptique-planche.png	
+66	relances-SU/prompts/SU24-e1-prehistorique-planche.txt	SU24	1	prehistorique	art/neuves/SU24.png	vert	art/SU24/_src/SU24-e1-prehistorique-planche.png	
+67	relances-SU/prompts/SU24-e1-apocalyptique-planche.txt	SU24	1	apocalyptique	art/neuves/SU24.png	vert	art/SU24/_src/SU24-e1-apocalyptique-planche.png	
+68	relances-SU/prompts/SU24-e2-prehistorique-planche.txt	SU24	2	prehistorique	art/neuves/SU24B.png	vert	art/SU24/_src/SU24-e2-prehistorique-planche.png	
+69	relances-SU/prompts/SU24-e3-prehistorique-planche.txt	SU24	3	prehistorique	art/neuves/SU24C.png	vert	art/SU24/_src/SU24-e3-prehistorique-planche.png	
+70	relances-SU/prompts/SU24-e3-apocalyptique-planche.txt	SU24	3	apocalyptique	art/neuves/SU24C.png	vert	art/SU24/_src/SU24-e3-apocalyptique-planche.png	
+71	relances-SU/prompts/SU25-e1-halloween-planche.txt	SU25	1	halloween	art/neuves/SU25.png	vert	art/SU25/_src/SU25-e1-halloween-planche.png	oui
+72	relances-SU/prompts/SU25-e1-apocalyptique-planche.txt	SU25	1	apocalyptique	art/neuves/SU25.png	vert	art/SU25/_src/SU25-e1-apocalyptique-planche.png	oui
+73	relances-SU/prompts/SU25-e3-apocalyptique-planche.txt	SU25	3	apocalyptique	art/neuves/SU25C.png	vert	art/SU25/_src/SU25-e3-apocalyptique-planche.png	oui
+74	relances-SU/prompts/SU28-e1-prehistorique-planche.txt	SU28	1	prehistorique	art/neuves/SU28.png	vert	art/SU28/_src/SU28-e1-prehistorique-planche.png	oui
+75	relances-SU/prompts/SU29-e1-prehistorique-planche.txt	SU29	1	prehistorique	art/neuves/SU29.png	vert	art/SU29/_src/SU29-e1-prehistorique-planche.png	
+76	relances-SU/prompts/SU29-e1-apocalyptique-planche.txt	SU29	1	apocalyptique	art/neuves/SU29.png	vert	art/SU29/_src/SU29-e1-apocalyptique-planche.png	
+77	relances-SU/prompts/SU29-e2-halloween-planche.txt	SU29	2	halloween	art/neuves/SU29B.png	vert	art/SU29/_src/SU29-e2-halloween-planche.png	
+78	relances-SU/prompts/SU31-e1-halloween-planche.txt	SU31	1	halloween	art/neuves/SU31.png	vert	art/SU31/_src/SU31-e1-halloween-planche.png	
+79	relances-SU/prompts/SU32-e3-apocalyptique-planche.txt	SU32	3	apocalyptique	art/neuves/SU32C.png	vert	art/SU32/_src/SU32-e3-apocalyptique-planche.png	
+80	relances-SU/prompts/SU34-e2-prehistorique-planche.txt	SU34	2	prehistorique	art/neuves/SU34B.png	vert	art/SU34/_src/SU34-e2-prehistorique-planche.png	
