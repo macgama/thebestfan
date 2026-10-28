@@ -6566,5 +6566,14 @@
  "Comment couper la musique ?": "Wie schalte ich die Musik aus?",
  "En bas du menu, « Couper la musique ». Elle ne joue que sur les pages calmes, jamais pendant un duel, au Grand Virage ou dans les mini-jeux, pour que tu entendes la tribune. Le mode calme du menu coupe aussi les sons, les vibrations ou les animations.": "Unten im Menü, „Musik aus“. Sie läuft nur auf den ruhigen Seiten, nie während eines Duells, in der Großen Kurve oder bei den Minispielen, damit du die Tribüne hörst. Der Ruhemodus im Menü schaltet auch Töne, Vibrationen oder Animationen ab.",
  "J’ai trouvé un bug. À qui le dire ?": "Ich habe einen Bug gefunden. Wem sage ich es?",
- "Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le message part directement à l’équipe du jeu.": "Im Menü, „Problem melden“: Sag, was passiert ist, und die Nachricht geht direkt an das Spielteam."
+ "Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le message part directement à l’équipe du jeu.": "Im Menü, „Problem melden“: Sag, was passiert ist, und die Nachricht geht direkt an das Spielteam.",
+ "Doucement : attends une minute avant de chercher encore.": "Langsam: Warte eine Minute, bevor du weitersuchst.",
+ "Aucun joueur à ce nom.": "Kein Spieler mit diesem Namen.",
+ "déjà ami": "schon befreundet",
+ "demande partie": "Anfrage gesendet",
+ "CHERCHER UN JOUEUR": "SPIELER SUCHEN",
+ "Tape le début de son pseudo, trois lettres au moins. Il n’a pas besoin de suivre tes clubs.": "Tipp den Anfang des Nicknames, mindestens drei Buchstaben. Er muss deinen Clubs nicht folgen.",
+ "Son pseudo": "Nickname",
+ "Pseudo du joueur à chercher": "Nickname des gesuchten Spielers",
+ "ILS SUIVENT TES CLUBS": "SIE FOLGEN DEINEN CLUBS"
 }

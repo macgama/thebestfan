@@ -82,6 +82,20 @@ export const FENETRE_PARRAINAGE_MS = 24 * 60 * 60 * 1000;
 const MAX_SUGGESTIONS = 40;
 
 /**
+ * La recherche par pseudo (28 octobre 2026, à la demande de Gaël) : de quoi
+ * ajouter quelqu'un qui ne suit aucun de mes clubs.
+ *
+ * Trois lettres au moins, huit réponses au plus, et le pseudo doit
+ * **commencer** par ce qu'on tape : on retrouve quelqu'un dont on connaît le
+ * nom, on ne feuillette pas la liste des inscrits. Une lettre rendrait un
+ * annuaire par tranches ; trois rendent une poignée de noms.
+ */
+export const RECHERCHE_MIN = 3;
+const RECHERCHE_MAX = 8;
+/** Les recherches d'un joueur par minute : assez pour taper, pas pour aspirer. */
+const RECHERCHES_PAR_MINUTE = 30;
+
+/**
  * @param {object} o
  * @param {object} [o.presence]  le module de présence (`presence/index.js`).
  *   Facultatif : sans lui, la liste d'amis est celle d'avant, sans pastille.
@@ -357,6 +371,74 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
       .map((g) => ({ ...g, communs: g.clubs.length }))
       .sort((x, y) => y.communs - x.communs || x.pseudo.localeCompare(y.pseudo, 'fr'))
       .slice(0, MAX_SUGGESTIONS);
+  }
+
+  /* ------------------------------------------------------------ chercher */
+
+  /* Les recherches de la dernière minute, par joueur. En mémoire : un
+     redémarrage les oublie, et ce n'est pas grave — la garde est là contre
+     une boucle qui aspirerait les pseudos, pas pour tenir un compte. */
+  const recherches = new Map();
+  function tropDeRecherches(userId) {
+    const maintenant = Date.now();
+    const recentes = (recherches.get(userId) ?? []).filter((t) => maintenant - t < 60_000);
+    recentes.push(maintenant);
+    recherches.set(userId, recentes);
+    if (recherches.size > 5000) {
+      for (const [id, ts] of recherches) {
+        if (!ts.some((t) => maintenant - t < 60_000)) recherches.delete(id);
+      }
+    }
+    return recentes.length > RECHERCHES_PAR_MINUTE;
+  }
+
+  /**
+   * **Trouver quelqu'un par son pseudo**, qu'il suive mes clubs ou non.
+   *
+   * Ce qu'on rend est ce qu'un classement montre déjà : le pseudo, le
+   * personnage, le niveau — **jamais ses clubs**, qu'on n'a pas en commun. Et
+   * l'état du lien, pour que la ligne dise « ami » ou « demande partie » au
+   * lieu de proposer un bouton qui répondrait par un refus.
+   *
+   * Un refus, dans un sens ou dans l'autre, ne se montre pas : la ligne
+   * reste neutre, et redemander trop tôt reçoit la réponse habituelle
+   * (`amis.error.refus_recent`). Dire « il t'a refusé » sous un pseudo
+   * qu'on vient de taper serait une information de plus que le refus n'en
+   * donne.
+   *
+   * Seuls les comptes actifs : un compte supprimé ou bloqué n'est trouvable
+   * par personne. La collation de la colonne (`utf8mb4_unicode_ci`) ignore
+   * les majuscules et les accents : « eleo » trouve « Éléonore ».
+   */
+  async function chercher(userId, texte) {
+    const cherche = String(texte ?? '').trim().slice(0, 20);
+    if ([...cherche].length < RECHERCHE_MIN) return [];
+    if (tropDeRecherches(userId)) throw fail('amis.error.trop_de_recherches');
+    // `%` et `_` sont des jokers pour LIKE : tapés, ce sont des lettres.
+    const motif = cherche.replace(/[\\%_]/g, (c) => '\\' + c) + '%';
+    const lignes = await avecXp((xp) => q(
+      `SELECT u.public_id AS id, u.pseudo, u.status,
+              w.active_fanzzy, w.active_evo, w.active_etat, ${xp} AS xp,
+              am.etat, am.par
+         FROM users u
+         LEFT JOIN user_wallet w ON w.user_id = u.public_id
+         LEFT JOIN amities am
+           ON (am.a = ? AND am.b = u.public_id) OR (am.a = u.public_id AND am.b = ?)
+        WHERE u.pseudo LIKE ? AND u.status = 'active' AND u.public_id <> ?
+        ORDER BY u.pseudo = ? DESC, CHAR_LENGTH(u.pseudo), u.pseudo
+        LIMIT ${RECHERCHE_MAX}`,
+      [userId, userId, motif, userId, cherche]));
+    await habiller(lignes.map((l) => Object.assign(l, { userId: l.id })));
+    return lignes.map((l) => {
+      const niveau = niveauDe(l);
+      const lien = l.etat === 'amis' ? 'amis'
+        : l.etat === 'demande' ? (l.par === userId ? 'envoyee' : 'recue') : null;
+      return {
+        id: l.id, pseudo: l.pseudo, fanzzy: l.fanzzy, avatar: l.avatar,
+        ...(niveau === undefined ? {} : { niveau }),
+        ...(lien ? { lien } : {}),
+      };
+    });
   }
 
   /* ------------------------------------------------------------ demander */
@@ -678,6 +760,9 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
   router.get('/suggestions', requireAuth, safe(async (req, res) =>
     res.json({ gens: await suggestions(req.user.id) })));
 
+  router.get('/chercher', requireAuth, safe(async (req, res) =>
+    res.json({ gens: await chercher(req.user.id, req.query?.q) })));
+
   router.post('/demande', requireAuth, safe(async (req, res) =>
     res.json(await demander(req.user.id, String(req.body?.id ?? '')))));
 
@@ -714,7 +799,7 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
     res.json(await repondreAuKop(req.user.id, String(req.body?.kopId ?? ''),
       Boolean(req.body?.ok)))));
 
-  return { router, tableau, suggestions, demander, repondre, retirer,
+  return { router, tableau, suggestions, chercher, demander, repondre, retirer,
            inviterAuKop, repondreAuKop,
            monInvitation, parrainDe, accepterParrainage };
 }

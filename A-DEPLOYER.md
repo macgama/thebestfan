@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Chercher un ami par pseudo dans AMIS, onglet TROUVER** (branche
+`claude/project-thread-hl4hic`, 28 octobre 2026, demandé par Gaël : on ne
+pouvait ajouter que des supporters des mêmes clubs). Construction seule,
+**sans schéma**.
+
+- Une case « CHERCHER UN JOUEUR » en haut de TROUVER : trois lettres au moins,
+  le début du pseudo, huit noms au plus ; AJOUTER envoie la demande d'ami.
+  Ni les clubs ni l'adresse de la personne ne s'affichent.
+- Après la mise en ligne : sur le S24+, chercher le pseudo d'un testeur qui
+  ne suit pas tes clubs et lui envoyer une demande.
+
+---
+
 **La page Questions à jour** (branche `claude/project-thread-7ad2lr`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 
