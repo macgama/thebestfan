@@ -6507,5 +6507,14 @@
  "{0}BOOSTER": "{0}BOOSTER",
  "sa carte est dans les boosters": "die Karte steckt in den Boostern",
  "Ultimate : {0} — sa carte est dans les boosters": "Ultimate: {0} — die Karte steckt in den Boostern",
- "Couper la musique": "Musik aus"
+ "Couper la musique": "Musik aus",
+ "Doucement : attends une minute avant de chercher encore.": "Langsam: Warte eine Minute, bevor du weitersuchst.",
+ "Aucun joueur à ce nom.": "Kein Spieler mit diesem Namen.",
+ "déjà ami": "schon befreundet",
+ "demande partie": "Anfrage gesendet",
+ "CHERCHER UN JOUEUR": "SPIELER SUCHEN",
+ "Tape le début de son pseudo, trois lettres au moins. Il n’a pas besoin de suivre tes clubs.": "Tipp den Anfang des Nicknames, mindestens drei Buchstaben. Er muss deinen Clubs nicht folgen.",
+ "Son pseudo": "Nickname",
+ "Pseudo du joueur à chercher": "Nickname des gesuchten Spielers",
+ "ILS SUIVENT TES CLUBS": "SIE FOLGEN DEINEN CLUBS"
 }

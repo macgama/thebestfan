@@ -6507,5 +6507,14 @@
  "{0}BOOSTER": "{0}BOOSTER",
  "sa carte est dans les boosters": "its card is in boosters",
  "Ultimate : {0} — sa carte est dans les boosters": "Ultimate: {0} — its card is in boosters",
- "Couper la musique": "Mute music"
+ "Couper la musique": "Mute music",
+ "Doucement : attends une minute avant de chercher encore.": "Easy now: wait a minute before searching again.",
+ "Aucun joueur à ce nom.": "No player by that name.",
+ "déjà ami": "already a friend",
+ "demande partie": "request sent",
+ "CHERCHER UN JOUEUR": "FIND A PLAYER",
+ "Tape le début de son pseudo, trois lettres au moins. Il n’a pas besoin de suivre tes clubs.": "Type the start of their username, at least three letters. They don’t need to follow your clubs.",
+ "Son pseudo": "Their username",
+ "Pseudo du joueur à chercher": "Username of the player to find",
+ "ILS SUIVENT TES CLUBS": "THEY FOLLOW YOUR CLUBS"
 }
