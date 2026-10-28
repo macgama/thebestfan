@@ -44,6 +44,12 @@ export const CADRAGES = {
   BG5: { y: 0.42, c: 0.66 },
   // Le bocal : le couvercle passait pour une tête.
   RV1: { y: 0.42, c: 0.62 },
+  // Die Kurve : la nageoire, le chapeau, la couronne et le couvercle passaient
+  // pour une tête ; le canot et le tram ont le visage au milieu du corps.
+  SU25C: { y: 0.34, c: 0.46 }, SU26C: { y: 0.38, c: 0.46 }, SU30C: { y: 0.34, c: 0.46 },
+  SU31C: { y: 0.31, c: 0.46 },
+  SU35: { y: 0.3, c: 0.5 }, SU35B: { y: 0.34, c: 0.5 }, SU35C: { y: 0.4, c: 0.5 },
+  SU36: { y: 0.34, c: 0.5 }, SU36B: { y: 0.43, c: 0.5 }, SU36C: { y: 0.45, c: 0.5 },
 };
 
 /** La carte d'un âge : `RP34` et 3 → `RP34C`. */
