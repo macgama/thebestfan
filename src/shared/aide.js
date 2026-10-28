@@ -268,6 +268,13 @@ const RUBRIQUES = [
         () => 'Les communes sont offertes à tout le monde. Sans elles, un joueur qui '
           + `débute ne pourrait pas remplir ses ${DECK_RULES.actions} emplacements le `
           + 'premier jour.'],
+      ['C’est quoi, une pièce de club ?',
+        () => 'Une pièce d’équipement aux couleurs d’un club, deux par club des Terraces '
+          + 'pour commencer. Portée par un Fanzzy lié au même club, c’est le COMBO : son '
+          + `revers perd ${reglage('stuff.club_revers')} %, dans tous les matchs. Et dans un `
+          + `match de ton club principal, c’est PLEIN CLUB : chacune rapporte ${reglage('stuff.club_gain')} % `
+          + 'd’écharpes en duel, ou de ferveur au Virage, en plus du lien du Fanzzy. '
+          + 'La force, elle, ne change pas.'],
       ['Mon deck change-t-il quelque chose au Grand Virage ?',
         () => 'Très peu : le Virage se joue au chant, pas au deck. Il compte pour le '
           + 'duel, où ton titulaire et ton équipement pèsent sur chaque geste.'],
@@ -297,6 +304,15 @@ const RUBRIQUES = [
             ? ` Sans PASS de tribune, ${reglage('abo.duels_classes_jour')} duels classés `
               + 'comptent par jour ; au-delà, tu joues toujours, en entraînement.'
             : '')],
+      ['Comment savoir où l’on joue en ce moment ?',
+        'Sur MATCHS et dans les compétitions, sous chaque match : la pastille verte '
+          + 'VIRAGE dit que sa tribune est ouverte et combien de supporters y poussent, '
+          + 'la violette DUEL qu’un joueur y attend un adversaire. Un appui t’y emmène. '
+          + 'Le filtre À JOUER de MATCHS ne garde que ces matchs-là.'],
+      ['Quelqu’un attend un duel : où le trouver ?',
+        'Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend '
+          + 'un joueur. Un appui choisit le match, le format et la tribune qui manque : '
+          + 'il ne reste qu’à entrer en file.'],
       ['Si je quitte la salle d’attente, mon duel disparaît-il ?',
         () => 'Non. Il reste ouvert et les autres le voient toujours ; le jeu te '
           + 'rappelle dès que quelqu’un arrive en face. S’il ne te voit pas revenir '
