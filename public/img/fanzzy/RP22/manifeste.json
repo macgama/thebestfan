@@ -1,6 +1,6 @@
 {
   "id": "RP22",
-  "rev": 8,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1d719c6066d3",
+          "sha": "ab456d842aaa",
           "cligne": true
         },
         "halloween": {
@@ -26,7 +26,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "35d6c5679c20"
+          "sha": "a89add0adf61"
         },
         "apocalyptique": {
           "etats": [
@@ -38,7 +38,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b540d5c03920"
+          "sha": "73e1447b14d9"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "5050e8ba0ce0"
         }
       }
     },
