@@ -26,6 +26,8 @@ import { couleursDuBlason, FormatDeBlason } from './blason.js';
  * elle. Deux couleurs CSS, la seconde peut être `null`.
  */
 export const COULEURS_A_LA_MAIN = {
+  3728: ['#04569C', '#ECE404'],   // FK Varnsdorf (Tchéquie) : bleu et jaune
+  7312: ['#FBE10D', '#0064AC'],   // FK Králův Dvůr (Tchéquie) : jaune et bleu
 };
 
 /** Au plus ce nombre de blasons par vague : un soir de Coupe d'Europe en
