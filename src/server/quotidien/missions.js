@@ -101,7 +101,8 @@ export function lirePresences(lire, userId) {
     [userId, userId]);
 }
 
-/** Les compteurs d'hier et d'aujourd'hui : boosters ouverts, évolutions. */
+/** Les compteurs d'hier et d'aujourd'hui : boosters ouverts, évolutions,
+    Ultimate lancés, parties de mini-jeux, pronostics. */
 export function lireCompteurs(lire, userId) {
   return lire(
     `SELECT IF(jour = CURDATE(), 0, 1) AS k, cle, n
@@ -112,6 +113,7 @@ export function lireCompteurs(lire, userId) {
 
 const FAMILLE = {
   boosters: 'compteurs', evolutions: 'compteurs',
+  ultimes: 'compteurs', minijeux: 'compteurs', pronos: 'compteurs',
   duels: 'duels', victoires: 'duels', classes: 'duels', duels_club: 'duels',
   chants: 'presences', chants_club: 'presences', mitemps: 'presences', competitions: 'presences',
 };
@@ -340,6 +342,16 @@ export function contexte({ lire, userId, jourDuFoot = null, base = null, memoire
           .filter((x) => SE_JOUE.has(x.status) && x.leagueId != null)
           .map((x) => x.leagueId)).size >= 2);
       case 'grandir': return unFanzzyPeutGrandir();
+      case 'minijeux': return reglage('jeux.actif') === true;
+      /* Un pronostic se donne avant le coup d'envoi d'un match d'un club
+         suivi : il en faut un aujourd'hui qui n'a pas commencé. */
+      case 'prono': {
+        if (reglage('prono.actif') !== true) return false;
+        const { suivis } = await lireSocle();
+        if (!suivis.size) return false;
+        return surLaJournee((matchs) => matchs.some((x) => x.status === 'NS'
+          && (suivis.has(Number(x.home?.id)) || suivis.has(Number(x.away?.id)))));
+      }
       default: return false;
     }
   }

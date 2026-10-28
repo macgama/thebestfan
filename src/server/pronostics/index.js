@@ -53,6 +53,7 @@
 import express from 'express';
 import { verser } from '../recompenses.js';
 import { reglage } from '../../shared/reglages.js';
+import { compterDuJour } from '../quotidien/compteurs.js';
 
 const FINIS = new Set(['FT', 'AET', 'PEN']);
 
@@ -226,10 +227,14 @@ export function createPronostics({ pool, requireAuth }) {
       const f = await match(id);
       const p = await porte(req.user.id, f);
       if (!p.ouvert) return res.status(409).json({ error: `prono.error.${p.raison}`, ...p });
-      await q(
+      const ecrit = await q(
         `INSERT INTO pronostics (user_id, fixture_id, home_goals, away_goals) VALUES (?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE home_goals = VALUES(home_goals), away_goals = VALUES(away_goals)`,
         [req.user.id, id, home, away]);
+      /* Un pronostic **nouveau** (une ligne insérée, pas un score changé) :
+         la mission « Fais un pronostic » le compte. Changer dix fois le même
+         score n'en fait pas dix. */
+      if (Number(ecrit?.affectedRows) === 1) await compterDuJour(q, req.user.id, 'prono');
       res.json({ ouvert: true, prono: { home, away }, gains: gains() });
     } catch (e) {
       if (SCHEMA_INCOMPLET.has(e?.code)) return res.status(503).json({ error: 'prono.error.schema' });

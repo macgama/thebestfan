@@ -1,419 +1,353 @@
-/**
- * L'écran d'ouverture : le kop de Fanzzy jouables, et le moment où il s'en
- * va.
- *
- * ## Ce qu'il fait, et ce qu'il ne fait pas
- *
- * Le cadre est déjà dans la page — la tribune au loin, le titre sur sa bâche, la jauge
- * et son premier libellé — et il est visible avant qu'une seule ligne d'ici ne
- * tourne. Ce fichier ajoute ce qui ne peut pas être écrit d'avance : le kop
- * (des visages jouables, tirés au hasard), l'avancée de la jauge et ses deux libellés
- * suivants (ils suivent le temps, et l'écharpe se noue sur le dernier quand
- * l'écran part : voir `nouer`), « TOUCHE POUR ENTRER » (vrai seulement si
- * ce fichier est là pour l'entendre), l'astuce du jour (elle dépend de la
- * date) — et la sortie.
- *
- * ## La sortie, qui est la partie qui compte
- *
- * L'écran part à la **première** des trois conditions : l'accueil dit qu'il
- * est prêt, on touche l'écran, ou le temps est écoulé. Le dernier n'est pas
- * une précaution ajoutée après coup, c'est le filet — un écran d'ouverture
- * qui attend le serveur devient un écran d'attente le jour où le serveur est
- * lent, et c'est exactement le jour où il ne faut pas retenir les gens
- * dehors.
- *
- * Les deux premières respectent un **plancher** : l'écran ne clignote pas.
- * Le plafond, lui, ne se négocie pas — voir `DUREE`.
- *
- * Ces sorties ont été retirées une fois, et remises : dix secondes que rien
- * n'abrège se lisent comme une panne, et un joueur l'a signalé deux fois.
- * Si l'envie revient de les enlever, relire d'abord le récit du duel plus
- * bas — c'est le même symptôme.
- *
- * Tout ce que le lot 2 a ajouté ici (libellés, consigne, astuce), et le kop,
- * est du décor, et chaque morceau est dans son `try` : une faute dans
- * le décor ne doit jamais coûter une sortie.
- *
- * Script classique, pas module : comme tout ce qui vit dans `public/`.
- */
+/* =======================================================================
+   L'ouverture d'un booster, en spectacle : le moteur commun.
+
+   Demandée par Gaël le 24 octobre 2026, dans l'esprit de Clash Royale et de
+   Brawl Stars : « de jolies animations pour chaque type de cartes gagnées ».
+   Trois temps s'ajoutent à la révélation, sans rien changer à son échelle de
+   rareté (`FX.reveler`) :
+
+     le suspense   le paquet tombe sur la scène et tremble une fois par degré
+                   de sa meilleure carte (rien pour un paquet de communes,
+                   trois secousses et des éclairs pour une légendaire), dans
+                   une lueur de cette couleur ;
+     la charge     la carte du dessus brille de sa rareté avant qu'on la
+                   touche ; une épique se soulève et vibre une demi-seconde
+                   avant de se retourner, une légendaire une seconde, la salle
+                   éteinte autour d'elle ;
+     l'entrée      une fois retournée, chaque sorte de carte a son geste : le
+                   Fanzzy saute, l'expression se dandine, la pièce tourne sur
+                   elle-même, la tenue passe derrière un rideau, le stade
+                   allume ses projecteurs, la carte action claque, les
+                   écharpes pleuvent. Son mot (« FANZZY », « TENUE »…) se colle
+                   sous la carte.
+
+   **Deux pages l'emploient**, le kiosque (`boosters.html`) et le paquet de
+   bienvenue (`bienvenue.html`). Le second avait gardé l'ouverture d'avant —
+   une gerbe filmée et des étincelles, la même pour toutes les cartes — et
+   Gaël l'a remarqué le 28 octobre 2026 : le premier paquet, celui dont on se
+   souvient, était le moins fêté du jeu. Le code est donc ici, une fois :
+   deux cérémonies recopiées finissent par ne plus se ressembler.
+
+   Ce que la page fournit : une scène (`.kq-scene`) où s'empilent les cartes
+   `.reveal` (avec `data-rar` et `data-sorte`), une salle (`.kq-salle`) que la
+   légendaire éteint, et une vidéo `.kq-fond` derrière la carte. Le reste — la
+   pile, les touchers, ce qui suit la dernière carte — reste à la page.
+
+   **Les propriétés `translate`, `scale` et `rotate`, jamais `transform`** :
+   la pile pose ses cartes par `transform` en ligne, et le retournement est un
+   `transform` de `.flip`. Les propriétés à part se composent avec eux au lieu
+   de les écraser.
+
+   **Le mouvement part, l'information reste** — sous `prefers-reduced-motion`
+   comme sous le mode calme (« animations ») : ni suspense ni charge, la carte
+   se retourne au premier toucher, et sa sorte se lit sur son mot.
+   ======================================================================= */
 (() => {
-  const ecran = document.getElementById('ouverture');
-  if (!ecran) return;
+  const CSS = `
+.reveal{--rc:var(--r-commune)}
+.kq-scene::before{content:"";position:absolute;left:50%;top:50%;width:min(170vw,820px);aspect-ratio:1;
+  translate:-50% -50%;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--rc,#fff) 90%,transparent),
+    color-mix(in srgb,var(--rc,#fff) 45%,transparent) 38%,transparent 70%)}
+.kq-scene.kq-attente:not([data-best=commune])>.reveal .face.back{
+  box-shadow:0 0 0 3px var(--kq-best),0 0 50px 14px color-mix(in srgb,var(--kq-best) 80%,transparent)}
+.kq-scene.kq-attente::before{animation:kq-lueur var(--kq-t,1s) ease-out both}
+.kq-scene.kq-apres::before{animation:kq-eteint .5s ease-out both}
+@keyframes kq-eteint{from{opacity:.9;scale:1.05}to{opacity:0;scale:1.15}}
+.kq-scene.kq-attente[data-best=legendaire]::before{animation:kq-lueur var(--kq-t,1s) ease-out both,
+  kq-eclairs .19s steps(2) .4s 6}
+@keyframes kq-lueur{0%{opacity:0;scale:.4}30%{opacity:.8;scale:.85}100%{opacity:.9;scale:1.05}}
+@keyframes kq-eclairs{50%{filter:brightness(2.4)}}
+.kq-scene.kq-attente>.reveal{animation:kq-tombe .36s cubic-bezier(.2,.9,.3,1.25) both,
+  kq-tremble .38s ease-in-out .36s var(--kq-n,0)}
+@keyframes kq-tombe{from{translate:0 -70vh;rotate:-8deg}}
+@keyframes kq-tremble{20%{translate:-7px 0;rotate:-3deg}40%{translate:6px -3px;rotate:3deg}
+  60%{translate:-5px 0;rotate:-2deg}80%{translate:3px 0;rotate:1deg}}
 
-  /* Une fois par session, et pas une fois par visite.
-   *
-   * L accueil est l écran vers lequel tout revient : le menu y mène, la
-   * flèche de retour y mène, la fin d un duel y ramène. Rejouer l ouverture à
-   * chaque fois, c est deux secondes de tribune en fusion entre deux parties,
-   * et un premier geste avalé à chaque fois — car l écran couvre la page, y
-   * compris le bouton qu on visait.
-   *
-   * sessionStorage et non localStorage : rouvrir l application doit la
-   * rouvrir, pas continuer une session d avant-hier. Il peut refuser
-   * d écrire — navigation privée, réglage du navigateur — et le pire cas est
-   * exactement ce qu on avait : l écran reparaît. */
-  const CLE = 'tbf.ouverture';
-  try {
-    if (sessionStorage.getItem(CLE)) { ecran.remove(); return; }
-    sessionStorage.setItem(CLE, '1');
-  } catch { /* stockage refusé : on la montre, c est tout */ }
+.reveal.kq-dessus:not(.flipped):not([data-rar=commune]) .face.back{
+  box-shadow:0 0 0 2px var(--rc),0 0 26px 4px color-mix(in srgb,var(--rc) 70%,transparent),
+    0 18px 36px rgba(0,0,0,.6)}
+.reveal.kq-dessus:not(.flipped):is([data-rar=epique],[data-rar=legendaire]) .face.back{
+  animation:kq-pouls 1.1s ease-in-out infinite}
+@keyframes kq-pouls{50%{box-shadow:0 0 0 3px var(--rc),0 0 46px 12px color-mix(in srgb,var(--rc) 80%,transparent),
+  0 18px 36px rgba(0,0,0,.6)}}
 
-  /* **On arrive de l'intérieur du jeu : pas d'ouverture.**
-   *
-   * Un joueur l'a décrit ainsi : « je quitte un duel, j'arrive sur la page de
-   * chargement, et il ne se passe plus rien ». Il ne se passait rien pendant
-   * **dix secondes**, ce qui, entre deux parties, ne se distingue pas d'une
-   * panne — et il rechargeait, ce qui remet dix secondes.
-   *
-   * La garde par session existait déjà et ne suffit pas : elle ne se pose qu'au
-   * premier passage **par l'accueil**. Quelqu'un qui ouvre l'application sur un
-   * match, joue, puis revient, n'y est encore jamais passé. Sa première visite
-   * de l'accueil est donc celle qui suit sa partie, c'est-à-dire le pire moment
-   * possible pour lui tenir l'écran.
-   *
-   * Le référent dit d'où l'on vient. Venir de chez nous, c'est revenir, et on
-   * ne joue pas une ouverture à quelqu'un qui revient. On la garde pour ce à
-   * quoi elle sert : arriver de l'extérieur, ou ouvrir l'application. */
-  try {
-    const ref = document.referrer;
-    if (ref && new URL(ref).origin === location.origin) { ecran.remove(); return; }
-  } catch { /* référent illisible : on la montre, c'est le cas ordinaire */ }
+.reveal.kq-charge .flip{scale:1.1;translate:0 -5%;transition:scale var(--kq-t,.5s) ease-in,translate var(--kq-t,.5s) ease-in;
+  animation:kq-vibre .07s linear infinite}
+.reveal.kq-charge .face.back{box-shadow:0 0 0 3px var(--rc),0 0 70px 22px var(--rc)!important}
+@keyframes kq-vibre{25%{rotate:-1.6deg}75%{rotate:1.6deg}}
+.kq-salle::before{content:"";position:absolute;inset:0;z-index:1;background:#000;opacity:0;
+  pointer-events:none;transition:opacity .35s}
+.kq-salle.kq-nuit::before{opacity:.7}
+.kq-salle>.kq-fond{position:absolute;top:0;left:50%;translate:-50% 0;z-index:1;
+  width:var(--colonne,100%);height:100%;max-width:none;margin:0;
+  object-fit:cover;mix-blend-mode:screen;opacity:0;transition:opacity .35s;pointer-events:none}
+.kq-salle>.kq-fond.on{opacity:var(--kq-op,.85)}
 
-  /**
-   * Combien de temps l'ouverture tient l'écran.
-   *
-   * Dix secondes. Elle en tenait 1800 ms et partait au premier toucher — le bon
-   * réglage du temps où elle passait à **chaque** visite de l'accueil. Elle ne
-   * passe qu'une fois par session depuis, et dix secondes une fois par session,
-   * c'est le temps d'une ouverture de jeu.
-   *
-   * C'est long, et il faut le savoir : quelqu'un qui ouvre l'application pour
-   * vérifier un score attendra dix secondes pour une information qui en demande
-   * deux. C'est une décision de rythme, et elle tient dans cette constante.
-   */
-  const DUREE = 10_000;
+.reveal.kq-entree[data-sorte=fanzzy] .flip{animation:kq-saut .62s cubic-bezier(.3,.7,.4,1)}
+@keyframes kq-saut{0%{translate:0 0;scale:1}35%{translate:0 -10%;scale:1.05 1.1}
+  62%{translate:0 0;scale:1.1 .9}82%{scale:.97 1.03}100%{translate:0 0;scale:1}}
+.reveal.kq-entree[data-sorte=etat] .flip{animation:kq-dandine .6s ease-in-out}
+@keyframes kq-dandine{0%{rotate:0;scale:1}20%{rotate:-7deg;scale:1.06}45%{rotate:6deg}70%{rotate:-3deg}100%{rotate:0;scale:1}}
+.reveal.kq-entree[data-sorte=stuff] .flip{animation:kq-tourne .75s cubic-bezier(.2,.7,.3,1)}
+@keyframes kq-tourne{from{rotate:y 0deg;scale:.9}to{rotate:y 360deg;scale:1}}
+.reveal.kq-entree[data-sorte=skin] .face.front::after{content:"";position:absolute;inset:0;z-index:5;
+  border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 30%),
+    repeating-linear-gradient(90deg,#9B1D2E 0 11px,#6F1220 11px 22px);
+  animation:kq-rideau .7s cubic-bezier(.6,0,.3,1) both}
+@keyframes kq-rideau{0%{clip-path:inset(0 0 100% 0)}25%,40%{clip-path:inset(0)}100%{clip-path:inset(0 0 100% 0)}}
+.reveal.kq-entree[data-sorte=lieu] .face.front{animation:kq-projo .8s linear}
+@keyframes kq-projo{0%,8%{filter:brightness(.2)}10%{filter:brightness(1.35)}26%{filter:brightness(.5)}
+  30%{filter:brightness(1.4)}46%{filter:brightness(.75)}50%{filter:brightness(1.3)}100%{filter:brightness(1)}}
+.reveal.kq-entree[data-sorte=action] .flip{animation:kq-claque .5s ease-out}
+@keyframes kq-claque{0%{translate:0;filter:brightness(1)}10%{translate:-5% 0;filter:brightness(2.3)}
+  22%{translate:5% 0}34%{translate:-3% 0;filter:brightness(1)}48%{translate:2% 0}64%{translate:0}}
+.reveal.kq-entree[data-sorte=echarpes] .flip{animation:kq-pop .45s cubic-bezier(.2,1.6,.35,1)}
+@keyframes kq-pop{from{scale:.82}}
+.reveal>.kq-sorte{position:absolute;z-index:4;left:50%;bottom:-13px;translate:-50% 0;pointer-events:none}
+.reveal>.kq-sorte>.tbf-sticker{--rot:-3deg;height:26px;font-size:12.5px;letter-spacing:.08em;
+  white-space:nowrap}
 
-  /**
-   * Le temps minimum qu'elle reste, quoi qu'il arrive.
-   *
-   * Sans lui, une page déjà chaude ferait clignoter l'ouverture : elle
-   * paraîtrait et disparaîtrait dans le même souffle, ce qui se lit comme un
-   * défaut d'affichage et non comme une entrée. Mille deux cents
-   * millisecondes, c'est le temps de lire le titre.
-   */
-  const PLANCHER = 1200;
+@media (prefers-reduced-motion:reduce){
+  .kq-scene::before,.kq-scene>.reveal{animation:none!important}
+  .reveal.kq-charge .flip{scale:1;translate:0}
+  .kq-salle>.kq-fond{display:none}
+}
+html[data-calme~="animations"] .kq-salle>.kq-fond{display:none}
+html[data-calme~="animations"] .kq-scene::before,
+html[data-calme~="animations"] .kq-scene>.reveal{animation:none!important}
+`;
 
-  const depart = performance.now();
-  let parti = false;
+  if (!document.getElementById('kq-css')) {
+    const st = document.createElement('style');
+    st.id = 'kq-css';
+    st.textContent = CSS;
+    (document.head || document.documentElement).appendChild(st);
+  }
 
-  /* La jauge suit le temps réel.
-   *
-   * Dix secondes sans rien qui avance se lisent comme une panne : on recharge,
-   * et l'on repart pour dix secondes. Elle était déjà dans le cadre, purement
-   * décorative — elle dit maintenant où l'on en est.
-   *
-   * `requestAnimationFrame` plutôt qu'une minuterie : la jauge ne décide de
-   * rien, elle ne fait que suivre, et un cadre sauté ne coûte qu'un cadre.
-   *
-   * **Ses trois libellés changent par tiers** (lot 2) : « on ouvre les
-   * grilles », « les tribunes se remplissent », « coup d'envoi ». Le premier
-   * est écrit dans la page, pour paraître avant ce fichier ; il doit rester
-   * identique à `MOTS[0]`. On ne réécrit le libellé qu'au changement de tiers :
-   * un texte réécrit à chaque image se remesure à chaque image. */
-  const MOTS = ['ON OUVRE LES GRILLES', 'LES TRIBUNES SE REMPLISSENT', 'COUP D’ENVOI'];
-  const libelle = document.getElementById('ouvMot');
-  let tiers = 0;
-  const jauge = ecran.querySelector('.jauge i, .barre i, [data-jauge]');
-  /* L'écharpe nouée : elle cesse de suivre l'horloge, voir `nouer`. */
-  let noue = false;
-  /** Le temps du nœud : l'écharpe finit sa course, « COUP D'ENVOI » se lit. */
-  const NOEUD = 300;
-  if (jauge) {
-    const suivre = () => {
-      if (noue) return;
-      const part = Math.min(1, (performance.now() - depart) / DUREE);
-      jauge.style.width = `${(part * 100).toFixed(1)}%`;
-      const t = Math.min(MOTS.length - 1, Math.floor(part * MOTS.length));
-      if (libelle && t !== tiers) { tiers = t; libelle.textContent = MOTS[t]; }
-      if (part < 1) requestAnimationFrame(suivre);
+  const DEGRES = ['commune', 'rare', 'epique', 'legendaire'];
+
+  const calme = (facette) => (document.documentElement.dataset.calme ?? '').split(' ').includes(facette);
+  const sansMouvement = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
+    || calme('animations');
+  const buzz = (p) => {
+    if (calme('vibrations')) return;
+    try { navigator.vibrate?.(p); } catch { /* rien */ }
+  };
+  const jouerSon = (nom) => { try { window.FX?.son?.(nom); } catch { /* le son ne casse rien */ } };
+  const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+    (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
+  /** Retire `classe` une fois l'animation `animation` finie sur `el` lui-même. */
+  function aLaFin(el, classe, animation) {
+    const fin = (e) => {
+      if (e.target !== el || e.animationName !== animation) return;
+      el.classList.remove(classe);
+      el.removeEventListener('animationend', fin);
     };
-    requestAnimationFrame(suivre);
+    el.addEventListener('animationend', fin);
+  }
+
+  /** La sorte d'une carte du paquet, telle que `carteDuPaquet` la rend. */
+  function sorteDe(f) {
+    if (f?.etat) return 'etat';
+    if (f?.skin) return 'skin';
+    if (f?.stuff) return 'stuff';
+    if (f?.lieu) return 'lieu';
+    if (f?.action) return 'action';
+    if (f?.echarpes) return 'echarpes';
+    return 'fanzzy';
+  }
+
+  /* Le mot collé sous la carte, et le bruit de son entrée. La carte action a
+     déjà son bruitage, celui qu'on entend quand on la joue en duel : c'est
+     lui qu'elle fait entendre, l'éclair n'est que son repli. */
+  const SORTES = {
+    fanzzy: { mot: 'FANZZY', son: 'saut', ton: 'flare' },
+    etat: { mot: 'EXPRESSION', son: 'bulle', ton: 'bleu' },
+    skin: { mot: 'TENUE', son: 'tissu', ton: 'bleu' },
+    stuff: { mot: 'ÉQUIPEMENT', son: 'metal', ton: 'craie' },
+    lieu: { mot: 'STADE', son: 'projecteur', ton: 'vert' },
+    action: { mot: 'CARTE ACTION', son: 'eclair', ton: 'flare' },
+    echarpes: { mot: 'ÉCHARPES', son: 'butin', ton: 'or' },
+  };
+
+  /**
+   * Le suspense : le paquet tombe et tremble une fois par degré de sa
+   * meilleure carte. `rarites` est la liste des raretés du paquet. Rien sans
+   * mouvement. `finirSuspense(scene)` l'abrège.
+   */
+  function suspense(scene, rarites) {
+    const best = rarites.reduce((m, r) => Math.max(m, DEGRES.indexOf(r)), 0);
+    if (sansMouvement() || !rarites.length) return;
+    const PAS = 380;
+    const duree = 360 + best * PAS + (best ? 120 : 0);
+    scene.style.setProperty('--rc', `var(--r-${DEGRES[best]})`);
+    scene.style.setProperty('--kq-best', `var(--r-${DEGRES[best]})`);
+    scene.style.setProperty('--kq-n', String(best));
+    scene.style.setProperty('--kq-t', `${duree}ms`);
+    scene.dataset.best = DEGRES[best];
+    scene.classList.add('kq-attente');
+    const minuteries = [];
+    for (let k = 0; k < best; k++) {
+      minuteries.push(setTimeout(() => {
+        jouerSon('tremble');
+        buzz(12 + k * 10);
+      }, 360 + k * PAS));
+    }
+    if (best === 3) minuteries.push(setTimeout(() => jouerSon('eclair'), 400));
+    minuteries.push(setTimeout(() => finirSuspense(scene), duree));
+    scene._kqAttente = minuteries;
+  }
+
+  /** Le suspense en cours s'arrête ; vrai s'il y en avait un. */
+  function finirSuspense(scene) {
+    const m = scene?._kqAttente;
+    if (!m) return false;
+    m.forEach(clearTimeout);
+    scene._kqAttente = null;
+    scene.classList.remove('kq-attente');
+    delete scene.dataset.best;
+    if (!sansMouvement()) {
+      scene.classList.add('kq-apres');
+      setTimeout(() => scene.classList.remove('kq-apres'), 520);
+    }
+    return true;
+  }
+
+  const enSuspense = (scene) => Boolean(scene?._kqAttente);
+
+  /**
+   * La charge d'une épique ou d'une légendaire, avant son retournement.
+   * `salle` s'éteint pour la légendaire ; `apres` retourne la carte. Rend
+   * une fonction qui abrège la charge (le toucher n'attend jamais) ; son
+   * `annuler()` l'arrête sans rien retourner.
+   */
+  function charger(cur, { salle, hint, apres }) {
+    const leg = cur.dataset.rar === 'legendaire';
+    const t = leg ? 1000 : 480;
+    cur.style.setProperty('--kq-t', `${t}ms`);
+    cur.classList.add('kq-charge');
+    if (leg) {
+      salle?.classList.add('kq-nuit');
+      jouerSon('charge');
+      buzz([15, 60, 20, 60, 30, 60, 40]);
+    } else {
+      jouerSon('tremble');
+      buzz(14);
+    }
+    if (hint) hint.textContent = leg ? 'Elle arrive…' : 'Ça brille…';
+    let fini = false;
+    const lacher = () => {
+      if (fini) return;
+      fini = true;
+      clearTimeout(minuterie);
+      cur.classList.remove('kq-charge');
+      apres();
+    };
+    const minuterie = setTimeout(lacher, t);
+    /* Quitter l'écran pendant la charge : elle s'arrête, sans retourner. */
+    lacher.annuler = () => {
+      fini = true;
+      clearTimeout(minuterie);
+      cur.classList.remove('kq-charge');
+    };
+    return lacher;
+  }
+
+  /** L'entrée de la carte qu'on vient de retourner : son geste, son mot, son bruit. */
+  function entree(cur, f) {
+    const sorte = cur.dataset.sorte;
+    const def = SORTES[sorte] ?? SORTES.fanzzy;
+    const mot = document.createElement('b');
+    mot.className = 'kq-sorte';
+    mot.innerHTML = `<span class="tbf-sticker tbf-colle" data-ton="${def.ton}">${esc(def.mot)}</span>`;
+    aLaFin(mot.firstElementChild, 'tbf-colle', 'tbf-colle');
+    cur.append(mot);
+    const action = sorte === 'action' && window.TBF_SON?.noms?.().includes(f?.id) ? f.id : null;
+    jouerSon(action ?? def.son);
+    if (sansMouvement()) return;
+    cur.classList.add('kq-entree');
+    if (sorte === 'echarpes') {
+      const r = cur.getBoundingClientRect();
+      window.FX?.particules?.({ x: r.left + r.width / 2, y: r.top + r.height * 0.45, n: 30,
+        couleurs: ['#F5C33B', '#B8321F', '#F2EEE4'], distance: Math.max(140, r.width), taille: 7, duree: 1000 });
+    }
   }
 
   /**
-   * L'écharpe se noue : « COUP D'ENVOI », et la jauge au bout.
-   *
-   * Elle suit le plafond, et l'écran part dès que l'accueil est prêt — en
-   * pratique entre une seconde et demie et trois secondes. On quittait donc
-   * le rideau sur une écharpe remplie au cinquième et sur « ON OUVRE LES
-   * GRILLES » : les deux autres libellés n'existaient que les jours où le
-   * serveur était lent, et la sortie se lisait comme une coupure plutôt que
-   * comme une entrée. Quand l'écran part, l'écharpe finit donc sa course en
-   * trois cents millisecondes, sur le dernier libellé.
-   *
-   * Au calme, elle saute au bout sans glisser : la transition est celle de la
-   * feuille (`.tbf-jauge[data-suit]`), que l'écriture en ligne ne remplace
-   * qu'en mouvement.
-   *
-   * @returns {number} le temps que prend le nœud, à attendre avant de partir.
+   * **La commune a sa petite fête** (25 octobre 2026, demande de Gaël). La
+   * cérémonie des raretés ne lui donne que le retournement — c'est la règle de
+   * `FX.reveler`, et elle est juste : la rare, l'épique et la légendaire
+   * doivent rester au-dessus. Mais une commune qui tombe sans rien se lisait
+   * comme un raté. Elle a donc un geste à elle, à sa mesure : une onde de
+   * craie, un nuage de poussière blanche et une poignée de confettis de
+   * papier, sans couleur de rareté ni lueur, et derrière elle son fond filmé
+   * (une explosion de craie sous un projecteur, Artlist, choisie par Gaël),
+   * plus bas que celui des autres (`fondFilme`). Une seconde, et rien sans
+   * mouvement.
    */
-  function nouer() {
-    if (noue) return 0;
-    noue = true;
-    try {
-      if (libelle) { tiers = MOTS.length - 1; libelle.textContent = MOTS[tiers]; }
-      if (!jauge || parseFloat(jauge.style.width) >= 100) return 0;
-      const calme = matchMedia('(prefers-reduced-motion: reduce)').matches
-        || /(^|\s)animations(\s|$)/.test(document.documentElement.dataset.calme ?? '');
-      if (!calme) jauge.style.transition = `width ${NOEUD}ms cubic-bezier(.2,1,.3,1)`;
-      jauge.style.width = '100%';
-      return NOEUD;
-    } catch { return 0; /* décor : la sortie ne l'attend pas */ }
+  function feteCommune(carte) {
+    const F = window.FX;
+    if (!F || sansMouvement()) return;
+    const r = carte.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const craie = F.couleurs?.craie ?? '#F2EEE4';
+    F.onde?.({ x, y, couleur: craie, taille: Math.max(240, r.width * 1.8) });
+    F.particules?.({ x, y, n: 30, couleurs: [craie, '#C2CAD6', '#E4D3B5'], distance: 190, taille: 5, duree: 900 });
+    F.particules?.({ x, y: r.top + r.height * 0.25, n: 14, papier: true, couleurs: [craie, '#E4D3B5', '#C2CAD6'],
+      distance: 160, duree: 1000 });
   }
 
-  /* Le départ lui-même : le fondu, puis le retrait. Une fois. */
-  let leve = false;
-  function lever() {
-    if (leve) return;
-    leve = true;
-    ecran.classList.add('partie');
-    /* On le retire vraiment, une fois la transition finie. `visibility` le
-       sort déjà de l'ordre de tabulation, mais une lumière qui grandit et
-       une fumée qui dérive pour personne consomment des calques de
-       composition pour rien. */
-    setTimeout(() => {
-      ecran.remove();
-      /* Le rideau est levé. Ce que l'accueil gardait pour ce moment — le
-         salut du personnage — peut se jouer : joué plus tôt, il se déroulait
-         entièrement derrière l'écran d'ouverture, et le joueur ne voyait
-         jamais son Fanzzy arriver. */
-      dispatchEvent(new Event('tbf:ouverture-finie'));
-    }, 700);
-  }
+  /* Les fonds filmés (Artlist, 24 et 25 octobre 2026), par rareté : une
+     gerbe d'or derrière la légendaire, un tourbillon violet derrière
+     l'épique, posés en « screen » sur le noir de l'écran, sous la carte.
+     Jamais chargés sans mouvement ni en économie de données. */
+  const FONDS = {
+    commune: '/video/fond-commune.cb81fe4f.mp4',
+    rare: '/video/fond-rare.fcda8ceb.mp4',
+    epique: '/video/fond-epique.802306fa.mp4',
+    legendaire: '/video/fond-legendaire.942fde94.mp4',
+  };
 
-  /* Le joueur a touché l'écran : plus rien ne le retient que le plancher. */
-  let touche = false;
+  /** Le fond filmé derrière la carte qui se retourne, trois secondes. */
+  function fondFilme(v, rar) {
+    if (!v) return;
+    clearTimeout(v._t);
+    const src = FONDS[rar];
+    if (!src || sansMouvement() || navigator.connection?.saveData) { eteindreFond(v); return; }
+    if (v.getAttribute('src') !== src) { v.src = src; v.load(); }
+    try { v.currentTime = 0; } catch { /* pas encore chargée */ }
+    /* La commune a le sien plus bas : un nuage de craie, pas une fête. */
+    v.style.setProperty('--kq-op', rar === 'commune' ? '.55' : '.85');
+    v.classList.add('on');
+    v.play?.()?.catch?.(() => {});
+    v._t = setTimeout(() => eteindreFond(v), 3200);
+  }
+  function eteindreFond(v) {
+    if (!v) return;
+    clearTimeout(v._t);
+    v.classList.remove('on');
+    v.pause?.();
+  }
 
   /**
-   * @param {boolean} plein attendre tout le plafond, ou seulement le plancher.
-   *   Vrai quand c'est la minuterie qui appelle — il ne reste alors rien à
-   *   attendre de toute façon. Faux quand c'est le joueur ou l'accueil.
-   *
-   * L'écharpe se noue au moment de partir, et le fondu attend ses trois
-   * cents millisecondes **seulement quand c'est l'accueil qui congédie
-   * l'écran** : le plafond l'a déjà pleine (il ne se négocie pas), et le
-   * doigt ne se fait pas retenir — le fondu part avec le nœud, et le geste
-   * suivant atteint la page (voir `pointerdown`, plus bas).
+   * La cérémonie de la rareté d'une carte qui se retourne : le jingle de la
+   * rareté s'il est prêt (il remplace alors le son de la cérémonie), le fond
+   * filmé, et l'échelle commune `FX.reveler`. Rend la promesse de sa fin.
    */
-  function partir(plein = false) {
-    if (parti) return;
-    parti = true;
-    const cible = plein ? DUREE : PLANCHER;
-    const reste = Math.max(0, cible - (performance.now() - depart));
-    setTimeout(() => {
-      const attente = nouer();
-      if (plein || touche || !attente) lever();
-      else setTimeout(lever, attente);
-    }, reste);
+  function ceremonie(cur, rar, fond) {
+    let chante = false;
+    try { chante = window.TBF_SON?.jingle?.(rar) === true; } catch { /* le son ne casse rien */ }
+    fondFilme(fond, rar);
+    return Promise.resolve(window.FX?.reveler?.(rar, cur, { son: !chante })).catch(() => {});
   }
 
-  /* **Le kop.** Des rangs de bustes, du plus loin au plus près, tirés parmi
-     les Fanzzy **jouables** : `FZART.jouables()` croise les séries ouvertes
-     du serveur et les dessins (« uniquement ceux activés », Gaël, 27 octobre
-     2026). Elle répond en deux secondes et demie au plus, avec la liste de
-     la visite d'avant si le réseau traîne. Sans bibliothèque ni liste, le
-     kop reste vide : le titre et la tribune suffisent, ce sont des visages
-     en plus, pas la condition de quoi que ce soit.
-
-     Les rangs se calculent sur la place réelle de la scène (voir « Le kop »,
-     dans la feuille de la page) : le premier prend la plus petite de deux
-     mesures — un peu plus du tiers de la hauteur, le tiers de la largeur —,
-     chacun des suivants les quatre cinquièmes du précédent, posé un peu
-     plus haut que les épaules de celui de devant ; on monte tant qu'il reste
-     de la hauteur, et pas au-delà de quarante-huit visages, pour ne pas
-     faire tirer cent images à un écran de chargement : ce sont alors les
-     rangs du fond qui restent vides, et la tribune de la photo s'y voit. Les visages se
-     répètent si la liste est courte : un kop à trous se lirait comme un
-     stade vide.
-
-     Chaque visage paraît quand son image est là (`.vu`), et part si elle
-     manque : un cadre d'image cassée au milieu d'une foule se voit. */
-  async function remplirKop() {
-    const gradins = document.getElementById('ouvKop');
-    if (!gradins || !window.FZART?.jouables) return;
-    const ids = await window.FZART.jouables();
-    if (!ids.length || parti) return;
-    const melange = [...ids];
-    for (let i = melange.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [melange[i], melange[j]] = [melange[j], melange[i]];
-    }
-    const { width: L, height: H } = gradins.getBoundingClientRect();
-    if (L < 40 || H < 40) return;
-    const rangs = [];
-    let s = Math.min(H * 0.4, L * 0.42);
-    let bas = 0;
-    let n = 0;
-    while (s >= 26 && bas + s * 0.5 < H) {
-      /* Un pas d'un peu plus des trois quarts d'un buste : les épaules se
-         touchent, les têtes non. Un rang sur deux décalé d'un demi-pas,
-         comme dans une vraie tribune. */
-      const pas = s * 0.78;
-      const decale = rangs.length % 2 ? pas / 2 : 0;
-      const places = [];
-      for (let x = -pas / 2 + decale + Math.random() * pas * 0.2; x < L + pas / 2; x += pas) {
-        places.push(x);
-      }
-      /* Le plafond se compte depuis le premier rang : ce sont les rangs du
-         fond, les plus petits, qui cèdent. */
-      if (n + places.length > 48) break;
-      rangs.push({ s, bas, places });
-      n += places.length;
-      bas += s * 0.62;
-      s *= 0.82;
-    }
-    const total = rangs.length;
-    let k = 0;
-    /* Du plus loin au plus près : le plus près se peint en dernier. */
-    for (let r = total - 1; r >= 0; r--) {
-      const { s: taille, bas: b, places } = rangs[r];
-      const rang = document.createElement('div');
-      rang.className = 'rang';
-      rang.style.setProperty('--s', `${taille.toFixed(1)}px`);
-      rang.style.setProperty('--b', `${b.toFixed(1)}px`);
-      rang.style.setProperty('--z', String(total - r));
-      rang.style.setProperty('--lum', (1 - r / Math.max(1, total - 1) * 0.55).toFixed(2));
-      for (const x of places) {
-        const id = melange[k % melange.length];
-        k++;
-        const src = window.FZART.adresse(id, 'buste');
-        if (!src) continue;
-        const fan = document.createElement('span');
-        fan.className = 'fan';
-        fan.style.setProperty('--x', `${x.toFixed(1)}px`);
-        fan.style.setProperty('--d', `${Math.round(Math.random() * 700)}ms`);
-        const img = document.createElement('img');
-        img.alt = '';
-        img.decoding = 'async';
-        img.addEventListener('load', () => img.classList.add('vu'), { once: true });
-        img.addEventListener('error', () => fan.remove(), { once: true });
-        img.src = src;
-        fan.append(img);
-        rang.append(fan);
-      }
-      gradins.append(rang);
-    }
-  }
-  try { remplirKop().catch(() => {}); } catch { /* pas de kop : le titre suffit */ }
-
-  /* **Les trois sorties, et pourquoi elles reviennent.**
-
-     Elles avaient été retirées au motif que « maintenant que la durée est
-     voulue, elles n'ont plus de sens ». Le résultat est dix secondes que
-     rien n'abrège — et dix secondes d'un écran fixe ne se distinguent pas
-     d'une panne. C'est mot pour mot ce que l'en-tête de ce fichier raconte
-     déjà : « je quitte un duel, j'arrive sur la page de chargement, et il ne
-     se passe plus rien ». Un joueur l'a signalé une seconde fois.
-
-     Trois choses le disaient encore, et plus rien ne les tenait :
-
-       — l'en-tête de ce fichier : « L'écran part à la **première** des deux
-         conditions… Il part aussi au premier geste » ;
-       — `index.html`, qui émet `tbf:pret` en expliquant que « ouverture.js
-         décide, c'est lui qui connaît le plancher et le plafond » — un
-         plancher qui n'existait pas, et un signal que plus personne
-         n'écoutait ;
-       — et le fait qu'un plafond sans plancher n'est pas une durée : c'est
-         une attente.
-
-     La règle est donc celle que le fichier a toujours décrite. Un plancher,
-     pour ne pas clignoter. Un plafond, pour ne jamais retenir personne. Et
-     entre les deux, l'écran part dès que l'accueil est prêt ou dès qu'on le
-     touche.
-
-     La minuterie est posée **en premier** : si tout le reste échoue — un
-     script cassé plus haut, un réseau mort — elle part quand même, et c'est
-     elle qui empêche l'ouverture de devenir une porte close.
-
-     Le nœud ne la repousse pas : si l'accueil a congédié l'écran juste
-     avant elle, et que l'écharpe est encore en train de se nouer, l'écran
-     part à l'heure dite et le nœud finit dans le fondu. */
-  setTimeout(() => { if (parti) { nouer(); lever(); } else partir(true); }, DUREE);
-
-  /* L'accueil a fini de se monter : le personnage est posé, la collection est
-     lue, il n'y a plus rien à couvrir. */
-  addEventListener('tbf:pret', () => partir(), { once: true });
-
-  /* Et le geste. Quelqu'un qui touche l'écran a fini de regarder — c'est la
-     seule des trois qui vienne du joueur, et c'est celle qui compte le plus :
-     elle transforme une attente subie en une attente qu'on peut couper.
-
-     `pointerdown` et non `click` : le voile part au moment où le doigt se
-     pose, donc le geste suivant atteint la page. Avec `click`, le premier
-     appui était avalé par l'écran qu'il venait de faire disparaître.
-
-     Le doigt n'attend pas le nœud de l'écharpe : posé pendant ses trois
-     cents millisecondes, il lève l'écran tout de suite (le nœud finit dans
-     le fondu). Plus d'`once` donc : le second appui doit pouvoir abréger
-     l'attente que le premier n'a pas déclenchée. */
-  ecran.addEventListener('pointerdown', () => {
-    touche = true;
-    if (noue) lever(); else partir();
-  });
-
-  /* **« TOUCHE POUR ENTRER », au bout du plancher.**
-
-     C'est à partir de là que le toucher fait partir l'écran sans attendre :
-     avant, il le fait partir au plancher de toute façon. La consigne est
-     posée par ce fichier et non par la page, parce que c'est lui qui écoute
-     le doigt — sans lui, toucher ne ferait rien, et la consigne mentirait.
-     Si l'écran est déjà sur le départ (l'accueil prêt avant le plancher), on
-     ne l'annonce pas : elle paraîtrait au moment où tout s'efface. */
-  setTimeout(() => { if (!parti) ecran.classList.add('entrable'); }, PLANCHER);
-
-  /* **L'astuce du jour**, sur un ticket kraft en bas de l’écran.
-
-     Une table écrite en dur, et une par jour (la date locale, pour qu'elle
-     change à minuit chez le joueur et pas à minuit à Greenwich). Chaque
-     ligne est en trois morceaux : avant le mot-clé, le mot-clé, après — le
-     mot-clé est mis en valeur par la page (Oswald gras ; jamais le
-     marqueur, qui n'a pas sa place sur le rideau).
-
-     **Aucun nombre réglable.** L'aide du jeu le dit déjà (`src/shared/aide.js`) :
-     une astuce ment toujours en premier sur les nombres — le prix d'un
-     booster, la taille d'une réserve se changent depuis l'administration, et
-     une phrase recopiée ici ne suivrait pas. Les astuces ne disent donc que
-     des règles du jeu, toutes tirées de cette aide ou du moteur du Virage.
-
-     **Deux lignes au plus à 320 px de large** : le ticket en a la hauteur, et
-     sa place est gardée dans la page. Une astuce plus longue serait coupée
-     par la déchirure du ticket : on la raccourcit, on n'agrandit pas le
-     ticket. */
-  const ASTUCES = [
-    ['Un vrai but au stade ouvre une ', 'minute double', ' au Virage.'],
-    ['Un double ne se perd jamais : il se change en ', 'écharpes', '.'],
-    ['La rareté dit ', 'l’âge', ' d’un Fanzzy, pas sa force.'],
-    ['Les rares et les épiques ne se tirent pas : ', 'elles se paient', '.'],
-    ['Une tenue change l’allure d’un Fanzzy, ', 'jamais sa force', '.'],
-    ['Chaque équipement a son ', 'revers', ' : il donne, et il reprend.'],
-    ['Au Virage, deux fois plus de monde ne pousse pas ', 'deux fois plus fort', '.'],
-    ['Un duel adossé à un ', 'match du jour', ' compte au classement.'],
-    ['Un geste te résiste ? ', 'La répétition', ' le fait rejouer sans risque.'],
-    ['Au Virage, sans geste, tu ', 'sors de la foule', ' : il faut chanter.'],
-    ['', 'Tous les matchs en direct', ' sont ouverts au Virage, ton club ou pas.'],
-    ['Le stade vient du match : l’avantage du terrain ', 'ne s’achète pas', '.'],
-  ];
-  try {
-    const astuce = document.getElementById('ouvAstuce');
-    const texte = astuce?.querySelector('p');
-    if (astuce && texte) {
-      const jour = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60_000) / 86_400_000);
-      const [avant, cle, apres] = ASTUCES[((jour % ASTUCES.length) + ASTUCES.length) % ASTUCES.length];
-      const b = document.createElement('b');
-      b.textContent = cle;
-      texte.replaceChildren(avant, b, apres);
-      astuce.hidden = false;
-      astuce.classList.add('tbf-glisse');
-    }
-  } catch { /* pas d'astuce : le ticket reste caché */ }
+  window.TBF_OUVERTURE = {
+    DEGRES, SORTES, FONDS, sorteDe, sansMouvement,
+    suspense, finirSuspense, enSuspense, charger, entree, feteCommune,
+    fondFilme, eteindreFond, ceremonie,
+  };
 })();
