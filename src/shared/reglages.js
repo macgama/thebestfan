@@ -1023,7 +1023,8 @@ export const REGLAGES = [
     titre: 'Côte à côte au Virage, chaque ami du même camp pousse plus fort de',
     unite: '%', min: 0, max: 10, defaut: 3,
     aide: 'Un bonus de poussée par ami présent dans la même tribune, pour lui comme pour ' +
-      'moi. Un ami caché compte aussi : il est là, même s’il ne se montre pas. À 0, rien.' },
+      'moi. Un ami caché ne compte pas, et la présence éteinte n’en compte aucun : le ' +
+      'bonus dirait sinon qui est là. À 0, rien.' },
 
   { cle: 'amis.cote_max', section: 'amis', type: 'entier',
     titre: 'Côte à côte : amis comptés au plus', unite: 'amis', min: 0, max: 10, defaut: 3,

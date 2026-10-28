@@ -220,6 +220,8 @@ export function createEnsemble({ pool, requireAuth }) {
       [userId, autreId, geste, Math.round(GESTE_PAUSE_MS / 1000)]);
     if (recent) throw fail('amis.error.geste_recent');
     await poserGeste(userId, autreId, geste);
+    await q(`DELETE FROM amis_gestes WHERE de = ? AND le < NOW(3) - INTERVAL 30 DAY`, [userId])
+      .catch(() => {});
     return { envoye: geste };
   }
 
@@ -229,6 +231,10 @@ export function createEnsemble({ pool, requireAuth }) {
    * plus : on ne montre que des amis mutuels actifs.
    */
   async function fil(userId) {
+    /* Trente jours, puis oubliés (`/confidentialite`) : le ménage se fait ici,
+       sur les siens, à chaque lecture. */
+    await q(`DELETE FROM amis_gestes WHERE a = ? AND le < NOW(3) - INTERVAL 30 DAY`, [userId])
+      .catch(() => {});
     const lignes = await q(
       `SELECT g.id, g.de AS userId, g.geste, g.vu,
               UNIX_TIMESTAMP(g.le) * 1000 AS le,

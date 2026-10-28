@@ -748,9 +748,10 @@ export class VirageRoom {
    * ou qui part change le bonus tout de suite, pour les deux.
    *
    * `m.amis` est l'ensemble de ses amis mutuels, posé par `ferveur/index.js`
-   * à l'entrée. Un ami caché compte : il est là, même s'il ne se montre pas,
-   * et le bonus ne dit pas qui. Rend `null` sans bonus, sinon
-   * `{ n, mods: { pushMult } }`.
+   * à l'entrée, avec `m.montre` : se montre-t-il à ses amis ? **Un ami caché
+   * ne compte pas** — le bonus dirait sinon qu'il est là, à qui il a choisi
+   * de ne pas le dire —, et la présence éteinte n'en compte aucun. Rend
+   * `null` sans bonus, sinon `{ n, mods: { pushMult } }`.
    */
   coteDe(m) {
     if (!m?.amis?.size || !reglage('amis.actif')) return null;
@@ -759,7 +760,8 @@ export class VirageRoom {
     if (!(force > 0) || !(max > 0)) return null;
     let n = 0;
     for (const id of m.amis) {
-      if (this.members.get(id)?.side === m.side && ++n >= max) break;
+      const ami = this.members.get(id);
+      if (ami?.side === m.side && ami.montre && ++n >= max) break;
     }
     return n ? { n, mods: { pushMult: 1 + n * force } } : null;
   }

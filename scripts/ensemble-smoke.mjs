@@ -254,6 +254,9 @@ console.log('\n— côte à côte au Virage —');
   const ma = room.members.get(A);
   check('sans amis connus, pas de bonus', (room.modsDe(ma).pushMult ?? 1) === 1);
   ma.amis = new Set([B, D]);
+  check('un ami caché ne compte pas', (room.modsDe(ma).pushMult ?? 1) === 1);
+  room.members.get(B).montre = true;
+  room.members.get(D).montre = true;
   const f = DEFAUTS['amis.cote_force'] / 100;
   check('un ami du même camp fait pousser plus fort, celui d’en face non',
     Math.abs(room.modsDe(ma).pushMult - (1 + f)) < 1e-9 && room.coteDe(ma).n === 1);
