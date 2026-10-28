@@ -240,7 +240,6 @@ await pool.query(`UPDATE amis_prets SET jour = CURDATE() - INTERVAL 1 DAY WHERE 
 l = await decks.loadout(A);
 check('demain, il est rendu : le deck joue sans lui',
   l?.fanzzy?.length === 1 && l.fanzzy[0].id === 'TR32');
-dhttp.close();
 
 /* ------------------------------------------------------ côte à côte */
 
@@ -275,7 +274,29 @@ x = await call('/api/ensemble/geste', { id: B, geste: 'respect' });
 check('éteint depuis /admin, rien ne part', x.json.error === 'amis.error.ensemble_eteint');
 poserReglages({ ...DEFAUTS });
 
+/* ------------------------------------------- le schéma pas appliqué
+
+   Gaël construit souvent sans `schema:appliquer` : sans les quatre tables,
+   la fonction se tait (fiche en pause, fil vide, deck intact) au lieu de
+   rendre des erreurs du serveur. Dernière partie : on efface les tables. */
+
+await pool.query('DROP TABLE amis_gestes, amis_cadeaux, amis_echanges, amis_prets');
+x = await call(`/api/ensemble/fiche/${B}`);
+check('sans les tables, la fiche s’ouvre, en pause', x.status === 200 && x.json.actif === false
+  || (console.log('        il rend :', x.status, x.json), false));
+x = await call('/api/ensemble/fil');
+check('le fil est vide', x.status === 200 && Array.isArray(x.json.fil) && x.json.fil.length === 0);
+x = await call('/api/ensemble/nouveau');
+check('rien de neuf', x.status === 200 && x.json.gestes === 0 && x.json.echanges === 0);
+x = await call('/api/ensemble/fil/vu', {});
+check('marquer vu ne lève pas', x.status === 200);
+x = await call('/api/ensemble/geste', { id: B, geste: 'merci' });
+check('un geste répond « en pause », pas une erreur', x.json.error === 'amis.error.ensemble_eteint');
+const dres = await fetch(`http://localhost:${dhttp.address().port}/api/deck/mien`);
+check('le deck se charge sans la table des prêts', dres.status === 200);
+check('et se joue', Boolean((await decks.loadout(A))?.fanzzy?.length));
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-http.close();
+http.close(); dhttp.close();
 await pool.end();
 process.exitCode = failures ? 1 : 0;
