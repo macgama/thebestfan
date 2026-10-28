@@ -1076,6 +1076,55 @@ const PREMIERS_AGES = [
       + 'battement, ni trop ni trop peu.',
     mods: { holdBonus: 1.16, tempoWindow: 0.92 },
     cri: { label: 'JE GARDE LE CAP !', gest: 'jauge', power: 53 } },
+
+  /* **Les six légendaires de la série** (demande de Gaël du 28 octobre
+     2026). Un seul âge, comme toutes les légendaires : elles se trouvent,
+     elles ne grandissent pas. AN61 à AN63 sont liées aux équipes nationales
+     du pays (hommes, femmes, espoirs), AN64 à AN66 au championnat, sans club
+     (`clubs.js`, `lienEcrit`). Mêmes interdits que la série, et deux de plus :
+     ni lion ni rose pour les sélections, ni le nom, ni le lion, ni la
+     couronne, ni le trophée du championnat. La croix rouge sur blanc est le
+     drapeau du pays : elle est libre. Fiches et prompts :
+     `fanzzy-prompts/AN-legendaires.md`. */
+  { id: 'AN61', nom: 'La Dame des Falaises Blanches', type: 'depl', stage: 1, rar: 'legendaire',
+    histoire: 'Taillée dans la craie des falaises, sa lanterne à la main, elle guette chaque '
+      + 'bateau qui rentre. Elle les a vus partir tous, et elle n’en a jamais laissé un rentrer '
+      + 'dans le noir.',
+    mods: { breathBonus: 1.36, refundBonus: 1.22, mashBonus: 0.86 },
+    cri: { label: 'LA LANTERNE EST ALLUMÉE', gest: 'bascule', power: 80 } },
+
+  { id: 'AN62', nom: 'Le Chevalier à la Croix Rouge', type: 'tifo', stage: 1, rar: 'legendaire',
+    histoire: 'On l’a vu descendre du vitrail un soir de qualification. Il a planté le drapeau '
+      + 'blanc à croix rouge au premier rang, et il n’est jamais remonté.',
+    mods: { parryBonus: 1.5, perfectBonus: 1.22, tempoWindow: 0.86 },
+    cri: { label: 'LEVEZ LA CROIX', gest: 'mosaique', power: 82 } },
+
+  { id: 'AN63', nom: 'Le Bouledogue au Grand Tambour', type: 'perc', stage: 1, rar: 'legendaire',
+    histoire: 'Coulé dans le bronze, têtu comme tout le pays, il ne sait battre qu’un seul '
+      + 'rythme. Il le bat depuis cent ans, dans tous les stades du monde, et il ne compte pas '
+      + 'changer.',
+    mods: { mashBonus: 1.38, mashTime: 900, holdBonus: 0.86 },
+    cri: { label: 'UN SEUL RYTHME', gest: 'crescendo', power: 81 } },
+
+  { id: 'AN64', nom: 'La Tisseuse des Vingt Écharpes', type: 'fide', stage: 1, rar: 'legendaire',
+    histoire: 'Personne ne l’a jamais vue tricoter. Mais chaque été, vingt écharpes neuves '
+      + 'pendent à son métier, une par tribune, toutes du même fil : quand quelqu’un tire trop '
+      + 'fort, c’est toute la saison qui se défait.',
+    mods: { holdBonus: 1.42, holdForgive: 3, parryResist: 1.2, tempoInterval: 90 },
+    cri: { label: 'TOUS DU MÊME FIL', gest: 'tenue', power: 80 } },
+
+  { id: 'AN65', nom: 'La Voix des Résultats', type: 'voix', stage: 1, rar: 'legendaire',
+    histoire: 'Chaque samedi à cinq heures, il lit les scores du pays entier. Il n’a jamais haussé '
+      + 'le ton : on entend la victoire à sa façon de dire le nom de la ville.',
+    mods: { tempoWindow: 1.3, breathBonus: 1.18, parryResist: 0.84 },
+    cri: { label: 'SCORE FINAL', gest: 'echo', power: 83 } },
+
+  { id: 'AN66', nom: 'Le Rouge-Gorge du Lendemain de Noël', type: 'pyro', stage: 1, rar: 'legendaire',
+    histoire: 'Il n’arrive qu’au plus froid de l’année, le lendemain de Noël, le ballon orange '
+      + 'des matchs sous la neige sous l’aile. Les soirs où il se pose sur le toit de la tribune, '
+      + 'personne n’y a froid.',
+    mods: { perfectBonus: 1.46, refundBonus: 1.32, backfire: 1.45 },
+    cri: { label: 'CHAUD DEVANT', gest: 'compte', power: 82 } },
 ];
 
 export const DEX_TERRACES = PREMIERS_AGES.map((f) => ({ ...f, set: SET_TERRACES.id }));
