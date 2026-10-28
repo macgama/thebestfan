@@ -15,6 +15,77 @@
 
 ---
 
+**Jouer entre amis : les sept idées** (branche `claude/project-thread-hl4hic`,
+28 octobre 2026, demandé par Gaël : que les amis puissent jouer ensemble,
+s'entraider et communiquer sans texte). **Avec schéma** : nouveau fichier
+`sql/amis-ensemble.sql` (quatre tables, accord de Gaël). Après la
+construction, en SSH : `npm run schema:appliquer`, puis redémarrer. Sans
+cela, le site tourne quand même : la fiche d'un ami dit « en pause », les
+gestes, cadeaux, échanges et prêts ne partent pas, et /healthz le signale.
+
+- Dans AMIS, chaque ami porte JOUER ENSEMBLE, qui ouvre sa fiche : gestes
+  (une liste fermée, jamais de texte), cadeau du jour (écharpes offertes par
+  le jeu), défi de la semaine (chants au Virage à deux), échange de doubles,
+  prêt d'un Fanzzy jusqu'à minuit, sa collection, son deck, ses souvenirs.
+- Au Grand Virage, chaque ami visible dans ta tribune ajoute 3 % à ta
+  poussée (3 amis au plus). Un ami hors ligne ne compte pas.
+- La page AMIS dit ce que l'amitié ouvre ; QUESTIONS a une rubrique « Les
+  amis », Comment jouer une ligne « Jouer ensemble ». Réglages dans /admin,
+  section ENTRE AMIS (tout peut s'éteindre).
+- Après la mise en ligne : avec deux comptes amis, envoyer un geste, offrir
+  le cadeau, emprunter un Fanzzy et le mettre dans le deck, proposer un
+  échange et l'accepter de l'autre côté.
+
+---
+
+**17 Fanzzy de plus clignent en tenue de base** (branche
+`claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- 222 âges de base RP et AN sur 275 clignent (205 avant).
+
+---
+
+**L'onglet EN ATTENTE sur la page du duel** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, choix de Gaël : « un bouton
+de plus "Duel en attente de joueur" », toujours là). Construction seule,
+**sans schéma**.
+
+- À côté de MES CLUBS et TOUS LES MATCHS : EN ATTENTE, avec le nombre de
+  duels qui attendent un joueur (grisé à 0). Un appui choisit le match, le
+  format et la tribune qui manque ; traduit dans les cinq langues, et ajouté à
+  /comment-jouer.
+- Après la mise en ligne : sur le PC, entrer en file ; sur le S24+, ouvrir
+  DUEL, l'onglet doit dire 1, puis un appui sur EN ATTENTE.
+
+---
+
+**Voir ce que la réconciliation du catalogue ferait** (branche
+`claude/contenus-sql-q1sziv`, 28 octobre 2026, pour les 338 écarts relevés par
+Gaël). Il se dépose avec ce qui est en dessous, ou seul.
+
+- `scripts/fanzzy-reconciliation.mjs`, `npm run reconciliation:voir` : en SSH,
+  il dit, sans rien écrire, quelles cartes le démarrage reprendrait du code et
+  lesquelles ont été corrigées à l'écran (celles-là restent telles quelles).
+  `src/server/fanzzy/catalogue.js` : le démarrage lit son plan par la même
+  fonction, sans rien changer à ce qu'il fait.
+
+**Aucun schéma ni réglage, sans redémarrage** (le script se lance à la main).
+
+---
+
+**Les duels qui attendent se voient sans recharger** (branche
+`claude/project-thread-sxsj06`, 28 octobre 2026, demandé par Gaël : il
+fallait rafraîchir la page pour savoir que quelqu'un attendait un duel).
+Construction seule, **sans schéma**.
+
+- Sur l'accueil, « Quelqu'un t'attend » s'allume (et s'éteint) dans les dix
+  secondes, et le sticker du duel du menu aussi sur les autres pages.
+- Après la mise en ligne : sur le PC, entrer en file d'un duel ; sur le S24+,
+  rester sur l'accueil sans recharger, le bandeau doit venir tout seul.
+
+---
+
 **MES SAISONS sur le profil** (branche `claude/project-thread-chiok9`,
 28 octobre 2026, demandé par Gaël : garder l'historique des saisons d'avant).
 Construction seule, **sans schéma**.

@@ -245,10 +245,10 @@ console.log('\n— l’horloge figée de la base —');
 /* ================================================= le contrat du module */
 
 console.log('\n— ce que le module promet —');
-check('les seize sources, liste fermée (la neuvième : l’XP du Virage ; la dixième : le '
-  + 'pronostic ; les six dernières : les mini-jeux)',
+check('les dix-huit sources, liste fermée (la neuvième : l’XP du Virage ; la dixième : le '
+  + 'pronostic ; puis six pour les mini-jeux et deux entre amis)',
   meme(SOURCES, ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
-    'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss']));
+    'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi']));
 check('les raisons de refus sont celles du contrat (§ 11), quota compris',
   meme([...RAISONS].sort(), ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',
     'schema', 'inconnu', 'quota'].sort()));
@@ -530,7 +530,7 @@ console.log('\n— les fautes de l’appelant lèvent, sans rien écrire —');
     ['une clé de gain inconnue (echarpe)', mission(E, 'f1', { echarpe: 30 })],
     ['un gain négatif', mission(E, 'f2', { echarpes: -5 })],
     ['un gain décimal', mission(E, 'f3', { echarpes: 2.5 })],
-    ['une source hors liste', { ...mission(E, 'f4', { echarpes: 1 }), source: 'cadeau' }],
+    ['une source hors liste', { ...mission(E, 'f4', { echarpes: 1 }), source: 'pourboire' }],
     ['une clé de plus de 40 caractères', mission(E, 'x'.repeat(41), { echarpes: 1 })],
     ['des boosters sans recharger', { userId: E, source: 'sachet', cle: 'f5', gain: { packs: 1 }, niveau }],
     ['de l’XP sans le module niveau', { userId: E, source: 'mission', cle: 'f6', gain: { xp: 5 },

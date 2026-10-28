@@ -114,4 +114,7 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
   'pronostics',
   /* Les mini-jeux d’entre les matchs (18 octobre 2026) : cinq tables neuves,
      sans clé étrangère. */
-  'mini-jeux'];
+  'mini-jeux',
+  /* Jouer entre amis (28 octobre 2026) : gestes, cadeaux, échanges, prêts.
+     Quatre tables neuves, sans clé étrangère. Rien n'en dépend. */
+  'amis-ensemble'];
