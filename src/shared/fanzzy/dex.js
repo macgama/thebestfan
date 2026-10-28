@@ -10,6 +10,7 @@ import { DEX_LEGENDES } from './dex-legendes.js';
 import { SETS_NEUVES, DEX_NEUVES } from './dex-series-neuves.js';
 import { SET_SAISON, DEX_SAISON } from './dex-saison.js';
 import { SET_TERRACES, DEX_TERRACES } from './dex-terraces.js';
+import { SET_KURVE, DEX_KURVE } from './dex-kurve.js';
 import { AGES } from './dex-ages.js';
 import { agesDe, idDuStade } from './ages.js';
 import { reglage } from '../reglages.js';
@@ -747,9 +748,10 @@ const RATES = table(2);
    fait pour ses lignées les plus anciennes : ses entrées de stade 2 et 3
    arrivent donc par ici et non par `AGES`. Les deux façons coexistent, et la
    boucle plus bas refuse justement de les mélanger sur une même carte. */
-/* LES TERRACES viennent après : leurs suites, elles, passent par `AGES`. */
+/* LES TERRACES viennent après, puis DIE KURVE : leurs suites, elles, passent
+   par `AGES`. */
 const PREMIERS = [...DEX, ...DEX_2026, ...DEX_LEGENDES, ...DEX_NEUVES, ...DEX_SAISON,
-  ...DEX_TERRACES];
+  ...DEX_TERRACES, ...DEX_KURVE];
 const PREMIER_PAR_ID = new Map(PREMIERS.map((f) => [f.id, f]));
 
 const SUITES = [];
@@ -794,8 +796,8 @@ const TOUT = [...PREMIERS, ...SUITES];
 /* LES TERRACES ferment la marche, pour la même raison : c'est la plus neuve.
    Elle aussi arrive fermée — aucune saison lancée ne la nomme —, et elle
    s'ouvre en la cochant dans une saison lancée, onglet SAISONS de /admin.
-   Voir `dex-terraces.js`. */
-const TOUS_SETS = [...SETS, ...SETS_2026, ...SETS_NEUVES, SET_SAISON, SET_TERRACES];
+   Voir `dex-terraces.js`. DIE KURVE suit, fermée elle aussi (`dex-kurve.js`). */
+const TOUS_SETS = [...SETS, ...SETS_2026, ...SETS_NEUVES, SET_SAISON, SET_TERRACES, SET_KURVE];
 
 // Un identifiant en double ferait taire une carte sans le dire : la seconde
 // écraserait la première dans BY_ID, et elle disparaîtrait des tirages sans
