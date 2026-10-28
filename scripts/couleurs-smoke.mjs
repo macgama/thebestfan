@@ -23,7 +23,7 @@
  */
 import { createServer } from 'node:http';
 import { deflateSync, crc32 } from 'node:zlib';
-import { decoderPng, couleursDuBlason } from '../src/server/football/blason.js';
+import { decoderPng, couleursDuBlason, formatDuBlason, FormatDeBlason } from '../src/server/football/blason.js';
 import { createCouleurs } from '../src/server/football/couleurs.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 import { readFileSync } from 'node:fs';
@@ -259,6 +259,48 @@ function blason({ largeur = 20, hauteur = 20, parts }) {
   }
 }
 
+/* ------------------------------------------- les blasons qui ne sont pas PNG
+
+   L'API sert parfois sous `….png` un SVG, un JPEG ou une page d'erreur. Le
+   SVG se lit ; le reste doit être reconnu et nommé, jamais pris pour un PNG
+   cassé.                                                                    */
+{
+  const proche = (hex, [r, g, b]) => {
+    const n = parseInt(hex.slice(1), 16);
+    return Math.abs(((n >> 16) & 255) - r) < 26 && Math.abs(((n >> 8) & 255) - g) < 26
+      && Math.abs((n & 255) - b) < 26;
+  };
+  const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+  check('un JPEG est reconnu', formatDuBlason(jpeg) === 'JPEG');
+  check('un GIF aussi', formatDuBlason(Buffer.from('GIF89a......')) === 'GIF');
+  check('une page d’erreur aussi',
+    formatDuBlason(Buffer.from('<!DOCTYPE html><html><body>404</body></html>')) === 'HTML');
+  check('un SVG précédé d’un en-tête XML aussi', formatDuBlason(Buffer.from(
+    '<?xml version="1.0"?>\n<!-- dessin -->\n<svg xmlns="http://www.w3.org/2000/svg"></svg>')) === 'SVG');
+
+  let leve = null;
+  try { couleursDuBlason(jpeg); } catch (e) { leve = e; }
+  check('un JPEG lève une erreur de format, nommée',
+    leve instanceof FormatDeBlason && leve.format === 'JPEG');
+
+  /* Un SVG d'écusson : un fond blanc, un contour noir, et la couleur du club
+     sur plusieurs aplats — dans un attribut, un style, une couleur courte. */
+  const svg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg">
+    <path fill="#FFFFFF" d="M0 0"/><path stroke="#000" fill="none" d="M0 0"/>
+    <path fill="#0A3A8C" d="M1 1"/><path style="fill:#0a3a8c;stroke:none" d="M2 2"/>
+    <circle fill="rgb(10, 58, 140)" r="3"/><rect fill="url(#degrade)"/>
+    <stop stop-color="#E30613"/><path fill="#e30613"/></svg>`);
+  const c = couleursDuBlason(svg);
+  check('un SVG rend la couleur la plus employée',
+    proche(c.c1, [10, 58, 140]) || (console.log('        il rend', c.c1), false));
+  check('et une seconde couleur distincte',
+    proche(c.c2 ?? '#000000', [227, 6, 19]) || (console.log('        il rend', c.c2), false));
+
+  let sansCouleur = '';
+  try { couleursDuBlason(Buffer.from('<svg><path d="M0 0"/></svg>')); } catch (e) { sansCouleur = e.message; }
+  check('un SVG sans couleur est refusé en le disant', /sans couleur/.test(sansCouleur));
+}
+
 /* ------------------------------------------------ le remplissage en base */
 
 const mysql = await import('mysql2/promise');
@@ -284,6 +326,11 @@ const srv = createServer((req, res) => {
   appels++;
   if (req.url === '/casse.png') { res.writeHead(404).end(); return; }
   if (req.url === '/pas-une-image.png') { res.writeHead(200).end('bonjour'); return; }
+  if (req.url.startsWith('/jpeg')) {
+    res.writeHead(200, { 'content-type': 'image/png' })
+      .end(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46]));
+    return;
+  }
   res.writeHead(200, { 'content-type': 'image/png' }).end(image);
 });
 await new Promise((r) => srv.listen(0, r));
@@ -341,6 +388,36 @@ const couleurs = createCouleurs({ pool, log: { warn: () => {} } });
   const [[{ n }]] = await pool.query(
     `SELECT COUNT(*) n FROM teams WHERE id IN (11,12,13,14) AND colors_at IS NULL`);
   check('et le reste attend le passage suivant', n === 2);
+}
+
+{
+  /* Les JPEG servis sous `.png` : un seul avertissement pour tous, et chacun
+     reste marqué comme tenté. */
+  const dits = [];
+  const c2 = createCouleurs({ pool, log: { warn: (m) => dits.push(m) },
+    aLaMain: { 31: ['#FFD200', '#000000'] } });
+  await pool.query(`INSERT INTO teams (id,name,logo) VALUES
+    (21,'J1',?),(22,'J2',?),(31,'A la main',?)`,
+  [`${base}/jpeg1.png`, `${base}/jpeg2.png`, `${base}/jpeg3.png`]);
+  const avant = appels;
+  const faits = await c2.assurer([21, 22, 31]);
+  check('les blasons JPEG ne donnent pas de couleur', faits === 1);
+  check('et ne valent qu’un seul avertissement',
+    dits.length === 1 && /JPEG/.test(dits[0]) || (console.log('        ', dits), false));
+  const [[{ n }]] = await pool.query(
+    `SELECT COUNT(*) n FROM teams WHERE id IN (21,22) AND colors_at IS NOT NULL AND color1 IS NULL`);
+  check('chacun est marqué comme tenté', n === 2);
+
+  const [[m]] = await pool.query(`SELECT color1, color2 FROM teams WHERE id = 31`);
+  check('les couleurs à la main sont posées', m.color1 === '#FFD200' && m.color2 === '#000000');
+  check('sans télécharger le blason', appels === avant + 2);
+
+  /* Elles reprennent leur place si la base les a perdues, au redémarrage. */
+  await pool.query(`UPDATE teams SET color1 = '#123456' WHERE id = 31`);
+  const c3 = createCouleurs({ pool, log: { warn: () => {} }, aLaMain: { 31: ['#FFD200', '#000000'] } });
+  await c3.assurer([31]);
+  const [[m2]] = await pool.query(`SELECT color1 FROM teams WHERE id = 31`);
+  check('et reprises au démarrage suivant', m2.color1 === '#FFD200');
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
