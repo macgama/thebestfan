@@ -3244,6 +3244,9 @@ function connect() {
      Une équipe, une compétition, ou un pays **dans sa langue** (pays.js). */
   const { pli, cherches: paysCherches } = window.TBF_PAYS;
   const nomPays = (m) => window.TBF_PAYS.nom(m.pays, m.drapeau);
+  /* Une sélection nationale porte un nom de pays : « Switzerland » s'écrit
+     « Suisse » chez un lecteur français. Un club garde son nom. */
+  const eqNom = (nom) => window.TBF_PAYS.equipe({ name: nom });
 
   let terme = '';
 
@@ -3303,10 +3306,10 @@ function connect() {
     return `<div class="match tbf-cadre tbf-affiche${m.open ? '' : ' off'}${m.mien ? '' : ' ailleurs tbf-affiche--ailleurs'}"
       data-id="${m.id}" data-mien="${m.mien ? 1 : 0}" role="button" tabindex="${m.open ? 0 : -1}"
       ${couleurs ? `style="${couleurs}"` : ''}>
-      <span class="tbf-affiche-club"><img src="${esc(m.home_logo ?? '')}" alt=""><b>${esc(m.home_name)}</b></span>
+      <span class="tbf-affiche-club"><img src="${esc(m.home_logo ?? '')}" alt=""><b>${esc(eqNom(m.home_name))}</b></span>
       <span class="tbf-affiche-score">${score ? `<b class="tbf-banderole">${score}</b>` : ''}
         ${m.league_name ? `<small>${esc(m.league_name)}</small>` : ''}</span>
-      <span class="tbf-affiche-club"><img src="${esc(m.away_logo ?? '')}" alt=""><b>${esc(m.away_name)}</b></span>
+      <span class="tbf-affiche-club"><img src="${esc(m.away_logo ?? '')}" alt=""><b>${esc(eqNom(m.away_name))}</b></span>
       ${etat}
       <span class="tbf-affiche-pied">
         <span class="tbf-foule tbf-foule--frise" data-tribune="moi" aria-hidden="true">${frise(foule)}</span>

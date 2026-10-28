@@ -587,25 +587,9 @@ $('b1').onclick = () => { scene(2); setTimeout(() => $('q').focus(), 400); buzz(
    ce qui revient dans la langue du lecteur. */
 const P = () => window.TBF_PAYS;
 
-/* Le nom d'une sélection nationale **est** un nom de pays : « Switzerland »
-   n'est pas le nom propre d'un club, c'est « Suisse » écrit en anglais. On le
-   traduit donc, suffixe compris — l'API range l'équipe féminine sous
-   « Switzerland W ». Le nom d'un club, lui, ne se traduit jamais : le Bayern
-   s'appelle le Bayern dans toutes les langues. */
-const SUFFIXE = /^(.+?)\s+(W|U\d{2})$/;
-const nomEquipe = (x) => {
-  if (!P()) return x.name;
-  const m = SUFFIXE.exec(x.name);
-  const base = m ? m[1] : x.name;
-  /* Sélection reconnue à sa marque, ou **à son nom** : la marque peut manquer
-     en base, et « Switzerland » sortait alors en anglais, après les clubs.
-     Pas un club qui porte le nom d'un pays : « Monaco » joue en France. */
-  const pays = P().code(base);
-  const sienne = pays && (!x.country || P().code(x.country) === pays);
-  if (!Number(x.national) && !sienne) return x.name;
-  const traduit = P().nom(base);
-  return m ? `${traduit} ${m[2]}` : traduit;
-};
+/* Le nom d'une sélection, dans la langue du lecteur : voir `equipe` dans
+   pays.js, partagé avec la page des clubs. */
+const nomEquipe = (x) => (P() ? P().equipe(x) : x.name);
 
 let t = null;
 $('q').oninput = () => {
