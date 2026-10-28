@@ -56,7 +56,10 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'sou
 }
 
 const [MOI, ELLE, LUI] = ['1', '2', '3'].map((i) => `aaaaaaaa-1111-0000-0000-00000000000${i}`);
-const NOMS = { [MOI]: 'Momo', [ELLE]: 'Sarah', [LUI]: 'Tarek' };
+const ZOE = 'aaaaaaaa-1111-0000-0000-0000000000a1';
+/* Zoé ne suit que Lugano : aucune suggestion ne la montrera. On ne la
+   trouve qu'en tapant son pseudo. */
+const NOMS = { [MOI]: 'Momo', [ELLE]: 'Sarah', [LUI]: 'Tarek', [ZOE]: 'Zoé' };
 for (const [id, nom] of Object.entries(NOMS)) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
     [id, `${nom.toLowerCase()}@ex.fr`, nom]);
@@ -74,8 +77,8 @@ await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle'),(99
    Lugano — que je ne suis pas. La page ne doit jamais l'apprendre : on montre
    les clubs **communs**, pas la vie de quelqu'un. */
 await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES
-  (?,85,1),(?,91,0),(?,85,1),(?,91,0),(?,85,1),(?,99,0)`,
-[MOI, MOI, ELLE, ELLE, LUI, LUI]);
+  (?,85,1),(?,91,0),(?,85,1),(?,91,0),(?,85,1),(?,99,0),(?,99,1)`,
+[MOI, MOI, ELLE, ELLE, LUI, LUI, ZOE]);
 await raw.end();
 
 /* ----------------------------------------------------------- le serveur */
@@ -196,6 +199,39 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
   await onglet(page, 'demandes');
   check('la demande envoyée apparaît en attente',
     /TU AS DEMANDÉ/.test(await texte(page)));
+}
+
+/* -------------------------------------------------- chercher par pseudo */
+
+{
+  await onglet(page, 'trouver');
+  check('Zoé, sans club commun, n’est pas suggérée', !/Zoé/.test(await texte(page)));
+  const taper = async (mot) => {
+    await page.evaluate(() => { document.getElementById('cherche').value = ''; });
+    await page.type('#cherche', mot);
+    await dodo(700);
+  };
+  await taper('Zo');
+  check('deux lettres ne cherchent rien',
+    !/Zoé/.test(await texte(page)) && !/Aucun joueur/.test(await texte(page)));
+  await taper('zoe');
+  const trouve = await page.evaluate(() => [...document.querySelectorAll('#trouves .gars')]
+    .map((n) => n.textContent.replace(/\s+/g, ' ').trim()));
+  check('trois lettres la trouvent, sans majuscule ni accent',
+    trouve.length === 1 && /Zoé/.test(trouve[0]) && /AJOUTER/.test(trouve[0])
+    || (console.log('        il y a :', trouve), false));
+  check('sans dire quels clubs elle suit', !/Lugano/.test(await texte(page)));
+
+  await page.evaluate(() => document.querySelector('#trouves [data-demander]').click());
+  await jusqua(async () => /demande partie/.test(await texte(page)));
+  check('l’ajouter part en demande, et la ligne le dit',
+    /envoyée/i.test(await dernierToast(page)) && /demande partie/.test(await texte(page)));
+  check('la recherche reste tapée',
+    await page.evaluate(() => document.getElementById('cherche').value) === 'zoe');
+
+  await taper('xyz');
+  check('un pseudo inconnu le dit', /Aucun joueur/.test(await texte(page)));
+  await amis.retirer(MOI, ZOE);
 }
 
 /* -------------------------------------------- la demande reçue se voit

@@ -6566,5 +6566,19 @@
  "Comment couper la musique ?": "How do I turn off the music?",
  "En bas du menu, « Couper la musique ». Elle ne joue que sur les pages calmes, jamais pendant un duel, au Grand Virage ou dans les mini-jeux, pour que tu entendes la tribune. Le mode calme du menu coupe aussi les sons, les vibrations ou les animations.": "At the bottom of the menu, “Mute music”. It only plays on the quiet pages, never during a duel, in the Big End or in the mini-games, so you can hear the crowd. The menu’s quiet mode also mutes sounds, vibrations or animations.",
  "J’ai trouvé un bug. À qui le dire ?": "I found a bug. Who do I tell?",
- "Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le message part directement à l’équipe du jeu.": "In the menu, “Report a problem”: say what happened, and the message goes straight to the game team."
+ "Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le message part directement à l’équipe du jeu.": "In the menu, “Report a problem”: say what happened, and the message goes straight to the game team.",
+ "Doucement : attends une minute avant de chercher encore.": "Easy now: wait a minute before searching again.",
+ "Aucun joueur à ce nom.": "No player by that name.",
+ "déjà ami": "already a friend",
+ "demande partie": "request sent",
+ "CHERCHER UN JOUEUR": "FIND A PLAYER",
+ "Tape le début de son pseudo, trois lettres au moins. Il n’a pas besoin de suivre tes clubs.": "Type the start of their username, at least three letters. They don’t need to follow your clubs.",
+ "Son pseudo": "Their username",
+ "Pseudo du joueur à chercher": "Username of the player to find",
+ "ILS SUIVENT TES CLUBS": "THEY FOLLOW YOUR CLUBS",
+ "MES SAISONS": "MY SEASONS",
+ "<0>1</0> tampon": "<0>1</0> stamp",
+ "<0>{0}</0> tampons": "<0>{0}</0> stamps",
+ "SAISON {0} — {1}": "SEASON {0} — {1}",
+ "<0>{0}</0> de ferveur": "<0>{0}</0> fervour"
 }
