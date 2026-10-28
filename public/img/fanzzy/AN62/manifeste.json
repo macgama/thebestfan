@@ -1,6 +1,6 @@
 {
   "id": "AN62",
-  "rev": 3,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "c6c4b76a46fc"
+          "sha": "c6c4b76a46fc",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -25,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f654a8aee825"
+          "sha": "f654a8aee825",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -37,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ee00f61dfd89"
+          "sha": "ee00f61dfd89",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

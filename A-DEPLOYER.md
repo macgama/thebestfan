@@ -13,6 +13,30 @@ trois boutons d'Android). Construction seule, **sans schéma**.
 
 ---
 
+**Les équipes nationales en français aussi sur la page CLUBS** (branche
+`claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : dans
+« Ajouter un club », la Suisse restait « Switzerland »). Construction seule,
+**sans schéma**.
+
+- « suisse » (ou « schweiz », « svizzera », « suiza ») trouve la sélection
+  dans « Ajouter un club », écrite dans la langue du joueur ; les matchs des
+  clubs suivis, les matchs du jour et le Virage écrivent aussi les sélections
+  dans sa langue.
+- Après la mise en ligne : sur le S24+, page CLUBS, chercher « suisse ».
+
+---
+
+**Les images Ultimate des Terraces** (branche `claude/project-thread-z4jtwl`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- 180 images plein cadre, une par Fanzzy AN et par âge, chacune avec un fond
+  tiré de l'histoire du Fanzzy. La grande scène Ultimate les montre à la
+  place du dessin fait avec la carte (pas encore de clip animé pour AN).
+- Après la mise en ligne : déclencher l'Ultimate d'un Fanzzy AN en duel, ou
+  ouvrir sa carte Ultimate dans la collection.
+
+---
+
 **Classement des clubs : les neutres comptent, et TRIBUNES suit la saison**
 (branche `claude/project-thread-2v1fvo`, 28 octobre 2026, demandé par Gaël :
 que les matchs joués pour un club qu'on ne suit pas rapportent un peu à ce
@@ -118,6 +142,7 @@ Construction seule, **sans schéma**.
 - Leurs 18 skins (Halloween, Préhistorique, Apocalyptique) sont toutes
   dessinées : les six dernières (AN61, AN62 préhistorique, AN65 Halloween et
   apocalyptique) suivent dans une seconde fusion, images seules.
+- Elles clignent des yeux dans 19 tenues sur 24 (images seules).
 - Après la mise en ligne : ouvrir la fiche d'une des six (collection) et
   lire le tampon « LIÉ À ».
 

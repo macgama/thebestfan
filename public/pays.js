@@ -192,10 +192,13 @@ window.TBF_PAYS = (() => {
    * reconnaît une sélection nationale à son seul nom : « Switzerland » n'est
    * pas le nom propre d'un club, c'est « Suisse » écrit en anglais.
    */
+  const codesVus = new Map();
   function code_(nomApi) {
     const p = pli(nomApi);
     if (p.length < 2) return null;
-    return table().find((x) => x.ang.includes(p))?.code ?? null;
+    // Une liste de matchs le demande deux fois par ligne : on retient.
+    if (!codesVus.has(p)) codesVus.set(p, table().find((x) => x.ang.includes(p))?.code ?? null);
+    return codesVus.get(p);
   }
 
   /**
@@ -309,5 +312,32 @@ window.TBF_PAYS = (() => {
     return [...new Set(designes(terme).map((p) => p.nom))];
   }
 
-  return { locale, pli, nom, code: code_, codeISO, cherches, designes, nomsApi };
+  /**
+   * Le nom d'une **équipe**, dans la langue du lecteur si c'est une sélection.
+   *
+   * Le nom d'une sélection nationale est un nom de pays : « Switzerland »
+   * n'est pas le nom propre d'un club, c'est « Suisse » écrit en anglais. On
+   * le traduit donc, suffixe compris — l'API range l'équipe féminine sous
+   * « Switzerland W », les espoirs sous « Switzerland U21 ». Le nom d'un club,
+   * lui, ne se traduit jamais : le Bayern s'appelle le Bayern partout.
+   *
+   * La sélection se reconnaît à sa marque `national`, ou **à son nom** : la
+   * marque peut manquer en base. Pas un club qui porte le nom d'un pays :
+   * « Monaco » joue en France, et son `country` le dit.
+   *
+   * @param e  { name, national?, country? } — une ligne de `teams`.
+   */
+  const SUFFIXE = /^(.+?)\s+(W|U\d{2})$/;
+  function equipe(e) {
+    const brut = String(e?.name ?? '');
+    const m = SUFFIXE.exec(brut);
+    const base = m ? m[1] : brut;
+    const pays = code_(base);
+    const sienne = pays && (!e?.country || code_(e.country) === pays);
+    if (!Number(e?.national) && !sienne) return brut;
+    const traduit = nom(base);
+    return m ? `${traduit} ${m[2]}` : traduit;
+  }
+
+  return { locale, pli, nom, code: code_, codeISO, cherches, designes, nomsApi, equipe };
 })();
