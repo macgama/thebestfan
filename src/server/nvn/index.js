@@ -439,9 +439,15 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        fort, chez soi seulement : un neutre n'a pas de club dans ce match. Le
        deck est lié ici, une fois, pour ce match-là — le moteur n'a rien à en
        savoir, il lit des totaux. */
+    /* Son club principal : celui du PLEIN CLUB, où ses pièces de club
+       rapportent en plus (`lierLeDeck`). */
+    const principal = club.neutre ? null
+      : (await q(`SELECT team_id FROM user_follows WHERE user_id = ? AND is_main = 1 LIMIT 1`,
+        [u.userId]).catch(() => []))[0]?.team_id ?? null;
     const deck = lierLeDeck(loadout, club.neutre ? null : club.teamId, tauxDuLien(), {
       leagueId: support.fixture.leagueId,
       nomDuClub: club.teamId === exterieur ? support.fixture.away.name : support.fixture.home.name,
+      principal,
     });
 
     quitterFile(u.userId);
@@ -1346,12 +1352,15 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            le joueur a choisi d'aligner, et c'est lui dont la ligne se souvient.
            `lie` n'est posé qu'à l'entrée en file, et seulement chez soi. */
         const lie = Boolean(pourSonClub && j.fanzzy?.[0]?.lie);
+        /* `lien.scarvesBonus` : le lien, et le PLEIN CLUB de ses pièces de
+           club s'il joue le match de son club principal (`lierLeDeck`). */
         const montant = Math.round(base * (pourSonClub ? DOUBLE_CLUB : 1)
-          * (lie ? 1 + tauxDuLien().gain : 1));
+          * (lie ? j.fanzzy[0].lien?.scarvesBonus ?? 1 + tauxDuLien().gain : 1));
         await assurerBourse(q, userId);
         await q(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
           [montant, userId]);
-        verse.set(userId, { echarpes: montant, pourSonClub, lie, xp: 0, kop: null });
+        verse.set(userId, { echarpes: montant, pourSonClub, lie,
+          pleinClub: lie ? j.fanzzy[0].pleinClub ?? 0 : 0, xp: 0, kop: null });
 
         /* L'XP, elle, **ne double pas** pour son club.
            Les écharpes récompensent la ferveur, et il est juste qu'elles
