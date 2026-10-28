@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**La page Questions à jour** (branche `claude/project-thread-7ad2lr`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- L'onglet QUESTIONS des missions répond maintenant sur l'Ultimate, les
+  Fanzzy liés à un club, les légendaires du deck, les duels qui attendent,
+  inviter un ami, le duel guidé, les mini-jeux, le pronostic, la saison, le
+  carnet, la collection, les cartes-souvenirs, la résiliation du PASS, la
+  musique et « Signaler un problème », dans les cinq langues. La réponse
+  sur le PASS est corrigée (deux clubs de plus, et les plafonds sans PASS).
+- Comment jouer : la musique, le rayon ULTIMATE et « Signaler un problème ».
+- Après la mise en ligne : ouvrir /aide, onglet QUESTIONS.
+
+---
+
 **Les équipes nationales dans la recherche « TON CLUB »** (branche
 `claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : il a dû
 taper « Switzerland » pour trouver la Suisse). Construction seule, **sans
