@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Les équipes nationales en français aussi sur la page CLUBS** (branche
+`claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : dans
+« Ajouter un club », la Suisse restait « Switzerland »). Construction seule,
+**sans schéma**.
+
+- « suisse » (ou « schweiz », « svizzera », « suiza ») trouve la sélection
+  dans « Ajouter un club », écrite dans la langue du joueur ; les matchs des
+  clubs suivis, les matchs du jour et le Virage écrivent aussi les sélections
+  dans sa langue.
+- Après la mise en ligne : sur le S24+, page CLUBS, chercher « suisse ».
+
+---
+
 **Les images Ultimate des Terraces** (branche `claude/project-thread-z4jtwl`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 

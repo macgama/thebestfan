@@ -62,6 +62,10 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES
 await raw.query(`INSERT INTO user_wallet (user_id,follow_slots) VALUES (?,2)`, [U]);
 await raw.query(`INSERT INTO teams (id,name,country) VALUES
   (85,'Lausanne','Suisse'),(91,'Bâle','Suisse'),(99,'Lugano','Suisse'),(77,'Servette','Suisse')`);
+/* La sélection suisse, telle que l'API la range : en anglais, et ici sans
+   pays ni marque, comme une ligne d'abord écrite par un match. */
+await raw.query(`INSERT INTO teams (id,name,country,national) VALUES
+  (701,'Switzerland',NULL,0),(702,'Switzerland W','Switzerland',1)`);
 await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1),(?,91,0)`,
   [U, U]);
 await raw.end();
@@ -316,6 +320,19 @@ async function chercher(terme) {
   const relit = await p.evaluate(() => typeof load === 'function');
   check('la page sait se relire', relit);
   await p.close();
+}
+
+/* Chercher son pays **dans sa langue**. Gaël devait taper « Switzerland »
+   pour trouver la Suisse, et la lisait ensuite en anglais. */
+{
+  const r = await chercher('suisse');
+  const noms = r.boutons.map((b) => b.nom.replace(/\s+/g, ' '));
+  check('« suisse » trouve la sélection, écrite en français',
+    noms.includes('Suisse') || (console.log('        proposés :', JSON.stringify(noms)), false));
+  check('l’équipe féminine aussi, sans redire le pays',
+    noms.includes('Suisse W') || (console.log('        proposés :', JSON.stringify(noms)), false));
+  check('et aucune n’est écrite en anglais',
+    !noms.some((n) => /Switzerland/.test(n)));
 }
 
 check('aucune erreur de script sur la page des clubs',
