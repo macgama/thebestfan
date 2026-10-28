@@ -1611,6 +1611,66 @@ for (const [route, nom] of tousLesEcrans) {
       && montre[1] >= gagnes && montre[1] <= possibles);
 }
 
+/* ------------------------------------------- les visites à la 1re visite
+
+   Mes Fanzzy, la fiche, la collection, les amis et le KOP ont chacun leur
+   visite guidée (`visite.js`, 28 octobre 2026). Demandée par l'adresse
+   (`?visite=1` : un navigateur piloté ne la voit pas sans ça), chacune doit
+   s'ouvrir, et **chaque projecteur éclairer un élément visible** — un
+   sélecteur qui ne trouve plus rien est sauté, jamais pointé dans le vide,
+   mais une visite réduite à ses bulles du milieu ne montrerait plus rien. */
+console.log('\n  Les visites guidées des pages');
+{
+  const [[eu]] = await pool.query(
+    `SELECT uf.fanzzy_id AS id FROM user_fanzzy uf JOIN fanzzy f ON f.id = uf.fanzzy_id
+      WHERE uf.user_id = ? AND f.stage = 1 AND f.rar <> 'legendaire' ORDER BY uf.stage LIMIT 1`, [U]);
+  const fiche = '/fanzzy/' + eu.id;
+  for (const [route, nom, min, cle] of [['/fanzzy', 'Mes Fanzzy', 2, 'fanzzy'], [fiche, 'la fiche', 3, 'fiche'],
+    ['/collection', 'la collection', 2, 'collection'], ['/amis', 'les amis', 2, 'amis'], ['/kop', 'le KOP', 0, 'kop']]) {
+    const pg = await nav.newPage();
+    const erreurs = [];
+    pg.on('pageerror', (e) => erreurs.push(e.message));
+    await pg.setViewport({ width: 400, height: 880 });
+    await pg.goto(`${base}${route}?visite=1`, { waitUntil: 'networkidle0' });
+    let ouverte = false;
+    for (let t = 0; t < 80 && !ouverte; t++) {
+      ouverte = await pg.evaluate(() => !!document.querySelector('.tbf-visite'));
+      if (!ouverte) await new Promise((r) => setTimeout(r, 150));
+    }
+    const arrets = [];
+    for (let n = 0; ouverte && n < 12; n++) {
+      const a = await pg.evaluate(() => {
+        const v = document.querySelector('.tbf-visite');
+        if (!v) return null;
+        const trou = v.querySelector('.tbf-visite-trou');
+        const bulle = v.querySelector('.tbf-visite-bulle').getBoundingClientRect();
+        const r = trou.hidden ? null : trou.getBoundingClientRect();
+        return { titre: v.querySelector('h2').textContent,
+          eclaire: r ? r.width > 10 && r.height > 10 && r.bottom > 0 && r.top < innerHeight : null,
+          bulle: bulle.top >= 0 && bulle.bottom <= innerHeight + 1,
+          fin: !!v.querySelector('.tbf-visite-fin') };
+      });
+      if (!a) break;
+      arrets.push(a);
+      if (a.fin) break;
+      await pg.click('.tbf-visite [data-suivant]');
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    const projecteurs = arrets.filter((a) => a.eclaire !== null);
+    console.log(`    ${nom} :`, arrets.map((a) => a.titre).join(' · '));
+    check(`${nom} : la visite s’ouvre et va jusqu’au bout`, ouverte && arrets.at(-1)?.fin === true);
+    check(`${nom} : chaque projecteur éclaire un élément visible (${projecteurs.length})`,
+      projecteurs.length >= min && projecteurs.every((a) => a.eclaire));
+    check(`${nom} : la bulle tient toujours dans l’écran`, arrets.every((a) => a.bulle));
+    if (ouverte) await pg.click('.tbf-visite [data-fin]').catch(() => {});
+    const apres = await pg.evaluate((k) => ({ fermee: !document.querySelector('.tbf-visite'),
+      vue: localStorage.getItem(`tbf.visite.${k}`) === '1' }), cle);
+    check(`${nom} : « Compris » la referme et la garde comme vue`, apres.fermee && apres.vue);
+    check(`${nom} : aucune erreur de script`, erreurs.length === 0 || (console.log('       ', erreurs), false));
+    await pg.close();
+  }
+}
+
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);
 
 await nav.close();
