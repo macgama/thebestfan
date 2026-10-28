@@ -1,6 +1,6 @@
 {
   "id": "RP33",
-  "rev": 9,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -118,7 +118,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "68e74c9dad78"
+          "sha": "6f7a808afa3f"
         },
         "base": {
           "etats": [
@@ -129,7 +129,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b61401b97ce0"
+          "sha": "eec17788ddc8"
         },
         "apocalyptique": {
           "etats": [
@@ -141,7 +141,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5531403cfc7b"
+          "sha": "bf7cc9f85a1c"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "6d48e5a07f62"
         }
       }
     }

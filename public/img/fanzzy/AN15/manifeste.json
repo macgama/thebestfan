@@ -1,6 +1,6 @@
 {
   "id": "AN15",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5862b9b59d20",
+          "sha": "c033d3dfd24d",
           "cligne": true
         },
         "halloween": {
@@ -26,7 +26,31 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7c8f22c570b2"
+          "sha": "5d99ba439cb4"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "ae759b6757e4"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "59b909f2eb41"
         }
       }
     },
@@ -41,7 +65,43 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "8f669362ac48"
+          "sha": "273044dd27ad"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "24fd5cabf6f1"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "0930da57ec2c"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "e5d26b925a5e"
         }
       }
     },
