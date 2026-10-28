@@ -1,6 +1,6 @@
 {
   "id": "SU16",
-  "rev": 8,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -160,5 +160,24 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/apocalyptique/neutre": 1.126,
+    "e3/apocalyptique/joie": 1.126,
+    "e3/apocalyptique/colere": 1.126,
+    "e3/apocalyptique/depit": 1.126,
+    "e3/apocalyptique/pousse": 1.126,
+    "e3/apocalyptique/cligne": 1.126,
+    "e3/halloween/neutre": 1.137,
+    "e3/halloween/joie": 1.137,
+    "e3/halloween/colere": 1.137,
+    "e3/halloween/depit": 1.137,
+    "e3/halloween/pousse": 1.137,
+    "e3/prehistorique/neutre": 1.128,
+    "e3/prehistorique/joie": 1.128,
+    "e3/prehistorique/colere": 1.128,
+    "e3/prehistorique/depit": 1.128,
+    "e3/prehistorique/pousse": 1.128,
+    "e3/prehistorique/cligne": 1.128
   }
 }

@@ -1,6 +1,6 @@
 {
   "id": "AN15",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -162,5 +162,12 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/apocalyptique/pousse": 1.363,
+    "e1/halloween/colere": 1.174,
+    "e1/halloween/depit": 1.425,
+    "e1/halloween/pousse": 1.399,
+    "e1/prehistorique/colere": 1.42
   }
 }

@@ -1,6 +1,6 @@
 {
   "id": "RP25",
-  "rev": 16,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -165,5 +165,18 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e2/halloween/neutre": 0.921,
+    "e2/halloween/joie": 0.921,
+    "e2/halloween/colere": 0.921,
+    "e2/halloween/depit": 0.921,
+    "e2/halloween/pousse": 0.921,
+    "e3/halloween/neutre": 0.85,
+    "e3/halloween/joie": 0.85,
+    "e3/halloween/colere": 0.85,
+    "e3/halloween/depit": 0.85,
+    "e3/halloween/pousse": 0.85,
+    "e3/halloween/cligne": 0.85
   }
 }

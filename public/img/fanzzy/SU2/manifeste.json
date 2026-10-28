@@ -1,6 +1,6 @@
 {
   "id": "SU2",
-  "rev": 11,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -139,5 +139,13 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e3/halloween/neutre": 0.864,
+    "e3/halloween/joie": 0.864,
+    "e3/halloween/colere": 0.864,
+    "e3/halloween/depit": 0.864,
+    "e3/halloween/pousse": 0.864,
+    "e3/halloween/cligne": 0.864
   }
 }

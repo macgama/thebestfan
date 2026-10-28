@@ -1,6 +1,6 @@
 {
   "id": "AN10",
-  "rev": 13,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -164,5 +164,11 @@
         }
       }
     }
+  },
+  "retailles": {
+    "e1/halloween/joie": 1.145,
+    "e1/halloween/colere": 1.45,
+    "e1/halloween/depit": 1.45,
+    "e1/halloween/pousse": 1.45
   }
 }
