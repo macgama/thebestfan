@@ -1,6 +1,6 @@
 {
   "id": "AN42",
-  "rev": 6,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -51,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1a325f957db6"
+          "sha": "1a325f957db6",
+          "cligne": true
         }
       }
     },
@@ -130,7 +131,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a47c5428d237"
+          "sha": "a47c5428d237",
+          "cligne": true
         },
         "halloween": {
           "etats": [

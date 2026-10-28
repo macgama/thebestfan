@@ -1,6 +1,6 @@
 {
   "id": "RP22",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -142,7 +142,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "dd237e07b48e"
+          "sha": "dd237e07b48e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

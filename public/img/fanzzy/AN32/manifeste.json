@@ -1,6 +1,6 @@
 {
   "id": "AN32",
-  "rev": 6,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4f648c81fefa"
+          "sha": "4f648c81fefa",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -51,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "454b4ab72150"
+          "sha": "454b4ab72150",
+          "cligne": true
         }
       }
     },
@@ -79,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "3c2d55eb0ba6"
+          "sha": "3c2d55eb0ba6",
+          "cligne": true
         },
         "halloween": {
           "etats": [

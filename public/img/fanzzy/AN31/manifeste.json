@@ -1,6 +1,6 @@
 {
   "id": "AN31",
-  "rev": 8,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e40113ab09f1"
+          "sha": "e40113ab09f1",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -51,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f0716cea3063"
+          "sha": "f0716cea3063",
+          "cligne": true
         }
       }
     },
@@ -79,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "753d456958b4"
+          "sha": "753d456958b4",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -104,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0d26b8a9d721"
+          "sha": "0d26b8a9d721",
+          "cligne": true
         }
       }
     },
@@ -132,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "560474b00322"
+          "sha": "560474b00322",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -157,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4c603a922371"
+          "sha": "4c603a922371",
+          "cligne": true
         }
       }
     }

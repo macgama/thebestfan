@@ -1,6 +1,6 @@
 {
   "id": "RP26",
-  "rev": 11,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "583567ab407d"
+          "sha": "583567ab407d",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -51,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7b685cda4bfc"
+          "sha": "7b685cda4bfc",
+          "cligne": true
         }
       }
     },
@@ -144,7 +146,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4353e0bc195e"
+          "sha": "4353e0bc195e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -156,7 +159,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c6b25b46a8da"
+          "sha": "c6b25b46a8da",
+          "cligne": true
         }
       }
     }
