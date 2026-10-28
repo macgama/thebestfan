@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Les images Ultimate des Terraces** (branche `claude/project-thread-z4jtwl`,
+28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
+
+- 180 images plein cadre, une par Fanzzy AN et par âge, chacune avec un fond
+  tiré de l'histoire du Fanzzy. La grande scène Ultimate les montre à la
+  place du dessin fait avec la carte (pas encore de clip animé pour AN).
+- Après la mise en ligne : déclencher l'Ultimate d'un Fanzzy AN en duel, ou
+  ouvrir sa carte Ultimate dans la collection.
+
+---
+
 **Les pièces de club des Terraces** (branche `claude/project-thread-rftsbq`,
 28 octobre 2026, demandé par Gaël). Construction seule, **sans schéma**.
 

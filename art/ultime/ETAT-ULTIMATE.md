@@ -13,13 +13,13 @@ Les images sont faites avec Nano Banana 2, en image vers image, au format 9:16 e
 | Série | Lignées | Légendaires | Images faites / à faire | Clips faits / à faire | État |
 |---|---|---|---|---|---|
 | **RP** · LA REPRISE | 30 | 5 | **95 / 95** | **95 / 95** | ✅ terminée |
-| **AN** · LES TERRACES (base) | 60 | — | **3 / 180** | 0 / 180 | 🟡 en cours (images d'abord) |
+| **AN** · LES TERRACES (base) | 60 | — | **180 / 180** | 0 / 180 | 🟡 images faites, clips à faire |
 | **AN** · légendaires AN61 à AN66 | — | 6 | 0 / 6 | 0 / 6 | ⏳ en attente des cartes au catalogue |
 | **SU** · DIE KURVE | 36 | aucune prévue | 0 / 108 | 0 / 108 | ⏳ série en cours de création |
 | Autres séries du catalogue | 191 | 65 | 0 / 638 | 0 / 638 | ⬜ pas commencé |
 | Séries de championnat à venir | — | — | — | — | ⬜ pas encore conçues |
 
-Il reste à faire **929 images et 932 clips**, sans compter les championnats à venir.
+Il reste à faire **752 images et 932 clips**, sans compter les championnats à venir.
 
 ---
 
@@ -39,10 +39,10 @@ Rien à faire.
 |---|---|---|
 | Prompts (`origin/ult-an-prompts`, `prompts/AN<n>-ult-e<âge>.txt`) | 180 / 180 | — |
 | Références (`art/neuves/AN<n>{,B,C}.png`) | 180 / 180 | — |
-| Images | AN1-e1, AN1-e2, AN1-e3 (essai du 28 octobre, en mode Unlimited, sans crédit) | AN2 à AN60 : **177** |
+| Images | AN1 à AN60, 180 (28 octobre, en mode Unlimited, sans crédit) | — |
 | Clips | — | AN1 à AN60 : **180** |
 
-Les 3 images AN1 sont sur la branche `claude/project-thread-z4jtwl`, pas encore fusionnée dans `main`.
+Les 180 images sont dans `main`. Petits défauts gardés : un fanion à croix blanche dans le fond d'AN25 âge 2, un visage dans la fenêtre de la roulotte d'AN47 (comme sur sa carte), un mégaphone ajouté à AN6 et AN18 âge 2.
 
 > ⚠️ `scripts/ultime-images.mjs` réécrit IMAGES et CLIPS à partir du seul `art/ultime/_src/`. Lancé dans un dossier où ce répertoire ne contient pas toutes les sources (un worktree, par exemple), il efface les entrées RP. Lancez-le dans le dépôt principal, où toutes les sources sont présentes, ou vérifiez le diff (seules des lignes AN doivent s'ajouter).
 
@@ -110,8 +110,8 @@ Pour une série de N clubs, il faudra compter 3N lignées, soit 9N images et 9N 
 
 ## Ordre proposé
 
-1. **AN base, images** : AN2 à AN60, 177 images. ← maintenant
-2. AN base, clips : 180.
+1. ~~AN base, images~~ : faites (180).
+2. **AN base, clips** : 180. ← ensuite
 3. AN légendaires : catalogue, puis 6 prompts, 6 images et 6 clips.
 4. SU : 36 prompts, puis 108 images et 108 clips, quand la série est fusionnée.
 5. Autres séries du catalogue, par ordre d'ouverture en jeu.
