@@ -1,6 +1,6 @@
 {
   "id": "RP21",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -77,7 +77,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "e2c246e424d5"
+          "sha": "e2c246e424d5",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
