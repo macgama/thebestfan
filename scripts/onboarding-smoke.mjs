@@ -448,6 +448,41 @@ check('l\u2019équipement a bien un revers',
     /\/img\/dos\//.test(dos.fond)
     || (console.log('        fond :', dos.fond), false));
 
+  /* **Le premier paquet s'ouvre comme au kiosque** (28 octobre 2026) : le
+     moteur commun `/ouverture.js`, sa rareté et sa sorte sur chaque carte,
+     et le mot de la sorte collé sous la carte une fois retournée. On touche
+     jusqu'à la scène finale : un toucher abrège le suspense et la charge,
+     jamais il ne reste sans effet plus de quelques secondes. */
+  const marques = await page.evaluate(() => {
+    const r = [...document.querySelectorAll('#s3 .reveal')];
+    return { moteur: Boolean(window.TBF_OUVERTURE), scene: document.getElementById('s3').classList.contains('kq-scene'),
+      salle: document.getElementById('app').classList.contains('kq-salle'),
+      dessus: r[0]?.classList.contains('kq-dessus') === true,
+      rar: r.every((x) => x.dataset.rar), sorte: r.every((x) => x.dataset.sorte) };
+  });
+  check('le paquet de bienvenue a le moteur d’ouverture du kiosque',
+    marques.moteur && marques.scene && marques.salle
+    || (console.log('        ', JSON.stringify(marques)), false));
+  check('chaque carte dit sa rareté et sa sorte, la première est dessus',
+    marques.rar && marques.sorte && marques.dessus);
+
+  let tours = 0;
+  while (tours++ < 200) {
+    const fini = await page.evaluate(() => document.getElementById('s4').classList.contains('on'));
+    if (fini) break;
+    await page.evaluate(() => document.getElementById('s3').click());
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  const fin = await page.evaluate(() => ({
+    finale: document.getElementById('s4').classList.contains('on'),
+    mots: document.querySelectorAll('#s3 .reveal > .kq-sorte').length,
+    cartes: document.querySelectorAll('#s3 .reveal').length,
+  }));
+  check('toucher mène toutes les cartes jusqu’à la scène finale', fin.finale
+    || (console.log('        ', JSON.stringify(fin)), false));
+  check('chaque carte retournée a reçu le mot de sa sorte', fin.mots === fin.cartes && fin.cartes > 0
+    || (console.log('        ', JSON.stringify(fin)), false));
+
   check('et la page n’a rien jeté en chemin', soucis.length === 0
     || (console.log('        ', soucis.slice(0, 2).join(' | ')), false));
 
