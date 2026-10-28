@@ -94,7 +94,7 @@ export function apportsDe({ fanzzy = null, stuff = [], kop = null, club = null, 
     out.push({ quoi: 'club', nom: 'Fanzzy lié à ton club', mods: club });
   }
 
-  /* Côte à côte avec ses amis, au Virage (`virage.js`, `coteDe`). */
+  /* Côte à côte avec ses amis, au Virage (`virage.js`, `coteACote`). */
   if (garni(amis?.mods)) {
     out.push({ quoi: 'amis', nom: 'Côte à côte avec tes amis', mods: amis.mods });
   }

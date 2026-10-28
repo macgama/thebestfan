@@ -990,7 +990,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       /* Les amis : après l'état, sans l'attendre — une présence lente ou en
          panne ne retarde ni ne ferme l'entrée. */
       const m = room.members.get(u.userId);
-      /* **Côte à côte** (`virage.js`, `coteDe`) : ses amis mutuels, et s'il se
+      /* **Côte à côte** (`virage.js`, `coteACote`) : ses amis mutuels, et s'il se
          montre à eux — caché, il ne compte pour personne. Sans attendre : une
          lecture lente retarde le bonus, jamais l'entrée. */
       if (m && presence?.amisMutuels) {
