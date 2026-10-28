@@ -1,6 +1,6 @@
 {
   "id": "AN25",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,6 +39,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "e8d10e42aad3"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "571fbc72322b"
         }
       }
     },
@@ -53,7 +65,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "bcbc656fe4d4",
+          "sha": "d3313da3f614",
           "cligne": true
         },
         "halloween": {
@@ -66,7 +78,31 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "688dedf18483"
+          "sha": "4c4bb74f384c"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "ab2465bc71d0"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "6a6e9be27eeb"
         }
       }
     },
@@ -81,7 +117,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "15f0efd94359",
+          "sha": "32be570ecae2",
           "cligne": true
         },
         "halloween": {
@@ -94,7 +130,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c0dcf2ed21a0"
+          "sha": "216000cf781f"
         },
         "prehistorique": {
           "etats": [
@@ -106,7 +142,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4e2ba126ce66"
+          "sha": "7f07ef253a89"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "1c9bd41bb816"
         }
       }
     }
