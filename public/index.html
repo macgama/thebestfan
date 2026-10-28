@@ -6513,6 +6513,16 @@ async function alerteDuel() {
   // marqué pendant que le téléphone était en poche se verrait trois minutes
   // plus tard, ce qui est pire que de ne rien montrer.
   document.addEventListener('visibilitychange', () => { if (!document.hidden) planifier(0); });
+  /* **Un duel qui s'ouvre ou se vide, sans recharger** (28 octobre 2026).
+     Le tour de veille ne passe que toutes les trois minutes hors match, et
+     une file de duel n'en vit que deux : « Quelqu'un t'attend » ne se
+     voyait qu'en rechargeant. Le rappel du duel lit les files toutes les dix
+     secondes et prévient quand elles changent (`duel-rappel.js`) : on refait
+     un tour tout de suite. Pas pendant un match du joueur — le Virage passe
+     avant, et le tour de vingt-cinq secondes continue. */
+  window.addEventListener('tbf:attentes', () => {
+    if (!document.hidden && !H.live) planifier(0);
+  });
 
   /**
    * La poignée de l'écran, comme `window.FX` pour les effets.
