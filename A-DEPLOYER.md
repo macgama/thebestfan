@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Les couleurs des clubs dont le blason n'est pas un PNG** (branche
+`claude/project-thread-k7c32b`, 28 octobre 2026, demandé par Gaël : le
+serveur écrivait « [couleurs] club 3728 : blason : ce fichier n’est pas un
+PNG »). Construction seule, **sans schéma**.
+
+- Un blason en SVG se lit maintenant ; un JPEG, un GIF ou une page d'erreur
+  laisse le club à la couleur par défaut, avec un seul avertissement par
+  format (« blason au format JPEG… »), plus un par club.
+- Les couleurs peuvent se poser à la main (`COULEURS_A_LA_MAIN` dans
+  `src/server/football/couleurs.js`), elles passent avant le blason.
+
+---
+
 **Les équipes nationales en français aussi sur la page CLUBS** (branche
 `claude/project-thread-ycfmy5`, 28 octobre 2026, demandé par Gaël : dans
 « Ajouter un club », la Suisse restait « Switzerland »). Construction seule,
