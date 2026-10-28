@@ -1,6 +1,6 @@
 {
   "id": "RP27",
-  "rev": 7,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7c48407e2a57"
+          "sha": "7c48407e2a57",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -66,7 +67,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8102ac98bd81"
+          "sha": "8102ac98bd81",
+          "cligne": true
         },
         "base": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "AN60",
-  "rev": 5,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1f1654b04fef"
+          "sha": "1f1654b04fef",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "70d348e3258b"
+          "sha": "70d348e3258b",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5089fd715a98"
+          "sha": "5089fd715a98",
+          "cligne": true
         }
       }
     },
@@ -78,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "3ecfa3b554a9"
+          "sha": "3ecfa3b554a9",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -90,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b930622b6dd9"
+          "sha": "b930622b6dd9",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -102,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "38b3033fcc57"
+          "sha": "38b3033fcc57",
+          "cligne": true
         }
       }
     },
@@ -130,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1c1d618a9abd"
+          "sha": "1c1d618a9abd",
+          "cligne": true
         },
         "halloween": {
           "etats": [
