@@ -18,6 +18,7 @@ import { apres as coteApres, moyenne as coteMoyenne, COTE_DEPART }
 // La même règle qu'au Virage : le club qu'on soutient dans cette
 // rencontre, ou rien du tout si on n'en suit aucun des deux.
 import { clubSoutenu, clubParmi, campDe } from '../football/suivis.js';
+import { principauxDe } from '../football/principal.js';
 import { lierLeDeck, tauxDuLien } from '../../shared/fanzzy/clubs.js';
 import { assurerBourse } from '../bourse.js';
 
@@ -439,11 +440,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        fort, chez soi seulement : un neutre n'a pas de club dans ce match. Le
        deck est lié ici, une fois, pour ce match-là — le moteur n'a rien à en
        savoir, il lit des totaux. */
-    /* Son club principal : celui du PLEIN CLUB, où ses pièces de club
+    /* Son club principal et sa sélection principale : ceux du PLEIN CLUB, où ses pièces de club
        rapportent en plus (`lierLeDeck`). */
     const principal = club.neutre ? null
-      : (await q(`SELECT team_id FROM user_follows WHERE user_id = ? AND is_main = 1 LIMIT 1`,
-        [u.userId]).catch(() => []))[0]?.team_id ?? null;
+      : Object.values(await principauxDe(q, u.userId));
     const deck = lierLeDeck(loadout, club.neutre ? null : club.teamId, tauxDuLien(), {
       leagueId: support.fixture.leagueId,
       nomDuClub: club.teamId === exterieur ? support.fixture.away.name : support.fixture.home.name,
