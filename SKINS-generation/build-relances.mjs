@@ -18,7 +18,7 @@ for (const l of fs.readFileSync(DIR + 'relances.txt', 'utf8').trim().split('\n')
   if (/\bShe never\b/.test(p) && skin === 'prehistorique')
     p = p.replace('rough brown leather and fur, bare arms,', 'rough brown leather and fur, a long-sleeved fur tunic that covers the body,')
       .replace(/(Her own costume: [^\n]*)/, '$1 Fully clothed, modest, family-friendly.');
-  p = p.replace(SIX, TROIS).replace(/all six figures/g, 'all three figures').replace('Wide 3:2 image.', 'Wide 16:9 image, one single row.');
+  p = p.replace(SIX, TROIS).replace(/(all|ALL) six figures/g, '$1 three figures').replace('Wide 3:2 image.', 'Wide 16:9 image, one single row.');
   const m = p.match(POSES); if (!m) throw new Error(id + ' poses');
   const poseB = m[2].replace(/^4\. /, '1. ').replace(' 5. ', ' 2. ').replace(/ 6\. rest with eyes closed: exactly the same as figure 1, eyes closed\./, ' 3. rest with eyes closed: standing calm, arms by the sides, eyes closed, mouth closed, the signature item carried on the body.');
   for (const [L, poses] of [['A', m[1]], ['B', poseB]]) {
