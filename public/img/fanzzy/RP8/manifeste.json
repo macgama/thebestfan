@@ -1,6 +1,6 @@
 {
   "id": "RP8",
-  "rev": 10,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "00d660644d35"
+          "sha": "00d660644d35",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "067ce785e91e"
+          "sha": "067ce785e91e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "aa03a1b6ab1c"
+          "sha": "aa03a1b6ab1c",
+          "cligne": true
         }
       }
     },
