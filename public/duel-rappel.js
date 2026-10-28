@@ -15,6 +15,12 @@
  * base), toutes les `CADENCE_MS`, onglet visible seulement ; plus vite quand
  * un adversaire attend. Rien sans compte : la première réponse 401 arrête
  * tout. Monté par `nav.js`.
+ *
+ * **Et les duels des autres** (28 octobre 2026) : la même réponse porte les
+ * files où quelqu'un attend. Quand elles changent, la page en est prévenue
+ * par l'événement `tbf:attentes` (`detail.attentes`, la liste de
+ * `/api/nvn/attentes`) : l'accueil rallume son « Quelqu'un t'attend », le
+ * tiroir son sticker, sans qu'on recharge.
  */
 (() => {
   const chemin = location.pathname.replace(/\/$/, '') || '/';
@@ -22,7 +28,9 @@
   if (window.TBF_RAPPEL_DUEL) return;
   window.TBF_RAPPEL_DUEL = true;
 
-  const CADENCE_MS = 20_000;
+  /* Dix secondes et non plus vingt : une file de duel ne vit que deux
+     minutes avant les bots, et c'est cette lecture qui l'annonce aux autres. */
+  const CADENCE_MS = 10_000;
   const PRESSE_MS = 5_000;
   /** Les invitations écartées d'un « PLUS TARD », pour cet onglet. */
   const ecartees = new Set();
@@ -109,6 +117,19 @@
     return false;
   }
 
+  /** Ce qui distingue deux états des files : le match, le format, les camps. */
+  let filesVues = null;
+  function annoncerFiles(attentes) {
+    if (!Array.isArray(attentes)) return;
+    const sig = JSON.stringify(attentes.map((a) => [a.fixtureId, a.format, a.camps]));
+    /* La première lecture ne fait que retenir : la page vient de lire les
+       files elle-même en s'ouvrant. */
+    if (filesVues !== null && sig !== filesVues) {
+      window.dispatchEvent(new CustomEvent('tbf:attentes', { detail: { attentes } }));
+    }
+    filesVues = sig;
+  }
+
   async function lire() {
     clearTimeout(minuterie);
     if (arret) return;
@@ -118,7 +139,11 @@
       const r = await fetch('/api/nvn/moi', { credentials: 'same-origin', cache: 'no-store' });
       // Sans compte, ou sans duel sur ce serveur : rien à rappeler, jamais.
       if (r.status === 401 || r.status === 404) { arret = true; retirer(); return; }
-      if (r.ok) presse = rendre(await r.json());
+      if (r.ok) {
+        const d = await r.json();
+        presse = rendre(d);
+        annoncerFiles(d?.attentes);
+      }
     } catch { /* hors ligne : on réessaie au tour suivant */ }
     minuterie = setTimeout(lire, presse ? PRESSE_MS : CADENCE_MS);
   }
