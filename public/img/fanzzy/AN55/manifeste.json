@@ -1,6 +1,6 @@
 {
   "id": "AN55",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8287253edc23"
+          "sha": "8287253edc23",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

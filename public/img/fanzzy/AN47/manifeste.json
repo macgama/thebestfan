@@ -1,6 +1,6 @@
 {
   "id": "AN47",
-  "rev": 6,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "90c81a3ea3a3"
+          "sha": "90c81a3ea3a3",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -141,7 +142,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a2c608df4db4"
+          "sha": "a2c608df4db4",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

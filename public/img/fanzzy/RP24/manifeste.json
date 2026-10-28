@@ -1,6 +1,6 @@
 {
   "id": "RP24",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -116,7 +116,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "16d5ce20e6d1"
+          "sha": "16d5ce20e6d1",
+          "cligne": true
         },
         "base": {
           "etats": [

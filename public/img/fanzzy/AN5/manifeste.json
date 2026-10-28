@@ -1,6 +1,6 @@
 {
   "id": "AN5",
-  "rev": 7,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "46032cac92ec"
+          "sha": "46032cac92ec",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -90,7 +91,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5e1ee47b39d0"
+          "sha": "5e1ee47b39d0",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -142,7 +144,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2f2f4e194d54"
+          "sha": "2f2f4e194d54",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

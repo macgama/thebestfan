@@ -1,6 +1,6 @@
 {
   "id": "RP26",
-  "rev": 9,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "709445667947"
+          "sha": "709445667947",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -118,7 +119,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6604df483bdc"
+          "sha": "6604df483bdc",
+          "cligne": true
         },
         "base": {
           "etats": [

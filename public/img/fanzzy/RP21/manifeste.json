@@ -1,6 +1,6 @@
 {
   "id": "RP21",
-  "rev": 12,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -14,7 +14,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cace1c0ae7ef"
+          "sha": "cace1c0ae7ef",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -118,7 +119,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d3d489df979d"
+          "sha": "d3d489df979d",
+          "cligne": true
         },
         "base": {
           "etats": [

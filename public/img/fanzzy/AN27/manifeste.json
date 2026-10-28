@@ -1,6 +1,6 @@
 {
   "id": "AN27",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -102,7 +102,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8bef1f26cf32"
+          "sha": "8bef1f26cf32",
+          "cligne": true
         }
       }
     },

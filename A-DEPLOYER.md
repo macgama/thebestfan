@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Les Fanzzy en skin Halloween clignent** (branche
+`claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- 159 âges Halloween RP et AN sur 258 clignent (aucun avant) ; paupières
+  tirées de la figure « yeux fermés » des planches, sans crédits.
+
+---
+
 **17 Fanzzy de plus clignent en tenue de base** (branche
 `claude/project-thread-j17xyz`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** : des images et des réglages.

@@ -1,6 +1,6 @@
 {
   "id": "RP12",
-  "rev": 7,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "43d5c7132e97"
+          "sha": "43d5c7132e97",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -66,7 +67,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b9d087d4e838"
+          "sha": "b9d087d4e838",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -118,7 +120,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "85b42008361e"
+          "sha": "85b42008361e",
+          "cligne": true
         },
         "base": {
           "etats": [

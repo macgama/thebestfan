@@ -1,6 +1,6 @@
 {
   "id": "RP20",
-  "rev": 6,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2cff06d8660d"
+          "sha": "2cff06d8660d",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -66,7 +67,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8b3813c3ebab"
+          "sha": "8b3813c3ebab",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -118,7 +120,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9de83048511d"
+          "sha": "9de83048511d",
+          "cligne": true
         },
         "base": {
           "etats": [

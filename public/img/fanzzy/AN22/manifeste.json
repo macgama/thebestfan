@@ -1,6 +1,6 @@
 {
   "id": "AN22",
-  "rev": 10,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "22e7e451d238"
+          "sha": "22e7e451d238",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -78,7 +79,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "88d6578b2773"
+          "sha": "88d6578b2773",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -142,7 +144,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7c1609cafc56"
+          "sha": "7c1609cafc56",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

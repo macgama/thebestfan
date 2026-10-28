@@ -1,6 +1,6 @@
 {
   "id": "AN30",
-  "rev": 6,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "231e803c0fcc"
+          "sha": "231e803c0fcc",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -141,7 +142,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "224f201c1acb"
+          "sha": "224f201c1acb",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "AN19",
-  "rev": 5,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4ea22d95904f"
+          "sha": "4ea22d95904f",
+          "cligne": true
         }
       }
     },
@@ -129,7 +130,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "42854f22f42f"
+          "sha": "42854f22f42f",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
