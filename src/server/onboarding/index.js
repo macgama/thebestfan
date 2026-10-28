@@ -145,8 +145,13 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     if (main && actuel != null && Number(actuel) !== Number(teamId)) {
       await q(`INSERT IGNORE INTO user_follows (user_id, team_id, is_main) VALUES (?, ?, 0)`,
         [userId, teamId]);
-      await devenirPrincipal(q, userId, teamId);
-      return;
+      /* Sans sql/principal.sql, le changement libre d'avant. */
+      try {
+        await devenirPrincipal(q, userId, teamId);
+        return;
+      } catch (e) {
+        if (e?.code !== 'onboarding.error.principal_absent') throw e;
+      }
     }
     if (main) await q(`UPDATE user_follows SET is_main = 0 WHERE user_id = ?`, [userId]);
     await q(
@@ -620,6 +625,10 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
 
   router.post('/welcome', requireAuth, safe(async (req, res) => {
     const teamId = Number(req.body?.teamId);
+    /* Un paquet déjà ouvert ne repose pas le club principal : sans ce garde,
+       rejouer l'appel avec un autre club userait le changement de la saison. */
+    const [w] = await q(`SELECT onboarded_at FROM user_wallet WHERE user_id = ?`, [req.user.id]);
+    if (w?.onboarded_at) throw fail('onboarding.error.already_done');
     if (Number.isInteger(teamId)) await follow(req.user.id, teamId, { main: true });
     res.json(await openWelcome(req.user.id, teamId));
   }));
