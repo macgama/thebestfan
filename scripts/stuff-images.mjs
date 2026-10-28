@@ -40,6 +40,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 import { enIcone, partSuspecte, ecrireLesTrois } from './detourage.mjs';
+import { INVITES_CLUBS } from './stuff-clubs-invites.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
@@ -443,6 +444,9 @@ export const INVITES = {
     + 'pennant, a whistle and a badge, everything plain with no text, no crest and no '
     + 'numbers, a warm glow rising from inside',
 };
+
+/* Les pièces de club ont leurs sujets à part (`stuff-clubs-invites.mjs`). */
+Object.assign(INVITES, INVITES_CLUBS);
 
 export const inviteDe = (id) => (INVITES[id]
   ? `Subject: ${INVITES[id]}.\n\n${STYLE}` : null);

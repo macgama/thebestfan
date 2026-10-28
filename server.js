@@ -668,6 +668,9 @@ if (process.env.DATABASE_URL) {
        monde y entre avec sa voix pour seule arme. */
     virage = createVirage({ pool, io, requireAuth: auth.requireAuth,
       souvenirs, fanzzy, kop, couleurs, decks,
+      /* Les duels qui attendent, pour les pastilles des pages des matchs
+         (`/api/virage/a-jouer`). Le duel est monté plus haut. */
+      filesDuel: () => nvn?.filesParMatch?.() ?? [],
       /* Pour savoir si ce Virage-ci compte au classement. Absent, tout
          compte : voir le branchement du duel juste au-dessus. */
       abonnement,
