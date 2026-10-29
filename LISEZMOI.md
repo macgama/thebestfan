@@ -1,0 +1,1 @@
+Prompts des Ultimate en skin (jamais à fusionner). skins/<skin>/liste.tsv : clé, prompt, référence (chemin dans le dépôt). Nano Banana 2, 9:16, 2K, mode rapide Unlimited, 1 variante. Source téléchargée -> art/ultime/_src/<clé>.png puis npm run ultime:images.
