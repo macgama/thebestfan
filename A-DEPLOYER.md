@@ -243,8 +243,8 @@ appui). Construction seule, **sans schéma**.
 Construction seule, **sans schéma**.
 
 - 36 Fanzzy (trois par club), trois âges, qui clignent ; dos de carte SU.
-- 323 skins sur 324 (Halloween, Préhistorique, Apocalyptique) ; un skin
-  manquant montre la tenue de base. Seul SU14 âge 3 Préhistorique manque. Liste :
+- Les 324 skins (Halloween, Préhistorique, Apocalyptique) ; un skin
+  manquant montre la tenue de base. Points à regarder :
   fanzzy-prompts/SU-generation/skins-manquants.md.
 - Pour l'ouvrir aux joueurs : /admin, onglet des Fanzzy, cocher la série SU.
 - Ultimate SU : pas encore (après le 2 novembre).
