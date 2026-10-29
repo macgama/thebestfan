@@ -16,8 +16,8 @@ const AMBIANCE = {
     decor: 'in the stone age: the stand carved into a rocky cliff, wooden poles and stretched hides as banners, torches and bonfires burning on the steps, a volcano smoking in the distance, mammoths silhouetted on the horizon, the supporters behind dressed in furs and hides',
   },
   apocalyptique: {
-    nom: 'desert wasteland',
-    decor: 'after the end of the world, in a desert wasteland: the stand rebuilt from scrap metal, wrecked cars and tyres, rusty floodlight towers, dust and sand blowing, an orange sun haze, burning oil drums on the steps, the supporters behind in dusty road-warrior gear',
+    nom: 'post-apocalyptic',
+    decor: 'into a Mad Max style desert wasteland after the end of the world: the stand rebuilt from scrap metal, wrecked cars and stacked tyres, rusty floodlight towers, dust and sand blowing, an orange sun haze, flaming oil drums on the steps, spiked rusty war-rig trucks parked behind the stand, the supporters behind in dusty road-warrior gear with goggles and scarves. Wild and fun, never grim: no weapons, no skulls, no blood anywhere',
   },
 };
 const args = process.argv.slice(2);
