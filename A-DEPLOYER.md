@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Les Fanzzy AN de base clignent presque tous** (branche
+`claude/project-thread-j17xyz`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- 37 âges AN de base de plus clignent, et la légendaire AN66 : AN de base
+  185 sur 186. Retouches en mode rapide Artlist, sans crédits.
+- AN64 (la Tisseuse) ne cligne pas : son repos a les yeux fermés par dessin.
+
+---
+
 **La taille des Fanzzy par âge, skin et état** (branche
 `claude/project-thread-gtu1ix`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** (images et index.json).

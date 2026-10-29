@@ -1,6 +1,6 @@
 {
   "id": "AN19",
-  "rev": 12,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -68,7 +68,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b585cc768cea"
+          "sha": "b585cc768cea",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
