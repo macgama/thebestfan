@@ -245,6 +245,8 @@
         && (voulu?.etat ?? 'neutre') === (a.etat ?? 'neutre');
     };
     const tenuesA = (n) => d.parAge?.[n]?.skins ?? d.skins ?? [];
+    /** La tenue choisie à l'âge `n`, pour l'image Ultimate de cette tenue. */
+    const tenueVue = (n) => (Number(voulu?.stade) === Number(n) && voulu?.skin) || 'base';
     const etatsA = (n) => d.parAge?.[n]?.etats ?? d.etats ?? [];
 
     /* **Un choix qui n'existe pas à l'âge regardé se défait.** Une tenue
@@ -333,7 +335,7 @@
         /* La carte gagnée montre son image Ultimate (`/ultime.js`), quand le
            Fanzzy en a une : c'est le visuel qu'on collectionne. Sinon, et
            tant qu'elle est à gagner, la pose qui pousse. */
-        const art = grande && aMoi() ? window.TBF_ULTIME?.image?.(d.fanzzy.racine ?? d.fanzzy.id, n) : null;
+        const art = grande && aMoi() ? window.TBF_ULTIME?.image?.(d.fanzzy.racine ?? d.fanzzy.id, n, tenueVue(n)) : null;
         liste.push({ cle: 'ultime', rang: 'ULTIMATE', titre: a?.cri?.label || 'Ultimate', id: 'ultime',
           ok: true, grande, atteint: Boolean(a?.possede ?? n <= d.stade), art: art ?? null,
           image: dessinExact(n, { etat: 'pousse' })
@@ -1197,7 +1199,7 @@
     function voirUltime(x) {
       window.TBF_ULTIME?.scene?.({ src: x.image ?? null, cri: x.titre, nom: ageDe(vu())?.nom ?? d.fanzzy.nom,
         couleur: famille(d.fanzzy.type).c, grande: Boolean(x.grande),
-        racine: d.fanzzy.racine ?? d.fanzzy.id, age: vu() });
+        racine: d.fanzzy.racine ?? d.fanzzy.id, age: vu(), skin: tenueVue(vu()) });
     }
 
     /* **Le cri d'un Fanzzy lié est celui de son club** (choix de Gaël du
