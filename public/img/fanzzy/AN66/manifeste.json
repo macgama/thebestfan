@@ -1,6 +1,6 @@
 {
   "id": "AN66",
-  "rev": 8,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b13075c2b4c5"
+          "sha": "b13075c2b4c5",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
