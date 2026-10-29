@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { SAISONS_PREVUES, CARNET_TRIMESTRE } from '../../shared/saisons-prevues.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STADES } from '../../shared/stades.js';
+import { ouverts } from '../contenus/index.js';
 import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
 // Les gestes du jeu viennent de leur source unique : voir plus bas.
 import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
@@ -747,6 +748,21 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
            champ réglable qui n'apparaît nulle part est un champ qui n'existe
            pas, quoi qu'en dise le serveur. */
         stades: STADES.map((x) => ({ id: x.id, nom: x.nom })),
+      },
+      /* **Ce qui est déjà en jeu**, famille par famille : ce que le jeu ouvre
+         ou distribue en ce moment. Une saison ajoute et ne retire rien — les
+         séries sont l'union des saisons lancées, et ce qu'un lancement a
+         publié le reste. Le formulaire ne propose donc en cases que le
+         reste : les nouveautés possibles. Cocher de nouveau ce qui est déjà
+         ouvert ne changeait rien, et quatre-vingts cases déjà cochées
+         faisaient croire qu'une case oubliée refermerait quelque chose
+         (Gaël, 29 octobre 2026). */
+      enJeu: {
+        series: seriesOuvertes() ?? SETS.map((s) => s.id),
+        tenues: toutesTenues().filter((t) => t.publie).map((t) => t.id),
+        stuff: [...ouverts('stuff')],
+        actions: [...ouverts('action')],
+        stades: [...ouverts('stade')],
       },
     };
   }
