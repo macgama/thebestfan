@@ -263,9 +263,13 @@ self.addEventListener('push', (e) => {
     await self.registration.showNotification(m.titre || 'thebestfan', {
       body: m.corps || '',
       tag: m.tag || undefined,
-      renotify: Boolean(m.tag),
+      /* Le score en direct change la même notification : un but fait
+         vibrer, la mi-temps non. */
+      renotify: Boolean(m.tag) && !m.silencieux,
+      silent: Boolean(m.silencieux),
       icon: '/img/icone-192.png',
       lang: 'fr',
+      actions: m.bouton ? [{ action: 'voir', title: m.bouton }] : undefined,
       data: { url: m.url || '/' },
     });
   })());

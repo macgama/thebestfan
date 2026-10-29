@@ -356,6 +356,62 @@ console.log('\n— le club qui joue, et son Virage');
   await N.coupDEnvoi(901, { status: '1H', elapsed: 35 });
   check('le tour suivant ne le redit pas, et un match déjà bien entamé non plus',
     envois.length === 0);
+
+  /* Le score en direct : la même notification, qui change. */
+  const coup = '2026-10-06T10:30:00+00:00';
+  const etat = (status, homeGoals, awayGoals, elapsed) =>
+    ({ status, homeGoals, awayGoals, elapsed, kickoffAt: coup });
+  envois.length = 0;
+  await N.scoreEnDirect(900, etat('1H', 0, 0, 3));
+  await N.scoreEnDirect(900, etat('1H', 0, 0, 4));
+  check('le premier tour vu et un score qui ne bouge pas ne disent rien', envois.length === 0);
+  await N.scoreEnDirect(900, etat('1H', 1, 0, 34));
+  check('un but : ceux qui ont coché « Mon club joue », et eux seuls',
+    vers() === 'cla,eve' || (console.log('        partis vers :', vers()), false));
+  m = envois[0]?.message ?? {};
+  check('le score en titre, le club qui marque et la minute, la même étiquette',
+    m.titre === 'FC Sion 1 – 0 Servette FC' && m.corps.startsWith('But pour FC Sion (34e)')
+    && m.tag === 'match-900' && m.url === '/virage?match=900' && m.bouton === 'Voir le match'
+    && !m.silencieux && !('memeLaNuit' in m));
+  envois.length = 0;
+  await N.scoreEnDirect(900, etat('HT', 1, 0, 45));
+  m = envois[0]?.message ?? {};
+  check('la mi-temps change la notification sans vibrer',
+    envois.length === 2 && m.corps.startsWith('Mi-temps') && m.silencieux === true);
+  envois.length = 0;
+  await N.scoreEnDirect(900, etat('2H', 1, 0, 46));
+  check('la reprise ne dit rien', envois.length === 0);
+
+  await N.scoreEnDirect(900, etat('2H', 1, 1, 80));
+  m = envois[0]?.message ?? {};
+  check('l’égalisation dit le club qui marque',
+    envois.length === 2 && m.corps.startsWith('But pour Servette FC (80e)'));
+  envois.length = 0;
+  await N.scoreEnDirect(900, etat('FT', 1, 1, 90));
+  m = envois[0]?.message ?? {};
+  check('le coup de sifflet final, et il mène aux matchs du jour',
+    envois.length === 2 && m.corps.startsWith('Score final') && m.url === '/aujourdhui');
+  envois.length = 0;
+  await N.scoreEnDirect(900, etat('FT', 1, 1, 90));
+  check('le tour d’après ne le redit pas', envois.length === 0);
+
+  /* Le soir : 21 h 45 à Zurich (19 h 45 UTC), et il est 23 h 30. */
+  await ligne(`INSERT INTO fixtures (id, league_id, season, home_id, away_id, status_short, kickoff_at)
+    VALUES (902, 207, 2026, 85, 91, '2H', '2026-10-06 19:45:00')`);
+  maintenant = SOIR;
+  const soir = (h, a) => ({ status: '2H', homeGoals: h, awayGoals: a, elapsed: 88,
+    kickoffAt: '2026-10-06T19:45:00+00:00' });
+  await N.scoreEnDirect(902, soir(0, 0));
+  await N.scoreEnDirect(902, soir(0, 1));
+  check('un match commencé avant 22 h garde son score après 22 h',
+    envois.length === 2 || (console.log('        partis :', envois.length), false));
+  envois.length = 0;
+  await N.coupDEnvoi(902, { status: '1H', elapsed: 1 });
+  check('mais le reste se tait toujours la nuit', envois.length === 0);
+  const nuit = { kickoffAt: '2026-10-06T21:00:00+00:00' };
+  await N.scoreEnDirect(901, { ...soir(0, 0), ...nuit });
+  await N.scoreEnDirect(901, { ...soir(1, 0), ...nuit });
+  check('mais un match commencé la nuit se tait', envois.length === 0);
   maintenant = MIDI;
 }
 
