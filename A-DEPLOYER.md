@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**AN6 redessinée à l'âge 1 en Halloween** (branche
+`claude/project-thread-gtu1ix`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** (images et index.json).
+
+- AN6 âge 1 Halloween : nouvelle planche (mode rapide, sans crédits), les
+  jambes ne sont plus coupées. AN6 âge 1 Apocalyptique : planche redécoupée,
+  le dépit n'a plus deux figures, et ses expressions ont la taille du repos.
+- Après la mise en ligne : la fiche d'AN6 à l'âge 1, en Halloween et en
+  Apocalyptique.
+
+---
+
 **/admin SAISONS : le formulaire ne propose que les nouveautés** (branche
 `claude/project-thread-9kuov4`, 29 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma**.
