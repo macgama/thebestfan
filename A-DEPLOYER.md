@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Un test du son sur /diagnostic** (branche `claude/project-thread-m3tqk9`,
+29 octobre 2026, demandé par Gaël : pas de son sur le mobile). Construction
+seule, **sans schéma**.
+
+- Bouton « Tester le son » sur /diagnostic : joue un carillon par le moteur
+  du jeu et deux secondes de musique par un simple lecteur, et dit ce qui
+  bloque (sons coupés dans le tiroir, volume du jeu, économie de données,
+  moteur bloqué par le navigateur, ou le téléphone lui-même).
+- Après la mise en ligne : ouvrir thebestfan.online/diagnostic sur le S24+
+  depuis l'icône, toucher le bouton, envoyer une capture.
+
+---
+
 **Les Fanzzy AN de base clignent presque tous** (branche
 `claude/project-thread-j17xyz`, 29 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** : des images et des réglages.
