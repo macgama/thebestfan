@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**/admin SAISONS : le formulaire ne propose que les nouveautés** (branche
+`claude/project-thread-9kuov4`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Nouvelle saison ou saison modifiée : seules les séries, tenues, pièces,
+  cartes et stades **pas encore en jeu** ont une case. Le déjà en jeu se lit
+  replié (« Déjà en jeu : N »), sans case, et reste ouvert ; ce qu'une saison
+  nommait déjà repart tel quel à l'enregistrement.
+- La confirmation « Lancer la saison » ne liste que ce qui est neuf pour les
+  joueurs, toutes familles comprises.
+- Après la mise en ligne : /admin, SAISONS, Modifier la saison 2.
+
+---
+
 **Un test du son sur /diagnostic** (branche `claude/project-thread-m3tqk9`,
 29 octobre 2026, demandé par Gaël : pas de son sur le mobile). Construction
 seule, **sans schéma**.
