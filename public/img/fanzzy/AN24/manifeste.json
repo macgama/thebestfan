@@ -1,6 +1,6 @@
 {
   "id": "AN24",
-  "rev": 12,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -123,7 +123,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "8bea32716f8c"
+          "sha": "8bea32716f8c",
+          "cligne": true
         },
         "halloween": {
           "etats": [

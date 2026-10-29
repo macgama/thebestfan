@@ -1,6 +1,6 @@
 {
   "id": "SU19",
-  "rev": 13,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "475019bffab2"
+          "sha": "fafc6763d6ec"
         },
         "apocalyptique": {
           "etats": [
@@ -51,7 +51,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2ea096e752e2"
+          "sha": "043c0da980b6"
         }
       }
     },
