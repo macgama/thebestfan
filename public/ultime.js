@@ -576,19 +576,25 @@
 
   /* Le fichier d'une lignée à un âge dans une table, ou null. Une légendaire
      n'a qu'un âge, donc qu'un fichier : on le prend à tout âge. Une lignée à
-     trois âges ne prête jamais le fichier d'un autre âge. */
-  function chercher(table, id, age) {
+     trois âges ne prête jamais le fichier d'un autre âge. Une tenue (`skin`)
+     a sa propre clé, `<racine>-e<âge>-<tenue>` (« RP4-e2-halloween ») ; sans
+     elle, c'est la tenue de base. */
+  function chercher(table, id, age, skin) {
     // Un âge passé en identifiant (« RP4B ») revient à sa lignée (« RP4 »).
     const racine = String(id ?? '').replace(/^([A-Z]{2}\d+)[B-Z]$/, '$1');
     const seule = !IMAGES[`${racine}-e2`] && !IMAGES[`${racine}-e3`];
-    const f = table[`${racine}-e${Math.max(1, Number(age) || 1)}`] ?? (seule ? table[`${racine}-e1`] : null);
+    const fin = skin && skin !== 'base' ? `-${skin}` : '';
+    const f = table[`${racine}-e${Math.max(1, Number(age) || 1)}${fin}`] ?? (seule ? table[`${racine}-e1${fin}`] : null);
     return f && racine ? `/img/ultime/${f}` : null;
   }
 
-  /** L'image Ultimate d'une lignée à un âge, ou null. */
-  const image = (id, age = 1) => chercher(IMAGES, id, age);
-  /** Le clip Ultimate d'une lignée à un âge, ou null. */
-  const clip = (id, age = 1) => chercher(CLIPS, id, age);
+  /** L'image Ultimate d'une lignée à un âge, dans sa tenue s'il y en a une
+      dessinée, sinon dans sa tenue de base ; ou null. */
+  const image = (id, age = 1, skin = 'base') => chercher(IMAGES, id, age, skin) ?? chercher(IMAGES, id, age);
+  /** Le clip Ultimate d'une lignée à un âge, ou null. Une tenue dessinée sans
+      clip n'en prend pas : celui de la base la montrerait en tenue de base. */
+  const clip = (id, age = 1, skin = 'base') => chercher(CLIPS, id, age, skin)
+    ?? (chercher(IMAGES, id, age, skin) ? null : chercher(CLIPS, id, age));
 
   /* Charge l'image avant la scène : une scène qui s'ouvre sur du noir puis
      saute à l'image perdrait sa révélation. Trop lente, la scène dessinée la
@@ -662,12 +668,14 @@
    * @param {string} [o.racine]  sa lignée, et
    * @param {number} [o.age]     son âge : la grande scène prend alors son image
    *                             Ultimate plein cadre, s'il en a une
+   * @param {string} [o.skin]    sa tenue (« halloween ») : son image à elle,
+   *                             si elle est dessinée ; la base sinon
    */
   function scene(o = {}) {
-    const fond = o.grande && o.racine ? image(o.racine, o.age) : null;
+    const fond = o.grande && o.racine ? image(o.racine, o.age, o.skin) : null;
     if (!fond) return jouer(o, null);
     // Le clip ne joue pas sous le calme : l'image fixe suffit.
-    const film = doux() ? null : clip(o.racine, o.age);
+    const film = doux() ? null : clip(o.racine, o.age, o.skin);
     return Promise.all([precharger(fond), film ? prechargerClip(film) : null])
       .then(([pret, video]) => jouer(o, pret ? fond : null, pret ? video : null));
   }
