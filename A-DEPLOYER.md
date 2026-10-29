@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Le tifo des mini-jeux dit ses peintres sans recharger** (branche
+`claude/project-thread-uo93xw`, 29 octobre 2026, tour de test demandé par
+Gaël). Construction seule, **sans schéma** (public/jeux-club.js).
+
+- Après avoir peint des cases, « Fidèle à … % · Peintres : … » se met à jour
+  tout seul (il restait à 0 jusqu'au prochain rechargement).
+- Après la mise en ligne : /jeux, onglet TIFO, peindre une case.
+
+---
+
 **Les sept boosters manquants et les pin's de série AN et SU** (branche
 `claude/project-thread-53a9gs`, 29 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** (images et public/cartes.js).

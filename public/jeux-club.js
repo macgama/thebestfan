@@ -95,6 +95,11 @@ $('tf-corps').addEventListener('click', async (e) => {
   caseEl.style.background = t.club.couleurs[TF.couleur];
   const reste = Math.max(0, t.casesJour - t.mesCasesAujourdhui);
   if ($('tf-reste')) $('tf-reste').textContent = reste;
+  /* La fidélité et les peintres restaient ceux de l'ouverture de l'onglet :
+     on peignait ses quinze cases sous « Fidèle à 0 % · Peintres : 0 ». Le
+     serveur les recompte, une fois que le pinceau s'est posé. */
+  clearTimeout(TF.relire);
+  TF.relire = setTimeout(chargerTifo, 1200);
 });
 
 /* ================================================================ le boss */
