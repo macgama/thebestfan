@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**Le classement des clubs devient un championnat de points** (branche
+`claude/project-thread-orvzgu`, 29 octobre 2026, choix de Gaël). Construction
+seule, **sans schéma** (classements, duel, pages TRIBUNES et compétition).
+
+- Chaque duel classé est un match pour le club du joueur : 3 points la
+  victoire, 1 le nul, 0 la défaite (le club du match s'il le suit, sinon son
+  club principal). Les clubs sont rangés sur les points par joueur qui a
+  joué (au moins 5, réglage /admin `tribune.plancher`), avec J, G, N, P.
+- Le bilan d'un duel classé dit la ferveur vraiment comptée (renfort, neutre)
+  et les points rapportés au club.
+- Le réglage /admin « Un neutre apporte au club qu'il pousse » disparaît.
+- Après la mise en ligne : /classement onglet TRIBUNES, une compétition onglet
+  TRIBUNES, et le bilan d'un duel classé.
+
+---
+
 **Le tifo des mini-jeux dit ses peintres sans recharger** (branche
 `claude/project-thread-uo93xw`, 29 octobre 2026, tour de test demandé par
 Gaël). Construction seule, **sans schéma** (public/jeux-club.js).

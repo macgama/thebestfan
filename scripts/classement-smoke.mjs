@@ -160,8 +160,8 @@ const post = async (p, corps) => {
 };
 
 /* Les moyennes de tribune éprouvées plus bas sont celles d'avant le plancher
-   de supporters (`tribune.plancher`, 5 par défaut) : on le met à 1 pour
-   elles. Le plancher a son propre bloc, avec les neutres. */
+   de joueurs (`tribune.plancher`, 5 par défaut) : on le met à 1 pour elles.
+   Le plancher a son propre bloc, avec les neutres. */
 poserReglages({ 'tribune.plancher': 1 });
 
 let r = await get('/api/rank/supporters');
@@ -180,12 +180,12 @@ check('le club du joueur est indiqué', r.classement[0].club === 'Petit Club');
 
 r = await get('/api/rank/tribunes');
 check('classement des tribunes', r.classement.length === 2);
-check('le petit club passe devant grâce à la moyenne',
+check('le petit club passe devant grâce à la moyenne de points',
   r.classement[0].name === 'Petit Club');
 const petit = r.classement.find((x)=>x.name==='Petit Club');
 const gros = r.classement.find((x)=>x.name==='Gros Club');
 
-/* ------------------------- la ferveur va au club pour lequel on a poussé
+/* --------------------------- les points vont au club pour lequel on a joué
 
    La jointure ne regardait que `user_id` : la ferveur d'un supporter était
    versée à **tous les clubs qu'il suit**. Quelqu'un qui suit les deux et qui
@@ -200,7 +200,7 @@ const gros = r.classement.find((x)=>x.name==='Gros Club');
    On fait donc suivre les deux clubs à quelqu'un, et on regarde si le club où
    il n'a pas mis les pieds encaisse sa ferveur. */
 {
-  const avant = Number(gros.ferveur);
+  const avant = Number(gros.points);
   /* Momo pousse pour le Petit Club (85) ; on lui fait suivre le Gros (91)
      aussi. `moi` **est** son identifiant public — l'écrire 'u1' en dur passait
      par `INSERT IGNORE`, qui avale le refus de clé étrangère : la ligne n'était
@@ -211,9 +211,9 @@ const gros = r.classement.find((x)=>x.name==='Gros Club');
   C.oublier();
   const r2 = await get('/api/rank/tribunes');
   const gros2 = r2.classement.find((x) => x.name === 'Gros Club');
-  check('suivre un club ne lui donne pas la ferveur poussée ailleurs',
-    Number(gros2.ferveur) === avant
-    || (console.log(`        il passe de ${avant} à ${gros2.ferveur}`), false));
+  check('suivre un club ne lui donne pas les points gagnés pour un autre',
+    Number(gros2.points) === avant
+    || (console.log(`        il passe de ${avant} à ${gros2.points}`), false));
   /* Et il compte quand même comme supporter : c'est bien un fidèle de plus,
      simplement un qui n'a encore rien donné là-bas. La moyenne baisse, et
      c'est juste — c'est exactement ce que ce classement mesure. */
@@ -223,13 +223,17 @@ const gros = r.classement.find((x)=>x.name==='Gros Club');
   await pool.query('DELETE FROM user_follows WHERE user_id = ? AND team_id = 91', [moi]);
   C.oublier();
 }
-/* Les deux moyennes montent, et pour la même raison : les duels classés de
-   chaque supporter remontent désormais à la tribune pour laquelle il a joué.
-   Petit Club : 1 600 de virage + 5 200 de duels sur 2 fidèles. Gros Club :
-   500 + 400 sur 4. L'ordre, lui, ne bouge pas — c'est bien la moyenne qui
-   classe, pas le total. */
-check('la moyenne est bien par supporter',
-  Number(petit.moyenne) === 3400 && Number(gros.moyenne) === 225
+/* **Le championnat des clubs** (Gaël, 29 octobre 2026) : chaque duel classé
+   est un match pour le club du joueur, 3 points la victoire, 0 la défaite.
+   Petit Club : 2 joueurs à deux victoires et une défaite, 12 points, 6 par
+   joueur. Gros Club : 4 joueurs, 5 victoires et 7 défaites, 15 points, 3,8
+   par joueur. Le total ne classe pas — c'est la moyenne. */
+check('le club a ses matchs, victoires, nuls et défaites',
+  petit.joues === 6 && petit.gagnes === 4 && petit.nuls === 0 && petit.perdus === 2
+  && gros.joues === 12 && gros.gagnes === 5 && gros.perdus === 7
+  || (console.log('        petit', JSON.stringify(petit), '· gros', JSON.stringify(gros)), false));
+check('3 points la victoire, et la moyenne par joueur qui a joué',
+  petit.points === 12 && petit.moyenne === 6 && gros.points === 15 && gros.moyenne === 3.8
   || (console.log('        petit', petit.moyenne, '· gros', gros.moyenne), false));
 check('le gros club a plus de supporters mais moins de moyenne',
   gros.supporters > petit.supporters && Number(gros.moyenne) < Number(petit.moyenne));
@@ -326,11 +330,13 @@ check('une ferveur gagnée dans une autre compétition ne remonte pas',
   Number(r.joueurs[0].ferveur) < 5000);
 
 check('les tribunes de la compétition sont classées', r.tribunes.length === 2);
-check('le petit club passe devant grâce à la moyenne',
-  r.tribunes[0].name === 'Petit Club');
-check('et sa moyenne est par supporter, pas par joueur présent',
-  Number(r.tribunes[0].moyenne) === 900
-  || (console.log('        elle dit :', r.tribunes[0].moyenne), false));
+/* Sur les matchs de la Ligue 1 seulement : chacun y a gagné son premier duel.
+   Petit Club 6 points pour 2 joueurs, Gros Club 12 pour 4 — 3 par joueur des
+   deux côtés, et à égalité, le plus de points devant. */
+check('la compétition ne compte que ses matchs, à égalité le plus de points devant',
+  r.tribunes[0].name === 'Gros Club' && r.tribunes[0].points === 12 && r.tribunes[0].moyenne === 3
+  && r.tribunes[1].points === 6 && r.tribunes[1].moyenne === 3
+  || (console.log('        elle dit :', JSON.stringify(r.tribunes)), false));
 
 check('les KOP sont classés', r.kops.length === 2);
 check('celui du club le plus fervent devant', r.kops[0].nom === 'Les Fidèles');
@@ -363,10 +369,11 @@ const noms = r.tribunes.map((t) => t.name).sort();
 check('les deux équipes du plateau y figurent, poussées ou non',
   r.tribunes.length === 2
   || (console.log('        la liste :', noms.join(', ')), false));
-check('celle qui a de la ferveur devant', r.tribunes[0].name === 'Petit Club'
-  || (console.log('        en tête :', r.tribunes[0].name), false));
+check('celle qui a des points devant', r.tribunes[0].name === 'Petit Club'
+  && r.tribunes[0].points === 3
+  || (console.log('        en tête :', JSON.stringify(r.tribunes[0])), false));
 check('et l’autre est là, à zéro, plutôt qu’absente',
-  Number(r.tribunes[1].ferveur) === 0 && r.tribunes[1].name === 'Gros Club'
+  r.tribunes[1].joues === 0 && r.tribunes[1].name === 'Gros Club'
   || (console.log('        seconde :', JSON.stringify(r.tribunes[1])), false));
 /* La compétition 61 n'a pas d'autre équipe : aucune ne doit s'y inviter. */
 check('et aucune équipe étrangère à la compétition ne s’y invite',
@@ -374,10 +381,11 @@ check('et aucune équipe étrangère à la compétition ne s’y invite',
 
 /* ---------------------------------------- les neutres, la saison, le plancher
 
-   Gaël, 28 octobre 2026 : un joueur qui pousse un club qu'il ne suit pas lui
-   apporte un dixième de sa ferveur, aux TRIBUNES comme dans la compétition,
-   jamais aux KOP. Il ne compte pas parmi les supporters. La moyenne se divise
-   par les supporters actifs, et au moins par cinq. TRIBUNES suit la saison. */
+   Gaël, 29 octobre 2026 : un duel classé joué sur un match dont on ne suit
+   aucun club compte pour **son club principal**. La moyenne se divise par les
+   joueurs du club qui ont joué, et au moins par cinq. Un compte fermé ne
+   compte plus. TRIBUNES suit la saison. Le KOP, lui, reste sur la ferveur
+   donnée pour son club. */
 {
   C.oublier();
   const kopNord = Number((await get('/api/rank/competition/61?saison=2026')).kops
@@ -385,64 +393,73 @@ check('et aucune équipe étrangère à la compétition ne s’y invite',
   const NEUTRE = 'n10000-0000-0000-0000-000000000099';
   await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
                     VALUES (?,'neutre@ex.fr','Nina','x')`, [NEUTRE]);
-  /* Elle pousse le Gros Club (extérieur, camp 1) sans le suivre : 1 000. */
-  await pool.query(`INSERT INTO virage_presence (user_id,fixture_id,side,team_id,ferveur)
-                    VALUES (?,7001,1,NULL,1000)`, [NEUTRE]);
+  /* Elle gagne un duel en neutre, sur un match sans club à elle. */
+  await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
+                    VALUES ('dn-1',?,'x','win',7001,NULL,1000,'classe',NOW(3))`, [NEUTRE]);
   const lire = async (q = '') => {
     C.oublier();
     const t = (await get(`/api/rank/tribunes${q}`)).classement;
     return { t, gros: t.find((x) => x.name === 'Gros Club'),
       petit: t.find((x) => x.name === 'Petit Club') };
   };
-  const g0 = { ferveur: Number(gros.ferveur), supporters: Number(gros.supporters) };
-  let { gros: g } = await lire();
-  check('un neutre apporte un dixième au club qu’il a poussé',
-    Number(g.ferveur) === g0.ferveur + 100 && Number(g.neutres) === 100
+  const g0 = { points: gros.points, supporters: gros.supporters, joueurs: gros.joueurs };
+  let { gros: g, t } = await lire();
+  check('sans club suivi, un duel ne rapporte à aucun club',
+    g.points === g0.points && t.every((x) => x.points <= 15)
     || (console.log('        gros :', JSON.stringify(g)), false));
-  check('sans compter parmi ses supporters', Number(g.supporters) === g0.supporters);
+  /* Elle se donne le Gros Club pour club principal : sa victoire y va. */
+  await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,1)', [NEUTRE]);
+  ({ gros: g } = await lire());
+  check('en neutre, la victoire va à son club principal',
+    g.points === g0.points + 3 && g.joueurs === g0.joueurs + 1 && g.gagnes === 6
+    || (console.log('        gros :', JSON.stringify(g)), false));
   const comp = await get('/api/rank/competition/61?saison=2026');
   const gc = comp.tribunes.find((x) => x.name === 'Gros Club');
-  check('et dans la compétition aussi', Number(gc.neutres) === 100
+  check('et dans la compétition du match aussi', gc.points === 15
     || (console.log('        compétition :', JSON.stringify(gc)), false));
   check('mais rien au KOP',
     Number(comp.kops.find((k) => k.nom === 'La Tribune Nord')?.ferveur) === kopNord
     || (console.log('        KOP :', JSON.stringify(comp.kops)), false));
+  await pool.query('DELETE FROM user_follows WHERE user_id = ?', [NEUTRE]);
 
-  poserReglages({ 'tribune.plancher': 1, 'ferveur.neutre_tribune': 0 });
-  ({ gros: g } = await lire());
-  check('à 0, un neutre ne rapporte plus à aucune tribune',
-    Number(g.ferveur) === g0.ferveur && Number(g.neutres) === 0);
-
-  /* Le plancher : le Petit Club (2 supporters) se divise par 5. */
-  poserReglages({});
+  /* L'entraînement ne rapporte aucun point. */
+  await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
+                    VALUES ('dn-2',?,'x','win',7001,85,10,'entrainement',NOW(3))`,
+    ['u10000-0000-0000-0000-000000000001']);
   let { petit: p } = await lire();
-  check('la moyenne se divise par au moins cinq supporters',
-    Number(p.moyenne) === Math.round(Number(p.ferveur) / 5)
+  check('l’entraînement ne rapporte aucun point', p.points === 12 && p.joues === 6
     || (console.log('        petit :', JSON.stringify(p)), false));
 
-  /* Un compte fermé ne pèse plus. */
+  /* Le plancher : le Petit Club (2 joueurs) se divise par 5. */
+  poserReglages({});
+  ({ petit: p } = await lire());
+  check('la moyenne se divise par au moins cinq joueurs',
+    p.moyenne === Math.round(p.points / 5 * 10) / 10
+    || (console.log('        petit :', JSON.stringify(p)), false));
+
+  /* Un compte fermé ne pèse plus, ni en supporters ni en points. */
   const lila = 'u40000-0000-0000-0000-000000000004';
   poserReglages({ 'tribune.plancher': 1 });
   await pool.query(`UPDATE users SET status = 'deleted' WHERE public_id = ?`, [lila]);
   ({ gros: g } = await lire());
-  check('un compte fermé ne compte plus parmi les supporters',
-    Number(g.supporters) === g0.supporters - 1
+  check('un compte fermé ne compte plus, ni parmi les supporters ni aux points',
+    g.supporters === g0.supporters - 1 && g.points === g0.points - 3 && g.joueurs === g0.joueurs - 1
     || (console.log('        gros :', JSON.stringify(g)), false));
   await pool.query(`UPDATE users SET status = 'active' WHERE public_id = ?`, [lila]);
 
-  /* La saison : une ferveur d'avant le lancement ne compte que sous TOUJOURS. */
-  await pool.query(`INSERT INTO virage_presence (user_id,fixture_id,side,team_id,ferveur,last_push_at)
-                    VALUES (?,7999,0,85,7000,NOW(3) - INTERVAL 3 DAY)`,
+  /* La saison : un duel d'avant le lancement ne compte que sous TOUJOURS. */
+  await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
+                    VALUES ('dn-3',?,'x','win',7999,85,7000,'classe',NOW(3) - INTERVAL 3 DAY)`,
     ['u10000-0000-0000-0000-000000000001']);
   ({ petit: p } = await lire());
-  const saisonP = Number(p.ferveur);
+  const saisonP = p.points;
   ({ petit: p } = await lire('?periode=toujours'));
-  check('TRIBUNES compte la saison, et TOUJOURS le cumul',
-    Number(p.ferveur) === saisonP + 7000
-    || (console.log('        saison', saisonP, '· toujours', p.ferveur), false));
+  check('TRIBUNES compte la saison, et TOUJOURS le cumul', p.points === saisonP + 3
+    || (console.log('        saison', saisonP, '· toujours', p.points), false));
   ({ petit: p } = await lire('?periode=mois'));
-  check('et MOIS les trente derniers jours', Number(p.ferveur) === saisonP + 7000);
+  check('et MOIS les trente derniers jours', p.points === saisonP + 3);
 
+  await pool.query(`DELETE FROM duel_results WHERE duel_id IN ('dn-1','dn-2','dn-3')`);
   await pool.query(`DELETE FROM virage_presence WHERE user_id = ? OR fixture_id = 7999`, [NEUTRE]);
   await pool.query(`DELETE FROM users WHERE public_id = ?`, [NEUTRE]);
   C.oublier();
@@ -646,11 +663,11 @@ check('une compétition sans match rend des listes vides',
      premier : c'est le contrôle qui compte le plus ici. */
   check('et l’entraînement ne lui rapporte rien', Number(lui?.ferveur) !== 10749);
 
-  /* La tribune de son club l'encaisse aussi : il a poussé **pour elle**. */
+  /* Son club encaisse ses deux victoires : il a joué **pour lui**. */
   const trib = (await get('/api/rank/tribunes')).classement ?? [];
   const gros3 = trib.find((x) => x.name === 'Gros Club');
-  check('et sa tribune reçoit cette ferveur', Number(gros3?.ferveur) >= 750
-    || (console.log('        elle a :', gros3?.ferveur), false));
+  check('et son club reçoit les points de ses victoires', gros3?.points >= 6
+    || (console.log('        il a :', JSON.stringify(gros3)), false));
 
   /* Et sa place le dit comme la liste : les deux lisaient deux sources
      différentes, et le joueur lisait « 312e » sous un classement qui ne le
