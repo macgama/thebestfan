@@ -744,6 +744,7 @@ if (process.env.DATABASE_URL) {
            ne retient que le premier tour du match). Sans être attendu. */
         onStatus: (fixtureId, etat) => {
           void notifications?.coupDEnvoi(fixtureId, etat);
+          void notifications?.scoreEnDirect(fixtureId, etat);
           return virage.matchStatus(fixtureId, etat);
         },
         onAbsent: (fixtureId) => virage.matchAbsent(fixtureId),
