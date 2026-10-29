@@ -382,6 +382,13 @@ const RUBRIQUES = [
         'Avec ta ferveur de la saison, gagnée au Virage et en duel : Sympathisant, '
           + 'Habitué, Fervent, Ultra, puis Capo. Une division atteinte reste acquise '
           + 'jusqu’à la fin de la saison.'],
+      ['Comment se classent les clubs ?',
+        () => 'Comme un vrai championnat. Chaque duel classé est un match pour ton '
+          + 'club : 3 points pour une victoire, 1 pour un nul, 0 pour une défaite. Le '
+          + 'club du match si tu le suis, sinon ton club principal : même un soir où '
+          + 'ton club ne joue pas, tu peux le faire monter. Les clubs sont rangés sur '
+          + `les points par joueur qui a joué (au moins ${reglage('tribune.plancher')}), `
+          + 'pour que les petits clubs aient leur chance. Le classement repart à chaque saison.'],
       ['C’est quoi, le carnet de la saison ?',
         () => 'Chaque mission du jour y pose des tampons : '
           + `${reglage('saison.tampons_facile')} pour une facile, `

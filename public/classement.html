@@ -317,7 +317,7 @@ const NOTES = {
      qui ne faisait que des duels lisait sinon une explication qui ne
      décrivait pas le classement qu'il avait sous les yeux. */
   supporters: 'La ferveur se gagne en chantant dans le Grand Virage et en gagnant des duels classés. Un joueur qui n’a jamais ouvert un booster peut être premier.',
-  tribunes: 'Les clubs sont classés sur la ferveur moyenne par supporter, pas sur le total. Trente fidèles qui chantent juste passent devant mille abonnés qui regardent. Un joueur qui pousse un club qu’il ne suit pas lui apporte un dixième de sa ferveur.',
+  tribunes: 'Un championnat, comme en vrai : chaque duel classé est un match pour ton club. Une victoire rapporte 3 points, un nul 1, une défaite 0. Le club du match si tu le suis, sinon ton club principal. Les clubs sont classés sur les points par joueur qui a joué, pour que les petits clubs aient leur chance.',
   duellistes: 'Classé sur la cote, pas sur le nombre de victoires : battre plus fort rapporte plus, perdre contre plus faible coûte plus. Tout le monde part de 1000. Duels contre de vrais adversaires uniquement — les entraînements ne comptent pas.',
   /* **Ce tableau classe sur les parties jouées, et il faut le dire** : on
      s'entraîne aussi contre des machines, et classer sur les victoires ferait
@@ -487,11 +487,14 @@ const LECTURES = {
   supporters: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
     sous: [x.club], plus: [compte(x.matchs, 'match', 'matchs'), compte(x.vecus, 'vécu', 'vécus')],
     val: nombre(x.ferveur), unite: 'FERVEUR', mot: 'de ferveur' }),
-  /* Le nombre de supporters reste sur la ligne d'une tribune : c'est ce qui
-     explique sa moyenne, et la note du bas le dit. */
+  /* Le championnat des clubs : les points par joueur en grand, sur quoi la
+     liste est rangée ; les points, et victoires-nuls-défaites, dessous —
+     c'est ce qui explique la moyenne. Le reste s'ouvre au toucher. */
   tribunes: (x) => ({ cle: `t:${x.id}`, nom: x.name, logo: x.logo,
-    sous: [x.country, compte(x.supporters, 'supporter', 'supporters')], plus: [],
-    val: nombre(x.moyenne), unite: 'PAR TÊTE', mot: 'par tête' }),
+    sous: [compte(x.points, 'point', 'points'),
+      Number(x.joues) > 0 ? `${Number(x.gagnes)}\u00a0V · ${Number(x.nuls)}\u00a0N · ${Number(x.perdus)}\u00a0D` : null],
+    plus: [x.country, compte(x.joueurs, 'joueur', 'joueurs'), compte(x.supporters, 'supporter', 'supporters')],
+    val: nombre(x.moyenne), unite: 'PTS / JOUEUR', mot: 'points par joueur' }),
   /* Le grand chiffre est **la cote**, sur laquelle on est classé ; les
      victoires et le taux s'ouvrent au toucher. Les écrire sous le nom
      faisait lire un classement de victoires rangé dans un ordre qui n'est
@@ -880,16 +883,16 @@ function maPlace() {
     }
   } else if (onglet === 'tribunes') {
     /* **Ce tableau ne classe pas des joueurs** : la question qu'on se pose
-       devant lui est l'autre — à quelle tribune va ma ferveur ? Un
-       supporter qui pousse en neutre n'en alimente aucune. */
+       devant lui est l'autre — qu'ai-je rapporté à mon club ? Ses points de
+       la saison, gagnés en duel classé. */
     const t = m.tribune;
     if (t?.nom) {
-      corps = Number(t.ferveur) > 0
-        ? quoi(`pour ${esc(t.nom)}`) + valeur(nombre(t.ferveur), 'donnés')
-        : quoi(`pour ${esc(t.nom)} · rien encore, tu as poussé en neutre`);
-      dit = `Ta ferveur va à ${t.nom}`;
+      corps = Number(t.joues) > 0
+        ? quoi(`pour ${esc(t.nom)}`) + valeur(nombre(t.points ?? 0), 'points rapportés')
+        : quoi(`pour ${esc(t.nom)} · gagne un duel classé pour lui rapporter 3 points`);
+      dit = `Tu joues pour ${t.nom}`;
     } else {
-      corps = quoi('Aucun club suivi : ta ferveur ne va à aucune tribune');
+      corps = quoi('Aucun club suivi : tes duels ne rapportent à aucun club');
       dit = 'Aucun club suivi';
     }
   } else {

@@ -4601,6 +4601,22 @@ function montrerBilan(b) {
       <b>${nombre(g.cote.avant)} → <span data-compte="${Number(g.cote.apres)}" data-de="${Number(g.cote.avant)}">${
         nombre(g.cote.apres)}</span></b></li>`);
   }
+  /* **Ce que le classement compte**, en duel classé : la ferveur écrite
+     (renfort et moitié du neutre compris, que la corde ne montre pas) et les
+     points rapportés au club — le championnat des clubs de TRIBUNES. */
+  const cl = g?.classement;
+  if (cl && Number.isFinite(Number(cl.ferveur))) {
+    const pourquoi = [Number(cl.renfort) > 1 ? `renfort ×${String(cl.renfort).replace('.', ',')}` : null,
+      cl.neutre ? 'neutre' : null].filter(Boolean).join(' · ');
+    lignes.push(`<li class="tbf-bilan-l"><span>FERVEUR COMPTÉE</span>
+      <b data-compte="${Number(cl.ferveur)}">${nombre(cl.ferveur)}</b>${
+        pourquoi ? `<small>${esc(pourquoi)}</small>` : ''}</li>`);
+  }
+  if (cl?.club && Number.isFinite(Number(cl.points))) {
+    lignes.push(`<li class="tbf-bilan-l${Number(cl.points) > 0 ? ' gain' : ''}"><span>POUR ${esc(String(cl.club).toUpperCase())}</span>
+      <b data-compte="${Number(cl.points)}" data-signe="+">+${Number(cl.points)}</b><small>${
+        Number(cl.points) === 1 ? 'POINT' : 'POINTS'}</small></li>`);
+  }
   const motMeilleur = moi?.meilleur ? window.TBF_GESTE?.mot?.(moi.meilleur.verdict) : null;
   if (motMeilleur) {
     const nomChant = moi.meilleur.nom
