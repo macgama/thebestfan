@@ -464,6 +464,19 @@ await pool.execute('DELETE FROM reglages');
    différence entre « le formulaire s'est refermé » et « c'est enregistré »
    existe vraiment. */
 
+/* **Seules les nouveautés ont une case** (Gaël, 29 octobre 2026). La saison 1
+   lancée n'ouvre ici qu'une série : celle-là est déjà en jeu, et le formulaire
+   ne doit plus la proposer — il la montre repliée, sans case. */
+const { chargerSaisons } = await import('../src/server/fanzzy/saisons.js');
+const catalogueJeu = await import('../src/server/fanzzy/catalogue.js');
+const dejaOuverte = catalogueJeu.tous().find((f) => f.publie && f.stage === 1)?.set;
+const saison1 = async (series) => {
+  await pool.query('UPDATE saisons SET series = ? WHERE numero = 1', [JSON.stringify(series)]);
+  await chargerSaisons(pool);
+  await catalogueJeu.chargerSeries(pool);
+};
+await saison1([dejaOuverte]);
+
 await page.evaluate(() => [...document.querySelectorAll('#nav button')]
   .find((b) => /SAISONS/.test(b.textContent))?.click());
 check('l’onglet des saisons se monte', await jusqua(async () =>
@@ -478,6 +491,12 @@ const serieChoisie = await page.evaluate(() => {
   return c ? c.value : null;
 });
 check('le formulaire propose les séries du catalogue', serieChoisie !== null);
+check('mais pas celle qu’une saison lancée ouvre déjà : elle n’a pas de case',
+  await page.evaluate((id) => document.querySelector(`#s-series input[value="${id}"]`) === null
+    && /Déjà en jeu : 1/.test(document.querySelector('#s-series + .sai-deja')?.textContent ?? ''),
+  dejaOuverte));
+check('et le formulaire dit qu’il ne propose que les nouveautés', await page.evaluate(() =>
+  /que les nouveautés/.test(document.querySelector('.sai-edit')?.textContent ?? '')));
 
 await page.evaluate((serie) => {
   document.getElementById('s-num').value = '77';
@@ -529,6 +548,27 @@ check('« Enregistrer » modifie une saison existante', await jusqua(async () =>
   return r[0]?.nom === 'Saison relue';
 }));
 
+/* Une saison **lancée** qu'on modifie garde ce qu'elle ouvrait : ses séries
+   n'ont plus de case, et les perdre à l'enregistrement les refermerait. */
+{
+  const [[s1]] = await pool.query('SELECT id FROM saisons WHERE numero = 1');
+  await page.evaluate((id) =>
+    document.querySelector(`[data-editer-saison="${id}"]`).click(), s1.id);
+  await jusqua(async () => page.evaluate(() =>
+    /Déjà en jeu/.test(document.querySelector('.sai-edit')?.textContent ?? '')));
+  await page.evaluate(() => {
+    document.getElementById('s-txt').value = 'Relue sans rien cocher.';
+    document.getElementById('s-ok').click();
+  });
+  check('modifier une saison lancée garde ses séries, sans case à cocher',
+    await jusqua(async () => {
+      const [[r]] = await pool.query('SELECT texte, series FROM saisons WHERE id = ?', [s1.id]);
+      const series = typeof r.series === 'string' ? JSON.parse(r.series) : r.series;
+      return r.texte === 'Relue sans rien cocher.'
+        && JSON.stringify(series) === JSON.stringify([dejaOuverte]);
+    }));
+}
+
 /* ------------------------------------------------------------ le lancement
 
    Le geste le plus visible du jeu : il ouvre du contenu pour tous les joueurs
@@ -551,6 +591,9 @@ check('et la confirmation nomme ce qui s’ouvre', await page.evaluate(() =>
   /série\(s\)/.test(document.body.textContent)));
 check('et dit que rien ne se ferme', await page.evaluate(() =>
   /Rien ne se ferme/.test(document.body.textContent)));
+/* La saison 1 repart telle que la base la pose — sans série nommée — avant le
+   clic : c'est le lancement additif de la première saison qui s'éprouve ici. */
+await saison1([]);
 await dire('LANCER');
 
 check('la saison est lancée en base', await jusqua(async () => {

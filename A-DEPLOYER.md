@@ -12,6 +12,43 @@ Construction seule, **sans schéma** (images et index.json).
 
 ---
 
+**/admin SAISONS : le formulaire ne propose que les nouveautés** (branche
+`claude/project-thread-9kuov4`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Nouvelle saison ou saison modifiée : seules les séries, tenues, pièces,
+  cartes et stades **pas encore en jeu** ont une case. Le déjà en jeu se lit
+  replié (« Déjà en jeu : N »), sans case, et reste ouvert ; ce qu'une saison
+  nommait déjà repart tel quel à l'enregistrement.
+- La confirmation « Lancer la saison » ne liste que ce qui est neuf pour les
+  joueurs, toutes familles comprises.
+- Après la mise en ligne : /admin, SAISONS, Modifier la saison 2.
+
+---
+
+**Un test du son sur /diagnostic** (branche `claude/project-thread-m3tqk9`,
+29 octobre 2026, demandé par Gaël : pas de son sur le mobile). Construction
+seule, **sans schéma**.
+
+- Bouton « Tester le son » sur /diagnostic : joue un carillon par le moteur
+  du jeu et deux secondes de musique par un simple lecteur, et dit ce qui
+  bloque (sons coupés dans le tiroir, volume du jeu, économie de données,
+  moteur bloqué par le navigateur, ou le téléphone lui-même).
+- Après la mise en ligne : ouvrir thebestfan.online/diagnostic sur le S24+
+  depuis l'icône, toucher le bouton, envoyer une capture.
+
+---
+
+**Les Fanzzy AN de base clignent presque tous** (branche
+`claude/project-thread-j17xyz`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- 37 âges AN de base de plus clignent, et la légendaire AN66 : AN de base
+  185 sur 186. Retouches en mode rapide Artlist, sans crédits.
+- AN64 (la Tisseuse) ne cligne pas : son repos a les yeux fermés par dessin.
+
+---
+
 **La taille des Fanzzy par âge, skin et état** (branche
 `claude/project-thread-gtu1ix`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** (images et index.json).
@@ -255,8 +292,8 @@ appui). Construction seule, **sans schéma**.
 Construction seule, **sans schéma**.
 
 - 36 Fanzzy (trois par club), trois âges, qui clignent ; dos de carte SU.
-- 283 skins sur 324 (Halloween, Préhistorique, Apocalyptique) ; un skin
-  manquant montre la tenue de base. Liste des 41 à refaire :
+- Les 324 skins (Halloween, Préhistorique, Apocalyptique) ; un skin
+  manquant montre la tenue de base. Points à regarder :
   fanzzy-prompts/SU-generation/skins-manquants.md.
 - Pour l'ouvrir aux joueurs : /admin, onglet des Fanzzy, cocher la série SU.
 - Ultimate SU : pas encore (après le 2 novembre).

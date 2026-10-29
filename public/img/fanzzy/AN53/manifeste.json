@@ -1,6 +1,6 @@
 {
   "id": "AN53",
-  "rev": 12,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -67,7 +67,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "a55eb2032d1a"
+          "sha": "a55eb2032d1a",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -120,7 +121,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "208fc003cdb5"
+          "sha": "208fc003cdb5",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
