@@ -1457,6 +1457,19 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   const issueDe = (d, j) => (d.vainqueur === null || d.vainqueur === undefined ? 'draw'
     : (j.side === d.vainqueur ? 'win' : 'loss'));
 
+  /* Les points d'un duel classé pour le club, ceux du championnat des clubs
+     (`classements/index.js`, qui les compte sur `outcome`). */
+  const POINTS_DUEL = { win: 3, draw: 1, loss: 0 };
+
+  /**
+   * La ferveur qu'un duel classé écrit pour un joueur : celle de la corde,
+   * réduite pour un neutre (`ferveur.neutre`) et multipliée par son renfort.
+   * Une seule formule pour la ligne de résultat et pour le bilan, qui disent
+   * donc le même chiffre.
+   */
+  const ferveurComptee = (j, m) => Math.max(0, Math.round((j.ferveur ?? 0)
+    * (m?.neutre === false ? 1 : reglage('ferveur.neutre')) * (m?.bonus ?? 1)));
+
   /**
    * La cote de chacun, avant et après ce duel : `userId → { avant, apres }`.
    *
@@ -1604,6 +1617,40 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       if (g) g.cote = { avant: c.avant, apres: c.apres, delta: c.apres - c.avant };
     }
 
+    /* **Ce que le duel classé compte, dit au bilan.** Le bilan montrait la
+       ferveur brute de la corde, et le classement en comptait une autre —
+       doublée par le renfort, réduite de moitié pour un neutre : un joueur
+       lisait 341 et le classement en comptait 682. Le bilan porte donc le
+       chiffre écrit (`ferveurComptee`, le même que la ligne de résultat), ce
+       qui l'a fait bouger, et les points rapportés au club — le club du
+       match qu'il suit, sinon son club principal (`classements/index.js`). */
+    if (!salle.tuto && d.mode === 'classe' && !coteIllisible) {
+      for (const [userId, j] of d.joueurs) {
+        const g = gains.get(userId);
+        if (userId.startsWith('bot:') || !g) continue;
+        const m = salle.membres.get(userId);
+        const issue = issueDe(d, j);
+        let club = null;
+        if (m?.teamId != null) {
+          const fx = d.fixture;
+          club = fx?.away?.id === m.teamId ? fx?.away?.name : fx?.home?.name;
+        } else {
+          try {
+            const [r] = await q(`SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id
+                                  WHERE f.user_id = ? AND f.is_main = 1 LIMIT 1`, [userId]);
+            club = r?.name ?? null;
+          } catch { /* sans club lisible, le bilan le tait */ }
+        }
+        g.classement = {
+          ferveur: ferveurComptee(j, m),
+          renfort: Number((m?.bonus ?? 1).toFixed(2)),
+          neutre: m?.neutre !== false,
+          points: club ? POINTS_DUEL[issue] ?? 0 : null,
+          club,
+        };
+      }
+    }
+
     /* **L'écran de fin.**
      *
      * Rien n'annonçait la fin d'un duel : le client la déduisait du drapeau
@@ -1679,7 +1726,6 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          quelle : venir jouer sur le match des autres se fait, mais on ne se
          bâtit une réputation que chez soi. */
       const f = d.fixture ?? null;
-      const neutreCoef = reglage('ferveur.neutre');
 
       /* La durée, calculée **une fois pour la partie** : c'est la même pour
          tout le monde, et la relire par joueur donnerait six valeurs qui ne
@@ -1708,8 +1754,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            on les relit sur la salle plutôt que d'interroger la base une
            seconde fois pour une réponse qui pourrait avoir changé entre-temps. */
         const m = salle.membres.get(userId);
-        const ferveur = Math.max(0, Math.round((j.ferveur ?? 0)
-          * (m?.neutre === false ? 1 : neutreCoef) * (m?.bonus ?? 1)));
+        const ferveur = ferveurComptee(j, m);
 
         /* ------------------------------------- ce que la ligne dit désormais
 
