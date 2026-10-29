@@ -890,9 +890,10 @@ function rendreJoueurs(d) {
    pas la même vertu :
 
      — les **supporters**, sur ce que chacun a donné ;
-     — les **tribunes**, c'est-à-dire les clubs, ramenés au nombre de leurs
-       supporters : sans cette division, le plus gros gagne toujours et
-       personne ne défend le sien ;
+     — les **tribunes**, c'est-à-dire les clubs, en championnat : chaque duel
+       classé est un match pour le club du joueur, et les points sont ramenés
+       au nombre de ses joueurs — sans cette division, le plus gros gagne
+       toujours et personne ne défend le sien ;
      — les **KOP**, ramenés au nombre de leurs membres, pour la même raison.
 
    Ces listes ne viennent pas du télétexte : elles sont calculées chez nous,
@@ -1072,27 +1073,29 @@ function tableFerveur(liste) {
         </tr>`).join('')}</tbody></table>`;
   }
   if (echelle === 'tribunes') {
-    /* **Le plateau entier, et non les seuls clubs déjà poussés.**
+    /* **Le plateau entier, et non les seuls clubs déjà joués.**
 
-       La liste se tirait des lignes de ferveur : un club n'existait que si
-       quelqu'un avait chanté pour lui, et une compétition de vingt équipes en
-       montrait deux. On y cherchait le sien, on ne l'y trouvait pas, et rien ne
-       disait s'il était mal classé ou absent du jeu.
+       Un club n'existait que si quelqu'un avait joué pour lui, et une
+       compétition de vingt équipes en montrait deux. Les clubs à zéro sont
+       donc là, en retrait — c'est une tribune à prendre, pas une ligne vide.
+       Ils n'ont pas de rang, et leur case reste vide.
 
-       Les clubs à zéro sont donc là, en retrait — c'est une tribune à prendre,
-       pas une ligne vide. Ils n'ont pas de rang, et leur case reste vide : un
-       tiret à sa place se lisait comme un rang illisible. Et les duels sont
-       comptés à part de la ferveur : ils ne demandent ni le même temps ni le
-       même geste que le virage. */
+       **Un championnat, comme en vrai** (Gaël, 29 octobre 2026) : chaque duel
+       classé sur un match de cette compétition est un match pour le club du
+       joueur — 3 points la victoire, 1 le nul. La liste est rangée sur les
+       points par joueur (PTS/J), qui laisse leur chance aux petits clubs. */
     return `<table>
-      <thead><tr><th>#</th><th>CLUB</th><th>SUPP.</th><th>DUELS</th><th>MOYENNE</th></tr></thead>
+      <thead><tr><th>#</th><th>CLUB</th><th>J</th><th>G</th><th>N</th><th>P</th><th>PTS</th><th>PTS/J</th></tr></thead>
       <tbody>${liste.map((t, i) => `
-        <tr class="${i < 3 && t.moyenne > 0 ? 'top3' : ''}${t.ferveur > 0 ? '' : ' a-prendre'}">
-          <td>${t.ferveur > 0 ? i + 1 : ''}</td>
+        <tr class="${i < 3 && t.points > 0 ? 'top3' : ''}${t.joues > 0 ? '' : ' a-prendre'}">
+          <td>${t.joues > 0 ? i + 1 : ''}</td>
           <td class="club"><img src="${esc(t.logo)}" alt=""><span>${esc(t.name)}</span></td>
-          <td>${t.supporters}</td>
-          <td>${t.duels ?? 0}</td>
-          <td class="pts">${t.moyenne}</td>
+          <td>${t.joues ?? 0}</td>
+          <td>${t.gagnes ?? 0}</td>
+          <td>${t.nuls ?? 0}</td>
+          <td>${t.perdus ?? 0}</td>
+          <td>${t.points ?? 0}</td>
+          <td class="pts">${String(t.moyenne ?? 0).replace('.', ',')}</td>
         </tr>`).join('')}</tbody></table>`;
   }
   return `<table>
