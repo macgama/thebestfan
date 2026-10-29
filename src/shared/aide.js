@@ -486,6 +486,12 @@ const RUBRIQUES = [
           + 'calmes, jamais pendant un duel, au Grand Virage ou dans les mini-jeux, '
           + 'pour que tu entendes la tribune. Le mode calme du menu coupe aussi les '
           + 'sons, les vibrations ou les animations.'],
+      ['Puis-je suivre le score de mon club sur mon téléphone ?',
+        'Oui. Dans ton compte, allume « Mon club joue » : une demi-heure avant le coup '
+          + 'd’envoi, une notification t’annonce le match, puis elle change à chaque but, à '
+          + 'la mi-temps et au coup de sifflet final. C’est toujours la même notification, qui '
+          + 'se met à jour au lieu de s’empiler. Un match commencé avant la nuit se suit '
+          + 'jusqu’au bout.'],
       ['J’ai trouvé un bug. À qui le dire ?',
         'Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le '
           + 'message part directement à l’équipe du jeu.'],

@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Le score en direct des clubs suivis, dans la notification** (branche
+`claude/project-thread-33twb0`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** (même case « Mon club joue »).
+
+- Après l'alerte 30 minutes avant le match, la même notification change à
+  chaque but (club qui marque et minute), à la mi-temps (sans vibrer) et au
+  coup de sifflet final, avec un bouton « Voir le match ».
+- Choix de Gaël : un match commencé avant 22 h envoie son score jusqu'à la
+  fin, même après 22 h. Le reste se tait toujours la nuit.
+- FAQ, /comment-jouer, /compte et /confidentialite à jour, cinq langues.
+- Après la mise en ligne : sur le S24+, rouvrir le jeu une fois (nouveau
+  service worker), puis attendre le prochain match d'un club suivi.
+
+---
+
 **AN6 redessinée à l'âge 1 en Halloween** (branche
 `claude/project-thread-gtu1ix`, 29 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** (images et index.json).
