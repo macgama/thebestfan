@@ -122,4 +122,8 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      principale (28 octobre 2026) : une colonne sur `user_follows`
      (football.sql), deux sur `user_wallet` (souvenirs.sql). Rien n'en
      dépend : le dernier rang. */
-  'principal'];
+  'principal',
+  /* Le score de la corde de chaque Virage (29 octobre 2026), pour les points
+     du championnat des clubs. Une table neuve, sans clé étrangère. Rien n'en
+     dépend : le dernier rang. */
+  'virage-tribunes'];

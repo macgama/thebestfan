@@ -303,15 +303,53 @@ export function createClassements({ pool, requireAuth,
      les points qu'on lui a donnés. Le club principal d'un neutre, lui, se lit
      au moment du calcul — il ne change qu'une fois par saison.
 
-     L'entraînement ne compte jamais, ni un compte fermé. */
+     **Le Virage aussi** (Gaël, 29 octobre 2026) : chaque présence classée
+     d'un supporter est un match pour son club, gagné si sa tribune a gagné
+     la corde (`virage_tribunes`, écrit à chaque but de corde), nul à
+     égalité. Seulement quand le vrai match est fini — le score de la corde
+     ne bouge plus — et pour qui a donné de la ferveur. Même règle de club
+     qu'au duel.
+
+     L'entraînement ne compte jamais, ni un compte fermé.
+
+     `et` ajoute une condition à chaque moitié, écrite sur son alias (`dr`
+     pour le duel, `vp` pour le Virage) : les paramètres d'une condition se
+     passent donc **deux fois**, ou une seule sans le Virage. `virage` faux
+     lit sans la table du score, que le schéma n'a peut-être pas encore
+     posée (voir `avecLeVirage`). */
   const POINTS = { win: 3, draw: 1, loss: 0 };
-  const MATCHS_DES_CLUBS = (et = '') => `
+  const MATCHS_DES_CLUBS = (et = () => '', virage = true) => `
     SELECT dr.user_id, COALESCE(dr.team_id, p.team_id) AS club, dr.fixture_id,
            dr.ended_at AS quand, dr.outcome AS issue
       FROM duel_results dr
       JOIN users u ON u.public_id = dr.user_id AND u.status = 'active'
       LEFT JOIN user_follows p ON p.user_id = dr.user_id AND p.is_main = 1
-     WHERE dr.mode = 'classe' ${et}`;
+     WHERE dr.mode = 'classe' ${et('dr')}
+    ${virage ? `UNION ALL
+    SELECT vp.user_id, COALESCE(vp.team_id, p.team_id) AS club, vp.fixture_id,
+           vp.last_push_at AS quand,
+           CASE WHEN vt.buts_dom = vt.buts_ext THEN 'draw'
+                WHEN (vt.buts_dom > vt.buts_ext) = (vp.side = 0) THEN 'win'
+                ELSE 'loss' END AS issue
+      FROM virage_presence vp
+      JOIN virage_tribunes vt ON vt.fixture_id = vp.fixture_id
+      JOIN fixtures fv ON fv.id = vp.fixture_id AND fv.status_short IN ('FT', 'AET', 'PEN')
+      JOIN users u ON u.public_id = vp.user_id AND u.status = 'active'
+      LEFT JOIN user_follows p ON p.user_id = vp.user_id AND p.is_main = 1
+     WHERE vp.classe = 1 AND vp.ferveur > 0 ${et('vp')}` : ''}`;
+  /* Une lecture qui compte le Virage, et sans lui si la table du score
+     manque (`sql/virage-tribunes.sql` pas encore appliqué) : les duels
+     gardent leurs points, et le journal le dit une fois. */
+  async function avecLeVirage(lire) {
+    try {
+      return await lire(true);
+    } catch (e) {
+      if (e?.code !== 'ER_NO_SUCH_TABLE' || !/virage_tribunes/.test(e.sqlMessage ?? e.message)) throw e;
+      direUneFois('virage-tribunes', '[classement] le Virage ne rapporte pas de points aux '
+        + 'clubs : applique sql/virage-tribunes.sql (npm run schema:appliquer)');
+      return lire(false);
+    }
+  }
   /* Le bilan d'un club sur des matchs déjà filtrés : joués, gagnés, nuls,
      perdus, points, et le nombre de ses joueurs qui ont joué. */
   const BILAN_DES_CLUBS = (matchs) => `
@@ -361,8 +399,8 @@ export function createClassements({ pool, requireAuth,
     const n = Number(limite) || 50;
     const plancher = plancherTribune();
     return memo(`trib:${p}:${n}:${plancher}`, async () => {
-      const lire = (fenetre) => {
-        const x = `(SELECT x.* FROM (${MATCHS_DES_CLUBS()}) x
+      const lire = (fenetre) => avecLeVirage((virage) => {
+        const x = `(SELECT x.* FROM (${MATCHS_DES_CLUBS(undefined, virage)}) x
                      ${fenetre ? `LEFT JOIN (${EN_COURS}) s ON 1 = 1` : ''}
                     WHERE 1 = 1
                           ${p === 'mois' ? 'AND x.quand > (NOW(3) - INTERVAL 30 DAY)' : ''}
@@ -375,7 +413,7 @@ export function createClassements({ pool, requireAuth,
             WHERE COALESCE(s.n, 0) >= 1 OR COALESCE(c.joues, 0) > 0
             ${ORDRE_CLUBS}
             LIMIT ${n}`).then(enNombres);
-      };
+      });
       if (p !== 'saison') return lire(false);
       try {
         return await lire(true);
@@ -589,9 +627,7 @@ export function createClassements({ pool, requireAuth,
    */
   async function tribunesDe(leagueId, saison, limite = 50) {
     const plancher = plancherTribune();
-    const matchs = `(${MATCHS_DES_CLUBS(`AND dr.fixture_id IN
-      (SELECT id FROM fixtures WHERE league_id = ? AND season = ?)`)})`;
-    return q(
+    return avecLeVirage((virage) => q(
       `SELECT t.id, t.name, t.logo, ${COLONNES_CLUB(plancher)},
               COALESCE(c.joues, 0) AS duels
          FROM (SELECT home_id AS team_id FROM fixtures WHERE league_id = ? AND season = ?
@@ -599,10 +635,13 @@ export function createClassements({ pool, requireAuth,
                SELECT away_id FROM fixtures WHERE league_id = ? AND season = ?) plateau
          JOIN teams t ON t.id = plateau.team_id
          LEFT JOIN (${SUPPORTERS_ACTIFS}) s ON s.team_id = t.id
-         LEFT JOIN (${BILAN_DES_CLUBS(matchs)}) c ON c.club = t.id
+         LEFT JOIN (${BILAN_DES_CLUBS(`(${MATCHS_DES_CLUBS((a) => `AND ${a}.fixture_id IN
+              (SELECT id FROM fixtures WHERE league_id = ? AND season = ?)`, virage)})`)}) c
+                ON c.club = t.id
         ${ORDRE_CLUBS}
         LIMIT ${Number(limite) || 50}`,
-      [leagueId, saison, leagueId, saison, leagueId, saison])
+      [leagueId, saison, leagueId, saison, leagueId, saison,
+       ...(virage ? [leagueId, saison] : [])]))
       .then((l) => enNombres(l).map((x) => ({ ...x, duels: Number(x.duels) })));
   }
 
@@ -816,14 +855,14 @@ export function createClassements({ pool, requireAuth,
        répond sans la fenêtre. */
     let apport = null;
     if (tribune) {
-      const lireApport = (fenetre) => q(
+      const lireApport = (fenetre) => avecLeVirage((virage) => q(
         `SELECT COALESCE(SUM(CASE x.issue WHEN 'win' THEN ${POINTS.win}
                   WHEN 'draw' THEN ${POINTS.draw} ELSE ${POINTS.loss} END), 0) AS points,
                 COUNT(*) AS joues
-           FROM (${MATCHS_DES_CLUBS('AND dr.user_id = ?')}) x
+           FROM (${MATCHS_DES_CLUBS((a) => `AND ${a}.user_id = ?`, virage)}) x
            ${fenetre ? `LEFT JOIN (${EN_COURS}) s ON 1 = 1` : ''}
           WHERE x.club = ? ${fenetre ? `AND (s.id IS NULL OR (${dansFenetre('x', 's')}))` : ''}`,
-        [userId, tribune.id]);
+        virage ? [userId, userId, tribune.id] : [userId, tribune.id]));
       try {
         [apport] = await lireApport(true).catch((e) => {
           if (!estSchema(e)) throw e;
