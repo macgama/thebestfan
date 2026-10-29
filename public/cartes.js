@@ -45,6 +45,15 @@ const ART = {
      une clé qui ne le recopie pas exactement ne lève rien, elle rend le
      repli de `packArt` sous les projecteurs. */
   RP: 'img/pack-la-reprise',
+  /* Les sept paquets dessinés le 2026-10-29, sur le modèle de LA TRIBUNE :
+     même sachet, même bande en biais, la couleur et le décor de la série. */
+  VP: 'img/pack-les-vip',
+  GC: 'img/pack-gastronomie-de-comptoir',
+  GD: 'img/pack-galeres-de-deplacement',
+  MT: 'img/pack-phenomenes-meteo',
+  HC: 'img/pack-heros-du-canape',
+  AN: 'img/pack-les-terraces',
+  SU: 'img/pack-die-kurve',
   /* La gerbe filmée (`video/gerbe.mp4`) n'est plus ici : elle ne servait
      qu'à la révélation d'une légendaire au kiosque, qui passe maintenant par
      l'échelle commune de cérémonie (`FX.reveler`, dans fx.js). La bienvenue

@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Les sept boosters manquants et les pin's de série AN et SU** (branche
+`claude/project-thread-53a9gs`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** (images et public/cartes.js).
+
+- Boosters des VIP, de la Gastronomie de comptoir, des Galères de
+  déplacement, des Phénomènes météo, des Héros du canapé, des Terraces et de
+  Die Kurve, dessinés sur le modèle de LA TRIBUNE (mode rapide, sans crédits).
+- Pin's de série des Terraces (tasse de thé sur les marches) et de Die Kurve
+  (cloche devant la montagne) : la collection et le kiosque les montrent.
+- Après la mise en ligne : le kiosque (/boosters) et la collection, sur ces
+  séries.
+
+---
+
 **Le score en direct des clubs suivis, dans la notification** (branche
 `claude/project-thread-33twb0`, 29 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** (même case « Mon club joue »).
