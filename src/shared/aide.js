@@ -384,11 +384,11 @@ const RUBRIQUES = [
           + 'jusqu’à la fin de la saison.'],
       ['Comment se classent les clubs ?',
         () => 'Comme un vrai championnat. Chaque duel classé et chaque Virage sont un '
-          + 'match pour ton club : 3 points pour une victoire, 1 pour un nul, 0 pour une '
-          + 'défaite. Au Virage, c’est ta tribune qui gagne ou perd la corde, compté à la '
-          + 'fin du vrai match. Le '
-          + 'club du match si tu le suis, sinon ton club principal : même un soir où '
-          + 'ton club ne joue pas, tu peux le faire monter. Les clubs sont rangés sur '
+          + 'match pour le club que tu pousses : 3 points pour une victoire, 1 pour un nul, '
+          + '0 pour une défaite. Au Virage, c’est ta tribune qui gagne ou perd la corde, '
+          + 'compté à la fin du vrai match. Si tu ne suis pas ce club, il ne reçoit qu’une '
+          + `part de ces points (×${String(reglage('tribune.neutre_points')).replace('.', ',')}) : `
+          + 'tu l’as soutenu, mais pas comme ton club. Les clubs sont rangés sur '
           + `les points par joueur qui a joué (au moins ${reglage('tribune.plancher')}), `
           + 'pour que les petits clubs aient leur chance. Le classement repart à chaque saison.'],
       ['C’est quoi, le carnet de la saison ?',

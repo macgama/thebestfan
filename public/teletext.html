@@ -1094,7 +1094,7 @@ function tableFerveur(liste) {
           <td>${t.gagnes ?? 0}</td>
           <td>${t.nuls ?? 0}</td>
           <td>${t.perdus ?? 0}</td>
-          <td>${t.points ?? 0}</td>
+          <td>${String(t.points ?? 0).replace('.', ',')}</td>
           <td class="pts">${String(t.moyenne ?? 0).replace('.', ',')}</td>
         </tr>`).join('')}</tbody></table>`;
   }

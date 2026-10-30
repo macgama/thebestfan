@@ -422,6 +422,31 @@ check('et aucune équipe étrangère à la compétition ne s’y invite',
     || (console.log('        KOP :', JSON.stringify(comp.kops)), false));
   await pool.query('DELETE FROM user_follows WHERE user_id = ?', [NEUTRE]);
 
+  /* **Le club poussé, une part pour un neutre** (Gaël, 30 octobre 2026) :
+     un duel enregistré avec son camp va au club de ce camp. Nina ne suit
+     pas le Petit Club, qui reçoit à domicile le match 7001 : il reçoit la
+     moitié de sa victoire, et elle ne compte pas parmi ses joueurs. */
+  {
+    await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,1)', [NEUTRE]);
+    const { petit: p0, gros: g1 } = await lire();
+    await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,side,ended_at)
+                      VALUES ('dn-4',?,'x','win',7001,NULL,500,'classe',0,NOW(3))`, [NEUTRE]);
+    let { petit: p1, gros: g2 } = await lire();
+    check('un neutre donne la moitié des points au club poussé',
+      p1.points === p0.points + 1.5 && p1.joueurs === p0.joueurs && p1.gagnes === p0.gagnes + 1
+      || (console.log('        petit :', JSON.stringify(p0), '→', JSON.stringify(p1)), false));
+    check('et rien à son club principal',
+      g2.points === g1.points
+      || (console.log('        gros :', JSON.stringify(g1), '→', JSON.stringify(g2)), false));
+    poserReglages({ 'tribune.plancher': 1, 'tribune.neutre_points': 0 });
+    ({ petit: p1 } = await lire());
+    check('la part se règle dans /admin', p1.points === p0.points
+      || (console.log('        petit :', JSON.stringify(p1)), false));
+    poserReglages({ 'tribune.plancher': 1 });
+    await pool.query(`DELETE FROM duel_results WHERE duel_id = 'dn-4'`);
+    await pool.query('DELETE FROM user_follows WHERE user_id = ?', [NEUTRE]);
+  }
+
   /* L'entraînement ne rapporte aucun point. */
   await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
                     VALUES ('dn-2',?,'x','win',7001,85,10,'entrainement',NOW(3))`,
