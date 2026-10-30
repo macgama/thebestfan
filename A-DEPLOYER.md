@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**« Mon compte » rejoint « Mon profil »** (branche
+`claude/project-thread-c664mv`, 30 octobre 2026, choix de Gaël). Construction
+seule, **sans schéma** (profil, compte, menu, textes en cinq langues).
+
+- Les notifications (cinq interrupteurs) sont dans Mon profil › RÉGLAGES, entre
+  Langue et Compte, avec les liens confidentialité et conditions.
+- `/compte` n'est plus que la porte d'entrée (connexion, inscription, mot de
+  passe oublié, Google) ; connecté, elle renvoie au profil. Le lien de
+  vérification d'adresse y arrive toujours et le profil dit « Adresse vérifiée ».
+- « Mon compte » sort du menu ☰.
+- Après la mise en ligne : ☰ › Mon profil › RÉGLAGES, les notifications
+  doivent y être (sur le S24+, depuis l'icône).
+
+---
+
 **Le jeu installé passe en plein écran** (branche
 `claude/project-thread-qkvp99`, 30 octobre 2026, demande de Gaël).
 Construction seule, **sans schéma** (manifeste, pwa.js, script de tête des
