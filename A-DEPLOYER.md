@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Ultimate en tenue Préhistorique : 281 images, RP et AN** (branche
+`claude/project-thread-wq439r`, 30 octobre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Quand le Fanzzy porte sa tenue Préhistorique, la grande scène Ultimate
+  (duel, Virage, fiche) montre son image Préhistorique, au fond transposé à
+  l'âge de pierre (falaise, torches, volcan, mammouths) ; sinon, l'image de
+  base. Pas de clip pour ces images.
+- Après la mise en ligne : sur la fiche d'un Fanzzy dont on a la carte
+  Ultimate, choisir la tenue Préhistorique puis toucher la tuile ULTIMATE.
+
+---
+
 **Ultimate en tenue Halloween : 281 images, RP et AN** (branche
 `claude/project-thread-wdq9qc`, 30 octobre 2026, demande de Gaël). Construction
 seule, **sans schéma**.
