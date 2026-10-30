@@ -3284,6 +3284,43 @@ const J = await creerJoueurs('bilan', 8, { fanzzy: 'TR32' });
     !virage.rooms.has(7001));
 }
 
+/* **Les deux tribunes face à face** (`tribunesEnFace`, 30 octobre 2026) :
+   les douze qui poussent le plus en ce moment de chaque tribune, celui qui
+   regarde toujours compris, et le compte de tous les présents. Un présent
+   sans Fanzzy compte, sans figure. */
+{
+  const salle = new VirageRoom({
+    fixture: { id: 9030, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: () => {}, log: { warn() {}, error() {} },
+  });
+  const perso = (id) => ({ id, age: `${id}B`, evo: 2, skin: 'base', nom: id });
+  for (let i = 0; i < 15; i++) salle.join(`a${i}`, { side: 0, name: `A${i}`, perso: perso(`AN${i + 1}`) });
+  salle.join('nu', { side: 0, name: 'Nu' });
+  for (let i = 0; i < 3; i++) salle.join(`b${i}`, { side: 1, name: `B${i}`, perso: perso(`RP${i + 1}`) });
+  /* Ce qu'ils poussent en ce moment : a14 le plus, puis a13… ; a0 rien. */
+  for (let i = 1; i < 15; i++) salle.crediter(salle.members.get(`a${i}`), i * 10);
+  salle.crediter(salle.members.get('b2'), 50);
+  const vu = salle.tribunesEnFace('a0');
+  const [nous, eux] = vu.tribunes;
+  check('les deux tribunes : douze figures de mon côté, et moi en treizième, hors des douze',
+    nous.n === 16 && nous.joueurs.length === 13 && nous.joueurs[12].moi === true
+    && nous.joueurs[12].nom === 'A0' && nous.joueurs.every((j) => j.fanzzy?.id)
+    || (console.log('        ', JSON.stringify(nous)), false));
+  check('devant, celui qui pousse le plus en ce moment, avec son rang',
+    nous.joueurs[0].nom === 'A14' && nous.joueurs[0].rang === 1 && nous.joueurs[1].nom === 'A13'
+    && eux.joueurs[0].nom === 'B2' && eux.n === 3 && eux.joueurs.length === 3
+    && nous.joueurs[0].fanzzy.age === 'AN15B' && nous.joueurs[0].fanzzy.evo === 2);
+  /* Huit secondes plus tard, la poussée de a14 a fondu de moitié : a1, qui
+     vient de pousser fort, passe devant. */
+  const vrai = Date.now;
+  try {
+    Date.now = () => vrai() + 8000;
+    salle.crediter(salle.members.get('a1'), 200);
+    check('l’élan s’éteint : qui vient de pousser passe devant qui poussait avant',
+      salle.tribunesEnFace('a0').tribunes[0].joueurs[0].nom === 'A1');
+  } finally { Date.now = vrai; }
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 virage.stop(); io.close();
 /* `exitCode` et non `process.exit()` : sous Windows, couper la boucle pendant
