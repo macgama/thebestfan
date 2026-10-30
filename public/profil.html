@@ -203,6 +203,16 @@ h2{margin:26px 2px 10px}
 .ligne a.v{display:inline-flex;align-items:center;min-height:44px;margin:-12px 0;
   color:var(--craie);opacity:1;font-weight:700}
 .btn.danger,button.link{min-height:44px}
+/* Les notifications, dans les réglages : les interrupteurs l'un sous l'autre,
+   sur toute la largeur — la phrase du duel est longue. */
+#notifs{padding-top:18px}
+.notif-texte{font-size:12.5px;line-height:1.5;margin:0 2px 8px}
+#notifNote:empty{display:none}
+#notifCases{display:flex;flex-direction:column;gap:2px}
+#notifCases .tbf-interrupteur{width:100%}
+#notifCases .tbf-interrupteur[disabled]{opacity:.55;cursor:wait}
+.legal{font-size:12.5px;text-align:center;margin:18px 0 4px}
+.legal a{color:var(--craie);display:inline-flex;align-items:center;min-height:44px}
 /* La croix qui retire un club : un bouton-icône de quarante-quatre pixels,
    pas une plaque. Elle ne vise que la croix : une règle plus large battait
    en spécificité toute plaque posée dans une ligne. */
@@ -479,6 +489,28 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
       <div id="clubs"></div>
       <h3 class="tbf-cousu">LANGUE</h3>
       <div class="langues tbf-onglets" data-ton="craie" id="langues"></div>
+      <!-- **Les notifications**, venues de « Mon compte » quand les deux pages
+           n'en ont plus fait qu'une (Gaël, 30 octobre 2026 : elles faisaient
+           doublon). Cachées tant que le serveur ne dit pas qu'il peut en
+           envoyer (`notifications.actif`). Les cases valent pour **cet
+           appareil** : voir `TBF_NOTIF` dans `pwa.js`. -->
+      <div id="notifs" hidden>
+        <h3 class="tbf-cousu">NOTIFICATIONS</h3>
+        <p class="notif-texte">Sur cet appareil, même le jeu fermé. Jamais la nuit, de 22 h à 8 h.</p>
+        <div id="notifCases">
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="kop"><i aria-hidden="true"></i><span>Un vote de mon KOP s’ouvre</span></button>
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="duel"><i aria-hidden="true"></i><span>Un duel classé attend un supporter de mon club</span></button>
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="club"><i aria-hidden="true"></i><span>Mon club joue : 30 minutes avant, puis le score en direct</span></button>
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="virage"><i aria-hidden="true"></i><span>Le Virage d’un match de mon club s’ouvre</span></button>
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="amis"><i aria-hidden="true"></i><span>Mes amis : une demande, un oui, une invitation en duel</span></button>
+        </div>
+        <p class="notif-texte" id="notifNote"></p>
+      </div>
       <h3 class="tbf-cousu">COMPTE</h3>
       <div class="ligne"><span class="n">Adresse</span><span class="v" id="email"></span></div>
       <div class="ligne"><span class="n">Adresse vérifiée</span><span class="v" id="verif"></span></div>
@@ -489,6 +521,11 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
         <button class="btn tbf-plaque" id="logout">SE DÉCONNECTER</button>
         <button class="btn danger" id="supprimer">Supprimer définitivement mon compte</button>
       </div>
+      <!-- Ce que le jeu garde de toi, et les conditions : à côté de la sortie,
+           parce que c'est là qu'on les cherche — avant de partir, ou pour
+           savoir ce qui part. Ils étaient sur « Mon compte ». -->
+      <p class="legal"><a href="/confidentialite">Ce que le jeu garde de toi</a>
+        · <a href="/conditions">Les conditions</a></p>
     </div>
   </details>
   <!-- Ce que la page fait sans le dire avec des mots — l'insigne posé —,
@@ -1848,9 +1885,54 @@ $('logout').onclick = async () => {
     texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
     oui: 'SE DÉCONNECTER', ton: 'flare',
   }))) return;
+  // Cet appareil n'est plus prévenu pour ce joueur : voir `pwa.js`.
+  await window.TBF_NOTIF?.oublier?.();
   try { await auth('/logout', {}); } catch {}
   location.href = '/';
 };
+
+/* ------------------------------------------------------ les notifications
+
+   `TBF_NOTIF` vient de `pwa.js`, chargé en `defer` à la fin : on attend le
+   document. Si le serveur n'en envoie pas, la rubrique reste cachée ; si cet
+   appareil ne peut pas en recevoir, elle le dit, sans interrupteurs. */
+const RAISONS_NOTIF = {
+  ios: 'Sur iPhone, installe d’abord le jeu sur l’écran d’accueil (Partager, puis « Sur l’écran d’accueil ») et ouvre-le de là.',
+  navigateur: 'Ce navigateur ne reçoit pas de notifications.',
+  refusees: 'Tu les as refusées dans le navigateur. Pour changer d’avis, autorise-les dans les réglages du site, puis recharge la page.',
+};
+const casesNotif = () => [...document.querySelectorAll('#notifCases [data-sujet]')];
+function poserCases(sujets) {
+  for (const b of casesNotif()) b.setAttribute('aria-checked', String(Boolean(sujets?.[b.dataset.sujet])));
+}
+async function notifications() {
+  const n = window.TBF_NOTIF;
+  if (!n || !user) return;
+  const e = await n.etat().catch(() => ({ possible: false, raison: 'eteintes' }));
+  if (!e.possible && e.raison === 'eteintes') { $('notifs').hidden = true; return; }
+  $('notifs').hidden = false;
+  $('notifCases').hidden = !e.possible;
+  $('notifNote').textContent = e.possible ? '' : (RAISONS_NOTIF[e.raison] ?? RAISONS_NOTIF.navigateur);
+  if (e.possible) poserCases(e.sujets);
+}
+for (const b of casesNotif()) {
+  b.onclick = async () => {
+    const voulu = Object.fromEntries(casesNotif().map((c) => [c.dataset.sujet,
+      c === b ? c.getAttribute('aria-checked') !== 'true' : c.getAttribute('aria-checked') === 'true']));
+    casesNotif().forEach((c) => { c.disabled = true; });
+    $('notifNote').textContent = '';
+    try {
+      poserCases(await window.TBF_NOTIF.poser(voulu));
+    } catch (err) {
+      /* Le refus dans la fenêtre du navigateur est définitif pour ce site :
+         la rubrique le dit, et les interrupteurs n'ont plus d'objet. */
+      if (err.message === 'refusees') { notifications(); return; }
+      if (err.message !== 'sans_reponse') $('notifNote').textContent = 'Ça n’a pas marché. Réessaie dans un instant.';
+    } finally {
+      casesNotif().forEach((c) => { c.disabled = false; });
+    }
+  };
+}
 
 /* La suppression du compte : le seul geste du jeu qu'on ne peut pas défaire.
    Le mot de passe reste demandé — c'est ce qui protège d'un téléphone laissé
@@ -1932,6 +2014,16 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     /* **La fête de niveau, depuis la dernière visite.** Après le premier
        rendu : elle passe devant la carte de supporter. Elle attend aussi
        ma place, qui porte l'avatar à montrer en pose de victoire (§ 14.3). */
+    domPret.then(notifications);
+    /* Le retour du lien de vérification, passé par la porte de connexion
+       (`/compte?verifier=…`) quand on y arrivait déjà connecté. */
+    const verifiee = new URLSearchParams(location.search).get('verifiee');
+    if (verifiee) {
+      history.replaceState({}, '', '/profil');
+      dire(verifiee === '1' ? 'Adresse vérifiée' : 'Ce lien n’est plus valable',
+        verifiee === '1' ? undefined : { erreur: true });
+    }
+
     await Promise.allSettled([pNiveau, pMoi, domPret]);
     if (niv && !niv.indisponible) {
       window.TBF_NIVEAU?.depuisVisite?.(niv, { avatar: monAvatar ?? undefined, qui: user.id });
