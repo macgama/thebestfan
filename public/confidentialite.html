@@ -5,7 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Confidentialité — thebestfan</title>
 <meta name="description" content="Ce que thebestfan garde de toi, pourquoi, combien de temps, et comment l’effacer.">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -202,13 +202,14 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <section class="rub" id="notifications">
     <h2 class="tbf-cousu">Les notifications</h2>
     <div class="bloc">
-      <p>Si tu les actives dans <b>Mon compte</b>, ton appareil peut être prévenu même le jeu fermé,
+      <p>Si tu les actives dans <b>Mon profil</b> (RÉGLAGES), ton appareil peut être prévenu même le jeu fermé,
         pour cinq choses seulement&nbsp;: <b>un vote de ton KOP qui s’ouvre</b>, <b>un duel classé qui
         attend un supporter de ton club</b>, <b>un match de ton club qui commence dans trente
-        minutes</b>, <b>le Virage de ce match qui s’ouvre</b> au coup d’envoi, et <b>tes amis</b> (une
+        minutes</b> puis <b>son score</b> à chaque but, à la mi-temps et à la fin, <b>le Virage de ce match qui s’ouvre</b> au coup d’envoi, et <b>tes amis</b> (une
         demande d’ami, une demande acceptée, une invitation en duel). Tu les choisis une à une,
         appareil par appareil, et ton navigateur te le redemande par sa propre fenêtre. Rien n’est
-        envoyé <b>la nuit</b>, de 22&nbsp;h à 8&nbsp;h (heure de Zurich). Un message ne nomme jamais un
+        envoyé <b>la nuit</b>, de 22&nbsp;h à 8&nbsp;h (heure de Zurich), sauf le score d’un match
+        commencé avant 22&nbsp;h, jusqu’à son coup de sifflet final. Un message ne nomme jamais un
         joueur&nbsp;: il parle de clubs, de ton KOP, d’un bonus, d’«&nbsp;un supporter&nbsp;» ou d’«&nbsp;un ami&nbsp;».</p>
       <p>Pour cela nous gardons, <b>par appareil</b>, l’adresse d’envoi que ton navigateur nous donne
         et ses deux clés de chiffrement, avec tes choix. Rien d’autre&nbsp;: ni le modèle de
@@ -348,7 +349,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <section class="rub" id="suppression">
     <h2 class="tbf-cousu">Quand tu supprimes ton compte</h2>
     <div class="bloc">
-      <p>Tu peux le faire toi-même, depuis <b>Mon compte</b>, en confirmant ton mot de passe. C’est
+      <p>Tu peux le faire toi-même, depuis <b>Mon profil</b> (RÉGLAGES), en confirmant ton mot de passe. C’est
         immédiat et définitif. Si tu t’es inscrit avec Google, tu n’as pas de mot de passe&nbsp;:
         choisis-en un d’abord avec «&nbsp;Mot de passe oublié ?&nbsp;», ou écris-nous.</p>
       <p><b>Ce qui est effacé, tout de suite&nbsp;:</b></p>

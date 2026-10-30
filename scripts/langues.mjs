@@ -249,7 +249,7 @@ for (const [t, f] of [...textes]) {
   if (avantServeur.has(t)) continue;
   if (![...f].some((x) => x.startsWith('src/server'))) continue;
   if (!FRANCAIS.test(t.replace(/\{\d+\}/g, ''))
-    || /\b(SELECT|INSERT|UPDATE|WHERE|JOIN|ALTER|TABLE|NULL)\b|sql\/|npm |\[\w+\]|`|SMTP|\.env|schema|colonne/i.test(t)) textes.delete(t);
+    || /\b(SELECT|INSERT|UPDATE|WHERE|JOIN|ALTER|TABLE|NULL|CASE)\b|sql\/|npm |\[\w+\]|`|SMTP|\.env|schema|colonne/i.test(t)) textes.delete(t);
 }
 
 /* ------------------------------------------------------- confrontation */

@@ -235,7 +235,10 @@ for (const [nom, m] of [['l’accueil', accueil], ['une page de contenu', carnet
    serveur et liés depuis l'accueil, n'étaient réclamés par personne. */
 const ATTENDUS = ['/', '/virage', '/duel-nvn', '/kop', '/deck', '/boosters', '/boutique',
   '/abonnement', '/collection', '/fanzzy', '/carnet', '/amis', '/matchs', '/equipes',
-  '/teletext', '/classement', '/profil', '/compte', '/aide', '/repetition', '/jeux', '/comment-jouer'];
+  '/teletext', '/classement', '/profil', '/aide', '/repetition', '/jeux', '/comment-jouer'];
+/* `/compte` n'y est plus (30 octobre 2026) : connecté, on ne la voit plus —
+   elle renvoie au profil, dont les RÉGLAGES ont repris « Mon compte ». */
+check('« Mon compte » n’y est plus, le profil l’a repris', !accueil.liens.includes('/compte'));
 const manquants = ATTENDUS.filter((h) => !accueil.liens.includes(h));
 check('toutes les destinations du jeu y sont', manquants.length === 0);
 if (manquants.length) console.log('    manquent :', manquants.join(' '));

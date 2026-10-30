@@ -8,7 +8,7 @@
 <script src="/pays.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Mes équipes — thebestfan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,15 +57,8 @@ input:focus{outline:none;border-color:var(--projo)}
    CAPO : il était écrit en or, en onze pixels, cerné d'or, et l'or ne
    s'écrit plus qu'en grand (arbitrage du 2 octobre 2026). Il ne garde ici
    que l'air que sa boîte ne compte pas — six pixels à droite pour le bord et
-   l'ombre, avant la croix. */
+   l'ombre. */
 .club .main{margin-right:6px}
-/* La croix qui retire un club : un bouton-icône, et il fait quarante-quatre
-   pixels comme tout ce qui se touche. Il en faisait vingt-deux, à côté du nom
-   du club qu'on vient voir — la marge négative rend la hauteur prise à la
-   ligne, qui ne grandit pas. */
-.club button{background:none;border:0;color:inherit;opacity:.7;cursor:pointer;font-size:18px;padding:0;
-  min-width:44px;min-height:44px;margin:-10px -8px -10px 0;
-  display:inline-flex;align-items:center;justify-content:center}
 .match{display:flex;align-items:center;gap:10px;padding:11px 14px;font-size:13.5px;
   border-top:1px solid rgba(242,238,228,.07)}
 .match .side{flex:1;display:flex;align-items:center;gap:7px;min-width:0}
@@ -99,7 +92,7 @@ input:focus{outline:none;border-color:var(--projo)}
 /* Le mot du serveur : un refus d'emplacement, et ce qu'il faut faire pour en
    sortir. Dans le flux de la page et non en bandeau flottant — il répond à un
    geste qu'on vient de faire juste au-dessus, et il doit rester lisible le
-   temps de choisir quel club retirer. */
+   temps de le lire. */
 .mot{display:none;border:1px solid rgba(245,195,59,.45);
   background:linear-gradient(rgba(245,195,59,.09),rgba(245,195,59,.09)),var(--panneau);
   border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;margin-bottom:14px}
@@ -180,29 +173,29 @@ const I18N = {
     next:'à venir',last:'derniers résultats',live:'EN DIRECT',today:"aujourd'hui",tomorrow:'demain',
     empty:'Tu ne suis aucun club. Cherche-le ci-dessus pour voir ses résultats et recevoir ses buts en direct.',
     login:'Connecte-toi pour suivre tes clubs.',goal:'BUT DE {team}',goalSeul:'BUT !',
-    nothing:'Aucun club trouvé.',main:'PRINCIPAL',plein:'Tu suis déjà {n} clubs sur {t}. Retire-en un, ou achète un emplacement depuis ton profil.',
-    pleinSans:'Tu n’as plus d’emplacement libre. Retire un club, ou achète un emplacement depuis ton profil.',
+    nothing:'Aucun club trouvé.',main:'PRINCIPAL',plein:'Tu suis déjà {n} clubs sur {t}. Un club choisi est gardé à vie : achète un emplacement depuis ton profil.',
+    pleinSans:'Tu n’as plus d’emplacement libre. Un club choisi est gardé à vie : achète un emplacement depuis ton profil.',
     panne:'Le serveur ne répond pas. Tes clubs sont toujours là — la page se remet à jour toute seule.'},
   en:{title:'MY TEAMS',subtitle:'results, fixtures, live',search:'Search for a club…',
     next:'upcoming',last:'latest results',live:'LIVE',today:'today',tomorrow:'tomorrow',
     empty:'You follow no club yet. Search above to see its results and get its goals live.',
     login:'Sign in to follow your clubs.',goal:'{team} SCORES',goalSeul:'GOAL!',
-    nothing:'No club found.',main:'MAIN',plein:'You already follow {n} clubs out of {t}. Remove one, or buy a slot from your profile.',
-    pleinSans:'You have no free slot left. Remove a club, or buy a slot from your profile.',
+    nothing:'No club found.',main:'MAIN',plein:'You already follow {n} clubs out of {t}. A club you pick is yours for life: buy a slot from your profile.',
+    pleinSans:'You have no free slot left. A club you pick is yours for life: buy a slot from your profile.',
     panne:'The server is not responding. Your clubs are still there — this page refreshes itself.'},
   de:{title:'MEINE TEAMS',subtitle:'Ergebnisse, Spielplan, live',search:'Verein suchen…',
     next:'kommende Spiele',last:'letzte Ergebnisse',live:'LIVE',today:'heute',tomorrow:'morgen',
     empty:'Du folgst noch keinem Verein. Suche oben, um Ergebnisse und Tore live zu bekommen.',
     login:'Melde dich an, um Vereinen zu folgen.',goal:'TOR FÜR {team}',goalSeul:'TOR!',
-    nothing:'Kein Verein gefunden.',main:'HAUPT',plein:'Du folgst bereits {n} von {t} Vereinen. Entferne einen oder kaufe einen Platz im Profil.',
-    pleinSans:'Du hast keinen freien Platz mehr. Entferne einen Verein oder kaufe einen Platz im Profil.',
+    nothing:'Kein Verein gefunden.',main:'HAUPT',plein:'Du folgst bereits {n} von {t} Vereinen. Ein gewählter Verein bleibt dir fürs Leben: kaufe einen Platz im Profil.',
+    pleinSans:'Du hast keinen freien Platz mehr. Ein gewählter Verein bleibt dir fürs Leben: kaufe einen Platz im Profil.',
     panne:'Der Server antwortet nicht. Deine Vereine sind noch da — die Seite aktualisiert sich von selbst.'},
   es:{title:'MIS EQUIPOS',subtitle:'resultados, calendario, directo',search:'Buscar un club…',
     next:'próximos',last:'últimos resultados',live:'EN DIRECTO',today:'hoy',tomorrow:'mañana',
     empty:'No sigues ningún club. Búscalo arriba para ver resultados y recibir sus goles en directo.',
     login:'Entra para seguir a tus clubes.',goal:'GOL DE {team}',goalSeul:'¡GOL!',
-    nothing:'No se encontró ningún club.',main:'PRINCIPAL',plein:'Ya sigues {n} clubes de {t}. Quita uno o compra una plaza desde tu perfil.',
-    pleinSans:'Ya no te queda ninguna plaza libre. Quita un club o compra una plaza desde tu perfil.',
+    nothing:'No se encontró ningún club.',main:'PRINCIPAL',plein:'Ya sigues {n} clubes de {t}. Un club elegido es tuyo para siempre: compra una plaza desde tu perfil.',
+    pleinSans:'Ya no te queda ninguna plaza libre. Un club elegido es tuyo para siempre: compra una plaza desde tu perfil.',
     panne:'El servidor no responde. Tus clubes siguen ahí — la página se actualiza sola.'},
 };
 /* La langue de `langue.js`. Pour l'italien, ces textes retombent sur le
@@ -375,7 +368,6 @@ function render(){
         <img src="${esc(row.team.logo)}" alt="">
         <b>${esc(nomEquipe(row.team))}</b>
         ${row.team.is_main ? `<span class="main tbf-sticker">${t('main')}</span>` : ''}
-        <button data-unfollow="${row.team.id}" title="✕">✕</button>
       </div>
       ${row.live.length ? row.live.map(matchRow).join('') : ''}
       ${row.next.length ? `<div class="section">${t('next')}</div>` + row.next.map(matchRow).join('') : ''}
@@ -383,20 +375,8 @@ function render(){
     </div>`).join('');
 }
 
-$('feed').onclick = async e => {
-  const b = e.target.closest('[data-unfollow]');
-  if (!b) return;
-  const r = await api('/follows/' + b.dataset.unfollow, { method: 'DELETE' });
-  /* **Le retrait aussi doit dire quand il rate.**
-     La réponse était jetée. Un refus — session expirée, serveur muet — laissait
-     donc le club en place après le rechargement, sans un mot : on clique, le
-     club reste, on reclique. C'est mot pour mot le défaut que le commentaire du
-     bouton « suivre », plus bas, dit avoir corrigé ; il n'avait été corrigé que
-     d'un côté. */
-  if (r.status === 401) { authed = false; render(); return; }
-  if (!(r.status >= 200 && r.status < 300)) { dire(t('panne')); return; }
-  await load();
-};
+/* Plus de croix pour retirer un club : un club choisi est gardé à vie
+   (règle de Gaël, 30 octobre 2026). */
 
 /* --------------------------------------------------------- recherche */
 

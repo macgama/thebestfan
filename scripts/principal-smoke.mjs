@@ -75,9 +75,13 @@ check('le second changement de la saison est refusé', r.status === 400
   && r.json.error === 'onboarding.error.principal_saison' && (await principal()).club === 42);
 r = await call('/api/me/follow', { body: { teamId: 50, main: true } });
 check('suivre « en principal » ne contourne pas la règle', (await principal()).club === 42);
-await call('/api/me/follow/42', { method: 'DELETE' });
+/* Un club choisi est gardé à vie (Gaël, 30 octobre 2026) : le retrait est
+   refusé, et le principal reste. */
+r = await call('/api/me/follow/42', { method: 'DELETE' });
+check('un club choisi ne se retire pas', r.status === 403
+  && r.json.error === 'onboarding.error.club_a_vie' && (await principal()).club === 42);
 r = await call('/api/me/principal', { body: { teamId: 50 } });
-check('retirer son principal ne rend pas le changement', r.status === 400 && (await principal()).club === null);
+check('et le principal reste celui choisi cette saison', r.status === 400 && (await principal()).club === 42);
 await q(`UPDATE user_wallet SET principal_saison = 'S0' WHERE user_id = ?`, [U]);
 r = await call('/api/me/principal', { body: { teamId: 50 } });
 check('à la saison suivante, on change de nouveau', r.status === 200 && (await principal()).club === 50);

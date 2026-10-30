@@ -59,7 +59,7 @@ app.get('/api/souvenirs/market', (_q, s) => s.json({ souvenirs: [] }));
 app.get('/api/fanzzy/state', (_q, s) => s.json({ wallet: { scarves: 25 } }));
 const PAGES = [['/', 'index', 'l’accueil'], ['/classement', 'classement', 'le classement'],
   ['/carnet', 'carnet', 'le carnet'], ['/collection', 'collection', 'le classeur'],
-  ['/abonnement', 'abonnement', 'l’abonnement'], ['/compte', 'compte', 'le compte'],
+  ['/abonnement', 'abonnement', 'l’abonnement'], ['/profil', 'profil', 'le profil'],
   ['/deck', 'deck', 'le deck'], ['/boosters', 'boosters', 'les boosters'],
   ['/boutique', 'boutique', 'la boutique'], ['/fanzzy', 'fanzzy', 'la page du Fanzzy'],
   ['/fanzzy/RP1', 'fanzzy-fiche', 'la fiche d’un Fanzzy'], ['/virage', 'virage', 'le Virage'],
@@ -68,6 +68,9 @@ const PAGES = [['/', 'index', 'l’accueil'], ['/classement', 'classement', 'le 
   ['/comment-jouer', 'comment-jouer', 'la page « Comment jouer »'],
   ['/mentions-legales', 'mentions-legales', 'les mentions légales'],
   ['/conditions', 'conditions', 'les conditions d’utilisation et de vente']];
+/* `/compte` n'est plus mesurée connectée : depuis que « Mon compte » a
+   rejoint le profil (30 octobre 2026), elle y renvoie. On mesure le profil,
+   qui porte maintenant ses réglages. */
 for (const [url, fichier] of PAGES) {
   app.get(url, (_q, s) => s.sendFile(path.join(RACINE, 'public', `${fichier}.html`)));
 }

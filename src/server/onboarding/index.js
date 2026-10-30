@@ -604,11 +604,14 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     res.json(await state(req.user.id));
   }));
 
-  router.delete('/follow/:teamId', requireAuth, safe(async (req, res) => {
-    await q(`DELETE FROM user_follows WHERE user_id = ? AND team_id = ?`,
-      [req.user.id, Number(req.params.teamId)]);
-    res.json(await state(req.user.id));
-  }));
+  /* **Un club choisi est gardé à vie** (règle de Gaël, 30 octobre 2026) :
+     on ne le retire plus. Seul le club principal change, entre clubs
+     suivis, par `/principal`. La route répond un refus nommé plutôt que de
+     disparaître, pour qu'une page restée ouverte sur l'ancienne version
+     dise pourquoi rien ne bouge. */
+  router.delete('/follow/:teamId', requireAuth, (_req, res) => {
+    res.status(403).json({ error: 'onboarding.error.club_a_vie' });
+  });
 
   /* **Devenir principal** (choix de Gaël du 28 octobre 2026) : un club suivi
      devient le club principal, une sélection suivie la sélection principale.
