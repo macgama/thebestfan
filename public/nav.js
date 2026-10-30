@@ -146,8 +146,57 @@
    * fiche posée dessus. La comparaison avec la pile d'arrivée le rattrape, sans
    * que cette barre ait à connaître les panneaux de qui que ce soit.
    */
-  const peutRevenir = () => history.length > pileAuDepart
-    || (history.length > 1 && memeSite(document.referrer));
+  const peutRevenir = () => {
+    const avant = pagePrecedente();
+    if (avant !== undefined) return revenirVers(avant);
+    return history.length > pileAuDepart
+      || (history.length > 1 && memeSite(document.referrer));
+  };
+
+  /* **La page d'avant, quand le navigateur sait la dire** (30 octobre 2026).
+   *
+   * Gaël, au sortir d'un duel : la flèche « sortait du jeu », sur la page de
+   * connexion ou sur une page d'erreur. Le référent ne dit pas ce qu'il y a
+   * **derrière** dans l'historique, seulement qui a ouvert la page, et les
+   * deux divergent plus souvent qu'on ne le croit :
+   *
+   * - toucher une notification reprend la fenêtre déjà ouverte et la mène au
+   *   duel (`sw.js`, `navigate`) : le référent est alors notre service worker,
+   *   « de chez nous », alors que derrière il y a la page où la fenêtre dormait
+   *   — la connexion, ou la page d'erreur restée d'une mise en ligne ;
+   * - une page ouverte par `location.replace` garde le référent de celle
+   *   qu'elle remplace, mais derrière elle il y a la page d'avant encore.
+   *
+   * L'API Navigation (Chrome, Edge, Safari et Firefox récents) donne, elle, les
+   * vraies entrées de l'onglet, et seulement celles de notre site : une page
+   * d'erreur ou un site étranger n'y figurent pas. `undefined` = le navigateur
+   * ne sait pas, on garde l'ancienne règle ; `null` = rien de chez nous
+   * derrière. */
+  const pagePrecedente = () => {
+    const nav = window.navigation;
+    if (!nav?.currentEntry || typeof nav.entries !== 'function') return undefined;
+    try {
+      const i = nav.currentEntry.index;
+      const e = i > 0 ? nav.entries()[i - 1] : null;
+      if (!e?.url) return null;
+      const u = new URL(e.url);
+      return u.origin === location.origin ? u : null;
+    } catch { return undefined; }
+  };
+
+  /* Les pages où une flèche intérieure ne ramène jamais : la porte de
+     connexion et l'inscription (revenir dessus, c'est « sortir du jeu »), les
+     adresses du serveur (un retour de connexion Google, par exemple). Et, sur
+     un écran de jeu, l'écran de jeu lui-même : un duel ouvert par-dessus un
+     autre ramènerait à un vestiaire d'hier, pas à l'accueil promis. */
+  const PAS_DE_RETOUR = ['/compte', '/bienvenue'];
+  const revenirVers = (u) => {
+    if (!u) return false;
+    const ou = u.pathname.replace(/\/$/, '') || '/';
+    if (PAS_DE_RETOUR.includes(ou) || ou.startsWith('/api/')) return false;
+    if (ECRANS_DE_JEU.includes(chemin) && ou === chemin) return false;
+    return true;
+  };
 
   /* **Le retour, quand il y a quelque chose où revenir.**
    *

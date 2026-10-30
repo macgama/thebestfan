@@ -306,7 +306,8 @@ const RUBRIQUES = [
           + 'passé est refusé.'
           + (reglage('abo.duels_classes_jour') > 0
             ? ` Sans PASS de tribune, ${reglage('abo.duels_classes_jour')} duels classés `
-              + 'comptent par jour ; au-delà, tu joues toujours, en entraînement.'
+              + 'comptent par jour, dans tous les formats, du 1v1 au 5v5 ; au-delà, tu joues '
+              + 'toujours, en entraînement.'
             : '')],
       ['Peut-on voir tous les supporters d’un Virage ?',
         'Oui : dans l’arène, le bouton LES DEUX TRIBUNES montre les Fanzzy titulaires '
