@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Ultimate en tenue Apocalyptique : 281 images, RP et AN** (branche
+`claude/project-thread-1yifq2`, 30 octobre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Quand le Fanzzy porte sa tenue Apocalyptique, la grande scène Ultimate (duel,
+  Virage, fiche) montre son image Apocalyptique, au fond transposé dans un désert
+  façon Mad Max (sans armes, crânes ni sang) ; sinon, l'image de base. Pas de clip.
+- Après la mise en ligne : sur la fiche d'un Fanzzy dont on a la carte
+  Ultimate, choisir la tenue Apocalyptique puis toucher la tuile ULTIMATE.
+
+---
+
 **Ultimate en tenue Halloween : 281 images, RP et AN** (branche
 `claude/project-thread-wdq9qc`, 30 octobre 2026, demande de Gaël). Construction
 seule, **sans schéma**.
