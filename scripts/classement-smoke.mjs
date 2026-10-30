@@ -425,7 +425,8 @@ check('et aucune équipe étrangère à la compétition ne s’y invite',
   /* **Le club poussé, une part pour un neutre** (Gaël, 30 octobre 2026) :
      un duel enregistré avec son camp va au club de ce camp. Nina ne suit
      pas le Petit Club, qui reçoit à domicile le match 7001 : il reçoit la
-     moitié de sa victoire, et elle ne compte pas parmi ses joueurs. */
+     moitié de sa victoire, et elle compte parmi ses joueurs (même jour,
+     après la simulation de saison). */
   {
     await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,1)', [NEUTRE]);
     const { petit: p0, gros: g1 } = await lire();
@@ -433,7 +434,7 @@ check('et aucune équipe étrangère à la compétition ne s’y invite',
                       VALUES ('dn-4',?,'x','win',7001,NULL,500,'classe',0,NOW(3))`, [NEUTRE]);
     let { petit: p1, gros: g2 } = await lire();
     check('un neutre donne la moitié des points au club poussé',
-      p1.points === p0.points + 1.5 && p1.joueurs === p0.joueurs && p1.gagnes === p0.gagnes + 1
+      p1.points === p0.points + 1.5 && p1.joueurs === p0.joueurs + 1 && p1.gagnes === p0.gagnes + 1
       || (console.log('        petit :', JSON.stringify(p0), '→', JSON.stringify(p1)), false));
     check('et rien à son club principal',
       g2.points === g1.points
@@ -444,6 +445,34 @@ check('et aucune équipe étrangère à la compétition ne s’y invite',
       || (console.log('        petit :', JSON.stringify(p1)), false));
     poserReglages({ 'tribune.plancher': 1 });
     await pool.query(`DELETE FROM duel_results WHERE duel_id = 'dn-4'`);
+    await pool.query('DELETE FROM user_follows WHERE user_id = ?', [NEUTRE]);
+  }
+
+  /* **Cinq duels classés par jour** comptent pour les clubs (Gaël,
+     30 octobre 2026) : Nina en gagne sept pour le Petit Club, le même jour,
+     son club principal. Ses duels classés déjà joués aujourd'hui (celui du
+     neutre, plus haut) entament le plafond : le reste ne rapporte rien. */
+  {
+    await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)', [NEUTRE]);
+    const { petit: p0 } = await lire();
+    const [[{ deja }]] = await pool.query(`SELECT COUNT(*) AS deja FROM duel_results
+                                            WHERE user_id = ? AND mode = 'classe' AND ended_at >= CURDATE()`, [NEUTRE]);
+    const comptes = Math.max(0, 5 - Number(deja));
+    for (let i = 0; i < 7; i++) {
+      await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
+                        VALUES (?,?,'x','win',7001,85,10,'classe',DATE_SUB(NOW(3), INTERVAL ? SECOND))`,
+        [`dj-${i}`, NEUTRE, 1 + i]);
+    }
+    let { petit: p1 } = await lire();
+    check('au plus cinq duels classés par jour comptent pour le club',
+      Number(deja) < 5 && p1.points === p0.points + 3 * comptes && p1.joues === p0.joues + comptes
+      || (console.log('        petit :', JSON.stringify(p0), '→', JSON.stringify(p1)), false));
+    poserReglages({ 'tribune.plancher': 1, 'tribune.duels_jour': 0 });
+    ({ petit: p1 } = await lire());
+    check('zéro désarme le plafond', p1.points === p0.points + 21
+      || (console.log('        petit :', JSON.stringify(p1)), false));
+    poserReglages({ 'tribune.plancher': 1 });
+    await pool.query(`DELETE FROM duel_results WHERE duel_id LIKE 'dj-%'`);
     await pool.query('DELETE FROM user_follows WHERE user_id = ?', [NEUTRE]);
   }
 
@@ -1658,6 +1687,77 @@ const BUD = ID(12);
 
   /* La base rendue comme on l'a trouvée, pour la suite d'après. */
   await appliquer('niveau', 'quotidien', 'couleurs');
+}
+
+/* ------------------------------------ les meilleurs duels, mon club, mon pays
+
+   Gaël, 30 octobre 2026 : seuls les cinq meilleurs duels classés du jour
+   comptent pour la ferveur, et SUPPORTERS et DUELS se lisent aussi parmi
+   les joueurs de mon club principal, ou des clubs de son pays. */
+{
+  const CAP = 'ucap0000-0000-0000-0000-000000000001';
+  const SUI = 'usui0000-0000-0000-0000-000000000001';
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES
+    (?,'cap@ex.fr','Capucine','x'),(?,'sui@ex.fr','Suzon','x')`, [CAP, SUI]);
+  await pool.query(`INSERT INTO teams (id,name,country) VALUES (86,'Autre Suisse','Suisse')`);
+  await pool.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1),(?,86,1)`, [CAP, SUI]);
+  /* Sept duels classés le même jour : 100, 200 … 700 de ferveur. */
+  for (let i = 1; i <= 7; i++) {
+    await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,elo_after,ended_at)
+                     VALUES (?,?,'x','win',7001,85,?,'classe',1200,DATE_SUB(NOW(3), INTERVAL ? SECOND))`,
+      [`cap-${i}`, CAP, i * 100, i]);
+  }
+  await pool.query(`INSERT INTO duel_results (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,elo_after,ended_at)
+                   VALUES ('sui-1',?,'x','win',7001,86,50,'classe',900,NOW(3)),
+                          ('sui-2',?,'x','win',7001,86,50,'classe',900,NOW(3)),
+                          ('sui-3',?,'x','win',7001,86,50,'classe',900,NOW(3))`, [SUI, SUI, SUI]);
+  C.oublier();
+  const ferveurDe = async (q) => Number((await get(`/api/rank/supporters${q}`)).classement
+    .find((x) => x.public_id === CAP)?.ferveur);
+  check('seuls les cinq meilleurs duels classés du jour comptent pour la ferveur',
+    await ferveurDe('?periode=toujours') === 2500
+    || (console.log('        ferveur :', await ferveurDe('?periode=toujours')), false));
+  poserReglages({ 'tribune.plancher': 1, 'ferveur.duels_jour': 0 });
+  C.oublier();
+  check('zéro désarme le plafond de la ferveur', await ferveurDe('?periode=toujours') === 2800);
+  poserReglages({ 'tribune.plancher': 1 });
+  C.oublier();
+
+  const avant = moi;
+  moi = CAP;
+  const club = await get('/api/rank/supporters?periode=toujours&portee=club');
+  check('MON CLUB : les seuls joueurs de mon club principal, et ma place parmi eux',
+    club.portee?.type === 'club' && club.portee.nom === 'Petit Club'
+    && club.classement.length > 0
+    && club.classement.every((x) => x.club === 'Petit Club' || x.public_id === CAP)
+    && !club.classement.some((x) => x.public_id === SUI)
+    && club.moi?.rang === club.classement.findIndex((x) => x.public_id === CAP) + 1
+    && club.moi.sur === club.classement.length
+    || (console.log('        il rend :', JSON.stringify({ ...club, classement: club.classement?.map((x) => x.pseudo) })), false));
+  const pays = await get('/api/rank/supporters?periode=toujours&portee=pays');
+  check('MON PAYS : les joueurs des clubs du même pays',
+    pays.portee?.type === 'pays' && pays.portee.nom === 'Suisse'
+    && pays.classement.some((x) => x.public_id === SUI) && pays.classement.some((x) => x.public_id === CAP)
+    && !pays.classement.some((x) => x.club === 'Gros Club')
+    || (console.log('        il rend :', JSON.stringify(pays.portee), pays.classement?.map((x) => x.pseudo)), false));
+  const duelsPays = await get('/api/rank/duellistes?portee=pays');
+  check('MON PAYS aussi sur la cote des duels, avec ma place',
+    duelsPays.classement[0]?.public_id === CAP && duelsPays.moi?.rang === 1
+    && duelsPays.classement.some((x) => x.public_id === SUI) && duelsPays.plancher > 0
+    || (console.log('        il rend :', JSON.stringify(duelsPays.moi), duelsPays.classement?.map((x) => x.pseudo)), false));
+  const monde = await get('/api/rank/supporters?periode=toujours');
+  check('sans portée, la liste de tout le jeu, sans « moi » ni « portee »',
+    !('portee' in monde) && !('moi' in monde) && monde.classement.some((x) => x.club === 'Gros Club'));
+  moi = 'usans0000-0000-0000-0000-00000000000';
+  const sans = await get('/api/rank/supporters?portee=club');
+  check('sans club principal : la portée sans nom, et une liste vide',
+    sans.portee?.type === 'club' && sans.portee.nom === null && sans.classement.length === 0);
+  moi = avant;
+  await pool.query(`DELETE FROM duel_results WHERE duel_id LIKE 'cap-%' OR duel_id LIKE 'sui-%'`);
+  await pool.query('DELETE FROM user_follows WHERE user_id IN (?,?)', [CAP, SUI]);
+  await pool.query('DELETE FROM users WHERE public_id IN (?,?)', [CAP, SUI]);
+  await pool.query('DELETE FROM teams WHERE id = 86');
+  C.oublier();
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
