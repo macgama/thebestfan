@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Le Virage rapporte aussi des points au championnat des clubs** (branche
+`claude/project-thread-orvzgu`, 29 octobre 2026, accord de Gaël pour la
+table). **Avec schéma** : construction, puis en SSH
+`npm run schema:appliquer` (pose `sql/virage-tribunes.sql`, une table neuve),
+puis redémarrage.
+
+- Le score de la corde de chaque Virage est gardé en base ; une salle rouverte
+  après un redémarrage le reprend.
+- À la fin du vrai match, chaque supporter classé qui a chanté rapporte à son
+  club 3 points si sa tribune a gagné la corde, 1 sur un nul, 0 sinon (club du
+  match s'il le suit, sinon son club principal).
+- Sans le schéma, rien ne casse : seul le Virage ne rapporte pas de points.
+- Après la mise en ligne : /healthz, puis après un match fini, /classement
+  onglet TRIBUNES.
+
+---
+
 **Le classement des clubs devient un championnat de points** (branche
 `claude/project-thread-orvzgu`, 29 octobre 2026, choix de Gaël). Construction
 seule, **sans schéma** (classements, duel, pages TRIBUNES et compétition).
