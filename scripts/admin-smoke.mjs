@@ -889,8 +889,8 @@ console.log('\n— la saison datée —');
   /* ------------------------------------------------- les règles pures */
   {
     const c = SH.carnetDe(null);
-    check('le carnet par défaut est celui de la saison 1 : 10, 40, 100, 180, 260 tampons',
-      c.map((p) => p.tampons).join() === '10,40,100,180,260' || montre('carnet', c));
+    check('le carnet par défaut est celui de la saison 1 : 10, 35, 75, 110, 140 tampons',
+      c.map((p) => p.tampons).join() === '10,35,75,110,140' || montre('carnet', c));
     check('chaque palier a la forme du contrat (n, tampons, nom, gain à quatre clés)',
       c.every((p, i) => p.n === i + 1 && typeof p.nom === 'string'
         && dire(Object.keys(p.gain)) === dire(['echarpes', 'packs', 'xp', 'tampons'])
@@ -922,7 +922,9 @@ console.log('\n— la saison datée —');
       s.map((d) => d.seuil).join() === '1,5000,5000,100000,100000' || montre('seuils', s));
     check('deux seuils égaux se franchissent ensemble, et la suivante est une division qu’on n’a pas',
       SH.divisionPour(5000, s)?.id === 'fervent' && SH.divisionSuivante(5000, s)?.id === 'ultra');
-    poserReglages(avant);
+    /* Les contrôles qui suivent portent sur les seuils d'avant le recalage du
+       30 octobre 2026, posés ici pour ne pas dépendre des défauts. */
+    poserReglages({ 'rang.habitue': 5000, 'rang.fervent': 30000, 'rang.ultra': 100000, 'rang.capo': 300000 });
     check('pas de division sans ferveur ; Sympathisant dès la première',
       SH.divisionPour(0) === null && SH.divisionPour(1)?.id === 'sympathisant');
     check('Habitué au seuil exact, pas un point avant',
@@ -934,6 +936,7 @@ console.log('\n— la saison datée —');
     check('pas de suivante à Capo ; seul Capo donne un titre',
       SH.divisionSuivante(300000) === null && SH.titreDivision(5, 1) === 'Capo de la saison 1'
       && SH.titreDivision(4, 1) === null);
+    poserReglages(avant);
   }
 
   /* ------------------------------------------ les refus de l'administration */

@@ -22,6 +22,12 @@
    pixels dès 360. */
 .tabs .tbf-onglet{flex:1 1 auto;font-size:clamp(11px,3vw,12px);letter-spacing:.04em;
   padding-left:4px;padding-right:4px}
+/* **Parmi qui** (Gaël, 30 octobre 2026) : tout le jeu, mon club, mon pays,
+   sous SUPPORTERS et DUELS, pour un joueur connecté. */
+.portees{display:flex;gap:6px;justify-content:center;margin:8px 0 0;font-size:12px;
+  font-weight:700;letter-spacing:.06em}
+.portees[hidden]{display:none}
+.portees .tbf-filtre{min-height:36px;padding:0 10px}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
@@ -282,6 +288,11 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
          le joueur cherche — il vient de jouer des « entraînements ». -->
     <button data-t="entrainements" class="tbf-onglet">ENTRAÎNEMENT</button>
   </div>
+  <div class="portees" id="portees" role="group" aria-label="Parmi qui" hidden>
+    <button type="button" class="tbf-filtre" data-p="monde" aria-pressed="true">TOUT LE JEU</button>
+    <button type="button" class="tbf-filtre" data-p="club" aria-pressed="false">MON CLUB</button>
+    <button type="button" class="tbf-filtre" data-p="pays" aria-pressed="false">MON PAYS</button>
+  </div>
   <div class="mur" id="list"><div class="spin"></div></div>
   <p class="note" id="note"></p>
 </div></main>
@@ -289,6 +300,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
      a choisi, `fanzzy-etats.js` pour son âge et sa tenue exacts. -->
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
+<script src="/pays.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
@@ -311,6 +323,11 @@ const BRECHES = /([_.])(?=[^_.])|(\p{Ll})(?=\p{Lu})|(\p{L})(?=\p{N})|(\p{N})(?=\
 const nomSecable = (s) => String(s ?? '').replace(BRECHES, (m) => `${m}\u0000`)
   .split('\u0000').map(esc).join('<wbr>');
 let onglet = 'supporters';
+/* Parmi qui : `monde`, `club` (mon club principal) ou `pays` (son pays).
+   Seuls SUPPORTERS et DUELS se lisent ainsi. */
+let portee = 'monde';
+const AVEC_PORTEE = new Set(['supporters', 'duellistes']);
+const porteeDe = () => (AVEC_PORTEE.has(onglet) && qui ? portee : 'monde');
 
 const NOTES = {
   /* **Les deux sources, dites dans l'ordre où on les rencontre** : un joueur
@@ -645,6 +662,12 @@ document.addEventListener('keydown', (e) => {
    nierait alors des parties qui ont eu lieu. Le serveur envoie son
    plancher, et l'écran dit la condition au lieu de la deviner. */
 function placeVide(d) {
+  if (d.portee && !d.portee.nom) {
+    return `<div class="pan vide">${d.portee.type === 'pays'
+      ? 'Ton club principal n’a pas de pays connu : choisis-en un dans ton profil pour te comparer à ton pays.'
+      : 'Choisis ton club principal dans ton profil pour te comparer à ses supporters.'}</div>
+      <a class="tbf-plaque tbf-bloc" data-ton="flare" href="/profil">MON PROFIL</a>`;
+  }
   const n = Number(d.plancher) || 0;
   const dit = n
     ? `Personne n’a encore ${n} parties à son compteur. Ce tableau n’admet qu’à partir de la
@@ -682,9 +705,13 @@ async function charger() {
     const m = await placeP;
     periode = m && !m.saison && motAncre() !== 'saison' ? 'toujours' : 'saison';
   }
+  const p = porteeDe();
+  const params = new URLSearchParams();
+  if (periode) params.set('periode', periode);
+  if (p !== 'monde') params.set('portee', p);
   let d;
   try {
-    const r = await fetch(`/api/rank/${onglet}${periode ? `?periode=${periode}` : ''}`,
+    const r = await fetch(`/api/rank/${onglet}${String(params) ? `?${params}` : ''}`,
       { credentials: 'same-origin' });
     d = await r.json();
     if (!r.ok || !d || d.error) throw new Error(d?.error ?? `http ${r.status}`);
@@ -694,7 +721,7 @@ async function charger() {
   }
   await dessinsP;
   if (mon !== jeton) return;
-  liste = { onglet, periode, ...d };
+  liste = { onglet, periode, parmi: p, ...d };
   rendreListe();
 }
 
@@ -720,13 +747,24 @@ function poserSaison() {
 
 /* La note du bas, et une phrase de plus quand la liste porte des
    divisions : l'écharpe à nœuds n'était nommée nulle part à l'écran. */
+/* « Parmi les supporters de Sion. », devant la note, sous MON CLUB ou MON
+   PAYS. Le pays est l'anglais de l'API, dit dans la langue du lecteur. */
+function parmiDe() {
+  const n = liste?.portee?.nom;
+  if (!n) return '';
+  return liste.portee.type === 'pays'
+    ? `Parmi les supporters de clubs de ce pays : ${window.TBF_PAYS?.nom?.(n) ?? n}. `
+    : `Parmi les supporters de ${n}. `;
+}
+
 function noteDe() {
   const c = liste?.classement ?? [];
   if (!c.length) return '';
   const divisions = liste.onglet === 'supporters' && liste.periode === 'saison'
     && (c.some((x) => divisionDe(x)) || Number(place?.saison?.division?.n) > 0);
-  return NOTES[liste.onglet] + (divisions
+  const note = NOTES[liste.onglet] + (divisions
     ? ' L’écharpe à nœuds dit la division de la saison : touche une ligne pour la lire.' : '');
+  return parmiDe() + note;
 }
 
 function rendreListe() {
@@ -741,7 +779,8 @@ function rendreListe() {
     return;
   }
   const L = c.map(LECTURES[liste.onglet]);
-  const ecart = photographier(`${liste.onglet}:${liste.periode ?? ''}`, L.map((x) => x.cle));
+  const ecart = photographier(`${liste.onglet}:${liste.periode ?? ''}${liste.parmi !== 'monde' ? `:${liste.parmi}` : ''}`,
+    L.map((x) => x.cle));
   const podium = c.slice(0, 3).map((x, i) => marche(x, i, L[i])).join('');
   const lignes = c.slice(3).map((x, i) => ligne(x, i + 3, L[i + 3], ecart)).join('');
   /* Le mot de la valeur, une fois, en tête de la colonne : il se répétait
@@ -783,7 +822,22 @@ function apresMaPlace() {
 function choisir(t) {
   onglet = t;
   document.querySelectorAll('.tabs [data-t]').forEach((x) => x.classList.toggle('on', x.dataset.t === t));
+  poserPortees();
 }
+/* Les trois boutons, sous les onglets qui les lisent et pour un joueur
+   connecté : un visiteur n'a ni club ni pays. */
+function poserPortees() {
+  const el = $('portees');
+  el.hidden = !(qui && AVEC_PORTEE.has(onglet));
+  el.querySelectorAll('[data-p]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === portee)));
+}
+$('portees').onclick = (e) => {
+  const b = e.target.closest('[data-p]');
+  if (!b || b.dataset.p === portee) return;
+  portee = b.dataset.p;
+  poserPortees();
+  charger();
+};
 document.querySelector('.tabs').onclick = (e) => {
   const b = e.target.closest('[data-t]');
   if (!b) return;
@@ -867,9 +921,13 @@ function maPlace() {
 
   if (onglet === 'duellistes' || onglet === 'entrainements') {
     const duel = onglet === 'duellistes';
-    const x = (duel ? m.duels : m.entrainements) ?? {};
+    let x = (duel ? m.duels : m.entrainements) ?? {};
+    /* Sous MON CLUB ou MON PAYS, mon rang parmi eux, sans la flèche depuis
+       la dernière visite, qui compte sur tout le jeu. */
+    const parmi = duel && liste?.portee?.nom ? liste.moi : null;
+    if (parmi) x = { ...x, rang: parmi.rang, sur: parmi.sur };
     if (x.rang) {
-      corps = rangDe(x.rang) + delta(evo[duel ? 'duels' : 'entrainements']?.rang, 'depuis ta dernière visite')
+      corps = rangDe(x.rang) + (parmi ? '' : delta(evo[duel ? 'duels' : 'entrainements']?.rang, 'depuis ta dernière visite'))
         + (duel ? valeur(nombre(x.cote ?? 1000), 'de cote') : valeur(nombre(x.joues), 'parties'));
       dit = `Ta place : ${x.rang}e sur ${x.sur} ${duel ? 'duellistes classés' : 'qui s’entraînent'}`;
     } else if (x.joues) {
@@ -902,13 +960,14 @@ function maPlace() {
        une liste qui n'est pas la sienne. La ligne ne se pose pas ; la
        mienne, si elle est dans la liste, garde son filet. */
     if (liste?.periode === 'saison' && !s) return;
-    const rang = s ? s.rang : m.rang;
+    const parmi = liste?.portee?.nom ? liste.moi : null;
+    const rang = parmi ? parmi.rang : s ? s.rang : m.rang;
     if (rang) {
       const nomDiv = s?.division?.n ? (s.division.nom ?? nomDivision(Number(s.division.n))) : null;
       corps = rangDe(rang) + (s?.division?.n ? maDivision(s.division) : '')
-        + (s ? delta(evo.ferveur?.rang, 'depuis ta dernière visite') : '')
+        + (s && !parmi ? delta(evo.ferveur?.rang, 'depuis ta dernière visite') : '')
         + valeur(nombre(s ? s.ferveur : m.ferveur), 'de ferveur');
-      dit = `Ta place : ${rang}e sur ${s ? s.sur : m.sur} supporters classés${
+      dit = `Ta place : ${rang}e sur ${parmi ? parmi.sur : s ? s.sur : m.sur} supporters classés${
         nomDiv ? `, division ${nomDiv}` : ''}`;
     } else {
       corps = quoi(s ? 'Pas encore classé cette saison' : 'Pas encore classé');
@@ -989,7 +1048,7 @@ function feterMontee(el) {
    écouteurs passent avant la suite de `charger`, qui attend aussi ma place
    pour choisir la liste SUPPORTERS : la liste se dessine donc déjà avec. */
 placeP.then((m) => { place = m; apresMaPlace(); });
-quiP.then((q) => { qui = q; apresMaPlace(); });
+quiP.then((q) => { qui = q; poserPortees(); apresMaPlace(); });
 charger();
 </script>
 <script src="/pwa.js" defer></script>
