@@ -370,7 +370,7 @@ h2{margin:26px 2px 10px}
 
 /* -------------------------------------------------------- les réglages
 
-   Les clubs suivis, la langue, l'adresse, la déconnexion et la suppression,
+   La langue, les notifications, l'adresse, la déconnexion et la suppression,
    rangés derrière une seule bâche RÉGLAGES (`details.tbf-reglages`), en bas
    de la page : le profil se lit d'abord, on règle ensuite. Les
    identifiants que lisent les scripts et les suites ne changent pas, seul
@@ -458,6 +458,13 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 
   <div class="bonus" id="bonus"></div>
 
+  <!-- **Mes clubs, à découvert** (Gaël, 30 octobre 2026 : « caché dans
+       réglage n'est pas adapté »). Ils décident où va la ferveur et pour qui
+       l'on joue : ils passent avant le niveau, juste sous la carte, et plus
+       derrière la bâche RÉGLAGES. -->
+  <h2 class="tbf-cousu">MES CLUBS<i id="clubsCompte"></i></h2>
+  <div class="pan bloc" id="clubs"></div>
+
   <h2 class="tbf-cousu">MON NIVEAU<i id="nivXp"></i></h2>
   <div id="niveau"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
 
@@ -485,8 +492,6 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
   <details class="tbf-reglages reglages" id="reglages">
     <summary class="tbf-plaque tbf-bloc">RÉGLAGES</summary>
     <div class="tbf-reglages-corps">
-      <h3 class="tbf-cousu">MES CLUBS</h3>
-      <div id="clubs"></div>
       <h3 class="tbf-cousu">LANGUE</h3>
       <div class="langues tbf-onglets" data-ton="craie" id="langues"></div>
       <!-- **Les notifications**, venues de « Mon compte » quand les deux pages
@@ -555,8 +560,8 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 /* =======================================================================
    Profil.
    Tout ce qui concerne le joueur au même endroit : sa carte de supporter,
-   ce qu'il possède, son niveau, sa saison, ce qu'il a joué — et, rangés
-   derrière une bâche, ses clubs, sa langue, son compte.
+   ses clubs, ce qu'il possède, son niveau, sa saison, ce qu'il a joué — et,
+   rangés derrière une bâche, sa langue, ses notifications, son compte.
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
@@ -1661,6 +1666,7 @@ function boutonPrincipal(f) {
 function rendreClubs() {
   const libres = Math.max(0, etat.slots.total - etat.slots.used);
   const prix = prixSlot();
+  $('clubsCompte').textContent = `${etat.slots.used} / ${etat.slots.total}`;
   $('clubs').innerHTML =
     (etat.follows ?? []).map((f) => `
       <div class="ligne suivi">
@@ -2032,8 +2038,7 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     if (e.message === 'auth') return;
     $('spin').style.display = 'none';
     $('page').style.display = 'block';
-    /* Dit là où l'on regarde, en haut : les clubs, eux, sont rangés derrière
-       la bâche RÉGLAGES, et un message replié ne dit rien. */
+    /* Dit là où l'on regarde, en haut, sous la carte. */
     $('stats').innerHTML = '<div class="pan" style="grid-column:1/-1"><div class="vide">Serveur injoignable.</div></div>';
   }
 })();
