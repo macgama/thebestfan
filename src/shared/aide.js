@@ -308,6 +308,14 @@ const RUBRIQUES = [
             ? ` Sans PASS de tribune, ${reglage('abo.duels_classes_jour')} duels classés `
               + 'comptent par jour ; au-delà, tu joues toujours, en entraînement.'
             : '')],
+      ['Peut-on voir tous les supporters d’un Virage ?',
+        'Oui : dans l’arène, le bouton LES DEUX TRIBUNES montre les Fanzzy titulaires '
+          + 'des douze supporters qui poussent le plus en ce moment dans chaque tribune, '
+          + 'face à face, et le tien toujours. PARTAGER L’IMAGE en fait une image à envoyer.'],
+      ['En duel à plusieurs, vois-je mes coéquipiers ?',
+        'Oui : tous les Fanzzy de chaque camp sont dans l’arène, le tien devant, les '
+          + 'autres au-dessus et en dessous de la corde, chacun avec son pseudo. En face, '
+          + 'celui qui pousse le plus en ce moment passe devant.'],
       ['Comment savoir où l’on joue en ce moment ?',
         'Sur MATCHS et dans les compétitions, sous chaque match : la pastille verte '
           + 'VIRAGE dit que sa tribune est ouverte et combien de supporters y poussent, '

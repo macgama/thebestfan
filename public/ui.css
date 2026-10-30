@@ -11830,3 +11830,84 @@ html[data-calme~="animations"]::view-transition-new(*){animation:none}
 @keyframes tbf-jeu-bat{50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){ .tbf-jeu .virage::before{animation:none} }
 html[data-calme~="animations"] .tbf-jeu .virage::before{animation:none}
+
+/* ------------------------------------------- les deux tribunes face à face
+
+   La page annexe du Grand Virage (`tribunes-face.js`, 30 octobre 2026) :
+   par-dessus l'écran de jeu, les Fanzzy titulaires des présents, ma
+   tribune en haut à gauche tournée vers la droite, celle d'en face en bas à
+   droite, retournée vers moi ; le VS en feu entre les deux. Chaque figure
+   reçoit sa place de la page (`--x` côté tribune, `--bas` pour les pieds,
+   `--h` la hauteur, en pour cent de la scène) : trois rangées de quatre,
+   la première plus grande. */
+.tbf-face{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;gap:8px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + var(--bas,0px));
+  background:#05070A;color:var(--craie);overflow:hidden}
+.tbf-face-scene{position:relative;flex:1 1 auto;min-height:0;border-radius:14px;overflow:hidden;isolation:isolate;
+  border:1px solid rgba(242,238,228,.14);
+  background:linear-gradient(118deg,#5C4A08 0 49.6%,#0B0B0B 49.6% 50.4%,#0E3B86 50.4%)}
+.tbf-face-scene::before{content:"";position:absolute;inset:0;z-index:0;
+  background:radial-gradient(ellipse at 50% 53%,transparent 30%,rgba(0,0,0,.72))}
+.tbf-face-faisceau{position:absolute;z-index:0;top:-10%;width:30%;height:120%;pointer-events:none;
+  background:linear-gradient(rgba(255,255,255,.3),transparent 70%);filter:blur(10px)}
+.tbf-face-faisceau[data-c=g]{left:4%;rotate:14deg}
+.tbf-face-faisceau[data-c=d]{right:4%;rotate:-14deg}
+.tbf-face-fumee{position:absolute;z-index:0;width:70%;height:30%;border-radius:50%;filter:blur(28px);opacity:.55}
+.tbf-face-fumee[data-tribune=moi]{left:-20%;top:20%;background:var(--projo)}
+.tbf-face-fumee[data-tribune=eux]{right:-20%;bottom:0;background:var(--bleu)}
+.tbf-face-haut{position:absolute;z-index:20;top:12px;left:0;right:0;display:flex;flex-direction:column;
+  align-items:center;gap:6px;pointer-events:none}
+.tbf-face-match{background:#fff;color:#111;font:700 15px/1.2 var(--banner);padding:3px 10px;
+  border:2px solid var(--encre);rotate:-2deg;max-width:92%;text-align:center}
+.tbf-face-titre{font:700 26px/1 var(--banner);letter-spacing:.05em;color:#FFD84A;
+  text-shadow:0 3px 0 var(--encre),0 0 18px rgba(255,190,0,.6)}
+.tbf-face-camp{position:absolute;z-index:20;font:700 15px/1.3 var(--banner);letter-spacing:.04em;
+  padding:2px 9px;rotate:-3deg;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbf-face-camp small{font-size:11px;font-weight:600;margin-left:6px;opacity:.85}
+.tbf-face-camp[data-tribune=moi]{left:10px;top:calc(13% + 4px);background:var(--projo);color:var(--encre)}
+.tbf-face-camp[data-tribune=eux]{right:10px;bottom:2.5%;background:var(--bleu);color:#fff}
+.tbf-face-mur{position:absolute;z-index:5;inset:0;pointer-events:none}
+.tbf-face-mur[data-tribune=moi]{top:19%;bottom:52%}
+.tbf-face-mur[data-tribune=eux]{top:59%;bottom:10%}
+.tbf-face-fz{position:absolute;margin:0;bottom:var(--bas);height:var(--h);
+  aspect-ratio:7/12;filter:drop-shadow(0 6px 6px rgba(0,0,0,.7))}
+.tbf-face-mur[data-tribune=moi] .tbf-face-fz{left:var(--x)}
+.tbf-face-mur[data-tribune=eux] .tbf-face-fz{right:var(--x)}
+.tbf-face-fz img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
+.tbf-face-mur[data-tribune=eux] .tbf-face-fz img{scale:-1 1}
+.tbf-face-fz[data-rangee="1"]{filter:drop-shadow(0 5px 5px rgba(0,0,0,.7)) brightness(.9)}
+.tbf-face-fz[data-rangee="2"]{filter:drop-shadow(0 4px 4px rgba(0,0,0,.7)) brightness(.78) saturate(.85)}
+.tbf-face-fz figcaption{position:absolute;left:50%;bottom:-4px;translate:-50% 0;rotate:-2deg;white-space:nowrap;
+  font:700 10px/14px var(--banner);letter-spacing:.04em;padding:0 5px;border-radius:2px;
+  background:var(--kraft);color:var(--encre)}
+.tbf-face-mur[data-tribune=eux] figcaption{background:#CFE0FF;rotate:2deg}
+.tbf-face-fz[data-moi] figcaption{background:var(--projo);outline:2px solid #fff}
+.tbf-face-plus{position:absolute;z-index:20;font:700 12px/1 var(--banner);padding:4px 9px;border-radius:12px;
+  background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.3)}
+.tbf-face-plus[data-tribune=moi]{right:10px;top:calc(13% + 6px)}
+.tbf-face-plus[data-tribune=eux]{left:10px;bottom:calc(2.5% + 2px)}
+.tbf-face-eclat{position:absolute;z-index:6;left:50%;top:55%;width:62%;aspect-ratio:1;translate:-50% -50%;
+  pointer-events:none;background:radial-gradient(circle,rgba(255,180,40,.75),rgba(255,80,0,.25) 35%,transparent 65%)}
+.tbf-face-vs{position:absolute;z-index:15;left:50%;top:55%;translate:-50% -50%;rotate:-8deg;
+  font:700 66px/1 var(--banner);color:#fff;-webkit-text-stroke:4px var(--encre);pointer-events:none;
+  text-shadow:0 0 30px rgba(255,120,0,.9),0 0 60px rgba(255,60,0,.6)}
+.tbf-face-vide{position:absolute;z-index:20;left:0;right:0;top:62%;text-align:center;margin:0;
+  font:600 14px/1.3 var(--banner);color:var(--craie)}
+.tbf-face-bas{flex:none;display:flex;gap:10px}
+.tbf-face-btn{flex:1;min-height:44px;border-radius:8px;border:1px solid #3A424D;background:#1A2029;
+  color:var(--craie);font:700 15px/1 var(--banner);letter-spacing:.04em;cursor:pointer}
+.tbf-face-btn[data-ton=or]{background:var(--projo);color:var(--encre);border-color:transparent}
+.tbf-face-note{flex:none;margin:0;min-height:0;text-align:center;font:600 12px/1.3 var(--ui);color:var(--craie)}
+.tbf-face-note:empty{display:none}
+/* L'entrée : le VS claque, les deux murs glissent de leur côté ; un but fait
+   sauter le mur qui marque. */
+.tbf-face.joue .tbf-face-vs{animation:tbf-face-vs .55s cubic-bezier(.2,1.6,.4,1) .25s backwards}
+.tbf-face.joue .tbf-face-mur[data-tribune=moi]{animation:tbf-face-g .5s cubic-bezier(.2,.8,.3,1) backwards}
+.tbf-face.joue .tbf-face-mur[data-tribune=eux]{animation:tbf-face-d .5s cubic-bezier(.2,.8,.3,1) .1s backwards}
+.tbf-face-mur.saute .tbf-face-fz{animation:tbf-face-saut .8s cubic-bezier(.3,.7,.4,1)}
+@keyframes tbf-face-vs{from{scale:2.4;opacity:0}}
+@keyframes tbf-face-g{from{translate:-40% 0;opacity:0}}
+@keyframes tbf-face-d{from{translate:40% 0;opacity:0}}
+@keyframes tbf-face-saut{0%,100%{translate:0 0}35%{translate:0 -12%}65%{translate:0 -4%}}
+@media (prefers-reduced-motion:reduce){ .tbf-face *{animation:none!important} }
+html[data-calme~="animations"] .tbf-face *{animation:none!important}
