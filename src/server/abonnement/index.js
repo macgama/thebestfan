@@ -435,7 +435,9 @@ export function createAbonnement({ pool, requireAuth }) {
              ligne disparaît. */
           duelsClassesJour: reglage('abo.duels_classes_jour') || null,
           viragesClassesJour: reglage('abo.virages_classes_jour') || null,
-          tailleClassee: reglage('abo.taille_classe_libre'),
+          /* À 5, aucun format n'est réservé : la ligne de la page disparaît. */
+          tailleClassee: reglage('abo.taille_classe_libre') < 5
+            ? reglage('abo.taille_classe_libre') : null,
         },
         /* Et ce dont il ne décide pas. La liste est courte et elle est là pour
            être lue : c'est la promesse du jeu, et un joueur qui hésite à
