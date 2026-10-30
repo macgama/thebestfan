@@ -49,10 +49,11 @@ const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
-                 souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
+                 virage_tribunes, souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, recompenses, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'tenues.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'tenues.sql',
+  'virage-tribunes.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 /* Les colonnes des chants, **prises dans `sql/quotidien.sql`** et non
@@ -769,6 +770,19 @@ check('la minute double s\u2019ouvre', A.realGoals[0].surgeUntil > Date.now());
   check('la salle l\u2019apprend en m\u00eame temps que le but',
     await until(() => A.fils.some((f) =>
       f.entrees?.some((e) => e.genre === 'tribune'))));
+
+  /* Le score de la corde se garde en base (`sql/virage-tribunes.sql`) : c'est
+     lui qui donne ses points au club de chaque supporter, au championnat des
+     clubs. Il ne vivait que dans la salle. */
+  check('le score de la corde est gardé en base, à chaque but',
+    await (async () => {
+      for (let i = 0; i < 100; i++) {
+        const [[r]] = await pool.query('SELECT buts_dom, buts_ext FROM virage_tribunes WHERE fixture_id = 7001');
+        if (r && r.buts_dom === salle.goals[0] && r.buts_ext === salle.goals[1]) return true;
+        await wait(20);
+      }
+      return false;
+    })());
 
   /* Le fil est born\u00e9. Un match \u00e0 prolongations avec vingt remplacements ne
      doit pas gonfler sans fin dans la m\u00e9moire du serveur. */

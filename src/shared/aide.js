@@ -383,8 +383,10 @@ const RUBRIQUES = [
           + 'Habitué, Fervent, Ultra, puis Capo. Une division atteinte reste acquise '
           + 'jusqu’à la fin de la saison.'],
       ['Comment se classent les clubs ?',
-        () => 'Comme un vrai championnat. Chaque duel classé est un match pour ton '
-          + 'club : 3 points pour une victoire, 1 pour un nul, 0 pour une défaite. Le '
+        () => 'Comme un vrai championnat. Chaque duel classé et chaque Virage sont un '
+          + 'match pour ton club : 3 points pour une victoire, 1 pour un nul, 0 pour une '
+          + 'défaite. Au Virage, c’est ta tribune qui gagne ou perd la corde, compté à la '
+          + 'fin du vrai match. Le '
           + 'club du match si tu le suis, sinon ton club principal : même un soir où '
           + 'ton club ne joue pas, tu peux le faire monter. Les clubs sont rangés sur '
           + `les points par joueur qui a joué (au moins ${reglage('tribune.plancher')}), `

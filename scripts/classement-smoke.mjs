@@ -23,7 +23,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query(`DROP TABLE IF EXISTS pronostics, recompenses, missions_jour, compteurs_jour, user_nouveautes,
   saisons, parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
-                 souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
+                 virage_tribunes, souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 /* Dans l'ordre de `scripts/ordre-schema.mjs` : `admin` pose `reglages`, que
@@ -33,7 +33,7 @@ await raw.query(`DROP TABLE IF EXISTS pronostics, recompenses, missions_jour, co
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'duel.sql',
   'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'etats.sql', 'admin.sql',
   'kop.sql', 'niveau.sql', 'billets.sql', 'saisons.sql', 'historique.sql', 'abonnement.sql',
-  'quotidien.sql']) {
+  'quotidien.sql', 'virage-tribunes.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 /* **Une saison lancée hier**, semée comme l'administration l'écrit
@@ -460,6 +460,47 @@ check('et aucune équipe étrangère à la compétition ne s’y invite',
   check('et MOIS les trente derniers jours', p.points === saisonP + 3);
 
   await pool.query(`DELETE FROM duel_results WHERE duel_id IN ('dn-1','dn-2','dn-3')`);
+
+  /* **Le Virage aussi rapporte des points** (Gaël, 29 octobre 2026) : la
+     tribune qui gagne la corde, 3 points au club de chacun de ses supporters
+     classés. Le match 7001 : le Petit Club reçoit, ses deux supporters y ont
+     chanté ; les quatre du Gros Club aussi, en face. */
+  ({ petit: p, gros: g } = await lire());
+  const avantP = { points: p.points, joues: p.joues }, avantG = { points: g.points, joues: g.joues };
+  await pool.query(`UPDATE fixtures SET status_short = '2H' WHERE id = 7001`);
+  await pool.query(`INSERT INTO virage_tribunes (fixture_id, buts_dom, buts_ext) VALUES (7001, 2, 1)`);
+  ({ petit: p } = await lire());
+  check('un Virage ne compte pas tant que le vrai match n’est pas fini',
+    p.points === avantP.points && p.joues === avantP.joues
+    || (console.log('        petit :', JSON.stringify(p)), false));
+  await pool.query(`UPDATE fixtures SET status_short = 'FT' WHERE id = 7001`);
+  ({ petit: p, gros: g } = await lire());
+  check('la tribune qui gagne la corde rapporte 3 points à chacun de ses supporters',
+    p.points === avantP.points + 6 && p.joues === avantP.joues + 2
+    || (console.log('        petit :', JSON.stringify(p)), false));
+  check('et celle qui perd joue ses matchs sans points',
+    g.points === avantG.points && g.joues === avantG.joues + 4
+    || (console.log('        gros :', JSON.stringify(g)), false));
+  await pool.query(`UPDATE virage_tribunes SET buts_ext = 2 WHERE fixture_id = 7001`);
+  ({ petit: p, gros: g } = await lire());
+  check('à égalité de corde, un point de chaque côté',
+    p.points === avantP.points + 2 && g.points === avantG.points + 4
+    || (console.log('        petit :', JSON.stringify(p), '· gros', JSON.stringify(g)), false));
+  const compV = (await get('/api/rank/competition/61?saison=2026')).tribunes;
+  check('et la compétition du match les compte aussi',
+    compV.find((x) => x.name === 'Petit Club')?.joues >= 3
+    || (console.log('        compétition :', JSON.stringify(compV)), false));
+  {
+    const avant = moi;
+    moi = 'u10000-0000-0000-0000-000000000001';
+    C.oublier();
+    const pl = await get('/api/rank/moi');
+    moi = avant;
+    check('ma place dit les points que j’ai rapportés à mon club',
+      pl.tribune?.nom === 'Petit Club' && Number.isFinite(pl.tribune?.points) && pl.tribune.joues > 0
+      || (console.log('        tribune :', JSON.stringify(pl.tribune)), false));
+  }
+  await pool.query(`DELETE FROM virage_tribunes`);
   await pool.query(`DELETE FROM virage_presence WHERE user_id = ? OR fixture_id = 7999`, [NEUTRE]);
   await pool.query(`DELETE FROM users WHERE public_id = ?`, [NEUTRE]);
   C.oublier();
