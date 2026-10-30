@@ -1,5 +1,36 @@
 # À déposer sur Infomaniak
 
+**Tous les supporters à l'écran : duel à plusieurs et Grand Virage** (branche
+`claude/project-thread-gi4dsl`, 30 octobre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Duel 2v2 à 5v5 : tous les Fanzzy de chaque camp sont dans l'arène, en deux
+  rangées au-dessus et en dessous de la corde, chacun avec son pseudo. Le mien
+  devant ; en face, celui qui pousse le plus en ce moment. 1v1 inchangé.
+- Grand Virage : bouton LES DEUX TRIBUNES dans l'arène, page par-dessus le jeu
+  avec les Fanzzy titulaires des douze qui poussent le plus dans chaque
+  tribune (et le sien toujours), face à face, VS au milieu, relue toutes les
+  3 s ; PARTAGER L'IMAGE fait une image PNG (feuille de partage ou
+  téléchargement). Nouvelle route `GET /api/virage/:match/tribunes`.
+- Après la mise en ligne : un 2v2 avec deux comptes, puis un Virage, bouton
+  LES DEUX TRIBUNES, et PARTAGER L'IMAGE sur le S24+.
+
+---
+
+**La flèche ne sort plus du jeu après un duel** (branche
+`claude/project-thread-b1dg7t`, 30 octobre 2026). Construction seule, **sans
+schéma** (nav.js, accueil).
+
+- La flèche lit la vraie page précédente et ne revient jamais sur la page de
+  connexion, l'inscription ou une page hors du jeu ; sur le duel et le Virage,
+  elle rentre alors à l'accueil.
+- L'accueil, sur un téléphone déjà connecté, n'affiche plus la vitrine des
+  visiteurs quand le serveur ne répond pas (mise en ligne en cours) : il attend,
+  puis montre « LE JEU REVIENT » et réessaie seul.
+- Après la mise en ligne : finir un duel, toucher la flèche, on est à l'accueil.
+
+---
+
 **Mes clubs : visibles sur le profil, et gardés à vie** (branche
 `claude/project-thread-c664mv`, 30 octobre 2026, règle de Gaël). Construction
 seule, **sans schéma**.
