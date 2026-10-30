@@ -1685,6 +1685,21 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
    * L'ouverture du Virage, elle, ne vient pas d'ici : la page la tire de la
    * minute et du coup d'envoi qu'elle a déjà, par la règle de `/live`.
    */
+  /**
+   * **Les deux tribunes face à face** : les Fanzzy titulaires des présents
+   * de ce match, pour la page `/virage-tribunes` (`VirageRoom.tribunesEnFace`).
+   * Une salle fermée ou vide répond deux tribunes vides, pas une erreur : la
+   * page le dit.
+   */
+  router.get('/:fixtureId/tribunes', requireAuth, (req, res) => {
+    res.set('cache-control', 'no-store');
+    const id = Number(req.params.fixtureId);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'fixture' });
+    const room = rooms.get(id);
+    if (!room) return res.json({ fixtureId: id, mien: null, goals: [0, 0], tribunes: [{ n: 0, joueurs: [] }, { n: 0, joueurs: [] }] });
+    res.json(room.tribunesEnFace(req.user.id));
+  });
+
   router.get('/a-jouer', (_req, res) => {
     res.set('cache-control', 'no-store');
     const foules = [];
