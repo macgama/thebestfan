@@ -426,12 +426,18 @@ que `raretes` les a rangées.
 - `principal.sql` (28 octobre 2026) : le club principal qui se change une
   fois par saison, et la sélection nationale principale. Trois colonnes
   (`user_follows.is_main_nation`, `user_wallet.principal_saison`,
-  `user_wallet.selection_saison`), aucune table. Il vient en dernier.
+  `user_wallet.selection_saison`), aucune table.
   **Sans lui, rien ne casse** : le club principal se lit comme avant, le
   bouton du profil répond que le changement n'est pas branché, et le
   démarrage nomme `sql/principal.sql`.
 
-Contrôle : `SHOW TABLES;` doit en lister **61**.
+- `virage-tribunes.sql` (29 octobre 2026) : le score de la corde de chaque
+  Virage, une ligne par match, pour les points du championnat des clubs. Une
+  table neuve, sans clé étrangère, en dernier. **Sans elle, rien ne casse** :
+  le Virage joue comme avant, les duels gardent leurs points, et seul le
+  Virage ne rapporte rien aux clubs (le journal le dit une fois).
+
+Contrôle : `SHOW TABLES;` doit en lister **62**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

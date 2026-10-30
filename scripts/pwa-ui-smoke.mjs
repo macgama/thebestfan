@@ -53,7 +53,10 @@ const manifeste = JSON.parse(
   readFileSync(path.join(RACINE, 'public', 'manifest.webmanifest'), 'utf8'));
 
 check('le manifeste se lit', Boolean(manifeste.name && manifeste.start_url));
-check('il demande le plein écran', manifeste.display === 'standalone');
+/* `fullscreen` depuis le 30 octobre 2026 : sur Android, l'icône cache la
+   barre d'état et les boutons du bas (Gaël voulait le jeu sans eux). Un
+   iPhone ne connaît pas `fullscreen` et retombe sur `standalone`. */
+check('il demande le plein écran', manifeste.display === 'fullscreen');
 /* Pas d'orientation ici : le manifeste verrouille pour tout l'appareil ou pour
    aucun, et l'on veut le portrait sur téléphone mais pas sur tablette. C'est
    `pwa.js` qui s'en charge, écran par écran. */

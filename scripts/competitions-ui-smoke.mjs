@@ -515,8 +515,11 @@ await controlerColonne(page, check, { nom: 'la page des compétitions',
   await page.evaluate(() => document.querySelector('[data-e=tribunes]').click());
   await jusqua(async () => (await page.$eval('thead', (n) => n.textContent)).includes('CLUB'));
   check('changer d’échelle ne redemande rien au serveur', appelsRang === avant);
-  check('les tribunes sont classées sur leur moyenne',
-    (await page.$eval('thead', (n) => n.textContent)).includes('MOYENNE'));
+  /* Un championnat, comme en vrai (Gaël, 29 octobre 2026) : joués,
+     victoires, nuls, défaites, points, et la moyenne par joueur qui range. */
+  check('les tribunes sont classées en championnat, aux points par joueur',
+    /J\s*G\s*N\s*P\s*PTS\s*PTS\/J/.test(await page.$eval('thead', (n) => n.textContent))
+    || (console.log('        en-tête :', await page.$eval('thead', (n) => n.textContent)), false));
 
   await page.evaluate(() => document.querySelector('[data-e=kops]').click());
   await jusqua(async () => (await page.$eval('thead', (n) => n.textContent)).includes('KOP'));

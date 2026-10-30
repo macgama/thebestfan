@@ -89,7 +89,7 @@ national flags, card frame or border, human faces, hands, watermark.`;
  * puce, et c'est à cette taille-là qu'on le verra le plus souvent.
  */
 export const INVITES = {
-  /* ------------------------------------------------- les treize séries */
+  /* ------------------------------------------------- les quinze séries */
   'serie-IM': 'an impossible stairway that loops back into itself, drawn as a '
     + 'terrace of concrete steps, silver metal and pale blue enamel',
   'serie-TR': 'a section of terrace crush barrier — a horizontal rail on two '
@@ -116,6 +116,12 @@ export const INVITES = {
   'serie-RP': 'a freshly mown football pitch shown as a small rectangle of '
     + 'mowing stripes, with a single green shoot sprouting from its centre, '
     + 'silver metal and two tones of grass green enamel',
+  /* LES TERRACES : « debout sous le crachin, et le thé a déjà refroidi ». */
+  'serie-AN': 'a steaming mug of tea resting on a short section of standing '
+    + 'terrace steps with a crush barrier, silver metal and bottle green enamel',
+  /* DIE KURVE : « debout dans le virage, et la montagne regarde le match ». */
+  'serie-SU': 'a cowbell hanging in front of a snowy mountain peak, silver '
+    + 'metal and alpine teal enamel',
 
   /* ---------------------------------------------------- les six types
 

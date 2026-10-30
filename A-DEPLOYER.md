@@ -1,5 +1,255 @@
 # À déposer sur Infomaniak
 
+**Ultimate en tenue Apocalyptique : 281 images, RP et AN** (branche
+`claude/project-thread-1yifq2`, 30 octobre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Quand le Fanzzy porte sa tenue Apocalyptique, la grande scène Ultimate (duel,
+  Virage, fiche) montre son image Apocalyptique, au fond transposé dans un désert
+  façon Mad Max (sans armes, crânes ni sang) ; sinon, l'image de base. Pas de clip.
+- Après la mise en ligne : sur la fiche d'un Fanzzy dont on a la carte
+  Ultimate, choisir la tenue Apocalyptique puis toucher la tuile ULTIMATE.
+
+---
+
+**Ultimate en tenue Halloween : 281 images, RP et AN** (branche
+`claude/project-thread-wdq9qc`, 30 octobre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Quand le Fanzzy porte sa tenue Halloween, la grande scène Ultimate (duel,
+  Virage, fiche) montre son image Halloween, au fond transposé en nuit
+  d'Halloween ; sinon, l'image de base. Pas de clip pour ces images.
+- RP6-e2 et AN47-e2 refaites (plus de texte, un seul visage).
+- Après la mise en ligne : sur la fiche d'un Fanzzy dont on a la carte
+  Ultimate, choisir la tenue Halloween puis toucher la tuile ULTIMATE.
+
+---
+
+**Classements plus justes, divisions et carnet recalés** (branche
+`claude/project-thread-4hxhyh`, 30 octobre 2026, choix de Gaël après la
+simulation de saison). Construction seule, **sans schéma**.
+
+- TRIBUNES (championnat des clubs) : seuls les 5 premiers duels classés du
+  jour de chaque joueur comptent pour les clubs, abonné ou non (réglable dans
+  /admin, « Duels classés comptés par jour pour les clubs », 0 = sans plafond).
+  Un joueur qui pousse un club qu'il ne suit pas compte maintenant parmi les
+  joueurs de ce club : un club sans supporters ne peut plus finir en tête sur
+  un soir creux.
+- Divisions : Habitué 7 000, Fervent 130 000, Ultra 420 000, Capo 880 000 de
+  ferveur (au lieu de 5 000, 30 000, 100 000, 300 000). Si ces seuils ont été
+  changés à la main dans /admin RÉGLAGES, la valeur de /admin reste : la
+  remettre au défaut.
+- Carnet : 10, 35, 75, 110, 140 tampons (base 63 jours) ; la remise à zéro le
+  recale à 25, 85, 180, 265, 335 pour la saison 1. Trimestres : 15, 50, 110,
+  160, 205. Si la saison 1 a déjà son carnet en base, le recaler dans /admin
+  SAISONS avant le premier palier versé.
+- Ferveur au classement : chaque jour, seuls les 5 meilleurs duels classés
+  de chaque joueur comptent (SUPPORTERS, divisions, compétitions). Un abonné
+  joue toujours sans limite. Réglable dans /admin (« Duels classés comptés
+  par jour pour la ferveur », 0 = sans plafond).
+- CLASSEMENT : sous SUPPORTERS et DUELS, trois boutons TOUT LE JEU, MON CLUB,
+  MON PAYS (club principal, ou clubs du même pays), avec sa place parmi eux.
+- Après la mise en ligne : /classement, SUPPORTERS puis MON CLUB et MON PAYS,
+  puis DUELS et MON PAYS, sur le S24+.
+- Outil : `npm run simuler:saison` (simulation d'une saison entière).
+
+---
+
+**Tous les supporters à l'écran : duel à plusieurs et Grand Virage** (branche
+`claude/project-thread-gi4dsl`, 30 octobre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Duel 2v2 à 5v5 : tous les Fanzzy de chaque camp sont dans l'arène, en deux
+  rangées au-dessus et en dessous de la corde, chacun avec son pseudo. Le mien
+  devant ; en face, celui qui pousse le plus en ce moment. 1v1 inchangé.
+- Grand Virage : bouton LES DEUX TRIBUNES dans l'arène, page par-dessus le jeu
+  avec les Fanzzy titulaires des douze qui poussent le plus dans chaque
+  tribune (et le sien toujours), face à face, VS au milieu, relue toutes les
+  3 s ; PARTAGER L'IMAGE fait une image PNG (feuille de partage ou
+  téléchargement). Nouvelle route `GET /api/virage/:match/tribunes`.
+- Après la mise en ligne : un 2v2 avec deux comptes, puis un Virage, bouton
+  LES DEUX TRIBUNES, et PARTAGER L'IMAGE sur le S24+.
+
+---
+
+**La flèche ne sort plus du jeu après un duel** (branche
+`claude/project-thread-b1dg7t`, 30 octobre 2026). Construction seule, **sans
+schéma** (nav.js, accueil).
+
+- La flèche lit la vraie page précédente et ne revient jamais sur la page de
+  connexion, l'inscription ou une page hors du jeu ; sur le duel et le Virage,
+  elle rentre alors à l'accueil.
+- L'accueil, sur un téléphone déjà connecté, n'affiche plus la vitrine des
+  visiteurs quand le serveur ne répond pas (mise en ligne en cours) : il attend,
+  puis montre « LE JEU REVIENT » et réessaie seul.
+- Après la mise en ligne : finir un duel, toucher la flèche, on est à l'accueil.
+
+---
+
+**Mes clubs : visibles sur le profil, et gardés à vie** (branche
+`claude/project-thread-c664mv`, 30 octobre 2026, règle de Gaël). Construction
+seule, **sans schéma**.
+
+- MES CLUBS sort des RÉGLAGES : sous la carte du profil, avant MON NIVEAU,
+  avec le compte des places (« 1 / 2 »).
+- Un club choisi ne se retire plus : plus de croix sur le profil ni sur la
+  page des clubs, et le serveur refuse le retrait (403). Le club principal
+  se change toujours entre clubs suivis, une fois par saison.
+- Après la mise en ligne : /profil, MES CLUBS sous la carte, sans croix.
+
+---
+
+**« Mon compte » rejoint « Mon profil »** (branche
+`claude/project-thread-c664mv`, 30 octobre 2026, choix de Gaël). Construction
+seule, **sans schéma** (profil, compte, menu, textes en cinq langues).
+
+- Les notifications (cinq interrupteurs) sont dans Mon profil › RÉGLAGES, entre
+  Langue et Compte, avec les liens confidentialité et conditions.
+- `/compte` n'est plus que la porte d'entrée (connexion, inscription, mot de
+  passe oublié, Google) ; connecté, elle renvoie au profil. Le lien de
+  vérification d'adresse y arrive toujours et le profil dit « Adresse vérifiée ».
+- « Mon compte » sort du menu ☰.
+- Après la mise en ligne : ☰ › Mon profil › RÉGLAGES, les notifications
+  doivent y être (sur le S24+, depuis l'icône).
+
+---
+
+**Le jeu installé passe en plein écran** (branche
+`claude/project-thread-qkvp99`, 30 octobre 2026, demande de Gaël).
+Construction seule, **sans schéma** (manifeste, pwa.js, script de tête des
+pages).
+
+- Depuis l'icône sur Android, la barre d'état (heure) et les trois boutons du
+  bas disparaissent ; un glissement depuis le bord les fait revenir un instant.
+- Chrome met à jour l'appli installée à son rythme (jusqu'à un jour) : pour
+  le voir tout de suite, retirer l'icône et réinstaller le jeu depuis Chrome.
+- Dans un simple onglet et sur iPhone, rien ne change.
+- Après la mise en ligne : sur le S24+, depuis l'icône, l'accueil ne doit
+  plus garder de bande vide en bas.
+
+---
+
+**Le Virage rapporte aussi des points au championnat des clubs** (branche
+`claude/project-thread-orvzgu`, 29 octobre 2026, accord de Gaël pour la
+table). **Avec schéma** : construction, puis en SSH
+`npm run schema:appliquer` (pose `sql/virage-tribunes.sql`, une table neuve),
+puis redémarrage.
+
+- Le score de la corde de chaque Virage est gardé en base ; une salle rouverte
+  après un redémarrage le reprend.
+- À la fin du vrai match, chaque supporter classé qui a chanté rapporte à son
+  club 3 points si sa tribune a gagné la corde, 1 sur un nul, 0 sinon (club du
+  match s'il le suit, sinon son club principal).
+- Sans le schéma, rien ne casse : seul le Virage ne rapporte pas de points.
+- Après la mise en ligne : /healthz, puis après un match fini, /classement
+  onglet TRIBUNES.
+
+---
+
+**Le classement des clubs devient un championnat de points** (branche
+`claude/project-thread-orvzgu`, 29 octobre 2026, choix de Gaël). Construction
+seule, **sans schéma** (classements, duel, pages TRIBUNES et compétition).
+
+- Chaque duel classé est un match pour le club du joueur : 3 points la
+  victoire, 1 le nul, 0 la défaite (le club du match s'il le suit, sinon son
+  club principal). Les clubs sont rangés sur les points par joueur qui a
+  joué (au moins 5, réglage /admin `tribune.plancher`), avec J, G, N, P.
+- Le bilan d'un duel classé dit la ferveur vraiment comptée (renfort, neutre)
+  et les points rapportés au club.
+- Le réglage /admin « Un neutre apporte au club qu'il pousse » disparaît.
+- Après la mise en ligne : /classement onglet TRIBUNES, une compétition onglet
+  TRIBUNES, et le bilan d'un duel classé.
+
+---
+
+**Le tifo des mini-jeux dit ses peintres sans recharger** (branche
+`claude/project-thread-uo93xw`, 29 octobre 2026, tour de test demandé par
+Gaël). Construction seule, **sans schéma** (public/jeux-club.js).
+
+- Après avoir peint des cases, « Fidèle à … % · Peintres : … » se met à jour
+  tout seul (il restait à 0 jusqu'au prochain rechargement).
+- Après la mise en ligne : /jeux, onglet TIFO, peindre une case.
+
+---
+
+**Les sept boosters manquants et les pin's de série AN et SU** (branche
+`claude/project-thread-53a9gs`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** (images et public/cartes.js).
+
+- Boosters des VIP, de la Gastronomie de comptoir, des Galères de
+  déplacement, des Phénomènes météo, des Héros du canapé, des Terraces et de
+  Die Kurve, dessinés sur le modèle de LA TRIBUNE (mode rapide, sans crédits).
+- Pin's de série des Terraces (tasse de thé sur les marches) et de Die Kurve
+  (cloche devant la montagne) : la collection et le kiosque les montrent.
+- Après la mise en ligne : le kiosque (/boosters) et la collection, sur ces
+  séries.
+
+---
+
+**Le score en direct des clubs suivis, dans la notification** (branche
+`claude/project-thread-33twb0`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** (même case « Mon club joue »).
+
+- Après l'alerte 30 minutes avant le match, la même notification change à
+  chaque but (club qui marque et minute), à la mi-temps (sans vibrer) et au
+  coup de sifflet final, avec un bouton « Voir le match ».
+- Choix de Gaël : un match commencé avant 22 h envoie son score jusqu'à la
+  fin, même après 22 h. Le reste se tait toujours la nuit.
+- FAQ, /comment-jouer, /compte et /confidentialite à jour, cinq langues.
+- Après la mise en ligne : sur le S24+, rouvrir le jeu une fois (nouveau
+  service worker), puis attendre le prochain match d'un club suivi.
+
+---
+
+**AN6 redessinée à l'âge 1 en Halloween** (branche
+`claude/project-thread-gtu1ix`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** (images et index.json).
+
+- AN6 âge 1 Halloween : nouvelle planche (mode rapide, sans crédits), les
+  jambes ne sont plus coupées. AN6 âge 1 Apocalyptique : planche redécoupée,
+  le dépit n'a plus deux figures, et ses expressions ont la taille du repos.
+- Après la mise en ligne : la fiche d'AN6 à l'âge 1, en Halloween et en
+  Apocalyptique.
+
+---
+
+**/admin SAISONS : le formulaire ne propose que les nouveautés** (branche
+`claude/project-thread-9kuov4`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma**.
+
+- Nouvelle saison ou saison modifiée : seules les séries, tenues, pièces,
+  cartes et stades **pas encore en jeu** ont une case. Le déjà en jeu se lit
+  replié (« Déjà en jeu : N »), sans case, et reste ouvert ; ce qu'une saison
+  nommait déjà repart tel quel à l'enregistrement.
+- La confirmation « Lancer la saison » ne liste que ce qui est neuf pour les
+  joueurs, toutes familles comprises.
+- Après la mise en ligne : /admin, SAISONS, Modifier la saison 2.
+
+---
+
+**Un test du son sur /diagnostic** (branche `claude/project-thread-m3tqk9`,
+29 octobre 2026, demandé par Gaël : pas de son sur le mobile). Construction
+seule, **sans schéma**.
+
+- Bouton « Tester le son » sur /diagnostic : joue un carillon par le moteur
+  du jeu et deux secondes de musique par un simple lecteur, et dit ce qui
+  bloque (sons coupés dans le tiroir, volume du jeu, économie de données,
+  moteur bloqué par le navigateur, ou le téléphone lui-même).
+- Après la mise en ligne : ouvrir thebestfan.online/diagnostic sur le S24+
+  depuis l'icône, toucher le bouton, envoyer une capture.
+
+---
+
+**Les Fanzzy AN de base clignent presque tous** (branche
+`claude/project-thread-j17xyz`, 29 octobre 2026, demandé par Gaël).
+Construction seule, **sans schéma** : des images et des réglages.
+
+- 37 âges AN de base de plus clignent, et la légendaire AN66 : AN de base
+  185 sur 186. Retouches en mode rapide Artlist, sans crédits.
+- AN64 (la Tisseuse) ne cligne pas : son repos a les yeux fermés par dessin.
+
+---
+
 **La taille des Fanzzy par âge, skin et état** (branche
 `claude/project-thread-gtu1ix`, 28 octobre 2026, demandé par Gaël).
 Construction seule, **sans schéma** (images et index.json).

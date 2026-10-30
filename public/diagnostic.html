@@ -26,6 +26,9 @@
   dt:first-of-type,dl>dt:first-child+dd{border-top:0}
   .hint{font-size:12px;opacity:.45;line-height:1.7;margin-top:18px}
   code{background:rgba(255,255,255,.07);padding:2px 5px;border-radius:3px;font-size:11.5px}
+  h2{font-size:13px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;font-weight:600;margin:34px 0 14px}
+  .tester{display:block;width:100%;margin:0 0 14px;padding:15px;border:0;border-radius:10px;font:inherit;font-weight:700;
+          letter-spacing:.08em;text-transform:uppercase;background:var(--projo);color:#0F1216;cursor:pointer}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -73,6 +76,31 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
   Si le transport affiche <code>websocket</code>, le duel temps réel passera.
   Reviens dans quelques heures sans y toucher : si l'uptime a été remis à zéro,
   c'est que l'hébergement endort le process au repos.</p>
+
+  <!-- Le son, de ce téléphone (29 octobre 2026, Gaël : « le son ne
+       fonctionne pas sur mobile, sur PC oui »). Ce qui bloque n'est pas
+       toujours dans le jeu : le tiroir, le volume du jeu, l'économie de
+       données, le moteur du navigateur — et, hors de portée de la page, le
+       volume Multimédia et le réglage « Son » du site dans Chrome. La page
+       teste deux chemins : le moteur du jeu (Web Audio) et un simple
+       lecteur audio, pour savoir lequel se tait. -->
+  <h2>Son de cet appareil</h2>
+  <button class="tester" id="sonTester" type="button">Tester le son</button>
+  <div class="verdict" id="sonVerdict"><b id="sonTitre">Pas encore testé</b><p id="sonTexte">Touche le bouton : tu dois entendre un carillon, puis deux secondes de musique.</p></div>
+  <dl>
+    <dt>Sons du jeu (tiroir)</dt><dd id="sonCalme">—</dd>
+    <dt>Musique (tiroir)</dt><dd id="sonMusique">—</dd>
+    <dt>Volume du jeu</dt><dd id="sonVolume">—</dd>
+    <dt>Économie de données</dt><dd id="sonDonnees">—</dd>
+    <dt>Ouvert depuis</dt><dd id="sonMode">—</dd>
+    <dt>Moteur audio</dt><dd id="sonContexte">—</dd>
+    <dt>Carillon (moteur du jeu)</dt><dd id="sonCarillon">—</dd>
+    <dt>Lecteur audio simple</dt><dd id="sonLecteur">—</dd>
+  </dl>
+  <p class="hint">Si tout est vert et que tu n'entends rien : monte le volume
+  <b>Multimédia</b> du téléphone (pas la sonnerie), puis dans Chrome, touche le
+  cadenas à gauche de l'adresse, ou ⋮ › Paramètres › Paramètres des sites ›
+  Son, et vérifie que thebestfan.online n'y est pas en « Bloqué ».</p>
 </main>
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -154,7 +182,48 @@ async function health(){
   }catch(e){ $('node').textContent = 'injoignable'; }
 }
 health(); setInterval(health, 5000);
+
+/* ------------------------------------------------------------- le son */
+const calmeDe = (f) => (document.documentElement.dataset.calme ?? '').split(' ').includes(f);
+function etatSon(){
+  $('sonCalme').textContent = calmeDe('sons') ? 'coupés' : 'actifs';
+  $('sonMusique').textContent = calmeDe('sons') || calmeDe('musique') ? 'coupée' : 'active';
+  const v = window.TBF_SON ? TBF_SON.volume() : null;
+  $('sonVolume').textContent = v === null ? '—' : `${Math.round(v * 100)} %`;
+  $('sonDonnees').textContent = navigator.connection?.saveData ? 'activée' : 'non';
+  $('sonMode').textContent = matchMedia('(display-mode: browser)').matches ? 'un onglet' : "l'icône";
+  $('sonContexte').textContent = window.TBF_SON ? TBF_SON.etat().contexte : 'absent';
+}
+etatSon();
+window.addEventListener('load', etatSon);
+window.addEventListener('tbf-calme', etatSon);
+
+$('sonTester').addEventListener('click', () => {
+  // Dans le geste même : le moteur du jeu, puis le lecteur simple.
+  const parti = window.TBF_SON ? TBF_SON.jouer('carillon') : false;
+  $('sonCarillon').textContent = parti ? 'joué' : 'pas joué';
+  const a = new Audio('/son/musique-accueil.07fdc38b.mp3');
+  a.volume = 0.6;
+  a.play().then(() => {
+    $('sonLecteur').textContent = 'joué';
+    setTimeout(() => a.pause(), 2000);
+  }).catch((e) => { $('sonLecteur').textContent = `refusé (${e.name})`; });
+  setTimeout(() => {
+    etatSon();
+    const ctxEtat = window.TBF_SON ? TBF_SON.etat().contexte : 'absent';
+    const v = window.TBF_SON ? TBF_SON.volume() : 1;
+    if (calmeDe('sons')) verdictSon('ko', 'Sons coupés dans le jeu', 'Ouvre le menu du jeu et éteins « Couper les sons ».');
+    else if (v === 0) verdictSon('ko', 'Volume du jeu à zéro', 'Monte le volume dans le menu du jeu.');
+    else if (ctxEtat !== 'running') verdictSon('ko', 'Le navigateur bloque le moteur', `Le moteur audio est « ${ctxEtat} ». Envoie une capture de cette page.`);
+    else verdictSon('ok', 'Le jeu envoie le son', "Si tu n'as rien entendu, c'est le téléphone : volume Multimédia ou réglage Son du site dans Chrome (voir plus bas).");
+  }, 600);
+});
+function verdictSon(cls, titre, texte){
+  $('sonVerdict').className = 'verdict ' + cls;
+  $('sonTitre').textContent = titre; $('sonTexte').textContent = texte;
+}
 </script>
+<script src="/son.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>

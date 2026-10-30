@@ -67,7 +67,7 @@ export const VIDER = [
   // les connexions (celles d'un admin restent : voir plus bas)
   'auth_tokens', 'login_attempts',
   // les duels et ce qui fait les classements
-  'duels', 'duel_events', 'duel_results', 'virage_presence',
+  'duels', 'duel_events', 'duel_results', 'virage_presence', 'virage_tribunes',
   // la collection, le deck, la bourse
   'user_wallet', 'user_fanzzy', 'user_skins', 'user_stuff', 'user_etats', 'user_decks',
   'user_souvenirs', 'user_stades', 'user_nouveautes',
