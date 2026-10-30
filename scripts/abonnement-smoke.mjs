@@ -552,6 +552,10 @@ check('tous les formats de duel restent ouverts à tous',
     abonnement.tailleClasseeMax(true) === Infinity);
   check('et sans abonnement, le classé s’arrête au réglage',
     abonnement.tailleClasseeMax(false) === reglage('abo.taille_classe_libre'));
+  /* Gaël, 30 octobre 2026 : sans abonnement, tous les formats se jouent en
+     classé, dans les duels classés du jour — le 2v2 doit pouvoir se remplir. */
+  check('par défaut, le 5v5 se joue en classé sans abonnement',
+    abonnement.tailleClasseeMax(false) >= 5);
 }
 
 
