@@ -443,9 +443,11 @@ export const REGLAGES = [
 
   { cle: 'abo.taille_classe_libre', section: 'abonnement', type: 'entier',
     titre: 'Plus grand format classé sans abonnement', unite: 'joueurs par camp',
-    min: 1, max: 5, defaut: 1,
-    aide: 'Le 2v2 et au-dessus restent jouables par tout le monde — en ' +
-      'entraînement. À 5, plus aucun format n’est réservé.' },
+    min: 1, max: 5, defaut: 5,
+    aide: 'À 5 (choix de Gaël du 30 octobre 2026), tous les formats se jouent ' +
+      'en classé sans abonnement, dans les duels classés du jour : sinon le ' +
+      '2v2 et au-dessus ne se rempliraient jamais. Plus bas, les grands formats ' +
+      'restent jouables par tout le monde, en entraînement.' },
 
   /* -------------------------------------------------------------- deck */
   { cle: 'deck.fanzzy', section: 'deck', type: 'entier',
