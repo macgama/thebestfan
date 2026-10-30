@@ -183,9 +183,9 @@ h2{margin:26px 2px 10px}
   .ligne{flex-wrap:wrap;row-gap:2px}
   .ligne .n{flex:1 1 100%}
   .ligne .v{flex:1 1 auto}
-  /* Un club suivi ne se replie pas : son blason, son nom, PRINCIPAL et la
-     croix tiennent sur une ligne, et le nom cède — replié, le blason
-     restait seul sur la sienne et la croix tombait sous le nom. */
+  /* Un club suivi ne se replie pas : son blason, son nom et PRINCIPAL
+     tiennent sur une ligne, et le nom cède — replié, le blason restait seul
+     sur la sienne. */
   .ligne.suivi{flex-wrap:nowrap}
   .ligne.suivi .n{flex:1 1 auto}
 }
@@ -213,12 +213,6 @@ h2{margin:26px 2px 10px}
 #notifCases .tbf-interrupteur[disabled]{opacity:.55;cursor:wait}
 .legal{font-size:12.5px;text-align:center;margin:18px 0 4px}
 .legal a{color:var(--craie);display:inline-flex;align-items:center;min-height:44px}
-/* La croix qui retire un club : un bouton-icône de quarante-quatre pixels,
-   pas une plaque. Elle ne vise que la croix : une règle plus large battait
-   en spécificité toute plaque posée dans une ligne. */
-.ligne button[data-unfollow]{background:none;border:0;color:inherit;opacity:.88;cursor:pointer;
-  font-size:17px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;
-  justify-content:center}
 /* L'achat d'un emplacement est une plaque d'or (acheter = or), compacte pour
    tenir dans sa ligne ; sous 440 px elle passe sous son libellé. */
 .ligne #buyslot{flex:none;padding:9px 14px;min-height:44px;font-size:13px}
@@ -370,7 +364,7 @@ h2{margin:26px 2px 10px}
 
 /* -------------------------------------------------------- les réglages
 
-   Les clubs suivis, la langue, l'adresse, la déconnexion et la suppression,
+   La langue, les notifications, l'adresse, la déconnexion et la suppression,
    rangés derrière une seule bâche RÉGLAGES (`details.tbf-reglages`), en bas
    de la page : le profil se lit d'abord, on règle ensuite. Les
    identifiants que lisent les scripts et les suites ne changent pas, seul
@@ -458,6 +452,13 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 
   <div class="bonus" id="bonus"></div>
 
+  <!-- **Mes clubs, à découvert** (Gaël, 30 octobre 2026 : « caché dans
+       réglage n'est pas adapté »). Ils décident où va la ferveur et pour qui
+       l'on joue : ils passent avant le niveau, juste sous la carte, et plus
+       derrière la bâche RÉGLAGES. -->
+  <h2 class="tbf-cousu">MES CLUBS<i id="clubsCompte"></i></h2>
+  <div class="pan bloc" id="clubs"></div>
+
   <h2 class="tbf-cousu">MON NIVEAU<i id="nivXp"></i></h2>
   <div id="niveau"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
 
@@ -485,8 +486,6 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
   <details class="tbf-reglages reglages" id="reglages">
     <summary class="tbf-plaque tbf-bloc">RÉGLAGES</summary>
     <div class="tbf-reglages-corps">
-      <h3 class="tbf-cousu">MES CLUBS</h3>
-      <div id="clubs"></div>
       <h3 class="tbf-cousu">LANGUE</h3>
       <div class="langues tbf-onglets" data-ton="craie" id="langues"></div>
       <!-- **Les notifications**, venues de « Mon compte » quand les deux pages
@@ -555,8 +554,8 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 /* =======================================================================
    Profil.
    Tout ce qui concerne le joueur au même endroit : sa carte de supporter,
-   ce qu'il possède, son niveau, sa saison, ce qu'il a joué — et, rangés
-   derrière une bâche, ses clubs, sa langue, son compte.
+   ses clubs, ce qu'il possède, son niveau, sa saison, ce qu'il a joué — et,
+   rangés derrière une bâche, sa langue, ses notifications, son compte.
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
@@ -1661,6 +1660,7 @@ function boutonPrincipal(f) {
 function rendreClubs() {
   const libres = Math.max(0, etat.slots.total - etat.slots.used);
   const prix = prixSlot();
+  $('clubsCompte').textContent = `${etat.slots.used} / ${etat.slots.total}`;
   $('clubs').innerHTML =
     (etat.follows ?? []).map((f) => `
       <div class="ligne suivi">
@@ -1669,8 +1669,6 @@ function rendreClubs() {
         ${f.is_main ? '<span class="main">PRINCIPAL</span>' : ''}
         ${f.is_main_nation ? '<span class="main">SÉLECTION</span>' : ''}
         ${boutonPrincipal(f)}
-        <button data-unfollow="${esc(f.team_id)}" data-nom="${esc(f.name ?? '')}"
-          aria-label="Ne plus suivre ${esc(f.name ?? 'ce club')}">✕</button>
       </div>`).join('')
     + Array.from({ length: libres }, () => `
       <div class="ligne libre"><span class="n">emplacement libre</span>
@@ -1791,21 +1789,6 @@ function rendre() {
 /* ---------------------------------------------------------- actions */
 
 $('clubs').addEventListener('click', async (e) => {
-  const u = e.target.closest('[data-unfollow]');
-  if (u) {
-    /* Ne plus suivre un club se demande : la croix est petite, au bord de
-       la ligne, et ce qu'elle retire — la tribune où va la ferveur — ne se
-       voit pas tout de suite. */
-    const nom = u.dataset.nom || 'ce club';
-    if (!(await window.TBF_DIALOGUE?.confirmer({
-      titre: `NE PLUS SUIVRE ${nom.toLocaleUpperCase('fr')} ?`,
-      texte: 'Ta ferveur n’ira plus à sa tribune. Tu pourras le suivre de nouveau depuis les clubs.',
-      oui: 'NE PLUS SUIVRE', ton: 'flare', non: 'GARDER',
-    }))) return;
-    try { etat = await me('/follow/' + u.dataset.unfollow, undefined, 'DELETE'); rendreClubs(); rendreCarte(); }
-    catch (err) { if (err.message !== 'auth') dire('Impossible pour le moment', { erreur: true }); }
-    return;
-  }
   const p = e.target.closest('[data-principal]');
   if (p) {
     const nom = p.dataset.nom || 'ce club';
@@ -2032,8 +2015,7 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     if (e.message === 'auth') return;
     $('spin').style.display = 'none';
     $('page').style.display = 'block';
-    /* Dit là où l'on regarde, en haut : les clubs, eux, sont rangés derrière
-       la bâche RÉGLAGES, et un message replié ne dit rien. */
+    /* Dit là où l'on regarde, en haut, sous la carte. */
     $('stats').innerHTML = '<div class="pan" style="grid-column:1/-1"><div class="vide">Serveur injoignable.</div></div>';
   }
 })();

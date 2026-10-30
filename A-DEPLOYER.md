@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Mes clubs : visibles sur le profil, et gardés à vie** (branche
+`claude/project-thread-c664mv`, 30 octobre 2026, règle de Gaël). Construction
+seule, **sans schéma**.
+
+- MES CLUBS sort des RÉGLAGES : sous la carte du profil, avant MON NIVEAU,
+  avec le compte des places (« 1 / 2 »).
+- Un club choisi ne se retire plus : plus de croix sur le profil ni sur la
+  page des clubs, et le serveur refuse le retrait (403). Le club principal
+  se change toujours entre clubs suivis, une fois par saison.
+- Après la mise en ligne : /profil, MES CLUBS sous la carte, sans croix.
+
+---
+
 **« Mon compte » rejoint « Mon profil »** (branche
 `claude/project-thread-c664mv`, 30 octobre 2026, choix de Gaël). Construction
 seule, **sans schéma** (profil, compte, menu, textes en cinq langues).
