@@ -3787,6 +3787,42 @@ check('aucune erreur de script pendant ces contrôles du hub', erreurs.length ==
   await page.close();
 }
 
+{
+  /* **Android, sans proposition de Chrome** (30 octobre 2026). Gaël avait
+     retiré l'icône pour la réinstaller : Chrome ne repropose pas tout de
+     suite, et l'entrée restait cachée. Elle explique maintenant le geste du
+     menu de Chrome, qui marche toujours. */
+  const page = await ouvrir();
+  await page.setUserAgent('Mozilla/5.0 (Linux; Android 15; SM-S926B) AppleWebKit/537.36 '
+    + '(KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36');
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.waitForFunction(() => !document.getElementById('ouverture'),
+    { timeout: OUVERTURE_MS }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 400));
+  await page.click('#burger');
+  await new Promise((r) => setTimeout(r, 300));
+  const avant = await page.evaluate(() => {
+    const b = document.getElementById('tbf-installer');
+    return b ? { cachee: b.hidden, facon: b.dataset.facon ?? '' } : null;
+  });
+  if (avant && !avant.cachee) await page.click('#tbf-installer');
+  await new Promise((r) => setTimeout(r, 150));
+  const apres = await page.evaluate(() => {
+    const b = document.getElementById('tbf-installer');
+    const c = document.getElementById('tbf-installer-android');
+    const r = c?.getBoundingClientRect();
+    return {
+      texte: c && !c.hidden && r.height > 0 ? c.textContent.replace(/\s+/g, ' ').trim() : null,
+      relie: b?.getAttribute('aria-controls') ?? null,
+    };
+  });
+  check('sur Android sans proposition, on explique le menu de Chrome',
+    avant?.facon === 'expliquer' && /Ajouter à l’écran d’accueil/.test(apres.texte ?? '')
+    && apres.relie === 'tbf-installer-android'
+    || (console.log('        l’entrée :', JSON.stringify(avant), JSON.stringify(apres)), false));
+  await page.close();
+}
+
 /* ------------------------------------------------ faire défiler ses âges
 
  * Le joueur qui a fait grandir son Fanzzy possède **plusieurs dessins du même

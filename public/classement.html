@@ -5,7 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Classements — thebestfan</title>
 <!-- Permanent Marker dans la même ligne qu'Oswald : « TA PLACE EST LÀ », sur
      le classement vide, est l'un des six emplois du marqueur. Le fichier de
@@ -317,7 +317,7 @@ const NOTES = {
      qui ne faisait que des duels lisait sinon une explication qui ne
      décrivait pas le classement qu'il avait sous les yeux. */
   supporters: 'La ferveur se gagne en chantant dans le Grand Virage et en gagnant des duels classés. Un joueur qui n’a jamais ouvert un booster peut être premier.',
-  tribunes: 'Les clubs sont classés sur la ferveur moyenne par supporter, pas sur le total. Trente fidèles qui chantent juste passent devant mille abonnés qui regardent. Un joueur qui pousse un club qu’il ne suit pas lui apporte un dixième de sa ferveur.',
+  tribunes: 'Un championnat, comme en vrai : chaque duel classé et chaque Virage sont un match pour le club poussé. Une victoire rapporte 3 points, un nul 1, une défaite 0 ; au Virage, c’est ta tribune qui gagne ou perd la corde. Un club que tu ne suis pas n’en reçoit qu’une part. Les clubs sont classés sur les points par joueur qui a joué, pour que les petits clubs aient leur chance.',
   duellistes: 'Classé sur la cote, pas sur le nombre de victoires : battre plus fort rapporte plus, perdre contre plus faible coûte plus. Tout le monde part de 1000. Duels contre de vrais adversaires uniquement — les entraînements ne comptent pas.',
   /* **Ce tableau classe sur les parties jouées, et il faut le dire** : on
      s'entraîne aussi contre des machines, et classer sur les victoires ferait
@@ -487,11 +487,14 @@ const LECTURES = {
   supporters: (x) => ({ cle: x.public_id ?? `p:${x.pseudo}`, joueur: true, nom: x.pseudo,
     sous: [x.club], plus: [compte(x.matchs, 'match', 'matchs'), compte(x.vecus, 'vécu', 'vécus')],
     val: nombre(x.ferveur), unite: 'FERVEUR', mot: 'de ferveur' }),
-  /* Le nombre de supporters reste sur la ligne d'une tribune : c'est ce qui
-     explique sa moyenne, et la note du bas le dit. */
+  /* Le championnat des clubs : les points par joueur en grand, sur quoi la
+     liste est rangée ; les points, et victoires-nuls-défaites, dessous —
+     c'est ce qui explique la moyenne. Le reste s'ouvre au toucher. */
   tribunes: (x) => ({ cle: `t:${x.id}`, nom: x.name, logo: x.logo,
-    sous: [x.country, compte(x.supporters, 'supporter', 'supporters')], plus: [],
-    val: nombre(x.moyenne), unite: 'PAR TÊTE', mot: 'par tête' }),
+    sous: [compte(x.points, 'point', 'points'),
+      Number(x.joues) > 0 ? `${Number(x.gagnes)}\u00a0V · ${Number(x.nuls)}\u00a0N · ${Number(x.perdus)}\u00a0D` : null],
+    plus: [x.country, compte(x.joueurs, 'joueur', 'joueurs'), compte(x.supporters, 'supporter', 'supporters')],
+    val: nombre(x.moyenne), unite: 'PTS / JOUEUR', mot: 'points par joueur' }),
   /* Le grand chiffre est **la cote**, sur laquelle on est classé ; les
      victoires et le taux s'ouvrent au toucher. Les écrire sous le nom
      faisait lire un classement de victoires rangé dans un ordre qui n'est
@@ -880,16 +883,16 @@ function maPlace() {
     }
   } else if (onglet === 'tribunes') {
     /* **Ce tableau ne classe pas des joueurs** : la question qu'on se pose
-       devant lui est l'autre — à quelle tribune va ma ferveur ? Un
-       supporter qui pousse en neutre n'en alimente aucune. */
+       devant lui est l'autre — qu'ai-je rapporté à mon club ? Ses points de
+       la saison, gagnés en duel classé. */
     const t = m.tribune;
     if (t?.nom) {
-      corps = Number(t.ferveur) > 0
-        ? quoi(`pour ${esc(t.nom)}`) + valeur(nombre(t.ferveur), 'donnés')
-        : quoi(`pour ${esc(t.nom)} · rien encore, tu as poussé en neutre`);
-      dit = `Ta ferveur va à ${t.nom}`;
+      corps = Number(t.joues) > 0
+        ? quoi(`pour ${esc(t.nom)}`) + valeur(nombre(t.points ?? 0), 'points rapportés')
+        : quoi(`pour ${esc(t.nom)} · gagne un duel classé ou un Virage pour lui rapporter 3 points`);
+      dit = `Tu joues pour ${t.nom}`;
     } else {
-      corps = quoi('Aucun club suivi : ta ferveur ne va à aucune tribune');
+      corps = quoi('Aucun club suivi : tes parties ne rapportent à aucun club');
       dit = 'Aucun club suivi';
     }
   } else {

@@ -1,6 +1,6 @@
 {
   "id": "AN32",
-  "rev": 9,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -122,7 +122,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5079cb91a530"
+          "sha": "5079cb91a530",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

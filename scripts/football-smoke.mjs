@@ -306,9 +306,9 @@ check('adversaire enregistré au passage', (await pool.query('SELECT 1 FROM team
     encore.status === 200
     && encore.json.teams?.find((t) => t.id === 91)?.is_main === 1);
 
-  // On libère ce qu'on vient de prendre : la suite continue avec 85 seul.
-  await call('/api/football/follows/77', { method: 'DELETE' });
-  await call('/api/football/follows/91', { method: 'DELETE' });
+  /* On libère ce qu'on vient de prendre, en base : un joueur ne le peut
+     plus (un club choisi est gardé à vie). La suite continue avec 85 seul. */
+  await pool.query('DELETE FROM user_follows WHERE user_id = ? AND team_id IN (77, 91)', [USER]);
   await pool.query('UPDATE user_follows SET is_main = 1 WHERE user_id = ? AND team_id = 85', [USER]);
 }
 
@@ -617,8 +617,13 @@ check('club inconnu : 404 propre', r.status === 404);
 
 /* ---------------------------------------------------- désabonnement */
 
+/* Un club choisi est gardé à vie (Gaël, 30 octobre 2026) : le retrait est
+   refusé. Le compte supprimé, lui, emporte ses clubs : on l'imite en base pour
+   éprouver ce que le relevé fait d'un club que personne ne suit plus. */
 r = await call('/api/football/follows/85', { method: 'DELETE' });
-check('désabonnement', r.json.teams?.length === 0);
+check('un club choisi ne se retire pas', r.status === 403
+  && (await pool.query('SELECT COUNT(*) n FROM user_follows'))[0][0].n === 1);
+await pool.query('DELETE FROM user_follows WHERE user_id = ?', [USER]);
 
 const [suivis] = await pool.query('SELECT * FROM user_follows');
 check('plus rien à interroger pour ce club', suivis.length === 0);

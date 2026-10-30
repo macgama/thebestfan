@@ -220,24 +220,20 @@ export const REGLAGES = [
       'classements de compétition n’ont plus de chez-soi ; à 0, plus personne ' +
       'n’a de raison d’entrer dans un match qui n’est pas le sien.' },
 
-  /* La part d'un neutre pour le club qu'il pousse (Gaël, 28 octobre 2026) :
-     elle ne remontait à aucune tribune. Lue par `classements/index.js`, au
-     classement TRIBUNES comme à celui d'une compétition — jamais aux KOP,
-     dont le neutre n'est pas membre. */
-  { cle: 'ferveur.neutre_tribune', section: 'virage', type: 'decimal',
-    titre: 'Un neutre apporte au club qu’il pousse', unite: '× sa ferveur',
-    min: 0, max: 1, pas: 0.05, defaut: 0.1,
-    aide: 'Au classement des tribunes et à celui des compétitions, sur la ferveur ' +
-      'classée du neutre (déjà réduite par le réglage du dessus). Le neutre ne ' +
-      'compte pas parmi les supporters du club. À 0, un neutre ne rapporte à ' +
-      'aucune tribune, comme avant.' },
-
   { cle: 'tribune.plancher', section: 'virage', type: 'entier',
-    titre: 'La moyenne d’une tribune se divise par au moins', unite: 'supporters',
+    titre: 'Les points d’un club se divisent par au moins', unite: 'joueurs',
     min: 1, max: 100, defaut: 5,
-    aide: 'Sans plancher, un club d’un seul supporter actif et quelques neutres ' +
-      'passerait devant tout le monde. À 1, la moyenne se divise par le vrai ' +
-      'nombre de supporters actifs.' },
+    aide: 'Au championnat des clubs (TRIBUNES et compétitions), les points se ' +
+      'divisent par les joueurs du club qui ont joué sur la période. Sans ' +
+      'plancher, un club d’un seul joueur passerait devant tout le monde. À 1, ' +
+      'on divise par le vrai nombre de joueurs.' },
+  { cle: 'tribune.neutre_points', section: 'virage', type: 'decimal',
+    titre: 'Points donnés à un club qu’on soutient sans le suivre', unite: '× les points',
+    min: 0, max: 1, pas: 0.05, defaut: 0.5,
+    aide: 'Au championnat des clubs, un joueur qui pousse un club qu’il ne suit ' +
+      'pas (au Duel classé comme au Virage) lui donne cette part de ses 3 / 1 / 0 ' +
+      'points. À 0,5, une victoire vaut 1,5 point. Ce joueur ne compte pas parmi ' +
+      'les joueurs du club pour la moyenne. À 0, un neutre ne rapporte rien.' },
 
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
      `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et
@@ -447,9 +443,11 @@ export const REGLAGES = [
 
   { cle: 'abo.taille_classe_libre', section: 'abonnement', type: 'entier',
     titre: 'Plus grand format classé sans abonnement', unite: 'joueurs par camp',
-    min: 1, max: 5, defaut: 1,
-    aide: 'Le 2v2 et au-dessus restent jouables par tout le monde — en ' +
-      'entraînement. À 5, plus aucun format n’est réservé.' },
+    min: 1, max: 5, defaut: 5,
+    aide: 'À 5 (choix de Gaël du 30 octobre 2026), tous les formats se jouent ' +
+      'en classé sans abonnement, dans les duels classés du jour : sinon le ' +
+      '2v2 et au-dessus ne se rempliraient jamais. Plus bas, les grands formats ' +
+      'restent jouables par tout le monde, en entraînement.' },
 
   /* -------------------------------------------------------------- deck */
   { cle: 'deck.fanzzy', section: 'deck', type: 'entier',

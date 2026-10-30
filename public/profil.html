@@ -5,7 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Mon profil — thebestfan</title>
 <!-- Permanent Marker dans la même ligne qu'Oswald : la carte de supporter
      écrit « dans la tribune depuis » à la main (un des six emplois du
@@ -183,9 +183,9 @@ h2{margin:26px 2px 10px}
   .ligne{flex-wrap:wrap;row-gap:2px}
   .ligne .n{flex:1 1 100%}
   .ligne .v{flex:1 1 auto}
-  /* Un club suivi ne se replie pas : son blason, son nom, PRINCIPAL et la
-     croix tiennent sur une ligne, et le nom cède — replié, le blason
-     restait seul sur la sienne et la croix tombait sous le nom. */
+  /* Un club suivi ne se replie pas : son blason, son nom et PRINCIPAL
+     tiennent sur une ligne, et le nom cède — replié, le blason restait seul
+     sur la sienne. */
   .ligne.suivi{flex-wrap:nowrap}
   .ligne.suivi .n{flex:1 1 auto}
 }
@@ -203,12 +203,16 @@ h2{margin:26px 2px 10px}
 .ligne a.v{display:inline-flex;align-items:center;min-height:44px;margin:-12px 0;
   color:var(--craie);opacity:1;font-weight:700}
 .btn.danger,button.link{min-height:44px}
-/* La croix qui retire un club : un bouton-icône de quarante-quatre pixels,
-   pas une plaque. Elle ne vise que la croix : une règle plus large battait
-   en spécificité toute plaque posée dans une ligne. */
-.ligne button[data-unfollow]{background:none;border:0;color:inherit;opacity:.88;cursor:pointer;
-  font-size:17px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;
-  justify-content:center}
+/* Les notifications, dans les réglages : les interrupteurs l'un sous l'autre,
+   sur toute la largeur — la phrase du duel est longue. */
+#notifs{padding-top:18px}
+.notif-texte{font-size:12.5px;line-height:1.5;margin:0 2px 8px}
+#notifNote:empty{display:none}
+#notifCases{display:flex;flex-direction:column;gap:2px}
+#notifCases .tbf-interrupteur{width:100%}
+#notifCases .tbf-interrupteur[disabled]{opacity:.55;cursor:wait}
+.legal{font-size:12.5px;text-align:center;margin:18px 0 4px}
+.legal a{color:var(--craie);display:inline-flex;align-items:center;min-height:44px}
 /* L'achat d'un emplacement est une plaque d'or (acheter = or), compacte pour
    tenir dans sa ligne ; sous 440 px elle passe sous son libellé. */
 .ligne #buyslot{flex:none;padding:9px 14px;min-height:44px;font-size:13px}
@@ -360,7 +364,7 @@ h2{margin:26px 2px 10px}
 
 /* -------------------------------------------------------- les réglages
 
-   Les clubs suivis, la langue, l'adresse, la déconnexion et la suppression,
+   La langue, les notifications, l'adresse, la déconnexion et la suppression,
    rangés derrière une seule bâche RÉGLAGES (`details.tbf-reglages`), en bas
    de la page : le profil se lit d'abord, on règle ensuite. Les
    identifiants que lisent les scripts et les suites ne changent pas, seul
@@ -448,6 +452,13 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 
   <div class="bonus" id="bonus"></div>
 
+  <!-- **Mes clubs, à découvert** (Gaël, 30 octobre 2026 : « caché dans
+       réglage n'est pas adapté »). Ils décident où va la ferveur et pour qui
+       l'on joue : ils passent avant le niveau, juste sous la carte, et plus
+       derrière la bâche RÉGLAGES. -->
+  <h2 class="tbf-cousu">MES CLUBS<i id="clubsCompte"></i></h2>
+  <div class="pan bloc" id="clubs"></div>
+
   <h2 class="tbf-cousu">MON NIVEAU<i id="nivXp"></i></h2>
   <div id="niveau"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
 
@@ -475,10 +486,30 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
   <details class="tbf-reglages reglages" id="reglages">
     <summary class="tbf-plaque tbf-bloc">RÉGLAGES</summary>
     <div class="tbf-reglages-corps">
-      <h3 class="tbf-cousu">MES CLUBS</h3>
-      <div id="clubs"></div>
       <h3 class="tbf-cousu">LANGUE</h3>
       <div class="langues tbf-onglets" data-ton="craie" id="langues"></div>
+      <!-- **Les notifications**, venues de « Mon compte » quand les deux pages
+           n'en ont plus fait qu'une (Gaël, 30 octobre 2026 : elles faisaient
+           doublon). Cachées tant que le serveur ne dit pas qu'il peut en
+           envoyer (`notifications.actif`). Les cases valent pour **cet
+           appareil** : voir `TBF_NOTIF` dans `pwa.js`. -->
+      <div id="notifs" hidden>
+        <h3 class="tbf-cousu">NOTIFICATIONS</h3>
+        <p class="notif-texte">Sur cet appareil, même le jeu fermé. Jamais la nuit, de 22 h à 8 h.</p>
+        <div id="notifCases">
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="kop"><i aria-hidden="true"></i><span>Un vote de mon KOP s’ouvre</span></button>
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="duel"><i aria-hidden="true"></i><span>Un duel classé attend un supporter de mon club</span></button>
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="club"><i aria-hidden="true"></i><span>Mon club joue : 30 minutes avant, puis le score en direct</span></button>
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="virage"><i aria-hidden="true"></i><span>Le Virage d’un match de mon club s’ouvre</span></button>
+          <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false"
+            data-sujet="amis"><i aria-hidden="true"></i><span>Mes amis : une demande, un oui, une invitation en duel</span></button>
+        </div>
+        <p class="notif-texte" id="notifNote"></p>
+      </div>
       <h3 class="tbf-cousu">COMPTE</h3>
       <div class="ligne"><span class="n">Adresse</span><span class="v" id="email"></span></div>
       <div class="ligne"><span class="n">Adresse vérifiée</span><span class="v" id="verif"></span></div>
@@ -489,6 +520,11 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
         <button class="btn tbf-plaque" id="logout">SE DÉCONNECTER</button>
         <button class="btn danger" id="supprimer">Supprimer définitivement mon compte</button>
       </div>
+      <!-- Ce que le jeu garde de toi, et les conditions : à côté de la sortie,
+           parce que c'est là qu'on les cherche — avant de partir, ou pour
+           savoir ce qui part. Ils étaient sur « Mon compte ». -->
+      <p class="legal"><a href="/confidentialite">Ce que le jeu garde de toi</a>
+        · <a href="/conditions">Les conditions</a></p>
     </div>
   </details>
   <!-- Ce que la page fait sans le dire avec des mots — l'insigne posé —,
@@ -518,8 +554,8 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 /* =======================================================================
    Profil.
    Tout ce qui concerne le joueur au même endroit : sa carte de supporter,
-   ce qu'il possède, son niveau, sa saison, ce qu'il a joué — et, rangés
-   derrière une bâche, ses clubs, sa langue, son compte.
+   ses clubs, ce qu'il possède, son niveau, sa saison, ce qu'il a joué — et,
+   rangés derrière une bâche, sa langue, ses notifications, son compte.
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
@@ -1624,6 +1660,7 @@ function boutonPrincipal(f) {
 function rendreClubs() {
   const libres = Math.max(0, etat.slots.total - etat.slots.used);
   const prix = prixSlot();
+  $('clubsCompte').textContent = `${etat.slots.used} / ${etat.slots.total}`;
   $('clubs').innerHTML =
     (etat.follows ?? []).map((f) => `
       <div class="ligne suivi">
@@ -1632,8 +1669,6 @@ function rendreClubs() {
         ${f.is_main ? '<span class="main">PRINCIPAL</span>' : ''}
         ${f.is_main_nation ? '<span class="main">SÉLECTION</span>' : ''}
         ${boutonPrincipal(f)}
-        <button data-unfollow="${esc(f.team_id)}" data-nom="${esc(f.name ?? '')}"
-          aria-label="Ne plus suivre ${esc(f.name ?? 'ce club')}">✕</button>
       </div>`).join('')
     + Array.from({ length: libres }, () => `
       <div class="ligne libre"><span class="n">emplacement libre</span>
@@ -1754,21 +1789,6 @@ function rendre() {
 /* ---------------------------------------------------------- actions */
 
 $('clubs').addEventListener('click', async (e) => {
-  const u = e.target.closest('[data-unfollow]');
-  if (u) {
-    /* Ne plus suivre un club se demande : la croix est petite, au bord de
-       la ligne, et ce qu'elle retire — la tribune où va la ferveur — ne se
-       voit pas tout de suite. */
-    const nom = u.dataset.nom || 'ce club';
-    if (!(await window.TBF_DIALOGUE?.confirmer({
-      titre: `NE PLUS SUIVRE ${nom.toLocaleUpperCase('fr')} ?`,
-      texte: 'Ta ferveur n’ira plus à sa tribune. Tu pourras le suivre de nouveau depuis les clubs.',
-      oui: 'NE PLUS SUIVRE', ton: 'flare', non: 'GARDER',
-    }))) return;
-    try { etat = await me('/follow/' + u.dataset.unfollow, undefined, 'DELETE'); rendreClubs(); rendreCarte(); }
-    catch (err) { if (err.message !== 'auth') dire('Impossible pour le moment', { erreur: true }); }
-    return;
-  }
   const p = e.target.closest('[data-principal]');
   if (p) {
     const nom = p.dataset.nom || 'ce club';
@@ -1848,9 +1868,54 @@ $('logout').onclick = async () => {
     texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
     oui: 'SE DÉCONNECTER', ton: 'flare',
   }))) return;
+  // Cet appareil n'est plus prévenu pour ce joueur : voir `pwa.js`.
+  await window.TBF_NOTIF?.oublier?.();
   try { await auth('/logout', {}); } catch {}
   location.href = '/';
 };
+
+/* ------------------------------------------------------ les notifications
+
+   `TBF_NOTIF` vient de `pwa.js`, chargé en `defer` à la fin : on attend le
+   document. Si le serveur n'en envoie pas, la rubrique reste cachée ; si cet
+   appareil ne peut pas en recevoir, elle le dit, sans interrupteurs. */
+const RAISONS_NOTIF = {
+  ios: 'Sur iPhone, installe d’abord le jeu sur l’écran d’accueil (Partager, puis « Sur l’écran d’accueil ») et ouvre-le de là.',
+  navigateur: 'Ce navigateur ne reçoit pas de notifications.',
+  refusees: 'Tu les as refusées dans le navigateur. Pour changer d’avis, autorise-les dans les réglages du site, puis recharge la page.',
+};
+const casesNotif = () => [...document.querySelectorAll('#notifCases [data-sujet]')];
+function poserCases(sujets) {
+  for (const b of casesNotif()) b.setAttribute('aria-checked', String(Boolean(sujets?.[b.dataset.sujet])));
+}
+async function notifications() {
+  const n = window.TBF_NOTIF;
+  if (!n || !user) return;
+  const e = await n.etat().catch(() => ({ possible: false, raison: 'eteintes' }));
+  if (!e.possible && e.raison === 'eteintes') { $('notifs').hidden = true; return; }
+  $('notifs').hidden = false;
+  $('notifCases').hidden = !e.possible;
+  $('notifNote').textContent = e.possible ? '' : (RAISONS_NOTIF[e.raison] ?? RAISONS_NOTIF.navigateur);
+  if (e.possible) poserCases(e.sujets);
+}
+for (const b of casesNotif()) {
+  b.onclick = async () => {
+    const voulu = Object.fromEntries(casesNotif().map((c) => [c.dataset.sujet,
+      c === b ? c.getAttribute('aria-checked') !== 'true' : c.getAttribute('aria-checked') === 'true']));
+    casesNotif().forEach((c) => { c.disabled = true; });
+    $('notifNote').textContent = '';
+    try {
+      poserCases(await window.TBF_NOTIF.poser(voulu));
+    } catch (err) {
+      /* Le refus dans la fenêtre du navigateur est définitif pour ce site :
+         la rubrique le dit, et les interrupteurs n'ont plus d'objet. */
+      if (err.message === 'refusees') { notifications(); return; }
+      if (err.message !== 'sans_reponse') $('notifNote').textContent = 'Ça n’a pas marché. Réessaie dans un instant.';
+    } finally {
+      casesNotif().forEach((c) => { c.disabled = false; });
+    }
+  };
+}
 
 /* La suppression du compte : le seul geste du jeu qu'on ne peut pas défaire.
    Le mot de passe reste demandé — c'est ce qui protège d'un téléphone laissé
@@ -1932,6 +1997,16 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     /* **La fête de niveau, depuis la dernière visite.** Après le premier
        rendu : elle passe devant la carte de supporter. Elle attend aussi
        ma place, qui porte l'avatar à montrer en pose de victoire (§ 14.3). */
+    domPret.then(notifications);
+    /* Le retour du lien de vérification, passé par la porte de connexion
+       (`/compte?verifier=…`) quand on y arrivait déjà connecté. */
+    const verifiee = new URLSearchParams(location.search).get('verifiee');
+    if (verifiee) {
+      history.replaceState({}, '', '/profil');
+      dire(verifiee === '1' ? 'Adresse vérifiée' : 'Ce lien n’est plus valable',
+        verifiee === '1' ? undefined : { erreur: true });
+    }
+
     await Promise.allSettled([pNiveau, pMoi, domPret]);
     if (niv && !niv.indisponible) {
       window.TBF_NIVEAU?.depuisVisite?.(niv, { avatar: monAvatar ?? undefined, qui: user.id });
@@ -1940,8 +2015,7 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     if (e.message === 'auth') return;
     $('spin').style.display = 'none';
     $('page').style.display = 'block';
-    /* Dit là où l'on regarde, en haut : les clubs, eux, sont rangés derrière
-       la bâche RÉGLAGES, et un message replié ne dit rien. */
+    /* Dit là où l'on regarde, en haut, sous la carte. */
     $('stats').innerHTML = '<div class="pan" style="grid-column:1/-1"><div class="vide">Serveur injoignable.</div></div>';
   }
 })();

@@ -630,6 +630,26 @@ check('et la moitié du neutre annule le double du renfort',
   brut(U[1]) > 0 && ligne(U[1])?.ferveur === Math.round(brut(U[1]) * 0.5 * 2)
   || (console.log('        brut', brut(U[1]), '· inscrit', ligne(U[1])?.ferveur), false));
 
+/* **Et le bilan le dit.** Il montrait la ferveur brute de la corde, et le
+   classement en comptait une autre : le neutre lisait sa part, jamais son
+   renfort. Il porte maintenant le chiffre écrit, et les points rapportés au
+   club — le championnat des clubs (Gaël, 29 octobre 2026). */
+{
+  const clA = A.fin?.gains?.classement;
+  const clB = B2.fin?.gains?.classement;
+  check('le bilan dit la ferveur comptée, la même que la ligne',
+    clA?.ferveur === ligne(U[0])?.ferveur && clB?.ferveur === ligne(U[1])?.ferveur
+    || (console.log('        A', JSON.stringify(clA), '· B', JSON.stringify(clB)), false));
+  check('avec le renfort et le neutre qui l’ont fait bouger',
+    clB?.renfort === 2 && clB?.neutre === true && clA?.renfort === 1 && clA?.neutre === false);
+  const pts = { win: 3, draw: 1, loss: 0 }[ligne(U[0])?.outcome];
+  check('et les points rapportés au club du match',
+    clA?.club === 'Sion' && clA?.points === pts
+    || (console.log('        A', JSON.stringify(clA)), false));
+  check('un neutre sans club principal ne rapporte de points à personne',
+    clB?.club === null && clB?.points === null);
+}
+
 /* ------------------------------------------ le double pour son club
 
    On peut jouer pour n’importe quel match — c’est ce qui permet de trouver un

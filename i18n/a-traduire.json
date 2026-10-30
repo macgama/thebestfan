@@ -1,4 +1,37 @@
 {
+ "LE JEU REVIENT": {
+  "ou": [
+   "public/index.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le serveur redémarre, souvent pour une nouvelle version. On réessaie tout seul — tu restes connecté, rien n’est perdu.": {
+  "ou": [
+   "public/index.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Dans Chrome : le menu <0>⋮</0> en haut à droite, puis <1>Ajouter à l’écran d’accueil</1> et <2>Installer</2>.": {
+  "ou": [
+   "public/menu.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "Antigua and Barbuda": {
   "ou": [
    "public/pays.js"
