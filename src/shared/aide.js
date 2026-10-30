@@ -483,9 +483,11 @@ const RUBRIQUES = [
           + 'abonné. Il ne se renouvelle plus, tu le gardes jusqu’à la fin de la '
           + 'période déjà payée, et rien de ce que tu as gagné ne t’est repris.'],
       ['Puis-je changer de club ?',
-        () => 'Tu peux en suivre plusieurs : tu commences avec deux emplacements, et '
-          + 'les suivants s’achètent en écharpes. Ton club principal est celui qui te '
-          + 'rattache à une tribune pour les classements.'],
+        () => 'Un club choisi est gardé à vie : on ne le retire pas. Tu peux en suivre '
+          + 'plusieurs : tu commences avec deux emplacements, et les suivants s’achètent '
+          + 'en écharpes. Ton club principal est celui qui te rattache à une tribune pour '
+          + 'les classements ; tu peux le changer pour un autre de tes clubs, une fois par '
+          + 'saison, depuis MES CLUBS sur ton profil.'],
       ['Que se passe-t-il si je perds mes cartes ?',
         () => 'Rien de ce que tu possèdes ne disparaît. Une série qui se referme '
           + 'cesse d’être distribuée, elle ne se reprend pas : ta carte reste dans '

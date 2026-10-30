@@ -247,8 +247,12 @@ check('emplacement acheté', r.json.slots === 3 && r.json.spent === 120);
 r = await call('/api/me/follow', { body: { teamId: 61 } });
 check('troisième club accepté ensuite', r.json.slots.used === 3);
 
+/* Un club choisi est gardé à vie (Gaël, 30 octobre 2026). */
 r = await call('/api/me/follow/91', { method: 'DELETE' });
-check('un club libéré rend son emplacement', r.json.slots.used === 2);
+check('un club choisi ne se retire pas', r.status === 403
+  && r.json.error === 'onboarding.error.club_a_vie');
+r = await call('/api/me/state');
+check('et il garde son emplacement', r.json.slots.used === 3);
 
 /* ---------------------------------------------------- inventaire */
 
