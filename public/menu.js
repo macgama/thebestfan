@@ -883,8 +883,11 @@
       /* **Signaler un problème** (25 octobre 2026, avant la bêta) : un mail à
          Gaël, avec la page et l'appareil. Voir `server/signalement`. */
       + item('#', 'signaler', 'Signaler un problème', 'signaler')
+      /* « Mon compte » n'y est plus (Gaël, 30 octobre 2026) : il faisait
+         doublon avec le profil, dont les RÉGLAGES portent l'adresse, les
+         notifications, la déconnexion et la suppression. `/compte` n'est plus
+         que la porte de connexion. */
       + item('/profil', 'profil', 'Mon profil', ici('/profil') ? 'on' : '')
-      + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
       + item('#', 'sortie', 'Se déconnecter', 'sortie')
       + musiqueHTML
       + calmeHTML
