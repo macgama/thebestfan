@@ -77,6 +77,10 @@ export const AVANT_MATCH_MIN = 30;
     un redémarrage du serveur en plein match n'annonce pas un coup d'envoi passé. */
 export const COUP_D_ENVOI_MAX_MIN = 10;
 
+/** Les périodes d'un match en cours, et celles d'un match fini (`scoreEnDirect`). */
+const EN_JEU = new Set(['1H', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT']);
+const FINS = new Set(['FT', 'AET', 'PEN']);
+
 /** Combien d'envois en vol à la fois : un coup d'envoi ne doit pas ouvrir mille connexions. */
 const EN_VOL = 8;
 
@@ -231,7 +235,8 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
   async function prevenir(userIds, sujet, message) {
     if (!SUJETS.includes(sujet)) return 0;
     const ids = [...new Set(userIds)].filter(Boolean);
-    if (!ids.length || !actives() || estLaNuit(horloge())) return 0;
+    if (!ids.length || !actives()) return 0;
+    if (estLaNuit(horloge()) && !message.memeLaNuit) return 0;
     const k = await lesCles();
     if (!k) return 0;
 
@@ -252,7 +257,7 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
        message peut fournir sa propre traduction (`traduction(langue)`)
        quand le français ne se laisse pas découper ; sinon le titre et le
        corps passent par les dictionnaires. */
-    const { traduction, ttl: _ttl, ...base } = message;
+    const { traduction, ttl: _ttl, memeLaNuit: _nuit, ...base } = message;
     const parLangue = new Map();
     const corpsEn = (l) => {
       if (!parLangue.has(l)) {
@@ -494,6 +499,70 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
     }
   }
 
+  /**
+   * Le score en direct, dans la notification du match : demande de Gaël du
+   * 29 octobre 2026 (« suivre l'évolution du score sur son mobile, comme
+   * Google »). Branché sur `onStatus`, comme `coupDEnvoi` : le score et la
+   * période sont déjà dans la réponse du relevé, sans un appel de plus.
+   *
+   * Un message part quand le score change (un but, ou un but annulé), à la
+   * mi-temps et au coup de sifflet final ; jamais au premier tour où l'on
+   * voit un match (un redémarrage ne redit pas un score déjà connu). Tous
+   * portent le `tag` du match : sur l'appareil, la même notification change
+   * au lieu d'en empiler une par but. La mi-temps change sans vibrer.
+   *
+   * Même case que « ton club joue bientôt » (`club`) : pas de colonne de
+   * plus. Et un match commencé avant 22 h se suit jusqu'au bout, même la
+   * nuit : le joueur a choisi ce club, et le score final est ce qu'il attend.
+   * Une seule notification remplacée, pas une sonnerie par minute.
+   */
+  const scoresVus = new Map();
+  async function scoreEnDirect(fixtureId, etat = {}) {
+    const { status, homeGoals: h, awayGoals: a } = etat;
+    const phase = status === 'HT' ? 'mi-temps' : FINS.has(status) ? 'fin'
+      : EN_JEU.has(status) ? 'jeu' : null;
+    if (!phase || h == null || a == null) return 0;
+    const t = horloge();
+    for (const [c, v] of scoresVus) if (t - v.t > 6 * 60 * 60_000) scoresVus.delete(c);
+    const avant = scoresVus.get(fixtureId);
+    scoresVus.set(fixtureId, { h, a, phase, t });
+    if (!avant || avant.phase === 'fin') return 0;
+    const but = h !== avant.h || a !== avant.a;
+    const quoi = but ? 'but' : phase !== avant.phase && phase !== 'jeu' ? phase : null;
+    if (!quoi || !actives()) return 0;
+
+    const coup = Date.parse(etat.kickoffAt ?? '');
+    const memeLaNuit = Number.isFinite(coup) && !estLaNuit(coup) && t - coup < 4 * 60 * 60_000;
+    try {
+      const m = await leMatch(fixtureId);
+      if (!m?.suiveurs.length) return 0;
+      const titre = `${m.home ?? ''} ${h} – ${a} ${m.away ?? ''}`.trim();
+      const minute = (etat.elapsed ?? 0) + (etat.elapsedExtra ?? 0);
+      let corps;
+      if (quoi === 'fin') corps = 'Score final ›';
+      else if (quoi === 'mi-temps') corps = 'Mi-temps. Le Virage t’attend ›';
+      else if (h + a < avant.h + avant.a) corps = `But annulé (${minute}e). Suis le match ›`;
+      else {
+        const pour = h > avant.h ? m.home : m.away;
+        corps = `But pour ${pour} (${minute}e). Suis le match ›`;
+      }
+      return await prevenir(m.suiveurs, 'club', {
+        titre,
+        corps,
+        bouton: 'Voir le match',
+        traduction: (l) => ({ titre, corps: traduire(l, corps), bouton: traduire(l, 'Voir le match') }),
+        url: quoi === 'fin' ? '/aujourdhui' : `/virage?match=${encodeURIComponent(fixtureId)}`,
+        tag: `match-${fixtureId}`,
+        silencieux: quoi === 'mi-temps',
+        ttl: quoi === 'fin' ? 2 * 60 * 60 : 10 * 60,
+        memeLaNuit,
+      });
+    } catch (e) {
+      log.error('[notifications] score en direct :', e.message);
+      return 0;
+    }
+  }
+
   /* ------------------------------------------------------------ les amis
 
      Jamais le pseudo de l'autre : « un supporter », « un ami ». La page des
@@ -657,6 +726,6 @@ export function createNotifications({ pool, requireAuth, origine = 'https://theb
     return l;
   }
 
-  return { router, prevenir, voteOuvert, duelAttend, avantMatch, coupDEnvoi,
+  return { router, prevenir, voteOuvert, duelAttend, avantMatch, coupDEnvoi, scoreEnDirect,
     amiDemande, amiAccepte, inviteDuel, demarrer, arreter, lesCles };
 }

@@ -5,7 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>thebestfan — le jeu des tribunes</title>
 <!-- **Permanent Marker, dans la même ligne qu'Oswald** (lot 2, fin de
      l'hypothèse H3). L'accueil est la seule page de ce lot qui l'emploie, et
@@ -5613,16 +5613,66 @@ function feterNiveau(niveau) {
      base qui hoquette (503), le proxy de l'hébergeur qui s'impatiente en fin
      de duel (502, 504), un réseau qui se cherche au retour d'une page —
      montrait la vitrine des non-connectés à un joueur qui l'était toujours.
-     On redemande donc, trois fois en tout, avant de s'y résoudre. */
+     On redemande donc, trois fois en tout, avant de s'y résoudre.
+
+     **Plus longtemps pour un joueur qu'on connaît** (Gaël, 30 octobre 2026 :
+     « en fin de duel, la flèche me sort de l'application, sur la page de
+     connexion »). Trois essais tiennent deux secondes et demie, et le
+     serveur qui range un duel — écharpes, XP, cote — peut mettre plus que
+     ça. Sur un appareil où un joueur s'est déjà fait reconnaître, la vitrine
+     des visiteurs est presque toujours une fausse réponse : on insiste donc
+     une douzaine de secondes, derrière l'écran d'ouverture, puis on le dit
+     (plus bas). Seul un 401
+     efface ce souvenir (une déconnexion, une session échue). */
+  const CONNU = 'tbf.connu';
+  let connu = false;
+  try { connu = localStorage.getItem(CONNU) === '1'; } catch { /* sans stockage */ }
+  const ESSAIS = connu ? 8 : 3;
   let user = null;
-  for (let essai = 0; essai < 3; essai++) {
-    if (essai) await new Promise((ok) => setTimeout(ok, 400 * essai));
+  let reponse = null;
+  for (let essai = 0; essai < ESSAIS; essai++) {
+    if (essai) await new Promise((ok) => setTimeout(ok, Math.min(400 * essai, 2400)));
     try {
       const r = await fetch('/api/auth/me', { credentials:'same-origin', cache:'no-store' });
+      reponse = r.status;
       if (r.ok) { user = (await r.json()).user; break; }
-      if (r.status === 401) break;
+      if (r.status === 401) {
+        try { localStorage.removeItem(CONNU); } catch { /* sans stockage */ }
+        break;
+      }
     } catch { /* hors ligne : on redemande, puis la vitrine suffit */ }
   }
+  /* **Le serveur ne répond toujours pas** : c'est presque toujours une mise en
+     ligne qui redémarre le jeu (Gaël : « une page Infomaniak, si en
+     construction »). Pour un joueur connu, la vitrine dirait « tu n'as pas de
+     compte » : on dit plutôt ce qui se passe, et on redemande toutes les
+     quelques secondes jusqu'à ce que le serveur revienne. */
+  if (!user && connu && reponse !== 401) {
+    const voile = document.createElement('div');
+    voile.id = 'tbf-revient';
+    voile.setAttribute('role', 'status');
+    voile.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:flex;'
+      + 'align-items:center;justify-content:center;text-align:center;padding:28px;'
+      + 'background:#05070A;color:#F2EEE4;line-height:1.6;'
+      + 'font-family:system-ui,-apple-system,"Segoe UI",sans-serif';
+    voile.innerHTML = '<div style="max-width:340px">'
+      + '<b style="display:block;font-size:18px;letter-spacing:.12em;margin-bottom:14px;color:#F5C33B">'
+      + 'LE JEU REVIENT</b>'
+      + '<small style="opacity:.9;font-size:13px">Le serveur redémarre, souvent pour une '
+      + 'nouvelle version. On réessaie tout seul — tu restes connecté, rien n’est perdu.</small></div>';
+    document.body.appendChild(voile);
+    for (let essai = 0; !user; essai++) {
+      await new Promise((ok) => setTimeout(ok, Math.min(3000 + 1000 * essai, 15000)));
+      try {
+        const r = await fetch('/api/auth/me', { credentials:'same-origin', cache:'no-store' });
+        if (r.ok) { user = (await r.json()).user; break; }
+        if (r.status === 401) { reponse = 401; break; }
+      } catch { /* toujours pas */ }
+    }
+    if (reponse === 401) { try { localStorage.removeItem(CONNU); } catch { /* sans stockage */ } }
+    voile.remove();
+  }
+  if (user) { try { localStorage.setItem(CONNU, '1'); } catch { /* sans stockage */ } }
 
   /* Pas de compte : la vitrine reste, et elle se garnit. C'est décidé ici
      plutôt que dans un second appel à `/api/auth/me` — deux fois la même

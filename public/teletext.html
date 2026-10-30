@@ -5,7 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Toutes les compétitions — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
@@ -890,9 +890,10 @@ function rendreJoueurs(d) {
    pas la même vertu :
 
      — les **supporters**, sur ce que chacun a donné ;
-     — les **tribunes**, c'est-à-dire les clubs, ramenés au nombre de leurs
-       supporters : sans cette division, le plus gros gagne toujours et
-       personne ne défend le sien ;
+     — les **tribunes**, c'est-à-dire les clubs, en championnat : chaque duel
+       classé est un match pour le club du joueur, et les points sont ramenés
+       au nombre de ses joueurs — sans cette division, le plus gros gagne
+       toujours et personne ne défend le sien ;
      — les **KOP**, ramenés au nombre de leurs membres, pour la même raison.
 
    Ces listes ne viennent pas du télétexte : elles sont calculées chez nous,
@@ -1072,27 +1073,29 @@ function tableFerveur(liste) {
         </tr>`).join('')}</tbody></table>`;
   }
   if (echelle === 'tribunes') {
-    /* **Le plateau entier, et non les seuls clubs déjà poussés.**
+    /* **Le plateau entier, et non les seuls clubs déjà joués.**
 
-       La liste se tirait des lignes de ferveur : un club n'existait que si
-       quelqu'un avait chanté pour lui, et une compétition de vingt équipes en
-       montrait deux. On y cherchait le sien, on ne l'y trouvait pas, et rien ne
-       disait s'il était mal classé ou absent du jeu.
+       Un club n'existait que si quelqu'un avait joué pour lui, et une
+       compétition de vingt équipes en montrait deux. Les clubs à zéro sont
+       donc là, en retrait — c'est une tribune à prendre, pas une ligne vide.
+       Ils n'ont pas de rang, et leur case reste vide.
 
-       Les clubs à zéro sont donc là, en retrait — c'est une tribune à prendre,
-       pas une ligne vide. Ils n'ont pas de rang, et leur case reste vide : un
-       tiret à sa place se lisait comme un rang illisible. Et les duels sont
-       comptés à part de la ferveur : ils ne demandent ni le même temps ni le
-       même geste que le virage. */
+       **Un championnat, comme en vrai** (Gaël, 29 octobre 2026) : chaque duel
+       classé sur un match de cette compétition est un match pour le club du
+       joueur — 3 points la victoire, 1 le nul. La liste est rangée sur les
+       points par joueur (PTS/J), qui laisse leur chance aux petits clubs. */
     return `<table>
-      <thead><tr><th>#</th><th>CLUB</th><th>SUPP.</th><th>DUELS</th><th>MOYENNE</th></tr></thead>
+      <thead><tr><th>#</th><th>CLUB</th><th>J</th><th>G</th><th>N</th><th>P</th><th>PTS</th><th>PTS/J</th></tr></thead>
       <tbody>${liste.map((t, i) => `
-        <tr class="${i < 3 && t.moyenne > 0 ? 'top3' : ''}${t.ferveur > 0 ? '' : ' a-prendre'}">
-          <td>${t.ferveur > 0 ? i + 1 : ''}</td>
+        <tr class="${i < 3 && t.points > 0 ? 'top3' : ''}${t.joues > 0 ? '' : ' a-prendre'}">
+          <td>${t.joues > 0 ? i + 1 : ''}</td>
           <td class="club"><img src="${esc(t.logo)}" alt=""><span>${esc(t.name)}</span></td>
-          <td>${t.supporters}</td>
-          <td>${t.duels ?? 0}</td>
-          <td class="pts">${t.moyenne}</td>
+          <td>${t.joues ?? 0}</td>
+          <td>${t.gagnes ?? 0}</td>
+          <td>${t.nuls ?? 0}</td>
+          <td>${t.perdus ?? 0}</td>
+          <td>${String(t.points ?? 0).replace('.', ',')}</td>
+          <td class="pts">${String(t.moyenne ?? 0).replace('.', ',')}</td>
         </tr>`).join('')}</tbody></table>`;
   }
   return `<table>

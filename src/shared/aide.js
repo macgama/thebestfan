@@ -306,8 +306,17 @@ const RUBRIQUES = [
           + 'passé est refusé.'
           + (reglage('abo.duels_classes_jour') > 0
             ? ` Sans PASS de tribune, ${reglage('abo.duels_classes_jour')} duels classés `
-              + 'comptent par jour ; au-delà, tu joues toujours, en entraînement.'
+              + 'comptent par jour, dans tous les formats, du 1v1 au 5v5 ; au-delà, tu joues '
+              + 'toujours, en entraînement.'
             : '')],
+      ['Peut-on voir tous les supporters d’un Virage ?',
+        'Oui : dans l’arène, le bouton LES DEUX TRIBUNES montre les Fanzzy titulaires '
+          + 'des douze supporters qui poussent le plus en ce moment dans chaque tribune, '
+          + 'face à face, et le tien toujours. PARTAGER L’IMAGE en fait une image à envoyer.'],
+      ['En duel à plusieurs, vois-je mes coéquipiers ?',
+        'Oui : tous les Fanzzy de chaque camp sont dans l’arène, le tien devant, les '
+          + 'autres au-dessus et en dessous de la corde, chacun avec son pseudo. En face, '
+          + 'celui qui pousse le plus en ce moment passe devant.'],
       ['Comment savoir où l’on joue en ce moment ?',
         'Sur MATCHS et dans les compétitions, sous chaque match : la pastille verte '
           + 'VIRAGE dit que sa tribune est ouverte et combien de supporters y poussent, '
@@ -382,6 +391,15 @@ const RUBRIQUES = [
         'Avec ta ferveur de la saison, gagnée au Virage et en duel : Sympathisant, '
           + 'Habitué, Fervent, Ultra, puis Capo. Une division atteinte reste acquise '
           + 'jusqu’à la fin de la saison.'],
+      ['Comment se classent les clubs ?',
+        () => 'Comme un vrai championnat. Chaque duel classé et chaque Virage sont un '
+          + 'match pour le club que tu pousses : 3 points pour une victoire, 1 pour un nul, '
+          + '0 pour une défaite. Au Virage, c’est ta tribune qui gagne ou perd la corde, '
+          + 'compté à la fin du vrai match. Si tu ne suis pas ce club, il ne reçoit qu’une '
+          + `part de ces points (×${String(reglage('tribune.neutre_points')).replace('.', ',')}) : `
+          + 'tu l’as soutenu, mais pas comme ton club. Les clubs sont rangés sur '
+          + `les points par joueur qui a joué (au moins ${reglage('tribune.plancher')}), `
+          + 'pour que les petits clubs aient leur chance. Le classement repart à chaque saison.'],
       ['C’est quoi, le carnet de la saison ?',
         () => 'Chaque mission du jour y pose des tampons : '
           + `${reglage('saison.tampons_facile')} pour une facile, `
@@ -474,9 +492,11 @@ const RUBRIQUES = [
           + 'abonné. Il ne se renouvelle plus, tu le gardes jusqu’à la fin de la '
           + 'période déjà payée, et rien de ce que tu as gagné ne t’est repris.'],
       ['Puis-je changer de club ?',
-        () => 'Tu peux en suivre plusieurs : tu commences avec deux emplacements, et '
-          + 'les suivants s’achètent en écharpes. Ton club principal est celui qui te '
-          + 'rattache à une tribune pour les classements.'],
+        () => 'Un club choisi est gardé à vie : on ne le retire pas. Tu peux en suivre '
+          + 'plusieurs : tu commences avec deux emplacements, et les suivants s’achètent '
+          + 'en écharpes. Ton club principal est celui qui te rattache à une tribune pour '
+          + 'les classements ; tu peux le changer pour un autre de tes clubs, une fois par '
+          + 'saison, depuis MES CLUBS sur ton profil.'],
       ['Que se passe-t-il si je perds mes cartes ?',
         () => 'Rien de ce que tu possèdes ne disparaît. Une série qui se referme '
           + 'cesse d’être distribuée, elle ne se reprend pas : ta carte reste dans '
@@ -486,6 +506,12 @@ const RUBRIQUES = [
           + 'calmes, jamais pendant un duel, au Grand Virage ou dans les mini-jeux, '
           + 'pour que tu entendes la tribune. Le mode calme du menu coupe aussi les '
           + 'sons, les vibrations ou les animations.'],
+      ['Puis-je suivre le score de mon club sur mon téléphone ?',
+        'Oui. Dans ton compte, allume « Mon club joue » : une demi-heure avant le coup '
+          + 'd’envoi, une notification t’annonce le match, puis elle change à chaque but, à '
+          + 'la mi-temps et au coup de sifflet final. C’est toujours la même notification, qui '
+          + 'se met à jour au lieu de s’empiler. Un match commencé avant la nuit se suit '
+          + 'jusqu’au bout.'],
       ['J’ai trouvé un bug. À qui le dire ?',
         'Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le '
           + 'message part directement à l’équipe du jeu.'],

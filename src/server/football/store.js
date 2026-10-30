@@ -150,10 +150,6 @@ export function createFootballStore(pool) {
       );
     },
 
-    async unfollow(userId, teamId) {
-      await q(`DELETE FROM user_follows WHERE user_id = ? AND team_id = ?`, [userId, teamId]);
-    },
-
     async followsOf(userId) {
       return q(
         `SELECT t.id, t.name, t.country, t.logo, f.is_main

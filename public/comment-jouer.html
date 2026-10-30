@@ -5,7 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Comment jouer — thebestfan</title>
 <meta name="description" content="Apprendre à jouer à thebestfan : les gestes, les Fanzzy, le Grand Virage, les duels, les mini-jeux, et tout ce que le jeu permet.">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -227,6 +227,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
         <li>Il faut chanter pour être compté&nbsp;: sans geste un moment, tu sors de la foule.</li>
         <li>Tu peux pousser pour n’importe quel club&nbsp;; c’est chez ton club que tu gagnes le plus de
           <b>ferveur</b>, celle qui fait monter au classement.</li>
+        <li><b>LES DEUX TRIBUNES</b>&nbsp;: le bouton de l’arène montre les Fanzzy des douze qui poussent le
+          plus dans chaque tribune, face à face, et le tien&nbsp;; tu peux en partager l’image.</li>
       </ul>
       <p class="aller"><a href="/virage">Entrer dans un virage&nbsp;›</a></p>
     </div>
@@ -243,6 +245,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
         <li>Un duel s’adosse à un <b>vrai match</b>&nbsp;: sur un match du jour ou en cours, il est
           <b>classé</b> et compte au classement&nbsp;; sur un autre jour, c’est un <b>entraînement</b>.</li>
         <li>Le chant de ton titulaire est toujours dans ta main, et il pousse autant que la poussée du cri de sa fiche.</li>
+        <li>À plusieurs, <b>tous les Fanzzy</b> sont dans l’arène, au-dessus et en dessous de la corde&nbsp;: le
+          tien devant, et en face celui qui pousse le plus en ce moment.</li>
         <li>Gagner rapporte des écharpes, perdre aussi un peu&nbsp;; un duel joué pour ton club rapporte le
           double.</li>
         <li><b>Derby</b>&nbsp;: quand un supporter de l’autre club d’un match du jour est en ligne, le jeu te
@@ -306,7 +310,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div class="bloc">
       <ul>
         <li><b>Mes clubs</b>&nbsp;: choisis les clubs que tu suis, et ton club principal. C’est lui qui te
-          place dans une tribune.</li>
+          place dans une tribune. Un club choisi est gardé à vie&nbsp;; seul le principal change, une fois
+          par saison.</li>
         <li><b>Les matchs du jour</b>&nbsp;: les scores en direct, les compositions, le fil du match et les
           statistiques.</li>
         <li><b>Le pronostic</b>&nbsp;: gratuit, sur les matchs de tes clubs, jusqu’au coup d’envoi. Le bon
@@ -350,6 +355,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
           Ultra, puis Capo. Une division atteinte reste acquise jusqu’à la fin de la saison.</li>
         <li>Les classements comparent les supporters, les tribunes et les duels, sur la saison ou depuis
           toujours.</li>
+        <li>Les <b>clubs</b> jouent un championnat&nbsp;: chaque duel classé et chaque Virage sont un match pour le club
+          poussé, 3&nbsp;points la victoire, 1 le nul, 0 la défaite. Un club que tu ne suis pas n’en reçoit
+          qu’une part.</li>
       </ul>
       <p class="aller"><a href="/classement">Voir les classements&nbsp;›</a></p>
     </div>
@@ -394,8 +402,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
         <li><b>La musique</b>&nbsp;: elle accompagne les pages calmes, jamais un duel, le Virage ou les
           mini-jeux. «&nbsp;Couper la musique&nbsp;», en bas du menu, la fait taire.</li>
         <li><b>Le mode calme</b>&nbsp;: coupe les sons, les vibrations ou les animations, dans le menu.</li>
-        <li><b>Les notifications</b>&nbsp;: ton club qui joue, le Virage qui s’ouvre, tes amis, ton KOP et
-          les duels qui t’attendent. Dans ton compte, case par case, jamais la nuit.</li>
+        <li><b>Les notifications</b>&nbsp;: ton club qui joue et son score en direct, le Virage qui
+          s’ouvre, tes amis, ton KOP et les duels qui t’attendent. Dans ton profil (RÉGLAGES), case par case,
+          jamais la nuit (sauf le score d’un match commencé avant).</li>
         <li><b>L’application</b>&nbsp;: installe le jeu sur ton téléphone depuis le menu, pour l’avoir en
           plein écran.</li>
         <li><b>Un bug&nbsp;?</b> «&nbsp;Signaler un problème&nbsp;», dans le menu, l’envoie directement à

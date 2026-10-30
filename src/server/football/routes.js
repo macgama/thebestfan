@@ -136,9 +136,10 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
     res.json({ teams: await store.followsOf(req.user.id), loading: toLoad });
   });
 
-  router.delete('/follows/:teamId', requireAuth, async (req, res) => {
-    await store.unfollow(req.user.id, Number(req.params.teamId));
-    res.json({ teams: await store.followsOf(req.user.id) });
+  /* Un club choisi est gardé à vie (Gaël, 30 octobre 2026) : voir
+     `DELETE /api/me/follow` dans `onboarding`, qui refuse de même. */
+  router.delete('/follows/:teamId', requireAuth, (_req, res) => {
+    res.status(403).json({ error: 'onboarding.error.club_a_vie' });
   });
 
   /** Le fil du joueur : pour chaque club suivi, le direct, le prochain, le dernier. */
