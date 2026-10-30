@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**La flèche ne sort plus du jeu après un duel** (branche
+`claude/project-thread-b1dg7t`, 30 octobre 2026). Construction seule, **sans
+schéma** (nav.js, accueil).
+
+- La flèche lit la vraie page précédente et ne revient jamais sur la page de
+  connexion, l'inscription ou une page hors du jeu ; sur le duel et le Virage,
+  elle rentre alors à l'accueil.
+- L'accueil, sur un téléphone déjà connecté, n'affiche plus la vitrine des
+  visiteurs quand le serveur ne répond pas (mise en ligne en cours) : il attend,
+  puis montre « LE JEU REVIENT » et réessaie seul.
+- Après la mise en ligne : finir un duel, toucher la flèche, on est à l'accueil.
+
+---
+
 **Mes clubs : visibles sur le profil, et gardés à vie** (branche
 `claude/project-thread-c664mv`, 30 octobre 2026, règle de Gaël). Construction
 seule, **sans schéma**.
