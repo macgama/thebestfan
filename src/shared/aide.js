@@ -391,14 +391,23 @@ const RUBRIQUES = [
         'Avec ta ferveur de la saison, gagnée au Virage et en duel : Sympathisant, '
           + 'Habitué, Fervent, Ultra, puis Capo. Une division atteinte reste acquise '
           + 'jusqu’à la fin de la saison.'],
+      ['Comment devenir le meilleur supporter ?',
+        () => 'Au classement, ta ferveur se compte au Virage et en duel classé. '
+          + (reglage('ferveur.duels_jour')
+            ? `Chaque jour, seuls tes ${reglage('ferveur.duels_jour')} meilleurs duels classés comptent : `
+              + 'jouer plus ne suffit pas, il faut bien jouer. ' : '')
+          + 'Sous SUPPORTERS et DUELS, MON CLUB et MON PAYS te comparent aux '
+          + 'supporters de ton club principal, ou des clubs de son pays.'],
       ['Comment se classent les clubs ?',
         () => 'Comme un vrai championnat. Chaque duel classé et chaque Virage sont un '
           + 'match pour le club que tu pousses : 3 points pour une victoire, 1 pour un nul, '
           + '0 pour une défaite. Au Virage, c’est ta tribune qui gagne ou perd la corde, '
           + 'compté à la fin du vrai match. Si tu ne suis pas ce club, il ne reçoit qu’une '
           + `part de ces points (×${String(reglage('tribune.neutre_points')).replace('.', ',')}) : `
-          + 'tu l’as soutenu, mais pas comme ton club. Les clubs sont rangés sur '
-          + `les points par joueur qui a joué (au moins ${reglage('tribune.plancher')}), `
+          + 'tu l’as soutenu, mais pas comme ton club. '
+          + (reglage('tribune.duels_jour') ? `Tes ${reglage('tribune.duels_jour')} premiers duels classés du jour comptent pour les clubs. ` : '')
+          + 'Les clubs sont rangés sur '
+          + `les points par joueur qui a joué pour eux (au moins ${reglage('tribune.plancher')}), `
           + 'pour que les petits clubs aient leur chance. Le classement repart à chaque saison.'],
       ['C’est quoi, le carnet de la saison ?',
         () => 'Chaque mission du jour y pose des tampons : '
