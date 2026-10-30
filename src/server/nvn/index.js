@@ -1622,30 +1622,25 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        doublée par le renfort, réduite de moitié pour un neutre : un joueur
        lisait 341 et le classement en comptait 682. Le bilan porte donc le
        chiffre écrit (`ferveurComptee`, le même que la ligne de résultat), ce
-       qui l'a fait bouger, et les points rapportés au club — le club du
-       match qu'il suit, sinon son club principal (`classements/index.js`). */
+       qui l'a fait bouger, et les points rapportés au club poussé — entiers
+       s'il le suit, une part sinon (`classements/index.js`). */
     if (!salle.tuto && d.mode === 'classe' && !coteIllisible) {
       for (const [userId, j] of d.joueurs) {
         const g = gains.get(userId);
         if (userId.startsWith('bot:') || !g) continue;
         const m = salle.membres.get(userId);
         const issue = issueDe(d, j);
-        let club = null;
-        if (m?.teamId != null) {
-          const fx = d.fixture;
-          club = fx?.away?.id === m.teamId ? fx?.away?.name : fx?.home?.name;
-        } else {
-          try {
-            const [r] = await q(`SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id
-                                  WHERE f.user_id = ? AND f.is_main = 1 LIMIT 1`, [userId]);
-            club = r?.name ?? null;
-          } catch { /* sans club lisible, le bilan le tait */ }
-        }
+        /* Le club poussé reçoit les points ; un neutre ne lui en donne
+           qu'une part (`tribune.neutre_points`), comme au classement. */
+        const fx = d.fixture;
+        const club = (j.side === 1 ? fx?.away?.name : fx?.home?.name) ?? null;
+        const part = m?.neutre === false ? 1 : Math.min(1, Math.max(0,
+          Number(reglage('tribune.neutre_points') ?? 0.5)));
         g.classement = {
           ferveur: ferveurComptee(j, m),
           renfort: Number((m?.bonus ?? 1).toFixed(2)),
           neutre: m?.neutre !== false,
-          points: club ? POINTS_DUEL[issue] ?? 0 : null,
+          points: club ? Math.round((POINTS_DUEL[issue] ?? 0) * part * 10) / 10 : null,
           club,
         };
       }

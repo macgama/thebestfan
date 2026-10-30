@@ -173,6 +173,7 @@ export function createClassements({ pool, requireAuth,
     return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : defaut;
   };
   const plancherTribune = () => Math.round(borne(reglage('tribune.plancher'), 1, 100, 5));
+  const partNeutre = () => borne(reglage('tribune.neutre_points'), 0, 1, 0.5);
 
   /* ================================================== la fenêtre d'une saison
 
@@ -292,23 +293,25 @@ export function createClassements({ pool, requireAuth,
      qui le gagnait. La ferveur reste la mesure des **joueurs** (SUPPORTERS,
      divisions, KOP) ; les clubs, eux, gagnent des matchs.
 
-     **Un duel classé est un match pour le club du joueur** : 3 points pour
-     une victoire, 1 pour un nul, 0 pour une défaite. Le club, c'est celui
-     qu'il a poussé quand il le suit (`team_id`, écrit à la fin du duel), et
-     sinon **son club principal** : un soir où son club ne joue pas, un
-     supporter peut encore le faire monter en allant jouer ailleurs. Avant, ce
-     duel-là ne rapportait rien à son club et un vingtième à celui d'un autre.
+     **Un duel classé est un match pour le club poussé** : 3 points pour
+     une victoire, 1 pour un nul, 0 pour une défaite, quand le joueur suit ce
+     club (`team_id`, écrit à la fin du duel). **Un neutre** — il pousse un
+     club qu'il ne suit pas — lui en donne une part, `tribune.neutre_points`
+     (Gaël, 30 octobre 2026 : « on les a soutenus, mais pas avec la même
+     ferveur que nos équipes favorites »). Le club poussé se lit sur le camp
+     (`side`) du match. Le neutre ne compte pas parmi les joueurs du club :
+     son aide ne doit pas faire baisser la moyenne de ceux qu'il soutient.
+     Une ligne sans camp (d'avant `side`) reste à son club principal.
 
      `team_id` est écrit une fois pour toutes : changer de club ne retire pas
-     les points qu'on lui a donnés. Le club principal d'un neutre, lui, se lit
-     au moment du calcul — il ne change qu'une fois par saison.
+     les points qu'on lui a donnés.
 
      **Le Virage aussi** (Gaël, 29 octobre 2026) : chaque présence classée
      d'un supporter est un match pour son club, gagné si sa tribune a gagné
      la corde (`virage_tribunes`, écrit à chaque but de corde), nul à
      égalité. Seulement quand le vrai match est fini — le score de la corde
-     ne bouge plus — et pour qui a donné de la ferveur. Même règle de club
-     qu'au duel.
+     ne bouge plus — et pour qui a donné de la ferveur. Même règle de club,
+     et même part pour un neutre, qu'au duel.
 
      L'entraînement ne compte jamais, ni un compte fermé.
 
@@ -319,15 +322,22 @@ export function createClassements({ pool, requireAuth,
      posée (voir `avecLeVirage`). */
   const POINTS = { win: 3, draw: 1, loss: 0 };
   const MATCHS_DES_CLUBS = (et = () => '', virage = true) => `
-    SELECT dr.user_id, COALESCE(dr.team_id, p.team_id) AS club, dr.fixture_id,
-           dr.ended_at AS quand, dr.outcome AS issue
+    SELECT dr.user_id, COALESCE(dr.team_id,
+             CASE dr.side WHEN 0 THEN fd.home_id WHEN 1 THEN fd.away_id END,
+             p.team_id) AS club,
+           (dr.team_id IS NULL AND fd.id IS NOT NULL AND COALESCE(dr.side IN (0, 1), 0)) AS neutre,
+           dr.fixture_id, dr.ended_at AS quand, dr.outcome AS issue
       FROM duel_results dr
       JOIN users u ON u.public_id = dr.user_id AND u.status = 'active'
+      LEFT JOIN fixtures fd ON fd.id = dr.fixture_id
       LEFT JOIN user_follows p ON p.user_id = dr.user_id AND p.is_main = 1
      WHERE dr.mode = 'classe' ${et('dr')}
     ${virage ? `UNION ALL
-    SELECT vp.user_id, COALESCE(vp.team_id, p.team_id) AS club, vp.fixture_id,
-           vp.last_push_at AS quand,
+    SELECT vp.user_id, COALESCE(vp.team_id,
+             CASE vp.side WHEN 0 THEN fv.home_id WHEN 1 THEN fv.away_id END,
+             p.team_id) AS club,
+           (vp.team_id IS NULL AND COALESCE(vp.side IN (0, 1), 0)) AS neutre,
+           vp.fixture_id, vp.last_push_at AS quand,
            CASE WHEN vt.buts_dom = vt.buts_ext THEN 'draw'
                 WHEN (vt.buts_dom > vt.buts_ext) = (vp.side = 0) THEN 'win'
                 ELSE 'loss' END AS issue
@@ -337,6 +347,13 @@ export function createClassements({ pool, requireAuth,
       JOIN users u ON u.public_id = vp.user_id AND u.status = 'active'
       LEFT JOIN user_follows p ON p.user_id = vp.user_id AND p.is_main = 1
      WHERE vp.classe = 1 AND vp.ferveur > 0 ${et('vp')}` : ''}`;
+  /* Les points d'une ligne de `MATCHS_DES_CLUBS` : 3 / 1 / 0, et la part du
+     neutre (`part`, un nombre borné par le registre) quand il ne suit pas le
+     club. */
+  const POINTS_DE = (x, part) => `
+    (CASE ${x}.issue WHEN 'win' THEN ${POINTS.win}
+      WHEN 'draw' THEN ${POINTS.draw} ELSE ${POINTS.loss} END
+      * CASE WHEN ${x}.neutre THEN ${part} ELSE 1 END)`;
   /* Une lecture qui compte le Virage, et sans lui si la table du score
      manque (`sql/virage-tribunes.sql` pas encore appliqué) : les duels
      gardent leurs points, et le journal le dit une fois. */
@@ -351,13 +368,14 @@ export function createClassements({ pool, requireAuth,
     }
   }
   /* Le bilan d'un club sur des matchs déjà filtrés : joués, gagnés, nuls,
-     perdus, points, et le nombre de ses joueurs qui ont joué. */
+     perdus, points, et le nombre de ses joueurs qui ont joué — sans les
+     neutres de passage. */
   const BILAN_DES_CLUBS = (matchs) => `
-    SELECT x.club, COUNT(DISTINCT x.user_id) AS joueurs, COUNT(*) AS joues,
+    SELECT x.club, COUNT(DISTINCT CASE WHEN NOT x.neutre THEN x.user_id END) AS joueurs,
+           COUNT(*) AS joues,
            SUM(x.issue = 'win') AS gagnes, SUM(x.issue = 'draw') AS nuls,
            SUM(x.issue = 'loss') AS perdus,
-           SUM(CASE x.issue WHEN 'win' THEN ${POINTS.win} WHEN 'draw' THEN ${POINTS.draw}
-                            ELSE ${POINTS.loss} END) AS points
+           SUM(${POINTS_DE('x', partNeutre())}) AS points
       FROM ${matchs} x
      WHERE x.club IS NOT NULL
      GROUP BY x.club`;
@@ -371,7 +389,7 @@ export function createClassements({ pool, requireAuth,
     COALESCE(s.n, 0) AS supporters,
     COALESCE(c.joueurs, 0) AS joueurs, COALESCE(c.joues, 0) AS joues,
     COALESCE(c.gagnes, 0) AS gagnes, COALESCE(c.nuls, 0) AS nuls,
-    COALESCE(c.perdus, 0) AS perdus, COALESCE(c.points, 0) AS points,
+    COALESCE(c.perdus, 0) AS perdus, ROUND(COALESCE(c.points, 0), 1) AS points,
     ROUND(COALESCE(c.points, 0) / GREATEST(COALESCE(c.joueurs, 0), ${plancher}), 1) AS moyenne`;
   const ORDRE_CLUBS = 'ORDER BY moyenne DESC, points DESC, gagnes DESC, t.name ASC';
   /* Les nombres sortent de la base en chaînes (`SUM`, `ROUND`) : la page les
@@ -856,8 +874,7 @@ export function createClassements({ pool, requireAuth,
     let apport = null;
     if (tribune) {
       const lireApport = (fenetre) => avecLeVirage((virage) => q(
-        `SELECT COALESCE(SUM(CASE x.issue WHEN 'win' THEN ${POINTS.win}
-                  WHEN 'draw' THEN ${POINTS.draw} ELSE ${POINTS.loss} END), 0) AS points,
+        `SELECT COALESCE(SUM(${POINTS_DE('x', partNeutre())}), 0) AS points,
                 COUNT(*) AS joues
            FROM (${MATCHS_DES_CLUBS((a) => `AND ${a}.user_id = ?`, virage)}) x
            ${fenetre ? `LEFT JOIN (${EN_COURS}) s ON 1 = 1` : ''}
@@ -891,7 +908,7 @@ export function createClassements({ pool, requireAuth,
       },
       tribune: tribune
         ? { id: tribune.id, nom: tribune.nom, ferveur: Number(tribune.ferveur),
-            ...(apport ? { points: Number(apport.points), joues: Number(apport.joues) } : {}),
+            ...(apport ? { points: Math.round(Number(apport.points) * 10) / 10, joues: Number(apport.joues) } : {}),
             ...(couleurs.length ? { couleurs } : {}) }
         : null,
     };

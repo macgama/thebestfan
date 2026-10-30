@@ -227,6 +227,13 @@ export const REGLAGES = [
       'divisent par les joueurs du club qui ont joué sur la période. Sans ' +
       'plancher, un club d’un seul joueur passerait devant tout le monde. À 1, ' +
       'on divise par le vrai nombre de joueurs.' },
+  { cle: 'tribune.neutre_points', section: 'virage', type: 'decimal',
+    titre: 'Points donnés à un club qu’on soutient sans le suivre', unite: '× les points',
+    min: 0, max: 1, pas: 0.05, defaut: 0.5,
+    aide: 'Au championnat des clubs, un joueur qui pousse un club qu’il ne suit ' +
+      'pas (au Duel classé comme au Virage) lui donne cette part de ses 3 / 1 / 0 ' +
+      'points. À 0,5, une victoire vaut 1,5 point. Ce joueur ne compte pas parmi ' +
+      'les joueurs du club pour la moyenne. À 0, un neutre ne rapporte rien.' },
 
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
      `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et
