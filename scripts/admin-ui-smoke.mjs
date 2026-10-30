@@ -670,7 +670,7 @@ let carnetEcran = null;
 try { carnetEcran = JSON.parse(prerempli.carnet); } catch { /* vérifié juste dessous */ }
 check('le formulaire porte deux champs date et le carnet, prérempli du carnet par défaut',
   prerempli.fin === 'date' && prerempli.ouvre === 'date' && Array.isArray(carnetEcran)
-  && carnetEcran.map((p) => p.tampons).join() === '10,40,100,180,260'
+  && carnetEcran.map((p) => p.tampons).join() === '10,35,75,110,140'
   || (console.log('        lu :', JSON.stringify(prerempli).slice(0, 200)), false));
 
 await page.evaluate(() => {

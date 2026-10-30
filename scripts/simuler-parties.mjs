@@ -700,6 +700,39 @@ if (tout || quoi.has('duels')) {
   ligne(`  ${parGeste.join(' · ')}`);
 }
 
+/* L'étalon de la simulation de saison (`scripts/simuler-saison.mjs`) : ce
+   que les vrais moteurs donnent pour les petites tribunes et les duels de
+   1v1, niveau contre niveau. Écrit en JSON, que la saison relit au lieu
+   d'inventer ses chiffres. */
+if (quoi.has('etalon')) {
+  const { writeFileSync } = await import('node:fs');
+  const niveaux = ['debutant', 'moyen', 'bon', 'expert'];
+  const duels = {};
+  for (const a of niveaux) for (const b of niveaux) {
+    if (niveaux.indexOf(b) < niveaux.indexOf(a)) continue;
+    const r = { n: 30, gagneA: 0, nul: 0, ferveurA: 0, ferveurB: 0, minutes: 0 };
+    for (let i = 0; i < r.n; i++) {
+      const x = duel([[a], [b]], { id: `e${a}${b}${i}`, butsReels: hasard() < 0.4 ? 1 : 0 });
+      if (x.vainqueur === 0) r.gagneA++; else if (x.vainqueur == null) r.nul++;
+      const f = (s) => x.bilan.joueurs?.find((j) => j.side === s)?.ferveur ?? 0;
+      r.ferveurA += f(0); r.ferveurB += f(1); r.minutes += x.dureeMs / 60_000;
+    }
+    duels[`${a}-${b}`] = { victoireA: r.gagneA / r.n, nul: r.nul / r.n,
+      ferveurA: Math.round(r.ferveurA / r.n), ferveurB: Math.round(r.ferveurB / r.n),
+      minutes: +(r.minutes / r.n).toFixed(1) };
+  }
+  const tribunes = {};
+  for (const [a, b] of [[1, 0], [2, 0], [1, 1], [2, 1], [3, 1], [3, 3], [5, 2], [8, 3]]) {
+    const r = virage([moitie(a), moitie(b)], { minutes: 90, fixture: 9600 + a * 10 + b,
+      buts: [{ minute: 30, camp: 0 }, { minute: 70, camp: 1 }] });
+    const moy = (t) => (t.length ? Math.round(t.reduce((x, y) => x + y, 0) / t.length) : 0);
+    tribunes[`${a}-${b}`] = { buts: r.buts, ferveurA: moy(r.ferveur[0]), ferveurB: moy(r.ferveur[1]) };
+  }
+  const sortie = args.find((x) => x.startsWith('--sortie='))?.split('=')[1];
+  const json = JSON.stringify({ graine, duels, tribunes }, null, 2);
+  if (sortie) writeFileSync(sortie, json); else ligne(json);
+}
+
 if (tout || quoi.has('jeux')) {
   titre('LES MINI-JEUX');
   jongles();

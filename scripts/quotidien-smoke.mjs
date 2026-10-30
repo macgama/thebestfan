@@ -1511,7 +1511,7 @@ titre('le carnet de la saison');
   await poster(C, 'mission', { jour, rang: 0, id: 'duel' });
   e = await lire(C);
   check('la mission ajoute son tampon : 10, le palier 1 est prêt', e.carnet.tampons === 10
-    && e.carnet.paliers[0].etat === 'pret' && JSON.stringify(e.carnet.prochain) === '{"n":2,"manque":30}'
+    && e.carnet.paliers[0].etat === 'pret' && JSON.stringify(e.carnet.prochain) === `{"n":2,"manque":${CARNET_DEFAUT[1].tampons - 10}}`
     || voir(e.carnet));
   const rs = await enParallele(2, () => poster(C, 'carnet', { saison: S1, n: 1 }));
   check('deux réclamations du palier : un versement, 100 écharpes',
