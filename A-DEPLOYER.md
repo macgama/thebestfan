@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**Le jeu installé passe en plein écran** (branche
+`claude/project-thread-qkvp99`, 30 octobre 2026, demande de Gaël).
+Construction seule, **sans schéma** (manifeste, pwa.js, script de tête des
+pages).
+
+- Depuis l'icône sur Android, la barre d'état (heure) et les trois boutons du
+  bas disparaissent ; un glissement depuis le bord les fait revenir un instant.
+- Chrome met à jour l'appli installée à son rythme (jusqu'à un jour) : pour
+  le voir tout de suite, retirer l'icône et réinstaller le jeu depuis Chrome.
+- Dans un simple onglet et sur iPhone, rien ne change.
+- Après la mise en ligne : sur le S24+, depuis l'icône, l'accueil ne doit
+  plus garder de bande vide en bas.
+
+---
+
 **Le Virage rapporte aussi des points au championnat des clubs** (branche
 `claude/project-thread-orvzgu`, 29 octobre 2026, accord de Gaël pour la
 table). **Avec schéma** : construction, puis en SSH
