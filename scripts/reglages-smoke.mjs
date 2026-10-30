@@ -140,10 +140,10 @@ const PLAN = [
   ['collection.serie_echarpes', 'saison', 'entier', 0, 1000, 100],
   ['collection.serie_packs', 'saison', 'entier', 0, 5, 1],
   ['rang.actif', 'saison', 'booleen', null, null, true],
-  ['rang.habitue', 'saison', 'entier', 0, 100000000, 5000],
-  ['rang.fervent', 'saison', 'entier', 0, 100000000, 30000],
-  ['rang.ultra', 'saison', 'entier', 0, 100000000, 100000],
-  ['rang.capo', 'saison', 'entier', 0, 100000000, 300000],
+  ['rang.habitue', 'saison', 'entier', 0, 100000000, 7000],
+  ['rang.fervent', 'saison', 'entier', 0, 100000000, 130000],
+  ['rang.ultra', 'saison', 'entier', 0, 100000000, 420000],
+  ['rang.capo', 'saison', 'entier', 0, 100000000, 880000],
 ];
 {
   const ecarts = [];

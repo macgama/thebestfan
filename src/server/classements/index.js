@@ -148,14 +148,31 @@ export function createClassements({ pool, requireAuth,
      fois. */
   /* `side` dit le camp poussé (0 domicile, 1 extérieur) : c'est lui qui
      désigne le club d'un neutre, dont `team_id` est nul. Voir `tribunes`. */
+  /* **Les meilleurs duels du jour, et eux seuls** (Gaël, 30 octobre 2026,
+     après la simulation de saison) : au plus `ferveur.duels_jour` duels
+     classés par joueur et par jour comptent pour la ferveur, ceux qui en ont
+     rapporté le plus (à égalité, l'identifiant départage). Un abonné joue
+     autant qu'il veut, mais ne prend plus la tête en jouant simplement plus.
+     Le Virage n'est pas concerné. Écrit sans fonction de fenêtre, que toutes
+     les bases ne lisent pas ; le jour est celui de l'horloge de la base. */
+  const MEILLEURS_DU_JOUR = (a) => {
+    const n = Math.round(borne(reglage('ferveur.duels_jour'), 0, 200, 5));
+    return n ? `AND (SELECT COUNT(*) FROM duel_results dm
+                      WHERE dm.user_id = ${a}.user_id AND dm.mode = 'classe'
+                        AND dm.ended_at >= DATE(${a}.ended_at)
+                        AND dm.ended_at < DATE(${a}.ended_at) + INTERVAL 1 DAY
+                        AND (dm.ferveur > ${a}.ferveur
+                             OR (dm.ferveur = ${a}.ferveur AND dm.duel_id < ${a}.duel_id))) < ${n}` : '';
+  };
   const sourceFerveur = (et = '') => `
     SELECT user_id, team_id, ferveur, fixture_id, side, last_push_at AS quand
       FROM virage_presence WHERE classe = 1 ${et}
     UNION ALL
     SELECT user_id, team_id, ferveur, fixture_id, side, ended_at AS quand
-      FROM duel_results WHERE mode = 'classe' ${et}`;
-  const FERVEUR = sourceFerveur();
-  const FERVEUR_DE = sourceFerveur('AND user_id = ?');
+      FROM duel_results dr WHERE mode = 'classe' ${et} ${MEILLEURS_DU_JOUR('dr')}`;
+  /* Des fonctions : le plafond est un réglage, relu à chaque requête. */
+  const FERVEUR = () => sourceFerveur();
+  const FERVEUR_DE = () => sourceFerveur('AND user_id = ?');
 
   /* Les supporters d'un club qui comptent dans sa moyenne : comptes actifs
      seulement. Un compte fermé suivait encore son club et divisait la
@@ -174,6 +191,7 @@ export function createClassements({ pool, requireAuth,
   };
   const plancherTribune = () => Math.round(borne(reglage('tribune.plancher'), 1, 100, 5));
   const partNeutre = () => borne(reglage('tribune.neutre_points'), 0, 1, 0.5);
+  const duelsDuJour = () => Math.round(borne(reglage('tribune.duels_jour'), 0, 200, 5));
 
   /* ================================================== la fenêtre d'une saison
 
@@ -219,6 +237,46 @@ export function createClassements({ pool, requireAuth,
   const PERIODES = new Set(['saison', 'mois', 'toujours']);
   const periodeDe = (p) => (PERIODES.has(p) ? p : 'saison');
 
+  /* ------------------------------------------- mon club, mon pays
+
+     **Être le meilleur de son club, de son pays** (Gaël, 30 octobre 2026) :
+     les listes SUPPORTERS et DUELS se lisent aussi parmi les seuls joueurs
+     du même club principal, ou dont le club principal est du même pays.
+     Le club principal, parce que c'est celui qui dit « mon club » partout
+     ailleurs (la carte de supporter, la ligne de chaque joueur). Le pays
+     est celui du club (`teams.country`, l'anglais de l'API) : une sélection
+     nationale principale est de son propre pays. */
+  async function porteeDe(userId, type) {
+    if (!userId || (type !== 'club' && type !== 'pays')) return null;
+    const [c] = await q(
+      `SELECT t.id, t.name, t.country FROM user_follows f JOIN teams t ON t.id = f.team_id
+        WHERE f.user_id = ? AND f.is_main = 1 LIMIT 1`, [userId]);
+    if (!c) return { type, nom: null };
+    if (type === 'club') return { type, id: Number(c.id), nom: c.name };
+    return c.country ? { type, valeur: c.country, nom: c.country } : { type, nom: null };
+  }
+  /* Le filtre d'une portée, sur la colonne qui porte l'identifiant public du
+     joueur, et son paramètre. Sans portée : rien. */
+  const filtrePortee = (portee, col) => {
+    if (portee?.type === 'club' && portee.id) {
+      return [`AND EXISTS (SELECT 1 FROM user_follows pf WHERE pf.user_id = ${col}
+                             AND pf.is_main = 1 AND pf.team_id = ?)`, [portee.id]];
+    }
+    if (portee?.type === 'pays' && portee.valeur) {
+      return [`AND EXISTS (SELECT 1 FROM user_follows pf JOIN teams pt ON pt.id = pf.team_id
+                            WHERE pf.user_id = ${col} AND pf.is_main = 1 AND pt.country = ?)`,
+        [portee.valeur]];
+    }
+    return ['', []];
+  };
+  const clePortee = (portee) => (portee?.type === 'club' ? `club=${portee.id}`
+    : portee?.type === 'pays' ? `pays=${portee.valeur}` : 'monde');
+  /* Ma place dans une liste déjà triée de toute la portée. */
+  const placeDans = (lignes, userId) => {
+    const i = lignes.findIndex((l) => l.public_id === userId);
+    return { rang: i >= 0 ? i + 1 : null, sur: lignes.length };
+  };
+
   /* -------------------------------------------------------- supporters */
 
   /**
@@ -234,10 +292,11 @@ export function createClassements({ pool, requireAuth,
    * cumul, sans division. Sans la table ou sans `fin_le` (schéma pas encore
    * appliqué), même repli, dit une fois au journal.
    */
-  async function supporters(periode = 'saison', limite = 50) {
+  async function supporters(periode = 'saison', limite = 50, portee = null, brut = false) {
     const p = periodeDe(periode);
     const n = Number(limite) || 50;
-    return memo(`sup:${p}:${n}`, async () => {
+    const [parmi, avec] = filtrePortee(portee, 'u.public_id');
+    return memo(`sup:${p}:${n}:${clePortee(portee)}:${brut ? 'brut' : ''}`, async () => {
       const lire = (fenetre) => q(
         `SELECT u.public_id, u.pseudo,
                 SUM(x.ferveur) AS ferveur,
@@ -247,15 +306,16 @@ export function createClassements({ pool, requireAuth,
                 (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id
                   WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club
                 ${fenetre ? ', MAX(s.id) AS fenetre_saison' : ''}
-           FROM (${FERVEUR}) x
+           FROM (${FERVEUR()}) x
            JOIN users u ON u.public_id = x.user_id
            ${fenetre ? `LEFT JOIN (${EN_COURS}) s ON 1 = 1` : ''}
           WHERE u.status = 'active'
                 ${p === 'mois' ? 'AND x.quand > (NOW(3) - INTERVAL 30 DAY)' : ''}
                 ${fenetre ? `AND (s.id IS NULL OR (${dansFenetre('x', 's')}))` : ''}
+                ${parmi}
           GROUP BY u.public_id, u.pseudo
           ORDER BY ferveur DESC
-          LIMIT ${n}`);
+          LIMIT ${n}`, avec);
 
       let lignes;
       if (p !== 'saison') {
@@ -278,7 +338,7 @@ export function createClassements({ pool, requireAuth,
           return d ? { ...l, division: d.n } : l;
         });
       }
-      return habiller(lignes);
+      return brut ? lignes : habiller(lignes);
     });
   }
 
@@ -299,9 +359,16 @@ export function createClassements({ pool, requireAuth,
      club qu'il ne suit pas — lui en donne une part, `tribune.neutre_points`
      (Gaël, 30 octobre 2026 : « on les a soutenus, mais pas avec la même
      ferveur que nos équipes favorites »). Le club poussé se lit sur le camp
-     (`side`) du match. Le neutre ne compte pas parmi les joueurs du club :
-     son aide ne doit pas faire baisser la moyenne de ceux qu'il soutient.
+     (`side`) du match. **Le neutre compte parmi les joueurs du club**
+     (Gaël, 30 octobre 2026, après la simulation de saison) : sans ça, ses
+     points se divisaient par le seul plancher, et un club que personne ne
+     suit, joué un soir creux, finissait en tête des TRIBUNES.
      Une ligne sans camp (d'avant `side`) reste à son club principal.
+
+     **Au plus `tribune.duels_jour` duels classés par joueur et par jour**
+     comptent pour les clubs (même décision) : un abonné joue autant de
+     duels classés qu'il veut, et sans plafond une poignée d'abonnés faisait
+     l'essentiel des points. Les premiers du jour, à l'heure de la base.
 
      `team_id` est écrit une fois pour toutes : changer de club ne retire pas
      les points qu'on lui a donnés.
@@ -321,6 +388,18 @@ export function createClassements({ pool, requireAuth,
      lit sans la table du score, que le schéma n'a peut-être pas encore
      posée (voir `avecLeVirage`). */
   const POINTS = { win: 3, draw: 1, loss: 0 };
+  /* Le plafond du jour : les duels classés du même joueur finis plus tôt le
+     même jour (à égalité d'heure, l'identifiant du duel départage), comptés
+     par l'index (user_id, ended_at). Un nombre du registre, borné, jamais une
+     saisie : il s'écrit dans la requête. */
+  const PLAFOND_DU_JOUR = () => {
+    const n = duelsDuJour();
+    return n ? `AND (SELECT COUNT(*) FROM duel_results dj
+                      WHERE dj.user_id = dr.user_id AND dj.mode = 'classe'
+                        AND dj.ended_at >= DATE(dr.ended_at)
+                        AND (dj.ended_at < dr.ended_at
+                             OR (dj.ended_at = dr.ended_at AND dj.duel_id < dr.duel_id))) < ${n}` : '';
+  };
   const MATCHS_DES_CLUBS = (et = () => '', virage = true) => `
     SELECT dr.user_id, COALESCE(dr.team_id,
              CASE dr.side WHEN 0 THEN fd.home_id WHEN 1 THEN fd.away_id END,
@@ -331,7 +410,7 @@ export function createClassements({ pool, requireAuth,
       JOIN users u ON u.public_id = dr.user_id AND u.status = 'active'
       LEFT JOIN fixtures fd ON fd.id = dr.fixture_id
       LEFT JOIN user_follows p ON p.user_id = dr.user_id AND p.is_main = 1
-     WHERE dr.mode = 'classe' ${et('dr')}
+     WHERE dr.mode = 'classe' ${et('dr')} ${PLAFOND_DU_JOUR()}
     ${virage ? `UNION ALL
     SELECT vp.user_id, COALESCE(vp.team_id,
              CASE vp.side WHEN 0 THEN fv.home_id WHEN 1 THEN fv.away_id END,
@@ -368,10 +447,10 @@ export function createClassements({ pool, requireAuth,
     }
   }
   /* Le bilan d'un club sur des matchs déjà filtrés : joués, gagnés, nuls,
-     perdus, points, et le nombre de ses joueurs qui ont joué — sans les
-     neutres de passage. */
+     perdus, points, et le nombre de ses joueurs qui ont joué — neutres de
+     passage compris. */
   const BILAN_DES_CLUBS = (matchs) => `
-    SELECT x.club, COUNT(DISTINCT CASE WHEN NOT x.neutre THEN x.user_id END) AS joueurs,
+    SELECT x.club, COUNT(DISTINCT x.user_id) AS joueurs,
            COUNT(*) AS joues,
            SUM(x.issue = 'win') AS gagnes, SUM(x.issue = 'draw') AS nuls,
            SUM(x.issue = 'loss') AS perdus,
@@ -416,7 +495,7 @@ export function createClassements({ pool, requireAuth,
     const p = periodeDe(periode);
     const n = Number(limite) || 50;
     const plancher = plancherTribune();
-    return memo(`trib:${p}:${n}:${plancher}`, async () => {
+    return memo(`trib:${p}:${n}:${plancher}:${partNeutre()}:${duelsDuJour()}`, async () => {
       const lire = (fenetre) => avecLeVirage((virage) => {
         const x = `(SELECT x.* FROM (${MATCHS_DES_CLUBS(undefined, virage)}) x
                      ${fenetre ? `LEFT JOIN (${EN_COURS}) s ON 1 = 1` : ''}
@@ -478,8 +557,9 @@ export function createClassements({ pool, requireAuth,
      joueur, et deux littéraux ne bougent jamais ensemble. */
   const PLANCHER_CLASSE = 3;
 
-  async function duellistes(limite = 50) {
-    return memo(`duel:${limite}`, async () => habiller(await q(
+  async function duellistes(limite = 50, portee = null, brut = false) {
+    const [parmi, avec] = filtrePortee(portee, 'u.public_id');
+    return memo(`duel:${limite}:${clePortee(portee)}:${brut ? 'brut' : ''}`, async () => (brut ? (l) => l : habiller)(await q(
       `SELECT u.public_id, u.pseudo,
               SUM(dr.outcome = 'win') AS gagnes,
               COUNT(*) AS joues,
@@ -497,11 +577,11 @@ export function createClassements({ pool, requireAuth,
                 WHERE fo.user_id = u.public_id ORDER BY fo.is_main DESC LIMIT 1) AS club
          FROM duel_results dr
          JOIN users u ON u.public_id = dr.user_id
-        WHERE u.status = 'active' AND dr.mode = 'classe'
+        WHERE u.status = 'active' AND dr.mode = 'classe' ${parmi}
         GROUP BY u.public_id, u.pseudo
        HAVING joues >= ${PLANCHER_CLASSE}
         ORDER BY cote DESC, joues DESC
-        LIMIT ${Number(limite) || 50}`)));
+        LIMIT ${Number(limite) || 50}`, avec)));
   }
 
   /* ---------------------------------------------------- les entraînements
@@ -584,7 +664,7 @@ export function createClassements({ pool, requireAuth,
   /* Même filtre qu'à `FERVEUR` ci-dessus, et pour la même raison. */
   /* `poussee` : le club que la ligne a poussé, celui du joueur ou, pour un
      neutre, celui du camp choisi. Seules les tribunes s'en servent. */
-  const SOURCE = `
+  const SOURCE = () => `
     SELECT vp.user_id, vp.team_id, vp.ferveur, 0 AS duel,
            CASE vp.side WHEN 0 THEN f.home_id WHEN 1 THEN f.away_id END AS poussee
       FROM virage_presence vp
@@ -595,7 +675,7 @@ export function createClassements({ pool, requireAuth,
            CASE dr.side WHEN 0 THEN f.home_id WHEN 1 THEN f.away_id END AS poussee
       FROM duel_results dr
       JOIN fixtures f ON f.id = dr.fixture_id
-     WHERE f.league_id = ? AND f.season = ? AND dr.mode = 'classe'`;
+     WHERE f.league_id = ? AND f.season = ? AND dr.mode = 'classe' ${MEILLEURS_DU_JOUR('dr')}`;
 
   /**
    * La saison à classer, quand la page n'en demande pas.
@@ -620,7 +700,7 @@ export function createClassements({ pool, requireAuth,
               COUNT(*) AS seances,
               (SELECT t.name FROM user_follows fo JOIN teams t ON t.id = fo.team_id
                 WHERE fo.user_id = u.public_id ORDER BY fo.is_main DESC LIMIT 1) AS club
-         FROM (${SOURCE}) x
+         FROM (${SOURCE()}) x
          JOIN users u ON u.public_id = x.user_id
         WHERE u.status = 'active'
         GROUP BY u.public_id, u.pseudo
@@ -690,7 +770,7 @@ export function createClassements({ pool, requireAuth,
          JOIN kop_membres km ON km.kop_id = k.id
          LEFT JOIN (
                SELECT y.user_id, y.team_id, SUM(y.ferveur) AS ferveur
-                 FROM (${SOURCE}) y
+                 FROM (${SOURCE()}) y
                 GROUP BY y.user_id, y.team_id
               ) p ON p.user_id = km.user_id AND p.team_id = k.team_id
         GROUP BY k.id, k.nom, t.name, t.logo, m.n
@@ -711,17 +791,17 @@ export function createClassements({ pool, requireAuth,
   async function maPlaceDans(userId, leagueId, saison) {
     const [moi] = await q(
       `SELECT COALESCE(SUM(x.ferveur), 0) AS f, COUNT(*) AS seances
-         FROM (${SOURCE}) x WHERE x.user_id = ?`,
+         FROM (${SOURCE()}) x WHERE x.user_id = ?`,
       [leagueId, saison, leagueId, saison, userId]);
 
     const [rang] = await q(
       `SELECT COUNT(*) + 1 AS rang FROM (
-         SELECT x.user_id, SUM(x.ferveur) AS f FROM (${SOURCE}) x GROUP BY x.user_id
+         SELECT x.user_id, SUM(x.ferveur) AS f FROM (${SOURCE()}) x GROUP BY x.user_id
        ) z WHERE z.f > ?`,
       [leagueId, saison, leagueId, saison, Number(moi.f)]);
 
     const [total] = await q(
-      `SELECT COUNT(DISTINCT x.user_id) AS n FROM (${SOURCE}) x WHERE x.ferveur > 0`,
+      `SELECT COUNT(DISTINCT x.user_id) AS n FROM (${SOURCE()}) x WHERE x.ferveur > 0`,
       [leagueId, saison, leagueId, saison]);
 
     return {
@@ -760,7 +840,7 @@ export function createClassements({ pool, requireAuth,
        surmonte est pire qu'une absence de place. */
     const [ferveur] = await q(
       `SELECT COALESCE(SUM(x.ferveur), 0) AS f, COUNT(DISTINCT x.fixture_id) AS m
-         FROM (${FERVEUR}) x WHERE x.user_id = ?`, [userId]);
+         FROM (${FERVEUR()}) x WHERE x.user_id = ?`, [userId]);
 
     /* **Le rang et l'effectif en une lecture**, pour chaque échelle : les
        deux comptaient les mêmes lignes groupées, l'un avec un filtre, l'autre
@@ -770,7 +850,7 @@ export function createClassements({ pool, requireAuth,
        somme arrive en DECIMAL, donc en chaîne : on la relit en nombre. */
     const [classee] = await q(
       `SELECT COALESCE(SUM(y.f > ?), 0) + 1 AS rang, COUNT(*) AS n FROM (
-         SELECT user_id, SUM(ferveur) AS f FROM (${FERVEUR}) z GROUP BY user_id
+         SELECT user_id, SUM(ferveur) AS f FROM (${FERVEUR()}) z GROUP BY user_id
        ) y`, [ferveur.f]);
 
     /* ------------------------------------- une place par échelle, pas une
@@ -850,7 +930,7 @@ export function createClassements({ pool, requireAuth,
       `SELECT t.id, t.name AS nom, ${couleurs}, COALESCE(SUM(x.ferveur), 0) AS ferveur
          FROM user_follows f
          JOIN teams t ON t.id = f.team_id
-         LEFT JOIN (${FERVEUR}) x
+         LEFT JOIN (${FERVEUR()}) x
                 ON x.user_id = f.user_id AND x.team_id = f.team_id
         WHERE f.user_id = ?
         GROUP BY t.id, t.name
@@ -1004,7 +1084,7 @@ export function createClassements({ pool, requireAuth,
               GREATEST(0, DATEDIFF(f.fin_le, CURDATE()) + 1) AS jours_restants,
               COALESCE(SUM(x.ferveur), 0) AS ferveur
          FROM (${FENETRES}) f
-         LEFT JOIN (${FERVEUR_DE}) x ON ${dansFenetre('x', 'f')}
+         LEFT JOIN (${FERVEUR_DE()}) x ON ${dansFenetre('x', 'f')}
         GROUP BY f.id, f.numero, f.nom, f.debut, f.fin, f.fin_le
         ORDER BY f.debut DESC, f.id DESC`, [userId, userId]);
     return rows.map((r) => ({ id: Number(r.id), numero: Number(r.numero), nom: r.nom,
@@ -1061,7 +1141,7 @@ export function createClassements({ pool, requireAuth,
   function ferveursDe(saisonId) {
     return memo(`hist:${saisonId}`, async () => (await q(
       `SELECT SUM(x.ferveur) AS f
-         FROM (${FERVEUR}) x
+         FROM (${FERVEUR()}) x
          JOIN users u ON u.public_id = x.user_id
          JOIN (${FENETRES}) s ON s.id = ?
         WHERE u.status = 'active' AND ${dansFenetre('x', 's')}
@@ -1129,7 +1209,7 @@ export function createClassements({ pool, requireAuth,
       const [r] = await q(
         `SELECT COALESCE(SUM(z.f > ?), 0) + 1 AS rang, COUNT(*) AS sur
            FROM (SELECT x.user_id, SUM(x.ferveur) AS f
-                   FROM (${FERVEUR}) x
+                   FROM (${FERVEUR()}) x
                    JOIN users u ON u.public_id = x.user_id
                    JOIN (${FENETRES}) s ON s.id = ?
                   WHERE u.status = 'active' AND ${dansFenetre('x', 's')}
@@ -1328,7 +1408,7 @@ export function createClassements({ pool, requireAuth,
     const [rows] = await conn.execute(
       `SELECT COALESCE(SUM(x.ferveur), 0) AS f
          FROM (${FENETRES}) w
-         LEFT JOIN (${FERVEUR_DE}) x ON ${dansFenetre('x', 'w')}
+         LEFT JOIN (${FERVEUR_DE()}) x ON ${dansFenetre('x', 'w')}
         WHERE w.id = ?
         GROUP BY w.id`, [userId, userId, saisonId]);
     if (!rows.length) return 'inconnu';
@@ -1749,9 +1829,27 @@ export function createClassements({ pool, requireAuth,
     if (!res.headersSent) res.status(503).json({ error: 'rank.error.unavailable' });
   });
 
+  /* **`portee=club` ou `portee=pays`** : la même liste parmi les joueurs de
+     mon club principal, ou de son pays, avec ma place dans cette liste
+     (`moi`, lue sur le même mémo de deux minutes que la liste). Sans
+     joueur connecté ou sans club principal : `portee.nom` nul, liste vide.
+     Le rang se lit sur la portée entière, sans la limite d'affichage. */
+  const TOUTE_LA_PORTEE = 100000;
+  async function avecPortee(req, lireListe) {
+    const type = String(req.query.portee ?? '');
+    if (type !== 'club' && type !== 'pays') return { classement: await lireListe(50, null) };
+    const portee = await porteeDe(req.user?.id, type);
+    const dite = { type, nom: portee?.nom ?? null };
+    if (!portee?.nom) return { classement: [], portee: dite };
+    const [classement, toute] = await Promise.all([lireListe(50, portee),
+      req.user?.id ? lireListe(TOUTE_LA_PORTEE, portee, true) : null]);
+    return { classement, portee: dite, ...(toute ? { moi: placeDans(toute, req.user.id) } : {}) };
+  }
+
   router.get('/supporters', safe(async (req, res) => {
     res.set('cache-control', 'private, max-age=120');
-    res.json({ classement: await supporters(String(req.query.periode ?? 'saison')) });
+    const periode = String(req.query.periode ?? 'saison');
+    res.json(await avecPortee(req, (n, portee, brut) => supporters(periode, n, portee, brut)));
   }));
 
   router.get('/tribunes', safe(async (req, res) => {
@@ -1770,9 +1868,10 @@ export function createClassements({ pool, requireAuth,
    *
    * Un écran qui ignore la condition d'entrée invente forcément une phrase
    * fausse. Il la reçoit donc. */
-  router.get('/duellistes', safe(async (_req, res) => {
+  router.get('/duellistes', safe(async (req, res) => {
     res.set('cache-control', 'private, max-age=120');
-    res.json({ classement: await duellistes(), plancher: PLANCHER_CLASSE });
+    res.json({ ...(await avecPortee(req, (n, portee, brut) => duellistes(n, portee, brut))),
+      plancher: PLANCHER_CLASSE });
   }));
 
   /* Sa propre adresse, et non un paramètre de la précédente : ce n'est pas le

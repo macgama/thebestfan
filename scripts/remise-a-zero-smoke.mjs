@@ -43,10 +43,10 @@ check('une fin au 30 mars : la saison 2 ouvre le 31 et finit le 30 juin',
   meme(calendrier('2027-03-30', [2]), [{ numero: 2, ouvre_le: '2027-03-31', fin_le: '2027-06-30' }]));
 
 check('le carnet sur 63 jours reste celui du code',
-  meme(carnetRecale(63).map((p) => p.tampons), [10, 40, 100, 180, 260]));
+  meme(carnetRecale(63).map((p) => p.tampons), [10, 35, 75, 110, 140]));
 check('sur 157 jours, les seuils sont multipliés par 2,5 environ, les gains inchangés',
   meme(carnetRecale(157).map((p) => [p.tampons, p.echarpes, p.packs]),
-    [[25, 100, 0], [100, 150, 1], [250, 250, 2], [450, 400, 3], [650, 600, 4]]));
+    [[25, 100, 0], [85, 150, 1], [185, 250, 2], [275, 400, 3], [350, 600, 4]]));
 
 /* ------------------------------------------------------- la base complète */
 

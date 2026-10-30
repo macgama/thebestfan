@@ -22,10 +22,10 @@
    arrondis. */
 export const CARNET_TRIMESTRE = Object.freeze([
   { tampons: 15, nom: 'De retour', echarpes: 100, packs: 0 },
-  { tampons: 60, nom: 'Dans le bain', echarpes: 150, packs: 1, insigne: 'lisere' },
-  { tampons: 145, nom: 'Remis en voix', echarpes: 250, packs: 2, insigne: 'tampon' },
-  { tampons: 260, nom: 'Au rendez-vous', echarpes: 400, packs: 3 },
-  { tampons: 380, nom: 'Revenu pour de bon', echarpes: 600, packs: 4, titre: true },
+  { tampons: 50, nom: 'Dans le bain', echarpes: 150, packs: 1, insigne: 'lisere' },
+  { tampons: 110, nom: 'Remis en voix', echarpes: 250, packs: 2, insigne: 'tampon' },
+  { tampons: 160, nom: 'Au rendez-vous', echarpes: 400, packs: 3 },
+  { tampons: 205, nom: 'Revenu pour de bon', echarpes: 600, packs: 4, titre: true },
 ].map((p) => Object.freeze(p)));
 
 /* `stuff` : le préfixe des pièces neuves de la série (`hc-`, `mt-`, `gd-`,

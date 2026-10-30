@@ -40,14 +40,19 @@ import { reglage, DEFAUTS } from './reglages.js';
 
    Calibré sur 63 jours de missions (mise en ligne au plus tard le
    19 octobre 2026). Plus tard, il se recale dans l'onglet Saisons, seuils
-   multipliés par « jours restants / 63 », **avant** le premier palier versé. */
+   multipliés par « jours restants / 63 », **avant** le premier palier versé.
+
+   Seuils abaissés le 30 octobre 2026 (choix de Gaël) : la simulation d'une
+   saison (`npm run simuler:saison`) montrait que personne ne finissait le
+   carnet. Un joueur assidu fait environ 2,3 tampons par jour ; le dernier
+   palier est à sa portée sur la saison. */
 
 export const CARNET_DEFAUT = Object.freeze([
   { tampons: 10, nom: 'De retour', echarpes: 100, packs: 0 },
-  { tampons: 40, nom: 'Dans le bain', echarpes: 150, packs: 1, insigne: 'lisere' },
-  { tampons: 100, nom: 'Remis en voix', echarpes: 250, packs: 2, insigne: 'tampon' },
-  { tampons: 180, nom: 'Au rendez-vous', echarpes: 400, packs: 3 },
-  { tampons: 260, nom: 'Revenu pour de bon', echarpes: 600, packs: 4, titre: true },
+  { tampons: 35, nom: 'Dans le bain', echarpes: 150, packs: 1, insigne: 'lisere' },
+  { tampons: 75, nom: 'Remis en voix', echarpes: 250, packs: 2, insigne: 'tampon' },
+  { tampons: 110, nom: 'Au rendez-vous', echarpes: 400, packs: 3 },
+  { tampons: 140, nom: 'Revenu pour de bon', echarpes: 600, packs: 4, titre: true },
 ].map((p) => Object.freeze(p)));
 
 /** Les bornes d'un carnet saisi. Écrites une fois : le refus les cite. */
