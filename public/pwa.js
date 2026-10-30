@@ -39,6 +39,7 @@
     possible: false,
     /** Le jeu tourne-t-il déjà comme une application installée ? */
     installe: matchMedia('(display-mode: standalone)').matches
+      || matchMedia('(display-mode: fullscreen)').matches
       || window.navigator.standalone === true,
     /** Un iPhone ou un iPad : Safari n'a pas de fenêtre d'installation.
      *

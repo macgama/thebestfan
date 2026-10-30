@@ -142,6 +142,27 @@ for (const [url, , nom] of ECRANS) {
     m.bas <= m.fenetre - 52 || (console.log('        ', m), false));
 }
 
+/* **Le plein écran de l'icône** (30 octobre 2026). Le manifeste dit
+   `fullscreen` : Android cache la barre d'état et les trois boutons, la
+   fenêtre fait tout l'écran. Rien n'est alors sous des boutons absents :
+   le repli de 52 px laisserait une bande vide en bas. */
+for (const [url, , nom] of ECRANS) {
+  const page = await nav.newPage();
+  page.on('dialog', (d) => d.dismiss());
+  await page.evaluateOnNewDocument(() => {
+    const vrai = window.matchMedia.bind(window);
+    window.matchMedia = (q) => (/display-mode:\s*(browser|fullscreen)/.test(q)
+      ? { matches: /fullscreen/.test(q), media: q, addEventListener() {}, removeEventListener() {} } : vrai(q));
+  });
+  await page.setUserAgent(ANDROID);
+  await page.setViewport({ width: 411, height: 915, isMobile: true, hasTouch: true });
+  try { await page.goto(base + url, { waitUntil: 'domcontentloaded', timeout: 15000 }); } catch {}
+  const cache = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--bas-cache').trim());
+  check(`${nom}, plein écran depuis l’icône : aucun bas gardé pour des boutons cachés (« ${cache} »)`, !cache);
+  await page.close();
+}
+
 for (const [url, , nom] of ECRANS) {
   const court = await mesurer(url, 296, 480);
   check(`${nom}, fenêtre courte (296 × 480) : l’écran garde 560 px et défile jusqu’à son bas`,
