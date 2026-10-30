@@ -278,6 +278,15 @@ export function crowdFactor(n) {
   return 1 + 0.18 * Math.log2(Math.max(1, n / 100));
 }
 
+
+/** La page des deux tribunes : combien de figures par tribune. */
+export const TRIBUNES_EN_FACE = 12;
+/** « Qui pousse le plus en ce moment » : la ferveur gagnée, qui s'éteint de
+    moitié en huit secondes. */
+const ELAN_DEMI_VIE = 8000;
+const elanDe = (m, now = Date.now()) =>
+  (m.elan ? m.elan * 0.5 ** ((now - (m.elanA ?? now)) / ELAN_DEMI_VIE) : 0);
+
 export class VirageRoom {
   /**
    * @param fixture {id, homeId, awayId, homeName, awayName, leagueId, kickoffAt}
@@ -1136,6 +1145,10 @@ export class VirageRoom {
        ne le contredit pas. */
     if (chant && plancher && bonus > 0 && gagne < 1) gagne = 1;
     m.ferveur += gagne;
+    // Ce qu'il pousse en ce moment : la page des deux tribunes le lit.
+    const t = Date.now();
+    m.elan = elanDe(m, t) + gagne;
+    m.elanA = t;
     this.dirty = true;
     this.classementSale = true;
 
@@ -1958,6 +1971,42 @@ export class VirageRoom {
     if (this.classementSale) this.classer();
     const { rang, sur } = this.placeDe(m);
     return { rank: rang, of: sur, ferveur: m.ferveur };
+  }
+
+  /**
+   * **Les deux tribunes face à face** (30 octobre 2026, demande de Gaël) :
+   * les Fanzzy titulaires des présents, les douze qui poussent le plus en ce
+   * moment de chaque tribune (`elan`, la ferveur gagnée, qui s'éteint de
+   * moitié en `ELAN_DEMI_VIE`), et celui qui regarde, toujours — à sa place
+   * s'il y est, en treizième sinon. `n` compte tous les présents. Un
+   * supporter sans Fanzzy équipé n'a pas de figure : il compte, sans place.
+   */
+  tribunesEnFace(userId, combien = TRIBUNES_EN_FACE) {
+    const now = Date.now();
+    const tribunes = [[], []];
+    for (const m of this.members.values()) tribunes[m.side ? 1 : 0].push(m);
+    return {
+      fixtureId: this.fixture?.id ?? null,
+      mien: this.members.get(userId)?.side ?? null,
+      goals: [...this.goals],
+      tribunes: tribunes.map((t) => {
+        const classes = t.filter((m) => m.perso?.id)
+          .sort((a, b) => elanDe(b, now) - elanDe(a, now) || b.ferveur - a.ferveur);
+        let gardes = classes.slice(0, combien);
+        const moi = classes.findIndex((m) => m.userId === userId);
+        if (moi >= combien) gardes = [...gardes, classes[moi]];
+        return {
+          n: t.length,
+          joueurs: gardes.map((m) => ({
+            nom: m.name ?? '',
+            rang: classes.indexOf(m) + 1,
+            moi: m.userId === userId,
+            fanzzy: { id: m.perso.id, age: m.perso.age ?? m.perso.id,
+              evo: Number(m.perso.evo) || 1, skin: m.perso.skin || 'base' },
+          })),
+        };
+      }),
+    };
   }
 
   snapshotFor(userId) {

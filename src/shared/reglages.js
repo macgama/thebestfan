@@ -220,24 +220,41 @@ export const REGLAGES = [
       'classements de compétition n’ont plus de chez-soi ; à 0, plus personne ' +
       'n’a de raison d’entrer dans un match qui n’est pas le sien.' },
 
-  /* La part d'un neutre pour le club qu'il pousse (Gaël, 28 octobre 2026) :
-     elle ne remontait à aucune tribune. Lue par `classements/index.js`, au
-     classement TRIBUNES comme à celui d'une compétition — jamais aux KOP,
-     dont le neutre n'est pas membre. */
-  { cle: 'ferveur.neutre_tribune', section: 'virage', type: 'decimal',
-    titre: 'Un neutre apporte au club qu’il pousse', unite: '× sa ferveur',
-    min: 0, max: 1, pas: 0.05, defaut: 0.1,
-    aide: 'Au classement des tribunes et à celui des compétitions, sur la ferveur ' +
-      'classée du neutre (déjà réduite par le réglage du dessus). Le neutre ne ' +
-      'compte pas parmi les supporters du club. À 0, un neutre ne rapporte à ' +
-      'aucune tribune, comme avant.' },
+  /* Gaël, 30 octobre 2026, après la simulation de saison : un abonné joue
+     autant de duels classés qu'il veut, et sans plafond il prenait la tête
+     des SUPPORTERS et des divisions en jouant simplement plus. */
+  { cle: 'ferveur.duels_jour', section: 'virage', type: 'entier',
+    titre: 'Duels classés comptés par jour pour la ferveur', unite: 'meilleurs duels',
+    min: 0, max: 200, defaut: 5,
+    aide: 'Au classement des supporters, aux divisions et aux classements de ' +
+      'compétition, seuls les meilleurs duels classés du jour de chaque joueur ' +
+      'comptent (ceux qui ont rapporté le plus de ferveur). On joue toujours ' +
+      'sans limite avec le PASS ; les autres duels comptent pour la cote. Le ' +
+      'Virage n’est pas concerné. Zéro désarme le plafond.' },
 
   { cle: 'tribune.plancher', section: 'virage', type: 'entier',
-    titre: 'La moyenne d’une tribune se divise par au moins', unite: 'supporters',
+    titre: 'Les points d’un club se divisent par au moins', unite: 'joueurs',
     min: 1, max: 100, defaut: 5,
-    aide: 'Sans plancher, un club d’un seul supporter actif et quelques neutres ' +
-      'passerait devant tout le monde. À 1, la moyenne se divise par le vrai ' +
-      'nombre de supporters actifs.' },
+    aide: 'Au championnat des clubs (TRIBUNES et compétitions), les points se ' +
+      'divisent par les joueurs du club qui ont joué sur la période. Sans ' +
+      'plancher, un club d’un seul joueur passerait devant tout le monde. À 1, ' +
+      'on divise par le vrai nombre de joueurs.' },
+  { cle: 'tribune.neutre_points', section: 'virage', type: 'decimal',
+    titre: 'Points donnés à un club qu’on soutient sans le suivre', unite: '× les points',
+    min: 0, max: 1, pas: 0.05, defaut: 0.5,
+    aide: 'Au championnat des clubs, un joueur qui pousse un club qu’il ne suit ' +
+      'pas (au Duel classé comme au Virage) lui donne cette part de ses 3 / 1 / 0 ' +
+      'points. À 0,5, une victoire vaut 1,5 point. Ce joueur compte parmi les ' +
+      'joueurs du club pour la moyenne. À 0, un neutre ne rapporte rien.' },
+  /* La simulation de saison (Gaël, 30 octobre 2026) : sans plafond, les
+     abonnés, qui jouent autant de duels classés qu'ils veulent, faisaient
+     70 % des points des clubs. */
+  { cle: 'tribune.duels_jour', section: 'virage', type: 'entier',
+    titre: 'Duels classés comptés par jour pour les clubs', unite: 'duels par joueur',
+    min: 0, max: 200, defaut: 5,
+    aide: 'Au championnat des clubs, seuls les premiers duels classés du jour de ' +
+      'chaque joueur comptent, abonné ou non. Les suivants comptent pour le joueur ' +
+      '(ferveur, cote), pas pour le club. Zéro désarme le plafond.' },
 
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
      `shared/fanzzy/clubs.js`. Deux nombres, parce que « gagner plus » et
@@ -447,9 +464,11 @@ export const REGLAGES = [
 
   { cle: 'abo.taille_classe_libre', section: 'abonnement', type: 'entier',
     titre: 'Plus grand format classé sans abonnement', unite: 'joueurs par camp',
-    min: 1, max: 5, defaut: 1,
-    aide: 'Le 2v2 et au-dessus restent jouables par tout le monde — en ' +
-      'entraînement. À 5, plus aucun format n’est réservé.' },
+    min: 1, max: 5, defaut: 5,
+    aide: 'À 5 (choix de Gaël du 30 octobre 2026), tous les formats se jouent ' +
+      'en classé sans abonnement, dans les duels classés du jour : sinon le ' +
+      '2v2 et au-dessus ne se rempliraient jamais. Plus bas, les grands formats ' +
+      'restent jouables par tout le monde, en entraînement.' },
 
   /* -------------------------------------------------------------- deck */
   { cle: 'deck.fanzzy', section: 'deck', type: 'entier',
@@ -858,24 +877,27 @@ export const REGLAGES = [
 
   { cle: 'rang.habitue', section: 'saison', type: 'entier',
     titre: 'Seuil d’Habitué', unite: 'ferveur classée de la saison',
-    min: 0, max: 100000000, defaut: 5000,
+    min: 0, max: 100000000, defaut: 7000,
     aide: 'Sympathisant dès la première ferveur, puis ces quatre seuils fixes, ' +
       'jamais des pourcentages : une division atteinte reste acquise. À viser ' +
-      'sur les seuls joueurs sans abonnement : environ 70 % des actifs.' },
+      'sur les seuls joueurs sans abonnement : environ 70 % des actifs. Défauts ' +
+      'recalés le 30 octobre 2026 sur la simulation d’une saison de 151 jours ' +
+      '(`npm run simuler:saison`) ; pour une saison plus courte, prendre la ' +
+      'proposition de /admin SAISONS.' },
 
   { cle: 'rang.fervent', section: 'saison', type: 'entier',
     titre: 'Seuil de Fervent', unite: 'ferveur classée de la saison',
-    min: 0, max: 100000000, defaut: 30000,
+    min: 0, max: 100000000, defaut: 130000,
     aide: 'Environ 40 % des joueurs actifs sans abonnement.' },
 
   { cle: 'rang.ultra', section: 'saison', type: 'entier',
     titre: 'Seuil d’Ultra', unite: 'ferveur classée de la saison',
-    min: 0, max: 100000000, defaut: 100000,
+    min: 0, max: 100000000, defaut: 420000,
     aide: 'Environ 15 % des joueurs actifs sans abonnement.' },
 
   { cle: 'rang.capo', section: 'saison', type: 'entier',
     titre: 'Seuil de Capo', unite: 'ferveur classée de la saison',
-    min: 0, max: 100000000, defaut: 300000,
+    min: 0, max: 100000000, defaut: 880000,
     aide: 'Environ 4 % des joueurs actifs sans abonnement, et jamais plus que ce ' +
       'qu’un joueur gratuit assidu peut faire dans la saison (cinq duels ' +
       'classés et deux Virages comptés par jour) : le titre « Capo de la ' +

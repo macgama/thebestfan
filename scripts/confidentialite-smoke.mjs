@@ -169,8 +169,12 @@ try {
   const accueil = r ? await (await fetch(`${base}/`)).text() : '';
   check('la vitrine y mène', accueil.includes('href="/confidentialite"'));
   const compte = r ? await (await fetch(`${base}/compte`)).text() : '';
-  check('la porte de connexion et « Mon compte » aussi',
-    (compte.match(/href="\/confidentialite"/g) ?? []).length === 2);
+  /* Une fois : « Mon compte » est parti dans les RÉGLAGES du profil
+     (30 octobre 2026), qui porte maintenant le second lien. */
+  check('la porte de connexion aussi',
+    (compte.match(/href="\/confidentialite"/g) ?? []).length === 1);
+  const profil = r ? await (await fetch(`${base}/profil`)).text() : '';
+  check('et les réglages du profil', profil.includes('href="/confidentialite"'));
 } finally {
   proc.kill();
 }

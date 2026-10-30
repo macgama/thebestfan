@@ -5,7 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <title>Duel de tribunes — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -455,6 +455,24 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 @keyframes fzDuelDeploie{35%,65%{scale:1.14 1.02}}
 @keyframes fzDuelAllume{30%{translate:0 -10%;filter:brightness(1.45)}60%{filter:brightness(1.2)}}
 @keyframes fzDuelTourne{0%,100%{rotate:0deg}20%{rotate:-7deg}45%{rotate:7deg}70%{rotate:-4deg}}
+/* **À plusieurs par camp** (`placerFz`) : deux rangées qui laissent la corde
+   libre, le premier rang sous elle, le second au-dessus, un peu plus petit ;
+   chacun avance d'un pas de la ligne de but vers le milieu (`--pas`). Le
+   nom de chacun à ses pieds, le mien en or. */
+.duel-fz[data-rangee]:not([data-devant]){z-index:1;height:min(38%,190px)}
+.duel-fz[data-rangee=haut]{bottom:calc(50% + 12px);height:min(34%,170px);filter:brightness(.92)}
+.duel-fz[data-tribune=moi][data-rangee]{left:calc(3% + var(--pas,0) * 12%)}
+.duel-fz[data-tribune=eux][data-rangee]{right:calc(3% + var(--pas,0) * 12%)}
+.duel-fz[data-rangee=haut][data-tribune=moi]{left:calc(9% + var(--pas,0) * 12%)}
+.duel-fz[data-rangee=haut][data-tribune=eux]{right:calc(9% + var(--pas,0) * 12%)}
+.duel-fz[data-rangee] .tbf-porte{--piece:24px}
+.duel-fz-nom{position:absolute;z-index:3;left:50%;bottom:-1px;translate:-50% 0;rotate:-2deg;max-width:130%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 5px;border-radius:2px;
+  font:600 10px/14px var(--banner);letter-spacing:.04em;text-transform:uppercase;
+  background:var(--kraft);color:var(--encre);box-shadow:0 1px 0 rgba(7,9,12,.6)}
+.duel-fz[data-moi] .duel-fz-nom{background:var(--projo)}
+.arene[data-foule-pleine] .lieu{display:none}
+.duel-fz[data-tribune=eux] .duel-fz-nom{background:#CFE0FF;rotate:2deg}
 /* Une arène trop basse pour eux (un petit téléphone, des effets en cours,
    un bandeau d'annonce) : ils monteraient sur la corde. La foule au
    pochoir garde seule la tribune. */
@@ -3664,12 +3682,55 @@ const TENIR_FZ = { but: 2600, butReel: 3600, pousse: 1100, decision: 1800, sien:
     où l'effet est tombé, pas la carte. */
 const COUPS_RECUS = new Set(['silence', 'blind', 'lock_actions', 'mod_foe']);
 
+/* **Toute la tribune dans l'arène** (30 octobre 2026, demande de Gaël) : en
+   2 contre 2 et au-delà, chaque écran ne montrait que son Fanzzy et un seul
+   d'en face ; le coéquipier n'était nulle part. Chaque camp aligne
+   maintenant tous ses joueurs, jusqu'à cinq, en deux rangées qui laissent
+   la corde libre : le premier rang sous la corde, le second au-dessus.
+   Devant, au bord de sa ligne : moi chez moi, et en face **celui qui pousse
+   le plus en ce moment** (`pousseRecente`). En 1 contre 1, rien ne change.
+
+   `fzArene.moi` et `fzArene.eux` restent le premier de chaque camp (`fzMoi`,
+   `fzEux`) ; les suivants (`moi1`…`eux4`) sont posés à la demande. */
+const FZ_PAR_CAMP = 5;
 const fzArene = {};
-for (const cote of ['moi', 'eux']) {
-  fzArene[cote] = { cote, id: cote === 'moi' ? 'fzMoi' : 'fzEux', qui: null, cle: '', cleSac: '',
-    pose: 'neutre', jusqua: 0, retour: 0, gesteT: 0, jeton: 0, devant: 0, src: '', voulu: '', coups: null,
-    sienJusqua: 0 };
+function placeFz(cote, rang) {
+  const cle = rang ? `${cote}${rang}` : cote;
+  if (!fzArene[cle]) {
+    const id = rang ? `${placeFz(cote, 0).id}${rang}` : { moi: 'fzMoi', eux: 'fzEux' }[cote];
+    if (rang && !$(id)) {
+      $('fzEux').insertAdjacentHTML('afterend', `<div class="duel-fz" data-tribune="${cote}" data-pose="neutre"
+        id="${id}" aria-hidden="true" hidden><div class="duel-fz-corps"><img alt="" decoding="async"
+        draggable="false"><img alt="" decoding="async" draggable="false"></div></div>`);
+    }
+    fzArene[cle] = { cote, rang, id, qui: null, cle: '', cleSac: '', nom: '',
+      pose: 'neutre', jusqua: 0, retour: 0, gesteT: 0, jeton: 0, devant: 0, src: '', voulu: '', coups: null,
+      sienJusqua: 0 };
+  }
+  return fzArene[cle];
 }
+placeFz('moi', 0);
+placeFz('eux', 0);
+const placesDuCamp = (cote) => Object.values(fzArene).filter((f) => f.cote === cote);
+
+/* **Qui pousse le plus en ce moment** : la somme de ses poussées, qui
+   s'éteint de moitié en huit secondes. La ferveur du match, elle, dirait
+   qui a le plus poussé depuis le début. */
+const POUSSE_DEMI_VIE = 8000;
+const pousseRecente = new Map();      // userId -> { v, t }
+function pousseDe(userId, t = performance.now()) {
+  const p = pousseRecente.get(userId);
+  return p ? p.v * 0.5 ** ((t - p.t) / POUSSE_DEMI_VIE) : 0;
+}
+function noterPoussee(userId, valeur) {
+  if (userId == null) return;
+  const t = performance.now();
+  pousseRecente.set(userId, { v: pousseDe(userId, t) + (Number(valeur) || 0), t });
+}
+/* L'ordre ne se refait qu'une fois toutes les trois secondes : deux joueurs
+   au coude à coude échangeraient sinon leur place à chaque poussée. */
+const ORDRE_FZ_MS = 3000;
+const ordreFz = { moi: { ids: [], a: -Infinity }, eux: { ids: [], a: -Infinity } };
 
 /* **Le manifeste des expressions d'abord.** Sans lui, un Fanzzy de LA
    REPRISE se poserait sur son dessin plat, puis sauterait sur celui de ses
@@ -3697,10 +3758,56 @@ const ageFz = (id) => {
   return l ? l.charCodeAt(0) - 64 : 1;
 };
 
-/** Qui se tient dans l'arène pour ce camp, ou `null`. */
-function quiEnTribune(v, cote) {
+/** Celui qui se tient devant dans l'arène pour ce camp — ou, avec `userId`,
+    celui de ce joueur s'il y est —, sinon `null`. */
+function quiEnTribune(v, cote, userId = null) {
+  const liste = tribuneEnArene(v, cote);
+  return (userId != null ? liste.find((q) => q.userId === userId) : null) ?? liste[0] ?? null;
+}
+
+/** Le personnage d'un joueur de l'équipe servie (`equipes[]`), ou `null`. */
+function quiDuJoueur(j) {
+  const racine = racineFz(j?.fanzzy);
+  return racine ? { id: j.fanzzy, racine, evo: Number(j.stade) || ageFz(j.fanzzy), skin: j.skin || 'base',
+    sac: j.sac ?? [], userId: j.userId ?? null, nom: j.nom ?? '', parti: j.connecte === false } : null;
+}
+
+/**
+ * Tous ceux qui se tiennent dans l'arène pour ce camp, dans l'ordre des
+ * places : le premier devant. Chez moi, moi d'abord ; en face, les présents
+ * d'abord, puis qui pousse le plus en ce moment. Cinq au plus.
+ */
+function tribuneEnArene(v, cote) {
   const mon = v.moi?.side ?? 0;
-  if (cote === 'moi' && v.moi) {
+  const tribune = (v.equipes?.[cote === 'moi' ? mon : mon ^ 1] ?? []).filter((x) => x?.fanzzy);
+  const id = monId();
+  const autres = cote === 'moi' && v.moi ? tribune.filter((x) => id == null || x.userId !== id) : tribune;
+  /* L'ordre gardé, tant qu'il est frais et qu'il parle des mêmes joueurs. */
+  const t = performance.now();
+  const cles = autres.map((x) => x.userId);
+  const garde = ordreFz[cote];
+  let ordre;
+  if (t - garde.a < ORDRE_FZ_MS && garde.ids.length === cles.length && cles.every((c) => garde.ids.includes(c))) {
+    ordre = garde.ids;
+  } else {
+    ordre = autres.map((x, i) => ({ x, i }))
+      .sort((a, b) => (a.x.connecte === false) - (b.x.connecte === false)
+        || pousseDe(b.x.userId, t) - pousseDe(a.x.userId, t) || a.i - b.i)
+      .map(({ x }) => x.userId);
+    ordreFz[cote] = { ids: ordre, a: t };
+  }
+  const liste = ordre.map((u) => quiDuJoueur(autres.find((x) => x.userId === u))).filter(Boolean);
+  if (cote === 'moi') {
+    const moi = monQui(v);
+    if (moi) liste.unshift(moi);
+  }
+  return liste.slice(0, FZ_PAR_CAMP);
+}
+
+/** Mon personnage : l'actif de la vue, à son âge, dans sa tenue. */
+function monQui(v) {
+  const mon = v.moi?.side ?? 0;
+  if (v.moi) {
     const f = (v.moi.fanzzy ?? []).find((x) => x.actif);
     const racine = racineFz(f?.id);
     if (!racine) return null;
@@ -3708,15 +3815,9 @@ function quiEnTribune(v, cote) {
     /* Mon sac, tel que l'équipe le sert (`equipes[].sac`, avec la rareté) :
        `moi.fanzzy[].stuff` n'a que les identifiants. */
     const sac = (v.equipes?.[mon] ?? []).find((x) => x?.userId != null && x.userId === monId())?.sac ?? [];
-    return { id: f.id, racine, evo, skin: tenueEnJeu(f, evo, racine), sac };
+    return { id: f.id, racine, evo, skin: tenueEnJeu(f, evo, racine), sac, userId: monId(), nom: 'TOI', moi: true };
   }
-  const tribune = v.equipes?.[cote === 'moi' ? mon : mon ^ 1] ?? [];
-  const j = tribune.find((x) => x?.fanzzy && x.connecte !== false) ?? tribune.find((x) => x?.fanzzy);
-  const racine = racineFz(j?.fanzzy);
-  /* `parti` : toute sa tribune a quitté le duel. Il reste, terni, comme ses
-     supporters assis (`dessinerFoule`) : on voit qu'il n'y a plus personne. */
-  return racine ? { id: j.fanzzy, racine, evo: Number(j.stade) || ageFz(j.fanzzy), skin: j.skin || 'base',
-    sac: j.sac ?? [], parti: tribune.every((x) => x?.connecte === false) } : null;
+  return null;
 }
 
 /** Le plein-pied de ce personnage à ce moment, par la fonction unique. */
@@ -3792,8 +3893,18 @@ function gesteFz(f, geste) {
  * Fait vivre un moment au Fanzzy d'un camp, `tenir` millisecondes, puis le
  * rend au repos. Un moment de rang plus bas ne coupe pas celui qui tient.
  */
-function vivreFz(cote, etat, tenir, geste) {
-  const f = fzArene[cote];
+function vivreFz(cote, etat, tenir, geste, userId = null) {
+  /* Le moment d'un joueur, à son Fanzzy seul (celui de devant s'il n'est
+     pas dans l'arène) ; un moment de tribune — un but —, à tout le camp. */
+  if (userId != null) {
+    const f = placesDuCamp(cote).find((x) => x.qui && x.qui.userId === userId);
+    vivreFzPlace(f ?? fzArene[cote], etat, tenir, geste);
+  } else {
+    for (const f of placesDuCamp(cote)) vivreFzPlace(f, etat, tenir, geste);
+  }
+}
+
+function vivreFzPlace(f, etat, tenir, geste) {
   const el = $(f?.id);
   if (!f?.qui || !el) return;
   const t = performance.now();
@@ -3829,11 +3940,12 @@ function vivreFz(cote, etat, tenir, geste) {
 const GESTE_DE_FAMILLE = { voix: 'crie', perc: 'frappe', fide: 'tient', tifo: 'deploie',
   pyro: 'allume', depl: 'tourne' };
 
-function sonGesteFz(cote, famille) {
-  const f = fzArene[cote];
+function sonGesteFz(cote, famille, userId = null) {
+  const f = (userId != null ? placesDuCamp(cote).find((x) => x.qui && x.qui.userId === userId) : null)
+    ?? fzArene[cote];
   const geste = GESTE_DE_FAMILLE[famille];
   if (!f?.qui || !geste) return;
-  vivreFz(cote, 'pousse', TENIR_FZ.sien, geste);
+  vivreFzPlace(f, 'pousse', TENIR_FZ.sien, geste);
   f.sienJusqua = performance.now() + TENIR_FZ.sien;
 }
 
@@ -3855,10 +3967,25 @@ function coupsRecus(v, cote) {
  */
 function rendreFzArene(v) {
   if (!fzManifesteLu || !v) return;
+  const listes = { moi: tribuneEnArene(v, 'moi'), eux: tribuneEnArene(v, 'eux') };
+  for (const cote of ['moi', 'eux']) {
+    for (let rang = 1; rang < listes[cote].length; rang++) placeFz(cote, rang);
+    /* En 1 contre 1, celui d'en face se ternit quand toute sa tribune est
+       partie, comme ses supporters assis (`dessinerFoule`). */
+    if (cote === 'eux' && listes.eux[0]) {
+      const tribune = v.equipes?.[(v.moi?.side ?? 0) ^ 1] ?? [];
+      listes.eux[0] = { ...listes.eux[0], parti: tribune.every((x) => x?.connecte === false) };
+    }
+  }
+  /* À quatre et plus d'un côté, la rangée du bas atteint le milieu : le nom
+     du lieu s'y effacerait sous les pseudos. Il reste dans le « i ». */
+  const pleine = Math.max(listes.moi.length, listes.eux.length) >= 4;
+  if ($('arene').hasAttribute('data-foule-pleine') !== pleine) $('arene').toggleAttribute('data-foule-pleine', pleine);
   for (const f of Object.values(fzArene)) {
     const el = $(f.id);
     if (!el) continue;
-    const qui = quiEnTribune(v, f.cote);
+    const liste = listes[f.cote];
+    const qui = liste[f.rang] ?? null;
     /* L'âge dans la clé : l'identifiant est la lignée, et ne change pas
        quand la Relève fait grandir le personnage. */
     const cle = qui ? `${qui.id}|${qui.evo}|${qui.skin}` : '';
@@ -3893,12 +4020,37 @@ function rendreFzArene(v) {
       if (qui && cleSac) el.insertAdjacentHTML('beforeend', window.TBF_STUFF.porte(qui.sac));
     }
     if (el.hasAttribute('data-parti') !== Boolean(qui?.parti)) el.toggleAttribute('data-parti', Boolean(qui?.parti));
+    placerFz(el, f, liste.length);
+    /* Son nom à ses pieds, à plusieurs seulement : seul, on sait qui c'est. */
+    const nom = liste.length > 1 && qui ? (qui.nom || '') : '';
+    if (nom !== f.nom) {
+      f.nom = nom;
+      el.querySelector('.duel-fz-nom')?.remove();
+      if (nom) el.insertAdjacentHTML('beforeend', `<span class="duel-fz-nom">${esc(nom)}</span>`);
+    }
     const coups = coupsRecus(v, f.cote);
     if (f.coups && [...coups].some((c) => !f.coups.has(c))) {
-      vivreFz(f.cote, 'decision', TENIR_FZ.decision, 'rage');
+      vivreFzPlace(f, 'decision', TENIR_FZ.decision, 'rage');
     }
     f.coups = coups;
   }
+}
+
+/**
+ * La place d'une figure : seule de son camp, celle de toujours ; à
+ * plusieurs, en deux rangées qui laissent la corde libre — les rangs pairs
+ * sous la corde, les impairs au-dessus, de la ligne de but vers le milieu.
+ */
+function placerFz(el, f, n) {
+  const rangee = n > 1 ? (f.rang % 2 ? 'haut' : 'bas') : '';
+  if ((el.dataset.rangee ?? '') !== rangee) {
+    if (rangee) el.dataset.rangee = rangee; else delete el.dataset.rangee;
+  }
+  const pas = String(Math.floor(f.rang / 2));
+  if (el.style.getPropertyValue('--pas') !== pas) el.style.setProperty('--pas', pas);
+  el.toggleAttribute('data-moi', Boolean(f.qui?.moi));
+  // Le premier garde sa taille de toujours, et passe devant les autres.
+  el.toggleAttribute('data-devant', n > 1 && f.rang === 0);
 }
 
 /** Les deux entrent en scène quand l'affiche se retire. */
@@ -4066,7 +4218,7 @@ function raconter(e) {
       }
       /* **Son geste** : réussi, le chant de sa spécialité le fait chanter à
          la manière de sa famille (voir `GESTE_DE_FAMILLE`). */
-      if (e.sien && (v === 'parfait' || v === 'bon')) sonGesteFz(pour ? 'moi' : 'eux', e.famille);
+      if (e.sien && (v === 'parfait' || v === 'bon')) sonGesteFz(pour ? 'moi' : 'eux', e.famille, e.userId);
       break;
     }
 
@@ -4080,9 +4232,11 @@ function raconter(e) {
      * bruit de fond que personne n'a décidé.
      */
     case 'push': {
+      // Qui pousse le plus en ce moment se tient devant (`tribuneEnArene`).
+      noterPoussee(e.userId, e.valeur);
       if ((e.valeur ?? 0) < 6) break;
       // Son Fanzzy se penche vers la corde avec elle (voir `vivreFz`).
-      vivreFz(pour ? 'moi' : 'eux', 'pousse', TENIR_FZ.pousse, 'hisse');
+      vivreFz(pour ? 'moi' : 'eux', 'pousse', TENIR_FZ.pousse, 'hisse', e.userId);
       const p = pointCorde();
       if (pour) {
         FX?.points?.(e.valeur, p, { couleur: OR, quoi: 'POUSSÉE' });
@@ -4600,6 +4754,24 @@ function montrerBilan(b) {
     lignes.push(`<li class="tbf-bilan-l"><span>COTE</span>
       <b>${nombre(g.cote.avant)} → <span data-compte="${Number(g.cote.apres)}" data-de="${Number(g.cote.avant)}">${
         nombre(g.cote.apres)}</span></b></li>`);
+  }
+  /* **Ce que le classement compte**, en duel classé : la ferveur écrite
+     (renfort et moitié du neutre compris, que la corde ne montre pas) et les
+     points rapportés au club poussé — une part seulement pour un neutre —,
+     le championnat des clubs de TRIBUNES. */
+  const cl = g?.classement;
+  if (cl && Number.isFinite(Number(cl.ferveur))) {
+    const pourquoi = [Number(cl.renfort) > 1 ? `renfort ×${String(cl.renfort).replace('.', ',')}` : null,
+      cl.neutre ? 'neutre' : null].filter(Boolean).join(' · ');
+    lignes.push(`<li class="tbf-bilan-l"><span>FERVEUR COMPTÉE</span>
+      <b data-compte="${Number(cl.ferveur)}">${nombre(cl.ferveur)}</b>${
+        pourquoi ? `<small>${esc(pourquoi)}</small>` : ''}</li>`);
+  }
+  if (cl?.club && Number.isFinite(Number(cl.points))) {
+    lignes.push(`<li class="tbf-bilan-l${Number(cl.points) > 0 ? ' gain' : ''}"><span>POUR ${esc(String(cl.club).toUpperCase())}</span>
+      <b${Number.isInteger(Number(cl.points)) ? ` data-compte="${Number(cl.points)}" data-signe="+"` : ''}>+${
+        String(Number(cl.points)).replace('.', ',')}</b><small>${
+        Number(cl.points) <= 1 ? 'POINT' : 'POINTS'}</small></li>`);
   }
   const motMeilleur = moi?.meilleur ? window.TBF_GESTE?.mot?.(moi.meilleur.verdict) : null;
   if (motMeilleur) {
@@ -5174,11 +5346,11 @@ $('ultime').addEventListener('click', async () => {
 
 /** La scène d'un Ultimate, le sien ou celui d'en face (`/ultime.js`). */
 function sceneUltime(e, pour) {
-  const qui = S.vue ? quiEnTribune(S.vue, pour ? 'moi' : 'eux') : null;
+  const qui = S.vue ? quiEnTribune(S.vue, pour ? 'moi' : 'eux', e.userId) : null;
   const src = qui ? (imageFz(qui, 'pousse') ?? imageFz(qui, 'neutre')) : null;
   // La couleur de sa famille, servie avec l'évènement : la page n'a pas le catalogue.
   const couleur = e.couleur ?? (pour ? '#F5C33B' : '#3C82E8');
-  if (qui) vivreFz(pour ? 'moi' : 'eux', 'pousse', 2600, 'saut');
+  if (qui) vivreFz(pour ? 'moi' : 'eux', 'pousse', 2600, 'saut', e.userId);
   window.TBF_SON?.rumeur?.('but');
   return window.TBF_ULTIME?.scene?.({ src, cri: e.cri ?? '', nom: e.nom ?? '',
     couleur, grande: Boolean(e.grande), eux: !pour, racine: qui?.racine, age: qui?.evo, skin: qui?.skin });

@@ -49,10 +49,11 @@ const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
-                 souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
+                 virage_tribunes, souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, recompenses, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'tenues.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'tenues.sql',
+  'virage-tribunes.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 /* Les colonnes des chants, **prises dans `sql/quotidien.sql`** et non
@@ -769,6 +770,19 @@ check('la minute double s\u2019ouvre', A.realGoals[0].surgeUntil > Date.now());
   check('la salle l\u2019apprend en m\u00eame temps que le but',
     await until(() => A.fils.some((f) =>
       f.entrees?.some((e) => e.genre === 'tribune'))));
+
+  /* Le score de la corde se garde en base (`sql/virage-tribunes.sql`) : c'est
+     lui qui donne ses points au club de chaque supporter, au championnat des
+     clubs. Il ne vivait que dans la salle. */
+  check('le score de la corde est gardé en base, à chaque but',
+    await (async () => {
+      for (let i = 0; i < 100; i++) {
+        const [[r]] = await pool.query('SELECT buts_dom, buts_ext FROM virage_tribunes WHERE fixture_id = 7001');
+        if (r && r.buts_dom === salle.goals[0] && r.buts_ext === salle.goals[1]) return true;
+        await wait(20);
+      }
+      return false;
+    })());
 
   /* Le fil est born\u00e9. Un match \u00e0 prolongations avec vingt remplacements ne
      doit pas gonfler sans fin dans la m\u00e9moire du serveur. */
@@ -3268,6 +3282,43 @@ const J = await creerJoueurs('bilan', 8, { fanzzy: 'TR32' });
   await uneMinutePlusTard();
   check('le match fini, elle est libérée une minute après, malgré le battement',
     !virage.rooms.has(7001));
+}
+
+/* **Les deux tribunes face à face** (`tribunesEnFace`, 30 octobre 2026) :
+   les douze qui poussent le plus en ce moment de chaque tribune, celui qui
+   regarde toujours compris, et le compte de tous les présents. Un présent
+   sans Fanzzy compte, sans figure. */
+{
+  const salle = new VirageRoom({
+    fixture: { id: 9030, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: () => {}, log: { warn() {}, error() {} },
+  });
+  const perso = (id) => ({ id, age: `${id}B`, evo: 2, skin: 'base', nom: id });
+  for (let i = 0; i < 15; i++) salle.join(`a${i}`, { side: 0, name: `A${i}`, perso: perso(`AN${i + 1}`) });
+  salle.join('nu', { side: 0, name: 'Nu' });
+  for (let i = 0; i < 3; i++) salle.join(`b${i}`, { side: 1, name: `B${i}`, perso: perso(`RP${i + 1}`) });
+  /* Ce qu'ils poussent en ce moment : a14 le plus, puis a13… ; a0 rien. */
+  for (let i = 1; i < 15; i++) salle.crediter(salle.members.get(`a${i}`), i * 10);
+  salle.crediter(salle.members.get('b2'), 50);
+  const vu = salle.tribunesEnFace('a0');
+  const [nous, eux] = vu.tribunes;
+  check('les deux tribunes : douze figures de mon côté, et moi en treizième, hors des douze',
+    nous.n === 16 && nous.joueurs.length === 13 && nous.joueurs[12].moi === true
+    && nous.joueurs[12].nom === 'A0' && nous.joueurs.every((j) => j.fanzzy?.id)
+    || (console.log('        ', JSON.stringify(nous)), false));
+  check('devant, celui qui pousse le plus en ce moment, avec son rang',
+    nous.joueurs[0].nom === 'A14' && nous.joueurs[0].rang === 1 && nous.joueurs[1].nom === 'A13'
+    && eux.joueurs[0].nom === 'B2' && eux.n === 3 && eux.joueurs.length === 3
+    && nous.joueurs[0].fanzzy.age === 'AN15B' && nous.joueurs[0].fanzzy.evo === 2);
+  /* Huit secondes plus tard, la poussée de a14 a fondu de moitié : a1, qui
+     vient de pousser fort, passe devant. */
+  const vrai = Date.now;
+  try {
+    Date.now = () => vrai() + 8000;
+    salle.crediter(salle.members.get('a1'), 200);
+    check('l’élan s’éteint : qui vient de pousser passe devant qui poussait avant',
+      salle.tribunesEnFace('a0').tribunes[0].joueurs[0].nom === 'A1');
+  } finally { Date.now = vrai; }
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

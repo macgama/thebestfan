@@ -1,0 +1,141 @@
+{
+  "graine": 2026,
+  "duels": {
+    "debutant-debutant": {
+      "victoireA": 0.6333333333333333,
+      "nul": 0.06666666666666667,
+      "ferveurA": 832,
+      "ferveurB": 736,
+      "minutes": 5
+    },
+    "debutant-moyen": {
+      "victoireA": 0,
+      "nul": 0,
+      "ferveurA": 739,
+      "ferveurB": 1349,
+      "minutes": 4.7
+    },
+    "debutant-bon": {
+      "victoireA": 0,
+      "nul": 0,
+      "ferveurA": 220,
+      "ferveurB": 983,
+      "minutes": 1.5
+    },
+    "debutant-expert": {
+      "victoireA": 0,
+      "nul": 0,
+      "ferveurA": 221,
+      "ferveurB": 965,
+      "minutes": 1.4
+    },
+    "moyen-moyen": {
+      "victoireA": 0.5333333333333333,
+      "nul": 0.06666666666666667,
+      "ferveurA": 1316,
+      "ferveurB": 1213,
+      "minutes": 5
+    },
+    "moyen-bon": {
+      "victoireA": 0,
+      "nul": 0,
+      "ferveurA": 703,
+      "ferveurB": 1462,
+      "minutes": 2.6
+    },
+    "moyen-expert": {
+      "victoireA": 0,
+      "nul": 0,
+      "ferveurA": 358,
+      "ferveurB": 1117,
+      "minutes": 1.5
+    },
+    "bon-bon": {
+      "victoireA": 0.4666666666666667,
+      "nul": 0,
+      "ferveurA": 2670,
+      "ferveurB": 2658,
+      "minutes": 4.2
+    },
+    "bon-expert": {
+      "victoireA": 0.26666666666666666,
+      "nul": 0,
+      "ferveurA": 2116,
+      "ferveurB": 2482,
+      "minutes": 3.6
+    },
+    "expert-expert": {
+      "victoireA": 0.5666666666666667,
+      "nul": 0,
+      "ferveurA": 2950,
+      "ferveurB": 2817,
+      "minutes": 3.9
+    }
+  },
+  "tribunes": {
+    "1-0": {
+      "buts": [
+        149,
+        0
+      ],
+      "ferveurA": 7009,
+      "ferveurB": 0
+    },
+    "2-0": {
+      "buts": [
+        178,
+        0
+      ],
+      "ferveurA": 7460,
+      "ferveurB": 0
+    },
+    "1-1": {
+      "buts": [
+        107,
+        0
+      ],
+      "ferveurA": 10761,
+      "ferveurB": 6058
+    },
+    "2-1": {
+      "buts": [
+        0,
+        20
+      ],
+      "ferveurA": 4290,
+      "ferveurB": 5938
+    },
+    "3-1": {
+      "buts": [
+        32,
+        0
+      ],
+      "ferveurA": 5700,
+      "ferveurB": 4213
+    },
+    "3-3": {
+      "buts": [
+        34,
+        41
+      ],
+      "ferveurA": 8022,
+      "ferveurB": 8460
+    },
+    "5-2": {
+      "buts": [
+        0,
+        41
+      ],
+      "ferveurA": 3448,
+      "ferveurB": 5696
+    },
+    "8-3": {
+      "buts": [
+        6,
+        68
+      ],
+      "ferveurA": 4796,
+      "ferveurB": 6934
+    }
+  }
+}

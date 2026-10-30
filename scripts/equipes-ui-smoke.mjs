@@ -164,21 +164,32 @@ async function chercher(terme) {
   check('et la page dit pourquoi, avec le compte',
     /2 clubs sur 2/.test(r.mot)
     || (console.log('        elle dit :', r.mot || '(rien)'), false));
-  /* Elle dit aussi **comment s'en sortir** : retirer un club, ou acheter un
-     emplacement. Un refus sans issue est un cul-de-sac. */
+  /* Elle dit aussi **comment s'en sortir** : acheter un emplacement, puisqu'un
+     club choisi est gardé à vie (Gaël, 30 octobre 2026). Un refus sans issue
+     est un cul-de-sac. */
   check('et comment en sortir',
-    /[Rr]etire/.test(r.mot) && /emplacement/.test(r.mot));
+    /à vie/.test(r.mot) && /emplacement/.test(r.mot));
+  check('et aucune croix pour retirer un club',
+    await page.evaluate(() => !document.querySelector('[data-unfollow]')));
+  const retrait = await page.evaluate(async () =>
+    (await fetch('/api/football/follows/' + document.querySelector('.team').dataset.team,
+      { method: 'DELETE', credentials: 'same-origin' })).status);
+  const [garde] = await pool.query(`SELECT COUNT(*) n FROM user_follows WHERE user_id = ?`, [U]);
+  check('et le serveur refuse de le retirer', retrait === 403 && garde[0].n === 2);
 }
 
-/* ------------------------------------- une place se libère, la porte s'ouvre */
+/* ---------------------------------- un emplacement acheté, la porte s'ouvre */
 
 {
-  await page.evaluate(() => document.querySelector('[data-unfollow]').click());
-  await jusqua(async () => await page.evaluate(() =>
-    document.querySelectorAll('.team').length === 1));
+  await pool.query(`UPDATE user_wallet SET follow_slots = 3 WHERE user_id = ?`, [U]);
+  await page.evaluate(() => load());
+  await jusqua(async () => await page.evaluate(() => slots === 3));
+  /* Les résultats de la recherche d'avant sont encore ouverts, et bloqués :
+     on les ferme, pour lire ceux de la nouvelle. */
+  await page.evaluate(() => document.getElementById('results').classList.remove('on'));
 
   const r = await chercher('Lugano');
-  check('une place libérée, le club redevient ajoutable',
+  check('une place achetée, le club redevient ajoutable',
     r.boutons.some((b) => /Lugano/.test(b.nom) && !b.bloque)
     || (console.log('        proposés :', JSON.stringify(r.boutons)), false));
 
@@ -192,7 +203,7 @@ async function chercher(terme) {
   const [suivis] = await pool.query(
     `SELECT team_id FROM user_follows WHERE user_id = ?`, [U]);
   check('et il est vraiment suivi',
-    suivis.some((s) => s.team_id === 99) && suivis.length === 2);
+    suivis.some((s) => s.team_id === 99) && suivis.length === 3);
 }
 
 /* ------------------------- le refus du serveur, s'il arrive quand même
@@ -207,10 +218,10 @@ async function chercher(terme) {
      mise en scène, la page bloquerait d'elle-même et le contrôle passerait au
      vert **sans jamais atteindre le serveur** : c'est exactement ce qui s'est
      produit au premier essai, et c'est la définition d'un test creux. */
-  await pool.query(`UPDATE user_wallet SET follow_slots = 3 WHERE user_id = ?`, [U]);
+  await pool.query(`UPDATE user_wallet SET follow_slots = 4 WHERE user_id = ?`, [U]);
   await page.evaluate(() => load());
-  await jusqua(async () => await page.evaluate(() => slots === 3));
-  await pool.query(`UPDATE user_wallet SET follow_slots = 2 WHERE user_id = ?`, [U]);
+  await jusqua(async () => await page.evaluate(() => slots === 4));
+  await pool.query(`UPDATE user_wallet SET follow_slots = 3 WHERE user_id = ?`, [U]);
 
   await page.evaluate(() => {
     const q = document.getElementById('q');
@@ -245,7 +256,7 @@ async function chercher(terme) {
     !/onboarding\.error|football\.error/.test(mot));
   const [apres] = await pool.query(
     `SELECT COUNT(*) n FROM user_follows WHERE user_id = ?`, [U]);
-  check('et rien n’a été suivi', apres[0].n === 2);
+  check('et rien n’a été suivi', apres[0].n === 3);
 }
 
 
