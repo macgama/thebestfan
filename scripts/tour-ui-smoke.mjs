@@ -1376,19 +1376,30 @@ for (const [route, nom] of tousLesEcrans) {
    pas le serveur, et une tentative vide compterait dans le plafond anti-
    force brute. */
 {
+  /* **Sans session** : connecté, `/compte` renvoie au profil depuis que
+     « Mon compte » l'a rejoint (30 octobre 2026) ; `/api/auth/me` répond
+     donc 401 ici. La suppression du compte, et son mot de passe, sont dans
+     une boîte du profil, plus ici : trois champs, connexion, inscription et
+     nouveau mot de passe. */
   const pg = await nav.newPage();
   await pg.setRequestInterception(true);
-  pg.on('request', (r) => (r.url().includes('/api/auth/login') ? r.abort() : r.continue()));
+  pg.on('request', (r) => {
+    if (r.url().includes('/api/auth/login')) return r.abort();
+    if (r.url().endsWith('/api/auth/me')) {
+      return r.respond({ status: 401, contentType: 'application/json', body: '{}' });
+    }
+    return r.continue();
+  });
   await pg.goto(base + '/compte', { waitUntil: 'networkidle0' });
   const bilan = await pg.evaluate(() => {
-    const champs = [...document.querySelectorAll('#liPassword, #rgPassword, #rsPassword, #delPassword')];
+    const champs = [...document.querySelectorAll('#liPassword, #rgPassword, #rsPassword')];
     return {
       n: champs.length,
       avecOeil: champs.filter((c) => c.parentElement.querySelector('.oeil')).length,
     };
   });
   check(`chaque champ de mot de passe a son œil (${bilan.avecOeil}/${bilan.n})`,
-    bilan.n === 4 && bilan.avecOeil === 4);
+    bilan.n === 3 && bilan.avecOeil === 3);
 
   const etat = () => pg.evaluate(() => {
     const c = document.getElementById('liPassword');
