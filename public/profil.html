@@ -183,9 +183,9 @@ h2{margin:26px 2px 10px}
   .ligne{flex-wrap:wrap;row-gap:2px}
   .ligne .n{flex:1 1 100%}
   .ligne .v{flex:1 1 auto}
-  /* Un club suivi ne se replie pas : son blason, son nom, PRINCIPAL et la
-     croix tiennent sur une ligne, et le nom cède — replié, le blason
-     restait seul sur la sienne et la croix tombait sous le nom. */
+  /* Un club suivi ne se replie pas : son blason, son nom et PRINCIPAL
+     tiennent sur une ligne, et le nom cède — replié, le blason restait seul
+     sur la sienne. */
   .ligne.suivi{flex-wrap:nowrap}
   .ligne.suivi .n{flex:1 1 auto}
 }
@@ -213,12 +213,6 @@ h2{margin:26px 2px 10px}
 #notifCases .tbf-interrupteur[disabled]{opacity:.55;cursor:wait}
 .legal{font-size:12.5px;text-align:center;margin:18px 0 4px}
 .legal a{color:var(--craie);display:inline-flex;align-items:center;min-height:44px}
-/* La croix qui retire un club : un bouton-icône de quarante-quatre pixels,
-   pas une plaque. Elle ne vise que la croix : une règle plus large battait
-   en spécificité toute plaque posée dans une ligne. */
-.ligne button[data-unfollow]{background:none;border:0;color:inherit;opacity:.88;cursor:pointer;
-  font-size:17px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;
-  justify-content:center}
 /* L'achat d'un emplacement est une plaque d'or (acheter = or), compacte pour
    tenir dans sa ligne ; sous 440 px elle passe sous son libellé. */
 .ligne #buyslot{flex:none;padding:9px 14px;min-height:44px;font-size:13px}
@@ -1675,8 +1669,6 @@ function rendreClubs() {
         ${f.is_main ? '<span class="main">PRINCIPAL</span>' : ''}
         ${f.is_main_nation ? '<span class="main">SÉLECTION</span>' : ''}
         ${boutonPrincipal(f)}
-        <button data-unfollow="${esc(f.team_id)}" data-nom="${esc(f.name ?? '')}"
-          aria-label="Ne plus suivre ${esc(f.name ?? 'ce club')}">✕</button>
       </div>`).join('')
     + Array.from({ length: libres }, () => `
       <div class="ligne libre"><span class="n">emplacement libre</span>
@@ -1797,21 +1789,6 @@ function rendre() {
 /* ---------------------------------------------------------- actions */
 
 $('clubs').addEventListener('click', async (e) => {
-  const u = e.target.closest('[data-unfollow]');
-  if (u) {
-    /* Ne plus suivre un club se demande : la croix est petite, au bord de
-       la ligne, et ce qu'elle retire — la tribune où va la ferveur — ne se
-       voit pas tout de suite. */
-    const nom = u.dataset.nom || 'ce club';
-    if (!(await window.TBF_DIALOGUE?.confirmer({
-      titre: `NE PLUS SUIVRE ${nom.toLocaleUpperCase('fr')} ?`,
-      texte: 'Ta ferveur n’ira plus à sa tribune. Tu pourras le suivre de nouveau depuis les clubs.',
-      oui: 'NE PLUS SUIVRE', ton: 'flare', non: 'GARDER',
-    }))) return;
-    try { etat = await me('/follow/' + u.dataset.unfollow, undefined, 'DELETE'); rendreClubs(); rendreCarte(); }
-    catch (err) { if (err.message !== 'auth') dire('Impossible pour le moment', { erreur: true }); }
-    return;
-  }
   const p = e.target.closest('[data-principal]');
   if (p) {
     const nom = p.dataset.nom || 'ce club';
