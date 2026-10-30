@@ -5613,16 +5613,33 @@ function feterNiveau(niveau) {
      base qui hoquette (503), le proxy de l'hébergeur qui s'impatiente en fin
      de duel (502, 504), un réseau qui se cherche au retour d'une page —
      montrait la vitrine des non-connectés à un joueur qui l'était toujours.
-     On redemande donc, trois fois en tout, avant de s'y résoudre. */
+     On redemande donc, trois fois en tout, avant de s'y résoudre.
+
+     **Plus longtemps pour un joueur qu'on connaît** (Gaël, 30 octobre 2026 :
+     « en fin de duel, la flèche me sort de l'application, sur la page de
+     connexion »). Trois essais tiennent deux secondes et demie, et le
+     serveur qui range un duel — écharpes, XP, cote — peut mettre plus que
+     ça. Sur un appareil où un joueur s'est déjà fait reconnaître, la vitrine
+     des visiteurs est presque toujours une fausse réponse : on insiste donc
+     une douzaine de secondes, derrière l'écran d'ouverture. Seul un 401
+     efface ce souvenir (une déconnexion, une session échue). */
+  const CONNU = 'tbf.connu';
+  let connu = false;
+  try { connu = localStorage.getItem(CONNU) === '1'; } catch { /* sans stockage */ }
+  const ESSAIS = connu ? 8 : 3;
   let user = null;
-  for (let essai = 0; essai < 3; essai++) {
-    if (essai) await new Promise((ok) => setTimeout(ok, 400 * essai));
+  for (let essai = 0; essai < ESSAIS; essai++) {
+    if (essai) await new Promise((ok) => setTimeout(ok, Math.min(400 * essai, 2400)));
     try {
       const r = await fetch('/api/auth/me', { credentials:'same-origin', cache:'no-store' });
       if (r.ok) { user = (await r.json()).user; break; }
-      if (r.status === 401) break;
+      if (r.status === 401) {
+        try { localStorage.removeItem(CONNU); } catch { /* sans stockage */ }
+        break;
+      }
     } catch { /* hors ligne : on redemande, puis la vitrine suffit */ }
   }
+  if (user) { try { localStorage.setItem(CONNU, '1'); } catch { /* sans stockage */ } }
 
   /* Pas de compte : la vitrine reste, et elle se garnit. C'est décidé ici
      plutôt que dans un second appel à `/api/auth/me` — deux fois la même

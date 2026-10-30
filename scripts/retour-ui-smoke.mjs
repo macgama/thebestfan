@@ -109,6 +109,29 @@ for (const [nom, etapes, referer, attendu] of cas) {
   check(`${nom} (${arrivee})`, arrivee === attendu);
 }
 
+/* **L'accueil, au retour d'un duel, attend un serveur occupé.** Sans base,
+   `/api/auth/me` n'existe pas : c'est la réponse « ni oui ni non » d'un
+   serveur qui range un duel. Un visiteur inconnu a droit à trois essais ; un
+   joueur déjà reconnu sur cet appareil à davantage, avant la vitrine. */
+async function demandesQuiEstLa(connu) {
+  const p = await navigateur.newPage();
+  let n = 0;
+  p.on('request', (r) => { if (new URL(r.url()).pathname === '/api/auth/me') n += 1; });
+  await p.goto(base + '/aide', { waitUntil: 'domcontentloaded' });
+  await p.evaluate((c) => {
+    if (c) localStorage.setItem('tbf.connu', '1'); else localStorage.removeItem('tbf.connu');
+  }, connu);
+  n = 0;
+  await p.goto(base + '/', { waitUntil: 'domcontentloaded' });
+  await dors(9000);
+  await p.close();
+  return n;
+}
+const inconnu = await demandesQuiEstLa(false);
+const reconnu = await demandesQuiEstLa(true);
+check(`un visiteur inconnu : trois essais (${inconnu})`, inconnu <= 4);
+check(`un joueur déjà reconnu : on insiste davantage (${reconnu})`, reconnu >= 6);
+
 await navigateur.close();
 serveur.kill();
 console.log(fautes ? `\n${fautes} échec(s)` : '\ntout est vert');
