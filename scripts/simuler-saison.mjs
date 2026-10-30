@@ -1104,7 +1104,7 @@ const resultat = {
   reglages: { packRegen: R('pack.regen_min'), packMax: R('pack.max'), aboRegen: R('abo.pack_regen_min'),
     aboMax: R('abo.pack_max'), seuils: SEUILS, plancher: R('tribune.plancher'), neutre: R('tribune.neutre_points') },
   parProfil, courbes, jours: journal.jours, duelsParHeure: dh, totaux, sallesStats,
-  tribunes: { S1: tribS1, S2: tribS2, S1variante: tribS1Variante }, bots: journal.bots, parHeure: journal.parHeure, ligues, supportersS1: supportersS1.slice(0, 25), divisions, proposition,
+  tribunes: { S1: tribS1, S2: tribS2, S1variante: tribS1Variante }, bots: journal.bots, parHeure: journal.parHeure, ligues, supportersS1: supportersS1.slice(0, 25), ferveursS1: supportersS1.map((x) => ({ profil: x.profil, ferveur: x.ferveur })), divisions, proposition,
   duellistes: duellistes.slice(0, 15),
   clubs: { total: CLUBS.size, suivis: clubsSuivis.size, avecMatchs: tribS1.length,
     avecJoueurs: new Set(joueurs.map((p) => p.principal)).size },

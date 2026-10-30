@@ -1,5 +1,35 @@
 # À déposer sur Infomaniak
 
+**Classements plus justes, divisions et carnet recalés** (branche
+`claude/project-thread-4hxhyh`, 30 octobre 2026, choix de Gaël après la
+simulation de saison). Construction seule, **sans schéma**.
+
+- TRIBUNES (championnat des clubs) : seuls les 5 premiers duels classés du
+  jour de chaque joueur comptent pour les clubs, abonné ou non (réglable dans
+  /admin, « Duels classés comptés par jour pour les clubs », 0 = sans plafond).
+  Un joueur qui pousse un club qu'il ne suit pas compte maintenant parmi les
+  joueurs de ce club : un club sans supporters ne peut plus finir en tête sur
+  un soir creux.
+- Divisions : Habitué 7 000, Fervent 130 000, Ultra 420 000, Capo 880 000 de
+  ferveur (au lieu de 5 000, 30 000, 100 000, 300 000). Si ces seuils ont été
+  changés à la main dans /admin RÉGLAGES, la valeur de /admin reste : la
+  remettre au défaut.
+- Carnet : 10, 35, 75, 110, 140 tampons (base 63 jours) ; la remise à zéro le
+  recale à 25, 85, 180, 265, 335 pour la saison 1. Trimestres : 15, 50, 110,
+  160, 205. Si la saison 1 a déjà son carnet en base, le recaler dans /admin
+  SAISONS avant le premier palier versé.
+- Ferveur au classement : chaque jour, seuls les 5 meilleurs duels classés
+  de chaque joueur comptent (SUPPORTERS, divisions, compétitions). Un abonné
+  joue toujours sans limite. Réglable dans /admin (« Duels classés comptés
+  par jour pour la ferveur », 0 = sans plafond).
+- CLASSEMENT : sous SUPPORTERS et DUELS, trois boutons TOUT LE JEU, MON CLUB,
+  MON PAYS (club principal, ou clubs du même pays), avec sa place parmi eux.
+- Après la mise en ligne : /classement, SUPPORTERS puis MON CLUB et MON PAYS,
+  puis DUELS et MON PAYS, sur le S24+.
+- Outil : `npm run simuler:saison` (simulation d'une saison entière).
+
+---
+
 **Tous les supporters à l'écran : duel à plusieurs et Grand Virage** (branche
 `claude/project-thread-gi4dsl`, 30 octobre 2026, demande de Gaël). Construction
 seule, **sans schéma**.
