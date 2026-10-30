@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Ultimate en tenue Halloween : 281 images, RP et AN** (branche
+`claude/project-thread-wdq9qc`, 30 octobre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Quand le Fanzzy porte sa tenue Halloween, la grande scène Ultimate (duel,
+  Virage, fiche) montre son image Halloween, au fond transposé en nuit
+  d'Halloween ; sinon, l'image de base. Pas de clip pour ces images.
+- Défauts gardés, à refaire plus tard : RP6-e2 (mot « SUPPORTER » sur une
+  banderole), AN47-e2 (deux visages).
+- Après la mise en ligne : sur la fiche d'un Fanzzy dont on a la carte
+  Ultimate, choisir la tenue Halloween puis toucher la tuile ULTIMATE.
+
+---
+
 **Tous les supporters à l'écran : duel à plusieurs et Grand Virage** (branche
 `claude/project-thread-gi4dsl`, 30 octobre 2026, demande de Gaël). Construction
 seule, **sans schéma**.
