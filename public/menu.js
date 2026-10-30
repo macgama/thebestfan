@@ -876,6 +876,12 @@
       + 'Installer l’application</button>'
       + '<p class="tbf-installer-ios" id="tbf-installer-ios" hidden>Pour l’avoir en plein écran : '
       + '<b>Partager</b>, puis <b>Sur l’écran d’accueil</b>.</p>'
+      /* **Android, sans proposition** (30 octobre 2026) : Gaël avait retiré
+         l'icône pour la réinstaller, et Chrome ne repropose pas tout de suite
+         l'installation — l'entrée restait cachée. Le menu de Chrome sait
+         toujours le faire : on explique ce geste-là. */
+      + '<p class="tbf-installer-ios" id="tbf-installer-android" hidden>Dans Chrome : le menu '
+      + '<b>⋮</b> en haut à droite, puis <b>Ajouter à l’écran d’accueil</b> et <b>Installer</b>.</p>'
       /* **Comment jouer** (18 octobre 2026) : tout ce que le jeu permet,
          expliqué, et la visite guidée à relancer. En tête des liens du pied :
          c'est ce qu'on y vient chercher quand on est perdu. */
@@ -1138,10 +1144,12 @@
        plus tard encore : on regarde au montage, à chaque ouverture du
        tiroir, et à chaque fois que pwa.js annonce du nouveau (« tbf-pwa »). */
     const installer = tiroir.querySelector('#tbf-installer');
-    const consigne = tiroir.querySelector('#tbf-installer-ios');
+    const android = /Android/i.test(navigator.userAgent);
+    const consigne = tiroir.querySelector(android ? '#tbf-installer-android' : '#tbf-installer-ios');
     const proposerInstallation = () => {
       const p = window.TBF_PWA;
-      const facon = !p || p.installe ? '' : p.possible ? 'proposer' : p.ios ? 'expliquer' : '';
+      const facon = !p || p.installe ? '' : p.possible ? 'proposer'
+        : p.ios || android ? 'expliquer' : '';
       /* **Le focus ne tombe pas avec elle.** Sur Android, l'entrée se cache
          juste après la fenêtre d'installation — acceptée ou refusée, la
          proposition est consommée — et c'est elle qu'on vient de toucher :
@@ -1163,7 +1171,7 @@
       installer.hidden = !facon;
       installer.dataset.facon = facon;
       if (facon === 'expliquer') {
-        installer.setAttribute('aria-controls', 'tbf-installer-ios');
+        installer.setAttribute('aria-controls', consigne.id);
         installer.setAttribute('aria-expanded', String(!consigne.hidden));
       } else {
         consigne.hidden = true;
