@@ -5,7 +5,7 @@
 <script src="/langue.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
-<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, ou une fenêtre que Chrome tient au-dessus des boutons, ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
 <title>Grand Virage — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
@@ -119,6 +119,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Ce qu'il porte (`TBF_STUFF.porte`) : au bord gauche de sa boîte, à hauteur
    de hanche, loin de la corde. */
 .fzs>.tbf-porte{left:0;bottom:16%;--piece:30px;gap:5px}
+/* **Les deux tribunes face à face** (`tribunes-face.js`) : le bouton qui
+   ouvre la page annexe, sous le compte d'en face. */
+#tribunesBtn{position:absolute;right:8px;top:34px;z-index:6;--rot:2deg;cursor:pointer;
+  font-family:var(--banner);font-size:12px;font-weight:700;letter-spacing:.06em;border:0}
 /* Les amis présents (`virage:amis`), en sticker au coin haut de l'arène. */
 #amisIci{position:absolute;left:10px;top:8px;z-index:5;--rot:-3deg}
 /* L'annonce de repli sur la corde, quand le personnage n'est pas monté. */
@@ -440,6 +444,8 @@ html[data-calme~=animations] .ultime[data-etat=pret]{animation:none}
     <div class="tbf-foule" id="crowdMe" data-tribune="moi" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <span class="compte" id="compteEux"><b>0</b> EN FACE</span>
     <span class="compte" id="compteMoi"><b>0</b> AVEC TOI</span>
+    <button type="button" class="tbf-sticker" data-ton="or" id="tribunesBtn"
+      aria-haspopup="dialog">LES DEUX TRIBUNES ›</button>
     <!-- Le Fanzzy équipé : la scène est montée par `fanzzy-scene.js`, la
          page ne fait que lui prêter cette boîte. -->
     <div class="fzs" id="fzs"></div>
@@ -567,6 +573,8 @@ html[data-calme~=animations] .ultime[data-etat=pret]{animation:none}
 <script src="/chant-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-scene.js"></script>
+<!-- Les deux tribunes face à face, la page annexe du bouton de l'arène. -->
+<script src="/tribunes-face.js"></script>
 <script>
 /* =======================================================================
    Grand Virage — client.
@@ -1430,6 +1438,14 @@ const ouvrirFeuille = (oui) => {
 };
 
 $('fil').addEventListener('click', () => ouvrirFeuille(true));
+/* Les deux tribunes face à face : ma tribune, celle d'en face, leurs noms. */
+$('tribunesBtn').addEventListener('click', () => {
+  const f = S?.fixture;
+  if (!f?.id) return;
+  const mine = S.you?.side ?? 0;
+  window.TBF_FACE?.ouvrir({ fixtureId: f.id,
+    nomMoi: mine === 0 ? f.homeName : f.awayName, nomEux: mine === 0 ? f.awayName : f.homeName });
+});
 $('feuilleX').addEventListener('click', () => ouvrirFeuille(false));
 // On peut toujours sortir : c'est la règle de tout plein écran de ce jeu.
 document.addEventListener('keydown', (e) => {

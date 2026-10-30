@@ -213,6 +213,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       couleurs?.assurerPlusTard([f.home_id, f.away_id]);
       const room = buildRoom(f, fixtureId);
       await semerLeFil(room, fixtureId);
+      await reprendreLeScore(room);
       rooms.set(fixtureId, room);
       return room;
     })().finally(() => enCours.delete(fixtureId));
@@ -266,7 +267,47 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          du stade coûte le reste. */
       onPush: (p) => souvenirs.recordPush(p)
         .catch((e) => console.error(`[virage ${fixtureId}] présence non écrite :`, e.message)),
+      /* **Le score de la corde, gardé en base** (`sql/virage-tribunes.sql`) :
+         c'est lui qui donne ses points au club de chaque supporter, au
+         championnat des clubs (`classements/index.js`). Il ne vivait que dans
+         la salle. Même posture que la présence : jamais attendu, jamais une
+         panne qui sort tout le monde du stade. */
+      onGoal: ({ fixtureId: id, goals }) => q(
+        `INSERT INTO virage_tribunes (fixture_id, buts_dom, buts_ext) VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE buts_dom = VALUES(buts_dom), buts_ext = VALUES(buts_ext)`,
+        [id, goals[0], goals[1]])
+        .catch((e) => scoreNonEcrit(id, e)),
     });
+  }
+
+  /* Sans la table (schéma pas encore appliqué), le Virage joue comme avant :
+     on le dit une fois au journal, pas à chaque but. */
+  let tableScoreAbsenteDite = false;
+  function scoreNonEcrit(id, e) {
+    if (e?.code === 'ER_NO_SUCH_TABLE') {
+      if (!tableScoreAbsenteDite) {
+        tableScoreAbsenteDite = true;
+        console.warn('[virage] score de la corde non gardé : applique sql/virage-tribunes.sql '
+          + '(npm run schema:appliquer). Le Virage ne rapporte pas de points aux clubs d’ici là.');
+      }
+      return;
+    }
+    console.error(`[virage ${id}] score de la corde non écrit :`, e.message);
+  }
+
+  /**
+   * Une salle rouverte reprend le score de sa corde : un redémarrage pendant
+   * le match remettait sinon les deux tribunes à zéro, et le championnat des
+   * clubs lirait le score d'après le redémarrage.
+   */
+  async function reprendreLeScore(room) {
+    try {
+      const [r] = await q('SELECT buts_dom, buts_ext FROM virage_tribunes WHERE fixture_id = ?',
+        [room.fixture.id]);
+      if (r) room.goals = [Number(r.buts_dom) || 0, Number(r.buts_ext) || 0];
+    } catch (e) {
+      scoreNonEcrit(room.fixture.id, e);
+    }
   }
 
   /**
@@ -1644,6 +1685,21 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
    * L'ouverture du Virage, elle, ne vient pas d'ici : la page la tire de la
    * minute et du coup d'envoi qu'elle a déjà, par la règle de `/live`.
    */
+  /**
+   * **Les deux tribunes face à face** : les Fanzzy titulaires des présents
+   * de ce match, pour la page `/virage-tribunes` (`VirageRoom.tribunesEnFace`).
+   * Une salle fermée ou vide répond deux tribunes vides, pas une erreur : la
+   * page le dit.
+   */
+  router.get('/:fixtureId/tribunes', requireAuth, (req, res) => {
+    res.set('cache-control', 'no-store');
+    const id = Number(req.params.fixtureId);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'fixture' });
+    const room = rooms.get(id);
+    if (!room) return res.json({ fixtureId: id, mien: null, goals: [0, 0], tribunes: [{ n: 0, joueurs: [] }, { n: 0, joueurs: [] }] });
+    res.json(room.tribunesEnFace(req.user.id));
+  });
+
   router.get('/a-jouer', (_req, res) => {
     res.set('cache-control', 'no-store');
     const foules = [];
