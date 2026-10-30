@@ -111,8 +111,9 @@ for (const [nom, etapes, referer, attendu] of cas) {
 
 /* **L'accueil, au retour d'un duel, attend un serveur occupé.** Sans base,
    `/api/auth/me` n'existe pas : c'est la réponse « ni oui ni non » d'un
-   serveur qui range un duel. Un visiteur inconnu a droit à trois essais ; un
-   joueur déjà reconnu sur cet appareil à davantage, avant la vitrine. */
+   serveur qui redémarre. Un visiteur inconnu a droit à trois essais ; un
+   joueur déjà reconnu sur cet appareil à davantage, puis à « LE JEU REVIENT »
+   au lieu de la vitrine. */
 async function demandesQuiEstLa(connu) {
   const p = await navigateur.newPage();
   let n = 0;
@@ -123,14 +124,17 @@ async function demandesQuiEstLa(connu) {
   }, connu);
   n = 0;
   await p.goto(base + '/', { waitUntil: 'domcontentloaded' });
-  await dors(9000);
+  await dors(connu ? 16000 : 9000);
+  const voile = await p.evaluate(() => Boolean(document.getElementById('tbf-revient')));
   await p.close();
-  return n;
+  return { n, voile };
 }
 const inconnu = await demandesQuiEstLa(false);
 const reconnu = await demandesQuiEstLa(true);
-check(`un visiteur inconnu : trois essais (${inconnu})`, inconnu <= 4);
-check(`un joueur déjà reconnu : on insiste davantage (${reconnu})`, reconnu >= 6);
+check(`un visiteur inconnu : trois essais, puis la vitrine (${inconnu.n})`,
+  inconnu.n <= 4 && !inconnu.voile);
+check(`un joueur déjà reconnu : on insiste davantage (${reconnu.n})`, reconnu.n >= 8);
+check('et on lui dit que le jeu revient, au lieu de la vitrine', reconnu.voile);
 
 await navigateur.close();
 serveur.kill();

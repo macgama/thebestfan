@@ -5621,23 +5621,56 @@ function feterNiveau(niveau) {
      serveur qui range un duel — écharpes, XP, cote — peut mettre plus que
      ça. Sur un appareil où un joueur s'est déjà fait reconnaître, la vitrine
      des visiteurs est presque toujours une fausse réponse : on insiste donc
-     une douzaine de secondes, derrière l'écran d'ouverture. Seul un 401
+     une douzaine de secondes, derrière l'écran d'ouverture, puis on le dit
+     (plus bas). Seul un 401
      efface ce souvenir (une déconnexion, une session échue). */
   const CONNU = 'tbf.connu';
   let connu = false;
   try { connu = localStorage.getItem(CONNU) === '1'; } catch { /* sans stockage */ }
   const ESSAIS = connu ? 8 : 3;
   let user = null;
+  let reponse = null;
   for (let essai = 0; essai < ESSAIS; essai++) {
     if (essai) await new Promise((ok) => setTimeout(ok, Math.min(400 * essai, 2400)));
     try {
       const r = await fetch('/api/auth/me', { credentials:'same-origin', cache:'no-store' });
+      reponse = r.status;
       if (r.ok) { user = (await r.json()).user; break; }
       if (r.status === 401) {
         try { localStorage.removeItem(CONNU); } catch { /* sans stockage */ }
         break;
       }
     } catch { /* hors ligne : on redemande, puis la vitrine suffit */ }
+  }
+  /* **Le serveur ne répond toujours pas** : c'est presque toujours une mise en
+     ligne qui redémarre le jeu (Gaël : « une page Infomaniak, si en
+     construction »). Pour un joueur connu, la vitrine dirait « tu n'as pas de
+     compte » : on dit plutôt ce qui se passe, et on redemande toutes les
+     quelques secondes jusqu'à ce que le serveur revienne. */
+  if (!user && connu && reponse !== 401) {
+    const voile = document.createElement('div');
+    voile.id = 'tbf-revient';
+    voile.setAttribute('role', 'status');
+    voile.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:flex;'
+      + 'align-items:center;justify-content:center;text-align:center;padding:28px;'
+      + 'background:#05070A;color:#F2EEE4;line-height:1.6;'
+      + 'font-family:system-ui,-apple-system,"Segoe UI",sans-serif';
+    voile.innerHTML = '<div style="max-width:340px">'
+      + '<b style="display:block;font-size:18px;letter-spacing:.12em;margin-bottom:14px;color:#F5C33B">'
+      + 'LE JEU REVIENT</b>'
+      + '<small style="opacity:.9;font-size:13px">Le serveur redémarre, souvent pour une '
+      + 'nouvelle version. On réessaie tout seul — tu restes connecté, rien n’est perdu.</small></div>';
+    document.body.appendChild(voile);
+    for (let essai = 0; !user; essai++) {
+      await new Promise((ok) => setTimeout(ok, Math.min(3000 + 1000 * essai, 15000)));
+      try {
+        const r = await fetch('/api/auth/me', { credentials:'same-origin', cache:'no-store' });
+        if (r.ok) { user = (await r.json()).user; break; }
+        if (r.status === 401) { reponse = 401; break; }
+      } catch { /* toujours pas */ }
+    }
+    if (reponse === 401) { try { localStorage.removeItem(CONNU); } catch { /* sans stockage */ } }
+    voile.remove();
   }
   if (user) { try { localStorage.setItem(CONNU, '1'); } catch { /* sans stockage */ } }
 
