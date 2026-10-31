@@ -786,6 +786,112 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
     butin.brillantes <= 5);
 }
 
+/* --------------------------------------------------------- la carte en grand
+
+ * Demande de Gaël (31 octobre 2026) : toucher une carte du butin pour la voir
+ * en grand, avec ses caractéristiques. Le toucher ouvrait une fiche que la
+ * page ne dessinait pas (elle tombait sous le kiosque, hors de l'écran), et
+ * rien du tout pour une tenue, une pièce ou une carte d'action.
+ */
+{
+  const vu = await page.evaluate(async () => {
+    const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
+    const sum = document.getElementById('summary');
+    const loupe = document.getElementById('loupe');
+    const visible = (el) => {
+      if (!el || el.hidden) return false;
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0
+        && getComputedStyle(el).visibility !== 'hidden';
+    };
+    /* Chaque carte du paquet, quelle que soit sa sorte, s'ouvre en grand. */
+    const cartes = [];
+    for (const c of sum.querySelectorAll('[data-i]')) {
+      c.click();
+      await attendre(60);
+      const carte = loupe.querySelector('.loupe-carte .fz');
+      const ticket = loupe.querySelector('.loupe-ticket');
+      const i = +c.dataset.i;
+      cartes.push({
+        i, nom: pull[i]?.nom,
+        ouverte: visible(loupe),
+        largeur: Math.round(carte?.getBoundingClientRect().width ?? 0),
+        nomEcrit: (ticket?.querySelector('h2')?.textContent ?? '') === (pull[i]?.nom ?? ''),
+        lignes: ticket?.querySelectorAll('dt').length ?? 0,
+        rarete: /Rareté/.test(ticket?.textContent ?? ''),
+        butinDessous: document.getElementById('opener').classList.contains('on'),
+      });
+      document.getElementById('loupeFermer').click();
+      await attendre(30);
+    }
+    const fermee = loupe.hidden;
+    /* Les flèches passent d'une carte à l'autre, en boucle. */
+    sum.querySelector('[data-i="0"]').click();
+    await attendre(40);
+    document.getElementById('loupeSuiv').click();
+    const apresSuiv = document.getElementById('loupeCompte').textContent;
+    document.getElementById('loupePrec').click();
+    document.getElementById('loupePrec').click();
+    const apresPrec = document.getElementById('loupeCompte').textContent;
+    /* Échap referme. */
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const echap = loupe.hidden;
+
+    /* La fiche d'un Fanzzy, par-dessus la loupe, à l'écran. */
+    let fiche = null;
+    const j = pull.findIndex((f) => f && !(f.etat || f.skin || f.stuff || f.action || f.lieu || f.echarpes));
+    if (j >= 0) {
+      sum.querySelector(`[data-i="${j}"]`).click();
+      await attendre(40);
+      const voir = document.getElementById('loupeVoir');
+      const voirVisible = visible(voir);
+      voir.click();
+      const det = document.getElementById('detail');
+      for (let k = 0; k < 40 && !det.querySelector('#fiche-art'); k++) await attendre(100);
+      const art = det.querySelector('#fiche-art');
+      const r = art?.getBoundingClientRect();
+      fiche = { voirVisible, montee: Boolean(art), aLEcran: Boolean(r && r.top >= 0 && r.top < innerHeight) };
+      det.querySelector('[data-fermer]')?.click();
+      await attendre(40);
+      fiche.rendLaLoupe = !det.classList.contains('on') && !loupe.hidden;
+      document.getElementById('loupeFermer').click();
+    }
+    return { cartes, fermee, apresSuiv, apresPrec, echap, fiche, n: pull.length };
+  });
+
+  if (process.env.CAPTURE) {
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    for (const i of [0, 3, 4]) {
+      await page.evaluate((k) => document.querySelector(`#summary [data-i="${k}"]`)?.click(), i);
+      await new Promise((r) => setTimeout(r, 900));
+      await page.screenshot({ path: join(tmpdir(), `loupe-${i}.png`) });
+      console.log('   capture :', join(tmpdir(), `loupe-${i}.png`));
+      await page.evaluate(() => document.getElementById('loupeFermer').click());
+    }
+  }
+
+  check(`toucher chaque carte du butin l’ouvre en grand (${vu.cartes.filter((c) => c.ouverte).length}/${vu.n})`,
+    vu.cartes.length === vu.n && vu.cartes.every((c) => c.ouverte)
+    || (console.log('       ', JSON.stringify(vu.cartes)), false));
+  check(`en grand pour de vrai (${Math.min(...vu.cartes.map((c) => c.largeur))} px au moins)`,
+    vu.cartes.every((c) => c.largeur >= 200));
+  check('avec son nom et ses caractéristiques',
+    vu.cartes.every((c) => c.nomEcrit && c.rarete && c.lignes >= 2));
+  check('le butin reste dessous', vu.cartes.every((c) => c.butinDessous));
+  check('FERMER rend le butin', vu.fermee === true);
+  check(`les flèches passent d’une carte à l’autre (${vu.apresSuiv}, ${vu.apresPrec})`,
+    vu.apresSuiv === `2 / ${vu.n}` && vu.apresPrec === `${vu.n} / ${vu.n}`);
+  check('Échap referme', vu.echap === true);
+  if (vu.fiche) {
+    check('un Fanzzy propose sa fiche', vu.fiche.voirVisible === true);
+    check('et la fiche s’ouvre à l’écran, pas sous le kiosque',
+      vu.fiche.montee && vu.fiche.aLEcran
+      || (console.log('       ', JSON.stringify(vu.fiche)), false));
+    check('la refermer rend la carte en grand', vu.fiche.rendLaLoupe === true);
+  }
+}
+
 /* ============================================ acheter un booster aux écharpes
 
    **Le chemin le plus court entre deux fautes : une affordance montrée quand
