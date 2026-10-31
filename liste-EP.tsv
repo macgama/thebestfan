@@ -1,0 +1,421 @@
+# prompt	fichier	références	fond
+EP1-e1	EP1		vert
+EP1-pl-e1A	EP1-e1-base-planche-A	EP1-e1	vert
+EP1-pl-e1B	EP1-e1-base-planche-B	EP1-e1	vert
+EP1-e2	EP1B	EP1-e1	vert
+EP1-pl-e2A	EP1-e2-base-planche-A	EP1-e2	vert
+EP1-pl-e2B	EP1-e2-base-planche-B	EP1-e2	vert
+EP1-e3	EP1C	EP1-e2,EP1-e1	vert
+EP1-pl-e3A	EP1-e3-base-planche-A	EP1-e3	vert
+EP1-pl-e3B	EP1-e3-base-planche-B	EP1-e3	vert
+EP2-e1	EP2		magenta
+EP2-pl-e1A	EP2-e1-base-planche-A	EP2-e1	magenta
+EP2-pl-e1B	EP2-e1-base-planche-B	EP2-e1	magenta
+EP2-e2	EP2B	EP2-e1	magenta
+EP2-pl-e2A	EP2-e2-base-planche-A	EP2-e2	magenta
+EP2-pl-e2B	EP2-e2-base-planche-B	EP2-e2	magenta
+EP2-e3	EP2C	EP2-e2,EP2-e1	magenta
+EP2-pl-e3A	EP2-e3-base-planche-A	EP2-e3	magenta
+EP2-pl-e3B	EP2-e3-base-planche-B	EP2-e3	magenta
+EP3-e1	EP3		vert
+EP3-pl-e1A	EP3-e1-base-planche-A	EP3-e1	vert
+EP3-pl-e1B	EP3-e1-base-planche-B	EP3-e1	vert
+EP3-e2	EP3B	EP3-e1	vert
+EP3-pl-e2A	EP3-e2-base-planche-A	EP3-e2	vert
+EP3-pl-e2B	EP3-e2-base-planche-B	EP3-e2	vert
+EP3-e3	EP3C	EP3-e2,EP3-e1	vert
+EP3-pl-e3A	EP3-e3-base-planche-A	EP3-e3	vert
+EP3-pl-e3B	EP3-e3-base-planche-B	EP3-e3	vert
+EP4-e1	EP4		vert
+EP4-pl-e1A	EP4-e1-base-planche-A	EP4-e1	vert
+EP4-pl-e1B	EP4-e1-base-planche-B	EP4-e1	vert
+EP4-e2	EP4B	EP4-e1	vert
+EP4-pl-e2A	EP4-e2-base-planche-A	EP4-e2	vert
+EP4-pl-e2B	EP4-e2-base-planche-B	EP4-e2	vert
+EP4-e3	EP4C	EP4-e2,EP4-e1	vert
+EP4-pl-e3A	EP4-e3-base-planche-A	EP4-e3	vert
+EP4-pl-e3B	EP4-e3-base-planche-B	EP4-e3	vert
+EP5-e1	EP5		vert
+EP5-pl-e1A	EP5-e1-base-planche-A	EP5-e1	vert
+EP5-pl-e1B	EP5-e1-base-planche-B	EP5-e1	vert
+EP6-e1	EP6		vert
+EP6-pl-e1A	EP6-e1-base-planche-A	EP6-e1	vert
+EP6-pl-e1B	EP6-e1-base-planche-B	EP6-e1	vert
+EP6-e2	EP6B	EP6-e1	vert
+EP6-pl-e2A	EP6-e2-base-planche-A	EP6-e2	vert
+EP6-pl-e2B	EP6-e2-base-planche-B	EP6-e2	vert
+EP6-e3	EP6C	EP6-e2,EP6-e1	vert
+EP6-pl-e3A	EP6-e3-base-planche-A	EP6-e3	vert
+EP6-pl-e3B	EP6-e3-base-planche-B	EP6-e3	vert
+EP7-e1	EP7		vert
+EP7-pl-e1A	EP7-e1-base-planche-A	EP7-e1	vert
+EP7-pl-e1B	EP7-e1-base-planche-B	EP7-e1	vert
+EP7-e2	EP7B	EP7-e1	vert
+EP7-pl-e2A	EP7-e2-base-planche-A	EP7-e2	vert
+EP7-pl-e2B	EP7-e2-base-planche-B	EP7-e2	vert
+EP7-e3	EP7C	EP7-e2,EP7-e1	vert
+EP7-pl-e3A	EP7-e3-base-planche-A	EP7-e3	vert
+EP7-pl-e3B	EP7-e3-base-planche-B	EP7-e3	vert
+EP8-e1	EP8		vert
+EP8-pl-e1A	EP8-e1-base-planche-A	EP8-e1	vert
+EP8-pl-e1B	EP8-e1-base-planche-B	EP8-e1	vert
+EP8-e2	EP8B	EP8-e1	vert
+EP8-pl-e2A	EP8-e2-base-planche-A	EP8-e2	vert
+EP8-pl-e2B	EP8-e2-base-planche-B	EP8-e2	vert
+EP8-e3	EP8C	EP8-e2,EP8-e1	vert
+EP8-pl-e3A	EP8-e3-base-planche-A	EP8-e3	vert
+EP8-pl-e3B	EP8-e3-base-planche-B	EP8-e3	vert
+EP9-e1	EP9		magenta
+EP9-pl-e1A	EP9-e1-base-planche-A	EP9-e1	magenta
+EP9-pl-e1B	EP9-e1-base-planche-B	EP9-e1	magenta
+EP9-e2	EP9B	EP9-e1	magenta
+EP9-pl-e2A	EP9-e2-base-planche-A	EP9-e2	magenta
+EP9-pl-e2B	EP9-e2-base-planche-B	EP9-e2	magenta
+EP9-e3	EP9C	EP9-e2,EP9-e1	magenta
+EP9-pl-e3A	EP9-e3-base-planche-A	EP9-e3	magenta
+EP9-pl-e3B	EP9-e3-base-planche-B	EP9-e3	magenta
+EP10-e1	EP10		vert
+EP10-pl-e1A	EP10-e1-base-planche-A	EP10-e1	vert
+EP10-pl-e1B	EP10-e1-base-planche-B	EP10-e1	vert
+EP10-e2	EP10B	EP10-e1	vert
+EP10-pl-e2A	EP10-e2-base-planche-A	EP10-e2	vert
+EP10-pl-e2B	EP10-e2-base-planche-B	EP10-e2	vert
+EP10-e3	EP10C	EP10-e2,EP10-e1	vert
+EP10-pl-e3A	EP10-e3-base-planche-A	EP10-e3	vert
+EP10-pl-e3B	EP10-e3-base-planche-B	EP10-e3	vert
+EP11-e1	EP11		vert
+EP11-pl-e1A	EP11-e1-base-planche-A	EP11-e1	vert
+EP11-pl-e1B	EP11-e1-base-planche-B	EP11-e1	vert
+EP11-e2	EP11B	EP11-e1	vert
+EP11-pl-e2A	EP11-e2-base-planche-A	EP11-e2	vert
+EP11-pl-e2B	EP11-e2-base-planche-B	EP11-e2	vert
+EP11-e3	EP11C	EP11-e2,EP11-e1	vert
+EP11-pl-e3A	EP11-e3-base-planche-A	EP11-e3	vert
+EP11-pl-e3B	EP11-e3-base-planche-B	EP11-e3	vert
+EP12-e1	EP12		vert
+EP12-pl-e1A	EP12-e1-base-planche-A	EP12-e1	vert
+EP12-pl-e1B	EP12-e1-base-planche-B	EP12-e1	vert
+EP12-e2	EP12B	EP12-e1	vert
+EP12-pl-e2A	EP12-e2-base-planche-A	EP12-e2	vert
+EP12-pl-e2B	EP12-e2-base-planche-B	EP12-e2	vert
+EP12-e3	EP12C	EP12-e2,EP12-e1	vert
+EP12-pl-e3A	EP12-e3-base-planche-A	EP12-e3	vert
+EP12-pl-e3B	EP12-e3-base-planche-B	EP12-e3	vert
+EP13-e1	EP13		magenta
+EP13-pl-e1A	EP13-e1-base-planche-A	EP13-e1	magenta
+EP13-pl-e1B	EP13-e1-base-planche-B	EP13-e1	magenta
+EP13-e2	EP13B	EP13-e1	magenta
+EP13-pl-e2A	EP13-e2-base-planche-A	EP13-e2	magenta
+EP13-pl-e2B	EP13-e2-base-planche-B	EP13-e2	magenta
+EP13-e3	EP13C	EP13-e2,EP13-e1	magenta
+EP13-pl-e3A	EP13-e3-base-planche-A	EP13-e3	magenta
+EP13-pl-e3B	EP13-e3-base-planche-B	EP13-e3	magenta
+EP14-e1	EP14		vert
+EP14-pl-e1A	EP14-e1-base-planche-A	EP14-e1	vert
+EP14-pl-e1B	EP14-e1-base-planche-B	EP14-e1	vert
+EP14-e2	EP14B	EP14-e1	vert
+EP14-pl-e2A	EP14-e2-base-planche-A	EP14-e2	vert
+EP14-pl-e2B	EP14-e2-base-planche-B	EP14-e2	vert
+EP14-e3	EP14C	EP14-e2,EP14-e1	vert
+EP14-pl-e3A	EP14-e3-base-planche-A	EP14-e3	vert
+EP14-pl-e3B	EP14-e3-base-planche-B	EP14-e3	vert
+EP15-e1	EP15		magenta
+EP15-pl-e1A	EP15-e1-base-planche-A	EP15-e1	magenta
+EP15-pl-e1B	EP15-e1-base-planche-B	EP15-e1	magenta
+EP16-e1	EP16		vert
+EP16-pl-e1A	EP16-e1-base-planche-A	EP16-e1	vert
+EP16-pl-e1B	EP16-e1-base-planche-B	EP16-e1	vert
+EP16-e2	EP16B	EP16-e1	vert
+EP16-pl-e2A	EP16-e2-base-planche-A	EP16-e2	vert
+EP16-pl-e2B	EP16-e2-base-planche-B	EP16-e2	vert
+EP16-e3	EP16C	EP16-e2,EP16-e1	vert
+EP16-pl-e3A	EP16-e3-base-planche-A	EP16-e3	vert
+EP16-pl-e3B	EP16-e3-base-planche-B	EP16-e3	vert
+EP17-e1	EP17		vert
+EP17-pl-e1A	EP17-e1-base-planche-A	EP17-e1	vert
+EP17-pl-e1B	EP17-e1-base-planche-B	EP17-e1	vert
+EP18-e1	EP18		vert
+EP18-pl-e1A	EP18-e1-base-planche-A	EP18-e1	vert
+EP18-pl-e1B	EP18-e1-base-planche-B	EP18-e1	vert
+EP19-e1	EP19		vert
+EP19-pl-e1A	EP19-e1-base-planche-A	EP19-e1	vert
+EP19-pl-e1B	EP19-e1-base-planche-B	EP19-e1	vert
+EP20-e1	EP20		vert
+EP20-pl-e1A	EP20-e1-base-planche-A	EP20-e1	vert
+EP20-pl-e1B	EP20-e1-base-planche-B	EP20-e1	vert
+EP20-e2	EP20B	EP20-e1	vert
+EP20-pl-e2A	EP20-e2-base-planche-A	EP20-e2	vert
+EP20-pl-e2B	EP20-e2-base-planche-B	EP20-e2	vert
+EP20-e3	EP20C	EP20-e2,EP20-e1	vert
+EP20-pl-e3A	EP20-e3-base-planche-A	EP20-e3	vert
+EP20-pl-e3B	EP20-e3-base-planche-B	EP20-e3	vert
+EP21-e1	EP21		vert
+EP21-pl-e1A	EP21-e1-base-planche-A	EP21-e1	vert
+EP21-pl-e1B	EP21-e1-base-planche-B	EP21-e1	vert
+EP21-e2	EP21B	EP21-e1	vert
+EP21-pl-e2A	EP21-e2-base-planche-A	EP21-e2	vert
+EP21-pl-e2B	EP21-e2-base-planche-B	EP21-e2	vert
+EP21-e3	EP21C	EP21-e2,EP21-e1	vert
+EP21-pl-e3A	EP21-e3-base-planche-A	EP21-e3	vert
+EP21-pl-e3B	EP21-e3-base-planche-B	EP21-e3	vert
+EP22-e1	EP22		vert
+EP22-pl-e1A	EP22-e1-base-planche-A	EP22-e1	vert
+EP22-pl-e1B	EP22-e1-base-planche-B	EP22-e1	vert
+EP22-e2	EP22B	EP22-e1	vert
+EP22-pl-e2A	EP22-e2-base-planche-A	EP22-e2	vert
+EP22-pl-e2B	EP22-e2-base-planche-B	EP22-e2	vert
+EP22-e3	EP22C	EP22-e2,EP22-e1	vert
+EP22-pl-e3A	EP22-e3-base-planche-A	EP22-e3	vert
+EP22-pl-e3B	EP22-e3-base-planche-B	EP22-e3	vert
+EP23-e1	EP23		vert
+EP23-pl-e1A	EP23-e1-base-planche-A	EP23-e1	vert
+EP23-pl-e1B	EP23-e1-base-planche-B	EP23-e1	vert
+EP23-e2	EP23B	EP23-e1	vert
+EP23-pl-e2A	EP23-e2-base-planche-A	EP23-e2	vert
+EP23-pl-e2B	EP23-e2-base-planche-B	EP23-e2	vert
+EP23-e3	EP23C	EP23-e2,EP23-e1	vert
+EP23-pl-e3A	EP23-e3-base-planche-A	EP23-e3	vert
+EP23-pl-e3B	EP23-e3-base-planche-B	EP23-e3	vert
+EP24-e1	EP24		vert
+EP24-pl-e1A	EP24-e1-base-planche-A	EP24-e1	vert
+EP24-pl-e1B	EP24-e1-base-planche-B	EP24-e1	vert
+EP24-e2	EP24B	EP24-e1	vert
+EP24-pl-e2A	EP24-e2-base-planche-A	EP24-e2	vert
+EP24-pl-e2B	EP24-e2-base-planche-B	EP24-e2	vert
+EP24-e3	EP24C	EP24-e2,EP24-e1	vert
+EP24-pl-e3A	EP24-e3-base-planche-A	EP24-e3	vert
+EP24-pl-e3B	EP24-e3-base-planche-B	EP24-e3	vert
+EP25-e1	EP25		vert
+EP25-pl-e1A	EP25-e1-base-planche-A	EP25-e1	vert
+EP25-pl-e1B	EP25-e1-base-planche-B	EP25-e1	vert
+EP25-e2	EP25B	EP25-e1	vert
+EP25-pl-e2A	EP25-e2-base-planche-A	EP25-e2	vert
+EP25-pl-e2B	EP25-e2-base-planche-B	EP25-e2	vert
+EP25-e3	EP25C	EP25-e2,EP25-e1	vert
+EP25-pl-e3A	EP25-e3-base-planche-A	EP25-e3	vert
+EP25-pl-e3B	EP25-e3-base-planche-B	EP25-e3	vert
+EP26-e1	EP26		vert
+EP26-pl-e1A	EP26-e1-base-planche-A	EP26-e1	vert
+EP26-pl-e1B	EP26-e1-base-planche-B	EP26-e1	vert
+EP26-e2	EP26B	EP26-e1	vert
+EP26-pl-e2A	EP26-e2-base-planche-A	EP26-e2	vert
+EP26-pl-e2B	EP26-e2-base-planche-B	EP26-e2	vert
+EP26-e3	EP26C	EP26-e2,EP26-e1	vert
+EP26-pl-e3A	EP26-e3-base-planche-A	EP26-e3	vert
+EP26-pl-e3B	EP26-e3-base-planche-B	EP26-e3	vert
+EP27-e1	EP27		vert
+EP27-pl-e1A	EP27-e1-base-planche-A	EP27-e1	vert
+EP27-pl-e1B	EP27-e1-base-planche-B	EP27-e1	vert
+EP27-e2	EP27B	EP27-e1	vert
+EP27-pl-e2A	EP27-e2-base-planche-A	EP27-e2	vert
+EP27-pl-e2B	EP27-e2-base-planche-B	EP27-e2	vert
+EP27-e3	EP27C	EP27-e2,EP27-e1	vert
+EP27-pl-e3A	EP27-e3-base-planche-A	EP27-e3	vert
+EP27-pl-e3B	EP27-e3-base-planche-B	EP27-e3	vert
+EP28-e1	EP28		vert
+EP28-pl-e1A	EP28-e1-base-planche-A	EP28-e1	vert
+EP28-pl-e1B	EP28-e1-base-planche-B	EP28-e1	vert
+EP28-e2	EP28B	EP28-e1	vert
+EP28-pl-e2A	EP28-e2-base-planche-A	EP28-e2	vert
+EP28-pl-e2B	EP28-e2-base-planche-B	EP28-e2	vert
+EP28-e3	EP28C	EP28-e2,EP28-e1	vert
+EP28-pl-e3A	EP28-e3-base-planche-A	EP28-e3	vert
+EP28-pl-e3B	EP28-e3-base-planche-B	EP28-e3	vert
+EP29-e1	EP29		vert
+EP29-pl-e1A	EP29-e1-base-planche-A	EP29-e1	vert
+EP29-pl-e1B	EP29-e1-base-planche-B	EP29-e1	vert
+EP29-e2	EP29B	EP29-e1	vert
+EP29-pl-e2A	EP29-e2-base-planche-A	EP29-e2	vert
+EP29-pl-e2B	EP29-e2-base-planche-B	EP29-e2	vert
+EP29-e3	EP29C	EP29-e2,EP29-e1	vert
+EP29-pl-e3A	EP29-e3-base-planche-A	EP29-e3	vert
+EP29-pl-e3B	EP29-e3-base-planche-B	EP29-e3	vert
+EP30-e1	EP30		vert
+EP30-pl-e1A	EP30-e1-base-planche-A	EP30-e1	vert
+EP30-pl-e1B	EP30-e1-base-planche-B	EP30-e1	vert
+EP30-e2	EP30B	EP30-e1	vert
+EP30-pl-e2A	EP30-e2-base-planche-A	EP30-e2	vert
+EP30-pl-e2B	EP30-e2-base-planche-B	EP30-e2	vert
+EP30-e3	EP30C	EP30-e2,EP30-e1	vert
+EP30-pl-e3A	EP30-e3-base-planche-A	EP30-e3	vert
+EP30-pl-e3B	EP30-e3-base-planche-B	EP30-e3	vert
+EP31-e1	EP31		vert
+EP31-pl-e1A	EP31-e1-base-planche-A	EP31-e1	vert
+EP31-pl-e1B	EP31-e1-base-planche-B	EP31-e1	vert
+EP31-e2	EP31B	EP31-e1	vert
+EP31-pl-e2A	EP31-e2-base-planche-A	EP31-e2	vert
+EP31-pl-e2B	EP31-e2-base-planche-B	EP31-e2	vert
+EP31-e3	EP31C	EP31-e2,EP31-e1	vert
+EP31-pl-e3A	EP31-e3-base-planche-A	EP31-e3	vert
+EP31-pl-e3B	EP31-e3-base-planche-B	EP31-e3	vert
+EP32-e1	EP32		vert
+EP32-pl-e1A	EP32-e1-base-planche-A	EP32-e1	vert
+EP32-pl-e1B	EP32-e1-base-planche-B	EP32-e1	vert
+EP32-e2	EP32B	EP32-e1	vert
+EP32-pl-e2A	EP32-e2-base-planche-A	EP32-e2	vert
+EP32-pl-e2B	EP32-e2-base-planche-B	EP32-e2	vert
+EP32-e3	EP32C	EP32-e2,EP32-e1	vert
+EP32-pl-e3A	EP32-e3-base-planche-A	EP32-e3	vert
+EP32-pl-e3B	EP32-e3-base-planche-B	EP32-e3	vert
+EP33-e1	EP33		vert
+EP33-pl-e1A	EP33-e1-base-planche-A	EP33-e1	vert
+EP33-pl-e1B	EP33-e1-base-planche-B	EP33-e1	vert
+EP33-e2	EP33B	EP33-e1	vert
+EP33-pl-e2A	EP33-e2-base-planche-A	EP33-e2	vert
+EP33-pl-e2B	EP33-e2-base-planche-B	EP33-e2	vert
+EP33-e3	EP33C	EP33-e2,EP33-e1	vert
+EP33-pl-e3A	EP33-e3-base-planche-A	EP33-e3	vert
+EP33-pl-e3B	EP33-e3-base-planche-B	EP33-e3	vert
+EP34-e1	EP34		vert
+EP34-pl-e1A	EP34-e1-base-planche-A	EP34-e1	vert
+EP34-pl-e1B	EP34-e1-base-planche-B	EP34-e1	vert
+EP34-e2	EP34B	EP34-e1	vert
+EP34-pl-e2A	EP34-e2-base-planche-A	EP34-e2	vert
+EP34-pl-e2B	EP34-e2-base-planche-B	EP34-e2	vert
+EP34-e3	EP34C	EP34-e2,EP34-e1	vert
+EP34-pl-e3A	EP34-e3-base-planche-A	EP34-e3	vert
+EP34-pl-e3B	EP34-e3-base-planche-B	EP34-e3	vert
+EP35-e1	EP35		vert
+EP35-pl-e1A	EP35-e1-base-planche-A	EP35-e1	vert
+EP35-pl-e1B	EP35-e1-base-planche-B	EP35-e1	vert
+EP35-e2	EP35B	EP35-e1	vert
+EP35-pl-e2A	EP35-e2-base-planche-A	EP35-e2	vert
+EP35-pl-e2B	EP35-e2-base-planche-B	EP35-e2	vert
+EP35-e3	EP35C	EP35-e2,EP35-e1	vert
+EP35-pl-e3A	EP35-e3-base-planche-A	EP35-e3	vert
+EP35-pl-e3B	EP35-e3-base-planche-B	EP35-e3	vert
+EP36-e1	EP36		vert
+EP36-pl-e1A	EP36-e1-base-planche-A	EP36-e1	vert
+EP36-pl-e1B	EP36-e1-base-planche-B	EP36-e1	vert
+EP36-e2	EP36B	EP36-e1	vert
+EP36-pl-e2A	EP36-e2-base-planche-A	EP36-e2	vert
+EP36-pl-e2B	EP36-e2-base-planche-B	EP36-e2	vert
+EP36-e3	EP36C	EP36-e2,EP36-e1	vert
+EP36-pl-e3A	EP36-e3-base-planche-A	EP36-e3	vert
+EP36-pl-e3B	EP36-e3-base-planche-B	EP36-e3	vert
+EP37-e1	EP37		vert
+EP37-pl-e1A	EP37-e1-base-planche-A	EP37-e1	vert
+EP37-pl-e1B	EP37-e1-base-planche-B	EP37-e1	vert
+EP37-e2	EP37B	EP37-e1	vert
+EP37-pl-e2A	EP37-e2-base-planche-A	EP37-e2	vert
+EP37-pl-e2B	EP37-e2-base-planche-B	EP37-e2	vert
+EP37-e3	EP37C	EP37-e2,EP37-e1	vert
+EP37-pl-e3A	EP37-e3-base-planche-A	EP37-e3	vert
+EP37-pl-e3B	EP37-e3-base-planche-B	EP37-e3	vert
+EP38-e1	EP38		vert
+EP38-pl-e1A	EP38-e1-base-planche-A	EP38-e1	vert
+EP38-pl-e1B	EP38-e1-base-planche-B	EP38-e1	vert
+EP38-e2	EP38B	EP38-e1	vert
+EP38-pl-e2A	EP38-e2-base-planche-A	EP38-e2	vert
+EP38-pl-e2B	EP38-e2-base-planche-B	EP38-e2	vert
+EP38-e3	EP38C	EP38-e2,EP38-e1	vert
+EP38-pl-e3A	EP38-e3-base-planche-A	EP38-e3	vert
+EP38-pl-e3B	EP38-e3-base-planche-B	EP38-e3	vert
+EP39-e1	EP39		vert
+EP39-pl-e1A	EP39-e1-base-planche-A	EP39-e1	vert
+EP39-pl-e1B	EP39-e1-base-planche-B	EP39-e1	vert
+EP39-e2	EP39B	EP39-e1	vert
+EP39-pl-e2A	EP39-e2-base-planche-A	EP39-e2	vert
+EP39-pl-e2B	EP39-e2-base-planche-B	EP39-e2	vert
+EP39-e3	EP39C	EP39-e2,EP39-e1	vert
+EP39-pl-e3A	EP39-e3-base-planche-A	EP39-e3	vert
+EP39-pl-e3B	EP39-e3-base-planche-B	EP39-e3	vert
+EP40-e1	EP40		vert
+EP40-pl-e1A	EP40-e1-base-planche-A	EP40-e1	vert
+EP40-pl-e1B	EP40-e1-base-planche-B	EP40-e1	vert
+EP40-e2	EP40B	EP40-e1	vert
+EP40-pl-e2A	EP40-e2-base-planche-A	EP40-e2	vert
+EP40-pl-e2B	EP40-e2-base-planche-B	EP40-e2	vert
+EP40-e3	EP40C	EP40-e2,EP40-e1	vert
+EP40-pl-e3A	EP40-e3-base-planche-A	EP40-e3	vert
+EP40-pl-e3B	EP40-e3-base-planche-B	EP40-e3	vert
+EP41-e1	EP41		vert
+EP41-pl-e1A	EP41-e1-base-planche-A	EP41-e1	vert
+EP41-pl-e1B	EP41-e1-base-planche-B	EP41-e1	vert
+EP41-e2	EP41B	EP41-e1	vert
+EP41-pl-e2A	EP41-e2-base-planche-A	EP41-e2	vert
+EP41-pl-e2B	EP41-e2-base-planche-B	EP41-e2	vert
+EP41-e3	EP41C	EP41-e2,EP41-e1	vert
+EP41-pl-e3A	EP41-e3-base-planche-A	EP41-e3	vert
+EP41-pl-e3B	EP41-e3-base-planche-B	EP41-e3	vert
+EP42-e1	EP42		vert
+EP42-pl-e1A	EP42-e1-base-planche-A	EP42-e1	vert
+EP42-pl-e1B	EP42-e1-base-planche-B	EP42-e1	vert
+EP42-e2	EP42B	EP42-e1	vert
+EP42-pl-e2A	EP42-e2-base-planche-A	EP42-e2	vert
+EP42-pl-e2B	EP42-e2-base-planche-B	EP42-e2	vert
+EP42-e3	EP42C	EP42-e2,EP42-e1	vert
+EP42-pl-e3A	EP42-e3-base-planche-A	EP42-e3	vert
+EP42-pl-e3B	EP42-e3-base-planche-B	EP42-e3	vert
+EP43-e1	EP43		vert
+EP43-pl-e1A	EP43-e1-base-planche-A	EP43-e1	vert
+EP43-pl-e1B	EP43-e1-base-planche-B	EP43-e1	vert
+EP43-e2	EP43B	EP43-e1	vert
+EP43-pl-e2A	EP43-e2-base-planche-A	EP43-e2	vert
+EP43-pl-e2B	EP43-e2-base-planche-B	EP43-e2	vert
+EP43-e3	EP43C	EP43-e2,EP43-e1	vert
+EP43-pl-e3A	EP43-e3-base-planche-A	EP43-e3	vert
+EP43-pl-e3B	EP43-e3-base-planche-B	EP43-e3	vert
+EP44-e1	EP44		vert
+EP44-pl-e1A	EP44-e1-base-planche-A	EP44-e1	vert
+EP44-pl-e1B	EP44-e1-base-planche-B	EP44-e1	vert
+EP44-e2	EP44B	EP44-e1	vert
+EP44-pl-e2A	EP44-e2-base-planche-A	EP44-e2	vert
+EP44-pl-e2B	EP44-e2-base-planche-B	EP44-e2	vert
+EP44-e3	EP44C	EP44-e2,EP44-e1	vert
+EP44-pl-e3A	EP44-e3-base-planche-A	EP44-e3	vert
+EP44-pl-e3B	EP44-e3-base-planche-B	EP44-e3	vert
+EP45-e1	EP45		vert
+EP45-pl-e1A	EP45-e1-base-planche-A	EP45-e1	vert
+EP45-pl-e1B	EP45-e1-base-planche-B	EP45-e1	vert
+EP45-e2	EP45B	EP45-e1	vert
+EP45-pl-e2A	EP45-e2-base-planche-A	EP45-e2	vert
+EP45-pl-e2B	EP45-e2-base-planche-B	EP45-e2	vert
+EP45-e3	EP45C	EP45-e2,EP45-e1	vert
+EP45-pl-e3A	EP45-e3-base-planche-A	EP45-e3	vert
+EP45-pl-e3B	EP45-e3-base-planche-B	EP45-e3	vert
+EP46-e1	EP46		vert
+EP46-pl-e1A	EP46-e1-base-planche-A	EP46-e1	vert
+EP46-pl-e1B	EP46-e1-base-planche-B	EP46-e1	vert
+EP46-e2	EP46B	EP46-e1	vert
+EP46-pl-e2A	EP46-e2-base-planche-A	EP46-e2	vert
+EP46-pl-e2B	EP46-e2-base-planche-B	EP46-e2	vert
+EP46-e3	EP46C	EP46-e2,EP46-e1	vert
+EP46-pl-e3A	EP46-e3-base-planche-A	EP46-e3	vert
+EP46-pl-e3B	EP46-e3-base-planche-B	EP46-e3	vert
+EP47-e1	EP47		vert
+EP47-pl-e1A	EP47-e1-base-planche-A	EP47-e1	vert
+EP47-pl-e1B	EP47-e1-base-planche-B	EP47-e1	vert
+EP47-e2	EP47B	EP47-e1	vert
+EP47-pl-e2A	EP47-e2-base-planche-A	EP47-e2	vert
+EP47-pl-e2B	EP47-e2-base-planche-B	EP47-e2	vert
+EP47-e3	EP47C	EP47-e2,EP47-e1	vert
+EP47-pl-e3A	EP47-e3-base-planche-A	EP47-e3	vert
+EP47-pl-e3B	EP47-e3-base-planche-B	EP47-e3	vert
+EP48-e1	EP48		vert
+EP48-pl-e1A	EP48-e1-base-planche-A	EP48-e1	vert
+EP48-pl-e1B	EP48-e1-base-planche-B	EP48-e1	vert
+EP48-e2	EP48B	EP48-e1	vert
+EP48-pl-e2A	EP48-e2-base-planche-A	EP48-e2	vert
+EP48-pl-e2B	EP48-e2-base-planche-B	EP48-e2	vert
+EP48-e3	EP48C	EP48-e2,EP48-e1	vert
+EP48-pl-e3A	EP48-e3-base-planche-A	EP48-e3	vert
+EP48-pl-e3B	EP48-e3-base-planche-B	EP48-e3	vert
+EP49-e1	EP49		vert
+EP49-pl-e1A	EP49-e1-base-planche-A	EP49-e1	vert
+EP49-pl-e1B	EP49-e1-base-planche-B	EP49-e1	vert
+EP49-e2	EP49B	EP49-e1	vert
+EP49-pl-e2A	EP49-e2-base-planche-A	EP49-e2	vert
+EP49-pl-e2B	EP49-e2-base-planche-B	EP49-e2	vert
+EP49-e3	EP49C	EP49-e2,EP49-e1	vert
+EP49-pl-e3A	EP49-e3-base-planche-A	EP49-e3	vert
+EP49-pl-e3B	EP49-e3-base-planche-B	EP49-e3	vert
+EP50-e1	EP50		vert
+EP50-pl-e1A	EP50-e1-base-planche-A	EP50-e1	vert
+EP50-pl-e1B	EP50-e1-base-planche-B	EP50-e1	vert
+EP50-e2	EP50B	EP50-e1	vert
+EP50-pl-e2A	EP50-e2-base-planche-A	EP50-e2	vert
+EP50-pl-e2B	EP50-e2-base-planche-B	EP50-e2	vert
+EP50-e3	EP50C	EP50-e2,EP50-e1	vert
+EP50-pl-e3A	EP50-e3-base-planche-A	EP50-e3	vert
+EP50-pl-e3B	EP50-e3-base-planche-B	EP50-e3	vert

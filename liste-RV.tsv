@@ -1,0 +1,421 @@
+# prompt	fichier	références	fond
+RV1-e1	RV1		vert
+RV1-pl-e1A	RV1-e1-base-planche-A	RV1-e1	vert
+RV1-pl-e1B	RV1-e1-base-planche-B	RV1-e1	vert
+RV1-e2	RV1B	RV1-e1	vert
+RV1-pl-e2A	RV1-e2-base-planche-A	RV1-e2	vert
+RV1-pl-e2B	RV1-e2-base-planche-B	RV1-e2	vert
+RV1-e3	RV1C	RV1-e2,RV1-e1	vert
+RV1-pl-e3A	RV1-e3-base-planche-A	RV1-e3	vert
+RV1-pl-e3B	RV1-e3-base-planche-B	RV1-e3	vert
+RV2-e1	RV2		vert
+RV2-pl-e1A	RV2-e1-base-planche-A	RV2-e1	vert
+RV2-pl-e1B	RV2-e1-base-planche-B	RV2-e1	vert
+RV3-e1	RV3		magenta
+RV3-pl-e1A	RV3-e1-base-planche-A	RV3-e1	magenta
+RV3-pl-e1B	RV3-e1-base-planche-B	RV3-e1	magenta
+RV3-e2	RV3B	RV3-e1	magenta
+RV3-pl-e2A	RV3-e2-base-planche-A	RV3-e2	magenta
+RV3-pl-e2B	RV3-e2-base-planche-B	RV3-e2	magenta
+RV3-e3	RV3C	RV3-e2,RV3-e1	magenta
+RV3-pl-e3A	RV3-e3-base-planche-A	RV3-e3	magenta
+RV3-pl-e3B	RV3-e3-base-planche-B	RV3-e3	magenta
+RV4-e1	RV4		magenta
+RV4-pl-e1A	RV4-e1-base-planche-A	RV4-e1	magenta
+RV4-pl-e1B	RV4-e1-base-planche-B	RV4-e1	magenta
+RV4-e2	RV4B	RV4-e1	magenta
+RV4-pl-e2A	RV4-e2-base-planche-A	RV4-e2	magenta
+RV4-pl-e2B	RV4-e2-base-planche-B	RV4-e2	magenta
+RV4-e3	RV4C	RV4-e2,RV4-e1	magenta
+RV4-pl-e3A	RV4-e3-base-planche-A	RV4-e3	magenta
+RV4-pl-e3B	RV4-e3-base-planche-B	RV4-e3	magenta
+RV5-e1	RV5		vert
+RV5-pl-e1A	RV5-e1-base-planche-A	RV5-e1	vert
+RV5-pl-e1B	RV5-e1-base-planche-B	RV5-e1	vert
+RV5-e2	RV5B	RV5-e1	vert
+RV5-pl-e2A	RV5-e2-base-planche-A	RV5-e2	vert
+RV5-pl-e2B	RV5-e2-base-planche-B	RV5-e2	vert
+RV5-e3	RV5C	RV5-e2,RV5-e1	vert
+RV5-pl-e3A	RV5-e3-base-planche-A	RV5-e3	vert
+RV5-pl-e3B	RV5-e3-base-planche-B	RV5-e3	vert
+RV6-e1	RV6		magenta
+RV6-pl-e1A	RV6-e1-base-planche-A	RV6-e1	magenta
+RV6-pl-e1B	RV6-e1-base-planche-B	RV6-e1	magenta
+RV6-e2	RV6B	RV6-e1	magenta
+RV6-pl-e2A	RV6-e2-base-planche-A	RV6-e2	magenta
+RV6-pl-e2B	RV6-e2-base-planche-B	RV6-e2	magenta
+RV6-e3	RV6C	RV6-e2,RV6-e1	magenta
+RV6-pl-e3A	RV6-e3-base-planche-A	RV6-e3	magenta
+RV6-pl-e3B	RV6-e3-base-planche-B	RV6-e3	magenta
+RV7-e1	RV7		magenta
+RV7-pl-e1A	RV7-e1-base-planche-A	RV7-e1	magenta
+RV7-pl-e1B	RV7-e1-base-planche-B	RV7-e1	magenta
+RV7-e2	RV7B	RV7-e1	magenta
+RV7-pl-e2A	RV7-e2-base-planche-A	RV7-e2	magenta
+RV7-pl-e2B	RV7-e2-base-planche-B	RV7-e2	magenta
+RV7-e3	RV7C	RV7-e2,RV7-e1	magenta
+RV7-pl-e3A	RV7-e3-base-planche-A	RV7-e3	magenta
+RV7-pl-e3B	RV7-e3-base-planche-B	RV7-e3	magenta
+RV8-e1	RV8		magenta
+RV8-pl-e1A	RV8-e1-base-planche-A	RV8-e1	magenta
+RV8-pl-e1B	RV8-e1-base-planche-B	RV8-e1	magenta
+RV8-e2	RV8B	RV8-e1	magenta
+RV8-pl-e2A	RV8-e2-base-planche-A	RV8-e2	magenta
+RV8-pl-e2B	RV8-e2-base-planche-B	RV8-e2	magenta
+RV8-e3	RV8C	RV8-e2,RV8-e1	magenta
+RV8-pl-e3A	RV8-e3-base-planche-A	RV8-e3	magenta
+RV8-pl-e3B	RV8-e3-base-planche-B	RV8-e3	magenta
+RV9-e1	RV9		magenta
+RV9-pl-e1A	RV9-e1-base-planche-A	RV9-e1	magenta
+RV9-pl-e1B	RV9-e1-base-planche-B	RV9-e1	magenta
+RV9-e2	RV9B	RV9-e1	magenta
+RV9-pl-e2A	RV9-e2-base-planche-A	RV9-e2	magenta
+RV9-pl-e2B	RV9-e2-base-planche-B	RV9-e2	magenta
+RV9-e3	RV9C	RV9-e2,RV9-e1	magenta
+RV9-pl-e3A	RV9-e3-base-planche-A	RV9-e3	magenta
+RV9-pl-e3B	RV9-e3-base-planche-B	RV9-e3	magenta
+RV10-e1	RV10		vert
+RV10-pl-e1A	RV10-e1-base-planche-A	RV10-e1	vert
+RV10-pl-e1B	RV10-e1-base-planche-B	RV10-e1	vert
+RV11-e1	RV11		magenta
+RV11-pl-e1A	RV11-e1-base-planche-A	RV11-e1	magenta
+RV11-pl-e1B	RV11-e1-base-planche-B	RV11-e1	magenta
+RV11-e2	RV11B	RV11-e1	magenta
+RV11-pl-e2A	RV11-e2-base-planche-A	RV11-e2	magenta
+RV11-pl-e2B	RV11-e2-base-planche-B	RV11-e2	magenta
+RV11-e3	RV11C	RV11-e2,RV11-e1	magenta
+RV11-pl-e3A	RV11-e3-base-planche-A	RV11-e3	magenta
+RV11-pl-e3B	RV11-e3-base-planche-B	RV11-e3	magenta
+RV12-e1	RV12		magenta
+RV12-pl-e1A	RV12-e1-base-planche-A	RV12-e1	magenta
+RV12-pl-e1B	RV12-e1-base-planche-B	RV12-e1	magenta
+RV13-e1	RV13		magenta
+RV13-pl-e1A	RV13-e1-base-planche-A	RV13-e1	magenta
+RV13-pl-e1B	RV13-e1-base-planche-B	RV13-e1	magenta
+RV13-e2	RV13B	RV13-e1	magenta
+RV13-pl-e2A	RV13-e2-base-planche-A	RV13-e2	magenta
+RV13-pl-e2B	RV13-e2-base-planche-B	RV13-e2	magenta
+RV13-e3	RV13C	RV13-e2,RV13-e1	magenta
+RV13-pl-e3A	RV13-e3-base-planche-A	RV13-e3	magenta
+RV13-pl-e3B	RV13-e3-base-planche-B	RV13-e3	magenta
+RV14-e1	RV14		vert
+RV14-pl-e1A	RV14-e1-base-planche-A	RV14-e1	vert
+RV14-pl-e1B	RV14-e1-base-planche-B	RV14-e1	vert
+RV14-e2	RV14B	RV14-e1	vert
+RV14-pl-e2A	RV14-e2-base-planche-A	RV14-e2	vert
+RV14-pl-e2B	RV14-e2-base-planche-B	RV14-e2	vert
+RV14-e3	RV14C	RV14-e2,RV14-e1	vert
+RV14-pl-e3A	RV14-e3-base-planche-A	RV14-e3	vert
+RV14-pl-e3B	RV14-e3-base-planche-B	RV14-e3	vert
+RV15-e1	RV15		magenta
+RV15-pl-e1A	RV15-e1-base-planche-A	RV15-e1	magenta
+RV15-pl-e1B	RV15-e1-base-planche-B	RV15-e1	magenta
+RV15-e2	RV15B	RV15-e1	magenta
+RV15-pl-e2A	RV15-e2-base-planche-A	RV15-e2	magenta
+RV15-pl-e2B	RV15-e2-base-planche-B	RV15-e2	magenta
+RV15-e3	RV15C	RV15-e2,RV15-e1	magenta
+RV15-pl-e3A	RV15-e3-base-planche-A	RV15-e3	magenta
+RV15-pl-e3B	RV15-e3-base-planche-B	RV15-e3	magenta
+RV16-e1	RV16		vert
+RV16-pl-e1A	RV16-e1-base-planche-A	RV16-e1	vert
+RV16-pl-e1B	RV16-e1-base-planche-B	RV16-e1	vert
+RV16-e2	RV16B	RV16-e1	vert
+RV16-pl-e2A	RV16-e2-base-planche-A	RV16-e2	vert
+RV16-pl-e2B	RV16-e2-base-planche-B	RV16-e2	vert
+RV16-e3	RV16C	RV16-e2,RV16-e1	vert
+RV16-pl-e3A	RV16-e3-base-planche-A	RV16-e3	vert
+RV16-pl-e3B	RV16-e3-base-planche-B	RV16-e3	vert
+RV17-e1	RV17		vert
+RV17-pl-e1A	RV17-e1-base-planche-A	RV17-e1	vert
+RV17-pl-e1B	RV17-e1-base-planche-B	RV17-e1	vert
+RV17-e2	RV17B	RV17-e1	vert
+RV17-pl-e2A	RV17-e2-base-planche-A	RV17-e2	vert
+RV17-pl-e2B	RV17-e2-base-planche-B	RV17-e2	vert
+RV17-e3	RV17C	RV17-e2,RV17-e1	vert
+RV17-pl-e3A	RV17-e3-base-planche-A	RV17-e3	vert
+RV17-pl-e3B	RV17-e3-base-planche-B	RV17-e3	vert
+RV18-e1	RV18		vert
+RV18-pl-e1A	RV18-e1-base-planche-A	RV18-e1	vert
+RV18-pl-e1B	RV18-e1-base-planche-B	RV18-e1	vert
+RV19-e1	RV19		vert
+RV19-pl-e1A	RV19-e1-base-planche-A	RV19-e1	vert
+RV19-pl-e1B	RV19-e1-base-planche-B	RV19-e1	vert
+RV19-e2	RV19B	RV19-e1	vert
+RV19-pl-e2A	RV19-e2-base-planche-A	RV19-e2	vert
+RV19-pl-e2B	RV19-e2-base-planche-B	RV19-e2	vert
+RV19-e3	RV19C	RV19-e2,RV19-e1	vert
+RV19-pl-e3A	RV19-e3-base-planche-A	RV19-e3	vert
+RV19-pl-e3B	RV19-e3-base-planche-B	RV19-e3	vert
+RV20-e1	RV20		vert
+RV20-pl-e1A	RV20-e1-base-planche-A	RV20-e1	vert
+RV20-pl-e1B	RV20-e1-base-planche-B	RV20-e1	vert
+RV21-e1	RV21		magenta
+RV21-pl-e1A	RV21-e1-base-planche-A	RV21-e1	magenta
+RV21-pl-e1B	RV21-e1-base-planche-B	RV21-e1	magenta
+RV21-e2	RV21B	RV21-e1	magenta
+RV21-pl-e2A	RV21-e2-base-planche-A	RV21-e2	magenta
+RV21-pl-e2B	RV21-e2-base-planche-B	RV21-e2	magenta
+RV21-e3	RV21C	RV21-e2,RV21-e1	magenta
+RV21-pl-e3A	RV21-e3-base-planche-A	RV21-e3	magenta
+RV21-pl-e3B	RV21-e3-base-planche-B	RV21-e3	magenta
+RV22-e1	RV22		vert
+RV22-pl-e1A	RV22-e1-base-planche-A	RV22-e1	vert
+RV22-pl-e1B	RV22-e1-base-planche-B	RV22-e1	vert
+RV22-e2	RV22B	RV22-e1	vert
+RV22-pl-e2A	RV22-e2-base-planche-A	RV22-e2	vert
+RV22-pl-e2B	RV22-e2-base-planche-B	RV22-e2	vert
+RV22-e3	RV22C	RV22-e2,RV22-e1	vert
+RV22-pl-e3A	RV22-e3-base-planche-A	RV22-e3	vert
+RV22-pl-e3B	RV22-e3-base-planche-B	RV22-e3	vert
+RV23-e1	RV23		vert
+RV23-pl-e1A	RV23-e1-base-planche-A	RV23-e1	vert
+RV23-pl-e1B	RV23-e1-base-planche-B	RV23-e1	vert
+RV23-e2	RV23B	RV23-e1	vert
+RV23-pl-e2A	RV23-e2-base-planche-A	RV23-e2	vert
+RV23-pl-e2B	RV23-e2-base-planche-B	RV23-e2	vert
+RV23-e3	RV23C	RV23-e2,RV23-e1	vert
+RV23-pl-e3A	RV23-e3-base-planche-A	RV23-e3	vert
+RV23-pl-e3B	RV23-e3-base-planche-B	RV23-e3	vert
+RV24-e1	RV24		vert
+RV24-pl-e1A	RV24-e1-base-planche-A	RV24-e1	vert
+RV24-pl-e1B	RV24-e1-base-planche-B	RV24-e1	vert
+RV24-e2	RV24B	RV24-e1	vert
+RV24-pl-e2A	RV24-e2-base-planche-A	RV24-e2	vert
+RV24-pl-e2B	RV24-e2-base-planche-B	RV24-e2	vert
+RV24-e3	RV24C	RV24-e2,RV24-e1	vert
+RV24-pl-e3A	RV24-e3-base-planche-A	RV24-e3	vert
+RV24-pl-e3B	RV24-e3-base-planche-B	RV24-e3	vert
+RV25-e1	RV25		vert
+RV25-pl-e1A	RV25-e1-base-planche-A	RV25-e1	vert
+RV25-pl-e1B	RV25-e1-base-planche-B	RV25-e1	vert
+RV25-e2	RV25B	RV25-e1	vert
+RV25-pl-e2A	RV25-e2-base-planche-A	RV25-e2	vert
+RV25-pl-e2B	RV25-e2-base-planche-B	RV25-e2	vert
+RV25-e3	RV25C	RV25-e2,RV25-e1	vert
+RV25-pl-e3A	RV25-e3-base-planche-A	RV25-e3	vert
+RV25-pl-e3B	RV25-e3-base-planche-B	RV25-e3	vert
+RV26-e1	RV26		vert
+RV26-pl-e1A	RV26-e1-base-planche-A	RV26-e1	vert
+RV26-pl-e1B	RV26-e1-base-planche-B	RV26-e1	vert
+RV26-e2	RV26B	RV26-e1	vert
+RV26-pl-e2A	RV26-e2-base-planche-A	RV26-e2	vert
+RV26-pl-e2B	RV26-e2-base-planche-B	RV26-e2	vert
+RV26-e3	RV26C	RV26-e2,RV26-e1	vert
+RV26-pl-e3A	RV26-e3-base-planche-A	RV26-e3	vert
+RV26-pl-e3B	RV26-e3-base-planche-B	RV26-e3	vert
+RV27-e1	RV27		vert
+RV27-pl-e1A	RV27-e1-base-planche-A	RV27-e1	vert
+RV27-pl-e1B	RV27-e1-base-planche-B	RV27-e1	vert
+RV27-e2	RV27B	RV27-e1	vert
+RV27-pl-e2A	RV27-e2-base-planche-A	RV27-e2	vert
+RV27-pl-e2B	RV27-e2-base-planche-B	RV27-e2	vert
+RV27-e3	RV27C	RV27-e2,RV27-e1	vert
+RV27-pl-e3A	RV27-e3-base-planche-A	RV27-e3	vert
+RV27-pl-e3B	RV27-e3-base-planche-B	RV27-e3	vert
+RV28-e1	RV28		vert
+RV28-pl-e1A	RV28-e1-base-planche-A	RV28-e1	vert
+RV28-pl-e1B	RV28-e1-base-planche-B	RV28-e1	vert
+RV28-e2	RV28B	RV28-e1	vert
+RV28-pl-e2A	RV28-e2-base-planche-A	RV28-e2	vert
+RV28-pl-e2B	RV28-e2-base-planche-B	RV28-e2	vert
+RV28-e3	RV28C	RV28-e2,RV28-e1	vert
+RV28-pl-e3A	RV28-e3-base-planche-A	RV28-e3	vert
+RV28-pl-e3B	RV28-e3-base-planche-B	RV28-e3	vert
+RV29-e1	RV29		vert
+RV29-pl-e1A	RV29-e1-base-planche-A	RV29-e1	vert
+RV29-pl-e1B	RV29-e1-base-planche-B	RV29-e1	vert
+RV29-e2	RV29B	RV29-e1	vert
+RV29-pl-e2A	RV29-e2-base-planche-A	RV29-e2	vert
+RV29-pl-e2B	RV29-e2-base-planche-B	RV29-e2	vert
+RV29-e3	RV29C	RV29-e2,RV29-e1	vert
+RV29-pl-e3A	RV29-e3-base-planche-A	RV29-e3	vert
+RV29-pl-e3B	RV29-e3-base-planche-B	RV29-e3	vert
+RV30-e1	RV30		magenta
+RV30-pl-e1A	RV30-e1-base-planche-A	RV30-e1	magenta
+RV30-pl-e1B	RV30-e1-base-planche-B	RV30-e1	magenta
+RV30-e2	RV30B	RV30-e1	magenta
+RV30-pl-e2A	RV30-e2-base-planche-A	RV30-e2	magenta
+RV30-pl-e2B	RV30-e2-base-planche-B	RV30-e2	magenta
+RV30-e3	RV30C	RV30-e2,RV30-e1	magenta
+RV30-pl-e3A	RV30-e3-base-planche-A	RV30-e3	magenta
+RV30-pl-e3B	RV30-e3-base-planche-B	RV30-e3	magenta
+RV31-e1	RV31		magenta
+RV31-pl-e1A	RV31-e1-base-planche-A	RV31-e1	magenta
+RV31-pl-e1B	RV31-e1-base-planche-B	RV31-e1	magenta
+RV31-e2	RV31B	RV31-e1	magenta
+RV31-pl-e2A	RV31-e2-base-planche-A	RV31-e2	magenta
+RV31-pl-e2B	RV31-e2-base-planche-B	RV31-e2	magenta
+RV31-e3	RV31C	RV31-e2,RV31-e1	magenta
+RV31-pl-e3A	RV31-e3-base-planche-A	RV31-e3	magenta
+RV31-pl-e3B	RV31-e3-base-planche-B	RV31-e3	magenta
+RV32-e1	RV32		vert
+RV32-pl-e1A	RV32-e1-base-planche-A	RV32-e1	vert
+RV32-pl-e1B	RV32-e1-base-planche-B	RV32-e1	vert
+RV32-e2	RV32B	RV32-e1	vert
+RV32-pl-e2A	RV32-e2-base-planche-A	RV32-e2	vert
+RV32-pl-e2B	RV32-e2-base-planche-B	RV32-e2	vert
+RV32-e3	RV32C	RV32-e2,RV32-e1	vert
+RV32-pl-e3A	RV32-e3-base-planche-A	RV32-e3	vert
+RV32-pl-e3B	RV32-e3-base-planche-B	RV32-e3	vert
+RV33-e1	RV33		vert
+RV33-pl-e1A	RV33-e1-base-planche-A	RV33-e1	vert
+RV33-pl-e1B	RV33-e1-base-planche-B	RV33-e1	vert
+RV33-e2	RV33B	RV33-e1	vert
+RV33-pl-e2A	RV33-e2-base-planche-A	RV33-e2	vert
+RV33-pl-e2B	RV33-e2-base-planche-B	RV33-e2	vert
+RV33-e3	RV33C	RV33-e2,RV33-e1	vert
+RV33-pl-e3A	RV33-e3-base-planche-A	RV33-e3	vert
+RV33-pl-e3B	RV33-e3-base-planche-B	RV33-e3	vert
+RV34-e1	RV34		vert
+RV34-pl-e1A	RV34-e1-base-planche-A	RV34-e1	vert
+RV34-pl-e1B	RV34-e1-base-planche-B	RV34-e1	vert
+RV34-e2	RV34B	RV34-e1	vert
+RV34-pl-e2A	RV34-e2-base-planche-A	RV34-e2	vert
+RV34-pl-e2B	RV34-e2-base-planche-B	RV34-e2	vert
+RV34-e3	RV34C	RV34-e2,RV34-e1	vert
+RV34-pl-e3A	RV34-e3-base-planche-A	RV34-e3	vert
+RV34-pl-e3B	RV34-e3-base-planche-B	RV34-e3	vert
+RV35-e1	RV35		vert
+RV35-pl-e1A	RV35-e1-base-planche-A	RV35-e1	vert
+RV35-pl-e1B	RV35-e1-base-planche-B	RV35-e1	vert
+RV35-e2	RV35B	RV35-e1	vert
+RV35-pl-e2A	RV35-e2-base-planche-A	RV35-e2	vert
+RV35-pl-e2B	RV35-e2-base-planche-B	RV35-e2	vert
+RV35-e3	RV35C	RV35-e2,RV35-e1	vert
+RV35-pl-e3A	RV35-e3-base-planche-A	RV35-e3	vert
+RV35-pl-e3B	RV35-e3-base-planche-B	RV35-e3	vert
+RV36-e1	RV36		vert
+RV36-pl-e1A	RV36-e1-base-planche-A	RV36-e1	vert
+RV36-pl-e1B	RV36-e1-base-planche-B	RV36-e1	vert
+RV36-e2	RV36B	RV36-e1	vert
+RV36-pl-e2A	RV36-e2-base-planche-A	RV36-e2	vert
+RV36-pl-e2B	RV36-e2-base-planche-B	RV36-e2	vert
+RV36-e3	RV36C	RV36-e2,RV36-e1	vert
+RV36-pl-e3A	RV36-e3-base-planche-A	RV36-e3	vert
+RV36-pl-e3B	RV36-e3-base-planche-B	RV36-e3	vert
+RV37-e1	RV37		vert
+RV37-pl-e1A	RV37-e1-base-planche-A	RV37-e1	vert
+RV37-pl-e1B	RV37-e1-base-planche-B	RV37-e1	vert
+RV37-e2	RV37B	RV37-e1	vert
+RV37-pl-e2A	RV37-e2-base-planche-A	RV37-e2	vert
+RV37-pl-e2B	RV37-e2-base-planche-B	RV37-e2	vert
+RV37-e3	RV37C	RV37-e2,RV37-e1	vert
+RV37-pl-e3A	RV37-e3-base-planche-A	RV37-e3	vert
+RV37-pl-e3B	RV37-e3-base-planche-B	RV37-e3	vert
+RV38-e1	RV38		vert
+RV38-pl-e1A	RV38-e1-base-planche-A	RV38-e1	vert
+RV38-pl-e1B	RV38-e1-base-planche-B	RV38-e1	vert
+RV38-e2	RV38B	RV38-e1	vert
+RV38-pl-e2A	RV38-e2-base-planche-A	RV38-e2	vert
+RV38-pl-e2B	RV38-e2-base-planche-B	RV38-e2	vert
+RV38-e3	RV38C	RV38-e2,RV38-e1	vert
+RV38-pl-e3A	RV38-e3-base-planche-A	RV38-e3	vert
+RV38-pl-e3B	RV38-e3-base-planche-B	RV38-e3	vert
+RV39-e1	RV39		vert
+RV39-pl-e1A	RV39-e1-base-planche-A	RV39-e1	vert
+RV39-pl-e1B	RV39-e1-base-planche-B	RV39-e1	vert
+RV39-e2	RV39B	RV39-e1	vert
+RV39-pl-e2A	RV39-e2-base-planche-A	RV39-e2	vert
+RV39-pl-e2B	RV39-e2-base-planche-B	RV39-e2	vert
+RV39-e3	RV39C	RV39-e2,RV39-e1	vert
+RV39-pl-e3A	RV39-e3-base-planche-A	RV39-e3	vert
+RV39-pl-e3B	RV39-e3-base-planche-B	RV39-e3	vert
+RV40-e1	RV40		vert
+RV40-pl-e1A	RV40-e1-base-planche-A	RV40-e1	vert
+RV40-pl-e1B	RV40-e1-base-planche-B	RV40-e1	vert
+RV40-e2	RV40B	RV40-e1	vert
+RV40-pl-e2A	RV40-e2-base-planche-A	RV40-e2	vert
+RV40-pl-e2B	RV40-e2-base-planche-B	RV40-e2	vert
+RV40-e3	RV40C	RV40-e2,RV40-e1	vert
+RV40-pl-e3A	RV40-e3-base-planche-A	RV40-e3	vert
+RV40-pl-e3B	RV40-e3-base-planche-B	RV40-e3	vert
+RV41-e1	RV41		vert
+RV41-pl-e1A	RV41-e1-base-planche-A	RV41-e1	vert
+RV41-pl-e1B	RV41-e1-base-planche-B	RV41-e1	vert
+RV41-e2	RV41B	RV41-e1	vert
+RV41-pl-e2A	RV41-e2-base-planche-A	RV41-e2	vert
+RV41-pl-e2B	RV41-e2-base-planche-B	RV41-e2	vert
+RV41-e3	RV41C	RV41-e2,RV41-e1	vert
+RV41-pl-e3A	RV41-e3-base-planche-A	RV41-e3	vert
+RV41-pl-e3B	RV41-e3-base-planche-B	RV41-e3	vert
+RV42-e1	RV42		vert
+RV42-pl-e1A	RV42-e1-base-planche-A	RV42-e1	vert
+RV42-pl-e1B	RV42-e1-base-planche-B	RV42-e1	vert
+RV42-e2	RV42B	RV42-e1	vert
+RV42-pl-e2A	RV42-e2-base-planche-A	RV42-e2	vert
+RV42-pl-e2B	RV42-e2-base-planche-B	RV42-e2	vert
+RV42-e3	RV42C	RV42-e2,RV42-e1	vert
+RV42-pl-e3A	RV42-e3-base-planche-A	RV42-e3	vert
+RV42-pl-e3B	RV42-e3-base-planche-B	RV42-e3	vert
+RV43-e1	RV43		vert
+RV43-pl-e1A	RV43-e1-base-planche-A	RV43-e1	vert
+RV43-pl-e1B	RV43-e1-base-planche-B	RV43-e1	vert
+RV43-e2	RV43B	RV43-e1	vert
+RV43-pl-e2A	RV43-e2-base-planche-A	RV43-e2	vert
+RV43-pl-e2B	RV43-e2-base-planche-B	RV43-e2	vert
+RV43-e3	RV43C	RV43-e2,RV43-e1	vert
+RV43-pl-e3A	RV43-e3-base-planche-A	RV43-e3	vert
+RV43-pl-e3B	RV43-e3-base-planche-B	RV43-e3	vert
+RV44-e1	RV44		vert
+RV44-pl-e1A	RV44-e1-base-planche-A	RV44-e1	vert
+RV44-pl-e1B	RV44-e1-base-planche-B	RV44-e1	vert
+RV44-e2	RV44B	RV44-e1	vert
+RV44-pl-e2A	RV44-e2-base-planche-A	RV44-e2	vert
+RV44-pl-e2B	RV44-e2-base-planche-B	RV44-e2	vert
+RV44-e3	RV44C	RV44-e2,RV44-e1	vert
+RV44-pl-e3A	RV44-e3-base-planche-A	RV44-e3	vert
+RV44-pl-e3B	RV44-e3-base-planche-B	RV44-e3	vert
+RV45-e1	RV45		magenta
+RV45-pl-e1A	RV45-e1-base-planche-A	RV45-e1	magenta
+RV45-pl-e1B	RV45-e1-base-planche-B	RV45-e1	magenta
+RV45-e2	RV45B	RV45-e1	magenta
+RV45-pl-e2A	RV45-e2-base-planche-A	RV45-e2	magenta
+RV45-pl-e2B	RV45-e2-base-planche-B	RV45-e2	magenta
+RV45-e3	RV45C	RV45-e2,RV45-e1	magenta
+RV45-pl-e3A	RV45-e3-base-planche-A	RV45-e3	magenta
+RV45-pl-e3B	RV45-e3-base-planche-B	RV45-e3	magenta
+RV46-e1	RV46		vert
+RV46-pl-e1A	RV46-e1-base-planche-A	RV46-e1	vert
+RV46-pl-e1B	RV46-e1-base-planche-B	RV46-e1	vert
+RV46-e2	RV46B	RV46-e1	vert
+RV46-pl-e2A	RV46-e2-base-planche-A	RV46-e2	vert
+RV46-pl-e2B	RV46-e2-base-planche-B	RV46-e2	vert
+RV46-e3	RV46C	RV46-e2,RV46-e1	vert
+RV46-pl-e3A	RV46-e3-base-planche-A	RV46-e3	vert
+RV46-pl-e3B	RV46-e3-base-planche-B	RV46-e3	vert
+RV47-e1	RV47		vert
+RV47-pl-e1A	RV47-e1-base-planche-A	RV47-e1	vert
+RV47-pl-e1B	RV47-e1-base-planche-B	RV47-e1	vert
+RV47-e2	RV47B	RV47-e1	vert
+RV47-pl-e2A	RV47-e2-base-planche-A	RV47-e2	vert
+RV47-pl-e2B	RV47-e2-base-planche-B	RV47-e2	vert
+RV47-e3	RV47C	RV47-e2,RV47-e1	vert
+RV47-pl-e3A	RV47-e3-base-planche-A	RV47-e3	vert
+RV47-pl-e3B	RV47-e3-base-planche-B	RV47-e3	vert
+RV48-e1	RV48		vert
+RV48-pl-e1A	RV48-e1-base-planche-A	RV48-e1	vert
+RV48-pl-e1B	RV48-e1-base-planche-B	RV48-e1	vert
+RV48-e2	RV48B	RV48-e1	vert
+RV48-pl-e2A	RV48-e2-base-planche-A	RV48-e2	vert
+RV48-pl-e2B	RV48-e2-base-planche-B	RV48-e2	vert
+RV48-e3	RV48C	RV48-e2,RV48-e1	vert
+RV48-pl-e3A	RV48-e3-base-planche-A	RV48-e3	vert
+RV48-pl-e3B	RV48-e3-base-planche-B	RV48-e3	vert
+RV49-e1	RV49		vert
+RV49-pl-e1A	RV49-e1-base-planche-A	RV49-e1	vert
+RV49-pl-e1B	RV49-e1-base-planche-B	RV49-e1	vert
+RV49-e2	RV49B	RV49-e1	vert
+RV49-pl-e2A	RV49-e2-base-planche-A	RV49-e2	vert
+RV49-pl-e2B	RV49-e2-base-planche-B	RV49-e2	vert
+RV49-e3	RV49C	RV49-e2,RV49-e1	vert
+RV49-pl-e3A	RV49-e3-base-planche-A	RV49-e3	vert
+RV49-pl-e3B	RV49-e3-base-planche-B	RV49-e3	vert
+RV50-e1	RV50		vert
+RV50-pl-e1A	RV50-e1-base-planche-A	RV50-e1	vert
+RV50-pl-e1B	RV50-e1-base-planche-B	RV50-e1	vert
+RV50-e2	RV50B	RV50-e1	vert
+RV50-pl-e2A	RV50-e2-base-planche-A	RV50-e2	vert
+RV50-pl-e2B	RV50-e2-base-planche-B	RV50-e2	vert
+RV50-e3	RV50C	RV50-e2,RV50-e1	vert
+RV50-pl-e3A	RV50-e3-base-planche-A	RV50-e3	vert
+RV50-pl-e3B	RV50-e3-base-planche-B	RV50-e3	vert

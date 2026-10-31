@@ -1,0 +1,421 @@
+# prompt	fichier	références	fond
+GC1-e1	GC1		vert
+GC1-pl-e1A	GC1-e1-base-planche-A	GC1-e1	vert
+GC1-pl-e1B	GC1-e1-base-planche-B	GC1-e1	vert
+GC1-e2	GC1B	GC1-e1	vert
+GC1-pl-e2A	GC1-e2-base-planche-A	GC1-e2	vert
+GC1-pl-e2B	GC1-e2-base-planche-B	GC1-e2	vert
+GC1-e3	GC1C	GC1-e2,GC1-e1	vert
+GC1-pl-e3A	GC1-e3-base-planche-A	GC1-e3	vert
+GC1-pl-e3B	GC1-e3-base-planche-B	GC1-e3	vert
+GC2-e1	GC2		vert
+GC2-pl-e1A	GC2-e1-base-planche-A	GC2-e1	vert
+GC2-pl-e1B	GC2-e1-base-planche-B	GC2-e1	vert
+GC2-e2	GC2B	GC2-e1	vert
+GC2-pl-e2A	GC2-e2-base-planche-A	GC2-e2	vert
+GC2-pl-e2B	GC2-e2-base-planche-B	GC2-e2	vert
+GC2-e3	GC2C	GC2-e2,GC2-e1	vert
+GC2-pl-e3A	GC2-e3-base-planche-A	GC2-e3	vert
+GC2-pl-e3B	GC2-e3-base-planche-B	GC2-e3	vert
+GC3-e1	GC3		magenta
+GC3-pl-e1A	GC3-e1-base-planche-A	GC3-e1	magenta
+GC3-pl-e1B	GC3-e1-base-planche-B	GC3-e1	magenta
+GC3-e2	GC3B	GC3-e1	magenta
+GC3-pl-e2A	GC3-e2-base-planche-A	GC3-e2	magenta
+GC3-pl-e2B	GC3-e2-base-planche-B	GC3-e2	magenta
+GC3-e3	GC3C	GC3-e2,GC3-e1	magenta
+GC3-pl-e3A	GC3-e3-base-planche-A	GC3-e3	magenta
+GC3-pl-e3B	GC3-e3-base-planche-B	GC3-e3	magenta
+GC4-e1	GC4		vert
+GC4-pl-e1A	GC4-e1-base-planche-A	GC4-e1	vert
+GC4-pl-e1B	GC4-e1-base-planche-B	GC4-e1	vert
+GC4-e2	GC4B	GC4-e1	vert
+GC4-pl-e2A	GC4-e2-base-planche-A	GC4-e2	vert
+GC4-pl-e2B	GC4-e2-base-planche-B	GC4-e2	vert
+GC4-e3	GC4C	GC4-e2,GC4-e1	vert
+GC4-pl-e3A	GC4-e3-base-planche-A	GC4-e3	vert
+GC4-pl-e3B	GC4-e3-base-planche-B	GC4-e3	vert
+GC5-e1	GC5		vert
+GC5-pl-e1A	GC5-e1-base-planche-A	GC5-e1	vert
+GC5-pl-e1B	GC5-e1-base-planche-B	GC5-e1	vert
+GC5-e2	GC5B	GC5-e1	vert
+GC5-pl-e2A	GC5-e2-base-planche-A	GC5-e2	vert
+GC5-pl-e2B	GC5-e2-base-planche-B	GC5-e2	vert
+GC5-e3	GC5C	GC5-e2,GC5-e1	vert
+GC5-pl-e3A	GC5-e3-base-planche-A	GC5-e3	vert
+GC5-pl-e3B	GC5-e3-base-planche-B	GC5-e3	vert
+GC6-e1	GC6		vert
+GC6-pl-e1A	GC6-e1-base-planche-A	GC6-e1	vert
+GC6-pl-e1B	GC6-e1-base-planche-B	GC6-e1	vert
+GC6-e2	GC6B	GC6-e1	vert
+GC6-pl-e2A	GC6-e2-base-planche-A	GC6-e2	vert
+GC6-pl-e2B	GC6-e2-base-planche-B	GC6-e2	vert
+GC6-e3	GC6C	GC6-e2,GC6-e1	vert
+GC6-pl-e3A	GC6-e3-base-planche-A	GC6-e3	vert
+GC6-pl-e3B	GC6-e3-base-planche-B	GC6-e3	vert
+GC7-e1	GC7		vert
+GC7-pl-e1A	GC7-e1-base-planche-A	GC7-e1	vert
+GC7-pl-e1B	GC7-e1-base-planche-B	GC7-e1	vert
+GC7-e2	GC7B	GC7-e1	vert
+GC7-pl-e2A	GC7-e2-base-planche-A	GC7-e2	vert
+GC7-pl-e2B	GC7-e2-base-planche-B	GC7-e2	vert
+GC7-e3	GC7C	GC7-e2,GC7-e1	vert
+GC7-pl-e3A	GC7-e3-base-planche-A	GC7-e3	vert
+GC7-pl-e3B	GC7-e3-base-planche-B	GC7-e3	vert
+GC8-e1	GC8		vert
+GC8-pl-e1A	GC8-e1-base-planche-A	GC8-e1	vert
+GC8-pl-e1B	GC8-e1-base-planche-B	GC8-e1	vert
+GC8-e2	GC8B	GC8-e1	vert
+GC8-pl-e2A	GC8-e2-base-planche-A	GC8-e2	vert
+GC8-pl-e2B	GC8-e2-base-planche-B	GC8-e2	vert
+GC8-e3	GC8C	GC8-e2,GC8-e1	vert
+GC8-pl-e3A	GC8-e3-base-planche-A	GC8-e3	vert
+GC8-pl-e3B	GC8-e3-base-planche-B	GC8-e3	vert
+GC9-e1	GC9		magenta
+GC9-pl-e1A	GC9-e1-base-planche-A	GC9-e1	magenta
+GC9-pl-e1B	GC9-e1-base-planche-B	GC9-e1	magenta
+GC9-e2	GC9B	GC9-e1	magenta
+GC9-pl-e2A	GC9-e2-base-planche-A	GC9-e2	magenta
+GC9-pl-e2B	GC9-e2-base-planche-B	GC9-e2	magenta
+GC9-e3	GC9C	GC9-e2,GC9-e1	magenta
+GC9-pl-e3A	GC9-e3-base-planche-A	GC9-e3	magenta
+GC9-pl-e3B	GC9-e3-base-planche-B	GC9-e3	magenta
+GC10-e1	GC10		vert
+GC10-pl-e1A	GC10-e1-base-planche-A	GC10-e1	vert
+GC10-pl-e1B	GC10-e1-base-planche-B	GC10-e1	vert
+GC11-e1	GC11		vert
+GC11-pl-e1A	GC11-e1-base-planche-A	GC11-e1	vert
+GC11-pl-e1B	GC11-e1-base-planche-B	GC11-e1	vert
+GC12-e1	GC12		vert
+GC12-pl-e1A	GC12-e1-base-planche-A	GC12-e1	vert
+GC12-pl-e1B	GC12-e1-base-planche-B	GC12-e1	vert
+GC13-e1	GC13		vert
+GC13-pl-e1A	GC13-e1-base-planche-A	GC13-e1	vert
+GC13-pl-e1B	GC13-e1-base-planche-B	GC13-e1	vert
+GC14-e1	GC14		vert
+GC14-pl-e1A	GC14-e1-base-planche-A	GC14-e1	vert
+GC14-pl-e1B	GC14-e1-base-planche-B	GC14-e1	vert
+GC18-e1	GC18		vert
+GC18-pl-e1A	GC18-e1-base-planche-A	GC18-e1	vert
+GC18-pl-e1B	GC18-e1-base-planche-B	GC18-e1	vert
+GC18-e2	GC18B	GC18-e1	vert
+GC18-pl-e2A	GC18-e2-base-planche-A	GC18-e2	vert
+GC18-pl-e2B	GC18-e2-base-planche-B	GC18-e2	vert
+GC18-e3	GC18C	GC18-e2,GC18-e1	vert
+GC18-pl-e3A	GC18-e3-base-planche-A	GC18-e3	vert
+GC18-pl-e3B	GC18-e3-base-planche-B	GC18-e3	vert
+GC19-e1	GC19		vert
+GC19-pl-e1A	GC19-e1-base-planche-A	GC19-e1	vert
+GC19-pl-e1B	GC19-e1-base-planche-B	GC19-e1	vert
+GC19-e2	GC19B	GC19-e1	vert
+GC19-pl-e2A	GC19-e2-base-planche-A	GC19-e2	vert
+GC19-pl-e2B	GC19-e2-base-planche-B	GC19-e2	vert
+GC19-e3	GC19C	GC19-e2,GC19-e1	vert
+GC19-pl-e3A	GC19-e3-base-planche-A	GC19-e3	vert
+GC19-pl-e3B	GC19-e3-base-planche-B	GC19-e3	vert
+GC20-e1	GC20		vert
+GC20-pl-e1A	GC20-e1-base-planche-A	GC20-e1	vert
+GC20-pl-e1B	GC20-e1-base-planche-B	GC20-e1	vert
+GC20-e2	GC20B	GC20-e1	vert
+GC20-pl-e2A	GC20-e2-base-planche-A	GC20-e2	vert
+GC20-pl-e2B	GC20-e2-base-planche-B	GC20-e2	vert
+GC20-e3	GC20C	GC20-e2,GC20-e1	vert
+GC20-pl-e3A	GC20-e3-base-planche-A	GC20-e3	vert
+GC20-pl-e3B	GC20-e3-base-planche-B	GC20-e3	vert
+GC21-e1	GC21		vert
+GC21-pl-e1A	GC21-e1-base-planche-A	GC21-e1	vert
+GC21-pl-e1B	GC21-e1-base-planche-B	GC21-e1	vert
+GC21-e2	GC21B	GC21-e1	vert
+GC21-pl-e2A	GC21-e2-base-planche-A	GC21-e2	vert
+GC21-pl-e2B	GC21-e2-base-planche-B	GC21-e2	vert
+GC21-e3	GC21C	GC21-e2,GC21-e1	vert
+GC21-pl-e3A	GC21-e3-base-planche-A	GC21-e3	vert
+GC21-pl-e3B	GC21-e3-base-planche-B	GC21-e3	vert
+GC22-e1	GC22		vert
+GC22-pl-e1A	GC22-e1-base-planche-A	GC22-e1	vert
+GC22-pl-e1B	GC22-e1-base-planche-B	GC22-e1	vert
+GC22-e2	GC22B	GC22-e1	vert
+GC22-pl-e2A	GC22-e2-base-planche-A	GC22-e2	vert
+GC22-pl-e2B	GC22-e2-base-planche-B	GC22-e2	vert
+GC22-e3	GC22C	GC22-e2,GC22-e1	vert
+GC22-pl-e3A	GC22-e3-base-planche-A	GC22-e3	vert
+GC22-pl-e3B	GC22-e3-base-planche-B	GC22-e3	vert
+GC23-e1	GC23		vert
+GC23-pl-e1A	GC23-e1-base-planche-A	GC23-e1	vert
+GC23-pl-e1B	GC23-e1-base-planche-B	GC23-e1	vert
+GC23-e2	GC23B	GC23-e1	vert
+GC23-pl-e2A	GC23-e2-base-planche-A	GC23-e2	vert
+GC23-pl-e2B	GC23-e2-base-planche-B	GC23-e2	vert
+GC23-e3	GC23C	GC23-e2,GC23-e1	vert
+GC23-pl-e3A	GC23-e3-base-planche-A	GC23-e3	vert
+GC23-pl-e3B	GC23-e3-base-planche-B	GC23-e3	vert
+GC24-e1	GC24		vert
+GC24-pl-e1A	GC24-e1-base-planche-A	GC24-e1	vert
+GC24-pl-e1B	GC24-e1-base-planche-B	GC24-e1	vert
+GC24-e2	GC24B	GC24-e1	vert
+GC24-pl-e2A	GC24-e2-base-planche-A	GC24-e2	vert
+GC24-pl-e2B	GC24-e2-base-planche-B	GC24-e2	vert
+GC24-e3	GC24C	GC24-e2,GC24-e1	vert
+GC24-pl-e3A	GC24-e3-base-planche-A	GC24-e3	vert
+GC24-pl-e3B	GC24-e3-base-planche-B	GC24-e3	vert
+GC25-e1	GC25		vert
+GC25-pl-e1A	GC25-e1-base-planche-A	GC25-e1	vert
+GC25-pl-e1B	GC25-e1-base-planche-B	GC25-e1	vert
+GC25-e2	GC25B	GC25-e1	vert
+GC25-pl-e2A	GC25-e2-base-planche-A	GC25-e2	vert
+GC25-pl-e2B	GC25-e2-base-planche-B	GC25-e2	vert
+GC25-e3	GC25C	GC25-e2,GC25-e1	vert
+GC25-pl-e3A	GC25-e3-base-planche-A	GC25-e3	vert
+GC25-pl-e3B	GC25-e3-base-planche-B	GC25-e3	vert
+GC26-e1	GC26		vert
+GC26-pl-e1A	GC26-e1-base-planche-A	GC26-e1	vert
+GC26-pl-e1B	GC26-e1-base-planche-B	GC26-e1	vert
+GC26-e2	GC26B	GC26-e1	vert
+GC26-pl-e2A	GC26-e2-base-planche-A	GC26-e2	vert
+GC26-pl-e2B	GC26-e2-base-planche-B	GC26-e2	vert
+GC26-e3	GC26C	GC26-e2,GC26-e1	vert
+GC26-pl-e3A	GC26-e3-base-planche-A	GC26-e3	vert
+GC26-pl-e3B	GC26-e3-base-planche-B	GC26-e3	vert
+GC27-e1	GC27		magenta
+GC27-pl-e1A	GC27-e1-base-planche-A	GC27-e1	magenta
+GC27-pl-e1B	GC27-e1-base-planche-B	GC27-e1	magenta
+GC27-e2	GC27B	GC27-e1	magenta
+GC27-pl-e2A	GC27-e2-base-planche-A	GC27-e2	magenta
+GC27-pl-e2B	GC27-e2-base-planche-B	GC27-e2	magenta
+GC27-e3	GC27C	GC27-e2,GC27-e1	magenta
+GC27-pl-e3A	GC27-e3-base-planche-A	GC27-e3	magenta
+GC27-pl-e3B	GC27-e3-base-planche-B	GC27-e3	magenta
+GC28-e1	GC28		vert
+GC28-pl-e1A	GC28-e1-base-planche-A	GC28-e1	vert
+GC28-pl-e1B	GC28-e1-base-planche-B	GC28-e1	vert
+GC28-e2	GC28B	GC28-e1	vert
+GC28-pl-e2A	GC28-e2-base-planche-A	GC28-e2	vert
+GC28-pl-e2B	GC28-e2-base-planche-B	GC28-e2	vert
+GC28-e3	GC28C	GC28-e2,GC28-e1	vert
+GC28-pl-e3A	GC28-e3-base-planche-A	GC28-e3	vert
+GC28-pl-e3B	GC28-e3-base-planche-B	GC28-e3	vert
+GC29-e1	GC29		vert
+GC29-pl-e1A	GC29-e1-base-planche-A	GC29-e1	vert
+GC29-pl-e1B	GC29-e1-base-planche-B	GC29-e1	vert
+GC29-e2	GC29B	GC29-e1	vert
+GC29-pl-e2A	GC29-e2-base-planche-A	GC29-e2	vert
+GC29-pl-e2B	GC29-e2-base-planche-B	GC29-e2	vert
+GC29-e3	GC29C	GC29-e2,GC29-e1	vert
+GC29-pl-e3A	GC29-e3-base-planche-A	GC29-e3	vert
+GC29-pl-e3B	GC29-e3-base-planche-B	GC29-e3	vert
+GC30-e1	GC30		vert
+GC30-pl-e1A	GC30-e1-base-planche-A	GC30-e1	vert
+GC30-pl-e1B	GC30-e1-base-planche-B	GC30-e1	vert
+GC30-e2	GC30B	GC30-e1	vert
+GC30-pl-e2A	GC30-e2-base-planche-A	GC30-e2	vert
+GC30-pl-e2B	GC30-e2-base-planche-B	GC30-e2	vert
+GC30-e3	GC30C	GC30-e2,GC30-e1	vert
+GC30-pl-e3A	GC30-e3-base-planche-A	GC30-e3	vert
+GC30-pl-e3B	GC30-e3-base-planche-B	GC30-e3	vert
+GC31-e1	GC31		vert
+GC31-pl-e1A	GC31-e1-base-planche-A	GC31-e1	vert
+GC31-pl-e1B	GC31-e1-base-planche-B	GC31-e1	vert
+GC31-e2	GC31B	GC31-e1	vert
+GC31-pl-e2A	GC31-e2-base-planche-A	GC31-e2	vert
+GC31-pl-e2B	GC31-e2-base-planche-B	GC31-e2	vert
+GC31-e3	GC31C	GC31-e2,GC31-e1	vert
+GC31-pl-e3A	GC31-e3-base-planche-A	GC31-e3	vert
+GC31-pl-e3B	GC31-e3-base-planche-B	GC31-e3	vert
+GC32-e1	GC32		magenta
+GC32-pl-e1A	GC32-e1-base-planche-A	GC32-e1	magenta
+GC32-pl-e1B	GC32-e1-base-planche-B	GC32-e1	magenta
+GC32-e2	GC32B	GC32-e1	magenta
+GC32-pl-e2A	GC32-e2-base-planche-A	GC32-e2	magenta
+GC32-pl-e2B	GC32-e2-base-planche-B	GC32-e2	magenta
+GC32-e3	GC32C	GC32-e2,GC32-e1	magenta
+GC32-pl-e3A	GC32-e3-base-planche-A	GC32-e3	magenta
+GC32-pl-e3B	GC32-e3-base-planche-B	GC32-e3	magenta
+GC33-e1	GC33		vert
+GC33-pl-e1A	GC33-e1-base-planche-A	GC33-e1	vert
+GC33-pl-e1B	GC33-e1-base-planche-B	GC33-e1	vert
+GC33-e2	GC33B	GC33-e1	vert
+GC33-pl-e2A	GC33-e2-base-planche-A	GC33-e2	vert
+GC33-pl-e2B	GC33-e2-base-planche-B	GC33-e2	vert
+GC33-e3	GC33C	GC33-e2,GC33-e1	vert
+GC33-pl-e3A	GC33-e3-base-planche-A	GC33-e3	vert
+GC33-pl-e3B	GC33-e3-base-planche-B	GC33-e3	vert
+GC34-e1	GC34		vert
+GC34-pl-e1A	GC34-e1-base-planche-A	GC34-e1	vert
+GC34-pl-e1B	GC34-e1-base-planche-B	GC34-e1	vert
+GC34-e2	GC34B	GC34-e1	vert
+GC34-pl-e2A	GC34-e2-base-planche-A	GC34-e2	vert
+GC34-pl-e2B	GC34-e2-base-planche-B	GC34-e2	vert
+GC34-e3	GC34C	GC34-e2,GC34-e1	vert
+GC34-pl-e3A	GC34-e3-base-planche-A	GC34-e3	vert
+GC34-pl-e3B	GC34-e3-base-planche-B	GC34-e3	vert
+GC35-e1	GC35		vert
+GC35-pl-e1A	GC35-e1-base-planche-A	GC35-e1	vert
+GC35-pl-e1B	GC35-e1-base-planche-B	GC35-e1	vert
+GC35-e2	GC35B	GC35-e1	vert
+GC35-pl-e2A	GC35-e2-base-planche-A	GC35-e2	vert
+GC35-pl-e2B	GC35-e2-base-planche-B	GC35-e2	vert
+GC35-e3	GC35C	GC35-e2,GC35-e1	vert
+GC35-pl-e3A	GC35-e3-base-planche-A	GC35-e3	vert
+GC35-pl-e3B	GC35-e3-base-planche-B	GC35-e3	vert
+GC36-e1	GC36		vert
+GC36-pl-e1A	GC36-e1-base-planche-A	GC36-e1	vert
+GC36-pl-e1B	GC36-e1-base-planche-B	GC36-e1	vert
+GC36-e2	GC36B	GC36-e1	vert
+GC36-pl-e2A	GC36-e2-base-planche-A	GC36-e2	vert
+GC36-pl-e2B	GC36-e2-base-planche-B	GC36-e2	vert
+GC36-e3	GC36C	GC36-e2,GC36-e1	vert
+GC36-pl-e3A	GC36-e3-base-planche-A	GC36-e3	vert
+GC36-pl-e3B	GC36-e3-base-planche-B	GC36-e3	vert
+GC37-e1	GC37		vert
+GC37-pl-e1A	GC37-e1-base-planche-A	GC37-e1	vert
+GC37-pl-e1B	GC37-e1-base-planche-B	GC37-e1	vert
+GC37-e2	GC37B	GC37-e1	vert
+GC37-pl-e2A	GC37-e2-base-planche-A	GC37-e2	vert
+GC37-pl-e2B	GC37-e2-base-planche-B	GC37-e2	vert
+GC37-e3	GC37C	GC37-e2,GC37-e1	vert
+GC37-pl-e3A	GC37-e3-base-planche-A	GC37-e3	vert
+GC37-pl-e3B	GC37-e3-base-planche-B	GC37-e3	vert
+GC38-e1	GC38		vert
+GC38-pl-e1A	GC38-e1-base-planche-A	GC38-e1	vert
+GC38-pl-e1B	GC38-e1-base-planche-B	GC38-e1	vert
+GC38-e2	GC38B	GC38-e1	vert
+GC38-pl-e2A	GC38-e2-base-planche-A	GC38-e2	vert
+GC38-pl-e2B	GC38-e2-base-planche-B	GC38-e2	vert
+GC38-e3	GC38C	GC38-e2,GC38-e1	vert
+GC38-pl-e3A	GC38-e3-base-planche-A	GC38-e3	vert
+GC38-pl-e3B	GC38-e3-base-planche-B	GC38-e3	vert
+GC39-e1	GC39		vert
+GC39-pl-e1A	GC39-e1-base-planche-A	GC39-e1	vert
+GC39-pl-e1B	GC39-e1-base-planche-B	GC39-e1	vert
+GC39-e2	GC39B	GC39-e1	vert
+GC39-pl-e2A	GC39-e2-base-planche-A	GC39-e2	vert
+GC39-pl-e2B	GC39-e2-base-planche-B	GC39-e2	vert
+GC39-e3	GC39C	GC39-e2,GC39-e1	vert
+GC39-pl-e3A	GC39-e3-base-planche-A	GC39-e3	vert
+GC39-pl-e3B	GC39-e3-base-planche-B	GC39-e3	vert
+GC40-e1	GC40		vert
+GC40-pl-e1A	GC40-e1-base-planche-A	GC40-e1	vert
+GC40-pl-e1B	GC40-e1-base-planche-B	GC40-e1	vert
+GC40-e2	GC40B	GC40-e1	vert
+GC40-pl-e2A	GC40-e2-base-planche-A	GC40-e2	vert
+GC40-pl-e2B	GC40-e2-base-planche-B	GC40-e2	vert
+GC40-e3	GC40C	GC40-e2,GC40-e1	vert
+GC40-pl-e3A	GC40-e3-base-planche-A	GC40-e3	vert
+GC40-pl-e3B	GC40-e3-base-planche-B	GC40-e3	vert
+GC41-e1	GC41		vert
+GC41-pl-e1A	GC41-e1-base-planche-A	GC41-e1	vert
+GC41-pl-e1B	GC41-e1-base-planche-B	GC41-e1	vert
+GC41-e2	GC41B	GC41-e1	vert
+GC41-pl-e2A	GC41-e2-base-planche-A	GC41-e2	vert
+GC41-pl-e2B	GC41-e2-base-planche-B	GC41-e2	vert
+GC41-e3	GC41C	GC41-e2,GC41-e1	vert
+GC41-pl-e3A	GC41-e3-base-planche-A	GC41-e3	vert
+GC41-pl-e3B	GC41-e3-base-planche-B	GC41-e3	vert
+GC42-e1	GC42		vert
+GC42-pl-e1A	GC42-e1-base-planche-A	GC42-e1	vert
+GC42-pl-e1B	GC42-e1-base-planche-B	GC42-e1	vert
+GC42-e2	GC42B	GC42-e1	vert
+GC42-pl-e2A	GC42-e2-base-planche-A	GC42-e2	vert
+GC42-pl-e2B	GC42-e2-base-planche-B	GC42-e2	vert
+GC42-e3	GC42C	GC42-e2,GC42-e1	vert
+GC42-pl-e3A	GC42-e3-base-planche-A	GC42-e3	vert
+GC42-pl-e3B	GC42-e3-base-planche-B	GC42-e3	vert
+GC43-e1	GC43		vert
+GC43-pl-e1A	GC43-e1-base-planche-A	GC43-e1	vert
+GC43-pl-e1B	GC43-e1-base-planche-B	GC43-e1	vert
+GC43-e2	GC43B	GC43-e1	vert
+GC43-pl-e2A	GC43-e2-base-planche-A	GC43-e2	vert
+GC43-pl-e2B	GC43-e2-base-planche-B	GC43-e2	vert
+GC43-e3	GC43C	GC43-e2,GC43-e1	vert
+GC43-pl-e3A	GC43-e3-base-planche-A	GC43-e3	vert
+GC43-pl-e3B	GC43-e3-base-planche-B	GC43-e3	vert
+GC44-e1	GC44		vert
+GC44-pl-e1A	GC44-e1-base-planche-A	GC44-e1	vert
+GC44-pl-e1B	GC44-e1-base-planche-B	GC44-e1	vert
+GC44-e2	GC44B	GC44-e1	vert
+GC44-pl-e2A	GC44-e2-base-planche-A	GC44-e2	vert
+GC44-pl-e2B	GC44-e2-base-planche-B	GC44-e2	vert
+GC44-e3	GC44C	GC44-e2,GC44-e1	vert
+GC44-pl-e3A	GC44-e3-base-planche-A	GC44-e3	vert
+GC44-pl-e3B	GC44-e3-base-planche-B	GC44-e3	vert
+GC45-e1	GC45		vert
+GC45-pl-e1A	GC45-e1-base-planche-A	GC45-e1	vert
+GC45-pl-e1B	GC45-e1-base-planche-B	GC45-e1	vert
+GC45-e2	GC45B	GC45-e1	vert
+GC45-pl-e2A	GC45-e2-base-planche-A	GC45-e2	vert
+GC45-pl-e2B	GC45-e2-base-planche-B	GC45-e2	vert
+GC45-e3	GC45C	GC45-e2,GC45-e1	vert
+GC45-pl-e3A	GC45-e3-base-planche-A	GC45-e3	vert
+GC45-pl-e3B	GC45-e3-base-planche-B	GC45-e3	vert
+GC46-e1	GC46		vert
+GC46-pl-e1A	GC46-e1-base-planche-A	GC46-e1	vert
+GC46-pl-e1B	GC46-e1-base-planche-B	GC46-e1	vert
+GC46-e2	GC46B	GC46-e1	vert
+GC46-pl-e2A	GC46-e2-base-planche-A	GC46-e2	vert
+GC46-pl-e2B	GC46-e2-base-planche-B	GC46-e2	vert
+GC46-e3	GC46C	GC46-e2,GC46-e1	vert
+GC46-pl-e3A	GC46-e3-base-planche-A	GC46-e3	vert
+GC46-pl-e3B	GC46-e3-base-planche-B	GC46-e3	vert
+GC47-e1	GC47		vert
+GC47-pl-e1A	GC47-e1-base-planche-A	GC47-e1	vert
+GC47-pl-e1B	GC47-e1-base-planche-B	GC47-e1	vert
+GC47-e2	GC47B	GC47-e1	vert
+GC47-pl-e2A	GC47-e2-base-planche-A	GC47-e2	vert
+GC47-pl-e2B	GC47-e2-base-planche-B	GC47-e2	vert
+GC47-e3	GC47C	GC47-e2,GC47-e1	vert
+GC47-pl-e3A	GC47-e3-base-planche-A	GC47-e3	vert
+GC47-pl-e3B	GC47-e3-base-planche-B	GC47-e3	vert
+GC48-e1	GC48		vert
+GC48-pl-e1A	GC48-e1-base-planche-A	GC48-e1	vert
+GC48-pl-e1B	GC48-e1-base-planche-B	GC48-e1	vert
+GC48-e2	GC48B	GC48-e1	vert
+GC48-pl-e2A	GC48-e2-base-planche-A	GC48-e2	vert
+GC48-pl-e2B	GC48-e2-base-planche-B	GC48-e2	vert
+GC48-e3	GC48C	GC48-e2,GC48-e1	vert
+GC48-pl-e3A	GC48-e3-base-planche-A	GC48-e3	vert
+GC48-pl-e3B	GC48-e3-base-planche-B	GC48-e3	vert
+GC49-e1	GC49		vert
+GC49-pl-e1A	GC49-e1-base-planche-A	GC49-e1	vert
+GC49-pl-e1B	GC49-e1-base-planche-B	GC49-e1	vert
+GC49-e2	GC49B	GC49-e1	vert
+GC49-pl-e2A	GC49-e2-base-planche-A	GC49-e2	vert
+GC49-pl-e2B	GC49-e2-base-planche-B	GC49-e2	vert
+GC49-e3	GC49C	GC49-e2,GC49-e1	vert
+GC49-pl-e3A	GC49-e3-base-planche-A	GC49-e3	vert
+GC49-pl-e3B	GC49-e3-base-planche-B	GC49-e3	vert
+GC50-e1	GC50		vert
+GC50-pl-e1A	GC50-e1-base-planche-A	GC50-e1	vert
+GC50-pl-e1B	GC50-e1-base-planche-B	GC50-e1	vert
+GC50-e2	GC50B	GC50-e1	vert
+GC50-pl-e2A	GC50-e2-base-planche-A	GC50-e2	vert
+GC50-pl-e2B	GC50-e2-base-planche-B	GC50-e2	vert
+GC50-e3	GC50C	GC50-e2,GC50-e1	vert
+GC50-pl-e3A	GC50-e3-base-planche-A	GC50-e3	vert
+GC50-pl-e3B	GC50-e3-base-planche-B	GC50-e3	vert
+GC51-e1	GC51		vert
+GC51-pl-e1A	GC51-e1-base-planche-A	GC51-e1	vert
+GC51-pl-e1B	GC51-e1-base-planche-B	GC51-e1	vert
+GC51-e2	GC51B	GC51-e1	vert
+GC51-pl-e2A	GC51-e2-base-planche-A	GC51-e2	vert
+GC51-pl-e2B	GC51-e2-base-planche-B	GC51-e2	vert
+GC51-e3	GC51C	GC51-e2,GC51-e1	vert
+GC51-pl-e3A	GC51-e3-base-planche-A	GC51-e3	vert
+GC51-pl-e3B	GC51-e3-base-planche-B	GC51-e3	vert
+GC52-e1	GC52		vert
+GC52-pl-e1A	GC52-e1-base-planche-A	GC52-e1	vert
+GC52-pl-e1B	GC52-e1-base-planche-B	GC52-e1	vert
+GC52-e2	GC52B	GC52-e1	vert
+GC52-pl-e2A	GC52-e2-base-planche-A	GC52-e2	vert
+GC52-pl-e2B	GC52-e2-base-planche-B	GC52-e2	vert
+GC52-e3	GC52C	GC52-e2,GC52-e1	vert
+GC52-pl-e3A	GC52-e3-base-planche-A	GC52-e3	vert
+GC52-pl-e3B	GC52-e3-base-planche-B	GC52-e3	vert
+GC53-e1	GC53		vert
+GC53-pl-e1A	GC53-e1-base-planche-A	GC53-e1	vert
+GC53-pl-e1B	GC53-e1-base-planche-B	GC53-e1	vert
+GC53-e2	GC53B	GC53-e1	vert
+GC53-pl-e2A	GC53-e2-base-planche-A	GC53-e2	vert
+GC53-pl-e2B	GC53-e2-base-planche-B	GC53-e2	vert
+GC53-e3	GC53C	GC53-e2,GC53-e1	vert
+GC53-pl-e3A	GC53-e3-base-planche-A	GC53-e3	vert
+GC53-pl-e3B	GC53-e3-base-planche-B	GC53-e3	vert
