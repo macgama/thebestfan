@@ -1,0 +1,421 @@
+# prompt	fichier	références	fond
+HC15-e1	HC15		vert
+HC15-pl-e1A	HC15-e1-base-planche-A	HC15-e1	vert
+HC15-pl-e1B	HC15-e1-base-planche-B	HC15-e1	vert
+HC15-e2	HC15B	HC15-e1	vert
+HC15-pl-e2A	HC15-e2-base-planche-A	HC15-e2	vert
+HC15-pl-e2B	HC15-e2-base-planche-B	HC15-e2	vert
+HC15-e3	HC15C	HC15-e2,HC15-e1	vert
+HC15-pl-e3A	HC15-e3-base-planche-A	HC15-e3	vert
+HC15-pl-e3B	HC15-e3-base-planche-B	HC15-e3	vert
+HC16-e1	HC16		magenta
+HC16-pl-e1A	HC16-e1-base-planche-A	HC16-e1	magenta
+HC16-pl-e1B	HC16-e1-base-planche-B	HC16-e1	magenta
+HC16-e2	HC16B	HC16-e1	magenta
+HC16-pl-e2A	HC16-e2-base-planche-A	HC16-e2	magenta
+HC16-pl-e2B	HC16-e2-base-planche-B	HC16-e2	magenta
+HC16-e3	HC16C	HC16-e2,HC16-e1	magenta
+HC16-pl-e3A	HC16-e3-base-planche-A	HC16-e3	magenta
+HC16-pl-e3B	HC16-e3-base-planche-B	HC16-e3	magenta
+HC1-e1	HC1		vert
+HC1-pl-e1A	HC1-e1-base-planche-A	HC1-e1	vert
+HC1-pl-e1B	HC1-e1-base-planche-B	HC1-e1	vert
+HC1-e2	HC1B	HC1-e1	vert
+HC1-pl-e2A	HC1-e2-base-planche-A	HC1-e2	vert
+HC1-pl-e2B	HC1-e2-base-planche-B	HC1-e2	vert
+HC1-e3	HC1C	HC1-e2,HC1-e1	vert
+HC1-pl-e3A	HC1-e3-base-planche-A	HC1-e3	vert
+HC1-pl-e3B	HC1-e3-base-planche-B	HC1-e3	vert
+HC2-e1	HC2		vert
+HC2-pl-e1A	HC2-e1-base-planche-A	HC2-e1	vert
+HC2-pl-e1B	HC2-e1-base-planche-B	HC2-e1	vert
+HC2-e2	HC2B	HC2-e1	vert
+HC2-pl-e2A	HC2-e2-base-planche-A	HC2-e2	vert
+HC2-pl-e2B	HC2-e2-base-planche-B	HC2-e2	vert
+HC2-e3	HC2C	HC2-e2,HC2-e1	vert
+HC2-pl-e3A	HC2-e3-base-planche-A	HC2-e3	vert
+HC2-pl-e3B	HC2-e3-base-planche-B	HC2-e3	vert
+HC3-e1	HC3		magenta
+HC3-pl-e1A	HC3-e1-base-planche-A	HC3-e1	magenta
+HC3-pl-e1B	HC3-e1-base-planche-B	HC3-e1	magenta
+HC3-e2	HC3B	HC3-e1	magenta
+HC3-pl-e2A	HC3-e2-base-planche-A	HC3-e2	magenta
+HC3-pl-e2B	HC3-e2-base-planche-B	HC3-e2	magenta
+HC3-e3	HC3C	HC3-e2,HC3-e1	magenta
+HC3-pl-e3A	HC3-e3-base-planche-A	HC3-e3	magenta
+HC3-pl-e3B	HC3-e3-base-planche-B	HC3-e3	magenta
+HC4-e1	HC4		vert
+HC4-pl-e1A	HC4-e1-base-planche-A	HC4-e1	vert
+HC4-pl-e1B	HC4-e1-base-planche-B	HC4-e1	vert
+HC4-e2	HC4B	HC4-e1	vert
+HC4-pl-e2A	HC4-e2-base-planche-A	HC4-e2	vert
+HC4-pl-e2B	HC4-e2-base-planche-B	HC4-e2	vert
+HC4-e3	HC4C	HC4-e2,HC4-e1	vert
+HC4-pl-e3A	HC4-e3-base-planche-A	HC4-e3	vert
+HC4-pl-e3B	HC4-e3-base-planche-B	HC4-e3	vert
+HC5-e1	HC5		vert
+HC5-pl-e1A	HC5-e1-base-planche-A	HC5-e1	vert
+HC5-pl-e1B	HC5-e1-base-planche-B	HC5-e1	vert
+HC5-e2	HC5B	HC5-e1	vert
+HC5-pl-e2A	HC5-e2-base-planche-A	HC5-e2	vert
+HC5-pl-e2B	HC5-e2-base-planche-B	HC5-e2	vert
+HC5-e3	HC5C	HC5-e2,HC5-e1	vert
+HC5-pl-e3A	HC5-e3-base-planche-A	HC5-e3	vert
+HC5-pl-e3B	HC5-e3-base-planche-B	HC5-e3	vert
+HC6-e1	HC6		vert
+HC6-pl-e1A	HC6-e1-base-planche-A	HC6-e1	vert
+HC6-pl-e1B	HC6-e1-base-planche-B	HC6-e1	vert
+HC6-e2	HC6B	HC6-e1	vert
+HC6-pl-e2A	HC6-e2-base-planche-A	HC6-e2	vert
+HC6-pl-e2B	HC6-e2-base-planche-B	HC6-e2	vert
+HC6-e3	HC6C	HC6-e2,HC6-e1	vert
+HC6-pl-e3A	HC6-e3-base-planche-A	HC6-e3	vert
+HC6-pl-e3B	HC6-e3-base-planche-B	HC6-e3	vert
+HC7-e1	HC7		vert
+HC7-pl-e1A	HC7-e1-base-planche-A	HC7-e1	vert
+HC7-pl-e1B	HC7-e1-base-planche-B	HC7-e1	vert
+HC7-e2	HC7B	HC7-e1	vert
+HC7-pl-e2A	HC7-e2-base-planche-A	HC7-e2	vert
+HC7-pl-e2B	HC7-e2-base-planche-B	HC7-e2	vert
+HC7-e3	HC7C	HC7-e2,HC7-e1	vert
+HC7-pl-e3A	HC7-e3-base-planche-A	HC7-e3	vert
+HC7-pl-e3B	HC7-e3-base-planche-B	HC7-e3	vert
+HC8-e1	HC8		vert
+HC8-pl-e1A	HC8-e1-base-planche-A	HC8-e1	vert
+HC8-pl-e1B	HC8-e1-base-planche-B	HC8-e1	vert
+HC8-e2	HC8B	HC8-e1	vert
+HC8-pl-e2A	HC8-e2-base-planche-A	HC8-e2	vert
+HC8-pl-e2B	HC8-e2-base-planche-B	HC8-e2	vert
+HC8-e3	HC8C	HC8-e2,HC8-e1	vert
+HC8-pl-e3A	HC8-e3-base-planche-A	HC8-e3	vert
+HC8-pl-e3B	HC8-e3-base-planche-B	HC8-e3	vert
+HC9-e1	HC9		vert
+HC9-pl-e1A	HC9-e1-base-planche-A	HC9-e1	vert
+HC9-pl-e1B	HC9-e1-base-planche-B	HC9-e1	vert
+HC9-e2	HC9B	HC9-e1	vert
+HC9-pl-e2A	HC9-e2-base-planche-A	HC9-e2	vert
+HC9-pl-e2B	HC9-e2-base-planche-B	HC9-e2	vert
+HC9-e3	HC9C	HC9-e2,HC9-e1	vert
+HC9-pl-e3A	HC9-e3-base-planche-A	HC9-e3	vert
+HC9-pl-e3B	HC9-e3-base-planche-B	HC9-e3	vert
+HC10-e1	HC10		vert
+HC10-pl-e1A	HC10-e1-base-planche-A	HC10-e1	vert
+HC10-pl-e1B	HC10-e1-base-planche-B	HC10-e1	vert
+HC11-e1	HC11		vert
+HC11-pl-e1A	HC11-e1-base-planche-A	HC11-e1	vert
+HC11-pl-e1B	HC11-e1-base-planche-B	HC11-e1	vert
+HC12-e1	HC12		vert
+HC12-pl-e1A	HC12-e1-base-planche-A	HC12-e1	vert
+HC12-pl-e1B	HC12-e1-base-planche-B	HC12-e1	vert
+HC13-e1	HC13		vert
+HC13-pl-e1A	HC13-e1-base-planche-A	HC13-e1	vert
+HC13-pl-e1B	HC13-e1-base-planche-B	HC13-e1	vert
+HC14-e1	HC14		vert
+HC14-pl-e1A	HC14-e1-base-planche-A	HC14-e1	vert
+HC14-pl-e1B	HC14-e1-base-planche-B	HC14-e1	vert
+HC17-e1	HC17		vert
+HC17-pl-e1A	HC17-e1-base-planche-A	HC17-e1	vert
+HC17-pl-e1B	HC17-e1-base-planche-B	HC17-e1	vert
+HC17-e2	HC17B	HC17-e1	vert
+HC17-pl-e2A	HC17-e2-base-planche-A	HC17-e2	vert
+HC17-pl-e2B	HC17-e2-base-planche-B	HC17-e2	vert
+HC17-e3	HC17C	HC17-e2,HC17-e1	vert
+HC17-pl-e3A	HC17-e3-base-planche-A	HC17-e3	vert
+HC17-pl-e3B	HC17-e3-base-planche-B	HC17-e3	vert
+HC18-e1	HC18		vert
+HC18-pl-e1A	HC18-e1-base-planche-A	HC18-e1	vert
+HC18-pl-e1B	HC18-e1-base-planche-B	HC18-e1	vert
+HC18-e2	HC18B	HC18-e1	vert
+HC18-pl-e2A	HC18-e2-base-planche-A	HC18-e2	vert
+HC18-pl-e2B	HC18-e2-base-planche-B	HC18-e2	vert
+HC18-e3	HC18C	HC18-e2,HC18-e1	vert
+HC18-pl-e3A	HC18-e3-base-planche-A	HC18-e3	vert
+HC18-pl-e3B	HC18-e3-base-planche-B	HC18-e3	vert
+HC19-e1	HC19		vert
+HC19-pl-e1A	HC19-e1-base-planche-A	HC19-e1	vert
+HC19-pl-e1B	HC19-e1-base-planche-B	HC19-e1	vert
+HC19-e2	HC19B	HC19-e1	vert
+HC19-pl-e2A	HC19-e2-base-planche-A	HC19-e2	vert
+HC19-pl-e2B	HC19-e2-base-planche-B	HC19-e2	vert
+HC19-e3	HC19C	HC19-e2,HC19-e1	vert
+HC19-pl-e3A	HC19-e3-base-planche-A	HC19-e3	vert
+HC19-pl-e3B	HC19-e3-base-planche-B	HC19-e3	vert
+HC20-e1	HC20		vert
+HC20-pl-e1A	HC20-e1-base-planche-A	HC20-e1	vert
+HC20-pl-e1B	HC20-e1-base-planche-B	HC20-e1	vert
+HC20-e2	HC20B	HC20-e1	vert
+HC20-pl-e2A	HC20-e2-base-planche-A	HC20-e2	vert
+HC20-pl-e2B	HC20-e2-base-planche-B	HC20-e2	vert
+HC20-e3	HC20C	HC20-e2,HC20-e1	vert
+HC20-pl-e3A	HC20-e3-base-planche-A	HC20-e3	vert
+HC20-pl-e3B	HC20-e3-base-planche-B	HC20-e3	vert
+HC21-e1	HC21		vert
+HC21-pl-e1A	HC21-e1-base-planche-A	HC21-e1	vert
+HC21-pl-e1B	HC21-e1-base-planche-B	HC21-e1	vert
+HC21-e2	HC21B	HC21-e1	vert
+HC21-pl-e2A	HC21-e2-base-planche-A	HC21-e2	vert
+HC21-pl-e2B	HC21-e2-base-planche-B	HC21-e2	vert
+HC21-e3	HC21C	HC21-e2,HC21-e1	vert
+HC21-pl-e3A	HC21-e3-base-planche-A	HC21-e3	vert
+HC21-pl-e3B	HC21-e3-base-planche-B	HC21-e3	vert
+HC22-e1	HC22		vert
+HC22-pl-e1A	HC22-e1-base-planche-A	HC22-e1	vert
+HC22-pl-e1B	HC22-e1-base-planche-B	HC22-e1	vert
+HC22-e2	HC22B	HC22-e1	vert
+HC22-pl-e2A	HC22-e2-base-planche-A	HC22-e2	vert
+HC22-pl-e2B	HC22-e2-base-planche-B	HC22-e2	vert
+HC22-e3	HC22C	HC22-e2,HC22-e1	vert
+HC22-pl-e3A	HC22-e3-base-planche-A	HC22-e3	vert
+HC22-pl-e3B	HC22-e3-base-planche-B	HC22-e3	vert
+HC23-e1	HC23		vert
+HC23-pl-e1A	HC23-e1-base-planche-A	HC23-e1	vert
+HC23-pl-e1B	HC23-e1-base-planche-B	HC23-e1	vert
+HC23-e2	HC23B	HC23-e1	vert
+HC23-pl-e2A	HC23-e2-base-planche-A	HC23-e2	vert
+HC23-pl-e2B	HC23-e2-base-planche-B	HC23-e2	vert
+HC23-e3	HC23C	HC23-e2,HC23-e1	vert
+HC23-pl-e3A	HC23-e3-base-planche-A	HC23-e3	vert
+HC23-pl-e3B	HC23-e3-base-planche-B	HC23-e3	vert
+HC24-e1	HC24		vert
+HC24-pl-e1A	HC24-e1-base-planche-A	HC24-e1	vert
+HC24-pl-e1B	HC24-e1-base-planche-B	HC24-e1	vert
+HC24-e2	HC24B	HC24-e1	vert
+HC24-pl-e2A	HC24-e2-base-planche-A	HC24-e2	vert
+HC24-pl-e2B	HC24-e2-base-planche-B	HC24-e2	vert
+HC24-e3	HC24C	HC24-e2,HC24-e1	vert
+HC24-pl-e3A	HC24-e3-base-planche-A	HC24-e3	vert
+HC24-pl-e3B	HC24-e3-base-planche-B	HC24-e3	vert
+HC25-e1	HC25		vert
+HC25-pl-e1A	HC25-e1-base-planche-A	HC25-e1	vert
+HC25-pl-e1B	HC25-e1-base-planche-B	HC25-e1	vert
+HC25-e2	HC25B	HC25-e1	vert
+HC25-pl-e2A	HC25-e2-base-planche-A	HC25-e2	vert
+HC25-pl-e2B	HC25-e2-base-planche-B	HC25-e2	vert
+HC25-e3	HC25C	HC25-e2,HC25-e1	vert
+HC25-pl-e3A	HC25-e3-base-planche-A	HC25-e3	vert
+HC25-pl-e3B	HC25-e3-base-planche-B	HC25-e3	vert
+HC26-e1	HC26		vert
+HC26-pl-e1A	HC26-e1-base-planche-A	HC26-e1	vert
+HC26-pl-e1B	HC26-e1-base-planche-B	HC26-e1	vert
+HC26-e2	HC26B	HC26-e1	vert
+HC26-pl-e2A	HC26-e2-base-planche-A	HC26-e2	vert
+HC26-pl-e2B	HC26-e2-base-planche-B	HC26-e2	vert
+HC26-e3	HC26C	HC26-e2,HC26-e1	vert
+HC26-pl-e3A	HC26-e3-base-planche-A	HC26-e3	vert
+HC26-pl-e3B	HC26-e3-base-planche-B	HC26-e3	vert
+HC27-e1	HC27		vert
+HC27-pl-e1A	HC27-e1-base-planche-A	HC27-e1	vert
+HC27-pl-e1B	HC27-e1-base-planche-B	HC27-e1	vert
+HC27-e2	HC27B	HC27-e1	vert
+HC27-pl-e2A	HC27-e2-base-planche-A	HC27-e2	vert
+HC27-pl-e2B	HC27-e2-base-planche-B	HC27-e2	vert
+HC27-e3	HC27C	HC27-e2,HC27-e1	vert
+HC27-pl-e3A	HC27-e3-base-planche-A	HC27-e3	vert
+HC27-pl-e3B	HC27-e3-base-planche-B	HC27-e3	vert
+HC28-e1	HC28		vert
+HC28-pl-e1A	HC28-e1-base-planche-A	HC28-e1	vert
+HC28-pl-e1B	HC28-e1-base-planche-B	HC28-e1	vert
+HC28-e2	HC28B	HC28-e1	vert
+HC28-pl-e2A	HC28-e2-base-planche-A	HC28-e2	vert
+HC28-pl-e2B	HC28-e2-base-planche-B	HC28-e2	vert
+HC28-e3	HC28C	HC28-e2,HC28-e1	vert
+HC28-pl-e3A	HC28-e3-base-planche-A	HC28-e3	vert
+HC28-pl-e3B	HC28-e3-base-planche-B	HC28-e3	vert
+HC29-e1	HC29		vert
+HC29-pl-e1A	HC29-e1-base-planche-A	HC29-e1	vert
+HC29-pl-e1B	HC29-e1-base-planche-B	HC29-e1	vert
+HC29-e2	HC29B	HC29-e1	vert
+HC29-pl-e2A	HC29-e2-base-planche-A	HC29-e2	vert
+HC29-pl-e2B	HC29-e2-base-planche-B	HC29-e2	vert
+HC29-e3	HC29C	HC29-e2,HC29-e1	vert
+HC29-pl-e3A	HC29-e3-base-planche-A	HC29-e3	vert
+HC29-pl-e3B	HC29-e3-base-planche-B	HC29-e3	vert
+HC30-e1	HC30		vert
+HC30-pl-e1A	HC30-e1-base-planche-A	HC30-e1	vert
+HC30-pl-e1B	HC30-e1-base-planche-B	HC30-e1	vert
+HC30-e2	HC30B	HC30-e1	vert
+HC30-pl-e2A	HC30-e2-base-planche-A	HC30-e2	vert
+HC30-pl-e2B	HC30-e2-base-planche-B	HC30-e2	vert
+HC30-e3	HC30C	HC30-e2,HC30-e1	vert
+HC30-pl-e3A	HC30-e3-base-planche-A	HC30-e3	vert
+HC30-pl-e3B	HC30-e3-base-planche-B	HC30-e3	vert
+HC31-e1	HC31		vert
+HC31-pl-e1A	HC31-e1-base-planche-A	HC31-e1	vert
+HC31-pl-e1B	HC31-e1-base-planche-B	HC31-e1	vert
+HC31-e2	HC31B	HC31-e1	vert
+HC31-pl-e2A	HC31-e2-base-planche-A	HC31-e2	vert
+HC31-pl-e2B	HC31-e2-base-planche-B	HC31-e2	vert
+HC31-e3	HC31C	HC31-e2,HC31-e1	vert
+HC31-pl-e3A	HC31-e3-base-planche-A	HC31-e3	vert
+HC31-pl-e3B	HC31-e3-base-planche-B	HC31-e3	vert
+HC32-e1	HC32		vert
+HC32-pl-e1A	HC32-e1-base-planche-A	HC32-e1	vert
+HC32-pl-e1B	HC32-e1-base-planche-B	HC32-e1	vert
+HC32-e2	HC32B	HC32-e1	vert
+HC32-pl-e2A	HC32-e2-base-planche-A	HC32-e2	vert
+HC32-pl-e2B	HC32-e2-base-planche-B	HC32-e2	vert
+HC32-e3	HC32C	HC32-e2,HC32-e1	vert
+HC32-pl-e3A	HC32-e3-base-planche-A	HC32-e3	vert
+HC32-pl-e3B	HC32-e3-base-planche-B	HC32-e3	vert
+HC33-e1	HC33		vert
+HC33-pl-e1A	HC33-e1-base-planche-A	HC33-e1	vert
+HC33-pl-e1B	HC33-e1-base-planche-B	HC33-e1	vert
+HC33-e2	HC33B	HC33-e1	vert
+HC33-pl-e2A	HC33-e2-base-planche-A	HC33-e2	vert
+HC33-pl-e2B	HC33-e2-base-planche-B	HC33-e2	vert
+HC33-e3	HC33C	HC33-e2,HC33-e1	vert
+HC33-pl-e3A	HC33-e3-base-planche-A	HC33-e3	vert
+HC33-pl-e3B	HC33-e3-base-planche-B	HC33-e3	vert
+HC34-e1	HC34		vert
+HC34-pl-e1A	HC34-e1-base-planche-A	HC34-e1	vert
+HC34-pl-e1B	HC34-e1-base-planche-B	HC34-e1	vert
+HC34-e2	HC34B	HC34-e1	vert
+HC34-pl-e2A	HC34-e2-base-planche-A	HC34-e2	vert
+HC34-pl-e2B	HC34-e2-base-planche-B	HC34-e2	vert
+HC34-e3	HC34C	HC34-e2,HC34-e1	vert
+HC34-pl-e3A	HC34-e3-base-planche-A	HC34-e3	vert
+HC34-pl-e3B	HC34-e3-base-planche-B	HC34-e3	vert
+HC35-e1	HC35		vert
+HC35-pl-e1A	HC35-e1-base-planche-A	HC35-e1	vert
+HC35-pl-e1B	HC35-e1-base-planche-B	HC35-e1	vert
+HC35-e2	HC35B	HC35-e1	vert
+HC35-pl-e2A	HC35-e2-base-planche-A	HC35-e2	vert
+HC35-pl-e2B	HC35-e2-base-planche-B	HC35-e2	vert
+HC35-e3	HC35C	HC35-e2,HC35-e1	vert
+HC35-pl-e3A	HC35-e3-base-planche-A	HC35-e3	vert
+HC35-pl-e3B	HC35-e3-base-planche-B	HC35-e3	vert
+HC36-e1	HC36		vert
+HC36-pl-e1A	HC36-e1-base-planche-A	HC36-e1	vert
+HC36-pl-e1B	HC36-e1-base-planche-B	HC36-e1	vert
+HC36-e2	HC36B	HC36-e1	vert
+HC36-pl-e2A	HC36-e2-base-planche-A	HC36-e2	vert
+HC36-pl-e2B	HC36-e2-base-planche-B	HC36-e2	vert
+HC36-e3	HC36C	HC36-e2,HC36-e1	vert
+HC36-pl-e3A	HC36-e3-base-planche-A	HC36-e3	vert
+HC36-pl-e3B	HC36-e3-base-planche-B	HC36-e3	vert
+HC37-e1	HC37		vert
+HC37-pl-e1A	HC37-e1-base-planche-A	HC37-e1	vert
+HC37-pl-e1B	HC37-e1-base-planche-B	HC37-e1	vert
+HC37-e2	HC37B	HC37-e1	vert
+HC37-pl-e2A	HC37-e2-base-planche-A	HC37-e2	vert
+HC37-pl-e2B	HC37-e2-base-planche-B	HC37-e2	vert
+HC37-e3	HC37C	HC37-e2,HC37-e1	vert
+HC37-pl-e3A	HC37-e3-base-planche-A	HC37-e3	vert
+HC37-pl-e3B	HC37-e3-base-planche-B	HC37-e3	vert
+HC38-e1	HC38		vert
+HC38-pl-e1A	HC38-e1-base-planche-A	HC38-e1	vert
+HC38-pl-e1B	HC38-e1-base-planche-B	HC38-e1	vert
+HC38-e2	HC38B	HC38-e1	vert
+HC38-pl-e2A	HC38-e2-base-planche-A	HC38-e2	vert
+HC38-pl-e2B	HC38-e2-base-planche-B	HC38-e2	vert
+HC38-e3	HC38C	HC38-e2,HC38-e1	vert
+HC38-pl-e3A	HC38-e3-base-planche-A	HC38-e3	vert
+HC38-pl-e3B	HC38-e3-base-planche-B	HC38-e3	vert
+HC39-e1	HC39		vert
+HC39-pl-e1A	HC39-e1-base-planche-A	HC39-e1	vert
+HC39-pl-e1B	HC39-e1-base-planche-B	HC39-e1	vert
+HC39-e2	HC39B	HC39-e1	vert
+HC39-pl-e2A	HC39-e2-base-planche-A	HC39-e2	vert
+HC39-pl-e2B	HC39-e2-base-planche-B	HC39-e2	vert
+HC39-e3	HC39C	HC39-e2,HC39-e1	vert
+HC39-pl-e3A	HC39-e3-base-planche-A	HC39-e3	vert
+HC39-pl-e3B	HC39-e3-base-planche-B	HC39-e3	vert
+HC40-e1	HC40		vert
+HC40-pl-e1A	HC40-e1-base-planche-A	HC40-e1	vert
+HC40-pl-e1B	HC40-e1-base-planche-B	HC40-e1	vert
+HC40-e2	HC40B	HC40-e1	vert
+HC40-pl-e2A	HC40-e2-base-planche-A	HC40-e2	vert
+HC40-pl-e2B	HC40-e2-base-planche-B	HC40-e2	vert
+HC40-e3	HC40C	HC40-e2,HC40-e1	vert
+HC40-pl-e3A	HC40-e3-base-planche-A	HC40-e3	vert
+HC40-pl-e3B	HC40-e3-base-planche-B	HC40-e3	vert
+HC41-e1	HC41		vert
+HC41-pl-e1A	HC41-e1-base-planche-A	HC41-e1	vert
+HC41-pl-e1B	HC41-e1-base-planche-B	HC41-e1	vert
+HC41-e2	HC41B	HC41-e1	vert
+HC41-pl-e2A	HC41-e2-base-planche-A	HC41-e2	vert
+HC41-pl-e2B	HC41-e2-base-planche-B	HC41-e2	vert
+HC41-e3	HC41C	HC41-e2,HC41-e1	vert
+HC41-pl-e3A	HC41-e3-base-planche-A	HC41-e3	vert
+HC41-pl-e3B	HC41-e3-base-planche-B	HC41-e3	vert
+HC42-e1	HC42		magenta
+HC42-pl-e1A	HC42-e1-base-planche-A	HC42-e1	magenta
+HC42-pl-e1B	HC42-e1-base-planche-B	HC42-e1	magenta
+HC42-e2	HC42B	HC42-e1	magenta
+HC42-pl-e2A	HC42-e2-base-planche-A	HC42-e2	magenta
+HC42-pl-e2B	HC42-e2-base-planche-B	HC42-e2	magenta
+HC42-e3	HC42C	HC42-e2,HC42-e1	magenta
+HC42-pl-e3A	HC42-e3-base-planche-A	HC42-e3	magenta
+HC42-pl-e3B	HC42-e3-base-planche-B	HC42-e3	magenta
+HC43-e1	HC43		vert
+HC43-pl-e1A	HC43-e1-base-planche-A	HC43-e1	vert
+HC43-pl-e1B	HC43-e1-base-planche-B	HC43-e1	vert
+HC43-e2	HC43B	HC43-e1	vert
+HC43-pl-e2A	HC43-e2-base-planche-A	HC43-e2	vert
+HC43-pl-e2B	HC43-e2-base-planche-B	HC43-e2	vert
+HC43-e3	HC43C	HC43-e2,HC43-e1	vert
+HC43-pl-e3A	HC43-e3-base-planche-A	HC43-e3	vert
+HC43-pl-e3B	HC43-e3-base-planche-B	HC43-e3	vert
+HC44-e1	HC44		vert
+HC44-pl-e1A	HC44-e1-base-planche-A	HC44-e1	vert
+HC44-pl-e1B	HC44-e1-base-planche-B	HC44-e1	vert
+HC44-e2	HC44B	HC44-e1	vert
+HC44-pl-e2A	HC44-e2-base-planche-A	HC44-e2	vert
+HC44-pl-e2B	HC44-e2-base-planche-B	HC44-e2	vert
+HC44-e3	HC44C	HC44-e2,HC44-e1	vert
+HC44-pl-e3A	HC44-e3-base-planche-A	HC44-e3	vert
+HC44-pl-e3B	HC44-e3-base-planche-B	HC44-e3	vert
+HC45-e1	HC45		vert
+HC45-pl-e1A	HC45-e1-base-planche-A	HC45-e1	vert
+HC45-pl-e1B	HC45-e1-base-planche-B	HC45-e1	vert
+HC45-e2	HC45B	HC45-e1	vert
+HC45-pl-e2A	HC45-e2-base-planche-A	HC45-e2	vert
+HC45-pl-e2B	HC45-e2-base-planche-B	HC45-e2	vert
+HC45-e3	HC45C	HC45-e2,HC45-e1	vert
+HC45-pl-e3A	HC45-e3-base-planche-A	HC45-e3	vert
+HC45-pl-e3B	HC45-e3-base-planche-B	HC45-e3	vert
+HC46-e1	HC46		vert
+HC46-pl-e1A	HC46-e1-base-planche-A	HC46-e1	vert
+HC46-pl-e1B	HC46-e1-base-planche-B	HC46-e1	vert
+HC46-e2	HC46B	HC46-e1	vert
+HC46-pl-e2A	HC46-e2-base-planche-A	HC46-e2	vert
+HC46-pl-e2B	HC46-e2-base-planche-B	HC46-e2	vert
+HC46-e3	HC46C	HC46-e2,HC46-e1	vert
+HC46-pl-e3A	HC46-e3-base-planche-A	HC46-e3	vert
+HC46-pl-e3B	HC46-e3-base-planche-B	HC46-e3	vert
+HC47-e1	HC47		vert
+HC47-pl-e1A	HC47-e1-base-planche-A	HC47-e1	vert
+HC47-pl-e1B	HC47-e1-base-planche-B	HC47-e1	vert
+HC47-e2	HC47B	HC47-e1	vert
+HC47-pl-e2A	HC47-e2-base-planche-A	HC47-e2	vert
+HC47-pl-e2B	HC47-e2-base-planche-B	HC47-e2	vert
+HC47-e3	HC47C	HC47-e2,HC47-e1	vert
+HC47-pl-e3A	HC47-e3-base-planche-A	HC47-e3	vert
+HC47-pl-e3B	HC47-e3-base-planche-B	HC47-e3	vert
+HC48-e1	HC48		vert
+HC48-pl-e1A	HC48-e1-base-planche-A	HC48-e1	vert
+HC48-pl-e1B	HC48-e1-base-planche-B	HC48-e1	vert
+HC48-e2	HC48B	HC48-e1	vert
+HC48-pl-e2A	HC48-e2-base-planche-A	HC48-e2	vert
+HC48-pl-e2B	HC48-e2-base-planche-B	HC48-e2	vert
+HC48-e3	HC48C	HC48-e2,HC48-e1	vert
+HC48-pl-e3A	HC48-e3-base-planche-A	HC48-e3	vert
+HC48-pl-e3B	HC48-e3-base-planche-B	HC48-e3	vert
+HC49-e1	HC49		vert
+HC49-pl-e1A	HC49-e1-base-planche-A	HC49-e1	vert
+HC49-pl-e1B	HC49-e1-base-planche-B	HC49-e1	vert
+HC49-e2	HC49B	HC49-e1	vert
+HC49-pl-e2A	HC49-e2-base-planche-A	HC49-e2	vert
+HC49-pl-e2B	HC49-e2-base-planche-B	HC49-e2	vert
+HC49-e3	HC49C	HC49-e2,HC49-e1	vert
+HC49-pl-e3A	HC49-e3-base-planche-A	HC49-e3	vert
+HC49-pl-e3B	HC49-e3-base-planche-B	HC49-e3	vert
+HC50-e1	HC50		magenta
+HC50-pl-e1A	HC50-e1-base-planche-A	HC50-e1	magenta
+HC50-pl-e1B	HC50-e1-base-planche-B	HC50-e1	magenta
+HC50-e2	HC50B	HC50-e1	magenta
+HC50-pl-e2A	HC50-e2-base-planche-A	HC50-e2	magenta
+HC50-pl-e2B	HC50-e2-base-planche-B	HC50-e2	magenta
+HC50-e3	HC50C	HC50-e2,HC50-e1	magenta
+HC50-pl-e3A	HC50-e3-base-planche-A	HC50-e3	magenta
+HC50-pl-e3B	HC50-e3-base-planche-B	HC50-e3	magenta
