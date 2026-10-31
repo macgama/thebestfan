@@ -1,0 +1,421 @@
+# prompt	fichier	références	fond
+MS1-e1	MS1		vert
+MS1-pl-e1A	MS1-e1-base-planche-A	MS1-e1	vert
+MS1-pl-e1B	MS1-e1-base-planche-B	MS1-e1	vert
+MS1-e2	MS1B	MS1-e1	vert
+MS1-pl-e2A	MS1-e2-base-planche-A	MS1-e2	vert
+MS1-pl-e2B	MS1-e2-base-planche-B	MS1-e2	vert
+MS1-e3	MS1C	MS1-e2,MS1-e1	vert
+MS1-pl-e3A	MS1-e3-base-planche-A	MS1-e3	vert
+MS1-pl-e3B	MS1-e3-base-planche-B	MS1-e3	vert
+MS2-e1	MS2		vert
+MS2-pl-e1A	MS2-e1-base-planche-A	MS2-e1	vert
+MS2-pl-e1B	MS2-e1-base-planche-B	MS2-e1	vert
+MS2-e2	MS2B	MS2-e1	vert
+MS2-pl-e2A	MS2-e2-base-planche-A	MS2-e2	vert
+MS2-pl-e2B	MS2-e2-base-planche-B	MS2-e2	vert
+MS2-e3	MS2C	MS2-e2,MS2-e1	vert
+MS2-pl-e3A	MS2-e3-base-planche-A	MS2-e3	vert
+MS2-pl-e3B	MS2-e3-base-planche-B	MS2-e3	vert
+MS3-e1	MS3		magenta
+MS3-pl-e1A	MS3-e1-base-planche-A	MS3-e1	magenta
+MS3-pl-e1B	MS3-e1-base-planche-B	MS3-e1	magenta
+MS3-e2	MS3B	MS3-e1	magenta
+MS3-pl-e2A	MS3-e2-base-planche-A	MS3-e2	magenta
+MS3-pl-e2B	MS3-e2-base-planche-B	MS3-e2	magenta
+MS3-e3	MS3C	MS3-e2,MS3-e1	magenta
+MS3-pl-e3A	MS3-e3-base-planche-A	MS3-e3	magenta
+MS3-pl-e3B	MS3-e3-base-planche-B	MS3-e3	magenta
+MS4-e1	MS4		magenta
+MS4-pl-e1A	MS4-e1-base-planche-A	MS4-e1	magenta
+MS4-pl-e1B	MS4-e1-base-planche-B	MS4-e1	magenta
+MS4-e2	MS4B	MS4-e1	magenta
+MS4-pl-e2A	MS4-e2-base-planche-A	MS4-e2	magenta
+MS4-pl-e2B	MS4-e2-base-planche-B	MS4-e2	magenta
+MS4-e3	MS4C	MS4-e2,MS4-e1	magenta
+MS4-pl-e3A	MS4-e3-base-planche-A	MS4-e3	magenta
+MS4-pl-e3B	MS4-e3-base-planche-B	MS4-e3	magenta
+MS5-e1	MS5		magenta
+MS5-pl-e1A	MS5-e1-base-planche-A	MS5-e1	magenta
+MS5-pl-e1B	MS5-e1-base-planche-B	MS5-e1	magenta
+MS5-e2	MS5B	MS5-e1	magenta
+MS5-pl-e2A	MS5-e2-base-planche-A	MS5-e2	magenta
+MS5-pl-e2B	MS5-e2-base-planche-B	MS5-e2	magenta
+MS5-e3	MS5C	MS5-e2,MS5-e1	magenta
+MS5-pl-e3A	MS5-e3-base-planche-A	MS5-e3	magenta
+MS5-pl-e3B	MS5-e3-base-planche-B	MS5-e3	magenta
+MS6-e1	MS6		vert
+MS6-pl-e1A	MS6-e1-base-planche-A	MS6-e1	vert
+MS6-pl-e1B	MS6-e1-base-planche-B	MS6-e1	vert
+MS6-e2	MS6B	MS6-e1	vert
+MS6-pl-e2A	MS6-e2-base-planche-A	MS6-e2	vert
+MS6-pl-e2B	MS6-e2-base-planche-B	MS6-e2	vert
+MS6-e3	MS6C	MS6-e2,MS6-e1	vert
+MS6-pl-e3A	MS6-e3-base-planche-A	MS6-e3	vert
+MS6-pl-e3B	MS6-e3-base-planche-B	MS6-e3	vert
+MS7-e1	MS7		magenta
+MS7-pl-e1A	MS7-e1-base-planche-A	MS7-e1	magenta
+MS7-pl-e1B	MS7-e1-base-planche-B	MS7-e1	magenta
+MS7-e2	MS7B	MS7-e1	magenta
+MS7-pl-e2A	MS7-e2-base-planche-A	MS7-e2	magenta
+MS7-pl-e2B	MS7-e2-base-planche-B	MS7-e2	magenta
+MS7-e3	MS7C	MS7-e2,MS7-e1	magenta
+MS7-pl-e3A	MS7-e3-base-planche-A	MS7-e3	magenta
+MS7-pl-e3B	MS7-e3-base-planche-B	MS7-e3	magenta
+MS8-e1	MS8		vert
+MS8-pl-e1A	MS8-e1-base-planche-A	MS8-e1	vert
+MS8-pl-e1B	MS8-e1-base-planche-B	MS8-e1	vert
+MS8-e2	MS8B	MS8-e1	vert
+MS8-pl-e2A	MS8-e2-base-planche-A	MS8-e2	vert
+MS8-pl-e2B	MS8-e2-base-planche-B	MS8-e2	vert
+MS8-e3	MS8C	MS8-e2,MS8-e1	vert
+MS8-pl-e3A	MS8-e3-base-planche-A	MS8-e3	vert
+MS8-pl-e3B	MS8-e3-base-planche-B	MS8-e3	vert
+MS9-e1	MS9		vert
+MS9-pl-e1A	MS9-e1-base-planche-A	MS9-e1	vert
+MS9-pl-e1B	MS9-e1-base-planche-B	MS9-e1	vert
+MS9-e2	MS9B	MS9-e1	vert
+MS9-pl-e2A	MS9-e2-base-planche-A	MS9-e2	vert
+MS9-pl-e2B	MS9-e2-base-planche-B	MS9-e2	vert
+MS9-e3	MS9C	MS9-e2,MS9-e1	vert
+MS9-pl-e3A	MS9-e3-base-planche-A	MS9-e3	vert
+MS9-pl-e3B	MS9-e3-base-planche-B	MS9-e3	vert
+MS10-e1	MS10		vert
+MS10-pl-e1A	MS10-e1-base-planche-A	MS10-e1	vert
+MS10-pl-e1B	MS10-e1-base-planche-B	MS10-e1	vert
+MS10-e2	MS10B	MS10-e1	vert
+MS10-pl-e2A	MS10-e2-base-planche-A	MS10-e2	vert
+MS10-pl-e2B	MS10-e2-base-planche-B	MS10-e2	vert
+MS10-e3	MS10C	MS10-e2,MS10-e1	vert
+MS10-pl-e3A	MS10-e3-base-planche-A	MS10-e3	vert
+MS10-pl-e3B	MS10-e3-base-planche-B	MS10-e3	vert
+MS11-e1	MS11		vert
+MS11-pl-e1A	MS11-e1-base-planche-A	MS11-e1	vert
+MS11-pl-e1B	MS11-e1-base-planche-B	MS11-e1	vert
+MS11-e2	MS11B	MS11-e1	vert
+MS11-pl-e2A	MS11-e2-base-planche-A	MS11-e2	vert
+MS11-pl-e2B	MS11-e2-base-planche-B	MS11-e2	vert
+MS11-e3	MS11C	MS11-e2,MS11-e1	vert
+MS11-pl-e3A	MS11-e3-base-planche-A	MS11-e3	vert
+MS11-pl-e3B	MS11-e3-base-planche-B	MS11-e3	vert
+MS12-e1	MS12		magenta
+MS12-pl-e1A	MS12-e1-base-planche-A	MS12-e1	magenta
+MS12-pl-e1B	MS12-e1-base-planche-B	MS12-e1	magenta
+MS12-e2	MS12B	MS12-e1	magenta
+MS12-pl-e2A	MS12-e2-base-planche-A	MS12-e2	magenta
+MS12-pl-e2B	MS12-e2-base-planche-B	MS12-e2	magenta
+MS12-e3	MS12C	MS12-e2,MS12-e1	magenta
+MS12-pl-e3A	MS12-e3-base-planche-A	MS12-e3	magenta
+MS12-pl-e3B	MS12-e3-base-planche-B	MS12-e3	magenta
+MS13-e1	MS13		magenta
+MS13-pl-e1A	MS13-e1-base-planche-A	MS13-e1	magenta
+MS13-pl-e1B	MS13-e1-base-planche-B	MS13-e1	magenta
+MS13-e2	MS13B	MS13-e1	magenta
+MS13-pl-e2A	MS13-e2-base-planche-A	MS13-e2	magenta
+MS13-pl-e2B	MS13-e2-base-planche-B	MS13-e2	magenta
+MS13-e3	MS13C	MS13-e2,MS13-e1	magenta
+MS13-pl-e3A	MS13-e3-base-planche-A	MS13-e3	magenta
+MS13-pl-e3B	MS13-e3-base-planche-B	MS13-e3	magenta
+MS14-e1	MS14		vert
+MS14-pl-e1A	MS14-e1-base-planche-A	MS14-e1	vert
+MS14-pl-e1B	MS14-e1-base-planche-B	MS14-e1	vert
+MS14-e2	MS14B	MS14-e1	vert
+MS14-pl-e2A	MS14-e2-base-planche-A	MS14-e2	vert
+MS14-pl-e2B	MS14-e2-base-planche-B	MS14-e2	vert
+MS14-e3	MS14C	MS14-e2,MS14-e1	vert
+MS14-pl-e3A	MS14-e3-base-planche-A	MS14-e3	vert
+MS14-pl-e3B	MS14-e3-base-planche-B	MS14-e3	vert
+MS15-e1	MS15		magenta
+MS15-pl-e1A	MS15-e1-base-planche-A	MS15-e1	magenta
+MS15-pl-e1B	MS15-e1-base-planche-B	MS15-e1	magenta
+MS16-e1	MS16		vert
+MS16-pl-e1A	MS16-e1-base-planche-A	MS16-e1	vert
+MS16-pl-e1B	MS16-e1-base-planche-B	MS16-e1	vert
+MS16-e2	MS16B	MS16-e1	vert
+MS16-pl-e2A	MS16-e2-base-planche-A	MS16-e2	vert
+MS16-pl-e2B	MS16-e2-base-planche-B	MS16-e2	vert
+MS16-e3	MS16C	MS16-e2,MS16-e1	vert
+MS16-pl-e3A	MS16-e3-base-planche-A	MS16-e3	vert
+MS16-pl-e3B	MS16-e3-base-planche-B	MS16-e3	vert
+MS17-e1	MS17		vert
+MS17-pl-e1A	MS17-e1-base-planche-A	MS17-e1	vert
+MS17-pl-e1B	MS17-e1-base-planche-B	MS17-e1	vert
+MS17-e2	MS17B	MS17-e1	vert
+MS17-pl-e2A	MS17-e2-base-planche-A	MS17-e2	vert
+MS17-pl-e2B	MS17-e2-base-planche-B	MS17-e2	vert
+MS17-e3	MS17C	MS17-e2,MS17-e1	vert
+MS17-pl-e3A	MS17-e3-base-planche-A	MS17-e3	vert
+MS17-pl-e3B	MS17-e3-base-planche-B	MS17-e3	vert
+MS18-e1	MS18		vert
+MS18-pl-e1A	MS18-e1-base-planche-A	MS18-e1	vert
+MS18-pl-e1B	MS18-e1-base-planche-B	MS18-e1	vert
+MS18-e2	MS18B	MS18-e1	vert
+MS18-pl-e2A	MS18-e2-base-planche-A	MS18-e2	vert
+MS18-pl-e2B	MS18-e2-base-planche-B	MS18-e2	vert
+MS18-e3	MS18C	MS18-e2,MS18-e1	vert
+MS18-pl-e3A	MS18-e3-base-planche-A	MS18-e3	vert
+MS18-pl-e3B	MS18-e3-base-planche-B	MS18-e3	vert
+MS19-e1	MS19		vert
+MS19-pl-e1A	MS19-e1-base-planche-A	MS19-e1	vert
+MS19-pl-e1B	MS19-e1-base-planche-B	MS19-e1	vert
+MS19-e2	MS19B	MS19-e1	vert
+MS19-pl-e2A	MS19-e2-base-planche-A	MS19-e2	vert
+MS19-pl-e2B	MS19-e2-base-planche-B	MS19-e2	vert
+MS19-e3	MS19C	MS19-e2,MS19-e1	vert
+MS19-pl-e3A	MS19-e3-base-planche-A	MS19-e3	vert
+MS19-pl-e3B	MS19-e3-base-planche-B	MS19-e3	vert
+MS20-e1	MS20		magenta
+MS20-pl-e1A	MS20-e1-base-planche-A	MS20-e1	magenta
+MS20-pl-e1B	MS20-e1-base-planche-B	MS20-e1	magenta
+MS20-e2	MS20B	MS20-e1	magenta
+MS20-pl-e2A	MS20-e2-base-planche-A	MS20-e2	magenta
+MS20-pl-e2B	MS20-e2-base-planche-B	MS20-e2	magenta
+MS20-e3	MS20C	MS20-e2,MS20-e1	magenta
+MS20-pl-e3A	MS20-e3-base-planche-A	MS20-e3	magenta
+MS20-pl-e3B	MS20-e3-base-planche-B	MS20-e3	magenta
+MS21-e1	MS21		vert
+MS21-pl-e1A	MS21-e1-base-planche-A	MS21-e1	vert
+MS21-pl-e1B	MS21-e1-base-planche-B	MS21-e1	vert
+MS21-e2	MS21B	MS21-e1	vert
+MS21-pl-e2A	MS21-e2-base-planche-A	MS21-e2	vert
+MS21-pl-e2B	MS21-e2-base-planche-B	MS21-e2	vert
+MS21-e3	MS21C	MS21-e2,MS21-e1	vert
+MS21-pl-e3A	MS21-e3-base-planche-A	MS21-e3	vert
+MS21-pl-e3B	MS21-e3-base-planche-B	MS21-e3	vert
+MS22-e1	MS22		magenta
+MS22-pl-e1A	MS22-e1-base-planche-A	MS22-e1	magenta
+MS22-pl-e1B	MS22-e1-base-planche-B	MS22-e1	magenta
+MS22-e2	MS22B	MS22-e1	magenta
+MS22-pl-e2A	MS22-e2-base-planche-A	MS22-e2	magenta
+MS22-pl-e2B	MS22-e2-base-planche-B	MS22-e2	magenta
+MS22-e3	MS22C	MS22-e2,MS22-e1	magenta
+MS22-pl-e3A	MS22-e3-base-planche-A	MS22-e3	magenta
+MS22-pl-e3B	MS22-e3-base-planche-B	MS22-e3	magenta
+MS23-e1	MS23		magenta
+MS23-pl-e1A	MS23-e1-base-planche-A	MS23-e1	magenta
+MS23-pl-e1B	MS23-e1-base-planche-B	MS23-e1	magenta
+MS23-e2	MS23B	MS23-e1	magenta
+MS23-pl-e2A	MS23-e2-base-planche-A	MS23-e2	magenta
+MS23-pl-e2B	MS23-e2-base-planche-B	MS23-e2	magenta
+MS23-e3	MS23C	MS23-e2,MS23-e1	magenta
+MS23-pl-e3A	MS23-e3-base-planche-A	MS23-e3	magenta
+MS23-pl-e3B	MS23-e3-base-planche-B	MS23-e3	magenta
+MS24-e1	MS24		vert
+MS24-pl-e1A	MS24-e1-base-planche-A	MS24-e1	vert
+MS24-pl-e1B	MS24-e1-base-planche-B	MS24-e1	vert
+MS25-e1	MS25		vert
+MS25-pl-e1A	MS25-e1-base-planche-A	MS25-e1	vert
+MS25-pl-e1B	MS25-e1-base-planche-B	MS25-e1	vert
+MS25-e2	MS25B	MS25-e1	vert
+MS25-pl-e2A	MS25-e2-base-planche-A	MS25-e2	vert
+MS25-pl-e2B	MS25-e2-base-planche-B	MS25-e2	vert
+MS25-e3	MS25C	MS25-e2,MS25-e1	vert
+MS25-pl-e3A	MS25-e3-base-planche-A	MS25-e3	vert
+MS25-pl-e3B	MS25-e3-base-planche-B	MS25-e3	vert
+MS26-e1	MS26		magenta
+MS26-pl-e1A	MS26-e1-base-planche-A	MS26-e1	magenta
+MS26-pl-e1B	MS26-e1-base-planche-B	MS26-e1	magenta
+MS26-e2	MS26B	MS26-e1	magenta
+MS26-pl-e2A	MS26-e2-base-planche-A	MS26-e2	magenta
+MS26-pl-e2B	MS26-e2-base-planche-B	MS26-e2	magenta
+MS26-e3	MS26C	MS26-e2,MS26-e1	magenta
+MS26-pl-e3A	MS26-e3-base-planche-A	MS26-e3	magenta
+MS26-pl-e3B	MS26-e3-base-planche-B	MS26-e3	magenta
+MS27-e1	MS27		magenta
+MS27-pl-e1A	MS27-e1-base-planche-A	MS27-e1	magenta
+MS27-pl-e1B	MS27-e1-base-planche-B	MS27-e1	magenta
+MS28-e1	MS28		vert
+MS28-pl-e1A	MS28-e1-base-planche-A	MS28-e1	vert
+MS28-pl-e1B	MS28-e1-base-planche-B	MS28-e1	vert
+MS29-e1	MS29		vert
+MS29-pl-e1A	MS29-e1-base-planche-A	MS29-e1	vert
+MS29-pl-e1B	MS29-e1-base-planche-B	MS29-e1	vert
+MS30-e1	MS30		vert
+MS30-pl-e1A	MS30-e1-base-planche-A	MS30-e1	vert
+MS30-pl-e1B	MS30-e1-base-planche-B	MS30-e1	vert
+MS30-e2	MS30B	MS30-e1	vert
+MS30-pl-e2A	MS30-e2-base-planche-A	MS30-e2	vert
+MS30-pl-e2B	MS30-e2-base-planche-B	MS30-e2	vert
+MS30-e3	MS30C	MS30-e2,MS30-e1	vert
+MS30-pl-e3A	MS30-e3-base-planche-A	MS30-e3	vert
+MS30-pl-e3B	MS30-e3-base-planche-B	MS30-e3	vert
+MS31-e1	MS31		vert
+MS31-pl-e1A	MS31-e1-base-planche-A	MS31-e1	vert
+MS31-pl-e1B	MS31-e1-base-planche-B	MS31-e1	vert
+MS31-e2	MS31B	MS31-e1	vert
+MS31-pl-e2A	MS31-e2-base-planche-A	MS31-e2	vert
+MS31-pl-e2B	MS31-e2-base-planche-B	MS31-e2	vert
+MS31-e3	MS31C	MS31-e2,MS31-e1	vert
+MS31-pl-e3A	MS31-e3-base-planche-A	MS31-e3	vert
+MS31-pl-e3B	MS31-e3-base-planche-B	MS31-e3	vert
+MS32-e1	MS32		magenta
+MS32-pl-e1A	MS32-e1-base-planche-A	MS32-e1	magenta
+MS32-pl-e1B	MS32-e1-base-planche-B	MS32-e1	magenta
+MS32-e2	MS32B	MS32-e1	magenta
+MS32-pl-e2A	MS32-e2-base-planche-A	MS32-e2	magenta
+MS32-pl-e2B	MS32-e2-base-planche-B	MS32-e2	magenta
+MS32-e3	MS32C	MS32-e2,MS32-e1	magenta
+MS32-pl-e3A	MS32-e3-base-planche-A	MS32-e3	magenta
+MS32-pl-e3B	MS32-e3-base-planche-B	MS32-e3	magenta
+MS33-e1	MS33		vert
+MS33-pl-e1A	MS33-e1-base-planche-A	MS33-e1	vert
+MS33-pl-e1B	MS33-e1-base-planche-B	MS33-e1	vert
+MS33-e2	MS33B	MS33-e1	vert
+MS33-pl-e2A	MS33-e2-base-planche-A	MS33-e2	vert
+MS33-pl-e2B	MS33-e2-base-planche-B	MS33-e2	vert
+MS33-e3	MS33C	MS33-e2,MS33-e1	vert
+MS33-pl-e3A	MS33-e3-base-planche-A	MS33-e3	vert
+MS33-pl-e3B	MS33-e3-base-planche-B	MS33-e3	vert
+MS36-e1	MS36		vert
+MS36-pl-e1A	MS36-e1-base-planche-A	MS36-e1	vert
+MS36-pl-e1B	MS36-e1-base-planche-B	MS36-e1	vert
+MS36-e2	MS36B	MS36-e1	vert
+MS36-pl-e2A	MS36-e2-base-planche-A	MS36-e2	vert
+MS36-pl-e2B	MS36-e2-base-planche-B	MS36-e2	vert
+MS36-e3	MS36C	MS36-e2,MS36-e1	vert
+MS36-pl-e3A	MS36-e3-base-planche-A	MS36-e3	vert
+MS36-pl-e3B	MS36-e3-base-planche-B	MS36-e3	vert
+MS37-e1	MS37		magenta
+MS37-pl-e1A	MS37-e1-base-planche-A	MS37-e1	magenta
+MS37-pl-e1B	MS37-e1-base-planche-B	MS37-e1	magenta
+MS37-e2	MS37B	MS37-e1	magenta
+MS37-pl-e2A	MS37-e2-base-planche-A	MS37-e2	magenta
+MS37-pl-e2B	MS37-e2-base-planche-B	MS37-e2	magenta
+MS37-e3	MS37C	MS37-e2,MS37-e1	magenta
+MS37-pl-e3A	MS37-e3-base-planche-A	MS37-e3	magenta
+MS37-pl-e3B	MS37-e3-base-planche-B	MS37-e3	magenta
+MS38-e1	MS38		vert
+MS38-pl-e1A	MS38-e1-base-planche-A	MS38-e1	vert
+MS38-pl-e1B	MS38-e1-base-planche-B	MS38-e1	vert
+MS38-e2	MS38B	MS38-e1	vert
+MS38-pl-e2A	MS38-e2-base-planche-A	MS38-e2	vert
+MS38-pl-e2B	MS38-e2-base-planche-B	MS38-e2	vert
+MS38-e3	MS38C	MS38-e2,MS38-e1	vert
+MS38-pl-e3A	MS38-e3-base-planche-A	MS38-e3	vert
+MS38-pl-e3B	MS38-e3-base-planche-B	MS38-e3	vert
+MS39-e1	MS39		vert
+MS39-pl-e1A	MS39-e1-base-planche-A	MS39-e1	vert
+MS39-pl-e1B	MS39-e1-base-planche-B	MS39-e1	vert
+MS39-e2	MS39B	MS39-e1	vert
+MS39-pl-e2A	MS39-e2-base-planche-A	MS39-e2	vert
+MS39-pl-e2B	MS39-e2-base-planche-B	MS39-e2	vert
+MS39-e3	MS39C	MS39-e2,MS39-e1	vert
+MS39-pl-e3A	MS39-e3-base-planche-A	MS39-e3	vert
+MS39-pl-e3B	MS39-e3-base-planche-B	MS39-e3	vert
+MS40-e1	MS40		vert
+MS40-pl-e1A	MS40-e1-base-planche-A	MS40-e1	vert
+MS40-pl-e1B	MS40-e1-base-planche-B	MS40-e1	vert
+MS40-e2	MS40B	MS40-e1	vert
+MS40-pl-e2A	MS40-e2-base-planche-A	MS40-e2	vert
+MS40-pl-e2B	MS40-e2-base-planche-B	MS40-e2	vert
+MS40-e3	MS40C	MS40-e2,MS40-e1	vert
+MS40-pl-e3A	MS40-e3-base-planche-A	MS40-e3	vert
+MS40-pl-e3B	MS40-e3-base-planche-B	MS40-e3	vert
+MS41-e1	MS41		vert
+MS41-pl-e1A	MS41-e1-base-planche-A	MS41-e1	vert
+MS41-pl-e1B	MS41-e1-base-planche-B	MS41-e1	vert
+MS41-e2	MS41B	MS41-e1	vert
+MS41-pl-e2A	MS41-e2-base-planche-A	MS41-e2	vert
+MS41-pl-e2B	MS41-e2-base-planche-B	MS41-e2	vert
+MS41-e3	MS41C	MS41-e2,MS41-e1	vert
+MS41-pl-e3A	MS41-e3-base-planche-A	MS41-e3	vert
+MS41-pl-e3B	MS41-e3-base-planche-B	MS41-e3	vert
+MS42-e1	MS42		vert
+MS42-pl-e1A	MS42-e1-base-planche-A	MS42-e1	vert
+MS42-pl-e1B	MS42-e1-base-planche-B	MS42-e1	vert
+MS42-e2	MS42B	MS42-e1	vert
+MS42-pl-e2A	MS42-e2-base-planche-A	MS42-e2	vert
+MS42-pl-e2B	MS42-e2-base-planche-B	MS42-e2	vert
+MS42-e3	MS42C	MS42-e2,MS42-e1	vert
+MS42-pl-e3A	MS42-e3-base-planche-A	MS42-e3	vert
+MS42-pl-e3B	MS42-e3-base-planche-B	MS42-e3	vert
+MS43-e1	MS43		vert
+MS43-pl-e1A	MS43-e1-base-planche-A	MS43-e1	vert
+MS43-pl-e1B	MS43-e1-base-planche-B	MS43-e1	vert
+MS43-e2	MS43B	MS43-e1	vert
+MS43-pl-e2A	MS43-e2-base-planche-A	MS43-e2	vert
+MS43-pl-e2B	MS43-e2-base-planche-B	MS43-e2	vert
+MS43-e3	MS43C	MS43-e2,MS43-e1	vert
+MS43-pl-e3A	MS43-e3-base-planche-A	MS43-e3	vert
+MS43-pl-e3B	MS43-e3-base-planche-B	MS43-e3	vert
+MS44-e1	MS44		vert
+MS44-pl-e1A	MS44-e1-base-planche-A	MS44-e1	vert
+MS44-pl-e1B	MS44-e1-base-planche-B	MS44-e1	vert
+MS44-e2	MS44B	MS44-e1	vert
+MS44-pl-e2A	MS44-e2-base-planche-A	MS44-e2	vert
+MS44-pl-e2B	MS44-e2-base-planche-B	MS44-e2	vert
+MS44-e3	MS44C	MS44-e2,MS44-e1	vert
+MS44-pl-e3A	MS44-e3-base-planche-A	MS44-e3	vert
+MS44-pl-e3B	MS44-e3-base-planche-B	MS44-e3	vert
+MS45-e1	MS45		vert
+MS45-pl-e1A	MS45-e1-base-planche-A	MS45-e1	vert
+MS45-pl-e1B	MS45-e1-base-planche-B	MS45-e1	vert
+MS45-e2	MS45B	MS45-e1	vert
+MS45-pl-e2A	MS45-e2-base-planche-A	MS45-e2	vert
+MS45-pl-e2B	MS45-e2-base-planche-B	MS45-e2	vert
+MS45-e3	MS45C	MS45-e2,MS45-e1	vert
+MS45-pl-e3A	MS45-e3-base-planche-A	MS45-e3	vert
+MS45-pl-e3B	MS45-e3-base-planche-B	MS45-e3	vert
+MS46-e1	MS46		magenta
+MS46-pl-e1A	MS46-e1-base-planche-A	MS46-e1	magenta
+MS46-pl-e1B	MS46-e1-base-planche-B	MS46-e1	magenta
+MS46-e2	MS46B	MS46-e1	magenta
+MS46-pl-e2A	MS46-e2-base-planche-A	MS46-e2	magenta
+MS46-pl-e2B	MS46-e2-base-planche-B	MS46-e2	magenta
+MS46-e3	MS46C	MS46-e2,MS46-e1	magenta
+MS46-pl-e3A	MS46-e3-base-planche-A	MS46-e3	magenta
+MS46-pl-e3B	MS46-e3-base-planche-B	MS46-e3	magenta
+MS47-e1	MS47		vert
+MS47-pl-e1A	MS47-e1-base-planche-A	MS47-e1	vert
+MS47-pl-e1B	MS47-e1-base-planche-B	MS47-e1	vert
+MS47-e2	MS47B	MS47-e1	vert
+MS47-pl-e2A	MS47-e2-base-planche-A	MS47-e2	vert
+MS47-pl-e2B	MS47-e2-base-planche-B	MS47-e2	vert
+MS47-e3	MS47C	MS47-e2,MS47-e1	vert
+MS47-pl-e3A	MS47-e3-base-planche-A	MS47-e3	vert
+MS47-pl-e3B	MS47-e3-base-planche-B	MS47-e3	vert
+MS48-e1	MS48		vert
+MS48-pl-e1A	MS48-e1-base-planche-A	MS48-e1	vert
+MS48-pl-e1B	MS48-e1-base-planche-B	MS48-e1	vert
+MS48-e2	MS48B	MS48-e1	vert
+MS48-pl-e2A	MS48-e2-base-planche-A	MS48-e2	vert
+MS48-pl-e2B	MS48-e2-base-planche-B	MS48-e2	vert
+MS48-e3	MS48C	MS48-e2,MS48-e1	vert
+MS48-pl-e3A	MS48-e3-base-planche-A	MS48-e3	vert
+MS48-pl-e3B	MS48-e3-base-planche-B	MS48-e3	vert
+MS49-e1	MS49		vert
+MS49-pl-e1A	MS49-e1-base-planche-A	MS49-e1	vert
+MS49-pl-e1B	MS49-e1-base-planche-B	MS49-e1	vert
+MS49-e2	MS49B	MS49-e1	vert
+MS49-pl-e2A	MS49-e2-base-planche-A	MS49-e2	vert
+MS49-pl-e2B	MS49-e2-base-planche-B	MS49-e2	vert
+MS49-e3	MS49C	MS49-e2,MS49-e1	vert
+MS49-pl-e3A	MS49-e3-base-planche-A	MS49-e3	vert
+MS49-pl-e3B	MS49-e3-base-planche-B	MS49-e3	vert
+MS50-e1	MS50		vert
+MS50-pl-e1A	MS50-e1-base-planche-A	MS50-e1	vert
+MS50-pl-e1B	MS50-e1-base-planche-B	MS50-e1	vert
+MS50-e2	MS50B	MS50-e1	vert
+MS50-pl-e2A	MS50-e2-base-planche-A	MS50-e2	vert
+MS50-pl-e2B	MS50-e2-base-planche-B	MS50-e2	vert
+MS50-e3	MS50C	MS50-e2,MS50-e1	vert
+MS50-pl-e3A	MS50-e3-base-planche-A	MS50-e3	vert
+MS50-pl-e3B	MS50-e3-base-planche-B	MS50-e3	vert
+MS51-e1	MS51		vert
+MS51-pl-e1A	MS51-e1-base-planche-A	MS51-e1	vert
+MS51-pl-e1B	MS51-e1-base-planche-B	MS51-e1	vert
+MS51-e2	MS51B	MS51-e1	vert
+MS51-pl-e2A	MS51-e2-base-planche-A	MS51-e2	vert
+MS51-pl-e2B	MS51-e2-base-planche-B	MS51-e2	vert
+MS51-e3	MS51C	MS51-e2,MS51-e1	vert
+MS51-pl-e3A	MS51-e3-base-planche-A	MS51-e3	vert
+MS51-pl-e3B	MS51-e3-base-planche-B	MS51-e3	vert
+MS52-e1	MS52		vert
+MS52-pl-e1A	MS52-e1-base-planche-A	MS52-e1	vert
+MS52-pl-e1B	MS52-e1-base-planche-B	MS52-e1	vert
+MS52-e2	MS52B	MS52-e1	vert
+MS52-pl-e2A	MS52-e2-base-planche-A	MS52-e2	vert
+MS52-pl-e2B	MS52-e2-base-planche-B	MS52-e2	vert
+MS52-e3	MS52C	MS52-e2,MS52-e1	vert
+MS52-pl-e3A	MS52-e3-base-planche-A	MS52-e3	vert
+MS52-pl-e3B	MS52-e3-base-planche-B	MS52-e3	vert

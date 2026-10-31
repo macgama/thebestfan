@@ -1,0 +1,421 @@
+# prompt	fichier	références	fond
+BG1-e1	BG1		vert
+BG1-pl-e1A	BG1-e1-base-planche-A	BG1-e1	vert
+BG1-pl-e1B	BG1-e1-base-planche-B	BG1-e1	vert
+BG1-e2	BG1B	BG1-e1	vert
+BG1-pl-e2A	BG1-e2-base-planche-A	BG1-e2	vert
+BG1-pl-e2B	BG1-e2-base-planche-B	BG1-e2	vert
+BG1-e3	BG1C	BG1-e2,BG1-e1	vert
+BG1-pl-e3A	BG1-e3-base-planche-A	BG1-e3	vert
+BG1-pl-e3B	BG1-e3-base-planche-B	BG1-e3	vert
+BG2-e1	BG2		magenta
+BG2-pl-e1A	BG2-e1-base-planche-A	BG2-e1	magenta
+BG2-pl-e1B	BG2-e1-base-planche-B	BG2-e1	magenta
+BG2-e2	BG2B	BG2-e1	magenta
+BG2-pl-e2A	BG2-e2-base-planche-A	BG2-e2	magenta
+BG2-pl-e2B	BG2-e2-base-planche-B	BG2-e2	magenta
+BG2-e3	BG2C	BG2-e2,BG2-e1	magenta
+BG2-pl-e3A	BG2-e3-base-planche-A	BG2-e3	magenta
+BG2-pl-e3B	BG2-e3-base-planche-B	BG2-e3	magenta
+BG3-e1	BG3		vert
+BG3-pl-e1A	BG3-e1-base-planche-A	BG3-e1	vert
+BG3-pl-e1B	BG3-e1-base-planche-B	BG3-e1	vert
+BG3-e2	BG3B	BG3-e1	vert
+BG3-pl-e2A	BG3-e2-base-planche-A	BG3-e2	vert
+BG3-pl-e2B	BG3-e2-base-planche-B	BG3-e2	vert
+BG3-e3	BG3C	BG3-e2,BG3-e1	vert
+BG3-pl-e3A	BG3-e3-base-planche-A	BG3-e3	vert
+BG3-pl-e3B	BG3-e3-base-planche-B	BG3-e3	vert
+BG4-e1	BG4		magenta
+BG4-pl-e1A	BG4-e1-base-planche-A	BG4-e1	magenta
+BG4-pl-e1B	BG4-e1-base-planche-B	BG4-e1	magenta
+BG4-e2	BG4B	BG4-e1	magenta
+BG4-pl-e2A	BG4-e2-base-planche-A	BG4-e2	magenta
+BG4-pl-e2B	BG4-e2-base-planche-B	BG4-e2	magenta
+BG4-e3	BG4C	BG4-e2,BG4-e1	magenta
+BG4-pl-e3A	BG4-e3-base-planche-A	BG4-e3	magenta
+BG4-pl-e3B	BG4-e3-base-planche-B	BG4-e3	magenta
+BG5-e1	BG5		magenta
+BG5-pl-e1A	BG5-e1-base-planche-A	BG5-e1	magenta
+BG5-pl-e1B	BG5-e1-base-planche-B	BG5-e1	magenta
+BG5-e2	BG5B	BG5-e1	magenta
+BG5-pl-e2A	BG5-e2-base-planche-A	BG5-e2	magenta
+BG5-pl-e2B	BG5-e2-base-planche-B	BG5-e2	magenta
+BG5-e3	BG5C	BG5-e2,BG5-e1	magenta
+BG5-pl-e3A	BG5-e3-base-planche-A	BG5-e3	magenta
+BG5-pl-e3B	BG5-e3-base-planche-B	BG5-e3	magenta
+BG6-e1	BG6		vert
+BG6-pl-e1A	BG6-e1-base-planche-A	BG6-e1	vert
+BG6-pl-e1B	BG6-e1-base-planche-B	BG6-e1	vert
+BG6-e2	BG6B	BG6-e1	vert
+BG6-pl-e2A	BG6-e2-base-planche-A	BG6-e2	vert
+BG6-pl-e2B	BG6-e2-base-planche-B	BG6-e2	vert
+BG6-e3	BG6C	BG6-e2,BG6-e1	vert
+BG6-pl-e3A	BG6-e3-base-planche-A	BG6-e3	vert
+BG6-pl-e3B	BG6-e3-base-planche-B	BG6-e3	vert
+BG7-e1	BG7		magenta
+BG7-pl-e1A	BG7-e1-base-planche-A	BG7-e1	magenta
+BG7-pl-e1B	BG7-e1-base-planche-B	BG7-e1	magenta
+BG7-e2	BG7B	BG7-e1	magenta
+BG7-pl-e2A	BG7-e2-base-planche-A	BG7-e2	magenta
+BG7-pl-e2B	BG7-e2-base-planche-B	BG7-e2	magenta
+BG7-e3	BG7C	BG7-e2,BG7-e1	magenta
+BG7-pl-e3A	BG7-e3-base-planche-A	BG7-e3	magenta
+BG7-pl-e3B	BG7-e3-base-planche-B	BG7-e3	magenta
+BG8-e1	BG8		vert
+BG8-pl-e1A	BG8-e1-base-planche-A	BG8-e1	vert
+BG8-pl-e1B	BG8-e1-base-planche-B	BG8-e1	vert
+BG8-e2	BG8B	BG8-e1	vert
+BG8-pl-e2A	BG8-e2-base-planche-A	BG8-e2	vert
+BG8-pl-e2B	BG8-e2-base-planche-B	BG8-e2	vert
+BG8-e3	BG8C	BG8-e2,BG8-e1	vert
+BG8-pl-e3A	BG8-e3-base-planche-A	BG8-e3	vert
+BG8-pl-e3B	BG8-e3-base-planche-B	BG8-e3	vert
+BG9-e1	BG9		vert
+BG9-pl-e1A	BG9-e1-base-planche-A	BG9-e1	vert
+BG9-pl-e1B	BG9-e1-base-planche-B	BG9-e1	vert
+BG9-e2	BG9B	BG9-e1	vert
+BG9-pl-e2A	BG9-e2-base-planche-A	BG9-e2	vert
+BG9-pl-e2B	BG9-e2-base-planche-B	BG9-e2	vert
+BG9-e3	BG9C	BG9-e2,BG9-e1	vert
+BG9-pl-e3A	BG9-e3-base-planche-A	BG9-e3	vert
+BG9-pl-e3B	BG9-e3-base-planche-B	BG9-e3	vert
+BG10-e1	BG10		vert
+BG10-pl-e1A	BG10-e1-base-planche-A	BG10-e1	vert
+BG10-pl-e1B	BG10-e1-base-planche-B	BG10-e1	vert
+BG10-e2	BG10B	BG10-e1	vert
+BG10-pl-e2A	BG10-e2-base-planche-A	BG10-e2	vert
+BG10-pl-e2B	BG10-e2-base-planche-B	BG10-e2	vert
+BG10-e3	BG10C	BG10-e2,BG10-e1	vert
+BG10-pl-e3A	BG10-e3-base-planche-A	BG10-e3	vert
+BG10-pl-e3B	BG10-e3-base-planche-B	BG10-e3	vert
+BG11-e1	BG11		vert
+BG11-pl-e1A	BG11-e1-base-planche-A	BG11-e1	vert
+BG11-pl-e1B	BG11-e1-base-planche-B	BG11-e1	vert
+BG11-e2	BG11B	BG11-e1	vert
+BG11-pl-e2A	BG11-e2-base-planche-A	BG11-e2	vert
+BG11-pl-e2B	BG11-e2-base-planche-B	BG11-e2	vert
+BG11-e3	BG11C	BG11-e2,BG11-e1	vert
+BG11-pl-e3A	BG11-e3-base-planche-A	BG11-e3	vert
+BG11-pl-e3B	BG11-e3-base-planche-B	BG11-e3	vert
+BG12-e1	BG12		magenta
+BG12-pl-e1A	BG12-e1-base-planche-A	BG12-e1	magenta
+BG12-pl-e1B	BG12-e1-base-planche-B	BG12-e1	magenta
+BG12-e2	BG12B	BG12-e1	magenta
+BG12-pl-e2A	BG12-e2-base-planche-A	BG12-e2	magenta
+BG12-pl-e2B	BG12-e2-base-planche-B	BG12-e2	magenta
+BG12-e3	BG12C	BG12-e2,BG12-e1	magenta
+BG12-pl-e3A	BG12-e3-base-planche-A	BG12-e3	magenta
+BG12-pl-e3B	BG12-e3-base-planche-B	BG12-e3	magenta
+BG13-e1	BG13		magenta
+BG13-pl-e1A	BG13-e1-base-planche-A	BG13-e1	magenta
+BG13-pl-e1B	BG13-e1-base-planche-B	BG13-e1	magenta
+BG13-e2	BG13B	BG13-e1	magenta
+BG13-pl-e2A	BG13-e2-base-planche-A	BG13-e2	magenta
+BG13-pl-e2B	BG13-e2-base-planche-B	BG13-e2	magenta
+BG13-e3	BG13C	BG13-e2,BG13-e1	magenta
+BG13-pl-e3A	BG13-e3-base-planche-A	BG13-e3	magenta
+BG13-pl-e3B	BG13-e3-base-planche-B	BG13-e3	magenta
+BG14-e1	BG14		vert
+BG14-pl-e1A	BG14-e1-base-planche-A	BG14-e1	vert
+BG14-pl-e1B	BG14-e1-base-planche-B	BG14-e1	vert
+BG14-e2	BG14B	BG14-e1	vert
+BG14-pl-e2A	BG14-e2-base-planche-A	BG14-e2	vert
+BG14-pl-e2B	BG14-e2-base-planche-B	BG14-e2	vert
+BG14-e3	BG14C	BG14-e2,BG14-e1	vert
+BG14-pl-e3A	BG14-e3-base-planche-A	BG14-e3	vert
+BG14-pl-e3B	BG14-e3-base-planche-B	BG14-e3	vert
+BG15-e1	BG15		magenta
+BG15-pl-e1A	BG15-e1-base-planche-A	BG15-e1	magenta
+BG15-pl-e1B	BG15-e1-base-planche-B	BG15-e1	magenta
+BG15-e2	BG15B	BG15-e1	magenta
+BG15-pl-e2A	BG15-e2-base-planche-A	BG15-e2	magenta
+BG15-pl-e2B	BG15-e2-base-planche-B	BG15-e2	magenta
+BG15-e3	BG15C	BG15-e2,BG15-e1	magenta
+BG15-pl-e3A	BG15-e3-base-planche-A	BG15-e3	magenta
+BG15-pl-e3B	BG15-e3-base-planche-B	BG15-e3	magenta
+BG16-e1	BG16		magenta
+BG16-pl-e1A	BG16-e1-base-planche-A	BG16-e1	magenta
+BG16-pl-e1B	BG16-e1-base-planche-B	BG16-e1	magenta
+BG16-e2	BG16B	BG16-e1	magenta
+BG16-pl-e2A	BG16-e2-base-planche-A	BG16-e2	magenta
+BG16-pl-e2B	BG16-e2-base-planche-B	BG16-e2	magenta
+BG16-e3	BG16C	BG16-e2,BG16-e1	magenta
+BG16-pl-e3A	BG16-e3-base-planche-A	BG16-e3	magenta
+BG16-pl-e3B	BG16-e3-base-planche-B	BG16-e3	magenta
+BG17-e1	BG17		vert
+BG17-pl-e1A	BG17-e1-base-planche-A	BG17-e1	vert
+BG17-pl-e1B	BG17-e1-base-planche-B	BG17-e1	vert
+BG17-e2	BG17B	BG17-e1	vert
+BG17-pl-e2A	BG17-e2-base-planche-A	BG17-e2	vert
+BG17-pl-e2B	BG17-e2-base-planche-B	BG17-e2	vert
+BG17-e3	BG17C	BG17-e2,BG17-e1	vert
+BG17-pl-e3A	BG17-e3-base-planche-A	BG17-e3	vert
+BG17-pl-e3B	BG17-e3-base-planche-B	BG17-e3	vert
+BG18-e1	BG18		vert
+BG18-pl-e1A	BG18-e1-base-planche-A	BG18-e1	vert
+BG18-pl-e1B	BG18-e1-base-planche-B	BG18-e1	vert
+BG19-e1	BG19		vert
+BG19-pl-e1A	BG19-e1-base-planche-A	BG19-e1	vert
+BG19-pl-e1B	BG19-e1-base-planche-B	BG19-e1	vert
+BG19-e2	BG19B	BG19-e1	vert
+BG19-pl-e2A	BG19-e2-base-planche-A	BG19-e2	vert
+BG19-pl-e2B	BG19-e2-base-planche-B	BG19-e2	vert
+BG19-e3	BG19C	BG19-e2,BG19-e1	vert
+BG19-pl-e3A	BG19-e3-base-planche-A	BG19-e3	vert
+BG19-pl-e3B	BG19-e3-base-planche-B	BG19-e3	vert
+BG20-e1	BG20		vert
+BG20-pl-e1A	BG20-e1-base-planche-A	BG20-e1	vert
+BG20-pl-e1B	BG20-e1-base-planche-B	BG20-e1	vert
+BG20-e2	BG20B	BG20-e1	vert
+BG20-pl-e2A	BG20-e2-base-planche-A	BG20-e2	vert
+BG20-pl-e2B	BG20-e2-base-planche-B	BG20-e2	vert
+BG20-e3	BG20C	BG20-e2,BG20-e1	vert
+BG20-pl-e3A	BG20-e3-base-planche-A	BG20-e3	vert
+BG20-pl-e3B	BG20-e3-base-planche-B	BG20-e3	vert
+BG21-e1	BG21		vert
+BG21-pl-e1A	BG21-e1-base-planche-A	BG21-e1	vert
+BG21-pl-e1B	BG21-e1-base-planche-B	BG21-e1	vert
+BG21-e2	BG21B	BG21-e1	vert
+BG21-pl-e2A	BG21-e2-base-planche-A	BG21-e2	vert
+BG21-pl-e2B	BG21-e2-base-planche-B	BG21-e2	vert
+BG21-e3	BG21C	BG21-e2,BG21-e1	vert
+BG21-pl-e3A	BG21-e3-base-planche-A	BG21-e3	vert
+BG21-pl-e3B	BG21-e3-base-planche-B	BG21-e3	vert
+BG22-e1	BG22		magenta
+BG22-pl-e1A	BG22-e1-base-planche-A	BG22-e1	magenta
+BG22-pl-e1B	BG22-e1-base-planche-B	BG22-e1	magenta
+BG22-e2	BG22B	BG22-e1	magenta
+BG22-pl-e2A	BG22-e2-base-planche-A	BG22-e2	magenta
+BG22-pl-e2B	BG22-e2-base-planche-B	BG22-e2	magenta
+BG22-e3	BG22C	BG22-e2,BG22-e1	magenta
+BG22-pl-e3A	BG22-e3-base-planche-A	BG22-e3	magenta
+BG22-pl-e3B	BG22-e3-base-planche-B	BG22-e3	magenta
+BG23-e1	BG23		vert
+BG23-pl-e1A	BG23-e1-base-planche-A	BG23-e1	vert
+BG23-pl-e1B	BG23-e1-base-planche-B	BG23-e1	vert
+BG23-e2	BG23B	BG23-e1	vert
+BG23-pl-e2A	BG23-e2-base-planche-A	BG23-e2	vert
+BG23-pl-e2B	BG23-e2-base-planche-B	BG23-e2	vert
+BG23-e3	BG23C	BG23-e2,BG23-e1	vert
+BG23-pl-e3A	BG23-e3-base-planche-A	BG23-e3	vert
+BG23-pl-e3B	BG23-e3-base-planche-B	BG23-e3	vert
+BG24-e1	BG24		vert
+BG24-pl-e1A	BG24-e1-base-planche-A	BG24-e1	vert
+BG24-pl-e1B	BG24-e1-base-planche-B	BG24-e1	vert
+BG25-e1	BG25		vert
+BG25-pl-e1A	BG25-e1-base-planche-A	BG25-e1	vert
+BG25-pl-e1B	BG25-e1-base-planche-B	BG25-e1	vert
+BG26-e1	BG26		vert
+BG26-pl-e1A	BG26-e1-base-planche-A	BG26-e1	vert
+BG26-pl-e1B	BG26-e1-base-planche-B	BG26-e1	vert
+BG27-e1	BG27		magenta
+BG27-pl-e1A	BG27-e1-base-planche-A	BG27-e1	magenta
+BG27-pl-e1B	BG27-e1-base-planche-B	BG27-e1	magenta
+BG29-e1	BG29		vert
+BG29-pl-e1A	BG29-e1-base-planche-A	BG29-e1	vert
+BG29-pl-e1B	BG29-e1-base-planche-B	BG29-e1	vert
+BG29-e2	BG29B	BG29-e1	vert
+BG29-pl-e2A	BG29-e2-base-planche-A	BG29-e2	vert
+BG29-pl-e2B	BG29-e2-base-planche-B	BG29-e2	vert
+BG29-e3	BG29C	BG29-e2,BG29-e1	vert
+BG29-pl-e3A	BG29-e3-base-planche-A	BG29-e3	vert
+BG29-pl-e3B	BG29-e3-base-planche-B	BG29-e3	vert
+BG30-e1	BG30		vert
+BG30-pl-e1A	BG30-e1-base-planche-A	BG30-e1	vert
+BG30-pl-e1B	BG30-e1-base-planche-B	BG30-e1	vert
+BG30-e2	BG30B	BG30-e1	vert
+BG30-pl-e2A	BG30-e2-base-planche-A	BG30-e2	vert
+BG30-pl-e2B	BG30-e2-base-planche-B	BG30-e2	vert
+BG30-e3	BG30C	BG30-e2,BG30-e1	vert
+BG30-pl-e3A	BG30-e3-base-planche-A	BG30-e3	vert
+BG30-pl-e3B	BG30-e3-base-planche-B	BG30-e3	vert
+BG31-e1	BG31		vert
+BG31-pl-e1A	BG31-e1-base-planche-A	BG31-e1	vert
+BG31-pl-e1B	BG31-e1-base-planche-B	BG31-e1	vert
+BG31-e2	BG31B	BG31-e1	vert
+BG31-pl-e2A	BG31-e2-base-planche-A	BG31-e2	vert
+BG31-pl-e2B	BG31-e2-base-planche-B	BG31-e2	vert
+BG31-e3	BG31C	BG31-e2,BG31-e1	vert
+BG31-pl-e3A	BG31-e3-base-planche-A	BG31-e3	vert
+BG31-pl-e3B	BG31-e3-base-planche-B	BG31-e3	vert
+BG32-e1	BG32		vert
+BG32-pl-e1A	BG32-e1-base-planche-A	BG32-e1	vert
+BG32-pl-e1B	BG32-e1-base-planche-B	BG32-e1	vert
+BG32-e2	BG32B	BG32-e1	vert
+BG32-pl-e2A	BG32-e2-base-planche-A	BG32-e2	vert
+BG32-pl-e2B	BG32-e2-base-planche-B	BG32-e2	vert
+BG32-e3	BG32C	BG32-e2,BG32-e1	vert
+BG32-pl-e3A	BG32-e3-base-planche-A	BG32-e3	vert
+BG32-pl-e3B	BG32-e3-base-planche-B	BG32-e3	vert
+BG33-e1	BG33		vert
+BG33-pl-e1A	BG33-e1-base-planche-A	BG33-e1	vert
+BG33-pl-e1B	BG33-e1-base-planche-B	BG33-e1	vert
+BG33-e2	BG33B	BG33-e1	vert
+BG33-pl-e2A	BG33-e2-base-planche-A	BG33-e2	vert
+BG33-pl-e2B	BG33-e2-base-planche-B	BG33-e2	vert
+BG33-e3	BG33C	BG33-e2,BG33-e1	vert
+BG33-pl-e3A	BG33-e3-base-planche-A	BG33-e3	vert
+BG33-pl-e3B	BG33-e3-base-planche-B	BG33-e3	vert
+BG34-e1	BG34		vert
+BG34-pl-e1A	BG34-e1-base-planche-A	BG34-e1	vert
+BG34-pl-e1B	BG34-e1-base-planche-B	BG34-e1	vert
+BG34-e2	BG34B	BG34-e1	vert
+BG34-pl-e2A	BG34-e2-base-planche-A	BG34-e2	vert
+BG34-pl-e2B	BG34-e2-base-planche-B	BG34-e2	vert
+BG34-e3	BG34C	BG34-e2,BG34-e1	vert
+BG34-pl-e3A	BG34-e3-base-planche-A	BG34-e3	vert
+BG34-pl-e3B	BG34-e3-base-planche-B	BG34-e3	vert
+BG35-e1	BG35		vert
+BG35-pl-e1A	BG35-e1-base-planche-A	BG35-e1	vert
+BG35-pl-e1B	BG35-e1-base-planche-B	BG35-e1	vert
+BG35-e2	BG35B	BG35-e1	vert
+BG35-pl-e2A	BG35-e2-base-planche-A	BG35-e2	vert
+BG35-pl-e2B	BG35-e2-base-planche-B	BG35-e2	vert
+BG35-e3	BG35C	BG35-e2,BG35-e1	vert
+BG35-pl-e3A	BG35-e3-base-planche-A	BG35-e3	vert
+BG35-pl-e3B	BG35-e3-base-planche-B	BG35-e3	vert
+BG36-e1	BG36		vert
+BG36-pl-e1A	BG36-e1-base-planche-A	BG36-e1	vert
+BG36-pl-e1B	BG36-e1-base-planche-B	BG36-e1	vert
+BG36-e2	BG36B	BG36-e1	vert
+BG36-pl-e2A	BG36-e2-base-planche-A	BG36-e2	vert
+BG36-pl-e2B	BG36-e2-base-planche-B	BG36-e2	vert
+BG36-e3	BG36C	BG36-e2,BG36-e1	vert
+BG36-pl-e3A	BG36-e3-base-planche-A	BG36-e3	vert
+BG36-pl-e3B	BG36-e3-base-planche-B	BG36-e3	vert
+BG37-e1	BG37		vert
+BG37-pl-e1A	BG37-e1-base-planche-A	BG37-e1	vert
+BG37-pl-e1B	BG37-e1-base-planche-B	BG37-e1	vert
+BG37-e2	BG37B	BG37-e1	vert
+BG37-pl-e2A	BG37-e2-base-planche-A	BG37-e2	vert
+BG37-pl-e2B	BG37-e2-base-planche-B	BG37-e2	vert
+BG37-e3	BG37C	BG37-e2,BG37-e1	vert
+BG37-pl-e3A	BG37-e3-base-planche-A	BG37-e3	vert
+BG37-pl-e3B	BG37-e3-base-planche-B	BG37-e3	vert
+BG38-e1	BG38		vert
+BG38-pl-e1A	BG38-e1-base-planche-A	BG38-e1	vert
+BG38-pl-e1B	BG38-e1-base-planche-B	BG38-e1	vert
+BG38-e2	BG38B	BG38-e1	vert
+BG38-pl-e2A	BG38-e2-base-planche-A	BG38-e2	vert
+BG38-pl-e2B	BG38-e2-base-planche-B	BG38-e2	vert
+BG38-e3	BG38C	BG38-e2,BG38-e1	vert
+BG38-pl-e3A	BG38-e3-base-planche-A	BG38-e3	vert
+BG38-pl-e3B	BG38-e3-base-planche-B	BG38-e3	vert
+BG39-e1	BG39		vert
+BG39-pl-e1A	BG39-e1-base-planche-A	BG39-e1	vert
+BG39-pl-e1B	BG39-e1-base-planche-B	BG39-e1	vert
+BG39-e2	BG39B	BG39-e1	vert
+BG39-pl-e2A	BG39-e2-base-planche-A	BG39-e2	vert
+BG39-pl-e2B	BG39-e2-base-planche-B	BG39-e2	vert
+BG39-e3	BG39C	BG39-e2,BG39-e1	vert
+BG39-pl-e3A	BG39-e3-base-planche-A	BG39-e3	vert
+BG39-pl-e3B	BG39-e3-base-planche-B	BG39-e3	vert
+BG40-e1	BG40		vert
+BG40-pl-e1A	BG40-e1-base-planche-A	BG40-e1	vert
+BG40-pl-e1B	BG40-e1-base-planche-B	BG40-e1	vert
+BG40-e2	BG40B	BG40-e1	vert
+BG40-pl-e2A	BG40-e2-base-planche-A	BG40-e2	vert
+BG40-pl-e2B	BG40-e2-base-planche-B	BG40-e2	vert
+BG40-e3	BG40C	BG40-e2,BG40-e1	vert
+BG40-pl-e3A	BG40-e3-base-planche-A	BG40-e3	vert
+BG40-pl-e3B	BG40-e3-base-planche-B	BG40-e3	vert
+BG41-e1	BG41		magenta
+BG41-pl-e1A	BG41-e1-base-planche-A	BG41-e1	magenta
+BG41-pl-e1B	BG41-e1-base-planche-B	BG41-e1	magenta
+BG41-e2	BG41B	BG41-e1	magenta
+BG41-pl-e2A	BG41-e2-base-planche-A	BG41-e2	magenta
+BG41-pl-e2B	BG41-e2-base-planche-B	BG41-e2	magenta
+BG41-e3	BG41C	BG41-e2,BG41-e1	magenta
+BG41-pl-e3A	BG41-e3-base-planche-A	BG41-e3	magenta
+BG41-pl-e3B	BG41-e3-base-planche-B	BG41-e3	magenta
+BG42-e1	BG42		vert
+BG42-pl-e1A	BG42-e1-base-planche-A	BG42-e1	vert
+BG42-pl-e1B	BG42-e1-base-planche-B	BG42-e1	vert
+BG42-e2	BG42B	BG42-e1	vert
+BG42-pl-e2A	BG42-e2-base-planche-A	BG42-e2	vert
+BG42-pl-e2B	BG42-e2-base-planche-B	BG42-e2	vert
+BG42-e3	BG42C	BG42-e2,BG42-e1	vert
+BG42-pl-e3A	BG42-e3-base-planche-A	BG42-e3	vert
+BG42-pl-e3B	BG42-e3-base-planche-B	BG42-e3	vert
+BG43-e1	BG43		vert
+BG43-pl-e1A	BG43-e1-base-planche-A	BG43-e1	vert
+BG43-pl-e1B	BG43-e1-base-planche-B	BG43-e1	vert
+BG43-e2	BG43B	BG43-e1	vert
+BG43-pl-e2A	BG43-e2-base-planche-A	BG43-e2	vert
+BG43-pl-e2B	BG43-e2-base-planche-B	BG43-e2	vert
+BG43-e3	BG43C	BG43-e2,BG43-e1	vert
+BG43-pl-e3A	BG43-e3-base-planche-A	BG43-e3	vert
+BG43-pl-e3B	BG43-e3-base-planche-B	BG43-e3	vert
+BG44-e1	BG44		vert
+BG44-pl-e1A	BG44-e1-base-planche-A	BG44-e1	vert
+BG44-pl-e1B	BG44-e1-base-planche-B	BG44-e1	vert
+BG44-e2	BG44B	BG44-e1	vert
+BG44-pl-e2A	BG44-e2-base-planche-A	BG44-e2	vert
+BG44-pl-e2B	BG44-e2-base-planche-B	BG44-e2	vert
+BG44-e3	BG44C	BG44-e2,BG44-e1	vert
+BG44-pl-e3A	BG44-e3-base-planche-A	BG44-e3	vert
+BG44-pl-e3B	BG44-e3-base-planche-B	BG44-e3	vert
+BG45-e1	BG45		vert
+BG45-pl-e1A	BG45-e1-base-planche-A	BG45-e1	vert
+BG45-pl-e1B	BG45-e1-base-planche-B	BG45-e1	vert
+BG45-e2	BG45B	BG45-e1	vert
+BG45-pl-e2A	BG45-e2-base-planche-A	BG45-e2	vert
+BG45-pl-e2B	BG45-e2-base-planche-B	BG45-e2	vert
+BG45-e3	BG45C	BG45-e2,BG45-e1	vert
+BG45-pl-e3A	BG45-e3-base-planche-A	BG45-e3	vert
+BG45-pl-e3B	BG45-e3-base-planche-B	BG45-e3	vert
+BG46-e1	BG46		vert
+BG46-pl-e1A	BG46-e1-base-planche-A	BG46-e1	vert
+BG46-pl-e1B	BG46-e1-base-planche-B	BG46-e1	vert
+BG46-e2	BG46B	BG46-e1	vert
+BG46-pl-e2A	BG46-e2-base-planche-A	BG46-e2	vert
+BG46-pl-e2B	BG46-e2-base-planche-B	BG46-e2	vert
+BG46-e3	BG46C	BG46-e2,BG46-e1	vert
+BG46-pl-e3A	BG46-e3-base-planche-A	BG46-e3	vert
+BG46-pl-e3B	BG46-e3-base-planche-B	BG46-e3	vert
+BG47-e1	BG47		magenta
+BG47-pl-e1A	BG47-e1-base-planche-A	BG47-e1	magenta
+BG47-pl-e1B	BG47-e1-base-planche-B	BG47-e1	magenta
+BG47-e2	BG47B	BG47-e1	magenta
+BG47-pl-e2A	BG47-e2-base-planche-A	BG47-e2	magenta
+BG47-pl-e2B	BG47-e2-base-planche-B	BG47-e2	magenta
+BG47-e3	BG47C	BG47-e2,BG47-e1	magenta
+BG47-pl-e3A	BG47-e3-base-planche-A	BG47-e3	magenta
+BG47-pl-e3B	BG47-e3-base-planche-B	BG47-e3	magenta
+BG48-e1	BG48		vert
+BG48-pl-e1A	BG48-e1-base-planche-A	BG48-e1	vert
+BG48-pl-e1B	BG48-e1-base-planche-B	BG48-e1	vert
+BG48-e2	BG48B	BG48-e1	vert
+BG48-pl-e2A	BG48-e2-base-planche-A	BG48-e2	vert
+BG48-pl-e2B	BG48-e2-base-planche-B	BG48-e2	vert
+BG48-e3	BG48C	BG48-e2,BG48-e1	vert
+BG48-pl-e3A	BG48-e3-base-planche-A	BG48-e3	vert
+BG48-pl-e3B	BG48-e3-base-planche-B	BG48-e3	vert
+BG49-e1	BG49		vert
+BG49-pl-e1A	BG49-e1-base-planche-A	BG49-e1	vert
+BG49-pl-e1B	BG49-e1-base-planche-B	BG49-e1	vert
+BG49-e2	BG49B	BG49-e1	vert
+BG49-pl-e2A	BG49-e2-base-planche-A	BG49-e2	vert
+BG49-pl-e2B	BG49-e2-base-planche-B	BG49-e2	vert
+BG49-e3	BG49C	BG49-e2,BG49-e1	vert
+BG49-pl-e3A	BG49-e3-base-planche-A	BG49-e3	vert
+BG49-pl-e3B	BG49-e3-base-planche-B	BG49-e3	vert
+BG50-e1	BG50		vert
+BG50-pl-e1A	BG50-e1-base-planche-A	BG50-e1	vert
+BG50-pl-e1B	BG50-e1-base-planche-B	BG50-e1	vert
+BG50-e2	BG50B	BG50-e1	vert
+BG50-pl-e2A	BG50-e2-base-planche-A	BG50-e2	vert
+BG50-pl-e2B	BG50-e2-base-planche-B	BG50-e2	vert
+BG50-e3	BG50C	BG50-e2,BG50-e1	vert
+BG50-pl-e3A	BG50-e3-base-planche-A	BG50-e3	vert
+BG50-pl-e3B	BG50-e3-base-planche-B	BG50-e3	vert
+BG51-e1	BG51		vert
+BG51-pl-e1A	BG51-e1-base-planche-A	BG51-e1	vert
+BG51-pl-e1B	BG51-e1-base-planche-B	BG51-e1	vert
+BG51-e2	BG51B	BG51-e1	vert
+BG51-pl-e2A	BG51-e2-base-planche-A	BG51-e2	vert
+BG51-pl-e2B	BG51-e2-base-planche-B	BG51-e2	vert
+BG51-e3	BG51C	BG51-e2,BG51-e1	vert
+BG51-pl-e3A	BG51-e3-base-planche-A	BG51-e3	vert
+BG51-pl-e3B	BG51-e3-base-planche-B	BG51-e3	vert

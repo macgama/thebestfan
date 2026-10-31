@@ -1,0 +1,481 @@
+# prompt	fichier	références	fond
+TR1-e1	TR1		magenta
+TR1-pl-e1A	TR1-e1-base-planche-A	TR1-e1	magenta
+TR1-pl-e1B	TR1-e1-base-planche-B	TR1-e1	magenta
+TR1-e2	TR1B	TR1-e1	magenta
+TR1-pl-e2A	TR1-e2-base-planche-A	TR1-e2	magenta
+TR1-pl-e2B	TR1-e2-base-planche-B	TR1-e2	magenta
+TR1-e3	TR1C	TR1-e2,TR1-e1	magenta
+TR1-pl-e3A	TR1-e3-base-planche-A	TR1-e3	magenta
+TR1-pl-e3B	TR1-e3-base-planche-B	TR1-e3	magenta
+TR2-e1	TR2		magenta
+TR2-pl-e1A	TR2-e1-base-planche-A	TR2-e1	magenta
+TR2-pl-e1B	TR2-e1-base-planche-B	TR2-e1	magenta
+TR2-e2	TR2B	TR2-e1	magenta
+TR2-pl-e2A	TR2-e2-base-planche-A	TR2-e2	magenta
+TR2-pl-e2B	TR2-e2-base-planche-B	TR2-e2	magenta
+TR2-e3	TR2C	TR2-e2,TR2-e1	magenta
+TR2-pl-e3A	TR2-e3-base-planche-A	TR2-e3	magenta
+TR2-pl-e3B	TR2-e3-base-planche-B	TR2-e3	magenta
+TR3-e1	TR3		vert
+TR3-pl-e1A	TR3-e1-base-planche-A	TR3-e1	vert
+TR3-pl-e1B	TR3-e1-base-planche-B	TR3-e1	vert
+TR3-e2	TR3B	TR3-e1	vert
+TR3-pl-e2A	TR3-e2-base-planche-A	TR3-e2	vert
+TR3-pl-e2B	TR3-e2-base-planche-B	TR3-e2	vert
+TR3-e3	TR3C	TR3-e2,TR3-e1	vert
+TR3-pl-e3A	TR3-e3-base-planche-A	TR3-e3	vert
+TR3-pl-e3B	TR3-e3-base-planche-B	TR3-e3	vert
+TR4-e1	TR4		magenta
+TR4-pl-e1A	TR4-e1-base-planche-A	TR4-e1	magenta
+TR4-pl-e1B	TR4-e1-base-planche-B	TR4-e1	magenta
+TR4-e2	TR4B	TR4-e1	magenta
+TR4-pl-e2A	TR4-e2-base-planche-A	TR4-e2	magenta
+TR4-pl-e2B	TR4-e2-base-planche-B	TR4-e2	magenta
+TR4-e3	TR4C	TR4-e2,TR4-e1	magenta
+TR4-pl-e3A	TR4-e3-base-planche-A	TR4-e3	magenta
+TR4-pl-e3B	TR4-e3-base-planche-B	TR4-e3	magenta
+TR5-e1	TR5		vert
+TR5-pl-e1A	TR5-e1-base-planche-A	TR5-e1	vert
+TR5-pl-e1B	TR5-e1-base-planche-B	TR5-e1	vert
+TR5-e2	TR5B	TR5-e1	vert
+TR5-pl-e2A	TR5-e2-base-planche-A	TR5-e2	vert
+TR5-pl-e2B	TR5-e2-base-planche-B	TR5-e2	vert
+TR5-e3	TR5C	TR5-e2,TR5-e1	vert
+TR5-pl-e3A	TR5-e3-base-planche-A	TR5-e3	vert
+TR5-pl-e3B	TR5-e3-base-planche-B	TR5-e3	vert
+TR6-e1	TR6		vert
+TR6-pl-e1A	TR6-e1-base-planche-A	TR6-e1	vert
+TR6-pl-e1B	TR6-e1-base-planche-B	TR6-e1	vert
+TR6-e2	TR6B	TR6-e1	vert
+TR6-pl-e2A	TR6-e2-base-planche-A	TR6-e2	vert
+TR6-pl-e2B	TR6-e2-base-planche-B	TR6-e2	vert
+TR6-e3	TR6C	TR6-e2,TR6-e1	vert
+TR6-pl-e3A	TR6-e3-base-planche-A	TR6-e3	vert
+TR6-pl-e3B	TR6-e3-base-planche-B	TR6-e3	vert
+TR7-e1	TR7		magenta
+TR7-pl-e1A	TR7-e1-base-planche-A	TR7-e1	magenta
+TR7-pl-e1B	TR7-e1-base-planche-B	TR7-e1	magenta
+TR7-e2	TR7B	TR7-e1	magenta
+TR7-pl-e2A	TR7-e2-base-planche-A	TR7-e2	magenta
+TR7-pl-e2B	TR7-e2-base-planche-B	TR7-e2	magenta
+TR7-e3	TR7C	TR7-e2,TR7-e1	magenta
+TR7-pl-e3A	TR7-e3-base-planche-A	TR7-e3	magenta
+TR7-pl-e3B	TR7-e3-base-planche-B	TR7-e3	magenta
+TR8-e1	TR8		magenta
+TR8-pl-e1A	TR8-e1-base-planche-A	TR8-e1	magenta
+TR8-pl-e1B	TR8-e1-base-planche-B	TR8-e1	magenta
+TR8-e2	TR8B	TR8-e1	magenta
+TR8-pl-e2A	TR8-e2-base-planche-A	TR8-e2	magenta
+TR8-pl-e2B	TR8-e2-base-planche-B	TR8-e2	magenta
+TR8-e3	TR8C	TR8-e2,TR8-e1	magenta
+TR8-pl-e3A	TR8-e3-base-planche-A	TR8-e3	magenta
+TR8-pl-e3B	TR8-e3-base-planche-B	TR8-e3	magenta
+TR9-e1	TR9		magenta
+TR9-pl-e1A	TR9-e1-base-planche-A	TR9-e1	magenta
+TR9-pl-e1B	TR9-e1-base-planche-B	TR9-e1	magenta
+TR9-e2	TR9B	TR9-e1	magenta
+TR9-pl-e2A	TR9-e2-base-planche-A	TR9-e2	magenta
+TR9-pl-e2B	TR9-e2-base-planche-B	TR9-e2	magenta
+TR9-e3	TR9C	TR9-e2,TR9-e1	magenta
+TR9-pl-e3A	TR9-e3-base-planche-A	TR9-e3	magenta
+TR9-pl-e3B	TR9-e3-base-planche-B	TR9-e3	magenta
+TR10-e1	TR10		vert
+TR10-pl-e1A	TR10-e1-base-planche-A	TR10-e1	vert
+TR10-pl-e1B	TR10-e1-base-planche-B	TR10-e1	vert
+TR10-e2	TR10B	TR10-e1	vert
+TR10-pl-e2A	TR10-e2-base-planche-A	TR10-e2	vert
+TR10-pl-e2B	TR10-e2-base-planche-B	TR10-e2	vert
+TR10-e3	TR10C	TR10-e2,TR10-e1	vert
+TR10-pl-e3A	TR10-e3-base-planche-A	TR10-e3	vert
+TR10-pl-e3B	TR10-e3-base-planche-B	TR10-e3	vert
+TR11-e1	TR11		magenta
+TR11-pl-e1A	TR11-e1-base-planche-A	TR11-e1	magenta
+TR11-pl-e1B	TR11-e1-base-planche-B	TR11-e1	magenta
+TR11-e2	TR11B	TR11-e1	magenta
+TR11-pl-e2A	TR11-e2-base-planche-A	TR11-e2	magenta
+TR11-pl-e2B	TR11-e2-base-planche-B	TR11-e2	magenta
+TR11-e3	TR11C	TR11-e2,TR11-e1	magenta
+TR11-pl-e3A	TR11-e3-base-planche-A	TR11-e3	magenta
+TR11-pl-e3B	TR11-e3-base-planche-B	TR11-e3	magenta
+TR12-e1	TR12		magenta
+TR12-pl-e1A	TR12-e1-base-planche-A	TR12-e1	magenta
+TR12-pl-e1B	TR12-e1-base-planche-B	TR12-e1	magenta
+TR13-e1	TR13		vert
+TR13-pl-e1A	TR13-e1-base-planche-A	TR13-e1	vert
+TR13-pl-e1B	TR13-e1-base-planche-B	TR13-e1	vert
+TR13-e2	TR13B	TR13-e1	vert
+TR13-pl-e2A	TR13-e2-base-planche-A	TR13-e2	vert
+TR13-pl-e2B	TR13-e2-base-planche-B	TR13-e2	vert
+TR13-e3	TR13C	TR13-e2,TR13-e1	vert
+TR13-pl-e3A	TR13-e3-base-planche-A	TR13-e3	vert
+TR13-pl-e3B	TR13-e3-base-planche-B	TR13-e3	vert
+TR14-e1	TR14		magenta
+TR14-pl-e1A	TR14-e1-base-planche-A	TR14-e1	magenta
+TR14-pl-e1B	TR14-e1-base-planche-B	TR14-e1	magenta
+TR14-e2	TR14B	TR14-e1	magenta
+TR14-pl-e2A	TR14-e2-base-planche-A	TR14-e2	magenta
+TR14-pl-e2B	TR14-e2-base-planche-B	TR14-e2	magenta
+TR14-e3	TR14C	TR14-e2,TR14-e1	magenta
+TR14-pl-e3A	TR14-e3-base-planche-A	TR14-e3	magenta
+TR14-pl-e3B	TR14-e3-base-planche-B	TR14-e3	magenta
+TR15-e1	TR15		vert
+TR15-pl-e1A	TR15-e1-base-planche-A	TR15-e1	vert
+TR15-pl-e1B	TR15-e1-base-planche-B	TR15-e1	vert
+TR15-e2	TR15B	TR15-e1	vert
+TR15-pl-e2A	TR15-e2-base-planche-A	TR15-e2	vert
+TR15-pl-e2B	TR15-e2-base-planche-B	TR15-e2	vert
+TR15-e3	TR15C	TR15-e2,TR15-e1	vert
+TR15-pl-e3A	TR15-e3-base-planche-A	TR15-e3	vert
+TR15-pl-e3B	TR15-e3-base-planche-B	TR15-e3	vert
+TR16-e1	TR16		magenta
+TR16-pl-e1A	TR16-e1-base-planche-A	TR16-e1	magenta
+TR16-pl-e1B	TR16-e1-base-planche-B	TR16-e1	magenta
+TR16-e2	TR16B	TR16-e1	magenta
+TR16-pl-e2A	TR16-e2-base-planche-A	TR16-e2	magenta
+TR16-pl-e2B	TR16-e2-base-planche-B	TR16-e2	magenta
+TR16-e3	TR16C	TR16-e2,TR16-e1	magenta
+TR16-pl-e3A	TR16-e3-base-planche-A	TR16-e3	magenta
+TR16-pl-e3B	TR16-e3-base-planche-B	TR16-e3	magenta
+TR17-e1	TR17		vert
+TR17-pl-e1A	TR17-e1-base-planche-A	TR17-e1	vert
+TR17-pl-e1B	TR17-e1-base-planche-B	TR17-e1	vert
+TR17-e2	TR17B	TR17-e1	vert
+TR17-pl-e2A	TR17-e2-base-planche-A	TR17-e2	vert
+TR17-pl-e2B	TR17-e2-base-planche-B	TR17-e2	vert
+TR17-e3	TR17C	TR17-e2,TR17-e1	vert
+TR17-pl-e3A	TR17-e3-base-planche-A	TR17-e3	vert
+TR17-pl-e3B	TR17-e3-base-planche-B	TR17-e3	vert
+TR18-e1	TR18		magenta
+TR18-pl-e1A	TR18-e1-base-planche-A	TR18-e1	magenta
+TR18-pl-e1B	TR18-e1-base-planche-B	TR18-e1	magenta
+TR18-e2	TR18B	TR18-e1	magenta
+TR18-pl-e2A	TR18-e2-base-planche-A	TR18-e2	magenta
+TR18-pl-e2B	TR18-e2-base-planche-B	TR18-e2	magenta
+TR18-e3	TR18C	TR18-e2,TR18-e1	magenta
+TR18-pl-e3A	TR18-e3-base-planche-A	TR18-e3	magenta
+TR18-pl-e3B	TR18-e3-base-planche-B	TR18-e3	magenta
+TR19-e1	TR19		vert
+TR19-pl-e1A	TR19-e1-base-planche-A	TR19-e1	vert
+TR19-pl-e1B	TR19-e1-base-planche-B	TR19-e1	vert
+TR19-e2	TR19B	TR19-e1	vert
+TR19-pl-e2A	TR19-e2-base-planche-A	TR19-e2	vert
+TR19-pl-e2B	TR19-e2-base-planche-B	TR19-e2	vert
+TR19-e3	TR19C	TR19-e2,TR19-e1	vert
+TR19-pl-e3A	TR19-e3-base-planche-A	TR19-e3	vert
+TR19-pl-e3B	TR19-e3-base-planche-B	TR19-e3	vert
+TR20-e1	TR20		magenta
+TR20-pl-e1A	TR20-e1-base-planche-A	TR20-e1	magenta
+TR20-pl-e1B	TR20-e1-base-planche-B	TR20-e1	magenta
+TR20-e2	TR20B	TR20-e1	magenta
+TR20-pl-e2A	TR20-e2-base-planche-A	TR20-e2	magenta
+TR20-pl-e2B	TR20-e2-base-planche-B	TR20-e2	magenta
+TR20-e3	TR20C	TR20-e2,TR20-e1	magenta
+TR20-pl-e3A	TR20-e3-base-planche-A	TR20-e3	magenta
+TR20-pl-e3B	TR20-e3-base-planche-B	TR20-e3	magenta
+TR21-e1	TR21		vert
+TR21-pl-e1A	TR21-e1-base-planche-A	TR21-e1	vert
+TR21-pl-e1B	TR21-e1-base-planche-B	TR21-e1	vert
+TR21-e2	TR21B	TR21-e1	vert
+TR21-pl-e2A	TR21-e2-base-planche-A	TR21-e2	vert
+TR21-pl-e2B	TR21-e2-base-planche-B	TR21-e2	vert
+TR21-e3	TR21C	TR21-e2,TR21-e1	vert
+TR21-pl-e3A	TR21-e3-base-planche-A	TR21-e3	vert
+TR21-pl-e3B	TR21-e3-base-planche-B	TR21-e3	vert
+TR22-e1	TR22		magenta
+TR22-pl-e1A	TR22-e1-base-planche-A	TR22-e1	magenta
+TR22-pl-e1B	TR22-e1-base-planche-B	TR22-e1	magenta
+TR22-e2	TR22B	TR22-e1	magenta
+TR22-pl-e2A	TR22-e2-base-planche-A	TR22-e2	magenta
+TR22-pl-e2B	TR22-e2-base-planche-B	TR22-e2	magenta
+TR22-e3	TR22C	TR22-e2,TR22-e1	magenta
+TR22-pl-e3A	TR22-e3-base-planche-A	TR22-e3	magenta
+TR22-pl-e3B	TR22-e3-base-planche-B	TR22-e3	magenta
+TR24-e1	TR24		vert
+TR24-pl-e1A	TR24-e1-base-planche-A	TR24-e1	vert
+TR24-pl-e1B	TR24-e1-base-planche-B	TR24-e1	vert
+TR24-e2	TR24B	TR24-e1	vert
+TR24-pl-e2A	TR24-e2-base-planche-A	TR24-e2	vert
+TR24-pl-e2B	TR24-e2-base-planche-B	TR24-e2	vert
+TR24-e3	TR24C	TR24-e2,TR24-e1	vert
+TR24-pl-e3A	TR24-e3-base-planche-A	TR24-e3	vert
+TR24-pl-e3B	TR24-e3-base-planche-B	TR24-e3	vert
+TR25-e1	TR25		vert
+TR25-pl-e1A	TR25-e1-base-planche-A	TR25-e1	vert
+TR25-pl-e1B	TR25-e1-base-planche-B	TR25-e1	vert
+TR25-e2	TR25B	TR25-e1	vert
+TR25-pl-e2A	TR25-e2-base-planche-A	TR25-e2	vert
+TR25-pl-e2B	TR25-e2-base-planche-B	TR25-e2	vert
+TR25-e3	TR25C	TR25-e2,TR25-e1	vert
+TR25-pl-e3A	TR25-e3-base-planche-A	TR25-e3	vert
+TR25-pl-e3B	TR25-e3-base-planche-B	TR25-e3	vert
+TR26-e1	TR26		magenta
+TR26-pl-e1A	TR26-e1-base-planche-A	TR26-e1	magenta
+TR26-pl-e1B	TR26-e1-base-planche-B	TR26-e1	magenta
+TR26-e2	TR26B	TR26-e1	magenta
+TR26-pl-e2A	TR26-e2-base-planche-A	TR26-e2	magenta
+TR26-pl-e2B	TR26-e2-base-planche-B	TR26-e2	magenta
+TR26-e3	TR26C	TR26-e2,TR26-e1	magenta
+TR26-pl-e3A	TR26-e3-base-planche-A	TR26-e3	magenta
+TR26-pl-e3B	TR26-e3-base-planche-B	TR26-e3	magenta
+TR27-e1	TR27		magenta
+TR27-pl-e1A	TR27-e1-base-planche-A	TR27-e1	magenta
+TR27-pl-e1B	TR27-e1-base-planche-B	TR27-e1	magenta
+TR27-e2	TR27B	TR27-e1	magenta
+TR27-pl-e2A	TR27-e2-base-planche-A	TR27-e2	magenta
+TR27-pl-e2B	TR27-e2-base-planche-B	TR27-e2	magenta
+TR27-e3	TR27C	TR27-e2,TR27-e1	magenta
+TR27-pl-e3A	TR27-e3-base-planche-A	TR27-e3	magenta
+TR27-pl-e3B	TR27-e3-base-planche-B	TR27-e3	magenta
+TR28-e1	TR28		magenta
+TR28-pl-e1A	TR28-e1-base-planche-A	TR28-e1	magenta
+TR28-pl-e1B	TR28-e1-base-planche-B	TR28-e1	magenta
+TR29-e1	TR29		magenta
+TR29-pl-e1A	TR29-e1-base-planche-A	TR29-e1	magenta
+TR29-pl-e1B	TR29-e1-base-planche-B	TR29-e1	magenta
+TR31-e1	TR31		magenta
+TR31-pl-e1A	TR31-e1-base-planche-A	TR31-e1	magenta
+TR31-pl-e1B	TR31-e1-base-planche-B	TR31-e1	magenta
+TR32-e1	TR32		vert
+TR32-pl-e1A	TR32-e1-base-planche-A	TR32-e1	vert
+TR32-pl-e1B	TR32-e1-base-planche-B	TR32-e1	vert
+TR32-e2	TR32B	TR32-e1	vert
+TR32-pl-e2A	TR32-e2-base-planche-A	TR32-e2	vert
+TR32-pl-e2B	TR32-e2-base-planche-B	TR32-e2	vert
+TR32-e3	TR32C	TR32-e2,TR32-e1	vert
+TR32-pl-e3A	TR32-e3-base-planche-A	TR32-e3	vert
+TR32-pl-e3B	TR32-e3-base-planche-B	TR32-e3	vert
+TR33-e1	TR33		magenta
+TR33-pl-e1A	TR33-e1-base-planche-A	TR33-e1	magenta
+TR33-pl-e1B	TR33-e1-base-planche-B	TR33-e1	magenta
+TR33-e2	TR33B	TR33-e1	magenta
+TR33-pl-e2A	TR33-e2-base-planche-A	TR33-e2	magenta
+TR33-pl-e2B	TR33-e2-base-planche-B	TR33-e2	magenta
+TR33-e3	TR33C	TR33-e2,TR33-e1	magenta
+TR33-pl-e3A	TR33-e3-base-planche-A	TR33-e3	magenta
+TR33-pl-e3B	TR33-e3-base-planche-B	TR33-e3	magenta
+TR35-e1	TR35		magenta
+TR35-pl-e1A	TR35-e1-base-planche-A	TR35-e1	magenta
+TR35-pl-e1B	TR35-e1-base-planche-B	TR35-e1	magenta
+TR35-e2	TR35B	TR35-e1	magenta
+TR35-pl-e2A	TR35-e2-base-planche-A	TR35-e2	magenta
+TR35-pl-e2B	TR35-e2-base-planche-B	TR35-e2	magenta
+TR35-e3	TR35C	TR35-e2,TR35-e1	magenta
+TR35-pl-e3A	TR35-e3-base-planche-A	TR35-e3	magenta
+TR35-pl-e3B	TR35-e3-base-planche-B	TR35-e3	magenta
+TR36-e1	TR36		magenta
+TR36-pl-e1A	TR36-e1-base-planche-A	TR36-e1	magenta
+TR36-pl-e1B	TR36-e1-base-planche-B	TR36-e1	magenta
+TR36-e2	TR36B	TR36-e1	magenta
+TR36-pl-e2A	TR36-e2-base-planche-A	TR36-e2	magenta
+TR36-pl-e2B	TR36-e2-base-planche-B	TR36-e2	magenta
+TR36-e3	TR36C	TR36-e2,TR36-e1	magenta
+TR36-pl-e3A	TR36-e3-base-planche-A	TR36-e3	magenta
+TR36-pl-e3B	TR36-e3-base-planche-B	TR36-e3	magenta
+TR37-e1	TR37		magenta
+TR37-pl-e1A	TR37-e1-base-planche-A	TR37-e1	magenta
+TR37-pl-e1B	TR37-e1-base-planche-B	TR37-e1	magenta
+TR37-e2	TR37B	TR37-e1	magenta
+TR37-pl-e2A	TR37-e2-base-planche-A	TR37-e2	magenta
+TR37-pl-e2B	TR37-e2-base-planche-B	TR37-e2	magenta
+TR37-e3	TR37C	TR37-e2,TR37-e1	magenta
+TR37-pl-e3A	TR37-e3-base-planche-A	TR37-e3	magenta
+TR37-pl-e3B	TR37-e3-base-planche-B	TR37-e3	magenta
+TR38-e1	TR38		vert
+TR38-pl-e1A	TR38-e1-base-planche-A	TR38-e1	vert
+TR38-pl-e1B	TR38-e1-base-planche-B	TR38-e1	vert
+TR38-e2	TR38B	TR38-e1	vert
+TR38-pl-e2A	TR38-e2-base-planche-A	TR38-e2	vert
+TR38-pl-e2B	TR38-e2-base-planche-B	TR38-e2	vert
+TR38-e3	TR38C	TR38-e2,TR38-e1	vert
+TR38-pl-e3A	TR38-e3-base-planche-A	TR38-e3	vert
+TR38-pl-e3B	TR38-e3-base-planche-B	TR38-e3	vert
+TR39-e1	TR39		magenta
+TR39-pl-e1A	TR39-e1-base-planche-A	TR39-e1	magenta
+TR39-pl-e1B	TR39-e1-base-planche-B	TR39-e1	magenta
+TR39-e2	TR39B	TR39-e1	magenta
+TR39-pl-e2A	TR39-e2-base-planche-A	TR39-e2	magenta
+TR39-pl-e2B	TR39-e2-base-planche-B	TR39-e2	magenta
+TR39-e3	TR39C	TR39-e2,TR39-e1	magenta
+TR39-pl-e3A	TR39-e3-base-planche-A	TR39-e3	magenta
+TR39-pl-e3B	TR39-e3-base-planche-B	TR39-e3	magenta
+TR40-e1	TR40		vert
+TR40-pl-e1A	TR40-e1-base-planche-A	TR40-e1	vert
+TR40-pl-e1B	TR40-e1-base-planche-B	TR40-e1	vert
+TR40-e2	TR40B	TR40-e1	vert
+TR40-pl-e2A	TR40-e2-base-planche-A	TR40-e2	vert
+TR40-pl-e2B	TR40-e2-base-planche-B	TR40-e2	vert
+TR40-e3	TR40C	TR40-e2,TR40-e1	vert
+TR40-pl-e3A	TR40-e3-base-planche-A	TR40-e3	vert
+TR40-pl-e3B	TR40-e3-base-planche-B	TR40-e3	vert
+TR44-e1	TR44		vert
+TR44-pl-e1A	TR44-e1-base-planche-A	TR44-e1	vert
+TR44-pl-e1B	TR44-e1-base-planche-B	TR44-e1	vert
+TR44-e2	TR44B	TR44-e1	vert
+TR44-pl-e2A	TR44-e2-base-planche-A	TR44-e2	vert
+TR44-pl-e2B	TR44-e2-base-planche-B	TR44-e2	vert
+TR44-e3	TR44C	TR44-e2,TR44-e1	vert
+TR44-pl-e3A	TR44-e3-base-planche-A	TR44-e3	vert
+TR44-pl-e3B	TR44-e3-base-planche-B	TR44-e3	vert
+TR48-e1	TR48		vert
+TR48-pl-e1A	TR48-e1-base-planche-A	TR48-e1	vert
+TR48-pl-e1B	TR48-e1-base-planche-B	TR48-e1	vert
+TR48-e2	TR48B	TR48-e1	vert
+TR48-pl-e2A	TR48-e2-base-planche-A	TR48-e2	vert
+TR48-pl-e2B	TR48-e2-base-planche-B	TR48-e2	vert
+TR48-e3	TR48C	TR48-e2,TR48-e1	vert
+TR48-pl-e3A	TR48-e3-base-planche-A	TR48-e3	vert
+TR48-pl-e3B	TR48-e3-base-planche-B	TR48-e3	vert
+TR50-e1	TR50		magenta
+TR50-pl-e1A	TR50-e1-base-planche-A	TR50-e1	magenta
+TR50-pl-e1B	TR50-e1-base-planche-B	TR50-e1	magenta
+TR50-e2	TR50B	TR50-e1	magenta
+TR50-pl-e2A	TR50-e2-base-planche-A	TR50-e2	magenta
+TR50-pl-e2B	TR50-e2-base-planche-B	TR50-e2	magenta
+TR50-e3	TR50C	TR50-e2,TR50-e1	magenta
+TR50-pl-e3A	TR50-e3-base-planche-A	TR50-e3	magenta
+TR50-pl-e3B	TR50-e3-base-planche-B	TR50-e3	magenta
+TR51-e1	TR51		vert
+TR51-pl-e1A	TR51-e1-base-planche-A	TR51-e1	vert
+TR51-pl-e1B	TR51-e1-base-planche-B	TR51-e1	vert
+TR51-e2	TR51B	TR51-e1	vert
+TR51-pl-e2A	TR51-e2-base-planche-A	TR51-e2	vert
+TR51-pl-e2B	TR51-e2-base-planche-B	TR51-e2	vert
+TR51-e3	TR51C	TR51-e2,TR51-e1	vert
+TR51-pl-e3A	TR51-e3-base-planche-A	TR51-e3	vert
+TR51-pl-e3B	TR51-e3-base-planche-B	TR51-e3	vert
+TR52-e1	TR52		vert
+TR52-pl-e1A	TR52-e1-base-planche-A	TR52-e1	vert
+TR52-pl-e1B	TR52-e1-base-planche-B	TR52-e1	vert
+TR52-e2	TR52B	TR52-e1	vert
+TR52-pl-e2A	TR52-e2-base-planche-A	TR52-e2	vert
+TR52-pl-e2B	TR52-e2-base-planche-B	TR52-e2	vert
+TR52-e3	TR52C	TR52-e2,TR52-e1	vert
+TR52-pl-e3A	TR52-e3-base-planche-A	TR52-e3	vert
+TR52-pl-e3B	TR52-e3-base-planche-B	TR52-e3	vert
+TR58-e1	TR58		vert
+TR58-pl-e1A	TR58-e1-base-planche-A	TR58-e1	vert
+TR58-pl-e1B	TR58-e1-base-planche-B	TR58-e1	vert
+TR60-e1	TR60		vert
+TR60-pl-e1A	TR60-e1-base-planche-A	TR60-e1	vert
+TR60-pl-e1B	TR60-e1-base-planche-B	TR60-e1	vert
+TR60-e2	TR60B	TR60-e1	vert
+TR60-pl-e2A	TR60-e2-base-planche-A	TR60-e2	vert
+TR60-pl-e2B	TR60-e2-base-planche-B	TR60-e2	vert
+TR60-e3	TR60C	TR60-e2,TR60-e1	vert
+TR60-pl-e3A	TR60-e3-base-planche-A	TR60-e3	vert
+TR60-pl-e3B	TR60-e3-base-planche-B	TR60-e3	vert
+TR61-e1	TR61		vert
+TR61-pl-e1A	TR61-e1-base-planche-A	TR61-e1	vert
+TR61-pl-e1B	TR61-e1-base-planche-B	TR61-e1	vert
+TR61-e2	TR61B	TR61-e1	vert
+TR61-pl-e2A	TR61-e2-base-planche-A	TR61-e2	vert
+TR61-pl-e2B	TR61-e2-base-planche-B	TR61-e2	vert
+TR61-e3	TR61C	TR61-e2,TR61-e1	vert
+TR61-pl-e3A	TR61-e3-base-planche-A	TR61-e3	vert
+TR61-pl-e3B	TR61-e3-base-planche-B	TR61-e3	vert
+TR62-e1	TR62		vert
+TR62-pl-e1A	TR62-e1-base-planche-A	TR62-e1	vert
+TR62-pl-e1B	TR62-e1-base-planche-B	TR62-e1	vert
+TR62-e2	TR62B	TR62-e1	vert
+TR62-pl-e2A	TR62-e2-base-planche-A	TR62-e2	vert
+TR62-pl-e2B	TR62-e2-base-planche-B	TR62-e2	vert
+TR62-e3	TR62C	TR62-e2,TR62-e1	vert
+TR62-pl-e3A	TR62-e3-base-planche-A	TR62-e3	vert
+TR62-pl-e3B	TR62-e3-base-planche-B	TR62-e3	vert
+TR63-e1	TR63		vert
+TR63-pl-e1A	TR63-e1-base-planche-A	TR63-e1	vert
+TR63-pl-e1B	TR63-e1-base-planche-B	TR63-e1	vert
+TR63-e2	TR63B	TR63-e1	vert
+TR63-pl-e2A	TR63-e2-base-planche-A	TR63-e2	vert
+TR63-pl-e2B	TR63-e2-base-planche-B	TR63-e2	vert
+TR63-e3	TR63C	TR63-e2,TR63-e1	vert
+TR63-pl-e3A	TR63-e3-base-planche-A	TR63-e3	vert
+TR63-pl-e3B	TR63-e3-base-planche-B	TR63-e3	vert
+TR64-e1	TR64		magenta
+TR64-pl-e1A	TR64-e1-base-planche-A	TR64-e1	magenta
+TR64-pl-e1B	TR64-e1-base-planche-B	TR64-e1	magenta
+TR64-e2	TR64B	TR64-e1	magenta
+TR64-pl-e2A	TR64-e2-base-planche-A	TR64-e2	magenta
+TR64-pl-e2B	TR64-e2-base-planche-B	TR64-e2	magenta
+TR64-e3	TR64C	TR64-e2,TR64-e1	magenta
+TR64-pl-e3A	TR64-e3-base-planche-A	TR64-e3	magenta
+TR64-pl-e3B	TR64-e3-base-planche-B	TR64-e3	magenta
+TR65-e1	TR65		vert
+TR65-pl-e1A	TR65-e1-base-planche-A	TR65-e1	vert
+TR65-pl-e1B	TR65-e1-base-planche-B	TR65-e1	vert
+TR65-e2	TR65B	TR65-e1	vert
+TR65-pl-e2A	TR65-e2-base-planche-A	TR65-e2	vert
+TR65-pl-e2B	TR65-e2-base-planche-B	TR65-e2	vert
+TR65-e3	TR65C	TR65-e2,TR65-e1	vert
+TR65-pl-e3A	TR65-e3-base-planche-A	TR65-e3	vert
+TR65-pl-e3B	TR65-e3-base-planche-B	TR65-e3	vert
+TR66-e1	TR66		magenta
+TR66-pl-e1A	TR66-e1-base-planche-A	TR66-e1	magenta
+TR66-pl-e1B	TR66-e1-base-planche-B	TR66-e1	magenta
+TR66-e2	TR66B	TR66-e1	magenta
+TR66-pl-e2A	TR66-e2-base-planche-A	TR66-e2	magenta
+TR66-pl-e2B	TR66-e2-base-planche-B	TR66-e2	magenta
+TR66-e3	TR66C	TR66-e2,TR66-e1	magenta
+TR66-pl-e3A	TR66-e3-base-planche-A	TR66-e3	magenta
+TR66-pl-e3B	TR66-e3-base-planche-B	TR66-e3	magenta
+TR23-e1	TR23		vert
+TR23-pl-e1A	TR23-e1-base-planche-A	TR23-e1	vert
+TR23-pl-e1B	TR23-e1-base-planche-B	TR23-e1	vert
+TR23-e2	TR23B	TR23-e1	vert
+TR23-pl-e2A	TR23-e2-base-planche-A	TR23-e2	vert
+TR23-pl-e2B	TR23-e2-base-planche-B	TR23-e2	vert
+TR23-e3	TR23C	TR23-e2,TR23-e1	vert
+TR23-pl-e3A	TR23-e3-base-planche-A	TR23-e3	vert
+TR23-pl-e3B	TR23-e3-base-planche-B	TR23-e3	vert
+TR30-e1	TR30		vert
+TR30-pl-e1A	TR30-e1-base-planche-A	TR30-e1	vert
+TR30-pl-e1B	TR30-e1-base-planche-B	TR30-e1	vert
+TR34-e1	TR34		vert
+TR34-pl-e1A	TR34-e1-base-planche-A	TR34-e1	vert
+TR34-pl-e1B	TR34-e1-base-planche-B	TR34-e1	vert
+TR34-e2	TR34B	TR34-e1	vert
+TR34-pl-e2A	TR34-e2-base-planche-A	TR34-e2	vert
+TR34-pl-e2B	TR34-e2-base-planche-B	TR34-e2	vert
+TR34-e3	TR34C	TR34-e2,TR34-e1	vert
+TR34-pl-e3A	TR34-e3-base-planche-A	TR34-e3	vert
+TR34-pl-e3B	TR34-e3-base-planche-B	TR34-e3	vert
+TR49-e1	TR49		magenta
+TR49-pl-e1A	TR49-e1-base-planche-A	TR49-e1	magenta
+TR49-pl-e1B	TR49-e1-base-planche-B	TR49-e1	magenta
+TR49-e2	TR49B	TR49-e1	magenta
+TR49-pl-e2A	TR49-e2-base-planche-A	TR49-e2	magenta
+TR49-pl-e2B	TR49-e2-base-planche-B	TR49-e2	magenta
+TR49-e3	TR49C	TR49-e2,TR49-e1	magenta
+TR49-pl-e3A	TR49-e3-base-planche-A	TR49-e3	magenta
+TR49-pl-e3B	TR49-e3-base-planche-B	TR49-e3	magenta
+TR55-e1	TR55		magenta
+TR55-pl-e1A	TR55-e1-base-planche-A	TR55-e1	magenta
+TR55-pl-e1B	TR55-e1-base-planche-B	TR55-e1	magenta
+TR56-e1	TR56		vert
+TR56-pl-e1A	TR56-e1-base-planche-A	TR56-e1	vert
+TR56-pl-e1B	TR56-e1-base-planche-B	TR56-e1	vert
+TR57-e1	TR57		magenta
+TR57-pl-e1A	TR57-e1-base-planche-A	TR57-e1	magenta
+TR57-pl-e1B	TR57-e1-base-planche-B	TR57-e1	magenta
+TR59-e1	TR59		magenta
+TR59-pl-e1A	TR59-e1-base-planche-A	TR59-e1	magenta
+TR59-pl-e1B	TR59-e1-base-planche-B	TR59-e1	magenta
+TR67-e1	TR67		magenta
+TR67-pl-e1A	TR67-e1-base-planche-A	TR67-e1	magenta
+TR67-pl-e1B	TR67-e1-base-planche-B	TR67-e1	magenta
+TR67-e2	TR67B	TR67-e1	magenta
+TR67-pl-e2A	TR67-e2-base-planche-A	TR67-e2	magenta
+TR67-pl-e2B	TR67-e2-base-planche-B	TR67-e2	magenta
+TR67-e3	TR67C	TR67-e2,TR67-e1	magenta
+TR67-pl-e3A	TR67-e3-base-planche-A	TR67-e3	magenta
+TR67-pl-e3B	TR67-e3-base-planche-B	TR67-e3	magenta
+TR68-e1	TR68		magenta
+TR68-pl-e1A	TR68-e1-base-planche-A	TR68-e1	magenta
+TR68-pl-e1B	TR68-e1-base-planche-B	TR68-e1	magenta
+TR68-e2	TR68B	TR68-e1	magenta
+TR68-pl-e2A	TR68-e2-base-planche-A	TR68-e2	magenta
+TR68-pl-e2B	TR68-e2-base-planche-B	TR68-e2	magenta
+TR68-e3	TR68C	TR68-e2,TR68-e1	magenta
+TR68-pl-e3A	TR68-e3-base-planche-A	TR68-e3	magenta
+TR68-pl-e3B	TR68-e3-base-planche-B	TR68-e3	magenta

@@ -1,0 +1,19 @@
+Character sheet of the same character as the reference image.
+
+Stylised 3D animated-film rendering with a premium game-hero finish: slightly caricatured proportions, expressive face, a bold silhouette readable at thumbnail size, rich material detail on fabric, leather, fur, metal and paint, warm key light and a bright rim light.
+
+A stern old man with a brown tweed flat cap, big black-rimmed glasses, bushy white eyebrows, a thick white walrus moustache, a big nose and a deeply lined frowning face. A green wool jumper with a wide maroon band across the chest and sleeves, brown corduroy trousers rolled at the ankle, brown leather boots, a long wooden cane. His signature item is a hand-stitched vintage leather football in tobacco brown (#8A5A32): keep exactly this colour.
+
+A living monument of the old game, half man, half carved statue: the same stern face and white moustache, his body grown tall and solid, the green and maroon jumper turned into a heavy embroidered royal robe of green velvet and maroon brocade, his legs and boots carved in polished dark oak and veined marble like a plinth. His crowning element is a huge sunburst of stitched leather panels rising behind his cap and shoulders, each panel tooled with gold-leaf seams, like the inside of an old ball opened into a crown. The cane has become a tall oak sceptre capped with gold, raised and pointing forward. The 1968 leather ball rests in his other hand, its stitched seams glowing with golden light (#FFC23D) that also runs along the gold seams of the sunburst and the embroidery of his robe, all staying on the body.
+
+With exactly his body proportions from the reference: same build, same head size relative to the body. Same outfit and same signature item, held in every figure. Same aura and glowing details as the reference, if he has any, pressed against the body in every figure.
+Correct anatomy in every figure: exactly two arms, two legs, two hands with five fingers each, no extra or duplicated limbs.
+Only the objects he has on the reference: never add an instrument, scarf, flag or prop he does not carry.
+Exactly three full-body figures, no more, no less, side by side in one single row, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line, wide empty background gaps between the figures, nothing touching, nothing cut by the edges.
+Every figure stays compact and narrow, hardly wider than the rest pose: arms raised straight up or bent close to the body, never stretched out to the sides.
+One head per figure, no motion blur, no double image.
+Left to right: 1. rest: standing calm, arms by the sides, eyes open, mouth closed. 2. joy: jumping with both fists raised straight up above his head, mouth wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one hand over his face.
+
+Wide 16:9 image, one row. Background: a completely flat, uniform, saturated studio magenta (#FF00FF), the exact same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the character, no magenta glow or magenta rim light on the character. No grid lines, no borders, no frames, no labels.
+
+no text, no letters, no numbers, no logos, no brand marks, no club crests, no team names, no sponsor logos, no identifiable jerseys, no real people. No captions or name tags. No glowing symbols, runes or letter-like signs anywhere.
