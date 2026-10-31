@@ -626,6 +626,70 @@
 .kq-fin-deux>*{flex:1 1 0;min-width:0;min-height:46px;padding:11px 8px;font-size:13.5px}
 #oEncore{min-height:52px}
 
+/* ------------------------------------------- la carte en grand (la loupe)
+
+   Demande de Gaël (31 octobre 2026) : au butin, toucher une carte pour la
+   voir en grand, avec ce qu'elle fait. Le toucher ouvrait la fiche d'un
+   Fanzzy dans un `#detail` que cette page ne dessinait pas : elle tombait,
+   sans style, sous le kiosque, hors de l'écran, et une tenue, une Ultimate,
+   un équipement ou une carte d'action n'ont pas de fiche du tout (« Ce
+   Fanzzy est introuvable »). On ne voyait rien venir.
+
+   La loupe se pose **par-dessus le butin**, qui reste là : FERMER y ramène,
+   les flèches et le glissé passent aux autres cartes du paquet. La carte
+   en grand (`cardHTML`, la même qu'au classeur), puis un ticket kraft qui
+   dit ses caractéristiques. VOIR LA FICHE ouvre la fiche complète du
+   Fanzzy (ou de celui qui porte la tenue, l'état, l'Ultimate) par-dessus,
+   et la refermer ramène à la loupe.
+
+   Au-dessus de la pile des tickets (93) : le ticket du gain arrive une
+   seconde après le butin et couvrait les flèches. La fête de niveau (170)
+   et la grande scène de l'Ultimate (120) passent toujours devant. */
+.loupe{position:fixed;inset:0;z-index:94;display:flex;flex-direction:column;align-items:center;
+  background:radial-gradient(120% 70% at 50% 20%,#1D242D,#05070A 70%);
+  clip-path:inset(0 var(--tbf-cote));
+  height:100vh;height:100dvh;padding-bottom:calc(var(--bas) + 10px)}
+.loupe[hidden]{display:none}
+.loupe>*{width:100%;max-width:min(var(--colonne), 560px)}
+.loupe-tete{flex:none;display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 16px 8px;
+  box-sizing:border-box}
+.loupe-compte{font-family:var(--banner);font-weight:700;font-size:15px;letter-spacing:.1em}
+.loupe-tete>#loupeFermer{margin-left:auto;min-height:44px;padding:10px 15px;font-size:13px}
+.loupe-corps{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;align-items:center;gap:16px;padding:4px 16px 14px;
+  box-sizing:border-box;touch-action:pan-y}
+.loupe-carte{position:relative;flex:none;width:min(62vw, 240px)}
+.loupe-carte>.tbf-sticker{position:absolute;z-index:9;left:-12px;top:40%;--rot:-6deg}
+.loupe-carte>.tbf-sticker--prix{left:auto;right:-10px;bottom:auto;top:46%;--rot:5deg}
+.loupe-ticket{width:100%;max-width:420px}
+.loupe-ticket h2{margin:0 0 2px;font-family:var(--banner);font-weight:700;font-size:19px;line-height:1.1;
+  letter-spacing:.05em;text-transform:uppercase;overflow-wrap:anywhere}
+.loupe-ticket .loupe-sorte{margin:0 0 10px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase}
+.loupe-lignes{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:12px;
+  letter-spacing:.06em;text-transform:uppercase}
+.loupe-lignes dt{font-weight:600}
+.loupe-lignes dd{margin:0;font-weight:700;text-align:right;overflow-wrap:anywhere}
+.loupe-effets{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;
+  font-family:var(--ui);font-weight:600;font-size:13px;letter-spacing:0;text-transform:none}
+.loupe-effets li::before{content:"• "}
+.loupe-effets li.plus{color:var(--vert-fonce)}
+.loupe-effets li.moins{color:var(--rouge-fonce)}
+.loupe-texte{margin:10px 0 0;font-family:var(--ui);font-weight:500;font-size:13.5px;line-height:1.4;
+  letter-spacing:0;text-transform:none}
+.loupe-texte--histoire{font-style:italic}
+.loupe-pied{flex:none;display:flex;gap:10px;padding:8px 16px 0;box-sizing:border-box}
+.loupe-pied>.tbf-plaque{min-height:48px;font-size:13.5px}
+.loupe-pied>.loupe-fleche{flex:none;width:56px;padding:0;font-size:22px}
+.loupe-pied>.loupe-voir{flex:1 1 0;min-width:0;padding:11px 8px}
+.loupe-pied>.loupe-voir[hidden]{display:none}
+/* La fiche complète d'un Fanzzy, par-dessus la loupe (`ouvrirFicheDuButin`). */
+#detail{position:fixed;inset:0;z-index:96;display:none;flex-direction:column;
+  background:#04060A;clip-path:inset(0 var(--tbf-cote));
+  height:100vh;height:100dvh;padding-bottom:var(--bas);overflow-y:auto}
+#detail.on{display:flex}
+/* Les cases du butin se touchent : elles le disent au doigt. */
+.tbf-album-case[data-i]{cursor:pointer}
+
 /* ------------------------------------------- l'ouverture, en spectacle
 
    Le suspense, la charge, l'entrée de chaque sorte et les fonds filmés ont
@@ -772,6 +836,20 @@ body{padding-bottom:calc(var(--bas) + 40px)}
           <a class="tbf-plaque" data-ton="bleu" href="/deck">MON DECK</a>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- La carte en grand, par-dessus le butin (voir `.loupe`). -->
+  <div id="loupe" class="loupe" role="dialog" aria-modal="true" aria-labelledby="loupeNom" hidden>
+    <div class="loupe-tete"><span class="loupe-compte" id="loupeCompte"></span>
+      <button type="button" class="tbf-plaque" id="loupeFermer">FERMER</button></div>
+    <div class="loupe-corps" id="loupeCorps"></div>
+    <div class="loupe-pied">
+      <button type="button" class="tbf-plaque loupe-fleche" data-ton="craie" id="loupePrec"
+        aria-label="Carte précédente">&lsaquo;</button>
+      <button type="button" class="tbf-plaque loupe-voir" data-ton="bleu" id="loupeVoir" hidden>VOIR LA FICHE</button>
+      <button type="button" class="tbf-plaque loupe-fleche" data-ton="craie" id="loupeSuiv"
+        aria-label="Carte suivante">&rsaquo;</button>
     </div>
   </div>
 
@@ -2410,7 +2488,10 @@ function finishPack() {
   const cases = pull.map((f, i) => {
     const rar = rareteDe(f);
     const m = montantsSurs && rapportent[i] ? montants[i] : 0;
-    return `<div class="tbf-album-case tbf-colle ${rar}" data-i="${i}" style="--d:${i * 60}ms">`
+    /* Une case est un `div` (une carte n'entre pas dans un bouton) : elle se
+       touche et répond au clavier comme un bouton (voir `ouvrirLoupe`). */
+    return `<div class="tbf-album-case tbf-colle ${rar}" data-i="${i}" style="--d:${i * 60}ms"`
+      + ` role="button" tabindex="0" aria-label="${esc(f?.nom ?? '')} : voir en grand">`
       + cardHTML(f, { mini: true })
       + (neuf[i] ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : '')
       + (m > 0 ? `<span class="tbf-sticker tbf-sticker--prix"><img src="${esc(JETON)}" alt="">+${m}</span>` : '')
@@ -2426,16 +2507,19 @@ function finishPack() {
   sum.classList.add('on');
   sum.scrollTop = 0;
   avancerSerie();
+  /* Toucher une carte la montre en grand, par-dessus le butin (`.loupe`).
+     Le butin reste là : FERMER y ramène. */
   sum.onclick = (e) => {
     const d = e.target.closest('[data-i]');
-    // On ferme l'écran d'ouverture d'abord : la fiche se pose par-dessus la
-    // grille, pas par-dessus un booster à moitié déchiré.
     if (!d) return;
-    $('opener').classList.remove('on');
-    /* `renderKiosque` et non `renderDex` : le classeur n'est pas sur cette
-       page. */
-    renderKiosque();
-    ouvrirFicheDuButin(pull[+d.dataset.i].id);
+    ouvrirLoupe(+d.dataset.i);
+  };
+  sum.onkeydown = (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const d = e.target.closest?.('[data-i]');
+    if (!d) return;
+    e.preventDefault();
+    ouvrirLoupe(+d.dataset.i);
   };
 
   /* La fin : ENCORE UN si la réserve ou le solde le permettent, et ce qu'il
@@ -2646,13 +2730,169 @@ function avancerNiveau() {
     .then(finir);
 }
 
+/* ------------------------------------------------------- la carte en grand
+
+   Demande de Gaël (31 octobre 2026) : « pouvoir cliquer sur les images pour
+   les voir en grand et avoir les caractéristiques ». La feuille, `.loupe`,
+   dit pourquoi l'ancien toucher ne montrait rien. */
+
+/** La carte regardée dans la loupe, par sa place dans le paquet. */
+let loupeI = -1;
+/** La case touchée, pour lui rendre le clavier en refermant. */
+let loupeDepuis = null;
+
+/** Un Fanzzy, et non une tenue, un état, une pièce, une action, un lieu. */
+const estFanzzy = (f) => Boolean(f) && !(f.etat || f.skin || f.stuff || f.action || f.lieu || f.echarpes);
+
+/** Le personnage dont on peut ouvrir la fiche : lui, ou celui qui porte. */
+const ficheDe = (f) => (estFanzzy(f) ? f.id : (f?.etat || f?.skin) && f.pour ? f.pour : null);
+
+/** Ce qu'est la carte, en clair, sous son nom. */
+function motDeSorte(f) {
+  if (f.ultime) return 'Ultimate';
+  if (f.etat) return `État · ${f.etatMot ?? ''}`;
+  if (f.skin) return `Tenue · ${f.skinMot ?? ''}`;
+  if (f.stuff) return 'Équipement';
+  if (f.action) return 'Carte d’action';
+  if (f.lieu) return 'Stade';
+  if (f.echarpes) return 'Écharpes';
+  if (f.rar === 'legendaire') return 'Fanzzy légendaire';
+  return 'Fanzzy';
+}
+
 /**
- * La fiche d'une carte qu'on vient d'ouvrir.
+ * Les caractéristiques d'une carte, sur un ticket kraft : ce qu'elle est, à
+ * qui elle va, ce qu'elle change au jeu — et rien qu'on ne sache pas.
+ */
+function caracteristiquesHTML(f, i) {
+  const lignes = [];
+  const ligne = (nom, val) => { if (val != null && val !== '') lignes.push([nom, String(val)]); };
+  const perso = f.pour ? BY_ID.get(f.pour) : null;
+  ligne('Rareté', MOT[rareteDe(f)]);
+  if (estFanzzy(f)) {
+    ligne('Famille', TYPES[f.type]?.nom);
+    if (f.rar !== 'legendaire') ligne('Âge', f.stage ?? 1);
+    ligne('Série', SETS_TOUTES.find((x) => x.id === f.set)?.nom);
+    if (f.cri?.label) ligne('Cri', f.cri.label);
+    if (Number(f.cri?.power) > 0) ligne('Poussée', f.cri.power);
+  }
+  if (f.etat || f.skin) {
+    ligne('Pour', perso?.nom);
+    ligne('Âge', f.stage ?? 1);
+  }
+  if (f.action) {
+    const a = ACTES.get(f.id);
+    if (Number(a?.cost) > 0) ligne('Coût', `${a.cost} de souffle`);
+    if (Number(a?.cd) > 0) ligne('Recharge', `${a.cd} s`);
+  }
+  if (f.echarpes) ligne('Gain', `${f.montant ?? 0} écharpes`);
+
+  /* Neuve ou doublon : le butin le disait d'un sticker, la loupe l'écrit. */
+  const m = montantsSurs && rapportent[i] ? montants[i] : 0;
+  if (!f.echarpes) {
+    ligne('Au classeur', neuf[i] ? 'Nouvelle' : m > 0 ? `Doublon · +${m} écharpes` : 'Déjà à toi');
+  }
+
+  const effets = (f.stuff || estFanzzy(f)) ? (window.TBF_MODS?.detail?.(f.mods ?? {}) ?? []) : [];
+  const texte = estFanzzy(f) ? f.histoire : f.texte;
+  const note = f.skin || (f.etat && !f.ultime)
+    ? 'Pour le style seulement : rien ne change en jeu.' : '';
+
+  return `<div class="tbf-ticket loupe-ticket">
+    <h2 id="loupeNom">${esc(f.nom ?? '')}</h2>
+    <p class="loupe-sorte">${esc(motDeSorte(f))}</p>
+    <dl class="loupe-lignes">${lignes.map(([n, v]) => `<dt>${esc(n)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+    ${effets.length ? `<ul class="loupe-effets" aria-label="Effets">${effets.map((x) =>
+    `<li class="${esc(x.sens)}">${esc(x.texte)}</li>`).join('')}</ul>` : ''}
+    ${texte ? `<p class="loupe-texte${estFanzzy(f) ? ' loupe-texte--histoire' : ''}">${esc(texte)}</p>` : ''}
+    ${note ? `<p class="loupe-texte">${esc(note)}</p>` : ''}
+  </div>`;
+}
+
+/** Montre la carte `i` du paquet dans la loupe. */
+function poserLoupe(i) {
+  const n = pull.length;
+  if (!n) return;
+  loupeI = ((i % n) + n) % n;
+  const f = pull[loupeI];
+  const m = montantsSurs && rapportent[loupeI] ? montants[loupeI] : 0;
+  $('loupeCompte').textContent = `${loupeI + 1} / ${n}`;
+  $('loupeCorps').innerHTML = `<div class="loupe-carte">${cardHTML(f, { pied: true })}`
+    + (neuf[loupeI] ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : '')
+    + (m > 0 ? `<span class="tbf-sticker tbf-sticker--prix"><img src="${esc(JETON)}" alt="">+${m}</span>` : '')
+    + `</div>${caracteristiquesHTML(f, loupeI)}`;
+  $('loupeCorps').scrollTop = 0;
+  const voir = $('loupeVoir');
+  voir.hidden = !(ficheDe(f) && window.TBF_FICHE);
+  voir.textContent = f.ultime ? 'VOIR L’ULTIMATE' : 'VOIR LA FICHE';
+  const seul = n < 2;
+  $('loupePrec').hidden = seul;
+  $('loupeSuiv').hidden = seul;
+}
+
+function ouvrirLoupe(i) {
+  if (!pull[i]) return;
+  loupeDepuis = document.activeElement;
+  buzz(8);
+  window.FX?.son?.('carte');
+  poserLoupe(i);
+  $('loupe').hidden = false;
+  $('loupeFermer').focus({ preventScroll: true });
+}
+
+function fermerLoupe() {
+  $('loupe').hidden = true;
+  $('loupeCorps').innerHTML = '';
+  const c = $('summary').querySelector(`[data-i="${loupeI}"]`) ?? loupeDepuis;
+  loupeI = -1;
+  if (c?.isConnected) c.focus({ preventScroll: true });
+}
+
+$('loupeFermer').onclick = fermerLoupe;
+$('loupePrec').onclick = () => poserLoupe(loupeI - 1);
+$('loupeSuiv').onclick = () => poserLoupe(loupeI + 1);
+$('loupeVoir').onclick = () => {
+  const f = pull[loupeI];
+  if (!f) return;
+  /* L'Ultimate se montre comme à la révélation : sa grande scène. */
+  if (f.ultime) { montrerUltime(f); return; }
+  const id = ficheDe(f);
+  if (id) ouvrirFicheDuButin(id);
+};
+/* Le clavier : les flèches passent d'une carte à l'autre, Échap referme. La
+   fiche ouverte par-dessus garde ses touches. */
+addEventListener('keydown', (e) => {
+  if ($('loupe').hidden || $('detail').classList.contains('on')) return;
+  if (e.key === 'Escape') { e.preventDefault(); fermerLoupe(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); poserLoupe(loupeI - 1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); poserLoupe(loupeI + 1); }
+});
+/* Le glissé : un doigt qui part de côté de plus de cinquante pixels, et
+   plus de côté que de haut — le ticket, lui, défile verticalement. */
+{
+  let x0 = null, y0 = 0;
+  $('loupeCorps').addEventListener('pointerdown', (e) => { x0 = e.clientX; y0 = e.clientY; });
+  $('loupeCorps').addEventListener('pointerup', (e) => {
+    if (x0 === null) return;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    x0 = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) poserLoupe(loupeI + (dx < 0 ? 1 : -1));
+  });
+  $('loupeCorps').addEventListener('pointercancel', () => { x0 = null; });
+}
+
+/**
+ * La fiche d'un Fanzzy qu'on vient d'ouvrir, par-dessus la loupe.
  *
  * Elle s'appelait `ouvrirFiche` — le nom qu'a la fonction du **classeur**,
  * qui n'est pas cette page-ci et que celle-ci ne charge pas. L'appel levait
- * donc un `ReferenceError` à chaque fois, sans que rien ne le dise :
- * l'écran du paquet venait de se fermer, et on croyait avoir raté la carte.
+ * donc un `ReferenceError` à chaque fois, sans que rien ne le dise.
+ *
+ * Puis elle fermait l'écran du paquet et montait la fiche dans un `#detail`
+ * que cette page ne dessinait pas : la fiche tombait sous le kiosque, hors de
+ * l'écran. `#detail` est maintenant un plein écran (voir `.loupe`), et
+ * l'écran du paquet reste ouvert dessous : refermer la fiche rend la loupe,
+ * puis le butin.
  *
  * Sans entrée d'historique, à la différence du classeur : on sort d'un plein
  * écran, et deux adresses empilées feraient reculer deux fois.
@@ -2663,7 +2903,11 @@ function ouvrirFicheDuButin(id) {
   n.classList.add('on');
   n.innerHTML = '';
   return window.TBF_FICHE.ouvrir(n, id, {
-    fermer: () => { n.classList.remove('on'); n.innerHTML = ''; },
+    fermer: () => {
+      n.classList.remove('on');
+      n.innerHTML = '';
+      if (!$('loupe').hidden) $('loupeVoir').focus({ preventScroll: true });
+    },
     // Le kiosque a pu changer pendant qu'on regardait — un âge acheté se
     // paie en écharpes, et c'est le même solde qui achète les boosters.
     change: renderKiosque,
