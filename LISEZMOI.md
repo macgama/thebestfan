@@ -7,3 +7,7 @@
 - Fond magenta (découpe avec `--lueur`) : SU4, SU6, SU15, SU18, SU30. Tous les autres sur fond vert.
 - Créatures : SU25 à SU36. Humains : SU1 à SU24.
 - `ids.tsv` : journal des générations et crédits ; `prompts/` et `build.mjs` : prompts exacts.
+
+## Ultimate SU (2026-10-31, en crédits, accord de Gaël)
+- `telechargement-SU-ult.tsv` : chemin `art/ultime/_src/SU<n>-e<k>.png`, generationId, outputIndex (108 images, Nano Banana 2, 9:16, 2K).
+- `ult/` : prompts (build-su.mjs, decors-su.json) et journal des crédits (ids-su.tsv).
