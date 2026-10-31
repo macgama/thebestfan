@@ -232,6 +232,11 @@ const RUBRIQUES = [
           + 'jamais un supporter de plus. Si tu as déjà toutes les tenues, tous les '
           + 'états ou toutes les cartes d’action que la carte pouvait te donner, '
           + `elle se change en ${POIGNEE_DE_REPLI} écharpes.`],
+      ['Comment voir une carte en grand après un booster ?',
+        () => 'Touche-la sur l’écran de fin d’ouverture. Elle s’ouvre en grand, avec sa '
+          + 'rareté, ce qu’elle change en jeu et si elle est nouvelle ou en double. Les '
+          + 'flèches passent aux autres cartes du paquet, VOIR LA FICHE ouvre la fiche du '
+          + 'Fanzzy et FERMER te ramène au paquet.'],
       ['Que valent mes doubles ?',
         () => 'Ils deviennent des écharpes, au tarif de la rareté : '
           + `${SCARVES.commune} pour une commune, ${SCARVES.rare} pour une rare, `

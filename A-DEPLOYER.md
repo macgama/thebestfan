@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Les cartes en grand à la fin d'un booster** (branche
+`claude/project-thread-skb2xv`, 31 octobre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Sur l'écran « TOUTES NOUVELLES / DANS LE CLASSEUR », toucher une carte
+  (Fanzzy, Ultimate, tenue, état, équipement, carte d'action, stade) l'ouvre en
+  grand avec ses caractéristiques : rareté, famille, âge, série, cri et
+  poussée, effets en jeu, coût et recharge d'une carte d'action, nouvelle ou
+  doublon. Flèches et glissé pour passer aux autres cartes, VOIR LA FICHE pour
+  un Fanzzy (ou celui qui porte la tenue), VOIR L'ULTIMATE rejoue sa scène,
+  FERMER revient au paquet.
+- Avant, le toucher ouvrait la fiche hors de l'écran (rien ne semblait se
+  passer) et rien du tout pour les autres sortes de cartes.
+- Après la mise en ligne : ouvrir un booster sur le S24+ et toucher chaque carte.
+
+---
+
 **Ultimate en tenue Préhistorique : 281 images, RP et AN** (branche
 `claude/project-thread-wq439r`, 30 octobre 2026, demande de Gaël). Construction
 seule, **sans schéma**.
