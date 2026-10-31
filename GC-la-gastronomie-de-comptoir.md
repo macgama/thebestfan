@@ -1,15 +1,14 @@
 # GC · LA GASTRONOMIE DE COMPTOIR (v2, 45 + 5)
 
 *31 octobre 2026. Série remise au modèle RP v2, AN et SU, à la demande de Gaël :
-45 personnages à trois âges et 5 légendaires (GC10 à GC14). GC1 à GC9 et GC15 à
-GC17 sont les fiches d'avant, remises au modèle (GC15, GC16 et GC17 ont
-maintenant trois âges) ; GC18 à GC50 sont nouvelles.*
+45 personnages à trois âges et 5 légendaires (GC10 à GC14). GC1 à GC9 sont les
+fiches d'avant, remises au modèle ; GC18 à GC53 sont nouvelles (GC15 à GC17,
+cartes doublons cachées du jeu, ne sont pas reprises).*
 
 Ce qu'on mange et boit debout, en trois minutes, et qu'on regrette pendant la
 deuxième mi-temps. Ce sont surtout des choses : elles ne s'améliorent pas,
 elles deviennent plus elles-mêmes, chacune dans son propre univers (volcan,
-fontaine, momie, cirque, festin, montagne, fête foraine). Trois figures de la
-buvette (la marchande, la patronne, le ramasseur) les servent.
+fontaine, momie, cirque, festin, montagne, fête foraine).
 
 ## Le modèle, appliqué à chaque fiche
 
@@ -23,69 +22,6 @@ buvette (la marchande, la patronne, le ramasseur) les servent.
 - Pas de marque, pas d'écriture, pas d'écharpe de vrai club.
 
 ---
-
-### GC15 · La Marchande de Saucisses → La Reine du Gril → La Gardienne du Feu · fond vert
-
-Celle qui n'a jamais vu un but et qui sait, au bruit, si c'était pour nous.
-
-**Fil d'évolution : le feu, du gril de la buvette à la gardienne du foyer qui nourrit la ville, l'oreille toujours tendue vers le stade.**
-
-
-```
-IDENTITÉ: A sturdy woman in her forties: a round freckled face, copper-red hair piled in a messy bun stuck with pencils, tired half-lidded hazel eyes, a small knowing smirk, decorative tattoos on her forearms. She never wears a football shirt. Her signature item is a pair of grilling tongs in steel with a red handle (#C8322F): keep exactly this colour.
-```
-
-- Âge 1 : `Everyday clothes: a red and black plaid flannel shirt with rolled sleeves, a white tea towel over one shoulder, a long worn dark grey canvas apron, faded jeans rolled at the ankle, heavy brown work boots. Standing behind an invisible grill, holding the red-handled tongs with a fat grilled sausage in them, head tilted and one ear turned toward the stadium noise, eyes half closed, listening to know if it was a goal for us.`
-- Âge 2 : `The queen of the grill: a festival grill master with a long leather apron over a red plaid shirt, a wide grill on wheels beside her full of sizzling sausages, a crown of skewers in her bun, smoke curling around her, still one ear turned toward the stadium. Aura colour: ember red.`
-- Âge 3 : `The keeper of the fire: a tall calm woman in a long robe of ember red and charcoal, a great iron hearth glowing behind her shoulders, flames dancing safely around her hands, a crown of iron forks, the white tea towel of level 1 over her shoulder, the tongs grown into a long red-handled iron staff. Aura colour: ember red.`
-- Skins :
-  - Halloween : `A friendly Cerberus of the grill: a shaggy black dog hood with floppy ears and two more plush dog heads on her shoulders, all three turned toward the stadium, a black collar with a round orange tag, the red-handled tongs holding a sausage.`
-  - Préhistorique : `A stone-age grill keeper: a hide tunic painted in red and black plaid, a long hide apron, tongs made from two bent bone strips with a red ochre handle holding a sausage, the copper bun pierced with bone pins.`
-  - Apocalyptique : `A wasteland grill keeper: a plaid shirt patched with leather, an apron cut from a truck tarp, a grill made from a wheel rim at her side, the steel tongs with their red handle wrapped in rubber tape, a spark plug stuck in her bun with the pencils.`
-
-
-
-### GC16 · La Patronne du Bar → L'Aubergiste → La Gardienne de la Taverne des Siècles · fond vert
-
-Quatre entraîneurs, deux relégations, un titre, et le même comptoir à essuyer.
-
-**Fil d'évolution : l'auberge, du comptoir du quartier à la taverne où passent tous les siècles.**
-
-
-```
-IDENTITÉ: A solid woman in her sixties: a square face with deep laugh lines, a silver-grey bob with a straight fringe, sharp grey eyes behind reading glasses on a beaded chain, thin pencilled eyebrows, a firm closed mouth. She never wears a football shirt. Her signature item is a bar cloth in mustard yellow (#E0A426) over her shoulder: keep exactly this colour.
-```
-
-- Âge 1 : `Everyday clothes: a long navy cardigan over a white blouse, a black bar apron tied at the waist, black trousers, comfortable black clogs, a ring of keys at her hip. Wiping an imaginary counter with the mustard cloth in slow circles, the other hand on her hip, looking straight at the viewer over her glasses, unimpressed, having seen everything.`
-- Âge 2 : `The innkeeper: a long navy dress with a laced bodice, a heavy apron, a big iron ring of old keys at her belt, a tray of tankards on one hand, an oil lamp hanging beside her. Aura colour: deep navy.`
-- Âge 3 : `The keeper of the tavern of the ages: a tall solid woman in a long navy robe embroidered with little clocks, a great wooden counter of carved oak behind her with travellers from every century, a lantern of many coloured glass, the reading glasses on the beaded chain of level 1, the mustard cloth grown into a long mustard shawl. Aura colour: deep navy.`
-- Skins :
-  - Halloween : `A sphinx who has seen everything: a striped gold and navy headdress over her silver bob, soft lion-paw gloves, a tufted lion tail, a short sand-coloured cape, the mustard cloth over her shoulder, unimpressed eyes over her glasses.`
-  - Préhistorique : `A stone-age hearth keeper: a long navy-dyed hide cardigan, a black fur apron, a ring of bone keys at her hip, glasses rimmed in bone, the mustard-dyed hide cloth over her shoulder.`
-  - Apocalyptique : `A wasteland bar keeper: a navy cardigan patched with leather, a tarp apron, a ring of car keys at her hip, goggles hanging from the beaded chain, the mustard cloth over her shoulder.`
-
-
-
-### GC17 · Le Ramasseur de Gobelets → Le Bâtisseur de Tours → L'Architecte des Gobelets · fond magenta
-
-Le dernier à partir, une tour de gobelets dans les bras, parce qu'il faut bien que quelqu'un le fasse.
-
-**Fil d'évolution : la tour, du bénévole du dernier quart d'heure à l'architecte des tours qui touchent le ciel.**
-
-
-```
-IDENTITÉ: A tall lanky young man: a long friendly face, a short blond beard, blond hair tied in a small top bun, round thin-rimmed glasses, a wide easy smile. He never wears a football shirt. His signature item is a tall leaning tower of stacked paper cups in kraft brown (#C9A57A): keep exactly this colour.
-```
-
-- Âge 1 : `Everyday clothes: a faded tie-dye T-shirt in blue and pink, a fluorescent yellow-green volunteer vest, beige cargo trousers rolled at the calf, brown sandals. Holding the wobbly tower of stacked cups high in one hand like a trophy, one more cup in the other hand, a relaxed proud smile, the last one in the empty stand.`
-- Âge 2 : `The tower builder: a builder's hard hat over his top bun, a tool belt full of cups, a long scarf of stacked cup sleeves, the cup tower now taller than him and perfectly straight. Aura colour: warm copper.`
-- Âge 3 : `The architect of cups: a tall gentle man in a long architect's coat of kraft brown, rolled blueprints under his arm, a whole city of cup towers rising around him like skyscrapers, little birds nesting on their tops, the round glasses of level 1, the cup tower grown into a great spiralling tower reaching the clouds. Aura colour: warm copper.`
-- Skins :
-  - Halloween : `A gentle troll of the empty stand: a shaggy hood of brown yarn hair over his top bun, big furry feet, a patched sackcloth tunic, the kraft brown cup tower held up like a bridge pillar, glasses and smile unchanged, skin colour unchanged.`
-  - Préhistorique : `A stone-age gatherer: a hide tunic dyed blue and pink, a yellow fibre sash, sandals of woven bark, a tall leaning tower of stacked clay cups in kraft brown.`
-  - Apocalyptique : `A wasteland collector: a tie-dye shirt patched with tarp, a yellow vest made from road-sign scraps, sandals cut from tyres, the kraft brown cup tower tied with bungee cords.`
-
-
 
 ### GC1 · La Merguez Carbonisée → La Merguez de la Maison → La Merguez de 1998 · fond vert
 
@@ -349,7 +285,7 @@ IDENTITÉ: A tall gentle waiter: a long kind face, tired soft eyes, a neat grey 
 
 ---
 
-## Les 33 nouveaux
+## Les 36 nouveaux
 
 ### GC18 · Le Bretzel → Le Bretzel Noué → Le Nœud des Montagnes · fond vert
 
@@ -977,3 +913,60 @@ IDENTITÉ: A living lunch box: a rectangular plastic lunch box body in bright or
   - Halloween : `A coffin lunch box with a bat.`
   - Préhistorique : `A woven basket with flatbread.`
   - Apocalyptique : `A dented tin lunch box with tape.`
+
+### GC51 · La Brochette → La Brochette du Barbecue → Le Festin de la Plaine · fond vert
+
+La brochette du stand des supporters, où il reste toujours un oignon que personne ne veut.
+
+**Fil d'évolution : la grillade, de la brochette au grand festin sous les étoiles de la plaine.**
+
+```
+IDENTITÉ: A living skewer: a wooden skewer body with chunks of grilled meat, red pepper and onion stacked like a tall body, a face on the top chunk with round cheerful eyes, short eyebrows, a small nose and a closed smile, little arms, the stick tip as a leg. He is clearly a living skewer, not a person in costume. His signature item is a chunk of red pepper (#E0352B) on his chest: keep exactly this colour.
+```
+
+- Âge 1 : `A small skewer with one onion left at the bottom, a little smoke rising, the red pepper on his chest, a proud grin.`
+- Âge 2 : `The barbecue skewer: glazed and shining, a little chef's hat, a pair of tongs as a walking stick. Aura colour: ember red.`
+- Âge 3 : `The feast of the plain: a tall figure like a great carved wooden spit over a campfire, a long feast table under the stars behind him with lanterns, the onion of level 1 still at his base, the red pepper grown into a large red lantern. Aura colour: ember red.`
+- Pose : `Facing the viewer, standing upright on his stick tip, arms by his sides, proud determined expression, mouth closed.`
+- Skins :
+  - Halloween : `A skewer with spooky marshmallows.`
+  - Préhistorique : `Meat on a sharpened bone.`
+  - Apocalyptique : `A skewer on a scrap rod.`
+
+### GC52 · Le Rösti → Le Rösti du Chalet → La Montagne Dorée de Pommes de Terre · fond vert
+
+Le rösti croustillant du stand suisse, servi dans une poêle, qu'on mange avec les doigts.
+
+**Fil d'évolution : le chalet, de la galette de pommes de terre à la grande montagne des récoltes.**
+
+```
+IDENTITÉ: A living rösti: a round crispy potato cake body in golden brown (#C9873A) with crunchy edges, a face on the cake with round warm eyes, short eyebrows, a small nose and a closed smile, short arms and legs. She is clearly a living rösti, not a person in costume. Her signature item is a small cast iron pan with a handle in bright red (#C8102E): keep exactly this colour.
+```
+
+- Âge 1 : `A small rösti with one burnt edge, sitting in the red-handled pan, steam rising, a cosy smile.`
+- Âge 2 : `The chalet rösti: a fried egg on top like a hat, a checked cloth cape, a little wooden spatula. Aura colour: warm amber.`
+- Âge 3 : `The mountain of potatoes: a tall mountain figure with a body of crispy potato terraces, little farmers harvesting on her slopes, a chalet and cows at her feet, the burnt edge of level 1 still visible, the pan grown into a large red-handled pan held like a shield. Aura colour: warm amber.`
+- Pose : `Facing the viewer, standing upright on her short legs, arms by her sides, proud determined expression, mouth closed.`
+- Skins :
+  - Halloween : `A spooky rösti with a pumpkin egg.`
+  - Préhistorique : `A potato cake on a hot stone.`
+  - Apocalyptique : `A rösti in a scrap pan.`
+
+### GC53 · Le Taco → Le Taco du Food-Truck → La Fiesta · fond vert
+
+Le taco du food-truck garé devant le stade, qui perd la moitié de sa garniture à la première bouchée.
+
+**Fil d'évolution : la fête, du taco qui déborde à la grande fiesta de la place.**
+
+```
+IDENTITÉ: A living taco: a folded yellow corn tortilla body (#F2C21B) filled with meat, red tomato and white cheese peeking out like hair, a face on the shell with round joyful eyes, short eyebrows, a small nose and a closed smile, short arms and legs. He is clearly a living taco, not a person in costume. His signature item is a drizzle of red salsa (#D63A3A) on his top: keep exactly this colour.
+```
+
+- Âge 1 : `A small taco with filling falling out, red salsa dripping, a joyful surprised look.`
+- Âge 2 : `The food-truck taco: in a little paper boat, a lime wedge as a hat, a maraca in his hand. Aura colour: fiesta red.`
+- Âge 3 : `The fiesta: a tall festive figure in a long poncho of bright stripes, paper flags and lanterns strung around him, a village square with dancers, the falling filling of level 1 still spilling out, the salsa grown into a red ribbon swirling around him. Aura colour: fiesta red.`
+- Pose : `Facing the viewer, standing upright on his short legs, arms by his sides, proud determined expression, mouth closed.`
+- Skins :
+  - Halloween : `A spooky taco with bat chips.`
+  - Préhistorique : `A corn cake wrapped around meat.`
+  - Apocalyptique : `A taco in a scrap tray.`

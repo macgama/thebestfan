@@ -1,9 +1,9 @@
 # HC · LES HÉROS DU CANAPÉ (v2, 45 + 5)
 
 *31 octobre 2026. Série remise au modèle RP v2, AN et SU, à la demande de Gaël :
-45 personnages à trois âges et 5 légendaires (HC10 à HC14). HC1 à HC9, HC15 et
-HC16 sont les fiches d'avant, remises au modèle (HC16 a maintenant trois âges) ;
-HC17 à HC50 sont nouvelles.*
+45 personnages à trois âges et 5 légendaires (HC10 à HC14). HC1 à HC9 et HC15 sont
+les fiches d'avant, remises au modèle ; HC17 à HC51 sont nouvelles (HC16, carte
+doublon cachée du jeu, n'est pas reprise).*
 
 Ceux qui ne sont pas au stade et qui en parlent le plus fort. La série ne se
 moque pas d'eux. Leur montée est une descente du volume : ils effacent moins,
@@ -43,25 +43,6 @@ IDENTITÉ: A sturdy woman in her fifties: round cheerful face, short grey-streak
   - Halloween : `A playful banshee: a long tattered lilac-grey gown with trailing sleeves (or a tattered gown over her tail at the higher levels), her hair teased wild with a white streak, her rain poncho turned into a cobwebby ghostly shawl, the cobalt microphone wrapped in black lace.`
   - Préhistorique : `A stone-age caller of the valley: a rain cape of oiled hide instead of plastic, a tunic of navy-dyed wool, the cobalt microphone carved from cobalt-blue painted stone with a round fur windscreen, and at the higher levels a gown of stone beads, a tail of cobalt-dyed fish-skin leather and a crown of shells and bone.`
   - Apocalyptique : `A wasteland broadcaster: a rain poncho cut from a clear tarp with chrome grommets, yellow boots patched with tyre rubber, the cobalt microphone with a windscreen cut from an air filter, and at the higher levels a gown and tail plated with cobalt-painted car-door panels and chrome radio dials, a crown of car aerials and spark plugs.`
-
-### HC16 · La Streameuse → La Streameuse du Virage → La Reporter des Tribunes · fond magenta
-
-La jeune streameuse qui filme la tribune plus que le terrain.
-
-**Fil d'évolution : la reporter de tribune, du téléphone levé à la grande reporter du virage.**
-
-
-```
-IDENTITÉ: A slim young woman streamer: bubblegum-pink hair in two space buns with a black-and-white split streak on one side, blunt pink fringe, big brown eyes with long lashes, small sticker decorations on one cheek, a wide bright smile with dimples. Slim, lively build. She never wears a football shirt. Her signature item is a selfie stick with a black pole and a round ring light in warm white (#F4F1EA) around a phone: keep exactly this colour.
-```
-
-- Âge 1 : `Everyday clothes: a cropped green-and-white horizontally striped tee, black fishnet sleeves, layered silver chains, wide olive-khaki cargo trousers with a beige belt bag, pastel lilac and white chunky sneakers, beaded bracelets. Holding the ring-light selfie stick high above her shoulder, the phone turned back towards the stands behind her rather than the pitch, a tiny clip-on microphone on her collar, belt bag full of cables, eager and quick.`
-- Âge 2 : `A stand reporter: a pink and black bomber jacket over her striped tee, a camera rig on a shoulder harness, a headset with a boom microphone, a utility belt of cables and batteries, the ring-light stick now big with a bright warm ring. Aura colour: bubblegum pink.`
-- Âge 3 : `The reporter of the stands: a tall striking woman in a long pink and black coat covered in small screens showing only colours, a crown of ring lights and small cameras rising above her head, a long cape of braided cables held close to her body, the beaded bracelets of level 1 on her wrists, the selfie stick grown into a great staff topped with a huge warm-white ring light. Aura colour: bubblegum pink.`
-- Skins :
-  - Halloween : `A paranormal ghost hunter: a khaki vest covered in pockets, a headlamp over her space buns, a small plush ghost riding on her shoulder, the ring light pointed at the shadows as if to catch a spirit on camera.`
-  - Préhistorique : `A stone-age chronicler: her hair in two buns held by bone pins, a striped hide top, bracelets of bone beads, the selfie stick a wooden pole topped with a ring of polished white shell around a flat stone.`
-  - Apocalyptique : `A wasteland streamer: space buns held with spark plugs, a crop top patched from seat fabric, cargo trousers with a motorbike tool pouch, chunky biker boots, the selfie stick a car antenna with a warm-white ring cut from a round car headlamp.`
 
 ### HC1 · L'Expert Tactique Twitter → Celui Qui N'Efface Plus → L'Analyste du Club · fond vert
 
@@ -322,7 +303,7 @@ IDENTITÉ: A young woman: a heart-shaped face, sleepy but bright dark eyes, a sm
 
 ---
 
-## Les 34 nouveaux
+## Les 35 nouveaux
 
 ### HC17 · Le Canapé → Le Canapé du Salon → Le Trône du Dimanche · fond vert
 
@@ -361,43 +342,43 @@ IDENTITÉ: A small lively grandmother in her late seventies: light skin, a round
   - Préhistorique : `A cave grandmother: a fur shawl, a carved stone cup.`
   - Apocalyptique : `A wasteland grandmother: a patched coat, a dented tin mug.`
 
-### HC19 · Le Chat Sur le Canapé → Le Chat de la Maison → Le Chat des Contes · fond vert
+### HC19 · La Télécommande → La Télécommande Universelle → Le Sceptre des Chaînes · fond vert
 
-Le chat qui dort sur la télécommande pendant les penaltys et qui saute à chaque but.
+La télécommande qu'on ne retrouve jamais au coup d'envoi, toujours coincée entre deux coussins.
 
-**Fil d'évolution : le chat, du coussin au grand chat de conte qui veille sur les nuits de match.**
-
-```
-IDENTITÉ: A living tabby cat standing upright: soft striped fur in ginger and cream, a round face with big amber eyes, long white whiskers, a pink nose, one ear slightly bent, a long striped tail, soft paws. He is clearly a living cat, not a person in costume. His signature item is a little bell collar in bright red (#E0352B): keep exactly this colour.
-```
-
-- Âge 1 : `A small sleepy tabby cat stretching, the little red bell collar around his neck, one paw on a remote control, a half-closed eye.`
-- Âge 2 : `The cat of the house: a bigger proud tabby with fluffy cheeks, a little patchwork cushion on his back like a saddle, a ball of wool tucked under his arm, the red bell now shining. Aura colour: warm red.`
-- Âge 3 : `The cat of the tales: a tall majestic tabby in a long velvet cape, big leather boots, a wide feathered hat, a lantern in one paw, a crescent moon embroidered on his cape, the bent ear of level 1, the bell grown into a large red bell hanging from his chest like a medal. Aura colour: warm red.`
-- Pose : `Facing the viewer, standing upright on his hind paws, front paws by his sides, proud determined expression, mouth closed.`
-- Skins :
-  - Halloween : `A black cat: a witch's hat, glowing eyes, a pumpkin bell.`
-  - Préhistorique : `A sabre-tooth kitten: thick fur, little fangs, a stone bell.`
-  - Apocalyptique : `A wasteland cat: patchy fur, goggles, a bottle-cap bell.`
-
-### HC20 · Le Paquet de Chips → Le Grand Paquet → Le Festin · fond vert
-
-Le paquet de chips ouvert au coup d'envoi et vide à la mi-temps.
-
-**Fil d'évolution : le banquet, du petit paquet au grand festin qu'on partage.**
+**Fil d'évolution : le pouvoir, de la télécommande perdue au sceptre qui commande toutes les chaînes.**
 
 ```
-IDENTITÉ: A living crisp packet: a crinkly foil packet body in bright yellow (#F2C21B) with a simple wavy pattern and no words, a face on the front with round greedy eyes, bushy eyebrows, a small nose and a closed grin, crumpled corners like ears, short arms and legs. He is clearly a living crisp packet, not a person in costume. His signature item is a single giant crisp in golden orange (#E8962C), held in his hand: keep exactly this colour.
+IDENTITÉ: A living TV remote: a long black plastic remote body (#2A2A2A) with rows of round buttons on his chest, a small face at the top with round mischievous eyes, short eyebrows, a small nose and a closed smile, thin arms and legs. He is clearly a living remote control, not a person in costume. His signature item is a big round power button in bright red (#E0352B) on his chest: keep exactly this colour.
 ```
 
-- Âge 1 : `A small crisp packet torn open at the top, crumbs on his chin, holding the single orange crisp, a little guilty smile.`
-- Âge 2 : `A party-size crisp packet: a big round body, a napkin tucked in like a bib, a bowl of dips in his arms, the crisp now a stack of crisps. Aura colour: bright orange.`
-- Âge 3 : `The feast: a giant figure dressed as a jovial banquet host, a long apron, a tall chef's hat, a huge serving tray of crisps, snacks and sandwiches held high above his head, the torn top of level 1 still on his head, the crisp grown into a huge crisp used as a fan. Aura colour: bright orange.`
+- Âge 1 : `A small remote stuck between two sofa cushions, one button missing, the red power button on his chest, peeking out with a cheeky look.`
+- Âge 2 : `The universal remote: shiny new buttons glowing softly, a little antenna on his head, a wrist strap like a scarf. Aura colour: bright red.`
+- Âge 3 : `The sceptre of channels: a tall regal figure like a great sceptre of black and silver, little glowing screens orbiting him like planets, a crown of buttons, the missing button of level 1 still a small gap on his chest, the power button grown into a large red jewel. Aura colour: bright red.`
 - Pose : `Facing the viewer, standing upright on his short legs, arms by his sides, proud determined expression, mouth closed.`
 - Skins :
-  - Halloween : `A trick-or-treat bag: a pumpkin pattern, candy crumbs.`
-  - Préhistorique : `A leaf bundle of roasted roots tied with a vine.`
-  - Apocalyptique : `A ration pack: a dented tin and a scrap label without words.`
+  - Halloween : `A haunted remote with glowing buttons.`
+  - Préhistorique : `A carved stick with pebble buttons.`
+  - Apocalyptique : `A scrap remote with tape and wires.`
+
+### HC20 · La Box Internet → La Box qui Clignote → La Tour des Réseaux · fond vert
+
+La box internet qui redémarre toute seule à la 88e minute, au pire moment.
+
+**Fil d'évolution : le réseau, de la petite box qui clignote à la grande tour qui relie toutes les maisons.**
+
+```
+IDENTITÉ: A living internet router: a flat white box body (#F4F1EA) with two little antennas like ears, a row of small lights on the front, a face with round nervous eyes, short eyebrows, a small nose and a closed smile, short arms and legs. He is clearly a living router, not a person in costume. His signature item is a row of status lights in bright blue (#2C7BE5): keep exactly this colour.
+```
+
+- Âge 1 : `A small router with one light blinking, a tangle of cables at his feet, looking very nervous.`
+- Âge 2 : `The blinking router: all his blue lights steady, cables neatly tied, a little shield of signal waves around him. Aura colour: electric blue.`
+- Âge 3 : `The tower of networks: a tall glowing tower figure with rings of blue light rising around him, little houses connected to him by threads of light, the tangle of cables of level 1 at his feet, his status lights grown into a crown of blue lights. Aura colour: electric blue.`
+- Pose : `Facing the viewer, standing upright on his short legs, arms by his sides, proud determined expression, mouth closed.`
+- Skins :
+  - Halloween : `A haunted router with a bat antenna.`
+  - Préhistorique : `A wooden box with shell lights.`
+  - Apocalyptique : `A scrap router with tape.`
 
 ### HC21 · Le Joueur de Console → Le Champion du Salon → Le Chevalier Pixel · fond vert
 
@@ -435,24 +416,24 @@ IDENTITÉ: A confident woman in her thirties: dark skin, an oval face, sharp dar
   - Préhistorique : `A cave storyteller: a fur dress, a carved horn as microphone.`
   - Apocalyptique : `A pirate radio host: a patched jacket, a scrap microphone.`
 
-### HC23 · Le Pyjama → Le Pyjama de Nuit → Le Marchand de Sable · fond vert
+### HC23 · Le Plaid → Le Plaid du Dimanche → La Grande Couverture du Monde · fond vert
 
-Le pyjama du match de 3 heures du matin, à l'autre bout du monde.
+Le plaid à carreaux sous lequel toute la famille regarde le match d'hiver, et qu'on se dispute à la mi-temps.
 
-**Fil d'évolution : le sommeil, du pyjama froissé au marchand de sable qui veille les nuits blanches.**
+**Fil d'évolution : la chaleur, du plaid sur le canapé à la grande couverture qui réchauffe tout le monde.**
 
 ```
-IDENTITÉ: A living pyjama: a soft flannel pyjama top and trousers in navy blue (#1F3A6B) with little white stars, standing up by themselves, a round pillow-like face where the collar is with sleepy half-closed eyes, soft eyebrows, a small nose and a closed yawning smile, empty sleeves as arms. He is clearly a living pyjama, not a person in costume. His signature item is a nightcap in bright red (#E0352B) with a white pompom: keep exactly this colour.
+IDENTITÉ: A living tartan blanket: a soft folded blanket body in red and dark blue tartan (#B3172E) with fringes, a face in the fold with round cosy eyes, soft eyebrows, a small nose and a closed smile, fringed corners as hands and feet. She is clearly a living blanket, not a person in costume. Her signature item is a hot water bottle in bright orange (#F07A22) in her arms: keep exactly this colour.
 ```
 
-- Âge 1 : `A crumpled pyjama with one button undone, the red nightcap flopping over one eye, a tiny alarm clock under his arm, very sleepy.`
-- Âge 2 : `A night watchman pyjama: a dressing gown over his shoulders, a little candle lantern, warm slippers, the red nightcap standing proud. Aura colour: midnight blue.`
-- Âge 3 : `The sandman: a tall dreamy figure in a long robe of navy flannel full of glowing stars, a sack of shimmering sand over his shoulder, a crescent moon resting on his back, the undone button of level 1 still on his chest, the nightcap grown into a long red nightcap trailing behind him like a banner. Aura colour: midnight blue.`
-- Pose : `Facing the viewer, standing upright, empty sleeves by his sides, proud determined expression, mouth closed.`
+- Âge 1 : `A small folded tartan blanket with one frayed fringe, holding the orange hot water bottle, a cosy smile.`
+- Âge 2 : `The Sunday blanket: unfolded like a cape, a mug of cocoa, a little cushion friend, the hot water bottle in a knitted cover. Aura colour: warm red.`
+- Âge 3 : `The great blanket of the world: a tall figure wrapped in an immense tartan blanket spread over little rooftops and hills like a quilt, snow falling around, warm windows glowing beneath, the frayed fringe of level 1, the hot water bottle grown into a large orange glowing heart. Aura colour: warm red.`
+- Pose : `Facing the viewer, standing upright on her fringed corners, arms by her sides, proud determined expression, mouth closed.`
 - Skins :
-  - Halloween : `A ghost pyjama: a pale glow, a cap with a little pumpkin.`
-  - Préhistorique : `A fur sleeping wrap with a hide nightcap.`
-  - Apocalyptique : `A sleeping-bag pyjama: patched nylon, a beanie of sacking.`
+  - Halloween : `A ghost blanket with a spooky glow.`
+  - Préhistorique : `A blanket of furs.`
+  - Apocalyptique : `A blanket of patched tarp.`
 
 ### HC24 · La Coloc Qui Dort → La Coloc Réveillée → La Belle du Bois Éveillée · fond vert
 
@@ -860,42 +841,41 @@ IDENTITÉ: A living VHS tape: a rectangular black plastic cassette body (#2A2A2A
   - Préhistorique : `A carved stone tablet with a vine ribbon.`
   - Apocalyptique : `A melted scrap cassette with tape.`
 
-### HC46 · La Tricoteuse du Salon → La Tricoteuse des Écharpes → La Fileuse des Étoiles · fond vert
+### HC46 · Le Frère Qui Spoile → Le Frère Repenti → Le Gardien des Secrets · fond vert
 
-Celle qui tricote une maille par minute de match, et qui a fini une écharpe à la prolongation.
+Le grand frère qui a vu le résultat sur son téléphone et qui le dit à tout le monde avant la rediffusion.
 
-**Fil d'évolution : le fil, de la pelote à la fileuse qui tisse le ciel.**
+**Fil d'évolution : le secret, du frère qui ne sait pas se taire au gardien qui garde tous les secrets.**
 
 ```
-IDENTITÉ: A calm woman in her sixties: brown skin, a round gentle face, soft dark eyes behind reading glasses on a chain, a small smile, short grey curls. Round, comfortable build. She never wears a football shirt. Her signature item is a ball of wool in bright teal (#1BA6A6): keep exactly this colour.
+IDENTITÉ: A lanky teenage boy of seventeen: light brown skin, a long face, sparkling mischievous dark eyes, a big grin, messy curly black hair. Tall, thin build. He never wears a football shirt. His signature item is a smartphone with a cover in bright orange (#F07A22): keep exactly this colour.
 ```
 
-- Âge 1 : `Everyday clothes: a cream cable-knit jumper, a plaid skirt, woollen socks, sheepskin slippers. Knitting with two needles, the teal ball of wool on her lap, glancing at a television.`
-- Âge 2 : `The knitter of scarves: a long patchwork knitted cardigan, a basket of wool balls of many colours, a long unfinished plain scarf over her shoulder, the teal ball now huge. Aura colour: bright teal.`
-- Âge 3 : `The spinner of the stars: a tall serene woman at a spinning wheel made of moonlight, a long robe of woven teal threads, threads of starlight spinning from her fingers into constellations, the reading glasses of level 1 on their chain, the ball of wool grown into a huge glowing teal sphere floating beside her. Aura colour: bright teal.`
+- Âge 1 : `Everyday clothes: a grey hoodie, black joggers, slides with socks. Holding up the orange phone, about to tell the result, a mischievous grin.`
+- Âge 2 : `The repentant brother: a finger on his lips, the phone turned face down in his pocket, a little zip drawn on his hoodie, a guilty smile. Aura colour: bright orange.`
+- Âge 3 : `The keeper of secrets: a tall young man in a long hooded cloak of deep orange and black, a great locked chest of glowing secrets behind him, little keys floating around him, the slides of level 1 on his feet, the phone grown into a large orange tablet sealed with a ribbon. Aura colour: bright orange.`
 - Skins :
-  - Halloween : `A spider knitter: a cobweb shawl, a pumpkin ball of wool.`
-  - Préhistorique : `A cave weaver: a fur dress, a bundle of plant fibre.`
-  - Apocalyptique : `A wasteland knitter: a patched cardigan, a ball of cable.`
+  - Halloween : `A ghost brother with a skull phone.`
+  - Préhistorique : `A cave boy with a stone tablet.`
+  - Apocalyptique : `A wasteland boy with a scrap phone.`
 
-### HC47 · Le Chien Qui Aboie au But → Le Chien de Garde → Le Grand Loup des Collines · fond vert
+### HC47 · Le Voisin du Dessous → Le Voisin Qui Monte → L'Ami de l'Immeuble · fond vert
 
-Le chien qui aboie à chaque but sans savoir pourquoi, et qui saute sur le canapé avec tout le monde.
+Le voisin du dessous qui tape au plafond avec son balai à chaque but, et qui finit par monter regarder le match.
 
-**Fil d'évolution : la meute, du chien du salon au grand loup qui garde les collines.**
+**Fil d'évolution : le voisinage, du balai contre le plafond à l'ami qui réunit tout l'immeuble.**
 
 ```
-IDENTITÉ: A living dog standing upright: a fluffy beagle-like dog with brown, black and white fur, a round face with big brown eyes, long floppy ears, a black nose, a wagging tail, soft paws. He is clearly a living dog, not a person in costume. His signature item is a collar in bright blue (#2C7BE5) with a round tag: keep exactly this colour.
+IDENTITÉ: A grumpy man in his sixties: light skin, a square face, small frowning grey eyes, a big grey moustache, a bald head with tufts of grey hair. Stocky build. He never wears a football shirt. His signature item is a broom with bright red bristles (#E0352B): keep exactly this colour.
 ```
 
-- Âge 1 : `A small excited beagle mid-bark, the blue collar around his neck, one ear flipped inside out, tail wagging fast.`
-- Âge 2 : `The guard dog: a bigger proud dog with a little padded vest, a ball in his paw, a bandana tied to his collar, alert ears. Aura colour: electric blue.`
-- Âge 3 : `The great wolf of the hills: a tall noble wolf-dog with a thick silver and brown mane, a long cloak of night blue, a crescent moon behind his shoulders, hills and pine trees at his feet, the flipped ear of level 1, the collar grown into a large blue torc around his neck. Aura colour: electric blue.`
-- Pose : `Facing the viewer, standing upright on his hind paws, front paws by his sides, proud determined expression, mouth closed.`
+- Âge 1 : `Everyday clothes: a striped bathrobe over pyjamas, checked slippers, a hairnet. Tapping the ceiling with the red broom, a grumpy frown.`
+- Âge 2 : `The neighbour who comes up: the broom on his shoulder, a bottle of lemonade and a bowl of crisps in his hands, a small shy smile. Aura colour: warm red.`
+- Âge 3 : `The friend of the building: a tall smiling man in a long warm cardigan, an apartment building with all its windows lit behind him, neighbours waving from the balconies, the checked slippers of level 1, the broom grown into a tall red-bristled banner pole. Aura colour: warm red.`
 - Skins :
-  - Halloween : `A werewolf pup: glowing eyes, a pumpkin collar.`
-  - Préhistorique : `A wild wolf pup: thick fur, a collar of bone.`
-  - Apocalyptique : `A wasteland dog: patchy fur, goggles, a scrap collar.`
+  - Halloween : `A ghost neighbour with a cobweb broom.`
+  - Préhistorique : `A cave neighbour with a twig broom.`
+  - Apocalyptique : `A wasteland neighbour with a scrap broom.`
 
 ### HC48 · La Doubleuse de Jeux Vidéo → La Voix des Héros → La Voix aux Mille Visages · fond vert
 
@@ -915,24 +895,24 @@ IDENTITÉ: An expressive woman in her thirties: light olive skin, a long mobile 
   - Préhistorique : `A cave storyteller: a fur dress, a horn megaphone.`
   - Apocalyptique : `A wasteland voice: a patched coat, scrap headphones.`
 
-### HC49 · La Lampe de Salon → La Lampe du Soir → La Lanterne des Rêves · fond vert
+### HC49 · Le Ventilateur → Le Ventilateur d'Été → L'Esprit du Vent Frais · fond vert
 
-La lampe qu'on éteint pour « faire comme au stade » quand le match commence.
+Le ventilateur du match d'été, qui tourne la tête vers tout le monde sauf vers soi.
 
-**Fil d'évolution : la lumière, de la lampe de salon à la lanterne qui éclaire les rêves.**
+**Fil d'évolution : la brise, du ventilateur du salon à l'esprit qui rafraîchit les soirs d'été.**
 
 ```
-IDENTITÉ: A living floor lamp: a tall thin lamp body in brass, a round fabric lampshade in warm cream (#F2E2C0) as her head with a face of round kind eyes, thin eyebrows, a small nose and a closed smile, a little pull chain on her side like a hand, a round base as feet. She is clearly a living lamp, not a person in costume. Her signature item is her bulb glow in warm yellow (#FFD86B), soft and close to her shade: keep exactly this colour.
+IDENTITÉ: A living electric fan: a round cage head in white with three blue blades (#5BB4E5), a face on the centre with round cheerful eyes, short eyebrows, a small nose and a closed smile, a thin stand body, a round base as feet, thin arms. He is clearly a living fan, not a person in costume. His signature item is a ribbon in bright pink (#E8559A) tied to his cage, fluttering: keep exactly this colour.
 ```
 
-- Âge 1 : `A small floor lamp with a tilted shade, her glow dimmed, the pull chain in her hand, a little shy.`
-- Âge 2 : `The lamp of the evening: a fringed lampshade like a skirt, a little dimmer knob on her base, a moth fluttering near her, her glow warm. Aura colour: warm yellow.`
-- Âge 3 : `The lantern of dreams: a tall elegant figure like a grand paper lantern of cream and soft yellow, little floating lanterns rising around her, a crown of glowing fireflies, the tilted shade of level 1 as her hat, her glow soft and close to her shade. Aura colour: warm yellow.`
-- Pose : `Facing the viewer, standing upright on her round base, arms by her sides, proud determined expression, mouth closed.`
+- Âge 1 : `A small fan turning his head side to side, the pink ribbon fluttering, a little wobbly on his base.`
+- Âge 2 : `The summer fan: blades spinning fast, a little paper umbrella in his cage, cool air with a few leaves around him. Aura colour: sky blue.`
+- Âge 3 : `The spirit of the cool breeze: a tall graceful figure with a great round head of spinning blue petals like a flower, swirls of cool wind and dandelion seeds around him, a summer night sky behind, the wobble of level 1 still in his base, the ribbon grown into long pink streamers. Aura colour: sky blue.`
+- Pose : `Facing the viewer, standing upright on his round base, thin arms by his sides, proud determined expression, mouth closed.`
 - Skins :
-  - Halloween : `A haunted lamp: a torn shade, a little bat inside.`
-  - Préhistorique : `A stone oil lamp with a small flame.`
-  - Apocalyptique : `A scrap lamp: a tin can shade, wires and tape.`
+  - Halloween : `A haunted fan with bat blades.`
+  - Préhistorique : `A palm-leaf fan on a stick.`
+  - Apocalyptique : `A scrap fan with tape.`
 
 ### HC50 · Le Retraité au Jardin → Le Jardinier du Dimanche → Le Gardien du Verger · fond magenta
 
@@ -951,3 +931,21 @@ IDENTITÉ: A sturdy old man in his seventies: light tanned skin, a square weathe
   - Halloween : `A scarecrow gardener: a stitched face, a pumpkin watering can.`
   - Préhistorique : `A cave gatherer: a fur tunic, a gourd of water.`
   - Apocalyptique : `A wasteland gardener: a patched coat, a scrap can.`
+
+### HC51 · La Tante au Téléphone → La Tante Connectée → La Voix des Familles · fond vert
+
+La tante qui appelle pendant chaque match pour demander le score, et qui raconte toute sa semaine.
+
+**Fil d'évolution : la famille, du téléphone qui sonne au mauvais moment à la voix qui relie toute la famille.**
+
+```
+IDENTITÉ: A chatty woman in her fifties: light olive skin, a round face, bright laughing brown eyes, red lipstick, big curly dark hair. Round, lively build. She never wears a football shirt. Her signature item is a landline phone receiver in bright red (#E0352B) on a curly cord: keep exactly this colour.
+```
+
+- Âge 1 : `Everyday clothes: a patterned blouse, a black skirt, big hoop earrings, slippers. Talking into the red receiver, one hand waving, laughing, the curly cord wound around her arm.`
+- Âge 2 : `The connected aunt: a smartphone in each hand, a headset, a little photo album of the family, still chatting. Aura colour: warm coral.`
+- Âge 3 : `The voice of families: a tall warm woman in a long coral robe, glowing threads of voices connecting little houses around her, family photographs floating like stars, the curly cord of level 1 around her arm, the receiver grown into a large red receiver like a sceptre. Aura colour: warm coral.`
+- Skins :
+  - Halloween : `A witch aunt with a cauldron phone.`
+  - Préhistorique : `A cave aunt with a shell phone.`
+  - Apocalyptique : `A wasteland aunt with a scrap phone.`

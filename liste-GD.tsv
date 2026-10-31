@@ -80,33 +80,15 @@ GD9-pl-e2B	GD9-e2-base-planche-B	GD9-e2	vert
 GD9-e3	GD9C	GD9-e2,GD9-e1	vert
 GD9-pl-e3A	GD9-e3-base-planche-A	GD9-e3	vert
 GD9-pl-e3B	GD9-e3-base-planche-B	GD9-e3	vert
-GD13-e1	GD13		magenta
-GD13-pl-e1A	GD13-e1-base-planche-A	GD13-e1	magenta
-GD13-pl-e1B	GD13-e1-base-planche-B	GD13-e1	magenta
-GD13-e2	GD13B	GD13-e1	magenta
-GD13-pl-e2A	GD13-e2-base-planche-A	GD13-e2	magenta
-GD13-pl-e2B	GD13-e2-base-planche-B	GD13-e2	magenta
-GD13-e3	GD13C	GD13-e2,GD13-e1	magenta
-GD13-pl-e3A	GD13-e3-base-planche-A	GD13-e3	magenta
-GD13-pl-e3B	GD13-e3-base-planche-B	GD13-e3	magenta
-GD14-e1	GD14		vert
-GD14-pl-e1A	GD14-e1-base-planche-A	GD14-e1	vert
-GD14-pl-e1B	GD14-e1-base-planche-B	GD14-e1	vert
-GD14-e2	GD14B	GD14-e1	vert
-GD14-pl-e2A	GD14-e2-base-planche-A	GD14-e2	vert
-GD14-pl-e2B	GD14-e2-base-planche-B	GD14-e2	vert
-GD14-e3	GD14C	GD14-e2,GD14-e1	vert
-GD14-pl-e3A	GD14-e3-base-planche-A	GD14-e3	vert
-GD14-pl-e3B	GD14-e3-base-planche-B	GD14-e3	vert
 GD10-e1	GD10		vert
 GD10-pl-e1A	GD10-e1-base-planche-A	GD10-e1	vert
 GD10-pl-e1B	GD10-e1-base-planche-B	GD10-e1	vert
 GD11-e1	GD11		vert
 GD11-pl-e1A	GD11-e1-base-planche-A	GD11-e1	vert
 GD11-pl-e1B	GD11-e1-base-planche-B	GD11-e1	vert
-GD12-e1	GD12		vert
-GD12-pl-e1A	GD12-e1-base-planche-A	GD12-e1	vert
-GD12-pl-e1B	GD12-e1-base-planche-B	GD12-e1	vert
+GD14-e1	GD14		vert
+GD14-pl-e1A	GD14-e1-base-planche-A	GD14-e1	vert
+GD14-pl-e1B	GD14-e1-base-planche-B	GD14-e1	vert
 GD15-e1	GD15		vert
 GD15-pl-e1A	GD15-e1-base-planche-A	GD15-e1	vert
 GD15-pl-e1B	GD15-e1-base-planche-B	GD15-e1	vert
@@ -419,3 +401,21 @@ GD50-pl-e2B	GD50-e2-base-planche-B	GD50-e2	vert
 GD50-e3	GD50C	GD50-e2,GD50-e1	vert
 GD50-pl-e3A	GD50-e3-base-planche-A	GD50-e3	vert
 GD50-pl-e3B	GD50-e3-base-planche-B	GD50-e3	vert
+GD51-e1	GD51		vert
+GD51-pl-e1A	GD51-e1-base-planche-A	GD51-e1	vert
+GD51-pl-e1B	GD51-e1-base-planche-B	GD51-e1	vert
+GD51-e2	GD51B	GD51-e1	vert
+GD51-pl-e2A	GD51-e2-base-planche-A	GD51-e2	vert
+GD51-pl-e2B	GD51-e2-base-planche-B	GD51-e2	vert
+GD51-e3	GD51C	GD51-e2,GD51-e1	vert
+GD51-pl-e3A	GD51-e3-base-planche-A	GD51-e3	vert
+GD51-pl-e3B	GD51-e3-base-planche-B	GD51-e3	vert
+GD52-e1	GD52		vert
+GD52-pl-e1A	GD52-e1-base-planche-A	GD52-e1	vert
+GD52-pl-e1B	GD52-e1-base-planche-B	GD52-e1	vert
+GD52-e2	GD52B	GD52-e1	vert
+GD52-pl-e2A	GD52-e2-base-planche-A	GD52-e2	vert
+GD52-pl-e2B	GD52-e2-base-planche-B	GD52-e2	vert
+GD52-e3	GD52C	GD52-e2,GD52-e1	vert
+GD52-pl-e3A	GD52-e3-base-planche-A	GD52-e3	vert
+GD52-pl-e3B	GD52-e3-base-planche-B	GD52-e3	vert

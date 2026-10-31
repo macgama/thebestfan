@@ -8,15 +8,6 @@ HC15-pl-e2B	HC15-e2-base-planche-B	HC15-e2	vert
 HC15-e3	HC15C	HC15-e2,HC15-e1	vert
 HC15-pl-e3A	HC15-e3-base-planche-A	HC15-e3	vert
 HC15-pl-e3B	HC15-e3-base-planche-B	HC15-e3	vert
-HC16-e1	HC16		magenta
-HC16-pl-e1A	HC16-e1-base-planche-A	HC16-e1	magenta
-HC16-pl-e1B	HC16-e1-base-planche-B	HC16-e1	magenta
-HC16-e2	HC16B	HC16-e1	magenta
-HC16-pl-e2A	HC16-e2-base-planche-A	HC16-e2	magenta
-HC16-pl-e2B	HC16-e2-base-planche-B	HC16-e2	magenta
-HC16-e3	HC16C	HC16-e2,HC16-e1	magenta
-HC16-pl-e3A	HC16-e3-base-planche-A	HC16-e3	magenta
-HC16-pl-e3B	HC16-e3-base-planche-B	HC16-e3	magenta
 HC1-e1	HC1		vert
 HC1-pl-e1A	HC1-e1-base-planche-A	HC1-e1	vert
 HC1-pl-e1B	HC1-e1-base-planche-B	HC1-e1	vert
@@ -419,3 +410,12 @@ HC50-pl-e2B	HC50-e2-base-planche-B	HC50-e2	magenta
 HC50-e3	HC50C	HC50-e2,HC50-e1	magenta
 HC50-pl-e3A	HC50-e3-base-planche-A	HC50-e3	magenta
 HC50-pl-e3B	HC50-e3-base-planche-B	HC50-e3	magenta
+HC51-e1	HC51		vert
+HC51-pl-e1A	HC51-e1-base-planche-A	HC51-e1	vert
+HC51-pl-e1B	HC51-e1-base-planche-B	HC51-e1	vert
+HC51-e2	HC51B	HC51-e1	vert
+HC51-pl-e2A	HC51-e2-base-planche-A	HC51-e2	vert
+HC51-pl-e2B	HC51-e2-base-planche-B	HC51-e2	vert
+HC51-e3	HC51C	HC51-e2,HC51-e1	vert
+HC51-pl-e3A	HC51-e3-base-planche-A	HC51-e3	vert
+HC51-pl-e3B	HC51-e3-base-planche-B	HC51-e3	vert

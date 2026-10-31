@@ -1,0 +1,19 @@
+Character sheet of the same character as the reference image.
+
+Stylised 3D animated-film rendering with a premium game-hero finish: slightly caricatured proportions, expressive face, a bold silhouette readable at thumbnail size, rich material detail on fabric, leather, fur, metal and paint, warm key light and a bright rim light.
+
+A small, skinny alien tourist: smooth lime green skin, a big round head, three large round eyes with black pupils, a tiny worried mouth, two thin antennae with blue ball tips. A loose royal blue T-shirt with orange and white sleeve stripes, black shorts, white socks, brown flip-flop sandals. He holds a phone and a hot-dog. His signature item is the hot-dog in mustard yellow and sausage red (#E0A52A): keep exactly this colour.
+
+The lord of street food, a giant from beyond the sky: a towering alien with a huge round belly and broad soft shoulders, lime green skin crossed by fine glowing engraved lines, his big round head and three eyes calm and delighted. Around his waist he wears a whole street-food cart like a wide skirt: polished steel and gold-leaf panels, a glowing grill plate in front, two small brass wheels at his hips and a row of glass condiment jars in mustard yellow and ketchup red. Over his shoulders, a round striped awning in royal blue, orange and white rises like a parasol collar. His royal blue T-shirt is now heavy embroidered silk with orange and white woven sleeve bands, gold-leaf flip-flops on his feet. Crowning element: a giant hot-dog of gold leaf and glass, longer than his shoulders are wide, arched above his head and held at both ends by his two long curved antennae, a ribbon of glowing mustard yellow running along it. In one hand a long pair of gold serving tongs held like a sceptre, in the other a smaller real hot-dog in mustard yellow and sausage red. Golden light (#FFC23D) glows from the golden hot-dog, the grill plate and the engraved lines of his skin, staying close to the body.
+
+With exactly his body proportions from the reference: same build, same head size relative to the body. Same outfit and same signature item, held in every figure. Same aura and glowing details as the reference, if he has any, pressed against the body in every figure.
+Correct anatomy in every figure: exactly two arms, two legs, two hands with five fingers each, no extra or duplicated limbs.
+Only the objects he has on the reference: never add an instrument, scarf, flag or prop he does not carry.
+Exactly three full-body figures, no more, no less, side by side in one single row, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line, wide empty background gaps between the figures, nothing touching, nothing cut by the edges.
+Every figure stays compact and narrow, hardly wider than the rest pose: arms raised straight up or bent close to the body, never stretched out to the sides.
+One head per figure, no motion blur, no double image.
+Left to right: 1. rest: standing calm, arms by the sides, eyes open, mouth closed. 2. joy: jumping with both fists raised straight up above his head, mouth wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one hand over his face.
+
+Wide 16:9 image, one row. Background: a completely flat, uniform, saturated studio magenta (#FF00FF), the exact same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the character, no magenta glow or magenta rim light on the character. No grid lines, no borders, no frames, no labels.
+
+no text, no letters, no numbers, no logos, no brand marks, no club crests, no team names, no sponsor logos, no identifiable jerseys, no real people. No captions or name tags. No glowing symbols, runes or letter-like signs anywhere.

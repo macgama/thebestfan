@@ -2,17 +2,17 @@ Character sheet of the same character as the reference image.
 
 Stylised 3D animated-film rendering with a premium game-hero finish: slightly caricatured proportions, expressive face, a bold silhouette readable at thumbnail size, rich material detail on fabric, leather, fur, metal and paint, warm key light and a bright rim light.
 
-A living dog standing upright: a fluffy beagle-like dog with brown, black and white fur, a round face with big brown eyes, long floppy ears, a black nose, a wagging tail, soft paws. He is clearly a living dog, not a person in costume. His signature item is a collar in bright blue (#2C7BE5) with a round tag: keep exactly this colour.
+A grumpy man in his sixties: light skin, a square face, small frowning grey eyes, a big grey moustache, a bald head with tufts of grey hair. Stocky build. He never wears a football shirt. His signature item is a broom with bright red bristles (#E0352B): keep exactly this colour.
 
-The guard dog: a bigger proud dog with a little padded vest, a ball in his paw, a bandana tied to his collar, alert ears. Aura colour: electric blue.
+The neighbour who comes up: the broom on his shoulder, a bottle of lemonade and a bowl of crisps in his hands, a small shy smile. Aura colour: warm red.
 
 With exactly his body proportions from the reference: same build, same head size relative to the body. Same outfit and same signature item, held in every figure. Same aura and glowing details as the reference, if he has any, pressed against the body in every figure.
-Correct anatomy in every figure: no extra or duplicated limbs, wings, fins, wheels or heads.
+Correct anatomy in every figure: exactly two arms, two legs, two hands with five fingers each, no extra or duplicated limbs.
 Only the objects he has on the reference: never add an instrument, scarf, flag or prop he does not carry.
 Exactly three full-body figures, no more, no less, side by side in one single row, each figure centred in its own third of the image width. Head to toe, front view, same scale and same height in every figure, feet on the same line, wide empty background gaps between the figures, nothing touching, nothing cut by the edges.
-Every figure stays compact and narrow, hardly wider than the rest pose: arm, wing, paw, hoof or fins raised straight up or bent close to the body, never stretched out to the sides.
+Every figure stays compact and narrow, hardly wider than the rest pose: arms raised straight up or bent close to the body, never stretched out to the sides.
 One head per figure, no motion blur, no double image.
-Left to right: 1. rest: in his rest pose, calm, eyes open, mouth or beak closed. 2. joy: jumping with both arms, wings, paws, hooves or fins raised straight up above his head, mouth or beak wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one arm, wing, paw, hoof or fin over his face.
+Left to right: 1. rest: standing calm, arms by the sides, eyes open, mouth closed. 2. joy: jumping with both fists raised straight up above his head, mouth wide open in a shout of joy. 3. dismay: shoulders dropped, head down, one hand over his face.
 
 Wide 16:9 image, one row. Background: a completely flat, uniform, saturated studio green (#00B140), the exact same colour everywhere, including between the figures. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the character, no green glow or green rim light on the character. No grid lines, no borders, no frames, no labels.
 

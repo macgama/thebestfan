@@ -1,11 +1,10 @@
 # GD · LES GALÈRES DE DÉPLACEMENT (v2, 45 + 5)
 
 *31 octobre 2026. Série remise au modèle RP v2, AN et SU, à la demande de Gaël :
-45 personnages à trois âges et 5 légendaires. GD1 à GD16 sont les fiches
-d'avant, remises au modèle ; GD17 à GD50 sont nouvelles. GD13 (le vendeur
-d'écharpes, une seule carte) a maintenant trois âges ; GD14 (le compteur du
-car 3) n'est plus légendaire, il devient un personnage à trois âges, pour
-garder cinq légendaires (GD10, GD11, GD12, GD15, GD16).*
+45 personnages à trois âges et 5 légendaires (GD10, GD11, GD14, GD15, GD16).
+GD1 à GD9 et les légendaires sont les fiches d'avant, remises au modèle ;
+GD17 à GD52 sont nouvelles. GD12 et GD13, cartes doublons cachées du jeu, ne
+sont pas reprises.*
 
 Neuf cents kilomètres, et ça commence mal : le minibus, le péage, l'aire
 d'autoroute, la frontière, le quai de gare. Chaque galère part d'un incident
@@ -193,42 +192,6 @@ IDENTITÉ: A living rotating beacon light: a clear glass dome as his head with a
   - Préhistorique : `A stone-age signal keeper: his dome a bowl of clear blue crystal with a small fire inside, a hide jacket, a horn across his chest.`
   - Apocalyptique : `A wasteland convoy leader: his dome a blue truck beacon in a welded cage, a jacket patched with tyre rubber, headlights on his shoulders.`
 
-### GD13 · Le Vendeur d'Écharpes → Le Colporteur → La Boutique Qui Marche · fond magenta
-
-Le vendeur à la sauvette qui a les écharpes des deux clubs dans le même sac, et qui finit boutique ambulante de toutes les routes.
-
-**Fil d'évolution : le colporteur, du manteau-vitrine au marchand caravane.**
-
-```
-IDENTITÉ: A scruffy street seller: wild shoulder-length grey and brown hair, a bushy grey beard, a round red nose, one eye shut in a wink, a gold-coloured front tooth, a lanky frame. He never wears a football shirt. His signature item is a long torn trench coat in tan (#A07E58), its lining hung with small plain striped scarves in red and white, blue and white, and green and white, with no badges: keep exactly this colour.
-```
-
-- Âge 1 : `Everyday clothes: a white roll-neck sweater, light grey trousers, laced grey boots, fingerless grey gloves under the tan trench coat. Holding his coat open like a shop window, rival colours hanging side by side, one plain scarf offered in each hand, a sly wink.`
-- Âge 2 : `A travelling pedlar: a tall wooden pedlar's pack on his back hung with scarves, bells, ribbons and small pots, a wide felt hat with a feather, a leather money pouch, the tan coat now patched and lined with dozens of pockets. Aura colour: tan orange.`
-- Âge 3 : `The walking shop of all roads: a towering merchant whose back carries a whole little market stall with a striped awning rising above his head, rows of scarves in every colour hanging like curtains, lanterns and brass scales at his belt, the fingerless grey gloves of level 1 on his hands, the tan trench coat grown into a long merchant's robe lined with hundreds of scarves. Aura colour: tan orange.`
-- Skins :
-  - Halloween : `A goblin pedlar: pointed felt ears, a pointed purple hood, curled slippers, tiny knitted bats among the scarves.`
-  - Préhistorique : `A stone-age pedlar: a long tan hide coat lined with striped wool strips, a bone necklace, fur foot wraps.`
-  - Apocalyptique : `A wasteland pedlar: a trench coat patched with seatbelt webbing, a shopping-trolley basket strapped to his back.`
-
-### GD14 · Le Compteur du Car 3 → Le Chef de Car → Le Berger des Routes de Nuit · fond vert
-
-Le responsable du car 3, qui a compté les mêmes trente-neuf personnes à l'aller et au retour pendant vingt ans.
-
-**Fil d'évolution : le berger, du boulier de poche au gardien des routes de nuit.**
-
-```
-IDENTITÉ: A tall gaunt man in his sixties: a long serious face, a thick grey walrus moustache, sharp pale-blue eyes under heavy lids, big ears. He never wears a football shirt. His signature item is a wooden counting abacus with brass rods and red beads (#B3261E): keep exactly this colour.
-```
-
-- Âge 1 : `Everyday clothes: a navy peaked cap, a long navy wool coat buttoned to the neck, grey trousers, polished black shoes. Standing at the coach door, counting heads with one finger raised, the small abacus in his other hand.`
-- Âge 2 : `A coach-party chief: a navy coat with brass buttons, a whistle on a cord, a clipboard under his arm, a lantern at his belt, the abacus now big and worn on a leather strap across his chest. Aura colour: deep red.`
-- Âge 3 : `The shepherd of the night roads: a towering figure in a huge navy greatcoat embroidered with winding night roads, a tall arched gateway of polished brass coach grab-rails rising behind his head like an open coach door, the navy peaked cap of level 1 on his head, the abacus grown into a tall shepherd's staff with thirty-nine glowing red beads. Aura colour: deep red.`
-- Skins :
-  - Halloween : `A friendly ferryman of the night river: a deep navy hood over his cap, a long pole, his abacus beads turned into small orange lanterns.`
-  - Préhistorique : `A stone-age counter: a navy-dyed fur coat, the abacus a wooden frame with bone rods and red stone beads.`
-  - Apocalyptique : `A wasteland convoy counter: a coat cut from a car cover, the abacus a frame of exhaust tubing with red reflectors as beads.`
-
 ### GD10 · Parcage 400 places · légendaire · fond vert
 
 Le parcage des visiteurs, quatre cents places derrière le grillage, devenu un seul géant.
@@ -263,22 +226,22 @@ IDENTITÉ: A tall slender woman of the night: long straight jet-black hair down 
   - Préhistorique : `A stone-age night woman: a long midnight-blue dyed fur cloak, a crown of short resinous wood torches with small flames, the flare a red-ochre painted wooden torch.`
   - Apocalyptique : `A wasteland night woman: a long midnight-blue cloak cut from a car cover, a crown of red rear-light lenses, the flare a red road flare in a chrome holder.`
 
-### GD12 · Le Supporter en Orbite · légendaire · fond vert
+### GD14 · Le Douanier du Car 3 · légendaire · fond vert
 
-L'astronaute qui a glissé son écharpe dans ses effets personnels, à quatre cents kilomètres d'altitude.
+Le responsable du car 3, qui a compté les mêmes trente-neuf personnes à l'aller et au retour pendant vingt ans.
 
-**Mythe : l'astronaute de marbre dont l'écharpe est devenue l'anneau d'une planète.**
+**Mythe : le berger des routes de nuit, gardien de la porte du car.**
 
 
 ```
-IDENTITÉ: A cheerful astronaut supporter: short swept-back silver-grey hair, warm brown eyes creased by a wide smile, rounded cheeks, straight dark eyebrows, a smooth round face. A chunky white space suit with grey padded joints, a white life-support backpack, white boots and gloves, a small tablet strapped to his forearm, a white and black football at his side. His signature item is a knitted striped scarf in steel blue (#5A7FB0) and white: keep exactly this colour.
+IDENTITÉ: A tall gaunt man in his sixties: a long serious face, a thick grey walrus moustache, sharp pale-blue eyes under heavy lids, big ears, a navy peaked cap. A long navy wool coat (#1E2C4A) buttoned to the neck, grey trousers, polished black shoes. His signature item is a wooden counting abacus with brass rods and red beads (#B3261E): keep exactly this colour.
 ```
 
-- Légendaire : `An astronaut of the stadium sky, larger than life: his space suit has become white marble veined with gold leaf, its joints rings of polished gold, his helmet held under one arm like a crystal globe with a tiny blue Earth inside. His steel-blue and white striped scarf has grown into a wide flat ring circling his shoulders like the ring of a planet, slightly tilted, resting on his shoulders and backpack, its edge glowing gold (#FFC23D). Golden light shines from his chest control panel and from the crystal globe, staying on his body. A football of white marble with gold seams rests against his hip. The silhouette of a ringed planet with a man inside it.`
+- Légendaire : `The night shepherd of the coaches: a towering figure in a huge bell-shaped navy greatcoat that falls to the ground like a tower, embroidered in gold thread with winding night roads. Rising behind his head and shoulders, a tall arched gateway of polished brass coach grab-rails, like the open door of a coach, forms his crown. He holds his abacus upright like a shepherd's staff, now taller than him, its thirty-nine red glass beads glowing from within with golden light (#FFC23D). Cap peak and buttons in gold leaf, a silvery moustache, white marble gloves, calm eyes that are still counting.`
 - Skins :
-  - Halloween : `A B-movie robot costume over his suit: a boxy silver cardboard helmet with springy antennae, silver dryer-duct arms, blinking bulb buttons, the steel blue scarf ring dotted with tiny felt bats.`
-  - Préhistorique : `A stone-age sky watcher: a suit of bleached white hide padded with fur, a helmet of a hollow crystal geode under his arm, the scarf ring a circle of steel blue woven wool on a bent wooden hoop, a stone-ball football.`
-  - Apocalyptique : `A wasteland astronaut: a white suit patched with car airbags and duct tape, a helmet made from a motorbike helmet dome, the scarf ring a steel-blue painted truck inner tube around his shoulders, the football patched with tyre rubber.`
+  - Halloween : `A friendly ferryman of the night river: a deep navy hood over his cap, a long ferryman's pole tucked under his arm, his abacus beads turned into small glowing orange lanterns, cobwebs on his shoulders.`
+  - Préhistorique : `A stone-age counter: a long navy-dyed fur coat, the abacus a wooden frame with bone rods and red stone beads, an arch of mammoth tusks behind his head.`
+  - Apocalyptique : `A wasteland convoy counter: a long navy coat cut from a car cover, an arch of bent roll bars behind his head, the abacus a frame of exhaust tubing with red rear reflectors as beads.`
 
 ### GD15 · La Mosaïque de Séville · légendaire · fond vert
 
@@ -316,7 +279,7 @@ IDENTITÉ: A huge man shaped like a night train: a wide square face, a broad fla
 
 ---
 
-## Les 34 nouveaux
+## Les 36 nouveaux
 
 ### GD17 · La Glacière du Car → La Glacière Pleine → Le Buffet Roulant · fond vert
 
@@ -947,3 +910,41 @@ IDENTITÉ: A living postcard: a flat rectangular card body in cream (#F2E8D0) wi
   - Halloween : `A haunted postcard: a spooky landscape, a satchel with a bat.`
   - Préhistorique : `A carved message stone: a flat stone body, a satchel of hide.`
   - Apocalyptique : `A wasteland courier: a card of cardboard patched with tape, a satchel of tarp.`
+
+### GD51 · La Couchette du Train de Nuit → Le Wagon-Lit → Le Train des Rêves · fond vert
+
+La couchette du train de nuit, trop courte, où l'on dort mal et où l'on refait le match jusqu'à l'aube.
+
+**Fil d'évolution : le sommeil du voyage, de la couchette étroite au grand train qui roule dans les rêves.**
+
+```
+IDENTITÉ: A living train bunk: a narrow fold-down bunk body in deep navy (#1F3A6B) with a thin mattress and a white pillow as his head, a face on the pillow with round sleepy eyes, soft eyebrows, a small nose and a closed smile, a little ladder as legs, thin arms. He is clearly a living bunk, not a person in costume. His signature item is a reading lamp in bright orange (#F07A22) above his pillow: keep exactly this colour.
+```
+
+- Âge 1 : `A narrow bunk with a crumpled blanket, the little orange reading lamp on, a ticket stub without words on his pillow, very sleepy.`
+- Âge 2 : `The sleeping car: a little curtain drawn like a cape, a bedside cup of tea, a wooden panel with brass fittings, the lamp glowing warm. Aura colour: night blue.`
+- Âge 3 : `The train of dreams: a tall figure shaped like a night train carriage with lit windows, travelling on a track through the clouds under the moon, sleeping travellers in his windows, the crumpled blanket of level 1 over his shoulder, the lamp grown into a large orange lantern on his front. Aura colour: night blue.`
+- Pose : `Facing the viewer, standing upright on his short legs, arms by his sides, proud determined expression, mouth closed.`
+- Skins :
+  - Halloween : `A haunted bunk with cobwebs and a bat.`
+  - Préhistorique : `A bed of furs on a wooden shelf.`
+  - Apocalyptique : `A bunk of scrap and tarp.`
+
+### GD52 · Le Triangle de Signalisation → Le Triangle du Bas-Côté → Le Phare des Routes · fond vert
+
+Le triangle rouge posé derrière le minibus en panne, qui a vu passer tous les cars des autres clubs.
+
+**Fil d'évolution : l'alerte, du triangle sur le bas-côté au phare qui guide tous les voyageurs de nuit.**
+
+```
+IDENTITÉ: A living warning triangle: a red reflective triangle body (#E0352B) on a little folding stand, a face in the middle with round alert eyes, short eyebrows, a small nose and a closed smile, thin arms. He is clearly a living warning triangle, not a person in costume. His signature item is a reflective vest in bright yellow (#F2C21B): keep exactly this colour.
+```
+
+- Âge 1 : `A small warning triangle on the side of a motorway, a bit wobbly in the wind, the yellow vest on his shoulders, a brave look.`
+- Âge 2 : `The roadside triangle: a little torch in his hand, a coil of jump leads, the reflective vest shining in headlights. Aura colour: signal red.`
+- Âge 3 : `The lighthouse of the roads: a tall lighthouse figure of red and white bands standing at a crossroads at night, beams of light sweeping over long roads with little coaches, the wobble of level 1 still in his stand, the vest grown into a broad yellow reflective sash. Aura colour: signal red.`
+- Pose : `Facing the viewer, standing upright on his folding stand, thin arms by his sides, proud determined expression, mouth closed.`
+- Skins :
+  - Halloween : `A haunted triangle with a bat.`
+  - Préhistorique : `A triangle of sticks tied with vine.`
+  - Apocalyptique : `A triangle of scrap metal.`

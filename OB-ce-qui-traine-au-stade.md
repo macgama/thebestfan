@@ -346,43 +346,43 @@ IDENTITÉ: A living hand-painted protest sign: a wide weathered white plywood bo
 
 ## Les 33 nouveaux
 
-### OB18 · Le Ballon Crevé → Le Ballon Recousu → Le Ballon des Étoiles · fond vert
+### OB18 · Les Jumelles → Les Jumelles du Dernier Rang → L'Observatoire · fond vert
 
-Le ballon dégonflé qui a fini dans la tribune après un dégagement de trop.
+Les jumelles oubliées au dernier rang, qui ont vu tous les hors-jeu que l'arbitre n'a pas vus.
 
-**Fil d'évolution : la planète, du ballon à plat au petit astre qui tourne sur lui-même.**
+**Fil d'évolution : le regard, des jumelles du dernier rang au grand observatoire qui voit jusqu'aux étoiles.**
 
 ```
-IDENTITÉ: A living football: a round leather ball in white (#F4F1EA) with classic black pentagon patches, a face on one side with round brave eyes, short eyebrows, a small nose and a closed smile, short arms and legs. He is clearly a living ball, not a person in costume. His signature item is a patch of tape in bright red (#E0352B) over a hole: keep exactly this colour.
+IDENTITÉ: Living binoculars: a pair of black binoculars (#2A2A2A) with two round lenses as big eyes, short eyebrows above them, a small nose and a closed smile below, short arms and legs. He is clearly a living pair of binoculars, not a person in costume. His signature item is a neck strap in bright red (#E0352B): keep exactly this colour.
 ```
 
-- Âge 1 : `A small deflated ball, a bit flat on one side, the red tape over his little hole, looking up hopefully.`
-- Âge 2 : `The stitched ball: round again with thick visible stitches, a little bicycle pump strapped on his back like a quiver, a bandage around his head, the red tape now a neat cross. Aura colour: bright red.`
-- Âge 3 : `The ball of the stars: a glowing planet-like ball floating among small moons, rings of stardust around him like Saturn, a little comet trail behind him, the flat side of level 1 still slightly visible, the red tape grown into a red ring around his middle. Aura colour: bright red.`
+- Âge 1 : `Small binoculars with one scratched lens, the red strap hanging, peering at the pitch very seriously.`
+- Âge 2 : `The binoculars of the last row: a little sun visor over his lenses, a small notebook without words, a focus wheel shining. Aura colour: bright red.`
+- Âge 3 : `The observatory: a tall domed observatory figure with a great telescope rising from his head, a starry sky behind him, planets reflected in his lenses, the scratched lens of level 1, the strap grown into a long red ribbon. Aura colour: bright red.`
 - Pose : `Facing the viewer, standing upright on his short legs, arms by his sides, proud determined expression, mouth closed.`
 - Skins :
-  - Halloween : `A pumpkin ball: orange patches, a carved grin.`
-  - Préhistorique : `A stone ball wrapped in hide and vine.`
-  - Apocalyptique : `A scrap ball: patched rubber, bolts and tape.`
+  - Halloween : `Haunted binoculars with glowing lenses.`
+  - Préhistorique : `Two hollow bones tied with hide.`
+  - Apocalyptique : `Scrap binoculars with tape.`
 
-### OB19 · La Glacière → La Glacière du Parking → Le Palais de Glace · fond vert
+### OB19 · La Pelle à Neige → La Pelle du Matin → La Gardienne de l'Hiver · fond vert
 
-La glacière qui reste au parking pendant le match et qui attend le retour de la bande.
+La pelle à neige qui dégage les travées à l'aube, pour que le match d'hiver puisse avoir lieu.
 
-**Fil d'évolution : le froid, de la glacière de pique-nique au palais de glace des contes.**
+**Fil d'évolution : l'hiver, de la pelle des travées à la gardienne qui ouvre les chemins sous la neige.**
 
 ```
-IDENTITÉ: A living cool box: a rectangular plastic cool box body in bright blue (#2C7BE5) with a white lid like a cap, a face on the front with round loyal eyes, short eyebrows, a small nose and a closed smile, short arms and legs. He is clearly a living cool box, not a person in costume. His signature item is a carrying handle in bright white (#FFFFFF): keep exactly this colour.
+IDENTITÉ: A living snow shovel: a wide shovel blade in bright blue plastic (#2C7BE5) as her body with a face on it, round determined eyes, short eyebrows, a small nose and a closed smile, a long wooden handle rising behind like a ponytail, short arms and legs. She is clearly a living shovel, not a person in costume. Her signature item is a woolly bobble on her handle in bright red (#E0352B): keep exactly this colour.
 ```
 
-- Âge 1 : `A small cool box with a scratch on his side, a little frost on his lid, the white handle on top, waiting alone in a car park.`
-- Âge 2 : `The car-park cool box: a folding camping chair strapped on his back, a little parasol, ice cubes peeking from his lid, a proud host look. Aura colour: ice blue.`
-- Âge 3 : `The ice palace: a tall shining palace figure of clear ice and blue crystal, frosted towers rising above his shoulders, snowflakes swirling around him, little icicles hanging like lanterns, the scratch of level 1 still on his side, the handle grown into a white frosted arch over his head. Aura colour: ice blue.`
-- Pose : `Facing the viewer, standing upright on his short legs, arms by his sides, proud determined expression, mouth closed.`
+- Âge 1 : `A small snow shovel with a crack on her blade, snow on her edge, the red bobble on her handle, breathing frosty puffs.`
+- Âge 2 : `The morning shovel: a little lantern hanging from her handle, a pair of mittens, a cleared path behind her. Aura colour: ice blue.`
+- Âge 3 : `The keeper of winter: a tall figure in a long cloak of snow and ice, a cleared path lit by lanterns through a snowy forest behind her, snowflakes swirling, the crack of level 1 still on her blade, the bobble grown into a large red pompom crown. Aura colour: ice blue.`
+- Pose : `Facing the viewer, standing upright on her short legs, arms by her sides, proud determined expression, mouth closed.`
 - Skins :
-  - Halloween : `A coffin-shaped cool box with a little bat.`
-  - Préhistorique : `A stone box packed with snow and hide.`
-  - Apocalyptique : `A dented metal cool box with tape.`
+  - Halloween : `A haunted shovel with a bat.`
+  - Préhistorique : `A shovel of carved bone.`
+  - Apocalyptique : `A scrap shovel of sheet metal.`
 
 ### OB20 · Le Ticket Déchiré → Le Ticket Gardé → Le Passeport des Mondes · fond vert
 
@@ -422,24 +422,24 @@ IDENTITÉ: A living corner flag: a thin flexible pole in white with a small tria
   - Préhistorique : `A wooden stick with a hide flag.`
   - Apocalyptique : `A scrap pole with a tarp flag.`
 
-### OB22 · Le Sifflet Perdu → Le Sifflet Retrouvé → Le Cor des Montagnes · fond vert
+### OB22 · L'Extincteur → L'Extincteur du Couloir → Le Gardien des Flammes · fond magenta
 
-Le sifflet de l'arbitre tombé dans la boue, retrouvé par un gamin du premier rang.
+L'extincteur rouge du couloir de la tribune, qui n'a jamais servi et qui le vit très bien.
 
-**Fil d'évolution : le son, du petit sifflet au grand cor qui résonne dans les vallées.**
+**Fil d'évolution : le feu, de l'extincteur qui attend au gardien qui apaise toutes les flammes.**
 
 ```
-IDENTITÉ: A living whistle: a small metal whistle body in shiny silver (#C0C6CE) with a round chamber as his belly, a face on the side with round stern eyes, thick eyebrows, a small nose and a closed mouth, short arms and legs. He is clearly a living whistle, not a person in costume. His signature item is a lanyard cord in bright black and red, red #E0352B: keep exactly this colour.
+IDENTITÉ: A living fire extinguisher: a tall red cylinder body (#D63A3A) with a black hose like an arm, a face on the front with round watchful eyes, short eyebrows, a small nose and a closed smile, a black handle on top like a hat, short legs. He is clearly a living fire extinguisher, not a person in costume. His signature item is a safety pin with a tag in bright green (#2EAD4B): keep exactly this colour.
 ```
 
-- Âge 1 : `A small muddy whistle with a splash of mud on his cheek, the red cord trailing behind, looking a little lost.`
-- Âge 2 : `The found whistle: polished and shining, the cord tied as a proud sash, a little pea rattling in his belly, a tiny stopwatch at his belt. Aura colour: silver blue.`
-- Âge 3 : `The horn of the mountains: a tall majestic alpine horn figure of carved wood and silver bands, snowy peaks behind his shoulders, sound waves rolling like clouds around him, the mud splash of level 1 still on his cheek, the cord grown into a long red braided rope wound around him. Aura colour: silver blue.`
+- Âge 1 : `A small fire extinguisher hanging on a wall hook, a bit dusty, the green safety tag on, very alert.`
+- Âge 2 : `The extinguisher of the corridor: a little fire helmet on his head, the hose coiled like a lasso, a small brass bell at his side. Aura colour: cool blue.`
+- Âge 3 : `The keeper of the flames: a tall calm figure in a long coat of red and silver, gentle rain and mist swirling around him, small campfires and lanterns burning safely at his feet, the dust of level 1 still on his shoulders, the safety tag grown into a large green seal on his chest. Aura colour: cool blue.`
 - Pose : `Facing the viewer, standing upright on his short legs, arms by his sides, proud determined expression, mouth closed.`
 - Skins :
-  - Halloween : `A bone whistle with a little skull.`
-  - Préhistorique : `A carved bone whistle on a leather cord.`
-  - Apocalyptique : `A scrap whistle of bent pipe.`
+  - Halloween : `A haunted extinguisher spraying purple mist.`
+  - Préhistorique : `A clay jar of water with a hide hose.`
+  - Apocalyptique : `A scrap extinguisher with tape.`
 
 ### OB23 · La Bouteille Sans Bouchon → La Gourde → La Source · fond vert
 
@@ -498,24 +498,24 @@ IDENTITÉ: A living stadium cushion: a small square foam cushion in bright red (
   - Préhistorique : `A cushion of stuffed hide.`
   - Apocalyptique : `A cushion of patched sacking.`
 
-### OB26 · Le Parapluie Interdit → Le Parapluie Ouvert → Le Parapluie des Nuages · fond vert
+### OB26 · Le Filet à Ballons → Le Filet de l'Échauffement → Le Grand Filet des Pêcheurs · fond vert
 
-Le parapluie confisqué à l'entrée, qui attend son propriétaire au vestiaire.
+Le filet à ballons de l'échauffement, oublié derrière le but, qui compte ses ballons tous les soirs.
 
-**Fil d'évolution : le ciel, du parapluie de la consigne à celui qui commande aux nuages.**
+**Fil d'évolution : le filet, du sac à ballons au grand filet des pêcheurs d'étoiles.**
 
 ```
-IDENTITÉ: A living umbrella: a folded umbrella body with canopy in bright yellow (#F2C21B) like a long coat, a curved wooden handle as feet, a round face near the top with round sad eyes, drooping eyebrows, a small nose and a closed frown, thin metal ribs as arms. He is clearly a living umbrella, not a person in costume. His signature item is a tag on his handle in bright blue (#2C7BE5), with no words: keep exactly this colour.
+IDENTITÉ: A living ball net bag: a mesh net bag body in bright orange (#F07A22) full of footballs like a round belly, a face on the drawstring top with round careful eyes, short eyebrows, a small nose and a closed smile, the drawstring as arms, short legs. He is clearly a living net bag, not a person in costume. His signature item is a drawstring cord in bright white (#FFFFFF): keep exactly this colour.
 ```
 
-- Âge 1 : `A small folded umbrella with one bent rib, the blue tag on his handle, waiting alone in a corner, a little sad.`
-- Âge 2 : `The open umbrella: canopy wide open like a skirt, raindrops bouncing off him, a little rubber duck at his foot, a happy smile now. Aura colour: sunny yellow.`
-- Âge 3 : `The umbrella of the clouds: a huge yellow umbrella floating among soft clouds, little rain clouds and rainbows dancing around his canopy, raindrops turning into stars, the bent rib of level 1 still visible, the tag grown into a blue kite on a string. Aura colour: sunny yellow.`
-- Pose : `Facing the viewer, standing upright on his curved handle, rib arms by his sides, proud determined expression, mouth closed.`
+- Âge 1 : `A small net bag with one ball missing and a little hole in the mesh, the white cord tied in a bow, counting his balls with a worried look.`
+- Âge 2 : `The warm-up net: full of shiny balls, a whistle on his cord, little training cones around him. Aura colour: bright orange.`
+- Âge 3 : `The great net of fishermen: a tall fisherman figure in a long cloak woven of orange net, a great net full of glowing stars and moons cast over the night sea, the little hole of level 1 still in his mesh, the cord grown into a thick white rope. Aura colour: bright orange.`
+- Pose : `Facing the viewer, standing upright on his short legs, arms by his sides, proud determined expression, mouth closed.`
 - Skins :
-  - Halloween : `A torn black umbrella with bat wings.`
-  - Préhistorique : `A giant leaf umbrella with a wooden stick.`
-  - Apocalyptique : `A patched tarp umbrella with scrap ribs.`
+  - Halloween : `A haunted net with spiders.`
+  - Préhistorique : `A net of woven vine with stone balls.`
+  - Apocalyptique : `A net of cable with scrap balls.`
 
 ### OB27 · La Barrière → La Barrière du Kop → La Muraille · fond vert
 
@@ -745,24 +745,24 @@ IDENTITÉ: A living pop-up sprinkler: a small round sprinkler head body in black
   - Préhistorique : `A hollow bamboo sprinkler.`
   - Apocalyptique : `A scrap pipe sprinkler with tape.`
 
-### OB39 · Le Tambour Fendu → Le Tambour Recollé → Le Tambour du Tonnerre · fond vert
+### OB39 · La Pompe à Ballons → La Pompe du Vestiaire → Le Souffle des Géants · fond vert
 
-Le tambour du virage fendu après trente ans de chants, qui bat encore.
+La petite pompe à ballons du vestiaire, qui regonfle tout le monde avant le match, même les joueurs.
 
-**Fil d'évolution : le rythme, du tambour fendu au tambour qui fait gronder l'orage.**
+**Fil d'évolution : le souffle, de la petite pompe au grand souffle des géants qui gonfle les voiles.**
 
 ```
-IDENTITÉ: A living bass drum: a round drum body in deep red (#A8232B) with white rims and ropes, a face on the drumhead with round fierce eyes, thick eyebrows, a small nose and a closed grin, short arms holding two mallets, short legs. He is clearly a living drum, not a person in costume. His signature item is a pair of mallets with heads in bright white (#FFFFFF): keep exactly this colour.
+IDENTITÉ: A living hand pump: a small cylinder body in bright yellow (#F2C21B) with a T-handle on top like a hat, a thin hose like a tail, a face on the front with round eager eyes, short eyebrows, a small nose and a closed smile, short arms and legs. She is clearly a living pump, not a person in costume. Her signature item is a little pressure gauge in bright red (#E0352B) on her chest: keep exactly this colour.
 ```
 
-- Âge 1 : `A small drum with a crack in his drumhead, the two white mallets in his hands, beating proudly anyway.`
-- Âge 2 : `The glued drum: tape over his crack, a leather strap across him, little bells on his ropes, beating harder. Aura colour: deep red.`
-- Âge 3 : `The drum of thunder: a huge war drum figure carved with storm patterns, dark storm clouds and flashes of lightning around him, a crown of horns, the crack of level 1 still on his drumhead, the mallets grown into two large white mallets like thunderbolts. Aura colour: deep red.`
-- Pose : `Facing the viewer, standing upright on his short legs, mallets by his sides, proud determined expression, mouth closed.`
+- Âge 1 : `A small pump with a bent handle, puffing hard, the red gauge on her chest, a determined look.`
+- Âge 2 : `The locker-room pump: a little towel around her neck, a row of balls behind her, the gauge needle up. Aura colour: sunny yellow.`
+- Âge 3 : `The breath of giants: a tall wind spirit figure with great puffed cheeks of cloud, blowing a strong wind that fills the sails of little ships around her, the bent handle of level 1 still on her head, the gauge grown into a large red compass-like dial. Aura colour: sunny yellow.`
+- Pose : `Facing the viewer, standing upright on her short legs, arms by her sides, proud determined expression, mouth closed.`
 - Skins :
-  - Halloween : `A skull drum with bone mallets.`
-  - Préhistorique : `A hide drum with bone mallets.`
-  - Apocalyptique : `An oil drum with pipe mallets.`
+  - Halloween : `A haunted pump with a bat.`
+  - Préhistorique : `A hide bellows.`
+  - Apocalyptique : `A scrap pump with tape.`
 
 ### OB40 · Le Drapeau Géant → Le Drapeau qui Passe → La Voile des Mers · fond vert
 

@@ -158,15 +158,15 @@ OB21-pl-e2B	OB21-e2-base-planche-B	OB21-e2	vert
 OB21-e3	OB21C	OB21-e2,OB21-e1	vert
 OB21-pl-e3A	OB21-e3-base-planche-A	OB21-e3	vert
 OB21-pl-e3B	OB21-e3-base-planche-B	OB21-e3	vert
-OB22-e1	OB22		vert
-OB22-pl-e1A	OB22-e1-base-planche-A	OB22-e1	vert
-OB22-pl-e1B	OB22-e1-base-planche-B	OB22-e1	vert
-OB22-e2	OB22B	OB22-e1	vert
-OB22-pl-e2A	OB22-e2-base-planche-A	OB22-e2	vert
-OB22-pl-e2B	OB22-e2-base-planche-B	OB22-e2	vert
-OB22-e3	OB22C	OB22-e2,OB22-e1	vert
-OB22-pl-e3A	OB22-e3-base-planche-A	OB22-e3	vert
-OB22-pl-e3B	OB22-e3-base-planche-B	OB22-e3	vert
+OB22-e1	OB22		magenta
+OB22-pl-e1A	OB22-e1-base-planche-A	OB22-e1	magenta
+OB22-pl-e1B	OB22-e1-base-planche-B	OB22-e1	magenta
+OB22-e2	OB22B	OB22-e1	magenta
+OB22-pl-e2A	OB22-e2-base-planche-A	OB22-e2	magenta
+OB22-pl-e2B	OB22-e2-base-planche-B	OB22-e2	magenta
+OB22-e3	OB22C	OB22-e2,OB22-e1	magenta
+OB22-pl-e3A	OB22-e3-base-planche-A	OB22-e3	magenta
+OB22-pl-e3B	OB22-e3-base-planche-B	OB22-e3	magenta
 OB23-e1	OB23		vert
 OB23-pl-e1A	OB23-e1-base-planche-A	OB23-e1	vert
 OB23-pl-e1B	OB23-e1-base-planche-B	OB23-e1	vert

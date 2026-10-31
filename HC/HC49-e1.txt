@@ -2,14 +2,14 @@ A new character for a football supporters' card game.
 
 Stylised 3D animated-film rendering with a premium game-hero finish: slightly caricatured proportions, expressive face, a bold silhouette readable at thumbnail size, rich material detail on fabric, leather, fur, metal and paint, warm key light and a bright rim light.
 
-A living floor lamp: a tall thin lamp body in brass, a round fabric lampshade in warm cream (#F2E2C0) as her head with a face of round kind eyes, thin eyebrows, a small nose and a closed smile, a little pull chain on her side like a hand, a round base as feet. She is clearly a living lamp, not a person in costume. Her signature item is her bulb glow in warm yellow (#FFD86B), soft and close to her shade: keep exactly this colour.
+A living electric fan: a round cage head in white with three blue blades (#5BB4E5), a face on the centre with round cheerful eyes, short eyebrows, a small nose and a closed smile, a thin stand body, a round base as feet, thin arms. He is clearly a living fan, not a person in costume. His signature item is a ribbon in bright pink (#E8559A) tied to his cage, fluttering: keep exactly this colour.
 
 Level 1, common tier: an ordinary, everyday version of this character, normal build, simple everyday clothes or state, a little clumsy and endearing. The signature item is small and plain.
 
-Theme: A small floor lamp with a tilted shade, her glow dimmed, the pull chain in her hand, a little shy.
+Theme: A small fan turning his head side to side, the pink ribbon fluttering, a little wobbly on his base.
 
-Facing the viewer, standing upright on her round base, arms by her sides, proud determined expression, mouth closed. Correct anatomy in every figure: no extra or duplicated limbs, wings, fins, wheels or heads.
-Only the objects described here: never add an instrument, scarf, flag or prop she does not carry.
+Facing the viewer, standing upright on his round base, thin arms by his sides, proud determined expression, mouth closed. Correct anatomy in every figure: no extra or duplicated limbs, wings, fins, wheels or heads.
+Only the objects described here: never add an instrument, scarf, flag or prop he does not carry.
 
 Full body, head to toe, centred, the whole figure inside the frame with a small margin, 9:16. Background: a completely flat, uniform, saturated studio green (#00B140), the exact same colour everywhere. No gradient, no vignette, no floor, no cast shadow, no reflection, no ground patch, no smoke or particles around the character, no green glow or green rim light on the character.
 
