@@ -11,3 +11,7 @@
 ## Ultimate SU (2026-10-31, en crédits, accord de Gaël)
 - `telechargement-SU-ult.tsv` : chemin `art/ultime/_src/SU<n>-e<k>.png`, generationId, outputIndex (108 images, Nano Banana 2, 9:16, 2K).
 - `ult/` : prompts (build-su.mjs, decors-su.json) et journal des crédits (ids-su.tsv).
+
+## Clips Ultimate SU et AN (2026-10-31)
+
+`telechargement-clips-ult.tsv` : 165 clips (SU1-36, AN1-19, trois âges), colonnes chemin cible, generationId, index. Tous terminés côté Artlist. Télécharger chaque clip dans `art/ultime/_src/<clé>.mp4`, puis `npm run ultime:images`. Détail et anciens essais ratés : `ult/clips/`.
