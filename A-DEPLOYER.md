@@ -4,12 +4,15 @@
 1er novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
 
 - Les douze clubs suisses ont leur identifiant : les Fanzzy SU sont liés à leur
-  club comme les AN (bonus du lien, cri type en attendant leurs cris).
+  club comme les AN (bonus du lien).
+- Chaque club suisse a son cri, traduit dans les quatre langues : un Fanzzy SU
+  lié le pousse dans les matchs de son club, et la page du championnat suisse
+  le montre sous chaque club.
 - 24 pièces d'équipement (une commune, une rare par club), **fermées** jusqu'à
   leur dessin : rien ne change pour les joueurs tant qu'on ne les ouvre pas
   dans /admin CONTENUS.
 - Après la mise en ligne : sur la fiche d'un Fanzzy SU, vérifier qu'il dit son
-  club ; dans /admin CONTENUS, la série SU compte 24 pièces écrites.
+  club et son cri ; dans /admin CONTENUS, la série SU compte 24 pièces écrites.
 
 ---
 
