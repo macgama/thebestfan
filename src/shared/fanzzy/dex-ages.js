@@ -1112,6 +1112,258 @@ export const AGES = {
       + 'nombreux, et ce jour-là on n’a pas fait la différence.', 'ON EST NOMBREUX'],
   ],
 
+  GD17: [
+    ['La Glacière Pleine', 'Elle tient six heures de route sans rien laisser tiédir, et elle fait le tour '
+      + 'du car deux fois. On la garde jusqu’au dernier péage.', 'ENCORE UN TOUR'],
+    ['Le Buffet Roulant', 'Le grand buffet des déplacements : des tartes, du pain, des fruits, et tout le '
+      + 'virage autour. Elle penche toujours un peu d’un côté.', 'À TABLE, LE VIRAGE'],
+  ],
+
+  GD18: [
+    ['Le Duvet du Car', 'Toute la rangée dort dessous, serrée, sans un bruit. Il retient le sommeil '
+      + 'jusqu’à l’arrivée.', 'ON DORT ENCORE'],
+    ['La Yourte', 'Une maison de nomade en feutre, ronde et chaude, où tout le groupe tient. Le '
+      + 'vieux sac est roulé à l’entrée.', 'ENTREZ AU CHAUD'],
+  ],
+
+  GD19: [
+    ['Le Billet Plié', 'Elle plie maintenant chaque billet en quatre et elle se souvient de chaque '
+      + 'place. Personne n’entre sans elle.', 'RANG 12, PLACE 4'],
+    ['Celle Qui Garde les Billets', 'Gardienne d’une bibliothèque de billets, elle sait par cœur chaque déplacement '
+      + 'depuis le premier. Elle en garde un dans sa chaussette, par habitude.', 'JE LES AI TOUS'],
+  ],
+
+  GD20: [
+    ['Le Chauffeur Qui Chante', 'Il a appris tous les chants à force de les entendre, et il donne le rythme au '
+      + 'volant. Le car chante à sa cadence.', 'TOUT LE MONDE CHANTE'],
+    ['Le Roi de la Route', 'Roi des grandes routes, il mène un convoi de cars et de camions qui klaxonnent '
+      + 'en mesure. Il n’a toujours pas vu un match.', 'LA ROUTE EST À NOUS'],
+  ],
+
+  GD21: [
+    ['La Valise Réparée', 'Ses roues tournent à nouveau, et elle claque en rafales sur les pavés. Elle '
+      + 'porte les souvenirs de tout le monde.', 'CLAC-CLAC-CLAC'],
+    ['La Malle aux Trésors', 'Coffre au trésor de tous les voyages, elle déborde de perles et de souvenirs. '
+      + 'Une de ses roues racle toujours.', 'OUVREZ LA MALLE'],
+  ],
+
+  GD22: [
+    ['La Copilote', 'Elle lit la route à voix haute et relance à chaque virage. Les jeunes ont '
+      + 'appris à se tenir.', 'À GAUCHE, À FOND'],
+    ['La Reine du Rallye', 'Championne des pistes, elle saute les dunes au volant d’une voiture de rallye. '
+      + 'Elle a gardé ses lunettes de la petite citadine.', 'PLEIN GAZ'],
+  ],
+
+  GD23: [
+    ['Le Panneau Qu’On Rate', 'Il change de côté au dernier moment, et le car bascule avec lui. On a fini par '
+      + 'l’aimer.', 'DEMI-TOUR'],
+    ['Le Grand Carrefour', 'Gardien de tous les carrefours, il tourne ses quatre panneaux vers chaque '
+      + 'route. Il fait encore rater la sortie, une fois sur deux.', 'TOUTES LES ROUTES'],
+  ],
+
+  GD24: [
+    ['La Carte Dépliée', 'Elle se souvient de chaque route prise, et elle les montre à qui veut. Elle ne '
+      + 'se replie toujours pas.', 'PAR LÀ'],
+    ['L’Atlas', 'Atlas de toutes les routes, ses pages s’ouvrent sur chaque déplacement. Un '
+      + 'coin reste toujours froissé.', 'TOUTES LES ROUTES MÈNENT ICI'],
+  ],
+
+  GD25: [
+    ['Le Scout du Virage', 'Il porte maintenant le sac des autres et il connaît tous les chants. Il lève '
+      + 'l’écharpe le premier.', 'ÉCHARPES EN L’AIR'],
+    ['L’Explorateur', 'Grand explorateur, il mène l’expédition à travers les jungles et les '
+      + 'montagnes. Son sac est toujours trop lourd.', 'EN AVANT'],
+  ],
+
+  GD26: [
+    ['Le Ferry Qui Chante', 'Il renvoie les chants d’un pont à l’autre, comme un écho sur la mer. Tout le '
+      + 'bateau répond.', 'LA MER RÉPOND'],
+    ['Le Paquebot', 'Géant des mers, il traverse la nuit avec quatre ponts de fenêtres allumées. '
+      + 'Son écho s’entend jusqu’au port.', 'TOUS SUR LE PONT'],
+  ],
+
+  GD27: [
+    ['La Cuisinière de Nuit', 'Elle fait tourner les poêles et les cafés pour tout le car. Ça sort à la '
+      + 'chaîne.', 'UN CAFÉ, DEUX CAFÉS'],
+    ['La Reine du Relais', 'Reine de l’auberge des routes, elle accueille tous les voyageurs de la nuit. '
+      + 'Elle lance toujours les sandwichs.', 'LE RELAIS EST OUVERT'],
+  ],
+
+  GD28: [
+    ['Le Ticket Composté', 'Il connaît le rythme de toutes les rames, et il donne la mesure du chant. '
+      + 'Composté, mais jamais jeté.', 'STATION SUIVANTE'],
+    ['Le Grand Métro', 'Grand chef de toutes les lignes, il fait rouler les rames en cadence sous la '
+      + 'ville. Il garde son vieux ticket dans la poche.', 'TOUTES LES LIGNES'],
+  ],
+
+  GD29: [
+    ['Le Coussin du Retour', 'Il a appris à garder son air, juste ce qu’il faut. Tout le car dort sur lui au '
+      + 'retour.', 'JUSTE ASSEZ'],
+    ['Le Nuage de Sommeil', 'Nuage de sommeil de tout le car, il berce les supporters jusqu’au matin. Il '
+      + 'fuit toujours un peu.', 'DORMEZ, ON GAGNE'],
+  ],
+
+  GD30: [
+    ['La Routarde', 'Elle fait le chemin dans les deux sens, aller et retour, sans jamais se '
+      + 'perdre. Le carton est couvert de routes.', 'ALLER-RETOUR'],
+    ['La Nomade', 'Nomade de toutes les routes, elle traverse les déserts et les montagnes. Elle '
+      + 'garde son vieux carton sous le bras.', 'LA ROUTE CONTINUE'],
+  ],
+
+  GD31: [
+    ['Le Klaxon à Trois Tons', 'Il joue trois notes, toujours les mêmes, et le parking entier répond. Les '
+      + 'chauffeurs le reconnaissent.', 'TÛT-TÛT-TÛT'],
+    ['La Fanfare des Routes', 'Géant des cuivres, il fait sonner mille klaxons comme un orgue. Il est encore '
+      + 'enroué.', 'TOUS LES KLAXONS'],
+  ],
+
+  GD32: [
+    ['Le Bouchon du Retour', 'Il repart au compte à rebours, voiture par voiture. Tout le car compte avec '
+      + 'lui.', 'TROIS, DEUX, UN… ON BOUGE'],
+    ['Le Dragon d’Autoroute', 'Grand dragon de lumière, il serpente dans la nuit fait de mille voitures '
+      + 'allumées. On le regarde passer comme une fête.', 'LE DRAGON PASSE'],
+  ],
+
+  GD33: [
+    ['La Station-Service', 'Ses lumières dessinent le virage sur le bitume, et le groupe pose devant. '
+      + 'C’est la photo de chaque retour.', 'LA PHOTO !'],
+    ['Le Phare des Routes', 'Phare lumineux des grandes routes, il guide tous les cars dans la nuit. Il '
+      + 'garde sa vieille pompe.', 'SUIVEZ LA LUMIÈRE'],
+  ],
+
+  GD34: [
+    ['Le Cycliste au Long Cours', 'Il pédale de plus en plus vite à l’approche du stade. Le virage l’entend '
+      + 'arriver.', 'PLUS VITE'],
+    ['Le Tour du Monde', 'Il a fait le tour du monde des stades à vélo, et il accélère encore. Ses '
+      + 'vieilles sacoches sont toujours là.', 'LE TOUR DU MONDE'],
+  ],
+
+  GD35: [
+    ['La Reporter', 'Elle colle ses photos côte à côte, et elles dessinent tout le virage. Il en '
+      + 'manque toujours une.', 'UNE DE PLUS'],
+    ['La Grande Reporter', 'Grande reporter couverte de souvenirs, elle fait de chaque voyage une immense '
+      + 'mosaïque. Elle a encore son appareil jetable.', 'LA PHOTO DU SIÈCLE'],
+  ],
+
+  GD36: [
+    ['L’Essuie-Glace Qui Danse', 'Il a fini par danser sur le chant, juste à côté du temps. Le car chante entre '
+      + 'deux coups.', 'ENTRE DEUX COUPS'],
+    ['Le Métronome', 'Métronome de tout le virage, il bat la mesure d’un grand balancier de cuivre. '
+      + 'Il grince encore un peu.', 'TIC, TAC, ON CHANTE'],
+  ],
+
+  GD37: [
+    ['La Mémoire du Car', 'Elle raconte chaque déplacement comme si c’était hier, et personne ne la '
+      + 'coupe. Elle tient jusqu’au bout.', 'JE M’EN SOUVIENS'],
+    ['L’Ancêtre des Déplacements', 'Ancêtre de toutes les routes, elle porte mille souvenirs cousus sur sa cape. '
+      + 'Son tricot n’est toujours pas fini.', 'ON NE LÂCHE RIEN'],
+  ],
+
+  GD38: [
+    ['La Contrôleuse Qui Sourit', 'Elle lance les chants d’un wagon à l’autre, et le train entier suit. Elle n’a '
+      + 'jamais mis une amende.', 'TOUT LE TRAIN'],
+    ['La Gardienne des Rails', 'Gardienne de la grande gare, elle mène tous les trains au signal. Elle garde '
+      + 'sa pince à billets.', 'EN VOITURE'],
+  ],
+
+  GD39: [
+    ['La Tente Qui Tient', 'Elle tient enfin, et on y accroche toutes les écharpes du groupe. On la voit '
+      + 'depuis la route.', 'ELLE TIENT !'],
+    ['Le Camp de Toile', 'Grand camp de toile, il loge tout le virage sous les étoiles. Un piquet est '
+      + 'toujours de travers.', 'TOUT LE CAMP DEBOUT'],
+  ],
+
+  GD40: [
+    ['Le Steward du Charter', 'Il relance la cabine à chaque trou d’air, et l’avion entier chante. Le retard '
+      + 'passe vite.', 'ATTACHEZ VOS CEINTURES'],
+    ['Le Commandant de Bord', 'Commandant du grand avion, il fait décoller tout le virage au-dessus des '
+      + 'nuages. Il garde son chariot de boissons.', 'DÉCOLLAGE'],
+  ],
+
+  GD41: [
+    ['La Clé du 12', 'Elle range chaque supporter dans la bonne chambre, au bon étage. Plus personne '
+      + 'ne dort dans le couloir.', 'CHACUN SA CHAMBRE'],
+    ['Le Grand Hôtel', 'Grand hôtel vivant, ses balcons sont pleins de supporters qui chantent. La clé '
+      + 'du 12 se perd encore.', 'TOUS AUX BALCONS'],
+  ],
+
+  GD42: [
+    ['La Collectionneuse de Stades', 'Elle lance la vague dans chaque stade qu’elle visite, et la vague la suit. Son '
+      + 'carnet déborde.', 'LA VAGUE PART'],
+    ['L’Atlas des Tribunes', 'Atlas vivant des tribunes, elle porte des dizaines de stades sur sa cape. Elle '
+      + 'a gardé son premier carnet.', 'TOUTES LES TRIBUNES'],
+  ],
+
+  GD43: [
+    ['Le Sac en Papier', 'Il tient maintenant tout le trajet sans broncher, le sac plié dans la poche. '
+      + 'Il n’a plus besoin de s’arrêter.', 'JE TIENS'],
+    ['Le Marin Aguerri', 'Vieux marin qui ne craint aucune tempête, il tient la barre jusqu’au port. Il '
+      + 'garde le sac en papier, au cas où.', 'TENEZ BON'],
+  ],
+
+  GD44: [
+    ['Le Scooter Chargé', 'Il porte maintenant les sacs de tout le groupe, et il ne tousse plus. Son '
+      + 'klaxon tape la mesure.', 'ON CHARGE'],
+    ['La Caravane', 'Caravane roulante de tout le voyage, il tire une petite maison derrière lui. '
+      + 'Il tousse encore dans les côtes.', 'EN ROUTE'],
+  ],
+
+  GD45: [
+    ['La Cantatrice des Routes', 'Elle chante comme à l’opéra, et tout le car tient sa mesure. Le micro a '
+      + 'changé, pas elle.', 'TOUT LE CAR'],
+    ['La Voix de Tout le Convoi', 'Cantatrice de tout le convoi, elle chante d’un car à l’autre. Elle garde le '
+      + 'vieux micro.', 'TOUT LE CONVOI'],
+  ],
+
+  GD46: [
+    ['La Mascotte du Car', 'Il porte une écharpe autour du cou et il suit tous les déplacements. Il monte '
+      + 'toujours le premier.', 'IL EST DES NÔTRES'],
+    ['Le Chien de Traîneau', 'Chef de la meute des neiges, il tire le traîneau sous les aurores. Il a gardé '
+      + 'sa vieille écharpe.', 'EN AVANT, LA MEUTE'],
+  ],
+
+  GD47: [
+    ['La Mère Qui Va au Travail', 'Elle allume une lanterne pour chacun de ceux qui rentrent, et la ville se '
+      + 'dessine. Elle est toujours debout.', 'ON EST RENTRÉS'],
+    ['La Veilleuse', 'Gardienne des lanternes, elle veille sur tous ceux qui rentrent de nuit. Elle '
+      + 'a toujours les yeux un peu fatigués.', 'LES LANTERNES BRILLENT'],
+  ],
+
+  GD48: [
+    ['Le Porteur', 'Il porte maintenant le groupe entier, sacs et supporters compris. Il ne lâche '
+      + 'jamais.', 'JE PORTE TOUT'],
+    ['Le Titan des Bagages', 'Titan qui porte le monde, il tient sur ses épaules un globe de valises. Il a '
+      + 'gardé son vieux chariot.', 'LE MONDE SUR LES ÉPAULES'],
+  ],
+
+  GD49: [
+    ['La Lampe du Tunnel', 'Elle vise juste maintenant, et son faisceau trouve chaque sortie. Le groupe la '
+      + 'suit.', 'PAR ICI'],
+    ['La Mine', 'Grande lampe des galeries, elle éclaire tous les tunnels sous la montagne. '
+      + 'Elle a gardé son vieil élastique.', 'LA LUMIÈRE AU BOUT'],
+  ],
+
+  GD50: [
+    ['La Carte Envoyée', 'Elle part maintenant de chaque ville, et elle relance l’envie de repartir. La '
+      + 'grand-mère les collectionne.', 'ON REPART'],
+    ['La Poste du Monde', 'Grand bureau de poste vivant, il envoie des nouvelles dans toutes les villes. '
+      + 'La première carte est encore cornée.', 'DES NOUVELLES DE PARTOUT'],
+  ],
+
+  GD51: [
+    ['Le Wagon-Lit', 'Il compte les gares jusqu’à l’arrivée, et tout le wagon compte avec lui. On '
+      + 'dort un peu mieux.', 'PLUS QUE TROIS GARES'],
+    ['Le Train des Rêves', 'Grand train qui roule dans les rêves, il traverse les nuages sous la lune. La '
+      + 'couchette est toujours trop courte.', 'TOUS À BORD'],
+  ],
+
+  GD52: [
+    ['Le Triangle du Bas-Côté', 'Il clignote avec les feux de détresse, l’un après l’autre, et les voitures '
+      + 'ralentissent. Deux signaux, une seule alerte.', 'DEUX COUPS, ATTENTION'],
+    ['La Sentinelle du Bas-Côté', 'Sentinelle des routes de nuit, elle balaie l’ombre de sa grande lumière. Elle '
+      + 'a gardé son reflet rouge.', 'RALENTISSEZ'],
+  ],
+
   /* ================================================== LES PHÉNOMÈNES MÉTÉO
 
      Le vent, la pluie, la grêle : rien de tout cela n'a d'intention, et c'est
