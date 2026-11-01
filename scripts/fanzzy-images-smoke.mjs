@@ -283,7 +283,15 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      auront pas avant que quelqu'un les dessine : 1 944 fichiers d'états et 54
      cartes. `scripts/fanzzy_prompts.py` sait écrire leurs prompts ;
      `npm run dessins --serie RP` dit ce qu'il reste. */
-  const DETTE = 233;
+  /* 233 → 150, le 1er novembre 2026. **Il descend**, et il remonte un peu
+     dans le même lot ; les deux se disent séparément. LES PHÉNOMÈNES MÉTÉO
+     passent à quarante-cinq personnages et cinq légendaires : cent huit cartes
+     neuves (MT15 à MT50, trois âges), et toute la série redessinée au nouveau
+     style. Quarante-neuf lignées sur cinquante ont leurs images ; MT23 attend
+     la sienne (une demi-planche à refaire) : d'ici là elle garde le rendu
+     procédural, comme les autres cartes pas encore dessinées, et ses trois
+     âges comptent ici. */
+  const DETTE = 150;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))

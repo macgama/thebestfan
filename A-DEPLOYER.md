@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**LES PHÉNOMÈNES MÉTÉO redessinés, 36 Fanzzy de plus** (branche
+`claude/project-thread-dlq7nr`, 1er novembre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- La série MT passe à 45 personnages à trois âges et 5 légendaires : MT15 à MT50
+  sont neufs (noms, histoires et cris en cinq langues), et toute la série est
+  redessinée au nouveau style (cartes, bustes, états, portraits, clignement).
+- MT23 « Le Flocon Égaré » garde la silhouette en attendant son dessin.
+- La série ne sort en booster que si elle est cochée dans une saison lancée.
+- Après la mise en ligne : ouvrir la page MT de l'album et quelques fiches.
+
+---
+
 **Le Fanzzy en grand depuis sa fiche** (branche `claude/project-thread-bk32k5`,
 1er novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
 

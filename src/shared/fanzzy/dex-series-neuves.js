@@ -400,6 +400,225 @@ export const DEX_NEUVES = [
     mods: { tempoWindow: 1.34, perfectBonus: 1.26, breathBonus: 0.84 },
     cri: { label: 'PLUS UN BRUIT', gest: 'echo', power: 83 } },
 
+
+  /* MT15 à MT50 — les trente-six phénomènes de la refonte du 1er novembre 2026
+     (45 personnages et 5 légendaires par série, demande de Gaël). Fiches et
+     dessins : fanzzy-prompts/SERIES-50/MT-les-phenomenes-meteo.md. */
+  { id: 'MT15', nom: 'La Bruine', type: 'voix', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'La pluie fine qu’on ne sent pas, celle qui ne mérite même pas une capuche. Au '
+      + 'bout d’une heure elle est trempée et elle jure qu’il ne pleut pas.',
+    mods: { tempoWindow: 1.16, backfire: 1.1 },
+    cri: { label: 'ÇA MOUILLE PAS', gest: 'contretemps', power: 46 } },
+
+  { id: 'MT16', nom: 'L’Arc-en-Ciel du But', type: 'tifo', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Il sort pile au moment du but, d’un bout à l’autre du ciel. Personne ne l’a '
+      + 'jamais vu un jour de défaite.',
+    mods: { parryBonus: 1.18, backfire: 1.12 },
+    cri: { label: 'IL EST SORTI', gest: 'tifo', power: 47 } },
+
+  { id: 'MT17', nom: 'Le Gamin au Parapluie', type: 'tifo', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Son parapluie est trop petit pour un, et il abrite quand même ses deux '
+      + 'voisins. Le parapluie s’est retourné trois fois, il ne l’a jamais lâché.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'TOUS DESSOUS', gest: 'tifo', power: 46 } },
+
+  { id: 'MT18', nom: 'Le Nuage Bas', type: 'fide', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Un petit nuage descendu si bas qu’il s’est posé sur le toit de la tribune. Il '
+      + 'devait passer, il est resté.',
+    mods: { holdBonus: 1.18, backfire: 1.1 },
+    cri: { label: 'JE RESTE LÀ', gest: 'hold', power: 46 } },
+
+  { id: 'MT19', nom: 'La Flaque du Parvis', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'La flaque devant l’entrée dans laquelle tout le monde marche, à chaque match, '
+      + 'depuis des années. Personne ne l’a jamais vue sécher.',
+    mods: { breathBonus: 1.16, backfire: 1.1 },
+    cri: { label: 'PLOUF', gest: 'miroir', power: 46 } },
+
+  { id: 'MT20', nom: 'Le Thermomètre de la Buvette', type: 'fide', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le thermomètre de la buvette, que tout le monde regarde avant de commander. '
+      + 'Sous cinq degrés, c’est vin chaud pour tout le rang.',
+    mods: { holdBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'COMBIEN IL FAIT ?', gest: 'jauge', power: 46 } },
+
+  { id: 'MT21', nom: 'Le Sable dans les Yeux', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Partie en déplacement dans le sud, elle a ramené du sable dans les chaussures, '
+      + 'le sac et les cheveux. Six mois après, elle en trouve encore.',
+    mods: { breathBonus: 1.18, backfire: 1.12 },
+    cri: { label: 'ON TRAVERSE', gest: 'echarpe', power: 47 } },
+
+  { id: 'MT22', nom: 'Le Coup de Chaleur', type: 'fide', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Un jour de canicule, elle a fait passer sa gourde dans tout le rang. Elle est '
+      + 'revenue vide, et elle est repartie la remplir.',
+    mods: { holdBonus: 1.16, backfire: 1.1 },
+    cri: { label: 'BOIS UN COUP', gest: 'tenue', power: 46 } },
+
+  { id: 'MT23', nom: 'Le Flocon Égaré', type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le premier flocon tombé sur la pelouse en novembre, qui tournoie tout seul '
+      + 'sous les projecteurs. Tout le virage l’a montré du doigt.',
+    mods: { perfectBonus: 1.2, backfire: 1.16 },
+    cri: { label: 'IL NEIGE !', gest: 'relance', power: 46 } },
+
+  { id: 'MT24', nom: 'Le Givre sur les Sièges', type: 'fide', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'La grand-mère qui tricote au premier rang du match de décembre. Sa laine gèle '
+      + 'au fil des minutes, et elle continue.',
+    mods: { holdBonus: 1.17, tempoWindow: 0.92 },
+    cri: { label: 'MAILLE À L’ENDROIT', gest: 'hold', power: 46 } },
+
+  { id: 'MT25', nom: 'Le Courant d’Air', type: 'voix', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le courant d’air glacé qui siffle dans le couloir d’accès. On l’entend avant '
+      + 'd’entrer, on l’entend encore en sortant.',
+    mods: { tempoWindow: 1.17, backfire: 1.1 },
+    cri: { label: 'ÇA SIFFLE', gest: 'echo', power: 46 } },
+
+  { id: 'MT26', nom: 'L’Éclair de Chaleur', type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Elle photographie les éclairs muets d’un soir d’août, loin à l’horizon. Elle '
+      + 'n’en a jamais eu un net.',
+    mods: { perfectBonus: 1.18, backfire: 1.14 },
+    cri: { label: 'TU AS VU ?', gest: 'relance', power: 46 } },
+
+  { id: 'MT27', nom: 'La Rosée du Soir', type: 'tifo', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le jardinier du club regarde la rosée briller sur la pelouse au coup d’envoi '
+      + 'tardif. Il dit que c’est la plus belle pelouse du championnat, et il a raison.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'LA ROSÉE BRILLE', gest: 'tri', power: 46 } },
+
+  { id: 'MT28', nom: 'Le Pluviomètre', type: 'voix', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Il note la pluie de chaque match dans un carnet, depuis trente ans. Il sait '
+      + 'exactement combien il est tombé le soir de la finale.',
+    mods: { tempoWindow: 1.18, perfectBonus: 0.92 },
+    cri: { label: 'TROIS MILLIMÈTRES', gest: 'tempo', power: 46 } },
+
+  { id: 'MT29', nom: 'La Tornade de Gobelets', type: 'perc', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le petit tourbillon qui fait danser les gobelets vides dans la tribune. Il ne '
+      + 'sait pas s’arrêter, et personne ne le lui demande.',
+    mods: { mashBonus: 1.17, backfire: 1.12 },
+    cri: { label: 'ÇA TOURNE', gest: 'crescendo', power: 46 } },
+
+  { id: 'MT30', nom: 'La Mouette de Tempête', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'La mouette poussée dans le stade par le vent du large, qui a volé un sandwich '
+      + 'en tribune. Elle est revenue la semaine suivante.',
+    mods: { breathBonus: 1.17, backfire: 1.1 },
+    cri: { label: 'ELLE EST ENTRÉE', gest: 'echarpe', power: 46 } },
+
+  { id: 'MT31', nom: 'Le Soleil d’Hiver', type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le petit soleil pâle d’un match de janvier, et elle qui tend son visage vers '
+      + 'lui. Il ne chauffe pas, elle sourit quand même.',
+    mods: { perfectBonus: 1.18, breathBonus: 0.92 },
+    cri: { label: 'UN RAYON', gest: 'relance', power: 46 } },
+
+  { id: 'MT32', nom: 'Le Bob de Plage', type: 'tifo', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Il vient au match de juillet comme à la plage, bob sur la tête et serviette '
+      + 'sur l’épaule. Il manque juste le sable.',
+    mods: { parryBonus: 1.16, backfire: 1.1 },
+    cri: { label: 'À LA PLAGE', gest: 'ola', power: 46 } },
+
+  { id: 'MT33', nom: 'La Glissade', type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Elle a glissé sur les marches gelées et elle en a fait une figure. Tout le '
+      + 'rang a applaudi.',
+    mods: { perfectBonus: 1.18, costPenalty: 1.06 },
+    cri: { label: 'OUPS', gest: 'visee', power: 46 } },
+
+  { id: 'MT34', nom: 'La Buée', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Ses lunettes s’embuent dès qu’il entre à la buvette. Il ressort, ça '
+      + 's’éclaircit, il rentre, ça recommence.',
+    mods: { breathBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'JE VOIS RIEN', gest: 'bascule', power: 46 } },
+
+  { id: 'MT35', nom: 'Le Nuage Noir du Kop', type: 'perc', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le nuage noir qui arrive en même temps que le but adverse. Il boude au-dessus '
+      + 'du kop jusqu’à la fin.',
+    mods: { mashBonus: 1.18, backfire: 1.12 },
+    cri: { label: 'IL GRONDE', gest: 'mash', power: 47 } },
+
+  { id: 'MT36', nom: 'La Feuille Morte', type: 'tifo', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'La feuille qui tombe sur la pelouse au premier match de la rentrée. Le '
+      + 'jardinier la ramasse, le vent en ramène une autre.',
+    mods: { parryBonus: 1.17, backfire: 1.1 },
+    cri: { label: 'LA PREMIÈRE FEUILLE', gest: 'mosaique', power: 46 } },
+
+  { id: 'MT37', nom: 'L’Éternuement d’Avril', type: 'tifo', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Allergique, elle éternue au premier match d’avril et tout le rang lui répond « '
+      + 'à tes souhaits ». Elle vient quand même, le mouchoir à la main.',
+    mods: { parryBonus: 1.16, backfire: 1.1 },
+    cri: { label: 'ATCHOUM', gest: 'tifo', power: 46 } },
+
+  { id: 'MT38', nom: 'La Gouttière Percée', type: 'perc', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le plombier bénévole qui répare la gouttière qui arrose toujours le même '
+      + 'siège. Elle fuit à nouveau le match suivant.',
+    mods: { mashBonus: 1.16, backfire: 1.1 },
+    cri: { label: 'PLIC, PLOC', gest: 'deuxvoix', power: 46 } },
+
+  { id: 'MT39', nom: 'Le Vent Fou', type: 'voix', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Les jours de vent chaud, ses cheveux sont en bataille dès l’entrée. Elle a '
+      + 'renoncé à les attacher.',
+    mods: { tempoWindow: 1.16, backfire: 1.12 },
+    cri: { label: 'MES CHEVEUX !', gest: 'capo', power: 46 } },
+
+  { id: 'MT40', nom: 'La Pluie d’Été', type: 'perc', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'La goutte d’averse tiède de juillet qu’on accueille les bras ouverts. Elle '
+      + 'rebondit sur les sièges et tout le monde rit.',
+    mods: { mashBonus: 1.17, perfectBonus: 0.92 },
+    cri: { label: 'ENFIN !', gest: 'mash', power: 46 } },
+
+  { id: 'MT41', nom: 'Le Ballon de l’École', type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le petit ballon météo lâché par l’école d’en face, qui passe au-dessus du '
+      + 'stade pendant le match. Tout le virage compte jusqu’à ce qu’il disparaisse.',
+    mods: { perfectBonus: 1.18, backfire: 1.12 },
+    cri: { label: 'LÂCHEZ !', gest: 'compte', power: 46 } },
+
+  { id: 'MT42', nom: 'La Brume du Fleuve', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Elle vient du port à pied, dans la brume du fleuve, une petite lampe à la '
+      + 'main. Elle n’est jamais en retard.',
+    mods: { breathBonus: 1.16, backfire: 1.1 },
+    cri: { label: 'ON Y VOIT RIEN', gest: 'echarpe', power: 46 } },
+
+  { id: 'MT43', nom: 'La Lune Haute', type: 'voix', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'La petite lune qui se lève au-dessus du match du soir, timide derrière le '
+      + 'toit. À la mi-temps, elle est déjà plus haute.',
+    mods: { tempoWindow: 1.17, backfire: 1.1 },
+    cri: { label: 'ELLE SE LÈVE', gest: 'tempo', power: 46 } },
+
+  { id: 'MT44', nom: 'Le Ciel du Retour', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le gamin qui regarde les étoiles par la vitre du car, au retour d’un '
+      + 'déplacement. Il les compte jusqu’à s’endormir.',
+    mods: { breathBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'REGARDE DEHORS', gest: 'memoire', power: 46 } },
+
+  { id: 'MT45', nom: 'L’Aurore', type: 'voix', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Elle descend du car au lever du soleil après une nuit de déplacement, les yeux '
+      + 'à moitié fermés. Elle est la première à chanter.',
+    mods: { tempoWindow: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'DÉJÀ LE MATIN ?', gest: 'tempo', power: 46 } },
+
+  { id: 'MT46', nom: 'La Congère', type: 'perc', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le bénévole à la pelle qui déblaie la neige devant les portes avant chaque '
+      + 'match d’hiver. Il commence à six heures.',
+    mods: { mashBonus: 1.16, backfire: 1.1 },
+    cri: { label: 'À LA PELLE', gest: 'mash', power: 46 } },
+
+  { id: 'MT47', nom: 'La Goutte au Nez', type: 'fide', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Enrhumée, la goutte au nez, elle vient quand même. Elle n’a pas raté un match '
+      + 'en douze hivers.',
+    mods: { holdBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'JE VIENS QUAND MÊME', gest: 'hold', power: 46 } },
+
+  { id: 'MT48', nom: 'Le Coup de Soleil', type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Rouge comme une tomate après un match d’août, il a oublié la crème. Il '
+      + 'l’oublie à chaque fois.',
+    mods: { perfectBonus: 1.17, backfire: 1.12 },
+    cri: { label: 'ÇA BRÛLE', gest: 'rouleaux', power: 46 } },
+
+  { id: 'MT49', nom: 'La Bourrasque de Confettis', type: 'perc', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Le coup de vent qui renvoie les confettis du tifo droit dans le kop. On en '
+      + 'retrouve dans les poches jusqu’à Noël.',
+    mods: { mashBonus: 1.17, backfire: 1.14 },
+    cri: { label: 'ILS REVIENNENT', gest: 'salves', power: 46 } },
+
+  { id: 'MT50', nom: 'L’Accalmie', type: 'fide', set: 'MT', stage: 1, rar: 'commune',
+    histoire: 'Elle sourit en silence quand la pluie s’arrête, et elle referme son parapluie '
+      + 'la première. Elle sent toujours le moment avant les autres.',
+    mods: { holdBonus: 1.17, backfire: 1.1 },
+    cri: { label: 'ÇA S’ARRÊTE', gest: 'retenue', power: 46 } },
   /* ============================== LES HÉROS DU CANAPÉ (HC)
 
      Ils n'y étaient pas, et ils savent mieux. La série de ceux qui regardent
