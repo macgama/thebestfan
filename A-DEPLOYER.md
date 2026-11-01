@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Ultimate SU : 108 images et 108 clips ; clips Ultimate AN1 à AN19** (branche
+`claude/project-thread-8di81x`, 1er novembre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- La série SU « Die Kurve » a son image Ultimate plein cadre pour chaque Fanzzy
+  et chaque âge, avec son clip de 4 s. AN1 à AN19 ont maintenant leur clip
+  (57) ; AN20 à AN60 gardent l'image fixe.
+- Après la mise en ligne : sur une fiche SU, toucher la tuile ULTIMATE et voir
+  le clip ; même chose sur AN5.
+
+---
+
 **Les cartes en grand à la fin d'un booster** (branche
 `claude/project-thread-skb2xv`, 31 octobre 2026, demande de Gaël). Construction
 seule, **sans schéma**.
