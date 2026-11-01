@@ -1,0 +1,21 @@
+{
+  "id": "MT11",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "e1db6f7e6d49"
+        }
+      }
+    }
+  }
+}
