@@ -493,6 +493,11 @@ for (const [route, nom] of tousLesEcrans) {
         const st = getComputedStyle(el);
         if (st.overflowX !== 'hidden' && st.overflowX !== 'clip') return false;
         if (st.textOverflow === 'ellipsis') return false;
+        /* **Un fondu au bord annonce la suite**, comme des points de
+           suspension : l'histoire de la fiche d'un Fanzzy tient sur une
+           ligne qui s'efface sous « plus » (1er novembre 2026). */
+        if ((st.maskImage || st.webkitMaskImage || 'none') !== 'none'
+          && el.parentElement?.querySelector('[aria-expanded]')) return false;
         /* **Masqué à l'œil, lu par les lecteurs d'écran : rien n'est coupé.**
            Le Virage écrit ses libellés sous deux formes (lot 0, chantier 1) :
            la longue (« TA TRIBUNE », « GRAND VIRAGE », « EN FACE ») et la
