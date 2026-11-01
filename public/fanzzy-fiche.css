@@ -205,8 +205,7 @@
    Une rangée sous la carte : le cri (▶, à la craie, toucher le crie), le club
    lié (son logo et son nom), l'avatar (TON AVATAR, ou ME MONTRER AINSI).
    Quarante-quatre pixels de cible, la pilule en fait trente-quatre. Sur un
-   écran étroit, le cri et le nom du club se serrent en fondu, jamais en
-   points de suspension. */
+   écran étroit, le cri et le nom du club passent sur deux lignes. */
 .fiche .pastilles{flex:none;display:flex;justify-content:center;gap:6px;margin:2px var(--marge) 0;min-width:0}
 .fiche .pastilles[hidden]{display:none}
 .fiche .pastille{position:relative;flex:0 1 auto;min-width:0;min-height:44px;display:inline-flex;align-items:center;
@@ -220,10 +219,10 @@
 .fiche .pastille-cri{flex-shrink:1.4;color:var(--encre)}
 .fiche .pastille-cri::before{background:var(--craie);border-color:var(--craie);box-shadow:inset 4px 0 0 var(--e1,var(--projo))}
 .fiche .pastille-cri>svg{width:11px;height:11px;flex:none;fill:currentColor}
-.fiche .pastille-cri>b,.fiche .fiche-club>.fiche-club-nom{min-width:0;overflow:hidden;font-weight:700;
-  padding-right:8px;margin-right:-8px;
-  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 9px),transparent);
-          mask-image:linear-gradient(90deg,#000 calc(100% - 9px),transparent)}
+/* Un cri ou un nom trop long passe sur deux lignes dans sa pilule, jamais
+   coupé : la cible garde ses quarante-quatre pixels. */
+.fiche .pastille-cri>b,.fiche .fiche-club>.fiche-club-nom{min-width:0;font-weight:700;white-space:normal;
+  line-height:1.05;text-wrap:balance;text-align:left}
 /* Serrées (`serrerPastilles`) : le club à son logo, l'avatar à son étoile. */
 .fiche .pastilles.serre .fiche-club:has(.fiche-club-logo)>.fiche-club-nom,
 .fiche .pastilles.serre .pastille-avatar>.pastille-mot{position:absolute;width:1px;height:1px;overflow:hidden;
