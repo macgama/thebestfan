@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**Le Fanzzy en grand depuis sa fiche** (branche `claude/project-thread-bk32k5`,
+1er novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
+
+- Sur la fiche d'un Fanzzy, toucher la carte l'ouvre en plein écran : le
+  personnage en entier devant le décor de sa carte, avec la tenue et
+  l'expression choisies. La croix, un toucher ou Échap referment.
+- Ce toucher retournait la carte : c'est maintenant la plaque ronde ↻ seule.
+- **Fiche plus légère (forme A, choisie par Gaël)** : sous la carte, trois
+  pastilles (le cri, le club lié avec son logo, TON AVATAR ou ME MONTRER
+  AINSI), l'histoire sur une ligne avec « plus », puis quatre onglets ÂGES,
+  ULTIMATE, EFFETS, LOOK (états et tenues) dont la rangée est centrée, et une
+  ligne de détail. La bande du cri, les tampons autour de la carte et la
+  plaque ULTIMATE à côté d'elle sont retirés ; la carte, l'âge, la rareté, la
+  famille et le solde d'écharpes restent comme avant.
+- Après la mise en ligne : sur le S24+, ouvrir une fiche, toucher la carte,
+  puis chaque onglet et « plus ».
+
+---
+
 **Les pièces de club de DIE KURVE** (branche `claude/project-thread-jh1l0z`,
 1er novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
 

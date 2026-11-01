@@ -7369,5 +7369,19 @@
  "Effets": "Effects",
  "À la fin de l’ouverture, <0>touche une carte</0> pour la voir en grand avec ses caractéristiques : rareté, effets en jeu, nouvelle ou double. Les flèches passent d’une carte à l’autre.": "At the end of the opening, <0>tap a card</0> to see it full size with its details: rarity, in-game effects, new or duplicate. The arrows move from one card to the next.",
  "Comment voir une carte en grand après un booster ?": "How do I see a card full size after a booster?",
- "Touche-la sur l’écran de fin d’ouverture. Elle s’ouvre en grand, avec sa rareté, ce qu’elle change en jeu et si elle est nouvelle ou en double. Les flèches passent aux autres cartes du paquet, VOIR LA FICHE ouvre la fiche du Fanzzy et FERMER te ramène au paquet.": "Tap it on the screen at the end of the opening. It opens full size, with its rarity, what it changes in the game and whether it is new or a duplicate. The arrows move to the other cards in the pack, VIEW PROFILE opens the Fanzzy’s profile and CLOSE takes you back to the pack."
+ "Touche-la sur l’écran de fin d’ouverture. Elle s’ouvre en grand, avec sa rareté, ce qu’elle change en jeu et si elle est nouvelle ou en double. Les flèches passent aux autres cartes du paquet, VOIR LA FICHE ouvre la fiche du Fanzzy et FERMER te ramène au paquet.": "Tap it on the screen at the end of the opening. It opens full size, with its rarity, what it changes in the game and whether it is new or a duplicate. The arrows move to the other cards in the pack, VIEW PROFILE opens the Fanzzy’s profile and CLOSE takes you back to the pack.",
+ "<0>En grand</0> : sur la fiche, touche la carte pour voir ton Fanzzy en plein écran, devant son décor.": "<0>Full size</0>: on the profile, tap the card to see your Fanzzy full screen, in front of its backdrop.",
+ "{0} en grand": "{0} full size",
+ "Comment voir mon Fanzzy en grand ?": "How do I see my Fanzzy full size?",
+ "Touche sa carte sur sa fiche. Il s’ouvre en plein écran, en entier devant son décor, avec la tenue et l’expression choisies. Touche l’écran ou la croix pour revenir. Pour retourner la carte, c’est la plaque ronde à côté d’elle.": "Tap its card on its profile. It opens full screen, head to toe in front of its backdrop, with the chosen outfit and mood. Tap the screen or the cross to go back. To flip the card, use the round button next to it.",
+ "<0>Ton Fanzzy de l’accueil</0> est ton titulaire : choisis-le dans « Mes Fanzzy », et ouvre sa fiche pour le faire évoluer. Ses onglets ÂGES, ULTIMATE, EFFETS et LOOK montrent ses âges, son coup fatal, ce qu’il change en jeu, ses expressions et ses tenues.": "<0>Your home-screen Fanzzy</0> is your starter: pick it in “My Fanzzy”, and open its card to evolve it. Its AGES, ULTIMATE, EFFECTS and LOOK tabs show its ages, its finishing move, what it changes in the game, its moods and its outfits.",
+ "LOOK": "LOOK",
+ "plus ›": "more ›",
+ "moins ‹": "less ‹",
+ "Ce qu’il a": "What it has",
+ "Lier à mon club, {0} écharpes": "Bind to my club, {0} scarves",
+ "LIER À MON CLUB": "BIND TO MY CLUB",
+ "UN CLUB": "A CLUB",
+ "Où trouver les âges, les effets et les tenues de mon Fanzzy ?": "Where do I find my Fanzzy’s ages, effects and outfits?",
+ "Sur sa fiche, sous la carte. Les onglets ÂGES, ULTIMATE, EFFETS et LOOK montrent chacun leur rangée ; touche une image pour lire ce qu’elle fait juste dessous. LOOK réunit ses expressions et ses tenues. Les pastilles sous la carte crient son cri, disent son club et s’il est ton avatar ; « plus » ouvre toute son histoire.": "On its card page, under the card. The AGES, ULTIMATE, EFFECTS and LOOK tabs each show their row; tap a picture to read what it does just below. LOOK gathers its moods and its outfits. The badges under the card shout its chant, show its club and whether it is your avatar; “more” opens its whole story."
 }
