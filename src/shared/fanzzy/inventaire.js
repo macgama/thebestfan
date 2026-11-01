@@ -676,6 +676,98 @@ export const STUFF = [
     texte: 'Cousu de mille boutons, il arrête tout. Il ne laisse pas danser.',
     mods: { parryResist: 1.28, tempoWindow: 0.86 } },
 
+  /* --------------------------------------------- DIE KURVE, les pièces de club
+
+     Les mêmes règles que LES TERRACES, pour les douze clubs suisses (demande
+     de Gaël du 1er novembre 2026). Les couleurs ou la ville, jamais ce que
+     dessinent les écussons ni les armoiries : ni ours, ni étoile, ni aigle,
+     ni clé, ni insecte, ni grande lettre V, ni croix. */
+
+  // Bâle
+  { id: 'su-piccolo', nom: 'Piccolo rouge et bleu', rar: 'commune', club: 551, publie: false,
+    texte: 'Il donne la note avant tout le monde. Il s’essouffle avant tout le monde aussi.',
+    mods: { tempoWindow: 1.18, breathBonus: 0.9 } },
+  { id: 'su-lanterne-cortege', nom: 'Lanterne peinte du cortège', rar: 'rare', club: 551, publie: false,
+    texte: 'Elle éclaire le geste juste au cœur de la nuit. Elle se porte à pas lents.',
+    mods: { perfectBonus: 1.28, mashTime: 400 } },
+  // Grasshopper
+  { id: 'su-casquette-matelot', nom: 'Casquette de matelot bleu nuit', rar: 'commune', club: 1013, publie: false,
+    texte: 'Le vent du lac glisse dessus. Elle tombe au premier coup de bras.',
+    mods: { parryResist: 1.2, mashBonus: 0.88 } },
+  { id: 'su-cloche-aubes', nom: 'Cloche du bateau à aubes', rar: 'rare', club: 1013, publie: false,
+    texte: 'On l’entend d’une rive à l’autre. Il faut attendre qu’elle se taise.',
+    mods: { parryBonus: 1.28, tempoInterval: 70 } },
+  // Lausanne-Sport
+  { id: 'su-gants-vendange', nom: 'Gants de vendange bleu roi', rar: 'commune', club: 1014, publie: false,
+    texte: 'Ils tiennent la grappe jusqu’au bout. Ils n’ont pas la finesse des doigts nus.',
+    mods: { holdBonus: 1.18, perfectBonus: 0.9 } },
+  { id: 'su-porte-voix-guet', nom: 'Porte-voix du guet', rar: 'rare', club: 1014, publie: false,
+    texte: 'Il porte ta voix jusqu’au lac. Les mains prises, tu ne contres plus.',
+    mods: { breathBonus: 1.28, parryBonus: 0.84 } },
+  // Lucerne
+  { id: 'su-mirliton', nom: 'Mirliton bleu lac', rar: 'commune', club: 644, publie: false,
+    texte: 'Il fait du bruit pour dix. Pas toujours en mesure.',
+    mods: { mashBonus: 1.18, tempoWindow: 0.9 } },
+  { id: 'su-planche-pont', nom: 'Planche peinte du vieux pont', rar: 'rare', club: 644, publie: false,
+    texte: 'Elle tient au-dessus de l’eau depuis des siècles. Elle ne se presse jamais.',
+    mods: { parryResist: 1.3, mashTime: 450 } },
+  // Lugano
+  { id: 'su-cornet-marrons', nom: 'Cornet de marrons chauds', rar: 'commune', club: 606, publie: false,
+    texte: 'On y puise de quoi repartir. Les doigts brûlants ratent le geste fin.',
+    mods: { refundBonus: 1.18, perfectBonus: 0.88 } },
+  { id: 'su-manivelle', nom: 'Manivelle du funiculaire', rar: 'rare', club: 606, publie: false,
+    texte: 'Le refrain monte sans s’arrêter. Pas un palier pour souffler.',
+    mods: { tempoInterval: -60, breathBonus: 0.86 } },
+  // Saint-Gall
+  { id: 'su-de-coudre', nom: 'Dé à coudre vert et blanc', rar: 'commune', club: 1011, publie: false,
+    texte: 'Le geste fin passe par le bout du doigt. Il ne tape pas.',
+    mods: { perfectBonus: 1.18, mashBonus: 0.9 } },
+  { id: 'su-cerceau-broderie', nom: 'Cerceau de broderie', rar: 'rare', club: 1011, publie: false,
+    texte: 'Tu tiens tout le motif sans lâcher le fil. Le rythme attendra.',
+    mods: { holdBonus: 1.28, tempoWindow: 0.86 } },
+  // Servette
+  { id: 'su-marmite', nom: 'Petite marmite grenat', rar: 'commune', club: 2184, publie: false,
+    texte: 'On la casse en chantant. Elle ne protège de rien.',
+    mods: { breathBonus: 1.18, parryResist: 0.9 } },
+  { id: 'su-echelle', nom: 'Échelle des remparts', rar: 'rare', club: 2184, publie: false,
+    texte: 'Chaque contre monte d’un barreau. Sur une échelle, on ne tient pas en place.',
+    mods: { parryBonus: 1.3, holdBonus: 0.84 } },
+  // Sion
+  { id: 'su-gourde-glacier', nom: 'Gourde rouge du glacier', rar: 'commune', club: 630, publie: false,
+    texte: 'Une gorgée d’eau de glace et la voix revient. Elle pèse au bout du bras.',
+    mods: { breathBonus: 1.18, mashBonus: 0.9 } },
+  { id: 'su-cloche-alpage', nom: 'Grande cloche de l’alpage', rar: 'rare', club: 630, publie: false,
+    texte: 'Chaque coup sonne dans toute la vallée. Il faut le temps qu’elle se taise.',
+    mods: { mashBonus: 1.28, tempoInterval: 70 } },
+  // Thoune
+  { id: 'su-sciure', nom: 'Sac de sciure', rar: 'commune', club: 1012, publie: false,
+    texte: 'Une poignée et tu te relèves. Elle glisse entre les doigts.',
+    mods: { refundBonus: 1.18, tempoWindow: 0.9 } },
+  { id: 'su-planche-vague', nom: 'Planche de la vague du fleuve', rar: 'rare', club: 1012, publie: false,
+    texte: 'Tu tiens la vague du refrain. Le premier choc te jette à l’eau.',
+    mods: { tempoWindow: 1.28, parryResist: 0.86 } },
+  // Vaduz
+  { id: 'su-loupe', nom: 'Loupe de philatéliste', rar: 'commune', club: 660, publie: false,
+    texte: 'Elle voit le geste juste dans le moindre détail. Elle ne tient rien.',
+    mods: { perfectBonus: 1.18, holdBonus: 0.9 } },
+  { id: 'su-luge', nom: 'Luge en bois rouge', rar: 'rare', club: 660, publie: false,
+    texte: 'Le refrain file comme la piste. Rien à reprendre en route.',
+    mods: { tempoInterval: -60, refundBonus: 0.86 } },
+  // Young Boys
+  { id: 'su-tresse-oignons', nom: 'Tresse d’oignons', rar: 'commune', club: 565, publie: false,
+    texte: 'Elle tient tout le marché. Elle fait un peu pleurer.',
+    mods: { holdBonus: 1.2, breathBonus: 0.9 } },
+  { id: 'su-rouage', nom: 'Rouage de la tour de l’horloge', rar: 'rare', club: 565, publie: false,
+    texte: 'Tout tourne à la seconde près. Rien ne force un rouage.',
+    mods: { tempoWindow: 1.3, mashBonus: 0.84 } },
+  // Zurich
+  { id: 'su-casque-audio', nom: 'Casque audio blanc et bleu', rar: 'commune', club: 783, publie: false,
+    texte: 'Le rythme dans les oreilles. Les coups, tu ne les entends pas venir.',
+    mods: { tempoWindow: 1.18, parryBonus: 0.9 } },
+  { id: 'su-poignee-tram', nom: 'Poignée du tram', rar: 'rare', club: 783, publie: false,
+    texte: 'Tu tiens jusqu’au terminus. Il faut du temps pour lâcher.',
+    mods: { holdBonus: 1.28, mashTime: 400 } },
+
   /* ----------------------------------------------------- la centième
 
      Hors série : elle ne s'ouvre avec aucune saison, mais quand on le

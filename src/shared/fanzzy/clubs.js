@@ -59,24 +59,24 @@ const TERRACES = [
 ];
 
 /* Les douze clubs suisses de 2026-2027 (DIE KURVE, `dex-kurve.js`), dans
-   l'ordre des fiches : SU1 à SU12, SU13 à SU24, SU25 à SU36. **Pas encore
-   d'identifiant** : ceux de LES TERRACES ont été écrits de mémoire et restent
-   à vérifier, on ne recommence pas. Un `null` laisse la lignée neutre ; on
-   remplit chaque case avec l'identifiant lu dans `teams` en production (ou
-   dans le classement de la compétition 207). */
+   l'ordre des fiches : SU1 à SU12, SU13 à SU24, SU25 à SU36. Identifiants
+   API-Football écrits le 1er novembre 2026 (fil « Créer l'équipement des
+   clubs suisses ») d'après des relevés publics de l'API où chacun revient
+   sous le même nom de club, à confirmer dans `teams` en production. Un
+   `null` laisserait la lignée neutre. */
 const KURVE = [
-  null,  // Bâle
-  null,  // Grasshopper
-  null,  // Lausanne-Sport
-  null,  // Lucerne
-  null,  // Lugano
-  null,  // Saint-Gall
-  null,  // Servette
-  null,  // Sion
-  null,  // Thoune
-  null,  // Vaduz
-  null,  // Young Boys
-  null,  // Zurich
+  551,  // Bâle
+  1013, // Grasshopper
+  1014, // Lausanne-Sport
+  644,  // Lucerne
+  606,  // Lugano
+  1011, // Saint-Gall
+  2184, // Servette
+  630,  // Sion
+  1012, // Thoune
+  660,  // Vaduz
+  565,  // Young Boys
+  783,  // Zurich
 ];
 
 /**
@@ -158,8 +158,6 @@ export function avecCriDuClub(perso, teamId) {
  */
 export const SERIES_DE_CLUBS = Object.freeze({
   AN: Object.freeze([...TERRACES]),
-  /* Identifiants pas encore lus (`KURVE`) : la suite dit la série en attente
-     tant qu'il en manque, et l'exige dès qu'ils sont remplis. */
   SU: Object.freeze([...KURVE]),
 });
 
