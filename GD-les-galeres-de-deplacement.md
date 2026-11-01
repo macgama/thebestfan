@@ -689,7 +689,7 @@ IDENTITÉ: A tall confident woman in her forties: light olive skin, black hair i
   - Préhistorique : `A stone-age path keeper: a fur coat, a horn of bone.`
   - Apocalyptique : `A wasteland rail keeper: a coat of tarp, a red lamp made from a brake light.`
 
-### GD39 · La Tente du Camping → La Tente Qui Tient → Le Campement · fond vert
+### GD39 · La Tente du Camping → La Tente Qui Tient → Le Camp de Toile · fond vert
 
 La tente montée de travers au camping municipal la veille du match, et qui finit campement de tout le groupe.
 
