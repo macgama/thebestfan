@@ -123,13 +123,19 @@ console.log('\nLes championnats qui ont leurs Fanzzy');
   check('le cri de série d\'un club anglais, rien pour un autre', criDeSerie(40) === CRI_DU_CLUB.get(40) && criDeSerie(85) === null);
 }
 console.log('\nLe cri du club');
-check('vingt cris, un par club, quatre mots au plus et sans chiffre',
-  CRI_DU_CLUB.size === 20 && [...CRI_DU_CLUB.values()].every((c) =>
+check('trente-deux cris, un par club, quatre mots au plus et sans chiffre',
+  CRI_DU_CLUB.size === 32 && [...CRI_DU_CLUB.values()].every((c) =>
     c.replace(/[,!’']/g, ' ').trim().split(/\s+/).length <= 4 && !/\d/.test(c)));
 check('chaque club de LES TERRACES a le sien', SERIES_DE_CLUBS.AN.every((c) => CRI_DU_CLUB.has(c)));
-/* DIE KURVE n'a pas encore ses cris validés : ses clubs prennent un cri type. */
-check('un club de DIE KURVE a un cri type, en attendant le sien',
-  SERIES_DE_CLUBS.SU.every((c) => CRI_DU_CLUB.has(c) || CRIS_TYPES.includes(criDuClub(c))));
+check('chaque club de DIE KURVE a le sien, jamais un cri type',
+  SERIES_DE_CLUBS.SU.every((c) => CRI_DU_CLUB.has(c) && !CRIS_TYPES.includes(criDuClub(c))));
+check('aucun cri ne sert deux fois', new Set(CRI_DU_CLUB.values()).size === CRI_DU_CLUB.size);
+{
+  const { serieDeLigue } = await import('../src/shared/fanzzy/series-ligues.js');
+  const su = serieDeLigue(207);
+  check('le championnat suisse : douze clubs, trois Fanzzy et un cri chacun',
+    su.clubs.length === 12 && su.clubs.every((c) => c.fanzzy.length === 3 && c.cri === CRI_DU_CLUB.get(c.club)));
+}
 {
   const lie = lierLeDeck(loadout(['AN1', 'TR32']), CLUB, tauxDuLien());
   const cri = CRI_DU_CLUB.get(CLUB);

@@ -111,8 +111,31 @@ const CRIS_TERRACES = [
   'BLANC NACRÉ, BLEU NUIT',
 ];
 
+/* Les cris de DIE KURVE (demande de Gaël du 1er novembre 2026, « il faut
+   créer les cris personnalisés pour les clubs suisses »). Mêmes règles, et
+   celles de `dex-kurve.js` : ni surnom (pas de grenat, ni de jaune et noir,
+   ni de rouge-bleu), ni ce que dessine l'écusson ; un morceau de la ville,
+   souvent celui des deux pièces d'équipement du club. Même ordre que `KURVE`. */
+const CRIS_KURVE = [
+  'LES LANTERNES S’ALLUMENT',
+  'BLEU LAC, BLANC VOILE',
+  'LES ESCALIERS CHANTENT',
+  'LE VIEUX PONT TREMBLE',
+  'MARRONS CHAUDS, CŒURS CHAUDS',
+  'BRODÉS DE VERT',
+  'LA MARMITE DÉBORDE',
+  'LES REINES DESCENDENT',
+  'LA VAGUE NOUS PORTE',
+  'PETIT PAYS, GRANDE VOIX',
+  'LES OIGNONS FONT PLEURER',
+  'LE TRAM EST PLEIN',
+];
+
 /** Club → son cri, pour les clubs d'une série de championnat. */
-export const CRI_DU_CLUB = new Map(TERRACES.map((club, i) => [club, CRIS_TERRACES[i]]));
+export const CRI_DU_CLUB = new Map([
+  ...TERRACES.map((club, i) => [club, CRIS_TERRACES[i]]),
+  ...KURVE.map((club, i) => [club, CRIS_KURVE[i]]).filter(([club]) => club != null),
+]);
 
 /**
  * **Le cri type** (demande de Gaël du 25 octobre 2026 : « des cris types pour
