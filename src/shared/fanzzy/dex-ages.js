@@ -1169,6 +1169,257 @@ export const AGES = {
       + 'souffle quand même, et c’est bien le sujet.', 'ON SOUFFLE TOUS'],
   ],
 
+  MT15: [
+    ['La Bruine Fidèle', 'Elle vient à tous les matchs d’automne, une perle d’eau au bout du nez. Elle '
+      + 'chante juste à côté du temps, comme la pluie qui tombe entre les gouttes.', 'PERLE PAR PERLE'],
+    ['Le Crachin Éternel', 'Couverte de mille perles d’eau qui brillent sous les projecteurs, elle n’a '
+      + 'jamais vu un match au sec. Elle ne le regrette pas.', 'IL CRACHINE ENCORE'],
+  ],
+
+  MT16: [
+    ['L’Arc Qui Revient', 'Il revient à chaque victoire, un peu plus large. Le virage lève les yeux avant '
+      + 'même que l’arbitre siffle la fin.', 'IL REVIENT'],
+    ['Le Pont des Couleurs', 'Il tient un pont de couleurs au-dessus du stade, et tout le virage passe '
+      + 'dessous en chantant. On dit qu’il mène tout droit au match suivant.', 'TOUS SOUS LE PONT'],
+  ],
+
+  MT17: [
+    ['Le Parapluie Partagé', 'Il a trouvé un parapluie plus grand et il le tend au-dessus de tout le rang. '
+      + 'Le rang de derrière demande déjà le même.', 'SERREZ-VOUS'],
+    ['Le Toit de Toile', 'Une grande toile peinte tendue au-dessus du virage, et lui dessous, qui tient '
+      + 'le mât. Il pleut partout dans le stade, sauf chez nous.', 'LA TOILE TIENT'],
+  ],
+
+  MT18: [
+    ['Le Nuage Posé', 'Il ne bouge plus de la tribune, quel que soit le vent. Les autres nuages '
+      + 'commencent à s’arrêter à côté de lui.', 'ON NE BOUGE PAS'],
+    ['Le Plafond du Stade', 'Il mène un troupeau de nuages qui font un plafond au-dessus du stade. Les '
+      + 'jours de grand soleil, c’est lui qui fait l’ombre.', 'LE CIEL EST À NOUS'],
+  ],
+
+  MT19: [
+    ['La Flaque Évitée', 'Les habitués sautent par-dessus sans regarder, les nouveaux tombent dedans. '
+      + 'Elle reflète déjà tout le parvis.', 'SAUTE !'],
+    ['Le Miroir d’Eau', 'Calme comme un lac, elle renvoie le stade entier à l’envers. Le soir, le '
+      + 'virage s’y regarde chanter.', 'REGARDE-TOI'],
+  ],
+
+  MT20: [
+    ['Le Thermomètre à Zéro', 'Il est descendu à zéro un soir de décembre, et la buvette a battu son record. '
+      + 'Il en est encore fier.', 'ZÉRO PILE'],
+    ['La Colonne de Mercure', 'Grand savant de verre et d’argent, il mesure la chaleur du virage, pas celle '
+      + 'de l’air. Elle monte toujours à la dernière minute.', 'ÇA MONTE'],
+  ],
+
+  MT21: [
+    ['La Tempête du Déplacement', 'Le car a roulé dans une tempête de sable, et c’est elle qui a guidé le '
+      + 'chauffeur. Elle s’est noué l’écharpe sur le visage et n’a rien lâché.', 'SUIVEZ-MOI'],
+    ['La Dune Debout', 'Cheffe de caravane, elle mène tout le convoi à travers le désert jusqu’au '
+      + 'stade. Il lui reste toujours du sable dans les yeux.', 'LA CARAVANE ARRIVE'],
+  ],
+
+  MT22: [
+    ['La Gourde Pleine', 'Elle vient avec trois gourdes et une glacière, et personne n’a plus soif '
+      + 'autour d’elle. Elle tient jusqu’au coup de sifflet.', 'IL EN RESTE'],
+    ['La Source', 'Gardienne d’une oasis fraîche au milieu de la chaleur, elle ne sèche jamais. '
+      + 'On dit que le virage boit à sa source.', 'LA SOURCE COULE'],
+  ],
+
+  MT23: [
+    ['Les Premiers Flocons', 'Il n’est plus seul, et ils tournent ensemble en glissant comme des patineurs. '
+      + 'Le match s’arrête pour les regarder.', 'ILS ARRIVENT'],
+    ['La Tempête de Neige', 'Roi de la tempête blanche, il fait danser des milliers de flocons autour de '
+      + 'lui. Le match continue, et personne ne voit plus le ballon.', 'TOUT EST BLANC'],
+  ],
+
+  MT24: [
+    ['La Dentelle aux Fenêtres', 'Le givre dessine de la dentelle sur les vitres de la buvette, et elle '
+      + 'reconnaît ses points. Elle tricote avec des aiguilles de glace.', 'MAILLE À L’ENVERS'],
+    ['La Dentelle de Givre', 'Reine de la dentelle de givre, elle couvre tout le stade de motifs blancs une '
+      + 'nuit d’hiver. Elle garde toujours sa pelote du premier jour.', 'LE GIVRE TIENT'],
+  ],
+
+  MT25: [
+    ['Le Couloir des Vents', 'Il siffle maintenant les chants du virage, en retard d’une seconde. Le couloir '
+      + 'les renvoie aux tribunes.', 'ÉCOUTEZ LE COULOIR'],
+    ['Le Tunnel des Vents', 'Organiste du vent, il joue sur tous les tunnels du stade comme sur les tuyaux '
+      + 'd’un grand orgue. Le chant revient de partout.', 'LE STADE RÉPOND'],
+  ],
+
+  MT26: [
+    ['L’Éclair Lointain', 'Elle part à la chasse à l’orage après les matchs du soir, l’appareil autour du '
+      + 'cou. Cette fois, elle l’a eu.', 'CLIC'],
+    ['La Lanterne d’Été', 'Elle garde la foudre dans une lanterne et la ressort pour les grands soirs. Le '
+      + 'virage s’allume d’un coup.', 'LA FOUDRE EST À NOUS'],
+  ],
+
+  MT27: [
+    ['La Pelouse Qui Brille', 'Il range chaque goutte de rosée brin par brin, et la pelouse brille en motifs. '
+      + 'Les joueurs n’osent plus marcher dessus.', 'PAS SUR LA PELOUSE'],
+    ['Le Jardinier de l’Aube', 'Gardien d’un grand jardin où la rosée ne sèche jamais, il garde son arrosoir '
+      + 'du premier jour. Le matin, tout le stade sent l’herbe mouillée.', 'LE JARDIN SE LÈVE'],
+  ],
+
+  MT28: [
+    ['Le Relevé du Lundi', 'Chaque lundi, il affiche le relevé à la buvette, et tout le monde vient voir. '
+      + 'Il donne la mesure du chant comme celle de la pluie.', 'RELEVÉ DU LUNDI'],
+    ['La Station Météo', 'Gardien d’une station tout en haut de la montagne, il lit le ciel avant tout '
+      + 'le monde. Son carnet n’a jamais sauté un match.', 'IL VA PLEUVOIR'],
+  ],
+
+  MT29: [
+    ['La Tornade Rangée', 'Il a appris à tourner sans rien renverser, et les gobelets retombent en pile. '
+      + 'Plus il tourne, plus il va vite.', 'PLUS VITE'],
+    ['Le Tourbillon', 'Grand danseur du vent, il tourne si bien qu’on vient de loin pour le regarder. '
+      + 'Le virage tape des mains de plus en plus fort.', 'ON NE S’ARRÊTE PAS'],
+  ],
+
+  MT30: [
+    ['La Mouette du Toit', 'Elle vit sur le toit de la tribune et suit tous les déplacements. Elle arrive '
+      + 'toujours avant le car.', 'ELLE NOUS SUIT'],
+    ['L’Albatros', 'Vieil albatros capitaine, il a fait le tour des mers et de tous les stades. Il '
+      + 'porte encore la miette du sandwich.', 'LE TOUR DU MONDE'],
+  ],
+
+  MT31: [
+    ['Le Soleil Bas', 'Elle le suit d’un match à l’autre, le bonnet sur les oreilles. Il est bas, il '
+      + 'éblouit, et il revient toujours.', 'IL REVIENT'],
+    ['Le Soleil de Minuit', 'Voyageuse du grand Nord, elle a vu le soleil qui ne se couche pas. Elle le '
+      + 'ramène dans le virage les soirs d’hiver.', 'IL NE SE COUCHE PAS'],
+  ],
+
+  MT32: [
+    ['Le Chapeau de Paille', 'Il distribue des chapeaux de paille dans tout le rang, et le rang les lève '
+      + 'l’un après l’autre. Ça fait une vague dorée.', 'LEVEZ LES CHAPEAUX'],
+    ['L’Ombre de Midi', 'Maître des chapeaux de tout le virage, il porte un chapeau immense dont '
+      + 'l’ombre marque l’heure. Il garde son bob dessous.', 'LA VAGUE PASSE'],
+  ],
+
+  MT33: [
+    ['La Patineuse', 'Elle ne glisse plus, elle patine, et elle vise la marche suivante avant de '
+      + 'partir. Elle ne la rate jamais.', 'JE VISE'],
+    ['La Patinoire', 'Reine de la piste de glace, elle dessine des figures parfaites sous les '
+      + 'lumières. Elle a gardé le bonnet de la première glissade.', 'LA FIGURE PARFAITE'],
+  ],
+
+  MT34: [
+    ['Les Lunettes Embuées', 'Il passe du froid au chaud toute la mi-temps, et il a appris à voir à travers '
+      + 'la buée. Le verre l’a pris d’amitié.', 'DEDANS, DEHORS'],
+    ['Le Souffleur de Verre', 'Maître du verre soufflé, il fait des merveilles de cristal d’un seul souffle. '
+      + 'Ses lunettes, elles, s’embuent toujours.', 'UN SOUFFLE'],
+  ],
+
+  MT35: [
+    ['Le Ciel Noir', 'Il gronde maintenant avec le virage, au même rythme que les tambours. Les '
+      + 'adversaires lèvent les yeux.', 'ÇA VA TONNER'],
+    ['Le Tonnerre du Kop', 'Géant des grands tambours, il frappe le tonnerre au-dessus du kop. Quand il '
+      + 'gronde, tout le stade tremble.', 'TONNERRE !'],
+  ],
+
+  MT36: [
+    ['Le Tapis d’Automne', 'Elle et ses sœurs couvrent les gradins d’un tapis roux, feuille par feuille. '
+      + 'Vu d’en haut, ça fait un dessin.', 'FEUILLE PAR FEUILLE'],
+    ['La Saison', 'Esprit de toute la forêt d’automne, elle porte des bois de feuillage roux. '
+      + 'Chaque saison commence quand elle tombe.', 'LA SAISON COMMENCE'],
+  ],
+
+  MT37: [
+    ['Le Pollen de Printemps', 'Elle a fait la paix avec les fleurs, et elle en sème partout dans la tribune. '
+      + 'Le virage fleurit à chaque printemps.', 'À TES SOUHAITS'],
+    ['Le Pré Fleuri', 'Couronnée de prairie, elle porte tout un pré fleuri sur les épaules. Elle '
+      + 'garde un mouchoir, au cas où.', 'LE PRÉ EST EN FLEUR'],
+  ],
+
+  MT38: [
+    ['La Gouttière Réparée', 'Elle ne fuit plus, elle joue : deux gouttes, deux notes, l’une après l’autre. '
+      + 'Le siège est enfin sec.', 'PLIC ET PLOC'],
+    ['La Cascade du Toit', 'Maître des fontaines, il fait danser l’eau du toit en deux grandes cascades '
+      + 'qui se répondent. Il garde sa clé à molette à la ceinture.', 'L’EAU CHANTE'],
+  ],
+
+  MT39: [
+    ['Le Vent d’Autan', 'Elle joue du vent comme d’un instrument, et le rang chante à son signal. Ses '
+      + 'cheveux, eux, n’en font qu’à leur tête.', 'À MON SIGNAL'],
+    ['Le Vent du Sud', 'Grande joueuse de cornemuse du vent du sud, elle mène tout le virage derrière '
+      + 'elle. Ses cheveux en bataille flottent comme un drapeau.', 'SUIVEZ LE VENT'],
+  ],
+
+  MT40: [
+    ['L’Averse Fraîche', 'Elle tombe à grosses gouttes, au rythme des tambours. Le virage danse dessous.', 'ENCORE !'],
+    ['La Mousson', 'Seigneur des grandes pluies, il fait tomber la mousson en cadence. Ses gouttes '
+      + 'frappent les toits comme mille tambours.', 'LA GRANDE PLUIE'],
+  ],
+
+  MT41: [
+    ['Le Ballon Lâché', 'Il part maintenant au compte à rebours, et monte de plus en plus haut. Il '
+      + 'revient toujours au stade.', 'TROIS, DEUX, UN'],
+    ['La Montgolfière', 'Grande montgolfière d’aéronaute, il emmène le virage au-dessus des nuages. Il '
+      + 'a gardé la ficelle du premier ballon.', 'DÉCOLLAGE'],
+  ],
+
+  MT42: [
+    ['La Brume du Port', 'Elle guide les supporters perdus dans la brume, de quai en quai jusqu’au '
+      + 'stade. Sa lampe est devenue lanterne.', 'PAR ICI'],
+    ['Le Phare', 'Gardienne du phare qui guide tout le virage, elle balaie la brume de sa grande '
+      + 'lumière. Elle porte encore la lampe du premier jour.', 'SUIVEZ LA LUMIÈRE'],
+  ],
+
+  MT43: [
+    ['La Pleine Lune', 'Pleine et ronde, elle éclaire le virage mieux que les projecteurs. On chante '
+      + 'au rythme de sa montée.', 'PLEINE LUNE'],
+    ['La Nuit Claire', 'Astronome de la nuit claire, elle compte les étoiles au-dessus du stade. Elle '
+      + 'garde son petit croissant du premier soir.', 'LA NUIT EST CLAIRE'],
+  ],
+
+  MT44: [
+    ['Le Ciel des Déplacements', 'Il connaît par cœur les étoiles de toutes les routes du championnat. Il dit au '
+      + 'chauffeur où on est.', 'ON EST LÀ'],
+    ['La Carte du Ciel', 'Navigateur aux étoiles, il tient la carte du ciel de tous les retours. Il n’a '
+      + 'jamais oublié la première étoile vue du car.', 'JE CONNAIS LA ROUTE'],
+  ],
+
+  MT45: [
+    ['Le Lever du Jour', 'Elle réveille tout le car au premier rayon, et elle donne le rythme du retour. '
+      + 'Le soleil se lève à son signal.', 'DEBOUT !'],
+    ['Le Retour à l’Aube', 'Messagère de l’aube, elle porte le soleil levant entre ses mains. Elle a '
+      + 'toujours l’œil un peu fatigué du premier matin.', 'LE JOUR SE LÈVE'],
+  ],
+
+  MT46: [
+    ['Le Déblayeur', 'Il déblaie plus vite qu’il ne neige, à grands coups de pelle. Les portes '
+      + 'ouvrent à l’heure.', 'ON DÉGAGE'],
+    ['Le Chasse-Neige', 'Géant chasse-neige, il ouvre la route du stade à travers les congères. Il '
+      + 'garde sa vieille pelle sur le dos.', 'LA ROUTE EST OUVERTE'],
+  ],
+
+  MT47: [
+    ['Le Rhume du Dimanche', 'Elle arrive avec un thermos de bouillon pour tout le rang. Elle tousse, elle '
+      + 'chante, elle reste.', 'UN BOUILLON ?'],
+    ['Le Grand Bouillon', 'Cuisinière de la grande soupe d’hiver du virage, elle tourne une marmite '
+      + 'géante. Elle garde son mouchoir dans la poche du tablier.', 'À LA SOUPE'],
+  ],
+
+  MT48: [
+    ['La Crème Solaire', 'Il distribue la crème dans tout le rang, et il lance les tubes d’un bout à '
+      + 'l’autre. Lui reste rouge.', 'ATTRAPE !'],
+    ['Le Marchand de Glaces', 'Géant au chariot de glaces, il lance les boules dans les cornets, une par une, '
+      + 'sans jamais en rater. Il a toujours le nez rouge.', 'UNE BOULE, DEUX BOULES'],
+  ],
+
+  MT49: [
+    ['Le Ciel de Papier', 'Il lance les confettis par grandes rafales, à chaque but. Le ciel du virage '
+      + 'devient de papier.', 'RAFALE !'],
+    ['La Tempête de Fête', 'Artificier de papier, il tire des fusées de confettis en salves au-dessus du '
+      + 'stade. Il en garde toujours un dans les cheveux.', 'FEU D’ARTIFICE'],
+  ],
+
+  MT50: [
+    ['Le Calme Après l’Orage', 'Elle attend que l’orage passe sans un mot, et tout le rang attend avec elle. '
+      + 'Puis elle se lève.', 'ATTENDEZ'],
+    ['Le Ciel Lavé', 'Gardienne du ciel bleu, elle veille sur le calme qui revient après la tempête. '
+      + 'Elle tient encore son parapluie fermé.', 'LE CIEL EST BLEU'],
+  ],
+
   /* ================================================== LES HÉROS DU CANAPÉ
 
      Ceux qui ne sont pas au stade, et qui en parlent le plus fort. La série se
