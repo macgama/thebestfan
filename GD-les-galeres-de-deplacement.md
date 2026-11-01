@@ -930,7 +930,7 @@ IDENTITÉ: A living train bunk: a narrow fold-down bunk body in deep navy (#1F3A
   - Préhistorique : `A bed of furs on a wooden shelf.`
   - Apocalyptique : `A bunk of scrap and tarp.`
 
-### GD52 · Le Triangle de Signalisation → Le Triangle du Bas-Côté → Le Phare des Routes · fond vert
+### GD52 · Le Triangle de Signalisation → Le Triangle du Bas-Côté → La Sentinelle du Bas-Côté · fond vert
 
 Le triangle rouge posé derrière le minibus en panne, qui a vu passer tous les cars des autres clubs.
 
