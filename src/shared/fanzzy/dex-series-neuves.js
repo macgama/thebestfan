@@ -452,7 +452,7 @@ export const DEX_NEUVES = [
     mods: { holdBonus: 1.16, backfire: 1.1 },
     cri: { label: 'BOIS UN COUP', gest: 'tenue', power: 46 } },
 
-  { id: 'MT23', nom: 'Le Flocon Égaré', type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
+  { id: 'MT23', nom: 'Le Flocon Égaré', publie: false /* en attente de son dessin (1er novembre 2026) */, type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
     histoire: 'Le premier flocon tombé sur la pelouse en novembre, qui tournoie tout seul '
       + 'sous les projecteurs. Tout le virage l’a montré du doigt.',
     mods: { perfectBonus: 1.2, backfire: 1.16 },
