@@ -41,7 +41,7 @@
   /* Les empreintes des dictionnaires : écrites par `npm run langues`, pour
      qu'un dictionnaire changé ait une autre adresse et ne sorte jamais d'un
      cache. */
-  const VERSIONS = /*versions*/{"en":"0ad6178004","de":"c3a05720cc","it":"5294112d11","es":"f59eb76e62"}/*fin*/;
+  const VERSIONS = /*versions*/{"en":"3dc83acc8e","de":"dc3ca5d6c8","it":"2a236dd9b1","es":"14bad4027d"}/*fin*/;
 
   const lire = () => {
     try {
