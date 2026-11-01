@@ -381,6 +381,33 @@
    ne sont pas un grand texte (la règle de l'or, « les tons » dans `ui.css`). */
 .fiche .vide a{color:var(--craie);text-decoration:underline;text-underline-offset:3px}
 
+/* ------------------------------------------------------- le Fanzzy en grand
+
+   Toucher la carte l'ouvre en grand (`pleinEcran`, fanzzy-fiche.js) : le
+   personnage en entier devant le décor de sa carte. Posé sur `body`, au-dessus
+   du panneau comme de la page, et à la largeur de la colonne (`--tbf-cote`,
+   ui.css) : aucune scène ne prend toute la fenêtre d'un ordinateur. */
+.fiche-plein{position:fixed;inset:0;z-index:120;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:10px;padding:max(12px, env(safe-area-inset-top)) 12px calc(12px + var(--bas,0px));
+  box-sizing:border-box;background:rgba(4,6,10,.96);clip-path:inset(0 var(--tbf-cote,0px));
+  cursor:zoom-out;animation:fiche-fondu .18s ease}
+.fiche-plein-scene{position:relative;container-type:size;overflow:hidden;border-radius:14px;
+  aspect-ratio:2/3;height:min(calc(100dvh - 90px), calc((min(100vw, var(--colonne, 480px)) - 24px) * 1.5));
+  max-width:100%;box-shadow:0 10px 40px rgba(0,0,0,.7)}
+.fiche-plein-scene>svg{position:absolute;inset:0;width:100%;height:100%}
+.fiche-plein-perso{position:absolute;left:-25%;bottom:2%;width:150%;height:92%;object-fit:contain;
+  object-position:50% 100%;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))}
+.fiche-plein-scene[data-age="2"] .fiche-plein-perso{filter:drop-shadow(0 0 6px rgba(95,168,255,.75))
+  drop-shadow(0 0 18px rgba(95,168,255,.4)) drop-shadow(0 4px 12px rgba(0,0,0,.6))}
+.fiche-plein-scene[data-age="3"] .fiche-plein-perso{filter:drop-shadow(0 0 8px rgba(185,140,255,.9))
+  drop-shadow(0 0 26px rgba(185,140,255,.55)) drop-shadow(0 4px 12px rgba(0,0,0,.6))}
+.fiche-plein-nom{margin:0;font:700 18px/1.1 var(--banner);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--craie);text-shadow:0 2px 0 var(--encre);text-align:center}
+.fiche-plein-fermer{position:absolute;top:max(12px, env(safe-area-inset-top));
+  right:calc(var(--tbf-cote,0px) + 12px)}
+@media (prefers-reduced-motion:reduce){.fiche-plein{animation:none}}
+html[data-calme~="animations"] .fiche-plein{animation:none}
+
 /* ------------------------------------------------------------ le mouvement
 
    La fiche n'ajoute qu'un mouvement à elle : le fondu de la confirmation.

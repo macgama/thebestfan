@@ -1024,6 +1024,28 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
     });
     check(`sans sa carte, la plaque ne joue pas la scène (${sansCarte.detail.slice(0, 50)})`,
       !sansCarte.scene && /booster/i.test(sansCarte.detail));
+    /* **Toucher la carte l'ouvre en grand, devant son décor** (Gaël,
+       1er novembre 2026). Un vrai toucher — sans glisser —, puis la croix
+       referme. La carte ne se retourne plus à ce toucher : c'est la plaque ↻. */
+    const art = await fiche.$('#fiche-art .fz');
+    const bo = art && await art.boundingBox();
+    if (bo) await fiche.mouse.click(bo.x + bo.width / 2, bo.y + bo.height / 2);
+    await new Promise((r) => setTimeout(r, 400));
+    const grand = await fiche.evaluate(() => {
+      const v = document.querySelector('.fiche-plein');
+      const sc = v?.querySelector('.fiche-plein-scene')?.getBoundingClientRect();
+      const img = v?.querySelector('.fiche-plein-perso');
+      return v ? { decor: Boolean(v.querySelector('.fiche-plein-scene > svg')), src: img?.getAttribute('src') ?? '',
+        haut: sc?.height ?? 0, ecran: innerHeight, nom: v.querySelector('.fiche-plein-nom')?.textContent ?? '',
+        dos: document.querySelector('[data-tourner]')?.getAttribute('aria-pressed') === 'true' } : null;
+    });
+    if (process.env.TBF_CAPTURE_GRAND) await fiche.screenshot({ path: process.env.TBF_CAPTURE_GRAND });
+    check(`toucher la carte ouvre le Fanzzy en grand (${grand?.nom})`,
+      Boolean(grand?.decor && grand.src && grand.haut > grand.ecran * 0.6 && !grand.dos)
+      || (console.log('        en grand :', JSON.stringify(grand)), false));
+    await fiche.click('.fiche-plein-fermer').catch(() => {});
+    check('et la croix le referme',
+      await fiche.evaluate(() => !document.querySelector('.fiche-plein')));
     check('et il y a des cases à regarder', m.cases >= 4);
     check('celles qu’on n’a pas restent visibles, verrouillées', m.verrous > 0);
     /* Une case est choisie d'entrée, sinon le bloc de détail s'ouvre vide et

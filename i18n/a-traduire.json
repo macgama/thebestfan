@@ -859,6 +859,534 @@
    "es"
   ]
  },
+ "Piccolo rouge et bleu": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Il donne la note avant tout le monde. Il s’essouffle avant tout le monde aussi.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Lanterne peinte du cortège": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Elle éclaire le geste juste au cœur de la nuit. Elle se porte à pas lents.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Casquette de matelot bleu nuit": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le vent du lac glisse dessus. Elle tombe au premier coup de bras.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Cloche du bateau à aubes": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "On l’entend d’une rive à l’autre. Il faut attendre qu’elle se taise.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Gants de vendange bleu roi": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ils tiennent la grappe jusqu’au bout. Ils n’ont pas la finesse des doigts nus.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Porte-voix du guet": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Il porte ta voix jusqu’au lac. Les mains prises, tu ne contres plus.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Mirliton bleu lac": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Il fait du bruit pour dix. Pas toujours en mesure.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Planche peinte du vieux pont": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Elle tient au-dessus de l’eau depuis des siècles. Elle ne se presse jamais.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Cornet de marrons chauds": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "On y puise de quoi repartir. Les doigts brûlants ratent le geste fin.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Manivelle du funiculaire": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le refrain monte sans s’arrêter. Pas un palier pour souffler.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Dé à coudre vert et blanc": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le geste fin passe par le bout du doigt. Il ne tape pas.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Cerceau de broderie": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tu tiens tout le motif sans lâcher le fil. Le rythme attendra.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Petite marmite grenat": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "On la casse en chantant. Elle ne protège de rien.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Échelle des remparts": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Chaque contre monte d’un barreau. Sur une échelle, on ne tient pas en place.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Gourde rouge du glacier": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Une gorgée d’eau de glace et la voix revient. Elle pèse au bout du bras.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Grande cloche de l’alpage": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Chaque coup sonne dans toute la vallée. Il faut le temps qu’elle se taise.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Sac de sciure": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Une poignée et tu te relèves. Elle glisse entre les doigts.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Planche de la vague du fleuve": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tu tiens la vague du refrain. Le premier choc te jette à l’eau.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Loupe de philatéliste": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Elle voit le geste juste dans le moindre détail. Elle ne tient rien.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Luge en bois rouge": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le refrain file comme la piste. Rien à reprendre en route.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tresse d’oignons": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Elle tient tout le marché. Elle fait un peu pleurer.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Rouage de la tour de l’horloge": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tout tourne à la seconde près. Rien ne force un rouage.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Casque audio blanc et bleu": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le rythme dans les oreilles. Les coups, tu ne les entends pas venir.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Poignée du tram": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tu tiens jusqu’au terminus. Il faut du temps pour lâcher.": {
+  "ou": [
+   "src/shared/fanzzy/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "blason au format {0}, que le jeu ne lit pas": {
   "ou": [
    "src/server/football/blason.js"
