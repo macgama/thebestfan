@@ -1238,6 +1238,54 @@
       hote.querySelector('[data-tourner]')?.setAttribute('aria-pressed', String(dos));
     }
 
+    /* **Le Fanzzy en grand, devant son décor.** Le décor est celui de la
+       carte (la plaque de sa rareté, `fondDeCarte`), le personnage la pose
+       qu'elle montre — tenue et expression comprises —, cette fois en entier,
+       pieds compris : la bande du nom ne les cache plus. À la largeur de la
+       colonne, comme toute scène plein écran (`--tbf-cote`). Toucher n'importe
+       où, la croix ou Échap le referment. Rend `false` quand il n'y a rien à
+       montrer. */
+    function pleinEcran() {
+      const fz = hote.querySelector('#fiche-art .fz');
+      const wrap = fz?.querySelector('.illuwrap');
+      const img = wrap?.querySelector('img.illu');
+      if (!fz || !img || fz.classList.contains('fz-secret') || fz.classList.contains('fz-verrou')) return false;
+      document.querySelector('.fiche-plein')?.remove();
+      const a = ageDe(vu());
+      const evo = Number(a?.stage) || d.stade || 1;
+      const nom = a?.nom ?? d.fanzzy.nom ?? '';
+      const fond = wrap.querySelector(':scope > svg')?.outerHTML ?? '';
+      const v = document.createElement('div');
+      v.className = 'fiche-plein';
+      v.setAttribute('role', 'dialog');
+      v.setAttribute('aria-modal', 'true');
+      v.setAttribute('aria-label', `${nom} en grand`);
+      v.innerHTML = `<div class="fiche-plein-scene" data-age="${evo}">${fond}
+          <img class="fiche-plein-perso" alt="${esc(nom)}"></div>
+        <p class="fiche-plein-nom">${esc(nom)}</p>
+        <button type="button" class="tbf-plaque tbf-plaque--rond fiche-plein-fermer" aria-label="Fermer">${SVG.croix}</button>`;
+      const perso = v.querySelector('.fiche-plein-perso');
+      /* La taille de son âge, mesurée sur ses pieds (`TBF_ETATS.taille`) :
+         sans elle, un âge 2 ou 3 paraissait petit dans le cadre commun. */
+      const t = /\/img\/fanzzy\/[A-Z]+\d+\/e\d\//.test(img.getAttribute('src') ?? '')
+        ? E()?.taille?.(racine(), evo, 0.9) : null;
+      if (t) perso.style.cssText = `height:${t.hauteur};bottom:calc(${t.bas} + 2%);translate:${t.decale} 0`;
+      perso.src = img.currentSrc || img.src;
+      const avant = document.activeElement;
+      const fermer = () => {
+        removeEventListener('keydown', touche);
+        v.remove();
+        if (avant?.isConnected) avant.focus({ preventScroll: true });
+      };
+      const touche = (e) => { if (e.key === 'Escape') { e.preventDefault(); fermer(); } };
+      v.addEventListener('click', fermer);
+      addEventListener('keydown', touche);
+      document.body.append(v);
+      v.querySelector('.fiche-plein-fermer').focus({ preventScroll: true });
+      window.FX?.son?.('carte');
+      return true;
+    }
+
     /* **L'inclinaison au doigt**, celle de la vitrine de la collection, à
        l'identique : `--rx`, `--ry` et le lustre (`--lx`, `--ly`) sur la
        scène, `.touche` tant qu'on la tient ; le reflet de l'holo épique suit
@@ -1247,9 +1295,15 @@
       if (!scene) return;
       let depart = null;
       scene.addEventListener('pointerdown', (e) => { depart = { x: e.clientX, y: e.clientY }; });
+      /* **Un toucher bref ouvre le Fanzzy en grand** (1er novembre 2026,
+         Gaël : « pouvoir cliquer sur l'image du fanzzy pour le voir en plein
+         écran, avec le décor »). Il retournait la carte : la plaque ronde ↻
+         à côté d'elle le fait toujours. Une carte au secret ou sous verrou
+         n'a rien à montrer en grand : là, le toucher retourne comme avant. */
       scene.addEventListener('click', (e) => {
         if (!depart || !e.target.closest('.fz')) return;
-        if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < 8) tourner();
+        if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) >= 8) return;
+        if (!pleinEcran()) tourner();
       });
       if (doux()) return;
       const suivre = (e) => {
