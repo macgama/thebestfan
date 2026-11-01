@@ -59,24 +59,24 @@ const TERRACES = [
 ];
 
 /* Les douze clubs suisses de 2026-2027 (DIE KURVE, `dex-kurve.js`), dans
-   l'ordre des fiches : SU1 à SU12, SU13 à SU24, SU25 à SU36. **Pas encore
-   d'identifiant** : ceux de LES TERRACES ont été écrits de mémoire et restent
-   à vérifier, on ne recommence pas. Un `null` laisse la lignée neutre ; on
-   remplit chaque case avec l'identifiant lu dans `teams` en production (ou
-   dans le classement de la compétition 207). */
+   l'ordre des fiches : SU1 à SU12, SU13 à SU24, SU25 à SU36. Identifiants
+   API-Football écrits le 1er novembre 2026 (fil « Créer l'équipement des
+   clubs suisses ») d'après des relevés publics de l'API où chacun revient
+   sous le même nom de club, à confirmer dans `teams` en production. Un
+   `null` laisserait la lignée neutre. */
 const KURVE = [
-  null,  // Bâle
-  null,  // Grasshopper
-  null,  // Lausanne-Sport
-  null,  // Lucerne
-  null,  // Lugano
-  null,  // Saint-Gall
-  null,  // Servette
-  null,  // Sion
-  null,  // Thoune
-  null,  // Vaduz
-  null,  // Young Boys
-  null,  // Zurich
+  551,  // Bâle
+  1013, // Grasshopper
+  1014, // Lausanne-Sport
+  644,  // Lucerne
+  606,  // Lugano
+  1011, // Saint-Gall
+  2184, // Servette
+  630,  // Sion
+  1012, // Thoune
+  660,  // Vaduz
+  565,  // Young Boys
+  783,  // Zurich
 ];
 
 /**
@@ -111,8 +111,31 @@ const CRIS_TERRACES = [
   'BLANC NACRÉ, BLEU NUIT',
 ];
 
+/* Les cris de DIE KURVE (demande de Gaël du 1er novembre 2026, « il faut
+   créer les cris personnalisés pour les clubs suisses »). Mêmes règles, et
+   celles de `dex-kurve.js` : ni surnom (pas de grenat, ni de jaune et noir,
+   ni de rouge-bleu), ni ce que dessine l'écusson ; un morceau de la ville,
+   souvent celui des deux pièces d'équipement du club. Même ordre que `KURVE`. */
+const CRIS_KURVE = [
+  'LES LANTERNES S’ALLUMENT',
+  'BLEU LAC, BLANC VOILE',
+  'LES ESCALIERS CHANTENT',
+  'LE VIEUX PONT TREMBLE',
+  'MARRONS CHAUDS, CŒURS CHAUDS',
+  'BRODÉS DE VERT',
+  'LA MARMITE DÉBORDE',
+  'LES REINES DESCENDENT',
+  'LA VAGUE NOUS PORTE',
+  'PETIT PAYS, GRANDE VOIX',
+  'LES OIGNONS FONT PLEURER',
+  'LE TRAM EST PLEIN',
+];
+
 /** Club → son cri, pour les clubs d'une série de championnat. */
-export const CRI_DU_CLUB = new Map(TERRACES.map((club, i) => [club, CRIS_TERRACES[i]]));
+export const CRI_DU_CLUB = new Map([
+  ...TERRACES.map((club, i) => [club, CRIS_TERRACES[i]]),
+  ...KURVE.map((club, i) => [club, CRIS_KURVE[i]]).filter(([club]) => club != null),
+]);
 
 /**
  * **Le cri type** (demande de Gaël du 25 octobre 2026 : « des cris types pour
@@ -158,8 +181,6 @@ export function avecCriDuClub(perso, teamId) {
  */
 export const SERIES_DE_CLUBS = Object.freeze({
   AN: Object.freeze([...TERRACES]),
-  /* Identifiants pas encore lus (`KURVE`) : la suite dit la série en attente
-     tant qu'il en manque, et l'exige dès qu'ils sont remplis. */
   SU: Object.freeze([...KURVE]),
 });
 

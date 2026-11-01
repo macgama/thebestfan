@@ -6,7 +6,7 @@
  * panneau des bonus.
  */
 import { DuelNvN } from '../src/server/nvn/engine.js';
-import { CLUB_DE, CRI_DU_CLUB, CRIS_TYPES, criDuClub, avecCriDuClub, clubDe, lieA, lienEcrit, estSelection, modsDuLien, avecLien, lierLeDeck, tauxDuLien }
+import { CLUB_DE, CRI_DU_CLUB, SERIES_DE_CLUBS, CRIS_TYPES, criDuClub, avecCriDuClub, clubDe, lieA, lienEcrit, estSelection, modsDuLien, avecLien, lierLeDeck, tauxDuLien }
   from '../src/shared/fanzzy/clubs.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { ACTION_BY_ID } from '../src/shared/duel/actions.js';
@@ -17,10 +17,14 @@ let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 
 console.log('\nLa table des liens');
-check('soixante lignées, trois par club', CLUB_DE.size === 60
-  && new Set(CLUB_DE.values()).size === 20
+/* LES TERRACES (60 lignées, 20 clubs) et DIE KURVE (36 lignées, 12 clubs,
+   identifiants écrits le 1er novembre 2026). */
+check('quatre-vingt-seize lignées, trois par club', CLUB_DE.size === 96
+  && new Set(CLUB_DE.values()).size === 32
   && [...new Set(CLUB_DE.values())].every((c) =>
     [...CLUB_DE.values()].filter((x) => x === c).length === 3));
+check('SU1, SU13 et SU25 partagent le club de Bâle, SU12 celui de Zurich',
+  clubDe('SU1') === 551 && clubDe('SU13B') === 551 && clubDe('SU25C') === 551 && clubDe('SU12') === 783);
 check('AN1, AN21 et AN41 partagent le même club', clubDe('AN1') === clubDe('AN21')
   && clubDe('AN21') === clubDe('AN41') && clubDe('AN1') != null);
 check('un âge supérieur garde le lien de sa lignée', clubDe('AN3C') === clubDe('AN3')
@@ -119,10 +123,19 @@ console.log('\nLes championnats qui ont leurs Fanzzy');
   check('le cri de série d\'un club anglais, rien pour un autre', criDeSerie(40) === CRI_DU_CLUB.get(40) && criDeSerie(85) === null);
 }
 console.log('\nLe cri du club');
-check('vingt cris, un par club, quatre mots au plus et sans chiffre',
-  CRI_DU_CLUB.size === 20 && [...CRI_DU_CLUB.values()].every((c) =>
+check('trente-deux cris, un par club, quatre mots au plus et sans chiffre',
+  CRI_DU_CLUB.size === 32 && [...CRI_DU_CLUB.values()].every((c) =>
     c.replace(/[,!’']/g, ' ').trim().split(/\s+/).length <= 4 && !/\d/.test(c)));
-check('chaque club de la série a le sien', [...new Set(CLUB_DE.values())].every((c) => CRI_DU_CLUB.has(c)));
+check('chaque club de LES TERRACES a le sien', SERIES_DE_CLUBS.AN.every((c) => CRI_DU_CLUB.has(c)));
+check('chaque club de DIE KURVE a le sien, jamais un cri type',
+  SERIES_DE_CLUBS.SU.every((c) => CRI_DU_CLUB.has(c) && !CRIS_TYPES.includes(criDuClub(c))));
+check('aucun cri ne sert deux fois', new Set(CRI_DU_CLUB.values()).size === CRI_DU_CLUB.size);
+{
+  const { serieDeLigue } = await import('../src/shared/fanzzy/series-ligues.js');
+  const su = serieDeLigue(207);
+  check('le championnat suisse : douze clubs, trois Fanzzy et un cri chacun',
+    su.clubs.length === 12 && su.clubs.every((c) => c.fanzzy.length === 3 && c.cri === CRI_DU_CLUB.get(c.club)));
+}
 {
   const lie = lierLeDeck(loadout(['AN1', 'TR32']), CLUB, tauxDuLien());
   const cri = CRI_DU_CLUB.get(CLUB);

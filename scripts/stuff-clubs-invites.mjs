@@ -72,4 +72,49 @@ export const INVITES_CLUBS = {
   // Tottenham Hotspur : blanc et bleu nuit, les boutons nacrés
   'an-boutons': `a small handful of large mother-of-pearl buttons, iridescent white, scattered with a few navy blue ones among them, ${NU}`,
   'an-gilet-nacre': `a navy blue waistcoat covered in hundreds of sewn-on white mother-of-pearl buttons, laid flat, empty and unworn, nobody wearing it, ${NU}`,
+
+  /* DIE KURVE (demande de Gaël du 1er novembre 2026). Ni ours, ni étoile, ni
+     aigle, ni clé, ni insecte, ni grande lettre V, ni croix : ce sont les
+     écussons et les armoiries de ces villes. */
+  // Bâle : rouge et bleu, le carnaval
+  'su-piccolo': `a small wooden carnival piccolo fife painted in bright red and deep blue bands, a short red and blue tasselled cord tied near the mouthpiece, ${NU}`,
+  'su-lanterne-cortege': `a large hand-painted paper carnival lantern on a short wooden pole, glowing warmly from inside, its paper panels painted with abstract red and blue swirls only, no faces, no animals and no figures, ${NU}`,
+  // Grasshopper : bleu nuit et blanc, le lac
+  'su-casquette-matelot': `an empty unworn sailor's peaked cap in deep navy blue with a white band and white piping, nobody wearing it, ${NU}`,
+  'su-cloche-aubes': `a polished brass ship's bell hanging from a small navy blue painted iron bracket, a white braided rope pull hanging from its clapper, ${NU}`,
+  // Lausanne-Sport : bleu roi et blanc, les vignes et le guet
+  'su-gants-vendange': `a pair of sturdy royal blue work gloves with white cuffs, a few purple grape juice stains on the fingertips, one lying flat and one curled, ${NU}`,
+  'su-porte-voix-guet': `an old tall conical brass speaking trumpet of a night watchman, a royal blue and white striped cord wound around its handle, ${NU}`,
+  // Lucerne : bleu lac et blanc, le carnaval et le vieux pont
+  'su-mirliton': `a carnival toy kazoo horn in lake blue with white paper frills and a small white tassel, ${NU}`,
+  'su-planche-pont': `a single old weathered triangular wooden gable panel from a covered bridge, its painted surface showing only a soft abstract landscape of lake blue water and white mountains, no people and no figures, ${NU}`,
+  // Lugano : noir et blanc, le lac et les marrons
+  'su-cornet-marrons': `a twisted paper cone with bold black and white stripes filled with roasted chestnuts, a curl of steam rising, ${NU}`,
+  'su-manivelle': `a heavy old cast iron crank handle with a black painted arm and a white enamelled wooden grip, a small toothed gear at its base, ${NU}`,
+  // Saint-Gall : vert et blanc, la broderie (sur fond magenta : FOND_MAGENTA)
+  'su-de-coudre': `a single porcelain sewing thimble, glossy white with a deep green band around its rim and a delicate white lace pattern, ${NU}`,
+  'su-cerceau-broderie': `a round wooden embroidery hoop holding a taut piece of white fabric with fine white lace embroidery of abstract flowers and swirls in green thread, a needle with green thread hanging from it, no leaves, ${NU}`,
+  // Servette : grenat et blanc, l'Escalade
+  'su-marmite': `a small round cooking pot made of shiny dark chocolate tied with a garnet red ribbon with white edges, a few tiny marzipan vegetables beside it, an orange carrot and a white turnip, nothing green, ${NU}`,
+  'su-echelle': `a short old wooden siege ladder with rough rungs, a garnet red and white striped cloth tied around its top rung, ${NU}`,
+  // Sion : rouge et blanc, le glacier et l'alpage
+  'su-gourde-glacier': `a dented aluminium mountain flask painted bright red with a white screw cap, a little frost on its shoulder, hanging from a white cord, ${NU}`,
+  'su-cloche-alpage': `a large hand-forged iron cowbell on a wide red leather strap embroidered with small white abstract flowers, no cross and no star anywhere, ${NU}`,
+  // Thoune : blanc et rouge, la sciure et la vague du fleuve
+  'su-sciure': `a small burlap sack with red and white striped edges, spilling a little heap of pale wood shavings and sawdust, ${NU}`,
+  'su-planche-vague': `a short river surfboard, white with one bold red stripe down its length, a red leash coiled beside it, a few water droplets, ${NU}`,
+  // Vaduz : rouge et blanc, les timbres et la neige
+  'su-loupe': `a small brass-rimmed magnifying glass with a red lacquered handle lying over one blank white perforated postage stamp with no picture and no numbers, ${NU}`,
+  'su-luge': `a classic wooden sled with curved runners painted red and a white woven seat, a red and white rope pull, a light dusting of snow on it, ${NU}`,
+  // Young Boys : jaune et noir, le marché aux oignons et l'horloge
+  'su-tresse-oignons': `a decorative braided string of golden onions with dried straw coloured stems, tied with a yellow and black striped ribbon bow, nothing green, ${NU}`,
+  'su-rouage': `a large old brass clockwork gear wheel interlocked with a smaller black iron gear, one spoke painted bright yellow, no numbers, ${NU}`,
+  // Zurich : blanc et bleu, la parade et le tram
+  'su-casque-audio': `a pair of over-ear DJ headphones in glossy white with royal blue ear cushions and a coiled blue cable, ${NU}`,
+  'su-poignee-tram': `a hanging tram strap handle, a white plastic ring on a royal blue leather strap with a chrome clip, ${NU}`,
 };
+
+/* Les pièces vertes ne passent pas sur le vert de studio : le détourage les
+   mangerait. Elles se dessinent sur un magenta uni, comme les Fanzzy de
+   Saint-Gall, et le détourage, qui part de la couleur du coin, suit. */
+export const FOND_MAGENTA = new Set(['su-de-coudre', 'su-cerceau-broderie']);
