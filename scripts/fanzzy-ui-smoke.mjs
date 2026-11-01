@@ -972,16 +972,14 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
       verrous: document.querySelectorAll('.case.verrou').length,
       detail: document.getElementById('fiche-detail').textContent.replace(/\s+/g, ' ').trim(),
       choisies: document.querySelectorAll('.case.choisie').length,
-      /* La plaque ULTIMATE, à côté de la carte : dans l'écran, et sans
-         mordre sur la carte ni sur la plaque qui la retourne. */
-      ult: (() => {
-        const u = document.querySelector('#fiche-vitrine .cote-ult');
-        if (!u) return null;
-        const r = u.getBoundingClientRect();
-        const c = document.querySelector('#fiche-art')?.getBoundingClientRect();
-        const t = document.querySelector('#fiche-vitrine .tourne')?.getBoundingClientRect();
-        return { texte: u.textContent.replace(/\s+/g, ' ').trim(), dedans: r.top >= 0 && r.right <= innerWidth + 1,
-          carte: Boolean(c && r.left >= c.right - 1), tourne: !t || r.bottom <= t.top + 1 };
+      /* Les onglets sous la carte (forme A, Gaël, 1er novembre 2026), dans
+         l'écran, et la rangée de l'onglet ouvert seule visible. */
+      onglets: [...document.querySelectorAll('#fiche-onglets [data-onglet]')].map((n) => n.textContent.trim()),
+      ouvert: document.querySelector('#fiche-onglets [aria-selected="true"]')?.textContent.trim() ?? null,
+      visibles: [...document.querySelectorAll('.rang:not([hidden]) h4')].map((n) => n.textContent.trim()),
+      ongletsDedans: (() => {
+        const r = document.getElementById('fiche-onglets')?.getBoundingClientRect();
+        return Boolean(r && r.height >= 44 && r.bottom <= innerHeight && r.right <= innerWidth + 1);
       })(),
     }));
     check('elle tient dans l’écran, sans défilement',
@@ -1006,24 +1004,56 @@ check(`la progression compte les personnages, pas leurs âges (${progression})`,
          bord droit d'un téléphone, coupé (Gaël, 27 octobre 2026). */
       m.rangs.join('/') === 'ÂGES/ULTIMATE/EFFETS/ÉTATS/TENUES'
       || (console.log('        rangées :', m.rangs.join(', ')), false));
-    check(`l’Ultimate a sa plaque à côté de la carte (${m.ult?.texte})`,
-      Boolean(m.ult && /ULTIMATE/.test(m.ult.texte) && /TA CARTE|BOOSTER/.test(m.ult.texte)));
-    check('dans l’écran, à droite de la carte, au-dessus de la plaque qui la retourne',
-      Boolean(m.ult?.dedans && m.ult.carte && m.ult.tourne)
-      || (console.log('        plaque :', JSON.stringify(m.ult)), false));
-    /* Sans la carte, pas de scène (Gaël, 27 octobre 2026) : la plaque
-       dit la règle dans le détail, et rien ne se joue. */
+    check(`les onglets sont là, dans l’écran (${m.onglets.join(', ')})`,
+      m.onglets.join('/') === 'ÂGES/ULTIMATE/EFFETS/LOOK' && m.ongletsDedans
+      || (console.log('        onglets :', JSON.stringify(m.onglets), m.ongletsDedans), false));
+    check(`l’onglet ouvert est celui des âges, seule rangée visible (${m.visibles.join(', ')})`,
+      m.ouvert === 'ÂGES' && m.visibles.join('/') === 'ÂGES');
+    /* L'onglet LOOK montre les états et les tenues ensemble. */
+    const look = await fiche.evaluate(async () => {
+      document.querySelector('[data-onglet="LOOK"]')?.click();
+      await new Promise((r) => setTimeout(r, 150));
+      return { ouvert: document.querySelector('#fiche-onglets [aria-selected="true"]')?.textContent.trim(),
+        visibles: [...document.querySelectorAll('.rang:not([hidden]) h4')].map((n) => n.textContent.trim()) };
+    });
+    check(`l’onglet LOOK montre les états et les tenues (${look.visibles.join(', ')})`,
+      look.ouvert === 'LOOK' && look.visibles.join('/') === 'ÉTATS/TENUES');
+    /* Sans la carte, pas de scène (Gaël, 27 octobre 2026) : l'onglet
+       ULTIMATE dit la règle dans le détail, et rien ne se joue. */
     const sansCarte = await fiche.evaluate(async () => {
-      const avant = document.querySelector('.case.choisie')?.dataset.case;
-      document.querySelector('#fiche-vitrine .cote-ult')?.click();
+      document.querySelector('[data-onglet="ULTIMATE"]')?.click();
+      await new Promise((r) => setTimeout(r, 150));
+      document.querySelector('[data-case="ultime"]')?.click();
       await new Promise((r) => setTimeout(r, 500));
       const r = { scene: Boolean(document.querySelector('.tbf-ult')),
         detail: document.getElementById('fiche-detail').textContent.replace(/\s+/g, ' ').trim() };
-      document.querySelector(`[data-case="${avant}"]:not(.cote-ult)`)?.click();
+      document.querySelector('[data-onglet="ÂGES"]')?.click();
       return r;
     });
     check(`sans sa carte, la plaque ne joue pas la scène (${sansCarte.detail.slice(0, 50)})`,
       !sansCarte.scene && /booster/i.test(sansCarte.detail));
+    /* **Toucher la carte l'ouvre en grand, devant son décor** (Gaël,
+       1er novembre 2026). Un vrai toucher — sans glisser —, puis la croix
+       referme. La carte ne se retourne plus à ce toucher : c'est la plaque ↻. */
+    const art = await fiche.$('#fiche-art .fz');
+    const bo = art && await art.boundingBox();
+    if (bo) await fiche.mouse.click(bo.x + bo.width / 2, bo.y + bo.height / 2);
+    await new Promise((r) => setTimeout(r, 400));
+    const grand = await fiche.evaluate(() => {
+      const v = document.querySelector('.fiche-plein');
+      const sc = v?.querySelector('.fiche-plein-scene')?.getBoundingClientRect();
+      const img = v?.querySelector('.fiche-plein-perso');
+      return v ? { decor: Boolean(v.querySelector('.fiche-plein-scene > svg')), src: img?.getAttribute('src') ?? '',
+        haut: sc?.height ?? 0, ecran: innerHeight, nom: v.querySelector('.fiche-plein-nom')?.textContent ?? '',
+        dos: document.querySelector('[data-tourner]')?.getAttribute('aria-pressed') === 'true' } : null;
+    });
+    if (process.env.TBF_CAPTURE_GRAND) await fiche.screenshot({ path: process.env.TBF_CAPTURE_GRAND });
+    check(`toucher la carte ouvre le Fanzzy en grand (${grand?.nom})`,
+      Boolean(grand?.decor && grand.src && grand.haut > grand.ecran * 0.6 && !grand.dos)
+      || (console.log('        en grand :', JSON.stringify(grand)), false));
+    await fiche.click('.fiche-plein-fermer').catch(() => {});
+    check('et la croix le referme',
+      await fiche.evaluate(() => !document.querySelector('.fiche-plein')));
     check('et il y a des cases à regarder', m.cases >= 4);
     check('celles qu’on n’a pas restent visibles, verrouillées', m.verrous > 0);
     /* Une case est choisie d'entrée, sinon le bloc de détail s'ouvre vide et
@@ -2438,7 +2468,7 @@ amputer = null;
      avait rien à faire : un acquis se tamponne, il ne se grise pas. La bâche
      doit donc avoir disparu avec. */
   await p.waitForFunction(() => {
-    const t = document.querySelector('#fiche-vitrine .cote-g.tbf-tampon');
+    const t = document.querySelector('#fiche-pastilles .pastille-avatar');
     return Boolean(t) && /TON\s*AVATAR/.test(t.textContent) && !document.querySelector('[data-montrer]');
   }, { timeout: 8000 }).catch(() => null);
   await dodo(500);
@@ -2448,7 +2478,7 @@ amputer = null;
   const vu = await p.evaluate(() => ({
     src: document.querySelector('#fiche-art img')?.getAttribute('src') ?? null,
     nom: document.getElementById('fiche-nom')?.textContent?.trim() ?? null,
-    tampon: document.querySelector('#fiche-vitrine .cote-g.tbf-tampon')?.textContent
+    tampon: document.querySelector('#fiche-pastilles .pastille-avatar')?.textContent
       ?.replace(/\s+/g, ' ').trim() ?? null,
     bache: Boolean(document.querySelector('[data-montrer]')),
   }));
@@ -3319,6 +3349,8 @@ if (process.env.CAPTURE) {
   await p.setViewport({ width: 1366, height: 800 });
   await p.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
   await p.waitForSelector('.fiche .tbf-inventaire', { timeout: 8000 }).catch(() => null);
+  /* L'onglet le plus garni : LOOK, les états et les tenues ensemble. */
+  await p.evaluate(() => document.querySelector('[data-onglet="LOOK"]')?.click());
   await new Promise((r) => setTimeout(r, 400));
   const rang = () => p.evaluate(() => {
     const r = document.querySelector('.fiche .tbf-inventaire');
