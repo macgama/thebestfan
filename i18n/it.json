@@ -7369,5 +7369,19 @@
  "Effets": "Effetti",
  "À la fin de l’ouverture, <0>touche une carte</0> pour la voir en grand avec ses caractéristiques : rareté, effets en jeu, nouvelle ou double. Les flèches passent d’une carte à l’autre.": "Alla fine dell’apertura, <0>tocca una carta</0> per vederla in grande con le sue caratteristiche: rarità, effetti in gioco, nuova o doppione. Le frecce passano da una carta all’altra.",
  "Comment voir une carte en grand après un booster ?": "Come vedo una carta in grande dopo un booster?",
- "Touche-la sur l’écran de fin d’ouverture. Elle s’ouvre en grand, avec sa rareté, ce qu’elle change en jeu et si elle est nouvelle ou en double. Les flèches passent aux autres cartes du paquet, VOIR LA FICHE ouvre la fiche du Fanzzy et FERMER te ramène au paquet.": "Toccala nella schermata di fine apertura. Si apre in grande, con la sua rarità, cosa cambia in gioco e se è nuova o un doppione. Le frecce passano alle altre carte del pacchetto, VEDI LA SCHEDA apre la scheda del Fanzzy e CHIUDI ti riporta al pacchetto."
+ "Touche-la sur l’écran de fin d’ouverture. Elle s’ouvre en grand, avec sa rareté, ce qu’elle change en jeu et si elle est nouvelle ou en double. Les flèches passent aux autres cartes du paquet, VOIR LA FICHE ouvre la fiche du Fanzzy et FERMER te ramène au paquet.": "Toccala nella schermata di fine apertura. Si apre in grande, con la sua rarità, cosa cambia in gioco e se è nuova o un doppione. Le frecce passano alle altre carte del pacchetto, VEDI LA SCHEDA apre la scheda del Fanzzy e CHIUDI ti riporta al pacchetto.",
+ "<0>En grand</0> : sur la fiche, touche la carte pour voir ton Fanzzy en plein écran, devant son décor.": "<0>In grande</0>: nella scheda, tocca la carta per vedere il tuo Fanzzy a schermo intero, davanti al suo sfondo.",
+ "{0} en grand": "{0} in grande",
+ "Comment voir mon Fanzzy en grand ?": "Come vedo il mio Fanzzy in grande?",
+ "Touche sa carte sur sa fiche. Il s’ouvre en plein écran, en entier devant son décor, avec la tenue et l’expression choisies. Touche l’écran ou la croix pour revenir. Pour retourner la carte, c’est la plaque ronde à côté d’elle.": "Tocca la sua carta nella sua scheda. Si apre a schermo intero, per intero davanti al suo sfondo, con il completo e l’espressione scelti. Tocca lo schermo o la croce per tornare. Per girare la carta, usa il pulsante rotondo accanto.",
+ "<0>Ton Fanzzy de l’accueil</0> est ton titulaire : choisis-le dans « Mes Fanzzy », et ouvre sa fiche pour le faire évoluer. Ses onglets ÂGES, ULTIMATE, EFFETS et LOOK montrent ses âges, son coup fatal, ce qu’il change en jeu, ses expressions et ses tenues.": "<0>Il Fanzzy della home</0> è il tuo titolare: sceglilo in «I miei Fanzzy» e apri la sua scheda per farlo evolvere. Le schede ETÀ, ULTIMATE, EFFETTI e LOOK mostrano le sue età, il suo colpo finale, cosa cambia in gioco, le sue espressioni e le sue tenute.",
+ "LOOK": "LOOK",
+ "plus ›": "altro ›",
+ "moins ‹": "meno ‹",
+ "Ce qu’il a": "Cosa ha",
+ "Lier à mon club, {0} écharpes": "Lega al mio club, {0} sciarpe",
+ "LIER À MON CLUB": "LEGA AL MIO CLUB",
+ "UN CLUB": "UN CLUB",
+ "Où trouver les âges, les effets et les tenues de mon Fanzzy ?": "Dove trovo le età, gli effetti e le tenute del mio Fanzzy?",
+ "Sur sa fiche, sous la carte. Les onglets ÂGES, ULTIMATE, EFFETS et LOOK montrent chacun leur rangée ; touche une image pour lire ce qu’elle fait juste dessous. LOOK réunit ses expressions et ses tenues. Les pastilles sous la carte crient son cri, disent son club et s’il est ton avatar ; « plus » ouvre toute son histoire.": "Nella sua scheda, sotto la carta. Le schede ETÀ, ULTIMATE, EFFETTI e LOOK mostrano ognuna la sua fila; tocca un’immagine per leggere subito sotto cosa fa. LOOK riunisce le sue espressioni e le sue tenute. Le pastiglie sotto la carta gridano il suo coro, dicono il suo club e se è il tuo avatar; «altro» apre tutta la sua storia."
 }
