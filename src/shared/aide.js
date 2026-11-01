@@ -183,6 +183,12 @@ const RUBRIQUES = [
         () => 'Non. Jamais. Une tenue change ce qu’on voit et rien d’autre — c’est '
           + 'une règle du jeu, pas un oubli. Ce qui compte, c’est l’équipement, et '
           + 'lui se voit dans le deck.'],
+      ['Où trouver les âges, les effets et les tenues de mon Fanzzy ?',
+        () => 'Sur sa fiche, sous la carte. Les onglets ÂGES, ULTIMATE, EFFETS et '
+          + 'LOOK montrent chacun leur rangée ; touche une image pour lire ce '
+          + 'qu’elle fait juste dessous. LOOK réunit ses expressions et ses '
+          + 'tenues. Les pastilles sous la carte crient son cri, disent son club '
+          + 'et s’il est ton avatar ; « plus » ouvre toute son histoire.'],
       ['Comment voir mon Fanzzy en grand ?',
         () => 'Touche sa carte sur sa fiche. Il s’ouvre en plein écran, en entier '
           + 'devant son décor, avec la tenue et l’expression choisies. Touche '

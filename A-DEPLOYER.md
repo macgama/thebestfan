@@ -7,7 +7,15 @@
   personnage en entier devant le décor de sa carte, avec la tenue et
   l'expression choisies. La croix, un toucher ou Échap referment.
 - Ce toucher retournait la carte : c'est maintenant la plaque ronde ↻ seule.
-- Après la mise en ligne : sur le S24+, ouvrir une fiche et toucher la carte.
+- **Fiche plus légère (forme A, choisie par Gaël)** : sous la carte, trois
+  pastilles (le cri, le club lié avec son logo, TON AVATAR ou ME MONTRER
+  AINSI), l'histoire sur une ligne avec « plus », puis quatre onglets ÂGES,
+  ULTIMATE, EFFETS, LOOK (états et tenues) dont la rangée est centrée, et une
+  ligne de détail. La bande du cri, les tampons autour de la carte et la
+  plaque ULTIMATE à côté d'elle sont retirés ; la carte, l'âge, la rareté, la
+  famille et le solde d'écharpes restent comme avant.
+- Après la mise en ligne : sur le S24+, ouvrir une fiche, toucher la carte,
+  puis chaque onglet et « plus ».
 
 ---
 
