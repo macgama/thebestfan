@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Le Fanzzy en grand depuis sa fiche** (branche `claude/project-thread-bk32k5`,
+1er novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
+
+- Sur la fiche d'un Fanzzy, toucher la carte l'ouvre en plein écran : le
+  personnage en entier devant le décor de sa carte, avec la tenue et
+  l'expression choisies. La croix, un toucher ou Échap referment.
+- Ce toucher retournait la carte : c'est maintenant la plaque ronde ↻ seule.
+- Après la mise en ligne : sur le S24+, ouvrir une fiche et toucher la carte.
+
+---
+
 **Les pièces de club de DIE KURVE** (branche `claude/project-thread-jh1l0z`,
 1er novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
 
