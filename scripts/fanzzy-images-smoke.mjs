@@ -288,8 +288,9 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      passent à quarante-cinq personnages et cinq légendaires : cent huit cartes
      neuves (MT15 à MT50, trois âges), et toute la série redessinée au nouveau
      style. Quarante-neuf lignées sur cinquante ont leurs images ; MT23 attend
-     la sienne (une demi-planche à refaire), elle est cachée en attendant
-     (`publie: false`) et ses trois âges comptent ici. */
+     la sienne (une demi-planche à refaire) : d'ici là elle garde le rendu
+     procédural, comme les autres cartes pas encore dessinées, et ses trois
+     âges comptent ici. */
   const DETTE = 150;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
