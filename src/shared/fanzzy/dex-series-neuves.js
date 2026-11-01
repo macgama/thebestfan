@@ -314,6 +314,224 @@ export const DEX_NEUVES = [
     mods: { mashBonus: 1.16, breathBonus: 1.08, holdBonus: 0.88 },
     cri: { label: 'ON PASSE', gest: 'mash', power: 48 } },
 
+  /* GD17 à GD52 — les trente-six galères de la refonte du 1er novembre 2026
+     (45 personnages et 5 légendaires par série, demande de Gaël). Fiches et
+     dessins : fanzzy-prompts/SERIES-50/GD-les-galeres-de-deplacement.md. */
+  { id: 'GD17', nom: 'La Glacière du Car', type: 'fide', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La glacière qu’on ouvre au premier péage et qui nourrit tout le car. Elle '
+      + 'penche d’un côté, le couvercle ferme mal, et il reste toujours un sandwich.',
+    mods: { holdBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'QUI A FAIM ?', gest: 'tenue', power: 45 } },
+
+  { id: 'GD18', nom: 'Le Sac de Couchage', type: 'fide', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le sac de couchage qu’on déroule dans l’allée du car à trois heures du matin. '
+      + 'Il ne ferme plus, il garde chaud quand même.',
+    mods: { holdBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'CHUT, ILS DORMENT', gest: 'retenue', power: 45 } },
+
+  { id: 'GD19', nom: 'Le Billet Perdu', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Elle perd son billet dans le car, le cherche une heure et le retrouve dans sa '
+      + 'chaussette. Elle n’a jamais compris comment.',
+    mods: { breathBonus: 1.16, parryResist: 0.92 },
+    cri: { label: 'JE L’AI !', gest: 'memoire', power: 45 } },
+
+  { id: 'GD20', nom: 'Le Chauffeur du Car', type: 'voix', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le chauffeur du car qui a fait mille déplacements sans jamais voir un match. '
+      + 'Il attend sur le parking et il compte les chants.',
+    mods: { tempoWindow: 1.17, refundBonus: 0.92 },
+    cri: { label: 'ON Y VA', gest: 'tempo', power: 46 } },
+
+  { id: 'GD21', nom: 'La Valise Cassée', type: 'perc', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La valise à roulette cassée qui racle le trottoir jusqu’à la gare. On l’entend '
+      + 'arriver de loin, par petits coups.',
+    mods: { mashBonus: 1.16, holdBonus: 0.92 },
+    cri: { label: 'CLAC, CLAC', gest: 'salves', power: 45 } },
+
+  { id: 'GD22', nom: 'La Grand-Mère du Covoiturage', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La grand-mère qui conduit quatre jeunes au stade dans sa petite voiture. Elle '
+      + 'connaît tous les raccourcis et elle ne ralentit jamais.',
+    mods: { perfectBonus: 1.18, breathBonus: 0.92 },
+    cri: { label: 'ATTACHEZ-VOUS', gest: 'relance', power: 46 } },
+
+  { id: 'GD23', nom: 'Le Panneau de Sortie', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le panneau de sortie qu’on rate toujours, à chaque déplacement. Le car fait '
+      + 'demi-tour, tout le monde chante.',
+    mods: { breathBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'C’ÉTAIT LÀ !', gest: 'echarpe', power: 45 } },
+
+  { id: 'GD24', nom: 'La Carte Routière', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La carte routière qu’on n’arrive jamais à replier. Elle prend tout le '
+      + 'pare-brise et personne ne sait la lire.',
+    mods: { breathBonus: 1.17, tempoWindow: 0.92 },
+    cri: { label: 'ON EST OÙ ?', gest: 'memoire', power: 45 } },
+
+  { id: 'GD25', nom: 'Le Premier Déplacement', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le gamin de onze ans qui part pour son premier déplacement avec un sac trop '
+      + 'lourd. Il ne dort pas de la nuit.',
+    mods: { breathBonus: 1.18, refundBonus: 0.92 },
+    cri: { label: 'MON PREMIER', gest: 'echarpe', power: 46 } },
+
+  { id: 'GD26', nom: 'Le Ferry de Nuit', type: 'voix', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le ferry de nuit où le virage dort sur le pont. Les chants reviennent avec les '
+      + 'vagues.',
+    mods: { tempoWindow: 1.16, parryResist: 0.92 },
+    cri: { label: 'ÇA TANGUE', gest: 'echo', power: 45 } },
+
+  { id: 'GD27', nom: 'La Sandwicherie de l’Aire', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La vendeuse de l’aire d’autoroute qui sert quarante sandwichs à quatre heures '
+      + 'du matin. Elle les lance par-dessus le comptoir sans en rater un.',
+    mods: { perfectBonus: 1.17, mashBonus: 0.92 },
+    cri: { label: 'QUARANTE SANDWICHS', gest: 'rouleaux', power: 45 } },
+
+  { id: 'GD28', nom: 'Le Ticket de Métro', type: 'voix', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le ticket de métro usé qu’on garde pour le retour. Il est passé dans toutes '
+      + 'les poches du groupe.',
+    mods: { tempoWindow: 1.17, breathBonus: 0.92 },
+    cri: { label: 'TERMINUS', gest: 'tempo', power: 45 } },
+
+  { id: 'GD29', nom: 'Le Coussin de Nuque', type: 'fide', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le coussin de nuque gonflable qui ne tient jamais. On le regonfle à chaque '
+      + 'péage.',
+    mods: { holdBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'IL SE DÉGONFLE', gest: 'jauge', power: 45 } },
+
+  { id: 'GD30', nom: 'La Stoppeuse', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Elle rejoint le stade en stop avec un carton à bout de bras. Elle arrive '
+      + 'toujours avant le car.',
+    mods: { breathBonus: 1.16, parryResist: 0.92 },
+    cri: { label: 'LE STADE ?', gest: 'echarpe', power: 45 } },
+
+  { id: 'GD31', nom: 'Le Klaxon', type: 'perc', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le klaxon du car qui répond à tous les klaxons de l’autoroute. Il est enroué '
+      + 'depuis le dernier déplacement.',
+    mods: { mashBonus: 1.18, tempoWindow: 0.92 },
+    cri: { label: 'TÛT TÛT', gest: 'mash', power: 46 } },
+
+  { id: 'GD32', nom: 'Le Bouchon', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'L’embouteillage du retour, des kilomètres de feux rouges. On compte les '
+      + 'voitures pour passer le temps.',
+    mods: { perfectBonus: 1.18, costPenalty: 1.06 },
+    cri: { label: 'ÇA AVANCE ?', gest: 'compte', power: 46 } },
+
+  { id: 'GD33', nom: 'La Pompe à Essence', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La pompe de la station-service où tout le car descend à minuit. Elle éclaire '
+      + 'le parking comme une scène.',
+    mods: { parryBonus: 1.17, breathBonus: 0.92 },
+    cri: { label: 'TOUT LE MONDE DESCEND', gest: 'tifo', power: 46 } },
+
+  { id: 'GD34', nom: 'Le Vélo du Déplacement', type: 'perc', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Il va au match à vélo, deux cents kilomètres. Il arrive à la mi-temps et il '
+      + 'chante plus fort que tout le monde.',
+    mods: { mashBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'DEUX CENTS BORNES', gest: 'crescendo', power: 45 } },
+
+  { id: 'GD35', nom: 'La Photographe du Car', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Elle photographie chaque déplacement depuis la fenêtre du car, avec un '
+      + 'appareil jetable. Elle ne regarde jamais les photos.',
+    mods: { parryBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'SOURIEZ', gest: 'mosaique', power: 45 } },
+
+  { id: 'GD36', nom: 'L’Essuie-Glace', type: 'voix', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'L’essuie-glace qui bat sous l’orage pendant tout le trajet. Il grince toujours '
+      + 'à contretemps.',
+    mods: { tempoWindow: 1.16, backfire: 1.06 },
+    cri: { label: 'ÇA GRINCE', gest: 'contretemps', power: 45 } },
+
+  { id: 'GD37', nom: 'La Doyenne du Car', type: 'fide', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Elle a quatre-vingt-deux ans et elle n’a raté aucun déplacement depuis 1968. '
+      + 'Elle tricote dans le car.',
+    mods: { holdBonus: 1.17, tempoWindow: 0.92 },
+    cri: { label: 'DEPUIS 1968', gest: 'hold', power: 46 } },
+
+  { id: 'GD38', nom: 'La Contrôleuse du Train', type: 'voix', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La contrôleuse du train spécial qui vérifie trois cents billets en chantant. '
+      + 'Tout le wagon reprend après elle.',
+    mods: { tempoWindow: 1.16, refundBonus: 0.92 },
+    cri: { label: 'BILLETS, S’IL VOUS PLAÎT', gest: 'capo', power: 45 } },
+
+  { id: 'GD39', nom: 'La Tente du Camping', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La tente montée de travers au camping municipal la veille du match. Elle '
+      + 's’effondre deux fois dans la nuit.',
+    mods: { parryBonus: 1.16, holdBonus: 0.92 },
+    cri: { label: 'ELLE S’EFFONDRE', gest: 'tifo', power: 45 } },
+
+  { id: 'GD40', nom: 'Le Vol Retardé', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le steward du vol charter qui annonce trois heures de retard. Il finit par '
+      + 'chanter avec la cabine.',
+    mods: { perfectBonus: 1.17, tempoWindow: 0.92 },
+    cri: { label: 'TROIS HEURES DE RETARD', gest: 'relance', power: 45 } },
+
+  { id: 'GD41', nom: 'La Clé d’Hôtel', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La clé de la chambre 12 de l’hôtel bon marché où dorment six supporters. Elle '
+      + 'se perd tous les soirs.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'CHAMBRE 12', gest: 'tri', power: 45 } },
+
+  { id: 'GD42', nom: 'La Groundhoppeuse', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Elle veut voir un match dans tous les stades d’Europe, et elle coche son '
+      + 'carnet à chaque nouvelle tribune.',
+    mods: { parryBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'ET D’UN DE PLUS', gest: 'ola', power: 45 } },
+
+  { id: 'GD43', nom: 'Le Mal des Transports', type: 'fide', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Il a le mal des transports au premier virage, le sac en papier à la main. Il '
+      + 'vient quand même, à chaque fois.',
+    mods: { holdBonus: 1.17, breathBonus: 0.92 },
+    cri: { label: 'ÇA VA ALLER', gest: 'hold', power: 45 } },
+
+  { id: 'GD44', nom: 'Le Scooter', type: 'perc', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le scooter qui part au stade avec deux passagers et trois drapeaux. Il tousse '
+      + 'à chaque côte.',
+    mods: { mashBonus: 1.17, parryResist: 0.92 },
+    cri: { label: 'BIP BIP', gest: 'mash', power: 45 } },
+
+  { id: 'GD45', nom: 'La Chanteuse du Car', type: 'voix', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Elle lance les chants au micro du car pendant six heures. Personne n’a jamais '
+      + 'réussi à lui prendre le micro.',
+    mods: { tempoWindow: 1.17, perfectBonus: 0.92 },
+    cri: { label: 'UN, DEUX, TROIS', gest: 'tempo', power: 46 } },
+
+  { id: 'GD46', nom: 'Le Chien de l’Aire', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le chien errant de l’aire d’autoroute que le car adopte. Il dort sous les '
+      + 'sièges et il aboie aux buts.',
+    mods: { breathBonus: 1.17, tempoWindow: 0.92 },
+    cri: { label: 'OUAF', gest: 'echarpe', power: 45 } },
+
+  { id: 'GD47', nom: 'Le Retour à 5 h', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Elle rentre du déplacement à cinq heures du matin et part directement '
+      + 'travailler. Elle n’a pas fermé l’œil.',
+    mods: { parryBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'BONNE NUIT, BONJOUR', gest: 'tifo', power: 45 } },
+
+  { id: 'GD48', nom: 'Le Bagagiste', type: 'fide', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le bagagiste de la gare qui porte les sacs de tout le groupe. Il ne pose '
+      + 'jamais rien.',
+    mods: { holdBonus: 1.17, perfectBonus: 0.92 },
+    cri: { label: 'DONNEZ-MOI ÇA', gest: 'hold', power: 46 } },
+
+  { id: 'GD49', nom: 'La Lampe Frontale', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La lampe frontale qu’on sort pour trouver la sortie du parking de nuit. Elle '
+      + 'vise toujours à côté.',
+    mods: { perfectBonus: 1.18, costPenalty: 1.06 },
+    cri: { label: 'LA SORTIE ?', gest: 'visee', power: 46 } },
+
+  { id: 'GD50', nom: 'La Carte Postale', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La carte postale qu’on envoie à la grand-mère de chaque déplacement. Elle '
+      + 'arrive toujours après le retour.',
+    mods: { perfectBonus: 1.17, holdBonus: 0.92 },
+    cri: { label: 'BONS BAISERS', gest: 'relance', power: 45 } },
+
+  { id: 'GD51', nom: 'La Couchette du Train de Nuit', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'La couchette du train de nuit, trop courte, où l’on dort mal. On refait le '
+      + 'match jusqu’à l’aube.',
+    mods: { perfectBonus: 1.17, breathBonus: 0.92 },
+    cri: { label: 'ON REFAIT LE MATCH', gest: 'compte', power: 45 } },
+
+  { id: 'GD52', nom: 'Le Triangle de Signalisation', type: 'perc', set: 'GD', stage: 1, rar: 'commune',
+    histoire: 'Le triangle rouge posé derrière le minibus en panne. Il a vu passer tous les '
+      + 'cars des autres clubs.',
+    mods: { mashBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'ATTENTION', gest: 'mash', power: 45 } },
   /* ============================= LES PHÉNOMÈNES MÉTÉO (MT)
 
      Le onzième joueur, et il n'est d'aucun camp. La série des choses qui
