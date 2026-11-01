@@ -21,6 +21,17 @@
  * le ticket et la pile (`ui.css`). Ce qui manquait à ces briques est
  * marqué « provisoire » et décrit en besoin.
  *
+ * ## La forme A (1er novembre 2026, choix de Gaël : la fiche « trop chargée »)
+ *
+ * Sous la carte : une rangée de pastilles (le cri, le club lié et son logo,
+ * l'avatar), l'histoire sur une ligne avec « plus », quatre onglets (ÂGES,
+ * ULTIMATE, EFFETS, LOOK) dont seule la rangée ouverte se voit, centrée, et
+ * une ligne de détail de soixante pixels. La bande du cri, les tampons dans
+ * les gouttières et la plaque ULTIMATE à côté de la carte sont partis : la
+ * carte reprend leur place. Le budget ci-dessous est celui d'avant, gardé
+ * pour ses raisons ; les hauteurs sont maintenant : pastilles 46, histoire
+ * 19, onglets 50, rangée 78, détail 60.
+ *
  * ## Le budget de hauteur, à 360 × 640
  *
  * L'écran ne défile pas : il doit se lire d'un coup d'œil. Chaque bloc a donc
@@ -174,120 +185,103 @@
 .fiche .vitrine{position:relative;flex:1 1 auto;min-height:150px;container-type:size;
   display:grid;place-items:center;--l:150px}
 @container (min-width:0px){
-  .fiche .vitrine>*{--l:clamp(70px, min(calc((100cqh - 14px) * 63 / 88), calc(100cqw - 192px)), 300px)}
+  .fiche .vitrine>*{--l:clamp(70px, min(calc((100cqh - 14px) * 63 / 88), calc(100cqw - 140px)), 300px)}
 }
 .fiche .vitrine>.tbf-vitrine-scene{width:var(--l);margin:0}
 .fiche .vitrine .fz{width:100%}
 
-/* **Ce qui se colle à côté de la carte**, dans ses gouttières : à gauche le
-   tampon TON AVATAR, ou la bâche ME MONTRER AINSI ; à droite la plaque qui
-   la retourne, la bande du cri repliée sur un téléphone court, ou la
-   vignette du paquet d'une carte qu'on n'a pas. Les places se calculent sur
-   `--l` : la demi-largeur de la carte, sa demi-hauteur (`--l` × 44/63). */
-.fiche .vitrine>.cote-g{position:absolute;z-index:3;right:calc(50% + var(--l) / 2 + 12px);
-  top:calc(50% + var(--l) * 44 / 63 * .15);translate:0 -50%;
-  max-width:calc(50% - var(--l) / 2 - 18px)}
+/* **À côté de la carte, la plaque qui la retourne** ; sur une carte qu'on
+   n'a pas, la vignette du paquet. Les places se calculent sur `--l`. Tout
+   le reste — le club, l'avatar, le cri — est en pastilles dessous (forme A,
+   choisie par Gaël le 1er novembre 2026 : la fiche était « trop chargée »). */
 .fiche .vitrine>.tourne{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 10px);
   top:calc(50% - 22px)}
-/* **L'Ultimate**, dans la gouttière de droite, au-dessus de la plaque qui
-   retourne (`plaqueUltime`, fanzzy-fiche.js) : sa vignette, le mot, et ce
-   qu'on a. Le bas de la plaque tient à trente pixels au-dessus du milieu de
-   la carte, là où commence la plaque ronde ; sur une carte trop courte, elle
-   ne monte pas plus haut que le haut de la vitrine. */
-.fiche .vitrine>.cote-ult{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 10px);
-  top:max(calc(50% - 30px), 112px);translate:0 -100%;
-  width:min(84px, calc(50% - var(--l) / 2 - 16px));margin:0;padding:6px 5px 5px;
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  font-size:12px;line-height:1;letter-spacing:.06em;text-align:center;white-space:normal}
-.fiche .vitrine>.cote-ult>img{display:block;width:100%;max-width:56px;aspect-ratio:3/4;object-fit:cover;
-  object-position:50% 20%;border-radius:3px;box-shadow:0 0 0 2px var(--encre)}
-.fiche .vitrine>.cote-ult>b{font-weight:700;font-size:12px}
-.fiche .vitrine>.cote-ult>small{display:flex;align-items:center;justify-content:center;gap:3px;
-  font-size:10px;font-weight:600;letter-spacing:.04em}
-.fiche .vitrine>.cote-ult>small>svg{width:9px;height:9px;flex:none;fill:currentColor}
-.fiche .vitrine>.cote-ult>small>.tbf-ico{width:10px;height:10px;flex:none}
-.fiche .vitrine>.paquet{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 16px);
-  top:50%;translate:0 -50%;max-width:calc(50% - var(--l) / 2 - 24px);margin:0}
+.fiche .vitrine>.paquet{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 12px);
+  top:50%;translate:0 -50%;max-width:calc(50% - var(--l) / 2 - 18px);margin:0}
 .fiche .vitrine>.paquet>img{width:min(64px,100%)}
 
-/* **LIÉ À TON CLUB** (`src/shared/fanzzy/clubs.js`) : dans la gouttière de
-   gauche, en haut de la carte — TON AVATAR tient le bas. Posé sur la vitrine
-   et non dessous, parce que la colonne n'a pas un pixel à donner (le budget
-   de hauteur, en tête). Un bouton : la phrase qui l'explique vient au toucher.
-   Un club que le joueur ne suit pas prend l'encre bleue, pour que « le mien »
-   se reconnaisse d'un coup d'œil. */
-.fiche .vitrine>.fiche-club{position:absolute;z-index:3;right:calc(50% + var(--l) / 2 + 12px);
-  top:calc(50% - var(--l) * 44 / 63 * .6);translate:0 -50%;
-  max-width:calc(50% - var(--l) / 2 - 18px);font-size:14px;line-height:1.1;
-  white-space:normal;--rot:-6deg;cursor:pointer}
-.fiche .vitrine>.fiche-club[data-club=autre]{--teinte:var(--bleu-clair)}
-.fiche .vitrine>.fiche-club[data-club=lier]{--teinte:var(--projo)}
-.fiche .vitrine>.fiche-club>small{display:block;margin-top:3px;font-size:11px;letter-spacing:.04em}
-/* Le logo du club, au-dessus du mot ; le nom dessous, en clair (pas en
-   capitales tamponnées : c'est un nom propre, il doit se lire). */
-.fiche .vitrine>.fiche-club>.fiche-club-logo{display:block;width:30px;height:30px;
-  object-fit:contain;margin:0 auto 4px;rotate:calc(var(--rot) * -1)}
-.fiche .vitrine>.fiche-club>.fiche-club-nom{text-transform:none;font-size:12px;line-height:1.15;
-  overflow-wrap:anywhere}
+/* ------------------------------------------------------------ les pastilles
 
-/* Le tampon TON AVATAR : un acquis, pas un bouton éteint. En deux lignes,
-   à seize pixels — le plancher du tampon en contour sur un fond sombre. */
-.fiche .cote-g.tbf-tampon{font-size:16px;line-height:1.1}
-/* ME MONTRER AINSI : la bâche de parpaing, **plus basse** que les actions —
-   ce n'est ni jouer ni dépenser, c'est choisir de quoi l'on a l'air. Le
-   libellé passe à la ligne dans la gouttière, jamais coupé. */
-.fiche .cote-g.tbf-plaque{min-height:44px;margin:0;padding:7px 9px;font-size:12px;line-height:1.15;
-  letter-spacing:.06em;text-align:center;white-space:normal}
+   Une rangée sous la carte : le cri (▶, à la craie, toucher le crie), le club
+   lié (son logo et son nom), l'avatar (TON AVATAR, ou ME MONTRER AINSI).
+   Quarante-quatre pixels de cible, la pilule en fait trente-quatre. Sur un
+   écran étroit, le cri et le nom du club se serrent en fondu, jamais en
+   points de suspension. */
+.fiche .pastilles{flex:none;display:flex;justify-content:center;gap:6px;margin:2px var(--marge) 0;min-width:0}
+.fiche .pastilles[hidden]{display:none}
+.fiche .pastille{position:relative;flex:0 1 auto;min-width:0;min-height:44px;display:inline-flex;align-items:center;
+  justify-content:center;gap:6px;margin:0;padding:0 11px;box-sizing:border-box;background:none;border:0;
+  font:700 12px/1 var(--banner);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;
+  color:var(--craie);cursor:pointer}
+.fiche .pastille::before{content:"";position:absolute;z-index:-1;inset:5px 0;border-radius:999px;
+  border:1.5px solid currentColor;background:rgba(10,13,17,.72)}
+.fiche .pastille:focus-visible{outline:3px solid var(--projo);outline-offset:-2px;border-radius:999px}
+.fiche .pastille:active{translate:0 1px}
+.fiche .pastille-cri{flex-shrink:1.4;color:var(--encre)}
+.fiche .pastille-cri::before{background:var(--craie);border-color:var(--craie);box-shadow:inset 4px 0 0 var(--e1,var(--projo))}
+.fiche .pastille-cri>svg{width:11px;height:11px;flex:none;fill:currentColor}
+.fiche .pastille-cri>b,.fiche .fiche-club>.fiche-club-nom{min-width:0;overflow:hidden;font-weight:700;
+  padding-right:8px;margin-right:-8px;
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 9px),transparent);
+          mask-image:linear-gradient(90deg,#000 calc(100% - 9px),transparent)}
+/* Serrées (`serrerPastilles`) : le club à son logo, l'avatar à son étoile. */
+.fiche .pastilles.serre .fiche-club:has(.fiche-club-logo)>.fiche-club-nom,
+.fiche .pastilles.serre .pastille-avatar>.pastille-mot{position:absolute;width:1px;height:1px;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap}
+.fiche .pastilles.serre .pastille{padding:0 9px}
+.fiche .pastilles.mesure{justify-content:flex-start}
+.fiche .pastilles.mesure>.pastille{flex-shrink:0}
+.fiche .fiche-club{color:#7FE0A6}
+.fiche .fiche-club[data-club=autre]{color:var(--bleu-clair,#9CC8FF)}
+.fiche .fiche-club[data-club=lier]{color:var(--projo)}
+.fiche .fiche-club>.fiche-club-logo{flex:none;width:22px;height:22px;object-fit:contain}
+.fiche .fiche-club>.fiche-club-nom{font-size:12px;letter-spacing:.04em}
+.fiche .pastille-prix{display:inline-flex;align-items:center;gap:2px}
+.fiche .pastille-prix>img{width:15px;height:15px}
+.fiche .pastille-avatar{flex:none;color:#7FE0A6;cursor:default}
+.fiche .pastille-montrer{flex:none;color:var(--craie)}
 
-/* ------------------------------------------------------- la bande du cri
+/* ---------------------------------------------------------------- l'histoire
 
-   Pleine largeur sous la carte : toucher lance le cri en vidéo. Les bouts
-   rayés sont à la couleur de la famille (`--e1`, posée par la fiche). */
-.fiche .tbf-cri{flex:none;width:auto;margin:0 var(--marge) 4px}
-/* **Repliée dès que la carte en a besoin.** Les quarante-huit pixels de la
-   bande reviennent alors à la carte, et le cri reste à portée : une plaque
-   ronde ▶ collée à droite de la carte, au niveau de la bande de son nom.
+   **Une ligne, et « plus »** : la phrase du catalogue s'efface en fondu au
+   bord, le mot « plus » l'ouvre en entier sur place (cinq lignes au plus),
+   et c'est la carte, au-dessus, qui cède la place. Sur un écran trop court,
+   elle se retire avant les onglets. */
+.fiche .histoire-l{flex:none;display:flex;align-items:baseline;gap:6px;margin:0 var(--marge);min-width:0}
+.fiche .histoire-l[hidden]{display:none}
+.fiche .histoire{flex:1 1 auto;min-width:0;margin:0;font-family:var(--ui);font-size:13px;line-height:1.45;
+  font-style:italic;color:var(--craie);opacity:.88;white-space:nowrap;overflow:hidden;text-align:center}
+.fiche .histoire-l.longue:not(.ouverte) .histoire{text-align:left;
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);
+          mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+.fiche .histoire-l.ouverte .histoire{white-space:normal;text-align:left;max-height:calc(5 * 1.45em);overflow-y:auto}
+.fiche .histoire-plus{flex:none;min-height:44px;margin:-12px 0;padding:0 2px 0 4px;background:none;border:0;
+  font:600 13px/1 var(--ui);color:var(--projo);cursor:pointer}
+.fiche .histoire-l:not(.longue):not(.ouverte) .histoire-plus{display:none}
+@container fiche-corps (height < 470px){ .fiche .histoire-l:not(.ouverte){display:none} }
 
-   **Le seuil est celui du pied de la carte, lu sur le corps.** Avec la bande,
-   la scène a la hauteur du corps moins 236 pixels (la bande 48, l'inventaire
-   100, le détail 88) ; la carte, celle de la scène moins 14 ; et sa largeur,
-   63/88 de sa hauteur. Elle dépasse cent cinquante pixels de large — le
-   seuil du pied, `cartes.css` — tant que le corps a au moins 460 pixels de
-   haut : 461 à 360 × 640, où la bande reste, comme le budget l'écrit.
+/* -------------------------------------------------------------- les onglets
 
-   Le repli se décidait sur l'écran (`max-height:600px`), et ne savait rien
-   de ce que la barre, l'en-tête ou une annonce prennent au-dessus : entre
-   601 et 638 pixels de haut — un Android de 360 de large, barre d'adresse
-   comprise —, la bande restait et la carte tombait en vignette sans pied,
-   jusqu'à 123 pixels de large (137 à 620). Le corps, lui, le sait.
-
-   À 320 de large, la carte est tenue par la largeur (128 px, ses deux
-   gouttières) : entre 608 et 638 pixels de haut, le repli ne lui rend rien,
-   et le cri y reste à portée, en plaque ronde. Une seconde condition pour
-   ces trente pixels d'un téléphone de 320 ne vaudrait pas sa lecture. */
-/* **Son histoire**, sous la carte et au-dessus du cri : deux ou trois lignes
-   d'italique à la craie, comme dans la vitrine du classeur. Elle ne grandit
-   pas la page : c'est la carte, au-dessus, qui lui cède la place (`flex:1`).
-   Trois lignes au plus — l'histoire la plus longue du catalogue en prend
-   trois à 320 pixels —, et sur un écran trop court, elle s'efface avant le
-   cri. */
-.fiche .histoire{flex:none;margin:2px var(--marge) 10px;font-family:var(--ui);font-size:13px;line-height:1.45;
-  font-style:italic;text-align:center;color:var(--craie);opacity:.88;text-wrap:balance;
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
-.fiche .histoire[hidden]{display:none}
-@container fiche-corps (height < 520px){ .fiche .histoire{display:none} }
-.fiche .vitrine>.cri-court{display:none}
-@container fiche-corps (height < 460px){
-  .fiche .corps>.tbf-cri{display:none}
-  .fiche .vitrine>.cri-court{display:grid;position:absolute;z-index:3;
-    left:calc(50% + var(--l) / 2 + 10px);top:calc(50% + var(--l) * 44 / 63 - 50px)}
-}
+   ÂGES, ULTIMATE, EFFETS, LOOK : une famille d'informations à la fois. Le
+   trait d'or sous l'onglet ouvert ; les autres à la craie éteinte. */
+.fiche .onglets{flex:none;display:flex;margin:4px var(--marge) 0;border-bottom:2px solid rgba(242,238,228,.14)}
+.fiche .onglet{flex:1 1 0;min-width:0;min-height:44px;margin:0 0 -2px;padding:0 2px;background:none;border:0;
+  border-bottom:3px solid transparent;font:700 13px/1 var(--banner);letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(242,238,228,.58);cursor:pointer}
+.fiche .onglet[aria-selected=true]{color:var(--craie);border-bottom-color:var(--projo)}
+.fiche .onglet:focus-visible{outline:3px solid var(--projo);outline-offset:-3px}
 
 /* ------------------------------------------------------- l'inventaire
 
    Cent pixels, quatre rangées côte à côte qui défilent en largeur : ÂGES,
    EFFETS, ÉTATS, TENUES (`.tbf-inventaire`). La hauteur est à la page. */
-.fiche .tbf-inventaire{flex:none;height:100px}
+.fiche .tbf-inventaire{flex:none;height:78px;padding-top:10px}
+/* **Les images au milieu** (Gaël, 1er novembre 2026) : la rangée se centre
+   tant qu'elle tient, et défile depuis le bord quand elle déborde. */
+.fiche .tbf-inventaire{justify-content:safe center;gap:0}
+.fiche .tbf-inventaire>.rang[hidden]{display:none}
+.fiche .tbf-inventaire .look-sep{flex:none;align-self:center;width:2px;height:30px;margin:0 12px;
+  border-radius:1px;background:rgba(242,238,228,.22)}
 /* **Le pin de la famille, au coin d'une tuile d'effet** (fanzzy-fiche.js,
    `tuileHTML`) : la tuile est à la craie, et c'est lui qui dit la famille.
    Seize pixels — sa taille dans le sticker sous le nom —, au coin
@@ -306,17 +300,31 @@
   -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);
           mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
 
-/* ----------------------------------------------- la fiche kraft du détail
+/* ------------------------------------------------------- la ligne de détail
 
-   Quatre-vingt-huit pixels fixes : passer d'un effet à une tenue ne fait pas
-   sauter la carte. Un titre et deux lignes de chiffres au plus — c'est ce que
-   la hauteur tient, et un ticket ne porte pas de paragraphe. */
-.fiche #fiche-detail{flex:none;height:88px;margin:0 var(--marge)}
-/* Une ligne sans jauges (un effet, une phrase courte) : le libellé prend la
-   place des jauges, la valeur reste dans sa colonne. C'est une place dans la
-   grille de la brique, pas un dessin. */
-.fiche .tbf-detail-l>span:first-child:nth-last-child(2){grid-column:1 / 3}
-.fiche .tbf-detail-l>b:nth-child(2){grid-column:3}
+   Ce que fait la pièce qu'on touche, en une ligne sous les images : le titre
+   et sa précision, puis les chiffres à la suite. Cinquante-six pixels fixes,
+   pour que passer d'un onglet à l'autre ne fasse pas sauter la carte. */
+.fiche .fiche-detail{flex:none;box-sizing:border-box;height:60px;margin:0 var(--marge);padding:6px 12px;
+  display:flex;flex-direction:column;justify-content:center;gap:3px;overflow:hidden;
+  background:rgba(20,24,32,.92);border-left:3px solid var(--projo);border-radius:4px;color:var(--craie)}
+.fiche .fiche-detail>.tbf-detail-portrait{display:none}
+.fiche .fiche-detail .tbf-detail-t{flex:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;
+  min-width:0;height:15px;overflow:hidden;white-space:nowrap;row-gap:8px}
+.fiche .fiche-detail .tbf-detail-t>b{font:700 13px/1.1 var(--banner);letter-spacing:.06em;text-transform:uppercase}
+.fiche .fiche-detail .tbf-detail-t>b{flex:none;max-width:100%}
+/* La précision à droite du titre, quand elle tient ; sinon elle passe à
+   une ligne que la hauteur du titre cache, plutôt que de mordre dessus. */
+.fiche .fiche-detail .tbf-detail-t>small{margin-left:auto;font:500 12px/1.1 var(--ui);opacity:.75}
+.fiche .fiche-detail-l{margin:0;font:500 12px/1.3 var(--ui);color:rgba(242,238,228,.88);
+  text-transform:none;letter-spacing:0;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+.fiche .fiche-detail-l>.tbf-detail-l,.fiche .fiche-detail-l>.tbf-detail-l>*{display:inline;
+  font:inherit;text-transform:none;letter-spacing:0;color:inherit}
+.fiche .fiche-detail-l>.tbf-detail-l+.tbf-detail-l::before{content:" · "}
+.fiche .fiche-detail-l .tbf-detail-deux,.fiche .fiche-detail-l .tbf-jauge{display:none}
+.fiche .fiche-detail-l .tbf-detail-l>b{margin-left:5px;font-weight:700;color:var(--craie)}
+.fiche .fiche-detail .tbf-detail-l>b:only-child{margin:0}
 
 /* ---------------------------------------------------------- les actions
 

@@ -173,6 +173,12 @@
     etat: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM8 9h.01M16 9h.01M8 14h8a4 4 0 0 1-8 0z',
   };
   const trait = (cle) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${TRAITS[cle] ?? TRAITS.etoile}"/></svg>`;
+  /* Les onglets de la fiche et les rangées qu'ils montrent, dans l'ordre de
+     l'importance : ce qu'il devient, son coup fatal, ce qu'il change, puis
+     ce qu'il montre. */
+  const ONGLETS = [['ÂGES', ['ÂGES']], ['ULTIMATE', ['ULTIMATE']], ['EFFETS', ['EFFETS']],
+    ['LOOK', ['ÉTATS', 'TENUES']]];
+
   const SVG = {
     croix: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     tourne: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>',
@@ -408,16 +414,20 @@
           </div>
           <div class="corps">
             <div class="vitrine" id="fiche-vitrine">
-              ${lienClub()}
               <div class="tbf-vitrine-scene" id="fiche-scene">
                 <div class="tbf-vitrine-tilt" id="fiche-art"></div>
               </div>
             </div>
-            <p class="histoire" id="fiche-histoire" hidden></p>
-            <div id="fiche-cri" hidden></div>
-            <div class="tbf-inventaire rangs" id="fiche-inventaire"${
+            <div class="pastilles" id="fiche-pastilles"></div>
+            <div class="histoire-l" id="fiche-histoire-l" hidden>
+              <p class="histoire" id="fiche-histoire"></p>
+              <button type="button" class="histoire-plus" data-histoire aria-expanded="false"
+                aria-controls="fiche-histoire">plus ›</button>
+            </div>
+            <div class="onglets" id="fiche-onglets" role="tablist" aria-label="Ce qu’il a"></div>
+            <div class="tbf-inventaire rangs" id="fiche-inventaire" role="tabpanel"${
               aMoi() ? '' : ' aria-hidden="true"'}></div>
-            <div class="tbf-ticket tbf-detail" id="fiche-detail"></div>
+            <div class="fiche-detail" id="fiche-detail" aria-live="polite"></div>
           </div>
           <div class="actions" id="fiche-actions"></div>
         </div>`;
@@ -437,8 +447,9 @@
          22 octobre 2026), au club principal du joueur, pour toujours. Le
          bouton prend la place du tampon, dans la même gouttière. */
       if (c && !c.lie && aMoi() && Number.isFinite(Number(c.prix))) {
-        return `<button type="button" class="tbf-tampon fiche-club" id="fiche-lier" data-ton="or"
-          data-club="lier">LIER À MON CLUB<small>${Number(c.prix)} écharpes</small></button>`;
+        return `<button type="button" class="pastille fiche-club" id="fiche-lier" data-club="lier"
+          aria-label="Lier à mon club, ${Number(c.prix)} écharpes">LIER À MON CLUB<span class="pastille-prix"><img src="${
+          esc(JETON())}" alt="">${Number(c.prix)}</span></button>`;
       }
       if (!c?.lie) return '';
       const force = Number(c.force) || 0;
@@ -472,12 +483,13 @@
           : `Il porte les couleurs d’un club que tu ne suis pas. Suis ce club, et dans ses matchs il poussera ${force} % plus fort et rapportera ${gain} % de plus.`;
       const logo = c.logo ? `<img class="fiche-club-logo" src="${esc(c.logo)}" alt="" onerror="this.remove()">` : '';
       const qui = nom ? `<small class="fiche-club-nom">${esc(nom)}</small>` : '';
-      /* **Posé sur la vitrine, pas sous elle** : la colonne n'a pas un pixel
-         à donner (le budget de hauteur, fanzzy-fiche.css). Le tampon se lit
-         d'un coup d'œil, et la phrase vient au toucher, dans la pile. */
-      return `<button type="button" class="tbf-tampon fiche-club" id="fiche-club" data-ton="vert"
+      /* **Une pastille sous la carte** (1er novembre 2026, Gaël : la fiche
+         « trop chargée », forme A) : le logo du club et son nom, la phrase
+         au toucher, dans la pile. Le tampon dans la gouttière de la carte
+         prenait la place d'un objet pour dire un mot. */
+      return `<button type="button" class="pastille fiche-club" id="fiche-club"
         data-club="${c.tonClub ? 'sien' : 'autre'}" data-phrase="${esc(phrase)}"${c.cri ? ` data-cri="${esc(c.cri)}"` : ''} aria-label="${esc(phrase)}">${logo}${
-  c.tonClub && !c.portee ? 'LIÉ À TON CLUB' : nom ? 'LIÉ À' : 'LIÉ À UN CLUB'}${qui}</button>`;
+  qui || (c.tonClub && !c.portee ? '<small class="fiche-club-nom">TON CLUB</small>' : '<small class="fiche-club-nom">UN CLUB</small>')}</button>`;
     }
 
     /** LIER À MON CLUB : la demande, puis l'achat. */
@@ -538,8 +550,8 @@
       peindreTete();
       peindreCarte();
       peindreCotes();
+      peindrePastilles();
       peindreHistoire();
-      peindreCri();
       prechargerSonDuClub();
       peindreInventaire();
       peindreDetail();
@@ -705,65 +717,74 @@
     function peindreCotes() {
       const v = hote.querySelector('#fiche-vitrine');
       if (!v) return;
-      v.querySelectorAll(':scope > .cote-g, :scope > .tourne, :scope > .paquet, :scope > .cri-court, :scope > .cote-ult')
-        .forEach((n) => n.remove());
+      v.querySelectorAll(':scope > .tourne, :scope > .paquet').forEach((n) => n.remove());
       const a = ageDe(vu());
       const atteint = aMoi() && Boolean(a?.possede ?? true);
       let html = '';
+      /* **À côté de la carte, la seule plaque qui la retourne** (1er novembre
+         2026, forme A) : le club, l'avatar et le cri sont passés en
+         pastilles dessous (`peindrePastilles`), et l'Ultimate a son onglet. */
       if (atteint && voulu) {
-        /* **TON AVATAR est un acquis, pas un bouton éteint.** Le bouton
-           « C'EST DÉJÀ LUI » occupait une place d'action pour dire qu'il n'y
-           avait rien à faire. Quand la carte montre autre chose que l'avatar,
-           la bâche qui l'enregistre prend la même place. */
-        html += memeQueLAvatar()
-          ? `<span class="cote-g tbf-tampon${claquerAvatar ? ' tbf-clac' : ''}" data-ton="vert">TON<br>AVATAR</span>`
-          : `<button type="button" class="cote-g tbf-plaque" data-montrer
-              data-stade="${esc(String(voulu.stade))}" data-skin="${esc(voulu.skin ?? 'base')}"
-              data-etat="${esc(voulu.etat ?? 'neutre')}">ME MONTRER AINSI</button>`;
         html += `<button type="button" class="tbf-plaque tbf-plaque--rond tourne" data-tourner
           aria-pressed="false" aria-label="Retourner la carte">${SVG.tourne}</button>`;
-      }
-      claquerAvatar = false;
-      html += plaqueUltime();
-      const cri = criVu();
-      if (aMoi() && cri) {
-        html += `<button type="button" class="tbf-plaque tbf-plaque--rond cri-court" data-cri
-          aria-label="Cri : ${esc(cri)}">${SVG.lecture}</button>`;
       }
       /* **La carte qu'on n'a pas montre où la trouver** : la vignette du
          paquet de sa série, collée à côté d'elle. Le dessin du sachet quand
          la série en a un, sinon le sachet composé de `packArt` — celui que
-         le kiosque montre faute de mieux. La chance de la tirer
-         (« 1 CHANCE SUR 3 ») n'est pas servie avec la fiche : elle ne
-         s'écrit pas. */
+         le kiosque montre faute de mieux. */
       if (!aMoi()) {
         const src = paquet();
         if (src) html += `<div class="tbf-vitrine-paquet paquet"><img src="${esc(src)}" alt="${
           esc(d.fanzzy.setNom ? `Le booster ${d.fanzzy.setNom}` : 'Un booster')}"></div>`;
       }
       v.insertAdjacentHTML('beforeend', html);
-      v.querySelector('.cote-g.tbf-clac')?.addEventListener('animationend',
-        (e) => e.currentTarget.classList.remove('tbf-clac'), { once: true });
     }
 
-    /** **L'Ultimate, à côté de la carte** (27 octobre 2026, Gaël : « quand je
-        suis sur la fiche du fanzzy, je ne vois pas l'ultimate »). Dans la
-        gouttière de droite, au-dessus de la plaque qui retourne : sa
-        vignette, le mot ULTIMATE, et ce qu'on a — la carte gagnée à l'or
-        (TA CARTE), sinon BOOSTER sous un cadenas. Le toucher fait comme la
-        tuile de l'inventaire : le détail dit la règle, et la grande scène
-        se joue **seulement si la carte est gagnée** (Gaël, 27 octobre 2026 :
-        « si on n'a pas gagné la carte Ultimate, on ne devrait pas pouvoir
-        voir l'Ultimate »). */
-    function plaqueUltime() {
-      if (!aMoi()) return '';
-      const x = pieces.find((y) => y.rang === 'ULTIMATE');
-      if (!x) return '';
-      const img = x.art ?? x.image;
-      const nom = `Ultimate : ${x.titre} — ${x.grande ? 'carte gagnée, voir la grande scène' : 'sa carte est dans les boosters'}`;
-      return `<button type="button" class="tbf-plaque cote-ult"${x.grande ? ' data-ton="or"' : ''} data-case="ultime"
-        aria-label="${esc(nom)}">${img ? `<img src="${esc(img)}" alt="" onerror="this.remove()">` : ''}<b>ULTIMATE</b><small>${
-        x.grande ? `${SVG.lecture}TA CARTE` : '<i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>BOOSTER'}</small></button>`;
+    /* **Les pastilles sous la carte** (1er novembre 2026, Gaël, forme A) :
+       le cri qu'on touche pour l'entendre, le club lié avec son logo, et
+       l'avatar — TON AVATAR quand la carte le montre, ME MONTRER AINSI
+       sinon. Une rangée de quarante-quatre pixels à la place de la bande du
+       cri et de trois tampons autour de la carte. */
+    /* **Trop étroit, le club et l'avatar se serrent** en leur seul signe — le
+       logo, l'étoile —, le mot reste au lecteur d'écran : le cri, lui, garde
+       ses mots, c'est lui qu'on vient entendre. */
+    function serrerPastilles() {
+      const n = hote.querySelector('#fiche-pastilles');
+      if (!n || n.hidden) return;
+      n.classList.remove('serre');
+      /* Mesurées à leur largeur entière : serrées par la rangée, elles ne
+         débordent jamais, elles rapetissent. */
+      n.classList.add('mesure');
+      const trop = n.scrollWidth > n.clientWidth + 1;
+      n.classList.remove('mesure');
+      if (trop) n.classList.add('serre');
+    }
+
+    function peindrePastilles() {
+      const n = hote.querySelector('#fiche-pastilles');
+      if (!n) return;
+      let html = '';
+      const cri = criVu();
+      if (aMoi() && cri) {
+        html += `<button type="button" class="pastille pastille-cri" id="fiche-cri" data-cri
+          style="--e1:${esc(famille(d.fanzzy.type).c)}" aria-label="Cri : ${esc(cri)}">${SVG.lecture}<b>${esc(cri)}</b></button>`;
+      }
+      html += lienClub();
+      const a = ageDe(vu());
+      const atteint = aMoi() && Boolean(a?.possede ?? true);
+      if (atteint && voulu) {
+        html += memeQueLAvatar()
+          ? `<span class="pastille pastille-avatar${claquerAvatar ? ' tbf-clac' : ''}" title="Ton avatar">★<span class="pastille-mot"> TON AVATAR</span></span>`
+          : `<button type="button" class="pastille pastille-montrer" data-montrer
+              data-stade="${esc(String(voulu.stade))}" data-skin="${esc(voulu.skin ?? 'base')}"
+              data-etat="${esc(voulu.etat ?? 'neutre')}">ME MONTRER AINSI</button>`;
+      }
+      claquerAvatar = false;
+      n.innerHTML = html;
+      n.hidden = !html;
+      serrerPastilles();
+      n.querySelector('.tbf-clac')?.addEventListener('animationend',
+        (e) => e.currentTarget.classList.remove('tbf-clac'), { once: true });
     }
 
     /** L'adresse de la vignette du paquet de la série, ou rien. */
@@ -792,30 +813,35 @@
        pas, celle de son premier âge : elle donne envie de l'avoir. */
     function peindreHistoire() {
       const n = hote.querySelector('#fiche-histoire');
-      if (!n) return;
+      const l = hote.querySelector('#fiche-histoire-l');
+      if (!n || !l) return;
       const a = ageDe(vu());
       const h = (a?.possede ? a.histoire : null) ?? d.fanzzy.histoire ?? '';
-      n.textContent = h;
-      n.hidden = !h;
+      if (n.textContent !== h) {
+        n.textContent = h;
+        histoireOuverte(false);
+      }
+      l.hidden = !h;
+      requestAnimationFrame(mesurerHistoire);
     }
 
-    /* Le cri se **crie** quand on touche la bande : sur un Fanzzy qu'on n'a
-       pas, la bande ne se pose pas — une carte éteinte qui pousse un cri,
-       c'était le seul élément qui répondait encore. */
-    function peindreCri() {
-      const n = hote.querySelector('#fiche-cri');
-      if (!n) return;
-      const cri = criVu();
-      if (!aMoi() || !cri) { n.replaceWith(Object.assign(document.createElement('div'), { id: 'fiche-cri', hidden: true })); return; }
-      const fam = famille(d.fanzzy.type);
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.id = 'fiche-cri';
-      b.className = 'tbf-cri';
-      b.dataset.cri = '';
-      b.style.cssText = `--e1:${fam.c};--e2:var(--craie)`;
-      b.innerHTML = `${SVG.lecture}<small>CRI</small><b>${esc(cri)}</b>`;
-      n.replaceWith(b);
+    /* **Une ligne, et « plus » pour le reste** (1er novembre 2026, forme A).
+       Pas de points de suspension : la ligne s'efface en fondu sous le mot
+       « plus ». Ouverte, l'histoire prend ses lignes, et c'est la carte, au-dessus,
+       qui lui cède la place. « plus » ne se pose que si la ligne déborde. */
+    function histoireOuverte(ouverte) {
+      const l = hote.querySelector('#fiche-histoire-l');
+      const b = l?.querySelector('[data-histoire]');
+      if (!l || !b) return;
+      l.classList.toggle('ouverte', ouverte);
+      b.setAttribute('aria-expanded', String(ouverte));
+      b.textContent = ouverte ? 'moins ‹' : 'plus ›';
+    }
+    function mesurerHistoire() {
+      const l = hote.querySelector('#fiche-histoire-l');
+      const n = l?.querySelector('.histoire');
+      if (!n || l.classList.contains('ouverte')) return;
+      l.classList.toggle('longue', n.scrollWidth > n.clientWidth + 1);
     }
 
     /* ---------------------------------------------------------- l'inventaire */
@@ -830,17 +856,59 @@
          **L'Ultimate suit les âges** (27 octobre 2026, Gaël : « je ne vois
          pas l'ultimate ») : derrière les effets, il tombait au bord droit,
          coupé, sur un téléphone. */
+      /* **En onglets** (1er novembre 2026, Gaël : la fiche « trop chargée »,
+         forme A) : une famille d'informations à la fois, ses images au
+         milieu. Les états et les tenues partagent LOOK : ni l'un ni l'autre
+         ne change le jeu. L'onglet ouvert est celui de la pièce regardée. */
+      const ouverts = ONGLETS.map(([nom, rangs]) => [nom, pieces.filter((x) => rangs.includes(x.rang))])
+        .filter(([, l]) => l.length);
+      const ici = ongletDe(choisie) ?? ouverts[0]?.[0];
+      const o = hote.querySelector('#fiche-onglets');
+      if (o) {
+        o.innerHTML = ouverts.map(([nom]) => `<button type="button" class="onglet" role="tab" data-onglet="${nom}"
+          aria-selected="${nom === ici}"${nom === ici ? '' : ' tabindex="-1"'}>${nom}</button>`).join('');
+      }
+      const memeOnglet = n.dataset.ouvert === ici;
+      n.dataset.ouvert = ici ?? '';
+      /* **Toutes les rangées restent dans la page**, celles des autres onglets
+         cachées : une pièce touchée ailleurs (un lien, le clavier) ouvre son
+         onglet, et le lecteur d'écran garde le nom de chaque rangée. */
+      const montre = ONGLETS.find(([nom]) => nom === ici)?.[1] ?? [];
       const rangs = ['ÂGES', 'ULTIMATE', 'EFFETS', 'ÉTATS', 'TENUES']
         .map((r) => [r, pieces.filter((x) => x.rang === r)])
         .filter(([, l]) => l.length);
-      n.innerHTML = rangs.map(([nom, l]) => `<section class="tbf-inventaire-rang rang">
-          <h4 class="tbf-inventaire-titre">${nom}</h4>
+      let vus = 0;
+      n.innerHTML = rangs.map(([nom, l]) => {
+        const ici2 = montre.includes(nom);
+        const sep = ici2 && vus++ ? '<i class="look-sep" aria-hidden="true"></i>' : '';
+        return `${sep}<section class="tbf-inventaire-rang rang" data-rang="${nom}"${ici2 ? '' : ' hidden'}>
+          <h4 class="tbf-inventaire-titre tbf-vh">${nom}</h4>
           ${nom === 'ÂGES'
             ? `<ol class="tbf-ages" aria-label="Ses âges">${l.map(noeudHTML).join('')}</ol>`
             : `<div class="tbf-inventaire-tuiles cases">${l.map(tuileHTML).join('')}</div>`}
-        </section>`).join('');
-      n.scrollLeft = gauche;
+        </section>`;
+      }).join('');
+      n.scrollLeft = memeOnglet ? gauche : 0;
       marquerDebord();
+    }
+
+    /** L'onglet d'une pièce. */
+    function ongletDe(cle) {
+      const r = pieces.find((x) => x.cle === cle)?.rang;
+      return ONGLETS.find(([, rangs]) => rangs.includes(r))?.[0] ?? null;
+    }
+
+    /* Toucher un onglet regarde sa pièce la plus parlante : l'âge regardé,
+       l'Ultimate (sans jouer sa scène : c'est la tuile qui la joue), le
+       premier effet, l'expression choisie. Rien ne change sur la carte. */
+    function ouvrirOnglet(nom) {
+      const rangs = ONGLETS.find(([n]) => n === nom)?.[1] ?? [];
+      const l = pieces.filter((x) => rangs.includes(x.rang));
+      if (!l.length) return;
+      const prefere = nom === 'ÂGES' ? l.find((x) => Number(x.age.stage) === vu())
+        : nom === 'LOOK' ? l.find((x) => x.cle === `etat:${voulu?.etat ?? 'neutre'}`) : null;
+      choisie = (prefere ?? l[0]).cle;
+      peindre();
     }
 
     /* `disabled` et non seulement `pointer-events:none` : une pièce
@@ -956,7 +1024,7 @@
     function peindreDetail() {
       const n = hote.querySelector('#fiche-detail');
       if (!n) return;
-      n.className = 'tbf-ticket tbf-detail';
+      n.className = 'fiche-detail';
       /* Sur un Fanzzy qu'on n'a pas, une seule réponse, celle qu'on se pose
          devant une carte grise : comment l'avoir. Le nom de la série vient du
          serveur (`setNom`) — une table « TR → LA TRIBUNE » écrite ici serait
@@ -975,6 +1043,19 @@
       else if (x.rang === 'EFFETS') n.innerHTML = detailEffet(x);
       else if (x.rang === 'ULTIMATE') n.innerHTML = detailUltime(x);
       else detailPose(n, x);
+      enLigne(n);
+    }
+
+    /* **Une ligne de détail, pas un ticket** (1er novembre 2026, forme A) :
+       le titre, puis ses lignes à la suite, séparées d'un point. Les jauges
+       restent au ticket de la confirmation, où l'on prend le temps. */
+    function enLigne(n) {
+      const lignes = [...n.querySelectorAll(':scope > .tbf-detail-l')];
+      if (!lignes.length) return;
+      const p = document.createElement('p');
+      p.className = 'fiche-detail-l';
+      lignes.forEach((x) => p.append(x));
+      n.append(p);
     }
 
     /* Un âge : ce qu'il gagne sur le précédent — la poussée du cri en deux
@@ -1144,6 +1225,10 @@
           return;
         }
         if (e.target.closest('[data-cri]')) { crier(); return; }
+        const og = e.target.closest('[data-onglet]');
+        if (og) { ouvrirOnglet(og.dataset.onglet); return; }
+        const plus = e.target.closest('[data-histoire]');
+        if (plus) { histoireOuverte(plus.getAttribute('aria-expanded') !== 'true'); return; }
         if (e.target.closest('[data-tourner]')) { tourner(); return; }
         if (e.target.closest('[data-montrer]')) { montrer(e.target.closest('[data-montrer]')); return; }
         const b = e.target.closest('[data-case]');
@@ -1158,6 +1243,8 @@
           marquerDebord();
           ajusterNom(hote.querySelector('#fiche-nom') ?? document.createElement('span'));
           serrerGalons(hote.querySelector('#fiche-galons'));
+          mesurerHistoire();
+          serrerPastilles();
         });
         largeurs.observe(inv);
       }
