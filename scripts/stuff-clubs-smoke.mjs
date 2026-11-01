@@ -16,7 +16,7 @@ import { STUFF, STUFF_BY_ID, combine, faitCombo, modsDeLaPiece, partDuCombo }
 import { SERIES_DE_CLUBS, clubDe, pleinClub, facteurPleinClub, gainPleinClub,
   lierLeDeck, tauxDuLien } from '../src/shared/fanzzy/clubs.js';
 import { apportsDe } from '../src/shared/apports.js';
-import { INVITES_CLUBS } from './stuff-clubs-invites.mjs';
+import { INVITES_CLUBS, FOND_MAGENTA } from './stuff-clubs-invites.mjs';
 import { poserReglages, PAR_CLE } from '../src/shared/reglages.js';
 
 let failures = 0;
@@ -58,6 +58,18 @@ check('chaque sujet dit l’objet nu, sans écusson ni texte', deClub.every((s) 
   const NOMS = /arsenal|villa|bournemouth|brentford|brighton|chelsea|coventry|palace|everton|fulham|hull|ipswich|leeds|liverpool|manchester|newcastle|nottingham|forest|sunderland|tottenham|spurs|gunner|magpie|toffee|hornet|seagull|cherr|blades|reds\b|blues\b|maillot|écusson/i;
   check('ni nom de club, ni surnom, ni maillot dans un nom ou un texte',
     deClub.every((s) => !NOMS.test(s.nom) && !NOMS.test(s.texte)));
+  /* DIE KURVE : les villes et clubs suisses, et ce que dessinent leurs
+     écussons et armoiries. */
+  const SUISSES = /b[âa]le\b|basel|grasshopper|lausanne|lucerne|luzern|lugano|gall|servette|\bsion\b|thoun|\bthun\b|vaduz|young|\bboys\b|z[üu]rich|\bbern|\bours\b|[ée]toile|aigle|\bcl[ée]\b|sauterelle|basilic|croix/i;
+  check('ni ville ni club suisse, ni ours, étoile, aigle ou clé dans une pièce SU',
+    deClub.filter((s) => s.id.startsWith('su-')).every((s) => !SUISSES.test(s.nom) && !SUISSES.test(s.texte)));
+  const INTERDITS_SU = /\bbear|\bstar\b|eagle|\bkey\b|insect|grasshopper|letter v\b|basilisk|\bcross\b(?! and no star)|\bflag/i;
+  check('ni ours, étoile, aigle, clé, insecte ni drapeau dans le sujet d’une pièce SU',
+    deClub.filter((s) => s.id.startsWith('su-')).every((s) =>
+      !INTERDITS_SU.test(INVITES_CLUBS[s.id].replace(/no cross and no star anywhere/, ''))));
+  check('les pièces vertes se dessinent sur magenta, et elles seules',
+    [...FOND_MAGENTA].every((id) => STUFF_BY_ID.get(id)?.club === 1011)
+    && deClub.filter((s) => s.club === 1011).every((s) => FOND_MAGENTA.has(s.id)));
 }
 
 console.log('\nLe COMBO : le revers s’adoucit, le bonus ne bouge pas');

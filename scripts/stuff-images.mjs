@@ -40,7 +40,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 import { enIcone, partSuspecte, ecrireLesTrois } from './detourage.mjs';
-import { INVITES_CLUBS } from './stuff-clubs-invites.mjs';
+import { INVITES_CLUBS, FOND_MAGENTA } from './stuff-clubs-invites.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
@@ -448,8 +448,13 @@ export const INVITES = {
 /* Les pièces de club ont leurs sujets à part (`stuff-clubs-invites.mjs`). */
 Object.assign(INVITES, INVITES_CLUBS);
 
+/* Le magenta des pièces vertes (`FOND_MAGENTA`) : même consigne, autre couleur. */
+const STYLE_MAGENTA = STYLE.replace(FOND, FOND
+  .replace('saturated studio green\n(#00B140)', 'saturated magenta\n(#FF00FF)')
+  .replace('no green glow or green rim', 'no magenta glow or magenta rim'));
+
 export const inviteDe = (id) => (INVITES[id]
-  ? `Subject: ${INVITES[id]}.\n\n${STYLE}` : null);
+  ? `Subject: ${INVITES[id]}.\n\n${FOND_MAGENTA.has(id) ? STYLE_MAGENTA : STYLE}` : null);
 
 /* ------------------------------------------------------------- le détourage */
 
