@@ -1,0 +1,21 @@
+{
+  "id": "GD15",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "bfd138c5b2d7"
+        }
+      }
+    }
+  }
+}
