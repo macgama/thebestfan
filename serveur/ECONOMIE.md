@@ -107,14 +107,15 @@ tribunes nombreuses.
 - **Boosters** : 1 toutes les 10 min, réserve de 12, 3 au départ. Taux des deux
   premières places : 95/5 puis 85/15 (commune/légendaire). La deuxième place
   est un personnage 7 fois sur 10.
-- **Plafonds sans abonnement** : 5 duels classés par jour, 2 Virages comptés
-  au classement par jour, classé limité au 1 contre 1. Ils se comptent en SQL
-  contre `CURDATE()`, c'est-à-dire l'heure de Zurich
-  (`abonnement/index.js:285`, `:308`).
-- **Abonnement** (3,99 €/mois, 39,90 €/an) : réserve de 24, 1 booster toutes
-  les 6 min, +2 clubs, mémoire longue, toutes les tenues publiées, création de
-  KOP, plafonds levés. Plus 1 booster par échéance mensuelle, 6 pour l'annuel
-  (`src/shared/boutique.js`).
+- **Plus de plafond gratuit au classement** (2 novembre 2026, choix de Gaël) :
+  tous les duels classés, tous les Virages et tous les formats comptent pour
+  tous, PASS ou non. Seul `tribune.duels_jour` (5) borne les duels qui
+  rapportent des points à un club.
+- **PASS de saison** (7,99 €, une fois, ou 40 000 écharpes ; voir
+  `serveur/PASS.md`) : 3 boosters à l'achat ; pendant sa saison, réserve de 24,
+  1 booster toutes les 6 min, mémoire longue ; pour toujours, +1 club suivi et
+  +1 KOP à créer par PASS, la tenue de la saison, son badge et son cadre. Il ne
+  donne aucune écharpe : l'argent n'achète pas la monnaie des tirages.
 
 ---
 

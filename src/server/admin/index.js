@@ -182,12 +182,28 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     } catch (e) {
       if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
     }
+    /* Les PASS de saison (2 novembre 2026), lus à part pour la même raison :
+       une base sans `sql/pass.sql` n'éteint pas l'écran des joueurs. */
+    let passes = new Map();
+    try {
+      const ids = lignes.map((l) => l.public_id);
+      const rows = await q(
+        `SELECT user_id, saison, source FROM user_pass
+          WHERE user_id IN (${ids.map(() => '?').join(',')}) ORDER BY saison`, ids);
+      for (const r of rows) {
+        (passes.get(r.user_id) ?? passes.set(r.user_id, []).get(r.user_id))
+          .push({ saison: Number(r.saison), source: r.source });
+      }
+    } catch (e) {
+      if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
+    }
     return lignes.map((l) => {
       const a = abos.get(l.public_id);
       return { ...l,
         abonne: Boolean(a && Number(a.actif)),
         abo_fin: a?.fin ?? null,
-        abo_formule: a?.formule ?? null };
+        abo_formule: a?.formule ?? null,
+        pass: passes.get(l.public_id) ?? [] };
     });
   }
 
@@ -1300,6 +1316,41 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const etat = await deps.abonnement.retirer(req.params.id);
     await journal(req.user.id, 'abonnement.retirer', req.params.id, null, ip(req));
     res.json({ abonnement: etat });
+  }));
+
+  /* -------------------------------------------------------- le PASS de saison
+
+     Offrir le PASS d'une saison (par défaut, la saison en cours) ou le
+     retirer. C'est ce qui donne le PASS aux bêta-testeurs, et le geste de
+     service après-vente d'un remboursement. Journalisé comme le reste. */
+
+  router.post('/joueur/:id/pass', safe(async (req, res) => {
+    if (!deps.abonnement?.accorderPass) return res.status(503).json({ error: 'admin.error.abo_absent' });
+    const cible = (await q('SELECT public_id FROM users WHERE public_id = ?', [req.params.id]))[0];
+    if (!cible) return res.status(404).json({ error: 'admin.error.joueur_inconnu' });
+    let saison = Number(req.body?.saison);
+    if (!Number.isInteger(saison) || saison < 1) {
+      const { saisonEnCours } = await import('../fanzzy/saisons.js');
+      let c = null;
+      try { c = saisonEnCours(); } catch { c = null; }
+      saison = Number(c?.numero);
+    }
+    if (!Number.isInteger(saison) || saison < 1) {
+      return res.status(400).json({ error: 'admin.error.pas_de_saison' });
+    }
+    const nouvelles = await deps.abonnement.accorderPass(cible.public_id,
+      { saisons: [saison], source: 'offert', reference: 'admin' });
+    await journal(req.user.id, 'pass.accorder', cible.public_id, { saison }, ip(req));
+    res.json({ saison, nouveau: nouvelles.length > 0 });
+  }));
+
+  router.delete('/joueur/:id/pass/:saison', safe(async (req, res) => {
+    if (!deps.abonnement?.retirerPass) return res.status(503).json({ error: 'admin.error.abo_absent' });
+    const saison = Number(req.params.saison);
+    if (!Number.isInteger(saison) || saison < 1) return res.status(400).json({ error: 'admin.error.saison' });
+    await deps.abonnement.retirerPass(req.params.id, saison);
+    await journal(req.user.id, 'pass.retirer', req.params.id, { saison }, ip(req));
+    res.json({ saison });
   }));
 
   /* La collection d'un joueur et les cadeaux, puis les KOP : `collection.js`. */

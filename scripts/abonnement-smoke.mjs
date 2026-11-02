@@ -49,7 +49,7 @@ await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'duel.sql',
                  'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql',
                  'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql', 'niveau.sql', 'kop.sql',
-                 'historique.sql', 'abonnement.sql']) {
+                 'historique.sql', 'abonnement.sql', 'pass.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -179,128 +179,37 @@ check('le retirer le retire vraiment', (await abonnement.estAbonne(LIBRE)) === f
       '· attendu', reglage('pack.max'), reglage('pack.regen_min')), false));
   check('et les deux ne disent pas la même chose', r.sans?.packMax !== r.ouvre?.packMax);
 
-  /* **Les formules, avec leur prix et leur cadeau.**
-
-     La page les écrivait en dur — « 3,99 € », « 39,90 € », « deux mois
-     offerts », « un booster offert » — à côté du seul endroit qui les décide.
-     Quatre nombres recopiés sur l'écran qui prend l'argent, c'est-à-dire le
-     seul où se tromper coûte la confiance plutôt qu'un haussement d'épaules.
-
-     Le jour où le cadeau annuel est passé de un à six, elle aurait continué
-     d'en promettre un. Ce contrôle-là est celui qui l'aurait dit. */
+  /* **La formule, avec son prix et son cadeau.** Depuis le 2 novembre 2026,
+     une seule : le PASS de saison (choix de Gaël). Les deux formules de
+     l'abonnement restent au catalogue, retirées de la vente. */
   const f = r.formules ?? [];
-  check(`la route rend les formules (${f.length})`, f.length >= 2);
-  check('chacune porte un prix déjà mis en forme',
-    f.every((x) => typeof x.prixTexte === 'string' && /\d/.test(x.prixTexte))
+  check(`la route rend la formule du PASS (${f.length})`, f.length === 1 && f[0].formule === 'pass'
+    || (console.log('        elle rend :', JSON.stringify(f)), false));
+  check('elle porte un prix déjà mis en forme',
+    f.every((x) => typeof x.prixTexte === 'string' && /7,99/.test(x.prixTexte))
     || (console.log('        elles rendent :', JSON.stringify(f)), false));
   check('et un identifiant que la boutique sait commander',
-    f.every((x) => ARTICLE_PAR_ID.has(x.id)));
-
-  /* Le cadeau vient du catalogue et de nulle part ailleurs : recopié ici, ce
-     contrôle mesurerait sa propre copie et ne dirait plus rien. */
-  check('et le nombre de boosters que dit le catalogue',
-    f.every((x) => x.packs === (ARTICLE_PAR_ID.get(x.id)?.livraison?.packs ?? 0))
-    || (console.log('        elles rendent :',
-      f.map((x) => `${x.id} ${x.packs}`).join(' · ')), false));
-
-  /* **Et les deux formules ne donnent plus la même chose.** C'est la raison
-     d'être du bloc dessiné sur la page : tant que le cadeau était le même des
-     deux côtés, une phrase au-dessus des boutons suffisait. */
-  check('l’annuelle donne plus que la mensuelle',
-    Math.max(...f.map((x) => x.packs)) > Math.min(...f.map((x) => x.packs)));
+    f.every((x) => ARTICLE_PAR_ID.has(x.id) && !ARTICLE_PAR_ID.get(x.id).retire));
+  check('et le nombre de boosters que dit le catalogue (3)',
+    f.every((x) => x.packs === (ARTICLE_PAR_ID.get(x.id)?.livraison?.packs ?? 0) && x.packs === 3));
+  check('l’abonnement mensuel et l’annuel ne sont plus en vente',
+    ARTICLE_PAR_ID.get('abo-mensuel')?.retire === true && ARTICLE_PAR_ID.get('abo-annuel')?.retire === true);
 }
 
-/* ======================================== ce que le gratuit plafonne
+/* ======================================== plus aucun plafond gratuit
 
-   Trois plafonds, et un seul principe : **c'est le compteur qui s'arrête,
-   jamais le jeu**. Ce bloc éprouve le compteur ; ce qui reste jouable se
-   vérifie au duel et au Virage, où le refus est écrit.
-
-   Les lignes sont posées à la main plutôt que jouées : ce qu'on mesure ici
-   est la **lecture** du plafond, pas la façon dont les lignes arrivent. */
+   Choix de Gaël du 2 novembre 2026 : **tout compte au classement pour tous**.
+   Les trois plafonds de septembre (duels classés et Virages comptés par jour,
+   plus grand format classé) disparaissent avec l'abonnement. Ce contrôle
+   rougira le jour où quelqu'un les remettra. */
 {
-  const duel = (id, quand, mode) => pool.query(
-    `INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome, mode, ended_at)
-     VALUES (?, ?, 'x', 'win', ?, ?)`,
-    [`d-${id}`, LIBRE, mode, quand]);
-
-  const max = reglage('abo.duels_classes_jour');
-  check(`au réveil, les ${max} duels classés du jour sont entiers`,
-    (await abonnement.duelsClassesRestants(LIBRE)) === max);
-
-  /* **Hier ne compte pas.** Le plafond est journalier, et un joueur qui
-     revient le lendemain doit retrouver ses cinq duels — sans quoi le
-     plafond serait un plafond à vie, ce qui n'est pas la même offre. */
-  await duel('hier', new Date(Date.now() - 26 * 3600e3), 'classe');
-  check('un duel classé d’hier ne mange pas le quota du jour',
-    (await abonnement.duelsClassesRestants(LIBRE)) === max);
-
-  /* **L'entraînement non plus**, et c'est tout le sens du plafond : il ne
-     ferme pas le jeu, il ferme le compteur. Si l'entraînement comptait, la
-     porte de sortie qu'on annonce sur l'écran de l'abonnement se refermerait
-     toute seule. */
-  await duel('entrainement', new Date(), 'entrainement');
-  check('un duel d’entraînement non plus',
-    (await abonnement.duelsClassesRestants(LIBRE)) === max);
-
-  for (let i = 0; i < max; i++) await duel(`jour-${i}`, new Date(), 'classe');
-  check('les duels classés du jour épuisent le quota',
-    (await abonnement.duelsClassesRestants(LIBRE)) === 0);
-
-  /* **Et un abonné n'a pas de quota du tout.** `null`, et non un grand
-     nombre : les appelants écrivent `reste !== null && reste <= 0`, qui ne se
-     trompe pas de sens le jour où la valeur manque. */
-  check('un abonné n’a pas de plafond de duels',
-    (await abonnement.duelsClassesRestants(ABO)) === null);
-
-  /* ------------------------------------------------------ le Virage
-
-     Ici rien n'est refusé : la ligne de présence porte `classe = 0` au-delà
-     du plafond, le match se joue en entier, et le classement ne la lit pas.
-     La différence avec le duel n'est pas un caprice — une présence au Virage
-     est individuelle, elle ne décide du sort de personne d'autre. */
-  const vir = (id, quand, classe) => pool.query(
-    `INSERT INTO virage_presence (user_id, fixture_id, side, ferveur, classe, joined_at)
-     VALUES (?, ?, 0, 10, ?, ?)`, [LIBRE, id, classe, quand]);
-
-  const maxV = reglage('abo.virages_classes_jour');
-  check(`au réveil, les ${maxV} Virages comptés du jour sont entiers`,
-    (await abonnement.viragesClassesRestants(LIBRE)) === maxV);
-
-  await vir(9001, new Date(Date.now() - 26 * 3600e3), 1);
-  check('un Virage d’hier ne mange pas le quota du jour',
-    (await abonnement.viragesClassesRestants(LIBRE)) === maxV);
-
-  for (let i = 0; i < maxV; i++) await vir(9100 + i, new Date(), 1);
-  check('les Virages comptés du jour épuisent le quota',
-    (await abonnement.viragesClassesRestants(LIBRE)) === 0);
-
-  /* Et ceux qui ne comptent pas ne comptent **pas non plus contre le
-     quota** : sans ce garde, le troisième Virage de la journée mangerait une
-     place qu'il n'occupe pas, et le quatrième aussi. */
-  await vir(9200, new Date(), 0);
-  check('un Virage hors classement ne compte pas contre le quota',
-    (await abonnement.viragesClassesRestants(LIBRE)) === 0);
-
-  check('un abonné n’a pas de plafond de Virages',
-    (await abonnement.viragesClassesRestants(ABO)) === null);
-
-  /* **Zéro désarme le plafond**, sans livraison ni migration. C'est le chemin
-     du retour en arrière, et il doit être éprouvé comme le reste : un bouton
-     de secours qu'on n'a jamais essayé n'est pas un bouton de secours. */
-  {
-    const avant = reglagesVivants();
-    poserReglages({ ...avant, 'abo.duels_classes_jour': 0,
-      'abo.virages_classes_jour': 0 });
-    check('à zéro, le plafond des duels est désarmé',
-      (await abonnement.duelsClassesRestants(LIBRE)) === null);
-    check('et celui des Virages aussi',
-      (await abonnement.viragesClassesRestants(LIBRE)) === null);
-    poserReglages(avant);
-  }
-
-  await pool.query('DELETE FROM duel_results WHERE user_id = ?', [LIBRE]);
-  await pool.query('DELETE FROM virage_presence WHERE user_id = ?', [LIBRE]);
+  const { REGLAGES } = await import('../src/shared/reglages.js');
+  const cles = new Set(REGLAGES.map((r) => r.cle));
+  check('les plafonds gratuits ont disparu des réglages',
+    !['abo.duels_classes_jour', 'abo.virages_classes_jour', 'abo.taille_classe_libre']
+      .some((c) => cles.has(c)));
+  check('et du module', !('duelsClassesRestants' in abonnement)
+    && !('viragesClassesRestants' in abonnement) && !('tailleClasseeMax' in abonnement));
 }
 
 /* ======================================== choisir son avatar en un geste
@@ -529,33 +438,16 @@ check('tous les formats de duel restent ouverts à tous',
       'noterDepart', 'departs'].includes(k));
   const attendues = ['plafondPacks', 'regenMs', 'profondeurParcours',
     'profondeurSouvenirs', 'clubsEnPlus',
-    /* **Ces trois-là ne sont pas des portes, ce sont des plafonds**, et
-       c'est la première fois que ce module en porte. Elles ne donnent rien
-       à l'abonné : elles retirent quelque chose à celui qui ne paie pas.
-
-       Le contrôle demandait qu'une porte nouvelle soit « nommée ici, et
-       qu'il faille la défendre ». Elles le sont, et la défense tient en
-       trois points — aucune porte ne se ferme (le 2v2 se joue en
-       entraînement, le sixième duel se joue sur un autre match, le
-       troisième Virage se joue en entier), rien ne pousse plus fort, et
-       les trois nombres se désarment à zéro depuis l'administration.
-       Le raisonnement complet est en tête de `abonnement/index.js`. */
-    'duelsClassesRestants', 'viragesClassesRestants', 'tailleClasseeMax'];
-  check(`l’abonnement n’ouvre que le rythme, la mémoire et la largeur (${portes.length})`,
+    /* **Le PASS de saison** (2 novembre 2026). `kopsAutorises` est une porte
+       (un KOP à fonder par PASS) ; `ageTenuePass` et `tenueAuPass` disent la
+       tenue de la saison, qui se regarde et ne pousse pas ; le reste est de
+       la plomberie du PASS (le poser, le lire, le payer en écharpes, montrer
+       son badge). Aucune ne touche à la corde. */
+    'kopsAutorises', 'nombrePass', 'saisonsDuPass', 'voies', 'badgeDe', 'badgesDe',
+    'ageTenuePass', 'tenueAuPass', 'accorderPass', 'retirerPass', 'offre', 'acheterEnEcharpes'];
+  check(`le PASS n’ouvre que le rythme, la mémoire, la largeur et le visuel (${portes.length})`,
     portes.length === attendues.length && portes.every((p) => attendues.includes(p))
     || (console.log('        portes :', portes.join(', ')), false));
-
-  /* **Un abonné n'a aucun plafond, et c'est la seule chose qu'il achète ici.**
-     `Infinity` plutôt qu'un grand nombre : un 99 finirait par être comparé à
-     un format de cent joueurs le jour où quelqu'un en inventera un. */
-  check('un abonné joue tous les formats en classé',
-    abonnement.tailleClasseeMax(true) === Infinity);
-  check('et sans abonnement, le classé s’arrête au réglage',
-    abonnement.tailleClasseeMax(false) === reglage('abo.taille_classe_libre'));
-  /* Gaël, 30 octobre 2026 : sans abonnement, tous les formats se jouent en
-     classé, dans les duels classés du jour — le 2v2 doit pouvoir se remplir. */
-  check('par défaut, le 5v5 se joue en classé sans abonnement',
-    abonnement.tailleClasseeMax(false) >= 5);
 }
 
 
@@ -703,45 +595,57 @@ const { createOnboarding } = await import('../src/server/onboarding/index.js');
 {
   const O = createOnboarding({ pool, requireAuth, abonnement });
   const { tenuesPubliees } = await import('../src/server/fanzzy/tenues.js');
-  const tenue = tenuesPubliees().find((t) => t.id !== 'base');
+  /* La tenue du PASS 1 (Préhistorique), et une tenue ordinaire. */
+  const tenue = tenuesPubliees().find((t) => t.id === 'prehistorique');
+  const autre = tenuesPubliees().find((t) => t.id !== 'base' && t.id !== 'prehistorique');
   await pool.query(
     'INSERT IGNORE INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, 1)',
     [ABO, 'TR32']);
 
   if (!tenue) {
-    check('une tenue publiée existe pour ce contrôle', false);
+    check('la tenue du PASS 1 est publiée pour ce contrôle', false);
   } else {
     let refus = null;
     try { await O.wearSkin(ABO, 'TR32', tenue.id); } catch (e) { refus = e.code; }
-    check('un joueur inscrit ne porte que ce qu il a gagné',
+    check('un joueur sans PASS ne porte que ce qu il a gagné',
       refus === 'onboarding.error.not_owned'
       || (console.log('        refus :', refus), false));
 
+    /* **Un ancien abonné ne porte plus toutes les tenues publiées** (choix de
+       Gaël du 2 novembre 2026). */
     await abonnement.accorder(ABO, { formule: 'offert', jours: null });
+    if (autre) {
+      let ancien = null;
+      try { await O.wearSkin(ABO, 'TR32', autre.id); } catch (e) { ancien = e.code; }
+      check('un abonné d’avant ne porte plus une tenue qu’il n’a pas gagnée',
+        ancien === 'onboarding.error.not_owned' || (console.log('        refus :', ancien), false));
+    }
+    await abonnement.retirer(ABO);
+
+    /* Le PASS 1 donne sa tenue au premier âge dès l'achat (`shared/pass.js`). */
+    await abonnement.accorderPass(ABO, { saisons: [1], source: 'offert' });
     let leve = null;
     try { await O.wearSkin(ABO, 'TR32', tenue.id); } catch (e) { leve = e.code ?? e.message; }
-    check(`un abonné porte toute tenue publiée (${tenue.id})`, leve === null
+    check(`le PASS 1 donne sa tenue au premier âge (${tenue.id})`, leve === null
       || (console.log('        refus :', leve), false));
 
-    /* **Et il la garde.** C'est la règle de ce jeu : une série qu'on referme
-       n'efface pas les cartes de qui les possède. Reprendre une tenue qu'on a
-       vue sur son personnage serait la seule chose qu'un collectionneur ne
-       pardonne pas. */
-    await abonnement.retirer(ABO);
+    /* **Et il la garde**, même si le PASS lui est retiré. */
+    await abonnement.retirerPass(ABO, 1);
     const [[gardee]] = await pool.query(
       `SELECT equipped FROM user_skins
         WHERE user_id = ? AND fanzzy_id = 'TR32' AND skin_id = ?`, [ABO, tenue.id]);
-    check('et elle lui reste quand l abonnement s arrête',
+    check('et elle lui reste pour toujours',
       Number(gardee?.equipped) === 1
       || (console.log('        en base :', JSON.stringify(gardee)), false));
 
-    /* Mais il n'en prend plus de nouvelles. */
-    const autre = tenuesPubliees().find((t) => t.id !== 'base' && t.id !== tenue.id);
+    /* Mais le PASS n'ouvre pas les autres tenues. */
     if (autre) {
+      await abonnement.accorderPass(ABO, { saisons: [1], source: 'offert' });
       let apres = null;
       try { await O.wearSkin(ABO, 'TR32', autre.id); } catch (e) { apres = e.code; }
-      check('mais il n en prend plus de nouvelles',
+      check('mais le PASS n’ouvre pas les autres tenues',
         apres === 'onboarding.error.not_owned');
+      await abonnement.retirerPass(ABO, 1);
     }
 
     /* ============ et la tenue choisie arrive jusqu'aux écrans

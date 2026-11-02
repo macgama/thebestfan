@@ -17,7 +17,7 @@
    Publiées le 19 octobre 2026 (fil « Analyse de l'appli et premiers pas »),
    d'après le projet `CGV.md` et ce que le code fait. Les nombres réglables
    depuis /admin (réserve, délais, plafonds, taux des boosters) n'y sont
-   **pas** recopiés : la page de l'abonnement les lit au serveur, et une
+   **pas** recopiés : la page du PASS les lit au serveur, et une
    page juridique qui annonce un chiffre que l'administration a changé ment.
    Seuls les prix y sont, parce qu'ils vivent dans `src/shared/boutique.js` et
    ne se règlent pas : `legal:smoke` vérifie qu'ils y sont toujours. */
@@ -72,15 +72,15 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <section class="rub" id="qui">
     <h2 class="tbf-cousu">Qui vend, et quoi</h2>
     <div class="bloc">
-      <p class="date">Dernière mise à jour&nbsp;: 19&nbsp;octobre&nbsp;2026</p>
+      <p class="date">Dernière mise à jour&nbsp;: 2&nbsp;novembre&nbsp;2026</p>
       <p>thebestfan.online est édité par <b>Gaël Manigley</b>, entreprise individuelle, Chemin les
         Jordils 2, 1085&nbsp;Vulliens, Suisse — ci-après «&nbsp;nous&nbsp;». Contact&nbsp;:
         <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>. Le détail est dans les
         <a href="/mentions-legales">mentions légales</a>.</p>
       <p><b>Le jeu est gratuit.</b> On peut y jouer entièrement, aussi longtemps qu’on veut, sans
-        jamais payer. La seule chose que nous vendons est un <b>abonnement</b>, le PASS de tribune.</p>
-      <p>En créant un compte, tu acceptes ces conditions. En t’abonnant, tu acceptes aussi celles
-        de la partie «&nbsp;L’abonnement&nbsp;».</p>
+        jamais payer. La seule chose que nous vendons est le <b>PASS de saison</b>.</p>
+      <p>En créant un compte, tu acceptes ces conditions. En achetant un PASS, tu acceptes aussi celles
+        de la partie «&nbsp;Le PASS de saison&nbsp;».</p>
     </div>
   </section>
 
@@ -93,44 +93,47 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <p>Tu es responsable de ton mot de passe. Si tu penses qu’il a fui, change-le depuis ton
         compte&nbsp;: toutes tes sessions seront fermées.</p>
       <p>Le jeu est ouvert à tous les âges. <b>Si tu as moins de 18&nbsp;ans, demande l’accord d’un
-        de tes parents avant de t’abonner.</b></p>
+        de tes parents avant d’acheter un PASS.</b></p>
     </div>
   </section>
 
   <section class="rub" id="abonnement">
-    <h2 class="tbf-cousu">L’abonnement</h2>
+    <h2 class="tbf-cousu">Le PASS de saison</h2>
     <div class="bloc">
       <h3>Ce qu’il coûte</h3>
       <ul>
-        <li><b>Mensuel&nbsp;: 3,99&nbsp;€</b> par mois.</li>
-        <li><b>Annuel&nbsp;: 39,90&nbsp;€</b> par an.</li>
+        <li><b>7,99&nbsp;€</b>, payés <b>une seule fois</b>.</li>
       </ul>
-      <p>Les prix sont en euros, toutes taxes comprises. Le paiement passe par Stripe&nbsp;: nous
-        ne voyons jamais ton numéro de carte.</p>
+      <p>Le prix est en euros, toutes taxes comprises. Le paiement passe par Stripe&nbsp;: nous
+        ne voyons jamais ton numéro de carte. Le PASS peut aussi s’obtenir avec des écharpes gagnées
+        en jouant, sans payer.</p>
+      <h3>Ce qu’il couvre</h3>
+      <p>Un PASS vaut pour <b>une saison</b> du jeu, jusqu’à sa dernière journée. Acheté pendant le
+        dernier mois d’une saison, il couvre aussi la saison suivante.</p>
       <h3>Ce qu’il donne</h3>
-      <p>Des boosters tout de suite au paiement qui l’ouvre (un avec le mensuel, six avec l’annuel),
-        puis du confort&nbsp;: des boosters qui reviennent plus vite et une réserve plus grande, plus
-        de clubs suivis, tout ton parcours et toutes tes cartes-souvenirs, toutes les tenues
-        publiées, et la création d’un KOP. Sans abonnement, quelques parties classées sont
-        plafonnées chaque jour&nbsp;; elles restent jouables en entraînement.</p>
-      <p>Le détail chiffré, toujours à jour, est sur <a href="/abonnement">la page de
-        l’abonnement</a>. Si nous réduisons ce que l’abonnement donne, nous te prévenons avant, et
-        tu peux résilier.</p>
-      <p>Abonné ou non, on joue au même jeu, avec les mêmes cartes et les mêmes chances dans les
-        boosters.</p>
-      <h3>Le renouvellement</h3>
-      <p>L’abonnement se renouvelle tout seul à chaque échéance, au même prix, jusqu’à ce que tu
-        l’arrêtes.</p>
-      <h3>Résilier</h3>
-      <p><b>Tu peux résilier à tout moment</b>, sans motif et sans frais&nbsp;: sur
-        <a href="/abonnement">la page de l’abonnement</a>, bouton «&nbsp;Résilier mon
-        abonnement&nbsp;», puis «&nbsp;Confirmer&nbsp;». La résiliation prend effet <b>à la fin de
-        la période déjà payée</b>&nbsp;: tu gardes l’accès jusque-là, et tu peux changer d’avis
-        avant.</p>
+      <p>Des boosters tout de suite à l’achat, puis, pendant sa saison, du confort&nbsp;: des boosters
+        qui reviennent plus vite et une réserve plus grande, tout ton parcours et toutes tes
+        cartes-souvenirs. Pour toujours&nbsp;: la tenue de la saison, son badge et son cadre de carte,
+        un club suivi et un KOP à créer de plus. Ces avantages sont visuels ou de confort&nbsp;; aucun
+        ne donne de puissance en jeu, et aucun Fanzzy n’est réservé au PASS.</p>
+      <p>Le détail chiffré, toujours à jour, est sur <a href="/abonnement">la page du PASS</a>.
+        Si nous réduisons ce qu’un PASS déjà acheté donne, nous te prévenons avant.</p>
+      <p>Avec ou sans PASS, on joue au même jeu, avec les mêmes cartes, le même classement et les
+        mêmes chances dans les boosters.</p>
+      <h3>Pas de renouvellement</h3>
+      <p><b>Le PASS ne se renouvelle jamais tout seul.</b> Il n’y a rien à résilier&nbsp;: à la fin de
+        sa saison, il s’arrête, et rien n’est débité ensuite. Le PASS d’une saison suivante s’achète, si
+        tu le veux, à part.</p>
       <h3>Changer d’avis dans les quatorze jours</h3>
-      <p>Si tu regrettes ton abonnement dans les <b>quatorze jours</b> qui suivent ton premier
-        paiement, écris à <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>&nbsp;:
-        nous te remboursons entièrement, sans que tu aies à te justifier.</p>
+      <p>Si tu regrettes ton PASS dans les <b>quatorze jours</b> qui suivent son achat, écris à
+        <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>&nbsp;: nous te remboursons
+        entièrement, sans que tu aies à te justifier.</p>
+      <h3>Les anciens abonnements</h3>
+      <p>Le PASS de saison remplace l’ancien abonnement mensuel ou annuel. Un abonnement en cours ne se
+        renouvelle plus&nbsp;: tu gardes tout jusqu’à la fin de la période déjà payée, et tu reçois le
+        PASS de la saison où elle se termine. Tu peux aussi le <b>résilier</b> tout de suite sur
+        <a href="/abonnement">la page du PASS</a>, bouton «&nbsp;Résilier mon ancien abonnement&nbsp;»&nbsp;:
+        la résiliation prend effet <b>à la fin de la période déjà payée</b>.</p>
     </div>
   </section>
 
@@ -141,8 +144,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
         n’ont aucune valeur hors du jeu&nbsp;: elles ne s’échangent pas entre joueurs, ne se
         revendent pas et ne se remboursent pas.</p>
       <p><b>Un booster contient des cartes tirées au hasard</b>, avec les mêmes chances pour tout le
-        monde, abonné ou non. Il ne s’achète pas avec de l’argent&nbsp;: il revient tout seul avec
-        le temps, se gagne en jouant, s’échange contre des écharpes, ou arrive avec l’abonnement.</p>
+        monde, avec ou sans PASS. Il ne s’achète pas avec de l’argent&nbsp;: il revient tout seul avec
+        le temps, se gagne en jouant, s’échange contre des écharpes, ou arrive avec le PASS.</p>
       <p>Tes Fanzzy, tes cartes, ton deck et tes écharpes sont des <b>éléments de jeu</b>, pas des
         biens&nbsp;: tu en as l’usage tant que ton compte et le jeu existent, sans en devenir
         propriétaire.</p>
