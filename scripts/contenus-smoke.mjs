@@ -29,6 +29,7 @@ import { createContenus, tous, publies, ouverts, oublier, FAMILLES, stadeDuMatch
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 import { STADES, STADE_DEFAUT, stadeDeLaRencontre } from '../src/shared/stades.js';
+import { MINI_JEUX } from '../src/shared/mini-jeux.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -91,8 +92,8 @@ const contenus = createContenus({ pool });
   const r = await contenus.charger();
   check('avec la table, le catalogue se charge', r.charge === true);
 
-  const attendu = ACTIONS.length + STUFF.length + STADES.length;
-  check(`les trois familles sont semées (${r.total}/${attendu})`, r.total === attendu
+  const attendu = ACTIONS.length + STUFF.length + STADES.length + MINI_JEUX.length;
+  check(`les quatre familles sont semées, mini-jeux compris (${r.total}/${attendu})`, r.total === attendu
     || (console.log('        semé :', r.total, '· attendu', attendu), false));
 
   /* **Tout ce qui existait reste jouable.** C'est la règle de la migration, et

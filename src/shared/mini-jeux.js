@@ -5,6 +5,24 @@
  * éprouve sans rien monter.
  */
 
+/**
+ * **Les six mini-jeux**, tels que le menu PASS de l'administration les ouvre
+ * (demande de Gaël du 2 novembre 2026 : la BASE et chaque PASS ont leur liste
+ * de mini-jeux, comme l'équipement ou les stades). L'identifiant est celui des
+ * routes de `src/server/jeux/` et des onglets de `public/jeux.html`.
+ *
+ * Fermer un mini-jeu, c'est cesser de le proposer : ses classements et ses
+ * écharpes déjà gagnées restent. Sans `sql/contenus.sql`, tous sont ouverts.
+ */
+export const MINI_JEUX = Object.freeze([
+  { id: 'jongles', nom: 'Les jongles' },
+  { id: 'tirs', nom: 'Les tirs au but' },
+  { id: 'chant', nom: 'Le chant en rythme' },
+  { id: 'deplacement', nom: 'Le déplacement' },
+  { id: 'tifo', nom: 'Le tifo du club' },
+  { id: 'boss', nom: 'La tribune contre le boss' },
+].map((j) => Object.freeze(j)));
+
 /* ================================================================ jongles
 
    Le ballon tombe, on tape dessous pour le relancer. Le jeu se joue dans la
