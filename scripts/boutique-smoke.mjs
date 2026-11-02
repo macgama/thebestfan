@@ -151,7 +151,9 @@ const evenement = (sessionId) => ({
 /* ------------------------------------------------------------- le catalogue */
 {
   const r = await fetch(`${base}/api/boutique/catalogue`).then((x) => x.json());
-  check('le catalogue est servi', Array.isArray(r.articles) && r.articles.length === CATALOGUE.length);
+  check('le catalogue est servi, sans les articles retirés de la vente',
+    Array.isArray(r.articles) && r.articles.length === CATALOGUE.filter((a) => !a.retire).length
+    && !r.articles.some((a) => a.id === 'abo-mensuel' || a.id === 'abo-annuel'));
   check('avec ses rayons', Array.isArray(r.rayons) && r.rayons.length > 0);
   /* Ce que la page n'a **pas** à savoir : ce que contient un article. Le
      contenu décide de la livraison, et l'exposer invite à s'en servir. */
@@ -300,8 +302,11 @@ const evenement = (sessionId) => ({
      que la Belgique et les Pays-Bas traitent comme un jeu de hasard. Les deux
      contrôles qui suivent sont là pour ça, et ils sont plus sévères que celui
      qu'ils remplacent : ils nomment l'interdit au lieu d'énumérer le permis. */
-  const PERMIS = new Set(['abonnement']);
-  check('aucun article payant ne livre autre chose que l’abonnement',
+  /* Le PASS de saison (2 novembre 2026, choix de Gaël) remplace l'abonnement :
+     il livre le PASS et 3 boosters, jamais d'écharpes. `abonnement` reste pour
+     les renouvellements des anciens abonnés, jusqu'à leur échéance. */
+  const PERMIS = new Set(['abonnement', 'pass']);
+  check('aucun article payant ne livre autre chose que le PASS ou l’abonnement',
     CATALOGUE.every((a) => PERMIS.has(a.livraison.type))
     || (console.log('        fautifs :', CATALOGUE
       .filter((a) => !PERMIS.has(a.livraison.type))
@@ -323,8 +328,8 @@ const evenement = (sessionId) => ({
      vide. Elle en avait deux : les billets sont partis avec la monnaie
      achetable, et la chaîne euro → tirage n'est plus coupée par une séparation
      qu'il fallait tenir — elle est coupée à la racine. */
-  check('la liste des livraisons payantes tient en une entrée',
-    LIVRAISONS_PAYANTES.size === 1 && LIVRAISONS_PAYANTES.has('abonnement')
+  check('la liste des livraisons payantes tient en deux entrées : le PASS, et l’ancien abonnement',
+    LIVRAISONS_PAYANTES.size === 2 && LIVRAISONS_PAYANTES.has('abonnement') && LIVRAISONS_PAYANTES.has('pass')
     || (console.log('        elle contient :', [...LIVRAISONS_PAYANTES].join(', ')), false));
 
   /* **L'abonnement livre un booster, et rien d'autre que lui.**
@@ -378,6 +383,14 @@ const evenement = (sessionId) => ({
     const mois = Math.max(1, Math.round((a.livraison.jours ?? 31) / 30.5));
     check(`« ${a.id} » : ${a.livraison.packs ?? 0} booster(s) pour ${mois} mois`,
       (a.livraison.packs ?? 0) <= Math.ceil(mois / 2));
+  }
+
+  /* Le PASS : une saison payée une fois, 3 boosters (Gaël, 2 novembre 2026),
+     et rien d'autre — ni écharpes, ni carte choisie. */
+  for (const a of CATALOGUE.filter((x) => x.livraison.type === 'pass')) {
+    check(`« ${a.id} » ne livre que le PASS et au plus 3 boosters`,
+      Object.keys(a.livraison).every((k) => ['type', 'packs'].includes(k))
+      && (a.livraison.packs ?? 0) <= 3 && !a.recurrence);
   }
 
   check('aucun article payant ne s’appelle « booster » ou « écharpe »',

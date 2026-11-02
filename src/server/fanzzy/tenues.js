@@ -16,6 +16,8 @@
  * dépublie : elle sort des boosters, elle reste à qui l'a gagnée.
  */
 import { SKINS as AMORCE } from '../../shared/fanzzy/inventaire.js';
+import { tenueDePass, tenueReservee } from '../../shared/pass.js';
+import { saisonEnCours } from './saisons.js';
 
 let charge = false;
 let liste = [];
@@ -88,6 +90,34 @@ export function toutesTenues() { garde(); return liste; }
  * qui la possède déjà se briserait — mais elle ne sort plus d'un booster.
  */
 export function tenuesPubliees() { garde(); return liste.filter((s) => s.publie); }
+
+/**
+ * Ce qui sort d'un booster : les tenues publiées, **moins celles d'un PASS**.
+ *
+ * La tenue d'un PASS de saison (Préhistorique pour le PASS 1) ne se tire
+ * jamais : pendant sa saison, elle se gagne sur la voie du PASS ; après, elle
+ * revient seulement à l'étal, à l'unité et plus chère (choix de Gaël du
+ * 2 novembre 2026, `shared/pass.js`).
+ */
+export function tenuesTirables() {
+  return tenuesPubliees().filter((s) => !tenueDePass(s.id));
+}
+
+/** Le numéro de la saison en cours, ou `null` (saisons non chargées). */
+function numeroCourant() {
+  try { return saisonEnCours()?.numero ?? null; } catch { return null; }
+}
+
+/**
+ * Ce que l'étal vend : les tenues publiées, moins celles **réservées en ce
+ * moment** à un PASS. Une tenue d'un PASS passé y revient, marquée `pass`
+ * (son prix est `pass.prix_tenue_etal`, voir `shared/etal.js`).
+ */
+export function tenuesEnEtal() {
+  const n = numeroCourant();
+  return tenuesPubliees().filter((s) => !tenueReservee(s.id, n))
+    .map((s) => (tenueDePass(s.id) ? { ...s, pass: true } : s));
+}
 
 /** Par identifiant, publiée ou non : une tenue déjà possédée doit s'afficher. */
 export function tenuePar(id) { garde(); return parId.get(id); }

@@ -317,11 +317,11 @@ const ECHARPE = '/img/gains/echarpes.webp';
 const nb = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F');
 
 const MESSAGES = {
-  /* **Créer** demande un abonnement, **rejoindre** non. Le message le dit
+  /* **Créer** demande un PASS de saison (un KOP par PASS), **rejoindre** non. Le message le dit
      dans cet ordre : ce qui est encore possible avant ce qui ne l’est pas,
      sinon on lit un refus là où il y a une porte ouverte. */
   'kop.error.abonnement':     'Rejoindre un KOP est ouvert à tous ; en créer un demande '
-                              + 'un abonnement. Cherche celui de ton club juste en dessous.',
+                              + 'un PASS de saison, un KOP par PASS. Cherche celui de ton club juste en dessous.',
   'kop.error.nom':            'Ce nom ne va pas : entre 3 et 40 caractères, sans balise.',
   'kop.error.club':           'Ce club n’existe pas.',
   'kop.error.pas_ton_club':   'Tu ne suis pas ce club. Suis-le d’abord depuis « Mes clubs ».',
@@ -414,7 +414,7 @@ async function lire() {
          le premier rendu de la tribune retomberait sur la carte de l’âge et
          perdrait la tenue et l’expression de chacun. Il ne lève jamais. */
       etatsDemandes ? null : (etatsDemandes = true, window.TBF_ETATS?.charger?.()),
-      /* **Créer un KOP est un geste d'abonné** (rejoindre reste libre) : la
+      /* **Créer un KOP demande un PASS de saison** (rejoindre reste libre) : la
          carte d'un club sans KOP dit ce que coûte la création, et un joueur
          qui n'a pas le PASS l'apprend avant d'avoir tapé un nom, plus après.
          Lu une fois, pas à chaque relecture des trente secondes, par une
@@ -431,7 +431,9 @@ async function lire() {
         .then((d) => { S.invits = Number(d?.kop) || 0; }),
       aboDemande ? null : (aboDemande = true, (window.TBF_ABO ??= fetch('/api/abonnement',
         { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null)).catch(() => null))
-        .then((a) => { S.abo = typeof a?.abonne === 'boolean' ? a.abonne : null; })),
+        /* Un KOP à créer par PASS acheté, pour toujours : c'est le reste
+           (`kopsRestants`) qui ouvre la création, pas le PASS de la saison. */
+        .then((a) => { S.abo = Number.isFinite(Number(a?.kopsRestants)) ? Number(a.kopsRestants) > 0 : null; })),
     ]);
     S.kops = mes.kops ?? [];
     S.catalogue = mes.catalogue ?? [];
@@ -1031,12 +1033,12 @@ function clubHTML(c, pitch) {
     out.push(`<button class="gros tbf-plaque" ${c.kops.length ? '' : 'data-ton="violet"'}
       data-nouveau="${c.id}">CRÉER UN KOP</button>`);
   }
-  /* Ce que coûte la création : le PASS DE TRIBUNE (le serveur refuse la
+  /* Ce que coûte la création : un PASS DE SAISON (le serveur refuse la
      création à qui ne l'a pas), jamais des écharpes. Rejoindre est libre,
      et c'est dit aussi : c'est la porte qui reste ouverte à tous. */
   out.push(S.abo === true
-    ? '<p class="club-prix"><b>CRÉER :</b> compris dans ton PASS DE TRIBUNE.</p>'
-    : '<p class="club-prix"><b>CRÉER :</b> avec le PASS DE TRIBUNE. <b>REJOINDRE :</b> libre.</p>');
+    ? '<p class="club-prix"><b>CRÉER :</b> compris dans ton PASS DE SAISON.</p>'
+    : '<p class="club-prix"><b>CRÉER :</b> un KOP par PASS DE SAISON. <b>REJOINDRE :</b> libre.</p>');
   out.push('</article>');
   return out.join('');
 }
@@ -1169,8 +1171,8 @@ $('corps').addEventListener('click', async (ev) => {
        modale), la création suit son chemin et le refus du serveur parle. */
     if (d.nouveau && S.abo === false && window.TBF_DIALOGUE) {
       if (await window.TBF_DIALOGUE.confirmer({
-        titre: 'LE PASS DE TRIBUNE',
-        texte: 'Créer un KOP fait partie du PASS DE TRIBUNE. Rejoindre un KOP reste libre : '
+        titre: 'LE PASS DE SAISON',
+        texte: 'Chaque PASS de saison permet de créer un KOP, pour toujours. Rejoindre un KOP reste libre : '
           + 'un ami qui lance celui de ton club peut t’y inviter.',
         oui: 'VOIR LE PASS', non: 'PLUS TARD', ton: 'or',
       })) location.href = '/abonnement';

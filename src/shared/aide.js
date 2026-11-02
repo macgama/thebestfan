@@ -320,11 +320,8 @@ const RUBRIQUES = [
         () => 'Seulement s’il s’adosse à un match du jour ou en cours. Un match d’un '
           + 'autre jour donne un entraînement, qui ne compte pas — et un match déjà '
           + 'passé est refusé.'
-          + (reglage('abo.duels_classes_jour') > 0
-            ? ` Sans PASS de tribune, ${reglage('abo.duels_classes_jour')} duels classés `
-              + 'comptent par jour, dans tous les formats, du 1v1 au 5v5 ; au-delà, tu joues '
-              + 'toujours, en entraînement.'
-            : '')],
+          + ' Avec ou sans PASS, tous tes duels classés comptent, dans tous les formats, '
+          + 'du 1v1 au 5v5, sans limite par jour.'],
       ['Peut-on voir tous les supporters d’un Virage ?',
         'Oui : dans l’arène, le bouton LES DEUX TRIBUNES montre les Fanzzy titulaires '
           + 'des douze supporters qui poussent le plus en ce moment dans chaque tribune, '
@@ -497,25 +494,37 @@ const RUBRIQUES = [
         () => 'À ouvrir des droits, jamais à taper plus fort : une place de deck de '
           + 'plus, un emplacement de club de plus. Le niveau ne donne aucune '
           + 'puissance — c’est une règle du jeu, écrite et tenue.'],
-      ['Et le PASS de tribune, il donne un avantage ?',
-        () => `Du confort, jamais de la puissance : une réserve de ${reglage('abo.pack_max')} `
-          + `boosters au lieu de ${reglage('pack.max')}, qui se remplit toutes les `
-          + `${reglage('abo.pack_regen_min')} minutes au lieu de ${reglage('pack.regen_min')}, `
-          + `${reglage('abo.clubs_en_plus')} clubs suivis de plus, tout ton parcours et `
-          + 'tous tes souvenirs, la création d’un KOP, et le droit de porter toute '
-          + 'tenue publiée. Rien de tout cela ne pèse sur la corde.'],
+      ['C’est quoi, le PASS de saison ?',
+        () => `Un achat unique, 7,99 € ou ${reglage('pass.prix_echarpes')} écharpes, `
+          + 'valable jusqu’à la fin de la saison. Il ne se renouvelle jamais tout seul. '
+          + `Pris pendant les ${reglage('pass.dernier_mois_jours')} derniers jours d’une saison, `
+          + 'il couvre aussi la suivante. Chaque PASS a sa tenue, son badge et son cadre de carte.'],
+      ['Et le PASS, il donne un avantage ?',
+        () => 'Du confort et du style, jamais de la puissance : 3 boosters à l’achat, une '
+          + `réserve de ${reglage('abo.pack_max')} boosters au lieu de ${reglage('pack.max')}, `
+          + `qui se remplit toutes les ${reglage('abo.pack_regen_min')} minutes au lieu de `
+          + `${reglage('pack.regen_min')}, tout ton parcours et tous tes souvenirs pendant la `
+          + 'saison achetée. Pour toujours : la tenue de la saison, le badge, le cadre, '
+          + `${reglage('pass.clubs_par_pass')} club suivi de plus et ${reglage('pass.kops_par_pass')} `
+          + 'KOP de plus à créer par PASS. Rien de tout cela ne pèse sur la corde.'],
+      ['C’est quoi, la voie PASS ?',
+        () => 'Une deuxième ligne dans ton carnet de tampons. Chaque palier du carnet fait '
+          + 'monter ton PASS d’un niveau : la tenue de la saison aux âges suivants, puis le '
+          + 'cadre de carte, le cadre animé et le badge en or. Que du visuel, jamais '
+          + 'd’écharpes ni de boosters.'],
       ['Que me manque-t-il sans le PASS ?',
-        () => 'Rien pour jouer : toutes les cartes, tous les âges, tous les formats '
-          + 'et le Grand Virage en entier. Ce qui est compté, c’est le classement'
-          + (reglage('abo.duels_classes_jour') > 0 && reglage('abo.virages_classes_jour') > 0
-            ? ` : ${reglage('abo.duels_classes_jour')} duels et `
-              + `${reglage('abo.virages_classes_jour')} matchs de Virage par jour y `
-              + 'comptent, et au-delà tu joues toujours, sans que ça compte.'
-            : ' : certaines parties s’y jouent en entraînement, sans compter.')],
-      ['Comment résilier le PASS ?',
-        'Depuis la page du PASS, en deux touches, aussi simplement que tu t’es '
-          + 'abonné. Il ne se renouvelle plus, tu le gardes jusqu’à la fin de la '
-          + 'période déjà payée, et rien de ce que tu as gagné ne t’est repris.'],
+        () => 'Rien pour jouer ni pour le classement : toutes les séries, tous les âges, '
+          + 'tous les formats, le Grand Virage en entier, et tout compte, sans limite. '
+          + 'Les Fanzzy ne sont jamais réservés au PASS. Sa tenue revient à l’étal une '
+          + 'saison plus tard, à acheter en écharpes ; le badge, le cadre et l’Ultimate de '
+          + 'la tenue restent au PASS.'],
+      ['Puis-je payer le PASS en écharpes ?',
+        () => `Oui, ${reglage('pass.prix_echarpes')} écharpes, sur la page du PASS. C’est la `
+          + 'récompense des supporters assidus : le même PASS, sans dépenser d’argent.'],
+      ['J’avais un abonnement : que devient-il ?',
+        'Il ne se renouvelle plus. Tu gardes tout jusqu’à la fin de la période déjà payée, '
+          + 'et tu reçois le PASS de la saison où elle se termine. Rien de ce que tu as '
+          + 'gagné ne t’est repris.'],
       ['Puis-je changer de club ?',
         () => 'Un club choisi est gardé à vie : on ne le retire pas. Tu peux en suivre '
           + 'plusieurs : tu commences avec deux emplacements, et les suivants s’achètent '

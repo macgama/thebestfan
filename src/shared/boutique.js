@@ -1,7 +1,7 @@
 /**
  * Le catalogue de la boutique : ce qui est en vente, et à quel prix.
  *
- * ## L'argent réel n'achète qu'une chose : l'abonnement
+ * ## L'argent réel n'achète qu'une chose : le PASS de saison
  *
  * C'est la règle qui gouverne tout ce fichier, et elle n'est pas commerciale,
  * elle est structurelle.
@@ -18,7 +18,7 @@
  * était coupée par une séparation qu'il fallait tenir : deux compteurs, deux
  * règles, et la vigilance de ne jamais les mélanger.
  *
- * Les billets n'existent plus. **L'argent réel n'achète que l'abonnement**, et
+ * Les billets n'existent plus. **L'argent réel n'achète que le PASS de saison** (l'abonnement jusqu'au 2 novembre 2026), et
  * les écharpes ne se gagnent qu'en jouant. La chaîne n'est plus coupée par une
  * séparation, elle est coupée **à la racine** : il n'y a plus de monnaie
  * achetable, donc plus rien à séparer, et plus rien à tenir.
@@ -70,12 +70,13 @@ export const MONNAIE = { un: 'écharpe', plusieurs: 'écharpes', Un: 'Écharpe',
 
 /** Les familles, pour ranger l'écran. L'ordre est celui de l'affichage. */
 export const RAYONS = [
-  /* **L'abonnement d'abord.** C'est le seul rayon qui ne s'achète pas à la
-     pièce, et le seul dont le prix se paie tous les mois : il mérite d'être lu
-     avant qu'on additionne des billets. */
-  { id: 'abonnement', nom: 'L’abonnement',
-    texte: 'Du rythme, de la mémoire et du confort. Jamais un avantage de jeu — '
-      + 'tous les formats, tous les âges et tous les classements restent ouverts à tous.' },
+  /* **Le PASS de saison** (choix de Gaël du 2 novembre 2026), qui remplace
+     l'abonnement. Le rayon garde son identifiant d'avant : les commandes
+     passées le nomment. */
+  { id: 'abonnement', nom: 'Le PASS de saison',
+    texte: 'Du rythme, de la mémoire et du visuel. Jamais un avantage de jeu — '
+      + 'toutes les cartes, tous les âges, tous les formats et tous les classements '
+      + 'restent ouverts à tous, sans limite.' },
 ];
 
 /**
@@ -85,7 +86,34 @@ export const RAYONS = [
  * décrit. Un seul type est permis — voir `LIVRAISONS_PAYANTES`.
  */
 export const CATALOGUE = [
+  /* ------------------------------------------------------ le PASS de saison
+
+     **Payé une fois, jamais renouvelé tout seul** : une session Stripe en
+     `mode: 'payment'`, rien à résilier. Il vaut jusqu'à la fin de la saison,
+     et acheté pendant son dernier mois, il couvre aussi la suivante
+     (`shared/pass.js`, `saisonsCouvertes`). Même prix partout : sur le site,
+     et demain sur Android et iOS (commission des stores absorbée).
+
+     **Trois boosters avec le PASS**, déclarés ici comme ceux de l'ancien
+     abonnement et pour les mêmes raisons (voir plus bas) : attachés à un
+     achat qui ne s'achète pas deux fois pour la même saison, à la vue du
+     contrôle, et sans aucune monnaie achetable. Aucune écharpe : l'argent
+     n'achète jamais la monnaie des boosters. */
+  {
+    id: 'pass-saison', rayon: 'abonnement', nom: 'PASS de saison',
+    texte: 'Toute la saison, payé une fois. Ne se renouvelle pas tout seul.',
+    prix: 799,
+    livraison: { type: 'pass', packs: 3 },
+  },
+
   /* ---------------------------------------------------------- l'abonnement
+
+     **Plus en vente depuis le 2 novembre 2026** (`retire: true`) : le PASS
+     de saison le remplace. Les deux formules restent au catalogue pour
+     qu'une commande ouverte avant la bascule se livre encore, et pour que
+     les écrans d'administration sachent les nommer. Les renouvellements des
+     abonnés d'avant passent par le webhook, sans le catalogue, jusqu'à ce
+     que la reprise coupe leur renouvellement (`scripts/pass-reprise.mjs`).
 
      `recurrence` est ce qui fait la différence entre un paiement et un
      abonnement, et c'est **le serveur** qui la lit : il ouvre alors une session
@@ -100,7 +128,7 @@ export const CATALOGUE = [
   {
     id: 'abo-mensuel', rayon: 'abonnement', nom: 'Abonnement mensuel',
     texte: 'Se renouvelle chaque mois. S’arrête quand tu veux.',
-    prix: 399, recurrence: 'month',
+    prix: 399, recurrence: 'month', retire: true,
     /* **Un booster avec l'abonnement**, et il est déclaré ici plutôt que
        glissé dans le moteur.
 
@@ -127,7 +155,7 @@ export const CATALOGUE = [
   {
     id: 'abo-annuel', rayon: 'abonnement', nom: 'Abonnement annuel',
     texte: 'Douze mois d’un coup, au prix de dix.',
-    prix: 3990, marque: 'deux mois offerts', recurrence: 'year',
+    prix: 3990, marque: 'deux mois offerts', recurrence: 'year', retire: true,
     /* **Six, et non un.** Voir les bornes de l'abonnement mensuel : elles
        tiennent toujours, c'est le nombre qui bouge.
 
@@ -162,7 +190,10 @@ export const ARTICLE_PAR_ID = new Map(CATALOGUE.map((a) => [a.id, a]));
  * penserait à la mettre à jour. Ici, ajouter un type de livraison payante
  * oblige à venir écrire son nom sur cette ligne — c'est-à-dire à décider.
  */
-export const LIVRAISONS_PAYANTES = new Set(['abonnement']);
+export const LIVRAISONS_PAYANTES = new Set(['abonnement', 'pass']);
+
+/** Ce qui est en vente aujourd'hui : le catalogue, moins les articles retirés. */
+export const EN_VENTE = () => CATALOGUE.filter((a) => !a.retire);
 
 /**
  * L'argent réel produit-il de la monnaie de jeu ?

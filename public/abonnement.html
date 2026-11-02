@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
-<title>L’abonnement — TheBestFan</title>
+<title>Le PASS de saison — TheBestFan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- La police des banderoles, que la page ne chargeait pas : ses titres et le
@@ -20,35 +20,21 @@
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
-/* L'écran de l'abonnement.
+/* L'écran du PASS de saison (choix de Gaël du 2 novembre 2026).
 
    ## Ce qu'il doit faire, dans cet ordre
 
-   0. **Montrer ce qu'on vend** — le PASS DE TRIBUNE, sa bâche or et ce qu'il
-      donne le jour du paiement —, **sans prix ni bouton**, juste sous le
-      chapeau. Le premier écran ne montrait qu'une liste à coches, un
-      paragraphe et un tableau : un écran de conditions générales, pas un
-      écran de jeu, et l'objet de la page attendait à 970 px sur 1 503 à
-      360 px de large (critique du lot 3). Ce n'est pas encore une offre :
-      rien ne s'y paie, rien ne s'y touche.
-   1. **Dire ce qui reste libre.** Avant le prix et avant la liste de ce qui
-      s'ouvre. Un joueur qui arrive ici se demande ce qu'on lui retire s'il ne
-      paie pas ; tant qu'il n'a pas la réponse, il ne lit pas le reste. La
-      réponse est « rien de ce qui se joue », et elle est assez rare dans ce
-      genre de jeu pour valoir la place d'honneur : le chapeau la dit dès le
-      haut de l'écran, le bloc qui suit le PASS la détaille.
-   2. **Dire ce qui s'ouvre**, en chiffres et non en adjectifs. « Plus de
-      boosters » ne veut rien dire ; « 24 en réserve au lieu de 10 » se compare.
-   3. **Proposer.** Les formules, leur prix et leur bouton viennent en
-      dernier, quand les deux questions sont réglées : le gratuit passe
-      toujours avant le prix.
+   0. **Montrer ce qu'on vend, et donner envie** : le PASS de la saison, sa
+      tenue portée par des Fanzzy qui défilent, son badge et son cadre — sans
+      prix ni bouton, juste sous le chapeau.
+   1. **La voie PASS** : six niveaux, ce que chacun donne, et où l'on en est.
+   2. **Dire ce qui reste libre**, avant le prix : rien de ce qui se joue ne
+      se trouve derrière ce bouton. Tout compte au classement pour tous.
+   3. **Dire ce qui s'ajoute**, en chiffres : pour la saison, et pour la vie.
+   4. **Proposer** : 7,99 € ou 40 000 écharpes, payé une fois.
 
-   ## Pourquoi la liste des chiffres vient du serveur
-
-   `/api/abonnement` rend `ouvre` et `libre`. La page n'en porte aucune copie :
-   les valeurs vivent dans les réglages, elles s'ajustent depuis /admin sans
-   livraison, et une page qui les recopierait mentirait au premier réglage
-   changé. C'est la même règle que partout ailleurs ici. */
+   Tous les nombres viennent de `/api/abonnement` : les réglages vivent dans
+   /admin, et une page qui les recopierait mentirait au premier changement. */
 
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
@@ -106,33 +92,19 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1;
    `display`. */
 main [hidden]{display:none}
 
-/* ------------------------------------------------ le PASS DE TRIBUNE
 
-   L'offre, en une bâche or à écharpe — l'or dit « on achète » (la règle de
-   l'or : une face, jamais un petit texte) — tenue au mur par deux scotchs :
-   son nom en grand, et le cadeau du jour du paiement avec ses sachets. Elle
-   est **en tête de page**, sous le chapeau, sans prix ni bouton : c'est
-   l'objet qu'on vient voir. Les formules, elles, sont en bas, en bâches côte
-   à côte après ce qui reste libre et le tableau : la mensuelle en parpaing,
-   celle que le catalogue met en avant en or, son ruban en sticker.
+/* ------------------------------------------------ le PASS de la saison
 
-   **Il ne promet rien que le serveur ne fasse.** Le nombre de boosters est
-   celui que les formules portent (`formules[].packs`), le prix celui du
-   catalogue, la période celle du champ `mois` ; une donnée absente retire sa
-   ligne. « JUSQU'À » quand les formules n'en donnent pas toutes autant. En
-   vitrine (le paiement n'est pas branché, `ouvert` du catalogue), les
-   bâches sont hors service et le sticker BIENTÔT le dit d'avance, au lieu
-   d'une boîte d'excuse après le geste.
-
-   Abonné, la même bâche porte le tampon ABONNÉ et l'échéance, en tête de
-   page : c'est la réponse à la question qu'on est venu poser.
-
-   La boutique monte la même composition dans son rayon : une composition et
-   non une brique (un seul écran la pose), écrite des deux côtés. */
-.pass{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;
-  margin:6px 0 28px;padding:22px 16px 16px;rotate:-.6deg}
+   La bâche or, la tenue de la saison qui défile, le badge. L'or dit « on
+   achète » (une face, jamais un petit texte). */
+.pass{position:relative;display:grid;grid-template-columns:1fr auto;align-items:end;gap:10px 14px;
+  margin:6px 0 26px;padding:20px 16px 16px;rotate:-.6deg;overflow:visible}
+.pass-gauche{display:flex;flex-direction:column;gap:9px;min-width:0}
 .pass-titre{font-family:var(--banner);font-weight:700;font-size:26px;line-height:1;
   letter-spacing:.08em;text-transform:uppercase}
+.pass-saison{font-family:var(--banner);font-weight:600;font-size:15px;letter-spacing:.1em;
+  text-transform:uppercase}
+.pass-texte{margin:0;font-size:12.5px;line-height:1.45;font-weight:600}
 .pass-cadeau{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .pass-cadeau>span:last-child{display:flex;flex-direction:column;gap:3px}
 .pass-cadeau b{font-family:var(--banner);font-weight:700;font-size:21px;line-height:1;
@@ -140,9 +112,49 @@ main [hidden]{display:none}
 .pass-cadeau small,.pass-etat small{font-family:var(--banner);font-weight:600;font-size:12px;
   letter-spacing:.08em;text-transform:uppercase}
 .pass-etat{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
-.pass-bientot{position:absolute;top:16px;right:14px;--rot:5deg}
-/* Les conditions, sous les formules et avant le paiement : on les accepte en
-   touchant une formule, il faut pouvoir les lire à cet endroit-là. */
+.pass-bientot{position:absolute;top:14px;right:14px;--rot:5deg}
+
+/* La vitrine : des Fanzzy en tenue de la saison, qui passent l'un après
+   l'autre. Le défilé est joué au script (une image à la fois, un fondu), et
+   s'arrête avec le mode calme. */
+.vitrine{position:relative;width:118px;height:150px;flex:none}
+.vitrine img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  object-position:bottom;opacity:0;transition:opacity .6s ease,transform .6s ease;
+  transform:translateY(6px) scale(.97);filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.vitrine img.on{opacity:1;transform:none}
+.vitrine .tbf-pass-badge{position:absolute;left:-10px;top:-8px;z-index:2}
+
+/* L'Ultimate en tenue, en bandeau sous la bâche : c'est ce que la voie
+   montre de plus spectaculaire. Masqué si l'image n'existe pas. */
+.ult{margin:-10px 0 24px;border-radius:14px;overflow:hidden;position:relative;aspect-ratio:16/9;
+  background:var(--panneau);border:1px solid rgba(242,238,228,.12)}
+.ult img{width:100%;height:100%;object-fit:cover;display:block}
+.ult span{position:absolute;left:10px;bottom:9px;font-family:var(--banner);font-weight:700;
+  font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:6px;
+  background:rgba(7,9,12,.72)}
+
+/* ------------------------------------------------------- la voie PASS */
+.voie{padding:15px 14px 14px;border-radius:14px;margin-bottom:22px;background:var(--panneau);
+  border:1px solid rgba(242,238,228,.12)}
+.voie h2{margin:0 0 6px}
+.voie>p{margin:0 0 12px;font-size:12px;line-height:1.5;opacity:.9}
+.voie ol{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.voie li{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;
+  padding:9px 10px;border-radius:10px;background:rgba(242,238,228,.04);
+  border:1px solid rgba(242,238,228,.08)}
+.voie li[data-on]{background:color-mix(in srgb,var(--pass,#c9772e) 18%,transparent);
+  border-color:color-mix(in srgb,var(--pass,#c9772e) 55%,transparent)}
+.voie li .n{display:grid;place-items:center;width:28px;height:28px;border-radius:7px;
+  font-family:var(--banner);font-weight:700;font-size:15px;background:rgba(242,238,228,.1)}
+.voie li[data-on] .n{background:var(--pass,#c9772e);color:var(--encre)}
+.voie li b{font-family:var(--banner);font-weight:600;font-size:14px;letter-spacing:.03em}
+.voie li small{display:block;font-size:11.5px;opacity:.85;margin-top:2px}
+.voie li em{font-style:normal;font-family:var(--banner);font-weight:600;font-size:11.5px;
+  letter-spacing:.08em;text-transform:uppercase;opacity:.9;white-space:nowrap}
+.jauge{height:8px;border-radius:5px;background:rgba(242,238,228,.1);overflow:hidden;margin:2px 0 12px}
+.jauge i{display:block;height:100%;background:var(--pass,#c9772e)}
+
+/* Les deux façons de payer, côte à côte. */
 .pass-conditions{margin:8px 0 0;font-size:12px;line-height:1.5;text-align:center}
 .pass-conditions a{color:var(--craie);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .pass-formules{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:16px 12px;margin:0 0 6px}
@@ -150,15 +162,9 @@ main [hidden]{display:none}
   min-height:98px;padding:14px 14px 13px;text-align:left}
 .pass-formule small{font-size:11px;font-weight:600;letter-spacing:.08em;line-height:1.2}
 .pass-formule b{font-size:20px;font-weight:700;letter-spacing:.03em;line-height:1;font-variant-numeric:tabular-nums}
-/* Le ruban de la formule mise en avant, collé à cheval sur son bord haut :
-   il ne mord pas sur le nom de la formule. */
 .pass-formule>.tbf-sticker{position:absolute;top:-19px;right:-6px;--rot:5deg}
 .pass-beta{margin:10px 0 0;padding:10px 13px;border-radius:8px;background:var(--panneau);
   font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.35;letter-spacing:.04em}
-/* En bas de page, les formules n'ont plus la bâche du PASS au-dessus d'elles
-   pour les annoncer : elles ont leur titre cousu, comme les deux rubriques
-   qui les précèdent. Sous lui, la place du ruban de la formule mise en avant,
-   qui monte de dix-neuf pixels au-dessus de sa bâche. */
 .prendre h2{margin:24px 0 30px}
 
 /* **Ce qui reste libre** — le bloc le plus lisible de l'écran, le premier
@@ -308,13 +314,9 @@ body{padding-bottom:calc(var(--bas) + 40px)}
 <body>
 <main>
   <div class="chapeau">
-    <h1>L’ABONNEMENT</h1>
-    <!-- Le sous-titre disait « ce qu'il change, et ce qu'il ne change pas ».
-         Exact, et parfaitement plat : il décrit un plan de page. Celui-ci
-         répond à la question qu'on se pose en arrivant, et la réponse est la
-         chose la plus rare que ce jeu ait à dire. -->
-    <p>Tout le jeu reste ouvert sans payer.<br>Ce qui s’achète ici, c’est du
-       rythme.</p>
+    <h1>LE PASS DE SAISON</h1>
+    <p>Tout le jeu reste ouvert sans payer, et tout compte au classement.<br>
+       Le PASS ajoute du rythme, de la mémoire et du style.</p>
   </div>
   <div id="corps"><div class="vide">Un instant…</div></div>
 </main>
@@ -323,119 +325,50 @@ body{padding-bottom:calc(var(--bas) + 40px)}
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 <script src="/pwa.js" defer></script>
+<script src="/pass.js"></script>
+<script src="/ultime.js" defer></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c]));
-
-/**
- * La date d'échéance, telle qu'on la dit.
- *
- * Nulle veut dire **sans terme** — c'est ce que pose un administrateur pour un
- * bêta-testeur, rien ne l'expire, et le taire laisserait croire à un oubli.
- */
 const jour = (d) => new Date(d).toLocaleDateString('fr', {
   day: 'numeric', month: 'long', year: 'numeric' });
+const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+const milliers = (n) => Number(n).toLocaleString('fr-FR');
 
-/* Les quatre portes, dans l'ordre où elles comptent pour quelqu'un qui joue.
-   Le libellé est ici, les **chiffres** viennent du serveur : c'est lui qui
-   connaît les réglages, et ils s'ajustent depuis /admin sans qu'on relivre
-   cette page. */
+/* Des Fanzzy en tenue de la saison, pour la vitrine. Une sélection et non
+   toute la série : la vitrine montre la tenue, pas la collection. Une image
+   absente se retire d'elle-même (`onerror`). */
+const VITRINE = [['RP1', 1], ['AN5', 2], ['RP20', 3], ['AN1', 1], ['RP4', 2], ['AN41', 3],
+  ['RP13', 1], ['AN60', 2], ['RP7', 3], ['AN22', 1]];
+
 /**
- * Les six lignes du tableau, chacune avec ses deux colonnes.
- *
- * **Les deux côtés viennent du serveur.** `o` est ce que l'abonnement ouvre,
- * `sans` ce qu'on a sans lui ; aucun des deux n'est écrit ici. La page avait
- * déjà recopié un barème une fois et annonçait « au lieu de 10 » quand le
- * réglage en disait douze — un nombre recopié ment au premier ajustement fait
- * depuis l'administration, et personne ne relit une page pour vérifier un
- * chiffre qu'il croit connaître.
- *
- * `n` est le nom de la ligne, `sous` la précision qui ne tient pas dans une
- * colonne, et les deux valeurs se lisent côte à côte.
- */
-/**
- * Ce que l'abonnement ouvre, ligne par ligne.
- *
- * **Un nombre absent doit rester absent.** Le tableau se replie déjà sur un
- * tiret — `esc(p.sans ?? '—')` — mais ce repli ne servait à rien : `String()`
- * et les gabarits transforment `undefined` en la **chaîne** « undefined »,
- * qui est vraie, donc le `??` ne se déclenchait jamais.
- *
- * Le tour d'interface l'a vu le jour où cette page est entrée dans sa liste :
- * « undefined undefined » en toutes lettres sur la seule page du jeu qui
- * prend de l'argent réel. Le garde existait, il était court-circuité deux
- * lignes plus haut — la faute la plus discrète qui soit, parce qu'on relit le
- * garde et qu'on le trouve correct.
- *
- * `nb` ne rend donc rien quand il n'y a rien.
- *
- * **Et une ligne à qui il manque une valeur disparaît** — c'est la règle de
- * tout le jeu : une ligne sans donnée se retire, elle ne s'écrit jamais avec
- * un tiret. Le tiret reprenait la place d'« undefined », et disait « rien »
- * là où la vérité est « le serveur ne l'a pas dit ». Sur un tableau qu'on lit
- * pour comparer, une case vide d'un côté ne compare rien : la ligne entière
- * part, au dernier moment, ici.
+ * Le tableau : ce que le PASS ajoute, et ce qu'on a sans lui. Deux blocs : la
+ * saison achetée, puis la vie. Les nombres viennent du serveur ; une ligne à
+ * qui il manque une valeur disparaît.
  */
 function portes(o, sans) {
-  /* `?? undefined` et non `?? '—'` : ce qui manque doit rester reconnaissable
-     comme manquant, pour que la ligne puisse partir au lieu de s'écrire. */
   const nb = (v, suffixe = '', prefixe = '') =>
     (v === undefined || v === null ? undefined : `${prefixe}${v}${suffixe}`);
   return [
-    /* L'ordre compte, et ce n'est pas celui du barème : c'est celui de ce
-       qu'on ressent en jouant. Le rythme des boosters d'abord — c'est la
-       seule ligne qu'on remarque le jour même —, l'identité et la mémoire
-       ensuite, qui se découvrent au bout de quelques semaines. */
-    { n: 'Le temps entre deux boosters', sous: 'ce qu’on attend avant le suivant',
+    { n: 'Le temps entre deux boosters', sous: 'pour la saison achetée',
       sans: nb(sans.packRegenMin, ' min'), avec: nb(o.packRegenMin, ' min') },
-    { n: 'La réserve', sous: 'de quoi s’absenter un week-end sans rien perdre',
+    { n: 'La réserve de boosters', sous: 'pour la saison achetée',
       sans: nb(sans.packMax), avec: nb(o.packMax) },
-    { n: 'Clubs suivis', sous: 'par-dessus ce que le niveau ouvre déjà',
-      sans: 'ce que le niveau ouvre', avec: nb(o.clubsEnPlus, '', '+') },
-    { n: 'Tes parties gardées', sous: 'le parcours et les cartes-souvenirs',
-      sans: nb(o.parcoursLibre, ' dernières'), avec: 'toutes' },
-    { n: 'Les tenues', sous: 'celles que tu portes te restent dans tous les cas',
-      sans: 'celles que tu gagnes', avec: 'toutes les publiées' },
-    { n: 'Créer un KOP', sous: 'en rejoindre un reste ouvert à tout le monde',
+    { n: 'Tes parties et tes souvenirs', sous: 'pour la saison achetée',
+      sans: nb(sans.parcoursLibre, ' derniers'), avec: 'tous' },
+    { n: 'Clubs suivis', sous: 'à vie, un de plus à chaque PASS',
+      sans: 'ce que le niveau ouvre', avec: nb(o.clubsParPass, ' par PASS', '+') },
+    { n: 'Fonder un KOP', sous: 'à vie ; en rejoindre un reste ouvert à tous',
+      sans: 'non', avec: nb(o.kopsParPass, ' par PASS', '+') },
+    { n: 'La tenue de la saison', sous: 'à vie, gagnée le long de la voie',
+      sans: 'à l’étal la saison suivante', avec: 'dès l’achat' },
+    { n: 'Le badge et le cadre', sous: 'à vie, sur ta carte de supporter',
       sans: 'non', avec: 'oui' },
-
-    /* **Les trois plafonds de la compétition.**
-
-       Ce sont les seules lignes du tableau qui **retirent** quelque chose à
-       celui qui ne paie pas, au lieu d'élargir. Elles sont donc en dernier,
-       et leur précision dit à chaque fois ce qui reste ouvert : un plafond
-       qu'on annonce sans dire par quoi on le contourne se lit comme une
-       porte, et ce n'en est pas une.
-
-       Elles ne paraissent que si le serveur les envoie. À zéro, le plafond
-       est désarmé depuis l'administration, la route rend `null`, et la ligne
-       disparaît d'elle-même — plutôt que d'annoncer un plafond que plus
-       personne n'applique. */
-    ...(sans.duelsClassesJour ? [{
-      n: 'Duels classés par jour',
-      sous: 'les matchs des autres jours restent ouverts, en entraînement',
-      sans: nb(sans.duelsClassesJour), avec: 'sans limite' }] : []),
-    ...(sans.viragesClassesJour ? [{
-      n: 'Virages comptés au classement',
-      sous: 'les suivants se jouent en entier — seul le compteur s’arrête',
-      sans: nb(sans.viragesClassesJour, ' par jour'), avec: 'tous' }] : []),
-    ...(sans.tailleClassee >= 1 ? [{
-      n: 'Formats classés',
-      sous: 'le 2v2 et au-dessus se jouent à tout le monde, en entraînement',
-      sans: nb(sans.tailleClassee, `v${sans.tailleClassee}`),
-      avec: 'tous les formats' }] : []),
   ].filter((p) => p.sans != null && p.avec != null);
 }
 
-/* --------------------------------------------- la pile, et ce qu'on y dit
-
-   Un refus du paiement se dit dans la pile commune (`.tbf-pile`, sur
-   `body`), en toast d'erreur (`.tbf-toast--erreur`) : il passait par une
-   boîte `TBF_DIALOGUE.ouvrir` qui n'a jamais existé — `dialogue.js` ne sait
-   que `confirmer` —, donc par l'`alert()` du navigateur, grise et en police
-   système, sur la seule page du jeu qui prend de l'argent. */
-function toast(texte) {
+function toast(texte, ok = false) {
   let p = document.querySelector('body > .tbf-pile');
   if (!p) {
     p = document.createElement('div');
@@ -443,233 +376,240 @@ function toast(texte) {
     document.body.appendChild(p);
   }
   const t = document.createElement('div');
-  t.className = 'tbf-toast tbf-toast--erreur';
-  t.setAttribute('role', 'alert');
+  t.className = `tbf-toast${ok ? '' : ' tbf-toast--erreur'}`;
+  t.setAttribute('role', ok ? 'status' : 'alert');
   t.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"/>'
     + '<circle cx="12" cy="12" r="9"/></svg>' + esc(texte);
   p.appendChild(t);
   setTimeout(() => t.remove(), 6000);
 }
 
-const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+/** La saison de la vitrine : celle qu'on achèterait, sinon la dernière possédée. */
+function passVitrine(d) {
+  const couvre = d.offre?.couvre ?? [];
+  const voies = d.voies ?? [];
+  return couvre[0] ?? voies[voies.length - 1] ?? (d.passes ?? [])[0] ?? null;
+}
 
-/**
- * Le PASS DE TRIBUNE : la bâche or, en tête de page. Voir la feuille, « le
- * PASS DE TRIBUNE ». **Ni prix ni bouton** : abonné, l'état de l'abonnement ;
- * sinon, ce que le paiement donne et, en vitrine, BIENTÔT. Les formules qu'on
- * paie sont en bas de page (`formulesHTML`), après ce qui reste libre.
- *
- * `ouvert` vient du catalogue de la boutique : `false` veut dire « vitrine »
- * (le paiement n'est pas branché), `undefined` qu'on ne sait pas — et alors
- * les bâches restent actives, le serveur dira non s'il le faut.
- */
+/** La bâche du PASS, en tête : ce qu'on vend, ou ce qu'on a. Ni prix ni bouton. */
 function passHTML(d, { ouvert } = {}) {
-  const formules = d.formules ?? [];
-  const vitrine = ouvert === false;
-  if (d.abonne) {
-    /* La formule et l'échéance, **ce qu'on en sait**. Une formule absente
-       laissait la ligne commencer par « · jusqu'au… » : le séparateur d'une
-       valeur qui n'est pas là. On ne garde que les morceaux présents. */
-    const ligne = [d.formule, d.fin ? `jusqu’au ${jour(d.fin)}` : 'sans terme'].filter(Boolean).join(' · ');
-    return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
-      <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
-      <b class="pass-titre">PASS DE TRIBUNE</b>
-      <span class="pass-etat"><span class="tbf-tampon tbf-tampon--plein" data-ton="vert">ABONNÉ</span>
-        <small>${esc(ligne)}</small></span>
-    </div>`;
-  }
-  if (!formules.length) return '';
-  /* Le cadeau du jour du paiement : le plus grand nombre de boosters qu'une
-     formule donne, « jusqu'à » s'ils ne sont pas tous égaux. Sans booster
-     dans aucune formule, pas de ligne. */
-  const nombres = formules.map((f) => Number(f.packs) || 0);
-  const max = Math.max(0, ...nombres);
-  const cadeau = max > 0 ? `<span class="pass-cadeau">
-      ${max <= 7 ? `<span class="tbf-fentes" aria-hidden="true">${'<span class="tbf-fente"></span>'.repeat(max)}</span>` : ''}
-      <span><b>${esc(`${nombres.every((n) => n === max) ? '' : 'JUSQU’À '}${pluriel(max, 'BOOSTER', 'BOOSTERS')}`)}</b>
-      <small>DÈS LE PAIEMENT</small></span></span>` : '';
+  const p = passVitrine(d);
+  if (!p) return '';
+  const saison = Number(p.numero ?? p.saison);
+  const mienne = (d.voies ?? []).find((v) => v.saison === saison) ?? null;
+  const badge = window.TBF_PASS?.badge({ saison, couleur: p.couleur, niveau: mienne?.niveau ?? 0,
+    or: mienne?.or }, 'grand') ?? '';
+  const packs = Number(d.offre?.article?.packs) || 0;
+  const etat = d.actif
+    ? `<span class="pass-etat"><span class="tbf-tampon tbf-tampon--plein" data-ton="vert">PASS ACTIF</span>
+        <small>${esc(d.fin ? `jusqu’au ${jour(d.fin)}` : 'cette saison')}</small></span>`
+    : (packs ? `<span class="pass-cadeau">
+        <span class="tbf-fentes" aria-hidden="true">${'<span class="tbf-fente"></span>'.repeat(Math.min(packs, 7))}</span>
+        <span><b>${esc(pluriel(packs, 'BOOSTER', 'BOOSTERS'))}</b><small>DÈS L’ACHAT</small></span></span>` : '');
+  const tenue = p.tenue ? `<div class="vitrine" id="vitrine" style="--pass:${esc(p.couleur)}">
+      ${badge}
+      ${VITRINE.map(([id, age], i) => `<img alt="" loading="${i < 2 ? 'eager' : 'lazy'}"
+        src="/img/fanzzy/${id}/e${age}/${esc(p.tenue)}/pousse.webp"
+        onerror="this.remove()"${i === 0 ? ' class="on"' : ''}>`).join('')}
+    </div>` : `<div class="vitrine">${badge}</div>`;
   return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
       <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
-      <b class="pass-titre">PASS DE TRIBUNE</b>
-      ${cadeau}
-      ${vitrine ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
+      <div class="pass-gauche">
+        <b class="pass-titre">PASS ${esc(saison)}</b>
+        <span class="pass-saison">${esc(String(p.nom ?? '').replace(/^PASS \d+ · /, ''))}</span>
+        ${p.texte ? `<p class="pass-texte">${esc(p.texte)}</p>` : ''}
+        ${etat}
+      </div>
+      ${tenue}
+      ${ouvert === false && !d.actif ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
     </div>`;
 }
 
-/**
- * Les formules du PASS, en bâches côte à côte, pour qui n'est pas abonné :
- * le bas de la page, l'offre qu'on paie. En vitrine, elles sont hors service
- * et la phrase de la bêta les suit.
- */
-function formulesHTML(d, { ouvert } = {}) {
-  const formules = d.formules ?? [];
-  const vitrine = ouvert === false;
-  if (d.abonne || !formules.length) return '';
-  const bache = (f) => {
-    const mois = Number(f.mois) || null;
-    const periode = mois === 1 ? ' / MOIS' : mois === 12 ? ' / AN' : mois ? ` / ${mois} MOIS` : '';
-    const packs = Number(f.packs) || 0;
-    return `<button type="button" class="tbf-plaque pass-formule" data-article="${esc(f.id)}"${
-      f.marque && !vitrine ? ' data-ton="or"' : ''}${vitrine ? ' disabled' : ''}
-      aria-label="${esc(`M’abonner — ${f.nom}, ${f.prixTexte}${periode.toLowerCase()}`)}">
-      <small>${esc(f.nom)}</small><b>${esc(f.prixTexte)}${periode}</b>
-      ${f.parMois && mois > 1 ? `<small>${esc(`soit ${f.parMois} par mois`)}</small>` : ''}
-      ${packs ? `<small>${esc(`+${pluriel(packs, 'booster', 'boosters')} au paiement`)}</small>` : ''}
-      ${f.marque ? `<span class="tbf-sticker">${esc(f.marque)}</span>` : ''}</button>`;
+/** La voie PASS : six niveaux, ceux qu'on a et ceux qui viennent. */
+function voieHTML(d) {
+  const p = passVitrine(d);
+  if (!p) return '';
+  const saison = Number(p.numero ?? p.saison);
+  const mienne = (d.voies ?? []).find((v) => v.saison === saison) ?? null;
+  const niveau = mienne?.niveau ?? 0;
+  const seuils = mienne?.seuils ?? [];
+  const tampons = mienne?.tampons ?? 0;
+  const detail = {
+    tenue: (n) => `${p.tenue ? 'Sur tous tes Fanzzy, avec son Ultimate en tenue' : 'La tenue de la saison'}`,
+    cadre: () => 'Autour de ta carte de supporter',
+    cadre_anime: () => 'Un reflet en fait le tour',
+    badge_or: () => 'Le badge du PASS passe en or',
   };
-  return `<h2 class="tbf-cousu">Les formules</h2>
-    <div class="pass-formules">${formules.map(bache).join('')}</div>
-    ${vitrine ? '' : `<p class="pass-conditions">En t’abonnant, tu acceptes les
-      <a href="/conditions">conditions de vente</a>. Tu peux résilier quand tu veux, et tu es
-      remboursé si tu changes d’avis dans les quatorze jours.</p>`}
-    ${vitrine ? '<p class="pass-beta">Pendant la bêta, l’abonnement s’offre depuis l’administration : demande-le.</p>' : ''}`;
+  const jauge = mienne && seuils.length
+    ? `<div class="jauge" role="img" aria-label="${esc(`${tampons} tampons sur ${seuils[seuils.length - 1]}`)}"><i style="width:${
+      Math.min(100, Math.round(100 * tampons / seuils[seuils.length - 1]))}%"></i></div>` : '';
+  return `<div class="voie" style="--pass:${esc(p.couleur)}">
+      <h2 class="tbf-cousu">La voie PASS</h2>
+      <p>Elle avance avec les tampons du carnet, ceux de tout le monde : la voie
+         gratuite reste la même, la voie PASS ajoute une seconde ligne. Elle ne donne
+         que du visuel, et tout ce qu’elle donne reste à toi.${mienne
+           ? ` Tu as <b>${esc(pluriel(tampons, 'tampon', 'tampons'))}</b> cette saison.` : ''}</p>
+      ${jauge}
+      <ol>${(d.voie ?? []).map((v) => {
+        const on = niveau >= v.niveau;
+        const seuil = v.paliers ? seuils[v.paliers - 1] : null;
+        const quand = v.paliers === 0 ? 'à l’achat'
+          : seuil ? `${seuil} tampons` : `palier ${v.paliers} du carnet`;
+        return `<li${on ? ' data-on' : ''}><span class="n">${esc(v.niveau)}</span>
+          <span><b>${esc(v.nom)}</b><small>${esc((detail[v.gain] ?? (() => ''))(v))}</small></span>
+          <em>${on ? 'OBTENU' : esc(quand)}</em></li>`;
+      }).join('')}</ol>
+    </div>`;
+}
+
+/** Les deux façons de payer. */
+function formulesHTML(d, { ouvert } = {}) {
+  const o = d.offre ?? {};
+  if (!o.aAcheter?.length) return '';
+  const vitrine = ouvert === false;
+  const deux = o.couvre?.length > 1;
+  const quoi = deux ? `PASS ${o.couvre.map((p) => p.numero).join(' + ')}` : `PASS ${o.couvre?.[0]?.numero ?? ''}`;
+  const packs = Number(o.article?.packs) || 0;
+  const euros = o.article ? `<button type="button" class="tbf-plaque pass-formule" data-ton="or"
+      data-article="${esc(o.article.id)}"${vitrine ? ' disabled' : ''}
+      aria-label="${esc(`Prendre le ${quoi} — ${o.article.prixTexte}, payé une fois`)}">
+      <small>${esc(quoi)}</small><b>${esc(o.article.prixTexte)}</b>
+      <small>payé une fois</small>
+      ${packs ? `<small>${esc(`+${pluriel(packs, 'booster', 'boosters')} dès l’achat`)}</small>` : ''}
+      ${deux ? '<span class="tbf-sticker">2 saisons</span>' : ''}</button>` : '';
+  const assez = Number(d.echarpes) >= Number(o.echarpes);
+  const echarpes = o.echarpes ? `<button type="button" class="tbf-plaque pass-formule"
+      data-echarpes${assez ? '' : ' disabled'}
+      aria-label="${esc(`Prendre le ${quoi} pour ${milliers(o.echarpes)} écharpes`)}">
+      <small>${esc(quoi)}</small><b>${esc(milliers(o.echarpes))} écharpes</b>
+      <small>${esc(assez ? `tu en as ${milliers(d.echarpes)}` : `il t’en manque ${milliers(o.echarpes - d.echarpes)}`)}</small>
+      ${packs ? `<small>${esc(`+${pluriel(packs, 'booster', 'boosters')} dès l’achat`)}</small>` : ''}</button>` : '';
+  return `<h2 class="tbf-cousu">Prendre le PASS</h2>
+    <div class="pass-formules">${euros}${echarpes}</div>
+    ${deux ? `<p class="pass-conditions">C’est le dernier mois de la saison : le PASS
+      vaut pour celle-ci <b>et</b> pour la suivante.</p>` : ''}
+    ${vitrine ? '' : `<p class="pass-conditions">Payé une fois, il ne se renouvelle jamais tout seul :
+      rien à résilier. En le prenant, tu acceptes les <a href="/conditions">conditions de vente</a>.</p>`}
+    ${vitrine ? '<p class="pass-beta">Pendant la bêta, le PASS s’offre depuis l’administration, ou se prend en écharpes.</p>' : ''}`;
+}
+
+/** Le défilé de la vitrine : une image à la fois, joué au script. */
+function defiler() {
+  const v = document.getElementById('vitrine');
+  if (!v) return;
+  const calme = matchMedia('(prefers-reduced-motion: reduce)').matches
+    || /animations/.test(document.documentElement.dataset.calme ?? '');
+  if (calme) return;
+  let i = 0;
+  setInterval(() => {
+    const imgs = [...v.querySelectorAll('img')];
+    if (imgs.length < 2) return;
+    imgs.forEach((im) => im.classList.remove('on'));
+    i = (i + 1) % imgs.length;
+    imgs[i].classList.add('on');
+  }, 2200);
+}
+
+/** L'Ultimate en tenue, en bandeau, si l'image existe. */
+function ultime(d) {
+  const p = passVitrine(d);
+  const u = window.TBF_ULTIME?.image?.('RP4', 2, p?.tenue);
+  const el = $('ult');
+  if (!el || !u || !p?.tenue) return;
+  el.innerHTML = `<img alt="L’Ultimate en tenue de la saison" src="${esc(u)}"><span>Ton Ultimate en tenue</span>`;
+  el.hidden = false;
 }
 
 (async () => {
-  /* L'état de l'abonnement, et le catalogue de la boutique pour une seule
-     chose : savoir si le paiement est branché (`ouvert`). Le catalogue est
-     public et sans base ; une panne de sa part ne coûte que le sticker
-     BIENTÔT. */
   const catalogue = fetch('/api/boutique/catalogue')
     .then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  /* **Une seule question à l'abonnement par page.** Le tiroir la pose aussi
-     (sa marque ABONNÉ) : la réponse se partage par la promesse posée sur la
-     fenêtre, `window.TBF_ABO` — comme `TBF_MOI` pour le compte, comme la
-     boutique et le KOP —, le premier qui passe la pose, l'autre la reprend.
-     Cette page passe la première : son script n'est pas différé, ceux de la
-     barre le sont.
-
-     Sa forme est celle de tous ses lecteurs : le corps d'une réponse
-     réussie, ou `null`, sans jamais lever. Un refus n'a donc pas de corps à
-     lire ici ; c'est le statut, retenu au passage, qui en dit la cause —
-     401, pas connecté ; aucun statut, serveur injoignable (ou une réponse
-     illisible, comme avant). Si un autre script avait posé la promesse
-     avant la page, le statut resterait inconnu, et le refus se dirait sans
-     sa cause plutôt que d'en inventer une. L'objet rendu est commun : on le
-     lit, on n'y écrit pas. */
+  /* Une seule question au PASS par page, partagée avec le tiroir
+     (`window.TBF_ABO`) : le corps d'une réponse réussie, ou `null`. */
   let statut;
-  const d = await (window.TBF_ABO ??= fetch('/api/abonnement', { credentials: 'same-origin' })
+  const lire = () => fetch('/api/abonnement', { credentials: 'same-origin' })
     .then((r) => { statut = r.status; return r.ok ? r.json() : null; })
-    .catch(() => { statut = 0; return null; }));
+    .catch(() => { statut = 0; return null; });
+  const d = await (window.TBF_ABO ??= lire());
   if (!d || d.error) {
     $('corps').innerHTML = statut === 0 ? '<div class="vide">Serveur injoignable.</div>'
       : statut === 401
-        ? '<div class="vide">Connecte-toi pour voir ton abonnement.<br><a href="/compte">Se connecter</a></div>'
-        : '<div class="vide">L’abonnement n’est pas disponible pour le moment.</div>';
+        ? '<div class="vide">Connecte-toi pour voir le PASS.<br><a href="/compte">Se connecter</a></div>'
+        : '<div class="vide">Le PASS n’est pas disponible pour le moment.</div>';
     return;
   }
   const ouvert = (await catalogue)?.ouvert;
-
-  /* **Les deux côtés viennent du serveur.** Cette page en avait recopié un —
-     « au lieu de 10 boosters » — et le réglage en disait douze. Un barème
-     recopié dans une page ment au premier ajustement fait depuis /admin, et
-     personne ne relit une page pour vérifier un nombre qu'il croit connaître.
-     La route rend donc `ouvre` **et** `sans`. */
   const o = d.ouvre ?? {};
   const sans = d.sans ?? {};
-
   const libre = (d.libre ?? []).map((x) => `<li><i class="tbf-ico tbf-ico-coche"
     aria-hidden="true"></i><span>${esc(x)}</span></li>`).join('');
 
-  /* **Le PASS en tête**, sous le chapeau. Abonné, il porte le tampon et
-     l'échéance — la réponse à la question qu'on vient poser. Sinon, ce que
-     le paiement donne, sans prix ni bouton : l'objet de la page se voit au
-     premier écran, et ce qui se paie attend en bas. */
-  const pass = passHTML(d, { ouvert });
-
-  /* **Le retour de Stripe.** On revenait du paiement sur une page muette : ni
-     « tu es abonné », ni ce que ça donne. Stripe ramène ici avec `?paye=1` ;
-     mais l'abonnement n'est posé qu'à l'arrivée du webhook, qui peut suivre
-     le retour de quelques secondes. On redemande donc l'état tant qu'il ne dit
-     pas « abonné », puis on recharge avec `?bienvenue=1` — la page se
-     redessine abonnée, et l'accueil s'ouvre par-dessus. */
+  /* Le retour de Stripe : le PASS n'est posé qu'à l'arrivée du webhook, qui
+     peut suivre le retour de quelques secondes. On redemande l'état, et le
+     serveur rattrape lui-même un webhook perdu (`/api/boutique/rattraper`). */
   const retour = new URLSearchParams(location.search);
   if (retour.has('paye') || retour.has('annule') || retour.has('bienvenue')) {
     history.replaceState(null, '', location.pathname);
   }
   if (retour.has('annule')) toast('Paiement annulé. Rien n’a été débité.');
-  /* **Et si le webhook s'est perdu**, le serveur demande lui-même à Stripe
-     si une commande en attente est payée (`/api/boutique/rattraper`). Sans
-     commande en attente, il ne demande rien à personne. */
   const rattraper = () => fetch('/api/boutique/rattraper', {
     method: 'POST', credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' }, body: '{}',
   }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  if (!d.abonne && !retour.has('paye')) {
+  const aPayer = (d.offre?.aAcheter ?? []).length > 0;
+  if (aPayer && !retour.has('paye')) {
     rattraper().then((r) => { if (r?.livre) location.replace('/abonnement?bienvenue=1'); });
   }
-  if (retour.has('paye') && !d.abonne) {
+  if (retour.has('paye') && aPayer) {
     (async () => {
       for (let i = 0; i < 12; i++) {
         if (i === 2 && (await rattraper())?.livre) {
           location.replace('/abonnement?bienvenue=1'); return;
         }
         await new Promise((r) => setTimeout(r, 1500));
-        const e = await fetch('/api/abonnement', { credentials: 'same-origin' })
-          .then((r) => (r.ok ? r.json() : null)).catch(() => null);
-        if (e?.abonne) { location.replace('/abonnement?bienvenue=1'); return; }
+        const e = await lire();
+        if (e && !(e.offre?.aAcheter ?? []).length) { location.replace('/abonnement?bienvenue=1'); return; }
       }
-      toast('Paiement reçu. Ton abonnement arrive dans un instant : recharge la page.');
+      toast('Paiement reçu. Ton PASS arrive dans un instant : recharge la page.');
     })();
   }
-  if ((retour.has('paye') || retour.has('bienvenue')) && d.abonne) {
-    const f = (d.formules ?? []).find((x) => x.formule === d.formule);
+  if ((retour.has('paye') || retour.has('bienvenue')) && d.actif) {
+    const packs = Number(d.offre?.article?.packs) || 0;
+    const p = passVitrine(d);
     const lignes = [
-      f?.packs ? `<li><b>+${esc(pluriel(f.packs, 'booster', 'boosters'))}</b> dans ta réserve, tout de suite</li>` : '',
-      ...portes(d.ouvre ?? {}, d.sans ?? {}).map((p) =>
-        `<li><b>${esc(p.n)}</b> : ${esc(p.avec)} <small>(au lieu de ${esc(p.sans)})</small></li>`),
+      packs ? `<li><b>+${esc(pluriel(packs, 'booster', 'boosters'))}</b> dans ta réserve, tout de suite</li>` : '',
+      p?.tenue ? '<li><b>La tenue de la saison</b> sur tous tes Fanzzy, au premier âge</li>' : '',
+      '<li><b>Ton badge</b> sur ta carte de supporter</li>',
+      ...portes(o, sans).slice(0, 3).map((x) =>
+        `<li><b>${esc(x.n)}</b> : ${esc(x.avec)} <small>(au lieu de ${esc(x.sans)})</small></li>`),
     ].join('');
     const attendre = () => (window.TBF_DIALOGUE ? Promise.resolve()
       : new Promise((r) => window.addEventListener('load', r, { once: true })));
     attendre().then(async () => {
       if (await window.TBF_DIALOGUE?.confirmer({
-        titre: 'BIENVENUE DANS LE PASS DE TRIBUNE',
-        texte: `Ton abonnement ${d.formule ?? ''} est actif${d.fin ? ` jusqu’au ${jour(d.fin)}` : ''}. Il se renouvelle seul, et tu peux le résilier ici quand tu veux.`,
+        titre: 'BIENVENUE DANS LE PASS',
+        texte: `Ton PASS est actif${d.fin ? ` jusqu’au ${jour(d.fin)}` : ''}. Il est payé une fois et ne se renouvelle pas tout seul.`,
         corps: lignes ? `<ul class="bienvenue">${lignes}</ul>` : '',
         oui: 'JOUER', non: 'FERMER', ton: 'or',
       })) location.href = '/';
     });
   }
 
-  /* **Ce qui reste libre, avant ce qui s'ouvre.** Un joueur qui arrive ici se
-     demande d'abord ce qu'on lui retire s'il ne paie pas. Tant qu'il n'a pas la
-     réponse, il ne lit pas le reste — et la réponse est « rien de ce qui se
-     joue ». */
   $('corps').innerHTML = `
-    ${pass ? `<div id="pass">${pass}</div>` : ''}
+    <div id="pass">${passHTML(d, { ouvert })}</div>
+    <div class="ult" id="ult" hidden></div>
+    ${voieHTML(d)}
     <div class="libre">
       <h2 class="tbf-cousu">Ce que tu gardes sans payer</h2>
       <ul>${libre}</ul>
-      <!-- Cette phrase est le cœur de la page, et elle passe avant le prix.
-           Quelqu'un qui arrive ici se demande d'abord ce qu'on lui retire
-           s'il refuse ; tant qu'il n'a pas la réponse, il ne lit pas le
-           reste. Elle est écrite à la deuxième personne et au présent : une
-           règle du jeu, pas un argument. -->
-      <p>Le classement ne mesure pas ce qu’on a payé. Tu peux ne jamais
-         t’abonner et finir premier : aucune carte, aucun format, aucun
-         classement ne se trouve derrière ce bouton.</p>
+      <p>Le classement ne mesure pas ce qu’on a payé : tout compte pour tous, sans
+         limite. Tu peux ne jamais prendre le PASS et finir premier — aucune carte,
+         aucun âge, aucun format ne se trouve derrière ce bouton.</p>
     </div>
 
     <div class="ouvre">
-      <h2 class="tbf-cousu">Ce que l’abonnement élargit</h2>
-      <!-- « Ouvre » laissait entendre qu'il y a des portes fermées. Il n'y en
-           a pas — c'est toute la promesse du bloc au-dessus. Ce que
-           l'abonnement fait, c'est élargir ce qui est déjà là. -->
-      <!-- **Un tableau, et non une liste.**
-
-           La liste disait « 24 boosters en réserve — au lieu de 5 ». C'est
-           exact, et il faut lire la phrase jusqu'au bout pour trouver le
-           second nombre, celui auquel on se compare. Un tableau met les deux
-           côte à côte : on voit l'écart avant d'avoir lu.
-
-           Les deux colonnes viennent du serveur — « ouvre » et « sans » — et
-           non d'un barème recopié ici. La page l'avait déjà fait une fois et
-           annonçait « au lieu de 10 » quand le réglage en disait douze. -->
+      <h2 class="tbf-cousu">Ce que le PASS ajoute</h2>
       <div class="tableau"><table class="compare">
         <thead><tr><th></th><th>Sans</th><th class="avec">Avec</th></tr></thead>
-        <!-- Chaque ligne qui arrive ici a ses deux valeurs : « portes » retire
-             celles à qui il en manque une. Il n'y a donc plus de repli à
-             écrire dans les cellules — ni tiret, ni « undefined ». -->
         <tbody>${portes(o, sans).map((p) => `<tr>
           <th scope="row"><b>${esc(p.n)}</b><small>${esc(p.sous)}</small></th>
           <td>${esc(p.sans)}</td>
@@ -678,51 +618,39 @@ function formulesHTML(d, { ouvert } = {}) {
       </table></div>
     </div>
 
-    ${d.abonne ? '<div class="gerer" id="gerer" hidden></div>' : `<div class="prendre" id="prendre">
-      <!-- Les formules du PASS, en dernier : ce qui reste libre et ce qui
-           s'élargit sont réglés, on peut proposer. Les formules sont côte à
-           côte — une seule mènerait au mensuel sans jamais dire que l'annuel
-           existe. Chaque bâche porte sa durée, son prix ramené au mois et ses
-           boosters du jour du paiement : sur deux boutons voisins, c'est ce
-           qu'on lit qui dit lequel on choisit. Tout vient du serveur, le nom,
-           le prix, le ruban, la durée et le nombre de boosters. -->
+    <div class="prendre" id="prendre">
       ${formulesHTML(d, { ouvert })}
-      <!-- Un serveur d'avant cette route ne rend pas « formules ». Plutôt que
-           de recopier ici les prix qu'on vient d'en sortir, on envoie là où
-           ils vivent : la boutique vend les mêmes articles. -->
-      ${(d.formules ?? []).length ? '' : `<a class="tbf-plaque tbf-bloc tbf-grande"
-        data-ton="or" href="/boutique#abonnement" style="width:100%">Voir les formules
-        à la boutique</a>`}
-      <p class="fin-mot">Résiliable quand tu veux, depuis cet écran :
-        l’échéance déjà payée court jusqu’au bout, tu gardes les tenues que tu
-        portes, et tes parties ne sont jamais effacées — c’est la lecture qui
-        raccourcit, et elle rouvre entièrement si tu reviens.</p>
-    </div>`}`;
+      ${aPayer ? '' : `<p class="fin-mot">${d.saison ? 'Tu as le PASS de cette saison.' : 'Aucune saison n’est en cours.'}
+        Le prochain se prend dès le dernier mois de la saison : il vaut alors pour elle et pour la suivante.</p>`}
+    </div>
+    ${d.ancien?.abonne ? '<div class="gerer" id="gerer" hidden></div>' : ''}`;
 
-  /* **Résilier, depuis cet écran.** La page le promettait et rien ne le
-   * permettait. Un abonnement offert par l'administration n'a rien à
-   * résilier : on le dit, sans bouton. Un abonnement payé demande son état à
-   * Stripe (résilié ou non), puis offre le bouton et une confirmation — deux
-   * gestes, pas plus.
-   */
+  defiler();
+  window.addEventListener('load', () => ultime(d), { once: true });
+  if (document.readyState === 'complete') ultime(d);
+
+  /* **L'ancien abonnement**, tant qu'il court : on peut encore le résilier
+     depuis cet écran (la loi le veut), et la question de départ suit. */
   const gerer = $('gerer');
-  const fin = d.fin ? `le ${jour(d.fin)}` : 'à la fin de la période payée';
+  const fin = d.ancien?.fin ? `le ${jour(d.ancien.fin)}` : 'à la fin de la période payée';
   async function etatGerer(r) {
+    if (!gerer) return;
     if (!r?.gerable) {
-      if (d.source === 'admin') {
-        gerer.innerHTML = '<p>Ton abonnement t’est offert : rien n’est prélevé, rien à résilier.</p>';
+      if (d.ancien?.source === 'admin') {
+        gerer.innerHTML = '<p>Ton ancien abonnement t’est offert : rien n’est prélevé, rien à résilier.</p>';
         gerer.hidden = false;
       }
       return;
     }
     gerer.hidden = false;
     gerer.innerHTML = r.resilie
-      ? `<p>Abonnement résilié : il s’arrête ${esc(fin)}, et plus rien ne sera prélevé.
-           Tu gardes tout jusque-là.</p>
-         <button type="button" class="tbf-plaque tbf-bloc" data-gerer="reprendre">Garder mon abonnement</button>`
-      : `<button type="button" class="tbf-plaque tbf-bloc" data-gerer="demander">Résilier mon abonnement</button>`;
+      ? `<p>Ton ancien abonnement s’arrête ${esc(fin)}, et plus rien ne sera prélevé.
+           Tu gardes tout jusque-là, puis le PASS de saison prend le relais.</p>`
+      : `<p>Ton ancien abonnement mensuel ou annuel court encore. Tu gardes tout jusqu’à
+           la fin de la période payée.</p>
+         <button type="button" class="tbf-plaque tbf-bloc" data-gerer="demander">Résilier mon ancien abonnement</button>`;
   }
-  if (d.abonne && gerer) {
+  if (gerer) {
     fetch('/api/boutique/abonnement', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null)).catch(() => null).then(etatGerer);
   }
@@ -731,7 +659,7 @@ function formulesHTML(d, { ouvert } = {}) {
     if (!b || b.disabled) return;
     const geste = b.dataset.gerer;
     if (geste === 'demander') {
-      gerer.innerHTML = `<p>Ton abonnement s’arrêtera ${esc(fin)}. Plus rien ne sera
+      gerer.innerHTML = `<p>Ton ancien abonnement s’arrêtera ${esc(fin)}. Plus rien ne sera
           prélevé, et tu gardes tout jusque-là.</p>
         <button type="button" class="tbf-plaque tbf-bloc" data-gerer="resilier">Confirmer la résiliation</button>
         <button type="button" class="tbf-plaque tbf-bloc" data-gerer="annuler">Ne rien changer</button>`;
@@ -743,15 +671,13 @@ function formulesHTML(d, { ouvert } = {}) {
       const raison = gerer.querySelector('input[name="raison"]:checked')?.value;
       if (!raison) { toast('Choisis une réponse, ou passe.'); return; }
       b.disabled = true;
-      /* Ce qui arrive à la réponse ne change rien à la résiliation, déjà faite :
-         on remercie dans tous les cas. */
       await fetch('/api/abonnement/depart', {
         method: 'POST', credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ raison, texte: gerer.querySelector('textarea')?.value ?? '' }),
       }).catch(() => null);
       etatGerer({ gerable: true, resilie: true });
-      toast('Merci, c’est noté.');
+      toast('Merci, c’est noté.', true);
       return;
     }
     b.disabled = true;
@@ -762,15 +688,12 @@ function formulesHTML(d, { ouvert } = {}) {
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.gerable) throw new Error();
-      toast(j.resilie ? `Résiliation enregistrée : ton abonnement s’arrête ${fin}.`
-        : 'Ton abonnement continue.');
-      /* **La question vient après**, une fois la résiliation faite : elle est
-         facultative et ne retarde rien (la loi le veut). */
+      toast(`Résiliation enregistrée : ton ancien abonnement s’arrête ${fin}.`, true);
       if (j.resilie && geste === 'resilier' && (d.raisonsDepart ?? []).length) {
         gerer.innerHTML = `<fieldset><legend>C’est fait. Une question, si tu veux bien :
             pourquoi tu pars ?</legend>
-          ${d.raisonsDepart.map((r) => `<label><input type="radio" name="raison"
-            value="${esc(r.cle)}">${esc(r.libelle)}</label>`).join('')}
+          ${d.raisonsDepart.map((x) => `<label><input type="radio" name="raison"
+            value="${esc(x.cle)}">${esc(x.libelle)}</label>`).join('')}
           <textarea maxlength="500" aria-label="Un mot de plus (facultatif)"
             placeholder="Un mot de plus (facultatif)"></textarea></fieldset>
           <button type="button" class="tbf-plaque tbf-bloc" data-gerer="raison">Envoyer</button>
@@ -784,45 +707,27 @@ function formulesHTML(d, { ouvert } = {}) {
     }
   });
 
-  /* **Le bouton menait à une boîte de dialogue disant « bientôt ».**
-   *
-   * Elle avait raison le jour où elle a été écrite. Depuis, la boutique sait
-   * ouvrir un abonnement Stripe — `mode: 'subscription'`, deux formules au
-   * catalogue — et c'est par elle que les joueurs s'abonnaient : cet écran-ci,
-   * celui qui explique l'abonnement, était le seul à ne pas pouvoir le vendre.
-   *
-   * Il appelle donc la même route que la boutique, avec le même corps : rien
-   * que l'identifiant de l'article. Le prix est décidé par le serveur, ici
-   * comme là-bas.
-   */
+  /* Payer en euros : la même route que la boutique, avec l'identifiant de
+     l'article et rien d'autre. Le prix est décidé par le serveur. */
   async function commander(article, bouton) {
     bouton.disabled = true;
     try {
       const r = await fetch('/api/boutique/commander', {
-        method: 'POST',
-        credentials: 'same-origin',
+        method: 'POST', credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ article }),
       });
       const j = await r.json().catch(() => ({}));
       if (r.status === 401) { location.href = '/compte'; return; }
       if (!r.ok || !j.url) {
-        /* Le cas de la vitrine : la boutique se monte sans clé Stripe et
-           refuse alors la commande. Si le catalogue ne l'avait pas dit, le
-           refus le dit : le PASS passe en vitrine — sticker BIENTÔT sur la
-           bâche du haut, formules hors service et phrase de la bêta en
-           bas —, plutôt que de laisser un bouton qui ne fait rien. Toute
-           autre panne se dit dans la pile. */
-        if (j.error === 'boutique.error.non_configuree' && !d.abonne) {
-          const haut = document.getElementById('pass');
-          if (haut) haut.innerHTML = passHTML(d, { ouvert: false });
-          const p = document.getElementById('prendre');
-          const garde = p?.querySelector('.fin-mot')?.outerHTML ?? '';
-          if (p) p.innerHTML = formulesHTML(d, { ouvert: false }) + garde;
+        if (j.error === 'boutique.error.non_configuree') {
+          $('pass').innerHTML = passHTML(d, { ouvert: false });
+          $('prendre').innerHTML = formulesHTML(d, { ouvert: false });
           return;
         }
         bouton.disabled = false;
-        toast('Le paiement n’est pas disponible pour le moment.');
+        toast(j.error === 'pass.error.deja' ? 'Tu as déjà ce PASS.'
+          : 'Le paiement n’est pas disponible pour le moment.');
         return;
       }
       location.href = j.url;
@@ -832,14 +737,43 @@ function formulesHTML(d, { ouvert } = {}) {
     }
   }
 
-  /* **Délégué, et sur l'attribut plutôt que sur deux identifiants.** Les deux
-     boutons étaient câblés un par un, avec le nom de l'article écrit ici : une
-     troisième formule au catalogue aurait donc paru à l'écran avec un bouton
-     qui ne fait rien — la pire des pannes sur un écran de paiement, puisque
-     tout a l'air normal. */
+  /* Payer en écharpes : une confirmation, puis le PASS tout de suite. */
+  async function enEcharpes(bouton) {
+    const prix = d.offre?.echarpes;
+    const ok = await window.TBF_DIALOGUE?.confirmer({
+      titre: 'PRENDRE LE PASS EN ÉCHARPES',
+      texte: `${milliers(prix)} écharpes pour le PASS. Elles se gagnent en jouant : aucun euro n’est en jeu.`,
+      oui: 'PRENDRE LE PASS', non: 'ANNULER', ton: 'or',
+    });
+    if (ok === false) return;
+    bouton.disabled = true;
+    try {
+      const r = await fetch('/api/abonnement/pass/echarpes', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: '{}',
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        bouton.disabled = false;
+        toast({ 'pass.error.pas_assez': 'Il te manque des écharpes.',
+          'pass.error.deja': 'Tu as déjà ce PASS.',
+          'pass.error.pas_de_saison': 'Aucune saison n’est en cours.',
+          'pass.error.echarpes_fermees': 'Le PASS ne se prend plus en écharpes.' }[j.error]
+          ?? 'Le PASS n’a pas pu se prendre. Réessaie dans un instant.');
+        return;
+      }
+      location.replace('/abonnement?bienvenue=1');
+    } catch {
+      bouton.disabled = false;
+      toast('Le PASS n’a pas pu se prendre. Réessaie dans un instant.');
+    }
+  }
+
   $('corps').addEventListener('click', (e) => {
     const b = e.target.closest('[data-article]');
-    if (b && !b.disabled) commander(b.dataset.article, b);
+    if (b && !b.disabled) { commander(b.dataset.article, b); return; }
+    const c = e.target.closest('[data-echarpes]');
+    if (c && !c.disabled) enEcharpes(c);
   });
 })();
 </script>

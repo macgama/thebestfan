@@ -676,30 +676,6 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     return prise ? { fixtureId: prise.fixtureId, room: rooms.get(prise.fixtureId) } : {};
   };
 
-  /**
-   * Les Virages classés qu'un joueur tient sans les avoir encore consommés :
-   * présent dans une autre salle au rang « classé », sans y avoir poussé.
-   *
-   * Le compteur de l'abonnement ne les voit pas — il lit les lignes de
-   * présence, et une ligne n'existe qu'à la première poussée. Deux onglets
-   * ouverts sur deux matchs avant tout chant se réserveraient donc chacun la
-   * dernière place, et les deux compteraient.
-   *
-   * Les partis n'y sont pas : qui a regardé une tribune et en est ressorti
-   * sans chanter ne doit pas perdre sa place dans celle où il va vraiment
-   * jouer. S'il revient dans la première, sa réservation s'y refait contre le
-   * compteur, qui voit alors la seconde.
-   */
-  function reservees(userId, saufFixture) {
-    let n = 0;
-    for (const [id, room] of rooms) {
-      if (id === saufFixture) continue;
-      const m = room.members.get(userId);
-      if (m && m.classe !== false && !m.presenceEcrite) n++;
-    }
-    return n;
-  }
-
   /* ------------------------------------------------------------- socket */
 
   io.on('connection', (socket) => {
@@ -935,39 +911,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         }
       }
 
-      /* **Ce Virage comptera-t-il au classement ?**
-
-         La question se pose ici, une seule fois, à l'entrée : au-delà de
-         `abo.virages_classes_jour`, un joueur sans abonnement entre quand
-         même et joue tout le match — il pousse, il chante, les
-         cartes-souvenirs tombent — mais sa ferveur ne rejoint pas le
-         classement. **Aucune porte ne se ferme**, c'est le compteur qui
-         s'arrête.
-
-         **Une fois la présence écrite, la salle ne recalcule plus** :
-         rejoindre à nouveau reprend la décision posée sur le membre — ou sur
-         le parti, que la salle garde tant que le match peut se jouer —,
-         sinon un match commencé compté cesserait de l'être parce qu'un
-         tunnel a coupé le réseau.
-
-         **Avant, ce n'est qu'une réservation, et elle se refait.** Le compteur
-         lit les lignes de présence, et une ligne n'existe qu'à la première
-         poussée. Garder au parti une décision jamais consommée laisserait
-         regarder trois tribunes au coup d'envoi, ressortir, puis revenir
-         chanter dans les trois — trois Virages classés sur un plafond d'un.
-         Voir aussi `reservees`, plus bas, pour deux onglets ouverts à la fois.
-
-         Une panne de ce compte **ne ferme rien** : on compte au classement,
-         comme avant. Un plafond qui se déclenche sur une erreur de base
-         punirait sans raison et ne se verrait nulle part. */
-      let reste = null;
-      if (abonnement && !connu?.presenceEcrite) {
-        try {
-          reste = await abonnement.viragesClassesRestants(u.userId);
-        } catch (e) {
-          console.warn('[virage] plafond illisible pour', u.userId, '·', e.message);
-        }
-      }
+      /* **Tout Virage compte au classement**, pour tous (choix de Gaël du
+         2 novembre 2026 : le plafond de Virages comptés par jour sans
+         abonnement a disparu avec l'abonnement). */
 
       /* **La ventilation de ce qu'il porte**, construite ici parce que c'est le
          seul endroit où les morceaux existent encore séparément : plus bas, il
@@ -1028,12 +974,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       attacher(socket, room.fixture.id, u.userId);
       if (process.env.VIRAGE_DEBUG) console.log('[virage] join', u.userId, '->', room.fixture.id);
 
-      /* La réservation se pèse ici, sans plus rien attendre, et après le
-         détachement : deux entrées en vol sur deux matchs liraient sinon le
-         même compteur et se réserveraient chacune la dernière place, et une
-         socket qui change de match se compterait elle-même dans la salle
-         qu'elle quitte. */
-      const classe = reste === null || reste - reservees(u.userId, room.fixture.id) > 0;
+      const classe = true;
 
       socket.emit('virage:state',
         room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions,

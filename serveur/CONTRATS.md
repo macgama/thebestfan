@@ -1648,9 +1648,9 @@ fenêtre du geste).
 | `GET /api/deck/match/:id` | `enJeu` | la forme de la liste | ce qu'une victoire rapporterait dans chaque format, calculé sur le `mode` que cette réponse sert, par la même formule que la liste | jamais sur une réponse 200 : la route refuse (400) un match où l'on ne peut plus entrer |
 | `GET /api/deck/matchs`, chaque match ; `GET /api/deck/match/:id` | `stade` | `{ "id", "nom", "effet" }` | le stade du match : celui de son Grand Virage et de **tous** ses duels, tiré sur l'identifiant du match parmi les stades qu'une saison a ouverts (`stadeDuMatch`, `src/server/contenus/index.js`). La forme du `stade` de la vue du duel (`nvn:start`, `nvn:state`) : `id` nomme le dessin (`/img/stade/<id>-mini`), `nom` et `effet` s'écrivent tels quels (R7) | jamais |
 
-- `enJeu` : **les mêmes montants pour tous, abonnés compris** (R9). Un format
-  qu'un joueur gratuit ne peut pas jouer classé est refusé à l'entrée
-  (`format_classe_abonne`, `duels_classes_epuises`), jamais payé autrement.
+- `enJeu` : **les mêmes montants pour tous, PASS ou non** (R9). Depuis le PASS
+  de saison (2 novembre 2026), tous les formats se jouent classés pour tous,
+  sans plafond par jour (`serveur/PASS.md`).
   L'XP n'y entre pas : elle ne double pas pour son club et ne dépend pas du
   format. Le serveur compte (barème, prime, double du club), l'écran nomme
   (« +60 écharpes en jeu ») et n'écrit rien sans ce champ.
