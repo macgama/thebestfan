@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**AN64 cligne des yeux** (branche `claude/project-thread-aamllz`, 2 novembre
+2026, demande de Gaël). Construction seule, **sans schéma**.
+
+- La Tisseuse des Vingt Écharpes (AN64) garde les yeux ouverts au repos dans sa
+  tenue de base, et cligne : ses yeux ouverts viennent de sa tenue
+  Apocalyptique, ses paupières de son ancien repos (0 crédit).
+- Après la mise en ligne : ouvrir la fiche d'AN64 et attendre un clignement.
+
+---
+
 **Les dessins des 24 pièces de club de DIE KURVE** (branche
 `claude/project-thread-jh1l0z`, 2 novembre 2026, demande de Gaël). Construction
 seule, **sans schéma**.
