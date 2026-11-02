@@ -11975,3 +11975,62 @@ html[data-calme~="animations"] .tbf-face *{animation:none!important}
   .tbf-pass-cadre[data-cadre="anime"]{animation:none}
 }
 html[data-calme~="animations"] .tbf-pass-cadre[data-cadre="anime"]{animation:none}
+
+/* ====================================================== la pub du PASS
+
+   `public/pass-pub.js` (Gaël, 2 novembre 2026) : la plaque « PASS 1 » posée
+   sur la scène de l'accueil, et le spot du jour, en plein écran, après le
+   chargement. Le spot se ferme toujours d'un geste. */
+.pass-plaque{position:absolute;z-index:5;top:62px;left:8px;display:inline-flex;align-items:center;gap:6px;
+  padding:4px 9px 4px 5px;text-decoration:none;font-family:var(--banner);line-height:1.05;
+  animation:tbf-pass-appel 2.8s ease-in-out infinite}
+.pass-plaque b{display:block;font-size:12px;letter-spacing:.05em}
+.pass-plaque small{display:block;font-size:9.5px;letter-spacing:.04em;opacity:.85;text-transform:uppercase}
+@keyframes tbf-pass-appel{0%,80%,100%{transform:rotate(-3deg) scale(1)}88%{transform:rotate(2deg) scale(1.07)}}
+
+.pass-spot{position:fixed;inset:0;z-index:9000;--pass:#c9772e;display:flex;flex-direction:column;
+  justify-content:flex-end;overflow:hidden;color:#F2EEE4;opacity:0;transition:opacity .3s ease;
+  background:radial-gradient(120% 70% at 50% 30%,color-mix(in srgb,var(--pass) 45%,#05070A) 0%,#05070A 70%)}
+.pass-spot.on{opacity:1}
+.pass-spot.pass-spot-part{opacity:0}
+.pass-spot-x{position:absolute;z-index:3;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;
+  width:40px;height:40px;border-radius:50%;border:1px solid rgba(242,238,228,.35);
+  background:rgba(5,7,10,.55);color:#F2EEE4;font-size:24px;line-height:1;cursor:pointer}
+.pass-spot-defile{position:absolute;inset:0 0 38% 0;display:grid;place-items:end center}
+.pass-spot-defile img{position:absolute;bottom:0;max-width:86%;max-height:92%;object-fit:contain;
+  opacity:0;transform:scale(.92) translateY(10px);transition:opacity .45s ease,transform 1.2s ease;
+  filter:drop-shadow(0 12px 22px rgba(0,0,0,.7))}
+.pass-spot-defile img.on{opacity:1;transform:scale(1.04) translateY(0)}
+.pass-spot-texte{position:relative;z-index:2;padding:0 20px calc(env(safe-area-inset-bottom,0px) + 22px);
+  background:linear-gradient(transparent,#05070A 28%)}
+.pass-spot-sur{display:inline-block;padding:3px 8px;border-radius:4px;background:#F5C33B;color:#07090C;
+  font-family:var(--banner);font-weight:700;font-size:11px;letter-spacing:.08em}
+.pass-spot h2{margin:8px 0 6px;font-family:var(--banner);font-weight:700;font-size:30px;line-height:1;
+  letter-spacing:.02em;text-transform:uppercase}
+.pass-spot h2 span{display:block;font-size:14px;letter-spacing:.12em;color:#F5C33B;margin-bottom:4px}
+.pass-spot-lignes{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:5px;font-size:14px}
+.pass-spot-lignes li{display:flex;gap:8px;align-items:center;opacity:0;transform:translateX(-12px);
+  animation:tbf-pass-ligne .45s ease forwards}
+.pass-spot-lignes li::before{content:"";width:8px;height:8px;flex:none;transform:rotate(45deg);
+  background:#F5C33B;box-shadow:0 0 8px #F5C33B}
+.pass-spot-lignes li:nth-child(1){animation-delay:.9s}
+.pass-spot-lignes li:nth-child(2){animation-delay:1.9s}
+.pass-spot-lignes li:nth-child(3){animation-delay:2.9s}
+.pass-spot-lignes li:nth-child(4){animation-delay:3.9s}
+@keyframes tbf-pass-ligne{to{opacity:1;transform:none}}
+.pass-spot-prix{margin:0 0 12px;font-family:var(--banner);font-weight:700;font-size:20px;color:#F5C33B}
+.pass-spot-prix small{display:block;margin-top:3px;font-family:var(--ui);font-weight:400;font-size:12px;
+  color:#F2EEE4;opacity:.85}
+.pass-spot-boutons{display:grid;gap:6px}
+.pass-spot-tard{background:none;border:0;color:#F2EEE4;opacity:.8;font-size:14px;padding:8px;cursor:pointer;
+  text-decoration:underline}
+.pass-spot-jauge{position:absolute;z-index:3;left:0;top:0;height:3px;width:100%;background:#F5C33B;
+  transform-origin:left;transform:scaleX(0);animation:tbf-pass-jauge 7s linear forwards}
+@keyframes tbf-pass-jauge{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){
+  .pass-plaque,.pass-spot-jauge{animation:none}
+  .pass-spot-lignes li{animation:none;opacity:1;transform:none}
+}
+html[data-calme~="animations"] .pass-plaque,
+html[data-calme~="animations"] .pass-spot-jauge{animation:none}
+html[data-calme~="animations"] .pass-spot-lignes li{animation:none;opacity:1;transform:none}
