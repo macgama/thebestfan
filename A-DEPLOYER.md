@@ -10,6 +10,9 @@ bouton « Tester le son » ne fait rien sur son S24+). Construction seule,
   par Chrome, version de Chrome, et un cadre « Erreurs de la page ».
 - Après la mise en ligne : /diagnostic sur le S24+, toucher le bouton,
   envoyer une capture de toute la page.
+
+---
+
 **La pub du PASS** (branche `claude/project-thread-0kw498`, 2 novembre 2026,
 demande de Gaël). Construction seule, **sans schéma**. À déposer avec ou après
 le PASS de saison ci-dessous.
