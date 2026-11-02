@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Les dessins des 24 pièces de club de DIE KURVE** (branche
+`claude/project-thread-jh1l0z`, 2 novembre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- Les 24 pièces SU ont leur image (mode rapide gratuit, 0 crédit). Elles
+  restent fermées : les ouvrir dans /admin CONTENUS, série SU.
+- Après la mise en ligne : ouvrir une pièce, la voir à la boutique et sur un
+  Fanzzy SU qui la porte (COMBO).
+
+---
+
 **LES PHÉNOMÈNES MÉTÉO redessinés, 36 Fanzzy de plus** (branche
 `claude/project-thread-dlq7nr`, 1er novembre 2026, demande de Gaël). Construction
 seule, **sans schéma**.
