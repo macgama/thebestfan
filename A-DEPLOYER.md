@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**LES GALÈRES DE DÉPLACEMENT redessinées, et MT23** (branche
+`claude/project-thread-dlq7nr`, 2 novembre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- 49 lignées GD sur 50 ont leurs images au nouveau style (cartes et bustes des
+  trois âges, états, portraits, clignement quand il se recale). GD32 garde le
+  rendu procédural : deux demi-planches sont refusées par le filtre du
+  fournisseur.
+- MT23 « Le Flocon Égaré » a enfin son dessin.
+- Après la mise en ligne : ouvrir la page GD de l'album et quelques fiches
+  (GD1, GD21, GD39 « Le Camp de Toile », GD42 « La Pèlerine des Stades »,
+  GD52), et la fiche de MT23.
+
 **AN64 cligne des yeux** (branche `claude/project-thread-aamllz`, 2 novembre
 2026, demande de Gaël). Construction seule, **sans schéma**.
 

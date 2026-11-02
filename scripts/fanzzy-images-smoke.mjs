@@ -291,7 +291,12 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      la sienne (une demi-planche à refaire) : d'ici là elle garde le rendu
      procédural, comme les autres cartes pas encore dessinées, et ses trois
      âges comptent ici. */
-  const DETTE = 150;
+  /* 150 → 118, le 2 novembre 2026. LES GALÈRES DE DÉPLACEMENT redessinées :
+     quarante-neuf lignées sur cinquante ont leurs images (cartes, états,
+     portraits), et MT23 a enfin la sienne. GD32 attend encore : le filtre du
+     fournisseur refuse ses demi-planches A des âges 1 et 2, elle garde le rendu
+     procédural et ses trois âges comptent ici. */
+  const DETTE = 118;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))
