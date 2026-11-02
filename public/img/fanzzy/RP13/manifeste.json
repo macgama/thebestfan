@@ -1,6 +1,6 @@
 {
   "id": "RP13",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fd5c8e021b11"
+          "sha": "fd5c8e021b11",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

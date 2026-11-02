@@ -1,6 +1,6 @@
 {
   "id": "RP8",
-  "rev": 16,
+  "rev": 25,
   "evolutions": {
     "e1": {
       "skins": {
@@ -69,7 +69,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "36ee5fac0351"
+          "sha": "36ee5fac0351",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -93,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b0472e0cfc6b"
+          "sha": "b0472e0cfc6b",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -105,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "aa45a00c19b0"
+          "sha": "aa45a00c19b0",
+          "cligne": true
         }
       }
     },
@@ -121,7 +124,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f38629699e0e"
+          "sha": "f38629699e0e",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -145,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5952b23eb00a"
+          "sha": "5952b23eb00a",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -157,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "75a542fb1467"
+          "sha": "75a542fb1467",
+          "cligne": true
         }
       }
     }

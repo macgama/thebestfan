@@ -1,6 +1,6 @@
 {
   "id": "VP13",
-  "rev": 1,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,43 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "08fa93aa99af"
+          "sha": "801392f6bee3"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "32ec6303ce9b"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "52ac49f47837"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "80d6d358f2fb"
         }
       }
     }

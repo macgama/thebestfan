@@ -16,6 +16,28 @@ puis **`npm run schema:appliquer`** (une colonne : `saisons.jeux`, dans
 
 ---
 
+**Les skins RP et AN clignent** (branche `claude/project-thread-xt5kg2`,
+2 novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
+
+- 330 tenues Halloween, Préhistorique et Apocalyptique de plus clignent
+  (retouches yeux fermés en crédits, accord de Gaël). Toutes les tenues RP et AN
+  clignent, sauf 9 qui ont déjà les yeux fermés au repos.
+- Après la mise en ligne : ouvrir une fiche AN ou RP en tenue et attendre un
+  clignement.
+
+---
+
+**Le Fanzzy garde la taille de son âge quand on change de tenue sur la fiche**
+(branche `claude/project-thread-4p06d7`, 2 novembre 2026, signalé par Gaël sur
+la Gamine au Pipeau en tenue préhistorique). Construction seule, **sans schéma**.
+
+- En choisissant une tenue ou une expression sur la fiche, le Fanzzy tombait à
+  la moitié de la carte : l'image changeait sans la taille de l'âge (90, 97,
+  104 % de la carte). Elle la prend maintenant, comme la carte au repos.
+- Après la mise en ligne : fiche de AN37, tenue Préhistorique.
+
+---
+
 **L'admin rangée en sept menus, avec un menu PASS** (branche
 `claude/project-thread-bxmiqd`, 2 novembre 2026, choix de Gaël). Construction
 seule, **sans schéma**.

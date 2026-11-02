@@ -1,6 +1,6 @@
 {
   "id": "AN35",
-  "rev": 16,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fdeb9354c610"
+          "sha": "fdeb9354c610",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -80,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "594a202c7827"
+          "sha": "594a202c7827",
+          "cligne": true
         },
         "halloween": {
           "etats": [
