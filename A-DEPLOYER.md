@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**L'admin rangée en sept menus, avec un menu PASS** (branche
+`claude/project-thread-bxmiqd`, 2 novembre 2026, choix de Gaël). Construction
+seule, **sans schéma**.
+
+- SAISONS · CATALOGUE (FANZZY, CONTENUS, SKINS) · PASS · RÉGLAGES · APERÇU
+  (EN JEU, JOURNAL) · JOUEURS (COMPTES, KOP) · COMPÉTITIONS. Aucun écran retiré.
+- Le menu PASS réunit : les PASS par saison (carte, écharpes, offerts), les
+  derniers PASS, les anciens abonnés encore en cours, pourquoi ils sont partis,
+  et les réglages du PASS (sortis de RÉGLAGES).
+- Puis : ouvrir /admin, menu PASS.
+
+---
+
 **Le PASS de saison remplace l'abonnement** (branche
 `claude/project-thread-0kw498`, 2 novembre 2026, choix de Gaël). **Avec
 schéma** : `npm run schema:appliquer` en SSH (pose `sql/pass.sql`, table
