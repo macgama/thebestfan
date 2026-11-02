@@ -1,6 +1,6 @@
 {
   "id": "RP15",
-  "rev": 6,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f70076a8742d"
+          "sha": "f70076a8742d",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5c8b62adc330"
+          "sha": "5c8b62adc330",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "004832b47706"
+          "sha": "004832b47706",
+          "cligne": true
         }
       }
     }
