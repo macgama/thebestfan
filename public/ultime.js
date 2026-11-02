@@ -1552,6 +1552,30 @@
     'SU36-e1': 'SU36-e1.bc16eec7.webp',
     'SU36-e2': 'SU36-e2.35d6d1d9.webp',
     'SU36-e3': 'SU36-e3.b0ef603d.webp',
+    'SU37-e1': 'SU37-e1.dad9cf03.webp',
+    'SU37-e1-apocalyptique': 'SU37-e1-apocalyptique.f412abcc.webp',
+    'SU37-e1-halloween': 'SU37-e1-halloween.3f0f04cf.webp',
+    'SU37-e1-prehistorique': 'SU37-e1-prehistorique.a939fe14.webp',
+    'SU38-e1': 'SU38-e1.aefd8b4c.webp',
+    'SU38-e1-apocalyptique': 'SU38-e1-apocalyptique.e693bb35.webp',
+    'SU38-e1-halloween': 'SU38-e1-halloween.f9b04f1c.webp',
+    'SU38-e1-prehistorique': 'SU38-e1-prehistorique.7d4fc107.webp',
+    'SU39-e1': 'SU39-e1.5af5e944.webp',
+    'SU39-e1-apocalyptique': 'SU39-e1-apocalyptique.be45ebee.webp',
+    'SU39-e1-halloween': 'SU39-e1-halloween.a9dcc58a.webp',
+    'SU39-e1-prehistorique': 'SU39-e1-prehistorique.d2f529ea.webp',
+    'SU40-e1': 'SU40-e1.572775f1.webp',
+    'SU40-e1-apocalyptique': 'SU40-e1-apocalyptique.02e57bca.webp',
+    'SU40-e1-halloween': 'SU40-e1-halloween.c2a9c994.webp',
+    'SU40-e1-prehistorique': 'SU40-e1-prehistorique.907c7d98.webp',
+    'SU41-e1': 'SU41-e1.e35b41bb.webp',
+    'SU41-e1-apocalyptique': 'SU41-e1-apocalyptique.e42df4b0.webp',
+    'SU41-e1-halloween': 'SU41-e1-halloween.ead9b80a.webp',
+    'SU41-e1-prehistorique': 'SU41-e1-prehistorique.20724efe.webp',
+    'SU42-e1': 'SU42-e1.cd1c9df0.webp',
+    'SU42-e1-apocalyptique': 'SU42-e1-apocalyptique.5bf76f4a.webp',
+    'SU42-e1-halloween': 'SU42-e1-halloween.8d555c98.webp',
+    'SU42-e1-prehistorique': 'SU42-e1-prehistorique.ffa02e34.webp',
   };
   /* IMAGES: fin */
 
@@ -1950,6 +1974,12 @@
     'SU36-e1': 'SU36-e1.04db510f.mp4',
     'SU36-e2': 'SU36-e2.49f5f67e.mp4',
     'SU36-e3': 'SU36-e3.84f707b2.mp4',
+    'SU37-e1': 'SU37-e1.fe441474.mp4',
+    'SU38-e1': 'SU38-e1.8513f759.mp4',
+    'SU39-e1': 'SU39-e1.7e3c2fd4.mp4',
+    'SU40-e1': 'SU40-e1.4068bc3d.mp4',
+    'SU41-e1': 'SU41-e1.1473235f.mp4',
+    'SU42-e1': 'SU42-e1.828a1199.mp4',
   };
   /* CLIPS: fin */
 
