@@ -1,6 +1,6 @@
 {
   "id": "AN48",
-  "rev": 12,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -52,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c2955067846b"
+          "sha": "c2955067846b",
+          "cligne": true
         }
       }
     },
@@ -135,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "009439e22e5a"
+          "sha": "009439e22e5a",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -147,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ed91091305e2"
+          "sha": "ed91091305e2",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -159,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4e94edb161ab"
+          "sha": "4e94edb161ab",
+          "cligne": true
         }
       }
     }

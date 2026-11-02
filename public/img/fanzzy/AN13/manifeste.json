@@ -1,6 +1,6 @@
 {
   "id": "AN13",
-  "rev": 14,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "41629de05335"
+          "sha": "41629de05335",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -135,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "83aa9082515b"
+          "sha": "83aa9082515b",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -147,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4a4d84acf857"
+          "sha": "4a4d84acf857",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

@@ -708,8 +708,9 @@
             const s = E()?.secours?.(r.src, true);
             if (s) img.src = s;
           };
-          img.classList.add('fz-pied');
-          img.src = r.src;
+          /* À la taille de son âge, comme la carte au repos (`cadrerImage`). */
+          if (C.cadrerImage) C.cadrerImage(img, r.src);
+          else { img.classList.add('fz-pied'); img.src = r.src; }
         }
       }
       window.FX?.animer?.(tilt);

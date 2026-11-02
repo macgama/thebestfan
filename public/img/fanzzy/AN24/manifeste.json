@@ -1,6 +1,6 @@
 {
   "id": "AN24",
-  "rev": 13,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -136,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "dcabb7bca3c9"
+          "sha": "dcabb7bca3c9",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -148,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "99d8917c72c3"
+          "sha": "99d8917c72c3",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -160,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0decfc97e2c7"
+          "sha": "0decfc97e2c7",
+          "cligne": true
         }
       }
     }
