@@ -1,6 +1,6 @@
 {
   "id": "VP35",
-  "rev": 2,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,31 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "88df3239de6b"
+          "sha": "364bd050a3e5"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "bac6f54f3ecb"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "24505932807f"
         }
       }
     },
@@ -28,8 +52,20 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "27a011c06372",
+          "sha": "9525846e4b8b",
           "cligne": true
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "18884810862d"
         }
       }
     },

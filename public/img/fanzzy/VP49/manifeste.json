@@ -1,6 +1,6 @@
 {
   "id": "VP49",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,31 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "2228e023a5cb"
+          "sha": "78b5bfcccf3f"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "f4dbc5b5e5d5"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "aed430f94e17"
         }
       }
     },
@@ -28,8 +52,32 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "e2ec6d2d8b20",
+          "sha": "d69caabf3099",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "49abc81f705a"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "00f5739e0c5e"
         }
       }
     },
@@ -44,7 +92,31 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7bc388e96b6d"
+          "sha": "989213df86ab"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "99343c9ef40f"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "dd9868204f01"
         }
       }
     }

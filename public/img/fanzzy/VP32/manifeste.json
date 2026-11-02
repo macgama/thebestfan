@@ -1,6 +1,6 @@
 {
   "id": "VP32",
-  "rev": 3,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,43 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "d75fd14dda2d"
+          "sha": "0362b8d79dab"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "c5697c32c198"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "50ff899b70b7"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "fbccf829b6ad"
         }
       }
     },
@@ -28,8 +64,44 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "71927ec5ba28",
+          "sha": "f97273fa90b9",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "742e5ec2f008"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "836c6fdaa54b"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "0e0d776a97c8"
         }
       }
     },
@@ -44,8 +116,20 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "c9d2d6d7cddd",
+          "sha": "d859d5474ad1",
           "cligne": true
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "938d0b73d423"
         }
       }
     }

@@ -1,6 +1,6 @@
 {
   "id": "VP26",
-  "rev": 3,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,8 +13,32 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "0abdaeaf6439",
+          "sha": "465b75fc88c8",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "e9086af6e6d2"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "46b25365f340"
         }
       }
     },
@@ -29,8 +53,20 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "f69474c224d9",
+          "sha": "ccf9e3592850",
           "cligne": true
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "bdb43db010af"
         }
       }
     },
