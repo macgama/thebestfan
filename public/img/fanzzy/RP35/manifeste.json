@@ -1,6 +1,6 @@
 {
   "id": "RP35",
-  "rev": 13,
+  "rev": 21,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4200dd9d1c04"
+          "sha": "4200dd9d1c04",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -68,7 +69,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "75b4bbe2499b"
+          "sha": "75b4bbe2499b",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -92,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "03e99b79c180"
+          "sha": "03e99b79c180",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -121,7 +124,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a712e2f8dfa7"
+          "sha": "a712e2f8dfa7",
+          "cligne": true
         },
         "base": {
           "etats": [
@@ -145,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "504268a46ecd"
+          "sha": "504268a46ecd",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -157,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "98e1c7f5d7ae"
+          "sha": "98e1c7f5d7ae",
+          "cligne": true
         }
       }
     }

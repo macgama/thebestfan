@@ -1,6 +1,6 @@
 {
   "id": "RP21",
-  "rev": 18,
+  "rev": 23,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4ac15d49ac1f"
+          "sha": "4ac15d49ac1f",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -51,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4d60de6e72b6"
+          "sha": "4d60de6e72b6",
+          "cligne": true
         }
       }
     },
@@ -67,7 +69,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d7de33cdf2e6"
+          "sha": "d7de33cdf2e6",
+          "cligne": true
         },
         "base": {
           "etats": [
