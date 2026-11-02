@@ -19,6 +19,31 @@ schéma** : `npm run schema:appliquer` en SSH (pose `sql/pass.sql`, table
 
 ---
 
+**Les six légendaires de DIE KURVE (SU37 à SU42)** (branche
+`claude/project-thread-z0t7i9`, 2 novembre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- La Fée de l’Edelweiss, le Sonneur du Grand Cor et le Saint-Bernard du Col
+  sont liés aux sélections suisses (hommes, femmes, espoirs) ; la Messagère des
+  Quatre Langues, le Géant du Röstigraben et la Marmotte du Premier Sifflet au
+  championnat suisse. Cartes, états, trois skins et clignement (22 tenues sur
+  24 : l’Apocalyptique du Saint-Bernard et de la Messagère n’a encore que trois
+  états). Ils sortent avec la série, dans le booster DIE KURVE.
+- Après la mise en ligne : ouvrir la page SU de l’album et la fiche de SU42.
+
+**LES GALÈRES DE DÉPLACEMENT redessinées, et MT23** (branche
+`claude/project-thread-dlq7nr`, 2 novembre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- 49 lignées GD sur 50 ont leurs images au nouveau style (cartes et bustes des
+  trois âges, états, portraits, clignement quand il se recale). GD32 garde le
+  rendu procédural : deux demi-planches sont refusées par le filtre du
+  fournisseur.
+- MT23 « Le Flocon Égaré » a enfin son dessin.
+- Après la mise en ligne : ouvrir la page GD de l'album et quelques fiches
+  (GD1, GD21, GD39 « Le Camp de Toile », GD42 « La Pèlerine des Stades »,
+  GD52), et la fiche de MT23.
+
 **AN64 cligne des yeux** (branche `claude/project-thread-aamllz`, 2 novembre
 2026, demande de Gaël). Construction seule, **sans schéma**.
 

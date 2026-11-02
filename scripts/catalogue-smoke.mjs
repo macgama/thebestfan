@@ -172,9 +172,9 @@ console.log('\nLes séries');
  * la retire. Une exemption qu'on oublie là devient une règle morte.
  *
  * Tombée le 28 octobre 2026 : LES TERRACES a ses six légendaires (AN61 à
- * AN66). DIE KURVE (SU) arrive sans les siens : elle y reste jusqu'à leur
- * venue. */
-const SANS_SOMMET_ENCORE = new Set(['SU']);
+ * AN66). Puis le 2 novembre 2026 pour DIE KURVE, avec SU37 à SU42 : il n'en
+ * reste aucune. */
+const SANS_SOMMET_ENCORE = new Set([]);
 {
   const manque = [];
   const exemptees = [];
