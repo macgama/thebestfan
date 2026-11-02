@@ -1,6 +1,6 @@
 {
   "id": "AN54",
-  "rev": 14,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -136,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "514605a2c4d5"
+          "sha": "514605a2c4d5",
+          "cligne": true
         },
         "halloween": {
           "etats": [

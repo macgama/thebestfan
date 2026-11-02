@@ -1,6 +1,6 @@
 {
   "id": "RP12",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6fc66fc6d95f"
+          "sha": "6fc66fc6d95f",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

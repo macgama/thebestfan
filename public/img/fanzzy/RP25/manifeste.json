@@ -1,6 +1,6 @@
 {
   "id": "RP25",
-  "rev": 17,
+  "rev": 19,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "39f5a5adb166"
+          "sha": "39f5a5adb166",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -68,7 +69,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ac120848cc0a"
+          "sha": "ac120848cc0a",
+          "cligne": true
         },
         "base": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "RP31",
-  "rev": 17,
+  "rev": 19,
   "evolutions": {
     "e1": {
       "skins": {
@@ -94,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9b338ab77bcc"
+          "sha": "9b338ab77bcc",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -106,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9eadd1715e83"
+          "sha": "9eadd1715e83",
+          "cligne": true
         }
       }
     },

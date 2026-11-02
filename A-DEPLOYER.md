@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Les skins RP et AN clignent** (branche `claude/project-thread-xt5kg2`,
+2 novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
+
+- 330 tenues Halloween, Préhistorique et Apocalyptique de plus clignent
+  (retouches yeux fermés en crédits, accord de Gaël). Toutes les tenues RP et AN
+  clignent, sauf 9 qui ont déjà les yeux fermés au repos.
+- Après la mise en ligne : ouvrir une fiche AN ou RP en tenue et attendre un
+  clignement.
+
+---
+
 **Le Fanzzy garde la taille de son âge quand on change de tenue sur la fiche**
 (branche `claude/project-thread-4p06d7`, 2 novembre 2026, signalé par Gaël sur
 la Gamine au Pipeau en tenue préhistorique). Construction seule, **sans schéma**.
