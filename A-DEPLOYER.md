@@ -10,7 +10,16 @@ seule, **sans schéma**.
   fournisseur.
 - MT23 « Le Flocon Égaré » a enfin son dessin.
 - Après la mise en ligne : ouvrir la page GD de l'album et quelques fiches
-  (GD1, GD21, GD39 « Le Camp de Toile », GD52), et la fiche de MT23.
+  (GD1, GD21, GD39 « Le Camp de Toile », GD42 « La Pèlerine des Stades »,
+  GD52), et la fiche de MT23.
+
+**AN64 cligne des yeux** (branche `claude/project-thread-aamllz`, 2 novembre
+2026, demande de Gaël). Construction seule, **sans schéma**.
+
+- La Tisseuse des Vingt Écharpes (AN64) garde les yeux ouverts au repos dans sa
+  tenue de base, et cligne : ses yeux ouverts viennent de sa tenue
+  Apocalyptique, ses paupières de son ancien repos (0 crédit).
+- Après la mise en ligne : ouvrir la fiche d'AN64 et attendre un clignement.
 
 ---
 
