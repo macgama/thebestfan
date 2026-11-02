@@ -367,16 +367,17 @@ console.log('\nLes doublons de dessin');
      entre deux contrôles qui n'en ont pas. */
   const { DEX } = await import('../src/shared/fanzzy/dex.js');
 
-  const empreinte = async (f) => {
+  const empreinte = async (f, n = 8) => {
     const { data } = await sharp(f).flatten({ background: '#000000' })
-      .greyscale().resize(9, 8, { fit: 'fill' }).raw()
+      .greyscale().resize(n + 1, n, { fit: 'fill' }).raw()
       .toBuffer({ resolveWithObject: true });
     const bits = [];
-    for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 8; x++) bits.push(data[y * 9 + x] > data[y * 9 + x + 1] ? 1 : 0);
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) bits.push(data[y * (n + 1) + x] > data[y * (n + 1) + x + 1] ? 1 : 0);
     }
     return bits;
   };
+  const ecart = (a, b) => a.reduce((n, v, k) => n + (v === b[k] ? 0 : 1), 0);
 
   /* Les âges d'une même lignée sont exclus : ils se ressemblent par
      construction, c'est le personnage qui vieillit, et les compter noierait
@@ -398,7 +399,7 @@ console.log('\nLes doublons de dessin');
   for (const f of DEX.filter((x) => x.publie !== false)) {
     const p = new URL(`${f.id}.png`, DOSSIER);
     if (!existsSync(p)) continue;
-    liste.push({ id: f.id, nom: f.nom, racine: racine.get(f.id) ?? f.id,
+    liste.push({ id: f.id, nom: f.nom, racine: racine.get(f.id) ?? f.id, chemin: fileURLToPath(p),
       // `fileURLToPath` : sharp veut un chemin, pas une URL — et l'erreur qu'il
       // rend (« Unsupported input … of type object ») ne dit pas laquelle.
       bits: await empreinte(fileURLToPath(p)) });
@@ -408,8 +409,18 @@ console.log('\nLes doublons de dessin');
   for (let i = 0; i < liste.length; i++) {
     for (let j = i + 1; j < liste.length; j++) {
       if (liste[i].racine === liste[j].racine) continue;
-      const d = liste[i].bits.reduce((n, v, k) => n + (v === liste[j].bits[k] ? 0 : 1), 0);
-      if (d <= 2) jumeaux.push([liste[i], liste[j], d]);
+      const d = ecart(liste[i].bits, liste[j].bits);
+      if (d > 2) continue;
+      /* **Confirmation en 256 bits.** Soixante-quatre bits ne suffisent plus à
+         départager plus de mille cartes sur le même fond plat : le 2 novembre,
+         VP4 (un homme à écharpe beige) et AN25B (un contrôleur en bleu) sont
+         tombés sur la même empreinte, deux personnages que rien ne rapproche.
+         Le même rendu livré deux fois reste presque identique à 16 × 16 ; deux
+         dessins différents s'y séparent (mesuré le 2 novembre sur le catalogue : un même rendu reste à 15 bits ou moins, deux dessins différents passent 38). On ne garde donc la paire que si
+         l'empreinte fine confirme, sans liste d'exceptions à tenir. */
+      if (!liste[i].fine) liste[i].fine = await empreinte(liste[i].chemin, 16);
+      if (!liste[j].fine) liste[j].fine = await empreinte(liste[j].chemin, 16);
+      if (ecart(liste[i].fine, liste[j].fine) <= 24) jumeaux.push([liste[i], liste[j], d]);
     }
   }
 
