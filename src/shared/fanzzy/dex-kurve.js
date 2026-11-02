@@ -469,7 +469,7 @@ const PREMIERS_AGES = [
       + 'l’hiver. Au premier sifflet du printemps, c’est elle qui siffle, et toute la montagne '
       + 'se réveille.',
     mods: { perfectBonus: 1.46, refundBonus: 1.32, backfire: 1.45 },
-    cri: { label: 'LA SAISON SE RÉVEILLE', gest: 'compte', power: 82 } },
+    cri: { label: 'LA SAISON SE RÉVEILLE', gest: 'relance', power: 82 } },
 ];
 
 export const DEX_KURVE = PREMIERS_AGES.map((f) => ({ ...f, set: SET_KURVE.id }));
