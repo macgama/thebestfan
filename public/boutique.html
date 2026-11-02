@@ -394,11 +394,11 @@ body{padding-bottom:calc(var(--bas) + 40px)}
          lit « l'argent réel n'achète que l'abonnement » juste en dessous doit
          pouvoir y aller d'un geste. -->
     <a class="vers-abo" href="/abonnement">
-      <b>L’ABONNEMENT</b>
-      <span>Ce qu’il ouvre, et ce qu’il ne change pas</span>
+      <b>LE PASS DE SAISON</b>
+      <span>Sa tenue, son badge, sa voie, et ce qui reste gratuit</span>
       <i aria-hidden="true">›</i>
     </a>
-    <p class="abo-conditions">En t’abonnant, tu acceptes les <a href="/conditions">conditions de vente</a>.</p>
+    <p class="abo-conditions">En prenant le PASS, tu acceptes les <a href="/conditions">conditions de vente</a>.</p>
   </section>
 
   <p class="mot" id="mot"></p>
@@ -1625,8 +1625,8 @@ async function porterTenue(m, t) {
 
 /* ======================================================= la vitrine en euros
 
-   **L'argent réel n'achète que l'abonnement**, et il le fait par Stripe. Le
-   rayon de l'abonnement est le PASS DE TRIBUNE : la bâche or, le cadeau du
+   **L'argent réel n'achète que le PASS de saison** (7,99 €, une fois, jamais
+   renouvelé), et il le fait par Stripe. Son rayon est le PASS DE SAISON : la bâche or, le cadeau du
    jour du paiement — le nombre de boosters que les formules portent,
    `/api/abonnement`, jamais un nombre écrit ici —, puis les formules en
    bâches. En vitrine (paiement pas branché), les bâches sont hors service et
@@ -1639,17 +1639,18 @@ const formuleDe = (id) => (S.abo?.formules ?? []).find((f) => f.id === id) ?? nu
 function bacheFormule(a, ouvert) {
   const f = formuleDe(a.id);
   const mois = Number(f?.mois) || null;
-  const periode = mois === 1 ? ' / MOIS' : mois === 12 ? ' / AN' : mois ? ` / ${mois} MOIS` : '';
+  const periode = f?.formule === 'pass' ? ' · LA SAISON'
+    : mois === 1 ? ' / MOIS' : mois === 12 ? ' / AN' : mois ? ` / ${mois} MOIS` : '';
   const packs = Number(f?.packs) || 0;
   const lignes = [
     `<small>${esc(a.nom)}</small>`,
     `<b>${esc(a.prixTexte)}${periode}</b>`,
-    f?.parMois && mois > 1 ? `<small>${esc(`soit ${f.parMois} par mois`)}</small>` : '',
+    f?.formule !== 'pass' && f?.parMois && mois > 1 ? `<small>${esc(`soit ${f.parMois} par mois`)}</small>` : '',
     packs ? `<small>${esc(`+${pluriel(packs, 'booster', 'boosters')} au paiement`)}</small>` : '',
   ].join('');
   return `<button type="button" class="tbf-plaque pass-formule" data-art="${esc(a.id)}"${
     a.marque && ouvert ? ' data-ton="or"' : ''}${ouvert ? '' : ' disabled'}
-    aria-label="${esc(`M’abonner — ${a.nom}, ${a.prixTexte}${periode.toLowerCase()}`)}">${lignes}${
+    aria-label="${esc(`Acheter — ${a.nom}, ${a.prixTexte}${periode.toLowerCase()}`)}">${lignes}${
     a.marque ? `<span class="tbf-sticker">${esc(a.marque)}</span>` : ''}</button>`;
 }
 
@@ -1674,25 +1675,25 @@ function rendrePass() {
         <span><b>${esc(`${nombres.every((n) => n === max) ? '' : 'JUSQU’À '}${pluriel(max, 'BOOSTER', 'BOOSTERS')}`)}</b>
         <small>DÈS LE PAIEMENT</small></span></span>` : '';
     const abonne = S.abo && !S.abo.error && S.abo.abonne;
-    const etat = abonne ? `<span class="pass-etat"><span class="tbf-tampon tbf-tampon--plein" data-ton="vert">ABONNÉ</span>${
-      S.abo.formule || S.abo.fin !== undefined ? `<small>${esc([S.abo.formule,
-        S.abo.fin ? `jusqu’au ${new Date(S.abo.fin).toLocaleDateString('fr', { day: 'numeric', month: 'long', year: 'numeric' })}`
-          : 'sans terme'].filter(Boolean).join(' · '))}</small>` : ''}</span>` : '';
+    const etat = abonne ? `<span class="pass-etat"><span class="tbf-tampon tbf-tampon--plein" data-ton="vert">PASS ACTIF</span>${
+      S.abo.fin ? `<small>${esc(`jusqu’au ${new Date(S.abo.fin).toLocaleDateString('fr', { day: 'numeric', month: 'long', year: 'numeric' })}`)}</small>` : ''}</span>` : '';
+    const echarpes = Number(S.abo?.offre?.echarpes) || 0;
     return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
         <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
-        <b class="pass-titre">PASS DE TRIBUNE</b>
+        <b class="pass-titre">PASS DE SAISON</b>
         ${abonne ? etat : cadeau}
         ${!ouvert && !abonne ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
       </div>
       ${abonne ? '' : `<div class="pass-formules">${dedans.map((a) => bacheFormule(a, ouvert)).join('')}</div>
-        ${ouvert ? '' : '<p class="pass-beta">Pendant la bêta, l’abonnement s’offre depuis l’administration : demande-le.</p>'}`}`;
+        ${echarpes ? `<p class="pass-beta">Ou ${esc(echarpes.toLocaleString('fr'))} écharpes, sur <a href="/abonnement">la page du PASS</a>.</p>` : ''}
+        ${ouvert ? '' : '<p class="pass-beta">Pendant la bêta, le PASS s’offre depuis l’administration : demande-le.</p>'}`}`;
   }).join('');
   el.innerHTML = blocs;
 
   $('mot').innerHTML = (ouvert
     ? 'Les paiements passent par <b>Stripe</b>. Nous ne voyons jamais ton numéro de carte.'
     : 'La boutique est en <b>vitrine</b> : les paiements ne sont pas encore branchés.')
-    + '<br>L’argent réel n’achète que l’<b>abonnement</b>. Tout le reste — les '
+    + '<br>L’argent réel n’achète que le <b>PASS de saison</b>. Tout le reste — les '
     + 'boosters, les tenues, l’équipement — se paie en écharpes, et les écharpes '
     + 'se gagnent en jouant.';
 }
@@ -1890,7 +1891,7 @@ function rayons() {
     (S.etal?.stuff ?? []).length ? { id: 'equipement', nom: 'ÉQUIPEMENT' } : null,
     (S.etal?.tenues ?? []).length ? { id: 'tenues', nom: 'TENUES' } : null,
     (S.etal?.ultimes ?? []).length ? { id: 'ultimes', nom: 'ULTIMATE' } : null,
-    abo ? { id: 'abonnement', nom: 'ABONNEMENT' } : null,
+    abo ? { id: 'abonnement', nom: 'PASS' } : null,
   ].filter(Boolean);
 }
 

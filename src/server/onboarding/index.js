@@ -17,7 +17,7 @@ import { clubDe } from '../../shared/fanzzy/clubs.js';
    modules voisins, et deux sens pour un nom finissent par se confondre.
    Voir `tirerBienvenue`. */
 import { publies as jouables } from '../contenus/index.js';
-import { toutesTenues, tenuesPubliees } from '../fanzzy/tenues.js';
+import { toutesTenues } from '../fanzzy/tenues.js';
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 import { assurerBourse } from '../bourse.js';
 import { changementsDeLaSaison, devenirPrincipal, principauxDe } from '../football/principal.js';
@@ -182,12 +182,11 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    */
   async function buySlot(userId) {
     const w = (await q(`SELECT follow_slots, scarves FROM user_wallet WHERE user_id = ?`, [userId]))[0];
-    /* **L'abonnement lève le plafond, il n'offre pas l'emplacement.** Les
-       écharpes restent ce qu’il en coûte : c’est la même règle que pour le
-       niveau, qui « ouvre le droit d’en avoir un de plus » sans le donner.
-       On vend donc de la largeur, et le joueur la paie quand même. */
-    const enPlus = module.abonnement
-      ? module.abonnement.clubsEnPlus(await module.abonnement.estAbonne(userId)) : 0;
+    /* **Le PASS lève le plafond, il n'offre pas l'emplacement.** Un de plus
+       par PASS acheté, à vie (`pass.clubs_par_pass`). Les écharpes restent
+       ce qu’il en coûte : c’est la même règle que pour le niveau, qui « ouvre
+       le droit d’en avoir un de plus » sans le donner. */
+    const enPlus = module.abonnement ? await module.abonnement.clubsEnPlus(userId) : 0;
     const plafond = niveau
       ? Math.min(SLOTS_MAX, (await niveau.droitsDe(userId)).slots + enPlus)
       : SLOTS_MAX;
@@ -421,20 +420,17 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    * abonnement peut vendre sans toucher à l'équilibre — de l'identité, pas de
    * la puissance.
    *
-   * Un abonné peut porter n'importe quelle tenue **publiée** ; un joueur
-   * inscrit ne porte que celles qu'il a gagnées.
+   * Une tenue se porte quand on l'a gagnée : en booster, à l'étal, ou le long
+   * de la voie d'un PASS de saison (`shared/pass.js`). Le PASS 1 donne la
+   * tenue Préhistorique au premier âge dès l'achat, puis au deuxième et au
+   * troisième aux paliers suivants du carnet. Depuis le 2 novembre 2026, le
+   * PASS ne permet plus de porter **toutes** les tenues publiées.
    *
    * ## Et il la garde
    *
-   * La tenue prise pendant l'abonnement s'inscrit dans `user_skins` comme une
-   * autre : elle reste à lui quand l'abonnement s'arrête. C'est la règle que ce
-   * jeu s'est déjà donnée ailleurs — « fermer, c'est cesser de distribuer », une
-   * série qu'on referme n'efface pas les cartes de qui les possède. Reprendre
-   * une tenue qu'on a vue sur son personnage serait la seule chose qu'un
-   * collectionneur ne pardonne pas.
-   *
-   * Ce qui s'arrête à l'échéance est donc le droit d'en prendre de nouvelles,
-   * et non celles qu'on porte.
+   * La tenue prise par la voie du PASS s'inscrit dans `user_skins` comme une
+   * autre : elle reste à lui pour toujours. C'est la règle que ce jeu s'est
+   * déjà donnée ailleurs — « fermer, c'est cesser de distribuer ».
    */
   async function wearSkin(userId, fanzzyId, skinId, stade = null) {
     const s = stade ?? Number((await q(
@@ -447,13 +443,12 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       [userId, fanzzyId, s, skinId]);
 
     if (!owned.length) {
-      /* Non possédée. Un abonné la prend si elle est publiée ; les autres
-         reçoivent le refus d'avant, mot pour mot. */
-      const abonne = module.abonnement ? await module.abonnement.estAbonne(userId) : false;
-      const publiee = abonne && tenuesPubliees().some((t) => t.id === skinId);
-      if (!publiee) throw fail('onboarding.error.not_owned');
+      /* Non possédée. La tenue d'un PASS se prend si la voie de ce PASS a
+         atteint cet âge ; les autres reçoivent le refus d'avant, mot pour mot. */
+      const age = module.abonnement ? await module.abonnement.ageTenuePass(userId, skinId) : 0;
+      if (!(age >= s)) throw fail('onboarding.error.not_owned');
       /* Le personnage doit quand même être à lui : une tenue se porte sur
-         quelqu'un, et l'abonnement n'offre pas les Fanzzy. */
+         quelqu'un, et le PASS n'offre pas les Fanzzy. */
       const sien = await q(
         `SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`, [userId, fanzzyId]);
       if (!sien.length) throw fail('onboarding.error.not_owned');

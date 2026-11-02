@@ -437,7 +437,13 @@ que `raretes` les a rangées.
   le Virage joue comme avant, les duels gardent leurs points, et seul le
   Virage ne rapporte rien aux clubs (le journal le dit une fois).
 
-Contrôle : `SHOW TABLES;` doit en lister **62**.
+- `pass.sql` (2 novembre 2026) : le PASS de saison, `user_pass`, une ligne par
+  joueur et par saison. Une table neuve, sans clé étrangère, en dernier. **Sans
+  elle, rien ne casse** : personne n'a de PASS, et l'achat répond qu'il est
+  indisponible. Puis, une fois : `npm run pass:reprise-essai` et
+  `npm run pass:reprise` (voir `serveur/PASS.md`).
+
+Contrôle : `SHOW TABLES;` doit en lister **63**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

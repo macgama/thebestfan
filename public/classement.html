@@ -301,6 +301,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/pays.js"></script>
+<script src="/pass.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
@@ -537,7 +538,7 @@ function marche(x, i, L) {
   return `<li data-rang="${i + 1}"${colle}>${visage}
     <div class="tbf-podium-bache">
       <b class="tbf-podium-rang">${i + 1}</b>
-      <b class="tbf-podium-nom"><span>${nomSecable(L.nom)}</span></b>
+      <b class="tbf-podium-nom"><span>${nomSecable(L.nom)}${passDe(x)}</span></b>
       <span class="tbf-podium-val">${L.val}<span class="vh"> ${L.mot}</span></span>
     </div></li>`;
 }
@@ -596,6 +597,10 @@ function bulleDe(x, L) {
    du dessous se passe de séparateur orphelin : ce qui manque se retire avec
    le sien. Le mot de la valeur est en tête de colonne, et dit ici au seul
    lecteur d'écran. Une ligne qui a une bulle à ouvrir est un bouton. */
+/* L'écusson du PASS de saison, après le pseudo, quand la ligne le porte. */
+const passDe = (x) => (x?.pass && window.TBF_PASS
+  ? ` ${window.TBF_PASS.badge(x.pass)}` : '');
+
 function ligne(x, i, L, ecart) {
   const rang = i + 1;
   const visage = L.logo ? `<img src="${esc(L.logo)}" alt="">` : buste(x.avatar, L.nom, { taille: 28 });
@@ -605,7 +610,7 @@ function ligne(x, i, L, ecart) {
   const moi = qui && x.public_id && x.public_id === qui.id ? ' moi' : '';
   const pid = x.public_id ? ` data-pid="${esc(x.public_id)}"` : '';
   const corps = `<span class="rk">${rang}</span>${visage}
-    <span class="n"><b>${nomSecable(L.nom)}</b>${division || sous ? `<small>${division}${sous}</small>` : ''}</span>
+    <span class="n"><b>${nomSecable(L.nom)}${passDe(x)}</b>${division || sous ? `<small>${division}${sous}</small>` : ''}</span>
     ${delta(ecart(L.cle, rang), 'depuis ta dernière visite')}
     <span class="v">${L.val}<span class="vh"> ${L.mot}</span></span>`;
   return L.joueur && bulleDe(x, L).length

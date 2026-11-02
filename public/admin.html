@@ -1563,7 +1563,7 @@ const VUES = {
     $('main').innerHTML = `
       <div class="bar"><input id="q" placeholder="pseudo ou adresse" value="${esc(terme)}">
         <button class="mini" id="go">Chercher</button></div>
-      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>ABONNEMENT</th><th>ACTIONS</th></tr></thead>
+      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>PASS</th><th>ACTIONS</th></tr></thead>
       <tbody>${d.joueurs.map((u) => `
         <tr><td><b>${esc(u.pseudo)}</b>
           ${u.role==='admin'?'<span class="pill admin">ADMIN</span>':''}
@@ -1577,11 +1577,16 @@ const VUES = {
              demande une seconde question ; « jusqu'au 12 mars » y répond. Sans
              terme, on l'écrit : c'est ce qu'on pose à un bêta-testeur, rien ne
              l'expire, et ça doit se voir. -->
-        <td>${u.abonne
-          ? `<span class="pill vert">${esc(u.abo_formule ?? 'abonné')}</span><br>
+        <!-- Le PASS de saison : une pastille par saison achetée ou offerte, et
+             l'ancien abonnement tant qu'il court (il garde tout jusqu'à la fin
+             de sa période payée). -->
+        <td>${(u.pass ?? []).map((p) => `<span class="pill vert" title="${esc(p.source)}">PASS S${p.saison}</span>`).join(' ')
+          || (u.abonne ? '' : '<span style="opacity:.4">non</span>')}
+          ${u.abonne
+          ? `<br><span class="pill">${esc(u.abo_formule ?? 'abonné')}</span>
              <span style="opacity:.45;font-size:11px">${
                u.abo_fin ? 'jusqu’au ' + jour(u.abo_fin) : 'sans terme'}</span>`
-          : '<span style="opacity:.4">non</span>'}</td>
+          : ''}</td>
         <td class="act" data-id="${u.public_id}">
           <button class="mini vert" data-a="collection">Collection</button>
           <button class="mini" data-a="scarves">+100 éch.</button>
@@ -1595,10 +1600,10 @@ const VUES = {
                à quelqu'un, le second est un geste de service après-vente — un
                mois offert après un incident. Les deux sont journalisés, comme
                toute écriture d'administration. -->
-          ${u.abonne
-            ? '<button class="mini rouge" data-a="abo_retirer">Retirer l’abo</button>'
-            : `<button class="mini vert" data-a="abo_offrir">Offrir l’abo</button>
-               <button class="mini" data-a="abo_mois">+1 mois</button>`}
+          <button class="mini vert" data-a="pass_offrir">Offrir le PASS</button>
+          ${(u.pass ?? []).length ? `<button class="mini rouge" data-a="pass_retirer"
+            data-saison="${u.pass[u.pass.length - 1].saison}">Retirer le PASS S${u.pass[u.pass.length - 1].saison}</button>` : ''}
+          ${u.abonne ? '<button class="mini rouge" data-a="abo_retirer">Retirer l’ancien abo</button>' : ''}
         </td></tr>`).join('')}</tbody></table></div>`;
 
     const chercher = () => sansPerdreLaMain(() => VUES.joueurs($('q').value.trim()));
@@ -1615,16 +1620,34 @@ const VUES = {
       /* L'abonnement a ses propres routes : il ne se pose pas avec un `PATCH`
          sur le joueur, parce qu'il ne vit pas dans `users` mais dans sa propre
          table, avec sa formule et son échéance. Trois gestes, deux verbes. */
-      const abo = { abo_offrir: ['POST', { formule: 'offert', jours: null }],
-                    abo_mois:   ['POST', { formule: 'mensuel', jours: 30 }],
-                    abo_retirer:['DELETE', null] }[b.dataset.a];
+      /* Le PASS de saison : offert pour la saison en cours, ou retiré. */
+      if (b.dataset.a === 'pass_offrir' || b.dataset.a === 'pass_retirer') {
+        try {
+          if (b.dataset.a === 'pass_offrir') {
+            const r = await api('/joueur/' + id + '/pass', {}, 'POST');
+            recu(r.nouveau ? `PASS de la saison ${r.saison} offert.` : `il a déjà le PASS de la saison ${r.saison}.`);
+          } else {
+            await api('/joueur/' + id + '/pass/' + b.dataset.saison, null, 'DELETE');
+            recu(`PASS de la saison ${b.dataset.saison} retiré.`);
+          }
+          VUES.joueurs($('q')?.value ?? '');
+        } catch (err) {
+          recu(err.code === 'admin.error.abo_absent'
+            ? 'le module du PASS n’est pas monté : applique sql/pass.sql.'
+            : err.code === 'admin.error.pas_de_saison' ? 'aucune saison n’est lancée.'
+              : (err.raison ?? err.code), true);
+        }
+        return;
+      }
+
+      const abo = { abo_retirer:['DELETE', null] }[b.dataset.a];
       if (abo) {
         const [verbe, corpsAbo] = abo;
         try {
           await api('/joueur/' + id + '/abonnement', corpsAbo, verbe);
           recu(b.dataset.a === 'abo_retirer'
             ? 'abonnement retiré.'
-            : (b.dataset.a === 'abo_mois' ? 'un mois offert.' : 'abonnement offert, sans terme.'));
+            : 'abonnement retiré.');
           VUES.joueurs($('q')?.value ?? '');
         } catch (err) {
           recu(err.code === 'admin.error.abo_absent'

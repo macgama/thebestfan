@@ -226,8 +226,12 @@ export function createKop({ pool, requireAuth, io = null,
   async function creer(userId, teamId, nomBrut) {
     /* Le refus vient **en premier** : inutile de valider un nom et un club
        pour annoncer ensuite qu’on n’a pas le droit. */
-    if (abonnement && !(await abonnement.estAbonne(userId))) {
-      throw fail('kop.error.abonnement');
+    /* Un KOP à fonder par PASS acheté, à vie (`pass.kops_par_pass`) :
+       deux PASS, deux KOP. Rejoindre reste ouvert à tous. */
+    if (abonnement) {
+      const permis = await abonnement.kopsAutorises(userId);
+      const [f] = await q('SELECT COUNT(*) AS n FROM kops WHERE createur = ?', [userId]);
+      if (Number(f?.n ?? 0) >= permis) throw fail('kop.error.abonnement');
     }
     const nom = nomValide(nomBrut);
     if (!nom) throw fail('kop.error.nom');
