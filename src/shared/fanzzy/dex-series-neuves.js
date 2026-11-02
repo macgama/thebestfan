@@ -467,7 +467,7 @@ export const DEX_NEUVES = [
     mods: { parryBonus: 1.16, breathBonus: 0.92 },
     cri: { label: 'CHAMBRE 12', gest: 'tri', power: 45 } },
 
-  { id: 'GD42', nom: 'La Groundhoppeuse', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
+  { id: 'GD42', nom: 'La Pèlerine des Stades', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Elle veut voir un match dans tous les stades d’Europe, et elle coche son '
       + 'carnet à chaque nouvelle tribune.',
     mods: { parryBonus: 1.16, perfectBonus: 0.92 },
