@@ -730,14 +730,37 @@ function fondDeCarte(f) {
  * prenne la hauteur de son âge, pieds au même endroit.
  */
 const PART_CARTE = { 1: 0.9, 2: 0.97, 3: 1.04 };
+const ETAT_SRC = /\/img\/fanzzy\/([A-Z]+\d+)\/e(\d)\//;
+/** Le style qui donne au personnage d'une image d'état la taille de son âge
+    sur la carte, ou `null` si l'adresse n'est pas une image d'état mesurée. */
+function styleEtat(src) {
+  const m = ETAT_SRC.exec(String(src ?? ''));
+  const t = m ? window.TBF_ETATS?.taille?.(m[1], m[2], PART_CARTE[m[2]]) : null;
+  return t ? `height:${t.hauteur};bottom:calc(${t.bas} - 6%);translate:${t.decale} 0` : null;
+}
 function cadrerEtat(html) {
-  return html.replace(/<img class="illu fz-pied([^"]*)"([^>]*?) src="(\/img\/fanzzy\/([A-Z]+\d+)\/e(\d)\/[^"]+)"/g,
-    (tout, cls, entre, src, racine, evo) => {
-      const t = window.TBF_ETATS?.taille?.(racine, evo, PART_CARTE[evo]);
-      if (!t) return tout;
-      return `<img class="illu fz-pied${cls}" style="height:${t.hauteur};`
-        + `bottom:calc(${t.bas} - 6%);translate:${t.decale} 0"${entre} src="${src}"`;
+  return html.replace(/<img class="illu fz-pied([^"]*)"([^>]*?) src="(\/img\/fanzzy\/[A-Z]+\d+\/e\d\/[^"]+)"/g,
+    (tout, cls, entre, src) => {
+      const style = styleEtat(src);
+      return style ? `<img class="illu fz-pied${cls}" style="${style}"${entre} src="${src}"` : tout;
     });
+}
+/**
+ * **Une image déjà posée qui change de pose ou de tenue** (la fiche : on
+ * choisit une tenue, une expression). Elle prend la même taille d'âge que
+ * `cadrerEtat` donne au HTML : sans elle, la Gamine au Pipeau en tenue
+ * préhistorique tombait à la moitié de la carte, le cadre commun de l'âge
+ * réduit à 90 % au lieu du personnage (Gaël, 2 novembre 2026).
+ */
+function cadrerImage(img, src) {
+  if (!img) return;
+  img.classList.add('fz-pied');
+  const style = styleEtat(src);
+  img.style.height = '';
+  img.style.bottom = '';
+  img.style.translate = '';
+  if (style) img.style.cssText += `;${style}`;
+  img.src = src;
 }
 
 function portraitDeCarte(f, pied = false) {
@@ -1314,5 +1337,5 @@ function carteDuPaquet(c) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, LIEUX, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, lieuSrc, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid, ultimeDe };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, LIEUX, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cadrerImage, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, lieuSrc, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid, ultimeDe };
 })();
