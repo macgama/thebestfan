@@ -1,6 +1,6 @@
 {
   "id": "VP4",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,8 +13,20 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "aedab5d069ed",
+          "sha": "eb6531d9c123",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "b4c26114b66a"
         }
       }
     },
@@ -29,7 +41,43 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "c0a6014baa6b"
+          "sha": "e0cda1900b3c"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "7fb6af0832c0"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "6d390e0f08d6"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "0ff5e0fbba24"
         }
       }
     },
@@ -44,7 +92,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b76fb0e10658"
+          "sha": "90109326cebc"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "3e4daeac11f4"
         }
       }
     }
