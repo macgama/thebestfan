@@ -981,6 +981,251 @@ export const AGES = {
       + 'disparu, le dessert aussi, et personne ne s’en est plaint.', 'ON RESTE DEBOUT'],
   ],
 
+  VP16: [
+    ['La Coupe Tendue', 'Elle descend au virage et se tend vers chacun, pleine à ras bord. Elle trinque '
+      + 'maintenant avec tout le monde.', 'À LA VÔTRE'],
+    ['La Fontaine de Cristal', 'Grande fontaine de cristal, elle verse à boire à tout le virage par cent '
+      + 'petites coupes. Son bord tinte encore.', 'TOUT LE MONDE BOIT'],
+  ],
+
+  VP17: [
+    ['L’Hôtesse Qui Ouvre', 'Elle a rangé sa liste et elle tient la porte grande ouverte. Elle ne la lâche '
+      + 'plus jusqu’au coup d’envoi.', 'ENTREZ, ENTREZ'],
+    ['La Gardienne des Portes', 'Gardienne de mille portes, elle les ouvre toutes en même temps pour le virage. '
+      + 'Elle garde sa liste dans sa poche, par habitude.', 'TOUTES LES PORTES'],
+  ],
+
+  VP18: [
+    ['Le Petit-Four Partagé', 'Il descend au virage et se coupe en vingt morceaux. Chaque supporter en a un, '
+      + 'et il dessine un cœur sur le plateau.', 'UN CHACUN'],
+    ['La Pièce Montée', 'Grande pièce montée de la fête du virage, ses étages dessinent les couleurs du '
+      + 'club. La serviette en dentelle est tout en haut.', 'LA FÊTE EST SERVIE'],
+  ],
+
+  VP19: [
+    ['La Présidente des Bénévoles', 'Elle descend aider les bénévoles, les manches retroussées et l’écharpe au cou. '
+      + 'Elle la lève à chaque but.', 'ON VA LES AIDER'],
+    ['La Mécène du Virage', 'Jardinière du grand jardin du virage, elle fait pousser des écharpes comme des '
+      + 'fleurs. Le bouquet de la loge est à sa ceinture.', 'TOUT FLEURIT'],
+  ],
+
+  VP20: [
+    ['Le Parapluie Prêté', 'Sous l’averse, on le prête au virage, et il tient ouvert tout le match. '
+      + 'Personne ne le rend, personne ne le lâche.', 'TOUS DESSOUS'],
+    ['Le Grand Abri', 'Grand pavillon de toile, il abrite tout le virage sous la tempête. Sa poignée '
+      + 'de loge est toujours là.', 'L’ABRI TIENT'],
+  ],
+
+  VP21: [
+    ['Le Badge Prêté', 'Il passe de cou en cou dans le virage, et chacun entre à son tour. Il bipe la '
+      + 'mesure des chants.', 'BIP, ON ENTRE'],
+    ['Le Laissez-Passer de Tous', 'Héraut du stade, il porte un grand sceau qui ouvre tout à tout le monde. Il '
+      + 'bipe encore, par habitude.', 'TOUT LE MONDE ENTRE'],
+  ],
+
+  VP22: [
+    ['Le Cuisinier de la Buvette', 'Un jour, il descend à la buvette et fait sauter les frites à la chaîne. La '
+      + 'queue avance enfin.', 'ÇA SORT'],
+    ['Le Cuisinier du Peuple', 'Géant des grandes marmites, il nourrit tout le virage d’un seul coup de '
+      + 'louche. Il garde sa toque haute.', 'À LA SOUPE'],
+  ],
+
+  VP23: [
+    ['La Star Qui Chante', 'Elle découvre les chants du virage et les apprend tous. Elle pose encore, mais '
+      + 'au micro.', 'ON CHANTE, LÀ'],
+    ['La Voix de la Tribune', 'Meneuse de revue du virage, elle lance les chants depuis une grande estrade de '
+      + 'lumière. Elle garde ses lunettes de star.', 'TOUT LE MONDE AVEC MOI'],
+  ],
+
+  VP24: [
+    ['Le Siège Prêté', 'Il chauffe juste ce qu’il faut et on se le passe dans le rang. Chacun s’y '
+      + 'réchauffe à son tour.', 'À TOI'],
+    ['Le Trône Partagé', 'Grand banc royal du virage, il chauffe toute une rangée à la fois. Son bouton '
+      + 'de réglage est resté au maximum.', 'TOUS SUR LE TRÔNE'],
+  ],
+
+  VP25: [
+    ['La Trésorière du Petit Club', 'Elle tient bénévolement les comptes du club du quartier, centime par centime. '
+      + 'Grâce à elle, il y a des maillots.', 'UN, DEUX, TROIS MAILLOTS'],
+    ['La Gardienne du Coffre', 'Gardienne du trésor du club, elle veille sur un coffre plein d’écharpes et de '
+      + 'souvenirs. Son vieux tableau de chiffres est cloué au couvercle.', 'LE COFFRE EST PLEIN'],
+  ],
+
+  VP26: [
+    ['La Journaliste du Bord de Terrain', 'Elle descend au bord du terrain, le micro tendu vers la foule. Le virage lui '
+      + 'répond en écho.', 'ON VOUS ENTEND'],
+    ['La Voix des Tribunes', 'Grande reporter de radio, elle porte la voix du virage jusqu’au bout du pays. '
+      + 'Elle garde son micro de plateau.', 'EN DIRECT DU VIRAGE'],
+  ],
+
+  VP27: [
+    ['Le Plaid Partagé', 'Il descend au virage et couvre trois genoux, puis six. Il retient la chaleur '
+      + 'jusqu’au coup de sifflet.', 'SERREZ-VOUS'],
+    ['La Grande Couverture', 'Grand manteau de laine, il couvre tout un rang de virage sous la neige. Son '
+      + 'coin en cachemire est resté doux.', 'TOUT LE RANG AU CHAUD'],
+  ],
+
+  VP28: [
+    ['Le Voiturier du Car', 'Un soir, il prend le volant du car des supporters. Il a noué une écharpe sur '
+      + 'sa casquette.', 'TOUT LE MONDE MONTE'],
+    ['Le Cocher', 'Cocher de la grande diligence, il mène tout le virage au stade au galop. Il '
+      + 'garde ses gants blancs.', 'HUE, LE VIRAGE'],
+  ],
+
+  VP29: [
+    ['La Sommelière de la Buvette', 'Elle descend servir à la buvette, et elle tape la mesure sur le comptoir. Le '
+      + 'virage chante entre deux verres.', 'SERVEZ, SERVEZ'],
+    ['La Vendangeuse', 'Géante des vendanges, elle foule le raisin avec tout le virage dans une grande '
+      + 'cuve. Son tastevin brille encore.', 'ON FOULE'],
+  ],
+
+  VP30: [
+    ['Le Majordome du Virage', 'Il descend servir le thé au virage, et il range chacun à sa place, rang par '
+      + 'rang. Personne n’est oublié.', 'CHACUN SA TASSE'],
+    ['Le Grand Intendant', 'Grand maître du service, il fait tourner mille tasses autour du virage. Il est '
+      + 'toujours raide comme un piquet.', 'LE SERVICE COMMENCE'],
+  ],
+
+  VP31: [
+    ['Le Chapeau Lancé', 'Un soir de but, il vole au-dessus du virage, et on le relance de main en main. '
+      + 'Il revient toujours.', 'IL VOLE !'],
+    ['Le Chapeau Magique', 'Grand chapeau de magicien, il fait sortir de lui des colombes, des écharpes et '
+      + 'des confettis. Il est toujours bien droit.', 'ET HOP'],
+  ],
+
+  VP32: [
+    ['La Danseuse du Virage', 'Elle danse maintenant devant le virage, de plus en plus vite. Les tambours la '
+      + 'suivent.', 'PLUS FORT, PLUS VITE'],
+    ['La Reine du Carnaval', 'Reine du carnaval, elle mène le défilé en grand costume de plumes. Elle a '
+      + 'gardé ses pompons.', 'LE CARNAVAL ARRIVE'],
+  ],
+
+  VP33: [
+    ['Le Rideau Ouvert', 'Il s’ouvre un soir de derby, et la loge découvre le virage. Il ne s’est plus '
+      + 'jamais refermé.', 'ON OUVRE'],
+    ['Le Grand Rideau', 'Grand rideau de théâtre, il se lève sur le virage comme sur un spectacle. Son '
+      + 'velours de loge est toujours rouge.', 'RIDEAU !'],
+  ],
+
+  VP34: [
+    ['Le Chien du Virage', 'Il s’échappe du sac et file au virage, où il aboie à chaque but. On lui a noué '
+      + 'une écharpe.', 'WAF WAF WAF'],
+    ['Le Grand Chien de Garde', 'Grand chien de garde du stade, il veille sur toutes les portes. Il porte '
+      + 'encore son petit nœud.', 'PERSONNE NE PASSE'],
+  ],
+
+  VP35: [
+    ['La Notaire du Quartier', 'Elle rédige gratuitement les statuts de l’association des supporters. Elle se '
+      + 'souvient de chaque promesse signée.', 'C’EST ÉCRIT'],
+    ['La Gardienne des Actes', 'Gardienne du grand registre des promesses, elle garde la mémoire de tout le '
+      + 'virage. Son stylo plume ne coule plus.', 'RIEN NE S’OUBLIE'],
+  ],
+
+  VP36: [
+    ['La Fille Qui Descend', 'Elle descend au virage des enfants, l’écharpe par-dessus la robe. Elle la fait '
+      + 'tourner la première.', 'VENEZ, LES GOSSES'],
+    ['La Capitaine du Kop des Gosses', 'Capitaine pirate du kop des enfants, elle mène son navire à l’abordage du '
+      + 'match. Le nœud de sa robe flotte au mât.', 'À L’ABORDAGE'],
+  ],
+
+  VP37: [
+    ['La Vitrine Ouverte', 'Elle ouvre ses portes, et chaque supporter y pose un souvenir. Les objets '
+      + 'dessinent l’histoire du club.', 'APPORTEZ LES VÔTRES'],
+    ['Le Musée du Virage', 'Grand musée vivant du virage, ses salles sont pleines des souvenirs de tous. '
+      + 'La petite clé pend encore à sa porte.', 'TOUTE NOTRE HISTOIRE'],
+  ],
+
+  VP38: [
+    ['L’Ambassadeur Qui Chante', 'Il apprend les chants des deux camps et les chante à la même cadence. Les deux '
+      + 'virages se répondent.', 'LES DEUX CAMPS'],
+    ['Le Diplomate des Tribunes', 'Grand diplomate, il tend un pont de lumière entre les deux tribunes. Il serre '
+      + 'toujours toutes les mains.', 'LE PONT EST OUVERT'],
+  ],
+
+  VP39: [
+    ['La Couturière du Virage', 'Elle coud les bannières du virage, point par point. Son carnet est plein '
+      + 'd’écharpes.', 'UN POINT, DEUX POINTS'],
+    ['La Brodeuse des Bannières', 'Brodeuse de la grande bannière, elle déploie sur tout le virage une broderie '
+      + 'aux couleurs du club. Elle garde son carnet de croquis.', 'LA BANNIÈRE SE LÈVE'],
+  ],
+
+  VP40: [
+    ['Le Plateau de la Buvette', 'Il descend à la buvette et porte les frites, les cafés, les gaufres. On tape '
+      + 'dessus pour la mesure.', 'BOUM, BOUM, LES FRITES'],
+    ['Le Plateau de Tout le Rang', 'Géant qui sert tout le monde, il porte un plateau grand comme une tribune. Son '
+      + 'argent brille encore.', 'TOUT LE RANG MANGE'],
+  ],
+
+  VP41: [
+    ['La Mécène Qui Se Montre', 'Un jour, elle monte dans le car, et tout le monde la reconnaît. Elle bascule '
+      + 'd’un côté à l’autre du car pour saluer.', 'C’ÉTAIT MOI'],
+    ['La Bienfaitrice', 'Fée marraine du virage, elle distribue écharpes et billets d’un coup de '
+      + 'baguette. Elle signe encore ses chèques d’un seul trait.', 'POUR TOUT LE MONDE'],
+  ],
+
+  VP42: [
+    ['La Cheffe du Comité', 'Elle prend la tête du comité des supporters et tape du marteau à chaque '
+      + 'réunion. Tout avance plus vite.', 'ADOPTÉ'],
+    ['La Bâtisseuse', 'Bâtisseuse de la nouvelle tribune debout, elle cloue chaque marche avec le '
+      + 'virage. Son tableau de bord est accroché au chantier.', 'ON CONSTRUIT'],
+  ],
+
+  VP43: [
+    ['Le Billet Donné', 'On le donne à un gamin du quartier, et il lance la vague en entrant. Tout le '
+      + 'virage le suit.', 'LA VAGUE DU GAMIN'],
+    ['La Clé du Virage', 'Grande clé dorée, elle ouvre le virage à tous les gamins du quartier. Elle '
+      + 'garde le reflet doré du billet.', 'LE VIRAGE EST À VOUS'],
+  ],
+
+  VP44: [
+    ['Le Paon Qui Danse', 'Il fait la roue au rythme des chants, et ses plumes prennent les couleurs du '
+      + 'club. Le virage danse avec lui.', 'TOUS EN COULEURS'],
+    ['Le Paon du Virage', 'Danseur de parade, il ouvre une roue grande comme tout le virage. Il pose '
+      + 'encore un peu pour la photo.', 'LA ROUE S’OUVRE'],
+  ],
+
+  VP45: [
+    ['La Pianiste du Virage', 'Elle joue les chants du virage sur un vieux piano à roulettes. Tout le monde '
+      + 'chante à sa mesure.', 'DO, RÉ, MI, ALLEZ'],
+    ['L’Orgue du Stade', 'Organiste du grand orgue du stade, elle fait trembler le toit à chaque note. '
+      + 'Elle garde ses gants de salon.', 'L’ORGUE JOUE'],
+  ],
+
+  VP46: [
+    ['L’Ascenseur en Panne', 'Il reste en panne pour de bon, et les marches résonnent sous les pas, par '
+      + 'rafales. Les VIP montent avec le virage.', 'MARCHE APRÈS MARCHE'],
+    ['L’Escalier du Virage', 'Grand escalier vivant, il monte jusqu’en haut du virage et chaque marche tape '
+      + 'la mesure. Son bouton doré brille encore.', 'TOUT LE MONDE MONTE À PIED'],
+  ],
+
+  VP47: [
+    ['Le Golfeur du Parking', 'Il s’entraîne sur le parking et vise juste, toujours. Les supporters lui '
+      + 'renvoient la balle.', 'EN PLEIN DANS LE MILLE'],
+    ['Le Lanceur du Virage', 'Géant qui lance les ballons de plage du virage, il les envoie tout en haut de '
+      + 'la tribune. Il garde sa casquette de golf.', 'LES BALLONS VOLENT'],
+  ],
+
+  VP48: [
+    ['La Speakerine du Virage', 'Elle annonce les noms, et le virage les crie après elle, en cadence. Elle a '
+      + 'appris à crier aussi.', 'ET LE NUMÉRO DIX…'],
+    ['La Voix du Stade', 'Crieuse du stade, sa voix porte jusqu’au toit et au-delà. Elle commence '
+      + 'toujours d’une voix polie.', 'TOUT LE STADE'],
+  ],
+
+  VP49: [
+    ['Le Bouquet Lancé', 'Un soir de victoire, il vole dans le virage, et on le relance de rang en rang. '
+      + 'Il ne fane plus.', 'ATTRAPEZ-LE'],
+    ['La Gerbe du Virage', 'Grande gerbe de fête, elle éclate en fleurs de toutes les couleurs au-dessus '
+      + 'du virage. Un bout de cellophane brille encore.', 'TOUTES LES FLEURS'],
+  ],
+
+  VP50: [
+    ['Le Comte du Rang 3', 'Il descend au rang 3 du virage et il n’en bouge plus, quoi qu’il arrive. Il '
+      + 'chante, monocle compris.', 'JE RESTE'],
+    ['Le Seigneur des Gradins', 'Chevalier en armure aux couleurs du club, il tient les gradins comme un '
+      + 'château. Son monocle brille sous la visière.', 'LES GRADINS TIENNENT'],
+  ],
+
   /* =============================================== LA GASTRONOMIE DE COMPTOIR
 
      Ce qui se mange et se boit debout. Ce sont des choses, pas des gens : elles
