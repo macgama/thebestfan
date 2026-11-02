@@ -1,5 +1,64 @@
 # À déposer sur Infomaniak
 
+**L'admin rangée en sept menus, avec un menu PASS** (branche
+`claude/project-thread-bxmiqd`, 2 novembre 2026, choix de Gaël). Construction
+seule, **sans schéma**.
+
+- SAISONS · CATALOGUE (FANZZY, CONTENUS, SKINS) · PASS · RÉGLAGES · APERÇU
+  (EN JEU, JOURNAL) · JOUEURS (COMPTES, KOP) · COMPÉTITIONS. Aucun écran retiré.
+- Le menu PASS réunit : les PASS par saison (carte, écharpes, offerts), les
+  derniers PASS, les anciens abonnés encore en cours, pourquoi ils sont partis,
+  et les réglages du PASS (sortis de RÉGLAGES).
+- Puis : ouvrir /admin, menu PASS.
+
+---
+
+**Les Ultimate des six légendaires SU, et leur Apocalyptique complète**
+(branche `claude/project-thread-z0t7i9`, 2 novembre 2026, accord de Gaël pour
+les crédits). Construction seule, **sans schéma**.
+
+- SU37 à SU42 ont leur image Ultimate en tenue de base et dans les trois skins
+  (24 images), et leur clip Ultimate en tenue de base (6 clips).
+- L’Apocalyptique du Saint-Bernard du Col (SU39) et de la Messagère des Quatre
+  Langues (SU40) a maintenant ses cinq états et cligne : les 24 tenues des six
+  légendaires clignent.
+- Après la mise en ligne : toucher ULTIMATE sur la fiche de SU42, puis sur
+  celle de SU39 en tenue Apocalyptique.
+
+---
+
+**/diagnostic montre ses propres erreurs** (branche
+`claude/project-thread-m3tqk9`, 2 novembre 2026, demandé par Gaël : le
+bouton « Tester le son » ne fait rien sur son S24+). Construction seule,
+**sans schéma**.
+
+- Le test du son vit dans son propre script : il marche même si la partie
+  serveur de la page tombe. Nouvelles lignes : touchers reçus, geste reconnu
+  par Chrome, version de Chrome, et un cadre « Erreurs de la page ».
+- Après la mise en ligne : /diagnostic sur le S24+, toucher le bouton,
+  envoyer une capture de toute la page.
+
+---
+
+**La pub du PASS** (branche `claude/project-thread-0kw498`, 2 novembre 2026,
+demande de Gaël). Construction seule, **sans schéma**. À déposer avec ou après
+le PASS de saison ci-dessous.
+
+- Vitrine (pas connecté) : une bande or « LE PASS DE SAISON · PRÉHISTORIQUE »
+  sous les promesses (cachée sur un écran de moins de 760 px de haut).
+- Accueil connecté : une plaque « PASS 1 » sur la scène, et une fois par jour,
+  juste après le chargement, le spot du PASS en plein écran (se ferme à tout
+  moment). Jamais montrés à qui a déjà le PASS.
+- Fiche d'un Fanzzy, onglet LOOK : la tenue Préhistorique dit PASS (ou ÉTAL
+  une saison plus tard) au lieu de BOOSTER ; un joueur qui a le PASS la voit
+  à lui jusqu'à l'âge ouvert par sa voie.
+- Page du PASS : le Fanzzy de la vitrine est recadré sur sa silhouette (il
+  était tout petit et coupé).
+- Puis : se connecter avec un compte sans PASS, voir le spot une fois, revenir
+  à l'accueil (il ne revient pas avant demain).
+
+---
+
 **Le PASS de saison remplace l'abonnement** (branche
 `claude/project-thread-0kw498`, 2 novembre 2026, choix de Gaël). **Avec
 schéma** : `npm run schema:appliquer` en SSH (pose `sql/pass.sql`, table
@@ -26,9 +85,8 @@ seule, **sans schéma**.
 - La Fée de l’Edelweiss, le Sonneur du Grand Cor et le Saint-Bernard du Col
   sont liés aux sélections suisses (hommes, femmes, espoirs) ; la Messagère des
   Quatre Langues, le Géant du Röstigraben et la Marmotte du Premier Sifflet au
-  championnat suisse. Cartes, états, trois skins et clignement (22 tenues sur
-  24 : l’Apocalyptique du Saint-Bernard et de la Messagère n’a encore que trois
-  états). Ils sortent avec la série, dans le booster DIE KURVE.
+  championnat suisse. Cartes, états, trois skins et clignement sur les 24
+  tenues. Ils sortent avec la série, dans le booster DIE KURVE.
 - Après la mise en ligne : ouvrir la page SU de l’album et la fiche de SU42.
 
 **LES GALÈRES DE DÉPLACEMENT redessinées, et MT23** (branche
