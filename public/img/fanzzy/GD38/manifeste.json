@@ -1,6 +1,6 @@
 {
   "id": "GD38",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,31 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "258b0829b9a0"
+          "sha": "4588185e4bc8"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "36e2cd181baf"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "3b4590e48f6e"
         }
       }
     },
@@ -28,8 +52,44 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "11e82edd25d7",
+          "sha": "67c2d1955e26",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "5c60eb2737cd"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "5b35e85c0c59"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "99770d985297"
         }
       }
     },
@@ -44,7 +104,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "87e21393d6ff"
+          "sha": "13e71e393b58"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "859ece696066"
         }
       }
     }
