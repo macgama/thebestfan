@@ -1,5 +1,24 @@
 # À déposer sur Infomaniak
 
+**La pub du PASS** (branche `claude/project-thread-0kw498`, 2 novembre 2026,
+demande de Gaël). Construction seule, **sans schéma**. À déposer avec ou après
+le PASS de saison ci-dessous.
+
+- Vitrine (pas connecté) : une bande or « LE PASS DE SAISON · PRÉHISTORIQUE »
+  sous les promesses (cachée sur un écran de moins de 760 px de haut).
+- Accueil connecté : une plaque « PASS 1 » sur la scène, et une fois par jour,
+  juste après le chargement, le spot du PASS en plein écran (se ferme à tout
+  moment). Jamais montrés à qui a déjà le PASS.
+- Fiche d'un Fanzzy, onglet LOOK : la tenue Préhistorique dit PASS (ou ÉTAL
+  une saison plus tard) au lieu de BOOSTER ; un joueur qui a le PASS la voit
+  à lui jusqu'à l'âge ouvert par sa voie.
+- Page du PASS : le Fanzzy de la vitrine est recadré sur sa silhouette (il
+  était tout petit et coupé).
+- Puis : se connecter avec un compte sans PASS, voir le spot une fois, revenir
+  à l'accueil (il ne revient pas avant demain).
+
+---
+
 **Le PASS de saison remplace l'abonnement** (branche
 `claude/project-thread-0kw498`, 2 novembre 2026, choix de Gaël). **Avec
 schéma** : `npm run schema:appliquer` en SSH (pose `sql/pass.sql`, table
