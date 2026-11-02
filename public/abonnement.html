@@ -117,12 +117,12 @@ main [hidden]{display:none}
 /* La vitrine : des Fanzzy en tenue de la saison, qui passent l'un après
    l'autre. Le défilé est joué au script (une image à la fois, un fondu), et
    s'arrête avec le mode calme. */
-.vitrine{position:relative;width:118px;height:150px;flex:none}
+.vitrine{position:relative;width:132px;height:172px;flex:none}
 .vitrine img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   object-position:bottom;opacity:0;transition:opacity .6s ease,transform .6s ease;
   transform:translateY(6px) scale(.97);filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
 .vitrine img.on{opacity:1;transform:none}
-.vitrine .tbf-pass-badge{position:absolute;left:-10px;top:-8px;z-index:2}
+.vitrine .tbf-pass-badge{position:absolute;left:-22px;bottom:-8px;z-index:2;transform:scale(.8);transform-origin:bottom left}
 
 /* L'Ultimate en tenue, en bandeau sous la bâche : c'est ce que la voie
    montre de plus spectaculaire. Masqué si l'image n'existe pas. */
@@ -339,8 +339,7 @@ const milliers = (n) => Number(n).toLocaleString('fr-FR');
 /* Des Fanzzy en tenue de la saison, pour la vitrine. Une sélection et non
    toute la série : la vitrine montre la tenue, pas la collection. Une image
    absente se retire d'elle-même (`onerror`). */
-const VITRINE = [['RP1', 1], ['AN5', 2], ['RP20', 3], ['AN1', 1], ['RP4', 2], ['AN41', 3],
-  ['RP13', 1], ['AN60', 2], ['RP7', 3], ['AN22', 1]];
+const VITRINE = window.TBF_PASS?.VITRINE ?? [['RP1', 3], ['AN5', 2], ['RP20', 3], ['AN1', 1]];
 
 /**
  * Le tableau : ce que le PASS ajoute, et ce qu'on a sans lui. Deux blocs : la
@@ -497,6 +496,7 @@ function formulesHTML(d, { ouvert } = {}) {
 function defiler() {
   const v = document.getElementById('vitrine');
   if (!v) return;
+  v.querySelectorAll('img').forEach((im) => window.TBF_PASS?.cadrer?.(im));
   const calme = matchMedia('(prefers-reduced-motion: reduce)').matches
     || /animations/.test(document.documentElement.dataset.calme ?? '');
   if (calme) return;
