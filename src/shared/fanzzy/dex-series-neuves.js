@@ -159,6 +159,218 @@ export const DEX_NEUVES = [
     mods: { breathBonus: 1.34, refundBonus: 1.26, perfectBonus: 0.84 },
     cri: { label: 'ON VOIT NOTRE LOGO ?', gest: 'bascule', power: 79 } },
 
+  /* VP16 à VP50 — les trente-cinq VIP de la refonte du 2 novembre 2026
+     (45 personnages et 5 légendaires par série, demande de Gaël). Fiches et
+     dessins : fanzzy-prompts/SERIES-50/VP-les-vip.md. */
+  { id: 'VP16', nom: 'La Coupe de Champagne', type: 'pyro', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La coupe de cristal qui ne trinque qu’avec les invités. Elle fait tinter son '
+      + 'bord quand la loge applaudit, jamais avant.',
+    mods: { perfectBonus: 1.18, breathBonus: 0.92 },
+    cri: { label: 'SANTÉ, LA LOGE', gest: 'relance', power: 46 } },
+
+  { id: 'VP17', nom: 'L’Hôtesse d’Accueil', type: 'fide', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'L’hôtesse qui vérifie les invitations à l’entrée de la loge, sourire figé. '
+      + 'Personne n’entre sans être sur sa liste.',
+    mods: { holdBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'VOTRE INVITATION ?', gest: 'hold', power: 45 } },
+
+  { id: 'VP18', nom: 'Le Petit-Four', type: 'tifo', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le petit-four du buffet que personne ne mange, posé sur sa serviette en '
+      + 'dentelle. Il attend depuis la mi-temps.',
+    mods: { parryBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'PERSONNE N’EN VEUT ?', gest: 'tifo', power: 45 } },
+
+  { id: 'VP19', nom: 'La Femme du Président', type: 'depl', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La femme du président qui s’ennuie en loge, son bouquet sur les genoux. Elle '
+      + 'regarde le virage plus que le terrain.',
+    mods: { breathBonus: 1.16, parryResist: 0.92 },
+    cri: { label: 'IL EST QUELLE HEURE ?', gest: 'echarpe', power: 45 } },
+
+  { id: 'VP20', nom: 'Le Parapluie de Loge', type: 'fide', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le grand parapluie de la loge, toujours plié, qui n’a jamais vu la pluie. La '
+      + 'loge a un toit.',
+    mods: { holdBonus: 1.17, perfectBonus: 0.92 },
+    cri: { label: 'IL NE PLEUT PAS', gest: 'hold', power: 45 } },
+
+  { id: 'VP21', nom: 'Le Badge VIP', type: 'voix', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le badge VIP plastifié qui ouvre toutes les portes du stade. Il bipe à chaque '
+      + 'porte, toujours au même rythme.',
+    mods: { tempoWindow: 1.16, refundBonus: 0.92 },
+    cri: { label: 'ACCÈS AUTORISÉ', gest: 'tempo', power: 45 } },
+
+  { id: 'VP22', nom: 'Le Chef du Traiteur', type: 'pyro', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le chef du traiteur de la loge, toque haute et assiettes minuscules. Il n’a '
+      + 'jamais servi de frites.',
+    mods: { perfectBonus: 1.17, tempoWindow: 0.92 },
+    cri: { label: 'OUI, CHEF', gest: 'rouleaux', power: 45 } },
+
+  { id: 'VP23', nom: 'La Star de Téléréalité', type: 'voix', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La candidate de téléréalité invitée en loge pour les photos. Elle tourne le '
+      + 'dos au match pour son meilleur profil.',
+    mods: { tempoWindow: 1.17, breathBonus: 0.92 },
+    cri: { label: 'UNE PHOTO ?', gest: 'capo', power: 45 } },
+
+  { id: 'VP24', nom: 'Le Siège Chauffant', type: 'fide', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le siège chauffant de la tribune d’honneur, réglé sur le maximum. Celui qui '
+      + 's’y assoit s’endort à la mi-temps.',
+    mods: { holdBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'IL FAIT BON ICI', gest: 'jauge', power: 45 } },
+
+  { id: 'VP25', nom: 'La Banquière', type: 'pyro', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La banquière invitée en loge qui compte les places vides au lieu des buts. Son '
+      + 'tableau de chiffres ne la quitte pas.',
+    mods: { perfectBonus: 1.18, costPenalty: 1.06 },
+    cri: { label: 'LES CHIFFRES SONT BONS', gest: 'compte', power: 46 } },
+
+  { id: 'VP26', nom: 'La Journaliste de Plateau', type: 'voix', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La journaliste du plateau télé, bien au chaud derrière la vitre. Elle commente '
+      + 'un virage qu’elle n’a jamais vu de près.',
+    mods: { tempoWindow: 1.16, parryResist: 0.92 },
+    cri: { label: 'À VOUS LES STUDIOS', gest: 'echo', power: 45 } },
+
+  { id: 'VP27', nom: 'Le Plaid en Cachemire', type: 'fide', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le plaid en cachemire plié sur les genoux d’un invité. Il ne couvre qu’une '
+      + 'personne, et il n’en bouge jamais.',
+    mods: { holdBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'J’AI FROID AUX GENOUX', gest: 'retenue', power: 45 } },
+
+  { id: 'VP28', nom: 'Le Voiturier', type: 'depl', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le voiturier qui gare les berlines des invités, gants blancs et casquette. Il '
+      + 'n’a jamais vu un match.',
+    mods: { breathBonus: 1.17, perfectBonus: 0.92 },
+    cri: { label: 'VOS CLÉS, MONSIEUR', gest: 'echarpe', power: 45 } },
+
+  { id: 'VP29', nom: 'La Sommelière', type: 'perc', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La sommelière de la loge qui sert les grands crus, son tastevin au cou. Elle '
+      + 'ne trouve jamais l’invité qui sait goûter.',
+    mods: { mashBonus: 1.17, holdBonus: 0.92 },
+    cri: { label: 'UN GRAND CRU', gest: 'mash', power: 45 } },
+
+  { id: 'VP30', nom: 'Le Majordome', type: 'tifo', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le majordome de la loge présidentielle, raide comme un piquet. Il range les '
+      + 'invités par ordre d’importance.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'LE THÉ EST SERVI', gest: 'tri', power: 45 } },
+
+  { id: 'VP31', nom: 'Le Chapeau Melon', type: 'pyro', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le chapeau melon de la tribune d’honneur, sage et bien droit. Il n’a jamais '
+      + 'quitté une tête.',
+    mods: { perfectBonus: 1.17, mashBonus: 0.92 },
+    cri: { label: 'CHAPEAU !', gest: 'relance', power: 45 } },
+
+  { id: 'VP32', nom: 'La Danseuse de la Mi-Temps', type: 'perc', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La danseuse du spectacle de la mi-temps, pompons aux poings. Elle danse devant '
+      + 'les loges et le virage ne la voit pas.',
+    mods: { mashBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'À LA MI-TEMPS', gest: 'crescendo', power: 45 } },
+
+  { id: 'VP33', nom: 'Le Rideau de la Loge', type: 'tifo', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le rideau de velours tiré sur la vitre de la loge quand le virage est trop '
+      + 'bruyant. Il cache tout.',
+    mods: { parryBonus: 1.17, tempoWindow: 0.92 },
+    cri: { label: 'ON FERME', gest: 'tifo', power: 45 } },
+
+  { id: 'VP34', nom: 'Le Petit Chien de la Présidente', type: 'perc', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le petit chien de salon de la présidente, nœud dans les poils, porté dans un '
+      + 'sac à main. Il aboie aux mauvais moments.',
+    mods: { mashBonus: 1.17, parryResist: 0.92 },
+    cri: { label: 'WAF', gest: 'mash', power: 45 } },
+
+  { id: 'VP35', nom: 'La Notaire', type: 'depl', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La notaire invitée en loge, stylo plume à la main. Elle lit les petites lignes '
+      + 'du programme du match.',
+    mods: { breathBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'SIGNEZ ICI', gest: 'memoire', power: 45 } },
+
+  { id: 'VP36', nom: 'La Fille du Sponsor', type: 'depl', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La fille du sponsor qui s’ennuie en loge dans sa robe de cérémonie. Elle colle '
+      + 'son nez à la vitre pour voir le virage.',
+    mods: { breathBonus: 1.17, refundBonus: 0.92 },
+    cri: { label: 'JE M’ENNUIE', gest: 'echarpe', power: 45 } },
+
+  { id: 'VP37', nom: 'La Vitrine', type: 'tifo', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La vitrine du salon VIP où dorment des souvenirs que personne ne regarde. Elle '
+      + 'est fermée à clé.',
+    mods: { parryBonus: 1.16, holdBonus: 0.92 },
+    cri: { label: 'NE PAS TOUCHER', gest: 'mosaique', power: 45 } },
+
+  { id: 'VP38', nom: 'L’Ambassadeur', type: 'voix', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'L’ambassadeur invité pour un match amical, qui serre toutes les mains. Il ne '
+      + 'connaît aucun chant.',
+    mods: { tempoWindow: 1.17, refundBonus: 0.92 },
+    cri: { label: 'ENCHANTÉ', gest: 'tempo', power: 45 } },
+
+  { id: 'VP39', nom: 'La Styliste', type: 'tifo', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La styliste invitée en loge qui juge les tenues des supporters. Son carnet de '
+      + 'croquis est plein de croix.',
+    mods: { parryBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'CE N’EST PAS LA SAISON', gest: 'tifo', power: 45 } },
+
+  { id: 'VP40', nom: 'Le Plateau d’Argent', type: 'perc', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le plateau d’argent poli qui ne porte que des coupes. Il n’a jamais porté une '
+      + 'frite.',
+    mods: { mashBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'ATTENTION, ÇA PASSE', gest: 'mash', power: 45 } },
+
+  { id: 'VP41', nom: 'La Mécène Anonyme', type: 'depl', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La mécène qui paie les déplacements sans jamais se montrer. Personne ne '
+      + 'connaît son visage.',
+    mods: { breathBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'MERCI QUI ?', gest: 'bascule', power: 45 } },
+
+  { id: 'VP42', nom: 'La Cheffe d’Entreprise', type: 'perc', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La cheffe d’entreprise qui achète une loge pour ses clients. Elle regarde ses '
+      + 'chiffres pendant le match.',
+    mods: { mashBonus: 1.18, tempoWindow: 0.92 },
+    cri: { label: 'C’EST RENTABLE ?', gest: 'mash', power: 46 } },
+
+  { id: 'VP43', nom: 'Le Billet d’Or', type: 'tifo', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le billet doré de la loge, rangé dans une enveloppe. Il n’a jamais servi.',
+    mods: { parryBonus: 1.16, breathBonus: 0.92 },
+    cri: { label: 'C’EST POUR TOI', gest: 'ola', power: 45 } },
+
+  { id: 'VP44', nom: 'Le Paon de la Loge', type: 'tifo', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le paon qui fait la roue dans la loge pour être pris en photo. Il tourne le '
+      + 'dos au terrain.',
+    mods: { parryBonus: 1.17, mashBonus: 0.92 },
+    cri: { label: 'REGARDEZ-MOI', gest: 'tifo', power: 45 } },
+
+  { id: 'VP45', nom: 'La Pianiste du Salon', type: 'voix', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La pianiste du salon VIP que personne n’écoute. Elle joue du Chopin pendant le '
+      + 'derby.',
+    mods: { tempoWindow: 1.18, perfectBonus: 0.92 },
+    cri: { label: 'UN PEU DE CHOPIN ?', gest: 'tempo', power: 46 } },
+
+  { id: 'VP46', nom: 'L’Ascenseur de la Tribune', type: 'perc', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'L’ascenseur doré réservé aux VIP. Il tombe en panne au premier étage, et tout '
+      + 'le monde prend l’escalier.',
+    mods: { mashBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'EN PANNE', gest: 'salves', power: 45 } },
+
+  { id: 'VP47', nom: 'Le Golfeur', type: 'pyro', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le golfeur qui parle de son handicap pendant tout le match. Il vise le trou '
+      + 'même au stade.',
+    mods: { perfectBonus: 1.18, costPenalty: 1.06 },
+    cri: { label: 'MON HANDICAP', gest: 'visee', power: 46 } },
+
+  { id: 'VP48', nom: 'La Speakerine', type: 'voix', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'La speakerine qui annonce les compositions d’une voix polie. Elle prononce '
+      + 'chaque nom avec soin.',
+    mods: { tempoWindow: 1.16, mashBonus: 0.92 },
+    cri: { label: 'MESDAMES, MESSIEURS', gest: 'tempo', power: 45 } },
+
+  { id: 'VP49', nom: 'Le Bouquet de Fleurs', type: 'pyro', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le bouquet de la loge, sous cellophane, qui ne sert qu’à la photo. Il fane '
+      + 'sans avoir rien vu.',
+    mods: { perfectBonus: 1.17, holdBonus: 0.92 },
+    cri: { label: 'POUR LA PHOTO', gest: 'relance', power: 45 } },
+
+  { id: 'VP50', nom: 'Le Vieux Comte', type: 'fide', set: 'VP', stage: 1, rar: 'commune',
+    histoire: 'Le vieux comte qui a sa loge depuis cinquante ans, monocle à l’œil. Il n’a '
+      + 'jamais chanté.',
+    mods: { holdBonus: 1.17, breathBonus: 0.92 },
+    cri: { label: 'DEPUIS CINQUANTE ANS', gest: 'hold', power: 45 } },
+
   /* ============================= LA GASTRONOMIE DE COMPTOIR (GC)
 
      Ce qu'on mange debout, en trois minutes, et qu'on regrette pendant la
