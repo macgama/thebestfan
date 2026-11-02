@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**/diagnostic montre ses propres erreurs** (branche
+`claude/project-thread-m3tqk9`, 2 novembre 2026, demandé par Gaël : le
+bouton « Tester le son » ne fait rien sur son S24+). Construction seule,
+**sans schéma**.
+
+- Le test du son vit dans son propre script : il marche même si la partie
+  serveur de la page tombe. Nouvelles lignes : touchers reçus, geste reconnu
+  par Chrome, version de Chrome, et un cadre « Erreurs de la page ».
+- Après la mise en ligne : /diagnostic sur le S24+, toucher le bouton,
+  envoyer une capture de toute la page.
+
+---
+
 **La pub du PASS** (branche `claude/project-thread-0kw498`, 2 novembre 2026,
 demande de Gaël). Construction seule, **sans schéma**. À déposer avec ou après
 le PASS de saison ci-dessous.
