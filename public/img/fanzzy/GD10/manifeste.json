@@ -1,0 +1,22 @@
+{
+  "id": "GD10",
+  "rev": 2,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "27f1bd902d24",
+          "cligne": true
+        }
+      }
+    }
+  }
+}
