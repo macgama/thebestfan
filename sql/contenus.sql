@@ -72,3 +72,8 @@ CREATE TABLE IF NOT EXISTS contenus (
 -- déjà — elles n'annonçaient rien qu'on pût retenir, elles ouvrent maintenant
 -- pour de bon.
 ALTER TABLE saisons ADD COLUMN IF NOT EXISTS stades JSON NULL;
+
+-- Les mini-jeux d'une saison (menu PASS, 2 novembre 2026) : la BASE et chaque
+-- PASS ouvrent leurs mini-jeux comme l'équipement ou les stades. Sans cette
+-- colonne, une saison ne peut nommer aucun mini-jeu ; le jeu les garde ouverts.
+ALTER TABLE saisons ADD COLUMN IF NOT EXISTS jeux JSON NULL;

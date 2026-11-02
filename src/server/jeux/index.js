@@ -42,6 +42,7 @@ import {
 } from '../../shared/mini-jeux.js';
 import { chantReussiPour } from './voix.js';
 import { compterDuJour } from '../quotidien/compteurs.js';
+import { ouverts } from '../contenus/index.js';
 
 const SCHEMA_INCOMPLET = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR']);
 
@@ -701,6 +702,11 @@ export function createJeux({ pool, requireAuth }) {
     return r;
   };
   const ferme = (res) => res.status(409).json({ error: 'jeux.error.inactif' });
+  /* Un mini-jeu fermé dans le menu PASS de l'administration (BASE, ou PASS
+     pas encore lancé) ne s'ouvre plus : ses classements et ses gains restent,
+     on ne le propose plus. Sans `sql/contenus.sql`, tous sont ouverts. */
+  const ouvert = (jeu) => ouverts('jeu').has(jeu);
+  const fermeIci = (jeu) => !reglage('jeux.actif') || !ouvert(jeu);
   const idDe = (req) => {
     const n = Number(req.params.id);
     return Number.isInteger(n) && n > 0 ? n : null;
@@ -721,6 +727,8 @@ export function createJeux({ pool, requireAuth }) {
       gains: { jongles: { parEcharpe: reglage('jeux.jongles_par_echarpe'),
         maxPartie: reglage('jeux.jongles_max_partie') }, tirs: GAINS_TIRS(), ...GAINS_SEULS() },
       jongles, tirs, chant, deplacement,
+      /* Les mini-jeux ouverts : la page cache les autres. */
+      ouverts: [...ouverts('jeu')],
     });
   }));
 
@@ -744,7 +752,7 @@ export function createJeux({ pool, requireAuth }) {
   }));
 
   router.post('/jongles', requireAuth, safe(async (req, res) => {
-    if (!reglage('jeux.actif')) return ferme(res);
+    if (fermeIci('jongles')) return ferme(res);
     res.json(await ouvrirJongles(req.user.id));
   }));
 
@@ -757,7 +765,7 @@ export function createJeux({ pool, requireAuth }) {
 
   /** Tirer : contre un ami (`ami` : son identifiant), ou contre le premier venu. */
   router.post('/tirs', requireAuth, safe(async (req, res) => {
-    if (!reglage('jeux.actif')) return ferme(res);
+    if (fermeIci('tirs')) return ferme(res);
     const jeu = jeuDeTirs(req.body?.jeu);
     if (!jeu) return res.status(400).json({ error: 'jeux.error.jeu_invalide' });
     const ami = typeof req.body?.ami === 'string' && req.body.ami ? req.body.ami : null;
@@ -767,7 +775,7 @@ export function createJeux({ pool, requireAuth }) {
 
   /** Relever le défi d'un ami. */
   router.post('/tirs/:id', requireAuth, safe(async (req, res) => {
-    if (!reglage('jeux.actif')) return ferme(res);
+    if (fermeIci('tirs')) return ferme(res);
     const id = idDe(req);
     const jeu = jeuDeTirs(req.body?.jeu);
     if (!id || !jeu) return res.status(400).json({ error: 'jeux.error.jeu_invalide' });
@@ -784,7 +792,7 @@ export function createJeux({ pool, requireAuth }) {
   /** Ouvrir une partie de chant en rythme ou de déplacement. */
   router.post('/partie/:jeu', requireAuth, safe(async (req, res) => {
     if (!SEULS.has(req.params.jeu)) return res.status(404).json({ error: 'jeux.error.jeu_inconnu' });
-    if (!reglage('jeux.actif')) return ferme(res);
+    if (fermeIci(req.params.jeu)) return ferme(res);
     res.json(await ouvrirPartie(req.user.id, req.params.jeu));
   }));
 
@@ -799,17 +807,19 @@ export function createJeux({ pool, requireAuth }) {
   }));
 
   router.get('/tifo', requireAuth, safe(async (req, res) => {
-    res.json({ actif: Boolean(reglage('jeux.actif')), ...await etatTifo(req.user.id) });
+    res.json({ actif: Boolean(reglage('jeux.actif')), ouvert: ouvert('tifo'),
+      ...await etatTifo(req.user.id) });
   }));
 
   router.post('/tifo', requireAuth, safe(async (req, res) => {
-    if (!reglage('jeux.actif')) return ferme(res);
+    if (fermeIci('tifo')) return ferme(res);
     repondre(res, await joue(req.user.id, await peindre(req.user.id, Number(req.body?.match),
       Number(req.body?.case), Number(req.body?.couleur))));
   }));
 
   router.get('/boss', requireAuth, safe(async (req, res) => {
-    res.json({ actif: Boolean(reglage('jeux.actif')), ...await etatBoss(req.user.id) });
+    res.json({ actif: Boolean(reglage('jeux.actif')), ouvert: ouvert('boss'),
+      ...await etatBoss(req.user.id) });
   }));
 
   return { router, classement, finirJongles, ouvrirJongles, tirerAuHasard, defier, releverDefi,

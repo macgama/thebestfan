@@ -238,6 +238,10 @@ tr.cmp-off td:not(.act){opacity:.5}
 .sai-k:has(input:checked){border-color:#1E9E6A;background:rgba(30,158,106,.14)}
 .sai-k input{margin:0;accent-color:#1E9E6A}
 .sai-rien{font-size:11.5px;opacity:.5}
+.sai-g{flex-basis:100%;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.5;margin-top:4px}
+.sai-k.verrou{cursor:default;opacity:.55;border-style:dashed}
+.sai-k.verrou small{opacity:.8;font-size:10px}
+.base-paquet{margin:0 0 6px;padding-left:18px;font-size:12.5px;line-height:1.7}
 .sai-deja{margin-top:6px;font-size:11px}
 .sai-deja summary{cursor:pointer;opacity:.55}
 .sai-deja p{margin:5px 0 0;opacity:.6;line-height:1.6}
@@ -499,10 +503,14 @@ const MSG_FANZZY = {
  * Les sous-onglets de tous les menus sont dans la page, seuls ceux du menu
  * ouvert se voient : la ligne reste à sa place quand on change de menu.
  */
+/* **Le menu PASS** (demande de Gaël du 2 novembre 2026 : « l'onglet Saison,
+   qu'on devrait appeler PASS ») réunit les saisons et le PASS : la BASE, tout
+   ce qu'un joueur reçoit et trouve en jeu dès le début ; LES PASS, un par
+   saison, avec la liste de leurs nouveautés ; les VENTES. */
 const FAMILLES_ONGLETS = [
-  ['LE CONTENU', [['saisons', 'SAISONS'],
+  ['LE CONTENU', [['pass', 'PASS', [['base', 'BASE'], ['saisons', 'LES PASS'], ['ventes', 'VENTES']]],
     ['catalogue', 'CATALOGUE', [['fanzzy', 'FANZZY'], ['contenus', 'CONTENUS'], ['tenues', 'SKINS']]]]],
-  ['LE JEU', [['pass', 'PASS'], ['reglages', 'RÉGLAGES']]],
+  ['LE JEU', [['reglages', 'RÉGLAGES']]],
   ['L’EXPLOITATION', [['apercu', 'APERÇU', [['apercu', 'EN JEU'], ['journal', 'JOURNAL']]],
     ['joueurs', 'JOUEURS', [['joueurs', 'COMPTES'], ['kops', 'KOP']]],
     ['competitions', 'COMPÉTITIONS']]],
@@ -512,8 +520,11 @@ const MENUS = FAMILLES_ONGLETS.flatMap(([, liste]) => liste);
 const MENU_DE = new Map(MENUS.flatMap(([m, , sous]) =>
   (sous ?? [[m]]).map(([v]) => [v, m])));
 let onglet = 'apercu';
-/* Les sections du registre qui vont au menu PASS, et non à RÉGLAGES. */
+/* Les sections du registre qui vont au menu PASS, et non à RÉGLAGES : celle
+   du PASS (VENTES) et celle du paquet de bienvenue (BASE). */
 const SECTIONS_DU_PASS = ['abonnement'];
+const SECTIONS_DE_LA_BASE = ['bienvenue'];
+const HORS_REGLAGES = [...SECTIONS_DU_PASS, ...SECTIONS_DE_LA_BASE];
 
 $('nav').innerHTML = FAMILLES_ONGLETS.map(([titre, liste]) =>
   `<div class="fam"><i>${titre}</i><span>${liste.map(([k, t, sous]) =>
@@ -644,7 +655,7 @@ const VUES = {
    * qu'on se pose en ouvrant cette page : *qu'est-ce que les joueurs peuvent
    * obtenir aujourd'hui, et où est-ce que ça se règle ?*
    *
-   * Cette question-là traverse quatre onglets — SAISONS ouvre les séries,
+   * Cette question-là traverse quatre onglets — PASS ouvre les séries,
    * FANZZY publie carte par carte, CONTENUS publie le reste, RÉGLAGES fixe les
    * nombres — et rien ne les reliait. Le bandeau ci-dessous les relie, et
    * chaque ligne **nomme l'onglet** où elle se change.
@@ -681,18 +692,18 @@ const VUES = {
       <div class="tbl"><table><tbody>
         ${l('Séries ouvertes', ouvertes === null
           ? '<b>toutes</b> — aucune saison lancée n’en nomme'
-          : ouvertes.length ? esc(ouvertes.join(' · ')) : '<b>aucune</b>', 'SAISONS')}
+          : ouvertes.length ? esc(ouvertes.join(' · ')) : '<b>aucune</b>', 'PASS › BASE')}
         ${l('Saison en cours', sai.enCours
-          ? `${esc(sai.enCours.nom)} (n° ${sai.enCours.numero})` : 'aucune', 'SAISONS')}
+          ? `${esc(sai.enCours.nom)} (n° ${sai.enCours.numero})` : 'aucune', 'PASS › LES PASS')}
         ${l('Brouillons prêts', brouillons.length
-          ? esc(brouillons.map((x) => x.nom).join(' · ')) : 'aucun', 'SAISONS')}
+          ? esc(brouillons.map((x) => x.nom).join(' · ')) : 'aucun', 'PASS › LES PASS')}
         ${tirables === null ? '' : l('Fanzzy tirables',
           `${tirables} de premier âge publiés${retirees ? ` · ${retirees} carte(s) retirée(s)` : ''}`,
           'CATALOGUE › FANZZY')}
         ${fermes === null ? '' : l('Contenus retirés',
           fermes ? `${fermes} élément(s) hors du jeu` : 'aucun — tout est publié', 'CATALOGUE › CONTENUS')}
         ${ps?.enCours ? l(`PASS de la saison ${ps.enCours.numero}`, `${
-          ps.ventes.find((v) => v.saison === ps.enCours.numero)?.total ?? 0} joueur(s)`, 'PASS') : ''}
+          ps.ventes.find((v) => v.saison === ps.enCours.numero)?.total ?? 0} joueur(s)`, 'PASS › VENTES') : ''}
       </tbody></table></div>`;
     };
 
@@ -778,6 +789,127 @@ const VUES = {
    * celles-là. Les tenues publiées ne se dépublient pas : quelqu'un les a
    * peut-être déjà gagnées.
    */
+  /**
+   * **La BASE** (demande de Gaël du 2 novembre 2026) : tout ce qu'un joueur
+   * reçoit et trouve en jeu dès le début, sans aucun PASS — le paquet de
+   * bienvenue, puis, famille par famille, ce qui est ouvert pour tous.
+   *
+   * Modifiable : coché, c'est en jeu ; décoché, ça cesse d'être distribué
+   * (personne ne perd ce qu'il possède). Ce qu'un PASS apporte ou prévoit, et
+   * la tenue réservée d'un PASS, se lisent ici sans case : ils se changent
+   * dans la fiche de ce PASS (LES PASS).
+   */
+  async base() {
+    const d = await api('/saisons');
+    if (!d.base) {
+      $('main').innerHTML = '<div class="vide">Aucune saison : la BASE naît avec le premier PASS '
+        + '(sous-onglet LES PASS).</div>';
+      return;
+    }
+    const b = d.base;
+    const enJeu = Object.fromEntries(Object.entries(d.enJeu ?? {})
+      .map(([k, ids]) => [k, new Set(ids)]));
+    const deClub = new Set(d.seriesDeClubs ?? []);
+    const FAMILLES = [
+      ['series', 'SÉRIES', 'série(s)'], ['tenues', 'SKINS', 'skin(s)'],
+      ['stuff', 'ÉQUIPEMENT', 'pièce(s) d’équipement'], ['actions', 'CARTES D’ACTION', 'carte(s) d’action'],
+      ['stades', 'STADES', 'stade(s)'], ['jeux', 'MINI-JEUX', 'mini-jeu(x)'],
+    ];
+    /* Ce qui n'est pas à la BASE : à quel PASS il appartient, ou `null`. */
+    const verrou = (f, id) => {
+      if (f === 'tenues' && d.tenuesDuPass?.[id] != null) {
+        return `tenue réservée au PASS ${d.tenuesDuPass[id]}`;
+      }
+      const a = d.ailleurs?.[f]?.[id];
+      if (!a) return null;
+      if (a.lancee) return `arrivé avec le PASS ${a.numero}`;
+      return enJeu[f]?.has(id) ? null : `prévu au PASS ${a.numero}`;
+    };
+    /* Coché au départ : ce qui est en jeu (BASE lancée), sinon ce qu'elle nomme. */
+    const dans = (f, id) => (b.lancee ? enJeu[f]?.has(id) : (b[f] ?? []).includes(id));
+    const depart = Object.fromEntries(FAMILLES.map(([f]) => [f,
+      new Set(d.choix[f].filter((x) => !verrou(f, x.id) && dans(f, x.id)).map((x) => x.id))]));
+
+    const liste = (f) => {
+      const libres = d.choix[f].filter((x) => !verrou(f, x.id));
+      const pris = d.choix[f].filter((x) => verrou(f, x.id));
+      const caseDe = (x) => `<label class="sai-k"><input type="checkbox" value="${esc(x.id)}"
+        ${depart[f].has(x.id) ? 'checked' : ''}>${esc(x.nom)}</label>`;
+      const groupes = f === 'series'
+        ? [['De championnat', libres.filter((x) => deClub.has(x.id))],
+          ['Hors championnat', libres.filter((x) => !deClub.has(x.id))]].filter(([, l]) => l.length)
+        : [[null, libres]];
+      return `<div class="sai-ks" id="b-${f}">${libres.length
+        ? groupes.map(([t, l]) => (t ? `<span class="sai-g">${t}</span>` : '')
+          + l.map(caseDe).join('')).join('')
+        : '<span class="sai-rien">Rien : tout appartient à un PASS.</span>'}</div>
+        ${pris.length ? `<details class="sai-deja"><summary>Hors de la BASE : ${pris.length}
+          — ${pris.length > 1 ? 'ils appartiennent' : 'il appartient'} à un PASS</summary>
+          <p>${pris.map((x) => `${esc(x.nom)} <small>(${esc(verrou(f, x.id))})</small>`)
+            .join(' · ')}</p></details>` : ''}`;
+    };
+
+    const avant = `
+      <div class="series">
+        <p class="series-t">LA BASE
+          <span>ce que tout joueur a dès le début, sans PASS — portée par le PASS ${
+            esc(String(b.numero))} « ${esc(b.nom)} »</span></p>
+        <p class="series-n">Tout ce qui est coché plus bas est en jeu <b>pour tous</b>.
+          Décocher cesse de distribuer, à l'enregistrement : personne ne perd ce qu'il
+          possède. Les nouveautés des saisons suivantes se préparent dans <b>LES PASS</b>.</p>
+      </div>
+      <h3 class="h3">LE PAQUET DE BIENVENUE</h3>
+      <ul class="base-paquet">
+        <li><b>2 Fanzzy</b> tirés dans les séries ouvertes : le titulaire, un commun, et
+          un second, souvent légendaire, qui entre en remplaçant.</li>
+        <li><b>1 pièce d’équipement</b> ouverte.</li>
+        <li><b>5 cartes d’action</b> : l’Arbitre (s’il est ouvert) et des communes ou rares
+          ouvertes.</li>
+        <li><b>Des écharpes</b> et <b>des boosters</b> : leurs nombres se règlent juste
+          en dessous.</li>
+        <li><b>2 clubs suivis</b>, choisis par le joueur.</li>
+      </ul>`;
+
+    const apres = () => {
+      $('main').insertAdjacentHTML('beforeend', `
+        <h3 class="h3">CE QUI EST EN JEU POUR TOUS</h3>
+        <div class="sai sai-edit">
+          ${FAMILLES.map(([f, titre]) => `<div class="sai-l"><p class="sai-lt">${titre}</p>
+            ${liste(f)}${f === 'series' ? `<p class="sai-note">Chaque série vient avec ses
+              Fanzzy, leurs skins d’âge et leurs Ultimate.</p>` : ''}</div>`).join('')}
+          <div class="sai-a"><button class="mini vert" id="base-ok">Enregistrer la BASE</button></div>
+        </div>`);
+      $('base-ok').onclick = async () => {
+        const coche = (f) => [...document.querySelectorAll(`#b-${f} input:checked`)].map((i) => i.value);
+        const corps = Object.fromEntries(FAMILLES.map(([f]) => [f, coche(f)]));
+        const nom = (f, id) => d.choix[f].find((x) => x.id === id)?.nom ?? id;
+        const dire = (sens) => FAMILLES.map(([f, , mot]) => {
+          const l = sens === 'ouvre'
+            ? corps[f].filter((id) => !depart[f].has(id))
+            : [...depart[f]].filter((id) => !corps[f].includes(id));
+          return l.length ? `${l.length} ${mot} : ${l.map((id) => nom(f, id)).join(', ')}` : null;
+        }).filter(Boolean).join('\n');
+        const ouvre = dire('ouvre');
+        const ferme = dire('ferme');
+        if (!ouvre && !ferme) { recu('rien n’a changé dans la BASE.'); return; }
+        const ok = await window.TBF_DIALOGUE?.confirmer({
+          titre: 'ENREGISTRER LA BASE ?',
+          texte: (ouvre ? `S’ouvre pour tous${b.lancee ? ', maintenant' : ''} :\n${ouvre}` : '')
+            + (ouvre && ferme ? '\n\n' : '')
+            + (ferme ? `Cesse d’être distribué :\n${ferme}\n\nPersonne ne perd ce qu’il possède.` : ''),
+          oui: 'ENREGISTRER', ton: ferme ? 'flare' : 'vert',
+        });
+        if (!ok) return;
+        try {
+          await api('/base', corps, 'PUT');
+          recu('BASE enregistrée.');
+          VUES.base();
+        } catch (e) { recuRate(e); }
+      };
+    };
+    return VUES.reglages(SECTIONS_DE_LA_BASE, avant, apres);
+  },
+
   async saisons() {
     const d = await api('/saisons');
     const fmt = (v) => (v ? new Date(v).toLocaleDateString('fr-CH',
@@ -818,20 +950,34 @@ const VUES = {
        saison avant de la lancer doit lire « LES VIP », pas « VP ». */
     const noms = (ids, source) => ids
       .map((id) => d.choix[source].find((x) => x.id === id)?.nom ?? id).join(' · ');
+    /* La saison fondatrice porte la BASE : ses listes se changent dans le
+       sous-onglet BASE, son PASS n'ajoute que sa tenue réservée. */
+    const estBase = (s) => d.base?.id === s.id;
+    const passDe = (s) => (d.pass ?? []).find((x) => x.numero === s.numero);
+    const tenueDuPass = (s) => {
+      const t = passDe(s)?.tenue;
+      return t ? (d.choix.tenues.find((x) => x.id === t)?.nom ?? t) : null;
+    };
 
     const carte = (s) => `
       <div class="sai ${s.lancee ? 'on' : ''}">
         <div class="sai-t">
-          <b>Saison ${s.numero} — ${esc(s.nom)}</b>
-          <span class="sai-e">${s.lancee ? `lancée le ${esc(fmt(s.lanceeA))}` : 'brouillon'}</span>
+          <b>PASS ${s.numero} — ${esc(s.nom)}</b>
+          <span class="sai-e">${s.lancee ? `lancé le ${esc(fmt(s.lanceeA))}` : 'brouillon'}</span>
         </div>
         ${s.texte ? `<p class="sai-x">${esc(s.texte)}</p>` : ''}
         <dl class="sai-c">
+          <dt>Membres du PASS</dt><dd>${tenueDuPass(s)
+            ? `la tenue <b>${esc(tenueDuPass(s))}</b>, la voie PASS, le badge et le cadre`
+            : 'la voie PASS, le badge et le cadre — sans tenue de saison'}</dd>
+          ${estBase(s) ? `<dt>Pour tous</dt><dd>la <b>BASE</b> — elle se change dans le
+            sous-onglet BASE</dd>` : `
           <dt>Séries</dt><dd>${esc(noms(s.series, 'series')) || '—'}</dd>
-          <dt>Tenues</dt><dd>${esc(noms(s.tenues, 'tenues')) || '—'}</dd>
+          <dt>Skins</dt><dd>${esc(noms(s.tenues, 'tenues')) || '—'}</dd>
           <dt>Équipement</dt><dd>${esc(noms(s.stuff, 'stuff')) || '—'}</dd>
           <dt>Cartes</dt><dd>${esc(noms(s.actions, 'actions')) || '—'}</dd>
           <dt>Stades</dt><dd>${esc(noms(s.stades ?? [], 'stades')) || '—'}</dd>
+          <dt>Mini-jeux</dt><dd>${esc(noms(s.jeux ?? [], 'jeux')) || '—'}</dd>`}
           <dt>Fin</dt><dd>${esc(finTexte(s))}</dd>
           ${s.lancee ? '' : `<dt>Ouverture</dt><dd>${s.ouvre
             ? `annoncée aux joueurs pour le ${esc(jourFr(s.ouvre))}` : 'pas annoncée'}</dd>`}
@@ -840,7 +986,7 @@ const VUES = {
         <div class="sai-a">
           <button class="mini" data-editer-saison="${s.id}">Modifier</button>
           <button class="mini ${s.lancee ? 'rouge' : 'vert'}" data-lancer="${s.id}">
-            ${s.lancee ? 'Remettre en brouillon' : 'Lancer la saison'}</button>
+            ${s.lancee ? 'Remettre en brouillon' : 'Lancer le PASS'}</button>
           ${s.lancee ? ''
             : `<button class="mini rouge" data-suppr-saison="${s.id}">Supprimer</button>`}
         </div>
@@ -849,15 +995,15 @@ const VUES = {
     const enCours = d.enCours;
     $('main').innerHTML = `
       <div class="series">
-        <p class="series-t">SAISON EN COURS
-          <span>${enCours ? `Saison ${enCours.numero} — ${esc(enCours.nom)} · fin : ${
+        <p class="series-t">PASS EN COURS
+          <span>${enCours ? `PASS ${enCours.numero} — ${esc(enCours.nom)} · fin : ${
             esc(finTexte(enCours))}`
-            : 'aucune saison lancée — toutes les séries restent ouvertes'}</span></p>
+            : 'aucun PASS lancé — toutes les séries restent ouvertes'}</span></p>
         <!-- L'annonce, telle que les joueurs la voient au kiosque. Poser un jour
              d'ouverture sur un brouillon, c'est l'annoncer : l'écran le montre
              ici pour qu'on ne le découvre pas chez les joueurs. -->
         <p class="series-t">ANNONCÉE AUX JOUEURS
-          <span>${d.prochaine ? `Saison ${d.prochaine.numero} — ${esc(d.prochaine.nom)}, `
+          <span>${d.prochaine ? `PASS ${d.prochaine.numero} — ${esc(d.prochaine.nom)}, `
             + `ouverture le ${esc(jourFr(d.prochaine.ouvre))}${d.prochaine.joursAvant
               ? ` (dans ${d.prochaine.joursAvant} jour${d.prochaine.joursAvant > 1 ? 's' : ''})`
               : ' (aujourd’hui)'}`
@@ -872,19 +1018,21 @@ const VUES = {
           <span>${d.ouvertes
             ? esc(noms(d.ouvertes, 'series'))
             : 'toutes — aucune saison lancée n’en nomme'}</span></p>
-        <p class="series-n">Une saison <b>ajoute</b> au jeu : les séries déjà
-          ouvertes le restent, et personne ne perd ce qu'il possède. Elle ouvre ses séries et publie <b>tout le reste</b> —
-          tenues, équipement, cartes d'action, stades — pour tout le monde, à
-          l'instant du lancement. Remettre en brouillon referme les séries et
-          <b>elles seules</b> : ce qui a été publié reste publié, parce que
-          quelqu'un l'a peut-être déjà gagné. Pour retirer une pièce
-          d'équipement, une carte ou un stade, va dans <b>CONTENUS</b>.</p>
+        <p class="series-n">Chaque PASS est une saison. Il <b>ajoute</b> au jeu, <b>pour
+          tous</b> et à vie, à sa date de lancement : ses séries — celles d'un nouveau
+          championnat comprises —, ses skins, son équipement, ses cartes d'action, ses
+          stades et ses mini-jeux. Les séries déjà ouvertes le restent, et personne ne
+          perd ce qu'il possède. Aux <b>membres du PASS</b>, il n'ajoute que du visuel :
+          sa tenue réservée, la voie PASS, le badge et le cadre (jamais d'écharpes).
+          Remettre en brouillon referme ses séries, ses stades et ses mini-jeux ; ce
+          qui a été publié reste publié, parce que quelqu'un l'a peut-être déjà
+          gagné. Ce que tout joueur a dès le début, c'est la <b>BASE</b>.</p>
       </div>
-      <div class="bar"><button class="mini" id="nouvelle-saison">Nouvelle saison</button></div>
+      <div class="bar"><button class="mini" id="nouvelle-saison">Nouveau PASS</button></div>
       <div id="sai-form"></div>
       ${d.saisons.length
         ? [...d.saisons].reverse().map(carte).join('')
-        : '<div class="vide">Aucune saison. Le jeu tourne toutes séries ouvertes.</div>'}`;
+        : '<div class="vide">Aucun PASS. Le jeu tourne toutes séries ouvertes.</div>'}`;
 
     /** Le formulaire. Les listes sont des cases à cocher : une saison se
         relit d'un coup d'œil, et un champ de texte à identifiants séparés par des
@@ -900,13 +1048,22 @@ const VUES = {
     const enJeu = Object.fromEntries(Object.entries(d.enJeu ?? {})
       .map(([k, ids]) => [k, new Set(ids)]));
     const dejaEnJeu = (source) => d.choix[source].filter((x) => enJeu[source]?.has(x.id));
+    const caseDe = (x, choisis) => `
+          <label class="sai-k"><input type="checkbox" value="${esc(x.id)}"
+            ${choisis.includes(x.id) ? 'checked' : ''}>${esc(x.nom)}</label>`;
+    /* Les séries de championnat à part : un PASS ouvre, pour tous et à sa
+       date, la série d'un nouveau championnat (Gaël, 2 novembre 2026). */
+    const deClub = new Set(d.seriesDeClubs ?? []);
     const cases = (source, choisis) => {
       const neufs = d.choix[source].filter((x) => !enJeu[source]?.has(x.id));
       const deja = dejaEnJeu(source);
+      const groupes = source === 'series'
+        ? [['De championnat', neufs.filter((x) => deClub.has(x.id))],
+          ['Hors championnat', neufs.filter((x) => !deClub.has(x.id))]].filter(([, l]) => l.length)
+        : [[null, neufs]];
       return `<div class="sai-ks" id="s-${source}">${neufs.length
-        ? neufs.map((x) => `
-          <label class="sai-k"><input type="checkbox" value="${esc(x.id)}"
-            ${choisis.includes(x.id) ? 'checked' : ''}>${esc(x.nom)}</label>`).join('')
+        ? groupes.map(([titre, l]) => (titre ? `<span class="sai-g">${titre}</span>` : '')
+          + l.map((x) => caseDe(x, choisis)).join('')).join('')
         : '<span class="sai-rien">Rien de neuf à ajouter : tout est déjà en jeu.</span>'}</div>
         ${deja.length ? `<details class="sai-deja"><summary>Déjà en jeu : ${deja.length}
           — ${deja.length > 1 ? 'ils restent' : 'il reste'}, rien à cocher</summary>
@@ -915,7 +1072,8 @@ const VUES = {
 
     function formulaire(s) {
       const v = s ?? { numero: '', nom: '', texte: '',
-        series: [], tenues: [], stuff: [], actions: [], stades: [] };
+        series: [], tenues: [], stuff: [], actions: [], stades: [], jeux: [] };
+      const base = Boolean(s && estBase(s));
       /* Un carnet figé se montre sans se modifier, et ne repart pas au serveur :
          il n'y a rien à y décider, et un champ qu'on peut taper mais qui sera
          refusé est un piège. */
@@ -959,19 +1117,26 @@ const VUES = {
                 + `${esc(L.packsMax ?? 10)} au plus ; au besoin « insigne » (lisere ou `
                 + 'tampon) et « titre » (true : le nom devient un titre). Laissé tel '
                 + 'quel ou vidé : le carnet par défaut. Il se fige au premier palier versé.'}</p></div>
+          ${base ? `<p class="sai-note sai-neuf">Ce PASS porte la <b>BASE</b> : ce qu'il
+            ouvre pour tous se change dans le sous-onglet BASE. Ici, son nom, ses dates
+            et son carnet.</p>` : `
           <p class="sai-note sai-neuf">Ne sont proposées que les <b>nouveautés</b> : ce que
             le jeu ouvre déjà reste ouvert, sans rien cocher. Coche seulement ce que
-            cette saison apporte de neuf.</p>
+            ce PASS apporte de neuf, <b>pour tous</b>, à sa date de lancement.</p>
           <div class="sai-l"><p class="sai-lt">SÉRIES — elles s’ouvrent</p>
-            ${cases('series', v.series ?? [])}</div>
-          <div class="sai-l"><p class="sai-lt">TENUES — elles se publient</p>
+            ${cases('series', v.series ?? [])}
+            <p class="sai-note">Chaque série arrive avec ses Fanzzy, leurs skins d’âge et
+              leurs Ultimate : ils s’ouvrent avec elle.</p></div>
+          <div class="sai-l"><p class="sai-lt">SKINS — ils se publient</p>
             ${cases('tenues', v.tenues ?? [])}</div>
           <div class="sai-l"><p class="sai-lt">ÉQUIPEMENT — il se publie</p>
             ${cases('stuff', v.stuff ?? [])}</div>
           <div class="sai-l"><p class="sai-lt">CARTES D’ACTION — elles se publient</p>
             ${cases('actions', v.actions ?? [])}</div>
-          <div class="sai-l"><p class="sai-lt">STADES — ils se publient</p>
+          <div class="sai-l"><p class="sai-lt">STADES — ils s’ouvrent</p>
             ${cases('stades', v.stades ?? [])}</div>
+          <div class="sai-l"><p class="sai-lt">MINI-JEUX — ils s’ouvrent</p>
+            ${cases('jeux', v.jeux ?? [])}</div>`}
           <div class="sai-a">
             <button class="mini" id="s-annuler">Annuler</button>
             <button class="mini vert" id="s-ok">${s ? 'Enregistrer' : 'Créer le brouillon'}</button>
@@ -982,10 +1147,10 @@ const VUES = {
       /* Les cases cochées, plus ce que la saison nommait déjà parmi le déjà en
          jeu : ces lignes-là n'ont pas de case, et les perdre à l'enregistrement
          retirerait une série à une saison lancée. */
-      const coches = (source) => [...new Set([
+      const coches = (source) => (base ? [...(v[source] ?? [])] : [...new Set([
         ...(v[source] ?? []).filter((id) => enJeu[source]?.has(id)),
         ...[...document.querySelectorAll(`#s-${source} input:checked`)].map((i) => i.value),
-      ])];
+      ])]);
       $('s-annuler').onclick = () => { $('sai-form').innerHTML = ''; };
       $('s-ok').onclick = async () => {
         const corps = {
@@ -993,7 +1158,7 @@ const VUES = {
           nom: $('s-nom').value, texte: $('s-txt').value,
           series: coches('series'), tenues: coches('tenues'),
           stuff: coches('stuff'), actions: coches('actions'),
-          stades: coches('stades'),
+          stades: coches('stades'), jeux: coches('jeux'),
           /* Vides, les deux jours partent vides : le serveur les efface. Le
              carnet part tel qu'il est tapé, et c'est le serveur qui le juge —
              son refus nomme le palier fautif. */
@@ -1011,7 +1176,7 @@ const VUES = {
              c'est ce qui rend cette faute-là invisible à la relecture. */
           if (s) await api(`/saison/${s.id}`, corps, 'PATCH');
           else await api('/saisons', corps);
-          recu(s ? `saison ${v.numero || ''} « ${$('s-nom').value} » modifiée.`
+          recu(s ? `PASS ${v.numero || ''} « ${$('s-nom').value} » modifié.`
             : `brouillon « ${$('s-nom').value} » créé. Il n'ouvre rien tant qu'il n'est pas lancé.`);
           VUES.saisons();
         } catch (e) { recuRate(e); }
@@ -1034,7 +1199,7 @@ const VUES = {
            s'ouvre » grossissait la liste sans rien dire. */
         const FAMILLES = [['series', 'série(s)'], ['tenues', 'tenue(s)'],
           ['stuff', 'pièce(s) d’équipement'], ['actions', 'carte(s) d’action'],
-          ['stades', 'stade(s)']];
+          ['stades', 'stade(s)'], ['jeux', 'mini-jeu(x)']];
         const neufs = (src) => (s[src] ?? []).filter((id) => !enJeu[src]?.has(id));
         const ouvre = FAMILLES.map(([src, mot]) => {
           const n = neufs(src);
@@ -1044,13 +1209,13 @@ const VUES = {
           t + (s[src] ?? []).length - neufs(src).length, 0);
         const finDite = s.fin ? `\n\nDernier jour de jeu : ${jourFr(s.fin)}.` : '';
         const ok = await window.TBF_DIALOGUE?.confirmer(s.lancee ? {
-          titre: `REMETTRE LA SAISON ${s.numero} EN BROUILLON ?`,
+          titre: `REMETTRE LE PASS ${s.numero} EN BROUILLON ?`,
           texte: 'Ses séries se referment pour tout le monde. Personne ne perd ce '
             + 'qu’il possède déjà, mais les boosters de ces séries cessent d’être '
             + 'proposés. Les tenues publiées restent publiées.',
           oui: 'REFERMER', ton: 'flare',
         } : {
-          titre: `LANCER LA SAISON ${s.numero} ?`,
+          titre: `LANCER LE PASS ${s.numero} ?`,
           texte: `« ${s.nom} » s’ouvre pour tous les joueurs, maintenant.\n\n`
             + (ouvre ? `Nouveau pour les joueurs :\n${ouvre}`
               : 'Elle n’ouvre rien de neuf — elle ne fera qu’annoncer.')
@@ -1062,8 +1227,8 @@ const VUES = {
         if (!ok) return;
         try {
           await api(`/saison/${s.id}/lancer`, { lancer: !s.lancee });
-          recu(s.lancee ? `saison ${s.numero} remise en brouillon.`
-            : `saison ${s.numero} lancée. Ce qu'elle ouvre est ouvert pour tout le monde.`);
+          recu(s.lancee ? `PASS ${s.numero} remis en brouillon.`
+            : `PASS ${s.numero} lancé. Ce qu'il ouvre est ouvert pour tout le monde.`);
           VUES.saisons();
         } catch (e) { recuRate(e); }
       };
@@ -1162,7 +1327,7 @@ const VUES = {
        est ouvert et par quelle saison ; il ne l'ouvre plus. Les séries ouvertes
        sont l'union des saisons lancées, et un second interrupteur ici aurait été
        une seconde vérité — le jour où les deux divergent, personne ne sait
-       laquelle le jeu applique. L'onglet SAISONS est le seul levier. */
+       laquelle le jeu applique. Le menu PASS est le seul levier. */
     const serie = (x) => `<span class="serie ${x.ouverte ? 'on' : ''}"
         title="${x.tirables} carte(s) tirable(s) sur ${x.publiees} publiée(s)">
         <b>${esc(x.nom)}</b><span>${x.tirables} tirables</span></span>`;
@@ -1176,7 +1341,7 @@ const VUES = {
         <div class="series-l">${d.series.map(serie).join('')}</div>
         <p class="series-n">Une série grisée n'a aucune carte de stade 1 publiée : elle ne
           pourrait pas distribuer de booster. <b>Pour en ouvrir une, lance une
-          saison</b> — onglet SAISONS.</p>
+          saison</b> — menu PASS (BASE, ou LES PASS).</p>
       </div>
       <div class="bar">
         <!-- **« f-serie » et non « f-set ».**
@@ -1411,7 +1576,7 @@ const VUES = {
         <p class="series-n">Retirer une carte d'action, une pièce d'équipement ou un
           stade le sort des tirages et des parties <b>immédiatement</b>, sans
           l'effacer. C'est le seul endroit d'où l'on referme ce qu'une saison a
-          ouvert — <b>SAISONS</b> ouvre, il ne referme que les séries.</p>
+          ouvert — le menu <b>PASS</b> ouvre (sa BASE ouvre et referme).</p>
       </div>
       ${(d.piecesDeClub ?? []).map((p) => {
         const manque = p.ecrites < p.attendues || p.dessinees < p.attendues || p.ouvertes < p.attendues;
@@ -1833,7 +1998,7 @@ const VUES = {
    * nulle part : combien de joueurs l'ont, et quelle tenue porte chaque PASS.
    * On lit ici ; on règle ici ; on l'offre toujours depuis la ligne du joueur.
    */
-  async pass() {
+  async ventes() {
     const [d, dep] = await Promise.all([api('/pass'),
       api('/departs').catch(() => null)]);
     const SOURCES = { stripe: 'carte', echarpes: 'écharpes', offert: 'offert' };
@@ -1867,7 +2032,7 @@ const VUES = {
           ? `Saison en cours : <b>${esc(enCours.nom ?? '')}</b> (n° ${enCours.numero}) — ${
             esc(pc?.nom ?? 'PASS ' + enCours.numero)}${pc?.tenue
               ? `, tenue <b>${esc(pc.tenue)}</b>` : ', sans tenue de saison'}.`
-          : 'Aucune saison lancée : le PASS ne se vend pas tant qu’aucune saison ne court (menu SAISONS).'}
+          : 'Aucune saison lancée : le PASS ne se vend pas tant qu’aucune saison ne court (PASS › LES PASS).'}
           Il coûte <b>${euros(d.prixEuros)}</b> (fixé dans le code, catalogue de la boutique)
           ou des écharpes (réglage plus bas). Pour l’<b>offrir</b> ou le <b>retirer</b> à un
           joueur : menu JOUEURS, bouton « Offrir le PASS » sur sa ligne. La tenue de chaque
@@ -1905,12 +2070,12 @@ const VUES = {
   /* `seul` : les sections à montrer (le menu PASS montre la sienne) ; sans
      lui, toutes sauf celles du PASS, qui ont leur menu. `avant` : ce que le
      menu qui appelle pose au-dessus. */
-  async reglages(seul = null, avant = '') {
+  async reglages(seul = null, avant = '', apres = null) {
     const [d, recal] = await Promise.all([api('/registre'),
       seul ? null : api('/divisions/recalage').catch((e) => ({ refus: e }))]);
-    const relire = () => VUES.reglages(seul, avant);
+    const relire = () => VUES.reglages(seul, avant, apres);
     const montrees = d.sections.filter((sec) => (seul
-      ? seul.includes(sec.id) : !SECTIONS_DU_PASS.includes(sec.id)));
+      ? seul.includes(sec.id) : !HORS_REGLAGES.includes(sec.id)));
     const parSection = (id) => d.reglages.filter((r) => r.section === id);
     // Une clé posée en base est une clé modifiée, même si sa valeur égale le
     // défaut : c'est ce que `brutes` dit et que `valeurs` ne peut pas dire.
@@ -1950,7 +2115,7 @@ const VUES = {
        calcule ; l'écran montre ce qu'il a lu et ce qu'il propose. */
     const ent = (n) => Number(n).toLocaleString('fr-CH', { maximumFractionDigits: 0 });
     const AVERTIS = {
-      sans_fin: 'Le dernier jour de jeu de la saison n’est pas saisi (onglet SAISONS) : '
+      sans_fin: 'Le dernier jour de jeu de la saison n’est pas saisi (PASS › LES PASS) : '
         + 'sans lui, rien ne se projette sur la saison entière.',
       aucun_joueur: 'Aucun joueur sans abonnement n’a encore de ferveur classée cette saison.',
       peu_de_joueurs: 'Moins de 30 joueurs : les rangs lus tiennent à quelques personnes. '
@@ -2012,6 +2177,9 @@ const VUES = {
         ${parSection(sec.id).map(ligne).join('')}
       </section>`).join('')}
       <div class="enreg"><span class="quoi" id="quoi"></span></div>`;
+    /* Ce que le menu qui appelle pose sous les réglages, et ses boutons : la
+       BASE y met ses listes. Rappelé à chaque redessin. */
+    apres?.();
 
     /* Chaque champ s'enregistre seul, à la sortie. Un bouton « Enregistrer »
        unique obligerait à deviner lequel des vingt-six champs a été refusé

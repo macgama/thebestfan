@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**Le menu PASS : la BASE, LES PASS, les VENTES** (branche
+`claude/project-thread-d5k3ue`, 2 novembre 2026, demande de Gaël). Construction,
+puis **`npm run schema:appliquer`** (une colonne : `saisons.jeux`, dans
+`sql/contenus.sql`), puis redémarrage.
+
+- SAISONS et PASS deviennent un seul menu PASS : BASE (le paquet de bienvenue
+  et tout ce qui est en jeu pour tous, modifiable), LES PASS (un par saison,
+  avec ses nouveautés pour tous et sa tenue pour les membres), VENTES (l'ancien
+  menu PASS).
+- Les mini-jeux s'ouvrent et se ferment comme l'équipement et les stades ; les
+  écharpes du paquet de bienvenue se règlent (80 à 119 par défaut, comme avant).
+- Sans le schéma, tout marche, sauf nommer un mini-jeu dans un PASS.
+- Puis : /admin, menu PASS › BASE.
+
+---
+
 **L'admin rangée en sept menus, avec un menu PASS** (branche
 `claude/project-thread-bxmiqd`, 2 novembre 2026, choix de Gaël). Construction
 seule, **sans schéma**.

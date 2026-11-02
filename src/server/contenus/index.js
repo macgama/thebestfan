@@ -56,12 +56,16 @@
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STUFF } from '../../shared/fanzzy/inventaire.js';
 import { STADES, stadeDeLaRencontre } from '../../shared/stades.js';
+import { MINI_JEUX } from '../../shared/mini-jeux.js';
 
-/** Les trois familles, et ce que le code en dit. */
+/** Les familles, et ce que le code en dit. Les mini-jeux sont arrivés le
+    2 novembre 2026 avec le menu PASS : la BASE et chaque PASS les ouvrent
+    comme le reste. La colonne `famille` est du texte, aucune migration. */
 export const FAMILLES = {
   action: { source: ACTIONS, nom: 'cartes d’action' },
   stuff: { source: STUFF, nom: 'pièces d’équipement' },
   stade: { source: STADES, nom: 'stades' },
+  jeu: { source: MINI_JEUX, nom: 'mini-jeux' },
 };
 
 /* Ce qui vit en colonnes ; tout le reste part dans `donnees`. */

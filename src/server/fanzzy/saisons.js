@@ -123,6 +123,9 @@ const versJeu = (r) => ({
      sert pas, et `lireJson` rend alors une liste vide — une saison sans
      stade, ce qui est la vérité. */
   stades: lireJson(r.stades),
+  /* Les mini-jeux (menu PASS, 2 novembre 2026) : colonne de sql/contenus.sql ;
+     absente, une saison sans mini-jeu, ce qui est sa vérité. */
+  jeux: lireJson(r.jeux),
   // `lancee` plutôt qu'un booléen déduit ailleurs : la date porte les deux
   // informations, et un écran qui veut dire « lancée le 3 octobre » l'a sous la
   // main sans seconde requête.
