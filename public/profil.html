@@ -98,6 +98,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .carte .depuis .tbf-marqueur{font-size:16px;line-height:20px;letter-spacing:0}
 .carte .depuis:empty{display:none}
 .carte-tampon{position:absolute;z-index:3;top:18px;right:14px;--rot:-7deg}
+/* L'écusson du PASS de saison, en bas à gauche de la carte, et son lien vers
+   la page du PASS. Posé seulement s'il y en a un (`pass.js`). */
+.carte-pass{position:absolute;z-index:3;left:12px;bottom:10px;text-decoration:none}
 /* Le niveau, collé sur le coin déchiré du cadre : il le chevauche. */
 .carte-niv{position:absolute;z-index:4;right:-7px;bottom:-9px;--taille:34px;--rot:6deg;font-size:17px}
 
@@ -446,6 +449,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
          posés seulement s'il y en a. -->
     <div class="carte-saisons" id="saisonsCarte" role="img" hidden></div>
     <b class="tbf-sticker tbf-sticker--rond carte-niv" id="nivCoin" role="img" hidden></b>
+    <a class="carte-pass" id="passCarte" href="/abonnement" hidden></a>
   </section>
 
   <div class="stats" id="stats"></div>
@@ -547,6 +551,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <script src="/action-art.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/niveau-fete.js" defer></script>
+<script src="/pass.js"></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 
@@ -2018,6 +2023,23 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
     /* Dit là où l'on regarde, en haut, sous la carte. */
     $('stats').innerHTML = '<div class="pan" style="grid-column:1/-1"><div class="vide">Serveur injoignable.</div></div>';
   }
+})();
+
+/* **Le PASS de saison sur la carte** : son écusson au niveau atteint de la
+   voie, et le cadre de la carte dès le niveau 4 (animé au 5). La même
+   requête que le menu (`window.TBF_ABO`), jamais une seconde. */
+void (async () => {
+  try {
+    const a = await (window.TBF_ABO ??= fetch('/api/abonnement', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null));
+    const v = (a?.voies ?? []).at(-1);
+    if (!v || !window.TBF_PASS) return;
+    const el = $('passCarte');
+    el.innerHTML = window.TBF_PASS.badge(v, 'moyen');
+    el.setAttribute('aria-label', `${v.nom ?? `PASS ${v.saison}`}, niveau ${v.niveau} sur ${window.TBF_PASS.MAX}`);
+    el.hidden = false;
+    window.TBF_PASS.cadre($('carte'), v);
+  } catch { /* la carte se passe de son badge */ }
 })();
 </script>
 <script src="/pwa.js" defer></script>

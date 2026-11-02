@@ -474,7 +474,7 @@ function gagnerXp(p, n) {
   p.niveau = N.niveauPour(p.xp);
   for (let k = avant + 1; k <= p.niveau; k++) credit(p, 'niveaux', N.ecarpesDuPalier(k));
 }
-const slots = (p) => N.droits(p.niveau).slots + (p.abonne ? R('abo.clubs_en_plus') : 0);
+const slots = (p) => N.droits(p.niveau).slots + (p.abonne ? R('pass.clubs_par_pass') : 0);
 
 /* Dépenser : faire grandir d'abord (le moins cher), puis l'étal pour qui le
    fréquente, puis des boosters pour le tryhardeur à court. */
@@ -691,7 +691,7 @@ for (let jour = DEBUT; jour <= FIN; jour = jourSuivant(jour)) {
   }
   tentatives.sort((a, b) => a.t - b.t);
   const file = [];   // { x, t, jusqua, match, side, absent }
-  const plafond = R('abo.duels_classes_jour');
+  const plafond = 0;   // plus de plafond gratuit (PASS de saison, 2 novembre 2026)
   const duelsDuJour = [];
   const occupe = new Map();
   for (const a of tentatives) {
@@ -815,7 +815,7 @@ for (let jour = DEBUT; jour <= FIN; jour = jourSuivant(jour)) {
         gagnerXp(p, R('xp.virage') + (chants >= 10 ? R('xp.virage_chants') : 0));
         p.viragesXp++;
       }
-      if (p.abonne || p.viragesClasses < R('abo.virages_classes_jour')) {
+      {   // tout Virage compte, PASS ou non (2 novembre 2026)
         p.viragesClasses++;
         p.stats.viragesClasses++;
         p.ferveur[saison] += Math.round(HUMAIN * v.minutes * ferveurVirageMinute(progres(p)) * (suit ? 1 : R('ferveur.neutre')));
@@ -919,7 +919,7 @@ function tribunes(saison, ligue = null, variante = false) {
       const k = `${l.joueur}:${l.jour}`;
       const n = (duJour.get(k) ?? 0) + 1;
       duJour.set(k, n);
-      if (n > R('abo.duels_classes_jour')) continue;
+      if (n > R('tribune.duels_jour')) continue;
     }
     if (ligue && CLUBS.get(l.club).ligue !== ligue) continue;
     if (CLUBS.get(l.club).ligue === 'autres') continue;

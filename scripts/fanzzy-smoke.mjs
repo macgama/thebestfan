@@ -13,7 +13,7 @@ import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue, obtenables, chargerSeries, lignee, publies }
   from '../src/server/fanzzy/catalogue.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
-import { chargerTenues, tenuesPubliees } from '../src/server/fanzzy/tenues.js';
+import { chargerTenues, tenuesPubliees, tenuesEnEtal } from '../src/server/fanzzy/tenues.js';
 import * as moduleSaisons from '../src/server/fanzzy/saisons.js';
 import { verser } from '../src/server/recompenses.js';
 import { reglage, poserReglages } from '../src/shared/reglages.js';
@@ -1211,7 +1211,7 @@ const base1W = DEX.find((f) => f.stage === 1 && f.evo);
       const [ont] = await pool.execute(
         'SELECT skin_id FROM user_skins WHERE user_id = ? AND fanzzy_id = ? AND stage = ?',
         [E, base1W.id, f.stage]);
-      const tenue = tenuesPubliees().find((t) => t.id !== 'base' && !ont.some((o) => o.skin_id === t.id));
+      const tenue = tenuesEnEtal().find((t) => t.id !== 'base' && !ont.some((o) => o.skin_id === t.id));
       if (!tenue) return new Set();
       const l = await nouvelles(E, () => dansUneTransaction((c) => F.remettreTenue(c, E,
         { tenue: tenue.id, fanzzy: base1W.id, stage: f.stage })));
@@ -1600,9 +1600,12 @@ try {
      écharpes et en boosters (`CONTRATS.md`, R9). Le chemin est le vrai — la
      route de l'avatar, sous un abonnement simulé : une ligne posée à la main
      prouverait la règle du compte, pas que le geste de l'abonné y tombe. */
-  console.log('\n  ce que l’abonnement ouvre ne paie pas');
+  /* Depuis le PASS de saison (2 novembre 2026), seule la tenue d'un PASS se
+     porte sans l'avoir tirée. Le faux module ci-dessous la donne pour toutes,
+     au troisième âge : le pire cas pour les crans. */
+  console.log('\n  ce que le PASS ouvre ne paie pas');
   const O = createOnboarding({ pool, requireAuth: authentifier,
-    abonnement: { estAbonne: async () => true, clubsEnPlus: () => 0 } });
+    abonnement: { estAbonne: async () => true, clubsEnPlus: async () => 0, ageTenuePass: async () => 3 } });
   app.use('/api/onboarding', O.router);
   const tenues = tenuesPubliees().filter((t) => t.id !== 'base');
   const cran = reglage('collection.cran');

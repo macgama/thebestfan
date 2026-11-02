@@ -132,7 +132,7 @@
        pour écrire le titre de la barre, et une route absente n'affiche **rien**.
        La collection et l'abonnement s'ouvraient donc sur une barre muette,
        alors que les vingt autres écrans se nomment. */
-    '/collection': 'Collection', '/abonnement': 'Abonnement',
+    '/collection': 'Collection', '/abonnement': 'PASS de saison',
     '/confidentialite': 'Confidentialité',
     '/mentions-legales': 'Mentions légales', '/conditions': 'Conditions',
     '/comment-jouer': 'Comment jouer',
@@ -298,7 +298,7 @@
       /* Juste après la boutique, et pas ailleurs : c'est le même geste — on
          vient dépenser. Il manquait, et la seule façon d'atteindre l'écran de
          l'abonnement était de connaître son adresse. */
-      ['/abonnement', 'abonnement', 'L’abonnement', 'or'],
+      ['/abonnement', 'abonnement', 'Le PASS de saison', 'or'],
     ] },
     { titre: 'LE FOOTBALL', ton: 'vert', liens: [
       ['/matchs', 'matchs', 'Les matchs du jour'],
@@ -1304,7 +1304,12 @@
           ? new Date(a.fin).toLocaleDateString('fr-FR',
             { day: 'numeric', month: 'long', year: 'numeric' })
           : null;
-        n.innerHTML = '<b>ABONNÉ</b><span>'
+        /* L'écusson du PASS le plus récent (`ui.css`, `.tbf-pass-badge`). */
+        const v = (a.voies ?? []).at(-1);
+        const couleur = /^#[0-9a-f]{3,8}$/i.test(String(v?.couleur ?? '')) ? v.couleur : '#c9772e';
+        const badge = v ? `<span class="tbf-pass-badge" style="--pass:${couleur}"${v.or ? ' data-or' : ''}`
+          + ` aria-hidden="true"><b>P${Number(v.saison) || ''}</b></span>` : '';
+        n.innerHTML = badge + '<b>PASS ACTIF</b><span>'
           + (fin ? 'jusqu’au ' + fin : 'sans terme') + '</span>';
         n.hidden = false;
       } catch { /* un menu ne tombe pas pour ça */ }

@@ -32,13 +32,12 @@
  * de la montagne, jamais du club : c'est la règle de `dex-terraces.js`, et
  * elle ne se rattrape pas après coup.
  *
- * ## Elle arrive fermée, et sans légendaire
+ * ## Elle arrive fermée
  *
  * Aucune saison lancée ne la nomme : aucun booster ni aucun kiosque ne la
  * distribue tant que Gaël ne la coche pas dans une saison lancée (onglet
- * SAISONS de /admin). Aucune légendaire n'est conçue : `catalogue-smoke.mjs`
- * l'exempte nommément, comme LES TERRACES, et l'exemption tombe d'elle-même
- * le jour où la série en compte cinq.
+ * SAISONS de /admin). Ses six légendaires (SU37 à SU42, 2 novembre 2026)
+ * sont en bas de la liste.
  *
  * ## Le barème et les familles
  *
@@ -425,6 +424,52 @@ const PREMIERS_AGES = [
       + 'lequel ils viennent.',
     mods: { breathBonus: 1.16, mashBonus: 0.92 },
     cri: { label: 'PROCHAIN ARRÊT : LE STADE', gest: 'memoire', power: 53 } },
+  /* **Les six légendaires de la série** (demande de Gaël du 2 novembre
+     2026, sur le modèle de LES TERRACES). Un seul âge : elles se trouvent,
+     elles ne grandissent pas. SU37 à SU39 sont liées aux équipes nationales
+     suisses (hommes, femmes, espoirs), SU40 à SU42 au championnat, sans club
+     (`clubs.js`, `lienEcrit`). Mêmes interdits que la série : ni croix
+     suisse, ni drapeau, ni armoiries, ni arbalète, ni le nom ou le logo du
+     championnat. Fiches et prompts : `fanzzy-prompts/SU-legendaires.md`. */
+  { id: 'SU37', nom: 'La Fée de l’Edelweiss', type: 'depl', stage: 1, rar: 'legendaire',
+    histoire: 'Elle ne descend jamais de ses neiges éternelles. Mais chaque supporter parti '
+      + 'suivre l’équipe au bout du monde trouve un matin une petite fleur blanche accrochée à '
+      + 'son écharpe.',
+    mods: { breathBonus: 1.36, refundBonus: 1.22, mashBonus: 0.86 },
+    cri: { label: 'UNE FLEUR POUR CHACUN', gest: 'echarpe', power: 80 } },
+
+  { id: 'SU38', nom: 'Le Sonneur du Grand Cor', type: 'voix', stage: 1, rar: 'legendaire',
+    histoire: 'Il ne souffle qu’une fois par match, avant le coup d’envoi. On l’entend jusqu’au '
+      + 'fond de la dernière vallée, et ceux qui n’ont pas de billet savent au moins qu’on joue.',
+    mods: { tempoWindow: 1.3, breathBonus: 1.18, parryResist: 0.84 },
+    cri: { label: 'TOUTES LES VALLÉES', gest: 'echo', power: 83 } },
+
+  { id: 'SU39', nom: 'Le Saint-Bernard du Col', type: 'fide', stage: 1, rar: 'legendaire',
+    histoire: 'Il connaît tous les cols et toutes les tempêtes. Il n’a jamais laissé un '
+      + 'supporter dormir dans la neige, et il les a tous ramenés à temps pour le coup d’envoi.',
+    mods: { holdBonus: 1.42, holdForgive: 3, parryResist: 1.2, tempoInterval: 90 },
+    cri: { label: 'PERSONNE NE RESTE DEHORS', gest: 'hold', power: 80 } },
+
+  { id: 'SU40', nom: 'La Messagère des Quatre Langues', type: 'tifo', stage: 1, rar: 'legendaire',
+    histoire: 'Le score part de la ville en allemand, passe le col en français, arrive au lac en '
+      + 'italien et finit dans la vallée en romanche. Elle est la seule à l’avoir porté partout '
+      + 'le même soir.',
+    mods: { parryBonus: 1.5, perfectBonus: 1.22, tempoWindow: 0.86 },
+    cri: { label: 'LE SCORE ARRIVE', gest: 'tifo', power: 82 } },
+
+  { id: 'SU41', nom: 'Le Géant du Röstigraben', type: 'perc', stage: 1, rar: 'legendaire',
+    histoire: 'Toute l’année, chacun reste de son côté du fossé. Le jour du match, il met un pied '
+      + 'de chaque côté, sa poêle à la main, et pendant quatre-vingt-dix minutes tout le monde '
+      + 'est d’accord.',
+    mods: { mashBonus: 1.38, mashTime: 900, holdBonus: 0.86 },
+    cri: { label: 'UN PIED DE CHAQUE CÔTÉ', gest: 'mash', power: 81 } },
+
+  { id: 'SU42', nom: 'La Marmotte du Premier Sifflet', type: 'pyro', stage: 1, rar: 'legendaire',
+    histoire: 'Elle se couche le soir du dernier match d’automne et ne bouge plus de tout '
+      + 'l’hiver. Au premier sifflet du printemps, c’est elle qui siffle, et toute la montagne '
+      + 'se réveille.',
+    mods: { perfectBonus: 1.46, refundBonus: 1.32, backfire: 1.45 },
+    cri: { label: 'LA SAISON SE RÉVEILLE', gest: 'relance', power: 82 } },
 ];
 
 export const DEX_KURVE = PREMIERS_AGES.map((f) => ({ ...f, set: SET_KURVE.id }));

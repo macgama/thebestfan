@@ -60,13 +60,15 @@ console.log('\nLes conditions\n');
 check('elles sont datées', /Dernière mise à jour : \d{1,2}(er)? [a-zéû]+ 20\d\d/.test(conditions));
 /* Les prix : le seul nombre recopié, lu dans le catalogue qui fait foi. */
 const euros = (centimes) => `${Math.floor(centimes / 100)},${String(centimes % 100).padStart(2, '0')} €`;
-for (const id of ['abo-mensuel', 'abo-annuel']) {
+for (const id of ['pass-saison']) {
   const a = CATALOGUE.find((x) => x.id === id);
   check(`le prix de ${id} est celui du catalogue (${a ? euros(a.prix) : '?'})`,
     Boolean(a) && conditions.includes(euros(a.prix)));
 }
-check('elles disent comment résilier, et quand ça prend effet',
-  conditions.includes('Résilier mon abonnement') && conditions.includes('à la fin de la période déjà payée'));
+check('elles disent que le PASS ne se renouvelle jamais tout seul',
+  conditions.includes('ne se renouvelle jamais tout seul'));
+check('et comment résilier un ancien abonnement, et quand ça prend effet',
+  conditions.includes('Résilier mon ancien abonnement') && conditions.includes('à la fin de la période déjà payée'));
 check('elles disent le remboursement des quatorze jours', conditions.includes('quatorze jours'));
 check('elles disent l’accord d’un parent avant 18 ans', conditions.includes('moins de 18 ans'));
 check('elles disent le droit applicable', conditions.includes('droit suisse'));
