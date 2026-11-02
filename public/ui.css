@@ -11911,3 +11911,126 @@ html[data-calme~="animations"] .tbf-jeu .virage::before{animation:none}
 @keyframes tbf-face-saut{0%,100%{translate:0 0}35%{translate:0 -12%}65%{translate:0 -4%}}
 @media (prefers-reduced-motion:reduce){ .tbf-face *{animation:none!important} }
 html[data-calme~="animations"] .tbf-face *{animation:none!important}
+
+/* =================================================== le PASS de saison
+
+   Le badge et le cadre du PASS (choix de Gaël du 2 novembre 2026,
+   `src/shared/pass.js`). Purement visuels : ils disent qu'on a pris le PASS
+   d'une saison et jusqu'où l'on a mené sa voie, rien de plus.
+
+   **Le badge** : un écusson taillé, à la couleur de sa saison (`--pass`,
+   posée par la page depuis le registre), avec le numéro du PASS. Ses crans
+   (`data-niveau`, 1 à 6) s'allument un par un ; au sixième, il passe en or
+   (`data-or`). Trois tailles : en ligne (classement, duel), moyenne (carte
+   de supporter), grande (la page du PASS).
+
+   **Le cadre** : autour de la carte de supporter. `fixe` au niveau 4, une
+   bordure de pierre taillée ; `anime` au niveau 5, la même avec un reflet qui
+   la parcourt — une seule animation infinie, coupée par
+   `prefers-reduced-motion`. */
+.tbf-pass-badge{--pass:#c9772e;--t:22px;position:relative;display:inline-grid;place-items:center;
+  flex:none;width:var(--t);height:calc(var(--t) * 1.16);vertical-align:middle;
+  font-family:var(--banner);font-weight:700;font-size:calc(var(--t) * .42);line-height:1;
+  color:var(--encre);letter-spacing:.02em}
+.tbf-pass-badge::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--pass) 70%,#fff) 0%,var(--pass) 46%,
+    color-mix(in srgb,var(--pass) 62%,#000) 100%);
+  clip-path:polygon(50% 0,100% 14%,100% 62%,50% 100%,0 62%,0 14%);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.35)}
+.tbf-pass-badge::after{content:"";position:absolute;inset:calc(var(--t) * .09);
+  clip-path:polygon(50% 0,100% 14%,100% 62%,50% 100%,0 62%,0 14%);
+  border:1px solid rgba(255,255,255,.35);background:transparent;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.28)}
+.tbf-pass-badge>b{position:relative;z-index:1;transform:translateY(-6%)}
+.tbf-pass-badge[data-or]{--pass:#F5C33B}
+.tbf-pass-badge[data-or]::before{background:linear-gradient(160deg,#fff3c4 0%,#F5C33B 42%,#a77a10 100%);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.35),0 0 calc(var(--t) * .45) rgba(245,195,59,.55)}
+.tbf-pass-badge--moyen{--t:34px}
+.tbf-pass-badge--grand{--t:64px}
+/* Les crans de la voie, sous le badge moyen et grand. */
+.tbf-pass-crans{display:inline-flex;gap:3px;margin-top:4px}
+.tbf-pass-crans i{width:7px;height:7px;border-radius:2px;background:rgba(242,238,228,.18);
+  transform:rotate(45deg)}
+.tbf-pass-crans i[data-on]{background:var(--pass,#c9772e);box-shadow:0 0 6px var(--pass,#c9772e)}
+
+/* Le cadre de la carte de supporter. Il se pose sur un bloc existant, sans
+   rien changer à son contenu, et sans pseudo-élément : le bloc qui le porte a souvent déjà les siens (la
+   brique `.tbf-cadre` pose son ::before). Le cadre est donc une pile d'ombres
+   — un liseré noir, la bande à la couleur du PASS, un second liseré, un halo —
+   et le cadre animé fait respirer ce halo et tourner sa teinte vers l'or. */
+.tbf-pass-cadre{--pass:#c9772e}
+.tbf-pass-cadre[data-cadre]{
+  box-shadow:0 0 0 2px rgba(0,0,0,.65),0 0 0 6px var(--pass),
+    0 0 0 7px color-mix(in srgb,var(--pass) 40%,#fff),0 0 0 9px rgba(0,0,0,.55),
+    0 0 22px 4px color-mix(in srgb,var(--pass) 45%,transparent)}
+.tbf-pass-cadre[data-cadre="anime"]{animation:tbf-pass-souffle 3.2s ease-in-out infinite}
+@keyframes tbf-pass-souffle{
+  0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.65),0 0 0 6px var(--pass),
+    0 0 0 7px color-mix(in srgb,var(--pass) 40%,#fff),0 0 0 9px rgba(0,0,0,.55),
+    0 0 18px 2px color-mix(in srgb,var(--pass) 40%,transparent)}
+  50%{box-shadow:0 0 0 2px rgba(0,0,0,.65),0 0 0 6px color-mix(in srgb,var(--pass) 55%,#F5C33B),
+    0 0 0 7px #fff3c4,0 0 0 9px rgba(0,0,0,.55),
+    0 0 34px 8px color-mix(in srgb,#F5C33B 55%,transparent)}}
+@media (prefers-reduced-motion:reduce){
+  .tbf-pass-cadre[data-cadre="anime"]{animation:none}
+}
+html[data-calme~="animations"] .tbf-pass-cadre[data-cadre="anime"]{animation:none}
+
+/* ====================================================== la pub du PASS
+
+   `public/pass-pub.js` (Gaël, 2 novembre 2026) : la plaque « PASS 1 » posée
+   sur la scène de l'accueil, et le spot du jour, en plein écran, après le
+   chargement. Le spot se ferme toujours d'un geste. */
+.pass-plaque{position:absolute;z-index:5;top:62px;left:8px;display:inline-flex;align-items:center;gap:6px;
+  padding:4px 9px 4px 5px;text-decoration:none;font-family:var(--banner);line-height:1.05;
+  animation:tbf-pass-appel 2.8s ease-in-out infinite}
+.pass-plaque b{display:block;font-size:12px;letter-spacing:.05em}
+.pass-plaque small{display:block;font-size:9.5px;letter-spacing:.04em;opacity:.85;text-transform:uppercase}
+@keyframes tbf-pass-appel{0%,80%,100%{transform:rotate(-3deg) scale(1)}88%{transform:rotate(2deg) scale(1.07)}}
+
+.pass-spot{position:fixed;inset:0;z-index:9000;--pass:#c9772e;display:flex;flex-direction:column;
+  justify-content:flex-end;overflow:hidden;color:#F2EEE4;opacity:0;transition:opacity .3s ease;
+  background:radial-gradient(120% 70% at 50% 30%,color-mix(in srgb,var(--pass) 45%,#05070A) 0%,#05070A 70%)}
+.pass-spot.on{opacity:1}
+.pass-spot.pass-spot-part{opacity:0}
+.pass-spot-x{position:absolute;z-index:3;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;
+  width:40px;height:40px;border-radius:50%;border:1px solid rgba(242,238,228,.35);
+  background:rgba(5,7,10,.55);color:#F2EEE4;font-size:24px;line-height:1;cursor:pointer}
+.pass-spot-defile{position:absolute;inset:0 0 38% 0;display:grid;place-items:end center}
+.pass-spot-defile img{position:absolute;bottom:0;max-width:86%;max-height:92%;object-fit:contain;
+  opacity:0;transform:scale(.92) translateY(10px);transition:opacity .45s ease,transform 1.2s ease;
+  filter:drop-shadow(0 12px 22px rgba(0,0,0,.7))}
+.pass-spot-defile img.on{opacity:1;transform:scale(1.04) translateY(0)}
+.pass-spot-texte{position:relative;z-index:2;padding:0 20px calc(env(safe-area-inset-bottom,0px) + 22px);
+  background:linear-gradient(transparent,#05070A 28%)}
+.pass-spot-sur{display:inline-block;padding:3px 8px;border-radius:4px;background:#F5C33B;color:#07090C;
+  font-family:var(--banner);font-weight:700;font-size:11px;letter-spacing:.08em}
+.pass-spot h2{margin:8px 0 6px;font-family:var(--banner);font-weight:700;font-size:30px;line-height:1;
+  letter-spacing:.02em;text-transform:uppercase}
+.pass-spot h2 span{display:block;font-size:14px;letter-spacing:.12em;color:#F5C33B;margin-bottom:4px}
+.pass-spot-lignes{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:5px;font-size:14px}
+.pass-spot-lignes li{display:flex;gap:8px;align-items:center;opacity:0;transform:translateX(-12px);
+  animation:tbf-pass-ligne .45s ease forwards}
+.pass-spot-lignes li::before{content:"";width:8px;height:8px;flex:none;transform:rotate(45deg);
+  background:#F5C33B;box-shadow:0 0 8px #F5C33B}
+.pass-spot-lignes li:nth-child(1){animation-delay:.9s}
+.pass-spot-lignes li:nth-child(2){animation-delay:1.9s}
+.pass-spot-lignes li:nth-child(3){animation-delay:2.9s}
+.pass-spot-lignes li:nth-child(4){animation-delay:3.9s}
+@keyframes tbf-pass-ligne{to{opacity:1;transform:none}}
+.pass-spot-prix{margin:0 0 12px;font-family:var(--banner);font-weight:700;font-size:20px;color:#F5C33B}
+.pass-spot-prix small{display:block;margin-top:3px;font-family:var(--ui);font-weight:400;font-size:12px;
+  color:#F2EEE4;opacity:.85}
+.pass-spot-boutons{display:grid;gap:6px}
+.pass-spot-tard{background:none;border:0;color:#F2EEE4;opacity:.8;font-size:14px;padding:8px;cursor:pointer;
+  text-decoration:underline}
+.pass-spot-jauge{position:absolute;z-index:3;left:0;top:0;height:3px;width:100%;background:#F5C33B;
+  transform-origin:left;transform:scaleX(0);animation:tbf-pass-jauge 7s linear forwards}
+@keyframes tbf-pass-jauge{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){
+  .pass-plaque,.pass-spot-jauge{animation:none}
+  .pass-spot-lignes li{animation:none;opacity:1;transform:none}
+}
+html[data-calme~="animations"] .pass-plaque,
+html[data-calme~="animations"] .pass-spot-jauge{animation:none}
+html[data-calme~="animations"] .pass-spot-lignes li{animation:none;opacity:1;transform:none}

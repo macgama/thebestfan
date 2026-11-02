@@ -23,7 +23,7 @@ const ETAT_NOM = {
 };
 // Les tenues viennent de la base : elles se créent depuis l'administration,
 // et une liste figée dans le code redeviendrait une seconde vérité.
-import { toutesTenues, tenuesPubliees } from './tenues.js';
+import { toutesTenues, tenuesPubliees, tenuesTirables, tenuesEnEtal } from './tenues.js';
 import { ACTIONS, DECK_RULES } from '../../shared/duel/actions.js';
 /* Ce que les saisons ont ouvert de l'équipement et des cartes d'action.
    Renommé à l'import : `publies` est déjà pris ici par le catalogue Fanzzy, et
@@ -38,6 +38,7 @@ import { STADES, STADE_BY_ID as LIEU_BY_ID, STADE_DEFAUT as LIEU_DEFAUT } from '
 import { avatarsDe } from './avatar.js';
 import { XP } from '../../shared/niveau.js';
 import { saisonsLancees, saisonEnCours } from './saisons.js';
+import { tenueDePass, passDeLaTenue, tenueReservee } from '../../shared/pass.js';
 /* L'espace de noms entier, en plus des noms ci-dessus : `saisonProchaine` et
    `seriesAnnoncees` sont livrées par le périmètre des saisons, et un import
    nommé d'une fonction absente ferait tomber le module au chargement — donc
@@ -46,7 +47,7 @@ import { saisonsLancees, saisonEnCours } from './saisons.js';
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
 import { verser, verserTout } from '../recompenses.js';
-import { criDuClub, gainPleinClub, lienEcrit } from '../../shared/fanzzy/clubs.js';
+import { criDuClub, gainPleinClub, lienEcrit, motifSelection } from '../../shared/fanzzy/clubs.js';
 
 /* ------------------------------------------------------------ le journal
 
@@ -884,7 +885,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       for (const id of avant) {
         const stade = stadeDe.get(id) ?? 1;
         for (let s = 1; s <= stade; s++) {
-          for (const sk of tenuesPubliees()) {
+          for (const sk of tenuesTirables()) {
             if (sk.id === 'base') continue;
             if (!skinsPris.has(`${id}:${s}:${sk.id}`)) places.push({ id, stade: s, skin: sk.id });
           }
@@ -2416,6 +2417,27 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       laTribune(userId, id),
     ]);
 
+    /* **La tenue d'un PASS** (2 novembre 2026) : elle ne sort d'aucun
+       booster. La fiche dit d'où elle vient (`pass`, le numéro ; `reservee`
+       tant que sa saison court, sinon elle est à l'étal), et la compte comme
+       à soi aux âges que la voie de son PASS a ouverts, sur un Fanzzy qu'on a. */
+    const agesPass = new Map();
+    for (const sk of toutesTenues()) {
+      if (!tenueDePass(sk.id)) continue;
+      const age = mien?.length && abonnement?.ageTenuePass
+        ? await abonnement.ageTenuePass(userId, sk.id).catch(() => 0) : 0;
+      agesPass.set(sk.id, age);
+    }
+    let numeroCourant = null;
+    try { numeroCourant = saisonEnCours()?.numero ?? null; } catch { /* sans saisons */ }
+    const tenueVue = (sk, m, n) => {
+      const parPass = (agesPass.get(sk.id) ?? 0) >= n;
+      const pass = tenueDePass(sk.id) ? passDeLaTenue(sk.id)[0] : null;
+      return { ...sk, possede: Boolean(m) || parPass, porte: Boolean(m?.equipped),
+               depuis: m?.got_at ?? null,
+               ...(pass ? { pass, reservee: tenueReservee(sk.id, numeroCourant) } : {}) };
+    };
+
     const ages = lignee(id);
     const stade = Number(mien[0]?.stage ?? 1);
     // Ce qu'il est **aujourd'hui** : nom, histoire, bonus et cri de l'âge
@@ -2444,8 +2466,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       : ecrit?.selection != null
         ? (await q(
           `SELECT 1 FROM user_follows uf JOIN teams t ON t.id = uf.team_id
-            WHERE uf.user_id = ? AND (t.id = ? OR t.name REGEXP '^England( W| U[0-9]{2})$') LIMIT 1`,
-          [userId, ecrit.selection]).catch(() => [])).length > 0
+            WHERE uf.user_id = ? AND (t.id = ? OR t.name REGEXP ?) LIMIT 1`,
+          [userId, ecrit.selection, motifSelection(id)]).catch(() => [])).length > 0
         : sonClub == null ? false : (await q(
           `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id = ? LIMIT 1`,
           [userId, sonClub]).catch(() => [])).length > 0;
@@ -2540,11 +2562,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          garde-robe du gamin. Montrer toutes les tenues du personnage ferait
          croire le contraire, et le joueur chercherait longtemps le bouton qui
          ne viendra pas. */
-      skins: toutesTenues().map((sk) => {
-        const m = skins.find((x) => x.skin_id === sk.id && Number(x.stage) === stade);
-        return { ...sk, possede: Boolean(m), porte: Boolean(m?.equipped),
-                 depuis: m?.got_at ?? null };
-      }),
+      skins: toutesTenues().map((sk) => tenueVue(sk,
+        skins.find((x) => x.skin_id === sk.id && Number(x.stage) === stade), stade)),
       // Ce qui est gagné aux autres âges, pour que la fiche puisse le dire
       // plutôt que de laisser croire à une perte.
       skinsAutresAges: skins.filter((x) => Number(x.stage) !== stade)
@@ -2566,11 +2585,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          Trois âges, une vingtaine de tenues : la réponse grossit de
          quelques centaines d'octets, et la fiche cesse de mentir. */
       parAge: Object.fromEntries([1, 2, 3].map((n) => [n, {
-        skins: toutesTenues().map((sk) => {
-          const m = skins.find((x) => x.skin_id === sk.id && Number(x.stage) === n);
-          return { ...sk, possede: Boolean(m), porte: Boolean(m?.equipped),
-                   depuis: m?.got_at ?? null };
-        }),
+        skins: toutesTenues().map((sk) => tenueVue(sk,
+          skins.find((x) => x.skin_id === sk.id && Number(x.stage) === n), n)),
         etats: ETATS_DESSINES.map((e) => {
           const m = etats.find((x) => x.etat === e && Number(x.stage) === n);
           return { id: e, nom: ETAT_NOM[e] ?? e, dessin: ETAT_DESSIN[e] ?? '',
@@ -2708,7 +2724,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
 
         const places = [];
         for (const f of avant) {
-          for (const sk of tenuesPubliees()) {
+          for (const sk of tenuesTirables()) {
             if (sk.id === 'base') continue;
             if (!dejaLa.has(`${f.fanzzy_id}:${f.stage}:${sk.id}`)) {
               places.push({ id: f.fanzzy_id, stade: f.stage, skin: sk.id });
@@ -2792,7 +2808,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    *   — il l'a déjà habillé ainsi.
    */
   async function remettreTenue(conn, userId, { tenue, fanzzy, stage }) {
-    const t = tenuesPubliees().find((x) => x.id === tenue);
+    /* Ce que l'étal vend, et rien d'autre : une tenue réservée au PASS de la
+       saison ne s'achète pas (`tenuesEnEtal`). */
+    const t = tenuesEnEtal().find((x) => x.id === tenue);
     if (!t || tenue === 'base') throw fail('boutique.error.tenue_inconnue');
 
     /* **Un âge atteint, pas seulement le dernier.** On peut se montrer à un

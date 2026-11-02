@@ -74,6 +74,16 @@ export function prixTenue() {
   return reglage('etal.tenue') ?? null;
 }
 
+/**
+ * Le prix d'une tenue précise : celle d'un PASS passé (`pass: true`, posé par
+ * `tenuesEnEtal`) revient à l'étal plus chère (`pass.prix_tenue_etal`, choix
+ * de Gaël du 2 novembre 2026), les autres au prix ordinaire.
+ */
+export function prixTenueDe(t) {
+  if (prixTenue() === null) return null;
+  return t?.pass ? (reglage('pass.prix_tenue_etal') ?? prixTenue()) : prixTenue();
+}
+
 /** Le prix d'une carte Ultimate, **en écharpes**. Le même à tous les âges :
     elle ne change rien au jeu, elle débloque la grande scène du coup fatal. */
 export function prixUltime() {
@@ -126,7 +136,7 @@ export function etalTenues(tenues = []) {
   return tenues
     .filter((t) => t.id !== 'base' && t.publie !== false && t.publie !== 0)
     .map((t) => ({ type: 'tenue', id: t.id, nom: t.nom, texte: t.texte ?? null,
-      rar: t.rar, prix: p }));
+      rar: t.rar, prix: prixTenueDe(t), ...(t.pass ? { pass: true } : {}) }));
 }
 
 /**
@@ -145,7 +155,7 @@ export function prixDe(type, id, tenues = []) {
   if (type === 'tenue') {
     const t = tenues.find((x) => x.id === id);
     if (!t || t.id === 'base' || t.publie === false || t.publie === 0) return null;
-    return prixTenue();
+    return prixTenueDe(t);
   }
   /* Le Fanzzy et l'âge visés se vérifient à la remise (`remettreUltime`) :
      possédé, âge atteint, pas légendaire, image faite. */

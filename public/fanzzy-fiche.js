@@ -371,7 +371,10 @@
       for (const s of tenuesA(n)) {
         if (!s.possede && s.publie === false) continue;
         liste.push({ cle: `tenue:${s.id}`, rang: 'TENUES', titre: s.nom, id: s.id, ok: Boolean(s.possede),
-          porte: Boolean(s.porte), image: s.possede ? dessinExact(n, { skin: s.id }) : null });
+          porte: Boolean(s.porte), image: s.possede ? dessinExact(n, { skin: s.id }) : null,
+          /* La tenue d'un PASS de saison ne sort d'aucun booster : elle vient
+             du PASS pendant sa saison, de l'étal ensuite. */
+          pass: s.pass ?? null, reservee: Boolean(s.reservee) });
       }
       return liste;
     }
@@ -705,8 +708,9 @@
             const s = E()?.secours?.(r.src, true);
             if (s) img.src = s;
           };
-          img.classList.add('fz-pied');
-          img.src = r.src;
+          /* À la taille de son âge, comme la carte au repos (`cadrerImage`). */
+          if (C.cadrerImage) C.cadrerImage(img, r.src);
+          else { img.classList.add('fz-pied'); img.src = r.src; }
         }
       }
       window.FX?.animer?.(tilt);
@@ -969,7 +973,8 @@
         colle = '<span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span>'
           + (x.prix != null
             ? `<span class="tbf-sticker" aria-hidden="true"><img src="${esc(JETON())}" alt="">${x.prix}</span>`
-            : '<span class="tbf-sticker" aria-hidden="true">BOOSTER</span>');
+            : x.pass ? `<span class="tbf-sticker" data-ton="or" aria-hidden="true">${x.reservee ? 'PASS' : 'ÉTAL'}</span>`
+              : '<span class="tbf-sticker" aria-hidden="true">BOOSTER</span>');
       } else if (aMoi() && x.ok && tenue && x.porte) {
         colle = '<span class="tbf-sticker" aria-hidden="true">PORTÉE</span>';
       } else if (aMoi() && x.ok && etat) {
@@ -977,7 +982,8 @@
       } else if (aMoi() && x.ok && effet) {
         colle = pinFamille(d.fanzzy.type);
       }
-      const nom = !x.ok ? `${x.titre} — ${x.prix != null ? `${x.prix} écharpes` : 'dans les boosters'}`
+      const nom = !x.ok ? `${x.titre} — ${x.prix != null ? `${x.prix} écharpes`
+        : x.pass ? (x.reservee ? `avec le PASS ${x.pass}` : 'à l’étal de la boutique') : 'dans les boosters'}`
         : tenue && x.porte ? `${x.titre}, portée` : x.titre;
       return `<button type="button" class="tbf-plaque tbf-tuile${tenue ? ' tbf-tuile--pied' : ''} case ${
         x.ok ? 'ok' : 'verrou'}${choisi ? ' choisie' : ''}"${ton}${!x.ok || !aMoi() ? ' data-verrou' : ''}
@@ -1122,7 +1128,13 @@
         : retenu ? (etat ? 'choisi' : 'choisie') : x.id === 'neutre' ? 'de base' : 'à toi';
       const lignes = [];
       if (!x.ok) {
-        lignes.push(ligne('Dans un booster'), ligne(`Pour l’âge ${vu()} de ce Fanzzy`));
+        if (!etat && x.pass && x.reservee) {
+          lignes.push(ligne(`Avec le PASS ${x.pass}`), ligne(`La voie PASS l’ouvre pour l’âge ${vu()}`));
+        } else if (!etat && x.pass) {
+          lignes.push(ligne('À l’étal de la boutique, en écharpes'), ligne(`Pour l’âge ${vu()} de ce Fanzzy`));
+        } else {
+          lignes.push(ligne('Dans un booster'), ligne(`Pour l’âge ${vu()} de ce Fanzzy`));
+        }
       } else {
         lignes.push(ligne(etat ? (x.id === 'neutre' ? 'Son air de tous les jours' : x.dessin || 'Au bon moment du match')
           : 'Elle se voit, sans rien changer au jeu'));
