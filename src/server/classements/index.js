@@ -35,8 +35,9 @@ import { DIVISIONS, divisionPour, seuilsDivisions, titreDivision, finDeFenetre }
 const TTL_MS = 5 * 60 * 1000;
 
 export function createClassements({ pool, requireAuth,
-  /* L'abonnement ouvre la **mémoire longue** du parcours : un joueur inscrit
-     voit ses vingt dernières parties, un abonné tout son historique. Rien
+  /* Le PASS de saison ouvre la **mémoire longue** du parcours : un joueur
+     voit ses vingt dernières parties, celui qui a le PASS de la saison tout
+     son historique ; il pose aussi son écusson sur les lignes. Rien
      n’est effacé, et les classements ne changent pas d’un iota — c’est la
      lecture qui s’arrête. Voir `abonnement/index.js`. */
   abonnement = null }) {
@@ -88,7 +89,16 @@ export function createClassements({ pool, requireAuth,
       console.error('[classement] avatars et niveaux indisponibles :', e.message);
       return lignes;
     }
-    return lignes.map((l) => ({ ...l, ...(carte.get(l.public_id) ?? {}) }));
+    /* L'écusson du PASS de saison (`abonnement.badgesDe`, une requête pour la
+       liste) : la saison et sa couleur, purement visuel. Une panne le tait. */
+    let passes = new Map();
+    if (abonnement?.badgesDe) {
+      passes = await abonnement.badgesDe(lignes.map((l) => l.public_id)).catch(() => new Map());
+    }
+    return lignes.map((l) => {
+      const pass = passes.get(String(l.public_id));
+      return { ...l, ...(carte.get(l.public_id) ?? {}), ...(pass ? { pass } : {}) };
+    });
   }
 
   /* Le schéma incomplet se dit une fois par cause, pas à chaque lecture. */
@@ -139,7 +149,7 @@ export function createClassements({ pool, requireAuth,
   /* **Les deux sources se filtrent de la même façon**, et c'est nouveau du
      côté du Virage : `duel_results` écartait déjà l'entraînement, la présence
      au Virage prenait tout. Elle porte désormais `classe`, posé à l'entrée
-     dans la tribune — voir `abo.virages_classes_jour`. Les lignes écrites
+     dans la tribune ; depuis le PASS de saison, toujours 1. Les lignes écrites
      avant valent 1 par défaut : personne ne perd rétroactivement sa ferveur. */
   /* Une seule définition, et une condition qu'on peut y glisser : la ferveur
      d'**un** joueur se lit avec `user_id = ?` dans chaque moitié, sur l'index

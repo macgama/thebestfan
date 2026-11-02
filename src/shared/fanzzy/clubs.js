@@ -213,13 +213,34 @@ export function clubDe(fanzzyId) {
  * le lien joue dans tout match de cette compétition du club que le joueur
  * soutient, quel que soit ce club.
  */
-const SELECTION = { equipeA: 10, nom: /^England(?: W| U\d{2})?$/i };
-const LEGENDES_SELECTION = new Set(['AN61', 'AN62', 'AN63']);
-const LEGENDES_CHAMPIONNAT = new Map([['AN64', 39], ['AN65', 39], ['AN66', 39]]);
+/* **Les légendaires de DIE KURVE** (demande de Gaël du 2 novembre 2026, même
+ * modèle) : SU37 à SU39 aux équipes nationales suisses (équipe A : 15 chez
+ * API-Football), SU40 à SU42 au championnat suisse (207). Fiches :
+ * `fanzzy-prompts/SU-legendaires.md`. */
+const SELECTIONS = {
+  AN: { equipeA: 10, nom: /^England(?: W| U\d{2})?$/i, sql: '^England( W| U[0-9]{2})?$' },
+  SU: { equipeA: 15, nom: /^Switzerland(?: W| U\d{2})?$/i, sql: '^Switzerland( W| U[0-9]{2})?$' },
+};
+const SELECTION = SELECTIONS.AN;
+const LEGENDES_SELECTION = new Map([
+  ['AN61', 'AN'], ['AN62', 'AN'], ['AN63', 'AN'],
+  ['SU37', 'SU'], ['SU38', 'SU'], ['SU39', 'SU'],
+]);
+const LEGENDES_CHAMPIONNAT = new Map([
+  ['AN64', 39], ['AN65', 39], ['AN66', 39],
+  ['SU40', 207], ['SU41', 207], ['SU42', 207],
+]);
 
-/** L'une des équipes nationales d'Angleterre ? */
-export function estSelection(teamId, nom = null) {
-  return Number(teamId) === SELECTION.equipeA || SELECTION.nom.test(String(nom ?? '').trim());
+/** L'une des équipes nationales du pays `pays` (`AN` par défaut : l'Angleterre) ? */
+export function estSelection(teamId, nom = null, pays = 'AN') {
+  const s = SELECTIONS[pays] ?? SELECTION;
+  return Number(teamId) === s.equipeA || s.nom.test(String(nom ?? '').trim());
+}
+
+/** Le motif SQL (REGEXP) des noms des sélections auxquelles ce Fanzzy est lié, ou null. */
+export function motifSelection(fanzzyId) {
+  const pays = LEGENDES_SELECTION.get(racine(fanzzyId));
+  return pays ? SELECTIONS[pays].sql : null;
 }
 
 /**
@@ -230,7 +251,7 @@ export function estSelection(teamId, nom = null) {
 export function lienEcrit(fanzzyId) {
   const r = racine(fanzzyId);
   if (CLUB_DE.has(r)) return { club: CLUB_DE.get(r) };
-  if (LEGENDES_SELECTION.has(r)) return { selection: SELECTION.equipeA };
+  if (LEGENDES_SELECTION.has(r)) return { selection: SELECTIONS[LEGENDES_SELECTION.get(r)].equipeA };
   if (LEGENDES_CHAMPIONNAT.has(r)) return { ligue: LEGENDES_CHAMPIONNAT.get(r) };
   return null;
 }
@@ -249,7 +270,9 @@ export function lieA(fanzzyId, teamId, clubAchete = null, match = {}) {
   if (teamId == null) return false;
   const ecrit = lienEcrit(fanzzyId);
   // `match` : la compétition et le nom du club soutenu, pour les légendaires.
-  if (ecrit?.selection != null) return estSelection(teamId, match.nomDuClub);
+  if (ecrit?.selection != null) {
+    return estSelection(teamId, match.nomDuClub, LEGENDES_SELECTION.get(racine(fanzzyId)));
+  }
   if (ecrit?.ligue != null) return Number(match.leagueId) === ecrit.ligue;
   const c = clubDe(fanzzyId) ?? (clubAchete == null ? null : Number(clubAchete));
   return c != null && teamId != null && c === Number(teamId);

@@ -11911,3 +11911,67 @@ html[data-calme~="animations"] .tbf-jeu .virage::before{animation:none}
 @keyframes tbf-face-saut{0%,100%{translate:0 0}35%{translate:0 -12%}65%{translate:0 -4%}}
 @media (prefers-reduced-motion:reduce){ .tbf-face *{animation:none!important} }
 html[data-calme~="animations"] .tbf-face *{animation:none!important}
+
+/* =================================================== le PASS de saison
+
+   Le badge et le cadre du PASS (choix de Gaël du 2 novembre 2026,
+   `src/shared/pass.js`). Purement visuels : ils disent qu'on a pris le PASS
+   d'une saison et jusqu'où l'on a mené sa voie, rien de plus.
+
+   **Le badge** : un écusson taillé, à la couleur de sa saison (`--pass`,
+   posée par la page depuis le registre), avec le numéro du PASS. Ses crans
+   (`data-niveau`, 1 à 6) s'allument un par un ; au sixième, il passe en or
+   (`data-or`). Trois tailles : en ligne (classement, duel), moyenne (carte
+   de supporter), grande (la page du PASS).
+
+   **Le cadre** : autour de la carte de supporter. `fixe` au niveau 4, une
+   bordure de pierre taillée ; `anime` au niveau 5, la même avec un reflet qui
+   la parcourt — une seule animation infinie, coupée par
+   `prefers-reduced-motion`. */
+.tbf-pass-badge{--pass:#c9772e;--t:22px;position:relative;display:inline-grid;place-items:center;
+  flex:none;width:var(--t);height:calc(var(--t) * 1.16);vertical-align:middle;
+  font-family:var(--banner);font-weight:700;font-size:calc(var(--t) * .42);line-height:1;
+  color:var(--encre);letter-spacing:.02em}
+.tbf-pass-badge::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--pass) 70%,#fff) 0%,var(--pass) 46%,
+    color-mix(in srgb,var(--pass) 62%,#000) 100%);
+  clip-path:polygon(50% 0,100% 14%,100% 62%,50% 100%,0 62%,0 14%);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.35)}
+.tbf-pass-badge::after{content:"";position:absolute;inset:calc(var(--t) * .09);
+  clip-path:polygon(50% 0,100% 14%,100% 62%,50% 100%,0 62%,0 14%);
+  border:1px solid rgba(255,255,255,.35);background:transparent;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.28)}
+.tbf-pass-badge>b{position:relative;z-index:1;transform:translateY(-6%)}
+.tbf-pass-badge[data-or]{--pass:#F5C33B}
+.tbf-pass-badge[data-or]::before{background:linear-gradient(160deg,#fff3c4 0%,#F5C33B 42%,#a77a10 100%);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.35),0 0 calc(var(--t) * .45) rgba(245,195,59,.55)}
+.tbf-pass-badge--moyen{--t:34px}
+.tbf-pass-badge--grand{--t:64px}
+/* Les crans de la voie, sous le badge moyen et grand. */
+.tbf-pass-crans{display:inline-flex;gap:3px;margin-top:4px}
+.tbf-pass-crans i{width:7px;height:7px;border-radius:2px;background:rgba(242,238,228,.18);
+  transform:rotate(45deg)}
+.tbf-pass-crans i[data-on]{background:var(--pass,#c9772e);box-shadow:0 0 6px var(--pass,#c9772e)}
+
+/* Le cadre de la carte de supporter. Il se pose sur un bloc existant, sans
+   rien changer à son contenu, et sans pseudo-élément : le bloc qui le porte a souvent déjà les siens (la
+   brique `.tbf-cadre` pose son ::before). Le cadre est donc une pile d'ombres
+   — un liseré noir, la bande à la couleur du PASS, un second liseré, un halo —
+   et le cadre animé fait respirer ce halo et tourner sa teinte vers l'or. */
+.tbf-pass-cadre{--pass:#c9772e}
+.tbf-pass-cadre[data-cadre]{
+  box-shadow:0 0 0 2px rgba(0,0,0,.65),0 0 0 6px var(--pass),
+    0 0 0 7px color-mix(in srgb,var(--pass) 40%,#fff),0 0 0 9px rgba(0,0,0,.55),
+    0 0 22px 4px color-mix(in srgb,var(--pass) 45%,transparent)}
+.tbf-pass-cadre[data-cadre="anime"]{animation:tbf-pass-souffle 3.2s ease-in-out infinite}
+@keyframes tbf-pass-souffle{
+  0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.65),0 0 0 6px var(--pass),
+    0 0 0 7px color-mix(in srgb,var(--pass) 40%,#fff),0 0 0 9px rgba(0,0,0,.55),
+    0 0 18px 2px color-mix(in srgb,var(--pass) 40%,transparent)}
+  50%{box-shadow:0 0 0 2px rgba(0,0,0,.65),0 0 0 6px color-mix(in srgb,var(--pass) 55%,#F5C33B),
+    0 0 0 7px #fff3c4,0 0 0 9px rgba(0,0,0,.55),
+    0 0 34px 8px color-mix(in srgb,#F5C33B 55%,transparent)}}
+@media (prefers-reduced-motion:reduce){
+  .tbf-pass-cadre[data-cadre="anime"]{animation:none}
+}
+html[data-calme~="animations"] .tbf-pass-cadre[data-cadre="anime"]{animation:none}

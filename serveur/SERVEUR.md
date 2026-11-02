@@ -350,21 +350,16 @@ acquise pour la saison, même si d'autres joueurs vous dépassent.
 | Ultra | 100 000 | l'insigne |
 | Capo | 300 000 | l'insigne et le **titre « Capo de la saison 1 »**, pour toujours |
 
-- **Rien de matériel, et c'est voulu.** La ferveur classée n'est plafonnée
-  que pour le joueur gratuit : `duelsClassesRestants` et
-  `viragesClassesRestants` (`src/server/abonnement/index.js`) rendent « sans
-  limite » pour un abonné, et le classé au-dessus du 1 contre 1 lui est
-  réservé. Une division payée en boosters ou en écharpes (qui achètent des
-  boosters) se gagnerait donc en partie en payant, et la règle « l'argent
-  n'achète que du confort » tomberait. Les récompenses matérielles de la
-  saison passent par le carnet, que les missions remplissent au même rythme
-  pour tout le monde.
-- **Le titre de Capo doit rester atteignable sans abonnement**, avec cinq
-  duels classés et deux Virages comptés par jour. Recaler les seuils sur la
-  population entière (abonnés compris, sans plafond) placerait Capo hors de
-  portée du gratuit. Le recalage de l'annexe A d'`ECONOMIE.md` se fait donc
-  **sur les seuls joueurs sans abonnement**, et Capo ne dépasse jamais ce
-  qu'un gratuit assidu peut faire dans la saison.
+- **Rien de matériel, et c'est voulu.** Depuis le PASS de saison (2 novembre
+  2026, `serveur/PASS.md`), la ferveur classée n'est plus plafonnée pour
+  personne : tout compte pour tous. Une division payée en boosters ou en
+  écharpes resterait pourtant une récompense de l'activité, que le PASS
+  facilite (des boosters plus vite) : les récompenses matérielles de la
+  saison passent donc toujours par le carnet, que les missions remplissent au
+  même rythme pour tout le monde.
+- **Le titre de Capo doit rester atteignable par un joueur assidu**, PASS ou
+  non : plus rien ne les sépare au classement, et le recalage de l'annexe A
+  d'`ECONOMIE.md` se fait sur toute la population.
 - **Les seuils sont incertains d'un facteur deux** : la ferveur réelle des
   joueurs de production n'est pas connue d'ici. Il faut viser environ 70 %,
   40 %, 15 % et 4 % des joueurs actifs sans abonnement pour Habitué, Fervent,

@@ -227,6 +227,21 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
       });
     },
 
+    /* Le PASS de saison : payé une fois, il n'a pas de résiliation à
+       confirmer. Les saisons couvertes s'écrivent « S1 » ou « S1 et S2 ». */
+    async sendPass({ to, pseudo, locale, saisons = [], packs = 0 }) {
+      return send({ locale,
+        to,
+        subject: t(locale, 'mail.pass.subject'),
+        text: t(locale, 'mail.pass.body', {
+          pseudo, saisons: saisons.map((n) => `S${n}`).join(' + '),
+          packs: packs ? t(locale, packs > 1 ? 'mail.abo.packs' : 'mail.abo.pack', { n: packs }) : '',
+          link: `${origin}/abonnement`,
+        }),
+        lien: `${origin}/abonnement`, bouton: t(locale, 'mail.btn.abo'), tribune: true,
+      });
+    },
+
     async sendResiliation({ to, pseudo, locale, fin }) {
       return send({ locale,
         to,

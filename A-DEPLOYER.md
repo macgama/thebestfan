@@ -1,5 +1,36 @@
 # À déposer sur Infomaniak
 
+**Le PASS de saison remplace l'abonnement** (branche
+`claude/project-thread-0kw498`, 2 novembre 2026, choix de Gaël). **Avec
+schéma** : `npm run schema:appliquer` en SSH (pose `sql/pass.sql`, table
+`user_pass`), puis redémarrer.
+
+- Le PASS à 7,99 € payé une fois (ou 40 000 écharpes), jamais renouvelé ; pris
+  le dernier mois, il couvre aussi la saison suivante. PASS 1 = tenue
+  Préhistorique, badge, cadre de carte, voie PASS dans le carnet.
+- Tout compte au classement pour tous : plus de plafond de duels classés, de
+  Virages comptés ni de format classé sans PASS.
+- Préhistorique ne sort plus des boosters et quitte l'étal pendant la saison 1.
+- Après le redémarrage, en SSH : `npm run pass:reprise-essai`, lire ce qu'il
+  annonce, puis `npm run pass:reprise` (résilie à l'échéance les abonnements
+  Stripe en cours et donne le PASS ; les PASS offerts deviennent PASS 1).
+- Puis : ouvrir /abonnement, offrir un PASS à un compte de test dans /admin
+  JOUEURS, et regarder le badge sur le profil et au classement.
+
+---
+
+**Les six légendaires de DIE KURVE (SU37 à SU42)** (branche
+`claude/project-thread-z0t7i9`, 2 novembre 2026, demande de Gaël). Construction
+seule, **sans schéma**.
+
+- La Fée de l’Edelweiss, le Sonneur du Grand Cor et le Saint-Bernard du Col
+  sont liés aux sélections suisses (hommes, femmes, espoirs) ; la Messagère des
+  Quatre Langues, le Géant du Röstigraben et la Marmotte du Premier Sifflet au
+  championnat suisse. Cartes, états, trois skins et clignement (22 tenues sur
+  24 : l’Apocalyptique du Saint-Bernard et de la Messagère n’a encore que trois
+  états). Ils sortent avec la série, dans le booster DIE KURVE.
+- Après la mise en ligne : ouvrir la page SU de l’album et la fiche de SU42.
+
 **LES GALÈRES DE DÉPLACEMENT redessinées, et MT23** (branche
 `claude/project-thread-dlq7nr`, 2 novembre 2026, demande de Gaël). Construction
 seule, **sans schéma**.

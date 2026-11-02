@@ -317,14 +317,10 @@ export function contexte({ lire, userId, jourDuFoot = null, base = null, memoire
       case 'duel': return entrainement;
       case 'suit_un_club': return entrainement && (await lireSocle()).suivis.size > 0;
       case 'classes': {
-        /* Le classé se joue le jour d'un match, rapporte de l'XP, et reste
-           sous le plafond gratuit : les classés déjà joués aujourd'hui plus la
-           cible, comptés comme le quota (`mode = 'classe'`, depuis
-           `CURDATE()`), sans lire l'abonnement. Un plafond à 0 ne plafonne
-           rien. */
+        /* Le classé se joue le jour d'un match et rapporte de l'XP. Il n'a
+           plus de plafond gratuit depuis le 2 novembre 2026 (choix de Gaël :
+           tout compte au classement pour tous). */
         if (!(reglage('xp.duel_classe') > 0)) return false;
-        const plafond = reglage('abo.duels_classes_jour');
-        if (plafond > 0 && (await lireSocle()).classes + mission.cible > plafond) return false;
         return surLaJournee(seJoue);
       }
       case 'match_du_jour':

@@ -47,6 +47,14 @@ check('AN61 à AN63 : liées aux sélections, hommes, femmes et espoirs',
   && !lieA('AN62', 42, null, { nomDuClub: 'Arsenal' })
   && !lieA('AN62', 1234, null, { nomDuClub: 'Englandia' }) && !lieA('AN62', null)
   && estSelection(10) && !estSelection(42, 'Scotland'));
+check('SU37 à SU39 : liées aux sélections suisses, SU40 à SU42 au championnat suisse',
+  lienEcrit('SU38')?.selection === 15 && lienEcrit('SU41')?.ligue === 207
+  && lieA('SU37', 15) && lieA('SU39', 1234, null, { nomDuClub: 'Switzerland W' })
+  && lieA('SU38', 1234, null, { nomDuClub: 'Switzerland U21' })
+  && !lieA('SU37', 10) && !lieA('SU37', 1234, null, { nomDuClub: 'England W' })
+  && !lieA('AN61', 15) && !lieA('AN61', 1234, null, { nomDuClub: 'Switzerland W' })
+  && lieA('SU40', 42, null, { leagueId: 207 }) && !lieA('SU42', 42, null, { leagueId: 39 })
+  && estSelection(15, null, 'SU') && !estSelection(15) && clubDe('SU40') === null);
 check('AN64 à AN66 : liées au championnat, pour tout club qui y joue',
   lienEcrit('AN65')?.ligue === 39
   && lieA('AN64', 42, null, { leagueId: 39 }) && lieA('AN66', 40, null, { leagueId: 39 })

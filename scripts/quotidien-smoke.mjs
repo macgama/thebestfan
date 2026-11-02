@@ -443,9 +443,9 @@ titre('le catalogue');
       && PAR_CLE.get(`mission.${x.id}`)?.type === 'booleen')
     || voir(Q.MISSIONS.filter((x) => PAR_CLE.get(`mission.${x.id}`)?.titre !== x.titre(x.cible))
       .map((x) => `${x.id} : « ${PAR_CLE.get(`mission.${x.id}`)?.titre} » ≠ « ${x.titre(x.cible)} »`)));
-  /* L2 : sous les plafonds gratuits. */
-  check('« Joue 2 duels classés » tient sous le plafond gratuit du registre',
-    Q.MISSION_PAR_ID.get('classes').cible <= reglage('abo.duels_classes_jour'));
+  /* L2 : il n'y a plus de plafond gratuit (PASS de saison, 2 novembre 2026). */
+  check('le registre n’a plus de plafond de duels classés',
+    !PAR_CLE.has('abo.duels_classes_jour'));
   check('aucune mission ne demande un Virage compté',
     !Q.MISSIONS.some((x) => /classe|compt/i.test(x.condition) && x.source === 'chants'));
   check('la carte de présence vaut 20, 25 … 50 écharpes, et un booster à la septième case',
@@ -832,7 +832,7 @@ titre('minuit : la mission d’hier se récupère le lendemain');
 
 /* ====================================================== J1 et J3 : le jour */
 
-titre('J1 : à 00:30, les classés du jour comptent les mêmes lignes que le quota');
+titre('J1 : à 00:30, les classés du jour se comptent depuis minuit');
 {
   await figer('2026-12-08 00:30:00');
   matchs = JOURNEE();
@@ -842,9 +842,8 @@ titre('J1 : à 00:30, les classés du jour comptent les mêmes lignes que le quo
   await duel(J, { mode: 'classe', xp: 20, duree: 120, ilYaMin: 20 });   // 00:10
   await duel(J, { mode: 'classe', xp: 20, duree: 120, ilYaMin: 10 });   // 00:20
   const e = await lire(J);
-  const reste = await abonnement.duelsClassesRestants(J);
-  check('« Joue 2 duels classés » : 2, comme le quota (deux joués depuis minuit)',
-    mission(e, 1)?.fait === 2 && reglage('abo.duels_classes_jour') - reste === 2 || voir(mission(e, 1), reste));
+  check('« Joue 2 duels classés » : 2 (deux joués depuis minuit)',
+    mission(e, 1)?.fait === 2 || voir(mission(e, 1)));
   check('le duel de 23:50 compte pour hier dans les deux', mission(e, 2)?.fait === 2);
 }
 
@@ -1201,25 +1200,20 @@ titre('abonné et non-abonné, et les plafonds gratuits');
   if (jourClasses) {
     await figer(`${jourClasses} 12:00:00`);
     const tem = await lire(await joueur());
-    check('plafond à 5 : « Joue 2 duels classés » est tirée', mission(tem, 1)?.id === 'classes' || voir(ids(tem)));
-    poserReglages({ 'abo.duels_classes_jour': 1 });
-    const e1 = await lire(await joueur());
-    check('plafond abaissé à 1 : elle sort du tirage, la suivante faisable la remplace',
-      mission(e1, 1)?.id === attendu(jourClasses, 'moyenne', new Set([...SANS_CLUB].filter((x) => x !== 'classes')))
-      || voir(ids(e1)));
+    check('« Joue 2 duels classés » est tirée', mission(tem, 1)?.id === 'classes' || voir(ids(tem)));
     poserReglages({ 'xp.duel_classe': 0 });
     const e2 = await lire(await joueur());
-    check('un classé qui ne rapporte rien : elle sort aussi', mission(e2, 1)?.id !== 'classes');
+    check('un classé qui ne rapporte rien : elle sort', mission(e2, 1)?.id !== 'classes');
     reglagesDeDepart();
-    /* Deux classés déjà joués sur cinq : il en reste trois, elle reste. */
+    /* Plus de plafond : quatre classés déjà joués, elle reste au tirage. */
     const P3 = await joueur();
     await duel(P3, { mode: 'classe', xp: 20, duree: 120 });
     await duel(P3, { mode: 'classe', xp: 20, duree: 120 });
     await duel(P3, { mode: 'classe', xp: 20, duree: 120 });
-    await duel(P3, { mode: 'classe', xp: 0, duree: 5 });   // quitté : il compte au quota quand même
+    await duel(P3, { mode: 'classe', xp: 0, duree: 5 });
     const e3 = await lire(P3);
-    check('quatre classés déjà joués (5 au plus) : « 2 de plus » dépasserait, elle sort',
-      mission(e3, 1)?.id !== 'classes' || voir(ids(e3)));
+    check('quatre classés déjà joués : sans plafond, elle reste tirée',
+      mission(e3, 1)?.id === 'classes' || voir(ids(e3)));
   }
 
   /* L'entraînement qui ne rapporte rien sort les missions de duel. */

@@ -634,33 +634,24 @@ console.log('\nD3 — une socket, pas un joueur');
   B.couper();
 }
 
-/* ===================================== le plafond des Virages classés
+/* ================================ plus de plafond des Virages classés
 
-   Le compteur de l'abonnement lit les lignes de présence, et une ligne
-   n'existe qu'à la première poussée ; sa colonne `classe` est écrite à
-   l'insertion et jamais mise à jour. Le faux store fait exactement ça. Sur
-   une instance à part : les autres blocs montent le Virage sans plafond. */
+   Depuis le PASS de saison (2 novembre 2026, choix de Gaël), tout compte au
+   classement pour tous : chaque Virage où l'on chante est classé, PASS ou
+   non, et le module du Virage ne demande plus rien à l'abonnement. Le faux
+   store écrit `classe` à la première poussée, comme le vrai. */
 
-console.log('\nLe plafond des Virages classés ne se contourne pas');
+console.log('\nTout Virage chanté est classé, sans plafond');
 {
   const lignes = new Map();             // `${userId}|${fixtureId}` -> { classe }
-  const envoyes = new Map();            // `${userId}|${fixtureId}` -> dernier `classe` envoyé
   const souvenirs = { recordPush: async (p) => {
     const cle = `${p.userId}|${p.fixtureId}`;
     if (!lignes.has(cle)) lignes.set(cle, { classe: p.classe === false ? 0 : 1 });
-    envoyes.set(cle, p.classe);
   } };
-  const PLAFOND = 1;
   const classes = (u) => [...lignes].filter(([k, l]) => k.startsWith(`${u}|`) && l.classe === 1);
-  const abonnement = {
-    viragesClassesRestants: async (u) => Math.max(0, PLAFOND - classes(u).length),
-  };
   const io3 = fauxIo();
-  const W = monter(io3, { abonnement, souvenirs });
+  const W = monter(io3, { abonnement: {}, souvenirs });
   try {
-    /* 1. Le parcours normal de la page : on regarde trois tribunes au coup
-       d'envoi, sans chanter, on ressort par la flèche, puis on revient
-       chanter dans les trois. */
     const s = io3.connecter('cap1');
     for (const id of [1040, 1041, 1042]) { await entrer(s, id); s.fire('virage:leave'); }
     for (const id of [1040, 1041, 1042]) {
@@ -668,61 +659,27 @@ console.log('\nLe plafond des Virages classés ne se contourne pas');
       await chanter(s, W.rooms.get(id), 'cap1');
       s.fire('virage:leave');
     }
-    check('regarder trois tribunes puis revenir y chanter : un seul Virage classé',
-      classes('cap1').length === 1
-      || (console.log('        classés :', classes('cap1').map(([k]) => k).join(' ')), false));
-    check('celui où il a chanté le premier', lignes.get('cap1|1040')?.classe === 1);
+    check('chanter dans trois tribunes : trois Virages classés', classes('cap1').length === 3);
+    if (classes('cap1').length !== 3) console.log('        classés :', classes('cap1').map(([k]) => k).join(' '));
     s.couper();
 
-    /* 1b. Deux onglets ouverts sur deux matchs avant tout chant. */
     const a = io3.connecter('cap2'), b = io3.connecter('cap2');
     await entrer(a, 1043); await entrer(b, 1044);
     const chants = [await chanter(a, W.rooms.get(1043), 'cap2'),
       await chanter(b, W.rooms.get(1044), 'cap2')];
-    check('deux onglets sur deux matchs chantent chacun', chants.every((c) => c === 'result'));
-    check('mais un seul de leurs Virages est classé', classes('cap2').length === 1
-      || (console.log('        classés :', classes('cap2').map(([k]) => k).join(' ')), false));
+    check('deux onglets sur deux matchs chantent chacun, et les deux sont classés',
+      chants.every((c) => c === 'result') && classes('cap2').length === 2);
     a.couper(); b.couper();
 
-    /* 1c. Regarder une tribune puis aller jouer ailleurs : c'est celle où l'on
-       joue qui compte. Une réservation laissée en partant ne doit pas la lui
-       prendre. */
-    const c = io3.connecter('cap3');
-    await entrer(c, 1045); c.fire('virage:leave');
-    await entrer(c, 1046);
-    await chanter(c, W.rooms.get(1046), 'cap3');
-    check('regarder une tribune sans y chanter ne prend pas la place de celle où l’on joue',
-      lignes.get('cap3|1046')?.classe === 1);
-    c.couper();
-
-    /* 1d. Une présence écrite garde sa décision : un tunnel qui coupe le
-       réseau ne fait pas cesser de compter un match commencé compté. */
     const d = io3.connecter('cap4');
     await entrer(d, 1047);
     await chanter(d, W.rooms.get(1047), 'cap4');
     d.couper();
     const e = io3.connecter('cap4');
     await entrer(e, 1047);
-    check('une fois la présence écrite, revenir ne rouvre pas la question',
+    check('une fois la présence écrite, revenir la garde classée',
       W.rooms.get(1047).members.get('cap4')?.classe === true);
     e.couper();
-
-    /* 1e. Et dans l'autre sens : hors classement une fois écrit, il le
-       reste. Un retour qui ne lit plus le compteur ne doit pas le remettre
-       au classement en passant. */
-    const f = io3.connecter('cap5');
-    await entrer(f, 1048);
-    await chanter(f, W.rooms.get(1048), 'cap5');            // la place du jour
-    f.fire('virage:leave');
-    await entrer(f, 1049);
-    await chanter(f, W.rooms.get(1049), 'cap5');            // au-delà : hors classement
-    f.fire('virage:leave');
-    await entrer(f, 1049);
-    await chanter(f, W.rooms.get(1049), 'cap5');
-    check('hors classement une fois la présence écrite, le retour l’y laisse',
-      W.rooms.get(1049).members.get('cap5')?.classe === false
-      && envoyes.get('cap5|1049') === false && lignes.get('cap5|1049')?.classe === 0);
-    f.couper();
   } finally { W.stop(); }
 }
 

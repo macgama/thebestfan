@@ -23,9 +23,9 @@
  * Il ne reçoit **ni l'abonnement, ni le KOP, ni les amis** (`verif-cablage`
  * le vérifie). Abonné et non-abonné reçoivent exactement les mêmes missions et
  * les mêmes montants ; le meilleur moyen de le garantir est que ce module ne
- * puisse pas savoir qui est abonné. Le plafond des duels classés se lit au
- * registre (`abo.duels_classes_jour`) et se compte comme le quota, sans
- * demander à personne si le joueur paie.
+ * puisse pas savoir qui est abonné. Il n'y a plus de plafond de duels
+ * classés (2 novembre 2026) ; la voie PASS du carnet est lue par le module du
+ * PASS (`abonnement/`) sur le grand livre, sans que celui-ci le sache.
  *
  * ## Sans les tables, rien ne casse
  *
