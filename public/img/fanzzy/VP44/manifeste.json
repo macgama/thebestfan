@@ -1,0 +1,47 @@
+{
+  "id": "VP44",
+  "rev": 2,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "6a9965fca7a7"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "joie",
+            "depit"
+          ],
+          "portrait": true,
+          "sha": "54809661f4b2"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "joie",
+            "depit"
+          ],
+          "portrait": true,
+          "sha": "ea8fee411b47"
+        }
+      }
+    }
+  }
+}
