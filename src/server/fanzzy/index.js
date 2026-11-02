@@ -46,7 +46,7 @@ import { saisonsLancees, saisonEnCours } from './saisons.js';
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
 import { verser, verserTout } from '../recompenses.js';
-import { criDuClub, gainPleinClub, lienEcrit } from '../../shared/fanzzy/clubs.js';
+import { criDuClub, gainPleinClub, lienEcrit, motifSelection } from '../../shared/fanzzy/clubs.js';
 
 /* ------------------------------------------------------------ le journal
 
@@ -2444,8 +2444,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       : ecrit?.selection != null
         ? (await q(
           `SELECT 1 FROM user_follows uf JOIN teams t ON t.id = uf.team_id
-            WHERE uf.user_id = ? AND (t.id = ? OR t.name REGEXP '^England( W| U[0-9]{2})$') LIMIT 1`,
-          [userId, ecrit.selection]).catch(() => [])).length > 0
+            WHERE uf.user_id = ? AND (t.id = ? OR t.name REGEXP ?) LIMIT 1`,
+          [userId, ecrit.selection, motifSelection(id)]).catch(() => [])).length > 0
         : sonClub == null ? false : (await q(
           `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id = ? LIMIT 1`,
           [userId, sonClub]).catch(() => [])).length > 0;
