@@ -1,0 +1,55 @@
+{
+  "id": "SU39",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "joie",
+            "depit"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "0409f1fda3ae"
+        },
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "99c9d4b0fef6"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "78268fe381e4"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "04cd12fd3ea2"
+        }
+      }
+    }
+  }
+}
