@@ -333,7 +333,7 @@ check('l’écran des réglages se peuple depuis le registre', await jusqua(asyn
     || (console.log('        ', recal), false));
 }
 
-/* ------------------------- les avantages de l'abonnement se règlent d'ici
+/* ---------------------- les avantages du PASS de saison se règlent d'ici
 
    Ils vivent dans le registre comme le reste du barème, et c'est ce qui permet
    de les ajuster pendant la bêta sans relivrer : « vingt-quatre boosters,
@@ -344,10 +344,17 @@ check('l’écran des réglages se peuple depuis le registre', await jusqua(asyn
    jamais de la puissance » — et c'est elle que quelqu'un lira avant de changer
    un nombre. Une section qui disparaîtrait de l'écran laisserait les cinq
    réglages sans leur phrase. */
+/* Depuis le 2 novembre 2026, la section vit dans le menu PASS, et RÉGLAGES
+   ne la montre plus : on y va, on la lit, on revient. */
+await page.evaluate(() => [...document.querySelectorAll('#nav button')]
+  .find((b) => b.textContent.trim() === 'PASS')?.click());
+check('le menu PASS se monte, avec ses tableaux et ses réglages', await jusqua(async () =>
+  await page.evaluate(() => /LES PASS PAR SAISON/.test(document.getElementById('main').textContent)
+    && document.querySelectorAll('#main .rg').length >= 9)));
 {
   const abo = await page.evaluate(() => {
     const sect = [...document.querySelectorAll('#main .sect')]
-      .find((x) => /ABONNEMENT/i.test(x.querySelector('h3')?.textContent ?? ''));
+      .find((x) => /PASS DE SAISON/i.test(x.querySelector('h3')?.textContent ?? ''));
     if (!sect) return null;
     return {
       aide: sect.querySelector('.sh')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
@@ -356,10 +363,10 @@ check('l’écran des réglages se peuple depuis le registre', await jusqua(asyn
       reglables: sect.querySelectorAll('input,select,button.bascule').length,
     };
   });
-  check('l’abonnement a sa section dans les réglages', Boolean(abo)
+  check('le PASS de saison a sa section dans les réglages', Boolean(abo)
     || (console.log('        sections vues :', await page.evaluate(() =>
       [...document.querySelectorAll('#main .sect h3')].map((h) => h.textContent).join(' | '))), false));
-  check('ses cinq avantages s’y règlent', (abo?.reglables ?? 0) >= 5
+  check('ses avantages et son prix en écharpes s’y règlent', (abo?.reglables ?? 0) >= 9
     || (console.log('        champs :', JSON.stringify(abo?.champs)), false));
   /* La phrase compte autant que les champs : c'est elle qui arrête la main de
      celui qui voudrait « rendre l'abonnement plus attractif ». */
@@ -367,6 +374,13 @@ check('l’écran des réglages se peuple depuis le registre', await jusqua(asyn
     /jamais de la puissance/i.test(abo?.aide ?? '')
     || (console.log('        elle dit :', abo?.aide), false));
 }
+await page.evaluate(() => [...document.querySelectorAll('#nav button')]
+  .find((b) => /RÉGLAGES/i.test(b.textContent))?.click());
+await jusqua(async () => await page.evaluate(() =>
+  document.querySelectorAll('#main .rg').length > 15
+  && !/LES PASS PAR SAISON/.test(document.getElementById('main').textContent)));
+check('et RÉGLAGES ne la montre plus : elle a un seul endroit', await page.evaluate(() =>
+  ![...document.querySelectorAll('#main .sect h3')].some((h) => /PASS DE SAISON/i.test(h.textContent))));
 
 const ecran = await page.evaluate(() => {
   const rg = [...document.querySelectorAll('#main .rg')];
@@ -827,7 +841,27 @@ if (process.env.CAPTURE) {
   const sautes = [];
   let poses = 0;
 
-  for (const r of registre.reglages) {
+  /* Les réglages du PASS vivent dans le menu PASS (2 novembre 2026) : on fait
+     les siens d'abord, depuis ce menu, puis on revient à RÉGLAGES. Dans cet
+     ordre-là : un réglage de RÉGLAGES ferme le site aux joueurs, et après lui
+     plus aucun menu ne se recharge. */
+  const duPass = (r) => r.section === 'abonnement';
+  const ordre = [...registre.reglages.filter(duPass),
+    ...registre.reglages.filter((r) => !duPass(r))];
+  const allerA = async (menu, preuve) => {
+    await page.evaluate((m) => [...document.querySelectorAll('#nav button')]
+      .find((b) => b.textContent.trim() === m)?.click(), menu);
+    await jusqua(async () => await page.evaluate(preuve));
+  };
+  await allerA('PASS', () => /LES PASS PAR SAISON/.test(document.getElementById('main').textContent)
+    && document.querySelectorAll('#main .rg').length >= 9);
+  let surPass = true;
+  for (const r of ordre) {
+    if (!duPass(r) && surPass) {
+      surPass = false;
+      await allerA('RÉGLAGES', () => document.querySelectorAll('#main .rg').length > 15
+        && !/LES PASS PAR SAISON/.test(document.getElementById('main').textContent));
+    }
     const actuelle = registre.valeurs[r.cle];
     const v = neuve(r, actuelle);
     if (v === null || v === undefined) { sautes.push(r.cle); continue; }
@@ -899,8 +933,15 @@ if (process.env.CAPTURE) {
      d'avoir perdu un onglet, alors qu'il en avait gagné un. Un nombre attendu
      se périme à chaque ajout ; une liste de noms dit ce qu'on veut vraiment
      savoir : **le rangement n'a fait disparaître personne.** */
-  const attendus = ['SAISONS', 'FANZZY', 'CONTENUS', 'SKINS', 'RÉGLAGES',
-    'APERÇU', 'JOUEURS', 'KOP', 'COMPÉTITIONS', 'JOURNAL'];
+  /* Le 2 novembre 2026, dix menus sont devenus sept, avec des sous-onglets :
+     chaque écran d'avant existe toujours, comme menu ou comme sous-onglet. */
+  const menus = await page.evaluate(() =>
+    [...document.querySelectorAll('#nav .fam button')].map((b) => b.textContent.trim()));
+  check('sept menus', JSON.stringify(menus) === JSON.stringify(['SAISONS', 'CATALOGUE', 'PASS',
+    'RÉGLAGES', 'APERÇU', 'JOUEURS', 'COMPÉTITIONS'])
+    || (console.log('        vu :', JSON.stringify(menus)), false));
+  const attendus = ['SAISONS', 'CATALOGUE', 'FANZZY', 'CONTENUS', 'SKINS', 'PASS', 'RÉGLAGES',
+    'APERÇU', 'EN JEU', 'JOURNAL', 'JOUEURS', 'COMPTES', 'KOP', 'COMPÉTITIONS'];
   const vus = await page.evaluate(() =>
     [...document.querySelectorAll('#nav button')].map((b) => b.textContent.trim()));
   check('le rangement n’a fait disparaître aucun onglet',

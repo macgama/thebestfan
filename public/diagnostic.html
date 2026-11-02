@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par env(safe-area-inset-bottom) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Les erreurs de la page, retenues dès la tête et montrées en bas (2 novembre 2026, Gaël : « je ne peux même pas cliquer sur Tester le son ») : sur un téléphone, pas de console à lire. */window.tbfErreurs=[];addEventListener('error',function(e){tbfErreurs.push(e.filename?(e.message+' — '+String(e.filename).split('/').pop()+':'+e.lineno):('ressource introuvable : '+((e.target&&(e.target.src||e.target.href))||'?')));window.tbfMontrer&&tbfMontrer()},true);addEventListener('unhandledrejection',function(e){tbfErreurs.push('promesse : '+(e.reason&&e.reason.message||e.reason));window.tbfMontrer&&tbfMontrer()});</script>
 <title>Diagnostic — thebestfan</title>
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
@@ -96,7 +97,12 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
     <dt>Moteur audio</dt><dd id="sonContexte">—</dd>
     <dt>Carillon (moteur du jeu)</dt><dd id="sonCarillon">—</dd>
     <dt>Lecteur audio simple</dt><dd id="sonLecteur">—</dd>
+    <dt>Touchers reçus</dt><dd id="sonTouchers">0</dd>
+    <dt>Geste reconnu par Chrome</dt><dd id="sonActivation">—</dd>
+    <dt>Navigateur</dt><dd id="sonNavigateur">—</dd>
   </dl>
+  <h2>Erreurs de la page</h2>
+  <div class="verdict" id="erreurs"><p id="erreursTexte">Aucune pour l'instant.</p></div>
   <p class="hint">Si tout est vert et que tu n'entends rien : monte le volume
   <b>Multimédia</b> du téléphone (pas la sonnerie), puis dans Chrome, touche le
   cadenas à gauche de l'adresse, ou ⋮ › Paramètres › Paramètres des sites ›
@@ -183,31 +189,54 @@ async function health(){
 }
 health(); setInterval(health, 5000);
 
+</script>
+<script src="/son.js"></script>
+<script>
 /* ------------------------------------------------------------- le son */
+/* Dans son propre script : si celui du serveur tombe (socket.io absent),
+   le son se teste quand même. */
+const $s = (id) => document.getElementById(id);
+window.tbfMontrer = () => {
+  if (!tbfErreurs.length) return;
+  $s('erreurs').className = 'verdict ko';
+  $s('erreursTexte').textContent = tbfErreurs.slice(-8).join(' · ');
+};
+tbfMontrer();
+let touchers = 0;
+for (const t of ['pointerup', 'click']) {
+  addEventListener(t, () => {
+    if (t === 'click') $s('sonTouchers').textContent = String(++touchers);
+    $s('sonActivation').textContent = navigator.userActivation
+      ? (navigator.userActivation.isActive ? 'oui' : navigator.userActivation.hasBeenActive ? 'déjà, plus maintenant' : 'non')
+      : 'inconnu';
+  }, { capture: true });
+}
+const chrome = navigator.userAgent.match(/Chrome\/(\d+)/);
+$s('sonNavigateur').textContent = chrome ? `Chrome ${chrome[1]}` : navigator.userAgent.slice(0, 40);
 const calmeDe = (f) => (document.documentElement.dataset.calme ?? '').split(' ').includes(f);
 function etatSon(){
-  $('sonCalme').textContent = calmeDe('sons') ? 'coupés' : 'actifs';
-  $('sonMusique').textContent = calmeDe('sons') || calmeDe('musique') ? 'coupée' : 'active';
+  $s('sonCalme').textContent = calmeDe('sons') ? 'coupés' : 'actifs';
+  $s('sonMusique').textContent = calmeDe('sons') || calmeDe('musique') ? 'coupée' : 'active';
   const v = window.TBF_SON ? TBF_SON.volume() : null;
-  $('sonVolume').textContent = v === null ? '—' : `${Math.round(v * 100)} %`;
-  $('sonDonnees').textContent = navigator.connection?.saveData ? 'activée' : 'non';
-  $('sonMode').textContent = matchMedia('(display-mode: browser)').matches ? 'un onglet' : "l'icône";
-  $('sonContexte').textContent = window.TBF_SON ? TBF_SON.etat().contexte : 'absent';
+  $s('sonVolume').textContent = v === null ? '—' : `${Math.round(v * 100)} %`;
+  $s('sonDonnees').textContent = navigator.connection?.saveData ? 'activée' : 'non';
+  $s('sonMode').textContent = matchMedia('(display-mode: browser)').matches ? 'un onglet' : "l'icône";
+  $s('sonContexte').textContent = window.TBF_SON ? TBF_SON.etat().contexte : 'absent';
 }
 etatSon();
 window.addEventListener('load', etatSon);
 window.addEventListener('tbf-calme', etatSon);
 
-$('sonTester').addEventListener('click', () => {
+$s('sonTester').addEventListener('click', () => {
   // Dans le geste même : le moteur du jeu, puis le lecteur simple.
   const parti = window.TBF_SON ? TBF_SON.jouer('carillon') : false;
-  $('sonCarillon').textContent = parti ? 'joué' : 'pas joué';
+  $s('sonCarillon').textContent = parti ? 'joué' : 'pas joué';
   const a = new Audio('/son/musique-accueil.07fdc38b.mp3');
   a.volume = 0.6;
   a.play().then(() => {
-    $('sonLecteur').textContent = 'joué';
+    $s('sonLecteur').textContent = 'joué';
     setTimeout(() => a.pause(), 2000);
-  }).catch((e) => { $('sonLecteur').textContent = `refusé (${e.name})`; });
+  }).catch((e) => { $s('sonLecteur').textContent = `refusé (${e.name})`; });
   setTimeout(() => {
     etatSon();
     const ctxEtat = window.TBF_SON ? TBF_SON.etat().contexte : 'absent';
@@ -219,11 +248,10 @@ $('sonTester').addEventListener('click', () => {
   }, 600);
 });
 function verdictSon(cls, titre, texte){
-  $('sonVerdict').className = 'verdict ' + cls;
-  $('sonTitre').textContent = titre; $('sonTexte').textContent = texte;
+  $s('sonVerdict').className = 'verdict ' + cls;
+  $s('sonTitre').textContent = titre; $s('sonTexte').textContent = texte;
 }
 </script>
-<script src="/son.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>

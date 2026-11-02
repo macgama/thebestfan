@@ -64,12 +64,13 @@ export const SECTIONS = [
       'payés en écharpes gagnées en jouant. Les prix en euros, eux, ' +
       'vivent dans le catalogue de la boutique et ne se règlent pas ici : un prix ' +
       'qu’un écran peut changer d’un doigt est un prix qui finira changé par erreur.' },
-  { id: 'abonnement', titre: 'L’ABONNEMENT',
-    aide: 'Ce que l’abonnement ouvre. Il vend de la largeur et du confort, ' +
-      'jamais de la puissance : tous les formats de duel, tous les âges et ' +
-      'tous les classements restent ouverts à tout le monde. Un avantage sur ' +
-      'la corde ferait à l’argent ce que le jeu refuse déjà au temps — voir ' +
-      '`shared/niveau.js`, « le niveau ne donne aucune puissance ».' },
+  { id: 'abonnement', titre: 'LE PASS DE SAISON',
+    aide: 'Ce que le PASS de saison ajoute (choix de Gaël du 2 novembre 2026). ' +
+      'Du rythme et de la mémoire pour la saison achetée, des clubs, des KOP et ' +
+      'du visuel pour la vie — jamais de la puissance : toutes les cartes, tous ' +
+      'les âges, tous les formats et tous les classements restent ouverts à tout ' +
+      'le monde, sans limite. Le prix en euros vit dans le catalogue de la ' +
+      'boutique ; le prix en écharpes, ici.' },
   { id: 'exploitation', titre: 'L’EXPLOITATION',
     aide: 'Ce qui s’adresse aux joueurs depuis l’administration.' },
   /* Les trois sections du quotidien (chantier serveur, vague 1). Chaque source
@@ -228,8 +229,8 @@ export const REGLAGES = [
     min: 0, max: 200, defaut: 5,
     aide: 'Au classement des supporters, aux divisions et aux classements de ' +
       'compétition, seuls les meilleurs duels classés du jour de chaque joueur ' +
-      'comptent (ceux qui ont rapporté le plus de ferveur). On joue toujours ' +
-      'sans limite avec le PASS ; les autres duels comptent pour la cote. Le ' +
+      'comptent (ceux qui ont rapporté le plus de ferveur), PASS ou non. On joue ' +
+      'toujours sans limite ; les autres duels comptent pour la cote. Le ' +
       'Virage n’est pas concerné. Zéro désarme le plafond.' },
 
   { cle: 'tribune.plancher', section: 'virage', type: 'entier',
@@ -253,7 +254,7 @@ export const REGLAGES = [
     titre: 'Duels classés comptés par jour pour les clubs', unite: 'duels par joueur',
     min: 0, max: 200, defaut: 5,
     aide: 'Au championnat des clubs, seuls les premiers duels classés du jour de ' +
-      'chaque joueur comptent, abonné ou non. Les suivants comptent pour le joueur ' +
+      'chaque joueur comptent, PASS ou non. Les suivants comptent pour le joueur ' +
       '(ferveur, cote), pas pour le club. Zéro désarme le plafond.' },
 
   /* Les Fanzzy liés à un club (demande de Gaël du 21 octobre 2026) : voir
@@ -395,80 +396,76 @@ export const REGLAGES = [
     titre: 'Un chant coûte', unite: 'souffle', min: 0, max: 100, defaut: 18 },
 
 
-  /* ------------------------------------------------------- abonnement
+  /* ------------------------------------------------------- le PASS
 
-     Ce que l'abonnement ouvre, et rien d'autre. Chacun de ces réglages a son
-     jumeau gratuit juste au-dessus dans sa propre section : c'est ce qui permet
-     de lire l'écart d'un coup d'œil, et de le ramener à zéro sans livraison si
-     l'abonnement se révèle trop généreux — ou pas assez. */
+     Ce que le PASS de saison ouvre, et rien d'autre (`shared/pass.js`). Les
+     quatre premiers valent **pour la saison achetée** : ils gardent leurs
+     clés `abo.*` d'avant, pour qu'une valeur déjà posée dans /admin survive.
+     Les suivants sont ceux du PASS lui-même.
+
+     Les trois plafonds du gratuit (duels classés et Virages comptés par jour,
+     plus grand format classé) ont disparu le 2 novembre 2026, sur décision de
+     Gaël : **tout compte au classement pour tous**. Le plafond de ferveur
+     (`ferveur.duels_jour`) et celui des clubs (`tribune.duels_jour`) valent,
+     eux, pour tout le monde, PASS ou non. */
 
   { cle: 'abo.pack_max', section: 'abonnement', type: 'entier',
-    titre: 'Réserve maximale d’un abonné', unite: 'boosters', min: 1, max: 99, defaut: 24,
+    titre: 'Réserve maximale avec le PASS', unite: 'boosters', min: 1, max: 99, defaut: 24,
     aide: 'Le plafond gratuit est de douze. Ce qui s’achète ici est le droit ' +
-      'de s’absenter deux jours sans rien perdre, pas des cartes en plus : la ' +
-      'réserve se remplit au même rythme pour tout le monde si l’autre réglage ' +
-      'reste égal.' },
+      'de s’absenter deux jours sans rien perdre, pas des cartes en plus. ' +
+      'Pour la saison achetée seulement.' },
 
   { cle: 'abo.pack_regen_min', section: 'abonnement', type: 'entier',
-    titre: 'Un booster tous les, pour un abonné', unite: 'minutes',
+    titre: 'Un booster tous les, avec le PASS', unite: 'minutes',
     min: 1, max: 1440, defaut: 6,
-    aide: 'Dix minutes pour un joueur inscrit, six pour un abonné. C’est du ' +
-      'rythme, donc de la collection plus vite remplie — et la collection ne ' +
-      'pèse rien sur la corde, puisqu’un deck entre toujours au premier âge.' },
-
-  { cle: 'abo.clubs_en_plus', section: 'abonnement', type: 'entier',
-    titre: 'Emplacements de club en plus', unite: 'clubs', min: 0, max: 8, defaut: 2,
-    aide: 'Par-dessus ce que le niveau ouvre déjà, de deux à huit. Suivre un ' +
-      'club de plus donne des matchs de plus à vivre ; ça ne donne aucun ' +
-      'avantage en duel.' },
+    aide: 'Dix minutes sans PASS, six avec. C’est du rythme, donc de la ' +
+      'collection plus vite remplie — et la collection ne pèse rien sur la ' +
+      'corde, puisqu’un deck entre toujours au premier âge. Pour la saison achetée.' },
 
   { cle: 'abo.parcours_libre', section: 'abonnement', type: 'entier',
-    titre: 'Parties gardées au parcours sans abonnement', unite: 'parties',
+    titre: 'Parties gardées au parcours sans PASS', unite: 'parties',
     min: 5, max: 500, defaut: 20,
-    aide: 'Un joueur inscrit voit ses vingt dernières parties ; un abonné a ' +
-      'tout son historique. Les parties ne sont jamais effacées — c’est la ' +
-      'lecture qui s’arrête, et elle rouvre entièrement dès l’abonnement.' },
+    aide: 'Un joueur sans PASS voit ses vingt dernières parties ; avec le PASS ' +
+      'de la saison, tout son historique. Les parties ne sont jamais effacées — ' +
+      'c’est la lecture qui s’arrête, et elle rouvre entièrement avec le PASS.' },
 
   { cle: 'abo.souvenirs_libres', section: 'abonnement', type: 'entier',
-    titre: 'Cartes-souvenirs lisibles sans abonnement', unite: 'cartes',
+    titre: 'Cartes-souvenirs lisibles sans PASS', unite: 'cartes',
     min: 5, max: 500, defaut: 20,
     aide: 'Mêmes règles que le parcours : rien n’est perdu, la vitrine est ' +
       'plus courte. Ce qu’on vend est la mémoire longue, pas les souvenirs ' +
       'eux-mêmes.' },
 
-  /* ------------------------------------------- ce que le gratuit plafonne
+  { cle: 'pass.prix_echarpes', section: 'abonnement', type: 'entier',
+    titre: 'Le PASS payé en écharpes', unite: 'écharpes', min: 0, max: 999999, defaut: 40000,
+    aide: 'Choix de Gaël du 2 novembre 2026 : 40 000. Un joueur de tous les jours ' +
+      'les gagne en deux mois environ, un joueur régulier n’y arrive pas en une ' +
+      'saison. Zéro : le PASS ne se paie plus en écharpes. Ce n’est jamais l’inverse : ' +
+      'aucun euro n’achète d’écharpes.' },
 
-     **Ces trois-là ne sont pas comme les autres, et il faut le savoir.** Tout
-     ce qui précède élargit quelque chose à l'abonné ; ceux-ci **retirent**
-     quelque chose à celui qui ne paie pas. C'est une décision de Gaël, prise
-     en septembre 2026, et elle entame la règle inscrite en tête du module
-     d'abonnement — voir ce fichier-là, où le raisonnement est écrit en entier.
+  { cle: 'pass.dernier_mois_jours', section: 'abonnement', type: 'entier',
+    titre: 'Acheté si près de la fin, il couvre aussi la saison suivante', unite: 'jours',
+    min: 0, max: 60, defaut: 30,
+    aide: 'Le « dernier mois » (choix de Gaël) : un PASS acheté dans les trente ' +
+      'derniers jours d’une saison vaut pour elle et pour la suivante. Zéro : ' +
+      'jamais deux saisons d’un coup.' },
 
-     **Zéro désarme le plafond**, et c'est la valeur à poser si l'on veut
-     revenir en arrière sans livraison : c'est tout l'intérêt d'avoir mis ces
-     trois nombres ici plutôt que dans le code. */
+  { cle: 'pass.clubs_par_pass', section: 'abonnement', type: 'entier',
+    titre: 'Emplacements de club en plus, par PASS acheté', unite: 'clubs', min: 0, max: 4, defaut: 1,
+    aide: 'À vie et cumulé : trois PASS achetés, trois emplacements de plus que ce ' +
+      'que le niveau ouvre. L’emplacement se paie toujours en écharpes. Suivre un ' +
+      'club de plus donne des matchs à vivre, aucun avantage en duel.' },
 
-  { cle: 'abo.duels_classes_jour', section: 'abonnement', type: 'entier',
-    titre: 'Duels classés par jour, sans abonnement', unite: 'duels',
-    min: 0, max: 200, defaut: 5,
-    aide: 'Au-delà, on joue toujours — sur un match d’un autre jour, qui est ' +
-      'de l’entraînement. C’est le **compteur** qui ferme, pas le jeu. Zéro ' +
-      'désarme le plafond.' },
+  { cle: 'pass.kops_par_pass', section: 'abonnement', type: 'entier',
+    titre: 'KOP à créer, par PASS acheté', unite: 'KOP', min: 0, max: 4, defaut: 1,
+    aide: 'À vie et cumulé : un PASS, un KOP à fonder ; deux PASS, deux. Rejoindre ' +
+      'un KOP reste ouvert à tous.' },
 
-  { cle: 'abo.virages_classes_jour', section: 'abonnement', type: 'entier',
-    titre: 'Virages comptés au classement par jour, sans abonnement',
-    unite: 'matchs', min: 0, max: 100, defaut: 2,
-    aide: 'Le troisième Virage de la journée se joue entièrement — on pousse, ' +
-      'on chante, les cartes-souvenirs tombent — mais sa ferveur ne compte ' +
-      'pas au classement. Aucune porte ne se ferme. Zéro désarme le plafond.' },
-
-  { cle: 'abo.taille_classe_libre', section: 'abonnement', type: 'entier',
-    titre: 'Plus grand format classé sans abonnement', unite: 'joueurs par camp',
-    min: 1, max: 5, defaut: 5,
-    aide: 'À 5 (choix de Gaël du 30 octobre 2026), tous les formats se jouent ' +
-      'en classé sans abonnement, dans les duels classés du jour : sinon le ' +
-      '2v2 et au-dessus ne se rempliraient jamais. Plus bas, les grands formats ' +
-      'restent jouables par tout le monde, en entraînement.' },
+  { cle: 'pass.prix_tenue_etal', section: 'abonnement', type: 'entier',
+    titre: 'Une tenue d’un PASS passé, à l’étal', unite: 'écharpes', min: 1, max: 99999, defaut: 500,
+    aide: 'Choix de Gaël : la tenue d’un PASS revient à l’étal dès la saison suivante, ' +
+      'à l’unité et plus chère qu’une tenue ordinaire (130). Elle ne sort plus jamais ' +
+      'd’un booster ; le badge et le cadre du PASS restent au PASS.' },
 
   /* -------------------------------------------------------------- deck */
   { cle: 'deck.fanzzy', section: 'deck', type: 'entier',

@@ -10,7 +10,7 @@ export const messages = {
     'mail.html.pied': 'le jeu des supporters',
     'mail.btn.verify': 'Confirmer mon adresse',
     'mail.btn.reset': 'Choisir un mot de passe',
-    'mail.btn.abo': 'Voir mon abonnement',
+    'mail.btn.abo': 'Voir mon PASS',
     'mail.btn.resil': 'Garder mon abonnement',
     'mail.verify.subject': 'Confirme ton adresse — thebestfan',
     'mail.verify.body':
@@ -41,6 +41,13 @@ export const messages = {
       'thebestfan.online',
     'mail.abo.pack': ' Un booster vient d\'arriver dans ta réserve.',
     'mail.abo.packs': ' {n} boosters viennent d\'arriver dans ta réserve.',
+    'mail.pass.subject': 'Ton PASS de saison est actif — thebestfan',
+    'mail.pass.body':
+      'Salut {pseudo},\n\n' +
+      'Bienvenue dans le PASS de saison ({saisons}).{packs}\n' +
+      'Il est payé une fois et ne se renouvelle pas tout seul : il n\'y a rien à résilier.\n\n' +
+      'Ta tenue de saison, ton badge et ta voie PASS t\'attendent ici :\n{link}\n\n' +
+      'thebestfan.online',
     'mail.resil.subject': 'Ta résiliation est enregistrée — thebestfan',
     'mail.resil.body':
       'Salut {pseudo},\n\n' +
@@ -55,7 +62,7 @@ export const messages = {
     'mail.html.pied': 'the fans’ game',
     'mail.btn.verify': 'Confirm my address',
     'mail.btn.reset': 'Choose a password',
-    'mail.btn.abo': 'See my subscription',
+    'mail.btn.abo': 'See my PASS',
     'mail.btn.resil': 'Keep my subscription',
     'mail.verify.subject': 'Confirm your address — thebestfan',
     'mail.verify.body':
@@ -86,6 +93,13 @@ export const messages = {
       'thebestfan.online',
     'mail.abo.pack': ' A booster just landed in your stock.',
     'mail.abo.packs': ' {n} boosters just landed in your stock.',
+    'mail.pass.subject': 'Your season PASS is active — thebestfan',
+    'mail.pass.body':
+      'Hi {pseudo},\n\n' +
+      'Welcome to the season PASS ({saisons}).{packs}\n' +
+      'You pay once and it never renews by itself: there is nothing to cancel.\n\n' +
+      'Your season outfit, your badge and your PASS track are waiting here:\n{link}\n\n' +
+      'thebestfan.online',
     'mail.resil.subject': 'Your cancellation is confirmed — thebestfan',
     'mail.resil.body':
       'Hi {pseudo},\n\n' +
@@ -94,7 +108,7 @@ export const messages = {
       'thebestfan.online',
   },
   de: {
-    'mail.btn.abo': 'Mein Abo ansehen',
+    'mail.btn.abo': 'Meinen PASS ansehen',
     'mail.btn.resil': 'Mein Abo behalten',
     'mail.formule.mensuel': 'Monatsabo',
     'mail.formule.annuel': 'Jahresabo',
@@ -109,6 +123,13 @@ export const messages = {
       'thebestfan.online',
     'mail.abo.pack': ' Ein Booster ist gerade in deinem Vorrat gelandet.',
     'mail.abo.packs': ' {n} Booster sind gerade in deinem Vorrat gelandet.',
+    'mail.pass.subject': 'Dein Saison-PASS ist aktiv — thebestfan',
+    'mail.pass.body':
+      'Hallo {pseudo},\n\n' +
+      'Willkommen im Saison-PASS ({saisons}).{packs}\n' +
+      'Er wird einmal bezahlt und verlängert sich nie von selbst: Es gibt nichts zu kündigen.\n\n' +
+      'Dein Saison-Outfit, dein Abzeichen und dein PASS-Weg warten hier:\n{link}\n\n' +
+      'thebestfan.online',
     'mail.resil.subject': 'Deine Kündigung ist eingegangen — thebestfan',
     'mail.resil.body':
       'Hallo {pseudo},\n\n' +
@@ -141,7 +162,7 @@ export const messages = {
   it: {
     'mail.btn.verify': 'Conferma il mio indirizzo',
     'mail.btn.reset': 'Scegli una password',
-    'mail.btn.abo': 'Vedi il mio abbonamento',
+    'mail.btn.abo': 'Vedi il mio PASS',
     'mail.btn.resil': 'Tieni il mio abbonamento',
     'mail.formule.mensuel': 'mensile',
     'mail.formule.annuel': 'annuale',
@@ -156,6 +177,13 @@ export const messages = {
       'thebestfan.online',
     'mail.abo.pack': ' Un booster è appena arrivato nella tua riserva.',
     'mail.abo.packs': ' {n} booster sono appena arrivati nella tua riserva.',
+    'mail.pass.subject': 'Il tuo PASS stagionale è attivo — thebestfan',
+    'mail.pass.body':
+      'Ciao {pseudo},\n\n' +
+      'Benvenuto nel PASS stagionale ({saisons}).{packs}\n' +
+      'Si paga una volta e non si rinnova da solo: non c\'è niente da disdire.\n\n' +
+      'La tua tenuta di stagione, il tuo distintivo e la tua via PASS ti aspettano qui:\n{link}\n\n' +
+      'thebestfan.online',
     'mail.resil.subject': 'La tua disdetta è registrata — thebestfan',
     'mail.resil.body':
       'Ciao {pseudo},\n\n' +
@@ -184,7 +212,7 @@ export const messages = {
       'thebestfan.online',
   },
   es: {
-    'mail.btn.abo': 'Ver mi suscripción',
+    'mail.btn.abo': 'Ver mi PASS',
     'mail.btn.resil': 'Mantener mi suscripción',
     'mail.formule.mensuel': 'mensual',
     'mail.formule.annuel': 'anual',
@@ -199,6 +227,13 @@ export const messages = {
       'thebestfan.online',
     'mail.abo.pack': ' Acaba de llegar un sobre a tu reserva.',
     'mail.abo.packs': ' Acaban de llegar {n} sobres a tu reserva.',
+    'mail.pass.subject': 'Tu PASS de temporada está activo — thebestfan',
+    'mail.pass.body':
+      'Hola {pseudo},\n\n' +
+      'Bienvenido al PASS de temporada ({saisons}).{packs}\n' +
+      'Se paga una vez y nunca se renueva solo: no hay nada que cancelar.\n\n' +
+      'Tu atuendo de temporada, tu insignia y tu vía PASS te esperan aquí:\n{link}\n\n' +
+      'thebestfan.online',
     'mail.resil.subject': 'Tu cancelación está registrada — thebestfan',
     'mail.resil.body':
       'Hola {pseudo}:\n\n' +

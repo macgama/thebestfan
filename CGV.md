@@ -19,7 +19,8 @@ Nous éditons **thebestfan.online**, un jeu de cartes de supporters adossé aux
 vrais matchs de football.
 
 **Le jeu est gratuit.** On peut y jouer entièrement, indéfiniment, sans jamais
-payer. La seule chose que nous vendons est un **abonnement**.
+payer. La seule chose que nous vendons est le **PASS de saison**
+(depuis le 2 novembre 2026 ; il remplace l'ancien abonnement).
 
 ---
 
@@ -38,55 +39,50 @@ l'inscription.
 
 ---
 
-## 3. L'abonnement
+## 3. Le PASS de saison
 
 ### Ce qu'il coûte
 
-| formule | prix | renouvellement |
-|---|---|---|
-| mensuel | **3,99 € TTC** | tous les mois |
-| annuel | **39,90 € TTC** | tous les ans |
+**7,99 € TTC, payés une seule fois.** Il ne se renouvelle jamais tout seul :
+il n'y a rien à résilier. Le paiement passe par **Stripe** ; nous ne voyons
+jamais ton numéro de carte. Il s'obtient aussi avec des écharpes gagnées en
+jouant (40 000 par défaut, réglable dans l'administration), sans payer.
 
-Les prix sont en euros, toutes taxes comprises. Le paiement passe par **Stripe**.
-Nous ne voyons jamais ton numéro de carte.
+### Ce qu'il couvre
+
+Une saison du jeu, jusqu'à son dernier jour. Acheté pendant le dernier mois
+d'une saison (30 jours, réglable), il couvre aussi la suivante.
 
 ### Ce qu'il ouvre
 
-| | sans abonnement | avec |
-|---|---|---|
-| boosters en réserve | 12 | 24 |
-| délai entre deux boosters | 10 minutes | 6 minutes |
-| clubs suivis en plus | — | +2 |
-| profondeur de ton parcours | 20 dernières parties | tout |
-| cartes-souvenirs consultables | 20 | toutes |
-| tenues | celles que tu possèdes | toutes celles publiées |
-| créer un groupe (KOP) | non | oui |
+| | sans PASS | avec, pendant sa saison | avec, pour toujours |
+|---|---|---|---|
+| boosters à l'achat | — | 3 | |
+| boosters en réserve | 12 | 24 | |
+| délai entre deux boosters | 10 minutes | 6 minutes | |
+| profondeur de ton parcours | 20 dernières parties | tout | |
+| cartes-souvenirs consultables | 20 | toutes | |
+| clubs suivis en plus | — | | +1 par PASS |
+| créer un groupe (KOP) | — | | 1 par PASS |
+| la tenue de la saison, son badge, son cadre de carte | — | | oui |
 
-Ces valeurs peuvent être ajustées. Si nous les modifions **à la baisse**, nous
-te préviendrons avant, et tu pourras résilier.
+Ces valeurs peuvent être ajustées. Si nous réduisons ce qu'un PASS déjà acheté
+donne, nous te préviendrons avant.
 
 ### Ce qu'il n'ouvre pas, et c'est l'essentiel
 
-**L'abonnement ne donne aucun avantage de jeu.** Tous les formats de duel, tous
-les âges des personnages, tous les classements et le Grand Virage restent
-ouverts à tout le monde.
+**Le PASS ne donne aucun avantage de jeu.** Toutes les séries, tous les âges,
+tous les formats de duel, le Grand Virage, et **tout le classement, sans
+limite**, restent ouverts à tout le monde. Aucun Fanzzy n'est réservé au PASS.
+Sa tenue revient à l'étal, en écharpes, une saison plus tard.
 
-Un abonné et un non-abonné jouent au même jeu, avec les mêmes chances de gagner.
-Ce n'est pas une promesse commerciale : c'est une règle de conception, et des
-contrôles automatiques refusent toute modification qui la briserait.
+### Les anciens abonnements
 
-### Le renouvellement, et comment l'arrêter
-
-L'abonnement se renouvelle automatiquement à échéance, au même prix, jusqu'à ce
-que tu l'arrêtes.
-
-**Tu peux résilier à tout moment**, sans motif et sans frais. La résiliation
-prend effet **à la fin de la période déjà payée** : tu gardes l'accès jusque-là.
-Nous ne coupons pas un accès que tu as réglé.
-
-**Où résilier :** sur l'écran de l'abonnement (menu, « L'abonnement »), bouton
-« Résilier mon abonnement », puis « Confirmer la résiliation ». Tu peux changer
-d'avis jusqu'à l'échéance avec « Garder mon abonnement ».
+Un abonnement mensuel ou annuel en cours ne se renouvelle plus : le joueur
+garde tout jusqu'à la fin de la période déjà payée, et reçoit le PASS de la
+saison où elle se termine. Il peut aussi le résilier tout de suite sur la page
+du PASS (« Résilier mon ancien abonnement ») ; la résiliation prend effet à la
+fin de la période déjà payée.
 
 ### Le droit de rétractation
 

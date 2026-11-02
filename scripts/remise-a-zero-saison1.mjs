@@ -77,7 +77,7 @@ export const VIDER = [
   'kops', 'kop_membres', 'kop_votes', 'kop_bulletins', 'kop_bonus', 'kop_invites',
   'amities', 'parrainages',
   // boutique et abonnement (résiliés chez Stripe avant)
-  'achats', 'abonnements', 'abonnement_departs',
+  'achats', 'abonnements', 'abonnement_departs', 'user_pass',
   // le quotidien, le carnet, les récompenses
   'missions_jour', 'compteurs_jour', 'recompenses',
   // pronostics, mini-jeux, notifications

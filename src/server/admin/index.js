@@ -21,6 +21,8 @@ import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
 import { ecrireReglage, rendreAuDefaut, tousLesReglages } from '../reglages/index.js';
 import { assurerBourse } from '../bourse.js';
 import { createCollectionAdmin } from './collection.js';
+import { PASS_SAISONS, passDe } from '../../shared/pass.js';
+import { ARTICLE_PAR_ID } from '../../shared/boutique.js';
 
 /**
  * Administration.
@@ -182,12 +184,28 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     } catch (e) {
       if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
     }
+    /* Les PASS de saison (2 novembre 2026), lus à part pour la même raison :
+       une base sans `sql/pass.sql` n'éteint pas l'écran des joueurs. */
+    let passes = new Map();
+    try {
+      const ids = lignes.map((l) => l.public_id);
+      const rows = await q(
+        `SELECT user_id, saison, source FROM user_pass
+          WHERE user_id IN (${ids.map(() => '?').join(',')}) ORDER BY saison`, ids);
+      for (const r of rows) {
+        (passes.get(r.user_id) ?? passes.set(r.user_id, []).get(r.user_id))
+          .push({ saison: Number(r.saison), source: r.source });
+      }
+    } catch (e) {
+      if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
+    }
     return lignes.map((l) => {
       const a = abos.get(l.public_id);
       return { ...l,
         abonne: Boolean(a && Number(a.actif)),
         abo_fin: a?.fin ?? null,
-        abo_formule: a?.formule ?? null };
+        abo_formule: a?.formule ?? null,
+        pass: passes.get(l.public_id) ?? [] };
     });
   }
 
@@ -1300,6 +1318,89 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const etat = await deps.abonnement.retirer(req.params.id);
     await journal(req.user.id, 'abonnement.retirer', req.params.id, null, ip(req));
     res.json({ abonnement: etat });
+  }));
+
+  /* -------------------------------------------------------- le PASS de saison
+
+     Offrir le PASS d'une saison (par défaut, la saison en cours) ou le
+     retirer. C'est ce qui donne le PASS aux bêta-testeurs, et le geste de
+     service après-vente d'un remboursement. Journalisé comme le reste. */
+
+  router.post('/joueur/:id/pass', safe(async (req, res) => {
+    if (!deps.abonnement?.accorderPass) return res.status(503).json({ error: 'admin.error.abo_absent' });
+    const cible = (await q('SELECT public_id FROM users WHERE public_id = ?', [req.params.id]))[0];
+    if (!cible) return res.status(404).json({ error: 'admin.error.joueur_inconnu' });
+    let saison = Number(req.body?.saison);
+    if (!Number.isInteger(saison) || saison < 1) {
+      const { saisonEnCours } = await import('../fanzzy/saisons.js');
+      let c = null;
+      try { c = saisonEnCours(); } catch { c = null; }
+      saison = Number(c?.numero);
+    }
+    if (!Number.isInteger(saison) || saison < 1) {
+      return res.status(400).json({ error: 'admin.error.pas_de_saison' });
+    }
+    const nouvelles = await deps.abonnement.accorderPass(cible.public_id,
+      { saisons: [saison], source: 'offert', reference: 'admin' });
+    await journal(req.user.id, 'pass.accorder', cible.public_id, { saison }, ip(req));
+    res.json({ saison, nouveau: nouvelles.length > 0 });
+  }));
+
+  /* Le menu PASS : tout ce qui touche au PASS de saison, lu au même endroit
+     (demande de Gaël du 2 novembre 2026, « je ne comprends plus comment
+     gérer l'admin avec le PASS »). Les ventes par saison et par caisse, les
+     derniers détenteurs, les anciens abonnés qui courent encore, et ce que le
+     code fixe (prix en euros, tenue de chaque PASS) pour qu'on le voie sans
+     ouvrir le dépôt. Chaque table manquante rend une liste vide, jamais une
+     erreur : une base sans `sql/pass.sql` garde son menu. */
+  router.get('/pass', safe(async (_req, res) => {
+    const sansTable = (e) => { if (e?.code !== 'ER_NO_SUCH_TABLE') throw e; return []; };
+    let enCours = null;
+    try { enCours = saisonEnCours(); } catch { enCours = null; }
+    const ventes = await q(
+      `SELECT saison, source, COUNT(*) AS n FROM user_pass GROUP BY saison, source
+        ORDER BY saison DESC`).catch(sansTable);
+    const parSaison = new Map();
+    for (const v of ventes) {
+      const ligne = parSaison.get(Number(v.saison))
+        ?? parSaison.set(Number(v.saison), { saison: Number(v.saison), stripe: 0,
+          echarpes: 0, offert: 0, total: 0 }).get(Number(v.saison));
+      const n = Number(v.n);
+      if (v.source in ligne) ligne[v.source] += n;
+      ligne.total += n;
+    }
+    const detenteurs = await q(
+      `SELECT p.user_id, u.pseudo, p.saison, p.source, p.achete_le
+         FROM user_pass p LEFT JOIN users u ON u.public_id = p.user_id
+        ORDER BY p.achete_le DESC LIMIT 60`).catch(sansTable);
+    const anciens = await q(
+      `SELECT a.user_id, u.pseudo, a.formule, a.fin
+         FROM abonnements a LEFT JOIN users u ON u.public_id = a.user_id
+        WHERE a.fin IS NULL OR a.fin > NOW(3)
+        ORDER BY a.fin IS NULL, a.fin LIMIT 200`).catch(sansTable);
+    const numeros = new Set(PASS_SAISONS.map((p) => p.numero));
+    if (Number(enCours?.numero) > 0) numeros.add(Number(enCours.numero));
+    for (const n of parSaison.keys()) numeros.add(n);
+    res.json({
+      enCours: enCours ? { numero: Number(enCours.numero), nom: enCours.nom ?? null,
+        fin: enCours.fin ?? null } : null,
+      prixEuros: ARTICLE_PAR_ID.get('pass-saison')?.prix ?? null,
+      registre: [...numeros].sort((a, b) => b - a).map((n) => passDe(n)),
+      ventes: [...parSaison.values()],
+      detenteurs: detenteurs.map((d) => ({ id: d.user_id, pseudo: d.pseudo,
+        saison: Number(d.saison), source: d.source, le: d.achete_le })),
+      anciens: anciens.map((a) => ({ id: a.user_id, pseudo: a.pseudo,
+        formule: a.formule, fin: a.fin })),
+    });
+  }));
+
+  router.delete('/joueur/:id/pass/:saison', safe(async (req, res) => {
+    if (!deps.abonnement?.retirerPass) return res.status(503).json({ error: 'admin.error.abo_absent' });
+    const saison = Number(req.params.saison);
+    if (!Number.isInteger(saison) || saison < 1) return res.status(400).json({ error: 'admin.error.saison' });
+    await deps.abonnement.retirerPass(req.params.id, saison);
+    await journal(req.user.id, 'pass.retirer', req.params.id, { saison }, ip(req));
+    res.json({ saison });
   }));
 
   /* La collection d'un joueur et les cadeaux, puis les KOP : `collection.js`. */
