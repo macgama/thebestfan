@@ -43,6 +43,11 @@ header .who{font-size:12px;opacity:.5}
   color:inherit;padding:8px 14px;font-family:var(--banner);font-size:12px;letter-spacing:.06em;
   cursor:pointer;opacity:.55}
 #nav button.on{background:var(--craie);color:#0B0E13;opacity:1}
+/* Les sous-onglets du menu ouvert : une ligne sous les familles, plus petite. */
+#nav .sous{display:none;flex-basis:100%;gap:6px;flex-wrap:wrap;padding-top:2px}
+#nav .sous.vu{display:flex}
+#nav .sous button{padding:6px 11px;font-size:10.5px;border-radius:999px}
+#nav .sous button.on{background:var(--projo);color:#0B0E13}
 main{padding:0 18px 40px;max-width:1100px}
 /* Les tableaux de l'administration ont huit colonnes : ils ne rentreront jamais
    dans un téléphone, et il n'y a aucune raison de les y forcer. Ils défilent
@@ -481,24 +486,56 @@ const MSG_FANZZY = {
  * Le regroupement le dit sans une phrase d'explication. Il ne change aucune
  * vue : ce sont les mêmes écrans, rangés.
  */
+/*
+ * **Sept menus, et des sous-onglets** (demande de Gaël du 2 novembre 2026,
+ * « est-ce qu'il y a toujours besoin de tous ces menus ? »).
+ *
+ * Dix boutons à plat, et le PASS de saison éparpillé dans trois d'entre eux.
+ * Le CATALOGUE réunit ce qui se publie carte par carte (FANZZY, CONTENUS,
+ * SKINS) ; PASS réunit tout ce qui touche au PASS ; les KOP rejoignent les
+ * JOUEURS, le JOURNAL rejoint l'APERÇU. Aucun écran n'a disparu : chacun est
+ * un sous-onglet de son menu, et le premier s'ouvre quand on touche le menu.
+ *
+ * Les sous-onglets de tous les menus sont dans la page, seuls ceux du menu
+ * ouvert se voient : la ligne reste à sa place quand on change de menu.
+ */
 const FAMILLES_ONGLETS = [
-  ['LE CONTENU', [['saisons','SAISONS'], ['fanzzy','FANZZY'],
-    ['contenus','CONTENUS'], ['tenues','SKINS']]],
-  ['LE JEU', [['reglages','RÉGLAGES']]],
-  ['L’EXPLOITATION', [['apercu','APERÇU'], ['joueurs','JOUEURS'],
-    ['kops','KOP'], ['competitions','COMPÉTITIONS'], ['journal','JOURNAL']]],
+  ['LE CONTENU', [['saisons', 'SAISONS'],
+    ['catalogue', 'CATALOGUE', [['fanzzy', 'FANZZY'], ['contenus', 'CONTENUS'], ['tenues', 'SKINS']]]]],
+  ['LE JEU', [['pass', 'PASS'], ['reglages', 'RÉGLAGES']]],
+  ['L’EXPLOITATION', [['apercu', 'APERÇU', [['apercu', 'EN JEU'], ['journal', 'JOURNAL']]],
+    ['joueurs', 'JOUEURS', [['joueurs', 'COMPTES'], ['kops', 'KOP']]],
+    ['competitions', 'COMPÉTITIONS']]],
 ];
-const ONGLETS = FAMILLES_ONGLETS.flatMap(([, liste]) => liste);
+const MENUS = FAMILLES_ONGLETS.flatMap(([, liste]) => liste);
+/* La vue → son menu. */
+const MENU_DE = new Map(MENUS.flatMap(([m, , sous]) =>
+  (sous ?? [[m]]).map(([v]) => [v, m])));
 let onglet = 'apercu';
+/* Les sections du registre qui vont au menu PASS, et non à RÉGLAGES. */
+const SECTIONS_DU_PASS = ['abonnement'];
 
 $('nav').innerHTML = FAMILLES_ONGLETS.map(([titre, liste]) =>
-  `<div class="fam"><i>${titre}</i><span>${liste.map(([k,t]) =>
-    `<button data-o="${k}" class="${k===onglet?'on':''}">${t}</button>`).join('')}</span></div>`
-).join('');
+  `<div class="fam"><i>${titre}</i><span>${liste.map(([k, t, sous]) =>
+    `<button data-o="${k}" data-m="${k}"${sous ? ` data-v="${sous[0][0]}"` : ''}>${t}</button>`).join('')}</span></div>`
+).join('') + MENUS.filter(([, , sous]) => sous).map(([m, , sous]) =>
+  `<div class="sous" data-sous="${m}">${sous.map(([v, t]) =>
+    `<button data-o="${v}" data-sv="${v}">${t}</button>`).join('')}</div>`).join('');
+
+function marquer() {
+  const menu = MENU_DE.get(onglet);
+  document.querySelectorAll('#nav [data-m]').forEach((x) =>
+    x.classList.toggle('on', x.dataset.m === menu));
+  document.querySelectorAll('#nav [data-sv]').forEach((x) =>
+    x.classList.toggle('on', x.dataset.sv === onglet));
+  document.querySelectorAll('#nav [data-sous]').forEach((x) =>
+    x.classList.toggle('vu', x.dataset.sous === menu));
+}
+marquer();
 $('nav').onclick = (e) => {
   const b = e.target.closest('[data-o]'); if (!b) return;
-  onglet = b.dataset.o;
-  document.querySelectorAll('nav button').forEach((x)=>x.classList.toggle('on',x===b));
+  onglet = b.dataset.v ?? b.dataset.o;
+  marquer();
   rendre();
 };
 
@@ -618,28 +655,12 @@ const VUES = {
    */
   async apercu() {
     const d = await api('/apercu');
-    const [sai, fz, cont, dep] = await Promise.all([
+    const [sai, fz, cont, ps] = await Promise.all([
       api('/saisons').catch(() => null),
       api('/fanzzy').catch(() => null),
       api('/contenus').catch(() => null),
-      api('/departs').catch(() => null),
+      api('/pass').catch(() => null),
     ]);
-
-    /* Pourquoi les abonnés partent : la question facultative posée après une
-       résiliation. Anonyme ; le compte des 90 derniers jours, puis les
-       derniers mots laissés. Sans table, rien. */
-    const departs = () => {
-      if (!dep) return '';
-      const total = dep.raisons.reduce((n, r) => n + r.n, 0);
-      return `<h3 class="h3">POURQUOI ILS SE DÉSABONNENT (${dep.jours} JOURS)</h3>
-      <div class="tbl"><table><tbody>
-        ${total ? dep.raisons.map((r) => `<tr><td>${esc(r.libelle)}</td><td>${r.n}</td></tr>`).join('')
-          : '<tr><td>Aucune réponse pour l’instant.</td></tr>'}
-        ${dep.mots.map((m) => `<tr><td style="opacity:.6;font-size:11px;white-space:nowrap">${
-          esc(new Date(m.cree).toLocaleDateString('fr'))} · ${esc(m.libelle)}${
-          m.formule ? ' · ' + esc(m.formule) : ''}</td><td>${esc(m.texte)}</td></tr>`).join('')}
-      </tbody></table></div>`;
-    };
 
     const enJeu = () => {
       if (!sai) return '';
@@ -667,14 +688,16 @@ const VUES = {
           ? esc(brouillons.map((x) => x.nom).join(' · ')) : 'aucun', 'SAISONS')}
         ${tirables === null ? '' : l('Fanzzy tirables',
           `${tirables} de premier âge publiés${retirees ? ` · ${retirees} carte(s) retirée(s)` : ''}`,
-          'FANZZY')}
+          'CATALOGUE › FANZZY')}
         ${fermes === null ? '' : l('Contenus retirés',
-          fermes ? `${fermes} élément(s) hors du jeu` : 'aucun — tout est publié', 'CONTENUS')}
+          fermes ? `${fermes} élément(s) hors du jeu` : 'aucun — tout est publié', 'CATALOGUE › CONTENUS')}
+        ${ps?.enCours ? l(`PASS de la saison ${ps.enCours.numero}`, `${
+          ps.ventes.find((v) => v.saison === ps.enCours.numero)?.total ?? 0} joueur(s)`, 'PASS') : ''}
       </tbody></table></div>`;
     };
 
     const c = (v, l) => `<div class="card"><b>${v ?? 0}</b><span>${l}</span></div>`;
-    $('main').innerHTML = enJeu() + departs() + `
+    $('main').innerHTML = enJeu() + `
       <div class="cards">
         ${c(d.joueurs.total,'JOUEURS')}${c(d.joueurs.nouveaux,'CETTE SEMAINE')}
         ${c(d.joueurs.verifies,'ADRESSES VÉRIFIÉES')}${c(d.joueurs.admins,'ADMINS')}
@@ -1802,9 +1825,92 @@ const VUES = {
     };
   },
 
-  async reglages() {
+  /**
+   * Le PASS de saison, **en un seul endroit** (2 novembre 2026).
+   *
+   * Il était réparti entre RÉGLAGES (ses nombres), JOUEURS (l'offrir) et
+   * l'APERÇU (les départs des anciens abonnés), et deux choses ne se lisaient
+   * nulle part : combien de joueurs l'ont, et quelle tenue porte chaque PASS.
+   * On lit ici ; on règle ici ; on l'offre toujours depuis la ligne du joueur.
+   */
+  async pass() {
+    const [d, dep] = await Promise.all([api('/pass'),
+      api('/departs').catch(() => null)]);
+    const SOURCES = { stripe: 'carte', echarpes: 'écharpes', offert: 'offert' };
+    const euros = (c) => (c == null ? '?' : (c / 100).toLocaleString('fr-CH',
+      { minimumFractionDigits: 2 }) + ' €');
+    const date = (v) => (v ? new Date(v).toLocaleDateString('fr-CH') : '');
+    const nom = (j) => esc(j.pseudo ?? j.id);
+    const ventes = new Map(d.ventes.map((v) => [v.saison, v]));
+    const enCours = d.enCours;
+    const pc = enCours ? d.registre.find((p) => p.numero === enCours.numero) : null;
+    /* Pourquoi les abonnés partent : la question facultative posée après une
+       résiliation. Anonyme ; le compte des 90 derniers jours, puis les
+       derniers mots laissés. Sans table, rien. Elle ne concerne plus que les
+       anciens abonnés : elle a quitté l'APERÇU pour ce menu. */
+    const departs = () => {
+      if (!dep) return '';
+      const total = dep.raisons.reduce((n, r) => n + r.n, 0);
+      return `<h3 class="h3">POURQUOI LES ANCIENS ABONNÉS SONT PARTIS (${dep.jours} JOURS)</h3>
+      <div class="tbl"><table><tbody>
+        ${total ? dep.raisons.map((r) => `<tr><td>${esc(r.libelle)}</td><td>${r.n}</td></tr>`).join('')
+          : '<tr><td>Aucune réponse pour l’instant.</td></tr>'}
+        ${dep.mots.map((m) => `<tr><td style="opacity:.6;font-size:11px;white-space:nowrap">${
+          esc(new Date(m.cree).toLocaleDateString('fr'))} · ${esc(m.libelle)}${
+          m.formule ? ' · ' + esc(m.formule) : ''}</td><td>${esc(m.texte)}</td></tr>`).join('')}
+      </tbody></table></div>`;
+    };
+
+    const avant = `
+      <div class="series"><p class="series-t">LE PASS DE SAISON</p>
+        <p class="series-n">${enCours
+          ? `Saison en cours : <b>${esc(enCours.nom ?? '')}</b> (n° ${enCours.numero}) — ${
+            esc(pc?.nom ?? 'PASS ' + enCours.numero)}${pc?.tenue
+              ? `, tenue <b>${esc(pc.tenue)}</b>` : ', sans tenue de saison'}.`
+          : 'Aucune saison lancée : le PASS ne se vend pas tant qu’aucune saison ne court (menu SAISONS).'}
+          Il coûte <b>${euros(d.prixEuros)}</b> (fixé dans le code, catalogue de la boutique)
+          ou des écharpes (réglage plus bas). Pour l’<b>offrir</b> ou le <b>retirer</b> à un
+          joueur : menu JOUEURS, bouton « Offrir le PASS » sur sa ligne. La tenue de chaque
+          PASS est écrite dans le code (<code>src/shared/pass.js</code>).</p></div>
+      <h3 class="h3">LES PASS PAR SAISON</h3>
+      <div class="tbl"><table><thead><tr><th>SAISON</th><th>TENUE</th><th>PAYÉS CARTE</th>
+        <th>PAYÉS ÉCHARPES</th><th>OFFERTS</th><th>TOTAL</th></tr></thead><tbody>
+        ${d.registre.map((p) => { const v = ventes.get(p.numero) ?? {}; return `<tr>
+          <td><b>${esc(p.nom)}</b>${enCours?.numero === p.numero
+            ? ' <span class="pill vert">EN COURS</span>' : ''}</td>
+          <td>${esc(p.tenue ?? '—')}</td><td>${v.stripe ?? 0}</td><td>${v.echarpes ?? 0}</td>
+          <td>${v.offert ?? 0}</td><td><b>${v.total ?? 0}</b></td></tr>`; }).join('')
+          || '<tr><td colspan="6" class="vide">Aucun PASS.</td></tr>'}
+      </tbody></table></div>
+      <h3 class="h3">LES DERNIERS PASS</h3>
+      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>SAISON</th><th>COMMENT</th>
+        <th>LE</th></tr></thead><tbody>
+        ${d.detenteurs.map((j) => `<tr><td>${nom(j)}</td><td>S${j.saison}</td>
+          <td>${esc(SOURCES[j.source] ?? j.source)}</td><td>${date(j.le)}</td></tr>`).join('')
+          || '<tr><td colspan="4" class="vide">Personne n’a encore le PASS.</td></tr>'}
+      </tbody></table></div>
+      <h3 class="h3">ANCIENS ABONNÉS ENCORE EN COURS (${d.anciens.length})</h3>
+      <p style="opacity:.5;font-size:12px;max-width:660px">L’abonnement n’est plus en vente.
+        Ceux-ci gardent tout jusqu’à la fin de leur période ; un abonnement offert sans
+        terme se retire depuis JOUEURS.</p>
+      ${d.anciens.length ? `<div class="tbl"><table><thead><tr><th>JOUEUR</th><th>FORMULE</th>
+        <th>JUSQU’AU</th></tr></thead><tbody>${d.anciens.map((a) => `<tr><td>${nom(a)}</td>
+          <td>${esc(a.formule ?? '')}</td><td>${a.fin ? date(a.fin) : 'sans terme'}</td></tr>`).join('')}
+      </tbody></table></div>` : ''}
+      ${departs()}
+      <h3 class="h3">SES RÉGLAGES</h3>`;
+    return VUES.reglages(SECTIONS_DU_PASS, avant);
+  },
+
+  /* `seul` : les sections à montrer (le menu PASS montre la sienne) ; sans
+     lui, toutes sauf celles du PASS, qui ont leur menu. `avant` : ce que le
+     menu qui appelle pose au-dessus. */
+  async reglages(seul = null, avant = '') {
     const [d, recal] = await Promise.all([api('/registre'),
-      api('/divisions/recalage').catch((e) => ({ refus: e }))]);
+      seul ? null : api('/divisions/recalage').catch((e) => ({ refus: e }))]);
+    const relire = () => VUES.reglages(seul, avant);
+    const montrees = d.sections.filter((sec) => (seul
+      ? seul.includes(sec.id) : !SECTIONS_DU_PASS.includes(sec.id)));
     const parSection = (id) => d.reglages.filter((r) => r.section === id);
     // Une clé posée en base est une clé modifiée, même si sa valeur égale le
     // défaut : c'est ce que `brutes` dit et que `valeurs` ne peut pas dire.
@@ -1893,13 +1999,14 @@ const VUES = {
           Poser ces quatre seuils</button>`);
     }
 
-    $('main').innerHTML = `
+    $('main').innerHTML = avant + (seul ? '' : `
       <p style="opacity:.5;font-size:12px;max-width:660px">Ces réglages agissent
       <b>immédiatement</b>, sans redéploiement : le serveur relit ses valeurs après chaque
       enregistrement. Ce qui n'est pas ici ne se règle pas ici — les prix en euros vivent
       dans le catalogue de la boutique, et les taux de tirage d'un booster payant sont une
-      donnée réglementée qui ne bouge pas depuis un champ de saisie.</p>
-      ${d.sections.map((sec) => `<section class="sect">
+      donnée réglementée qui ne bouge pas depuis un champ de saisie. Les réglages
+      du PASS de saison sont dans le menu <b>PASS</b>.</p>`) + `
+      ${montrees.map((sec) => `<section class="sect">
         <h3>${esc(sec.titre)}</h3><p class="sh">${esc(sec.aide)}</p>
         ${sec.id === 'saison' ? recalage(recal) : ''}
         ${parSection(sec.id).map(ligne).join('')}
@@ -1925,7 +2032,7 @@ const VUES = {
         /* Le redessin **d'abord**, le message ensuite. Dans l'autre ordre, le
            redessin remplaçait le bandeau qui venait d'annoncer le refus : deux
            lignes correctes chacune, et ensemble elles ne montraient rien. */
-        await VUES.reglages();
+        await relire();
         $('quoi').textContent = 'Refusé — ' + (e.raison || e.message || e.code);
         recuRate(e);
       }
@@ -1943,7 +2050,7 @@ const VUES = {
       if (e.target.closest('#poser-recalage')) {
         try {
           const r = await api('/divisions/recalage', {}, 'POST');
-          await VUES.reglages();
+          await relire();
           recu('seuils de division posés : ' + Object.entries(r.seuils)
             .map(([cle, v]) => `${NOMS[cle][0]} ${ent(v)}`).join(', ') + '.');
         } catch (err) { recuRate(err); }
@@ -1965,7 +2072,7 @@ const VUES = {
         } catch (err) { return recuRate(err); }
         $('quoi').textContent = `${rd.dataset.rendre} rendu au défaut.`;
         recu(`${rd.dataset.rendre} rendu à sa valeur par défaut.`);
-        return VUES.reglages();
+        return relire();
       }
     };
   },
