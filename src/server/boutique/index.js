@@ -42,7 +42,7 @@ import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, MONNAIE, RAYONS, enEuro
   from '../../shared/boutique.js';
 import { etalStuff, etalTenues, prixDe, prixUltime } from '../../shared/etal.js';
 import { STUFF_BY_ID } from '../../shared/fanzzy/inventaire.js';
-import { tenuesPubliees } from '../fanzzy/tenues.js';
+import { tenuesEnEtal } from '../fanzzy/tenues.js';
 import { ouverts } from '../contenus/index.js';
 import { traduire, LANGUES } from '../langues.js';
 
@@ -84,7 +84,23 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
     if (r?.livre?.abonnement && r.userId) {
       await prevenir(r.userId, 'debut', { packs: r.livre.packs ?? 0 });
     }
+    if (r?.livre?.pass && r.userId) {
+      await prevenirPass(r.userId, r.livre.pass, r.livre.packs ?? 0);
+    }
     return r;
+  }
+
+  /** La confirmation d'un PASS payé : les saisons couvertes, les boosters. */
+  async function prevenirPass(userId, saisons, packs) {
+    const m = mailer ?? globalThis.mailer;
+    if (!m?.sendPass) return;
+    try {
+      const [u] = await q('SELECT email, pseudo, locale FROM users WHERE public_id = ?', [userId]);
+      if (!u?.email) return;
+      await m.sendPass({ to: u.email, pseudo: u.pseudo, locale: u.locale, saisons, packs });
+    } catch (e) {
+      console.error('[boutique] mail', e.message);
+    }
   }
 
   const cle = () => process.env.STRIPE_SECRET_KEY || '';
@@ -175,7 +191,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
      se monte quand même, son catalogue est vide, et l'écran le dit. Ce qu'elle
      ne fait dans aucun cas, c'est encaisser un abonnement sans savoir le
      poser — voir `livrer`. */
-  async function livrer(conn, userId, article, { reference = null } = {}) {
+  async function livrer(conn, userId, article, { reference = null, session = null } = {}) {
     const l = article.livraison;
 
     /* Un seul type, et c'est la moitié du sujet. **L'argent réel n'achète que
@@ -222,6 +238,21 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
           [l.packs, userId]);
       }
       return { abonnement: l.formule, ...(l.packs ? { packs: l.packs } : {}) };
+    }
+
+    /* **Le PASS de saison** : son module sait quelles saisons un achat
+       couvre (la saison en cours, et la suivante pendant le dernier mois).
+       Même transaction que l'encaissement, mêmes raisons que l'abonnement. */
+    if (l.type === 'pass') {
+      if (!abonnement?.accorderPass) throw new Error('boutique.error.abonnement_absent');
+      const saisons = await abonnement.accorderPass(userId, {
+        source: 'stripe', reference: session ?? reference, conn });
+      if (l.packs) {
+        await conn.query(
+          'UPDATE user_wallet SET packs = packs + ? WHERE user_id = ?',
+          [l.packs, userId]);
+      }
+      return { pass: saisons, ...(l.packs ? { packs: l.packs } : {}) };
     }
 
     throw new Error('boutique.error.livraison_inconnue');
@@ -280,7 +311,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
         return { article_retire: true };
       }
 
-      const remis = await livrer(conn, cmd.user_id, article, { reference });
+      const remis = await livrer(conn, cmd.user_id, article, { reference, session: sessionId });
       await conn.query(`UPDATE achats SET livraison = ? WHERE id = ?`,
         [JSON.stringify(remis), cmd.id]);
       await conn.commit();
@@ -395,7 +426,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
          alors à sa façon, et le jour où l on vendra en francs suisses il y
          aurait deux endroits à corriger. */
       rayons: RAYONS,
-      articles: CATALOGUE.map(({ livraison, prix, ...reste }) =>
+      articles: CATALOGUE.filter((a) => !a.retire).map(({ livraison, prix, ...reste }) =>
         ({ ...reste, prix, prixTexte: enEuros(prix) })),
       // La page a besoin de savoir si le paiement est branché, pour dire
       // « bientôt » plutôt que de lancer une commande qui sera refusée.
@@ -436,7 +467,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
          attend sa saison) ne se vend pas plus qu'elle ne se tire. */
       stuff: etalStuff(new Map(ont.map((o) => [o.stuff_id, Math.max(1, Number(o.copies) || 1)])))
         .filter((s) => ouverts('stuff').has(s.id)),
-      tenues: etalTenues(tenuesPubliees()),
+      tenues: etalTenues(tenuesEnEtal()),
       posees: posees.map((r) => ({ fanzzy: r.fanzzy_id, stade: Number(r.stage), tenue: r.skin_id })),
       /* Les cartes Ultimate des Fanzzy du joueur, à un prix unique (choix de
          Gaël du 28 octobre 2026). Un serveur sans le chemin n'en vend pas. */
@@ -473,7 +504,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
     const type = String(req.body?.type ?? '');
     const id = String(req.body?.id ?? '');
     const prix = type === 'stuff' && !ouverts('stuff').has(id)
-      ? null : prixDe(type, id, tenuesPubliees());
+      ? null : prixDe(type, id, tenuesEnEtal());
     if (prix === null) return res.status(400).json({ error: 'boutique.error.objet_inconnu' });
 
     const conn = await pool.getConnection();
@@ -532,7 +563,17 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
     if (!configure()) return res.status(503).json({ error: 'boutique.error.non_configuree' });
 
     const article = ARTICLE_PAR_ID.get(String(req.body?.article ?? ''));
-    if (!article) return res.status(400).json({ error: 'boutique.error.article_inconnu' });
+    /* Un article retiré (l'abonnement d'avant le PASS) ne se commande plus. */
+    if (!article || article.retire) {
+      return res.status(400).json({ error: 'boutique.error.article_inconnu' });
+    }
+    /* Le PASS d'une saison qu'on a déjà ne se paie pas deux fois. */
+    if (article.livraison?.type === 'pass' && abonnement?.offre) {
+      const o = await abonnement.offre(req.user.id).catch(() => null);
+      if (o && !o.aAcheter.length) {
+        return res.status(400).json({ error: o.couvre.length ? 'pass.error.deja' : 'pass.error.pas_de_saison' });
+      }
+    }
 
     try {
       /* **Deux modes, et c'est l'article qui décide.** `recurrence` porte
@@ -546,7 +587,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
          l'abonnement, qui sait dire jusqu'à quand il court, et non sur la
          boutique, qui n'en sait rien. */
       const abonne = Boolean(article.recurrence);
-      const retour = abonne ? '/abonnement' : '/boutique';
+      const retour = abonne || article.livraison?.type === 'pass' ? '/abonnement' : '/boutique';
       const session = await stripe('/checkout/sessions', {
         mode: abonne ? 'subscription' : 'payment',
         success_url: `${racine()}${retour}?paye=1`,

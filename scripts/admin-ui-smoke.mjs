@@ -333,7 +333,7 @@ check('l’écran des réglages se peuple depuis le registre', await jusqua(asyn
     || (console.log('        ', recal), false));
 }
 
-/* ------------------------- les avantages de l'abonnement se règlent d'ici
+/* ---------------------- les avantages du PASS de saison se règlent d'ici
 
    Ils vivent dans le registre comme le reste du barème, et c'est ce qui permet
    de les ajuster pendant la bêta sans relivrer : « vingt-quatre boosters,
@@ -347,7 +347,7 @@ check('l’écran des réglages se peuple depuis le registre', await jusqua(asyn
 {
   const abo = await page.evaluate(() => {
     const sect = [...document.querySelectorAll('#main .sect')]
-      .find((x) => /ABONNEMENT/i.test(x.querySelector('h3')?.textContent ?? ''));
+      .find((x) => /PASS DE SAISON/i.test(x.querySelector('h3')?.textContent ?? ''));
     if (!sect) return null;
     return {
       aide: sect.querySelector('.sh')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
@@ -356,10 +356,10 @@ check('l’écran des réglages se peuple depuis le registre', await jusqua(asyn
       reglables: sect.querySelectorAll('input,select,button.bascule').length,
     };
   });
-  check('l’abonnement a sa section dans les réglages', Boolean(abo)
+  check('le PASS de saison a sa section dans les réglages', Boolean(abo)
     || (console.log('        sections vues :', await page.evaluate(() =>
       [...document.querySelectorAll('#main .sect h3')].map((h) => h.textContent).join(' | '))), false));
-  check('ses cinq avantages s’y règlent', (abo?.reglables ?? 0) >= 5
+  check('ses avantages et son prix en écharpes s’y règlent', (abo?.reglables ?? 0) >= 9
     || (console.log('        champs :', JSON.stringify(abo?.champs)), false));
   /* La phrase compte autant que les champs : c'est elle qui arrête la main de
      celui qui voudrait « rendre l'abonnement plus attractif ». */

@@ -388,38 +388,11 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     if (!loadout) throw new Cheat('no_deck');
     const support = await decks.matchSupport(Number(fixtureId), u.userId);
 
-    /* **Ce que le gratuit plafonne, et pourquoi c'est un refus ici.**
-
-       Cinq duels classés par jour, et le classé s'arrête au 1v1 — voir
-       `abonnement/index.js`, où la décision est écrite en entier.
-
-       On refuse à l'entrée plutôt que de déclasser à la sortie, et ce n'est
-       pas un choix de confort : **un duel est classé pour tout le monde ou
-       pour personne**. La note du camp est partagée — « les noter un par un
-       donnerait trois résultats différents pour une seule partie », dit le
-       calcul de la cote plus bas. Déclasser un seul joueur après coup
-       déclasserait donc ses quatre coéquipiers, qui n'ont rien demandé.
-
-       Et le refus n'est pas une porte close : les matchs des autres jours
-       sont de l'entraînement, ils restent ouverts, et le 2v2 s'y joue à tout
-       le monde. La page le dit avec ces deux codes-là.
-
-       **Une panne de ce compte laisse entrer.** Refuser sur une erreur de
-       base fermerait le jeu pour une raison invisible — c'est la même
-       posture que partout ailleurs ici. */
-    if (abonnement && support.mode === 'classe') {
-      try {
-        const abonne = await abonnement.estAbonne(u.userId);
-        if (FORMATS[format] > abonnement.tailleClasseeMax(abonne)) {
-          throw new Cheat('format_classe_abonne');
-        }
-        const reste = await abonnement.duelsClassesRestants(u.userId);
-        if (reste !== null && reste <= 0) throw new Cheat('duels_classes_epuises');
-      } catch (e) {
-        if (e instanceof Cheat) throw e;
-        console.warn('[nvn] plafond illisible pour', u.userId, '·', e.message);
-      }
-    }
+    /* Plus aucun plafond gratuit ici (choix de Gaël du 2 novembre 2026) :
+       tous les formats et tous les duels classés du jour se jouent et
+       comptent pour tous. Le plafond de ferveur (`ferveur.duels_jour`) et
+       celui des clubs (`tribune.duels_jour`) valent pour tout le monde, à
+       la sortie, sans rien refuser à l'entrée. */
 
     const maison = support.fixture.home.id;
     const exterieur = support.fixture.away.id;
