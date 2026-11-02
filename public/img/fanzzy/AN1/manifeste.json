@@ -1,6 +1,6 @@
 {
   "id": "AN1",
-  "rev": 14,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -81,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "531ebdf91846"
+          "sha": "531ebdf91846",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -135,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b49033b4fb01"
+          "sha": "b49033b4fb01",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -160,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "15097c311321"
+          "sha": "15097c311321",
+          "cligne": true
         }
       }
     }

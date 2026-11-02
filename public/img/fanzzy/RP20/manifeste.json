@@ -1,6 +1,6 @@
 {
   "id": "RP20",
-  "rev": 14,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c5ceef3cbf8d"
+          "sha": "c5ceef3cbf8d",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -93,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a47930a4a004"
+          "sha": "a47930a4a004",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
