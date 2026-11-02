@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Les Ultimate des six légendaires SU, et leur Apocalyptique complète**
+(branche `claude/project-thread-z0t7i9`, 2 novembre 2026, accord de Gaël pour
+les crédits). Construction seule, **sans schéma**.
+
+- SU37 à SU42 ont leur image Ultimate en tenue de base et dans les trois skins
+  (24 images), et leur clip Ultimate en tenue de base (6 clips).
+- L’Apocalyptique du Saint-Bernard du Col (SU39) et de la Messagère des Quatre
+  Langues (SU40) a maintenant ses cinq états et cligne : les 24 tenues des six
+  légendaires clignent.
+- Après la mise en ligne : toucher ULTIMATE sur la fiche de SU42, puis sur
+  celle de SU39 en tenue Apocalyptique.
+
+---
+
 **/diagnostic montre ses propres erreurs** (branche
 `claude/project-thread-m3tqk9`, 2 novembre 2026, demandé par Gaël : le
 bouton « Tester le son » ne fait rien sur son S24+). Construction seule,
@@ -58,9 +72,8 @@ seule, **sans schéma**.
 - La Fée de l’Edelweiss, le Sonneur du Grand Cor et le Saint-Bernard du Col
   sont liés aux sélections suisses (hommes, femmes, espoirs) ; la Messagère des
   Quatre Langues, le Géant du Röstigraben et la Marmotte du Premier Sifflet au
-  championnat suisse. Cartes, états, trois skins et clignement (22 tenues sur
-  24 : l’Apocalyptique du Saint-Bernard et de la Messagère n’a encore que trois
-  états). Ils sortent avec la série, dans le booster DIE KURVE.
+  championnat suisse. Cartes, états, trois skins et clignement sur les 24
+  tenues. Ils sortent avec la série, dans le booster DIE KURVE.
 - Après la mise en ligne : ouvrir la page SU de l’album et la fiche de SU42.
 
 **LES GALÈRES DE DÉPLACEMENT redessinées, et MT23** (branche
