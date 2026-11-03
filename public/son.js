@@ -1477,6 +1477,33 @@
     // Le retour d'outre-tombe : une cloche lourde.
     'a-rv-outre-tombe': { famille: 'jeu', duree: 1.1,
       jouer: (c, s, t) => metal(c, s, t, { freq: 180, duree: 1, vol: 0.1 }) },
+    // Mi-temps : le double coup de sifflet, puis le souffle qu'on reprend.
+    'a-mitemps': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        sifflet(c, s, t, { duree: 0.15, freq: 2900, vol: 0.08 });
+        sifflet(c, s, t, { duree: 0.3, freq: 2900, vol: 0.08, delai: 0.22 });
+        balaye(c, s, t, { duree: 0.35, de: 300, a: 1200, vol: 0.12, q: 0.8, sorte: 'monte', delai: 0.5 });
+      } },
+    // But au stade ! : la clameur qui éclate.
+    'a-but-au-stade': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.9, freq: 1100, q: 0.5, vol: 0.2 });
+        fut(c, s, t, { de: 160, a: 60, duree: 0.3, vol: 0.25 });
+      } },
+    // Carton rouge : le sifflet sec, puis la tribune qui gronde.
+    'a-carton-rouge': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        sifflet(c, s, t, { duree: 0.2, freq: 3200, vol: 0.09 });
+        bruit(c, s, t, { duree: 0.6, freq: 500, filtre: 'lowpass', q: 0.7, vol: 0.2, delai: 0.2 });
+      } },
+    // Coup de sifflet : le long sifflet du coup d'envoi, plus clair.
+    'a-coup-sifflet': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => sifflet(c, s, t, { duree: 0.6, freq: 3100, vol: 0.09 }) },
+    // Temps additionnel : le panneau lumineux, trois bips.
+    'a-temps-additionnel': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        [0, 0.18, 0.36].forEach((d) => ton(c, s, t, { freq: 988, duree: 0.1, type: 'square', vol: 0.06, delai: d }));
+      } },
 
     /* ============================================= les épreuves (ouverture)
        Les quatre de rythme d'abord : brèves, voir plus haut. */
@@ -1730,6 +1757,11 @@
     'a-rv-frisson': 2.06,
     'a-rv-brume': 2.57,
     'a-rv-outre-tombe': 0.891,
+    'a-mitemps': 0.661,
+    'a-but-au-stade': 0.646,
+    'a-carton-rouge': 0.575,
+    'a-coup-sifflet': 0.582,
+    'a-temps-additionnel': 2.95,
   };
   Object.assign(MIX, MIX_CARTES);
 

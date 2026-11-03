@@ -1,6 +1,7 @@
 import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
-import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
+import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage, conditionReelleRemplie, estRouge }
+  from '../../shared/duel/actions.js';
 import { CHANTS, puissanceDuChant } from '../../shared/duel/chants.js';
 // Le stade du match, tiré dans ce qu'une saison a ouvert : voir `stade()`.
 // La même fonction donne le leur aux duels de ce match.
@@ -381,6 +382,10 @@ export class VirageRoom {
     this.minuteOuverture = fixture.elapsed != null && Number.isFinite(ouverte) ? ouverte : null;
     this.butsAnnonces = [];           // {teamId, minute} de chaque but annoncé ici
     this.statut = fixture.status ?? null;
+    /* Le dernier vrai but de chaque club, le dernier vrai rouge reçu par
+       chaque club (heure du serveur) : les cartes du vrai match. */
+    this.dernierButReel = [null, null];
+    this.dernierRougeReel = [null, null];
     this.minute = fixture.elapsed ?? null;
     /* Le temps additionnel, et l'instant où le serveur a vu tout ça.
        Sans `vuA`, la page fait courir son horloge à partir du moment où *elle*
@@ -1292,6 +1297,15 @@ export class VirageRoom {
     if (c.minuteReelle && (this.minute ?? 0) < c.minuteReelle) {
       throw new Cheat('condition_not_met');
     }
+    /* Les cartes du vrai match : mi-temps, premières minutes, but de son
+       club, rouge en face. La même règle que le duel (`shared/duel/actions.js`). */
+    {
+      const depuis = (x) => (x == null ? null : now - x);
+      const r = { minute: this.minute ?? null, statut: this.statut ?? null,
+        depuisBut: depuis(this.dernierButReel[m.side]),
+        depuisRouge: depuis(this.dernierRougeReel[m.side ^ 1]) };
+      if (!conditionReelleRemplie(c, r)) throw new Cheat('condition_not_met');
+    }
     /* La Relève demande un âge suivant à atteindre. Le Virage ne met qu'un
        personnage en tribune : on refuse plutôt que de laisser la carte brûler
        du souffle pour rien. */
@@ -1654,6 +1668,7 @@ export class VirageRoom {
 
     const side = teamId === this.fixture.homeId ? 0 : 1;
     this.realGoals[side]++;
+    this.dernierButReel[side] = Date.now();
     /* Le score du vrai match vient du relevé quand il l'accompagne : le
        compter ici à partir des buts vus donnerait 1–0 à qui entre à la
        soixantième minute d'un 3–2.
@@ -1704,6 +1719,11 @@ export class VirageRoom {
    * fois par celui du relevé — et le fil raconterait un 2–0 sur un but.
    */
   matchEvents(events = []) {
+    for (const e of events) {
+      if (!estRouge(e)) continue;
+      const side = this.coteDe(e.teamId ?? e.team_id);
+      if (side != null) this.dernierRougeReel[side] = Date.now();
+    }
     return this.ajouterAuFil(
       events.filter((e) => e.type !== 'Goal').map((e) => this.entreeTerrain(e)));
   }

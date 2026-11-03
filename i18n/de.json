@@ -8556,5 +8556,17 @@
  "Brume du cimetière": "Friedhofsnebel",
  "Cache les cartes de l’adversaire pendant 8 s. Ton souffle revient moins vite 5 s.": "Verdeckt 8 s lang die Karten des Gegners. Dein Atem kehrt 5 s lang langsamer zurück.",
  "Retour d’outre-tombe": "Rückkehr aus dem Grab",
- "Jouable seulement si tu es mené d’au moins deux buts. Pousse 100.": "Nur spielbar, wenn du mindestens zwei Tore zurückliegst. Schub von 100."
+ "Jouable seulement si tu es mené d’au moins deux buts. Pousse 100.": "Nur spielbar, wenn du mindestens zwei Tore zurückliegst. Schub von 100.",
+ "Mi-temps": "Halbzeit",
+ "Entre la 40e et la 50e minute du vrai match, ou à la mi-temps. Rend tout ton souffle.": "Zwischen der 40. und 50. Minute des echten Spiels oder in der Halbzeit. Gibt dir deinen ganzen Atem zurück.",
+ "But au stade !": "Tor im Stadion!",
+ "Dans les 2 minutes après un vrai but de ton club. Pousse 80.": "Innerhalb von 2 Minuten nach einem echten Tor deines Vereins. Schub von 80.",
+ "Dans les 5 minutes après un vrai carton rouge contre le club d’en face. Toute ta tribune pousse 40 % plus fort pendant 8 s.": "Innerhalb von 5 Minuten nach einer echten Roten Karte gegen den anderen Verein. Deine ganze Tribüne schiebt 8 s lang 40 % stärker.",
+ "Coup de sifflet": "Anpfiff",
+ "Pendant les 10 premières minutes du vrai match. Toutes tes cartes redeviennent jouables.": "In den ersten 10 Minuten des echten Spiels. Alle deine Karten sind wieder spielbar.",
+ "Temps additionnel": "Nachspielzeit",
+ "Après la 90e minute du vrai match. Ta poussée +50 % pendant 10 s.": "Nach der 90. Minute des echten Spiels. Dein Schub +50 % für 10 s.",
+ "Pourquoi certaines cartes d’action ne partent pas ?": "Warum lassen sich manche Aktionskarten nicht spielen?",
+ "Certaines suivent le vrai match : Mi-temps, But au stade !, Carton rouge, Coup de sifflet, Temps additionnel, Prolongations. Elles ne se jouent qu’au moment qu’elles disent (la mi-temps, un vrai but de ton club, un rouge en face…). D’autres demandent d’être mené au score. Et les cartes d’un PASS arrivent pour tout le monde le jour où sa saison commence.": "Manche folgen dem echten Spiel: Halbzeit, Tor im Stadion!, Rote Karte, Anpfiff, Nachspielzeit, Verlängerung. Sie lassen sich nur in dem Moment spielen, den sie nennen (Halbzeit, ein echtes Tor deines Vereins, Rot für die andere Seite…). Andere verlangen, dass du hinten liegst. Und die Karten eines PASS kommen für alle an dem Tag, an dem seine Saison beginnt.",
+ "Des cartes d’action suivent le <0>vrai match</0> : Mi-temps, But au stade !, Carton rouge, Coup de sifflet, Temps additionnel. Elles ne partent qu’au moment qu’elles disent.": "Manche Aktionskarten folgen dem <0>echten Spiel</0>: Halbzeit, Tor im Stadion!, Rote Karte, Anpfiff, Nachspielzeit. Sie lassen sich nur in dem Moment spielen, den sie nennen."
 }

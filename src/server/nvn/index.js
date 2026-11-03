@@ -1081,6 +1081,36 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     return touchees;
   }
 
+  /** Le relevé du direct a revu un match : les duels adossés suivent sa minute. */
+  function etatReel(fixtureId, etat) {
+    for (const salle of salles.values()) {
+      if (Number(salle.duel.fixture?.id) !== Number(fixtureId)) continue;
+      salle.duel.etatReel(etat ?? {});
+    }
+  }
+
+  /** Les cartons du vrai match (le carton rouge des cartes « vrai match »). */
+  function evenementsReels(fixtureId, events) {
+    for (const salle of salles.values()) {
+      if (Number(salle.duel.fixture?.id) !== Number(fixtureId)) continue;
+      salle.duel.evenementsReels(events ?? []);
+    }
+  }
+
+  /**
+   * Les matchs dont un duel est en cours : le relevé leur doit leurs cartons
+   * comme à une salle du Virage occupée (un appel par minute et par match au
+   * plus, et seulement pendant le jeu — voir `fixturesAuFil` du relevé).
+   */
+  function fixturesEnDuel() {
+    const ids = new Set();
+    for (const salle of salles.values()) {
+      const f = salle.duel.fixture;
+      if (!salle.duel.termine && f?.id != null && !f.fictif) ids.add(f.id);
+    }
+    return [...ids];
+  }
+
   /**
    * Diffusion : les événements partent à tous, les vues restent privées.
    *
@@ -2374,7 +2404,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      c’est pourtant elle qui empêche un 1v1 de finir dans un 5v5. */
   return { router, salles, files, filesParMatch, alertePour, derbyPour, guetteurs, accepte,
            reprendre, placeDe,
-           ouvrir, ouvrirAvecBots, tenterAppariement, butReel, estEnDuel,
+           ouvrir, ouvrirAvecBots, tenterAppariement, butReel, etatReel, evenementsReels,
+           fixturesEnDuel, estEnDuel,
            /* `fermer` n'est appelée par aucun autre module : elle n'est exposée
               qu'aux suites, qui doivent pouvoir la frapper deux fois de suite
               pour voir qu'elle ne paie qu'une fois. Le nom dit à qui elle est

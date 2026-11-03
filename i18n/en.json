@@ -8556,5 +8556,17 @@
  "Brume du cimetière": "Graveyard Mist",
  "Cache les cartes de l’adversaire pendant 8 s. Ton souffle revient moins vite 5 s.": "Hides the opponent's cards for 8 s. Your breath comes back slower for 5 s.",
  "Retour d’outre-tombe": "Back from the Grave",
- "Jouable seulement si tu es mené d’au moins deux buts. Pousse 100.": "Only playable if you're at least two goals down. Pushes 100."
+ "Jouable seulement si tu es mené d’au moins deux buts. Pousse 100.": "Only playable if you're at least two goals down. Pushes 100.",
+ "Mi-temps": "Half-Time",
+ "Entre la 40e et la 50e minute du vrai match, ou à la mi-temps. Rend tout ton souffle.": "Between the 40th and 50th minute of the real match, or at half-time. Restores all your breath.",
+ "But au stade !": "Goal at the Ground!",
+ "Dans les 2 minutes après un vrai but de ton club. Pousse 80.": "Within 2 minutes of a real goal by your club. Pushes 80.",
+ "Dans les 5 minutes après un vrai carton rouge contre le club d’en face. Toute ta tribune pousse 40 % plus fort pendant 8 s.": "Within 5 minutes of a real red card against the other club. Your whole stand pushes 40% harder for 8 s.",
+ "Coup de sifflet": "Kick-Off Whistle",
+ "Pendant les 10 premières minutes du vrai match. Toutes tes cartes redeviennent jouables.": "During the first 10 minutes of the real match. All your cards become playable again.",
+ "Temps additionnel": "Stoppage Time",
+ "Après la 90e minute du vrai match. Ta poussée +50 % pendant 10 s.": "After the 90th minute of the real match. Your push +50% for 10 s.",
+ "Pourquoi certaines cartes d’action ne partent pas ?": "Why won't some action cards play?",
+ "Certaines suivent le vrai match : Mi-temps, But au stade !, Carton rouge, Coup de sifflet, Temps additionnel, Prolongations. Elles ne se jouent qu’au moment qu’elles disent (la mi-temps, un vrai but de ton club, un rouge en face…). D’autres demandent d’être mené au score. Et les cartes d’un PASS arrivent pour tout le monde le jour où sa saison commence.": "Some follow the real match: Half-Time, Goal at the Ground!, Red Card, Kick-Off Whistle, Stoppage Time, Extra Time. They can only be played at the moment they say (half-time, a real goal by your club, a red card for the other side…). Others require you to be behind on the score. And a PASS's cards arrive for everyone on the day its season starts.",
+ "Des cartes d’action suivent le <0>vrai match</0> : Mi-temps, But au stade !, Carton rouge, Coup de sifflet, Temps additionnel. Elles ne partent qu’au moment qu’elles disent.": "Some action cards follow the <0>real match</0>: Half-Time, Goal at the Ground!, Red Card, Kick-Off Whistle, Stoppage Time. They only play at the moment they say."
 }

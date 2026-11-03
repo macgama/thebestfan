@@ -8556,5 +8556,17 @@
  "Brume du cimetière": "Niebla del cementerio",
  "Cache les cartes de l’adversaire pendant 8 s. Ton souffle revient moins vite 5 s.": "Oculta las cartas del rival durante 8 s. Tu aliento vuelve más despacio durante 5 s.",
  "Retour d’outre-tombe": "Regreso de ultratumba",
- "Jouable seulement si tu es mené d’au moins deux buts. Pousse 100.": "Solo se juega si vas perdiendo por al menos dos goles. Empuja 100."
+ "Jouable seulement si tu es mené d’au moins deux buts. Pousse 100.": "Solo se juega si vas perdiendo por al menos dos goles. Empuja 100.",
+ "Mi-temps": "Descanso",
+ "Entre la 40e et la 50e minute du vrai match, ou à la mi-temps. Rend tout ton souffle.": "Entre el minuto 40 y el 50 del partido real, o en el descanso. Te devuelve todo el aliento.",
+ "But au stade !": "¡Gol en el estadio!",
+ "Dans les 2 minutes après un vrai but de ton club. Pousse 80.": "En los 2 minutos tras un gol real de tu club. Empuja 80.",
+ "Dans les 5 minutes après un vrai carton rouge contre le club d’en face. Toute ta tribune pousse 40 % plus fort pendant 8 s.": "En los 5 minutos tras una tarjeta roja real contra el club rival. Toda tu grada empuja un 40 % más fuerte durante 8 s.",
+ "Coup de sifflet": "Pitido inicial",
+ "Pendant les 10 premières minutes du vrai match. Toutes tes cartes redeviennent jouables.": "Durante los 10 primeros minutos del partido real. Todas tus cartas vuelven a ser jugables.",
+ "Temps additionnel": "Tiempo añadido",
+ "Après la 90e minute du vrai match. Ta poussée +50 % pendant 10 s.": "Después del minuto 90 del partido real. Tu empuje +50 % durante 10 s.",
+ "Pourquoi certaines cartes d’action ne partent pas ?": "¿Por qué algunas cartas de acción no se juegan?",
+ "Certaines suivent le vrai match : Mi-temps, But au stade !, Carton rouge, Coup de sifflet, Temps additionnel, Prolongations. Elles ne se jouent qu’au moment qu’elles disent (la mi-temps, un vrai but de ton club, un rouge en face…). D’autres demandent d’être mené au score. Et les cartes d’un PASS arrivent pour tout le monde le jour où sa saison commence.": "Algunas siguen el partido real: Descanso, ¡Gol en el estadio!, Tarjeta roja, Pitido inicial, Tiempo añadido, Prórroga. Solo se juegan en el momento que indican (el descanso, un gol real de tu club, una roja al rival…). Otras exigen ir perdiendo. Y las cartas de un PASS llegan para todos el día en que empieza su temporada.",
+ "Des cartes d’action suivent le <0>vrai match</0> : Mi-temps, But au stade !, Carton rouge, Coup de sifflet, Temps additionnel. Elles ne partent qu’au moment qu’elles disent.": "Algunas cartas de acción siguen el <0>partido real</0>: Descanso, ¡Gol en el estadio!, Tarjeta roja, Pitido inicial, Tiempo añadido. Solo se juegan en el momento que indican."
 }

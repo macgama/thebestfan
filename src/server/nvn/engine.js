@@ -1,7 +1,8 @@
 import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat, GESTES, MOTIFS }
   from '../ferveur/gestures.js';
-import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
+import { ACTION_BY_ID, DECK_RULES, conditionReelleRemplie, estRouge }
+  from '../../shared/duel/actions.js';
 /* Les chants, partagés avec le Virage. Le duel les impose plus : il les offre,
    comme lui, et c'est la dernière différence entre les deux modes qui tombe. */
 import { CHANTS, ORDRE, puissanceDuChant } from '../../shared/duel/chants.js';
@@ -304,6 +305,15 @@ export class DuelNvN {
        deux buts, comme le Virage — un serveur qui ne parle qu'au but
        laisserait la minute figée une demi-heure. */
     this.minuteReelle = fixture?.elapsed ?? null;
+    /* **Et l'heure où on l'a lue**, pour que la minute avance pendant le
+       duel (`minuteDuMatch`) : les cartes du vrai match en dépendent, et un
+       duel ouvert à la 38e ne doit pas rester à la 38e jusqu'au bout. */
+    this.minuteLueA = now;
+    this.statutReel = fixture?.status ?? null;
+    /* Le dernier vrai but de chaque camp, le dernier vrai rouge reçu par
+       chaque camp (heure du serveur) : `conditionReelleRemplie`. */
+    this.dernierButReel = [null, null];
+    this.dernierRougeReel = [null, null];
     /* **Le format joué**, et non celui qui a été demandé. Un 3v3 qui part à
        deux contre deux faute de monde est un 2v2 : c’est ce qui s’est passé
        qu’on enregistre, et c’est lui que le parcours du joueur montrera.
@@ -488,7 +498,8 @@ export class DuelNvN {
     this.rope = clamp(this.rope + secousse, -RULES.goalAt, RULES.goalAt);
 
     this.scoreReel[side]++;
-    if (minute != null) this.minuteReelle = minute;
+    this.dernierButReel[side] = t;
+    if (minute != null) { this.minuteReelle = minute; this.minuteLueA = t; }
 
     evenements.push(this.ev('but_reel', {
       teamId, minute, joueur, side, souffles,
@@ -738,6 +749,48 @@ export class DuelNvN {
     return evenements;
   }
 
+  /* ------------------------------------------------------- le vrai match */
+
+  /**
+   * La minute du vrai match **à cet instant** : la dernière lue, plus le temps
+   * passé depuis, tant que le ballon roule. Nulle sans match réel.
+   */
+  minuteDuMatch(t = now0()) {
+    if (this.minuteReelle == null) return null;
+    const roule = this.statutReel == null || ['1H', '2H', 'ET'].includes(this.statutReel);
+    if (!roule) return this.minuteReelle;
+    return this.minuteReelle + Math.floor(Math.max(0, t - this.minuteLueA) / 60_000);
+  }
+
+  /** Le relevé du direct a revu le match : statut et minute. */
+  etatReel({ status = null, elapsed = null } = {}, t = now0()) {
+    if (status) this.statutReel = status;
+    if (elapsed != null) { this.minuteReelle = Number(elapsed); this.minuteLueA = t; }
+  }
+
+  /** Cartons et remplacements du vrai match : seuls les rouges comptent ici. */
+  evenementsReels(events = [], t = now0()) {
+    let vus = 0;
+    for (const e of events) {
+      if (!estRouge(e)) continue;
+      const side = this.coteDe(e.teamId ?? e.team_id);
+      if (side === null) continue;
+      this.dernierRougeReel[side] = t;
+      vus++;
+    }
+    return vus;
+  }
+
+  /** Ce que `conditionReelleRemplie` lit, vu depuis le camp `side`. */
+  vraiMatchPour(side, t = now0()) {
+    const depuis = (x) => (x == null ? null : t - x);
+    return {
+      minute: this.minuteDuMatch(t), statut: this.statutReel,
+      depuisBut: depuis(this.dernierButReel[side]),
+      depuisRouge: depuis(this.dernierRougeReel[side ^ 1]),
+    };
+  }
+
   /* -------------------------------------------------------------- carte */
 
   jouer(userId, cardId, t = now0()) {
@@ -757,7 +810,10 @@ export class DuelNvN {
     if (c.mene && this.goals[j.side] + c.mene > this.goals[j.side ^ 1]) {
       throw new Cheat('condition_not_met');
     }
-    if (c.minuteReelle && (this.fixture?.elapsed ?? 0) < c.minuteReelle) {
+    if (c.minuteReelle && (this.minuteDuMatch(t) ?? 0) < c.minuteReelle) {
+      throw new Cheat('condition_not_met');
+    }
+    if (!conditionReelleRemplie(c, this.vraiMatchPour(j.side, t))) {
       throw new Cheat('condition_not_met');
     }
     // La Relève ne se joue que s'il reste un âge à atteindre. Le client le sait

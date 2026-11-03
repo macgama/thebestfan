@@ -259,6 +259,17 @@ export const INVITES = {
     + 'floodlights and a few silhouettes with scarves visible'],
   'a-rv-outre-tombe': ['gold', 'a friendly ghost supporter rising from the turf behind the goal, '
     + 'scarf around his neck, the crowd cheering in amazement'],
+  /* Le vrai match (3 novembre 2026). */
+  'a-mitemps': ['blue', 'half-time on a terrace, supporters sitting down at last, sharing a '
+    + 'thermos, the empty pitch and the tunnel behind them, cool blue light'],
+  'a-but-au-stade': ['red', 'the instant a real goal goes in, a whole terrace exploding in joy, '
+    + 'people climbing on each other, scarves and arms everywhere'],
+  'a-carton-rouge': ['amber', 'a referee on the pitch raising a red card seen from the stands, '
+    + 'the home terrace roaring and pointing, warm amber floodlight'],
+  'a-coup-sifflet': ['gold', 'the referee at the centre spot blowing the kick-off whistle, the '
+    + 'terrace behind lifting its scarves all at once'],
+  'a-temps-additionnel': ['gold', 'the fourth official raising the lit board for stoppage time, '
+    + 'no readable numbers, supporters biting their scarves'],
 };
 
 export const inviteDe = (id) => {

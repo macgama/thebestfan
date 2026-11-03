@@ -482,9 +482,87 @@ export const ACTIONS = [
   { id: 'a-rv-outre-tombe', nom: 'Retour d’outre-tombe', fam: 'bascule', rar: 'legendaire', cost: 40, cd: 90, publie: false,
     texte: 'Jouable seulement si tu es mené d’au moins deux buts. Pousse 100.',
     effet: { type: 'push', valeur: 100 }, condition: { mene: 2 } },
+
+  /* =========================================== LE VRAI MATCH (novembre 2026)
+
+     Elles ne se jouent que pendant un vrai match, au moment qu'elles disent :
+     voir `conditionReelleRemplie` plus bas. Hors match (un entraînement, un
+     match pas commencé), elles restent en main sans pouvoir partir.          */
+
+  { id: 'a-mitemps', nom: 'Mi-temps', fam: 'souffle', rar: 'rare', cost: 10, cd: 60,
+    texte: 'Entre la 40e et la 50e minute du vrai match, ou à la mi-temps. Rend tout ton souffle.',
+    effet: { type: 'refill', part: 1 }, condition: { minuteEntre: [40, 50] } },
+
+  { id: 'a-but-au-stade', nom: 'But au stade !', fam: 'pousse', rar: 'epique', cost: 24, cd: 60,
+    texte: 'Dans les 2 minutes après un vrai but de ton club. Pousse 80.',
+    effet: { type: 'push', valeur: 80 }, condition: { butRecent: 120_000 } },
+
+  { id: 'a-carton-rouge', nom: 'Carton rouge', fam: 'collectif', rar: 'epique', cost: 26, cd: 60,
+    texte: 'Dans les 5 minutes après un vrai carton rouge contre le club d’en face. Toute ta tribune pousse 40 % plus fort pendant 8 s.',
+    /* Une carte de tribune, pas une entrave : elle se joue aussi au Virage,
+       où le carton rouge arrive par le fil du match. */
+    effet: { type: 'rally', duree: 8000, bonus: 1.4 }, condition: { rougeAdverse: 300_000 } },
+
+  { id: 'a-coup-sifflet', nom: 'Coup de sifflet', fam: 'bascule', rar: 'rare', cost: 20, cd: 60,
+    texte: 'Pendant les 10 premières minutes du vrai match. Toutes tes cartes redeviennent jouables.',
+    effet: { type: 'clear_cooldowns' }, condition: { minuteMax: 10 } },
+
+  { id: 'a-temps-additionnel', nom: 'Temps additionnel', fam: 'bascule', rar: 'epique', cost: 30, cd: 60,
+    texte: 'Après la 90e minute du vrai match. Ta poussée +50 % pendant 10 s.',
+    effet: { type: 'mod_self', mods: { pushMult: 1.5 }, duree: 10000 },
+    condition: { minuteReelle: 90 } },
 ];
 
 export const ACTION_BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));
+
+/* ------------------------------------------- les conditions du vrai match
+
+   **Les cartes qui bougent avec le vrai match** (Gaël, 3 novembre 2026,
+   « Ok pour les cartes vrai match »). Jusqu'ici une seule le faisait — les
+   Prolongations, après la 75e. Celles-ci lisent la mi-temps, les premières
+   minutes, un vrai but de son club, un vrai carton rouge en face.
+
+   Les deux moteurs (duel et Virage) décrivent le vrai match de la même façon
+   et posent la même question ici : une seule règle, qui ne peut pas diverger
+   d'un mode à l'autre.
+
+   `r` : { minute, statut, depuisBut, depuisRouge }
+     minute       la minute du vrai match, ou null (pas de match, entraînement)
+     statut       le statut court de l'API (1H, HT, 2H…), ou null
+     depuisBut    ms depuis le dernier vrai but **du club de ce camp**, ou null
+     depuisRouge  ms depuis le dernier vrai carton rouge **du club d'en face**,
+                  ou null                                                        */
+
+/** Les statuts où le ballon roule (la mi-temps n'en est pas). */
+export const STATUTS_EN_JEU = new Set(['1H', '2H', 'ET', 'P', 'LIVE']);
+
+/** Une carte demande-t-elle le vrai match ? (pour l'aide et les écrans) */
+export const CONDITIONS_REELLES = ['minuteEntre', 'minuteMax', 'butRecent', 'rougeAdverse'];
+
+/**
+ * Les conditions « vrai match » d'une carte sont-elles remplies ?
+ * Ne lit que les clés de `CONDITIONS_REELLES` : le reste (mené, minute
+ * minimale, Relève) reste aux moteurs, qui le lisaient déjà.
+ */
+export function conditionReelleRemplie(c = {}, r = {}) {
+  const { minute = null, statut = null, depuisBut = null, depuisRouge = null } = r;
+  if (c.minuteEntre) {
+    const [de, a] = c.minuteEntre;
+    const mi = statut === 'HT';
+    if (!mi && !(minute != null && minute >= de && minute <= a)) return false;
+  }
+  if (c.minuteMax != null) {
+    // Le match doit avoir commencé : sans statut, une minute connue suffit.
+    const roule = statut ? STATUTS_EN_JEU.has(statut) : minute != null;
+    if (!roule || minute == null || minute > c.minuteMax) return false;
+  }
+  if (c.butRecent && !(depuisBut != null && depuisBut >= 0 && depuisBut <= c.butRecent)) return false;
+  if (c.rougeAdverse && !(depuisRouge != null && depuisRouge >= 0 && depuisRouge <= c.rougeAdverse)) return false;
+  return true;
+}
+
+/** Un événement de l'API est-il un carton rouge (deuxième jaune compris) ? */
+export const estRouge = (e) => e?.type === 'Card' && /red|second yellow/i.test(String(e?.detail ?? ''));
 
 /* ------------------------------------------------- où une carte se joue */
 
