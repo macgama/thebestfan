@@ -62,6 +62,12 @@ for (const [nom, c] of Object.entries(cas)) {
   if (nom !== 'aucun') {
     ok(t.includes('LA VOIE PASS 1'), `${nom} : la voie PASS est sous le carnet`);
     ok(await n('.tbf-noeud') === 12, `${nom} : douze niveaux`);
+    /* Le kit du PASS 1 : un dessin par gain, et l'écusson dessiné. */
+    ok(await n('.voie-icone') === 12, `${nom} : les douze gains ont leur dessin`);
+    const charges = await p.$$eval('#voiePass .voie-icone', (l) => Promise.all(l.map((i) => i.decode()
+      .then(() => i.naturalWidth > 0, () => false)))).catch(() => []);
+    ok(charges.length === 12 && charges.every(Boolean), `${nom} : les dessins se chargent`);
+    ok(await n('.tbf-pass-badge[data-kit] img') === 1, `${nom} : l'écusson dessiné du PASS 1`);
   }
   if (nom === 'sans') {
     ok(/4 CADEAUX PASS T.ATTENDENT/.test(t), 'sans PASS : 4 cadeaux attendent (40 tampons : 0, 10, 20 et 35)');

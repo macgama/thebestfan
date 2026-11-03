@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Voie PASS : le kit dessiné du PASS 1** (branche `claude/project-thread-plmj5o`,
+3 novembre 2026, 15 images Artlist accordées par Gaël, 1 950 crédits).
+Construction seule, **sans schéma**. Les images sont dans git
+(`public/img/pass/`, 1,8 Mo) : rien à envoyer à part.
+
+- L'écusson du PASS 1 est dessiné (os, cornes, main de pierre ; en or au
+  niveau 12) partout où le badge P1 se montre.
+- Dans la voie du carnet, chaque niveau a le dessin de son gain, le seuil en
+  pastille au coin.
+- Sur la carte de Mon profil : cadre de pierre autour du buste (niveau 2), fond
+  de grotte aux braises qui respirent (niveau 5), titre sur sa plaque de pierre
+  (niveau 9).
+- Sources des images : branche `pass1-kit-images` ; `node
+  scripts/pass-images.mjs <dossier>` les détoure.
+
+---
+
 **Voie PASS : le titre et le pseudo en or sur le profil** (branche
 `claude/project-thread-plmj5o`, 3 novembre 2026). Construction seule, **sans
 schéma**.

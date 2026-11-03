@@ -17,6 +17,41 @@
   const couleurSure = (c) => (/^#[0-9a-f]{3,8}$/i.test(String(c ?? '')) ? c : '#c9772e');
   const MAX = 12;
 
+  /* **Le kit dessiné d'un PASS** (`scripts/pass-images.mjs`, rendus Artlist du
+     3 novembre 2026) : l'écusson, les icônes des gains de la voie, le cadre,
+     la plaque du titre, le fond. Un PASS sans kit garde les dessins en CSS. */
+  const KIT = {
+    1: { badge: 'badge-p1', or: 'badge-p1-or', tenue: ['icone-tenue-1', 'icone-tenue-2', 'icone-tenue-3'],
+      cadre_profil: 'cadre-profil', stickers: 'sticker-ouga', fond_profil: 'fond-grotte',
+      cadre: 'cadre-carte', cadre_anime: 'cadre-carte', entree: 'entree-rochers', titre: 'plaque-titre',
+      aura: 'icone-aura', badge_or: 'badge-p1-or',
+      autocollants: ['sticker-ouga', 'sticker-massue', 'sticker-os', 'sticker-feu'] },
+  };
+  const ext = () => {
+    const e = window.FZART?.IMG_EXT_ALPHA ?? window.TBF_ETATS?.EXT_ALPHA;
+    return e === '.avif' || e === '.webp' ? e : '.webp';
+  };
+  /** L'adresse d'une pièce du kit, ou `''`. Le fond est une photo : `.jpg` en repli. */
+  function image(id) {
+    if (!id) return '';
+    return `/img/pass/${id}${ext()}`;
+  }
+  const repli = (id) => `/img/pass/${id}${id === 'fond-grotte' ? '.jpg' : '.png'}`;
+  /** Une `<img>` du kit qui retombe sur le PNG (ou le JPEG), et s'efface sans fichier. */
+  function img(id, classe = '', alt = '') {
+    if (!id) return '';
+    return `<img${classe ? ` class="${classe}"` : ''} src="${image(id)}" alt="${esc(alt)}" loading="lazy" decoding="async"
+      onerror="if(this.dataset.r){this.remove()}else{this.dataset.r=1;this.src='${repli(id)}'}">`;
+  }
+  /** L'id de l'icône d'un gain de la voie (`{ gain, age }`) pour un PASS, ou `''`. */
+  function icone(saison, v) {
+    const k = KIT[Number(saison)];
+    if (!k || !v) return '';
+    if (v.gain === 'tenue') return k.tenue?.[Math.max(1, Number(v.age) || 1) - 1] ?? '';
+    return k[v.gain] ?? '';
+  }
+  const kit = (saison) => KIT[Number(saison)] ?? null;
+
   /** L'écusson. `taille` : '' (en ligne), 'moyen', 'grand'. `null` sans badge. */
   function badge(b, taille = '') {
     if (!b || !Number.isFinite(Number(b.saison))) return '';
@@ -28,9 +63,12 @@
       ? `<span class="tbf-pass-crans" style="--pass:${couleurSure(b.couleur)}" aria-hidden="true">${
         Array.from({ length: MAX }, (_, i) => `<i${i < niveau ? ' data-on' : ''}></i>`).join('')}</span>`
       : '';
+    /* L'écusson dessiné du kit, quand le PASS en a un ; « P1 » en étiquette dessous. */
+    const k = KIT[n];
+    const dessin = k ? img(b.or ? k.or : k.badge, 'tbf-pass-blason') : '';
     const ecusson = `<span class="tbf-pass-badge${taille ? ` tbf-pass-badge--${taille}` : ''}"
-      style="--pass:${couleurSure(b.couleur)}"${b.or ? ' data-or' : ''}
-      role="img" aria-label="${esc(titre)}" title="${esc(titre)}"><b>P${n}</b>${
+      style="--pass:${couleurSure(b.couleur)}"${b.or ? ' data-or' : ''}${dessin ? ' data-kit' : ''}
+      role="img" aria-label="${esc(titre)}" title="${esc(titre)}">${dessin}<b>P${n}</b>${
       etoiles ? `<i class="tbf-pass-etoiles" aria-hidden="true">★${etoiles > 1 ? etoiles : ''}</i>` : ''}</span>`;
     return crans
       ? `<span style="display:inline-flex;flex-direction:column;align-items:center">${ecusson}${crans}</span>`
@@ -109,5 +147,5 @@
   const VITRINE = [['RP1', 3], ['AN5', 2], ['RP20', 3], ['AN1', 1], ['RP4', 2], ['AN41', 3],
     ['RP13', 1], ['AN60', 2], ['RP7', 1], ['AN22', 1]];
 
-  window.TBF_PASS = { badge, cadre, cadrer, VITRINE, MAX };
+  window.TBF_PASS = { badge, cadre, cadrer, VITRINE, MAX, kit, icone, image, img };
 })();
