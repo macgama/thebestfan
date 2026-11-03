@@ -859,6 +859,18 @@
    "es"
   ]
  },
+ "HEAD": {
+  "ou": [
+   "public/video-tuto.js",
+   "src/server/construction.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "Piccolo rouge et bleu": {
   "ou": [
    "src/shared/fanzzy/inventaire.js"
