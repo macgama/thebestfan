@@ -1064,7 +1064,10 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   async function modifierSaison(acteur, id, p, ip_) {
     const avant = toutesLesSaisons().find((s) => s.id === Number(id));
     if (!avant) throw fail('admin.error.saison_inconnue', 404);
-    const c = validerContenu(p ?? {});
+    /* Une série que le brouillon nommait déjà reste acceptée sans carte publiée
+       (le PASS 1 nomme Les héros du canapé avant leurs dessins) : on peut
+       corriger son nom ou ses dates ; son lancement, lui, vérifie les cartes. */
+    const c = validerContenu(p ?? {}, { deja: new Set(avant.series) });
     if (p?.tenue_pass && !tenuePar(String(p.tenue_pass))) throw fail('admin.error.tenue_inconnue');
     const nom = texteOuRien(p?.nom, 64) ?? avant.nom;
     /* `undefined` : le champ n'est pas venu, on n'y touche pas. Un client
