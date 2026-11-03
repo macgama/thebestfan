@@ -1,5 +1,25 @@
 # À déposer sur Infomaniak
 
+**Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
+`claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
+puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH
+depuis `~/sites/thebestfan.online` :
+
+1. Construction, puis `npm run schema:appliquer`.
+2. `npm run calendrier:essai` : montre les saisons avant et après, ne change rien.
+3. `npm run calendrier:appliquer`, puis taper `CALENDRIER`.
+4. Redémarrage.
+
+- La saison lancée le 26 octobre devient la saison 0, la BASE, jusqu'au
+  30 novembre 2026. Un PASS acheté pendant elle est le PASS 1, actif tout de suite.
+- PASS 1 Les héros du canapé (1er décembre - 28 février, tenue Préhistorique),
+  PASS 2 Météo (mars - mai), PASS 3 Déplacement (juin - août), PASS 4 Revenants
+  (septembre - novembre). Chacun se lance seul à sa date.
+- Les images de la série Héros du canapé doivent être dans main avant le
+  1er décembre, sinon le lancement du PASS 1 refusera une série sans carte.
+
+---
+
 **Le menu PASS : la BASE, LES PASS, les VENTES** (branche
 `claude/project-thread-d5k3ue`, 2 novembre 2026, demande de Gaël). Construction,
 puis **`npm run schema:appliquer`** (trois colonnes : `saisons.jeux`,

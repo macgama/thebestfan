@@ -31,17 +31,32 @@ export const CARNET_TRIMESTRE = Object.freeze([
 /* `stuff` : le préfixe des pièces neuves de la série (`hc-`, `mt-`, `gd-`,
    `shared/fanzzy/inventaire.js`), fermées jusqu'à la saison qui les ouvre.
    LES REVENANTS n'en ont pas. */
+/* **Le calendrier des PASS** (Gaël, 3 novembre 2026) : la saison 0 est la
+   BASE, ouverte dès le lancement de l'application ; puis un PASS par saison
+   météorologique — hiver (décembre à février), printemps (mars à mai), été
+   (juin à août), automne (septembre à novembre). Chacun ouvre pour tous, à
+   sa date, sa série hors championnat et ses pièces ; ses membres ont en plus
+   leur tenue, leur badge, leur cadre et plus de boosters.
+
+   Une base d'avant ce calendrier (saison 1 lancée le 26 octobre, brouillons
+   2 à 5) passe à celui-ci par `npm run calendrier:essai`, puis
+   `npm run calendrier:appliquer` (scripts/calendrier-base.mjs). */
 export const SAISONS_PREVUES = Object.freeze([
-  { numero: 2, nom: 'Les héros du canapé', ouvre: '2027-01-01', fin: '2027-03-31',
-    series: ['HC'], stuff: 'hc-',
-    texte: 'L’hiver, on supporte depuis le canapé. Les héros du salon entrent en tribune.' },
-  { numero: 3, nom: 'Les phénomènes météo', ouvre: '2027-04-01', fin: '2027-06-30',
+  { numero: 1, nom: 'Les héros du canapé', ouvre: '2026-12-01', fin: '2027-02-28',
+    series: ['HC'], stuff: 'hc-', tenue: 'prehistorique',
+    texte: 'L’hiver, on supporte depuis le canapé : les héros du salon entrent en tribune, '
+      + 'pour tous. Avec le PASS 1 : la tenue Préhistorique à ses trois âges, son badge, '
+      + 'son cadre et plus de boosters toute la saison.' },
+  { numero: 2, nom: 'Les phénomènes météo', ouvre: '2027-03-01', fin: '2027-05-31',
     series: ['MT'], stuff: 'mt-',
-    texte: 'Pluie, vent, grêle : la tribune tient bon. La météo descend sur la pelouse.' },
-  { numero: 4, nom: 'Les galères de déplacement', ouvre: '2027-07-01', fin: '2027-09-30',
+    texte: 'Giboulées, vent, grêle : la tribune tient bon, et la météo descend sur la pelouse, '
+      + 'pour tous. Avec le PASS 2 : sa tenue, son badge, son cadre et plus de boosters.' },
+  { numero: 3, nom: 'Les galères de déplacement', ouvre: '2027-06-01', fin: '2027-08-31',
     series: ['GD'], stuff: 'gd-',
-    texte: 'Car en panne, train raté : on arrive quand même. L’été, la tribune prend la route.' },
-  { numero: 5, nom: 'Les revenants', ouvre: '2027-10-01', fin: '2027-12-31',
+    texte: 'Car en panne, train raté : on arrive quand même. L’été, la tribune prend la route, '
+      + 'pour tous. Avec le PASS 3 : sa tenue, son badge, son cadre et plus de boosters.' },
+  { numero: 4, nom: 'Les revenants', ouvre: '2027-09-01', fin: '2027-11-30',
     series: ['RV'], stuff: null,
-    texte: 'Ils reviennent hanter le virage. Les revenants sortent pour Halloween.' },
+    texte: 'Ils reviennent hanter le virage jusqu’à Halloween, pour tous. Avec le PASS 4 : '
+      + 'sa tenue, son badge, son cadre et plus de boosters.' },
 ].map((s) => Object.freeze(s)));
