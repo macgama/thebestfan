@@ -18,6 +18,15 @@ import { clubDe } from '../../shared/fanzzy/clubs.js';
    Voir `tirerBienvenue`. */
 import { publies as jouables } from '../contenus/index.js';
 import { toutesTenues } from '../fanzzy/tenues.js';
+import { reglage } from '../../shared/reglages.js';
+
+/* Les écharpes du paquet, entre les deux bornes réglées dans la BASE du menu
+   PASS (80 à 119 par défaut, ce que le paquet donnait avant). */
+function echarpesDeBienvenue() {
+  const min = Math.max(0, Math.floor(Number(reglage('bienvenue.echarpes_min')) || 0));
+  const max = Math.max(min, Math.floor(Number(reglage('bienvenue.echarpes_max')) || 0));
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 import { assurerBourse } from '../bourse.js';
 import { changementsDeLaSaison, devenirPrincipal, principauxDe } from '../football/principal.js';
@@ -295,7 +304,7 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       { type: 'stuff', id: rnd(equipement).id },
       ...(arbitre ? [{ type: 'action', id: OUVRE_LE_CHANGEMENT }] : []),
       ...melange.slice(0, arbitre ? 4 : 5).map((a) => ({ type: 'action', id: a.id })),
-      { type: 'scarves', amount: 80 + Math.floor(Math.random() * 40) },
+      { type: 'scarves', amount: echarpesDeBienvenue() },
     ];
   }
 

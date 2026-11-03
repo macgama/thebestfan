@@ -111,6 +111,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* Six onglets sur deux rangs, dans la largeur du téléphone. */
 .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 14px 6px}
+.tabs .tab[hidden]{display:none}
 .terrain .compte.petit{font-size:34px}
 .terrain .multi{position:absolute;right:12px;top:14px;font-family:var(--banner);font-weight:700;font-size:20px;
   color:var(--projo);text-shadow:0 2px 0 #000;pointer-events:none}
@@ -423,6 +424,12 @@ async function charger() {
     return;
   }
   avatar = etat.avatar;
+  if (Array.isArray(etat.ouverts)) {
+    ouverts = etat.ouverts;
+    cacherFermes();
+    const ici = document.querySelector('.tab.on')?.dataset.tab;
+    if (ici && !estOuvert(ici)) montrer(ici);
+  }
   $('saison').textContent = etat.saison ? `Saison ${etat.saison.numero} · ${etat.saison.nom}` : 'Entre deux matchs';
   $('jour').innerHTML = `<b>${etat.echarpes.aujourdhui} / ${etat.echarpes.plafond}</b><br>écharpes aujourd’hui`;
   $('j-record').textContent = etat.jongles.record ?? '–';
@@ -488,9 +495,21 @@ document.querySelector('.tabs').addEventListener('click', (e) => {
   montrer(t.dataset.tab);
 });
 
+/* Les mini-jeux ouverts (menu PASS de l'administration : la BASE et chaque
+   PASS les ouvrent). Tant que le serveur n'a rien dit, tous. Un onglet fermé
+   se cache ; un lien vers lui ouvre le premier ouvert. */
+let ouverts = null;
+const estOuvert = (tab) => !ouverts || ouverts.includes(tab);
+function cacherFermes() {
+  document.querySelectorAll('.tab').forEach((x) => { x.hidden = !estOuvert(x.dataset.tab); });
+}
+
 /** Un onglet, par son nom ; l'adresse le garde (`/jeux#tifo`). */
 function montrer(tab) {
   if (!document.getElementById(`v-${tab}`)) tab = 'jongles';
+  if (!estOuvert(tab)) {
+    tab = [...document.querySelectorAll('.tab')].map((x) => x.dataset.tab).find(estOuvert) ?? tab;
+  }
   document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x.dataset.tab === tab));
   document.querySelectorAll('.vue').forEach((v) => { v.hidden = v.id !== `v-${tab}`; });
   if (location.hash.slice(1) !== tab) history.replaceState(null, '', tab === 'jongles' ? location.pathname : `#${tab}`);
