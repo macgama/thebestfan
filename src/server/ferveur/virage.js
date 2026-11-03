@@ -2,6 +2,7 @@ import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage, conditionReelleRemplie, estRouge }
   from '../../shared/duel/actions.js';
+import { clubDe } from '../../shared/fanzzy/clubs.js';
 import { CHANTS, puissanceDuChant } from '../../shared/duel/chants.js';
 // Le stade du match, tiré dans ce qu'une saison a ouvert : voir `stade()`.
 // La même fonction donne le leur aux duels de ce match.
@@ -143,6 +144,8 @@ export const EFFETS_CONNUS = new Set([
   'push', 'refill', 'team_breath', 'mod_self', 'floor_quality',
   'rally', 'per_mate', 'sync', 'refill_hand', 'clear_cooldowns',
   'delayed_push', 'freeze_decay', 'double_next', 'cost_free', 'push_over_time',
+  /* Les mécaniques neuves de novembre 2026 qui entrent au Virage. */
+  'replay_last', 'streak', 'extra_hand', 'cooldown_mult', 'per_present',
 ]);
 
 /** La minute où placer un changement de période, faute que l'API en donne une. */
@@ -892,6 +895,14 @@ export class VirageRoom {
       if (!gagne) m.breath = Math.max(0, m.breath - (mise.valeur ?? 20));
       mise.fin = 0;                     // consommée, gagnée ou perdue
     }
+    /* **Tribune chaude** : chaque parfait d'affilée pousse un cran plus fort,
+       jusqu'au plafond ; un raté remet la série à zéro. Comme au duel. */
+    const serieChaude = (m.effets ?? []).find((e) => e.type === 'serie' && e.fin > now);
+    if (serieChaude) {
+      if (parfait && !backfire) serieChaude.n++;
+      else if (!chantReussi(mesuree)) serieChaude.n = 0;
+      facteurMise *= 1 + Math.min(serieChaude.max ?? 0.5, serieChaude.n * (serieChaude.pas ?? 0.1));
+    }
 
     /* Le prix et la reprise du Fanzzy, comme au duel : voir `prixDuChant`. */
     m.breath = Math.max(0, m.breath - prixDuChant(card.cost, mods));
@@ -1306,6 +1317,8 @@ export class VirageRoom {
         depuisRouge: depuis(this.dernierRougeReel[m.side ^ 1]) };
       if (!conditionReelleRemplie(c, r)) throw new Cheat('condition_not_met');
     }
+    // « À domicile » : la tribune du club qui reçoit.
+    if (c.domicile && m.side !== 0) throw new Cheat('condition_not_met');
     /* La Relève demande un âge suivant à atteindre. Le Virage ne met qu'un
        personnage en tribune : on refuse plutôt que de laisser la carte brûler
        du souffle pour rien. */
@@ -1326,14 +1339,21 @@ export class VirageRoom {
     /* Décomptée ici, une fois la carte réellement jouée : un refus plus haut
        ne doit pas consommer une gratuité que le joueur n’a pas utilisée. */
     if (tournee) tournee.valeur--;
-    m.cooldowns[cardId] = now + carte.cd * 1000 * RULES.cardCooldownMult;
+    const froid = (m.effets ?? []).find((e) => e.type === 'sangfroid' && e.fin > now)?.valeur ?? 1;
+    m.cooldowns[cardId] = now + carte.cd * 1000 * RULES.cardCooldownMult * froid;
     if (collectif) this.collectifLibreA[m.side].set(cardId, m.cooldowns[cardId]);
     /* Un exemplaire, pas tous : voir le même correctif dans `nvn/engine.js`.
        Deux Fumigènes en main, un joué, et l'autre disparaissait du Virage. */
     m.main.splice(m.main.indexOf(cardId), 1);
-    m.defausse.push(cardId);
+    // Le Fantôme revient une fois dans la main au lieu de la défausse.
+    if (carte.revient && !(m.revenues ??= {})[cardId]) {
+      m.revenues[cardId] = true;
+      m.main.push(cardId);
+    } else m.defausse.push(cardId);
     m.remplirA = now + RULES.refillMs;
     m.lastPush = now;          // jouer, c'est être présent dans la foule
+    // Ce que l'Écho rejoue : la dernière carte, l'Écho lui-même excepté.
+    if (carte.effet?.type !== 'replay_last') m.derniereCarte = cardId;
 
     const evenements = [{ t: 'action', userId, side: m.side, cardId, famille: carte.fam }];
     this.appliquer(m, carte, now, evenements);
@@ -1353,6 +1373,12 @@ export class VirageRoom {
            voulu — la Torche parle de la tribune, pas du terrain. */
         const recule = m.side === 0 ? this.rope > 0 : this.rope < 0;
         if (e.doubleSiMene && recule) v *= 2;
+        // « Maillot du club » : double si son Fanzzy est du club de sa tribune.
+        if (e.doubleSiClub) {
+          const club = m.perso?.id ? clubDe(m.perso.id) : null;
+          const equipe = m.side === 0 ? this.fixture.homeId : this.fixture.awayId;
+          if (club != null && Number(club) === Number(equipe)) v *= 2;
+        }
         this.pousserDepuisCarte(m, v, now, evenements);
         break;
       }
@@ -1499,9 +1525,42 @@ export class VirageRoom {
         m.pioche.push(...m.main, ...m.defausse);
         m.defausse = [];
         m.pioche = melanger(m.pioche);
-        m.main = m.pioche.splice(0, RULES.mainVisible);
+        m.main = m.pioche.splice(0, this.tailleMain(m, now));
         m.remplirA = 0;
         evenements.push({ t: 'effect', type: 'refill_hand', userId, cartes: m.main.length });
+        break;
+      }
+
+      /* Les mécaniques neuves de novembre 2026, celles du Virage. Mêmes
+         règles qu'au duel (`nvn/engine.js`). */
+      case 'replay_last': {
+        const der = ACTION_BY_ID.get(m.derniereCarte);
+        if (der && dansLeVirage(der) && !der.condition && der.rar !== 'legendaire'
+          && der.effet?.type !== 'replay_last' && EFFETS_CONNUS.has(der.effet?.type)) {
+          evenements.push({ t: 'effect', type: 'replay_last', userId, cardId: der.id });
+          this.appliquer(m, der, now, evenements);
+        } else {
+          evenements.push({ t: 'effect', type: 'replay_last', userId, cardId: null });
+        }
+        break;
+      }
+      case 'streak':
+        poserEffet(m, { type: 'serie', fin: now + e.duree, n: 0, pas: e.pas, max: e.max });
+        evenements.push({ t: 'effect', type: 'streak', userId, duree: e.duree });
+        break;
+      case 'extra_hand':
+        poserEffet(m, { type: 'main_plus', fin: now + e.duree, valeur: e.cartes ?? 1 });
+        m.remplirA = now;
+        evenements.push({ t: 'effect', type: 'extra_hand', userId });
+        break;
+      case 'cooldown_mult':
+        poserEffet(m, { type: 'sangfroid', fin: now + e.duree, valeur: e.valeur });
+        evenements.push({ t: 'effect', type: 'cooldown_mult', userId });
+        break;
+      case 'per_present': {
+        const n = this.crowd()[m.side] ?? 1;
+        this.pousserDepuisCarte(m, Math.min(e.max ?? Infinity, e.valeur * Math.max(1, n)), now, evenements);
+        evenements.push({ t: 'effect', type: 'per_present', presents: n });
         break;
       }
 
@@ -1567,7 +1626,8 @@ export class VirageRoom {
     for (const [, m] of this.members) {
       if (!m.effets) continue;
       nettoyerEffets(m, now);
-      if (m.main.length < RULES.mainVisible && m.remplirA && now >= m.remplirA) {
+      const taille = this.tailleMain(m, now);
+      if (m.main.length < taille && m.remplirA && now >= m.remplirA) {
         /* La pioche vide se refait de la défausse. Un deck de dix cartes dont
            quatorze sont jouables tournerait sinon à sec au bout d'un quart
            d'heure, et le joueur finirait la mi-temps sans main. */
@@ -1577,9 +1637,15 @@ export class VirageRoom {
         }
         const tiree = m.pioche.shift();
         if (tiree) { m.main.push(tiree); m.dirtyMain = true; }
-        m.remplirA = m.main.length < RULES.mainVisible ? now + RULES.refillMs : 0;
+        m.remplirA = m.main.length < taille ? now + RULES.refillMs : 0;
       }
     }
+  }
+
+  /** La taille de la main : cinq, une de plus sous la Recrue. */
+  tailleMain(m, now = Date.now()) {
+    const plus = (m.effets ?? []).find((e) => e.type === 'main_plus' && e.fin > now)?.valeur ?? 0;
+    return RULES.mainVisible + plus;
   }
 
   regen(m, now = Date.now()) {

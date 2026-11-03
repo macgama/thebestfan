@@ -625,6 +625,11 @@ export class DuelNvN {
     const plancher = j.effets.find((e) => e.type === 'floor_quality' && e.charges > 0);
     if (plancher && q < plancher.valeur) { q = plancher.valeur; plancher.charges--; }
 
+    /* La malédiction d'en face : un geste parfait ne compte que comme moyen,
+       une fois. Un geste qui n'était pas parfait ne la consomme pas. */
+    const sort = j.effets.find((e) => e.type === 'malediction' && e.charges > 0);
+    if (sort && estParfait(q)) { q = 0.5; sort.charges--; }
+
     const { quality, backfire } = applyHeroMods(q, m);
     j.breath = Math.max(0, j.breath - prixDuChant(card.cost, m));
     j.dernierChant = t;
@@ -678,9 +683,17 @@ export class DuelNvN {
        ce ne serait plus un pari. */
     const mise = j.effets.find((e) => e.type === 'double_next' && e.fin > t);
     let facteur = 1;
+    /* **Tribune chaude** : chaque parfait d'affilée pousse un cran plus fort,
+       jusqu'au plafond ; un geste raté remet la série à zéro. */
+    const serie = j.effets.find((e) => e.type === 'serie' && e.fin > t);
+    if (serie) {
+      if (estParfait(q) && !backfire) serie.n++;
+      else if (!chantReussi(q)) serie.n = 0;
+      facteur *= 1 + Math.min(serie.max ?? 0.5, serie.n * (serie.pas ?? 0.1));
+    }
     if (mise) {
       const gagne = !backfire && quality >= 0.5;
-      facteur = gagne ? 2 : 1;
+      facteur *= gagne ? 2 : 1;
       if (!gagne) j.breath = Math.max(0, j.breath - (mise.valeur ?? 20));
       mise.fin = 0;                       // consommée, gagnée ou perdue
       evenements.push(this.ev('effect', { userId, type: 'double_next_resolu', gagne }));
@@ -747,6 +760,20 @@ export class DuelNvN {
     })];
     this.pousser(j, pousseeUltime(stade, note), t, evenements);
     return evenements;
+  }
+
+  /** La taille de la main : cinq, une de plus sous la Recrue. */
+  tailleMain(j, t = now0()) {
+    const plus = j.effets?.find((e) => e.type === 'main_plus' && e.fin > t)?.valeur ?? 0;
+    return RULES.mainVisible + plus;
+  }
+
+  /** Le Fanzzy en tribune est-il du club de ce camp ? (Maillot du club) */
+  fanzzyDuClub(j) {
+    const f = j.fanzzy[j.actif];
+    const club = f ? clubDe(f.id) ?? f.club ?? null : null;
+    const equipe = j.side === 0 ? this.fixture?.home?.id : this.fixture?.away?.id;
+    return club != null && equipe != null && Number(club) === Number(equipe);
   }
 
   /* ------------------------------------------------------- le vrai match */
@@ -816,6 +843,8 @@ export class DuelNvN {
     if (!conditionReelleRemplie(c, this.vraiMatchPour(j.side, t))) {
       throw new Cheat('condition_not_met');
     }
+    // « À domicile » : la tribune du club qui reçoit, celle du côté 0.
+    if (c.domicile && j.side !== 0) throw new Cheat('condition_not_met');
     // La Relève ne se joue que s'il reste un âge à atteindre. Le client le sait
     // déjà — l'état lui donne `stade` et `ages` — et grise la carte ; ce
     // contrôle est le filet. Il porte son propre code, parce que ce n'est pas
@@ -833,7 +862,10 @@ export class DuelNvN {
      * ce qui est ce que fait déjà `refill`. */
     const tournee = j.effets.find((e) => e.type === 'cost_free'
       && e.fin > t && (e.valeur ?? 0) > 0);
-    const prix = tournee ? 0 : carte.cost;
+    /* **Le péage** d'en face renchérit chaque carte, la tournée comprise
+       (elle ne paie rien, il n'y a rien à renchérir). */
+    const peage = j.effets.find((e) => e.type === 'peage' && e.fin > t)?.valeur ?? 1;
+    const prix = tournee ? 0 : Math.round(carte.cost * peage);
     if (j.breath < prix) throw new Cheat('not_enough_breath');
 
     // Renvoi : la carte se retourne contre celui qui la joue.
@@ -848,7 +880,9 @@ export class DuelNvN {
        refus plus haut — carte en recharge, condition non remplie — ne doit pas
        consommer une gratuité que le joueur n'a pas utilisée. */
     if (tournee) tournee.valeur--;
-    j.cooldowns[cardId] = t + carte.cd * 1000;
+    // Le sang-froid : les recharges vont plus vite tant qu'il dure.
+    const froid = j.effets.find((e) => e.type === 'sangfroid' && e.fin > t)?.valeur ?? 1;
+    j.cooldowns[cardId] = t + carte.cd * 1000 * froid;
     /* **Un exemplaire, pas tous.** C'était `filter`, qui retirait de la main
        toutes les cartes du même nom quand une seule part à la défausse. Un
        deck accepte plusieurs exemplaires d'une carte — c'est même le deck de
@@ -857,11 +891,33 @@ export class DuelNvN {
        pioche, ni en défausse. Le deck fondait de coup en coup, et les joueurs
        voyaient leurs cartes « ne jamais revenir ». */
     j.main.splice(j.main.indexOf(cardId), 1);
-    j.defausse.push(cardId);
+    /* Une carte **prise à l'adversaire** (Chambrage) ne s'ajoute pas au deck :
+       elle part une fois et disparaît. Le **Fantôme** revient une fois dans la
+       main, au lieu de la défausse. */
+    if ((j.pretees?.[cardId] ?? 0) > 0) j.pretees[cardId]--;
+    else if (carte.revient && !(j.revenues ??= {})[cardId]) {
+      j.revenues[cardId] = true;
+      j.main.push(cardId);
+    } else j.defausse.push(cardId);
     // La carte suivante n'arrive pas tout de suite : jouer coûte aussi du choix.
     j.remplirA = t + RULES.refillMs;
+    /* Ce que l'Écho rejoue et ce que le Chambrage prend : la dernière carte
+       jouée, l'Écho lui-même excepté. */
+    if (carte.effet?.type !== 'replay_last') { j.derniereCarte = cardId; j.derniereCarteA = t; }
 
     const evenements = [this.ev('action', { userId, side: j.side, cardId, famille: carte.fam })];
+
+    /* **Le piège à la buvette** : la prochaine carte de poussée d'en face est
+       payée et perdue, sans effet. L'adversaire savait qu'un piège était posé
+       (l'évènement `effect` l'annonce), pas lequel de ses gestes il visait. */
+    const piege = carte.fam === 'pousse'
+      && adverses.map((a) => a.effets.find((e) => e.type === 'piege' && e.charges > 0)).find(Boolean);
+    if (piege) {
+      piege.charges--;
+      evenements.push(this.ev('piege', { userId, cardId }));
+      if (carte.revers) this.appliquerEffet(j, carte.revers, t, evenements);
+      return evenements;
+    }
 
     if (miroir) {
       miroir.charges--;
@@ -885,9 +941,116 @@ export class DuelNvN {
       case 'push': {
         let v = e.valeur;
         if (e.doubleSiMene && this.goals[j.side] < this.goals[j.side ^ 1]) v *= 2;
+        // « Maillot du club » : double si le Fanzzy en tribune est du club de ce camp.
+        if (e.doubleSiClub && this.fanzzyDuClub(j)) v *= 2;
         this.pousser(j, v, t, evenements);
         break;
       }
+
+      /* ================================= les mécaniques neuves (novembre 2026)
+
+         Gaël, 3 novembre 2026 : « Ok pour les nouvelles mécaniques ». Chacune
+         touche une chose que rien ne touchait : la main de l'autre, sa
+         dernière carte, son prochain geste parfait, le prix de ses cartes,
+         la taille de sa propre main, ses recharges, la série de ses gestes. */
+
+      /** Chambrage : la dernière carte jouée en face arrive dans ta main, une fois. */
+      case 'steal_card': {
+        const cible = adverses.filter((a) => a.derniereCarte)
+          .sort((a, b) => (b.derniereCarteA ?? 0) - (a.derniereCarteA ?? 0))[0];
+        const prise = cible?.derniereCarte;
+        if (prise && ACTION_BY_ID.has(prise)) {
+          j.main.push(prise);
+          (j.pretees ??= {})[prise] = (j.pretees[prise] ?? 0) + 1;
+          delete j.cooldowns[prise];
+        }
+        evenements.push(this.ev('effect', { type: 'steal_card', userId: j.userId,
+          cardId: prise ?? null }));
+        break;
+      }
+
+      /** Écho : ta dernière carte rejouée, sans la payer. Pas les cartes à
+          condition (elles en contourneraient la condition), ni les légendaires. */
+      case 'replay_last': {
+        const der = ACTION_BY_ID.get(j.derniereCarte);
+        if (der && !der.condition && der.rar !== 'legendaire' && der.effet?.type !== 'replay_last') {
+          evenements.push(this.ev('effect', { type: 'replay_last', userId: j.userId, cardId: der.id }));
+          this.appliquer(j, der, t, evenements);
+        } else {
+          evenements.push(this.ev('effect', { type: 'replay_last', userId: j.userId, cardId: null }));
+        }
+        break;
+      }
+
+      /** Piège à la buvette : posé face cachée, voir `jouer`. */
+      case 'trap':
+        poserEffet(j, { type: 'piege', charges: e.charges ?? 1 });
+        evenements.push(this.ev('effect', { type: 'trap', userId: j.userId }));
+        break;
+
+      /** Tribune chaude : la série de gestes parfaits, voir `chanter`. */
+      case 'streak':
+        poserEffet(j, { type: 'serie', fin: t + e.duree, n: 0, pas: e.pas, max: e.max });
+        evenements.push(this.ev('effect', { type: 'streak', userId: j.userId, duree: e.duree }));
+        break;
+
+      /** Recrue : une carte de plus en main tant qu'elle dure. */
+      case 'extra_hand':
+        poserEffet(j, { type: 'main_plus', fin: t + e.duree, valeur: e.cartes ?? 1 });
+        j.remplirA = t;
+        evenements.push(this.ev('effect', { type: 'extra_hand', userId: j.userId }));
+        break;
+
+      /** Sang-froid : les recharges vont plus vite, voir `jouer`. */
+      case 'cooldown_mult':
+        poserEffet(j, { type: 'sangfroid', fin: t + e.duree, valeur: e.valeur });
+        evenements.push(this.ev('effect', { type: 'cooldown_mult', userId: j.userId }));
+        break;
+
+      /** Kop plein : une poussée par supporter de ta tribune, plafonnée. */
+      case 'per_present': {
+        const n = allies.length;
+        const v = Math.min(e.max ?? Infinity, e.valeur * n);
+        this.pousser(j, v, t, evenements);
+        evenements.push(this.ev('effect', { type: 'per_present', presents: n }));
+        break;
+      }
+
+      /** Télécommande : l'adversaire zappe, sa main repart dans sa pioche. */
+      case 'shuffle_foe': {
+        for (const a of adverses) {
+          if (aEffet(a, 'immunite', t)) continue;
+          a.pioche.push(...a.main);
+          for (let i = a.pioche.length - 1; i > 0; i--) {
+            const k = Math.floor(Math.random() * (i + 1));
+            [a.pioche[i], a.pioche[k]] = [a.pioche[k], a.pioche[i]];
+          }
+          a.main = a.pioche.splice(0, this.tailleMain(a, t));
+        }
+        evenements.push(this.ev('effect', { cible: 'adverse', type: 'shuffle_foe' }));
+        break;
+      }
+
+      /** Péage : les cartes d'en face coûtent plus, voir `jouer`. */
+      case 'cost_mult': {
+        const mPose = modsDe(j, t, this.stade);
+        for (const a of adverses) {
+          if (aEffet(a, 'immunite', t)) continue;
+          poserEffet(a, { type: 'peage', valeur: e.valeur,
+            fin: t + dureeDEntrave(e.duree, mPose, modsDe(a, t, this.stade)) });
+        }
+        evenements.push(this.ev('effect', { cible: 'adverse', type: 'cost_mult', duree: e.duree }));
+        break;
+      }
+
+      /** Malédiction : le prochain geste parfait d'en face compte comme moyen. */
+      case 'curse':
+        for (const a of adverses) {
+          if (aEffet(a, 'immunite', t)) continue;
+          poserEffet(a, { type: 'malediction', charges: e.charges ?? 1 });
+        }
+        evenements.push(this.ev('effect', { cible: 'adverse', type: 'curse' }));
+        break;
       case 'silence':
       case 'blind':
       case 'lock_actions': {
@@ -954,7 +1117,9 @@ export class DuelNvN {
         break;
 
       case 'shield':
-        poserEffet(j, { type: 'shield', valeur: e.valeur });
+        /* « Parcage visiteur » : plus solide pour la tribune qui se déplace. */
+        poserEffet(j, { type: 'shield',
+          valeur: e.valeur * (e.bonusExterieur && j.side === 1 ? e.bonusExterieur : 1) });
         evenements.push(this.ev('effect', { type: 'shield', userId: j.userId, valeur: e.valeur }));
         break;
 
@@ -998,7 +1163,7 @@ export class DuelNvN {
           const k = Math.floor(Math.random() * (i + 1));
           [j.pioche[i], j.pioche[k]] = [j.pioche[k], j.pioche[i]];
         }
-        j.main = j.pioche.splice(0, RULES.mainVisible);
+        j.main = j.pioche.splice(0, this.tailleMain(j, t));
         // La main est pleine tout de suite : c'est tout l'intérêt de la carte.
         j.remplirA = 0;
         evenements.push(this.ev('effect', { type: 'refill_hand', userId: j.userId,
@@ -1303,11 +1468,12 @@ export class DuelNvN {
       this.regen(j, t);
       nettoyerEffets(j, t);
       // Remplacement des cartes jouées, une fois le délai passé.
-      if (j.remplirA && t >= j.remplirA && j.main.length < RULES.mainVisible) {
+      const taille = this.tailleMain(j, t);
+      if (j.remplirA && t >= j.remplirA && j.main.length < taille) {
         if (!j.pioche.length) { j.pioche = j.defausse.splice(0); }
         const c = j.pioche.shift();
         if (c) { j.main.push(c); evenements.push(this.ev('draw', { userId: j.userId, cardId: c })); }
-        j.remplirA = j.main.length < RULES.mainVisible ? t + RULES.refillMs : null;
+        j.remplirA = j.main.length < taille ? t + RULES.refillMs : null;
       }
     }
     this.rallies = this.rallies.filter((r) => r.fin > t);

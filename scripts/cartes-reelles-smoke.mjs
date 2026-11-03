@@ -51,7 +51,7 @@ check('et toutes se jouent au Virage', IDS.every((id) => dansLeVirage(ACTION_BY_
 console.log('\n  le duel');
 const loadout = (actions) => ({
   fanzzy: [{ id: 'TR32', nom: 'J', stade: 1, cri: { gest: 'tempo', label: 'x' }, mods: {} }],
-  actions,
+  actions: actions.map((id) => ACTION_BY_ID.get(id)),
 });
 function duel(elapsed, status = '1H', t = 1_000_000) {
   const eq = (side) => [{ userId: `${side}-0`, nom: `J${side}`, loadout: loadout(IDS.concat(IDS)) }];

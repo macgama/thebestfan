@@ -270,6 +270,35 @@ export const INVITES = {
     + 'terrace behind lifting its scarves all at once'],
   'a-temps-additionnel': ['gold', 'the fourth official raising the lit board for stoppage time, '
     + 'no readable numbers, supporters biting their scarves'],
+  /* Les mécaniques neuves (3 novembre 2026). */
+  'a-chambrage': ['violet', 'a supporter cupping his ear toward the away end with a cheeky grin, '
+    + 'his mates laughing behind him'],
+  'a-echo': ['blue', 'a chant bouncing off the opposite stand roof, visible sound rings '
+    + 'returning to the singers, cool blue light'],
+  'a-piege': ['silver', 'a stadium snack bar counter with a hidden mousetrap under a hot dog, '
+    + 'a supporter winking behind it'],
+  'a-tribune-chaude': ['green', 'a terrace jumping in perfect rhythm, heat haze rising above it, '
+    + 'faces flushed and grinning'],
+  'a-recrue': ['blue', 'a young new supporter receiving a scarf from an older one at the turnstile, '
+    + 'both smiling'],
+  'a-sangfroid': ['blue', 'a calm supporter with eyes closed breathing in, amid a roaring crowd '
+    + 'frozen in motion around him'],
+  'a-domicile': ['gold', 'the home end at full volume, the stadium lit in warm colours, the '
+    + 'pitch below, a sense of owning the place'],
+  'a-maillot': ['red', 'a supporter pulling a plain-coloured replica shirt over his head in the '
+    + 'stand, no badge, no lettering, arms up'],
+  'a-kop-plein': ['amber', 'a huge steep terrace packed to the last step, thousands of scarves '
+    + 'raised, seen from the pitch'],
+  'a-hc-telecommande': ['violet', 'a remote control pointed at a television, channels flicking '
+    + 'past in a blur, a supporter on the couch'],
+  'a-gd-peage': ['violet', 'a motorway toll barrier down in front of a supporters\u2019 coach, a '
+    + 'long queue behind, red light'],
+  'a-gd-parcage-visiteur': ['silver', 'a fenced away section full of travelling supporters, tall '
+    + 'mesh fence, scarves tied to it'],
+  'a-rv-fantome': ['red', 'a translucent friendly ghost supporter drifting through the stand '
+    + 'waving a scarf, the crowd half-scared half-laughing'],
+  'a-rv-malediction': ['violet', 'a hooded old supporter in the stands pointing a bony finger '
+    + 'at the pitch, purple sparks, the crowd shivering'],
 };
 
 export const inviteDe = (id) => {

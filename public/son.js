@@ -1504,6 +1504,86 @@
       jouer: (c, s, t) => {
         [0, 0.18, 0.36].forEach((d) => ton(c, s, t, { freq: 988, duree: 0.1, type: 'square', vol: 0.06, delai: d }));
       } },
+    // Chambrage : le « ouuuh » moqueur de la tribune.
+    'a-chambrage': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 300, vers: 220, duree: 0.7, type: 'triangle', vol: 0.1 });
+        balaye(c, s, t, { duree: 0.6, de: 900, a: 500, vol: 0.1, q: 1, sorte: 'bosse' });
+      } },
+    // Écho : un claquement qui revient, plus loin.
+    'a-echo': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        clap(c, s, t, 0.6);
+        clap(c, s, t + 0.18, 0.3);
+        clap(c, s, t + 0.36, 0.12);
+      } },
+    // Le piège à la buvette : un déclic métallique, discret.
+    'a-piege': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 1200, vol: 0.14 });
+        metal(c, s, t, { freq: 700, duree: 0.3, vol: 0.06, delai: 0.05 });
+      } },
+    // Tribune chaude : des frappes qui accélèrent.
+    'a-tribune-chaude': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        [0, 0.22, 0.4, 0.54, 0.64, 0.72].forEach((d, i) => fut(c, s, t, { de: 170, a: 80, duree: 0.12, vol: 0.14 + i * 0.02, delai: d }));
+      } },
+    // Recrue : une carte qu'on glisse dans la main.
+    'a-recrue': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.18, de: 1200, a: 3000, vol: 0.12, q: 1.2, sorte: 'monte' });
+        clic(c, s, t, { freq: 1800, vol: 0.1, delai: 0.18 });
+      } },
+    // Sang-froid : une respiration lente et une note qui tient.
+    'a-sangfroid': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.6, de: 400, a: 900, vol: 0.12, q: 0.7, sorte: 'bosse' });
+        ton(c, s, t, { freq: 392, duree: 0.6, vol: 0.05, delai: 0.2 });
+      } },
+    // À domicile : l'hymne du club, trois notes qui montent.
+    'a-domicile': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        [392, 494, 587].forEach((f, i) => ton(c, s, t, { freq: f, duree: 0.22, type: 'triangle', vol: 0.08, delai: i * 0.18 }));
+      } },
+    // Maillot du club : le tissu qu'on enfile, d'un coup.
+    'a-maillot': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.3, de: 600, a: 2200, vol: 0.14, q: 0.9, sorte: 'bosse' });
+        fut(c, s, t, { de: 200, a: 90, duree: 0.12, vol: 0.18, delai: 0.3 });
+      } },
+    // Kop plein : la clameur d'une tribune entière.
+    'a-kop-plein': { famille: 'jeu', duree: 1.1,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 1, freq: 700, q: 0.4, vol: 0.18 });
+        fut(c, s, t, { de: 140, a: 55, duree: 0.4, vol: 0.22 });
+      } },
+    // Télécommande : le zapping, trois clics et un grésillement.
+    'a-hc-telecommande': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [0, 0.1, 0.2].forEach((d) => clic(c, s, t, { freq: 2200, vol: 0.1, delai: d }));
+        bruit(c, s, t, { duree: 0.25, freq: 4000, q: 0.5, vol: 0.06, delai: 0.3 });
+      } },
+    // Péage : la barrière qui se lève, le bip du ticket.
+    'a-gd-peage': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 1320, duree: 0.12, type: 'square', vol: 0.05 });
+        balaye(c, s, t, { duree: 0.4, de: 300, a: 900, vol: 0.1, q: 1, sorte: 'monte', delai: 0.15 });
+      } },
+    // Parcage visiteur : les grilles qui se ferment.
+    'a-gd-parcage-visiteur': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => metal(c, s, t, { freq: 260, duree: 0.5, vol: 0.09 }) },
+    // Fantôme : un souffle qui passe et revient.
+    'a-rv-fantome': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 660, vers: 440, duree: 0.45, vol: 0.06 });
+        ton(c, s, t, { freq: 440, vers: 660, duree: 0.45, vol: 0.05, delai: 0.45 });
+      } },
+    // Malédiction : un accord grave qui se tord.
+    'a-rv-malediction': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 110, vers: 98, duree: 0.8, type: 'sawtooth', vol: 0.04 });
+        ton(c, s, t, { freq: 116, vers: 104, duree: 0.8, type: 'sawtooth', vol: 0.04 });
+      } },
 
     /* ============================================= les épreuves (ouverture)
        Les quatre de rythme d'abord : brèves, voir plus haut. */
@@ -1762,6 +1842,20 @@
     'a-carton-rouge': 0.575,
     'a-coup-sifflet': 0.582,
     'a-temps-additionnel': 2.95,
+    'a-chambrage': 1.46,
+    'a-echo': 2.16,
+    'a-piege': 1.57,
+    'a-tribune-chaude': 0.776,
+    'a-recrue': 2.14,
+    'a-sangfroid': 1.82,
+    'a-domicile': 2.75,
+    'a-maillot': 1.3,
+    'a-kop-plein': 0.684,
+    'a-hc-telecommande': 2.85,
+    'a-gd-peage': 3.05,
+    'a-gd-parcage-visiteur': 1.2,
+    'a-rv-fantome': 2.21,
+    'a-rv-malediction': 2.95,
   };
   Object.assign(MIX, MIX_CARTES);
 

@@ -511,6 +511,72 @@ export const ACTIONS = [
     texte: 'Après la 90e minute du vrai match. Ta poussée +50 % pendant 10 s.',
     effet: { type: 'mod_self', mods: { pushMult: 1.5 }, duree: 10000 },
     condition: { minuteReelle: 90 } },
+
+  /* =========================================== LES MÉCANIQUES NEUVES (novembre 2026)
+
+     Gaël, 3 novembre 2026 : « Ok pour les nouvelles mécaniques ». Celles-ci
+     ont chacune leur branche dans les moteurs : la main de l'adversaire, sa
+     dernière carte, un piège posé d'avance, une série de gestes parfaits, la
+     taille de sa main, la vitesse des recharges, la place de la tribune.   */
+
+  { id: 'a-chambrage', nom: 'Chambrage', fam: 'entrave', rar: 'rare', cost: 24, cd: 30,
+    texte: 'Prend la dernière carte jouée par l’adversaire : elle arrive dans ta main, pour une fois.',
+    effet: { type: 'steal_card' } },
+
+  { id: 'a-echo', nom: 'Écho', fam: 'souffle', rar: 'rare', cost: 18, cd: 35,
+    texte: 'Rejoue ta dernière carte, sans la payer. Pas une légendaire, ni une carte à condition.',
+    effet: { type: 'replay_last' } },
+
+  { id: 'a-piege', nom: 'Piège à la buvette', fam: 'garde', rar: 'epique', cost: 26, cd: 30,
+    texte: 'Posé face cachée : la prochaine carte de poussée adverse est perdue, sans effet.',
+    effet: { type: 'trap', charges: 1 } },
+
+  { id: 'a-tribune-chaude', nom: 'Tribune chaude', fam: 'geste', rar: 'epique', cost: 26, cd: 35,
+    texte: 'Pendant 15 s, chaque chant parfait d’affilée pousse 10 % de plus, jusqu’à +50 %. Un raté remet à zéro.',
+    effet: { type: 'streak', duree: 15000, pas: 0.1, max: 0.5 } },
+
+  { id: 'a-recrue', nom: 'Recrue', fam: 'souffle', rar: 'commune', cost: 12, cd: 30,
+    texte: 'Ta main passe de 5 à 6 cartes pendant 15 s.',
+    effet: { type: 'extra_hand', cartes: 1, duree: 15000 } },
+
+  { id: 'a-sangfroid', nom: 'Sang-froid', fam: 'souffle', rar: 'rare', cost: 20, cd: 35,
+    texte: 'Pendant 10 s, les cartes que tu joues se rechargent deux fois plus vite.',
+    effet: { type: 'cooldown_mult', valeur: 0.5, duree: 10000 } },
+
+  { id: 'a-domicile', nom: 'À domicile', fam: 'bascule', rar: 'rare', cost: 24, cd: 40,
+    texte: 'Seulement pour la tribune du club qui reçoit. Pousse 45.',
+    effet: { type: 'push', valeur: 45 }, condition: { domicile: true } },
+
+  { id: 'a-maillot', nom: 'Maillot du club', fam: 'pousse', rar: 'rare', cost: 22, cd: 16,
+    texte: 'Pousse 24, le double si ton Fanzzy en tribune est du club de ta tribune.',
+    effet: { type: 'push', valeur: 24, doubleSiClub: true } },
+
+  { id: 'a-kop-plein', nom: 'Kop plein', fam: 'collectif', rar: 'legendaire', cost: 34, cd: 60,
+    texte: '14 de poussée par supporter de ta tribune, toi compris, jusqu’à 150.',
+    /* Comme la Mosaïque, mais tout le monde compte, pas seulement ceux qui
+       viennent de chanter : la carte d'une tribune pleine. */
+    effet: { type: 'per_present', valeur: 14, max: 150 } },
+
+  /* Les mécaniques neuves des PASS. */
+  { id: 'a-hc-telecommande', nom: 'Télécommande', fam: 'entrave', rar: 'rare', cost: 22, cd: 28, publie: false,
+    texte: 'L’adversaire zappe : sa main repart dans sa pioche, il en reprend une autre.',
+    effet: { type: 'shuffle_foe' } },
+
+  { id: 'a-gd-peage', nom: 'Péage', fam: 'entrave', rar: 'rare', cost: 24, cd: 26, publie: false,
+    texte: 'Pendant 8 s, les cartes de l’adversaire coûtent moitié plus de souffle.',
+    effet: { type: 'cost_mult', valeur: 1.5, duree: 8000 } },
+
+  { id: 'a-gd-parcage-visiteur', nom: 'Parcage visiteur', fam: 'garde', rar: 'rare', cost: 24, cd: 22, publie: false,
+    texte: 'Absorbe 40 de poussée adverse, 60 si ta tribune joue à l’extérieur.',
+    effet: { type: 'shield', valeur: 40, bonusExterieur: 1.5 } },
+
+  { id: 'a-rv-fantome', nom: 'Fantôme', fam: 'pousse', rar: 'epique', cost: 28, cd: 25, publie: false,
+    texte: 'Pousse 40, puis revient une fois dans ta main.',
+    effet: { type: 'push', valeur: 40 }, revient: true },
+
+  { id: 'a-rv-malediction', nom: 'Malédiction', fam: 'entrave', rar: 'rare', cost: 24, cd: 30, publie: false,
+    texte: 'Le prochain chant parfait de l’adversaire ne compte que comme moyen.',
+    effet: { type: 'curse', charges: 1 } },
 ];
 
 export const ACTION_BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));
@@ -631,6 +697,20 @@ const PORTEE = {
   cost_free: 'soi',
   push_over_time: 'soi',
   halve_gap: 'adverse',
+
+  /* Les mécaniques neuves de novembre 2026. Celles qui visent quelqu'un en
+     face (sa carte, sa main, ses prix, son prochain parfait, sa prochaine
+     poussée) restent au duel ; les autres entrent au Virage. */
+  steal_card: 'adverse',
+  trap: 'adverse',
+  shuffle_foe: 'adverse',
+  cost_mult: 'adverse',
+  curse: 'adverse',
+  replay_last: 'soi',
+  streak: 'soi',
+  extra_hand: 'soi',
+  cooldown_mult: 'soi',
+  per_present: 'tribune',
 };
 
 /**

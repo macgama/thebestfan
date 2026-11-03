@@ -1,6 +1,6 @@
 # À déposer sur Infomaniak
 
-**30 nouvelles cartes d'action** (branche `claude/project-thread-96sqrp`,
+**49 nouvelles cartes d'action** (branche `claude/project-thread-96sqrp`,
 3 novembre 2026, « Ok pour toutes tes idées » de Gaël). Construction seule,
 pas de schéma.
 
@@ -14,6 +14,14 @@ pas de schéma.
   calendrier a déjà été appliqué avant cette mise en ligne : /admin › PASS ›
   LES PASS, cocher les cartes `a-hc-…` dans le PASS 1 (puis `a-mt-`, `a-gd-`,
   `a-rv-` dans les PASS 2 à 4).
+- 5 cartes du vrai match pour tous (Mi-temps, But au stade !, Carton rouge,
+  Coup de sifflet, Temps additionnel) : le duel suit maintenant la minute, les
+  buts et les cartons rouges du vrai match. Le relevé demande les cartons des
+  matchs où un duel est en cours (au plus un appel par minute et par match).
+- 14 cartes à mécaniques neuves : 9 pour tous (Chambrage, Écho, Piège à la
+  buvette, Tribune chaude, Recrue, Sang-froid, À domicile, Maillot du club,
+  Kop plein) et 5 de PASS (Télécommande, Péage, Parcage visiteur, Fantôme,
+  Malédiction). 88 cartes en tout.
 - Sans dessin pour l'instant : la carte montre son symbole de famille.
 
 ---
