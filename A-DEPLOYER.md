@@ -15,6 +15,19 @@ sert aussi la saison annoncée).
 
 ---
 
+**L'équipement d'un championnat ne sort que de son booster** (branche
+`claude/project-thread-zlv4w0`, 3 novembre 2026, carte de Gaël « Seulement dans
+son booster »). Construction seule, pas de schéma, puis redémarrage.
+
+- Une pièce rangée sous une série (par son identifiant `an-`, `su-`, `rp-`… ou
+  par la colonne SÉRIE de CATALOGUE › CONTENUS) ne tombe que dans les boosters
+  de cette série. Les pièces communes et celles des skins (`hw-`, `ph-`, `ap-`)
+  tombent partout. La boutique, elle, livre toujours n'importe quelle pièce ouverte.
+- Pour un nouveau championnat : ouvrir ses pièces avec son PASS (ou dans
+  CATALOGUE › CONTENUS) ; elles sortiront de ses boosters seulement.
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH
