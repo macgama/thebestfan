@@ -50,6 +50,9 @@ public/img/ultime/**/*.webp
 public/img/ultime/**/*.avif
 public/img/ultime/**/*.jpg
 public/img/ultime/**/*.mp4
+# Les vidéos servies sous /video (fonds de fx.js, tutoriels de video-tuto.js) et
+# leurs affiches : hors de git, envoyées avec les images.
+/public/video/
 *.mp4
 /*.png
 /*.jpg
