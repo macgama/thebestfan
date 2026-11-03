@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**L'écran des boosters : descriptif de série et carrousel de dix paquets**
+(branche `claude/project-thread-loywt5`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- Sous OUVRIR LE BOOSTER, un panneau décrit la série choisie (sa phrase et
+  deux lignes), dans les cinq langues ; la boîte « 13 séries attendent une
+  saison » est retirée.
+- Dix paquets en anneau qui tourne seul ; il s'arrête au moindre geste.
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH
