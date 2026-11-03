@@ -1,5 +1,70 @@
 # À déposer sur Infomaniak
 
+**Le PASS ne s'achète pas avant le 1er décembre** (branche
+`claude/project-thread-d7nrt6`, 3 novembre 2026, demande de Gaël).
+Construction et redémarrage, rien d'autre. Ne joue qu'une fois le calendrier
+ci-dessous appliqué (la BASE, saison 0, en cours).
+
+- Pendant la BASE, la page du PASS, la boutique et la pub montrent le PASS 1
+  sous « BIENTÔT · le 1er décembre » ; les boutons d'achat sont hors service
+  et le serveur refuse l'achat (euros et écharpes). Offrir le PASS depuis
+  /admin marche toujours.
+- Il s'achète dès que la saison 1 est lancée (seule, le jour de son ouverture).
+- Tenues Préhistorique : « Uniquement avec le PASS » dans la collection (case
+  marquée PASS, carte sans « Booster La Reprise ») et sur la fiche.
+
+---
+
+**Le bon dos de carte aux boosters** (branche `claude/project-thread-xhkkac`,
+3 novembre 2026, demande de Gaël). Construction seule, sans schéma.
+
+- Chaque carte d'un booster et du paquet de bienvenue se retourne sur le dos
+  de **sa** série : un Fanzzy le sien, une tenue ou un état celui de son
+  Fanzzy, une pièce, une action ou un stade la série posée dans CATALOGUE ›
+  CONTENUS ou celle de son préfixe (`rp-`, `a-rp-`…).
+- Ce qui n'a aucune série (écharpes, pièces et actions communes) a un dos
+  neutre au blason du jeu : `public/img/dos/NEUTRE.*`. Un dessin plus soigné
+  posé dans `art/dos/NEUTRE.png` le remplace par `node scripts/dos-images.mjs`.
+
+---
+
+**La page d'accueil vivante, et le PASS « bientôt »** (branche
+`claude/project-thread-2zegrb`, 3 novembre 2026, demande de Gaël « plus vivante,
+gaming »). Construction seule, puis redémarrage (la route `/api/fanzzy/jouables`
+sert aussi la saison annoncée).
+
+- Sans compte : le nom du jeu tombe lettre par lettre, les promesses sautent,
+  « PRENDRE MA PLACE » tombe avec une onde et des étincelles, les visages se
+  distribuent comme des cartes ; puis toutes les 6 à 11 s une « vie » (éclat
+  d'or sur BEST, ola, visage qui saute, flashs, braises…). Un but en direct
+  allume la ligne du match avec « BUT ! ».
+- La bande du PASS porte BIENTÔT et un compte à rebours (J-28, puis les heures
+  le dernier jour) jusqu'au 1er décembre, ou jusqu'à la date annoncée.
+
+---
+
+**« Voir la vidéo » dans Comment jouer › Les Fanzzy** (branche
+`claude/project-thread-j0jy2q`, 3 novembre 2026). Construction seule, pas de
+schéma. Le bouton reste **caché tant que la vidéo n'est pas sur le serveur** :
+rien ne change à l'écran avant. La vidéo (`public/video/tuto-fanzzy-1.mp4`,
+puis une par langue `tuto-fanzzy-1-de.mp4`… avec la voix off) part avec les
+images : `npm run images:envoyer`, qui envoie désormais aussi `public/video`.
+
+---
+
+**L'équipement d'un championnat ne sort que de son booster** (branche
+`claude/project-thread-zlv4w0`, 3 novembre 2026, carte de Gaël « Seulement dans
+son booster »). Construction seule, pas de schéma, puis redémarrage.
+
+- Une pièce rangée sous une série (par son identifiant `an-`, `su-`, `rp-`… ou
+  par la colonne SÉRIE de CATALOGUE › CONTENUS) ne tombe que dans les boosters
+  de cette série. Les pièces communes et celles des skins (`hw-`, `ph-`, `ap-`)
+  tombent partout. La boutique, elle, livre toujours n'importe quelle pièce ouverte.
+- Pour un nouveau championnat : ouvrir ses pièces avec son PASS (ou dans
+  CATALOGUE › CONTENUS) ; elles sortiront de ses boosters seulement.
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH
@@ -11,7 +76,8 @@ depuis `~/sites/thebestfan.online` :
 4. Redémarrage.
 
 - La saison lancée le 26 octobre devient la saison 0, la BASE, jusqu'au
-  30 novembre 2026. Un PASS acheté pendant elle est le PASS 1, actif tout de suite.
+  30 novembre 2026. Le PASS 1 ne s'y achète pas (« Bientôt », voir plus haut) ;
+  offert depuis /admin, il est actif tout de suite.
 - PASS 1 Les héros du canapé (1er décembre - 28 février, tenue Préhistorique),
   PASS 2 Météo (mars - mai), PASS 3 Déplacement (juin - août), PASS 4 Revenants
   (septembre - novembre). Chacun se lance seul à sa date.
