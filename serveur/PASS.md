@@ -53,18 +53,32 @@ Le droit de porter **toute** tenue publiée, qu'avait l'abonnement, est retiré.
 
 ### La voie PASS (« style Fortnite »)
 
-Une seconde ligne dans le carnet de tampons de la saison. Le niveau vaut
-`1 + paliers du carnet atteints` (au plus 6), lus sur les mêmes tampons que la
-voie gratuite (`recompenses`, sources `mission` et `sachet`). Que du visuel :
+Une seconde ligne dans le carnet de tampons de la saison, douze niveaux
+(Gaël, 3 novembre 2026). Chaque niveau a son seuil de tampons, une part fixe
+du dernier palier du carnet (`VOIE_PASS[].part`, `seuilsVoie`) ; le niveau
+compte les seuils atteints par les tampons du carnet (`recompenses`, sources
+`mission` et `sachet`) plus les points des défis PASS (`niveauVoieDe`). Après
+le dernier niveau, une étoile tous les 15 (`etoilesDe`). Que du visuel :
 
-| niveau | ce qu'il ouvre |
-|---|---|
-| 1 (à l'achat) | la tenue au 1er âge |
-| 2 | la tenue au 2e âge |
-| 3 | la tenue au 3e âge |
-| 4 | le cadre de carte |
-| 5 | le cadre animé |
-| 6 | le badge en or |
+| niveau | seuil (carnet à 140) | ce qu'il ouvre |
+|---|---|---|
+| 1 | à l'achat | la tenue au 1er âge |
+| 2 | 10 | le cadre de profil |
+| 3 | 20 | les stickers de duel |
+| 4 | 35 | la tenue au 2e âge |
+| 5 | 50 | le fond de profil animé |
+| 6 | 65 | le cadre de carte |
+| 7 | 75 | la tenue au 3e âge |
+| 8 | 90 | l'entrée au duel |
+| 9 | 105 | le titre sous le pseudo |
+| 10 | 120 | le cadre animé |
+| 11 | 130 | l'aura de braises au Virage |
+| 12 | 140 | le badge et le pseudo en or |
+
+Sans PASS, le carnet de /aide montre la voie sous cadenas et ce que les
+tampons ont déjà atteint (« N cadeaux PASS t'attendent ») : le niveau est
+rétroactif à l'achat. Un acheteur tardif n'a que le niveau 1 et aucun gain
+spécial (`GAINS_SPECIAUX`).
 
 ### La tenue de saison
 

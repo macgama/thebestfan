@@ -31,7 +31,7 @@ import { chargerTenues, tenuesTirables, tenuesEnEtal } from '../src/server/fanzz
 import { poserReglages, reglage, PAR_CLE } from '../src/shared/reglages.js';
 import { prixTenueDe } from '../src/shared/etal.js';
 import {
-  saisonsCouvertes, niveauVoie, ageTenue, cadreDe, tenueReservee, vitrineDe, NIVEAU_MAX, passDe,
+  saisonsCouvertes, niveauVoieDe, seuilsVoie, etoilesDe, gainsDe, ageTenue, cadreDe, tenueReservee, vitrineDe, NIVEAU_MAX, passDe,
   venteAncienPassLe, anciensPassEnVente, estTardif, voieSelonAchat,
 } from '../src/shared/pass.js';
 import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, articleCommande, idAncienPass }
@@ -56,10 +56,27 @@ check('sans saison : rien', saisonsCouvertes(null).length === 0);
 check('sans date de fin : la saison seule', JSON.stringify(saisonsCouvertes({ numero: 3 }, 30)) === '[3]');
 
 titre('La voie PASS');
-check('niveau 1 à l’achat, 6 au plus', niveauVoie(0) === 1 && niveauVoie(99) === NIVEAU_MAX && NIVEAU_MAX === 6);
-check('la tenue : âge 1, puis 2 et 3', ageTenue(1) === 1 && ageTenue(2) === 2 && ageTenue(3) === 3 && ageTenue(6) === 3);
-check('le cadre au niveau 4, animé au 5', cadreDe(3) === null && cadreDe(4) === 'fixe' && cadreDe(5) === 'anime');
-check('le badge en or au dernier niveau', vitrineDe(1, 6).or === true && vitrineDe(1, 5).or === false);
+check('douze niveaux, niveau 1 à l’achat', NIVEAU_MAX === 12
+  && niveauVoieDe({ tampons: 0 }) === 1 && niveauVoieDe({ tampons: 9999 }) === NIVEAU_MAX);
+check('les seuils de la voie sur un carnet à 140 tampons',
+  JSON.stringify(seuilsVoie([10, 35, 75, 110, 140])) === '[0,10,20,35,50,65,75,90,105,120,130,140]'
+  || console.log('       ', seuilsVoie([10, 35, 75, 110, 140])));
+check('les seuils suivent un autre carnet, toujours croissants', (() => {
+  const t = seuilsVoie([2, 4]);
+  return t.length === 12 && t.every((x, i) => i === 0 || x > t[i - 1]) && t[0] === 0;
+})());
+check('sans carnet : 140 tampons au bout', seuilsVoie([]).at(-1) === 140);
+check('les tampons font monter la voie', niveauVoieDe({ tampons: 34, seuils: [140] }) === 3
+  && niveauVoieDe({ tampons: 35, seuils: [140] }) === 4);
+check('une étoile tous les 15 tampons après le bout', etoilesDe({ tampons: 140, seuils: [140] }) === 0
+  && etoilesDe({ tampons: 155, seuils: [140] }) === 1 && etoilesDe({ tampons: 184, seuils: [140] }) === 2);
+check('la tenue : âge 1, puis 2 au niveau 4 et 3 au niveau 7', ageTenue(1) === 1 && ageTenue(3) === 1
+  && ageTenue(4) === 2 && ageTenue(6) === 2 && ageTenue(7) === 3 && ageTenue(12) === 3);
+check('le cadre au niveau 6, animé au 10', cadreDe(5) === null && cadreDe(6) === 'fixe'
+  && cadreDe(9) === 'fixe' && cadreDe(10) === 'anime');
+check('le badge et le pseudo en or au dernier niveau', vitrineDe(1, 12).or === true && vitrineDe(1, 11).or === false);
+check('les gains ouverts se lisent par niveau', gainsDe(2).includes('cadre_profil')
+  && !gainsDe(2).includes('stickers') && gainsDe(12).length === 10);
 check('le PASS 1 est Préhistorique', passDe(1).tenue === 'prehistorique');
 
 titre('Les tenues réservées');
@@ -106,11 +123,14 @@ check('sans date de fin : jamais', venteAncienPassLe(null) === null && venteAnci
 check('un achat tardif se lit sur la source', estTardif('stripe-tard') && estTardif('echarpes-tard')
   && !estTardif('stripe') && !estTardif('offert') && !estTardif(null));
 {
-  const t = voieSelonAchat(1, 6, { tardif: true });
+  const t = voieSelonAchat(1, 12, { tardif: true, etoiles: 3 });
   check('acheteur tardif : niveau 1, sans cadre ni or, pas original', t.niveau === 1 && t.cadre === null
     && t.or === false && t.original === false && t.tardif === true);
-  const o = voieSelonAchat(1, 6);
-  check('joueur de la saison : son niveau, original', o.niveau === 6 && o.or === true && o.original === true);
+  check('acheteur tardif : ni étoiles ni gains spéciaux', t.etoiles === 0
+    && !(t.gains ?? []).some((g) => ['cadre_profil', 'stickers', 'fond_profil', 'entree', 'titre', 'aura'].includes(g)));
+  const o = voieSelonAchat(1, 12, { etoiles: 2 });
+  check('joueur de la saison : son niveau, original', o.niveau === 12 && o.or === true && o.original === true
+    && o.etoiles === 2);
   const a = articleCommande(idAncienPass(1));
   check('l’article d’un ancien PASS : même prix, saison nommée, tardif', a?.prix === article?.prix
     && a?.livraison?.type === 'pass' && a?.livraison?.saison === 1 && a?.livraison?.tardif === true
@@ -285,19 +305,21 @@ titre('Ce que les PASS donnent pour toujours');
   const e = await get('/api/abonnement');
   check('l’écran reçoit la voie, le PASS et ce qui reste libre', Array.isArray(e.voies) && e.voies.length === 1
     && Array.isArray(e.voie) && e.voie.length === NIVEAU_MAX && Array.isArray(e.libre) && e.libre.length > 0);
-  /* Les tampons du carnet font monter la voie : deux paliers, niveau 3, la
-     tenue jusqu'à l'âge 3. */
+  /* Les tampons du carnet font monter la voie : la moitié du carnet, niveau
+     7, la tenue jusqu'à l'âge 3. */
   const seuils = v?.seuils ?? [];
   check('la voie lit les paliers du carnet de la saison', seuils.length >= 5);
   await pool.query(`INSERT INTO recompenses (user_id, source, cle, saison_id, tampons)
-    VALUES (?, 'mission', 'essai-1', 1, ?)`, [A, seuils[1] ?? 0]);
+    VALUES (?, 'mission', 'essai-1', 1, ?)`, [A, v?.seuilsVoie?.[6] ?? 0]);
   const v3 = (await abonnement.voies(A))[0];
-  check('deux paliers atteints : niveau 3, tenue à l’âge 3', v3?.niveau === 3 && v3?.ageTenue === 3
+  check('la voie sert les seuils de ses douze niveaux', v?.seuilsVoie?.length === NIVEAU_MAX
+    && v.seuilsVoie[0] === 0 && v.seuilsVoie.at(-1) === seuils.at(-1));
+  check('au seuil du niveau 7 : tenue à l’âge 3', v3?.niveau === 7 && v3?.ageTenue === 3
     && (await abonnement.ageTenuePass(A, 'prehistorique')) === 3 || console.log('       ', v3));
   await pool.query(`UPDATE recompenses SET tampons = ? WHERE user_id = ? AND cle = 'essai-1'`,
     [seuils.at(-1) ?? 0, A]);
   const v6 = (await abonnement.voies(A))[0];
-  check('tout le carnet : niveau 6, cadre animé, badge en or', v6?.niveau === NIVEAU_MAX
+  check('tout le carnet : niveau 12, cadre animé, badge en or', v6?.niveau === NIVEAU_MAX
     && v6?.cadre === 'anime' && v6?.or === true || console.log('       ', v6));
   check('les tampons d’une autre source ne comptent pas', await (async () => {
     await pool.query(`INSERT INTO recompenses (user_id, source, cle, saison_id, tampons)
@@ -378,7 +400,7 @@ titre('Les anciens PASS : en boutique');
   const vA = (await abonnement.voies(A))[0];
   check('le joueur de la saison : édition originale, voie close', vA?.original === true && vA?.close === true);
   await pool.query(`UPDATE recompenses SET tampons = ? WHERE user_id = ? AND cle = 'essai-1'`,
-    [vA.seuils[0], A]);
+    [vA.seuilsVoie[3], A]);
   const vA2 = (await abonnement.voies(A))[0];
   check('voie pas finie : il garde ses âges, le 3e tombe dans ses boosters', vA2?.ageTenue === 2
     && (await abonnement.tenuesAuxBoosters(A)).get('prehistorique') === 2 || console.log('       ', vA2));

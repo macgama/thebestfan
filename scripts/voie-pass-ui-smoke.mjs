@@ -10,6 +10,7 @@
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
+import { VOIE_PASS, seuilsVoie } from '../src/shared/pass.js';
 let rouge = 0;
 const ok = (v, m) => { console.log(`  ${v ? 'ok  ' : 'NON '} ${m}`); if (!v) rouge++; };
 const app = express();
@@ -17,13 +18,8 @@ const PUBLIC = fileURLToPath(new URL('../public', import.meta.url));
 app.use(express.static(PUBLIC, { extensions: ['html'] }));
 const srv = app.listen(0);
 const port = srv.address().port;
-const VOIE = [
-  { niveau: 1, paliers: 0, nom: 'La tenue au premier âge', gain: 'tenue', age: 1 },
-  { niveau: 2, paliers: 1, nom: 'La tenue au deuxième âge', gain: 'tenue', age: 2 },
-  { niveau: 3, paliers: 2, nom: 'La tenue au troisième âge', gain: 'tenue', age: 3 },
-  { niveau: 4, paliers: 3, nom: 'Le cadre de carte', gain: 'cadre' },
-  { niveau: 5, paliers: 4, nom: 'Le cadre qui s’anime', gain: 'cadre_anime' },
-  { niveau: 6, paliers: 5, nom: 'Le badge en or', gain: 'badge_or' }];
+/* La voie telle que le serveur la sert (`/api/abonnement` : `voie`). */
+const VOIE = VOIE_PASS.map((v) => ({ ...v }));
 const carnet = (numero, tampons) => {
   const seuils = [10, 35, 75, 110, 140];
   return { saison: { id: 7, numero, nom: numero ? 'Héros du canapé' : 'BASE' }, tampons,
@@ -33,7 +29,7 @@ const carnet = (numero, tampons) => {
 };
 const cas = {
   sans: { q: carnet(1, 40), a: { actif: false, voie: VOIE, voies: [], offre: { couvre: [{ numero: 1, couleur: '#c9772e' }] } } },
-  membre: { q: carnet(1, 80), a: { actif: true, voie: VOIE, voies: [{ saison: 1, niveau: 4, couleur: '#c9772e', tampons: 80, seuils: [10,35,75,110,140] }] } },
+  membre: { q: carnet(1, 80), a: { actif: true, voie: VOIE, voies: [{ saison: 1, niveau: 7, couleur: '#c9772e', tampons: 80, seuils: [10,35,75,110,140], seuilsVoie: seuilsVoie([10,35,75,110,140]) }] } },
   aucun: { q: carnet(1, 40), a: null },
   base: { q: carnet(0, 20), a: { actif: false, voie: VOIE, voies: [], offre: { couvre: [{ numero: 1, couleur: '#c9772e' }], bientot: { ouvre: '2026-12-01' } } } },
   ouvert: { q: carnet(1, 40), a: { actif: false, voie: VOIE, voies: [], offre: { couvre: [{ numero: 1, couleur: '#c9772e' }], bientot: null } } },
@@ -57,16 +53,21 @@ for (const [nom, c] of Object.entries(cas)) {
   });
   await p.goto(`http://127.0.0.1:${port}/aide#saison`, { waitUntil: 'networkidle0' });
   await new Promise((r) => setTimeout(r, 800));
+  /* `VOIE_CAPTURES=<dossier>` : une capture de la voie par cas, pour la regarder. */
+  if (process.env.VOIE_CAPTURES && nom !== 'aucun') {
+    await p.$('#voiePass').then((e) => e?.screenshot({ path: `${process.env.VOIE_CAPTURES}/voie-${nom}.png` })).catch(() => {});
+  }
   const t = await p.$eval('#voiePass', (e) => e.innerText.replace(/\s+/g, ' ')).catch(() => '');
   const n = (sel) => p.$$eval(`#voiePass ${sel}`, (l) => l.length).catch(() => 0);
   if (nom !== 'aucun') {
     ok(t.includes('LA VOIE PASS 1'), `${nom} : la voie PASS est sous le carnet`);
-    ok(await n('.tbf-noeud') === 6, `${nom} : six niveaux`);
+    ok(await n('.tbf-noeud') === 12, `${nom} : douze niveaux`);
   }
   if (nom === 'sans') {
-    ok(/3 CADEAUX PASS T.ATTENDENT/.test(t), 'sans PASS : 3 cadeaux attendent (achat + 2 paliers)');
-    ok(await n('[data-attend]') === 3, 'sans PASS : les trois brillent');
-    ok(await n('[data-verrou]') === 6, 'sans PASS : tout est sous cadenas');
+    ok(/4 CADEAUX PASS T.ATTENDENT/.test(t), 'sans PASS : 4 cadeaux attendent (40 tampons : 0, 10, 20 et 35)');
+    ok(await n('[data-attend]') === 4, 'sans PASS : les quatre brillent');
+    ok(await n('[data-verrou]') === 12, 'sans PASS : tout est sous cadenas');
+    ok(t.includes('STICKERS') && t.includes('AURA'), 'sans PASS : les nouveaux gains ont leur nom court');
     if (Date.now() < Date.parse('2026-12-01T00:00:00+01:00')) {
       ok(t.includes('1er décembre') && t.includes('BIENTÔT'), 'sans PASS : BIENTÔT et le 1er décembre avant l’ouverture');
     } else {
@@ -74,8 +75,8 @@ for (const [nom, c] of Object.entries(cas)) {
     }
   }
   if (nom === 'membre') {
-    ok(t.includes('NIVEAU 4 / 6'), 'membre : son niveau, servi par le serveur');
-    ok(await n('[data-etat=fait]') === 4, 'membre : quatre niveaux obtenus');
+    ok(t.includes('NIVEAU 7 / 12'), 'membre : son niveau, servi par le serveur');
+    ok(await n('[data-etat=fait]') === 7, 'membre : sept niveaux obtenus');
     ok(!t.includes('BIENTÔT') && !t.includes('VOIR LE PASS'), 'membre : rien à vendre');
   }
   if (nom === 'base') {

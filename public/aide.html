@@ -156,7 +156,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .voie-pass>.haut .quoi{flex:1;font-family:var(--banner);font-weight:700;font-size:16px;letter-spacing:.04em}
 .voie-pass>.haut .attend{max-width:42%;font-family:var(--banner);font-weight:700;font-size:12px;letter-spacing:.05em;
   line-height:1.2;color:var(--encre);text-align:right}
-.voie-pass .tbf-chemin{margin-top:14px}
+/* Douze niveaux : deux rangées de six, la corde reprend à la ligne. */
+.voie-pass .tbf-chemin{margin-top:14px;grid-auto-flow:row;grid-template-columns:repeat(6,minmax(0,1fr));row-gap:12px}
+.voie-pass .tbf-noeud:nth-child(6n)::before{display:none}
 /* La corde de la voie est d'or : on la reconnaît d'un coup d'œil sous le kraft du carnet. */
 .voie-pass .tbf-noeud:not(:last-child)::before{
   background:linear-gradient(180deg,rgba(7,9,12,.3),transparent 45%,rgba(7,9,12,.3)),
@@ -991,9 +993,10 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
      dit tout (`/api/abonnement` : `voie`, les niveaux ; `voies`, les miens,
      au niveau qu'il a compté) : la page ne décide d'aucun niveau pour un
      membre. Pour un joueur sans PASS, elle montre ce que ses tampons ont
-     déjà atteint, d'après les paliers du carnet servis — la règle du
-     serveur, `1 + paliers atteints` (`src/shared/pass.js`) : c'est ce qu'il
-     recevrait à l'achat, et c'est ce qui donne envie.
+     déjà atteint : ses tampons face aux seuils des douze niveaux, tirés du
+     dernier palier du carnet — la règle du serveur, `seuilsVoie` et
+     `niveauVoieDe` (`src/shared/pass.js`) : c'est ce qu'il recevrait à
+     l'achat, et c'est ce qui donne envie.
 
      Pendant la BASE (saison 0), la voie du PASS 1 n'a pas encore de carnet :
      elle se montre en aperçu, tout sous cadenas, avec le jour d'ouverture. */
@@ -1003,7 +1006,21 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
      l'annonce de la vitrine, l'emportent quand elles existent. */
   const OUVERTURE_PASS = Date.parse('2026-12-01T00:00:00+01:00');
   const GAINS_COURTS = { tenue: (v) => `TENUE ${entier(v.age)}`, cadre: () => 'CADRE',
-    cadre_anime: () => 'CADRE ANIMÉ', badge_or: () => 'BADGE OR' };
+    cadre_anime: () => 'CADRE ANIMÉ', badge_or: () => 'BADGE OR', cadre_profil: () => 'CADRE PROFIL',
+    stickers: () => 'STICKERS', fond_profil: () => 'FOND', entree: () => 'ENTRÉE',
+    titre: () => 'TITRE', aura: () => 'AURA' };
+  /* Les seuils des niveaux, comme `seuilsVoie` (src/shared/pass.js) : la part
+     de chaque niveau sur le dernier palier du carnet, strictement croissants. */
+  function seuilsDeLaVoie(voie, seuilsCarnet) {
+    const fin = Math.max(0, ...seuilsCarnet.map(Number).filter(Number.isFinite)) || 140;
+    let avant = -1;
+    return voie.map((v) => {
+      const part = Number(v.part);
+      const t = Math.max(Math.round((Number.isFinite(part) ? part : 0) * fin), avant + 1);
+      avant = t;
+      return t;
+    });
+  }
 
   function ouverturePass() {
     const servie = Date.parse(ABO?.offre?.bientot?.ouvre ?? '');
@@ -1036,21 +1053,22 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     const couleur = /^#[0-9a-f]{3,8}$/i.test(String(p.couleur ?? '')) ? p.couleur : '#c9772e';
 
     const paliers = (c?.paliers ?? []).filter((x) => x && typeof x === 'object');
-    const atteints = apercu ? 0 : paliers.filter((x) => x.etat === 'pret' || x.etat === 'reclame').length;
-    const niveau = membre ? entier(mienne.niveau) : apercu ? 0 : 1 + atteints;
+    const seuils = membre && Array.isArray(mienne.seuilsVoie) && mienne.seuilsVoie.length === voie.length
+      ? mienne.seuilsVoie.map(entier)
+      : seuilsDeLaVoie(voie, membre && Array.isArray(mienne.seuils) ? mienne.seuils : paliers.map((x) => entier(x.tampons)));
+    const atteints = apercu ? 0 : seuils.filter((t) => entier(c?.tampons) >= t).length;
+    const niveau = membre ? entier(mienne.niveau) : apercu ? 0 : Math.max(1, atteints);
     const attendent = membre || apercu ? 0 : voie.filter((v) => entier(v.niveau) <= niveau).length;
-    const seuils = membre && Array.isArray(mienne.seuils) ? mienne.seuils : paliers.map((x) => entier(x.tampons));
     /* Le serveur dit si le PASS s'achète déjà (`offre.bientot`, pendant la
        BASE) ; un serveur d'avant ne le dit pas : on compte alors jusqu'au jour. */
     const bientot = !membre && !a.actif && (a.offre && 'bientot' in a.offre
       ? Boolean(a.offre.bientot) : Date.now() < ouverturePass());
 
-    const noeuds = voie.map((v) => {
+    const noeuds = voie.map((v, i) => {
       const atteint = entier(v.niveau) <= niveau;
       const court = esc((GAINS_COURTS[v.gain] ?? (() => v.nom))(v));
-      const seuil = entier(v.paliers) ? entier(seuils[entier(v.paliers) - 1]) : 0;
-      const quand = !entier(v.paliers) ? 'à l’achat'
-        : seuil ? `à ${seuil} tampons` : `au palier ${entier(v.paliers)} du carnet`;
+      const seuil = entier(seuils[i]);
+      const quand = seuil ? `à ${seuil} tampons` : 'à l’achat';
       const dit = `<span class="tbf-vh">Niveau ${entier(v.niveau)}, ${esc(v.nom)}, ${esc(quand)} :</span>`;
       if (membre && atteint) {
         return `<li class="tbf-noeud" data-etat="fait">${dit}<span class="tbf-vh">obtenu</span>
@@ -1063,7 +1081,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
           <span class="tbf-noeud-l" aria-hidden="true">${court}</span></li>`;
       }
       return `<li class="tbf-noeud"${membre ? '' : ' data-verrou'}>${dit}<span class="tbf-vh">pas encore</span>
-          <span class="tbf-noeud-k" aria-hidden="true">${seuil || (entier(v.paliers) ? entier(v.niveau) : 'P')}</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${seuil || 'P'}</span>
           <span class="tbf-noeud-l" aria-hidden="true">${court}</span></li>`;
     });
 

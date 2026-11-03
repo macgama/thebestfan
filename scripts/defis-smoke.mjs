@@ -87,9 +87,10 @@ check('un défi : 100 écharpes et 2 tampons', JSON.stringify(gainDefi('serie'))
 check('le défi PASS : 10 points de voie, rien d’autre', JSON.stringify(gainDefi('pass')) === '{"echarpes":0,"tampons":0,"points":10}');
 check('sans saison : pas de tampons promis', gainDefi('stuff', { avecSaison: false }).tampons === 0);
 check('les points de voie s’ajoutent aux tampons face aux seuils',
-  niveauVoieDe({ tampons: 50, points: 0, seuils: [60, 120] }) === 1
-  && niveauVoieDe({ tampons: 50, points: 10, seuils: [60, 120] }) === 2
-  && niveauVoieDe({ tampons: 0, points: 999, seuils: [] }) === 1);
+  niveauVoieDe({ tampons: 50, points: 0, seuils: [60, 120] }) === 5
+  && niveauVoieDe({ tampons: 50, points: 10, seuils: [60, 120] }) === 6
+  && niveauVoieDe({ tampons: 0, points: 0, seuils: [] }) === 1
+  && niveauVoieDe({ tampons: 0, points: 999, seuils: [] }) === 12);
 
 /* ================================================================= la base */
 

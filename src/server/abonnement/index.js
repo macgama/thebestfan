@@ -3,7 +3,7 @@ import { reglage } from '../../shared/reglages.js';
 import { CATALOGUE, enEuros } from '../../shared/boutique.js';
 import { carnetDe } from '../../shared/saison.js';
 import {
-  passAvecTenue, passDe, VOIE_PASS, niveauVoieDe, ageTenue, saisonsCouvertes,
+  passAvecTenue, passDe, VOIE_PASS, niveauVoieDe, etoilesDe, seuilsVoie, ageTenue, saisonsCouvertes,
   tenueReservee, estTardif, SUFFIXE_TARD, anciensPassEnVente, voieSelonAchat,
 } from '../../shared/pass.js';
 import { saisonEnCours, toutesLesSaisons } from '../fanzzy/saisons.js';
@@ -369,9 +369,13 @@ export function createAbonnement({ pool, requireAuth }) {
       }
       /* `tampons` reste le carnet seul ; les points des défis PASS
          s'y ajoutent pour le niveau (`niveauVoieDe`). */
-      const v = voieSelonAchat(n, niveauVoieDe({ tampons, points, seuils }), { tardif });
+      const v = voieSelonAchat(n, niveauVoieDe({ tampons, points, seuils }),
+        { tardif, etoiles: etoilesDe({ tampons, points, seuils }) });
+      /* `seuils` : les paliers du carnet ; `seuilsVoie` : ceux des douze
+         niveaux, tirés du carnet (`seuilsVoie`, shared/pass.js). */
       out.push({ ...v, tenue: passDe(n).tenue, ageTenue: ageTenue(v.niveau),
-        tampons, points, seuils, saisonId: s?.id ?? null, lancee: Boolean(s?.lancee),
+        tampons, points, seuils, seuilsVoie: seuilsVoie(seuils),
+        saisonId: s?.id ?? null, lancee: Boolean(s?.lancee),
         close: saisonPassee(n) });
     }
     return out;
@@ -385,7 +389,7 @@ export function createAbonnement({ pool, requireAuth }) {
     if (!v.length) return null;
     const d = v[v.length - 1];
     return { saison: d.saison, niveau: d.niveau, couleur: d.couleur, cadre: d.cadre, or: d.or,
-      nombre: v.length };
+      etoiles: d.etoiles ?? 0, gains: d.gains ?? [], nombre: v.length };
   }
 
   /**

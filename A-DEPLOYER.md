@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**La voie PASS passe à 12 niveaux** (branche `claude/project-thread-plmj5o`,
+3 novembre 2026, plan « tout gratuit » validé par Gaël). Construction seule,
+**sans schéma**.
+
+- Douze niveaux sur des seuils de tampons (carnet à 140 : 0, 10, 20, 35, 50, 65,
+  75, 90, 105, 120, 130, 140) : tenue aux âges 1, 2 et 3 (niveaux 1, 4, 7), cadre
+  de profil, stickers, fond animé, cadre de carte puis animé, entrée, titre, aura,
+  badge et pseudo en or ; une étoile tous les 15 tampons après.
+- Le carnet de /aide les montre en deux rangées de six ; la page du PASS aussi.
+- Les âges de la tenue tombent aux mêmes tampons qu'avant (35 et 75) ; le cadre
+  animé passe de 110 à 120 tampons. Sans effet aujourd'hui : la voie du PASS 1
+  commence avec sa saison, le 1er décembre.
+- Les nouveaux gains (cadre de profil, stickers…) ne sont pas encore dessinés dans
+  le jeu : ils arrivent avant le 1er décembre.
+- Après la mise en ligne : /aide › DE LA SAISON, regarder la voie sous le carnet.
+
+---
+
 **Clignement : 9 tenues RP/AN et 225 tenues SU** (branche
 `claude/cligne-rp-an-su`, 3 novembre 2026). Construction seule, **sans schéma**.
 

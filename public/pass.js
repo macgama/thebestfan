@@ -15,21 +15,23 @@
   const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
     (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
   const couleurSure = (c) => (/^#[0-9a-f]{3,8}$/i.test(String(c ?? '')) ? c : '#c9772e');
-  const MAX = 6;
+  const MAX = 12;
 
   /** L'écusson. `taille` : '' (en ligne), 'moyen', 'grand'. `null` sans badge. */
   function badge(b, taille = '') {
     if (!b || !Number.isFinite(Number(b.saison))) return '';
     const n = Number(b.saison);
     const niveau = Number(b.niveau) || 0;
-    const titre = `PASS ${n}${niveau ? ` · niveau ${niveau} sur ${MAX}` : ''}`;
+    const etoiles = Math.max(0, Math.floor(Number(b.etoiles) || 0));
+    const titre = `PASS ${n}${niveau ? ` · niveau ${niveau} sur ${MAX}` : ''}${etoiles ? ` · ★${etoiles}` : ''}`;
     const crans = niveau && taille
       ? `<span class="tbf-pass-crans" style="--pass:${couleurSure(b.couleur)}" aria-hidden="true">${
         Array.from({ length: MAX }, (_, i) => `<i${i < niveau ? ' data-on' : ''}></i>`).join('')}</span>`
       : '';
     const ecusson = `<span class="tbf-pass-badge${taille ? ` tbf-pass-badge--${taille}` : ''}"
       style="--pass:${couleurSure(b.couleur)}"${b.or ? ' data-or' : ''}
-      role="img" aria-label="${esc(titre)}" title="${esc(titre)}"><b>P${n}</b></span>`;
+      role="img" aria-label="${esc(titre)}" title="${esc(titre)}"><b>P${n}</b>${
+      etoiles ? `<i class="tbf-pass-etoiles" aria-hidden="true">★${etoiles > 1 ? etoiles : ''}</i>` : ''}</span>`;
     return crans
       ? `<span style="display:inline-flex;flex-direction:column;align-items:center">${ecusson}${crans}</span>`
       : ecusson;
