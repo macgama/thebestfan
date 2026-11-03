@@ -1,5 +1,19 @@
 # À déposer sur Infomaniak
 
+**Clignement : 9 tenues RP/AN et 225 tenues SU** (branche
+`claude/cligne-rp-an-su`, 3 novembre 2026). Construction seule, **sans schéma**.
+
+- Avant le déploiement, envoyer les images (neutre, portrait et cligne.* des
+  tenues touchées) avec `scripts/envoyer-images.sh` : elles ne sont plus dans git.
+- RP6-e1, RP12-e1, RP22-e2, AN16-e2, AN64-e1, AN29-e3, AN40-e2, AN32-e2, AN38-e3,
+  SU18-e2 apocalyptique, SU20-e2 apocalyptique et SU3-e2 préhistorique avaient les
+  yeux fermés au repos : neutre et portrait sont réécrits, yeux ouverts.
+- SU10 e2 préhistorique et apocalyptique ne clignent pas (monocle), le reste de SU oui.
+- Retouches Artlist en mode Unlimited : 0 crédit.
+- Après la mise en ligne : ouvrir quelques fiches SU (SU27, SU31, SU33) et attendre un clignement.
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH

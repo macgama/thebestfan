@@ -1,6 +1,6 @@
 {
   "id": "SU20",
-  "rev": 18,
+  "rev": 19,
   "evolutions": {
     "e1": {
       "skins": {
@@ -81,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b65fb295408e"
+          "sha": "b65fb295408e",
+          "cligne": true
         },
         "halloween": {
           "etats": [

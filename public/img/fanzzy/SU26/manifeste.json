@@ -1,6 +1,6 @@
 {
   "id": "SU26",
-  "rev": 16,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -149,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f60c32498594"
+          "sha": "f60c32498594",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
