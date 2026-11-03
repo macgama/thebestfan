@@ -148,6 +148,7 @@
     "pass:reprise-essai": "node --env-file-if-exists=.env scripts/pass-reprise.mjs",
     "pass:reprise": "node --env-file-if-exists=.env scripts/pass-reprise.mjs --pour-de-bon",
     "pass:smoke": "node scripts/pass-smoke.mjs",
+    "defis:smoke": "node scripts/defis-smoke.mjs",
     "boosters:ui": "node scripts/boosters-ui-smoke.mjs",
     "repetition:smoke": "node scripts/repetition-smoke.mjs",
     "reglages:smoke": "node scripts/reglages-smoke.mjs",

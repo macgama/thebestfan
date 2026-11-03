@@ -160,6 +160,8 @@ export function createStore(pool) {
           WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
         `DELETE FROM compteurs_jour
           WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
+        `DELETE FROM defis_semaine
+          WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
         `UPDATE user_wallet SET rangs_vus = NULL, visite_a = NULL, instantane = NULL
           WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
       ];

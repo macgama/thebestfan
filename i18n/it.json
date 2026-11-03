@@ -8558,5 +8558,21 @@
  "La pluie horizontale, le brouillard de novembre, l’orage à la 80e : le ciel qui décide du match sans jouer. Une série instable, pour ceux qui aiment parier.": "La pioggia orizzontale, la nebbia di novembre, il temporale dell’80°: il cielo che decide la partita senza giocare. Una serie instabile, per chi ama scommettere.",
  "Ceux qui regardent le match de chez eux et savent mieux que tout le monde. La série la plus défensive du jeu : on ne pousse pas depuis un canapé, on commente.": "Quelli che guardano la partita da casa e ne sanno più di tutti. La serie più difensiva del gioco: dal divano non si spinge, si commenta.",
  "Les supporters des vingt clubs de Premier League, trois par club, chacun avec le cri de son club. Debout sous la pluie, comme là-bas.": "I tifosi dei venti club di Premier League, tre per club, ognuno con il coro del suo club. In piedi sotto la pioggia, come laggiù.",
- "Ce qui vit sous les gradins, et ce qui n’aurait jamais dû trouver un billet. Des Fanzzy étranges, et drôles.": "Ciò che vive sotto le gradinate, e ciò che non avrebbe mai dovuto trovare un biglietto. Fanzzy strani, e divertenti."
+ "Ce qui vit sous les gradins, et ce qui n’aurait jamais dû trouver un billet. Des Fanzzy étranges, et drôles.": "Ciò che vive sotto le gradinate, e ciò che non avrebbe mai dovuto trovare un biglietto. Fanzzy strani, e divertenti.",
+ "+{0} VOIE PASS": "+{0} PERCORSO PASS",
+ "VOIE PASS": "PERCORSO PASS",
+ "nouveaux dans {0}": "nuove tra {0}",
+ "Un duel compte si un Fanzzy de la série ou dans la tenue du défi est monté en tribune.": "Un duello conta se un Fanzzy della serie o con la tenuta della sfida è salito in tribuna.",
+ "Une pièce compte si ton Fanzzy du Virage la porte dans ton deck.": "Un pezzo conta se il tuo Fanzzy della Curva lo porta nel tuo mazzo.",
+ "LES DÉFIS DE LA SEMAINE": "LE SFIDE DELLA SETTIMANA",
+ "LA SEMAINE DERNIÈRE<0>encore à récupérer</0>": "LA SETTIMANA SCORSA<0>ancora da ritirare</0>",
+ "<0>Les défis de la semaine</0> : chaque lundi, trois défis tirés parmi ce que tu possèdes (une de tes séries, une de tes pièces portée au Virage, une de tes tenues). Chacun rapporte des écharpes et des tampons du carnet. Les membres d’un PASS en ont un quatrième, dans la tenue de leur PASS, qui fait avancer leur voie PASS.": "<0>Le sfide della settimana</0>: ogni lunedì, tre sfide estratte da ciò che possiedi (una delle tue serie, uno dei tuoi pezzi portato in Curva, una delle tue tenute). Ognuna fa guadagnare sciarpe e timbri dell’album. I membri di un PASS ne hanno una quarta, con la tenuta del loro PASS, che fa avanzare il loro percorso PASS.",
+ "C’est quoi, les défis de la semaine ?": "Cosa sono le sfide della settimana?",
+ "Chaque lundi, trois défis tirés parmi ce que tu possèdes : jouer des duels avec un Fanzzy d’une de tes séries, chanter au Grand Virage en portant une de tes pièces, jouer des duels avec un Fanzzy dans une de tes tenues. Chacun rapporte {0} écharpes et {1} tampons du carnet. Un duel compte s’il a duré au moins une minute et que tu ne l’as pas quitté ; une pièce compte si ton Fanzzy du Virage la porte dans ton deck. Un défi fini se récupère jusqu’à la fin de la semaine suivante.": "Ogni lunedì, tre sfide estratte da ciò che possiedi: giocare duelli con un Fanzzy di una delle tue serie, cantare nella Grande Curva portando uno dei tuoi pezzi, giocare duelli con un Fanzzy con una delle tue tenute. Ognuna fa guadagnare {0} sciarpe e {1} timbri dell’album. Un duello conta se è durato almeno un minuto e non l’hai abbandonato; un pezzo conta se il tuo Fanzzy della Curva lo porta nel tuo mazzo. Una sfida finita si ritira fino alla fine della settimana dopo.",
+ "Et le défi du PASS ?": "E la sfida del PASS?",
+ "Les membres d’un PASS ont un quatrième défi : jouer des duels dans la tenue de leur PASS. Il fait avancer la voie PASS (la tenue à ses âges, le cadre, le badge), et rien d’autre : ni écharpes, ni tampons du carnet.": "I membri di un PASS hanno una quarta sfida: giocare duelli con la tenuta del loro PASS. Fa avanzare il percorso PASS (la tenuta alle sue età, la cornice, il badge), e nient’altro: né sciarpe, né timbri dell’album.",
+ "Joue {0} duels avec un Fanzzy {1}": "Gioca {0} duelli con un Fanzzy {1}",
+ "Chante {0} fois au Grand Virage en portant « {1} »": "Canta {0} volte nella Grande Curva portando «{1}»",
+ "Joue {0} duels avec un Fanzzy en tenue « {1} »": "Gioca {0} duelli con un Fanzzy in tenuta «{1}»",
+ "Joue {0} duels en tenue « {1} », celle de ton PASS": "Gioca {0} duelli in tenuta «{1}», quella del tuo PASS"
 }

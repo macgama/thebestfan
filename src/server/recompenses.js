@@ -63,9 +63,17 @@ import { grandLivreFerme } from './auth/schema.js';
     `cadeau` et `defi` (28 octobre 2026) : entre amis. Le cadeau du jour, une
     fois par cadeau — la clé est son numéro, `C<id>` pour celui qui reçoit,
     `M<id>` pour celui qui offre ; le défi de la semaine, une fois par ami et
-    par semaine — la clé dit le lundi et l'ami. */
+    par semaine — la clé dit le lundi et l'ami.
+
+    `hebdo` et `voie` (3 novembre 2026) : les défis de la semaine
+    (`src/server/defis/`), une fois par défi — la clé dit le lundi et le rang.
+    `hebdo` verse des écharpes et des tampons du carnet ; `voie`, le défi des
+    membres d'un PASS, ne verse que des **points de la voie PASS**, rangés
+    dans la colonne `tampons` : seule la voie les lit (`abonnement`), jamais
+    le carnet, qui ne compte que `mission`, `sachet` et `hebdo`. */
 export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
-  'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi'];
+  'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi',
+  'hebdo', 'voie'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',

@@ -443,7 +443,7 @@ que `raretes` les a rangées.
   indisponible. Puis, une fois : `npm run pass:reprise-essai` et
   `npm run pass:reprise` (voir `serveur/PASS.md`).
 
-Contrôle : `SHOW TABLES;` doit en lister **63**.
+Contrôle : `SHOW TABLES;` doit en lister **64**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

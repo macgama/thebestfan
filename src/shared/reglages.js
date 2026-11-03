@@ -715,6 +715,35 @@ export const REGLAGES = [
       'tirage, comme les missions : un changement vaut pour le lendemain. Il ' +
       'entre dans la réserve même pleine.' },
 
+  /* ------------------------------------------- les défis de la semaine
+
+     Trois défis par joueur, tirés le lundi parmi ce qu'il possède (une série,
+     une pièce portée, une tenue), et un quatrième pour les membres d'un PASS
+     qui court (`src/shared/defis.js`). Montants copiés au tirage : un
+     changement vaut pour la semaine suivante. */
+  { cle: 'defis.actif', section: 'quotidien', type: 'booleen',
+    titre: 'Proposer les défis de la semaine', defaut: true,
+    aide: 'Éteint : plus de tirage, plus de progression, et les réclamations ' +
+      'de défis sont refusées. Rallumé, un défi terminé reste récupérable ' +
+      'jusqu’à la fin de la semaine suivante.' },
+
+  { cle: 'defis.echarpes', section: 'quotidien', type: 'entier',
+    titre: 'Un défi de la semaine rapporte', unite: 'écharpes', min: 0, max: 600, defaut: 100,
+    aide: 'Comme une mission difficile. Copié au tirage du lundi : un ' +
+      'changement vaut pour la semaine suivante.' },
+
+  { cle: 'defis.tampons', section: 'quotidien', type: 'entier',
+    titre: 'Un défi de la semaine rapporte aussi', unite: 'tampons', min: 0, max: 5, defaut: 2,
+    aide: 'Des tampons du carnet de la saison, comme une mission difficile. ' +
+      'Sans saison ouverte, le défi n’en promet aucun.' },
+
+  { cle: 'defis.points_voie', section: 'quotidien', type: 'entier',
+    titre: 'Le défi PASS fait avancer la voie PASS de', unite: 'points', min: 0, max: 60, defaut: 10,
+    aide: 'Le défi réservé aux membres d’un PASS (jouer sa tenue de PASS) ne ' +
+      'donne que des points de la voie PASS, comptés comme des tampons pour ' +
+      'ses seuls niveaux : du visuel, jamais d’écharpes ni de tampons du ' +
+      'carnet (choix de Gaël). À 0, il n’est plus proposé.' },
+
   { cle: 'quotidien.retour_heures', section: 'quotidien', type: 'entier',
     titre: 'Une nouvelle visite commence après', unite: 'heures d’absence',
     min: 1, max: 48, defaut: 3,
