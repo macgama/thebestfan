@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Voie PASS : le titre et le pseudo en or sur le profil** (branche
+`claude/project-thread-plmj5o`, 3 novembre 2026). Construction seule, **sans
+schéma**.
+
+- Niveau 9 : « Chasseur de mammouth » (titre du PASS 1) sous le pseudo, sur la
+  carte de Mon profil. Niveau 12 : le pseudo en or, avec un reflet lent (coupé en
+  mode calme).
+- Sans effet visible avant le 1er décembre : la voie du PASS 1 commence avec sa
+  saison.
+
+---
+
 **La voie PASS passe à 12 niveaux** (branche `claude/project-thread-plmj5o`,
 3 novembre 2026, plan « tout gratuit » validé par Gaël). Construction seule,
 **sans schéma**.
