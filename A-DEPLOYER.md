@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**« Voir la vidéo » dans Comment jouer › Les Fanzzy** (branche
+`claude/project-thread-j0jy2q`, 3 novembre 2026). Construction seule, pas de
+schéma. Le bouton reste **caché tant que la vidéo n'est pas sur le serveur** :
+rien ne change à l'écran avant. La vidéo (`public/video/tuto-fanzzy-1.mp4`,
+puis une par langue `tuto-fanzzy-1-de.mp4`… avec la voix off) part avec les
+images : `npm run images:envoyer`, qui envoie désormais aussi `public/video`.
+
+---
+
 **L'équipement d'un championnat ne sort que de son booster** (branche
 `claude/project-thread-zlv4w0`, 3 novembre 2026, carte de Gaël « Seulement dans
 son booster »). Construction seule, pas de schéma, puis redémarrage.
