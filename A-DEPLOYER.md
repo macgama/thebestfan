@@ -9,8 +9,9 @@
   de profil, stickers, fond animé, cadre de carte puis animé, entrée, titre, aura,
   badge et pseudo en or ; une étoile tous les 15 tampons après.
 - Le carnet de /aide les montre en deux rangées de six ; la page du PASS aussi.
-- Un membre actuel peut changer de niveau (les seuils ont bougé) ; rien ne lui est
-  retiré qui soit déjà porté (la tenue du 3e âge vient maintenant au niveau 7).
+- Les âges de la tenue tombent aux mêmes tampons qu'avant (35 et 75) ; le cadre
+  animé passe de 110 à 120 tampons. Sans effet aujourd'hui : la voie du PASS 1
+  commence avec sa saison, le 1er décembre.
 - Les nouveaux gains (cadre de profil, stickers…) ne sont pas encore dessinés dans
   le jeu : ils arrivent avant le 1er décembre.
 - Après la mise en ligne : /aide › DE LA SAISON, regarder la voie sous le carnet.
