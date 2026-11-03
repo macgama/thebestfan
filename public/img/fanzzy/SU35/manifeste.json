@@ -1,6 +1,6 @@
 {
   "id": "SU35",
-  "rev": 16,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -81,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "580d39d150bb"
+          "sha": "580d39d150bb",
+          "cligne": true
         },
         "halloween": {
           "etats": [
