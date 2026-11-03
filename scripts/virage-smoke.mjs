@@ -1412,6 +1412,15 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
        celui qui les joue ou sur sa tribune. */
     'a-rp-rouille', 'a-rp-horsjeu', 'a-rp-bache-neuve',
 
+    /* LA RELANCE, les PASS et les mécaniques neuves (novembre 2026) : toutes
+       visent quelqu'un en face — ses gestes, sa main, sa prochaine poussée,
+       ses prix, sa dernière carte. L'Éclaircie est un Filet court (sans objet,
+       plus bas). */
+    'a-sifflets', 'a-larsen', 'a-echarpe-tendue', 'a-faussenote',
+    'a-hc-pause-pub', 'a-hc-plaid', 'a-hc-ralenti', 'a-mt-averse',
+    'a-rv-frisson', 'a-rv-brume', 'a-chambrage', 'a-piege',
+    'a-hc-telecommande', 'a-gd-peage', 'a-gd-parcage-visiteur', 'a-rv-malediction',
+
     /* **Ces deux-là ne visent personne : elles n'ont pas d'objet.**
 
        L'Arbitre fait entrer quelqu'un du banc, la Relève fait grandir un
@@ -1426,7 +1435,7 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
 
        Le Filet de chantier les a rejointes le 27 octobre 2026 : il protège
        des entraves d'en face, et personne n'entrave au Virage. */
-    'a-arbitre', 'a-releve', 'a-rp-filet'];
+    'a-arbitre', 'a-releve', 'a-rp-filet', 'a-mt-eclaircie'];
 
   /* **Toute carte jouable ici a un effet que le moteur sait rendre.**
 
