@@ -1,0 +1,841 @@
+cle	fichier	reference	skin_dans_le_jeu
+GD1-e1-halloween	halloween/GD1-e1-halloween.txt	public/img/fanzzy/GD1/e1/halloween/neutre.png	oui
+GD1-e2-halloween	halloween/GD1-e2-halloween.txt	public/img/fanzzy/GD1/e2/halloween/neutre.png	oui
+GD1-e3-halloween	halloween/GD1-e3-halloween.txt	public/img/fanzzy/GD1/e3/halloween/neutre.png	oui
+GD2-e1-halloween	halloween/GD2-e1-halloween.txt	public/img/fanzzy/GD2/e1/halloween/neutre.png	oui
+GD2-e2-halloween	halloween/GD2-e2-halloween.txt	public/img/fanzzy/GD2/e2/halloween/neutre.png	oui
+GD2-e3-halloween	halloween/GD2-e3-halloween.txt	public/img/fanzzy/GD2/e3/halloween/neutre.png	oui
+GD3-e1-halloween	halloween/GD3-e1-halloween.txt	public/img/fanzzy/GD3/e1/halloween/neutre.png	oui
+GD3-e2-halloween	halloween/GD3-e2-halloween.txt	public/img/fanzzy/GD3/e2/halloween/neutre.png	oui
+GD3-e3-halloween	halloween/GD3-e3-halloween.txt	public/img/fanzzy/GD3/e3/halloween/neutre.png	non : attendre le skin
+GD4-e1-halloween	halloween/GD4-e1-halloween.txt	public/img/fanzzy/GD4/e1/halloween/neutre.png	oui
+GD4-e2-halloween	halloween/GD4-e2-halloween.txt	public/img/fanzzy/GD4/e2/halloween/neutre.png	oui
+GD4-e3-halloween	halloween/GD4-e3-halloween.txt	public/img/fanzzy/GD4/e3/halloween/neutre.png	oui
+GD5-e1-halloween	halloween/GD5-e1-halloween.txt	public/img/fanzzy/GD5/e1/halloween/neutre.png	oui
+GD5-e2-halloween	halloween/GD5-e2-halloween.txt	public/img/fanzzy/GD5/e2/halloween/neutre.png	oui
+GD5-e3-halloween	halloween/GD5-e3-halloween.txt	public/img/fanzzy/GD5/e3/halloween/neutre.png	oui
+GD6-e1-halloween	halloween/GD6-e1-halloween.txt	public/img/fanzzy/GD6/e1/halloween/neutre.png	oui
+GD6-e2-halloween	halloween/GD6-e2-halloween.txt	public/img/fanzzy/GD6/e2/halloween/neutre.png	non : attendre le skin
+GD6-e3-halloween	halloween/GD6-e3-halloween.txt	public/img/fanzzy/GD6/e3/halloween/neutre.png	oui
+GD7-e1-halloween	halloween/GD7-e1-halloween.txt	public/img/fanzzy/GD7/e1/halloween/neutre.png	oui
+GD7-e2-halloween	halloween/GD7-e2-halloween.txt	public/img/fanzzy/GD7/e2/halloween/neutre.png	oui
+GD7-e3-halloween	halloween/GD7-e3-halloween.txt	public/img/fanzzy/GD7/e3/halloween/neutre.png	oui
+GD8-e1-halloween	halloween/GD8-e1-halloween.txt	public/img/fanzzy/GD8/e1/halloween/neutre.png	oui
+GD8-e2-halloween	halloween/GD8-e2-halloween.txt	public/img/fanzzy/GD8/e2/halloween/neutre.png	oui
+GD8-e3-halloween	halloween/GD8-e3-halloween.txt	public/img/fanzzy/GD8/e3/halloween/neutre.png	non : attendre le skin
+GD9-e1-halloween	halloween/GD9-e1-halloween.txt	public/img/fanzzy/GD9/e1/halloween/neutre.png	non : attendre le skin
+GD9-e2-halloween	halloween/GD9-e2-halloween.txt	public/img/fanzzy/GD9/e2/halloween/neutre.png	oui
+GD9-e3-halloween	halloween/GD9-e3-halloween.txt	public/img/fanzzy/GD9/e3/halloween/neutre.png	non : attendre le skin
+GD10-e1-halloween	halloween/GD10-e1-halloween.txt	public/img/fanzzy/GD10/e1/halloween/neutre.png	oui
+GD11-e1-halloween	halloween/GD11-e1-halloween.txt	public/img/fanzzy/GD11/e1/halloween/neutre.png	oui
+GD14-e1-halloween	halloween/GD14-e1-halloween.txt	public/img/fanzzy/GD14/e1/halloween/neutre.png	oui
+GD15-e1-halloween	halloween/GD15-e1-halloween.txt	public/img/fanzzy/GD15/e1/halloween/neutre.png	non : attendre le skin
+GD16-e1-halloween	halloween/GD16-e1-halloween.txt	public/img/fanzzy/GD16/e1/halloween/neutre.png	oui
+GD17-e1-halloween	halloween/GD17-e1-halloween.txt	public/img/fanzzy/GD17/e1/halloween/neutre.png	oui
+GD17-e2-halloween	halloween/GD17-e2-halloween.txt	public/img/fanzzy/GD17/e2/halloween/neutre.png	oui
+GD17-e3-halloween	halloween/GD17-e3-halloween.txt	public/img/fanzzy/GD17/e3/halloween/neutre.png	oui
+GD18-e1-halloween	halloween/GD18-e1-halloween.txt	public/img/fanzzy/GD18/e1/halloween/neutre.png	oui
+GD18-e2-halloween	halloween/GD18-e2-halloween.txt	public/img/fanzzy/GD18/e2/halloween/neutre.png	oui
+GD18-e3-halloween	halloween/GD18-e3-halloween.txt	public/img/fanzzy/GD18/e3/halloween/neutre.png	oui
+GD19-e1-halloween	halloween/GD19-e1-halloween.txt	public/img/fanzzy/GD19/e1/halloween/neutre.png	non : attendre le skin
+GD19-e2-halloween	halloween/GD19-e2-halloween.txt	public/img/fanzzy/GD19/e2/halloween/neutre.png	non : attendre le skin
+GD19-e3-halloween	halloween/GD19-e3-halloween.txt	public/img/fanzzy/GD19/e3/halloween/neutre.png	non : attendre le skin
+GD20-e1-halloween	halloween/GD20-e1-halloween.txt	public/img/fanzzy/GD20/e1/halloween/neutre.png	oui
+GD20-e2-halloween	halloween/GD20-e2-halloween.txt	public/img/fanzzy/GD20/e2/halloween/neutre.png	oui
+GD20-e3-halloween	halloween/GD20-e3-halloween.txt	public/img/fanzzy/GD20/e3/halloween/neutre.png	oui
+GD21-e1-halloween	halloween/GD21-e1-halloween.txt	public/img/fanzzy/GD21/e1/halloween/neutre.png	oui
+GD21-e2-halloween	halloween/GD21-e2-halloween.txt	public/img/fanzzy/GD21/e2/halloween/neutre.png	oui
+GD21-e3-halloween	halloween/GD21-e3-halloween.txt	public/img/fanzzy/GD21/e3/halloween/neutre.png	oui
+GD22-e1-halloween	halloween/GD22-e1-halloween.txt	public/img/fanzzy/GD22/e1/halloween/neutre.png	oui
+GD22-e2-halloween	halloween/GD22-e2-halloween.txt	public/img/fanzzy/GD22/e2/halloween/neutre.png	oui
+GD22-e3-halloween	halloween/GD22-e3-halloween.txt	public/img/fanzzy/GD22/e3/halloween/neutre.png	oui
+GD23-e1-halloween	halloween/GD23-e1-halloween.txt	public/img/fanzzy/GD23/e1/halloween/neutre.png	oui
+GD23-e2-halloween	halloween/GD23-e2-halloween.txt	public/img/fanzzy/GD23/e2/halloween/neutre.png	oui
+GD23-e3-halloween	halloween/GD23-e3-halloween.txt	public/img/fanzzy/GD23/e3/halloween/neutre.png	non : attendre le skin
+GD24-e1-halloween	halloween/GD24-e1-halloween.txt	public/img/fanzzy/GD24/e1/halloween/neutre.png	oui
+GD24-e2-halloween	halloween/GD24-e2-halloween.txt	public/img/fanzzy/GD24/e2/halloween/neutre.png	oui
+GD24-e3-halloween	halloween/GD24-e3-halloween.txt	public/img/fanzzy/GD24/e3/halloween/neutre.png	oui
+GD25-e1-halloween	halloween/GD25-e1-halloween.txt	public/img/fanzzy/GD25/e1/halloween/neutre.png	oui
+GD25-e2-halloween	halloween/GD25-e2-halloween.txt	public/img/fanzzy/GD25/e2/halloween/neutre.png	oui
+GD25-e3-halloween	halloween/GD25-e3-halloween.txt	public/img/fanzzy/GD25/e3/halloween/neutre.png	oui
+GD26-e1-halloween	halloween/GD26-e1-halloween.txt	public/img/fanzzy/GD26/e1/halloween/neutre.png	oui
+GD26-e2-halloween	halloween/GD26-e2-halloween.txt	public/img/fanzzy/GD26/e2/halloween/neutre.png	oui
+GD26-e3-halloween	halloween/GD26-e3-halloween.txt	public/img/fanzzy/GD26/e3/halloween/neutre.png	oui
+GD27-e1-halloween	halloween/GD27-e1-halloween.txt	public/img/fanzzy/GD27/e1/halloween/neutre.png	oui
+GD27-e2-halloween	halloween/GD27-e2-halloween.txt	public/img/fanzzy/GD27/e2/halloween/neutre.png	oui
+GD27-e3-halloween	halloween/GD27-e3-halloween.txt	public/img/fanzzy/GD27/e3/halloween/neutre.png	non : attendre le skin
+GD28-e1-halloween	halloween/GD28-e1-halloween.txt	public/img/fanzzy/GD28/e1/halloween/neutre.png	oui
+GD28-e2-halloween	halloween/GD28-e2-halloween.txt	public/img/fanzzy/GD28/e2/halloween/neutre.png	oui
+GD28-e3-halloween	halloween/GD28-e3-halloween.txt	public/img/fanzzy/GD28/e3/halloween/neutre.png	oui
+GD29-e1-halloween	halloween/GD29-e1-halloween.txt	public/img/fanzzy/GD29/e1/halloween/neutre.png	oui
+GD29-e2-halloween	halloween/GD29-e2-halloween.txt	public/img/fanzzy/GD29/e2/halloween/neutre.png	oui
+GD29-e3-halloween	halloween/GD29-e3-halloween.txt	public/img/fanzzy/GD29/e3/halloween/neutre.png	oui
+GD30-e1-halloween	halloween/GD30-e1-halloween.txt	public/img/fanzzy/GD30/e1/halloween/neutre.png	oui
+GD30-e2-halloween	halloween/GD30-e2-halloween.txt	public/img/fanzzy/GD30/e2/halloween/neutre.png	oui
+GD30-e3-halloween	halloween/GD30-e3-halloween.txt	public/img/fanzzy/GD30/e3/halloween/neutre.png	oui
+GD31-e1-halloween	halloween/GD31-e1-halloween.txt	public/img/fanzzy/GD31/e1/halloween/neutre.png	oui
+GD31-e2-halloween	halloween/GD31-e2-halloween.txt	public/img/fanzzy/GD31/e2/halloween/neutre.png	oui
+GD31-e3-halloween	halloween/GD31-e3-halloween.txt	public/img/fanzzy/GD31/e3/halloween/neutre.png	oui
+GD32-e1-halloween	halloween/GD32-e1-halloween.txt	public/img/fanzzy/GD32/e1/halloween/neutre.png	non : attendre le skin
+GD32-e2-halloween	halloween/GD32-e2-halloween.txt	public/img/fanzzy/GD32/e2/halloween/neutre.png	non : attendre le skin
+GD32-e3-halloween	halloween/GD32-e3-halloween.txt	public/img/fanzzy/GD32/e3/halloween/neutre.png	non : attendre le skin
+GD33-e1-halloween	halloween/GD33-e1-halloween.txt	public/img/fanzzy/GD33/e1/halloween/neutre.png	oui
+GD33-e2-halloween	halloween/GD33-e2-halloween.txt	public/img/fanzzy/GD33/e2/halloween/neutre.png	oui
+GD33-e3-halloween	halloween/GD33-e3-halloween.txt	public/img/fanzzy/GD33/e3/halloween/neutre.png	oui
+GD34-e1-halloween	halloween/GD34-e1-halloween.txt	public/img/fanzzy/GD34/e1/halloween/neutre.png	oui
+GD34-e2-halloween	halloween/GD34-e2-halloween.txt	public/img/fanzzy/GD34/e2/halloween/neutre.png	non : attendre le skin
+GD34-e3-halloween	halloween/GD34-e3-halloween.txt	public/img/fanzzy/GD34/e3/halloween/neutre.png	oui
+GD35-e1-halloween	halloween/GD35-e1-halloween.txt	public/img/fanzzy/GD35/e1/halloween/neutre.png	oui
+GD35-e2-halloween	halloween/GD35-e2-halloween.txt	public/img/fanzzy/GD35/e2/halloween/neutre.png	oui
+GD35-e3-halloween	halloween/GD35-e3-halloween.txt	public/img/fanzzy/GD35/e3/halloween/neutre.png	oui
+GD36-e1-halloween	halloween/GD36-e1-halloween.txt	public/img/fanzzy/GD36/e1/halloween/neutre.png	oui
+GD36-e2-halloween	halloween/GD36-e2-halloween.txt	public/img/fanzzy/GD36/e2/halloween/neutre.png	oui
+GD36-e3-halloween	halloween/GD36-e3-halloween.txt	public/img/fanzzy/GD36/e3/halloween/neutre.png	oui
+GD37-e1-halloween	halloween/GD37-e1-halloween.txt	public/img/fanzzy/GD37/e1/halloween/neutre.png	oui
+GD37-e2-halloween	halloween/GD37-e2-halloween.txt	public/img/fanzzy/GD37/e2/halloween/neutre.png	oui
+GD37-e3-halloween	halloween/GD37-e3-halloween.txt	public/img/fanzzy/GD37/e3/halloween/neutre.png	oui
+GD38-e1-halloween	halloween/GD38-e1-halloween.txt	public/img/fanzzy/GD38/e1/halloween/neutre.png	oui
+GD38-e2-halloween	halloween/GD38-e2-halloween.txt	public/img/fanzzy/GD38/e2/halloween/neutre.png	oui
+GD38-e3-halloween	halloween/GD38-e3-halloween.txt	public/img/fanzzy/GD38/e3/halloween/neutre.png	non : attendre le skin
+GD39-e1-halloween	halloween/GD39-e1-halloween.txt	public/img/fanzzy/GD39/e1/halloween/neutre.png	oui
+GD39-e2-halloween	halloween/GD39-e2-halloween.txt	public/img/fanzzy/GD39/e2/halloween/neutre.png	oui
+GD39-e3-halloween	halloween/GD39-e3-halloween.txt	public/img/fanzzy/GD39/e3/halloween/neutre.png	oui
+GD40-e1-halloween	halloween/GD40-e1-halloween.txt	public/img/fanzzy/GD40/e1/halloween/neutre.png	oui
+GD40-e2-halloween	halloween/GD40-e2-halloween.txt	public/img/fanzzy/GD40/e2/halloween/neutre.png	oui
+GD40-e3-halloween	halloween/GD40-e3-halloween.txt	public/img/fanzzy/GD40/e3/halloween/neutre.png	oui
+GD41-e1-halloween	halloween/GD41-e1-halloween.txt	public/img/fanzzy/GD41/e1/halloween/neutre.png	oui
+GD41-e2-halloween	halloween/GD41-e2-halloween.txt	public/img/fanzzy/GD41/e2/halloween/neutre.png	oui
+GD41-e3-halloween	halloween/GD41-e3-halloween.txt	public/img/fanzzy/GD41/e3/halloween/neutre.png	oui
+GD42-e1-halloween	halloween/GD42-e1-halloween.txt	public/img/fanzzy/GD42/e1/halloween/neutre.png	oui
+GD42-e2-halloween	halloween/GD42-e2-halloween.txt	public/img/fanzzy/GD42/e2/halloween/neutre.png	oui
+GD42-e3-halloween	halloween/GD42-e3-halloween.txt	public/img/fanzzy/GD42/e3/halloween/neutre.png	oui
+GD43-e1-halloween	halloween/GD43-e1-halloween.txt	public/img/fanzzy/GD43/e1/halloween/neutre.png	oui
+GD43-e2-halloween	halloween/GD43-e2-halloween.txt	public/img/fanzzy/GD43/e2/halloween/neutre.png	non : attendre le skin
+GD43-e3-halloween	halloween/GD43-e3-halloween.txt	public/img/fanzzy/GD43/e3/halloween/neutre.png	oui
+GD44-e1-halloween	halloween/GD44-e1-halloween.txt	public/img/fanzzy/GD44/e1/halloween/neutre.png	oui
+GD44-e2-halloween	halloween/GD44-e2-halloween.txt	public/img/fanzzy/GD44/e2/halloween/neutre.png	oui
+GD44-e3-halloween	halloween/GD44-e3-halloween.txt	public/img/fanzzy/GD44/e3/halloween/neutre.png	oui
+GD45-e1-halloween	halloween/GD45-e1-halloween.txt	public/img/fanzzy/GD45/e1/halloween/neutre.png	oui
+GD45-e2-halloween	halloween/GD45-e2-halloween.txt	public/img/fanzzy/GD45/e2/halloween/neutre.png	oui
+GD45-e3-halloween	halloween/GD45-e3-halloween.txt	public/img/fanzzy/GD45/e3/halloween/neutre.png	oui
+GD46-e1-halloween	halloween/GD46-e1-halloween.txt	public/img/fanzzy/GD46/e1/halloween/neutre.png	oui
+GD46-e2-halloween	halloween/GD46-e2-halloween.txt	public/img/fanzzy/GD46/e2/halloween/neutre.png	oui
+GD46-e3-halloween	halloween/GD46-e3-halloween.txt	public/img/fanzzy/GD46/e3/halloween/neutre.png	oui
+GD47-e1-halloween	halloween/GD47-e1-halloween.txt	public/img/fanzzy/GD47/e1/halloween/neutre.png	oui
+GD47-e2-halloween	halloween/GD47-e2-halloween.txt	public/img/fanzzy/GD47/e2/halloween/neutre.png	oui
+GD47-e3-halloween	halloween/GD47-e3-halloween.txt	public/img/fanzzy/GD47/e3/halloween/neutre.png	non : attendre le skin
+GD48-e1-halloween	halloween/GD48-e1-halloween.txt	public/img/fanzzy/GD48/e1/halloween/neutre.png	oui
+GD48-e2-halloween	halloween/GD48-e2-halloween.txt	public/img/fanzzy/GD48/e2/halloween/neutre.png	non : attendre le skin
+GD48-e3-halloween	halloween/GD48-e3-halloween.txt	public/img/fanzzy/GD48/e3/halloween/neutre.png	oui
+GD49-e1-halloween	halloween/GD49-e1-halloween.txt	public/img/fanzzy/GD49/e1/halloween/neutre.png	oui
+GD49-e2-halloween	halloween/GD49-e2-halloween.txt	public/img/fanzzy/GD49/e2/halloween/neutre.png	oui
+GD49-e3-halloween	halloween/GD49-e3-halloween.txt	public/img/fanzzy/GD49/e3/halloween/neutre.png	oui
+GD50-e1-halloween	halloween/GD50-e1-halloween.txt	public/img/fanzzy/GD50/e1/halloween/neutre.png	oui
+GD50-e2-halloween	halloween/GD50-e2-halloween.txt	public/img/fanzzy/GD50/e2/halloween/neutre.png	oui
+GD50-e3-halloween	halloween/GD50-e3-halloween.txt	public/img/fanzzy/GD50/e3/halloween/neutre.png	oui
+GD51-e1-halloween	halloween/GD51-e1-halloween.txt	public/img/fanzzy/GD51/e1/halloween/neutre.png	oui
+GD51-e2-halloween	halloween/GD51-e2-halloween.txt	public/img/fanzzy/GD51/e2/halloween/neutre.png	oui
+GD51-e3-halloween	halloween/GD51-e3-halloween.txt	public/img/fanzzy/GD51/e3/halloween/neutre.png	oui
+GD52-e1-halloween	halloween/GD52-e1-halloween.txt	public/img/fanzzy/GD52/e1/halloween/neutre.png	oui
+GD52-e2-halloween	halloween/GD52-e2-halloween.txt	public/img/fanzzy/GD52/e2/halloween/neutre.png	oui
+GD52-e3-halloween	halloween/GD52-e3-halloween.txt	public/img/fanzzy/GD52/e3/halloween/neutre.png	oui
+VP1-e1-halloween	halloween/VP1-e1-halloween.txt	public/img/fanzzy/VP1/e1/halloween/neutre.png	oui
+VP1-e2-halloween	halloween/VP1-e2-halloween.txt	public/img/fanzzy/VP1/e2/halloween/neutre.png	oui
+VP1-e3-halloween	halloween/VP1-e3-halloween.txt	public/img/fanzzy/VP1/e3/halloween/neutre.png	non : attendre le skin
+VP2-e1-halloween	halloween/VP2-e1-halloween.txt	public/img/fanzzy/VP2/e1/halloween/neutre.png	non : attendre le skin
+VP2-e2-halloween	halloween/VP2-e2-halloween.txt	public/img/fanzzy/VP2/e2/halloween/neutre.png	oui
+VP2-e3-halloween	halloween/VP2-e3-halloween.txt	public/img/fanzzy/VP2/e3/halloween/neutre.png	non : attendre le skin
+VP3-e1-halloween	halloween/VP3-e1-halloween.txt	public/img/fanzzy/VP3/e1/halloween/neutre.png	oui
+VP3-e2-halloween	halloween/VP3-e2-halloween.txt	public/img/fanzzy/VP3/e2/halloween/neutre.png	non : attendre le skin
+VP3-e3-halloween	halloween/VP3-e3-halloween.txt	public/img/fanzzy/VP3/e3/halloween/neutre.png	non : attendre le skin
+VP4-e1-halloween	halloween/VP4-e1-halloween.txt	public/img/fanzzy/VP4/e1/halloween/neutre.png	non : attendre le skin
+VP4-e2-halloween	halloween/VP4-e2-halloween.txt	public/img/fanzzy/VP4/e2/halloween/neutre.png	oui
+VP4-e3-halloween	halloween/VP4-e3-halloween.txt	public/img/fanzzy/VP4/e3/halloween/neutre.png	oui
+VP5-e1-halloween	halloween/VP5-e1-halloween.txt	public/img/fanzzy/VP5/e1/halloween/neutre.png	oui
+VP5-e2-halloween	halloween/VP5-e2-halloween.txt	public/img/fanzzy/VP5/e2/halloween/neutre.png	oui
+VP5-e3-halloween	halloween/VP5-e3-halloween.txt	public/img/fanzzy/VP5/e3/halloween/neutre.png	oui
+VP6-e1-halloween	halloween/VP6-e1-halloween.txt	public/img/fanzzy/VP6/e1/halloween/neutre.png	oui
+VP6-e2-halloween	halloween/VP6-e2-halloween.txt	public/img/fanzzy/VP6/e2/halloween/neutre.png	oui
+VP6-e3-halloween	halloween/VP6-e3-halloween.txt	public/img/fanzzy/VP6/e3/halloween/neutre.png	oui
+VP7-e1-halloween	halloween/VP7-e1-halloween.txt	public/img/fanzzy/VP7/e1/halloween/neutre.png	oui
+VP7-e2-halloween	halloween/VP7-e2-halloween.txt	public/img/fanzzy/VP7/e2/halloween/neutre.png	oui
+VP7-e3-halloween	halloween/VP7-e3-halloween.txt	public/img/fanzzy/VP7/e3/halloween/neutre.png	oui
+VP8-e1-halloween	halloween/VP8-e1-halloween.txt	public/img/fanzzy/VP8/e1/halloween/neutre.png	oui
+VP8-e2-halloween	halloween/VP8-e2-halloween.txt	public/img/fanzzy/VP8/e2/halloween/neutre.png	oui
+VP8-e3-halloween	halloween/VP8-e3-halloween.txt	public/img/fanzzy/VP8/e3/halloween/neutre.png	oui
+VP9-e1-halloween	halloween/VP9-e1-halloween.txt	public/img/fanzzy/VP9/e1/halloween/neutre.png	oui
+VP9-e2-halloween	halloween/VP9-e2-halloween.txt	public/img/fanzzy/VP9/e2/halloween/neutre.png	oui
+VP9-e3-halloween	halloween/VP9-e3-halloween.txt	public/img/fanzzy/VP9/e3/halloween/neutre.png	oui
+VP10-e1-halloween	halloween/VP10-e1-halloween.txt	public/img/fanzzy/VP10/e1/halloween/neutre.png	oui
+VP11-e1-halloween	halloween/VP11-e1-halloween.txt	public/img/fanzzy/VP11/e1/halloween/neutre.png	non : attendre le skin
+VP12-e1-halloween	halloween/VP12-e1-halloween.txt	public/img/fanzzy/VP12/e1/halloween/neutre.png	oui
+VP13-e1-halloween	halloween/VP13-e1-halloween.txt	public/img/fanzzy/VP13/e1/halloween/neutre.png	oui
+VP14-e1-halloween	halloween/VP14-e1-halloween.txt	public/img/fanzzy/VP14/e1/halloween/neutre.png	non : attendre le skin
+VP15-e1-halloween	halloween/VP15-e1-halloween.txt	public/img/fanzzy/VP15/e1/halloween/neutre.png	oui
+VP15-e2-halloween	halloween/VP15-e2-halloween.txt	public/img/fanzzy/VP15/e2/halloween/neutre.png	non : attendre le skin
+VP15-e3-halloween	halloween/VP15-e3-halloween.txt	public/img/fanzzy/VP15/e3/halloween/neutre.png	non : attendre le skin
+VP16-e1-halloween	halloween/VP16-e1-halloween.txt	public/img/fanzzy/VP16/e1/halloween/neutre.png	oui
+VP16-e2-halloween	halloween/VP16-e2-halloween.txt	public/img/fanzzy/VP16/e2/halloween/neutre.png	oui
+VP16-e3-halloween	halloween/VP16-e3-halloween.txt	public/img/fanzzy/VP16/e3/halloween/neutre.png	non : attendre le skin
+VP17-e1-halloween	halloween/VP17-e1-halloween.txt	public/img/fanzzy/VP17/e1/halloween/neutre.png	oui
+VP17-e2-halloween	halloween/VP17-e2-halloween.txt	public/img/fanzzy/VP17/e2/halloween/neutre.png	oui
+VP17-e3-halloween	halloween/VP17-e3-halloween.txt	public/img/fanzzy/VP17/e3/halloween/neutre.png	non : attendre le skin
+VP18-e1-halloween	halloween/VP18-e1-halloween.txt	public/img/fanzzy/VP18/e1/halloween/neutre.png	oui
+VP18-e2-halloween	halloween/VP18-e2-halloween.txt	public/img/fanzzy/VP18/e2/halloween/neutre.png	oui
+VP18-e3-halloween	halloween/VP18-e3-halloween.txt	public/img/fanzzy/VP18/e3/halloween/neutre.png	oui
+VP19-e1-halloween	halloween/VP19-e1-halloween.txt	public/img/fanzzy/VP19/e1/halloween/neutre.png	non : attendre le skin
+VP19-e2-halloween	halloween/VP19-e2-halloween.txt	public/img/fanzzy/VP19/e2/halloween/neutre.png	non : attendre le skin
+VP19-e3-halloween	halloween/VP19-e3-halloween.txt	public/img/fanzzy/VP19/e3/halloween/neutre.png	non : attendre le skin
+VP20-e1-halloween	halloween/VP20-e1-halloween.txt	public/img/fanzzy/VP20/e1/halloween/neutre.png	oui
+VP20-e2-halloween	halloween/VP20-e2-halloween.txt	public/img/fanzzy/VP20/e2/halloween/neutre.png	oui
+VP20-e3-halloween	halloween/VP20-e3-halloween.txt	public/img/fanzzy/VP20/e3/halloween/neutre.png	oui
+VP21-e1-halloween	halloween/VP21-e1-halloween.txt	public/img/fanzzy/VP21/e1/halloween/neutre.png	oui
+VP21-e2-halloween	halloween/VP21-e2-halloween.txt	public/img/fanzzy/VP21/e2/halloween/neutre.png	oui
+VP21-e3-halloween	halloween/VP21-e3-halloween.txt	public/img/fanzzy/VP21/e3/halloween/neutre.png	oui
+VP22-e1-halloween	halloween/VP22-e1-halloween.txt	public/img/fanzzy/VP22/e1/halloween/neutre.png	oui
+VP22-e2-halloween	halloween/VP22-e2-halloween.txt	public/img/fanzzy/VP22/e2/halloween/neutre.png	oui
+VP22-e3-halloween	halloween/VP22-e3-halloween.txt	public/img/fanzzy/VP22/e3/halloween/neutre.png	oui
+VP23-e1-halloween	halloween/VP23-e1-halloween.txt	public/img/fanzzy/VP23/e1/halloween/neutre.png	oui
+VP23-e2-halloween	halloween/VP23-e2-halloween.txt	public/img/fanzzy/VP23/e2/halloween/neutre.png	non : attendre le skin
+VP23-e3-halloween	halloween/VP23-e3-halloween.txt	public/img/fanzzy/VP23/e3/halloween/neutre.png	oui
+VP24-e1-halloween	halloween/VP24-e1-halloween.txt	public/img/fanzzy/VP24/e1/halloween/neutre.png	oui
+VP24-e2-halloween	halloween/VP24-e2-halloween.txt	public/img/fanzzy/VP24/e2/halloween/neutre.png	oui
+VP24-e3-halloween	halloween/VP24-e3-halloween.txt	public/img/fanzzy/VP24/e3/halloween/neutre.png	oui
+VP25-e1-halloween	halloween/VP25-e1-halloween.txt	public/img/fanzzy/VP25/e1/halloween/neutre.png	oui
+VP25-e2-halloween	halloween/VP25-e2-halloween.txt	public/img/fanzzy/VP25/e2/halloween/neutre.png	oui
+VP25-e3-halloween	halloween/VP25-e3-halloween.txt	public/img/fanzzy/VP25/e3/halloween/neutre.png	oui
+VP26-e1-halloween	halloween/VP26-e1-halloween.txt	public/img/fanzzy/VP26/e1/halloween/neutre.png	non : attendre le skin
+VP26-e2-halloween	halloween/VP26-e2-halloween.txt	public/img/fanzzy/VP26/e2/halloween/neutre.png	oui
+VP26-e3-halloween	halloween/VP26-e3-halloween.txt	public/img/fanzzy/VP26/e3/halloween/neutre.png	non : attendre le skin
+VP27-e1-halloween	halloween/VP27-e1-halloween.txt	public/img/fanzzy/VP27/e1/halloween/neutre.png	oui
+VP27-e2-halloween	halloween/VP27-e2-halloween.txt	public/img/fanzzy/VP27/e2/halloween/neutre.png	oui
+VP27-e3-halloween	halloween/VP27-e3-halloween.txt	public/img/fanzzy/VP27/e3/halloween/neutre.png	oui
+VP28-e1-halloween	halloween/VP28-e1-halloween.txt	public/img/fanzzy/VP28/e1/halloween/neutre.png	non : attendre le skin
+VP28-e2-halloween	halloween/VP28-e2-halloween.txt	public/img/fanzzy/VP28/e2/halloween/neutre.png	non : attendre le skin
+VP28-e3-halloween	halloween/VP28-e3-halloween.txt	public/img/fanzzy/VP28/e3/halloween/neutre.png	oui
+VP29-e1-halloween	halloween/VP29-e1-halloween.txt	public/img/fanzzy/VP29/e1/halloween/neutre.png	non : attendre le skin
+VP29-e2-halloween	halloween/VP29-e2-halloween.txt	public/img/fanzzy/VP29/e2/halloween/neutre.png	oui
+VP29-e3-halloween	halloween/VP29-e3-halloween.txt	public/img/fanzzy/VP29/e3/halloween/neutre.png	oui
+VP30-e1-halloween	halloween/VP30-e1-halloween.txt	public/img/fanzzy/VP30/e1/halloween/neutre.png	oui
+VP30-e2-halloween	halloween/VP30-e2-halloween.txt	public/img/fanzzy/VP30/e2/halloween/neutre.png	non : attendre le skin
+VP30-e3-halloween	halloween/VP30-e3-halloween.txt	public/img/fanzzy/VP30/e3/halloween/neutre.png	oui
+VP31-e1-halloween	halloween/VP31-e1-halloween.txt	public/img/fanzzy/VP31/e1/halloween/neutre.png	oui
+VP31-e2-halloween	halloween/VP31-e2-halloween.txt	public/img/fanzzy/VP31/e2/halloween/neutre.png	oui
+VP31-e3-halloween	halloween/VP31-e3-halloween.txt	public/img/fanzzy/VP31/e3/halloween/neutre.png	non : attendre le skin
+VP32-e1-halloween	halloween/VP32-e1-halloween.txt	public/img/fanzzy/VP32/e1/halloween/neutre.png	oui
+VP32-e2-halloween	halloween/VP32-e2-halloween.txt	public/img/fanzzy/VP32/e2/halloween/neutre.png	oui
+VP32-e3-halloween	halloween/VP32-e3-halloween.txt	public/img/fanzzy/VP32/e3/halloween/neutre.png	oui
+VP33-e1-halloween	halloween/VP33-e1-halloween.txt	public/img/fanzzy/VP33/e1/halloween/neutre.png	oui
+VP33-e2-halloween	halloween/VP33-e2-halloween.txt	public/img/fanzzy/VP33/e2/halloween/neutre.png	oui
+VP33-e3-halloween	halloween/VP33-e3-halloween.txt	public/img/fanzzy/VP33/e3/halloween/neutre.png	oui
+VP34-e1-halloween	halloween/VP34-e1-halloween.txt	public/img/fanzzy/VP34/e1/halloween/neutre.png	oui
+VP34-e2-halloween	halloween/VP34-e2-halloween.txt	public/img/fanzzy/VP34/e2/halloween/neutre.png	non : attendre le skin
+VP34-e3-halloween	halloween/VP34-e3-halloween.txt	public/img/fanzzy/VP34/e3/halloween/neutre.png	oui
+VP35-e1-halloween	halloween/VP35-e1-halloween.txt	public/img/fanzzy/VP35/e1/halloween/neutre.png	oui
+VP35-e2-halloween	halloween/VP35-e2-halloween.txt	public/img/fanzzy/VP35/e2/halloween/neutre.png	oui
+VP35-e3-halloween	halloween/VP35-e3-halloween.txt	public/img/fanzzy/VP35/e3/halloween/neutre.png	non : attendre le skin
+VP36-e1-halloween	halloween/VP36-e1-halloween.txt	public/img/fanzzy/VP36/e1/halloween/neutre.png	oui
+VP36-e2-halloween	halloween/VP36-e2-halloween.txt	public/img/fanzzy/VP36/e2/halloween/neutre.png	oui
+VP36-e3-halloween	halloween/VP36-e3-halloween.txt	public/img/fanzzy/VP36/e3/halloween/neutre.png	oui
+VP37-e1-halloween	halloween/VP37-e1-halloween.txt	public/img/fanzzy/VP37/e1/halloween/neutre.png	oui
+VP37-e2-halloween	halloween/VP37-e2-halloween.txt	public/img/fanzzy/VP37/e2/halloween/neutre.png	oui
+VP37-e3-halloween	halloween/VP37-e3-halloween.txt	public/img/fanzzy/VP37/e3/halloween/neutre.png	oui
+VP38-e1-halloween	halloween/VP38-e1-halloween.txt	public/img/fanzzy/VP38/e1/halloween/neutre.png	oui
+VP38-e2-halloween	halloween/VP38-e2-halloween.txt	public/img/fanzzy/VP38/e2/halloween/neutre.png	non : attendre le skin
+VP38-e3-halloween	halloween/VP38-e3-halloween.txt	public/img/fanzzy/VP38/e3/halloween/neutre.png	non : attendre le skin
+VP39-e1-halloween	halloween/VP39-e1-halloween.txt	public/img/fanzzy/VP39/e1/halloween/neutre.png	oui
+VP39-e2-halloween	halloween/VP39-e2-halloween.txt	public/img/fanzzy/VP39/e2/halloween/neutre.png	oui
+VP39-e3-halloween	halloween/VP39-e3-halloween.txt	public/img/fanzzy/VP39/e3/halloween/neutre.png	non : attendre le skin
+VP40-e1-halloween	halloween/VP40-e1-halloween.txt	public/img/fanzzy/VP40/e1/halloween/neutre.png	oui
+VP40-e2-halloween	halloween/VP40-e2-halloween.txt	public/img/fanzzy/VP40/e2/halloween/neutre.png	oui
+VP40-e3-halloween	halloween/VP40-e3-halloween.txt	public/img/fanzzy/VP40/e3/halloween/neutre.png	oui
+VP41-e1-halloween	halloween/VP41-e1-halloween.txt	public/img/fanzzy/VP41/e1/halloween/neutre.png	oui
+VP41-e2-halloween	halloween/VP41-e2-halloween.txt	public/img/fanzzy/VP41/e2/halloween/neutre.png	non : attendre le skin
+VP41-e3-halloween	halloween/VP41-e3-halloween.txt	public/img/fanzzy/VP41/e3/halloween/neutre.png	non : attendre le skin
+VP42-e1-halloween	halloween/VP42-e1-halloween.txt	public/img/fanzzy/VP42/e1/halloween/neutre.png	oui
+VP42-e2-halloween	halloween/VP42-e2-halloween.txt	public/img/fanzzy/VP42/e2/halloween/neutre.png	oui
+VP42-e3-halloween	halloween/VP42-e3-halloween.txt	public/img/fanzzy/VP42/e3/halloween/neutre.png	non : attendre le skin
+VP43-e1-halloween	halloween/VP43-e1-halloween.txt	public/img/fanzzy/VP43/e1/halloween/neutre.png	oui
+VP43-e2-halloween	halloween/VP43-e2-halloween.txt	public/img/fanzzy/VP43/e2/halloween/neutre.png	oui
+VP43-e3-halloween	halloween/VP43-e3-halloween.txt	public/img/fanzzy/VP43/e3/halloween/neutre.png	non : attendre le skin
+VP44-e1-halloween	halloween/VP44-e1-halloween.txt	public/img/fanzzy/VP44/e1/halloween/neutre.png	oui
+VP44-e2-halloween	halloween/VP44-e2-halloween.txt	public/img/fanzzy/VP44/e2/halloween/neutre.png	oui
+VP44-e3-halloween	halloween/VP44-e3-halloween.txt	public/img/fanzzy/VP44/e3/halloween/neutre.png	non : attendre le skin
+VP45-e1-halloween	halloween/VP45-e1-halloween.txt	public/img/fanzzy/VP45/e1/halloween/neutre.png	oui
+VP45-e2-halloween	halloween/VP45-e2-halloween.txt	public/img/fanzzy/VP45/e2/halloween/neutre.png	oui
+VP45-e3-halloween	halloween/VP45-e3-halloween.txt	public/img/fanzzy/VP45/e3/halloween/neutre.png	non : attendre le skin
+VP46-e1-halloween	halloween/VP46-e1-halloween.txt	public/img/fanzzy/VP46/e1/halloween/neutre.png	oui
+VP46-e2-halloween	halloween/VP46-e2-halloween.txt	public/img/fanzzy/VP46/e2/halloween/neutre.png	non : attendre le skin
+VP46-e3-halloween	halloween/VP46-e3-halloween.txt	public/img/fanzzy/VP46/e3/halloween/neutre.png	oui
+VP47-e1-halloween	halloween/VP47-e1-halloween.txt	public/img/fanzzy/VP47/e1/halloween/neutre.png	non : attendre le skin
+VP47-e2-halloween	halloween/VP47-e2-halloween.txt	public/img/fanzzy/VP47/e2/halloween/neutre.png	oui
+VP47-e3-halloween	halloween/VP47-e3-halloween.txt	public/img/fanzzy/VP47/e3/halloween/neutre.png	non : attendre le skin
+VP48-e1-halloween	halloween/VP48-e1-halloween.txt	public/img/fanzzy/VP48/e1/halloween/neutre.png	oui
+VP48-e2-halloween	halloween/VP48-e2-halloween.txt	public/img/fanzzy/VP48/e2/halloween/neutre.png	non : attendre le skin
+VP48-e3-halloween	halloween/VP48-e3-halloween.txt	public/img/fanzzy/VP48/e3/halloween/neutre.png	oui
+VP49-e1-halloween	halloween/VP49-e1-halloween.txt	public/img/fanzzy/VP49/e1/halloween/neutre.png	oui
+VP49-e2-halloween	halloween/VP49-e2-halloween.txt	public/img/fanzzy/VP49/e2/halloween/neutre.png	oui
+VP49-e3-halloween	halloween/VP49-e3-halloween.txt	public/img/fanzzy/VP49/e3/halloween/neutre.png	oui
+VP50-e1-halloween	halloween/VP50-e1-halloween.txt	public/img/fanzzy/VP50/e1/halloween/neutre.png	non : attendre le skin
+VP50-e2-halloween	halloween/VP50-e2-halloween.txt	public/img/fanzzy/VP50/e2/halloween/neutre.png	oui
+VP50-e3-halloween	halloween/VP50-e3-halloween.txt	public/img/fanzzy/VP50/e3/halloween/neutre.png	non : attendre le skin
+GD1-e1-prehistorique	prehistorique/GD1-e1-prehistorique.txt	public/img/fanzzy/GD1/e1/prehistorique/neutre.png	oui
+GD1-e2-prehistorique	prehistorique/GD1-e2-prehistorique.txt	public/img/fanzzy/GD1/e2/prehistorique/neutre.png	oui
+GD1-e3-prehistorique	prehistorique/GD1-e3-prehistorique.txt	public/img/fanzzy/GD1/e3/prehistorique/neutre.png	oui
+GD2-e1-prehistorique	prehistorique/GD2-e1-prehistorique.txt	public/img/fanzzy/GD2/e1/prehistorique/neutre.png	oui
+GD2-e2-prehistorique	prehistorique/GD2-e2-prehistorique.txt	public/img/fanzzy/GD2/e2/prehistorique/neutre.png	oui
+GD2-e3-prehistorique	prehistorique/GD2-e3-prehistorique.txt	public/img/fanzzy/GD2/e3/prehistorique/neutre.png	oui
+GD3-e1-prehistorique	prehistorique/GD3-e1-prehistorique.txt	public/img/fanzzy/GD3/e1/prehistorique/neutre.png	oui
+GD3-e2-prehistorique	prehistorique/GD3-e2-prehistorique.txt	public/img/fanzzy/GD3/e2/prehistorique/neutre.png	oui
+GD3-e3-prehistorique	prehistorique/GD3-e3-prehistorique.txt	public/img/fanzzy/GD3/e3/prehistorique/neutre.png	non : attendre le skin
+GD4-e1-prehistorique	prehistorique/GD4-e1-prehistorique.txt	public/img/fanzzy/GD4/e1/prehistorique/neutre.png	oui
+GD4-e2-prehistorique	prehistorique/GD4-e2-prehistorique.txt	public/img/fanzzy/GD4/e2/prehistorique/neutre.png	oui
+GD4-e3-prehistorique	prehistorique/GD4-e3-prehistorique.txt	public/img/fanzzy/GD4/e3/prehistorique/neutre.png	oui
+GD5-e1-prehistorique	prehistorique/GD5-e1-prehistorique.txt	public/img/fanzzy/GD5/e1/prehistorique/neutre.png	oui
+GD5-e2-prehistorique	prehistorique/GD5-e2-prehistorique.txt	public/img/fanzzy/GD5/e2/prehistorique/neutre.png	oui
+GD5-e3-prehistorique	prehistorique/GD5-e3-prehistorique.txt	public/img/fanzzy/GD5/e3/prehistorique/neutre.png	oui
+GD6-e1-prehistorique	prehistorique/GD6-e1-prehistorique.txt	public/img/fanzzy/GD6/e1/prehistorique/neutre.png	oui
+GD6-e2-prehistorique	prehistorique/GD6-e2-prehistorique.txt	public/img/fanzzy/GD6/e2/prehistorique/neutre.png	oui
+GD6-e3-prehistorique	prehistorique/GD6-e3-prehistorique.txt	public/img/fanzzy/GD6/e3/prehistorique/neutre.png	oui
+GD7-e1-prehistorique	prehistorique/GD7-e1-prehistorique.txt	public/img/fanzzy/GD7/e1/prehistorique/neutre.png	oui
+GD7-e2-prehistorique	prehistorique/GD7-e2-prehistorique.txt	public/img/fanzzy/GD7/e2/prehistorique/neutre.png	non : attendre le skin
+GD7-e3-prehistorique	prehistorique/GD7-e3-prehistorique.txt	public/img/fanzzy/GD7/e3/prehistorique/neutre.png	non : attendre le skin
+GD8-e1-prehistorique	prehistorique/GD8-e1-prehistorique.txt	public/img/fanzzy/GD8/e1/prehistorique/neutre.png	oui
+GD8-e2-prehistorique	prehistorique/GD8-e2-prehistorique.txt	public/img/fanzzy/GD8/e2/prehistorique/neutre.png	oui
+GD8-e3-prehistorique	prehistorique/GD8-e3-prehistorique.txt	public/img/fanzzy/GD8/e3/prehistorique/neutre.png	oui
+GD9-e1-prehistorique	prehistorique/GD9-e1-prehistorique.txt	public/img/fanzzy/GD9/e1/prehistorique/neutre.png	oui
+GD9-e2-prehistorique	prehistorique/GD9-e2-prehistorique.txt	public/img/fanzzy/GD9/e2/prehistorique/neutre.png	oui
+GD9-e3-prehistorique	prehistorique/GD9-e3-prehistorique.txt	public/img/fanzzy/GD9/e3/prehistorique/neutre.png	oui
+GD10-e1-prehistorique	prehistorique/GD10-e1-prehistorique.txt	public/img/fanzzy/GD10/e1/prehistorique/neutre.png	oui
+GD11-e1-prehistorique	prehistorique/GD11-e1-prehistorique.txt	public/img/fanzzy/GD11/e1/prehistorique/neutre.png	oui
+GD14-e1-prehistorique	prehistorique/GD14-e1-prehistorique.txt	public/img/fanzzy/GD14/e1/prehistorique/neutre.png	oui
+GD15-e1-prehistorique	prehistorique/GD15-e1-prehistorique.txt	public/img/fanzzy/GD15/e1/prehistorique/neutre.png	oui
+GD16-e1-prehistorique	prehistorique/GD16-e1-prehistorique.txt	public/img/fanzzy/GD16/e1/prehistorique/neutre.png	oui
+GD17-e1-prehistorique	prehistorique/GD17-e1-prehistorique.txt	public/img/fanzzy/GD17/e1/prehistorique/neutre.png	oui
+GD17-e2-prehistorique	prehistorique/GD17-e2-prehistorique.txt	public/img/fanzzy/GD17/e2/prehistorique/neutre.png	oui
+GD17-e3-prehistorique	prehistorique/GD17-e3-prehistorique.txt	public/img/fanzzy/GD17/e3/prehistorique/neutre.png	oui
+GD18-e1-prehistorique	prehistorique/GD18-e1-prehistorique.txt	public/img/fanzzy/GD18/e1/prehistorique/neutre.png	oui
+GD18-e2-prehistorique	prehistorique/GD18-e2-prehistorique.txt	public/img/fanzzy/GD18/e2/prehistorique/neutre.png	oui
+GD18-e3-prehistorique	prehistorique/GD18-e3-prehistorique.txt	public/img/fanzzy/GD18/e3/prehistorique/neutre.png	oui
+GD19-e1-prehistorique	prehistorique/GD19-e1-prehistorique.txt	public/img/fanzzy/GD19/e1/prehistorique/neutre.png	oui
+GD19-e2-prehistorique	prehistorique/GD19-e2-prehistorique.txt	public/img/fanzzy/GD19/e2/prehistorique/neutre.png	non : attendre le skin
+GD19-e3-prehistorique	prehistorique/GD19-e3-prehistorique.txt	public/img/fanzzy/GD19/e3/prehistorique/neutre.png	non : attendre le skin
+GD20-e1-prehistorique	prehistorique/GD20-e1-prehistorique.txt	public/img/fanzzy/GD20/e1/prehistorique/neutre.png	oui
+GD20-e2-prehistorique	prehistorique/GD20-e2-prehistorique.txt	public/img/fanzzy/GD20/e2/prehistorique/neutre.png	oui
+GD20-e3-prehistorique	prehistorique/GD20-e3-prehistorique.txt	public/img/fanzzy/GD20/e3/prehistorique/neutre.png	oui
+GD21-e1-prehistorique	prehistorique/GD21-e1-prehistorique.txt	public/img/fanzzy/GD21/e1/prehistorique/neutre.png	oui
+GD21-e2-prehistorique	prehistorique/GD21-e2-prehistorique.txt	public/img/fanzzy/GD21/e2/prehistorique/neutre.png	oui
+GD21-e3-prehistorique	prehistorique/GD21-e3-prehistorique.txt	public/img/fanzzy/GD21/e3/prehistorique/neutre.png	oui
+GD22-e1-prehistorique	prehistorique/GD22-e1-prehistorique.txt	public/img/fanzzy/GD22/e1/prehistorique/neutre.png	non : attendre le skin
+GD22-e2-prehistorique	prehistorique/GD22-e2-prehistorique.txt	public/img/fanzzy/GD22/e2/prehistorique/neutre.png	oui
+GD22-e3-prehistorique	prehistorique/GD22-e3-prehistorique.txt	public/img/fanzzy/GD22/e3/prehistorique/neutre.png	oui
+GD23-e1-prehistorique	prehistorique/GD23-e1-prehistorique.txt	public/img/fanzzy/GD23/e1/prehistorique/neutre.png	oui
+GD23-e2-prehistorique	prehistorique/GD23-e2-prehistorique.txt	public/img/fanzzy/GD23/e2/prehistorique/neutre.png	oui
+GD23-e3-prehistorique	prehistorique/GD23-e3-prehistorique.txt	public/img/fanzzy/GD23/e3/prehistorique/neutre.png	oui
+GD24-e1-prehistorique	prehistorique/GD24-e1-prehistorique.txt	public/img/fanzzy/GD24/e1/prehistorique/neutre.png	non : attendre le skin
+GD24-e2-prehistorique	prehistorique/GD24-e2-prehistorique.txt	public/img/fanzzy/GD24/e2/prehistorique/neutre.png	oui
+GD24-e3-prehistorique	prehistorique/GD24-e3-prehistorique.txt	public/img/fanzzy/GD24/e3/prehistorique/neutre.png	oui
+GD25-e1-prehistorique	prehistorique/GD25-e1-prehistorique.txt	public/img/fanzzy/GD25/e1/prehistorique/neutre.png	non : attendre le skin
+GD25-e2-prehistorique	prehistorique/GD25-e2-prehistorique.txt	public/img/fanzzy/GD25/e2/prehistorique/neutre.png	oui
+GD25-e3-prehistorique	prehistorique/GD25-e3-prehistorique.txt	public/img/fanzzy/GD25/e3/prehistorique/neutre.png	oui
+GD26-e1-prehistorique	prehistorique/GD26-e1-prehistorique.txt	public/img/fanzzy/GD26/e1/prehistorique/neutre.png	oui
+GD26-e2-prehistorique	prehistorique/GD26-e2-prehistorique.txt	public/img/fanzzy/GD26/e2/prehistorique/neutre.png	oui
+GD26-e3-prehistorique	prehistorique/GD26-e3-prehistorique.txt	public/img/fanzzy/GD26/e3/prehistorique/neutre.png	oui
+GD27-e1-prehistorique	prehistorique/GD27-e1-prehistorique.txt	public/img/fanzzy/GD27/e1/prehistorique/neutre.png	oui
+GD27-e2-prehistorique	prehistorique/GD27-e2-prehistorique.txt	public/img/fanzzy/GD27/e2/prehistorique/neutre.png	oui
+GD27-e3-prehistorique	prehistorique/GD27-e3-prehistorique.txt	public/img/fanzzy/GD27/e3/prehistorique/neutre.png	non : attendre le skin
+GD28-e1-prehistorique	prehistorique/GD28-e1-prehistorique.txt	public/img/fanzzy/GD28/e1/prehistorique/neutre.png	oui
+GD28-e2-prehistorique	prehistorique/GD28-e2-prehistorique.txt	public/img/fanzzy/GD28/e2/prehistorique/neutre.png	oui
+GD28-e3-prehistorique	prehistorique/GD28-e3-prehistorique.txt	public/img/fanzzy/GD28/e3/prehistorique/neutre.png	oui
+GD29-e1-prehistorique	prehistorique/GD29-e1-prehistorique.txt	public/img/fanzzy/GD29/e1/prehistorique/neutre.png	oui
+GD29-e2-prehistorique	prehistorique/GD29-e2-prehistorique.txt	public/img/fanzzy/GD29/e2/prehistorique/neutre.png	oui
+GD29-e3-prehistorique	prehistorique/GD29-e3-prehistorique.txt	public/img/fanzzy/GD29/e3/prehistorique/neutre.png	oui
+GD30-e1-prehistorique	prehistorique/GD30-e1-prehistorique.txt	public/img/fanzzy/GD30/e1/prehistorique/neutre.png	oui
+GD30-e2-prehistorique	prehistorique/GD30-e2-prehistorique.txt	public/img/fanzzy/GD30/e2/prehistorique/neutre.png	oui
+GD30-e3-prehistorique	prehistorique/GD30-e3-prehistorique.txt	public/img/fanzzy/GD30/e3/prehistorique/neutre.png	non : attendre le skin
+GD31-e1-prehistorique	prehistorique/GD31-e1-prehistorique.txt	public/img/fanzzy/GD31/e1/prehistorique/neutre.png	oui
+GD31-e2-prehistorique	prehistorique/GD31-e2-prehistorique.txt	public/img/fanzzy/GD31/e2/prehistorique/neutre.png	oui
+GD31-e3-prehistorique	prehistorique/GD31-e3-prehistorique.txt	public/img/fanzzy/GD31/e3/prehistorique/neutre.png	oui
+GD32-e1-prehistorique	prehistorique/GD32-e1-prehistorique.txt	public/img/fanzzy/GD32/e1/prehistorique/neutre.png	non : attendre le skin
+GD32-e2-prehistorique	prehistorique/GD32-e2-prehistorique.txt	public/img/fanzzy/GD32/e2/prehistorique/neutre.png	non : attendre le skin
+GD32-e3-prehistorique	prehistorique/GD32-e3-prehistorique.txt	public/img/fanzzy/GD32/e3/prehistorique/neutre.png	non : attendre le skin
+GD33-e1-prehistorique	prehistorique/GD33-e1-prehistorique.txt	public/img/fanzzy/GD33/e1/prehistorique/neutre.png	oui
+GD33-e2-prehistorique	prehistorique/GD33-e2-prehistorique.txt	public/img/fanzzy/GD33/e2/prehistorique/neutre.png	oui
+GD33-e3-prehistorique	prehistorique/GD33-e3-prehistorique.txt	public/img/fanzzy/GD33/e3/prehistorique/neutre.png	oui
+GD34-e1-prehistorique	prehistorique/GD34-e1-prehistorique.txt	public/img/fanzzy/GD34/e1/prehistorique/neutre.png	oui
+GD34-e2-prehistorique	prehistorique/GD34-e2-prehistorique.txt	public/img/fanzzy/GD34/e2/prehistorique/neutre.png	non : attendre le skin
+GD34-e3-prehistorique	prehistorique/GD34-e3-prehistorique.txt	public/img/fanzzy/GD34/e3/prehistorique/neutre.png	non : attendre le skin
+GD35-e1-prehistorique	prehistorique/GD35-e1-prehistorique.txt	public/img/fanzzy/GD35/e1/prehistorique/neutre.png	oui
+GD35-e2-prehistorique	prehistorique/GD35-e2-prehistorique.txt	public/img/fanzzy/GD35/e2/prehistorique/neutre.png	non : attendre le skin
+GD35-e3-prehistorique	prehistorique/GD35-e3-prehistorique.txt	public/img/fanzzy/GD35/e3/prehistorique/neutre.png	oui
+GD36-e1-prehistorique	prehistorique/GD36-e1-prehistorique.txt	public/img/fanzzy/GD36/e1/prehistorique/neutre.png	oui
+GD36-e2-prehistorique	prehistorique/GD36-e2-prehistorique.txt	public/img/fanzzy/GD36/e2/prehistorique/neutre.png	oui
+GD36-e3-prehistorique	prehistorique/GD36-e3-prehistorique.txt	public/img/fanzzy/GD36/e3/prehistorique/neutre.png	oui
+GD37-e1-prehistorique	prehistorique/GD37-e1-prehistorique.txt	public/img/fanzzy/GD37/e1/prehistorique/neutre.png	oui
+GD37-e2-prehistorique	prehistorique/GD37-e2-prehistorique.txt	public/img/fanzzy/GD37/e2/prehistorique/neutre.png	non : attendre le skin
+GD37-e3-prehistorique	prehistorique/GD37-e3-prehistorique.txt	public/img/fanzzy/GD37/e3/prehistorique/neutre.png	oui
+GD38-e1-prehistorique	prehistorique/GD38-e1-prehistorique.txt	public/img/fanzzy/GD38/e1/prehistorique/neutre.png	oui
+GD38-e2-prehistorique	prehistorique/GD38-e2-prehistorique.txt	public/img/fanzzy/GD38/e2/prehistorique/neutre.png	oui
+GD38-e3-prehistorique	prehistorique/GD38-e3-prehistorique.txt	public/img/fanzzy/GD38/e3/prehistorique/neutre.png	oui
+GD39-e1-prehistorique	prehistorique/GD39-e1-prehistorique.txt	public/img/fanzzy/GD39/e1/prehistorique/neutre.png	oui
+GD39-e2-prehistorique	prehistorique/GD39-e2-prehistorique.txt	public/img/fanzzy/GD39/e2/prehistorique/neutre.png	oui
+GD39-e3-prehistorique	prehistorique/GD39-e3-prehistorique.txt	public/img/fanzzy/GD39/e3/prehistorique/neutre.png	oui
+GD40-e1-prehistorique	prehistorique/GD40-e1-prehistorique.txt	public/img/fanzzy/GD40/e1/prehistorique/neutre.png	oui
+GD40-e2-prehistorique	prehistorique/GD40-e2-prehistorique.txt	public/img/fanzzy/GD40/e2/prehistorique/neutre.png	oui
+GD40-e3-prehistorique	prehistorique/GD40-e3-prehistorique.txt	public/img/fanzzy/GD40/e3/prehistorique/neutre.png	oui
+GD41-e1-prehistorique	prehistorique/GD41-e1-prehistorique.txt	public/img/fanzzy/GD41/e1/prehistorique/neutre.png	oui
+GD41-e2-prehistorique	prehistorique/GD41-e2-prehistorique.txt	public/img/fanzzy/GD41/e2/prehistorique/neutre.png	oui
+GD41-e3-prehistorique	prehistorique/GD41-e3-prehistorique.txt	public/img/fanzzy/GD41/e3/prehistorique/neutre.png	oui
+GD42-e1-prehistorique	prehistorique/GD42-e1-prehistorique.txt	public/img/fanzzy/GD42/e1/prehistorique/neutre.png	oui
+GD42-e2-prehistorique	prehistorique/GD42-e2-prehistorique.txt	public/img/fanzzy/GD42/e2/prehistorique/neutre.png	oui
+GD42-e3-prehistorique	prehistorique/GD42-e3-prehistorique.txt	public/img/fanzzy/GD42/e3/prehistorique/neutre.png	non : attendre le skin
+GD43-e1-prehistorique	prehistorique/GD43-e1-prehistorique.txt	public/img/fanzzy/GD43/e1/prehistorique/neutre.png	oui
+GD43-e2-prehistorique	prehistorique/GD43-e2-prehistorique.txt	public/img/fanzzy/GD43/e2/prehistorique/neutre.png	oui
+GD43-e3-prehistorique	prehistorique/GD43-e3-prehistorique.txt	public/img/fanzzy/GD43/e3/prehistorique/neutre.png	oui
+GD44-e1-prehistorique	prehistorique/GD44-e1-prehistorique.txt	public/img/fanzzy/GD44/e1/prehistorique/neutre.png	oui
+GD44-e2-prehistorique	prehistorique/GD44-e2-prehistorique.txt	public/img/fanzzy/GD44/e2/prehistorique/neutre.png	oui
+GD44-e3-prehistorique	prehistorique/GD44-e3-prehistorique.txt	public/img/fanzzy/GD44/e3/prehistorique/neutre.png	oui
+GD45-e1-prehistorique	prehistorique/GD45-e1-prehistorique.txt	public/img/fanzzy/GD45/e1/prehistorique/neutre.png	oui
+GD45-e2-prehistorique	prehistorique/GD45-e2-prehistorique.txt	public/img/fanzzy/GD45/e2/prehistorique/neutre.png	oui
+GD45-e3-prehistorique	prehistorique/GD45-e3-prehistorique.txt	public/img/fanzzy/GD45/e3/prehistorique/neutre.png	non : attendre le skin
+GD46-e1-prehistorique	prehistorique/GD46-e1-prehistorique.txt	public/img/fanzzy/GD46/e1/prehistorique/neutre.png	oui
+GD46-e2-prehistorique	prehistorique/GD46-e2-prehistorique.txt	public/img/fanzzy/GD46/e2/prehistorique/neutre.png	oui
+GD46-e3-prehistorique	prehistorique/GD46-e3-prehistorique.txt	public/img/fanzzy/GD46/e3/prehistorique/neutre.png	oui
+GD47-e1-prehistorique	prehistorique/GD47-e1-prehistorique.txt	public/img/fanzzy/GD47/e1/prehistorique/neutre.png	oui
+GD47-e2-prehistorique	prehistorique/GD47-e2-prehistorique.txt	public/img/fanzzy/GD47/e2/prehistorique/neutre.png	oui
+GD47-e3-prehistorique	prehistorique/GD47-e3-prehistorique.txt	public/img/fanzzy/GD47/e3/prehistorique/neutre.png	non : attendre le skin
+GD48-e1-prehistorique	prehistorique/GD48-e1-prehistorique.txt	public/img/fanzzy/GD48/e1/prehistorique/neutre.png	oui
+GD48-e2-prehistorique	prehistorique/GD48-e2-prehistorique.txt	public/img/fanzzy/GD48/e2/prehistorique/neutre.png	oui
+GD48-e3-prehistorique	prehistorique/GD48-e3-prehistorique.txt	public/img/fanzzy/GD48/e3/prehistorique/neutre.png	oui
+GD49-e1-prehistorique	prehistorique/GD49-e1-prehistorique.txt	public/img/fanzzy/GD49/e1/prehistorique/neutre.png	oui
+GD49-e2-prehistorique	prehistorique/GD49-e2-prehistorique.txt	public/img/fanzzy/GD49/e2/prehistorique/neutre.png	oui
+GD49-e3-prehistorique	prehistorique/GD49-e3-prehistorique.txt	public/img/fanzzy/GD49/e3/prehistorique/neutre.png	oui
+GD50-e1-prehistorique	prehistorique/GD50-e1-prehistorique.txt	public/img/fanzzy/GD50/e1/prehistorique/neutre.png	non : attendre le skin
+GD50-e2-prehistorique	prehistorique/GD50-e2-prehistorique.txt	public/img/fanzzy/GD50/e2/prehistorique/neutre.png	oui
+GD50-e3-prehistorique	prehistorique/GD50-e3-prehistorique.txt	public/img/fanzzy/GD50/e3/prehistorique/neutre.png	oui
+GD51-e1-prehistorique	prehistorique/GD51-e1-prehistorique.txt	public/img/fanzzy/GD51/e1/prehistorique/neutre.png	non : attendre le skin
+GD51-e2-prehistorique	prehistorique/GD51-e2-prehistorique.txt	public/img/fanzzy/GD51/e2/prehistorique/neutre.png	oui
+GD51-e3-prehistorique	prehistorique/GD51-e3-prehistorique.txt	public/img/fanzzy/GD51/e3/prehistorique/neutre.png	oui
+GD52-e1-prehistorique	prehistorique/GD52-e1-prehistorique.txt	public/img/fanzzy/GD52/e1/prehistorique/neutre.png	oui
+GD52-e2-prehistorique	prehistorique/GD52-e2-prehistorique.txt	public/img/fanzzy/GD52/e2/prehistorique/neutre.png	oui
+GD52-e3-prehistorique	prehistorique/GD52-e3-prehistorique.txt	public/img/fanzzy/GD52/e3/prehistorique/neutre.png	oui
+VP1-e1-prehistorique	prehistorique/VP1-e1-prehistorique.txt	public/img/fanzzy/VP1/e1/prehistorique/neutre.png	oui
+VP1-e2-prehistorique	prehistorique/VP1-e2-prehistorique.txt	public/img/fanzzy/VP1/e2/prehistorique/neutre.png	oui
+VP1-e3-prehistorique	prehistorique/VP1-e3-prehistorique.txt	public/img/fanzzy/VP1/e3/prehistorique/neutre.png	oui
+VP2-e1-prehistorique	prehistorique/VP2-e1-prehistorique.txt	public/img/fanzzy/VP2/e1/prehistorique/neutre.png	oui
+VP2-e2-prehistorique	prehistorique/VP2-e2-prehistorique.txt	public/img/fanzzy/VP2/e2/prehistorique/neutre.png	non : attendre le skin
+VP2-e3-prehistorique	prehistorique/VP2-e3-prehistorique.txt	public/img/fanzzy/VP2/e3/prehistorique/neutre.png	non : attendre le skin
+VP3-e1-prehistorique	prehistorique/VP3-e1-prehistorique.txt	public/img/fanzzy/VP3/e1/prehistorique/neutre.png	oui
+VP3-e2-prehistorique	prehistorique/VP3-e2-prehistorique.txt	public/img/fanzzy/VP3/e2/prehistorique/neutre.png	oui
+VP3-e3-prehistorique	prehistorique/VP3-e3-prehistorique.txt	public/img/fanzzy/VP3/e3/prehistorique/neutre.png	oui
+VP4-e1-prehistorique	prehistorique/VP4-e1-prehistorique.txt	public/img/fanzzy/VP4/e1/prehistorique/neutre.png	non : attendre le skin
+VP4-e2-prehistorique	prehistorique/VP4-e2-prehistorique.txt	public/img/fanzzy/VP4/e2/prehistorique/neutre.png	oui
+VP4-e3-prehistorique	prehistorique/VP4-e3-prehistorique.txt	public/img/fanzzy/VP4/e3/prehistorique/neutre.png	non : attendre le skin
+VP5-e1-prehistorique	prehistorique/VP5-e1-prehistorique.txt	public/img/fanzzy/VP5/e1/prehistorique/neutre.png	oui
+VP5-e2-prehistorique	prehistorique/VP5-e2-prehistorique.txt	public/img/fanzzy/VP5/e2/prehistorique/neutre.png	oui
+VP5-e3-prehistorique	prehistorique/VP5-e3-prehistorique.txt	public/img/fanzzy/VP5/e3/prehistorique/neutre.png	oui
+VP6-e1-prehistorique	prehistorique/VP6-e1-prehistorique.txt	public/img/fanzzy/VP6/e1/prehistorique/neutre.png	oui
+VP6-e2-prehistorique	prehistorique/VP6-e2-prehistorique.txt	public/img/fanzzy/VP6/e2/prehistorique/neutre.png	oui
+VP6-e3-prehistorique	prehistorique/VP6-e3-prehistorique.txt	public/img/fanzzy/VP6/e3/prehistorique/neutre.png	non : attendre le skin
+VP7-e1-prehistorique	prehistorique/VP7-e1-prehistorique.txt	public/img/fanzzy/VP7/e1/prehistorique/neutre.png	oui
+VP7-e2-prehistorique	prehistorique/VP7-e2-prehistorique.txt	public/img/fanzzy/VP7/e2/prehistorique/neutre.png	oui
+VP7-e3-prehistorique	prehistorique/VP7-e3-prehistorique.txt	public/img/fanzzy/VP7/e3/prehistorique/neutre.png	non : attendre le skin
+VP8-e1-prehistorique	prehistorique/VP8-e1-prehistorique.txt	public/img/fanzzy/VP8/e1/prehistorique/neutre.png	oui
+VP8-e2-prehistorique	prehistorique/VP8-e2-prehistorique.txt	public/img/fanzzy/VP8/e2/prehistorique/neutre.png	oui
+VP8-e3-prehistorique	prehistorique/VP8-e3-prehistorique.txt	public/img/fanzzy/VP8/e3/prehistorique/neutre.png	non : attendre le skin
+VP9-e1-prehistorique	prehistorique/VP9-e1-prehistorique.txt	public/img/fanzzy/VP9/e1/prehistorique/neutre.png	oui
+VP9-e2-prehistorique	prehistorique/VP9-e2-prehistorique.txt	public/img/fanzzy/VP9/e2/prehistorique/neutre.png	oui
+VP9-e3-prehistorique	prehistorique/VP9-e3-prehistorique.txt	public/img/fanzzy/VP9/e3/prehistorique/neutre.png	oui
+VP10-e1-prehistorique	prehistorique/VP10-e1-prehistorique.txt	public/img/fanzzy/VP10/e1/prehistorique/neutre.png	oui
+VP11-e1-prehistorique	prehistorique/VP11-e1-prehistorique.txt	public/img/fanzzy/VP11/e1/prehistorique/neutre.png	oui
+VP12-e1-prehistorique	prehistorique/VP12-e1-prehistorique.txt	public/img/fanzzy/VP12/e1/prehistorique/neutre.png	oui
+VP13-e1-prehistorique	prehistorique/VP13-e1-prehistorique.txt	public/img/fanzzy/VP13/e1/prehistorique/neutre.png	oui
+VP14-e1-prehistorique	prehistorique/VP14-e1-prehistorique.txt	public/img/fanzzy/VP14/e1/prehistorique/neutre.png	oui
+VP15-e1-prehistorique	prehistorique/VP15-e1-prehistorique.txt	public/img/fanzzy/VP15/e1/prehistorique/neutre.png	non : attendre le skin
+VP15-e2-prehistorique	prehistorique/VP15-e2-prehistorique.txt	public/img/fanzzy/VP15/e2/prehistorique/neutre.png	non : attendre le skin
+VP15-e3-prehistorique	prehistorique/VP15-e3-prehistorique.txt	public/img/fanzzy/VP15/e3/prehistorique/neutre.png	oui
+VP16-e1-prehistorique	prehistorique/VP16-e1-prehistorique.txt	public/img/fanzzy/VP16/e1/prehistorique/neutre.png	oui
+VP16-e2-prehistorique	prehistorique/VP16-e2-prehistorique.txt	public/img/fanzzy/VP16/e2/prehistorique/neutre.png	oui
+VP16-e3-prehistorique	prehistorique/VP16-e3-prehistorique.txt	public/img/fanzzy/VP16/e3/prehistorique/neutre.png	oui
+VP17-e1-prehistorique	prehistorique/VP17-e1-prehistorique.txt	public/img/fanzzy/VP17/e1/prehistorique/neutre.png	oui
+VP17-e2-prehistorique	prehistorique/VP17-e2-prehistorique.txt	public/img/fanzzy/VP17/e2/prehistorique/neutre.png	non : attendre le skin
+VP17-e3-prehistorique	prehistorique/VP17-e3-prehistorique.txt	public/img/fanzzy/VP17/e3/prehistorique/neutre.png	non : attendre le skin
+VP18-e1-prehistorique	prehistorique/VP18-e1-prehistorique.txt	public/img/fanzzy/VP18/e1/prehistorique/neutre.png	oui
+VP18-e2-prehistorique	prehistorique/VP18-e2-prehistorique.txt	public/img/fanzzy/VP18/e2/prehistorique/neutre.png	oui
+VP18-e3-prehistorique	prehistorique/VP18-e3-prehistorique.txt	public/img/fanzzy/VP18/e3/prehistorique/neutre.png	oui
+VP19-e1-prehistorique	prehistorique/VP19-e1-prehistorique.txt	public/img/fanzzy/VP19/e1/prehistorique/neutre.png	oui
+VP19-e2-prehistorique	prehistorique/VP19-e2-prehistorique.txt	public/img/fanzzy/VP19/e2/prehistorique/neutre.png	oui
+VP19-e3-prehistorique	prehistorique/VP19-e3-prehistorique.txt	public/img/fanzzy/VP19/e3/prehistorique/neutre.png	oui
+VP20-e1-prehistorique	prehistorique/VP20-e1-prehistorique.txt	public/img/fanzzy/VP20/e1/prehistorique/neutre.png	oui
+VP20-e2-prehistorique	prehistorique/VP20-e2-prehistorique.txt	public/img/fanzzy/VP20/e2/prehistorique/neutre.png	oui
+VP20-e3-prehistorique	prehistorique/VP20-e3-prehistorique.txt	public/img/fanzzy/VP20/e3/prehistorique/neutre.png	oui
+VP21-e1-prehistorique	prehistorique/VP21-e1-prehistorique.txt	public/img/fanzzy/VP21/e1/prehistorique/neutre.png	oui
+VP21-e2-prehistorique	prehistorique/VP21-e2-prehistorique.txt	public/img/fanzzy/VP21/e2/prehistorique/neutre.png	non : attendre le skin
+VP21-e3-prehistorique	prehistorique/VP21-e3-prehistorique.txt	public/img/fanzzy/VP21/e3/prehistorique/neutre.png	non : attendre le skin
+VP22-e1-prehistorique	prehistorique/VP22-e1-prehistorique.txt	public/img/fanzzy/VP22/e1/prehistorique/neutre.png	oui
+VP22-e2-prehistorique	prehistorique/VP22-e2-prehistorique.txt	public/img/fanzzy/VP22/e2/prehistorique/neutre.png	oui
+VP22-e3-prehistorique	prehistorique/VP22-e3-prehistorique.txt	public/img/fanzzy/VP22/e3/prehistorique/neutre.png	oui
+VP23-e1-prehistorique	prehistorique/VP23-e1-prehistorique.txt	public/img/fanzzy/VP23/e1/prehistorique/neutre.png	oui
+VP23-e2-prehistorique	prehistorique/VP23-e2-prehistorique.txt	public/img/fanzzy/VP23/e2/prehistorique/neutre.png	non : attendre le skin
+VP23-e3-prehistorique	prehistorique/VP23-e3-prehistorique.txt	public/img/fanzzy/VP23/e3/prehistorique/neutre.png	oui
+VP24-e1-prehistorique	prehistorique/VP24-e1-prehistorique.txt	public/img/fanzzy/VP24/e1/prehistorique/neutre.png	oui
+VP24-e2-prehistorique	prehistorique/VP24-e2-prehistorique.txt	public/img/fanzzy/VP24/e2/prehistorique/neutre.png	oui
+VP24-e3-prehistorique	prehistorique/VP24-e3-prehistorique.txt	public/img/fanzzy/VP24/e3/prehistorique/neutre.png	oui
+VP25-e1-prehistorique	prehistorique/VP25-e1-prehistorique.txt	public/img/fanzzy/VP25/e1/prehistorique/neutre.png	oui
+VP25-e2-prehistorique	prehistorique/VP25-e2-prehistorique.txt	public/img/fanzzy/VP25/e2/prehistorique/neutre.png	non : attendre le skin
+VP25-e3-prehistorique	prehistorique/VP25-e3-prehistorique.txt	public/img/fanzzy/VP25/e3/prehistorique/neutre.png	non : attendre le skin
+VP26-e1-prehistorique	prehistorique/VP26-e1-prehistorique.txt	public/img/fanzzy/VP26/e1/prehistorique/neutre.png	oui
+VP26-e2-prehistorique	prehistorique/VP26-e2-prehistorique.txt	public/img/fanzzy/VP26/e2/prehistorique/neutre.png	non : attendre le skin
+VP26-e3-prehistorique	prehistorique/VP26-e3-prehistorique.txt	public/img/fanzzy/VP26/e3/prehistorique/neutre.png	non : attendre le skin
+VP27-e1-prehistorique	prehistorique/VP27-e1-prehistorique.txt	public/img/fanzzy/VP27/e1/prehistorique/neutre.png	non : attendre le skin
+VP27-e2-prehistorique	prehistorique/VP27-e2-prehistorique.txt	public/img/fanzzy/VP27/e2/prehistorique/neutre.png	oui
+VP27-e3-prehistorique	prehistorique/VP27-e3-prehistorique.txt	public/img/fanzzy/VP27/e3/prehistorique/neutre.png	oui
+VP28-e1-prehistorique	prehistorique/VP28-e1-prehistorique.txt	public/img/fanzzy/VP28/e1/prehistorique/neutre.png	oui
+VP28-e2-prehistorique	prehistorique/VP28-e2-prehistorique.txt	public/img/fanzzy/VP28/e2/prehistorique/neutre.png	oui
+VP28-e3-prehistorique	prehistorique/VP28-e3-prehistorique.txt	public/img/fanzzy/VP28/e3/prehistorique/neutre.png	oui
+VP29-e1-prehistorique	prehistorique/VP29-e1-prehistorique.txt	public/img/fanzzy/VP29/e1/prehistorique/neutre.png	oui
+VP29-e2-prehistorique	prehistorique/VP29-e2-prehistorique.txt	public/img/fanzzy/VP29/e2/prehistorique/neutre.png	oui
+VP29-e3-prehistorique	prehistorique/VP29-e3-prehistorique.txt	public/img/fanzzy/VP29/e3/prehistorique/neutre.png	non : attendre le skin
+VP30-e1-prehistorique	prehistorique/VP30-e1-prehistorique.txt	public/img/fanzzy/VP30/e1/prehistorique/neutre.png	oui
+VP30-e2-prehistorique	prehistorique/VP30-e2-prehistorique.txt	public/img/fanzzy/VP30/e2/prehistorique/neutre.png	oui
+VP30-e3-prehistorique	prehistorique/VP30-e3-prehistorique.txt	public/img/fanzzy/VP30/e3/prehistorique/neutre.png	non : attendre le skin
+VP31-e1-prehistorique	prehistorique/VP31-e1-prehistorique.txt	public/img/fanzzy/VP31/e1/prehistorique/neutre.png	oui
+VP31-e2-prehistorique	prehistorique/VP31-e2-prehistorique.txt	public/img/fanzzy/VP31/e2/prehistorique/neutre.png	non : attendre le skin
+VP31-e3-prehistorique	prehistorique/VP31-e3-prehistorique.txt	public/img/fanzzy/VP31/e3/prehistorique/neutre.png	oui
+VP32-e1-prehistorique	prehistorique/VP32-e1-prehistorique.txt	public/img/fanzzy/VP32/e1/prehistorique/neutre.png	oui
+VP32-e2-prehistorique	prehistorique/VP32-e2-prehistorique.txt	public/img/fanzzy/VP32/e2/prehistorique/neutre.png	oui
+VP32-e3-prehistorique	prehistorique/VP32-e3-prehistorique.txt	public/img/fanzzy/VP32/e3/prehistorique/neutre.png	non : attendre le skin
+VP33-e1-prehistorique	prehistorique/VP33-e1-prehistorique.txt	public/img/fanzzy/VP33/e1/prehistorique/neutre.png	oui
+VP33-e2-prehistorique	prehistorique/VP33-e2-prehistorique.txt	public/img/fanzzy/VP33/e2/prehistorique/neutre.png	oui
+VP33-e3-prehistorique	prehistorique/VP33-e3-prehistorique.txt	public/img/fanzzy/VP33/e3/prehistorique/neutre.png	oui
+VP34-e1-prehistorique	prehistorique/VP34-e1-prehistorique.txt	public/img/fanzzy/VP34/e1/prehistorique/neutre.png	oui
+VP34-e2-prehistorique	prehistorique/VP34-e2-prehistorique.txt	public/img/fanzzy/VP34/e2/prehistorique/neutre.png	oui
+VP34-e3-prehistorique	prehistorique/VP34-e3-prehistorique.txt	public/img/fanzzy/VP34/e3/prehistorique/neutre.png	oui
+VP35-e1-prehistorique	prehistorique/VP35-e1-prehistorique.txt	public/img/fanzzy/VP35/e1/prehistorique/neutre.png	oui
+VP35-e2-prehistorique	prehistorique/VP35-e2-prehistorique.txt	public/img/fanzzy/VP35/e2/prehistorique/neutre.png	non : attendre le skin
+VP35-e3-prehistorique	prehistorique/VP35-e3-prehistorique.txt	public/img/fanzzy/VP35/e3/prehistorique/neutre.png	non : attendre le skin
+VP36-e1-prehistorique	prehistorique/VP36-e1-prehistorique.txt	public/img/fanzzy/VP36/e1/prehistorique/neutre.png	non : attendre le skin
+VP36-e2-prehistorique	prehistorique/VP36-e2-prehistorique.txt	public/img/fanzzy/VP36/e2/prehistorique/neutre.png	oui
+VP36-e3-prehistorique	prehistorique/VP36-e3-prehistorique.txt	public/img/fanzzy/VP36/e3/prehistorique/neutre.png	non : attendre le skin
+VP37-e1-prehistorique	prehistorique/VP37-e1-prehistorique.txt	public/img/fanzzy/VP37/e1/prehistorique/neutre.png	oui
+VP37-e2-prehistorique	prehistorique/VP37-e2-prehistorique.txt	public/img/fanzzy/VP37/e2/prehistorique/neutre.png	oui
+VP37-e3-prehistorique	prehistorique/VP37-e3-prehistorique.txt	public/img/fanzzy/VP37/e3/prehistorique/neutre.png	non : attendre le skin
+VP38-e1-prehistorique	prehistorique/VP38-e1-prehistorique.txt	public/img/fanzzy/VP38/e1/prehistorique/neutre.png	oui
+VP38-e2-prehistorique	prehistorique/VP38-e2-prehistorique.txt	public/img/fanzzy/VP38/e2/prehistorique/neutre.png	oui
+VP38-e3-prehistorique	prehistorique/VP38-e3-prehistorique.txt	public/img/fanzzy/VP38/e3/prehistorique/neutre.png	oui
+VP39-e1-prehistorique	prehistorique/VP39-e1-prehistorique.txt	public/img/fanzzy/VP39/e1/prehistorique/neutre.png	oui
+VP39-e2-prehistorique	prehistorique/VP39-e2-prehistorique.txt	public/img/fanzzy/VP39/e2/prehistorique/neutre.png	oui
+VP39-e3-prehistorique	prehistorique/VP39-e3-prehistorique.txt	public/img/fanzzy/VP39/e3/prehistorique/neutre.png	non : attendre le skin
+VP40-e1-prehistorique	prehistorique/VP40-e1-prehistorique.txt	public/img/fanzzy/VP40/e1/prehistorique/neutre.png	oui
+VP40-e2-prehistorique	prehistorique/VP40-e2-prehistorique.txt	public/img/fanzzy/VP40/e2/prehistorique/neutre.png	oui
+VP40-e3-prehistorique	prehistorique/VP40-e3-prehistorique.txt	public/img/fanzzy/VP40/e3/prehistorique/neutre.png	oui
+VP41-e1-prehistorique	prehistorique/VP41-e1-prehistorique.txt	public/img/fanzzy/VP41/e1/prehistorique/neutre.png	non : attendre le skin
+VP41-e2-prehistorique	prehistorique/VP41-e2-prehistorique.txt	public/img/fanzzy/VP41/e2/prehistorique/neutre.png	oui
+VP41-e3-prehistorique	prehistorique/VP41-e3-prehistorique.txt	public/img/fanzzy/VP41/e3/prehistorique/neutre.png	non : attendre le skin
+VP42-e1-prehistorique	prehistorique/VP42-e1-prehistorique.txt	public/img/fanzzy/VP42/e1/prehistorique/neutre.png	oui
+VP42-e2-prehistorique	prehistorique/VP42-e2-prehistorique.txt	public/img/fanzzy/VP42/e2/prehistorique/neutre.png	oui
+VP42-e3-prehistorique	prehistorique/VP42-e3-prehistorique.txt	public/img/fanzzy/VP42/e3/prehistorique/neutre.png	oui
+VP43-e1-prehistorique	prehistorique/VP43-e1-prehistorique.txt	public/img/fanzzy/VP43/e1/prehistorique/neutre.png	oui
+VP43-e2-prehistorique	prehistorique/VP43-e2-prehistorique.txt	public/img/fanzzy/VP43/e2/prehistorique/neutre.png	non : attendre le skin
+VP43-e3-prehistorique	prehistorique/VP43-e3-prehistorique.txt	public/img/fanzzy/VP43/e3/prehistorique/neutre.png	oui
+VP44-e1-prehistorique	prehistorique/VP44-e1-prehistorique.txt	public/img/fanzzy/VP44/e1/prehistorique/neutre.png	non : attendre le skin
+VP44-e2-prehistorique	prehistorique/VP44-e2-prehistorique.txt	public/img/fanzzy/VP44/e2/prehistorique/neutre.png	oui
+VP44-e3-prehistorique	prehistorique/VP44-e3-prehistorique.txt	public/img/fanzzy/VP44/e3/prehistorique/neutre.png	oui
+VP45-e1-prehistorique	prehistorique/VP45-e1-prehistorique.txt	public/img/fanzzy/VP45/e1/prehistorique/neutre.png	oui
+VP45-e2-prehistorique	prehistorique/VP45-e2-prehistorique.txt	public/img/fanzzy/VP45/e2/prehistorique/neutre.png	oui
+VP45-e3-prehistorique	prehistorique/VP45-e3-prehistorique.txt	public/img/fanzzy/VP45/e3/prehistorique/neutre.png	non : attendre le skin
+VP46-e1-prehistorique	prehistorique/VP46-e1-prehistorique.txt	public/img/fanzzy/VP46/e1/prehistorique/neutre.png	oui
+VP46-e2-prehistorique	prehistorique/VP46-e2-prehistorique.txt	public/img/fanzzy/VP46/e2/prehistorique/neutre.png	oui
+VP46-e3-prehistorique	prehistorique/VP46-e3-prehistorique.txt	public/img/fanzzy/VP46/e3/prehistorique/neutre.png	oui
+VP47-e1-prehistorique	prehistorique/VP47-e1-prehistorique.txt	public/img/fanzzy/VP47/e1/prehistorique/neutre.png	non : attendre le skin
+VP47-e2-prehistorique	prehistorique/VP47-e2-prehistorique.txt	public/img/fanzzy/VP47/e2/prehistorique/neutre.png	oui
+VP47-e3-prehistorique	prehistorique/VP47-e3-prehistorique.txt	public/img/fanzzy/VP47/e3/prehistorique/neutre.png	oui
+VP48-e1-prehistorique	prehistorique/VP48-e1-prehistorique.txt	public/img/fanzzy/VP48/e1/prehistorique/neutre.png	oui
+VP48-e2-prehistorique	prehistorique/VP48-e2-prehistorique.txt	public/img/fanzzy/VP48/e2/prehistorique/neutre.png	oui
+VP48-e3-prehistorique	prehistorique/VP48-e3-prehistorique.txt	public/img/fanzzy/VP48/e3/prehistorique/neutre.png	non : attendre le skin
+VP49-e1-prehistorique	prehistorique/VP49-e1-prehistorique.txt	public/img/fanzzy/VP49/e1/prehistorique/neutre.png	non : attendre le skin
+VP49-e2-prehistorique	prehistorique/VP49-e2-prehistorique.txt	public/img/fanzzy/VP49/e2/prehistorique/neutre.png	non : attendre le skin
+VP49-e3-prehistorique	prehistorique/VP49-e3-prehistorique.txt	public/img/fanzzy/VP49/e3/prehistorique/neutre.png	non : attendre le skin
+VP50-e1-prehistorique	prehistorique/VP50-e1-prehistorique.txt	public/img/fanzzy/VP50/e1/prehistorique/neutre.png	oui
+VP50-e2-prehistorique	prehistorique/VP50-e2-prehistorique.txt	public/img/fanzzy/VP50/e2/prehistorique/neutre.png	oui
+VP50-e3-prehistorique	prehistorique/VP50-e3-prehistorique.txt	public/img/fanzzy/VP50/e3/prehistorique/neutre.png	non : attendre le skin
+GD1-e1-apocalyptique	apocalyptique/GD1-e1-apocalyptique.txt	public/img/fanzzy/GD1/e1/apocalyptique/neutre.png	oui
+GD1-e2-apocalyptique	apocalyptique/GD1-e2-apocalyptique.txt	public/img/fanzzy/GD1/e2/apocalyptique/neutre.png	oui
+GD1-e3-apocalyptique	apocalyptique/GD1-e3-apocalyptique.txt	public/img/fanzzy/GD1/e3/apocalyptique/neutre.png	oui
+GD2-e1-apocalyptique	apocalyptique/GD2-e1-apocalyptique.txt	public/img/fanzzy/GD2/e1/apocalyptique/neutre.png	oui
+GD2-e2-apocalyptique	apocalyptique/GD2-e2-apocalyptique.txt	public/img/fanzzy/GD2/e2/apocalyptique/neutre.png	oui
+GD2-e3-apocalyptique	apocalyptique/GD2-e3-apocalyptique.txt	public/img/fanzzy/GD2/e3/apocalyptique/neutre.png	oui
+GD3-e1-apocalyptique	apocalyptique/GD3-e1-apocalyptique.txt	public/img/fanzzy/GD3/e1/apocalyptique/neutre.png	oui
+GD3-e2-apocalyptique	apocalyptique/GD3-e2-apocalyptique.txt	public/img/fanzzy/GD3/e2/apocalyptique/neutre.png	oui
+GD3-e3-apocalyptique	apocalyptique/GD3-e3-apocalyptique.txt	public/img/fanzzy/GD3/e3/apocalyptique/neutre.png	oui
+GD4-e1-apocalyptique	apocalyptique/GD4-e1-apocalyptique.txt	public/img/fanzzy/GD4/e1/apocalyptique/neutre.png	oui
+GD4-e2-apocalyptique	apocalyptique/GD4-e2-apocalyptique.txt	public/img/fanzzy/GD4/e2/apocalyptique/neutre.png	oui
+GD4-e3-apocalyptique	apocalyptique/GD4-e3-apocalyptique.txt	public/img/fanzzy/GD4/e3/apocalyptique/neutre.png	oui
+GD5-e1-apocalyptique	apocalyptique/GD5-e1-apocalyptique.txt	public/img/fanzzy/GD5/e1/apocalyptique/neutre.png	oui
+GD5-e2-apocalyptique	apocalyptique/GD5-e2-apocalyptique.txt	public/img/fanzzy/GD5/e2/apocalyptique/neutre.png	oui
+GD5-e3-apocalyptique	apocalyptique/GD5-e3-apocalyptique.txt	public/img/fanzzy/GD5/e3/apocalyptique/neutre.png	oui
+GD6-e1-apocalyptique	apocalyptique/GD6-e1-apocalyptique.txt	public/img/fanzzy/GD6/e1/apocalyptique/neutre.png	oui
+GD6-e2-apocalyptique	apocalyptique/GD6-e2-apocalyptique.txt	public/img/fanzzy/GD6/e2/apocalyptique/neutre.png	oui
+GD6-e3-apocalyptique	apocalyptique/GD6-e3-apocalyptique.txt	public/img/fanzzy/GD6/e3/apocalyptique/neutre.png	oui
+GD7-e1-apocalyptique	apocalyptique/GD7-e1-apocalyptique.txt	public/img/fanzzy/GD7/e1/apocalyptique/neutre.png	oui
+GD7-e2-apocalyptique	apocalyptique/GD7-e2-apocalyptique.txt	public/img/fanzzy/GD7/e2/apocalyptique/neutre.png	oui
+GD7-e3-apocalyptique	apocalyptique/GD7-e3-apocalyptique.txt	public/img/fanzzy/GD7/e3/apocalyptique/neutre.png	oui
+GD8-e1-apocalyptique	apocalyptique/GD8-e1-apocalyptique.txt	public/img/fanzzy/GD8/e1/apocalyptique/neutre.png	oui
+GD8-e2-apocalyptique	apocalyptique/GD8-e2-apocalyptique.txt	public/img/fanzzy/GD8/e2/apocalyptique/neutre.png	oui
+GD8-e3-apocalyptique	apocalyptique/GD8-e3-apocalyptique.txt	public/img/fanzzy/GD8/e3/apocalyptique/neutre.png	oui
+GD9-e1-apocalyptique	apocalyptique/GD9-e1-apocalyptique.txt	public/img/fanzzy/GD9/e1/apocalyptique/neutre.png	non : attendre le skin
+GD9-e2-apocalyptique	apocalyptique/GD9-e2-apocalyptique.txt	public/img/fanzzy/GD9/e2/apocalyptique/neutre.png	oui
+GD9-e3-apocalyptique	apocalyptique/GD9-e3-apocalyptique.txt	public/img/fanzzy/GD9/e3/apocalyptique/neutre.png	oui
+GD10-e1-apocalyptique	apocalyptique/GD10-e1-apocalyptique.txt	public/img/fanzzy/GD10/e1/apocalyptique/neutre.png	oui
+GD11-e1-apocalyptique	apocalyptique/GD11-e1-apocalyptique.txt	public/img/fanzzy/GD11/e1/apocalyptique/neutre.png	oui
+GD14-e1-apocalyptique	apocalyptique/GD14-e1-apocalyptique.txt	public/img/fanzzy/GD14/e1/apocalyptique/neutre.png	oui
+GD15-e1-apocalyptique	apocalyptique/GD15-e1-apocalyptique.txt	public/img/fanzzy/GD15/e1/apocalyptique/neutre.png	non : attendre le skin
+GD16-e1-apocalyptique	apocalyptique/GD16-e1-apocalyptique.txt	public/img/fanzzy/GD16/e1/apocalyptique/neutre.png	oui
+GD17-e1-apocalyptique	apocalyptique/GD17-e1-apocalyptique.txt	public/img/fanzzy/GD17/e1/apocalyptique/neutre.png	oui
+GD17-e2-apocalyptique	apocalyptique/GD17-e2-apocalyptique.txt	public/img/fanzzy/GD17/e2/apocalyptique/neutre.png	oui
+GD17-e3-apocalyptique	apocalyptique/GD17-e3-apocalyptique.txt	public/img/fanzzy/GD17/e3/apocalyptique/neutre.png	oui
+GD18-e1-apocalyptique	apocalyptique/GD18-e1-apocalyptique.txt	public/img/fanzzy/GD18/e1/apocalyptique/neutre.png	oui
+GD18-e2-apocalyptique	apocalyptique/GD18-e2-apocalyptique.txt	public/img/fanzzy/GD18/e2/apocalyptique/neutre.png	oui
+GD18-e3-apocalyptique	apocalyptique/GD18-e3-apocalyptique.txt	public/img/fanzzy/GD18/e3/apocalyptique/neutre.png	oui
+GD19-e1-apocalyptique	apocalyptique/GD19-e1-apocalyptique.txt	public/img/fanzzy/GD19/e1/apocalyptique/neutre.png	oui
+GD19-e2-apocalyptique	apocalyptique/GD19-e2-apocalyptique.txt	public/img/fanzzy/GD19/e2/apocalyptique/neutre.png	non : attendre le skin
+GD19-e3-apocalyptique	apocalyptique/GD19-e3-apocalyptique.txt	public/img/fanzzy/GD19/e3/apocalyptique/neutre.png	oui
+GD20-e1-apocalyptique	apocalyptique/GD20-e1-apocalyptique.txt	public/img/fanzzy/GD20/e1/apocalyptique/neutre.png	oui
+GD20-e2-apocalyptique	apocalyptique/GD20-e2-apocalyptique.txt	public/img/fanzzy/GD20/e2/apocalyptique/neutre.png	oui
+GD20-e3-apocalyptique	apocalyptique/GD20-e3-apocalyptique.txt	public/img/fanzzy/GD20/e3/apocalyptique/neutre.png	oui
+GD21-e1-apocalyptique	apocalyptique/GD21-e1-apocalyptique.txt	public/img/fanzzy/GD21/e1/apocalyptique/neutre.png	oui
+GD21-e2-apocalyptique	apocalyptique/GD21-e2-apocalyptique.txt	public/img/fanzzy/GD21/e2/apocalyptique/neutre.png	oui
+GD21-e3-apocalyptique	apocalyptique/GD21-e3-apocalyptique.txt	public/img/fanzzy/GD21/e3/apocalyptique/neutre.png	oui
+GD22-e1-apocalyptique	apocalyptique/GD22-e1-apocalyptique.txt	public/img/fanzzy/GD22/e1/apocalyptique/neutre.png	oui
+GD22-e2-apocalyptique	apocalyptique/GD22-e2-apocalyptique.txt	public/img/fanzzy/GD22/e2/apocalyptique/neutre.png	oui
+GD22-e3-apocalyptique	apocalyptique/GD22-e3-apocalyptique.txt	public/img/fanzzy/GD22/e3/apocalyptique/neutre.png	oui
+GD23-e1-apocalyptique	apocalyptique/GD23-e1-apocalyptique.txt	public/img/fanzzy/GD23/e1/apocalyptique/neutre.png	oui
+GD23-e2-apocalyptique	apocalyptique/GD23-e2-apocalyptique.txt	public/img/fanzzy/GD23/e2/apocalyptique/neutre.png	oui
+GD23-e3-apocalyptique	apocalyptique/GD23-e3-apocalyptique.txt	public/img/fanzzy/GD23/e3/apocalyptique/neutre.png	oui
+GD24-e1-apocalyptique	apocalyptique/GD24-e1-apocalyptique.txt	public/img/fanzzy/GD24/e1/apocalyptique/neutre.png	oui
+GD24-e2-apocalyptique	apocalyptique/GD24-e2-apocalyptique.txt	public/img/fanzzy/GD24/e2/apocalyptique/neutre.png	oui
+GD24-e3-apocalyptique	apocalyptique/GD24-e3-apocalyptique.txt	public/img/fanzzy/GD24/e3/apocalyptique/neutre.png	oui
+GD25-e1-apocalyptique	apocalyptique/GD25-e1-apocalyptique.txt	public/img/fanzzy/GD25/e1/apocalyptique/neutre.png	oui
+GD25-e2-apocalyptique	apocalyptique/GD25-e2-apocalyptique.txt	public/img/fanzzy/GD25/e2/apocalyptique/neutre.png	oui
+GD25-e3-apocalyptique	apocalyptique/GD25-e3-apocalyptique.txt	public/img/fanzzy/GD25/e3/apocalyptique/neutre.png	non : attendre le skin
+GD26-e1-apocalyptique	apocalyptique/GD26-e1-apocalyptique.txt	public/img/fanzzy/GD26/e1/apocalyptique/neutre.png	oui
+GD26-e2-apocalyptique	apocalyptique/GD26-e2-apocalyptique.txt	public/img/fanzzy/GD26/e2/apocalyptique/neutre.png	oui
+GD26-e3-apocalyptique	apocalyptique/GD26-e3-apocalyptique.txt	public/img/fanzzy/GD26/e3/apocalyptique/neutre.png	oui
+GD27-e1-apocalyptique	apocalyptique/GD27-e1-apocalyptique.txt	public/img/fanzzy/GD27/e1/apocalyptique/neutre.png	oui
+GD27-e2-apocalyptique	apocalyptique/GD27-e2-apocalyptique.txt	public/img/fanzzy/GD27/e2/apocalyptique/neutre.png	oui
+GD27-e3-apocalyptique	apocalyptique/GD27-e3-apocalyptique.txt	public/img/fanzzy/GD27/e3/apocalyptique/neutre.png	non : attendre le skin
+GD28-e1-apocalyptique	apocalyptique/GD28-e1-apocalyptique.txt	public/img/fanzzy/GD28/e1/apocalyptique/neutre.png	oui
+GD28-e2-apocalyptique	apocalyptique/GD28-e2-apocalyptique.txt	public/img/fanzzy/GD28/e2/apocalyptique/neutre.png	oui
+GD28-e3-apocalyptique	apocalyptique/GD28-e3-apocalyptique.txt	public/img/fanzzy/GD28/e3/apocalyptique/neutre.png	oui
+GD29-e1-apocalyptique	apocalyptique/GD29-e1-apocalyptique.txt	public/img/fanzzy/GD29/e1/apocalyptique/neutre.png	oui
+GD29-e2-apocalyptique	apocalyptique/GD29-e2-apocalyptique.txt	public/img/fanzzy/GD29/e2/apocalyptique/neutre.png	oui
+GD29-e3-apocalyptique	apocalyptique/GD29-e3-apocalyptique.txt	public/img/fanzzy/GD29/e3/apocalyptique/neutre.png	oui
+GD30-e1-apocalyptique	apocalyptique/GD30-e1-apocalyptique.txt	public/img/fanzzy/GD30/e1/apocalyptique/neutre.png	oui
+GD30-e2-apocalyptique	apocalyptique/GD30-e2-apocalyptique.txt	public/img/fanzzy/GD30/e2/apocalyptique/neutre.png	non : attendre le skin
+GD30-e3-apocalyptique	apocalyptique/GD30-e3-apocalyptique.txt	public/img/fanzzy/GD30/e3/apocalyptique/neutre.png	oui
+GD31-e1-apocalyptique	apocalyptique/GD31-e1-apocalyptique.txt	public/img/fanzzy/GD31/e1/apocalyptique/neutre.png	oui
+GD31-e2-apocalyptique	apocalyptique/GD31-e2-apocalyptique.txt	public/img/fanzzy/GD31/e2/apocalyptique/neutre.png	oui
+GD31-e3-apocalyptique	apocalyptique/GD31-e3-apocalyptique.txt	public/img/fanzzy/GD31/e3/apocalyptique/neutre.png	oui
+GD32-e1-apocalyptique	apocalyptique/GD32-e1-apocalyptique.txt	public/img/fanzzy/GD32/e1/apocalyptique/neutre.png	non : attendre le skin
+GD32-e2-apocalyptique	apocalyptique/GD32-e2-apocalyptique.txt	public/img/fanzzy/GD32/e2/apocalyptique/neutre.png	non : attendre le skin
+GD32-e3-apocalyptique	apocalyptique/GD32-e3-apocalyptique.txt	public/img/fanzzy/GD32/e3/apocalyptique/neutre.png	non : attendre le skin
+GD33-e1-apocalyptique	apocalyptique/GD33-e1-apocalyptique.txt	public/img/fanzzy/GD33/e1/apocalyptique/neutre.png	oui
+GD33-e2-apocalyptique	apocalyptique/GD33-e2-apocalyptique.txt	public/img/fanzzy/GD33/e2/apocalyptique/neutre.png	oui
+GD33-e3-apocalyptique	apocalyptique/GD33-e3-apocalyptique.txt	public/img/fanzzy/GD33/e3/apocalyptique/neutre.png	non : attendre le skin
+GD34-e1-apocalyptique	apocalyptique/GD34-e1-apocalyptique.txt	public/img/fanzzy/GD34/e1/apocalyptique/neutre.png	non : attendre le skin
+GD34-e2-apocalyptique	apocalyptique/GD34-e2-apocalyptique.txt	public/img/fanzzy/GD34/e2/apocalyptique/neutre.png	oui
+GD34-e3-apocalyptique	apocalyptique/GD34-e3-apocalyptique.txt	public/img/fanzzy/GD34/e3/apocalyptique/neutre.png	non : attendre le skin
+GD35-e1-apocalyptique	apocalyptique/GD35-e1-apocalyptique.txt	public/img/fanzzy/GD35/e1/apocalyptique/neutre.png	oui
+GD35-e2-apocalyptique	apocalyptique/GD35-e2-apocalyptique.txt	public/img/fanzzy/GD35/e2/apocalyptique/neutre.png	oui
+GD35-e3-apocalyptique	apocalyptique/GD35-e3-apocalyptique.txt	public/img/fanzzy/GD35/e3/apocalyptique/neutre.png	oui
+GD36-e1-apocalyptique	apocalyptique/GD36-e1-apocalyptique.txt	public/img/fanzzy/GD36/e1/apocalyptique/neutre.png	oui
+GD36-e2-apocalyptique	apocalyptique/GD36-e2-apocalyptique.txt	public/img/fanzzy/GD36/e2/apocalyptique/neutre.png	non : attendre le skin
+GD36-e3-apocalyptique	apocalyptique/GD36-e3-apocalyptique.txt	public/img/fanzzy/GD36/e3/apocalyptique/neutre.png	oui
+GD37-e1-apocalyptique	apocalyptique/GD37-e1-apocalyptique.txt	public/img/fanzzy/GD37/e1/apocalyptique/neutre.png	oui
+GD37-e2-apocalyptique	apocalyptique/GD37-e2-apocalyptique.txt	public/img/fanzzy/GD37/e2/apocalyptique/neutre.png	oui
+GD37-e3-apocalyptique	apocalyptique/GD37-e3-apocalyptique.txt	public/img/fanzzy/GD37/e3/apocalyptique/neutre.png	oui
+GD38-e1-apocalyptique	apocalyptique/GD38-e1-apocalyptique.txt	public/img/fanzzy/GD38/e1/apocalyptique/neutre.png	non : attendre le skin
+GD38-e2-apocalyptique	apocalyptique/GD38-e2-apocalyptique.txt	public/img/fanzzy/GD38/e2/apocalyptique/neutre.png	oui
+GD38-e3-apocalyptique	apocalyptique/GD38-e3-apocalyptique.txt	public/img/fanzzy/GD38/e3/apocalyptique/neutre.png	non : attendre le skin
+GD39-e1-apocalyptique	apocalyptique/GD39-e1-apocalyptique.txt	public/img/fanzzy/GD39/e1/apocalyptique/neutre.png	oui
+GD39-e2-apocalyptique	apocalyptique/GD39-e2-apocalyptique.txt	public/img/fanzzy/GD39/e2/apocalyptique/neutre.png	oui
+GD39-e3-apocalyptique	apocalyptique/GD39-e3-apocalyptique.txt	public/img/fanzzy/GD39/e3/apocalyptique/neutre.png	oui
+GD40-e1-apocalyptique	apocalyptique/GD40-e1-apocalyptique.txt	public/img/fanzzy/GD40/e1/apocalyptique/neutre.png	non : attendre le skin
+GD40-e2-apocalyptique	apocalyptique/GD40-e2-apocalyptique.txt	public/img/fanzzy/GD40/e2/apocalyptique/neutre.png	oui
+GD40-e3-apocalyptique	apocalyptique/GD40-e3-apocalyptique.txt	public/img/fanzzy/GD40/e3/apocalyptique/neutre.png	oui
+GD41-e1-apocalyptique	apocalyptique/GD41-e1-apocalyptique.txt	public/img/fanzzy/GD41/e1/apocalyptique/neutre.png	oui
+GD41-e2-apocalyptique	apocalyptique/GD41-e2-apocalyptique.txt	public/img/fanzzy/GD41/e2/apocalyptique/neutre.png	oui
+GD41-e3-apocalyptique	apocalyptique/GD41-e3-apocalyptique.txt	public/img/fanzzy/GD41/e3/apocalyptique/neutre.png	oui
+GD42-e1-apocalyptique	apocalyptique/GD42-e1-apocalyptique.txt	public/img/fanzzy/GD42/e1/apocalyptique/neutre.png	oui
+GD42-e2-apocalyptique	apocalyptique/GD42-e2-apocalyptique.txt	public/img/fanzzy/GD42/e2/apocalyptique/neutre.png	non : attendre le skin
+GD42-e3-apocalyptique	apocalyptique/GD42-e3-apocalyptique.txt	public/img/fanzzy/GD42/e3/apocalyptique/neutre.png	non : attendre le skin
+GD43-e1-apocalyptique	apocalyptique/GD43-e1-apocalyptique.txt	public/img/fanzzy/GD43/e1/apocalyptique/neutre.png	oui
+GD43-e2-apocalyptique	apocalyptique/GD43-e2-apocalyptique.txt	public/img/fanzzy/GD43/e2/apocalyptique/neutre.png	non : attendre le skin
+GD43-e3-apocalyptique	apocalyptique/GD43-e3-apocalyptique.txt	public/img/fanzzy/GD43/e3/apocalyptique/neutre.png	oui
+GD44-e1-apocalyptique	apocalyptique/GD44-e1-apocalyptique.txt	public/img/fanzzy/GD44/e1/apocalyptique/neutre.png	oui
+GD44-e2-apocalyptique	apocalyptique/GD44-e2-apocalyptique.txt	public/img/fanzzy/GD44/e2/apocalyptique/neutre.png	oui
+GD44-e3-apocalyptique	apocalyptique/GD44-e3-apocalyptique.txt	public/img/fanzzy/GD44/e3/apocalyptique/neutre.png	oui
+GD45-e1-apocalyptique	apocalyptique/GD45-e1-apocalyptique.txt	public/img/fanzzy/GD45/e1/apocalyptique/neutre.png	non : attendre le skin
+GD45-e2-apocalyptique	apocalyptique/GD45-e2-apocalyptique.txt	public/img/fanzzy/GD45/e2/apocalyptique/neutre.png	oui
+GD45-e3-apocalyptique	apocalyptique/GD45-e3-apocalyptique.txt	public/img/fanzzy/GD45/e3/apocalyptique/neutre.png	oui
+GD46-e1-apocalyptique	apocalyptique/GD46-e1-apocalyptique.txt	public/img/fanzzy/GD46/e1/apocalyptique/neutre.png	oui
+GD46-e2-apocalyptique	apocalyptique/GD46-e2-apocalyptique.txt	public/img/fanzzy/GD46/e2/apocalyptique/neutre.png	oui
+GD46-e3-apocalyptique	apocalyptique/GD46-e3-apocalyptique.txt	public/img/fanzzy/GD46/e3/apocalyptique/neutre.png	oui
+GD47-e1-apocalyptique	apocalyptique/GD47-e1-apocalyptique.txt	public/img/fanzzy/GD47/e1/apocalyptique/neutre.png	oui
+GD47-e2-apocalyptique	apocalyptique/GD47-e2-apocalyptique.txt	public/img/fanzzy/GD47/e2/apocalyptique/neutre.png	oui
+GD47-e3-apocalyptique	apocalyptique/GD47-e3-apocalyptique.txt	public/img/fanzzy/GD47/e3/apocalyptique/neutre.png	non : attendre le skin
+GD48-e1-apocalyptique	apocalyptique/GD48-e1-apocalyptique.txt	public/img/fanzzy/GD48/e1/apocalyptique/neutre.png	oui
+GD48-e2-apocalyptique	apocalyptique/GD48-e2-apocalyptique.txt	public/img/fanzzy/GD48/e2/apocalyptique/neutre.png	oui
+GD48-e3-apocalyptique	apocalyptique/GD48-e3-apocalyptique.txt	public/img/fanzzy/GD48/e3/apocalyptique/neutre.png	oui
+GD49-e1-apocalyptique	apocalyptique/GD49-e1-apocalyptique.txt	public/img/fanzzy/GD49/e1/apocalyptique/neutre.png	oui
+GD49-e2-apocalyptique	apocalyptique/GD49-e2-apocalyptique.txt	public/img/fanzzy/GD49/e2/apocalyptique/neutre.png	oui
+GD49-e3-apocalyptique	apocalyptique/GD49-e3-apocalyptique.txt	public/img/fanzzy/GD49/e3/apocalyptique/neutre.png	oui
+GD50-e1-apocalyptique	apocalyptique/GD50-e1-apocalyptique.txt	public/img/fanzzy/GD50/e1/apocalyptique/neutre.png	oui
+GD50-e2-apocalyptique	apocalyptique/GD50-e2-apocalyptique.txt	public/img/fanzzy/GD50/e2/apocalyptique/neutre.png	oui
+GD50-e3-apocalyptique	apocalyptique/GD50-e3-apocalyptique.txt	public/img/fanzzy/GD50/e3/apocalyptique/neutre.png	oui
+GD51-e1-apocalyptique	apocalyptique/GD51-e1-apocalyptique.txt	public/img/fanzzy/GD51/e1/apocalyptique/neutre.png	oui
+GD51-e2-apocalyptique	apocalyptique/GD51-e2-apocalyptique.txt	public/img/fanzzy/GD51/e2/apocalyptique/neutre.png	oui
+GD51-e3-apocalyptique	apocalyptique/GD51-e3-apocalyptique.txt	public/img/fanzzy/GD51/e3/apocalyptique/neutre.png	oui
+GD52-e1-apocalyptique	apocalyptique/GD52-e1-apocalyptique.txt	public/img/fanzzy/GD52/e1/apocalyptique/neutre.png	oui
+GD52-e2-apocalyptique	apocalyptique/GD52-e2-apocalyptique.txt	public/img/fanzzy/GD52/e2/apocalyptique/neutre.png	oui
+GD52-e3-apocalyptique	apocalyptique/GD52-e3-apocalyptique.txt	public/img/fanzzy/GD52/e3/apocalyptique/neutre.png	oui
+VP1-e1-apocalyptique	apocalyptique/VP1-e1-apocalyptique.txt	public/img/fanzzy/VP1/e1/apocalyptique/neutre.png	oui
+VP1-e2-apocalyptique	apocalyptique/VP1-e2-apocalyptique.txt	public/img/fanzzy/VP1/e2/apocalyptique/neutre.png	oui
+VP1-e3-apocalyptique	apocalyptique/VP1-e3-apocalyptique.txt	public/img/fanzzy/VP1/e3/apocalyptique/neutre.png	oui
+VP2-e1-apocalyptique	apocalyptique/VP2-e1-apocalyptique.txt	public/img/fanzzy/VP2/e1/apocalyptique/neutre.png	oui
+VP2-e2-apocalyptique	apocalyptique/VP2-e2-apocalyptique.txt	public/img/fanzzy/VP2/e2/apocalyptique/neutre.png	non : attendre le skin
+VP2-e3-apocalyptique	apocalyptique/VP2-e3-apocalyptique.txt	public/img/fanzzy/VP2/e3/apocalyptique/neutre.png	oui
+VP3-e1-apocalyptique	apocalyptique/VP3-e1-apocalyptique.txt	public/img/fanzzy/VP3/e1/apocalyptique/neutre.png	oui
+VP3-e2-apocalyptique	apocalyptique/VP3-e2-apocalyptique.txt	public/img/fanzzy/VP3/e2/apocalyptique/neutre.png	non : attendre le skin
+VP3-e3-apocalyptique	apocalyptique/VP3-e3-apocalyptique.txt	public/img/fanzzy/VP3/e3/apocalyptique/neutre.png	oui
+VP4-e1-apocalyptique	apocalyptique/VP4-e1-apocalyptique.txt	public/img/fanzzy/VP4/e1/apocalyptique/neutre.png	oui
+VP4-e2-apocalyptique	apocalyptique/VP4-e2-apocalyptique.txt	public/img/fanzzy/VP4/e2/apocalyptique/neutre.png	oui
+VP4-e3-apocalyptique	apocalyptique/VP4-e3-apocalyptique.txt	public/img/fanzzy/VP4/e3/apocalyptique/neutre.png	non : attendre le skin
+VP5-e1-apocalyptique	apocalyptique/VP5-e1-apocalyptique.txt	public/img/fanzzy/VP5/e1/apocalyptique/neutre.png	oui
+VP5-e2-apocalyptique	apocalyptique/VP5-e2-apocalyptique.txt	public/img/fanzzy/VP5/e2/apocalyptique/neutre.png	oui
+VP5-e3-apocalyptique	apocalyptique/VP5-e3-apocalyptique.txt	public/img/fanzzy/VP5/e3/apocalyptique/neutre.png	oui
+VP6-e1-apocalyptique	apocalyptique/VP6-e1-apocalyptique.txt	public/img/fanzzy/VP6/e1/apocalyptique/neutre.png	oui
+VP6-e2-apocalyptique	apocalyptique/VP6-e2-apocalyptique.txt	public/img/fanzzy/VP6/e2/apocalyptique/neutre.png	non : attendre le skin
+VP6-e3-apocalyptique	apocalyptique/VP6-e3-apocalyptique.txt	public/img/fanzzy/VP6/e3/apocalyptique/neutre.png	oui
+VP7-e1-apocalyptique	apocalyptique/VP7-e1-apocalyptique.txt	public/img/fanzzy/VP7/e1/apocalyptique/neutre.png	oui
+VP7-e2-apocalyptique	apocalyptique/VP7-e2-apocalyptique.txt	public/img/fanzzy/VP7/e2/apocalyptique/neutre.png	non : attendre le skin
+VP7-e3-apocalyptique	apocalyptique/VP7-e3-apocalyptique.txt	public/img/fanzzy/VP7/e3/apocalyptique/neutre.png	oui
+VP8-e1-apocalyptique	apocalyptique/VP8-e1-apocalyptique.txt	public/img/fanzzy/VP8/e1/apocalyptique/neutre.png	oui
+VP8-e2-apocalyptique	apocalyptique/VP8-e2-apocalyptique.txt	public/img/fanzzy/VP8/e2/apocalyptique/neutre.png	oui
+VP8-e3-apocalyptique	apocalyptique/VP8-e3-apocalyptique.txt	public/img/fanzzy/VP8/e3/apocalyptique/neutre.png	oui
+VP9-e1-apocalyptique	apocalyptique/VP9-e1-apocalyptique.txt	public/img/fanzzy/VP9/e1/apocalyptique/neutre.png	oui
+VP9-e2-apocalyptique	apocalyptique/VP9-e2-apocalyptique.txt	public/img/fanzzy/VP9/e2/apocalyptique/neutre.png	oui
+VP9-e3-apocalyptique	apocalyptique/VP9-e3-apocalyptique.txt	public/img/fanzzy/VP9/e3/apocalyptique/neutre.png	oui
+VP10-e1-apocalyptique	apocalyptique/VP10-e1-apocalyptique.txt	public/img/fanzzy/VP10/e1/apocalyptique/neutre.png	non : attendre le skin
+VP11-e1-apocalyptique	apocalyptique/VP11-e1-apocalyptique.txt	public/img/fanzzy/VP11/e1/apocalyptique/neutre.png	oui
+VP12-e1-apocalyptique	apocalyptique/VP12-e1-apocalyptique.txt	public/img/fanzzy/VP12/e1/apocalyptique/neutre.png	oui
+VP13-e1-apocalyptique	apocalyptique/VP13-e1-apocalyptique.txt	public/img/fanzzy/VP13/e1/apocalyptique/neutre.png	oui
+VP14-e1-apocalyptique	apocalyptique/VP14-e1-apocalyptique.txt	public/img/fanzzy/VP14/e1/apocalyptique/neutre.png	oui
+VP15-e1-apocalyptique	apocalyptique/VP15-e1-apocalyptique.txt	public/img/fanzzy/VP15/e1/apocalyptique/neutre.png	oui
+VP15-e2-apocalyptique	apocalyptique/VP15-e2-apocalyptique.txt	public/img/fanzzy/VP15/e2/apocalyptique/neutre.png	non : attendre le skin
+VP15-e3-apocalyptique	apocalyptique/VP15-e3-apocalyptique.txt	public/img/fanzzy/VP15/e3/apocalyptique/neutre.png	non : attendre le skin
+VP16-e1-apocalyptique	apocalyptique/VP16-e1-apocalyptique.txt	public/img/fanzzy/VP16/e1/apocalyptique/neutre.png	oui
+VP16-e2-apocalyptique	apocalyptique/VP16-e2-apocalyptique.txt	public/img/fanzzy/VP16/e2/apocalyptique/neutre.png	oui
+VP16-e3-apocalyptique	apocalyptique/VP16-e3-apocalyptique.txt	public/img/fanzzy/VP16/e3/apocalyptique/neutre.png	non : attendre le skin
+VP17-e1-apocalyptique	apocalyptique/VP17-e1-apocalyptique.txt	public/img/fanzzy/VP17/e1/apocalyptique/neutre.png	oui
+VP17-e2-apocalyptique	apocalyptique/VP17-e2-apocalyptique.txt	public/img/fanzzy/VP17/e2/apocalyptique/neutre.png	oui
+VP17-e3-apocalyptique	apocalyptique/VP17-e3-apocalyptique.txt	public/img/fanzzy/VP17/e3/apocalyptique/neutre.png	oui
+VP18-e1-apocalyptique	apocalyptique/VP18-e1-apocalyptique.txt	public/img/fanzzy/VP18/e1/apocalyptique/neutre.png	oui
+VP18-e2-apocalyptique	apocalyptique/VP18-e2-apocalyptique.txt	public/img/fanzzy/VP18/e2/apocalyptique/neutre.png	oui
+VP18-e3-apocalyptique	apocalyptique/VP18-e3-apocalyptique.txt	public/img/fanzzy/VP18/e3/apocalyptique/neutre.png	oui
+VP19-e1-apocalyptique	apocalyptique/VP19-e1-apocalyptique.txt	public/img/fanzzy/VP19/e1/apocalyptique/neutre.png	oui
+VP19-e2-apocalyptique	apocalyptique/VP19-e2-apocalyptique.txt	public/img/fanzzy/VP19/e2/apocalyptique/neutre.png	oui
+VP19-e3-apocalyptique	apocalyptique/VP19-e3-apocalyptique.txt	public/img/fanzzy/VP19/e3/apocalyptique/neutre.png	non : attendre le skin
+VP20-e1-apocalyptique	apocalyptique/VP20-e1-apocalyptique.txt	public/img/fanzzy/VP20/e1/apocalyptique/neutre.png	oui
+VP20-e2-apocalyptique	apocalyptique/VP20-e2-apocalyptique.txt	public/img/fanzzy/VP20/e2/apocalyptique/neutre.png	oui
+VP20-e3-apocalyptique	apocalyptique/VP20-e3-apocalyptique.txt	public/img/fanzzy/VP20/e3/apocalyptique/neutre.png	oui
+VP21-e1-apocalyptique	apocalyptique/VP21-e1-apocalyptique.txt	public/img/fanzzy/VP21/e1/apocalyptique/neutre.png	oui
+VP21-e2-apocalyptique	apocalyptique/VP21-e2-apocalyptique.txt	public/img/fanzzy/VP21/e2/apocalyptique/neutre.png	non : attendre le skin
+VP21-e3-apocalyptique	apocalyptique/VP21-e3-apocalyptique.txt	public/img/fanzzy/VP21/e3/apocalyptique/neutre.png	oui
+VP22-e1-apocalyptique	apocalyptique/VP22-e1-apocalyptique.txt	public/img/fanzzy/VP22/e1/apocalyptique/neutre.png	oui
+VP22-e2-apocalyptique	apocalyptique/VP22-e2-apocalyptique.txt	public/img/fanzzy/VP22/e2/apocalyptique/neutre.png	oui
+VP22-e3-apocalyptique	apocalyptique/VP22-e3-apocalyptique.txt	public/img/fanzzy/VP22/e3/apocalyptique/neutre.png	oui
+VP23-e1-apocalyptique	apocalyptique/VP23-e1-apocalyptique.txt	public/img/fanzzy/VP23/e1/apocalyptique/neutre.png	oui
+VP23-e2-apocalyptique	apocalyptique/VP23-e2-apocalyptique.txt	public/img/fanzzy/VP23/e2/apocalyptique/neutre.png	non : attendre le skin
+VP23-e3-apocalyptique	apocalyptique/VP23-e3-apocalyptique.txt	public/img/fanzzy/VP23/e3/apocalyptique/neutre.png	non : attendre le skin
+VP24-e1-apocalyptique	apocalyptique/VP24-e1-apocalyptique.txt	public/img/fanzzy/VP24/e1/apocalyptique/neutre.png	oui
+VP24-e2-apocalyptique	apocalyptique/VP24-e2-apocalyptique.txt	public/img/fanzzy/VP24/e2/apocalyptique/neutre.png	oui
+VP24-e3-apocalyptique	apocalyptique/VP24-e3-apocalyptique.txt	public/img/fanzzy/VP24/e3/apocalyptique/neutre.png	oui
+VP25-e1-apocalyptique	apocalyptique/VP25-e1-apocalyptique.txt	public/img/fanzzy/VP25/e1/apocalyptique/neutre.png	non : attendre le skin
+VP25-e2-apocalyptique	apocalyptique/VP25-e2-apocalyptique.txt	public/img/fanzzy/VP25/e2/apocalyptique/neutre.png	oui
+VP25-e3-apocalyptique	apocalyptique/VP25-e3-apocalyptique.txt	public/img/fanzzy/VP25/e3/apocalyptique/neutre.png	non : attendre le skin
+VP26-e1-apocalyptique	apocalyptique/VP26-e1-apocalyptique.txt	public/img/fanzzy/VP26/e1/apocalyptique/neutre.png	oui
+VP26-e2-apocalyptique	apocalyptique/VP26-e2-apocalyptique.txt	public/img/fanzzy/VP26/e2/apocalyptique/neutre.png	non : attendre le skin
+VP26-e3-apocalyptique	apocalyptique/VP26-e3-apocalyptique.txt	public/img/fanzzy/VP26/e3/apocalyptique/neutre.png	non : attendre le skin
+VP27-e1-apocalyptique	apocalyptique/VP27-e1-apocalyptique.txt	public/img/fanzzy/VP27/e1/apocalyptique/neutre.png	oui
+VP27-e2-apocalyptique	apocalyptique/VP27-e2-apocalyptique.txt	public/img/fanzzy/VP27/e2/apocalyptique/neutre.png	oui
+VP27-e3-apocalyptique	apocalyptique/VP27-e3-apocalyptique.txt	public/img/fanzzy/VP27/e3/apocalyptique/neutre.png	oui
+VP28-e1-apocalyptique	apocalyptique/VP28-e1-apocalyptique.txt	public/img/fanzzy/VP28/e1/apocalyptique/neutre.png	oui
+VP28-e2-apocalyptique	apocalyptique/VP28-e2-apocalyptique.txt	public/img/fanzzy/VP28/e2/apocalyptique/neutre.png	non : attendre le skin
+VP28-e3-apocalyptique	apocalyptique/VP28-e3-apocalyptique.txt	public/img/fanzzy/VP28/e3/apocalyptique/neutre.png	oui
+VP29-e1-apocalyptique	apocalyptique/VP29-e1-apocalyptique.txt	public/img/fanzzy/VP29/e1/apocalyptique/neutre.png	oui
+VP29-e2-apocalyptique	apocalyptique/VP29-e2-apocalyptique.txt	public/img/fanzzy/VP29/e2/apocalyptique/neutre.png	non : attendre le skin
+VP29-e3-apocalyptique	apocalyptique/VP29-e3-apocalyptique.txt	public/img/fanzzy/VP29/e3/apocalyptique/neutre.png	oui
+VP30-e1-apocalyptique	apocalyptique/VP30-e1-apocalyptique.txt	public/img/fanzzy/VP30/e1/apocalyptique/neutre.png	oui
+VP30-e2-apocalyptique	apocalyptique/VP30-e2-apocalyptique.txt	public/img/fanzzy/VP30/e2/apocalyptique/neutre.png	non : attendre le skin
+VP30-e3-apocalyptique	apocalyptique/VP30-e3-apocalyptique.txt	public/img/fanzzy/VP30/e3/apocalyptique/neutre.png	non : attendre le skin
+VP31-e1-apocalyptique	apocalyptique/VP31-e1-apocalyptique.txt	public/img/fanzzy/VP31/e1/apocalyptique/neutre.png	oui
+VP31-e2-apocalyptique	apocalyptique/VP31-e2-apocalyptique.txt	public/img/fanzzy/VP31/e2/apocalyptique/neutre.png	oui
+VP31-e3-apocalyptique	apocalyptique/VP31-e3-apocalyptique.txt	public/img/fanzzy/VP31/e3/apocalyptique/neutre.png	non : attendre le skin
+VP32-e1-apocalyptique	apocalyptique/VP32-e1-apocalyptique.txt	public/img/fanzzy/VP32/e1/apocalyptique/neutre.png	oui
+VP32-e2-apocalyptique	apocalyptique/VP32-e2-apocalyptique.txt	public/img/fanzzy/VP32/e2/apocalyptique/neutre.png	oui
+VP32-e3-apocalyptique	apocalyptique/VP32-e3-apocalyptique.txt	public/img/fanzzy/VP32/e3/apocalyptique/neutre.png	non : attendre le skin
+VP33-e1-apocalyptique	apocalyptique/VP33-e1-apocalyptique.txt	public/img/fanzzy/VP33/e1/apocalyptique/neutre.png	oui
+VP33-e2-apocalyptique	apocalyptique/VP33-e2-apocalyptique.txt	public/img/fanzzy/VP33/e2/apocalyptique/neutre.png	oui
+VP33-e3-apocalyptique	apocalyptique/VP33-e3-apocalyptique.txt	public/img/fanzzy/VP33/e3/apocalyptique/neutre.png	oui
+VP34-e1-apocalyptique	apocalyptique/VP34-e1-apocalyptique.txt	public/img/fanzzy/VP34/e1/apocalyptique/neutre.png	oui
+VP34-e2-apocalyptique	apocalyptique/VP34-e2-apocalyptique.txt	public/img/fanzzy/VP34/e2/apocalyptique/neutre.png	non : attendre le skin
+VP34-e3-apocalyptique	apocalyptique/VP34-e3-apocalyptique.txt	public/img/fanzzy/VP34/e3/apocalyptique/neutre.png	oui
+VP35-e1-apocalyptique	apocalyptique/VP35-e1-apocalyptique.txt	public/img/fanzzy/VP35/e1/apocalyptique/neutre.png	non : attendre le skin
+VP35-e2-apocalyptique	apocalyptique/VP35-e2-apocalyptique.txt	public/img/fanzzy/VP35/e2/apocalyptique/neutre.png	non : attendre le skin
+VP35-e3-apocalyptique	apocalyptique/VP35-e3-apocalyptique.txt	public/img/fanzzy/VP35/e3/apocalyptique/neutre.png	non : attendre le skin
+VP36-e1-apocalyptique	apocalyptique/VP36-e1-apocalyptique.txt	public/img/fanzzy/VP36/e1/apocalyptique/neutre.png	oui
+VP36-e2-apocalyptique	apocalyptique/VP36-e2-apocalyptique.txt	public/img/fanzzy/VP36/e2/apocalyptique/neutre.png	non : attendre le skin
+VP36-e3-apocalyptique	apocalyptique/VP36-e3-apocalyptique.txt	public/img/fanzzy/VP36/e3/apocalyptique/neutre.png	oui
+VP37-e1-apocalyptique	apocalyptique/VP37-e1-apocalyptique.txt	public/img/fanzzy/VP37/e1/apocalyptique/neutre.png	oui
+VP37-e2-apocalyptique	apocalyptique/VP37-e2-apocalyptique.txt	public/img/fanzzy/VP37/e2/apocalyptique/neutre.png	oui
+VP37-e3-apocalyptique	apocalyptique/VP37-e3-apocalyptique.txt	public/img/fanzzy/VP37/e3/apocalyptique/neutre.png	non : attendre le skin
+VP38-e1-apocalyptique	apocalyptique/VP38-e1-apocalyptique.txt	public/img/fanzzy/VP38/e1/apocalyptique/neutre.png	oui
+VP38-e2-apocalyptique	apocalyptique/VP38-e2-apocalyptique.txt	public/img/fanzzy/VP38/e2/apocalyptique/neutre.png	non : attendre le skin
+VP38-e3-apocalyptique	apocalyptique/VP38-e3-apocalyptique.txt	public/img/fanzzy/VP38/e3/apocalyptique/neutre.png	non : attendre le skin
+VP39-e1-apocalyptique	apocalyptique/VP39-e1-apocalyptique.txt	public/img/fanzzy/VP39/e1/apocalyptique/neutre.png	oui
+VP39-e2-apocalyptique	apocalyptique/VP39-e2-apocalyptique.txt	public/img/fanzzy/VP39/e2/apocalyptique/neutre.png	oui
+VP39-e3-apocalyptique	apocalyptique/VP39-e3-apocalyptique.txt	public/img/fanzzy/VP39/e3/apocalyptique/neutre.png	non : attendre le skin
+VP40-e1-apocalyptique	apocalyptique/VP40-e1-apocalyptique.txt	public/img/fanzzy/VP40/e1/apocalyptique/neutre.png	oui
+VP40-e2-apocalyptique	apocalyptique/VP40-e2-apocalyptique.txt	public/img/fanzzy/VP40/e2/apocalyptique/neutre.png	oui
+VP40-e3-apocalyptique	apocalyptique/VP40-e3-apocalyptique.txt	public/img/fanzzy/VP40/e3/apocalyptique/neutre.png	oui
+VP41-e1-apocalyptique	apocalyptique/VP41-e1-apocalyptique.txt	public/img/fanzzy/VP41/e1/apocalyptique/neutre.png	non : attendre le skin
+VP41-e2-apocalyptique	apocalyptique/VP41-e2-apocalyptique.txt	public/img/fanzzy/VP41/e2/apocalyptique/neutre.png	non : attendre le skin
+VP41-e3-apocalyptique	apocalyptique/VP41-e3-apocalyptique.txt	public/img/fanzzy/VP41/e3/apocalyptique/neutre.png	oui
+VP42-e1-apocalyptique	apocalyptique/VP42-e1-apocalyptique.txt	public/img/fanzzy/VP42/e1/apocalyptique/neutre.png	non : attendre le skin
+VP42-e2-apocalyptique	apocalyptique/VP42-e2-apocalyptique.txt	public/img/fanzzy/VP42/e2/apocalyptique/neutre.png	non : attendre le skin
+VP42-e3-apocalyptique	apocalyptique/VP42-e3-apocalyptique.txt	public/img/fanzzy/VP42/e3/apocalyptique/neutre.png	oui
+VP43-e1-apocalyptique	apocalyptique/VP43-e1-apocalyptique.txt	public/img/fanzzy/VP43/e1/apocalyptique/neutre.png	oui
+VP43-e2-apocalyptique	apocalyptique/VP43-e2-apocalyptique.txt	public/img/fanzzy/VP43/e2/apocalyptique/neutre.png	oui
+VP43-e3-apocalyptique	apocalyptique/VP43-e3-apocalyptique.txt	public/img/fanzzy/VP43/e3/apocalyptique/neutre.png	oui
+VP44-e1-apocalyptique	apocalyptique/VP44-e1-apocalyptique.txt	public/img/fanzzy/VP44/e1/apocalyptique/neutre.png	oui
+VP44-e2-apocalyptique	apocalyptique/VP44-e2-apocalyptique.txt	public/img/fanzzy/VP44/e2/apocalyptique/neutre.png	oui
+VP44-e3-apocalyptique	apocalyptique/VP44-e3-apocalyptique.txt	public/img/fanzzy/VP44/e3/apocalyptique/neutre.png	oui
+VP45-e1-apocalyptique	apocalyptique/VP45-e1-apocalyptique.txt	public/img/fanzzy/VP45/e1/apocalyptique/neutre.png	oui
+VP45-e2-apocalyptique	apocalyptique/VP45-e2-apocalyptique.txt	public/img/fanzzy/VP45/e2/apocalyptique/neutre.png	non : attendre le skin
+VP45-e3-apocalyptique	apocalyptique/VP45-e3-apocalyptique.txt	public/img/fanzzy/VP45/e3/apocalyptique/neutre.png	non : attendre le skin
+VP46-e1-apocalyptique	apocalyptique/VP46-e1-apocalyptique.txt	public/img/fanzzy/VP46/e1/apocalyptique/neutre.png	non : attendre le skin
+VP46-e2-apocalyptique	apocalyptique/VP46-e2-apocalyptique.txt	public/img/fanzzy/VP46/e2/apocalyptique/neutre.png	oui
+VP46-e3-apocalyptique	apocalyptique/VP46-e3-apocalyptique.txt	public/img/fanzzy/VP46/e3/apocalyptique/neutre.png	non : attendre le skin
+VP47-e1-apocalyptique	apocalyptique/VP47-e1-apocalyptique.txt	public/img/fanzzy/VP47/e1/apocalyptique/neutre.png	oui
+VP47-e2-apocalyptique	apocalyptique/VP47-e2-apocalyptique.txt	public/img/fanzzy/VP47/e2/apocalyptique/neutre.png	oui
+VP47-e3-apocalyptique	apocalyptique/VP47-e3-apocalyptique.txt	public/img/fanzzy/VP47/e3/apocalyptique/neutre.png	non : attendre le skin
+VP48-e1-apocalyptique	apocalyptique/VP48-e1-apocalyptique.txt	public/img/fanzzy/VP48/e1/apocalyptique/neutre.png	oui
+VP48-e2-apocalyptique	apocalyptique/VP48-e2-apocalyptique.txt	public/img/fanzzy/VP48/e2/apocalyptique/neutre.png	non : attendre le skin
+VP48-e3-apocalyptique	apocalyptique/VP48-e3-apocalyptique.txt	public/img/fanzzy/VP48/e3/apocalyptique/neutre.png	non : attendre le skin
+VP49-e1-apocalyptique	apocalyptique/VP49-e1-apocalyptique.txt	public/img/fanzzy/VP49/e1/apocalyptique/neutre.png	oui
+VP49-e2-apocalyptique	apocalyptique/VP49-e2-apocalyptique.txt	public/img/fanzzy/VP49/e2/apocalyptique/neutre.png	oui
+VP49-e3-apocalyptique	apocalyptique/VP49-e3-apocalyptique.txt	public/img/fanzzy/VP49/e3/apocalyptique/neutre.png	oui
+VP50-e1-apocalyptique	apocalyptique/VP50-e1-apocalyptique.txt	public/img/fanzzy/VP50/e1/apocalyptique/neutre.png	oui
+VP50-e2-apocalyptique	apocalyptique/VP50-e2-apocalyptique.txt	public/img/fanzzy/VP50/e2/apocalyptique/neutre.png	oui
+VP50-e3-apocalyptique	apocalyptique/VP50-e3-apocalyptique.txt	public/img/fanzzy/VP50/e3/apocalyptique/neutre.png	non : attendre le skin
