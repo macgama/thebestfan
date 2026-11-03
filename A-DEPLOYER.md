@@ -13,6 +13,21 @@ Construction seule, sans schéma.
 
 ---
 
+**Le PASS ne s'achète pas avant le 1er décembre** (branche
+`claude/project-thread-d7nrt6`, 3 novembre 2026, demande de Gaël).
+Construction et redémarrage, rien d'autre. Ne joue qu'une fois le calendrier
+ci-dessous appliqué (la BASE, saison 0, en cours).
+
+- Pendant la BASE, la page du PASS, la boutique et la pub montrent le PASS 1
+  sous « BIENTÔT · le 1er décembre » ; les boutons d'achat sont hors service
+  et le serveur refuse l'achat (euros et écharpes). Offrir le PASS depuis
+  /admin marche toujours.
+- Il s'achète dès que la saison 1 est lancée (seule, le jour de son ouverture).
+- Tenues Préhistorique : « Uniquement avec le PASS » dans la collection (case
+  marquée PASS, carte sans « Booster La Reprise ») et sur la fiche.
+
+---
+
 **Le bon dos de carte aux boosters** (branche `claude/project-thread-xhkkac`,
 3 novembre 2026, demande de Gaël). Construction seule, sans schéma.
 
@@ -74,7 +89,8 @@ depuis `~/sites/thebestfan.online` :
 4. Redémarrage.
 
 - La saison lancée le 26 octobre devient la saison 0, la BASE, jusqu'au
-  30 novembre 2026. Un PASS acheté pendant elle est le PASS 1, actif tout de suite.
+  30 novembre 2026. Le PASS 1 ne s'y achète pas (« Bientôt », voir plus haut) ;
+  offert depuis /admin, il est actif tout de suite.
 - PASS 1 Les héros du canapé (1er décembre - 28 février, tenue Préhistorique),
   PASS 2 Météo (mars - mai), PASS 3 Déplacement (juin - août), PASS 4 Revenants
   (septembre - novembre). Chacun se lance seul à sa date.

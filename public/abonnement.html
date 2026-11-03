@@ -166,6 +166,12 @@ main [hidden]{display:none}
 .pass-beta{margin:10px 0 0;padding:10px 13px;border-radius:8px;background:var(--panneau);
   font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.35;letter-spacing:.04em}
 .prendre h2{margin:24px 0 30px}
+/* Le PASS pas encore ouvert à l'achat : un cadre or, BIENTÔT en sticker. */
+.pass-bientot-bloc{position:relative;display:flex;flex-direction:column;gap:8px;padding:22px 18px 18px}
+.pass-bientot-bloc>.tbf-sticker{position:absolute;top:-14px;right:12px;--rot:4deg}
+.pass-bientot-bloc b{font-family:var(--banner);font-weight:700;font-size:21px;line-height:1.1;letter-spacing:.03em}
+.pass-bientot-bloc p{margin:0;font-size:14px;line-height:1.4}
+.pass-bientot-bloc small{font-family:var(--banner);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 
 /* **Ce qui reste libre** — le bloc le plus lisible de l'écran, le premier
    après le PASS, et avant tout prix. Il porte la promesse du jeu, que le
@@ -420,7 +426,7 @@ function passHTML(d, { ouvert } = {}) {
         ${etat}
       </div>
       ${tenue}
-      ${ouvert === false && !d.actif ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
+      ${(ouvert === false || d.offre?.bientot) && !d.actif ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
     </div>`;
 }
 
@@ -461,10 +467,39 @@ function voieHTML(d) {
     </div>`;
 }
 
+/** Le jour d'ouverture du PASS, en toutes lettres : « le 1er décembre ». */
+function ouvertureTexte(o) {
+  const j = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(o?.bientot?.ouvre ?? ''));
+  if (!j) return null;
+  const date = new Date(Number(j[1]), Number(j[2]) - 1, Number(j[3]));
+  const lg = window.TBF_LANGUE?.langue ?? 'fr';
+  if (lg !== 'fr') return date.toLocaleDateString(lg, { day: 'numeric', month: 'long' });
+  return `le ${date.getDate() === 1 ? '1er' : date.getDate()} ${date.toLocaleDateString('fr', { month: 'long' })}`;
+}
+
+/** Le PASS pas encore ouvert : ses prix, sous BIENTÔT, et rien à toucher. */
+function bientotHTML(o) {
+  const n = o.couvre?.[0]?.numero ?? 1;
+  const quand = ouvertureTexte(o);
+  const prix = [o.article?.prixTexte, o.echarpes ? `${milliers(o.echarpes)} écharpes` : null]
+    .filter(Boolean).join(' ou ');
+  return `<h2 class="tbf-cousu">Prendre le PASS</h2>
+    <div class="tbf-cadre pass-bientot-bloc" data-ton="or">
+      <span class="tbf-sticker" data-ton="or">BIENTÔT</span>
+      <b>${esc(`Le PASS ${n} s’ouvre ${quand ?? 'avec sa saison'}`)}</b>
+      <p>${esc(`Il ne s’achète pas avant${quand ? ` ${quand}` : ''}. Tout le jeu reste ouvert d’ici là, sans payer.`)}</p>
+      ${prix ? `<small>${esc(`${prix}, payé une fois`)}</small>` : ''}
+    </div>`;
+}
+
 /** Les deux façons de payer. */
 function formulesHTML(d, { ouvert } = {}) {
   const o = d.offre ?? {};
   if (!o.aAcheter?.length) return '';
+  /* **Bientôt** (Gaël, 3 novembre 2026) : pendant la BASE, le PASS se
+     montre mais ne s'achète pas avant son ouverture. Le serveur le refuse de
+     toute façon (`pass.error.bientot`) ; ici, on le dit avant. */
+  if (o.bientot) return bientotHTML(o);
   const vitrine = ouvert === false;
   const deux = o.couvre?.length > 1;
   const quoi = deux ? `PASS ${o.couvre.map((p) => p.numero).join(' + ')}` : `PASS ${o.couvre?.[0]?.numero ?? ''}`;
@@ -727,6 +762,7 @@ function ultime(d) {
         }
         bouton.disabled = false;
         toast(j.error === 'pass.error.deja' ? 'Tu as déjà ce PASS.'
+          : j.error === 'pass.error.bientot' ? 'Le PASS ne s’achète pas encore : bientôt.'
           : 'Le paiement n’est pas disponible pour le moment.');
         return;
       }
@@ -757,6 +793,7 @@ function ultime(d) {
         bouton.disabled = false;
         toast({ 'pass.error.pas_assez': 'Il te manque des écharpes.',
           'pass.error.deja': 'Tu as déjà ce PASS.',
+          'pass.error.bientot': 'Le PASS ne s’achète pas encore : bientôt.',
           'pass.error.pas_de_saison': 'Aucune saison n’est en cours.',
           'pass.error.echarpes_fermees': 'Le PASS ne se prend plus en écharpes.' }[j.error]
           ?? 'Le PASS n’a pas pu se prendre. Réessaie dans un instant.');
