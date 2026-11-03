@@ -2,8 +2,9 @@
 
 **Le menu PASS : la BASE, LES PASS, les VENTES** (branche
 `claude/project-thread-d5k3ue`, 2 novembre 2026, demande de Gaël). Construction,
-puis **`npm run schema:appliquer`** (deux colonnes : `saisons.jeux` et
-`saisons.chants`, dans `sql/contenus.sql`), puis redémarrage.
+puis **`npm run schema:appliquer`** (trois colonnes : `saisons.jeux`,
+`saisons.chants` et `saisons.tenue_pass`, dans `sql/contenus.sql`), puis
+redémarrage.
 
 - SAISONS et PASS deviennent un seul menu PASS : BASE (le paquet de bienvenue
   et tout ce qui est en jeu pour tous, modifiable), LES PASS (un par saison,
@@ -14,7 +15,12 @@ puis **`npm run schema:appliquer`** (deux colonnes : `saisons.jeux` et
 - 3 novembre : l'équipement et les stades sont rangés par série et par skin,
   avec un bouton « tout » par groupe ; les 26 chants du DUEL et du VIRAGE se
   cochent aussi (au moins cinq restent ouverts).
-- Sans le schéma, tout marche, sauf nommer un mini-jeu ou un chant dans un PASS.
+- 3 novembre, suite : le PASS 1 a le même écran que les autres ; ajouter à un
+  PASS lancé l'ouvre aussitôt ; la série d'un stade, d'une carte d'action ou
+  d'un mini-jeu se pose dans CATALOGUE › CONTENUS ; la tenue des membres de
+  chaque PASS se choisit dans sa fiche (TENUE DES MEMBRES DU PASS).
+- Sans le schéma, tout marche, sauf nommer un mini-jeu ou un chant dans un PASS
+  et changer la tenue des membres (le PASS 1 garde Préhistorique).
 - Puis : /admin, menu PASS › BASE.
 
 ---

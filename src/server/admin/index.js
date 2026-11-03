@@ -23,7 +23,7 @@ import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
 import { ecrireReglage, rendreAuDefaut, tousLesReglages } from '../reglages/index.js';
 import { assurerBourse } from '../bourse.js';
 import { createCollectionAdmin } from './collection.js';
-import { PASS_SAISONS, passDe } from '../../shared/pass.js';
+import { passAvecTenue, passDe } from '../../shared/pass.js';
 import { ARTICLE_PAR_ID } from '../../shared/boutique.js';
 
 /**
@@ -670,6 +670,26 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       }
     }
   }
+  /* **La tenue des membres du PASS** (Gaël, 3 novembre 2026). `undefined` :
+     on n'y touche pas (un écran d'avant, ou rien de changé). `''` : aucune.
+     Choisie, elle est publiée pour que ses membres la portent ; `shared/pass.js`
+     la garde hors des boosters et de l'étal pendant sa saison. */
+  async function ecrireTenuePass(id, v) {
+    if (v === undefined) return;
+    const t = v === null ? '' : String(v);
+    if (t && !tenuePar(t)) throw fail('admin.error.tenue_inconnue');
+    if (!(await aColonne('tenue_pass'))) {
+      throw Object.assign(fail('admin.error.saison_colonnes', 503), {
+        raison: 'La tenue des membres d’un PASS demande sql/contenus.sql : '
+          + 'applique-le (npm run schema:appliquer), puis redémarre le serveur.' });
+    }
+    await q('UPDATE saisons SET tenue_pass = ? WHERE id = ?', [t, id]);
+    if (t) {
+      await q('UPDATE tenues SET publie = 1 WHERE id = ?', [t]);
+      await rechargerTenues(pool);
+    }
+  }
+
   async function ecrireColonnes(id, c) {
     for (const [nom] of COLONNES_A_PART) {
       if (!(await aColonne(nom))) continue;
@@ -910,7 +930,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       /* Ce que le PASS de chaque saison réserve à ses membres : sa tenue
          (`shared/pass.js`). Elle n'est jamais dans la BASE. */
       pass: toutesLesSaisons().map((x) => passDe(x.numero)),
-      tenuesDuPass: Object.fromEntries(PASS_SAISONS.filter((x) => x.tenue)
+      tenuesDuPass: Object.fromEntries(passAvecTenue()
         .map((x) => [x.tenue, x.numero])),
     };
   }
@@ -999,6 +1019,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   async function creerSaison(acteur, p, ip_) {
     const c = validerContenu(p ?? {});
+    if (p?.tenue_pass && !tenuePar(String(p.tenue_pass))) throw fail('admin.error.tenue_inconnue');
     const nom = texteOuRien(p?.nom, 64);
     if (!nom) throw fail('admin.error.saison_sans_nom');
     /* Le numéro proposé suit le plus grand existant. Il reste modifiable : on
@@ -1033,6 +1054,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, valeurs);
     }
     await ecrireColonnes(r.insertId, c);
+    await ecrireTenuePass(r.insertId, p?.tenue_pass);
     await chargerSaisons(pool);
     await journal(acteur, 'saison.creee', String(r.insertId), { nom, numero, ...c,
       fin_le: fin, ouvre_le: ouvre, carnet: carnet ?? 'défaut' }, ip_);
@@ -1043,6 +1065,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const avant = toutesLesSaisons().find((s) => s.id === Number(id));
     if (!avant) throw fail('admin.error.saison_inconnue', 404);
     const c = validerContenu(p ?? {});
+    if (p?.tenue_pass && !tenuePar(String(p.tenue_pass))) throw fail('admin.error.tenue_inconnue');
     const nom = texteOuRien(p?.nom, 64) ?? avant.nom;
     /* `undefined` : le champ n'est pas venu, on n'y touche pas. Un client
        d'avant ces champs ne doit pas effacer une date en enregistrant un nom. */
@@ -1104,6 +1127,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
           WHERE id = ?`, [...valeurs, avant.id]);
     }
     await ecrireColonnes(avant.id, c);
+    await ecrireTenuePass(avant.id, p?.tenue_pass);
     /* **Ajouter à un PASS déjà lancé l'ouvre aussitôt** (Gaël, 3 novembre
        2026 : « je ne peux rien ajouter sur le PASS 1 »). Le PASS 1, lancé,
        porte la BASE ; un ajout y valait jusqu'ici une ligne écrite et rien
@@ -1615,7 +1639,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
          FROM abonnements a LEFT JOIN users u ON u.public_id = a.user_id
         WHERE a.fin IS NULL OR a.fin > NOW(3)
         ORDER BY a.fin IS NULL, a.fin LIMIT 200`).catch(sansTable);
-    const numeros = new Set(PASS_SAISONS.map((p) => p.numero));
+    const numeros = new Set(passAvecTenue().map((p) => p.numero));
     if (Number(enCours?.numero) > 0) numeros.add(Number(enCours.numero));
     for (const n of parSaison.keys()) numeros.add(n);
     res.json({
