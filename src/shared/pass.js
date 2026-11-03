@@ -237,7 +237,9 @@ export const estTardif = (source) => String(source ?? '').endsWith(SUFFIXE_TARD)
 /** Le contenu d'un PASS, que l'acheteur tardif reçoit aussi. */
 export const GAINS_CONTENU = Object.freeze(['tenue', 'stuff', 'stade', 'jeu']);
 /** Ses gains spéciaux, réservés à ceux qui l'ont joué pendant sa saison. */
-export const GAINS_SPECIAUX = Object.freeze(['cadre', 'cadre_anime', 'badge_or']);
+export const GAINS_SPECIAUX = Object.freeze(['cadre', 'cadre_anime', 'badge_or',
+  /* Ceux de la voie à 12 niveaux (fil de la voie PASS, 3 novembre 2026). */
+  'cadre_profil', 'stickers', 'fond_profil', 'entree', 'titre', 'aura']);
 
 /**
  * Le jour où l'ancien PASS d'une saison revient en vente : `'AAAA-MM-01'`.
