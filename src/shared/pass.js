@@ -31,8 +31,11 @@
  * cette ligne : ce serait de l'argent qui achète des tirages
  * (`shared/boutique.js`, « l'argent réel n'achète qu'une chose »).
  *
- * Le niveau de la voie est `1 + paliers du carnet atteints` : on est au
- * niveau 1 dès l'achat, au niveau 6 au dernier palier d'un carnet de cinq.
+ * **Douze niveaux** (choix de Gaël du 3 novembre 2026, « Oui, tout gratuit ») :
+ * on est au niveau 1 dès l'achat, au niveau 12 au dernier palier du carnet.
+ * Chaque niveau a son seuil de tampons, une part fixe du dernier palier du
+ * carnet de la saison (`seuilsVoie`) : la voie monte deux fois plus souvent
+ * que le carnet. Au-delà, une **étoile** sur le badge tous les 15 tampons.
  *
  * Rien ici ne lit la base ni l'horloge : `src/server/abonnement/` le fait.
  */
@@ -99,38 +102,79 @@ export function passDe(numero) {
 }
 
 /**
- * Les six niveaux de la voie PASS. `paliers` : le nombre de paliers du carnet
- * de la saison qu'il faut avoir atteints.
+ * Les douze niveaux de la voie PASS. `part` : la part du dernier palier du
+ * carnet de la saison qu'il faut avoir atteinte (sur un carnet qui finit à
+ * 140 tampons : 0, 10, 20, 35, 50, 65, 75, 90, 105, 120, 130 et 140).
  *
- * Écrits une fois : la page les dessine, le serveur les applique, l'aide les
- * cite. Le premier ne demande rien d'autre que l'achat.
+ * Les mêmes douze pour chaque PASS : chaque saison les habille de son thème
+ * (ses images, `public/img/pass/`, et son titre, `PASS_SAISONS`). Écrits une
+ * fois : la page les dessine, le serveur les applique, l'aide les cite. Le
+ * premier ne demande rien d'autre que l'achat.
  */
 export const VOIE_PASS = Object.freeze([
-  { niveau: 1, paliers: 0, nom: 'La tenue au premier âge', gain: 'tenue', age: 1 },
-  { niveau: 2, paliers: 1, nom: 'La tenue au deuxième âge', gain: 'tenue', age: 2 },
-  { niveau: 3, paliers: 2, nom: 'La tenue au troisième âge', gain: 'tenue', age: 3 },
-  { niveau: 4, paliers: 3, nom: 'Le cadre de carte', gain: 'cadre' },
-  { niveau: 5, paliers: 4, nom: 'Le cadre qui s’anime', gain: 'cadre_anime' },
-  { niveau: 6, paliers: 5, nom: 'Le badge en or', gain: 'badge_or' },
+  { niveau: 1, part: 0, nom: 'La tenue au premier âge', gain: 'tenue', age: 1 },
+  { niveau: 2, part: 10 / 140, nom: 'Le cadre de profil', gain: 'cadre_profil' },
+  { niveau: 3, part: 20 / 140, nom: 'Les stickers de duel', gain: 'stickers' },
+  { niveau: 4, part: 35 / 140, nom: 'La tenue au deuxième âge', gain: 'tenue', age: 2 },
+  { niveau: 5, part: 50 / 140, nom: 'Le fond de profil animé', gain: 'fond_profil' },
+  { niveau: 6, part: 65 / 140, nom: 'Le cadre de carte', gain: 'cadre' },
+  { niveau: 7, part: 75 / 140, nom: 'La tenue au troisième âge', gain: 'tenue', age: 3 },
+  { niveau: 8, part: 90 / 140, nom: 'L’entrée au duel', gain: 'entree' },
+  { niveau: 9, part: 105 / 140, nom: 'Le titre sous le pseudo', gain: 'titre' },
+  { niveau: 10, part: 120 / 140, nom: 'Le cadre qui s’anime', gain: 'cadre_anime' },
+  { niveau: 11, part: 130 / 140, nom: 'L’aura de braises au Virage', gain: 'aura' },
+  { niveau: 12, part: 1, nom: 'Le badge et le pseudo en or', gain: 'badge_or' },
 ].map((n) => Object.freeze(n)));
 
 export const NIVEAU_MAX = VOIE_PASS.length;
 
-/** Le niveau de la voie, à partir des paliers du carnet atteints. */
-export function niveauVoie(paliersAtteints) {
-  const n = Math.max(0, Math.floor(Number(paliersAtteints) || 0));
-  return Math.min(NIVEAU_MAX, 1 + n);
+/** Le carnet de référence, quand une saison n'en dit pas (`CARNET_DEFAUT`). */
+const FIN_PAR_DEFAUT = 140;
+
+/** Une étoile sur le badge tous les tant de tampons au-delà du dernier niveau. */
+export const TAMPONS_PAR_ETOILE = 15;
+
+/**
+ * Les seuils de tampons des douze niveaux, d'après les seuils des paliers du
+ * carnet de la saison : `[0, 10, 20, …, 140]`. Strictement croissants, même
+ * sur un petit carnet, pour que deux niveaux ne s'ouvrent jamais ensemble.
+ */
+export function seuilsVoie(seuilsCarnet = []) {
+  const fin = Math.max(0, ...(seuilsCarnet ?? []).map(Number).filter(Number.isFinite))
+    || FIN_PAR_DEFAUT;
+  let avant = -1;
+  return VOIE_PASS.map((v) => {
+    const t = Math.max(Math.round(v.part * fin), avant + 1);
+    avant = t;
+    return t;
+  });
 }
 
 /**
  * Le niveau de la voie d'après ce qui la fait monter : les tampons du carnet
  * de la saison, et les **points de voie** des défis PASS (`shared/defis.js`,
  * choix de Gaël du 3 novembre 2026). Les deux s'additionnent face aux seuils
- * des paliers du carnet ; les points ne remplissent jamais le carnet lui-même.
+ * de la voie (`seuilsVoie`, tirés des paliers du carnet) ; les points ne
+ * remplissent jamais le carnet lui-même.
  */
 export function niveauVoieDe({ tampons = 0, points = 0, seuils = [] } = {}) {
   const total = Math.max(0, Number(tampons) || 0) + Math.max(0, Number(points) || 0);
-  return niveauVoie((seuils ?? []).filter((t) => total >= Number(t)).length);
+  return Math.max(1, seuilsVoie(seuils).filter((t) => total >= t).length);
+}
+
+/** Les étoiles du badge : une tous les 15 tampons (et points) après le dernier niveau. */
+export function etoilesDe({ tampons = 0, points = 0, seuils = [] } = {}) {
+  const total = Math.max(0, Number(tampons) || 0) + Math.max(0, Number(points) || 0);
+  const fin = seuilsVoie(seuils).at(-1);
+  return total > fin ? Math.floor((total - fin) / TAMPONS_PAR_ETOILE) : 0;
+}
+
+/** Le niveau où s'ouvre un gain, ou `Infinity` s'il n'est pas sur la voie. */
+const niveauDuGain = (gain) => VOIE_PASS.find((v) => v.gain === gain)?.niveau ?? Infinity;
+
+/** Les gains ouverts à ce niveau (la tenue comptée une fois). */
+export function gainsDe(niveau) {
+  return [...new Set(VOIE_PASS.filter((v) => v.niveau <= niveau).map((v) => v.gain))];
 }
 
 /** Jusqu'à quel âge la tenue de la saison se porte, à ce niveau. */
@@ -142,13 +186,13 @@ export function ageTenue(niveau) {
 
 /** Le cadre de carte : `null`, `'fixe'` ou `'anime'`. */
 export function cadreDe(niveau) {
-  if (niveau >= 5) return 'anime';
-  if (niveau >= 4) return 'fixe';
+  if (niveau >= niveauDuGain('cadre_anime')) return 'anime';
+  if (niveau >= niveauDuGain('cadre')) return 'fixe';
   return null;
 }
 
 /** Ce qu'un joueur montre pour un PASS, au niveau atteint. */
-export function vitrineDe(numero, niveau) {
+export function vitrineDe(numero, niveau, etoiles = 0) {
   const p = passDe(numero);
   return {
     saison: p.numero,
@@ -157,6 +201,8 @@ export function vitrineDe(numero, niveau) {
     niveau,
     cadre: cadreDe(niveau),
     or: niveau >= NIVEAU_MAX,
+    etoiles: niveau >= NIVEAU_MAX ? Math.max(0, Math.floor(Number(etoiles) || 0)) : 0,
+    gains: gainsDe(niveau),
   };
 }
 
@@ -286,7 +332,8 @@ export function anciensPassEnVente(saisons, aujourdHui, deja = []) {
  * Pris après : le niveau 1 pour le contenu (la tenue au premier âge, comme
  * à l'achat), aucun gain spécial ; les âges suivants viennent des boosters.
  */
-export function voieSelonAchat(numero, niveau, { tardif = false } = {}) {
-  if (!tardif) return { ...vitrineDe(numero, niveau), original: true, tardif: false };
-  return { ...vitrineDe(numero, 1), cadre: null, or: false, original: false, tardif: true };
+export function voieSelonAchat(numero, niveau, { tardif = false, etoiles = 0 } = {}) {
+  if (!tardif) return { ...vitrineDe(numero, niveau, etoiles), original: true, tardif: false };
+  return { ...vitrineDe(numero, 1), cadre: null, or: false, etoiles: 0,
+    gains: gainsDe(1).filter((g) => !GAINS_SPECIAUX.includes(g)), original: false, tardif: true };
 }

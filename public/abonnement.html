@@ -419,7 +419,7 @@ function passHTML(d, { ouvert } = {}) {
   if (!p) return '';
   const saison = Number(p.numero ?? p.saison);
   const mienne = (d.voies ?? []).find((v) => v.saison === saison) ?? null;
-  const badge = window.TBF_PASS?.badge({ saison, couleur: p.couleur, niveau: mienne?.niveau ?? 0,
+  const badge = window.TBF_PASS?.badge({ saison, couleur: p.couleur, niveau: mienne?.niveau ?? 0, etoiles: mienne?.etoiles ?? 0,
     or: mienne?.or }, 'grand') ?? '';
   const packs = Number(d.offre?.article?.packs) || 0;
   /* « ÉDITION ORIGINALE » : réservé à ceux qui l'ont pris pendant la saison
@@ -464,8 +464,15 @@ function voieHTML(d) {
     tenue: (n) => `${p.tenue ? 'Sur tous tes Fanzzy, avec son Ultimate en tenue' : 'La tenue de la saison'}`,
     cadre: () => 'Autour de ta carte de supporter',
     cadre_anime: () => 'Un reflet en fait le tour',
-    badge_or: () => 'Le badge du PASS passe en or',
+    badge_or: () => 'Le badge et ton pseudo passent en or',
+    cadre_profil: () => 'Autour de ton portrait, sur ton profil',
+    stickers: () => 'À coller sur l’affiche de tes duels',
+    fond_profil: () => 'Ton profil prend le décor de la saison',
+    entree: () => 'Ton Fanzzy entre en scène au début du duel',
+    titre: () => 'Un titre de la saison sous ton pseudo',
+    aura: () => 'Des braises autour de toi au Virage',
   };
+  const seuilsV = mienne?.seuilsVoie ?? [];
   const jauge = mienne && seuils.length
     ? `<div class="jauge" role="img" aria-label="${esc(`${tampons} tampons sur ${seuils[seuils.length - 1]}`)}"><i style="width:${
       Math.min(100, Math.round(100 * tampons / seuils[seuils.length - 1]))}%"></i></div>` : '';
@@ -478,11 +485,11 @@ function voieHTML(d) {
       ${jauge}
       ${mienne?.close ? `<p><b>La saison est finie.</b> Les âges de la tenue qui te manquent
          tombent maintenant dans tes boosters ; le cadre et le badge ne s’ouvrent plus.</p>` : ''}
-      <ol>${(d.voie ?? []).map((v) => {
+      <ol>${(d.voie ?? []).map((v, i) => {
         const on = niveau >= v.niveau;
-        const seuil = v.paliers ? seuils[v.paliers - 1] : null;
-        const quand = v.paliers === 0 ? 'à l’achat'
-          : seuil ? `${seuil} tampons` : `palier ${v.paliers} du carnet`;
+        const fin = seuils.length ? seuils[seuils.length - 1] : 140;
+        const seuil = seuilsV[i] ?? Math.round((Number(v.part) || 0) * fin);
+        const quand = seuil ? `${seuil} tampons` : 'à l’achat';
         return `<li${on ? ' data-on' : ''}><span class="n">${esc(v.niveau)}</span>
           <span><b>${esc(v.nom)}</b><small>${esc((detail[v.gain] ?? (() => ''))(v))}</small></span>
           <em>${on ? 'OBTENU' : esc(quand)}</em></li>`;
@@ -500,8 +507,8 @@ function mesPassHTML(d) {
         : '<span class="tbf-tampon">APRÈS LA SAISON</span>'}
       <small>${esc(x.tardif
         ? 'La tenue au premier âge sur tous tes Fanzzy ; ses autres âges tombent dans tes boosters.'
-        : x.close ? `Niveau ${x.niveau} sur 6 de sa voie. Les âges qui te manquent tombent dans tes boosters.`
-          : `Niveau ${x.niveau} sur 6 de sa voie.`)}</small></li>`).join('')}</ul></div>`;
+        : x.close ? `Niveau ${x.niveau} sur ${(d.voie ?? []).length || 12} de sa voie. Les âges qui te manquent tombent dans tes boosters.`
+          : `Niveau ${x.niveau} sur ${(d.voie ?? []).length || 12} de sa voie.`)}</small></li>`).join('')}</ul></div>`;
 }
 
 /**

@@ -439,8 +439,8 @@ const RUBRIQUES = [
           + 'fini se récupère jusqu’à la fin de la semaine suivante.'],
       ['Et le défi du PASS ?',
         'Les membres d’un PASS ont un quatrième défi : jouer des duels dans la tenue de '
-          + 'leur PASS. Il fait avancer la voie PASS (la tenue à ses âges, le cadre, le '
-          + 'badge), et rien d’autre : ni écharpes, ni tampons du carnet.'],
+          + 'leur PASS. Il fait avancer la voie PASS (la tenue à ses âges, les cadres, le '
+          + 'titre, le badge…), et rien d’autre : ni écharpes, ni tampons du carnet.'],
       ['Que me rapporte ma collection ?',
         () => `Tous les ${reglage('collection.cran')} objets différents gagnés, un `
           + `cran te rapporte ${reglage('collection.cran_echarpes')} écharpes, et de `
@@ -523,10 +523,13 @@ const RUBRIQUES = [
           + `${reglage('pass.clubs_par_pass')} club suivi de plus et ${reglage('pass.kops_par_pass')} `
           + 'KOP de plus à créer par PASS. Rien de tout cela ne pèse sur la corde.'],
       ['C’est quoi, la voie PASS ?',
-        () => 'Une deuxième ligne dans ton carnet de tampons. Chaque palier du carnet fait '
-          + 'monter ton PASS d’un niveau : la tenue de la saison aux âges suivants, puis le '
-          + 'cadre de carte, le cadre animé et le badge en or. Que du visuel, jamais '
-          + 'd’écharpes ni de boosters.'],
+        () => 'Une deuxième ligne dans ton carnet de tampons, en or, avec douze niveaux. '
+          + 'Tes tampons la font monter : la tenue de la saison à ses trois âges, un cadre de '
+          + 'profil, des stickers de duel, un fond de profil animé, un cadre de carte puis '
+          + 'animé, une entrée au duel, un titre sous ton pseudo, une aura au Virage, et au '
+          + 'bout le badge et le pseudo en or ; ensuite, une étoile tous les 15 tampons. Sans '
+          + 'PASS, tu la vois sous cadenas : ce que tes tampons ont déjà atteint est à toi dès '
+          + 'l’achat. Que du visuel, jamais d’écharpes ni de boosters.'],
       ['Que me manque-t-il sans le PASS ?',
         () => 'Rien pour jouer ni pour le classement : toutes les séries, tous les âges, '
           + 'tous les formats, le Grand Virage en entier, et tout compte, sans limite. '
@@ -544,8 +547,8 @@ const RUBRIQUES = [
           + 'joué pendant la saison.'],
       ['Je n’ai pas fini ma voie PASS avant la fin de la saison : je perds tout ?',
         'Non. Ce que tu as ouvert reste à toi, et les âges de la tenue qui te manquent tombent '
-          + 'ensuite dans tes boosters. Seuls le cadre, le cadre animé et le badge en or ne '
-          + 's’ouvrent plus.'],
+          + 'ensuite dans tes boosters. Les autres cadeaux de la voie (cadres, stickers, fond, '
+          + 'entrée, titre, aura, badge en or) ne s’ouvrent plus.'],
       ['J’avais un abonnement : que devient-il ?',
         'Il ne se renouvelle plus. Tu gardes tout jusqu’à la fin de la période déjà payée, '
           + 'et tu reçois le PASS de la saison où elle se termine. Rien de ce que tu as '
