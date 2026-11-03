@@ -573,6 +573,8 @@ check('« Enregistrer » modifie une saison existante', await jusqua(async () =>
     document.getElementById('s-txt').value = 'Relue sans rien cocher.';
     document.getElementById('s-ok').click();
   });
+  check('le PASS 1 a le même écran que les autres, avec ses listes', await page.evaluate(() =>
+    document.querySelector('#s-stuff') !== null && document.querySelector('#s-chants') !== null));
   check('modifier une saison lancée garde ses séries, sans case à cocher',
     await jusqua(async () => {
       const [[r]] = await pool.query('SELECT texte, series FROM saisons WHERE id = ?', [s1.id]);
