@@ -241,7 +241,9 @@ export function createAbonnement({ pool, requireAuth }) {
     const c = courante();
     if (c) {
       const n = Number(c.numero);
-      const voulues = c.finie ? [n, n + 1] : [n];
+      /* Pendant la BASE (saison 0), le PASS 1 vaut déjà : c'est lui qu'on
+         achète (`saisonsCouvertes`). */
+      const voulues = c.finie || n === 0 ? [n, n + 1] : [n];
       const a = await saisonsDuPass(userId);
       if (a.some((x) => voulues.includes(x))) return true;
     }
@@ -533,6 +535,11 @@ export function createAbonnement({ pool, requireAuth }) {
    * chaque PASS possédé. Une page qui recopie un barème le fait mentir au
    * premier réglage changé dans /admin.
    */
+  /* La fin du PASS en cours : celle de la saison, ou pendant la BASE
+     (saison 0), celle de la saison 1 dont le PASS est déjà actif. */
+  const finDuPass = (c) => (Number(c?.numero) === 0
+    ? (toutes().find((s) => Number(s.numero) === 1)?.fin ?? null) : (c?.fin ?? null));
+
   router.get('/', requireAuth, async (req, res) => {
     try {
       const userId = req.user.id;
@@ -552,7 +559,7 @@ export function createAbonnement({ pool, requireAuth }) {
            la saison couverte, ou celle de l'ancien abonnement). */
         abonne: actif,
         formule: actif ? (o.deja.length ? 'pass' : e.formule) : null,
-        fin: actif ? (o.deja.length && c?.fin ? c.fin : e.fin ?? null) : null,
+        fin: actif ? (o.deja.length && finDuPass(c) ? finDuPass(c) : e.fin ?? null) : null,
         kopsRestants: Math.max(0, nombre * reglage('pass.kops_par_pass') - Number((await q(
           'SELECT COUNT(*) AS n FROM kops WHERE createur = ?', [userId]).catch(() => [{ n: 0 }]))[0]?.n ?? 0)),
         formules: article ? [{ id: article.id, formule: 'pass', nom: article.nom,

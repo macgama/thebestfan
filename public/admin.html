@@ -998,16 +998,18 @@ const VUES = {
     const carte = (s) => `
       <div class="sai ${s.lancee ? 'on' : ''}">
         <div class="sai-t">
-          <b>PASS ${s.numero} — ${esc(s.nom)}</b>
+          <b>${Number(s.numero) === 0 ? 'BASE' : `PASS ${s.numero}`} — ${esc(s.nom)}</b>
           <span class="sai-e">${s.lancee ? `lancé le ${esc(fmt(s.lanceeA))}` : 'brouillon'}</span>
         </div>
         ${s.texte ? `<p class="sai-x">${esc(s.texte)}</p>` : ''}
         <dl class="sai-c">
+          ${Number(s.numero) === 0 ? `<dt>PASS</dt><dd>aucun : la saison 0 est la BASE.
+            Un PASS acheté pendant elle est le PASS 1, actif tout de suite.</dd>` : `
           <dt>Membres du PASS</dt><dd>${tenueDuPass(s)
             ? `la tenue <b>${esc(tenueDuPass(s))}</b>, la voie PASS, le badge et le cadre`
             : '<b style="color:#e5484d">aucune tenue de saison prévue</b> — la voie PASS, le badge et le cadre'}
             ; 3 boosters à l’achat, plus de boosters pendant sa saison, +1 club suivi et
-            +1 KOP à vie (chiffres : sous-onglet VENTES). Jamais d’écharpes.</dd>
+            +1 KOP à vie (chiffres : sous-onglet VENTES). Jamais d’écharpes.</dd>`}
           ${estBase(s) ? `<dt>Pour tous</dt><dd>la <b>BASE</b> — elle se change dans le
             sous-onglet BASE</dd>` : `
           <dt>Séries</dt><dd>${esc(noms(s.series, 'series')) || '—'}</dd>
@@ -1160,11 +1162,12 @@ const VUES = {
               ses écharpes et ses boosters ne viennent pas du PASS. Les membres du PASS
               y ont en plus la voie PASS, qui ne donne que du visuel (la tenue à ses trois
               âges, le cadre, le cadre animé, le badge en or).</p></div>
-          ${base ? `<p class="sai-note sai-neuf">Le PASS ${esc(v.numero)} est le premier :
-            ce qu'il ouvre pour tous forme la <b>BASE</b>. Ce que tu coches ici s'y
+          ${base ? `<p class="sai-note sai-neuf">${Number(v.numero) === 0 ? 'La saison 0 est la BASE'
+            : `Le PASS ${esc(v.numero)} est le premier`} :
+            ce qu'elle ouvre pour tous forme la <b>BASE</b>. Ce que tu coches ici s'y
             ajoute et s'ouvre pour tous${s.lancee ? ', <b>dès l’enregistrement</b>' : ' à son lancement'}.
             Pour retirer quelque chose de la BASE : sous-onglet <b>BASE</b>.</p>` : ''}
-          <div class="sai-l"><p class="sai-lt">TENUE DES MEMBRES DU PASS</p>
+          ${s && Number(s.numero) === 0 ? '' : `<div class="sai-l"><p class="sai-lt">TENUE DES MEMBRES DU PASS</p>
             <select id="s-tenue-pass">
               <option value="">aucune</option>
               ${d.choix.tenues.map((t) => `<option value="${esc(t.id)}"${
@@ -1172,7 +1175,7 @@ const VUES = {
             </select>
             <p class="sai-note">Réservée aux membres de ce PASS : ils la gagnent sur la voie
               PASS, à ses trois âges. Elle ne sort d'aucun booster, et revient à l'étal une
-              saison plus tard. Choisis une tenue dessinée à ses trois âges.</p></div>
+              saison plus tard. Choisis une tenue dessinée à ses trois âges.</p></div>`}
           <p class="sai-note sai-neuf">Ne sont proposées que les <b>nouveautés</b> : ce que
             le jeu ouvre déjà reste ouvert, sans rien cocher. Coche seulement ce que
             ce PASS apporte de neuf, <b>pour tous</b>, à sa date de lancement.</p>
@@ -1221,7 +1224,7 @@ const VUES = {
           fin_le: $('s-fin').value, ouvre_le: $('s-ouvre').value,
           /* Seulement si elle change : une base sans la colonne enregistre
              encore tout le reste. */
-          ...($('s-tenue-pass').value !== tenuePassAvant
+          ...($('s-tenue-pass') && $('s-tenue-pass').value !== tenuePassAvant
             ? { tenue_pass: $('s-tenue-pass').value } : {}),
           ...(fige ? {} : { carnet: $('s-carnet').value }),
         };

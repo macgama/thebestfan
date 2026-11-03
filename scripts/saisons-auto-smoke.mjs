@@ -57,33 +57,35 @@ check('quatre saisons prévues, de trois mois, qui se suivent sans trou',
     const lendemain = new Date(fin.getTime() + 86_400_000).toISOString().slice(0, 10);
     return mois === 2 && ouvre.getUTCDate() === 1 && (!suivante || suivante.ouvre === lendemain);
   }));
-check('la première ouvre au lendemain de la saison 1', SAISONS_PREVUES[0].ouvre === '2027-01-01');
+check('le PASS 1 ouvre le 1er décembre, après la BASE', SAISONS_PREVUES[0].ouvre === '2026-12-01'
+  && SAISONS_PREVUES[0].numero === 1 && SAISONS_PREVUES[0].tenue === 'prehistorique');
 check('chaque série prévue existe', SAISONS_PREVUES.every((s) => s.series.every((id) =>
   SETS.some((x) => x.id === id))));
 
 /* ------------------------------------------------- posées une seule fois */
 
 let posees = await adm.amorcerSaisonsPrevues();
-check('les quatre saisons prévues sont posées', posees.join() === '2,3,4,5');
+/* La saison 1 existe déjà dans une base neuve (sql/saisons.sql) : seules 2 à 4 se posent. */
+check('les saisons prévues absentes sont posées', posees.join() === '2,3,4');
 const s2 = toutesLesSaisons().find((s) => s.numero === 2);
 check('en brouillon, avec leurs dates et leur carnet', s2 && !s2.lancee
-  && s2.fin === '2027-03-31' && s2.ouvre === '2027-01-01'
-  && s2.series.join() === 'HC' && s2.stuff.length === 10 && s2.stuff.every((id) => id.startsWith('hc-'))
+  && s2.fin === '2027-05-31' && s2.ouvre === '2027-03-01'
+  && s2.series.join() === 'MT' && s2.stuff.length === 10 && s2.stuff.every((id) => id.startsWith('mt-'))
   && JSON.stringify(s2.carnet ?? null) === JSON.stringify(CARNET_TRIMESTRE));
 check('les revenants n’ouvrent aucune pièce',
-  toutesLesSaisons().find((s) => s.numero === 5)?.stuff.length === 0);
+  toutesLesSaisons().find((s) => s.numero === 4)?.stuff.length === 0);
 
 posees = await adm.amorcerSaisonsPrevues();
 check('un second démarrage ne pose rien', posees.length === 0
   && toutesLesSaisons().filter((s) => s.numero === 3).length === 1);
 
-await adm.supprimerSaison('test', toutesLesSaisons().find((s) => s.numero === 5).id, null);
+await adm.supprimerSaison('test', toutesLesSaisons().find((s) => s.numero === 4).id, null);
 posees = await adm.amorcerSaisonsPrevues();
 check('une saison prévue supprimée n’est pas recréée', posees.length === 0
-  && !toutesLesSaisons().some((s) => s.numero === 5));
+  && !toutesLesSaisons().some((s) => s.numero === 4));
 
-/* Vrai jusqu'au 31 décembre 2026 ; ensuite la saison 2 serait due, à juste titre. */
-if (new Date() < new Date('2026-12-31T00:00:00Z')) {
+/* Vrai jusqu'au 28 février 2027 ; ensuite le PASS 2 serait dû, à juste titre. */
+if (new Date() < new Date('2027-02-28T00:00:00Z')) {
   check('rien de 2027 ne se lance avant son jour', (await adm.lancerAuto()).length === 0);
 }
 

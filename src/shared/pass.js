@@ -186,6 +186,10 @@ export const passDeLaTenue = (tenueId) =>
 export function saisonsCouvertes(courante, dernierMois = 30) {
   if (!courante || !Number.isFinite(Number(courante.numero))) return [];
   const n = Number(courante.numero);
+  /* **La saison 0 est la BASE** (Gaël, 3 novembre 2026) : elle n'a pas de
+     PASS à elle. Un achat pendant la BASE est le PASS 1, actif tout de suite
+     (voir `estAbonne`) et jusqu'à la fin de la saison 1. */
+  if (n === 0) return [1];
   if (courante.finie) return [n + 1];
   const reste = Number(courante.joursRestants);
   if (Number.isFinite(reste) && reste <= dernierMois) return [n, n + 1];
