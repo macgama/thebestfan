@@ -319,9 +319,12 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
        la vue (`.hidden`, au-delà de 1,8 place du centre). */
     devant: [...document.querySelectorAll('#carousel .slide.center')].map((s) => s.dataset.i),
     caches: document.querySelectorAll('#carousel .slide.hidden').length,
-    /* Ce qui vient, annoncé sans être sur le chemin. */
-    avenir: document.getElementById('avenir')?.hidden === false
-      ? document.getElementById('avenir').textContent : null,
+    /* Le descriptif de la série présentée (demande de Gaël, 3 novembre
+       2026), à la place du rail des séries fermées, retiré. */
+    descriptif: document.getElementById('serieDesc')?.hidden === false
+      ? document.getElementById('serieTxt')?.textContent ?? '' : null,
+    descAttendu: SETS[S.set]?.desc ?? null,
+    rail: Boolean(document.getElementById('avenir') || document.querySelector('.fermees-rang')),
     /* Les pastilles ne listent que l'ouvert, et disparaissent s'il n'y en a
        qu'une : un sélecteur à un seul choix n'est pas un choix. */
     pastilles: [...document.querySelectorAll('#series button')].map((b) => b.textContent),
@@ -348,19 +351,14 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
     !/niveau \d+/i.test(vu.bouton)
     || (console.log('        bouton :', vu.bouton), false));
 
-  if (vu.verrouillees > 0) {
-    /* Un jeu ne cache pas ce qui vient : il le dit, à côté du choix. */
-    check('ce qui vient est annoncé', Boolean(vu.avenir)
-      || (console.log('        aucune ligne « à venir »'), false));
-    /* Elle disait « au niveau 12 ». Elle ne le dit plus, et pas seulement
-       parce que le niveau n'ouvre plus rien : **on ne connaît pas la date**.
-       Une saison se lance quand l'administration la lance, et annoncer une
-       échéance qu'on ne tiendra peut-être pas est pire que de n'en annoncer
-       aucune. Elle nomme donc les séries, et dit qu'elles attendent. */
-    check('avec leur nom, et sans promettre de date',
-      /saison/i.test(vu.avenir ?? '') && !/niveau \d+/i.test(vu.avenir ?? '')
-      || (console.log('        elle dit :', vu.avenir), false));
-  }
+  /* Le descriptif dit ce qu'on trouve dans la série présentée, pour donner
+     envie de la choisir. Le rail « 13 séries attendent une saison » est
+     retiré : on n'y pouvait rien faire (le classeur montre toujours les
+     séries fermées, sous cadenas). */
+  check('le descriptif de la série est affiché',
+    Boolean(vu.descAttendu) && vu.descriptif === vu.descAttendu
+    || (console.log('        affiché :', vu.descriptif, '— attendu :', vu.descAttendu), false));
+  check('les séries fermées ne sont plus en rail sous le bouton', vu.rail === false);
 
   /* Au niveau 1 il n'y a qu'une série : la rangée de pastilles n'a rien à
      proposer et ne doit pas s'afficher. */

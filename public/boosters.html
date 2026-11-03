@@ -266,48 +266,20 @@
 .cta small{display:block;font-family:var(--banner);font-weight:500;font-size:12px;line-height:14px;
   letter-spacing:.04em;text-transform:none;text-shadow:0 1px 0 var(--encre)}
 
-/* Les séries fermées, en rail : leurs sachets en gris sous un scotch en
-   croix. **Un seul rail, une seule croix.** Il y en avait un par raison,
-   chacun sous sa grande croix : un sachet seul, entièrement caché, sous
-   « SAISON 2 » — on ne savait pas quelle série ouvrirait —, puis onze
-   sachets de vingt-huit pixels tassés en une pellicule illisible sous
-   « FERMÉE ». Deux X géants pour dire « pas encore ».
+/* Le descriptif de la série présentée, sous le bouton (demande de Gaël,
+   3 novembre 2026 : « pour donner envie de prendre telle ou telle série »).
+   Il a pris la place du rail des séries fermées — « 13 séries attendent une
+   saison », treize sachets gris sous une croix de scotch —, qui n'apportait
+   rien au jeu : on ne peut ni les ouvrir ni rien y faire. Le classeur montre
+   toujours les séries fermées, sous cadenas.
 
-   Les sachets ont maintenant la taille d'un sachet (40 × 62), espacés, et
-   le rail défile de côté. **La série annoncée vient en premier**, avec son
-   nom et sa saison en étiquette (« LES HÉROS DU CANAPÉ · SAISON 2 ») : il
-   est connu dès qu'elle est annoncée (`sets[].prochaine`). Les autres n'ont
-   pas de sticker : « 12 SÉRIES ATTENDENT UNE SAISON » le dit pour elles, et
-   on n'annonce jamais une date qu'on n'a pas. Leur nom reste à l'écoute
-   (`aria-label` de chaque sachet). Sur un panneau (`.pan`) : rien ne
-   s'écrit à même la photo de la tribune. */
-.fermees{margin:16px 0 8px;padding:12px 0 6px}
-.fermees-lab{margin:0 12px;font-family:var(--banner);font-weight:600;font-size:11px;line-height:1.3;
-  letter-spacing:.1em;text-transform:uppercase;text-align:center}
-/* L'étiquette de la série annoncée, au-dessus du rail, collée sur le coin
-   de son sachet (le premier). Un nom long (« LA GASTRONOMIE DE COMPTOIR ·
-   SAISON 2 ») passe sur deux lignes plutôt que de sortir du panneau à
-   320 px. */
-.fermees-annonce{display:flex;margin:12px 12px -6px;position:relative;z-index:6}
-.fermees-annonce>.tbf-sticker{--rot:-2deg;max-width:100%;height:auto;min-height:24px;padding:4px 7px;
-  white-space:normal;line-height:1.15}
-/* Le rail défile ; la croix, elle, est posée sur sa fenêtre et ne défile
-   pas avec lui — une seule, au milieu, sur la largeur de trois sachets. Le
-   rembourrage garde l'air des ombres, qu'un défilement rogne. */
-.fermees-rail{position:relative;margin-top:8px}
-.fermees-rang{display:flex;gap:12px;overflow-x:auto;padding:10px 12px 12px;
-  scroll-snap-type:x proximity;scroll-padding-inline:12px;scrollbar-width:none}
-.fermees-rang::-webkit-scrollbar{display:none}
-.fermees-rang>:first-child{margin-left:auto}
-.fermees-rang>:last-child{margin-right:auto}
-.fermees-rang:focus-visible{outline:3px solid var(--projo);outline-offset:-3px}
-.fermees-s{position:relative;flex:none;width:40px;height:62px;border-radius:4px;overflow:hidden;
-  scroll-snap-align:start;background:var(--encre) center/cover no-repeat;filter:grayscale(1) brightness(.6);
-  box-shadow:0 0 0 1.5px rgba(242,238,228,.4),2px 2px 5px rgba(7,9,12,.55)}
-/* La série annoncée garde un peu de sa lumière : c'est la prochaine. */
-.fermees-s[data-annoncee]{filter:grayscale(.6) brightness(.8)}
-.fermees-rail>.tbf-scotch--croix{left:50%;right:auto;width:min(156px,60%);translate:-50% 0;
-  top:4px;bottom:6px;pointer-events:none;z-index:4}
+   Sa phrase (`ligne`) en tête, en capitales, puis ce qu'on y trouve
+   et comment elle se joue (`desc`, écrit avec la série dans `dex-*.js`).
+   Sur un panneau (`.pan`) : rien ne s'écrit à même la photo de la tribune. */
+.serie-desc{margin:16px 0 8px;padding:12px 14px 13px}
+.serie-desc-ligne{margin:0 0 6px;font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.3;
+  letter-spacing:.06em;text-transform:uppercase;text-align:center;text-wrap:balance}
+.serie-desc-txt{margin:0;font-size:14px;line-height:1.45;text-align:center;text-wrap:pretty;opacity:.92}
 
 /* --------------------------------------------------- geste d'ouverture
 
@@ -793,11 +765,11 @@ body{padding-bottom:calc(var(--bas) + 40px)}
          éteint ne mène nulle part, celui-ci mène où en gagner. -->
     <a class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="vert" id="gagner" href="/virage" hidden>GAGNER DES
       ÉCHARPES<small id="gagnerManque"></small></a>
-    <!-- Ce qui vient : les séries fermées, en rail. Le kiosque montrait les
-         huit séries verrouillées dans le carrousel : on glissait au milieu de
-         ce qu'on ne peut pas ouvrir pour retrouver ce qu'on peut. Un jeu
-         montre ce qui l'attend, il ne le met pas sur le chemin. -->
-    <section class="pan fermees" id="avenir" aria-label="Les séries à venir" hidden></section>
+    <!-- Ce que la série présentée raconte, pour donner envie de la choisir. -->
+    <section class="pan serie-desc" id="serieDesc" aria-label="La série" hidden>
+      <p class="serie-desc-ligne" id="serieLigne"></p>
+      <p class="serie-desc-txt" id="serieTxt"></p>
+    </section>
   </section>
 
   <div class="tearzone" id="tearzone">
@@ -1602,56 +1574,24 @@ $('saisonVu').onclick = async () => {
   try { await api('/saison-vue', {}); } catch { /* il reviendra, sans plus */ }
 };
 
-/** Le petit sachet gris d'une série fermée, dans son rail. Sans dessin, un
-    sachet de ses deux couleurs, et non le paquet composé de `packArt` : son
-    nom y serait écrit à deux pixels — un texte que personne ne lit, et que
-    l'audit compterait sous onze. Le nom est à l'écoute (`aria-label`). */
-const saisonDe = (x) => (Number.isInteger(x.prochaine) && x.prochaine > 0 ? x.prochaine : 0);
-const sachetFerme = (x) => {
-  const k = saisonDe(x);
-  const nom = esc(k ? `${x.nom} — saison ${k}` : x.nom);
-  const fond = ART[x.id] ? `url('/${esc(src(ART[x.id]))}')`
-    : `linear-gradient(160deg,${esc(x.c2 ?? '#1A1F27')} 0 32%,${esc(x.c1 ?? '#C2CAD6')} 58%,${esc(x.c2 ?? '#1A1F27')})`;
-  return `<span class="fermees-s" role="img" aria-label="${nom}"${k ? ' data-annoncee' : ''}
-      style="background-image:${fond}"></span>`;
-};
-
 /**
- * Ce qui vient : les séries fermées, en un rail de sachets gris sous une
- * croix de scotch.
- *
- * Elle disait « au niveau 12 ». Elle ne le dit plus, et pas seulement parce
- * que le niveau n'ouvre plus rien : **on ne connaît pas toujours la date**.
- * Une saison se lance quand l'administration la lance ; le serveur ne dit
- * quelle saison ouvrira une série que si elle a été annoncée
- * (`sets[].prochaine`, contrat § 7.2), et annoncer une échéance qu'on ne
- * tiendra peut-être pas est pire que de n'en annoncer aucune. Les séries
- * annoncées viennent en tête du rail, leur nom et leur saison en étiquette
- * (« SAISON 2 » n'est écrit que si la saison est servie) ; les autres n'en
- * ont pas.
+ * Le descriptif de la série présentée : sa phrase et ce qu'on y trouve. Il
+ * change avec la pastille choisie — c'est lui qui aide à choisir. Une série
+ * sans texte (une série neuve dont on n'a rien écrit) cache le panneau
+ * plutôt que d'afficher un cadre vide.
  */
-function rendreFermees() {
-  const fermees = SETS_TOUTES.filter((x) => !serieDebloquee(x));
-  const av = $('avenir');
-  if (!fermees.length) { av.hidden = true; av.innerHTML = ''; return; }
-  av.hidden = false;
-  // Les séries annoncées d'abord, de la saison la plus proche à la plus
-  // lointaine ; l'ordre du catalogue sinon (le tri est stable).
-  const rang = [...fermees].sort((a, b) => (saisonDe(a) || Infinity) - (saisonDe(b) || Infinity));
-  const annoncees = rang.filter((x) => saisonDe(x));
-  const k = annoncees.length ? saisonDe(annoncees[0]) : 0;
-  const memeSaison = annoncees.filter((x) => saisonDe(x) === k);
-  /* Une série annoncée : son nom. Plusieurs pour la même saison : leur
-     nombre — une étiquette de trois noms ne tiendrait pas sur un sachet. */
-  const etiquette = !k ? ''
-    : memeSaison.length === 1 ? `${memeSaison[0].nom} · SAISON ${k}`
-      : `${memeSaison.length} SÉRIES · SAISON ${k}`;
-  const n = fermees.length;
-  av.innerHTML = `<p class="fermees-lab">${n} série${n > 1 ? 's attendent' : ' attend'} une saison</p>`
-    + (etiquette ? `<div class="fermees-annonce"><span class="tbf-sticker">${esc(etiquette)}</span></div>` : '')
-    + `<div class="fermees-rail"><div class="fermees-rang" tabindex="0" role="group"
-        aria-label="Les séries à venir">${rang.map(sachetFerme).join('')}</div>
-        <span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span></div>`;
+function rendreDescriptif(s) {
+  const p = $('serieDesc');
+  const ligne = (s.ligne ?? '').trim();
+  const desc = (s.desc ?? '').trim();
+  p.hidden = !ligne && !desc;
+  p.setAttribute('aria-label', s.nom ?? 'La série');
+  /* Le texte seul, sans guillemets ajoutés : la traduction de la page
+     reconnaît la phrase telle qu'elle est écrite dans la série. */
+  $('serieLigne').textContent = ligne;
+  $('serieLigne').hidden = !ligne;
+  $('serieTxt').textContent = desc;
+  $('serieTxt').hidden = !desc;
 }
 
 /** Les pastilles des séries ouvertes, la choisie ramenée au milieu du rail. */
@@ -1688,7 +1628,7 @@ function renderKiosque() {
   const ouvrable = serieDebloquee(s);
 
   rendreSeries(ouvertes, s);
-  rendreFermees();
+  rendreDescriptif(s);
   rendreSaison();
 
   /* Le nom de la série, en sticker sous son sachet, et ce qu'elle contient :
