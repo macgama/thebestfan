@@ -1005,7 +1005,9 @@ const VUES = {
         <dl class="sai-c">
           <dt>Membres du PASS</dt><dd>${tenueDuPass(s)
             ? `la tenue <b>${esc(tenueDuPass(s))}</b>, la voie PASS, le badge et le cadre`
-            : 'la voie PASS, le badge et le cadre — sans tenue de saison'}</dd>
+            : '<b style="color:#e5484d">aucune tenue de saison prévue</b> — la voie PASS, le badge et le cadre'}
+            ; 3 boosters à l’achat, plus de boosters pendant sa saison, +1 club suivi et
+            +1 KOP à vie (chiffres : sous-onglet VENTES). Jamais d’écharpes.</dd>
           ${estBase(s) ? `<dt>Pour tous</dt><dd>la <b>BASE</b> — elle se change dans le
             sous-onglet BASE</dd>` : `
           <dt>Séries</dt><dd>${esc(noms(s.series, 'series')) || '—'}</dd>
@@ -1148,10 +1150,15 @@ const VUES = {
                 + `${esc(L.echarpesMax ?? 2000)} au plus ; « packs » : les boosters, `
                 + `${esc(L.packsMax ?? 10)} au plus ; au besoin « insigne » (lisere ou `
                 + 'tampon) et « titre » (true : le nom devient un titre). Laissé tel '
-                + 'quel ou vidé : le carnet par défaut. Il se fige au premier palier versé.'}</p></div>
-          ${base ? `<p class="sai-note sai-neuf">Ce PASS porte la <b>BASE</b> : ce qu'il
-            ouvre pour tous se change dans le sous-onglet BASE. Ici, son nom, ses dates
-            et son carnet.</p>` : `
+                + 'quel ou vidé : le carnet par défaut. Il se fige au premier palier versé.'}</p>
+            <p class="sai-note">Ce carnet est la <b>voie gratuite, pour tous les joueurs</b> :
+              ses écharpes et ses boosters ne viennent pas du PASS. Les membres du PASS
+              y ont en plus la voie PASS, qui ne donne que du visuel (la tenue à ses trois
+              âges, le cadre, le cadre animé, le badge en or).</p></div>
+          ${base ? `<p class="sai-note sai-neuf">Le PASS ${esc(v.numero)} est le premier :
+            ce qu'il ouvre pour tous forme la <b>BASE</b>. Ce que tu coches ici s'y
+            ajoute et s'ouvre pour tous${s.lancee ? ', <b>dès l’enregistrement</b>' : ' à son lancement'}.
+            Pour retirer quelque chose de la BASE : sous-onglet <b>BASE</b>.</p>` : ''}
           <p class="sai-note sai-neuf">Ne sont proposées que les <b>nouveautés</b> : ce que
             le jeu ouvre déjà reste ouvert, sans rien cocher. Coche seulement ce que
             ce PASS apporte de neuf, <b>pour tous</b>, à sa date de lancement.</p>
@@ -1170,7 +1177,7 @@ const VUES = {
           <div class="sai-l"><p class="sai-lt">MINI-JEUX — ils s’ouvrent</p>
             ${cases('jeux', v.jeux ?? [])}</div>
           <div class="sai-l"><p class="sai-lt">CHANTS DU DUEL ET DU VIRAGE — ils s’ouvrent</p>
-            ${cases('chants', v.chants ?? [])}</div>`}
+            ${cases('chants', v.chants ?? [])}</div>
           <div class="sai-a">
             <button class="mini" id="s-annuler">Annuler</button>
             <button class="mini vert" id="s-ok">${s ? 'Enregistrer' : 'Créer le brouillon'}</button>
@@ -1182,7 +1189,7 @@ const VUES = {
       /* Les cases cochées, plus ce que la saison nommait déjà parmi le déjà en
          jeu : ces lignes-là n'ont pas de case, et les perdre à l'enregistrement
          retirerait une série à une saison lancée. */
-      const coches = (source) => (base ? [...(v[source] ?? [])] : [...new Set([
+      const coches = (source) => ([...new Set([
         ...(v[source] ?? []).filter((id) => enJeu[source]?.has(id)),
         ...[...document.querySelectorAll(`#s-${source} input:checked`)].map((i) => i.value),
       ])]);
