@@ -34,3 +34,40 @@ art/**/_src/
 
 # La base de test propre à une copie de travail (voir scripts/base-de-test.mjs).
 .tbf-base-de-test
+
+# Les images, hors de git depuis le 3 novembre 2026. Le dépôt avait atteint
+# vingt-huit gigaoctets — chaque dessin de Fanzzy en PNG, WebP et AVIF — et
+# plus aucune copie neuve ne tenait sur le disque d'un fil de travail.
+# L'historique a été réécrit pour les en sortir. Elles restent sur ta machine,
+# et partent au serveur par scripts/envoyer-images.sh. Les manifestes JSON de
+# ces dossiers, eux, sont toujours versionnés : le code en a besoin.
+public/img/fanzzy/**/*.png
+public/img/fanzzy/**/*.webp
+public/img/fanzzy/**/*.avif
+public/img/fanzzy/**/*.jpg
+public/img/ultime/**/*.png
+public/img/ultime/**/*.webp
+public/img/ultime/**/*.avif
+public/img/ultime/**/*.jpg
+public/img/ultime/**/*.mp4
+*.mp4
+/*.png
+/*.jpg
+/*.webp
+/*.avif
+/a-decouper/
+/skins/
+/ultime/
+/sources/
+# Les dessins de art/, sauf art/action/ et art/stuff/ (voir plus haut : on ne
+# sait pas les refaire, ils restent dans l'historique).
+/art/**/*.png
+/art/**/*.jpg
+/art/**/*.jpeg
+/art/**/*.webp
+/art/**/*.avif
+!/art/action/**
+!/art/stuff/**
+.tbf-images-envoyees
+.tbf-images-envoyees.nouveau
+.tbf-images-liste

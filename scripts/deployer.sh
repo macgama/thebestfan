@@ -44,6 +44,18 @@ cd "$RACINE"
 
 echo "→ récupération de origin/$BRANCHE"
 git fetch --prune origin "$BRANCHE"
+
+# **Les images ne sont plus dans git** (voir scripts/envoyer-images.sh). Une
+# copie de travail qui les suit encore les effacerait au `reset` qui vient,
+# puisque le nouveau commit ne les contient plus — et le site perdrait tous
+# ses personnages. On cesse donc d'abord de les suivre : elles deviennent des
+# fichiers ignorés, que `reset --hard` ne touche pas. Ne sert qu'une fois, au
+# premier déploiement après la réécriture ; ensuite il n'y a plus rien à
+# retirer et la ligne ne fait rien.
+git ls-files -z -- public/img/fanzzy public/img/ultime \
+  | grep -zEi '\.(png|jpe?g|webp|avif|mp4)$' \
+  | xargs -0 -r git rm -q --cached --
+
 git reset --hard "origin/$BRANCHE"
 
 # --short=10 et non --short : la longueur par défaut dépend du nombre

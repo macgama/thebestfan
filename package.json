@@ -11,6 +11,7 @@
     "start": "node --env-file-if-exists=.env server.js",
     "build": "npm install && node build.mjs",
     "schema:appliquer": "node --env-file-if-exists=.env scripts/appliquer-schema.mjs",
+    "images:envoyer": "bash scripts/envoyer-images.sh",
     "schema:smoke": "node scripts/schema-smoke.mjs",
     "catalogue:diag": "node --env-file-if-exists=.env scripts/catalogue-diag.mjs",
     "simuler": "node scripts/simuler-parties.mjs",

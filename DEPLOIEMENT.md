@@ -885,6 +885,15 @@ pas.
 
 ## Les visuels
 
+**Les images ne passent plus par git.** Depuis le 3 novembre 2026, les dessins
+de `public/img/fanzzy` et `public/img/ultime` (PNG, WebP, AVIF, MP4) et ceux
+de `art/` (hors `art/action` et `art/stuff`) sont ignorés : le dépôt avait
+atteint vingt-huit gigaoctets, et l'historique a été réécrit pour les en
+sortir. Ils restent sur la machine qui les fabrique, et partent au serveur
+par `TBF_SSH=<utilisateur>@<hote> npm run images:envoyer` — à lancer après
+chaque nouvelle série de dessins. Une copie neuve du dépôt tourne sans eux,
+mais les personnages y sont absents.
+
 Toute image ou vidéo générée suit les règles de `VISUELS.md` : aucun nom ni
 logo de marque, aucun nom ni écusson de club, aucun texte dans l'illustration,
 aucune personne réelle. Les couleurs sont libres — une écharpe bleu et blanc
