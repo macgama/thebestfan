@@ -81,3 +81,8 @@ ALTER TABLE saisons ADD COLUMN IF NOT EXISTS jeux JSON NULL;
 -- Les chants du DUEL et du VIRAGE d'une saison (menu PASS, 3 novembre 2026) :
 -- un PASS peut ouvrir, pour tous et à sa date, de nouveaux chants.
 ALTER TABLE saisons ADD COLUMN IF NOT EXISTS chants JSON NULL;
+
+-- La tenue des membres du PASS de cette saison (menu PASS, 3 novembre 2026 :
+-- Gaël la choisit dans l'admin). NULL : celle du code (`PASS_SAISONS`,
+-- src/shared/pass.js) ; '' : aucune.
+ALTER TABLE saisons ADD COLUMN IF NOT EXISTS tenue_pass VARCHAR(32) NULL;

@@ -3,7 +3,7 @@ import { reglage } from '../../shared/reglages.js';
 import { CATALOGUE, enEuros } from '../../shared/boutique.js';
 import { carnetDe } from '../../shared/saison.js';
 import {
-  PASS_SAISONS, passDe, VOIE_PASS, niveauVoie, ageTenue, vitrineDe, saisonsCouvertes,
+  passAvecTenue, passDe, VOIE_PASS, niveauVoie, ageTenue, vitrineDe, saisonsCouvertes,
   tenueReservee,
 } from '../../shared/pass.js';
 import { saisonEnCours, toutesLesSaisons } from '../fanzzy/saisons.js';
@@ -345,7 +345,7 @@ export function createAbonnement({ pool, requireAuth }) {
    * l'achat, le deuxième et le troisième aux paliers suivants du carnet.
    */
   async function ageTenuePass(userId, tenueId) {
-    if (!PASS_SAISONS.some((p) => p.tenue === tenueId)) return 0;
+    if (!passAvecTenue().some((p) => p.tenue === tenueId)) return 0;
     let age = 0;
     for (const v of await voies(userId)) if (v.tenue === tenueId) age = Math.max(age, v.ageTenue);
     return age;
@@ -594,7 +594,7 @@ export function createAbonnement({ pool, requireAuth }) {
           'chaque saison ajoute pour tous ses séries, ses pièces et ses stades',
         ],
         raisonsDepart: RAISONS_DEPART.map(([cle, libelle]) => ({ cle, libelle })),
-        passes: PASS_SAISONS.map((p) => passDe(p.numero)),
+        passes: passAvecTenue(),
       });
     } catch (err) {
       console.error('[abonnement]', err.message);
