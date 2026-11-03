@@ -277,6 +277,75 @@ export const STADES = [
     mods: { pushMult: 1.15, refundBonus: 0.8 },
     effet: 'Plus rien à perdre : chaque poussée porte plus loin, et rien ne se récupère.',
   },
+
+  /* ================================================== LES TERRACES (5)
+
+     Cinq lieux pour la série AN (demande de Gaël du 3 novembre 2026). Le
+     préfixe `an-` les range d'eux-mêmes sous LES TERRACES dans /admin, comme
+     `rp-` le fait pour LA REPRISE. Ce sont des stades **anglais** sans être
+     ceux d'un club : aucun nom, aucun écusson — la pluie fine, la terrace
+     debout, le match du lendemain de Noël, le stade coincé entre les maisons
+     de briques et la vieille tribune qu'on démolit.
+
+     Ils naissent **fermés** (`publie: false`), comme les pièces `an-` de
+     l'équipement : ils s'ouvrent avec la série, dans la BASE ou dans un PASS.
+     Et la règle ne change pas : chacun ouvre une porte et en ferme une, pour
+     les deux tribunes à la fois.                                            */
+  {
+    id: 'an-crachin',
+    nom: 'Le Crachin',
+    rar: 'commune',
+    publie: false,
+    texte: 'Il pleut depuis le coup d’envoi, finement, sans jamais s’arrêter. Personne ne bouge.',
+    /* La pluie fine colle au chant : ce qui se tient porte loin, mais le
+       rythme glisse sous les pieds. */
+    mods: { holdBonus: 1.15, tempoWindow: 0.9 },
+    effet: 'La pluie fine porte les chants tenus, et fait glisser le rythme.',
+  },
+  {
+    id: 'an-terrace',
+    nom: 'La Terrace Debout',
+    rar: 'rare',
+    publie: false,
+    texte: 'Pas un siège : des marches de béton et des barrières d’acier où l’on s’appuie à dix.',
+    /* Debout et serrés, on pousse ensemble et on se répond de tout près :
+       la poussée grossit, et chaque contre porte. */
+    mods: { pushMult: 1.12, parryBonus: 1.15 },
+    effet: 'Debout contre les barrières : on pousse plus fort, et l’on se contre mieux.',
+  },
+  {
+    id: 'an-lendemain',
+    nom: 'Le Lendemain de Noël',
+    rar: 'rare',
+    publie: false,
+    texte: 'Midi, le 26 décembre. Tout le monde est venu, et personne n’a vraiment dormi.',
+    /* Le match où toute la famille vient : la ferveur monte d'elle-même,
+       et le souffle revient mal après la veille. */
+    mods: { ferveurBonus: 1.18, breathBonus: 0.88 },
+    effet: 'Tout le monde est là : la ferveur monte vite, mais le souffle revient mal.',
+  },
+  {
+    id: 'an-briques',
+    nom: 'La Rue de Briques',
+    rar: 'epique',
+    publie: false,
+    texte: 'Le stade tient entre deux rangées de maisons. On regarde le match depuis les fenêtres.',
+    /* Un quartier entier qui se connaît : on se relaie, chaque souffle
+       dépensé revient — mais on n'y frappe pas fort, on chante ensemble. */
+    mods: { refundBonus: 1.25, mashBonus: 0.85 },
+    effet: 'Tout le quartier se relaie : le souffle dépensé revient mieux, le martelage porte moins.',
+  },
+  {
+    id: 'an-derniere',
+    nom: 'La Dernière Terrace',
+    rar: 'legendaire',
+    publie: false,
+    texte: 'La vieille tribune sera démolie lundi. Ce soir, on y chante une dernière fois.',
+    /* L'adieu : on pousse et on tient comme jamais, et l'on n'a plus de
+       souffle ni de repères. Le pendant de L'Inauguration, dans l'autre sens. */
+    mods: { pushMult: 1.3, holdBonus: 1.2, breathBonus: 0.85, tempoWindow: 0.82 },
+    effet: 'Un dernier soir : tout le monde pousse et tient comme jamais, et plus personne ne souffle.',
+  },
 ];
 
 export const STADE_BY_ID = new Map(STADES.map((s) => [s.id, s]));

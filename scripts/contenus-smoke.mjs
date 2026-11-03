@@ -70,7 +70,8 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
     publies('stuff').length === STUFF.filter((s) => s.publie !== false).length);
   check('et une pièce neuve qui attend sa saison n’est pas distribuée',
     !STUFF.some((s) => s.publie === false) || !publies('stuff').some((s) => s.publie === false));
-  check('et tous les stades', publies('stade').length === STADES.length);
+  check('et tous les stades, sauf ceux que le code dit fermés',
+    publies('stade').length === STADES.filter((s) => s.publie !== false).length);
 }
 
 /* --------------------------------------------------------------- le semis */
