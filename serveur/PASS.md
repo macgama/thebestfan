@@ -107,6 +107,27 @@ résiliation à l'échéance chez Stripe de chaque abonnement en cours, PASS de 
 saison où sa période se termine ; abonnement offert : PASS de la saison en
 cours, et sa ligne s'arrête au dernier jour de cette saison.
 
+## Les anciens PASS (Gaël, 3 novembre 2026)
+
+- Un PASS revient en vente **le 1er du deuxième mois après la fin de sa
+  saison** (fin le 28 février → dès le 1er avril), au même prix, en euros ou
+  en écharpes (`venteAncienPassLe`, `anciensPassEnVente`). La page du PASS les
+  vend (`anciensPass` de `GET /api/abonnement`), la boutique les annonce.
+- En euros : `POST /api/boutique/commander { article: 'pass-saison', saison }`,
+  la commande garde `pass-saison@<n>` (`articleCommande`). En écharpes :
+  `POST /api/abonnement/pass/echarpes { saison }`.
+- La ligne de `user_pass` porte `stripe-tard` ou `echarpes-tard` : c'est ce qui
+  fait un achat tardif (`estTardif`).
+- **L'acheteur tardif n'a que le contenu** (tenue, stuff, stade, mini-jeux) :
+  la tenue au premier âge, ses autres âges dans ses boosters, les boosters du
+  PASS. Aucun **gain spécial** : ni tampon « ÉDITION ORIGINALE », ni cadre,
+  cadre animé, badge, ni club ou KOP en plus, ni le rythme de la saison.
+- **Une voie pas finie** : sa saison close, ce qui est ouvert reste ; les âges
+  de la tenue qui manquent tombent dans les boosters du joueur
+  (`tenuesAuxBoosters`) ; les gains spéciaux ne s'ouvrent plus.
+- Le prix reste celui du PASS d'aujourd'hui (le code ne garde pas l'historique
+  des prix) : à revoir le jour où le prix du PASS changera.
+
 ## Pour la saison suivante
 
 Ajouter une entrée à `PASS_SAISONS` (numéro, nom, tenue, texte, couleur), avec

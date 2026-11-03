@@ -206,3 +206,87 @@ export function saisonsCouvertes(courante, dernierMois = 30) {
   if (Number.isFinite(reste) && reste <= dernierMois) return [n, n + 1];
   return [n];
 }
+
+/* ============================================================ les anciens PASS
+
+   Règles de Gaël du 3 novembre 2026 (fil « Vendre les anciens PASS en
+   boutique ») :
+
+   - un PASS revient en vente **le 1er du deuxième mois après la fin de sa
+     saison** (fin le 28 février → en vente dès le 1er avril), au même prix
+     qu'à l'origine, en euros ou en écharpes ;
+   - le tampon « ÉDITION ORIGINALE » reste à ceux qui l'ont pris **pendant**
+     la saison ;
+   - l'acheteur tardif n'a que le **contenu** du PASS (tenue, stuff, stade,
+     mini-jeux), jamais ses **gains spéciaux** (cadre, cadre animé, badge en
+     or, badge, club suivi et KOP en plus) ;
+   - un joueur de la saison qui n'a pas fini sa voie garde ce qu'il a, et le
+     contenu qui lui manque tombe ensuite dans ses boosters ; les gains
+     spéciaux, eux, ne s'ouvrent plus (sa voie s'arrête avec le carnet).
+
+   Un achat tardif se reconnaît à sa source, `stripe-tard` ou `echarpes-tard`
+   (`user_pass.source`, 16 caractères) : la règle se lit sur la ligne, sans
+   date à recalculer ni colonne de plus. */
+
+/** Le suffixe des achats faits après la saison. */
+export const SUFFIXE_TARD = '-tard';
+
+/** Cette ligne de `user_pass` vient-elle d'un achat après la saison ? */
+export const estTardif = (source) => String(source ?? '').endsWith(SUFFIXE_TARD);
+
+/** Le contenu d'un PASS, que l'acheteur tardif reçoit aussi. */
+export const GAINS_CONTENU = Object.freeze(['tenue', 'stuff', 'stade', 'jeu']);
+/** Ses gains spéciaux, réservés à ceux qui l'ont joué pendant sa saison. */
+export const GAINS_SPECIAUX = Object.freeze(['cadre', 'cadre_anime', 'badge_or',
+  /* Ceux de la voie à 12 niveaux (fil de la voie PASS, 3 novembre 2026). */
+  'cadre_profil', 'stickers', 'fond_profil', 'entree', 'titre', 'aura']);
+
+/**
+ * Le jour où l'ancien PASS d'une saison revient en vente : `'AAAA-MM-01'`.
+ *
+ * Le 1er du deuxième mois après le dernier jour de la saison : fin le
+ * 28 février, vente le 1er avril ; fin le 30 novembre, vente le 1er janvier
+ * suivant. `null` sans date de fin lisible.
+ */
+export function venteAncienPassLe(finJour) {
+  const m = /^(\d{4})-(\d{2})-\d{2}/.exec(String(finJour ?? ''));
+  if (!m) return null;
+  const mois = Number(m[1]) * 12 + (Number(m[2]) - 1) + 2;
+  const a = Math.floor(mois / 12);
+  return `${a}-${String((mois % 12) + 1).padStart(2, '0')}-01`;
+}
+
+/**
+ * Les anciens PASS en vente aujourd'hui, parmi les saisons données.
+ *
+ * `saisons` : `[{ numero, fin, lancee }]` (la forme de `toutesLesSaisons`,
+ * `fin` en `'AAAA-MM-JJ'`). `aujourdHui` : `'AAAA-MM-JJ'`. `deja` : les
+ * numéros que le joueur a déjà. Rend `[{ numero, venteLe }]`, du plus ancien
+ * au plus récent. La BASE (saison 0) n'a pas de PASS : elle n'y est jamais.
+ */
+export function anciensPassEnVente(saisons, aujourdHui, deja = []) {
+  const ont = new Set((deja ?? []).map(Number));
+  const vus = new Set();
+  const out = [];
+  for (const s of saisons ?? []) {
+    const n = Number(s?.numero);
+    if (!Number.isInteger(n) || n < 1 || vus.has(n) || !s?.lancee) continue;
+    const le = venteAncienPassLe(s.fin);
+    if (!le || String(aujourdHui) < le) continue;
+    vus.add(n);
+    if (!ont.has(n)) out.push({ numero: n, venteLe: le });
+  }
+  return out.sort((a, b) => a.numero - b.numero);
+}
+
+/**
+ * La voie d'un PASS selon la façon dont on l'a pris.
+ *
+ * Pris pendant la saison : le niveau atteint, gains spéciaux compris.
+ * Pris après : le niveau 1 pour le contenu (la tenue au premier âge, comme
+ * à l'achat), aucun gain spécial ; les âges suivants viennent des boosters.
+ */
+export function voieSelonAchat(numero, niveau, { tardif = false } = {}) {
+  if (!tardif) return { ...vitrineDe(numero, niveau), original: true, tardif: false };
+  return { ...vitrineDe(numero, 1), cadre: null, or: false, original: false, tardif: true };
+}
