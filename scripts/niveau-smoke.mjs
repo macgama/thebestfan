@@ -340,9 +340,19 @@ r = await call('/api/me/slot', { method: 'POST' });
 check('le quatrième est refusé : il demande le niveau 9',
   r.json.error === 'onboarding.error.slot_locked');
 
+/* Gaël, 3 novembre 2026 : le profil laissait cliquer sur un emplacement
+   fermé. L'état dit maintenant le plafond et le niveau qui ouvre le suivant,
+   pour que la plaque soit éteinte avant le clic. */
+r = await call('/api/me/state');
+check(`l’état dit que le quatrième s’ouvre au niveau 9 (${r.json.slots?.niveauRequis})`,
+  r.json.slots?.niveauRequis === 9 && r.json.slots?.plafond === 3);
+
 await pool.query('UPDATE user_wallet SET xp = ? WHERE user_id = ?', [seuil(9), U]);
 r = await call('/api/me/slot', { method: 'POST' });
 check('au niveau 9, il s’achète', r.json.slots === 4);
+r = await call('/api/me/state');
+check('et au niveau 9, le cinquième demande le niveau 14',
+  r.json.slots?.niveauRequis === 14 && r.json.slots?.total === 4);
 
 /* ---------------------------------------- le deck respecte son plafond */
 

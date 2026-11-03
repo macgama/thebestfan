@@ -1,5 +1,47 @@
 # À déposer sur Infomaniak
 
+**Cinq stades pour LES TERRACES (série AN)** (branche
+`claude/project-thread-coelne`, 3 novembre 2026, demande de Gaël). Construction
+seule, sans schéma : Le Crachin, La Terrace Debout, Le Lendemain de Noël, La Rue
+de Briques et La Dernière Terrace, avec leurs images. Ils naissent **fermés** :
+pour les ouvrir, /admin › PASS › BASE (ou un PASS), groupe LES TERRACES des
+stades.
+
+---
+
+**L'écran des boosters : descriptif de série et carrousel de dix paquets**
+(branche `claude/project-thread-loywt5`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- Sous OUVRIR LE BOOSTER, un panneau décrit la série choisie (sa phrase et
+  deux lignes), dans les cinq langues ; la boîte « 13 séries attendent une
+  saison » est retirée.
+- Dix paquets en anneau qui tourne seul ; il s'arrête au moindre geste.
+
+---
+
+**Profil : l'emplacement de club fermé se voit avant le clic** (branche
+`claude/project-thread-0f5ilz`, 3 novembre 2026). Construction seule, pas de
+schéma. La plaque « 120 écharpes » ne se laisse plus toucher quand le niveau
+n'ouvre pas encore l'emplacement : elle est éteinte, dit « NIVEAU 4 » (par
+exemple), et la ligne dit « Se débloque au niveau 4 ». Même chose quand il
+manque des écharpes (« Il te manque 40 écharpes »).
+
+---
+
+**Le premier booster se déchire comme les autres** (branche
+`claude/project-thread-i98y57`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- À l'inscription, le sachet de bienvenue reprend la déchirure du kiosque :
+  l'intérieur du sachet se creuse sous la bande, la bande revient si on lâche
+  trop tôt, le bruit de déchirure, et le dessin du paquet de sa série (LA
+  REPRISE) au lieu de l'ancien VIRAGE NORD.
+- Au kiosque, la bande arrachée montrait un haut agrandi, décalé du dessin :
+  réglé.
+
+---
+
 **Le PASS ne s'achète pas avant le 1er décembre** (branche
 `claude/project-thread-d7nrt6`, 3 novembre 2026, demande de Gaël).
 Construction et redémarrage, rien d'autre. Ne joue qu'une fois le calendrier

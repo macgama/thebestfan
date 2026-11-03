@@ -77,6 +77,7 @@ export const SET_KURVE = {
   id: 'SU',
   nom: 'DIE KURVE',
   ligne: 'debout dans le virage, et la montagne regarde le match',
+  desc: 'Les virages des douze clubs suisses, trois Fanzzy par club, du guet de la vieille ville au chamois des crêtes. Avec le cri de chaque club.',
   c1: '#2E8B9A',
   c2: '#0D1A1D',
 };
