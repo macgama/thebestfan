@@ -67,6 +67,7 @@
     "retour:ui": "node scripts/retour-ui-smoke.mjs",
     "aide:ui": "node scripts/aide-ui-smoke.mjs",
     "voie:ui": "node scripts/voie-pass-ui-smoke.mjs",
+    "profil-vivant:ui": "node scripts/profil-vivant-ui-smoke.mjs",
     "repetition:ui": "node scripts/repetition-ui-smoke.mjs",
     "actions:ui": "node scripts/actions-ui-smoke.mjs",
     "admin:ui": "node scripts/admin-ui-smoke.mjs",
