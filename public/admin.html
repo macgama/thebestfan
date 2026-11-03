@@ -1093,9 +1093,13 @@ const VUES = {
     /* Les séries de championnat à part : un PASS ouvre, pour tous et à sa
        date, la série d'un nouveau championnat (Gaël, 2 novembre 2026). */
     const deClub = new Set(d.seriesDeClubs ?? []);
+    /* La tenue d'un PASS est à ses membres, pas à tous : elle a sa propre
+       liste (TENUE DES MEMBRES), jamais une case dans SKINS. */
+    const tenuesDePass = new Set(Object.keys(d.tenuesDuPass ?? {}));
+    const horsPass = (source) => (x) => source !== 'tenues' || !tenuesDePass.has(x.id);
     const cases = (source, choisis) => {
-      const neufs = d.choix[source].filter((x) => !enJeu[source]?.has(x.id));
-      const deja = dejaEnJeu(source);
+      const neufs = d.choix[source].filter((x) => !enJeu[source]?.has(x.id)).filter(horsPass(source));
+      const deja = dejaEnJeu(source).filter(horsPass(source));
       return `<div class="sai-ks" id="s-${source}">${neufs.length
         ? casesRangees(source, neufs, (x) => caseDe(x, choisis), deClub)
         : '<span class="sai-rien">Rien de neuf à ajouter : tout est déjà en jeu.</span>'}</div>
@@ -1108,6 +1112,7 @@ const VUES = {
       const v = s ?? { numero: '', nom: '', texte: '',
         series: [], tenues: [], stuff: [], actions: [], stades: [], jeux: [], chants: [] };
       const base = Boolean(s && estBase(s));
+      const tenuePassAvant = s ? (passDe(s)?.tenue ?? '') : '';
       /* Un carnet figé se montre sans se modifier, et ne repart pas au serveur :
          il n'y a rien à y décider, et un champ qu'on peut taper mais qui sera
          refusé est un piège. */
@@ -1159,6 +1164,15 @@ const VUES = {
             ce qu'il ouvre pour tous forme la <b>BASE</b>. Ce que tu coches ici s'y
             ajoute et s'ouvre pour tous${s.lancee ? ', <b>dès l’enregistrement</b>' : ' à son lancement'}.
             Pour retirer quelque chose de la BASE : sous-onglet <b>BASE</b>.</p>` : ''}
+          <div class="sai-l"><p class="sai-lt">TENUE DES MEMBRES DU PASS</p>
+            <select id="s-tenue-pass">
+              <option value="">aucune</option>
+              ${d.choix.tenues.map((t) => `<option value="${esc(t.id)}"${
+                t.id === tenuePassAvant ? ' selected' : ''}>${esc(t.nom)}</option>`).join('')}
+            </select>
+            <p class="sai-note">Réservée aux membres de ce PASS : ils la gagnent sur la voie
+              PASS, à ses trois âges. Elle ne sort d'aucun booster, et revient à l'étal une
+              saison plus tard. Choisis une tenue dessinée à ses trois âges.</p></div>
           <p class="sai-note sai-neuf">Ne sont proposées que les <b>nouveautés</b> : ce que
             le jeu ouvre déjà reste ouvert, sans rien cocher. Coche seulement ce que
             ce PASS apporte de neuf, <b>pour tous</b>, à sa date de lancement.</p>
@@ -1205,6 +1219,10 @@ const VUES = {
              carnet part tel qu'il est tapé, et c'est le serveur qui le juge —
              son refus nomme le palier fautif. */
           fin_le: $('s-fin').value, ouvre_le: $('s-ouvre').value,
+          /* Seulement si elle change : une base sans la colonne enregistre
+             encore tout le reste. */
+          ...($('s-tenue-pass').value !== tenuePassAvant
+            ? { tenue_pass: $('s-tenue-pass').value } : {}),
           ...(fige ? {} : { carnet: $('s-carnet').value }),
         };
         try {
