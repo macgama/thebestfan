@@ -8592,5 +8592,7 @@
  "Le PASS {0} s’achète dès le {1}.": "El PASS {0} se compra desde el {1}.",
  "LA VOIE PASS {0}": "RUTA PASS {0}",
  "{0} Le PASS {1} s’achète dès le {2}.": "{0} El PASS {1} se compra desde el {2}.",
- "La voie PASS {0}": "La ruta PASS {0}"
+ "La voie PASS {0}": "La ruta PASS {0}",
+ "Faire crier {0}": "Haz gritar a {0}",
+ "Faire crier mon Fanzzy": "Haz gritar a mi Fanzzy"
 }

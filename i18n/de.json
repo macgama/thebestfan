@@ -8592,5 +8592,7 @@
  "Le PASS {0} s’achète dès le {1}.": "Den PASS {0} gibt es ab dem {1}.",
  "LA VOIE PASS {0}": "PASS-{0}-PFAD",
  "{0} Le PASS {1} s’achète dès le {2}.": "{0} Den PASS {1} gibt es ab dem {2}.",
- "La voie PASS {0}": "Der PASS-{0}-Pfad"
+ "La voie PASS {0}": "Der PASS-{0}-Pfad",
+ "Faire crier {0}": "{0} anfeuern lassen",
+ "Faire crier mon Fanzzy": "Meinen Fanzzy anfeuern lassen"
 }

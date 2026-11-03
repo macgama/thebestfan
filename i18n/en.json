@@ -8592,5 +8592,7 @@
  "Le PASS {0} s’achète dès le {1}.": "PASS {0} goes on sale on {1}.",
  "LA VOIE PASS {0}": "PASS {0} TRACK",
  "{0} Le PASS {1} s’achète dès le {2}.": "{0} PASS {1} goes on sale on {2}.",
- "La voie PASS {0}": "The PASS {0} track"
+ "La voie PASS {0}": "The PASS {0} track",
+ "Faire crier {0}": "Make {0} chant",
+ "Faire crier mon Fanzzy": "Make my Fanzzy chant"
 }
