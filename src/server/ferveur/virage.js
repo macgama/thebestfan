@@ -1,10 +1,10 @@
 import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
-import { CHANTS, ORDRE, puissanceDuChant } from '../../shared/duel/chants.js';
+import { CHANTS, puissanceDuChant } from '../../shared/duel/chants.js';
 // Le stade du match, tiré dans ce qu'une saison a ouvert : voir `stade()`.
 // La même fonction donne le leur aux duels de ce match.
-import { stadeDuMatch } from '../contenus/index.js';
+import { stadeDuMatch, ordreDesChants } from '../contenus/index.js';
 // La composition lieu + Fanzzy vit dans le moteur de duel : une seule règle.
 import { avecLieu, prixDuChant, repriseDuChant } from '../nvn/engine.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
@@ -1026,14 +1026,16 @@ export class VirageRoom {
    */
   rangRepertoire(minute = this.minute) {
     const m = Math.max(0, Math.floor(Number(minute) || 0));
-    return Math.floor(m / RULES.repertoireMin) % ORDRE.length;
+    return Math.floor(m / RULES.repertoireMin) % ordreDesChants().length;
   }
 
-  /** Les cinq chants offerts à ce rang : une fenêtre glissante sur `ORDRE`. */
+  /** Les cinq chants offerts à ce rang : une fenêtre glissante sur `ORDRE`,
+      sans les chants fermés dans le menu PASS de l'administration. */
   repertoire(rang = this.rangRepertoire()) {
-    const r = ((rang % ORDRE.length) + ORDRE.length) % ORDRE.length;
+    const ordre = ordreDesChants();
+    const r = ((rang % ordre.length) + ordre.length) % ordre.length;
     return Array.from({ length: RULES.repertoire },
-      (_, i) => ORDRE[(r + i) % ORDRE.length]);
+      (_, i) => ordre[(r + i) % ordre.length]);
   }
 
   /** Les mêmes, tels que la page les attend : décrits, pas seulement nommés. */

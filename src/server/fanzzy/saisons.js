@@ -126,6 +126,8 @@ const versJeu = (r) => ({
   /* Les mini-jeux (menu PASS, 2 novembre 2026) : colonne de sql/contenus.sql ;
      absente, une saison sans mini-jeu, ce qui est sa vérité. */
   jeux: lireJson(r.jeux),
+  /* Les chants du DUEL et du VIRAGE (3 novembre 2026), même colonne à part. */
+  chants: lireJson(r.chants),
   // `lancee` plutôt qu'un booléen déduit ailleurs : la date porte les deux
   // informations, et un écran qui veut dire « lancée le 3 octobre » l'a sous la
   // main sans seconde requête.
