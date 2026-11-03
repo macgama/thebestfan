@@ -919,12 +919,15 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
      elle se montre en aperçu, tout sous cadenas, avec le jour d'ouverture. */
   let ABO = null;
   /* Le jour où le PASS 1 s'achète (Gaël, 3 novembre 2026 : achat bloqué
-     avant le 1er décembre). L'annonce servie l'emporte quand elle existe. */
+     avant le 1er décembre). La date servie (`offre.bientot.ouvre`), puis
+     l'annonce de la vitrine, l'emportent quand elles existent. */
   const OUVERTURE_PASS = Date.parse('2026-12-01T00:00:00+01:00');
   const GAINS_COURTS = { tenue: (v) => `TENUE ${entier(v.age)}`, cadre: () => 'CADRE',
     cadre_anime: () => 'CADRE ANIMÉ', badge_or: () => 'BADGE OR' };
 
   function ouverturePass() {
+    const servie = Date.parse(ABO?.offre?.bientot?.ouvre ?? '');
+    if (Number.isFinite(servie)) return servie;
     const p = window.FZART?.prochaine?.();
     const t = Date.parse(p?.ouvre_le ?? p?.ouvreLe ?? '');
     return Number.isFinite(t) ? t : OUVERTURE_PASS;
@@ -957,7 +960,10 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     const niveau = membre ? entier(mienne.niveau) : apercu ? 0 : 1 + atteints;
     const attendent = membre || apercu ? 0 : voie.filter((v) => entier(v.niveau) <= niveau).length;
     const seuils = membre && Array.isArray(mienne.seuils) ? mienne.seuils : paliers.map((x) => entier(x.tampons));
-    const bientot = !membre && !a.actif && Date.now() < ouverturePass();
+    /* Le serveur dit si le PASS s'achète déjà (`offre.bientot`, pendant la
+       BASE) ; un serveur d'avant ne le dit pas : on compte alors jusqu'au jour. */
+    const bientot = !membre && !a.actif && (a.offre && 'bientot' in a.offre
+      ? Boolean(a.offre.bientot) : Date.now() < ouverturePass());
 
     const noeuds = voie.map((v) => {
       const atteint = entier(v.niveau) <= niveau;

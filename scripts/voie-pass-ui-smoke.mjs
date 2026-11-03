@@ -35,7 +35,8 @@ const cas = {
   sans: { q: carnet(1, 40), a: { actif: false, voie: VOIE, voies: [], offre: { couvre: [{ numero: 1, couleur: '#c9772e' }] } } },
   membre: { q: carnet(1, 80), a: { actif: true, voie: VOIE, voies: [{ saison: 1, niveau: 4, couleur: '#c9772e', tampons: 80, seuils: [10,35,75,110,140] }] } },
   aucun: { q: carnet(1, 40), a: null },
-  base: { q: carnet(0, 20), a: { actif: false, voie: VOIE, voies: [], offre: { couvre: [{ numero: 1, couleur: '#c9772e' }] } } },
+  base: { q: carnet(0, 20), a: { actif: false, voie: VOIE, voies: [], offre: { couvre: [{ numero: 1, couleur: '#c9772e' }], bientot: { ouvre: '2026-12-01' } } } },
+  ouvert: { q: carnet(1, 40), a: { actif: false, voie: VOIE, voies: [], offre: { couvre: [{ numero: 1, couleur: '#c9772e' }], bientot: null } } },
 };
 const b = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 for (const [nom, c] of Object.entries(cas)) {
@@ -81,6 +82,8 @@ for (const [nom, c] of Object.entries(cas)) {
     ok(await n('[data-attend]') === 0, 'BASE : aucun cadeau promis, le carnet n’est pas celui du PASS 1');
     ok(t.includes('saison 1'), 'BASE : elle dit qu’elle avance avec la saison 1');
   }
+  if (nom === 'base') ok(t.includes('BIENTÔT') && t.includes('1er décembre'), 'BASE : le serveur dit BIENTÔT, avec son jour');
+  if (nom === 'ouvert') ok(t.includes('VOIR LE PASS') && !t.includes('BIENTÔT'), 'le serveur dit que le PASS s’achète : VOIR LE PASS');
   if (nom === 'aucun') ok(!t, 'sans réponse du PASS : pas de voie, et rien ne casse');
   ok(!erreurs.length, `${nom} : aucune erreur de script`);
   await p.close();
