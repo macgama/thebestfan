@@ -63,13 +63,19 @@ export function planifier(saisons) {
   const base = s1[0];
   const pris = new Set([base.id]);
   const pass = SAISONS_PREVUES.map((p) => {
-    const brouillon = saisons.find((s) => !pris.has(s.id) && s.lancee_a == null
-      && lireListe(s.series).includes(p.series[0]));
+    /* Par sa série, ou à défaut par son nom : en production, le brouillon
+       des héros du canapé n'a pas pu nommer HC (aucune carte encore publiée,
+       la création refuse une série vide de cartes) et sa liste est vide. */
+    const libre = (s) => !pris.has(s.id) && s.lancee_a == null;
+    const memeNom = (s) => String(s.nom ?? '').trim().toLowerCase() === p.nom.toLowerCase();
+    const brouillon = saisons.find((s) => libre(s) && lireListe(s.series).includes(p.series[0]))
+      ?? saisons.find((s) => libre(s) && memeNom(s));
     if (brouillon) pris.add(brouillon.id);
     return {
       id: brouillon?.id ?? null, avant: brouillon ? Number(brouillon.numero) : null,
       numero: p.numero, nom: p.nom, texte: p.texte, ouvre: p.ouvre, fin: p.fin,
-      series: brouillon ? lireListe(brouillon.series) : p.series,
+      /* Toujours sa série, en plus de ce que le brouillon nommait déjà. */
+      series: [...new Set([...p.series, ...(brouillon ? lireListe(brouillon.series) : [])])],
       stuff: p.stuff ? STUFF.filter((x) => x.id.startsWith(p.stuff)).map((x) => x.id) : [],
       tenue: p.tenue ?? null,
     };
