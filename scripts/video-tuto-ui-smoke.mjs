@@ -19,7 +19,7 @@
  * Usage : node scripts/video-tuto-ui-smoke.mjs
  */
 import { createServer } from 'node:http';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, copyFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -129,12 +129,16 @@ try {
   check('Échap ferme le lecteur', await attendre(() => !document.querySelector('.vtuto')));
 
   /* ------------------------------------------- dans la langue du joueur */
+  /* Une version allemande (sa voix off) passe devant la vidéo commune. */
+  if (videoOk) copyFileSync(path.join(dossier, `${NOM}.mp4`), path.join(dossier, `${NOM}-de.mp4`));
   await page.evaluate(() => localStorage.setItem('tbf_locale', 'de'));
   await page.goto(`${base}/comment-jouer`, { waitUntil: 'networkidle0' });
   await attendre(() => !document.querySelector('[data-video-tuto]')?.hidden);
   check('en allemand, le bouton est traduit',
     await page.$eval('[data-video-tuto]', (b) => b.textContent.trim() === 'Video ansehen'));
   await page.tap('[data-video-tuto]');
+  check('en allemand, c’est la version allemande qui joue', await attendre(() =>
+    /-de\.mp4$/.test(document.querySelector('.vtuto video')?.getAttribute('src') ?? '')));
   check('en allemand, la phrase aussi', await attendre(() =>
     /Fan/.test(document.querySelector('.vtuto-phrase.on')?.textContent ?? '')
     && !/supporter/.test(document.querySelector('.vtuto-phrase.on')?.textContent ?? '')));

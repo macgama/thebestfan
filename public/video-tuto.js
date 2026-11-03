@@ -23,6 +23,11 @@
  * avec les images, par scripts/envoyer-images.sh. Un déploiement du code
  * avant l'envoi ne montre donc pas un bouton qui ouvrirait un écran noir.
  *
+ * **Une version par langue quand la vidéo parle.** Avec une voix off, le
+ * fichier de la langue du joueur s'appelle `tuto-fanzzy-1-de.mp4` ; à
+ * défaut, c'est `tuto-fanzzy-1.mp4` qui sert. Les phrases restent affichées
+ * dans les deux cas (sous-titres, son coupé).
+ *
  * Le fichier porte un numéro (`tuto-fanzzy-1.mp4`) : /video est servi avec un
  * an de cache, une vidéo refaite prend le numéro suivant.
  *
@@ -71,7 +76,7 @@
     }));
   }
 
-  function ouvrir(nom, bouton) {
+  function ouvrir(nom, bouton, fichier) {
     if (document.querySelector('.vtuto')) return;
     const liste = phrases(nom);
     const boite = document.createElement('div');
@@ -81,7 +86,7 @@
     boite.setAttribute('aria-label', bouton.textContent.trim());
     boite.innerHTML = `<div class="vtuto-col">
       <div class="vtuto-cadre">
-        <video src="/video/${nom}.mp4" poster="/video/${nom}.jpg" playsinline autoplay controls
+        <video src="/video/${fichier}.mp4" poster="/video/${nom}.jpg" playsinline autoplay controls
           controlslist="nodownload noplaybackrate nofullscreen" disablepictureinpicture preload="auto"></video>
         <p class="vtuto-phrase" aria-live="polite"></p>
       </div>
@@ -144,11 +149,16 @@
     for (const b of boutons) {
       const nom = b.dataset.videoTuto;
       if (!/^[a-z0-9-]+$/.test(nom)) continue;
-      b.addEventListener('click', () => ouvrir(nom, b));
-      /* Montré seulement si la vidéo est bien là (voir en tête). */
-      fetch(`/video/${nom}.mp4`, { method: 'HEAD' })
-        .then((r) => { if (r.ok) b.hidden = false; })
-        .catch(() => {});
+      /* La version dans la langue du joueur (sa voix off), sinon la vidéo
+         commune. Le bouton ne se montre que si l'une des deux est servie. */
+      const langue = window.TBF_LANGUE?.langue ?? 'fr';
+      const essayer = (f) => fetch(`/video/${f}.mp4`, { method: 'HEAD' })
+        .then((r) => (r.ok ? f : null)).catch(() => null);
+      let fichier = null;
+      b.addEventListener('click', () => { if (fichier) ouvrir(nom, b, fichier); });
+      essayer(`${nom}-${langue}`)
+        .then((f) => f ?? essayer(nom))
+        .then((f) => { if (f) { fichier = f; b.hidden = false; } });
     }
   }
 
