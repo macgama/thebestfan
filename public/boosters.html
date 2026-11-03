@@ -150,7 +150,7 @@
    soixante, et toute la page se met à glisser horizontalement. Rien ne casse,
    la page devient simplement pénible — et on ne le voit jamais depuis un
    écran large. */
-.carousel{position:absolute;inset:0;z-index:3;perspective:1100px;touch-action:pan-y;overflow-x:clip}
+.carousel{position:absolute;inset:0;z-index:3;perspective:640px;touch-action:pan-y;overflow-x:clip}
 .slide{position:absolute;left:50%;top:6px;width:124px;aspect-ratio:.62;margin:0;cursor:grab;
   transform-style:preserve-3d;transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .45s,filter .45s;
   border-radius:9px;overflow:hidden;border:1px solid rgba(0,0,0,.6);
@@ -163,8 +163,17 @@
   background-size:260% 260%;background-position:120% 0;mix-blend-mode:screen}
 .slide.center .foil{animation:foil 4.5s ease-in-out infinite}
 @keyframes foil{0%{background-position:130% 0}55%{background-position:-40% 0}100%{background-position:-40% 0}}
-.slide.side{filter:brightness(.42) saturate(.65)}
-.slide.hidden{opacity:0;pointer-events:none}
+/* L'éclairage de l'anneau (`--lum`, posé par `placeCarousel`) : un paquet
+   s'éteint en reculant, et ceux du fond, vus de dos, ne se touchent pas.
+   Pendant un glissement, la transition se retire : le paquet suit le doigt. */
+.slide.side{filter:brightness(var(--lum,.42)) saturate(.65)}
+.slide.dos{pointer-events:none}
+.slide.dos .foil{display:none}
+.carousel.glisse .slide{transition:none}
+/* Quand l'anneau tourne seul, chaque pas dure exactement l'intervalle entre
+   deux pas, à vitesse constante : les pas s'enchaînent en un mouvement
+   continu, sans boucle d'images. Un geste rend la transition courte. */
+.carousel.tourne .slide{transition:transform 2.6s linear,opacity 2.6s linear,filter 2.6s linear}
 /* Le nom de la série, en sticker collé sous le sachet, à cheval sur le pied
    du socle. Son fond de craie est le sien : la fumée qui passe dessous ne
    touche pas la lettre. */
@@ -1202,21 +1211,24 @@ function tickReserve() {
 /**
  * Combien de paquets on présente au choix.
  *
- * Trois : celui du milieu, sur son socle, et un de chaque côté. Ils étaient
- * dix, « comme sur un présentoir » — on n'en voyait jamais que trois à la
- * fois, et sept points sous le carrousel comptaient des paquets qu'on ne
- * regardait pas. **Le paquet choisi ne change rien au tirage** : les cartes
- * sont tirées par le serveur à l'ouverture, et le numéro du paquet ne lui est
- * même pas envoyé. Le geste est là pour le geste — ouvrir un booster est une
+ * Dix, en anneau, comme un présentoir qui tourne (demande de Gaël, 3 novembre
+ * 2026 : « un vrai carrousel avec 10 paquets qui tourne »). Ils avaient été
+ * dix une première fois, en file : on n'en voyait que trois et sept points
+ * comptaient le reste. En anneau, on les voit tous — devant, de côté, et de
+ * dos au fond —, et l'anneau tourne seul tant qu'on n'y touche pas.
+ *
+ * **Le paquet choisi ne change rien au tirage** : les cartes sont tirées par
+ * le serveur à l'ouverture, et le numéro du paquet ne lui est même pas
+ * envoyé. Le geste est là pour le geste — ouvrir un booster est une
  * cérémonie, et une cérémonie sans choix n'en est pas une.
  *
  * Le jour où ce choix influencerait le contenu, les joueurs s'en apercevraient
  * en quelques heures, un « paquet qui donne les légendaires » circulerait, et
  * il faudrait honorer une superstition qu'on aurait fabriquée soi-même.
  */
-const PAQUETS_AU_CHOIX = 3;
-/** On arrive sur celui du milieu : un voisin de chaque côté. */
-const MILIEU = Math.floor(PAQUETS_AU_CHOIX / 2);
+const PAQUETS_AU_CHOIX = 10;
+/** On arrive sur le premier ; l'anneau n'a ni début ni fin. */
+const MILIEU = 0;
 
 /** Les séries que ce joueur peut ouvrir, dans l'ordre du catalogue. */
 const seriesOuvertes = () => SETS.filter(serieDebloquee);
@@ -1259,27 +1271,73 @@ function buildCarousel() {
   placeCarousel(0);
 }
 
-/** L'écart entre deux paquets : un peu plus que la largeur d'un sachet, qui
-    grandit avec l'écran (voir la feuille). */
+/** L'écart entre deux paquets, mesuré au glissement du doigt : un peu
+    plus que la largeur d'un sachet, qui grandit avec l'écran. */
 const ecartDesPaquets = () =>
   ($('carousel').querySelector('.slide')?.offsetWidth || 124) * 1.2;
 
+/**
+ * L'anneau. Chaque paquet a sa place sur un cercle vu de face : `off` est son
+ * écart au paquet de devant, ramené entre −5 et +5 (l'anneau n'a pas de
+ * bout). Son angle sur le cercle donne sa position — de côté, il recule ; au
+ * fond, il passe derrière les autres et s'éteint — et il se tourne avec le
+ * cercle. Le rayon suit la largeur du sachet, si bien que l'anneau se
+ * resserre avec la scène sur les écrans courts.
+ *
+ * Un paquet qui fait le tour par le fond (son `off` saute de +5 à −5) ne doit
+ * pas tourner sur lui-même pendant la transition : on la lui retire le temps
+ * d'un saut. Il est au fond, sombre, derrière les autres : rien ne se voit.
+ */
 function placeCarousel(drag = 0) {
-  const w = ecartDesPaquets();
-  for (let i = 0; i < PAQUETS_AU_CHOIX; i++) {
+  const sachet = $('carousel').querySelector('.slide')?.offsetWidth || 124;
+  const rayon = sachet * 1.85;
+  const pas = 360 / PAQUETS_AU_CHOIX;
+  const n = PAQUETS_AU_CHOIX;
+  for (let i = 0; i < n; i++) {
     const el = $('carousel').querySelector(`.slide[data-i="${i}"]`);
     if (!el) continue;
-    const off = i - (S.paquet ?? MILIEU) - drag;
-    const abs = Math.abs(off);
+    let off = (((i - (S.paquet ?? MILIEU) - drag) % n) + n) % n;
+    if (off >= n / 2) off -= n;
+    const avant = Number(el.dataset.off);
+    if (Number.isFinite(avant) && Math.abs(off - avant) > n / 2) {
+      el.style.transition = 'none';
+      requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transition = ''; }));
+    }
+    el.dataset.off = String(off);
+    const a = (off * pas * Math.PI) / 180;
+    const x = Math.sin(a) * rayon;
+    const z = (Math.cos(a) - 1) * rayon;
     el.style.transform =
-      `translateX(-50%) translateX(${off * w}px) translateZ(${-abs * 190}px) ` +
-      `rotateY(${off * -26}deg) scale(${1 - abs * 0.06})`;
-    el.style.zIndex = String(10 - Math.round(abs * 10));
+      `translateX(-50%) translateX(${x.toFixed(1)}px) translateZ(${z.toFixed(1)}px) rotateY(${(off * pas).toFixed(1)}deg)`;
+    const abs = Math.abs(off);
+    el.style.zIndex = String(20 - Math.round(abs * 3));
+    /* L'éclairage : plein devant, de plus en plus sombre en reculant. */
+    el.style.setProperty('--lum', Math.max(0.12, 0.12 + 0.36 * Math.cos(a)).toFixed(2));
     el.classList.toggle('center', abs < 0.5);
     el.classList.toggle('side', abs >= 0.5);
-    el.classList.toggle('hidden', abs > 1.8);
+    el.classList.toggle('dos', abs > n / 4);
   }
 }
+
+/**
+ * L'anneau tourne seul, d'un paquet toutes les 2,6 secondes en continu, tant qu'on n'y
+ * touche pas : il repart six secondes après le dernier geste. Pas de boucle
+ * d'images — un pas, et la transition de la feuille fait le reste —, rien
+ * quand l'onglet est caché, quand l'ouverture est à l'écran, ni pour qui a
+ * demandé moins de mouvement (système ou réglages du jeu).
+ */
+let reposJusqua = 0;
+const toucheLAnneau = () => { reposJusqua = Date.now() + 6000; $('carousel').classList.remove('tourne'); };
+const anneauCalme = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+  || /(^|\s)animations(\s|$)/.test(document.documentElement.dataset.calme ?? '');
+setInterval(() => {
+  if (document.hidden || Date.now() < reposJusqua || anneauCalme()) return;
+  if ($('s-kiosque').hidden || $('opener')?.classList.contains('on')) return;
+  if (!$('carousel').querySelector('.slide') || $('carousel').classList.contains('glisse')) return;
+  $('carousel').classList.add('tourne');
+  S.paquet = ((S.paquet ?? MILIEU) + 1) % PAQUETS_AU_CHOIX;
+  placeCarousel(0);
+}, 2600);
 
 /**
  * Cette série est-elle ouverte ?
@@ -1389,6 +1447,9 @@ function rendreGeste() {
 /** Ce que fait la bâche principale, et le sachet touché. */
 function ouvrirDepuisLaBache() {
   if (!('avatar' in S) || !SETS[S.set]) return;
+  /* L'anneau s'arrête sur le paquet de devant : on ouvre celui qu'on voit. */
+  toucheLAnneau();
+  placeCarousel(0);
   const g = geste();
   if (g === 'pret') ouvrirLArrive();
   else if (g === 'ouvrir' || g === 'acheter') startTear();
@@ -1668,6 +1729,7 @@ function renderKiosque() {
 /** Passer d'un paquet à l'autre. Le contenu ne change pas — voir la note de
     `PAQUETS_AU_CHOIX` — mais le geste, lui, est la moitié du plaisir. */
 function goPaquet(delta) {
+  toucheLAnneau();
   S.paquet = ((S.paquet ?? MILIEU) + delta + PAQUETS_AU_CHOIX) % PAQUETS_AU_CHOIX;
   audio.flip();
   renderKiosque();
@@ -1693,7 +1755,10 @@ $('series').onclick = (e) => {
 (() => {
   const c = $('carousel');
   let x0 = null, dragging = false;
-  c.addEventListener('pointerdown', (e) => { x0 = e.clientX; dragging = false; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointerdown', (e) => {
+    x0 = e.clientX; dragging = false; toucheLAnneau(); c.classList.add('glisse');
+    c.setPointerCapture(e.pointerId);
+  });
   c.addEventListener('pointermove', (e) => {
     if (x0 === null) return;
     const d = (e.clientX - x0) / ecartDesPaquets();
@@ -1704,12 +1769,14 @@ $('series').onclick = (e) => {
     if (x0 === null) return;
     const d = (e.clientX - x0) / ecartDesPaquets();
     x0 = null;
+    c.classList.remove('glisse');
+    toucheLAnneau();
     if (d < -0.28) goPaquet(1);
     else if (d > 0.28) goPaquet(-1);
     else { placeCarousel(0); if (!dragging) ouvrirDepuisLaBache(); }
   };
   c.addEventListener('pointerup', end);
-  c.addEventListener('pointercancel', () => { x0 = null; placeCarousel(0); });
+  c.addEventListener('pointercancel', () => { x0 = null; c.classList.remove('glisse'); placeCarousel(0); });
 })();
 
 $('openBtn').onclick = () => ouvrirDepuisLaBache();
