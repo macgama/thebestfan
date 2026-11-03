@@ -1,5 +1,20 @@
 # À déposer sur Infomaniak
 
+**La page d'accueil vivante, et le PASS « bientôt »** (branche
+`claude/project-thread-2zegrb`, 3 novembre 2026, demande de Gaël « plus vivante,
+gaming »). Construction seule, puis redémarrage (la route `/api/fanzzy/jouables`
+sert aussi la saison annoncée).
+
+- Sans compte : le nom du jeu tombe lettre par lettre, les promesses sautent,
+  « PRENDRE MA PLACE » tombe avec une onde et des étincelles, les visages se
+  distribuent comme des cartes ; puis toutes les 6 à 11 s une « vie » (éclat
+  d'or sur BEST, ola, visage qui saute, flashs, braises…). Un but en direct
+  allume la ligne du match avec « BUT ! ».
+- La bande du PASS porte BIENTÔT et un compte à rebours (J-28, puis les heures
+  le dernier jour) jusqu'au 1er décembre, ou jusqu'à la date annoncée.
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH

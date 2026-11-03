@@ -160,6 +160,62 @@ const dit = (bon, quoi) => {
   dit(d.getElementById('vDirect').hidden, 'aucun match : le bloc reste fermé');
 }
 
+/* ------------------------------------------- la vitrine vivante et le PASS
+
+   `vitrine-vivante.js` (Gaël, 3 novembre 2026 : « plus vivante, gaming ; le
+   PASS s'ouvre le 1er décembre »). Les animations ne se mesurent pas ici ;
+   ce qui se vérifie, c'est ce qu'elles ne doivent pas casser — le nom du jeu
+   se lit pareil — et ce qui informe : BIENTÔT et le compte à rebours avant
+   l'ouverture, plus rien après, et le but qui allume sa ligne. */
+const vivante = readFileSync(path.join(RACINE, 'public', 'vitrine-vivante.js'), 'utf8');
+async function vivre(maintenant, annonce) {
+  const d = await monter({ ok: true, json: async () => JOUR });
+  const w = d.defaultView;
+  w.Date.now = () => maintenant;
+  w.setInterval = () => 0;
+  w.requestAnimationFrame = () => 0;
+  w.FZART.prochaine = async () => annonce;
+  w.eval(vivante);
+  await new Promise((r) => { globalThis.setTimeout(r, 30); });
+  return d;
+}
+{
+  const d = await vivre(Date.UTC(2026, 10, 3, 12), { numero: 1, ouvre: '2026-12-01' });
+  const p = d.getElementById('vPass');
+  dit(d.querySelector('.logo').textContent === 'THEBESTFANLE JEU DES TRIBUNES',
+    `le nom du jeu se lit pareil, lettre par lettre (${d.querySelector('.logo').textContent})`);
+  dit(!p.querySelector('.vpass-bientot').hidden, 'avant le 1er décembre, le PASS dit BIENTÔT');
+  dit(p.querySelector('.vpass-chrono').textContent === 'J-28',
+    `et compte les jours (${p.querySelector('.vpass-chrono').textContent})`);
+  dit(/1er décembre/.test(p.querySelector('.vpass-texte').textContent),
+    `et dit le jour (${p.querySelector('.vpass-texte').textContent})`);
+  dit(d.defaultView.TBF_VITRINE_VIVANTE.minuitZurich('2026-12-01') === Date.UTC(2026, 10, 30, 23),
+    'le 1er décembre commence à minuit, heure de Zurich');
+
+  const ligne = d.querySelector('#vScores .sc.live');
+  const id = ligne.dataset.id;
+  const plus = structuredClone(JOUR);
+  plus.groupes[1].matchs[0].home.goals = 2;
+  d.defaultView.fetch = async () => ({ ok: true, json: async () => plus });
+  await d.defaultView.eval('scoresVitrine()');
+  await new Promise((r) => { globalThis.setTimeout(r, 30); });
+  const apres = d.querySelector(`#vScores .sc[data-id="${id}"]`);
+  dit(apres?.classList.contains('vv-allume') && apres.querySelector('.vv-but')?.textContent === 'BUT !',
+    'un but en direct allume sa ligne');
+}
+{
+  const d = await vivre(Date.UTC(2026, 11, 2, 12), { numero: 1, ouvre: '2026-12-01' });
+  const p = d.getElementById('vPass');
+  dit(p.querySelector('.vpass-bientot').hidden && p.querySelector('.vpass-chrono').textContent === '›',
+    'une fois ouvert, plus de BIENTÔT ni de compte à rebours');
+}
+{
+  const d = await vivre(Date.UTC(2026, 10, 30, 22, 0, 0), null);
+  dit(d.getElementById('vPass').querySelector('.vpass-chrono').textContent === '01:00:00',
+    `sans annonce, le 1er décembre ; le dernier jour, les heures (${
+      d.getElementById('vPass').querySelector('.vpass-chrono').textContent})`);
+}
+
 console.log(echecs
   ? `\n${echecs} contrôle(s) en échec.`
   : '\nLa vitrine se garnit, et se tait quand elle n’a rien à dire.');
