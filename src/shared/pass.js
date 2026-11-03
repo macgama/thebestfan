@@ -64,15 +64,36 @@ export const PASS_SAISONS = Object.freeze([
 
 export const PASS_PAR_NUMERO = new Map(PASS_SAISONS.map((p) => [p.numero, p]));
 
+/* **La tenue choisie dans l'admin** (Gaël, 3 novembre 2026 : « je devrais
+   pouvoir sélectionner moi-même »). Le serveur la lit dans
+   `saisons.tenue_pass` au chargement des saisons et la pose ici :
+   numéro → identifiant de tenue, ou `''` pour « aucune ». Un numéro absent
+   garde la tenue du code (`PASS_SAISONS`). */
+let tenuesChoisies = new Map();
+export function poserTenuesDesPass(choix) {
+  tenuesChoisies = new Map([...(choix instanceof Map ? choix : Object.entries(choix ?? {}))]
+    .map(([n, t]) => [Number(n), t == null ? null : String(t)])
+    .filter(([, t]) => t !== null));
+}
+
+/** Les PASS qui ont une tenue, code et admin réunis : `[{ numero, tenue }]`. */
+export function passAvecTenue() {
+  const numeros = new Set([...PASS_SAISONS.map((p) => p.numero), ...tenuesChoisies.keys()]);
+  return [...numeros].sort((a, b) => a - b).map((n) => passDe(n)).filter((p) => p.tenue);
+}
+
 /** Le PASS d'une saison, même sans tenue, pour l'afficher. */
 export function passDe(numero) {
   const n = Number(numero);
   const p = PASS_PAR_NUMERO.get(n);
+  const tenue = tenuesChoisies.has(n) ? (tenuesChoisies.get(n) || null) : (p?.tenue ?? null);
   return {
     numero: n,
-    nom: p?.nom ?? `PASS ${n}`,
-    tenue: p?.tenue ?? null,
-    texte: p?.texte ?? null,
+    /* Le nom du code ne vaut que pour sa tenue : une autre tenue choisie
+       dans l'admin ne doit pas garder « Préhistorique » dans le nom. */
+    nom: p?.nom && tenue === p.tenue ? p.nom : `PASS ${n}`,
+    tenue,
+    texte: p?.texte && tenue === p.tenue ? p.texte : null,
     couleur: p?.couleur ?? '#f2c14e',
   };
 }
@@ -137,7 +158,7 @@ export function vitrineDe(numero, niveau) {
  * referme plus.
  */
 export function tenueReservee(tenueId, numeroCourant) {
-  for (const p of PASS_SAISONS) {
+  for (const p of passAvecTenue()) {
     if (p.tenue !== tenueId) continue;
     if (numeroCourant === null || numeroCourant === undefined) return true;
     if (Number(numeroCourant) <= p.numero) return true;
@@ -146,11 +167,11 @@ export function tenueReservee(tenueId, numeroCourant) {
 }
 
 /** Une tenue qui a été celle d'un PASS : elle ne sort plus jamais d'un booster. */
-export const tenueDePass = (tenueId) => PASS_SAISONS.some((p) => p.tenue === tenueId);
+export const tenueDePass = (tenueId) => passAvecTenue().some((p) => p.tenue === tenueId);
 
 /** Les PASS qui ont cette tenue. */
 export const passDeLaTenue = (tenueId) =>
-  PASS_SAISONS.filter((p) => p.tenue === tenueId).map((p) => p.numero);
+  passAvecTenue().filter((p) => p.tenue === tenueId).map((p) => p.numero);
 
 /**
  * Les saisons qu'un achat couvre.

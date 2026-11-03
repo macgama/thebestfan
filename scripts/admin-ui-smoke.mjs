@@ -575,6 +575,10 @@ check('« Enregistrer » modifie une saison existante', await jusqua(async () =>
   });
   check('le PASS 1 a le même écran que les autres, avec ses listes', await page.evaluate(() =>
     document.querySelector('#s-stuff') !== null && document.querySelector('#s-chants') !== null));
+  check('sa tenue des membres se choisit dans une liste, hors des SKINS pour tous', await page.evaluate(() =>
+    document.getElementById('s-tenue-pass')?.value === 'prehistorique'
+    && !document.querySelector('#s-tenues input[value="prehistorique"]')
+    && !/Préhistorique/.test(document.querySelector('#s-tenues + .sai-deja')?.textContent ?? '')));
   check('modifier une saison lancée garde ses séries, sans case à cocher',
     await jusqua(async () => {
       const [[r]] = await pool.query('SELECT texte, series FROM saisons WHERE id = ?', [s1.id]);

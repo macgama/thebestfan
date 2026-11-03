@@ -69,6 +69,7 @@
  */
 
 import { validerCarnet } from '../../shared/saison.js';
+import { poserTenuesDesPass } from '../../shared/pass.js';
 
 let charge = false;
 let liste = [];
@@ -128,6 +129,9 @@ const versJeu = (r) => ({
   jeux: lireJson(r.jeux),
   /* Les chants du DUEL et du VIRAGE (3 novembre 2026), même colonne à part. */
   chants: lireJson(r.chants),
+  /* La tenue des membres de son PASS (`saisons.tenue_pass`, 3 novembre 2026) :
+     `null` garde celle du code, `''` dit « aucune ». */
+  tenuePass: r.tenue_pass === undefined ? null : r.tenue_pass,
   // `lancee` plutôt qu'un booléen déduit ailleurs : la date porte les deux
   // informations, et un écran qui veut dire « lancée le 3 octobre » l'a sous la
   // main sans seconde requête.
@@ -237,6 +241,10 @@ export async function chargerSaisons(pool) {
   if (moi < appliquee) return rows ? rows.length : null;
   appliquee = moi;
   poser(rows ?? [], t);
+  /* La tenue de chaque PASS choisie dans l'admin : `shared/pass.js` la lit
+     partout (boosters, étal, voie), sans qu'aucun lecteur ait à le savoir. */
+  poserTenuesDesPass(Object.fromEntries((rows ?? [])
+    .filter((r) => r.tenue_pass != null).map((r) => [Number(r.numero), r.tenue_pass])));
   return rows ? liste.length : null;
 }
 
