@@ -9,6 +9,19 @@ manque des écharpes (« Il te manque 40 écharpes »).
 
 ---
 
+**Le premier booster se déchire comme les autres** (branche
+`claude/project-thread-i98y57`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- À l'inscription, le sachet de bienvenue reprend la déchirure du kiosque :
+  l'intérieur du sachet se creuse sous la bande, la bande revient si on lâche
+  trop tôt, le bruit de déchirure, et le dessin du paquet de sa série (LA
+  REPRISE) au lieu de l'ancien VIRAGE NORD.
+- Au kiosque, la bande arrachée montrait un haut agrandi, décalé du dessin :
+  réglé.
+
+---
+
 **Le PASS ne s'achète pas avant le 1er décembre** (branche
 `claude/project-thread-d7nrt6`, 3 novembre 2026, demande de Gaël).
 Construction et redémarrage, rien d'autre. Ne joue qu'une fois le calendrier
