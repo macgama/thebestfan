@@ -518,23 +518,20 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
   /* ---------------------------------------------- le dos porte la série
 
      **Les treize séries se retournaient sur le même dos** : un dégradé gris
-     et un petit triangle au trait, identique pour LA TRIBUNE, LE BESTIAIRE et
-     LA REPRISE. C'est pourtant la seule image qu'on regarde pendant la seconde
-     qui précède le tirage — celle qui donne envie de retourner. La série, qui
-     est le premier plaisir de la collection, n'existait qu'**après**.
-
-     On vérifie deux choses, et la seconde est la plus facile à casser : que
-     le dos est bien dessiné, et qu'il est celui du **sachet** et non celui de
-     la carte. Donner à chaque carte le dos de sa propre série reviendrait à
-     annoncer ce qu'elle est avant de la retourner — un booster n'a plus rien
-     à révéler si son dos l'a déjà dit. */
+     et un petit triangle au trait. Puis le dos du sachet a été posé sur les
+     cinq cartes : une pièce commune, une poignée d'écharpes ou la tenue d'un
+     Fanzzy d'une autre série se retournaient sur une série qui n'était pas la
+     leur (Gaël, 3 novembre 2026). Chaque carte porte maintenant le dos que le
+     serveur lui donne — sa série, ou le neutre —, et chaque fente le même. */
   const dos = await pageG.evaluate(() => {
     const dos = [...document.querySelectorAll('#ostage .face.back')];
+    const fentes = [...document.querySelectorAll('#oFentes .tbf-fente')];
     return {
       fonds: dos.map((d) => getComputedStyle(d).backgroundImage),
+      fentes: fentes.map((d) => getComputedStyle(d).backgroundImage),
       dessines: dos.filter((d) => d.classList.contains('dessine')).length,
       total: dos.length,
-      attendu: (SETS[S.set] ?? {}).id,
+      attendus: dosDesCartes.map((c) => c ?? 'NEUTRE'),
       triangles: dos.filter((d) => {
         const svg = d.querySelector('svg');
         return svg && getComputedStyle(svg).display !== 'none';
@@ -543,11 +540,14 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
   });
   check(`les cinq dos portent un dessin (${dos.dessines}/${dos.total})`,
     dos.dessines === dos.total);
-  check(`et c’est celui du sachet ouvert — ${dos.attendu}`,
-    !!dos.attendu && dos.fonds.every((f) => f.includes(`/img/dos/${dos.attendu}.`))
-      || (console.log('        fonds :', dos.fonds[0]), false));
-  check('un seul dos pour tout le paquet : rien ne trahit la carte d’en dessous',
-    new Set(dos.fonds).size === 1);
+  check(`chaque carte a le dos de sa série, ou le neutre — ${dos.attendus.join(' ')}`,
+    dos.attendus.length === dos.total
+      && dos.fonds.every((f, i) => f.includes(`/img/dos/${dos.attendus[i]}.`))
+      || (console.log('        fonds :', dos.fonds), false));
+  check('et chaque fente annonce le dos de sa carte',
+    dos.fentes.length === dos.total
+      && dos.fentes.every((f, i) => f.includes(`/img/dos/${dos.attendus[i]}.`))
+      || (console.log('        fentes :', dos.fentes), false));
   check('et le triangle de secours s’efface quand le dessin est là',
     dos.triangles === 0);
 

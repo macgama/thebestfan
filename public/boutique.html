@@ -1654,11 +1654,25 @@ function bacheFormule(a, ouvert) {
     a.marque ? `<span class="tbf-sticker">${esc(a.marque)}</span>` : ''}</button>`;
 }
 
+/** « le 1er décembre », depuis `YYYY-MM-DD`, ou `null`. */
+function quandOuvre(ouvre) {
+  const j = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ouvre ?? ''));
+  if (!j) return null;
+  const date = new Date(Number(j[1]), Number(j[2]) - 1, Number(j[3]));
+  const lg = window.TBF_LANGUE?.langue ?? 'fr';
+  if (lg !== 'fr') return date.toLocaleDateString(lg, { day: 'numeric', month: 'long' });
+  return `le ${date.getDate() === 1 ? '1er' : date.getDate()} ${date.toLocaleDateString('fr', { month: 'long' })}`;
+}
+
 function rendrePass() {
   const c = S.catalogue;
   const el = $('rayons');
   if (!c) { el.innerHTML = ''; return; }
-  const ouvert = Boolean(c.ouvert);
+  /* **Bientôt** (Gaël, 3 novembre 2026) : pendant la BASE, le PASS ne
+     s'achète pas avant l'ouverture de sa saison. Ses bâches restent en
+     vitrine, hors service, sous BIENTÔT ; le serveur le refuse de toute façon. */
+  const bientot = Boolean(S.abo && !S.abo.error && S.abo.offre?.bientot);
+  const ouvert = Boolean(c.ouvert) && !bientot;
   const blocs = (c.rayons ?? []).map((r) => {
     const dedans = (c.articles ?? []).filter((a) => a.rayon === r.id);
     if (!dedans.length) return '';
@@ -1686,11 +1700,12 @@ function rendrePass() {
       </div>
       ${abonne ? '' : `<div class="pass-formules">${dedans.map((a) => bacheFormule(a, ouvert)).join('')}</div>
         ${echarpes ? `<p class="pass-beta">Ou ${esc(echarpes.toLocaleString('fr'))} écharpes, sur <a href="/abonnement">la page du PASS</a>.</p>` : ''}
-        ${ouvert ? '' : '<p class="pass-beta">Pendant la bêta, le PASS s’offre depuis l’administration : demande-le.</p>'}`}`;
+        ${bientot ? `<p class="pass-beta">${esc(`Le PASS s’ouvre ${quandOuvre(S.abo.offre.bientot.ouvre) ?? 'avec sa saison'} : il ne s’achète pas avant.`)}</p>`
+          : ouvert ? '' : '<p class="pass-beta">Pendant la bêta, le PASS s’offre depuis l’administration : demande-le.</p>'}`}`;
   }).join('');
   el.innerHTML = blocs;
 
-  $('mot').innerHTML = (ouvert
+  $('mot').innerHTML = (c.ouvert
     ? 'Les paiements passent par <b>Stripe</b>. Nous ne voyons jamais ton numéro de carte.'
     : 'La boutique est en <b>vitrine</b> : les paiements ne sont pas encore branchés.')
     + '<br>L’argent réel n’achète que le <b>PASS de saison</b>. Tout le reste — les '

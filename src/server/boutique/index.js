@@ -570,6 +570,10 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
     /* Le PASS d'une saison qu'on a déjà ne se paie pas deux fois. */
     if (article.livraison?.type === 'pass' && abonnement?.offre) {
       const o = await abonnement.offre(req.user.id).catch(() => null);
+      /* Pas avant son ouverture : pendant la BASE, il est « Bientôt ». */
+      if (o?.bientot && o.aAcheter.length) {
+        return res.status(400).json({ error: 'pass.error.bientot' });
+      }
       if (o && !o.aAcheter.length) {
         return res.status(400).json({ error: o.couvre.length ? 'pass.error.deja' : 'pass.error.pas_de_saison' });
       }

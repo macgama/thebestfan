@@ -28,7 +28,9 @@ function echarpesDeBienvenue() {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
+import { PALIERS } from '../../shared/niveau.js';
 import { assurerBourse } from '../bourse.js';
+import { poserLesDos } from '../fanzzy/dos.js';
 import { changementsDeLaSaison, devenirPrincipal, principauxDe } from '../football/principal.js';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -118,7 +120,11 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
 
     return {
       onboarded: Boolean(w.onboarded_at),
-      slots: { used: suivis.length, total: w.follow_slots, max: SLOTS_MAX },
+      /* `plafond` et `niveauRequis` : le profil montre l'emplacement suivant
+         verrouillé, avec le niveau qui l'ouvre, au lieu d'un bouton qui
+         refuse après coup (« slot_locked »). */
+      slots: { used: suivis.length, total: w.follow_slots, max: SLOTS_MAX,
+               ...(await plafondDe(userId, w.follow_slots)) },
       follows: suivis,
       /* Ce qui a déjà changé cette saison : le profil le dit au lieu de
          proposer un bouton qui refuserait. */
@@ -189,16 +195,31 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    * Et le niveau garde ainsi un effet visible sans rien donner : c'est la
    * règle de `shared/niveau.js`, tenue jusque dans les cas particuliers.
    */
+  /**
+   * Jusqu'où les écharpes peuvent acheter, et le niveau qui ouvre
+   * l'emplacement suivant quand il est encore fermé (`null` sinon).
+   *
+   * **Le PASS lève le plafond, il n'offre pas l'emplacement.** Un de plus
+   * par PASS acheté, à vie (`pass.clubs_par_pass`). Les écharpes restent ce
+   * qu’il en coûte : c’est la même règle que pour le niveau, qui « ouvre le
+   * droit d’en avoir un de plus » sans le donner.
+   *
+   * Une seule fonction pour l'achat et pour l'état : le profil ne peut pas
+   * proposer un emplacement que l'achat refuserait.
+   */
+  async function plafondDe(userId, total) {
+    if (!niveau) return { plafond: SLOTS_MAX, niveauRequis: null };
+    const enPlus = module.abonnement ? await module.abonnement.clubsEnPlus(userId) : 0;
+    const plafond = Math.min(SLOTS_MAX, (await niveau.droitsDe(userId)).slots + enPlus);
+    const voulu = total + 1 - enPlus;
+    const niveauRequis = total < plafond || total >= SLOTS_MAX ? null
+      : (PALIERS.find((p) => p.slots && p.slots >= voulu)?.niveau ?? null);
+    return { plafond, niveauRequis };
+  }
+
   async function buySlot(userId) {
     const w = (await q(`SELECT follow_slots, scarves FROM user_wallet WHERE user_id = ?`, [userId]))[0];
-    /* **Le PASS lève le plafond, il n'offre pas l'emplacement.** Un de plus
-       par PASS acheté, à vie (`pass.clubs_par_pass`). Les écharpes restent
-       ce qu’il en coûte : c’est la même règle que pour le niveau, qui « ouvre
-       le droit d’en avoir un de plus » sans le donner. */
-    const enPlus = module.abonnement ? await module.abonnement.clubsEnPlus(userId) : 0;
-    const plafond = niveau
-      ? Math.min(SLOTS_MAX, (await niveau.droitsDe(userId)).slots + enPlus)
-      : SLOTS_MAX;
+    const { plafond } = await plafondDe(userId, w.follow_slots);
     if (w.follow_slots >= plafond) {
       throw fail(w.follow_slots >= SLOTS_MAX ? 'onboarding.error.max_slots'
                                             : 'onboarding.error.slot_locked');
@@ -389,6 +410,10 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
         const f = parIdentifiant(c.id);
         return { ...c, nom: f?.nom ?? c.id, set: f?.set ?? null, rar: f?.rar ?? null };
       });
+
+      /* Le dos de chaque carte, celui de sa série ou le neutre : le paquet
+         de bienvenue mélange les séries et des cartes qui n'en ont aucune. */
+      poserLesDos(nommees);
 
       return { cartes: nommees, scarves, activeFanzzy: premier.id };
     } catch (e) {

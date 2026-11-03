@@ -404,6 +404,16 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 .vpass b{display:block;font-family:var(--banner);font-weight:700;font-size:12px;letter-spacing:.05em;color:#F5C33B}
 .vpass small{display:block;font-size:11px;line-height:1.3;opacity:.9}
 .vpass i{font-style:normal;font-size:20px;color:#F5C33B}
+/* Avant l'ouverture : le sticker BIENTÔT à cheval sur le bord, et le compte à
+   rebours (« J-28 », puis les heures) dans un petit chrono à la place de la
+   flèche. Rien ne grandit : la bande garde sa hauteur. */
+.vpass{position:relative}
+.vpass-bientot{position:absolute;top:-10px;right:10px;--rot:6deg;height:20px;font-size:11px}
+.vpass-bientot[hidden]{display:none}
+.vpass i.vv-chrono{flex:none;font-family:var(--banner);font-size:13px;letter-spacing:.06em;
+  font-variant-numeric:tabular-nums;padding:5px 7px;border-radius:7px;
+  border:1px solid rgba(245,195,59,.7);background:rgba(4,6,10,.55);
+  box-shadow:inset 0 0 8px rgba(245,195,59,.25)}
 /* 0. La bande du PASS part avant tout le reste : c'est une pub, pas la page. */
 @media (max-height:760px){.vpass{display:none}}
 
@@ -1931,8 +1941,11 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
     <a class="vpass" id="vPass" href="/compte?inscription" data-ton="or">
       <img src="/img/fanzzy/RP1/e3/prehistorique/pousse.webp" alt="" onerror="this.remove()">
       <span><b>LE PASS DE SAISON · PRÉHISTORIQUE</b>
-        <small>Sa tenue, ton badge, ton cadre. Le jeu reste gratuit.</small></span>
-      <i aria-hidden="true">›</i>
+        <small class="vpass-texte">Sa tenue, ton badge, ton cadre. Le jeu reste gratuit.</small></span>
+      <!-- Avant l'ouverture du PASS (le 1er décembre 2026), `vitrine-vivante.js`
+           montre ce sticker et met le compte à rebours à la place de la flèche. -->
+      <span class="tbf-sticker vpass-bientot" data-ton="flare" hidden>BIENTÔT</span>
+      <i class="vpass-chrono" aria-hidden="true">›</i>
     </a>
 
     <!-- Les visages, sous le bouton : ils ne décident personne, ils
@@ -4871,7 +4884,9 @@ async function scoresVitrine() {
     const quand = m.live ? (minute(m) ?? 'DIRECT')
       : m.fini ? 'FINI'
       : new Date(m.date).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
-    return `<div class="sc ${m.live ? 'live' : ''}">
+    /* `data-id` et `data-buts` : la vitrine vivante y voit les buts tomber. */
+    return `<div class="sc ${m.live ? 'live' : ''}" data-id="${esc(m.id ?? '')}"
+      data-buts="${(Number(m.home.goals) || 0) + (Number(m.away.goals) || 0)}">
       <div class="quand">${esc(quand)}</div>
       <div class="eq">${cote(m.home, m.fini && m.away.vainqueur)}${
         cote(m.away, m.fini && m.home.vainqueur)}</div>
@@ -4940,6 +4955,10 @@ async function garnirVitrine() {
      battement qui tourne dans le vide n'ouvrira pas un bloc qu'on a renoncé
      à montrer. */
   if (live !== null) veillerVitrine(live);
+  /* La vitrine est décidée et garnie : elle peut entrer et vivre
+     (`vitrine-vivante.js`). */
+  window.TBF_VITRINE = true;
+  dispatchEvent(new Event('tbf:vitrine'));
 }
 
 /* ------------------------------------------------------------ le hub */
@@ -6630,6 +6649,8 @@ async function alerteDuel() {
 <!-- La tribune qui vit autour du Fanzzy : l'entrée des tuiles, les flashs,
      le projecteur, le reflet sur l'entrée. Voir son en-tête. -->
 <script src="/accueil-vivant.js" defer></script>
+<!-- La vitrine (pas connecté) qui entre et vit, et le PASS « bientôt ». -->
+<script src="/vitrine-vivante.js" defer></script>
 <script src="/tifo.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/pass.js" defer></script>
