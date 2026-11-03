@@ -160,7 +160,8 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'due
 }
 const A = 'bbbb0000-0000-0000-0000-000000000001';
 const B = 'bbbb0000-0000-0000-0000-000000000002';
-for (const [i, id] of [A, B].entries()) {
+const C = 'bbbb0000-0000-0000-0000-000000000003';
+for (const [i, id] of [A, B, C].entries()) {
   await raw.query("INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')",
     [id, `p${i}@ex.fr`, `Pass${i}`]);
   await raw.query('INSERT INTO user_wallet (user_id,scarves,packs) VALUES (?,0,0)', [id]);
@@ -232,6 +233,40 @@ await poserSaison(12);
   moi = A;
   const eA = await get('/api/abonnement');
   check('qui a déjà le PASS 1 n’achète que le 2', JSON.stringify(eA.offre?.aAcheter) === '[2]');
+}
+await poserSaison(80);
+
+titre('Pendant la BASE, le PASS est « Bientôt »');
+{
+  /* Gaël, 3 novembre 2026 : le PASS 1 ouvre le 1er décembre ; il ne
+     s'achète pas avant. La BASE (saison 0) court, la saison 1 attend son
+     jour d'ouverture en brouillon. */
+  await pool.query('DELETE FROM saisons');
+  await pool.query(`INSERT INTO saisons (id, numero, nom, series, tenues, lancee_a, fin_le, ouvre_le) VALUES
+    (10, 0, 'BASE', JSON_ARRAY(), JSON_ARRAY(), NOW(3) - INTERVAL 5 DAY, CURDATE() + INTERVAL 27 DAY, NULL),
+    (11, 1, 'Héros du canapé', JSON_ARRAY(), JSON_ARRAY(), NULL, CURDATE() + INTERVAL 117 DAY, CURDATE() + INTERVAL 28 DAY)`);
+  await chargerSaisons(pool);
+  moi = C;
+  await pool.query('UPDATE user_wallet SET scarves = 90000 WHERE user_id = ?', [C]);
+  const attendu = (await pool.query(
+    "SELECT DATE_FORMAT(CURDATE() + INTERVAL 28 DAY, '%Y-%m-%d') AS j"))[0][0].j;
+  const e = await get('/api/abonnement');
+  check('la BASE court : l’offre montre le PASS 1, « bientôt », avec son jour d’ouverture',
+    saisonEnCours()?.numero === 0 && JSON.stringify(e.offre?.aAcheter) === '[1]'
+    && e.offre?.bientot?.ouvre === attendu || console.log('       ', e.offre));
+  const r = await post('/api/abonnement/pass/echarpes');
+  check('l’acheter en écharpes est refusé, rien n’est débité', r.s === 400 && r.j.error === 'pass.error.bientot'
+    && Number((await bourse(C)).scarves) === 90000 && (await abonnement.saisonsDuPass(C)).length === 0
+    || console.log('       ', r));
+  await abonnement.accorderPass(C, { source: 'offert' });
+  check('l’administration peut toujours l’offrir', JSON.stringify(await abonnement.saisonsDuPass(C)) === '[1]'
+    && (await abonnement.estAbonne(C)) === true);
+  await pool.query('UPDATE saisons SET lancee_a = NOW(3) WHERE id = 11');
+  await chargerSaisons(pool);
+  moi = B;
+  check('la saison 1 lancée : plus « bientôt »', saisonEnCours()?.numero === 1
+    && (await get('/api/abonnement')).offre?.bientot === null);
+  moi = A;
 }
 await poserSaison(80);
 

@@ -179,21 +179,46 @@ input:focus{outline:none;border-color:var(--projo)}
 .pack{width:min(64vw,232px);aspect-ratio:.62;border-radius:11px;overflow:hidden;position:relative;
   cursor:pointer;background:#05070A;border:0;padding:0;-webkit-appearance:none;appearance:none;
   box-shadow:0 30px 60px rgba(0,0,0,.75);touch-action:none}
-.pack img{width:100%;height:100%;object-fit:cover;display:block}
-/* La bande qu'on arrache, comme au kiosque. `--p` est l'avancée, de 0 à 1, et
-   c'est la **seule** variable du geste : elle ne dépend que de la distance
-   parcourue par le doigt, jamais du nombre d'images rendues. */
-.pack{--p:0;--bande:15%}
-.pack.tire .lip,.pack.tire{transition:none}
-.pack:not(.tire) .lip{transition:clip-path .32s cubic-bezier(.2,1.4,.5,1),
-  transform .32s cubic-bezier(.2,1.4,.5,1)}
+.pack .art{position:absolute;inset:0}
+.pack img,.pack svg{width:100%;height:100%;object-fit:cover;display:block}
+/* **La déchirure est celle du kiosque** (3 novembre 2026, Gaël : « le paquet
+   qui se déchire est différent des autres boosters, et on ne le voit pas se
+   déchirer »). Cette page avait gardé une copie ancienne du geste, et il lui
+   manquait la pièce qui fait tout voir : **l'intérieur du sachet**
+   (`.maw`). La bande arrachée est une copie du haut du dessin, posée sur le
+   dessin lui-même : rognée, elle découvrait… le même dessin, au pixel près.
+   Le doigt avançait, rien ne bougeait. Au kiosque, sous la bande, il y a la
+   nuit du sachet ouvert, bordée de dents, qui s'éclaire à mesure — c'est ce
+   qu'on voit se creuser. Le paquet est aussi celui de sa série, comme au
+   kiosque, et non plus l'ancien VIRAGE NORD.
 
+   `--p` porte l'avancée, de 0 à 1, et ne dépend que de la distance parcourue
+   par le doigt, jamais du nombre d'images rendues. Déclarée en `@property`
+   pour qu'elle s'anime : c'est le retour élastique quand on lâche trop tôt.
+
+   `--bande` : où passe la déchirure. Vingt pour cent, comme au kiosque : le
+   dessin d'un booster laisse une marge sombre au-dessus du sachet, et à
+   quinze la bande s'arrachait dans le vide. */
+@property --p { syntax: '<number>'; inherits: true; initial-value: 0; }
+.pack{--p:0;--bande:20%;transition:--p .32s cubic-bezier(.3,1.4,.5,1);cursor:grab}
+.pack.tire{transition:none;cursor:grabbing}
+
+/* L'intérieur du sachet : ce qu'on découvre à mesure que la bande s'en va. */
+.pack .maw{position:absolute;left:0;right:0;top:0;height:var(--bande);z-index:2;
+  background:radial-gradient(120% 160% at 50% 0,rgba(255,238,190,calc(.55 * var(--p))),
+    rgba(5,7,10,.96) 62%);
+  -webkit-mask:conic-gradient(from -45deg at 50% calc(100% - 7px),#0000 90deg,#000 0) 50%/14px 100%;
+          mask:conic-gradient(from -45deg at 50% calc(100% - 7px),#0000 90deg,#000 0) 50%/14px 100%}
+
+/* La bande elle-même : une copie du paquet, rognée à sa hauteur. Son dessin
+   fait cinq fois sa hauteur (cent divisé par vingt) : il recouvre ainsi
+   exactement le haut du paquet, quel qu'il soit — photo ou SVG de repli. */
 .pack .lip{position:absolute;left:0;right:0;top:0;height:var(--bande);overflow:hidden;
   background:#05070A;
   clip-path:inset(0 0 0 calc(var(--p) * 100%));
   transform:rotate(calc(var(--p) * 5deg)) translateY(calc(var(--p) * -6px));
   transform-origin:100% 100%;z-index:3}
-.pack .lip > *{position:absolute;top:0;left:0;width:100%;height:666.7%;object-fit:cover}
+.pack .lip > *{position:absolute;top:0;left:0;width:100%;height:500%}
 
 /* La ligne dentelée : elle dit où saisir avant qu'on ait lu la consigne, et
    elle s'efface à mesure que la déchirure la mange. */
@@ -417,6 +442,8 @@ html[data-calme~="animations"] #flash.go{animation:none}
            clavier, et du même coup la sortie de secours de qui ne peut pas
            faire le geste — une seule mécanique, deux services. -->
       <button class="pack" id="pack" type="button" aria-label="Déchirer le paquet">
+        <div class="art" id="packart"></div>
+        <div class="maw"></div>
         <div class="lip" id="packlip"></div>
         <div class="seam"></div>
         <div class="grip"></div>
@@ -692,36 +719,58 @@ let tear = null;
 
 function preparerPaquet() {
   const p = $('pack');
-  p.querySelectorAll('img').forEach((n) => n.remove());
-
-  const img = document.createElement('img');
-  img.src = 'img/pack-virage-nord.avif';
-  img.alt = '';
-  img.onerror = () => {
-    // Sans visuel, le paquet reste un paquet : le geste compte plus que l'image.
-    img.remove();
-    p.style.background = 'linear-gradient(150deg,#2A1218,#0D1116 55%,#3A1A12)';
-    p.style.border = '1px solid rgba(245,195,59,.35)';
+  const V = window.TBF_CARTES;
+  /* **Le paquet de sa série, dessiné comme au kiosque.** La série est celle
+     du premier supporter du paquet — la même qui donne leur dos aux cartes
+     (voir `reveler`). Le dessin vient de la même table (`ART`, cartes.js), et
+     une série sans dessin prend le même repli (`packArt`). */
+  const id = cartes.find((c) => c.set)?.set ?? 'RP';
+  const set = V?.SETS_TOUTES?.find((x) => x.id === id) ?? V?.SETS?.find((x) => x.id === id) ?? { id };
+  /* Le repli est dessiné deux fois plutôt que cloné : `packArt` numérote ses
+     dégradés, et deux copies du même nœud porteraient les mêmes identifiants. */
+  const dessiner = () => {
+    if (V?.packArt) {
+      $('packart').innerHTML = V.packArt(set);
+      $('packlip').innerHTML = V.packArt(set);
+    } else {
+      // Sans visuel, le paquet reste un paquet : le geste compte plus que l'image.
+      $('packart').replaceChildren();
+      $('packlip').replaceChildren();
+      p.style.background = 'linear-gradient(150deg,#2A1218,#0D1116 55%,#3A1A12)';
+      p.style.border = '1px solid rgba(245,195,59,.35)';
+    }
   };
-  // La bande montre le haut du même dessin. `cloneNode` plutôt qu'un second
-  // chargement : une image déjà décodée ne clignote pas.
-  img.onload = () => $('packlip').replaceChildren(img.cloneNode(true));
-  p.insertBefore(img, p.firstChild);
+  if (!V?.ART?.[id]) {
+    dessiner();
+  } else {
+    const img = document.createElement('img');
+    img.src = V.src(V.ART[id]);
+    img.alt = '';
+    img.onerror = dessiner;
+    // La bande montre le haut du même dessin. `cloneNode` plutôt qu'un second
+    // chargement : une image déjà décodée ne clignote pas.
+    img.onload = () => $('packlip').replaceChildren(img.cloneNode(true));
+    $('packart').replaceChildren(img);
+    $('packlip').replaceChildren();
+  }
 
   p.style.setProperty('--p', '0');
   p.classList.remove('tire');
   $('hint').innerHTML = 'TIRE LA BANDE <b>EN TRAVERS DU HAUT</b>';
   tear = { p: 0, base: 0, x0: 0, pointeur: null, tic: -1, ratees: 0, done: false };
+  window.TBF_CARTES?.audio?.ready();
 }
 
-/** Pose l'avancée, et fait la vibration qui va avec. */
+/** Pose l'avancée, et fait le bruit et la vibration qui vont avec. */
 function poser(v) {
   tear.p = v;
   $('pack').style.setProperty('--p', String(v));
   // Un cran tous les neuf pour cent : la sensation suit la main plutôt que
   // l'horloge, donc déchirer lentement fait une longue série de crans.
   const tic = Math.floor(v / 0.09);
-  if (tic > tear.tic) { tear.tic = tic; buzz(7); }
+  // Le crissement du kiosque (`audio.rip`) : il manquait ici, et un sachet
+  // qui se déchire sans bruit ne se déchire pas.
+  if (tic > tear.tic) { tear.tic = tic; window.TBF_CARTES?.audio?.rip(0.22 + v * 0.5); buzz(7); }
   if (v > 0.12 && !tear.encourage) {
     tear.encourage = true;
     $('hint').innerHTML = 'ENCORE — <b>NE LÂCHE PAS</b>';
@@ -734,6 +783,7 @@ $('pack').addEventListener('pointerdown', (e) => {
   tear.x0 = e.clientX;
   tear.base = tear.p;
   $('pack').classList.add('tire');
+  window.TBF_CARTES?.audio?.ready();
   /* En dernier, et protégé : `setPointerCapture` lève sur un pointeur qui
      n'est plus actif. Placé en tête, il emportait les lignes qui posent le
      point de départ, et le glissement entier était perdu. La leçon a déjà été
@@ -782,6 +832,7 @@ function ouvrir() {
   tear.done = true;
   $('pack').classList.remove('tire');
   $('pack').style.setProperty('--p', '1');
+  window.TBF_CARTES?.audio?.rip(1.4);
   buzz([50, 40, 120]);
   $('flash').classList.add('go');
   setTimeout(() => $('flash').classList.remove('go'), 560);
@@ -868,12 +919,13 @@ function faceCarte(c) {
 function reveler() {
   KQ = window.TBF_OUVERTURE ?? null;
   const s = $('s3');
-  /* **Un seul dos pour tout le paquet, celui de sa série.** Les cartes de
-     bienvenue ne sont pas toutes des Fanzzy — il y a des actions, du stuff,
-     des écharpes —, et donner à chacune le dos de sa propre série reviendrait
-     à annoncer ce qu'elle est avant de la retourner. On prend donc la série du
-     premier supporter du paquet : c'est celle du sachet. */
-  const dos = window.FZART?.dos?.(cartes.find((c) => c.set)?.set);
+  /* **Chaque carte porte le dos de sa série** (demande de Gaël du 3 novembre
+     2026). Le paquet de bienvenue est un tirage au hasard : deux Fanzzy qui
+     ne sont pas forcément de la même série, une pièce, des actions, des
+     écharpes. Le dos du premier Fanzzy posé sur les dix donnait à chacune une
+     série qui n'était pas la sienne. Le serveur dit le dos de chaque carte
+     (`dos`, `src/server/fanzzy/dos.js`) : celui de sa série, ou le neutre
+     pour ce qui n'en a aucune. */
   cartes.forEach((c, i) => {
     const el = document.createElement('div');
     /* **Figée tant qu'elle n'est pas retournée** (`.fz-fige`, cartes.css).
@@ -891,6 +943,7 @@ function reveler() {
     el.style.setProperty('--rc', `var(--r-${el.dataset.rar})`);
     el.style.zIndex = 20 - i;
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
+    const dos = window.FZART?.dos?.(c.dos ?? (c.type === 'fanzzy' ? c.set : null));
     el.innerHTML = `<div class="flip">
       <div class="face back${dos ? ' dessine' : ''}"${dos
         ? ` style="background-image:url('${dos}')"` : ''}><svg width="52" height="52" viewBox="0 0 24 24" fill="none"

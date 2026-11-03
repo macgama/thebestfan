@@ -29,6 +29,12 @@ l'abonnement mensuel (3,99 €) et annuel (39,90 €), qui ne sont plus en vente
 - Il couvre **la saison en cours** ; pris pendant ses `pass.dernier_mois_jours`
   derniers jours (30), il couvre aussi la suivante ; une saison finie fait
   acheter la suivante (`saisonsCouvertes`, `src/shared/pass.js`).
+- **Pas avant son ouverture** (Gaël, 3 novembre 2026) : pendant la BASE
+  (saison 0), le PASS 1 se montre sous « BIENTÔT » avec son jour d'ouverture
+  (`ouvre_le` de la saison 1) ; `POST /api/boutique/commander` et
+  `POST /api/abonnement/pass/echarpes` rendent `pass.error.bientot`
+  (`offre().bientot`, `src/server/abonnement/`). Il s'achète dès que la
+  saison 1 est lancée. L'administration peut toujours l'offrir.
 - Il ne donne **jamais d'écharpes** : l'argent n'achète pas la monnaie des
   tirages.
 

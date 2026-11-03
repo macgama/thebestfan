@@ -57,7 +57,19 @@
       couleur: p.couleur, prix: a.offre?.article?.prixTexte ?? null,
       echarpes: Number(a.offre?.echarpes) || null, packs: Number(a.offre?.article?.packs) || 0,
       deux: couvre.length > 1,
+      /* Pas encore en vente (la BASE) : la pub l'annonce, « BIENTÔT ». */
+      bientot: Boolean(a.offre?.bientot), quand: quandOuvre(a.offre?.bientot?.ouvre),
     };
+  }
+
+  /** « le 1er décembre », depuis `YYYY-MM-DD`, ou `null`. */
+  function quandOuvre(ouvre) {
+    const j = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ouvre ?? ''));
+    if (!j) return null;
+    const date = new Date(Number(j[1]), Number(j[2]) - 1, Number(j[3]));
+    const lg = window.TBF_LANGUE?.langue ?? 'fr';
+    if (lg !== 'fr') return date.toLocaleDateString(lg, { day: 'numeric', month: 'long' });
+    return `le ${date.getDate() === 1 ? '1er' : date.getDate()} ${date.toLocaleDateString('fr', { month: 'long' })}`;
   }
 
   /* ----------------------------------------------- la plaque de l'accueil */
@@ -72,7 +84,7 @@
     a.dataset.ton = 'or';
     a.setAttribute('aria-label', `Le PASS ${o.numero} : ${o.nom}`);
     a.innerHTML = `${window.TBF_PASS ? window.TBF_PASS.badge({ saison: o.numero, couleur: o.couleur }) : ''}
-      <span><b>${esc(`PASS ${o.numero}`)}</b><small>${esc(o.nom)}</small></span>`;
+      <span><b>${esc(`PASS ${o.numero}`)}</b><small>${esc(o.bientot ? 'BIENTÔT' : o.nom)}</small></span>`;
     scene.appendChild(a);
   }
 
@@ -94,7 +106,7 @@
       <button type="button" class="pass-spot-x" data-fermer aria-label="Fermer">×</button>
       <div class="pass-spot-defile" aria-hidden="true">${images}</div>
       <div class="pass-spot-texte">
-        <span class="pass-spot-sur">NOUVEAU</span>
+        <span class="pass-spot-sur">${o.bientot ? esc(o.quand ? `BIENTÔT · ${o.quand}` : 'BIENTÔT') : 'NOUVEAU'}</span>
         <h2 id="passSpotTitre"><span>${esc(`PASS ${o.numero}`)}</span>${esc(o.nom)}</h2>
         <ol class="pass-spot-lignes">
           <li>La tenue de la saison sur tes Fanzzy</li>
@@ -102,7 +114,9 @@
           ${o.packs ? `<li>${esc(`${o.packs} boosters dès l’achat`)}</li>` : ''}
           <li>Des boosters qui reviennent plus vite</li>
         </ol>
-        <p class="pass-spot-prix">${esc(prix)}${o.deux ? ' · 2 saisons' : ''}<small>Payé une fois · tout le jeu reste gratuit</small></p>
+        <p class="pass-spot-prix">${esc(prix)}${o.deux ? ' · 2 saisons' : ''}<small>${o.bientot
+          ? esc(`En vente ${o.quand ?? 'avec sa saison'} · tout le jeu reste gratuit`)
+          : 'Payé une fois · tout le jeu reste gratuit'}</small></p>
         <div class="pass-spot-boutons">
           <a class="tbf-plaque tbf-bloc" data-ton="or" href="/abonnement">VOIR LE PASS</a>
           <button type="button" class="pass-spot-tard" data-fermer>Plus tard</button>

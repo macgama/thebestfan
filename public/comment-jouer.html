@@ -56,6 +56,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .gestes{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0 0 10px;font-size:13.5px}
 .gestes dt{font-family:var(--banner);font-weight:600;letter-spacing:.04em;white-space:nowrap}
 .gestes dd{margin:0}
+/* La vidéo d'une rubrique (video-tuto.js) : un bouton en tête du bloc, pour
+   qui préfère regarder que lire. Caché tant que la vidéo n'est pas servie. */
+.video-tuto:has(> [hidden]){display:none}
+.video-tuto .tbf-plaque{width:100%;justify-content:center}
 
 /* tbf-degagement */
 #app{padding-bottom:calc(var(--bas) + 40px)}
@@ -133,6 +137,20 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <section class="rub" id="fanzzy">
     <h2 class="tbf-cousu">Les Fanzzy</h2>
     <div class="bloc">
+      <p class="video-tuto"><button type="button" class="tbf-plaque" data-ton="or"
+        data-video-tuto="tuto-fanzzy-1" hidden>Voir la vidéo</button></p>
+      <ol class="video-sous-titres" data-pour="tuto-fanzzy-1" hidden>
+        <li data-de="0" data-a="5">Un Fanzzy, c’est un <b>supporter</b>.</li>
+        <li data-de="5" data-a="10">Pas d’attaque, pas de défense&nbsp;: il a un <b>cri</b>.</li>
+        <li data-de="10" data-a="15">Son cri choisit les gestes que tu vas faire.</li>
+        <li data-de="15" data-a="20">Six familles, chacune avec ses gestes préférés.</li>
+        <li data-de="20" data-a="26">Il grandit&nbsp;: trois âges, payés en <b>écharpes</b>.</li>
+        <li data-de="26" data-a="32">Les <b>légendaires</b> sortent entières d’un booster. Rare&nbsp;!</li>
+        <li data-de="32" data-a="39">Lié à ton club, il pousse plus fort dans ses matchs.</li>
+        <li data-de="39" data-a="44">Tenues et expressions&nbsp;: l’allure change, jamais la force.</li>
+        <li data-de="44" data-a="50">Ouvre sa fiche pour le faire évoluer.</li>
+        <li data-de="50" data-a="56">Touche sa carte pour le voir en grand.</li>
+      </ol>
       <p>Un Fanzzy est un supporter. Il n’a ni attaque ni défense&nbsp;: il a un <b>cri</b>, et ce cri désigne
         les gestes que tu vas faire. Chaque Fanzzy appartient à une <b>famille</b> (la Voix, la Percussion,
         la Fidélité, le Tifo, la Pyro, le Déplacement), et chaque famille a ses gestes préférés.</p>
@@ -396,7 +414,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
           renouvelé tout seul, valable jusqu’à la fin de la saison (pris le dernier mois, il couvre aussi la
           suivante). Il donne 3 boosters à l’achat, une réserve de boosters plus grande qui se remplit plus
           vite, tout ton parcours et tes souvenirs pendant sa saison&nbsp;; et pour toujours la tenue de la
-          saison, son badge, son cadre de carte, un club suivi et un KOP à créer de plus.</li>
+          saison, son badge, son cadre de carte, un club suivi et un KOP à créer de plus.
+          Il ne s’achète qu’à l’ouverture de sa saison&nbsp;: pendant la BASE, le PASS&nbsp;1 est marqué
+          «&nbsp;Bientôt&nbsp;», en vente dès le 1er décembre.</li>
         <li><b>La voie PASS</b>&nbsp;: une deuxième ligne dans ton carnet de tampons. Chaque palier fait
           monter ton PASS&nbsp;: la tenue aux âges suivants, le cadre, le cadre animé, le badge en or.
           Que du visuel.</li>
@@ -432,6 +452,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     </div>
   </section>
 </main>
+<script src="/video-tuto.js" defer></script>
 <script src="/fx.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>

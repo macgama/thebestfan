@@ -1,4 +1,15 @@
 {
+ "NEUTRE": {
+  "ou": [
+   "public/fanzzy-art.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "LE JEU REVIENT": {
   "ou": [
    "public/index.html"
@@ -851,6 +862,18 @@
  "ZZ": {
   "ou": [
    "public/pays.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "HEAD": {
+  "ou": [
+   "public/video-tuto.js",
+   "src/server/construction.js"
   ],
   "langues": [
    "en",

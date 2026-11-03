@@ -983,7 +983,7 @@
         colle = pinFamille(d.fanzzy.type);
       }
       const nom = !x.ok ? `${x.titre} — ${x.prix != null ? `${x.prix} écharpes`
-        : x.pass ? (x.reservee ? `avec le PASS ${x.pass}` : 'à l’étal de la boutique') : 'dans les boosters'}`
+        : x.pass ? (x.reservee ? `uniquement avec le PASS ${x.pass}` : 'à l’étal de la boutique') : 'dans les boosters'}`
         : tenue && x.porte ? `${x.titre}, portée` : x.titre;
       return `<button type="button" class="tbf-plaque tbf-tuile${tenue ? ' tbf-tuile--pied' : ''} case ${
         x.ok ? 'ok' : 'verrou'}${choisi ? ' choisie' : ''}"${ton}${!x.ok || !aMoi() ? ' data-verrou' : ''}
@@ -1129,7 +1129,7 @@
       const lignes = [];
       if (!x.ok) {
         if (!etat && x.pass && x.reservee) {
-          lignes.push(ligne(`Avec le PASS ${x.pass}`), ligne(`La voie PASS l’ouvre pour l’âge ${vu()}`));
+          lignes.push(ligne(`Uniquement avec le PASS ${x.pass}`), ligne(`La voie PASS l’ouvre pour l’âge ${vu()}`));
         } else if (!etat && x.pass) {
           lignes.push(ligne('À l’étal de la boutique, en écharpes'), ligne(`Pour l’âge ${vu()} de ce Fanzzy`));
         } else {

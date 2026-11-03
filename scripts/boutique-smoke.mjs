@@ -184,6 +184,32 @@ const evenement = (sessionId) => ({
   check('et un article inconnu est refusé', r.status === 400);
 }
 
+/* ------------------------------------------- le PASS pas encore ouvert (BASE) */
+{
+  /* Gaël, 3 novembre 2026 : pendant la BASE, le PASS est « Bientôt » et ne
+     s'achète pas avant son ouverture. Le module du PASS le dit (`bientot`),
+     la boutique refuse avant d'ouvrir la moindre session Stripe. */
+  const avant = (await q('SELECT COUNT(*) AS n FROM achats'))[0].n;
+  const fermee = createBoutique({
+    mailer: facteur, pool, fanzzy,
+    requireAuth: (req, _res, next) => { req.user = { id: U }; next(); },
+    abonnement: { offre: async () => ({ couvre: [1], aAcheter: [1], deja: [], bientot: { ouvre: '2026-12-01' } }) },
+  });
+  const app2 = express();
+  app2.use(express.json());
+  app2.use('/api/boutique', fermee.router);
+  const h2 = createServer(app2).listen(0);
+  const r = await fetch(`http://localhost:${h2.address().port}/api/boutique/commander`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ article: 'pass-saison' }),
+  });
+  const j = await r.json().catch(() => ({}));
+  h2.close();
+  check('pendant la BASE, le PASS ne se commande pas : « bientôt »',
+    r.status === 400 && j.error === 'pass.error.bientot' || console.log('       ', r.status, j));
+  check('et aucune commande n’est écrite', (await q('SELECT COUNT(*) AS n FROM achats'))[0].n === avant);
+}
+
 /* ------------------------------------------------------------- la signature */
 {
   await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
