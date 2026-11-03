@@ -1,6 +1,6 @@
 {
   "id": "AN32",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -107,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "270c4407e995"
+          "sha": "270c4407e995",
+          "cligne": true
         }
       }
     },
