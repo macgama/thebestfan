@@ -1474,6 +1474,19 @@ console.log('\n— la BASE du menu PASS —');
   check('recocher rouvre', ouvertsIci('jeu').has('tifo') && ouvertsIci('stade').has(retire)
     && ordreDesChants().includes('reprise'));
 
+  /* **Le PASS 1 s'écrit comme les autres** (Gaël, 3 novembre 2026 : « je ne
+     peux rien ajouter sur le PASS 1 ») : y ajouter un stade, sa saison étant
+     lancée, l'ouvre aussitôt pour tous. */
+  await call('/api/admin/base', { method: 'PUT', body: { ...corps, stades: corps.stades.slice(1) } });
+  check('(le stade part fermé)', !ouvertsIci('stade').has(retire));
+  d = (await call('/api/admin/saisons')).json;
+  const b1 = d.saisons.find((x) => x.id === d.base.id);
+  r = await call(`/api/admin/saison/${b1.id}`, { method: 'PATCH', body: {
+    nom: b1.nom, series: b1.series, tenues: b1.tenues, stuff: b1.stuff, actions: b1.actions,
+    stades: [...b1.stades, retire], jeux: b1.jeux, chants: b1.chants } });
+  check('ajouter un stade au PASS 1 lancé l’ouvre pour tous', r.status === 200
+    && ouvertsIci('stade').has(retire) || montre('pass 1', [r.status, r.json?.error]));
+
   r = await call('/api/admin/base', { method: 'PUT', body: { ...corps, chants: corps.chants.slice(0, 3) } });
   check('une BASE de moins de cinq chants est refusée', r.status === 400
     && r.json.error === 'admin.error.base_peu_de_chants' || montre('refus', [r.status, r.json]));

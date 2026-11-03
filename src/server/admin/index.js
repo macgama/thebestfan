@@ -1104,6 +1104,23 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
           WHERE id = ?`, [...valeurs, avant.id]);
     }
     await ecrireColonnes(avant.id, c);
+    /* **Ajouter à un PASS déjà lancé l'ouvre aussitôt** (Gaël, 3 novembre
+       2026 : « je ne peux rien ajouter sur le PASS 1 »). Le PASS 1, lancé,
+       porte la BASE ; un ajout y valait jusqu'ici une ligne écrite et rien
+       d'ouvert. Seuls les ajouts : retirer d'un PASS lancé ne referme rien ici
+       (la BASE et LES CONTENUS le font, à l'union). */
+    if (avant.lancee) {
+      const neufs = (f) => (c[f] ?? []).filter((id) => !(avant[f] ?? []).includes(id));
+      if (neufs('tenues').length) {
+        await pool.query(`UPDATE tenues SET publie = 1 WHERE id IN (?)`, [neufs('tenues')]);
+        await rechargerTenues(pool);
+      }
+      if (deps.contenus) {
+        for (const [f, famille] of Object.entries(CONTENU_DE)) {
+          if (neufs(f).length) await deps.contenus.publier(famille, neufs(f), true);
+        }
+      }
+    }
     await chargerSaisons(pool);
     /* Modifier une saison **déjà lancée** change ce qui est ouvert. On recharge
        donc les séries, sans quoi le jeu continuerait de distribuer selon
