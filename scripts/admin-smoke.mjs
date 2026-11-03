@@ -1399,6 +1399,53 @@ console.log('\n— la saison datée —');
   await pool.query(`UPDATE saisons SET fin_le = NULL WHERE numero = 1`);
 }
 
+/* ============================================================ la BASE
+
+   Demande de Gaël du 2 novembre 2026 : le menu PASS a une BASE, tout ce
+   qu'un joueur a dès le début, modifiable. Elle est portée par la saison du
+   plus petit numéro ; décocher cesse de distribuer, recocher rouvre, et ce
+   qu'un autre PASS apporte ne se touche pas d'ici. */
+console.log('\n— la BASE du menu PASS —');
+{
+  const montre = (l, x) => (console.log(`        ${l} :`, JSON.stringify(x)?.slice(0, 220)), false);
+  const { ouverts: ouvertsIci } = await import('../src/server/contenus/index.js');
+  let d = (await call('/api/admin/saisons')).json;
+  check('la BASE est la saison du plus petit numéro',
+    d.base && d.base.numero === Math.min(...d.saisons.map((x) => x.numero))
+    || montre('base', d.base));
+  check('les six familles ont leurs choix, mini-jeux compris',
+    ['series', 'tenues', 'stuff', 'actions', 'stades', 'jeux'].every((f) => Array.isArray(d.choix[f]))
+    && d.choix.jeux.length === 6 && Array.isArray(d.enJeu.jeux) || montre('choix', Object.keys(d.choix)));
+  check('chaque saison dit son PASS', Array.isArray(d.pass) && d.pass.length === d.saisons.length
+    || montre('pass', d.pass));
+  check('les séries de championnat sont nommées', Array.isArray(d.seriesDeClubs)
+    && d.seriesDeClubs.length > 0 || montre('seriesDeClubs', d.seriesDeClubs));
+
+  const corps = Object.fromEntries(['series', 'tenues', 'stuff', 'actions', 'stades', 'jeux']
+    .map((f) => [f, [...d.enJeu[f]]]));
+  const sansTifo = { ...corps, jeux: corps.jeux.filter((x) => x !== 'tifo'),
+    stades: corps.stades.slice(1) };
+  const retire = corps.stades[0];
+  let r = await call('/api/admin/base', { method: 'PUT', body: sansTifo });
+  check('la BASE s’enregistre', r.status === 200 || montre('base', r.json));
+  check('décocher un mini-jeu le ferme pour tous', !ouvertsIci('jeu').has('tifo')
+    && ouvertsIci('jeu').has('jongles') || montre('jeux', [...ouvertsIci('jeu')]));
+  check('décocher un stade le ferme aussi', !ouvertsIci('stade').has(retire));
+  d = (await call('/api/admin/saisons')).json;
+  check('la saison de la BASE garde ses listes', d.base.jeux.includes('jongles')
+    && !d.base.jeux.includes('tifo') || montre('base', d.base));
+
+  r = await call('/api/admin/base', { method: 'PUT', body: corps });
+  check('recocher rouvre', ouvertsIci('jeu').has('tifo') && ouvertsIci('stade').has(retire));
+
+  r = await call('/api/admin/base', { method: 'PUT', body: { ...corps, series: [] } });
+  check('une BASE sans série est refusée', r.status === 400
+    && r.json.error === 'admin.error.base_sans_serie' || montre('refus', [r.status, r.json]));
+
+  const j = (await call('/api/admin/journal?limite=50')).json.journal;
+  check('la BASE modifiée est journalisée', j.some((l) => l.action === 'base.modifiee'));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end();
 

@@ -50,6 +50,10 @@
 export const SECTIONS = [
   { id: 'boosters', titre: 'BOOSTERS ET ÉCHARPES',
     aide: 'Le rythme auquel on reçoit des cartes, et ce qu’elles coûtent.' },
+  /* Le paquet de bienvenue : il se règle depuis la BASE du menu PASS, pas
+     depuis RÉGLAGES (demande de Gaël du 2 novembre 2026). */
+  { id: 'bienvenue', titre: 'SES NOMBRES',
+    aide: 'Les boosters et les écharpes du paquet de bienvenue, reçus avant tout booster gagné.' },
   { id: 'virage', titre: 'LE GRAND VIRAGE',
     aide: 'La salle collective adossée à un vrai match.' },
   { id: 'duel', titre: 'LES DUELS',
@@ -148,10 +152,18 @@ export const REGLAGES = [
     aide: 'Le temps de recharge d’un booster gratuit. Raccourcir remplit les ' +
       'collections plus vite et dévalue les écharpes.' },
 
-  { cle: 'pack.depart', section: 'boosters', type: 'entier',
+  { cle: 'pack.depart', section: 'bienvenue', type: 'entier',
     titre: 'Boosters offerts à l’inscription', unite: 'boosters', min: 0, max: 20, defaut: 3,
     aide: 'Trois laissent le temps de regarder les cartes. Au-delà de cinq, on ' +
       'voit soixante cartes avant d’avoir compris ce qu’est un Fanzzy.' },
+
+  { cle: 'bienvenue.echarpes_min', section: 'bienvenue', type: 'entier',
+    titre: 'Écharpes du paquet, au moins', unite: 'écharpes', min: 0, max: 2000, defaut: 80,
+    aide: 'Le paquet en tire un nombre entre ce minimum et le maximum ci-dessous.' },
+
+  { cle: 'bienvenue.echarpes_max', section: 'bienvenue', type: 'entier',
+    titre: 'Écharpes du paquet, au plus', unite: 'écharpes', min: 0, max: 2000, defaut: 119,
+    aide: 'Plus petit que le minimum : le paquet donne le minimum, toujours.' },
 
   { cle: 'pack.max', section: 'boosters', type: 'entier',
     titre: 'Réserve maximale', unite: 'boosters', min: 1, max: 99, defaut: 12,

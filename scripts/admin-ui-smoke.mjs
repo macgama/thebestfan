@@ -346,9 +346,8 @@ check('l’écran des réglages se peuple depuis le registre', await jusqua(asyn
    réglages sans leur phrase. */
 /* Depuis le 2 novembre 2026, la section vit dans le menu PASS, et RÉGLAGES
    ne la montre plus : on y va, on la lit, on revient. */
-await page.evaluate(() => [...document.querySelectorAll('#nav button')]
-  .find((b) => b.textContent.trim() === 'PASS')?.click());
-check('le menu PASS se monte, avec ses tableaux et ses réglages', await jusqua(async () =>
+await page.evaluate(() => document.querySelector('#nav [data-sv="ventes"]')?.click());
+check('le menu PASS › VENTES se monte, avec ses tableaux et ses réglages', await jusqua(async () =>
   await page.evaluate(() => /LES PASS PAR SAISON/.test(document.getElementById('main').textContent)
     && document.querySelectorAll('#main .rg').length >= 9)));
 {
@@ -492,7 +491,7 @@ const saison1 = async (series) => {
 await saison1([dejaOuverte]);
 
 await page.evaluate(() => [...document.querySelectorAll('#nav button')]
-  .find((b) => /SAISONS/.test(b.textContent))?.click());
+  .find((b) => b.dataset.sv === 'saisons')?.click());
 check('l’onglet des saisons se monte', await jusqua(async () =>
   await page.$('#nouvelle-saison') !== null));
 
@@ -600,7 +599,7 @@ await page.evaluate((id) => document.querySelector(`[data-lancer="${id}"]`).clic
   brouillon.id);
 await dodo(400);
 check('lancer une saison demande confirmation', await page.evaluate(() =>
-  /LANCER LA SAISON/i.test(document.body.textContent)));
+  /LANCER LE PASS/i.test(document.body.textContent)));
 check('et la confirmation nomme ce qui s’ouvre', await page.evaluate(() =>
   /série\(s\)/.test(document.body.textContent)));
 check('et dit que rien ne se ferme', await page.evaluate(() =>
@@ -737,7 +736,7 @@ await pool.query(
   `INSERT INTO recompenses (user_id, source, cle, saison_id, echarpes, packs, xp, tampons)
    VALUES (?, 'carnet', ?, ?, 120, 0, 0, 0)`, [U, `S${datee.id}:1`, datee.id]);
 await page.evaluate(() => [...document.querySelectorAll('#nav button')]
-  .find((b) => /SAISONS/.test(b.textContent))?.click());
+  .find((b) => b.dataset.sv === 'saisons')?.click());
 await jusqua(async () => page.evaluate((id) =>
   document.querySelector(`[data-editer-saison="${id}"]`) !== null, datee.id));
 await page.evaluate((id) => document.querySelector(`[data-editer-saison="${id}"]`).click(), datee.id);
@@ -767,7 +766,7 @@ if (process.env.CAPTURE) {
   /* L'écran des saisons, qui est le seul endroit d'où l'on ouvre du contenu. Il
      se regarde : trois défauts du lot précédent n'ont été vus que sur l'image. */
   await page.evaluate(() => [...document.querySelectorAll('nav button')]
-    .find((b) => /SAISONS/.test(b.textContent))?.click());
+    .find((b) => b.dataset.sv === 'saisons')?.click());
   await new Promise((r) => setTimeout(r, 500));
   await page.evaluate(() => document.getElementById('nouvelle-saison')?.click());
   await new Promise((r) => setTimeout(r, 400));
@@ -845,22 +844,29 @@ if (process.env.CAPTURE) {
      les siens d'abord, depuis ce menu, puis on revient à RÉGLAGES. Dans cet
      ordre-là : un réglage de RÉGLAGES ferme le site aux joueurs, et après lui
      plus aucun menu ne se recharge. */
+  /* Et ceux du paquet de bienvenue, dans PASS › BASE (même jour). */
   const duPass = (r) => r.section === 'abonnement';
-  const ordre = [...registre.reglages.filter(duPass),
-    ...registre.reglages.filter((r) => !duPass(r))];
-  const allerA = async (menu, preuve) => {
-    await page.evaluate((m) => [...document.querySelectorAll('#nav button')]
-      .find((b) => b.textContent.trim() === m)?.click(), menu);
+  const deLaBase = (r) => r.section === 'bienvenue';
+  const ordre = [...registre.reglages.filter(duPass), ...registre.reglages.filter(deLaBase),
+    ...registre.reglages.filter((r) => !duPass(r) && !deLaBase(r))];
+  const allerA = async (vue, preuve) => {
+    await page.evaluate((v) => [...document.querySelectorAll('#nav button')]
+      .find((b) => (b.dataset.sv ?? b.dataset.o) === v)?.click(), vue);
     await jusqua(async () => await page.evaluate(preuve));
   };
-  await allerA('PASS', () => /LES PASS PAR SAISON/.test(document.getElementById('main').textContent)
+  await allerA('ventes', () => /LES PASS PAR SAISON/.test(document.getElementById('main').textContent)
     && document.querySelectorAll('#main .rg').length >= 9);
-  let surPass = true;
+  let ou = 'ventes';
   for (const r of ordre) {
-    if (!duPass(r) && surPass) {
-      surPass = false;
-      await allerA('RÉGLAGES', () => document.querySelectorAll('#main .rg').length > 15
-        && !/LES PASS PAR SAISON/.test(document.getElementById('main').textContent));
+    if (deLaBase(r) && ou === 'ventes') {
+      ou = 'base';
+      await allerA('base', () => /LE PAQUET DE BIENVENUE/.test(document.getElementById('main').textContent)
+        && document.querySelectorAll('#main .rg').length >= 3);
+    }
+    if (!duPass(r) && !deLaBase(r) && ou !== 'reglages') {
+      ou = 'reglages';
+      await allerA('reglages', () => document.querySelectorAll('#main .rg').length > 15
+        && !/LES PASS PAR SAISON|LE PAQUET DE BIENVENUE/.test(document.getElementById('main').textContent));
     }
     const actuelle = registre.valeurs[r.cle];
     const v = neuve(r, actuelle);
@@ -937,10 +943,13 @@ if (process.env.CAPTURE) {
      chaque écran d'avant existe toujours, comme menu ou comme sous-onglet. */
   const menus = await page.evaluate(() =>
     [...document.querySelectorAll('#nav .fam button')].map((b) => b.textContent.trim()));
-  check('sept menus', JSON.stringify(menus) === JSON.stringify(['SAISONS', 'CATALOGUE', 'PASS',
+  /* Le même jour, SAISONS et PASS sont devenus un seul menu PASS (BASE,
+     LES PASS, VENTES) : six menus. */
+  check('six menus', JSON.stringify(menus) === JSON.stringify(['PASS', 'CATALOGUE',
     'RÉGLAGES', 'APERÇU', 'JOUEURS', 'COMPÉTITIONS'])
     || (console.log('        vu :', JSON.stringify(menus)), false));
-  const attendus = ['SAISONS', 'CATALOGUE', 'FANZZY', 'CONTENUS', 'SKINS', 'PASS', 'RÉGLAGES',
+  const attendus = ['PASS', 'BASE', 'LES PASS', 'VENTES', 'CATALOGUE', 'FANZZY', 'CONTENUS',
+    'SKINS', 'RÉGLAGES',
     'APERÇU', 'EN JEU', 'JOURNAL', 'JOUEURS', 'COMPTES', 'KOP', 'COMPÉTITIONS'];
   const vus = await page.evaluate(() =>
     [...document.querySelectorAll('#nav button')].map((b) => b.textContent.trim()));
@@ -951,6 +960,46 @@ if (process.env.CAPTURE) {
   check('et n’en a inventé aucun', vus.every((t) => attendus.includes(t))
     || (console.log('        en trop :',
       vus.filter((t) => !attendus.includes(t)).join(' ')), false));
+}
+
+/* ==================================================== la BASE du menu PASS
+
+   Demande de Gaël du 2 novembre 2026 : ce qu'un joueur a dès le début, le
+   paquet de bienvenue puis tout ce qui est en jeu pour tous, modifiable. */
+await page.evaluate(() => document.querySelector('#nav [data-m="pass"]')?.click());
+check('le menu PASS ouvre sa BASE', await jusqua(async () => await page.evaluate(() =>
+  /LE PAQUET DE BIENVENUE/.test(document.getElementById('main').textContent)
+  && document.getElementById('base-ok') !== null)));
+{
+  const vu = await page.evaluate(() => ({
+    familles: [...document.querySelectorAll('#main .sai-lt')].map((x) => x.textContent.trim()),
+    jeux: document.querySelectorAll('#b-jeux input').length,
+    echarpes: Boolean(document.querySelector('[data-champ="bienvenue.echarpes_min"]')),
+  }));
+  check('elle montre les six familles, mini-jeux compris',
+    ['SÉRIES', 'SKINS', 'ÉQUIPEMENT', 'CARTES D’ACTION', 'STADES', 'MINI-JEUX']
+      .every((t) => vu.familles.includes(t)) && vu.jeux === 6
+    || (console.log('        vu :', JSON.stringify(vu)), false));
+  check('et les écharpes du paquet s’y règlent', vu.echarpes);
+  const { tmpdir } = await import('node:os');
+  await page.screenshot({ path: path.join(tmpdir(), 'admin-base.png'), fullPage: true });
+  console.log(`              ${path.join(tmpdir(), 'admin-base.png')}`);
+
+  await page.evaluate(() => {
+    const c = document.querySelector('#b-jeux input[value="boss"]');
+    c.checked = false;
+    document.getElementById('base-ok').click();
+  });
+  await dodo(400);
+  check('enregistrer la BASE dit ce qui cesse d’être distribué', await page.evaluate(() =>
+    /Cesse d’être distribué/.test(document.body.textContent)
+    && /La tribune contre le boss/.test(document.body.textContent)));
+  await dire('ENREGISTRER');
+  check('et le mini-jeu se ferme', await jusqua(async () => {
+    const [r] = await pool.query(`SELECT publie FROM contenus WHERE famille = 'jeu' AND id = 'boss'`);
+    return r[0] && Number(r[0].publie) === 0;
+  }));
+  await contenus.publier('jeu', ['boss'], true);
 }
 
 /* ==================================================== l'aperçu qui oriente
@@ -966,7 +1015,7 @@ await dodo(500);
   check('l’aperçu dit ce qui est en jeu', /CE QUI EST EN JEU/.test(t)
     || (console.log('        il dit :', t.slice(0, 120)), false));
   check('il nomme les séries ouvertes', /Séries ouvertes/.test(t));
-  check('et il nomme l’onglet où ça se change', /SAISONS/.test(t));
+  check('et il nomme l’onglet où ça se change', /PASS › BASE/.test(t));
 }
 
 /* ==================================================== l'onglet CONTENUS
