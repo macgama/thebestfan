@@ -330,9 +330,9 @@ titre('La tenue du PASS, hors des boosters et de l’étal');
 
 titre('Les anciens PASS : en boutique');
 {
-  const C = 'bbbb0000-0000-0000-0000-000000000003';
+  const C = 'bbbb0000-0000-0000-0000-0000000000a3';
   await pool.query("INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')",
-    [C, 'p2@ex.fr', 'Pass2']);
+    [C, 'ancien-pass@ex.fr', 'AncienPass']);
   await pool.query('INSERT INTO user_wallet (user_id,scarves,packs) VALUES (?,90000,0)', [C]);
   const postJ = async (p, corps) => {
     const r = await fetch(base + p, { method: 'POST', headers: { 'Content-Type': 'application/json' },
