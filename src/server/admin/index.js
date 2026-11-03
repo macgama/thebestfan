@@ -15,7 +15,8 @@ import { SAISONS_PREVUES, CARNET_TRIMESTRE } from '../../shared/saisons-prevues.
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STADES } from '../../shared/stades.js';
 import { MINI_JEUX } from '../../shared/mini-jeux.js';
-import { ouverts } from '../contenus/index.js';
+import { ouverts, CHANTS_MIN } from '../contenus/index.js';
+import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
 // Les gestes du jeu viennent de leur source unique : voir plus bas.
 import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
@@ -604,6 +605,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const actions = liste(p.actions);
     const stades = liste(p.stades);
     const jeux = liste(p.jeux);
+    const chants = liste(p.chants);
 
     const inconnue = series.find((id) => !SETS.some((s) => s.id === id));
     if (inconnue) throw fail('admin.error.serie_inconnue');
@@ -636,34 +638,43 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     if (jeux.some((id) => !MINI_JEUX.some((x) => x.id === id))) {
       throw fail('admin.error.contenu_inconnu');
     }
-    return { series, tenues, stuff, actions, stades, jeux };
+    if (chants.some((id) => !CHANTS[id])) throw fail('admin.error.contenu_inconnu');
+    return { series, tenues, stuff, actions, stades, jeux, chants };
   }
 
-  /* **La colonne des mini-jeux** (`saisons.jeux`, sql/contenus.sql). Lue une
-     fois : une base où elle manque crée et modifie ses saisons comme avant, et
-     refuse seulement une saison qui nomme un mini-jeu, en nommant le fichier.
-     Elle s'écrit à part, après le reste : la mêler aux autres colonnes ferait
-     tomber une base sans elle dans le repli « sans dates ». */
-  let colonneJeux = null;
-  async function aColonneJeux() {
-    if (colonneJeux === null) {
+  /* **Les colonnes des mini-jeux et des chants** (`saisons.jeux` et
+     `saisons.chants`, sql/contenus.sql). Lues une fois : une base où elles
+     manquent crée et modifie ses saisons comme avant, et refuse seulement une
+     saison qui en nomme, en nommant le fichier. Elles s'écrivent à part, après
+     le reste : les mêler aux autres colonnes ferait tomber une base sans elles
+     dans le repli « sans dates ». */
+  const COLONNES_A_PART = [['jeux', 'Les mini-jeux'], ['chants', 'Les chants']];
+  const colonnes = new Map();
+  async function aColonne(nom) {
+    if (!colonnes.has(nom)) {
       try {
-        const r = await q(`SHOW COLUMNS FROM saisons LIKE 'jeux'`);
-        colonneJeux = r.length > 0;
-      } catch { colonneJeux = false; }
+        // `nom` vient de COLONNES_A_PART, jamais d'une requête : écrit en clair,
+        // parce qu'un SHOW préparé refuse son paramètre.
+        const r = await q(`SHOW COLUMNS FROM saisons LIKE '${nom}'`);
+        colonnes.set(nom, r.length > 0);
+      } catch { colonnes.set(nom, false); }
     }
-    return colonneJeux;
+    return colonnes.get(nom);
   }
-  async function verifierColonneJeux(jeux) {
-    if (jeux?.length && !(await aColonneJeux())) {
-      throw Object.assign(fail('admin.error.saison_colonnes', 503), {
-        raison: 'Les mini-jeux d’une saison demandent sql/contenus.sql : '
-          + 'applique-le (npm run schema:appliquer), puis redémarre le serveur.' });
+  async function verifierColonnes(c) {
+    for (const [nom, mots] of COLONNES_A_PART) {
+      if (c[nom]?.length && !(await aColonne(nom))) {
+        throw Object.assign(fail('admin.error.saison_colonnes', 503), {
+          raison: `${mots} d’une saison demandent sql/contenus.sql : `
+            + 'applique-le (npm run schema:appliquer), puis redémarre le serveur.' });
+      }
     }
   }
-  async function ecrireJeux(id, jeux) {
-    if (!(await aColonneJeux())) return;
-    await q(`UPDATE saisons SET jeux = ? WHERE id = ?`, [JSON.stringify(jeux ?? []), id]);
+  async function ecrireColonnes(id, c) {
+    for (const [nom] of COLONNES_A_PART) {
+      if (!(await aColonne(nom))) continue;
+      await q(`UPDATE saisons SET ${nom} = ? WHERE id = ?`, [JSON.stringify(c[nom] ?? []), id]);
+    }
   }
 
   /* `texte` existe déjà plus haut et tronque sans jamais rendre `null`. Ici on
@@ -774,6 +785,20 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     raison: 'Les dates et le carnet d’une saison demandent sql/quotidien.sql : '
       + 'applique-le (npm run schema:appliquer), puis redémarre le serveur.' });
 
+  /* **La série ou le skin d'un objet** (demande de Gaël du 3 novembre 2026 :
+     distinguer ce qui est lié à une série pour l'ouvrir d'un coup dans un
+     PASS). L'équipement le dit par son préfixe (`rp-`, `an-`, `hw-`…) ; une
+     fiche qui écrit `serie: 'XX'` le dit d'elle-même. Rien : commun. */
+  const SKIN_DU_PREFIXE = { hw: 'halloween', ph: 'prehistorique', ap: 'apocalyptique' };
+  function groupeDe(o) {
+    const code = o.serie ?? (o.id.includes('-') ? o.id.split('-')[0].toUpperCase() : null);
+    const set = code ? SETS.find((x) => x.id === code) : null;
+    if (set) return { groupe: `serie:${set.id}`, groupeNom: set.nom };
+    const skin = code ? SKIN_DU_PREFIXE[code.toLowerCase()] : null;
+    if (skin) return { groupe: `skin:${skin}`, groupeNom: `Skin ${tenuePar(skin)?.nom ?? skin}` };
+    return {};
+  }
+
   async function listerSaisons() {
     return {
       saisons: toutesLesSaisons(),
@@ -792,16 +817,18 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       choix: {
         series: SETS.map((s) => ({ id: s.id, nom: s.nom })),
         tenues: toutesTenues().map((t) => ({ id: t.id, nom: t.nom, publie: t.publie })),
-        stuff: STUFF.map((s) => ({ id: s.id, nom: s.nom })),
-        actions: ACTIONS.map((a) => ({ id: a.id, nom: a.nom })),
+        stuff: STUFF.map((s) => ({ id: s.id, nom: s.nom, ...groupeDe(s) })),
+        actions: ACTIONS.map((a) => ({ id: a.id, nom: a.nom, ...groupeDe(a) })),
         /* **Les stades manquaient.** La colonne `saisons.stades` existe,
            `validerContenu` les accepte et `lancerSaison` les publie — mais ils
            n'étaient pas dans cette liste, donc l'écran ne pouvait pas les
            proposer. Dix stades dans le code, aucun levier pour les ouvrir : un
            champ réglable qui n'apparaît nulle part est un champ qui n'existe
            pas, quoi qu'en dise le serveur. */
-        stades: STADES.map((x) => ({ id: x.id, nom: x.nom })),
-        jeux: MINI_JEUX.map((x) => ({ id: x.id, nom: x.nom })),
+        stades: STADES.map((x) => ({ id: x.id, nom: x.nom, ...groupeDe(x) })),
+        jeux: MINI_JEUX.map((x) => ({ id: x.id, nom: x.nom, ...groupeDe(x) })),
+        /* Les chants du DUEL et du VIRAGE, dans l'ordre où ils sont offerts. */
+        chants: ORDRE.map((id) => ({ id, nom: CHANTS[id].nom })),
       },
       /* Les séries de championnat (celles dont les Fanzzy sont liés aux clubs) :
          l'écran les range à part, pour qu'un PASS ouvre à sa date, pour tous,
@@ -823,6 +850,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
         actions: [...ouverts('action')],
         stades: [...ouverts('stade')],
         jeux: [...ouverts('jeu')],
+        chants: [...ouverts('chant')],
       },
     };
   }
@@ -843,10 +871,11 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   const FAMILLES_PASS = [
     ['series', 'série(s)'], ['tenues', 'skin(s)'], ['stuff', 'pièce(s) d’équipement'],
     ['actions', 'carte(s) d’action'], ['stades', 'stade(s)'], ['jeux', 'mini-jeu(x)'],
+    ['chants', 'chant(s)'],
   ];
   /* La famille de `contenus` qui publie chaque liste ; séries et tenues ont
      leur propre chemin. */
-  const CONTENU_DE = { stuff: 'stuff', actions: 'action', stades: 'stade', jeux: 'jeu' };
+  const CONTENU_DE = { stuff: 'stuff', actions: 'action', stades: 'stade', jeux: 'jeu', chants: 'chant' };
 
   function saisonDeBase() {
     return toutesLesSaisons().reduce((m, x) => (!m || x.numero < m.numero
@@ -908,12 +937,16 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       throw Object.assign(fail('admin.error.base_sans_serie'), {
         raison: 'La BASE garde au moins une série : sans aucune, le jeu rouvrirait toutes les séries.' });
     }
-    await verifierColonneJeux(c.jeux);
+    if (c.chants.length < CHANTS_MIN) {
+      throw Object.assign(fail('admin.error.base_peu_de_chants'), {
+        raison: `La BASE garde au moins ${CHANTS_MIN} chants : le DUEL et le VIRAGE en offrent cinq.` });
+    }
+    await verifierColonnes(c);
 
     await q(`UPDATE saisons SET series = ?, tenues = ?, stuff = ?, actions = ?, stades = ?
               WHERE id = ?`, [JSON.stringify(c.series), JSON.stringify(c.tenues),
       JSON.stringify(c.stuff), JSON.stringify(c.actions), JSON.stringify(c.stades), base.id]);
-    await ecrireJeux(base.id, c.jeux);
+    await ecrireColonnes(base.id, c);
 
     const ouvre = {};
     const ferme = {};
@@ -953,6 +986,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       actions: ouverts('action'),
       stades: ouverts('stade'),
       jeux: ouverts('jeu'),
+      chants: ouverts('chant'),
     };
   }
 
@@ -970,7 +1004,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const fin = lireJour(p?.fin_le, 'fin_le') ?? null;
     const ouvre = lireJour(p?.ouvre_le, 'ouvre_le') ?? null;
     const carnet = lireCarnet(p?.carnet) ?? null;
-    await verifierColonneJeux(c.jeux);
+    await verifierColonnes(c);
 
     const valeurs = [numero, nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series),
       JSON.stringify(c.tenues), JSON.stringify(c.stuff), JSON.stringify(c.actions),
@@ -991,7 +1025,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
         `INSERT INTO saisons (numero, nom, texte, series, tenues, stuff, actions, stades)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, valeurs);
     }
-    await ecrireJeux(r.insertId, c.jeux);
+    await ecrireColonnes(r.insertId, c);
     await chargerSaisons(pool);
     await journal(acteur, 'saison.creee', String(r.insertId), { nom, numero, ...c,
       fin_le: fin, ouvre_le: ouvre, carnet: carnet ?? 'défaut' }, ip_);
@@ -1009,7 +1043,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const ouvre = lireJour(p?.ouvre_le, 'ouvre_le');
     const carnet = lireCarnet(p?.carnet);
     const carnetChange = carnet !== undefined && !memeCarnet(carnet, avant.carnet ?? null);
-    await verifierColonneJeux(c.jeux);
+    await verifierColonnes(c);
 
     /* **Le carnet se fige au premier palier versé.** Le formulaire renvoie le
        carnet à chaque enregistrement : on ne refuse donc qu'un carnet qui
@@ -1062,7 +1096,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
                             stuff = ?, actions = ?, stades = ?
           WHERE id = ?`, [...valeurs, avant.id]);
     }
-    await ecrireJeux(avant.id, c.jeux);
+    await ecrireColonnes(avant.id, c);
     await chargerSaisons(pool);
     /* Modifier une saison **déjà lancée** change ce qui est ouvert. On recharge
        donc les séries, sans quoi le jeu continuerait de distribuer selon
@@ -1166,7 +1200,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
          tenues, elles, s'ouvrent. */
       if (deps.contenus) {
         for (const [famille, liste] of [['action', s.actions], ['stuff', s.stuff],
-          ['stade', s.stades], ['jeu', s.jeux]]) {
+          ['stade', s.stades], ['jeu', s.jeux], ['chant', s.chants]]) {
           if (liste?.length) await deps.contenus.publier(famille, liste, true);
         }
       }
@@ -1178,10 +1212,10 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
          parmi les lancées, et rien ne se fermerait jamais. */
       /* Les mini-jeux suivent la même règle que les stades : personne ne les
          possède, les refermer ne retire rien à personne. */
-      if (deps.contenus && (s.stades.length || s.jeux?.length)) {
+      if (deps.contenus && (s.stades.length || s.jeux?.length || s.chants?.length)) {
         await chargerSaisons(pool);
         const lanceesIci = toutesLesSaisons().filter((x) => x.lancee);
-        for (const [famille, cle] of [['stade', 'stades'], ['jeu', 'jeux']]) {
+        for (const [famille, cle] of [['stade', 'stades'], ['jeu', 'jeux'], ['chant', 'chants']]) {
           const ailleurs = new Set(lanceesIci.flatMap((x) => x[cle] ?? []));
           const aFermer = (s[cle] ?? []).filter((id) => !ailleurs.has(id));
           if (aFermer.length) await deps.contenus.publier(famille, aFermer, false);

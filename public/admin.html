@@ -238,6 +238,9 @@ tr.cmp-off td:not(.act){opacity:.5}
 .sai-k:has(input:checked){border-color:#1E9E6A;background:rgba(30,158,106,.14)}
 .sai-k input{margin:0;accent-color:#1E9E6A}
 .sai-rien{font-size:11.5px;opacity:.5}
+.sai-gr{display:contents}
+.sai-tout{margin-left:6px;padding:1px 7px;font-size:9.5px;letter-spacing:.08em;border-radius:9px;
+  border:1px solid currentColor;background:none;color:inherit;cursor:pointer;opacity:1}
 .sai-g{flex-basis:100%;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.5;margin-top:4px}
 .sai-k.verrou{cursor:default;opacity:.55;border-style:dashed}
 .sai-k.verrou small{opacity:.8;font-size:10px}
@@ -646,6 +649,42 @@ async function offrirDepuis(ligne) {
   } catch (err) { recuRate(err); }
 }
 
+/* **Les cases d'une famille, rangées** (demande de Gaël du 3 novembre 2026).
+   Les séries : de championnat, puis hors championnat. Le reste : par série ou
+   par skin, d'après le `groupe` que le serveur pose sur l'objet, ce qui n'est
+   lié à rien d'abord. Chaque groupe a son bouton « tout », qui coche ou
+   décoche le groupe entier : ouvrir l'équipement d'une série en un geste. */
+function casesRangees(source, liste, caseDe, deClub) {
+  let groupes;
+  if (source === 'series') {
+    groupes = [['De championnat', liste.filter((x) => deClub.has(x.id))],
+      ['Hors championnat', liste.filter((x) => !deClub.has(x.id))]];
+  } else {
+    const m = new Map([[null, []]]);
+    for (const x of liste) {
+      const k = x.groupeNom ?? null;
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(x);
+    }
+    groupes = [...m].map(([t, l]) => [t ?? (m.size > 1 ? 'Liés à aucune série' : null), l]);
+  }
+  return groupes.filter(([, l]) => l.length).map(([t, l]) => `<span class="sai-gr">${t
+    ? `<span class="sai-g">${esc(t)}${l.length > 1
+      ? ' <button type="button" class="sai-tout" data-tout>tout</button>' : ''}</span>` : ''}${
+    l.map(caseDe).join('')}</span>`).join('');
+}
+/* Le bouton « tout » d'un groupe : tout coché, il décoche ; sinon il coche. */
+function brancherTout(racine = document) {
+  racine.querySelectorAll('[data-tout]').forEach((b) => {
+    b.onclick = (e) => {
+      e.preventDefault();
+      const cases = [...b.closest('.sai-gr').querySelectorAll('input[type=checkbox]')];
+      const tout = cases.every((c) => c.checked);
+      cases.forEach((c) => { c.checked = !tout; });
+    };
+  });
+}
+
 const VUES = {
   /**
    * L'aperçu, et **ce qui est en jeu en ce moment**.
@@ -814,6 +853,7 @@ const VUES = {
       ['series', 'SÉRIES', 'série(s)'], ['tenues', 'SKINS', 'skin(s)'],
       ['stuff', 'ÉQUIPEMENT', 'pièce(s) d’équipement'], ['actions', 'CARTES D’ACTION', 'carte(s) d’action'],
       ['stades', 'STADES', 'stade(s)'], ['jeux', 'MINI-JEUX', 'mini-jeu(x)'],
+      ['chants', 'CHANTS DU DUEL ET DU VIRAGE', 'chant(s)'],
     ];
     /* Ce qui n'est pas à la BASE : à quel PASS il appartient, ou `null`. */
     const verrou = (f, id) => {
@@ -835,13 +875,8 @@ const VUES = {
       const pris = d.choix[f].filter((x) => verrou(f, x.id));
       const caseDe = (x) => `<label class="sai-k"><input type="checkbox" value="${esc(x.id)}"
         ${depart[f].has(x.id) ? 'checked' : ''}>${esc(x.nom)}</label>`;
-      const groupes = f === 'series'
-        ? [['De championnat', libres.filter((x) => deClub.has(x.id))],
-          ['Hors championnat', libres.filter((x) => !deClub.has(x.id))]].filter(([, l]) => l.length)
-        : [[null, libres]];
       return `<div class="sai-ks" id="b-${f}">${libres.length
-        ? groupes.map(([t, l]) => (t ? `<span class="sai-g">${t}</span>` : '')
-          + l.map(caseDe).join('')).join('')
+        ? casesRangees(f, libres, caseDe, deClub)
         : '<span class="sai-rien">Rien : tout appartient à un PASS.</span>'}</div>
         ${pris.length ? `<details class="sai-deja"><summary>Hors de la BASE : ${pris.length}
           — ${pris.length > 1 ? 'ils appartiennent' : 'il appartient'} à un PASS</summary>
@@ -879,6 +914,7 @@ const VUES = {
               Fanzzy, leurs skins d’âge et leurs Ultimate.</p>` : ''}</div>`).join('')}
           <div class="sai-a"><button class="mini vert" id="base-ok">Enregistrer la BASE</button></div>
         </div>`);
+      brancherTout($('main'));
       $('base-ok').onclick = async () => {
         const coche = (f) => [...document.querySelectorAll(`#b-${f} input:checked`)].map((i) => i.value);
         const corps = Object.fromEntries(FAMILLES.map(([f]) => [f, coche(f)]));
@@ -977,7 +1013,8 @@ const VUES = {
           <dt>Équipement</dt><dd>${esc(noms(s.stuff, 'stuff')) || '—'}</dd>
           <dt>Cartes</dt><dd>${esc(noms(s.actions, 'actions')) || '—'}</dd>
           <dt>Stades</dt><dd>${esc(noms(s.stades ?? [], 'stades')) || '—'}</dd>
-          <dt>Mini-jeux</dt><dd>${esc(noms(s.jeux ?? [], 'jeux')) || '—'}</dd>`}
+          <dt>Mini-jeux</dt><dd>${esc(noms(s.jeux ?? [], 'jeux')) || '—'}</dd>
+          <dt>Chants</dt><dd>${esc(noms(s.chants ?? [], 'chants')) || '—'}</dd>`}
           <dt>Fin</dt><dd>${esc(finTexte(s))}</dd>
           ${s.lancee ? '' : `<dt>Ouverture</dt><dd>${s.ouvre
             ? `annoncée aux joueurs pour le ${esc(jourFr(s.ouvre))}` : 'pas annoncée'}</dd>`}
@@ -1057,13 +1094,8 @@ const VUES = {
     const cases = (source, choisis) => {
       const neufs = d.choix[source].filter((x) => !enJeu[source]?.has(x.id));
       const deja = dejaEnJeu(source);
-      const groupes = source === 'series'
-        ? [['De championnat', neufs.filter((x) => deClub.has(x.id))],
-          ['Hors championnat', neufs.filter((x) => !deClub.has(x.id))]].filter(([, l]) => l.length)
-        : [[null, neufs]];
       return `<div class="sai-ks" id="s-${source}">${neufs.length
-        ? groupes.map(([titre, l]) => (titre ? `<span class="sai-g">${titre}</span>` : '')
-          + l.map((x) => caseDe(x, choisis)).join('')).join('')
+        ? casesRangees(source, neufs, (x) => caseDe(x, choisis), deClub)
         : '<span class="sai-rien">Rien de neuf à ajouter : tout est déjà en jeu.</span>'}</div>
         ${deja.length ? `<details class="sai-deja"><summary>Déjà en jeu : ${deja.length}
           — ${deja.length > 1 ? 'ils restent' : 'il reste'}, rien à cocher</summary>
@@ -1072,7 +1104,7 @@ const VUES = {
 
     function formulaire(s) {
       const v = s ?? { numero: '', nom: '', texte: '',
-        series: [], tenues: [], stuff: [], actions: [], stades: [], jeux: [] };
+        series: [], tenues: [], stuff: [], actions: [], stades: [], jeux: [], chants: [] };
       const base = Boolean(s && estBase(s));
       /* Un carnet figé se montre sans se modifier, et ne repart pas au serveur :
          il n'y a rien à y décider, et un champ qu'on peut taper mais qui sera
@@ -1136,13 +1168,16 @@ const VUES = {
           <div class="sai-l"><p class="sai-lt">STADES — ils s’ouvrent</p>
             ${cases('stades', v.stades ?? [])}</div>
           <div class="sai-l"><p class="sai-lt">MINI-JEUX — ils s’ouvrent</p>
-            ${cases('jeux', v.jeux ?? [])}</div>`}
+            ${cases('jeux', v.jeux ?? [])}</div>
+          <div class="sai-l"><p class="sai-lt">CHANTS DU DUEL ET DU VIRAGE — ils s’ouvrent</p>
+            ${cases('chants', v.chants ?? [])}</div>`}
           <div class="sai-a">
             <button class="mini" id="s-annuler">Annuler</button>
             <button class="mini vert" id="s-ok">${s ? 'Enregistrer' : 'Créer le brouillon'}</button>
           </div>
         </div>`;
       $('sai-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      brancherTout($('sai-form'));
 
       /* Les cases cochées, plus ce que la saison nommait déjà parmi le déjà en
          jeu : ces lignes-là n'ont pas de case, et les perdre à l'enregistrement
@@ -1158,7 +1193,7 @@ const VUES = {
           nom: $('s-nom').value, texte: $('s-txt').value,
           series: coches('series'), tenues: coches('tenues'),
           stuff: coches('stuff'), actions: coches('actions'),
-          stades: coches('stades'), jeux: coches('jeux'),
+          stades: coches('stades'), jeux: coches('jeux'), chants: coches('chants'),
           /* Vides, les deux jours partent vides : le serveur les efface. Le
              carnet part tel qu'il est tapé, et c'est le serveur qui le juge —
              son refus nomme le palier fautif. */
@@ -1199,7 +1234,7 @@ const VUES = {
            s'ouvre » grossissait la liste sans rien dire. */
         const FAMILLES = [['series', 'série(s)'], ['tenues', 'tenue(s)'],
           ['stuff', 'pièce(s) d’équipement'], ['actions', 'carte(s) d’action'],
-          ['stades', 'stade(s)'], ['jeux', 'mini-jeu(x)']];
+          ['stades', 'stade(s)'], ['jeux', 'mini-jeu(x)'], ['chants', 'chant(s)']];
         const neufs = (src) => (s[src] ?? []).filter((id) => !enJeu[src]?.has(id));
         const ouvre = FAMILLES.map(([src, mot]) => {
           const n = neufs(src);
