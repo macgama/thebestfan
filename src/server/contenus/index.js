@@ -223,7 +223,30 @@ export function createContenus({ pool } = {}) {
     return r.affectedRows ?? 0;
   }
 
-  return { charger, semer, publier };
+  /**
+   * **La série d'un contenu**, posée depuis l'administration (demande de Gaël
+   * du 3 novembre 2026 : ranger lui-même un stade, une carte d'action ou un
+   * mini-jeu sous une série, pour l'ouvrir avec elle dans un PASS).
+   *
+   * Elle vit dans `donnees.serie`, la même clé qu'une fiche du code peut
+   * écrire : aucune colonne neuve, et le semis (`INSERT IGNORE`) ne l'écrase
+   * jamais. `serie` vide ou nulle la retire.
+   */
+  async function lierSerie(famille, id, serie) {
+    const code = serie ? String(serie) : null;
+    const [r] = code
+      ? await pool.execute(
+        `UPDATE contenus SET donnees = JSON_SET(COALESCE(donnees, JSON_OBJECT()), '$.serie', ?)
+         WHERE famille = ? AND id = ?`, [code, famille, String(id)])
+      : await pool.execute(
+        `UPDATE contenus SET donnees = JSON_REMOVE(COALESCE(donnees, JSON_OBJECT()), '$.serie')
+         WHERE famille = ? AND id = ?`, [famille, String(id)]);
+    const o = memoire?.[famille]?.find((x) => x.id === String(id));
+    if (o) { if (code) o.serie = code; else delete o.serie; }
+    return r.affectedRows ?? 0;
+  }
+
+  return { charger, semer, publier, lierSerie };
 }
 
 /* ------------------------------------------------------------- la lecture

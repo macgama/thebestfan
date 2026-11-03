@@ -1591,12 +1591,21 @@ const VUES = {
     const publies = familles.reduce((n, [, x]) =>
       n + x.liste.filter((y) => y.publie !== false).length, 0);
 
+    /* La série que son identifiant lui donne déjà (`rp-…`), quand c'en est une. */
+    const prefixe = (id) => { const c = id.includes('-') ? id.split('-')[0].toUpperCase() : '';
+      return (d.series ?? []).some((s) => s.id === c) ? c : ''; };
     const ligne = (x) => `<tr class="${x.publie === false ? 'depublie' : ''}">
       <td><b>${esc(x.nom ?? x.id)}</b>
         ${x.publie === false ? '<span class="pill off">RETIRÉ</span>' : ''}
         <br><span style="opacity:.45;font-size:11px">${esc(x.id)}</span></td>
       <td>${esc(d.familles[x.famille].nom)}</td>
       <td>${esc(x.rar ?? '—')}</td>
+      <td>${x.famille === 'chant' ? '<span style="opacity:.45">—</span>'
+        : `<select class="mini" data-serie="${esc(x.id)}" data-famille="${esc(x.famille)}"
+            title="Le menu PASS la range sous cette série">
+            <option value="">${prefixe(x.id) ? `${esc(prefixe(x.id))} (par son identifiant)` : 'aucune'}</option>
+            ${(d.series ?? []).map((s) => `<option value="${esc(s.id)}"${x.serie === s.id ? ' selected' : ''}>${
+              esc(s.id)} · ${esc(s.nom)}</option>`).join('')}</select>`}</td>
       <td style="text-align:right">
         <button class="mini ${x.publie === false ? 'vert' : 'rouge'}"
           data-basculer="${esc(x.id)}" data-famille="${esc(x.famille)}"
@@ -1611,7 +1620,9 @@ const VUES = {
         <p class="series-n">Retirer une carte d'action, une pièce d'équipement ou un
           stade le sort des tirages et des parties <b>immédiatement</b>, sans
           l'effacer. C'est le seul endroit d'où l'on referme ce qu'une saison a
-          ouvert — le menu <b>PASS</b> ouvre (sa BASE ouvre et referme).</p>
+          ouvert — le menu <b>PASS</b> ouvre (sa BASE ouvre et referme).
+          La colonne <b>SÉRIE</b> range un contenu sous une série : le menu
+          <b>PASS</b> l'ouvre alors avec elle, d'un bouton « tout ».</p>
       </div>
       ${(d.piecesDeClub ?? []).map((p) => {
         const manque = p.ecrites < p.attendues || p.dessinees < p.attendues || p.ouvertes < p.attendues;
@@ -1632,9 +1643,9 @@ const VUES = {
         <input id="c-q" placeholder="nom ou identifiant" value="${esc(f2.q)}" style="flex:1">
       </div>
       <div class="compte">${lignes.length} ligne(s)</div>
-      <div class="tbl"><table><thead><tr><th>NOM</th><th>FAMILLE</th><th>RARETÉ</th><th></th></tr></thead>
+      <div class="tbl"><table><thead><tr><th>NOM</th><th>FAMILLE</th><th>RARETÉ</th><th>SÉRIE</th><th></th></tr></thead>
       <tbody id="c-corps">${lignes.map(ligne).join('')
-        || '<tr><td colspan="4" class="vide">Rien ne correspond.</td></tr>'}</tbody></table></div>`;
+        || '<tr><td colspan="5" class="vide">Rien ne correspond.</td></tr>'}</tbody></table></div>`;
 
     const relire = () => VUES.contenus({
       famille: $('c-famille').value, etat: $('c-etat').value, q: $('c-q').value });
@@ -1647,6 +1658,17 @@ const VUES = {
        posé sur `#main` survit au changement d'onglet — `innerHTML` remplace les
        enfants, jamais les gestionnaires du parent — et resterait branché sous
        toutes les vues suivantes. */
+    $('c-corps').onchange = async (e) => {
+      const sel = e.target.closest('[data-serie]');
+      if (!sel) return;
+      sel.disabled = true;
+      try {
+        await api('/contenus/serie', { famille: sel.dataset.famille,
+          id: sel.dataset.serie, serie: sel.value });
+        recu(sel.value ? `Rangé sous la série ${sel.value}.` : 'Plus rangé sous une série.');
+      } catch (err) { recuRate(err); }
+      sel.disabled = false;
+    };
     $('c-corps').onclick = async (e) => {
       const b = e.target.closest('[data-basculer]');
       if (!b) return;
