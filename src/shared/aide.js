@@ -288,6 +288,12 @@ const RUBRIQUES = [
         () => 'Les communes sont offertes à tout le monde. Sans elles, un joueur qui '
           + `débute ne pourrait pas remplir ses ${DECK_RULES.actions} emplacements le `
           + 'premier jour.'],
+      ['Pourquoi certaines cartes d’action ne partent pas ?',
+        () => 'Certaines suivent le vrai match : Mi-temps, But au stade !, Carton rouge, '
+          + 'Coup de sifflet, Temps additionnel, Prolongations. Elles ne se jouent qu’au '
+          + 'moment qu’elles disent (la mi-temps, un vrai but de ton club, un rouge en face…). '
+          + 'D’autres demandent d’être mené au score. Et les cartes d’un PASS arrivent pour '
+          + 'tout le monde le jour où sa saison commence.'],
       ['C’est quoi, une pièce de club ?',
         () => 'Une pièce d’équipement aux couleurs d’un club, deux par club des Terraces '
           + 'pour commencer. Portée par un Fanzzy lié au même club, c’est le COMBO : son '

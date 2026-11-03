@@ -323,9 +323,312 @@ export const ACTIONS = [
        ce qui n'est pas la même chose et ne se joue pas au même moment. Une fois
        et demie par duel au mieux, et seulement quand on perd. */
     effet: { type: 'refill', part: 1 }, condition: { mene: 1 } },
+
+  /* =========================================== LA RELANCE (novembre 2026)
+
+     ## Pourquoi encore des cartes
+
+     Gaël, le 3 novembre 2026 : « les joueurs ont vite reçu toutes les cartes
+     possibles ». Le constat se mesure : une carte se possède une fois, les
+     communes sont offertes à tous, et le booster ne tirait donc que **vingt-
+     neuf** cartes. Toutes possédées, la place « carte d'action » (près d'un
+     quart du booster) se repliait sur deux écharpes.
+
+     ## Ce qui est neuf
+
+     Comme LA REPRISE : **aucun verbe de plus**, des chiffres et des familles.
+     Les communes donnent du choix à qui débute (elles sont offertes) ; les
+     rares et plus regarnissent le booster. Chaque carte qui ressemble à une
+     ancienne paie sa différence — même règle qu'au-dessus.                    */
+
+  { id: 'a-petard', nom: 'Pétard', fam: 'pousse', rar: 'commune', cost: 10, cd: 6,
+    texte: 'Une petite poussée de 12, presque gratuite.',
+    /* La carte qu'on joue tout le temps : moitié du Fumigène, moitié de son
+       prix, et une recharge plus courte. Elle remplit les trous du souffle. */
+    effet: { type: 'push', valeur: 12 } },
+
+  { id: 'a-banderole', nom: 'Banderole', fam: 'pousse', rar: 'commune', cost: 18, cd: 20,
+    texte: 'Se déroule pendant 4 s — tout le monde la voit — puis pousse 50.',
+    /* Le petit Tifo : deux fois plus vite déroulée, à peine plus de la moitié
+       de sa force. Elle se fait bâcher pareil. */
+    effet: { type: 'delayed_push', valeur: 50, delai: 4000 } },
+
+  { id: 'a-sifflets', nom: 'Sifflets', fam: 'entrave', rar: 'commune', cost: 18, cd: 18,
+    texte: 'Pendant 6 s, la fenêtre de tempo adverse rétrécit d’un cinquième.',
+    effet: { type: 'mod_foe', mods: { tempoWindow: 0.8 }, duree: 6000 } },
+
+  { id: 'a-larsen', nom: 'Larsen', fam: 'entrave', rar: 'commune', cost: 16, cd: 16,
+    texte: 'Coupe le souffle adverse 2 s.',
+    effet: { type: 'silence', duree: 2000 } },
+
+  { id: 'a-gourde', nom: 'La Gourde', fam: 'souffle', rar: 'commune', cost: 8, cd: 10,
+    texte: 'Rend un tiers de ton souffle manquant.',
+    effet: { type: 'refill', part: 0.33 } },
+
+  { id: 'a-echarpe-tendue', nom: 'Écharpe tendue', fam: 'garde', rar: 'commune', cost: 14, cd: 12,
+    texte: 'Absorbe 25 de poussée adverse.',
+    effet: { type: 'shield', valeur: 25 } },
+
+  { id: 'a-ola', nom: 'Ola', fam: 'collectif', rar: 'commune', cost: 16, cd: 20,
+    texte: '8 de poussée par coéquipier qui chante dans les 8 s.',
+    /* Presque rien en 1v1, et c'est voulu : la commune du Virage. */
+    effet: { type: 'per_mate', valeur: 8, fenetre: 8000 } },
+
+  { id: 'a-tambour', nom: 'Tambour', fam: 'collectif', rar: 'commune', cost: 22, cd: 26,
+    texte: 'Pendant 10 s, toute ta tribune pousse 20 % plus fort.',
+    effet: { type: 'rally', duree: 10000, bonus: 1.2 } },
+
+  { id: 'a-bengale', nom: 'Feu de Bengale', fam: 'pousse', rar: 'rare', cost: 26, cd: 14,
+    texte: 'Pousse 34. Ton souffle revient moins vite pendant 4 s.',
+    effet: { type: 'push', valeur: 34 }, revers: { type: 'breath_mult', valeur: 0.7, duree: 4000 } },
+
+  { id: 'a-faussenote', nom: 'Fausse note', fam: 'entrave', rar: 'rare', cost: 26, cd: 22,
+    texte: 'Pendant 8 s, les frappes rapides de l’adversaire poussent un quart de moins.',
+    effet: { type: 'mod_foe', mods: { mashBonus: 0.75 }, duree: 8000 } },
+
+  { id: 'a-coupfranc', nom: 'Coup franc', fam: 'bascule', rar: 'rare', cost: 24, cd: 40,
+    texte: 'Jouable seulement si tu es mené d’au moins un but. Pousse 45.',
+    /* La petite Remontada : deux tiers de sa poussée, moins chère, deux fois
+       plus souvent. */
+    effet: { type: 'push', valeur: 45 }, condition: { mene: 1 } },
+
+  { id: 'a-megaphone', nom: 'Mégaphone', fam: 'collectif', rar: 'epique', cost: 32, cd: 30,
+    texte: 'Pendant 4 s, toute ta tribune pousse 60 % plus fort.',
+    /* Le coup de poing du capo : plus court que l'Appel, beaucoup plus fort. */
+    effet: { type: 'rally', duree: 4000, bonus: 1.6 } },
+
+  /* =========================================== LES CARTES DES PASS
+
+     Une série de cartes par PASS, **pour tous** comme les séries de Fanzzy
+     et les pièces : fermées (`publie: false`) jusqu'au jour où leur saison se
+     lance. Le préfixe (`a-hc-`, `a-mt-`, `a-gd-`, `a-rv-`) est celui que
+     `shared/saisons-prevues.js` donne à chaque saison : c'est par lui qu'elle
+     sait quelles cartes ouvrir.                                              */
+
+  /* ------------------------------ PASS 1 · LES HÉROS DU CANAPÉ (a-hc-) */
+  { id: 'a-hc-pause-pub', nom: 'Pause pub', fam: 'entrave', rar: 'rare', cost: 24, cd: 30, publie: false,
+    texte: 'L’adversaire ne joue plus de carte pendant 5 s. Ton souffle revient deux fois moins vite pendant 4 s.',
+    effet: { type: 'lock_actions', duree: 5000 }, revers: { type: 'breath_mult', valeur: 0.5, duree: 4000 } },
+
+  { id: 'a-hc-chips', nom: 'Paquet de chips', fam: 'souffle', rar: 'rare', cost: 6, cd: 14, publie: false,
+    texte: 'Rend 40 % de ton souffle manquant. Les doigts collent : ton souffle revient moins vite 3 s.',
+    effet: { type: 'refill', part: 0.4 }, revers: { type: 'breath_mult', valeur: 0.8, duree: 3000 } },
+
+  { id: 'a-hc-plaid', nom: 'Plaid', fam: 'garde', rar: 'rare', cost: 26, cd: 22, publie: false,
+    texte: 'Absorbe 50 de poussée adverse.',
+    effet: { type: 'shield', valeur: 50 } },
+
+  { id: 'a-hc-ralenti', nom: 'Ralenti', fam: 'entrave', rar: 'rare', cost: 28, cd: 24, publie: false,
+    texte: 'Pendant 7 s, le tempo adverse se serre et ses frappes rapides faiblissent.',
+    effet: { type: 'mod_foe', mods: { tempoWindow: 0.8, mashBonus: 0.85 }, duree: 7000 } },
+
+  { id: 'a-hc-reveil', nom: 'Réveil du canapé', fam: 'bascule', rar: 'epique', cost: 28, cd: 50, publie: false,
+    texte: 'Jouable seulement si tu es mené d’au moins un but. Ta poussée +50 % pendant 8 s.',
+    effet: { type: 'mod_self', mods: { pushMult: 1.5 }, duree: 8000 }, condition: { mene: 1 } },
+
+  /* La tenue des membres du PASS 1 est Préhistorique : ses deux cartes sont
+     pour tous, comme le reste de la saison. */
+  { id: 'a-hc-massue', nom: 'Massue', fam: 'pousse', rar: 'epique', cost: 38, cd: 20, publie: false,
+    texte: 'Pousse 56. Ton souffle revient deux fois moins vite pendant 6 s.',
+    effet: { type: 'push', valeur: 56 }, revers: { type: 'breath_mult', valeur: 0.5, duree: 6000 } },
+
+  { id: 'a-hc-feu-camp', nom: 'Feu de camp', fam: 'souffle', rar: 'epique', cost: 26, cd: 30, publie: false,
+    texte: 'Rend 16 de souffle à toute ta tribune, toi compris.',
+    effet: { type: 'team_breath', valeur: 16 } },
+
+  /* ------------------------------ PASS 2 · LES PHÉNOMÈNES MÉTÉO (a-mt-) */
+  { id: 'a-mt-averse', nom: 'Averse', fam: 'entrave', rar: 'rare', cost: 26, cd: 24, publie: false,
+    texte: 'Pendant 8 s, la pluie brouille le tempo adverse : fenêtre d’un quart plus étroite.',
+    effet: { type: 'mod_foe', mods: { tempoWindow: 0.75 }, duree: 8000 } },
+
+  { id: 'a-mt-eclaircie', nom: 'Éclaircie', fam: 'garde', rar: 'rare', cost: 22, cd: 26, publie: false,
+    texte: 'Pendant 6 s, les entraves d’en face ne te touchent pas.',
+    effet: { type: 'immunite', duree: 6000 } },
+
+  { id: 'a-mt-grele', nom: 'Grêle', fam: 'pousse', rar: 'rare', cost: 26, cd: 20, publie: false,
+    texte: 'Huit poussées en rafale sur 3 s, 56 en tout.',
+    effet: { type: 'push_over_time', valeur: 56, coups: 8, duree: 3000 } },
+
+  { id: 'a-mt-vent-arriere', nom: 'Vent arrière', fam: 'geste', rar: 'rare', cost: 22, cd: 24, publie: false,
+    texte: 'Pendant 8 s, ta fenêtre de tempo s’élargit de moitié.',
+    effet: { type: 'mod_self', mods: { tempoWindow: 1.5 }, duree: 8000 } },
+
+  { id: 'a-mt-orage', nom: 'Orage', fam: 'pousse', rar: 'epique', cost: 36, cd: 45, publie: false,
+    texte: 'Gronde pendant 10 s — tout le monde l’entend — puis frappe à 120.',
+    effet: { type: 'delayed_push', valeur: 120, delai: 10000 } },
+
+  /* ------------------------------ PASS 3 · LES GALÈRES DE DÉPLACEMENT (a-gd-) */
+  { id: 'a-gd-car', nom: 'Car de supporters', fam: 'collectif', rar: 'epique', cost: 36, cd: 32, publie: false,
+    texte: '22 de poussée par coéquipier qui chante dans les 6 s.',
+    effet: { type: 'per_mate', valeur: 22, fenetre: 6000 } },
+
+  { id: 'a-gd-aire', nom: 'Aire d’autoroute', fam: 'souffle', rar: 'rare', cost: 16, cd: 28, publie: false,
+    texte: 'Rend les deux tiers de ton souffle manquant.',
+    effet: { type: 'refill', part: 0.65 } },
+
+  { id: 'a-gd-train-retard', nom: 'Train en retard', fam: 'pousse', rar: 'rare', cost: 20, cd: 30, publie: false,
+    texte: 'Arrive dans 12 s — tout le monde l’attend — et pousse 70.',
+    effet: { type: 'delayed_push', valeur: 70, delai: 12000 } },
+
+  /* ------------------------------ PASS 4 · LES REVENANTS (a-rv-) */
+  { id: 'a-rv-frisson', nom: 'Frisson', fam: 'entrave', rar: 'rare', cost: 24, cd: 22, publie: false,
+    texte: 'Pendant 8 s, les gestes parfaits adverses valent moins et son tempo se serre.',
+    effet: { type: 'mod_foe', mods: { perfectBonus: 0.8, tempoWindow: 0.9 }, duree: 8000 } },
+
+  { id: 'a-rv-brume', nom: 'Brume du cimetière', fam: 'entrave', rar: 'epique', cost: 30, cd: 26, publie: false,
+    texte: 'Cache les cartes de l’adversaire pendant 8 s. Ton souffle revient moins vite 5 s.',
+    effet: { type: 'blind', duree: 8000 }, revers: { type: 'breath_mult', valeur: 0.7, duree: 5000 } },
+
+  { id: 'a-rv-outre-tombe', nom: 'Retour d’outre-tombe', fam: 'bascule', rar: 'legendaire', cost: 40, cd: 90, publie: false,
+    texte: 'Jouable seulement si tu es mené d’au moins deux buts. Pousse 100.',
+    effet: { type: 'push', valeur: 100 }, condition: { mene: 2 } },
+
+  /* =========================================== LE VRAI MATCH (novembre 2026)
+
+     Elles ne se jouent que pendant un vrai match, au moment qu'elles disent :
+     voir `conditionReelleRemplie` plus bas. Hors match (un entraînement, un
+     match pas commencé), elles restent en main sans pouvoir partir.          */
+
+  { id: 'a-mitemps', nom: 'Mi-temps', fam: 'souffle', rar: 'rare', cost: 10, cd: 60,
+    texte: 'Entre la 40e et la 50e minute du vrai match, ou à la mi-temps. Rend tout ton souffle.',
+    effet: { type: 'refill', part: 1 }, condition: { minuteEntre: [40, 50] } },
+
+  { id: 'a-but-au-stade', nom: 'But au stade !', fam: 'pousse', rar: 'epique', cost: 24, cd: 60,
+    texte: 'Dans les 2 minutes après un vrai but de ton club. Pousse 80.',
+    effet: { type: 'push', valeur: 80 }, condition: { butRecent: 120_000 } },
+
+  { id: 'a-carton-rouge', nom: 'Carton rouge', fam: 'collectif', rar: 'epique', cost: 26, cd: 60,
+    texte: 'Dans les 5 minutes après un vrai carton rouge contre le club d’en face. Toute ta tribune pousse 40 % plus fort pendant 8 s.',
+    /* Une carte de tribune, pas une entrave : elle se joue aussi au Virage,
+       où le carton rouge arrive par le fil du match. */
+    effet: { type: 'rally', duree: 8000, bonus: 1.4 }, condition: { rougeAdverse: 300_000 } },
+
+  { id: 'a-coup-sifflet', nom: 'Coup de sifflet', fam: 'bascule', rar: 'rare', cost: 20, cd: 60,
+    texte: 'Pendant les 10 premières minutes du vrai match. Toutes tes cartes redeviennent jouables.',
+    effet: { type: 'clear_cooldowns' }, condition: { minuteMax: 10 } },
+
+  { id: 'a-temps-additionnel', nom: 'Temps additionnel', fam: 'bascule', rar: 'epique', cost: 30, cd: 60,
+    texte: 'Après la 90e minute du vrai match. Ta poussée +50 % pendant 10 s.',
+    effet: { type: 'mod_self', mods: { pushMult: 1.5 }, duree: 10000 },
+    condition: { minuteReelle: 90 } },
+
+  /* =========================================== LES MÉCANIQUES NEUVES (novembre 2026)
+
+     Gaël, 3 novembre 2026 : « Ok pour les nouvelles mécaniques ». Celles-ci
+     ont chacune leur branche dans les moteurs : la main de l'adversaire, sa
+     dernière carte, un piège posé d'avance, une série de gestes parfaits, la
+     taille de sa main, la vitesse des recharges, la place de la tribune.   */
+
+  { id: 'a-chambrage', nom: 'Chambrage', fam: 'entrave', rar: 'rare', cost: 24, cd: 30,
+    texte: 'Prend la dernière carte jouée par l’adversaire : elle arrive dans ta main, pour une fois.',
+    effet: { type: 'steal_card' } },
+
+  { id: 'a-echo', nom: 'Écho', fam: 'souffle', rar: 'rare', cost: 18, cd: 35,
+    texte: 'Rejoue ta dernière carte, sans la payer. Pas une légendaire, ni une carte à condition.',
+    effet: { type: 'replay_last' } },
+
+  { id: 'a-piege', nom: 'Piège à la buvette', fam: 'garde', rar: 'epique', cost: 26, cd: 30,
+    texte: 'Posé face cachée : la prochaine carte de poussée adverse est perdue, sans effet.',
+    effet: { type: 'trap', charges: 1 } },
+
+  { id: 'a-tribune-chaude', nom: 'Tribune chaude', fam: 'geste', rar: 'epique', cost: 26, cd: 35,
+    texte: 'Pendant 15 s, chaque chant parfait d’affilée pousse 10 % de plus, jusqu’à +50 %. Un raté remet à zéro.',
+    effet: { type: 'streak', duree: 15000, pas: 0.1, max: 0.5 } },
+
+  { id: 'a-recrue', nom: 'Recrue', fam: 'souffle', rar: 'commune', cost: 12, cd: 30,
+    texte: 'Ta main passe de 5 à 6 cartes pendant 15 s.',
+    effet: { type: 'extra_hand', cartes: 1, duree: 15000 } },
+
+  { id: 'a-sangfroid', nom: 'Sang-froid', fam: 'souffle', rar: 'rare', cost: 20, cd: 35,
+    texte: 'Pendant 10 s, les cartes que tu joues se rechargent deux fois plus vite.',
+    effet: { type: 'cooldown_mult', valeur: 0.5, duree: 10000 } },
+
+  { id: 'a-domicile', nom: 'À domicile', fam: 'bascule', rar: 'rare', cost: 24, cd: 40,
+    texte: 'Seulement pour la tribune du club qui reçoit. Pousse 45.',
+    effet: { type: 'push', valeur: 45 }, condition: { domicile: true } },
+
+  { id: 'a-maillot', nom: 'Maillot du club', fam: 'pousse', rar: 'rare', cost: 22, cd: 16,
+    texte: 'Pousse 24, le double si ton Fanzzy en tribune est du club de ta tribune.',
+    effet: { type: 'push', valeur: 24, doubleSiClub: true } },
+
+  { id: 'a-kop-plein', nom: 'Kop plein', fam: 'collectif', rar: 'legendaire', cost: 34, cd: 60,
+    texte: '14 de poussée par supporter de ta tribune, toi compris, jusqu’à 150.',
+    /* Comme la Mosaïque, mais tout le monde compte, pas seulement ceux qui
+       viennent de chanter : la carte d'une tribune pleine. */
+    effet: { type: 'per_present', valeur: 14, max: 150 } },
+
+  /* Les mécaniques neuves des PASS. */
+  { id: 'a-hc-telecommande', nom: 'Télécommande', fam: 'entrave', rar: 'rare', cost: 22, cd: 28, publie: false,
+    texte: 'L’adversaire zappe : sa main repart dans sa pioche, il en reprend une autre.',
+    effet: { type: 'shuffle_foe' } },
+
+  { id: 'a-gd-peage', nom: 'Péage', fam: 'entrave', rar: 'rare', cost: 24, cd: 26, publie: false,
+    texte: 'Pendant 8 s, les cartes de l’adversaire coûtent moitié plus de souffle.',
+    effet: { type: 'cost_mult', valeur: 1.5, duree: 8000 } },
+
+  { id: 'a-gd-parcage-visiteur', nom: 'Parcage visiteur', fam: 'garde', rar: 'rare', cost: 24, cd: 22, publie: false,
+    texte: 'Absorbe 40 de poussée adverse, 60 si ta tribune joue à l’extérieur.',
+    effet: { type: 'shield', valeur: 40, bonusExterieur: 1.5 } },
+
+  { id: 'a-rv-fantome', nom: 'Fantôme', fam: 'pousse', rar: 'epique', cost: 28, cd: 25, publie: false,
+    texte: 'Pousse 40, puis revient une fois dans ta main.',
+    effet: { type: 'push', valeur: 40 }, revient: true },
+
+  { id: 'a-rv-malediction', nom: 'Malédiction', fam: 'entrave', rar: 'rare', cost: 24, cd: 30, publie: false,
+    texte: 'Le prochain chant parfait de l’adversaire ne compte que comme moyen.',
+    effet: { type: 'curse', charges: 1 } },
 ];
 
 export const ACTION_BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));
+
+/* ------------------------------------------- les conditions du vrai match
+
+   **Les cartes qui bougent avec le vrai match** (Gaël, 3 novembre 2026,
+   « Ok pour les cartes vrai match »). Jusqu'ici une seule le faisait — les
+   Prolongations, après la 75e. Celles-ci lisent la mi-temps, les premières
+   minutes, un vrai but de son club, un vrai carton rouge en face.
+
+   Les deux moteurs (duel et Virage) décrivent le vrai match de la même façon
+   et posent la même question ici : une seule règle, qui ne peut pas diverger
+   d'un mode à l'autre.
+
+   `r` : { minute, statut, depuisBut, depuisRouge }
+     minute       la minute du vrai match, ou null (pas de match, entraînement)
+     statut       le statut court de l'API (1H, HT, 2H…), ou null
+     depuisBut    ms depuis le dernier vrai but **du club de ce camp**, ou null
+     depuisRouge  ms depuis le dernier vrai carton rouge **du club d'en face**,
+                  ou null                                                        */
+
+/** Les statuts où le ballon roule (la mi-temps n'en est pas). */
+export const STATUTS_EN_JEU = new Set(['1H', '2H', 'ET', 'P', 'LIVE']);
+
+/** Une carte demande-t-elle le vrai match ? (pour l'aide et les écrans) */
+export const CONDITIONS_REELLES = ['minuteEntre', 'minuteMax', 'butRecent', 'rougeAdverse'];
+
+/**
+ * Les conditions « vrai match » d'une carte sont-elles remplies ?
+ * Ne lit que les clés de `CONDITIONS_REELLES` : le reste (mené, minute
+ * minimale, Relève) reste aux moteurs, qui le lisaient déjà.
+ */
+export function conditionReelleRemplie(c = {}, r = {}) {
+  const { minute = null, statut = null, depuisBut = null, depuisRouge = null } = r;
+  if (c.minuteEntre) {
+    const [de, a] = c.minuteEntre;
+    const mi = statut === 'HT';
+    if (!mi && !(minute != null && minute >= de && minute <= a)) return false;
+  }
+  if (c.minuteMax != null) {
+    // Le match doit avoir commencé : sans statut, une minute connue suffit.
+    const roule = statut ? STATUTS_EN_JEU.has(statut) : minute != null;
+    if (!roule || minute == null || minute > c.minuteMax) return false;
+  }
+  if (c.butRecent && !(depuisBut != null && depuisBut >= 0 && depuisBut <= c.butRecent)) return false;
+  if (c.rougeAdverse && !(depuisRouge != null && depuisRouge >= 0 && depuisRouge <= c.rougeAdverse)) return false;
+  return true;
+}
+
+/** Un événement de l'API est-il un carton rouge (deuxième jaune compris) ? */
+export const estRouge = (e) => e?.type === 'Card' && /red|second yellow/i.test(String(e?.detail ?? ''));
 
 /* ------------------------------------------------- où une carte se joue */
 
@@ -394,6 +697,20 @@ const PORTEE = {
   cost_free: 'soi',
   push_over_time: 'soi',
   halve_gap: 'adverse',
+
+  /* Les mécaniques neuves de novembre 2026. Celles qui visent quelqu'un en
+     face (sa carte, sa main, ses prix, son prochain parfait, sa prochaine
+     poussée) restent au duel ; les autres entrent au Virage. */
+  steal_card: 'adverse',
+  trap: 'adverse',
+  shuffle_foe: 'adverse',
+  cost_mult: 'adverse',
+  curse: 'adverse',
+  replay_last: 'soi',
+  streak: 'soi',
+  extra_hand: 'soi',
+  cooldown_mult: 'soi',
+  per_present: 'tribune',
 };
 
 /**

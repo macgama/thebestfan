@@ -25,7 +25,7 @@ import express from 'express';
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { createDecks } from '../src/server/deck/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
-import { ACTIONS } from '../src/shared/duel/actions.js';
+import { ACTIONS, dansLeVirage } from '../src/shared/duel/actions.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
@@ -352,7 +352,11 @@ check('dix emplacements de cartes', T(dom).querySelectorAll('.emp').length === 1
   await jusqua(() => T(dom).querySelectorAll('.cat .carte').length === ACTIONS.length);
 
   const marquees = await dom.window.eval('S.catalogue.filter((a) => a.virage === false).length');
-  check('le catalogue dit de chaque carte où elle se joue', marquees === 14);
+  /* 14 jusqu'au 3 novembre 2026, 31 avec les cartes de novembre (dont celles
+     des PASS, fermées mais montrées au catalogue). */
+  const attendues = ACTIONS.filter((a) => !dansLeVirage(a)).length;
+  check(`le catalogue dit de chaque carte où elle se joue (${marquees} sur ${attendues})`,
+    marquees === attendues && attendues === 31);
 
   /* La Bâche vise la prochaine poussée adverse : au Virage, « la prochaine
      poussée adverse » n'est pas un événement, c'est du bruit de fond. */

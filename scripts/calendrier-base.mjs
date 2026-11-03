@@ -34,6 +34,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SAISONS_PREVUES, CARNET_TRIMESTRE } from '../src/shared/saisons-prevues.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
+import { ACTIONS } from '../src/shared/duel/actions.js';
 
 export const FIN_BASE = '2026-11-30';
 export const TEXTE_BASE = 'TBFO est lancé : tous les championnats du monde et, pour tous, les Fanzzy '
@@ -77,6 +78,10 @@ export function planifier(saisons) {
       /* Toujours sa série, en plus de ce que le brouillon nommait déjà. */
       series: [...new Set([...p.series, ...(brouillon ? lireListe(brouillon.series) : [])])],
       stuff: p.stuff ? STUFF.filter((x) => x.id.startsWith(p.stuff)).map((x) => x.id) : [],
+      /* Ses cartes d'action, en plus de celles que le brouillon nommait. */
+      actions: [...new Set([
+        ...(p.actions ? ACTIONS.filter((x) => x.id.startsWith(p.actions)).map((x) => x.id) : []),
+        ...(brouillon ? lireListe(brouillon.actions) : [])])],
       tenue: p.tenue ?? null,
     };
   });
@@ -100,15 +105,15 @@ export async function appliquer(q, plan, { tenuePass = false } = {}) {
     if (tenuePass) await q(`UPDATE saisons SET tenue_pass = '' WHERE id = ?`, [plan.base.id]);
     for (const p of plan.pass) {
       const valeurs = [p.numero, p.nom, p.texte, JSON.stringify(p.series), JSON.stringify(p.stuff),
-        p.ouvre, p.fin, JSON.stringify(CARNET_TRIMESTRE)];
+        JSON.stringify(p.actions ?? []), p.ouvre, p.fin, JSON.stringify(CARNET_TRIMESTRE)];
       let id = p.id;
       if (id) {
         await q(`UPDATE saisons SET numero = ?, nom = ?, texte = ?, series = ?, stuff = ?,
-                   ouvre_le = ?, fin_le = ?, carnet = ? WHERE id = ?`, [...valeurs, id]);
+                   actions = ?, ouvre_le = ?, fin_le = ?, carnet = ? WHERE id = ?`, [...valeurs, id]);
       } else {
-        const r = await q(`INSERT INTO saisons (numero, nom, texte, series, stuff, ouvre_le, fin_le,
-                             carnet, tenues, actions, stades)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, '[]', '[]', '[]')`, valeurs);
+        const r = await q(`INSERT INTO saisons (numero, nom, texte, series, stuff, actions, ouvre_le,
+                             fin_le, carnet, tenues, stades)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', '[]')`, valeurs);
         id = r.insertId;
       }
       if (tenuePass && p.tenue) await q('UPDATE saisons SET tenue_pass = ? WHERE id = ?', [p.tenue, id]);
@@ -140,7 +145,7 @@ async function principal() {
   console.log(pourDeBon ? '  CALENDRIER DES PASS — POUR DE BON' : '  CALENDRIER DES PASS — ESSAI (rien ne sera modifié)');
   console.log('');
 
-  const saisons = await q(`SELECT id, numero, nom, series, lancee_a,
+  const saisons = await q(`SELECT id, numero, nom, series, actions, lancee_a,
       DATE_FORMAT(ouvre_le, '%Y-%m-%d') AS ouvre_le, DATE_FORMAT(fin_le, '%Y-%m-%d') AS fin_le
       FROM saisons ORDER BY numero, id`);
   console.log('  Avant :');
@@ -161,7 +166,8 @@ async function principal() {
   console.log(`     0  lancée     … → ${FIN_BASE}  ${plan.base.nom}  (la BASE)`);
   for (const p of plan.pass) {
     console.log(`    ${String(p.numero).padStart(2)}  brouillon  ${p.ouvre} → ${p.fin}  ${p.nom}`
-      + `${p.id ? '' : '  (créé)'}${p.tenue ? `  tenue des membres : ${p.tenue}` : ''}`);
+      + `${p.id ? '' : '  (créé)'}${p.tenue ? `  tenue des membres : ${p.tenue}` : ''}`
+      + `${p.actions.length ? `  ${p.actions.length} cartes d’action` : ''}`);
   }
   for (const s of plan.autres) console.log(`    ${String(s.numero).padStart(2)}  inchangé   ${s.nom}`);
   console.log('');

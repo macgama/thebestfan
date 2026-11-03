@@ -756,11 +756,22 @@ if (process.env.DATABASE_URL) {
         onStatus: (fixtureId, etat) => {
           void notifications?.coupDEnvoi(fixtureId, etat);
           void notifications?.scoreEnDirect(fixtureId, etat);
+          /* Les duels adossés suivent la minute et la période du vrai match :
+             les cartes « vrai match » la lisent (3 novembre 2026). */
+          try { nvn?.etatReel(fixtureId, etat); }
+          catch (e) { console.error('[nvn] état réel', e.message); }
           return virage.matchStatus(fixtureId, etat);
         },
         onAbsent: (fixtureId) => virage.matchAbsent(fixtureId),
-        onEvents: (fixtureId, events) => virage.matchEvents(fixtureId, events),
-        fixturesAuFil: () => virage.sallesOccupees(),
+        onEvents: (fixtureId, events) => {
+          try { nvn?.evenementsReels(fixtureId, events); }
+          catch (e) { console.error('[nvn] cartons réels', e.message); }
+          return virage.matchEvents(fixtureId, events);
+        },
+        /* Les salles du Virage occupées, et les matchs d'un duel en cours :
+           le Carton rouge doit voir le carton dans les deux. */
+        fixturesAuFil: () => [...new Set([...virage.sallesOccupees(),
+          ...(nvn?.fixturesEnDuel?.() ?? [])])],
         onGoal: async (g) => {
           // 0. Secouer la corde du Grand Virage AVANT de frapper les cartes :
           //    ceux qui chantaient à la seconde du but doivent être comptés

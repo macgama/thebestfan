@@ -1302,9 +1302,11 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
         [String(p.numero)]);
       if (deja) continue;
       const stuff = p.stuff ? STUFF.filter((x) => x.id.startsWith(p.stuff)).map((x) => x.id) : [];
+      const actions = p.actions
+        ? ACTIONS.filter((x) => x.id.startsWith(p.actions)).map((x) => x.id) : [];
       try {
         await creerSaison(ACTEUR_AUTO, { numero: p.numero, nom: p.nom, texte: p.texte,
-          series: p.series, stuff, ouvre_le: p.ouvre, fin_le: p.fin,
+          series: p.series, stuff, actions, ouvre_le: p.ouvre, fin_le: p.fin,
           carnet: CARNET_TRIMESTRE, ...(p.tenue && await aColonne('tenue_pass')
             ? { tenue_pass: p.tenue } : {}) }, null);
         await journal(ACTEUR_AUTO, 'saison.prevue', String(p.numero), { nom: p.nom }, null);

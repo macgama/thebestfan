@@ -1,5 +1,32 @@
 # À déposer sur Infomaniak
 
+**49 nouvelles cartes d'action** (branche `claude/project-thread-96sqrp`,
+3 novembre 2026, « Ok pour toutes tes idées » de Gaël). Construction seule,
+pas de schéma.
+
+- 12 cartes pour tous dès la mise en ligne : 8 communes (offertes à tous :
+  Pétard, Banderole, Sifflets, Larsen, La Gourde, Écharpe tendue, Ola, Tambour)
+  et 4 à gagner au booster (Feu de Bengale, Fausse note, Coup franc, Mégaphone).
+- 18 cartes de PASS, fermées jusqu'au lancement de leur saison, pour tous :
+  PASS 1 Héros du canapé 7 (dont Massue et Feu de camp pour Préhistorique),
+  PASS 2 Météo 5, PASS 3 Déplacement 3, PASS 4 Revenants 3.
+- `npm run calendrier:appliquer` les range maintenant dans chaque PASS. Si le
+  calendrier a déjà été appliqué avant cette mise en ligne : /admin › PASS ›
+  LES PASS, cocher les cartes `a-hc-…` dans le PASS 1 (puis `a-mt-`, `a-gd-`,
+  `a-rv-` dans les PASS 2 à 4).
+- 5 cartes du vrai match pour tous (Mi-temps, But au stade !, Carton rouge,
+  Coup de sifflet, Temps additionnel) : le duel suit maintenant la minute, les
+  buts et les cartons rouges du vrai match. Le relevé demande les cartons des
+  matchs où un duel est en cours (au plus un appel par minute et par match).
+- 14 cartes à mécaniques neuves : 9 pour tous (Chambrage, Écho, Piège à la
+  buvette, Tribune chaude, Recrue, Sang-froid, À domicile, Maillot du club,
+  Kop plein) et 5 de PASS (Télécommande, Péage, Parcage visiteur, Fantôme,
+  Malédiction). 88 cartes en tout.
+- Les 49 dessins sont dans `art/action` et `public/img/action` (Artlist, 6 370
+  crédits accordés par Gaël).
+
+---
+
 **Voie PASS : le kit dessiné du PASS 1** (branche `claude/project-thread-plmj5o`,
 3 novembre 2026, 15 images Artlist accordées par Gaël, 1 950 crédits).
 Construction seule, **sans schéma**. Les images sont dans git

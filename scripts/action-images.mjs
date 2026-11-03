@@ -198,6 +198,107 @@ export const INVITES = {
   'a-rp-jour-un': ['gold', 'an empty terrace an hour before the opening match, one lone '
     + 'supporter standing at the barrier looking at the pitch, everything still possible, '
     + 'low golden sun across the seats'],
+  /* La relance et les cartes des PASS (3 novembre 2026). */
+  'a-petard': ['red', 'a single small firecracker bursting in a bright flash just above a '
+    + 'terrace barrier, supporters with open visible faces flinching and laughing'],
+  'a-banderole': ['red', 'a long hand-painted banner being unrolled down the front of a packed '
+    + 'stand, supporters holding its top edge, letters not readable, cloth rippling'],
+  'a-sifflets': ['violet', 'a whole stand whistling with fingers in their mouths, cheeks puffed, '
+    + 'visible sound lines in the air, cool violet light'],
+  'a-larsen': ['violet', 'a stadium loudspeaker screeching with feedback, a visible jagged '
+    + 'sound wave, supporters below covering their ears'],
+  'a-gourde': ['blue', 'a dented metal water flask passed along a terrace row, a supporter '
+    + 'drinking with eyes closed, cool blue light'],
+  'a-echarpe-tendue': ['silver', 'a long row of supporters holding their scarves stretched tight '
+    + 'above their heads like a wall, seen from the pitch'],
+  'a-ola': ['amber', 'a Mexican wave travelling across a full stadium, one section on its feet '
+    + 'with arms up, the rest about to rise, warm amber light'],
+  'a-tambour': ['amber', 'a big bass drum at the front of a terrace, a drummer mid-swing, '
+    + 'the crowd behind jumping on the beat'],
+  'a-bengale': ['red', 'a bright red Bengal flare held at arm\u2019s length, intense glow and '
+    + 'sparks, the holder grinning, red light flooding the faces around'],
+  'a-faussenote': ['violet', 'a brass band in the stands playing a sour note, the trumpeter '
+    + 'wincing, crooked musical notes floating in the air'],
+  'a-coupfranc': ['gold', 'a ball resting on the grass in front of a defensive wall seen from '
+    + 'the stands, the whole terrace leaning forward holding its breath'],
+  'a-megaphone': ['amber', 'a capo standing on the barrier shouting into a battered megaphone, '
+    + 'the crowd behind answering with raised fists'],
+  'a-hc-pause-pub': ['violet', 'a living-room television showing a frozen colourful advert break, '
+    + 'a supporter on the couch throwing up his arms in frustration'],
+  'a-hc-chips': ['blue', 'a torn-open bag of crisps on a couch armrest, a hand grabbing a fistful, '
+    + 'crumbs flying, football on the TV glow'],
+  'a-hc-plaid': ['silver', 'a supporter wrapped in a thick striped club blanket on a couch, '
+    + 'only his face and scarf showing, TV light'],
+  'a-hc-ralenti': ['violet', 'a television replay in slow motion, motion-blur trails behind a '
+    + 'player, a supporter on the couch leaning in, frozen'],
+  'a-hc-reveil': ['gold', 'a supporter jolting awake on the couch, an alarm clock jumping on the '
+    + 'coffee table, the match on the TV behind'],
+  'a-hc-massue': ['red', 'a prehistoric caveman supporter in fur raising a big wooden club over '
+    + 'his head on a terrace, friendly face, sparks'],
+  'a-hc-feu-camp': ['blue', 'a small campfire in front of a cave, caveman supporters in furs '
+    + 'warming their hands and singing, scarves around their necks'],
+  'a-mt-averse': ['violet', 'a sudden downpour over a terrace, sheets of rain, supporters under '
+    + 'plastic ponchos still singing, puddles on the steps'],
+  'a-mt-eclaircie': ['silver', 'the sun breaking through dark clouds over a stadium, a beam of '
+    + 'light on the terrace, wet seats shining'],
+  'a-mt-grele': ['red', 'hailstones bouncing off the stand roof and the steps, supporters '
+    + 'laughing with hoods up, white pellets everywhere'],
+  'a-mt-vent-arriere': ['green', 'a strong wind blowing from behind a terrace, flags and scarves '
+    + 'all streaming forward toward the pitch'],
+  'a-mt-orage': ['red', 'a thunderstorm rolling over a floodlit stadium, a lightning bolt in the '
+    + 'distance, the crowd lit white for an instant'],
+  'a-gd-car': ['amber', 'an old supporters\u2019 coach on a motorway at night, scarves hanging '
+    + 'out of the windows, faces pressed to the glass singing'],
+  'a-gd-aire': ['blue', 'a motorway service station at dawn, supporters in scarves stretching '
+    + 'next to their coach, coffee cups steaming'],
+  'a-gd-train-retard': ['red', 'a station platform departure board flashing red lights, no readable text, '
+    + 'only, supporters sitting on their bags waiting, scarves on'],
+  'a-rv-frisson': ['violet', 'a ghostly cold mist sweeping across a night terrace, supporters '
+    + 'shivering, frost on the barrier'],
+  'a-rv-brume': ['violet', 'a thick graveyard fog rolling into a stadium at night, only the '
+    + 'floodlights and a few silhouettes with scarves visible'],
+  'a-rv-outre-tombe': ['gold', 'a friendly ghost supporter rising from the turf behind the goal, '
+    + 'scarf around his neck, the crowd cheering in amazement'],
+  /* Le vrai match (3 novembre 2026). */
+  'a-mitemps': ['blue', 'half-time on a terrace, supporters sitting down at last, sharing a '
+    + 'thermos, the empty pitch and the tunnel behind them, cool blue light'],
+  'a-but-au-stade': ['red', 'the instant a real goal goes in, a whole terrace exploding in joy, '
+    + 'people climbing on each other, scarves and arms everywhere'],
+  'a-carton-rouge': ['amber', 'a referee on the pitch raising a red card seen from the stands, '
+    + 'the home terrace roaring and pointing, warm amber floodlight'],
+  'a-coup-sifflet': ['gold', 'the referee at the centre spot blowing the kick-off whistle, the '
+    + 'terrace behind lifting its scarves all at once'],
+  'a-temps-additionnel': ['gold', 'the fourth official raising the lit board for stoppage time, '
+    + 'no readable numbers, supporters biting their scarves'],
+  /* Les mécaniques neuves (3 novembre 2026). */
+  'a-chambrage': ['violet', 'a supporter cupping his ear toward the away end with a cheeky grin, '
+    + 'his mates laughing behind him'],
+  'a-echo': ['blue', 'a chant bouncing off the opposite stand roof, visible sound rings '
+    + 'returning to the singers, cool blue light'],
+  'a-piege': ['silver', 'a stadium snack bar counter with a hidden mousetrap under a hot dog, '
+    + 'a supporter winking behind it'],
+  'a-tribune-chaude': ['green', 'a terrace jumping in perfect rhythm, heat haze rising above it, '
+    + 'faces flushed and grinning'],
+  'a-recrue': ['blue', 'a young new supporter receiving a scarf from an older one at the turnstile, '
+    + 'both smiling'],
+  'a-sangfroid': ['blue', 'a calm supporter with eyes closed breathing in, amid a roaring crowd '
+    + 'frozen in motion around him'],
+  'a-domicile': ['gold', 'the home end at full volume, the stadium lit in warm colours, the '
+    + 'pitch below, a sense of owning the place'],
+  'a-maillot': ['red', 'a supporter pulling a plain-coloured replica shirt over his head in the '
+    + 'stand, no badge, no lettering, arms up'],
+  'a-kop-plein': ['amber', 'a huge steep terrace packed to the last step, thousands of scarves '
+    + 'raised, seen from the pitch'],
+  'a-hc-telecommande': ['violet', 'a remote control pointed at a television, channels flicking '
+    + 'past in a blur, a supporter on the couch'],
+  'a-gd-peage': ['violet', 'a motorway toll barrier down in front of a supporters\u2019 coach, a '
+    + 'long queue behind, red light'],
+  'a-gd-parcage-visiteur': ['silver', 'a fenced away section full of travelling supporters, tall '
+    + 'mesh fence, scarves tied to it'],
+  'a-rv-fantome': ['red', 'a translucent friendly ghost supporter drifting through the stand '
+    + 'waving a scarf, the crowd half-scared half-laughing'],
+  'a-rv-malediction': ['violet', 'a hooded old supporter in the stands pointing a bony finger '
+    + 'at the pitch, purple sparks, the crowd shivering'],
 };
 
 export const inviteDe = (id) => {

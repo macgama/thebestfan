@@ -1311,6 +1311,280 @@
         ton(c, s, t, { freq: 784, duree: 0.2, vol: 0.05, delai: 0.78 });
       } },
 
+    /* ============================ LA RELANCE et les cartes des PASS (novembre 2026) */
+    // Le pétard : un claquement sec, court.
+    'a-petard': { famille: 'jeu', duree: 0.4,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.08, freq: 1800, q: 0.7, vol: 0.2 });
+        fut(c, s, t, { de: 220, a: 90, duree: 0.15, vol: 0.18, delai: 0.01 });
+      } },
+    // La banderole : une toile qu'on déroule, puis le claquement du tissu.
+    'a-banderole': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.55, de: 300, a: 1200, vol: 0.16, q: 0.7, sorte: 'bosse' });
+        bruit(c, s, t, { duree: 0.1, freq: 900, filtre: 'lowpass', q: 0.8, vol: 0.18, delai: 0.55 });
+      } },
+    // Les sifflets : trois coups de sifflet aigus, désordonnés.
+    'a-sifflets': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        sifflet(c, s, t, { duree: 0.18, freq: 3100, vol: 0.07 });
+        sifflet(c, s, t, { duree: 0.2, freq: 2700, vol: 0.06, delai: 0.15 });
+        sifflet(c, s, t, { duree: 0.22, freq: 3400, vol: 0.06, delai: 0.32 });
+      } },
+    // Le larsen : un sifflement électrique qui monte et se coupe net.
+    'a-larsen': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 1800, vers: 3200, duree: 0.35, type: 'square', vol: 0.04 });
+        clic(c, s, t, { freq: 600, vol: 0.1, delai: 0.36 });
+      } },
+    // La gourde : le bouchon, puis une gorgée.
+    'a-gourde': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 900, vol: 0.14 });
+        ton(c, s, t, { freq: 320, vers: 520, duree: 0.25, vol: 0.08, delai: 0.12 });
+        ton(c, s, t, { freq: 300, vers: 480, duree: 0.2, vol: 0.06, delai: 0.34 });
+      } },
+    // L'écharpe tendue : un tissu qu'on tend d'un coup sec.
+    'a-echarpe-tendue': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.2, de: 500, a: 1800, vol: 0.16, q: 1, sorte: 'monte' });
+        bruit(c, s, t, { duree: 0.07, freq: 1200, q: 1, vol: 0.16, delai: 0.2 });
+      } },
+    // L'ola : une vague de voix qui traverse de gauche à droite.
+    'a-ola': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.85, de: 400, a: 1400, vol: 0.16, q: 0.8, sorte: 'bosse', pan: -0.7 });
+        balaye(c, s, t, { duree: 0.6, de: 600, a: 1600, vol: 0.12, q: 0.8, sorte: 'bosse', delai: 0.25, pan: 0.7 });
+      } },
+    // Le tambour : quatre frappes de grosse caisse.
+    'a-tambour': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        [0, 0.2, 0.4, 0.6].forEach((d, i) => fut(c, s, t, { de: 150, a: 70, duree: 0.2, vol: 0.2 + i * 0.03, delai: d }));
+      } },
+    // Le feu de Bengale : l'allumage qui crépite.
+    'a-bengale': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 2400, vol: 0.12 });
+        grains(c, s, t, { n: 18, duree: 0.6, freq: 4200, vol: 0.07, delai: 0.05 });
+      } },
+    // La fausse note : un accord qui grince.
+    'a-faussenote': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 330, duree: 0.45, type: 'sawtooth', vol: 0.04 });
+        ton(c, s, t, { freq: 349, vers: 300, duree: 0.45, type: 'sawtooth', vol: 0.04 });
+      } },
+    // Le coup franc : le sifflet, puis la frappe.
+    'a-coupfranc': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        sifflet(c, s, t, { duree: 0.25, freq: 2900, vol: 0.08 });
+        fut(c, s, t, { de: 200, a: 80, duree: 0.2, vol: 0.28, delai: 0.4 });
+      } },
+    // Le mégaphone : la voix du capo, saturée.
+    'a-megaphone': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 440, vers: 520, duree: 0.5, type: 'square', vol: 0.05 });
+        bruit(c, s, t, { duree: 0.5, freq: 1500, q: 2, vol: 0.08 });
+      } },
+    // La pause pub : le petit jingle qui coupe tout.
+    'a-hc-pause-pub': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        [523, 659, 784].forEach((f, i) => ton(c, s, t, { freq: f, duree: 0.15, vol: 0.07, delai: i * 0.13 }));
+        clic(c, s, t, { freq: 700, vol: 0.1, delai: 0.5 });
+      } },
+    // Le paquet de chips : un froissement de plastique.
+    'a-hc-chips': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => grains(c, s, t, { n: 22, duree: 0.5, freq: 3000, vol: 0.32 }) },
+    // Le plaid : un tissu épais qui retombe, étouffé.
+    'a-hc-plaid': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => bruit(c, s, t, { duree: 0.45, freq: 400, filtre: 'lowpass', q: 0.7, vol: 0.5 }) },
+    // Le ralenti : une note qui descend et s'étire.
+    'a-hc-ralenti': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 440, vers: 110, duree: 0.8, type: 'triangle', vol: 0.08 });
+        balaye(c, s, t, { duree: 0.7, de: 1600, a: 300, vol: 0.1, q: 1.2, sorte: 'bosse' });
+      } },
+    // Le réveil du canapé : la sonnerie du réveil.
+    'a-hc-reveil': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 6; i++) ton(c, s, t, { freq: 1400, duree: 0.05, type: 'square', vol: 0.1, delai: i * 0.1 });
+      } },
+    // La massue : un grand coup sourd sur le sol.
+    'a-hc-massue': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.2, de: 300, a: 1200, vol: 0.12, q: 0.8, sorte: 'monte' });
+        fut(c, s, t, { de: 120, a: 45, duree: 0.4, vol: 0.32, delai: 0.2 });
+      } },
+    // Le feu de camp : le bois qui crépite, doucement.
+    'a-hc-feu-camp': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.9, freq: 500, filtre: 'lowpass', q: 0.7, vol: 0.25 });
+        grains(c, s, t, { n: 10, duree: 0.8, freq: 2600, vol: 0.18 });
+      } },
+    // L'averse : la pluie qui tombe d'un coup.
+    'a-mt-averse': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.8, freq: 3500, q: 0.5, vol: 0.1 });
+        grains(c, s, t, { n: 24, duree: 0.8, freq: 5000, vol: 0.05 });
+      } },
+    // L'éclaircie : un accord clair qui s'ouvre.
+    'a-mt-eclaircie': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        [523, 659, 784, 1047].forEach((f, i) => ton(c, s, t, { freq: f, duree: 0.5, vol: 0.04, delai: i * 0.08 }));
+      } },
+    // La grêle : des grêlons serrés sur la tôle.
+    'a-mt-grele': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 8; i++) clic(c, s, t, { freq: 2600 + (i % 3) * 400, vol: 0.09, delai: i * 0.07 });
+      } },
+    // Le vent arrière : un souffle qui pousse dans le dos.
+    'a-mt-vent-arriere': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => balaye(c, s, t, { duree: 0.7, de: 300, a: 1500, vol: 0.18, q: 0.6, sorte: 'bosse' }) },
+    // L'orage : le grondement lointain.
+    'a-mt-orage': { famille: 'jeu', duree: 1.1,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 1, freq: 180, filtre: 'lowpass', q: 0.7, vol: 0.28 });
+        clic(c, s, t, { freq: 3000, vol: 0.08, delai: 0.05 });
+      } },
+    // Le car de supporters : deux coups de klaxon.
+    'a-gd-car': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 330, duree: 0.2, type: 'square', vol: 0.05 });
+        ton(c, s, t, { freq: 330, duree: 0.35, type: 'square', vol: 0.05, delai: 0.3 });
+      } },
+    // L'aire d'autoroute : la portière, puis le soupir.
+    'a-gd-aire': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        fut(c, s, t, { de: 180, a: 90, duree: 0.15, vol: 0.2 });
+        balaye(c, s, t, { duree: 0.5, de: 900, a: 300, vol: 0.12, q: 0.8, sorte: 'bosse', delai: 0.2 });
+      } },
+    // Le train en retard : l'annonce du quai, deux notes.
+    'a-gd-train-retard': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 659, duree: 0.25, vol: 0.07 });
+        ton(c, s, t, { freq: 523, duree: 0.35, vol: 0.07, delai: 0.25 });
+      } },
+    // Le frisson : un trémolo glacé.
+    'a-rv-frisson': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 6; i++) ton(c, s, t, { freq: 880 + (i % 2) * 40, duree: 0.08, vol: 0.12, delai: i * 0.1 });
+      } },
+    // La brume du cimetière : une nappe grave et creuse.
+    'a-rv-brume': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.9, de: 200, a: 700, vol: 0.14, q: 1.5, sorte: 'bosse' });
+        ton(c, s, t, { freq: 110, duree: 0.8, type: 'triangle', vol: 0.06 });
+      } },
+    // Le retour d'outre-tombe : une cloche lourde.
+    'a-rv-outre-tombe': { famille: 'jeu', duree: 1.1,
+      jouer: (c, s, t) => metal(c, s, t, { freq: 180, duree: 1, vol: 0.1 }) },
+    // Mi-temps : le double coup de sifflet, puis le souffle qu'on reprend.
+    'a-mitemps': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        sifflet(c, s, t, { duree: 0.15, freq: 2900, vol: 0.08 });
+        sifflet(c, s, t, { duree: 0.3, freq: 2900, vol: 0.08, delai: 0.22 });
+        balaye(c, s, t, { duree: 0.35, de: 300, a: 1200, vol: 0.12, q: 0.8, sorte: 'monte', delai: 0.5 });
+      } },
+    // But au stade ! : la clameur qui éclate.
+    'a-but-au-stade': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.9, freq: 1100, q: 0.5, vol: 0.2 });
+        fut(c, s, t, { de: 160, a: 60, duree: 0.3, vol: 0.25 });
+      } },
+    // Carton rouge : le sifflet sec, puis la tribune qui gronde.
+    'a-carton-rouge': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        sifflet(c, s, t, { duree: 0.2, freq: 3200, vol: 0.09 });
+        bruit(c, s, t, { duree: 0.6, freq: 500, filtre: 'lowpass', q: 0.7, vol: 0.2, delai: 0.2 });
+      } },
+    // Coup de sifflet : le long sifflet du coup d'envoi, plus clair.
+    'a-coup-sifflet': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => sifflet(c, s, t, { duree: 0.6, freq: 3100, vol: 0.09 }) },
+    // Temps additionnel : le panneau lumineux, trois bips.
+    'a-temps-additionnel': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        [0, 0.18, 0.36].forEach((d) => ton(c, s, t, { freq: 988, duree: 0.1, type: 'square', vol: 0.06, delai: d }));
+      } },
+    // Chambrage : le « ouuuh » moqueur de la tribune.
+    'a-chambrage': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 300, vers: 220, duree: 0.7, type: 'triangle', vol: 0.1 });
+        balaye(c, s, t, { duree: 0.6, de: 900, a: 500, vol: 0.1, q: 1, sorte: 'bosse' });
+      } },
+    // Écho : un claquement qui revient, plus loin.
+    'a-echo': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        clap(c, s, t, 0.6);
+        clap(c, s, t + 0.18, 0.3);
+        clap(c, s, t + 0.36, 0.12);
+      } },
+    // Le piège à la buvette : un déclic métallique, discret.
+    'a-piege': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        clic(c, s, t, { freq: 1200, vol: 0.14 });
+        metal(c, s, t, { freq: 700, duree: 0.3, vol: 0.06, delai: 0.05 });
+      } },
+    // Tribune chaude : des frappes qui accélèrent.
+    'a-tribune-chaude': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        [0, 0.22, 0.4, 0.54, 0.64, 0.72].forEach((d, i) => fut(c, s, t, { de: 170, a: 80, duree: 0.12, vol: 0.14 + i * 0.02, delai: d }));
+      } },
+    // Recrue : une carte qu'on glisse dans la main.
+    'a-recrue': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.18, de: 1200, a: 3000, vol: 0.12, q: 1.2, sorte: 'monte' });
+        clic(c, s, t, { freq: 1800, vol: 0.1, delai: 0.18 });
+      } },
+    // Sang-froid : une respiration lente et une note qui tient.
+    'a-sangfroid': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.6, de: 400, a: 900, vol: 0.12, q: 0.7, sorte: 'bosse' });
+        ton(c, s, t, { freq: 392, duree: 0.6, vol: 0.05, delai: 0.2 });
+      } },
+    // À domicile : l'hymne du club, trois notes qui montent.
+    'a-domicile': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        [392, 494, 587].forEach((f, i) => ton(c, s, t, { freq: f, duree: 0.22, type: 'triangle', vol: 0.08, delai: i * 0.18 }));
+      } },
+    // Maillot du club : le tissu qu'on enfile, d'un coup.
+    'a-maillot': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        balaye(c, s, t, { duree: 0.3, de: 600, a: 2200, vol: 0.14, q: 0.9, sorte: 'bosse' });
+        fut(c, s, t, { de: 200, a: 90, duree: 0.12, vol: 0.18, delai: 0.3 });
+      } },
+    // Kop plein : la clameur d'une tribune entière.
+    'a-kop-plein': { famille: 'jeu', duree: 1.1,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 1, freq: 700, q: 0.4, vol: 0.18 });
+        fut(c, s, t, { de: 140, a: 55, duree: 0.4, vol: 0.22 });
+      } },
+    // Télécommande : le zapping, trois clics et un grésillement.
+    'a-hc-telecommande': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        [0, 0.1, 0.2].forEach((d) => clic(c, s, t, { freq: 2200, vol: 0.1, delai: d }));
+        bruit(c, s, t, { duree: 0.25, freq: 4000, q: 0.5, vol: 0.06, delai: 0.3 });
+      } },
+    // Péage : la barrière qui se lève, le bip du ticket.
+    'a-gd-peage': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 1320, duree: 0.12, type: 'square', vol: 0.05 });
+        balaye(c, s, t, { duree: 0.4, de: 300, a: 900, vol: 0.1, q: 1, sorte: 'monte', delai: 0.15 });
+      } },
+    // Parcage visiteur : les grilles qui se ferment.
+    'a-gd-parcage-visiteur': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => metal(c, s, t, { freq: 260, duree: 0.5, vol: 0.09 }) },
+    // Fantôme : un souffle qui passe et revient.
+    'a-rv-fantome': { famille: 'jeu', duree: 1,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 660, vers: 440, duree: 0.45, vol: 0.06 });
+        ton(c, s, t, { freq: 440, vers: 660, duree: 0.45, vol: 0.05, delai: 0.45 });
+      } },
+    // Malédiction : un accord grave qui se tord.
+    'a-rv-malediction': { famille: 'jeu', duree: 0.9,
+      jouer: (c, s, t) => {
+        ton(c, s, t, { freq: 110, vers: 98, duree: 0.8, type: 'sawtooth', vol: 0.04 });
+        ton(c, s, t, { freq: 116, vers: 104, duree: 0.8, type: 'sawtooth', vol: 0.04 });
+      } },
+
     /* ============================================= les épreuves (ouverture)
        Les quatre de rythme d'abord : brèves, voir plus haut. */
     // Le tempo : le compte des baguettes qui se frappent.
@@ -1532,6 +1806,56 @@
     'epreuve-miroir': 1.15,        //  −17,6 · −22,4 · 0,56 s
     'epreuve-rouleaux': 6.38,      //   −8,1 · −22,6 · 0,45 s
     'epreuve-deuxvoix': 0.871,     //  −10,1 · −22,5 · 0,39 s
+    /* La relance et les cartes des PASS (3 novembre 2026), même banc. */
+    'a-petard': 1.2,
+    'a-banderole': 2.09,
+    'a-sifflets': 0.75,
+    'a-larsen': 2.16,
+    'a-gourde': 2.19,
+    'a-echarpe-tendue': 2.48,
+    'a-ola': 2.21,
+    'a-tambour': 0.724,
+    'a-bengale': 2.34,
+    'a-faussenote': 3.27,
+    'a-coupfranc': 0.661,
+    'a-megaphone': 1.95,
+    'a-hc-pause-pub': 2.95,
+    'a-hc-chips': 3.88,
+    'a-hc-plaid': 2.5,
+    'a-hc-ralenti': 1.72,
+    'a-hc-reveil': 1.98,
+    'a-hc-massue': 0.525,
+    'a-hc-feu-camp': 3.29,
+    'a-mt-averse': 1.76,
+    'a-mt-eclaircie': 2.43,
+    'a-mt-grele': 2.09,
+    'a-mt-vent-arriere': 1.6,
+    'a-mt-orage': 2.99,
+    'a-gd-car': 2.34,
+    'a-gd-aire': 1.14,
+    'a-gd-train-retard': 2.14,
+    'a-rv-frisson': 2.06,
+    'a-rv-brume': 2.57,
+    'a-rv-outre-tombe': 0.891,
+    'a-mitemps': 0.661,
+    'a-but-au-stade': 0.646,
+    'a-carton-rouge': 0.575,
+    'a-coup-sifflet': 0.582,
+    'a-temps-additionnel': 2.95,
+    'a-chambrage': 1.46,
+    'a-echo': 2.16,
+    'a-piege': 1.57,
+    'a-tribune-chaude': 0.776,
+    'a-recrue': 2.14,
+    'a-sangfroid': 1.82,
+    'a-domicile': 2.75,
+    'a-maillot': 1.3,
+    'a-kop-plein': 0.684,
+    'a-hc-telecommande': 2.85,
+    'a-gd-peage': 3.05,
+    'a-gd-parcage-visiteur': 1.2,
+    'a-rv-fantome': 2.21,
+    'a-rv-malediction': 2.95,
   };
   Object.assign(MIX, MIX_CARTES);
 

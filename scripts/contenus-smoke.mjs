@@ -64,8 +64,8 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
   const c = createContenus({ pool });
   const r = await c.charger();
   check('sans la table, le chargement ne lève pas', r.charge === false);
-  check('et toutes les cartes d’action restent jouables',
-    publies('action').length === ACTIONS.length);
+  check('et toutes les cartes d’action restent jouables, sauf ce que le code dit fermé',
+    publies('action').length === ACTIONS.filter((a) => a.publie !== false).length);
   check('tout l’équipement aussi, sauf ce que le code dit fermé',
     publies('stuff').length === STUFF.filter((s) => s.publie !== false).length);
   check('et une pièce neuve qui attend sa saison n’est pas distribuée',
@@ -132,7 +132,7 @@ const contenus = createContenus({ pool });
      les affichent dans cet ordre depuis le premier jour. */
   check('l’ordre du code est conservé',
     publies('action')[0]?.id === ACTIONS[0].id
-    && publies('action').at(-1)?.id === ACTIONS.at(-1).id);
+    && publies('action').at(-1)?.id === ACTIONS.filter((a) => a.publie !== false).at(-1).id);
 }
 
 /* ======================================== le semis n'écrase pas ce qui est là

@@ -30,7 +30,9 @@ export const CARNET_TRIMESTRE = Object.freeze([
 
 /* `stuff` : le préfixe des pièces neuves de la série (`hc-`, `mt-`, `gd-`,
    `shared/fanzzy/inventaire.js`), fermées jusqu'à la saison qui les ouvre.
-   LES REVENANTS n'en ont pas. */
+   LES REVENANTS n'en ont pas.
+   `actions` : de même, le préfixe des cartes d'action de la saison
+   (`shared/duel/actions.js`, novembre 2026), fermées jusqu'à son lancement. */
 /* **Le calendrier des PASS** (Gaël, 3 novembre 2026) : la saison 0 est la
    BASE, ouverte dès le lancement de l'application ; puis un PASS par saison
    météorologique — hiver (décembre à février), printemps (mars à mai), été
@@ -43,20 +45,20 @@ export const CARNET_TRIMESTRE = Object.freeze([
    `npm run calendrier:appliquer` (scripts/calendrier-base.mjs). */
 export const SAISONS_PREVUES = Object.freeze([
   { numero: 1, nom: 'Les héros du canapé', ouvre: '2026-12-01', fin: '2027-02-28',
-    series: ['HC'], stuff: 'hc-', tenue: 'prehistorique',
+    series: ['HC'], stuff: 'hc-', actions: 'a-hc-', tenue: 'prehistorique',
     texte: 'L’hiver, on supporte depuis le canapé : les héros du salon entrent en tribune, '
       + 'pour tous. Avec le PASS 1 : la tenue Préhistorique à ses trois âges, son badge, '
       + 'son cadre et plus de boosters toute la saison.' },
   { numero: 2, nom: 'Les phénomènes météo', ouvre: '2027-03-01', fin: '2027-05-31',
-    series: ['MT'], stuff: 'mt-',
+    series: ['MT'], stuff: 'mt-', actions: 'a-mt-',
     texte: 'Giboulées, vent, grêle : la tribune tient bon, et la météo descend sur la pelouse, '
       + 'pour tous. Avec le PASS 2 : sa tenue, son badge, son cadre et plus de boosters.' },
   { numero: 3, nom: 'Les galères de déplacement', ouvre: '2027-06-01', fin: '2027-08-31',
-    series: ['GD'], stuff: 'gd-',
+    series: ['GD'], stuff: 'gd-', actions: 'a-gd-',
     texte: 'Car en panne, train raté : on arrive quand même. L’été, la tribune prend la route, '
       + 'pour tous. Avec le PASS 3 : sa tenue, son badge, son cadre et plus de boosters.' },
   { numero: 4, nom: 'Les revenants', ouvre: '2027-09-01', fin: '2027-11-30',
-    series: ['RV'], stuff: null,
+    series: ['RV'], stuff: null, actions: 'a-rv-',
     texte: 'Ils reviennent hanter le virage jusqu’à Halloween, pour tous. Avec le PASS 4 : '
       + 'sa tenue, son badge, son cadre et plus de boosters.' },
 ].map((s) => Object.freeze(s)));

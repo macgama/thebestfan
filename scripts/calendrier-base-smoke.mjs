@@ -32,7 +32,7 @@ await raw.end();
 const pool = mysql.createPool({ uri: DB, connectionLimit: 2, ...OPTIONS_BASE });
 const q = async (sql, p) => (await pool.query(sql, p))[0];
 
-let saisons = await q('SELECT id, numero, nom, series, lancee_a FROM saisons ORDER BY numero, id');
+let saisons = await q('SELECT id, numero, nom, series, actions, lancee_a FROM saisons ORDER BY numero, id');
 const plan = planifier(saisons);
 check('le plan se fait', !plan.erreur || (console.log('       ', plan.erreur), false));
 /* Comme en production : le brouillon HC n'a pas de série (création refusée sans carte). */
@@ -52,6 +52,11 @@ check('le PASS 1 est les héros du canapé, du 1er décembre au 28 février', p1
 check('et garde Préhistorique pour ses membres', passDe(1).tenue === 'prehistorique');
 check('PASS 2 à 4 : météo, déplacement, revenants', ['MT', 'GD', 'RV'].every((c, i) =>
   t.find((s) => s.numero === i + 2)?.series.join() === c));
+check('chaque PASS nomme ses cartes d’action, et seulement les siennes',
+  ['a-hc-', 'a-mt-', 'a-gd-', 'a-rv-'].every((pre, i) => {
+    const a = t.find((s) => s.numero === i + 1)?.actions ?? [];
+    return a.length >= 3 && a.every((id) => id.startsWith(pre));
+  }), t.map((s) => [s.numero, s.actions?.length]));
 check('aucun numéro en double', new Set(t.map((s) => s.numero)).size === t.length);
 check('la saison en cours est la BASE', saisonEnCours()?.numero === 0);
 check('un PASS acheté pendant la BASE est le PASS 1', saisonsCouvertes(saisonEnCours(), 30).join() === '1');

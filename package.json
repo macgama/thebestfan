@@ -51,6 +51,8 @@
     "principal:smoke": "node scripts/principal-smoke.mjs",
     "stuff-clubs:smoke": "node scripts/stuff-clubs-smoke.mjs",
     "nvn:smoke": "node scripts/nvn-smoke.mjs",
+    "cartes-reelles:smoke": "node scripts/cartes-reelles-smoke.mjs",
+    "cartes-mecaniques:smoke": "node scripts/cartes-mecaniques-smoke.mjs",
     "derby:smoke": "node scripts/derby-smoke.mjs",
     "duel-attente:smoke": "node scripts/duel-attente-smoke.mjs",
     "duel-guide:smoke": "node scripts/duel-guide-smoke.mjs",
