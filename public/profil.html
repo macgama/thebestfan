@@ -94,6 +94,23 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @keyframes pseudo-or{0%,100%{background-position:100% 0}50%{background-position:0 0}}
 @media (prefers-reduced-motion:reduce){.carte h1.pseudo-or{animation:none}}
 html[data-calme~="animations"] .carte h1.pseudo-or{animation:none}
+/* **Le kit du PASS sur la carte** (`TBF_PASS.kit`) : la plaque de pierre
+   derrière le titre (niveau 9), le cadre de pierre autour du buste
+   (niveau 2), et le fond de grotte dont les braises respirent (niveau 5).
+   Tout se pose seulement si la voie l'a donné. */
+.carte .pass-titre.plaque{display:inline-block;margin-top:4px;padding:5px 16px 4px;
+  background:var(--plaque) 50% 50%/100% 100% no-repeat;color:#f6e7c4;
+  text-shadow:0 1px 1px rgba(0,0,0,.8)}
+.carte-buste{position:relative}
+.carte-buste>.pass-cadre-profil{position:absolute;inset:-15px;width:calc(100% + 30px);height:calc(100% + 30px);
+  max-width:none;pointer-events:none;z-index:3;filter:drop-shadow(0 2px 2px rgba(0,0,0,.6))}
+.carte-fond.grotte{background:var(--grotte) 50% 45%/cover no-repeat,var(--parpaing)}
+.carte-fond.grotte::before{content:"";position:absolute;inset:0;mix-blend-mode:screen;
+  background:radial-gradient(60% 45% at 50% 70%,rgba(255,140,40,.35),transparent 70%);
+  animation:grotte-braises 3.4s ease-in-out infinite}
+@keyframes grotte-braises{0%,100%{opacity:.35}40%{opacity:.9}55%{opacity:.6}70%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.carte-fond.grotte::before{animation:none}}
+html[data-calme~="animations"] .carte-fond.grotte::before{animation:none}
 .carte .club{display:flex;align-items:center;gap:7px;margin-top:8px;min-width:0;
   font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.2;letter-spacing:.06em;
   text-transform:uppercase}
@@ -2143,12 +2160,28 @@ void (async () => {
     window.TBF_PASS.cadre($('carte'), v);
     /* Le titre de la voie, puis le pseudo en or au bout. */
     const t = $('passTitre');
+    const P = window.TBF_PASS;
+    const k = P.kit?.(v.saison);
+    const gagne = (g) => Array.isArray(v.gains) && v.gains.includes(g);
     if (v.titre && t) {
       t.textContent = v.titre;
       t.style.setProperty('--pass', v.couleur ?? '#c9772e');
+      if (k?.titre) {
+        t.style.setProperty('--plaque', `url("${P.image(k.titre)}")`);
+        t.classList.add('plaque');
+      }
       t.hidden = false;
     }
     if (v.or) $('pseudo').classList.add('pseudo-or');
+    /* Le cadre de pierre autour du buste, et le fond de grotte. */
+    if (k?.cadre_profil && gagne('cadre_profil') && !$('buste').querySelector('.pass-cadre-profil')) {
+      $('buste').insertAdjacentHTML('beforeend', P.img(k.cadre_profil, 'pass-cadre-profil'));
+    }
+    if (k?.fond_profil && gagne('fond_profil')) {
+      const f = $('fond');
+      f.style.setProperty('--grotte', `url("${P.image(k.fond_profil)}")`);
+      f.classList.add('grotte');
+    }
   } catch { /* la carte se passe de son badge */ }
 })();
 </script>

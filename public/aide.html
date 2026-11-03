@@ -176,6 +176,17 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @media (prefers-reduced-motion:reduce){.voie-pass .tbf-noeud-k{animation:none!important}}
 html[data-calme~="animations"] .voie-pass .tbf-noeud-k{animation:none!important}
 .voie-pass .tbf-noeud-l{font-size:10px}
+/* Le dessin du gain dans son rond, le seuil (ou la coche) en pastille au
+   coin haut ; le cadenas reste au coin bas. Pas encore atteint : en sourdine. */
+.voie-pass .tbf-chemin{--k:44px}
+.voie-pass .tbf-noeud-k>.voie-icone{width:40px;height:40px;object-fit:contain;
+  filter:drop-shadow(0 1px 1px rgba(7,9,12,.5))}
+.voie-pass .tbf-noeud:not([data-etat]):not([data-attend]) .voie-icone{filter:grayscale(.75) brightness(.8);opacity:.85}
+.voie-pass .voie-coin{position:absolute;left:-6px;top:-6px;min-width:18px;height:18px;padding:0 3px;
+  box-sizing:border-box;border-radius:9px;display:grid;place-items:center;font-style:normal;
+  font-size:10px;background:var(--craie);color:var(--encre);box-shadow:0 0 0 1.5px var(--encre)}
+.voie-pass .voie-coin>svg{width:11px;height:11px;color:var(--vert-fonce);stroke-width:3.4}
+.voie-pass .tbf-noeud-k:has(.voie-icone){border-style:solid;border-width:1.5px}
 .voie-pass>.pied{display:flex;align-items:center;gap:10px;margin-top:14px;min-height:24px}
 .voie-pass>.pied small{flex:1;font-size:11.5px;line-height:1.45;opacity:.92}
 .voie-pass>.pied .tbf-plaque{flex:none;text-decoration:none}
@@ -1064,6 +1075,12 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     const bientot = !membre && !a.actif && (a.offre && 'bientot' in a.offre
       ? Boolean(a.offre.bientot) : Date.now() < ouverturePass());
 
+    /* Le dessin du gain dans le rond (le kit du PASS, quand il en a un), et
+       le seuil — ou la coche — en pastille au coin. Sans kit : comme avant. */
+    const rond = (v, coin) => {
+      const id = window.TBF_PASS?.icone?.(numero, v);
+      return id ? `${window.TBF_PASS.img(id, 'voie-icone')}<i class="voie-coin">${coin}</i>` : coin;
+    };
     const noeuds = voie.map((v, i) => {
       const atteint = entier(v.niveau) <= niveau;
       const court = esc((GAINS_COURTS[v.gain] ?? (() => v.nom))(v));
@@ -1072,16 +1089,16 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       const dit = `<span class="tbf-vh">Niveau ${entier(v.niveau)}, ${esc(v.nom)}, ${esc(quand)} :</span>`;
       if (membre && atteint) {
         return `<li class="tbf-noeud" data-etat="fait">${dit}<span class="tbf-vh">obtenu</span>
-          <span class="tbf-noeud-k" aria-hidden="true">${embleme('coche')}</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${rond(v, embleme('coche'))}</span>
           <span class="tbf-noeud-l" aria-hidden="true">${court}</span></li>`;
       }
       if (atteint) {
         return `<li class="tbf-noeud" data-attend data-verrou>${dit}<span class="tbf-vh">à toi dès l’achat du PASS</span>
-          <span class="tbf-noeud-k" aria-hidden="true">${seuil || 'P'}</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${rond(v, seuil || 'P')}</span>
           <span class="tbf-noeud-l" aria-hidden="true">${court}</span></li>`;
       }
       return `<li class="tbf-noeud"${membre ? '' : ' data-verrou'}>${dit}<span class="tbf-vh">pas encore</span>
-          <span class="tbf-noeud-k" aria-hidden="true">${seuil || 'P'}</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${rond(v, seuil || 'P')}</span>
           <span class="tbf-noeud-l" aria-hidden="true">${court}</span></li>`;
     });
 

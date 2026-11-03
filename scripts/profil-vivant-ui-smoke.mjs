@@ -78,15 +78,27 @@ async function ouvrir(av, abo = null) {
   ok(!err.length, 'et rien ne casse');
   await p.close();
 }
-/* La voie PASS sur la carte : le titre (niveau 9), le pseudo en or (12). */
-for (const [niveau, titre, or] of [[8, null, false], [12, 'Chasseur de mammouth', true]]) {
-  const v = { saison: 1, niveau, couleur: '#c9772e', or, titre, etoiles: 0, gains: [], cadre: 'anime' };
+/* La voie PASS sur la carte : le titre (niveau 9), le pseudo en or (12) ;
+   le kit du PASS 1 : cadre de pierre au buste (2), fond de grotte (5), plaque du titre. */
+const GAINS_12 = ['tenue', 'cadre_profil', 'stickers', 'fond_profil', 'cadre', 'entree', 'titre',
+  'cadre_anime', 'aura', 'badge_or'];
+for (const [niveau, titre, or, gains] of [[1, null, false, ['tenue']], [8, null, false, GAINS_12.slice(0, 6)],
+  [12, 'Chasseur de mammouth', true, GAINS_12]]) {
+  const v = { saison: 1, niveau, couleur: '#c9772e', or, titre, etoiles: 0, gains, cadre: 'anime' };
   const { p, err } = await ouvrir({ id: 'ZZ99', age: 'ZZ99', evo: 1, skin: 'base', nom: 'Inconnu', rar: 'commune' },
     { actif: true, voies: [v], voie: [] });
   const t = await p.$eval('#passTitre', (e) => (e.hidden ? '' : e.textContent)).catch(() => '');
   const enOr = await p.$eval('#pseudo', (e) => e.classList.contains('pseudo-or')).catch(() => false);
   ok(titre ? t === titre : !t, `niveau ${niveau} : ${titre ? 'le titre sous le pseudo' : 'pas encore de titre'}`);
   ok(enOr === or, `niveau ${niveau} : ${or ? 'le pseudo en or' : 'le pseudo pas encore en or'}`);
+  const kit = await p.evaluate(() => ({
+    cadre: Boolean(document.querySelector('#buste .pass-cadre-profil')),
+    grotte: document.getElementById('fond').classList.contains('grotte'),
+    plaque: document.getElementById('passTitre').classList.contains('plaque'),
+  }));
+  ok(kit.cadre === niveau >= 2, `niveau ${niveau} : ${niveau >= 2 ? 'le cadre de pierre autour du buste' : 'pas de cadre de pierre'}`);
+  ok(kit.grotte === niveau >= 5, `niveau ${niveau} : ${niveau >= 5 ? 'le fond de grotte' : 'pas de fond de grotte'}`);
+  ok(kit.plaque === Boolean(titre), `niveau ${niveau} : ${titre ? 'le titre sur sa plaque' : 'pas de plaque'}`);
   if (process.env.VOIE_CAPTURES && or) {
     await p.$('.carte').then((e) => e?.screenshot({ path: `${process.env.VOIE_CAPTURES}/profil-titre-or.png` })).catch(() => {});
   }
