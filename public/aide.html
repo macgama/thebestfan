@@ -139,6 +139,45 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     var(--e2,var(--flare)) 8px 15px,var(--encre) 15px 16px);
 }
 
+/* ============================================================ la voie PASS
+
+   Sous le carnet, pour tout le monde : la seconde ligne, en or, celle du
+   PASS de la saison (demande de Gaël, 3 novembre 2026 : « une voie PASS dans
+   le carnet qui donnera envie aux personnes n'ayant pas le PASS »). Le
+   membre y lit ce qu'il a ; les autres y voient tout ce qu'elle donne, sous
+   cadenas, et en or ce que leurs tampons ont **déjà** atteint : à l'achat,
+   tout cela leur revient d'un coup (le niveau se lit sur les tampons). */
+/* Le papier du ticket passe à l'or (la feuille peint `--kraft` sous son
+   grain) : la voie PASS se distingue du carnet d'un coup d'œil. */
+.voie-pass{--pass:#c9772e;margin-top:12px;padding-left:8px;padding-right:8px;
+  --kraft:linear-gradient(160deg,#f7dc8c 0%,#ecc35a 55%,#d9a441 100%)}
+.voie-pass>.haut,.voie-pass>.pied{padding:0 8px}
+.voie-pass>.haut{display:flex;align-items:center;gap:10px}
+.voie-pass>.haut .quoi{flex:1;font-family:var(--banner);font-weight:700;font-size:16px;letter-spacing:.04em}
+.voie-pass>.haut .attend{max-width:42%;font-family:var(--banner);font-weight:700;font-size:12px;letter-spacing:.05em;
+  line-height:1.2;color:var(--encre);text-align:right}
+.voie-pass .tbf-chemin{margin-top:14px}
+/* La corde de la voie est d'or : on la reconnaît d'un coup d'œil sous le kraft du carnet. */
+.voie-pass .tbf-noeud:not(:last-child)::before{
+  background:linear-gradient(180deg,rgba(7,9,12,.3),transparent 45%,rgba(7,9,12,.3)),
+    linear-gradient(90deg,#7a4a12,var(--pass))}
+.voie-pass .tbf-noeud[data-etat=fait] .tbf-noeud-k{background:var(--craie)}
+.voie-pass .tbf-noeud[data-verrou] .tbf-noeud-k{opacity:.8}
+/* Atteint sans PASS : il attend son acheteur, et il brille. */
+.voie-pass .tbf-noeud[data-attend] .tbf-noeud-k{border:0;
+  background:radial-gradient(circle at 35% 30%,#fffbe8,#fff0b8 50%,#f5c33b);
+  box-shadow:0 0 0 2px var(--encre),0 0 12px 2px rgba(245,195,59,.65)}
+.voie-pass .tbf-noeud[data-attend]:first-of-type .tbf-noeud-k,
+.voie-pass .tbf-noeud[data-attend]:nth-of-type(2) .tbf-noeud-k{animation:voie-luit 2.6s ease-in-out infinite}
+@keyframes voie-luit{0%,100%{box-shadow:0 0 0 2px var(--encre),0 0 6px 1px rgba(245,195,59,.45)}
+  50%{box-shadow:0 0 0 2px var(--encre),0 0 16px 4px rgba(245,195,59,.85)}}
+@media (prefers-reduced-motion:reduce){.voie-pass .tbf-noeud-k{animation:none!important}}
+html[data-calme~="animations"] .voie-pass .tbf-noeud-k{animation:none!important}
+.voie-pass .tbf-noeud-l{font-size:10px}
+.voie-pass>.pied{display:flex;align-items:center;gap:10px;margin-top:14px;min-height:24px}
+.voie-pass>.pied small{flex:1;font-size:11.5px;line-height:1.45;opacity:.92}
+.voie-pass>.pied .tbf-plaque{flex:none;text-decoration:none}
+
 /* **Le petit dessin d'un insigne** (`insigneHTML`), dans son sticker : le
    profil en réduction. Le liseré : la bande d'encre de l'anneau du buste et
    son fil de craie en pointillé ; le tampon : un tampon plein de travers, sa
@@ -316,6 +355,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
 <script src="/stuff-art.js"></script>
 <script src="/action-art.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<script src="/pass.js"></script>
 <script src="/cartes.js"></script>
 <script src="/fx.js" defer></script>
 <!-- La fête de niveau, après fx.js : une mission récupérée peut verser
@@ -865,6 +905,105 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       </div>`;
   }
 
+  /* ========================================================== la voie PASS
+
+     La seconde ligne du carnet, en or, celle du PASS de la saison. Le serveur
+     dit tout (`/api/abonnement` : `voie`, les niveaux ; `voies`, les miens,
+     au niveau qu'il a compté) : la page ne décide d'aucun niveau pour un
+     membre. Pour un joueur sans PASS, elle montre ce que ses tampons ont
+     déjà atteint, d'après les paliers du carnet servis — la règle du
+     serveur, `1 + paliers atteints` (`src/shared/pass.js`) : c'est ce qu'il
+     recevrait à l'achat, et c'est ce qui donne envie.
+
+     Pendant la BASE (saison 0), la voie du PASS 1 n'a pas encore de carnet :
+     elle se montre en aperçu, tout sous cadenas, avec le jour d'ouverture. */
+  let ABO = null;
+  /* Le jour où le PASS 1 s'achète (Gaël, 3 novembre 2026 : achat bloqué
+     avant le 1er décembre). L'annonce servie l'emporte quand elle existe. */
+  const OUVERTURE_PASS = Date.parse('2026-12-01T00:00:00+01:00');
+  const GAINS_COURTS = { tenue: (v) => `TENUE ${entier(v.age)}`, cadre: () => 'CADRE',
+    cadre_anime: () => 'CADRE ANIMÉ', badge_or: () => 'BADGE OR' };
+
+  function ouverturePass() {
+    const p = window.FZART?.prochaine?.();
+    const t = Date.parse(p?.ouvre_le ?? p?.ouvreLe ?? '');
+    return Number.isFinite(t) ? t : OUVERTURE_PASS;
+  }
+
+  /** « 1er décembre » dans la langue de la page ; en français, le premier du mois en ordinal. */
+  function dateOuverture() {
+    const d = new Date(ouverturePass());
+    const langue = document.documentElement.lang || 'fr';
+    const date = d.toLocaleDateString(langue, { day: 'numeric', month: 'long', timeZone: 'Europe/Zurich' });
+    return langue.startsWith('fr') ? date.replace(/^1 /, '1er ') : date;
+  }
+
+  function voiePassHTML(c, saison) {
+    const a = ABO;
+    const voie = (Array.isArray(a?.voie) ? a.voie : [])
+      .filter((v) => v && entier(v.niveau) && v.nom);
+    if (!voie.length) return '';
+    const numeroCarnet = numeroDe(saison);
+    const apercu = numeroCarnet === 0;
+    const numero = apercu ? 1 : numeroCarnet;
+    const mienne = (Array.isArray(a.voies) ? a.voies : []).find((v) => Number(v?.saison) === numero) ?? null;
+    const membre = Boolean(mienne);
+    const p = mienne ?? (a.offre?.couvre ?? []).find((x) => Number(x?.numero) === numero)
+      ?? (a.passes ?? []).find((x) => Number(x?.numero) === numero) ?? { numero, couleur: '#c9772e' };
+    const couleur = /^#[0-9a-f]{3,8}$/i.test(String(p.couleur ?? '')) ? p.couleur : '#c9772e';
+
+    const paliers = (c?.paliers ?? []).filter((x) => x && typeof x === 'object');
+    const atteints = apercu ? 0 : paliers.filter((x) => x.etat === 'pret' || x.etat === 'reclame').length;
+    const niveau = membre ? entier(mienne.niveau) : apercu ? 0 : 1 + atteints;
+    const attendent = membre || apercu ? 0 : voie.filter((v) => entier(v.niveau) <= niveau).length;
+    const seuils = membre && Array.isArray(mienne.seuils) ? mienne.seuils : paliers.map((x) => entier(x.tampons));
+    const bientot = !membre && !a.actif && Date.now() < ouverturePass();
+
+    const noeuds = voie.map((v) => {
+      const atteint = entier(v.niveau) <= niveau;
+      const court = esc((GAINS_COURTS[v.gain] ?? (() => v.nom))(v));
+      const seuil = entier(v.paliers) ? entier(seuils[entier(v.paliers) - 1]) : 0;
+      const quand = !entier(v.paliers) ? 'à l’achat'
+        : seuil ? `à ${seuil} tampons` : `au palier ${entier(v.paliers)} du carnet`;
+      const dit = `<span class="tbf-vh">Niveau ${entier(v.niveau)}, ${esc(v.nom)}, ${esc(quand)} :</span>`;
+      if (membre && atteint) {
+        return `<li class="tbf-noeud" data-etat="fait">${dit}<span class="tbf-vh">obtenu</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${embleme('coche')}</span>
+          <span class="tbf-noeud-l" aria-hidden="true">${court}</span></li>`;
+      }
+      if (atteint) {
+        return `<li class="tbf-noeud" data-attend data-verrou>${dit}<span class="tbf-vh">à toi dès l’achat du PASS</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${seuil || 'P'}</span>
+          <span class="tbf-noeud-l" aria-hidden="true">${court}</span></li>`;
+      }
+      return `<li class="tbf-noeud"${membre ? '' : ' data-verrou'}>${dit}<span class="tbf-vh">pas encore</span>
+          <span class="tbf-noeud-k" aria-hidden="true">${seuil || (entier(v.paliers) ? entier(v.niveau) : 'P')}</span>
+          <span class="tbf-noeud-l" aria-hidden="true">${court}</span></li>`;
+    });
+
+    const badge = window.TBF_PASS?.badge?.({ saison: numero, couleur, niveau: membre ? niveau : 0,
+      or: Boolean(mienne?.or) }) ?? '';
+    const droite = membre ? `NIVEAU ${niveau} / ${voie.length}`
+      : attendent > 1 ? `${attendent} CADEAUX PASS T’ATTENDENT`
+        : attendent ? '1 CADEAU PASS T’ATTEND' : '';
+    const phrase = membre
+      ? (niveau >= voie.length ? 'Toute la voie est à toi. Que du visuel, et tout reste à toi pour toujours.'
+        : 'Elle avance avec les tampons du carnet. Que du visuel, et tout reste à toi pour toujours.')
+      : apercu
+        ? `La voie du PASS ${numero} avance avec le carnet de la saison ${numero}. Que du visuel, jamais de puissance.`
+        : 'Tout ce que tes tampons ont déjà atteint est à toi dès l’achat. Que du visuel, jamais de puissance.';
+    const geste = membre ? ''
+      : bientot ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>'
+        : '<a class="tbf-plaque" data-ton="or" href="/abonnement">VOIR LE PASS</a>';
+    return `<div class="tbf-ticket entete voie-pass" style="--pass:${esc(couleur)}" id="voiePass">
+        <div class="haut">${badge}<span class="quoi">LA VOIE PASS ${numero}</span>${
+          droite ? `<span class="attend">${droite}</span>` : ''}</div>
+        <ol class="tbf-chemin" aria-label="La voie PASS ${numero}${membre ? ` : niveau ${niveau} sur ${voie.length}` : ''}">${noeuds.join('')}</ol>
+        <div class="pied"><small>${esc(phrase)}${bientot
+          ? ` Le PASS ${numero} s’achète dès le ${esc(dateOuverture())}.` : ''}</small>${geste}</div>
+      </div>`;
+  }
+
   const nomSaison = (s) => [s?.numero ? `SAISON ${entier(s.numero)}` : '', esc(s?.nom ?? '').toUpperCase()]
     .filter(Boolean).join(' · ');
 
@@ -905,7 +1044,8 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       const prets = pretsDe(c.paliers);
       out.push(`<h2 class="tbf-cousu">${nomSaison(s) || 'LA SAISON'}${quand ? `<i>${esc(quand)}</i>` : ''}</h2>
         ${prets.length ? `<div class="tbf-missions">${prets.map((p) => ticketPalier(p, s)).join('')}</div>` : ''}
-        ${carnetHTML(c, s, tampons)}`);
+        ${carnetHTML(c, s, tampons)}
+        ${voiePassHTML(c, s)}`);
     }
 
     const passee = Q.saisonPassee;
@@ -1556,6 +1696,15 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
        qu'on croit tenir, et à défaut on montre la FAQ, qui suffit. */
     if (Array.isArray(d?.etapes) && d.etapes.length) parcours = d;
     appliquer(q);
+    /* La voie PASS du carnet : sa propre lecture, qui n'attend personne et
+       a le droit d'échouer (pas de voie, et rien d'autre ne change). Même
+       question que le tiroir (`window.TBF_ABO`). */
+    (window.TBF_ABO ??= fetch('/api/abonnement', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null))
+      .then((a) => {
+        ABO = a && !a.error ? a : null;
+        if (ABO && onglet === 'saison') rendre();
+      }).catch(() => {});
 
     /* Le rail de départ : celui que l'adresse demande s'il existe, sinon
        les premiers pas **tant qu'ils ne sont pas finis**, sinon les missions
