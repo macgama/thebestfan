@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**30 nouvelles cartes d'action** (branche `claude/project-thread-96sqrp`,
+3 novembre 2026, « Ok pour toutes tes idées » de Gaël). Construction seule,
+pas de schéma.
+
+- 12 cartes pour tous dès la mise en ligne : 8 communes (offertes à tous :
+  Pétard, Banderole, Sifflets, Larsen, La Gourde, Écharpe tendue, Ola, Tambour)
+  et 4 à gagner au booster (Feu de Bengale, Fausse note, Coup franc, Mégaphone).
+- 18 cartes de PASS, fermées jusqu'au lancement de leur saison, pour tous :
+  PASS 1 Héros du canapé 7 (dont Massue et Feu de camp pour Préhistorique),
+  PASS 2 Météo 5, PASS 3 Déplacement 3, PASS 4 Revenants 3.
+- `npm run calendrier:appliquer` les range maintenant dans chaque PASS. Si le
+  calendrier a déjà été appliqué avant cette mise en ligne : /admin › PASS ›
+  LES PASS, cocher les cartes `a-hc-…` dans le PASS 1 (puis `a-mt-`, `a-gd-`,
+  `a-rv-` dans les PASS 2 à 4).
+- Sans dessin pour l'instant : la carte montre son symbole de famille.
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH
