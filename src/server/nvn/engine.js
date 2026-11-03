@@ -15,7 +15,7 @@ import { nouvelleJauge, chargerJauge, ultimePret, pousseeUltime, vueJauge }
 import { chantReussiPour } from '../jeux/voix.js';
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
-import { ouverts, stadeDuMatch } from '../contenus/index.js';
+import { ouverts, stadeDuMatch, ordreDesChants } from '../contenus/index.js';
 /* La ventilation de ce qu'un joueur porte, partagée avec le Grand Virage : les
    deux arènes composent les mêmes modificateurs, elles doivent les nommer
    pareil. Voir `src/shared/apports.js`. */
@@ -351,9 +351,11 @@ export class DuelNvN {
      * joueurs** — la corde est commune, les moyens de la tirer aussi — et
      * différents d'un duel à l'autre, ce qui fait rencontrer les dix-sept
      * gestes en jouant plusieurs parties. */
-    const depart = hachage(`${id}:chants`) % ORDRE.length;
+    /* Parmi les chants ouverts (menu PASS de l'administration). */
+    const ordre = ordreDesChants();
+    const depart = hachage(`${id}:chants`) % ordre.length;
     this.repertoire = Array.from({ length: 5 },
-      (_, i) => ORDRE[(depart + i) % ORDRE.length]);
+      (_, i) => ordre[(depart + i) % ordre.length]);
     this.rope = 0;
     this.goals = [0, 0];
     this.debut = now;

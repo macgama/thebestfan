@@ -2,8 +2,8 @@
 
 **Le menu PASS : la BASE, LES PASS, les VENTES** (branche
 `claude/project-thread-d5k3ue`, 2 novembre 2026, demande de Gaël). Construction,
-puis **`npm run schema:appliquer`** (une colonne : `saisons.jeux`, dans
-`sql/contenus.sql`), puis redémarrage.
+puis **`npm run schema:appliquer`** (deux colonnes : `saisons.jeux` et
+`saisons.chants`, dans `sql/contenus.sql`), puis redémarrage.
 
 - SAISONS et PASS deviennent un seul menu PASS : BASE (le paquet de bienvenue
   et tout ce qui est en jeu pour tous, modifiable), LES PASS (un par saison,
@@ -11,7 +11,10 @@ puis **`npm run schema:appliquer`** (une colonne : `saisons.jeux`, dans
   menu PASS).
 - Les mini-jeux s'ouvrent et se ferment comme l'équipement et les stades ; les
   écharpes du paquet de bienvenue se règlent (80 à 119 par défaut, comme avant).
-- Sans le schéma, tout marche, sauf nommer un mini-jeu dans un PASS.
+- 3 novembre : l'équipement et les stades sont rangés par série et par skin,
+  avec un bouton « tout » par groupe ; les 26 chants du DUEL et du VIRAGE se
+  cochent aussi (au moins cinq restent ouverts).
+- Sans le schéma, tout marche, sauf nommer un mini-jeu ou un chant dans un PASS.
 - Puis : /admin, menu PASS › BASE.
 
 ---
