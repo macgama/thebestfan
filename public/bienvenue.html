@@ -868,12 +868,13 @@ function faceCarte(c) {
 function reveler() {
   KQ = window.TBF_OUVERTURE ?? null;
   const s = $('s3');
-  /* **Un seul dos pour tout le paquet, celui de sa série.** Les cartes de
-     bienvenue ne sont pas toutes des Fanzzy — il y a des actions, du stuff,
-     des écharpes —, et donner à chacune le dos de sa propre série reviendrait
-     à annoncer ce qu'elle est avant de la retourner. On prend donc la série du
-     premier supporter du paquet : c'est celle du sachet. */
-  const dos = window.FZART?.dos?.(cartes.find((c) => c.set)?.set);
+  /* **Chaque carte porte le dos de sa série** (demande de Gaël du 3 novembre
+     2026). Le paquet de bienvenue est un tirage au hasard : deux Fanzzy qui
+     ne sont pas forcément de la même série, une pièce, des actions, des
+     écharpes. Le dos du premier Fanzzy posé sur les dix donnait à chacune une
+     série qui n'était pas la sienne. Le serveur dit le dos de chaque carte
+     (`dos`, `src/server/fanzzy/dos.js`) : celui de sa série, ou le neutre
+     pour ce qui n'en a aucune. */
   cartes.forEach((c, i) => {
     const el = document.createElement('div');
     /* **Figée tant qu'elle n'est pas retournée** (`.fz-fige`, cartes.css).
@@ -891,6 +892,7 @@ function reveler() {
     el.style.setProperty('--rc', `var(--r-${el.dataset.rar})`);
     el.style.zIndex = 20 - i;
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
+    const dos = window.FZART?.dos?.(c.dos ?? (c.type === 'fanzzy' ? c.set : null));
     el.innerHTML = `<div class="flip">
       <div class="face back${dos ? ' dessine' : ''}"${dos
         ? ` style="background-image:url('${dos}')"` : ''}><svg width="52" height="52" viewBox="0 0 24 24" fill="none"

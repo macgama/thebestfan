@@ -46,6 +46,7 @@ import { tenueDePass, passDeLaTenue, tenueReservee } from '../../shared/pass.js'
    seulement l'annonce. */
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
+import { poserLesDos } from './dos.js';
 import { verser, verserTout } from '../recompenses.js';
 import { criDuClub, gainPleinClub, lienEcrit, motifSelection } from '../../shared/fanzzy/clubs.js';
 
@@ -1259,6 +1260,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const cle = cleDeCarte(c);
         if (cle) c.cle = cle;
       }
+      /* Le dos de chaque carte, celui de sa série ou le neutre (`dos.js`). */
+      poserLesDos(cards);
       resultat = { cards, scarvesGained: scarves, paye, series: progressionSeries(avant, had, cards) };
     } catch (e) {
       await conn.rollback().catch(() => {});
