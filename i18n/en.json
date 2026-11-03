@@ -8498,5 +8498,11 @@
  "L’hiver, on supporte depuis le canapé : les héros du salon entrent en tribune, pour tous. Avec le PASS 1 : la tenue Préhistorique à ses trois âges, son badge, son cadre et plus de boosters toute la saison.": "In winter, we support from the couch: the living-room heroes take to the stands, for everyone. With PASS 1: the Prehistoric outfit at all three ages, its badge, its frame and more boosters all season.",
  "Giboulées, vent, grêle : la tribune tient bon, et la météo descend sur la pelouse, pour tous. Avec le PASS 2 : sa tenue, son badge, son cadre et plus de boosters.": "Showers, wind, hail: the stand holds firm, and the weather comes down onto the pitch, for everyone. With PASS 2: its outfit, its badge, its frame and more boosters.",
  "Car en panne, train raté : on arrive quand même. L’été, la tribune prend la route, pour tous. Avec le PASS 3 : sa tenue, son badge, son cadre et plus de boosters.": "Broken-down coach, missed train: we get there anyway. In summer, the stand hits the road, for everyone. With PASS 3: its outfit, its badge, its frame and more boosters.",
- "Ils reviennent hanter le virage jusqu’à Halloween, pour tous. Avec le PASS 4 : sa tenue, son badge, son cadre et plus de boosters.": "They come back to haunt the stand until Halloween, for everyone. With PASS 4: its outfit, its badge, its frame and more boosters."
+ "Ils reviennent hanter le virage jusqu’à Halloween, pour tous. Avec le PASS 4 : sa tenue, son badge, son cadre et plus de boosters.": "They come back to haunt the stand until Halloween, for everyone. With PASS 4: its outfit, its badge, its frame and more boosters.",
+ "NIVEAU {0}": "LEVEL {0}",
+ "Emplacement supplémentaire <0>{0}</0>": "Extra slot <0>{0}</0>",
+ "Se débloque au niveau {0}": "Unlocks at level {0}",
+ "Pas encore débloqué": "Not unlocked yet",
+ "Il te manque {0} écharpes": "You need {0} more scarves",
+ "Pas encore débloqué : monte de niveau": "Not unlocked yet: level up first"
 }
