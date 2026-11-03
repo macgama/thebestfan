@@ -82,7 +82,7 @@ titre('Ce qui fait avancer');
 titre('Les intitulés, les gains et la voie');
 check('« Joue 5 duels avec un Fanzzy LES TERRACES »',
   titreDefi('serie', 5, 'LES TERRACES') === 'Joue 5 duels avec un Fanzzy LES TERRACES');
-check('le stuff se porte au Virage', /Grand Virage en portant « Cornet de brume »/.test(titreDefi('stuff', 30, 'Cornet de brume')));
+check('le stuff se porte au Virage', /Grand Virage en portant «\u00a0Cornet de brume\u00a0»/.test(titreDefi('stuff', 30, 'Cornet de brume')));
 check('un défi : 100 écharpes et 2 tampons', JSON.stringify(gainDefi('serie')) === '{"echarpes":100,"tampons":2,"points":0}');
 check('le défi PASS : 10 points de voie, rien d’autre', JSON.stringify(gainDefi('pass')) === '{"echarpes":0,"tampons":0,"points":10}');
 check('sans saison : pas de tampons promis', gainDefi('stuff', { avecSaison: false }).tampons === 0);
