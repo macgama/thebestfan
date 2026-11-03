@@ -374,6 +374,9 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
   let laFaq = null;
   /** L'état du jour, seulement s'il est actif : `null` veut dire « rien de quotidien ». */
   let Q = null;
+  /** Les défis de la semaine (`GET /api/defis`), seulement s'ils sont actifs. */
+  let D = null;
+  let finSemaine = null;
   /** L'instant (horloge de la page) de la dernière lecture, et la fin du jour qu'elle a dite. */
   let luA = 0;
   let finJour = null;
@@ -526,7 +529,8 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
         + `<img src="/img/gains/echarpes.webp" alt="">+${e}</span>` : '')
       + (p ? `<span class="tbf-sticker">+${p} BOOSTER${p > 1 ? 'S' : ''}</span>` : '')
       + (x ? `<span class="tbf-sticker">+${x} XP</span>` : '')
-      + (t ? `<span class="tbf-sticker">+${t} TAMPON${t > 1 ? 'S' : ''}</span>` : '');
+      + (t ? `<span class="tbf-sticker">+${t} TAMPON${t > 1 ? 'S' : ''}</span>` : '')
+      + (entier(g?.voie) ? `<span class="tbf-sticker" data-ton="or">+${entier(g.voie)} VOIE PASS</span>` : '');
   }
 
   /** La progression d'un ticket : l'écharpe fine et le compte. */
@@ -552,10 +556,11 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
      vide ne fait pas un onglet (« pas d'onglet vide »). */
   const listeDe = (l) => (Array.isArray(l) ? l : []);
   const pretsDe = (l) => listeDe(l).filter((x) => x?.etat === 'pret');
+  const aDefis = () => Boolean(D && (listeDe(D.liste).length || pretsDe(D.passee).length));
   const aJour = () => {
     const m = Q?.missions;
     return Boolean(m && (listeDe(m.liste).length || pretsDe(m.hier?.liste).length
-      || m.hier?.sachet?.etat === 'pret'));
+      || m.hier?.sachet?.etat === 'pret')) || aDefis();
   };
   const aSaison = () => Boolean(Q && (listeDe(Q.carnet?.paliers).length || Q.relais
     || pretsDe(Q.saisonPassee?.paliers).length));
@@ -566,7 +571,10 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
   function compteJour() {
     const m = Q?.missions;
     if (!aJour()) return 0;
-    return (Q.bonus?.pret === true && peut('bonus') ? 1 : 0)
+    const defisPrets = aDefis() && peut('defi')
+      ? pretsDe(D.liste).length + pretsDe(D.passee).length : 0;
+    if (!m) return defisPrets;
+    return defisPrets + (Q.bonus?.pret === true && peut('bonus') ? 1 : 0)
       + (peut('mission') ? pretsDe(m.liste).length + pretsDe(m.hier?.liste).length : 0)
       + (peut('sachet') ? (m.sachet?.etat === 'pret' ? 1 : 0) + (m.hier?.sachet?.etat === 'pret' ? 1 : 0) : 0);
   }
@@ -697,7 +705,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
   const resteDuJour = () => (finJour ? finJour.ms - (performance.now() - finJour.t0) : null);
 
   function vueJour() {
-    const m = Q.missions;
+    const m = Q?.missions ?? { liste: [] };
     const liste = listeDe(m.liste);
     const reste = resteDuJour();
     /* La précision du titre : quand viennent les nouvelles, et combien de
@@ -728,7 +736,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       regles.push('Les chants d’un match comptent pour le jour de son coup d’envoi.');
     }
 
-    return `${Q.bonus && typeof Q.bonus === 'object' ? ticketBonus() : ''}
+    return `${Q?.bonus && typeof Q.bonus === 'object' ? ticketBonus() : ''}
       ${liste.length ? `<h2 class="tbf-cousu"><span class="mot">LES MISSIONS</span>${quand}</h2>
       <div class="tbf-missions">
         ${liste.map((x) => ticketMission(x, m.jour, true)).join('')}
@@ -739,6 +747,78 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
           ${hierListe.map((x) => ticketMission(x, hier.jour, false)).join('')}
           ${hierSachet ? ticketSachet(hierSachet, hier.jour, false) : ''}
         </div>` : ''}
+      ${regles.length ? `<div class="regle pan">${regles.map((r) => `<p>${esc(r)}</p>`).join('')}</div>` : ''}
+      ${vueDefis()}`;
+  }
+
+  /* ===================================================== LES DÉFIS DE LA SEMAINE
+
+     Trois défis tirés le lundi parmi ce que le joueur possède (une série, une
+     pièce portée, une tenue), et un quatrième, or, pour les membres d'un PASS
+     qui court : il ne fait avancer que la voie PASS (`src/shared/defis.js`). */
+
+  /** La vignette d'un défi : le dos de la série, le dessin de la pièce, ou l'emblème des âges. */
+  function vignetteDefi(x) {
+    try {
+      if (x.sorte === 'serie') {
+        const src = window.FZART?.dos?.(x.objet);
+        if (src) return image(src, 'dos');
+      }
+      if (x.sorte === 'stuff') {
+        const src = window.TBF_STUFF?.adresse?.(x.objet) ?? `/img/stuff/${x.objet}.webp`;
+        return image(src, 'cible');
+      }
+    } catch { /* le catalogue n'a pas chargé : l'emblème */ }
+    return embleme(x.sorte === 'stuff' ? 'cible' : 'ages');
+  }
+
+  function ticketDefi(x) {
+    const cle = `defi:${x.semaine}:${x.rang}`;
+    const ton = x.pass ? ' data-ton="or"' : '';
+    const corps = `<span class="tbf-mission-vignette">${vignetteDefi(x)}</span>
+        <b class="tbf-mission-titre">${x.pass ? '<span class="tbf-sticker" data-ton="or">PASS</span> ' : ''}${esc(x.titre)}</b>
+        ${jaugeHTML(x.fait, x.cible)}
+        <span class="tbf-mission-gain">${gainHTML(x.gain)}</span>`;
+    if (x.etat === 'pret') {
+      const geste = eteintes.has('defi') ? ''
+        : `<button type="button" class="tbf-plaque" data-ton="or" data-geste="defi"
+            data-semaine="${esc(x.semaine)}" data-rang="${entier(x.rang)}"
+            data-titre="${esc(x.titre)}">RÉCUPÉRER</button>`;
+      return `<article class="tbf-ticket tbf-mission tbf-defi${colleSi(cle)}"${ton} data-etat="pret" data-cle="${esc(cle)}">${corps}${geste}</article>`;
+    }
+    if (x.etat === 'reclamee') {
+      return `<article class="tbf-ticket tbf-mission tbf-defi"${ton} data-etat="reclamee" data-cle="${esc(cle)}">${corps}${fait(cle)}</article>`;
+    }
+    const ou = chemin(x.ou);
+    return ou
+      ? `<a class="tbf-ticket tbf-mission tbf-defi"${ton} data-etat="en_cours" data-cle="${esc(cle)}" href="${esc(ou)}">${corps}
+          <small class="tbf-mission-note">${esc(x.bouton || 'Y aller').toUpperCase()} ›</small></a>`
+      : `<article class="tbf-ticket tbf-mission tbf-defi"${ton} data-etat="en_cours" data-cle="${esc(cle)}">${corps}</article>`;
+  }
+
+  /** « 3 j », « 5 h 12 » : la fin de la semaine de jeu, comptée par le serveur. */
+  function dureeSemaine(ms) {
+    const j = Math.floor(ms / 86400000);
+    return j >= 1 ? `${j} j` : duree(ms);
+  }
+
+  function vueDefis() {
+    if (!aDefis()) return '';
+    const liste = listeDe(D.liste);
+    const passee = pretsDe(D.passee);
+    const reste = finSemaine ? finSemaine.ms - (performance.now() - finSemaine.t0) : null;
+    const quand = reste > 0 ? `<i>nouveaux dans ${dureeSemaine(reste)}</i>` : '';
+    const regles = [];
+    if (liste.some((x) => x.unite === 'duels')) {
+      regles.push('Un duel compte si un Fanzzy de la série ou dans la tenue du défi est monté en tribune.');
+    }
+    if (liste.some((x) => x.sorte === 'stuff')) {
+      regles.push('Une pièce compte si ton Fanzzy du Virage la porte dans ton deck.');
+    }
+    return `${liste.length ? `<h2 class="tbf-cousu"><span class="mot">LES DÉFIS DE LA SEMAINE</span>${quand}</h2>
+      <div class="tbf-missions">${liste.map(ticketDefi).join('')}</div>` : ''}
+      ${passee.length ? `<h2 class="tbf-cousu">LA SEMAINE DERNIÈRE<i>encore à récupérer</i></h2>
+        <div class="tbf-missions">${passee.map(ticketDefi).join('')}</div>` : ''}
       ${regles.length ? `<div class="regle pan">${regles.map((r) => `<p>${esc(r)}</p>`).join('')}</div>` : ''}`;
   }
 
@@ -1147,6 +1227,18 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     .then((j) => (j?.actif === true ? j : null))
     .catch(() => null);
 
+  /** Les défis de la semaine : même règle, absent veut dire rien. */
+  const lireDefis = () => fetch('/api/defis', { credentials: 'same-origin' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => (j?.actif === true ? j : null))
+    .catch(() => null);
+
+  function appliquerDefis(d) {
+    D = d?.actif === true && Array.isArray(d.liste) ? { ...d, passee: listeDe(d.passee) } : null;
+    const ms = Number(D?.finSemaineMs);
+    finSemaine = D && Number.isFinite(ms) && ms >= 0 ? { ms, t0: performance.now() } : null;
+  }
+
   /**
    * Prendre un état du jour, d'une lecture ou d'une réclamation.
    *
@@ -1183,7 +1275,9 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
   /** Relire le serveur : à minuit de jeu, au retour sur l'onglet, après un refus. */
   async function relire() {
     if (occupe) return;
-    appliquer(await lireQuotidien());
+    const [q, d] = await Promise.all([lireQuotidien(), lireDefis()]);
+    appliquer(q);
+    appliquerDefis(d);
     if (onglet === 'jour' || onglet === 'saison') rendre();
     else rendreRail();
   }
@@ -1322,16 +1416,18 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
    * déjà volé (`volees` : les boosters d'un palier partent de sa case).
    */
   async function ticketGain(g, origine, volees = []) {
-    const v = { echarpes: entier(g?.echarpes), packs: entier(g?.packs), xp: entier(g?.xp), tampons: entier(g?.tampons) };
+    const v = { echarpes: entier(g?.echarpes), packs: entier(g?.packs), xp: entier(g?.xp),
+      tampons: entier(g?.tampons), voie: entier(g?.voie) };
     const MOTS = {
       echarpes: () => 'ÉCHARPES',
       packs: (n) => (n > 1 ? 'BOOSTERS' : 'BOOSTER'),
       xp: () => 'XP',
       tampons: (n) => (n > 1 ? 'TAMPONS' : 'TAMPON'),
+      voie: () => 'VOIE PASS',
     };
-    const sorte = ['echarpes', 'packs', 'xp', 'tampons'].find((k) => v[k]);
+    const sorte = ['echarpes', 'packs', 'xp', 'tampons', 'voie'].find((k) => v[k]);
     if (!sorte) return;
-    const autres = ['packs', 'xp', 'tampons'].filter((k) => k !== sorte && v[k])
+    const autres = ['packs', 'xp', 'tampons', 'voie'].filter((k) => k !== sorte && v[k])
       .map((k) => `+${v[k]} ${MOTS[k](v[k]).toLowerCase()}`);
     const ligne = [origine, ...autres].filter(Boolean).join(' · ');
     const t = document.createElement('div');
@@ -1346,7 +1442,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     window.FX?.compter?.(chiffre, 0, v[sorte], { format: (n) => `+${Math.round(n)}` });
     /* Le vol part du jeton (le premier enfant) et dit d'où vient le gain ;
        le compteur de la barre dit combien, quand la page annonce la bourse. */
-    if (sorte === 'tampons' || volees.includes(sorte)) return;
+    if (sorte === 'tampons' || sorte === 'voie' || volees.includes(sorte)) return;
     const cible = cibleCompteur(sorte);
     const depart = t.firstElementChild;
     await window.FX?.voler?.(depart, cible,
@@ -1394,6 +1490,8 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       carnet: ['/api/quotidien/carnet', { saison: Number(b.dataset.saison), n: Number(b.dataset.n) },
         `carnet:${b.dataset.saison}:${b.dataset.n}`, b.dataset.titre],
       relais: ['/api/quotidien/relais', {}, 'relais', 'Passage de relais'],
+      defi: ['/api/defis/recuperer', { semaine: b.dataset.semaine, rang: Number(b.dataset.rang) },
+        `defi:${b.dataset.semaine}:${b.dataset.rang}`, b.dataset.titre],
     };
     const quoi = ROUTES[sorte];
     if (!quoi || occupe) return;
@@ -1411,6 +1509,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       return;
     }
     if (j.quotidien) appliquer(j.quotidien);
+    if (j.defis) appliquerDefis(j.defis);
 
     if (j.verse === true) {
       clac = cle;
@@ -1427,7 +1526,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
 
     if (j.raison === 'inactif' || j.raison === 'schema') eteintes.add(sorte);
     if (RAISONS[j.raison]) toast(RAISONS[j.raison]);
-    if (j.quotidien) rendre();
+    if (j.quotidien || j.defis) rendre();
     else await relire();
   }
 
@@ -1546,6 +1645,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
         .then((r) => r.json()).catch(() => null),
       lireQuotidien(),
       moi,
+      lireDefis().then((x) => { appliquerDefis(x); return x; }),
     ]);
     qui = u ? String(u.id ?? u.pseudo ?? '') || null : null;
     /* **On exige un parcours, pas l'absence d'erreur.** Le test valait

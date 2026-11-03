@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**Les défis de la semaine** (branche `claude/project-thread-4e3rjc`,
+3 novembre 2026, demande de Gaël « Ok pour moi »). Construction, puis
+**`npm run schema:appliquer`** (une table neuve, `defis_semaine`, dans
+`sql/defis.sql`), puis redémarrage.
+
+- Chaque lundi, trois défis par joueur tirés parmi ce qu'il possède : 5 duels
+  avec un Fanzzy d'une de ses séries, 30 chants au Grand Virage en portant une
+  de ses pièces, 3 duels avec un Fanzzy dans une de ses tenues. 100 écharpes
+  et 2 tampons du carnet chacun (réglables dans RÉGLAGES, section du quotidien).
+- Les membres d'un PASS dont la saison est lancée ont un quatrième défi :
+  5 duels dans la tenue de leur PASS. Il ne donne que 10 points de la voie
+  PASS (réglable), jamais d'écharpes ni de tampons.
+- Ils s'affichent dans les missions (DU JOUR), sous les missions du jour.
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH

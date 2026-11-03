@@ -219,6 +219,7 @@ check('et le grand livre y est ouvert', grandLivreFerme() === null);
 {
   const ATTENDUES = {
     compteurs_jour: 'user_id,jour,cle',
+    defis_semaine: 'user_id,semaine,rang',
     missions_jour: 'user_id,jour,rang',
     recompenses: 'user_id,source,cle',
     user_nouveautes: 'user_id,cle',
@@ -226,7 +227,8 @@ check('et le grand livre y est ouvert', grandLivreFerme() === null);
   const [k] = await pool.query(
     `SELECT table_name AS t, column_name AS c FROM information_schema.statistics
       WHERE table_schema = DATABASE() AND index_name = 'PRIMARY'
-        AND table_name IN ('recompenses', 'missions_jour', 'compteurs_jour', 'user_nouveautes')
+        AND table_name IN ('recompenses', 'missions_jour', 'compteurs_jour', 'user_nouveautes',
+                           'defis_semaine')
       ORDER BY table_name, seq_in_index`);
   const vues = {};
   for (const l of k) (vues[String(l.t).toLowerCase()] ??= []).push(String(l.c).toLowerCase());
