@@ -166,6 +166,12 @@ main [hidden]{display:none}
 .pass-beta{margin:10px 0 0;padding:10px 13px;border-radius:8px;background:var(--panneau);
   font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.35;letter-spacing:.04em}
 .prendre h2{margin:24px 0 30px}
+/* Le PASS pas encore ouvert à l'achat : un cadre or, BIENTÔT en sticker. */
+.pass-bientot-bloc{position:relative;display:flex;flex-direction:column;gap:8px;padding:22px 18px 18px}
+.pass-bientot-bloc>.tbf-sticker{position:absolute;top:-14px;right:12px;--rot:4deg}
+.pass-bientot-bloc b{font-family:var(--banner);font-weight:700;font-size:21px;line-height:1.1;letter-spacing:.03em}
+.pass-bientot-bloc p{margin:0;font-size:14px;line-height:1.4}
+.pass-bientot-bloc small{font-family:var(--banner);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 
 /* **Ce qui reste libre** — le bloc le plus lisible de l'écran, le premier
    après le PASS, et avant tout prix. Il porte la promesse du jeu, que le
@@ -280,6 +286,23 @@ main [hidden]{display:none}
 .gerer textarea{width:100%;box-sizing:border-box;margin-top:6px;min-height:64px;font:inherit;
   padding:8px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit}
 
+.anciens{margin:26px 0 0}
+.anciens>p{margin:0 0 12px;font-size:12px;line-height:1.5;opacity:.9}
+.mes-pass{margin:0 0 22px;padding:13px 14px;border-radius:14px;background:var(--panneau)}
+.mes-pass h2{margin:0 0 8px}
+.mes-pass ul,.ancien ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+.mes-pass li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12.5px}
+.mes-pass li b{font-family:var(--banner);font-weight:700;letter-spacing:.05em}
+.mes-pass li small{flex-basis:100%;opacity:.8;font-size:11.5px;line-height:1.4}
+.ancien{margin:0 0 16px;padding:14px;border-radius:14px;background:var(--panneau);
+  border-left:4px solid var(--pass,#c9772e)}
+.ancien .pass-titre{display:block;margin:0 0 4px}
+.ancien li{font-size:12.5px;line-height:1.4;padding-left:16px;position:relative}
+.ancien li::before{content:'';position:absolute;left:3px;top:.55em;width:6px;height:6px;border-radius:2px;
+  background:var(--pass,#c9772e)}
+.ancien li.sans{opacity:.75}
+.ancien li.sans::before{background:rgba(242,238,228,.35)}
+.ancien .pass-formules{margin-top:12px}
 .vide{font-size:13px;text-align:center;padding:26px 16px;border-radius:14px;
   background:var(--panneau)}
 /* Le lien en craie, souligné et en gras : il était en or à treize pixels
@@ -396,12 +419,16 @@ function passHTML(d, { ouvert } = {}) {
   if (!p) return '';
   const saison = Number(p.numero ?? p.saison);
   const mienne = (d.voies ?? []).find((v) => v.saison === saison) ?? null;
-  const badge = window.TBF_PASS?.badge({ saison, couleur: p.couleur, niveau: mienne?.niveau ?? 0,
+  const badge = window.TBF_PASS?.badge({ saison, couleur: p.couleur, niveau: mienne?.niveau ?? 0, etoiles: mienne?.etoiles ?? 0,
     or: mienne?.or }, 'grand') ?? '';
   const packs = Number(d.offre?.article?.packs) || 0;
+  /* « ÉDITION ORIGINALE » : réservé à ceux qui l'ont pris pendant la saison
+     (Gaël, 3 novembre 2026). */
+  const original = mienne?.original
+    ? '<span class="tbf-tampon" data-ton="or">ÉDITION ORIGINALE</span>' : '';
   const etat = d.actif
     ? `<span class="pass-etat"><span class="tbf-tampon tbf-tampon--plein" data-ton="vert">PASS ACTIF</span>
-        <small>${esc(d.fin ? `jusqu’au ${jour(d.fin)}` : 'cette saison')}</small></span>`
+        ${original}<small>${esc(d.fin ? `jusqu’au ${jour(d.fin)}` : 'cette saison')}</small></span>`
     : (packs ? `<span class="pass-cadeau">
         <span class="tbf-fentes" aria-hidden="true">${'<span class="tbf-fente"></span>'.repeat(Math.min(packs, 7))}</span>
         <span><b>${esc(pluriel(packs, 'BOOSTER', 'BOOSTERS'))}</b><small>DÈS L’ACHAT</small></span></span>` : '');
@@ -420,7 +447,7 @@ function passHTML(d, { ouvert } = {}) {
         ${etat}
       </div>
       ${tenue}
-      ${ouvert === false && !d.actif ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
+      ${(ouvert === false || d.offre?.bientot) && !d.actif ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
     </div>`;
 }
 
@@ -437,8 +464,15 @@ function voieHTML(d) {
     tenue: (n) => `${p.tenue ? 'Sur tous tes Fanzzy, avec son Ultimate en tenue' : 'La tenue de la saison'}`,
     cadre: () => 'Autour de ta carte de supporter',
     cadre_anime: () => 'Un reflet en fait le tour',
-    badge_or: () => 'Le badge du PASS passe en or',
+    badge_or: () => 'Le badge et ton pseudo passent en or',
+    cadre_profil: () => 'Autour de ton portrait, sur ton profil',
+    stickers: () => 'À coller sur l’affiche de tes duels',
+    fond_profil: () => 'Ton profil prend le décor de la saison',
+    entree: () => 'Ton Fanzzy entre en scène au début du duel',
+    titre: () => 'Un titre de la saison sous ton pseudo',
+    aura: () => 'Des braises autour de toi au Virage',
   };
+  const seuilsV = mienne?.seuilsVoie ?? [];
   const jauge = mienne && seuils.length
     ? `<div class="jauge" role="img" aria-label="${esc(`${tampons} tampons sur ${seuils[seuils.length - 1]}`)}"><i style="width:${
       Math.min(100, Math.round(100 * tampons / seuils[seuils.length - 1]))}%"></i></div>` : '';
@@ -449,11 +483,13 @@ function voieHTML(d) {
          que du visuel, et tout ce qu’elle donne reste à toi.${mienne
            ? ` Tu as <b>${esc(pluriel(tampons, 'tampon', 'tampons'))}</b> cette saison.` : ''}</p>
       ${jauge}
-      <ol>${(d.voie ?? []).map((v) => {
+      ${mienne?.close ? `<p><b>La saison est finie.</b> Les âges de la tenue qui te manquent
+         tombent maintenant dans tes boosters ; le cadre et le badge ne s’ouvrent plus.</p>` : ''}
+      <ol>${(d.voie ?? []).map((v, i) => {
         const on = niveau >= v.niveau;
-        const seuil = v.paliers ? seuils[v.paliers - 1] : null;
-        const quand = v.paliers === 0 ? 'à l’achat'
-          : seuil ? `${seuil} tampons` : `palier ${v.paliers} du carnet`;
+        const fin = seuils.length ? seuils[seuils.length - 1] : 140;
+        const seuil = seuilsV[i] ?? Math.round((Number(v.part) || 0) * fin);
+        const quand = seuil ? `${seuil} tampons` : 'à l’achat';
         return `<li${on ? ' data-on' : ''}><span class="n">${esc(v.niveau)}</span>
           <span><b>${esc(v.nom)}</b><small>${esc((detail[v.gain] ?? (() => ''))(v))}</small></span>
           <em>${on ? 'OBTENU' : esc(quand)}</em></li>`;
@@ -461,10 +497,95 @@ function voieHTML(d) {
     </div>`;
 }
 
+/** Mes PASS, saison par saison, avec leur tampon. Rien sans PASS. */
+function mesPassHTML(d) {
+  const v = d.voies ?? [];
+  if (!v.length) return '';
+  return `<div class="mes-pass"><h2 class="tbf-cousu">Mes PASS</h2><ul>${v.map((x) => `<li>
+      <b>PASS ${esc(x.saison)}</b>${x.original
+        ? '<span class="tbf-tampon" data-ton="or">ÉDITION ORIGINALE</span>'
+        : '<span class="tbf-tampon">APRÈS LA SAISON</span>'}
+      <small>${esc(x.tardif
+        ? 'La tenue au premier âge sur tous tes Fanzzy ; ses autres âges tombent dans tes boosters.'
+        : x.close ? `Niveau ${x.niveau} sur ${(d.voie ?? []).length || 12} de sa voie. Les âges qui te manquent tombent dans tes boosters.`
+          : `Niveau ${x.niveau} sur ${(d.voie ?? []).length || 12} de sa voie.`)}</small></li>`).join('')}</ul></div>`;
+}
+
+/**
+ * Les anciens PASS en boutique (Gaël, 3 novembre 2026) : en vente le 1er du
+ * deuxième mois après la fin de leur saison, au même prix. On dit d'abord ce
+ * qu'ils donnent et ce qu'ils ne donnent pas : pas de tampon « ÉDITION
+ * ORIGINALE », pas de gain spécial.
+ */
+function anciensHTML(d, { ouvert } = {}) {
+  const a = d.anciensPass ?? [];
+  if (!a.length) return '';
+  const o = d.offre ?? {};
+  const packs = Number(o.article?.packs) || 0;
+  const prixE = Number(o.echarpes) || 0;
+  const assez = Number(d.echarpes) >= prixE;
+  const vitrine = ouvert === false;
+  return `<div class="anciens" id="anciens">
+    <h2 class="tbf-cousu">Les anciens PASS</h2>
+    <p>Une saison finie revient ici au même prix. Tu reçois son contenu, pas ses gains
+       spéciaux : ceux-là restent à ceux qui l’ont joué pendant la saison.</p>
+    ${a.map((p) => `<div class="ancien" style="--pass:${esc(p.couleur)}">
+      <b class="pass-titre">PASS ${esc(p.numero)}</b>
+      ${p.tenue ? `<span class="pass-saison">${esc(String(p.nom ?? '').replace(/^PASS \d+ · /, ''))}</span>` : ''}
+      <ul>
+        ${p.tenue ? '<li>La tenue de la saison au premier âge sur tous tes Fanzzy, ses autres âges dans tes boosters</li>' : ''}
+        <li>L’équipement, le stade et les mini-jeux de ce PASS</li>
+        ${packs ? `<li>${esc(`+${pluriel(packs, 'booster', 'boosters')} dès l’achat`)}</li>` : ''}
+        <li class="sans">Sans le tampon « ÉDITION ORIGINALE », ni cadre, ni badge, ni club ou KOP en plus</li>
+      </ul>
+      <div class="pass-formules">
+        ${o.article ? `<button type="button" class="tbf-plaque pass-formule" data-ton="or"
+          data-article="${esc(o.article.id)}" data-saison="${esc(p.numero)}"${vitrine ? ' disabled' : ''}
+          aria-label="${esc(`Prendre le PASS ${p.numero} — ${o.article.prixTexte}, payé une fois`)}">
+          <small>PASS ${esc(p.numero)}</small><b>${esc(o.article.prixTexte)}</b>
+          <small>payé une fois</small></button>` : ''}
+        ${prixE ? `<button type="button" class="tbf-plaque pass-formule" data-echarpes
+          data-saison="${esc(p.numero)}"${assez ? '' : ' disabled'}
+          aria-label="${esc(`Prendre le PASS ${p.numero} pour ${milliers(prixE)} écharpes`)}">
+          <small>PASS ${esc(p.numero)}</small><b>${esc(milliers(prixE))} écharpes</b>
+          <small>${esc(assez ? `tu en as ${milliers(d.echarpes)}` : `il t’en manque ${milliers(prixE - d.echarpes)}`)}</small></button>` : ''}
+      </div></div>`).join('')}
+  </div>`;
+}
+
+/** Le jour d'ouverture du PASS, en toutes lettres : « le 1er décembre ». */
+function ouvertureTexte(o) {
+  const j = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(o?.bientot?.ouvre ?? ''));
+  if (!j) return null;
+  const date = new Date(Number(j[1]), Number(j[2]) - 1, Number(j[3]));
+  const lg = window.TBF_LANGUE?.langue ?? 'fr';
+  if (lg !== 'fr') return date.toLocaleDateString(lg, { day: 'numeric', month: 'long' });
+  return `le ${date.getDate() === 1 ? '1er' : date.getDate()} ${date.toLocaleDateString('fr', { month: 'long' })}`;
+}
+
+/** Le PASS pas encore ouvert : ses prix, sous BIENTÔT, et rien à toucher. */
+function bientotHTML(o) {
+  const n = o.couvre?.[0]?.numero ?? 1;
+  const quand = ouvertureTexte(o);
+  const prix = [o.article?.prixTexte, o.echarpes ? `${milliers(o.echarpes)} écharpes` : null]
+    .filter(Boolean).join(' ou ');
+  return `<h2 class="tbf-cousu">Prendre le PASS</h2>
+    <div class="tbf-cadre pass-bientot-bloc" data-ton="or">
+      <span class="tbf-sticker" data-ton="or">BIENTÔT</span>
+      <b>${esc(`Le PASS ${n} s’ouvre ${quand ?? 'avec sa saison'}`)}</b>
+      <p>${esc(`Il ne s’achète pas avant${quand ? ` ${quand}` : ''}. Tout le jeu reste ouvert d’ici là, sans payer.`)}</p>
+      ${prix ? `<small>${esc(`${prix}, payé une fois`)}</small>` : ''}
+    </div>`;
+}
+
 /** Les deux façons de payer. */
 function formulesHTML(d, { ouvert } = {}) {
   const o = d.offre ?? {};
   if (!o.aAcheter?.length) return '';
+  /* **Bientôt** (Gaël, 3 novembre 2026) : pendant la BASE, le PASS se
+     montre mais ne s'achète pas avant son ouverture. Le serveur le refuse de
+     toute façon (`pass.error.bientot`) ; ici, on le dit avant. */
+  if (o.bientot) return bientotHTML(o);
   const vitrine = ouvert === false;
   const deux = o.couvre?.length > 1;
   const quoi = deux ? `PASS ${o.couvre.map((p) => p.numero).join(' + ')}` : `PASS ${o.couvre?.[0]?.numero ?? ''}`;
@@ -555,11 +676,25 @@ function ultime(d) {
     method: 'POST', credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' }, body: '{}',
   }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  /* Le retour d'un ancien PASS payé (`?ancien=<n>`) : on attend que cette
+     saison-là apparaisse dans les PASS du joueur. */
+  const ancienPaye = Number(retour.get('ancien')) || null;
+  const aLAncien = (e) => (e?.voies ?? []).some((v) => v.saison === ancienPaye);
+  if (retour.has('paye') && ancienPaye && !aLAncien(d)) {
+    (async () => {
+      for (let i = 0; i < 12; i++) {
+        if (i === 2) await rattraper();
+        await new Promise((r) => setTimeout(r, 1500));
+        if (aLAncien(await lire())) { location.replace(`/abonnement?bienvenue=1&ancien=${ancienPaye}`); return; }
+      }
+      toast('Paiement reçu. Ton PASS arrive dans un instant : recharge la page.');
+    })();
+  }
   const aPayer = (d.offre?.aAcheter ?? []).length > 0;
   if (aPayer && !retour.has('paye')) {
     rattraper().then((r) => { if (r?.livre) location.replace('/abonnement?bienvenue=1'); });
   }
-  if (retour.has('paye') && aPayer) {
+  if (retour.has('paye') && aPayer && !ancienPaye) {
     (async () => {
       for (let i = 0; i < 12; i++) {
         if (i === 2 && (await rattraper())?.livre) {
@@ -572,7 +707,16 @@ function ultime(d) {
       toast('Paiement reçu. Ton PASS arrive dans un instant : recharge la page.');
     })();
   }
-  if ((retour.has('paye') || retour.has('bienvenue')) && d.actif) {
+  if ((retour.has('paye') || retour.has('bienvenue')) && ancienPaye && aLAncien(d)) {
+    const p = (d.voies ?? []).find((v) => v.saison === ancienPaye);
+    (window.TBF_DIALOGUE ? Promise.resolve()
+      : new Promise((r) => window.addEventListener('load', r, { once: true }))).then(() => window.TBF_DIALOGUE?.confirmer({
+      titre: `LE PASS ${ancienPaye} EST À TOI`,
+      texte: p?.tenue ? 'Sa tenue au premier âge est sur tous tes Fanzzy ; ses autres âges tomberont dans tes boosters.'
+        : 'Son contenu est à toi.',
+      oui: 'JOUER', non: 'FERMER', ton: 'or',
+    })).then((ok) => { if (ok) location.href = '/'; });
+  } else if ((retour.has('paye') || retour.has('bienvenue')) && d.actif) {
     const packs = Number(d.offre?.article?.packs) || 0;
     const p = passVitrine(d);
     const lignes = [
@@ -623,6 +767,8 @@ function ultime(d) {
       ${aPayer ? '' : `<p class="fin-mot">${d.saison ? 'Tu as le PASS de cette saison.' : 'Aucune saison n’est en cours.'}
         Le prochain se prend dès le dernier mois de la saison : il vaut alors pour elle et pour la suivante.</p>`}
     </div>
+    ${anciensHTML(d, { ouvert })}
+    ${mesPassHTML(d)}
     ${d.ancien?.abonne ? '<div class="gerer" id="gerer" hidden></div>' : ''}`;
 
   defiler();
@@ -711,11 +857,12 @@ function ultime(d) {
      l'article et rien d'autre. Le prix est décidé par le serveur. */
   async function commander(article, bouton) {
     bouton.disabled = true;
+    const saison = bouton.dataset.saison ? Number(bouton.dataset.saison) : null;
     try {
       const r = await fetch('/api/boutique/commander', {
         method: 'POST', credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ article }),
+        body: JSON.stringify(saison ? { article, saison } : { article }),
       });
       const j = await r.json().catch(() => ({}));
       if (r.status === 401) { location.href = '/compte'; return; }
@@ -727,6 +874,8 @@ function ultime(d) {
         }
         bouton.disabled = false;
         toast(j.error === 'pass.error.deja' ? 'Tu as déjà ce PASS.'
+          : j.error === 'pass.error.pas_en_vente' ? 'Ce PASS n’est pas en vente.'
+          : j.error === 'pass.error.bientot' ? 'Le PASS ne s’achète pas encore : bientôt.'
           : 'Le paiement n’est pas disponible pour le moment.');
         return;
       }
@@ -740,9 +889,10 @@ function ultime(d) {
   /* Payer en écharpes : une confirmation, puis le PASS tout de suite. */
   async function enEcharpes(bouton) {
     const prix = d.offre?.echarpes;
+    const saison = bouton.dataset.saison ? Number(bouton.dataset.saison) : null;
     const ok = await window.TBF_DIALOGUE?.confirmer({
-      titre: 'PRENDRE LE PASS EN ÉCHARPES',
-      texte: `${milliers(prix)} écharpes pour le PASS. Elles se gagnent en jouant : aucun euro n’est en jeu.`,
+      titre: saison ? `PRENDRE LE PASS ${saison} EN ÉCHARPES` : 'PRENDRE LE PASS EN ÉCHARPES',
+      texte: `${milliers(prix)} écharpes pour le PASS${saison ? ` ${saison}` : ''}. Elles se gagnent en jouant : aucun euro n’est en jeu.`,
       oui: 'PRENDRE LE PASS', non: 'ANNULER', ton: 'or',
     });
     if (ok === false) return;
@@ -750,19 +900,22 @@ function ultime(d) {
     try {
       const r = await fetch('/api/abonnement/pass/echarpes', {
         method: 'POST', credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' }, body: '{}',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saison ? { saison } : {}),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) {
         bouton.disabled = false;
         toast({ 'pass.error.pas_assez': 'Il te manque des écharpes.',
           'pass.error.deja': 'Tu as déjà ce PASS.',
+          'pass.error.bientot': 'Le PASS ne s’achète pas encore : bientôt.',
           'pass.error.pas_de_saison': 'Aucune saison n’est en cours.',
+          'pass.error.pas_en_vente': 'Ce PASS n’est pas en vente.',
           'pass.error.echarpes_fermees': 'Le PASS ne se prend plus en écharpes.' }[j.error]
           ?? 'Le PASS n’a pas pu se prendre. Réessaie dans un instant.');
         return;
       }
-      location.replace('/abonnement?bienvenue=1');
+      location.replace(saison ? `/abonnement?bienvenue=1&ancien=${saison}` : '/abonnement?bienvenue=1');
     } catch {
       bouton.disabled = false;
       toast('Le PASS n’a pas pu se prendre. Réessaie dans un instant.');

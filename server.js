@@ -46,6 +46,7 @@ import { createJeux } from './src/server/jeux/index.js';
 import { brancherLaVoix } from './src/server/jeux/voix.js';
 import { createQuotidien, sonderJourDeJeu, phraseJourDeJeu }
   from './src/server/quotidien/index.js';
+import { createDefis } from './src/server/defis/index.js';
 import { createRepetition } from './src/server/repetition/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
@@ -213,6 +214,7 @@ let football = null;
 let souvenirs = null;
 let fanzzy = null;
 let abonnement = null;
+let defis = null;
 let virage = null;
 let teletext = null;
 let onboarding = null;
@@ -365,6 +367,15 @@ if (process.env.DATABASE_URL) {
     globalThis.abonnement = abonnement;
     console.log('abonnement actif');
 
+    /* ---- les défis de la semaine (3 novembre 2026)
+
+       Trois défis par joueur, tirés parmi ce qu'il possède, et un quatrième
+       pour les membres d'un PASS qui court. Après l'abonnement, qui dit le
+       PASS ; avant le duel et le Virage, qui les font avancer. */
+    defis = createDefis({ pool, requireAuth: auth.requireAuth, abonnement });
+    app.use('/api/defis', defis.router);
+    console.log('défis de la semaine actifs');
+
 
     // ---- niveau et XP
     //
@@ -439,7 +450,7 @@ if (process.env.DATABASE_URL) {
        duel ne plafonne rien — et personne ne s'en apercevrait, ce qui est
        exactement la panne que `verif-cablage.mjs` surveille. */
     nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth, niveau, kop,
-      abonnement, notifications });
+      abonnement, notifications, defis });
     app.use('/api/nvn', nvn.router);
     console.log('duels NvN actifs');
 
@@ -674,7 +685,7 @@ if (process.env.DATABASE_URL) {
        haut, donc disponible : sans lui la salle s'ouvre quand même, et tout le
        monde y entre avec sa voix pour seule arme. */
     virage = createVirage({ pool, io, requireAuth: auth.requireAuth,
-      souvenirs, fanzzy, kop, couleurs, decks,
+      souvenirs, fanzzy, kop, couleurs, decks, defis,
       /* Les duels qui attendent, pour les pastilles des pages des matchs
          (`/api/virage/a-jouer`). Le duel est monté plus haut. */
       filesDuel: () => nvn?.filesParMatch?.() ?? [],

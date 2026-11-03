@@ -1,6 +1,6 @@
 {
   "id": "SU4",
-  "rev": 14,
+  "rev": 19,
   "evolutions": {
     "e1": {
       "skins": {
@@ -94,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d80a75d9c8e2"
+          "sha": "d80a75d9c8e2",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -106,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a1edb6cfc7da"
+          "sha": "a1edb6cfc7da",
+          "cligne": true
         }
       }
     },
@@ -147,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c80c05d5e235"
+          "sha": "c80c05d5e235",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -159,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "932f61fb26ba"
+          "sha": "932f61fb26ba",
+          "cligne": true
         }
       }
     }

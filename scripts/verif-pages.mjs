@@ -478,7 +478,14 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
       }
     }
   }
-  if (manquants.length) ko('fanzzy-art.js', `illustrations annoncées mais absentes : ${manquants.join(', ')}`);
+  /* Depuis l'allègement du dépôt (3 novembre 2026), les dessins des Fanzzy
+     vivent hors de git, sur le serveur : un clone neuf — celui du bouton de
+     déploiement — ne les a pas. Le déploiement le dit par
+     `TBF_IMAGES_HORS_GIT=1`, et ces deux contrôles se taisent alors en le
+     disant, au lieu de bloquer une mise en ligne qui garde les images en place. */
+  const horsGit = process.env.TBF_IMAGES_HORS_GIT === '1';
+  if (horsGit) ok('fanzzy-art.js', `${illu.length} illustration(s) hors git : présence non vérifiée ici`);
+  else if (manquants.length) ko('fanzzy-art.js', `illustrations annoncées mais absentes : ${manquants.join(', ')}`);
   else if (brut !== undefined) ok('fanzzy-art.js', `${illu.length} illustration(s) présentes en trois formats`);
 
   /* ------------------------- et l'extension que le navigateur va demander
@@ -522,7 +529,9 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
           }
         }
       }
-      if (fantomes.length) {
+      if (horsGit) {
+        ok('fanzzy-art.js', 'adresses servies : dessins hors git, non vérifiées ici');
+      } else if (fantomes.length) {
         ko('fanzzy-art.js', 'adresses servies au navigateur mais sans fichier : '
           + `${fantomes.join(', ')} — un Fanzzy n'existe qu'en .avif, .webp et .png`);
       } else {

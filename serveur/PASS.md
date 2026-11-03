@@ -29,6 +29,12 @@ l'abonnement mensuel (3,99 €) et annuel (39,90 €), qui ne sont plus en vente
 - Il couvre **la saison en cours** ; pris pendant ses `pass.dernier_mois_jours`
   derniers jours (30), il couvre aussi la suivante ; une saison finie fait
   acheter la suivante (`saisonsCouvertes`, `src/shared/pass.js`).
+- **Pas avant son ouverture** (Gaël, 3 novembre 2026) : pendant la BASE
+  (saison 0), le PASS 1 se montre sous « BIENTÔT » avec son jour d'ouverture
+  (`ouvre_le` de la saison 1) ; `POST /api/boutique/commander` et
+  `POST /api/abonnement/pass/echarpes` rendent `pass.error.bientot`
+  (`offre().bientot`, `src/server/abonnement/`). Il s'achète dès que la
+  saison 1 est lancée. L'administration peut toujours l'offrir.
 - Il ne donne **jamais d'écharpes** : l'argent n'achète pas la monnaie des
   tirages.
 
@@ -47,18 +53,32 @@ Le droit de porter **toute** tenue publiée, qu'avait l'abonnement, est retiré.
 
 ### La voie PASS (« style Fortnite »)
 
-Une seconde ligne dans le carnet de tampons de la saison. Le niveau vaut
-`1 + paliers du carnet atteints` (au plus 6), lus sur les mêmes tampons que la
-voie gratuite (`recompenses`, sources `mission` et `sachet`). Que du visuel :
+Une seconde ligne dans le carnet de tampons de la saison, douze niveaux
+(Gaël, 3 novembre 2026). Chaque niveau a son seuil de tampons, une part fixe
+du dernier palier du carnet (`VOIE_PASS[].part`, `seuilsVoie`) ; le niveau
+compte les seuils atteints par les tampons du carnet (`recompenses`, sources
+`mission` et `sachet`) plus les points des défis PASS (`niveauVoieDe`). Après
+le dernier niveau, une étoile tous les 15 (`etoilesDe`). Que du visuel :
 
-| niveau | ce qu'il ouvre |
-|---|---|
-| 1 (à l'achat) | la tenue au 1er âge |
-| 2 | la tenue au 2e âge |
-| 3 | la tenue au 3e âge |
-| 4 | le cadre de carte |
-| 5 | le cadre animé |
-| 6 | le badge en or |
+| niveau | seuil (carnet à 140) | ce qu'il ouvre |
+|---|---|---|
+| 1 | à l'achat | la tenue au 1er âge |
+| 2 | 10 | le cadre de profil |
+| 3 | 20 | les stickers de duel |
+| 4 | 35 | la tenue au 2e âge |
+| 5 | 50 | le fond de profil animé |
+| 6 | 65 | le cadre de carte |
+| 7 | 75 | la tenue au 3e âge |
+| 8 | 90 | l'entrée au duel |
+| 9 | 105 | le titre sous le pseudo |
+| 10 | 120 | le cadre animé |
+| 11 | 130 | l'aura de braises au Virage |
+| 12 | 140 | le badge et le pseudo en or |
+
+Sans PASS, le carnet de /aide montre la voie sous cadenas et ce que les
+tampons ont déjà atteint (« N cadeaux PASS t'attendent ») : le niveau est
+rétroactif à l'achat. Un acheteur tardif n'a que le niveau 1 et aucun gain
+spécial (`GAINS_SPECIAUX`).
 
 ### La tenue de saison
 
@@ -100,6 +120,27 @@ voie gratuite (`recompenses`, sources `mission` et `sachet`). Que du visuel :
 résiliation à l'échéance chez Stripe de chaque abonnement en cours, PASS de la
 saison où sa période se termine ; abonnement offert : PASS de la saison en
 cours, et sa ligne s'arrête au dernier jour de cette saison.
+
+## Les anciens PASS (Gaël, 3 novembre 2026)
+
+- Un PASS revient en vente **le 1er du deuxième mois après la fin de sa
+  saison** (fin le 28 février → dès le 1er avril), au même prix, en euros ou
+  en écharpes (`venteAncienPassLe`, `anciensPassEnVente`). La page du PASS les
+  vend (`anciensPass` de `GET /api/abonnement`), la boutique les annonce.
+- En euros : `POST /api/boutique/commander { article: 'pass-saison', saison }`,
+  la commande garde `pass-saison@<n>` (`articleCommande`). En écharpes :
+  `POST /api/abonnement/pass/echarpes { saison }`.
+- La ligne de `user_pass` porte `stripe-tard` ou `echarpes-tard` : c'est ce qui
+  fait un achat tardif (`estTardif`).
+- **L'acheteur tardif n'a que le contenu** (tenue, stuff, stade, mini-jeux) :
+  la tenue au premier âge, ses autres âges dans ses boosters, les boosters du
+  PASS. Aucun **gain spécial** : ni tampon « ÉDITION ORIGINALE », ni cadre,
+  cadre animé, badge, ni club ou KOP en plus, ni le rythme de la saison.
+- **Une voie pas finie** : sa saison close, ce qui est ouvert reste ; les âges
+  de la tenue qui manquent tombent dans les boosters du joueur
+  (`tenuesAuxBoosters`) ; les gains spéciaux ne s'ouvrent plus.
+- Le prix reste celui du PASS d'aujourd'hui (le code ne garde pas l'historique
+  des prix) : à revoir le jour où le prix du PASS changera.
 
 ## Pour la saison suivante
 

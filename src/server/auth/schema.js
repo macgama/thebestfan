@@ -98,6 +98,7 @@ export const CLES_PRIMAIRES = [
   { fichier: 'quotidien.sql', table: 'missions_jour', cle: ['user_id', 'jour', 'rang'] },
   { fichier: 'quotidien.sql', table: 'compteurs_jour', cle: ['user_id', 'jour', 'cle'] },
   { fichier: 'quotidien.sql', table: 'user_nouveautes', cle: ['user_id', 'cle'] },
+  { fichier: 'defis.sql', table: 'defis_semaine', cle: ['user_id', 'semaine', 'rang'] },
 ];
 
 /* **Le grand livre fermé.** Quand le contrôle a vu `recompenses` avec une
@@ -128,14 +129,15 @@ async function controlerCles(pool, presentes) {
   if (!visees.length) return [];
   let lignes;
   try {
-    /* Les quatre noms toujours, en paramètres : une liste de `?` fabriquée à
+    /* Les cinq noms toujours, en paramètres : une liste de `?` fabriquée à
        la longueur de `visees` serait une interpolation de plus à justifier
-       devant `npm run securite`, pour économiser trois lignes d'index. */
+       devant `npm run securite`, pour économiser trois lignes d'index. Une
+       table ajoutée à CLES_PRIMAIRES ajoute un `?` ici. */
     [lignes] = await pool.query(
       `SELECT table_name AS t, column_name AS c, seq_in_index AS n
          FROM information_schema.statistics
         WHERE table_schema = DATABASE() AND index_name = 'PRIMARY'
-          AND table_name IN (?, ?, ?, ?)
+          AND table_name IN (?, ?, ?, ?, ?)
         ORDER BY table_name, seq_in_index`,
       CLES_PRIMAIRES.map((c) => c.table));
   } catch {

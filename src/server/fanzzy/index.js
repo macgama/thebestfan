@@ -46,8 +46,10 @@ import { tenueDePass, passDeLaTenue, tenueReservee } from '../../shared/pass.js'
    seulement l'annonce. */
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
+import { poserLesDos } from './dos.js';
 import { verser, verserTout } from '../recompenses.js';
 import { criDuClub, gainPleinClub, lienEcrit, motifSelection } from '../../shared/fanzzy/clubs.js';
+import { tombeDans } from '../../shared/fanzzy/stuff-series.js';
 
 /* ------------------------------------------------------------ le journal
 
@@ -845,8 +847,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   }
 
   async function tirerAutreChose(ctx) {
-    const { conn, userId, avant, stadeDe, skinsPris, etatsPris,
-      stuffPris, actionsPrises, lieuxPris } = ctx;
+    const { conn, userId, setId, avant, stadeDe, skinsPris, etatsPris,
+      stuffPris, actionsPrises, lieuxPris, tenuesPassees = new Map() } = ctx;
     const cat = tirerCategorie();
 
     /* Les écharpes, tirées pour elles-mêmes : une poignée de 6, 14 ou 30. */
@@ -888,6 +890,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
           for (const sk of tenuesTirables()) {
             if (sk.id === 'base') continue;
             if (!skinsPris.has(`${id}:${s}:${sk.id}`)) places.push({ id, stade: s, skin: sk.id });
+          }
+          /* La tenue d'un de **ses** PASS dont la saison est finie, aux âges
+             que sa voie n'a pas ouverts (Gaël, 3 novembre 2026). */
+          for (const [tid, ouvert] of tenuesPassees) {
+            if (s > ouvert && !skinsPris.has(`${id}:${s}:${tid}`)) places.push({ id, stade: s, skin: tid });
           }
         }
       }
@@ -960,7 +967,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          C'est la règle des séries, appliquée à l'équipement : `publies` rend la
          liste du code tant que `sql/contenus.sql` n'est pas appliqué, donc une
          base incomplète joue exactement comme avant au lieu de se vider. */
-      const ouvert = jouables('stuff');
+      /* **Et seulement ce que ce booster peut donner** (choix de Gaël du
+         2 novembre 2026) : les pièces d'une série — un championnat, ses
+         clubs — ne sortent que des boosters de cette série ; les pièces
+         communes sortent de tous. Voir `stuff-series.js`. */
+      const ouvert = jouables('stuff').filter((s) => tombeDans(s, setId));
       /* **Une légendaire ne sort que si le tirage la vise**, et le repli ne
          la donne plus : il prenait la première pièce non possédée de la
          liste, qui pouvait être la Bâche dès qu'on avait les communes. Au
@@ -977,7 +988,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
            liste entière ne donnerait rien de neuf — un doublon ne donne que des
            écharpes — mais il nommerait au joueur une pièce qu'il ne peut pas
            avoir, et une carte qui passe est une carte qu'on a vue. */
-        const dedans = rnd(ouvert.length ? ouvert : STUFF);
+        const dedans = rnd(ouvert.length ? ouvert
+          : STUFF.filter((s) => tombeDans(s, setId)));
         await conn.query(
           `UPDATE user_stuff SET copies = copies + 1 WHERE user_id = ? AND stuff_id = ?`,
           [userId, dedans.id]);
@@ -1174,6 +1186,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]);
       const stuffPris = new Set(stuffOwned.map((s) => s.stuff_id));
 
+      /* Les tenues de ses PASS finis, qui tombent dans ses boosters aux âges
+         qui lui manquent. Une lecture qui échoue n'empêche pas d'ouvrir. */
+      let tenuesPassees = new Map();
+      if (abonnement?.tenuesAuxBoosters) {
+        const publiees = new Set(tenuesPubliees().map((t) => t.id));
+        tenuesPassees = new Map([...(await abonnement.tenuesAuxBoosters(userId)
+          .catch(() => new Map()))].filter(([t]) => publiees.has(t)));
+      }
+
       /* Les lieux déjà tirés, avec la même garde que les états : sans
          `sql/collection-stades.sql`, `null`, et la place tombe en écharpes. */
       let lieuxPris = null;
@@ -1215,7 +1236,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const ouverte = i >= 2 || (i === 1 && Math.random() >= 0.7);
         if (ouverte) {
           const autre = await tirerAutreChose({
-            conn, userId, avant, stadeDe, skinsPris, etatsPris, stuffPris, actionsPrises, lieuxPris });
+            conn, userId, setId, avant, stadeDe, skinsPris, etatsPris, stuffPris, actionsPrises, lieuxPris,
+            tenuesPassees });
           if (autre) {
             scarves += autre.scarves ?? 0;
             cards.push(autre.carte);
@@ -1259,6 +1281,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const cle = cleDeCarte(c);
         if (cle) c.cle = cle;
       }
+      /* Le dos de chaque carte, celui de sa série ou le neutre (`dos.js`). */
+      poserLesDos(cards);
       resultat = { cards, scarvesGained: scarves, paye, series: progressionSeries(avant, had, cards) };
     } catch (e) {
       await conn.rollback().catch(() => {});
@@ -1734,7 +1758,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    */
   router.get('/jouables', (_req, res) => {
     res.set('cache-control', 'public, max-age=60');
-    res.json({ ids: obtenables().map((f) => f.id) });
+    /* La saison annoncée voyage avec : la vitrine y lit le jour où le PASS
+       ouvre, pour son compte à rebours, sans charger `/dex`. */
+    const annoncee = saisonAnnoncee();
+    res.json({ ids: obtenables().map((f) => f.id),
+      ...(annoncee ? { prochaine: annoncee.contrat } : {}) });
   });
 
   /**

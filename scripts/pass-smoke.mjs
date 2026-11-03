@@ -12,7 +12,11 @@
  *   - un club suivi et un KOP de plus par PASS, cumulés, pour toujours ;
  *   - sa tenue ne sort d'aucun booster, ne se vend pas à l'étal pendant sa
  *     saison, puis y revient une saison plus tard, à son prix à part ;
- *   - la reprise des anciens abonnements donne le bon PASS.
+ *   - la reprise des anciens abonnements donne le bon PASS ;
+ *   - les anciens PASS (Gaël, 3 novembre 2026) : en vente le 1er du deuxième
+ *     mois après la fin de leur saison, au même prix ; l'acheteur tardif n'a
+ *     que le contenu, sans « ÉDITION ORIGINALE » ni gain spécial ; la tenue
+ *     d'un PASS fini tombe dans les boosters aux âges qui manquent.
  *
  * Usage : node scripts/pass-smoke.mjs
  */
@@ -27,9 +31,11 @@ import { chargerTenues, tenuesTirables, tenuesEnEtal } from '../src/server/fanzz
 import { poserReglages, reglage, PAR_CLE } from '../src/shared/reglages.js';
 import { prixTenueDe } from '../src/shared/etal.js';
 import {
-  saisonsCouvertes, niveauVoie, ageTenue, cadreDe, tenueReservee, vitrineDe, NIVEAU_MAX, passDe,
+  saisonsCouvertes, niveauVoieDe, seuilsVoie, etoilesDe, gainsDe, ageTenue, cadreDe, tenueReservee, vitrineDe, NIVEAU_MAX, passDe,
+  venteAncienPassLe, anciensPassEnVente, estTardif, voieSelonAchat,
 } from '../src/shared/pass.js';
-import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES } from '../src/shared/boutique.js';
+import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, articleCommande, idAncienPass }
+  from '../src/shared/boutique.js';
 import { planifier, saisonDuJour } from './pass-reprise.mjs';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
@@ -50,10 +56,30 @@ check('sans saison : rien', saisonsCouvertes(null).length === 0);
 check('sans date de fin : la saison seule', JSON.stringify(saisonsCouvertes({ numero: 3 }, 30)) === '[3]');
 
 titre('La voie PASS');
-check('niveau 1 à l’achat, 6 au plus', niveauVoie(0) === 1 && niveauVoie(99) === NIVEAU_MAX && NIVEAU_MAX === 6);
-check('la tenue : âge 1, puis 2 et 3', ageTenue(1) === 1 && ageTenue(2) === 2 && ageTenue(3) === 3 && ageTenue(6) === 3);
-check('le cadre au niveau 4, animé au 5', cadreDe(3) === null && cadreDe(4) === 'fixe' && cadreDe(5) === 'anime');
-check('le badge en or au dernier niveau', vitrineDe(1, 6).or === true && vitrineDe(1, 5).or === false);
+check('douze niveaux, niveau 1 à l’achat', NIVEAU_MAX === 12
+  && niveauVoieDe({ tampons: 0 }) === 1 && niveauVoieDe({ tampons: 9999 }) === NIVEAU_MAX);
+check('les seuils de la voie sur un carnet à 140 tampons',
+  JSON.stringify(seuilsVoie([10, 35, 75, 110, 140])) === '[0,10,20,35,50,65,75,90,105,120,130,140]'
+  || console.log('       ', seuilsVoie([10, 35, 75, 110, 140])));
+check('les seuils suivent un autre carnet, toujours croissants', (() => {
+  const t = seuilsVoie([2, 4]);
+  return t.length === 12 && t.every((x, i) => i === 0 || x > t[i - 1]) && t[0] === 0;
+})());
+check('sans carnet : 140 tampons au bout', seuilsVoie([]).at(-1) === 140);
+check('les tampons font monter la voie', niveauVoieDe({ tampons: 34, seuils: [140] }) === 3
+  && niveauVoieDe({ tampons: 35, seuils: [140] }) === 4);
+check('une étoile tous les 15 tampons après le bout', etoilesDe({ tampons: 140, seuils: [140] }) === 0
+  && etoilesDe({ tampons: 155, seuils: [140] }) === 1 && etoilesDe({ tampons: 184, seuils: [140] }) === 2);
+check('la tenue : âge 1, puis 2 au niveau 4 et 3 au niveau 7', ageTenue(1) === 1 && ageTenue(3) === 1
+  && ageTenue(4) === 2 && ageTenue(6) === 2 && ageTenue(7) === 3 && ageTenue(12) === 3);
+check('le cadre au niveau 6, animé au 10', cadreDe(5) === null && cadreDe(6) === 'fixe'
+  && cadreDe(9) === 'fixe' && cadreDe(10) === 'anime');
+check('le badge et le pseudo en or au dernier niveau', vitrineDe(1, 12).or === true && vitrineDe(1, 11).or === false);
+check('le titre de la saison au niveau 9, pas avant', vitrineDe(1, 8).titre === null
+  && vitrineDe(1, 9).titre === 'Chasseur de mammouth');
+check('l’acheteur tardif n’a pas le titre', voieSelonAchat(1, 12, { tardif: true }).titre === null);
+check('les gains ouverts se lisent par niveau', gainsDe(2).includes('cadre_profil')
+  && !gainsDe(2).includes('stickers') && gainsDe(12).length === 10);
 check('le PASS 1 est Préhistorique', passDe(1).tenue === 'prehistorique');
 
 titre('Les tenues réservées');
@@ -77,6 +103,45 @@ check('40 000 écharpes par défaut, réglable', reglage('pass.prix_echarpes') =
 check('les plafonds gratuits du classement ont disparu',
   ['abo.duels_classes_jour', 'abo.virages_classes_jour', 'abo.taille_classe_libre', 'abo.clubs_en_plus']
     .every((k) => !PAR_CLE.has(k)));
+
+titre('Les anciens PASS : les règles');
+check('fin le 28 février : en vente le 1er avril', venteAncienPassLe('2027-02-28') === '2027-04-01');
+check('fin le 30 novembre : en vente le 1er janvier', venteAncienPassLe('2026-11-30') === '2027-01-01');
+check('fin le 31 décembre : en vente le 1er février', venteAncienPassLe('2026-12-31') === '2027-02-01');
+check('sans date de fin : jamais', venteAncienPassLe(null) === null && venteAncienPassLe('') === null);
+{
+  const S = [
+    { numero: 0, fin: '2026-11-30', lancee: true },
+    { numero: 1, fin: '2027-02-28', lancee: true },
+    { numero: 2, fin: '2027-05-31', lancee: true },
+    { numero: 3, fin: '2027-08-31', lancee: false },
+  ];
+  const ids = (l) => JSON.stringify(l.map((x) => x.numero));
+  check('le 31 mars : rien encore', ids(anciensPassEnVente(S, '2027-03-31')) === '[]');
+  check('le 1er avril : le PASS 1, jamais la BASE', ids(anciensPassEnVente(S, '2027-04-01')) === '[1]');
+  check('le 1er juillet : les PASS 1 et 2', ids(anciensPassEnVente(S, '2027-07-01')) === '[1,2]');
+  check('déjà à lui : pas proposé', ids(anciensPassEnVente(S, '2027-07-01', [1])) === '[2]');
+  check('une saison pas lancée : jamais', ids(anciensPassEnVente(S, '2030-01-01')) === '[1,2]');
+}
+check('un achat tardif se lit sur la source', estTardif('stripe-tard') && estTardif('echarpes-tard')
+  && !estTardif('stripe') && !estTardif('offert') && !estTardif(null));
+{
+  const t = voieSelonAchat(1, 12, { tardif: true, etoiles: 3 });
+  check('acheteur tardif : niveau 1, sans cadre ni or, pas original', t.niveau === 1 && t.cadre === null
+    && t.or === false && t.original === false && t.tardif === true);
+  check('acheteur tardif : ni étoiles ni gains spéciaux', t.etoiles === 0
+    && !(t.gains ?? []).some((g) => ['cadre_profil', 'stickers', 'fond_profil', 'entree', 'titre', 'aura'].includes(g)));
+  const o = voieSelonAchat(1, 12, { etoiles: 2 });
+  check('joueur de la saison : son niveau, original', o.niveau === 12 && o.or === true && o.original === true
+    && o.etoiles === 2);
+  const a = articleCommande(idAncienPass(1));
+  check('l’article d’un ancien PASS : même prix, saison nommée, tardif', a?.prix === article?.prix
+    && a?.livraison?.type === 'pass' && a?.livraison?.saison === 1 && a?.livraison?.tardif === true
+    && a?.livraison?.packs === article?.livraison?.packs);
+  check('un identifiant inventé ne donne rien', articleCommande('pass-saison@x') === null
+    && articleCommande('pass-saison@0') === null && articleCommande('autre@1') === null);
+  check('le PASS courant reste l’article du catalogue', articleCommande('pass-saison') === article);
+}
 
 titre('La reprise des anciens abonnements');
 {
@@ -118,7 +183,8 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'due
 }
 const A = 'bbbb0000-0000-0000-0000-000000000001';
 const B = 'bbbb0000-0000-0000-0000-000000000002';
-for (const [i, id] of [A, B].entries()) {
+const C = 'bbbb0000-0000-0000-0000-000000000003';
+for (const [i, id] of [A, B, C].entries()) {
   await raw.query("INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')",
     [id, `p${i}@ex.fr`, `Pass${i}`]);
   await raw.query('INSERT INTO user_wallet (user_id,scarves,packs) VALUES (?,0,0)', [id]);
@@ -193,6 +259,40 @@ await poserSaison(12);
 }
 await poserSaison(80);
 
+titre('Pendant la BASE, le PASS est « Bientôt »');
+{
+  /* Gaël, 3 novembre 2026 : le PASS 1 ouvre le 1er décembre ; il ne
+     s'achète pas avant. La BASE (saison 0) court, la saison 1 attend son
+     jour d'ouverture en brouillon. */
+  await pool.query('DELETE FROM saisons');
+  await pool.query(`INSERT INTO saisons (id, numero, nom, series, tenues, lancee_a, fin_le, ouvre_le) VALUES
+    (10, 0, 'BASE', JSON_ARRAY(), JSON_ARRAY(), NOW(3) - INTERVAL 5 DAY, CURDATE() + INTERVAL 27 DAY, NULL),
+    (11, 1, 'Héros du canapé', JSON_ARRAY(), JSON_ARRAY(), NULL, CURDATE() + INTERVAL 117 DAY, CURDATE() + INTERVAL 28 DAY)`);
+  await chargerSaisons(pool);
+  moi = C;
+  await pool.query('UPDATE user_wallet SET scarves = 90000 WHERE user_id = ?', [C]);
+  const attendu = (await pool.query(
+    "SELECT DATE_FORMAT(CURDATE() + INTERVAL 28 DAY, '%Y-%m-%d') AS j"))[0][0].j;
+  const e = await get('/api/abonnement');
+  check('la BASE court : l’offre montre le PASS 1, « bientôt », avec son jour d’ouverture',
+    saisonEnCours()?.numero === 0 && JSON.stringify(e.offre?.aAcheter) === '[1]'
+    && e.offre?.bientot?.ouvre === attendu || console.log('       ', e.offre));
+  const r = await post('/api/abonnement/pass/echarpes');
+  check('l’acheter en écharpes est refusé, rien n’est débité', r.s === 400 && r.j.error === 'pass.error.bientot'
+    && Number((await bourse(C)).scarves) === 90000 && (await abonnement.saisonsDuPass(C)).length === 0
+    || console.log('       ', r));
+  await abonnement.accorderPass(C, { source: 'offert' });
+  check('l’administration peut toujours l’offrir', JSON.stringify(await abonnement.saisonsDuPass(C)) === '[1]'
+    && (await abonnement.estAbonne(C)) === true);
+  await pool.query('UPDATE saisons SET lancee_a = NOW(3) WHERE id = 11');
+  await chargerSaisons(pool);
+  moi = B;
+  check('la saison 1 lancée : plus « bientôt »', saisonEnCours()?.numero === 1
+    && (await get('/api/abonnement')).offre?.bientot === null);
+  moi = A;
+}
+await poserSaison(80);
+
 titre('Ce que les PASS donnent pour toujours');
 {
   check('un PASS : un club suivi de plus', (await abonnement.clubsEnPlus(A)) === 1);
@@ -208,19 +308,21 @@ titre('Ce que les PASS donnent pour toujours');
   const e = await get('/api/abonnement');
   check('l’écran reçoit la voie, le PASS et ce qui reste libre', Array.isArray(e.voies) && e.voies.length === 1
     && Array.isArray(e.voie) && e.voie.length === NIVEAU_MAX && Array.isArray(e.libre) && e.libre.length > 0);
-  /* Les tampons du carnet font monter la voie : deux paliers, niveau 3, la
-     tenue jusqu'à l'âge 3. */
+  /* Les tampons du carnet font monter la voie : la moitié du carnet, niveau
+     7, la tenue jusqu'à l'âge 3. */
   const seuils = v?.seuils ?? [];
   check('la voie lit les paliers du carnet de la saison', seuils.length >= 5);
   await pool.query(`INSERT INTO recompenses (user_id, source, cle, saison_id, tampons)
-    VALUES (?, 'mission', 'essai-1', 1, ?)`, [A, seuils[1] ?? 0]);
+    VALUES (?, 'mission', 'essai-1', 1, ?)`, [A, v?.seuilsVoie?.[6] ?? 0]);
   const v3 = (await abonnement.voies(A))[0];
-  check('deux paliers atteints : niveau 3, tenue à l’âge 3', v3?.niveau === 3 && v3?.ageTenue === 3
+  check('la voie sert les seuils de ses douze niveaux', v?.seuilsVoie?.length === NIVEAU_MAX
+    && v.seuilsVoie[0] === 0 && v.seuilsVoie.at(-1) === seuils.at(-1));
+  check('au seuil du niveau 7 : tenue à l’âge 3', v3?.niveau === 7 && v3?.ageTenue === 3
     && (await abonnement.ageTenuePass(A, 'prehistorique')) === 3 || console.log('       ', v3));
   await pool.query(`UPDATE recompenses SET tampons = ? WHERE user_id = ? AND cle = 'essai-1'`,
     [seuils.at(-1) ?? 0, A]);
   const v6 = (await abonnement.voies(A))[0];
-  check('tout le carnet : niveau 6, cadre animé, badge en or', v6?.niveau === NIVEAU_MAX
+  check('tout le carnet : niveau 12, cadre animé, badge en or', v6?.niveau === NIVEAU_MAX
     && v6?.cadre === 'anime' && v6?.or === true || console.log('       ', v6));
   check('les tampons d’une autre source ne comptent pas', await (async () => {
     await pool.query(`INSERT INTO recompenses (user_id, source, cle, saison_id, tampons)
@@ -249,6 +351,66 @@ titre('La tenue du PASS, hors des boosters et de l’étal');
   check('le PASS 1 ne rend plus actif en saison 2', (await abonnement.estAbonne(A)) === false);
   check('mais la tenue reste portée, pour toujours', (await abonnement.ageTenuePass(A, 'prehistorique')) >= 1);
   check('et le club de plus aussi', (await abonnement.clubsEnPlus(A)) === 1);
+}
+
+titre('Les anciens PASS : en boutique');
+{
+  const C = 'bbbb0000-0000-0000-0000-0000000000a3';
+  await pool.query("INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')",
+    [C, 'ancien-pass@ex.fr', 'AncienPass']);
+  await pool.query('INSERT INTO user_wallet (user_id,scarves,packs) VALUES (?,90000,0)', [C]);
+  const postJ = async (p, corps) => {
+    const r = await fetch(base + p, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corps) });
+    return { s: r.status, j: await r.json() };
+  };
+  moi = C;
+  /* La saison 1 a fini il y a dix jours : son PASS n'est pas encore en vente. */
+  check('dix jours après la fin : pas encore en vente', (await abonnement.anciensEnVente(C)).length === 0
+    && (await get('/api/abonnement')).anciensPass?.length === 0);
+  const r0 = await postJ('/api/abonnement/pass/echarpes', { saison: 1 });
+  check('l’acheter quand même : refusé, rien ne bouge', r0.j.error === 'pass.error.pas_en_vente'
+    && Number((await bourse(C)).scarves) === 90000);
+
+  await pool.query(`UPDATE saisons SET fin_le = CURDATE() - INTERVAL 100 DAY WHERE numero = 1`);
+  await chargerSaisons(pool);
+  const e = await get('/api/abonnement');
+  check('cent jours après : le PASS 1 est en vente', JSON.stringify(e.anciensPass?.map((p) => p.numero)) === '[1]'
+    && e.anciensPass[0].tenue === 'prehistorique' || console.log('       ', e.anciensPass));
+  moi = A;
+  check('qui l’a déjà ne le voit pas', (await get('/api/abonnement')).anciensPass?.length === 0);
+  moi = C;
+  const r = await postJ('/api/abonnement/pass/echarpes', { saison: 1 });
+  const b = await bourse(C);
+  check('en écharpes, au même prix : le PASS 1 et ses 3 boosters', r.s === 200
+    && JSON.stringify(r.j.saisons) === '[1]' && Number(b.scarves) === 50000 && Number(b.packs) === 3
+    || console.log('       ', r, b));
+  const [[ligne]] = await pool.query('SELECT source FROM user_pass WHERE user_id = ? AND saison = 1', [C]);
+  check('la ligne est marquée tardive', ligne?.source === 'echarpes-tard');
+  check('une seconde fois : déjà à lui', (await postJ('/api/abonnement/pass/echarpes', { saison: 1 })).j.error
+    === 'pass.error.deja');
+  const v = (await abonnement.voies(C))[0];
+  check('sa voie : niveau 1, tenue au 1er âge, sans cadre ni or, pas d’édition originale',
+    v?.niveau === 1 && v?.ageTenue === 1 && v?.cadre === null && v?.or === false
+    && v?.original === false && v?.tardif === true || console.log('       ', v));
+  check('ni club ni KOP en plus', (await abonnement.clubsEnPlus(C)) === 0 && (await abonnement.kopsAutorises(C)) === 0);
+  check('ni badge', (await abonnement.badgeDe(C)) === null && !(await abonnement.badgesDe([C])).has(C));
+  check('il n’ouvre pas le rythme de la saison', (await abonnement.estAbonne(C)) === false);
+  check('la tenue se porte au 1er âge', (await abonnement.ageTenuePass(C, 'prehistorique')) === 1);
+  check('ses autres âges tombent dans ses boosters',
+    (await abonnement.tenuesAuxBoosters(C)).get('prehistorique') === 1);
+
+  const vA = (await abonnement.voies(A))[0];
+  check('le joueur de la saison : édition originale, voie close', vA?.original === true && vA?.close === true);
+  await pool.query(`UPDATE recompenses SET tampons = ? WHERE user_id = ? AND cle = 'essai-1'`,
+    [vA.seuilsVoie[3], A]);
+  const vA2 = (await abonnement.voies(A))[0];
+  check('voie pas finie : il garde ses âges, le 3e tombe dans ses boosters', vA2?.ageTenue === 2
+    && (await abonnement.tenuesAuxBoosters(A)).get('prehistorique') === 2 || console.log('       ', vA2));
+  moi = B;
+  check('la voie de la saison en cours n’est pas close',
+    (await abonnement.voies(B)).find((x) => x.saison === 2)?.close === false);
+  moi = A;
 }
 
 http.close();

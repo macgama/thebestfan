@@ -444,7 +444,11 @@ check('tous les formats de duel restent ouverts à tous',
        la plomberie du PASS (le poser, le lire, le payer en écharpes, montrer
        son badge). Aucune ne touche à la corde. */
     'kopsAutorises', 'nombrePass', 'saisonsDuPass', 'voies', 'badgeDe', 'badgesDe',
-    'ageTenuePass', 'tenueAuPass', 'accorderPass', 'retirerPass', 'offre', 'acheterEnEcharpes'];
+    'ageTenuePass', 'tenueAuPass', 'accorderPass', 'retirerPass', 'offre', 'acheterEnEcharpes',
+    /* **Les anciens PASS** (3 novembre 2026) : lire ses PASS et comment il les
+       a pris, ceux qui sont en vente, si une saison est finie, et la tenue
+       d'un PASS fini qui tombe dans ses boosters — du visuel, rien qui pousse. */
+    'passDuJoueur', 'anciensEnVente', 'tenuesAuxBoosters', 'saisonPassee'];
   check(`le PASS n’ouvre que le rythme, la mémoire, la largeur et le visuel (${portes.length})`,
     portes.length === attendues.length && portes.every((p) => attendues.includes(p))
     || (console.log('        portes :', portes.join(', ')), false));

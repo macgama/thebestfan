@@ -22,7 +22,223 @@ pas de schéma.
   buvette, Tribune chaude, Recrue, Sang-froid, À domicile, Maillot du club,
   Kop plein) et 5 de PASS (Télécommande, Péage, Parcage visiteur, Fantôme,
   Malédiction). 88 cartes en tout.
-- Sans dessin pour l'instant : la carte montre son symbole de famille.
+- Les 49 dessins sont dans `art/action` et `public/img/action` (Artlist, 6 370
+  crédits accordés par Gaël).
+
+---
+
+**Voie PASS : le kit dessiné du PASS 1** (branche `claude/project-thread-plmj5o`,
+3 novembre 2026, 15 images Artlist accordées par Gaël, 1 950 crédits).
+Construction seule, **sans schéma**. Les images sont dans git
+(`public/img/pass/`, 1,8 Mo) : rien à envoyer à part.
+
+- L'écusson du PASS 1 est dessiné (os, cornes, main de pierre ; en or au
+  niveau 12) partout où le badge P1 se montre.
+- Dans la voie du carnet, chaque niveau a le dessin de son gain, le seuil en
+  pastille au coin.
+- Sur la carte de Mon profil : cadre de pierre autour du buste (niveau 2), fond
+  de grotte aux braises qui respirent (niveau 5), titre sur sa plaque de pierre
+  (niveau 9).
+- Sources des images : branche `pass1-kit-images` ; `node
+  scripts/pass-images.mjs <dossier>` les détoure.
+
+---
+
+**Voie PASS : le titre et le pseudo en or sur le profil** (branche
+`claude/project-thread-plmj5o`, 3 novembre 2026). Construction seule, **sans
+schéma**.
+
+- Niveau 9 : « Chasseur de mammouth » (titre du PASS 1) sous le pseudo, sur la
+  carte de Mon profil. Niveau 12 : le pseudo en or, avec un reflet lent (coupé en
+  mode calme).
+- Sans effet visible avant le 1er décembre : la voie du PASS 1 commence avec sa
+  saison.
+
+---
+
+**La voie PASS passe à 12 niveaux** (branche `claude/project-thread-plmj5o`,
+3 novembre 2026, plan « tout gratuit » validé par Gaël). Construction seule,
+**sans schéma**.
+
+- Douze niveaux sur des seuils de tampons (carnet à 140 : 0, 10, 20, 35, 50, 65,
+  75, 90, 105, 120, 130, 140) : tenue aux âges 1, 2 et 3 (niveaux 1, 4, 7), cadre
+  de profil, stickers, fond animé, cadre de carte puis animé, entrée, titre, aura,
+  badge et pseudo en or ; une étoile tous les 15 tampons après.
+- Le carnet de /aide les montre en deux rangées de six ; la page du PASS aussi.
+- Les âges de la tenue tombent aux mêmes tampons qu'avant (35 et 75) ; le cadre
+  animé passe de 110 à 120 tampons. Sans effet aujourd'hui : la voie du PASS 1
+  commence avec sa saison, le 1er décembre.
+- Les nouveaux gains (cadre de profil, stickers…) ne sont pas encore dessinés dans
+  le jeu : ils arrivent avant le 1er décembre.
+- Après la mise en ligne : /aide › DE LA SAISON, regarder la voie sous le carnet.
+
+---
+
+**Clignement : 9 tenues RP/AN et 225 tenues SU** (branche
+`claude/cligne-rp-an-su`, 3 novembre 2026). Construction seule, **sans schéma**.
+
+- Avant le déploiement, envoyer les images (neutre, portrait et cligne.* des
+  tenues touchées) avec `scripts/envoyer-images.sh` : elles ne sont plus dans git.
+- RP6-e1, RP12-e1, RP22-e2, AN16-e2, AN64-e1, AN29-e3, AN40-e2, AN32-e2, AN38-e3,
+  SU18-e2 apocalyptique, SU20-e2 apocalyptique et SU3-e2 préhistorique avaient les
+  yeux fermés au repos : neutre et portrait sont réécrits, yeux ouverts.
+- SU10 e2 préhistorique et apocalyptique ne clignent pas (monocle), le reste de SU oui.
+- Retouches Artlist en mode Unlimited : 0 crédit.
+- Après la mise en ligne : ouvrir quelques fiches SU (SU27, SU31, SU33) et attendre un clignement.
+
+---
+
+**Les anciens PASS en boutique** (branche `claude/project-thread-rrv38b`,
+3 novembre 2026, règles de Gaël). Construction seule : aucun schéma, aucun
+script.
+
+- Un PASS fini revient sur la page du PASS (annoncé dans la boutique) le 1er du
+  deuxième mois après la fin de sa saison (fin le 28 février → dès le 1er avril),
+  au même prix, en euros ou en écharpes.
+- L'acheteur tardif reçoit la tenue au premier âge sur tous ses Fanzzy et les
+  boosters du PASS ; les âges suivants tombent dans ses boosters. Ni tampon
+  « ÉDITION ORIGINALE », ni cadre, badge, club ou KOP en plus.
+- Un joueur de la saison qui n'a pas fini sa voie garde ce qu'il a ; les âges
+  qui lui manquent tombent ensuite dans ses boosters.
+- /admin › PASS › VENTES : colonne « dont après la saison ».
+- Premier effet réel : le 1er avril 2027 (fin du PASS 1 le 28 février).
+
+---
+
+**La voie PASS dans le carnet, et MON FANZZY qui vit sur le profil**
+(branche `claude/project-thread-plmj5o`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- Missions › DE LA SAISON : sous le carnet, la voie PASS en or, pour tous.
+  Sans PASS : tout sous cadenas, et en or ce que les tampons ont déjà atteint
+  (« 3 CADEAUX PASS T'ATTENDENT »), BIENTÔT pendant la BASE. Membre : son
+  niveau. (PR #249, déjà dans main.)
+- Profil › MON FANZZY : le Fanzzy équipé en pied, qui respire et bouge ; au
+  toucher il saute, exulte et pousse son cri. Sans dessin d'états, la carte
+  comme avant.
+
+---
+
+**Les défis de la semaine** (branche `claude/project-thread-4e3rjc`,
+3 novembre 2026, demande de Gaël « Ok pour moi »). Construction, puis
+**`npm run schema:appliquer`** (une table neuve, `defis_semaine`, dans
+`sql/defis.sql`), puis redémarrage.
+
+- Chaque lundi, trois défis par joueur tirés parmi ce qu'il possède : 5 duels
+  avec un Fanzzy d'une de ses séries, 30 chants au Grand Virage en portant une
+  de ses pièces, 3 duels avec un Fanzzy dans une de ses tenues. 100 écharpes
+  et 2 tampons du carnet chacun (réglables dans RÉGLAGES, section du quotidien).
+- Les membres d'un PASS dont la saison est lancée ont un quatrième défi :
+  5 duels dans la tenue de leur PASS. Il ne donne que 10 points de la voie
+  PASS (réglable), jamais d'écharpes ni de tampons.
+- Ils s'affichent dans les missions (DU JOUR), sous les missions du jour.
+
+---
+
+**Cinq stades pour LES TERRACES (série AN)** (branche
+`claude/project-thread-coelne`, 3 novembre 2026, demande de Gaël). Construction
+seule, sans schéma : Le Crachin, La Terrace Debout, Le Lendemain de Noël, La Rue
+de Briques et La Dernière Terrace, avec leurs images. Ils naissent **fermés** :
+pour les ouvrir, /admin › PASS › BASE (ou un PASS), groupe LES TERRACES des
+stades.
+
+---
+
+**L'écran des boosters : descriptif de série et carrousel de dix paquets**
+(branche `claude/project-thread-loywt5`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- Sous OUVRIR LE BOOSTER, un panneau décrit la série choisie (sa phrase et
+  deux lignes), dans les cinq langues ; la boîte « 13 séries attendent une
+  saison » est retirée.
+- Dix paquets en anneau qui tourne seul ; il s'arrête au moindre geste.
+
+---
+
+**Profil : l'emplacement de club fermé se voit avant le clic** (branche
+`claude/project-thread-0f5ilz`, 3 novembre 2026). Construction seule, pas de
+schéma. La plaque « 120 écharpes » ne se laisse plus toucher quand le niveau
+n'ouvre pas encore l'emplacement : elle est éteinte, dit « NIVEAU 4 » (par
+exemple), et la ligne dit « Se débloque au niveau 4 ». Même chose quand il
+manque des écharpes (« Il te manque 40 écharpes »).
+
+---
+
+**Le premier booster se déchire comme les autres** (branche
+`claude/project-thread-i98y57`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- À l'inscription, le sachet de bienvenue reprend la déchirure du kiosque :
+  l'intérieur du sachet se creuse sous la bande, la bande revient si on lâche
+  trop tôt, le bruit de déchirure, et le dessin du paquet de sa série (LA
+  REPRISE) au lieu de l'ancien VIRAGE NORD.
+- Au kiosque, la bande arrachée montrait un haut agrandi, décalé du dessin :
+  réglé.
+
+---
+
+**Le PASS ne s'achète pas avant le 1er décembre** (branche
+`claude/project-thread-d7nrt6`, 3 novembre 2026, demande de Gaël).
+Construction et redémarrage, rien d'autre. Ne joue qu'une fois le calendrier
+ci-dessous appliqué (la BASE, saison 0, en cours).
+
+- Pendant la BASE, la page du PASS, la boutique et la pub montrent le PASS 1
+  sous « BIENTÔT · le 1er décembre » ; les boutons d'achat sont hors service
+  et le serveur refuse l'achat (euros et écharpes). Offrir le PASS depuis
+  /admin marche toujours.
+- Il s'achète dès que la saison 1 est lancée (seule, le jour de son ouverture).
+- Tenues Préhistorique : « Uniquement avec le PASS » dans la collection (case
+  marquée PASS, carte sans « Booster La Reprise ») et sur la fiche.
+
+---
+
+**Le bon dos de carte aux boosters** (branche `claude/project-thread-xhkkac`,
+3 novembre 2026, demande de Gaël). Construction seule, sans schéma.
+
+- Chaque carte d'un booster et du paquet de bienvenue se retourne sur le dos
+  de **sa** série : un Fanzzy le sien, une tenue ou un état celui de son
+  Fanzzy, une pièce, une action ou un stade la série posée dans CATALOGUE ›
+  CONTENUS ou celle de son préfixe (`rp-`, `a-rp-`…).
+- Ce qui n'a aucune série (écharpes, pièces et actions communes) a un dos
+  neutre au blason du jeu : `public/img/dos/NEUTRE.*`. Un dessin plus soigné
+  posé dans `art/dos/NEUTRE.png` le remplace par `node scripts/dos-images.mjs`.
+
+---
+
+**La page d'accueil vivante, et le PASS « bientôt »** (branche
+`claude/project-thread-2zegrb`, 3 novembre 2026, demande de Gaël « plus vivante,
+gaming »). Construction seule, puis redémarrage (la route `/api/fanzzy/jouables`
+sert aussi la saison annoncée).
+
+- Sans compte : le nom du jeu tombe lettre par lettre, les promesses sautent,
+  « PRENDRE MA PLACE » tombe avec une onde et des étincelles, les visages se
+  distribuent comme des cartes ; puis toutes les 6 à 11 s une « vie » (éclat
+  d'or sur BEST, ola, visage qui saute, flashs, braises…). Un but en direct
+  allume la ligne du match avec « BUT ! ».
+- La bande du PASS porte BIENTÔT et un compte à rebours (J-28, puis les heures
+  le dernier jour) jusqu'au 1er décembre, ou jusqu'à la date annoncée.
+
+---
+
+**« Voir la vidéo » dans Comment jouer › Les Fanzzy** (branche
+`claude/project-thread-j0jy2q`, 3 novembre 2026). Construction seule, pas de
+schéma. Le bouton reste **caché tant que la vidéo n'est pas sur le serveur** :
+rien ne change à l'écran avant. La vidéo (`public/video/tuto-fanzzy-1.mp4`,
+puis une par langue `tuto-fanzzy-1-de.mp4`… avec la voix off) part avec les
+images : `npm run images:envoyer`, qui envoie désormais aussi `public/video`.
+
+---
+
+**L'équipement d'un championnat ne sort que de son booster** (branche
+`claude/project-thread-zlv4w0`, 3 novembre 2026, carte de Gaël « Seulement dans
+son booster »). Construction seule, pas de schéma, puis redémarrage.
+
+- Une pièce rangée sous une série (par son identifiant `an-`, `su-`, `rp-`… ou
+  par la colonne SÉRIE de CATALOGUE › CONTENUS) ne tombe que dans les boosters
+  de cette série. Les pièces communes et celles des skins (`hw-`, `ph-`, `ap-`)
+  tombent partout. La boutique, elle, livre toujours n'importe quelle pièce ouverte.
+- Pour un nouveau championnat : ouvrir ses pièces avec son PASS (ou dans
+  CATALOGUE › CONTENUS) ; elles sortiront de ses boosters seulement.
 
 ---
 
@@ -37,7 +253,8 @@ depuis `~/sites/thebestfan.online` :
 4. Redémarrage.
 
 - La saison lancée le 26 octobre devient la saison 0, la BASE, jusqu'au
-  30 novembre 2026. Un PASS acheté pendant elle est le PASS 1, actif tout de suite.
+  30 novembre 2026. Le PASS 1 ne s'y achète pas (« Bientôt », voir plus haut) ;
+  offert depuis /admin, il est actif tout de suite.
 - PASS 1 Les héros du canapé (1er décembre - 28 février, tenue Préhistorique),
   PASS 2 Météo (mars - mai), PASS 3 Déplacement (juin - août), PASS 4 Revenants
   (septembre - novembre). Chacun se lance seul à sa date.

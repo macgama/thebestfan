@@ -11945,13 +11945,24 @@ html[data-calme~="animations"] .tbf-face *{animation:none!important}
 .tbf-pass-badge[data-or]{--pass:#F5C33B}
 .tbf-pass-badge[data-or]::before{background:linear-gradient(160deg,#fff3c4 0%,#F5C33B 42%,#a77a10 100%);
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.35),0 0 calc(var(--t) * .45) rgba(245,195,59,.55)}
+/* L'écusson dessiné du kit (`TBF_PASS.img`) remplace la forme en CSS ; le
+   numéro devient une étiquette à la couleur du PASS, posée sur sa pointe. */
+.tbf-pass-badge[data-kit]::before,.tbf-pass-badge[data-kit]::after{display:none}
+.tbf-pass-badge>.tbf-pass-blason{position:absolute;inset:-14% -18% -6%;width:136%;height:120%;
+  object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.tbf-pass-badge[data-or]>.tbf-pass-blason{filter:drop-shadow(0 0 calc(var(--t) * .2) rgba(245,195,59,.7))}
+.tbf-pass-badge[data-kit]>b{align-self:end;transform:translateY(30%);padding:1px 4px 0;border-radius:3px;
+  font-size:calc(var(--t) * .26);background:var(--pass);box-shadow:0 0 0 1.5px var(--encre)}
+.tbf-pass-badge[data-kit]:not([class*="--"])>b{display:none}
 .tbf-pass-badge--moyen{--t:34px}
 .tbf-pass-badge--grand{--t:64px}
 /* Les crans de la voie, sous le badge moyen et grand. */
-.tbf-pass-crans{display:inline-flex;gap:3px;margin-top:4px}
-.tbf-pass-crans i{width:7px;height:7px;border-radius:2px;background:rgba(242,238,228,.18);
+.tbf-pass-crans{display:inline-flex;gap:2px;margin-top:4px}
+.tbf-pass-crans i{width:5px;height:7px;border-radius:2px;background:rgba(242,238,228,.18);
   transform:rotate(45deg)}
 .tbf-pass-crans i[data-on]{background:var(--pass,#c9772e);box-shadow:0 0 6px var(--pass,#c9772e)}
+.tbf-pass-etoiles{position:absolute;right:-6px;top:-6px;font-style:normal;font-size:9px;line-height:1;
+  color:#ffd75e;text-shadow:0 0 4px rgba(0,0,0,.8);font-weight:900}
 
 /* Le cadre de la carte de supporter. Il se pose sur un bloc existant, sans
    rien changer à son contenu, et sans pseudo-élément : le bloc qui le porte a souvent déjà les siens (la

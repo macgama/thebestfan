@@ -331,7 +331,11 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
                             /* Facultatif : sans elles, un duel classé qui
                                attend ne prévient que ceux qui ont l'accueil
                                ouvert. */
-                            notifications = null }) {
+                            notifications = null,
+                            /* Facultatif : les défis de la semaine
+                               (`src/server/defis/`). Sans eux, un duel ne fait
+                               avancer aucun défi. */
+                            defis = null }) {
   const salles = new Map();          // duelId -> { duel, membres, timer }
   const salleDe = new Map();         // userId -> duelId
   /* **Le bilan de ceux qui n'étaient pas là au coup de sifflet.**
@@ -1804,6 +1808,15 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            d.mode ?? 'entrainement',
            j.vus?.[0] ?? null, Number(gains?.get(userId)?.xp ?? 0), duree, j.side,
            avant, apres]);
+
+        /* **Les défis de la semaine** : un duel qui compte pour les missions
+           (une minute au moins, pas quitté, de l'XP versée) fait avancer ceux
+           dont un Fanzzy monté en tribune a la série ou la tenue. Jamais
+           attendu par le duel : `apresDuel` ne lève pas. */
+        if (defis && Number(gains?.get(userId)?.xp ?? 0) > 0 && duree >= 60) {
+          const vus = new Set(j.vus ?? []);
+          defis.apresDuel(userId, (j.fanzzy ?? []).filter((x) => vus.has(x.id)));
+        }
       }
     } catch (e) {
       console.error('[nvn] enregistrement du résultat', e.message);
