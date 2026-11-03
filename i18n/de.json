@@ -8509,5 +8509,8 @@
  "Lié à ton club, il pousse plus fort dans ses matchs.": "Mit deinem Verein verbunden, drückt er in dessen Spielen stärker.",
  "Tenues et expressions : l’allure change, jamais la force.": "Outfits und Mienen: Der Look ändert sich, nie die Stärke.",
  "Ouvre sa fiche pour le faire évoluer.": "Öffne sein Profil, um ihn weiterzuentwickeln.",
- "Touche sa carte pour le voir en grand.": "Tippe auf seine Karte, um ihn groß zu sehen."
+ "Touche sa carte pour le voir en grand.": "Tippe auf seine Karte, um ihn groß zu sehen.",
+ "Ouvre le <0>{0}</0>. Le jeu reste gratuit.": "Startet am <0>{0}</0>. Das Spiel bleibt gratis.",
+ "Le PASS de saison ouvre le {0}": "Der Saison-PASS startet am {0}",
+ "C’est ouvert ! Le jeu reste gratuit.": "Jetzt offen! Das Spiel bleibt gratis."
 }
