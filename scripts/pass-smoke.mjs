@@ -75,6 +75,9 @@ check('la tenue : âge 1, puis 2 au niveau 4 et 3 au niveau 7', ageTenue(1) === 
 check('le cadre au niveau 6, animé au 10', cadreDe(5) === null && cadreDe(6) === 'fixe'
   && cadreDe(9) === 'fixe' && cadreDe(10) === 'anime');
 check('le badge et le pseudo en or au dernier niveau', vitrineDe(1, 12).or === true && vitrineDe(1, 11).or === false);
+check('le titre de la saison au niveau 9, pas avant', vitrineDe(1, 8).titre === null
+  && vitrineDe(1, 9).titre === 'Chasseur de mammouth');
+check('l’acheteur tardif n’a pas le titre', voieSelonAchat(1, 12, { tardif: true }).titre === null);
 check('les gains ouverts se lisent par niveau', gainsDe(2).includes('cadre_profil')
   && !gainsDe(2).includes('stickers') && gainsDe(12).length === 10);
 check('le PASS 1 est Préhistorique', passDe(1).tenue === 'prehistorique');

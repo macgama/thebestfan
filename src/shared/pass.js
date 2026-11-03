@@ -62,6 +62,8 @@ export const PASS_SAISONS = Object.freeze([
     /* La teinte du badge et du cadre de cette saison. Une couleur par PASS,
        pour qu'un badge dise sa saison d'un coup d'œil. */
     couleur: '#c9772e',
+    /* Le titre de la voie (niveau 9), sous le pseudo de ses membres. */
+    titre: 'Chasseur de mammouth',
   }),
 ]);
 
@@ -98,6 +100,8 @@ export function passDe(numero) {
     tenue,
     texte: p?.texte && tenue === p.tenue ? p.texte : null,
     couleur: p?.couleur ?? '#f2c14e',
+    /* Le titre suit le thème : une autre tenue choisie n'en a pas. */
+    titre: p?.titre && tenue === p.tenue ? p.titre : null,
   };
 }
 
@@ -203,6 +207,7 @@ export function vitrineDe(numero, niveau, etoiles = 0) {
     or: niveau >= NIVEAU_MAX,
     etoiles: niveau >= NIVEAU_MAX ? Math.max(0, Math.floor(Number(etoiles) || 0)) : 0,
     gains: gainsDe(niveau),
+    titre: gainsDe(niveau).includes('titre') ? p.titre : null,
   };
 }
 
@@ -334,6 +339,6 @@ export function anciensPassEnVente(saisons, aujourdHui, deja = []) {
  */
 export function voieSelonAchat(numero, niveau, { tardif = false, etoiles = 0 } = {}) {
   if (!tardif) return { ...vitrineDe(numero, niveau, etoiles), original: true, tardif: false };
-  return { ...vitrineDe(numero, 1), cadre: null, or: false, etoiles: 0,
+  return { ...vitrineDe(numero, 1), cadre: null, or: false, etoiles: 0, titre: null,
     gains: gainsDe(1).filter((g) => !GAINS_SPECIAUX.includes(g)), original: false, tardif: true };
 }
