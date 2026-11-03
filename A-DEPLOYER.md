@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Cinq stades pour LES TERRACES (série AN)** (branche
+`claude/project-thread-coelne`, 3 novembre 2026, demande de Gaël). Construction
+seule, sans schéma : Le Crachin, La Terrace Debout, Le Lendemain de Noël, La Rue
+de Briques et La Dernière Terrace, avec leurs images. Ils naissent **fermés** :
+pour les ouvrir, /admin › PASS › BASE (ou un PASS), groupe LES TERRACES des
+stades.
+
+---
+
 **L'écran des boosters : descriptif de série et carrousel de dix paquets**
 (branche `claude/project-thread-loywt5`, 3 novembre 2026, demande de Gaël).
 Construction seule, sans schéma.

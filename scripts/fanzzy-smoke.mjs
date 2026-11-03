@@ -1019,7 +1019,7 @@ const W = await joueur('Neuf');
   const b = (await call('/api/fanzzy/bibliotheque', { qui: L })).json;
   const T = b.types?.lieux;
   check('la bibliothèque compte les lieux, départ compris',
-    T?.possibles === STADES.length
+    T?.possibles === STADES.filter((s) => s.publie !== false).length
     && T.items.find((x) => x.id === STADE_DEFAUT)?.possede === true
     && T.gagnes === 1 + new Set(rangs.map((x) => x.stade_id)).size);
   check('le catalogue sert les lieux, sans leurs règles',
