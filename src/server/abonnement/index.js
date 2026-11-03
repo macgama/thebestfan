@@ -3,7 +3,7 @@ import { reglage } from '../../shared/reglages.js';
 import { CATALOGUE, enEuros } from '../../shared/boutique.js';
 import { carnetDe } from '../../shared/saison.js';
 import {
-  passAvecTenue, passDe, VOIE_PASS, niveauVoie, ageTenue, vitrineDe, saisonsCouvertes,
+  passAvecTenue, passDe, VOIE_PASS, niveauVoie, niveauVoieDe, ageTenue, vitrineDe, saisonsCouvertes,
   tenueReservee,
 } from '../../shared/pass.js';
 import { saisonEnCours, toutesLesSaisons } from '../fanzzy/saisons.js';
@@ -269,7 +269,22 @@ export function createAbonnement({ pool, requireAuth }) {
     try {
       const [r] = await q(
         `SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
-          WHERE user_id = ? AND source IN ('mission', 'sachet') AND saison_id = ?`,
+          WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id = ?`,
+        [userId, saisonId]);
+      return Number(r?.n ?? 0);
+    } catch (e) {
+      if (sansTable(e) || e?.code === 'ER_BAD_FIELD_ERROR') return 0;
+      throw e;
+    }
+  }
+
+  /** Les points de voie d'une saison : ce que les défis PASS ont versé
+      (`recompenses`, source `voie`, rangés dans la colonne `tampons`). */
+  async function pointsDe(userId, saisonId) {
+    try {
+      const [r] = await q(
+        `SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
+          WHERE user_id = ? AND source = 'voie' AND saison_id = ?`,
         [userId, saisonId]);
       return Number(r?.n ?? 0);
     } catch (e) {
@@ -294,16 +309,18 @@ export function createAbonnement({ pool, requireAuth }) {
     for (const n of numeros) {
       const s = parNumero.get(n);
       let tampons = 0;
-      let paliers = 0;
+      let points = 0;
       let seuils = [];
       if (s?.lancee) {
         tampons = await tamponsDe(userId, s.id);
+        points = await pointsDe(userId, s.id);
         seuils = carnetDe(s).map((p) => p.tampons);
-        paliers = seuils.filter((t) => tampons >= t).length;
       }
-      const niveau = niveauVoie(paliers);
+      /* `tampons` reste le carnet seul ; les points des défis PASS
+         s'y ajoutent pour le niveau (`niveauVoieDe`). */
+      const niveau = niveauVoieDe({ tampons, points, seuils });
       out.push({ ...vitrineDe(n, niveau), tenue: passDe(n).tenue, ageTenue: ageTenue(niveau),
-        tampons, seuils });
+        tampons, points, seuils, saisonId: s?.id ?? null, lancee: Boolean(s?.lancee) });
     }
     return out;
   }

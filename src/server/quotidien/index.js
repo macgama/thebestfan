@@ -196,13 +196,13 @@ const SQL_LIVRE = `
     FROM recompenses WHERE user_id = ? AND source IN ('carnet', 'relais')
   UNION ALL
   SELECT 'tampons', NULL, saison_id, NULL, SUM(tampons), NULL
-    FROM recompenses WHERE user_id = ? AND source IN ('mission', 'sachet') AND saison_id IS NOT NULL
+    FROM recompenses WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id IS NOT NULL
    GROUP BY saison_id`;
 
 /* Les tampons d'une saison, recomptés sous le verrou d'un versement. */
 const SQL_TAMPONS = `
   SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
-   WHERE user_id = ? AND source IN ('mission', 'sachet') AND saison_id = ?`;
+   WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id = ?`;
 
 /**
  * La sonde du jour de jeu : à quelle heure de Zurich le jour change, d'après
