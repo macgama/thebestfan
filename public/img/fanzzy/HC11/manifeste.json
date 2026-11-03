@@ -1,0 +1,22 @@
+{
+  "id": "HC11",
+  "rev": 2,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "efab8391107a",
+          "cligne": true
+        }
+      }
+    }
+  }
+}
