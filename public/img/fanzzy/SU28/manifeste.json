@@ -1,6 +1,6 @@
 {
   "id": "SU28",
-  "rev": 11,
+  "rev": 23,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "bffadf184205"
+          "sha": "bffadf184205",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c8e18dda112b"
+          "sha": "c8e18dda112b",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "304678603062"
+          "sha": "304678603062",
+          "cligne": true
         }
       }
     },
@@ -133,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "adc924002e06"
+          "sha": "adc924002e06",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -158,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "21c222209bda"
+          "sha": "21c222209bda",
+          "cligne": true
         }
       }
     }

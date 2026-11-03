@@ -1,6 +1,6 @@
 {
   "id": "AN29",
-  "rev": 20,
+  "rev": 21,
   "evolutions": {
     "e1": {
       "skins": {
@@ -136,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d7a17af08f13"
+          "sha": "d7a17af08f13",
+          "cligne": true
         },
         "halloween": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "RP12",
-  "rev": 16,
+  "rev": 17,
   "evolutions": {
     "e1": {
       "skins": {
@@ -52,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "07ec08fa1604"
+          "sha": "07ec08fa1604",
+          "cligne": true
         }
       }
     },
