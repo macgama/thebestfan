@@ -21,7 +21,7 @@ app.use(express.static(PUBLIC, { extensions: ['html'] }));
 const srv = app.listen(0); const port = srv.address().port;
 const b = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--accept-lang=fr-FR'] });
 
-async function ouvrir(av) {
+async function ouvrir(av, abo = null) {
   const p = await b.newPage();
   await p.setViewport({ width: 400, height: 900, deviceScaleFactor: 1 });
   const err = []; p.on('pageerror', (e) => err.push(e.message));
@@ -38,6 +38,7 @@ async function ouvrir(av) {
     if (u.pathname === '/api/rank/moi') return j({ avatar: av });
     if (u.pathname === '/api/me/state') return j({ onboarded: true, follows: [], stuff: [] });
     if (u.pathname === '/api/me/catalogue') return j({ stuff: [] });
+    if (u.pathname === '/api/abonnement' && abo) return j(abo);
     if (u.pathname === '/api/me/loadout') return j({ fanzzy: { id: av.id, nom: av.nom, cri: { label: 'PLUIE OU PAS' } } });
     if (u.pathname.startsWith('/api/')) return r.respond({ status: 404, contentType: 'application/json', body: '{}' });
     r.continue();
@@ -75,6 +76,21 @@ async function ouvrir(av) {
   const { p, err } = await ouvrir({ id: 'ZZ99', age: 'ZZ99', evo: 1, skin: 'base', nom: 'Inconnu', rar: 'commune' });
   ok(!(await p.$('#monFzScene')), 'un Fanzzy sans dessin d’états garde sa carte');
   ok(!err.length, 'et rien ne casse');
+  await p.close();
+}
+/* La voie PASS sur la carte : le titre (niveau 9), le pseudo en or (12). */
+for (const [niveau, titre, or] of [[8, null, false], [12, 'Chasseur de mammouth', true]]) {
+  const v = { saison: 1, niveau, couleur: '#c9772e', or, titre, etoiles: 0, gains: [], cadre: 'anime' };
+  const { p, err } = await ouvrir({ id: 'ZZ99', age: 'ZZ99', evo: 1, skin: 'base', nom: 'Inconnu', rar: 'commune' },
+    { actif: true, voies: [v], voie: [] });
+  const t = await p.$eval('#passTitre', (e) => (e.hidden ? '' : e.textContent)).catch(() => '');
+  const enOr = await p.$eval('#pseudo', (e) => e.classList.contains('pseudo-or')).catch(() => false);
+  ok(titre ? t === titre : !t, `niveau ${niveau} : ${titre ? 'le titre sous le pseudo' : 'pas encore de titre'}`);
+  ok(enOr === or, `niveau ${niveau} : ${or ? 'le pseudo en or' : 'le pseudo pas encore en or'}`);
+  if (process.env.VOIE_CAPTURES && or) {
+    await p.$('.carte').then((e) => e?.screenshot({ path: `${process.env.VOIE_CAPTURES}/profil-titre-or.png` })).catch(() => {});
+  }
+  ok(!err.length, `niveau ${niveau} : aucune erreur de script`);
   await p.close();
 }
 await b.close(); srv.close();

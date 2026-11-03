@@ -389,7 +389,7 @@ export function createAbonnement({ pool, requireAuth }) {
     if (!v.length) return null;
     const d = v[v.length - 1];
     return { saison: d.saison, niveau: d.niveau, couleur: d.couleur, cadre: d.cadre, or: d.or,
-      etoiles: d.etoiles ?? 0, gains: d.gains ?? [], nombre: v.length };
+      etoiles: d.etoiles ?? 0, gains: d.gains ?? [], titre: d.titre ?? null, nombre: v.length };
   }
 
   /**

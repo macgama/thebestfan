@@ -84,6 +84,16 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   text-shadow:2px 2px 0 var(--encre);overflow-wrap:anywhere}
 .carte h1.long{font-size:22px}
 .carte h1.tres-long{font-size:18px;letter-spacing:.02em}
+/* La voie PASS sur la carte : le titre de la saison sous le pseudo (niveau 9),
+   puis le pseudo en or au bout de la voie (niveau 12). */
+.carte .pass-titre{margin:2px 0 0;font-family:var(--banner);font-weight:700;font-size:12px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--pass,#c9772e)}
+.carte h1.pseudo-or{background:linear-gradient(100deg,#b8862b 0%,#ffe08a 30%,#fff6d0 45%,#f2c14e 60%,#b8862b 100%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(7,9,12,.6));animation:pseudo-or 5s ease-in-out infinite}
+@keyframes pseudo-or{0%,100%{background-position:100% 0}50%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.carte h1.pseudo-or{animation:none}}
+html[data-calme~="animations"] .carte h1.pseudo-or{animation:none}
 .carte .club{display:flex;align-items:center;gap:7px;margin-top:8px;min-width:0;
   font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.2;letter-spacing:.06em;
   text-transform:uppercase}
@@ -453,6 +463,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
              s'affiche sans pseudo plutôt qu'avec un « — » qui a l'air d'en être
              un. -->
         <h1 id="pseudo"></h1>
+        <p class="pass-titre" id="passTitre" hidden></p>
         <div class="club" id="clubline"></div>
         <div class="depuis" id="depuis"></div>
       </div>
@@ -2130,6 +2141,14 @@ void (async () => {
     el.setAttribute('aria-label', `${v.nom ?? `PASS ${v.saison}`}, niveau ${v.niveau} sur ${window.TBF_PASS.MAX}`);
     el.hidden = false;
     window.TBF_PASS.cadre($('carte'), v);
+    /* Le titre de la voie, puis le pseudo en or au bout. */
+    const t = $('passTitre');
+    if (v.titre && t) {
+      t.textContent = v.titre;
+      t.style.setProperty('--pass', v.couleur ?? '#c9772e');
+      t.hidden = false;
+    }
+    if (v.or) $('pseudo').classList.add('pseudo-or');
   } catch { /* la carte se passe de son badge */ }
 })();
 </script>
