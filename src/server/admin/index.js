@@ -1302,7 +1302,8 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       try {
         await creerSaison(ACTEUR_AUTO, { numero: p.numero, nom: p.nom, texte: p.texte,
           series: p.series, stuff, ouvre_le: p.ouvre, fin_le: p.fin,
-          carnet: CARNET_TRIMESTRE }, null);
+          carnet: CARNET_TRIMESTRE, ...(p.tenue && await aColonne('tenue_pass')
+            ? { tenue_pass: p.tenue } : {}) }, null);
         await journal(ACTEUR_AUTO, 'saison.prevue', String(p.numero), { nom: p.nom }, null);
         posees.push(p.numero);
       } catch (e) {
@@ -1641,6 +1642,8 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
         ORDER BY a.fin IS NULL, a.fin LIMIT 200`).catch(sansTable);
     const numeros = new Set(passAvecTenue().map((p) => p.numero));
     if (Number(enCours?.numero) > 0) numeros.add(Number(enCours.numero));
+    /* Pendant la BASE (saison 0), c'est le PASS 1 qui se vend. */
+    if (Number(enCours?.numero) === 0) numeros.add(1);
     for (const n of parSaison.keys()) numeros.add(n);
     res.json({
       enCours: enCours ? { numero: Number(enCours.numero), nom: enCours.nom ?? null,
