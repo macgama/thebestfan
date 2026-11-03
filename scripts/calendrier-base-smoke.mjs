@@ -23,7 +23,7 @@ for (const f of ['admin.sql', 'saisons.sql', 'contenus.sql', 'quotidien.sql']) {
    brouillons 2 à 5 posés par l'ancien calendrier. */
 await raw.query(`UPDATE saisons SET nom = 'C''est parti pour TBFO !', fin_le = '2027-03-31' WHERE numero = 1`);
 await raw.query(`INSERT INTO saisons (numero, nom, series, tenues, stuff, actions, stades, ouvre_le, fin_le) VALUES
-  (2, 'Les héros du canapé', '["HC"]', '[]', '[]', '[]', '[]', '2027-04-01', '2027-06-30'),
+  (2, 'Les héros du canapé', '[]', '[]', '[]', '[]', '[]', '2027-04-01', '2027-06-30'),
   (3, 'Les phénomènes météo', '["MT"]', '[]', '[]', '[]', '[]', '2027-07-01', '2027-09-30'),
   (4, 'Les galères de déplacement', '["GD"]', '[]', '[]', '[]', '[]', '2027-10-01', '2027-12-31'),
   (5, 'Les revenants', '["RV"]', '[]', '[]', '[]', '[]', '2028-01-01', '2028-03-31')`);
@@ -35,7 +35,8 @@ const q = async (sql, p) => (await pool.query(sql, p))[0];
 let saisons = await q('SELECT id, numero, nom, series, lancee_a FROM saisons ORDER BY numero, id');
 const plan = planifier(saisons);
 check('le plan se fait', !plan.erreur || (console.log('       ', plan.erreur), false));
-check('il reprend les quatre brouillons, sans en créer',
+/* Comme en production : le brouillon HC n'a pas de série (création refusée sans carte). */
+check('il reprend les quatre brouillons, sans en créer, HC retrouvé par son nom',
   plan.pass.every((p) => p.id) && plan.pass.find((p) => p.numero === 4).avant === 5);
 
 await appliquer(q, plan, { tenuePass: true });
@@ -57,6 +58,29 @@ check('un PASS acheté pendant la BASE est le PASS 1', saisonsCouvertes(saisonEn
 
 saisons = await q('SELECT id, numero, nom, series, lancee_a FROM saisons ORDER BY numero, id');
 check('le script ne s’applique pas deux fois', Boolean(planifier(saisons).erreur));
+
+/* Le PASS 1 nomme HC avant ses dessins : on peut encore le corriger dans
+   l'admin, mais pas le lancer tant qu'aucune carte HC n'est publiée. */
+{
+  const { createAdmin } = await import('../src/server/admin/index.js');
+  const { charger: chargerCatalogue } = await import('../src/server/fanzzy/catalogue.js');
+  const raw2 = await mysql.createConnection({ uri: DB, multipleStatements: true });
+  await raw2.query(`DROP TABLE IF EXISTS fanzzy, tenues`);
+  for (const f of ['fanzzy.sql', 'tenues.sql']) {
+    await raw2.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
+  }
+  await raw2.query(`UPDATE fanzzy SET publie = 0 WHERE set_id = 'HC'`).catch(() => {});
+  await raw2.end();
+  await chargerCatalogue(pool);
+  const { chargerTenues } = await import('../src/server/fanzzy/tenues.js');
+  await chargerTenues(pool);
+  const adm = createAdmin({ pool, requireAuth: (_r, _s, n) => n() });
+  let ok = true;
+  try {
+    await adm.modifierSaison('test', p1.id, { nom: 'Les héros du canapé', series: p1.series });
+  } catch (e) { ok = false; console.log('       ', e.code, e.message, e.stack?.split('\n')[1]); }
+  check('le PASS 1 se modifie avant les dessins de sa série', ok);
+}
 
 await pool.end();
 if (failures) { console.error(`\n${failures} échec(s)`); process.exit(1); }
