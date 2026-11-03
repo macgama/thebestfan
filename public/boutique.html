@@ -1678,6 +1678,9 @@ function rendrePass() {
     const etat = abonne ? `<span class="pass-etat"><span class="tbf-tampon tbf-tampon--plein" data-ton="vert">PASS ACTIF</span>${
       S.abo.fin ? `<small>${esc(`jusqu’au ${new Date(S.abo.fin).toLocaleDateString('fr', { day: 'numeric', month: 'long', year: 'numeric' })}`)}</small>` : ''}</span>` : '';
     const echarpes = Number(S.abo?.offre?.echarpes) || 0;
+    /* Les anciens PASS en vente (Gaël, 3 novembre 2026) : la page du PASS
+       les vend, la boutique les annonce. */
+    const anciens = S.abo?.anciensPass ?? [];
     return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
         <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
         <b class="pass-titre">PASS DE SAISON</b>
@@ -1686,7 +1689,10 @@ function rendrePass() {
       </div>
       ${abonne ? '' : `<div class="pass-formules">${dedans.map((a) => bacheFormule(a, ouvert)).join('')}</div>
         ${echarpes ? `<p class="pass-beta">Ou ${esc(echarpes.toLocaleString('fr'))} écharpes, sur <a href="/abonnement">la page du PASS</a>.</p>` : ''}
-        ${ouvert ? '' : '<p class="pass-beta">Pendant la bêta, le PASS s’offre depuis l’administration : demande-le.</p>'}`}`;
+        ${ouvert ? '' : '<p class="pass-beta">Pendant la bêta, le PASS s’offre depuis l’administration : demande-le.</p>'}`}
+      ${anciens.length ? `<p class="pass-beta">${esc(anciens.length > 1 ? 'Les anciens PASS' : 'L’ancien PASS')}
+        ${esc(anciens.map((p) => p.numero).join(', '))} : au même prix, sur
+        <a href="/abonnement#anciens">la page du PASS</a>.</p>` : ''}`;
   }).join('');
   el.innerHTML = blocs;
 

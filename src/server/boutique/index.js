@@ -38,7 +38,8 @@
  */
 import express from 'express';
 import crypto from 'node:crypto';
-import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, MONNAIE, RAYONS, enEuros }
+import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, MONNAIE, RAYONS, enEuros,
+  articleCommande, idAncienPass }
   from '../../shared/boutique.js';
 import { etalStuff, etalTenues, prixDe, prixUltime } from '../../shared/etal.js';
 import { STUFF_BY_ID } from '../../shared/fanzzy/inventaire.js';
@@ -245,8 +246,11 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
        Même transaction que l'encaissement, mêmes raisons que l'abonnement. */
     if (l.type === 'pass') {
       if (!abonnement?.accorderPass) throw new Error('boutique.error.abonnement_absent');
+      /* L'ancien PASS d'une saison nommée (`pass-saison@3`) : cette saison-là,
+         marquée tardive — le contenu, sans les gains spéciaux. */
       const saisons = await abonnement.accorderPass(userId, {
-        source: 'stripe', reference: session ?? reference, conn });
+        ...(l.saison ? { saisons: [Number(l.saison)] } : {}),
+        source: l.tardif ? 'stripe-tard' : 'stripe', reference: session ?? reference, conn });
       if (l.packs) {
         await conn.query(
           'UPDATE user_wallet SET packs = packs + ? WHERE user_id = ?',
@@ -299,7 +303,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       const [[cmd]] = await conn.query(
         `SELECT id, user_id, article FROM achats WHERE stripe_session = ?`, [sessionId]);
 
-      const article = ARTICLE_PAR_ID.get(cmd.article);
+      const article = articleCommande(cmd.article);
       if (!article) {
         /* L'article a quitté le catalogue entre la commande et le paiement. On
            ne devine pas ce qu'il contenait : on annule la prise, la commande
@@ -562,13 +566,25 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
   router.post('/commander', requireAuth, async (req, res) => {
     if (!configure()) return res.status(503).json({ error: 'boutique.error.non_configuree' });
 
-    const article = ARTICLE_PAR_ID.get(String(req.body?.article ?? ''));
+    let article = ARTICLE_PAR_ID.get(String(req.body?.article ?? ''));
     /* Un article retiré (l'abonnement d'avant le PASS) ne se commande plus. */
     if (!article || article.retire) {
       return res.status(400).json({ error: 'boutique.error.article_inconnu' });
     }
-    /* Le PASS d'une saison qu'on a déjà ne se paie pas deux fois. */
-    if (article.livraison?.type === 'pass' && abonnement?.offre) {
+    /* **Un ancien PASS** (Gaël, 3 novembre 2026) : le même article avec une
+       saison nommée, seulement si elle est en vente aujourd'hui et que le
+       joueur ne l'a pas. La commande garde `pass-saison@<n>`. */
+    const saisonAncienne = req.body?.saison ?? null;
+    if (article.livraison?.type === 'pass' && saisonAncienne !== null && saisonAncienne !== '') {
+      const n = Number(saisonAncienne);
+      const enVente = abonnement?.anciensEnVente
+        ? await abonnement.anciensEnVente(req.user.id).catch(() => []) : [];
+      if (!enVente.some((a) => a.numero === n)) {
+        return res.status(400).json({ error: 'pass.error.pas_en_vente' });
+      }
+      article = articleCommande(idAncienPass(n));
+    } else if (article.livraison?.type === 'pass' && abonnement?.offre) {
+      /* Le PASS d'une saison qu'on a déjà ne se paie pas deux fois. */
       const o = await abonnement.offre(req.user.id).catch(() => null);
       if (o && !o.aAcheter.length) {
         return res.status(400).json({ error: o.couvre.length ? 'pass.error.deja' : 'pass.error.pas_de_saison' });
@@ -588,9 +604,10 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
          boutique, qui n'en sait rien. */
       const abonne = Boolean(article.recurrence);
       const retour = abonne || article.livraison?.type === 'pass' ? '/abonnement' : '/boutique';
+      const ancien = article.livraison?.saison ? `&ancien=${article.livraison.saison}` : '';
       const session = await stripe('/checkout/sessions', {
         mode: abonne ? 'subscription' : 'payment',
-        success_url: `${racine()}${retour}?paye=1`,
+        success_url: `${racine()}${retour}?paye=1${ancien}`,
         cancel_url: `${racine()}${retour}?annule=1`,
         'line_items[0][quantity]': '1',
         'line_items[0][price_data][currency]': 'eur',

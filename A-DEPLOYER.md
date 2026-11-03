@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**Les anciens PASS en boutique** (branche `claude/project-thread-rrv38b`,
+3 novembre 2026, règles de Gaël). Construction seule : aucun schéma, aucun
+script.
+
+- Un PASS fini revient sur la page du PASS (annoncé dans la boutique) le 1er du
+  deuxième mois après la fin de sa saison (fin le 28 février → dès le 1er avril),
+  au même prix, en euros ou en écharpes.
+- L'acheteur tardif reçoit la tenue au premier âge sur tous ses Fanzzy et les
+  boosters du PASS ; les âges suivants tombent dans ses boosters. Ni tampon
+  « ÉDITION ORIGINALE », ni cadre, badge, club ou KOP en plus.
+- Un joueur de la saison qui n'a pas fini sa voie garde ce qu'il a ; les âges
+  qui lui manquent tombent ensuite dans ses boosters.
+- /admin › PASS › VENTES : colonne « dont après la saison ».
+- Premier effet réel : le 1er avril 2027 (fin du PASS 1 le 28 février).
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH

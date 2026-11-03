@@ -183,6 +183,30 @@ export const CATALOGUE = [
 export const ARTICLE_PAR_ID = new Map(CATALOGUE.map((a) => [a.id, a]));
 
 /**
+ * **L'ancien PASS d'une saison** (Gaël, 3 novembre 2026) : le même article
+ * que le PASS, au même prix, pour une saison nommée. La commande garde
+ * `pass-saison@<numéro>` dans `achats.article` ; c'est ce qui dit, au
+ * paiement, quelle saison livrer — sans colonne de plus.
+ */
+export const idAncienPass = (numero) => `pass-saison@${Number(numero)}`;
+
+/**
+ * L'article d'une commande : celui du catalogue, ou l'ancien PASS d'une
+ * saison (`pass-saison@3`), livré pour cette saison-là et marqué tardif.
+ */
+export function articleCommande(id) {
+  const brut = String(id ?? '');
+  const direct = ARTICLE_PAR_ID.get(brut);
+  if (direct) return direct;
+  const m = /^pass-saison@([1-9]\d{0,3})$/.exec(brut);
+  const base = ARTICLE_PAR_ID.get('pass-saison');
+  if (!m || !base) return null;
+  const saison = Number(m[1]);
+  return { ...base, id: brut, nom: `PASS ${saison}`, base: base.id,
+    livraison: { ...base.livraison, saison, tardif: true } };
+}
+
+/**
  * Ce qu'un article payé en argent réel a le droit de livrer.
  *
  * Une **liste blanche**, et c'est délibéré : une liste noire laisserait passer

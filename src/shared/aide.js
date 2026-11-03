@@ -521,6 +521,16 @@ const RUBRIQUES = [
       ['Puis-je payer le PASS en écharpes ?',
         () => `Oui, ${reglage('pass.prix_echarpes')} écharpes, sur la page du PASS. C’est la `
           + 'récompense des supporters assidus : le même PASS, sans dépenser d’argent.'],
+      ['Puis-je prendre un PASS d’une saison passée ?',
+        'Oui. Une saison finie revient sur la page du PASS le 1er du deuxième mois après sa '
+          + 'fin, au même prix. Tu reçois sa tenue au premier âge, puis ses autres âges dans '
+          + 'tes boosters, avec son équipement, son stade et ses mini-jeux. Le tampon « ÉDITION '
+          + 'ORIGINALE », le cadre, le badge, le club et le KOP en plus restent à ceux qui l’ont '
+          + 'joué pendant la saison.'],
+      ['Je n’ai pas fini ma voie PASS avant la fin de la saison : je perds tout ?',
+        'Non. Ce que tu as ouvert reste à toi, et les âges de la tenue qui te manquent tombent '
+          + 'ensuite dans tes boosters. Seuls le cadre, le cadre animé et le badge en or ne '
+          + 's’ouvrent plus.'],
       ['J’avais un abonnement : que devient-il ?',
         'Il ne se renouvelle plus. Tu gardes tout jusqu’à la fin de la période déjà payée, '
           + 'et tu reçois le PASS de la saison où elle se termine. Rien de ce que tu as '

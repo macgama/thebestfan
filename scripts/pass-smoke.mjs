@@ -12,7 +12,11 @@
  *   - un club suivi et un KOP de plus par PASS, cumulés, pour toujours ;
  *   - sa tenue ne sort d'aucun booster, ne se vend pas à l'étal pendant sa
  *     saison, puis y revient une saison plus tard, à son prix à part ;
- *   - la reprise des anciens abonnements donne le bon PASS.
+ *   - la reprise des anciens abonnements donne le bon PASS ;
+ *   - les anciens PASS (Gaël, 3 novembre 2026) : en vente le 1er du deuxième
+ *     mois après la fin de leur saison, au même prix ; l'acheteur tardif n'a
+ *     que le contenu, sans « ÉDITION ORIGINALE » ni gain spécial ; la tenue
+ *     d'un PASS fini tombe dans les boosters aux âges qui manquent.
  *
  * Usage : node scripts/pass-smoke.mjs
  */
@@ -28,8 +32,10 @@ import { poserReglages, reglage, PAR_CLE } from '../src/shared/reglages.js';
 import { prixTenueDe } from '../src/shared/etal.js';
 import {
   saisonsCouvertes, niveauVoie, ageTenue, cadreDe, tenueReservee, vitrineDe, NIVEAU_MAX, passDe,
+  venteAncienPassLe, anciensPassEnVente, estTardif, voieSelonAchat,
 } from '../src/shared/pass.js';
-import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES } from '../src/shared/boutique.js';
+import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, articleCommande, idAncienPass }
+  from '../src/shared/boutique.js';
 import { planifier, saisonDuJour } from './pass-reprise.mjs';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
@@ -77,6 +83,42 @@ check('40 000 écharpes par défaut, réglable', reglage('pass.prix_echarpes') =
 check('les plafonds gratuits du classement ont disparu',
   ['abo.duels_classes_jour', 'abo.virages_classes_jour', 'abo.taille_classe_libre', 'abo.clubs_en_plus']
     .every((k) => !PAR_CLE.has(k)));
+
+titre('Les anciens PASS : les règles');
+check('fin le 28 février : en vente le 1er avril', venteAncienPassLe('2027-02-28') === '2027-04-01');
+check('fin le 30 novembre : en vente le 1er janvier', venteAncienPassLe('2026-11-30') === '2027-01-01');
+check('fin le 31 décembre : en vente le 1er février', venteAncienPassLe('2026-12-31') === '2027-02-01');
+check('sans date de fin : jamais', venteAncienPassLe(null) === null && venteAncienPassLe('') === null);
+{
+  const S = [
+    { numero: 0, fin: '2026-11-30', lancee: true },
+    { numero: 1, fin: '2027-02-28', lancee: true },
+    { numero: 2, fin: '2027-05-31', lancee: true },
+    { numero: 3, fin: '2027-08-31', lancee: false },
+  ];
+  const ids = (l) => JSON.stringify(l.map((x) => x.numero));
+  check('le 31 mars : rien encore', ids(anciensPassEnVente(S, '2027-03-31')) === '[]');
+  check('le 1er avril : le PASS 1, jamais la BASE', ids(anciensPassEnVente(S, '2027-04-01')) === '[1]');
+  check('le 1er juillet : les PASS 1 et 2', ids(anciensPassEnVente(S, '2027-07-01')) === '[1,2]');
+  check('déjà à lui : pas proposé', ids(anciensPassEnVente(S, '2027-07-01', [1])) === '[2]');
+  check('une saison pas lancée : jamais', ids(anciensPassEnVente(S, '2030-01-01')) === '[1,2]');
+}
+check('un achat tardif se lit sur la source', estTardif('stripe-tard') && estTardif('echarpes-tard')
+  && !estTardif('stripe') && !estTardif('offert') && !estTardif(null));
+{
+  const t = voieSelonAchat(1, 6, { tardif: true });
+  check('acheteur tardif : niveau 1, sans cadre ni or, pas original', t.niveau === 1 && t.cadre === null
+    && t.or === false && t.original === false && t.tardif === true);
+  const o = voieSelonAchat(1, 6);
+  check('joueur de la saison : son niveau, original', o.niveau === 6 && o.or === true && o.original === true);
+  const a = articleCommande(idAncienPass(1));
+  check('l’article d’un ancien PASS : même prix, saison nommée, tardif', a?.prix === article?.prix
+    && a?.livraison?.type === 'pass' && a?.livraison?.saison === 1 && a?.livraison?.tardif === true
+    && a?.livraison?.packs === article?.livraison?.packs);
+  check('un identifiant inventé ne donne rien', articleCommande('pass-saison@x') === null
+    && articleCommande('pass-saison@0') === null && articleCommande('autre@1') === null);
+  check('le PASS courant reste l’article du catalogue', articleCommande('pass-saison') === article);
+}
 
 titre('La reprise des anciens abonnements');
 {
@@ -249,6 +291,66 @@ titre('La tenue du PASS, hors des boosters et de l’étal');
   check('le PASS 1 ne rend plus actif en saison 2', (await abonnement.estAbonne(A)) === false);
   check('mais la tenue reste portée, pour toujours', (await abonnement.ageTenuePass(A, 'prehistorique')) >= 1);
   check('et le club de plus aussi', (await abonnement.clubsEnPlus(A)) === 1);
+}
+
+titre('Les anciens PASS : en boutique');
+{
+  const C = 'bbbb0000-0000-0000-0000-000000000003';
+  await pool.query("INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')",
+    [C, 'p2@ex.fr', 'Pass2']);
+  await pool.query('INSERT INTO user_wallet (user_id,scarves,packs) VALUES (?,90000,0)', [C]);
+  const postJ = async (p, corps) => {
+    const r = await fetch(base + p, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corps) });
+    return { s: r.status, j: await r.json() };
+  };
+  moi = C;
+  /* La saison 1 a fini il y a dix jours : son PASS n'est pas encore en vente. */
+  check('dix jours après la fin : pas encore en vente', (await abonnement.anciensEnVente(C)).length === 0
+    && (await get('/api/abonnement')).anciensPass?.length === 0);
+  const r0 = await postJ('/api/abonnement/pass/echarpes', { saison: 1 });
+  check('l’acheter quand même : refusé, rien ne bouge', r0.j.error === 'pass.error.pas_en_vente'
+    && Number((await bourse(C)).scarves) === 90000);
+
+  await pool.query(`UPDATE saisons SET fin_le = CURDATE() - INTERVAL 100 DAY WHERE numero = 1`);
+  await chargerSaisons(pool);
+  const e = await get('/api/abonnement');
+  check('cent jours après : le PASS 1 est en vente', JSON.stringify(e.anciensPass?.map((p) => p.numero)) === '[1]'
+    && e.anciensPass[0].tenue === 'prehistorique' || console.log('       ', e.anciensPass));
+  moi = A;
+  check('qui l’a déjà ne le voit pas', (await get('/api/abonnement')).anciensPass?.length === 0);
+  moi = C;
+  const r = await postJ('/api/abonnement/pass/echarpes', { saison: 1 });
+  const b = await bourse(C);
+  check('en écharpes, au même prix : le PASS 1 et ses 3 boosters', r.s === 200
+    && JSON.stringify(r.j.saisons) === '[1]' && Number(b.scarves) === 50000 && Number(b.packs) === 3
+    || console.log('       ', r, b));
+  const [[ligne]] = await pool.query('SELECT source FROM user_pass WHERE user_id = ? AND saison = 1', [C]);
+  check('la ligne est marquée tardive', ligne?.source === 'echarpes-tard');
+  check('une seconde fois : déjà à lui', (await postJ('/api/abonnement/pass/echarpes', { saison: 1 })).j.error
+    === 'pass.error.deja');
+  const v = (await abonnement.voies(C))[0];
+  check('sa voie : niveau 1, tenue au 1er âge, sans cadre ni or, pas d’édition originale',
+    v?.niveau === 1 && v?.ageTenue === 1 && v?.cadre === null && v?.or === false
+    && v?.original === false && v?.tardif === true || console.log('       ', v));
+  check('ni club ni KOP en plus', (await abonnement.clubsEnPlus(C)) === 0 && (await abonnement.kopsAutorises(C)) === 0);
+  check('ni badge', (await abonnement.badgeDe(C)) === null && !(await abonnement.badgesDe([C])).has(C));
+  check('il n’ouvre pas le rythme de la saison', (await abonnement.estAbonne(C)) === false);
+  check('la tenue se porte au 1er âge', (await abonnement.ageTenuePass(C, 'prehistorique')) === 1);
+  check('ses autres âges tombent dans ses boosters',
+    (await abonnement.tenuesAuxBoosters(C)).get('prehistorique') === 1);
+
+  const vA = (await abonnement.voies(A))[0];
+  check('le joueur de la saison : édition originale, voie close', vA?.original === true && vA?.close === true);
+  await pool.query(`UPDATE recompenses SET tampons = ? WHERE user_id = ? AND cle = 'essai-1'`,
+    [vA.seuils[0], A]);
+  const vA2 = (await abonnement.voies(A))[0];
+  check('voie pas finie : il garde ses âges, le 3e tombe dans ses boosters', vA2?.ageTenue === 2
+    && (await abonnement.tenuesAuxBoosters(A)).get('prehistorique') === 2 || console.log('       ', vA2));
+  moi = B;
+  check('la voie de la saison en cours n’est pas close',
+    (await abonnement.voies(B)).find((x) => x.saison === 2)?.close === false);
+  moi = A;
 }
 
 http.close();

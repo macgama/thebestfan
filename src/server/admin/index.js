@@ -1629,9 +1629,13 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     for (const v of ventes) {
       const ligne = parSaison.get(Number(v.saison))
         ?? parSaison.set(Number(v.saison), { saison: Number(v.saison), stripe: 0,
-          echarpes: 0, offert: 0, total: 0 }).get(Number(v.saison));
+          echarpes: 0, offert: 0, tard: 0, total: 0 }).get(Number(v.saison));
       const n = Number(v.n);
-      if (v.source in ligne) ligne[v.source] += n;
+      /* Un ancien PASS pris après sa saison (`stripe-tard`, `echarpes-tard`)
+         compte dans sa caisse **et** dans « après la saison ». */
+      const caisse = String(v.source ?? '').replace(/-tard$/, '');
+      if (caisse in ligne) ligne[caisse] += n;
+      if (String(v.source ?? '').endsWith('-tard')) ligne.tard += n;
       ligne.total += n;
     }
     const detenteurs = await q(
