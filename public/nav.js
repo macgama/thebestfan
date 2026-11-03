@@ -1799,7 +1799,7 @@
      dans ui.css, « Les rangées qui défilent de côté ». */
   if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
     const RANGEES = '.tbf-inventaire,.tbf-album-rail,.jours,.chips,.sb-rail,'
-      + '.tabs.tbf-onglets,.series,.fermees-rang,.cabine-qui';
+      + '.tabs.tbf-onglets,.series,.cabine-qui';
     const HAUTEUR_MOLETTE = 260;
 
     const deborde = (el) => {

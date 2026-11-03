@@ -9,6 +9,17 @@ stades.
 
 ---
 
+**L'écran des boosters : descriptif de série et carrousel de dix paquets**
+(branche `claude/project-thread-loywt5`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- Sous OUVRIR LE BOOSTER, un panneau décrit la série choisie (sa phrase et
+  deux lignes), dans les cinq langues ; la boîte « 13 séries attendent une
+  saison » est retirée.
+- Dix paquets en anneau qui tourne seul ; il s'arrête au moindre geste.
+
+---
+
 **Profil : l'emplacement de club fermé se voit avant le clic** (branche
 `claude/project-thread-0f5ilz`, 3 novembre 2026). Construction seule, pas de
 schéma. La plaque « 120 écharpes » ne se laisse plus toucher quand le niveau
