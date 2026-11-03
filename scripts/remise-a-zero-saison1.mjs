@@ -79,7 +79,7 @@ export const VIDER = [
   // boutique et abonnement (résiliés chez Stripe avant)
   'achats', 'abonnements', 'abonnement_departs', 'user_pass',
   // le quotidien, le carnet, les récompenses
-  'missions_jour', 'compteurs_jour', 'recompenses',
+  'missions_jour', 'compteurs_jour', 'recompenses', 'defis_semaine',
   // pronostics, mini-jeux, notifications
   'pronostics', 'jeux_jongles', 'jeux_tirs', 'jeux_parties', 'jeux_tifo', 'jeux_boss',
   'notif_appareils',

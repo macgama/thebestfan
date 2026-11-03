@@ -164,6 +164,7 @@ const EVO_COST = { 2:25, 3:90 };
  */
 const SETS = [
   { id:'IM', nom:'LE VIRAGE IMPOSSIBLE', ligne:'ceux qui ne devraient pas être là',
+    desc:'Ce qui vit sous les gradins, et ce qui n’aurait jamais dû trouver un billet. Des Fanzzy étranges, et drôles.',
     c1:'#8257DA', c2:'#12101C' },
 ];
 

@@ -46,14 +46,19 @@
 /** Les cinq séries, avec leurs couleurs. */
 export const SETS_NEUVES = [
   { id: 'VP', nom: 'LES VIP', ligne: 'ils ont la meilleure place et ils regardent leur téléphone',
+    desc: 'L’influenceur, le sponsor, la coupe de champagne : ils ont la meilleure place et ne regardent pas le match. Ils poussent mal, mais ils gênent bien.',
     c1: '#C9A227', c2: '#1C1810' },
   { id: 'GC', nom: 'LA GASTRONOMIE DE COMPTOIR', ligne: 'ce qu’on mange debout, et qu’on regrette',
+    desc: 'La merguez carbonisée, la frite molle, la bière renversée : ce qu’on mange debout à la mi-temps. On y mange mal, on tient quand même.',
     c1: '#E08A2C', c2: '#1E1610' },
   { id: 'GD', nom: 'LES GALÈRES DE DÉPLACEMENT', ligne: 'neuf cents kilomètres, et ça commence mal',
+    desc: 'Le minibus en panne, le dernier train, l’aire d’autoroute à 4 h : la route jusqu’au stade d’en face. On arrive fatigué, on reste jusqu’au bout.',
     c1: '#4A8FC0', c2: '#101821' },
   { id: 'MT', nom: 'LES PHÉNOMÈNES MÉTÉO', ligne: 'le onzième joueur, et il n’est d’aucun camp',
+    desc: 'La pluie horizontale, le brouillard de novembre, l’orage à la 80e : le ciel qui décide du match sans jouer. Une série instable, pour ceux qui aiment parier.',
     c1: '#7FB3B5', c2: '#121A1C' },
   { id: 'HC', nom: 'LES HÉROS DU CANAPÉ', ligne: 'ils n’y étaient pas, et ils savent mieux',
+    desc: 'Ceux qui regardent le match de chez eux et savent mieux que tout le monde. La série la plus défensive du jeu : on ne pousse pas depuis un canapé, on commente.',
     c1: '#9A6FD0', c2: '#181224' },
 ];
 

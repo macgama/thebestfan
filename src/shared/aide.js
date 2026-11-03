@@ -429,6 +429,18 @@ const RUBRIQUES = [
           + `${reglage('saison.tampons_difficile')} pour une difficile. Chaque palier `
           + 'du carnet rapporte des écharpes ou des boosters, et qui a bien rempli le '
           + 'sien reçoit des boosters au lancement de la saison suivante.'],
+      ['C’est quoi, les défis de la semaine ?',
+        () => 'Chaque lundi, trois défis tirés parmi ce que tu possèdes : jouer des duels '
+          + 'avec un Fanzzy d’une de tes séries, chanter au Grand Virage en portant une de '
+          + 'tes pièces, jouer des duels avec un Fanzzy dans une de tes tenues. Chacun '
+          + `rapporte ${reglage('defis.echarpes')} écharpes et ${reglage('defis.tampons')} tampons `
+          + 'du carnet. Un duel compte s’il a duré au moins une minute et que tu ne l’as pas '
+          + 'quitté ; une pièce compte si ton Fanzzy du Virage la porte dans ton deck. Un défi '
+          + 'fini se récupère jusqu’à la fin de la semaine suivante.'],
+      ['Et le défi du PASS ?',
+        'Les membres d’un PASS ont un quatrième défi : jouer des duels dans la tenue de '
+          + 'leur PASS. Il fait avancer la voie PASS (la tenue à ses âges, le cadre, le '
+          + 'badge), et rien d’autre : ni écharpes, ni tampons du carnet.'],
       ['Que me rapporte ma collection ?',
         () => `Tous les ${reglage('collection.cran')} objets différents gagnés, un `
           + `cran te rapporte ${reglage('collection.cran_echarpes')} écharpes, et de `

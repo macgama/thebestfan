@@ -17,6 +17,51 @@ script.
 
 ---
 
+**Les défis de la semaine** (branche `claude/project-thread-4e3rjc`,
+3 novembre 2026, demande de Gaël « Ok pour moi »). Construction, puis
+**`npm run schema:appliquer`** (une table neuve, `defis_semaine`, dans
+`sql/defis.sql`), puis redémarrage.
+
+- Chaque lundi, trois défis par joueur tirés parmi ce qu'il possède : 5 duels
+  avec un Fanzzy d'une de ses séries, 30 chants au Grand Virage en portant une
+  de ses pièces, 3 duels avec un Fanzzy dans une de ses tenues. 100 écharpes
+  et 2 tampons du carnet chacun (réglables dans RÉGLAGES, section du quotidien).
+- Les membres d'un PASS dont la saison est lancée ont un quatrième défi :
+  5 duels dans la tenue de leur PASS. Il ne donne que 10 points de la voie
+  PASS (réglable), jamais d'écharpes ni de tampons.
+- Ils s'affichent dans les missions (DU JOUR), sous les missions du jour.
+
+---
+
+**Cinq stades pour LES TERRACES (série AN)** (branche
+`claude/project-thread-coelne`, 3 novembre 2026, demande de Gaël). Construction
+seule, sans schéma : Le Crachin, La Terrace Debout, Le Lendemain de Noël, La Rue
+de Briques et La Dernière Terrace, avec leurs images. Ils naissent **fermés** :
+pour les ouvrir, /admin › PASS › BASE (ou un PASS), groupe LES TERRACES des
+stades.
+
+---
+
+**L'écran des boosters : descriptif de série et carrousel de dix paquets**
+(branche `claude/project-thread-loywt5`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- Sous OUVRIR LE BOOSTER, un panneau décrit la série choisie (sa phrase et
+  deux lignes), dans les cinq langues ; la boîte « 13 séries attendent une
+  saison » est retirée.
+- Dix paquets en anneau qui tourne seul ; il s'arrête au moindre geste.
+
+---
+
+**Profil : l'emplacement de club fermé se voit avant le clic** (branche
+`claude/project-thread-0f5ilz`, 3 novembre 2026). Construction seule, pas de
+schéma. La plaque « 120 écharpes » ne se laisse plus toucher quand le niveau
+n'ouvre pas encore l'emplacement : elle est éteinte, dit « NIVEAU 4 » (par
+exemple), et la ligne dit « Se débloque au niveau 4 ». Même chose quand il
+manque des écharpes (« Il te manque 40 écharpes »).
+
+---
+
 **Le premier booster se déchire comme les autres** (branche
 `claude/project-thread-i98y57`, 3 novembre 2026, demande de Gaël).
 Construction seule, sans schéma.

@@ -121,11 +121,13 @@ const requireAuth = (q, _s, n) => { q.user = { id: U }; n(); };
 const app = express();
 app.use((req, _res, next) => { req.user = { id: U }; next(); });
 app.use('/api/rank', createClassements({ pool, requireAuth }).router);
-app.use('/api/me', createOnboarding({ pool, requireAuth }).router);
 /* La progression est montée comme `server.js` la monte : sans elle, le
    chemin du niveau ne peut pas s'éprouver — il dirait « pas lisible », ce
-   qui est le bon comportement mais pas celui qu’on vient mesurer. */
-app.use('/api/niveau', createNiveau({ pool, requireAuth }).router);
+   qui est le bon comportement mais pas celui qu’on vient mesurer. Elle passe
+   aussi à l’onboarding, qui en tire le plafond des emplacements de club. */
+const niveau = createNiveau({ pool, requireAuth });
+app.use('/api/me', createOnboarding({ pool, requireAuth, niveau }).router);
+app.use('/api/niveau', niveau.router);
 app.get('/api/auth/me', (_q, s) => s.json({
   user: { id: U, pseudo: 'Parcoureur', email: 'parcours@ex.fr', verified: true },
 }));
@@ -541,6 +543,39 @@ check('aucune erreur de script sur le profil', erreurs.length === 0
     Boolean(vieille) && !/XP/.test(vieille.texte) && !/(^|\s)0 s\b/.test(vieille.sous ?? '')
     || (console.log('        elle dit :', JSON.stringify(vieille)), false));
 }
+
+/* ------------------------------------------ l'emplacement de club suivant
+
+   Gaël, 3 novembre 2026 : « 120 écharpes » se laissait toucher, puis
+   répondait « Emplacement impossible (slot_locked) ». Au niveau 4 avec deux
+   emplacements, le troisième s'achète : la plaque est vive. Avec trois, le
+   quatrième demande le niveau 9 : la plaque est éteinte, la ligne le dit, et
+   la toucher le redit au lieu d'appeler le serveur. */
+const lireSlot = () => page.evaluate(() => {
+  const b = document.getElementById('buyslot');
+  return b ? { eteinte: b.getAttribute('aria-disabled') === 'true',
+               plaque: b.textContent.replace(/\s+/g, ' ').trim(),
+               ligne: document.getElementById('ligneSlot').textContent.replace(/\s+/g, ' ').trim() }
+           : null;
+});
+let slot = await lireSlot();
+check(`au niveau 4, le troisième emplacement s’achète (${slot?.plaque})`,
+  slot && !slot.eteinte && /120 écharpes/.test(slot.plaque));
+
+await pool.query('UPDATE user_wallet SET follow_slots = 3 WHERE user_id = ?', [U]);
+await page.goto(`${base}/profil`, { waitUntil: 'networkidle0' });
+await jusqua(async () => page.evaluate(() => Boolean(document.getElementById('buyslot'))));
+slot = await lireSlot();
+check(`le quatrième est éteint et dit le niveau 9 (${slot?.ligne})`,
+  slot?.eteinte && slot.plaque === 'NIVEAU 9' && /Se débloque au niveau 9/.test(slot.ligne));
+let appels = 0;
+page.on('request', (r) => { if (r.url().endsWith('/api/me/slot')) appels++; });
+await page.click('#ligneSlot');
+await jusqua(async () => page.evaluate(() => Boolean(document.querySelector('.tbf-toast--erreur'))));
+const toast = await page.evaluate(() => document.querySelector('.tbf-toast--erreur')?.textContent ?? '');
+check(`le toucher redit pourquoi, sans appeler le serveur (${toast})`,
+  /niveau 9/.test(toast || '') && appels === 0);
+await pool.query('UPDATE user_wallet SET follow_slots = 2 WHERE user_id = ?', [U]);
 
 /* ===================================================== sur un ordinateur
 

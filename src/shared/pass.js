@@ -122,6 +122,17 @@ export function niveauVoie(paliersAtteints) {
   return Math.min(NIVEAU_MAX, 1 + n);
 }
 
+/**
+ * Le niveau de la voie d'après ce qui la fait monter : les tampons du carnet
+ * de la saison, et les **points de voie** des défis PASS (`shared/defis.js`,
+ * choix de Gaël du 3 novembre 2026). Les deux s'additionnent face aux seuils
+ * des paliers du carnet ; les points ne remplissent jamais le carnet lui-même.
+ */
+export function niveauVoieDe({ tampons = 0, points = 0, seuils = [] } = {}) {
+  const total = Math.max(0, Number(tampons) || 0) + Math.max(0, Number(points) || 0);
+  return niveauVoie((seuils ?? []).filter((t) => total >= Number(t)).length);
+}
+
 /** Jusqu'à quel âge la tenue de la saison se porte, à ce niveau. */
 export function ageTenue(niveau) {
   let age = 0;

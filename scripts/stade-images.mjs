@@ -26,7 +26,7 @@
  *
  * Usage :  node scripts/stade-images.mjs
  */
-import { readdir, mkdir, writeFile } from 'node:fs/promises';
+import { readdir, mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -191,6 +191,39 @@ export const INVITES = {
     + 'still in their factory rows, a perfect untouched pitch, brand-new '
     + 'floodlights burning harder and whiter than they need to, bare ground and '
     + 'construction access roads still visible all around the outside',
+
+  /* ------------------------------------------ les cinq de LES TERRACES
+
+     Des stades anglais **sans club** : ni écusson, ni couleurs d'équipe, ni
+     nom sur un toit. Les tribunes restent dans l'ombre et la pelouse verte,
+     comme pour les autres — la pluie se dit par les flaques et le reflet,
+     jamais par une pelouse grise. */
+  'an-crachin': 'an old English football ground at night in fine persistent '
+    + 'drizzle, the pitch still clearly green but glistening wet with small '
+    + 'puddles along the touchlines, fine rain streaks caught in the floodlight '
+    + 'beams, low dark roofs over both side stands dripping water',
+
+  'an-terrace': 'an old English football ground at night whose two side stands '
+    + 'are standing terraces — long steep steps of bare grey concrete with rows of '
+    + 'painted steel crush barriers running along them, no seats at all, the '
+    + 'crowd packed tight as dark texture between the barriers',
+
+  'an-lendemain': 'an English football ground on a frozen winter evening, white '
+    + 'frost on the stand roofs and along the edges of the pitch, the pitch '
+    + 'itself still bright green in the middle, strings of small warm lights '
+    + 'along the edge of each roof, plumes of breath and steam rising faintly '
+    + 'from the dark side stands',
+
+  'an-briques': 'a small English football ground squeezed into a dense '
+    + 'neighbourhood at night, rows of red-brick terraced houses with tiny '
+    + 'back gardens pressed right against the backs of both narrow side stands, '
+    + 'warm lit windows in the houses, chimneys and slate roofs all around',
+
+  'an-derniere': 'an old English football ground at night on its very last '
+    + 'match before demolition, one side stand an ornate old wooden and iron '
+    + 'grandstand with a criss-cross painted steel balcony front along its edge, '
+    + 'a yellow demolition crane parked beyond one end, temporary fencing around '
+    + 'the outside, the pitch green and lit',
 };
 
 export const inviteDe = (id) => (INVITES[id]
@@ -303,14 +336,21 @@ if (!existsSync(SOURCE)) {
 
 const sources = (await readdir(SOURCE)).filter((f) => /\.(png|jpe?g|webp)$/i.test(f));
 const connus = new Set(STADES.map((s) => s.id));
-const plans = {};
+/* Les plans déjà mesurés sont gardés : depuis l'allègement du dépôt, les
+   dessins sources ne sont plus tous dans git, et un stade sans source ne doit
+   pas perdre son plan. Seuls les stades présents dans art/stade sont remesurés. */
+const PLANS = path.join(CIBLE, 'plans.json');
+const plans = existsSync(PLANS) ? JSON.parse(await readFile(PLANS, 'utf8')) : {};
 const manquants = [];
 const douteux = [];
 let faits = 0;
 
 for (const s of STADES) {
   const src = sources.find((f) => f.replace(/\.[^.]+$/, '') === s.id);
-  if (!src) { manquants.push(s.id); continue; }
+  if (!src) {
+    if (!existsSync(path.join(CIBLE, `${s.id}.jpg`))) manquants.push(s.id);
+    continue;
+  }
   const entree = path.join(SOURCE, src);
 
   /* La mesure se fait sur une image réduite : le plan est le même et le

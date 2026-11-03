@@ -219,6 +219,7 @@ h2{margin:26px 2px 10px}
 /* L'achat d'un emplacement est une plaque d'or (acheter = or), compacte pour
    tenir dans sa ligne ; sous 440 px elle passe sous son libellé. */
 .ligne #buyslot{flex:none;padding:9px 14px;min-height:44px;font-size:13px}
+.ligne .slot-refus{display:block;margin-top:3px;font-size:12px;color:var(--craie);opacity:.88}
 /* L'emplacement libre se dit **en creux** par un trait tireté, et non par
    une ligne à 40 % d'opacité : le lien qu'elle porte y tombait à 0,22. */
 .ligne.libre{border-top-style:dashed}
@@ -1679,9 +1680,29 @@ function rendreClubs() {
       <div class="ligne libre"><span class="n">emplacement libre</span>
         <a class="v" href="/equipes">choisir un club</a></div>`).join('')
     + (etat.slots.total < etat.slots.max ? `
-      <div class="ligne"><span class="n">Emplacement supplémentaire</span>
-        <button class="tbf-plaque" data-ton="or" id="buyslot">
-          ${prix === null ? 'ACHETER' : `${prix} écharpes`}</button></div>` : '');
+      <div class="ligne" id="ligneSlot"><span class="n">Emplacement supplémentaire
+        ${refusSlot() ? `<small class="slot-refus">${esc(refusSlot())}</small>` : ''}</span>
+        <button class="tbf-plaque" data-ton="or" id="buyslot"
+          ${refusSlot() ? 'aria-disabled="true"' : ''}>
+          ${etat.slots.niveauRequis ? `NIVEAU ${etat.slots.niveauRequis}`
+            : prix === null ? 'ACHETER' : `${prix} écharpes`}</button></div>` : '');
+}
+
+/* **Pourquoi l'emplacement suivant ne s'achète pas encore**, ou `null`.
+   Gaël, 3 novembre 2026 : le bouton laissait cliquer, puis répondait
+   « Emplacement impossible (slot_locked) ». Le refus se lit maintenant avant
+   le clic : la plaque est éteinte, la ligne dit pourquoi, et toucher la ligne
+   le redit. Le serveur garde la même règle (`plafondDe`). */
+function refusSlot() {
+  const s = etat?.slots;
+  if (!s) return null;
+  if (s.niveauRequis) return `Se débloque au niveau ${s.niveauRequis}`;
+  if (s.plafond != null && s.total >= s.plafond) return 'Pas encore débloqué';
+  const prix = prixSlot();
+  if (prix !== null && typeof etat.scarves === 'number' && etat.scarves < prix) {
+    return `Il te manque ${prix - etat.scarves} écharpes`;
+  }
+  return null;
 }
 
 /**
@@ -1819,6 +1840,12 @@ $('clubs').addEventListener('click', async (e) => {
   }
   // `closest` : la plaque peut un jour porter une icône, et le clic tomberait
   // alors sur elle plutôt que sur le bouton.
+  /* La plaque éteinte laisse passer le toucher à sa ligne : on y redit
+     pourquoi, plutôt que de ne rien faire. */
+  if (e.target.closest('#ligneSlot') && refusSlot()) {
+    dire(refusSlot(), { erreur: true });
+    return;
+  }
   if (e.target.closest('#buyslot')) {
     try {
       const avant = etat.scarves;
@@ -1840,6 +1867,7 @@ $('clubs').addEventListener('click', async (e) => {
       dire(({
         'onboarding.error.not_enough_scarves': 'Pas assez d’écharpes',
         'onboarding.error.max_slots': 'Tu as déjà le maximum d’emplacements',
+        'onboarding.error.slot_locked': 'Pas encore débloqué : monte de niveau',
         'onboarding.error.server': 'Le serveur n’a pas pu répondre',
       })[err.code] ?? `Emplacement impossible (${err.code ?? 'sans code'})`, { erreur: true });
     }

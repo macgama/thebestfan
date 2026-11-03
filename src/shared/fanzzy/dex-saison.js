@@ -140,6 +140,7 @@ export const SET_SAISON = {
   id: 'RP',
   nom: 'LA REPRISE',
   ligne: 'la première journée, et rien n’a le même son qu’en mai',
+  desc: 'Le premier jour de la saison : la tribune se réveille, les voix sont rouillées, la bâche est encore pliée. Toutes les familles, pour bâtir son premier deck.',
   c1: '#C7563A',
   c2: '#1A1210',
 };
