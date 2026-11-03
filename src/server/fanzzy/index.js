@@ -1743,7 +1743,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    */
   router.get('/jouables', (_req, res) => {
     res.set('cache-control', 'public, max-age=60');
-    res.json({ ids: obtenables().map((f) => f.id) });
+    /* La saison annoncée voyage avec : la vitrine y lit le jour où le PASS
+       ouvre, pour son compte à rebours, sans charger `/dex`. */
+    const annoncee = saisonAnnoncee();
+    res.json({ ids: obtenables().map((f) => f.id),
+      ...(annoncee ? { prochaine: annoncee.contrat } : {}) });
   });
 
   /**

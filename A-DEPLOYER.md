@@ -13,6 +13,30 @@
 
 ---
 
+**La page d'accueil vivante, et le PASS « bientôt »** (branche
+`claude/project-thread-2zegrb`, 3 novembre 2026, demande de Gaël « plus vivante,
+gaming »). Construction seule, puis redémarrage (la route `/api/fanzzy/jouables`
+sert aussi la saison annoncée).
+
+- Sans compte : le nom du jeu tombe lettre par lettre, les promesses sautent,
+  « PRENDRE MA PLACE » tombe avec une onde et des étincelles, les visages se
+  distribuent comme des cartes ; puis toutes les 6 à 11 s une « vie » (éclat
+  d'or sur BEST, ola, visage qui saute, flashs, braises…). Un but en direct
+  allume la ligne du match avec « BUT ! ».
+- La bande du PASS porte BIENTÔT et un compte à rebours (J-28, puis les heures
+  le dernier jour) jusqu'au 1er décembre, ou jusqu'à la date annoncée.
+
+---
+
+**« Voir la vidéo » dans Comment jouer › Les Fanzzy** (branche
+`claude/project-thread-j0jy2q`, 3 novembre 2026). Construction seule, pas de
+schéma. Le bouton reste **caché tant que la vidéo n'est pas sur le serveur** :
+rien ne change à l'écran avant. La vidéo (`public/video/tuto-fanzzy-1.mp4`,
+puis une par langue `tuto-fanzzy-1-de.mp4`… avec la voix off) part avec les
+images : `npm run images:envoyer`, qui envoie désormais aussi `public/video`.
+
+---
+
 **L'équipement d'un championnat ne sort que de son booster** (branche
 `claude/project-thread-zlv4w0`, 3 novembre 2026, carte de Gaël « Seulement dans
 son booster »). Construction seule, pas de schéma, puis redémarrage.

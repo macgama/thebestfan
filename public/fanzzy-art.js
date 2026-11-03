@@ -734,6 +734,9 @@
    */
   const CLE_JOUABLES = 'tbf.jouables';
   let jouablesEnCours = null;
+  /* La saison annoncée, servie avec la liste (`prochaine`) : la vitrine y lit
+     le jour d'ouverture du PASS. `null` sans annonce. */
+  let annonce = null;
   const jouablesGardes = () => {
     try {
       const v = JSON.parse(localStorage.getItem(CLE_JOUABLES) ?? 'null');
@@ -744,6 +747,7 @@
     jouablesEnCours ??= fetch('/api/fanzzy/jouables', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
+        annonce = d?.prochaine ?? null;
         if (!Array.isArray(d?.ids)) return null;
         try { localStorage.setItem(CLE_JOUABLES, JSON.stringify(d.ids)); } catch { /* privé */ }
         return d.ids.filter((id) => ILLUSTRES.has(id));
@@ -756,6 +760,8 @@
   window.FZART = {
     dessinAvatar,
     jouables,
+    /** La saison annoncée (`{ numero, nom, ouvre, … }`), ou `null`. */
+    prochaine: () => jouables().then(() => annonce),
     IMG_EXT,
     IMG_EXT_ALPHA,
     secours,
