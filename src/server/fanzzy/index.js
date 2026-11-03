@@ -46,6 +46,7 @@ import { tenueDePass, passDeLaTenue, tenueReservee } from '../../shared/pass.js'
    seulement l'annonce. */
 import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
+import { poserLesDos } from './dos.js';
 import { verser, verserTout } from '../recompenses.js';
 import { criDuClub, gainPleinClub, lienEcrit, motifSelection } from '../../shared/fanzzy/clubs.js';
 import { tombeDans } from '../../shared/fanzzy/stuff-series.js';
@@ -1265,6 +1266,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const cle = cleDeCarte(c);
         if (cle) c.cle = cle;
       }
+      /* Le dos de chaque carte, celui de sa série ou le neutre (`dos.js`). */
+      poserLesDos(cards);
       resultat = { cards, scarvesGained: scarves, paye, series: progressionSeries(avant, had, cards) };
     } catch (e) {
       await conn.rollback().catch(() => {});
@@ -1740,7 +1743,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    */
   router.get('/jouables', (_req, res) => {
     res.set('cache-control', 'public, max-age=60');
-    res.json({ ids: obtenables().map((f) => f.id) });
+    /* La saison annoncée voyage avec : la vitrine y lit le jour où le PASS
+       ouvre, pour son compte à rebours, sans charger `/dex`. */
+    const annoncee = saisonAnnoncee();
+    res.json({ ids: obtenables().map((f) => f.id),
+      ...(annoncee ? { prochaine: annoncee.contrat } : {}) });
   });
 
   /**

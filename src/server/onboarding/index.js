@@ -30,6 +30,7 @@ function echarpesDeBienvenue() {
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 import { PALIERS } from '../../shared/niveau.js';
 import { assurerBourse } from '../bourse.js';
+import { poserLesDos } from '../fanzzy/dos.js';
 import { changementsDeLaSaison, devenirPrincipal, principauxDe } from '../football/principal.js';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -409,6 +410,10 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
         const f = parIdentifiant(c.id);
         return { ...c, nom: f?.nom ?? c.id, set: f?.set ?? null, rar: f?.rar ?? null };
       });
+
+      /* Le dos de chaque carte, celui de sa série ou le neutre : le paquet
+         de bienvenue mélange les séries et des cartes qui n'en ont aucune. */
+      poserLesDos(nommees);
 
       return { cartes: nommees, scarves, activeFanzzy: premier.id };
     } catch (e) {

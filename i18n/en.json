@@ -8515,5 +8515,8 @@
  "Lié à ton club, il pousse plus fort dans ses matchs.": "Tied to your club, it pushes harder in its matches.",
  "Tenues et expressions : l’allure change, jamais la force.": "Outfits and expressions: the look changes, never the strength.",
  "Ouvre sa fiche pour le faire évoluer.": "Open its card page to make it evolve.",
- "Touche sa carte pour le voir en grand.": "Tap its card to see it full screen."
+ "Touche sa carte pour le voir en grand.": "Tap its card to see it full screen.",
+ "Ouvre le <0>{0}</0>. Le jeu reste gratuit.": "Opens on <0>{0}</0>. The game stays free.",
+ "Le PASS de saison ouvre le {0}": "The season PASS opens on {0}",
+ "C’est ouvert ! Le jeu reste gratuit.": "It’s open! The game stays free."
 }
