@@ -1732,9 +1732,14 @@ function vueCarte(vue) {
 
   /* La scène : le halo de la rareté, les rayons pour l'épique et la
      légendaire seulement, les voisines en dos derrière — seulement celles qui
-     existent. Le dos est celui de la série de la carte. */
-  const code = o.k === 'fanzzy' ? BY_ID.get(o.id)?.set : o.pour ? BY_ID.get(o.pour)?.set : SETS?.[0]?.id;
-  const dos = window.FZART?.dos?.(code ?? 'RP');
+     existent. Le dos est celui de la série de la carte — celle du Fanzzy
+     pour une tenue ou un état, celle du préfixe pour une pièce, une action ou
+     un stade (`rp-gourde`, `a-rp-filet`) —, le dos neutre sinon. */
+  const prefixe = String(o.id ?? '').replace(/^a-/, '').split('-');
+  const code = o.k === 'fanzzy' ? BY_ID.get(o.id)?.set : o.pour ? BY_ID.get(o.pour)?.set
+    : prefixe.length > 1 && SETS_TOUTES?.some((s) => s.id === prefixe[0].toUpperCase())
+      ? prefixe[0].toUpperCase() : null;
+  const dos = window.FZART?.dos?.(code);
   const scene = `<div class="tbf-vitrine-scene" id="vitr-scene" data-rar="${rar}"${
     ['epique', 'legendaire'].includes(rar) && possede ? ' data-rayons' : ''}${dos ? ` style="--dos:url('${esc(dos)}')"` : ''}>
       ${vue.i > 0 ? '<span class="tbf-vitrine-dos" aria-hidden="true"></span>' : ''}
