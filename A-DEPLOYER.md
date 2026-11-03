@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Le premier booster se déchire comme les autres** (branche
+`claude/project-thread-i98y57`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- À l'inscription, le sachet de bienvenue reprend la déchirure du kiosque :
+  l'intérieur du sachet se creuse sous la bande, la bande revient si on lâche
+  trop tôt, le bruit de déchirure, et le dessin du paquet de sa série (LA
+  REPRISE) au lieu de l'ancien VIRAGE NORD.
+- Au kiosque, la bande arrachée montrait un haut agrandi, décalé du dessin :
+  réglé.
+
+---
+
 **Le calendrier des PASS : la BASE, puis un PASS par saison** (branche
 `claude/project-thread-d5k3ue`, 3 novembre 2026, carte de Gaël « Oui, BASE
 puis PASS 1 au 1.12 »). Avec le menu PASS ci-dessous, dans cet ordre, en SSH
