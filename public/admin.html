@@ -1630,7 +1630,7 @@ const VUES = {
       <td>${esc(x.rar ?? '—')}</td>
       <td>${x.famille === 'chant' ? '<span style="opacity:.45">—</span>'
         : `<select class="mini" data-serie="${esc(x.id)}" data-famille="${esc(x.famille)}"
-            title="Le menu PASS la range sous cette série">
+            title="${x.famille === 'stuff' ? 'Ne sort que des boosters de cette série ; aucune : de tous les boosters' : 'Le menu PASS la range sous cette série'}">
             <option value="">${prefixe(x.id) ? `${esc(prefixe(x.id))} (par son identifiant)` : 'aucune'}</option>
             ${(d.series ?? []).map((s) => `<option value="${esc(s.id)}"${x.serie === s.id ? ' selected' : ''}>${
               esc(s.id)} · ${esc(s.nom)}</option>`).join('')}</select>`}</td>
@@ -1650,7 +1650,12 @@ const VUES = {
           l'effacer. C'est le seul endroit d'où l'on referme ce qu'une saison a
           ouvert — le menu <b>PASS</b> ouvre (sa BASE ouvre et referme).
           La colonne <b>SÉRIE</b> range un contenu sous une série : le menu
-          <b>PASS</b> l'ouvre alors avec elle, d'un bouton « tout ».</p>
+          <b>PASS</b> l'ouvre alors avec elle, d'un bouton « tout ».
+          Pour une <b>pièce d'équipement</b>, elle dit aussi d'où elle sort :
+          rangée sous une série (par son identifiant, comme <b>an-</b> ou
+          <b>su-</b>, ou par ce menu), elle ne tombe <b>que dans les boosters de
+          cette série</b> ; sans série, elle tombe dans tous les boosters.
+          Les pièces d'un nouveau championnat s'ouvrent avec son PASS ou ici.</p>
       </div>
       ${(d.piecesDeClub ?? []).map((p) => {
         const manque = p.ecrites < p.attendues || p.dessinees < p.attendues || p.ouvertes < p.attendues;
