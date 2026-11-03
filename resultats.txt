@@ -1,0 +1,26 @@
+Modele : mattmdjaga/segformer_b2_clothes (CPU, torch 2.15.0+cpu)
+Temps total d'inference : 4.7 s pour 12 images (moyenne 0.39 s/image, chargement du modele non compte)
+
+Par image (temps | classes detectees, % de la silhouette) :
+fanzzy/RP4/e1/base/neutre.png : 0.45 s | Pants 39.6%, Upper-clothes 33.7%, Face 8.9%, Hat 3.5%, Right-arm 2.9%, Left-arm 2.8%, Left-shoe 2.2%, Right-shoe 2.2%
+fanzzy/RP4/e3/base/pousse.png : 0.38 s | Upper-clothes 32.1%, Pants 25.6%, Right-arm 8.6%, Face 8.3%, Left-arm 5.6%, Right-shoe 2.1%, Left-shoe 2.1%, Hair 1.3%, Right-leg 1.0%, Left-leg 0.9%
+fanzzy/RP5/e2/base/joie.png : 0.43 s | Upper-clothes 43.7%, Pants 26.8%, Face 4.0%, Scarf 3.9%, Hat 2.8%, Right-shoe 1.9%, Left-shoe 1.5%, Left-leg 1.0%, Right-arm 0.9%, Right-leg 0.7%, Left-arm 0.6%, Hair 0.4%
+fanzzy/RP6/e1/base/pousse.png : 0.38 s | Upper-clothes 57.4%, Pants 18.8%, Face 8.1%, Hat 3.9%, Left-arm 2.6%, Left-shoe 2.0%, Right-shoe 1.5%, Scarf 1.4%, Hair 1.1%, Right-arm 0.9%
+fanzzy/RP6/e3/base/neutre.png : 0.41 s | Upper-clothes 33.1%, Pants 22.6%, Face 3.7%, Hair 2.8%, Left-arm 1.6%, Left-shoe 1.2%, Right-shoe 1.2%, Right-arm 0.6%
+fanzzy/RP7/e2/base/neutre.png : 0.40 s | Upper-clothes 52.6%, Pants 28.2%, Scarf 2.9%, Hat 2.5%, Face 2.4%, Right-arm 1.5%, Left-arm 1.4%, Right-shoe 1.2%, Left-shoe 1.1%
+fanzzy/RP7/e3/base/joie.png : 0.40 s | Upper-clothes 50.2%, Pants 20.0%, Scarf 5.1%, Right-arm 3.9%, Left-arm 2.7%, Face 2.3%, Left-shoe 1.4%, Right-shoe 1.2%, Right-leg 0.8%
+fanzzy/RP8/e1/base/joie.png : 0.37 s | Upper-clothes 35.3%, Pants 28.7%, Face 7.9%, Right-arm 6.9%, Left-arm 5.7%, Right-shoe 3.2%, Left-shoe 3.0%, Hair 0.4%, Hat 0.3%
+fanzzy/RP8/e2/base/pousse.png : 0.35 s | Upper-clothes 23.6%, Pants 19.1%, Left-arm 6.7%, Hat 4.9%, Face 4.8%, Right-arm 4.3%, Left-shoe 2.7%, Right-shoe 1.8%
+fanzzy/RP20/e2/base/neutre.png : 0.36 s | Upper-clothes 40.1%, Face 17.2%, Pants 5.2%, Left-shoe 3.4%, Right-shoe 2.9%, Hat 2.5%, Hair 1.4%
+fanzzy/RP20/e3/base/joie.png : 0.37 s | Upper-clothes 31.4%, Hat 6.2%, Left-shoe 4.6%, Face 4.0%, Pants 3.8%, Dress 2.3%, Hair 1.5%, Right-shoe 1.2%, Left-arm 0.4%
+ultime/RP5-e2.34204833.webp : 0.40 s | Upper-clothes 8.6%, Pants 4.9%, Face 1.0%, Hat 0.8%, Left-arm 0.5%, Right-shoe 0.4%, Right-arm 0.3%, Left-shoe 0.3%
+
+Temps total du script (premier lancement, telechargement du modele ~110 Mo compris) : 28 s.
+
+AVIS FRANC
+- Bonnets / casquettes : tres bien trouves sur les Fanzzy "humains" (RP4 e1, RP5 e2, RP6 e1, RP7 e2, ultime RP5 e2). Couronne (RP7 e3) ignoree, ce qui est plutot bien.
+- Echarpes : bien trouvees quand c'est une vraie echarpe autour du cou (RP5 e2, RP7 e2, RP7 e3). Ratees ou partielles pour un bandana (RP4 e1 -> classe "haut", donc peint en noir), une longue echarpe pendante (RP6 e3), une echarpe tenue a la main (RP6 e1, coupee en deux classes) et sur l'Ultimate.
+- Haut / manteau : tres fiable (vestes, doudounes, manteaux, gilets). Mais la classe "haut" avale aussi : le t-shirt sous le gilet, la cape (RP7 e3), la combinaison entiere jusqu'a la taille (RP4 e1), l'armure. Les manches d'une autre couleur sont souvent classees "bras" et restent intactes (RP4 e1).
+- Debordements : peu sur la peau en general, mais quelques erreurs nettes : une oreille classee "chapeau" (RP8 e1 -> oreille jaune), la pancarte tenue au-dessus de la tete classee "chapeau" (RP8 e2), les Fanzzy robots/fantaisie (RP20 e2/e3) sont mal compris (le visage/casque melange avec haut et chapeau). Le halo lumineux autour de certains PNG (RP6 e3 rouge, RP7 e3 bleu) n'est pas touche, donc il garde l'ancienne couleur.
+- Noir pur x luminance = noir plat ; j'ai utilise un noir releve (38,38,40) pour garder un peu de volume. Le jaune garde bien l'ombrage.
+- Verdict : utilisable comme 1er jet automatique pour ~60-70 % des Fanzzy humains, mais pas en production sans relecture : il faudrait soit un masque corrige a la main / valide par Fanzzy (une fois par RP et par age, puis reutilise pour tous les etats), soit un modele plus fort (SAM 2 guide par points / boites) pour les cas difficiles. Rapide : ~0,4 s par image sur CPU.
