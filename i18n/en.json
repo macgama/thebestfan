@@ -8504,5 +8504,16 @@
  "Se débloque au niveau {0}": "Unlocks at level {0}",
  "Pas encore débloqué": "Not unlocked yet",
  "Il te manque {0} écharpes": "You need {0} more scarves",
- "Pas encore débloqué : monte de niveau": "Not unlocked yet: level up first"
+ "Pas encore débloqué : monte de niveau": "Not unlocked yet: level up first",
+ "Voir la vidéo": "Watch the video",
+ "Un Fanzzy, c’est un <0>supporter</0>.": "A Fanzzy is a <0>fan</0>.",
+ "Pas d’attaque, pas de défense : il a un <0>cri</0>.": "No attack, no defence: it has a <0>chant</0>.",
+ "Son cri choisit les gestes que tu vas faire.": "Its chant picks the moves you’ll make.",
+ "Six familles, chacune avec ses gestes préférés.": "Six families, each with its favourite moves.",
+ "Il grandit : trois âges, payés en <0>écharpes</0>.": "It grows up: three ages, paid in <0>scarves</0>.",
+ "Les <0>légendaires</0> sortent entières d’un booster. Rare !": "<0>Legendaries</0> come whole out of a booster. Rare!",
+ "Lié à ton club, il pousse plus fort dans ses matchs.": "Tied to your club, it pushes harder in its matches.",
+ "Tenues et expressions : l’allure change, jamais la force.": "Outfits and expressions: the look changes, never the strength.",
+ "Ouvre sa fiche pour le faire évoluer.": "Open its card page to make it evolve.",
+ "Touche sa carte pour le voir en grand.": "Tap its card to see it full screen."
 }

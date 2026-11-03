@@ -18,6 +18,7 @@ import { SERIES_DE_CLUBS, clubDe, pleinClub, facteurPleinClub, gainPleinClub,
 import { apportsDe } from '../src/shared/apports.js';
 import { INVITES_CLUBS, FOND_MAGENTA } from './stuff-clubs-invites.mjs';
 import { poserReglages, PAR_CLE } from '../src/shared/reglages.js';
+import { serieDeLaPiece, tombeDans } from '../src/shared/fanzzy/stuff-series.js';
 
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
@@ -138,6 +139,31 @@ check('le réglage existe, 15 % par défaut', PAR_CLE.get('stuff.club_gain')?.de
   const ap = apportsDe({ club: { ...plein.lien, pleinClub: 2 } });
   check('le panneau nomme le PLEIN CLUB, sans la clé de comptage',
     ap[0].nom === 'PLEIN CLUB' && !('pleinClub' in ap[0].mods));
+}
+
+console.log('\nLes pièces d’un championnat ne sortent que de son booster (Gaël, 2 novembre 2026)');
+{
+  for (const [serie, clubs] of Object.entries(SERIES_DE_CLUBS)) {
+    const ids = new Set(clubs.filter((c) => c != null).map(Number));
+    const pieces = STUFF.filter((s) => ids.has(Number(s.club)));
+    const ailleurs = pieces.filter((s) => serieDeLaPiece(s) !== serie).map((s) => s.id);
+    check(`${serie} : ses ${pieces.length} pièces de club sont rangées sous ${serie}`
+      + (ailleurs.length ? ` (pas : ${ailleurs.join(', ')})` : ''), ailleurs.length === 0);
+  }
+  const an = STUFF_BY_ID.get('an-guitare');
+  check('une pièce AN sort d’un booster AN', tombeDans(an, 'AN'));
+  check('mais pas d’un booster SU ni TR', !tombeDans(an, 'SU') && !tombeDans(an, 'TR'));
+  check('une pièce commune sort de tous les boosters',
+    ['AN', 'SU', 'TR', 'RP'].every((x) => tombeDans(STUFF_BY_ID.get('jumelles'), x)));
+  check('une pièce de skin (hw-, ph-, ap-) aussi',
+    ['hw-bougie', 'ph-os', 'ap-bidon'].every((id) => serieDeLaPiece(STUFF_BY_ID.get(id)) === null));
+  check('une pièce de série (rp-) ne sort que de la sienne',
+    tombeDans(STUFF_BY_ID.get('rp-gourde'), 'RP') && !tombeDans(STUFF_BY_ID.get('rp-gourde'), 'AN'));
+  check('la série posée dans l’admin l’emporte sur le préfixe',
+    tombeDans({ ...STUFF_BY_ID.get('jumelles'), serie: 'SU' }, 'SU')
+    && !tombeDans({ ...STUFF_BY_ID.get('jumelles'), serie: 'SU' }, 'AN')
+    && tombeDans({ ...an, serie: 'RP' }, 'RP') && !tombeDans({ ...an, serie: 'RP' }, 'AN'));
+  check('une série inconnue ne ferme rien', serieDeLaPiece({ id: 'zz-truc' }) === null);
 }
 
 console.log(failures ? `\n${failures} échec(s).\n` : '\nTout est vert.\n');
