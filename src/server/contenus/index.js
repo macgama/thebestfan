@@ -57,6 +57,7 @@ import { ACTIONS } from '../../shared/duel/actions.js';
 import { STUFF } from '../../shared/fanzzy/inventaire.js';
 import { STADES, stadeDeLaRencontre } from '../../shared/stades.js';
 import { MINI_JEUX } from '../../shared/mini-jeux.js';
+import { LISTE_CHANTS, ORDRE } from '../../shared/duel/chants.js';
 
 /** Les familles, et ce que le code en dit. Les mini-jeux sont arrivés le
     2 novembre 2026 avec le menu PASS : la BASE et chaque PASS les ouvrent
@@ -66,7 +67,25 @@ export const FAMILLES = {
   stuff: { source: STUFF, nom: 'pièces d’équipement' },
   stade: { source: STADES, nom: 'stades' },
   jeu: { source: MINI_JEUX, nom: 'mini-jeux' },
+  /* Les chants du DUEL et du VIRAGE, dessins compris (demande de Gaël du
+     3 novembre 2026) : un chant fermé n'est plus offert. */
+  chant: { source: LISTE_CHANTS, nom: 'chants du duel et du virage' },
 };
+
+/** Au moins tant de chants restent ouverts : le DUEL et le VIRAGE en offrent cinq. */
+export const CHANTS_MIN = 5;
+
+/**
+ * **L'ordre des chants ouverts**, celui où le DUEL et le VIRAGE prennent leurs
+ * cinq chants offerts : `ORDRE` (`shared/duel/chants.js`), sans les chants
+ * fermés, dans le même ordre. Moins de cinq ouverts : l'ordre entier, pour ne
+ * jamais offrir un chant deux fois (l'administration le refuse de toute façon).
+ */
+export function ordreDesChants() {
+  const o = ouverts('chant');
+  const l = ORDRE.filter((id) => o.has(id));
+  return l.length >= CHANTS_MIN ? l : ORDRE;
+}
 
 /* Ce qui vit en colonnes ; tout le reste part dans `donnees`. */
 const COLONNES = new Set(['id', 'nom', 'rar', 'texte', 'publie']);
@@ -204,7 +223,30 @@ export function createContenus({ pool } = {}) {
     return r.affectedRows ?? 0;
   }
 
-  return { charger, semer, publier };
+  /**
+   * **La série d'un contenu**, posée depuis l'administration (demande de Gaël
+   * du 3 novembre 2026 : ranger lui-même un stade, une carte d'action ou un
+   * mini-jeu sous une série, pour l'ouvrir avec elle dans un PASS).
+   *
+   * Elle vit dans `donnees.serie`, la même clé qu'une fiche du code peut
+   * écrire : aucune colonne neuve, et le semis (`INSERT IGNORE`) ne l'écrase
+   * jamais. `serie` vide ou nulle la retire.
+   */
+  async function lierSerie(famille, id, serie) {
+    const code = serie ? String(serie) : null;
+    const [r] = code
+      ? await pool.execute(
+        `UPDATE contenus SET donnees = JSON_SET(COALESCE(donnees, JSON_OBJECT()), '$.serie', ?)
+         WHERE famille = ? AND id = ?`, [code, famille, String(id)])
+      : await pool.execute(
+        `UPDATE contenus SET donnees = JSON_REMOVE(COALESCE(donnees, JSON_OBJECT()), '$.serie')
+         WHERE famille = ? AND id = ?`, [famille, String(id)]);
+    const o = memoire?.[famille]?.find((x) => x.id === String(id));
+    if (o) { if (code) o.serie = code; else delete o.serie; }
+    return r.affectedRows ?? 0;
+  }
+
+  return { charger, semer, publier, lierSerie };
 }
 
 /* ------------------------------------------------------------- la lecture

@@ -974,17 +974,39 @@ check('le menu PASS ouvre sa BASE', await jusqua(async () => await page.evaluate
   const vu = await page.evaluate(() => ({
     familles: [...document.querySelectorAll('#main .sai-lt')].map((x) => x.textContent.trim()),
     jeux: document.querySelectorAll('#b-jeux input').length,
+    chants: document.querySelectorAll('#b-chants input').length,
+    groupesStuff: [...document.querySelectorAll('#b-stuff .sai-g')]
+      .map((g) => g.firstChild.textContent.trim().toUpperCase()),
     echarpes: Boolean(document.querySelector('[data-champ="bienvenue.echarpes_min"]')),
   }));
   check('elle montre les six familles, mini-jeux compris',
-    ['SÉRIES', 'SKINS', 'ÉQUIPEMENT', 'CARTES D’ACTION', 'STADES', 'MINI-JEUX']
-      .every((t) => vu.familles.includes(t)) && vu.jeux === 6
+    ['SÉRIES', 'SKINS', 'ÉQUIPEMENT', 'CARTES D’ACTION', 'STADES', 'MINI-JEUX',
+      'CHANTS DU DUEL ET DU VIRAGE'].every((t) => vu.familles.includes(t)) && vu.jeux === 6
+      && vu.chants >= 20 && vu.groupesStuff.includes('LA REPRISE')
     || (console.log('        vu :', JSON.stringify(vu)), false));
   check('et les écharpes du paquet s’y règlent', vu.echarpes);
   const { tmpdir } = await import('node:os');
   await page.screenshot({ path: path.join(tmpdir(), 'admin-base.png'), fullPage: true });
   console.log(`              ${path.join(tmpdir(), 'admin-base.png')}`);
 
+  /* Le bouton « tout » d'un groupe le coche ou le décoche entier. */
+  const tout = await page.evaluate(() => {
+    const g = [...document.querySelectorAll('#b-stuff .sai-gr')]
+      .find((x) => x.querySelector('[data-tout]') && x.querySelectorAll('input').length > 1);
+    if (!g) return null;
+    const lire = () => [...g.querySelectorAll('input')].map((i) => i.checked);
+    const avant = lire();
+    g.querySelector('[data-tout]').click();
+    const un = lire();
+    g.querySelector('[data-tout]').click();
+    const deux = lire();
+    /* Remis comme avant : l'enregistrement qui suit ne doit fermer que le boss. */
+    [...g.querySelectorAll('input')].forEach((i, k) => { i.checked = avant[k]; });
+    return { un, deux };
+  });
+  check('le bouton « tout » coche puis décoche un groupe entier', tout
+    && (tout.un.every(Boolean) || tout.un.every((x) => !x))
+    && tout.deux.every((x) => x !== tout.un[0]) || (console.log('        vu :', JSON.stringify(tout)), false));
   await page.evaluate(() => {
     const c = document.querySelector('#b-jeux input[value="boss"]');
     c.checked = false;
@@ -1056,6 +1078,24 @@ check('l’onglet des contenus se monte', await jusqua(async () =>
   /* On remet le jeu comme on l'a trouvé : les suites partagent une base. */
   await page.evaluate(() => document.querySelector('#c-corps [data-basculer]')?.click());
   await dodo(700);
+
+  /* **Ranger un stade sous une série** (Gaël, 3 novembre 2026) : le choix de
+     la colonne SÉRIE s'écrit en base, sans bouton à presser. */
+  await page.select('#c-etat', '');
+  await dodo(350);
+  const lieu = await page.evaluate(() => {
+    const sel = document.querySelector('#c-corps select[data-serie]');
+    sel.value = 'RP';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    return sel.dataset.serie;
+  });
+  check('la colonne SÉRIE range un stade sous une série', await jusqua(async () => {
+    const [r] = await pool.query(
+      `SELECT JSON_UNQUOTE(JSON_EXTRACT(donnees, '$.serie')) AS s FROM contenus
+       WHERE famille = 'stade' AND id = ?`, [lieu]);
+    return r[0]?.s === 'RP';
+  }));
+  await contenus.lierSerie('stade', lieu, null);
 }
 
 /* ==================================================== les filtres du catalogue

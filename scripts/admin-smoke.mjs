@@ -1408,35 +1408,75 @@ console.log('\n— la saison datée —');
 console.log('\n— la BASE du menu PASS —');
 {
   const montre = (l, x) => (console.log(`        ${l} :`, JSON.stringify(x)?.slice(0, 220)), false);
-  const { ouverts: ouvertsIci } = await import('../src/server/contenus/index.js');
+  const { ouverts: ouvertsIci, ordreDesChants } = await import('../src/server/contenus/index.js');
   let d = (await call('/api/admin/saisons')).json;
   check('la BASE est la saison du plus petit numéro',
     d.base && d.base.numero === Math.min(...d.saisons.map((x) => x.numero))
     || montre('base', d.base));
-  check('les six familles ont leurs choix, mini-jeux compris',
-    ['series', 'tenues', 'stuff', 'actions', 'stades', 'jeux'].every((f) => Array.isArray(d.choix[f]))
+  check('les sept familles ont leurs choix, mini-jeux et chants compris',
+    ['series', 'tenues', 'stuff', 'actions', 'stades', 'jeux', 'chants']
+      .every((f) => Array.isArray(d.choix[f])) && d.choix.chants.length >= 20
     && d.choix.jeux.length === 6 && Array.isArray(d.enJeu.jeux) || montre('choix', Object.keys(d.choix)));
   check('chaque saison dit son PASS', Array.isArray(d.pass) && d.pass.length === d.saisons.length
     || montre('pass', d.pass));
   check('les séries de championnat sont nommées', Array.isArray(d.seriesDeClubs)
     && d.seriesDeClubs.length > 0 || montre('seriesDeClubs', d.seriesDeClubs));
 
-  const corps = Object.fromEntries(['series', 'tenues', 'stuff', 'actions', 'stades', 'jeux']
+  /* L'équipement d'une série porte sa série ; celui d'un skin, son skin. */
+  const rp = d.choix.stuff.find((x) => x.id.startsWith('rp-'));
+  const hw = d.choix.stuff.find((x) => x.id.startsWith('hw-'));
+  check('l’équipement d’une série est rangé sous elle', rp?.groupe === 'serie:RP'
+    && hw?.groupe === 'skin:halloween' && !d.choix.stuff.find((x) => x.id === 'jumelles').groupe
+    || montre('groupes', [rp, hw]));
+
+  /* Gaël range lui-même un stade et un mini-jeu sous une série (CATALOGUE ›
+     CONTENUS) : le menu PASS les range alors sous elle. */
+  const { STADES: lieux } = await import('../src/shared/stades.js');
+  const unLieu = lieux.find((x) => !x.id.includes('-')).id;
+  let rs = await call('/api/admin/contenus/serie', { method: 'POST',
+    body: { famille: 'stade', id: unLieu, serie: 'RP' } });
+  rs = await call('/api/admin/contenus/serie', { method: 'POST',
+    body: { famille: 'jeu', id: 'tifo', serie: 'RP' } });
+  const apres = (await call('/api/admin/saisons')).json;
+  check('un stade et un mini-jeu rangés sous une série depuis l’admin',
+    apres.choix.stades.find((x) => x.id === unLieu)?.groupe === 'serie:RP'
+    && apres.choix.jeux.find((x) => x.id === 'tifo')?.groupe === 'serie:RP'
+    || montre('rangés', rs.json));
+  const refus = await call('/api/admin/contenus/serie', { method: 'POST',
+    body: { famille: 'stade', id: unLieu, serie: 'ZZ' } });
+  const refusChant = await call('/api/admin/contenus/serie', { method: 'POST',
+    body: { famille: 'chant', id: 'reprise', serie: 'RP' } });
+  check('une série inconnue ou un chant sont refusés', refus.status === 400 && refusChant.status === 400
+    || montre('refus', [refus.status, refusChant.status]));
+  await call('/api/admin/contenus/serie', { method: 'POST', body: { famille: 'stade', id: unLieu, serie: '' } });
+  await call('/api/admin/contenus/serie', { method: 'POST', body: { famille: 'jeu', id: 'tifo', serie: '' } });
+  check('et s’en détachent', !(await call('/api/admin/saisons')).json.choix.stades
+    .find((x) => x.id === unLieu)?.groupe);
+
+  const corps = Object.fromEntries(['series', 'tenues', 'stuff', 'actions', 'stades', 'jeux', 'chants']
     .map((f) => [f, [...d.enJeu[f]]]));
   const sansTifo = { ...corps, jeux: corps.jeux.filter((x) => x !== 'tifo'),
-    stades: corps.stades.slice(1) };
+    stades: corps.stades.slice(1), chants: corps.chants.filter((x) => x !== 'reprise') };
   const retire = corps.stades[0];
   let r = await call('/api/admin/base', { method: 'PUT', body: sansTifo });
   check('la BASE s’enregistre', r.status === 200 || montre('base', r.json));
   check('décocher un mini-jeu le ferme pour tous', !ouvertsIci('jeu').has('tifo')
     && ouvertsIci('jeu').has('jongles') || montre('jeux', [...ouvertsIci('jeu')]));
   check('décocher un stade le ferme aussi', !ouvertsIci('stade').has(retire));
+  check('décocher un chant le retire des chants offerts au DUEL et au VIRAGE',
+    !ouvertsIci('chant').has('reprise') && !ordreDesChants().includes('reprise')
+    && ordreDesChants().length === corps.chants.length - 1);
   d = (await call('/api/admin/saisons')).json;
   check('la saison de la BASE garde ses listes', d.base.jeux.includes('jongles')
     && !d.base.jeux.includes('tifo') || montre('base', d.base));
 
   r = await call('/api/admin/base', { method: 'PUT', body: corps });
-  check('recocher rouvre', ouvertsIci('jeu').has('tifo') && ouvertsIci('stade').has(retire));
+  check('recocher rouvre', ouvertsIci('jeu').has('tifo') && ouvertsIci('stade').has(retire)
+    && ordreDesChants().includes('reprise'));
+
+  r = await call('/api/admin/base', { method: 'PUT', body: { ...corps, chants: corps.chants.slice(0, 3) } });
+  check('une BASE de moins de cinq chants est refusée', r.status === 400
+    && r.json.error === 'admin.error.base_peu_de_chants' || montre('refus', [r.status, r.json]));
 
   r = await call('/api/admin/base', { method: 'PUT', body: { ...corps, series: [] } });
   check('une BASE sans série est refusée', r.status === 400

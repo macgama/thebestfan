@@ -77,3 +77,7 @@ ALTER TABLE saisons ADD COLUMN IF NOT EXISTS stades JSON NULL;
 -- PASS ouvrent leurs mini-jeux comme l'équipement ou les stades. Sans cette
 -- colonne, une saison ne peut nommer aucun mini-jeu ; le jeu les garde ouverts.
 ALTER TABLE saisons ADD COLUMN IF NOT EXISTS jeux JSON NULL;
+
+-- Les chants du DUEL et du VIRAGE d'une saison (menu PASS, 3 novembre 2026) :
+-- un PASS peut ouvrir, pour tous et à sa date, de nouveaux chants.
+ALTER TABLE saisons ADD COLUMN IF NOT EXISTS chants JSON NULL;
