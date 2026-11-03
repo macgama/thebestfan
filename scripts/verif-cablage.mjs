@@ -637,6 +637,10 @@ check('server.js complète les dépendances de l’administration sans les écra
       ordre.push('frappe:fin');
       return frappe(b);
     },
+    /* server.js corrige d'abord le camp d'un but déjà frappé (PR des buts au
+       score du match) : sans cette fonction, chaque but écrivait une erreur au
+       journal et ce contrôle rougissait. Rien à corriger ici. */
+    corrigerBut: async () => 0,
   };
   /* Ce que la salle répond au but, et si elle existe : voir plus bas, « un
      but que la salle tait ». Par défaut, aucune salle et un but annoncé. */
