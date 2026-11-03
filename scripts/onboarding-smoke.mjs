@@ -137,6 +137,16 @@ check('deux Fanzzy différents',
     || (console.log('        séries :', siens.map((f) => `${f.id}/${f.set}`).join(' ')), false));
 }
 check('une pièce d\u2019équipement', cartes.filter((c) => c.type === 'stuff').length === 1);
+
+/* **Le dos de chaque carte** (Gaël, 3 novembre 2026) : le paquet de bienvenue
+   est un tirage au hasard, et chaque carte se retourne sur le dos de sa propre
+   série — un Fanzzy le sien, ce qui n'a aucune série le neutre (`null`). */
+check('chaque carte dit son dos', cartes.every((c) => 'dos' in c)
+  || (console.log('        sans dos :', cartes.filter((c) => !('dos' in c))), false));
+check('un Fanzzy a le dos de sa série',
+  cartes.filter((c) => c.type === 'fanzzy').every((c) => c.dos === BY_ID.get(c.id).set));
+check('des écharpes n’ont pas de série : le dos neutre',
+  cartes.filter((c) => c.type === 'scarves').every((c) => c.dos === null));
 const actions = cartes.filter((c) => c.type === 'action').map((c) => c.id);
 check(`cinq cartes d\u2019action (${actions.length})`, actions.length === 5);
 
@@ -441,13 +451,19 @@ check('l\u2019équipement a bien un revers',
     || (console.log('        raretés :', vu.raretes.join(' ')), false));
   check('et elle remplit la face, sans cadre par-dessus le sien', vu.pleine === true);
 
-  /* Le dos aussi : c'est l'image de la seconde d'avant, et elle doit être
-     celle de la série du sachet — pas le dégradé gris de tout le monde. */
+  /* Le dos aussi : c'est l'image de la seconde d'avant, et chaque carte a
+     celui de sa série, ou le neutre — pas le dégradé gris de tout le monde. */
   const dos = await page.evaluate(() => {
     const d = [...document.querySelectorAll('#s3 .face.back')];
     return { total: d.length, dessines: d.filter((x) => x.classList.contains('dessine')).length,
-             fond: d[0] ? getComputedStyle(d[0]).backgroundImage : '' };
+             fond: d[0] ? getComputedStyle(d[0]).backgroundImage : '',
+             fonds: d.map((x) => getComputedStyle(x).backgroundImage),
+             attendus: cartes.map((c) => c.dos ?? 'NEUTRE') };
   });
+  check(`chaque carte a son propre dos — ${dos.attendus.join(' ')}`,
+    dos.fonds.length === dos.attendus.length
+      && dos.fonds.every((f, i) => f.includes(`/img/dos/${dos.attendus[i]}.`))
+    || (console.log('        fonds :', dos.fonds), false));
   check('le dos porte le dessin de la série', dos.total > 0 && dos.dessines === dos.total
     || (console.log('        dessinés :', dos.dessines, 'sur', dos.total), false));
   check('et c’est un vrai fichier, pas le dégradé de repli',
