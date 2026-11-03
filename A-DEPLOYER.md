@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Profil : l'emplacement de club fermé se voit avant le clic** (branche
+`claude/project-thread-0f5ilz`, 3 novembre 2026). Construction seule, pas de
+schéma. La plaque « 120 écharpes » ne se laisse plus toucher quand le niveau
+n'ouvre pas encore l'emplacement : elle est éteinte, dit « NIVEAU 4 » (par
+exemple), et la ligne dit « Se débloque au niveau 4 ». Même chose quand il
+manque des écharpes (« Il te manque 40 écharpes »).
+
+---
+
 **Le premier booster se déchire comme les autres** (branche
 `claude/project-thread-i98y57`, 3 novembre 2026, demande de Gaël).
 Construction seule, sans schéma.
