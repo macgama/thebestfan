@@ -781,8 +781,13 @@
      * Le repli garde l'ancien fond : une série neuve dont le dos n'est pas
      * encore dessiné doit s'ouvrir quand même. C'est exactement le cas qui
      * arrive à chaque saison.
+     *
+     * **Sans série, le dos neutre** (demande de Gaël du 3 novembre 2026) :
+     * une poignée d'écharpes, une pièce ou une action communes ont leur dos à
+     * part, au blason du jeu, plutôt que celui d'une série qui n'est pas la
+     * leur. Il vient de `art/dos/NEUTRE.png` comme les autres, s'il y est.
      */
-    dos: (code) => (code ? `/img/dos/${String(code).toUpperCase()}${IMG_EXT}` : null),
+    dos: (code) => `/img/dos/${code ? String(code).toUpperCase() : 'NEUTRE'}${IMG_EXT}`,
     setTypes,
     seeded,
     ILLUSTRES,

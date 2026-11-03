@@ -13,6 +13,19 @@ Construction seule, sans schéma.
 
 ---
 
+**Le bon dos de carte aux boosters** (branche `claude/project-thread-xhkkac`,
+3 novembre 2026, demande de Gaël). Construction seule, sans schéma.
+
+- Chaque carte d'un booster et du paquet de bienvenue se retourne sur le dos
+  de **sa** série : un Fanzzy le sien, une tenue ou un état celui de son
+  Fanzzy, une pièce, une action ou un stade la série posée dans CATALOGUE ›
+  CONTENUS ou celle de son préfixe (`rp-`, `a-rp-`…).
+- Ce qui n'a aucune série (écharpes, pièces et actions communes) a un dos
+  neutre au blason du jeu : `public/img/dos/NEUTRE.*`. Un dessin plus soigné
+  posé dans `art/dos/NEUTRE.png` le remplace par `node scripts/dos-images.mjs`.
+
+---
+
 **La page d'accueil vivante, et le PASS « bientôt »** (branche
 `claude/project-thread-2zegrb`, 3 novembre 2026, demande de Gaël « plus vivante,
 gaming »). Construction seule, puis redémarrage (la route `/api/fanzzy/jouables`
