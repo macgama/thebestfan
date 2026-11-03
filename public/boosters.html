@@ -360,7 +360,11 @@
   clip-path:inset(0 0 0 calc(var(--p) * 100%));
   transform:rotate(calc(var(--p) * 5deg)) translateY(calc(var(--p) * -6px));
   transform-origin:100% 100%}
-.tearpack .lip > *{position:absolute;top:0;left:0;width:100%;height:666.7%}
+/* Le dessin de la bande fait cinq fois sa hauteur (cent divisé par les vingt
+   de `--bande`) : il recouvre exactement le haut du paquet. À 666,7 % — le
+   compte d'une bande de quinze —, il débordait d'un tiers et la bande montrait
+   un haut agrandi, décalé du dessin d'en dessous. */
+.tearpack .lip > *{position:absolute;top:0;left:0;width:100%;height:500%}
 
 /* La ligne dentelée : l'affordance. Elle dit où saisir avant qu'on ait lu la
    consigne, et elle s'efface à mesure que la déchirure la mange. */
@@ -1973,6 +1977,11 @@ const estNeuve = (c) => c?.new === true && c.type !== 'echarpes' && c.type !== '
    avait déjà se change en écharpes, une poignée d'écharpes est une carte à
    part, et le reste ne rapporte rien. */
 let rapportent = [];
+/* Le dos de chaque carte du paquet : le code de sa série, ou `null` pour le
+   dos neutre (`src/server/fanzzy/dos.js`). Rangé à côté de `pull`, rang pour
+   rang : `carteDuPaquet` rend l'objet partagé du catalogue, qu'on ne marque
+   pas. */
+let dosDesCartes = [];
 /* Et combien chacune, pour le sticker de prix de sa case d'album. La page le
    recompte avec le barème du catalogue (`SCARVES`) ; elle ne l'écrit que si
    son compte retombe exactement sur le total du serveur — un doublon dont on
@@ -1982,6 +1991,9 @@ let montantsSurs = false;
 /* Vrai entre l'ouverture d'un paquet et le versement de ses doublons au
    compteur — voir `crediterDoublons`, qui le consomme. */
 let doublonsAVerser = false;
+/* Le dos d'une carte reçue : celui que le serveur a dit, la série du sachet
+   pour un serveur plus ancien qui ne le dit pas encore. */
+const dosDeCarte = (c) => (c && 'dos' in c ? c.dos : (SETS[S.set] ?? {}).id ?? null);
 const rapporte = (c) => c?.type === 'echarpes' || c?.type === 'scarves'
   || ((c?.type === 'fanzzy' || c?.type === 'stuff' || c?.type === 'lieu') && c.new === false);
 function montantDe(c) {
@@ -2076,6 +2088,7 @@ async function openPack() {
      catalogue recopié. */
   pull = res.cards.map(carteDuPaquet);
   rapportent = res.cards.map(rapporte);
+  dosDesCartes = res.cards.map(dosDeCarte);
   montants = res.cards.map(montantDe);
   neuf = res.cards.map(estNeuve);
   doublonsAVerser = true;
@@ -2095,6 +2108,7 @@ async function openPack() {
   if (inconnues.length) {
     // Les listes vont ensemble : on retire les mêmes rangs de toutes.
     rapportent = rapportent.filter((_, i) => Boolean(pull[i]));
+    dosDesCartes = dosDesCartes.filter((_, i) => Boolean(pull[i]));
     montants = montants.filter((_, i) => Boolean(pull[i]));
     neuf = neuf.filter((_, i) => Boolean(pull[i]));
     pull = pull.filter(Boolean);
@@ -2186,12 +2200,13 @@ async function openPack() {
   paquet += 1;
   enCeremonie = false;
   const st = $('ostage'); st.innerHTML = '';
-  /* **Le dos, c'est celui du sachet — pas celui de la carte.** La nuance
-     compte : montrer la série de la carte qu'on tient renseignerait sur elle
-     avant de la retourner, et un booster n'a plus rien à révéler si son dos
-     l'a déjà dit. Le sachet, lui, on l'a choisi soi-même une seconde plus
-     tôt. */
-  const dosDuSachet = window.FZART?.dos?.((SETS[S.set] ?? {}).id);
+  /* **Chaque carte porte le dos de sa série** (demande de Gaël du 3 novembre
+     2026). Le dos du sachet était posé sur les cinq : une pièce commune, une
+     poignée d'écharpes ou la tenue d'un Fanzzy d'une autre série se
+     retournaient sur un dos qui n'était pas le leur. Ce qui n'appartient à
+     aucune série a son dos à part, le neutre. Le serveur dit lequel
+     (`dos`) ; sans lui, la série du sachet. */
+  const dosDe = (i) => window.FZART?.dos?.(dosDesCartes[i]);
   pull.forEach((f, i) => {
     const el = document.createElement('div');
     /* Face cachée, elle ne se lit pas : figée (`.fz-fige`, cartes.css)
@@ -2202,20 +2217,23 @@ async function openPack() {
     el.dataset.sorte = sorteDe(f);
     el.style.setProperty('--rc', `var(--r-${el.dataset.rar})`);
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
+    const dos = dosDe(i);
     el.innerHTML = `<div class="flip">
-      <div class="face back${dosDuSachet ? ' dessine' : ''}"${dosDuSachet
-        ? ` style="background-image:url('${dosDuSachet}')"` : ''}><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
+      <div class="face back${dos ? ' dessine' : ''}"${dos
+        ? ` style="background-image:url('${dos}')"` : ''}><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
       <div class="face front">${cardHTML(f)}</div></div>`;
     st.appendChild(el);
   });
   st.firstElementChild?.classList.add('kq-dessus');
-  /* Les cinq fentes : un dos de carte par carte à révéler — le même dos que
-     celui des cartes —, la première qui sort. */
+  /* Les cinq fentes : un dos de carte par carte à révéler — chacune le dos
+     de la carte qu'elle annonce —, la première qui sort. */
   const fentes = $('oFentes');
-  if (dosDuSachet) fentes.style.setProperty('--dos', `url("${dosDuSachet}")`);
-  else fentes.style.removeProperty('--dos');
-  fentes.innerHTML = pull.map((_, i) =>
-    `<span class="tbf-fente${i === 0 ? ' tbf-fente--sort' : ''}"></span>`).join('');
+  fentes.style.removeProperty('--dos');
+  fentes.innerHTML = pull.map((_, i) => {
+    const dos = dosDe(i);
+    return `<span class="tbf-fente${i === 0 ? ' tbf-fente--sort' : ''}"${
+      dos ? ` style="--dos:url('${dos}')"` : ''}></span>`;
+  }).join('');
   fentes.setAttribute('aria-label', `Carte 1 sur ${pull.length}`);
   $('summary').classList.remove('on');
   $('summary').innerHTML = '';

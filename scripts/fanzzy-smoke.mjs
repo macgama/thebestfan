@@ -18,7 +18,8 @@ import * as moduleSaisons from '../src/server/fanzzy/saisons.js';
 import { verser } from '../src/server/recompenses.js';
 import { reglage, poserReglages } from '../src/shared/reglages.js';
 import { baseDeTest, OPTIONS_BASE, figerHorloge, enParallele } from './base-de-test.mjs';
-import { STUFF } from '../src/shared/fanzzy/inventaire.js';
+import { STUFF, STUFF_BY_ID } from '../src/shared/fanzzy/inventaire.js';
+import { tombeDans } from '../src/shared/fanzzy/stuff-series.js';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -171,10 +172,15 @@ let maxFanzzy = 0;
 let echarpesTombees = 0;
 let etatsTombes = 0;
 let etatsDoublesDansUnPaquet = 0;
+const piecesHorsSerie = [];
 const ouvertures = 40;
 for (let i = 0; i < ouvertures; i++) {
-  const o = await call('/api/fanzzy/open', { method: 'POST', body: { set: i % 2 ? 'MS' : 'TR' } });
+  const set = i % 2 ? 'MS' : 'TR';
+  const o = await call('/api/fanzzy/open', { method: 'POST', body: { set } });
   const cartes = o.json.cards ?? [];
+  for (const c of cartes) {
+    if (c.type === 'stuff' && !tombeDans(STUFF_BY_ID.get(c.id), set)) piecesHorsSerie.push(`${set}:${c.id}`);
+  }
   skinsTombes += cartes.filter((c) => c.type === 'skin').length;
   echarpesTombees += cartes.filter((c) => c.type === 'echarpes').length;
   const etatsDuPaquet = cartes.filter((c) => c.type === 'etat');
@@ -264,6 +270,12 @@ const [stuffRecu] = await pool.query(
   `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [U]);
 check(`l'équipement tombe dans les boosters (${stuffRecu.length} pièces)`,
   stuffRecu.length > 0);
+/* Les pièces d'une série (un championnat, ses clubs) ne sortent que des
+   boosters de cette série : choix de Gaël du 2 novembre 2026. Les boosters TR
+   et MS n'ont pas de pièces à eux, ils ne donnent donc que des communes. */
+check('un booster ne donne pas les pièces d’une autre série'
+  + (piecesHorsSerie.length ? ` (${piecesHorsSerie.slice(0, 4).join(', ')})` : ''),
+  piecesHorsSerie.length === 0);
 
 {
   const w = (await pool.query(
