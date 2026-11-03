@@ -307,6 +307,7 @@ export const SET_TERRACES = {
   id: 'AN',
   nom: 'LES TERRACES',
   ligne: 'debout sous le crachin, et le thé a déjà refroidi',
+  desc: 'Les supporters des vingt clubs de Premier League, trois par club, chacun avec le cri de son club. Debout sous la pluie, comme là-bas.',
   c1: '#3B7A57',
   c2: '#0F1913',
 };
