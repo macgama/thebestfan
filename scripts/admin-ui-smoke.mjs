@@ -1078,6 +1078,24 @@ check('l’onglet des contenus se monte', await jusqua(async () =>
   /* On remet le jeu comme on l'a trouvé : les suites partagent une base. */
   await page.evaluate(() => document.querySelector('#c-corps [data-basculer]')?.click());
   await dodo(700);
+
+  /* **Ranger un stade sous une série** (Gaël, 3 novembre 2026) : le choix de
+     la colonne SÉRIE s'écrit en base, sans bouton à presser. */
+  await page.select('#c-etat', '');
+  await dodo(350);
+  const lieu = await page.evaluate(() => {
+    const sel = document.querySelector('#c-corps select[data-serie]');
+    sel.value = 'RP';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    return sel.dataset.serie;
+  });
+  check('la colonne SÉRIE range un stade sous une série', await jusqua(async () => {
+    const [r] = await pool.query(
+      `SELECT JSON_UNQUOTE(JSON_EXTRACT(donnees, '$.serie')) AS s FROM contenus
+       WHERE famille = 'stade' AND id = ?`, [lieu]);
+    return r[0]?.s === 'RP';
+  }));
+  await contenus.lierSerie('stade', lieu, null);
 }
 
 /* ==================================================== les filtres du catalogue

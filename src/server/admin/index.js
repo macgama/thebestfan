@@ -15,7 +15,7 @@ import { SAISONS_PREVUES, CARNET_TRIMESTRE } from '../../shared/saisons-prevues.
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STADES } from '../../shared/stades.js';
 import { MINI_JEUX } from '../../shared/mini-jeux.js';
-import { ouverts, CHANTS_MIN } from '../contenus/index.js';
+import { ouverts, CHANTS_MIN, tous as tousLesContenus } from '../contenus/index.js';
 import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
 // Les gestes du jeu viennent de leur source unique : voir plus bas.
@@ -798,6 +798,13 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     if (skin) return { groupe: `skin:${skin}`, groupeNom: `Skin ${tenuePar(skin)?.nom ?? skin}` };
     return {};
   }
+  /* La série posée depuis CATALOGUE › CONTENUS l'emporte sur le préfixe : la
+     base la porte (`donnees.serie`), le code ne la connaît pas. */
+  function rangesDe(famille, source) {
+    const enBase = new Map(tousLesContenus(famille).map((o) => [o.id, o.serie]));
+    return source.map((o) => ({ id: o.id, nom: o.nom,
+      ...groupeDe({ ...o, serie: enBase.get(o.id) ?? o.serie }) }));
+  }
 
   async function listerSaisons() {
     return {
@@ -817,16 +824,16 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       choix: {
         series: SETS.map((s) => ({ id: s.id, nom: s.nom })),
         tenues: toutesTenues().map((t) => ({ id: t.id, nom: t.nom, publie: t.publie })),
-        stuff: STUFF.map((s) => ({ id: s.id, nom: s.nom, ...groupeDe(s) })),
-        actions: ACTIONS.map((a) => ({ id: a.id, nom: a.nom, ...groupeDe(a) })),
+        stuff: rangesDe('stuff', STUFF),
+        actions: rangesDe('action', ACTIONS),
         /* **Les stades manquaient.** La colonne `saisons.stades` existe,
            `validerContenu` les accepte et `lancerSaison` les publie — mais ils
            n'étaient pas dans cette liste, donc l'écran ne pouvait pas les
            proposer. Dix stades dans le code, aucun levier pour les ouvrir : un
            champ réglable qui n'apparaît nulle part est un champ qui n'existe
            pas, quoi qu'en dise le serveur. */
-        stades: STADES.map((x) => ({ id: x.id, nom: x.nom, ...groupeDe(x) })),
-        jeux: MINI_JEUX.map((x) => ({ id: x.id, nom: x.nom, ...groupeDe(x) })),
+        stades: rangesDe('stade', STADES),
+        jeux: rangesDe('jeu', MINI_JEUX),
         /* Les chants du DUEL et du VIRAGE, dans l'ordre où ils sont offerts. */
         chants: ORDRE.map((id) => ({ id, nom: CHANTS[id].nom })),
       },
@@ -1786,7 +1793,8 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     for (const [famille, { nom }] of Object.entries(FAMILLES)) {
       familles[famille] = { nom, liste: tousLes(famille) };
     }
-    res.json({ disponible: true, familles, piecesDeClub: piecesDeClub(familles.stuff?.liste ?? []) });
+    res.json({ disponible: true, familles, piecesDeClub: piecesDeClub(familles.stuff?.liste ?? []),
+      series: SETS.map((s) => ({ id: s.id, nom: s.nom })) });
   }));
 
   /* **Les pièces de club, série par série** (demande de Gaël du 28 octobre
@@ -1828,6 +1836,24 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     await journal(req.user.id, publie ? 'contenu.publie' : 'contenu.retire',
       `${famille}:${ids.join(',')}`, { famille, ids, publie }, ip(req));
     res.json({ change });
+  }));
+
+  /* **Ranger un contenu sous une série** (Gaël, 3 novembre 2026) : un stade,
+     une carte d'action, un mini-jeu ou une pièce d'équipement. Le menu PASS
+     le range ensuite sous elle, avec son bouton « tout ». Les chants n'ont pas
+     de série. */
+  router.post('/contenus/serie', safe(async (req, res) => {
+    if (!module.deps.contenus) throw fail('admin.error.contenus_absents');
+    const { FAMILLES } = await import('../contenus/index.js');
+    const famille = String(req.body?.famille ?? '');
+    if (!FAMILLES[famille] || famille === 'chant') throw fail('admin.error.famille_inconnue');
+    const id = String(req.body?.id ?? '');
+    if (!FAMILLES[famille].source.some((x) => x.id === id)) throw fail('admin.error.contenu_inconnu');
+    const serie = req.body?.serie ? String(req.body.serie) : null;
+    if (serie && !SETS.some((s) => s.id === serie)) throw fail('admin.error.fanzzy_set');
+    const change = await module.deps.contenus.lierSerie(famille, id, serie);
+    await journal(req.user.id, 'contenu.serie', `${famille}:${id}`, { famille, id, serie }, ip(req));
+    res.json({ change, serie });
   }));
 
   router.get('/tenues', safe(async (_req, res) =>

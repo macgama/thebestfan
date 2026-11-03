@@ -1429,6 +1429,30 @@ console.log('\n— la BASE du menu PASS —');
     && hw?.groupe === 'skin:halloween' && !d.choix.stuff.find((x) => x.id === 'jumelles').groupe
     || montre('groupes', [rp, hw]));
 
+  /* Gaël range lui-même un stade et un mini-jeu sous une série (CATALOGUE ›
+     CONTENUS) : le menu PASS les range alors sous elle. */
+  const { STADES: lieux } = await import('../src/shared/stades.js');
+  const unLieu = lieux.find((x) => !x.id.includes('-')).id;
+  let rs = await call('/api/admin/contenus/serie', { method: 'POST',
+    body: { famille: 'stade', id: unLieu, serie: 'RP' } });
+  rs = await call('/api/admin/contenus/serie', { method: 'POST',
+    body: { famille: 'jeu', id: 'tifo', serie: 'RP' } });
+  const apres = (await call('/api/admin/saisons')).json;
+  check('un stade et un mini-jeu rangés sous une série depuis l’admin',
+    apres.choix.stades.find((x) => x.id === unLieu)?.groupe === 'serie:RP'
+    && apres.choix.jeux.find((x) => x.id === 'tifo')?.groupe === 'serie:RP'
+    || montre('rangés', rs.json));
+  const refus = await call('/api/admin/contenus/serie', { method: 'POST',
+    body: { famille: 'stade', id: unLieu, serie: 'ZZ' } });
+  const refusChant = await call('/api/admin/contenus/serie', { method: 'POST',
+    body: { famille: 'chant', id: 'reprise', serie: 'RP' } });
+  check('une série inconnue ou un chant sont refusés', refus.status === 400 && refusChant.status === 400
+    || montre('refus', [refus.status, refusChant.status]));
+  await call('/api/admin/contenus/serie', { method: 'POST', body: { famille: 'stade', id: unLieu, serie: '' } });
+  await call('/api/admin/contenus/serie', { method: 'POST', body: { famille: 'jeu', id: 'tifo', serie: '' } });
+  check('et s’en détachent', !(await call('/api/admin/saisons')).json.choix.stades
+    .find((x) => x.id === unLieu)?.groupe);
+
   const corps = Object.fromEntries(['series', 'tenues', 'stuff', 'actions', 'stades', 'jeux', 'chants']
     .map((f) => [f, [...d.enJeu[f]]]));
   const sansTifo = { ...corps, jeux: corps.jeux.filter((x) => x !== 'tifo'),
