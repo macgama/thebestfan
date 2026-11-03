@@ -3,8 +3,8 @@ import { reglage } from '../../shared/reglages.js';
 import { CATALOGUE, enEuros } from '../../shared/boutique.js';
 import { carnetDe } from '../../shared/saison.js';
 import {
-  passAvecTenue, passDe, VOIE_PASS, niveauVoie, ageTenue, vitrineDe, saisonsCouvertes,
-  tenueReservee,
+  passAvecTenue, passDe, VOIE_PASS, niveauVoieDe, etoilesDe, seuilsVoie, ageTenue, saisonsCouvertes,
+  tenueReservee, estTardif, SUFFIXE_TARD, anciensPassEnVente, voieSelonAchat,
 } from '../../shared/pass.js';
 import { saisonEnCours, toutesLesSaisons } from '../fanzzy/saisons.js';
 
@@ -213,6 +213,52 @@ export function createAbonnement({ pool, requireAuth }) {
     }
   }
 
+  /**
+   * Ses PASS avec la façon dont il les a pris : `[{ saison, tardif }]`.
+   *
+   * `tardif` : acheté après la fin de sa saison (source `…-tard`). Il n'a
+   * que le contenu du PASS, jamais ses gains spéciaux (Gaël, 3 novembre 2026).
+   */
+  async function passDuJoueur(userId, lire = q) {
+    if (!userId) return [];
+    try {
+      const rows = await lire(
+        'SELECT saison, source FROM user_pass WHERE user_id = ? ORDER BY saison', [userId]);
+      return rows.map((r) => ({ saison: Number(r.saison), tardif: estTardif(r.source) }));
+    } catch (e) {
+      if (sansTable(e)) return [];
+      throw e;
+    }
+  }
+
+  /** Le jour d'aujourd'hui à Zurich, `'AAAA-MM-JJ'` : celui des dates de saison. */
+  const aujourdHui = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Zurich' })
+    .format(new Date());
+
+  /**
+   * La saison de ce numéro est-elle finie ? Finie à sa date, ou dépassée par
+   * une saison lancée après elle. C'est ce qui ferme sa voie et fait tomber
+   * le contenu qui manque dans les boosters.
+   */
+  function saisonPassee(numero) {
+    const n = Number(numero);
+    const c = courante();
+    if (c && Number(c.numero) > n) return true;
+    const s = toutes().find((x) => Number(x.numero) === n && x.lancee);
+    return Boolean(s?.finie);
+  }
+
+  /**
+   * Les anciens PASS que ce joueur peut prendre aujourd'hui :
+   * `[{ ...passDe(n), venteLe }]`. Le 1er du deuxième mois après la fin de
+   * leur saison, au même prix qu'à l'origine (`venteAncienPassLe`).
+   */
+  async function anciensEnVente(userId) {
+    const deja = await saisonsDuPass(userId);
+    return anciensPassEnVente(toutes(), aujourdHui(), deja)
+      .map((a) => ({ ...passDe(a.numero), venteLe: a.venteLe }));
+  }
+
   /** Un ancien abonnement (mensuel, annuel, offert) encore actif. */
   async function abonnementActif(userId) {
     if (!userId) return false;
@@ -244,7 +290,8 @@ export function createAbonnement({ pool, requireAuth }) {
       /* Pendant la BASE (saison 0), le PASS 1 vaut déjà : c'est lui qu'on
          achète (`saisonsCouvertes`). */
       const voulues = c.finie || n === 0 ? [n, n + 1] : [n];
-      const a = await saisonsDuPass(userId);
+      /* Un PASS pris après sa saison n'ouvre pas le rythme de la saison. */
+      const a = (await passDuJoueur(userId)).filter((p) => !p.tardif).map((p) => p.saison);
       if (a.some((x) => voulues.includes(x))) return true;
     }
     return abonnementActif(userId);
@@ -259,7 +306,9 @@ export function createAbonnement({ pool, requireAuth }) {
    * reprise.
    */
   async function nombrePass(userId) {
-    const n = (await saisonsDuPass(userId)).length;
+    /* Les PASS pris après leur saison ne comptent pas : un club et un KOP de
+       plus sont des gains spéciaux (Gaël, 3 novembre 2026). */
+    const n = (await passDuJoueur(userId)).filter((p) => !p.tardif).length;
     if (n > 0) return n;
     return (await abonnementActif(userId)) ? 1 : 0;
   }
@@ -269,7 +318,22 @@ export function createAbonnement({ pool, requireAuth }) {
     try {
       const [r] = await q(
         `SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
-          WHERE user_id = ? AND source IN ('mission', 'sachet') AND saison_id = ?`,
+          WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id = ?`,
+        [userId, saisonId]);
+      return Number(r?.n ?? 0);
+    } catch (e) {
+      if (sansTable(e) || e?.code === 'ER_BAD_FIELD_ERROR') return 0;
+      throw e;
+    }
+  }
+
+  /** Les points de voie d'une saison : ce que les défis PASS ont versé
+      (`recompenses`, source `voie`, rangés dans la colonne `tampons`). */
+  async function pointsDe(userId, saisonId) {
+    try {
+      const [r] = await q(
+        `SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
+          WHERE user_id = ? AND source = 'voie' AND saison_id = ?`,
         [userId, saisonId]);
       return Number(r?.n ?? 0);
     } catch (e) {
@@ -287,34 +351,45 @@ export function createAbonnement({ pool, requireAuth }) {
    * avec le carnet de sa saison.
    */
   async function voies(userId) {
-    const numeros = await saisonsDuPass(userId);
-    if (!numeros.length) return [];
-    const parNumero = new Map(toutes().map((s) => [Number(s.numero), s]));
+    const mes = await passDuJoueur(userId);
+    if (!mes.length) return [];
+    const parNumero = new Map(toutes().filter((s) => s.lancee).map((s) => [Number(s.numero), s]));
     const out = [];
-    for (const n of numeros) {
+    for (const { saison: n, tardif } of mes) {
       const s = parNumero.get(n);
       let tampons = 0;
-      let paliers = 0;
+      let points = 0;
       let seuils = [];
-      if (s?.lancee) {
+      /* Pris après la saison : sa voie ne se joue plus, il n'a que le
+         niveau 1 (la tenue au premier âge), sans gain spécial. */
+      if (s && !tardif) {
         tampons = await tamponsDe(userId, s.id);
+        points = await pointsDe(userId, s.id);
         seuils = carnetDe(s).map((p) => p.tampons);
-        paliers = seuils.filter((t) => tampons >= t).length;
       }
-      const niveau = niveauVoie(paliers);
-      out.push({ ...vitrineDe(n, niveau), tenue: passDe(n).tenue, ageTenue: ageTenue(niveau),
-        tampons, seuils });
+      /* `tampons` reste le carnet seul ; les points des défis PASS
+         s'y ajoutent pour le niveau (`niveauVoieDe`). */
+      const v = voieSelonAchat(n, niveauVoieDe({ tampons, points, seuils }),
+        { tardif, etoiles: etoilesDe({ tampons, points, seuils }) });
+      /* `seuils` : les paliers du carnet ; `seuilsVoie` : ceux des douze
+         niveaux, tirés du carnet (`seuilsVoie`, shared/pass.js). */
+      out.push({ ...v, tenue: passDe(n).tenue, ageTenue: ageTenue(v.niveau),
+        tampons, points, seuils, seuilsVoie: seuilsVoie(seuils),
+        saisonId: s?.id ?? null, lancee: Boolean(s?.lancee),
+        close: saisonPassee(n) });
     }
     return out;
   }
 
   /** Le badge à montrer : celui du PASS le plus récent, au niveau atteint. `null` sans PASS. */
   async function badgeDe(userId) {
-    const v = await voies(userId);
+    /* Le badge est un gain spécial : seuls les PASS joués pendant leur saison
+       en donnent un. */
+    const v = (await voies(userId)).filter((x) => x.original);
     if (!v.length) return null;
     const d = v[v.length - 1];
     return { saison: d.saison, niveau: d.niveau, couleur: d.couleur, cadre: d.cadre, or: d.or,
-      nombre: v.length };
+      etoiles: d.etoiles ?? 0, gains: d.gains ?? [], titre: d.titre ?? null, nombre: v.length };
   }
 
   /**
@@ -329,7 +404,8 @@ export function createAbonnement({ pool, requireAuth }) {
     try {
       const rows = await q(
         `SELECT user_id, MAX(saison) AS saison, COUNT(*) AS n FROM user_pass
-          WHERE user_id IN (${uniques.map(() => '?').join(',')}) GROUP BY user_id`, uniques);
+          WHERE user_id IN (${uniques.map(() => '?').join(',')})
+            AND source NOT LIKE ? GROUP BY user_id`, [...uniques, `%${SUFFIXE_TARD}`]);
       return new Map(rows.map((r) => {
         const p = passDe(r.saison);
         return [String(r.user_id), { saison: p.numero, couleur: p.couleur, nombre: Number(r.n) }];
@@ -351,6 +427,22 @@ export function createAbonnement({ pool, requireAuth }) {
     let age = 0;
     for (const v of await voies(userId)) if (v.tenue === tenueId) age = Math.max(age, v.ageTenue);
     return age;
+  }
+
+  /**
+   * Les tenues de PASS qui tombent dans **ses** boosters : `Map(tenue → âge
+   * déjà ouvert)`. Celles de ses PASS dont la saison est finie ; seuls les
+   * âges au-delà de ce que sa voie a ouvert sont à tirer (Gaël, 3 novembre
+   * 2026 : « ils peuvent continuer à gagner les SKIN […] dans les
+   * boosters »). Vide pour qui n'a pas de PASS fini.
+   */
+  async function tenuesAuxBoosters(userId) {
+    const out = new Map();
+    for (const v of await voies(userId)) {
+      if (!v.tenue || !v.close) continue;
+      out.set(v.tenue, Math.max(out.get(v.tenue) ?? 0, v.ageTenue));
+    }
+    return out;
   }
 
   /** La tenue est-elle réservée au PASS en ce moment (hors des boosters et de l'étal) ? */
@@ -421,11 +513,27 @@ export function createAbonnement({ pool, requireAuth }) {
    * réclamation (`WHERE scarves >= ?`), dans la même transaction que le PASS
    * et les boosters offerts : rien ne se perd, rien ne se paie deux fois.
    */
-  async function acheterEnEcharpes(userId) {
+  async function acheterEnEcharpes(userId, { saison = null } = {}) {
     const prix = reglage('pass.prix_echarpes');
     if (!(prix > 0)) return { erreur: 'pass.error.echarpes_fermees' };
-    const { aAcheter, bientot: ferme } = await offre(userId);
-    if (ferme && aAcheter.length) return { erreur: 'pass.error.bientot' };
+    /* **Un ancien PASS** nommé : seulement s'il est en vente aujourd'hui et
+       pas déjà à lui. Même prix qu'à l'origine ; la ligne porte `-tard`. */
+    let aAcheter;
+    let source = 'echarpes';
+    if (saison !== null && saison !== undefined && saison !== '') {
+      const n = Number(saison);
+      const enVente = await anciensEnVente(userId);
+      if (!enVente.some((a) => a.numero === n)) {
+        return { erreur: (await saisonsDuPass(userId)).includes(n)
+          ? 'pass.error.deja' : 'pass.error.pas_en_vente' };
+      }
+      aAcheter = [n];
+      source = `echarpes${SUFFIXE_TARD}`;
+    } else {
+      const o = await offre(userId);
+      aAcheter = o.aAcheter;
+      if (o.bientot && aAcheter.length) return { erreur: 'pass.error.bientot' };
+    }
     if (!aAcheter.length) {
       return { erreur: courante() ? 'pass.error.deja' : 'pass.error.pas_de_saison' };
     }
@@ -440,7 +548,7 @@ export function createAbonnement({ pool, requireAuth }) {
         await conn.rollback();
         return { erreur: 'pass.error.pas_assez' };
       }
-      const saisons = await accorderPass(userId, { saisons: aAcheter, source: 'echarpes',
+      const saisons = await accorderPass(userId, { saisons: aAcheter, source,
         reference: `${prix} écharpes`, conn });
       if (!saisons.length) {
         await conn.rollback();
@@ -562,9 +670,10 @@ export function createAbonnement({ pool, requireAuth }) {
   router.get('/', requireAuth, async (req, res) => {
     try {
       const userId = req.user.id;
-      const [e, actif, nombre, mesVoies, o, bourse] = await Promise.all([
+      const [e, actif, nombre, mesVoies, o, bourse, anciens] = await Promise.all([
         etat(userId), estAbonne(userId), nombrePass(userId), voies(userId), offre(userId),
         q('SELECT scarves FROM user_wallet WHERE user_id = ?', [userId]).catch(() => []),
+        anciensEnVente(userId),
       ]);
       const c = courante();
       const article = CATALOGUE.find((a) => a.livraison?.type === 'pass' && !a.retire);
@@ -623,6 +732,9 @@ export function createAbonnement({ pool, requireAuth }) {
         ],
         raisonsDepart: RAISONS_DEPART.map(([cle, libelle]) => ({ cle, libelle })),
         passes: passAvecTenue(),
+        /* Les anciens PASS en vente (Gaël, 3 novembre 2026) : même prix,
+           le contenu seulement, sans tampon « ÉDITION ORIGINALE ». */
+        anciensPass: anciens,
       });
     } catch (err) {
       console.error('[abonnement]', err.message);
@@ -633,7 +745,7 @@ export function createAbonnement({ pool, requireAuth }) {
   /** Payer le PASS en écharpes. */
   router.post('/pass/echarpes', requireAuth, async (req, res) => {
     try {
-      const r = await acheterEnEcharpes(req.user.id);
+      const r = await acheterEnEcharpes(req.user.id, { saison: req.body?.saison ?? null });
       if (r.erreur) return res.status(r.erreur === 'pass.error.indisponible' ? 503 : 400)
         .json({ error: r.erreur });
       res.json(r);
@@ -656,5 +768,6 @@ export function createAbonnement({ pool, requireAuth }) {
   return { router, estAbonne, etat, accorder, renouveler, retirer, noterDepart, departs,
     plafondPacks, regenMs, profondeurParcours, profondeurSouvenirs, clubsEnPlus,
     kopsAutorises, nombrePass, saisonsDuPass, voies, badgeDe, badgesDe, ageTenuePass,
-    tenueAuPass, accorderPass, retirerPass, offre, acheterEnEcharpes };
+    tenueAuPass, accorderPass, retirerPass, offre, acheterEnEcharpes, passDuJoueur,
+    anciensEnVente, tenuesAuxBoosters, saisonPassee };
 }

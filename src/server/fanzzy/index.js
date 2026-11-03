@@ -848,7 +848,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
 
   async function tirerAutreChose(ctx) {
     const { conn, userId, setId, avant, stadeDe, skinsPris, etatsPris,
-      stuffPris, actionsPrises, lieuxPris } = ctx;
+      stuffPris, actionsPrises, lieuxPris, tenuesPassees = new Map() } = ctx;
     const cat = tirerCategorie();
 
     /* Les écharpes, tirées pour elles-mêmes : une poignée de 6, 14 ou 30. */
@@ -890,6 +890,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
           for (const sk of tenuesTirables()) {
             if (sk.id === 'base') continue;
             if (!skinsPris.has(`${id}:${s}:${sk.id}`)) places.push({ id, stade: s, skin: sk.id });
+          }
+          /* La tenue d'un de **ses** PASS dont la saison est finie, aux âges
+             que sa voie n'a pas ouverts (Gaël, 3 novembre 2026). */
+          for (const [tid, ouvert] of tenuesPassees) {
+            if (s > ouvert && !skinsPris.has(`${id}:${s}:${tid}`)) places.push({ id, stade: s, skin: tid });
           }
         }
       }
@@ -1181,6 +1186,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]);
       const stuffPris = new Set(stuffOwned.map((s) => s.stuff_id));
 
+      /* Les tenues de ses PASS finis, qui tombent dans ses boosters aux âges
+         qui lui manquent. Une lecture qui échoue n'empêche pas d'ouvrir. */
+      let tenuesPassees = new Map();
+      if (abonnement?.tenuesAuxBoosters) {
+        const publiees = new Set(tenuesPubliees().map((t) => t.id));
+        tenuesPassees = new Map([...(await abonnement.tenuesAuxBoosters(userId)
+          .catch(() => new Map()))].filter(([t]) => publiees.has(t)));
+      }
+
       /* Les lieux déjà tirés, avec la même garde que les états : sans
          `sql/collection-stades.sql`, `null`, et la place tombe en écharpes. */
       let lieuxPris = null;
@@ -1222,7 +1236,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const ouverte = i >= 2 || (i === 1 && Math.random() >= 0.7);
         if (ouverte) {
           const autre = await tirerAutreChose({
-            conn, userId, setId, avant, stadeDe, skinsPris, etatsPris, stuffPris, actionsPrises, lieuxPris });
+            conn, userId, setId, avant, stadeDe, skinsPris, etatsPris, stuffPris, actionsPrises, lieuxPris,
+            tenuesPassees });
           if (autre) {
             scarves += autre.scarves ?? 0;
             cards.push(autre.carte);

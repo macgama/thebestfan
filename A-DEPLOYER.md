@@ -1,5 +1,113 @@
 # À déposer sur Infomaniak
 
+**Voie PASS : le kit dessiné du PASS 1** (branche `claude/project-thread-plmj5o`,
+3 novembre 2026, 15 images Artlist accordées par Gaël, 1 950 crédits).
+Construction seule, **sans schéma**. Les images sont dans git
+(`public/img/pass/`, 1,8 Mo) : rien à envoyer à part.
+
+- L'écusson du PASS 1 est dessiné (os, cornes, main de pierre ; en or au
+  niveau 12) partout où le badge P1 se montre.
+- Dans la voie du carnet, chaque niveau a le dessin de son gain, le seuil en
+  pastille au coin.
+- Sur la carte de Mon profil : cadre de pierre autour du buste (niveau 2), fond
+  de grotte aux braises qui respirent (niveau 5), titre sur sa plaque de pierre
+  (niveau 9).
+- Sources des images : branche `pass1-kit-images` ; `node
+  scripts/pass-images.mjs <dossier>` les détoure.
+
+---
+
+**Voie PASS : le titre et le pseudo en or sur le profil** (branche
+`claude/project-thread-plmj5o`, 3 novembre 2026). Construction seule, **sans
+schéma**.
+
+- Niveau 9 : « Chasseur de mammouth » (titre du PASS 1) sous le pseudo, sur la
+  carte de Mon profil. Niveau 12 : le pseudo en or, avec un reflet lent (coupé en
+  mode calme).
+- Sans effet visible avant le 1er décembre : la voie du PASS 1 commence avec sa
+  saison.
+
+---
+
+**La voie PASS passe à 12 niveaux** (branche `claude/project-thread-plmj5o`,
+3 novembre 2026, plan « tout gratuit » validé par Gaël). Construction seule,
+**sans schéma**.
+
+- Douze niveaux sur des seuils de tampons (carnet à 140 : 0, 10, 20, 35, 50, 65,
+  75, 90, 105, 120, 130, 140) : tenue aux âges 1, 2 et 3 (niveaux 1, 4, 7), cadre
+  de profil, stickers, fond animé, cadre de carte puis animé, entrée, titre, aura,
+  badge et pseudo en or ; une étoile tous les 15 tampons après.
+- Le carnet de /aide les montre en deux rangées de six ; la page du PASS aussi.
+- Les âges de la tenue tombent aux mêmes tampons qu'avant (35 et 75) ; le cadre
+  animé passe de 110 à 120 tampons. Sans effet aujourd'hui : la voie du PASS 1
+  commence avec sa saison, le 1er décembre.
+- Les nouveaux gains (cadre de profil, stickers…) ne sont pas encore dessinés dans
+  le jeu : ils arrivent avant le 1er décembre.
+- Après la mise en ligne : /aide › DE LA SAISON, regarder la voie sous le carnet.
+
+---
+
+**Clignement : 9 tenues RP/AN et 225 tenues SU** (branche
+`claude/cligne-rp-an-su`, 3 novembre 2026). Construction seule, **sans schéma**.
+
+- Avant le déploiement, envoyer les images (neutre, portrait et cligne.* des
+  tenues touchées) avec `scripts/envoyer-images.sh` : elles ne sont plus dans git.
+- RP6-e1, RP12-e1, RP22-e2, AN16-e2, AN64-e1, AN29-e3, AN40-e2, AN32-e2, AN38-e3,
+  SU18-e2 apocalyptique, SU20-e2 apocalyptique et SU3-e2 préhistorique avaient les
+  yeux fermés au repos : neutre et portrait sont réécrits, yeux ouverts.
+- SU10 e2 préhistorique et apocalyptique ne clignent pas (monocle), le reste de SU oui.
+- Retouches Artlist en mode Unlimited : 0 crédit.
+- Après la mise en ligne : ouvrir quelques fiches SU (SU27, SU31, SU33) et attendre un clignement.
+
+---
+
+**Les anciens PASS en boutique** (branche `claude/project-thread-rrv38b`,
+3 novembre 2026, règles de Gaël). Construction seule : aucun schéma, aucun
+script.
+
+- Un PASS fini revient sur la page du PASS (annoncé dans la boutique) le 1er du
+  deuxième mois après la fin de sa saison (fin le 28 février → dès le 1er avril),
+  au même prix, en euros ou en écharpes.
+- L'acheteur tardif reçoit la tenue au premier âge sur tous ses Fanzzy et les
+  boosters du PASS ; les âges suivants tombent dans ses boosters. Ni tampon
+  « ÉDITION ORIGINALE », ni cadre, badge, club ou KOP en plus.
+- Un joueur de la saison qui n'a pas fini sa voie garde ce qu'il a ; les âges
+  qui lui manquent tombent ensuite dans ses boosters.
+- /admin › PASS › VENTES : colonne « dont après la saison ».
+- Premier effet réel : le 1er avril 2027 (fin du PASS 1 le 28 février).
+
+---
+
+**La voie PASS dans le carnet, et MON FANZZY qui vit sur le profil**
+(branche `claude/project-thread-plmj5o`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- Missions › DE LA SAISON : sous le carnet, la voie PASS en or, pour tous.
+  Sans PASS : tout sous cadenas, et en or ce que les tampons ont déjà atteint
+  (« 3 CADEAUX PASS T'ATTENDENT »), BIENTÔT pendant la BASE. Membre : son
+  niveau. (PR #249, déjà dans main.)
+- Profil › MON FANZZY : le Fanzzy équipé en pied, qui respire et bouge ; au
+  toucher il saute, exulte et pousse son cri. Sans dessin d'états, la carte
+  comme avant.
+
+---
+
+**Les défis de la semaine** (branche `claude/project-thread-4e3rjc`,
+3 novembre 2026, demande de Gaël « Ok pour moi »). Construction, puis
+**`npm run schema:appliquer`** (une table neuve, `defis_semaine`, dans
+`sql/defis.sql`), puis redémarrage.
+
+- Chaque lundi, trois défis par joueur tirés parmi ce qu'il possède : 5 duels
+  avec un Fanzzy d'une de ses séries, 30 chants au Grand Virage en portant une
+  de ses pièces, 3 duels avec un Fanzzy dans une de ses tenues. 100 écharpes
+  et 2 tampons du carnet chacun (réglables dans RÉGLAGES, section du quotidien).
+- Les membres d'un PASS dont la saison est lancée ont un quatrième défi :
+  5 duels dans la tenue de leur PASS. Il ne donne que 10 points de la voie
+  PASS (réglable), jamais d'écharpes ni de tampons.
+- Ils s'affichent dans les missions (DU JOUR), sous les missions du jour.
+
+---
+
 **Cinq stades pour LES TERRACES (série AN)** (branche
 `claude/project-thread-coelne`, 3 novembre 2026, demande de Gaël). Construction
 seule, sans schéma : Le Crachin, La Terrace Debout, Le Lendemain de Noël, La Rue

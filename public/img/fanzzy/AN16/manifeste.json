@@ -1,6 +1,6 @@
 {
   "id": "AN16",
-  "rev": 17,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -94,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e6f54b825e5b"
+          "sha": "e6f54b825e5b",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

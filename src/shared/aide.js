@@ -429,6 +429,18 @@ const RUBRIQUES = [
           + `${reglage('saison.tampons_difficile')} pour une difficile. Chaque palier `
           + 'du carnet rapporte des écharpes ou des boosters, et qui a bien rempli le '
           + 'sien reçoit des boosters au lancement de la saison suivante.'],
+      ['C’est quoi, les défis de la semaine ?',
+        () => 'Chaque lundi, trois défis tirés parmi ce que tu possèdes : jouer des duels '
+          + 'avec un Fanzzy d’une de tes séries, chanter au Grand Virage en portant une de '
+          + 'tes pièces, jouer des duels avec un Fanzzy dans une de tes tenues. Chacun '
+          + `rapporte ${reglage('defis.echarpes')} écharpes et ${reglage('defis.tampons')} tampons `
+          + 'du carnet. Un duel compte s’il a duré au moins une minute et que tu ne l’as pas '
+          + 'quitté ; une pièce compte si ton Fanzzy du Virage la porte dans ton deck. Un défi '
+          + 'fini se récupère jusqu’à la fin de la semaine suivante.'],
+      ['Et le défi du PASS ?',
+        'Les membres d’un PASS ont un quatrième défi : jouer des duels dans la tenue de '
+          + 'leur PASS. Il fait avancer la voie PASS (la tenue à ses âges, les cadres, le '
+          + 'titre, le badge…), et rien d’autre : ni écharpes, ni tampons du carnet.'],
       ['Que me rapporte ma collection ?',
         () => `Tous les ${reglage('collection.cran')} objets différents gagnés, un `
           + `cran te rapporte ${reglage('collection.cran_echarpes')} écharpes, et de `
@@ -511,10 +523,13 @@ const RUBRIQUES = [
           + `${reglage('pass.clubs_par_pass')} club suivi de plus et ${reglage('pass.kops_par_pass')} `
           + 'KOP de plus à créer par PASS. Rien de tout cela ne pèse sur la corde.'],
       ['C’est quoi, la voie PASS ?',
-        () => 'Une deuxième ligne dans ton carnet de tampons. Chaque palier du carnet fait '
-          + 'monter ton PASS d’un niveau : la tenue de la saison aux âges suivants, puis le '
-          + 'cadre de carte, le cadre animé et le badge en or. Que du visuel, jamais '
-          + 'd’écharpes ni de boosters.'],
+        () => 'Une deuxième ligne dans ton carnet de tampons, en or, avec douze niveaux. '
+          + 'Tes tampons la font monter : la tenue de la saison à ses trois âges, un cadre de '
+          + 'profil, des stickers de duel, un fond de profil animé, un cadre de carte puis '
+          + 'animé, une entrée au duel, un titre sous ton pseudo, une aura au Virage, et au '
+          + 'bout le badge et le pseudo en or ; ensuite, une étoile tous les 15 tampons. Sans '
+          + 'PASS, tu la vois sous cadenas : ce que tes tampons ont déjà atteint est à toi dès '
+          + 'l’achat. Que du visuel, jamais d’écharpes ni de boosters.'],
       ['Que me manque-t-il sans le PASS ?',
         () => 'Rien pour jouer ni pour le classement : toutes les séries, tous les âges, '
           + 'tous les formats, le Grand Virage en entier, et tout compte, sans limite. '
@@ -524,6 +539,16 @@ const RUBRIQUES = [
       ['Puis-je payer le PASS en écharpes ?',
         () => `Oui, ${reglage('pass.prix_echarpes')} écharpes, sur la page du PASS. C’est la `
           + 'récompense des supporters assidus : le même PASS, sans dépenser d’argent.'],
+      ['Puis-je prendre un PASS d’une saison passée ?',
+        'Oui. Une saison finie revient sur la page du PASS le 1er du deuxième mois après sa '
+          + 'fin, au même prix. Tu reçois sa tenue au premier âge, puis ses autres âges dans '
+          + 'tes boosters, avec son équipement, son stade et ses mini-jeux. Le tampon « ÉDITION '
+          + 'ORIGINALE », le cadre, le badge, le club et le KOP en plus restent à ceux qui l’ont '
+          + 'joué pendant la saison.'],
+      ['Je n’ai pas fini ma voie PASS avant la fin de la saison : je perds tout ?',
+        'Non. Ce que tu as ouvert reste à toi, et les âges de la tenue qui te manquent tombent '
+          + 'ensuite dans tes boosters. Les autres cadeaux de la voie (cadres, stickers, fond, '
+          + 'entrée, titre, aura, badge en or) ne s’ouvrent plus.'],
       ['J’avais un abonnement : que devient-il ?',
         'Il ne se renouvelle plus. Tu gardes tout jusqu’à la fin de la période déjà payée, '
           + 'et tu reçois le PASS de la saison où elle se termine. Rien de ce que tu as '

@@ -90,6 +90,10 @@ jobs:
       # développement.
       - name: Les pages compilent
         run: node scripts/verif-pages.mjs
+        env:
+          # Les dessins des Fanzzy ne sont plus dans git (allègement du
+          # 3 novembre 2026) : ils restent sur le serveur, deployer.sh n'y touche pas.
+          TBF_IMAGES_HORS_GIT: '1'
 
       - name: Les modules sont branchés
         run: node scripts/verif-cablage.mjs

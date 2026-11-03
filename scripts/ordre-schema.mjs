@@ -128,5 +128,8 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
      dépend : le dernier rang. */
   'virage-tribunes',
   /* Le PASS de saison (2 novembre 2026) : une table neuve, sans clé
+     étrangère. Rien n'en dépend. */
+  'pass',
+  /* Les défis de la semaine (3 novembre 2026) : une table neuve, sans clé
      étrangère. Rien n'en dépend : le dernier rang. */
-  'pass'];
+  'defis'];

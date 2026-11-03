@@ -1,6 +1,6 @@
 {
   "id": "SU25",
-  "rev": 16,
+  "rev": 19,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "36ad8d35971d"
+          "sha": "36ad8d35971d",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -51,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7e144028331e"
+          "sha": "7e144028331e",
+          "cligne": true
         }
       }
     },
@@ -160,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "794963e402db"
+          "sha": "794963e402db",
+          "cligne": true
         }
       }
     }
