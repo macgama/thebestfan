@@ -17,6 +17,20 @@ script.
 
 ---
 
+**La voie PASS dans le carnet, et MON FANZZY qui vit sur le profil**
+(branche `claude/project-thread-plmj5o`, 3 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- Missions › DE LA SAISON : sous le carnet, la voie PASS en or, pour tous.
+  Sans PASS : tout sous cadenas, et en or ce que les tampons ont déjà atteint
+  (« 3 CADEAUX PASS T'ATTENDENT »), BIENTÔT pendant la BASE. Membre : son
+  niveau. (PR #249, déjà dans main.)
+- Profil › MON FANZZY : le Fanzzy équipé en pied, qui respire et bouge ; au
+  toucher il saute, exulte et pousse son cri. Sans dessin d'états, la carte
+  comme avant.
+
+---
+
 **Les défis de la semaine** (branche `claude/project-thread-4e3rjc`,
 3 novembre 2026, demande de Gaël « Ok pour moi »). Construction, puis
 **`npm run schema:appliquer`** (une table neuve, `defis_semaine`, dans
