@@ -116,15 +116,22 @@ jobs:
           BRANCHE: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          # Le script vit dans le dépôt, et il s'y met à jour tout seul au
-          # `git reset` qu'il fait lui-même. On l'appelle donc par son chemin
-          # plutôt que de le téléverser : une seule version, celle du dépôt.
+          # Le script part **de ce coureur**, sur l'entrée de la session SSH,
+          # et non de la copie du serveur. Celle du serveur est celle du
+          # déploiement précédent : elle ne connaît pas encore ce que le
+          # commit à déployer a pu changer à la façon de déployer. C'est
+          # arrivé à la sortie des images de git — l'ancien script aurait
+          # fait son `reset` sans les mettre à l'abri, et effacé tous les
+          # personnages du site. Une seule version fait donc foi : celle du
+          # commit qu'on déploie.
           #
-          # `\$HOME` est échappé exprès : il doit être résolu par le serveur,
-          # pas par ce coureur, qui n'a évidemment pas le même compte.
-          CHEMIN="${RACINE:-\$HOME/sites/thebestfan.online}"
+          # Il est d'abord écrit dans un fichier, puis lancé : un `bash -s`
+          # laisserait `npm` ou `git` lire la suite du script sur leur entrée.
+          # Les `\$` sont échappés exprès : ils doivent être résolus par le
+          # serveur, pas par ce coureur.
           ssh -i ~/.ssh/id_deploiement -o BatchMode=yes "$UTILISATEUR@$HOTE" \
-            "export TBF_RACINE='${RACINE:-}' TBF_REDEMARRAGE='${REDEMARRAGE:-}' TBF_BRANCHE='$BRANCHE'; bash $CHEMIN/scripts/deployer.sh"
+            "export TBF_RACINE='${RACINE:-}' TBF_REDEMARRAGE='${REDEMARRAGE:-}' TBF_BRANCHE='$BRANCHE'; f=\$(mktemp); cat > \"\$f\"; bash \"\$f\" < /dev/null; s=\$?; rm -f \"\$f\"; exit \$s" \
+            < scripts/deployer.sh
 
       # La preuve, et non la promesse. On attend que le site annonce le commit
       # qu'on vient de pousser : c'est la seule chose qui distingue un
