@@ -511,6 +511,9 @@ const RUBRIQUES = [
           + 'valable jusqu’à la fin de la saison. Il ne se renouvelle jamais tout seul. '
           + `Pris pendant les ${reglage('pass.dernier_mois_jours')} derniers jours d’une saison, `
           + 'il couvre aussi la suivante. Chaque PASS a sa tenue, son badge et son cadre de carte.'],
+      ['Quand puis-je prendre le PASS ?',
+        'Dès l’ouverture de sa saison. Pendant la BASE, le PASS 1 est marqué « Bientôt » : '
+          + 'il ne s’achète qu’à partir du 1er décembre. D’ici là, tout le jeu reste ouvert, sans payer.'],
       ['Et le PASS, il donne un avantage ?',
         () => 'Du confort et du style, jamais de la puissance : 3 boosters à l’achat, une '
           + `réserve de ${reglage('abo.pack_max')} boosters au lieu de ${reglage('pack.max')}, `

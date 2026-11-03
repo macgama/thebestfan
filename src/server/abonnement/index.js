@@ -405,11 +405,29 @@ export function createAbonnement({ pool, requireAuth }) {
     }
   }
 
+  /**
+   * **Le PASS ne s'achète pas avant son ouverture** (Gaël, 3 novembre 2026 :
+   * « vu que le pass ouvre le 1er décembre, […] bloquer la possibilité de
+   * l'acheter avant »). Pendant la BASE (saison 0), le PASS 1 se montre avec
+   * « Bientôt » ; il s'achète dès que la saison 1 est lancée — seule, le jour
+   * de son `ouvre_le`. Rend `{ ouvre }` (le jour, `YYYY-MM-DD`, ou `null`
+   * s'il n'est pas encore posé) tant que c'est fermé, sinon `null`.
+   *
+   * L'administration peut toujours l'offrir (`accorderPass`) : ce n'est pas
+   * un achat.
+   */
+  function bientot() {
+    const c = courante();
+    if (!c || Number(c.numero) !== 0) return null;
+    const suivante = toutes().find((s) => Number(s.numero) === 1);
+    return { ouvre: suivante?.ouvre ?? null };
+  }
+
   /** Ce qu'un achat couvrirait maintenant, et ce que le joueur a déjà. */
   async function offre(userId) {
     const couvre = saisonsCouvertes(courante(), reglage('pass.dernier_mois_jours'));
     const deja = await saisonsDuPass(userId);
-    return { couvre, aAcheter: couvre.filter((n) => !deja.includes(n)), deja };
+    return { couvre, aAcheter: couvre.filter((n) => !deja.includes(n)), deja, bientot: bientot() };
   }
 
   /**
@@ -423,7 +441,8 @@ export function createAbonnement({ pool, requireAuth }) {
   async function acheterEnEcharpes(userId) {
     const prix = reglage('pass.prix_echarpes');
     if (!(prix > 0)) return { erreur: 'pass.error.echarpes_fermees' };
-    const { aAcheter } = await offre(userId);
+    const { aAcheter, bientot: ferme } = await offre(userId);
+    if (ferme && aAcheter.length) return { erreur: 'pass.error.bientot' };
     if (!aAcheter.length) {
       return { erreur: courante() ? 'pass.error.deja' : 'pass.error.pas_de_saison' };
     }
@@ -593,6 +612,8 @@ export function createAbonnement({ pool, requireAuth }) {
           article: article ? { id: article.id, nom: article.nom, prixTexte: enEuros(article.prix),
             packs: article.livraison.packs ?? 0 } : null,
           echarpes: reglage('pass.prix_echarpes') || null,
+          /* Fermé à l'achat jusqu'à l'ouverture du PASS : `{ ouvre }`, ou `null`. */
+          bientot: o.bientot,
           dernierMoisJours: reglage('pass.dernier_mois_jours'),
         },
         echarpes: Number(bourse?.[0]?.scarves ?? 0),

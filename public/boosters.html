@@ -150,7 +150,7 @@
    soixante, et toute la page se met à glisser horizontalement. Rien ne casse,
    la page devient simplement pénible — et on ne le voit jamais depuis un
    écran large. */
-.carousel{position:absolute;inset:0;z-index:3;perspective:1100px;touch-action:pan-y;overflow-x:clip}
+.carousel{position:absolute;inset:0;z-index:3;perspective:640px;touch-action:pan-y;overflow-x:clip}
 .slide{position:absolute;left:50%;top:6px;width:124px;aspect-ratio:.62;margin:0;cursor:grab;
   transform-style:preserve-3d;transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .45s,filter .45s;
   border-radius:9px;overflow:hidden;border:1px solid rgba(0,0,0,.6);
@@ -163,8 +163,17 @@
   background-size:260% 260%;background-position:120% 0;mix-blend-mode:screen}
 .slide.center .foil{animation:foil 4.5s ease-in-out infinite}
 @keyframes foil{0%{background-position:130% 0}55%{background-position:-40% 0}100%{background-position:-40% 0}}
-.slide.side{filter:brightness(.42) saturate(.65)}
-.slide.hidden{opacity:0;pointer-events:none}
+/* L'éclairage de l'anneau (`--lum`, posé par `placeCarousel`) : un paquet
+   s'éteint en reculant, et ceux du fond, vus de dos, ne se touchent pas.
+   Pendant un glissement, la transition se retire : le paquet suit le doigt. */
+.slide.side{filter:brightness(var(--lum,.42)) saturate(.65)}
+.slide.dos{pointer-events:none}
+.slide.dos .foil{display:none}
+.carousel.glisse .slide{transition:none}
+/* Quand l'anneau tourne seul, chaque pas dure exactement l'intervalle entre
+   deux pas, à vitesse constante : les pas s'enchaînent en un mouvement
+   continu, sans boucle d'images. Un geste rend la transition courte. */
+.carousel.tourne .slide{transition:transform 2.6s linear,opacity 2.6s linear,filter 2.6s linear}
 /* Le nom de la série, en sticker collé sous le sachet, à cheval sur le pied
    du socle. Son fond de craie est le sien : la fumée qui passe dessous ne
    touche pas la lettre. */
@@ -266,48 +275,20 @@
 .cta small{display:block;font-family:var(--banner);font-weight:500;font-size:12px;line-height:14px;
   letter-spacing:.04em;text-transform:none;text-shadow:0 1px 0 var(--encre)}
 
-/* Les séries fermées, en rail : leurs sachets en gris sous un scotch en
-   croix. **Un seul rail, une seule croix.** Il y en avait un par raison,
-   chacun sous sa grande croix : un sachet seul, entièrement caché, sous
-   « SAISON 2 » — on ne savait pas quelle série ouvrirait —, puis onze
-   sachets de vingt-huit pixels tassés en une pellicule illisible sous
-   « FERMÉE ». Deux X géants pour dire « pas encore ».
+/* Le descriptif de la série présentée, sous le bouton (demande de Gaël,
+   3 novembre 2026 : « pour donner envie de prendre telle ou telle série »).
+   Il a pris la place du rail des séries fermées — « 13 séries attendent une
+   saison », treize sachets gris sous une croix de scotch —, qui n'apportait
+   rien au jeu : on ne peut ni les ouvrir ni rien y faire. Le classeur montre
+   toujours les séries fermées, sous cadenas.
 
-   Les sachets ont maintenant la taille d'un sachet (40 × 62), espacés, et
-   le rail défile de côté. **La série annoncée vient en premier**, avec son
-   nom et sa saison en étiquette (« LES HÉROS DU CANAPÉ · SAISON 2 ») : il
-   est connu dès qu'elle est annoncée (`sets[].prochaine`). Les autres n'ont
-   pas de sticker : « 12 SÉRIES ATTENDENT UNE SAISON » le dit pour elles, et
-   on n'annonce jamais une date qu'on n'a pas. Leur nom reste à l'écoute
-   (`aria-label` de chaque sachet). Sur un panneau (`.pan`) : rien ne
-   s'écrit à même la photo de la tribune. */
-.fermees{margin:16px 0 8px;padding:12px 0 6px}
-.fermees-lab{margin:0 12px;font-family:var(--banner);font-weight:600;font-size:11px;line-height:1.3;
-  letter-spacing:.1em;text-transform:uppercase;text-align:center}
-/* L'étiquette de la série annoncée, au-dessus du rail, collée sur le coin
-   de son sachet (le premier). Un nom long (« LA GASTRONOMIE DE COMPTOIR ·
-   SAISON 2 ») passe sur deux lignes plutôt que de sortir du panneau à
-   320 px. */
-.fermees-annonce{display:flex;margin:12px 12px -6px;position:relative;z-index:6}
-.fermees-annonce>.tbf-sticker{--rot:-2deg;max-width:100%;height:auto;min-height:24px;padding:4px 7px;
-  white-space:normal;line-height:1.15}
-/* Le rail défile ; la croix, elle, est posée sur sa fenêtre et ne défile
-   pas avec lui — une seule, au milieu, sur la largeur de trois sachets. Le
-   rembourrage garde l'air des ombres, qu'un défilement rogne. */
-.fermees-rail{position:relative;margin-top:8px}
-.fermees-rang{display:flex;gap:12px;overflow-x:auto;padding:10px 12px 12px;
-  scroll-snap-type:x proximity;scroll-padding-inline:12px;scrollbar-width:none}
-.fermees-rang::-webkit-scrollbar{display:none}
-.fermees-rang>:first-child{margin-left:auto}
-.fermees-rang>:last-child{margin-right:auto}
-.fermees-rang:focus-visible{outline:3px solid var(--projo);outline-offset:-3px}
-.fermees-s{position:relative;flex:none;width:40px;height:62px;border-radius:4px;overflow:hidden;
-  scroll-snap-align:start;background:var(--encre) center/cover no-repeat;filter:grayscale(1) brightness(.6);
-  box-shadow:0 0 0 1.5px rgba(242,238,228,.4),2px 2px 5px rgba(7,9,12,.55)}
-/* La série annoncée garde un peu de sa lumière : c'est la prochaine. */
-.fermees-s[data-annoncee]{filter:grayscale(.6) brightness(.8)}
-.fermees-rail>.tbf-scotch--croix{left:50%;right:auto;width:min(156px,60%);translate:-50% 0;
-  top:4px;bottom:6px;pointer-events:none;z-index:4}
+   Sa phrase (`ligne`) en tête, en capitales, puis ce qu'on y trouve
+   et comment elle se joue (`desc`, écrit avec la série dans `dex-*.js`).
+   Sur un panneau (`.pan`) : rien ne s'écrit à même la photo de la tribune. */
+.serie-desc{margin:16px 0 8px;padding:12px 14px 13px}
+.serie-desc-ligne{margin:0 0 6px;font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.3;
+  letter-spacing:.06em;text-transform:uppercase;text-align:center;text-wrap:balance}
+.serie-desc-txt{margin:0;font-size:14px;line-height:1.45;text-align:center;text-wrap:pretty;opacity:.92}
 
 /* --------------------------------------------------- geste d'ouverture
 
@@ -360,7 +341,11 @@
   clip-path:inset(0 0 0 calc(var(--p) * 100%));
   transform:rotate(calc(var(--p) * 5deg)) translateY(calc(var(--p) * -6px));
   transform-origin:100% 100%}
-.tearpack .lip > *{position:absolute;top:0;left:0;width:100%;height:666.7%}
+/* Le dessin de la bande fait cinq fois sa hauteur (cent divisé par les vingt
+   de `--bande`) : il recouvre exactement le haut du paquet. À 666,7 % — le
+   compte d'une bande de quinze —, il débordait d'un tiers et la bande montrait
+   un haut agrandi, décalé du dessin d'en dessous. */
+.tearpack .lip > *{position:absolute;top:0;left:0;width:100%;height:500%}
 
 /* La ligne dentelée : l'affordance. Elle dit où saisir avant qu'on ait lu la
    consigne, et elle s'efface à mesure que la déchirure la mange. */
@@ -793,11 +778,11 @@ body{padding-bottom:calc(var(--bas) + 40px)}
          éteint ne mène nulle part, celui-ci mène où en gagner. -->
     <a class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="vert" id="gagner" href="/virage" hidden>GAGNER DES
       ÉCHARPES<small id="gagnerManque"></small></a>
-    <!-- Ce qui vient : les séries fermées, en rail. Le kiosque montrait les
-         huit séries verrouillées dans le carrousel : on glissait au milieu de
-         ce qu'on ne peut pas ouvrir pour retrouver ce qu'on peut. Un jeu
-         montre ce qui l'attend, il ne le met pas sur le chemin. -->
-    <section class="pan fermees" id="avenir" aria-label="Les séries à venir" hidden></section>
+    <!-- Ce que la série présentée raconte, pour donner envie de la choisir. -->
+    <section class="pan serie-desc" id="serieDesc" aria-label="La série" hidden>
+      <p class="serie-desc-ligne" id="serieLigne"></p>
+      <p class="serie-desc-txt" id="serieTxt"></p>
+    </section>
   </section>
 
   <div class="tearzone" id="tearzone">
@@ -1230,21 +1215,24 @@ function tickReserve() {
 /**
  * Combien de paquets on présente au choix.
  *
- * Trois : celui du milieu, sur son socle, et un de chaque côté. Ils étaient
- * dix, « comme sur un présentoir » — on n'en voyait jamais que trois à la
- * fois, et sept points sous le carrousel comptaient des paquets qu'on ne
- * regardait pas. **Le paquet choisi ne change rien au tirage** : les cartes
- * sont tirées par le serveur à l'ouverture, et le numéro du paquet ne lui est
- * même pas envoyé. Le geste est là pour le geste — ouvrir un booster est une
+ * Dix, en anneau, comme un présentoir qui tourne (demande de Gaël, 3 novembre
+ * 2026 : « un vrai carrousel avec 10 paquets qui tourne »). Ils avaient été
+ * dix une première fois, en file : on n'en voyait que trois et sept points
+ * comptaient le reste. En anneau, on les voit tous — devant, de côté, et de
+ * dos au fond —, et l'anneau tourne seul tant qu'on n'y touche pas.
+ *
+ * **Le paquet choisi ne change rien au tirage** : les cartes sont tirées par
+ * le serveur à l'ouverture, et le numéro du paquet ne lui est même pas
+ * envoyé. Le geste est là pour le geste — ouvrir un booster est une
  * cérémonie, et une cérémonie sans choix n'en est pas une.
  *
  * Le jour où ce choix influencerait le contenu, les joueurs s'en apercevraient
  * en quelques heures, un « paquet qui donne les légendaires » circulerait, et
  * il faudrait honorer une superstition qu'on aurait fabriquée soi-même.
  */
-const PAQUETS_AU_CHOIX = 3;
-/** On arrive sur celui du milieu : un voisin de chaque côté. */
-const MILIEU = Math.floor(PAQUETS_AU_CHOIX / 2);
+const PAQUETS_AU_CHOIX = 10;
+/** On arrive sur le premier ; l'anneau n'a ni début ni fin. */
+const MILIEU = 0;
 
 /** Les séries que ce joueur peut ouvrir, dans l'ordre du catalogue. */
 const seriesOuvertes = () => SETS.filter(serieDebloquee);
@@ -1287,27 +1275,73 @@ function buildCarousel() {
   placeCarousel(0);
 }
 
-/** L'écart entre deux paquets : un peu plus que la largeur d'un sachet, qui
-    grandit avec l'écran (voir la feuille). */
+/** L'écart entre deux paquets, mesuré au glissement du doigt : un peu
+    plus que la largeur d'un sachet, qui grandit avec l'écran. */
 const ecartDesPaquets = () =>
   ($('carousel').querySelector('.slide')?.offsetWidth || 124) * 1.2;
 
+/**
+ * L'anneau. Chaque paquet a sa place sur un cercle vu de face : `off` est son
+ * écart au paquet de devant, ramené entre −5 et +5 (l'anneau n'a pas de
+ * bout). Son angle sur le cercle donne sa position — de côté, il recule ; au
+ * fond, il passe derrière les autres et s'éteint — et il se tourne avec le
+ * cercle. Le rayon suit la largeur du sachet, si bien que l'anneau se
+ * resserre avec la scène sur les écrans courts.
+ *
+ * Un paquet qui fait le tour par le fond (son `off` saute de +5 à −5) ne doit
+ * pas tourner sur lui-même pendant la transition : on la lui retire le temps
+ * d'un saut. Il est au fond, sombre, derrière les autres : rien ne se voit.
+ */
 function placeCarousel(drag = 0) {
-  const w = ecartDesPaquets();
-  for (let i = 0; i < PAQUETS_AU_CHOIX; i++) {
+  const sachet = $('carousel').querySelector('.slide')?.offsetWidth || 124;
+  const rayon = sachet * 1.85;
+  const pas = 360 / PAQUETS_AU_CHOIX;
+  const n = PAQUETS_AU_CHOIX;
+  for (let i = 0; i < n; i++) {
     const el = $('carousel').querySelector(`.slide[data-i="${i}"]`);
     if (!el) continue;
-    const off = i - (S.paquet ?? MILIEU) - drag;
-    const abs = Math.abs(off);
+    let off = (((i - (S.paquet ?? MILIEU) - drag) % n) + n) % n;
+    if (off >= n / 2) off -= n;
+    const avant = Number(el.dataset.off);
+    if (Number.isFinite(avant) && Math.abs(off - avant) > n / 2) {
+      el.style.transition = 'none';
+      requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transition = ''; }));
+    }
+    el.dataset.off = String(off);
+    const a = (off * pas * Math.PI) / 180;
+    const x = Math.sin(a) * rayon;
+    const z = (Math.cos(a) - 1) * rayon;
     el.style.transform =
-      `translateX(-50%) translateX(${off * w}px) translateZ(${-abs * 190}px) ` +
-      `rotateY(${off * -26}deg) scale(${1 - abs * 0.06})`;
-    el.style.zIndex = String(10 - Math.round(abs * 10));
+      `translateX(-50%) translateX(${x.toFixed(1)}px) translateZ(${z.toFixed(1)}px) rotateY(${(off * pas).toFixed(1)}deg)`;
+    const abs = Math.abs(off);
+    el.style.zIndex = String(20 - Math.round(abs * 3));
+    /* L'éclairage : plein devant, de plus en plus sombre en reculant. */
+    el.style.setProperty('--lum', Math.max(0.12, 0.12 + 0.36 * Math.cos(a)).toFixed(2));
     el.classList.toggle('center', abs < 0.5);
     el.classList.toggle('side', abs >= 0.5);
-    el.classList.toggle('hidden', abs > 1.8);
+    el.classList.toggle('dos', abs > n / 4);
   }
 }
+
+/**
+ * L'anneau tourne seul, d'un paquet toutes les 2,6 secondes en continu, tant qu'on n'y
+ * touche pas : il repart six secondes après le dernier geste. Pas de boucle
+ * d'images — un pas, et la transition de la feuille fait le reste —, rien
+ * quand l'onglet est caché, quand l'ouverture est à l'écran, ni pour qui a
+ * demandé moins de mouvement (système ou réglages du jeu).
+ */
+let reposJusqua = 0;
+const toucheLAnneau = () => { reposJusqua = Date.now() + 6000; $('carousel').classList.remove('tourne'); };
+const anneauCalme = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+  || /(^|\s)animations(\s|$)/.test(document.documentElement.dataset.calme ?? '');
+setInterval(() => {
+  if (document.hidden || Date.now() < reposJusqua || anneauCalme()) return;
+  if ($('s-kiosque').hidden || $('opener')?.classList.contains('on')) return;
+  if (!$('carousel').querySelector('.slide') || $('carousel').classList.contains('glisse')) return;
+  $('carousel').classList.add('tourne');
+  S.paquet = ((S.paquet ?? MILIEU) + 1) % PAQUETS_AU_CHOIX;
+  placeCarousel(0);
+}, 2600);
 
 /**
  * Cette série est-elle ouverte ?
@@ -1417,6 +1451,9 @@ function rendreGeste() {
 /** Ce que fait la bâche principale, et le sachet touché. */
 function ouvrirDepuisLaBache() {
   if (!('avatar' in S) || !SETS[S.set]) return;
+  /* L'anneau s'arrête sur le paquet de devant : on ouvre celui qu'on voit. */
+  toucheLAnneau();
+  placeCarousel(0);
   const g = geste();
   if (g === 'pret') ouvrirLArrive();
   else if (g === 'ouvrir' || g === 'acheter') startTear();
@@ -1602,56 +1639,24 @@ $('saisonVu').onclick = async () => {
   try { await api('/saison-vue', {}); } catch { /* il reviendra, sans plus */ }
 };
 
-/** Le petit sachet gris d'une série fermée, dans son rail. Sans dessin, un
-    sachet de ses deux couleurs, et non le paquet composé de `packArt` : son
-    nom y serait écrit à deux pixels — un texte que personne ne lit, et que
-    l'audit compterait sous onze. Le nom est à l'écoute (`aria-label`). */
-const saisonDe = (x) => (Number.isInteger(x.prochaine) && x.prochaine > 0 ? x.prochaine : 0);
-const sachetFerme = (x) => {
-  const k = saisonDe(x);
-  const nom = esc(k ? `${x.nom} — saison ${k}` : x.nom);
-  const fond = ART[x.id] ? `url('/${esc(src(ART[x.id]))}')`
-    : `linear-gradient(160deg,${esc(x.c2 ?? '#1A1F27')} 0 32%,${esc(x.c1 ?? '#C2CAD6')} 58%,${esc(x.c2 ?? '#1A1F27')})`;
-  return `<span class="fermees-s" role="img" aria-label="${nom}"${k ? ' data-annoncee' : ''}
-      style="background-image:${fond}"></span>`;
-};
-
 /**
- * Ce qui vient : les séries fermées, en un rail de sachets gris sous une
- * croix de scotch.
- *
- * Elle disait « au niveau 12 ». Elle ne le dit plus, et pas seulement parce
- * que le niveau n'ouvre plus rien : **on ne connaît pas toujours la date**.
- * Une saison se lance quand l'administration la lance ; le serveur ne dit
- * quelle saison ouvrira une série que si elle a été annoncée
- * (`sets[].prochaine`, contrat § 7.2), et annoncer une échéance qu'on ne
- * tiendra peut-être pas est pire que de n'en annoncer aucune. Les séries
- * annoncées viennent en tête du rail, leur nom et leur saison en étiquette
- * (« SAISON 2 » n'est écrit que si la saison est servie) ; les autres n'en
- * ont pas.
+ * Le descriptif de la série présentée : sa phrase et ce qu'on y trouve. Il
+ * change avec la pastille choisie — c'est lui qui aide à choisir. Une série
+ * sans texte (une série neuve dont on n'a rien écrit) cache le panneau
+ * plutôt que d'afficher un cadre vide.
  */
-function rendreFermees() {
-  const fermees = SETS_TOUTES.filter((x) => !serieDebloquee(x));
-  const av = $('avenir');
-  if (!fermees.length) { av.hidden = true; av.innerHTML = ''; return; }
-  av.hidden = false;
-  // Les séries annoncées d'abord, de la saison la plus proche à la plus
-  // lointaine ; l'ordre du catalogue sinon (le tri est stable).
-  const rang = [...fermees].sort((a, b) => (saisonDe(a) || Infinity) - (saisonDe(b) || Infinity));
-  const annoncees = rang.filter((x) => saisonDe(x));
-  const k = annoncees.length ? saisonDe(annoncees[0]) : 0;
-  const memeSaison = annoncees.filter((x) => saisonDe(x) === k);
-  /* Une série annoncée : son nom. Plusieurs pour la même saison : leur
-     nombre — une étiquette de trois noms ne tiendrait pas sur un sachet. */
-  const etiquette = !k ? ''
-    : memeSaison.length === 1 ? `${memeSaison[0].nom} · SAISON ${k}`
-      : `${memeSaison.length} SÉRIES · SAISON ${k}`;
-  const n = fermees.length;
-  av.innerHTML = `<p class="fermees-lab">${n} série${n > 1 ? 's attendent' : ' attend'} une saison</p>`
-    + (etiquette ? `<div class="fermees-annonce"><span class="tbf-sticker">${esc(etiquette)}</span></div>` : '')
-    + `<div class="fermees-rail"><div class="fermees-rang" tabindex="0" role="group"
-        aria-label="Les séries à venir">${rang.map(sachetFerme).join('')}</div>
-        <span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span></div>`;
+function rendreDescriptif(s) {
+  const p = $('serieDesc');
+  const ligne = (s.ligne ?? '').trim();
+  const desc = (s.desc ?? '').trim();
+  p.hidden = !ligne && !desc;
+  p.setAttribute('aria-label', s.nom ?? 'La série');
+  /* Le texte seul, sans guillemets ajoutés : la traduction de la page
+     reconnaît la phrase telle qu'elle est écrite dans la série. */
+  $('serieLigne').textContent = ligne;
+  $('serieLigne').hidden = !ligne;
+  $('serieTxt').textContent = desc;
+  $('serieTxt').hidden = !desc;
 }
 
 /** Les pastilles des séries ouvertes, la choisie ramenée au milieu du rail. */
@@ -1688,7 +1693,7 @@ function renderKiosque() {
   const ouvrable = serieDebloquee(s);
 
   rendreSeries(ouvertes, s);
-  rendreFermees();
+  rendreDescriptif(s);
   rendreSaison();
 
   /* Le nom de la série, en sticker sous son sachet, et ce qu'elle contient :
@@ -1728,6 +1733,7 @@ function renderKiosque() {
 /** Passer d'un paquet à l'autre. Le contenu ne change pas — voir la note de
     `PAQUETS_AU_CHOIX` — mais le geste, lui, est la moitié du plaisir. */
 function goPaquet(delta) {
+  toucheLAnneau();
   S.paquet = ((S.paquet ?? MILIEU) + delta + PAQUETS_AU_CHOIX) % PAQUETS_AU_CHOIX;
   audio.flip();
   renderKiosque();
@@ -1753,7 +1759,10 @@ $('series').onclick = (e) => {
 (() => {
   const c = $('carousel');
   let x0 = null, dragging = false;
-  c.addEventListener('pointerdown', (e) => { x0 = e.clientX; dragging = false; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointerdown', (e) => {
+    x0 = e.clientX; dragging = false; toucheLAnneau(); c.classList.add('glisse');
+    c.setPointerCapture(e.pointerId);
+  });
   c.addEventListener('pointermove', (e) => {
     if (x0 === null) return;
     const d = (e.clientX - x0) / ecartDesPaquets();
@@ -1764,12 +1773,14 @@ $('series').onclick = (e) => {
     if (x0 === null) return;
     const d = (e.clientX - x0) / ecartDesPaquets();
     x0 = null;
+    c.classList.remove('glisse');
+    toucheLAnneau();
     if (d < -0.28) goPaquet(1);
     else if (d > 0.28) goPaquet(-1);
     else { placeCarousel(0); if (!dragging) ouvrirDepuisLaBache(); }
   };
   c.addEventListener('pointerup', end);
-  c.addEventListener('pointercancel', () => { x0 = null; placeCarousel(0); });
+  c.addEventListener('pointercancel', () => { x0 = null; c.classList.remove('glisse'); placeCarousel(0); });
 })();
 
 $('openBtn').onclick = () => ouvrirDepuisLaBache();
@@ -1973,6 +1984,11 @@ const estNeuve = (c) => c?.new === true && c.type !== 'echarpes' && c.type !== '
    avait déjà se change en écharpes, une poignée d'écharpes est une carte à
    part, et le reste ne rapporte rien. */
 let rapportent = [];
+/* Le dos de chaque carte du paquet : le code de sa série, ou `null` pour le
+   dos neutre (`src/server/fanzzy/dos.js`). Rangé à côté de `pull`, rang pour
+   rang : `carteDuPaquet` rend l'objet partagé du catalogue, qu'on ne marque
+   pas. */
+let dosDesCartes = [];
 /* Et combien chacune, pour le sticker de prix de sa case d'album. La page le
    recompte avec le barème du catalogue (`SCARVES`) ; elle ne l'écrit que si
    son compte retombe exactement sur le total du serveur — un doublon dont on
@@ -1982,6 +1998,9 @@ let montantsSurs = false;
 /* Vrai entre l'ouverture d'un paquet et le versement de ses doublons au
    compteur — voir `crediterDoublons`, qui le consomme. */
 let doublonsAVerser = false;
+/* Le dos d'une carte reçue : celui que le serveur a dit, la série du sachet
+   pour un serveur plus ancien qui ne le dit pas encore. */
+const dosDeCarte = (c) => (c && 'dos' in c ? c.dos : (SETS[S.set] ?? {}).id ?? null);
 const rapporte = (c) => c?.type === 'echarpes' || c?.type === 'scarves'
   || ((c?.type === 'fanzzy' || c?.type === 'stuff' || c?.type === 'lieu') && c.new === false);
 function montantDe(c) {
@@ -2076,6 +2095,7 @@ async function openPack() {
      catalogue recopié. */
   pull = res.cards.map(carteDuPaquet);
   rapportent = res.cards.map(rapporte);
+  dosDesCartes = res.cards.map(dosDeCarte);
   montants = res.cards.map(montantDe);
   neuf = res.cards.map(estNeuve);
   doublonsAVerser = true;
@@ -2095,6 +2115,7 @@ async function openPack() {
   if (inconnues.length) {
     // Les listes vont ensemble : on retire les mêmes rangs de toutes.
     rapportent = rapportent.filter((_, i) => Boolean(pull[i]));
+    dosDesCartes = dosDesCartes.filter((_, i) => Boolean(pull[i]));
     montants = montants.filter((_, i) => Boolean(pull[i]));
     neuf = neuf.filter((_, i) => Boolean(pull[i]));
     pull = pull.filter(Boolean);
@@ -2186,12 +2207,13 @@ async function openPack() {
   paquet += 1;
   enCeremonie = false;
   const st = $('ostage'); st.innerHTML = '';
-  /* **Le dos, c'est celui du sachet — pas celui de la carte.** La nuance
-     compte : montrer la série de la carte qu'on tient renseignerait sur elle
-     avant de la retourner, et un booster n'a plus rien à révéler si son dos
-     l'a déjà dit. Le sachet, lui, on l'a choisi soi-même une seconde plus
-     tôt. */
-  const dosDuSachet = window.FZART?.dos?.((SETS[S.set] ?? {}).id);
+  /* **Chaque carte porte le dos de sa série** (demande de Gaël du 3 novembre
+     2026). Le dos du sachet était posé sur les cinq : une pièce commune, une
+     poignée d'écharpes ou la tenue d'un Fanzzy d'une autre série se
+     retournaient sur un dos qui n'était pas le leur. Ce qui n'appartient à
+     aucune série a son dos à part, le neutre. Le serveur dit lequel
+     (`dos`) ; sans lui, la série du sachet. */
+  const dosDe = (i) => window.FZART?.dos?.(dosDesCartes[i]);
   pull.forEach((f, i) => {
     const el = document.createElement('div');
     /* Face cachée, elle ne se lit pas : figée (`.fz-fige`, cartes.css)
@@ -2202,20 +2224,23 @@ async function openPack() {
     el.dataset.sorte = sorteDe(f);
     el.style.setProperty('--rc', `var(--r-${el.dataset.rar})`);
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
+    const dos = dosDe(i);
     el.innerHTML = `<div class="flip">
-      <div class="face back${dosDuSachet ? ' dessine' : ''}"${dosDuSachet
-        ? ` style="background-image:url('${dosDuSachet}')"` : ''}><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
+      <div class="face back${dos ? ' dessine' : ''}"${dos
+        ? ` style="background-image:url('${dos}')"` : ''}><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
       <div class="face front">${cardHTML(f)}</div></div>`;
     st.appendChild(el);
   });
   st.firstElementChild?.classList.add('kq-dessus');
-  /* Les cinq fentes : un dos de carte par carte à révéler — le même dos que
-     celui des cartes —, la première qui sort. */
+  /* Les cinq fentes : un dos de carte par carte à révéler — chacune le dos
+     de la carte qu'elle annonce —, la première qui sort. */
   const fentes = $('oFentes');
-  if (dosDuSachet) fentes.style.setProperty('--dos', `url("${dosDuSachet}")`);
-  else fentes.style.removeProperty('--dos');
-  fentes.innerHTML = pull.map((_, i) =>
-    `<span class="tbf-fente${i === 0 ? ' tbf-fente--sort' : ''}"></span>`).join('');
+  fentes.style.removeProperty('--dos');
+  fentes.innerHTML = pull.map((_, i) => {
+    const dos = dosDe(i);
+    return `<span class="tbf-fente${i === 0 ? ' tbf-fente--sort' : ''}"${
+      dos ? ` style="--dos:url('${dos}')"` : ''}></span>`;
+  }).join('');
   fentes.setAttribute('aria-label', `Carte 1 sur ${pull.length}`);
   $('summary').classList.remove('on');
   $('summary').innerHTML = '';

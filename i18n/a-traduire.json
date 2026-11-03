@@ -1,4 +1,15 @@
 {
+ "NEUTRE": {
+  "ou": [
+   "public/fanzzy-art.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "LE JEU REVIENT": {
   "ou": [
    "public/index.html"
@@ -859,6 +870,18 @@
    "es"
   ]
  },
+ "HEAD": {
+  "ou": [
+   "public/video-tuto.js",
+   "src/server/construction.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "Piccolo rouge et bleu": {
   "ou": [
    "src/shared/fanzzy/inventaire.js"
@@ -1445,6 +1468,171 @@
  "La tribune contre le boss": {
   "ou": [
    "src/shared/mini-jeux.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le Crachin": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Il pleut depuis le coup d’envoi, finement, sans jamais s’arrêter. Personne ne bouge.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "La pluie fine porte les chants tenus, et fait glisser le rythme.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "La Terrace Debout": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Pas un siège : des marches de béton et des barrières d’acier où l’on s’appuie à dix.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Debout contre les barrières : on pousse plus fort, et l’on se contre mieux.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le Lendemain de Noël": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Midi, le 26 décembre. Tout le monde est venu, et personne n’a vraiment dormi.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tout le monde est là : la ferveur monte vite, mais le souffle revient mal.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "La Rue de Briques": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le stade tient entre deux rangées de maisons. On regarde le match depuis les fenêtres.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Tout le quartier se relaie : le souffle dépensé revient mieux, le martelage porte moins.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "La Dernière Terrace": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "La vieille tribune sera démolie lundi. Ce soir, on y chante une dernière fois.": {
+  "ou": [
+   "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Un dernier soir : tout le monde pousse et tient comme jamais, et plus personne ne souffle.": {
+  "ou": [
+   "src/shared/stades.js"
   ],
   "langues": [
    "en",
