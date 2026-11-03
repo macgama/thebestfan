@@ -43,7 +43,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    temps du ménage, sinon MySQL refuse de laisser tomber une table qu une autre
    référence encore — et il a raison. */
 await raw.query('SET FOREIGN_KEY_CHECKS = 0');
-await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, tenues, user_stuff, user_etats, user_skins, user_fanzzy,
+await raw.query(`DROP TABLE IF EXISTS user_pass, parrainages, abonnements, achats, tenues, user_stuff, user_etats, user_skins, user_fanzzy,
   user_souvenirs, user_decks, virage_presence, user_nouveautes, user_wallet, users`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 const { readFile } = await import('node:fs/promises');
@@ -51,7 +51,7 @@ const { readFile } = await import('node:fs/promises');
    colonne. Le lire dans le désordre échoue sur un ALTER TABLE d une table qui
    n existe pas encore — et le message ne dit pas laquelle manque. */
 for (const f of ['auth.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql',
-  'skins.sql', 'etats.sql', 'tenues.sql', 'boutique.sql', 'abonnement.sql']) {
+  'skins.sql', 'etats.sql', 'tenues.sql', 'boutique.sql', 'abonnement.sql', 'pass.sql']) {
   await raw.query(await readFile(`sql/${f}`, 'utf8'));
 }
 /* **La table des nouveautés, et elle seule**, prise telle quelle dans
@@ -182,6 +182,32 @@ const evenement = (sessionId) => ({
     body: JSON.stringify({ article: 'article-qui-n-existe-pas' }),
   });
   check('et un article inconnu est refusé', r.status === 400);
+}
+
+/* ------------------------------------------- le PASS pas encore ouvert (BASE) */
+{
+  /* Gaël, 3 novembre 2026 : pendant la BASE, le PASS est « Bientôt » et ne
+     s'achète pas avant son ouverture. Le module du PASS le dit (`bientot`),
+     la boutique refuse avant d'ouvrir la moindre session Stripe. */
+  const avant = (await q('SELECT COUNT(*) AS n FROM achats'))[0].n;
+  const fermee = createBoutique({
+    mailer: facteur, pool, fanzzy,
+    requireAuth: (req, _res, next) => { req.user = { id: U }; next(); },
+    abonnement: { offre: async () => ({ couvre: [1], aAcheter: [1], deja: [], bientot: { ouvre: '2026-12-01' } }) },
+  });
+  const app2 = express();
+  app2.use(express.json());
+  app2.use('/api/boutique', fermee.router);
+  const h2 = createServer(app2).listen(0);
+  const r = await fetch(`http://localhost:${h2.address().port}/api/boutique/commander`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ article: 'pass-saison' }),
+  });
+  const j = await r.json().catch(() => ({}));
+  h2.close();
+  check('pendant la BASE, le PASS ne se commande pas : « bientôt »',
+    r.status === 400 && j.error === 'pass.error.bientot' || console.log('       ', r.status, j));
+  check('et aucune commande n’est écrite', (await q('SELECT COUNT(*) AS n FROM achats'))[0].n === avant);
 }
 
 /* ------------------------------------------------------------- la signature */
@@ -919,6 +945,35 @@ const evenement = (sessionId) => ({
   check('et elle prend PUBLIC_ORIGIN avant SITE_URL',
     lignes.every((l) => l.includes('process.env.PUBLIC_ORIGIN'))
     || (console.log('        ligne :', lignes.find((l) => !l.includes('PUBLIC_ORIGIN')).trim()), false));
+}
+
+/* --------------------------------------------- l'ancien PASS d'une saison
+
+   Gaël, 3 novembre 2026 : un PASS fini revient en vente, au même prix. La
+   commande garde `pass-saison@<n>` ; le paiement livre **cette** saison,
+   marquée tardive (`stripe-tard`), avec les boosters du PASS. */
+{
+  const [[w0]] = await pool.query('SELECT packs FROM user_wallet WHERE user_id = ?', [U]);
+  await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
+           VALUES (?, 'pass-saison@1', ?, 'eur', 'cs_ancien')`, [U, ARTICLE_PAR_ID.get('pass-saison').prix]);
+  const r = await poster(evenement('cs_ancien'));
+  const [ligne] = await q('SELECT saison, source FROM user_pass WHERE user_id = ?', [U]);
+  const [[w1]] = await pool.query('SELECT packs FROM user_wallet WHERE user_id = ?', [U]);
+  const [cmd] = await q(`SELECT etat FROM achats WHERE stripe_session = 'cs_ancien'`);
+  check('un ancien PASS payé livre sa saison, marquée tardive', r.status === 200
+    && ligne?.saison === 1 && ligne?.source === 'stripe-tard' && cmd?.etat === 'livre'
+    || console.log('       ', ligne, cmd));
+  check('avec les boosters du PASS', Number(w1.packs) - Number(w0.packs)
+    === ARTICLE_PAR_ID.get('pass-saison').livraison.packs);
+  await poster(evenement('cs_ancien'));
+  const [[w2]] = await pool.query('SELECT packs FROM user_wallet WHERE user_id = ?', [U]);
+  check('rejoué : rien de plus', Number(w2.packs) === Number(w1.packs));
+  const r2 = await fetch(`${base}/api/boutique/commander`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ article: 'pass-saison', saison: 7 }),
+  });
+  check('commander un ancien PASS qui n’est pas en vente : refusé',
+    r2.status === 400 && (await r2.json()).error === 'pass.error.pas_en_vente');
 }
 
 console.log(`\n${rates ? `${rates} échec(s)` : 'tout est vert'}`);

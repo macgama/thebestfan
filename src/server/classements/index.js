@@ -1240,7 +1240,7 @@ export function createClassements({ pool, requireAuth,
           WHERE user_id = ? AND (source = 'division' OR titre IS NOT NULL)
          UNION ALL
          SELECT 'tampons', NULL, saison_id, NULL, SUM(tampons), NULL FROM recompenses
-          WHERE user_id = ? AND source IN ('mission', 'sachet') AND saison_id IS NOT NULL
+          WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id IS NOT NULL
           GROUP BY saison_id
           ORDER BY verse_a, source, cle`, [userId, userId]);
     } catch (e) {

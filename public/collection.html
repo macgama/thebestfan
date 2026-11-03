@@ -806,7 +806,7 @@ const EMBLEMES = {
    est pas — plutôt que l'accroche de la série, qu'on lit déjà au classeur. */
 const ACCROCHES = {
   etats: 'Dans les boosters, pour un Fanzzy que tu as, à un âge que tu as débloqué.',
-  tenues: 'Dans les boosters et à la boutique, pour un Fanzzy que tu as, âge par âge.',
+  tenues: 'Dans les boosters et à la boutique, pour un Fanzzy que tu as, âge par âge. Celles marquées PASS : uniquement avec le PASS.',
   equipement: 'Dans les boosters et à la boutique. Chaque pièce a un bonus et un revers.',
   actions: 'Les communes sont à tout le monde ; les autres sortent des boosters.',
   lieux: 'Dans les boosters. Le Chaudron est à tout le monde ; un stade à toi peut habiller ton accueil.',
@@ -1248,7 +1248,10 @@ function objetsPlanche(perso, quoi, d, { atteints = false } = {}) {
     return quoi === 'tenues'
       ? (par.skins ?? []).filter((s) => s.id !== 'base' && (s.publie || s.possede))
         .map((s) => ({ k: 'skin', id: s.id, nom: s.nom, rar: s.rar, texte: s.texte,
-          possede: Boolean(s.possede), pour: perso, stade, ferme, ages: ages.length }))
+          possede: Boolean(s.possede), pour: perso, stade, ferme, ages: ages.length,
+          /* La tenue d'un PASS (Préhistorique) ne sort d'aucun booster :
+             uniquement avec le PASS pendant sa saison, à l'étal ensuite. */
+          pass: s.pass ?? null, reservee: Boolean(s.reservee) }))
       : (par.etats ?? []).map((e) => ({ k: 'etat', id: e.id, nom: e.nom, possede: Boolean(e.possede),
         pour: perso, stade, ferme, ages: ages.length }));
   }).filter((o) => !atteints || !o.ferme || o.possede);
@@ -1298,13 +1301,15 @@ function casesHTML(objets, cle) {
   const plusieurs = new Set(objets.map((o) => o.stade)).size > 1;
   return objets.map((o, k) => {
     const neuve = o.possede ? neufs.get(`${o.k}:${o.pour}:${o.stade}:${o.id}`) ?? null : null;
-    const etat = o.possede ? 'à toi' : o.ferme ? 'âge pas encore atteint' : 'à gagner';
+    const auPass = o.k === 'skin' && o.pass && o.reservee;
+    const etat = o.possede ? 'à toi' : auPass ? 'uniquement avec le PASS' : o.ferme ? 'âge pas encore atteint' : 'à gagner';
     return `<li><button type="button" class="tbf-planche-case"${o.possede ? ' data-etat="possede"' : ''}${
       !o.possede && o.ferme ? ' data-verrou' : ''} data-liste="${esc(cle)}" data-i="${k}"${neuve ? ` data-cle="${esc(neuve)}"` : ''}
       aria-label="${esc(o.nom)}${plusieurs ? `, âge ${o.stade}` : ''} — ${etat}${neuve ? ', nouveau' : ''}"><img src="${esc(dessinCase(o))}" alt=""
       loading="lazy" onerror="const s=window.TBF_ETATS?.secours?.(this.src,true);if(s)this.src=s;else this.removeAttribute('src')">${
       esc(o.nom)}${plusieurs ? `<small>ÂGE ${o.stade}</small>` : ''}${
-      neuve ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : ''}</button></li>`;
+      neuve ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>'
+        : auPass && !o.possede ? '<span class="tbf-sticker case-pass" data-ton="or" aria-hidden="true">PASS</span>' : ''}</button></li>`;
   }).join('');
 }
 
@@ -1732,9 +1737,14 @@ function vueCarte(vue) {
 
   /* La scène : le halo de la rareté, les rayons pour l'épique et la
      légendaire seulement, les voisines en dos derrière — seulement celles qui
-     existent. Le dos est celui de la série de la carte. */
-  const code = o.k === 'fanzzy' ? BY_ID.get(o.id)?.set : o.pour ? BY_ID.get(o.pour)?.set : SETS?.[0]?.id;
-  const dos = window.FZART?.dos?.(code ?? 'RP');
+     existent. Le dos est celui de la série de la carte — celle du Fanzzy
+     pour une tenue ou un état, celle du préfixe pour une pièce, une action ou
+     un stade (`rp-gourde`, `a-rp-filet`) —, le dos neutre sinon. */
+  const prefixe = String(o.id ?? '').replace(/^a-/, '').split('-');
+  const code = o.k === 'fanzzy' ? BY_ID.get(o.id)?.set : o.pour ? BY_ID.get(o.pour)?.set
+    : prefixe.length > 1 && SETS_TOUTES?.some((s) => s.id === prefixe[0].toUpperCase())
+      ? prefixe[0].toUpperCase() : null;
+  const dos = window.FZART?.dos?.(code);
   const scene = `<div class="tbf-vitrine-scene" id="vitr-scene" data-rar="${rar}"${
     ['epique', 'legendaire'].includes(rar) && possede ? ' data-rayons' : ''}${dos ? ` style="--dos:url('${esc(dos)}')"` : ''}>
       ${vue.i > 0 ? '<span class="tbf-vitrine-dos" aria-hidden="true"></span>' : ''}
@@ -1751,7 +1761,9 @@ function vueCarte(vue) {
      sur la face verte (2,4:1) : la carte pleine, sans pochoir ni scotch, dit
      déjà qu'elle est à soi, et la coche le redit sans couleur. */
   const sticker = possede ? '<span class="tbf-sticker"><i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>DANS TA COLLECTION</span>'
-    : aPayer ? '<span class="tbf-sticker">ÂGE À DÉBLOQUER</span>' : '<span class="tbf-sticker">À GAGNER</span>';
+    : aPayer ? '<span class="tbf-sticker">ÂGE À DÉBLOQUER</span>'
+      : o.k === 'skin' && o.pass && o.reservee ? '<span class="tbf-sticker" data-ton="or">UNIQUEMENT AVEC LE PASS</span>'
+        : '<span class="tbf-sticker">À GAGNER</span>';
 
   /* La phrase du jeu d'abord, celle de la bibliothèque en repli. */
   const texte = sansSonTitre(c?.texte ?? (o.k === 'skin' ? TENUES?.get(o.id)?.texte : o.texte) ?? '',
@@ -1806,6 +1818,14 @@ function vueCarte(vue) {
   } else if (!possede) {
     if (o.k === 'action' && rar === 'commune') {
       blocs.push('<p class="tbf-vitrine-texte">Commune : elle est à tout le monde depuis le premier jour.</p>');
+    } else if (o.k === 'skin' && o.pass && o.reservee) {
+      /* Gaël, 3 novembre 2026 : « Il faudrait indiquer "uniquement avec le
+         PASS" ». Aucun booster ne la donne : la mener au kiosque mentait. */
+      blocs.push(`<p class="tbf-vitrine-texte">${esc(`Uniquement avec le PASS ${o.pass}. Elle ne sort d’aucun booster : la voie PASS l’ouvre, âge par âge.`)}</p>`);
+      actions.push('<a class="tbf-plaque tbf-bloc" data-ton="or" href="/abonnement">VOIR LE PASS</a>');
+    } else if (o.k === 'skin' && o.pass) {
+      blocs.push('<p class="tbf-vitrine-texte">Elle ne sort d’aucun booster : elle est à l’étal de la boutique, en écharpes.</p>');
+      actions.push('<a class="tbf-plaque tbf-bloc" href="/boutique">VOIR LA BOUTIQUE</a>');
     } else if ((o.k === 'etat' || o.k === 'skin') && o.ferme) {
       blocs.push(`<p class="tbf-vitrine-texte">Il te faut d’abord débloquer cet âge : ${o.k === 'etat'
         ? 'un booster ne donne un état que pour un âge atteint.' : 'une tenue s’habille sur l’âge qui la reçoit.'}</p>`);

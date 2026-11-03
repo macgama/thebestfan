@@ -74,8 +74,15 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
                                   la route `/a-jouer` : les pages des matchs y
                                   lisent qu'un duel attend. Facultatives : sans
                                   elles, la route ne dit que le Virage. */
-                               filesDuel = null }) {
+                               filesDuel = null,
+                               /* Les défis de la semaine (`src/server/defis/`) :
+                                  un chant fait avancer le défi de stuff de qui
+                                  porte la pièce. Facultatifs. */
+                               defis = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
+  /* Le sac du Fanzzy de chaque supporter entré, pour les défis de stuff :
+     posé à l'entrée, lu à chaque chant. */
+  const sacsDesDefis = new Map();   // userId -> [stuff]
   /* Le bilan lit la base, jamais la salle (voir `bilan.js`). `recharger` ne
      sert pas à l'XP — elle ne porte pas de booster — et part par principe. */
   const bilan = createBilan({ pool, niveau, recharger: fanzzy?.recharger ?? null });
@@ -265,8 +272,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          La présence sert aux cartes-souvenirs et au classement : la perdre coûte
          une ligne de ferveur à un supporter. La perdre en sortant tout le monde
          du stade coûte le reste. */
-      onPush: (p) => souvenirs.recordPush(p)
-        .catch((e) => console.error(`[virage ${fixtureId}] présence non écrite :`, e.message)),
+      onPush: (p) => {
+        if (p.chant && defis) defis.apresChant(p.userId, sacsDesDefis.get(p.userId));
+        return souvenirs.recordPush(p)
+          .catch((e) => console.error(`[virage ${fixtureId}] présence non écrite :`, e.message));
+      },
       /* **Le score de la corde, gardé en base** (`sql/virage-tribunes.sql`) :
          c'est lui qui donne ses points au club de chaque supporter, au
          championnat des clubs (`classements/index.js`). Il ne vivait que dans
@@ -856,6 +866,12 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         // Un deck illisible ne doit pas fermer la porte du virage.
         console.warn('[virage] deck illisible pour', u.userId, '·', e.message);
       }
+      /* Le sac retenu pour les défis de stuff, et les défis de la semaine
+         tirés dès l'entrée s'ils ne l'étaient pas : le premier chant doit
+         déjà compter. Jamais attendu. */
+      sacsDesDefis.set(u.userId, sac);
+      if (sacsDesDefis.size > 20000) sacsDesDefis.delete(sacsDesDefis.keys().next().value);
+      defis?.entrer?.(u.userId)?.catch?.(() => {});
 
       /* Le bonus du KOP se mêle à ceux du Fanzzy, dans le même objet.
 

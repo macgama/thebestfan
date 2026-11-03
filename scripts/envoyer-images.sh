@@ -35,7 +35,12 @@ fi
 RACINE="${TBF_RACINE:-sites/thebestfan.online}"
 cd "$(dirname "$0")/.."
 
-DOSSIERS=(public/img/fanzzy public/img/ultime)
+# public/video : les fonds filmés de fx.js et les vidéos tutoriel de « Comment
+# jouer » (video-tuto.js). Ce sont des .mp4, hors de git comme les images.
+DOSSIERS=()
+for d in public/img/fanzzy public/img/ultime public/video; do
+  [ -d "$d" ] && DOSSIERS+=("$d")
+done
 REPERE=.tbf-images-envoyees
 
 if [ "${1:-}" = "--tout" ] || [ ! -f "$REPERE" ]; then

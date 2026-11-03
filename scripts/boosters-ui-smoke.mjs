@@ -290,16 +290,12 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
  * être verrouillée — bouton gris, « NIVEAU 9 REQUIS », sans rien qui dise
  * qu'il suffisait de glisser.
  *
- * Le carrousel ne porte donc plus que des paquets ouvrables, et il en porte
- * trois : on choisit le sien. **Ce choix ne change rien au tirage** — voir la
+ * Le carrousel ne porte donc plus que des paquets ouvrables, dix en anneau
+ * qui tourne (depuis le 3 novembre 2026) : on choisit le sien. **Ce choix ne change rien au tirage** — voir la
  * note de `PAQUETS_AU_CHOIX` — c'est un geste de cérémonie.
  *
- * Ils étaient dix. Le lot 3 (le kiosque) les a ramenés à trois au plus :
- * celui du milieu sur son socle, un voisin de chaque côté. On n'en voyait de
- * toute façon que trois à la fois, et les sept autres n'étaient que des
- * points sous le carrousel qu'on ne regardait pas. Le contrôle suit donc la
- * règle nouvelle — trois, tous visibles, et l'on arrive sur celui du
- * milieu — et pas seulement un nouveau chiffre.
+ * Ils étaient dix en file, puis trois (lot 3) : en file, on n'en voyait que
+ * trois. En anneau, on les voit tous, de face, de côté ou de dos.
  *
  * Mais un jeu ne cache pas ce qui vient : ce qui suit s'annonce en une ligne,
  * à côté du choix au lieu d'être dedans. Le compte de test est au niveau 1,
@@ -318,10 +314,14 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
     /* Lequel est devant (`.center`), et lesquels le carrousel range hors de
        la vue (`.hidden`, au-delà de 1,8 place du centre). */
     devant: [...document.querySelectorAll('#carousel .slide.center')].map((s) => s.dataset.i),
-    caches: document.querySelectorAll('#carousel .slide.hidden').length,
-    /* Ce qui vient, annoncé sans être sur le chemin. */
-    avenir: document.getElementById('avenir')?.hidden === false
-      ? document.getElementById('avenir').textContent : null,
+    dos: document.querySelectorAll('#carousel .slide.dos').length,
+    paquet: S.paquet,
+    /* Le descriptif de la série présentée (demande de Gaël, 3 novembre
+       2026), à la place du rail des séries fermées, retiré. */
+    descriptif: document.getElementById('serieDesc')?.hidden === false
+      ? document.getElementById('serieTxt')?.textContent ?? '' : null,
+    descAttendu: SETS[S.set]?.desc ?? null,
+    rail: Boolean(document.getElementById('avenir') || document.querySelector('.fermees-rang')),
     /* Les pastilles ne listent que l'ouvert, et disparaissent s'il n'y en a
        qu'une : un sélecteur à un seul choix n'est pas un choix. */
     pastilles: [...document.querySelectorAll('#series button')].map((b) => b.textContent),
@@ -333,34 +333,27 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
 
   check('le kiosque ne présente qu\u2019une série ouvrable', vu.serieOuverte === true
     || (console.log('        présentée :', vu.nom), false));
-  check(`trois paquets au choix (${vu.paquets})`, vu.paquets === 3);
-  /* Trois, c'est ce que l'œil embrasse : aucun n'est rangé hors de la vue,
-     sinon on aurait refait le présentoir de dix en plus court. Et l'on
-     arrive sur celui du milieu — `MILIEU`, l'indice 1 —, un voisin de chaque
-     côté pour que le glissement ait un sens dans les deux directions. Aucun
-     contrôle de cette suite ne fait tourner le carrousel avant celui-ci. */
-  check('tous les trois se voient', vu.caches === 0
-    || (console.log('        rangés hors de la vue :', vu.caches), false));
-  check('et l’on arrive sur celui du milieu',
-    vu.devant.length === 1 && vu.devant[0] === '1'
-    || (console.log('        devant :', JSON.stringify(vu.devant)), false));
+  /* Dix, en anneau qui tourne (demande de Gaël, 3 novembre 2026). Un seul
+     est devant, et c'est celui que l'état désigne (`S.paquet`) : l'anneau
+     tourne seul, le contrôle ne suppose donc pas lequel. Ceux de côté se
+     voient, ceux du fond passent derrière, de dos. */
+  check(`dix paquets en anneau (${vu.paquets})`, vu.paquets === 10);
+  check('un seul devant, celui que l’état désigne',
+    vu.devant.length === 1 && vu.devant[0] === String(vu.paquet)
+    || (console.log('        devant :', JSON.stringify(vu.devant), 'état :', vu.paquet), false));
+  check(`et les autres sont de côté ou de dos (${vu.dos} de dos)`, vu.dos > 0 && vu.dos < 9);
   check('le bouton ne réclame plus un niveau',
     !/niveau \d+/i.test(vu.bouton)
     || (console.log('        bouton :', vu.bouton), false));
 
-  if (vu.verrouillees > 0) {
-    /* Un jeu ne cache pas ce qui vient : il le dit, à côté du choix. */
-    check('ce qui vient est annoncé', Boolean(vu.avenir)
-      || (console.log('        aucune ligne « à venir »'), false));
-    /* Elle disait « au niveau 12 ». Elle ne le dit plus, et pas seulement
-       parce que le niveau n'ouvre plus rien : **on ne connaît pas la date**.
-       Une saison se lance quand l'administration la lance, et annoncer une
-       échéance qu'on ne tiendra peut-être pas est pire que de n'en annoncer
-       aucune. Elle nomme donc les séries, et dit qu'elles attendent. */
-    check('avec leur nom, et sans promettre de date',
-      /saison/i.test(vu.avenir ?? '') && !/niveau \d+/i.test(vu.avenir ?? '')
-      || (console.log('        elle dit :', vu.avenir), false));
-  }
+  /* Le descriptif dit ce qu'on trouve dans la série présentée, pour donner
+     envie de la choisir. Le rail « 13 séries attendent une saison » est
+     retiré : on n'y pouvait rien faire (le classeur montre toujours les
+     séries fermées, sous cadenas). */
+  check('le descriptif de la série est affiché',
+    Boolean(vu.descAttendu) && vu.descriptif === vu.descAttendu
+    || (console.log('        affiché :', vu.descriptif, '— attendu :', vu.descAttendu), false));
+  check('les séries fermées ne sont plus en rail sous le bouton', vu.rail === false);
 
   /* Au niveau 1 il n'y a qu'une série : la rangée de pastilles n'a rien à
      proposer et ne doit pas s'afficher. */
@@ -525,23 +518,20 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
   /* ---------------------------------------------- le dos porte la série
 
      **Les treize séries se retournaient sur le même dos** : un dégradé gris
-     et un petit triangle au trait, identique pour LA TRIBUNE, LE BESTIAIRE et
-     LA REPRISE. C'est pourtant la seule image qu'on regarde pendant la seconde
-     qui précède le tirage — celle qui donne envie de retourner. La série, qui
-     est le premier plaisir de la collection, n'existait qu'**après**.
-
-     On vérifie deux choses, et la seconde est la plus facile à casser : que
-     le dos est bien dessiné, et qu'il est celui du **sachet** et non celui de
-     la carte. Donner à chaque carte le dos de sa propre série reviendrait à
-     annoncer ce qu'elle est avant de la retourner — un booster n'a plus rien
-     à révéler si son dos l'a déjà dit. */
+     et un petit triangle au trait. Puis le dos du sachet a été posé sur les
+     cinq cartes : une pièce commune, une poignée d'écharpes ou la tenue d'un
+     Fanzzy d'une autre série se retournaient sur une série qui n'était pas la
+     leur (Gaël, 3 novembre 2026). Chaque carte porte maintenant le dos que le
+     serveur lui donne — sa série, ou le neutre —, et chaque fente le même. */
   const dos = await pageG.evaluate(() => {
     const dos = [...document.querySelectorAll('#ostage .face.back')];
+    const fentes = [...document.querySelectorAll('#oFentes .tbf-fente')];
     return {
       fonds: dos.map((d) => getComputedStyle(d).backgroundImage),
+      fentes: fentes.map((d) => getComputedStyle(d).backgroundImage),
       dessines: dos.filter((d) => d.classList.contains('dessine')).length,
       total: dos.length,
-      attendu: (SETS[S.set] ?? {}).id,
+      attendus: dosDesCartes.map((c) => c ?? 'NEUTRE'),
       triangles: dos.filter((d) => {
         const svg = d.querySelector('svg');
         return svg && getComputedStyle(svg).display !== 'none';
@@ -550,11 +540,14 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
   });
   check(`les cinq dos portent un dessin (${dos.dessines}/${dos.total})`,
     dos.dessines === dos.total);
-  check(`et c’est celui du sachet ouvert — ${dos.attendu}`,
-    !!dos.attendu && dos.fonds.every((f) => f.includes(`/img/dos/${dos.attendu}.`))
-      || (console.log('        fonds :', dos.fonds[0]), false));
-  check('un seul dos pour tout le paquet : rien ne trahit la carte d’en dessous',
-    new Set(dos.fonds).size === 1);
+  check(`chaque carte a le dos de sa série, ou le neutre — ${dos.attendus.join(' ')}`,
+    dos.attendus.length === dos.total
+      && dos.fonds.every((f, i) => f.includes(`/img/dos/${dos.attendus[i]}.`))
+      || (console.log('        fonds :', dos.fonds), false));
+  check('et chaque fente annonce le dos de sa carte',
+    dos.fentes.length === dos.total
+      && dos.fentes.every((f, i) => f.includes(`/img/dos/${dos.attendus[i]}.`))
+      || (console.log('        fentes :', dos.fentes), false));
   check('et le triangle de secours s’efface quand le dessin est là',
     dos.triangles === 0);
 

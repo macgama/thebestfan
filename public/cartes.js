@@ -1085,9 +1085,11 @@ function cardHTML(f, opts = {}) {
   const classes = `fz r-${rar}${holo}${opts.mini ? ' fz-mini' : ''}${anime ? ' fz-anime' : ''}`
     + `${verrou ? ' fz-verrou' : ''}${secret ? ' fz-secret' : ''}${opts.flip ? ' fz-flip' : ''}`;
   /* Le dos qu'on montrera au retournement : celui de la série de la carte,
-     LA REPRISE pour ce qui n'en a pas (une tenue, une pièce, une action). Une
-     adresse et pas une image : rien ne se télécharge avant le geste. */
-  const dos = opts.flip ? window.FZART?.dos?.(f.set ?? 'RP') ?? '' : '';
+     celle du Fanzzy pour une tenue ou un état, le dos neutre pour ce qui n'en
+     a pas (une pièce, une action). Une adresse et pas une image : rien ne se
+     télécharge avant le geste. */
+  const dos = opts.flip
+    ? window.FZART?.dos?.(f.set ?? (f.pour ? BY_ID.get(f.pour)?.set : null)) ?? '' : '';
 
   /* L'âge : un Fanzzy, un état, une tenue en ont un. Une pièce, une action,
      une poignée d'écharpes n'en ont pas — « ÉVO 1 » sur un thermos ne disait

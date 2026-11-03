@@ -219,6 +219,7 @@ h2{margin:26px 2px 10px}
 /* L'achat d'un emplacement est une plaque d'or (acheter = or), compacte pour
    tenir dans sa ligne ; sous 440 px elle passe sous son libellé. */
 .ligne #buyslot{flex:none;padding:9px 14px;min-height:44px;font-size:13px}
+.ligne .slot-refus{display:block;margin-top:3px;font-size:12px;color:var(--craie);opacity:.88}
 /* L'emplacement libre se dit **en creux** par un trait tireté, et non par
    une ligne à 40 % d'opacité : le lien qu'elle porte y tombait à 0,22. */
 .ligne.libre{border-top-style:dashed}
@@ -348,6 +349,18 @@ h2{margin:26px 2px 10px}
 .mon-fz-vide{width:112px;display:grid;place-items:center;border:2px dashed rgba(242,238,228,.5);
   border-radius:7px;background:rgba(0,0,0,.18)}
 .mon-fz-vide svg{width:46%;height:auto;fill:none;stroke:rgba(242,238,228,.55);stroke-width:1.6}
+/* **Mon Fanzzy vit** (Gaël, 3 novembre 2026 : « pas beaucoup d'animation sur
+   notre application »). Quand son dessin d'états existe, la carte cède la
+   place au personnage en pied, la scène commune (`fanzzy-scene.js`) : il
+   respire, cligne, a ses gestes de repos, et au toucher il saute, exulte et
+   pousse son cri. Une petite scène sous lui : le halo et l'ombre au sol. */
+.mon-fz-scene{flex:none;position:relative;width:132px;height:184px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.mon-fz-scene::before{content:"";position:absolute;left:8%;right:8%;bottom:4px;height:22px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent);pointer-events:none}
+.mon-fz-scene::after{content:"";position:absolute;inset:10% 0 6%;z-index:-1;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(245,195,59,.22),transparent);pointer-events:none}
+.mon-fz-scene:focus-visible{outline:3px solid var(--projo);outline-offset:3px;border-radius:8px}
 .mon-fz-txt{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .mon-fz-txt>b{font-family:var(--banner);font-weight:700;font-size:18px;line-height:1.15;letter-spacing:.04em;
   text-transform:uppercase;overflow-wrap:anywhere}
@@ -542,6 +555,7 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<script src="/fanzzy-scene.js"></script>
 <!-- `cardHTML` et le catalogue (`/api/fanzzy/dex`, servi de mémoire, sans
      base, et gardé une minute par le navigateur), pour la carte de MON
      FANZZY. Après fanzzy-art.js, qu'il lit dès son chargement. Et les trois
@@ -1679,9 +1693,29 @@ function rendreClubs() {
       <div class="ligne libre"><span class="n">emplacement libre</span>
         <a class="v" href="/equipes">choisir un club</a></div>`).join('')
     + (etat.slots.total < etat.slots.max ? `
-      <div class="ligne"><span class="n">Emplacement supplémentaire</span>
-        <button class="tbf-plaque" data-ton="or" id="buyslot">
-          ${prix === null ? 'ACHETER' : `${prix} écharpes`}</button></div>` : '');
+      <div class="ligne" id="ligneSlot"><span class="n">Emplacement supplémentaire
+        ${refusSlot() ? `<small class="slot-refus">${esc(refusSlot())}</small>` : ''}</span>
+        <button class="tbf-plaque" data-ton="or" id="buyslot"
+          ${refusSlot() ? 'aria-disabled="true"' : ''}>
+          ${etat.slots.niveauRequis ? `NIVEAU ${etat.slots.niveauRequis}`
+            : prix === null ? 'ACHETER' : `${prix} écharpes`}</button></div>` : '');
+}
+
+/* **Pourquoi l'emplacement suivant ne s'achète pas encore**, ou `null`.
+   Gaël, 3 novembre 2026 : le bouton laissait cliquer, puis répondait
+   « Emplacement impossible (slot_locked) ». Le refus se lit maintenant avant
+   le clic : la plaque est éteinte, la ligne dit pourquoi, et toucher la ligne
+   le redit. Le serveur garde la même règle (`plafondDe`). */
+function refusSlot() {
+  const s = etat?.slots;
+  if (!s) return null;
+  if (s.niveauRequis) return `Se débloque au niveau ${s.niveauRequis}`;
+  if (s.plafond != null && s.total >= s.plafond) return 'Pas encore débloqué';
+  const prix = prixSlot();
+  if (prix !== null && typeof etat.scarves === 'number' && etat.scarves < prix) {
+    return `Il te manque ${prix - etat.scarves} écharpes`;
+  }
+  return null;
 }
 
 /**
@@ -1722,16 +1756,66 @@ function rendreFanzzy() {
   /* La ligne du cri ne paraît que si le cri a un nom : « Cri : » suivi de
      rien se lit comme une donnée perdue. */
   const cri = f?.cri?.label;
+  /* Le personnage vivant d'abord, quand le dessin d'états le permet
+     (`vivant`) ; sinon la carte, comme avant. */
+  const vif = monAvatar?.id && window.TBF_SCENE && fanzzyMort !== monAvatar.id ? monAvatar : null;
   /* La même carte déjà posée ne se repose pas : elle clignoterait. */
-  const sig = JSON.stringify([carte?.id ?? null, cartesPretes, nom, cri ?? null]);
+  const sig = JSON.stringify([carte?.id ?? null, cartesPretes, nom, cri ?? null,
+    vif ? [vif.id, vif.evo, vif.skin, vif.etat] : null]);
   if (sig === fanzzyVu) return;
   fanzzyVu = sig;
-  const emplacement = carte
+  sceneProfil?.arreter?.();
+  sceneProfil = null;
+  const emplacement = vif
+    ? `<div class="mon-fz-scene" id="monFzScene" role="button" tabindex="0"
+        aria-label="${esc(nom ? `Faire crier ${nom}` : 'Faire crier mon Fanzzy')}"></div>`
+    : carte
     ? `<div class="mon-fz-carte" aria-hidden="true">${window.TBF_CARTES.cardHTML(carte, { mini: true })}</div>`
     : cartesPretes === null ? '<div class="mon-fz-carte" aria-hidden="true"></div>' : '';
   $('fanzzy').innerHTML = `<div class="mon-fz">${emplacement}
     <div class="mon-fz-txt"><b>${esc(nom)}</b>${cri ? `<span>Cri : ${esc(cri)}</span>` : ''}
       <a class="tbf-plaque changer" data-ton="bleu" href="/fanzzy">CHANGER</a></div></div>`;
+  if (vif) animerMonFanzzy(vif, cri, sig);
+}
+
+/* La scène de MON FANZZY. Un personnage sans dessin d'états (`definir`
+   rend faux) retombe sur sa carte, une fois pour toutes dans la visite. */
+let sceneProfil = null;
+let fanzzyMort = null;
+let dernierCri = -Infinity;
+async function animerMonFanzzy(avatar, cri, sig) {
+  const hote = $('monFzScene');
+  if (!hote) return;
+  const scene = window.TBF_SCENE.creer(hote, { fond: 'neutre', taille: { 1: 0.8, 2: 0.88, 3: 0.96 } });
+  sceneProfil = scene;
+  let vu = false;
+  try { vu = await scene.definir(avatar); } catch { vu = false; }
+  if (sceneProfil !== scene || fanzzyVu !== sig) return;
+  if (!vu) {
+    scene.arreter?.();
+    sceneProfil = null;
+    fanzzyMort = avatar.id;
+    fanzzyVu = null;
+    rendreFanzzy();
+    return;
+  }
+  /* Au toucher : un saut et la joie, toujours ; le cri, au plus une fois
+     toutes les quatre secondes, pour qu'un doigt nerveux ne fasse pas
+     trembler l'écran sans fin. Au calme, rien ne bouge : le cri seul, écrit. */
+  const toucher = () => {
+    if (!window.FX?.calme?.('animations')) {
+      scene.saute?.();
+      scene.pose?.('joie', 1800);
+    }
+    const t = performance.now();
+    if (t - dernierCri < 4000) return;
+    dernierCri = t;
+    window.FX?.cri?.(cri || 'ALLEZ !');
+  };
+  hote.addEventListener('click', toucher);
+  hote.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toucher(); }
+  });
 }
 
 /* Le catalogue des cartes, pour dessiner celle de MON FANZZY : une lecture
@@ -1819,6 +1903,12 @@ $('clubs').addEventListener('click', async (e) => {
   }
   // `closest` : la plaque peut un jour porter une icône, et le clic tomberait
   // alors sur elle plutôt que sur le bouton.
+  /* La plaque éteinte laisse passer le toucher à sa ligne : on y redit
+     pourquoi, plutôt que de ne rien faire. */
+  if (e.target.closest('#ligneSlot') && refusSlot()) {
+    dire(refusSlot(), { erreur: true });
+    return;
+  }
   if (e.target.closest('#buyslot')) {
     try {
       const avant = etat.scarves;
@@ -1840,6 +1930,7 @@ $('clubs').addEventListener('click', async (e) => {
       dire(({
         'onboarding.error.not_enough_scarves': 'Pas assez d’écharpes',
         'onboarding.error.max_slots': 'Tu as déjà le maximum d’emplacements',
+        'onboarding.error.slot_locked': 'Pas encore débloqué : monte de niveau',
         'onboarding.error.server': 'Le serveur n’a pas pu répondre',
       })[err.code] ?? `Emplacement impossible (${err.code ?? 'sans code'})`, { erreur: true });
     }

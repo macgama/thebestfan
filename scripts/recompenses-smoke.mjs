@@ -245,10 +245,11 @@ console.log('\n— l’horloge figée de la base —');
 /* ================================================= le contrat du module */
 
 console.log('\n— ce que le module promet —');
-check('les dix-huit sources, liste fermée (la neuvième : l’XP du Virage ; la dixième : le '
-  + 'pronostic ; puis six pour les mini-jeux et deux entre amis)',
+check('les vingt sources, liste fermée (la neuvième : l’XP du Virage ; la dixième : le '
+  + 'pronostic ; puis six pour les mini-jeux, deux entre amis et deux pour les défis de la semaine)',
   meme(SOURCES, ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
-    'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi']));
+    'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi',
+    'hebdo', 'voie']));
 check('les raisons de refus sont celles du contrat (§ 11), quota compris',
   meme([...RAISONS].sort(), ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',
     'schema', 'inconnu', 'quota'].sort()));

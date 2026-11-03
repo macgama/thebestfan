@@ -32,16 +32,22 @@
 /** Les six séries. Une couleur chaude par famille, un fond qui la porte. */
 export const SETS_2026 = [
   { id: 'TR', nom: 'LA TRIBUNE', ligne: 'ceux qui reviennent chaque samedi',
+    desc: 'Le public de tous les samedis, du gamin qui connaît les chants au capo du virage. La série la plus nombreuse : de quoi jouer toutes les familles.',
     c1: '#E0402C', c2: '#1A1F27' },
   { id: 'MS', nom: 'LES MÉTIERS DU STADE', ligne: 'ceux qui font tourner la baraque',
+    desc: 'La tireuse de pression, l’infirmière, le jardinier de nuit : ceux sans qui il n’y aurait pas de match. Ils tiennent plus qu’ils ne hurlent.',
     c1: '#E08A2C', c2: '#1E1710' },
   { id: 'BG', nom: 'LE BESTIAIRE DES GRADINS', ligne: 'ils ont pris une place, personne n’a rien dit',
+    desc: 'Le hibou statisticien, le lama blasé, la pieuvre du virage : les bêtes qui ont pris une place en tribune. Elles grimpent, volent et tapent pendant que le public tient sa place.',
     c1: '#1E9E6A', c2: '#101C17' },
   { id: 'RV', nom: 'LES REVENANTS', ligne: 'le virage d’après minuit',
+    desc: 'Ce qui revient au stade la nuit. La série la plus rare : de gros bonus, de vrais défauts, et une autre façon de jouer.',
     c1: '#8257DA', c2: '#12101C' },
   { id: 'OB', nom: 'CE QUI TRAÎNE AU STADE', ligne: 'un siège, un cône, une main en mousse',
+    desc: 'La main en mousse, le siège 14B, le cône du parking : les objets du stade qui se sont levés. La série la plus courte du jeu.',
     c1: '#3C82E8', c2: '#101722' },
   { id: 'EP', nom: 'LES ÉPOQUES', ligne: 'ils ont trouvé une porte, on ne sait pas laquelle',
+    desc: 'L’homme des cavernes, la Viking, l’astronaute : des supporters venus d’autres époques. Ils ne comprennent pas tout, mais ils ont la manière.',
     c1: '#C2CAD6', c2: '#1A1A22' },
 ];
 

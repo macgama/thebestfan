@@ -29,6 +29,12 @@ l'abonnement mensuel (3,99 €) et annuel (39,90 €), qui ne sont plus en vente
 - Il couvre **la saison en cours** ; pris pendant ses `pass.dernier_mois_jours`
   derniers jours (30), il couvre aussi la suivante ; une saison finie fait
   acheter la suivante (`saisonsCouvertes`, `src/shared/pass.js`).
+- **Pas avant son ouverture** (Gaël, 3 novembre 2026) : pendant la BASE
+  (saison 0), le PASS 1 se montre sous « BIENTÔT » avec son jour d'ouverture
+  (`ouvre_le` de la saison 1) ; `POST /api/boutique/commander` et
+  `POST /api/abonnement/pass/echarpes` rendent `pass.error.bientot`
+  (`offre().bientot`, `src/server/abonnement/`). Il s'achète dès que la
+  saison 1 est lancée. L'administration peut toujours l'offrir.
 - Il ne donne **jamais d'écharpes** : l'argent n'achète pas la monnaie des
   tirages.
 
@@ -100,6 +106,27 @@ voie gratuite (`recompenses`, sources `mission` et `sachet`). Que du visuel :
 résiliation à l'échéance chez Stripe de chaque abonnement en cours, PASS de la
 saison où sa période se termine ; abonnement offert : PASS de la saison en
 cours, et sa ligne s'arrête au dernier jour de cette saison.
+
+## Les anciens PASS (Gaël, 3 novembre 2026)
+
+- Un PASS revient en vente **le 1er du deuxième mois après la fin de sa
+  saison** (fin le 28 février → dès le 1er avril), au même prix, en euros ou
+  en écharpes (`venteAncienPassLe`, `anciensPassEnVente`). La page du PASS les
+  vend (`anciensPass` de `GET /api/abonnement`), la boutique les annonce.
+- En euros : `POST /api/boutique/commander { article: 'pass-saison', saison }`,
+  la commande garde `pass-saison@<n>` (`articleCommande`). En écharpes :
+  `POST /api/abonnement/pass/echarpes { saison }`.
+- La ligne de `user_pass` porte `stripe-tard` ou `echarpes-tard` : c'est ce qui
+  fait un achat tardif (`estTardif`).
+- **L'acheteur tardif n'a que le contenu** (tenue, stuff, stade, mini-jeux) :
+  la tenue au premier âge, ses autres âges dans ses boosters, les boosters du
+  PASS. Aucun **gain spécial** : ni tampon « ÉDITION ORIGINALE », ni cadre,
+  cadre animé, badge, ni club ou KOP en plus, ni le rythme de la saison.
+- **Une voie pas finie** : sa saison close, ce qui est ouvert reste ; les âges
+  de la tenue qui manquent tombent dans les boosters du joueur
+  (`tenuesAuxBoosters`) ; les gains spéciaux ne s'ouvrent plus.
+- Le prix reste celui du PASS d'aujourd'hui (le code ne garde pas l'historique
+  des prix) : à revoir le jour où le prix du PASS changera.
 
 ## Pour la saison suivante
 
