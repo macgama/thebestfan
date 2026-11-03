@@ -52,9 +52,9 @@ export const SORTE_DU_RANG = Object.freeze(Object.fromEntries(
 export function titreDefi(sorte, cible, nom) {
   switch (sorte) {
     case 'serie': return `Joue ${cible} duels avec un Fanzzy ${nom}`;
-    case 'stuff': return `Chante ${cible} fois au Grand Virage en portant « ${nom} »`;
-    case 'tenue': return `Joue ${cible} duels avec un Fanzzy en tenue « ${nom} »`;
-    case 'pass': return `Joue ${cible} duels en tenue « ${nom} », celle de ton PASS`;
+    case 'stuff': return `Chante ${cible} fois au Grand Virage en portant « ${nom} »`;
+    case 'tenue': return `Joue ${cible} duels avec un Fanzzy en tenue « ${nom} »`;
+    case 'pass': return `Joue ${cible} duels en tenue « ${nom} », celle de ton PASS`;
     default: return '';
   }
 }

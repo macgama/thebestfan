@@ -776,7 +776,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     const cle = `defi:${x.semaine}:${x.rang}`;
     const ton = x.pass ? ' data-ton="or"' : '';
     const corps = `<span class="tbf-mission-vignette">${vignetteDefi(x)}</span>
-        <b class="tbf-mission-titre">${x.pass ? '<span class="tbf-sticker" data-ton="or">PASS</span> ' : ''}${esc(x.titre)}</b>
+        <b class="tbf-mission-titre">${esc(x.titre)}</b>
         ${jaugeHTML(x.fait, x.cible)}
         <span class="tbf-mission-gain">${gainHTML(x.gain)}</span>`;
     if (x.etat === 'pret') {
