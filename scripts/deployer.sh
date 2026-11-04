@@ -51,9 +51,11 @@ git fetch --prune origin "$BRANCHE"
 # ses personnages. On cesse donc d'abord de les suivre : elles deviennent des
 # fichiers ignorés, que `reset --hard` ne touche pas. Ne sert qu'une fois, au
 # premier déploiement après la réécriture ; ensuite il n'y a plus rien à
-# retirer et la ligne ne fait rien.
+# retirer et la ligne ne fait rien — à condition que `grep`, qui sort en
+# erreur quand il ne trouve rien, ne fasse pas tomber le script (pipefail) :
+# c'est arrivé au deuxième déploiement, le 4 novembre 2026, d'où le `|| true`.
 git ls-files -z -- public/img/fanzzy public/img/ultime \
-  | grep -zEi '\.(png|jpe?g|webp|avif|mp4)$' \
+  | { grep -zEi '\.(png|jpe?g|webp|avif|mp4)$' || true; } \
   | xargs -0 -r git rm -q --cached --
 
 # **public/video aussi** : les fonds filmés de fx.js et les vidéos du tutoriel
