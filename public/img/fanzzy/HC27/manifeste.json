@@ -1,6 +1,6 @@
 {
   "id": "HC27",
-  "rev": 5,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -105,7 +105,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "6a08c9b4bf1b"
+          "sha": "6a08c9b4bf1b",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

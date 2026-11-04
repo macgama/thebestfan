@@ -1,6 +1,6 @@
 {
   "id": "HC5",
-  "rev": 3,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "679350430fb0"
+          "sha": "679350430fb0",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5fd222e15362"
+          "sha": "5fd222e15362",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "d55d7f926908"
+          "sha": "d55d7f926908",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

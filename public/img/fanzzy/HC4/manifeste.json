@@ -1,6 +1,6 @@
 {
   "id": "HC4",
-  "rev": 4,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "bb81296c86a5"
+          "sha": "bb81296c86a5",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "ad861770b4b1"
+          "sha": "ad861770b4b1",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

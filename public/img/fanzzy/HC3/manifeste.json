@@ -1,6 +1,6 @@
 {
   "id": "HC3",
-  "rev": 5,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -65,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "2f5e2902792f"
+          "sha": "2f5e2902792f",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -116,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "ad3c18a0d5cc"
+          "sha": "ad3c18a0d5cc",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
