@@ -70,7 +70,7 @@ const attendre = async (f, ms = 8000) => {
   }
   return false;
 };
-const boutonVu = () => page.$eval('[data-video-tuto]', (b) => !b.hidden && b.getBoundingClientRect().height > 0);
+const boutonVu = () => page.$eval('[data-video-tuto="tuto-fanzzy-1"]', (b) => !b.hidden && b.getBoundingClientRect().height > 0);
 
 try {
   /* ----------------------------------------------- vidéo absente : caché */
@@ -90,18 +90,35 @@ try {
     }
     return true;
   }));
+  /* Une vidéo par rubrique : chaque bouton a ses phrases, en ordre, et
+     chaque fichier n'est annoncé qu'une fois. */
+  check('chaque bouton a ses phrases, qui se suivent', await page.evaluate(() => {
+    const noms = [...document.querySelectorAll('[data-video-tuto]')].map((b) => b.dataset.videoTuto);
+    if (noms.length < 2 || new Set(noms).size !== noms.length) return false;
+    return noms.every((n) => {
+      const ol = document.querySelector(`.video-sous-titres[data-pour="${n}"]`);
+      if (!ol || !ol.hidden || ol.children.length < 3) return false;
+      let fin = -1;
+      for (const li of ol.children) {
+        const de = Number(li.dataset.de), a = Number(li.dataset.a);
+        if (!(a > de) || de < fin) return false;
+        fin = a;
+      }
+      return true;
+    });
+  }));
 
   /* ---------------------------------------------- vidéo servie : visible */
   check('la vidéo de test est fabriquée (ffmpeg)', videoOk);
   servie = true;
   await page.goto(`${base}/comment-jouer`, { waitUntil: 'networkidle0' });
   check('vidéo servie, le bouton se montre', await attendre(async () => {
-    const b = document.querySelector('[data-video-tuto]');
+    const b = document.querySelector('[data-video-tuto="tuto-fanzzy-1"]');
     return b && !b.hidden;
   }));
 
-  await page.$eval('[data-video-tuto]', (b) => b.scrollIntoView());
-  await page.tap('[data-video-tuto]');
+  await page.$eval('[data-video-tuto="tuto-fanzzy-1"]', (b) => b.scrollIntoView());
+  await page.tap('[data-video-tuto="tuto-fanzzy-1"]');
   check('le toucher ouvre le lecteur', await attendre(() => !!document.querySelector('.vtuto video')));
   check('la vidéo démarre', await attendre(() => document.querySelector('.vtuto video')?.currentTime > 0.2));
   check('la première phrase s’affiche', await attendre(() => {
@@ -123,7 +140,7 @@ try {
   await page.tap('.vtuto-fermer');
   check('la croix ferme le lecteur', await attendre(() => !document.querySelector('.vtuto')));
 
-  await page.tap('[data-video-tuto]');
+  await page.tap('[data-video-tuto="tuto-fanzzy-1"]');
   await attendre(() => !!document.querySelector('.vtuto video'));
   await page.keyboard.press('Escape');
   check('Échap ferme le lecteur', await attendre(() => !document.querySelector('.vtuto')));
@@ -133,10 +150,10 @@ try {
   if (videoOk) copyFileSync(path.join(dossier, `${NOM}.mp4`), path.join(dossier, `${NOM}-de.mp4`));
   await page.evaluate(() => localStorage.setItem('tbf_locale', 'de'));
   await page.goto(`${base}/comment-jouer`, { waitUntil: 'networkidle0' });
-  await attendre(() => !document.querySelector('[data-video-tuto]')?.hidden);
+  await attendre(() => !document.querySelector('[data-video-tuto="tuto-fanzzy-1"]')?.hidden);
   check('en allemand, le bouton est traduit',
-    await page.$eval('[data-video-tuto]', (b) => b.textContent.trim() === 'Video ansehen'));
-  await page.tap('[data-video-tuto]');
+    await page.$eval('[data-video-tuto="tuto-fanzzy-1"]', (b) => b.textContent.trim() === 'Video ansehen'));
+  await page.tap('[data-video-tuto="tuto-fanzzy-1"]');
   check('en allemand, c’est la version allemande qui joue', await attendre(() =>
     /-de\.mp4$/.test(document.querySelector('.vtuto video')?.getAttribute('src') ?? '')));
   check('en allemand, la phrase aussi', await attendre(() =>
