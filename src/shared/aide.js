@@ -542,6 +542,12 @@ const RUBRIQUES = [
           + 'bout le badge et le pseudo en or ; ensuite, une étoile tous les 15 tampons. Sans '
           + 'PASS, tu la vois sous cadenas : ce que tes tampons ont déjà atteint est à toi dès '
           + 'l’achat. Que du visuel, jamais d’écharpes ni de boosters.'],
+      ['Qui voit ce que ma voie PASS a ouvert ?',
+        'Les autres joueurs. Sur l’affiche d’un duel, ton adversaire voit ton écusson, ton titre, '
+          + 'ton pseudo en or, le cadre de pierre autour de ton Fanzzy et son entrée dans les rochers. '
+          + 'Pendant la partie, tu peux lui lancer tes stickers. Tes amis les voient aussi sur ta fiche, '
+          + 'avec ton fond de grotte, et tout le monde sur le podium du classement. Au Virage, ton '
+          + 'Fanzzy porte son aura de braises. Que du visuel : rien ne pèse sur la corde.'],
       ['Que me manque-t-il sans le PASS ?',
         () => 'Rien pour jouer ni pour le classement : toutes les séries, tous les âges, '
           + 'tous les formats, le Grand Virage en entier, et tout compte, sans limite. '

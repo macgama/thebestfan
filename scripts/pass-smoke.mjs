@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { createServer } from 'node:http';
 import { createAbonnement } from '../src/server/abonnement/index.js';
+import { vitrinePublique } from '../src/shared/pass.js';
 import { chargerSaisons, saisonEnCours } from '../src/server/fanzzy/saisons.js';
 import { chargerTenues, tenuesTirables, tenuesEnEtal } from '../src/server/fanzzy/tenues.js';
 import { poserReglages, reglage, PAR_CLE } from '../src/shared/reglages.js';
@@ -305,6 +306,16 @@ titre('Pendant la BASE, le PASS est « Bientôt »');
     && v9.titre === 'Chasseur de mammouth' && v9.ageTenue === 3 || console.log('       ', v9));
   poserReglages({ 'pass.essai_admin_niveau': 12 });
   check('au niveau 12, le badge et le pseudo en or', (await abonnement.badgeDe(B))?.or === true);
+  /* « Être vu » (4 novembre 2026) : le badge complet de quelques joueurs,
+     pour l'affiche du duel, le podium et la liste d'amis. */
+  const vus = await abonnement.vitrinesDe([B, C, 'bot:1', 'inconnu']);
+  const vb = vitrinePublique(vus.get(B));
+  check('être vu : le badge complet de chacun au niveau de sa voie, rien pour un bot ni un inconnu',
+    vus.size === 2 && !vus.get(C).gains.includes('stickers') && vb?.or === true && vb.titre === 'Chasseur de mammouth'
+    && ['stickers', 'cadre', 'entree', 'aura'].every((g) => vb.gains.includes(g))
+    || console.log('       ', [...vus.entries()]));
+  check('être vu : ni tampons ni points pour les autres', vb && !('tampons' in vb) && !('points' in vb));
+  check('être vu : au plus `max` joueurs', (await abonnement.vitrinesDe([B], { max: 0 })).size === 0);
   moi = C;
   check('un joueur garde « bientôt » et sa vraie voie', (await get('/api/abonnement')).offre?.bientot?.ouvre === attendu
     && (await abonnement.voies(C))[0]?.niveau === 1);

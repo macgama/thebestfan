@@ -12,6 +12,7 @@ import { CHANTS } from '../../shared/duel/chants.js';
 // L'échelle unique du verdict (CONTRATS.md § 16.1) : le serveur nomme, la page écrit.
 import { verdictDe, estParfait, noteDuVerdict } from '../../shared/verdict.js';
 import { XP } from '../../shared/niveau.js';
+import { vitrinePublique } from '../../shared/pass.js';
 import { reglage } from '../../shared/reglages.js';
 import { apres as coteApres, moyenne as coteMoyenne, COTE_DEPART }
   from '../../shared/cote.js';
@@ -323,6 +324,11 @@ export function vuePour(duel, userId, t = Date.now()) {
     ({ ...p, effets: effetsVus(duel.joueurs.get(p.userId), t) })));
   return v;
 }
+
+/** Les stickers que le PASS laisse lancer en duel (`public/pass.js`, kit). */
+export const STICKERS_PASS = Object.freeze(['ouga', 'massue', 'os', 'feu']);
+/** Un sticker toutes les tant de millisecondes, par joueur. */
+export const STICKER_MS = 6000;
 
 export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = null,
                             /* Facultatif : sans lui, aucun plafond, et le
@@ -1056,6 +1062,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
        et un duel n'a pas à attendre une requête pour commencer. Un client qui ne
        la reçoit pas joue exactement comme avant. */
     void affiche(duel).then((a) => {
+      // Gardée pour les stickers du PASS (`nvn:sticker`), qui lisent ses gains.
+      salle.affiche = a;
       for (const m of membres.values()) {
         if (m.socket?.connected) m.socket.emit('nvn:affiche', a);
       }
@@ -1309,6 +1317,13 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   async function affiche(duel) {
     const joueurs = [...duel.joueurs.values()];
     const formes = await forme(joueurs.map((j) => j.userId));
+    /* **Être vu** : le PASS de chacun, au niveau de sa voie — l'écusson, le
+       titre, le pseudo en or, le cadre de carte, l'entrée. Purement visuel :
+       une panne le tait, le duel part quand même. */
+    const passes = abonnement?.vitrinesDe
+      ? await abonnement.vitrinesDe(joueurs.map((j) => j.userId), { max: 12 })
+        .catch((e) => { console.error('[nvn] PASS de l\'affiche', e.message); return new Map(); })
+      : new Map();
     return {
       id: duel.id, mode: duel.mode,
       stade: duel.stade
@@ -1326,6 +1341,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
           rar: f.rar, cri: f.cri?.label ?? null, geste: f.cri?.gest ?? null,
         })),
         forme: formes.get(j.userId) ?? [],
+        ...(passes.has(String(j.userId)) ? { pass: vitrinePublique(passes.get(String(j.userId))) } : {}),
       })),
     };
   }
@@ -1943,6 +1959,26 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         catch (e) { erreur(e); }
       });
     }
+
+    /* **Les stickers du PASS** (niveau 3 de la voie) : un dessin lancé à la
+       tribune d'en face, vu par tout le duel. Purement visuel, il ne touche ni
+       la corde ni le score. Seul celui dont l'affiche porte le gain peut en
+       lancer, un toutes les `STICKER_MS`, et seulement ceux de son PASS. */
+    socket.on('nvn:sticker', (p = {}) => {
+      const u = moi();
+      const salle = maSalle();
+      if (!u || !salle || salle.duel.termine) return;
+      const j = (salle.affiche?.joueurs ?? []).find((x) => String(x.userId) === String(u.userId));
+      const gains = j?.pass?.gains ?? [];
+      const sticker = String(p?.sticker ?? '');
+      if (!gains.includes('stickers') || !STICKERS_PASS.includes(sticker)) return;
+      const t = Date.now();
+      salle.stickers ??= new Map();
+      if (t - (salle.stickers.get(u.userId) ?? 0) < STICKER_MS) return;
+      salle.stickers.set(u.userId, t);
+      io.to(salle.room).emit('nvn:sticker', { userId: u.userId, side: j.side,
+        saison: j.pass.saison, sticker });
+    });
 
     /** Reprise après coupure : la place attendait. */
     socket.on('nvn:resume', () => {

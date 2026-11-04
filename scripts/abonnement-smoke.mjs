@@ -448,7 +448,10 @@ check('tous les formats de duel restent ouverts à tous',
     /* **Les anciens PASS** (3 novembre 2026) : lire ses PASS et comment il les
        a pris, ceux qui sont en vente, si une saison est finie, et la tenue
        d'un PASS fini qui tombe dans ses boosters — du visuel, rien qui pousse. */
-    'passDuJoueur', 'anciensEnVente', 'tenuesAuxBoosters', 'saisonPassee'];
+    'passDuJoueur', 'anciensEnVente', 'tenuesAuxBoosters', 'saisonPassee',
+    /* **Être vu** (4 novembre 2026) : le badge complet de quelques joueurs,
+       pour l'affiche du duel, le podium et la fiche d'un ami. Du visuel. */
+    'vitrinesDe'];
   check(`le PASS n’ouvre que le rythme, la mémoire, la largeur et le visuel (${portes.length})`,
     portes.length === attendues.length && portes.every((p) => attendues.includes(p))
     || (console.log('        portes :', portes.join(', ')), false));

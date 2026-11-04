@@ -215,7 +215,7 @@ h2{margin:22px 2px 9px}
 .signe .mot{font-family:var(--banner);letter-spacing:.04em}
 .signe small{display:block;opacity:.75;font-size:10.5px;margin-top:2px}
 .fiche-tete{display:flex;align-items:center;gap:14px;margin:4px 0 14px}
-.fiche-tete>.tbf-buste{--taille:84px}
+.fiche-tete>.tbf-buste,.fiche-buste>.tbf-buste{--taille:84px}
 .fiche-tete b{display:block;font-family:var(--banner);font-size:20px;letter-spacing:.02em}
 .fiche-tete small{display:block;font-size:11.5px;opacity:.85;margin-top:4px;line-height:1.5}
 .bloc{border:1px solid var(--trait);border-radius:var(--r);padding:13px 14px;margin-bottom:12px;
@@ -264,6 +264,17 @@ button.buste-btn>.tbf-buste{--taille:52px}
    `display:flex`. */
 .tbf-toast[hidden]{display:none}
 
+/* **Le PASS d'un ami** (« Être vu », 4 novembre 2026) : sur sa fiche, le
+   fond de grotte, le cadre de pierre au buste, le titre et le pseudo en or. */
+.fiche-tete[data-pass-fond]{background:linear-gradient(rgba(20,16,12,.35),rgba(20,16,12,.6)),
+  center/cover no-repeat var(--pass-fond);border-radius:12px;padding:10px;
+  box-shadow:0 0 0 2px var(--pass,#c9772e) inset}
+.fiche-buste{position:relative;display:inline-block;flex:none}
+.fiche-buste>.pass-cadre-buste{position:absolute;inset:-18%;width:136%;height:136%;object-fit:contain;pointer-events:none}
+.fiche-tete b.pass-or{color:#F5C33B;text-shadow:0 0 8px rgba(245,195,59,.6),0 1px 0 #6b4a05}
+.fiche-tete .pass-titre{display:block;font-style:normal;font-family:var(--banner);font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:#F5C33B}
+.gars .nom .tbf-pass-badge{margin-left:4px;vertical-align:middle}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -294,6 +305,7 @@ button.buste-btn>.tbf-buste{--taille:52px}
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<script src="/pass.js"></script>
 <!-- Classique et non différé : `convier()` lit `TBF_PARTAGE.possible` au
      premier rendu, qui peut arriver avant qu’un script différé s’exécute. -->
 <script src="/partage.js"></script>
@@ -662,7 +674,7 @@ function carteAmi(g) {
   return `
   <div class="gars ami${ouvert ? ' deplie' : ''}" data-id="${esc(g.id)}">
     <button class="buste-btn" data-fiche="${esc(g.id)}" aria-label="La fiche de ${esc(g.pseudo)}">${avatar(g)}</button>
-    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${presence(g)}</span><span class="actions"><button
+    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${g.pass && window.TBF_PASS ? window.TBF_PASS.badge(g.pass) : ''}${presence(g)}</span><span class="actions"><button
       class="bt tbf-plaque" data-ton="violet" data-fiche="${esc(g.id)}">JOUER ENSEMBLE</button>${inviter}</span></span>
     <button class="bt tbf-plaque plus" data-plus="${esc(g.id)}" aria-expanded="${ouvert === 'plus'}"
       aria-label="Plus d’options pour ${esc(g.pseudo)}"><i class="tbf-ico ico-plus" aria-hidden="true"></i></button>
@@ -908,6 +920,18 @@ function quand(t) {
 }
 
 async function chargerFiche() {
+  /* Son PASS, à côté : la route publique de sa carte de supporter. */
+  const id = String(S.ficheId);
+  if (S.fichePass?.id !== id) {
+    S.fichePass = { id, badge: null };
+    fetch(`/api/abonnement/badge/${encodeURIComponent(id)}`, { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (S.fichePass?.id !== id || !d?.badge) return;
+        S.fichePass.badge = d.badge;
+        if (S.vue === 'fiche') rendre();
+      }).catch(() => {});
+  }
   try {
     S.fiche = await ensemble(`/fiche/${encodeURIComponent(S.ficheId)}`);
   } catch (e) {
@@ -928,8 +952,17 @@ function vueFiche() {
   const a = F.ami;
   const niv = Number.isInteger(a.niveau) ? `Niveau ${a.niveau}` : '';
   const clubs = a.clubs?.length ? `Vous suivez ${a.clubs.map(esc).join(', ')}` : '';
-  let html = retour + `<div class="fiche-tete">${busteEn(a, 'joie')}
-    <span><b>${esc(a.pseudo)}</b><small>${[niv, clubs].filter(Boolean).join(' · ')}</small></span></div>`;
+  /* **Son PASS, vu par moi** (« Être vu », 4 novembre 2026) : l'écusson à
+     son niveau, le titre, le pseudo en or, le cadre et le fond de sa voie. */
+  const pa = S.fichePass?.id === String(a.id) ? S.fichePass.badge : null;
+  const P = window.TBF_PASS;
+  const k = pa && P?.kit?.(pa.saison);
+  const g = (x) => Array.isArray(pa?.gains) && pa.gains.includes(x);
+  const fond = k && g('fond_profil') ? ` style="--pass-fond:url('${P.image(k.fond_profil)}');--pass:${esc(pa.couleur ?? '#c9772e')}" data-pass-fond` : (pa ? ` style="--pass:${esc(pa.couleur ?? '#c9772e')}"` : '');
+  const cadre = k && g('cadre_profil') ? P.img(k.cadre_profil, 'pass-cadre-buste') : '';
+  let html = retour + `<div class="fiche-tete"${fond}${pa ? ' data-pass' : ''}><span class="fiche-buste">${busteEn(a, 'joie')}${cadre}</span>
+    <span><b${g('badge_or') ? ' class="pass-or"' : ''}>${esc(a.pseudo)}</b>${pa && P ? ` ${P.badge(pa, 'moyen')}` : ''}${
+      g('titre') && pa.titre ? `<em class="pass-titre">${esc(pa.titre)}</em>` : ''}<small>${[niv, clubs].filter(Boolean).join(' · ')}</small></span></div>`;
   if (!F.actif) {
     return html + '<div class="vide">Les jeux entre amis sont en pause pour l’instant.</div>';
   }
