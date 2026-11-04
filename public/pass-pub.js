@@ -110,7 +110,7 @@
         <h2 id="passSpotTitre"><span>${esc(`PASS ${o.numero}`)}</span>${esc(o.nom)}</h2>
         <ol class="pass-spot-lignes">
           <li>La tenue de la saison sur tes Fanzzy</li>
-          <li>Ton badge et ton cadre de carte</li>
+          <li>Ton écusson, ton titre et ton pseudo en or, vus en duel</li>
           ${o.packs ? `<li>${esc(`${o.packs} boosters dès l’achat`)}</li>` : ''}
           <li>Des boosters qui reviennent plus vite</li>
         </ol>
@@ -118,7 +118,8 @@
           ? esc(`En vente ${o.quand ?? 'avec sa saison'} · tout le jeu reste gratuit`)
           : 'Payé une fois · tout le jeu reste gratuit'}</small></p>
         <div class="pass-spot-boutons">
-          <a class="tbf-plaque tbf-bloc" data-ton="or" href="/abonnement">VOIR LE PASS</a>
+          <a class="tbf-plaque tbf-bloc" data-ton="or" href="/abonnement?essayer=1">ESSAYER 10 s</a>
+          <a class="tbf-plaque tbf-bloc" href="/abonnement">VOIR LE PASS</a>
           <button type="button" class="pass-spot-tard" data-fermer>Plus tard</button>
         </div>
       </div>

@@ -548,6 +548,10 @@ const RUBRIQUES = [
           + 'Pendant la partie, tu peux lui lancer tes stickers. Tes amis les voient aussi sur ta fiche, '
           + 'avec ton fond de grotte, et tout le monde sur le podium du classement. Au Virage, ton '
           + 'Fanzzy porte son aura de braises. Que du visuel : rien ne pèse sur la corde.'],
+      ['Puis-je voir le PASS sur mon Fanzzy avant de l’acheter ?',
+        'Oui : touche ESSAYER 10 s sur la page du PASS. Ton Fanzzy porte la tenue de la saison à '
+          + 'ses trois âges, dans la grotte, avec le cadre de pierre, le titre et le pseudo en or. '
+          + 'Chaque niveau de ta voie PASS gagné ensuite a sa petite fête à ton retour.'],
       ['Que me manque-t-il sans le PASS ?',
         () => 'Rien pour jouer ni pour le classement : toutes les séries, tous les âges, '
           + 'tous les formats, le Grand Virage en entier, et tout compte, sans limite. '

@@ -31,6 +31,8 @@ app.get('/socket.io/socket.io.js', (_req, res) => res.type('js').send(
   + 'emit:function(e,d){(window.__emis=window.__emis||[]).push([e,d]);return s},'
   + 'connect:function(){return s},disconnect:function(){return s},'
   + '__fire:function(e,d){(h[e]||[]).forEach(function(f){f(d)})}};window.__socket=s;return s};'));
+/* Les poses des Fanzzy sont hors git : un dessin du kit en tient lieu. */
+app.get(/^\/img\/fanzzy\/.+\.webp$/, (_req, res) => res.sendFile(`${PUBLIC}/img/pass/icone-tenue-1.webp`));
 app.use(express.static(PUBLIC, { extensions: ['html'] }));
 const srv = app.listen(0);
 const port = srv.address().port;
@@ -176,6 +178,86 @@ for (const [nom, niveau] of [['niveau 11', 11], ['niveau 10', 10]]) {
   if (niveau === 11) ok(aura === 9, 'Virage : l’aura de braises autour de mon Fanzzy au niveau 11');
   else ok(aura === 0, 'Virage : pas d’aura avant le niveau 11');
   ok(!erreurs.filter((e) => /pass|aura/i.test(e)).length, `Virage (${nom}) : aucune erreur du PASS`);
+  await p.close();
+}
+
+/* ------------------------------------------------- donner envie */
+const OFFRE = { couvre: [{ numero: 1, nom: 'PASS 1 · Préhistorique', tenue: 'prehistorique', couleur: '#c9772e',
+  titre: 'Chasseur de mammouth' }], aAcheter: [1], article: { id: 'pass-saison', prixTexte: '7,99 €', packs: 3 },
+  echarpes: 40000, bientot: null };
+const VOIE = Array.from({ length: 12 }, (_, i) => ({ niveau: i + 1, nom: `Gain ${i + 1}`,
+  gain: ['tenue', 'cadre_profil', 'stickers', 'tenue', 'fond_profil', 'cadre', 'tenue', 'entree', 'titre',
+    'cadre_anime', 'aura', 'badge_or'][i], ...([1, 4, 7].includes(i + 1) ? { age: [1, 4, 7].indexOf(i + 1) + 1 } : {}) }));
+{
+  const { p, erreurs } = await page('/abonnement', {
+    '/api/abonnement': { actif: false, abonne: false, echarpes: 100, voie: VOIE, voies: [], offre: OFFRE },
+    '/api/fanzzy/state': { wallet: { avatarEnJeu: { id: 'RP1', evo: 1 } } },
+  });
+  await attendre(600);
+  const bouton = await p.$('[data-essayer]');
+  ok(Boolean(bouton), 'page PASS : le bouton ESSAYER 10 s sans PASS');
+  await bouton?.click();
+  await attendre(1500);
+  const e = await p.evaluate(() => {
+    const v = document.getElementById('pfVoile');
+    return { ouvert: Boolean(v), fond: v?.hasAttribute('data-fond'), ages: v?.querySelectorAll('#pfFz>img[data-age]').length ?? 0,
+      src: v?.querySelector('#pfFz>img[data-age]')?.getAttribute('src') ?? '', titre: v?.querySelector('.pf-plaque')?.textContent ?? '',
+      cadre: Boolean(v?.querySelector('.pf-cadre')), acheter: Boolean(v?.querySelector('[data-oui="acheter"]')) };
+  });
+  ok(e.ouvert && e.fond && e.cadre, 'ESSAYER : le voile s’ouvre sur la grotte, avec le cadre de pierre');
+  ok(/RP1\/e1\/prehistorique\//.test(e.src), `ESSAYER : mon Fanzzy dans la tenue Préhistorique (${e.src})`);
+  ok(e.titre === 'Chasseur de mammouth', 'ESSAYER : le titre de saison sur sa plaque');
+  ok(e.acheter, 'ESSAYER : PRENDRE LE PASS à la fin');
+  if (CAPT) await p.screenshot({ path: `${CAPT}/essayer.png` });
+  await p.keyboard.press('Escape');
+  ok(!(await p.$('#pfVoile')), 'ESSAYER : Échap le ferme');
+  ok(!erreurs.length, `page PASS : aucune erreur (${erreurs.join(' | ')})`);
+  await p.close();
+}
+{
+  const { p, erreurs } = await page('/abonnement?bienvenue=1', {
+    '/api/abonnement': { actif: true, abonne: true, fin: '2027-02-28T23:00:00Z', voie: VOIE,
+      voies: [{ saison: 1, niveau: 1, couleur: '#c9772e', original: true, tenue: 'prehistorique', gains: ['tenue'] }],
+      offre: { ...OFFRE, aAcheter: [] } },
+  });
+  await attendre(1800);
+  const f = await p.evaluate(() => {
+    const v = document.getElementById('pfVoile');
+    return { titre: v?.querySelector('.pf-titre')?.textContent ?? '', gains: v?.querySelectorAll('.pf-liste li').length ?? 0,
+      badge: Boolean(v?.querySelector('.pf-ecusson .tbf-pass-badge')),
+      vu: localStorage.getItem('tbf-pass-niveau:1') };
+  });
+  ok(/Bienvenue dans le PASS 1/i.test(f.titre) && f.badge, 'achat : la fête plein écran, l’écusson qui tombe');
+  ok(f.gains >= 3, 'achat : ce que le PASS donne, en liste');
+  ok(f.vu === '1', 'achat : le niveau est retenu, pas de seconde fête');
+  if (CAPT) await p.screenshot({ path: `${CAPT}/achat.png` });
+  ok(!erreurs.length, `achat : aucune erreur (${erreurs.join(' | ')})`);
+  await p.close();
+}
+for (const [nom, vu, attendu] of [['niveau gagné', '5', true], ['déjà vu', '6', false], ['premier passage', null, false]]) {
+  const p = await b.newPage();
+  await p.setViewport({ width: 400, height: 860, deviceScaleFactor: 1 });
+  await p.evaluateOnNewDocument((v) => {
+    try { if (v === null) localStorage.removeItem('tbf-pass-niveau:1'); else localStorage.setItem('tbf-pass-niveau:1', v); } catch { /* rien */ }
+  }, vu);
+  await p.setRequestInterception(true);
+  p.on('request', (r) => {
+    const u = new URL(r.url());
+    const j = (o) => r.respond({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
+    if (u.hostname !== '127.0.0.1') return r.respond({ status: 204, body: '' });
+    if (u.pathname === '/api/abonnement') return j({ actif: true, abonne: true, voie: VOIE,
+      voies: [{ saison: 1, niveau: 6, couleur: '#c9772e', original: true, gains: [] }] });
+    if (u.pathname === '/api/auth/me') return j({ user: { id: 'u1', pseudo: 'Gael' } });
+    if (u.pathname.startsWith('/api/')) return r.respond({ status: 404, contentType: 'application/json', body: '{}' });
+    return r.continue();
+  });
+  await p.goto(`http://127.0.0.1:${port}/comment-jouer`, { waitUntil: 'networkidle2' });
+  await attendre(1200);
+  const t = await p.evaluate(() => document.querySelector('#pfVoile .pf-titre')?.textContent ?? '');
+  if (attendu) {
+    ok(t === 'Niveau 6', `voie : la fête du niveau 6 (${nom})`);
+    if (CAPT) await p.screenshot({ path: `${CAPT}/niveau.png` });
+  } else ok(!t, `voie : pas de fête (${nom})`);
   await p.close();
 }
 

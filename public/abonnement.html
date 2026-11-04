@@ -332,6 +332,12 @@ main [hidden]{display:none}
 /* tbf-degagement */
 body{padding-bottom:calc(var(--bas) + 40px)}
 
+/* ESSAYER 10 s, sous l'état du PASS (`pass-fete.js`). */
+.pass-essayer{margin-top:10px;min-height:40px;padding:0 16px;font-family:var(--banner);font-weight:700;
+  letter-spacing:.08em;cursor:pointer;animation:passEssai 2.6s ease-in-out infinite}
+@keyframes passEssai{0%,82%,100%{transform:rotate(-2deg) scale(1)}90%{transform:rotate(1deg) scale(1.06)}}
+@media (prefers-reduced-motion: reduce){.pass-essayer{animation:none}}
+html[data-calme~="animations"] .pass-essayer{animation:none}
 </style>
 </head>
 <body>
@@ -349,6 +355,7 @@ body{padding-bottom:calc(var(--bas) + 40px)}
 <script src="/nav.js" defer></script>
 <script src="/pwa.js" defer></script>
 <script src="/pass.js"></script>
+<script src="/pass-fete.js"></script>
 <script src="/ultime.js" defer></script>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -432,6 +439,11 @@ function passHTML(d, { ouvert } = {}) {
     : (packs ? `<span class="pass-cadeau">
         <span class="tbf-fentes" aria-hidden="true">${'<span class="tbf-fente"></span>'.repeat(Math.min(packs, 7))}</span>
         <span><b>${esc(pluriel(packs, 'BOOSTER', 'BOOSTERS'))}</b><small>DÈS L’ACHAT</small></span></span>` : '');
+  /* **ESSAYER 10 s** (« Donner envie », 4 novembre 2026) : mon Fanzzy dans
+     la tenue, avec ce que la voie donne, avant d'acheter. Même pendant
+     BIENTÔT : l'envie commence avant l'ouverture. */
+  const essai = p.tenue && !d.actif
+    ? '<button type="button" class="tbf-plaque pass-essayer" data-ton="or" data-essayer>ESSAYER 10 s</button>' : '';
   const tenue = p.tenue ? `<div class="vitrine" id="vitrine" style="--pass:${esc(p.couleur)}">
       ${badge}
       ${VITRINE.map(([id, age], i) => `<img alt="" loading="${i < 2 ? 'eager' : 'lazy'}"
@@ -445,6 +457,7 @@ function passHTML(d, { ouvert } = {}) {
         <span class="pass-saison">${esc(String(p.nom ?? '').replace(/^PASS \d+ · /, ''))}</span>
         ${p.texte ? `<p class="pass-texte">${esc(p.texte)}</p>` : ''}
         ${etat}
+        ${essai}
       </div>
       ${tenue}
       ${(ouvert === false || d.offre?.bientot) && !d.actif ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
@@ -668,7 +681,11 @@ function ultime(d) {
      peut suivre le retour de quelques secondes. On redemande l'état, et le
      serveur rattrape lui-même un webhook perdu (`/api/boutique/rattraper`). */
   const retour = new URLSearchParams(location.search);
-  if (retour.has('paye') || retour.has('annule') || retour.has('bienvenue')) {
+  /* `?essayer=1` (le spot de l'accueil) : l'essai s'ouvre dès la page posée. */
+  if (retour.has('essayer')) {
+    setTimeout(() => document.querySelector('[data-essayer]')?.click(), 400);
+  }
+  if (retour.has('paye') || retour.has('annule') || retour.has('bienvenue') || retour.has('essayer')) {
     history.replaceState(null, '', location.pathname);
   }
   if (retour.has('annule')) toast('Paiement annulé. Rien n’a été débité.');
@@ -728,7 +745,28 @@ function ultime(d) {
     ].join('');
     const attendre = () => (window.TBF_DIALOGUE ? Promise.resolve()
       : new Promise((r) => window.addEventListener('load', r, { once: true })));
-    attendre().then(async () => {
+    /* **La fête de l'achat** (« Donner envie », 4 novembre 2026) : l'écusson
+       qui tombe et claque, la tenue sur mon Fanzzy, ce que le PASS donne.
+       La boîte de dialogue d'avant reste en repli. */
+    const F = window.TBF_PASS_FETE;
+    const v1 = (d.voies ?? []).filter((x) => x.original !== false).at(-1);
+    if (F && v1) {
+      try { localStorage.setItem(F.cleNiveau(v1.saison), String(v1.niveau ?? 1)); } catch { /* rien */ }
+      const k = window.TBF_PASS?.kit?.(v1.saison);
+      const gains = [
+        packs ? { texte: `+${pluriel(packs, 'booster', 'boosters')} dans ta réserve, tout de suite`, icone: null } : null,
+        p?.tenue ? { texte: 'La tenue de la saison sur tous tes Fanzzy', icone: k?.tenue?.[0] } : null,
+        { texte: 'Ton écusson, vu par tous en duel et au classement', icone: k?.badge },
+        { texte: 'Ta voie PASS : 12 niveaux de cadeaux à gagner en jouant', icone: k?.cadre },
+      ].filter(Boolean);
+      attendre().then(async () => {
+        const choix = await F.achat({ saison: v1.saison, couleur: v1.couleur,
+          nom: String(p?.nom ?? '').replace(/^PASS \d+ · /, ''), tenue: p?.tenue, gains,
+          fin: d.fin ? `Actif jusqu’au ${jour(d.fin)}, payé une fois, jamais renouvelé tout seul.` : '' });
+        if (choix === 'jouer') location.href = '/';
+        else if (choix === 'voie') location.href = '/aide#saison';
+      });
+    } else attendre().then(async () => {
       if (await window.TBF_DIALOGUE?.confirmer({
         titre: 'BIENVENUE DANS LE PASS',
         texte: `Ton PASS est actif${d.fin ? ` jusqu’au ${jour(d.fin)}` : ''}. Il est payé une fois et ne se renouvelle pas tout seul.`,
@@ -922,7 +960,19 @@ function ultime(d) {
     }
   }
 
-  $('corps').addEventListener('click', (e) => {
+  $('corps').addEventListener('click', async (e) => {
+    if (e.target.closest('[data-essayer]')) {
+      const p = passVitrine(d);
+      const moi = await (window.TBF_MOI ?? Promise.resolve(null)).catch?.(() => null);
+      const choix = await window.TBF_PASS_FETE?.essayer({
+        saison: Number(p?.numero ?? p?.saison), couleur: p?.couleur, tenue: p?.tenue, titre: p?.titre,
+        pseudo: moi?.user?.pseudo ?? moi?.pseudo ?? null, prix: d.offre?.article?.prixTexte ?? null,
+        bientot: Boolean(d.offre?.bientot), quand: ouvertureTexte(d.offre ?? {}),
+      });
+      if (choix === 'acheter') document.querySelector('.pass-formules, .pass-bientot-bloc')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     const b = e.target.closest('[data-article]');
     if (b && !b.disabled) { commander(b.dataset.article, b); return; }
     const c = e.target.closest('[data-echarpes]');
