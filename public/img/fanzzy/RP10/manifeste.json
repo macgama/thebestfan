@@ -1,6 +1,6 @@
 {
   "id": "RP10",
-  "rev": 24,
+  "rev": 25,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a1d92f93299d"
+          "sha": "a1d92f93299d",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "HC43",
-  "rev": 13,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -65,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4c65dd6803a1"
+          "sha": "4c65dd6803a1",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -116,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "ae16b24a7ebe"
+          "sha": "ae16b24a7ebe",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

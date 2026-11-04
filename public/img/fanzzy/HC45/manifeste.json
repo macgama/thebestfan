@@ -1,6 +1,6 @@
 {
   "id": "HC45",
-  "rev": 9,
+  "rev": 13,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5307c6a06adf"
+          "sha": "5307c6a06adf",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4fa37909e7f7"
+          "sha": "4fa37909e7f7",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
