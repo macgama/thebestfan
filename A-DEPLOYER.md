@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**La fin de duel plus festive ou plus triste** (branche
+`claude/project-thread-pphd5o`, 4 novembre 2026, accord de Gaël « Oui, telle
+quelle »). Sans schéma.
+
+- Victoire : le mot tombe lettre à lettre en or, éventail d'or, Fanzzy qui
+  saute, canons de confettis, son « fin-victoire » et l'ovation.
+- Défaite : lettres qui tombent, case fendue, nuage qui pleut sur le Fanzzy,
+  sticker « REVANCHE ? », son « fin-defaite ».
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **L'appli Android du Play Store : préparation et paiement Google** (branche
 `claude/project-thread-lg6ctd`, 4 novembre 2026, choix de Gaël « Paiement
 Google dans l'appli » et « Oui, ajouter les colonnes »). **Avec schéma** :
