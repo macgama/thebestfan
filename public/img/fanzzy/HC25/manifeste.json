@@ -1,6 +1,6 @@
 {
   "id": "HC25",
-  "rev": 16,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -41,6 +41,18 @@
           "repli": "base",
           "sha": "af39566e60c3",
           "cligne": true
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "b2c9de1c2c7b"
         }
       }
     },
@@ -55,7 +67,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "3282f3fe50a3",
+          "sha": "96f26879744c",
           "cligne": true
         },
         "apocalyptique": {
@@ -68,7 +80,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fa1f2d721169",
+          "sha": "e8d99279d577",
           "cligne": true
         },
         "halloween": {
@@ -81,8 +93,20 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "56b30a992a22",
+          "sha": "a3afbeff4cc3",
           "cligne": true
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "bd3201205c32"
         }
       }
     },
@@ -125,6 +149,18 @@
           "repli": "base",
           "sha": "0fb674d397ac",
           "cligne": true
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "22087decd02a"
         }
       }
     }

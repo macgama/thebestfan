@@ -1,6 +1,6 @@
 {
   "id": "HC34",
-  "rev": 18,
+  "rev": 22,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "105c2d388d26",
+          "sha": "def922da67c3",
           "cligne": true
         },
         "prehistorique": {
@@ -26,8 +26,20 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b8ef847a1758",
+          "sha": "09b3282db1e3",
           "cligne": true
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "e504e452aad6"
         }
       }
     },

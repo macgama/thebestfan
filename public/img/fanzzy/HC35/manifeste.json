@@ -1,6 +1,6 @@
 {
   "id": "HC35",
-  "rev": 25,
+  "rev": 26,
   "evolutions": {
     "e1": {
       "skins": {
@@ -123,7 +123,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "58f36b2f6270",
+          "sha": "8b57af64e803",
           "cligne": true
         },
         "apocalyptique": {
@@ -136,7 +136,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "28694266f19f",
+          "sha": "1e749d2c80a0",
           "cligne": true
         },
         "halloween": {
@@ -149,7 +149,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0dbf25178945"
+          "sha": "48d12337f3a4"
         },
         "prehistorique": {
           "etats": [
@@ -161,7 +161,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fe8d23931b26",
+          "sha": "502a8a85692f",
           "cligne": true
         }
       }
