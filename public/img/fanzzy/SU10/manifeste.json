@@ -1,6 +1,6 @@
 {
   "id": "SU10",
-  "rev": 27,
+  "rev": 28,
   "evolutions": {
     "e1": {
       "skins": {
@@ -68,8 +68,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "59fd76790aff",
-          "cligne": true
+          "sha": "59fd76790aff"
         },
         "halloween": {
           "etats": [
