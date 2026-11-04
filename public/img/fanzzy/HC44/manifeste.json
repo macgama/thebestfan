@@ -1,6 +1,6 @@
 {
   "id": "HC44",
-  "rev": 11,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1ba7fd514536"
+          "sha": "1ba7fd514536",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ff904b17b63f"
+          "sha": "ff904b17b63f",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -79,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1db350f70a0d"
+          "sha": "1db350f70a0d",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -120,7 +123,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8559d7ef8721"
+          "sha": "8559d7ef8721",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

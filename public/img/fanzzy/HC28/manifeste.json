@@ -1,6 +1,6 @@
 {
   "id": "HC28",
-  "rev": 16,
+  "rev": 20,
   "evolutions": {
     "e1": {
       "skins": {
@@ -52,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "287d1e594bf4"
+          "sha": "287d1e594bf4",
+          "cligne": true
         }
       }
     },
@@ -80,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cae2d32363fd"
+          "sha": "cae2d32363fd",
+          "cligne": true
         }
       }
     },

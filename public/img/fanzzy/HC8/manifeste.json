@@ -1,6 +1,6 @@
 {
   "id": "HC8",
-  "rev": 16,
+  "rev": 19,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "aeba012ea2c9"
+          "sha": "aeba012ea2c9",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -67,7 +68,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1f579a225a7c"
+          "sha": "1f579a225a7c",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -108,7 +110,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4d2c3752d060"
+          "sha": "4d2c3752d060",
+          "cligne": true
         },
         "halloween": {
           "etats": [

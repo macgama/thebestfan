@@ -1,6 +1,6 @@
 {
   "id": "HC40",
-  "rev": 16,
+  "rev": 20,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "074aa4ec1d91"
+          "sha": "074aa4ec1d91",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -79,7 +80,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "342f737a459e"
+          "sha": "342f737a459e",
+          "cligne": true
         },
         "halloween": {
           "etats": [

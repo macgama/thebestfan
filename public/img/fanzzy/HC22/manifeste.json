@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c5eaa9d7e403"
+          "sha": "c5eaa9d7e403",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

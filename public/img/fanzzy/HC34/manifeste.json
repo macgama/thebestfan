@@ -55,7 +55,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "636de28aad47"
+          "sha": "636de28aad47",
+          "cligne": true
         },
         "halloween": {
           "etats": [
