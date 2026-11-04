@@ -369,7 +369,7 @@ const RUBRIQUES = [
           + 'règles, et la même rencontre rejouée donne le même lieu. On ne peut '
           + 'pas acheter un avantage de terrain.'],
       ['Je rate toujours le même geste. Je peux m’entraîner ?',
-        () => 'Oui : La répétition, dans le menu. Les vingt gestes du jeu y sont à '
+        () => 'Oui : La répétition, dans le menu. Les vingt-quatre gestes du jeu y sont à '
           + 'l’essai, autant de fois que tu veux. Rien n’y compte — ni ferveur, ni '
           + 'écharpes, ni classement — et rien ne t’y aide non plus : aucun Fanzzy, '
           + 'aucun équipement. C’est ta main, et le même moteur qui te note en duel.'],

@@ -3,7 +3,7 @@
  *
  * ## Ce qu'elle règle
  *
- * Les vingt gestes ne s'apprennent nulle part. On les découvre **en duel** ou
+ * Les vingt-quatre gestes ne s'apprennent nulle part. On les découvre **en duel** ou
  * **dans le Grand Virage**, c'est-à-dire au seul moment où les rater coûte
  * quelque chose : un chant payé qui ne pousse pas, une carte jouée pour rien,
  * et une salle de quatre-vingt-dix minutes où l'on n'ose plus rien tenter.
@@ -32,7 +32,7 @@
  *
  * ## Ce qu'elle ne réimplémente pas
  *
- * Rien. `resoudreGeste` fabrique la configuration des vingt, `grade` les note
+ * Rien. `resoudreGeste` fabrique la configuration des vingt-quatre, `grade` les note
  * toutes — la même paire que le Virage et le duel appellent. Une salle qui
  * aurait son propre barème aurait fini par enseigner un geste qui n'existe pas.
  */
