@@ -284,6 +284,37 @@ titre('Pendant la BASE, le PASS est « Bientôt »');
   await abonnement.accorderPass(C, { source: 'offert' });
   check('l’administration peut toujours l’offrir', JSON.stringify(await abonnement.saisonsDuPass(C)) === '[1]'
     && (await abonnement.estAbonne(C)) === true);
+
+  /* Gaël, 4 novembre 2026 : « ouvrir le PASS 1 uniquement pour le profil
+     ADMIN pour que je puisse contrôler que ça fonctionne ». */
+  titre('Pendant la BASE, l’admin essaie le PASS 1');
+  moi = B;
+  await pool.query("UPDATE users SET role = 'admin' WHERE public_id = ?", [B]);
+  await pool.query('DELETE FROM user_pass WHERE user_id = ?', [B]);
+  await pool.query('UPDATE user_wallet SET scarves = 90000, packs = 0 WHERE user_id = ?', [B]);
+  check('l’admin n’a pas « bientôt »', (await get('/api/abonnement')).offre?.bientot === null);
+  const rb = await post('/api/abonnement/pass/echarpes');
+  check('l’admin l’achète en écharpes, le PASS 1 est à lui', rb.s === 200
+    && JSON.stringify(await abonnement.saisonsDuPass(B)) === '[1]'
+    && Number((await bourse(B)).scarves) === 50000 && (await abonnement.estAbonne(B)) === true
+    || console.log('       ', rb));
+  check('sa voie est au niveau 1 sans réglage', (await abonnement.voies(B))[0]?.niveau === 1);
+  poserReglages({ 'pass.essai_admin_niveau': 9 });
+  const v9 = (await abonnement.voies(B))[0];
+  check('le réglage d’essai la pose au niveau 9, titre et tenue au 3e âge', v9?.niveau === 9
+    && v9.titre === 'Chasseur de mammouth' && v9.ageTenue === 3 || console.log('       ', v9));
+  poserReglages({ 'pass.essai_admin_niveau': 12 });
+  check('au niveau 12, le badge et le pseudo en or', (await abonnement.badgeDe(B))?.or === true);
+  moi = C;
+  check('un joueur garde « bientôt » et sa vraie voie', (await get('/api/abonnement')).offre?.bientot?.ouvre === attendu
+    && (await abonnement.voies(C))[0]?.niveau === 1);
+  await pool.query("UPDATE users SET role = 'joueur' WHERE public_id = ?", [B]);
+  check('redevenu joueur, l’essai ne compte plus', (await abonnement.voies(B))[0]?.niveau === 1);
+  poserReglages({ 'pass.essai_admin_niveau': 0 });
+  await pool.query('DELETE FROM user_pass WHERE user_id = ?', [B]);
+  await pool.query('INSERT INTO user_pass (user_id, saison, source) VALUES (?, 1, ?), (?, 2, ?)',
+    [B, 'offert', B, 'offert']);
+
   await pool.query('UPDATE saisons SET lancee_a = NOW(3) WHERE id = 11');
   await chargerSaisons(pool);
   moi = B;

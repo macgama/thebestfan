@@ -455,6 +455,15 @@ export const REGLAGES = [
       'saison. Zéro : le PASS ne se paie plus en écharpes. Ce n’est jamais l’inverse : ' +
       'aucun euro n’achète d’écharpes.' },
 
+  { cle: 'pass.essai_admin_niveau', section: 'abonnement', type: 'entier',
+    titre: 'Essai du PASS par les admins : niveau de leur voie', unite: 'niveau',
+    min: 0, max: 12, defaut: 0,
+    aide: 'Demande de Gaël du 4 novembre 2026 : contrôler le PASS avant son ouverture. ' +
+      'Un compte admin achète le PASS même pendant la BASE (les joueurs voient toujours ' +
+      'BIENTÔT), et sa voie d’une saison pas encore lancée monte à ce niveau, pour voir ' +
+      'chaque gain. Zéro ou un : sa vraie voie. Une fois la saison lancée, ce réglage ne ' +
+      'compte plus.' },
+
   { cle: 'pass.dernier_mois_jours', section: 'abonnement', type: 'entier',
     titre: 'Acheté si près de la fin, il couvre aussi la saison suivante', unite: 'jours',
     min: 0, max: 60, defaut: 30,
