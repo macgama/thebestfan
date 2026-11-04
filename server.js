@@ -430,7 +430,7 @@ if (process.env.DATABASE_URL) {
     const ensemble = createEnsemble({ pool, requireAuth: auth.requireAuth });
     app.use('/api/ensemble', ensemble.router);
     amis = createAmis({ pool, requireAuth: auth.requireAuth, kop, presence, notifications,
-      ensemble });
+      ensemble, abonnement });
     app.use('/api/amis', amis.router);
     console.log('amis actifs');
 

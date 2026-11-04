@@ -901,6 +901,62 @@ html[data-calme~=animations] :is(.ultime[data-etat=pret],.ultime[data-etat=pret]
   #affiche.joue *,#affiche.joue .camps{animation:none!important}
 }
 html[data-calme~="animations"] #affiche.joue :is(*,.camps){animation:none!important}
+/* ============================================ le PASS, vu par tous
+   « Être vu » (choix de Gaël, 4 novembre 2026) : ce que la voie PASS a
+   ouvert se montre à l'adversaire. L'écusson et le titre près du pseudo, le
+   pseudo en or au bout de la voie, le cadre de pierre autour du héros (qui
+   souffle au niveau 10), l'entrée en rochers (niveau 8), et les stickers
+   lancés pendant la partie (niveau 3). Les dessins viennent du kit
+   (`public/pass.js`) ; rien de tout cela ne touche la corde. */
+.qui .pass-nom{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:center}
+.qui .pass-nom .tbf-pass-badge{--t:20px}
+.qui b.pass-or{color:#F5C33B;text-shadow:0 0 8px rgba(245,195,59,.55),0 1px 0 #6b4a05;
+  background:linear-gradient(100deg,#fff3c4 0%,#F5C33B 40%,#c48a12 60%,#fff3c4 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  background-size:220% 100%;animation:passOr 3.4s linear infinite}
+@keyframes passOr{to{background-position:-220% 0}}
+.qui .pass-titre{order:9;flex:0 0 auto;max-width:100%;padding:5px 16px 4px;
+  font-family:var(--banner);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:#f6e7c4;text-shadow:0 1px 1px rgba(0,0,0,.8);
+  background:50% 50%/100% 100% no-repeat var(--plaque,linear-gradient(#5a5048,#2f2924));
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.camp-bloc .qui:has(.pass-titre)::after{content:"";order:8;flex-basis:100%;height:0}
+.camp-bloc .qui:has(.pass-nom){position:relative;z-index:4}
+.fz-aff.heros>.pass-cadre{position:absolute;z-index:2;inset:0 -6% 12px;width:112%;height:calc(100% - 12px);
+  object-fit:fill;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.fz-aff.heros[data-pass-cadre=anime]>.pass-cadre{animation:passCadre 2.8s ease-in-out infinite}
+@keyframes passCadre{0%,100%{filter:drop-shadow(0 0 2px var(--pass,#c9772e))}
+  50%{filter:drop-shadow(0 0 12px var(--pass,#c9772e)) brightness(1.12)}}
+.fz-aff.heros>.pass-entree{position:absolute;z-index:3;left:-14%;right:-14%;bottom:0;height:46%;
+  width:128%;object-fit:contain;object-position:50% 100%;pointer-events:none;opacity:0}
+#affiche.joue .fz-aff.heros[data-pass-entree]>.pass-entree{animation:passRochers 1.5s cubic-bezier(.2,.9,.3,1) .95s both}
+#affiche.joue .fz-aff.heros[data-pass-entree]{animation:passSurgit .6s cubic-bezier(.2,1.5,.35,1) 1.25s backwards}
+@keyframes passRochers{0%{opacity:0;translate:0 40%;scale:.7}30%{opacity:1;translate:0 0;scale:1.08}
+  70%{opacity:1;scale:1}100%{opacity:0;translate:0 12%;scale:1.12}}
+@keyframes passSurgit{from{opacity:0;translate:0 38%;scale:.6}}
+/* Les stickers : le bouton (chez moi, au coin de l'arène) et le dessin qui
+   vole au-dessus de la tribune qui l'a lancé. */
+.pass-stickers{position:absolute;z-index:6;left:6px;bottom:6px;display:flex;align-items:flex-end;gap:4px}
+.pass-stickers>button{width:38px;height:38px;padding:0;border:0;border-radius:50%;cursor:pointer;
+  background:rgba(20,16,12,.55);box-shadow:0 0 0 2px var(--pass,#c9772e) inset;display:grid;place-items:center}
+.pass-stickers>button img{width:32px;height:32px;object-fit:contain}
+.pass-stickers .choix{display:flex;gap:4px;padding:3px;border-radius:22px;background:rgba(20,16,12,.7)}
+.pass-stickers .choix[hidden]{display:none}
+.pass-stickers[data-attente]>button{opacity:.45}
+.pass-vol{position:absolute;z-index:7;bottom:50%;width:min(26%,110px);pointer-events:none;
+  animation:passVol 2s cubic-bezier(.2,1.4,.35,1) forwards}
+.pass-vol[data-tribune=moi]{left:8%}
+.pass-vol[data-tribune=eux]{right:8%}
+.pass-vol img{display:block;width:100%;height:auto;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
+@keyframes passVol{0%{opacity:0;scale:.3;rotate:-18deg}18%{opacity:1;scale:1.12;rotate:6deg}
+  30%{scale:1;rotate:-3deg}80%{opacity:1;translate:0 -10%}100%{opacity:0;translate:0 -30%;scale:.9}}
+@media (prefers-reduced-motion: reduce){
+  .qui b.pass-or,.fz-aff.heros>.pass-cadre{animation:none}
+  .pass-vol{animation:passVolCalme 2s linear forwards}
+}
+html[data-calme~="animations"] :is(.qui b.pass-or,.fz-aff.heros>.pass-cadre){animation:none}
+html[data-calme~="animations"] .pass-vol{animation:passVolCalme 2s linear forwards}
+@keyframes passVolCalme{0%,85%{opacity:1}100%{opacity:0}}
 /* Un écran bas (320 × 568) : le héros garde la hauteur qu'il reste, le
    banc se resserre. */
 @media (max-height:640px){
@@ -1291,6 +1347,7 @@ html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:n
 <script src="/chant-art.js"></script>
 <script src="/stade-art.js"></script>
 <script src="/geste.js"></script>
+<script src="/pass.js"></script>
 <script>
 /* =======================================================================
    Duel N contre N.
@@ -2611,11 +2668,12 @@ function connecter() {
   /* L affiche, une fois, au coup d envoi. Elle arrive juste apres nvn:start
      et se retire toute seule : voir montrerAffiche. */
   socket.on('nvn:affiche', (a) => { try { montrerAffiche(a); } catch (e) {
-    console.error('affiche', e); } });
+    console.error('affiche', e); } try { poserStickers(a); } catch (e) { console.error('stickers', e); } });
+  socket.on('nvn:sticker', (d) => { try { volerSticker(d); } catch (e) { console.error('sticker', e); } });
 
   /* Le bilan, une fois, au coup de sifflet. Il remplace le voile gris que
      finir() posait ; celui-ci reste en repli si le bilan n arrive pas. */
-  socket.on('nvn:fin', (b) => { try {
+  socket.on('nvn:fin', (b) => { document.getElementById('passStickers')?.remove(); try {
     /* Il peut arriver à la reprise, d'un duel fini pendant la coupure : la
        vue n'a alors jamais su qu'il était terminé, et une reconnexion de
        plus redemanderait à y entrer. */
@@ -4498,7 +4556,7 @@ const dessinFz = (id, variante, tenue) =>
 
 /** La vignette d'un Fanzzy sur l'affiche, avec son repli. `rang` règle la
     cascade : les trois d'un camp entrent l'un après l'autre. */
-function vignetteFz(f, entre, couleur, rang = 0, heros = false) {
+function vignetteFz(f, entre, couleur, rang = 0, heros = false, pass = null) {
   /* La racine, parce que `monFanzzy` est la lignée et `f.id` l'âge : « TR32 »
      d'un côté, « TR32B » de l'autre pour le même personnage. */
   const racine = (s) => /^([A-Z]+\d+)/.exec(String(s ?? ''))?.[1] ?? s;
@@ -4519,8 +4577,18 @@ function vignetteFz(f, entre, couleur, rang = 0, heros = false) {
     skin: f.skin || (mien ? monAvatar?.skin : null) || 'base' };
   const image = heros ? (imageFz(qui, 'pousse') ?? src) : src;
   const ton = couleur === 'var(--bleu)' ? 'data-ton="bleu"' : 'data-ton="or"';
-  return `<div class="fz-aff ${heros ? 'heros' : 'tbf-glisse'} ${entre ? 'entre' : ''}" style="--ac:${couleur};--d:${rang * 160}ms;--i:${rang % 3};--src:url('${image ?? ''}')">
+  /* Le PASS du joueur sur son héros : le cadre de carte, l'entrée. */
+  const P = window.TBF_PASS;
+  const k = heros && pass && P?.kit?.(pass.saison);
+  const g = (x) => Array.isArray(pass?.gains) && pass.gains.includes(x);
+  const cadre = k && g('cadre') ? (g('cadre_anime') ? 'anime' : 'fixe') : '';
+  const entree = k && g('entree') && k.entree;
+  const attrs = (cadre ? ` data-pass-cadre="${cadre}"` : '') + (entree ? ' data-pass-entree' : '')
+    + (pass ? ` data-pass="${Number(pass.saison) || ''}"` : '');
+  return `<div class="fz-aff ${heros ? 'heros' : 'tbf-glisse'} ${entre ? 'entre' : ''}"${attrs} style="--ac:${couleur};--d:${rang * 160}ms;--i:${rang % 3};--src:url('${image ?? ''}')${pass?.couleur ? `;--pass:${esc(pass.couleur)}` : ''}">
     ${image ? `<img alt="" ${heros ? 'decoding="async"' : 'loading="lazy"'} src="${image}">` : ''}
+    ${cadre ? P.img(k.cadre, 'pass-cadre') : ''}
+    ${entree ? P.img(k.entree, 'pass-entree') : ''}
     ${heros && image ? '<span class="eclat" aria-hidden="true"></span>' : ''}
     ${entre ? `<span class="tag tbf-sticker" ${ton}>ENTRE</span>` : ''}
     <div class="voile-bas"><b>${esc(f.nom ?? f.id)}</b>
@@ -4561,7 +4629,72 @@ function formeHTML(liste) {
  * perd les secondes qu'il regarde. À son départ, la tribune s'emplit
  * (`entrerEnTribune`).
  */
+/**
+ * Le pseudo d'un joueur sur l'affiche, avec ce que sa voie PASS a ouvert :
+ * l'écusson, le pseudo en or (niveau 12), le titre sur sa plaque (niveau 9).
+ * Sans PASS, le pseudo seul, comme avant.
+ */
+function nomPass(j) {
+  const nom = `${esc(j.nom)}${j.bot ? ' · BOT' : ''}`;
+  const p = j.pass;
+  const P = window.TBF_PASS;
+  if (!p || !P || j.bot) return `<b>${nom}</b>`;
+  const g = (x) => Array.isArray(p.gains) && p.gains.includes(x);
+  const k = P.kit?.(p.saison);
+  const plaque = k?.titre ? ` style="--plaque:url('${P.image(k.titre)}')"` : '';
+  return `<span class="pass-nom"><b${g('badge_or') ? ' class="pass-or"' : ''}>${nom}</b>${P.badge(p)}</span>`
+    + (g('titre') && p.titre ? `<span class="pass-titre"${plaque}>${esc(p.titre)}</span>` : '');
+}
+
+/* **Les stickers du PASS en duel** (niveau 3 de la voie) : le bouton chez
+   moi quand mon affiche porte le gain, et le dessin qui vole au-dessus de la
+   tribune qui l'a lancé (`nvn:sticker`, vu par tout le duel). */
+const STICKERS_PASS = ['ouga', 'massue', 'os', 'feu'];
+function poserStickers(a) {
+  document.getElementById('passStickers')?.remove();
+  const moi = (a?.joueurs ?? []).find((j) => S.vue?.moi?.userId
+    && String(j.userId) === String(S.vue.moi.userId));
+  const P = window.TBF_PASS;
+  const k = moi?.pass && P?.kit?.(moi.pass.saison);
+  if (!k || !(moi.pass.gains ?? []).includes('stickers')) return;
+  const boite = document.createElement('div');
+  boite.className = 'pass-stickers';
+  boite.id = 'passStickers';
+  if (moi.pass.couleur) boite.style.setProperty('--pass', moi.pass.couleur);
+  boite.innerHTML = `<button type="button" class="ouvre" aria-expanded="false" aria-label="Lancer un sticker du PASS">${
+    P.img(`sticker-${STICKERS_PASS[0]}`)}</button><div class="choix" hidden>${STICKERS_PASS.map((x) =>
+    `<button type="button" data-sticker="${x}" aria-label="Sticker ${x}">${P.img(`sticker-${x}`)}</button>`).join('')}</div>`;
+  const choix = boite.querySelector('.choix');
+  boite.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.classList.contains('ouvre')) {
+      choix.hidden = !choix.hidden;
+      b.setAttribute('aria-expanded', String(!choix.hidden));
+      return;
+    }
+    if (boite.dataset.attente !== undefined) return;
+    socket?.emit('nvn:sticker', { sticker: b.dataset.sticker });
+    choix.hidden = true;
+    boite.dataset.attente = '';
+    setTimeout(() => { delete boite.dataset.attente; }, 6000);
+  });
+  $('arene').appendChild(boite);
+}
+function volerSticker(d) {
+  const P = window.TBF_PASS;
+  if (!P || !STICKERS_PASS.includes(d?.sticker)) return;
+  const mien = S.vue?.moi?.side ?? 0;
+  const el = document.createElement('div');
+  el.className = 'pass-vol';
+  el.dataset.tribune = d.side === mien ? 'moi' : 'eux';
+  el.innerHTML = P.img(`sticker-${d.sticker}`);
+  $('arene').appendChild(el);
+  setTimeout(() => el.remove(), 2100);
+}
+
 function montrerAffiche(a) {
+  S.affiche = a;
   const mien = S.vue?.moi?.side ?? 0;
   $('afficheLieu').innerHTML = a.stade
     ? `<b>${esc(a.stade.nom)}</b>${a.stade.effet ? ` · ${esc(a.stade.effet)}` : ''}`
@@ -4594,16 +4727,16 @@ function montrerAffiche(a) {
        autres au banc. À plusieurs, une ligne par supporter. */
     const bloc = serre
       ? `<div class="qui">${tag}</div>` + parCote[cote].map((j) => `<div class="joueur">
-          <div class="qui"><b>${esc(j.nom)}${j.bot ? ' · BOT' : ''}</b>${j.bot ? '' : formeHTML(j.forme)}</div>
+          <div class="qui">${nomPass(j)}${j.bot ? '' : formeHTML(j.forme)}</div>
           <div class="trois">${(j.fanzzy ?? []).slice(0, 3)
             .map((f, i) => vignetteFz(f, i === 0, couleur, decal + i)).join('')}</div></div>`).join('')
       : parCote[cote].map((j) => {
         const [premier, ...banc] = (j.fanzzy ?? []).slice(0, 3);
         return `<div class="qui">${tag}
-          <b>${esc(j.nom)}${j.bot ? ' · BOT' : ''}</b>
+          ${nomPass(j)}
           ${j.bot ? '' : formeHTML(j.forme)}
         </div>
-        ${premier ? vignetteFz(premier, true, couleur, decal, true) : ''}
+        ${premier ? vignetteFz(premier, true, couleur, decal, true, j.pass) : ''}
         <div class="banc">${banc.map((f, i) => vignetteFz(f, false, couleur, decal + i + 1)).join('')}</div>`;
       }).join('');
     return `<div class="camp-bloc ${moi ? 'moi' : 'eux'}${serre ? ' serre' : ' duo'}">${bloc}</div>`

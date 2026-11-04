@@ -116,6 +116,24 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    coûterait un chant. */
 .fzs{position:absolute;right:calc(50% + 14px);bottom:40px;width:40%;max-width:210px;height:45%;
   z-index:3;pointer-events:none}
+/* **L'aura de braises du PASS** (niveau 11 de la voie, choix de Gaël du
+   4 novembre 2026) : une lueur à la couleur de la saison sous le Fanzzy, et
+   des braises qui montent. Derrière lui (z -1 dans sa boîte), jamais sur la
+   corde. Au calme, la lueur seule, posée. */
+.fzs>.pass-aura{position:absolute;inset:8% -6% 0;z-index:-1;pointer-events:none;overflow:visible}
+.fzs>.pass-aura::before{content:"";position:absolute;left:12%;right:12%;bottom:2%;height:58%;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--pass,#c9772e) 70%,#ffcf6b) 0%,
+    color-mix(in srgb,var(--pass,#c9772e) 45%,transparent) 45%,transparent 100%);
+  filter:blur(6px);opacity:.8;animation:passAuraSouffle 2.4s ease-in-out infinite}
+.fzs>.pass-aura i{position:absolute;bottom:6%;width:5px;height:5px;border-radius:50%;
+  background:#ffd27a;box-shadow:0 0 6px 2px var(--pass,#c9772e);opacity:0;
+  left:calc(18% + var(--x) * 1%);animation:passBraise var(--d,2.6s) ease-out var(--r,0s) infinite}
+@keyframes passAuraSouffle{0%,100%{opacity:.6;scale:1}50%{opacity:.95;scale:1.06}}
+@keyframes passBraise{0%{opacity:0;translate:0 0;scale:1}15%{opacity:1}
+  100%{opacity:0;translate:calc(var(--dx,0) * 1px) -160px;scale:.3}}
+@media (prefers-reduced-motion: reduce){.fzs>.pass-aura::before{animation:none}.fzs>.pass-aura i{display:none}}
+html[data-calme~="animations"] .fzs>.pass-aura::before{animation:none}
+html[data-calme~="animations"] .fzs>.pass-aura i{display:none}
 /* Ce qu'il porte (`TBF_STUFF.porte`) : au bord gauche de sa boîte, à hauteur
    de hanche, loin de la corde. */
 .fzs>.tbf-porte{left:0;bottom:16%;--piece:30px;gap:5px}
@@ -573,6 +591,7 @@ html[data-calme~=animations] .ultime[data-etat=pret]{animation:none}
 <script src="/chant-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-scene.js"></script>
+<script src="/pass.js"></script>
 <!-- Les deux tribunes face à face, la page annexe du bouton de l'arène. -->
 <script src="/tribunes-face.js"></script>
 <script>
@@ -1464,6 +1483,26 @@ document.addEventListener('keydown', (e) => {
 const scene = window.TBF_SCENE?.creer?.($('fzs'), {
   momentDans: $('rope'), fond: 'attente',
 }) ?? null;
+
+/* **L'aura de braises du PASS** autour de mon Fanzzy, quand ma voie l'a
+   ouverte (niveau 11). La même requête que le menu (`window.TBF_ABO`). */
+void (async () => {
+  try {
+    const a = await (window.TBF_ABO ??= fetch('/api/abonnement', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null));
+    const v = (a?.voies ?? []).filter((x) => x.original !== false).at(-1);
+    if (!v || !Array.isArray(v.gains) || !v.gains.includes('aura')) return;
+    const hote = $('fzs');
+    if (!hote || hote.querySelector(':scope > .pass-aura')) return;
+    const aura = document.createElement('div');
+    aura.className = 'pass-aura';
+    aura.setAttribute('aria-hidden', 'true');
+    if (/^#[0-9a-f]{3,8}$/i.test(String(v.couleur ?? ''))) aura.style.setProperty('--pass', v.couleur);
+    aura.innerHTML = Array.from({ length: 9 }, (_, i) =>
+      `<i style="--x:${(i * 37) % 64};--dx:${((i * 23) % 30) - 15};--d:${2.2 + (i % 4) * 0.35}s;--r:${(i * 0.41).toFixed(2)}s"></i>`).join('');
+    hote.prepend(aura);
+  } catch { /* purement visuel */ }
+})();
 
 /** Une célébration du personnage, que la scène tient `ms` (un moment :
     quinze secondes, la durée de `fx.js`). Le dernier moment remplace le

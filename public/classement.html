@@ -262,6 +262,11 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 /* tbf-degagement */
 #app{padding-bottom:calc(var(--bas) + 40px)}
 
+/* **Le PASS sur le podium** (« Être vu », 4 novembre 2026) : le pseudo en
+   or au bout de la voie, le titre de saison sous la valeur. */
+.tbf-podium-nom>span.pass-or{color:#F5C33B;text-shadow:0 0 8px rgba(245,195,59,.6),0 1px 0 #6b4a05}
+.tbf-podium-bache>.pass-titre{display:block;margin-top:2px;font-family:var(--banner);font-size:9px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:#F5C33B;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -538,8 +543,9 @@ function marche(x, i, L) {
   return `<li data-rang="${i + 1}"${colle}>${visage}
     <div class="tbf-podium-bache">
       <b class="tbf-podium-rang">${i + 1}</b>
-      <b class="tbf-podium-nom"><span>${nomSecable(L.nom)}${passDe(x)}</span></b>
+      <b class="tbf-podium-nom"><span${gainPass(x, 'badge_or') ? ' class="pass-or"' : ''}>${nomSecable(L.nom)}${passDe(x)}</span></b>
       <span class="tbf-podium-val">${L.val}<span class="vh"> ${L.mot}</span></span>
+      ${gainPass(x, 'titre') && x.pass.titre ? `<small class="pass-titre">${esc(x.pass.titre)}</small>` : ''}
     </div></li>`;
 }
 
@@ -598,6 +604,8 @@ function bulleDe(x, L) {
    le sien. Le mot de la valeur est en tête de colonne, et dit ici au seul
    lecteur d'écran. Une ligne qui a une bulle à ouvrir est un bouton. */
 /* L'écusson du PASS de saison, après le pseudo, quand la ligne le porte. */
+/* Un gain de la voie PASS ouvert (le podium seul les reçoit en entier). */
+const gainPass = (x, g) => Array.isArray(x?.pass?.gains) && x.pass.gains.includes(g);
 const passDe = (x) => (x?.pass && window.TBF_PASS
   ? ` ${window.TBF_PASS.badge(x.pass)}` : '');
 
