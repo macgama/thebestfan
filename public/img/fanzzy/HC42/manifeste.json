@@ -1,6 +1,6 @@
 {
   "id": "HC42",
-  "rev": 20,
+  "rev": 25,
   "evolutions": {
     "e1": {
       "skins": {
@@ -69,6 +69,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "76a79532d38c"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "6a6deacf9f60"
         }
       }
     },
