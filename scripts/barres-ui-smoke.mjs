@@ -163,6 +163,31 @@ for (const [url, , nom] of ECRANS) {
   await page.close();
 }
 
+/* **L'appli du Play Store** (4 novembre 2026). Dans l'appli Android (plein
+   écran), Gaël voyait la fiche d'un Fanzzy sans ses boutons ÉVOLUER /
+   EMMENER EN DUEL : la page se disait plus haute que l'écran. On émule une
+   fenêtre de 950 px sur un écran de 891 (son S24+) : chaque écran de jeu
+   tient dans l'écran, par `--h-ecran` (script de tête, ui.css). */
+for (const [url, , nom] of ECRANS) {
+  const page = await nav.newPage();
+  page.on('dialog', (d) => d.dismiss());
+  await page.evaluateOnNewDocument(() => {
+    const vrai = window.matchMedia.bind(window);
+    window.matchMedia = (q) => (/display-mode:\s*(browser|fullscreen)/.test(q)
+      ? { matches: /fullscreen/.test(q), media: q, addEventListener() {}, removeEventListener() {} } : vrai(q));
+    Object.defineProperty(window.screen, 'height', { get: () => 891 });
+  });
+  await page.setUserAgent(ANDROID);
+  await page.setViewport({ width: 411, height: 950, isMobile: true, hasTouch: true });
+  try { await page.goto(base + url, { waitUntil: 'networkidle2', timeout: 15000 }); } catch {}
+  await new Promise((r) => setTimeout(r, 600));
+  const m = await page.evaluate(() => ({ bas: Math.round(document.getElementById('app').getBoundingClientRect().bottom),
+    h: getComputedStyle(document.documentElement).getPropertyValue('--h-ecran').trim() }));
+  check(`${nom}, appli plein écran, page annoncée plus haute que l’écran : l’écran de jeu tient dans les 891 px (${m.bas}, « ${m.h} »)`,
+    m.bas <= 891 || (console.log('        ', m), false));
+  await page.close();
+}
+
 for (const [url, , nom] of ECRANS) {
   const court = await mesurer(url, 296, 480);
   check(`${nom}, fenêtre courte (296 × 480) : l’écran garde 560 px et défile jusqu’à son bas`,

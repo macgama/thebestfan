@@ -399,7 +399,7 @@
   box-sizing:border-box;background:rgba(4,6,10,.96);clip-path:inset(0 var(--tbf-cote,0px));
   cursor:zoom-out;animation:fiche-fondu .18s ease}
 .fiche-plein-scene{position:relative;container-type:size;overflow:hidden;border-radius:14px;
-  aspect-ratio:2/3;height:min(calc(100dvh - 90px), calc((min(100vw, var(--colonne, 480px)) - 24px) * 1.5));
+  aspect-ratio:2/3;height:min(calc(var(--h-ecran,100dvh) - 90px), calc((min(100vw, var(--colonne, 480px)) - 24px) * 1.5));
   max-width:100%;box-shadow:0 10px 40px rgba(0,0,0,.7)}
 .fiche-plein-scene>svg{position:absolute;inset:0;width:100%;height:100%}
 .fiche-plein-perso{position:absolute;left:-25%;bottom:2%;width:150%;height:92%;object-fit:contain;
