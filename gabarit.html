@@ -1,0 +1,216 @@
+<title>Images de TheBestFan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap">
+<style>
+/* Mise en page : une bande de navigation collante (sections, recherche, filtre),
+   puis des planches de vignettes rangées comme les classeurs du jeu.
+   Palette du jeu (ui.css) : le noir du stade la nuit, la craie, le jaune des projecteurs.
+   Un seul thème, sombre, assumé comme dans le jeu. */
+:root{color-scheme:dark;
+  --fond:#0A0D11;--pan:#121821;--pan2:#18202B;--craie:#F2EEE4;--gris:#9AA3AE;
+  --trait:rgba(242,238,228,.13);--projo:#F5C33B;--vert:#1E9E6A;--flare:#E0402C;--bleu:#3C82E8;
+  --banner:"Oswald",Impact,"Arial Narrow Bold",sans-serif;
+  --texte:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+body{background:var(--fond);color:var(--craie);font:14px/1.5 var(--texte);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 60px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--fond)}
+.env{max-width:1240px;margin:0 auto}
+h1,h2,h3{font-family:var(--banner);font-weight:600;letter-spacing:.02em;text-wrap:balance;margin:0}
+h1{font-size:30px;text-transform:uppercase}
+h2{font-size:22px;text-transform:uppercase}
+h3{font-size:16px}
+.tete{padding-block:22px 12px;display:grid;gap:8px}
+.tete p{margin:0;color:var(--gris);max-width:70ch}
+.chiffres{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chiffre{background:var(--pan);border:1px solid var(--trait);border-radius:6px;padding:6px 10px;font-variant-numeric:tabular-nums;color:var(--craie);text-decoration:none;font-size:13px}
+.chiffre b{font-family:var(--banner);font-weight:500;font-size:15px;letter-spacing:.03em}
+.chiffre .m{color:var(--flare)}
+.barre{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--fond);border-bottom:1px solid var(--trait);padding-block:10px;display:grid;gap:8px}
+.onglets{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.onglet{flex:none;font-family:var(--banner);font-weight:500;text-transform:uppercase;letter-spacing:.05em;font-size:13px;
+  background:none;color:var(--gris);border:1px solid var(--trait);border-radius:999px;padding:5px 12px;cursor:pointer}
+.onglet[aria-current="true"]{background:var(--projo);color:#111;border-color:var(--projo)}
+.onglet .n{color:var(--flare);margin-left:4px}
+.onglet[aria-current="true"] .n{color:#7a1608}
+.outils{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.outils input[type=search]{flex:1 1 220px;min-width:0;background:var(--pan);color:var(--craie);border:1px solid var(--trait);border-radius:6px;padding:7px 10px;font:inherit}
+.outils label{display:flex;gap:6px;align-items:center;color:var(--gris);cursor:pointer}
+:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+.legende{display:flex;flex-wrap:wrap;gap:12px;color:var(--gris);font-size:12px}
+.legende span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--pan2);border:1px solid var(--trait)}
+.legende .l-m::before{border:1px dashed var(--flare);background:none}
+.legende .l-r::before{border-color:var(--projo)}
+.legende .l-f::before{border-color:var(--bleu)}
+.legende .l-c::before{background:var(--vert);border-color:var(--vert)}
+main{display:grid;gap:26px;padding-top:18px}
+.sec{display:grid;gap:14px}
+.sec>p{margin:0;color:var(--gris);max-width:75ch}
+.bloc{display:grid;gap:8px}
+.bloc h3{color:var(--projo)}
+.grille{display:flex;flex-wrap:wrap;gap:8px}
+.case{display:grid;gap:3px;align-content:start;justify-items:center;width:calc(var(--w) + 8px);background:var(--pan);border:1px solid var(--trait);border-radius:6px;padding:4px;cursor:zoom-in;color:inherit;font:inherit;text-align:center}
+.case .vi{width:var(--w);height:var(--h);background-repeat:no-repeat;border-radius:3px;background-color:var(--pan2)}
+.case .t{font-size:11px;line-height:1.25;color:var(--craie);overflow-wrap:anywhere;max-width:100%}
+.case .n{font-size:10px;line-height:1.2;color:var(--gris);overflow-wrap:anywhere;max-width:100%}
+.case.repli{border-color:var(--projo)}
+.case.ferme{border-color:var(--bleu)}
+.case.manque{border:1px dashed var(--flare);cursor:default;background:none}
+.case.manque .vi{display:grid;place-items:center;background:none;color:var(--flare);font-family:var(--banner);font-size:12px;text-transform:uppercase;letter-spacing:.06em;border:1px dashed rgba(224,64,44,.35)}
+.case.info{border-style:dashed;cursor:default;background:none}
+.case.info .vi{display:grid;place-items:center;background:none;color:var(--gris);font-size:11px}
+.case .clip{position:relative}
+.pastille{font-size:9px;font-family:var(--banner);letter-spacing:.06em;text-transform:uppercase;background:var(--vert);color:#fff;border-radius:3px;padding:0 4px}
+.series{display:flex;flex-wrap:wrap;gap:6px}
+.serie-btn{background:var(--pan);border:1px solid var(--trait);color:var(--craie);border-radius:6px;padding:6px 10px;cursor:pointer;font:inherit;display:grid;gap:1px;text-align:left}
+.serie-btn b{font-family:var(--banner);font-weight:500;letter-spacing:.04em}
+.serie-btn small{color:var(--gris);font-variant-numeric:tabular-nums}
+.serie-btn[aria-pressed="true"]{border-color:var(--projo);box-shadow:inset 0 0 0 1px var(--projo)}
+.bilan{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--gris);font-variant-numeric:tabular-nums;font-size:13px}
+.bilan b{color:var(--craie);font-weight:600}
+.lignee{border-top:1px solid var(--trait);padding-top:12px;display:grid;gap:8px}
+.lignee header{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.lignee header .id{font-family:var(--banner);color:var(--projo);font-size:17px}
+.lignee header .rar{color:var(--gris);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.lignee header .mq{color:var(--flare);font-size:12px}
+.rang{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:start}
+.rang>span{color:var(--gris);font-size:12px;padding-top:6px}
+@media (max-width:560px){.rang{grid-template-columns:minmax(0,1fr)}.rang>span{padding-top:0}}
+.voir{justify-self:start;background:none;border:1px solid var(--trait);color:var(--projo);border-radius:6px;padding:5px 10px;cursor:pointer;font:inherit;font-size:13px}
+.detail{display:grid;gap:8px;background:var(--pan);border-radius:8px;padding:10px}
+.vide{color:var(--gris);font-style:italic}
+dialog{background:var(--pan);color:var(--craie);border:1px solid var(--trait);border-radius:10px;padding:16px;max-width:min(92vw,520px)}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+dialog .grand{margin:0 auto 10px;background-repeat:no-repeat;max-width:100%}
+dialog p{margin:4px 0;overflow-wrap:anywhere}
+dialog code{color:var(--projo);font-size:12px}
+dialog button{background:var(--projo);color:#111;border:0;border-radius:6px;padding:6px 14px;font-family:var(--banner);text-transform:uppercase;cursor:pointer;margin-top:8px}
+.pied{color:var(--gris);font-size:12px;margin-top:30px}
+@media (prefers-reduced-motion:no-preference){.case .vi{transition:opacity .2s}}
+</style>
+
+<div class="env">
+  <header class="tete">
+    <h1>Les images du jeu</h1>
+    <p>Tout ce qu'un joueur peut voir dans TheBestFan, tiré de la branche main : chaque Fanzzy avec ses âges, ses états, ses tenues et ses Ultimate, les cartes action, l'équipement, les chants, les stades, les boosters et le décor de l'application. Ce qui manque est signalé en rouge.</p>
+    <p id="maj"></p>
+    <div class="chiffres" id="chiffres"></div>
+  </header>
+  <div class="barre">
+    <nav class="onglets" id="onglets" aria-label="Sections"></nav>
+    <div class="outils">
+      <input type="search" id="cherche" placeholder="Chercher un nom ou un code (RP4, Fumigène, halloween…)" aria-label="Chercher">
+      <label><input type="checkbox" id="manques"> Seulement ce qui manque</label>
+    </div>
+    <div class="legende"><span class="l-p">présente</span><span class="l-m">manque</span><span class="l-r">dessin pas branché</span><span class="l-f">pièce fermée</span><span class="l-c">clip animé</span></div>
+  </div>
+  <main id="vue"></main>
+  <p class="pied" id="pied"></p>
+</div>
+<dialog id="zoom"><div class="grand" id="zoom-vi"></div><p id="zoom-t"></p><p id="zoom-n"></p><p><code id="zoom-p"></code></p><form method="dialog"><button>Fermer</button></form></dialog>
+
+<script>
+const D = /*DONNEES*/null;
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+const NOMS = { fanzzy: 'Fanzzy', actions: 'Cartes action', stuff: 'Équipement', chants: 'Chants', stades: 'Stades', fonds: 'Fonds', boosters: 'Boosters', ecrans: 'Écrans, dos et logos', videos: 'Vidéos', orphelins: 'Sans fiche' };
+const ORDRE = ['fanzzy', ...D.sections.map((s) => s.id)];
+const etat = { vue: 'fanzzy', serie: D.series[0]?.id, ouverts: new Set(), q: '', manques: false };
+try { const s = JSON.parse(localStorage.getItem('catalogue-etat') || '{}'); if (s.serie) etat.serie = s.serie; } catch {}
+
+const date = new Date(D.genere);
+$('#maj').textContent = `Relevé du ${date.toLocaleDateString('fr-CH', { dateStyle: 'long' })} à ${date.toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' })}, sur main au commit ${D.commit}. Mis à jour chaque nuit avec l'état des lieux des séries.`;
+const tot = Object.values(D.stats).reduce((a, s) => ({ ok: a.ok + s.ok, m: a.m + s.manque }), { ok: 0, m: 0 });
+$('#chiffres').innerHTML = `<span class="chiffre"><b>${tot.ok.toLocaleString('fr-CH')}</b> images</span><span class="chiffre"><b class="m">${tot.m.toLocaleString('fr-CH')}</b> manques</span>`
+  + ORDRE.map((id) => { const s = D.stats[id] || { ok: 0, manque: 0 }; return `<a class="chiffre" href="#${id}">${NOMS[id] || id} · <b>${s.ok.toLocaleString('fr-CH')}</b>${s.manque ? ` · <span class="m">${s.manque} manques</span>` : ''}</a>`; }).join('');
+
+/* --- vignettes : une case lit sa position dans la planche de son groupe */
+const observe = 'IntersectionObserver' in window ? new IntersectionObserver((es) => {
+  for (const e of es) if (e.isIntersecting) { const el = e.target; el.style.backgroundImage = `url("${el.dataset.u}")`; observe.unobserve(el); }
+}, { rootMargin: '400px' }) : null;
+function fond(it, echelle = 1) {
+  const v = D.vignettes[it.g]; if (!v) return '';
+  const w = v.w * echelle, h = v.h * echelle;
+  return `width:${w}px;height:${h}px;background-size:${v.c * w}px auto;background-position:-${(it.i % v.c) * w}px -${Math.floor(it.i / v.c) * h}px`;
+}
+const ECH = (it) => (it.petit ? 0.6 : 0.8);
+function caseHtml(it) {
+  const v = D.vignettes[it.g];
+  const w = v ? Math.round(v.w * ECH(it)) : 76, h = v ? Math.round(v.h * ECH(it)) : 96;
+  if (!it.p) {
+    const cls = it.k === 'info' ? 'info' : 'manque';
+    return `<div class="case ${cls}" style="--w:${w}px;--h:${h}px" title="${esc(it.n)}"><div class="vi">${cls === 'manque' ? 'manque' : '—'}</div><div class="t">${esc(it.t)}</div><div class="n">${esc(it.n)}</div></div>`;
+  }
+  const cls = it.k === 'repli' ? 'repli' : it.k === 'ferme' ? 'ferme' : '';
+  return `<button class="case ${cls}" style="--w:${w}px;--h:${h}px" data-z="${esc(JSON.stringify(it))}"><div class="vi" data-u="${v.u}" style="${fond(it, ECH(it))}"></div><div class="t">${esc(it.t)}${it.clip ? ' <span class="pastille">clip</span>' : ''}</div>${it.n ? `<div class="n">${esc(it.n)}</div>` : ''}</button>`;
+}
+const garde = (it) => (!etat.manques || it.k === 'manque') && (!etat.q || `${it.t} ${it.n || ''} ${it.p || ''}`.toLowerCase().includes(etat.q));
+const grille = (items) => { const a = items.filter(garde); return a.length ? `<div class="grille">${a.map(caseHtml).join('')}</div>` : ''; };
+
+function vueFanzzy() {
+  const s = D.series.find((x) => x.id === etat.serie) || D.series[0];
+  const b = s.bilan;
+  let h = `<section class="sec" id="fanzzy"><h2>Fanzzy</h2><p>Choisis une série. Chaque lignée montre ses cartes (et bustes), sa tenue de base et ses trois skins à chaque âge, puis ses Ultimate. « Tous les états » ouvre la planche complète des expressions.</p><div class="series">`;
+  for (const x of D.series) {
+    const m = x.lignees.reduce((a, l) => a + l.manques, 0);
+    h += `<button class="serie-btn" data-serie="${x.id}" aria-pressed="${x.id === s.id}"><b>${x.id} · ${esc(x.nom)}</b><small>${x.lignees.length} lignées${m ? ` · <span style="color:var(--flare)">${m} manques</span>` : ''}</small></button>`;
+  }
+  h += `</div><div class="bloc"><h3>${esc(s.nom)}${s.ligne ? ` · ${esc(s.ligne)}` : ''}</h3>
+    <div class="bilan"><span>Cartes dessinées <b>${b.cartesOk}/${b.cartes}</b></span>${b.tenues ? `<span>Tenues dessinées <b>${b.tenuesOk}/${b.tenues}</b></span><span>États <b>${b.etats.toLocaleString('fr-CH')}</b></span><span>Tenues qui clignent <b>${b.cligne}/${b.tenuesOk}</b></span>` : ''}<span>Ultimate <b>${b.ultOk}/${b.ult}</b></span><span>Clips <b>${b.clips}</b></span></div>
+    ${grille(s.tete)}</div>`;
+  let n = 0;
+  for (const L of s.lignees) {
+    const corps = L.lignes.map((l) => { const g = grille(l.items); return g ? `<div class="rang"><span>${esc(l.titre)}</span>${g}</div>` : ''; }).join('');
+    const ouvert = etat.ouverts.has(L.id);
+    let det = '';
+    if (L.detail) {
+      const nb = L.detail.lignes.reduce((a, l) => a + l.items.filter((x) => x.p).length, 0);
+      det = `<button class="voir" data-ouvre="${L.id}" aria-expanded="${ouvert}">${ouvert ? 'Fermer les états' : `Tous les états (${nb})`}</button>`;
+      if (ouvert) det += `<div class="detail">${L.detail.lignes.map((l) => { const g = grille(l.items); return g ? `<div class="rang"><span>${esc(l.titre)}</span>${g}</div>` : ''; }).join('')}</div>`;
+    }
+    const nomOk = !etat.q || `${L.id} ${L.nom}`.toLowerCase().includes(etat.q);
+    if (!corps && !(nomOk && !etat.manques)) continue;
+    n++;
+    h += `<article class="lignee"><header><span class="id">${L.id}</span><h3>${esc(L.nom)}</h3><span class="rar">${esc(L.rar)}</span>${L.manques ? `<span class="mq">${L.manques} manque${L.manques > 1 ? 's' : ''}</span>` : ''}</header>${corps}${det}</article>`;
+  }
+  if (!n) h += `<p class="vide">Rien ne correspond dans cette série.</p>`;
+  return h + '</section>';
+}
+function vueSection(id) {
+  const s = D.sections.find((x) => x.id === id);
+  let h = `<section class="sec" id="${id}"><h2>${esc(s.titre)}</h2><p>${esc(s.intro)}</p>`;
+  let n = 0;
+  for (const b of s.blocs) { const g = grille(b.items); if (g) { n++; h += `<div class="bloc"><h3>${esc(b.titre)}</h3>${g}</div>`; } }
+  if (!n) h += `<p class="vide">Rien ne correspond.</p>`;
+  return h + '</section>';
+}
+function rendre() {
+  $('#onglets').innerHTML = ORDRE.map((id) => { const m = D.stats[id]?.manque; return `<button class="onglet" data-vue="${id}" aria-current="${id === etat.vue}">${NOMS[id] || id}${m ? `<span class="n">${m}</span>` : ''}</button>`; }).join('');
+  $('#vue').innerHTML = etat.vue === 'fanzzy' ? vueFanzzy() : vueSection(etat.vue);
+  document.querySelectorAll('.vi[data-u]').forEach((el) => observe ? observe.observe(el) : (el.style.backgroundImage = `url("${el.dataset.u}")`));
+  try { localStorage.setItem('catalogue-etat', JSON.stringify({ serie: etat.serie })); } catch {}
+}
+function lireHash() {
+  const h = location.hash.slice(1);
+  if (h.startsWith('serie-')) { etat.vue = 'fanzzy'; etat.serie = h.slice(6); }
+  else if (ORDRE.includes(h)) etat.vue = h;
+}
+lireHash(); rendre();
+addEventListener('hashchange', () => { lireHash(); rendre(); });
+document.addEventListener('click', (e) => {
+  const o = e.target.closest('[data-vue]'); if (o) { etat.vue = o.dataset.vue; location.hash = etat.vue; return; }
+  const s = e.target.closest('[data-serie]'); if (s) { etat.serie = s.dataset.serie; location.hash = 'serie-' + etat.serie; return; }
+  const v = e.target.closest('[data-ouvre]'); if (v) { const id = v.dataset.ouvre; etat.ouverts.has(id) ? etat.ouverts.delete(id) : etat.ouverts.add(id); rendre(); return; }
+  const z = e.target.closest('[data-z]'); if (z) {
+    const it = JSON.parse(z.dataset.z), vg = D.vignettes[it.g];
+    const g = $('#zoom-vi'); const ech = Math.min(2.6, (Math.min(innerWidth * 0.8, 480)) / vg.w);
+    g.setAttribute('style', fond(it, ech)); g.style.backgroundImage = `url("${vg.u}")`;
+    $('#zoom-t').textContent = it.t; $('#zoom-n').textContent = it.n || ''; $('#zoom-p').textContent = it.p;
+    const dl = $('#zoom'); dl.showModal ? dl.showModal() : dl.setAttribute('open', '');
+  }
+});
+let minuterie;
+$('#cherche').addEventListener('input', (e) => { clearTimeout(minuterie); minuterie = setTimeout(() => { etat.q = e.target.value.trim().toLowerCase(); rendre(); }, 200); });
+$('#manques').addEventListener('change', (e) => { etat.manques = e.target.checked; rendre(); });
+$('#pied').textContent = `Vignettes réduites à partir des fichiers de public/ (une planche par groupe). Les décors dessinés au code (mini-jeux, tifo, ola) n'ont pas de fichier image et ne figurent pas ici.`;
+</script>
