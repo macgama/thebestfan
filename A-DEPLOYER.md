@@ -13,6 +13,31 @@ Construction seule, **sans schéma**.
 
 ---
 
+**La fin de duel plus festive ou plus triste** (branche
+`claude/project-thread-pphd5o`, 4 novembre 2026, accord de Gaël « Oui, telle
+quelle »). Sans schéma.
+
+- Victoire : le mot tombe lettre à lettre en or, éventail d'or, Fanzzy qui
+  saute, canons de confettis, son « fin-victoire » et l'ovation.
+- Défaite : lettres qui tombent, case fendue, nuage qui pleut sur le Fanzzy,
+  sticker « REVANCHE ? », son « fin-defaite ».
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
+**Un partage propre du site** (branche `claude/project-thread-ezhsqf`,
+4 novembre 2026, demande de Gaël « il faut faire propre »). Construction
+seule, **sans schéma**.
+
+- L'aperçu d'un lien (WhatsApp, Facebook, X…) montre maintenant une image
+  (`public/img/partage.jpg`, 1200 × 630), le titre et une phrase.
+- Le menu a « Partager le jeu » : il envoie toujours https://thebestfan.online.
+- Après la mise en ligne : cliquer « Redémarrer ». WhatsApp garde un aperçu
+  quelque temps : un lien déjà partagé peut rester sans image, un nouveau
+  partage la montre.
+
+---
+
 **L'appli Android du Play Store : préparation et paiement Google** (branche
 `claude/project-thread-lg6ctd`, 4 novembre 2026, choix de Gaël « Paiement
 Google dans l'appli » et « Oui, ajouter les colonnes »). **Avec schéma** :

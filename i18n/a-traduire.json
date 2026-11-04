@@ -1,7 +1,129 @@
 {
+ "ESSAYER 10 s": {
+  "ou": [
+   "public/abonnement.html",
+   "public/pass-pub.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "+{0} dans ta réserve, tout de suite": {
+  "ou": [
+   "public/abonnement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "La tenue de la saison sur tous tes Fanzzy": {
+  "ou": [
+   "public/abonnement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ton écusson, vu par tous en duel et au classement": {
+  "ou": [
+   "public/abonnement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ta voie PASS : 12 niveaux de cadeaux à gagner en jouant": {
+  "ou": [
+   "public/abonnement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Actif jusqu’au {0}, payé une fois, jamais renouvelé tout seul.": {
+  "ou": [
+   "public/abonnement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Paiement en attente chez Google : ton PASS arrivera dès qu’il sera confirmé.": {
+  "ou": [
+   "public/abonnement.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "style=\"--pass-fond:url(’{0}’);--pass:{1}\" data-pass-fond": {
   "ou": [
    "public/amis.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Google Play": {
+  "ou": [
+   "public/boutique.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Stripe": {
+  "ou": [
+   "public/boutique.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} — {1}. Tu seras conduit chez Google Play pour payer. Rien n’est débité avant.": {
+  "ou": [
+   "public/boutique.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Paiement en attente chez Google.": {
+  "ou": [
+   "public/boutique.html"
   ],
   "langues": [
    "en",
@@ -32,9 +154,21 @@
    "es"
   ]
  },
+ "<0>ESSAYER 10 s</0> : sur la page du PASS, ton Fanzzy porte la tenue de la saison, avec le cadre, le titre et le pseudo en or, avant que tu l’achètes.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "style=\"--plaque:url(’{0}’)\"": {
   "ou": [
-   "public/duel-nvn.html"
+   "public/duel-nvn.html",
+   "public/pass-fete.js"
   ],
   "langues": [
    "en",
@@ -131,9 +265,251 @@
    "es"
   ]
  },
- "Dans Chrome : le menu <0>⋮</0> en haut à droite, puis <1>Ajouter à l’écran d’accueil</1> et <2>Installer</2>.": {
+ "Total": {
   "ou": [
-   "public/menu.js"
+   "public/paiement-google.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "EUR": {
+  "ou": [
+   "public/paiement-google.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "C’est toi, avec le PASS {0}": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "C’est toi, avec le PASS": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "IL S’OUVRE {0}": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "PRENDRE LE PASS · {0}": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "ESSAI · 10 SECONDES": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "ÂGE 1": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Essai du PASS {0}": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Essai du PASS": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bienvenue dans le PASS {0}": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bienvenue dans le PASS": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VOIR MA VOIE PASS": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Voie PASS {0}": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Voie PASS": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "et {0} autres niveaux avec lui": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "et {0} autres niveau avec lui": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "et {0} autre niveaux avec lui": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "et {0} autre niveau avec lui": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} niveaux sur {1}": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "VOIR MA VOIE": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Voie PASS, niveau {0}": {
+  "ou": [
+   "public/pass-fete.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ton écusson, ton titre et ton pseudo en or, vus en duel": {
+  "ou": [
+   "public/pass-pub.js"
   ],
   "langues": [
    "en",
@@ -1025,6 +1401,28 @@
    "es"
   ]
  },
+ "Puis-je voir le PASS sur mon Fanzzy avant de l’acheter ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Oui : touche ESSAYER 10 s sur la page du PASS. Ton Fanzzy porte la tenue de la saison à ses trois âges, dans la grotte, avec le cadre de pierre, le titre et le pseudo en or. Chaque niveau de ta voie PASS gagné ensuite a sa petite fête à ton retour.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "Piccolo rouge et bleu": {
   "ou": [
    "src/shared/fanzzy/inventaire.js"
@@ -1776,6 +2174,17 @@
  "Un dernier soir : tout le monde pousse et tient comme jamais, et plus personne ne souffle.": {
   "ou": [
    "src/shared/stades.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "pas d’appli Android": {
+  "ou": [
+   "src/server/android.js"
   ],
   "langues": [
    "en",

@@ -9185,5 +9185,14 @@
  "garder le doigt sur la flamme qui avance": "keep your finger on the moving flame",
  "url(’data:image/svg+xml,{0}’)": "url(’data:image/svg+xml,{0}’)",
  "×2 sur les temps marqués": "×2 on the marked beats",
- "◀ TOUCHE À GAUCHE OU À DROITE ▶": "◀ TAP LEFT OR RIGHT ▶"
+ "◀ TOUCHE À GAUCHE OU À DROITE ▶": "◀ TAP LEFT OR RIGHT ▶",
+ "Partager le jeu": "Share the game",
+ "PARTAGER LE JEU": "SHARE THE GAME",
+ "Viens supporter ton club avec moi sur thebestfan, le jeu des tribunes !": "Come and back your club with me on thebestfan, the game of the stands!",
+ "Le lien est copié : colle-le dans un message à tes amis.": "Link copied: paste it in a message to your friends.",
+ "Copie ce lien et envoie-le à tes amis :": "Copy this link and send it to your friends:",
+ "Dans Chrome : le menu <0>⋮</0> en haut à droite, puis <1>Ajouter à l’écran d’accueil</1> et <2>Installer</2>.": "In Chrome: the <0>⋮</0> menu at the top right, then <1>Add to Home screen</1> and <2>Install</2>.",
+ "<0>Inviter un ami</0> : « Partager le jeu », dans le menu, envoie le lien du jeu par WhatsApp, SMS ou mail.": "<0>Invite a friend</0>: “Share the game”, in the menu, sends the game’s link by WhatsApp, text or email.",
+ "Comment inviter un ami à jouer ?": "How do I invite a friend to play?",
+ "Dans le menu, « Partager le jeu » : choisis WhatsApp, un SMS ou un mail, et ton ami reçoit le lien du jeu avec son image. Sans partage sur ton appareil, le lien est copié : colle-le dans ton message.": "In the menu, “Share the game”: pick WhatsApp, a text or an email, and your friend gets the game’s link with its picture. If your device can’t share, the link is copied: paste it into your message."
 }

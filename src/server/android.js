@@ -15,14 +15,24 @@
  *   ANDROID_SHA256=AB:CD:...   (plusieurs séparées par des virgules : la clé
  *                               de Google et la clé d'envoi, par exemple)
  *
- * Sans ANDROID_SHA256, la route répond 404 : le site web ne change en rien.
+ * Avec ANDROID_SHA256 vide, la route répond 404. Le site web ne change en rien.
  */
 export const PAQUET_PAR_DEFAUT = 'online.thebestfan.app';
+
+/* Les empreintes sont publiques : on les garde ici, pour que la mise en
+   ligne habituelle suffise. `ANDROID_SHA256` dans le .env les remplace (vide :
+   plus d'assetlinks).
+   - la clé d'envoi, créée le 2026-11-04 sur le PC de Gaël (Bubblewrap) ;
+   - la clé de signature de Google, à ajouter quand la Play Console la montre. */
+export const EMPREINTES_PAR_DEFAUT = [
+  '04:12:55:2C:C8:B4:03:22:AB:F3:3D:4A:2B:0B:E9:21:21:60:45:8C:3F:43:2E:15:1C:90:F5:48:EA:2F:8F:68',
+];
 
 const EMPREINTE = /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/;
 
 export function assetlinks(env = process.env) {
-  const empreintes = String(env.ANDROID_SHA256 || '')
+  const brut = env.ANDROID_SHA256 ?? EMPREINTES_PAR_DEFAUT.join(',');
+  const empreintes = String(brut)
     .split(',')
     .map((e) => e.trim().toUpperCase())
     .filter((e) => EMPREINTE.test(e));
