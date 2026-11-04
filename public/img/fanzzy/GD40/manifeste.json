@@ -1,6 +1,6 @@
 {
   "id": "GD40",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -117,30 +117,6 @@
           "portrait": true,
           "repli": "base",
           "sha": "005b4a884cf8"
-        },
-        "halloween": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "e6e2626cdd93"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "684abae2df14"
         }
       }
     }

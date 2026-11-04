@@ -83,18 +83,6 @@
           "repli": "base",
           "sha": "f52d9cc2e714",
           "cligne": true
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "195b395f0cf1"
         }
       }
     },

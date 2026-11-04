@@ -513,5 +513,45 @@ await rm(tmp, { recursive: true, force: true });
   check('et les douze moments sont tous rangés', orphelins.length === 0
     || (console.log('        non rangés :', orphelins.join(', ')), false));
 }
+/* **Chaque état listé par un manifeste a son fichier.**
+
+   `fanzzy-art.mjs` fusionne avec le manifeste existant : une tenue dont on
+   supprime les sources et les images garde son entrée, avec des états qui
+   n'existent plus. Le 4 novembre 2026, trente-deux tenues de skins HC sont
+   arrivées ainsi dans main, et le jeu les aurait demandées.
+
+   Les images ne sont pas dans git : sur un poste qui n'en a aucune (CI, clone
+   neuf), il n'y a rien à vérifier, et le contrôle le dit. Il ne regarde donc
+   que les Fanzzy dont au moins un état est sur le disque — un Fanzzy à moitié
+   présent, c'est précisément le désaccord qu'on cherche. */
+{
+  const { readdirSync } = await import('node:fs');
+  const DOSSIER = fileURLToPath(new URL('../public/img/fanzzy/', import.meta.url));
+  const manquants = [];
+  let vus = 0;
+  for (const id of readdirSync(DOSSIER, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)) {
+    const mf = path.join(DOSSIER, id, 'manifeste.json');
+    if (!existsSync(mf)) continue;
+    const m = JSON.parse(await readFile(mf, 'utf8'));
+    const attendus = [];
+    for (const [evo, contenu] of Object.entries(m.evolutions ?? {})) {
+      for (const [tenue, s] of Object.entries(contenu.skins ?? {})) {
+        for (const etat of s.etats ?? []) attendus.push(path.join(DOSSIER, id, evo, tenue, `${etat}.webp`));
+      }
+    }
+    const presents = attendus.filter((p) => existsSync(p));
+    if (!presents.length) continue;
+    vus++;
+    for (const p of attendus) if (!presents.includes(p)) manquants.push(path.relative(DOSSIER, p));
+  }
+  if (!vus) console.log('  —    aucune image de Fanzzy sur ce poste : les états listés ne se vérifient pas ici');
+  else {
+    check(`chaque état listé par un manifeste a son fichier (${vus} Fanzzy sur le disque)`,
+      manquants.length === 0
+      || (console.log('        manquants :', manquants.slice(0, 8).join(' · '),
+        manquants.length > 8 ? `… (${manquants.length})` : ''), false));
+  }
+}
+
 console.log(ko ? `\n${ko} échec(s)\n` : '\ntout est vert\n');
 process.exitCode = ko ? 1 : 0;

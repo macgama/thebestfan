@@ -1,6 +1,6 @@
 {
   "id": "GD35",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -14,18 +14,6 @@
           ],
           "portrait": true,
           "sha": "ae841c80b3d2"
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "5d489137771f"
         },
         "halloween": {
           "etats": [
@@ -117,18 +105,6 @@
           "portrait": true,
           "repli": "base",
           "sha": "741eec405446"
-        },
-        "halloween": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "7e9905ae7441"
         },
         "prehistorique": {
           "etats": [

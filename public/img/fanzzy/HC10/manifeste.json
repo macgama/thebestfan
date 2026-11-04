@@ -1,6 +1,6 @@
 {
   "id": "HC10",
-  "rev": 9,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -28,18 +28,6 @@
           "repli": "base",
           "sha": "87e62e2cc3fd",
           "cligne": true
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "dffeb76ac517"
         },
         "prehistorique": {
           "etats": [

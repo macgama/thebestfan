@@ -1,6 +1,6 @@
 {
   "id": "VP15",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -14,18 +14,6 @@
           ],
           "portrait": true,
           "sha": "0dc9a28de04d"
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "be32da45afd4"
         },
         "halloween": {
           "etats": [
@@ -68,18 +56,6 @@
           ],
           "portrait": true,
           "sha": "47aafa913990"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "9ba8c089b979"
         }
       }
     }

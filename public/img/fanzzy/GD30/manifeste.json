@@ -1,6 +1,6 @@
 {
   "id": "GD30",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -118,18 +118,6 @@
           "portrait": true,
           "repli": "base",
           "sha": "56c1f14bec1e"
-        },
-        "halloween": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "0ab255aa7be9"
         }
       }
     }

@@ -16,18 +16,6 @@
           "sha": "105c2d388d26",
           "cligne": true
         },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "509ad17c5af1"
-        },
         "prehistorique": {
           "etats": [
             "neutre",
@@ -82,18 +70,6 @@
           "repli": "base",
           "sha": "87dd33487f3b",
           "cligne": true
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "8dee4c2451ac"
         }
       }
     },
@@ -110,30 +86,6 @@
           "portrait": true,
           "sha": "e0c36616d1e6",
           "cligne": true
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "d9b87ee7a093"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "8021f8e24ba3"
         },
         "halloween": {
           "etats": [
