@@ -1,6 +1,6 @@
 {
   "id": "HC30",
-  "rev": 4,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5b48db0f736f"
+          "sha": "5b48db0f736f",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -52,7 +53,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "14ac0ed66288"
+          "sha": "14ac0ed66288",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -103,7 +105,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "45d2963d0e79"
+          "sha": "45d2963d0e79",
+          "cligne": true
         },
         "halloween": {
           "etats": [

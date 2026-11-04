@@ -1,6 +1,6 @@
 {
   "id": "HC42",
-  "rev": 5,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7dd7632d7d5b"
+          "sha": "7dd7632d7d5b",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "bd3c5611d19e"
+          "sha": "bd3c5611d19e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -91,7 +93,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4f1ec6d3789d"
+          "sha": "4f1ec6d3789d",
+          "cligne": true
         },
         "halloween": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "HC49",
-  "rev": 3,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b1642ed0f9e3"
+          "sha": "b1642ed0f9e3",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "df629e3bb61d"
+          "sha": "df629e3bb61d",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4451df57b4a0"
+          "sha": "4451df57b4a0",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

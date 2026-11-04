@@ -1,6 +1,6 @@
 {
   "id": "HC20",
-  "rev": 6,
+  "rev": 18,
   "evolutions": {
     "e2": {
       "skins": {
@@ -13,7 +13,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4a5f8e66df93"
+          "sha": "4a5f8e66df93",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -64,7 +65,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "bbbbb9e9ac5e"
+          "sha": "bbbbb9e9ac5e",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -115,7 +117,8 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "2ac2185b4f48"
+          "sha": "2ac2185b4f48",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
