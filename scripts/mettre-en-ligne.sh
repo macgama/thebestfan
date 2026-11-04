@@ -45,7 +45,7 @@ fi
 
 # accept-new : la première connexion enregistre l'empreinte du serveur, les
 # suivantes refusent un serveur qui aurait changé.
-SSH=(ssh -o StrictHostKeyChecking=accept-new -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1)
+SSH=(ssh -o LogLevel=ERROR -o StrictHostKeyChecking=accept-new -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1)
 
 echo "→ contrôle de l'accès SSH"
 "${SSH[@]}" "$TBF_SSH" true
