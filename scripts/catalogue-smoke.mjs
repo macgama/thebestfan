@@ -88,7 +88,7 @@ console.log('\nLes familles');
  * dans le jeu — un joueur qui en voulait une avait une carte sur trente-cinq à
  * trouver.
  *
- * Le seuil est à un huitième de la famille. Il est bas exprès : ce n'est pas une
+ * Le seuil est à un dixième de la famille. Il est bas exprès : ce n'est pas une
  * cible d'équilibrage, c'est le plancher sous lequel une variante cesse d'être
  * jouable. La répartition visée est la moitié au geste éponyme et le reste
  * partagé également — ce contrôle rougit bien avant qu'on s'en éloigne
@@ -99,7 +99,11 @@ console.log('\nLes familles');
   for (const [id, t] of Object.entries(TYPES)) {
     const siens = DEX.filter((f) => f.type === id && f.stage === 1);
     if (siens.length < 12) continue;          // trop peu pour qu'une part ait un sens
-    const plancher = siens.length / 8;
+    /* Un dixième depuis le 4 novembre 2026 : cinq gestes par famille, la
+       moitié au geste éponyme, le reste à quatre variantes. À un huitième,
+       la règle demandait 1/2 + 4/8 — toute la famille, sans une carte de
+       jeu — et la Percussion (86 cartes) ne pouvait plus la tenir. */
+    const plancher = siens.length / 10;
     for (const g of t.gestes ?? []) {
       const n = siens.filter((f) => f.cri.gest === g).length;
       if (n < plancher) rares.push(`${t.nom}/${g} ${n}/${siens.length}`);
@@ -107,8 +111,19 @@ console.log('\nLes familles');
   }
   check('et chaque variante est réellement jouable', rares.length === 0
     || (console.log('        trop rares :', rares.join(' · ')),
-      console.log('        — une variante sous un huitième de sa famille '
+      console.log('        — une variante sous un dixième de sa famille '
         + 'n’existe qu’au catalogue'), false));
+}
+
+/* **Le même nombre de gestes pour chaque famille** (Gaël, 4 novembre 2026).
+ * Une famille qui en aurait un de plus offrirait plus de variété à ses
+ * joueurs : l'ajout d'un geste se fait donc six par six, un par famille. */
+{
+  const tailles = Object.values(TYPES).map((t) => (t.gestes ?? []).length);
+  check(`chaque famille a le même nombre de gestes (${tailles[0]})`,
+    tailles.every((n) => n === tailles[0])
+    || (console.log('        par famille :', Object.entries(TYPES)
+      .map(([id, t]) => `${id} ${(t.gestes ?? []).length}`).join(' · ')), false));
 }
 
 /* **Un âge ne change pas de spécialité.**

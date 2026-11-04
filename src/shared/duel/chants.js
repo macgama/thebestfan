@@ -78,6 +78,18 @@ export const CHANTS = {
   renvoi:   { nom: 'Le renvoi',       gest: 'miroir',   cost: 29, power: 48 },
   pluie:    { nom: 'La pluie de rouleaux', gest: 'rouleaux', cost: 27, power: 44 },
   canon:    { nom: 'Le canon',        gest: 'deuxvoix', cost: 28, power: 45 },
+  /* Les six de novembre 2026, une par famille de supporters — la Voix, la
+     Percussion, la Fidélité, le Tifo, la Pyro, le Déplacement — pour que
+     chacune en ait cinq (Gaël, 4 novembre 2026). Même règle de prix : la
+     durée et la charge mentale. Le puzzle dure onze secondes et demande de
+     reconnaître six morceaux : il pousse le plus. Sans craquer est le plus
+     court à décider : il coûte et rend le moins. */
+  melodie:   { nom: 'La mélodie',       gest: 'justesse', cost: 27, power: 44 },
+  accents:   { nom: 'Les accents',      gest: 'accents',  cost: 26, power: 42 },
+  sangfroid: { nom: 'Sans craquer',     gest: 'leurres',  cost: 26, power: 41 },
+  puzzle:    { nom: 'La bâche en morceaux', gest: 'puzzle', cost: 30, power: 50 },
+  meche:     { nom: 'La mèche',         gest: 'meche',    cost: 27, power: 43 },
+  cortege:   { nom: 'Le cortège',       gest: 'cortege',  cost: 28, power: 45 },
 };
 
 /**
@@ -94,10 +106,13 @@ export const CHANTS = {
    répertoire est une fenêtre de cinq qui glisse le long de cette liste : mises
    bout à bout, elles donneraient un quart d'heure sans rien à dessiner, puis un
    quart d'heure sans rien à chanter. Un Virage doit faire passer les deux. */
+/* Les six de novembre s'intercalent à leur tour, un tous les cinq ou six
+   rangs : jamais deux nouveaux dans la même fenêtre de cinq. */
 export const ORDRE = ['reprise', 'roulement', 'bache', 'repons', 'renverse',
-  'onetaitla', 'vague', 'damier', 'salves', 'trilage', 'fumigenes', 'contrechant',
-  'renvoi', 'moulinet', 'craquage', 'montee', 'tension', 'aupoint', 'pluie',
-  'rebours', 'tenir', 'mur', 'canon', 'appel', 'relance', 'cadence'];
+  'melodie', 'onetaitla', 'vague', 'damier', 'accents', 'salves', 'trilage',
+  'fumigenes', 'contrechant', 'cortege', 'renvoi', 'moulinet', 'craquage',
+  'sangfroid', 'montee', 'tension', 'aupoint', 'puzzle', 'pluie', 'rebours',
+  'tenir', 'meche', 'mur', 'canon', 'appel', 'relance', 'cadence'];
 
 /** Tous, sous forme de liste — pour qui veut les parcourir. */
 export const LISTE_CHANTS = ORDRE.map((id) => ({ id, ...CHANTS[id] }));

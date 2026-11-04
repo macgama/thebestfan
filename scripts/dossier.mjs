@@ -200,6 +200,23 @@ const REGLE_DITE = {
     + `${n(g.ms / 1000)} s. Chaque note se voit venir ${g.approche} ms à l’avance, et jamais `
     + `deux à moins de ${g.ecartMin} ms l’une de l’autre. Frapper du bon côté : pleine à `
     + `${g.fenetre} ms, nulle à ${g.limite} ms.`,
+  justesse: (g) => `${g.notes} notes sur ${g.lignes} lignes, de ${g.durees.join(', ')} ms, `
+    + `vues ${g.approche} ms à l’avance ; le doigt garde la ligne de la note, pleine à `
+    + `${g.pleine} interligne, nulle à ${g.limite}.`,
+  accents: (g) => `${g.temps} temps toutes les ${g.intervalle} ms, dont ${g.accents[0]} à `
+    + `${g.accents[1]} marqués, frappés deux fois en ${g.double} ms au plus. Pleine à `
+    + `${g.fenetre} ms, nulle à ${g.limite} ms ; le mauvais nombre de coups retire une `
+    + 'demi-réussite.',
+  leurres: (g) => `${g.signaux} signaux toutes les ${g.pas} ms, dont ${g.vrais[0]} à `
+    + `${g.vrais[1]} vrais, allumés ${g.vie} ms. Un leurre touché coûte un vrai.`,
+  puzzle: (g) => `${g.colonnes * g.rangees} morceaux d’une bâche à remettre en place en `
+    + `${n(g.ms / 1000)} s, le modèle sous les yeux.`,
+  meche: (g) => `Une flamme sur une mèche à ${g.sommets} sommets, ${g.segments} segments de `
+    + `vitesses tirées dont un arrêt ; note pleine à ${Math.round(g.coeur * 100)} % du cadre, `
+    + `nulle à ${Math.round(g.rayon * 100)} %.`,
+  cortege: (g) => `${g.pas.length} rangées sur ${g.voies} voies, de ${g.pas[0]} à `
+    + `${g.pas[g.pas.length - 1]} ms d’écart, vues ${g.approche} ms à l’avance. Rester `
+    + 'immobile vaut zéro.',
 };
 
 /** Ce que chaque mini-jeu mesure, en un mot. */
@@ -216,6 +233,9 @@ const MESURE = {
   jauge: 'la correction continue',
   ola: 'l’anticipation', miroir: 'le rythme retourné',
   rouleaux: 'la visée qui compense', deuxvoix: 'deux rythmes à la fois',
+  justesse: 'la mélodie qu’on anticipe', accents: 'le changement de frappe',
+  leurres: 'la retenue devant le faux signal', puzzle: 'l’assemblage',
+  meche: 'le suivi d’une cible qui bouge', cortege: 'le réflexe d’esquive',
 };
 
 const LABEL = {
@@ -229,6 +249,8 @@ const LABEL = {
   bascule: 'LA BASCULE', visee: 'LA VISÉE', jauge: 'LA JAUGE',
   ola: 'LA OLA', miroir: 'L’ÉCHO INVERSÉ', rouleaux: 'LES ROULEAUX',
   deuxvoix: 'LES DEUX VOIX',
+  justesse: 'LA JUSTESSE', accents: 'LES ACCENTS', leurres: 'SANS CRAQUER',
+  puzzle: 'LE PUZZLE', meche: 'LA MÈCHE', cortege: 'LE CORTÈGE',
 };
 
 /** Le gras de Markdown, et rien d'autre : les textes en portent, pas de HTML. */

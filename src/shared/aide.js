@@ -368,8 +368,15 @@ const RUBRIQUES = [
           + 'déduit de la rencontre, les deux camps y ont exactement les mêmes '
           + 'règles, et la même rencontre rejouée donne le même lieu. On ne peut '
           + 'pas acheter un avantage de terrain.'],
+      ['Combien y a-t-il de gestes ?',
+        'Trente, cinq par famille de Fanzzy. La Voix chante (tempo, contretemps, '
+          + 'écho, capo, justesse), la Percussion frappe (martelage, crescendo, salves, '
+          + 'deux voix, accents), la Fidélité tient (endurance, sang-froid, mesure, '
+          + 'jauge, sans craquer), le Tifo se montre (tifo, mosaïque, tri, ola, puzzle), '
+          + 'la Pyro vise l’instant (relance, compte, visée, rouleaux, mèche) et le '
+          + 'Déplacement fait la route (écharpe, visages, bascule, écho inversé, cortège).'],
       ['Je rate toujours le même geste. Je peux m’entraîner ?',
-        () => 'Oui : La répétition, dans le menu. Les vingt-quatre gestes du jeu y sont à '
+        () => 'Oui : La répétition, dans le menu. Les trente gestes du jeu y sont à '
           + 'l’essai, autant de fois que tu veux. Rien n’y compte — ni ferveur, ni '
           + 'écharpes, ni classement — et rien ne t’y aide non plus : aucun Fanzzy, '
           + 'aucun équipement. C’est ta main, et le même moteur qui te note en duel.'],

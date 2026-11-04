@@ -329,9 +329,10 @@ check('et la ferveur n’y est pas réduite', A.state.you.neutre === false);
    rythme — et cette liste-ci se met à jour à la main aussi. C'est le prix de
    la discipline, et il est bon marché. */
 const ORDRE_ATTENDU = ['reprise', 'roulement', 'bache', 'repons', 'renverse',
-  'onetaitla', 'vague', 'damier', 'salves', 'trilage', 'fumigenes', 'contrechant',
-  'renvoi', 'moulinet', 'craquage', 'montee', 'tension', 'aupoint', 'pluie',
-  'rebours', 'tenir', 'mur', 'canon', 'appel', 'relance', 'cadence'];
+  'melodie', 'onetaitla', 'vague', 'damier', 'accents', 'salves', 'trilage',
+  'fumigenes', 'contrechant', 'cortege', 'renvoi', 'moulinet', 'craquage',
+  'sangfroid', 'montee', 'tension', 'aupoint', 'puzzle', 'pluie', 'rebours',
+  'tenir', 'meche', 'mur', 'canon', 'appel', 'relance', 'cadence'];
 
 /* **La liste écrite à la main est confrontée à celle du jeu.**
  *
@@ -375,7 +376,10 @@ const GESTES_ATTENDUS = ['tempo', 'mash', 'hold', 'contretemps', 'echo',
   // Les trois épreuves de décision de LA REPRISE : décider, viser, doser.
   'bascule', 'visee', 'jauge',
   // Les quatre de l'automne 2026 : anticiper, retourner, compenser, dédoubler.
-  'ola', 'miroir', 'rouleaux', 'deuxvoix'];
+  'ola', 'miroir', 'rouleaux', 'deuxvoix',
+  // Les six de novembre 2026, une par famille : chanter, accentuer, résister,
+  // assembler, suivre, esquiver.
+  'justesse', 'accents', 'leurres', 'puzzle', 'meche', 'cortege'];
 
 {
   const oublies = GESTES.filter((g) => !GESTES_ATTENDUS.includes(g));

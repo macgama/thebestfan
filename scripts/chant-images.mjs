@@ -152,6 +152,20 @@ export const INVITES = {
   tension: ['cyan', 'a row of supporters hauling on a rope and holding it dead still at '
     + 'one exact level, arms locked and heels dug in, every muscle taut, nothing moving '
     + 'anywhere in the frame'],
+  /* Les six de novembre 2026, une par famille. */
+  melodie: ['gold', 'a capo conducting the terrace with both arms like a choir master, '
+    + 'the rows singing a rising and falling melody, mouths open on different notes, '
+    + 'a visible wave of pitch across the faces'],
+  accents: ['blue', 'a drummer on the terrace striking a big bass drum, one arm raised '
+    + 'for a double strike, the rows behind him punching the air on the accented beat'],
+  sangfroid: ['silver', 'one calm supporter standing perfectly still with his eyes fixed '
+    + 'ahead while flashes, smoke and shouting erupt all around him, refusing to react'],
+  puzzle: ['violet', 'supporters assembling a giant tifo from big painted panels, '
+    + 'carrying the last pieces into place, the picture almost complete across the stand'],
+  meche: ['red', 'a glowing spark racing along a long winding fuse laid across the '
+    + 'terrace steps, supporters leaning over it, the burnt part dark behind the flame'],
+  cortege: ['green', 'a march of supporters walking to the stadium down a night avenue, '
+    + 'scarves raised, weaving between red and white barriers, floodlights ahead'],
 };
 
 export const inviteDe = (id) => {

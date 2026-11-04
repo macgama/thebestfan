@@ -95,6 +95,8 @@
     bascule: 'LA BASCULE', visee: 'LA VISÉE', jauge: 'LA JAUGE',
     ola: 'LA OLA', miroir: 'L’ÉCHO INVERSÉ', rouleaux: 'LES ROU\u00ADLEAUX',
     deuxvoix: 'LES DEUX VOIX',
+    justesse: 'LA JUSTESSE', accents: 'LES ACCENTS', leurres: 'SANS CRAQUER',
+    puzzle: 'LE PUZZLE', meche: 'LA MÈCHE', cortege: 'LE CORTÈGE',
   };
   const AIDE = {
     tempo: 'Tape sur chaque pulsation',
@@ -126,6 +128,15 @@
     miroir: 'Écoute le capo, puis rejoue son motif en miroir : sa gauche est ta droite.',
     rouleaux: 'Glisse vers la pelouse pour lancer. Vise la cible — et compte avec le vent.',
     deuxvoix: 'Deux chants, deux côtés : frappe du bon côté quand la note touche la ligne.',
+    /* Les six de novembre, une par famille. Même règle : le piège est dit
+       avant qu'on tombe dedans — le leurre qui ressemble, la flamme qui
+       s'arrête, la rangée qui accélère. */
+    justesse: 'Garde le doigt sur la ligne de la note qui passe sous le trait. La mélodie se voit venir.',
+    accents: 'Une frappe par temps — **deux, vite**, sur les temps marqués.',
+    leurres: 'Touche **seulement** ton signal : sa forme et sa couleur. Les leurres lui ressemblent.',
+    puzzle: 'Touche un morceau de la bâche, puis sa place. Le modèle reste affiché.',
+    meche: 'Garde le doigt sur la flamme. Elle file, puis elle s’arrête.',
+    cortege: 'Touche à gauche ou à droite pour passer par la voie libre. Le cortège accélère.',
   };
   /* La couleur dit la famille du geste avant qu'on ait lu son nom : or pour le
      rythme, bleu pour la vitesse, craie pour la tenue, vert pour la mesure. */
@@ -150,6 +161,11 @@
        rythme. L'écho inversé se retient avant de se jouer : le vert d'eau
        de la mémoire. Les rouleaux se décident au doigt : le rouge. */
     ola: '#F5C33B', deuxvoix: '#F5C33B', miroir: '#2FB8A6', rouleaux: '#E0402C',
+    /* Les six de novembre portent la couleur de **leur famille** de
+       supporters (`TYPES`, dex.js) : la Voix or, la Percussion bleue, la
+       Fidélité craie, le Tifo violet, la Pyro rouge, le Déplacement vert. */
+    justesse: '#F5C33B', accents: '#3C82E8', leurres: '#C2CAD6',
+    puzzle: '#8257DA', meche: '#E0402C', cortege: '#1E9E6A',
   };
 
   const label = (g) => LABEL[g] ?? String(g ?? '').toUpperCase();
@@ -434,6 +450,82 @@
    */
   const prendre = (pad, e) => {
     try { pad.setPointerCapture?.(e.pointerId); } catch { /* doigt déjà parti */ }
+  };
+
+  /**
+   * **Où en est la mèche** à l'instant `t` (de 0 à 1), et **où est la
+   * flamme**. Recopiées à l'identique de `flammeA` dans
+   * `src/server/ferveur/epreuves.js` : la page dessine, le serveur juge, et
+   * `epreuves-ui-smoke` compare les deux.
+   */
+  const progression = (cles, t) => {
+    if (!cles?.length) return 0;
+    if (t <= cles[0].t) return cles[0].p;
+    if (t >= cles[cles.length - 1].t) return cles[cles.length - 1].p;
+    for (let i = 1; i < cles.length; i++) {
+      if (t <= cles[i].t) {
+        const part = (t - cles[i - 1].t) / Math.max(1, cles[i].t - cles[i - 1].t);
+        return cles[i - 1].p + (cles[i].p - cles[i - 1].p) * part;
+      }
+    }
+    return 0;
+  };
+  const flammeA = (consigne, t) => {
+    const { chemin = [], cles = [] } = consigne ?? {};
+    if (!chemin.length) return { x: 0.5, y: 0.5 };
+    if (chemin.length === 1) return chemin[0];
+    const x = progression(cles, t) * (chemin.length - 1);
+    const i = Math.min(chemin.length - 2, Math.floor(x));
+    const f = x - i;
+    return { x: chemin[i].x + (chemin[i + 1].x - chemin[i].x) * f,
+      y: chemin[i].y + (chemin[i + 1].y - chemin[i].y) * f };
+  };
+
+  /**
+   * **Les quatre bâches du puzzle**, en SVG de 200 × 300 — deux colonnes,
+   * trois rangées de morceaux. Chaque morceau doit se reconnaître seul : un
+   * dessin régulier (un damier sans rien d'autre) ferait six morceaux
+   * pareils, et l'épreuve deviendrait du hasard.
+   */
+  const bache = (motif) => {
+    const fond = (c) => `<rect width="200" height="300" fill="${c}"/>`;
+    const etoile = (x, y, r, c) => {
+      const pts = Array.from({ length: 10 }, (_, i) => {
+        const a = -Math.PI / 2 + (i * Math.PI) / 5;
+        const rr = i % 2 ? r * 0.45 : r;
+        return `${(x + Math.cos(a) * rr).toFixed(1)},${(y + Math.sin(a) * rr).toFixed(1)}`;
+      }).join(' ');
+      return `<polygon points="${pts}" fill="${c}"/>`;
+    };
+    const dessins = [
+      /* Le soleil : un astre d'or, ses rayons, une vague blanche en bas. */
+      () => fond('#5B3BB0') + Array.from({ length: 12 }, (_, i) => {
+        const a = (i * Math.PI) / 6;
+        return `<line x1="100" y1="130" x2="${(100 + Math.cos(a) * 140).toFixed(1)}" y2="${(130 + Math.sin(a) * 140).toFixed(1)}" stroke="#F5C33B" stroke-width="7" opacity=".55"/>`;
+      }).join('') + '<circle cx="100" cy="130" r="52" fill="#F5C33B"/>'
+        + '<path d="M0 240 Q50 210 100 240 T200 240 V300 H0Z" fill="#F2EEE4"/>'
+        + etoile(32, 34, 20, '#F2EEE4') + '<circle cx="168" cy="276" r="12" fill="#E0402C"/>',
+      /* L'écharpe : une bande en diagonale, une étoile, un ballon. */
+      () => fond('#1B2233') + '<path d="M-20 70 L120 -20 L220 40 L40 330 L-20 330Z" fill="#E0402C"/>'
+        + '<path d="M10 330 L190 30 L220 60 L60 330Z" fill="#F2EEE4"/>'
+        + etoile(150, 70, 34, '#F5C33B')
+        + '<circle cx="52" cy="232" r="30" fill="#F2EEE4" stroke="#1B2233" stroke-width="5"/>'
+        + '<polygon points="52,214 66,226 60,244 44,244 38,226" fill="#1B2233"/>',
+      /* Le cœur : un grand cœur rouge sur la nuit, une bande d'or. */
+      () => fond('#101A3A') + '<rect y="196" width="200" height="22" fill="#F5C33B"/>'
+        + '<path d="M100 250 C20 190 10 120 55 100 C80 90 95 105 100 120 C105 105 120 90 145 100 C190 120 180 190 100 250Z" fill="#E0402C"/>'
+        + etoile(30, 30, 16, '#F5C33B') + etoile(172, 272, 16, '#F2EEE4')
+        + '<circle cx="170" cy="40" r="10" fill="#3C82E8"/><circle cx="26" cy="270" r="10" fill="#3C82E8"/>',
+      /* Le chevron : un V blanc qui traverse un damier violet et or. */
+      () => fond('#8257DA') + Array.from({ length: 24 }, (_, i) => {
+        const x = (i % 4) * 50;
+        const y = Math.floor(i / 4) * 50;
+        return (i + Math.floor(i / 4)) % 2 ? `<rect x="${x}" y="${y}" width="50" height="50" fill="#F5C33B" opacity=".85"/>` : '';
+      }).join('') + '<path d="M10 40 L100 250 L190 40 L160 40 L100 190 L40 40Z" fill="#F2EEE4"/>'
+        + '<circle cx="100" cy="275" r="16" fill="#E0402C"/>',
+    ];
+    const d = dessins[((Number(motif) || 0) % dessins.length + dessins.length) % dessins.length];
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" preserveAspectRatio="none">${d()}</svg>`;
   };
 
   /**
@@ -1629,6 +1721,330 @@
             tic();
           };
           apres(g.ms ?? 8600, finir);
+          break;
+        }
+
+        /**
+         * **La justesse.** Une portée de cinq lignes ; la mélodie défile de
+         * droite à gauche et passe sous le trait. Le doigt posé n'importe où
+         * dans la portée choisit une hauteur — le point d'or sur le trait.
+         *
+         * Les mesures ne partent **que doigt posé** : lever le doigt est un
+         * silence, et le serveur compte les mesures attendues, pas les
+         * rendues. `v` va du bas (0) vers le haut (1), comme la jauge.
+         */
+        case 'justesse': {
+          const g = gestes?.justesse ?? {};
+          const notes = g.notes ?? [];
+          const lignes = g.lignes ?? 5;
+          const approche = g.approche ?? 1800;
+          rendre = { mesures: [] };
+          zone.innerHTML = `<div class="tbf-justesse" id="pad">
+            <div class="tbf-portee">${Array.from({ length: lignes }, (_, i) =>
+              `<i style="bottom:${((i + 0.5) / lignes) * 100}%"></i>`).join('')}</div>
+            <div class="tbf-notes" id="notes">${notes.map((n, i) =>
+              `<b data-i="${i}" style="bottom:${((n.ligne + 0.5) / lignes) * 100}%"></b>`).join('')}</div>
+            <div class="tbf-tete"></div>
+            <div class="tbf-voix" id="cur"></div>
+            <div class="tbf-ep-mot" id="mot">POSE LE DOIGT — SUIS LA MÉLODIE</div></div>`;
+          const pad = $('pad');
+          const cur = $('cur');
+          const barres = [...pad.querySelectorAll('.tbf-notes b')];
+          /* La tête de lecture est au quart de la largeur : on voit venir
+             les trois quarts de la mélodie, jamais ce qui est passé. */
+          const TETE = 0.25;
+          let v = null;
+          const poser = (e) => {
+            const r = pad.getBoundingClientRect();
+            if (!r.height) return;
+            v = Math.min(1, Math.max(0, 1 - (e.clientY - r.top) / r.height));
+            cur.style.bottom = `${v * 100}%`;
+            cur.classList.add('tbf-pose');
+          };
+          let pose = false;
+          pad.onpointerdown = (e) => { pose = true; poser(e); prendre(pad, e); tic(); };
+          pad.onpointermove = (e) => { if (pose) poser(e); };
+          const lever = () => { pose = false; cur.classList.remove('tbf-pose'); };
+          pad.onpointerup = lever;
+          pad.onpointercancel = lever;
+          const peindre = () => {
+            const t = maintenant();
+            let juste = false;
+            notes.forEach((n, i) => {
+              const b = barres[i];
+              const gauche = TETE + ((n.t - t) / approche) * (1 - TETE);
+              const large = (n.d / approche) * (1 - TETE);
+              b.style.left = `${gauche * 100}%`;
+              b.style.width = `calc(${large * 100}% - 4px)`;
+              const dessous = t >= n.t && t < n.t + n.d;
+              b.classList.toggle('chante', dessous);
+              if (dessous && v != null && pose
+                && Math.abs(v - (n.ligne + 0.5) / lignes) <= (0.5 / lignes)) juste = true;
+            });
+            cur.classList.toggle('juste', juste);
+          };
+          peindre();
+          chaque(30, peindre);
+          chaque(g.echantillon ?? 100, () => {
+            if (pose && v != null) rendre.mesures.push({ t: maintenant(), v: +v.toFixed(4) });
+          });
+          apres(g.ms ?? 8000, finir);
+          break;
+        }
+
+        /**
+         * **Les accents.** Les temps descendent vers la ligne, comme aux deux
+         * voix ; un temps marqué est un double rond, frappé deux fois. Le
+         * tambour est en dessous : toute la largeur, sous le pouce.
+         */
+        case 'accents': {
+          const g = gestes?.accents ?? {};
+          const liste = g.liste ?? [];
+          const approche = g.approche ?? 1300;
+          rendre = { frappes: [] };
+          zone.innerHTML = `<div class="tbf-accents" id="pad">
+            <div class="tbf-voies"><div class="tbf-voie tbf-voie-seule"></div>
+              <div class="tbf-ligne"></div></div>
+            <button type="button" class="tbf-caisse" id="caisse">
+              <span>FRAPPE</span><small>×2 sur les temps marqués</small></button></div>`;
+          const pad = $('pad');
+          const voie = pad.querySelector('.tbf-voie');
+          const caisse = $('caisse');
+          for (const n of liste) {
+            apres(Math.max(0, n.t - approche), () => {
+              const el = document.createElement('i');
+              el.className = `tbf-ep-note tbf-temps${n.accent ? ' tbf-accent' : ''}`;
+              if (n.accent) el.textContent = '×2';
+              const reste = Math.max(60, n.t - maintenant());
+              el.style.animationDuration = `${approche}ms`;
+              el.style.animationDelay = `${reste - approche}ms`;
+              voie.appendChild(el);
+              apres(reste + 250, () => el.remove());
+            });
+          }
+          caisse.onpointerdown = () => {
+            rendre.frappes.push(maintenant());
+            caisse.classList.remove('frappe'); void caisse.offsetWidth; caisse.classList.add('frappe');
+            tic();
+          };
+          apres(g.ms ?? 8000, finir);
+          break;
+        }
+
+        /**
+         * **Sans craquer.** Le signal à toucher est montré en haut, et y
+         * reste ; les signaux s'allument un par un au milieu. Toucher le
+         * milieu répond au signal allumé — c'est le serveur qui sait s'il
+         * était le bon.
+         */
+        case 'leurres': {
+          const g = gestes?.leurres ?? {};
+          const signaux = g.signaux ?? [];
+          const cible = g.cible ?? { forme: 0, couleur: 0 };
+          const vie = g.vie ?? 720;
+          rendre = { touches: [] };
+          const forme = (f, c, classe = '') =>
+            `<i class="tbf-ep-signal ${classe}" data-f="${Number(f) || 0}" data-c="${Number(c) || 0}"></i>`;
+          zone.innerHTML = `<div class="tbf-leurres" id="pad">
+            <div class="tbf-leurres-mien">TON SIGNAL ${forme(cible.forme, cible.couleur, 'tbf-petit')}</div>
+            <div class="tbf-leurres-scene" id="scene"><span class="tbf-ep-mot" id="mot">TOUCHE ICI QUAND C’EST LE TIEN</span></div></div>`;
+          const pad = $('pad');
+          const scene = $('scene');
+          for (const x of signaux) {
+            apres(x.t, () => {
+              $('mot')?.remove();
+              scene.querySelector('.tbf-ep-signal')?.remove();
+              scene.insertAdjacentHTML('beforeend', forme(x.forme, x.couleur, 'tbf-grand'));
+              const el = scene.querySelector('.tbf-ep-signal');
+              apres(vie, () => el?.remove());
+            });
+          }
+          scene.onpointerdown = () => {
+            rendre.touches.push(maintenant());
+            scene.classList.remove('touche'); void scene.offsetWidth; scene.classList.add('touche');
+            tic();
+          };
+          apres(g.ms ?? 11000, finir);
+          void pad;
+          break;
+        }
+
+        /**
+         * **Le puzzle de la bâche.** Le modèle en haut, les six places au
+         * milieu, la réserve en bas. Toucher un morceau le prend ; toucher
+         * une place l'y pose — et renvoie à la réserve celui qui s'y
+         * trouvait. Toucher la réserve, morceau en main, l'y remet.
+         *
+         * Chaque pose part avec son instant ; le serveur les rejoue toutes
+         * et ne juge que l'état final.
+         */
+        case 'puzzle': {
+          const g = gestes?.puzzle ?? {};
+          const col = g.colonnes ?? 2;
+          const ran = g.rangees ?? 3;
+          const n = col * ran;
+          const ordre = Array.isArray(g.ordre) && g.ordre.length === n
+            ? g.ordre : Array.from({ length: n }, (_, i) => i);
+          /* Entre apostrophes, et les apostrophes du SVG échappées : l'adresse
+             vit dans un attribut `style` déjà entre guillemets. */
+          const image = `url('data:image/svg+xml,${encodeURIComponent(bache(g.motif ?? 0)).replace(/'/g, '%27')}')`;
+          rendre = { poses: [] };
+          const morceau = (p) => `<button type="button" class="tbf-morceau" data-p="${p}"
+            style="background-image:${image};background-size:${col * 100}% ${ran * 100}%;
+            background-position:${col > 1 ? ((p % col) / (col - 1)) * 100 : 0}% ${ran > 1 ? (Math.floor(p / col) / (ran - 1)) * 100 : 0}%"></button>`;
+          zone.innerHTML = `<div class="tbf-puzzle" id="pad" style="--col:${col};--ran:${ran}">
+            <div class="tbf-puzzle-haut"><i class="tbf-modele" style="background-image:${image}"></i>
+              <span class="tbf-ep-mot" id="mot">REFAIS LA BÂCHE</span></div>
+            <div class="tbf-places">${Array.from({ length: n }, (_, i) =>
+              `<div class="tbf-place" data-place="${i}"></div>`).join('')}</div>
+            <div class="tbf-ep-reserve" id="reserve-puzzle">${ordre.map(morceau).join('')}</div></div>`;
+          const pad = $('pad');
+          const reserve = $('reserve-puzzle');
+          let main = null;
+          const prendreMorceau = (b) => {
+            pad.querySelectorAll('.tbf-morceau.pris').forEach((x) => x.classList.remove('pris'));
+            main = main === b ? null : b;
+            main?.classList.add('pris');
+          };
+          pad.onpointerdown = (e) => {
+            const b = e.target.closest('.tbf-morceau');
+            const place = e.target.closest('.tbf-place');
+            if (b && !(main && b.parentElement?.classList.contains('tbf-place') && main !== b)) {
+              prendreMorceau(b); tic(); return;
+            }
+            const cible = place ?? (b ? b.parentElement : null);
+            if (main && cible?.classList.contains('tbf-place')) {
+              const deja = cible.querySelector('.tbf-morceau');
+              if (deja && deja !== main) reserve.appendChild(deja);
+              cible.appendChild(main);
+              main.classList.remove('pris');
+              rendre.poses.push({ piece: Number(main.dataset.p),
+                place: Number(cible.dataset.place), t: maintenant() });
+              main = null;
+              tic();
+              return;
+            }
+            if (main && e.target.closest('#reserve-puzzle') && main.parentElement !== reserve) {
+              reserve.appendChild(main);
+              main.classList.remove('pris');
+              rendre.poses.push({ piece: Number(main.dataset.p), place: -1, t: maintenant() });
+              main = null;
+              tic();
+            }
+          };
+          valider();
+          apres(g.ms ?? 11000, finir);
+          break;
+        }
+
+        /**
+         * **La mèche.** Le chemin est celui du serveur, point pour point ;
+         * la flamme y est placée par `flammeA`, la même formule que la
+         * notation. Les mesures ne partent que doigt posé.
+         */
+        case 'meche': {
+          const g = gestes?.meche ?? {};
+          const chemin = g.chemin ?? [];
+          rendre = { mesures: [] };
+          const trace = chemin.map((p) => `${(p.x * 100).toFixed(2)},${(p.y * 100).toFixed(2)}`).join(' ');
+          zone.innerHTML = `<div class="tbf-meche" id="pad">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <polyline class="corde" points="${trace}"/>
+              <polyline class="brulee" id="brulee" points=""/></svg>
+            <i class="tbf-flamme" id="flamme"></i>
+            <i class="tbf-doigt" id="doigt"></i>
+            <span class="tbf-ep-mot" id="mot">POSE LE DOIGT SUR LA FLAMME</span></div>`;
+          const pad = $('pad');
+          const flamme = $('flamme');
+          const doigt = $('doigt');
+          const brulee = $('brulee');
+          let pose = null;
+          const ici = (e) => {
+            const r = pad.getBoundingClientRect();
+            return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+          };
+          const montrer = () => {
+            if (!pose) { doigt.classList.remove('tbf-pose'); return; }
+            doigt.style.left = `${pose.x * 100}%`;
+            doigt.style.top = `${pose.y * 100}%`;
+            doigt.classList.add('tbf-pose');
+          };
+          pad.onpointerdown = (e) => { pose = ici(e); prendre(pad, e); montrer(); tic(); };
+          pad.onpointermove = (e) => { if (pose) { pose = ici(e); montrer(); } };
+          const lever = () => { pose = null; montrer(); };
+          pad.onpointerup = lever;
+          pad.onpointercancel = lever;
+          const cles = g.cles ?? [];
+          const peindre = () => {
+            const t = maintenant();
+            const f = flammeA(g, t);
+            flamme.style.left = `${f.x * 100}%`;
+            flamme.style.top = `${f.y * 100}%`;
+            const p = progression(cles, t);
+            const k = Math.floor(p * (chemin.length - 1));
+            brulee.setAttribute('points', `${chemin.slice(0, k + 1)
+              .map((q) => `${(q.x * 100).toFixed(2)},${(q.y * 100).toFixed(2)}`).join(' ')} ${(f.x * 100).toFixed(2)},${(f.y * 100).toFixed(2)}`);
+            const dessus = pose && Math.hypot(pose.x - f.x, pose.y - f.y) <= (g.coeur ?? 0.07) * 1.4;
+            doigt.classList.toggle('juste', Boolean(dessus));
+            if (cles.length && t >= cles[0].t) $('mot')?.remove();
+          };
+          peindre();
+          chaque(30, peindre);
+          chaque(g.echantillon ?? 100, () => {
+            if (pose) rendre.mesures.push({ t: maintenant(), x: +pose.x.toFixed(4), y: +pose.y.toFixed(4) });
+          });
+          apres(g.ms ?? 7800, finir);
+          break;
+        }
+
+        /**
+         * **Le cortège.** Trois voies ; les barrières descendent par rangées
+         * qui n'en laissent qu'une libre. Toucher la moitié gauche fait un
+         * pas à gauche, la droite à droite — un pas, une voie : c'est la
+         * règle que le serveur vérifie.
+         */
+        case 'cortege': {
+          const g = gestes?.cortege ?? {};
+          const voies = g.voies ?? 3;
+          const rangs = g.rangs ?? [];
+          const approche = g.approche ?? 1300;
+          rendre = { pas: [] };
+          zone.innerHTML = `<div class="tbf-cortege" id="pad" style="--voies:${voies}">
+            ${Array.from({ length: voies }, (_, i) => `<div class="tbf-route" data-v="${i}"></div>`).join('')}
+            <i class="tbf-supporter" id="moi"></i>
+            <span class="tbf-ep-mot" id="mot">◀ TOUCHE À GAUCHE OU À DROITE ▶</span></div>`;
+          const pad = $('pad');
+          const routes = [...pad.querySelectorAll('.tbf-route')];
+          const moi = $('moi');
+          let voie = Math.floor(voies / 2);
+          const placer = () => { moi.style.left = `${((voie + 0.5) / voies) * 100}%`; };
+          placer();
+          for (const r of rangs) {
+            apres(Math.max(0, r.t - approche), () => {
+              const reste = Math.max(60, r.t - maintenant());
+              routes.forEach((route, i) => {
+                if (i === r.libre) return;
+                const el = document.createElement('i');
+                el.className = 'tbf-barriere';
+                el.style.animationDuration = `${approche}ms`;
+                el.style.animationDelay = `${reste - approche}ms`;
+                route.appendChild(el);
+                apres(reste + 300, () => el.remove());
+              });
+            });
+          }
+          pad.onpointerdown = (e) => {
+            const r = pad.getBoundingClientRect();
+            const sens = e.clientX - r.left < r.width / 2 ? -1 : 1;
+            const v = voie + sens;
+            if (v < 0 || v >= voies) return;
+            voie = v;
+            rendre.pas.push({ t: maintenant(), voie });
+            placer();
+            $('mot')?.remove();
+            tic();
+          };
+          apres(g.ms ?? 10000, finir);
           break;
         }
 

@@ -88,7 +88,7 @@ export const DEX_LEGENDES = [
     histoire: 'Il a compté les mêmes trente-neuf personnes à l’aller et au retour, '
       + 'pendant vingt ans, et il n’en a jamais perdu une.',
     mods: { breathBonus: 1.38, refundBonus: 1.25, mashBonus: 0.88 },
-    cri: { label: 'PERSONNE NE RESTE', gest: 'bascule', power: 77 } },
+    cri: { label: 'PERSONNE NE RESTE', gest: 'cortege', power: 77 } },
 
   { id: 'GD15', nom: 'La Mosaïque de Séville', type: 'tifo', set: 'GD', stage: 1, rar: 'legendaire',
     histoire: 'Douze mille cartons distribués en quarante minutes par huit personnes '
@@ -111,19 +111,19 @@ export const DEX_LEGENDES = [
     histoire: 'Trois arbitres, trois décisions, trois fois le même silence. Le virage '
       + 'a chanté les trois fois, plus fort à chaque reprise.',
     mods: { perfectBonus: 1.46, refundBonus: 1.4, backfire: 1.5 },
-    cri: { label: 'ON RECOMMENCE', gest: 'compte', power: 83 } },
+    cri: { label: 'ON RECOMMENCE', gest: 'meche', power: 83 } },
 
   { id: 'IM19', nom: 'La Minute 97', type: 'voix', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Il n’y avait que six minutes annoncées. Personne n’a jamais su d’où '
       + 'venait la septième, et personne ne l’a réclamée.',
     mods: { tempoWindow: 1.32, tempoInterval: -60, parryResist: 0.8 },
-    cri: { label: 'ENCORE UNE', gest: 'capo', power: 84 } },
+    cri: { label: 'ENCORE UNE', gest: 'justesse', power: 84 } },
 
   { id: 'IM20', nom: 'Le Gardien qui Monte', type: 'depl', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Il a traversé tout le terrain sur un corner et il n’est jamais redescendu '
       + 'dans les mémoires.',
     mods: { mashBonus: 1.42, breathBonus: 1.15, parryResist: 0.72 },
-    cri: { label: 'IL MONTE', gest: 'memoire', power: 82 } },
+    cri: { label: 'IL MONTE', gest: 'cortege', power: 82 } },
 
   { id: 'IM21', nom: 'Le Virage à Sept', type: 'fide', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Huis clos partiel, sept personnes autorisées. Ils ont fait le service '
@@ -192,19 +192,19 @@ export const DEX_LEGENDES = [
     histoire: 'Il monte dans le car sans billet et il descend au bon arrêt. Personne ne '
       + 'sait à qui il est et tout le monde l’attend.',
     mods: { breathBonus: 1.34, mashBonus: 1.14, parryResist: 0.8 },
-    cri: { label: 'IL EST DÉJÀ MONTÉ', gest: 'memoire', power: 77 } },
+    cri: { label: 'IL EST DÉJÀ MONTÉ', gest: 'cortege', power: 77 } },
 
   { id: 'BG25', nom: 'Le Corbeau des Projecteurs', type: 'tifo', set: 'BG', stage: 1, rar: 'legendaire',
     histoire: 'Il se pose sur le pylône nord à la 70e, tous les matchs. Le virage a '
       + 'décidé que c’était bon signe, et il a rarement eu tort.',
     mods: { parryBonus: 1.42, perfectBonus: 1.26, tempoInterval: 110 },
-    cri: { label: 'IL EST REVENU', gest: 'tri', power: 80 } },
+    cri: { label: 'IL EST REVENU', gest: 'puzzle', power: 80 } },
 
   { id: 'BG26', nom: 'La Guêpe de Septembre', type: 'pyro', set: 'BG', stage: 1, rar: 'legendaire',
     histoire: 'Un rang entier debout, les bras en l’air, et pas une note chantée. '
       + 'Le virage d’en face a cru à un tifo et a répondu.',
     mods: { perfectBonus: 1.48, tempoInterval: -90, backfire: 1.55 },
-    cri: { label: 'BOUGE PAS', gest: 'visee', power: 79 } },
+    cri: { label: 'BOUGE PAS', gest: 'meche', power: 79 } },
 
   /* Il s'appelait « Le Chat du Terrain », **exactement comme BG15** — deux
      cartes, un seul nom, dans la même série. Un collectionneur qui voit deux
@@ -217,7 +217,7 @@ export const DEX_LEGENDES = [
     histoire: 'Neuf minutes d’arrêt de jeu, quatre stadiers à quatre pattes, et lui '
       + 'assis au point de penalty à se laver une patte.',
     mods: { holdBonus: 1.36, holdForgive: 4, mashBonus: 0.8 },
-    cri: { label: 'IL PREND SON TEMPS', gest: 'tenue', power: 78 } },
+    cri: { label: 'IL PREND SON TEMPS', gest: 'leurres', power: 78 } },
 
   /* ================================= CE QUI TRAÎNE AU STADE (5 neuves)
 
@@ -259,11 +259,11 @@ export const DEX_LEGENDES = [
     histoire: 'Chapeau melon, canne, moustache. Il applaudit poliment les buts adverses '
       + 'et il trouve qu’on exagère avec les fumigènes.',
     mods: { holdBonus: 1.34, parryResist: 1.32, tempoInterval: 130 },
-    cri: { label: 'BIEN JOUÉ, MESSIEURS', gest: 'retenue', power: 78 } },
+    cri: { label: 'BIEN JOUÉ, MESSIEURS', gest: 'leurres', power: 78 } },
 
   { id: 'EP19', nom: 'Le Hooligan Repenti', type: 'pyro', set: 'EP', stage: 1, rar: 'legendaire',
     histoire: 'Il a tout fait dans les années quatre-vingt et il tient la buvette des '
       + 'jeunes depuis quinze ans. Il connaît les chants d’avant les chants.',
     mods: { perfectBonus: 1.4, parryBonus: 1.3, backfire: 1.4 },
-    cri: { label: 'C’ÉTAIT UNE AUTRE ÉPOQUE', gest: 'compte', power: 82 } },
+    cri: { label: 'C’ÉTAIT UNE AUTRE ÉPOQUE', gest: 'meche', power: 82 } },
 ];

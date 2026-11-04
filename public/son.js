@@ -1736,6 +1736,45 @@
         fut(c, s, t, { de: 170, a: 95, duree: 0.25, vol: 0.3, pan: -0.8 });
         fut(c, s, t, { de: 130, a: 75, duree: 0.3, vol: 0.3, delai: 0.2, pan: 0.8 });
       } },
+    /* Les six de novembre 2026 : des bruitages de synthèse, faute de prises
+       Artlist pour l'instant (les autres épreuves ont les deux). */
+    // La justesse : trois notes chantées qui montent.
+    'epreuve-justesse': { famille: 'jeu', duree: 0.7,
+      jouer: (c, s, t) => {
+        [392, 494, 587].forEach((f, i) => ton(c, s, t + i * 0.16, { freq: f, duree: 0.22, vol: 0.06 }));
+      } },
+    // Les accents : un coup simple, puis un double.
+    'epreuve-accents': { famille: 'jeu', duree: 0.6,
+      jouer: (c, s, t) => {
+        fut(c, s, t, { de: 150, a: 80, duree: 0.2, vol: 0.28 });
+        fut(c, s, t, { de: 170, a: 90, duree: 0.15, vol: 0.32, delai: 0.3 });
+        fut(c, s, t, { de: 170, a: 90, duree: 0.15, vol: 0.32, delai: 0.42 });
+      } },
+    // Sans craquer : un flash, puis le silence d'une respiration.
+    'epreuve-leurres': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        bruit(c, s, t, { duree: 0.06, freq: 3200, q: 0.8, vol: 0.12 });
+        ton(c, s, t + 0.1, { freq: 220, duree: 0.3, vol: 0.04 });
+      } },
+    // Le puzzle : des panneaux qu'on pose, clac clac.
+    'epreuve-puzzle': { famille: 'jeu', duree: 0.5,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 3; i++) clic(c, s, t, { freq: 900 + i * 220, vol: 0.14, delai: i * 0.12 });
+      } },
+    // La mèche : le grésillement qui court.
+    'epreuve-meche': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 10; i++) {
+          bruit(c, s, t, { duree: 0.03, freq: 4000 + alea() * 2500, q: 2, vol: 0.3, delai: i * 0.07 });
+        }
+      } },
+    // Le cortège : des pas qui avancent, gauche, droite.
+    'epreuve-cortege': { famille: 'jeu', duree: 0.8,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 4; i++) {
+          fut(c, s, t, { de: 110, a: 70, duree: 0.12, vol: 0.18, delai: i * 0.18, pan: i % 2 ? 0.5 : -0.5 });
+        }
+      } },
   });
 
   /* Les gains des sons des cartes et des épreuves, tirés du banc (graine 1,
@@ -1806,6 +1845,13 @@
     'epreuve-miroir': 1.15,        //  −17,6 · −22,4 · 0,56 s
     'epreuve-rouleaux': 6.38,      //   −8,1 · −22,6 · 0,45 s
     'epreuve-deuxvoix': 0.871,     //  −10,1 · −22,5 · 0,39 s
+    /* Les six de novembre 2026 : même banc, même cible. */
+    'epreuve-justesse': 2.98,
+    'epreuve-accents': 0.72,
+    'epreuve-leurres': 3.98,
+    'epreuve-puzzle': 2.56,
+    'epreuve-meche': 2.62,
+    'epreuve-cortege': 2.15,
     /* La relance et les cartes des PASS (3 novembre 2026), même banc. */
     'a-petard': 1.2,
     'a-banderole': 2.09,

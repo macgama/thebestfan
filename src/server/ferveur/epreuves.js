@@ -69,7 +69,15 @@ export const EPREUVES = ['tifo', 'memoire', 'mosaique', 'echarpe', 'capo',
      un rythme **en le retournant** (l'écho inversé), **viser en compensant**
      une force qu'on ne contrôle pas (les rouleaux), et suivre **deux rythmes
      à la fois** (les deux voix). */
-  'ola', 'miroir', 'rouleaux', 'deuxvoix'];
+  'ola', 'miroir', 'rouleaux', 'deuxvoix',
+  /* Les six de novembre 2026, une par famille (Gaël, 4 novembre 2026 : « le
+     même nombre pour chaque famille »). Chacune mesure encore une chose
+     qu'aucune autre ne demande : **suivre une mélodie** qu'on voit venir (la
+     justesse), **changer de frappe** sans perdre le temps (les accents),
+     **ne pas répondre** au faux signal (sans craquer), **assembler** une
+     image (le puzzle), **suivre une cible qui bouge** (la mèche), et
+     **esquiver** au réflexe (le cortège). */
+  'justesse', 'accents', 'leurres', 'puzzle', 'meche', 'cortege'];
 
 export const REGLES = {
   /* Tracer une forme sans quitter le trait. `tolerance` est en fraction du
@@ -224,6 +232,53 @@ export const REGLES = {
      lequel une note se voit arriver. */
   deuxvoix: { ms: 8600, gauche: 780, droite: 1010, depart: 900, approche: 1100,
     ecartMin: 170, fenetre: 100, limite: 250, saut: 0.12 },
+
+  /* **La justesse.** Une mélodie défile sur cinq lignes, et l'on garde le
+     doigt sur la ligne de la note qui passe sous la tête de lecture.
+
+     C'est l'inverse de la jauge : la jauge saute sans prévenir, la mélodie
+     **se voit venir** (`approche`) et ne saute jamais de plus de deux
+     lignes. On ne réagit pas, on anticipe. `grace` laisse au doigt le temps
+     de changer de ligne au début de chaque note ; `pleine` et `limite` sont
+     en fraction d'interligne. */
+  justesse: { lignes: 5, notes: 9, depart: 1000, durees: [480, 620, 760],
+    approche: 1800, grace: 130, pleine: 0.45, limite: 0.8, echantillon: 100,
+    minMesures: 30 },
+
+  /* **Les accents.** Une frappe par temps ; deux, vite, sur les temps
+     marqués. La pulsation se voit venir, comme aux deux voix : la difficulté
+     est de **changer de frappe** sans perdre le temps. `double` est l'écart
+     le plus long entre les deux coups d'un accent. */
+  accents: { temps: 10, intervalle: 640, depart: 1500, approche: 1300,
+    accents: [3, 5], fenetre: 110, limite: 260, double: 280 },
+
+  /* **Sans craquer.** Des signaux s'allument un par un ; un seul est le bon
+     — sa forme **et** sa couleur, montrées au début. Les leurres partagent
+     l'une ou l'autre. Toucher un leurre coûte autant qu'un bon signal
+     rapporte : c'est le sang-froid devant ce qui ressemble au signal.
+     `vie` est la durée d'un signal, `pleine` celle de la note pleine. */
+  leurres: { signaux: 12, pas: 760, depart: 1600, vie: 720, pleine: 450,
+    vrais: [4, 5] },
+
+  /* **Le puzzle de la bâche.** Six morceaux d'un tifo, mélangés ; on les
+     remet à leur place. Le modèle reste affiché en petit : ce n'est pas une
+     épreuve de mémoire, c'est le coup d'œil qui reconnaît un morceau. */
+  puzzle: { colonnes: 2, rangees: 3, motifs: 4, ms: 11000 },
+
+  /* **La mèche.** Une flamme avance le long d'une mèche sinueuse, tantôt
+     vite, tantôt arrêtée ; on garde le doigt dessus. Le tifo se trace à son
+     rythme ; ici, c'est la cible qui impose le sien. `coeur` et `rayon` sont
+     en fraction de cadre. */
+  meche: { ms: 7800, depart: 1000, sommets: 5, segments: 5, coeur: 0.07,
+    rayon: 0.2, echantillon: 100, minMesures: 25 },
+
+  /* **Le cortège.** En route vers le stade : chaque rangée bloque deux des
+     trois voies, et l'on glisse dans la libre avant qu'elle arrive. Les
+     rangées accélèrent. Une voie n'en saute jamais deux quand la rangée
+     suivante arrive trop vite pour deux pas. */
+  cortege: { voies: 3, depart: 1500, approche: 1300,
+    pas: [950, 900, 850, 800, 760, 720, 690, 660, 640, 620, 600, 580],
+    deuxPas: 760 },
 };
 
 /* --------------------------------------------------------------- le hasard
@@ -535,7 +590,197 @@ export function consigneDe(epreuve, graine = 0) {
     return { ...REGLES.deuxvoix, notes };
   }
 
+  if (epreuve === 'justesse') {
+    const { lignes, notes: combien, depart, durees } = REGLES.justesse;
+    const notes = [];
+    let ligne = Math.floor(rnd() * lignes);
+    let at = depart;
+    for (let i = 0; i < combien; i++) {
+      /* Jamais deux fois la même ligne : une note tenue ne se distingue pas
+         de la suivante, et l'épreuve redeviendrait « ne bouge pas ». Jamais
+         plus de deux lignes d'écart : une mélodie chantée par une tribune
+         ne saute pas d'un bout à l'autre de la portée. */
+      if (i) {
+        const pas = (rnd() < 0.6 ? 1 : 2) * (rnd() < 0.5 ? -1 : 1);
+        ligne = Math.min(lignes - 1, Math.max(0, ligne + pas));
+        if (ligne === notes[i - 1].ligne) ligne += ligne === 0 ? 1 : -1;
+      }
+      const d = durees[Math.floor(rnd() * durees.length)];
+      notes.push({ t: at, d, ligne });
+      at += d;
+    }
+    return { ...REGLES.justesse, notes, ms: at + 400 };
+  }
+
+  if (epreuve === 'accents') {
+    const { temps, intervalle, depart, accents: [aMin, aMax] } = REGLES.accents;
+    /* Ni le premier temps, ni deux accents de suite plus d'une fois : on doit
+       entendre la pulsation avant qu'elle se complique. */
+    const rangs = melanger(Array.from({ length: temps - 1 }, (_, i) => i + 1), rnd);
+    const nb = aMin + Math.floor(rnd() * (aMax - aMin + 1));
+    const marques = new Set(rangs.slice(0, nb));
+    const liste = Array.from({ length: temps }, (_, i) => ({
+      t: depart + i * intervalle, accent: marques.has(i) }));
+    return { ...REGLES.accents, liste, ms: depart + temps * intervalle + 400 };
+  }
+
+  if (epreuve === 'leurres') {
+    const { signaux: n, pas, depart, vie, vrais: [vMin, vMax] } = REGLES.leurres;
+    const FORMES_L = 4;
+    const COULEURS_L = 3;
+    const cible = { forme: Math.floor(rnd() * FORMES_L), couleur: Math.floor(rnd() * COULEURS_L) };
+    const nbVrais = vMin + Math.floor(rnd() * (vMax - vMin + 1));
+    /* Jamais le premier : on doit d'abord voir un leurre passer. */
+    const rangs = melanger(Array.from({ length: n - 1 }, (_, i) => i + 1), rnd);
+    const vrais = new Set(rangs.slice(0, nbVrais));
+    const autre = (v, m) => (v + 1 + Math.floor(rnd() * (m - 1))) % m;
+    const signaux = Array.from({ length: n }, (_, i) => {
+      const t = Math.round(depart + i * pas + rnd() * 120);
+      if (vrais.has(i)) return { t, ...cible, vrai: true };
+      /* Les leurres **ressemblent** : la bonne forme dans une autre couleur,
+         ou la bonne couleur sous une autre forme. Un leurre qui ne partage
+         rien se refuse sans réfléchir — il en reste un sur cinq, pour que
+         la règle ne se devine pas à la seule couleur. */
+      const r = rnd();
+      if (r < 0.4) return { t, forme: cible.forme, couleur: autre(cible.couleur, COULEURS_L), vrai: false };
+      if (r < 0.8) return { t, forme: autre(cible.forme, FORMES_L), couleur: cible.couleur, vrai: false };
+      return { t, forme: autre(cible.forme, FORMES_L), couleur: autre(cible.couleur, COULEURS_L), vrai: false };
+    });
+    return { ...REGLES.leurres, cible, signaux,
+      ms: signaux[signaux.length - 1].t + vie + 300 };
+  }
+
+  if (epreuve === 'puzzle') {
+    const { colonnes, rangees, motifs } = REGLES.puzzle;
+    const n = colonnes * rangees;
+    /* Le plateau de départ ne laisse aucun morceau à sa place dans la
+       réserve : l'ordre de la réserve ne doit rien souffler. */
+    const base = Array.from({ length: n }, (_, i) => i);
+    let ordre = melanger(base, rnd);
+    for (let essai = 0; essai < 30 && ordre.some((p, i) => p === i); essai++) {
+      ordre = melanger(base, rnd);
+    }
+    if (ordre.some((p, i) => p === i)) ordre = base.map((i) => (i + 1) % n);
+    return { ...REGLES.puzzle, motif: Math.floor(rnd() * motifs), ordre };
+  }
+
+  if (epreuve === 'meche') {
+    const { ms, depart, sommets, segments } = REGLES.meche;
+    /* Les sommets alternent d'un bord à l'autre et descendent : une mèche
+       qui serpente du haut vers le bas, sans jamais se recroiser. */
+    const pts = Array.from({ length: sommets }, (_, i) => ({
+      x: +(i % 2 ? 0.62 + rnd() * 0.24 : 0.14 + rnd() * 0.24).toFixed(3),
+      y: +(0.12 + (i / (sommets - 1)) * 0.76).toFixed(3),
+    }));
+    /* La progression : des segments de durée égale, à des vitesses tirées —
+       dont un arrêt au moins, pour que le doigt ne file pas tout seul. */
+    const duree = (ms - depart - 300) / segments;
+    const poids = Array.from({ length: segments }, () => 0.4 + rnd() * 1.6);
+    poids[1 + Math.floor(rnd() * (segments - 1))] = 0;
+    const somme = poids.reduce((a, b) => a + b, 0);
+    const cles = [{ t: depart, p: 0 }];
+    let p = 0;
+    for (let i = 0; i < segments; i++) {
+      p += poids[i] / somme;
+      cles.push({ t: Math.round(depart + (i + 1) * duree), p: +Math.min(1, p).toFixed(4) });
+    }
+    cles[cles.length - 1].p = 1;
+    return { ...REGLES.meche, chemin: echantillonner(pts), cles };
+  }
+
+  if (epreuve === 'cortege') {
+    const { voies, depart, pas, deuxPas } = REGLES.cortege;
+    const rangs = [];
+    let at = depart;
+    let avant = Math.floor(voies / 2);
+    for (let i = 0; i < pas.length; i++) {
+      const ecart = i ? pas[i - 1] : at;
+      let libre = Math.floor(rnd() * voies);
+      /* Deux voies d'un coup demandent deux pas : seulement si la rangée
+         laisse le temps de les faire. */
+      if (Math.abs(libre - avant) > 1 && ecart < deuxPas) libre = Math.floor(voies / 2);
+      if (i) at += pas[i - 1];
+      rangs.push({ t: at, libre });
+      avant = libre;
+    }
+    return { ...REGLES.cortege, rangs, ms: at + 600 };
+  }
+
   throw new Triche('epreuve.inconnue');
+}
+
+/**
+ * **Le chemin de la mèche**, échantillonné : une courbe lisse (Catmull-Rom)
+ * passant par les sommets, en points régulièrement espacés **le long de la
+ * courbe**. La page et la notation lisent ces points-là, et seulement eux :
+ * aucune des deux ne recalcule la courbe, elles ne peuvent donc pas diverger.
+ */
+function echantillonner(pts, parSegment = 16) {
+  const brut = [];
+  const P = (i) => pts[Math.max(0, Math.min(pts.length - 1, i))];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [p0, p1, p2, p3] = [P(i - 1), P(i), P(i + 1), P(i + 2)];
+    for (let k = 0; k < parSegment; k++) {
+      const t = k / parSegment;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      const f = (a, b, c, d) => 0.5 * ((2 * b) + (-a + c) * t
+        + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+      brut.push({ x: f(p0.x, p1.x, p2.x, p3.x), y: f(p0.y, p1.y, p2.y, p3.y) });
+    }
+  }
+  brut.push(pts[pts.length - 1]);
+  /* La longueur cumulée, puis rééchantillonnée à pas égal : une flamme qui
+     avance « d'un dixième » doit parcourir un dixième de la mèche, pas un
+     dixième des points. */
+  const cumul = [0];
+  for (let i = 1; i < brut.length; i++) {
+    cumul.push(cumul[i - 1] + Math.hypot(brut[i].x - brut[i - 1].x, brut[i].y - brut[i - 1].y));
+  }
+  const total = cumul[cumul.length - 1] || 1;
+  const n = 60;
+  const out = [];
+  let j = 0;
+  for (let k = 0; k <= n; k++) {
+    const cible = (k / n) * total;
+    while (j < cumul.length - 2 && cumul[j + 1] < cible) j++;
+    const part = (cible - cumul[j]) / Math.max(1e-9, cumul[j + 1] - cumul[j]);
+    out.push({
+      x: +(brut[j].x + (brut[j + 1].x - brut[j].x) * Math.min(1, part)).toFixed(4),
+      y: +(brut[j].y + (brut[j + 1].y - brut[j].y) * Math.min(1, part)).toFixed(4),
+    });
+  }
+  return out;
+}
+
+/**
+ * Où est la flamme à l'instant `t`. **Recopiée à l'identique dans
+ * `public/geste.js`**, qui s'en sert pour la dessiner : `epreuves-ui-smoke`
+ * compare les deux. Avant le départ, au début ; après la fin, au bout.
+ */
+export function flammeA(consigne, t) {
+  const { chemin = [], cles = [] } = consigne ?? {};
+  if (!chemin.length) return { x: 0.5, y: 0.5 };
+  let p = 0;
+  if (cles.length) {
+    if (t <= cles[0].t) p = cles[0].p;
+    else if (t >= cles[cles.length - 1].t) p = cles[cles.length - 1].p;
+    else {
+      for (let i = 1; i < cles.length; i++) {
+        if (t <= cles[i].t) {
+          const part = (t - cles[i - 1].t) / Math.max(1, cles[i].t - cles[i - 1].t);
+          p = cles[i - 1].p + (cles[i].p - cles[i - 1].p) * part;
+          break;
+        }
+      }
+    }
+  }
+  const x = p * (chemin.length - 1);
+  const i = Math.min(chemin.length - 2, Math.floor(x));
+  const f = x - i;
+  if (chemin.length === 1) return chemin[0];
+  return { x: chemin[i].x + (chemin[i + 1].x - chemin[i].x) * f,
+    y: chemin[i].y + (chemin[i + 1].y - chemin[i].y) * f };
 }
 
 /** Le décalage de la seconde voix : quelque part dans le premier tiers de son pas. */
@@ -999,6 +1244,213 @@ export function noter(epreuve, consigne, reponse, mods = {}) {
       libres += res.libres;
     }
     return borne((total - libres * 0.4) / notes.length);
+  }
+
+  /**
+   * **La justesse.** Chaque mesure prise pendant une note (après sa `grace`)
+   * est jugée contre la ligne de cette note : pleine à une demi-interligne,
+   * nulle à une interligne. Les silences ne comptent pas. Le dénominateur est
+   * le nombre de mesures **attendues** : ne rendre que les bonnes ne paie
+   * pas.
+   */
+  if (epreuve === 'justesse') {
+    const mesures = Array.isArray(r.mesures) ? r.mesures : [];
+    const notes = consigne.notes ?? [];
+    if (!notes.length || mesures.length < consigne.minMesures) return 0;
+    if (mesures.length > consigne.ms / 20) throw new Triche('mesures.trop_nombreuses');
+    const pas = 1 / consigne.lignes;
+    const large = mods.tempoWindow ?? 1;
+    const pleine = consigne.pleine * pas * large;
+    const limite = Math.max(pleine + 1e-6, consigne.limite * pas * large);
+    let attendues = 0;
+    for (const n of notes) attendues += Math.max(0, n.d - consigne.grace) / consigne.echantillon;
+    const vus = new Set();
+    let total = 0;
+    let parfaites = 0;
+    let jugees = 0;
+    for (const m of mesures) {
+      if (!Number.isFinite(m?.t) || !Number.isFinite(m?.v)) throw new Triche('mesure.invalide');
+      const n = notes.find((x) => m.t >= x.t + consigne.grace && m.t < x.t + x.d);
+      if (!n) continue;
+      const seau = Math.floor(m.t / consigne.echantillon);
+      if (vus.has(seau)) continue;          // deux mesures dans le même pas : une
+      vus.add(seau);
+      jugees++;
+      const ecart = Math.abs(m.v - (n.ligne + 0.5) * pas);
+      if (ecart === 0) parfaites++;
+      total += ecart <= pleine ? 1 : Math.max(0, 1 - (ecart - pleine) / (limite - pleine));
+    }
+    if (jugees > 6 && parfaites > jugees * 0.5) throw new Triche('reponse.trop_juste');
+    return borne(total / Math.max(1, attendues));
+  }
+
+  /**
+   * **Les accents.** Chaque temps prend la frappe libre la plus proche ;
+   * un accent demande une seconde frappe dans `double` après elle, un temps
+   * simple n'en veut pas. Un temps frappé du mauvais nombre de coups coûte
+   * une demi-réussite, comme une erreur à la bascule.
+   */
+  if (epreuve === 'accents') {
+    const frappes = Array.isArray(r.frappes) ? r.frappes : [];
+    const liste = consigne.liste ?? [];
+    if (!liste.length) return 0;
+    if (frappes.length > liste.length * 4) throw new Triche('frappes.trop_nombreuses');
+    if (frappes.some((x) => !Number.isFinite(x))) throw new Triche('frappe.invalide');
+    const triees = [...frappes].sort((a, b) => a - b);
+    humain(triees, { minEcart: 60 });
+    const large = mods.tempoWindow ?? 1;
+    const q = pleineEtLimite(consigne.fenetre * large, consigne.limite * large);
+    const prises = new Set();
+    let total = 0;
+    for (const temps of liste) {
+      let rang = -1;
+      let mieux = Infinity;
+      for (let i = 0; i < triees.length; i++) {
+        if (prises.has(i)) continue;
+        const dt = Math.abs(triees[i] - temps.t);
+        if (dt < mieux) { mieux = dt; rang = i; }
+      }
+      if (rang < 0 || mieux > consigne.limite * large) continue;
+      prises.add(rang);
+      const seconde = triees.findIndex((f, i) => !prises.has(i)
+        && f > triees[rang] && f - triees[rang] <= consigne.double);
+      if (seconde >= 0) prises.add(seconde);
+      const juste = temps.accent ? seconde >= 0 : seconde < 0;
+      /* Le mauvais nombre de coups **retire** une demi-réussite : sans ça,
+         ignorer les accents et taper une fois par temps payait 0,70. */
+      total += juste ? q(mieux) : -0.5;
+    }
+    const libres = triees.length - prises.size;
+    return borne((total - libres * 0.5) / liste.length);
+  }
+
+  /**
+   * **Sans craquer.** Une touche va au signal allumé à cet instant, et un
+   * signal ne se touche qu'une fois. Le bon signal rapporte selon la
+   * vitesse ; un leurre touché coûte une réussite entière ; une touche dans
+   * le vide, une demie. S'abstenir ne coûte rien.
+   */
+  if (epreuve === 'leurres') {
+    const touches = Array.isArray(r.touches) ? r.touches : [];
+    const signaux = consigne.signaux ?? [];
+    const vrais = signaux.filter((x) => x.vrai).length;
+    if (!vrais) return 0;
+    if (touches.length > signaux.length * 3) throw new Triche('touches.trop_nombreuses');
+    if (touches.some((x) => !Number.isFinite(x))) throw new Triche('touche.invalide');
+    const triees = [...touches].sort((a, b) => a - b);
+    humain(triees, { minEcart: 120 });
+    const vie = consigne.vie * (mods.holdBonus ?? 1);
+    const pris = new Set();
+    let bons = 0;
+    let fausses = 0;
+    let libres = 0;
+    for (const t of triees) {
+      const i = signaux.findIndex((x) => t >= x.t - 40 && t < x.t + vie);
+      if (i < 0) { libres++; continue; }
+      if (pris.has(i)) continue;
+      pris.add(i);
+      if (!signaux[i].vrai) { fausses++; continue; }
+      const dt = Math.max(0, t - signaux[i].t);
+      bons += dt <= consigne.pleine ? 1
+        : Math.max(0, 1 - (dt - consigne.pleine) / Math.max(1, vie - consigne.pleine));
+    }
+    return borne((bons - fausses - libres * 0.5) / vrais);
+  }
+
+  /**
+   * **Le puzzle.** Les poses sont rejouées dans l'ordre : un morceau posé
+   * quitte sa place précédente, et chasse celui qui occupait la nouvelle.
+   * Seul compte l'état final — combien de places portent leur morceau.
+   */
+  if (epreuve === 'puzzle') {
+    const poses = Array.isArray(r.poses) ? r.poses : [];
+    const n = consigne.colonnes * consigne.rangees;
+    if (poses.length > n * 8) throw new Triche('poses.trop_nombreuses');
+    for (const p of poses) {
+      if (!Number.isInteger(p?.piece) || p.piece < 0 || p.piece >= n
+          || !Number.isInteger(p?.place) || p.place < -1 || p.place >= n
+          || !Number.isFinite(p?.t)) {
+        throw new Triche('pose.invalide');
+      }
+    }
+    humain(poses.map((p) => p.t), { minEcart: 150 });
+    const place = new Map();     // morceau → place
+    for (const p of poses) {
+      for (const [m, pl] of place) if (pl === p.place && m !== p.piece) place.delete(m);
+      if (p.place < 0) place.delete(p.piece); else place.set(p.piece, p.place);
+    }
+    let justes = 0;
+    for (const [m, pl] of place) if (m === pl) justes++;
+    return borne((justes / n) * (mods.traitLarge ?? 1));
+  }
+
+  /**
+   * **La mèche.** Une mesure par pas d'échantillon, doigt posé ; chacune
+   * jugée contre la flamme **recalculée ici** à son instant. Le
+   * dénominateur est le nombre de pas de la course : lever le doigt coûte
+   * ce que dure le lever.
+   */
+  if (epreuve === 'meche') {
+    const mesures = Array.isArray(r.mesures) ? r.mesures : [];
+    if (mesures.length < consigne.minMesures) return 0;
+    if (mesures.length > consigne.ms / 20) throw new Triche('mesures.trop_nombreuses');
+    const cles = consigne.cles ?? [];
+    if (!cles.length) return 0;
+    const debut = cles[0].t;
+    const fin = cles[cles.length - 1].t;
+    const attendues = Math.max(1, (fin - debut) / consigne.echantillon);
+    const rayon = consigne.rayon * (mods.traitLarge ?? 1);
+    const coeur = Math.min(consigne.coeur, rayon * 0.9);
+    const vus = new Set();
+    let total = 0;
+    for (const m of mesures) {
+      if (!Number.isFinite(m?.t) || !Number.isFinite(m?.x) || !Number.isFinite(m?.y)) {
+        throw new Triche('mesure.invalide');
+      }
+      if (m.t < debut || m.t > fin) continue;
+      const seau = Math.floor((m.t - debut) / consigne.echantillon);
+      if (vus.has(seau)) continue;
+      vus.add(seau);
+      const f = flammeA(consigne, m.t);
+      const loin = Math.hypot(m.x - f.x, m.y - f.y);
+      total += loin <= coeur ? 1 : Math.max(0, 1 - (loin - coeur) / (rayon - coeur));
+    }
+    return borne(total / attendues);
+  }
+
+  /**
+   * **Le cortège.** La voie du joueur est **reconstruite ici** à partir de
+   * ses pas — un pas ne change que d'une voie, sinon c'est une réponse
+   * fabriquée. Chaque rangée est passée si la voie, à son instant, est la
+   * libre. Rester immobile en passe une sur trois : la note part de là, et
+   * c'est ce tiers-là qu'on retire.
+   */
+  if (epreuve === 'cortege') {
+    const pas = Array.isArray(r.pas) ? r.pas : [];
+    const rangs = consigne.rangs ?? [];
+    if (!rangs.length) return 0;
+    if (pas.length > rangs.length * 6) throw new Triche('pas.trop_nombreux');
+    let voie = Math.floor(consigne.voies / 2);
+    let avant = -Infinity;
+    for (const p of pas) {
+      if (!Number.isFinite(p?.t) || !Number.isInteger(p?.voie)
+          || p.voie < 0 || p.voie >= consigne.voies || p.t < avant) {
+        throw new Triche('pas.invalide');
+      }
+      if (Math.abs(p.voie - voie) !== 1) throw new Triche('pas.invalide');   // un pas saute une voie
+      voie = p.voie;
+      avant = p.t;
+    }
+    humain(pas.map((p) => p.t), { minEcart: 80 });
+    const voieA = (t) => {
+      let v = Math.floor(consigne.voies / 2);
+      for (const p of pas) { if (p.t <= t) v = p.voie; else break; }
+      return v;
+    };
+    const passees = rangs.filter((x) => voieA(x.t) === x.libre).length;
+    const hasard = 1 / consigne.voies;
+    return borne(((passees / rangs.length) - hasard) / (1 - hasard)
+      * (mods.tempoWindow ?? 1));
   }
 
   throw new Triche('epreuve.inconnue');
