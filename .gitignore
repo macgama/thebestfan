@@ -75,3 +75,8 @@ public/img/ultime/**/*.mp4
 .tbf-images-envoyees.nouveau
 .tbf-images-liste
 *.mdp
+
+# Clé de signature de l’appli Android : jamais dans le dépôt
+*.keystore
+*.jks
+android/app-release*
