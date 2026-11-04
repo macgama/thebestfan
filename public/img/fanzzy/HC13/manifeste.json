@@ -1,6 +1,6 @@
 {
   "id": "HC13",
-  "rev": 7,
+  "rev": 8,
   "evolutions": {
     "e1": {
       "skins": {
@@ -28,30 +28,6 @@
           "repli": "base",
           "sha": "f8ed9d5a9deb",
           "cligne": true
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "786adecc5bf2"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "2cdf4c5d67c4"
         }
       }
     }
