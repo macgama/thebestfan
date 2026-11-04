@@ -1,6 +1,6 @@
 {
   "id": "HC44",
-  "rev": 15,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -96,6 +96,18 @@
           "repli": "base",
           "sha": "cdcdeff22e8f",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "8e49d97df541"
         }
       }
     },
@@ -138,6 +150,18 @@
           "repli": "base",
           "sha": "90192093bcf1",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "492e1faa0b41"
         }
       }
     }

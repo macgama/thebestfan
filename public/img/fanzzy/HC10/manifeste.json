@@ -1,6 +1,6 @@
 {
   "id": "HC10",
-  "rev": 10,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {

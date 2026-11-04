@@ -1,6 +1,6 @@
 {
   "id": "HC42",
-  "rev": 18,
+  "rev": 20,
   "evolutions": {
     "e1": {
       "skins": {
@@ -42,7 +42,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "bd3c5611d19e",
+          "sha": "49c9a554d5f6",
           "cligne": true
         },
         "prehistorique": {
@@ -55,8 +55,20 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "85ee4602b178",
+          "sha": "955e0c513f34",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "76a79532d38c"
         }
       }
     },
