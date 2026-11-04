@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Les gestes refusés en duel** (branche `claude/project-thread-voavbo`,
+4 novembre 2026, signalé par Gaël : « Tifo ne fonctionne pas très bien »).
+Construction seule, **sans schéma**.
+
+- Le tifo et l'écharpe tracés sur un téléphone à 120 Hz, TIENS repris,
+  un doigt qui rebondit : le serveur refusait le geste et le duel affichait
+  « Refusé par le serveur ». La page envoie maintenant une réponse que le
+  serveur accepte (`assainir`, public/geste.js), et un refus restant se dit
+  en mots.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **L'appli Android du Play Store : préparation et paiement Google** (branche
 `claude/project-thread-lg6ctd`, 4 novembre 2026, choix de Gaël « Paiement
 Google dans l'appli » et « Oui, ajouter les colonnes »). **Avec schéma** :
