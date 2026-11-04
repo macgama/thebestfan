@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**Le PASS, être vu et donner envie** (PR #276 et la suivante, 4 novembre
+2026, choix de Gaël « Les deux, dans cet ordre »). Construction seule, **sans
+schéma**.
+
+- Être vu : sur l'affiche du duel, l'écusson, le titre, le pseudo en or, le
+  cadre et l'entrée en rochers ; les stickers du PASS pendant le duel ; l'aura
+  de braises au Virage ; le PASS d'un ami sur sa fiche ; le titre et l'or sur
+  le podium.
+- Donner envie : ESSAYER 10 s sur la page du PASS (et dans le spot de
+  l'accueil), la fête plein écran de l'achat, la fête de chaque niveau de la
+  voie gagné.
+- Pour tout voir avant le 1er décembre : /admin › PASS, réglage d'essai
+  admin au niveau 12, puis le remettre à 0.
+
+---
+
 **Quinze vidéos tutoriel dans Comment jouer** (branche
 `claude/project-thread-p1621n`, 4 novembre 2026, demande de Gaël). Construction
 seule, sans schéma.

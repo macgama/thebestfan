@@ -1294,10 +1294,32 @@
        * d'un refus la retient à part, au passage (`/abonnement`, son
        * statut), sans changer cette forme. L'objet rendu est commun : on le
        * lit, on n'y écrit pas. */
+    function voieFetee(a) {
+      try {
+        if (/^\/(duel-nvn|virage|repetition|kop)\b/.test(location.pathname)) return;
+        const v = (a?.voies ?? []).filter((x) => x.original !== false).at(-1);
+        if (!v || !Number.isFinite(Number(v.niveau))) return;
+        const cle = `tbf-pass-niveau:${v.saison}`;
+        const vu = localStorage.getItem(cle);
+        if (vu === null) { localStorage.setItem(cle, String(v.niveau)); return; }
+        if (!(Number(v.niveau) > Number(vu))) return;
+        const lancer = () => window.TBF_PASS_FETE?.verifierNiveau(a);
+        if (window.TBF_PASS_FETE) { lancer(); return; }
+        const sc = document.createElement('script');
+        sc.src = '/pass-fete.js';
+        sc.onload = lancer;
+        document.head.appendChild(sc);
+      } catch { /* sans stockage, pas de fête */ }
+    }
     void (async () => {
       try {
         const a = await (window.TBF_ABO ??= fetch('/api/abonnement', { credentials: 'same-origin' })
           .then((r) => (r.ok ? r.json() : null)).catch(() => null));
+        /* **Un niveau de la voie PASS gagné depuis la dernière visite** :
+           sa fête (`pass-fete.js`, chargé seulement ce jour-là). Jamais au
+           milieu d'une partie : le duel, le Virage et la répétition la
+           laissent à la page suivante. */
+        voieFetee(a);
         const n = document.getElementById('tbf-abo');
         if (!n || !a?.abonne) return;
         const fin = a.fin
