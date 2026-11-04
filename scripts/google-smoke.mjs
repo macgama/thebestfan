@@ -22,6 +22,12 @@ await raw.query('SET FOREIGN_KEY_CHECKS = 0');
 await raw.query(`DROP TABLE IF EXISTS user_pass, parrainages, abonnements, achats, tenues, user_stuff, user_etats,
   user_skins, user_fanzzy, user_souvenirs, user_decks, virage_presence, user_nouveautes, user_wallet, users`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
+/* `reglages` (sql/admin.sql), que boutique.sql met à jour : une autre suite
+   peut l'avoir laissée tomber. On la prend telle que le fichier la déclare. */
+const REGLAGES = (await readFile('sql/admin.sql', 'utf8'))
+  .match(/CREATE TABLE IF NOT EXISTS reglages \([\s\S]*?\)[^;]*;/)?.[0];
+if (!REGLAGES) throw new Error('sql/admin.sql ne déclare plus reglages');
+await raw.query(REGLAGES);
 /* Le même ordre que boutique:smoke : boutique.sql s'appuie sur ce qui précède. */
 for (const f of ['auth.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql',
   'skins.sql', 'etats.sql', 'tenues.sql', 'boutique.sql']) {
