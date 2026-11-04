@@ -1,6 +1,6 @@
 {
   "id": "HC34",
-  "rev": 1,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -28,7 +28,31 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5732fc567b7b"
+          "sha": "f81d80d50dfe"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "2f23ba26793a"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "aef6acc91517"
         }
       }
     },

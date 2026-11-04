@@ -1,6 +1,6 @@
 {
   "id": "HC38",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,8 +13,20 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "861901cfc73d",
+          "sha": "7db79b67b642",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "4e13c01e945d"
         }
       }
     },
@@ -29,8 +41,20 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "a060eb770326",
+          "sha": "ed9011b795a4",
           "cligne": true
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "fc758326ac20"
         }
       }
     },
@@ -45,8 +69,44 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "624b6af20270",
+          "sha": "d1761c38cda1",
           "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "24a8495097d0"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "f77c56309de8"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "c573d465132b"
         }
       }
     }
