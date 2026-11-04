@@ -1,6 +1,6 @@
 {
   "id": "HC12",
-  "rev": 11,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4ededdf11c28"
+          "sha": "4ededdf11c28",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

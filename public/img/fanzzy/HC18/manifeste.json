@@ -1,6 +1,6 @@
 {
   "id": "HC18",
-  "rev": 19,
+  "rev": 21,
   "evolutions": {
     "e1": {
       "skins": {
@@ -52,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2a8149feac3d"
+          "sha": "2a8149feac3d",
+          "cligne": true
         }
       }
     },
@@ -106,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "82368038f24f"
+          "sha": "82368038f24f",
+          "cligne": true
         }
       }
     },

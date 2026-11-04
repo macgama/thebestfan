@@ -1,6 +1,6 @@
 {
   "id": "HC14",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7a644d599bb4"
+          "sha": "7a644d599bb4",
+          "cligne": true
         }
       }
     }

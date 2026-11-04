@@ -1,6 +1,6 @@
 {
   "id": "HC24",
-  "rev": 26,
+  "rev": 29,
   "evolutions": {
     "e1": {
       "skins": {
@@ -68,7 +68,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "dc49e514a8ef"
+          "sha": "dc49e514a8ef",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -80,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "55896cf7ebf3"
+          "sha": "55896cf7ebf3",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -92,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "53610d2b0b87"
+          "sha": "53610d2b0b87",
+          "cligne": true
         }
       }
     },

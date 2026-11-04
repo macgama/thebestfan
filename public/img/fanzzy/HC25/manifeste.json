@@ -1,6 +1,6 @@
 {
   "id": "HC25",
-  "rev": 18,
+  "rev": 21,
   "evolutions": {
     "e1": {
       "skins": {
@@ -52,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b2c9de1c2c7b"
+          "sha": "b2c9de1c2c7b",
+          "cligne": true
         }
       }
     },
@@ -106,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "bd3201205c32"
+          "sha": "bd3201205c32",
+          "cligne": true
         }
       }
     },
@@ -160,7 +162,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "22087decd02a"
+          "sha": "22087decd02a",
+          "cligne": true
         }
       }
     }

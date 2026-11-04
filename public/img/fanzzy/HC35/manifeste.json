@@ -1,6 +1,6 @@
 {
   "id": "HC35",
-  "rev": 26,
+  "rev": 27,
   "evolutions": {
     "e1": {
       "skins": {
@@ -149,7 +149,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "48d12337f3a4"
+          "sha": "48d12337f3a4",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
