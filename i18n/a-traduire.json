@@ -1,7 +1,62 @@
 {
+ "style=\"--pass-fond:url(’{0}’);--pass:{1}\" data-pass-fond": {
+  "ou": [
+   "public/amis.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "<0>Ton Fanzzy de l’accueil</0> est ton titulaire : choisis-le dans « Mes Fanzzy », et ouvre sa fiche pour le faire évoluer. Ses onglets ÂGES, ULTIMATE, EFFETS et LOOK montrent ses âges, son coup fatal, ce qu’il change en jeu, ses expressions et ses tenues. Sur l’accueil, il se tient au sol et ne montre que les expressions que tu as gagnées en booster : touche-le plusieurs fois de suite pour les voir.": {
   "ou": [
    "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "<0>Ce que les autres voient</0> : ton adversaire voit sur l’affiche du duel ton écusson, ton titre, ton pseudo en or, ton cadre et ton entrée, et reçoit tes stickers pendant la partie. Tes amis le voient sur ta fiche, tout le monde sur le podium du classement.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "style=\"--plaque:url(’{0}’)\"": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Sticker {0}": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Lancer un sticker du PASS": {
+  "ou": [
+   "public/duel-nvn.html"
   ],
   "langues": [
    "en",
@@ -938,6 +993,28 @@
   ]
  },
  "Sur l’accueil, il ne montre que les expressions que tu as gagnées en booster : la joie, la colère, le dépit, la poussée. Touche-le trois fois de suite et il exulte, six fois et il proteste, s’il a l’expression. Sans elle, il garde son air de repos et fait seulement son petit saut. Il se tient toujours au même endroit, les pieds au sol au milieu de l’écran.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Qui voit ce que ma voie PASS a ouvert ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Les autres joueurs. Sur l’affiche d’un duel, ton adversaire voit ton écusson, ton titre, ton pseudo en or, le cadre de pierre autour de ton Fanzzy et son entrée dans les rochers. Pendant la partie, tu peux lui lancer tes stickers. Tes amis les voient aussi sur ta fiche, avec ton fond de grotte, et tout le monde sur le podium du classement. Au Virage, ton Fanzzy porte son aura de braises. Que du visuel : rien ne pèse sur la corde.": {
   "ou": [
    "src/shared/aide.js"
   ],
