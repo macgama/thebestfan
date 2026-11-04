@@ -641,10 +641,10 @@
    */
   function particules({ x, y, n = 24, couleurs = [COULEURS.or, COULEURS.feu],
                         distance = 150, taille = 5, duree = 900,
-                        papier = false, dans = null } = {}) {
+                        papier = false, dans = null, angle = null, ecart = Math.PI / 3 } = {}) {
     if (doux()) return;
     const l = dans ?? layer();
-    if (papier) { confettis(l, { x, y, n, couleurs, distance, duree }); return; }
+    if (papier) { confettis(l, { x, y, n, couleurs, distance, duree, angle, ecart }); return; }
     const total = Math.min(n, 120);
     for (let i = 0; i < total; i++) {
       const p = document.createElement('div');
@@ -669,14 +669,17 @@
      porte que le vol, la rotation et la retombée. Chaque morceau a un filet
      qui le retire, comme le reste de ce fichier : un onglet caché ne finit
      pas ses animations, et un confetti oublié resterait collé à l'écran. */
-  function confettis(l, { x, y, n, couleurs, distance, duree }) {
+  /* `angle` (en radians, 0 vers la droite, −π/2 vers le haut) en fait un
+     canon : les morceaux partent dans un cône d'`ecart` autour de lui, au
+     lieu de tout autour. */
+  function confettis(l, { x, y, n, couleurs, distance, duree, angle = null, ecart = Math.PI / 3 }) {
     const total = Math.min(n, 90);
     for (let i = 0; i < total; i++) {
       const p = document.createElement('i');
       p.className = 'fx-papier';
       p.style.cssText = `left:${x}px;top:${y}px;background:${couleurs[i % couleurs.length]}`;
       l.appendChild(p);
-      const a = Math.random() * Math.PI * 2;
+      const a = angle == null ? Math.random() * Math.PI * 2 : angle + (Math.random() - 0.5) * ecart;
       const d = distance * (0.45 + Math.random() * 0.75);
       const dx = Math.cos(a) * d;
       const dy = Math.sin(a) * d;
@@ -2131,6 +2134,17 @@
           distance: 200, duree: 2000 }), 650);
         setTimeout(() => particules({ ...papier, x: innerWidth * 0.8, y: innerHeight * 0.1, n: 30,
           distance: 200, duree: 2000 }), 800);
+        /* **Les canons** (4 novembre 2026, « plus festif, plus gaming ») :
+           deux salves de papier tirées des coins bas, vers le haut et le
+           milieu, comme au bord d'une scène. La colonne seule : sur un
+           ordinateur, les coins sont ceux de la colonne du jeu. */
+        const g = (innerWidth - Math.min(innerWidth, 460)) / 2, dr = innerWidth - g;
+        const canon = (cote, n, ms) => setTimeout(() => particules({ ...papier,
+          x: cote < 0 ? g + 6 : dr - 6, y: innerHeight - 30, n, distance: innerHeight * 0.62, duree: 2300,
+          angle: cote < 0 ? -Math.PI * 0.36 : -Math.PI * 0.64, ecart: 0.55 }), ms);
+        canon(-1, 45, 420); canon(1, 45, 520);
+        canon(-1, 35, 1500); canon(1, 35, 1600);
+        setTimeout(() => secousse(0.7), 120);
       } else if (issue === 'defaite') {
         buzz(200);
         fond('defaite', { dans, ms: 3400 });
