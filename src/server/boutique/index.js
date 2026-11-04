@@ -46,12 +46,13 @@ import { STUFF_BY_ID } from '../../shared/fanzzy/inventaire.js';
 import { tenuesEnEtal } from '../fanzzy/tenues.js';
 import { ouverts } from '../contenus/index.js';
 import { traduire, LANGUES } from '../langues.js';
+import { createGooglePlay, PRODUIT_PASS, referenceGoogle } from './google.js';
 
 
 const API = 'https://api.stripe.com/v1';
 
 export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = null,
-  mailer = null }) {
+  mailer = null, google = createGooglePlay() }) {
   const q = (sql, args) => pool.query(sql, args).then(([r]) => r);
 
   /**
@@ -558,19 +559,14 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
   });
 
   /**
-   * Ouvrir une commande, et rendre l'adresse où payer.
-   *
-   * Le corps ne porte **que** l'identifiant de l'article. Pas de montant, pas
-   * de quantité, pas de devise : tout le reste est décidé ici.
+   * L'article commandé, contrôlé : connu, en vente, et — pour un PASS — pas
+   * déjà payé ni pas encore ouvert. Partagé par Stripe et Google : les deux
+   * chemins refusent exactement les mêmes choses.
    */
-  router.post('/commander', requireAuth, async (req, res) => {
-    if (!configure()) return res.status(503).json({ error: 'boutique.error.non_configuree' });
-
-    let article = ARTICLE_PAR_ID.get(String(req.body?.article ?? ''));
+  async function choisirArticle(req, id) {
+    let article = ARTICLE_PAR_ID.get(id);
     /* Un article retiré (l'abonnement d'avant le PASS) ne se commande plus. */
-    if (!article || article.retire) {
-      return res.status(400).json({ error: 'boutique.error.article_inconnu' });
-    }
+    if (!article || article.retire) return { erreur: 'boutique.error.article_inconnu' };
     /* **Un ancien PASS** (Gaël, 3 novembre 2026) : le même article avec une
        saison nommée, seulement si elle est en vente aujourd'hui et que le
        joueur ne l'a pas. La commande garde `pass-saison@<n>`. */
@@ -580,7 +576,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       const enVente = abonnement?.anciensEnVente
         ? await abonnement.anciensEnVente(req.user.id).catch(() => []) : [];
       if (!enVente.some((a) => a.numero === n)) {
-        return res.status(400).json({ error: 'pass.error.pas_en_vente' });
+        return { erreur: 'pass.error.pas_en_vente' };
       }
       article = articleCommande(idAncienPass(n));
     } else if (article.livraison?.type === 'pass' && abonnement?.offre) {
@@ -588,12 +584,27 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       const o = await abonnement.offre(req.user.id).catch(() => null);
       /* Pas avant son ouverture : pendant la BASE, il est « Bientôt ». */
       if (o?.bientot && o.aAcheter.length) {
-        return res.status(400).json({ error: 'pass.error.bientot' });
+        return { erreur: 'pass.error.bientot' };
       }
       if (o && !o.aAcheter.length) {
-        return res.status(400).json({ error: o.couvre.length ? 'pass.error.deja' : 'pass.error.pas_de_saison' });
+        return { erreur: o.couvre.length ? 'pass.error.deja' : 'pass.error.pas_de_saison' };
       }
     }
+    return { article };
+  }
+
+  /**
+   * Ouvrir une commande, et rendre l'adresse où payer.
+   *
+   * Le corps ne porte **que** l'identifiant de l'article. Pas de montant, pas
+   * de quantité, pas de devise : tout le reste est décidé ici.
+   */
+  router.post('/commander', requireAuth, async (req, res) => {
+    if (!configure()) return res.status(503).json({ error: 'boutique.error.non_configuree' });
+
+    const choix = await choisirArticle(req, String(req.body?.article ?? ''));
+    if (choix.erreur) return res.status(400).json({ error: choix.erreur });
+    const { article } = choix;
 
     try {
       /* **Deux modes, et c'est l'article qui décide.** `recurrence` porte
@@ -640,6 +651,99 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       res.json({ url: session.url });
     } catch (e) {
       console.error('[boutique] commande', e.message);
+      res.status(502).json({ error: 'boutique.error.paiement_indisponible' });
+    }
+  });
+
+  /* ============================================== payer par Google Play
+
+     Dans l'appli Android du Play Store, Google impose son paiement pour le
+     PASS (choix de Gaël du 4 novembre 2026 : paiement Google dans l'appli,
+     Stripe sur le site). La feuille de paiement est celle de Google ; ce
+     serveur ne voit qu'un jeton, et le fait vérifier par Google avant de
+     livrer. Voir `google.js` et android/PAIEMENT-GOOGLE.md.
+
+     **Deux temps.** `/google/avant` refuse ce que `/commander` refuserait
+     (PASS déjà payé, pas encore ouvert) **avant** que le joueur ne paie chez
+     Google : un refus après coup laisserait de l'argent pris. Puis `/google`
+     reçoit le jeton, le fait vérifier, livre une seule fois et consomme.
+
+     **Si quelque chose casse après le paiement**, on ne consomme pas : Google
+     rembourse d'office, au bout de trois jours, un achat jamais confirmé. Le
+     joueur n'est donc jamais débité sans rien recevoir. */
+
+  /** Seuls les articles payés en euros qui ont leur produit chez Google. */
+  const produitGoogle = (article) => (article?.livraison?.type === 'pass' ? PRODUIT_PASS : null);
+
+  router.post('/google/avant', requireAuth, async (req, res) => {
+    if (!google?.configure()) return res.status(503).json({ error: 'boutique.error.non_configuree' });
+    const choix = await choisirArticle(req, String(req.body?.article ?? ''));
+    if (choix.erreur) return res.status(400).json({ error: choix.erreur });
+    const produit = produitGoogle(choix.article);
+    if (!produit) return res.status(400).json({ error: 'boutique.error.article_inconnu' });
+    res.json({ produit });
+  });
+
+  router.post('/google', requireAuth, async (req, res) => {
+    if (!google?.configure()) return res.status(503).json({ error: 'boutique.error.non_configuree' });
+    const purchaseToken = String(req.body?.jeton ?? '').trim();
+    if (!purchaseToken || purchaseToken.length > 1024) {
+      return res.status(400).json({ error: 'boutique.error.google_jeton' });
+    }
+    const ref = referenceGoogle(purchaseToken);
+
+    try {
+      /* Déjà vu : à ce joueur, c'est un double envoi (on rejoue l'encaissement,
+         sans effet s'il est livré) ; à un autre, c'est un jeton volé. */
+      const [deja] = await q('SELECT user_id, article FROM achats WHERE stripe_session = ?', [ref]);
+      if (deja && deja.user_id !== req.user.id) {
+        return res.status(409).json({ error: 'boutique.error.google_jeton' });
+      }
+
+      let article;
+      if (deja) {
+        article = articleCommande(deja.article);
+      } else {
+        const choix = await choisirArticle(req, String(req.body?.article ?? ''));
+        if (choix.erreur) return res.status(400).json({ error: choix.erreur });
+        article = choix.article;
+      }
+      const produit = produitGoogle(article);
+      if (!produit) return res.status(400).json({ error: 'boutique.error.article_inconnu' });
+
+      const achat = await google.lireAchat(produit, purchaseToken);
+      if (!achat) return res.status(400).json({ error: 'boutique.error.google_jeton' });
+      if (Number(achat.purchaseState) === 2) {
+        return res.status(202).json({ en_attente: true });
+      }
+      if (Number(achat.purchaseState) !== 0) {
+        return res.status(400).json({ error: 'boutique.error.google_annule' });
+      }
+
+      if (!deja) {
+        /* Le montant noté est celui du catalogue : Google ne le rend pas dans
+           cette réponse (il dépend du pays). La commande Google fait foi. */
+        await q(
+          `INSERT IGNORE INTO achats (user_id, article, montant, devise, fournisseur,
+                                      stripe_session, google_jeton, google_commande, etat, paye_le)
+           VALUES (?, ?, ?, 'eur', 'google', ?, ?, ?, 'paye', NOW(3))`,
+          [req.user.id, article.id, article.prix, ref, purchaseToken,
+            String(achat.orderId ?? '').slice(0, 64) || null]);
+      }
+
+      const r = await encaisser(ref, { reference: achat.orderId ?? null });
+      if (r.article_retire) return res.status(409).json({ error: 'boutique.error.article_inconnu' });
+      await apresEncaisse(r);
+
+      /* Consommer seulement une fois livré. Un échec ici n'enlève rien au
+         joueur : le prochain envoi du même jeton consommera. */
+      if (Number(achat.consumptionState) !== 1) {
+        await google.consommer(produit, purchaseToken)
+          .catch((e) => console.error('[boutique] google consume', e.message));
+      }
+      res.json({ ok: true, livre: r.livre ?? null, deja: Boolean(r.deja) });
+    } catch (e) {
+      console.error('[boutique] google', e.message);
       res.status(502).json({ error: 'boutique.error.paiement_indisponible' });
     }
   });
@@ -779,5 +883,5 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
      pourrait éprouver la règle qu à travers le catalogue — c est-à-dire
      vérifier que le catalogue est conforme, jamais que le moteur refuserait
      un article qui ne le serait pas. */
-  return { router, webhook, encaisser, livrer, signatureValide, configure };
+  return { router, webhook, encaisser, livrer, signatureValide, configure, google };
 }

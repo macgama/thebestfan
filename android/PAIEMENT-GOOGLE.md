@@ -1,4 +1,4 @@
-# Le paiement Google dans l'appli Android (à faire, à valider par Gaël)
+# Le paiement Google dans l'appli Android
 
 Choix de Gaël (2026-11-04) : dans l'appli du Play Store, les achats passent par
 Google Play ; sur le site, Stripe ne change pas.
@@ -9,6 +9,18 @@ Seul le PASS de saison se paie en argent réel (`pass-saison`, 7,99 €,
 src/shared/boutique.js). Les écharpes ne s'achètent pas. Côté Google, il n'y a
 donc qu'un produit « achat unique consommable » `pass_saison` à créer dans la
 Play Console (Monétiser › Produits intégrés), au prix équivalent.
+
+## Où c'est codé
+
+- `public/paiement-google.js` : la page reconnaît l'appli (Digital Goods API)
+  et ouvre la feuille de Google ; utilisé par /abonnement et /boutique.
+- `src/server/boutique/google.js` : le client de la Google Play Developer API.
+- `src/server/boutique/index.js`, « payer par Google Play » : `POST
+  /api/boutique/google/avant` puis `POST /api/boutique/google`.
+- Suite : `npm run google:smoke`.
+
+Pas encore fait : les remboursements Google ne retirent pas le PASS tout seuls
+(le retirer depuis /admin en attendant).
 
 ## Le parcours
 
@@ -29,17 +41,13 @@ Play Console (Monétiser › Produits intégrés), au prix équivalent.
    des achats annulés (`voidedpurchases`), qui retirent le PASS comme le fait
    aujourd'hui un remboursement Stripe.
 
-## Le schéma proposé (à valider avant de coder)
+## Le schéma (validé par Gaël le 2026-11-04, dans sql/boutique.sql)
 
 La table `achats` garde tout l'historique ; on y ajoute la provenance plutôt
 que de créer une seconde table :
 
-```sql
-ALTER TABLE achats
-  ADD COLUMN IF NOT EXISTS fournisseur ENUM('stripe','google') NOT NULL DEFAULT 'stripe' AFTER devise,
-  ADD COLUMN IF NOT EXISTS google_jeton VARCHAR(1024) NULL AFTER stripe_session,
-  ADD COLUMN IF NOT EXISTS google_commande VARCHAR(64) NULL AFTER google_jeton;
-```
+Trois colonnes : `fournisseur` (`stripe` ou `google`), `google_jeton` et
+`google_commande` (le numéro GPA.… de Google).
 
 Pour un achat Google, `stripe_session` reçoit `google:<empreinte SHA-256 du
 jeton>` : la clé unique existante empêche alors de livrer deux fois le même
