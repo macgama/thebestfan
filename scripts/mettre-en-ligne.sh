@@ -59,12 +59,13 @@ TBF_SSH_CMD="${SSH[*]}" TBF_DEPOT="$PWD" bash "$OUTILS/envoyer-images.sh" "$@"
 
 echo "→ déploiement sur le serveur ($ATTENDU)"
 # Le serveur prend lui-même deployer.sh dans main (et non sa copie de
-# travail, qui date du déploiement précédent), puis le lance. Rien ne passe
-# par l'entrée de ssh (-n) : le programme qui donne le mot de passe pourrait
-# l'avaler, et le premier essai s'est arrêté ainsi, sans un mot.
+# travail, qui date du déploiement précédent), puis le lance. Rien n'est
+# envoyé par l'entrée de ssh, et ssh garde celle du terminal : avec un tube
+# ou avec -n (/dev/null), la connexion par mot de passe automatique échouait
+# sous Git Bash sans un mot (codes 141 puis 255, novembre 2026).
 RAC="${TBF_RACINE:-sites/thebestfan.online}"
 set +e
-"${SSH[@]}" -n "$TBF_SSH" "cd '$RAC' && git fetch -q origin main && f=\$(mktemp) && git show origin/main:scripts/deployer.sh > \"\$f\" && TBF_REDEMARRAGE='${TBF_REDEMARRAGE:-}' TBF_BRANCHE=main bash \"\$f\" < /dev/null 2>&1; s=\$?; rm -f \"\$f\"; exit \$s"
+"${SSH[@]}" "$TBF_SSH" "cd '$RAC' && git fetch -q origin main && f=\$(mktemp) && git show origin/main:scripts/deployer.sh > \"\$f\" && TBF_REDEMARRAGE='${TBF_REDEMARRAGE:-}' TBF_BRANCHE=main bash \"\$f\" < /dev/null 2>&1; s=\$?; rm -f \"\$f\"; exit \$s"
 CODE=$?
 set -e
 if [ "$CODE" != "0" ]; then
