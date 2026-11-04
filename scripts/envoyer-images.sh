@@ -17,8 +17,9 @@
 #
 # ## Ce qu'il fait
 #
-# Il emballe les images plus récentes que le dernier envoi réussi, et les
-# déballe dans le dossier du site. Il n'efface rien sur le serveur : une image
+# Il demande au serveur la liste de ce qu'il a, emballe les images et vidéos
+# qui y manquent (ou dont la taille diffère), et les déballe dans le dossier
+# du site. Il n'efface rien sur le serveur : une image
 # retirée ici reste là-bas, ce qui ne casse jamais une page déjà en cache.
 # `--tout` renvoie tout, pour un serveur neuf.
 #
@@ -41,14 +42,21 @@ DOSSIERS=()
 for d in public/img/fanzzy public/img/ultime public/video; do
   [ -d "$d" ] && DOSSIERS+=("$d")
 done
-REPERE=.tbf-images-envoyees
+SSH_CMD="${TBF_SSH_CMD:-ssh}"
 
-if [ "${1:-}" = "--tout" ] || [ ! -f "$REPERE" ]; then
+if [ "${1:-}" = "--tout" ]; then
   echo "→ envoi complet"
   find "${DOSSIERS[@]}" -type f > .tbf-images-liste
 else
-  echo "→ images plus récentes que le dernier envoi"
-  find "${DOSSIERS[@]}" -type f -newer "$REPERE" > .tbf-images-liste
+  # On demande au serveur ce qu'il a déjà (taille et chemin), et l'on
+  # n'envoie que ce qui y manque ou n'y a pas la même taille. Plus fiable
+  # qu'une date : la réécriture du 3 novembre a retouché tous les fichiers.
+  echo "→ comparaison avec le serveur"
+  $SSH_CMD "$TBF_SSH" "cd '$RACINE' && find ${DOSSIERS[*]} -type f -printf '%s %p\\n' 2>/dev/null; true" \
+    | LC_ALL=C sort > .tbf-images-distant
+  find "${DOSSIERS[@]}" -type f -printf "%s %p\n" | LC_ALL=C sort > .tbf-images-local
+  comm -23 .tbf-images-local .tbf-images-distant | cut -d' ' -f2- > .tbf-images-liste
+  rm -f .tbf-images-local .tbf-images-distant
 fi
 
 N="$(wc -l < .tbf-images-liste | tr -d ' ')"
@@ -59,10 +67,6 @@ if [ "$N" = "0" ]; then
 fi
 echo "→ $N fichiers"
 
-# Le repère est posé **avant** l'envoi : une image écrite pendant le transfert
-# partira la fois suivante au lieu de passer entre les deux.
-touch "$REPERE.nouveau"
-tar -cf - -T .tbf-images-liste | ${TBF_SSH_CMD:-ssh} "$TBF_SSH" "cd '$RACINE' && tar -xf -"
-mv "$REPERE.nouveau" "$REPERE"
+tar -cf - -T .tbf-images-liste | $SSH_CMD "$TBF_SSH" "cd '$RACINE' && tar -xf -"
 rm -f .tbf-images-liste
 echo "→ envoyé"
