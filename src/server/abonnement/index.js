@@ -200,6 +200,26 @@ export function createAbonnement({ pool, requireAuth }) {
      le jeu tourne comme avant, personne ne perd rien. */
   const sansTable = (e) => e?.code === 'ER_NO_SUCH_TABLE';
 
+  /**
+   * **L'essai du PASS par l'administration** (Gaël, 4 novembre 2026 :
+   * « ouvrir le PASS 1 uniquement pour le profil ADMIN pour que je puisse
+   * contrôler que ça fonctionne »). Un compte `role = 'admin'` achète le PASS
+   * avant son ouverture (`offre`), et sa voie d'une saison pas encore lancée
+   * monte au niveau `pass.essai_admin_niveau` (`voies`). Les joueurs ne voient
+   * rien de changé.
+   */
+  async function estAdmin(userId) {
+    if (!userId) return false;
+    try {
+      const r = await q('SELECT role FROM users WHERE public_id = ?', [userId]);
+      return r[0]?.role === 'admin';
+    } catch (e) {
+      /* `role` vient de sql/admin.sql : sans lui, personne n'est admin. */
+      if (e?.code === 'ER_BAD_FIELD_ERROR' || sansTable(e)) return false;
+      throw e;
+    }
+  }
+
   /** Les numéros des saisons dont le joueur a le PASS, du plus ancien au plus récent. */
   async function saisonsDuPass(userId, lire = q) {
     if (!userId) return [];
@@ -353,6 +373,8 @@ export function createAbonnement({ pool, requireAuth }) {
   async function voies(userId) {
     const mes = await passDuJoueur(userId);
     if (!mes.length) return [];
+    let admin;
+    const essaiAdmin = async () => (admin ??= await estAdmin(userId));
     const parNumero = new Map(toutes().filter((s) => s.lancee).map((s) => [Number(s.numero), s]));
     const out = [];
     for (const { saison: n, tardif } of mes) {
@@ -366,6 +388,13 @@ export function createAbonnement({ pool, requireAuth }) {
         tampons = await tamponsDe(userId, s.id);
         points = await pointsDe(userId, s.id);
         seuils = carnetDe(s).map((p) => p.tampons);
+      }
+      /* L'essai de l'administration : une saison pas encore lancée, un PASS
+         pris à temps, et le niveau choisi dans /admin. Les tampons sont posés
+         au seuil de ce niveau, pour que la jauge dise la même chose. */
+      if (!s && !tardif && !saisonPassee(n) && await essaiAdmin()) {
+        const voulu = Math.min(VOIE_PASS.length, Math.max(0, Number(reglage('pass.essai_admin_niveau')) || 0));
+        if (voulu > 1) tampons = Math.max(tampons, seuilsVoie(seuils)[voulu - 1]);
       }
       /* `tampons` reste le carnet seul ; les points des défis PASS
          s'y ajoutent pour le niveau (`niveauVoieDe`). */
@@ -502,7 +531,10 @@ export function createAbonnement({ pool, requireAuth }) {
   async function offre(userId) {
     const couvre = saisonsCouvertes(courante(), reglage('pass.dernier_mois_jours'));
     const deja = await saisonsDuPass(userId);
-    return { couvre, aAcheter: couvre.filter((n) => !deja.includes(n)), deja, bientot: bientot() };
+    /* L'administration l'essaie avant tout le monde : pas de « bientôt » pour elle. */
+    const ferme = bientot();
+    return { couvre, aAcheter: couvre.filter((n) => !deja.includes(n)), deja,
+      bientot: ferme && !(await estAdmin(userId)) ? ferme : null };
   }
 
   /**

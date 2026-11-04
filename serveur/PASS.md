@@ -35,6 +35,12 @@ l'abonnement mensuel (3,99 €) et annuel (39,90 €), qui ne sont plus en vente
   `POST /api/abonnement/pass/echarpes` rendent `pass.error.bientot`
   (`offre().bientot`, `src/server/abonnement/`). Il s'achète dès que la
   saison 1 est lancée. L'administration peut toujours l'offrir.
+- **L'essai des admins** (Gaël, 4 novembre 2026) : un compte `role = 'admin'`
+  n'a pas de « bientôt » (`offre`, `estAdmin`) et achète le PASS 1 pendant la
+  BASE. Sa voie d'une saison pas encore lancée monte au niveau
+  `pass.essai_admin_niveau` (0 à 12, /admin › PASS ; `voies`) : les tampons
+  sont posés au seuil de ce niveau. Les séries, le stuff et les cartes de la
+  saison restent fermés pour tous, admins compris, jusqu'au lancement.
 - Il ne donne **jamais d'écharpes** : l'argent n'achète pas la monnaie des
   tirages.
 

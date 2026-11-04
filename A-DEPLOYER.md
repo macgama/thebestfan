@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Essai du PASS 1 par les admins** (branche `claude/project-thread-7jf6qt`,
+4 novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
+
+- Un compte admin achète le PASS 1 dès maintenant (euros ou écharpes) ; les
+  joueurs voient toujours BIENTÔT jusqu'au 1er décembre.
+- /admin › PASS, réglage « Essai du PASS par les admins : niveau de leur
+  voie » (0 à 12) : la voie PASS d'un admin monte à ce niveau tant que la
+  saison 1 n'est pas lancée, pour voir chaque gain. Remettre à 0 après l'essai.
+
+---
+
 **49 nouvelles cartes d'action** (branche `claude/project-thread-96sqrp`,
 3 novembre 2026, « Ok pour toutes tes idées » de Gaël). Construction seule,
 pas de schéma.
