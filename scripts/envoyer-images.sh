@@ -62,7 +62,7 @@ echo "→ $N fichiers"
 # Le repère est posé **avant** l'envoi : une image écrite pendant le transfert
 # partira la fois suivante au lieu de passer entre les deux.
 touch "$REPERE.nouveau"
-tar -cf - -T .tbf-images-liste | ssh "$TBF_SSH" "cd '$RACINE' && tar -xf -"
+tar -cf - -T .tbf-images-liste | ${TBF_SSH_CMD:-ssh} "$TBF_SSH" "cd '$RACINE' && tar -xf -"
 mv "$REPERE.nouveau" "$REPERE"
 rm -f .tbf-images-liste
 echo "→ envoyé"
