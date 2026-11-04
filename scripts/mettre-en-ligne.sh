@@ -45,7 +45,7 @@ fi
 
 # accept-new : la première connexion enregistre l'empreinte du serveur, les
 # suivantes refusent un serveur qui aurait changé.
-SSH=(ssh -o StrictHostKeyChecking=accept-new -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1)
+SSH=(ssh -o LogLevel=ERROR -o StrictHostKeyChecking=accept-new -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1)
 
 echo "→ contrôle de l'accès SSH"
 "${SSH[@]}" "$TBF_SSH" true
@@ -58,11 +58,19 @@ echo "→ images et vidéos"
 TBF_SSH_CMD="${SSH[*]}" TBF_DEPOT="$PWD" bash "$OUTILS/envoyer-images.sh" "$@"
 
 echo "→ déploiement sur le serveur ($ATTENDU)"
-# Le script part de main (et non de la copie du serveur, qui date du
-# déploiement précédent), écrit dans un fichier puis lancé, comme dans
-# .github/workflows/deploiement.yml.
-git show origin/main:scripts/deployer.sh | "${SSH[@]}" "$TBF_SSH" \
-  "export TBF_RACINE='${TBF_RACINE:-}' TBF_REDEMARRAGE='${TBF_REDEMARRAGE:-}' TBF_BRANCHE=main; f=\$(mktemp); cat > \"\$f\"; bash \"\$f\" < /dev/null; s=\$?; rm -f \"\$f\"; exit \$s"
+# Le serveur prend lui-même deployer.sh dans main (et non sa copie de
+# travail, qui date du déploiement précédent), puis le lance. Rien ne passe
+# par l'entrée de ssh (-n) : le programme qui donne le mot de passe pourrait
+# l'avaler, et le premier essai s'est arrêté ainsi, sans un mot.
+RAC="${TBF_RACINE:-sites/thebestfan.online}"
+set +e
+"${SSH[@]}" -n "$TBF_SSH" "cd '$RAC' && git fetch -q origin main && f=\$(mktemp) && git show origin/main:scripts/deployer.sh > \"\$f\" && TBF_REDEMARRAGE='${TBF_REDEMARRAGE:-}' TBF_BRANCHE=main bash \"\$f\" < /dev/null 2>&1; s=\$?; rm -f \"\$f\"; exit \$s"
+CODE=$?
+set -e
+if [ "$CODE" != "0" ]; then
+  echo "Échec du déploiement sur le serveur (code $CODE) : voir les lignes au-dessus." >&2
+  exit "$CODE"
+fi
 
 BASE="${TBF_ORIGINE:-https://thebestfan.online}"
 echo "→ attente de $ATTENDU sur $BASE/healthz"
