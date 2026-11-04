@@ -1,6 +1,6 @@
 {
   "id": "HC49",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -89,6 +89,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "e7652ed26777"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "278e0d30e6c6"
         }
       }
     },
