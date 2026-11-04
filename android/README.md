@@ -15,6 +15,22 @@ republie la coquille que pour changer son nom, son icône ou ses réglages
   numériques (PASS, boosters). `features.playBilling` est activé dans la
   coquille ; le côté site (Digital Goods API) est à faire.
 
+## Où elle est sur le PC de Gaël (2026-11-04)
+
+- Projet : `C:\Users\gaelm\Documents\thebestfan-android\` (hors dépôt), `.aab`
+  et `.apk` signés dedans.
+- Clé d'envoi : `thebestfan-envoi.keystore` (alias `thebestfan`), copie dans
+  `G:\Mon Drive\thebestfan-android\` ; mot de passe chiffré DPAPI dans
+  `%USERPROFILE%\.ssh\thebestfan-android.mdp`. SHA-256 :
+  `04:12:55:2C:…:2F:8F:68` (en entier dans src/server/android.js).
+- JDK 17 et SDK Android dans `%USERPROFILE%\.bubblewrap`. Pour reconstruire :
+  monter `appVersionCode`, mettre le JDK de `.bubblewrap\jdk` dans le PATH
+  (sinon jarsigner manque), vider `NoDefaultCurrentDirectoryInExePath` sous
+  PowerShell (sinon gradlew.bat manque), `bubblewrap update` puis
+  `bubblewrap build` avec `BUBBLEWRAP_KEYSTORE_PASSWORD` et
+  `BUBBLEWRAP_KEY_PASSWORD`.
+- `minSdkVersion` 24 : androidbrowserhelper 2.7.4 l'exige (Android 7 et plus).
+
 ## Fabriquer la coquille (une fois, sur le PC)
 
 1. Compte développeur Google Play (25 $) : https://play.google.com/console
@@ -25,9 +41,8 @@ republie la coquille que pour changer son nom, son icône ou ses réglages
    **la garder hors du dépôt, avec son mot de passe, sans jamais la perdre.**
 4. Envoyer `app-release-bundle.aab` dans la Play Console (test fermé d'abord :
    un compte personnel neuf doit faire tester par 12 personnes pendant 14 jours).
-5. Play Console › Intégrité de l'appli › Signature de l'appli : copier
-   l'empreinte SHA-256 de la clé de Google (et celle de la clé d'envoi) dans le
-   `.env` du serveur :
-   `ANDROID_SHA256=AA:BB:…,CC:DD:…` puis Redémarrer.
+5. Play Console › Intégrité de l'appli › Signature de l'appli : ajouter
+   l'empreinte SHA-256 de la clé de Google à `EMPREINTES_PAR_DEFAUT`
+   (src/server/android.js), puis mettre en ligne.
 6. Vérifier : https://thebestfan.online/.well-known/assetlinks.json montre les
    empreintes, et l'appli s'ouvre sans barre d'adresse.
