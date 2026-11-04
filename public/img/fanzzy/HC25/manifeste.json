@@ -1,6 +1,6 @@
 {
   "id": "HC25",
-  "rev": 2,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,31 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "d586492fec5b"
+          "sha": "91aaf8954c59"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "90840a847bea"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "af39566e60c3"
         }
       }
     },
@@ -28,7 +52,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "3439fae04561"
+          "sha": "3282f3fe50a3"
         },
         "apocalyptique": {
           "etats": [
@@ -40,7 +64,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "36c283bfa0a5"
+          "sha": "fa1f2d721169"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "56b30a992a22"
         }
       }
     },
@@ -55,7 +91,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "c9953b74c28a"
+          "sha": "17c59b5fd4cc"
         },
         "apocalyptique": {
           "etats": [
@@ -67,7 +103,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "446c3e2f8223"
+          "sha": "a74a9e862e35"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "0fb674d397ac"
         }
       }
     }
