@@ -1,6 +1,6 @@
 {
   "id": "HC44",
-  "rev": 8,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6c70ed42426d"
+          "sha": "6c70ed42426d",
+          "cligne": true
         }
       }
     },
@@ -90,7 +91,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cdcdeff22e8f"
+          "sha": "cdcdeff22e8f",
+          "cligne": true
         }
       }
     },
@@ -130,7 +132,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "90192093bcf1"
+          "sha": "90192093bcf1",
+          "cligne": true
         }
       }
     }

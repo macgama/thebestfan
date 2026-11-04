@@ -1,6 +1,6 @@
 {
   "id": "HC24",
-  "rev": 17,
+  "rev": 23,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "459a699653c5"
+          "sha": "459a699653c5",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -50,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c84114d4dd78"
+          "sha": "c84114d4dd78",
+          "cligne": true
         }
       }
     },
@@ -118,7 +120,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8665ab734100"
+          "sha": "8665ab734100",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -142,7 +145,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "7366e76f5af1"
+          "sha": "7366e76f5af1",
+          "cligne": true
         }
       }
     }

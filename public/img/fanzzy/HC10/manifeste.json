@@ -1,6 +1,6 @@
 {
   "id": "HC10",
-  "rev": 7,
+  "rev": 9,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "87e62e2cc3fd"
+          "sha": "87e62e2cc3fd",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -50,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cac4f2df0f42"
+          "sha": "cac4f2df0f42",
+          "cligne": true
         }
       }
     }
