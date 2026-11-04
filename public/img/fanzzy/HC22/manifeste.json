@@ -1,6 +1,6 @@
 {
   "id": "HC22",
-  "rev": 15,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -94,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9b82f1a5da0e"
+          "sha": "9b82f1a5da0e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -106,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "15539847bc7e"
+          "sha": "15539847bc7e",
+          "cligne": true
         }
       }
     },
@@ -134,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d2b360fa42e4"
+          "sha": "d2b360fa42e4",
+          "cligne": true
         },
         "halloween": {
           "etats": [

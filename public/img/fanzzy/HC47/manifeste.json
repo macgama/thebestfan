@@ -1,6 +1,6 @@
 {
   "id": "HC47",
-  "rev": 25,
+  "rev": 26,
   "evolutions": {
     "e1": {
       "skins": {
@@ -52,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0d52ec2e66d2"
+          "sha": "0d52ec2e66d2",
+          "cligne": true
         }
       }
     },
