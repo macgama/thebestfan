@@ -59,10 +59,23 @@ TBF_SSH_CMD="${SSH[*]}" TBF_DEPOT="$PWD" bash "$OUTILS/envoyer-images.sh" "$@"
 
 echo "→ déploiement sur le serveur ($ATTENDU)"
 # Le script part de main (et non de la copie du serveur, qui date du
-# déploiement précédent), écrit dans un fichier puis lancé, comme dans
-# .github/workflows/deploiement.yml.
-git show origin/main:scripts/deployer.sh | "${SSH[@]}" "$TBF_SSH" \
-  "export TBF_RACINE='${TBF_RACINE:-}' TBF_REDEMARRAGE='${TBF_REDEMARRAGE:-}' TBF_BRANCHE=main; f=\$(mktemp); cat > \"\$f\"; bash \"\$f\" < /dev/null; s=\$?; rm -f \"\$f\"; exit \$s"
+# déploiement précédent). Il est d'abord copié sur le serveur, puis lancé par une seconde
+# connexion : chaque étape dit ce qui a échoué au lieu de s'arrêter muette.
+DISTANT=".tbf-deployer.sh"
+git show origin/main:scripts/deployer.sh > .tbf-deployer.sh
+if ! "${SSH[@]}" "$TBF_SSH" "cat > $DISTANT && wc -l $DISTANT" < .tbf-deployer.sh; then
+  echo "Échec : impossible de copier deployer.sh sur le serveur." >&2
+  exit 1
+fi
+rm -f .tbf-deployer.sh
+set +e
+"${SSH[@]}" "$TBF_SSH" "export TBF_RACINE='${TBF_RACINE:-}' TBF_REDEMARRAGE='${TBF_REDEMARRAGE:-}' TBF_BRANCHE=main; bash $DISTANT < /dev/null 2>&1; s=\$?; rm -f $DISTANT; exit \$s"
+CODE=$?
+set -e
+if [ "$CODE" != "0" ]; then
+  echo "Échec du déploiement sur le serveur (code $CODE) : voir les lignes au-dessus." >&2
+  exit "$CODE"
+fi
 
 BASE="${TBF_ORIGINE:-https://thebestfan.online}"
 echo "→ attente de $ATTENDU sur $BASE/healthz"
