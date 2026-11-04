@@ -1,6 +1,6 @@
 {
   "id": "HC42",
-  "rev": 1,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "4e09cc07886e"
+          "sha": "06f0c28dc2d1"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "99b618e55ea2"
         }
       }
     },
@@ -43,7 +55,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5fd525dd9ffa"
+          "sha": "30d3cac2c54f"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "361e180f4c1b"
         }
       }
     }
