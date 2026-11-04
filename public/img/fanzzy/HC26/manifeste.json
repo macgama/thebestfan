@@ -1,6 +1,6 @@
 {
   "id": "HC26",
-  "rev": 19,
+  "rev": 21,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9bb833a6db5e"
+          "sha": "9bb833a6db5e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -93,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ec8ecd434162"
+          "sha": "ec8ecd434162",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

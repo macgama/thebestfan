@@ -108,7 +108,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b3e8a1f85607"
+          "sha": "b3e8a1f85607",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
