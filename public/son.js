@@ -211,6 +211,11 @@
     grondement: 3.02,             //  −8,1 · −16,5 · 1,80 s
     niveau: 1.65,                 //  −8,6 · −16,1 · 1,15 s
     ovation: 1.19,                //  −8,4 · −16,5 · 3,20 s
+    /* La fin d'un duel (4 novembre 2026) : la victoire au niveau de la
+       montée de niveau, la défaite un peu plus bas — elle soupire, elle ne
+       crie pas. */
+    'fin-victoire': 1.6,           //  −6,8 · −16,5 · 1,58 s
+    'fin-defaite': 3.3,            //  −8,8 · −17,1 · 3,08 s
     /* L'Ultimate (octobre 2026) : la montée sous le choc, l'impact au niveau
        du rugissement ; mesurés au banc le 26 octobre 2026. */
     'ultime-montee': 2.36,        //  −7,8 · −17,0 · 1,21 s
@@ -847,6 +852,42 @@
         [659, 831, 988].forEach((f) => ton(c, s, t, { freq: f, duree: 1.1, type: 'sine', vol: 0.07, delai: 0.3 }));
         [1318, 1662].forEach((f) => ton(c, s, t, { freq: f, duree: 0.5, type: 'sine', vol: 0.025, delai: 0.3 }));
         bruit(c, s, t, { duree: 1.3, freq: 1300, q: 0.6, vol: 0.06, delai: 0.3 });
+      } },
+    /* **La fin d'un duel** (4 novembre 2026, « plus festif, plus triste,
+       plus gaming »), au bilan, calée sur ses lettres qui tombent une à
+       une (70 ms d'écart, la première à 120 ms). La victoire : une note qui
+       monte par lettre (une gamme sans demi-ton, jamais un air), puis le
+       coup d'orchestre — un accord majeur en dents de scie, le grave qui
+       frappe, la cymbale. */
+    'fin-victoire': { famille: 'moment', duree: 2.1,
+      jouer: (c, s, t) => {
+        [523, 587, 659, 784, 880, 1047, 1175, 1319].forEach((f, i) =>
+          ton(c, s, t, { freq: f, duree: 0.13, type: 'triangle', vol: 0.05, delai: 0.12 + i * 0.07 }));
+        ton(c, s, t, { freq: 110, vers: 45, duree: 0.5, type: 'sine', vol: 0.14, delai: 0.74 });
+        [392, 494, 587, 784].forEach((f) =>
+          ton(c, s, t, { freq: f, duree: 1.2, type: 'sawtooth', vol: 0.03, delai: 0.74 }));
+        [1568, 1976].forEach((f) => ton(c, s, t, { freq: f, duree: 0.7, type: 'sine', vol: 0.02, delai: 0.74 }));
+        bruit(c, s, t, { duree: 1.2, freq: 6000, filtre: 'highpass', q: 0.7, vol: 0.05, delai: 0.74 });
+      } },
+    /* La défaite : chaque lettre tombe d'un coup sourd, la case se fend
+       (un craquement sec), puis quatre notes qui descendent d'un demi-ton
+       — la trompette qui se dégonfle des dessins animés —, la dernière
+       tenue et qui baisse encore, et la tribune qui soupire dessous. */
+    'fin-defaite': { famille: 'moment', duree: 3.2,
+      jouer: (c, s, t) => {
+        for (let i = 0; i < 7; i++) {
+          ton(c, s, t, { freq: 130 - i * 6, vers: 60, duree: 0.14, type: 'sine', vol: 0.11, delai: 0.12 + i * 0.09 });
+        }
+        bruit(c, s, t, { duree: 0.22, freq: 2400, q: 0.9, vol: 0.09, delai: 0.95 });
+        bruit(c, s, t, { duree: 0.12, freq: 900, q: 1.4, vol: 0.06, delai: 1.02 });
+        [[311, 0], [294, 0.36], [277, 0.72]].forEach(([f, d]) =>
+          ton(c, s, t, { freq: f, duree: 0.32, type: 'triangle', vol: 0.075, delai: 1.25 + d }));
+        ton(c, s, t, { freq: 262, vers: 220, duree: 1.0, type: 'triangle', vol: 0.075, delai: 2.33 });
+        const soupir = new Float32Array(24);
+        for (let k = 0; k < soupir.length; k++) soupir[k] = 0.05 * Math.sin(Math.PI * k / (soupir.length - 1));
+        const f = bruit(c, s, t, { duree: 1.6, freq: 700, q: 0.8, courbe: soupir, delai: 1.2 });
+        f.frequency.setValueAtTime(700, t + 1.2);
+        f.frequency.exponentialRampToValueAtTime(260, t + 2.8);
       } },
     /* L'ovation du but : la tribune qui explose. Le bruit rose de la rumeur
        qui enfle en un quart de seconde, s'éclaircit (les voix montent quand
