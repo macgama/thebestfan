@@ -1,6 +1,6 @@
 {
   "id": "HC38",
-  "rev": 12,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e36e312b70ab"
+          "sha": "e36e312b70ab",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -93,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b6f585622744"
+          "sha": "b6f585622744",
+          "cligne": true
         }
       }
     },
@@ -121,7 +123,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "24a8495097d0"
+          "sha": "24a8495097d0",
+          "cligne": true
         },
         "halloween": {
           "etats": [

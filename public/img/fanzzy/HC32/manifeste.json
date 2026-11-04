@@ -1,6 +1,6 @@
 {
   "id": "HC32",
-  "rev": 12,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "8aafa282a6f9"
+          "sha": "8aafa282a6f9",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -80,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5a358fdcbc5d"
+          "sha": "5a358fdcbc5d",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -134,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "33d39bcea691"
+          "sha": "33d39bcea691",
+          "cligne": true
         },
         "halloween": {
           "etats": [
