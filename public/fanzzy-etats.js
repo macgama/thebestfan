@@ -371,6 +371,79 @@
       decale: `${decale.toFixed(2)}cqh` };
   }
 
+  /* ## Où sont ses pieds, image par image
+
+     `pieds` (index.json) n'est mesuré que sur le repos de base de chaque âge.
+     Or chaque expression est un dessin à elle : dans la colère, le Capitaine
+     du Comté (AN13) pointe du doigt et ses pieds tombent quatre-vingts pixels
+     à gauche de ceux du repos, dans le même cadre. À l'accueil, il glissait
+     donc d'un côté à l'autre à chaque changement d'état (Gaël, 4 novembre
+     2026 : « poser tous les Fanzzy exactement au même endroit, les pieds au
+     centre »).
+
+     On mesure donc l'image affichée, une fois, dans le navigateur : le bas
+     du dessin (ses semelles) et **le milieu de la masse du bas du corps** —
+     le tiers bas du dessin, pondéré par l'opacité. Pas l'emprise des pixels
+     les plus bas : une batte, une canne, un drapeau posés au sol touchent le
+     sol aussi bien que les chaussures, et l'emprise partait de leur côté. La
+     masse, elle, est faite des jambes et de la cape ; un manche fin y pèse
+     peu. Mesurée sur une copie réduite (600 px de haut au plus), c'est
+     l'affaire de quelques millisecondes, et une seule fois par image.
+
+     Rend `null` quand l'image ne se lit pas (autre origine, pas encore
+     décodée, aucun pixel opaque) : la page garde alors la mesure de l'âge. */
+  const mesures = new Map();
+
+  /**
+   * @param {HTMLImageElement} img une image décodée
+   * @returns {{sous:number, decal:number, haut:number} | null} en hauteurs
+   *   d'image : la marge sous les semelles, l'écart entre le milieu des jambes
+   *   et celui de l'image (négatif à gauche), la hauteur du dessin.
+   */
+  function pieds(img) {
+    const src = img?.currentSrc || img?.src || '';
+    if (!src) return null;
+    if (mesures.has(src)) return mesures.get(src);
+    let m = null;
+    try {
+      const W = img.naturalWidth; const H = img.naturalHeight;
+      if (W > 0 && H > 0) {
+        const k = Math.min(1, 600 / H);
+        const w = Math.max(1, Math.round(W * k)); const h = Math.max(1, Math.round(H * k));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const g = c.getContext('2d', { willReadFrequently: true });
+        g.drawImage(img, 0, 0, w, h);
+        const d = g.getImageData(0, 0, w, h).data;
+        /* Une ligne compte quand deux pixels au moins y sont opaques : un
+           point isolé d'aura ne fait pas un sol. */
+        const pleine = (y) => {
+          let n = 0;
+          for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 128 && ++n >= 2) return true;
+          return false;
+        };
+        let y0 = 0; while (y0 < h && !pleine(y0)) y0++;
+        let y1 = h - 1; while (y1 > y0 && !pleine(y1)) y1--;
+        if (y0 < h) {
+          const haut = Math.round(y1 - (y1 - y0) * 0.3);
+          let masse = 0; let somme = 0;
+          for (let y = haut; y <= y1; y++) {
+            for (let x = 0; x < w; x++) {
+              const a = d[(y * w + x) * 4 + 3];
+              masse += a; somme += a * (x + 0.5);
+            }
+          }
+          if (masse > 0) {
+            m = { sous: (h - 1 - y1) / h, decal: (somme / masse - w / 2) / h,
+              haut: (y1 - y0 + 1) / h };
+          }
+        }
+      }
+    } catch { m = null; }               // image d'une autre origine : illisible
+    mesures.set(src, m);
+    return m;
+  }
+
   window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, REPLI, REPLI_ALPHA, secours,
-    charger, pret, resoudre, portrait, paupieres, precharger, possedes, taille };
+    charger, pret, resoudre, portrait, paupieres, precharger, possedes, taille, pieds };
 })();

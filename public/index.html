@@ -643,8 +643,8 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    respire — la liste de la direction, mot pour mot. Le halo qui pulsait,
    l'ombre qui suivait le flottement et le point du direct en faisaient
    cinq ; la respiration, qui tournait à part du flottement, en faisait
-   encore quatre les soirs de match. Elle est entrée dans le flottement :
-   une seule animation, sur la pile (voir `.pile`). */
+   encore quatre les soirs de match. Depuis le 4 novembre 2026, le
+   personnage ne flotte plus du tout (voir `.pile`) : il en reste deux. */
 .halo{position:absolute;left:50%;top:47%;width:min(112%,460px);aspect-ratio:1;
   transform:translate(-50%,-50%);pointer-events:none;
   background:radial-gradient(circle,rgba(245,195,59,.28) 0%,rgba(224,64,44,.14) 32%,
@@ -702,11 +702,10 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    et un calque positionné passe devant ce qui ne l'est pas.
 
    Ce calque ne tourne plus en boucle : il porte l'arrivée et le saut, et
-   rien d'autre. Le flottement est passé sur la pile, dans la respiration
-   (voir `.pile`). */
+   rien d'autre. Il n'y a plus de flottement (voir `.pile`). */
 .flotte{position:relative;z-index:2}
 /* La bascule vit sur son propre calque : elle n'entre pas en conflit avec le
-   saut ni avec le flottement de la pile. */
+   saut. */
 .bascule{transform-origin:50% 100%}
 .scene.change .bascule{animation:bascule .42s cubic-bezier(.33,1,.68,1)}
 /* La taille du personnage. Il tient le centre de l'écran, donc il a le droit
@@ -718,17 +717,13 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    tête coupée se lit comme une image cassée, jamais comme un cadrage serré.
    Avec cette borne, l'écran trop court le rétrécit au lieu de le rogner.
 
-   **Il flotte et il respire d'une seule animation** (`souffle`). Les deux
-   avaient la même durée et la même courbe, l'œil n'y voyait qu'un
-   mouvement ; ils tournaient pourtant à part, le flottement sur `.flotte`,
-   et cela faisait une animation infinie de trop au budget de l'écran. Les
-   réunir les tient aussi en phase : l'inclinaison de la respiration
-   (un demi-degré, qui abaisse un coin des pieds) ne joue plus que pendant
-   que le flottement les soulève — un saut relançait le flottement depuis
-   zéro et les déphasait. */
+   **Il ne flotte plus : il est posé au sol** (Gaël, 4 novembre 2026). Le
+   flottement et la respiration (`souffle`, neuf pixels de haut en bas) sont
+   retirés ; au repos, il ne fait que cligner des yeux. Les gestes restent :
+   l'arrivée, le coucou, le petit saut quand on le touche, et le rebond d'un
+   changement d'expression. */
 .pile{position:relative;height:100%;aspect-ratio:448/900;
-  transform-origin:50% 100%;
-  animation:souffle 3.6s ease-in-out infinite;will-change:transform}
+  transform-origin:50% 100%}
 /* Deux calques superposés : on croise les opacités, le personnage n'est jamais
    absent de l'écran et rien ne clignote. */
 .pose{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;
@@ -1042,11 +1037,6 @@ html[data-calme~="animations"] .cestlui{animation:none}
   22%{transform:translateY(0) scale(1.03,.96)}
   58%{transform:translateY(-7px) scale(.98,1.03)}
   100%{transform:translateY(0) scale(1,1)}}
-/* Le flottement (neuf pixels) et la respiration, d'une seule animation :
-   voir `.pile`. La translation vient en tête de la liste, donc en dernier :
-   la pile respire depuis ses pieds, puis le tout monte. */
-@keyframes souffle{0%,100%{transform:translateY(0) scale(1,1) rotate(0deg)}
-  50%{transform:translateY(-9px) scale(1.012,.988) rotate(.5deg)}}
 /* Le saut, **étiré depuis les pieds** (`transform-origin` du calque) : les
    pieds décollent de vingt-six pixels, et l'atterrissage s'écrase au sol au
    lieu de s'écraser en l'air. L'étirement passe de 8 % à 4 %, l'écrasement
@@ -3676,6 +3666,17 @@ function montrer() {
    vocabulaire de `fanzzy-etats.js`, et l'accueil n'en invente pas un second. */
 const SUPPORTER = { neutre: 'idle', pousse: 'push', but: 'goal', encaisse: 'sad' };
 
+/* **Il ne montre que les expressions que le joueur a gagnées** (Gaël,
+   4 novembre 2026). Les expressions sont des cartes, tirées en booster ; un
+   dessin qui existe ne suffit pas. Sans table posée, `fanzzy-etats.js` ne
+   filtre rien — c'est son choix pour les pages qui ne savent pas à qui elles
+   parlent —, et l'accueil montrait au troisième toucher une joie, au sixième
+   une colère, que le joueur n'avait jamais tirées. Une table vide d'abord :
+   le repos seul, jusqu'à ce que le portefeuille dise ce qu'il a (`etats` de
+   `/api/fanzzy/state`, posé plus bas). Le repos, lui, ne se gagne pas : c'est
+   la carte elle-même. */
+window.TBF_ETATS?.possedes?.({});
+
 const calques = [$('poseA'), $('poseB')];
 let devant = 0;
 let poseActuelle = null;
@@ -3773,8 +3774,8 @@ const ANIM = { arrive: 'arrivee', coucou: 'coucou', saute: 'saut', change: 'basc
  * accrochée y éteindrait tous les sauts suivants. C'était pire tant que le
  * flottement tournait sur ce même calque : le petit saut le figeait,
  * définitivement, et personne ne l'avait vu parce que rien ne s'arrête
- * visiblement — le mouvement manque, il ne casse pas. Le flottement et la
- * respiration vivent désormais ensemble sur la pile, qu'aucun geste ne prend.
+ * visiblement — le mouvement manque, il ne casse pas. Le flottement a
+ * depuis été retiré (4 novembre 2026) : il est posé au sol.
  */
 function rejouer(classe) {
   const s = $('scene');
@@ -3834,6 +3835,8 @@ async function pose(nom, tenir, force) {
     catch { return; }                        // cet état n'est pas dessiné
   }
 
+  /* Ses pieds à leur place **avant** qu'il passe devant : voir `caler`. */
+  caler(derriere);
   poseActuelle = nom;
   derriere.classList.add('on');
   calques[devant].classList.remove('on');
@@ -3845,6 +3848,42 @@ async function pose(nom, tenir, force) {
   rejouer('change');
 
   rendreLaMain(tenir);
+}
+
+/**
+ * **Les pieds au même endroit, quelle que soit l'image** (Gaël, 4 novembre
+ * 2026 : « poser tous les Fanzzy exactement au même endroit, les pieds au
+ * centre »).
+ *
+ * La pile pose chaque âge d'après la mesure de son repos (`taille`, dans
+ * `source`). Mais une colère, une joie sont des dessins à eux, et leurs pieds
+ * ne tombent pas où tombent ceux du repos : le Capitaine du Comté pointait du
+ * doigt quatre-vingts pixels plus à gauche. On mesure donc l'image qui va
+ * passer devant (`TBF_ETATS.pieds`) et on lui donne, à elle seule, la marge
+ * et le décalage qui posent ses semelles sur l'ombre (`.sol`, à 9 % du bas de
+ * la scène) et le milieu de ses jambes au milieu de l'écran. La taille, elle,
+ * reste celle de l'âge : les images d'un âge partagent un cadre, et c'est ce
+ * qui garde le même personnage à la même taille d'une expression à l'autre.
+ *
+ * Le supporter générique et le plein-pied d'une carte, qui n'ont pas de
+ * mesure d'âge, sont posés de la même façon, à la taille de leur boîte —
+ * réduits seulement si leur dessin passerait sinon au-dessus de la scène.
+ */
+function caler(img) {
+  const m = window.TBF_ETATS?.pieds?.(img);
+  if (!m || !(img.naturalHeight > 0)) {
+    for (const v of ['--taille', '--sous', '--decale']) img.style.removeProperty(v);
+    return;
+  }
+  const t = equipe ? window.TBF_ETATS?.taille?.(equipe.id, equipe.evo) : null;
+  let rh = t ? parseFloat(t.hauteur) / 100 : ({ 1: 0.8, 2: 0.9 }[equipe?.evo] ?? 1);
+  /* `contain` dans une boîte deux fois large comme la pile (448 × 900) : une
+     image plus large que ça se cale sur la largeur, et rend moins haut. */
+  rh = Math.min(rh, ((2 * 448) / 900) / (img.naturalWidth / img.naturalHeight));
+  if (!t) rh = Math.min(rh, 0.91 / Math.max(m.haut, 0.01));
+  img.style.setProperty('--taille', `${(rh * 100).toFixed(2)}%`);
+  img.style.setProperty('--sous', `calc(9% - ${(m.sous * rh * 100).toFixed(2)}%)`);
+  img.style.setProperty('--decale', `${(-m.decal * rh * 100).toFixed(2)}cqh`);
 }
 
 /**
@@ -3874,8 +3913,7 @@ function rendreLaMain(tenir) {
    image-là et tomberaient à côté des yeux de toute autre : une joie, une
    poussée, le supporter générique ne clignent pas, ils n'ont rien à poser.
    Et **pas sous le calme** : celui qui a demandé un écran immobile, ou dont
-   l'appareil le demande, garde un personnage qui ne bouge pas, comme sa
-   respiration (`souffle`) s'arrête pour lui. */
+   l'appareil le demande, garde un personnage qui ne bouge pas. */
 const paupieres = $('paupieres');
 /* Une seule minuterie à la fois : le battement en cours, ou le prochain.
    `armement` écarte un décodage dépassé — une autre pose a pu passer devant
@@ -3899,6 +3937,12 @@ const sansMouvement = () => matchMedia('(prefers-reduced-motion: reduce)').match
  */
 async function cligner() {
   const repos = calques[devant].getAttribute('src');
+  /* Les paupières suivent le repos à la lettre : même taille, même marge,
+     même décalage (voir `caler`). */
+  for (const v of ['--taille', '--sous', '--decale']) {
+    const val = calques[devant].style.getPropertyValue(v);
+    if (val) paupieres.style.setProperty(v, val); else paupieres.style.removeProperty(v);
+  }
   /* **Le même visage ne remet pas le compte à zéro.** Un moment sans dessin
      à lui — le salut d'arrivée, l'attente — pose le repos sur le repos :
      rien ne change à l'écran. Réarmer à chaque échange repoussait le premier
@@ -5831,6 +5875,8 @@ function feterNiveau(niveau) {
     void arriverAuHub(lireQuotidien(true));
     void lireLesDemandes();
     const c = await lire('/api/fanzzy/state', { credentials: 'same-origin' }).catch(() => null);
+    // Un booster ouvert entre-temps a pu lui donner une expression.
+    if (c?.etats && typeof c.etats === 'object') window.TBF_ETATS?.possedes?.(c.etats);
     const avant = H.nouveaux;
     poserNouveautes(user.id, c);
     const st = bourseLisible(c?.wallet) ? c.wallet
@@ -5893,6 +5939,8 @@ function feterNiveau(niveau) {
   // pour les deux, puisque `/api/fanzzy/state` porte déjà les deux réponses.
   try {
     const [dex, coll] = await Promise.all([P.dex, P.coll]);
+    // Les expressions gagnées, avant de choisir quoi montrer (voir `possedes` plus haut).
+    if (coll?.etats && typeof coll.etats === 'object') window.TBF_ETATS?.possedes?.(coll.etats);
     // `aCollectionner` et non tout le catalogue : il ne compte que les séries
     // ouvertes. Afficher « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
     // peut posséder est le pire message qu'on puisse lui envoyer. Le maximum

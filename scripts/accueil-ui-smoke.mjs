@@ -478,8 +478,7 @@ const scene = (page) => page.evaluate(() => {
     calques: calques.length,
     allumes: calques.filter((c) => c.classList.contains('on')).length,
     src: visible?.getAttribute('src') ?? null,
-    // La respiration vit sur la pile, pas sur l'image : c'est elle qui porte
-    // l'échelle, et animer les deux calques les désynchroniserait.
+    // Il est posé au sol (Gaël, 4 novembre 2026) : la pile ne tourne plus.
     souffle: getComputedStyle(pile).animationName,
     fondu: s?.transitionProperty ?? '',
     // Deux dessins de tailles différentes trahiraient un recadrage individuel.
@@ -498,7 +497,8 @@ let v = await scene(page);
 check('la scène porte deux calques pour le fondu', v.calques === 2);
 check('un seul est allumé', v.allumes === 1);
 check('au repos, c’est la pose d’attente', /\/img\/supporter\/idle\./.test(v.src ?? ''));
-check('le personnage respire', /souffle/.test(v.souffle ?? ''));
+check('le personnage ne flotte plus', (v.souffle ?? 'none') === 'none'
+  || (console.log('        la pile tourne encore :', v.souffle), false));
 check('et le changement de pose se fait en fondu', /opacity/.test(v.fondu));
 
 // Le débordement horizontal est le défaut classique d'un personnage en grand.
@@ -573,7 +573,11 @@ check('la page ne déborde pas en largeur', await page.evaluate(() =>
      `@keyframes`, **lue dans les feuilles de la page** et non recopiée, doit
      déplacer le personnage en hauteur (un `translateY` non nul) et tourner
      sans fin. Une respiration qui aurait perdu son flottement en route — ou
-     une règle introuvable — laisse ce contrôle rouge. */
+     une règle introuvable — laisse ce contrôle rouge.
+
+     **Depuis le 4 novembre 2026, il ne flotte plus du tout** (Gaël : « on le
+     fixe au sol ») : la pile ne porte plus aucune boucle, et le contrôle le
+     vérifie. */
   await page.evaluate(() => TBF.pose('but'));
   await page.evaluate(() => document.getElementById('scene').dispatchEvent(
     new PointerEvent('pointerdown', { bubbles: true })));
@@ -605,14 +609,10 @@ check('la page ne déborde pas en largeur', await page.evaluate(() =>
       classes: [...document.getElementById('scene').classList],
     };
   });
-  check('après un saut et un coucou, il respire encore', /souffle/.test(boucles.pile));
+  check('après un saut et un coucou, il reste posé', boucles.pile === 'none'
+    || (console.log('        la pile tourne :', boucles.pile), false));
   check('le saut a rendu son calque', boucles.flotte === 'none'
     || (console.log('        .flotte porte encore', boucles.flotte), false));
-  const monte = boucles.pas.some((t) => [...(t ?? '').matchAll(/translateY\(\s*([-\d.]+)/g)]
-    .some((m) => Number.parseFloat(m[1]) !== 0));
-  check('et il flotte encore', monte && /infinite/.test(boucles.tours)
-    || (console.log('        boucle', boucles.pile, boucles.tours, '· pas :',
-      boucles.pas.join(' | ') || 'aucune règle lue'), false));
   check('aucune classe de geste ne reste accrochée',
     !boucles.classes.some((c) => ['arrive', 'coucou', 'saute', 'change'].includes(c))
     || (console.log('        il reste', boucles.classes.join(' ')), false));
