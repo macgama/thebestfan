@@ -1,6 +1,6 @@
 {
   "id": "HC35",
-  "rev": 17,
+  "rev": 21,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "74d94b0d967d"
+          "sha": "74d94b0d967d",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -90,7 +91,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f9edc74bf437"
+          "sha": "f9edc74bf437",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -102,7 +104,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b0e4c53e8332"
+          "sha": "b0e4c53e8332",
+          "cligne": true
         }
       }
     },
@@ -154,7 +157,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fe8d23931b26"
+          "sha": "fe8d23931b26",
+          "cligne": true
         }
       }
     }

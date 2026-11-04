@@ -1,6 +1,6 @@
 {
   "id": "HC28",
-  "rev": 12,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "3df8b00d12ec"
+          "sha": "3df8b00d12ec",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -38,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "1c9eb3ca4317"
+          "sha": "1c9eb3ca4317",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -118,7 +120,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "18a66c79d3ff"
+          "sha": "18a66c79d3ff",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -130,7 +133,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "90d58768cb59"
+          "sha": "90d58768cb59",
+          "cligne": true
         }
       }
     }

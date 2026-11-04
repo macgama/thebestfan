@@ -1,6 +1,6 @@
 {
   "id": "HC39",
-  "rev": 8,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "35db6c598d82"
+          "sha": "35db6c598d82",
+          "cligne": true
         }
       }
     },
@@ -102,7 +103,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ba6b18cd6af3"
+          "sha": "ba6b18cd6af3",
+          "cligne": true
         }
       }
     },
@@ -154,7 +156,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "652398222d23"
+          "sha": "652398222d23",
+          "cligne": true
         }
       }
     }

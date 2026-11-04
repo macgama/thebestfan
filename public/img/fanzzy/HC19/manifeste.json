@@ -1,6 +1,6 @@
 {
   "id": "HC19",
-  "rev": 10,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -51,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "189ba24963b4"
+          "sha": "189ba24963b4",
+          "cligne": true
         }
       }
     },
@@ -91,7 +92,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "05278383733c"
+          "sha": "05278383733c",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -144,7 +146,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ac9a60ea629e"
+          "sha": "ac9a60ea629e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -156,7 +159,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "3894f0c30a15"
+          "sha": "3894f0c30a15",
+          "cligne": true
         }
       }
     }
