@@ -1235,6 +1235,49 @@ function marquer(html) {
     (m) => `${m}\n<meta name="tbf-construction" content="${CONSTRUCTION}">`);
 }
 
+/* **L'aperçu d'un lien partagé** (4 novembre 2026). Gaël partageait le site
+   sur WhatsApp : l'aperçu ne montrait que le titre, sans image ni phrase.
+   WhatsApp, Facebook, X, Discord ne lancent pas le JavaScript : ils lisent
+   les balises Open Graph du `<head>`. On les pose ici, une fois, sur toutes
+   les pages que sert `page()`, plutôt que dans trente fichiers : l'image et
+   l'adresse ne peuvent ainsi diverger d'une page à l'autre. Le titre est
+   celui de la page ; l'image (1200 × 630, le format que ces applications
+   recadrent sans couper) et l'adresse sont toujours celles du site. Une page
+   qui pose déjà ses balises garde les siennes. */
+const APERCU_DESCRIPTION = 'Le jeu des supporters : choisis ton club, '
+  + 'collectionne les Fanzzy et fais chanter ta tribune à chaque match.';
+const echapperAttr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+  .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function apercu(html, origine = ORIGIN) {
+  if (/property=["']og:/i.test(html)) return html;
+  const titre = /<title>([^<]*)<\/title>/i.exec(html)?.[1]?.trim()
+    || 'thebestfan — le jeu des tribunes';
+  const decrite = /<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i.exec(html)?.[1];
+  const description = decrite || APERCU_DESCRIPTION;
+  const image = `${origine}/img/partage.jpg`;
+  const balises = [
+    !decrite && `<meta name="description" content="${echapperAttr(description)}">`,
+    '<meta property="og:type" content="website">',
+    '<meta property="og:site_name" content="thebestfan">',
+    `<meta property="og:url" content="${echapperAttr(`${origine}/`)}">`,
+    `<meta property="og:title" content="${echapperAttr(titre)}">`,
+    `<meta property="og:description" content="${echapperAttr(description)}">`,
+    `<meta property="og:image" content="${echapperAttr(image)}">`,
+    `<meta property="og:image:secure_url" content="${echapperAttr(image)}">`,
+    '<meta property="og:image:type" content="image/jpeg">',
+    '<meta property="og:image:width" content="1200">',
+    '<meta property="og:image:height" content="630">',
+    '<meta property="og:image:alt" content="Trois supporters chantent dans la tribune, sous les projecteurs">',
+    '<meta property="og:locale" content="fr_FR">',
+    '<meta name="twitter:card" content="summary_large_image">',
+    `<meta name="twitter:title" content="${echapperAttr(titre)}">`,
+    `<meta name="twitter:description" content="${echapperAttr(description)}">`,
+    `<meta name="twitter:image" content="${echapperAttr(image)}">`,
+  ].filter(Boolean).join('\n');
+  return html.replace(/<\/title>/i, (m) => `${m}\n${balises}`);
+}
+
 function page(res, fichier) {
   const chemin = path.join(__dirname, 'public', fichier);
   try {
@@ -1248,8 +1291,8 @@ function page(res, fichier) {
        Il est parti avec la règle qui le lisait — voir `sw.js`, qui ne se fie
        plus qu'au code de statut. On ne rajoute pas ici un en-tête que personne
        ne lit : c'est ce genre de reste qui survit à sa raison d'être. */
-    res.type('html').send(marquer(estampiller(readFileSync(chemin, 'utf8'),
-      path.join(__dirname, 'public'))));
+    res.type('html').send(marquer(apercu(estampiller(readFileSync(chemin, 'utf8'),
+      path.join(__dirname, 'public')))));
   } catch {
     // Le fichier manque : on laisse Express rendre son 404 plutôt que
     // d'envoyer une page à moitié écrite.

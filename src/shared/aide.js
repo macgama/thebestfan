@@ -603,6 +603,10 @@ const RUBRIQUES = [
           + 'la mi-temps et au coup de sifflet final. C’est toujours la même notification, qui '
           + 'se met à jour au lieu de s’empiler. Un match commencé avant la nuit se suit '
           + 'jusqu’au bout.'],
+      ['Comment inviter un ami à jouer ?',
+        'Dans le menu, « Partager le jeu » : choisis WhatsApp, un SMS ou un mail, et '
+          + 'ton ami reçoit le lien du jeu avec son image. Sans partage sur ton appareil, '
+          + 'le lien est copié : colle-le dans ton message.'],
       ['J’ai trouvé un bug. À qui le dire ?',
         'Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le '
           + 'message part directement à l’équipe du jeu.'],

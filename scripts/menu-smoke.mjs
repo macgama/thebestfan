@@ -397,6 +397,42 @@ check('et elle porte un numéro', /\d/.test(ETIQUETTE));
 check('aucune erreur de script sur aucune des cinq ouvertures', bruit.length === 0);
 if (bruit.length) console.log('   ', bruit.slice(0, 4));
 
+/* ------------------------------------------------- partager le jeu
+
+   (4 novembre 2026) Le menu de Chrome partageait un lien court
+   `share.google/…`. L'entrée « Partager le jeu » envoie toujours l'adresse
+   du site : par la feuille de partage du téléphone quand il en a une, sinon
+   dans une boîte qui la montre (et la copie si le navigateur le permet). */
+{
+  const { page } = await menuDe('/carnet');
+  const partage = await page.evaluate(async () => {
+    const a = document.querySelector('.tbf-tiroir .partager');
+    if (!a) return null;
+    let recu = null;
+    navigator.share = async (d) => { recu = d; };
+    navigator.canShare = () => true;
+    a.click();
+    await new Promise((r) => setTimeout(r, 200));
+    const parFeuille = recu;
+    delete navigator.share;
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+    a.click();
+    await new Promise((r) => setTimeout(r, 600));
+    const boite = [...document.querySelectorAll('dialog, [role="dialog"], [role="alertdialog"]')]
+      .map((d) => d.textContent).join(' ');
+    return { libelle: a.textContent.trim(), parFeuille, boite };
+  });
+  check('« Partager le jeu » est dans le menu', partage?.libelle === 'Partager le jeu'
+    || (console.log('    vu :', JSON.stringify(partage)), false));
+  check('la feuille de partage reçoit l’adresse de l’accueil, pas celle de la page',
+    partage?.parFeuille?.url === `${base}/` && /thebestfan/.test(partage.parFeuille.text ?? '')
+    || (console.log('    reçu :', JSON.stringify(partage?.parFeuille)), false));
+  check('sans feuille de partage, une boîte montre le lien',
+    (partage?.boite ?? '').includes(`${base}/`)
+    || (console.log('    boîte :', partage?.boite), false));
+  await page.close();
+}
+
 await nav.close();
 await new Promise((r) => http.close(r));
 
