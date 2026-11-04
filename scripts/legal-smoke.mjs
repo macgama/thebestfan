@@ -119,6 +119,34 @@ try {
   const accueil = m ? await (await fetch(`${base}/`)).text() : '';
   check('la vitrine y mène', accueil.includes('href="/mentions-legales"') && accueil.includes('href="/conditions"'));
   check('« PRENDRE MA PLACE » ouvre l’inscription', accueil.includes('href="/compte?inscription"'));
+  /* L'aperçu d'un lien partagé (4 novembre 2026) : WhatsApp et les réseaux
+     lisent ces balises sans lancer le JavaScript. */
+  const og = (p) => new RegExp(`<meta property="og:${p}" content="([^"]*)"`).exec(accueil)?.[1];
+  check('l’accueil a son aperçu de partage : titre, description, adresse',
+    og('title')?.includes('thebestfan') && (og('description') ?? '').length > 30
+    && /^https?:\/\/[^/]+\/$/.test(og('url') ?? ''));
+  check('avec une image en adresse complète, au format 1200 × 630',
+    /^https?:\/\/[^/]+\/img\/partage\.jpg$/.test(og('image') ?? '')
+    && og('image:width') === '1200' && og('image:height') === '630'
+    && accueil.includes('name="twitter:card" content="summary_large_image"'));
+  const img = await fetch(`${base}/img/partage.jpg`);
+  const octets = img.ok ? new Uint8Array(await img.arrayBuffer()) : new Uint8Array();
+  /* Les dimensions lues dans l'en-tête JPEG (marqueur SOF0/SOF2). */
+  let dims = null;
+  for (let i = 2; i + 9 < octets.length;) {
+    const m = octets[i + 1], lg = (octets[i + 2] << 8) | octets[i + 3];
+    if (m === 0xc0 || m === 0xc2) {
+      dims = [(octets[i + 7] << 8) | octets[i + 8], (octets[i + 5] << 8) | octets[i + 6]];
+      break;
+    }
+    i += 2 + lg;
+  }
+  check('l’image est servie, en 1200 × 630, sous 300 Ko (la limite de WhatsApp)',
+    img.ok && dims?.[0] === 1200 && dims?.[1] === 630 && octets.length < 300 * 1024
+    || (console.log('    vu :', img.status, dims, octets.length), false));
+  const cond = await (await fetch(`${base}/conditions`)).text();
+  check('une page qui a sa description la garde dans son aperçu',
+    cond.includes('<meta property="og:description" content="Les conditions d’utilisation'));
 } finally {
   proc.kill();
 }
