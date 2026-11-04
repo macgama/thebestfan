@@ -454,7 +454,7 @@ export const DEX_NEUVES = [
     histoire: 'Un cahier à spirale, quatre lignes, et le nom de celle qui l’a écrite. '
       + 'Trois générations l’ont suivi sans jamais y changer une virgule.',
     mods: { holdBonus: 1.44, refundBonus: 1.24, mashBonus: 0.84 },
-    cri: { label: 'ON N’Y TOUCHE PAS', gest: 'jauge', power: 80 } },
+    cri: { label: 'ON N’Y TOUCHE PAS', gest: 'leurres', power: 80 } },
 
   { id: 'GC13', nom: 'Le Barbecue du Parking Nord', type: 'pyro', set: 'GC', stage: 1, rar: 'legendaire',
     histoire: 'Allumé à onze heures pour un match à vingt et une. La fumée se voit de '
@@ -466,7 +466,7 @@ export const DEX_NEUVES = [
     histoire: 'Payée par celui qui a le moins de raisons de payer, un soir de défaite. '
       + 'C’est de ces soirs-là qu’on se souvient, pas des victoires.',
     mods: { tempoWindow: 1.3, refundBonus: 1.36, perfectBonus: 0.86 },
-    cri: { label: 'C’EST MA TOURNÉE', gest: 'contretemps', power: 82 } },
+    cri: { label: 'C’EST MA TOURNÉE', gest: 'justesse', power: 82 } },
 
   /* ========================= LES GALÈRES DE DÉPLACEMENT (GD)
 
@@ -538,19 +538,19 @@ export const DEX_NEUVES = [
     histoire: 'La glacière qu’on ouvre au premier péage et qui nourrit tout le car. Elle '
       + 'penche d’un côté, le couvercle ferme mal, et il reste toujours un sandwich.',
     mods: { holdBonus: 1.16, tempoWindow: 0.92 },
-    cri: { label: 'QUI A FAIM ?', gest: 'tenue', power: 45 } },
+    cri: { label: 'QUI A FAIM ?', gest: 'leurres', power: 45 } },
 
   { id: 'GD18', nom: 'Le Sac de Couchage', type: 'fide', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Le sac de couchage qu’on déroule dans l’allée du car à trois heures du matin. '
       + 'Il ne ferme plus, il garde chaud quand même.',
     mods: { holdBonus: 1.16, mashBonus: 0.92 },
-    cri: { label: 'CHUT, ILS DORMENT', gest: 'retenue', power: 45 } },
+    cri: { label: 'CHUT, ILS DORMENT', gest: 'leurres', power: 45 } },
 
   { id: 'GD19', nom: 'Le Billet Perdu', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Elle perd son billet dans le car, le cherche une heure et le retrouve dans sa '
       + 'chaussette. Elle n’a jamais compris comment.',
     mods: { breathBonus: 1.16, parryResist: 0.92 },
-    cri: { label: 'JE L’AI !', gest: 'memoire', power: 45 } },
+    cri: { label: 'JE L’AI !', gest: 'cortege', power: 45 } },
 
   { id: 'GD20', nom: 'Le Chauffeur du Car', type: 'voix', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Le chauffeur du car qui a fait mille déplacements sans jamais voir un match. '
@@ -580,7 +580,7 @@ export const DEX_NEUVES = [
     histoire: 'La carte routière qu’on n’arrive jamais à replier. Elle prend tout le '
       + 'pare-brise et personne ne sait la lire.',
     mods: { breathBonus: 1.17, tempoWindow: 0.92 },
-    cri: { label: 'ON EST OÙ ?', gest: 'memoire', power: 45 } },
+    cri: { label: 'ON EST OÙ ?', gest: 'cortege', power: 45 } },
 
   { id: 'GD25', nom: 'Le Premier Déplacement', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Le gamin de onze ans qui part pour son premier déplacement avec un sac trop '
@@ -592,13 +592,13 @@ export const DEX_NEUVES = [
     histoire: 'Le ferry de nuit où le virage dort sur le pont. Les chants reviennent avec les '
       + 'vagues.',
     mods: { tempoWindow: 1.16, parryResist: 0.92 },
-    cri: { label: 'ÇA TANGUE', gest: 'echo', power: 45 } },
+    cri: { label: 'ÇA TANGUE', gest: 'justesse', power: 45 } },
 
   { id: 'GD27', nom: 'La Sandwicherie de l’Aire', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'La vendeuse de l’aire d’autoroute qui sert quarante sandwichs à quatre heures '
       + 'du matin. Elle les lance par-dessus le comptoir sans en rater un.',
     mods: { perfectBonus: 1.17, mashBonus: 0.92 },
-    cri: { label: 'QUARANTE SANDWICHS', gest: 'rouleaux', power: 45 } },
+    cri: { label: 'QUARANTE SANDWICHS', gest: 'meche', power: 45 } },
 
   { id: 'GD28', nom: 'Le Ticket de Métro', type: 'voix', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Le ticket de métro usé qu’on garde pour le retour. Il est passé dans toutes '
@@ -610,7 +610,7 @@ export const DEX_NEUVES = [
     histoire: 'Le coussin de nuque gonflable qui ne tient jamais. On le regonfle à chaque '
       + 'péage.',
     mods: { holdBonus: 1.16, perfectBonus: 0.92 },
-    cri: { label: 'IL SE DÉGONFLE', gest: 'jauge', power: 45 } },
+    cri: { label: 'IL SE DÉGONFLE', gest: 'leurres', power: 45 } },
 
   { id: 'GD30', nom: 'La Stoppeuse', type: 'depl', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Elle rejoint le stade en stop avec un carton à bout de bras. Elle arrive '
@@ -640,7 +640,7 @@ export const DEX_NEUVES = [
     histoire: 'Il va au match à vélo, deux cents kilomètres. Il arrive à la mi-temps et il '
       + 'chante plus fort que tout le monde.',
     mods: { mashBonus: 1.16, breathBonus: 0.92 },
-    cri: { label: 'DEUX CENTS BORNES', gest: 'crescendo', power: 45 } },
+    cri: { label: 'DEUX CENTS BORNES', gest: 'accents', power: 45 } },
 
   { id: 'GD35', nom: 'La Photographe du Car', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Elle photographie chaque déplacement depuis la fenêtre du car, avec un '
@@ -664,7 +664,7 @@ export const DEX_NEUVES = [
     histoire: 'La contrôleuse du train spécial qui vérifie trois cents billets en chantant. '
       + 'Tout le wagon reprend après elle.',
     mods: { tempoWindow: 1.16, refundBonus: 0.92 },
-    cri: { label: 'BILLETS, S’IL VOUS PLAÎT', gest: 'capo', power: 45 } },
+    cri: { label: 'BILLETS, S’IL VOUS PLAÎT', gest: 'justesse', power: 45 } },
 
   { id: 'GD39', nom: 'La Tente du Camping', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'La tente montée de travers au camping municipal la veille du match. Elle '
@@ -682,7 +682,7 @@ export const DEX_NEUVES = [
     histoire: 'La clé de la chambre 12 de l’hôtel bon marché où dorment six supporters. Elle '
       + 'se perd tous les soirs.',
     mods: { parryBonus: 1.16, breathBonus: 0.92 },
-    cri: { label: 'CHAMBRE 12', gest: 'tri', power: 45 } },
+    cri: { label: 'CHAMBRE 12', gest: 'puzzle', power: 45 } },
 
   { id: 'GD42', nom: 'La Pèlerine des Stades', type: 'tifo', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Elle veut voir un match dans tous les stades d’Europe, et elle coche son '
@@ -730,7 +730,7 @@ export const DEX_NEUVES = [
     histoire: 'La lampe frontale qu’on sort pour trouver la sortie du parking de nuit. Elle '
       + 'vise toujours à côté.',
     mods: { perfectBonus: 1.18, costPenalty: 1.06 },
-    cri: { label: 'LA SORTIE ?', gest: 'visee', power: 46 } },
+    cri: { label: 'LA SORTIE ?', gest: 'meche', power: 46 } },
 
   { id: 'GD50', nom: 'La Carte Postale', type: 'pyro', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'La carte postale qu’on envoie à la grand-mère de chaque déplacement. Elle '
@@ -742,7 +742,7 @@ export const DEX_NEUVES = [
     histoire: 'La couchette du train de nuit, trop courte, où l’on dort mal. On refait le '
       + 'match jusqu’à l’aube.',
     mods: { perfectBonus: 1.17, breathBonus: 0.92 },
-    cri: { label: 'ON REFAIT LE MATCH', gest: 'compte', power: 45 } },
+    cri: { label: 'ON REFAIT LE MATCH', gest: 'meche', power: 45 } },
 
   { id: 'GD52', nom: 'Le Triangle de Signalisation', type: 'perc', set: 'GD', stage: 1, rar: 'commune',
     histoire: 'Le triangle rouge posé derrière le minibus en panne. Il a vu passer tous les '
@@ -815,7 +815,7 @@ export const DEX_NEUVES = [
     histoire: 'Un ballon orange, des lignes bleues, et douze mille personnes qui n’ont '
       + 'jamais eu aussi froid. Personne n’est parti.',
     mods: { parryBonus: 1.48, holdBonus: 1.2, tempoWindow: 0.86 },
-    cri: { label: 'ON RESTE', gest: 'mosaique', power: 82 } },
+    cri: { label: 'ON RESTE', gest: 'puzzle', power: 82 } },
 
   { id: 'MT11', nom: 'Le Vent de Face Permanent', type: 'depl', set: 'MT', stage: 1, rar: 'legendaire',
     histoire: 'Il souffle dans le même sens depuis que le stade existe, parce qu’on l’a '
@@ -833,7 +833,7 @@ export const DEX_NEUVES = [
     histoire: 'Trois minutes de nuit à seize heures, et trente mille personnes qui se '
       + 'taisent d’un coup. Le seul silence que ce stade ait connu.',
     mods: { tempoWindow: 1.34, perfectBonus: 1.26, breathBonus: 0.84 },
-    cri: { label: 'PLUS UN BRUIT', gest: 'echo', power: 83 } },
+    cri: { label: 'PLUS UN BRUIT', gest: 'justesse', power: 83 } },
 
 
   /* MT15 à MT50 — les trente-six phénomènes de la refonte du 1er novembre 2026
@@ -903,7 +903,7 @@ export const DEX_NEUVES = [
     histoire: 'Le courant d’air glacé qui siffle dans le couloir d’accès. On l’entend avant '
       + 'd’entrer, on l’entend encore en sortant.',
     mods: { tempoWindow: 1.17, backfire: 1.1 },
-    cri: { label: 'ÇA SIFFLE', gest: 'echo', power: 46 } },
+    cri: { label: 'ÇA SIFFLE', gest: 'justesse', power: 46 } },
 
   { id: 'MT26', nom: 'L’Éclair de Chaleur', type: 'pyro', set: 'MT', stage: 1, rar: 'commune',
     histoire: 'Elle photographie les éclairs muets d’un soir d’août, loin à l’horizon. Elle '
@@ -927,7 +927,7 @@ export const DEX_NEUVES = [
     histoire: 'Le petit tourbillon qui fait danser les gobelets vides dans la tribune. Il ne '
       + 'sait pas s’arrêter, et personne ne le lui demande.',
     mods: { mashBonus: 1.17, backfire: 1.12 },
-    cri: { label: 'ÇA TOURNE', gest: 'crescendo', power: 46 } },
+    cri: { label: 'ÇA TOURNE', gest: 'accents', power: 46 } },
 
   { id: 'MT30', nom: 'La Mouette de Tempête', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
     histoire: 'La mouette poussée dans le stade par le vent du large, qui a volé un sandwich '
@@ -951,7 +951,7 @@ export const DEX_NEUVES = [
     histoire: 'Elle a glissé sur les marches gelées et elle en a fait une figure. Tout le '
       + 'rang a applaudi.',
     mods: { perfectBonus: 1.18, costPenalty: 1.06 },
-    cri: { label: 'OUPS', gest: 'visee', power: 46 } },
+    cri: { label: 'OUPS', gest: 'meche', power: 46 } },
 
   { id: 'MT34', nom: 'La Buée', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
     histoire: 'Ses lunettes s’embuent dès qu’il entre à la buvette. Il ressort, ça '
@@ -999,7 +999,7 @@ export const DEX_NEUVES = [
     histoire: 'Le petit ballon météo lâché par l’école d’en face, qui passe au-dessus du '
       + 'stade pendant le match. Tout le virage compte jusqu’à ce qu’il disparaisse.',
     mods: { perfectBonus: 1.18, backfire: 1.12 },
-    cri: { label: 'LÂCHEZ !', gest: 'compte', power: 46 } },
+    cri: { label: 'LÂCHEZ !', gest: 'meche', power: 46 } },
 
   { id: 'MT42', nom: 'La Brume du Fleuve', type: 'depl', set: 'MT', stage: 1, rar: 'commune',
     histoire: 'Elle vient du port à pied, dans la brume du fleuve, une petite lampe à la '
@@ -1121,7 +1121,7 @@ export const DEX_NEUVES = [
     histoire: 'Il n’avait jamais regardé un match et il a pleuré à la finale. Il n’en '
       + 'reverra pas d’autre, et celui-là il s’en souviendra toujours.',
     mods: { tempoWindow: 1.36, refundBonus: 1.28, holdBonus: 0.82 },
-    cri: { label: 'C’ÉTAIT QUOI CE MATCH', gest: 'echo', power: 81 } },
+    cri: { label: 'C’ÉTAIT QUOI CE MATCH', gest: 'justesse', power: 81 } },
 
   { id: 'HC11', nom: 'La Chaîne Cryptée', type: 'tifo', set: 'HC', stage: 1, rar: 'legendaire',
     histoire: 'Elle a le match, et elle seule. Quatre générations ont appris à '
@@ -1139,13 +1139,13 @@ export const DEX_NEUVES = [
     histoire: 'Du texte, rafraîchi toutes les trente secondes, et rien d’autre. C’est '
       + 'comme ça qu’une génération entière a vécu ses déplacements.',
     mods: { mashBonus: 1.42, perfectBonus: 1.22, breathBonus: 0.86 },
-    cri: { label: 'F5 · F5 · F5', gest: 'salves', power: 82 } },
+    cri: { label: 'F5 · F5 · F5', gest: 'accents', power: 82 } },
 
   { id: 'HC14', nom: 'La Streameuse de Minuit', type: 'depl', set: 'HC', stage: 1, rar: 'legendaire',
     histoire: 'Elle commente seule, pour trois cents personnes, un match que personne '
       + 'd’autre ne diffuse. À deux heures du matin ils sont encore là.',
     mods: { breathBonus: 1.36, refundBonus: 1.28, mashBonus: 0.84 },
-    cri: { label: 'VOUS ÊTES ENCORE LÀ ?', gest: 'bascule', power: 80 } },
+    cri: { label: 'VOUS ÊTES ENCORE LÀ ?', gest: 'cortege', power: 80 } },
 
   /* HC17 à HC51 — les trente-cinq héros du canapé de la refonte (45 personnages
      et 5 légendaires par série, demande de Gaël). Fiches et dessins :
@@ -1160,7 +1160,7 @@ export const DEX_NEUVES = [
     histoire: 'Elle ne rate aucun match depuis 1970 et elle connaît tous les joueurs par leur '
       + 'prénom. Elle les appelle aussi par celui de leur père.',
     mods: { breathBonus: 1.16, mashBonus: 0.9 },
-    cri: { label: 'C’EST LE PETIT DE…', gest: 'memoire', power: 44 } },
+    cri: { label: 'C’EST LE PETIT DE…', gest: 'cortege', power: 44 } },
 
   { id: 'HC19', nom: 'La Télécommande', type: 'tifo', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'Introuvable au coup d’envoi, toujours coincée entre deux coussins. Il lui '
@@ -1191,7 +1191,7 @@ export const DEX_NEUVES = [
     histoire: 'Le plaid à carreaux sous lequel toute la famille regarde le match d’hiver. On '
       + 'se le dispute à la mi-temps, et une frange est déjà partie.',
     mods: { holdBonus: 1.14, tempoInterval: 60 },
-    cri: { label: 'PLACE POUR UN', gest: 'tenue', power: 44 } },
+    cri: { label: 'PLACE POUR UN', gest: 'leurres', power: 44 } },
 
   { id: 'HC24', nom: 'La Coloc Qui Dort', type: 'pyro', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'Elle dort sur le canapé du coup d’envoi au coup de sifflet final, et elle se '
@@ -1233,7 +1233,7 @@ export const DEX_NEUVES = [
     histoire: 'Il écoute le match à la radio en même temps qu’il le regarde à la télé, le son '
       + 'coupé. La radio, elle, ne ment pas.',
     mods: { tempoWindow: 1.14, mashBonus: 0.9 },
-    cri: { label: 'ÉCOUTEZ LA RADIO', gest: 'echo', power: 45 } },
+    cri: { label: 'ÉCOUTEZ LA RADIO', gest: 'justesse', power: 45 } },
 
   { id: 'HC31', nom: 'Le Fauteuil Inclinable', type: 'fide', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'Il se renverse tout seul au moment du penalty, et il grince à chaque but. '
@@ -1257,7 +1257,7 @@ export const DEX_NEUVES = [
     histoire: 'Il dessine chaque match en trois cases et il les poste le lendemain matin. La '
       + 'troisième case est toujours la plus drôle.',
     mods: { parryBonus: 1.16, tempoWindow: 0.9 },
-    cri: { label: 'EN TROIS CASES', gest: 'mosaique', power: 45 } },
+    cri: { label: 'EN TROIS CASES', gest: 'puzzle', power: 45 } },
 
   { id: 'HC35', nom: 'Le Projecteur du Bar', type: 'tifo', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'Le vieux projecteur du bar du coin, calé sur un sous-bock. Les soirs de match '
@@ -1269,7 +1269,7 @@ export const DEX_NEUVES = [
     histoire: 'Elle connaît tous les chants du virage par cœur et elle les chante au karaoké '
       + 'du bar après le match. Elle ne regarde jamais l’écran.',
     mods: { tempoWindow: 1.14, breathBonus: 0.9 },
-    cri: { label: 'TOUT LE BAR AVEC MOI', gest: 'capo', power: 45 } },
+    cri: { label: 'TOUT LE BAR AVEC MOI', gest: 'justesse', power: 45 } },
 
   { id: 'HC37', nom: 'Le Câble HDMI', type: 'depl', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'On le cherche cinq minutes avant le coup d’envoi, toujours derrière le meuble. '
@@ -1299,13 +1299,13 @@ export const DEX_NEUVES = [
     histoire: 'Ouvert au bureau, avec le match dans un petit coin de l’écran. Un post-it '
       + 'jaune cache la fenêtre quand le chef passe.',
     mods: { mashBonus: 1.14, holdBonus: 0.9 },
-    cri: { label: 'RÉUNION, RÉUNION', gest: 'salves', power: 44 } },
+    cri: { label: 'RÉUNION, RÉUNION', gest: 'accents', power: 44 } },
 
   { id: 'HC42', nom: 'La Prof de Sport', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'Elle commente chaque match à la récré du lundi, sifflet au cou et chronomètre '
       + 'au poignet. Elle refait les actions avec les élèves.',
     mods: { mashBonus: 1.14, tempoWindow: 0.9 },
-    cri: { label: 'ON ACCÉLÈRE !', gest: 'crescendo', power: 44 } },
+    cri: { label: 'ON ACCÉLÈRE !', gest: 'accents', power: 44 } },
 
   { id: 'HC43', nom: 'La Cloche des Notifications', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'La petite cloche du téléphone qui sonne à chaque but, même pendant la messe, '
@@ -1329,7 +1329,7 @@ export const DEX_NEUVES = [
     histoire: 'Il a vu le résultat sur son téléphone et il le dit à tout le monde avant la '
       + 'rediffusion. Il fait semblant que ça lui a échappé.',
     mods: { tempoWindow: 1.14, perfectBonus: 0.9 },
-    cri: { label: 'J’AI RIEN DIT', gest: 'contretemps', power: 44 } },
+    cri: { label: 'J’AI RIEN DIT', gest: 'justesse', power: 44 } },
 
   { id: 'HC47', nom: 'Le Voisin du Dessous', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'Il tape au plafond avec son balai à chaque but, en peignoir et en filet à '
@@ -1347,7 +1347,7 @@ export const DEX_NEUVES = [
     histoire: 'Le ventilateur du match d’été. Il tourne la tête vers tout le monde sauf vers '
       + 'soi, et le petit ruban rose sur sa grille vole dans tous les sens.',
     mods: { parryBonus: 1.14, breathBonus: 0.9 },
-    cri: { label: 'À GAUCHE, À DROITE', gest: 'ola', power: 44 } },
+    cri: { label: 'À GAUCHE, À DROITE', gest: 'puzzle', power: 44 } },
 
   { id: 'HC50', nom: 'Le Retraité au Jardin', type: 'fide', set: 'HC', stage: 1, rar: 'commune',
     histoire: 'Il écoute le match en arrosant ses tomates, la radio posée sur la brouette. Il '

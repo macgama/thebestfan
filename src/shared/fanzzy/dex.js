@@ -33,6 +33,10 @@ import { reglage } from '../reglages.js';
  * seule, et un personnage ne peut porter que l'un des gestes de la sienne.
  * `catalogue:test` le vérifie sur les quatre cent quatre-vingt-onze cartes.
  *
+ * Depuis le 4 novembre 2026, **cinq gestes par famille**, ni plus ni moins
+ * (Gaël : « le même nombre pour chaque famille ») : `catalogue:test` le
+ * vérifie aussi.
+ *
  * Le premier de chaque liste est **le geste de la famille** — celui qu'on
  * associe à son nom, et le plus fréquent chez elle. Les suivants sont ses
  * variantes : de quoi distinguer deux Voix sans les sortir de la Voix.
@@ -40,27 +44,27 @@ import { reglage } from '../reglages.js';
 const TYPES = {
   // La voix mène : le tempo, ce qui se chante à contretemps, ce qui se répond,
   // et l'appel du capo — qui est une voix avant d'être un geste.
-  voix: { nom:'Voix', c:'#F5C33B', gestes:['tempo', 'contretemps', 'echo', 'capo'],
+  voix: { nom:'Voix', c:'#F5C33B', gestes:['tempo', 'contretemps', 'echo', 'capo', 'justesse'],
     ico:'M4 9v6h4l5 4V5L8 9H4zm12.5-1a5 5 0 0 1 0 8' },
   // Ce qui frappe : vite, de plus en plus vite, par rafales, ou des deux mains à la fois.
-  perc: { nom:'Percussion', c:'#3C82E8', gestes:['mash', 'crescendo', 'salves', 'deuxvoix'],
+  perc: { nom:'Percussion', c:'#3C82E8', gestes:['mash', 'crescendo', 'salves', 'deuxvoix', 'accents'],
     ico:'M12 6c5 0 8 1.5 8 3.5S17 13 12 13 4 11.5 4 9.5 7 6 12 6zm-8 4v5c0 2 3.5 3.5 8 3.5s8-1.5 8-3.5v-5' },
   // Ce qui reste : tenir, tenir sans aller au bout, tenir le compte exact.
-  fide: { nom:'Fidélité', c:'#C2CAD6', gestes:['hold', 'tenue', 'retenue', 'jauge'],
+  fide: { nom:'Fidélité', c:'#C2CAD6', gestes:['hold', 'tenue', 'retenue', 'jauge', 'leurres'],
     ico:'M12 21s-7-4.4-7-9.5A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.5C19 16.6 12 21 12 21z' },
   // Ce qui se montre : dessiner la forme, allumer la grille, trier les cartons,
   // lever la vague au passage.
-  tifo: { nom:'Tifo', c:'#8257DA', gestes:['tifo', 'mosaique', 'tri', 'ola'],
+  tifo: { nom:'Tifo', c:'#8257DA', gestes:['tifo', 'mosaique', 'tri', 'ola', 'puzzle'],
     ico:'M4 4h16v12l-8-3-8 3V4z' },
   /* Le risque, et c'est une affaire d'**instant** : lâcher pile sur la
      pulsation, tomber juste quand le compte s'est éteint. C'est exactement ce
      qu'est une torche qu'on allume — une seconde trop tôt ou trop tard et ce
      n'est plus le même geste. */
-  pyro: { nom:'Pyro', c:'#E0402C', gestes:['relance', 'compte', 'visee', 'rouleaux'],
+  pyro: { nom:'Pyro', c:'#E0402C', gestes:['relance', 'compte', 'visee', 'rouleaux', 'meche'],
     ico:'M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-2-1-3-1-4 2 1 4 3 4 6a6 6 0 0 1-12 0c0-5 6-7 6-11z' },
   // La route : l'écharpe qu'on fait tourner, les visages qu'on retient, et le
   // chant qu'on renvoie à l'envers, comme la tribune d'en face.
-  depl: { nom:'Déplacement', c:'#1E9E6A', gestes:['echarpe', 'memoire', 'bascule', 'miroir'],
+  depl: { nom:'Déplacement', c:'#1E9E6A', gestes:['echarpe', 'memoire', 'bascule', 'miroir', 'cortege'],
     ico:'M4 7h16v8H4zM4 15v3h3v-3m10 0v3h3v-3M6 10h12' },
 };
 
@@ -460,7 +464,7 @@ const DEX = [
     histoire:'Il repart toujours le dernier, une tour de gobelets dans les bras. '
       + 'Il dit que quelqu’un doit bien le faire.',
     mods:{ refundBonus:1.4, holdBonus:1.05 },
-    cri:{ label:'IL EN RESTE', gest:'jauge', power:47 } },
+    cri:{ label:'IL EN RESTE', gest: 'leurres', power:47 } },
 
   { id:'TR47', nom:'Le Mégaphone', publie:false /* refait TR18 */, type:'voix', set:'TR', stage:1, rar:'commune',
     histoire:'Dos au terrain pendant quatre-vingt-dix minutes. Il n’a jamais vu '
@@ -578,7 +582,7 @@ const DEX = [
     histoire:'Abonné depuis 1961. Mort en 1994. Il n’a pas manqué un match, et il '
       + 'trouve que le nouveau stade manque d’âme.',
     mods:{ holdBonus:1.28, holdForgive:3, breathBonus:1.1 },
-    cri:{ label:'JE N’AI JAMAIS PARTI', gest:'tenue', power:82 } },
+    cri:{ label:'JE N’AI JAMAIS PARTI', gest: 'leurres', power:82 } },
 
   { id:'IM3', nom:'Le Comte du Parcage', publie:false /* refait RV19 */, type:'pyro', set:'IM', stage:1, rar:'commune',
     histoire:'Il ne se déplace qu’aux matchs en nocturne, ce qui limite beaucoup '
@@ -640,7 +644,7 @@ const DEX = [
     histoire:'Volé dans un jardin en 1987, emmené à tous les déplacements depuis. '
       + 'Il a vu plus de stades que la plupart des abonnés.',
     mods:{ holdBonus:1.07, refundBonus:1.15 },
-    cri:{ label:'TOUJOURS LÀ', gest:'tenue', power:46 } },
+    cri:{ label:'TOUJOURS LÀ', gest: 'leurres', power:46 } },
 
   { id:'IM13', nom:'Le Capybara Serein', publie:false /* refait BG19 */, type:'fide', set:'IM', stage:1, rar:'commune',
     histoire:'Rien ne l’atteint. Ni le penalty refusé, ni le rouge à la '
@@ -670,7 +674,7 @@ const DEX = [
     histoire:'Il a traversé la galaxie pour un match de milieu de tableau. Il a '
       + 'pris un hot-dog et il trouve que ça valait le voyage.',
     mods:{ breathBonus:1.25, refundBonus:1.6, parryBonus:1.2 },
-    cri:{ label:'ON N’A PAS ÇA CHEZ NOUS', gest:'memoire', power:80 } },
+    cri:{ label:'ON N’A PAS ÇA CHEZ NOUS', gest: 'cortege', power:80 } },
 ];
 
 /**

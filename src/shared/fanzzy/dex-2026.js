@@ -369,13 +369,13 @@ export const DEX_2026 = [
     histoire: 'Sa louche a arrêté deux bagarres. Elle nourrit trois cents personnes en '
       + 'quinze minutes et elle n’a jamais dit merci à personne.',
     mods: { mashBonus: 1.24, parryBonus: 1.2, tempoWindow: 0.9 },
-    cri: { label: 'ÇA SUFFIT', gest: 'crescendo', power: 69 } },
+    cri: { label: 'ÇA SUFFIT', gest: 'accents', power: 69 } },
 
   { id: 'MS11', nom: 'Le Pompier de Garde', type: 'tifo', set: 'MS', stage: 1, rar: 'commune',
     histoire: 'Il est là pour les fumigènes et il aime les fumigènes. C’est un conflit '
       + 'qu’il gère très bien depuis douze ans.',
     mods: { parryBonus: 1.35, parryResist: 1.25 },
-    cri: { label: 'JE SURVEILLE', gest: 'mosaique', power: 62 } },
+    cri: { label: 'JE SURVEILLE', gest: 'puzzle', power: 62 } },
 
   { id: 'MS12', nom: 'Le Vieux Marin', type: 'fide', set: 'MS', stage: 1, rar: 'commune',
     histoire: 'Il tenait le filet du port avant de tenir celui des buts. Il salue le '
@@ -399,7 +399,7 @@ export const DEX_2026 = [
     histoire: 'Elle tient le tempo de la fanfare depuis dix-neuf ans. Quand elle s’arrête, '
       + 'le virage s’arrête, et elle ne s’arrête jamais avant la fin.',
     mods: { mashBonus: 1.34, mashTime: -900, breathBonus: 1.1 },
-    cri: { label: 'UN — DEUX — VIRAGE', gest: 'salves', power: 82 } },
+    cri: { label: 'UN — DEUX — VIRAGE', gest: 'accents', power: 82 } },
 
   { id: 'MS16', nom: 'L’Homme au Carton', type: 'tifo', set: 'MS', stage: 1, rar: 'commune',
     histoire: 'Il sort le jaune avant même que la faute soit commise. On dit qu’il en a '
@@ -447,13 +447,13 @@ export const DEX_2026 = [
     histoire: 'Elle annonce le score exact avant chaque match. Elle s’est trompée '
       + 'quatre-vingt-onze fois sur quatre-vingt-douze, et la tribune y croit encore.',
     mods: { perfectBonus: 1.35, backfire: true, tempoWindow: 1.1 },
-    cri: { label: 'JE L’AVAIS VU', gest: 'rouleaux', power: 71 } },
+    cri: { label: 'JE L’AVAIS VU', gest: 'meche', power: 71 } },
 
   { id: 'MS24', nom: 'Le Sifflet', type: 'tifo', set: 'MS', stage: 1, rar: 'legendaire',
     histoire: 'Quarante ans d’arbitrage en district et deux mille insultes par saison. '
       + 'Il siffle la fin quand il l’a décidé, pas quand la montre le dit.',
     mods: { parryBonus: 1.8, parryResist: 1.3, tempoWindow: 0.8 },
-    cri: { label: 'C’EST MOI QUI SIFFLE', gest: 'mosaique', power: 80 } },
+    cri: { label: 'C’EST MOI QUI SIFFLE', gest: 'puzzle', power: 80 } },
 
   { id: 'MS25', nom: 'Le Roi de la Grillade', type: 'pyro', set: 'MS', stage: 1, rar: 'commune',
     histoire: 'Sa fumée monte jusqu’à la tribune d’honneur et on s’en plaint chaque '
@@ -537,25 +537,25 @@ export const DEX_2026 = [
     histoire: 'Il vient en tenue de soirée à chaque match, même en préparation. Il '
       + 'considère qu’un stade est un lieu où l’on se tient.',
     mods: { holdBonus: 1.16, parryResist: 1.12, mashBonus: 0.92 },
-    cri: { label: 'UN PEU DE TENUE', gest: 'tenue', power: 58 } },
+    cri: { label: 'UN PEU DE TENUE', gest: 'leurres', power: 58 } },
 
   { id: 'BG12', nom: 'La Tortue de la Rampe', type: 'fide', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Elle met vingt minutes à monter à sa place et ne repart jamais avant que '
       + 'le stade soit vide. Elle a vu quatre-vingts saisons.',
     mods: { holdBonus: 1.3, holdForgive: 2, breathBonus: 1.06, mashBonus: 0.8 },
-    cri: { label: 'J’ARRIVE', gest: 'retenue', power: 69 } },
+    cri: { label: 'J’ARRIVE', gest: 'leurres', power: 69 } },
 
   { id: 'BG13', nom: 'La Fourmi Porteuse', type: 'perc', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Elle porte la caisse de la buvette, seule, à travers tout le stade. Elle '
       + 'refuse toute aide depuis qu’on lui en a proposé une fois.',
     mods: { mashBonus: 1.22, breathBonus: 1.12, tempoWindow: 0.88 },
-    cri: { label: 'JE GÈRE', gest: 'salves', power: 61 } },
+    cri: { label: 'JE GÈRE', gest: 'accents', power: 61 } },
 
   { id: 'BG14', nom: 'La Méduse Fluo', type: 'tifo', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Elle éclaire le virage quand les projecteurs tombent en panne, ce qui est '
       + 'arrivé deux fois. Les deux fois, on a gagné.',
     mods: { parryBonus: 1.45, breathBonus: 1.1, mashBonus: 0.85 },
-    cri: { label: 'ÇA BRILLE', gest: 'ola', power: 67 } },
+    cri: { label: 'ÇA BRILLE', gest: 'puzzle', power: 67 } },
 
   { id: 'BG15', nom: 'Le Chat du Terrain', type: 'depl', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Il a interrompu trois matchs en traversant la pelouse au ralenti. Le '
@@ -579,31 +579,31 @@ export const DEX_2026 = [
     histoire: 'Huit bras : le tambour, l’écharpe, la bière, le téléphone, la main en '
       + 'mousse, le hot-dog, la calculette et les lunettes. Elle ne lâche rien.',
     mods: { mashBonus: 1.35, mashTime: -800, refundBonus: 1.2, holdBonus: 1.08 },
-    cri: { label: 'LES HUIT À LA FOIS', gest: 'crescendo', power: 83 } },
+    cri: { label: 'LES HUIT À LA FOIS', gest: 'accents', power: 83 } },
 
   { id: 'BG19', nom: 'Le Capybara Serein', type: 'fide', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Rien ne l’atteint : ni le penalty raté, ni la relégation, ni le derby. '
       + 'Trois rangées autour de lui se sentent mieux.',
     mods: { holdBonus: 1.22, breathBonus: 1.2, parryResist: 1.2, mashBonus: 0.85 },
-    cri: { label: 'TOUT VA BIEN', gest: 'retenue', power: 70 } },
+    cri: { label: 'TOUT VA BIEN', gest: 'leurres', power: 70 } },
 
   { id: 'BG20', nom: 'L’Abeille de Chantier', type: 'depl', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Elle règle la circulation du parvis avec un panneau et un casque jaune. '
       + 'Personne ne l’écoute et elle revient chaque semaine.',
     mods: { breathBonus: 1.16, parryBonus: 1.15, holdBonus: 0.94 },
-    cri: { label: 'ON AVANCE', gest: 'memoire', power: 49 } },
+    cri: { label: 'ON AVANCE', gest: 'cortege', power: 49 } },
 
   { id: 'BG21', nom: 'L’Orang-outan en Costume', type: 'tifo', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Chef de la sécurité de la tribune d’honneur. Il n’a jamais eu à lever la '
       + 'main : il lui suffit de se lever.',
     mods: { parryBonus: 1.6, parryResist: 1.3, tempoWindow: 0.8 },
-    cri: { label: 'ON NE PASSE PAS', gest: 'ola', power: 71 } },
+    cri: { label: 'ON NE PASSE PAS', gest: 'puzzle', power: 71 } },
 
   { id: 'BG22', nom: 'Le Caméléon en Smoking', type: 'tifo', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Il lit le programme dans la tribune des deux camps et prend les couleurs '
       + 'de celui qui mène. Tout le monde le sait, personne ne le chasse.',
     mods: { parryBonus: 1.35, parryResist: 1.25, holdBonus: 0.9 },
-    cri: { label: 'J’AI TOUJOURS ÉTÉ AVEC VOUS', gest: 'ola', power: 59 } },
+    cri: { label: 'J’AI TOUJOURS ÉTÉ AVEC VOUS', gest: 'puzzle', power: 59 } },
 
   { id: 'BG23', nom: 'Le Loup du Parcage', type: 'perc', set: 'BG', stage: 1, rar: 'commune',
     histoire: 'Il vient avec le parcage adverse, un ballon sous le bras et une main en '
@@ -883,13 +883,13 @@ export const DEX_2026 = [
     histoire: 'Il a fait deux mille kilomètres à cheval pour un match amical. Il est resté '
       + 'et il attache encore sa monture au parking vélos.',
     mods: { holdBonus: 1.18, breathBonus: 1.12, tempoWindow: 0.9 },
-    cri: { label: 'J’AI FAIT LA ROUTE', gest: 'retenue', power: 59 } },
+    cri: { label: 'J’AI FAIT LA ROUTE', gest: 'leurres', power: 59 } },
 
   { id: 'EP11', nom: 'La Pirate', type: 'depl', set: 'EP', stage: 1, rar: 'commune',
     histoire: 'Elle aborde le parcage adverse à chaque déplacement pour échanger des '
       + 'écharpes. Elle rentre toujours avec plus qu’elle n’a donné.',
     mods: { refundBonus: 1.55, parryBonus: 1.25, holdBonus: 0.88 },
-    cri: { label: 'À L’ABORDAGE', gest: 'miroir', power: 69 } },
+    cri: { label: 'À L’ABORDAGE', gest: 'cortege', power: 69 } },
 
   { id: 'EP12', nom: 'L’Astronaute', type: 'depl', set: 'EP', stage: 1, rar: 'commune',
     histoire: 'Elle a suivi la finale depuis l’orbite avec vingt-deux secondes de retard. '
@@ -907,23 +907,23 @@ export const DEX_2026 = [
     histoire: 'Son bouclier porte les couleurs du club depuis quatre cents ans, ce qui '
       + 'pose un problème de date que personne n’a osé soulever.',
     mods: { parryBonus: 1.6, parryResist: 1.25, breathBonus: 0.88 },
-    cri: { label: 'POUR LE BLASON', gest: 'mosaique', power: 71 } },
+    cri: { label: 'POUR LE BLASON', gest: 'puzzle', power: 71 } },
 
   { id: 'EP15', nom: 'Le Touriste d’Ailleurs', type: 'depl', set: 'EP', stage: 1, rar: 'legendaire',
     histoire: 'Il a traversé la galaxie pour un match de milieu de tableau. Il a pris un '
       + 'hot-dog et il trouve que ça valait le voyage.',
     mods: { breathBonus: 1.3, refundBonus: 1.6, parryBonus: 1.2 },
-    cri: { label: 'ON N’A PAS ÇA CHEZ NOUS', gest: 'memoire', power: 81 } },
+    cri: { label: 'ON N’A PAS ÇA CHEZ NOUS', gest: 'cortege', power: 81 } },
 
   { id: 'EP16', nom: 'Le Flottant', type: 'voix', set: 'EP', stage: 1, rar: 'commune',
     histoire: 'Il jongle en apesanteur pendant les temps morts. Le ballon met onze '
       + 'minutes à retomber et il compte les secondes à voix haute.',
     mods: { tempoWindow: 1.3, tempoInterval: 80, mashBonus: 0.85 },
-    cri: { label: 'IL RETOMBE… BIENTÔT', gest: 'echo', power: 58 } },
+    cri: { label: 'IL RETOMBE… BIENTÔT', gest: 'justesse', power: 58 } },
 
   { id: 'EP17', nom: 'Le Gladiateur', type: 'perc', set: 'EP', stage: 1, rar: 'legendaire',
     histoire: 'Il a joué devant cinquante mille personnes bien avant qu’on invente le '
       + 'football. Il trouve que le public d’aujourd’hui manque un peu d’engagement.',
     mods: { mashBonus: 1.4, mashTime: -1000, parryBonus: 1.3, breathBonus: 0.85 },
-    cri: { label: 'ENCORE ! ENCORE !', gest: 'crescendo', power: 88 } },
+    cri: { label: 'ENCORE ! ENCORE !', gest: 'accents', power: 88 } },
 ];

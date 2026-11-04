@@ -9015,6 +9015,151 @@ html[data-calme~="animations"] .tbf-tribune.feu{animation:none}
   animation-fill-mode:both;pointer-events:none}
 @keyframes tbfTombe{from{top:-4%}to{top:82%}}
 
+/* ================================================ LES SIX DE NOVEMBRE
+
+   Une par famille de supporters, chacune dans la couleur de sa famille
+   (`geste.js`, `COULEUR`). Elles partagent un décor : un fond de tribune la
+   nuit — un dégradé qui monte vers la lumière des projecteurs — plutôt que
+   la case grise des épreuves d'avant. Le décor reste sombre et sans motif
+   sous ce qu'on doit viser : il habille, il ne gêne pas. */
+.tbf-justesse,.tbf-meche,.tbf-cortege,.tbf-leurres-scene{
+  background:radial-gradient(120% 70% at 50% -10%,rgba(245,195,59,.16),transparent 60%),
+    linear-gradient(180deg,#121a2b 0,#0b111d 100%);
+  border:1px solid rgba(242,238,228,.12);border-radius:14px}
+.tbf-ep-mot{font-family:var(--banner);letter-spacing:.12em;font-size:12.5px;color:var(--craie);
+  opacity:.9;pointer-events:none;text-align:center}
+
+/* **La justesse.** Une portée à cinq lignes craie ; les notes sont des
+   pilules d'or qui défilent vers le trait, et s'allument en passant dessous.
+   Le point du doigt glisse sur le trait, vert quand il chante juste. */
+.tbf-justesse{position:relative;width:100%;height:min(48vh,280px);overflow:hidden;
+  touch-action:none;-webkit-user-select:none;user-select:none;cursor:ns-resize}
+.tbf-portee i{position:absolute;left:0;right:0;height:1px;background:rgba(242,238,228,.22)}
+.tbf-notes b{position:absolute;height:14px;margin-bottom:-7px;border-radius:7px;
+  background:linear-gradient(90deg,#F5C33B,#d9a52a);box-shadow:0 0 0 1px rgba(0,0,0,.3);
+  transition:box-shadow .1s,filter .1s}
+.tbf-notes b.chante{box-shadow:0 0 14px rgba(245,195,59,.9);filter:brightness(1.15)}
+.tbf-tete{position:absolute;top:0;bottom:0;left:25%;width:2px;margin-left:-1px;
+  background:rgba(242,238,228,.75);box-shadow:0 0 10px rgba(242,238,228,.5);pointer-events:none}
+.tbf-voix{position:absolute;left:25%;width:22px;height:22px;margin:0 0 -11px -11px;bottom:50%;
+  border-radius:50%;border:3px solid var(--craie);background:rgba(242,238,228,.15);
+  opacity:.35;transition:background .1s,border-color .1s;pointer-events:none}
+.tbf-voix.tbf-pose{opacity:1}
+.tbf-voix.juste{background:#1E9E6A;border-color:#7fe0b4;box-shadow:0 0 16px rgba(30,158,106,.9)}
+.tbf-justesse .tbf-ep-mot{position:absolute;left:0;right:0;bottom:8px}
+
+/* **Les accents.** Une seule voie, et une grosse caisse en dessous. Le temps
+   marqué est plus large, rouge, et dit « ×2 » : il se voit venir de loin. */
+.tbf-accents{display:flex;flex-direction:column;gap:10px;width:100%;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.tbf-accents .tbf-voies{height:min(40vh,230px)}
+.tbf-voie-seule{background:linear-gradient(180deg,rgba(60,130,232,.06),rgba(60,130,232,.14))}
+.tbf-ep-note.tbf-temps{left:34%;right:34%;background:#3C82E8;
+  box-shadow:0 0 10px rgba(60,130,232,.7)}
+.tbf-ep-note.tbf-accent{left:20%;right:20%;height:22px;margin-top:-11px;border-radius:11px;
+  background:#E0402C;box-shadow:0 0 14px rgba(224,64,44,.85);color:#fff;
+  font-family:var(--banner);font-size:13px;line-height:22px;text-align:center;letter-spacing:.08em}
+.tbf-caisse{min-height:96px;border-radius:50%/34%;cursor:pointer;color:var(--craie);
+  border:3px solid #3C82E8;
+  background:radial-gradient(circle at 50% 40%,#F2EEE4 0,#d8d2c2 62%,#a9a290 100%);
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.18),0 0 0 4px rgba(60,130,232,.25);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-family:var(--banner);letter-spacing:.14em;color:#101a2b;font-size:16px}
+.tbf-caisse small{font-family:var(--ui);letter-spacing:.02em;font-size:11px;opacity:.75}
+.tbf-caisse.frappe{animation:tbfCaisse .12s ease-out}
+@keyframes tbfCaisse{50%{transform:scale(.97) translateY(3px);
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.18),0 0 0 8px rgba(60,130,232,.45)}}
+
+/* **Sans craquer.** En haut, le signal à reconnaître, petit et fixe ; au
+   milieu, la scène où les signaux s'allument. Quatre formes, trois
+   couleurs : de quoi faire des leurres qui ressemblent. */
+.tbf-leurres{display:flex;flex-direction:column;gap:10px;width:100%;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.tbf-leurres-mien{display:flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--banner);letter-spacing:.14em;font-size:13px;color:var(--craie)}
+.tbf-leurres-scene{position:relative;height:min(46vh,260px);display:grid;place-items:center;
+  cursor:pointer}
+.tbf-leurres-scene.touche{animation:tbfTouche .18s ease-out}
+@keyframes tbfTouche{50%{box-shadow:inset 0 0 0 3px rgba(242,238,228,.5)}}
+/* **`tbf-ep-signal`**, préfixé comme les autres épreuves : `.tbf-signal` est
+   déjà le champ de « Signaler un problème » (menu.js). */
+.tbf-ep-signal{display:block;width:110px;height:110px;flex:none;
+  background:var(--tbf-signal-c,#F5C33B)}
+.tbf-ep-signal.tbf-petit{width:28px;height:28px}
+.tbf-ep-signal.tbf-grand{animation:tbfSignalEp .16s ease-out both;
+  filter:drop-shadow(0 0 18px var(--tbf-signal-c,#F5C33B))}
+@keyframes tbfSignalEp{from{transform:scale(.4);opacity:0}}
+.tbf-ep-signal[data-c="0"]{--tbf-signal-c:#F5C33B}
+.tbf-ep-signal[data-c="1"]{--tbf-signal-c:#E0402C}
+.tbf-ep-signal[data-c="2"]{--tbf-signal-c:#3C82E8}
+.tbf-ep-signal[data-f="0"]{border-radius:50%}
+.tbf-ep-signal[data-f="1"]{border-radius:12%}
+.tbf-ep-signal[data-f="2"]{clip-path:polygon(50% 4%,96% 92%,4% 92%)}
+.tbf-ep-signal[data-f="3"]{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+
+/* **Le puzzle.** Le modèle en haut à gauche, les six places au milieu, la
+   réserve en bas. Le morceau pris se soulève et s'entoure de violet. */
+.tbf-puzzle{display:flex;flex-direction:column;gap:10px;width:100%;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.tbf-puzzle-haut{display:flex;align-items:center;gap:12px}
+.tbf-modele{display:block;width:48px;aspect-ratio:2/3;border-radius:6px;
+  background-size:100% 100%;box-shadow:0 0 0 2px rgba(130,87,218,.6)}
+.tbf-places{display:grid;grid-template-columns:repeat(var(--col),1fr);gap:3px;
+  width:min(62%,200px);margin:0 auto;padding:3px;border-radius:10px;
+  background:rgba(130,87,218,.14);border:1px dashed rgba(130,87,218,.7)}
+.tbf-place{aspect-ratio:1;border-radius:6px;background:rgba(242,238,228,.05);
+  display:grid;cursor:pointer}
+.tbf-ep-reserve{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;min-height:66px;
+  padding:8px;border-radius:12px;background:rgba(242,238,228,.05)}
+.tbf-ep-reserve .tbf-morceau{width:58px}
+.tbf-morceau{aspect-ratio:1;border:0;padding:0;border-radius:6px;cursor:pointer;
+  background-repeat:no-repeat;box-shadow:0 2px 0 rgba(0,0,0,.35);
+  transition:transform .1s,box-shadow .1s}
+.tbf-place .tbf-morceau{width:100%;height:100%;border-radius:4px}
+.tbf-morceau.pris{transform:translateY(-4px) scale(1.05);
+  box-shadow:0 0 0 3px #8257DA,0 8px 16px rgba(0,0,0,.45)}
+
+/* **La mèche.** Une corde qui serpente ; ce qui a brûlé noircit, la flamme
+   avance en tête. Le doigt est un anneau qui verdit quand il tient la
+   flamme. */
+.tbf-meche{position:relative;width:min(100%,330px);aspect-ratio:1;margin:0 auto;
+  overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;cursor:crosshair}
+.tbf-meche svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.tbf-meche .corde{fill:none;stroke:#c9a46a;stroke-width:5;stroke-dasharray:3 1.4;
+  stroke-linecap:round;vector-effect:non-scaling-stroke}
+.tbf-meche .brulee{fill:none;stroke:#2a2420;stroke-width:6;stroke-linecap:round;
+  vector-effect:non-scaling-stroke}
+.tbf-flamme{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;
+  background:radial-gradient(circle,#fff6c8 0,#F5C33B 35%,#E0402C 70%,transparent 72%);
+  box-shadow:0 0 22px 8px rgba(224,64,44,.55);pointer-events:none;
+  animation:tbfFlamme .22s ease-in-out infinite alternate}
+@keyframes tbfFlamme{to{transform:scale(1.18) rotate(8deg)}}
+.tbf-doigt{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+  border:3px solid rgba(242,238,228,.8);opacity:0;pointer-events:none;
+  transition:border-color .1s,box-shadow .1s}
+.tbf-doigt.tbf-pose{opacity:1}
+.tbf-doigt.juste{border-color:#7fe0b4;box-shadow:0 0 16px rgba(30,158,106,.9)}
+.tbf-meche .tbf-ep-mot{position:absolute;left:0;right:0;bottom:10px}
+
+/* **Le cortège.** Trois voies d'une avenue la nuit, vues d'en haut ; des
+   barrières rouge et blanc descendent ; le supporter est un rond vert qui
+   change de voie. */
+.tbf-cortege{position:relative;display:grid;grid-template-columns:repeat(var(--voies),1fr);
+  width:100%;height:min(50vh,290px);overflow:hidden;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;cursor:pointer}
+.tbf-route{position:relative;border-right:2px dashed rgba(242,238,228,.18)}
+.tbf-route:last-of-type{border-right:0}
+.tbf-barriere{position:absolute;left:10%;right:10%;height:18px;margin-top:-9px;top:0;
+  border-radius:4px;pointer-events:none;
+  background:repeating-linear-gradient(135deg,#E0402C 0 12px,#F2EEE4 12px 24px);
+  box-shadow:0 3px 0 rgba(0,0,0,.4);
+  animation-name:tbfBarriere;animation-timing-function:linear;animation-fill-mode:both}
+@keyframes tbfBarriere{from{top:-6%}to{top:82%}}
+.tbf-supporter{position:absolute;top:82%;width:34px;height:34px;margin:-17px 0 0 -17px;
+  border-radius:50%;background:#1E9E6A;border:3px solid #F2EEE4;
+  box-shadow:0 0 16px rgba(30,158,106,.8);transition:left .12s ease-out;pointer-events:none}
+.tbf-cortege .tbf-ep-mot{position:absolute;left:0;right:0;bottom:8px}
+
 /* **La visée.** Un cadre vide où les fumigènes s'allument.
 
    Rien autour : chaque élément de décor serait une cible en trop pour l'œil, et

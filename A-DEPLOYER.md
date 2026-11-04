@@ -1,5 +1,21 @@
 # À déposer sur Infomaniak
 
+**Six nouveaux gestes, trente en tout, cinq par famille** (branche
+`claude/project-thread-voavbo`, 4 novembre 2026, demande de Gaël « Go pour les
+6 nouveaux gestes »). **Avec schéma** : `sql/cris-novembre.sql`, appliqué par
+la mise en ligne.
+
+- Les gestes : LA JUSTESSE (voix), LES ACCENTS (percussions), SANS CRAQUER
+  (fidélité), LE PUZZLE (tifo), LA MÈCHE (pyro), LE CORTÈGE (déplacement), et
+  leurs six chants.
+- Le schéma donne ces gestes au cri de 66 lignées (hors RP et AN), pour que
+  chaque nouveau geste se joue au Virage et en duel.
+- Les illustrations des six chants sont provisoires ; les vraies viendront
+  d'Artlist en mode rapide (invites dans `scripts/chant-images.mjs`).
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Le PASS, être vu et donner envie** (PR #276 et la suivante, 4 novembre
 2026, choix de Gaël « Les deux, dans cet ordre »). Construction seule, **sans
 schéma**.

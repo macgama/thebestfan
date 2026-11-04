@@ -70,6 +70,9 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
   /* Les cris des quatre épreuves de l’automne 2026 : même nature, même
      dépendance que le précédent, qu’il suit. */
   'cris-automne',
+  /* Les cris des six gestes de novembre 2026 : même nature, même dépendance
+     que les deux précédents, qu’il suit. */
+  'cris-novembre',
   /* Les deux colonnes qui disent de quelle **sorte** un duel était. Elles
      viennent après duel.sql, qui pose la table, et n'ont d'autre dépendance :
      le parcours du joueur se lit sur elles, et les classements écartent
