@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<script src="/langue.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<title>Teste l’appli Android — thebestfan</title>
+<meta name="description" content="Deviens testeur de l’appli Android de thebestfan : trois gestes, et tu joues depuis le Play Store.">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* ============================================= devenir testeur Android
+
+   Demande de Gaël (4 novembre 2026, fil « Rendre l'application disponible
+   sur Android ») : une page à partager partout, qui dit les trois gestes pour
+   tester l'appli du Play Store. Google demande au moins 12 testeurs inscrits
+   pendant 14 jours avant d'ouvrir l'appli à tous.
+
+   Les trois adresses sont en haut du script (`LIENS`) : le groupe Google des
+   testeurs, la page d'inscription au test fermé, la fiche du Play Store.
+   Le QR code (`/img/qr-beta.png`) mène à cette page : il sert depuis un
+   ordinateur, ou imprimé. */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+.intro{font-size:14px;line-height:1.6;margin:14px 2px 4px}
+.geste{display:flex;gap:12px;background:var(--panneau);border:1px solid var(--trait);border-radius:12px;
+  padding:14px 14px 14px 12px;margin:12px 0 0}
+.geste .n{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--banner);font-weight:700;font-size:18px;color:#05070A;background:#F5C33B}
+.geste h2{margin:3px 0 6px;font-family:var(--banner);font-weight:600;font-size:16px;letter-spacing:.05em}
+.geste p{margin:0 0 10px;font-size:13.5px;line-height:1.6}
+.geste p:last-child{margin-bottom:0}
+.geste .tbf-plaque{margin-top:2px}
+.note{font-size:12.5px;line-height:1.6;opacity:.9;margin:14px 2px 0}
+.note a,.geste a:not(.tbf-plaque){color:var(--craie);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.qr{display:flex;gap:16px;align-items:center;margin:18px 0 0;padding:14px;border-radius:12px;
+  background:var(--panneau);border:1px solid var(--trait)}
+.qr img{width:132px;height:132px;flex:none;border-radius:8px;image-rendering:pixelated}
+.qr p{margin:0;font-size:13.5px;line-height:1.6}
+/* Sur un téléphone Android, le QR code ne sert à rien : on est déjà au bon endroit. */
+html.android .qr{display:none}
+.ailleurs{display:none}
+html.pas-android .ailleurs{display:block}
+#app{padding-bottom:calc(var(--bas) + 40px)}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+  <p class="tbf-sous">Teste l’appli Android avant tout le monde</p>
+
+  <p class="intro">L’appli <b>TheBestFan</b> arrive sur le Play Store. Avant de l’ouvrir à tous, Google
+    demande qu’au moins 12 supporters la testent pendant 14 jours. Trois gestes, et tu en fais partie.</p>
+
+  <p class="note ailleurs">Cette page s’ouvre sur ton téléphone Android : scanne le QR code plus bas,
+    ou ouvre <b>thebestfan.online/beta</b> sur ton téléphone. Pas encore d’appli iPhone : sur iPhone,
+    ajoute le site à l’écran d’accueil depuis Safari.</p>
+
+  <section class="geste">
+    <span class="n">1</span>
+    <div>
+      <h2>Rejoins le groupe des testeurs</h2>
+      <p>Avec le compte Google de ton téléphone, ouvre le groupe et touche « Rejoindre le groupe ».
+        Tu ne recevras aucun e-mail.</p>
+      <a class="tbf-plaque" data-ton="or" id="lienGroupe" href="#" rel="noopener">REJOINDRE LE GROUPE</a>
+    </div>
+  </section>
+
+  <section class="geste">
+    <span class="n">2</span>
+    <div>
+      <h2>Accepte le test</h2>
+      <p>Toujours avec le même compte, touche « Devenir testeur ». Si Google dit que le test n’est pas
+        encore disponible, réessaie un peu plus tard : il ouvre très bientôt.</p>
+      <a class="tbf-plaque" data-ton="or" id="lienTest" href="#" rel="noopener">DEVENIR TESTEUR</a>
+    </div>
+  </section>
+
+  <section class="geste">
+    <span class="n">3</span>
+    <div>
+      <h2>Installe l’appli et garde-la 14 jours</h2>
+      <p>Installe TheBestFan depuis le Play Store, puis joue depuis l’appli. Ton compte reste le même :
+        cartes, écharpes et Fanzzy t’y attendent.</p>
+      <p>Garde l’appli installée au moins 14 jours : c’est ce que Google compte.</p>
+      <a class="tbf-plaque" data-ton="flare" id="lienStore" href="#" rel="noopener">INSTALLER L’APPLI</a>
+    </div>
+  </section>
+
+  <section class="qr">
+    <img src="/img/qr-beta.png" alt="QR code vers thebestfan.online/beta" width="132" height="132">
+    <p>Scanne ce code avec ton téléphone Android pour ouvrir cette page dessus.</p>
+  </section>
+
+  <p class="note">Une question, un bug à signaler ? Écris à
+    <a href="mailto:info@thebestfan.online">info@thebestfan.online</a>. Merci de nous aider à lancer l’appli !</p>
+</main>
+<script>
+/* Les trois adresses du test. */
+const LIENS = {
+  groupe: 'https://groups.google.com/g/thebestfan-testeurs',
+  test: 'https://play.google.com/apps/testing/online.thebestfan.app',
+  store: 'https://play.google.com/store/apps/details?id=online.thebestfan.app',
+};
+document.getElementById('lienGroupe').href = LIENS.groupe;
+document.getElementById('lienTest').href = LIENS.test;
+document.getElementById('lienStore').href = LIENS.store;
+document.documentElement.classList.add(/Android/i.test(navigator.userAgent) ? 'android' : 'pas-android');
+/* La plaque de l'accueil (beta-android.js) se tait une semaine après une visite ici. */
+try { localStorage.setItem('tbf-beta-vu', String(Date.now())); } catch { /* stockage fermé */ }
+</script>
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

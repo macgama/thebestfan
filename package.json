@@ -41,6 +41,7 @@
     "livraisons:smoke": "node scripts/livraisons-smoke.mjs",
     "android:smoke": "node scripts/android-smoke.mjs",
     "google:smoke": "node scripts/google-smoke.mjs",
+    "beta:ui": "node scripts/beta-ui-smoke.mjs",
     "amis:ui": "node scripts/amis-ui-smoke.mjs",
     "ensemble:ui": "node scripts/ensemble-ui-smoke.mjs",
     "equipes:ui": "node scripts/equipes-ui-smoke.mjs",

@@ -607,6 +607,11 @@ const RUBRIQUES = [
         'Dans le menu, « Partager le jeu » : choisis WhatsApp, un SMS ou un mail, et '
           + 'ton ami reçoit le lien du jeu avec son image. Sans partage sur ton appareil, '
           + 'le lien est copié : colle-le dans ton message.'],
+      ['Y a-t-il une appli Android ?',
+        'Elle arrive sur le Play Store. Avant de l’ouvrir à tous, Google demande qu’au moins '
+          + 'douze joueurs la testent pendant quatorze jours : sur ton téléphone Android, ouvre '
+          + 'thebestfan.online/beta et suis les trois gestes. Ton compte reste le même dans '
+          + 'l’appli.'],
       ['J’ai trouvé un bug. À qui le dire ?',
         'Dans le menu, « Signaler un problème » : dis ce qui s’est passé, et le '
           + 'message part directement à l’équipe du jeu.'],
