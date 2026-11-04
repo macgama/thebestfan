@@ -65,8 +65,13 @@ if [ "$N" = "0" ]; then
   rm -f .tbf-images-liste
   exit 0
 fi
-echo "→ $N fichiers"
+TAILLE="$(tr '\n' '\0' < .tbf-images-liste | du -ch --files0-from=- 2>/dev/null | tail -1 | cut -f1)"
+echo "→ $N fichiers, ${TAILLE:-?} — par exemple :"
+head -3 .tbf-images-liste | sed 's/^/    /'
 
-tar -cf - -T .tbf-images-liste | $SSH_CMD "$TBF_SSH" "cd '$RACINE' && tar -xf -"
+# Un point d'étape toutes les ~100 Mo : sans lui, la fenêtre reste muette
+# pendant tout l'envoi, et un envoi de quelques gigaoctets a l'air bloqué.
+tar -cf - -T .tbf-images-liste --checkpoint=10000 --checkpoint-action='echo=  … %{}T envoyés' \
+  | $SSH_CMD "$TBF_SSH" "cd '$RACINE' && tar -xf -"
 rm -f .tbf-images-liste
 echo "→ envoyé"
