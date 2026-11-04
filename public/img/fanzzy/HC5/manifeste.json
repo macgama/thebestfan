@@ -1,6 +1,6 @@
 {
   "id": "HC5",
-  "rev": 17,
+  "rev": 24,
   "evolutions": {
     "e1": {
       "skins": {
@@ -51,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c1305e52c144"
+          "sha": "c1305e52c144",
+          "cligne": true
         }
       }
     },
@@ -91,7 +92,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9069509ede18"
+          "sha": "9069509ede18",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -143,7 +145,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4d8ec3b0741e"
+          "sha": "4d8ec3b0741e",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "HC49",
-  "rev": 9,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a222f0a13e3e"
+          "sha": "a222f0a13e3e",
+          "cligne": true
         }
       }
     },
@@ -102,7 +103,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "278e0d30e6c6"
+          "sha": "278e0d30e6c6",
+          "cligne": true
         }
       }
     },
@@ -154,7 +156,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "228dd2fd2a1e"
+          "sha": "228dd2fd2a1e",
+          "cligne": true
         }
       }
     }

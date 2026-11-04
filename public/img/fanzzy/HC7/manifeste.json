@@ -1,6 +1,6 @@
 {
   "id": "HC7",
-  "rev": 14,
+  "rev": 19,
   "evolutions": {
     "e1": {
       "skins": {
@@ -79,7 +79,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "36a05e6e26f1"
+          "sha": "36a05e6e26f1",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

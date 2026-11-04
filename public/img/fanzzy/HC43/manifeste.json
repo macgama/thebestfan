@@ -1,6 +1,6 @@
 {
   "id": "HC43",
-  "rev": 15,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -50,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "948ad33fcdcd"
+          "sha": "948ad33fcdcd",
+          "cligne": true
         }
       }
     },
@@ -102,7 +103,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "63c71cd993ba"
+          "sha": "63c71cd993ba",
+          "cligne": true
         }
       }
     },
@@ -154,7 +156,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "46b7f1e4c406"
+          "sha": "46b7f1e4c406",
+          "cligne": true
         }
       }
     }

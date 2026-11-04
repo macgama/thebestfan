@@ -1,6 +1,6 @@
 {
   "id": "HC32",
-  "rev": 6,
+  "rev": 12,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c57548279a10"
+          "sha": "c57548279a10",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -50,7 +51,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "88f9d4a2eb36"
+          "sha": "88f9d4a2eb36",
+          "cligne": true
         }
       }
     },
@@ -90,7 +92,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "200786439ad2"
+          "sha": "200786439ad2",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -102,7 +105,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9d0d13469779"
+          "sha": "9d0d13469779",
+          "cligne": true
         }
       }
     },
@@ -142,7 +146,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "59d76139880c"
+          "sha": "59d76139880c",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -154,7 +159,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "85ce1888b46f"
+          "sha": "85ce1888b46f",
+          "cligne": true
         }
       }
     }

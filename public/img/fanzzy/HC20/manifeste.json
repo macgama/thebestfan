@@ -1,6 +1,6 @@
 {
   "id": "HC20",
-  "rev": 18,
+  "rev": 26,
   "evolutions": {
     "e2": {
       "skins": {
@@ -50,7 +50,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a4ae447c5d9a"
+          "sha": "a4ae447c5d9a",
+          "cligne": true
         }
       }
     },
@@ -90,7 +91,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "fe4913315abf"
+          "sha": "fe4913315abf",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -130,7 +132,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "c3485eb60593"
+          "sha": "c3485eb60593",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -142,7 +145,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a2f9fd4d3e32"
+          "sha": "a2f9fd4d3e32",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
