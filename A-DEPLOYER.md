@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Page /beta : le vrai groupe des testeurs** (branche
+`claude/project-thread-lg6ctd`, 4 novembre 2026). Construction seule, sans
+schéma. Le bouton « Rejoindre le groupe » mène à
+https://groups.google.com/g/thebestfanbetatesteur (le groupe créé par Gaël).
+Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Testeurs de l'appli Android : page /beta et plaque de l'accueil** (branche
 `claude/project-thread-lg6ctd`, 4 novembre 2026, demande de Gaël).
 Construction seule, sans schéma.
