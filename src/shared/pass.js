@@ -342,3 +342,14 @@ export function voieSelonAchat(numero, niveau, { tardif = false, etoiles = 0 } =
   return { ...vitrineDe(numero, 1), cadre: null, or: false, etoiles: 0, titre: null,
     gains: gainsDe(1).filter((g) => !GAINS_SPECIAUX.includes(g)), original: false, tardif: true };
 }
+
+/**
+ * Ce qu'un adversaire voit du PASS d'un joueur : le dessin, jamais plus
+ * (`abonnement.vitrinesDe`). Ni tampons ni points, qui ne regardent que lui.
+ */
+export function vitrinePublique(b) {
+  if (!b) return null;
+  return { saison: b.saison, niveau: b.niveau, couleur: b.couleur, cadre: b.cadre ?? null,
+    or: Boolean(b.or), etoiles: b.etoiles ?? 0, titre: b.titre ?? null,
+    gains: Array.isArray(b.gains) ? b.gains : [] };
+}

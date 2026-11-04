@@ -446,6 +446,31 @@ export function createAbonnement({ pool, requireAuth }) {
   }
 
   /**
+   * **Être vu** : le badge complet (niveau, gains, titre, or, cadre) de
+   * quelques joueurs, pour ce que les autres regardent — l'affiche d'un duel,
+   * le podium, la liste des amis. `Map(userId → badge)`, sans ceux qui n'ont
+   * pas de PASS joué pendant sa saison. Au plus `max` joueurs (les premiers
+   * de la liste) : chacun coûte quelques requêtes, une liste de cent lignes
+   * garde l'écusson léger de `badgesDe`.
+   */
+  async function vitrinesDe(ids = [], { max = 40 } = {}) {
+    const uniques = [...new Set(ids.filter(Boolean).map(String))]
+      .filter((id) => !id.startsWith('bot:')).slice(0, Math.max(0, max));
+    const out = new Map();
+    if (!uniques.length) return out;
+    const legers = await badgesDe(uniques);
+    await Promise.all(uniques.filter((id) => legers.has(id)).map(async (id) => {
+      try {
+        const b = await badgeDe(id);
+        if (b) out.set(id, b);
+      } catch (e) {
+        if (!sansTable(e)) console.error('[abonnement] vitrine', e.message);
+      }
+    }));
+    return out;
+  }
+
+  /**
    * Jusqu'à quel âge il peut porter cette tenue grâce à ses PASS. 0 : pas du tout.
    *
    * La tenue d'un PASS se gagne le long de sa voie : le premier âge à
@@ -799,7 +824,7 @@ export function createAbonnement({ pool, requireAuth }) {
 
   return { router, estAbonne, etat, accorder, renouveler, retirer, noterDepart, departs,
     plafondPacks, regenMs, profondeurParcours, profondeurSouvenirs, clubsEnPlus,
-    kopsAutorises, nombrePass, saisonsDuPass, voies, badgeDe, badgesDe, ageTenuePass,
+    kopsAutorises, nombrePass, saisonsDuPass, voies, badgeDe, badgesDe, vitrinesDe, ageTenuePass,
     tenueAuPass, accorderPass, retirerPass, offre, acheterEnEcharpes, passDuJoueur,
     anciensEnVente, tenuesAuxBoosters, saisonPassee };
 }

@@ -103,7 +103,9 @@ const RECHERCHES_PAR_MINUTE = 30;
  *   § 18.1), et ce module lui dit quand une amitié change.
  */
 export function createAmis({ pool, requireAuth, kop = null, presence = null,
-  notifications = null, ensemble = null }) {
+  notifications = null, ensemble = null,
+  /* Facultatif : l'écusson du PASS de chacun dans la liste (`badgesDe`). */
+  abonnement = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -240,6 +242,15 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
     });
 
     const amis = gens.filter((g) => g.etat === 'amis');
+    /* L'écusson du PASS de saison de chaque ami : une requête pour la liste,
+       purement visuel, tu par une panne. Sa fiche dit le reste. */
+    if (abonnement?.badgesDe && amis.length) {
+      const passes = await abonnement.badgesDe(amis.map((g) => g.id)).catch(() => new Map());
+      for (const g of amis) {
+        const p = passes.get(String(g.id));
+        if (p) g.pass = p;
+      }
+    }
     /* Un compte supprimé garde sa ligne d'ami, sous un pseudo anonyme : il
        n'a plus de visage, et il n'a pas davantage de présence. */
     const actifs = new Set(lignes.filter((l) => l.status === 'active').map((l) => l.public_id));

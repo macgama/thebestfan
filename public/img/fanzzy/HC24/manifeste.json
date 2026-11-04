@@ -1,6 +1,6 @@
 {
   "id": "HC24",
-  "rev": 14,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "c816de3976c8",
+          "sha": "0753c073ef2a",
           "cligne": true
         },
         "halloween": {
@@ -26,7 +26,31 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "68a1e71e7f25"
+          "sha": "459a699653c5"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "19db9d7be4a9"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "c84114d4dd78"
         }
       }
     },
@@ -54,7 +78,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "a9e89860ab75"
+          "sha": "8de67075d6ab"
         },
         "prehistorique": {
           "etats": [
@@ -81,7 +105,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1e5876b0ae54"
+          "sha": "b47be7ec6f90"
         },
         "halloween": {
           "etats": [
@@ -93,7 +117,31 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e81133c6b404"
+          "sha": "8665ab734100"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "490eb21ba9d4"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "7366e76f5af1"
         }
       }
     }

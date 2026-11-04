@@ -4,6 +4,7 @@ import { habillerJoueurs } from '../fanzzy/avatar.js';
 import { couleursDuClub } from '../kop/index.js';
 import { verser, verserTout, GAIN_NUL } from '../recompenses.js';
 import { reglage } from '../../shared/reglages.js';
+import { vitrinePublique } from '../../shared/pass.js';
 import { DIVISIONS, divisionPour, seuilsDivisions, titreDivision, finDeFenetre }
   from '../../shared/saison.js';
 
@@ -94,6 +95,14 @@ export function createClassements({ pool, requireAuth,
     let passes = new Map();
     if (abonnement?.badgesDe) {
       passes = await abonnement.badgesDe(lignes.map((l) => l.public_id)).catch(() => new Map());
+    }
+    /* **Le podium est vu** : les trois premiers de la liste portent leur
+       PASS en entier (niveau, titre, pseudo en or, `vitrinesDe`) ; les autres
+       gardent l'écusson léger, une requête pour cent lignes. */
+    if (abonnement?.vitrinesDe && passes.size) {
+      const tete = lignes.slice(0, 3).map((l) => String(l.public_id)).filter((id) => passes.has(id));
+      const pleins = await abonnement.vitrinesDe(tete, { max: 3 }).catch(() => new Map());
+      for (const [id, b] of pleins) passes.set(id, vitrinePublique(b));
     }
     return lignes.map((l) => {
       const pass = passes.get(String(l.public_id));
