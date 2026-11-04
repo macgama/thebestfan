@@ -9185,5 +9185,14 @@
  "garder le doigt sur la flamme qui avance": "tenere il dito sulla fiamma che avanza",
  "url(’data:image/svg+xml,{0}’)": "url(’data:image/svg+xml,{0}’)",
  "×2 sur les temps marqués": "×2 sulle battute segnate",
- "◀ TOUCHE À GAUCHE OU À DROITE ▶": "◀ TOCCA A SINISTRA O A DESTRA ▶"
+ "◀ TOUCHE À GAUCHE OU À DROITE ▶": "◀ TOCCA A SINISTRA O A DESTRA ▶",
+ "Partager le jeu": "Condividi il gioco",
+ "PARTAGER LE JEU": "CONDIVIDI IL GIOCO",
+ "Viens supporter ton club avec moi sur thebestfan, le jeu des tribunes !": "Vieni a tifare il tuo club con me su thebestfan, il gioco delle curve!",
+ "Le lien est copié : colle-le dans un message à tes amis.": "Link copiato: incollalo in un messaggio ai tuoi amici.",
+ "Copie ce lien et envoie-le à tes amis :": "Copia questo link e mandalo ai tuoi amici:",
+ "Dans Chrome : le menu <0>⋮</0> en haut à droite, puis <1>Ajouter à l’écran d’accueil</1> et <2>Installer</2>.": "In Chrome: il menu <0>⋮</0> in alto a destra, poi <1>Aggiungi a schermata Home</1> e <2>Installa</2>.",
+ "<0>Inviter un ami</0> : « Partager le jeu », dans le menu, envoie le lien du jeu par WhatsApp, SMS ou mail.": "<0>Invita un amico</0>: «Condividi il gioco», nel menu, invia il link del gioco via WhatsApp, SMS o mail.",
+ "Comment inviter un ami à jouer ?": "Come invito un amico a giocare?",
+ "Dans le menu, « Partager le jeu » : choisis WhatsApp, un SMS ou un mail, et ton ami reçoit le lien du jeu avec son image. Sans partage sur ton appareil, le lien est copié : colle-le dans ton message.": "Nel menu, «Condividi il gioco»: scegli WhatsApp, un SMS o una mail, e il tuo amico riceve il link del gioco con la sua immagine. Se il tuo dispositivo non sa condividere, il link viene copiato: incollalo nel tuo messaggio."
 }

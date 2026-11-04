@@ -176,6 +176,8 @@
     admin: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6zM9 12l2 2 4-4',
     sortie: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l-4 4 4 4M6 12h9',
     signaler: 'M5 21V4M5 4h11l-2 4 2 4H5',
+    // Trois points reliés : le geste « partager » des téléphones.
+    partager: 'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6M6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6M8.6 13.5l6.8 4M15.4 6.5l-6.8 4',
     // Une croix : ce qui referme le tiroir (lot 2), là où était le menu.
     fermer: 'M6 6l12 12M18 6L6 18',
     // Un panier : deux roues et une anse. Reconnaissable à vingt pixels.
@@ -889,6 +891,11 @@
       /* **Signaler un problème** (25 octobre 2026, avant la bêta) : un mail à
          Gaël, avec la page et l'appareil. Voir `server/signalement`. */
       + item('#', 'signaler', 'Signaler un problème', 'signaler')
+      /* **Partager le jeu** (4 novembre 2026). Gaël partageait le site par le
+         menu de Chrome, qui envoie un lien court `share.google/…` à la place
+         de l'adresse. Cette entrée envoie toujours https://thebestfan.online,
+         l'accueil, quelle que soit la page où l'on est. */
+      + item('#', 'partager', 'Partager le jeu', 'partager')
       /* « Mon compte » n'y est plus (Gaël, 30 octobre 2026) : il faisait
          doublon avec le profil, dont les RÉGLAGES portent l'adresse, les
          notifications, la déconnexion et la suppression. `/compte` n'est plus
@@ -1425,6 +1432,36 @@
           });
           return true;
         },
+      });
+    });
+
+    /* **Partager.** La feuille de partage du téléphone quand il en a une
+       (`navigator.share`), sinon le lien copié. Un refus de l'utilisateur
+       (AbortError) n'est pas une erreur : on ne copie rien derrière son dos. */
+    tiroir.querySelector('.partager').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const T = (s) => window.TBF_LANGUE?.t?.(s) ?? s;
+      const url = `${location.origin.includes('localhost') ? location.origin : 'https://thebestfan.online'}/`;
+      const donnees = {
+        title: 'thebestfan',
+        text: T('Viens supporter ton club avec moi sur thebestfan, le jeu des tribunes !'),
+        url,
+      };
+      if (navigator.share && (!navigator.canShare || navigator.canShare(donnees))) {
+        try { await navigator.share(donnees); return; } catch (err) {
+          if (err?.name === 'AbortError') return;
+        }
+      }
+      ouvrir(false);
+      let copie = false;
+      try { await navigator.clipboard.writeText(url); copie = true; } catch { /* presse-papiers refusé */ }
+      window.TBF_DIALOGUE?.confirmer({
+        titre: 'PARTAGER LE JEU',
+        texte: copie
+          ? 'Le lien est copié : colle-le dans un message à tes amis.'
+          : 'Copie ce lien et envoie-le à tes amis :',
+        corps: `<p class="tbf-partage-lien" translate="no"><b>${url}</b></p>`,
+        oui: 'OK', apres: (b) => { b.querySelector('[data-non]').hidden = true; },
       });
     });
 
