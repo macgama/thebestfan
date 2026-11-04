@@ -1,6 +1,6 @@
 {
   "id": "HC8",
-  "rev": 13,
+  "rev": 15,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "29a87610a847"
+          "sha": "29a87610a847",
+          "cligne": true
         }
       }
     },
@@ -78,7 +79,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "92c9c5a28c52"
+          "sha": "92c9c5a28c52",
+          "cligne": true
         },
         "halloween": {
           "etats": [

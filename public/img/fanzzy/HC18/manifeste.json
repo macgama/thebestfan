@@ -1,6 +1,6 @@
 {
   "id": "HC18",
-  "rev": 11,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -38,7 +38,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d8d6a9336b9c"
+          "sha": "d8d6a9336b9c",
+          "cligne": true
         }
       }
     },
@@ -66,7 +67,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "9f31341b5f71"
+          "sha": "9f31341b5f71",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
@@ -118,7 +120,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "cbc203e2356b"
+          "sha": "cbc203e2356b",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [
