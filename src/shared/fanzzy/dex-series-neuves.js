@@ -1146,4 +1146,218 @@ export const DEX_NEUVES = [
       + 'd’autre ne diffuse. À deux heures du matin ils sont encore là.',
     mods: { breathBonus: 1.36, refundBonus: 1.28, mashBonus: 0.84 },
     cri: { label: 'VOUS ÊTES ENCORE LÀ ?', gest: 'bascule', power: 80 } },
+
+  /* HC17 à HC51 — les trente-cinq héros du canapé de la refonte (45 personnages
+     et 5 légendaires par série, demande de Gaël). Fiches et dessins :
+     series-prompts/HC-les-heros-du-canape.md. */
+  { id: 'HC17', nom: 'Le Canapé', type: 'fide', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Le vieux canapé qui a vu tous les matchs de la famille. Il a un creux à la '
+      + 'place de chacun, et personne ne s’assoit dans celui du grand-père.',
+    mods: { holdBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'TOUT LE MONDE ASSIS', gest: 'hold', power: 45 } },
+
+  { id: 'HC18', nom: 'La Mamie Devant la Télé', type: 'depl', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle ne rate aucun match depuis 1970 et elle connaît tous les joueurs par leur '
+      + 'prénom. Elle les appelle aussi par celui de leur père.',
+    mods: { breathBonus: 1.16, mashBonus: 0.9 },
+    cri: { label: 'C’EST LE PETIT DE…', gest: 'memoire', power: 44 } },
+
+  { id: 'HC19', nom: 'La Télécommande', type: 'tifo', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Introuvable au coup d’envoi, toujours coincée entre deux coussins. Il lui '
+      + 'manque un bouton, et c’était celui du son.',
+    mods: { parryBonus: 1.16, refundBonus: 0.9 },
+    cri: { label: 'QUI M’A VUE ?', gest: 'tri', power: 45 } },
+
+  { id: 'HC20', nom: 'La Box Internet', type: 'pyro', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle redémarre toute seule à la 88e minute, au pire moment, et le salon entier '
+      + 'retient son souffle devant ses petites lumières.',
+    mods: { perfectBonus: 1.16, breathBonus: 0.9 },
+    cri: { label: 'REDÉMARRAGE…', gest: 'relance', power: 46 } },
+
+  { id: 'HC21', nom: 'Le Joueur de Console', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Tous les soirs il rejoue la finale sur sa console, et tous les soirs son club '
+      + 'gagne. La manette a perdu sa croix directionnelle en 2024.',
+    mods: { mashBonus: 1.16, perfectBonus: 0.92 },
+    cri: { label: 'PAUSE, PAUSE !', gest: 'mash', power: 45 } },
+
+  { id: 'HC22', nom: 'La Podcasteuse', type: 'voix', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Chaque lundi, deux heures d’analyse enregistrées dans sa cuisine, entre le '
+      + 'frigo et la bouilloire. Elle a quatre cents auditeurs fidèles et un chat qui '
+      + 'miaule au générique.',
+    mods: { tempoWindow: 1.16, holdBonus: 0.9 },
+    cri: { label: 'BIENVENUE DANS L’ÉPISODE', gest: 'tempo', power: 45 } },
+
+  { id: 'HC23', nom: 'Le Plaid', type: 'fide', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Le plaid à carreaux sous lequel toute la famille regarde le match d’hiver. On '
+      + 'se le dispute à la mi-temps, et une frange est déjà partie.',
+    mods: { holdBonus: 1.14, tempoInterval: 60 },
+    cri: { label: 'PLACE POUR UN', gest: 'tenue', power: 44 } },
+
+  { id: 'HC24', nom: 'La Coloc Qui Dort', type: 'pyro', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle dort sur le canapé du coup d’envoi au coup de sifflet final, et elle se '
+      + 'réveille pile pour le but. Elle ne l’a jamais raté.',
+    mods: { perfectBonus: 1.18, refundBonus: 0.9 },
+    cri: { label: 'QUOI ? BUT ?', gest: 'visee', power: 46 } },
+
+  { id: 'HC25', nom: 'La Fille Qui Lit les Stats', type: 'tifo', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle sait combien de corners le club a tirés en 1998, et elle a raison. Elle '
+      + 'le note dans un cahier vert d’eau, au crayon, avec la date.',
+    mods: { parryBonus: 1.18, breathBonus: 0.9 },
+    cri: { label: 'EN FAIT, NON', gest: 'tifo', power: 46 } },
+
+  { id: 'HC26', nom: 'Le Réveil', type: 'pyro', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Réglé à 4 h 55 pour le match à l’autre bout du monde. Il sonne un peu trop '
+      + 'fort et il a la cloche cabossée.',
+    mods: { perfectBonus: 1.16, tempoWindow: 0.92 },
+    cri: { label: 'DEBOUT, ÇA COMMENCE', gest: 'relance', power: 45 } },
+
+  { id: 'HC27', nom: 'Le Livreur de Pizza', type: 'depl', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il sonne pile au but et il reste regarder la reprise sur le pas de la porte, '
+      + 'le carton encore chaud dans les mains.',
+    mods: { breathBonus: 1.16, perfectBonus: 0.9 },
+    cri: { label: 'QUI A COMMANDÉ ?', gest: 'echarpe', power: 45 } },
+
+  { id: 'HC28', nom: 'L’Antenne du Toit', type: 'pyro', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'On la tourne à la main sur le toit pendant que quelqu’un crie depuis le salon. '
+      + 'Une de ses branches est tordue depuis l’orage de 2009.',
+    mods: { perfectBonus: 1.14, parryResist: 0.9 },
+    cri: { label: 'LÀ ! ÇA MARCHE !', gest: 'relance', power: 45 } },
+
+  { id: 'HC29', nom: 'La Supportrice Expatriée', type: 'depl', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle vit à l’étranger et regarde chaque match de son club à l’heure du '
+      + 'déjeuner, seule au bureau, le téléphone calé contre un sandwich.',
+    mods: { breathBonus: 1.14, holdBonus: 0.9 },
+    cri: { label: 'ICI, ON EST LÀ', gest: 'echarpe', power: 44 } },
+
+  { id: 'HC30', nom: 'Le Grand-Père à la Radio', type: 'voix', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il écoute le match à la radio en même temps qu’il le regarde à la télé, le son '
+      + 'coupé. La radio, elle, ne ment pas.',
+    mods: { tempoWindow: 1.14, mashBonus: 0.9 },
+    cri: { label: 'ÉCOUTEZ LA RADIO', gest: 'echo', power: 45 } },
+
+  { id: 'HC31', nom: 'Le Fauteuil Inclinable', type: 'fide', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il se renverse tout seul au moment du penalty, et il grince à chaque but. '
+      + 'Personne n’a jamais retrouvé le manuel.',
+    mods: { holdBonus: 1.14, breathBonus: 0.9 },
+    cri: { label: 'TOUT EN ARRIÈRE', gest: 'retenue', power: 44 } },
+
+  { id: 'HC32', nom: 'La Voisine Qui Crie au But', type: 'voix', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'On l’entend crier depuis son balcon trente secondes avant son propre écran. '
+      + 'Tout l’immeuble sait le score avant elle.',
+    mods: { tempoWindow: 1.18, refundBonus: 0.9 },
+    cri: { label: 'BUUUUUT !', gest: 'tempo', power: 46 } },
+
+  { id: 'HC33', nom: 'Le Mug du Match', type: 'fide', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Le mug ébréché qu’on ne lave jamais les soirs de victoire, pour ne pas briser '
+      + 'le sort. Le sachet de thé y est depuis le dernier titre.',
+    mods: { holdBonus: 1.18, parryResist: 0.9 },
+    cri: { label: 'ON NE ME LAVE PAS', gest: 'hold', power: 46 } },
+
+  { id: 'HC34', nom: 'Le Dessinateur de BD', type: 'tifo', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il dessine chaque match en trois cases et il les poste le lendemain matin. La '
+      + 'troisième case est toujours la plus drôle.',
+    mods: { parryBonus: 1.16, tempoWindow: 0.9 },
+    cri: { label: 'EN TROIS CASES', gest: 'mosaique', power: 45 } },
+
+  { id: 'HC35', nom: 'Le Projecteur du Bar', type: 'tifo', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Le vieux projecteur du bar du coin, calé sur un sous-bock. Les soirs de match '
+      + 'il transforme le mur en écran géant, et il chauffe un peu.',
+    mods: { parryBonus: 1.2, holdBonus: 0.9 },
+    cri: { label: 'ÉTEIGNEZ LA LUMIÈRE', gest: 'tifo', power: 46 } },
+
+  { id: 'HC36', nom: 'La Reine du Karaoké', type: 'voix', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle connaît tous les chants du virage par cœur et elle les chante au karaoké '
+      + 'du bar après le match. Elle ne regarde jamais l’écran.',
+    mods: { tempoWindow: 1.14, breathBonus: 0.9 },
+    cri: { label: 'TOUT LE BAR AVEC MOI', gest: 'capo', power: 45 } },
+
+  { id: 'HC37', nom: 'Le Câble HDMI', type: 'depl', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'On le cherche cinq minutes avant le coup d’envoi, toujours derrière le meuble. '
+      + 'Il a un nœud au milieu que personne n’a jamais défait.',
+    mods: { breathBonus: 1.14, tempoWindow: 0.9 },
+    cri: { label: 'JE SUIS LÀ-DERRIÈRE', gest: 'miroir', power: 44 } },
+
+  { id: 'HC38', nom: 'La Maman Qui Explique', type: 'tifo', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle explique le hors-jeu avec des tasses et des cuillères sur la table de la '
+      + 'cuisine. Tout le monde a compris, sauf l’arbitre.',
+    mods: { parryBonus: 1.16, mashBonus: 0.92 },
+    cri: { label: 'REGARDE, LA TASSE', gest: 'tifo', power: 45 } },
+
+  { id: 'HC39', nom: 'La Petite Sœur Qui S’en Fiche', type: 'fide', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle lit pendant tout le match, le livre à l’envers, et elle demande à la 89e '
+      + 'minute qui sont les bleus.',
+    mods: { holdBonus: 1.14, perfectBonus: 0.9 },
+    cri: { label: 'C’EST QUI, LES BLEUS ?', gest: 'jauge', power: 44 } },
+
+  { id: 'HC40', nom: 'Le Poisson Rouge', type: 'depl', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il tourne dans son bocal à côté de la télé depuis onze ans. Il a vu plus de '
+      + 'matchs que tout le monde, et il ne s’en souvient d’aucun.',
+    mods: { breathBonus: 1.18, parryResist: 0.9 },
+    cri: { label: 'BLOUP', gest: 'echarpe', power: 46 } },
+
+  { id: 'HC41', nom: 'L’Ordinateur Portable', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Ouvert au bureau, avec le match dans un petit coin de l’écran. Un post-it '
+      + 'jaune cache la fenêtre quand le chef passe.',
+    mods: { mashBonus: 1.14, holdBonus: 0.9 },
+    cri: { label: 'RÉUNION, RÉUNION', gest: 'salves', power: 44 } },
+
+  { id: 'HC42', nom: 'La Prof de Sport', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle commente chaque match à la récré du lundi, sifflet au cou et chronomètre '
+      + 'au poignet. Elle refait les actions avec les élèves.',
+    mods: { mashBonus: 1.14, tempoWindow: 0.9 },
+    cri: { label: 'ON ACCÉLÈRE !', gest: 'crescendo', power: 44 } },
+
+  { id: 'HC43', nom: 'La Cloche des Notifications', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'La petite cloche du téléphone qui sonne à chaque but, même pendant la messe, '
+      + 'même pendant le mariage.',
+    mods: { mashBonus: 1.18, breathBonus: 0.9 },
+    cri: { label: 'DING DING DING', gest: 'mash', power: 46 } },
+
+  { id: 'HC44', nom: 'Le Mec du Rétro', type: 'depl', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il regarde chaque soir de vieux matchs en VHS, en survêtement de 1991. Il jure '
+      + 'que c’était mieux avant, et il a les cassettes pour le prouver.',
+    mods: { breathBonus: 1.14, refundBonus: 0.9 },
+    cri: { label: 'C’ÉTAIT MIEUX AVANT', gest: 'bascule', power: 44 } },
+
+  { id: 'HC45', nom: 'La Cassette VHS', type: 'pyro', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'La cassette de la finale de 1998, rembobinée tellement de fois que la bande '
+      + 'grince. L’étiquette est rayée, mais tout le monde sait ce qu’il y a dessus.',
+    mods: { perfectBonus: 1.14, holdBonus: 0.9 },
+    cri: { label: 'ON REMBOBINE', gest: 'rouleaux', power: 44 } },
+
+  { id: 'HC46', nom: 'Le Frère Qui Spoile', type: 'voix', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il a vu le résultat sur son téléphone et il le dit à tout le monde avant la '
+      + 'rediffusion. Il fait semblant que ça lui a échappé.',
+    mods: { tempoWindow: 1.14, perfectBonus: 0.9 },
+    cri: { label: 'J’AI RIEN DIT', gest: 'contretemps', power: 44 } },
+
+  { id: 'HC47', nom: 'Le Voisin du Dessous', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il tape au plafond avec son balai à chaque but, en peignoir et en filet à '
+      + 'cheveux. Personne ne sait pour quelle équipe il est.',
+    mods: { mashBonus: 1.16, refundBonus: 0.9 },
+    cri: { label: 'UN PEU DE CALME !', gest: 'mash', power: 45 } },
+
+  { id: 'HC48', nom: 'La Doubleuse de Jeux Vidéo', type: 'voix', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle prête sa voix aux commentateurs des jeux de foot, et elle crie le but en '
+      + 'cinq langues. Elle a mal à la gorge tous les vendredis.',
+    mods: { tempoWindow: 1.16, parryResist: 0.9 },
+    cri: { label: 'GOAL, BUT, TOR !', gest: 'tempo', power: 45 } },
+
+  { id: 'HC49', nom: 'Le Ventilateur', type: 'tifo', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Le ventilateur du match d’été. Il tourne la tête vers tout le monde sauf vers '
+      + 'soi, et le petit ruban rose sur sa grille vole dans tous les sens.',
+    mods: { parryBonus: 1.14, breathBonus: 0.9 },
+    cri: { label: 'À GAUCHE, À DROITE', gest: 'ola', power: 44 } },
+
+  { id: 'HC50', nom: 'Le Retraité au Jardin', type: 'fide', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Il écoute le match en arrosant ses tomates, la radio posée sur la brouette. Il '
+      + 'arrose deux fois le même pied quand on marque.',
+    mods: { holdBonus: 1.16, mashBonus: 0.9 },
+    cri: { label: 'ÇA POUSSE', gest: 'hold', power: 45 } },
+
+  { id: 'HC51', nom: 'La Tante au Téléphone', type: 'perc', set: 'HC', stage: 1, rar: 'commune',
+    histoire: 'Elle appelle pendant chaque match pour demander le score, et elle raconte '
+      + 'toute sa semaine. Elle raccroche juste avant le but.',
+    mods: { mashBonus: 1.14, parryResist: 0.9 },
+    cri: { label: 'ALORS, ÇA DONNE QUOI ?', gest: 'deuxvoix', power: 44 } },
 ];

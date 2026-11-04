@@ -893,6 +893,243 @@ export const AGES = {
     ['La Voix du Samedi', 'Trois générations ont appris les buts par sa voix. Le club diffuse son '
       + 'commentaire dans le stade, en direct, sur le but du titre.', 'ET LÀ, ÇA Y EST'],
   ],
+  HC17: [
+    ['Le Canapé du Salon', 'Coussins neufs, plaid au crochet et une télécommande dans chaque '
+      + 'accoudoir. Il garde le même creux pour chacun, même pour ceux qui ne '
+      + 'viennent plus.', 'POUSSEZ-VOUS UN PEU'],
+    ['Le Trône du Dimanche', 'Un trône de velours au dossier sculpté, où toute la famille tient à '
+      + 'la fois. Le fil qui dépasse de l’assise, personne n’a jamais osé le '
+      + 'couper.', 'LE DIMANCHE, ON EST LÀ'],
+  ],
+  HC18: [
+    ['La Mamie du Quartier', 'Un châle, un panier de biscuits, une théière pleine : tout '
+      + 'l’immeuble regarde le match chez elle. Elle raconte la finale de '
+      + '1976 à chaque mi-temps.', 'EN 76, DÉJÀ'],
+    ['La Fée du Foyer', 'Elle flotte au-dessus de la maison et garde le feu allumé les soirs de '
+      + 'défaite. Le crayon est toujours planté dans son chignon, pour noter les '
+      + 'buteurs.', 'ON RENTRE AU CHAUD'],
+  ],
+  HC19: [
+    ['La Télécommande Universelle', 'Elle allume la télé, la box, la lumière et le ventilateur du '
+      + 'voisin. Elle ne quitte plus la main de celui qui l’a '
+      + 'retrouvée.', 'CHANGEZ PAS DE CHAÎNE'],
+    ['Le Sceptre des Chaînes', 'Les écrans tournent autour de lui comme des planètes, et il les '
+      + 'commande tous d’un geste. Le bouton manquant, il ne l’a jamais '
+      + 'remplacé.', 'TOUTES LES CHAÎNES'],
+  ],
+  HC20: [
+    ['La Box qui Clignote', 'Elle clignote de toutes ses lumières à chaque but, et elle tient '
+      + 'enfin jusqu’au coup de sifflet final. Le nœud de câbles à ses pieds '
+      + 'n’a pas bougé.', 'ÇA REVIENT !'],
+    ['La Tour des Réseaux', 'Une grande tour de lumière bleue, reliée à toutes les maisons du '
+      + 'quartier par des fils lumineux. Plus personne ne rate un but, nulle '
+      + 'part.', 'TOUT LE MONDE EST CONNECTÉ'],
+  ],
+  HC21: [
+    ['Le Champion du Salon', 'Il a gagné le tournoi du quartier, un trophée en plastique et le '
+      + 'droit de choisir la chaîne le dimanche. Il garde son casque autour '
+      + 'du cou.', 'REVANCHE ?'],
+    ['Le Chevalier Pixel', 'Une armure de pixels bleus, une épée carrée, et un village entier '
+      + 'derrière lui. Il protège tout le monde, et il appuie encore sur tous '
+      + 'les boutons en même temps.', 'NIVEAU SUIVANT'],
+  ],
+  HC22: [
+    ['La Voix des Ondes', 'Son émission passe à la radio du club le samedi matin. Elle '
+      + 'l’enregistre toujours dans sa cuisine, et le chat est toujours au '
+      + 'générique.', 'ON EST EN DIRECT'],
+    ['L’Oracle des Ondes', 'Des anneaux de son tournent autour d’elle et elle entend toutes les '
+      + 'voix du virage à la fois. Elle annonce le score avant le match, sans '
+      + 'jamais se tromper.', 'J’ENTENDS TOUT'],
+  ],
+  HC23: [
+    ['Le Plaid du Dimanche', 'Assez grand pour quatre, avec une bouillotte orange cousue dans un '
+      + 'coin. On ne se le dispute plus, on se serre.', 'SERREZ-VOUS'],
+    ['La Grande Couverture du Monde', 'Elle s’étend sur les toits et les collines, et tout le '
+      + 'monde a chaud dessous. Il manque toujours une frange, au '
+      + 'même coin.', 'PERSONNE N’A FROID'],
+  ],
+  HC24: [
+    ['La Coloc Réveillée', 'Le masque de nuit relevé sur le front, elle tient maintenant toute une '
+      + 'mi-temps. Elle se rendort à la pause, par principe.', 'JE DORS PAS'],
+    ['La Belle du Bois Éveillée', 'Une couronne de roses, les yeux grands ouverts, et plus rien ne '
+      + 'lui échappe. Le masque de nuit rose pend à son poignet, au cas '
+      + 'où.', 'RÉVEILLEZ-VOUS !'],
+  ],
+  HC25: [
+    ['La Statisticienne', 'Elle a trois cahiers, un tableur et une colonne pour les poteaux '
+      + 'rentrants. L’entraîneur lui a demandé ses notes une fois, et il n’a pas '
+      + 'compris.', 'C’EST DANS LES CHIFFRES'],
+    ['La Gardienne des Archives', 'Derrière elle s’élèvent les rayons de tous les matchs jamais '
+      + 'joués. Le premier cahier vert d’eau est sur l’étagère du haut, '
+      + 'à sa place.', 'TOUT EST ÉCRIT'],
+  ],
+  HC26: [
+    ['Le Réveil de Nuit', 'Il ne sonne plus, il chuchote, pour ne pas réveiller la maison. Il '
+      + 'connaît l’heure de tous les coups d’envoi de la planète.', 'C’EST L’HEURE'],
+    ['L’Horloge du Monde', 'Une tour d’horloge de brique et de laiton, avec un cadran sans '
+      + 'chiffres. Sa cloche, tout en haut, est restée cabossée.', 'L’HEURE DU MATCH'],
+  ],
+  HC27: [
+    ['Le Livreur du Match', 'Il connaît l’horaire des matchs mieux que celui de ses commandes. Il '
+      + 'livre à la mi-temps, et il reste pour la deuxième.', 'LIVRÉ À LA PAUSE'],
+    ['Le Messager à Vélo Ailé', 'Des ailes aux sandales, un vélo qui file au-dessus des toits, et '
+      + 'des repas chauds pour tout le virage. Le carton rouge est '
+      + 'toujours sur son porte-bagages.', 'ÇA ARRIVE !'],
+  ],
+  HC28: [
+    ['L’Antenne Satellite', 'Une parabole toute neuve, qui attrape les matchs des cinq continents. '
+      + 'Elle garde sa vieille branche tordue, par fidélité.', 'J’AI LE SIGNAL'],
+    ['Le Phare des Ondes', 'Un grand phare d’argent dont la lampe envoie les matchs à toutes les '
+      + 'maisons. Sa branche tordue tourne tout en haut, avec la lumière.', 'ÇA CAPTE PARTOUT'],
+  ],
+  HC29: [
+    ['La Voyageuse', 'Une valise pleine d’autocollants de stades, et un match dans chaque fuseau '
+      + 'horaire. Elle retrouve toujours un bar qui le diffuse.', 'PARTOUT CHEZ NOUS'],
+    ['La Navigatrice des Étoiles', 'Une cape semée de constellations, un sextant à la ceinture, et '
+      + 'une étoile qui lui montre la route de la maison. Elle garde le '
+      + 'badge du bureau en marque-page.', 'JE RENTRE'],
+  ],
+  HC30: [
+    ['Le Grand-Père de Garde', 'Il veille tard, le transistor sur les genoux, pour les matchs de '
+      + 'nuit. Les petits viennent l’écouter en pyjama.', 'IL Y A ENCORE LA PROLONGATION'],
+    ['Le Gardien du Phare', 'Il écoute la mer et les ondes depuis son phare, la lanterne à la '
+      + 'main. Le transistor est posé à côté de lui, toujours allumé.', 'LA RADIO NE MENT PAS'],
+  ],
+  HC31: [
+    ['Le Fauteuil à Massage', 'Il masse le dos pendant les prolongations et il chauffe pendant les '
+      + 'tirs au but. Il grince encore, mais moins fort.', 'DÉTENDEZ-VOUS'],
+    ['Le Fauteuil des Nuages', 'Il flotte sur des nuages blancs, avec une petite lune pour lampe '
+      + 'de chevet. La pièce usée sur son accoudoir est toujours là.', 'ON NE BOUGE PLUS'],
+  ],
+  HC32: [
+    ['La Voisine du Balcon', 'Elle a mis un drapeau à son balcon et un haut-parleur à côté. Les '
+      + 'voisins des trois rues ouvrent leurs fenêtres pour l’entendre.', 'TOUT LE MONDE AU BALCON'],
+    ['La Cloche du Village', 'Une grande cloche de bronze derrière les épaules, et tout le village '
+      + 'sonne avec elle. Ses bigoudis sont toujours dans ses cheveux.', 'ÇA SONNE !'],
+  ],
+  HC33: [
+    ['Le Grand Mug', 'Assez grand pour toute la famille, et il porte toujours chance. Son bord est '
+      + 'resté ébréché, au même endroit.', 'ENCORE UNE TASSE'],
+    ['La Théière Enchantée', 'Une théière de porcelaine qui verse un ruban de thé chaud à toute la '
+      + 'tribune. Le petit éclat de son bec, c’est celui du premier mug.', 'LE SORT TIENT'],
+  ],
+  HC34: [
+    ['Le Dessinateur des Tribunes', 'Il dessine au virage, debout, le carnet contre la rambarde. '
+      + 'Ses planches sont collées dans la buvette.', 'ON VOUS DESSINE'],
+    ['Le Peintre des Légendes', 'Ce qu’il peint prend vie au-dessus du stade. Il garde son béret '
+      + 'et son premier carnet dans la poche de sa blouse.', 'C’EST UNE LÉGENDE'],
+  ],
+  HC35: [
+    ['Le Grand Projecteur', 'Un écran sur toute la façade, et la rue entière s’assoit sur le '
+      + 'trottoir. Le sous-bock est toujours sous son pied.', 'SUR LE MUR !'],
+    ['Le Cinéma des Étoiles', 'Il projette les matchs sur le ciel, et le quartier entier lève la '
+      + 'tête. Il est toujours calé sur son sous-bock.', 'REGARDEZ LE CIEL'],
+  ],
+  HC36: [
+    ['La Chanteuse du Bar', 'Le bar a acheté un vrai micro pour elle. Le patron baisse la musique '
+      + 'dès qu’elle se lève.', 'LE REFRAIN !'],
+    ['La Sirène des Chants', 'Sa voix porte du bar jusqu’au stade, et le virage chante avec elle. '
+      + 'Elle tient toujours le petit micro rose de ses débuts.', 'CHANTEZ !'],
+  ],
+  HC37: [
+    ['Le Câble Tressé', 'Gainé, solide, et assez long pour aller jusqu’au balcon. Il a gardé son '
+      + 'nœud.', 'BIEN BRANCHÉ'],
+    ['Le Serpent des Liens', 'Un long serpent de câbles tressés qui relie toutes les maisons du '
+      + 'quartier au même match. Le nœud est toujours au milieu de son corps.', 'TOUS RELIÉS'],
+  ],
+  HC38: [
+    ['La Maman des Règles', 'Elle entraîne les petits du quartier le mercredi, avec les mêmes '
+      + 'tasses en guise de plots. Personne n’a jamais été hors-jeu dans son '
+      + 'équipe.', 'C’EST LA RÈGLE'],
+    ['La Maîtresse des Contes', 'Un grand livre ouvert flotte devant elle, et de petits joueurs '
+      + 'dessinés en sortent pour jouer. Elle garde une cuillère dans sa '
+      + 'poche.', 'IL ÉTAIT UNE FOIS'],
+  ],
+  HC39: [
+    ['La Petite Sœur Curieuse', 'Elle a posé son livre, elle pose des questions, et elle a compris '
+      + 'le hors-jeu avant son frère.', 'POURQUOI IL A SIFFLÉ ?'],
+    ['La Petite Exploratrice', 'Une lanterne, une carte dessinée à la main, et tous les stades du '
+      + 'monde à visiter. Son livre est dans la poche de son manteau, à '
+      + 'l’endroit.', 'ON VA VOIR !'],
+  ],
+  HC40: [
+    ['Le Poisson du Salon', 'Un grand aquarium avec un petit but au fond. Il fait un tour complet '
+      + 'à chaque but de son club.', 'UN TOUR DE PLUS'],
+    ['Le Dragon d’Eau', 'Un dragon d’écailles orange, porté par des rubans d’eau, une perle dans '
+      + 'la griffe. Une petite bulle monte toujours de sa bouche.', 'LA VAGUE ARRIVE'],
+  ],
+  HC41: [
+    ['Le Portable du Bureau', 'Tout l’open space s’est réuni autour de lui à la 80e minute. Le '
+      + 'post-it est toujours sur l’écran, pour la forme.', 'ACTUALISE !'],
+    ['La Machine à Rêves', 'Des panneaux violets, des cadrans de laiton, et des rubans de lumière '
+      + 'qui sortent de l’écran. Le post-it jaune y est encore collé.', 'TOUT S’AFFICHE'],
+  ],
+  HC42: [
+    ['La Coach du Quartier', 'Elle entraîne tout le quartier le samedi matin, des petits aux '
+      + 'retraités. Elle ne siffle qu’une fois, et tout le monde s’arrête.', 'ENCORE UN TOUR'],
+    ['La Montagnarde', 'Une corde à l’épaule, un piolet à la ceinture, et elle emmène tout le '
+      + 'monde au sommet. Le sifflet vert pend toujours à son cou.', 'JUSQU’EN HAUT'],
+  ],
+  HC43: [
+    ['La Cloche du Groupe', 'Elle sonne pour tout le groupe des supporters à la fois, soixante '
+      + 'téléphones d’un coup. Personne n’a jamais coupé le son.', 'TOUT LE MONDE EST AU COURANT'],
+    ['Le Carillon', 'Un clocher entier de cloches de bronze, avec des colombes et des notes qui '
+      + 's’envolent. Il garde le petit badge blanc sur le côté.', 'ÇA CARILLONNE'],
+  ],
+  HC44: [
+    ['Le Collectionneur de Cassettes', 'Six cents cassettes rangées par saison, et un magnétoscope '
+      + 'de rechange. Il prête les finales, mais il note le nom.', 'TU ME LA RENDS'],
+    ['Le Conservateur du Temps', 'Un musée entier de ballons et de crampons anciens, et un grand '
+      + 'sablier qui flotte à côté de lui. Sa banane de 1991 est sous une '
+      + 'vitrine.', 'ON GARDE TOUT'],
+  ],
+  HC45: [
+    ['La Cassette du Grand Soir', 'Copiée trois fois, prêtée à tout l’immeuble, et toujours '
+      + 'rendue. Elle grince encore au moment du but.', 'ENCORE UNE FOIS'],
+    ['La Bobine des Légendes', 'Une grande bobine de film où dorment tous les joueurs de légende. '
+      + 'Une petite boucle de bande rouge dépasse toujours, comme sur la '
+      + 'cassette.', 'LA LÉGENDE TOURNE'],
+  ],
+  HC46: [
+    ['Le Frère Repenti', 'Il a promis de ne plus rien dire, et il a mis son téléphone dans un '
+      + 'tiroir. Il tient sa langue jusqu’au coup de sifflet, presque toujours.', 'MOTUS'],
+    ['Le Gardien des Secrets', 'Un grand coffre de secrets lumineux derrière lui, et toutes les '
+      + 'clés autour. Le téléphone orange est dedans, et il ne l’ouvrira '
+      + 'pas.', 'JE NE DIRAI RIEN'],
+  ],
+  HC47: [
+    ['Le Voisin Qui Monte', 'Un soir, il est monté se plaindre et il est resté pour la deuxième '
+      + 'mi-temps. Il a apporté son balai, par habitude.', 'JE PEUX ENTRER ?'],
+    ['L’Ami de l’Immeuble', 'Toutes les fenêtres de l’immeuble s’allument derrière lui, et chacun '
+      + 'regarde le match chez un voisin. Il tape encore au plafond, mais pour '
+      + 'applaudir.', 'TOUT L’IMMEUBLE'],
+  ],
+  HC48: [
+    ['La Voix des Héros', 'Elle double maintenant les joueurs eux-mêmes, et des millions d’enfants '
+      + 'les entendent avec sa voix. Son casque orange ne la quitte pas.', 'C’EST MOI QUI PARLE'],
+    ['La Voix aux Mille Visages', 'Mille masques de théâtre tournent autour d’elle, et chacun '
+      + 'parle avec sa voix. Le petit casque orange est toujours autour '
+      + 'de son cou.', 'MILLE VOIX'],
+  ],
+  HC49: [
+    ['Le Ventilateur d’Été', 'Grand, sur pied, et il souffle sur tout le salon à la fois. La '
+      + 'tribune entière tourne la tête avec lui.', 'ET ON TOURNE'],
+    ['L’Esprit du Vent Frais', 'Une grande fleur de pétales bleus qui tourne, et un vent frais sur '
+      + 'tout le virage les soirs d’été. Le ruban rose flotte encore à son '
+      + 'cou.', 'UN PEU D’AIR'],
+  ],
+  HC50: [
+    ['Le Jardinier du Dimanche', 'Un potager entier, et des tomates pour toute la tribune le '
+      + 'dimanche. La radio est toujours sur la brouette.', 'SERVEZ-VOUS'],
+    ['Le Gardien du Verger', 'Des arbres fruitiers poussent autour de lui, et des oiseaux se '
+      + 'posent sur ses épaules. Il garde son vieil arrosoir vert à la main.', 'IL Y EN AURA POUR TOUS'],
+  ],
+  HC51: [
+    ['La Tante Connectée', 'Elle a appris la visio et elle regarde le match avec toute la famille, '
+      + 'chacun chez soi. Elle parle encore pendant les penalties.', 'VOUS M’ENTENDEZ ?'],
+    ['La Voix des Familles', 'Des fils de voix lumineux relient toutes les maisons de la famille '
+      + 'autour d’elle. Le combiné rouge est toujours dans sa main.', 'TOUTE LA FAMILLE'],
+  ],
   IM10: [
     ['Le Drapeau Adopté', 'Le virage a appris le nom du club et le chante une fois par match, au hasard, sans '
       + 'que personne sache pourquoi. Le club en question l’ignore complètement.',
