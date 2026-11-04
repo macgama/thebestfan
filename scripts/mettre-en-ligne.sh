@@ -15,7 +15,7 @@
 #   ssh-keygen -t ed25519 -C "thebestfan mise en ligne" -f ~/.ssh/thebestfan -N ""
 #
 # Variables :
-#   TBF_SSH           utilisateur@hôte                         (obligatoire)
+#   TBF_SSH           utilisateur@hôte (client@57-116302.ssh.hosting-ik.com)
 #   TBF_SSH_CLE       la clé privée              (défaut ~/.ssh/thebestfan)
 #   TBF_RACINE        le dossier du site sur le serveur
 #   TBF_REDEMARRAGE   la commande de relance sur le serveur (voir deployer.sh)
@@ -26,10 +26,8 @@
 
 set -euo pipefail
 
-if [ -z "${TBF_SSH:-}" ]; then
-  echo "TBF_SSH manque : donne l'accès SSH, par exemple utilisateur@hote" >&2
-  exit 1
-fi
+TBF_SSH="${TBF_SSH:-client@57-116302.ssh.hosting-ik.com}"
+export TBF_SSH
 CLE="${TBF_SSH_CLE:-$HOME/.ssh/thebestfan}"
 if [ ! -f "$CLE" ]; then
   echo "Clé introuvable : $CLE (voir l'en-tête de ce script)" >&2
@@ -39,8 +37,9 @@ cd "$(dirname "$0")/.."
 
 # BatchMode : jamais de mot de passe demandé. Si la clé est refusée, on
 # s'arrête net au lieu d'attendre une saisie que personne ne fera.
-export GIT_SSH_COMMAND="ssh -i $CLE -o BatchMode=yes -o IdentitiesOnly=yes"
-SSH=(ssh -i "$CLE" -o BatchMode=yes -o IdentitiesOnly=yes)
+# accept-new : la première connexion enregistre l'empreinte du serveur, les
+# suivantes refusent un serveur qui aurait changé.
+SSH=(ssh -i "$CLE" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new)
 
 echo "→ contrôle de l'accès SSH"
 "${SSH[@]}" "$TBF_SSH" true
