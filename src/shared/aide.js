@@ -194,6 +194,12 @@ const RUBRIQUES = [
           + 'devant son décor, avec la tenue et l’expression choisies. Touche '
           + 'l’écran ou la croix pour revenir. Pour retourner la carte, c’est la '
           + 'plaque ronde à côté d’elle.'],
+      ['Pourquoi mon Fanzzy de l’accueil ne change-t-il pas de tête quand je le touche ?',
+        () => 'Sur l’accueil, il ne montre que les expressions que tu as gagnées en '
+          + 'booster : la joie, la colère, le dépit, la poussée. Touche-le trois fois '
+          + 'de suite et il exulte, six fois et il proteste, s’il a l’expression. Sans '
+          + 'elle, il garde son air de repos et fait seulement son petit saut. Il se '
+          + 'tient toujours au même endroit, les pieds au sol au milieu de l’écran.'],
       ['Pourquoi certaines de mes cartes sont-elles floues et verrouillées ?',
         () => 'Ce sont les âges que tu n’as pas encore payés. On te montre qu’ils '
           + 'existent sans te montrer qui ils sont : découvrir le personnage fait '
