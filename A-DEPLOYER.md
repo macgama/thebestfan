@@ -16,6 +16,16 @@ schéma**.
 
 ---
 
+**Quinze vidéos tutoriel dans Comment jouer** (branche
+`claude/project-thread-p1621n`, 4 novembre 2026, demande de Gaël). Construction
+seule, sans schéma.
+
+- Avant de mettre en ligne : copier les 30 fichiers `tuto-<rubrique>-1.mp4` et
+  `.jpg` (dossier « video-tuto-comment-jouer » du fil) dans `public\video\` du
+  PC. Un bouton « Voir la vidéo » n'apparaît que si sa vidéo est là.
+
+---
+
 **Essai du PASS 1 par les admins** (branche `claude/project-thread-7jf6qt`,
 4 novembre 2026, demande de Gaël). Construction seule, **sans schéma**.
 
