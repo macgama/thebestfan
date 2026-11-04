@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Testeurs de l'appli Android : page /beta et plaque de l'accueil** (branche
+`claude/project-thread-lg6ctd`, 4 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- thebestfan.online/beta : les trois gestes (groupe Google, test, Play Store)
+  et un QR code vers elle (`public/img/qr-beta.png`, aussi pour l'imprimer).
+- Sur l'accueil, téléphones Android seulement (jamais dans l'appli) : la
+  plaque « APPLI ANDROID · DEVIENS TESTEUR » mène à /beta.
+- Une question dans l'aide : « Y a-t-il une appli Android ? ».
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Les gestes refusés en duel** (branche `claude/project-thread-voavbo`,
 4 novembre 2026, signalé par Gaël : « Tifo ne fonctionne pas très bien »).
 Construction seule, **sans schéma**.

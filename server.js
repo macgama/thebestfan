@@ -1355,6 +1355,9 @@ app.get('/confidentialite', (_req, res) => page(res, 'confidentialite.html'));
    La vitrine, la porte d'inscription, l'abonnement et le pied du menu y mènent. */
 app.get('/mentions-legales', (_req, res) => page(res, 'mentions-legales.html'));
 app.get('/conditions', (_req, res) => page(res, 'conditions.html'));
+/* Devenir testeur de l'appli Android (Gaël, 4 novembre 2026) : lisible sans
+   compte, à partager partout, QR code compris. Voir android/README.md. */
+app.get('/beta', (_req, res) => page(res, 'beta.html'));
 
 /* -------------------------------------------------------------- socket.io */
 

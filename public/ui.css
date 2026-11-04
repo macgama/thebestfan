@@ -12142,6 +12142,13 @@ html[data-calme~="animations"] .tbf-pass-cadre[data-cadre="anime"]{animation:non
   animation:tbf-pass-appel 2.8s ease-in-out infinite}
 .pass-plaque b{display:block;font-size:12px;letter-spacing:.05em}
 .pass-plaque small{display:block;font-size:9.5px;letter-spacing:.04em;opacity:.85;text-transform:uppercase}
+/* La plaque « Appli Android · deviens testeur » (public/beta-android.js,
+   4 novembre 2026), en face de celle du PASS. */
+.beta-plaque{position:absolute;z-index:5;top:62px;right:8px;display:inline-flex;align-items:center;gap:6px;
+  padding:4px 9px 4px 7px;text-decoration:none;font-family:var(--banner);line-height:1.05;transform:rotate(2deg)}
+.beta-plaque svg{width:18px;height:18px;flex:none}
+.beta-plaque b{display:block;font-size:12px;letter-spacing:.05em}
+.beta-plaque small{display:block;font-size:9.5px;letter-spacing:.04em;opacity:.85}
 @keyframes tbf-pass-appel{0%,80%,100%{transform:rotate(-3deg) scale(1)}88%{transform:rotate(2deg) scale(1.07)}}
 
 .pass-spot{position:fixed;inset:0;z-index:9000;--pass:#c9772e;display:flex;flex-direction:column;
