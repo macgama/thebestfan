@@ -57,6 +57,7 @@ import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
 import { createBoutique } from './src/server/boutique/index.js';
 import { negocierAvif } from './src/server/images/index.js';
+import { routeAssetlinks } from './src/server/android.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ORIGIN = process.env.PUBLIC_ORIGIN ?? 'https://thebestfan.online';
@@ -994,6 +995,10 @@ app.get('/i18n/:fichier', (req, res, next) => {
   }
   next();
 });
+
+// L'appli Android (TWA) : la preuve que l'appli est à nous. 404 tant que
+// ANDROID_SHA256 n'est pas posé. Voir src/server/android.js.
+routeAssetlinks(app);
 
 // Les visuels ne changent jamais : un an de cache.
 app.use('/img', express.static(path.join(__dirname, 'public/img'),

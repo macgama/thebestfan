@@ -1,5 +1,22 @@
 # À déposer sur Infomaniak
 
+**L'appli Android du Play Store : préparation et paiement Google** (branche
+`claude/project-thread-lg6ctd`, 4 novembre 2026, choix de Gaël « Paiement
+Google dans l'appli » et « Oui, ajouter les colonnes »). **Avec schéma** :
+trois colonnes dans `achats` (`sql/boutique.sql`), appliquées par la mise en
+ligne.
+
+- Rien ne change sur le site tant que l'appli n'existe pas :
+  `/.well-known/assetlinks.json` répond 404 sans `ANDROID_SHA256`, et le
+  paiement Google répond 503 sans `GOOGLE_PLAY_CLE`. Stripe reste le paiement
+  du site.
+- Plus tard, une fois l'appli créée dans la Play Console : poser
+  `ANDROID_SHA256` et `GOOGLE_PLAY_CLE` dans le `.env` du serveur, puis
+  Redémarrer (voir `android/README.md` et `android/PAIEMENT-GOOGLE.md`).
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Six nouveaux gestes, trente en tout, cinq par famille** (branche
 `claude/project-thread-voavbo`, 4 novembre 2026, demande de Gaël « Go pour les
 6 nouveaux gestes »). **Avec schéma** : `sql/cris-novembre.sql`, appliqué par

@@ -92,3 +92,24 @@ DELETE FROM reglages WHERE cle LIKE 'billets.%';
 --
 -- Un solde restant se rembourse, par Stripe, à la personne. C'est la réponse
 -- honnête, et la seule.
+
+-- ---------------------------------------------------------------------------
+-- Le paiement Google de l'appli Android (validé par Gaël le 2026-11-04)
+--
+-- Dans l'appli du Play Store, le PASS se paie par Google Play ; sur le site,
+-- par Stripe. Les deux vont dans la même table, pour qu'un seul historique
+-- réponde à « qu'est-ce que j'ai payé ».
+--
+-- Pour un achat Google, `stripe_session` reçoit `google:<SHA-256 du jeton>` :
+-- la clé unique `uq_session` empêche ainsi de livrer deux fois le même achat,
+-- sans index sur un jeton de plusieurs centaines de caractères. Le jeton
+-- entier reste dans `google_jeton`, pour le relire chez Google un jour de
+-- remboursement. Une colonne par ALTER : le contrôle de démarrage n'en voit
+-- qu'une par instruction (voir src/server/auth/schema.js).
+
+ALTER TABLE achats
+  ADD COLUMN IF NOT EXISTS fournisseur ENUM('stripe','google') NOT NULL DEFAULT 'stripe' AFTER devise;
+ALTER TABLE achats
+  ADD COLUMN IF NOT EXISTS google_jeton VARCHAR(1024) NULL AFTER stripe_session;
+ALTER TABLE achats
+  ADD COLUMN IF NOT EXISTS google_commande VARCHAR(64) NULL AFTER google_jeton;
