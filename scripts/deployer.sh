@@ -56,6 +56,12 @@ git ls-files -z -- public/img/fanzzy public/img/ultime \
   | grep -zEi '\.(png|jpe?g|webp|avif|mp4)$' \
   | xargs -0 -r git rm -q --cached --
 
+# **public/video aussi** : les fonds filmés de fx.js et les vidéos du tutoriel
+# sont hors git depuis l'allègement (`.gitignore`, `envoyer-images.sh`). Le
+# premier déploiement du 4 novembre 2026 ne les retirait pas du suivi : le
+# `reset` les a effacés du serveur, et il a fallu les renvoyer.
+git ls-files -z -- public/video | xargs -0 -r git rm -q --cached --
+
 git reset --hard "origin/$BRANCHE"
 
 # --short=10 et non --short : la longueur par défaut dépend du nombre
