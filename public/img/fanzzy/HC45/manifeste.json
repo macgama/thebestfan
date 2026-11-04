@@ -1,6 +1,6 @@
 {
   "id": "HC45",
-  "rev": 23,
+  "rev": 24,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "acfd900ceb3b"
+          "sha": "acfd900ceb3b",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

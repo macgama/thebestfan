@@ -1,6 +1,6 @@
 {
   "id": "HC31",
-  "rev": 14,
+  "rev": 16,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "e676c257a0d8"
+          "sha": "e676c257a0d8",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -51,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4201eb70b1db"
+          "sha": "4201eb70b1db",
+          "cligne": true
         }
       }
     },
