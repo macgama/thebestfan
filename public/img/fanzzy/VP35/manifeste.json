@@ -1,6 +1,6 @@
 {
   "id": "VP35",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,18 +26,6 @@
           "portrait": true,
           "repli": "base",
           "sha": "bac6f54f3ecb"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "24505932807f"
         }
       }
     },

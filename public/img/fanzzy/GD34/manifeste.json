@@ -1,6 +1,6 @@
 {
   "id": "GD34",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -14,30 +14,6 @@
           ],
           "portrait": true,
           "sha": "7e24ef45f860"
-        },
-        "halloween": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "d47661416479"
-        },
-        "prehistorique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "eef02c301c08"
         }
       }
     },

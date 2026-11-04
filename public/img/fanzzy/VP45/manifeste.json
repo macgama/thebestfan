@@ -1,6 +1,6 @@
 {
   "id": "VP45",
-  "rev": 5,
+  "rev": 6,
   "evolutions": {
     "e1": {
       "skins": {
@@ -15,18 +15,6 @@
           "portrait": true,
           "sha": "f73aa15b142f",
           "cligne": true
-        },
-        "apocalyptique": {
-          "etats": [
-            "neutre",
-            "pousse",
-            "joie",
-            "depit",
-            "colere"
-          ],
-          "portrait": true,
-          "repli": "base",
-          "sha": "7987a9371d3f"
         },
         "halloween": {
           "etats": [
