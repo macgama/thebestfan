@@ -12,5 +12,7 @@
 #
 # Rien de ce fichier n'entre dans le dépôt, et ce script ne l'affiche jamais
 # ailleurs que pour ssh.
+# < /dev/null : PowerShell lirait sinon l'entrée héritée de ssh, et avalerait
+# ce qu'on envoie au serveur par un tube.
 exec powershell.exe -NoProfile -NonInteractive -Command \
-  '$s = Get-Content "$env:USERPROFILE\.ssh\thebestfan.mdp" | ConvertTo-SecureString; [Console]::Out.Write([Net.NetworkCredential]::new("", $s).Password)'
+  '$s = Get-Content "$env:USERPROFILE\.ssh\thebestfan.mdp" | ConvertTo-SecureString; [Console]::Out.Write([Net.NetworkCredential]::new("", $s).Password)' < /dev/null
