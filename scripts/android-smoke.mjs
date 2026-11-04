@@ -4,10 +4,11 @@
  */
 import assert from 'node:assert/strict';
 import express from 'express';
-import { assetlinks, routeAssetlinks, PAQUET_PAR_DEFAUT } from '../src/server/android.js';
+import { assetlinks, routeAssetlinks, PAQUET_PAR_DEFAUT, EMPREINTES_PAR_DEFAUT } from '../src/server/android.js';
 
 const E = 'ab:'.repeat(31) + 'cd';
-assert.equal(assetlinks({}), null, 'sans empreinte : rien');
+assert.equal(assetlinks({ ANDROID_SHA256: '' }), null, 'empreinte vidée : rien');
+assert.equal(assetlinks({})[0].target.sha256_cert_fingerprints[0], EMPREINTES_PAR_DEFAUT[0], 'sans réglage : la clé d’envoi');
 assert.equal(assetlinks({ ANDROID_SHA256: 'pas-une-empreinte' }), null, 'empreinte mal formée ignorée');
 const l = assetlinks({ ANDROID_SHA256: `${E}, ${E.replace('CD', 'EF')}` });
 assert.equal(l[0].target.package_name, PAQUET_PAR_DEFAUT);
@@ -25,7 +26,7 @@ async function appeler(env) {
     return { statut: r.status, type: r.headers.get('content-type'), corps: await r.text() };
   } finally { srv.close(); }
 }
-const absent = await appeler({});
+const absent = await appeler({ ANDROID_SHA256: '' });
 assert.equal(absent.statut, 404);
 const present = await appeler({ ANDROID_SHA256: E, ANDROID_PAQUET: 'online.thebestfan.essai' });
 assert.equal(present.statut, 200);
