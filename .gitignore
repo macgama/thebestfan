@@ -74,3 +74,4 @@ public/img/ultime/**/*.mp4
 .tbf-images-envoyees
 .tbf-images-envoyees.nouveau
 .tbf-images-liste
+*.mdp
