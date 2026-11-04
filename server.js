@@ -1291,8 +1291,8 @@ function page(res, fichier) {
        Il est parti avec la règle qui le lisait — voir `sw.js`, qui ne se fie
        plus qu'au code de statut. On ne rajoute pas ici un en-tête que personne
        ne lit : c'est ce genre de reste qui survit à sa raison d'être. */
-    res.type('html').send(marquer(apercu(estampiller(readFileSync(chemin, 'utf8'),
-      path.join(__dirname, 'public')))));
+    res.type('html').send(marquer(estampiller(apercu(readFileSync(chemin, 'utf8')),
+      path.join(__dirname, 'public'))));
   } catch {
     // Le fichier manque : on laisse Express rendre son 404 plutôt que
     // d'envoyer une page à moitié écrite.
