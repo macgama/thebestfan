@@ -23,8 +23,9 @@ export const PAQUET_PAR_DEFAUT = 'online.thebestfan.app';
    ligne habituelle suffise. `ANDROID_SHA256` dans le .env les remplace (vide :
    plus d'assetlinks).
    - la clé d'envoi, créée le 2026-11-04 sur le PC de Gaël (Bubblewrap) ;
-   - la clé de signature de Google, à ajouter quand la Play Console la montre. */
+   - la clé de signature de Google (Play Console › Intégrité de l'appli). */
 export const EMPREINTES_PAR_DEFAUT = [
+  '28:B7:58:2F:4D:45:F9:30:C2:1F:FB:0E:FC:C8:0E:F7:1B:B1:7D:40:D5:07:B6:34:6E:8E:F9:76:39:42:2A:8F',
   '04:12:55:2C:C8:B4:03:22:AB:F3:3D:4A:2B:0B:E9:21:21:60:45:8C:3F:43:2E:15:1C:90:F5:48:EA:2F:8F:68',
 ];
 
