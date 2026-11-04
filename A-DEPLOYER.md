@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Les gestes refusés en duel** (branche `claude/project-thread-voavbo`,
+4 novembre 2026, signalé par Gaël : « Tifo ne fonctionne pas très bien »).
+Construction seule, **sans schéma**.
+
+- Le tifo et l'écharpe tracés sur un téléphone à 120 Hz, TIENS repris,
+  un doigt qui rebondit : le serveur refusait le geste et le duel affichait
+  « Refusé par le serveur ». La page envoie maintenant une réponse que le
+  serveur accepte (`assainir`, public/geste.js), et un refus restant se dit
+  en mots.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **La fin de duel plus festive ou plus triste** (branche
 `claude/project-thread-pphd5o`, 4 novembre 2026, accord de Gaël « Oui, telle
 quelle »). Sans schéma.

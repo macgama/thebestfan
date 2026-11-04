@@ -645,5 +645,62 @@ if (G?.grille) {
     || (console.log('        ', fautes.join(' · ')), false));
 }
 
+/* ---------------------------------------------------------------------------
+ * **Un geste honnête n'est jamais refusé** (4 novembre 2026).
+ *
+ * Gaël voyait « Refusé par le serveur » à la fin de certains gestes en duel,
+ * le tifo d'abord. Un téléphone à 120 Hz rend plus de six cents points en six
+ * secondes de tracé ; un doigt qui rebondit frappe deux fois en vingt
+ * millisecondes ; reposer le doigt sur TIENS ajoute des appuis. Le serveur
+ * refusait, à raison contre un robot, à tort contre un joueur. `assainir`
+ * (geste.js) rend ce que le serveur accepte, sans rien changer à la note.
+ * ------------------------------------------------------------------------- */
+{
+  console.log('\nUn geste honnête n’est jamais refusé (assainir)');
+  const ctx = { document: { documentElement: { dataset: {} }, addEventListener() {} },
+    navigator: {}, performance, setTimeout, clearTimeout, setInterval, clearInterval, console,
+    CSS: { escape: (x) => x } };
+  ctx.window = ctx;
+  createContext(ctx);
+  new Script(SOURCE_GESTE).runInContext(ctx);
+  const assainir = ctx.TBF_GESTE?.assainir;
+  check('geste.js expose assainir', typeof assainir === 'function');
+  const cfg = resoudreGeste({}, { motif: 3 });
+  const noteDe = (kind, rendu) => { try { return grade(kind, rendu, {}, { motif: 3 }); } catch (e) { return e.code ?? 'refus'; } };
+  const pts = cfg.tifo.points;
+  const tifo = (n) => Array.from({ length: n }, (_, i) => {
+    const f = (i / n) * pts.length;
+    const a = pts[Math.floor(f) % pts.length];
+    const b = pts[(Math.floor(f) + 1) % pts.length];
+    const k = f % 1;
+    return { x: a.x + (b.x - a.x) * k + Math.sin(i) * 0.004, y: a.y + (b.y - a.y) * k + Math.cos(i) * 0.004 };
+  });
+  const cercle = (n) => Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2 * 3.2 * (cfg.echarpe.sens ?? 1);
+    return { x: 0.5 + 0.3 * Math.cos(a), y: 0.5 + 0.3 * Math.sin(a) };
+  });
+  const cas = [
+    ['le tifo tracé à 120 Hz (720 points)', 'tifo', { trace: tifo(720) }, 0.9],
+    ['le tifo tracé à 240 Hz (1 440 points)', 'tifo', { trace: tifo(1440) }, 0.9],
+    ['l’écharpe tournée à 120 Hz (840 points)', 'echarpe', { trace: cercle(840) }, 0.9],
+    ['TIENS lâché puis repris trois fois', 'hold', [0, 900, 1000, 1800, 1900, 2600, 2700, 3300], 0],
+    ['TIENS touché 20 ms', 'hold', [0, 20], 0],
+    ['LA RELANCE touchée 25 ms', 'relance', [100, 125], 0],
+    ['LE SANG-FROID touché 30 ms puis repris', 'tenue', [100, 130, 200, 2000], 0],
+    ['le tempo avec deux rebonds de doigt', 'tempo', [0, 15, 560, 1120, 1135, 1680, 2240, 2800, 3360, 3920], 0.9],
+    ['la mosaïque touchée à deux doigts', 'mosaique', { grille: cfg.mosaique.grille, instants: [300, 330, 900, 1400, 1420] }, 0],
+    ['la visée tapée partout', 'visee', { touches: Array.from({ length: 40 }, (_, i) => ({ x: (i % 7) / 7, y: (i % 5) / 5, t: 200 + i * 190 })) }, 0],
+    ['les accents frappés au rebond', 'accents', { frappes: [1500, 1530, 2140, 2780, 2800] }, 0],
+  ];
+  for (const [nom, kind, rendu, min] of cas) {
+    const avant = noteDe(kind, rendu);
+    const apres = noteDe(kind, assainir(kind, rendu, cfg));
+    check(`${nom} : noté (${typeof avant === 'number' ? avant.toFixed(2) : avant} → ${typeof apres === 'number' ? apres.toFixed(2) : apres})`,
+      typeof apres === 'number' && apres >= min);
+  }
+  // Et un vrai robot reste refusé : assainir ne travaille que pour la page.
+  check('un tracé de 1 440 points envoyé tel quel reste refusé', typeof noteDe('tifo', { trace: tifo(1440) }) === 'string');
+}
+
 console.log(ko ? `\n${ko} échec(s)\n` : '\ntout est vert\n');
 process.exitCode = ko ? 1 : 0;

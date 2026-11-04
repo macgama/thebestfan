@@ -545,6 +545,143 @@
    *   ne se chante pas — ses minuteries partent de l'appel, son zéro aussi —,
    *   le geste prend le sien à l'entrée.
    */
+  /* ---------------------------------------------- ce qui part au serveur
+
+     **Un geste honnête ne doit jamais être refusé.** Le serveur écarte ce
+     qu'une main ne fait pas : deux frappes à moins de 40 ms, un tracé de
+     plus de six cents points, une tenue reprise trois fois. Mais un téléphone
+     à 120 Hz rend deux cents points par seconde au tifo, un pouce qui rebondit
+     frappe deux fois en vingt millisecondes, et un joueur qui relâche puis
+     repose le doigt sur TIENS ajoute des appuis. Le duel affichait alors
+     « Refusé par le serveur » à la fin du geste, et le chant était perdu
+     (signalé par Gaël le 4 novembre 2026, « le tifo ne fonctionne pas très
+     bien »).
+
+     On ne touche pas aux garde-fous du serveur : ils restent ce qu'ils sont
+     contre un client modifié. C'est la page qui rend une réponse qu'ils
+     acceptent, en laissant tomber **ce qui ne compte pas** : la frappe en
+     double d'un rebond, les points d'un tracé trop serrés pour changer le
+     dessin, les appuis d'après la fin. Les seuils sont ceux du serveur
+     (`gestures.js`, `epreuves.js`), avec une marge. */
+  const ECART_FRAPPE = 45;                 // MIN_GAP_MS du serveur : 40
+  const MAX_FRAPPES = Object.freeze({
+    tempo: 24, mash: 60, contretemps: 20, echo: 16, crescendo: 26, salves: 30, retenue: 30,
+  });
+  const TENUES = Object.freeze({ hold: 4, relance: 4, tenue: 4 });
+  /* `humain()` du serveur : l'écart minimal entre deux instants, par épreuve. */
+  const ECART_EPREUVE = Object.freeze({
+    mosaique: 100, memoire: 100, capo: 100, tri: 100, bascule: 150,
+    ola: 130, miroir: 80, deuxvoix: 100, accents: 70, leurres: 130,
+    puzzle: 160, cortege: 90, rouleaux: 210,
+  });
+
+  /** Garde les valeurs espacées d'au moins `ecart` (`cle` lit l'instant). */
+  const espacer = (liste, ecart, cle = (x) => x) => {
+    if (!Array.isArray(liste)) return liste;
+    const gardees = [];
+    let avant = -Infinity;
+    for (const x of liste) {
+      const t = cle(x);
+      if (Number.isFinite(t) && t - avant < ecart) continue;
+      gardees.push(x);
+      if (Number.isFinite(t)) avant = t;
+    }
+    return gardees;
+  };
+
+  /** Un tracé : un point seulement s'il s'écarte du précédent, puis le plafond. */
+  const eclaircir = (trace, max) => {
+    if (!Array.isArray(trace)) return trace;
+    const pas = 0.008;
+    const gardes = [];
+    for (const p of trace) {
+      const d = gardes.at(-1);
+      if (d && Math.hypot(p.x - d.x, p.y - d.y) < pas) continue;
+      gardes.push(p);
+    }
+    const dernier = trace.at(-1);
+    if (dernier && gardes.at(-1) !== dernier && gardes.length) gardes.push(dernier);
+    return gardes.length > max ? gardes.slice(0, max) : gardes;
+  };
+
+  function assainir(kind, rendu, gestes) {
+    try {
+      if (Array.isArray(rendu)) {
+        if (TENUES[kind]) {
+          /* Appui, lâcher, appui… : un lâcher collé à son appui est reculé
+             juste au-delà du seuil (une tenue de 30 ms est ratée de toute
+             façon, on ne change rien à sa note), puis on garde les deux
+             premiers appuis. */
+          const r = [];
+          for (const t of rendu) {
+            const avant = r.at(-1);
+            r.push(Number.isFinite(avant) && t - avant < ECART_FRAPPE ? avant + ECART_FRAPPE : t);
+          }
+          return r.slice(0, TENUES[kind]);
+        }
+        const r = espacer(rendu, ECART_FRAPPE);
+        return MAX_FRAPPES[kind] ? r.slice(0, MAX_FRAPPES[kind]) : r;
+      }
+      if (!rendu || typeof rendu !== 'object') return rendu;
+      const g = gestes?.[kind] ?? {};
+      const r = { ...rendu };
+      if (kind === 'tifo' || kind === 'echarpe') {
+        r.trace = eclaircir(r.trace, (g.maxPoints ?? (kind === 'tifo' ? 600 : 800)) - 10);
+        return r;
+      }
+      if (kind === 'visee' && Array.isArray(r.touches)) {
+        const plafond = (g.cibles?.length ?? 0) * 4;
+        if (plafond) r.touches = r.touches.slice(0, plafond);
+        return r;
+      }
+      const ecart = ECART_EPREUVE[kind];
+      if (!ecart) return r;
+      if (Array.isArray(r.instants)) r.instants = espacer(r.instants, ecart);
+      if (kind === 'ola' || kind === 'accents') {
+        r.frappes = espacer([...(r.frappes ?? [])].sort((a, b) => a - b), ecart);
+        const plafond = kind === 'ola' ? (g.passages?.length ?? 0) * 4 : (g.liste?.length ?? 0) * 4;
+        if (plafond) r.frappes = r.frappes.slice(0, plafond);
+      }
+      if (kind === 'leurres') {
+        r.touches = espacer([...(r.touches ?? [])].sort((a, b) => a - b), ecart);
+        const plafond = (g.signaux?.length ?? 0) * 3;
+        if (plafond) r.touches = r.touches.slice(0, plafond);
+      }
+      if (kind === 'miroir') r.frappes = espacer(r.frappes, ecart, (f) => f?.t);
+      if (kind === 'deuxvoix' && Array.isArray(r.frappes)) {
+        const gauche = espacer(r.frappes.filter((f) => f?.cote === 0), ecart, (f) => f.t);
+        const droite = espacer(r.frappes.filter((f) => f?.cote === 1), ecart, (f) => f.t);
+        r.frappes = [...gauche, ...droite].sort((a, b) => a.t - b.t);
+        const plafond = (g.notes?.length ?? 0) * 3;
+        if (plafond) r.frappes = r.frappes.slice(0, plafond);
+      }
+      if (kind === 'rouleaux' && Array.isArray(r.lancers)) {
+        /* Une touche sans glisser n'est pas un lancer : le serveur la refusait
+           (`lancer.trop_rapide`), on ne l'envoie plus. */
+        const min = (g.dureeMin ?? 40) + 5;
+        r.lancers = espacer(r.lancers.filter((l) => l.t1 - l.t0 >= min), ecart, (l) => l.t0);
+        const plafond = (g.liste?.length ?? 0) * 3;
+        if (plafond) r.lancers = r.lancers.slice(0, plafond);
+      }
+      /* Le puzzle et le cortège : chaque pose, chaque pas change l'état, on
+         n'en retire aucun. Leur instant seul est avancé au-delà du seuil — il
+         ne sert qu'à ce contrôle-là au puzzle, et le cortège ne déplace un pas
+         que de quelques dizaines de millisecondes. */
+      if ((kind === 'puzzle' && Array.isArray(r.poses)) || (kind === 'cortege' && Array.isArray(r.pas))) {
+        const cle = kind === 'puzzle' ? 'poses' : 'pas';
+        let avant = -Infinity;
+        r[cle] = r[cle].map((p) => {
+          const t = Number.isFinite(p?.t) && p.t - avant < ecart ? avant + ecart : p?.t;
+          if (Number.isFinite(t)) avant = t;
+          return t === p?.t ? p : { ...p, t };
+        });
+      }
+      return r;
+    } catch {
+      return rendu;
+    }
+  }
+
   function jouer(kind, gestes, el = {}) {
     const zone = el.zone;
     const ici = performance.now();
@@ -600,7 +737,7 @@
           if (!relache) joue.classList.remove('hit');
         }
         if (zone) reperes.set(zone, derniere ?? performance.now());
-        resolve(rendre ?? taps);
+        resolve(assainir(kind, rendre ?? taps, gestes));
       };
       const minuteries = [];
       const apres = (ms, fn) => { const t = setTimeout(fn, ms); minuteries.push(t); return t; };
@@ -2267,7 +2404,7 @@
   }
 
   window.TBF_GESTE = {
-    jouer, label, aide, couleur, LABEL, AIDE, COULEUR,
+    jouer, assainir, label, aide, couleur, LABEL, AIDE, COULEUR,
     // Le pavé et le verdict (lot 6) : voir l'en-tête.
     FRAPPE, MOTS, mot, tamponner, attendre,
     DELAI_VERDICT, LECTURE_VERDICT, TENUE_CARTE,

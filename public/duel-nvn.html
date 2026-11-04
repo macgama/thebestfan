@@ -1635,7 +1635,24 @@ function toast(t) {
   clearTimeout(toastT);
   toastT = setTimeout(() => el.classList.remove('on'), 3400);
 }
-const dire = (code) => toast(MESSAGES[code] ?? `Refusé par le serveur : ${code}`);
+/* **Le refus d'un geste se dit en mots**, comme au Virage (`familleDuRefus`,
+   virage.html) : le duel affichait « Refusé par le serveur :
+   ferveur.error.trace.trop_longue » à la fin du geste (Gaël, 4 novembre
+   2026). Les mêmes phrases que le Virage, donc déjà traduites. */
+function familleDuRefus(code) {
+  const c = String(code ?? '');
+  if (/\.trop_rapide$/.test(c)) return 'Trop vite : le geste n’a pas pu être mesuré';
+  if (/\.trop_reguliere$/.test(c)) return 'Trop régulier pour une main — va à ton rythme';
+  if (/\.trop_juste$/.test(c)) return 'Répondu avant d’avoir pu lire la consigne';
+  if (/\.hors_delai$/.test(c)) return 'Trop tard : l’épreuve était déjà finie';
+  if (/\.(trop_nombreuses|trop_nombreux|trop_longue)$/.test(c)) return 'Trop de gestes d’un coup';
+  if (/\.invalide$/.test(c)) return 'Ce geste n’a pas été compris — recommence';
+  if (/^ferveur\.error\.(epreuve|consigne)\./.test(c)) {
+    return 'Cette épreuve est inconnue du serveur — recharge la page';
+  }
+  return null;
+}
+const dire = (code) => toast(MESSAGES[code] ?? familleDuRefus(code) ?? `Refusé par le serveur : ${code}`);
 
 
 /* ------------------------------------------------- faire venir quelqu'un
