@@ -15,7 +15,7 @@
 # Sans ce fichier, ssh le demande au clavier, comme avant.
 #
 # Variables :
-#   TBF_SSH           utilisateur@hôte (client@57-116302.ssh.hosting-ik.com)
+#   TBF_SSH           utilisateur@hôte (VSHXbBEk9F_thebesfan@57-116302.ssh.hosting-ik.com)
 #   TBF_RACINE        le dossier du site sur le serveur
 #   TBF_REDEMARRAGE   la commande de relance sur le serveur (voir deployer.sh)
 #   TBF_ORIGINE       l'adresse à interroger   (défaut https://thebestfan.online)
@@ -25,7 +25,7 @@
 
 set -euo pipefail
 
-TBF_SSH="${TBF_SSH:-client@57-116302.ssh.hosting-ik.com}"
+TBF_SSH="${TBF_SSH:-VSHXbBEk9F_thebesfan@57-116302.ssh.hosting-ik.com}"
 export TBF_SSH
 # Les scripts voisins viennent du même dossier que celui-ci ; les images, du
 # dépôt TBF_DEPOT (défaut : le dépôt qui contient ce script). On peut donc
