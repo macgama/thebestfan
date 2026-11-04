@@ -1,6 +1,6 @@
 {
   "id": "HC42",
-  "rev": 16,
+  "rev": 19,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7dd7632d7d5b",
+          "sha": "742479ab60cb",
           "cligne": true
         },
         "prehistorique": {
@@ -26,7 +26,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "256c70b5cd59",
+          "sha": "6e8d648a8f9c",
           "cligne": true
         }
       }
