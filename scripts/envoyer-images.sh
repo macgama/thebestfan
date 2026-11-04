@@ -33,7 +33,7 @@ if [ -z "${TBF_SSH:-}" ]; then
   exit 1
 fi
 RACINE="${TBF_RACINE:-sites/thebestfan.online}"
-cd "$(dirname "$0")/.."
+cd "${TBF_DEPOT:-$(dirname "$0")/..}"
 
 # public/video : les fonds filmés de fx.js et les vidéos tutoriel de « Comment
 # jouer » (video-tuto.js). Ce sont des .mp4, hors de git comme les images.
