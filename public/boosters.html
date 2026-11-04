@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
 <script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* La hauteur vraie de l'écran (4 novembre 2026). Dans l'appli Android (Play Store, plein écran), les boutons ÉVOLUER / EMMENER EN DUEL de la fiche tombaient sous le bas de l'écran : Chrome y annonçait une page (100dvh) plus haute que l'écran qu'on voit. Hors d'un onglet, les écrans de jeu prennent donc la plus petite de trois hauteurs : 100dvh, la fenêtre (innerHeight) et l'écran (screen.height) — var(--h-ecran), ui.css. Le clavier ouvert ne rétrécit rien : on ne remesure pas pendant une saisie. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches){var tbfH=function(){var a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;var h=Math.min(innerHeight||1e4,screen.height||1e4);if(h>0&&h<1e4)document.documentElement.style.setProperty('--h-ecran','min(100dvh, '+h+'px)')};tbfH();addEventListener('resize',tbfH)}}catch(e){}</script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0A0D11">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -416,7 +417,7 @@
      son fond filmé de 480 pixels sortait flou sur toute la fenêtre, et la
      lumière débordait (27 octobre 2026, voir `--tbf-cote` dans ui.css). */
   clip-path:inset(0 var(--tbf-cote));
-  height:100vh;height:100dvh;
+  height:100vh;height:var(--h-ecran,100dvh);
   padding-bottom:calc(var(--bas) + 10px)}
 #opener.on{display:flex}
 /* **Le fond est à l'écran, le paquet est dans sa colonne.**
@@ -633,7 +634,7 @@
 .loupe{position:fixed;inset:0;z-index:94;display:flex;flex-direction:column;align-items:center;
   background:radial-gradient(120% 70% at 50% 20%,#1D242D,#05070A 70%);
   clip-path:inset(0 var(--tbf-cote));
-  height:100vh;height:100dvh;padding-bottom:calc(var(--bas) + 10px)}
+  height:100vh;height:var(--h-ecran,100dvh);padding-bottom:calc(var(--bas) + 10px)}
 .loupe[hidden]{display:none}
 .loupe>*{width:100%;max-width:min(var(--colonne), 560px)}
 .loupe-tete{flex:none;display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 16px 8px;
@@ -670,7 +671,7 @@
 /* La fiche complète d'un Fanzzy, par-dessus la loupe (`ouvrirFicheDuButin`). */
 #detail{position:fixed;inset:0;z-index:96;display:none;flex-direction:column;
   background:#04060A;clip-path:inset(0 var(--tbf-cote));
-  height:100vh;height:100dvh;padding-bottom:var(--bas);overflow-y:auto}
+  height:100vh;height:var(--h-ecran,100dvh);padding-bottom:var(--bas);overflow-y:auto}
 #detail.on{display:flex}
 /* Les cases du butin se touchent : elles le disent au doigt. */
 .tbf-album-case[data-i]{cursor:pointer}
