@@ -1,6 +1,6 @@
 {
   "id": "HC18",
-  "rev": 15,
+  "rev": 18,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2c28574371fe"
+          "sha": "2c28574371fe",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -80,7 +81,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6f2600b8dd60"
+          "sha": "6f2600b8dd60",
+          "cligne": true
         }
       }
     },
@@ -134,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "4d78f9a68961"
+          "sha": "4d78f9a68961",
+          "cligne": true
         }
       }
     }

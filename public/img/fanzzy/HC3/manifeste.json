@@ -1,6 +1,6 @@
 {
   "id": "HC3",
-  "rev": 17,
+  "rev": 20,
   "evolutions": {
     "e1": {
       "skins": {
@@ -52,7 +52,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5c8cebecb70f"
+          "sha": "5c8cebecb70f",
+          "cligne": true
         }
       }
     },
@@ -106,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ee8a08ced0b6"
+          "sha": "ee8a08ced0b6",
+          "cligne": true
         }
       }
     },
@@ -134,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b20080b81c7b"
+          "sha": "b20080b81c7b",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

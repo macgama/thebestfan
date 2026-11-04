@@ -1,6 +1,6 @@
 {
   "id": "HC24",
-  "rev": 23,
+  "rev": 24,
   "evolutions": {
     "e1": {
       "skins": {
@@ -133,7 +133,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "490eb21ba9d4"
+          "sha": "490eb21ba9d4",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [

@@ -1,6 +1,6 @@
 {
   "id": "HC15",
-  "rev": 18,
+  "rev": 21,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,7 +26,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "f9b1b920bc0c"
+          "sha": "f9b1b920bc0c",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
@@ -93,7 +94,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "2690844da1d5"
+          "sha": "2690844da1d5",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -134,7 +136,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b6aea57a12d6"
+          "sha": "b6aea57a12d6",
+          "cligne": true
         },
         "halloween": {
           "etats": [

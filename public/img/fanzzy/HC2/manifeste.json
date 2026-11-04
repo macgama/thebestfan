@@ -1,6 +1,6 @@
 {
   "id": "HC2",
-  "rev": 21,
+  "rev": 25,
   "evolutions": {
     "e1": {
       "skins": {
@@ -79,7 +79,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ddbb327553bf"
+          "sha": "ddbb327553bf",
+          "cligne": true
         },
         "halloween": {
           "etats": [
@@ -144,7 +145,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0d024d55f5f9"
+          "sha": "0d024d55f5f9",
+          "cligne": true
         },
         "prehistorique": {
           "etats": [
