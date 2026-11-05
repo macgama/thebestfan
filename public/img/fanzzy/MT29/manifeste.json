@@ -1,6 +1,6 @@
 {
   "id": "MT29",
-  "rev": 1,
+  "rev": 2,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5be00802ece9"
+          "sha": "e3a08dcf6c47"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "7e1732195088"
         }
       }
     },
@@ -28,7 +40,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5d799f8a94cb"
+          "sha": "cc74d9683271"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "eeaf7882adbb"
         }
       }
     },

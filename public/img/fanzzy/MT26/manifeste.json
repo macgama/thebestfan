@@ -1,6 +1,6 @@
 {
   "id": "MT26",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "0f75efdf59cd"
+          "sha": "f80179304c13"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "2696c8cfcf84"
         }
       }
     },
@@ -28,8 +40,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "13854be24523",
-          "cligne": true
+          "sha": "d71f763ab4d6"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "94226840c52b"
         }
       }
     },
