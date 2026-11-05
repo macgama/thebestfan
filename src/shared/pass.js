@@ -317,16 +317,29 @@ export const GAINS_SPECIAUX = Object.freeze(['cadre', 'cadre_anime', 'badge_or',
 /**
  * Le jour où l'ancien PASS d'une saison revient en vente : `'AAAA-MM-01'`.
  *
- * Le 1er du deuxième mois après le dernier jour de la saison : fin le
- * 28 février, vente le 1er avril ; fin le 30 novembre, vente le 1er janvier
- * suivant. `null` sans date de fin lisible.
+ * Le 1er du mois qui suit le dernier jour de la saison (Gaël, 5 novembre
+ * 2026 : « pour ne pas bloquer les nouveaux USER ») : fin le 28 février,
+ * vente le 1er mars ; fin le 30 novembre, vente le 1er décembre. `null` sans
+ * date de fin lisible.
  */
 export function venteAncienPassLe(finJour) {
   const m = /^(\d{4})-(\d{2})-\d{2}/.exec(String(finJour ?? ''));
   if (!m) return null;
-  const mois = Number(m[1]) * 12 + (Number(m[2]) - 1) + 2;
+  const mois = Number(m[1]) * 12 + (Number(m[2]) - 1) + 1;
   const a = Math.floor(mois / 12);
   return `${a}-${String((mois % 12) + 1).padStart(2, '0')}-01`;
+}
+
+/**
+ * **Le PACK d'un PASS fini** (Gaël, 5 novembre 2026) : l'ancien PASS vendu
+ * après sa saison porte le nom de sa tenue, « PACK Préhistorique », pour que
+ * personne ne croie acheter le PASS complet. Même prix que le PASS. Un PASS
+ * sans thème garde « PACK du PASS <n> ».
+ */
+export function nomPack(numero) {
+  const p = passDe(numero);
+  const theme = /^PASS \d+ · (.+)$/.exec(String(p.nom ?? ''))?.[1];
+  return theme ? `PACK ${theme}` : `PACK du PASS ${p.numero}`;
 }
 
 /**

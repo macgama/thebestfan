@@ -517,7 +517,7 @@ function mesPassHTML(d) {
   const v = d.voies ?? [];
   if (!v.length) return '';
   return `<div class="mes-pass"><h2 class="tbf-cousu">Mes PASS</h2><ul>${v.map((x) => `<li>
-      <b>PASS ${esc(x.saison)}</b>${x.original
+      <b>${esc(x.pack || `PASS ${x.saison}`)}</b>${x.original
         ? '<span class="tbf-tampon" data-ton="or">ÉDITION ORIGINALE</span>'
         : '<span class="tbf-tampon">APRÈS LA SAISON</span>'}
       <small>${esc(x.tardif
@@ -527,10 +527,11 @@ function mesPassHTML(d) {
 }
 
 /**
- * Les anciens PASS en boutique (Gaël, 3 novembre 2026) : en vente le 1er du
- * deuxième mois après la fin de leur saison, au même prix. On dit d'abord ce
- * qu'ils donnent et ce qu'ils ne donnent pas : pas de tampon « ÉDITION
- * ORIGINALE », pas de gain spécial.
+ * Les PACKS des anciens PASS (Gaël, 3 et 5 novembre 2026) : en vente le 1er
+ * du mois qui suit la fin de leur saison, au même prix, sous le nom de leur
+ * tenue (« PACK Préhistorique »). On dit d'abord ce qu'ils donnent et ce
+ * qu'ils ne donnent pas : pas de tampon « ÉDITION ORIGINALE », pas de gain
+ * spécial.
  */
 function anciensHTML(d, { ouvert } = {}) {
   const a = d.anciensPass ?? [];
@@ -541,12 +542,12 @@ function anciensHTML(d, { ouvert } = {}) {
   const assez = Number(d.echarpes) >= prixE;
   const vitrine = ouvert === false;
   return `<div class="anciens" id="anciens">
-    <h2 class="tbf-cousu">Les anciens PASS</h2>
-    <p>Une saison finie revient ici au même prix. Tu reçois son contenu, pas ses gains
+    <h2 class="tbf-cousu">Les PACKS des anciens PASS</h2>
+    <p>Un PASS fini revient ici en PACK, au même prix. Tu reçois son contenu, pas ses gains
        spéciaux : ceux-là restent à ceux qui l’ont joué pendant la saison.</p>
     ${a.map((p) => `<div class="ancien" style="--pass:${esc(p.couleur)}">
-      <b class="pass-titre">PASS ${esc(p.numero)}</b>
-      ${p.tenue ? `<span class="pass-saison">${esc(String(p.nom ?? '').replace(/^PASS \d+ · /, ''))}</span>` : ''}
+      <b class="pass-titre">${esc(p.pack || `PASS ${p.numero}`)}</b>
+      <span class="pass-saison">${esc(`Le contenu du PASS ${p.numero}`)}</span>
       <ul>
         ${p.tenue ? '<li>La tenue de la saison au premier âge sur tous tes Fanzzy, ses autres âges dans tes boosters</li>' : ''}
         <li>L’équipement, le stade et les mini-jeux de ce PASS</li>
@@ -556,13 +557,13 @@ function anciensHTML(d, { ouvert } = {}) {
       <div class="pass-formules">
         ${o.article ? `<button type="button" class="tbf-plaque pass-formule" data-ton="or"
           data-article="${esc(o.article.id)}" data-saison="${esc(p.numero)}"${vitrine ? ' disabled' : ''}
-          aria-label="${esc(`Prendre le PASS ${p.numero} — ${o.article.prixTexte}, payé une fois`)}">
-          <small>PASS ${esc(p.numero)}</small><b>${esc(o.article.prixTexte)}</b>
+          aria-label="${esc(`Prendre le ${p.pack || `PASS ${p.numero}`} — ${o.article.prixTexte}, payé une fois`)}">
+          <small>${esc(p.pack || `PASS ${p.numero}`)}</small><b>${esc(o.article.prixTexte)}</b>
           <small>payé une fois</small></button>` : ''}
         ${prixE ? `<button type="button" class="tbf-plaque pass-formule" data-echarpes
           data-saison="${esc(p.numero)}"${assez ? '' : ' disabled'}
-          aria-label="${esc(`Prendre le PASS ${p.numero} pour ${milliers(prixE)} écharpes`)}">
-          <small>PASS ${esc(p.numero)}</small><b>${esc(milliers(prixE))} écharpes</b>
+          aria-label="${esc(`Prendre le ${p.pack || `PASS ${p.numero}`} pour ${milliers(prixE)} écharpes`)}">
+          <small>${esc(p.pack || `PASS ${p.numero}`)}</small><b>${esc(milliers(prixE))} écharpes</b>
           <small>${esc(assez ? `tu en as ${milliers(d.echarpes)}` : `il t’en manque ${milliers(prixE - d.echarpes)}`)}</small></button>` : ''}
       </div></div>`).join('')}
   </div>`;
@@ -730,7 +731,7 @@ function ultime(d) {
     const p = (d.voies ?? []).find((v) => v.saison === ancienPaye);
     (window.TBF_DIALOGUE ? Promise.resolve()
       : new Promise((r) => window.addEventListener('load', r, { once: true }))).then(() => window.TBF_DIALOGUE?.confirmer({
-      titre: `LE PASS ${ancienPaye} EST À TOI`,
+      titre: `${String(p?.pack || `LE PASS ${ancienPaye}`).toUpperCase()} EST À TOI`,
       texte: p?.tenue ? 'Sa tenue au premier âge est sur tous tes Fanzzy ; ses autres âges tomberont dans tes boosters.'
         : 'Son contenu est à toi.',
       oui: 'JOUER', non: 'FERMER', ton: 'or',

@@ -585,11 +585,16 @@ const RUBRIQUES = [
         () => `Oui, ${reglage('pass.prix_echarpes')} écharpes, sur la page du PASS. C’est la `
           + 'récompense des supporters assidus : le même PASS, sans dépenser d’argent.'],
       ['Puis-je prendre un PASS d’une saison passée ?',
-        'Oui. Une saison finie revient sur la page du PASS le 1er du deuxième mois après sa '
-          + 'fin, au même prix. Tu reçois sa tenue au premier âge, puis ses autres âges dans '
-          + 'tes boosters, avec son équipement, son stade et ses mini-jeux. Le tampon « ÉDITION '
-          + 'ORIGINALE », le cadre, le badge, le club et le KOP en plus restent à ceux qui l’ont '
-          + 'joué pendant la saison.'],
+        'Oui, en PACK. Un PASS fini revient sur la page du PASS le 1er du mois qui suit sa '
+          + 'fin, au même prix, sous le nom de sa tenue : le PACK Préhistorique pour le PASS 1, '
+          + 'puis les PACKS Apocalyptique, Spatiale et Halloween. Tu reçois sa tenue au premier '
+          + 'âge, puis ses autres âges dans tes boosters, avec son équipement, son stade et ses '
+          + 'mini-jeux. Le tampon « ÉDITION ORIGINALE », le cadre, le badge, le club et le KOP '
+          + 'en plus restent à ceux qui l’ont joué pendant la saison.'],
+      ['J’ai déjà le PASS : puis-je prendre son PACK ?',
+        'Non, et tu n’en as pas besoin : la tenue de ton PASS vaut pour tous tes Fanzzy, même '
+          + 'ceux des séries qui arrivent après, aux âges que ta voie a ouverts. Les âges qui te '
+          + 'manquent tombent dans tes boosters. Un PASS ne s’achète qu’une fois, PACK compris.'],
       ['Je n’ai pas fini ma voie PASS avant la fin de la saison : je perds tout ?',
         'Non. Ce que tu as ouvert reste à toi, et les âges de la tenue qui te manquent tombent '
           + 'ensuite dans tes boosters. Les autres cadeaux de la voie (cadres, stickers, fond, '
