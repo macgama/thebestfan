@@ -1,6 +1,6 @@
 {
   "id": "MT24",
-  "rev": 9,
+  "rev": 10,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7ed53669f4ff"
+          "sha": "82779c12c3dd"
         },
         "apocalyptique": {
           "etats": [
@@ -25,7 +25,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "09d606a9d4b3"
+          "sha": "ee61c8d028b4"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "e9dc9b793efb"
         }
       }
     },
@@ -40,7 +52,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5709ab06891a"
+          "sha": "89e247e66f18"
         },
         "apocalyptique": {
           "etats": [
@@ -52,7 +64,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "47dd198331a9"
+          "sha": "cbb36d05e6f5"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "578ddb2d11c3"
         }
       }
     },
@@ -80,6 +104,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "6d70b2bb5e0b"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "9ea6c7578b19"
         }
       }
     }

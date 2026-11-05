@@ -1,6 +1,6 @@
 {
   "id": "MT25",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1cc81561f543"
+          "sha": "215c573b9901"
         },
         "apocalyptique": {
           "etats": [
@@ -25,7 +25,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "61fde26c5317"
+          "sha": "39ac184a0ade"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "705d9e235a34"
         }
       }
     },
