@@ -1142,7 +1142,11 @@ export class DuelNvN {
         break;
       }
       case 'sync':
-        this.rallies.push({ side: j.side, fin: t + e.duree, bonus: 1, sync: true, max: e.max });
+        /* **Le Chœur au duel** : toute la tribune pousse `duel` fois plus fort
+           pendant sa fenêtre (×3, choix de Gaël du 5 novembre 2026). Il ouvrait
+           une fenêtre à ×1, que rien ne lisait : la carte coûtait trente de
+           souffle et ne faisait rien. */
+        this.rallies.push({ side: j.side, fin: t + e.duree, bonus: e.duel ?? 3, sync: true, max: e.max });
         evenements.push(this.ev('sync', { side: j.side, duree: e.duree }));
         break;
 

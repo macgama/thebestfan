@@ -78,7 +78,7 @@ export const ACTIONS = [
 
   /* -------------------------------------------------------------- garde */
   { id: 'a-bache', nom: 'Bâche', fam: 'garde', rar: 'commune', cost: 24, cd: 15,
-    texte: 'Absorbe la prochaine poussée adverse, jusqu\u2019à 40.',
+    texte: 'Absorbe jusqu\u2019à 40 de poussée adverse, en un ou plusieurs coups.',
     effet: { type: 'shield', valeur: 40 } },
 
   { id: 'a-miroir', nom: 'Renvoi', fam: 'garde', rar: 'legendaire', cost: 40, cd: 40,
@@ -95,8 +95,10 @@ export const ACTIONS = [
     effet: { type: 'per_mate', valeur: 18, fenetre: 10000 } },
 
   { id: 'a-choeur', nom: 'Chœur', fam: 'collectif', rar: 'legendaire', cost: 30, cd: 45,
-    texte: 'Toute la tribune doit taper dans la même seconde. Décuplé si tout le monde suit.',
-    effet: { type: 'sync', duree: 3000, max: 10 } },
+    texte: 'Pendant 3 s, chaque chant de ta tribune pousse 3 fois plus fort en duel, 12 fois plus au Virage.',
+    /* Au duel, la fenêtre vaut `duel` (×3, choix de Gaël du 5 novembre 2026 :
+       il n'y faisait rien) ; au Virage, la salle la lit à `collectifMax`. */
+    effet: { type: 'sync', duree: 3000, max: 10, duel: 3 } },
 
   /* ----------------------------------------------------------- bascule */
   { id: 'a-remontada', nom: 'Remontada', fam: 'bascule', rar: 'epique', cost: 30, cd: 60,
@@ -469,7 +471,7 @@ export const ACTIONS = [
     effet: { type: 'mod_foe', mods: { tempoWindow: 0.82, perfectBonus: 0.85 }, duree: 7000 } },
 
   { id: 'a-mt-tole', nom: 'Tôle soudée', fam: 'garde', rar: 'rare', cost: 30, cd: 24, publie: false,
-    texte: 'Absorbe la prochaine poussée adverse, jusqu’à 55.',
+    texte: 'Absorbe jusqu’à 55 de poussée adverse, en un ou plusieurs coups.',
     effet: { type: 'shield', valeur: 55 } },
 
   /* ------------------------------ PASS 3 · LES GALÈRES DE DÉPLACEMENT (a-gd-) */
