@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Accueil : nouveau son quand on touche le Fanzzy** (branche
+`claude/project-thread-n83hat`, 5 novembre 2026, choix de Gaël sur quatre sons
+à écouter). Code seul, sans schéma. Le bip aigu (« tic ») est remplacé par un
+coup de tambour de tribune doux ; les boutons du jeu gardent leur tic. Rien à
+redémarrer pour une page seule, mais « Redémarrer » ne fait pas de mal.
+
+---
+
 **Fin de duel : le Fanzzy en héros** (branche `claude/project-thread-vwg950`,
 5 novembre 2026, maquette A choisie par Gaël). Code seul (CSS), sans schéma.
 Sur VICTOIRE, DÉFAITE, MATCH NUL et au bilan de fin de match du Virage, le

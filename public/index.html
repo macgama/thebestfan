@@ -4564,7 +4564,7 @@ function sauter() {
      continue de sauter, mais il le dit. */
   if (touchers === 6) parler('boude');
   rejouer('saute');
-  window.FX?.son?.('tic');
+  window.FX?.son?.('fanzzy-toucher');
   if (touchers === 2) {
     /* Les deux visages qui viennent, chargés avant qu'on en ait besoin. */
     for (const e of ['but', 'decision']) { const s = source(e); if (s) new Image().src = s; }
