@@ -821,9 +821,9 @@ const evenement = (sessionId) => ({
   check('un légendaire : refusé', u4.json.error === 'boutique.error.objet_inconnu');
   check('et les trois refus n’ont rien coûté', Number(w7.scarves) === 900);
   const relue = (await fetch(base + '/api/boutique/etal').then((r) => r.json())).ultimes ?? [];
-  check('l’étal la dit à toi ensuite',
-    relue.find((x) => x.fanzzy === 'RP4' && x.stade === 2)?.possede === true
-    && relue.find((x) => x.fanzzy === 'RP4' && x.stade === 1)?.possede === false);
+  check('l’étal ne la montre plus ensuite, l’âge 1 reste en vente',
+    !relue.some((x) => x.fanzzy === 'RP4' && x.stade === 2)
+    && relue.some((x) => x.fanzzy === 'RP4' && x.stade === 1));
 
   /* Sans la table : l'achat se fait, sans sa nouveauté. Perdre une vente pour
      une pastille serait absurde, et l'erreur avalée est seulement celle-là. */

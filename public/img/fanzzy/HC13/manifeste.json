@@ -1,6 +1,6 @@
 {
   "id": "HC13",
-  "rev": 13,
+  "rev": 14,
   "evolutions": {
     "e1": {
       "skins": {
@@ -39,7 +39,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d5a2f6d51f6d"
+          "sha": "d5a2f6d51f6d",
+          "cligne": true
         },
         "apocalyptique": {
           "etats": [

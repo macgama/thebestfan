@@ -729,20 +729,43 @@ function fondDeCarte(f) {
  * de ce que mesure `pieds`, comme à l'accueil, pour que **le personnage**
  * prenne la hauteur de son âge, pieds au même endroit.
  */
-const PART_CARTE = { 1: 0.9, 2: 0.97, 3: 1.04 };
+const PART_CARTE = { 1: 0.84, 2: 0.9, 3: 0.96 };
 const ETAT_SRC = /\/img\/fanzzy\/([A-Z]+\d+)\/e(\d)\//;
 /** Le style qui donne au personnage d'une image d'état la taille de son âge
     sur la carte, ou `null` si l'adresse n'est pas une image d'état mesurée. */
 function styleEtat(src) {
   const m = ETAT_SRC.exec(String(src ?? ''));
   const t = m ? window.TBF_ETATS?.taille?.(m[1], m[2], PART_CARTE[m[2]]) : null;
-  return t ? `height:${t.hauteur};bottom:calc(${t.bas} - 6%);translate:${t.decale} 0` : null;
+  /* `left:50%`, largeur propre à l'image, recentrée par `translate` : le
+     cadre d'un âge (560 × 960) agrandi à la taille de l'âge est plus large
+     que les 150 % de la carte, et `contain` le réduisait sur sa largeur. Le
+     Maître des Quatre Coins (AN4, âge 3) y perdait un sixième de sa taille
+     et paraissait plus petit qu'à l'âge 2 (Gaël, 5 novembre 2026). */
+  return t ? `height:${t.hauteur};bottom:calc(${t.bas} - 6%);left:50%;width:auto;max-width:none;`
+    + `translate:calc(-50% + ${t.decale}) 0` : null;
+}
+
+/**
+ * **Les pieds de l'image affichée, comme à l'accueil** (`caler`, index.html).
+ * `pieds` (index.json) n'est mesuré que sur le repos de base de l'âge ; une
+ * expression ou une tenue a ses pieds ailleurs dans le même cadre. Une fois
+ * l'image décodée, on la mesure (`TBF_ETATS.pieds`) et on pose ses semelles
+ * sur le sol de la carte, jambes au milieu, à la taille de son âge.
+ */
+function poserAuSol(img) {
+  const m = window.TBF_ETATS?.pieds?.(img);
+  const e = ETAT_SRC.exec(img?.getAttribute?.('src') ?? '');
+  const t = m && e ? window.TBF_ETATS?.taille?.(e[1], e[2], PART_CARTE[e[2]]) : null;
+  if (!t) return;
+  const h = parseFloat(t.hauteur) / 100;
+  img.style.bottom = `calc(${(-m.sous * h * 100).toFixed(2)}% - 6%)`;
+  img.style.translate = `calc(-50% + ${(-m.decal * h * 100).toFixed(2)}cqh) 0`;
 }
 function cadrerEtat(html) {
   return html.replace(/<img class="illu fz-pied([^"]*)"([^>]*?) src="(\/img\/fanzzy\/[A-Z]+\d+\/e\d\/[^"]+)"/g,
     (tout, cls, entre, src) => {
       const style = styleEtat(src);
-      return style ? `<img class="illu fz-pied${cls}" style="${style}"${entre} src="${src}"` : tout;
+      return style ? `<img class="illu fz-pied${cls}" style="${style}" onload="window.TBF_CARTES?.poserAuSol?.(this)"${entre} src="${src}"` : tout;
     });
 }
 /**
@@ -756,15 +779,31 @@ function cadrerImage(img, src) {
   if (!img) return;
   img.classList.add('fz-pied');
   const style = styleEtat(src);
-  img.style.height = '';
-  img.style.bottom = '';
-  img.style.translate = '';
+  for (const k of ['height', 'bottom', 'left', 'width', 'max-width', 'translate']) img.style.removeProperty(k);
   if (style) img.style.cssText += `;${style}`;
+  if (style) img.addEventListener('load', () => poserAuSol(img), { once: true });
   img.src = src;
 }
 
+/**
+ * **L'âge 1 en pied, par le même chemin que les deux autres** (5 novembre
+ * 2026). Les âges 2 et 3 montrent le repos de leur âge, mesuré et posé au
+ * sol ; l'âge 1 montrait sa carte détourée au ras du crâne, à 90 % de la
+ * boîte : la tête touchait le haut, où le fondu des bustes la rendait floue
+ * (Le Gamin du Comptoir), et il n'avait ni la taille ni le sol des autres.
+ * Il prend donc lui aussi le repos de base de son âge, quand il existe.
+ */
+function dessinEnPied(f) {
+  const m = /^([A-Z]+\d+)$/.exec(String(f?.id ?? ''));
+  const r = m ? window.TBF_ETATS?.resoudre?.(m[1], { evo: 1, skin: 'base', etat: 'neutre' }) : null;
+  if (!r?.src || r.evo !== 1 || !ETAT_SRC.test(r.src)) return illustration(f, 'plein');
+  const secours = window.TBF_ETATS?.secours?.(r.src, true);
+  return `<img class="illu" alt="" loading="lazy" decoding="async" src="${r.src}"${secours
+    ? ` onerror="this.onerror=null;this.src='${secours}'"` : ''}>`;
+}
+
 function portraitDeCarte(f, pied = false) {
-  const dessin = illustration(f, pied ? 'plein' : 'buste');
+  const dessin = pied ? dessinEnPied(f) : illustration(f, 'buste');
   if (!dessin) return artProcedural(f);
   /* La classe de cadrage du personnage en pied (voir `cartes.css`). Le
      balisage vient de fanzzy-art.js et commence toujours ainsi. */
@@ -1339,5 +1378,5 @@ function carteDuPaquet(c) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, LIEUX, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cadrerImage, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, lieuSrc, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid, ultimeDe };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, LIEUX, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, poserAuSol, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cadrerImage, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, lieuSrc, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid, ultimeDe };
 })();

@@ -71,11 +71,15 @@ app.get('/api/boutique/etal', (_q, s) => s.json({
     { type: 'tenue', id: 'halloween', nom: 'Halloween', rar: 'epique', prix: PRIX },
   ],
   posees,
+  /* Le serveur ne liste plus celles qu'on a (demande de Gaël du 5 novembre
+     2026) ; RP1 âge 1 arrive quand même marquée, comme d'un serveur d'avant,
+     pour vérifier que la page l'écarte aussi. */
   ultimes: [
     { fanzzy: 'RP1', stade: 1, nom: 'Gosier Rouillé', cri: 'ON LÂCHE RIEN', image: '/img/ultime/RP1-e1.f2b92265.webp',
       prix: 300, possede: true },
-    { fanzzy: 'RP1', stade: 2, nom: 'Gosier Retrouvé', cri: 'C’EST JAMAIS FINI', image: '/img/ultime/RP1-e2.3a3930a4.webp',
-      prix: 300, possede: ultimesAchetees.has('RP1:2') },
+    ...(ultimesAchetees.has('RP1:2') ? [] : [
+      { fanzzy: 'RP1', stade: 2, nom: 'Gosier Retrouvé', cri: 'C’EST JAMAIS FINI', image: '/img/ultime/RP1-e2.3a3930a4.webp',
+        prix: 300 }]),
   ],
 }));
 app.post('/api/boutique/depenser', (q, s) => {
@@ -184,7 +188,13 @@ try {
   await page.click('#o-ultimes');
   check('le rayon ULTIMATE montre la première carte qui manque', await jusqua(() => page.$eval('#vitrine-ult',
     (el) => el.textContent.includes('Gosier Retrouvé') && el.textContent.includes('300')).catch(() => false)));
+  check('celle qu’on a déjà n’y est pas, ni « À TOI »', await page.$eval('#vitrine-ult',
+    (el) => !el.textContent.includes('Gosier Rouillé') && !el.textContent.includes('À TOI')
+      && !el.querySelector('[data-ult="RP1:1"]')));
   check('VOIR LA SCÈNE est là avant l’achat', Boolean(await page.$('#vitrine-ult [data-voir-ult]')));
+  /* Sans la rangée des vignettes, ACHETER tombe sous le toast de la tenue
+     achetée juste avant : on le ramène au milieu de l'écran. */
+  await page.$eval('#vitrine-ult [data-acheter-ult]', (b) => b.scrollIntoView({ block: 'center' }));
   await page.click('#vitrine-ult [data-acheter-ult]');
   check('ACHETER demande confirmation', await jusqua(() => page.$eval('.tbf-dial',
     (el) => el.textContent.includes('Pour Gosier Retrouvé, à l’âge 2')).catch(() => false)));
@@ -195,8 +205,10 @@ try {
   check('la cérémonie propose VOIR LA SCÈNE', await jusqua(() => page.$eval('.tbf-calque [data-geste]',
     (b) => !b.closest('[hidden]') && b.textContent.includes('VOIR LA SCÈNE')).catch(() => false), 10000));
   await page.click('.tbf-calque [data-fermer]');
-  check('relue, elle est à toi et ne se rachète pas', await jusqua(async () => !(await page.$('#vitrine-ult [data-acheter-ult]'))
-    && (await page.$eval('#vitrine-ult .cabine-deja', (el) => el.textContent).catch(() => '')).includes('DÉJÀ')));
+  check('relue, elle quitte l’étal ; la dernière partie, le rayon ULTIMATE s’efface',
+    await jusqua(async () => !(await page.$('#o-ultimes'))
+      && await page.$eval('#p-ultimes', (el) => el.hidden)
+      && await page.$eval('#p-tenues', (el) => !el.hidden)));
 
   check('aucune erreur dans la page', erreurs.length === 0 || (console.log('        ', erreurs), false));
 } finally {

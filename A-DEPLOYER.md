@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Fiche d'un Fanzzy : taille qui grandit d'âge en âge, pieds au sol**
+(branche `claude/project-thread-ehaa0o`, 5 novembre 2026, demande de Gaël).
+Pages seules, sans schéma ni image.
+
+- Les trois âges sont posés de la même façon (comme à l'accueil) : l'âge 1
+  prend le repos de son âge, chaque image a ses pieds mesurés et centrés.
+- Le haut de l'âge 1 n'est plus flou (Le Gamin du Comptoir) ; l'âge 3 n'est
+  plus plus petit que l'âge 2 (Le Maître des Quatre Coins).
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Pub de l'appli Android sur tout le site web** (branche
 `claude/project-thread-lg6ctd`, 5 novembre 2026, demande de Gaël).
 Construction seule, sans schéma.
