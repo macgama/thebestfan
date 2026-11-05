@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Fin de duel : le Fanzzy en héros** (branche `claude/project-thread-vwg950`,
+5 novembre 2026, maquette A choisie par Gaël). Code seul (CSS), sans schéma.
+Sur VICTOIRE, DÉFAITE, MATCH NUL et au bilan de fin de match du Virage, le
+Fanzzy prend près de la moitié de l'écran entre la case et la feuille. Rien à
+redémarrer pour des pages seules.
+
+---
+
 **Pastille « N EN LIGNE » sur l'accueil** (PR #343, 5 novembre 2026, demande
 de Gaël). Code et textes seuls, sans schéma. Sous l'avatar du hub, le nombre de
 supporters actifs dans les 5 dernières minutes (cachée quand on est seul).
