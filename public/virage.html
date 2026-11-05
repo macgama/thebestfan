@@ -268,6 +268,11 @@ html[data-calme~="animations"] .fzs>.pass-aura i{display:none}
 .bilan-case{position:relative;display:grid;place-items:center;isolation:isolate}
 .bilan-case>.tbf-bouffee{--taille:300px}
 .bilan-case>.tbf-vignette{position:relative;z-index:1}
+/* **Le Fanzzy en héros**, comme au duel (Gaël, 5 novembre 2026, maquette A) :
+   près de la moitié de l'écran entre la case — un peu resserrée — et la
+   feuille, pieds posés sur son bord. */
+#bilan>.tbf-bilan-fz{height:min(48vh,420px);margin:-30px auto -40px}
+#bilan>.bilan-case .tbf-vignette{scale:.86}
 .bilan-case .tbf-vignette small{display:block;margin-top:7px;font-family:var(--banner);font-size:14px;
   font-weight:600;letter-spacing:.12em;color:var(--craie);font-variant-numeric:tabular-nums}
 /* **Les deux bâches de sortie restent sous le pouce.** Au coup de sifflet,

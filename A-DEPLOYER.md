@@ -1,5 +1,38 @@
 # À déposer sur Infomaniak
 
+**Accueil : nouveau son quand on touche le Fanzzy** (branche
+`claude/project-thread-n83hat`, 5 novembre 2026, choix de Gaël sur quatre sons
+à écouter). Code seul, sans schéma. Le bip aigu (« tic ») est remplacé par un
+coup de tambour de tribune doux ; les boutons du jeu gardent leur tic. Rien à
+redémarrer pour une page seule, mais « Redémarrer » ne fait pas de mal.
+
+---
+
+**Fin de duel : le Fanzzy en héros** (branche `claude/project-thread-vwg950`,
+5 novembre 2026, maquette A choisie par Gaël). Code seul (CSS), sans schéma.
+Sur VICTOIRE, DÉFAITE, MATCH NUL et au bilan de fin de match du Virage, le
+Fanzzy prend près de la moitié de l'écran entre la case et la feuille. Rien à
+redémarrer pour des pages seules.
+
+---
+
+**Pastille « N EN LIGNE » sur l'accueil** (PR #343, 5 novembre 2026, demande
+de Gaël). Code et textes seuls, sans schéma. Sous l'avatar du hub, le nombre de
+supporters actifs dans les 5 dernières minutes (cachée quand on est seul).
+Aide, comment-jouer et 4 langues à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
+**Vestiaire du duel : JOUER CONTRE DES BOTS et ATTENDRE EN NAVIGUANT**
+(branche `claude/project-thread-ttms6p`, 5 novembre 2026, demande de Gaël).
+Code seul (serveur du duel et page), sans schéma. Le premier lance tout de
+suite un entraînement contre des bots (ne compte pas au classement) ; seul
+celui qui appuie part, les autres gardent leur place. Le second ramène à
+l'accueil en gardant la place, avec le rappel habituel. Aide, /comment-jouer
+et quatre langues à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Duel de tribunes : cadre autour du match choisi** (branche
 `claude/project-thread-0grr8y`, 5 novembre 2026, choix de Gaël sur quatre
 maquettes). Code seul (CSS), sans schéma. Le match choisi, son camp et ENTRER

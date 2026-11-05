@@ -1,6 +1,6 @@
 {
   "id": "MT41",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "fb934cecd2b5"
+          "sha": "3f98c9583d76"
         },
         "apocalyptique": {
           "etats": [
@@ -25,7 +25,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "120ed0681c21"
+          "sha": "412c0395e83f"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "73752908f91c"
         }
       }
     },
@@ -40,7 +52,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "72875195afe0"
+          "sha": "a2b76f0b0b68"
         },
         "apocalyptique": {
           "etats": [
@@ -52,7 +64,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d8c5a3b13415"
+          "sha": "3d35dc2d2ce7"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "90d18f2c4f6a"
         }
       }
     },
@@ -67,7 +91,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "9342fde668d0"
+          "sha": "8c66bbc39592"
         },
         "apocalyptique": {
           "etats": [
@@ -79,7 +103,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "ca93432f20ba"
+          "sha": "8b918349240e"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "02e2e18410e7"
         }
       }
     }

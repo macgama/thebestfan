@@ -922,6 +922,40 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     return ouvrir(equipes, { ...support, mode: 'entrainement' });
   }
 
+  /**
+   * **Jouer tout de suite contre des bots**, au choix du joueur (5 novembre
+   * 2026, Gaël : « si personne n'arrive et qu'on a juste envie de jouer
+   * contre un bot »). Le bouton ENTRAÎNEMENT du vestiaire.
+   *
+   * Seul **celui qui le demande** part : les autres de la file ne l'ont pas
+   * choisi, et partir contre des machines déclasse le duel. Ils gardent leur
+   * place, et leur attente continue. Le reste du duel est tenu par des bots,
+   * dans son camp comme en face, et c'est un entraînement : il ne compte ni
+   * au classement ni à la ferveur classée, comme tout duel contre des bots.
+   *
+   * @returns {object|null} la salle ouverte, ou `null` hors de toute file
+   */
+  function entrainementTout(socket) {
+    const u = socket.data?.user;
+    const f = u?.userId ? placeDe(u.userId) : null;
+    if (!f) return null;
+    const fixtureId = Number(f.support.fixture.id);
+    const taille = FORMATS[f.format];
+    f.socket = socket;
+    f.absentDepuis = null;
+    retirer([cle(f.format, fixtureId, f.camp)], [f]);
+    diffuserFile(f.format, fixtureId);
+    annoncerAttentes();
+    const equipes = [[], []];
+    equipes[f.camp].push(f);
+    for (const side of [0, 1]) {
+      while (equipes[side].length < taille) {
+        equipes[side].push(faireBot(f.loadout, equipes[side].length, side));
+      }
+    }
+    return ouvrir(equipes, { ...f.support, mode: 'entrainement' });
+  }
+
   function faireBot(modele, i, side) {
     return {
       userId: `bot:${randomUUID().slice(0, 8)}`,
@@ -1927,6 +1961,11 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          (E1). La garde de `fermer` suffirait seule, mais un appel qui ne sert
          à rien n'a pas à rester pour que la garde ait quelque chose à faire. */
       diffuser(salle, evs);
+    });
+
+    socket.on('nvn:entrainement', () => {
+      try { if (!entrainementTout(socket)) socket.emit('nvn:hors_file'); }
+      catch (e) { erreur(e); }
     });
 
     socket.on('nvn:leave_queue', () => {

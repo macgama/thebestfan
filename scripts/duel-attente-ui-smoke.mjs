@@ -253,7 +253,18 @@ check('l’ami passe à INVITÉ', await jusqua(() => H.page.evaluate(() =>
   document.querySelector('[data-inviter-ami]')?.innerText.trim() === 'INVITÉ')));
 await capture(H.page, '1-vestiaire-inviter');
 
-/* Puis il part voir une autre page. */
+/* Le vestiaire offre les deux portes de Gaël (5 novembre 2026) : jouer
+   tout de suite contre des bots, ou attendre en naviguant. */
+check('le vestiaire offre JOUER CONTRE DES BOTS et ATTENDRE EN NAVIGUANT', await H.page.evaluate(() =>
+  /JOUER CONTRE DES BOTS/.test(document.getElementById('contreBots')?.innerText ?? '')
+  && /ATTENDRE EN NAVIGUANT/.test(document.getElementById('ailleurs')?.innerText ?? '')));
+
+/* Puis il part voir une autre page, par ATTENDRE EN NAVIGUANT. */
+await Promise.all([
+  H.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+  H.page.click('#ailleurs'),
+]);
+check('ATTENDRE EN NAVIGUANT mène à l’accueil', new URL(H.page.url()).pathname === '/');
 await H.page.goto(`${base}/comment-jouer`, { waitUntil: 'networkidle0' });
 check('ailleurs, un rappel dit que son duel l’attend', await jusqua(() =>
   H.page.evaluate(() => /TON DUEL T’ATTEND/.test(

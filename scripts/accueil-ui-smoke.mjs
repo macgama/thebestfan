@@ -222,6 +222,9 @@ const requireAuth = (r, _s, n) => { r.user = { id: U }; n(); };
 const app = express();
 // L'accueil interroge /api/auth/me pour savoir s'il montre la vitrine ou le hub.
 app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
+// Les supporters en ligne : la pastille sous l'avatar lit ce total.
+let enLigne = 7;
+app.get('/api/en-ligne', (_q, s) => s.json({ enLigne }));
 
 // Le match en direct est simulé ici. La vraie route est éprouvée par
 // virage-smoke ; ce qu'on veut mesurer sur cette page, c'est ce qu'elle *fait*
@@ -504,6 +507,30 @@ check('et le changement de pose se fait en fondu', /opacity/.test(v.fondu));
 // Le débordement horizontal est le défaut classique d'un personnage en grand.
 check('la page ne déborde pas en largeur', await page.evaluate(() =>
   document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+
+/* La pastille des supporters en ligne : sous l'avatar, petite, et elle ne
+   chevauche ni la bourse ni le rail. */
+await page.waitForFunction(() => !document.getElementById('enLigne')?.hidden, { timeout: 4000 }).catch(() => {});
+const pastille = await page.evaluate(() => {
+  const r = (el) => el?.getBoundingClientRect();
+  const p = document.getElementById('enLigne');
+  const b = r(p), bo = r(document.querySelector('.bourse')), ra = r(document.querySelector('.rail'));
+  const touche = (a, c) => a && c && a.left < c.right && c.left < a.right && a.top < c.bottom && c.top < a.bottom;
+  return { vue: !p.hidden && b.width > 0, texte: p.textContent.trim(), h: b.height, w: b.width,
+    chevauche: touche(b, bo) || touche(b, ra) };
+});
+check('la pastille dit combien de supporters sont en ligne', pastille.vue && /^7 en ligne$/i.test(pastille.texte)
+  || (console.log('        pastille :', pastille), false));
+check('elle reste petite, sans chevaucher la bourse ni le rail',
+  pastille.h <= 22 && pastille.w <= 120 && !pastille.chevauche || (console.log('        pastille :', pastille), false));
+if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT + '/accueil-en-ligne.png' });
+enLigne = 1;
+check('seul, la pastille se cache', await page.evaluate(async () => {
+  document.dispatchEvent(new Event('visibilitychange'));
+  for (let i = 0; i < 40 && !document.getElementById('enLigne').hidden; i++) await new Promise((r) => setTimeout(r, 50));
+  return document.getElementById('enLigne').hidden;
+}));
+enLigne = 7;
 
 /* ------------------------------------------------------------- l'arrivée
 
