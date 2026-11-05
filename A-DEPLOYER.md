@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Fin de duel : le Fanzzy en héros** (branche `claude/project-thread-vwg950`,
+5 novembre 2026, maquette A choisie par Gaël). Code seul (CSS), sans schéma.
+Sur VICTOIRE, DÉFAITE, MATCH NUL et au bilan de fin de match du Virage, le
+Fanzzy prend près de la moitié de l'écran entre la case et la feuille. Rien à
+redémarrer pour des pages seules.
+
+---
+
 **Duel de tribunes : cadre autour du match choisi** (branche
 `claude/project-thread-0grr8y`, 5 novembre 2026, choix de Gaël sur quatre
 maquettes). Code seul (CSS), sans schéma. Le match choisi, son camp et ENTRER

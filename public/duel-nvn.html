@@ -1075,21 +1075,27 @@ html[data-calme~="animations"] .pass-vol{animation:passVolCalme 2s linear forwar
   80%{opacity:.85}100%{opacity:.4;scale:1;rotate:120deg}}
 
 /* Le Fanzzy : plus grand, et sa boîte porte le halo et le nuage. */
-.bilan-fz-boite{position:relative;display:grid;place-items:center;margin:-6px auto -28px;z-index:1;
+/* **Le héros** (Gaël, 5 novembre 2026 : « le Fanzzy devrait avoir une place
+   plus importante, c'est un des éléments centraux » ; maquette A choisie).
+   Près de la moitié de l'écran (420 px au plus), entre la case — un peu
+   resserrée — et la feuille, pieds posés sur son bord, une ombre au sol. */
+.bilan-fz-boite{position:relative;display:grid;place-items:center;margin:-30px auto -40px;z-index:1;
   width:min(420px,100%);pointer-events:none}
-.bilan-fz-boite>.tbf-bilan-fz{grid-area:1/1;margin:0;height:150px;position:relative;z-index:1}
+.bilan-fz-boite>.tbf-bilan-fz{grid-area:1/1;margin:0;height:min(48vh,420px);position:relative;z-index:1}
+.bilan-fz-boite::after{content:"";grid-area:1/1;align-self:end;width:46%;height:22px;margin-bottom:34px;
+  border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent)}
+#bilan>.bilan-case .tbf-vignette{scale:.86}
 .bilan-aura,.bilan-nuage{grid-area:1/1;display:none}
-#bilan[data-issue=victoire] .bilan-aura{display:block;width:210px;height:210px;border-radius:50%;
+#bilan[data-issue=victoire] .bilan-aura{display:block;width:340px;height:340px;border-radius:50%;
   background:radial-gradient(closest-side,rgba(255,214,90,.55),rgba(255,180,40,.18) 60%,transparent);
   animation:bilanAura 1.1s ease-in-out .9s 4 alternate both}
 @keyframes bilanAura{from{scale:.85;opacity:.6}to{scale:1.12;opacity:1}}
 #bilan[data-issue=victoire] .bilan-fz-boite{animation:bilanHop .5s cubic-bezier(.3,0,.6,1) 1.3s 4}
 @keyframes bilanHop{0%,100%{translate:0 0}45%{translate:0 -22px}}
-#bilan[data-issue=defaite] .bilan-fz-boite{margin-top:20px}
 #bilan[data-issue=victoire] .tbf-bilan-fz{filter:drop-shadow(0 0 10px rgba(255,210,80,.55))}
 /* Le petit nuage gris qui pleut sur sa tête, cinq secondes. */
 #bilan[data-issue=defaite] .bilan-nuage{display:block;position:relative;z-index:2;align-self:start;
-  width:76px;height:36px;margin-top:-30px;translate:-4px 0;
+  width:76px;height:36px;margin-top:10px;translate:-4px 0;scale:1.6;
   background:radial-gradient(circle at 27% 62%,#B4BCC8 0 12px,transparent 12.5px),
     radial-gradient(circle at 52% 42%,#C3CAD4 0 17px,transparent 17.5px),
     radial-gradient(circle at 76% 64%,#A9B1BD 0 11px,transparent 11.5px),
