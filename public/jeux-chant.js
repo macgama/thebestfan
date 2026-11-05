@@ -219,7 +219,14 @@ function frapperChant(c) {
 }
 
 function boucleChant() {
-  if ($('ch-terrain').hidden) { CH.raf = 0; return; }
+  if ($('ch-terrain').hidden) {
+    CH.raf = 0;
+    CH.musique?.arreter?.();
+    CH.musique = null;
+    return;
+  }
+  /* Un autre mini-jeu choisi en pleine partie : la musique se tait. */
+  if (CH.musique && $('ch-terrain').offsetParent === null) { CH.musique.arreter?.(); CH.musique = null; }
   const now = maintenant();
   const notes = CH.partition?.notes ?? [];
   if (!CH.fini) {
@@ -252,12 +259,19 @@ async function lancerChant() {
   $('ch-consigne').textContent = `${CH.partition.bpm} BPM · tape le tambour quand la note touche la ligne`;
   CH.taille = tailleCanvas(chc);
   CH.t0 = performance.now();
+  /* La musique de la partie (Gaël, 5 novembre 2026) : un groove composé par
+     le jeu au tempo de la partition, ses temps sur les notes. */
+  CH.musique?.arreter?.();
+  CH.musique = window.TBF_SON?.musiqueDeRythme?.({ bpm: CH.partition.bpm, depart: CHANT.DEBUT_MS,
+    fin: CHANT.DUREE_MS + 600, origine: CH.t0 }) ?? null;
   if (!CH.raf) CH.raf = requestAnimationFrame(boucleChant);
   $('ch-terrain').scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
 async function finirChant() {
   CH.fini = true;
+  CH.musique?.arreter?.();
+  CH.musique = null;
   $('ch-consigne').textContent = 'Le décompte…';
   let r;
   try {
@@ -295,6 +309,8 @@ window.addEventListener('keydown', (e) => {
 $('ch-jouer').addEventListener('click', lancerChant);
 $('ch-rejouer').addEventListener('click', lancerChant);
 $('ch-quitter').addEventListener('click', () => {
+  CH.musique?.arreter?.();
+  CH.musique = null;
   $('ch-terrain').hidden = true;
   $('ch-accueil').hidden = false;
   $('c-chant').scrollIntoView({ block: 'start', behavior: 'smooth' });

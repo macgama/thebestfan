@@ -3182,7 +3182,7 @@
      baissent ensemble d'un demi-décibel (0,164 et 0,856 avant) : tambour
      seul −24,3, claps seuls −23,5 ; le « tempo » −20,9 (crête −7,0), le
      contretemps −24,2, la marche −23,6, le roulement −21,4, l'écho −21,9. */
-  const MIX_CHANT = { tambour: 0.155, clap: 0.808 };
+  const MIX_CHANT = { tambour: 0.155, clap: 0.808, basse: 0.5, nappe: 0.5, charley: 0.5 };
   /** Les bornes d'un tempo : en deçà ce n'est plus un temps, au-delà plus un rythme. */
   const TEMPO = { min: 150, max: 2000, defaut: 560 };
   /** Le plus long chant compté : au-delà, on s'arrête là. Un chant sans fin
@@ -3223,10 +3223,60 @@
     const cl = c.createGain();
     cl.gain.value = MIX_CHANT.clap;
     cl.connect(sortie);
-    return { sortie, T: t, C: cl };
+    /* Les trois voix de la musique des gestes (voir « la musique des
+       gestes ») : la basse, la nappe, le charley. */
+    const voix = { sortie, T: t, C: cl };
+    for (const [k, nom] of [['B', 'basse'], ['N', 'nappe'], ['H', 'charley']]) {
+      voix[k] = c.createGain();
+      voix[k].gain.value = MIX_CHANT[nom];
+      voix[k].connect(sortie);
+    }
+    return voix;
   }
-  const frapper = (c, v, f, t0) =>
-    (f.voix === 'T' ? tambour : clap)(c, v[f.voix], t0 + f.t, f.force);
+  const frapper = (c, v, f, t0) => {
+    const t = t0 + f.t;
+    if (f.voix === 'T') tambour(c, v.T, t, f.force);
+    else if (f.voix === 'C') clap(c, v.C, t, f.force);
+    else if (f.voix === 'B') basse(c, v.B, t, f.freq, f.dur, f.force);
+    else if (f.voix === 'N') nappe(c, v.N, t, f.freq, f.dur, f.force);
+    else if (f.voix === 'H') charley(c, v.H, t, f.force);
+  };
+
+  /* La basse : une triangle ronde, et son octave pour qu'un haut-parleur de
+     téléphone l'entende. */
+  function basse(c, s, t, freq = 110, dur = 0.3, force = 1) {
+    const d = borner(Number(dur) || 0.3, 0.08, 2);
+    ton(c, s, t, { freq, duree: d, type: 'triangle', vol: 0.32 * force });
+    ton(c, s, t, { freq: freq * 2, duree: d * 0.7, type: 'sine', vol: 0.1 * force });
+  }
+  /* La nappe : une note tenue, deux triangles à peine désaccordées sous un
+     filtre doux, qui entrent et sortent sans claquer. Des accords tenus, la
+     voix de la tribune qui tient la note. */
+  function nappe(c, s, t, freq = 220, dur = 0.6, force = 1) {
+    const d = borner(Number(dur) || 0.6, 0.12, 4);
+    const f = c.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 1600;
+    const g = c.createGain();
+    const v = 0.11 * force;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + Math.min(0.06, d / 4));
+    g.gain.setValueAtTime(v, t + d * 0.75);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    f.connect(g).connect(s);
+    for (const x of [1, 1.006]) {
+      const o = c.createOscillator();
+      o.type = 'triangle';
+      o.frequency.value = freq * x;
+      o.connect(f);
+      lancer(c, o, t);
+      o.stop(t + d + 0.03);
+    }
+  }
+  /* Le charley : un souffle bref et aigu, la pulsation sans la marquer. */
+  function charley(c, s, t, force = 1) {
+    bruit(c, s, t, { duree: 0.045, freq: 7200, filtre: 'highpass', q: 0.7, vol: 0.09 * force });
+  }
 
   let chantEnCours = null;
   /** La poignée d'un chant qui ne joue pas : la page n'a pas à le savoir. */
@@ -3321,7 +3371,7 @@
    */
   function chant(type, o = {}) {
     arreterChant();
-    const plan = planDuChant(type, o);
+    const plan = o?.plan ?? planDuChant(type, o);
     if (!plan) return sansChant();
     if (document.hidden) return sansChant(plan.duree);
     const c = ouvrir();
@@ -3459,6 +3509,12 @@
    * @returns {{ arreter(): void, duree: number, joue: boolean }}
    */
   function chantDuGeste(geste, gestes, { origine } = {}) {
+    if (Object.prototype.hasOwnProperty.call(MUSIQUE_DU_GESTE, geste)) {
+      let plan = null;
+      try { plan = planDeMusique(MUSIQUE_DU_GESTE[geste](gestes?.[geste] ?? {}), MIX_MUSIQUE_GESTE[geste]); } catch { plan = null; }
+      if (!plan) { arreterChant(); return sansChant(); }
+      return chant('musique', { plan, ...(origine != null ? { origine } : {}) });
+    }
     const motif = Object.prototype.hasOwnProperty.call(MOTIF_DU_GESTE, geste) ? MOTIF_DU_GESTE[geste] : null;
     const instants = motif ? pulsationsDu(geste, gestes) : null;
     if (!instants) { arreterChant(); return sansChant(); }
@@ -3467,6 +3523,151 @@
     const pas = Number(gestes?.[geste]?.interval);
     return chant(motif, { instants, ...(pas > 0 ? { tempo: pas } : {}),
       ...(origine != null ? { origine } : {}) });
+  }
+
+  /* ================================================ la musique des gestes
+
+     Gaël, 5 novembre 2026 : « une musique pour ce geste (La justesse), comme
+     pour les autres gestes qui devraient en avoir ». Choix de Gaël : une
+     musique **composée par le jeu**, au tempo exact du geste, et non une
+     piste enregistrée qui ne tomberait jamais sur les notes.
+
+     Elle se construit sur ce que le serveur a servi — les instants des
+     notes —, se joue par le même chemin que les chants (horloge audio,
+     origine du geste, latence comprise) et se tait de même. Du rythme, une
+     basse, des notes tenues ; **jamais un air connu** : les hauteurs sont
+     celles d'une gamme pentatonique, tirées par la partition du geste.
+
+       deuxvoix  la voix de gauche au tambour et à la basse, celle de droite
+                 aux claps et au charley ; une nappe tenue par-dessous ;
+       accents   le tambour sur chaque temps, deux claps sur les temps
+                 marqués, le charley entre deux, une basse qui tourne sur
+                 quatre temps et un accord tenu par mesure ;
+       justesse  chaque note de la mélodie tenue par la nappe, à la hauteur
+                 de sa ligne, sa basse dessous et un charley qui bat. */
+  const GAMME = [220, 261.63, 293.66, 329.63, 392];   // la, do, ré, mi, sol
+  const ACCORDS = [[220, 261.63, 329.63], [196, 246.94, 293.66], [174.61, 220, 261.63], [164.81, 196, 246.94]];
+  const BASSES = [110, 98, 87.31, 82.41];
+  const ms = (x) => Number(x) / 1000;
+  const MUSIQUE_DU_GESTE = {
+    deuxvoix: (g) => {
+      const notes = (g.notes ?? []).filter((n) => Number.isFinite(n?.t));
+      if (!notes.length) return null;
+      const f = [];
+      const fin = Math.max(...notes.map((n) => n.t)) + 600;
+      const mesure = 2 * (Number(g.gauche) || 780);
+      for (let t = 0, k = 0; t < fin; t += mesure, k++) {
+        for (const hz of ACCORDS[k % 4]) f.push({ t: ms(t), voix: 'N', freq: hz, dur: ms(mesure), force: 0.6 });
+      }
+      notes.forEach((n, i) => {
+        if (n.cote === 0) {
+          f.push({ t: ms(n.t), voix: 'T', force: 0.9 });
+          f.push({ t: ms(n.t), voix: 'B', freq: BASSES[Math.floor(n.t / mesure) % 4], dur: 0.32, force: 1 });
+        } else {
+          f.push({ t: ms(n.t), voix: 'C', force: 0.85 });
+          f.push({ t: ms(n.t), voix: 'H', force: 1 });
+          f.push({ t: ms(n.t), voix: 'B', freq: BASSES[Math.floor(n.t / mesure) % 4] * 2, dur: 0.18, force: 0.5 + (i % 2) * 0.1 });
+        }
+      });
+      return f;
+    },
+    accents: (g) => {
+      const liste = (g.liste ?? []).filter((n) => Number.isFinite(n?.t));
+      if (!liste.length) return null;
+      const pas = Number(g.intervalle) || 640;
+      const f = [];
+      /* Quatre temps de charley avant le premier : on entre dans la mesure. */
+      for (let k = 4; k >= 1; k--) {
+        const t = liste[0].t - k * pas;
+        if (t >= 0) f.push({ t: ms(t), voix: 'H', force: k === 1 ? 1.2 : 0.8 });
+      }
+      liste.forEach((n, i) => {
+        f.push({ t: ms(n.t), voix: 'T', force: n.accent ? 1.1 : 0.75 });
+        f.push({ t: ms(n.t + pas / 2), voix: 'H', force: 0.8 });
+        f.push({ t: ms(n.t), voix: 'B', freq: BASSES[Math.floor(i / 4) % 4] * (i % 4 === 2 ? 1.5 : 1), dur: ms(pas * 0.8), force: 1 });
+        if (i % 4 === 0) {
+          for (const hz of ACCORDS[Math.floor(i / 4) % 4]) f.push({ t: ms(n.t), voix: 'N', freq: hz, dur: ms(pas * 4), force: 0.55 });
+        }
+        if (n.accent) {
+          f.push({ t: ms(n.t), voix: 'C', force: 1 });
+          f.push({ t: ms(n.t + Math.min(160, (Number(g.double) || 280) * 0.55)), voix: 'C', force: 1 });
+        }
+      });
+      return f;
+    },
+    justesse: (g) => {
+      const notes = (g.notes ?? []).filter((n) => Number.isFinite(n?.t) && Number.isFinite(n?.d));
+      if (!notes.length) return null;
+      const f = [];
+      const fin = Math.max(...notes.map((n) => n.t + n.d));
+      for (let t = Math.max(0, notes[0].t - 960); t < fin; t += 240) f.push({ t: ms(t), voix: 'H', force: 0.7 });
+      for (const n of notes) {
+        const hz = GAMME[Math.max(0, Math.min(GAMME.length - 1, Number(n.ligne) || 0))];
+        f.push({ t: ms(n.t), voix: 'N', freq: hz, dur: ms(n.d), force: 1 });
+        f.push({ t: ms(n.t), voix: 'N', freq: hz * 2, dur: ms(n.d), force: 0.25 });
+        f.push({ t: ms(n.t), voix: 'B', freq: hz / 2, dur: ms(n.d * 0.9), force: 0.8 });
+        f.push({ t: ms(n.t), voix: 'T', force: 0.45 });
+      }
+      return f;
+    },
+  };
+  /* Le niveau de chaque musique, mesuré au banc (`son:banc`, « musique- ») :
+     toutes dans la fenêtre du jeu, vers −22 LUFS, sous les chants de rythme
+     (−20,9) : elle accompagne, le geste reste devant. */
+  const MIX_MUSIQUE_GESTE = { deuxvoix: 0.7, accents: 0.6, justesse: 0.75, rythme: 0.6 };
+  /** Le plan d'une musique : ses frappes une par une, dans l'ordre du temps. */
+  function planDeMusique(frappes, gain = 1) {
+    if (!Array.isArray(frappes) || !frappes.length) return null;
+    const liste = frappes.filter((f) => Number.isFinite(f.t) && f.t >= 0)
+      .map((f) => ({ ...f, force: (f.force ?? 1) * gain })).sort((a, b) => a.t - b.t);
+    if (!liste.length) return null;
+    const duree = Math.max(...liste.map((f) => f.t + (Number(f.dur) || 0.3))) * 1000;
+    return { n: liste.length, frappesDu: (i) => [liste[i]], duree, periode: 0.5 };
+  }
+
+  /**
+   * **La musique d'un mini-jeu de rythme** (le chant des mini-jeux, Gaël,
+   * 5 novembre 2026) : un groove de tribune au tempo de la partie — le
+   * tambour sur les temps forts, les claps sur deux et quatre, le charley
+   * sur les croches, une basse qui tourne sur quatre mesures et un accord
+   * tenu toutes les deux. Les temps tombent sur la grille de la partition :
+   * `depart` est l'instant d'une croche de la partition (sa première note),
+   * et la musique entre une mesure plus tôt si la place le permet.
+   *
+   * @param {object} o
+   * @param {number} o.bpm       le tempo de la partition
+   * @param {number} [o.depart=0]  l'instant (ms) d'un premier temps de la partition
+   * @param {number} o.fin       l'instant (ms) où la musique se tait
+   * @param {number} [o.origine]  l'instant `performance.now()` du zéro de la partie
+   * @returns {{ arreter(): void, duree: number, joue: boolean }}
+   */
+  function musiqueDeRythme(o = {}) {
+    const plan = planDuRythme(o);
+    if (!plan) { arreterChant(); return sansChant(); }
+    return chant('musique', { plan, ...(o.origine != null ? { origine: o.origine } : {}) });
+  }
+  /** Le plan de la musique d'un mini-jeu de rythme (voir « musiqueDeRythme »), ou `null`. */
+  function planDuRythme({ bpm, depart = 0, fin } = {}) {
+    const temps = 60000 / Number(bpm);
+    if (!(temps >= TEMPO.min && temps <= TEMPO.max) || !(Number(fin) > 0)) return null;
+    const mesure = temps * 4;
+    let debut = Number(depart) || 0;
+    while (debut - mesure >= 0) debut -= mesure;
+    const f = [];
+    for (let t = debut, k = 0; t < fin; t += temps / 2, k++) {
+      const croche = k % 8;
+      const m = Math.floor(k / 8);
+      f.push({ t: ms(t), voix: 'H', force: croche % 2 ? 0.6 : 0.9 });
+      if (croche === 0 || croche === 4) f.push({ t: ms(t), voix: 'T', force: croche === 0 ? 1 : 0.8 });
+      if (croche === 2 || croche === 6) f.push({ t: ms(t), voix: 'C', force: 0.7 });
+      if (croche === 0 || croche === 3 || croche === 4) {
+        f.push({ t: ms(t), voix: 'B', freq: BASSES[m % 4] * (croche === 3 ? 1.5 : 1), dur: ms(temps * 0.9), force: 1 });
+      }
+      if (croche === 0 && m % 2 === 0) {
+        for (const hz of ACCORDS[(m / 2) % 4]) f.push({ t: ms(t), voix: 'N', freq: hz, dur: ms(mesure * 2), force: 0.5 });
+      }
+    }
+    return planDeMusique(f, MIX_MUSIQUE_GESTE.rythme);
   }
 
   /* ============================================================ la musique
@@ -3925,6 +4126,19 @@
         }
       }
     }
+    /* « musique » : la musique d'un geste à notes, sur une configuration
+       donnée (« config », celle que le serveur sert pour ce geste). */
+    if (quoi.musique && (quoi.musique === 'rythme'
+      || Object.prototype.hasOwnProperty.call(MUSIQUE_DU_GESTE, quoi.musique))) {
+      const plan = quoi.musique === 'rythme' ? planDuRythme(quoi.config ?? {})
+        : planDeMusique(MUSIQUE_DU_GESTE[quoi.musique](quoi.config ?? {}), MIX_MUSIQUE_GESTE[quoi.musique]);
+      if (plan) {
+        const v = voixDuChant(c, ch.bus.effets);
+        for (let i = 0; i < plan.n; i++) {
+          for (const f of plan.frappesDu(i)) if (!quoi.voix || f.voix === quoi.voix) frapper(c, v, f, t);
+        }
+      }
+    }
     if (quoi.chant) {
       const plan = planDuChant(quoi.chant, quoi);
       if (plan && plan.n !== Infinity) {
@@ -3974,6 +4188,7 @@
     rumeur,
     chant,
     chantDuGeste,
+    musiqueDeRythme,
     arreterChant: () => arreterChant(),
     volume,
     ouvrir,
@@ -3998,7 +4213,7 @@
     /** Les moments de la rumeur (voir « rumeur »). */
     rumeurs: () => Object.keys(RUMEUR),
     /** Les gestes qui ont un chant (voir « chantDuGeste »). */
-    gestesChantes: () => Object.keys(MOTIF_DU_GESTE),
+    gestesChantes: () => [...Object.keys(MOTIF_DU_GESTE), ...Object.keys(MUSIQUE_DU_GESTE)],
     etat,
     rendre,
     /* Le mixage tel que le banc le mesure et que la suite le vérifie : les
