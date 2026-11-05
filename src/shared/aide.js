@@ -200,6 +200,11 @@ const RUBRIQUES = [
           + 'de suite et il exulte, six fois et il proteste, s’il a l’expression. Sans '
           + 'elle, il garde son air de repos et fait seulement son petit saut. Il se '
           + 'tient toujours au même endroit, les pieds au sol au milieu de l’écran.'],
+      ['Comment voir les autres âges de mon Fanzzy sur l’accueil ?',
+        () => 'Glisse le doigt sur lui, vers la gauche pour l’âge d’après, vers la '
+          + 'droite pour celui d’avant, ou touche les flèches sous son nom. Tu ne vois '
+          + 'que les âges que tu as payés. Regarder ne change rien : c’est le bouton '
+          + '« C’est lui, partout » qui le montre ainsi aux autres.'],
       ['Pourquoi certaines de mes cartes sont-elles floues et verrouillées ?',
         () => 'Ce sont les âges que tu n’as pas encore payés. On te montre qu’ils '
           + 'existent sans te montrer qui ils sont : découvrir le personnage fait '

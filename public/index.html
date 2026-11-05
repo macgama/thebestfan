@@ -616,6 +616,7 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    coûté au personnage les pixels du budget ; c'était le geste qui était
    faux. Seule l'arrivée monte d'en dessous : c'est une entrée. */
 .scene{grid-row:1;grid-column:2;position:relative;height:100%;display:grid;place-items:end center;
+  touch-action:pan-y;
   grid-template-columns:minmax(0,1fr);
   padding:34px 0 0;
   min-height:0;text-decoration:none;color:inherit}
@@ -4534,7 +4535,36 @@ function sauter() {
   else if (touchers === 3) parler('encore');
 }
 
-$('scene').addEventListener('pointerdown', sauter);
+/* **Glisser le doigt change d'âge** (Gaël, 5 novembre 2026 : « sur mobile,
+   pouvoir swiper entre les 3 images »). Les flèches restent ; le glissé fait
+   la même chose qu'elles, et rien de plus : l'âge n'est montré qu'à l'écran,
+   le bouton « C'est lui, partout » reste le seul qui décide.
+
+   Au doigt, le saut attend que le doigt se lève : sauter dès qu'il se pose
+   ferait faire un bond au personnage au début de chaque glissé. Un toucher
+   court et immobile saute comme avant ; un glissé surtout horizontal change
+   d'âge ; un glissé vertical laisse la page défiler (`touch-action: pan-y`
+   sur `.scene`), et le navigateur l'annonce par `pointercancel`. À la souris
+   ou au stylet, le saut reste immédiat. */
+const GLISSE_PX = 40;
+let doigt = null;
+$('scene').addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch' || !e.isPrimary) { sauter(); return; }
+  doigt = { id: e.pointerId, x: e.clientX, y: e.clientY };
+});
+$('scene').addEventListener('pointerup', (e) => {
+  if (!doigt || doigt.id !== e.pointerId) return;
+  const dx = e.clientX - doigt.x; const dy = e.clientY - doigt.y;
+  doigt = null;
+  if (Math.abs(dx) >= GLISSE_PX && Math.abs(dx) > 1.5 * Math.abs(dy)) {
+    /* Vers la gauche, l'âge d'après — comme on tourne une page. Au bout de
+       la lignée, ou avec un seul âge, il ne se passe rien. */
+    if (equipe && lignee.atteint > 1) montrerAge((equipe.evo ?? 1) + (dx < 0 ? 1 : -1));
+    return;
+  }
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12) sauter();
+});
+$('scene').addEventListener('pointercancel', () => { doigt = null; });
 
 /* ------------------------------------------------------------ l'arrivée
 
