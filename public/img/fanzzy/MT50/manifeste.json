@@ -1,6 +1,6 @@
 {
   "id": "MT50",
-  "rev": 6,
+  "rev": 7,
   "evolutions": {
     "e1": {
       "skins": {
@@ -40,8 +40,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "846f84c3aa83",
-          "cligne": true
+          "sha": "63cef0e1c97d"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "cd4ca6f47482"
         }
       }
     },
