@@ -110,6 +110,18 @@ app.get('/api/me/state', async (_q, s) => {
   const [[n]] = await pool.query(`SELECT COUNT(*) c FROM user_follows WHERE user_id = ?`, [U]);
   s.json({ slots: { used: n.c, total: w.follow_slots, max: 8 } });
 });
+/* Les Fanzzy liés du joueur, tels que `/api/fanzzy/lies` les rend (la vraie
+   route est éprouvée par clubs:smoke) : AN-témoin de série sous Lausanne,
+   un neutre lié contre des écharpes sous Lausanne aussi, et une légendaire du
+   championnat 77. Bâle a deux Fanzzy de série à trouver. */
+app.get('/api/fanzzy/lies', (_q, s) => s.json({
+  lies: [
+    { id: 'AN1', image: 'AN1', nom: 'Témoin de série', stage: 1, club: 85, selection: null, ligue: null, achete: false },
+    { id: 'TR32', image: 'TR32', nom: 'Neutre lié', stage: 1, club: 85, selection: null, ligue: null, achete: true },
+    { id: 'SU40', image: 'SU40', nom: 'Légende du championnat', stage: 1, club: null, selection: null, ligue: 77, achete: false },
+  ],
+  parClub: { 85: 3, 91: 2 },
+}));
 app.get('/equipes', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'equipes.html')));
 app.use(express.static(path.join(RACINE, 'public')));
 
@@ -131,6 +143,14 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 /* Sur un ordinateur, la page des clubs garde la largeur du téléphone. */
 await controlerColonne(page, check, { nom: 'la page des clubs',
   pret: () => jusqua(async () => await page.$('.team') !== null) });
+
+/** La boîte « es-tu sûr ? » : attend qu'elle s'ouvre, rend son texte, répond. */
+async function repondre(p, oui) {
+  await jusqua(async () => await p.$('.tbf-dial [data-oui]') !== null);
+  const texte = await p.evaluate(() => document.querySelector('.tbf-dial')?.textContent ?? '');
+  await p.evaluate((o) => document.querySelector(o ? '.tbf-dial [data-oui]' : '.tbf-dial [data-non]')?.click(), oui);
+  return texte;
+}
 
 /** Cherche un club et rend l'état des résultats proposés. */
 async function chercher(terme) {
@@ -193,11 +213,26 @@ async function chercher(terme) {
     r.boutons.some((b) => /Lugano/.test(b.nom) && !b.bloque)
     || (console.log('        proposés :', JSON.stringify(r.boutons)), false));
 
-  await page.evaluate(() => {
+  const cliquerLugano = () => page.evaluate(() => {
     const b = [...document.querySelectorAll('#results button[data-follow]')]
       .find((x) => /Lugano/.test(x.textContent));
     b.click();
   });
+  /* « Es-tu sûr ? » avant de suivre (demande de Gaël du 5 novembre 2026) :
+     le club est gardé à vie, la boîte le dit, et ANNULER ne suit rien. */
+  await cliquerLugano();
+  const question = await repondre(page, false);
+  check('choisir un club demande d’abord « es-tu sûr ? »',
+    /SUIVRE LUGANO/.test(question) || (console.log('        elle dit :', question || '(rien)'), false));
+  check('et dit qu’il est gardé à vie, et ce qui reste',
+    /à vie/.test(question) && /dernier emplacement/.test(question));
+  await dodo(400);
+  const [avant] = await pool.query(`SELECT COUNT(*) n FROM user_follows WHERE user_id = ?`, [U]);
+  check('annuler ne suit rien', avant[0].n === 2);
+
+  await chercher('Lugano');
+  await cliquerLugano();
+  await repondre(page, true);
   await jusqua(async () => await page.evaluate(() =>
     [...document.querySelectorAll('.club b')].some((n) => /Lugano/.test(n.textContent))));
   const [suivis] = await pool.query(
@@ -244,6 +279,7 @@ async function chercher(terme) {
     b.click();
     return fige;
   });
+  await repondre(page, true);
   // La page croyait avoir de la place : c'est bien le serveur qu'on éprouve.
   check('la page laissait cliquer, c’est donc le serveur qui refuse',
     bloque === false);
@@ -285,11 +321,43 @@ async function chercher(terme) {
      VALUES (9100,77,2026,85,99,'2H',1,0,19,NULL,
              NOW(3) - INTERVAL 2 MINUTE, UTC_TIMESTAMP() - INTERVAL 25 MINUTE)`);
 
+  await pool.query(`INSERT INTO team_leagues (team_id,league_id,season) VALUES (85,77,2026)
+                    ON DUPLICATE KEY UPDATE season=VALUES(season)`);
+  await pool.query(`UPDATE leagues SET type='League' WHERE id=77`);
   const p = await nav.newPage();
   p.on('pageerror', (e) => erreurs.push(e.message));
   await p.setViewport({ width: 400, height: 900 });
   await p.goto(base + '/equipes', { waitUntil: 'networkidle0' });
   await jusqua(async () => await p.$('.team .live') !== null);
+
+  /* Tout se touche (demande de Gaël du 5 novembre 2026). */
+  const liens = await p.evaluate(() => {
+    const lau = document.querySelector('.team[data-team="85"]');
+    return {
+      club: lau?.querySelector('a.club')?.getAttribute('href') ?? '',
+      ligue: lau?.querySelector('.club .ligue')?.textContent ?? '',
+      match: lau?.querySelector('a.match[data-fixture="9100"]')?.getAttribute('href') ?? '',
+      direct: lau?.querySelector('.club .direct')?.textContent.trim() ?? '',
+      rangee: lau?.querySelector('a.match.en-direct') !== null,
+      fz: [...(lau?.querySelectorAll('.fz-c[data-fz]') ?? [])].map((a) => a.dataset.fz),
+      fzLien: lau?.querySelector('.fz-c[data-fz="AN1"]')?.getAttribute('href') ?? '',
+      achete: lau?.querySelector('.fz-c[data-fz="TR32"]')?.classList.contains('achete'),
+      reste: lau?.querySelector('.fz-c.reste')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+      bale: document.querySelector('.team[data-team="91"] .fz-vide')?.textContent ?? '',
+    };
+  });
+  check('le nom du club mène à la page de son championnat',
+    liens.club === '/teletext?ligue=77' && /Super League/.test(liens.ligue)
+    || (console.log('        lien :', liens.club, liens.ligue), false));
+  check('chaque match mène à sa fiche', liens.match === '/matchs?match=9100');
+  check('un match en direct se voit sur la carte du club', liens.direct === 'EN DIRECT' && liens.rangee);
+  check('les Fanzzy liés au club s’affichent : série, achetés, légendaires du championnat',
+    ['AN1', 'TR32', 'SU40'].every((x) => liens.fz.includes(x))
+    || (console.log('        vus :', liens.fz), false));
+  check('chacun ouvre sa fiche, l’acheté se distingue',
+    liens.fzLien === '/fanzzy/AN1' && liens.achete === true);
+  check('et ce qui reste à trouver est compté', /\+2/.test(liens.reste));
+  check('un club sans Fanzzy possédé dit combien il en a à collectionner', /2 Fanzzy/.test(liens.bale));
   const min = await p.evaluate(() =>
     document.querySelector('.team .live')?.textContent.trim() ?? '');
   check('la minute d’un match en cours court depuis le relevé',

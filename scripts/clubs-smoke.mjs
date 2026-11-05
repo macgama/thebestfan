@@ -293,6 +293,21 @@ check('le deck porte le club acheté', l.fanzzy[0].club === 85 && l.fanzzy[1].cl
 const lie = lierLeDeck(l, 85, tauxDuLien());
 check('et le duel d\'un match de son club le lie', lie.fanzzy[0].lie && !lie.fanzzy[1].lie);
 check('pas dans un match d\'un autre club', !lierLeDeck(l, 91, tauxDuLien()).fanzzy[0].lie);
+
+/* La page CLUBS montre les Fanzzy liés à chaque club suivi (demande de Gaël du
+   5 novembre 2026) : ceux de la série, les légendaires, et les liens achetés. */
+{
+  const { lies, parClub } = await F.liesDuJoueur(U);
+  const par = (id) => lies.find((x) => x.id === id);
+  check('les Fanzzy liés : celui de série, sous son club',
+    par('AN1')?.club === clubDe('AN1') && par('AN1').achete === false && par('AN1').nom);
+  check('le neutre lié contre des écharpes, sous le club principal',
+    par('TR32')?.club === 85 && par('TR32').achete === true);
+  check('les légendaires : sélection et championnat',
+    par('AN62')?.selection === 10 && par('AN64')?.ligue === 39);
+  check('et pas un neutre resté neutre', !par('MS30'));
+  check('chaque club de série compte ses trois Fanzzy', parClub[clubDe('AN1')] === 3);
+}
 await pool.end();
 
 console.log(failures ? `\n${failures} échec(s)` : '\nTout est bon.');

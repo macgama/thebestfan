@@ -76,6 +76,37 @@ input:focus{outline:none;border-color:var(--projo)}
 .live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
   background:var(--flare);margin-right:5px;animation:pulse 1.4s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+/* **Tout se touche** (demande de Gaël du 5 novembre 2026). Le nom du club
+   mène à la page de son championnat, chaque match à sa fiche : la page
+   montrait des résultats qu'on ne pouvait pas ouvrir. */
+a.club,a.match{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+a.club:hover,a.match:hover{background:rgba(242,238,228,.05)}
+a.club:focus-visible,a.match:focus-visible{outline:2px solid var(--projo);outline-offset:-2px}
+.club .nom{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.club .nom b{flex:none}
+.club .ligue{font-size:11.5px;opacity:.88;display:flex;align-items:center;gap:5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.club .ligue img{width:14px;height:14px}
+/* EN DIRECT sur la carte du club : on le voit sans descendre jusqu'au match. */
+.direct{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+  color:#fff;background:var(--flare);border-radius:4px;padding:3px 7px;flex:none}
+.direct::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.4s infinite}
+.match.en-direct{box-shadow:inset 3px 0 0 var(--flare);background:rgba(224,64,44,.08)}
+.section.direct-titre{color:var(--flare);font-weight:700;opacity:1}
+/* Les Fanzzy du club : ceux que leur carte y lie, et ceux que le joueur y a
+   liés lui-même. */
+.fz-rang{display:flex;gap:8px;overflow-x:auto;padding:8px 14px 13px;scrollbar-width:none}
+.fz-rang::-webkit-scrollbar{display:none}
+.fz-c{flex:none;width:66px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  color:inherit;text-decoration:none;font-size:10.5px;text-align:center;line-height:1.2}
+.fz-c .rond{width:58px;height:58px;border-radius:50%;overflow:hidden;background:rgba(242,238,228,.08);
+  border:2px solid rgba(242,238,228,.18);display:grid;place-items:center;font-family:var(--banner);font-size:15px}
+.fz-c.achete .rond{border-color:var(--projo)}
+.fz-c .rond img{width:100%;height:100%;object-fit:cover}
+.fz-c span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fz-c.reste .rond{border-style:dashed;font-size:14px}
+.fz-vide{font-size:12px;opacity:.88;padding:6px 14px 13px;line-height:1.5}
+.fz-vide a{color:var(--craie);font-weight:700}
 .section{font-size:11px;letter-spacing:.14em;opacity:.88;padding:10px 14px 2px;text-transform:uppercase}
 /* Le message d'une liste vide — ou d'un serveur muet — se posait à même la
    photo. Il a son panneau, comme le reste de la page. */
@@ -111,9 +142,10 @@ input:focus{outline:none;border-color:var(--projo)}
    bandeau d'un but et le mot du serveur paraissent à leur place, sans
    monter. */
 @media (prefers-reduced-motion:reduce){
-  .live::before,.flash.on,.mot.on{animation:none}
+  .direct::before,.live::before,.flash.on,.mot.on{animation:none}
 }
 html[data-calme~="animations"] .live::before,
+html[data-calme~="animations"] .direct::before,
 html[data-calme~="animations"] .flash.on,
 html[data-calme~="animations"] .mot.on{animation:none}
 
@@ -168,6 +200,9 @@ body{padding-bottom:calc(var(--bas) + 40px)}
 <!-- L'horloge du match : la même que sur la page des matchs et dans le
      Grand Virage. -->
 <script src="/horloge.js"></script>
+<!-- Le portrait des Fanzzy liés aux clubs. -->
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const I18N = {
@@ -177,28 +212,52 @@ const I18N = {
     login:'Connecte-toi pour suivre tes clubs.',goal:'BUT DE {team}',goalSeul:'BUT !',
     nothing:'Aucun club trouvé.',main:'PRINCIPAL',plein:'Tu suis déjà {n} clubs sur {t}. Un club choisi est gardé à vie : achète un emplacement depuis ton profil.',
     pleinSans:'Tu n’as plus d’emplacement libre. Un club choisi est gardé à vie : achète un emplacement depuis ton profil.',
-    panne:'Le serveur ne répond pas. Tes clubs sont toujours là — la page se remet à jour toute seule.'},
+    panne:'Le serveur ne répond pas. Tes clubs sont toujours là — la page se remet à jour toute seule.',
+    direct:'EN DIRECT',fz:'tes Fanzzy de ce club',fzReste:'à trouver',
+    fzAucun:'{n} Fanzzy de ce club à collectionner.',fzVoir:'Voir le classeur',
+    fzLier:'Aucun Fanzzy lié. Un Fanzzy neutre se lie à ton club principal depuis sa fiche.',
+    suivreTitre:'SUIVRE {club} ?',suivreOui:'SUIVRE',suivreNon:'ANNULER',
+    suivreTexte:'Un club choisi est gardé à vie : tu ne pourras plus le retirer.',
+    suivreReste:'Il te restera {n} emplacement(s) libre(s).',suivreDernier:'C’est ton dernier emplacement libre.'},
   en:{title:'MY TEAMS',subtitle:'results, fixtures, live',search:'Search for a club…',
     next:'upcoming',last:'latest results',live:'LIVE',today:'today',tomorrow:'tomorrow',
     empty:'You follow no club yet. Search above to see its results and get its goals live.',
     login:'Sign in to follow your clubs.',goal:'{team} SCORES',goalSeul:'GOAL!',
     nothing:'No club found.',main:'MAIN',plein:'You already follow {n} clubs out of {t}. A club you pick is yours for life: buy a slot from your profile.',
     pleinSans:'You have no free slot left. A club you pick is yours for life: buy a slot from your profile.',
-    panne:'The server is not responding. Your clubs are still there — this page refreshes itself.'},
+    panne:'The server is not responding. Your clubs are still there — this page refreshes itself.',
+    direct:'LIVE',fz:'your Fanzzy for this club',fzReste:'to find',
+    fzAucun:'{n} Fanzzy of this club to collect.',fzVoir:'Open the binder',
+    fzLier:'No linked Fanzzy. A neutral Fanzzy can be linked to your main club from its card.',
+    suivreTitre:'FOLLOW {club}?',suivreOui:'FOLLOW',suivreNon:'CANCEL',
+    suivreTexte:'A club you pick is yours for life: you will not be able to remove it.',
+    suivreReste:'You will have {n} free slot(s) left.',suivreDernier:'This is your last free slot.'},
   de:{title:'MEINE TEAMS',subtitle:'Ergebnisse, Spielplan, live',search:'Verein suchen…',
     next:'kommende Spiele',last:'letzte Ergebnisse',live:'LIVE',today:'heute',tomorrow:'morgen',
     empty:'Du folgst noch keinem Verein. Suche oben, um Ergebnisse und Tore live zu bekommen.',
     login:'Melde dich an, um Vereinen zu folgen.',goal:'TOR FÜR {team}',goalSeul:'TOR!',
     nothing:'Kein Verein gefunden.',main:'HAUPT',plein:'Du folgst bereits {n} von {t} Vereinen. Ein gewählter Verein bleibt dir fürs Leben: kaufe einen Platz im Profil.',
     pleinSans:'Du hast keinen freien Platz mehr. Ein gewählter Verein bleibt dir fürs Leben: kaufe einen Platz im Profil.',
-    panne:'Der Server antwortet nicht. Deine Vereine sind noch da — die Seite aktualisiert sich von selbst.'},
+    panne:'Der Server antwortet nicht. Deine Vereine sind noch da — die Seite aktualisiert sich von selbst.',
+    direct:'LIVE',fz:'deine Fanzzy dieses Vereins',fzReste:'zu finden',
+    fzAucun:'{n} Fanzzy dieses Vereins zu sammeln.',fzVoir:'Zum Album',
+    fzLier:'Kein verbundener Fanzzy. Ein neutraler Fanzzy lässt sich auf seiner Karte mit deinem Hauptverein verbinden.',
+    suivreTitre:'{club} FOLGEN?',suivreOui:'FOLGEN',suivreNon:'ABBRECHEN',
+    suivreTexte:'Ein gewählter Verein bleibt dir fürs Leben: du kannst ihn nicht mehr entfernen.',
+    suivreReste:'Dir bleiben {n} freie Plätze.',suivreDernier:'Das ist dein letzter freier Platz.'},
   es:{title:'MIS EQUIPOS',subtitle:'resultados, calendario, directo',search:'Buscar un club…',
     next:'próximos',last:'últimos resultados',live:'EN DIRECTO',today:'hoy',tomorrow:'mañana',
     empty:'No sigues ningún club. Búscalo arriba para ver resultados y recibir sus goles en directo.',
     login:'Entra para seguir a tus clubes.',goal:'GOL DE {team}',goalSeul:'¡GOL!',
     nothing:'No se encontró ningún club.',main:'PRINCIPAL',plein:'Ya sigues {n} clubes de {t}. Un club elegido es tuyo para siempre: compra una plaza desde tu perfil.',
     pleinSans:'Ya no te queda ninguna plaza libre. Un club elegido es tuyo para siempre: compra una plaza desde tu perfil.',
-    panne:'El servidor no responde. Tus clubes siguen ahí — la página se actualiza sola.'},
+    panne:'El servidor no responde. Tus clubes siguen ahí — la página se actualiza sola.',
+    direct:'EN DIRECTO',fz:'tus Fanzzy de este club',fzReste:'por encontrar',
+    fzAucun:'{n} Fanzzy de este club por coleccionar.',fzVoir:'Ver el álbum',
+    fzLier:'Ningún Fanzzy vinculado. Un Fanzzy neutro se vincula a tu club principal desde su ficha.',
+    suivreTitre:'¿SEGUIR A {club}?',suivreOui:'SEGUIR',suivreNon:'CANCELAR',
+    suivreTexte:'Un club elegido es tuyo para siempre: no podrás quitarlo.',
+    suivreReste:'Te quedarán {n} plaza(s) libre(s).',suivreDernier:'Es tu última plaza libre.'},
 };
 /* La langue de `langue.js`. Pour l'italien, ces textes retombent sur le
    français, que le dictionnaire traduit à l'affichage. */
@@ -214,6 +273,8 @@ let authed = true;
 let panne = false;
 let watched = [];
 let socket = null;
+/** Les Fanzzy du joueur liés à un club (`/api/fanzzy/lies`), `null` tant qu'inconnus. */
+let lies = null;
 
 const $ = (id) => document.getElementById(id);
 const t = (k, p = {}) => Object.entries(p).reduce((a,[x,v]) => a.replaceAll(`{${x}}`, v),
@@ -332,13 +393,15 @@ function when(f){
 function matchRow(f){
   const played = f.home_goals !== null && f.away_goals !== null;
   const min = enCours(f);
-  return `<div class="match" data-fixture="${f.id}">
+  const direct = ['1H','2H','HT','ET','P','BT','LIVE','INT'].includes(f.status_short);
+  /* Chaque match ouvre sa fiche sur la page des matchs (`/matchs?match=`). */
+  return `<a class="match${direct ? ' en-direct' : ''}" data-fixture="${f.id}" href="/matchs?match=${encodeURIComponent(f.id)}">
     <div class="side"><img src="${esc(f.home_logo)}" alt=""><span>${esc(nomEquipe({ name: f.home_name }))}</span></div>
     ${played ? `<div class="score">${f.home_goals} – ${f.away_goals}
                   ${min ? `<small class="live">${min}</small>` : ''}</div>`
              : `<div class="when">${when(f)}</div>`}
     <div class="side away"><span>${esc(nomEquipe({ name: f.away_name }))}</span><img src="${esc(f.away_logo)}" alt=""></div>
-  </div>`;
+  </a>`;
 }
 
 function render(){
@@ -364,17 +427,71 @@ function render(){
   }
   if (!feed.length) { $('feed').innerHTML = `<div class="empty">${t('empty')}</div>`; return; }
 
-  $('feed').innerHTML = feed.map(row => `
-    <div class="team" data-team="${row.team.id}">
-      <div class="club">
+  $('feed').innerHTML = feed.map(row => {
+    /* Le nom mène à la page du championnat du club (`/teletext?ligue=`). Sans
+       championnat connu, il reste un titre. */
+    const ligue = row.ligue?.id ? row.ligue : null;
+    const tete = `
         <img src="${esc(row.team.logo)}" alt="">
-        <b>${esc(nomEquipe(row.team))}</b>
-        ${row.team.is_main ? `<span class="main tbf-sticker">${t('main')}</span>` : ''}
-      </div>
-      ${row.live.length ? row.live.map(matchRow).join('') : ''}
+        <span class="nom"><b>${esc(nomEquipe(row.team))}</b>
+          ${ligue?.name ? `<small class="ligue">${ligue.logo ? `<img src="${esc(ligue.logo)}" alt="">` : ''}${esc(ligue.name)} ›</small>` : ''}</span>
+        ${row.live.length ? `<span class="direct">${t('direct')}</span>` : ''}
+        ${row.team.is_main ? `<span class="main tbf-sticker">${t('main')}</span>` : ''}`;
+    return `
+    <div class="team" data-team="${row.team.id}">
+      ${ligue ? `<a class="club" href="/teletext?ligue=${encodeURIComponent(ligue.id)}">${tete}</a>`
+              : `<div class="club">${tete}</div>`}
+      ${row.live.length ? `<div class="section direct-titre">${t('direct')}</div>` + row.live.map(matchRow).join('') : ''}
       ${row.next.length ? `<div class="section">${t('next')}</div>` + row.next.map(matchRow).join('') : ''}
       ${row.last.length ? `<div class="section">${t('last')}</div>` + row.last.map(matchRow).join('') : ''}
-    </div>`).join('');
+      ${fanzzyDuClub(row)}
+    </div>`;
+  }).join('');
+}
+
+/**
+ * Les Fanzzy du joueur liés à ce club (demande de Gaël du 5 novembre 2026) :
+ * ceux de sa série (AN pour la Premier League, SU pour la Super League…),
+ * les légendaires de sa sélection ou de son championnat, et ceux que le
+ * joueur y a liés lui-même contre des écharpes (cerclés d'or). Chacun ouvre
+ * sa fiche.
+ */
+function fanzzyDuClub(row){
+  if (!lies) return '';
+  const id = Number(row.team.id);
+  const ligue = Number(row.ligue?.id);
+  const siens = lies.lies.filter((f) => Number(f.club) === id || Number(f.selection) === id
+    || (f.ligue != null && Number(f.ligue) === ligue));
+  const deSerie = siens.filter((f) => !f.achete && f.club != null).length;
+  const reste = Math.max(0, (lies.parClub?.[id] ?? 0) - deSerie);
+  if (!siens.length) {
+    if (reste) return `<div class="section">${t('fz')}</div>
+      <div class="fz-vide">${t('fzAucun', { n: reste })} <a href="/fanzzy?ecran=dex">${t('fzVoir')} ›</a></div>`;
+    return row.team.is_main ? `<div class="section">${t('fz')}</div><div class="fz-vide">${t('fzLier')}</div>` : '';
+  }
+  const portrait = (f) => {
+    const src = window.FZART?.adresse?.(f.image, 'buste');
+    const init = esc(String(f.nom ?? f.id).slice(0, 2).toUpperCase());
+    // Un dessin qui manque laisse les initiales plutôt qu'une image cassée.
+    return src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${init}'))">`
+               : init;
+  };
+  return `<div class="section">${t('fz')}</div>
+    <div class="fz-rang">
+      ${siens.map((f) => `<a class="fz-c${f.achete ? ' achete' : ''}" data-fz="${esc(f.id)}"
+          href="/fanzzy/${encodeURIComponent(f.id)}"><span class="rond">${portrait(f)}</span><span>${esc(f.nom ?? f.id)}</span></a>`).join('')}
+      ${reste ? `<a class="fz-c reste" href="/fanzzy?ecran=dex"><span class="rond">+${reste}</span><span>${t('fzReste')}</span></a>` : ''}
+    </div>`;
+}
+
+/** Les Fanzzy liés, lus une fois au chargement et après un nouveau club. */
+async function chargerLies(){
+  try {
+    const r = await fetch('/api/fanzzy/lies', { credentials: 'same-origin' });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (Array.isArray(j?.lies)) { lies = j; render(); }
+  } catch { /* la page reste lisible sans eux */ }
 }
 
 /* Plus de croix pour retirer un club : un club choisi est gardé à vie
@@ -434,6 +551,21 @@ $('results').onclick = async e => {
   const b = e.target.closest('[data-follow]');
   if (!b) return;
   $('results').classList.remove('on');
+  const teamId = Number(b.dataset.follow);
+  /* « Es-tu sûr ? » avant de suivre (demande de Gaël du 5 novembre 2026) : un
+     club choisi est gardé à vie, un appui distrait ne doit pas le décider. Un
+     club déjà suivi n'a rien à confirmer. */
+  if (!feed.some((row) => Number(row.team.id) === teamId)) {
+    const nom = b.querySelector('span')?.textContent.trim() || '';
+    const reste = slots === null ? null : slots - feed.length - 1;
+    const ok = await window.TBF_DIALOGUE?.confirmer({
+      titre: t('suivreTitre', { club: nom.toUpperCase() }),
+      texte: t('suivreTexte') + (reste === null ? ''
+        : ' ' + (reste <= 0 ? t('suivreDernier') : t('suivreReste', { n: reste }))),
+      oui: t('suivreOui'), non: t('suivreNon'), ton: 'or',
+    }) ?? window.confirm(t('suivreTitre', { club: nom }));
+    if (!ok) return;
+  }
   $('q').value = '';
   const r = await api('/follows', { method: 'POST', body: { teamId: Number(b.dataset.follow) } });
   if (r.status === 401) { authed = false; render(); return; }
@@ -456,6 +588,7 @@ $('results').onclick = async e => {
   if (r.status === 0) { dire(t('panne')); return; }
   if (r.json?.error) { dire(r.json.error); return; }
   await load();
+  chargerLies();
 };
 
 /** Un mot au joueur, trois secondes. */
@@ -551,6 +684,7 @@ async function load(){
 applyLocale();
 connectLive();
 load();
+chargerLies();
 // Filet de sécurité : même sans temps réel, la page reste à jour.
 setInterval(load, 45_000);
 </script>
