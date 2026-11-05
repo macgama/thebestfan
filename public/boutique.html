@@ -1772,38 +1772,36 @@ $('rayons').addEventListener('click', async (e) => {
    Une carte Ultimate par âge atteint de chaque Fanzzy du joueur, au même
    prix (`etal.ultime`, 300 écharpes). Le serveur ne liste que celles qui se
    vendent : pas de légendaire, et seulement là où l'image est faite. Celles
-   qu'on a déjà restent dans la rangée, marquées À TOI : la vitrine dit aussi
-   ce qu'on a. On arrive sur la première qui manque. */
+   qu'on a déjà n'y sont plus (demande de Gaël du 5 novembre 2026 : la
+   liste s'allonge à chaque série et chaque tenue) ; l'album dit ce qu'on a. */
 const cleUlt = (u) => `${u.fanzzy}:${u.stade}`;
+/* Un serveur d'avant pouvait encore les envoyer, marquées : on les écarte. */
+const ultimesAVendre = () => (S.etal?.ultimes ?? []).filter((u) => !u.possede);
 
 function ultRegardee() {
-  const l = S.etal?.ultimes ?? [];
-  return l.find((u) => cleUlt(u) === S.ult) ?? l.find((u) => !u.possede) ?? l[0] ?? null;
+  const l = ultimesAVendre();
+  return l.find((u) => cleUlt(u) === S.ult) ?? l[0] ?? null;
 }
 
 function rendreUltimes() {
-  const l = S.etal?.ultimes ?? [];
+  const l = ultimesAVendre();
   const el = $('vitrine-ult');
   const u = ultRegardee();
   if (!u) { el.innerHTML = ''; return; }
   S.ult = cleUlt(u);
   const assez = S.echarpes >= u.prix;
-  const geste = u.possede
-    ? `<span class="tbf-plaque tbf-bloc cabine-deja" aria-disabled="true">DÉJÀ À TOI</span>`
-    : `<button type="button" class="tbf-plaque tbf-bloc" data-ton="or" data-acheter-ult
+  const geste = `<button type="button" class="tbf-plaque tbf-bloc" data-ton="or" data-acheter-ult
         aria-label="${esc(`Acheter l’Ultimate de ${u.nom}, âge ${u.stade} — ${u.prix} écharpes`)}">ACHETER${prixHTML(u.prix)}</button>`;
   const qui = l.length > 1 ? `<div class="cabine-qui" role="group" aria-label="Quelle carte Ultimate">${
     l.map((x) => `<button type="button" class="cabine-vignette cabine-vignette--ult" data-ult="${esc(cleUlt(x))}"
-      aria-pressed="${x === u}" aria-label="${esc(`${x.nom}, âge ${x.stade}${x.possede ? ', déjà à toi' : ''}`)}">
+      aria-pressed="${x === u}" aria-label="${esc(`${x.nom}, âge ${x.stade}`)}">
       <img src="${esc(x.image)}" alt="" decoding="async" loading="lazy">
-      ${x.possede ? '<span class="tbf-tampon tbf-tampon--plein" data-ton="vert" aria-hidden="true">À TOI</span>' : ''}
     </button>`).join('')}</div>` : '';
 
   el.innerHTML = `<div class="cabine">
     <div class="ult-scene">
       <img class="ult-flou" src="${esc(u.image)}" alt="" aria-hidden="true">
       <img class="ult-image" src="${esc(u.image)}" alt="${esc(`L’Ultimate de ${u.nom}, âge ${u.stade}`)}">
-      ${u.possede ? '<span class="tbf-tampon tbf-tampon--plein" data-ton="vert">À TOI</span>' : ''}
       ${l.length > 1 ? `<button type="button" class="tbf-plaque tbf-plaque--rond cabine-avant" data-pas-ult="-1"
           aria-label="L’Ultimate précédente">${CHEVRON('M15 5l-7 7 7 7')}</button>
         <button type="button" class="tbf-plaque tbf-plaque--rond cabine-apres" data-pas-ult="1"
@@ -1817,7 +1815,7 @@ function rendreUltimes() {
     <p class="cabine-pour">Pour <b>${esc(u.nom)}</b>, âge ${u.stade}</p>
     ${qui}
     <div class="cabine-achat">${geste}</div>
-    ${u.possede || assez ? '' : `<a class="cabine-gagner" href="/virage" aria-label="${esc(
+    ${assez ? '' : `<a class="cabine-gagner" href="/virage" aria-label="${esc(
       `Il t’en manque ${u.prix - S.echarpes} : où gagner des écharpes`)}">${ecartHTML(u.prix)}${GAGNER}</a>`}
   </div>`;
   el.querySelector('[aria-pressed="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
@@ -1830,7 +1828,7 @@ function jouerUltime(u) {
 }
 
 $('vitrine-ult').addEventListener('click', (e) => {
-  const l = S.etal?.ultimes ?? [];
+  const l = ultimesAVendre();
   const pas = e.target.closest('[data-pas-ult]');
   if (pas && l.length) {
     const i = l.findIndex((x) => cleUlt(x) === S.ult);
@@ -1856,7 +1854,7 @@ $('vitrine-ult').addEventListener('click', (e) => {
     chemin que la tenue (la boîte, le débit relu par le serveur, la cérémonie). */
 async function acheterUltime(bouton) {
   const u = ultRegardee();
-  if (!u || u.possede || enAchat) return;
+  if (!u || enAchat) return;
   const prix = Number(u.prix) || 0;
   const o = { type: 'ultime', id: u.fanzzy, nom: `Ultimate de ${u.nom}`, rar: 'epique', image: u.image, prix,
     texte: 'La grande scène de son coup fatal, et sa carte dans ton album.' };
@@ -1922,7 +1920,7 @@ function rayons() {
   return [
     (S.etal?.stuff ?? []).length ? { id: 'equipement', nom: 'ÉQUIPEMENT' } : null,
     (S.etal?.tenues ?? []).length ? { id: 'tenues', nom: 'TENUES' } : null,
-    (S.etal?.ultimes ?? []).length ? { id: 'ultimes', nom: 'ULTIMATE' } : null,
+    ultimesAVendre().length ? { id: 'ultimes', nom: 'ULTIMATE' } : null,
     abo ? { id: 'abonnement', nom: 'PASS' } : null,
   ].filter(Boolean);
 }
@@ -1991,6 +1989,8 @@ async function monterEtal() {
      qui le pose (voir `ceremonie`). */
   if (S.etat?.wallet && !enCeremonie()) poserSolde(document.querySelector('#reserve [data-echarpes]'), S.echarpes);
   rendreUne();
+  /* La dernière Ultimate achetée vide son rayon : on passe au suivant. */
+  if (S.rayon && !rayons().some((r) => r.id === S.rayon)) { montrerRayon(S.rayon); return; }
   if (S.rayon === 'equipement') rendreEtal();
   if (S.rayon === 'tenues') rendreCabine();
   if (S.rayon === 'ultimes') rendreUltimes();
