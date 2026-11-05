@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Page CLUBS plus vivante** (branche `claude/project-thread-sualru`, 5 novembre
+2026, demande de Gaël). Code seul, sans schéma. « Es-tu sûr ? » avant de suivre
+un nouveau club ; le nom du club ouvre la page de son championnat ; chaque match
+ouvre sa fiche ; pastille EN DIRECT et rangée rouge pour un match en cours ; sous
+chaque club, les Fanzzy du joueur qui lui sont liés (série, légendaires,
+liens achetés) et ce qui reste à trouver. Nouvelle route `/api/fanzzy/lies`.
+Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Vestiaire du duel : le match réel en tête** (branche
 `claude/project-thread-xm9ylm`, 5 novembre 2026, demande de Gaël). Code seul
 (serveur du duel et page), sans schéma. À venir : le jour et l'heure ; en

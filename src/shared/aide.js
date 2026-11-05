@@ -628,6 +628,14 @@ const RUBRIQUES = [
           + 'en écharpes. Ton club principal est celui qui te rattache à une tribune pour '
           + 'les classements ; tu peux le changer pour un autre de tes clubs, une fois par '
           + 'saison, depuis MES CLUBS sur ton profil.'],
+      ['Que montre la page CLUBS ?',
+        'Pour chaque club que tu suis : ses matchs en direct (pastille EN DIRECT, '
+          + 'minute et score), les prochains et les derniers résultats. Touche le nom '
+          + 'du club pour ouvrir la page de son championnat, et un match pour ouvrir sa '
+          + 'fiche. Dessous, tes Fanzzy liés à ce club : ceux de sa série, les légendaires '
+          + 'de son championnat ou de sa sélection, et ceux que tu y as liés toi-même '
+          + '(cerclés d’or), avec ce qu’il te reste à trouver. Avant de suivre un nouveau '
+          + 'club, la page te demande de confirmer, puisqu’il est gardé à vie.'],
       ['Que se passe-t-il si je perds mes cartes ?',
         () => 'Rien de ce que tu possèdes ne disparaît. Une série qui se referme '
           + 'cesse d’être distribuée, elle ne se reprend pas : ta carte reste dans '

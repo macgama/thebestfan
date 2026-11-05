@@ -48,7 +48,7 @@ import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
 import { poserLesDos } from './dos.js';
 import { verser, verserTout } from '../recompenses.js';
-import { criDuClub, gainPleinClub, lienEcrit, motifSelection } from '../../shared/fanzzy/clubs.js';
+import { CLUB_DE, criDuClub, gainPleinClub, lienEcrit, motifSelection } from '../../shared/fanzzy/clubs.js';
 import { tombeDans } from '../../shared/fanzzy/stuff-series.js';
 
 /* ------------------------------------------------------------ le journal
@@ -2179,6 +2179,46 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     return { ...r, ...(apres ? { paliers: apres } : {}) };
   }
 
+  /**
+   * Les Fanzzy du joueur liés à un club, une sélection ou un championnat
+   * (demande de Gaël du 5 novembre 2026, page CLUBS) : ceux que leur carte lie
+   * d'office (`lienEcrit`) et ceux qu'il a liés lui-même contre des écharpes
+   * (`user_fanzzy.club_id`). La page range chacun sous le club qui le concerne.
+   */
+  router.get('/lies', requireAuth, (req, res) => send(res, liesDuJoueur(req.user.id)));
+
+  async function liesDuJoueur(userId) {
+    const rows = await q(
+      `SELECT fanzzy_id, stage, club_id FROM user_fanzzy WHERE user_id = ? AND copies > 0`,
+      [userId],
+    ).catch((e) => {
+      // `club_id` vient de sql/fanzzy.sql : sans lui, seuls les liens écrits.
+      if (e.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      return q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ? AND copies > 0`,
+        [userId]);
+    });
+    const lies = [];
+    for (const r of rows) {
+      const perso = parIdentifiant(r.fanzzy_id);
+      if (!perso) continue;
+      const ecrit = lienEcrit(r.fanzzy_id);
+      const achete = ecrit ? null : (r.club_id == null ? null : Number(r.club_id));
+      if (!ecrit && achete == null) continue;
+      const stage = Math.max(1, Number(r.stage) || 1);
+      const age = auStade(r.fanzzy_id, stage) ?? perso;
+      lies.push({
+        id: r.fanzzy_id, image: age.id, nom: age.nom ?? perso.nom, stage,
+        club: ecrit?.club ?? achete, selection: ecrit?.selection ?? null,
+        ligue: ecrit?.ligue ?? null, achete: achete != null,
+      });
+    }
+    /* Combien de Fanzzy chaque club a dans sa série, pour dire ce qui reste à
+       trouver : AN pour la Premier League, SU pour la Super League… */
+    const parClub = {};
+    for (const club of CLUB_DE.values()) parClub[club] = (parClub[club] ?? 0) + 1;
+    return { lies, parClub };
+  }
+
   router.get('/bibliotheque', requireAuth, (req, res) =>
     send(res, bibliotheque(req.user.id)));
 
@@ -2945,7 +2985,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   }
 
   return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
-    personnageActif, construireAvatar, fiche, lierAuClub, offrir, remettreStuff, remettreTenue, bibliotheque,
+    personnageActif, construireAvatar, fiche, lierAuClub, liesDuJoueur, offrir, remettreStuff, remettreTenue, bibliotheque,
     remettreUltime, ultimesEnVente,
     /* `recharger(conn, userId)` : la porte du grand livre et du quotidien
        avant tout booster offert (`PLAN.md`, § 5, étape 7). */

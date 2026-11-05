@@ -142,6 +142,31 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
     res.status(403).json({ error: 'onboarding.error.club_a_vie' });
   });
 
+  /**
+   * Le championnat d'un club, pour que son nom mène à sa page (demande de Gaël
+   * du 5 novembre 2026, page CLUBS). Celui de type « League » de la saison la
+   * plus récente ; à défaut (une sélection, un club dont les compétitions ne
+   * sont pas encore relevées), la compétition qui revient le plus dans ses
+   * matchs. `null` si l'on ne sait rien : le nom reste alors un simple titre.
+   */
+  async function championnatDe(teamId, matchs) {
+    try {
+      const ligues = await store.leaguesOfTeam(teamId);
+      const ligue = ligues.filter((l) => l.type === 'League')
+        .sort((a, b) => (b.season ?? 0) - (a.season ?? 0))[0];
+      if (ligue) return { id: ligue.id, name: ligue.name, logo: ligue.logo };
+    } catch (e) { console.error('[foot] championnat', e.message); }
+    const compte = new Map();
+    for (const f of matchs) {
+      if (f.league_id == null) continue;
+      const c = compte.get(f.league_id) ?? { n: 0, f };
+      c.n += 1;
+      compte.set(f.league_id, c);
+    }
+    const top = [...compte.values()].sort((a, b) => b.n - a.n)[0];
+    return top ? { id: top.f.league_id, name: top.f.league_name ?? null, logo: top.f.league_logo ?? null } : null;
+  }
+
   /** Le fil du joueur : pour chaque club suivi, le direct, le prochain, le dernier. */
   router.get('/feed', requireAuth, async (req, res) => {
     const teams = await store.followsOf(req.user.id);
@@ -151,6 +176,7 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
       const live = upcoming.filter((f) => isLive(f.status_short));
       feed.push({
         team: t,
+        ligue: await championnatDe(t.id, [...past, ...upcoming]),
         live,
         next: upcoming.filter((f) => !isLive(f.status_short)).slice(0, 2),
         last: past,
