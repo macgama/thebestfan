@@ -74,6 +74,13 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // sur un catalogue vide.
 await chargerCatalogue(pool);
 await chargerTenues(pool);
+/* Depuis le 5 novembre 2026 (Gaël), chaque tenue du jeu est celle d'un PASS
+   et ne sort plus des boosters : `pass:smoke` le garde. Ici on éprouve la
+   **mécanique** du tirage et de l'étal des tenues : on rend Apocalyptique et
+   Halloween libres, comme le ferait « aucune » dans /admin › PASS. */
+const { poserTenuesDesPass } = await import('../src/shared/pass.js');
+const tenuesLibres = () => poserTenuesDesPass({ 2: '', 4: '' });
+tenuesLibres();
 /* Le joueur de la requête : `U` par défaut, un autre quand l'en-tête le nomme.
    Les contrôles du chantier serveur partent chacun d'un joueur neuf, pour ne
    pas hériter de ce que les blocs d'avant ont ouvert. */
@@ -1193,6 +1200,7 @@ const base1W = DEX.find((f) => f.stage === 1 && f.evo);
        jusqu'à les avoir vues, en partant de ce que les vingt d'en haut ont
        déjà montré. */
     openPack: async (sortes) => {
+      tenuesLibres();
       const vues = new Set(sortesDuBooster);
       for (let i = 0; i < 80 && sortes.some((s) => !vues.has(s)); i++) {
         for (const l of await nouvelles(E, () => ouvrir(E, i % 2 ? 'MS' : 'TR'))) vues.add(l.sorte);
@@ -1218,6 +1226,7 @@ const base1W = DEX.find((f) => f.stage === 1 && f.evo);
       return new Set(l.filter((x) => x.cle === `stuff:${piece.id}`).map((x) => x.sorte));
     },
     remettreTenue: async () => {
+      tenuesLibres();
       const [[f]] = await pool.execute('SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
         [E, base1W.id]);
       const [ont] = await pool.execute(

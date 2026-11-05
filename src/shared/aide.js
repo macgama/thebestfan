@@ -61,7 +61,7 @@ export const ETAPES = [
     visuel: 'dos',
     quoi: 'Cinq cartes. Une ou deux sont des supporters — la deuxième sept fois '
       + 'sur dix. Les trois dernières donnent autre chose : de l’équipement, une '
-      + 'carte d’action, une tenue, une expression, une carte Ultimate ou des écharpes.',
+      + 'carte d’action, une expression, une carte Ultimate ou des écharpes.',
     pourquoi: () => 'Un double ne se perd pas : il se change en écharpes, '
       + `${SCARVES.commune} pour une commune et jusqu’à ${SCARVES.legendaire} `
       + 'pour une légendaire. Et les écharpes sont ce qui fait grandir tes '
@@ -245,10 +245,15 @@ const RUBRIQUES = [
       ['Il y a quoi dans un booster ?',
         () => 'Cinq cartes. La première est toujours un supporter, la deuxième l’est '
           + 'sept fois sur dix. Les trois dernières donnent une carte d’action, une '
-          + 'pièce d’équipement, une tenue, un état ou une poignée d’écharpes — '
-          + 'jamais un supporter de plus. Si tu as déjà toutes les tenues, tous les '
+          + 'pièce d’équipement, un état ou une poignée d’écharpes — '
+          + 'jamais un supporter de plus. Si tu as déjà tous les '
           + 'états ou toutes les cartes d’action que la carte pouvait te donner, '
           + `elle se change en ${POIGNEE_DE_REPLI} écharpes.`],
+      ['Pourquoi les tenues ne sortent-elles plus des boosters ?',
+        () => 'Chaque tenue (Préhistorique, Apocalyptique, Halloween…) est celle d’un PASS : '
+          + 'elle se gagne en jouant, le long de la voie de son PASS, sur tous tes Fanzzy. '
+          + 'Une fois sa saison finie, elle revient à l’étal, à acheter en écharpes. '
+          + 'Les tenues que tu as déjà gagnées restent à toi.'],
       ['Comment voir une carte en grand après un booster ?',
         () => 'Touche-la sur l’écran de fin d’ouverture. Elle s’ouvre en grand, avec sa '
           + 'rareté, ce qu’elle change en jeu et si elle est nouvelle ou en double. Les '

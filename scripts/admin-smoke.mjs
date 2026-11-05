@@ -1490,7 +1490,7 @@ console.log('\n— la BASE du menu PASS —');
   /* **La tenue des membres d'un PASS se choisit dans l'admin** (Gaël,
      3 novembre 2026). Elle sort alors des boosters, et l'étal la garde. */
   {
-    const { passDe: lePass, tenueDePass: estDePass } = await import('../src/shared/pass.js');
+    const { passDe: lePass, tenueDePass: estDePass, passDeLaTenue } = await import('../src/shared/pass.js');
     const { tenuesTirables } = await import('../src/server/fanzzy/tenues.js');
     let rt = await call('/api/admin/saisons', { method: 'POST',
       body: { numero: 77, nom: 'Le PASS à tenue', series: [], tenue_pass: 'halloween' } });
@@ -1501,7 +1501,9 @@ console.log('\n— la BASE du menu PASS —');
       && rt.json.tenuesDuPass?.halloween === 77 || montre('tenue', [rt.status, rt.json?.error, lePass(77)]));
     rt = await call(`/api/admin/saison/${s77.id}`, { method: 'PATCH',
       body: { nom: s77.nom, series: [], tenue_pass: '' } });
-    check('et la perd quand on choisit « aucune »', lePass(77).tenue === null && !estDePass('halloween'));
+    /* Halloween reste au PASS 4 du code : seul le PASS 77 la perd. */
+    check('et la perd quand on choisit « aucune »', lePass(77).tenue === null
+      && !passDeLaTenue('halloween').includes(77));
     rt = await call(`/api/admin/saison/${s77.id}`, { method: 'PATCH',
       body: { nom: s77.nom, series: [], tenue_pass: 'inventee' } });
     check('une tenue inconnue est refusée', rt.status === 400);
