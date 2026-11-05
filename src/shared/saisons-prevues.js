@@ -62,3 +62,33 @@ export const SAISONS_PREVUES = Object.freeze([
     texte: 'Ils reviennent hanter le virage jusqu’à Halloween, pour tous. Avec le PASS 4 : '
       + 'la tenue Halloween à ses trois âges, son badge et son cadre.' },
 ].map((s) => Object.freeze(s)));
+
+/* **Le programme des PASS** (Gaël, 5 novembre 2026) : pour la BASE et chaque
+   PASS, sa tenue, sa série hors championnat et sa série de championnat.
+   L'admin (menu PASS) le montre sur chaque fiche avec l'état de chaque
+   élément : en jeu, posé dans ce PASS, posé ailleurs, ou pas encore créé.
+   Il ne coche rien : une série n'entre dans un PASS que depuis sa fiche,
+   une fois ses cartes dessinées (la règle de `validerContenu`).
+
+   `tenue` : identifiant de la tenue (`base` pour la tenue de départ).
+   `fiches` : où sont écrites les fiches d'une série pas encore dans le jeu. */
+export const PROGRAMME_DES_PASS = Object.freeze([
+  { numero: 0, tenue: 'base', nomTenue: 'Tenue de base',
+    serie: { id: 'RP', nom: 'La Reprise' },
+    championnat: { id: 'AN', nom: 'Les Terraces', ligue: 'Premier League' } },
+  { numero: 1, tenue: 'prehistorique', nomTenue: 'Préhistorique',
+    serie: { id: 'HC', nom: 'Les héros du canapé' },
+    championnat: { id: 'SU', nom: 'Die Kurve', ligue: 'Super League suisse' } },
+  { numero: 2, tenue: 'apocalyptique', nomTenue: 'Apocalyptique',
+    serie: { id: 'MT', nom: 'Les phénomènes météo' },
+    championnat: { id: 'FR', nom: 'Le Parcage', ligue: 'Ligue 1',
+      fiches: 'fanzzy-prompts/FR-les-kops.md' } },
+  { numero: 3, tenue: 'spatiale', nomTenue: 'Spatiale',
+    serie: { id: 'GD', nom: 'Les galères de déplacement' },
+    championnat: { id: 'ES', nom: 'La Grada', ligue: 'Liga espagnole',
+      fiches: 'fanzzy-prompts/ES-la-grada.md' } },
+  { numero: 4, tenue: 'halloween', nomTenue: 'Halloween',
+    serie: { id: 'RV', nom: 'Les revenants' },
+    championnat: { id: 'AL', nom: 'Les Stehplätze', ligue: 'Bundesliga',
+      fiches: 'fanzzy-prompts/AL-les-stehplaetze.md' } },
+].map((p) => Object.freeze(p)));

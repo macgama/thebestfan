@@ -1487,6 +1487,21 @@ console.log('\n— la BASE du menu PASS —');
   check('ajouter un stade au PASS 1 lancé l’ouvre pour tous', r.status === 200
     && ouvertsIci('stade').has(retire) || montre('pass 1', [r.status, r.json?.error]));
 
+  /* **Le programme des PASS** (Gaël, 5 novembre 2026) : chaque fiche dit sa
+     tenue, sa série et son championnat, et où chacun en est. */
+  {
+    const prog = d.programme ?? [];
+    const p2 = prog.find((x) => x.numero === 2);
+    const p4 = prog.find((x) => x.numero === 4);
+    check('le menu PASS montre le programme de la BASE et des quatre PASS',
+      prog.map((x) => x.numero).join() === '0,1,2,3,4'
+      && p2?.tenue.id === 'apocalyptique' && p2?.serie.id === 'MT'
+      && p2?.championnat.nom === 'Le Parcage' && p2?.championnat.etat === 'a_creer'
+      && p4?.championnat.nom === 'Les Stehplätze'
+      && prog.find((x) => x.numero === 3)?.tenue.etat === 'a_creer'
+      || montre('programme', prog));
+  }
+
   /* **La tenue des membres d'un PASS se choisit dans l'admin** (Gaël,
      3 novembre 2026). Elle sort alors des boosters, et l'étal la garde. */
   {
