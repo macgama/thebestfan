@@ -136,6 +136,8 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       jeu: nombres({ ...j, ...v }),
       competitions: nombres(c),
       quota: module.deps.client?.quota ?? null,
+      /* Joueurs connectés : 5 min, 1 h, 24 h, comptés en mémoire. */
+      connectes: module.deps.frequentation?.compter() ?? null,
       virage: module.deps.virage ? [...module.deps.virage.rooms.values()].map((r) => ({
         fixtureId: r.fixture.id, foule: r.crowd(), corde: Math.round(r.rope),
       })) : [],

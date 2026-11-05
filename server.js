@@ -53,6 +53,7 @@ import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createEnsemble } from './src/server/amis/ensemble.js';
 import { createPresence } from './src/server/presence/index.js';
+import { createFrequentation } from './src/server/frequentation/index.js';
 import { createNotifications } from './src/server/notifications/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
@@ -226,6 +227,8 @@ let niveau = null;
 let kop = null;
 let amis = null;
 let presence = null;
+/* Le nombre de joueurs connectés, pour l'aperçu de l'administration. */
+const frequentation = createFrequentation();
 let notifications = null;
 let admin = null;
 let boutique = null;
@@ -337,7 +340,7 @@ if (process.env.DATABASE_URL) {
        routes, `/api/presence`, se montent après la fermeture du jeu. */
     presence = createPresence({ pool, requireAuth: auth.requireAuth });
     app.use('/api', (req, _res, next) => {
-      if (req.user) presence.noter(req.user.id);
+      if (req.user) { presence.noter(req.user.id); frequentation.noter(req.user.id); }
       next();
     });
 
@@ -484,7 +487,7 @@ if (process.env.DATABASE_URL) {
          bêta sans attendre le prestataire de paiement — et restera le geste
          de service après-vente quand il sera branché. */
       deps: { client: globalThis.footClient ?? null, virage: null, abonnement,
-        contenus } });
+        contenus, frequentation } });
     app.use('/api/admin', admin.router);
 
     /* ------------------------------------------------- la fermeture du jeu
