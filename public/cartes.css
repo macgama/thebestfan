@@ -197,7 +197,10 @@
    que du vide au-dessus du crâne. Statique : un masque posé une fois ne
    coûte rien en grille. Ni l'objet ni le tableau d'une action ne le portent :
    l'un flotte entier, l'autre couvre tout. */
-.fz .illuwrap .illu:not(.objet,.fz-pleine){
+/* Pas sur un personnage en pied (5 novembre 2026) : détouré, il n'a pas de
+   bord à cacher, et quand son crâne touche le haut de l'image (la carte de
+   l'âge 1, Le Gamin du Comptoir), le fondu le rendait flou, transparent. */
+.fz .illuwrap .illu:not(.objet,.fz-pleine,.fz-pied){
   -webkit-mask-image:linear-gradient(180deg,transparent,#000 12%);
   mask-image:linear-gradient(180deg,transparent,#000 12%)}
 /* Un personnage en pied (la pose d'un état, d'une tenue, le Fanzzy d'une
