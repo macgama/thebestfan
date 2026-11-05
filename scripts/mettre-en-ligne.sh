@@ -25,6 +25,13 @@
 
 set -euo pipefail
 
+# Pas de ménage automatique de git (gc) pendant une mise en ligne. Sous
+# Windows, un fichier de .git verrouillé par un autre programme lui fait
+# demander « Deletion of directory '.git/objects/..' failed. Should I try
+# again? (y/n) » pour chaque dossier, et la mise en ligne reste en plan
+# (5 novembre 2026). GIT_ASK_YESNO=false répond non tout seul.
+export GIT_ASK_YESNO=false GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=gc.auto GIT_CONFIG_VALUE_0=0
+
 TBF_SSH="${TBF_SSH:-VSHXbBEk9F_thebesfan@57-116302.ssh.hosting-ik.com}"
 export TBF_SSH
 # Les scripts voisins viennent du même dossier que celui-ci ; les images, du
