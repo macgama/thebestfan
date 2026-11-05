@@ -627,6 +627,69 @@ const JUSQUA = `var jusqua = (t0, t) => new Promise((r) => setTimeout(r, Math.ma
   check(`à l’heure mais du mauvais côté ne paie pas (${noteInv.toFixed(2)})`, noteInv <= 0.1);
 }
 
+/* ------------------------------------------------- à la souris, sans clic
+
+   Sur ordinateur, La Justesse rendait 0.00 : le joueur suivait la mélodie du
+   pointeur, sans garder le bouton enfoncé, et la page ne mesurait rien. Une
+   souris qui survole le cadre compte maintenant comme un doigt posé ; un
+   doigt qui glisse sans s'être posé (ce qui n'arrive pas) ne compte pas. */
+for (const kind of ['justesse', 'meche', 'jauge']) {
+  const mesurer = (pointerType) => page.evaluate(async (k, g, pt) => {
+    const p = window.TBF_GESTE.jouer(k, { ...g, [k]: { ...g[k], ms: 900 } },
+      { zone: document.getElementById('zone') });
+    const pad = document.getElementById('pad');
+    const r = pad.getBoundingClientRect();
+    const t0 = performance.now();
+    let i = 0;
+    while (performance.now() - t0 < 800) {
+      pad.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: pt,
+        clientX: r.left + r.width * 0.5, clientY: r.top + r.height * (0.2 + (i++ % 6) / 10) }));
+      await new Promise((s) => setTimeout(s, 40));
+    }
+    const rendu = await p;
+    const ms = rendu?.mesures ?? [];
+    return { n: ms.length, bouge: new Set(ms.map((m) => m.v ?? m.y)).size };
+  }, kind, gestes, pointerType);
+  const souris = await mesurer('mouse');
+  check(`${kind} : la souris qui survole est suivie, sans clic (${souris.n} mesures, ${souris.bouge} hauteurs)`,
+    souris.n >= 5 && souris.bouge >= 2);
+  if (kind !== 'jauge') {
+    const doigt = await mesurer('touch');
+    check(`${kind} : un doigt non posé ne mesure rien (${doigt.n})`, doigt.n === 0);
+  }
+}
+
+/* ------------------------------------------- les notes qui tombent parlent
+
+   Gaël (5 novembre 2026) : une note ratée doit continuer tout droit, et le
+   geste doit dire BIEN, RATÉ… On ne frappe que la première note, à l'heure :
+   elle dit un mot de réussite ; la suivante, jamais frappée, dit RATÉ et
+   passe sous la ligne au lieu d'y rester figée. Et GO ! au départ. */
+{
+  const vu = await page.evaluate(async (g) => {
+    const p = window.TBF_GESTE.jouer('deuxvoix', g, { zone: document.getElementById('zone') });
+    const t0 = performance.now();
+    const go = Boolean(await new Promise((s) => setTimeout(() => s(document.querySelector('#pad .tbf-go')), 50)));
+    const [n0, n1] = g.deuxvoix.notes;
+    await new Promise((s) => setTimeout(s, Math.max(0, n0.t - (performance.now() - t0))));
+    document.querySelector(`#pad .tbf-cote[data-k="${n0.cote}"]`)
+      .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    const bon = document.querySelector('.tbf-mot-geste')?.textContent ?? '';
+    await new Promise((s) => setTimeout(s, Math.max(0, n1.t + 380 - (performance.now() - t0))));
+    const voie = document.querySelectorAll('.tbf-voie')[n1.cote];
+    const ratee = voie.querySelector('.tbf-ep-note.ratee');
+    const ligne = document.querySelector('.tbf-ligne').getBoundingClientRect();
+    const sous = ratee ? ratee.getBoundingClientRect().top > ligne.bottom : false;
+    const rate = [...voie.querySelectorAll('.tbf-mot-geste')].some((m) => m.firstChild?.textContent === 'RATÉ');
+    await p;
+    return { go, bon, ratee: Boolean(ratee), sous, rate };
+  }, gestes);
+  check('GO ! au départ du geste', vu.go);
+  check(`la note frappée à l’heure dit sa réussite (${vu.bon})`, /PARFAIT|BIEN/.test(vu.bon));
+  check('la note jamais frappée dit RATÉ', vu.rate);
+  check('et elle continue tout droit sous la ligne', vu.ratee && vu.sous);
+}
+
 check(`aucune erreur de script pendant les ${EPREUVES.length} épreuves`,
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 

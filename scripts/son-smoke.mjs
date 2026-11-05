@@ -1019,9 +1019,13 @@ if (banc) try {
     await page.click('#geste');
     await jusqua(page, (x) => x.contexte === 'running');
     const chantes = await page.evaluate(() => window.TBF_SON.gestesChantes());
-    check('les gestes chantés sont des gestes du serveur (tempo, contretemps, echo, crescendo)',
-      chantes.length === 4 && chantes.every((g) => GESTES.includes(g))
-        && ['tempo', 'contretemps', 'echo', 'crescendo'].every((g) => chantes.includes(g)), chantes);
+    /* Les quatre gestes de rythme chantent sur leur grille ; trois gestes à
+       notes (les deux voix, les accents, la justesse) ont leur musique,
+       composée sur leur partition (5 novembre 2026). */
+    const MUSICAUX = ['deuxvoix', 'accents', 'justesse'];
+    check('les gestes chantés sont des gestes du serveur (les quatre de rythme et les trois à notes)',
+      chantes.length === 7 && chantes.every((g) => GESTES.includes(g))
+        && ['tempo', 'contretemps', 'echo', 'crescendo', ...MUSICAUX].every((g) => chantes.includes(g)), chantes);
     /* Sur la configuration que le serveur sert, geste par geste : les quatre
        chantent, et aucun des vingt autres. */
     const parGeste = await page.evaluate((gestes, liste) => liste.map((g) => {
@@ -1055,8 +1059,22 @@ if (banc) try {
        exactement ceux qui ont une grille ; et une grille déplacée déplace le
        chant — sans grille, rien ne chante, même sur des durées lisibles. */
     const frappe = await page.evaluate(() => [...(window.TBF_GESTE?.FRAPPE ?? [])]);
-    check('les gestes chantés sont ceux qui ont une grille dans geste.js (FRAPPE)',
-      frappe.length > 0 && [...chantes].sort().join() === [...frappe].sort().join(), { chantes, frappe });
+    check('les gestes chantés sont ceux qui ont une grille dans geste.js (FRAPPE), et les trois à notes',
+      frappe.length > 0 && [...chantes].sort().join() === [...frappe, ...MUSICAUX].sort().join(), { chantes, frappe });
+    /* La musique d'un geste à notes dure sa partition, et se tait sans elle. */
+    const musiques = await page.evaluate((gestes, liste) => liste.map((g) => {
+      const p = window.TBF_SON.chantDuGeste(g, gestes);
+      p.arreter();
+      const vide = window.TBF_SON.chantDuGeste(g, {});
+      return [g, p.joue, p.duree, vide.joue];
+    }), servis, MUSICAUX);
+    for (const [g, joue, d, vide] of musiques) {
+      const notes = servis[g].notes ?? servis[g].liste;
+      const derniere = Math.max(...notes.map((n) => n.t + (n.d ?? 0)));
+      check(`${g} : sa musique joue toute la partition (${Math.round(d)} ms, dernière note à ${derniere})`,
+        joue && d >= derniere && d <= derniere + 3000, { joue, d, derniere });
+      check(`${g} : sans partition servie, pas de musique`, vide === false);
+    }
     const suit = await page.evaluate(async () => {
       const G = window.TBF_GESTE;
       const vraie = G.grille;
