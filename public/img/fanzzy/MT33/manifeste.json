@@ -1,6 +1,6 @@
 {
   "id": "MT33",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -67,7 +67,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "52f2c2e2bbb1"
+          "sha": "f438d9482f51"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "42c2fdfcf103"
         }
       }
     }
