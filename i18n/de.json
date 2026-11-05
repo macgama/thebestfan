@@ -9298,5 +9298,15 @@
  "<0>Tes amis</0> : trouve-les par leur pseudo, défie-les aux tirs au but, invite-les dans ton KOP, et vois s’ils sont au Virage ou en duel. Tu peux apparaître hors ligne depuis le menu. Sur l’accueil, la pastille verte sous ton avatar dit combien de supporters jouent en ce moment.": "<0>Deine Freunde</0>: Find sie über ihren Nickname, fordere sie zum Elfmeterschießen heraus, lade sie in deinen KOP ein und sieh, ob sie in der Kurve oder im Duell sind. Im Menü kannst du offline erscheinen. Auf der Startseite zeigt das grüne Abzeichen unter deinem Avatar, wie viele Fans gerade spielen.",
  "en ligne": "online",
  "C’est le nombre de supporters qui jouent en ce moment, toi compris (actifs dans les cinq dernières minutes). Ce n’est qu’un nombre : personne ne voit qui est en ligne, sauf tes amis si tu ne te caches pas. Seul, la pastille ne s’affiche pas.": "Das ist die Zahl der Fans, die gerade spielen, du eingeschlossen (aktiv in den letzten fünf Minuten). Es ist nur eine Zahl: Niemand sieht, wer online ist, außer deinen Freunden, wenn du dich nicht versteckst. Bist du allein, erscheint das Abzeichen nicht.",
- "Que veut dire « 12 EN LIGNE » sur l’accueil ?": "Was bedeutet „12 ONLINE“ auf der Startseite?"
+ "Que veut dire « 12 EN LIGNE » sur l’accueil ?": "Was bedeutet „12 ONLINE“ auf der Startseite?",
+ "contre son camp": "Eigentor",
+ "carton rouge": "Rote Karte",
+ "VAR": "VAR",
+ "but annulé": "Tor aberkannt",
+ "mi-temps {0} – {1}": "Halbzeit {0} – {1}",
+ "tirs au but {0} – {1}": "Elfmeterschießen {0} – {1}",
+ "Aucun but dans ce match.": "Keine Tore in diesem Spiel.",
+ "Pas encore de but.": "Noch keine Tore.",
+ "LE MATCH · {0}": "DAS SPIEL · {0}",
+ "LE MATCH": "DAS SPIEL"
 }

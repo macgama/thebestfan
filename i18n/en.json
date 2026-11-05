@@ -9298,5 +9298,15 @@
  "<0>Tes amis</0> : trouve-les par leur pseudo, défie-les aux tirs au but, invite-les dans ton KOP, et vois s’ils sont au Virage ou en duel. Tu peux apparaître hors ligne depuis le menu. Sur l’accueil, la pastille verte sous ton avatar dit combien de supporters jouent en ce moment.": "<0>Your friends</0>: find them by username, challenge them to penalties, invite them into your KOP, and see if they’re in the End or in a duel. You can appear offline from the menu. On the home screen, the green badge under your avatar shows how many fans are playing right now.",
  "en ligne": "online",
  "C’est le nombre de supporters qui jouent en ce moment, toi compris (actifs dans les cinq dernières minutes). Ce n’est qu’un nombre : personne ne voit qui est en ligne, sauf tes amis si tu ne te caches pas. Seul, la pastille ne s’affiche pas.": "It’s the number of fans playing right now, you included (active in the last five minutes). It’s only a number: nobody sees who is online, except your friends if you don’t hide. On your own, the badge doesn’t show.",
- "Que veut dire « 12 EN LIGNE » sur l’accueil ?": "What does “12 ONLINE” on the home screen mean?"
+ "Que veut dire « 12 EN LIGNE » sur l’accueil ?": "What does “12 ONLINE” on the home screen mean?",
+ "contre son camp": "own goal",
+ "carton rouge": "red card",
+ "VAR": "VAR",
+ "but annulé": "goal disallowed",
+ "mi-temps {0} – {1}": "half-time {0} – {1}",
+ "tirs au but {0} – {1}": "penalties {0} – {1}",
+ "Aucun but dans ce match.": "No goals in this match.",
+ "Pas encore de but.": "No goals yet.",
+ "LE MATCH · {0}": "THE MATCH · {0}",
+ "LE MATCH": "THE MATCH"
 }

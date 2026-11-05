@@ -9298,5 +9298,15 @@
  "<0>Tes amis</0> : trouve-les par leur pseudo, défie-les aux tirs au but, invite-les dans ton KOP, et vois s’ils sont au Virage ou en duel. Tu peux apparaître hors ligne depuis le menu. Sur l’accueil, la pastille verte sous ton avatar dit combien de supporters jouent en ce moment.": "<0>I tuoi amici</0>: trovali col loro nickname, sfidali ai rigori, invitali nel tuo KOP e guarda se sono in Curva o in duello. Dal menu puoi apparire offline. Nella home, il bollino verde sotto il tuo avatar dice quanti tifosi stanno giocando adesso.",
  "en ligne": "online",
  "C’est le nombre de supporters qui jouent en ce moment, toi compris (actifs dans les cinq dernières minutes). Ce n’est qu’un nombre : personne ne voit qui est en ligne, sauf tes amis si tu ne te caches pas. Seul, la pastille ne s’affiche pas.": "È il numero di tifosi che giocano adesso, tu compreso (attivi negli ultimi cinque minuti). È solo un numero: nessuno vede chi è online, tranne i tuoi amici se non ti nascondi. Da solo, il bollino non compare.",
- "Que veut dire « 12 EN LIGNE » sur l’accueil ?": "Cosa vuol dire «12 ONLINE» nella home?"
+ "Que veut dire « 12 EN LIGNE » sur l’accueil ?": "Cosa vuol dire «12 ONLINE» nella home?",
+ "contre son camp": "autogol",
+ "carton rouge": "cartellino rosso",
+ "VAR": "VAR",
+ "but annulé": "gol annullato",
+ "mi-temps {0} – {1}": "primo tempo {0} – {1}",
+ "tirs au but {0} – {1}": "rigori {0} – {1}",
+ "Aucun but dans ce match.": "Nessun gol in questa partita.",
+ "Pas encore de but.": "Ancora nessun gol.",
+ "LE MATCH · {0}": "LA PARTITA · {0}",
+ "LE MATCH": "LA PARTITA"
 }
