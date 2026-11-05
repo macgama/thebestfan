@@ -33,9 +33,19 @@
  * Un même type ne s'empile pas : il se renouvelle. Deux Métronomes joués coup
  * sur coup ne donnent pas quatre chants à fenêtre large, ils en donnent deux —
  * sinon la carte la plus jouable du jeu serait celle qu'on spamme.
+ *
+ * **Mais deux cartes différentes ne s'effacent pas l'une l'autre.** Les
+ * modificateurs (`mod_self`, `mod_foe`) portent tous le même type, et le
+ * Métronome joué après le Réveil du canapé lui retirait sa poussée ×1,5 —
+ * payée, et perdue sans que rien ne le dise ; une Averse tombait de même sous
+ * la Tempête de sable qui la suivait (audit du 5 novembre 2026). Un effet qui
+ * dit sa `source` (l'identifiant de la carte) ne renouvelle donc que celui de
+ * la même carte, et `modsAvecEffets` compose les autres comme il l'a toujours
+ * annoncé : les fenêtres se multiplient.
  */
 export function poserEffet(j, effet) {
-  j.effets = (j.effets ?? []).filter((e) => e.type !== effet.type);
+  j.effets = (j.effets ?? []).filter((e) => e.type !== effet.type
+    || (e.source ?? null) !== (effet.source ?? null));
   j.effets.push(effet);
 }
 

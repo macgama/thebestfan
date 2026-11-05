@@ -1424,6 +1424,8 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
     'a-hc-pause-pub', 'a-hc-plaid', 'a-hc-ralenti', 'a-mt-averse',
     'a-rv-frisson', 'a-rv-brume', 'a-chambrage', 'a-piege',
     'a-hc-telecommande', 'a-gd-peage', 'a-gd-parcage-visiteur', 'a-rv-malediction',
+    // Les deux Apocalyptiques du PASS 2 qui visent en face (PR #321).
+    'a-mt-tempete-sable', 'a-mt-tole',
 
     /* **Ces deux-là ne visent personne : elles n'ont pas d'objet.**
 

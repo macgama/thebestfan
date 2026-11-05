@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Cartes d'action : deux défauts corrigés en duel et au Virage** (branche
+`claude/project-thread-tfw02c`, 5 novembre 2026, audit demandé par Gaël).
+Code seul, sans schéma ni image.
+
+- Deux cartes à modificateurs jouées l'une après l'autre se cumulent : le
+  Métronome n'efface plus le Réveil du canapé, la Tempête de sable n'efface
+  plus l'Averse (au duel comme au Virage).
+- Au Virage, le Métronome et l'Échauffement s'usent après leurs 2 et 3 chants
+  au lieu de durer tout le match.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **PASS 2 : 3 cartes action Apocalyptique fermées** (Bidon de nitro, Tempête
 de sable, Tôle soudée ; branche `claude/project-thread-vuon42`, 5 novembre
 2026, demande de Gaël). Code seul, sans schéma ; dessins à venir. Rien ne

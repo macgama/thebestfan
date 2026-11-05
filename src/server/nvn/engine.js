@@ -1087,7 +1087,7 @@ export class DuelNvN {
         break;
 
       case 'mod_self':
-        poserEffet(j, { type: 'mod_self', mods: e.mods,
+        poserEffet(j, { type: 'mod_self', mods: e.mods, source: carte.id,
           fin: e.duree ? t + e.duree : undefined, charges: e.charges });
         evenements.push(this.ev('effect', { type: 'mod_self', userId: j.userId, mods: e.mods }));
         break;
@@ -1096,7 +1096,7 @@ export class DuelNvN {
         const mPose = modsDe(j, t, this.stade);
         for (const a of adverses) {
           if (aEffet(a, 'immunite', t)) continue;
-          poserEffet(a, { type: 'mod_foe', mods: e.mods,
+          poserEffet(a, { type: 'mod_foe', mods: e.mods, source: carte.id,
             fin: t + dureeDEntrave(e.duree, mPose, modsDe(a, t, this.stade)) });
         }
         evenements.push(this.ev('effect', { type: 'mod_foe', mods: e.mods }));
