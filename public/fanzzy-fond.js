@@ -57,6 +57,7 @@
     base:          { haut: '#2B4160', bas: '#070C13', brume: '#6E8CAE' },
     prehistorique: { haut: '#6A4322', bas: '#120A04', brume: '#C08A4E' },
     apocalyptique: { haut: '#4A3A2C', bas: '#0B0806', brume: '#A8845E' },
+    spatiale:      { haut: '#1A2350', bas: '#03040C', brume: '#5E7CD8' },
     nocturne:      { haut: '#1C3055', bas: '#04070E', brume: '#4E74B8' },
     pluie:         { haut: '#33434F', bas: '#080C10', brume: '#7E95A6' },
     derby:         { haut: '#521F26', bas: '#0D0508', brume: '#B04A56' },

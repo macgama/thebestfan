@@ -1001,6 +1001,7 @@ const VUES = {
     const ETAT_PROG = {
       ici: ['vert', 'posé ici'], libre: ['', 'dans le jeu, à cocher dans ce PASS'],
       a_creer: ['rouge', 'pas encore dans le jeu'],
+      a_dessiner: ['rouge', 'déclarée, images à faire, puis à publier dans CATALOGUE'],
     };
     const etatProg = (x) => {
       if (x.etat === 'base') return '<span class="pill">dans la BASE</span>';
