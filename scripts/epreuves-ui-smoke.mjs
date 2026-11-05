@@ -659,6 +659,37 @@ for (const kind of ['justesse', 'meche', 'jauge']) {
   }
 }
 
+/* ------------------------------------------- les notes qui tombent parlent
+
+   Gaël (5 novembre 2026) : une note ratée doit continuer tout droit, et le
+   geste doit dire BIEN, RATÉ… On ne frappe que la première note, à l'heure :
+   elle dit un mot de réussite ; la suivante, jamais frappée, dit RATÉ et
+   passe sous la ligne au lieu d'y rester figée. Et GO ! au départ. */
+{
+  const vu = await page.evaluate(async (g) => {
+    const p = window.TBF_GESTE.jouer('deuxvoix', g, { zone: document.getElementById('zone') });
+    const t0 = performance.now();
+    const go = Boolean(await new Promise((s) => setTimeout(() => s(document.querySelector('#pad .tbf-go')), 50)));
+    const [n0, n1] = g.deuxvoix.notes;
+    await new Promise((s) => setTimeout(s, Math.max(0, n0.t - (performance.now() - t0))));
+    document.querySelector(`#pad .tbf-cote[data-k="${n0.cote}"]`)
+      .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    const bon = document.querySelector('.tbf-mot-geste')?.textContent ?? '';
+    await new Promise((s) => setTimeout(s, Math.max(0, n1.t + 380 - (performance.now() - t0))));
+    const voie = document.querySelectorAll('.tbf-voie')[n1.cote];
+    const ratee = voie.querySelector('.tbf-ep-note.ratee');
+    const ligne = document.querySelector('.tbf-ligne').getBoundingClientRect();
+    const sous = ratee ? ratee.getBoundingClientRect().top > ligne.bottom : false;
+    const rate = [...voie.querySelectorAll('.tbf-mot-geste')].some((m) => m.firstChild?.textContent === 'RATÉ');
+    await p;
+    return { go, bon, ratee: Boolean(ratee), sous, rate };
+  }, gestes);
+  check('GO ! au départ du geste', vu.go);
+  check(`la note frappée à l’heure dit sa réussite (${vu.bon})`, /PARFAIT|BIEN/.test(vu.bon));
+  check('la note jamais frappée dit RATÉ', vu.rate);
+  check('et elle continue tout droit sous la ligne', vu.ratee && vu.sous);
+}
+
 check(`aucune erreur de script pendant les ${EPREUVES.length} épreuves`,
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 

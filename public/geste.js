@@ -945,6 +945,108 @@
         return b;
       };
 
+      /* ------------------------------------------------- les mots du geste
+
+         Le geste parle (Gaël, 5 novembre 2026 : « bien joué », « Go »…) :
+         GO ! au départ, et PARFAIT, BIEN, TÔT, TARD ou RATÉ à chaque note
+         qui tombe. Ces mots sont **ceux de la page** : ils disent au joueur
+         ce qu'il vient de faire, à l'instant ; la note, elle, reste celle du
+         serveur. Ils partent seuls, hors des minuteries du geste, pour finir
+         leur envol même quand le geste se termine. */
+      const crier = (hote, texte, sorte = '', compte = '') => {
+        if (!hote) return null;
+        const m = document.createElement('b');
+        m.className = `tbf-mot-geste ${sorte}`;
+        m.setAttribute('aria-hidden', 'true');
+        /* Le compte (« ×2 », la série) dans son propre nœud : le mot reste
+           seul dans le sien, et la page le traduit tel quel. */
+        const mot = document.createElement('span');
+        mot.textContent = texte;
+        m.appendChild(mot);
+        if (compte) {
+          const c = document.createElement('small');
+          c.textContent = compte;
+          m.appendChild(c);
+        }
+        hote.appendChild(m);
+        setTimeout(() => m.remove(), 900);
+        return m;
+      };
+
+      /**
+       * **Les notes qui tombent** (les deux voix, les accents).
+       *
+       * Une note descend en ligne droite et touche la ligne (à 82 % du
+       * couloir) à l'instant attendu. Elle s'y arrêtait, figée, puis
+       * disparaissait, qu'on l'ait frappée ou non. Maintenant, **ratée, elle
+       * continue tout droit** et sort par le bas, éteinte ; **prise, elle
+       * éclate** sur la ligne. La vitesse ne change pas : la course va
+       * jusqu'à 112 %, et sa durée grandit d'autant (`CHUTE`).
+       *
+       * Le jugement d'ici est celui de la fenêtre servie (`fenetre`,
+       * `limite`) : PARFAIT dans la moitié de la fenêtre, BIEN dans la
+       * fenêtre, TÔT ou TARD jusqu'à la limite, RATÉ au-delà ou sans frappe.
+       * Une frappe qui ne trouve aucune note ne dit rien : c'est le serveur
+       * qui la compte.
+       */
+      const CHUTE = 116 / 86;
+      let serie = 0;
+      const chute = (voie, t, el, approche, fenetre, limite) => {
+        const reste = Math.max(60, t - maintenant());
+        el.style.animationName = 'tbfTombeLoin';
+        el.style.animationDuration = `${approche * CHUTE}ms`;
+        el.style.animationDelay = `${reste - approche}ms`;
+        voie.appendChild(el);
+        const note = { t, el, voie, juge: false };
+        apres(reste + limite, () => {
+          if (note.juge) return;
+          note.juge = true;
+          serie = 0;
+          el.classList.add('ratee');
+          crier(voie, 'RATÉ', 'rate');
+        });
+        apres(reste + approche * (CHUTE - 1) + 120, () => el.remove());
+        return note;
+      };
+      /** La note la plus proche de `t` parmi `liste`, pas encore jugée. */
+      const prochaine = (liste, t, limite) => {
+        let mieux = null;
+        for (const n of liste) {
+          if (n.juge || Math.abs(t - n.t) > limite) continue;
+          if (!mieux || Math.abs(t - n.t) < Math.abs(t - mieux.t)) mieux = n;
+        }
+        return mieux;
+      };
+      const motDeLEcart = (ecart, fenetre) => {
+        const a = Math.abs(ecart);
+        if (a <= fenetre / 2) return ['PARFAIT', 'parfait'];
+        if (a <= fenetre) return ['BIEN', 'bien'];
+        return ecart < 0 ? ['TÔT', 'tot'] : ['TARD', 'tot'];
+      };
+      /** La note prise : elle éclate où elle est, et le mot monte. */
+      const prendreNote = (note, ecart, fenetre, suffixe = '') => {
+        note.juge = true;
+        const [texte, sorte] = motDeLEcart(ecart, fenetre);
+        serie = sorte === 'tot' ? 0 : serie + 1;
+        const el = note.el;
+        if (el?.isConnected) {
+          const haut = getComputedStyle(el).top;
+          el.style.animation = 'none';
+          el.style.top = haut;
+          void el.offsetWidth;
+          el.classList.add('prise');
+        }
+        crier(note.voie, texte, sorte, `${suffixe}${serie >= 3 ? ` ×${serie}` : ''}`);
+      };
+
+      /* GO ! au départ, posé sur le cadre du geste une fois dessiné. */
+      apres(0, () => {
+        const hote = zone?.querySelector('#pad');
+        if (!hote) return;
+        if (getComputedStyle(hote).position === 'static') hote.style.position = 'relative';
+        crier(hote, 'GO !', 'tbf-go');
+      });
+
       /* ------------------------------------------------------ les dix */
 
       switch (kind) {
@@ -1854,23 +1956,28 @@
             </div></div>`;
           const pad = $('pad');
           const voies = [...pad.querySelectorAll('.tbf-voie')];
+          const fenetre = g.fenetre ?? 100;
+          const limite = g.limite ?? 250;
+          const tombees = [[], []];
           for (const n of notes) {
             apres(Math.max(0, n.t - approche), () => {
               const el = document.createElement('i');
               el.className = 'tbf-ep-note';
               /* Si l'épreuve a démarré en retard sur la note, elle part déjà
-                 avancée : elle doit toucher la ligne à l'heure, pas plus tard. */
-              const reste = Math.max(60, n.t - maintenant());
-              el.style.animationDuration = `${approche}ms`;
-              el.style.animationDelay = `${reste - approche}ms`;
-              voies[n.cote]?.appendChild(el);
-              apres(reste + 250, () => el.remove());
+                 avancée : elle doit toucher la ligne à l'heure, pas plus tard
+                 (`chute`). */
+              const voie = voies[n.cote];
+              if (voie) tombees[n.cote].push(chute(voie, n.t, el, approche, fenetre, limite));
             });
           }
           pad.onpointerdown = (e) => {
             const b = e.target.closest('[data-k]');
             if (!b) return;
-            rendre.frappes.push({ t: maintenant(), cote: Number(b.dataset.k) });
+            const t = maintenant();
+            const k = Number(b.dataset.k);
+            rendre.frappes.push({ t, cote: k });
+            const note = prochaine(tombees[k] ?? [], t, limite);
+            if (note) prendreNote(note, t - note.t, fenetre);
             const bouton = pad.querySelector(`.tbf-cote[data-k="${b.dataset.k}"]`);
             bouton?.classList.add('pris');
             apres(120, () => bouton?.classList.remove('pris'));
@@ -1968,20 +2075,54 @@
           const pad = $('pad');
           const voie = pad.querySelector('.tbf-voie');
           const caisse = $('caisse');
+          const fenetre = g.fenetre ?? 110;
+          const limite = g.limite ?? 260;
+          const double = g.double ?? 280;
+          const tombees = [];
           for (const n of liste) {
             apres(Math.max(0, n.t - approche), () => {
               const el = document.createElement('i');
               el.className = `tbf-ep-note tbf-temps${n.accent ? ' tbf-accent' : ''}`;
               if (n.accent) el.textContent = '×2';
-              const reste = Math.max(60, n.t - maintenant());
-              el.style.animationDuration = `${approche}ms`;
-              el.style.animationDelay = `${reste - approche}ms`;
-              voie.appendChild(el);
-              apres(reste + 250, () => el.remove());
+              const note = chute(voie, n.t, el, approche, fenetre, limite);
+              note.accent = Boolean(n.accent);
+              tombees.push(note);
             });
           }
+          /* Un temps marqué attend son second coup : le mot ne part qu'avec
+             lui, ou à la fin de `double` s'il ne vient pas. Un second coup
+             sur un temps simple est dit aussi : le serveur le compte. */
+          let ouvert = null;
+          const frapperTemps = (t) => {
+            if (ouvert && t - ouvert.premier <= double) {
+              const o = ouvert;
+              ouvert = null;
+              clearTimeout(o.attente);
+              if (o.note.accent) prendreNote(o.note, o.premier - o.note.t, fenetre, ' ×2');
+              else { serie = 0; crier(o.note.voie, 'UN SEUL COUP', 'tot'); }
+              return;
+            }
+            const note = prochaine(tombees, t, limite);
+            if (!note) return;
+            note.juge = true;
+            if (!note.accent) {
+              prendreNote(note, t - note.t, fenetre);
+              ouvert = { note, premier: t, attente: 0 };
+              return;
+            }
+            const o = { note, premier: t, attente: 0 };
+            o.attente = apres(double + 20, () => {
+              if (ouvert !== o) return;
+              ouvert = null;
+              serie = 0;
+              crier(note.voie, 'IL EN FAUT DEUX', 'tot');
+              note.el?.classList.add('ratee');
+            });
+            ouvert = o;
+          };
           caisse.onpointerdown = () => {
             rendre.frappes.push(maintenant());
+            frapperTemps(maintenant());
             caisse.classList.remove('frappe'); void caisse.offsetWidth; caisse.classList.add('frappe');
             tic();
           };

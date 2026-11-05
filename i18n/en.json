@@ -9203,5 +9203,11 @@
  "Garde la souris sur la flamme, sans cliquer. Elle file, puis elle s’arrête.": "Keep your mouse on the flame, no need to click. It races, then it stops.",
  "GLISSE LA SOURIS — RESTE DANS LA BANDE": "MOVE YOUR MOUSE — STAY IN THE BAND",
  "SUIS LA MÉLODIE AVEC LA SOURIS": "FOLLOW THE MELODY WITH YOUR MOUSE",
- "GARDE LA SOURIS SUR LA FLAMME": "KEEP YOUR MOUSE ON THE FLAME"
+ "GARDE LA SOURIS SUR LA FLAMME": "KEEP YOUR MOUSE ON THE FLAME",
+ "BIEN": "GOOD",
+ "TÔT": "EARLY",
+ "TARD": "LATE",
+ "GO !": "GO!",
+ "UN SEUL COUP": "ONLY ONE HIT",
+ "IL EN FAUT DEUX": "HIT IT TWICE"
 }
