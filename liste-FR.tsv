@@ -1,0 +1,505 @@
+# prompt	fichier	références	fond
+FR1-e1	FR1		magenta
+FR1-pl-e1A	FR1-e1-base-planche-A	FR1-e1	magenta
+FR1-pl-e1B	FR1-e1-base-planche-B	FR1-e1	magenta
+FR1-e2	FR1B	FR1-e1	magenta
+FR1-pl-e2A	FR1-e2-base-planche-A	FR1-e2	magenta
+FR1-pl-e2B	FR1-e2-base-planche-B	FR1-e2	magenta
+FR1-e3	FR1C	FR1-e2,FR1-e1	magenta
+FR1-pl-e3A	FR1-e3-base-planche-A	FR1-e3	magenta
+FR1-pl-e3B	FR1-e3-base-planche-B	FR1-e3	magenta
+FR2-e1	FR2		vert
+FR2-pl-e1A	FR2-e1-base-planche-A	FR2-e1	vert
+FR2-pl-e1B	FR2-e1-base-planche-B	FR2-e1	vert
+FR2-e2	FR2B	FR2-e1	vert
+FR2-pl-e2A	FR2-e2-base-planche-A	FR2-e2	vert
+FR2-pl-e2B	FR2-e2-base-planche-B	FR2-e2	vert
+FR2-e3	FR2C	FR2-e2,FR2-e1	vert
+FR2-pl-e3A	FR2-e3-base-planche-A	FR2-e3	vert
+FR2-pl-e3B	FR2-e3-base-planche-B	FR2-e3	vert
+FR3-e1	FR3		vert
+FR3-pl-e1A	FR3-e1-base-planche-A	FR3-e1	vert
+FR3-pl-e1B	FR3-e1-base-planche-B	FR3-e1	vert
+FR3-e2	FR3B	FR3-e1	vert
+FR3-pl-e2A	FR3-e2-base-planche-A	FR3-e2	vert
+FR3-pl-e2B	FR3-e2-base-planche-B	FR3-e2	vert
+FR3-e3	FR3C	FR3-e2,FR3-e1	vert
+FR3-pl-e3A	FR3-e3-base-planche-A	FR3-e3	vert
+FR3-pl-e3B	FR3-e3-base-planche-B	FR3-e3	vert
+FR4-e1	FR4		vert
+FR4-pl-e1A	FR4-e1-base-planche-A	FR4-e1	vert
+FR4-pl-e1B	FR4-e1-base-planche-B	FR4-e1	vert
+FR4-e2	FR4B	FR4-e1	vert
+FR4-pl-e2A	FR4-e2-base-planche-A	FR4-e2	vert
+FR4-pl-e2B	FR4-e2-base-planche-B	FR4-e2	vert
+FR4-e3	FR4C	FR4-e2,FR4-e1	vert
+FR4-pl-e3A	FR4-e3-base-planche-A	FR4-e3	vert
+FR4-pl-e3B	FR4-e3-base-planche-B	FR4-e3	vert
+FR5-e1	FR5		vert
+FR5-pl-e1A	FR5-e1-base-planche-A	FR5-e1	vert
+FR5-pl-e1B	FR5-e1-base-planche-B	FR5-e1	vert
+FR5-e2	FR5B	FR5-e1	vert
+FR5-pl-e2A	FR5-e2-base-planche-A	FR5-e2	vert
+FR5-pl-e2B	FR5-e2-base-planche-B	FR5-e2	vert
+FR5-e3	FR5C	FR5-e2,FR5-e1	vert
+FR5-pl-e3A	FR5-e3-base-planche-A	FR5-e3	vert
+FR5-pl-e3B	FR5-e3-base-planche-B	FR5-e3	vert
+FR6-e1	FR6		vert
+FR6-pl-e1A	FR6-e1-base-planche-A	FR6-e1	vert
+FR6-pl-e1B	FR6-e1-base-planche-B	FR6-e1	vert
+FR6-e2	FR6B	FR6-e1	vert
+FR6-pl-e2A	FR6-e2-base-planche-A	FR6-e2	vert
+FR6-pl-e2B	FR6-e2-base-planche-B	FR6-e2	vert
+FR6-e3	FR6C	FR6-e2,FR6-e1	vert
+FR6-pl-e3A	FR6-e3-base-planche-A	FR6-e3	vert
+FR6-pl-e3B	FR6-e3-base-planche-B	FR6-e3	vert
+FR7-e1	FR7		vert
+FR7-pl-e1A	FR7-e1-base-planche-A	FR7-e1	vert
+FR7-pl-e1B	FR7-e1-base-planche-B	FR7-e1	vert
+FR7-e2	FR7B	FR7-e1	vert
+FR7-pl-e2A	FR7-e2-base-planche-A	FR7-e2	vert
+FR7-pl-e2B	FR7-e2-base-planche-B	FR7-e2	vert
+FR7-e3	FR7C	FR7-e2,FR7-e1	vert
+FR7-pl-e3A	FR7-e3-base-planche-A	FR7-e3	vert
+FR7-pl-e3B	FR7-e3-base-planche-B	FR7-e3	vert
+FR8-e1	FR8		vert
+FR8-pl-e1A	FR8-e1-base-planche-A	FR8-e1	vert
+FR8-pl-e1B	FR8-e1-base-planche-B	FR8-e1	vert
+FR8-e2	FR8B	FR8-e1	vert
+FR8-pl-e2A	FR8-e2-base-planche-A	FR8-e2	vert
+FR8-pl-e2B	FR8-e2-base-planche-B	FR8-e2	vert
+FR8-e3	FR8C	FR8-e2,FR8-e1	vert
+FR8-pl-e3A	FR8-e3-base-planche-A	FR8-e3	vert
+FR8-pl-e3B	FR8-e3-base-planche-B	FR8-e3	vert
+FR9-e1	FR9		vert
+FR9-pl-e1A	FR9-e1-base-planche-A	FR9-e1	vert
+FR9-pl-e1B	FR9-e1-base-planche-B	FR9-e1	vert
+FR9-e2	FR9B	FR9-e1	vert
+FR9-pl-e2A	FR9-e2-base-planche-A	FR9-e2	vert
+FR9-pl-e2B	FR9-e2-base-planche-B	FR9-e2	vert
+FR9-e3	FR9C	FR9-e2,FR9-e1	vert
+FR9-pl-e3A	FR9-e3-base-planche-A	FR9-e3	vert
+FR9-pl-e3B	FR9-e3-base-planche-B	FR9-e3	vert
+FR10-e1	FR10		vert
+FR10-pl-e1A	FR10-e1-base-planche-A	FR10-e1	vert
+FR10-pl-e1B	FR10-e1-base-planche-B	FR10-e1	vert
+FR10-e2	FR10B	FR10-e1	vert
+FR10-pl-e2A	FR10-e2-base-planche-A	FR10-e2	vert
+FR10-pl-e2B	FR10-e2-base-planche-B	FR10-e2	vert
+FR10-e3	FR10C	FR10-e2,FR10-e1	vert
+FR10-pl-e3A	FR10-e3-base-planche-A	FR10-e3	vert
+FR10-pl-e3B	FR10-e3-base-planche-B	FR10-e3	vert
+FR11-e1	FR11		magenta
+FR11-pl-e1A	FR11-e1-base-planche-A	FR11-e1	magenta
+FR11-pl-e1B	FR11-e1-base-planche-B	FR11-e1	magenta
+FR11-e2	FR11B	FR11-e1	magenta
+FR11-pl-e2A	FR11-e2-base-planche-A	FR11-e2	magenta
+FR11-pl-e2B	FR11-e2-base-planche-B	FR11-e2	magenta
+FR11-e3	FR11C	FR11-e2,FR11-e1	magenta
+FR11-pl-e3A	FR11-e3-base-planche-A	FR11-e3	magenta
+FR11-pl-e3B	FR11-e3-base-planche-B	FR11-e3	magenta
+FR12-e1	FR12		magenta
+FR12-pl-e1A	FR12-e1-base-planche-A	FR12-e1	magenta
+FR12-pl-e1B	FR12-e1-base-planche-B	FR12-e1	magenta
+FR12-e2	FR12B	FR12-e1	magenta
+FR12-pl-e2A	FR12-e2-base-planche-A	FR12-e2	magenta
+FR12-pl-e2B	FR12-e2-base-planche-B	FR12-e2	magenta
+FR12-e3	FR12C	FR12-e2,FR12-e1	magenta
+FR12-pl-e3A	FR12-e3-base-planche-A	FR12-e3	magenta
+FR12-pl-e3B	FR12-e3-base-planche-B	FR12-e3	magenta
+FR13-e1	FR13		vert
+FR13-pl-e1A	FR13-e1-base-planche-A	FR13-e1	vert
+FR13-pl-e1B	FR13-e1-base-planche-B	FR13-e1	vert
+FR13-e2	FR13B	FR13-e1	vert
+FR13-pl-e2A	FR13-e2-base-planche-A	FR13-e2	vert
+FR13-pl-e2B	FR13-e2-base-planche-B	FR13-e2	vert
+FR13-e3	FR13C	FR13-e2,FR13-e1	vert
+FR13-pl-e3A	FR13-e3-base-planche-A	FR13-e3	vert
+FR13-pl-e3B	FR13-e3-base-planche-B	FR13-e3	vert
+FR14-e1	FR14		vert
+FR14-pl-e1A	FR14-e1-base-planche-A	FR14-e1	vert
+FR14-pl-e1B	FR14-e1-base-planche-B	FR14-e1	vert
+FR14-e2	FR14B	FR14-e1	vert
+FR14-pl-e2A	FR14-e2-base-planche-A	FR14-e2	vert
+FR14-pl-e2B	FR14-e2-base-planche-B	FR14-e2	vert
+FR14-e3	FR14C	FR14-e2,FR14-e1	vert
+FR14-pl-e3A	FR14-e3-base-planche-A	FR14-e3	vert
+FR14-pl-e3B	FR14-e3-base-planche-B	FR14-e3	vert
+FR15-e1	FR15		vert
+FR15-pl-e1A	FR15-e1-base-planche-A	FR15-e1	vert
+FR15-pl-e1B	FR15-e1-base-planche-B	FR15-e1	vert
+FR15-e2	FR15B	FR15-e1	vert
+FR15-pl-e2A	FR15-e2-base-planche-A	FR15-e2	vert
+FR15-pl-e2B	FR15-e2-base-planche-B	FR15-e2	vert
+FR15-e3	FR15C	FR15-e2,FR15-e1	vert
+FR15-pl-e3A	FR15-e3-base-planche-A	FR15-e3	vert
+FR15-pl-e3B	FR15-e3-base-planche-B	FR15-e3	vert
+FR16-e1	FR16		vert
+FR16-pl-e1A	FR16-e1-base-planche-A	FR16-e1	vert
+FR16-pl-e1B	FR16-e1-base-planche-B	FR16-e1	vert
+FR16-e2	FR16B	FR16-e1	vert
+FR16-pl-e2A	FR16-e2-base-planche-A	FR16-e2	vert
+FR16-pl-e2B	FR16-e2-base-planche-B	FR16-e2	vert
+FR16-e3	FR16C	FR16-e2,FR16-e1	vert
+FR16-pl-e3A	FR16-e3-base-planche-A	FR16-e3	vert
+FR16-pl-e3B	FR16-e3-base-planche-B	FR16-e3	vert
+FR17-e1	FR17		vert
+FR17-pl-e1A	FR17-e1-base-planche-A	FR17-e1	vert
+FR17-pl-e1B	FR17-e1-base-planche-B	FR17-e1	vert
+FR17-e2	FR17B	FR17-e1	vert
+FR17-pl-e2A	FR17-e2-base-planche-A	FR17-e2	vert
+FR17-pl-e2B	FR17-e2-base-planche-B	FR17-e2	vert
+FR17-e3	FR17C	FR17-e2,FR17-e1	vert
+FR17-pl-e3A	FR17-e3-base-planche-A	FR17-e3	vert
+FR17-pl-e3B	FR17-e3-base-planche-B	FR17-e3	vert
+FR18-e1	FR18		vert
+FR18-pl-e1A	FR18-e1-base-planche-A	FR18-e1	vert
+FR18-pl-e1B	FR18-e1-base-planche-B	FR18-e1	vert
+FR18-e2	FR18B	FR18-e1	vert
+FR18-pl-e2A	FR18-e2-base-planche-A	FR18-e2	vert
+FR18-pl-e2B	FR18-e2-base-planche-B	FR18-e2	vert
+FR18-e3	FR18C	FR18-e2,FR18-e1	vert
+FR18-pl-e3A	FR18-e3-base-planche-A	FR18-e3	vert
+FR18-pl-e3B	FR18-e3-base-planche-B	FR18-e3	vert
+FR19-e1	FR19		vert
+FR19-pl-e1A	FR19-e1-base-planche-A	FR19-e1	vert
+FR19-pl-e1B	FR19-e1-base-planche-B	FR19-e1	vert
+FR19-e2	FR19B	FR19-e1	vert
+FR19-pl-e2A	FR19-e2-base-planche-A	FR19-e2	vert
+FR19-pl-e2B	FR19-e2-base-planche-B	FR19-e2	vert
+FR19-e3	FR19C	FR19-e2,FR19-e1	vert
+FR19-pl-e3A	FR19-e3-base-planche-A	FR19-e3	vert
+FR19-pl-e3B	FR19-e3-base-planche-B	FR19-e3	vert
+FR20-e1	FR20		vert
+FR20-pl-e1A	FR20-e1-base-planche-A	FR20-e1	vert
+FR20-pl-e1B	FR20-e1-base-planche-B	FR20-e1	vert
+FR20-e2	FR20B	FR20-e1	vert
+FR20-pl-e2A	FR20-e2-base-planche-A	FR20-e2	vert
+FR20-pl-e2B	FR20-e2-base-planche-B	FR20-e2	vert
+FR20-e3	FR20C	FR20-e2,FR20-e1	vert
+FR20-pl-e3A	FR20-e3-base-planche-A	FR20-e3	vert
+FR20-pl-e3B	FR20-e3-base-planche-B	FR20-e3	vert
+FR21-e1	FR21		vert
+FR21-pl-e1A	FR21-e1-base-planche-A	FR21-e1	vert
+FR21-pl-e1B	FR21-e1-base-planche-B	FR21-e1	vert
+FR21-e2	FR21B	FR21-e1	vert
+FR21-pl-e2A	FR21-e2-base-planche-A	FR21-e2	vert
+FR21-pl-e2B	FR21-e2-base-planche-B	FR21-e2	vert
+FR21-e3	FR21C	FR21-e2,FR21-e1	vert
+FR21-pl-e3A	FR21-e3-base-planche-A	FR21-e3	vert
+FR21-pl-e3B	FR21-e3-base-planche-B	FR21-e3	vert
+FR22-e1	FR22		vert
+FR22-pl-e1A	FR22-e1-base-planche-A	FR22-e1	vert
+FR22-pl-e1B	FR22-e1-base-planche-B	FR22-e1	vert
+FR22-e2	FR22B	FR22-e1	vert
+FR22-pl-e2A	FR22-e2-base-planche-A	FR22-e2	vert
+FR22-pl-e2B	FR22-e2-base-planche-B	FR22-e2	vert
+FR22-e3	FR22C	FR22-e2,FR22-e1	vert
+FR22-pl-e3A	FR22-e3-base-planche-A	FR22-e3	vert
+FR22-pl-e3B	FR22-e3-base-planche-B	FR22-e3	vert
+FR23-e1	FR23		vert
+FR23-pl-e1A	FR23-e1-base-planche-A	FR23-e1	vert
+FR23-pl-e1B	FR23-e1-base-planche-B	FR23-e1	vert
+FR23-e2	FR23B	FR23-e1	vert
+FR23-pl-e2A	FR23-e2-base-planche-A	FR23-e2	vert
+FR23-pl-e2B	FR23-e2-base-planche-B	FR23-e2	vert
+FR23-e3	FR23C	FR23-e2,FR23-e1	vert
+FR23-pl-e3A	FR23-e3-base-planche-A	FR23-e3	vert
+FR23-pl-e3B	FR23-e3-base-planche-B	FR23-e3	vert
+FR24-e1	FR24		vert
+FR24-pl-e1A	FR24-e1-base-planche-A	FR24-e1	vert
+FR24-pl-e1B	FR24-e1-base-planche-B	FR24-e1	vert
+FR24-e2	FR24B	FR24-e1	vert
+FR24-pl-e2A	FR24-e2-base-planche-A	FR24-e2	vert
+FR24-pl-e2B	FR24-e2-base-planche-B	FR24-e2	vert
+FR24-e3	FR24C	FR24-e2,FR24-e1	vert
+FR24-pl-e3A	FR24-e3-base-planche-A	FR24-e3	vert
+FR24-pl-e3B	FR24-e3-base-planche-B	FR24-e3	vert
+FR25-e1	FR25		vert
+FR25-pl-e1A	FR25-e1-base-planche-A	FR25-e1	vert
+FR25-pl-e1B	FR25-e1-base-planche-B	FR25-e1	vert
+FR25-e2	FR25B	FR25-e1	vert
+FR25-pl-e2A	FR25-e2-base-planche-A	FR25-e2	vert
+FR25-pl-e2B	FR25-e2-base-planche-B	FR25-e2	vert
+FR25-e3	FR25C	FR25-e2,FR25-e1	vert
+FR25-pl-e3A	FR25-e3-base-planche-A	FR25-e3	vert
+FR25-pl-e3B	FR25-e3-base-planche-B	FR25-e3	vert
+FR26-e1	FR26		vert
+FR26-pl-e1A	FR26-e1-base-planche-A	FR26-e1	vert
+FR26-pl-e1B	FR26-e1-base-planche-B	FR26-e1	vert
+FR26-e2	FR26B	FR26-e1	vert
+FR26-pl-e2A	FR26-e2-base-planche-A	FR26-e2	vert
+FR26-pl-e2B	FR26-e2-base-planche-B	FR26-e2	vert
+FR26-e3	FR26C	FR26-e2,FR26-e1	vert
+FR26-pl-e3A	FR26-e3-base-planche-A	FR26-e3	vert
+FR26-pl-e3B	FR26-e3-base-planche-B	FR26-e3	vert
+FR27-e1	FR27		vert
+FR27-pl-e1A	FR27-e1-base-planche-A	FR27-e1	vert
+FR27-pl-e1B	FR27-e1-base-planche-B	FR27-e1	vert
+FR27-e2	FR27B	FR27-e1	vert
+FR27-pl-e2A	FR27-e2-base-planche-A	FR27-e2	vert
+FR27-pl-e2B	FR27-e2-base-planche-B	FR27-e2	vert
+FR27-e3	FR27C	FR27-e2,FR27-e1	vert
+FR27-pl-e3A	FR27-e3-base-planche-A	FR27-e3	vert
+FR27-pl-e3B	FR27-e3-base-planche-B	FR27-e3	vert
+FR28-e1	FR28		vert
+FR28-pl-e1A	FR28-e1-base-planche-A	FR28-e1	vert
+FR28-pl-e1B	FR28-e1-base-planche-B	FR28-e1	vert
+FR28-e2	FR28B	FR28-e1	vert
+FR28-pl-e2A	FR28-e2-base-planche-A	FR28-e2	vert
+FR28-pl-e2B	FR28-e2-base-planche-B	FR28-e2	vert
+FR28-e3	FR28C	FR28-e2,FR28-e1	vert
+FR28-pl-e3A	FR28-e3-base-planche-A	FR28-e3	vert
+FR28-pl-e3B	FR28-e3-base-planche-B	FR28-e3	vert
+FR29-e1	FR29		vert
+FR29-pl-e1A	FR29-e1-base-planche-A	FR29-e1	vert
+FR29-pl-e1B	FR29-e1-base-planche-B	FR29-e1	vert
+FR29-e2	FR29B	FR29-e1	vert
+FR29-pl-e2A	FR29-e2-base-planche-A	FR29-e2	vert
+FR29-pl-e2B	FR29-e2-base-planche-B	FR29-e2	vert
+FR29-e3	FR29C	FR29-e2,FR29-e1	vert
+FR29-pl-e3A	FR29-e3-base-planche-A	FR29-e3	vert
+FR29-pl-e3B	FR29-e3-base-planche-B	FR29-e3	vert
+FR30-e1	FR30		vert
+FR30-pl-e1A	FR30-e1-base-planche-A	FR30-e1	vert
+FR30-pl-e1B	FR30-e1-base-planche-B	FR30-e1	vert
+FR30-e2	FR30B	FR30-e1	vert
+FR30-pl-e2A	FR30-e2-base-planche-A	FR30-e2	vert
+FR30-pl-e2B	FR30-e2-base-planche-B	FR30-e2	vert
+FR30-e3	FR30C	FR30-e2,FR30-e1	vert
+FR30-pl-e3A	FR30-e3-base-planche-A	FR30-e3	vert
+FR30-pl-e3B	FR30-e3-base-planche-B	FR30-e3	vert
+FR31-e1	FR31		vert
+FR31-pl-e1A	FR31-e1-base-planche-A	FR31-e1	vert
+FR31-pl-e1B	FR31-e1-base-planche-B	FR31-e1	vert
+FR31-e2	FR31B	FR31-e1	vert
+FR31-pl-e2A	FR31-e2-base-planche-A	FR31-e2	vert
+FR31-pl-e2B	FR31-e2-base-planche-B	FR31-e2	vert
+FR31-e3	FR31C	FR31-e2,FR31-e1	vert
+FR31-pl-e3A	FR31-e3-base-planche-A	FR31-e3	vert
+FR31-pl-e3B	FR31-e3-base-planche-B	FR31-e3	vert
+FR32-e1	FR32		vert
+FR32-pl-e1A	FR32-e1-base-planche-A	FR32-e1	vert
+FR32-pl-e1B	FR32-e1-base-planche-B	FR32-e1	vert
+FR32-e2	FR32B	FR32-e1	vert
+FR32-pl-e2A	FR32-e2-base-planche-A	FR32-e2	vert
+FR32-pl-e2B	FR32-e2-base-planche-B	FR32-e2	vert
+FR32-e3	FR32C	FR32-e2,FR32-e1	vert
+FR32-pl-e3A	FR32-e3-base-planche-A	FR32-e3	vert
+FR32-pl-e3B	FR32-e3-base-planche-B	FR32-e3	vert
+FR33-e1	FR33		vert
+FR33-pl-e1A	FR33-e1-base-planche-A	FR33-e1	vert
+FR33-pl-e1B	FR33-e1-base-planche-B	FR33-e1	vert
+FR33-e2	FR33B	FR33-e1	vert
+FR33-pl-e2A	FR33-e2-base-planche-A	FR33-e2	vert
+FR33-pl-e2B	FR33-e2-base-planche-B	FR33-e2	vert
+FR33-e3	FR33C	FR33-e2,FR33-e1	vert
+FR33-pl-e3A	FR33-e3-base-planche-A	FR33-e3	vert
+FR33-pl-e3B	FR33-e3-base-planche-B	FR33-e3	vert
+FR34-e1	FR34		vert
+FR34-pl-e1A	FR34-e1-base-planche-A	FR34-e1	vert
+FR34-pl-e1B	FR34-e1-base-planche-B	FR34-e1	vert
+FR34-e2	FR34B	FR34-e1	vert
+FR34-pl-e2A	FR34-e2-base-planche-A	FR34-e2	vert
+FR34-pl-e2B	FR34-e2-base-planche-B	FR34-e2	vert
+FR34-e3	FR34C	FR34-e2,FR34-e1	vert
+FR34-pl-e3A	FR34-e3-base-planche-A	FR34-e3	vert
+FR34-pl-e3B	FR34-e3-base-planche-B	FR34-e3	vert
+FR35-e1	FR35		vert
+FR35-pl-e1A	FR35-e1-base-planche-A	FR35-e1	vert
+FR35-pl-e1B	FR35-e1-base-planche-B	FR35-e1	vert
+FR35-e2	FR35B	FR35-e1	vert
+FR35-pl-e2A	FR35-e2-base-planche-A	FR35-e2	vert
+FR35-pl-e2B	FR35-e2-base-planche-B	FR35-e2	vert
+FR35-e3	FR35C	FR35-e2,FR35-e1	vert
+FR35-pl-e3A	FR35-e3-base-planche-A	FR35-e3	vert
+FR35-pl-e3B	FR35-e3-base-planche-B	FR35-e3	vert
+FR36-e1	FR36		vert
+FR36-pl-e1A	FR36-e1-base-planche-A	FR36-e1	vert
+FR36-pl-e1B	FR36-e1-base-planche-B	FR36-e1	vert
+FR36-e2	FR36B	FR36-e1	vert
+FR36-pl-e2A	FR36-e2-base-planche-A	FR36-e2	vert
+FR36-pl-e2B	FR36-e2-base-planche-B	FR36-e2	vert
+FR36-e3	FR36C	FR36-e2,FR36-e1	vert
+FR36-pl-e3A	FR36-e3-base-planche-A	FR36-e3	vert
+FR36-pl-e3B	FR36-e3-base-planche-B	FR36-e3	vert
+FR37-e1	FR37		vert
+FR37-pl-e1A	FR37-e1-base-planche-A	FR37-e1	vert
+FR37-pl-e1B	FR37-e1-base-planche-B	FR37-e1	vert
+FR37-e2	FR37B	FR37-e1	vert
+FR37-pl-e2A	FR37-e2-base-planche-A	FR37-e2	vert
+FR37-pl-e2B	FR37-e2-base-planche-B	FR37-e2	vert
+FR37-e3	FR37C	FR37-e2,FR37-e1	vert
+FR37-pl-e3A	FR37-e3-base-planche-A	FR37-e3	vert
+FR37-pl-e3B	FR37-e3-base-planche-B	FR37-e3	vert
+FR38-e1	FR38		vert
+FR38-pl-e1A	FR38-e1-base-planche-A	FR38-e1	vert
+FR38-pl-e1B	FR38-e1-base-planche-B	FR38-e1	vert
+FR38-e2	FR38B	FR38-e1	vert
+FR38-pl-e2A	FR38-e2-base-planche-A	FR38-e2	vert
+FR38-pl-e2B	FR38-e2-base-planche-B	FR38-e2	vert
+FR38-e3	FR38C	FR38-e2,FR38-e1	vert
+FR38-pl-e3A	FR38-e3-base-planche-A	FR38-e3	vert
+FR38-pl-e3B	FR38-e3-base-planche-B	FR38-e3	vert
+FR39-e1	FR39		vert
+FR39-pl-e1A	FR39-e1-base-planche-A	FR39-e1	vert
+FR39-pl-e1B	FR39-e1-base-planche-B	FR39-e1	vert
+FR39-e2	FR39B	FR39-e1	vert
+FR39-pl-e2A	FR39-e2-base-planche-A	FR39-e2	vert
+FR39-pl-e2B	FR39-e2-base-planche-B	FR39-e2	vert
+FR39-e3	FR39C	FR39-e2,FR39-e1	vert
+FR39-pl-e3A	FR39-e3-base-planche-A	FR39-e3	vert
+FR39-pl-e3B	FR39-e3-base-planche-B	FR39-e3	vert
+FR40-e1	FR40		vert
+FR40-pl-e1A	FR40-e1-base-planche-A	FR40-e1	vert
+FR40-pl-e1B	FR40-e1-base-planche-B	FR40-e1	vert
+FR40-e2	FR40B	FR40-e1	vert
+FR40-pl-e2A	FR40-e2-base-planche-A	FR40-e2	vert
+FR40-pl-e2B	FR40-e2-base-planche-B	FR40-e2	vert
+FR40-e3	FR40C	FR40-e2,FR40-e1	vert
+FR40-pl-e3A	FR40-e3-base-planche-A	FR40-e3	vert
+FR40-pl-e3B	FR40-e3-base-planche-B	FR40-e3	vert
+FR41-e1	FR41		vert
+FR41-pl-e1A	FR41-e1-base-planche-A	FR41-e1	vert
+FR41-pl-e1B	FR41-e1-base-planche-B	FR41-e1	vert
+FR41-e2	FR41B	FR41-e1	vert
+FR41-pl-e2A	FR41-e2-base-planche-A	FR41-e2	vert
+FR41-pl-e2B	FR41-e2-base-planche-B	FR41-e2	vert
+FR41-e3	FR41C	FR41-e2,FR41-e1	vert
+FR41-pl-e3A	FR41-e3-base-planche-A	FR41-e3	vert
+FR41-pl-e3B	FR41-e3-base-planche-B	FR41-e3	vert
+FR42-e1	FR42		vert
+FR42-pl-e1A	FR42-e1-base-planche-A	FR42-e1	vert
+FR42-pl-e1B	FR42-e1-base-planche-B	FR42-e1	vert
+FR42-e2	FR42B	FR42-e1	vert
+FR42-pl-e2A	FR42-e2-base-planche-A	FR42-e2	vert
+FR42-pl-e2B	FR42-e2-base-planche-B	FR42-e2	vert
+FR42-e3	FR42C	FR42-e2,FR42-e1	vert
+FR42-pl-e3A	FR42-e3-base-planche-A	FR42-e3	vert
+FR42-pl-e3B	FR42-e3-base-planche-B	FR42-e3	vert
+FR43-e1	FR43		vert
+FR43-pl-e1A	FR43-e1-base-planche-A	FR43-e1	vert
+FR43-pl-e1B	FR43-e1-base-planche-B	FR43-e1	vert
+FR43-e2	FR43B	FR43-e1	vert
+FR43-pl-e2A	FR43-e2-base-planche-A	FR43-e2	vert
+FR43-pl-e2B	FR43-e2-base-planche-B	FR43-e2	vert
+FR43-e3	FR43C	FR43-e2,FR43-e1	vert
+FR43-pl-e3A	FR43-e3-base-planche-A	FR43-e3	vert
+FR43-pl-e3B	FR43-e3-base-planche-B	FR43-e3	vert
+FR44-e1	FR44		vert
+FR44-pl-e1A	FR44-e1-base-planche-A	FR44-e1	vert
+FR44-pl-e1B	FR44-e1-base-planche-B	FR44-e1	vert
+FR44-e2	FR44B	FR44-e1	vert
+FR44-pl-e2A	FR44-e2-base-planche-A	FR44-e2	vert
+FR44-pl-e2B	FR44-e2-base-planche-B	FR44-e2	vert
+FR44-e3	FR44C	FR44-e2,FR44-e1	vert
+FR44-pl-e3A	FR44-e3-base-planche-A	FR44-e3	vert
+FR44-pl-e3B	FR44-e3-base-planche-B	FR44-e3	vert
+FR45-e1	FR45		vert
+FR45-pl-e1A	FR45-e1-base-planche-A	FR45-e1	vert
+FR45-pl-e1B	FR45-e1-base-planche-B	FR45-e1	vert
+FR45-e2	FR45B	FR45-e1	vert
+FR45-pl-e2A	FR45-e2-base-planche-A	FR45-e2	vert
+FR45-pl-e2B	FR45-e2-base-planche-B	FR45-e2	vert
+FR45-e3	FR45C	FR45-e2,FR45-e1	vert
+FR45-pl-e3A	FR45-e3-base-planche-A	FR45-e3	vert
+FR45-pl-e3B	FR45-e3-base-planche-B	FR45-e3	vert
+FR46-e1	FR46		vert
+FR46-pl-e1A	FR46-e1-base-planche-A	FR46-e1	vert
+FR46-pl-e1B	FR46-e1-base-planche-B	FR46-e1	vert
+FR46-e2	FR46B	FR46-e1	vert
+FR46-pl-e2A	FR46-e2-base-planche-A	FR46-e2	vert
+FR46-pl-e2B	FR46-e2-base-planche-B	FR46-e2	vert
+FR46-e3	FR46C	FR46-e2,FR46-e1	vert
+FR46-pl-e3A	FR46-e3-base-planche-A	FR46-e3	vert
+FR46-pl-e3B	FR46-e3-base-planche-B	FR46-e3	vert
+FR47-e1	FR47		vert
+FR47-pl-e1A	FR47-e1-base-planche-A	FR47-e1	vert
+FR47-pl-e1B	FR47-e1-base-planche-B	FR47-e1	vert
+FR47-e2	FR47B	FR47-e1	vert
+FR47-pl-e2A	FR47-e2-base-planche-A	FR47-e2	vert
+FR47-pl-e2B	FR47-e2-base-planche-B	FR47-e2	vert
+FR47-e3	FR47C	FR47-e2,FR47-e1	vert
+FR47-pl-e3A	FR47-e3-base-planche-A	FR47-e3	vert
+FR47-pl-e3B	FR47-e3-base-planche-B	FR47-e3	vert
+FR48-e1	FR48		vert
+FR48-pl-e1A	FR48-e1-base-planche-A	FR48-e1	vert
+FR48-pl-e1B	FR48-e1-base-planche-B	FR48-e1	vert
+FR48-e2	FR48B	FR48-e1	vert
+FR48-pl-e2A	FR48-e2-base-planche-A	FR48-e2	vert
+FR48-pl-e2B	FR48-e2-base-planche-B	FR48-e2	vert
+FR48-e3	FR48C	FR48-e2,FR48-e1	vert
+FR48-pl-e3A	FR48-e3-base-planche-A	FR48-e3	vert
+FR48-pl-e3B	FR48-e3-base-planche-B	FR48-e3	vert
+FR49-e1	FR49		vert
+FR49-pl-e1A	FR49-e1-base-planche-A	FR49-e1	vert
+FR49-pl-e1B	FR49-e1-base-planche-B	FR49-e1	vert
+FR49-e2	FR49B	FR49-e1	vert
+FR49-pl-e2A	FR49-e2-base-planche-A	FR49-e2	vert
+FR49-pl-e2B	FR49-e2-base-planche-B	FR49-e2	vert
+FR49-e3	FR49C	FR49-e2,FR49-e1	vert
+FR49-pl-e3A	FR49-e3-base-planche-A	FR49-e3	vert
+FR49-pl-e3B	FR49-e3-base-planche-B	FR49-e3	vert
+FR50-e1	FR50		vert
+FR50-pl-e1A	FR50-e1-base-planche-A	FR50-e1	vert
+FR50-pl-e1B	FR50-e1-base-planche-B	FR50-e1	vert
+FR50-e2	FR50B	FR50-e1	vert
+FR50-pl-e2A	FR50-e2-base-planche-A	FR50-e2	vert
+FR50-pl-e2B	FR50-e2-base-planche-B	FR50-e2	vert
+FR50-e3	FR50C	FR50-e2,FR50-e1	vert
+FR50-pl-e3A	FR50-e3-base-planche-A	FR50-e3	vert
+FR50-pl-e3B	FR50-e3-base-planche-B	FR50-e3	vert
+FR51-e1	FR51		vert
+FR51-pl-e1A	FR51-e1-base-planche-A	FR51-e1	vert
+FR51-pl-e1B	FR51-e1-base-planche-B	FR51-e1	vert
+FR51-e2	FR51B	FR51-e1	vert
+FR51-pl-e2A	FR51-e2-base-planche-A	FR51-e2	vert
+FR51-pl-e2B	FR51-e2-base-planche-B	FR51-e2	vert
+FR51-e3	FR51C	FR51-e2,FR51-e1	vert
+FR51-pl-e3A	FR51-e3-base-planche-A	FR51-e3	vert
+FR51-pl-e3B	FR51-e3-base-planche-B	FR51-e3	vert
+FR52-e1	FR52		vert
+FR52-pl-e1A	FR52-e1-base-planche-A	FR52-e1	vert
+FR52-pl-e1B	FR52-e1-base-planche-B	FR52-e1	vert
+FR52-e2	FR52B	FR52-e1	vert
+FR52-pl-e2A	FR52-e2-base-planche-A	FR52-e2	vert
+FR52-pl-e2B	FR52-e2-base-planche-B	FR52-e2	vert
+FR52-e3	FR52C	FR52-e2,FR52-e1	vert
+FR52-pl-e3A	FR52-e3-base-planche-A	FR52-e3	vert
+FR52-pl-e3B	FR52-e3-base-planche-B	FR52-e3	vert
+FR53-e1	FR53		vert
+FR53-pl-e1A	FR53-e1-base-planche-A	FR53-e1	vert
+FR53-pl-e1B	FR53-e1-base-planche-B	FR53-e1	vert
+FR53-e2	FR53B	FR53-e1	vert
+FR53-pl-e2A	FR53-e2-base-planche-A	FR53-e2	vert
+FR53-pl-e2B	FR53-e2-base-planche-B	FR53-e2	vert
+FR53-e3	FR53C	FR53-e2,FR53-e1	vert
+FR53-pl-e3A	FR53-e3-base-planche-A	FR53-e3	vert
+FR53-pl-e3B	FR53-e3-base-planche-B	FR53-e3	vert
+FR54-e1	FR54		vert
+FR54-pl-e1A	FR54-e1-base-planche-A	FR54-e1	vert
+FR54-pl-e1B	FR54-e1-base-planche-B	FR54-e1	vert
+FR54-e2	FR54B	FR54-e1	vert
+FR54-pl-e2A	FR54-e2-base-planche-A	FR54-e2	vert
+FR54-pl-e2B	FR54-e2-base-planche-B	FR54-e2	vert
+FR54-e3	FR54C	FR54-e2,FR54-e1	vert
+FR54-pl-e3A	FR54-e3-base-planche-A	FR54-e3	vert
+FR54-pl-e3B	FR54-e3-base-planche-B	FR54-e3	vert
+FR55-e1	FR55		vert
+FR55-pl-e1A	FR55-e1-base-planche-A	FR55-e1	vert
+FR55-pl-e1B	FR55-e1-base-planche-B	FR55-e1	vert
+FR56-e1	FR56		vert
+FR56-pl-e1A	FR56-e1-base-planche-A	FR56-e1	vert
+FR56-pl-e1B	FR56-e1-base-planche-B	FR56-e1	vert
+FR57-e1	FR57		vert
+FR57-pl-e1A	FR57-e1-base-planche-A	FR57-e1	vert
+FR57-pl-e1B	FR57-e1-base-planche-B	FR57-e1	vert
+FR58-e1	FR58		vert
+FR58-pl-e1A	FR58-e1-base-planche-A	FR58-e1	vert
+FR58-pl-e1B	FR58-e1-base-planche-B	FR58-e1	vert
+FR59-e1	FR59		magenta
+FR59-pl-e1A	FR59-e1-base-planche-A	FR59-e1	magenta
+FR59-pl-e1B	FR59-e1-base-planche-B	FR59-e1	magenta
+FR60-e1	FR60		vert
+FR60-pl-e1A	FR60-e1-base-planche-A	FR60-e1	vert
+FR60-pl-e1B	FR60-e1-base-planche-B	FR60-e1	vert
