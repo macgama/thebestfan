@@ -22,3 +22,11 @@ Relevé de minuit (à faire après le relevé de l'état des lieux) :
    La première fois depuis une autre session : action "read" sur l'url avant de publier.
    Si a-publier.json est vide, publier quand même index.html (date et commit changent).
 5. Dans le résumé à Gaël : une ligne avec le total d'images, le nombre de manques et ce qui a changé.
+
+Depuis l'allègement du dépôt (2026-11-03, images hors git) : le catalogue se fait SUR LE PC de Gaël.
+- Outil sur le PC : C:\Users\gaelm\Documents\catalogue-images\ (cache site\ à garder), copie sur la branche orpheline `catalogue-outil`.
+- Lancer par Remote Control (dossier Documents) : `git fetch origin main` dans Documents\GitHub\thebestfan, puis
+  node construire.mjs --repo C:\Users\gaelm\Documents\GitHub\thebestfan --ref origin/main --disque C:\Users\gaelm\Documents\GitHub\thebestfan --out C:\Users\gaelm\Documents\catalogue-images\site
+  (PYTHON=python ; Pillow installé). Pousser site\ (index.html, a-publier.json, etat.json, vignettes changées) sur la branche orpheline `catalogue-site` par index temporaire, --force.
+- Dans le cloud : git fetch origin catalogue-site, extraire par cat-file dans <scratchpad>/catalogue/, publier index.html + les clés de a-publier.json (255 fichiers au plus par publication : en plusieurs fois).
+- Si le PC est éteint ou Remote Control inactif : le dire à Gaël, garder la page de la veille.

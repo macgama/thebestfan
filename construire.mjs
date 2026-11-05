@@ -170,6 +170,7 @@ function img(g, chemin, t, extra = {}) {
 const manque = (t, n, k = 'manque') => ({ t, k, n });
 const imgOu = (g, sans, t, n, extra) => { const f = fichier(sans); return f ? img(g, f, t, extra) : manque(t, n); };
 
+const EN_ORDRE = (() => { for (const f of [path.join(ICI, 'clignements-en-ordre.json'), path.join(ICI, '..', 'clignements-en-ordre.json')]) { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { /* suivant */ } } return {}; })(); // clignements impossibles acceptés par Gaël
 const TENUES = SKINS.filter((s) => s.publie !== false).map((s) => s.id);         // base + 3 skins
 const NOM_TENUE = Object.fromEntries(SKINS.map((s) => [s.id, s.id === 'base' ? 'Base' : s.nom]));
 const NOM_AGE = { 1: 'Âge 1', 2: 'Âge 2', 3: 'Âge 3' };
@@ -239,13 +240,14 @@ for (const s of SETS) {
           bilan.tenuesOk++;
           const n = fichier(`${dt}/neutre`) ?? fichiers[0];
           const cligne = !!fichier(`${dt}/cligne`); if (cligne) bilan.cligne++;
-          lt.push(img(gS, n, NOM_TENUE[tn], { n: `Âge ${e}${cligne ? '' : ' · ne cligne pas'}`, cl: cligne ? 1 : 0 }));
+          const enOrdre = !cligne && EN_ORDRE[`${r}/e${e}/${tn}`];
+          lt.push(img(gS, n, NOM_TENUE[tn], { n: `Âge ${e}${cligne ? '' : enOrdre ? ' · sans clignement (en ordre)' : ' · ne cligne pas'}`, cl: cligne ? 1 : 0 }));
           const noms = [...new Set(fichiers.map((p) => path.basename(p).replace(/\.[a-z0-9]+$/i, '')))]
             .sort((a, b) => (ORDRE_ETATS.indexOf(a) + 99) % 99 - (ORDRE_ETATS.indexOf(b) + 99) % 99 || a.localeCompare(b));
           const it = noms.map((nm) => img(gD, fichier(`${dt}/${nm}`), nm));
           bilan.etats += it.length;
           for (const x of ['neutre', 'pousse', 'joie', 'depit', 'colere']) if (!noms.includes(x)) it.push(manque(x, 'État manquant'));
-          if (!noms.includes('cligne')) it.push(manque('cligne', 'Ne cligne pas des yeux', 'info'));
+          if (!noms.includes('cligne') && !enOrdre) it.push(manque('cligne', 'Ne cligne pas des yeux', 'info'));
           det.push({ titre: `Âge ${e} · ${NOM_TENUE[tn]}`, items: it });
         }
         L.lignes.push({ titre: `Tenues · âge ${e}`, items: lt });
