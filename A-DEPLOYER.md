@@ -10,6 +10,18 @@ y choisir Apocalyptique / Halloween.
 
 ---
 
+**Chœur au duel, textes de la Bâche et de la Tôle soudée** (branche
+`claude/project-thread-tfw02c`, 5 novembre 2026, choix de Gaël). Code et
+textes seuls, sans schéma ni image.
+
+- Le Chœur, qui ne faisait rien en duel, y fait pousser toute la tribune
+  3 fois plus fort pendant 3 s.
+- Bâche et Tôle soudée disent ce qu'elles font : « Absorbe jusqu'à 40 (55)
+  de poussée adverse, en un ou plusieurs coups ». Le jeu ne change pas.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Cartes d'action : deux défauts corrigés en duel et au Virage** (branche
 `claude/project-thread-tfw02c`, 5 novembre 2026, audit demandé par Gaël).
 Code seul, sans schéma ni image.
