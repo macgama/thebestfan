@@ -9286,5 +9286,15 @@
  "Le virage en orbite. Ta tribune en combinaisons et en casques à bulle, du premier au troisième âge, et un cadre de hublot.": "The end in orbit. Your stand in space suits and bubble helmets, from the first to the third age, and a porthole frame.",
  "Commandant de bord": "Flight Commander",
  "Car en panne, train raté : on arrive quand même. L’été, la tribune prend la route, pour tous. Avec le PASS 3 : la tenue Spatiale à ses trois âges, son badge et son cadre.": "Broken-down coach, missed train: we get there anyway. In summer the stand hits the road, for everyone. With PASS 3: the Space outfit at its three ages, its badge and its frame.",
- "PACK Spatiale": "Space PACK"
+ "PACK Spatiale": "Space PACK",
+ "contre son camp": "own goal",
+ "carton rouge": "red card",
+ "VAR": "VAR",
+ "but annulé": "goal disallowed",
+ "mi-temps {0} – {1}": "half-time {0} – {1}",
+ "tirs au but {0} – {1}": "penalties {0} – {1}",
+ "Aucun but dans ce match.": "No goals in this match.",
+ "Pas encore de but.": "No goals yet.",
+ "LE MATCH · {0}": "THE MATCH · {0}",
+ "LE MATCH": "THE MATCH"
 }

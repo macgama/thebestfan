@@ -1147,6 +1147,34 @@ html[data-calme~="animations"] .bilan-nuage>i{display:none}
 .renfort{text-align:center;font-family:var(--banner);font-size:12px;letter-spacing:.1em}
 .renfort b{font-weight:700}
 .inviter{align-self:center}
+/* **Le match réel** (5 novembre 2026) : le match support, en tête du
+   vestiaire. Le score et l'état, puis le résumé : un but ou un carton par
+   ligne, l'équipe à domicile à gauche, l'autre à droite. */
+.match-reel:empty{display:none}
+.match-reel{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px;
+  border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.45);text-align:center}
+.match-reel-titre{font-family:var(--banner);font-size:10.5px;letter-spacing:.14em;color:var(--craie-2,#bbb)}
+.match-reel-tete{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;width:100%}
+.match-reel-tete .eq{font-family:var(--banner);font-size:13px;letter-spacing:.06em;line-height:1.15;
+  text-transform:uppercase;overflow-wrap:anywhere}
+.match-reel-tete .eq:first-child{text-align:right}
+.match-reel-tete .eq:last-child{text-align:left}
+.match-reel-tete .score{font-family:var(--banner);font-size:24px;letter-spacing:.04em;white-space:nowrap}
+.match-reel-etat{display:flex;flex-direction:column;align-items:center;gap:3px}
+.match-reel-etat small{font-size:11.5px;color:var(--craie-2,#bbb)}
+.match-reel-etat .quand{font-size:13px;font-weight:700;color:var(--craie)}
+.match-reel-fil{list-style:none;margin:2px 0 0;padding:0;width:100%;max-height:118px;overflow:auto;
+  display:flex;flex-direction:column;gap:2px;font-size:12.5px;line-height:1.3}
+.match-reel-fil li{display:flex;align-items:center;gap:6px}
+.match-reel-fil li.ext{flex-direction:row-reverse;text-align:right}
+.match-reel-fil .min{min-width:34px;font-weight:700;color:var(--craie-2,#bbb)}
+.match-reel-fil li.dom .min{text-align:right}
+.match-reel-fil li.ext .min{text-align:left}
+.match-reel-fil small{color:var(--craie-2,#bbb)}
+.match-reel-fil .carton{display:inline-block;width:8px;height:11px;border-radius:1px;background:#f5c33b}
+.match-reel-fil .carton.rouge{background:#e5402f}
+.match-reel-fil .var{font-size:9px;letter-spacing:.05em}
+.match-reel-vide{margin:0;font-size:12px;color:var(--craie-2,#bbb)}
 /* Le duel reste ouvert quand on part : on le dit dans le vestiaire. */
 .ailleurs{margin:0;text-align:center;font-size:12.5px;color:var(--craie-2,#bbb);line-height:1.4}
 .inviters{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
@@ -1493,6 +1521,8 @@ html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:n
 <script src="/stade-art.js"></script>
 <script src="/geste.js"></script>
 <script src="/pass.js"></script>
+<!-- La minute d'un match en direct, la même qu'ailleurs : le vestiaire la montre. -->
+<script src="/horloge.js"></script>
 <script>
 /* =======================================================================
    Duel N contre N.
@@ -1914,6 +1944,9 @@ function rendreSalle(p) {
   // Le club après le point médian, seulement s'il est connu : sans lui, le
   // titre s'arrêtait sur un séparateur qui n'annonçait rien.
   const avecClub = (titre, club) => (club ? `${titre} · ${club}` : titre);
+  /* Le match réel, en tête du vestiaire : voir `matchReel`. */
+  const idMatch = Number(p.fixtureId ?? S.fixtureId) || null;
+  corps.push(`<div class="match-reel" id="matchReel">${matchReelHtml(idMatch)}</div>`);
   corps.push(tribuneAttente(avecClub('MA TRIBUNE', p.club?.name),
     t.moi, p.attendus, p.club?.name, 'moi'));
   corps.push('<div class="vs-att" aria-hidden="true"><b>VS</b></div>');
@@ -1949,6 +1982,7 @@ function rendreSalle(p) {
   voile('LE VESTIAIRE', `<div class="salle">${corps.join('')}</div>`,
     { texte: 'Quitter la file', action: quitterFile });
   S.derniereSalle = p;
+  suivreMatchReel(idMatch);
 
   if ($('inviter')) $('inviter').onclick = () => inviterAuDuel(p);
   $('inviterAmi').onclick = () => ouvrirAmisDuel();
@@ -1992,6 +2026,153 @@ function rendreSalle(p) {
   };
   if (Number.isFinite(dansMs) || finA) { tic(); reboursTimer = setInterval(tic, 1000); }
   else $('rebours')?.remove();
+}
+
+/* ------------------------------------------------ le match réel
+
+   **Le match support, dans le vestiaire** (5 novembre 2026, demandé par
+   Gaël) : on attend sur un vrai match, le vestiaire dit donc où il en est.
+   À venir, le jour et l'heure du coup d'envoi ; en cours, le score, la
+   minute et les événements ; terminé, le score et son résumé (buts,
+   cartons, arbitrage vidéo).
+
+   La fiche vient du télétexte (`/api/tt/match/:id`), celle de la page
+   AUJOURD'HUI : même cache, mêmes appels à l'API. Relue toutes les trente
+   secondes pendant le jeu, toutes les cinq minutes sinon ; la minute court
+   entre deux lectures (`horloge.js`). Avant la première réponse, la ligne de
+   la liste des matchs suffit à dire l'affiche et l'heure. Sans fiche ni
+   ligne (un match fictif du tutoriel, une panne), le bloc reste vide : rien
+   ne s'invente. */
+
+const MR = { id: null, d: null, vuA: 0, timer: null, horloge: null };
+const MR_PAUSES = { HT: 'MI-TEMPS', BT: 'PAUSE', P: 'TIRS AU BUT', SUSP: 'SUSPENDU', INT: 'INTERROMPU' };
+
+/** Le jour et l'heure d'un coup d'envoi, à l'heure du téléphone. */
+function coupDEnvoiDe(iso) {
+  const t = Date.parse(iso ?? '');
+  if (!Number.isFinite(t)) return '';
+  const d = new Date(t);
+  // Dans la langue du joueur : le jour et le mois ne passent pas par le dictionnaire.
+  const l = window.TBF_LANGUE?.langue ?? 'fr';
+  const jour = d.toLocaleDateString(l, { weekday: 'long', day: 'numeric', month: 'long' });
+  const h = d.toLocaleTimeString(l, { hour: '2-digit', minute: '2-digit' });
+  return `${jour.charAt(0).toUpperCase()}${jour.slice(1)} · ${h}`;
+}
+
+/** La minute du direct, qui court entre deux lectures. */
+function minuteReelle(d) {
+  const f = d.fixture;
+  return window.TBF_HORLOGE?.texte?.({ statut: f.status, minute: f.elapsed, extra: f.extra,
+    vuA: f.luA ?? MR.vuA }, MR_PAUSES) || MR_PAUSES[f.status] || 'EN DIRECT';
+}
+
+/** Un événement qui compte pour le résumé : les buts, les cartons, la VAR. */
+function evenementReel(e, d) {
+  const seance = ['P', 'PEN'].includes(d.fixture?.status);
+  let ic = '';
+  let quoi = '';
+  if (e.type === 'Goal') {
+    // Le penalty manqué et les tirs de la séance ne sont pas des buts.
+    if (e.detail === 'Missed Penalty') return '';
+    if (seance && e.detail === 'Penalty' && (e.minute == null || e.minute >= 90)) return '';
+    ic = '⚽';
+    quoi = e.detail === 'Own Goal' ? 'contre son camp' : e.detail === 'Penalty' ? 'penalty' : '';
+  } else if (e.type === 'Card') {
+    const rouge = /red|second/i.test(e.detail ?? '');
+    ic = `<i class="carton${rouge ? ' rouge' : ''}"></i>`;
+    quoi = rouge ? 'carton rouge' : '';
+  } else if (e.type === 'Var') {
+    ic = '<b class="var">VAR</b>';
+    quoi = /cancel/i.test(e.detail ?? '') ? 'but annulé'
+      : /penalty/i.test(e.detail ?? '') ? 'penalty' : '';
+  } else return '';
+  const droite = e.equipe != null && e.equipe === d.equipes?.away?.id;
+  const quand = e.minute == null ? '' : `${e.minute}${e.extra ? `+${e.extra}` : ''}′`;
+  return `<li class="${droite ? 'ext' : 'dom'}"><span class="min">${quand}</span>
+    <span class="ic" aria-hidden="true">${ic}</span>
+    <span class="qui">${esc(e.joueur ?? '')}${quoi ? ` <small>${quoi}</small>` : ''}</span></li>`;
+}
+
+/** Le bloc du match réel, de la fiche lue ou, en attendant, de la liste. */
+function matchReelHtml(id) {
+  if (!id) return '';
+  const d = MR.id === id ? MR.d : null;
+  const m = S.matchs?.find((x) => x.id === id);
+  const dom = d?.equipes?.home?.name ?? m?.home_name;
+  const ext = d?.equipes?.away?.name ?? m?.away_name;
+  if (!dom || !ext) return '';
+  const f = d?.fixture;
+  const live = f ? f.live : Boolean(m?.enCours);
+  const fini = f ? f.fini : Boolean(m?.termine);
+  const buts = (c, mg) => Number(d ? d.equipes?.[c]?.goals : mg) || 0;
+  const score = (live || fini) ? `${buts('home', m?.home_goals)} – ${buts('away', m?.away_goals)}` : 'VS';
+
+  let etat;
+  if (live) {
+    etat = `<span class="tbf-sticker tbf-sticker--live" data-ton="flare" id="matchReelMin">${
+      d ? minuteReelle(d) : (m?.elapsed ? `${Number(m.elapsed)}′` : 'EN DIRECT')}</span>`;
+  } else if (fini) {
+    etat = '<span class="tbf-sticker">TERMINÉ</span>';
+  } else {
+    const quand = coupDEnvoiDe(f?.date ?? m?.kickoff_at);
+    etat = quand ? `<span class="quand">${esc(quand)}</span>` : '';
+  }
+
+  // Le détail d'un match fini : la mi-temps, et la séance de tirs au but.
+  const per = d?.periodes;
+  const plus = [];
+  if (fini && per?.halftime?.home != null) plus.push(`mi-temps ${per.halftime.home} – ${per.halftime.away}`);
+  if (fini && per?.penalty?.home != null) plus.push(`tirs au but ${per.penalty.home} – ${per.penalty.away}`);
+
+  const evs = (live || fini) && d ? (d.evenements ?? []).map((e) => evenementReel(e, d)).filter(Boolean) : [];
+  const fil = !d || !(live || fini) ? ''
+    : evs.length ? `<ul class="match-reel-fil">${evs.join('')}</ul>`
+      : `<p class="match-reel-vide">${fini ? 'Aucun but dans ce match.' : 'Pas encore de but.'}</p>`;
+
+  return `<small class="match-reel-titre">LE MATCH${d?.ligue?.nom ? ` · ${esc(d.ligue.nom)}` : ''}</small>
+    <div class="match-reel-tete"><b class="eq">${esc(dom)}</b>
+      <b class="score">${score}</b><b class="eq">${esc(ext)}</b></div>
+    <div class="match-reel-etat">${etat}${plus.length ? `<small>${plus.join(' · ')}</small>` : ''}</div>
+    ${fil}`;
+}
+
+/** Relit la fiche du match, et repeint le bloc s'il est à l'écran. */
+async function lireMatchReel() {
+  const id = MR.id;
+  if (!id) return;
+  try {
+    const r = await fetch(`/api/tt/match/${id}`, { credentials: 'same-origin' });
+    const d = r.ok ? await r.json() : null;
+    if (MR.id !== id || !d?.fixture) return;
+    MR.d = d;
+    MR.vuA = Date.now();
+  } catch { /* hors ligne : on garde ce qu'on avait */ }
+  const n = $('matchReel');
+  if (n) n.innerHTML = matchReelHtml(id);
+}
+
+/** Suit le match tant que le vestiaire est à l'écran, puis s'arrête seul. */
+function suivreMatchReel(id) {
+  if (!id) return;
+  if (MR.id !== id) { MR.id = id; MR.d = null; clearTimeout(MR.timer); MR.timer = null; }
+  if (!MR.timer) {
+    const boucle = async () => {
+      if (!$('matchReel') || !S.enFile) { MR.timer = null; return; }
+      await lireMatchReel();
+      MR.timer = setTimeout(boucle, MR.d?.fixture?.live ? 30_000 : 300_000);
+    };
+    MR.timer = setTimeout(boucle, 0);
+  }
+  if (!MR.horloge) {
+    MR.horloge = setInterval(() => {
+      const n = $('matchReelMin');
+      if (!n || !MR.d?.fixture?.live) {
+        if (!$('matchReel')) { clearInterval(MR.horloge); MR.horloge = null; }
+        return;
+      }
+      n.textContent = minuteReelle(MR.d);
+    }, 15_000);
+  }
 }
 
 /* ------------------------------------------------------------ état */

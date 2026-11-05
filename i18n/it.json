@@ -9286,5 +9286,15 @@
  "Le virage en orbite. Ta tribune en combinaisons et en casques à bulle, du premier au troisième âge, et un cadre de hublot.": "La curva in orbita. La tua tribuna in tute spaziali e caschi a bolla, dalla prima alla terza età, e una cornice a oblò.",
  "Commandant de bord": "Comandante di bordo",
  "Car en panne, train raté : on arrive quand même. L’été, la tribune prend la route, pour tous. Avec le PASS 3 : la tenue Spatiale à ses trois âges, son badge et son cadre.": "Pullman in panne, treno perso: arriviamo lo stesso. D’estate la tribuna si mette in viaggio, per tutti. Con il PASS 3: la tenuta Spaziale nelle sue tre età, il suo badge e la sua cornice.",
- "PACK Spatiale": "PACK Spaziale"
+ "PACK Spatiale": "PACK Spaziale",
+ "contre son camp": "autogol",
+ "carton rouge": "cartellino rosso",
+ "VAR": "VAR",
+ "but annulé": "gol annullato",
+ "mi-temps {0} – {1}": "primo tempo {0} – {1}",
+ "tirs au but {0} – {1}": "rigori {0} – {1}",
+ "Aucun but dans ce match.": "Nessun gol in questa partita.",
+ "Pas encore de but.": "Ancora nessun gol.",
+ "LE MATCH · {0}": "LA PARTITA · {0}",
+ "LE MATCH": "LA PARTITA"
 }
