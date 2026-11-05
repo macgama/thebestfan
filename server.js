@@ -4,6 +4,7 @@
  * Démarre même sans base configurée : dans ce cas l'authentification est
  * désactivée et /diagnostic le signale, plutôt que de faire planter le site.
  */
+import { createEcusson } from './src/server/football/ecusson.js';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, existsSync } from 'node:fs';
@@ -339,6 +340,13 @@ if (process.env.DATABASE_URL) {
       if (req.user) presence.noter(req.user.id);
       next();
     });
+
+    /* ---- l'écusson du jeu (choix de Gaël du 5 novembre 2026)
+
+       Dans le jeu, un club se montre à ses couleurs et à ses initiales, plus
+       avec son logo, qui est une marque du club. Voir
+       `src/server/football/ecusson.js` et `public/ecusson.js`. */
+    app.use('/api/ecusson', createEcusson({ pool }).router);
     console.log(reglage('presence.actif')
       ? 'présence active'
       : 'présence éteinte (presence.actif) : rien n’est servi');
