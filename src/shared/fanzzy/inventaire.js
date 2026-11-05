@@ -51,6 +51,13 @@ export const SKINS = [
   { id: 'halloween', nom: 'Halloween', rar: 'epique', pour: '*',
     texte: 'Le virage a sorti ses masques. On ne sait plus qui chante.' },
 
+  /* **La tenue du PASS 3** (demande de Gaël, 5 novembre 2026). Déclarée avant
+     ses dessins : `publie: false` tant qu'aucune planche Spatiale n'existe,
+     pour qu'aucune fiche ne cherche une image absente. Elle se publie depuis
+     /admin › CATALOGUE une fois les images posées. */
+  { id: 'spatiale', nom: 'Spatiale', rar: 'epique', pour: '*', publie: false,
+    texte: 'Le virage a décollé. Casques à bulle, et les chants résonnent jusqu’en orbite.' },
+
   // Sortis de la circulation en septembre 2026. Conservés pour ceux qui les ont.
   { id: 'pluie', nom: 'Sous la pluie', rar: 'rare', pour: '*', publie: false },
   { id: 'nocturne', nom: 'Nocturne', rar: 'rare', pour: '*', publie: false },

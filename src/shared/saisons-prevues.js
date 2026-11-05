@@ -54,9 +54,9 @@ export const SAISONS_PREVUES = Object.freeze([
     texte: 'Giboulées, vent, grêle : la tribune tient bon, et la météo descend sur la pelouse, '
       + 'pour tous. Avec le PASS 2 : la tenue Apocalyptique à ses trois âges, son badge et son cadre.' },
   { numero: 3, nom: 'Les galères de déplacement', ouvre: '2027-06-01', fin: '2027-08-31',
-    series: ['GD'], stuff: 'gd-', actions: 'a-gd-',
+    series: ['GD'], stuff: 'gd-', actions: 'a-gd-', tenue: 'spatiale',
     texte: 'Car en panne, train raté : on arrive quand même. L’été, la tribune prend la route, '
-      + 'pour tous. Avec le PASS 3 : sa tenue, son badge, son cadre et plus de boosters.' },
+      + 'pour tous. Avec le PASS 3 : la tenue Spatiale à ses trois âges, son badge et son cadre.' },
   { numero: 4, nom: 'Les revenants', ouvre: '2027-09-01', fin: '2027-11-30',
     series: ['RV'], stuff: null, actions: 'a-rv-', tenue: 'halloween',
     texte: 'Ils reviennent hanter le virage jusqu’à Halloween, pour tous. Avec le PASS 4 : '

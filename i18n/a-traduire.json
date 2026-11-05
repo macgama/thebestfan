@@ -2395,17 +2395,6 @@
    "es"
   ]
  },
- "Spatiale": {
-  "ou": [
-   "src/shared/saisons-prevues.js"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
  "ES": {
   "ou": [
    "src/shared/saisons-prevues.js"
