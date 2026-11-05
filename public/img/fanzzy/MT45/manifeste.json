@@ -1,6 +1,6 @@
 {
   "id": "MT45",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "63597b661183"
+          "sha": "d7603a07f8e1"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "2c7ac0f2e47c"
         }
       }
     },
@@ -28,8 +40,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7df3077cee03",
-          "cligne": true
+          "sha": "fd167e378c91"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "f4943e053147"
         }
       }
     },
