@@ -259,6 +259,38 @@ let tiers;
   h.socket.disconnect(); a.socket.disconnect();
 }
 
+/* ------------------------------- jouer tout de suite contre des bots
+
+   Gaël, 5 novembre 2026 : « si personne n'arrive et qu'on a juste envie de
+   jouer contre un bot, il faudrait un bouton ». Seul celui qui appuie part ;
+   celui qui attend en face garde sa place. */
+
+{
+  const h = co(HOTE);
+  const t = co(TIERS);
+  await Promise.all([connecte(h), connecte(t)]);
+  h.socket.emit('nvn:queue', { format: '3v3', fixtureId: 901 });
+  t.socket.emit('nvn:queue', { format: '3v3', fixtureId: 901, camp: 1 });
+  await until(() => h.file !== null && t.file?.enFace === 1);
+  h.socket.emit('nvn:entrainement');
+  check('JOUER CONTRE DES BOTS lance le duel aussitôt', await until(() => h.state !== null, 3000));
+  const autres = (h.state?.equipes ?? []).flat().filter((p) => p.userId !== HOTE);
+  check('en 3v3, contre des bots seulement',
+    h.state?.equipes?.[0]?.length === 3 && h.state?.equipes?.[1]?.length === 3
+    && autres.every((p) => String(p.userId).startsWith('bot:'))
+    || (console.log('        équipes :', JSON.stringify(h.state?.equipes?.map((e) => e.map((p) => p.userId)))), false));
+  check('c’est un entraînement', h.state?.mode === 'entrainement');
+  check('il a quitté la file', !N.placeDe(HOTE));
+  check('celui d’en face garde sa place, et ne joue pas', Boolean(N.placeDe(TIERS)) && t.state === null);
+  check('et son vestiaire ne le montre plus', await until(() => t.file?.enFace === 0));
+  const x = co(INCONNU);
+  await connecte(x);
+  x.socket.emit('nvn:entrainement');
+  check('hors file, rien ne part', await until(() => x.horsFile > 0) && x.state === null);
+  t.socket.emit('nvn:leave_queue');
+  h.socket.disconnect(); t.socket.disconnect(); x.socket.disconnect();
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 N.stop(); io.close();
 await new Promise((r) => http.close(() => r()));
