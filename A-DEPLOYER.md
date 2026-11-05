@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Vestiaire du duel : JOUER CONTRE DES BOTS et ATTENDRE EN NAVIGUANT**
+(branche `claude/project-thread-ttms6p`, 5 novembre 2026, demande de Gaël).
+Code seul (serveur du duel et page), sans schéma. Le premier lance tout de
+suite un entraînement contre des bots (ne compte pas au classement) ; seul
+celui qui appuie part, les autres gardent leur place. Le second ramène à
+l'accueil en gardant la place, avec le rappel habituel. Aide, /comment-jouer
+et quatre langues à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Duel de tribunes : cadre autour du match choisi** (branche
 `claude/project-thread-0grr8y`, 5 novembre 2026, choix de Gaël sur quatre
 maquettes). Code seul (CSS), sans schéma. Le match choisi, son camp et ENTRER
