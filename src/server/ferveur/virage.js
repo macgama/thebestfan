@@ -904,6 +904,14 @@ export class VirageRoom {
       facteurMise *= 1 + Math.min(serieChaude.max ?? 0.5, serieChaude.n * (serieChaude.pas ?? 0.1));
     }
 
+    /* **Les charges d'un modificateur se consomment au chant**, comme au duel.
+       Elles ne se consommaient pas ici : le Métronome (« tes deux prochains
+       chants ») et l'Échauffement (« trois chants ») n'ont pas de durée, et
+       leur fenêtre élargie restait donc acquise jusqu'à la fin du match
+       (audit du 5 novembre 2026). */
+    for (const e of m.effets ?? []) if (e.charges !== undefined && e.mods) e.charges--;
+    nettoyerEffets(m, now);
+
     /* Le prix et la reprise du Fanzzy, comme au duel : voir `prixDuChant`. */
     m.breath = Math.max(0, m.breath - prixDuChant(card.cost, mods));
     if (parfait) m.breath = Math.min(RULES.breathMax, m.breath + repriseDuChant(card.cost, mods));
@@ -1402,7 +1410,7 @@ export class VirageRoom {
       }
 
       case 'mod_self':
-        poserEffet(m, { type: 'mod_self', mods: e.mods,
+        poserEffet(m, { type: 'mod_self', mods: e.mods, source: carte.id,
           fin: e.duree ? now + e.duree : undefined, charges: e.charges });
         evenements.push({ t: 'effect', type: 'mod_self', userId, mods: e.mods });
         break;

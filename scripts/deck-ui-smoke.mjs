@@ -353,10 +353,11 @@ check('dix emplacements de cartes', T(dom).querySelectorAll('.emp').length === 1
 
   const marquees = await dom.window.eval('S.catalogue.filter((a) => a.virage === false).length');
   /* 14 jusqu'au 3 novembre 2026, 31 avec les cartes de novembre (dont celles
-     des PASS, fermées mais montrées au catalogue). */
+     des PASS, fermées mais montrées au catalogue), 33 avec la Tempête de sable
+     et la Tôle soudée du PASS 2 (5 novembre 2026). */
   const attendues = ACTIONS.filter((a) => !dansLeVirage(a)).length;
   check(`le catalogue dit de chaque carte où elle se joue (${marquees} sur ${attendues})`,
-    marquees === attendues && attendues === 31);
+    marquees === attendues && attendues === 33);
 
   /* La Bâche vise la prochaine poussée adverse : au Virage, « la prochaine
      poussée adverse » n'est pas un événement, c'est du bruit de fond. */
