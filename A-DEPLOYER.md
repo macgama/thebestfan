@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Gestes à la souris : La Justesse, La Mèche et La Jauge marchent sur ordinateur**
+(branche `claude/project-thread-jkmtmm`, 5 novembre 2026, demande de Gaël).
+Pages seules, sans schéma ni image.
+
+- À la souris, suivre en survolant suffit (plus besoin de garder le clic
+  enfoncé) ; consignes « avec la souris » sur ordinateur. Le tactile ne change pas.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Fiche d'un Fanzzy : taille qui grandit d'âge en âge, pieds au sol**
 (branche `claude/project-thread-ehaa0o`, 5 novembre 2026, demande de Gaël).
 Pages seules, sans schéma ni image.
