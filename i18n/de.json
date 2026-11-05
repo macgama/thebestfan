@@ -9203,5 +9203,15 @@
  "Garde la souris sur la flamme, sans cliquer. Elle file, puis elle s’arrête.": "Halte die Maus auf der Flamme, ohne zu klicken. Sie rast los, dann bleibt sie stehen.",
  "GLISSE LA SOURIS — RESTE DANS LA BANDE": "BEWEG DIE MAUS — BLEIB IM BAND",
  "SUIS LA MÉLODIE AVEC LA SOURIS": "FOLGE DER MELODIE MIT DER MAUS",
- "GARDE LA SOURIS SUR LA FLAMME": "HALTE DIE MAUS AUF DER FLAMME"
+ "GARDE LA SOURIS SUR LA FLAMME": "HALTE DIE MAUS AUF DER FLAMME",
+ "BIEN": "GUT",
+ "TÔT": "ZU FRÜH",
+ "TARD": "ZU SPÄT",
+ "GO !": "LOS!",
+ "UN SEUL COUP": "NUR EIN SCHLAG",
+ "IL EN FAUT DEUX": "ZWEIMAL SCHLAGEN",
+ "Je joue sur ordinateur : comment faire les gestes à la souris ?": "Ich spiele am Computer: Wie mache ich die Gesten mit der Maus?",
+ "Un clic vaut un toucher. Pour les gestes où l’on garde le doigt posé — la justesse, la mèche, la jauge —, il suffit de suivre avec la souris, sans cliquer ; garder le clic enfoncé marche aussi. Au chant des mini-jeux, les touches J, K et L (ou les flèches) frappent les trois tambours.": "Ein Klick zählt wie ein Tippen. Bei den Gesten, bei denen man den Finger liegen lässt (die Tonhöhe, die Lunte, die Anzeige), folgst du einfach mit der Maus, ohne zu klicken; gedrückt halten geht auch. Beim Gesang der Minispiele schlagen die Tasten J, K und L (oder die Pfeile) die drei Trommeln.",
+ "Pourquoi y a-t-il de la musique pendant certains gestes ?": "Warum läuft bei manchen Gesten Musik?",
+ "Les gestes à notes (les deux voix, les accents, la justesse) et le chant des mini-jeux ont leur musique, composée par le jeu sur la partition du geste : ses temps tombent sur les notes. Pendant le geste, des mots te disent aussi comment tu t’en sors (PARFAIT, BIEN, TÔT, TARD, RATÉ), et une note ratée continue sa route. Le son se coupe dans le menu, comme les autres.": "Die Notengesten (zwei Stimmen, Akzente, Tonhöhe) und der Gesang der Minispiele haben ihre eigene Musik, vom Spiel auf die Partitur der Geste komponiert: Ihre Schläge fallen auf die Noten. Während der Geste sagen dir auch Wörter, wie es läuft (PERFEKT, GUT, ZU FRÜH, ZU SPÄT, VERFEHLT), und eine verpasste Note fällt weiter. Der Ton lässt sich im Menü ausschalten, wie alles andere."
 }

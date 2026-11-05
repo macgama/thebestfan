@@ -40,6 +40,7 @@
  * `scripts/son-smoke.mjs` importe d'ici la mesure (`ouvrirBanc`,
  * `mesurerTout`, `juger`) : une seule mesure, pas deux qui divergeraient.
  */
+import { resoudreGeste } from '../src/server/ferveur/gestures.js';
 import { createServer } from 'node:http';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -284,6 +285,14 @@ export function travaux(mix) {
   chant('chant-marche', { chant: 'marche', tempo: 500, temps: 16 }, 8.8);
   chant('chant-roulement', { chant: 'roulement', tempo: 500, temps: 4 }, 2.8);
   chant('chant-frappes-echo', { chant: 'frappes', instants: [0, 280, 840, 1120, 1680] }, 2.8);
+  /* La musique des trois gestes à notes (5 novembre 2026), sur la partition
+     que le serveur sert : jugée comme un chant, dans la fenêtre du jeu. */
+  const servis = resoudreGeste({}, { motif: 3 });
+  for (const g of ['deuxvoix', 'accents', 'justesse']) {
+    chant(`musique-${g}`, { musique: g, config: servis[g] }, 9.5);
+  }
+  // Le chant des mini-jeux : un groove à 108 BPM, deux mesures après le compte.
+  chant('musique-rythme', { musique: 'rythme', config: { bpm: 108, depart: 2400, fin: 9000 } }, 9.5);
   // L'équilibre des deux voix d'un chant : le tambour seul, les claps seuls (non jugés).
   t.push({ id: 'voix-tambour', sorte: 'voix', quoi: { chant: 'tempo', tempo: 560, temps: 8, voix: 'T' }, duree: 5.2 });
   t.push({ id: 'voix-claps', sorte: 'voix', quoi: { chant: 'tempo', tempo: 560, temps: 8, voix: 'C' }, duree: 5.2 });

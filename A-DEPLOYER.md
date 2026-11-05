@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Gestes plus vivants : notes ratées qui continuent, mots GO ! / PARFAIT / RATÉ, musique**
+(branche `claude/project-thread-jkmtmm`, 5 novembre 2026, demande et choix de Gaël).
+Pages seules, sans schéma ni image.
+
+- Aux deux voix et aux accents, une note ratée continue tout droit ; chaque
+  note dit PARFAIT, BIEN, TÔT, TARD ou RATÉ ; GO ! au départ de chaque geste.
+- Musique composée par le jeu, calée sur les notes : les deux voix, les
+  accents, la justesse, et le chant des mini-jeux.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Gestes à la souris : La Justesse, La Mèche et La Jauge marchent sur ordinateur**
 (branche `claude/project-thread-jkmtmm`, 5 novembre 2026, demande de Gaël).
 Pages seules, sans schéma ni image.

@@ -9203,5 +9203,15 @@
  "Garde la souris sur la flamme, sans cliquer. Elle file, puis elle s’arrête.": "Tieni il mouse sulla fiamma, senza cliccare. Corre, poi si ferma.",
  "GLISSE LA SOURIS — RESTE DANS LA BANDE": "MUOVI IL MOUSE — RESTA NELLA BANDA",
  "SUIS LA MÉLODIE AVEC LA SOURIS": "SEGUI LA MELODIA CON IL MOUSE",
- "GARDE LA SOURIS SUR LA FLAMME": "TIENI IL MOUSE SULLA FIAMMA"
+ "GARDE LA SOURIS SUR LA FLAMME": "TIENI IL MOUSE SULLA FIAMMA",
+ "BIEN": "BENE",
+ "TÔT": "PRESTO",
+ "TARD": "TARDI",
+ "GO !": "VIA!",
+ "UN SEUL COUP": "UN SOLO COLPO",
+ "IL EN FAUT DEUX": "NE SERVONO DUE",
+ "Je joue sur ordinateur : comment faire les gestes à la souris ?": "Gioco al computer: come faccio i gesti con il mouse?",
+ "Un clic vaut un toucher. Pour les gestes où l’on garde le doigt posé — la justesse, la mèche, la jauge —, il suffit de suivre avec la souris, sans cliquer ; garder le clic enfoncé marche aussi. Au chant des mini-jeux, les touches J, K et L (ou les flèches) frappent les trois tambours.": "Un clic vale un tocco. Per i gesti in cui si tiene il dito appoggiato (l’intonazione, la miccia, l’indicatore), basta seguire con il mouse, senza cliccare; tenere premuto funziona comunque. Nel coro dei minigiochi, i tasti J, K e L (o le frecce) colpiscono i tre tamburi.",
+ "Pourquoi y a-t-il de la musique pendant certains gestes ?": "Perché c’è musica durante alcuni gesti?",
+ "Les gestes à notes (les deux voix, les accents, la justesse) et le chant des mini-jeux ont leur musique, composée par le jeu sur la partition du geste : ses temps tombent sur les notes. Pendant le geste, des mots te disent aussi comment tu t’en sors (PARFAIT, BIEN, TÔT, TARD, RATÉ), et une note ratée continue sa route. Le son se coupe dans le menu, comme les autres.": "I gesti a note (le due voci, gli accenti, l’intonazione) e il coro dei minigiochi hanno la loro musica, composta dal gioco sulla partitura del gesto: i suoi battiti cadono sulle note. Durante il gesto, delle parole ti dicono anche come te la cavi (PERFETTO, BENE, PRESTO, TARDI, MANCATO), e una nota mancata continua la sua corsa. Il suono si spegne dal menu, come il resto."
 }

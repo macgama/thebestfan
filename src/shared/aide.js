@@ -380,6 +380,17 @@ const RUBRIQUES = [
           + 'l’essai, autant de fois que tu veux. Rien n’y compte — ni ferveur, ni '
           + 'écharpes, ni classement — et rien ne t’y aide non plus : aucun Fanzzy, '
           + 'aucun équipement. C’est ta main, et le même moteur qui te note en duel.'],
+      ['Je joue sur ordinateur : comment faire les gestes à la souris ?',
+        'Un clic vaut un toucher. Pour les gestes où l’on garde le doigt posé — la '
+          + 'justesse, la mèche, la jauge —, il suffit de suivre avec la souris, sans '
+          + 'cliquer ; garder le clic enfoncé marche aussi. Au chant des mini-jeux, les '
+          + 'touches J, K et L (ou les flèches) frappent les trois tambours.'],
+      ['Pourquoi y a-t-il de la musique pendant certains gestes ?',
+        'Les gestes à notes (les deux voix, les accents, la justesse) et le chant des '
+          + 'mini-jeux ont leur musique, composée par le jeu sur la partition du geste : '
+          + 'ses temps tombent sur les notes. Pendant le geste, des mots te disent aussi '
+          + 'comment tu t’en sors (PARFAIT, BIEN, TÔT, TARD, RATÉ), et une note ratée '
+          + 'continue sa route. Le son se coupe dans le menu, comme les autres.'],
       ['Que se passe-t-il quand un vrai but est marqué ?',
         () => 'La corde se secoue, et une fenêtre s’ouvre où tout compte double '
           + 'pendant une minute. Le souffle offert ne va qu’à ceux qui suivent le '

@@ -9203,5 +9203,15 @@
  "Garde la souris sur la flamme, sans cliquer. Elle file, puis elle s’arrête.": "Keep your mouse on the flame, no need to click. It races, then it stops.",
  "GLISSE LA SOURIS — RESTE DANS LA BANDE": "MOVE YOUR MOUSE — STAY IN THE BAND",
  "SUIS LA MÉLODIE AVEC LA SOURIS": "FOLLOW THE MELODY WITH YOUR MOUSE",
- "GARDE LA SOURIS SUR LA FLAMME": "KEEP YOUR MOUSE ON THE FLAME"
+ "GARDE LA SOURIS SUR LA FLAMME": "KEEP YOUR MOUSE ON THE FLAME",
+ "BIEN": "GOOD",
+ "TÔT": "EARLY",
+ "TARD": "LATE",
+ "GO !": "GO!",
+ "UN SEUL COUP": "ONLY ONE HIT",
+ "IL EN FAUT DEUX": "HIT IT TWICE",
+ "Je joue sur ordinateur : comment faire les gestes à la souris ?": "I play on a computer: how do I do the moves with a mouse?",
+ "Un clic vaut un toucher. Pour les gestes où l’on garde le doigt posé — la justesse, la mèche, la jauge —, il suffit de suivre avec la souris, sans cliquer ; garder le clic enfoncé marche aussi. Au chant des mini-jeux, les touches J, K et L (ou les flèches) frappent les trois tambours.": "A click counts as a tap. For the moves where you keep your finger down (in tune, the fuse, the gauge), just follow with your mouse, no need to click; holding the click works too. In the chant mini-game, the J, K and L keys (or the arrows) hit the three drums.",
+ "Pourquoi y a-t-il de la musique pendant certains gestes ?": "Why is there music during some moves?",
+ "Les gestes à notes (les deux voix, les accents, la justesse) et le chant des mini-jeux ont leur musique, composée par le jeu sur la partition du geste : ses temps tombent sur les notes. Pendant le geste, des mots te disent aussi comment tu t’en sors (PARFAIT, BIEN, TÔT, TARD, RATÉ), et une note ratée continue sa route. Le son se coupe dans le menu, comme les autres.": "The note moves (two voices, accents, in tune) and the chant mini-game have their own music, composed by the game on the move’s score: its beats land on the notes. During the move, words also tell you how you’re doing (PERFECT, GOOD, EARLY, LATE, MISSED), and a missed note keeps going. Sound can be turned off in the menu, like everything else."
 }
