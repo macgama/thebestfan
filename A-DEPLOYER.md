@@ -1,5 +1,12 @@
 # À déposer sur Infomaniak
 
+**PASS 2 : 3 cartes action Apocalyptique fermées** (Bidon de nitro, Tempête
+de sable, Tôle soudée ; branche `claude/project-thread-vuon42`, 5 novembre
+2026, demande de Gaël). Code seul, sans schéma ; dessins à venir. Rien ne
+change pour les joueurs avant le PASS 2. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **PASS 2 : 10 stades fermés (5 de la série météo, 5 de la Ligue 1)**
 (branche `claude/project-thread-vuon42`, 5 novembre 2026, demande et choix de Gaël).
 Code seul, sans schéma ; images à venir.

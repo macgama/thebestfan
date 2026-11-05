@@ -247,6 +247,12 @@ export const INVITES = {
     + 'all streaming forward toward the pitch'],
   'a-mt-orage': ['red', 'a thunderstorm rolling over a floodlit stadium, a lightning bolt in the '
     + 'distance, the crowd lit white for an instant'],
+  'a-mt-nitro': ['red', 'a battered red fuel can strapped with tape on the steps of a terrace, '
+    + 'blue flame bursting out of its nozzle like a rocket, supporters in wasteland goggles cheering, sparks'],
+  'a-mt-tempete-sable': ['violet', 'a huge wall of orange desert sand sweeping over a stadium terrace, '
+    + 'supporters squinting with goggles pushed up on their foreheads, holding on to the barrier, dust everywhere'],
+  'a-mt-tole': ['silver', 'a big shield of riveted corrugated metal sheets welded together in front '
+    + 'of a terrace, welding sparks on the seams, supporters behind it with scarves'],
   'a-gd-car': ['amber', 'an old supporters\u2019 coach on a motorway at night, scarves hanging '
     + 'out of the windows, faces pressed to the glass singing'],
   'a-gd-aire': ['blue', 'a motorway service station at dawn, supporters in scarves stretching '
