@@ -99,7 +99,7 @@
    "es"
   ]
  },
- "APPLI ANDROID": {
+ "L’appli Android est en test, bientôt sur Google Play": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -111,6 +111,28 @@
   ]
  },
  "DEVIENS TESTEUR": {
+  "ou": [
+   "public/beta-android.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "BIENTÔT SUR GOOGLE PLAY": {
+  "ou": [
+   "public/beta-android.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "APPLI ANDROID": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -154,7 +176,7 @@
    "es"
   ]
  },
- "L’appli <0>TheBestFan</0> arrive sur le Play Store. Avant de l’ouvrir à tous, Google demande qu’au moins 12 supporters la testent pendant 14 jours. Trois gestes, et tu en fais partie.": {
+ "L’appli Android <0>TheBestFan</0> est en test, et bientôt tout le monde pourra l’installer depuis le Google Play Store. Avant de l’ouvrir à tous, Google demande qu’au moins 12 supporters la testent pendant 14 jours. On cherche des bêta-testeurs : trois gestes, et tu en fais partie.": {
   "ou": [
    "public/beta.html"
   ],
@@ -220,7 +242,7 @@
    "es"
   ]
  },
- "Toujours avec le même compte, touche « Devenir testeur ». Si Google dit que le test n’est pas encore disponible, réessaie un peu plus tard : il ouvre très bientôt.": {
+ "Toujours avec le même compte, touche « Devenir testeur ». Si Google dit que tu n’as pas accès, attends quelques minutes après avoir rejoint le groupe et réessaie.": {
   "ou": [
    "public/beta.html"
   ],
@@ -411,6 +433,17 @@
  "Lancer un sticker du PASS": {
   "ou": [
    "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "use strict": {
+  "ou": [
+   "public/ecusson.js"
   ],
   "langues": [
    "en",
@@ -2449,6 +2482,50 @@
  "blason au format {0}, que le jeu ne lit pas": {
   "ou": [
    "src/server/football/blason.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DE": {
+  "ou": [
+   "src/server/football/ecusson.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DU": {
+  "ou": [
+   "src/server/football/ecusson.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LA": {
+  "ou": [
+   "src/server/football/ecusson.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LE": {
+  "ou": [
+   "src/server/football/ecusson.js"
   ],
   "langues": [
    "en",

@@ -169,7 +169,21 @@
   };
 
   const label = (g) => LABEL[g] ?? String(g ?? '').toUpperCase();
-  const aide = (g) => AIDE[g] ?? '';
+  /* **À la souris, on suit sans cliquer.** Les gestes où l'on garde le doigt
+     posé (la justesse, la mèche, la jauge) attendaient un clic maintenu ; à
+     la souris, le joueur suit naturellement du pointeur, sans appuyer, et ne
+     rendait rien : 0.00, RATÉ. Sur un écran à souris, le pointeur qui survole
+     le cadre compte comme un doigt posé, et le clic maintenu marche toujours.
+     Le doigt, lui, ne survole pas : rien ne change au tactile. */
+  const SOURIS = (() => {
+    try { return window.matchMedia('(hover: hover) and (pointer: fine)').matches; } catch { return false; }
+  })();
+  const AIDE_SOURIS = {
+    jauge: 'Garde le curseur dans la bande avec la souris. Elle tient, puis elle saute.',
+    justesse: 'Garde la souris sur la ligne de la note qui passe sous le trait, sans cliquer. La mélodie se voit venir.',
+    meche: 'Garde la souris sur la flamme, sans cliquer. Elle file, puis elle s’arrête.',
+  };
+  const aide = (g) => (SOURIS && AIDE_SOURIS[g]) || AIDE[g] || '';
   const couleur = (g) => COULEUR[g] ?? '#F5C33B';
 
   /* **Les quatre gestes qui s'enfoncent.** Ce sont les seuls où une frappe
@@ -448,6 +462,11 @@
    * La capture est un confort ; le tracé est le geste. On prend donc le point
    * d abord, et la capture ensuite, sous garde.
    */
+  /** Le pointeur est-il dans le cadre ? (un lâcher de souris hors du cadre lève.) */
+  const dedans = (pad, e) => {
+    const r = pad.getBoundingClientRect();
+    return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  };
   const prendre = (pad, e) => {
     try { pad.setPointerCapture?.(e.pointerId); } catch { /* doigt déjà parti */ }
   };
@@ -1569,7 +1588,7 @@
           zone.innerHTML = `<div class="tbf-ep-jauge" id="pad">
             <div class="bande" id="bande"></div>
             <div class="curseur" id="cur"></div>
-            <div class="s" id="s">GLISSE LE DOIGT — RESTE DANS LA BANDE</div></div>`;
+            <div class="s" id="s">${SOURIS ? 'GLISSE LA SOURIS — RESTE DANS LA BANDE' : 'GLISSE LE DOIGT — RESTE DANS LA BANDE'}</div></div>`;
           const pad = $('pad');
           const bande = $('bande');
           const cur = $('cur');
@@ -1600,7 +1619,7 @@
           /* Le point d'abord, la capture ensuite et sous garde (voir `prendre`) :
              une capture qui lève emportait la première mesure avec elle. */
           pad.onpointerdown = (e) => { poser(e); prendre(pad, e); tic(); };
-          pad.onpointermove = (e) => { if (e.buttons) poser(e); };
+          pad.onpointermove = (e) => { if (e.buttons || e.pointerType === 'mouse') poser(e); };
 
           cur.style.bottom = '50%';
           const peindre = () => {
@@ -1883,7 +1902,7 @@
               `<b data-i="${i}" style="bottom:${((n.ligne + 0.5) / lignes) * 100}%"></b>`).join('')}</div>
             <div class="tbf-tete"></div>
             <div class="tbf-voix" id="cur"></div>
-            <div class="tbf-ep-mot" id="mot">POSE LE DOIGT — SUIS LA MÉLODIE</div></div>`;
+            <div class="tbf-ep-mot" id="mot">${SOURIS ? 'SUIS LA MÉLODIE AVEC LA SOURIS' : 'POSE LE DOIGT — SUIS LA MÉLODIE'}</div></div>`;
           const pad = $('pad');
           const cur = $('cur');
           const barres = [...pad.querySelectorAll('.tbf-notes b')];
@@ -1899,11 +1918,13 @@
             cur.classList.add('tbf-pose');
           };
           let pose = false;
-          pad.onpointerdown = (e) => { pose = true; poser(e); prendre(pad, e); tic(); };
-          pad.onpointermove = (e) => { if (pose) poser(e); };
+          pad.onpointerdown = (e) => { e.preventDefault(); pose = true; poser(e); prendre(pad, e); tic(); };
+          /* À la souris, survoler suffit (voir `SOURIS`). */
+          pad.onpointermove = (e) => { if (pose || e.pointerType === 'mouse') { pose = true; poser(e); } };
           const lever = () => { pose = false; cur.classList.remove('tbf-pose'); };
-          pad.onpointerup = lever;
+          pad.onpointerup = (e) => { if (e.pointerType !== 'mouse' || !dedans(pad, e)) lever(); };
           pad.onpointercancel = lever;
+          pad.onpointerleave = (e) => { if (e.pointerType === 'mouse') lever(); };
           const peindre = () => {
             const t = maintenant();
             let juste = false;
@@ -2090,7 +2111,7 @@
               <polyline class="brulee" id="brulee" points=""/></svg>
             <i class="tbf-flamme" id="flamme"></i>
             <i class="tbf-doigt" id="doigt"></i>
-            <span class="tbf-ep-mot" id="mot">POSE LE DOIGT SUR LA FLAMME</span></div>`;
+            <span class="tbf-ep-mot" id="mot">${SOURIS ? 'GARDE LA SOURIS SUR LA FLAMME' : 'POSE LE DOIGT SUR LA FLAMME'}</span></div>`;
           const pad = $('pad');
           const flamme = $('flamme');
           const doigt = $('doigt');
@@ -2106,11 +2127,13 @@
             doigt.style.top = `${pose.y * 100}%`;
             doigt.classList.add('tbf-pose');
           };
-          pad.onpointerdown = (e) => { pose = ici(e); prendre(pad, e); montrer(); tic(); };
-          pad.onpointermove = (e) => { if (pose) { pose = ici(e); montrer(); } };
+          pad.onpointerdown = (e) => { e.preventDefault(); pose = ici(e); prendre(pad, e); montrer(); tic(); };
+          /* À la souris, survoler suffit (voir `SOURIS`). */
+          pad.onpointermove = (e) => { if (pose || e.pointerType === 'mouse') { pose = ici(e); montrer(); } };
           const lever = () => { pose = null; montrer(); };
-          pad.onpointerup = lever;
+          pad.onpointerup = (e) => { if (e.pointerType !== 'mouse' || !dedans(pad, e)) lever(); };
           pad.onpointercancel = lever;
+          pad.onpointerleave = (e) => { if (e.pointerType === 'mouse') lever(); };
           const cles = g.cles ?? [];
           const peindre = () => {
             const t = maintenant();

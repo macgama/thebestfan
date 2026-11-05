@@ -627,6 +627,38 @@ const JUSQUA = `var jusqua = (t0, t) => new Promise((r) => setTimeout(r, Math.ma
   check(`à l’heure mais du mauvais côté ne paie pas (${noteInv.toFixed(2)})`, noteInv <= 0.1);
 }
 
+/* ------------------------------------------------- à la souris, sans clic
+
+   Sur ordinateur, La Justesse rendait 0.00 : le joueur suivait la mélodie du
+   pointeur, sans garder le bouton enfoncé, et la page ne mesurait rien. Une
+   souris qui survole le cadre compte maintenant comme un doigt posé ; un
+   doigt qui glisse sans s'être posé (ce qui n'arrive pas) ne compte pas. */
+for (const kind of ['justesse', 'meche', 'jauge']) {
+  const mesurer = (pointerType) => page.evaluate(async (k, g, pt) => {
+    const p = window.TBF_GESTE.jouer(k, { ...g, [k]: { ...g[k], ms: 900 } },
+      { zone: document.getElementById('zone') });
+    const pad = document.getElementById('pad');
+    const r = pad.getBoundingClientRect();
+    const t0 = performance.now();
+    let i = 0;
+    while (performance.now() - t0 < 800) {
+      pad.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: pt,
+        clientX: r.left + r.width * 0.5, clientY: r.top + r.height * (0.2 + (i++ % 6) / 10) }));
+      await new Promise((s) => setTimeout(s, 40));
+    }
+    const rendu = await p;
+    const ms = rendu?.mesures ?? [];
+    return { n: ms.length, bouge: new Set(ms.map((m) => m.v ?? m.y)).size };
+  }, kind, gestes, pointerType);
+  const souris = await mesurer('mouse');
+  check(`${kind} : la souris qui survole est suivie, sans clic (${souris.n} mesures, ${souris.bouge} hauteurs)`,
+    souris.n >= 5 && souris.bouge >= 2);
+  if (kind !== 'jauge') {
+    const doigt = await mesurer('touch');
+    check(`${kind} : un doigt non posé ne mesure rien (${doigt.n})`, doigt.n === 0);
+  }
+}
+
 check(`aucune erreur de script pendant les ${EPREUVES.length} épreuves`,
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 
