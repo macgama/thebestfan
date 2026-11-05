@@ -1,6 +1,6 @@
 {
   "id": "MT48",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -91,7 +91,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "e5008c2f53db"
+          "sha": "f54c4ea1effa"
         },
         "apocalyptique": {
           "etats": [
@@ -103,7 +103,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "6e578170bf2d"
+          "sha": "9d9e76ed57d7"
         },
         "prehistorique": {
           "etats": [
@@ -115,7 +115,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "0fc4a67cef40"
+          "sha": "3a9d74893a98"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "2f0cf85a74c3"
         }
       }
     }

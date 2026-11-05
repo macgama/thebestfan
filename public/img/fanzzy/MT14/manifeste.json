@@ -1,6 +1,6 @@
 {
   "id": "MT14",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -91,7 +91,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "326f877240d3"
+          "sha": "3572a88fa4e6"
         },
         "apocalyptique": {
           "etats": [
@@ -103,7 +103,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d06b8da72029"
+          "sha": "b437547d4ac0"
         },
         "prehistorique": {
           "etats": [
@@ -115,7 +115,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "233b843cbd17"
+          "sha": "11cabe59dc79"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "8a70c95912ee"
         }
       }
     }

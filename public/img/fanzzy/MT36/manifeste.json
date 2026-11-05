@@ -1,6 +1,6 @@
 {
   "id": "MT36",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -116,6 +116,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "ef21e95be1e2"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "016c66ee6ba8"
         }
       }
     }
