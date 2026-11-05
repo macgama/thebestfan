@@ -174,17 +174,12 @@ const DUEL = {
     const temoin = temoinChant();
     return [p > temoin * 1.05, `chant du coéquipier ${p} (sans la carte ${temoin})`];
   },
-  /* **Le Chœur au duel ne fait rien encore** : il ouvre une fenêtre à
-     ×1, que rien ne lit (au Virage, la salle la lit). Ce qu'il doit y faire
-     est un choix de jeu demandé à Gaël le 5 novembre 2026 : en attendant, le
-     banc le signale sans rougir. */
+  /* Le Chœur au duel : toute la tribune ×3 pendant 3 s (choix de Gaël du
+     5 novembre 2026). */
   sync(d, carte, t) {
     const p = pousseeDe(chant(d, 'a2', t + 50), 'a2');
     const temoin = temoinChant();
-    if (!(p > temoin * 1.05)) {
-      console.log(`  ATTENTE ${carte.id} : au duel, le chœur ne change rien (${p} contre ${temoin}) — choix de Gaël demandé`);
-    }
-    return [true, ''];
+    return [Math.abs(p - temoin * carte.effet.duel) <= 1, `chant du coéquipier ${p} (sans la carte ${temoin})`];
   },
   swap_fanzzy(d, carte, t) {
     const r = essayer(() => d.changer('a1', 1, t + 10));
