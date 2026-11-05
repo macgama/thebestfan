@@ -136,6 +136,12 @@ app.use('/api/me', (await import('../src/server/onboarding/index.js'))
 app.get('/api/auth/me', (_q, s) => s.json({ user: { id: U, pseudo: 'Testeur' } }));
 app.use(express.static(path.join(RACINE, 'public')));
 
+/* Depuis le 5 novembre 2026 (Gaël), chaque tenue est celle d'un PASS et ne
+   sort plus des boosters (`pass:smoke` le garde). Ce banc éprouve l'ouverture
+   de **toutes** les sortes de cartes : Apocalyptique et Halloween y sont
+   rendues libres, comme « aucune » dans /admin › PASS. */
+(await import('../src/shared/pass.js')).poserTenuesDesPass({ 2: '', 4: '' });
+
 const http = createServer(app);
 await new Promise((r) => http.listen(0, r));
 const base = `http://localhost:${http.address().port}`;

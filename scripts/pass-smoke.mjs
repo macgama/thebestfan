@@ -87,7 +87,12 @@ titre('Les tenues réservées');
 check('pendant la saison 1, Préhistorique est réservée', tenueReservee('prehistorique', 1) === true);
 check('sans saison connue, elle reste réservée', tenueReservee('prehistorique', null) === true);
 check('à la saison 2, elle revient', tenueReservee('prehistorique', 2) === false);
-check('Halloween n’est réservée à aucun PASS', tenueReservee('halloween', 1) === false);
+/* Gaël, 5 novembre 2026 : Apocalyptique au PASS 2, Halloween au PASS 4,
+   même processus que Préhistorique. */
+check('Apocalyptique est réservée jusqu’au PASS 2 compris', tenueReservee('apocalyptique', 0) === true
+  && tenueReservee('apocalyptique', 2) === true && tenueReservee('apocalyptique', 3) === false);
+check('Halloween est réservée jusqu’au PASS 4 compris', tenueReservee('halloween', 1) === true
+  && tenueReservee('halloween', 4) === true && tenueReservee('halloween', 5) === false);
 
 titre('La boutique et les réglages');
 const article = ARTICLE_PAR_ID.get('pass-saison');
@@ -377,8 +382,8 @@ titre('Ce que les PASS donnent pour toujours');
 
 titre('La tenue du PASS, hors des boosters et de l’étal');
 {
-  check('Préhistorique ne sort d’aucun booster', !tenuesTirables().some((t) => t.id === 'prehistorique')
-    && tenuesTirables().some((t) => t.id === 'halloween'));
+  check('aucune tenue de PASS ne sort d’un booster', !tenuesTirables().some((t) =>
+    ['prehistorique', 'apocalyptique', 'halloween'].includes(t.id)));
   check('elle n’est pas à l’étal pendant la saison 1', !tenuesEnEtal().some((t) => t.id === 'prehistorique'));
   await pool.query('DELETE FROM saisons');
   await pool.query(`INSERT INTO saisons (id, numero, nom, series, tenues, lancee_a, fin_le) VALUES

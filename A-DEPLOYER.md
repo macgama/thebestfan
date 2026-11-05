@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Tenues Apocalyptique (PASS 2) et Halloween (PASS 4) retirées des boosters et de l'étal**
+(branche `claude/project-thread-vuon42`, 5 novembre 2026, demande de Gaël :
+« exactement le même processus » que Préhistorique). Code seul, sans schéma.
+Les joueurs gardent les tenues déjà gagnées ; la place « tenue » d'un booster
+devient des écharpes. Aide mise à jour (5 langues). Après la mise en ligne :
+« Redémarrer ». Si /admin › PASS montre « aucune » tenue pour la saison 2 ou 4,
+y choisir Apocalyptique / Halloween.
+
+---
+
 **Chœur au duel, textes de la Bâche et de la Tôle soudée** (branche
 `claude/project-thread-tfw02c`, 5 novembre 2026, choix de Gaël). Code et
 textes seuls, sans schéma ni image.

@@ -96,6 +96,11 @@ process.env.STRIPE_WEBHOOK_SECRET = 'whsec_secret_de_test';
    l'oubli en une lecture. */
 await chargerCatalogue(pool);
 await chargerTenues(pool);
+/* Depuis le 5 novembre 2026 (Gaël), chaque tenue du jeu est celle d'un PASS,
+   réservée pendant sa saison (`pass:smoke` le garde). Ici on éprouve la
+   **mécanique** de l'étal des tenues : Apocalyptique et Halloween y sont
+   rendues libres, comme « aucune » dans /admin › PASS. */
+(await import('../src/shared/pass.js')).poserTenuesDesPass({ 2: '', 4: '' });
 
 const fanzzy = createFanzzy({ pool, requireAuth: (req, _res, next) => next() });
 

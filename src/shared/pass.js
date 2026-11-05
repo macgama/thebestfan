@@ -65,6 +65,28 @@ export const PASS_SAISONS = Object.freeze([
     /* Le titre de la voie (niveau 9), sous le pseudo de ses membres. */
     titre: 'Chasseur de mammouth',
   }),
+  /* Gaël, 5 novembre 2026 : « exactement le même processus » pour les autres
+     tenues — rares, gagnées avec le PASS, puis à l'étal (en écharpes) une
+     fois le PASS fermé. Elles sortent donc des boosters et de l'étal dès
+     maintenant, comme Préhistorique. */
+  Object.freeze({
+    numero: 2,
+    nom: 'PASS 2 · Apocalyptique',
+    tenue: 'apocalyptique',
+    texte: 'Le virage d’après la fin du monde. Ta tribune en tôle, en pneus et '
+      + 'en lunettes de soudeur, du premier au troisième âge, et un cadre riveté.',
+    couleur: '#b5462a',
+    titre: 'Roi de la Casse',
+  }),
+  Object.freeze({
+    numero: 4,
+    nom: 'PASS 4 · Halloween',
+    tenue: 'halloween',
+    texte: 'Le virage de la nuit du 31. Ta tribune en citrouilles et en capes, '
+      + 'du premier au troisième âge, et un cadre qui fait peur.',
+    couleur: '#7a3fb0',
+    titre: 'Roi des Citrouilles',
+  }),
 ]);
 
 export const PASS_PAR_NUMERO = new Map(PASS_SAISONS.map((p) => [p.numero, p]));
