@@ -1,6 +1,6 @@
 {
   "id": "MT26",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -67,8 +67,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1fa6eed610de",
-          "cligne": true
+          "sha": "ca64faaf576d"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "346064daee85"
         }
       }
     }
