@@ -1,6 +1,6 @@
 {
   "id": "MT32",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "9a9d1da0c861"
+          "sha": "7f0b6b49f71e"
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "91f43725cfa4"
         }
       }
     },
