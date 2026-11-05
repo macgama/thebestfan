@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Joueurs connectés dans /admin › APERÇU** (branche `claude/project-thread-ge9o9j`,
+5 novembre 2026, demande de Gaël). Code seul, sans schéma. Trois nombres : en
+ligne (5 dernières minutes), dernière heure, dernières 24 h. Comptés en mémoire
+seulement, sans rien écrire en base : ils repartent de zéro à chaque
+redémarrage (l'aperçu le dit). Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Page Collection : vignettes des rayons** (branche `claude/project-thread-k2of25`,
 5 novembre 2026, capture de Gaël). Code seul, sans schéma. L'image ULTIMATE ne
 déborde plus de sa tuile ; ÉTATS, TENUES, ÉQUIPEMENT (et tout rayon sans

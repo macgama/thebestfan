@@ -748,7 +748,14 @@ const VUES = {
     };
 
     const c = (v, l) => `<div class="card"><b>${v ?? 0}</b><span>${l}</span></div>`;
-    $('main').innerHTML = enJeu() + `
+    const k = d.connectes;
+    const connectes = k ? `<h3 class="h3">JOUEURS CONNECTÉS</h3>
+      <div class="cards">
+        ${c(k.maintenant,'EN LIGNE (5 MIN)')}${c(k.heure,'DERNIÈRE HEURE')}${c(k.jour,'DERNIÈRES 24 H')}
+      </div>${Date.now() - new Date(k.depuis).getTime() < 864e5
+        ? `<p style="opacity:.5;font-size:11px;margin:4px 0 14px">Compté depuis le dernier redémarrage du serveur, le ${
+          esc(new Date(k.depuis).toLocaleString('fr-CH', { dateStyle: 'short', timeStyle: 'short' }))}.</p>` : ''}` : '';
+    $('main').innerHTML = enJeu() + connectes + `
       <div class="cards">
         ${c(d.joueurs.total,'JOUEURS')}${c(d.joueurs.nouveaux,'CETTE SEMAINE')}
         ${c(d.joueurs.verifies,'ADRESSES VÉRIFIÉES')}${c(d.joueurs.admins,'ADMINS')}

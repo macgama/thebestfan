@@ -71,12 +71,15 @@ const { createAbonnement } = await import('../src/server/abonnement/index.js');
 const abonnement = createAbonnement({ pool, requireAuth: (r,_s,n)=>n() });
 const { createContenus } = await import('../src/server/contenus/index.js');
 const contenus = createContenus({ pool });
+const { createFrequentation } = await import('../src/server/frequentation/index.js');
+const frequentation = createFrequentation();
+frequentation.noter('u-1'); frequentation.noter('u-2');
 await contenus.semer();
 await contenus.charger();
 
 const adm = createAdmin({ pool,
   requireAuth: (r,_s,n)=>{ r.user = { id: moi, email: moi===A?'patron@ex.fr':'joueur@ex.fr' }; n(); },
-  deps: { abonnement, contenus } });
+  deps: { abonnement, contenus, frequentation } });
 const app = express(); app.use('/api/admin', adm.router);
 const http = createServer(app); await new Promise((r)=>http.listen(0,r));
 const base = `http://localhost:${http.address().port}`;
@@ -106,6 +109,9 @@ check('l\u2019amorçage est journalisé',
 r = await call('/api/admin/apercu');
 check('aperçu des joueurs', r.json.joueurs.total === 3 && r.json.joueurs.admins === 1);
 check('aperçu des compétitions', r.json.competitions.competitions === 2);
+check('aperçu des joueurs connectés, en nombres seulement',
+  r.json.connectes?.maintenant === 2 && r.json.connectes.jour === 2
+  && !JSON.stringify(r.json.connectes).includes('u-1'));
 
 /* --------------------------------------------------------- joueurs */
 
