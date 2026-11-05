@@ -500,6 +500,11 @@ const RUBRIQUES = [
         'Page Amis, onglet TROUVER : le jeu te propose des supporters de tes clubs, '
           + 'et tu peux chercher n’importe qui par son pseudo, quel que soit son club. '
           + 'L’amitié commence quand il accepte ta demande.'],
+      ['Que veut dire « 12 EN LIGNE » sur l’accueil ?',
+        'C’est le nombre de supporters qui jouent en ce moment, toi compris (actifs '
+          + 'dans les cinq dernières minutes). Ce n’est qu’un nombre : personne ne voit '
+          + 'qui est en ligne, sauf tes amis si tu ne te caches pas. Seul, la pastille '
+          + 'ne s’affiche pas.'],
       ['Que peut-on faire entre amis ?',
         'Touche JOUER ENSEMBLE sous le nom d’un ami : tu y vois sa collection, son '
           + 'deck et ses cartes-souvenirs, et tu peux lui faire signe, lui offrir un '

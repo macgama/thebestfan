@@ -9286,5 +9286,9 @@
  "Le virage en orbite. Ta tribune en combinaisons et en casques à bulle, du premier au troisième âge, et un cadre de hublot.": "The end in orbit. Your stand in space suits and bubble helmets, from the first to the third age, and a porthole frame.",
  "Commandant de bord": "Flight Commander",
  "Car en panne, train raté : on arrive quand même. L’été, la tribune prend la route, pour tous. Avec le PASS 3 : la tenue Spatiale à ses trois âges, son badge et son cadre.": "Broken-down coach, missed train: we get there anyway. In summer the stand hits the road, for everyone. With PASS 3: the Space outfit at its three ages, its badge and its frame.",
- "PACK Spatiale": "Space PACK"
+ "PACK Spatiale": "Space PACK",
+ "<0>Tes amis</0> : trouve-les par leur pseudo, défie-les aux tirs au but, invite-les dans ton KOP, et vois s’ils sont au Virage ou en duel. Tu peux apparaître hors ligne depuis le menu. Sur l’accueil, la pastille verte sous ton avatar dit combien de supporters jouent en ce moment.": "<0>Your friends</0>: find them by username, challenge them to penalties, invite them into your KOP, and see if they’re in the End or in a duel. You can appear offline from the menu. On the home screen, the green badge under your avatar shows how many fans are playing right now.",
+ "en ligne": "online",
+ "C’est le nombre de supporters qui jouent en ce moment, toi compris (actifs dans les cinq dernières minutes). Ce n’est qu’un nombre : personne ne voit qui est en ligne, sauf tes amis si tu ne te caches pas. Seul, la pastille ne s’affiche pas.": "It’s the number of fans playing right now, you included (active in the last five minutes). It’s only a number: nobody sees who is online, except your friends if you don’t hide. On your own, the badge doesn’t show.",
+ "Que veut dire « 12 EN LIGNE » sur l’accueil ?": "What does “12 ONLINE” on the home screen mean?"
 }
