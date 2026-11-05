@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Tenue Spatiale (PASS 3) déclarée** (PR #333, 5 novembre 2026, demande de
+Gaël). Code seul, sans schéma. La tenue entre en base au redémarrage, NON
+publiée (pas encore d'images) ; le PASS 3 la porte (« PASS 3 · Spatiale »,
+titre « Commandant de bord »). Après la mise en ligne : « Redémarrer ».
+Quand ses images seront posées : la publier dans /admin › CATALOGUE.
+
+---
+
 **PACK des anciens PASS** (branche `claude/project-thread-dvdo5f`, 5 novembre
 2026, choix de Gaël). Code et textes seuls, sans schéma. Un PASS fini se vend
 sous le nom de sa tenue (« PACK Préhistorique » pour le PASS 1), au même prix,
