@@ -444,6 +444,54 @@
     return m;
   }
 
+  /* ## Poser une image d'état sur le sol de sa boîte, n'importe où
+
+     Le procédé de l'accueil (`caler`, index.html) et de la carte
+     (`poserAuSol`, cartes.js), pour toute page qui montre un Fanzzy en pied
+     dans une boîte (5 novembre 2026, Gaël : « en place partout ») : la
+     taille de son âge (`taille`), ses semelles au bas de la boîte et ses
+     jambes au milieu, mesurées sur l'image elle-même (`pieds`).
+
+     L'image doit être en `position:absolute` dans sa boîte. Tout est en
+     pourcentages — de la boîte pour la hauteur et le sol, de l'image pour le
+     recentrage —, la boîte peut donc changer de taille sans qu'on remesure.
+     Une image retournée (`scale:-1 1`, celui d'en face) recentre de l'autre
+     côté. Une image qui n'est pas un état mesuré (la carte plate d'un
+     Fanzzy pas encore redessiné) garde le cadrage de sa page.
+
+     `opt.part` : la part de la boîte que prend le personnage, un nombre ou
+     un objet par âge ; `TAILLE_AGE` par défaut. `opt.sol` : la hauteur du
+     sol au-dessus du bas de la boîte (une longueur CSS). */
+  const ETAT_RE = /\/img\/fanzzy\/([A-Z]+\d+)\/e(\d)\//;
+  const CALE = ['height', 'bottom', 'top', 'left', 'right', 'width', 'max-width', 'translate'];
+  function caler(img, opt = {}) {
+    if (!img) return;
+    /* Une image réutilisée (les deux calques d'une scène) n'écoute qu'une
+       fois ; chaque chargement relit les options du dernier appel. */
+    img.tbfCale = opt;
+    const faire = () => {
+      const opt = img.tbfCale ?? {};
+      const e = ETAT_RE.exec(img.currentSrc || img.src || '');
+      const part = typeof opt.part === 'number' ? opt.part : opt.part?.[e?.[2]];
+      const t = e ? taille(e[1], e[2], part) : null;
+      const m = t && img.naturalWidth > 0 ? pieds(img) : null;
+      if (!m) {
+        if (img.dataset.cale) { for (const k of CALE) img.style.removeProperty(k); delete img.dataset.cale; }
+        return;
+      }
+      const h = parseFloat(t.hauteur) / 100;
+      const miroir = String(getComputedStyle(img).scale ?? '').trim().startsWith('-');
+      const x = -m.decal * (img.naturalHeight / img.naturalWidth) * 100 * (miroir ? -1 : 1);
+      img.dataset.cale = '1';
+      Object.assign(img.style, { top: 'auto', right: 'auto', left: '50%', width: 'auto', maxWidth: 'none',
+        height: `${(h * 100).toFixed(2)}%`,
+        bottom: `calc(${opt.sol ?? '0px'} - ${(m.sous * h * 100).toFixed(2)}%)`,
+        translate: `calc(-50% + ${x.toFixed(2)}%) 0` });
+    };
+    if (img.complete && img.naturalWidth > 0) faire();
+    if (!img.tbfCaleEcoute) { img.tbfCaleEcoute = true; img.addEventListener('load', faire); }
+  }
+
   window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, REPLI, REPLI_ALPHA, secours,
-    charger, pret, resoudre, portrait, paupieres, precharger, possedes, taille, pieds };
+    charger, pret, resoudre, portrait, paupieres, precharger, possedes, taille, pieds, caler };
 })();

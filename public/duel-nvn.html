@@ -4072,6 +4072,8 @@ async function poserImageFz(f, etat) {
     try { derriere.src = repli; await derriere.decode(); } catch { return; }
   }
   if (jeton !== f.jeton) return;
+  /* À la taille de son âge, pieds au sol, comme à l'accueil (`caler`). */
+  window.TBF_ETATS?.caler?.(derriere);
   derriere.classList.add('on');
   calques[f.devant].classList.remove('on');
   f.devant = 1 - f.devant;
@@ -4735,7 +4737,7 @@ function vignetteFz(f, entre, couleur, rang = 0, heros = false, pass = null) {
   const attrs = (cadre ? ` data-pass-cadre="${cadre}"` : '') + (entree ? ' data-pass-entree' : '')
     + (pass ? ` data-pass="${Number(pass.saison) || ''}"` : '');
   return `<div class="fz-aff ${heros ? 'heros' : 'tbf-glisse'} ${entre ? 'entre' : ''}"${attrs} style="--ac:${couleur};--d:${rang * 160}ms;--i:${rang % 3};--src:url('${image ?? ''}')${pass?.couleur ? `;--pass:${esc(pass.couleur)}` : ''}">
-    ${image ? `<img alt="" ${heros ? 'decoding="async"' : 'loading="lazy"'} src="${image}">` : ''}
+    ${image ? `<img alt="" ${heros ? 'decoding="async"' : 'loading="lazy"'} onload="window.TBF_ETATS?.caler?.(this,{sol:'${heros ? '18px' : '0px'}'})" src="${image}">` : ''}
     ${cadre ? P.img(k.cadre, 'pass-cadre') : ''}
     ${entree ? P.img(k.entree, 'pass-entree') : ''}
     ${heros && image ? '<span class="eclat" aria-hidden="true"></span>' : ''}

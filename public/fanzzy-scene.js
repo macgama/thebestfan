@@ -279,6 +279,7 @@
         } catch { return lacher(jeton); }    // cet état n'est pas dessiné
       }
       if (jeton !== demande) return false;   // une autre pose est passée devant
+      poserAuSol(derriere);
 
       poseActuelle = nom;
       derriere.classList.add('on');
@@ -287,6 +288,25 @@
       rejouer('change');
       rendreLaMain(tenir);
       return true;
+    }
+
+    /**
+     * **Les pieds de l'image affichée, comme à l'accueil** (`caler`,
+     * index.html ; 5 novembre 2026, Gaël : « en place partout »). `--sous`
+     * et `--decale` de la scène viennent du repos de base de l'âge ; une
+     * expression ou une tenue a ses pieds ailleurs dans le même cadre, et le
+     * personnage glissait de côté ou flottait. On mesure l'image décodée
+     * (`TBF_ETATS.pieds`) et on pose ses variables sur elle seule ; la taille
+     * reste celle de l'âge.
+     */
+    function poserAuSol(img) {
+      for (const v of ['--sous', '--decale']) img.style.removeProperty(v);
+      const t = perso ? window.TBF_ETATS?.taille?.(perso.id, perso.evo, opts.taille?.[perso.evo]) : null;
+      const m = t ? window.TBF_ETATS?.pieds?.(img) : null;
+      if (!m) return;
+      const h = parseFloat(t.hauteur) / 100;
+      img.style.setProperty('--sous', `${(-m.sous * h * 100).toFixed(2)}%`);
+      img.style.setProperty('--decale', `${(-m.decal * h * 100).toFixed(2)}cqh`);
     }
 
     /**
