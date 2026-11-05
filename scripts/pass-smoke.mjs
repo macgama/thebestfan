@@ -91,8 +91,8 @@ check('Halloween n’est réservée à aucun PASS', tenueReservee('halloween', 1
 
 titre('La boutique et les réglages');
 const article = ARTICLE_PAR_ID.get('pass-saison');
-check('le PASS est à 7,99 €, 3 boosters', article?.prix === 799 && article?.livraison?.type === 'pass'
-  && article?.livraison?.packs === 3);
+check('le PASS est à 7,99 €, sans aucun booster (l’argent n’achète aucun tirage)', article?.prix === 799
+  && article?.livraison?.type === 'pass' && !article?.livraison?.packs);
 check('il ne se renouvelle pas', !article?.recurrence);
 check('les anciens abonnements ne sont plus en vente',
   ['abo-mensuel', 'abo-annuel'].every((id) => ARTICLE_PAR_ID.get(id)?.retire === true));
@@ -228,8 +228,8 @@ check('la saison 1 est en cours', saisonEnCours()?.numero === 1);
   await pool.query('UPDATE user_wallet SET scarves = 40500 WHERE user_id = ?', [A]);
   const r2 = await post('/api/abonnement/pass/echarpes');
   const b = await bourse(A);
-  check('avec 40 500 : PASS 1, 500 écharpes restent, 3 boosters', r2.s === 200
-    && JSON.stringify(r2.j.saisons) === '[1]' && Number(b.scarves) === 500 && Number(b.packs) === 3
+  check('avec 40 500 : PASS 1, 500 écharpes restent, aucun booster', r2.s === 200
+    && JSON.stringify(r2.j.saisons) === '[1]' && Number(b.scarves) === 500 && Number(b.packs) === 0
     || console.log('       ', r2, b));
   check('il est actif', (await abonnement.estAbonne(A)) === true);
   await pool.query('UPDATE user_wallet SET scarves = 90000 WHERE user_id = ?', [A]);
@@ -424,8 +424,8 @@ titre('Les anciens PASS : en boutique');
   moi = C;
   const r = await postJ('/api/abonnement/pass/echarpes', { saison: 1 });
   const b = await bourse(C);
-  check('en écharpes, au même prix : le PASS 1 et ses 3 boosters', r.s === 200
-    && JSON.stringify(r.j.saisons) === '[1]' && Number(b.scarves) === 50000 && Number(b.packs) === 3
+  check('en écharpes, au même prix : le PASS 1, sans booster', r.s === 200
+    && JSON.stringify(r.j.saisons) === '[1]' && Number(b.scarves) === 50000 && Number(b.packs) === 0
     || console.log('       ', r, b));
   const [[ligne]] = await pool.query('SELECT source FROM user_pass WHERE user_id = ? AND saison = 1', [C]);
   check('la ligne est marquée tardive', ligne?.source === 'echarpes-tard');

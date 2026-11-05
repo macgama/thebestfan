@@ -963,8 +963,7 @@ const evenement = (sessionId) => ({
   check('un ancien PASS payé livre sa saison, marquée tardive', r.status === 200
     && ligne?.saison === 1 && ligne?.source === 'stripe-tard' && cmd?.etat === 'livre'
     || console.log('       ', ligne, cmd));
-  check('avec les boosters du PASS', Number(w1.packs) - Number(w0.packs)
-    === ARTICLE_PAR_ID.get('pass-saison').livraison.packs);
+  check('sans aucun booster : l’argent n’achète aucun tirage', Number(w1.packs) === Number(w0.packs));
   await poster(evenement('cs_ancien'));
   const [[w2]] = await pool.query('SELECT packs FROM user_wallet WHERE user_id = ?', [U]);
   check('rejoué : rien de plus', Number(w2.packs) === Number(w1.packs));
