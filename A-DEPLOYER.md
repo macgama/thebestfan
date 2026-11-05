@@ -1,5 +1,12 @@
 # À déposer sur Infomaniak
 
+**Pastille « N EN LIGNE » sur l'accueil** (PR #343, 5 novembre 2026, demande
+de Gaël). Code et textes seuls, sans schéma. Sous l'avatar du hub, le nombre de
+supporters actifs dans les 5 dernières minutes (cachée quand on est seul).
+Aide, comment-jouer et 4 langues à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Vestiaire du duel : JOUER CONTRE DES BOTS et ATTENDRE EN NAVIGUANT**
 (branche `claude/project-thread-ttms6p`, 5 novembre 2026, demande de Gaël).
 Code seul (serveur du duel et page), sans schéma. Le premier lance tout de
