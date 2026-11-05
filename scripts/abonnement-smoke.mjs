@@ -190,8 +190,8 @@ check('le retirer le retire vraiment', (await abonnement.estAbonne(LIBRE)) === f
     || (console.log('        elles rendent :', JSON.stringify(f)), false));
   check('et un identifiant que la boutique sait commander',
     f.every((x) => ARTICLE_PAR_ID.has(x.id) && !ARTICLE_PAR_ID.get(x.id).retire));
-  check('et le nombre de boosters que dit le catalogue (3)',
-    f.every((x) => x.packs === (ARTICLE_PAR_ID.get(x.id)?.livraison?.packs ?? 0) && x.packs === 3));
+  check('et aucun booster : l’argent n’achète aucun tirage (Gaël, 5 novembre 2026)',
+    f.every((x) => x.packs === (ARTICLE_PAR_ID.get(x.id)?.livraison?.packs ?? 0) && x.packs === 0));
   check('l’abonnement mensuel et l’annuel ne sont plus en vente',
     ARTICLE_PAR_ID.get('abo-mensuel')?.retire === true && ARTICLE_PAR_ID.get('abo-annuel')?.retire === true);
 }
