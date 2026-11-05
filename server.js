@@ -343,6 +343,12 @@ if (process.env.DATABASE_URL) {
       if (req.user) { presence.noter(req.user.id); frequentation.noter(req.user.id); }
       next();
     });
+    /* Combien de supporters sont en ligne, pour la pastille de l'accueil :
+       un total des cinq dernières minutes, jamais un nom. */
+    app.get('/api/en-ligne', auth.requireAuth, (_req, res) => {
+      res.set('Cache-Control', 'no-store');
+      res.json({ enLigne: frequentation.compter().maintenant });
+    });
 
     /* ---- l'écusson du jeu (choix de Gaël du 5 novembre 2026)
 
