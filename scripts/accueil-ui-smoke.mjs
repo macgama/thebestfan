@@ -3932,6 +3932,33 @@ check('aucune erreur de script pendant ces contrôles du hub', erreurs.length ==
   await new Promise((r) => setTimeout(r, 350));
   v = await lire();
 
+  /* **Le doigt glisse d'un âge à l'autre** (Gaël, 5 novembre 2026 : « sur
+     mobile, pouvoir swiper entre les 3 images »). Vers la gauche l'âge
+     d'après, vers la droite celui d'avant ; un glissé ne fait pas sauter. */
+  const glisser = (dx) => page.evaluate((dx) => {
+    const s = document.getElementById('scene');
+    const r = s.getBoundingClientRect();
+    const x = r.left + r.width / 2; const y = r.top + r.height / 2;
+    const ev = (type, cx) => s.dispatchEvent(new PointerEvent(type, { bubbles: true,
+      pointerType: 'touch', pointerId: 7, isPrimary: true, clientX: cx, clientY: y }));
+    ev('pointerdown', x - dx / 2); ev('pointerup', x + dx / 2);
+  }, dx);
+  await glisser(-120);
+  await new Promise((r) => setTimeout(r, 350));
+  const g1 = await lire();
+  check('glisser vers la gauche montre l’âge d’après', /TR32B/.test(g1.src)
+    || (console.log('        elle montre :', g1.src), false));
+  await glisser(120);
+  await new Promise((r) => setTimeout(r, 350));
+  const g2 = await lire();
+  check('et vers la droite, l’âge d’avant', /TR32\./.test(g2.src)
+    || (console.log('        elle montre :', g2.src), false));
+  await glisser(120);
+  await new Promise((r) => setTimeout(r, 350));
+  check('au premier âge, glisser vers la droite ne change rien',
+    /TR32\./.test((await lire()).src));
+  v = await lire();
+
   /* **Rien n'a été écrit.** C'est la moitié qui compte : le défilé regarde. */
   const avantChoix = (await pool.query(
     'SELECT active_evo e FROM user_wallet WHERE user_id = ?', [U]))[0][0].e;
