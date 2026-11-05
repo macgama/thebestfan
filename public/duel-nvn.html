@@ -162,6 +162,19 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 /* **Le match choisi et ce qui se déplie sous lui**, dans un même bloc : c'est
    le bloc auquel la rangée d'entrée reste collée (voir `.entree`). */
 .match-choisi{display:flex;flex-direction:column}
+/* **Le cadre du match choisi** (choix de Gaël, 5 novembre 2026 : « toujours
+   difficile de voir le match sélectionné et les autres »). Sur les quatre
+   maquettes, il a gardé la page telle quelle et pris le cadre de « La coche » :
+   un trait flare de trois pixels autour du bloc entier — l'affiche, le camp
+   et ENTRER EN FILE —, l'ombre dure du jeu dessous, et un panneau sombre qui
+   le détache du noir de la page. Les tickets kraft restent hors du cadre :
+   ce qui est dedans est choisi, ce qui est dehors est à choisir. Le haut garde
+   la place du sticker CLASSÉ, qui dépasse de l'affiche. */
+#prepa .match-choisi{margin:8px 3px 6px;padding:14px 10px 6px;border-radius:8px;
+  background:var(--panneau);box-shadow:0 0 0 3px var(--flare),0 6px 0 3px #000}
+#prepa .match-choisi>.mt.tbf-affiche{margin-top:0}
+#prepa .match-choisi .entree[data-colle]{margin-inline:-10px;padding-inline:10px;
+  background:linear-gradient(180deg,rgba(12,17,24,0),rgba(12,17,24,.96) 8px)}
 /* Quand la page amène le match choisi sous les yeux (`amenerLeMatch`), elle
    le pose sous la flèche et le menu flottants, jamais dessous : quatorze
    pixels sous l'encoche, quarante-quatre de bouton, douze d'air. */

@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Duel de tribunes : cadre autour du match choisi** (branche
+`claude/project-thread-0grr8y`, 5 novembre 2026, choix de Gaël sur quatre
+maquettes). Code seul (CSS), sans schéma. Le match choisi, son camp et ENTRER
+EN FILE sont entourés d'un cadre rouge ; les autres matchs restent dehors.
+Rien à redémarrer pour une page seule, mais « Redémarrer » ne fait pas de mal.
+
+---
+
 **Joueurs connectés dans /admin › APERÇU** (branche `claude/project-thread-ge9o9j`,
 5 novembre 2026, demande de Gaël). Code seul, sans schéma. Trois nombres : en
 ligne (5 dernières minutes), dernière heure, dernières 24 h. Comptés en mémoire
