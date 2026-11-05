@@ -346,6 +346,141 @@ export const STADES = [
     mods: { pushMult: 1.3, holdBonus: 1.2, breathBonus: 0.85, tempoWindow: 0.82 },
     effet: 'Un dernier soir : tout le monde pousse et tient comme jamais, et plus personne ne souffle.',
   },
+
+  /* ============================================ LES PHÉNOMÈNES MÉTÉO (5)
+
+     Cinq lieux pour la série MT, celle du PASS 2 (demande de Gaël du
+     5 novembre 2026 : cinq stades par série). Le préfixe `mt-` les range
+     avec la série, comme ses pièces d'équipement. La neige, le vent de mer,
+     le crachin, la canicule et le givre ont déjà leur lieu : ceux-ci prennent
+     le reste du ciel — la giboulée, le brouillard, la grêle, l'orage et
+     l'arc-en-ciel. La pelouse reste verte et les tribunes dans l'ombre,
+     comme partout.
+
+     Fermés (`publie: false`) jusqu'au PASS 2 ; chacun ouvre une porte et en
+     ferme une, pour les deux tribunes à la fois.                           */
+  {
+    id: 'mt-giboulee',
+    nom: 'La Giboulée',
+    rar: 'commune',
+    publie: false,
+    texte: 'Soleil, averse, soleil. Le virage ouvre et ferme ses capuches toutes les cinq minutes.',
+    /* Le temps change sans arrêt : on reprend son souffle aux éclaircies,
+       mais personne ne tient un rythme d'un bout à l'autre. */
+    mods: { breathBonus: 1.12, tempoWindow: 0.9 },
+    effet: 'Les éclaircies rendent le souffle, mais le rythme change sans prévenir.',
+  },
+  {
+    id: 'mt-brouillard',
+    nom: 'Le Brouillard',
+    rar: 'rare',
+    publie: false,
+    texte: 'On ne voit plus le but d’en face. On devine le match au bruit de l’autre tribune.',
+    /* On ne voit plus l'autre camp : on se contre mal, faute de le lire,
+       et l'on chante pour soi, longtemps. */
+    mods: { parryBonus: 0.85, holdBonus: 1.15 },
+    effet: 'On ne voit plus l’autre tribune : on se contre mal, et les chants tenus portent loin.',
+  },
+  {
+    id: 'mt-grele',
+    nom: 'La Grêle',
+    rar: 'rare',
+    publie: false,
+    texte: 'Les grêlons rebondissent sur la pelouse et tambourinent sur les toits. On chante plus fort que le ciel.',
+    /* Le vacarme des grêlons : on martèle pour se faire entendre, et l'on
+       n'a plus le calme d'un geste parfait. */
+    mods: { mashBonus: 1.22, perfectBonus: 0.88 },
+    effet: 'Il faut couvrir le vacarme : le martelage gagne, les gestes parfaits rapportent moins.',
+  },
+  {
+    id: 'mt-orage',
+    nom: 'L’Orage',
+    rar: 'epique',
+    publie: false,
+    texte: 'Un éclair, et tout le stade compte jusqu’au tonnerre. Puis il repart, plus fort.',
+    /* L'électricité dans l'air : la ferveur monte d'un coup et la poussée
+       avec elle, mais ce qu'on dépense ne revient pas. */
+    mods: { ferveurBonus: 1.2, pushMult: 1.08, refundBonus: 0.8 },
+    effet: 'L’air est chargé : la ferveur et la poussée montent, et rien de ce qu’on dépense ne revient.',
+  },
+  {
+    id: 'mt-arc-en-ciel',
+    nom: 'L’Arc-en-Ciel',
+    rar: 'legendaire',
+    publie: false,
+    texte: 'La pluie s’arrête à la dernière minute et un arc-en-ciel tombe pile sur le rond central.',
+    /* Le moment que tout le monde regarde : on tient et on pousse comme
+       jamais, et l'on en oublie de compter. Le pendant météo de la Dernière
+       Terrace. */
+    mods: { pushMult: 1.25, holdBonus: 1.2, tempoWindow: 0.8, breathBonus: 0.9 },
+    effet: 'Tout le stade lève la tête : on pousse et on tient comme jamais, et plus personne ne compte.',
+  },
+
+  /* ================================================== LES KOPS (5)
+
+     Cinq lieux pour la série de Ligue 1, celle du PASS 2 (demande de Gaël du
+     5 novembre 2026). Des stades **français** sans être ceux d'un club :
+     aucun nom, aucun écusson, aucune couleur d'équipe — le petit stade du
+     Sud sous les platanes, le tifo géant en cartons, le stade au pied du
+     terril, la nuit de coupe chez l'amateur et le soir de derby.
+
+     Préfixe `fr-`, le code proposé pour la série (à changer avec lui si
+     Gaël en choisit un autre). Fermés jusqu'au PASS 2.                     */
+  {
+    id: 'fr-platanes',
+    nom: 'Les Platanes',
+    rar: 'commune',
+    publie: false,
+    texte: 'Un petit stade du Sud bordé de platanes. Les cigales chantent plus fort que la tribune.',
+    /* La chaleur douce d'un soir du Sud : on a le temps de reprendre son
+       souffle, et personne ne pousse vraiment. */
+    mods: { breathBonus: 1.15, pushMult: 0.92 },
+    effet: 'On reprend son souffle à l’ombre, mais personne ne pousse vraiment.',
+  },
+  {
+    id: 'fr-tifo',
+    nom: 'Le Tifo Géant',
+    rar: 'rare',
+    publie: false,
+    texte: 'Un carton sur chaque siège, et tout le virage les lève au même moment.',
+    /* Tout le monde ensemble au même signal : le geste juste rapporte
+       plus, et celui qui chante à côté du temps se fait vite entendre. */
+    mods: { perfectBonus: 1.15, tempoWindow: 0.9 },
+    effet: 'Tous au même signal : les gestes parfaits rapportent plus, mais le rythme se tient plus serré.',
+  },
+  {
+    id: 'fr-terril',
+    nom: 'Le Pied du Terril',
+    rar: 'rare',
+    publie: false,
+    texte: 'Derrière la tribune de briques, la colline noire de l’ancienne mine. Ici, on chante pour ceux d’avant.',
+    /* Une tribune qui ne lâche rien : les chants tenus portent loin, mais
+       elle chante lentement, sans se presser. */
+    mods: { holdBonus: 1.18, tempoInterval: 75 },
+    effet: 'Une tribune qui ne lâche rien : les chants tenus portent, et le rythme ralentit.',
+  },
+  {
+    id: 'fr-coupe',
+    nom: 'La Nuit de Coupe',
+    rar: 'epique',
+    publie: false,
+    texte: 'Le club du village reçoit un grand. Tribunes en tubes montées pour l’occasion, et tout le canton dedans.',
+    /* Le petit contre le grand : chaque carte revient vite et la ferveur
+       monte, mais les tribunes provisoires ne portent pas la poussée. */
+    mods: { refundBonus: 1.25, ferveurBonus: 1.1, pushMult: 0.88 },
+    effet: 'Tout le canton est là : le souffle revient et la ferveur monte, mais la poussée porte moins.',
+  },
+  {
+    id: 'fr-derby',
+    nom: 'Le Soir de Derby',
+    rar: 'legendaire',
+    publie: false,
+    texte: 'La ville est coupée en deux depuis une semaine. Ce soir, on saura qui a raison.',
+    /* Le match de l'année : tout le monde pousse et contre comme jamais, et
+       personne n'a plus le souffle ni la tête à compter. */
+    mods: { pushMult: 1.3, parryBonus: 1.2, breathBonus: 0.85, tempoWindow: 0.82 },
+    effet: 'Le match de l’année : on pousse et on se contre comme jamais, et plus personne ne souffle.',
+  },
 ];
 
 export const STADE_BY_ID = new Map(STADES.map((s) => [s.id, s]));
