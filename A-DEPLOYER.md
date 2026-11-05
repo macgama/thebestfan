@@ -1,5 +1,23 @@
 # À déposer sur Infomaniak
 
+**PASS sans boosters, TVA par Stripe Tax, écusson des clubs dans le jeu**
+(branche `claude/project-thread-iacy1r`, 5 novembre 2026, choix de Gaël).
+Construction seule, **sans schéma**.
+
+- Le PASS ne donne plus 3 boosters à l'achat : l'argent réel n'achète plus
+  aucun tirage.
+- Dans le jeu (Virage, duels, deck, KOP, classements du jeu, fiches,
+  profil, Mes équipes, carnet, bienvenue, boosters), les logos des clubs
+  sont remplacés par un écusson aux couleurs du club (`/api/ecusson/<id>.svg`).
+  Matchs du jour et télétexte gardent les logos officiels.
+- La caisse Stripe sait calculer la TVA de chaque pays, mais **reste éteinte**
+  tant que `STRIPE_TAX=1` n'est pas posé. Ne le poser qu'après l'inscription
+  au guichet OSS et l'activation de Stripe Tax dans le tableau de bord
+  Stripe (sinon Stripe refuse les paiements).
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Page /beta : le vrai groupe des testeurs** (branche
 `claude/project-thread-lg6ctd`, 4 novembre 2026). Construction seule, sans
 schéma. Le bouton « Rejoindre le groupe » mène à
