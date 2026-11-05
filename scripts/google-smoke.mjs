@@ -111,7 +111,7 @@ try {
     ligne?.fournisseur === 'google' && ligne.etat === 'livre' && ligne.google_jeton === JETON
     && ligne.google_commande === 'GPA.1234-5678' && ligne.user_id === U);
   const [{ packs }] = await q('SELECT packs FROM user_wallet WHERE user_id = ?', [U]);
-  check('les boosters du PASS sont crédités', packs > 0);
+  check('aucun booster n’est crédité : l’argent n’achète aucun tirage', Number(packs) === 0);
 
   /* Le joueur a maintenant le PASS : l'offre le dit. Le même jeton renvoyé
      (un double clic, un réseau qui rejoue) ne livre pas une seconde fois. */

@@ -112,7 +112,7 @@ tribunes nombreuses.
   tous, PASS ou non. Seul `tribune.duels_jour` (5) borne les duels qui
   rapportent des points à un club.
 - **PASS de saison** (7,99 €, une fois, ou 40 000 écharpes ; voir
-  `serveur/PASS.md`) : 3 boosters à l'achat ; pendant sa saison, réserve de 24,
+  `serveur/PASS.md`) : aucun booster à l'achat ; pendant sa saison, réserve de 24,
   1 booster toutes les 6 min, mémoire longue ; pour toujours, +1 club suivi et
   +1 KOP à créer par PASS, la tenue de la saison, son badge et son cadre. Il ne
   donne aucune écharpe : l'argent n'achète pas la monnaie des tirages.

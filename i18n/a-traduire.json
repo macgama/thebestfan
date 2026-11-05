@@ -88,6 +88,226 @@
    "es"
   ]
  },
+ "Deviens testeur de l’appli Android": {
+  "ou": [
+   "public/beta-android.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "APPLI ANDROID": {
+  "ou": [
+   "public/beta-android.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DEVIENS TESTEUR": {
+  "ou": [
+   "public/beta-android.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Teste l’appli Android — thebestfan": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Deviens testeur de l’appli Android de thebestfan : trois gestes, et tu joues depuis le Play Store.": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Teste l’appli Android avant tout le monde": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "L’appli <0>TheBestFan</0> arrive sur le Play Store. Avant de l’ouvrir à tous, Google demande qu’au moins 12 supporters la testent pendant 14 jours. Trois gestes, et tu en fais partie.": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Cette page s’ouvre sur ton téléphone Android : scanne le QR code plus bas, ou ouvre <0>thebestfan.online/beta</0> sur ton téléphone. Pas encore d’appli iPhone : sur iPhone, ajoute le site à l’écran d’accueil depuis Safari.": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Rejoins le groupe des testeurs": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Avec le compte Google de ton téléphone, ouvre le groupe et touche « Rejoindre le groupe ». Tu ne recevras aucun e-mail.": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "REJOINDRE LE GROUPE": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Accepte le test": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Toujours avec le même compte, touche « Devenir testeur ». Si Google dit que le test n’est pas encore disponible, réessaie un peu plus tard : il ouvre très bientôt.": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "DEVENIR TESTEUR": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Installe l’appli et garde-la 14 jours": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Installe TheBestFan depuis le Play Store, puis joue depuis l’appli. Ton compte reste le même : cartes, écharpes et Fanzzy t’y attendent.": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Garde l’appli installée au moins 14 jours : c’est ce que Google compte.": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "INSTALLER L’APPLI": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Scanne ce code avec ton téléphone Android pour ouvrir cette page dessus.": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Une question, un bug à signaler ? Écris à <0>info@thebestfan.online</0>. Merci de nous aider à lancer l’appli !": {
+  "ou": [
+   "public/beta.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "Google Play": {
   "ou": [
    "public/boutique.html"
@@ -1413,6 +1633,28 @@
   ]
  },
  "Oui : touche ESSAYER 10 s sur la page du PASS. Ton Fanzzy porte la tenue de la saison à ses trois âges, dans la grotte, avec le cadre de pierre, le titre et le pseudo en or. Chaque niveau de ta voie PASS gagné ensuite a sa petite fête à ton retour.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Y a-t-il une appli Android ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Elle arrive sur le Play Store. Avant de l’ouvrir à tous, Google demande qu’au moins douze joueurs la testent pendant quatorze jours : sur ton téléphone Android, ouvre thebestfan.online/beta et suis les trois gestes. Ton compte reste le même dans l’appli.": {
   "ou": [
    "src/shared/aide.js"
   ],

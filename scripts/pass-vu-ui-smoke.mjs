@@ -183,7 +183,7 @@ for (const [nom, niveau] of [['niveau 11', 11], ['niveau 10', 10]]) {
 
 /* ------------------------------------------------- donner envie */
 const OFFRE = { couvre: [{ numero: 1, nom: 'PASS 1 · Préhistorique', tenue: 'prehistorique', couleur: '#c9772e',
-  titre: 'Chasseur de mammouth' }], aAcheter: [1], article: { id: 'pass-saison', prixTexte: '7,99 €', packs: 3 },
+  titre: 'Chasseur de mammouth' }], aAcheter: [1], article: { id: 'pass-saison', prixTexte: '7,99 €', packs: 0 },
   echarpes: 40000, bientot: null };
 const VOIE = Array.from({ length: 12 }, (_, i) => ({ niveau: i + 1, nom: `Gain ${i + 1}`,
   gain: ['tenue', 'cadre_profil', 'stickers', 'tenue', 'fond_profil', 'cadre', 'tenue', 'entree', 'titre',

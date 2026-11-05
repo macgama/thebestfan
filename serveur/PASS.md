@@ -48,7 +48,7 @@ l'abonnement mensuel (3,99 €) et annuel (39,90 €), qui ne sont plus en vente
 
 | | quand | réglage |
 |---|---|---|
-| 3 boosters | à l'achat | catalogue |
+| aucun booster à l'achat (retirés le 5 novembre 2026 : l'argent n'achète aucun tirage) | — | catalogue |
 | réserve de 24 boosters, un toutes les 6 minutes | la saison achetée | `abo.pack_max`, `abo.pack_regen_min` |
 | tout le parcours et tous les souvenirs | la saison achetée | `abo.parcours_libre`, `abo.souvenirs_libres` (ce qu'on voit sans) |
 | +1 club suivi par PASS, cumulé | à vie | `pass.clubs_par_pass` |

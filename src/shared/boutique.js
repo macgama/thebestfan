@@ -94,16 +94,18 @@ export const CATALOGUE = [
      (`shared/pass.js`, `saisonsCouvertes`). Même prix partout : sur le site,
      et demain sur Android et iOS (commission des stores absorbée).
 
-     **Trois boosters avec le PASS**, déclarés ici comme ceux de l'ancien
-     abonnement et pour les mêmes raisons (voir plus bas) : attachés à un
-     achat qui ne s'achète pas deux fois pour la même saison, à la vue du
-     contrôle, et sans aucune monnaie achetable. Aucune écharpe : l'argent
-     n'achète jamais la monnaie des boosters. */
+     **Aucun booster avec le PASS** (choix de Gaël, 5 novembre 2026) : les
+     trois boosters donnés à l'achat ont été retirés. Un booster est un
+     tirage, et le jeu s'ouvre au monde entier : un tirage payé avec de
+     l'argent est traité comme un jeu de hasard dans certains pays (la
+     Belgique l'interdit) et oblige les stores à afficher les chances.
+     L'argent réel n'achète donc plus aucun tirage. Aucune écharpe non plus :
+     l'argent n'achète jamais la monnaie des boosters. */
   {
     id: 'pass-saison', rayon: 'abonnement', nom: 'PASS de saison',
     texte: 'Toute la saison, payé une fois. Ne se renouvelle pas tout seul.',
     prix: 799,
-    livraison: { type: 'pass', packs: 3 },
+    livraison: { type: 'pass' },
   },
 
   /* ---------------------------------------------------------- l'abonnement

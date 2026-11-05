@@ -534,7 +534,7 @@ const RUBRIQUES = [
         'Dès l’ouverture de sa saison. Pendant la BASE, le PASS 1 est marqué « Bientôt » : '
           + 'il ne s’achète qu’à partir du 1er décembre. D’ici là, tout le jeu reste ouvert, sans payer.'],
       ['Et le PASS, il donne un avantage ?',
-        () => 'Du confort et du style, jamais de la puissance : 3 boosters à l’achat, une '
+        () => 'Du confort et du style, jamais de la puissance : une '
           + `réserve de ${reglage('abo.pack_max')} boosters au lieu de ${reglage('pack.max')}, `
           + `qui se remplit toutes les ${reglage('abo.pack_regen_min')} minutes au lieu de `
           + `${reglage('pack.regen_min')}, tout ton parcours et tous tes souvenirs pendant la `

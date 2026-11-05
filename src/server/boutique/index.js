@@ -106,6 +106,23 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
   }
 
   const cle = () => process.env.STRIPE_SECRET_KEY || '';
+
+  /* **La TVA des pays étrangers, calculée par Stripe Tax** (choix de Gaël du
+     5 novembre 2026 : garder Stripe et déclarer la TVA de l'UE au guichet
+     OSS « non-Union »). Un vendeur hors de l'UE doit la TVA du pays de
+     l'acheteur dès le premier euro vendu à un particulier de l'UE.
+
+     Éteint tant que `STRIPE_TAX` ne vaut pas `1` : Stripe refuse une session
+     avec `automatic_tax` tant que Stripe Tax n'est pas activé et qu'aucune
+     inscription n'est posée dans son tableau de bord. Allumé, le prix reste
+     celui du catalogue, **TVA comprise** (`inclusive`) : le joueur paie
+     7,99 € partout, et la TVA de son pays est prise dedans. Le code fiscal
+     dit « service fourni par voie électronique ». */
+  const taxeStripe = () => (process.env.STRIPE_TAX === '1' ? {
+    'automatic_tax[enabled]': 'true',
+    'line_items[0][price_data][tax_behavior]': 'inclusive',
+    'line_items[0][price_data][product_data][tax_code]': 'txcd_10000000',
+  } : {});
   const secretHook = () => process.env.STRIPE_WEBHOOK_SECRET || '';
   /* L'adresse publique du site, pour les retours de Stripe. En développement
      elle vaut localhost ; en ligne, elle doit être écrite — une redirection
@@ -641,6 +658,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
         'metadata[user_id]': String(req.user.id),
         'metadata[article]': article.id,
         client_reference_id: String(req.user.id),
+        ...taxeStripe(),
       });
 
       await q(

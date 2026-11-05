@@ -40,6 +40,7 @@
     "signalement:smoke": "node scripts/signalement-smoke.mjs",
     "livraisons:smoke": "node scripts/livraisons-smoke.mjs",
     "android:smoke": "node scripts/android-smoke.mjs",
+    "ecusson:smoke": "node scripts/ecusson-smoke.mjs",
     "google:smoke": "node scripts/google-smoke.mjs",
     "beta:ui": "node scripts/beta-ui-smoke.mjs",
     "amis:ui": "node scripts/amis-ui-smoke.mjs",
