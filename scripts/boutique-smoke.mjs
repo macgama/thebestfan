@@ -210,6 +210,56 @@ const evenement = (sessionId) => ({
   check('et aucune commande n’est écrite', (await q('SELECT COUNT(*) AS n FROM achats'))[0].n === avant);
 }
 
+/* ------------------------------------------- la TVA par Stripe Tax (STRIPE_TAX) */
+{
+  /* Gaël, 5 novembre 2026 : Stripe calcule la TVA du pays de l'acheteur, que
+     Gaël déclare au guichet OSS. Éteint par défaut ; allumé, le prix du
+     catalogue reste TVA comprise. On intercepte l'appel à Stripe pour lire ce
+     que la session demande, sans rien envoyer. */
+  const ouverte = createBoutique({
+    mailer: facteur, pool, fanzzy,
+    requireAuth: (req, _res, next) => { req.user = { id: U }; next(); },
+    abonnement: { offre: async () => ({ couvre: [1], aAcheter: [1], deja: [] }) },
+  });
+  const app3 = express();
+  app3.use(express.json());
+  app3.use('/api/boutique', ouverte.router);
+  const h3 = createServer(app3).listen(0);
+  const vraiFetch = globalThis.fetch;
+  let corps = null;
+  globalThis.fetch = async (url, o) => {
+    if (String(url).startsWith('https://api.stripe.com/')) {
+      corps = new URLSearchParams(String(o?.body ?? ''));
+      return new Response(JSON.stringify({ id: `cs_tva_${Date.now()}_${Math.random()}`, url: 'https://checkout.stripe.com/x' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    return vraiFetch(url, o);
+  };
+  const commander = () => vraiFetch(`http://localhost:${h3.address().port}/api/boutique/commander`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ article: 'pass-saison' }),
+  });
+  const avantTaxe = process.env.STRIPE_TAX;
+  try {
+    delete process.env.STRIPE_TAX;
+    const r1 = await commander();
+    check('sans STRIPE_TAX, la session ne demande aucun calcul de TVA',
+      r1.status === 200 && corps && !corps.has('automatic_tax[enabled]') || console.log('       ', r1.status, corps && [...corps]));
+    corps = null;
+    process.env.STRIPE_TAX = '1';
+    const r2 = await commander();
+    check('avec STRIPE_TAX=1, Stripe calcule la TVA, prix TVA comprise',
+      r2.status === 200 && corps?.get('automatic_tax[enabled]') === 'true'
+      && corps.get('line_items[0][price_data][tax_behavior]') === 'inclusive'
+      && corps.get('line_items[0][price_data][unit_amount]') === String(ARTICLE_PAR_ID.get('pass-saison').prix)
+      || console.log('       ', r2.status, corps && [...corps]));
+  } finally {
+    globalThis.fetch = vraiFetch;
+    if (avantTaxe === undefined) delete process.env.STRIPE_TAX; else process.env.STRIPE_TAX = avantTaxe;
+    h3.close();
+  }
+}
+
 /* ------------------------------------------------------------- la signature */
 {
   await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
