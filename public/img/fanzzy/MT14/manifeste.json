@@ -1,6 +1,6 @@
 {
   "id": "MT14",
-  "rev": 1,
+  "rev": 2,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "0ec61df09f9b"
+          "sha": "669b67a6a1e1"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "ae957e50074e"
         }
       }
     },
@@ -28,7 +40,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "530119279b73"
+          "sha": "4b953496584e"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "8ed0708e9626"
         }
       }
     },
@@ -43,7 +67,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "6d3476063fb3"
+          "sha": "326f877240d3"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "d06b8da72029"
         }
       }
     }
