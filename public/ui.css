@@ -556,6 +556,12 @@
 .tbf-scene[data-evo="2"]{--taille-age:90%}
 .tbf-scene[data-evo] .tbf-pose{left:-50%;width:200%;pointer-events:none;top:auto;
   bottom:var(--sous,0);height:var(--taille,var(--taille-age,100%));translate:var(--decale,0) 0}
+/* Un âge mesuré garde la largeur de son image (5 novembre 2026) : agrandi à
+   la taille de l'âge, un cadre de 560 × 960 dépassait encore les deux
+   largeurs de la scène, et `contain` le réduisait (le Maître des Quatre
+   Coins, âge 3, plus petit qu'à l'âge 2). */
+.tbf-scene[data-evo][style*="--taille:"] .tbf-pose{left:50%;width:auto;max-width:none;
+  translate:calc(-50% + var(--decale,0px)) 0}
 /* `--decale` recentre le corps quand un objet étire le dessin d'un côté ; il
    se compte en hauteurs de la scène (`cqh`). */
 .tbf-scene[data-evo]{container-type:size}

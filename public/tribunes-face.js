@@ -113,6 +113,8 @@ window.TBF_FACE = (() => {
       }
       const img = fig.querySelector('img');
       if (src && img.getAttribute('src') !== src) img.src = src;
+      /* À la taille de son âge, pieds au sol (`TBF_ETATS.caler`). */
+      window.TBF_ETATS?.caler?.(img);
       /* Le treizième, c'est soi hors des douze : au fond, à côté. */
       const p = i < 12 ? placeDe(i) : { ...placeDe(9), x: placeDe(9).x - 12 };
       fig.style.setProperty('--x', `${p.x}%`);
