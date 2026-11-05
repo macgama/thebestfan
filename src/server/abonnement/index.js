@@ -4,7 +4,7 @@ import { CATALOGUE, enEuros } from '../../shared/boutique.js';
 import { carnetDe } from '../../shared/saison.js';
 import {
   passAvecTenue, passDe, VOIE_PASS, niveauVoieDe, etoilesDe, seuilsVoie, ageTenue, saisonsCouvertes,
-  tenueReservee, estTardif, SUFFIXE_TARD, anciensPassEnVente, voieSelonAchat,
+  tenueReservee, estTardif, SUFFIXE_TARD, anciensPassEnVente, voieSelonAchat, nomPack,
 } from '../../shared/pass.js';
 import { saisonEnCours, toutesLesSaisons } from '../fanzzy/saisons.js';
 
@@ -270,13 +270,14 @@ export function createAbonnement({ pool, requireAuth }) {
 
   /**
    * Les anciens PASS que ce joueur peut prendre aujourd'hui :
-   * `[{ ...passDe(n), venteLe }]`. Le 1er du deuxième mois après la fin de
-   * leur saison, au même prix qu'à l'origine (`venteAncienPassLe`).
+   * `[{ ...passDe(n), pack, venteLe }]`. Le 1er du mois qui suit la fin de
+   * leur saison, au même prix qu'à l'origine (`venteAncienPassLe`), sous le
+   * nom de leur PACK (`nomPack` : « PACK Préhistorique »).
    */
   async function anciensEnVente(userId) {
     const deja = await saisonsDuPass(userId);
     return anciensPassEnVente(toutes(), aujourdHui(), deja)
-      .map((a) => ({ ...passDe(a.numero), venteLe: a.venteLe }));
+      .map((a) => ({ ...passDe(a.numero), pack: nomPack(a.numero), venteLe: a.venteLe }));
   }
 
   /** Un ancien abonnement (mensuel, annuel, offert) encore actif. */
@@ -403,6 +404,8 @@ export function createAbonnement({ pool, requireAuth }) {
       /* `seuils` : les paliers du carnet ; `seuilsVoie` : ceux des douze
          niveaux, tirés du carnet (`seuilsVoie`, shared/pass.js). */
       out.push({ ...v, tenue: passDe(n).tenue, ageTenue: ageTenue(v.niveau),
+        /* Pris après sa saison : c'est son PACK (Gaël, 5 novembre 2026). */
+        pack: tardif ? nomPack(n) : null,
         tampons, points, seuils, seuilsVoie: seuilsVoie(seuils),
         saisonId: s?.id ?? null, lancee: Boolean(s?.lancee),
         close: saisonPassee(n) });

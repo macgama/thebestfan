@@ -55,6 +55,8 @@
  * traverse toute la chaîne, et personne n'a à diviser par cent quelque part.
  */
 
+import { nomPack } from './pass.js';
+
 /**
  * Le nom de la monnaie, écrit une fois.
  *
@@ -204,7 +206,7 @@ export function articleCommande(id) {
   const base = ARTICLE_PAR_ID.get('pass-saison');
   if (!m || !base) return null;
   const saison = Number(m[1]);
-  return { ...base, id: brut, nom: `PASS ${saison}`, base: base.id,
+  return { ...base, id: brut, nom: nomPack(saison), base: base.id,
     livraison: { ...base.livraison, saison, tardif: true } };
 }
 

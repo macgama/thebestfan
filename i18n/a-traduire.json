@@ -2305,6 +2305,174 @@
    "es"
   ]
  },
+ "La Reprise": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Les Terraces": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Premier League": {
+  "ou": [
+   "src/shared/saisons-prevues.js",
+   "src/server/football/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Die Kurve": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Super League suisse": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "FR": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Le Parcage": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ligue 1": {
+  "ou": [
+   "src/shared/saisons-prevues.js",
+   "src/server/football/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Spatiale": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "ES": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "La Grada": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Liga espagnole": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "AL": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Les Stehplätze": {
+  "ou": [
+   "src/shared/saisons-prevues.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Bundesliga": {
+  "ou": [
+   "src/shared/saisons-prevues.js",
+   "src/server/football/inventaire.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "Le Crachin": {
   "ou": [
    "src/shared/stades.js"
