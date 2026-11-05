@@ -1,6 +1,6 @@
 {
   "id": "MT28",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "68b05fcc0eb2"
+          "sha": "5fde1d8a7524"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "be068eefaa07"
         }
       }
     },
@@ -28,7 +40,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "7a447443a0d2"
+          "sha": "fd6f90fe7988"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "d4e1de620814"
         }
       }
     },
@@ -43,7 +67,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "556795670a62"
+          "sha": "f2803fc7672a"
         },
         "apocalyptique": {
           "etats": [
@@ -55,7 +79,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "d1a38e18df7a"
+          "sha": "795efa2834b0"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "c78e38331375"
         }
       }
     }
