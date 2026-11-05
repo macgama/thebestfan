@@ -457,6 +457,21 @@ export const ACTIONS = [
     texte: 'Gronde pendant 10 s — tout le monde l’entend — puis frappe à 120.',
     effet: { type: 'delayed_push', valeur: 120, delai: 10000 } },
 
+  /* La tenue des membres du PASS 2 est Apocalyptique : ses trois cartes
+     (demande de Gaël du 5 novembre 2026) sont pour tous, comme la Massue et
+     le Feu de camp du PASS 1. */
+  { id: 'a-mt-nitro', nom: 'Bidon de nitro', fam: 'pousse', rar: 'epique', cost: 40, cd: 24, publie: false,
+    texte: 'Pousse 66. Ton souffle revient presque à l’arrêt pendant 4 s.',
+    effet: { type: 'push', valeur: 66 }, revers: { type: 'breath_mult', valeur: 0.4, duree: 4000 } },
+
+  { id: 'a-mt-tempete-sable', nom: 'Tempête de sable', fam: 'entrave', rar: 'rare', cost: 26, cd: 26, publie: false,
+    texte: 'Pendant 7 s, le sable aveugle l’autre tribune : tempo plus étroit, gestes parfaits moins payés.',
+    effet: { type: 'mod_foe', mods: { tempoWindow: 0.82, perfectBonus: 0.85 }, duree: 7000 } },
+
+  { id: 'a-mt-tole', nom: 'Tôle soudée', fam: 'garde', rar: 'rare', cost: 30, cd: 24, publie: false,
+    texte: 'Absorbe la prochaine poussée adverse, jusqu’à 55.',
+    effet: { type: 'shield', valeur: 55 } },
+
   /* ------------------------------ PASS 3 · LES GALÈRES DE DÉPLACEMENT (a-gd-) */
   { id: 'a-gd-car', nom: 'Car de supporters', fam: 'collectif', rar: 'epique', cost: 36, cd: 32, publie: false,
     texte: '22 de poussée par coéquipier qui chante dans les 6 s.',

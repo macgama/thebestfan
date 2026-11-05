@@ -416,7 +416,7 @@ export const STADES = [
     effet: 'Tout le stade lève la tête : on pousse et on tient comme jamais, et plus personne ne compte.',
   },
 
-  /* ================================================== LES KOPS (5)
+  /* ================================================== LE PARCAGE (5)
 
      Cinq lieux pour la série de Ligue 1, celle du PASS 2 (demande de Gaël du
      5 novembre 2026). Des stades **français** sans être ceux d'un club :
@@ -424,8 +424,8 @@ export const STADES = [
      Sud sous les platanes, le tifo géant en cartons, le stade au pied du
      terril, la nuit de coupe chez l'amateur et le soir de derby.
 
-     Préfixe `fr-`, le code proposé pour la série (à changer avec lui si
-     Gaël en choisit un autre). Fermés jusqu'au PASS 2.                     */
+     Préfixe `fr-`, le code de la série LE PARCAGE (nom choisi par Gaël le
+     5 novembre 2026). Fermés jusqu'au PASS 2.                     */
   {
     id: 'fr-platanes',
     nom: 'Les Platanes',
