@@ -188,10 +188,7 @@
      4,15. */
   const MIX = {
     tic: 2.13,                    // −20,0 · −29,5 · 0,03 s
-    'fz-tambour': 0.245,
-    'fz-he': 1.68,
-    'fz-clap': 1,
-    'fz-boing': 0.7,
+    'fanzzy-toucher': 0.245,      // −21,4 · −29,0 · 0,26 s
     carte: 1.55,                  // −20,9 · −29,0 · 0,07 s
     bache: 0.862,                 // −19,7 · −28,0 · 0,14 s
     sourd: 1.51,                  // −15,9 · −28,5 · 0,06 s
@@ -605,16 +602,11 @@
         ton(c, s, t, { freq: 784, duree: 0.09, type: 'sine', vol: 0.12 });
         ton(c, s, t, { freq: 1175, duree: 0.14, type: 'sine', vol: 0.12, delai: 0.07 });
       } },
-    /* ESSAIS — le toucher du Fanzzy de l'accueil (Gaël, 5 novembre 2026 :
-       le tic carré est énervant). Quatre propositions, une seule restera. */
-    'fz-tambour': { famille: 'interface', duree: 0.5,
+    /* Le toucher du Fanzzy de l'accueil (Gaël, 5 novembre 2026) : le tic
+       carré, rejoué à chaque toucher, agaçait. Un coup de tambour de
+       tribune frappé doucement, grave et rond, au niveau du tic. */
+    'fanzzy-toucher': { famille: 'interface', duree: 0.5,
       jouer: (c, s, t) => tambour(c, s, t, 0.35) },
-    'fz-he': { famille: 'interface', duree: 0.4,
-      jouer: (c, s, t) => eclat(c, s, t, 1) },
-    'fz-clap': { famille: 'interface', duree: 0.4,
-      jouer: (c, s, t) => { clap(c, s, t, 0.6); clap(c, s, t + 0.16, 0.6); } },
-    'fz-boing': { famille: 'interface', duree: 0.3,
-      jouer: (c, s, t) => ton(c, s, t, { freq: 260, vers: 620, duree: 0.18, type: 'sine', vol: 0.14 }) },
     /* La carte du booster qui se retourne (« audio.flip » de cartes.js) :
        un claquement sec qui tombe. */
     retournement: { famille: 'interface', duree: 0.2,
