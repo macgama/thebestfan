@@ -1,6 +1,6 @@
 {
   "id": "MT28",
-  "rev": 1,
+  "rev": 2,
   "evolutions": {
     "e1": {
       "skins": {
@@ -43,7 +43,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "da3dbc268191"
+          "sha": "556795670a62"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "d1a38e18df7a"
         }
       }
     }
