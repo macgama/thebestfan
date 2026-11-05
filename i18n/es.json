@@ -9209,5 +9209,9 @@
  "TARD": "TARDE",
  "GO !": "¡YA!",
  "UN SEUL COUP": "UN SOLO GOLPE",
- "IL EN FAUT DEUX": "HACEN FALTA DOS"
+ "IL EN FAUT DEUX": "HACEN FALTA DOS",
+ "Je joue sur ordinateur : comment faire les gestes à la souris ?": "Juego en ordenador: ¿cómo hago los gestos con el ratón?",
+ "Un clic vaut un toucher. Pour les gestes où l’on garde le doigt posé — la justesse, la mèche, la jauge —, il suffit de suivre avec la souris, sans cliquer ; garder le clic enfoncé marche aussi. Au chant des mini-jeux, les touches J, K et L (ou les flèches) frappent les trois tambours.": "Un clic vale lo que un toque. En los gestos en los que se deja el dedo apoyado (la afinación, la mecha, el indicador), basta con seguir con el ratón, sin hacer clic; mantener el clic también funciona. En el cántico de los minijuegos, las teclas J, K y L (o las flechas) golpean los tres tambores.",
+ "Pourquoi y a-t-il de la musique pendant certains gestes ?": "¿Por qué hay música durante algunos gestos?",
+ "Les gestes à notes (les deux voix, les accents, la justesse) et le chant des mini-jeux ont leur musique, composée par le jeu sur la partition du geste : ses temps tombent sur les notes. Pendant le geste, des mots te disent aussi comment tu t’en sors (PARFAIT, BIEN, TÔT, TARD, RATÉ), et une note ratée continue sa route. Le son se coupe dans le menu, comme les autres.": "Los gestos de notas (las dos voces, los acentos, la afinación) y el cántico de los minijuegos tienen su propia música, compuesta por el juego sobre la partitura del gesto: sus tiempos caen sobre las notas. Durante el gesto, unas palabras te dicen también cómo vas (PERFECTO, BIEN, PRONTO, TARDE, FALLADO), y una nota fallada sigue su camino. El sonido se apaga en el menú, como lo demás."
 }
