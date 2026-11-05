@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Page Collection : vignettes des rayons** (branche `claude/project-thread-k2of25`,
+5 novembre 2026, capture de Gaël). Code seul, sans schéma. L'image ULTIMATE ne
+déborde plus de sa tuile ; ÉTATS, TENUES, ÉQUIPEMENT (et tout rayon sans
+nouveauté) montrent une pièce gagnée au lieu d'un vide. Après la mise en ligne :
+« Redémarrer ».
+
+---
+
 **Tenue Spatiale (PASS 3) déclarée** (PR #333, 5 novembre 2026, demande de
 Gaël). Code seul, sans schéma. La tenue entre en base au redémarrage, NON
 publiée (pas encore d'images) ; le PASS 3 la porte (« PASS 3 · Spatiale »,

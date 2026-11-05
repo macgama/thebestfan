@@ -595,13 +595,20 @@ const VUES = new Set(RAYONS.map((r) => r.vue));
 
 /**
  * La dernière pièce arrivée d'un rayon : la plus récente de ses nouveautés
- * (le serveur les range de la plus récente à la plus ancienne). Rien d'autre
- * ne dit ce qui est arrivé en dernier ; sans nouveauté, pas de vignette.
+ * (le serveur les range de la plus récente à la plus ancienne).
+ *
+ * **Sans nouveauté, une pièce qu'on a** (5 novembre 2026, Gaël, capture de
+ * la collection : ÉTATS, TENUES et ÉQUIPEMENT sans image à côté des autres,
+ * « petit souci d'affichage ») : une fois les nouveautés vues, le serveur
+ * les éteint, et le rayon restait nu. On montre alors la plus rare des
+ * pièces gagnées, ou un état, une tenue, une Ultimate d'un Fanzzy qu'on a.
+ * Un rayon où l'on n'a rien reste sans vignette.
  */
 function derniere(vue) {
   /* `toutes` : la dernière pièce arrivée le reste, même une fois vue. */
   const n = toutes((x) => deLaVue(vue, x))[0];
-  if (!n || !E.catalogue) return null;
+  if (!E.catalogue) return null;
+  if (!n) return unePiece(vue);
   const dessins = window.TBF_ETATS;
   if (n.sorte === 'fanzzy' || n.sorte === 'age') {
     const f = lignee(n.id)[(n.stade ?? stadeDe(n.id)) - 1] ?? BY_ID.get(n.id);
@@ -622,6 +629,42 @@ function derniere(vue) {
   if (n.sorte === 'stuff') return { src: window.TBF_STUFF?.adresse?.(n.id), rar: STUFFS?.get(n.id)?.rar };
   if (n.sorte === 'action') return { src: window.TBF_ACTION?.adresse?.(n.id), rar: ACTES?.get(n.id)?.rar };
   if (n.sorte === 'lieu') return { src: lieuSrc?.(n.id, true), rar: LIEUX?.get(n.id)?.rar };
+  return null;
+}
+
+const RANG_RAR = { legendaire: 3, epique: 2, rare: 1 };
+/** Une pièce gagnée du rayon, pour sa vignette quand rien n'est nouveau. */
+function unePiece(vue) {
+  const dessins = window.TBF_ETATS;
+  const persos = (E.B.parFanzzy ?? []).slice().sort((a, b) => entier(b.stade) - entier(a.stade));
+  if (vue === 'fanzzy') {
+    const p = persos[0];
+    const f = p && (lignee(p.id)[entier(p.stade) - 1] ?? BY_ID.get(p.id));
+    return f ? { src: buste(f.id), rar: f.rar } : null;
+  }
+  if (vue === 'etats') {
+    const p = persos.find((x) => x.unEtat?.etat);
+    return p ? { src: dessins?.resoudre?.(p.id, { evo: p.unEtat.age, etat: p.unEtat.etat })?.src ?? buste(p.id) } : null;
+  }
+  if (vue === 'tenues') {
+    const p = persos.find((x) => x.uneTenue?.skin);
+    return p ? { src: dessins?.resoudre?.(p.id, { evo: p.uneTenue.age, skin: p.uneTenue.skin, etat: 'neutre' })?.src
+      ?? buste(p.id), rar: TENUES?.get(p.uneTenue.skin)?.rar } : null;
+  }
+  if (vue === 'ultimes') {
+    const p = persos.find((x) => x.ultimes?.length);
+    if (!p) return null;
+    const s = Math.max(...p.ultimes.map(Number));
+    return { src: window.TBF_ULTIME?.image?.(p.id, s)
+      ?? dessins?.resoudre?.(p.id, { evo: s, etat: 'pousse' })?.src ?? buste(p.id), rar: 'epique' };
+  }
+  const r = RAYONS.find((x) => x.vue === vue);
+  const a = (E.B.types?.[r?.type]?.items ?? []).filter((x) => x.possede)
+    .sort((x, y) => (RANG_RAR[y.rar] ?? 0) - (RANG_RAR[x.rar] ?? 0))[0];
+  if (!a) return null;
+  if (vue === 'equipement') return { src: window.TBF_STUFF?.adresse?.(a.id), rar: a.rar };
+  if (vue === 'actions') return { src: window.TBF_ACTION?.adresse?.(a.id), rar: a.rar };
+  if (vue === 'lieux') return { src: lieuSrc?.(a.id, true), rar: a.rar };
   return null;
 }
 

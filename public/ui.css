@@ -6017,6 +6017,10 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
 .tbf-objet{
   --taille:96px;--rar:var(--r-commune);
   position:relative;display:inline-grid;place-items:center;flex:none;box-sizing:border-box;
+  /* La case du dessin tient dans l'objet : sans ces pistes, une image en
+     hauteur (une Ultimate, 9:16) agrandissait la rangée de la grille, et ses
+     82 % sortaient par le bas du sticker (collection, 5 novembre 2026). */
+  grid-template:minmax(0,1fr)/minmax(0,1fr);
   width:var(--taille);height:var(--taille);border-radius:calc(var(--taille) * .12);
   background:
     linear-gradient(rgba(242,238,228,.45),rgba(242,238,228,.45)),
@@ -8121,6 +8125,10 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
 .tbf-rayon-nom{grid-area:nom;display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%;
   font-weight:700;font-size:16px;line-height:1.1;overflow-wrap:anywhere}
 .tbf-rayon-nom>small{font-weight:600;font-size:12px;letter-spacing:.05em;font-variant-numeric:tabular-nums}
+/* L'Ultimate est une image en hauteur (9:16) : elle remplit son sticker,
+   cadrée sur le Fanzzy, au lieu d'y flotter en lamelle. */
+.tbf-rayon[data-vue=ultimes]>.tbf-objet{overflow:hidden}
+.tbf-rayon[data-vue=ultimes]>.tbf-objet>img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;filter:none}
 .tbf-rayons>.tbf-rayon:last-child:nth-child(odd){grid-template-columns:auto minmax(0,1fr) auto;
   grid-template-areas:"cercle nom objet";min-height:80px}
 .tbf-plaque.tbf-rayon[data-etat=nouveau]::after{--pf:var(--craie);--pl:var(--encre);--pr:-4deg}
