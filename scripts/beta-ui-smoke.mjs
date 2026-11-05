@@ -61,7 +61,12 @@ try {
   await p.close();
 
   p = await ouvrir('/', IPHONE);
-  check('sur iPhone, pas de plaque', !(await plaqueDe(p)));
+  const vueIphone = await plaqueDe(p);
+  const texteIphone = vueIphone ? await p.$eval('#betaPlaque', (a) => a.textContent.replace(/\s+/g, ' ')) : '';
+  check('sur iPhone (site web), la plaque annonce « BIENTÔT SUR GOOGLE PLAY » et mène à /beta',
+    vueIphone && /BIENTÔT SUR GOOGLE PLAY/.test(texteIphone)
+    && (await p.$eval('#betaPlaque', (a) => a.getAttribute('href'))) === '/beta');
+  if (PHOTOS && vueIphone) await p.screenshot({ path: path.join(PHOTOS, 'accueil-iphone.png') });
   await p.close();
 
   /* Chrome n'envoie pas un référent `android-app://` depuis Puppeteer : on le
@@ -93,8 +98,17 @@ try {
   check('après une visite de /beta, la plaque se tait', !(await plaqueDe(p)));
   await p.close();
 
-  const bureau = await nav.newPage();
+  /* Un contexte neuf : la visite de /beta plus haut a été notée dans ce navigateur. */
+  const bureau = await (await nav.createBrowserContext()).newPage();
   await bureau.setViewport({ width: 1366, height: 900 });
+  await bureau.goto(`${base}/`, { waitUntil: 'networkidle2' });
+  const surBureau = await plaqueDe(bureau);
+  const bureauDedans = surBureau && await bureau.$eval('#betaPlaque', (a) => {
+    const r = a.getBoundingClientRect();
+    return r.width > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0;
+  });
+  check('sur un ordinateur, la plaque se pose aussi sur l’accueil et tient dans l’écran', bureauDedans);
+  if (PHOTOS && surBureau) await bureau.screenshot({ path: path.join(PHOTOS, 'accueil-ordinateur.png') });
   await bureau.goto(`${base}/beta`, { waitUntil: 'networkidle2' });
   const qr = await bureau.$eval('.qr img', (img) => img.complete && img.naturalWidth > 0
     && getComputedStyle(img.closest('.qr')).display !== 'none');

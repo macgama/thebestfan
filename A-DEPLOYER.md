@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Pub de l'appli Android sur tout le site web** (branche
+`claude/project-thread-lg6ctd`, 5 novembre 2026, demande de Gaël).
+Construction seule, sans schéma.
+
+- La plaque de l'accueil se montre maintenant à tous les visiteurs du site
+  (jamais dans l'appli) : sur Android « APPLI ANDROID · DEVIENS TESTEUR »,
+  ailleurs « APPLI ANDROID · BIENTÔT SUR GOOGLE PLAY ». Elle mène à /beta.
+- /beta dit que l'appli est en test, qu'on cherche des bêta-testeurs et
+  qu'elle arrive bientôt sur le Google Play Store.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **PASS sans boosters, TVA par Stripe Tax, écusson des clubs dans le jeu**
 (branche `claude/project-thread-iacy1r`, 5 novembre 2026, choix de Gaël).
 Construction seule, **sans schéma**.
