@@ -2873,8 +2873,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * La même règle que le booster — un âge **atteint** d'un Fanzzy possédé —,
    * plus deux : pas de légendaire (sa carte ne sort qu'en booster, comme les
    * pièces légendaires), et seulement là où l'image de la grande scène est
-   * faite. Celles qu'on a déjà partent aussi, marquées : la vitrine dit ce
-   * qu'on a, comme l'étal de l'équipement.
+   * faite. Celles qu'on a déjà ne partent plus (demande de Gaël du
+   * 5 novembre 2026) : la liste s'allonge à chaque série et chaque tenue,
+   * l'étal ne montre que ce qui reste à acheter ; l'album dit ce qu'on a.
    */
   async function ultimesEnVente(userId) {
     const [ont, pris] = await Promise.all([
@@ -2889,10 +2890,10 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       const atteint = Math.min(3, Math.max(1, Number(r.stage) || 1));
       for (let s = 1; s <= atteint; s++) {
         const image = ultimeEnVente(id, s);
-        if (!image) continue;
+        if (!image || deja.has(`${id}:${s}`)) continue;
         const age = auStade(id, s) ?? parIdentifiant(id);
         liste.push({ fanzzy: id, stade: s, nom: age?.nom ?? id, cri: age?.cri?.label ?? '',
-          type: age?.type ?? null, image, possede: deja.has(`${id}:${s}`) });
+          type: age?.type ?? null, image });
       }
     }
     return liste;
