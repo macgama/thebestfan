@@ -1291,6 +1291,7 @@
     'HC42-e3': 'HC42-e3.906581cf.webp',
     'HC42-e3-prehistorique': 'HC42-e3-prehistorique.81ed26b8.webp',
     'HC43-e1': 'HC43-e1.d645e887.webp',
+    'HC43-e1-prehistorique': 'HC43-e1-prehistorique.2a7b7724.webp',
     'HC43-e2': 'HC43-e2.4167236b.webp',
     'HC43-e2-prehistorique': 'HC43-e2-prehistorique.e4d4b6a9.webp',
     'HC43-e3': 'HC43-e3.f68f1690.webp',
