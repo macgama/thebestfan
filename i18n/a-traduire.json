@@ -385,7 +385,7 @@
    "es"
   ]
  },
- "<0>Ton Fanzzy de l’accueil</0> est ton titulaire : choisis-le dans « Mes Fanzzy », et ouvre sa fiche pour le faire évoluer. Ses onglets ÂGES, ULTIMATE, EFFETS et LOOK montrent ses âges, son coup fatal, ce qu’il change en jeu, ses expressions et ses tenues. Sur l’accueil, il se tient au sol et ne montre que les expressions que tu as gagnées en booster : touche-le plusieurs fois de suite pour les voir.": {
+ "<0>Ton Fanzzy de l’accueil</0> est ton titulaire : choisis-le dans « Mes Fanzzy », et ouvre sa fiche pour le faire évoluer. Ses onglets ÂGES, ULTIMATE, EFFETS et LOOK montrent ses âges, son coup fatal, ce qu’il change en jeu, ses expressions et ses tenues. Sur l’accueil, il se tient au sol et ne montre que les expressions que tu as gagnées en booster : touche-le plusieurs fois de suite pour les voir. Glisse le doigt sur lui pour passer d’un âge à l’autre.": {
   "ou": [
    "public/comment-jouer.html"
   ],
@@ -1635,6 +1635,28 @@
   ]
  },
  "Sur l’accueil, il ne montre que les expressions que tu as gagnées en booster : la joie, la colère, le dépit, la poussée. Touche-le trois fois de suite et il exulte, six fois et il proteste, s’il a l’expression. Sans elle, il garde son air de repos et fait seulement son petit saut. Il se tient toujours au même endroit, les pieds au sol au milieu de l’écran.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Comment voir les autres âges de mon Fanzzy sur l’accueil ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Glisse le doigt sur lui, vers la gauche pour l’âge d’après, vers la droite pour celui d’avant, ou touche les flèches sous son nom. Tu ne vois que les âges que tu as payés. Regarder ne change rien : c’est le bouton « C’est lui, partout » qui le montre ainsi aux autres.": {
   "ou": [
    "src/shared/aide.js"
   ],

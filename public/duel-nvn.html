@@ -1949,8 +1949,20 @@ function rendreSalle(p) {
   if (S.amisOuverts) corps.push(listeAmisDuel());
   /* **Le duel reste ouvert quand on part** : la place attend, les autres la
      voient, et le joueur est rappelé quand quelqu'un arrive en face. */
-  corps.push('<p class="ailleurs">Tu peux aller voir ailleurs : ton duel reste ouvert, '
-    + 'et on te rappelle dès que quelqu’un arrive.</p>');
+  /* **Deux portes de plus** (5 novembre 2026, Gaël) : jouer tout de suite
+     contre des bots sans attendre la fin du rebours — un entraînement, qui ne
+     compte pas au classement — ou aller se promener dans le jeu en gardant sa
+     place. La phrase disait qu'on pouvait partir ; aucun bouton ne le
+     montrait, et le seul visible, QUITTER LA FILE, rendait la place. */
+  corps.push('<div class="inviters">'
+    + '<button class="inviter tbf-plaque" data-ton="vert" id="contreBots">'
+    + 'JOUER CONTRE DES BOTS</button>'
+    + '<button class="inviter tbf-plaque" data-ton="bleu" id="ailleurs">'
+    + 'ATTENDRE EN NAVIGUANT</button></div>');
+  corps.push('<p class="ailleurs"><b>Jouer contre des bots</b> lance tout de suite un '
+    + 'entraînement : il ne compte pas au classement. <b>Attendre en naviguant</b> '
+    + 'garde ta place : ton duel reste ouvert, et on te rappelle dès que quelqu’un '
+    + 'arrive. <b>Quitter la file</b> rend ta place.</p>');
 
   voile('LE VESTIAIRE', `<div class="salle">${corps.join('')}</div>`,
     { texte: 'Quitter la file', action: quitterFile });
@@ -1958,6 +1970,13 @@ function rendreSalle(p) {
 
   if ($('inviter')) $('inviter').onclick = () => inviterAuDuel(p);
   $('inviterAmi').onclick = () => ouvrirAmisDuel();
+  $('contreBots').onclick = () => {
+    $('contreBots').disabled = true;
+    socket?.emit('nvn:entrainement');
+  };
+  /* Partir **sans** `nvn:leave_queue` : la socket qui se ferme laisse la
+     place absente, gardée et rappelée (`duel-rappel.js`). */
+  $('ailleurs').onclick = () => { location.href = '/'; };
   for (const b of document.querySelectorAll('[data-inviter-ami]')) {
     b.onclick = () => {
       socket?.emit('nvn:inviter', { ami: b.dataset.inviterAmi });

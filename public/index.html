@@ -516,6 +516,18 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    L'écart entre les compteurs vient de leur « + » : un petit sticker or qui
    chevauche le bord droit de neuf pixels. */
 .bourse{display:flex;align-items:center;gap:16px}
+/* Les supporters en ligne : une pastille sous l'avatar, hors du flux de la
+   bande — elle ne prend la place de rien. Le point vert respire doucement. */
+.haut .en-ligne{position:absolute;left:0;top:calc(100% + 7px);display:inline-flex;align-items:center;
+  gap:5px;padding:2px 8px 2px 6px;border-radius:999px;background:rgba(7,9,12,.62);
+  color:var(--craie,#f3efe6);font:700 10px/1.4 var(--banner,system-ui);letter-spacing:.06em;
+  text-transform:uppercase;white-space:nowrap;pointer-events:none}
+.haut .en-ligne[hidden]{display:none}
+.haut .en-ligne i{width:7px;height:7px;border-radius:50%;background:#3ddc6f;
+  box-shadow:0 0 0 0 rgba(61,220,111,.6);animation:en-ligne-souffle 2.4s ease-out infinite}
+@keyframes en-ligne-souffle{0%{box-shadow:0 0 0 0 rgba(61,220,111,.55)}
+  70%,100%{box-shadow:0 0 0 6px rgba(61,220,111,0)}}
+@media (prefers-reduced-motion:reduce){.haut .en-ligne i{animation:none}}
 
 /* Le bouton du menu. L'accueil ne charge pas la barre commune — ses deux rails
    la remplacent — mais il charge le **menu** commun : sans lui, tout ce qui n'a
@@ -1975,6 +1987,11 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
         <span class="tbf-anneau" id="anneau" style="--p:0%"><span class="tbf-avatar-buste"></span></span>
         <b class="tbf-sticker tbf-sticker--rond tbf-avatar-niv" id="nivPastille" hidden></b>
       </a>
+      <!-- Les supporters en ligne (demande de Gaël du 5 novembre 2026) : un
+           nombre, jamais un nom, posé sous l'avatar sans pousser le reste.
+           Caché tant qu'on est seul. -->
+      <span class="en-ligne" id="enLigne" hidden role="status"
+        ><i aria-hidden="true"></i><b id="enLigneN"></b> en ligne</span>
       <div class="bourse">
         <!-- Toucher sa monnaie mène à la boutique : c'est le geste que tout
              joueur essaie en premier, et il ne menait nulle part. La boutique
@@ -2238,6 +2255,33 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
    ===================================================================== */
 
 const $ = (id) => document.getElementById(id);
+
+/**
+ * Combien de supporters sont en ligne (demande de Gaël du 5 novembre 2026).
+ * Le serveur ne rend qu'un total, celui des cinq dernières minutes ; on le
+ * relit chaque minute, et seulement quand la page se voit. Seul, on ne montre
+ * rien : « 1 en ligne », c'est soi.
+ */
+function suivreEnLigne() {
+  const el = $('enLigne');
+  if (!el) return;
+  let minuterie = 0;
+  const lire = async () => {
+    clearTimeout(minuterie);
+    if (document.hidden) return;
+    try {
+      const r = await fetch('/api/en-ligne', { credentials: 'same-origin' });
+      const n = r.ok ? Number((await r.json()).enLigne) : 0;
+      if (Number.isFinite(n) && n >= 2) {
+        $('enLigneN').textContent = String(n);
+        el.hidden = false;
+      } else el.hidden = true;
+    } catch { /* hors réseau : on garde ce qu'on montrait */ }
+    minuterie = setTimeout(lire, 60_000);
+  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) lire(); });
+  lire();
+}
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
 
@@ -5802,6 +5846,7 @@ function feterNiveau(niveau) {
   // Une image de délai avant l'entrée : le hub vient de passer de `display:none`
   // à visible, et une animation lancée dans la même image ne se joue pas.
   requestAnimationFrame(entrer);
+  suivreEnLigne();
   /* L'initiale du pseudo, sur une pastille dorée, a laissé la place au buste
      du Fanzzy équipé (lot 2) : voir `poserAvatar`. Le pseudo se lit au profil,
      qui est à un doigt d'ici. */
