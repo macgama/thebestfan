@@ -26,6 +26,12 @@
       cadre: 'cadre-carte', cadre_anime: 'cadre-carte', entree: 'entree-rochers', titre: 'plaque-titre',
       aura: 'icone-aura', badge_or: 'badge-p1-or',
       autocollants: ['sticker-ouga', 'sticker-massue', 'sticker-os', 'sticker-feu'] },
+    /* PASS 2 · Apocalyptique (5 novembre 2026, mode gratuit). */
+    2: { badge: 'p2-badge', or: 'p2-badge-or', tenue: ['p2-icone-tenue-1', 'p2-icone-tenue-2', 'p2-icone-tenue-3'],
+      cadre_profil: 'p2-cadre-profil', stickers: 'p2-sticker-cle', fond_profil: 'p2-fond-desert',
+      cadre: 'p2-cadre-carte', cadre_anime: 'p2-cadre-carte', entree: 'p2-entree-portail', titre: 'p2-plaque-titre',
+      aura: 'p2-icone-aura', badge_or: 'p2-badge-or',
+      autocollants: ['p2-sticker-cle', 'p2-sticker-bidon', 'p2-sticker-pneu', 'p2-sticker-lunettes'] },
   };
   const ext = () => {
     const e = window.FZART?.IMG_EXT_ALPHA ?? window.TBF_ETATS?.EXT_ALPHA;
@@ -36,7 +42,7 @@
     if (!id) return '';
     return `/img/pass/${id}${ext()}`;
   }
-  const repli = (id) => `/img/pass/${id}${id === 'fond-grotte' ? '.jpg' : '.png'}`;
+  const repli = (id) => `/img/pass/${id}${/fond-/.test(id) ? '.jpg' : '.png'}`;
   /** Une `<img>` du kit qui retombe sur le PNG (ou le JPEG), et s'efface sans fichier. */
   function img(id, classe = '', alt = '') {
     if (!id) return '';

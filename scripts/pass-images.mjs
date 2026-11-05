@@ -47,7 +47,29 @@ const PIECES = [
   { id: 'cadre-carte', large: 512, vider: { x: 0.105, y: 0.075 } },
   { id: 'plaque-titre', large: 768, trous: false },
   { id: 'entree-rochers', large: 768 },
+
+  /* Le kit du PASS 2 · Apocalyptique (5 novembre 2026, mode gratuit) : mêmes
+     pièces, préfixe `p2-`. Le cadre de carte a été rendu centre vide : pas de
+     `vider`. Sources sur la branche orpheline `pass2-visuels`, dossier
+     `pass2/kit/` (les versions `-c` remplacent les ratés). */
+  { id: 'p2-badge', cote: 256 },
+  { id: 'p2-badge-or', cote: 256 },
+  { id: 'p2-sticker-cle', cote: 256 },
+  { id: 'p2-sticker-bidon', cote: 256 },
+  { id: 'p2-sticker-pneu', cote: 256 },
+  { id: 'p2-sticker-lunettes', cote: 256 },
+  { id: 'p2-icone-tenue-1', cote: 256 },
+  { id: 'p2-icone-tenue-2', cote: 256 },
+  { id: 'p2-icone-tenue-3', cote: 256 },
+  { id: 'p2-icone-aura', cote: 256, despill: true },
+  { id: 'p2-cadre-profil', cote: 512 },
+  { id: 'p2-cadre-carte', large: 512 },
+  { id: 'p2-plaque-titre', large: 768, despill: true },
+  { id: 'p2-entree-portail', large: 768 },
 ];
+
+/* Les fonds de profil : des images pleines, servies en 720 de large. */
+const FONDS = ['fond-grotte', 'p2-fond-desert'];
 
 if (!existsSync(SOURCE)) {
   console.error(`\n  ${SOURCE} n'existe pas. Voir l'en-tête du script.\n`);
@@ -98,14 +120,14 @@ for (const p of PIECES) {
   console.log(`  ${p.id}`);
 }
 
-/* Le fond de grotte : une image pleine, servie en 720 de large. */
-const grotte = path.join(SOURCE, 'fond-grotte.png');
-if (existsSync(grotte)) {
-  const g = await sharp(grotte).resize({ width: 720 }).toBuffer();
-  await sharp(g).avif({ quality: 60 }).toFile(path.join(CIBLE, 'fond-grotte.avif'));
-  await sharp(g).webp({ quality: 80 }).toFile(path.join(CIBLE, 'fond-grotte.webp'));
-  await sharp(g).jpeg({ quality: 82, mozjpeg: true }).toFile(path.join(CIBLE, 'fond-grotte.jpg'));
-  console.log('  fond-grotte');
+for (const fond of FONDS) {
+  const src = path.join(SOURCE, `${fond}.png`);
+  if (!existsSync(src)) continue;
+  const g = await sharp(src).resize({ width: 720 }).toBuffer();
+  await sharp(g).avif({ quality: 60 }).toFile(path.join(CIBLE, `${fond}.avif`));
+  await sharp(g).webp({ quality: 80 }).toFile(path.join(CIBLE, `${fond}.webp`));
+  await sharp(g).jpeg({ quality: 82, mozjpeg: true }).toFile(path.join(CIBLE, `${fond}.jpg`));
+  console.log(`  ${fond}`);
 }
 
 if (suspectes.length) console.log(`\nDétourage douteux — à regarder : ${suspectes.join(', ')}`);
