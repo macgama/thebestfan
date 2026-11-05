@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Fanzzy posés comme à l'accueil sur tous les écrans** (branche
+`claude/project-thread-ehaa0o`, 5 novembre 2026, demande de Gaël).
+Pages seules, sans schéma ni image.
+
+- Mon Fanzzy, Virage, boosters, profil, duel (affiche, arène, deux
+  tribunes), carnet et plein écran de la fiche : taille qui grandit avec
+  l'âge, pieds mesurés image par image, posés au sol et centrés.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Gestes plus vivants : notes ratées qui continuent, mots GO ! / PARFAIT / RATÉ, musique**
 (branche `claude/project-thread-jkmtmm`, 5 novembre 2026, demande et choix de Gaël).
 Pages seules, sans schéma ni image.
