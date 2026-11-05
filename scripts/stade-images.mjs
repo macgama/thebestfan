@@ -224,6 +224,64 @@ export const INVITES = {
     + 'grandstand with a criss-cross painted steel balcony front along its edge, '
     + 'a yellow demolition crane parked beyond one end, temporary fencing around '
     + 'the outside, the pitch green and lit',
+
+  /* ---------------------------------- les cinq de LES PHÉNOMÈNES MÉTÉO
+
+     Le temps se dit par le ciel, les reflets et l'air autour — jamais par une
+     pelouse grise ou blanche : `boiteDuTerrain` a besoin de son vert. */
+  'mt-giboulee': 'a football ground in a spring shower at dusk, half of the '
+    + 'pitch in a bright patch of low sunshine and the other half under a '
+    + 'passing curtain of rain, the pitch clearly green and glistening, '
+    + 'raindrops sparkling in the floodlight beams, wet dark roofs over both side stands',
+
+  'mt-brouillard': 'a football ground at night in thick fog, the bright green '
+    + 'pitch still clearly visible under the floodlights but soft white mist '
+    + 'drifting over both side stands and swallowing the far ends, floodlight '
+    + 'beams turned into glowing cones in the fog',
+
+  'mt-grele': 'a football ground at night in a sudden hailstorm, small white '
+    + 'hailstones scattered and bouncing on the bright green pitch, hail '
+    + 'streaks caught in the floodlight beams, white hail piling in the gutters '
+    + 'of the dark roofs over both side stands',
+
+  'mt-orage': 'a football ground at night under a violent thunderstorm, a '
+    + 'forked lightning bolt crossing the dark sky beyond one end, heavy storm '
+    + 'clouds lit from inside, the pitch bright green and wet under the '
+    + 'floodlights, rain streaks over the dark side stands',
+
+  'mt-arc-en-ciel': 'a football ground at the end of a rain shower in the '
+    + 'evening, the clouds breaking open, a vivid rainbow arching across the '
+    + 'sky above the stadium and seeming to land on the centre circle, the '
+    + 'pitch bright green and gleaming wet, the side stands dark',
+
+  /* ------------------------------------------- les cinq de LES KOPS
+
+     Des stades **français** sans club : ni écusson, ni couleurs d'équipe, ni
+     nom sur un toit. */
+  'fr-platanes': 'a small football ground in a sunny southern French town '
+    + 'on a warm summer evening, rows of tall plane trees with big leafy crowns '
+    + 'lining both side stands and casting dappled shade, low old stands of '
+    + 'pale stone, terracotta roof tiles of the town all around',
+
+  'fr-tifo': 'a football ground at night whose whole end stand is covered by '
+    + 'a giant mosaic made of thousands of coloured cards held up by the crowd, '
+    + 'forming a simple abstract pattern of stripes and stars with no letters, '
+    + 'the two side stands dark, the pitch bright green',
+
+  'fr-terril': 'a football ground at night in an old northern French mining '
+    + 'town, a long red-brick side stand, a huge dark conical slag heap rising '
+    + 'beyond one end, an old iron mine headframe silhouetted nearby, rows of '
+    + 'brick miners\' houses around, the pitch bright green and lit',
+
+  'fr-coupe': 'a small village football ground in the French countryside on '
+    + 'a cold cup night, temporary scaffolding stands of metal tubes built '
+    + 'along both touchlines and packed with people, a little old clubhouse, '
+    + 'fields and a church steeple in the darkness beyond, the pitch bright green and lit',
+
+  'fr-derby': 'a big French city football ground at night on derby night, '
+    + 'both end stands a sea of thousands of waving plain flags, giant plain '
+    + 'banners unrolled over the stand fronts, the city lights and rooftops all '
+    + 'around, the two side stands dark and packed, the pitch bright green',
 };
 
 export const inviteDe = (id) => (INVITES[id]

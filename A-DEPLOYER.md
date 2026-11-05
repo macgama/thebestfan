@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**PASS 2 : 10 stades fermés (5 de la série météo, 5 de la Ligue 1)**
+(branche `claude/project-thread-vuon42`, 5 novembre 2026, demande et choix de Gaël).
+Code seul, sans schéma ; images à venir.
+
+- Fiches, effets et textes en 5 langues, `publie: false` : rien ne change
+  pour les joueurs avant l'ouverture du PASS 2.
+- Après la mise en ligne : cliquer « Redémarrer ».
+
+---
+
 **Fanzzy posés comme à l'accueil sur tous les écrans** (branche
 `claude/project-thread-ehaa0o`, 5 novembre 2026, demande de Gaël).
 Pages seules, sans schéma ni image.

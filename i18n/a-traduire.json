@@ -474,19 +474,9 @@
    "es"
   ]
  },
- "--taille": {
-  "ou": [
-   "public/index.html"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
  "--sous": {
   "ou": [
+   "public/fanzzy-scene.js",
    "public/index.html"
   ],
   "langues": [
@@ -497,6 +487,18 @@
   ]
  },
  "--decale": {
+  "ou": [
+   "public/fanzzy-scene.js",
+   "public/index.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "--taille": {
   "ou": [
    "public/index.html"
   ],
