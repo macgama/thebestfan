@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**PACK des anciens PASS** (branche `claude/project-thread-dvdo5f`, 5 novembre
+2026, choix de Gaël). Code et textes seuls, sans schéma. Un PASS fini se vend
+sous le nom de sa tenue (« PACK Préhistorique » pour le PASS 1), au même prix,
+dès le 1er du mois qui suit la fin de sa saison (avant : le 1er du deuxième
+mois). Qui a déjà le PASS ne peut pas le racheter. Aide et comment-jouer à jour
+(5 langues). Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Programme des PASS dans /admin › PASS** (branche `claude/project-thread-vuon42`,
 5 novembre 2026, demande de Gaël). Code seul, sans schéma. Chaque fiche (BASE et
 PASS 1 à 4) montre sa tenue, sa série et son championnat prévus, avec leur état
