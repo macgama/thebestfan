@@ -13,6 +13,13 @@ Code seul, sans schéma ni image.
 
 ---
 
+**PASS 2 : images des 10 stades, des 3 cartes Apocalyptique et du kit PASS 2**
+(branche `claude/project-thread-vuon42`, 5 novembre 2026). Images dans git
+(public/img/stade, action, pass), sans schéma. Tout reste fermé jusqu'au
+PASS 2. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **PASS 2 : 3 cartes action Apocalyptique fermées** (Bidon de nitro, Tempête
 de sable, Tôle soudée ; branche `claude/project-thread-vuon42`, 5 novembre
 2026, demande de Gaël). Code seul, sans schéma ; dessins à venir. Rien ne
