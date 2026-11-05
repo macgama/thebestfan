@@ -122,6 +122,29 @@ app.get('/api/auth/me', requireAuth, (r, s) => s.json({ user: { id: r.user.id, p
 app.get('/api/amis', requireAuth, (r, s) => s.json({
   amis: [{ id: r.user.id === HOTE ? AMI : HOTE, pseudo: NOMS[r.user.id === HOTE ? AMI : HOTE], etat: 'amis' }],
   recues: [], envoyees: [], invitations: [] }));
+/* La fiche du match support, telle que le télétexte la sert (`match`,
+   teletext/index.js), réduite à ce que lit le vestiaire. `TT.etat` la fait
+   passer d'à venir à en cours, puis à terminé. */
+const TT = { etat: 'live' };
+app.get('/api/tt/match/:id', (_r, s) => {
+  const live = TT.etat === 'live';
+  const fini = TT.etat === 'fini';
+  s.json({
+    fixture: { id: 7, date: '2026-11-06T19:30:00Z', status: live ? '2H' : fini ? 'FT' : 'NS',
+      elapsed: live ? 67 : fini ? 90 : null, extra: null, luA: Date.now(), live, fini },
+    ligue: { id: 207, nom: 'Super League' },
+    equipes: { home: { id: 85, name: 'Sion', goals: live || fini ? 2 : null },
+      away: { id: 91, name: 'Bâle', goals: live || fini ? 1 : null } },
+    periodes: { halftime: { home: 1, away: 0 }, penalty: { home: null, away: null } },
+    evenements: live || fini ? [
+      { minute: 12, type: 'Goal', detail: 'Normal Goal', equipe: 85, joueur: 'D. Kabashi' },
+      { minute: 34, type: 'Card', detail: 'Yellow Card', equipe: 91, joueur: 'T. Xhaka' },
+      { minute: 51, type: 'Goal', detail: 'Penalty', equipe: 91, joueur: 'K. Ajeti' },
+      { minute: 58, type: 'subst', detail: 'Substitution 1', equipe: 85, joueur: 'Remplacé' },
+      { minute: 63, type: 'Goal', detail: 'Own Goal', equipe: 85, joueur: 'M. Frei' },
+    ] : [],
+  });
+});
 app.get('/duel-nvn', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'duel-nvn.html')));
 app.get('/comment-jouer', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'comment-jouer.html')));
 app.use(express.static(path.join(RACINE, 'public')));
@@ -166,6 +189,31 @@ check('le vestiaire s’ouvre', await jusqua(() => H.page.evaluate(() =>
   Boolean(document.getElementById('inviterAmi')))));
 check('il dit que le duel reste ouvert si l’on part',
   /reste ouvert/.test(await texte(H.page, '.ailleurs')));
+/* Le match réel en tête du vestiaire (Gaël, 5 novembre 2026) : en cours,
+   le score, la minute et les buts et cartons ; terminé, le score et le
+   résumé ; à venir, le jour et l'heure. */
+const blocMatch = () => texte(H.page, '#matchReel');
+check('le vestiaire montre le match en cours : score, minute et événements', await jusqua(async () => {
+  const t = await blocMatch();
+  return /2 – 1/.test(t) && /67′/.test(t) && /Kabashi/.test(t) && /Ajeti/.test(t) && !/Remplacé/.test(t);
+}) || (console.log('        bloc :', JSON.stringify(await blocMatch())), false));
+await capture(H.page, '1a-vestiaire-match-en-cours');
+TT.etat = 'fini';
+await H.page.evaluate(() => lireMatchReel());
+check('terminé : le score, TERMINÉ et le résumé', await jusqua(async () => {
+  const t = await blocMatch();
+  return /2 – 1/.test(t) && /TERMINÉ/.test(t) && /Frei/.test(t) && /mi-temps 1 – 0/.test(t);
+}) || (console.log('        bloc :', JSON.stringify(await blocMatch())), false));
+await capture(H.page, '1b-vestiaire-match-termine');
+TT.etat = 'avant';
+await H.page.evaluate(() => lireMatchReel());
+check('à venir : le jour et l’heure du coup d’envoi, sans score', await jusqua(async () => {
+  const t = await blocMatch();
+  return /VS/.test(t) && /novembre/i.test(t) && /\d\d:\d\d/.test(t) && !/Kabashi/.test(t);
+}) || (console.log('        bloc :', JSON.stringify(await blocMatch())), false));
+await capture(H.page, '1c-vestiaire-match-a-venir');
+TT.etat = 'live';
+await H.page.evaluate(() => lireMatchReel());
 const lien = await H.page.evaluate(() => lienDeMaFile(S.derniereSalle));
 const code = await H.page.evaluate(() => S.derniereSalle?.code);
 check('le lien d’invitation porte le code du duel',

@@ -10,6 +10,15 @@ Après la mise en ligne : « Redémarrer ».
 
 ---
 
+**Vestiaire du duel : le match réel en tête** (branche
+`claude/project-thread-xm9ylm`, 5 novembre 2026, demande de Gaël). Code seul
+(serveur du duel et page), sans schéma. À venir : le jour et l'heure ; en
+cours : le score, la minute et les buts, cartons et VAR ; terminé : le score,
+la mi-temps et le résumé. 4 langues à jour. Après la mise en ligne :
+« Redémarrer » (le serveur du duel dit maintenant quel match attend).
+
+---
+
 **Accueil : nouveau son quand on touche le Fanzzy** (branche
 `claude/project-thread-n83hat`, 5 novembre 2026, choix de Gaël sur quatre sons
 à écouter). Code seul, sans schéma. Le bip aigu (« tic ») est remplacé par un

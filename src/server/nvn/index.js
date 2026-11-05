@@ -563,6 +563,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
     return {
       format, mode: support.mode, raison: support.raison,
+      /* Le match support : le vestiaire en montre le score, la minute et les
+         événements, ou l'heure du coup d'envoi (5 novembre 2026). */
+      fixtureId,
       camp, attendus: taille,
       club: clubs[camp], enFaceClub: clubs[camp ^ 1],
       presents: mien.length, enFace: face.length,
