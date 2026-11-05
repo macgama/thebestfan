@@ -1827,7 +1827,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     });
     const [fz, sk, st, w, etats, li] = await Promise.all([
       lecteur(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]),
-      lire(`SELECT fanzzy_id, skin_id FROM user_skins WHERE user_id = ?`, [userId]),
+      lire(`SELECT fanzzy_id, skin_id, stage FROM user_skins WHERE user_id = ?`, [userId]),
       lire(`SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]),
       lire(`SELECT action_cards FROM user_wallet WHERE user_id = ?`, [userId]),
       etatsGagnes(userId, lecteur).catch(() => null),
@@ -1850,11 +1850,24 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const tenues = new Set(tenuesPubliees().filter((t) => t.id !== 'base').map((t) => t.id));
     const agesDe = (id) => Math.max(1, lignee(id).length);
     const tenuesDe = new Map();
+    /* Une tenue gagnée par personnage : la vignette du rayon TENUES sur
+       l'accueil de la collection, quand aucune nouveauté ne la donne. */
+    const uneTenue = new Map();
     for (const r of sk) {
       if (!tenues.has(r.skin_id)) continue;
       const id = racineDe(r.fanzzy_id);
       tenuesDe.set(id, (tenuesDe.get(id) ?? 0) + 1);
+      if (!uneTenue.has(id)) uneTenue.set(id, { age: Math.max(1, Number(r.stage) || 1), skin: r.skin_id });
     }
+    /* Un état gagné par personnage, au plus haut âge où il en a un : la
+       vignette du rayon ÉTATS, de la même façon. */
+    const unEtat = (parAge) => {
+      for (const [age, l] of Object.entries(parAge ?? {}).sort((a, b) => Number(b[0]) - Number(a[0]))) {
+        const e = l.find((x) => ETATS_DESSINES.includes(x));
+        if (e) return { age: Number(age), etat: e };
+      }
+      return null;
+    };
 
     const T = {
       fanzzy: { gagnes: 0, possibles: persos.length, items: [] },
@@ -1884,7 +1897,9 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
           etats: { gagnes: Math.min(eG, eP), possibles: eP },
           tenues: { gagnes: Math.min(tG, tP), possibles: tP },
           // Les âges dont la carte Ultimate est gagnée.
-          ultimes: uG });
+          ultimes: uG,
+          // Un état et une tenue gagnés, pour les vignettes de l'accueil.
+          unEtat: unEtat(etats?.[f.id]), uneTenue: uneTenue.get(f.id) ?? null });
       }
     }
 

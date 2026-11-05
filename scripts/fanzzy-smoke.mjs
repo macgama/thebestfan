@@ -691,6 +691,9 @@ check(`catalogue de l'équipement servi (${STUFF.length})`,
   check('et le personnage apparaît avec ses états, ses tenues et son Ultimate',
     apres.parFanzzy.some((p) => p.id === X && p.etats.gagnes === 1
       && JSON.stringify(p.ultimes) === '[1]'));
+  check('il dit un état et une tenue gagnés, pour les vignettes de la collection',
+    apres.parFanzzy.some((p) => p.id === X && p.unEtat?.etat === 'joie' && p.unEtat?.age === 1
+      && (tenue ? p.uneTenue?.skin === tenue && p.uneTenue?.age === 1 : p.uneTenue === null)));
   check('la carte Ultimate ne compte pas dans les paliers',
     !apres.paliers || apres.paliers.gagnes - (avant.paliers?.gagnes ?? 0)
       === plus('fanzzy') + plus('etats') + plus('stuff'));

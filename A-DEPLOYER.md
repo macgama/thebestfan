@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Page Collection : vignettes des rayons** (branche `claude/project-thread-k2of25`,
+5 novembre 2026, capture de Gaël). Code seul, sans schéma. L'image ULTIMATE ne
+déborde plus de sa tuile ; ÉTATS, TENUES, ÉQUIPEMENT (et tout rayon sans
+nouveauté) montrent une pièce gagnée au lieu d'un vide. Après la mise en ligne :
+« Redémarrer ».
+
+---
+
 **PACK des anciens PASS** (branche `claude/project-thread-dvdo5f`, 5 novembre
 2026, choix de Gaël). Code et textes seuls, sans schéma. Un PASS fini se vend
 sous le nom de sa tenue (« PACK Préhistorique » pour le PASS 1), au même prix,
