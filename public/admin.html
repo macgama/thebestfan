@@ -76,6 +76,7 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 /* L abonnement : la meme pastille que les autres etats du compte, en vert —
    c est une porte ouverte, pas un avertissement. */
 .pill.vert{color:var(--vert,#5FDFA6)}
+.pill.rouge{color:#e5484d}
 .log{font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.7;opacity:.75}
 .log b{color:var(--projo);font-family:var(--banner)}
 .vide{opacity:.45;padding:36px;text-align:center}
@@ -995,6 +996,30 @@ const VUES = {
       return t ? (d.choix.tenues.find((x) => x.id === t)?.nom ?? t) : null;
     };
 
+    /* Le programme de Gaël pour ce PASS (`PROGRAMME_DES_PASS`) : ce qui est
+       prévu, et où chaque élément en est. Il ne coche rien. */
+    const ETAT_PROG = {
+      ici: ['vert', 'posé ici'], libre: ['', 'dans le jeu, à cocher dans ce PASS'],
+      a_creer: ['rouge', 'pas encore dans le jeu'],
+    };
+    const etatProg = (x) => {
+      if (x.etat === 'base') return '<span class="pill">dans la BASE</span>';
+      if (x.etat === 'ailleurs') return `<span class="pill">dans le PASS ${x.numero}</span>`;
+      const [c, t] = ETAT_PROG[x.etat] ?? ['', x.etat];
+      return `<span class="pill ${c}">${t}</span>`;
+    };
+    const programme = (s) => {
+      const p = (d.programme ?? []).find((x) => x.numero === (estBase(s) ? 0 : Number(s.numero)));
+      if (!p) return '';
+      const c = p.championnat;
+      return `<dt>Programme</dt><dd>
+          tenue <b>${esc(p.tenue.nom)}</b> ${etatProg(p.tenue)}<br>
+          série <b>${esc(p.serie.nom)}</b> (${esc(p.serie.id)}) ${etatProg(p.serie)}<br>
+          championnat <b>${esc(c.nom)}</b> (${esc(c.id)}, ${esc(c.ligue)}) ${etatProg(c)}${
+            c.fiches && c.etat === 'a_creer' ? ` — fiches écrites, images à faire
+              (<code>${esc(c.fiches)}</code>)` : ''}</dd>`;
+    };
+
     const carte = (s) => `
       <div class="sai ${s.lancee ? 'on' : ''}">
         <div class="sai-t">
@@ -1003,6 +1028,7 @@ const VUES = {
         </div>
         ${s.texte ? `<p class="sai-x">${esc(s.texte)}</p>` : ''}
         <dl class="sai-c">
+          ${programme(s)}
           ${Number(s.numero) === 0 ? `<dt>PASS</dt><dd>aucun : la saison 0 est la BASE.
             Un PASS acheté pendant elle est le PASS 1, actif tout de suite.</dd>` : `
           <dt>Membres du PASS</dt><dd>${tenueDuPass(s)

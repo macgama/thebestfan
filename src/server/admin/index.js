@@ -11,7 +11,8 @@ import { STUFF } from '../../shared/fanzzy/inventaire.js';
 import { SERIES_DE_CLUBS } from '../../shared/fanzzy/clubs.js';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { SAISONS_PREVUES, CARNET_TRIMESTRE } from '../../shared/saisons-prevues.js';
+import { SAISONS_PREVUES, CARNET_TRIMESTRE, PROGRAMME_DES_PASS }
+  from '../../shared/saisons-prevues.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STADES } from '../../shared/stades.js';
 import { MINI_JEUX } from '../../shared/mini-jeux.js';
@@ -932,7 +933,37 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       pass: toutesLesSaisons().map((x) => passDe(x.numero)),
       tenuesDuPass: Object.fromEntries(passAvecTenue()
         .map((x) => [x.tenue, x.numero])),
+      programme: programmeDesPass(base, autres),
     };
+  }
+
+  /* Le programme de Gaël (`PROGRAMME_DES_PASS`), avec l'état de chaque
+     élément d'après les saisons réelles : `ici` (posé dans ce PASS),
+     `base` / `pass N` (posé ailleurs), `libre` (dans le jeu, posé nulle
+     part), `a_creer` (pas encore dans le jeu). Rien n'est coché d'ici. */
+  function programmeDesPass(base, autres) {
+    const saisons = [...(base ? [base] : []), ...autres];
+    const ouSerie = (id) => saisons.find((x) => (x.series ?? []).includes(id));
+    const etatSerie = (numero, id) => {
+      if (!SETS.some((x) => x.id === id)) return { etat: 'a_creer' };
+      const s = ouSerie(id);
+      if (!s) return { etat: 'libre' };
+      if (s.numero === numero || (numero === 0 && s.id === base?.id)) return { etat: 'ici' };
+      return { etat: s.id === base?.id ? 'base' : 'ailleurs', numero: s.numero };
+    };
+    const etatTenue = (numero, id) => {
+      if (id === 'base') return { etat: 'ici' };
+      if (!tenuePar(id)) return { etat: 'a_creer' };
+      const pass = passAvecTenue().find((x) => x.tenue === id);
+      if (!pass) return { etat: 'libre' };
+      return pass.numero === numero ? { etat: 'ici' } : { etat: 'ailleurs', numero: pass.numero };
+    };
+    return PROGRAMME_DES_PASS.map((p) => ({
+      numero: p.numero,
+      tenue: { id: p.tenue, nom: p.nomTenue, ...etatTenue(p.numero, p.tenue) },
+      serie: { ...p.serie, ...etatSerie(p.numero, p.serie.id) },
+      championnat: { ...p.championnat, ...etatSerie(p.numero, p.championnat.id) },
+    }));
   }
 
   /**

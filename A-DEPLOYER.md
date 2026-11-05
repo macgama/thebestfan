@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Programme des PASS dans /admin › PASS** (branche `claude/project-thread-vuon42`,
+5 novembre 2026, demande de Gaël). Code seul, sans schéma. Chaque fiche (BASE et
+PASS 1 à 4) montre sa tenue, sa série et son championnat prévus, avec leur état
+(posé ici, ailleurs, à cocher, pas encore dans le jeu). Rien n'est coché tout seul.
+Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Tenues Apocalyptique (PASS 2) et Halloween (PASS 4) retirées des boosters et de l'étal**
 (branche `claude/project-thread-vuon42`, 5 novembre 2026, demande de Gaël :
 « exactement le même processus » que Préhistorique). Code seul, sans schéma.
