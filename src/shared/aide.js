@@ -365,6 +365,15 @@ const RUBRIQUES = [
         () => 'Non. Il reste ouvert et les autres le voient toujours ; le jeu te '
           + 'rappelle dès que quelqu’un arrive en face. S’il ne te voit pas revenir '
           + `dans les ${reglage('duel.attente_absent_min')} minutes, il se retire.`],
+      ['Personne n’arrive : puis-je jouer tout de suite contre des bots ?',
+        'Oui : dans la salle d’attente, JOUER CONTRE DES BOTS lance aussitôt un '
+          + 'entraînement, sans attendre la fin du compte à rebours. Des supporters '
+          + 'd’appoint tiennent les autres places ; ce duel ne compte pas au classement. '
+          + 'Ceux qui attendaient avec toi gardent leur place.'],
+      ['Puis-je me promener dans le jeu en attendant mon duel ?',
+        'Oui : ATTENDRE EN NAVIGUANT te ramène à l’accueil en gardant ta place, et le '
+          + 'jeu te rappelle dès que quelqu’un arrive en face. Pendant ce temps, les '
+          + 'supporters d’appoint n’entrent pas à ta place. QUITTER LA FILE, lui, rend ta place.'],
       ['Comment jouer un duel contre un ami ?',
         'Ouvre un duel, puis, dans la salle d’attente, invite ton ami depuis le jeu '
           + 'ou envoie-lui le lien : un appui l’amène directement dans ton duel. Tu '
