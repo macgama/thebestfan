@@ -940,7 +940,8 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   /* Le programme de Gaël (`PROGRAMME_DES_PASS`), avec l'état de chaque
      élément d'après les saisons réelles : `ici` (posé dans ce PASS),
      `base` / `pass N` (posé ailleurs), `libre` (dans le jeu, posé nulle
-     part), `a_creer` (pas encore dans le jeu). Rien n'est coché d'ici. */
+     part), `a_creer` (pas encore dans le jeu), `a_dessiner` (une tenue
+     déclarée mais pas publiée). Rien n'est coché d'ici. */
   function programmeDesPass(base, autres) {
     const saisons = [...(base ? [base] : []), ...autres];
     const ouSerie = (id) => saisons.find((x) => (x.series ?? []).includes(id));
@@ -954,6 +955,9 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const etatTenue = (numero, id) => {
       if (id === 'base') return { etat: 'ici' };
       if (!tenuePar(id)) return { etat: 'a_creer' };
+      /* Déclarée mais pas encore publiée (la Spatiale, 5 novembre 2026) :
+         ses images restent à faire, elle ne se voit nulle part. */
+      if (!tenuePar(id).publie) return { etat: 'a_dessiner' };
       const pass = passAvecTenue().find((x) => x.tenue === id);
       if (!pass) return { etat: 'libre' };
       return pass.numero === numero ? { etat: 'ici' } : { etat: 'ailleurs', numero: pass.numero };

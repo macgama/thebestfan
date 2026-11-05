@@ -79,6 +79,15 @@ export const PASS_SAISONS = Object.freeze([
     titre: 'Roi de la Casse',
   }),
   Object.freeze({
+    numero: 3,
+    nom: 'PASS 3 · Spatiale',
+    tenue: 'spatiale',
+    texte: 'Le virage en orbite. Ta tribune en combinaisons et en casques à bulle, '
+      + 'du premier au troisième âge, et un cadre de hublot.',
+    couleur: '#3a7bd5',
+    titre: 'Commandant de bord',
+  }),
+  Object.freeze({
     numero: 4,
     nom: 'PASS 4 · Halloween',
     tenue: 'halloween',
