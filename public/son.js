@@ -188,6 +188,7 @@
      4,15. */
   const MIX = {
     tic: 2.13,                    // −20,0 · −29,5 · 0,03 s
+    'fanzzy-toucher': 0.245,      // −21,4 · −29,0 · 0,26 s
     carte: 1.55,                  // −20,9 · −29,0 · 0,07 s
     bache: 0.862,                 // −19,7 · −28,0 · 0,14 s
     sourd: 1.51,                  // −15,9 · −28,5 · 0,06 s
@@ -601,6 +602,11 @@
         ton(c, s, t, { freq: 784, duree: 0.09, type: 'sine', vol: 0.12 });
         ton(c, s, t, { freq: 1175, duree: 0.14, type: 'sine', vol: 0.12, delai: 0.07 });
       } },
+    /* Le toucher du Fanzzy de l'accueil (Gaël, 5 novembre 2026) : le tic
+       carré, rejoué à chaque toucher, agaçait. Un coup de tambour de
+       tribune frappé doucement, grave et rond, au niveau du tic. */
+    'fanzzy-toucher': { famille: 'interface', duree: 0.5,
+      jouer: (c, s, t) => tambour(c, s, t, 0.35) },
     /* La carte du booster qui se retourne (« audio.flip » de cartes.js) :
        un claquement sec qui tombe. */
     retournement: { famille: 'interface', duree: 0.2,

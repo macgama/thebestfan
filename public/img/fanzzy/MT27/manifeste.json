@@ -1,6 +1,6 @@
 {
   "id": "MT27",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "e42c6a215ba4"
+          "sha": "4e719803cd67"
         },
         "apocalyptique": {
           "etats": [
@@ -25,7 +25,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "16ef831a5de3"
+          "sha": "b824ca1e9117"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "1d7adaad3de1"
         }
       }
     },
@@ -67,7 +79,19 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "b69ce75fda20"
+          "sha": "81efbb9711fd"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "d516842421d9"
         }
       }
     }

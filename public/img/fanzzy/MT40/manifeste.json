@@ -1,6 +1,6 @@
 {
   "id": "MT40",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -26,6 +26,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "7dc9436bf5b1"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "13a634d0de51"
         }
       }
     },
@@ -40,7 +52,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "1352c73fba2a"
+          "sha": "d5246a9134c7"
         },
         "apocalyptique": {
           "etats": [
@@ -52,7 +64,19 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "b4a68a2c7c39"
+          "sha": "af1f5ef0c4f8"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "4efc3b502f2c"
         }
       }
     },
@@ -80,6 +104,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "c76a8ab40774"
+        },
+        "prehistorique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "beb1c95b4d86"
         }
       }
     }
