@@ -1412,6 +1412,12 @@ SKIN_TEXTE = {
                       "wire, rubber and sun-bleached cloth. Everything is "
                       "repaired, mismatched and improvised; nothing is new. The "
                       "character's own build and face are unchanged."),
+    'spatiale': ("SKIN — SPACE: the same character dressed for a match in "
+                 "orbit. A sleek space suit in the character's own colours with "
+                 "thin glowing light strips, a round clear helmet bubble, little "
+                 "antennas and boot thrusters; the signature object turned into "
+                 "glowing space gear. Clean, shiny, futuristic, never armour. The "
+                 "character's own build and face are unchanged."),
 }
 
 
@@ -1788,7 +1794,7 @@ def _cli():
     ap = argparse.ArgumentParser(description='Prompts Fanzzy — série LA REPRISE')
     ap.add_argument('id', nargs='?', help='RP18, RP24… (vide : la table)')
     ap.add_argument('--skin', default='base',
-                    choices=('base', 'prehistorique', 'apocalyptique'))
+                    choices=('base', 'prehistorique', 'apocalyptique', 'spatiale'))
     ap.add_argument('--stade', type=int, choices=(1, 2, 3),
                     help='un seul âge plutôt que les trois')
     ap.add_argument('--table', action='store_true',

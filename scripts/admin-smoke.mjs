@@ -1493,12 +1493,17 @@ console.log('\n— la BASE du menu PASS —');
     const prog = d.programme ?? [];
     const p2 = prog.find((x) => x.numero === 2);
     const p4 = prog.find((x) => x.numero === 4);
+    /* La Spatiale (PASS 3) est déclarée sans être publiée : « images à
+       faire ». Une fois publiée (ce que la BASE de cette suite a pu faire en
+       cochant tout), elle est « posée ici ». */
+    const { tenuePar: laTenue } = await import('../src/server/fanzzy/tenues.js');
+    const spatiale = laTenue('spatiale')?.publie ? 'ici' : 'a_dessiner';
     check('le menu PASS montre le programme de la BASE et des quatre PASS',
       prog.map((x) => x.numero).join() === '0,1,2,3,4'
       && p2?.tenue.id === 'apocalyptique' && p2?.serie.id === 'MT'
       && p2?.championnat.nom === 'Le Parcage' && p2?.championnat.etat === 'a_creer'
       && p4?.championnat.nom === 'Les Stehplätze'
-      && prog.find((x) => x.numero === 3)?.tenue.etat === 'a_creer'
+      && prog.find((x) => x.numero === 3)?.tenue.etat === spatiale
       || montre('programme', prog));
   }
 

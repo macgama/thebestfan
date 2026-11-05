@@ -116,7 +116,9 @@ check('fin le 28 février : en vente le 1er mars', venteAncienPassLe('2027-02-28
 check('fin le 30 novembre : en vente le 1er décembre', venteAncienPassLe('2026-11-30') === '2026-12-01');
 check('fin le 31 décembre : en vente le 1er janvier', venteAncienPassLe('2026-12-31') === '2027-01-01');
 check('le PACK porte le nom de sa tenue', nomPack(1) === 'PACK Préhistorique'
-  && nomPack(2) === 'PACK Apocalyptique' && nomPack(4) === 'PACK Halloween');
+  && nomPack(2) === 'PACK Apocalyptique' && nomPack(3) === 'PACK Spatiale' && nomPack(4) === 'PACK Halloween');
+check('le PASS 3 a la tenue Spatiale, réservée au PASS', passDe(3).tenue === 'spatiale'
+  && tenueReservee('spatiale', 1) && tenueReservee('spatiale', 3) && !tenueReservee('spatiale', 4));
 check('un PASS sans thème : PACK du PASS <n>', nomPack(9) === 'PACK du PASS 9');
 check('sans date de fin : jamais', venteAncienPassLe(null) === null && venteAncienPassLe('') === null);
 {
