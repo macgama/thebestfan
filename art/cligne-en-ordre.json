@@ -1,0 +1,14 @@
+{
+  "_": "Tenues sans clignement, en ordre (décision de Gaël, 5 novembre 2026) : elles ne comptent pas comme manquantes et ne se relancent pas. Clé <ID>-e<âge>-<tenue>, valeur : la raison.",
+  "HC1-e1-prehistorique": "le repos a déjà les yeux fermés (mauvaise figure à la découpe)",
+  "HC17-e1-apocalyptique": "un pneu cache un œil",
+  "HC29-e3-apocalyptique": "le repos montre deux figures côte à côte",
+  "HC48-e1-halloween": "un demi-masque cache un œil",
+  "HC50-e2-halloween": "le repos est déjà un clin d'œil",
+  "HC10-e1-apocalyptique": "la retouche ne se recale jamais sur le repos (trois essais)",
+  "HC39-e1-halloween": "la retouche ne se recale jamais sur le repos (trois essais)",
+  "HC40-e1-prehistorique": "visage de poisson : la retouche ne ferme pas les yeux (trois essais)",
+  "HC40-e3-prehistorique": "visage de poisson : la retouche ne ferme pas les yeux (trois essais)",
+  "HC41-e1-apocalyptique": "la retouche ne se recale jamais sur le repos (trois essais)",
+  "HC51-e1-prehistorique": "la retouche ne se recale jamais sur le repos (trois essais)"
+}
