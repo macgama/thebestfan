@@ -409,6 +409,27 @@ const optSel = (v, t, sel) =>
 const jour = (d) => new Date(d).toLocaleString('fr', { day:'2-digit', month:'2-digit',
   hour:'2-digit', minute:'2-digit' });
 
+/** « il y a 3 h », « hier », « il y a 12 j » : la dernière visite d'un joueur. */
+const ilYa = (d) => {
+  if (!d) return 'jamais vu';
+  const min = Math.max(0, Math.round((Date.now() - new Date(d).getTime()) / 60000));
+  if (min < 5) return 'en ligne';
+  if (min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `il y a ${h} h`;
+  const j = Math.round(h / 24);
+  return j === 1 ? 'hier' : `il y a ${j} j`;
+};
+
+/** L'activité d'un joueur, en une ligne : seuls les chiffres non nuls. */
+const activiteEnLigne = (a) => [
+  a.duels && `${a.duels} duel${a.duels > 1 ? 's' : ''} (${a.victoires} V${a.contre_bots ? `, ${a.contre_bots} contre bots` : ''})`,
+  a.virage && `${a.virage} Virage`, a.boosters && `${a.boosters} boosters`,
+  a.evolutions && `${a.evolutions} évol.`, a.ultimes && `${a.ultimes} Ultimate`,
+  a.minijeux && `${a.minijeux} mini-jeux`, a.pronostics && `${a.pronostics} pronos`,
+  a.achats && `${a.achats} achat${a.achats > 1 ? 's' : ''}`,
+].filter(Boolean).join(' · ') || 'rien encore';
+
 /* ------------------------------------------------------ catalogue Fanzzy */
 
 /** Quels Fanzzy sont dessinés. La liste vient de /fanzzy-art.js, source unique. */
@@ -516,7 +537,7 @@ const FAMILLES_ONGLETS = [
     ['catalogue', 'CATALOGUE', [['fanzzy', 'FANZZY'], ['contenus', 'CONTENUS'], ['tenues', 'SKINS']]]]],
   ['LE JEU', [['reglages', 'RÉGLAGES']]],
   ['L’EXPLOITATION', [['apercu', 'APERÇU', [['apercu', 'EN JEU'], ['journal', 'JOURNAL']]],
-    ['joueurs', 'JOUEURS', [['joueurs', 'COMPTES'], ['kops', 'KOP']]],
+    ['joueurs', 'JOUEURS', [['joueurs', 'COMPTES'], ['usage', 'USAGE'], ['kops', 'KOP']]],
     ['competitions', 'COMPÉTITIONS']]],
 ];
 const MENUS = FAMILLES_ONGLETS.flatMap(([, liste]) => liste);
@@ -1875,7 +1896,7 @@ const VUES = {
     $('main').innerHTML = `
       <div class="bar"><input id="q" placeholder="pseudo ou adresse" value="${esc(terme)}">
         <button class="mini" id="go">Chercher</button></div>
-      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>PASS</th><th>ACTIONS</th></tr></thead>
+      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>ACTIVITÉ</th><th>PASS</th><th>ACTIONS</th></tr></thead>
       <tbody>${d.joueurs.map((u) => `
         <tr><td><b>${esc(u.pseudo)}</b>
           ${u.role==='admin'?'<span class="pill admin">ADMIN</span>':''}
@@ -1886,6 +1907,14 @@ const VUES = {
           <span style="opacity:.45;font-size:11px">inscrit le ${jour(u.created_at)}</span></td>
         <td>${u.scarves ?? 0} éch.<br><span style="opacity:.45;font-size:11px">${u.packs ?? 0} boosters · ${u.follow_slots ?? 2} slots</span></td>
         <td>${u.fanzzy ?? 0} fanzzy<br><span style="opacity:.45;font-size:11px">${u.ferveur ?? 0} ferveur</span></td>
+        <!-- **Ce qu'il fait du jeu** (demande de Gaël du 6 novembre 2026) :
+             sa dernière visite, ses gestes comptés depuis toujours, et les
+             pages qu'il ouvre le plus sur 30 jours. -->
+        <td class="activite"><b title="${u.derniere_visite ? esc(jour(u.derniere_visite)) : ''}">${ilYa(u.derniere_visite)}</b>${
+          u.activite?.jours_actifs ? `<span style="opacity:.45;font-size:11px"> · ${u.activite.jours_actifs} j actifs / 30</span>` : ''}
+          <br><span style="opacity:.6;font-size:11px">${u.activite ? esc(activiteEnLigne(u.activite)) : ''}</span>
+          ${u.activite?.pages?.length ? `<br><span style="opacity:.45;font-size:11px">aime : ${
+            esc(u.activite.pages.map((p) => p.nom).join(', '))}</span>` : ''}</td>
         <!-- **L'échéance se lit, pas seulement l'état.** « abonné : oui »
              demande une seconde question ; « jusqu'au 12 mars » y répond. Sans
              terme, on l'écrit : c'est ce qu'on pose à un bêta-testeur, rien ne
@@ -2010,6 +2039,55 @@ const VUES = {
           ? 'on ne change pas son propre compte depuis ici.'
           : (MSG_FANZZY[err.code] ?? err.raison ?? err.code), true);
       }
+    };
+  },
+
+  /**
+   * **L'usage du jeu** (demande de Gaël du 6 novembre 2026 : « savoir ce qui
+   * intéresse le plus les joueurs »). Des totaux, jamais un parcours : combien
+   * de joueurs ont fait quoi, et quelles pages ils ouvrent. Les comptes
+   * administrateurs n'y entrent pas.
+   */
+  async usage(jours = 7) {
+    const d = await api('/usage?jours=' + jours);
+    const barre = (v, max) => `<div style="height:6px;border-radius:3px;background:rgba(242,238,228,.1);min-width:90px">
+      <div style="height:6px;border-radius:3px;background:var(--projo,#F5C542);width:${max ? Math.round(100 * v / max) : 0}%"></div></div>`;
+    const c = (v, l) => `<div class="card"><b>${v ?? 0}</b><span>${l}</span></div>`;
+    const maxA = Math.max(1, ...d.activites.map((a) => a.joueurs));
+    const maxP = Math.max(1, ...d.pages.map((p) => p.joueurs));
+    const maxJ = Math.max(1, ...d.parJour.map((p) => p.joueurs));
+    const periode = { 1: '24 H', 7: '7 JOURS', 30: '30 JOURS', 90: '90 JOURS' };
+    $('main').innerHTML = `
+      <div class="bar">${Object.entries(periode).map(([n, t]) =>
+        `<button class="mini${Number(n) === d.jours ? ' vert' : ''}" data-jours="${n}">${t}</button>`).join(' ')}</div>
+      <h3 class="h3">JOUEURS ACTIFS</h3>
+      <div class="cards">
+        ${c(d.actifs.jour, 'VUS EN 24 H')}${c(d.actifs.semaine, 'VUS EN 7 JOURS')}
+        ${c(d.actifs.mois, 'VUS EN 30 JOURS')}${c(d.actifs.total, 'COMPTES JOUEURS')}
+      </div>
+      <h3 class="h3">CE QUE LES JOUEURS FONT · ${periode[d.jours]}</h3>
+      <div class="tbl"><table><thead><tr><th>ACTIVITÉ</th><th>JOUEURS</th><th>FOIS</th><th></th></tr></thead><tbody>
+        ${d.activites.map((a) => `<tr><td>${esc(a.nom)}${a.cle === 'duels' && a.dont_bots
+          ? `<br><span style="opacity:.45;font-size:11px">dont ${a.dont_bots} contre des bots</span>` : ''}</td>
+          <td><b>${a.joueurs}</b></td><td>${a.total}</td><td>${barre(a.joueurs, maxA)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <h3 class="h3">PAGES LES PLUS OUVERTES · ${periode[d.jours]}</h3>
+      ${d.pages.length ? `<div class="tbl"><table><thead><tr><th>PAGE</th><th>JOUEURS</th><th>OUVERTURES</th><th></th></tr></thead><tbody>
+        ${d.pages.map((p) => `<tr><td>${esc(p.nom)}</td><td><b>${p.joueurs}</b></td><td>${p.visites}</td>
+          <td>${barre(p.joueurs, maxP)}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="vide">Aucune page comptée sur cette période.</div>'}
+      ${d.parJour.length ? `<h3 class="h3">JOUEURS PAR JOUR · 14 JOURS</h3>
+        <div class="tbl"><table><tbody>${d.parJour.map((p) => `<tr><td>${esc(new Date(p.jour + 'T12:00:00')
+          .toLocaleDateString('fr-CH', { weekday: 'short', day: '2-digit', month: '2-digit' }))}</td>
+          <td><b>${p.joueurs}</b></td><td style="width:60%">${barre(p.joueurs, maxJ)}</td></tr>`).join('')}
+        </tbody></table></div>` : ''}
+      <p style="opacity:.5;font-size:11px;margin-top:14px">Les comptes administrateurs ne comptent pas.
+        Les pages se comptent depuis la mise en ligne du 6 novembre 2026 : un nombre d’ouvertures par joueur
+        et par jour, sans heure ni appareil, effacé après 90 jours. Duels, Virage, boosters, mini-jeux,
+        pronostics et achats viennent de ce que le jeu enregistre déjà.</p>`;
+    $('main').onclick = (e) => {
+      const b = e.target.closest('[data-jours]');
+      if (b) VUES.usage(Number(b.dataset.jours));
     };
   },
 

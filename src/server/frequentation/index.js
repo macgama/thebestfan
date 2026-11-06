@@ -2,7 +2,8 @@
  * La fréquentation : combien de joueurs connectés en ce moment, pour
  * l'administration (demande de Gaël du 5 novembre 2026).
  *
- * Un **nombre**, jamais une liste. Rien n'est écrit en base : chaque requête
+ * Un **nombre**, jamais une liste (l'administration lit aussi l'heure d'un
+ * joueur précis, sur sa ligne de JOUEURS › COMPTES). Rien n'est écrit en base : chaque requête
  * `/api` d'un joueur connecté pose sa dernière heure en mémoire, et le ménage
  * oublie tout ce qui a plus de 24 heures. Au redémarrage, la mémoire repart
  * de zéro — l'aperçu dit alors depuis quand il compte.
@@ -43,5 +44,13 @@ export function createFrequentation({ horloge = Date.now } = {}) {
     return { ...n, depuis: new Date(depuis).toISOString() };
   }
 
-  return { noter, compter };
+  /** La dernière activité d'un joueur dans les 24 h, en ms, ou `null` :
+      pour la colonne « dernière visite » de l'administration, plus fraîche
+      que la base, qui ne note la session qu'une fois par jour. */
+  function vuA(userId) {
+    const vu = vus.get(String(userId));
+    return vu != null && horloge() - vu < FENETRES.jour ? vu : null;
+  }
+
+  return { noter, compter, vuA };
 }

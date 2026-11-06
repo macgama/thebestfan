@@ -956,7 +956,7 @@ if (process.env.CAPTURE) {
     || (console.log('        vu :', JSON.stringify(menus)), false));
   const attendus = ['PASS', 'BASE', 'LES PASS', 'VENTES', 'CATALOGUE', 'FANZZY', 'CONTENUS',
     'SKINS', 'RÉGLAGES',
-    'APERÇU', 'EN JEU', 'JOURNAL', 'JOUEURS', 'COMPTES', 'KOP', 'COMPÉTITIONS'];
+    'APERÇU', 'EN JEU', 'JOURNAL', 'JOUEURS', 'COMPTES', 'USAGE', 'KOP', 'COMPÉTITIONS'];
   const vus = await page.evaluate(() =>
     [...document.querySelectorAll('#nav button')].map((b) => b.textContent.trim()));
   check('le rangement n’a fait disparaître aucun onglet',
@@ -1164,6 +1164,19 @@ await jusqua(async () =>
     return Number(r[0].n) === 1 && await page.evaluate(() =>
       /1 Fanzzy/.test(document.querySelector('tr[data-col]')?.textContent ?? ''));
   }));
+  check('la ligne du joueur dit sa dernière visite et son activité', await page.evaluate(() =>
+    /ACTIVITÉ/.test(document.querySelector('main thead')?.textContent ?? '')
+    && /jamais vu|en ligne|il y a|hier/.test(document.querySelector('td.activite')?.textContent ?? '')));
+
+  /* L'usage (6 novembre 2026) : la vue d'ensemble, et ses périodes. */
+  await page.evaluate(() => [...document.querySelectorAll('#nav button')]
+    .find((b) => b.textContent.trim() === 'USAGE')?.click());
+  check('l’onglet USAGE dit les joueurs actifs et ce qu’ils font', await jusqua(async () =>
+    page.evaluate(() => /JOUEURS ACTIFS/.test(document.querySelector('main')?.textContent ?? '')
+      && /Duels joués/.test(document.querySelector('main')?.textContent ?? ''))));
+  await page.evaluate(() => document.querySelector('[data-jours="30"]')?.click());
+  check('et passe à 30 jours', await jusqua(async () =>
+    page.evaluate(() => /CE QUE LES JOUEURS FONT · 30 JOURS/.test(document.querySelector('main')?.textContent ?? ''))));
 
   await page.evaluate(() => [...document.querySelectorAll('#nav button')]
     .find((b) => b.textContent.trim() === 'KOP')?.click());

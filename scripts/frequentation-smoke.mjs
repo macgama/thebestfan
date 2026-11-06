@@ -25,3 +25,11 @@ n = f.compter();
 assert.equal(n.jour, 1, 'les marques de plus de 24 h sont oubliées');
 assert.equal(typeof n.depuis, 'string');
 console.log('frequentation-smoke : ok');
+
+/* La dernière activité d'un joueur, pour la colonne « dernière visite ». */
+f.noter('e');
+assert.equal(f.vuA('e'), t, 'l’heure d’un joueur vu se lit');
+assert.equal(f.vuA('zz'), null, 'un joueur jamais vu : rien');
+t += 25 * 60 * MIN;
+assert.equal(f.vuA('e'), null, 'au-delà de 24 h, oublié');
+console.log('frequentation-smoke (vuA) : ok');

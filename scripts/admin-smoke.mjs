@@ -31,7 +31,7 @@ await raw.query(`DROP TABLE IF EXISTS pronostics, parrainages, contenus, abonnem
   recompenses, missions_jour, compteurs_jour, user_nouveautes`);
 /* `quotidien.sql` en dernier, comme dans `ORDRE` : il ajoute à `saisons` les
    colonnes de la saison datée (`fin_le`, `ouvre_le`, `carnet`). */
-for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql',
+for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','souvenirs.sql', 'duel.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql',
                  'teletext.sql','admin.sql','kop.sql','amis.sql','saisons.sql','contenus.sql','abonnement.sql',
                  'quotidien.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
@@ -117,6 +117,37 @@ check('aperçu des joueurs connectés, en nombres seulement',
 
 r = await call('/api/admin/joueurs?q=Joueur');
 check('recherche de joueur', r.json.joueurs.length === 1 && r.json.joueurs[0].pseudo === 'Joueur');
+
+/* Ce qu'il fait du jeu (6 novembre 2026) : dernière visite, duels, pages. */
+frequentation.noter(B);
+await pool.query(`INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome)
+  VALUES ('d1', ?, 'bot:12345678', 'win'), ('d2', ?, ?, 'loss'), ('d2', ?, ?, 'win')`, [B, B, C, C, B]);
+await pool.query(`INSERT INTO compteurs_jour (user_id, jour, cle, n) VALUES
+  (?, CURDATE(), 'v:collection', 4), (?, CURDATE(), 'v:boutique', 1), (?, CURDATE(), 'booster', 3),
+  (?, CURDATE(), 'v:collection', 9)`, [B, B, B, A]);
+r = await call('/api/admin/joueurs?q=Joueur');
+{
+  const j = r.json.joueurs[0];
+  check('sa dernière visite se lit (mémoire du serveur)',
+    j.derniere_visite && Date.now() - new Date(j.derniere_visite).getTime() < 60_000);
+  check('ses duels : 2, dont 1 gagné, 1 contre un bot',
+    j.activite?.duels === 2 && j.activite.victoires === 1 && j.activite.contre_bots === 1);
+  check('ses boosters ouverts', j.activite.boosters === 3);
+  check('ses pages préférées, la plus ouverte d’abord',
+    j.activite.pages[0]?.page === 'collection' && j.activite.pages[0].n === 4
+    && j.activite.pages[0].nom === 'Collection' && j.activite.jours_actifs === 1);
+}
+r = await call('/api/admin/usage?jours=30');
+check('l’usage : les pages, sans les admins',
+  r.json.pages?.find((p) => p.page === 'collection')?.visites === 4
+  && r.json.pages.find((p) => p.page === 'collection').joueurs === 1);
+check('l’usage : les duels de la période, joueurs et bots',
+  r.json.activites?.find((a) => a.cle === 'duels')?.total === 3
+  && r.json.activites.find((a) => a.cle === 'duels').dont_bots === 1);
+check('l’usage : les joueurs actifs (hors admins)', r.json.actifs?.total === 2);
+check('l’usage tolère les tables absentes (mini-jeux)',
+  r.json.activites.find((a) => a.cle === 'minijeux')?.total === 0);
+await pool.query(`DELETE FROM duel_results`); await pool.query(`DELETE FROM compteurs_jour`);
 check('aucun hachage exposé', !JSON.stringify(r.json).includes('password'));
 
 r = await call(`/api/admin/joueur/${B}`, { method:'PATCH', body:{ scarves: 250 } });
