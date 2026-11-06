@@ -1,7 +1,7 @@
 import express from 'express';
 import { assurerBourse } from '../bourse.js';
 import { XP, niveauPour, progression, droits, paliersEntre, ecarpesDuPalier, NIVEAU_MAX,
-  PALIERS }
+  PALIERS, distinctions, cadeauDuNiveau, XP_ETOILE }
   from '../../shared/niveau.js';
 
 /**
@@ -152,6 +152,17 @@ export function createNiveau({ pool, requireAuth, crochets = {} }) {
       monte: apres.niveau > avant,
       paliers: paliersEntre(avant, apres.niveau).map((p) => ({ ...p })),
       ecarpes,
+      /* Ce qui se voit (titre, pastille, étoiles), rangé dans un seul champ
+         (`CONTRATS.md`, § 1, `vu`) : voir « les cadeaux du niveau » dans
+         shared/niveau.js. Les cadeaux de chaque niveau franchi servent à la
+         fête ; `etoilesAvant` lui dit si une étoile est tombée au-delà du
+         dernier niveau. */
+      vu: {
+        ...distinctions(apresXp),
+        etoilesAvant: distinctions(avantXp).etoiles,
+        cadeaux: Array.from({ length: Math.max(0, apres.niveau - avant) },
+          (_, i) => cadeauDuNiveau(avant + 1 + i)),
+      },
       depart: { xp: avantXp, ...progression(avantXp) },
     };
   }
@@ -279,6 +290,14 @@ export function createNiveau({ pool, requireAuth, crochets = {} }) {
          puisqu'elles ne dépendent plus du joueur. */
       slots: d.slots,
       deckFanzzy: d.deckFanzzy,
+      /* Ce que le niveau fait voir (shared/niveau.js, « les cadeaux du
+         niveau ») : le titre de tribune, la matière de la pastille, les
+         étoiles au-delà du dernier niveau et la marche vers la suivante. */
+      ...(d.indisponible ? {} : distinctions(d.xp)),
+      xpEtoile: XP_ETOILE,
+      /* Le cadeau visible de chaque niveau, du 1 au dernier : le chemin du
+         profil les nomme, la page n'en garde aucune copie. */
+      cadeaux: Array.from({ length: NIVEAU_MAX }, (_, i) => cadeauDuNiveau(i + 1)),
       // Ce que rapporte chaque geste, pour que l'écran puisse l'annoncer sans
       // recopier le barème — une copie qui divergerait au premier réglage.
       gains: XP,

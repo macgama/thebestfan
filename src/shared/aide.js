@@ -598,8 +598,20 @@ const RUBRIQUES = [
     questions: [
       ['À quoi sert mon niveau ?',
         () => 'À ouvrir des droits, jamais à taper plus fort : une place de deck de '
-          + 'plus, un emplacement de club de plus. Le niveau ne donne aucune '
-          + 'puissance — c’est une règle du jeu, écrite et tenue.'],
+          + 'plus, un emplacement de club de plus. Chaque niveau te donne aussi un '
+          + 'titre de tribune, affiché sous ton pseudo, et des écharpes. Le niveau ne '
+          + 'donne aucune puissance — c’est une règle du jeu, écrite et tenue.'],
+      ['Ma pastille de niveau change de couleur ?',
+        () => 'Oui : bronze au niveau 10, argent au 15, or au 20, rubis au 25 et '
+          + 'légende au 30. Tout le monde la voit, au classement, chez tes amis et '
+          + 'dans ton KOP.'],
+      ['Que se passe-t-il après le niveau 30 ?',
+        () => 'Le niveau 30 est le dernier. Ensuite, tu gagnes une étoile tous les 2 000 XP, '
+          + 'sans fin : elle s’affiche au-dessus de ta pastille.'],
+      ['Mon niveau revient-il à 1 à chaque saison ?',
+        () => 'Non. Ton niveau, ton XP et ton titre se gardent d’une saison à l’autre. '
+          + 'Ce qui repart de zéro à chaque saison, c’est le classement, les divisions '
+          + 'et le carnet de tampons.'],
       ['C’est quoi, le PASS de saison ?',
         () => `Un achat unique, 7,99 € ou ${reglage('pass.prix_echarpes')} écharpes, `
           + 'valable jusqu’à la fin de la saison. Il ne se renouvelle jamais tout seul. '

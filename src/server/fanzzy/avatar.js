@@ -1,6 +1,6 @@
 import { racineDe, auStade, parIdentifiant, estCharge } from './catalogue.js';
 import { stadeAffiche } from '../../shared/fanzzy/ages.js';
-import { niveauPour } from '../../shared/niveau.js';
+import { pastillePour } from '../../shared/niveau.js';
 
 /**
  * **L'avatar d'un joueur — la seule réponse du jeu à « qui montrer ».**
@@ -283,7 +283,9 @@ export async function habillerJoueurs(q, ids) {
     const entree = {};
     if (visages) entree.avatar = avatarPublic(visages.get(id)?.avatar);
     const xp = l.xp == null ? NaN : Number(l.xp);
-    if (Number.isFinite(xp) && xp >= 0) entree.niveau = niveauPour(xp);
+    /* Le niveau, et la matière de la pastille et les étoiles s'il y en a :
+       les cadeaux de niveau se voient aussi chez les autres. */
+    if (Number.isFinite(xp) && xp >= 0) Object.assign(entree, pastillePour(xp));
     res.set(id, entree);
   }
   return res;
