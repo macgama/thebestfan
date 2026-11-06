@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Les Fanzzy légendaires plus grands que l'âge 3, partout** (branche
+`claude/project-thread-nj31ko`, 6 novembre 2026, demande de Gaël). Pages et
+index.json seuls, sans schéma ni image : un légendaire n'a qu'un âge et
+prenait la taille d'un âge 1 ; il a maintenant sa propre taille, au-dessus de
+l'âge 3 (accueil, carte et fiche qu'il remplit, fin de duel, Virage, deck,
+carnet, plein écran). Aucun redémarrage nécessaire (fichiers statiques).
+
+---
+
 **Missions et tampons mis en avant** (branche `claude/project-thread-8ynk3z`,
 6 novembre 2026, demande de Gaël). Code seul, sans schéma : une carte MISSIONS
 en haut à gauche de l'accueil (faites sur le total, ce qui est à récupérer),
