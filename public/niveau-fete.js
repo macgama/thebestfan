@@ -699,7 +699,8 @@
     try { localStorage.setItem(CLE_MISSIONS, JSON.stringify(o)); } catch { /* vaut pour rien */ }
   }
   const entier = (x) => Math.max(0, Math.floor(Number(x) || 0));
-  const DIFFICULTES = { facile: 'facile', moyenne: 'moyenne', difficile: 'difficile' };
+  const DIFFICULTES = { facile: 'Mission facile du jour', moyenne: 'Mission moyenne du jour',
+    difficile: 'Mission difficile du jour' };
 
   /** Les stickers d'un gain (`{ echarpes, xp, packs, tampons, voie }`), sans zéro. */
   function stickersDuGain(g, colle) {
@@ -767,7 +768,7 @@
     const faites = liste.filter((m) => m.etat !== 'en_cours').length;
     const de = un
       ? (un.defi ? 'Défi de la semaine'
-        : `Mission ${DIFFICULTES[un.difficulte] ?? ''} du jour · ${faites}/${liste.length}`.replace('  ', ' '))
+        : `${DIFFICULTES[un.difficulte] ?? 'Mission du jour'} · ${faites}/${liste.length}`)
       : neuves.map((m) => esc(m.titre.trim())).join(' · ');
     /* Ce qui vient : le sachet des trois missions, tant qu'il n'est pas pris. */
     const sachet = q?.missions?.sachet;
