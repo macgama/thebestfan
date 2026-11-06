@@ -35,6 +35,7 @@
     "ensemble:smoke": "node scripts/ensemble-smoke.mjs",
     "presence:smoke": "node scripts/presence-smoke.mjs",
     "frequentation:smoke": "node scripts/frequentation-smoke.mjs",
+    "usage:smoke": "node scripts/usage-smoke.mjs",
     "notifications:smoke": "node scripts/notifications-smoke.mjs",
     "confidentialite:smoke": "node scripts/confidentialite-smoke.mjs",
     "legal:smoke": "node scripts/legal-smoke.mjs",

@@ -24,6 +24,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { SESSION_TTL_MS } from '../src/server/auth/store.js';
+import { GARDE_JOURS as GARDE_USAGE } from '../src/server/usage/index.js';
 import { COOKIE } from '../src/server/auth/routes.js';
 import { PAR_CLE } from '../src/shared/reglages.js';
 import { estLaNuit } from '../src/server/notifications/index.js';
@@ -68,6 +69,8 @@ if (brouillon.length) console.log('        restent :', brouillon.join(' · '));
 
 console.log('\nCe qu’elle promet, et ce que le code tient\n');
 
+check('les pages ouvertes : quatre-vingt-dix jours, comme GARDE_JOURS (usage)',
+  GARDE_USAGE === 90 && dit('effacé après quatre-vingt-dix jours'));
 check('les sessions : trente jours sans visite, comme SESSION_TTL_MS',
   SESSION_TTL_MS === 30 * 24 * 3600 * 1000 && dit('ou trente jours sans visite'));
 

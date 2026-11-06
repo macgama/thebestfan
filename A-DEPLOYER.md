@@ -1,5 +1,17 @@
 # À déposer sur Infomaniak
 
+**Suivi des joueurs dans /admin** (branche `claude/project-thread-1ns4np`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma : les pages ouvertes
+se comptent dans `compteurs_jour`, qui existe déjà. JOUEURS › COMPTES dit la
+dernière visite de chaque joueur, ses duels (victoires, contre des bots), ses
+Virages, boosters, mini-jeux, pronostics, achats et ses pages préférées sur
+30 jours ; le nouveau sous-onglet USAGE dit, sur 24 h, 7, 30 ou 90 jours, ce
+que les joueurs font le plus (admins exclus). La page de confidentialité le
+dit. Les pages se comptent à partir de la mise en ligne. Après la mise en
+ligne : « Redémarrer ».
+
+---
+
 **Traductions à jour et images des autres clones** (branche
 `claude/project-thread-ojr7rb`, 6 novembre 2026, demande de Gaël). Code et
 textes seuls, sans schéma. Les 199 textes encore en français (page du PASS,

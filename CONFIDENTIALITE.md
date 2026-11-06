@@ -37,6 +37,9 @@ rubriques.
   vérification, le prénom (ou le nom, ou le début de l'adresse) pour le pseudo
   de départ, et la langue. Le compte reçoit un mot de passe aléatoire que
   personne ne connaît.
+- **Les pages ouvertes** (6 novembre 2026) : `src/server/usage` compte dans
+  `compteurs_jour` (clés `v:<page>`) un nombre d'ouvertures par joueur, page et
+  jour, pour JOUEURS › USAGE de `/admin` ; effacé après `GARDE_JOURS` (90).
 - **En jouant** : les tables de `sql/` ; le quotidien, `sql/quotidien.sql` ;
   les pronostics, `sql/pronostics.sql` ; le grand livre, `src/server/recompenses.js`.
 - **Ce que les autres voient** : les classements, `src/server/classements/index.js`
