@@ -316,6 +316,10 @@ const SERIE = {
   TB: 'the very first supporter of the game, in the brand colours orange, white '
     + 'and black: a black bomber jacket with orange cuffs, a long knitted bar '
     + 'scarf in orange, white and black with no text, a white megaphone',
+  /* CARNET PLEIN : le Fanzzy de fin de carnet de chaque PASS (6 novembre
+     2026), un trophée doré, chacun au thème de sa saison (son histoire). */
+  CP: 'a season trophy supporter with gold accents, a long knitted bar scarf in '
+    + 'gold and dark brown with no text, a small golden stamp-card medal pinned on the chest',
 };
 
 /** Les séries où le personnage n'a pas de corps humain : rien à tirer. */

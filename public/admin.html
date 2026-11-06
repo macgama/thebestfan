@@ -2269,16 +2269,22 @@ const VUES = {
           PASS est écrite dans le code (<code>src/shared/pass.js</code>).
           Un PASS fini revient en boutique le 1er du deuxième mois après la fin de sa saison,
           au même prix : l’acheteur n’a que la tenue (1er âge, les autres dans ses boosters),
-          sans cadre, badge, club ni KOP en plus, ni tampon « ÉDITION ORIGINALE ».</p></div>
+          sans cadre, badge, club ni KOP en plus, ni tampon « ÉDITION ORIGINALE ».
+          Le <b>Fanzzy du carnet plein</b> (série CARNET PLEIN) va à tous ceux qui atteignent
+          le dernier palier du carnet de sa saison, avec ou sans PASS ; il ne sort d’aucun
+          booster, et se coupe par le réglage « Le Fanzzy du carnet plein se gagne ».</p></div>
       <h3 class="h3">LES PASS PAR SAISON</h3>
       <div class="tbl"><table><thead><tr><th>SAISON</th><th>TENUE</th><th>PAYÉS CARTE</th>
-        <th>PAYÉS ÉCHARPES</th><th>OFFERTS</th><th>DONT APRÈS LA SAISON</th><th>TOTAL</th></tr></thead><tbody>
+        <th>PAYÉS ÉCHARPES</th><th>OFFERTS</th><th>DONT APRÈS LA SAISON</th><th>TOTAL</th>
+        <th>FANZZY DU CARNET PLEIN</th></tr></thead><tbody>
         ${d.registre.map((p) => { const v = ventes.get(p.numero) ?? {}; return `<tr>
           <td><b>${esc(p.nom)}</b>${enCours?.numero === p.numero
             ? ' <span class="pill vert">EN COURS</span>' : ''}</td>
           <td>${esc(p.tenue ?? '—')}</td><td>${v.stripe ?? 0}</td><td>${v.echarpes ?? 0}</td>
-          <td>${v.offert ?? 0}</td><td>${v.tard ?? 0}</td><td><b>${v.total ?? 0}</b></td></tr>`; }).join('')
-          || '<tr><td colspan="7" class="vide">Aucun PASS.</td></tr>'}
+          <td>${v.offert ?? 0}</td><td>${v.tard ?? 0}</td><td><b>${v.total ?? 0}</b></td>
+          <td>${p.trophee ? `${esc(p.trophee.nom)} (${esc(p.trophee.fanzzy)}) · <b>${
+            p.trophee.gagnants ?? 0}</b> gagnant${(p.trophee.gagnants ?? 0) > 1 ? 's' : ''}` : '—'}</td></tr>`; }).join('')
+          || '<tr><td colspan="8" class="vide">Aucun PASS.</td></tr>'}
       </tbody></table></div>
       <h3 class="h3">LES DERNIERS PASS</h3>
       <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>SAISON</th><th>COMMENT</th>

@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Fanzzy du carnet plein, un par PASS** (branche `claude/project-thread-bb7bji`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma. Nouvelle série
+cadeau CARNET PLEIN (CP), jamais dans un booster : le Gardien du Feu (PASS 1),
+le Ferrailleur (PASS 2), le Capitaine Comète (PASS 3), le Fantôme du Virage
+(PASS 4). Qui atteint le dernier palier du carnet de la saison le reçoit, avec
+ou sans PASS ; le carnet de /aide le montre sous cadenas au bout, puis gagné,
+avec le nombre de gagnants, et une fête plein écran le jour du gain. Réglage
+« Le Fanzzy du carnet plein se gagne » et colonne des gagnants dans /admin ›
+PASS. Les images arrivent par un envoi séparé depuis le PC. Après la mise en
+ligne : « Redémarrer ».
+
+---
+
 **Titre de l'Ultimate traduit** (branche `claude/project-thread-lo6qgq-ultime`,
 6 novembre 2026). Code seul, sans schéma : en anglais (et dans les autres
 langues), la grande scène de l'Ultimate affichait son titre en français

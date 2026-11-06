@@ -1871,11 +1871,22 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     /* Pendant la BASE (saison 0), c'est le PASS 1 qui se vend. */
     if (Number(enCours?.numero) === 0) numeros.add(1);
     for (const n of parSaison.keys()) numeros.add(n);
+    /* Le Fanzzy du carnet plein de chaque PASS et ses gagnants (6 novembre
+       2026) : la carte possédée est la seule trace (`quotidien/trophee.js`). */
+    const registre = [...numeros].sort((a, b) => b - a).map((n) => passDe(n));
+    const ids = registre.map((p) => p.trophee?.fanzzy).filter(Boolean);
+    const gagnants = new Map();
+    if (ids.length) {
+      for (const r of await q(`SELECT fanzzy_id, COUNT(*) AS n FROM user_fanzzy
+          WHERE fanzzy_id IN (${ids.map(() => '?').join(',')}) GROUP BY fanzzy_id`, ids)
+        .catch(sansTable)) gagnants.set(r.fanzzy_id, Number(r.n));
+    }
     res.json({
       enCours: enCours ? { numero: Number(enCours.numero), nom: enCours.nom ?? null,
         fin: enCours.fin ?? null } : null,
       prixEuros: ARTICLE_PAR_ID.get('pass-saison')?.prix ?? null,
-      registre: [...numeros].sort((a, b) => b - a).map((n) => passDe(n)),
+      registre: registre.map((p) => (p.trophee
+        ? { ...p, trophee: { ...p.trophee, gagnants: gagnants.get(p.trophee.fanzzy) ?? 0 } } : p)),
       ventes: [...parSaison.values()],
       detenteurs: detenteurs.map((d) => ({ id: d.user_id, pseudo: d.pseudo,
         saison: Number(d.saison), source: d.source, le: d.achete_le })),
