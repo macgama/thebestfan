@@ -245,7 +245,7 @@
     'FR48C', 'FR49', 'FR49B', 'FR49C', 'FR50', 'FR50B', 'FR50C', 'FR51',
     'FR51B', 'FR51C', 'FR52', 'FR52B', 'FR52C', 'FR53', 'FR53B', 'FR53C',
     'FR54', 'FR54B', 'FR54C', 'FR55', 'FR56', 'FR57', 'FR58', 'FR59',
-    'FR60',
+    'FR60', 'TB1',
   ]);
 
   /**
@@ -596,7 +596,7 @@
     FR52C: '10f9dc4a84', FR53: 'c43b9042eb', FR53B: '00a42b6e2a', FR53C: 'b5bf2efca7',
     FR54: '192ab87f78', FR54B: 'c5f0ed8777', FR54C: 'b3dc1dc0f3', FR55: 'cdf25515f7',
     FR56: 'a168a7743a', FR57: '48561622bc', FR58: '876c474aa3', FR59: 'cbdcd895e6',
-    FR60: 'ac6ae160e4',
+    FR60: 'ac6ae160e4', TB1: '15a689bb20',
   };
 
   /**
