@@ -1,6 +1,6 @@
 {
   "id": "HC46",
-  "rev": 28,
+  "rev": 29,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,7 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "063f8bedecbc",
+          "sha": "222980a9767e",
           "cligne": true
         },
         "apocalyptique": {
@@ -26,7 +26,7 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "72dbcb93bebe",
+          "sha": "d218250839b2",
           "cligne": true
         },
         "prehistorique": {
@@ -39,8 +39,20 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "27f3002f35f4",
+          "sha": "d0650d9d38ec",
           "cligne": true
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "78884df1f2a1"
         }
       }
     },
@@ -138,6 +150,18 @@
           "repli": "base",
           "sha": "bd24fafd7bdd",
           "cligne": true
+        },
+        "halloween": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "3df3003f6429"
         }
       }
     }
