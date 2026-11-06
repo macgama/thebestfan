@@ -9579,7 +9579,7 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
   z-index:2;overflow:visible;transform-origin:50% 90%;filter:drop-shadow(0 3px 0 var(--encre,#111))}
 .tbf-cadeau-couvercle{transform-box:fill-box;transform-origin:50% 100%}
 .tbf-cadeau-ouvert .tbf-cadeau-couvercle{opacity:0}
-.tbf-cadeau-scene--perso .tbf-cadeau-paquet{left:calc(50% + 46px);width:70px;height:70px;margin-left:-35px}
+.tbf-cadeau-scene--perso .tbf-cadeau-paquet{left:calc(50% + 50px);width:84px;height:84px;margin-left:-42px}
 .tbf-cadeau-eclat{position:absolute;left:50%;top:58%;width:90px;height:90px;margin:-45px 0 0 -45px;
   border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,240,190,.85) 35%,transparent 70%);
   opacity:0;pointer-events:none;z-index:1}
@@ -9590,6 +9590,7 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 /* Un cadeau et sa précision (« pour Le Choriste », la rareté) : en colonne. */
 .tbf-cadeau-ligne{display:flex;flex-direction:column;align-items:center}
 .tbf-cadeau-ligne small{display:block;margin-top:7px;font-size:12px}
+.tbf-cadeau-ligne .tbf-cadeau-rar{margin-top:6px;font-size:11px;rotate:2deg}
 .tbf-niv-butin .tbf-sticker svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;
   stroke-linejoin:round;vertical-align:-2px;margin-right:5px}
 .tbf-niv-butin .tbf-sticker .tbf-distinction svg{width:16px;height:18px;stroke:none}

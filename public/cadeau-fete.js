@@ -152,25 +152,26 @@
           c.n > 1 ? 'BOOSTERS' : 'BOOSTER'}</span>`);
       } else if (c.sorte === 'fanzzy') {
         const rar = RARETES[c.rar] ?? '';
-        l.push(`<span class="tbf-cadeau-ligne"><span class="tbf-sticker${d()}" data-ton="or">${ETOILE}FANZZY ${
-          esc(String(c.nom ?? '').toUpperCase())}</span>${rar ? `<small>${esc(rar)}</small>` : ''}</span>`);
+        l.push(`<span class="tbf-cadeau-ligne${d()}"><span class="tbf-sticker" data-ton="or">${ETOILE}FANZZY ${
+          esc(String(c.nom ?? '').toUpperCase())}</span>${rar ? `<span class="tbf-sticker tbf-cadeau-rar"${
+          c.rar === 'legendaire' || c.rar === 'epique' ? ' data-ton="flare"' : ''}>${esc(rar)}</span>` : ''}</span>`);
       } else if (c.sorte === 'skin') {
-        l.push(`<span class="tbf-cadeau-ligne"><span class="tbf-sticker${d()}">${ETOILE}TENUE ${
+        l.push(`<span class="tbf-cadeau-ligne${d()}"><span class="tbf-sticker">${ETOILE}TENUE ${
           esc(String(c.nom ?? '').toUpperCase())}</span><small>pour ${esc(c.nomFanzzy)}</small></span>`);
       } else if (c.sorte === 'ultime') {
-        l.push(`<span class="tbf-cadeau-ligne"><span class="tbf-sticker${d()}" data-ton="or">${ETOILE}CARTE ULTIMATE</span>
+        l.push(`<span class="tbf-cadeau-ligne${d()}"><span class="tbf-sticker" data-ton="or">${ETOILE}CARTE ULTIMATE</span>
           <small>pour ${esc(c.nomFanzzy)}</small></span>`);
       } else if (c.sorte === 'stuff') {
         l.push(`<span class="tbf-sticker${d()}">${ETOILE}${esc(String(c.nom ?? '').toUpperCase())}</span>`);
       } else if (c.sorte === 'pass') {
-        l.push(`<span class="tbf-cadeau-ligne"><span class="tbf-sticker${d()}" data-ton="or">${BILLET}LE PASS ${
+        l.push(`<span class="tbf-cadeau-ligne${d()}"><span class="tbf-sticker" data-ton="or">${BILLET}LE PASS ${
           esc(c.saison)}</span>${c.nom && c.nom !== `PASS ${c.saison}` ? `<small>${esc(c.nom)}</small>` : ''}</span>`);
       } else if (c.sorte === 'abonnement') {
         l.push(`<span class="tbf-sticker${d()}">${BILLET}${c.jours ? `ABONNEMENT ${esc(MOIS(c.jours))}`
           : 'ABONNEMENT OFFERT'}</span>`);
       } else if (c.sorte === 'distinction') {
-        const badge = window.TBF_PASS?.distinctions?.([c.distinction], '') ?? '';
-        l.push(`<span class="tbf-cadeau-ligne"><span class="tbf-sticker${d()}" data-ton="or">${badge}BADGE ${
+        const badge = window.TBF_PASS?.distinctions?.([c.distinction], '') || ETOILE;
+        l.push(`<span class="tbf-cadeau-ligne${d()}"><span class="tbf-sticker" data-ton="or">${badge}BADGE ${
           esc(String(c.nom ?? '').toUpperCase())}</span>${c.texte ? `<small>${esc(c.texte)}</small>` : ''}</span>`);
       }
     }
@@ -190,6 +191,11 @@
     const perso = scene.querySelector('.tbf-cadeau-perso');
     const eclat = scene.querySelector('.tbf-cadeau-eclat');
     const F = window.FX;
+    /* Un dessin qui ne répond pas : le paquet seul, au milieu. */
+    perso?.addEventListener('error', () => {
+      perso.remove();
+      scene.classList.remove('tbf-cadeau-scene--perso');
+    }, { once: true });
     const ouvrir = () => {
       scene.classList.add('tbf-cadeau-ouvert');
     };

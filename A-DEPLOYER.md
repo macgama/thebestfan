@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**L'alerte « cadeau reçu »** (branche `claude/project-thread-x9m6y9`,
+6 novembre 2026, demande de Gaël). Quand l'admin offre quelque chose depuis
+/admin › JOUEURS (écharpes, boosters, Fanzzy, tenue, Ultimate, pièce, PASS,
+abonnement, cadeau Fondateur), un paquet cadeau s'ouvre chez le joueur à sa
+prochaine visite, ou dans la minute s'il est en ligne. **Schéma :
+`sql/cadeaux.sql`** (une colonne `user_wallet.cadeau_vu`, acceptée par Gaël),
+appliqué par la mise en ligne. **Redémarrer** (nouvelle route `/api/cadeaux`).
+
+---
+
 **L'administration sur toute la largeur de l'écran** (branche
 `claude/project-thread-cgkjy6`, 6 novembre 2026, demande de Gaël). Page
 /admin seule, sans schéma : plus de plafond à 1 100 px, le tableau JOUEURS ›

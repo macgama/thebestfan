@@ -57,6 +57,11 @@ const json = (v) => {
   try { return JSON.parse(v); } catch { return null; }
 };
 const entier = (x) => (Number.isInteger(Number(x)) ? Number(x) : 0);
+/* Un catalogue pas encore chargé ne doit pas empêcher la fête : le nom
+   retombe sur l'identifiant. */
+const sur = (f) => { try { return f(); } catch { return undefined; } };
+const fanzzyPar = (id) => sur(() => parIdentifiant(String(id ?? '')));
+const tenueDe = (id) => sur(() => tenuePar(String(id ?? '')));
 const colonneAbsente = (e) => e?.code === 'ER_BAD_FIELD_ERROR' || e?.code === 'ER_NO_SUCH_TABLE';
 
 /**
@@ -80,15 +85,15 @@ export function cadeauxDe(lignes) {
         if (fondateur && d.fanzzy === FANZZY_FONDATEUR) continue;
         if (dejaFanzzy.has(d.fanzzy)) continue;
         dejaFanzzy.add(d.fanzzy);
-        const f = parIdentifiant(String(d.fanzzy ?? ''));
+        const f = fanzzyPar(d.fanzzy);
         out.push({ sorte: 'fanzzy', fanzzy: d.fanzzy, nom: f?.nom ?? d.fanzzy,
           rar: f?.rar ?? null, set: f?.set ?? null });
       } else if (d.sorte === 'skin') {
-        const f = parIdentifiant(String(d.fanzzy ?? ''));
+        const f = fanzzyPar(d.fanzzy);
         out.push({ sorte: 'skin', fanzzy: d.fanzzy, nomFanzzy: f?.nom ?? d.fanzzy,
-          age: entier(d.age) || 1, skin: d.skin, nom: tenuePar(String(d.skin ?? ''))?.nom ?? d.skin });
+          age: entier(d.age) || 1, skin: d.skin, nom: tenueDe(d.skin)?.nom ?? d.skin });
       } else if (d.sorte === 'ultime') {
-        const f = parIdentifiant(String(d.fanzzy ?? ''));
+        const f = fanzzyPar(d.fanzzy);
         out.push({ sorte: 'ultime', fanzzy: d.fanzzy, nomFanzzy: f?.nom ?? d.fanzzy,
           age: entier(d.age) || 1 });
       } else if (d.sorte === 'stuff') {
@@ -98,8 +103,8 @@ export function cadeauxDe(lignes) {
     } else if (l.action === 'pass.accorder') {
       const saison = entier(d.saison);
       if (saison < 1) continue;
-      const p = passDe(saison);
-      out.push({ sorte: 'pass', saison, nom: p.nom, couleur: p.couleur });
+      const p = sur(() => passDe(saison)) ?? {};
+      out.push({ sorte: 'pass', saison, nom: p.nom ?? `PASS ${saison}`, couleur: p.couleur ?? null });
     } else if (l.action === 'abonnement.accorder') {
       out.push({ sorte: 'abonnement', formule: d.formule ?? 'offert',
         jours: d.jours == null ? null : entier(d.jours) });
@@ -111,7 +116,7 @@ export function cadeauxDe(lignes) {
       }
       if (d.fanzzy && !dejaFanzzy.has(FANZZY_FONDATEUR)) {
         dejaFanzzy.add(FANZZY_FONDATEUR);
-        const f = parIdentifiant(FANZZY_FONDATEUR);
+        const f = fanzzyPar(FANZZY_FONDATEUR);
         out.push({ sorte: 'fanzzy', fanzzy: FANZZY_FONDATEUR, nom: f?.nom ?? 'TheBestFan',
           rar: f?.rar ?? null, set: f?.set ?? null });
       }
