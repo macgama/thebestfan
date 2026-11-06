@@ -50,6 +50,10 @@ export const CADRAGES = {
   SU31C: { y: 0.31, c: 0.46 },
   SU35: { y: 0.3, c: 0.5 }, SU35B: { y: 0.34, c: 0.5 }, SU35C: { y: 0.4, c: 0.5 },
   SU36: { y: 0.34, c: 0.5 }, SU36B: { y: 0.43, c: 0.5 }, SU36C: { y: 0.45, c: 0.5 },
+  // Le Parcage : la coquille Saint-Jacques a le visage au milieu de sa valve,
+  // le conteneur d'âge 3 porte une grue au-dessus de sa tête.
+  FR39: { y: 0.48, c: 0.52 }, FR39B: { y: 0.5, c: 0.52 }, FR39C: { y: 0.55, c: 0.52 },
+  FR40C: { y: 0.3, c: 0.46 },
 };
 
 /** La carte d'un âge : `RP34` et 3 → `RP34C`. */
