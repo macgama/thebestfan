@@ -1,6 +1,6 @@
 {
   "id": "FR11",
-  "rev": 3,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -15,6 +15,21 @@
           "portrait": true,
           "sha": "f9fa83ba46fc",
           "cligne": true
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "e7370227cac5"
         }
       }
     },
