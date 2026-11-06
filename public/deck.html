@@ -1578,6 +1578,9 @@ async function enregistrer() {
       actions: S.deck.actions,
     } });
     S.sale = false;
+    /* Le titulaire a pu changer, et avec lui le Fanzzy de l'accueil : ce que
+       l'accueil et la barre en retenaient ne vaut plus (nav.js, `TBF_PERSO`). */
+    window.TBF_PERSO?.oublier?.();
     rendre();
     const av = (r.avertissements ?? []).map((a) => MESSAGES[a.code]).filter(Boolean);
     toast(av.length ? av[0] : 'Deck enregistré.');

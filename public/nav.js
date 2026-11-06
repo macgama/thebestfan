@@ -489,6 +489,35 @@
     window.dispatchEvent(new CustomEvent('tbf:hud', { detail: JSON.parse(JSON.stringify(d)) }));
   };
 
+  /* **Le souvenir de l'accueil suit le serveur** (Gaël, 6 novembre 2026 :
+     « un autre Fanzzy est affiché 1-2 secondes, et ensuite mon Fanzzy
+     apparaît »). L'accueil repose dès sa première ligne le personnage qu'il
+     montrait à la dernière visite (`tbf.perso`, index.html). Changé ailleurs
+     — un autre titulaire au deck, une tenue, un âge —, ce souvenir repeignait
+     l'ancien jusqu'à la réponse du serveur. Chaque fois qu'un écran lit
+     l'avatar résolu, on le confronte au souvenir et on oublie celui-ci s'il
+     ne dit plus la même chose : l'accueil attendra alors la réponse sur une
+     scène vide, plutôt que de montrer quelqu'un d'autre. */
+  const SOUVENIR_ACCUEIL = 'tbf.perso';
+  const accorderSouvenir = (av) => {
+    try {
+      const s = JSON.parse(localStorage.getItem(SOUVENIR_ACCUEIL) ?? 'null');
+      if (!s) return;
+      const meme = s.aucun ? !av
+        : Boolean(av) && s.id === av.id && (s.evo ?? 1) === av.evo && (s.skin ?? 'base') === av.skin;
+      if (!meme) localStorage.removeItem(SOUVENIR_ACCUEIL);
+    } catch { /* stockage fermé : l'accueil n'a rien retenu non plus */ }
+  };
+  /* Pour un écran qui vient de changer le personnage montré sans relire le
+     portefeuille (le deck enregistré, « titulaire » sur la fiche) : ce que
+     l'accueil et la barre retiennent ne vaut plus. */
+  window.TBF_PERSO = Object.freeze({
+    oublier() {
+      try { localStorage.removeItem(SOUVENIR_ACCUEIL); } catch { /* rien à oublier */ }
+      try { sessionStorage.removeItem(CLE_HUD); } catch { /* rien à oublier */ }
+    },
+  });
+
   const memeAvatar = (a, b) => Boolean(a && b)
     && a.id === b.id && a.evo === b.evo && a.skin === b.skin;
 
@@ -615,6 +644,7 @@
   let surBourse = null;
   window.addEventListener('tbf:bourse', (e) => {
     const w = portefeuilleDe(e.detail?.wallet ?? e.detail) ?? etatDeLaPage();
+    if (w && 'avatar' in w) accorderSouvenir(w.avatar);
     const niv = niveauDe(e.detail?.niveau);
     if (surBourse) surBourse(w, niv);
     else if (w) {
@@ -639,6 +669,7 @@
   async function chargerHud() {
     const [etat, niveau] = await Promise.all([lireJson('/api/fanzzy/state'), lireNiveau()]);
     const w = portefeuilleDe(etat?.wallet);
+    if (w && 'avatar' in w) accorderSouvenir(w.avatar);
     if (w?.scarves === undefined) return null;
     const d = composer({ ...w, packs: w.packs ?? 0, avatar: w.avatar ?? null },
       niveau, Date.now());

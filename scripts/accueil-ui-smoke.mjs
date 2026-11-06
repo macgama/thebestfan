@@ -897,6 +897,68 @@ for (const [nom, l, h, plancher] of [
   await page.close();
 }
 
+/* ----------------------------- un souvenir périmé ne passe pas devant
+
+ * Gaël, 6 novembre 2026 : « des fois, lorsque je reviens sur la page HOME,
+ * j'ai un autre Fanzzy qui est affiché (1-2 secondes) et ensuite, mon fanzzy
+ * apparaît ». Le souvenir de l'accueil datait de la dernière visite, et le
+ * joueur avait changé de titulaire ailleurs : l'ancien repassait le temps de
+ * la réponse. La barre des autres écrans (`tbf-hud`) connaît le bon ; si elle
+ * contredit le souvenir, celui-ci ne s'affiche plus. Et faute de souvenir,
+ * le supporter générique n'arrive plus au bout d'une seconde et demie : la
+ * scène reste vide jusqu'à la réponse.
+ */
+{
+  await equiper(ILLUSTRE);
+  const page = await ouvrir();
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  const lu = await page.evaluate(() => JSON.parse(localStorage.getItem('tbf.perso') ?? 'null'));
+  check('la visite a retenu le Fanzzy équipé', lu?.id === ILLUSTRE
+    || (console.log('        souvenir :', JSON.stringify(lu)), false));
+  /* Un souvenir d'un autre personnage, et la barre qui dit le vrai. */
+  await page.evaluate((vrai) => {
+    localStorage.setItem('tbf.perso', JSON.stringify({ ...vrai, id: 'ZZ99', carte: 'ZZ99', nom: 'Intrus' }));
+    sessionStorage.setItem('tbf-hud', JSON.stringify({ qui: 'x', t: Date.now(), scarves: 0, packs: 0,
+      avatar: { id: vrai.id, age: vrai.carte ?? vrai.id, evo: vrai.evo ?? 1, skin: vrai.skin ?? 'base' } }));
+  }, lu);
+
+  retardFanzzy = 2200;
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  const vus = [];
+  const t0 = Date.now();
+  while (Date.now() - t0 < 2000) {
+    const src = await page.evaluate(() =>
+      document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '');
+    if (src && !vus.includes(src)) vus.push(src);
+    await new Promise((r) => setTimeout(r, 40));
+  }
+  retardFanzzy = 0;
+  check('un souvenir que la barre contredit ne s’affiche pas',
+    !vus.some((s) => s.includes('ZZ99'))
+    || (console.log('        vus :', vus.join(' puis ')), false));
+  check('et le supporter ne vient pas boucher l’attente',
+    !vus.some((s) => s.includes('/img/supporter/'))
+    || (console.log('        vus :', vus.join(' puis ')), false));
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  const fin = await page.evaluate(() =>
+    document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '');
+  check('puis c’est son Fanzzy qui arrive', fin.includes(ILLUSTRE)
+    || (console.log('        elle montre :', fin), false));
+
+  /* Feuilleter les âges n'est pas choisir : le souvenir garde l'âge validé. */
+  const apres = await page.evaluate(() => JSON.parse(localStorage.getItem('tbf.perso') ?? 'null'));
+  const ages = apres?.atteint ?? 1;
+  if (ages > 1) {
+    const avant = apres.evo;
+    await page.click(avant > 1 ? '#ageAvant' : '#ageApres').catch(() => {});
+    await new Promise((r) => setTimeout(r, 600));
+    const garde = await page.evaluate(() => JSON.parse(localStorage.getItem('tbf.perso') ?? 'null'));
+    check('feuilleter un âge ne change pas le souvenir', garde?.evo === avant
+      || (console.log('        souvenir :', JSON.stringify(garde)), false));
+  }
+  await page.close();
+}
+
 /* ------------------------------------- et quand il n'y a pas de Fanzzy
 
    Le supporter n'est pas un intrus : sans Fanzzy équipé, c'est **le bon**
