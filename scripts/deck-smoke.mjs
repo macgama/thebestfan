@@ -392,6 +392,14 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
   check('avec sa compétition', inconnu?.league_name === 'Premier League');
   check('et ce qui se joue passe devant', r.json.matchs[0]?.id === 5000);
 
+  /* **Les matchs du jour** (`?jour=1`, l'onglet MATCHS DU JOUR du duel,
+     6 novembre 2026) : tous les clubs, aujourd'hui seulement. */
+  const jour = (await call('/api/deck/matchs?jour=1')).json.matchs ?? [];
+  check('MATCHS DU JOUR : tous les clubs, et seulement aujourd’hui',
+    jour.some((m) => m.id === 5000) && jour.length > 0 && jour.every((m) => m.aujourdhui === 1)
+    && !jour.some((m) => m.id === 3)
+    || (console.log('        ', jour.map((m) => `${m.id}:${m.aujourdhui}`).join(' ')), false));
+
   /* **Un match fini du jour reste dans la liste.** Il en sortait, et c'était
      cohérent tant que « classé » voulait dire « en cours » : une rencontre
      terminée ne pouvait plus rien valoir. Depuis que la règle est la journée,

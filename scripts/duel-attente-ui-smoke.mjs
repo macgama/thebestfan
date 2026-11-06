@@ -186,6 +186,7 @@ await jusqua(() => T.page.evaluate(() => performance.getEntriesByType('resource'
 
 /* 1. Le créateur entre en file. */
 const H = await ouvrir(HOTE, '/duel-nvn');
+await capture(H.page, '00-matchs-du-jour');
 await H.page.evaluate(() => entrerEnFile());
 check('le vestiaire s’ouvre', await jusqua(() => H.page.evaluate(() =>
   Boolean(document.getElementById('inviterAmi')))));
@@ -237,7 +238,7 @@ const ongletAttente = () => D.page.evaluate(() => {
 });
 check('l’onglet EN ATTENTE compte le duel qui attend', await jusqua(async () => {
   const o = await ongletAttente();
-  return o && /EN ATTENTE\s*1/.test(o.texte) && !o.zero;
+  return o && /EN ATTENTE DE JOUEURS\s*1/.test(o.texte) && !o.zero;
 }, 8000) || (console.log('        onglet :', JSON.stringify(await ongletAttente())), false));
 await D.page.click('[data-portee="attente"]');
 check('un appui montre ce match, son format et le camp qui manque', await jusqua(() => D.page.evaluate(() =>
