@@ -3403,6 +3403,7 @@
     'SU41-e1-prehistorique': 'SU41-e1-prehistorique.1b882985.mp4',
     'SU42-e1': 'SU42-e1.828a1199.mp4',
     'SU42-e1-prehistorique': 'SU42-e1-prehistorique.45ab60d8.mp4',
+    'TB1-e1': 'TB1-e1.daa0e3d3.mp4',
   };
   /* CLIPS: fin */
 
