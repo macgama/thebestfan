@@ -481,6 +481,129 @@ export const STADES = [
     mods: { pushMult: 1.3, parryBonus: 1.2, breathBonus: 0.85, tempoWindow: 0.82 },
     effet: 'Le match de l’année : on pousse et on se contre comme jamais, et plus personne ne souffle.',
   },
+  /* ============================================ LES HÉROS DU CANAPÉ (5)
+
+     Cinq lieux pour la série HC, celle du PASS 1 (bilan du 6 novembre 2026 :
+     « cinq stades par série », la règle de Gaël du 5 novembre). Des stades
+     d'hiver vus par ceux qui supportent depuis chez eux : le canapé, le
+     plaid, l'écran géant, le match de minuit et le canapé d'or. Fermés
+     (`publie: false`) jusqu'au PASS 1 ; chacun ouvre une porte et en ferme
+     une, pour les deux tribunes à la fois.                                 */
+  {
+    id: 'hc-salon',
+    nom: 'Le Salon Géant',
+    rar: 'commune',
+    publie: false,
+    texte: 'Les tribunes ont des coussins. Personne ne sait qui a eu l’idée, tout le monde est d’accord.',
+    /* Trop bien assis : on reprend son souffle sans effort, mais on ne pousse
+       jamais tout à fait debout. */
+    mods: { breathBonus: 1.15, pushMult: 0.92 },
+    effet: 'Trop bien assis : le souffle revient vite, mais on pousse moins fort.',
+  },
+  {
+    id: 'hc-plaid',
+    nom: 'La Nuit des Plaids',
+    rar: 'rare',
+    publie: false,
+    texte: 'Moins cinq dehors. Tout le virage est sous les plaids, jusqu’au menton.',
+    /* Emmitouflé, on tient un chant longtemps, mais les bras sous la
+       couverture contrent mal. */
+    mods: { holdBonus: 1.15, parryBonus: 0.88 },
+    effet: 'Sous les plaids, les chants tenus durent, mais on se contre mal.',
+  },
+  {
+    id: 'hc-fanzone',
+    nom: 'La Fan-Zone',
+    rar: 'rare',
+    publie: false,
+    texte: 'Un écran géant au bout du terrain, et toute la ville devant. Le match passe deux fois.',
+    /* Tout le monde regarde et réagit ensemble : la ferveur monte vite, mais
+       le léger retard de l'écran fait glisser le rythme. */
+    mods: { ferveurBonus: 1.18, tempoWindow: 0.9 },
+    effet: 'Toute la ville devant l’écran : la ferveur monte vite, mais le rythme glisse.',
+  },
+  {
+    id: 'hc-minuit',
+    nom: 'Le Match de Minuit',
+    rar: 'epique',
+    publie: false,
+    texte: 'Coup d’envoi à minuit, en pyjama. Les voisins ont fini par descendre aussi.',
+    /* On chante à voix basse et on se relaie : le souffle dépensé revient,
+       le martelage, lui, réveillerait l'immeuble. */
+    mods: { refundBonus: 1.25, mashBonus: 0.85 },
+    effet: 'En pyjama, on se relaie : le souffle dépensé revient mieux, le martelage porte moins.',
+  },
+  {
+    id: 'hc-canape-or',
+    nom: 'Le Canapé d’Or',
+    rar: 'legendaire',
+    publie: false,
+    texte: 'Une tribune entière en un seul canapé doré. On dit qu’il n’a jamais vu une défaite.',
+    /* Le trône des héros du salon : on pousse et on tombe juste comme
+       jamais, et l'on en oublie de respirer. */
+    mods: { pushMult: 1.3, perfectBonus: 1.2, breathBonus: 0.85, tempoWindow: 0.82 },
+    effet: 'Le trône du salon : on pousse et on tombe juste comme jamais, et plus personne ne souffle.',
+  },
+
+  /* ==================================================== DIE KURVE (5)
+
+     Cinq lieux pour la série SU, le championnat suisse du PASS 1 (même
+     bilan). Des stades **suisses** sans club : ni écusson, ni drapeau, ni nom
+     sur un toit — le bord du lac, le foehn, le pont couvert, les toupins et
+     le glacier. Fermés jusqu'au PASS 1, comme les pièces `su-`.           */
+  {
+    id: 'su-lac',
+    nom: 'Le Bord du Lac',
+    rar: 'commune',
+    publie: false,
+    texte: 'Le terrain s’arrête au quai. Derrière le but, les cygnes regardent le match.',
+    /* L'air du lac est doux : on respire bien, mais la poussée se perd sur
+       l'eau. */
+    mods: { breathBonus: 1.15, pushMult: 0.92 },
+    effet: 'L’air du lac rend le souffle, mais la poussée se perd sur l’eau.',
+  },
+  {
+    id: 'su-foehn',
+    nom: 'Le Foehn',
+    rar: 'rare',
+    publie: false,
+    texte: 'Le vent chaud descend des Alpes. Il fait quinze degrés en novembre, et tout le monde a mal à la tête.',
+    /* Le vent porte les notes justes loin, mais il bouscule le rythme. */
+    mods: { perfectBonus: 1.15, tempoWindow: 0.9 },
+    effet: 'Le vent chaud porte les notes justes, mais bouscule le rythme.',
+  },
+  {
+    id: 'su-pont',
+    nom: 'Le Pont Couvert',
+    rar: 'rare',
+    publie: false,
+    texte: 'Le vieux pont de bois passe juste derrière la tribune. On y chante à l’abri, en écho.',
+    /* L'écho renvoie chaque chant : on se répond mieux, mais on frappe moins
+       fort sous le toit de bois. */
+    mods: { parryBonus: 1.15, mashBonus: 0.9 },
+    effet: 'L’écho du pont renvoie chaque chant : on se contre mieux, le martelage porte moins.',
+  },
+  {
+    id: 'su-toupins',
+    nom: 'Les Toupins',
+    rar: 'epique',
+    publie: false,
+    texte: 'Mille grosses cloches de vache sonnent à chaque corner. On ne s’entend plus penser.',
+    /* Le vacarme des cloches fait monter la ferveur, et coupe le souffle. */
+    mods: { ferveurBonus: 1.2, breathBonus: 0.88 },
+    effet: 'Mille cloches à chaque corner : la ferveur grimpe, et le souffle manque.',
+  },
+  {
+    id: 'su-glacier',
+    nom: 'Le Glacier',
+    rar: 'legendaire',
+    publie: false,
+    texte: 'Un stade posé au pied du glacier, entre deux murs de glace bleue. Le froid ne fait peur à personne.',
+    /* Le sommet de DIE KURVE : on tient et on pousse comme jamais, et l'air
+       glacé coupe le souffle et les repères. */
+    mods: { holdBonus: 1.25, pushMult: 1.2, breathBonus: 0.85, tempoWindow: 0.82 },
+    effet: 'Au pied du glacier : on tient et on pousse comme jamais, et l’air glacé coupe le souffle.',
+  },
 ];
 
 export const STADE_BY_ID = new Map(STADES.map((s) => [s.id, s]));

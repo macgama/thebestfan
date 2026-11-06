@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**PASS 1 complété : stades HC et SU, tenues et Ultimate HC** (branche
+`claude/project-thread-ojr7rb`, 6 novembre 2026, demande de Gaël). Code,
+textes et images, sans schéma. Dix stades neufs, cinq pour LES HÉROS DU CANAPÉ
+(`hc-`) et cinq pour DIE KURVE (`su-`), traduits, **fermés** jusqu'au PASS 1 :
+les cocher avec la série dans /admin. HC : clignement de 4 âges Préhistoriques
+(HC1 âge 1 a désormais les yeux ouverts au repos), les 13 âges Halloween et
+Apocalyptique qui manquaient, 280 Ultimate Halloween et Apocalyptique, et les
+140 clips Ultimate de la tenue de base. Les images et clips sont déjà dans
+Documents\GitHub\thebestfan : le double-clic de mise en ligne les envoie.
+Après la mise en ligne : « Redémarrer ».
+
+---
+
 **La version passe en 1.0.0** (branche `claude/project-thread-g4lm03`,
 6 novembre 2026, demande de Gaël). Code seul, sans schéma : le menu et la
 console du serveur disent « version : 1.0.0 » à la mise en ligne qui apporte

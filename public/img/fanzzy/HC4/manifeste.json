@@ -1,6 +1,6 @@
 {
   "id": "HC4",
-  "rev": 25,
+  "rev": 27,
   "evolutions": {
     "e1": {
       "skins": {
@@ -40,6 +40,19 @@
           "portrait": true,
           "repli": "base",
           "sha": "a970abb69a85",
+          "cligne": true
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "fdb988598ef3",
           "cligne": true
         }
       }

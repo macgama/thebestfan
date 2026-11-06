@@ -282,6 +282,63 @@ export const INVITES = {
     + 'both end stands a sea of thousands of waving plain flags, giant plain '
     + 'banners unrolled over the stand fronts, the city lights and rooftops all '
     + 'around, the two side stands dark and packed, the pitch bright green',
+
+  /* ---------------------------------- les cinq de LES HÉROS DU CANAPÉ
+
+     L'hiver vu depuis le salon : coussins, plaids, écran géant, pyjamas. La
+     pelouse reste verte et éclairée, les tribunes dans l'ombre. */
+  'hc-salon': 'a cosy football ground at night whose two side stands are built '
+    + 'like enormous long sofas, the terracing made of huge soft cushions and '
+    + 'padded armrests at each end, a giant coffee table shape behind one goal, '
+    + 'warm lamp glow at the far ends only',
+
+  'hc-plaid': 'a football ground on a freezing winter night, frost on the stand '
+    + 'roofs and edges of the pitch, the dark crowd in both side stands wrapped '
+    + 'under countless knitted blankets and tartan throws as soft texture, '
+    + 'breath steam rising, the pitch bright green',
+
+  'hc-fanzone': 'an open-air fan zone at night laid out like a football ground, '
+    + 'a gigantic blank glowing screen standing behind one end (screen shows only '
+    + 'soft green light, no image, no text), crowds on temporary scaffold stands '
+    + 'on both sides in shadow, the pitch bright green',
+
+  'hc-minuit': 'a small neighbourhood football ground at midnight, apartment '
+    + 'blocks all around with a few lit windows, people in the dark side stands '
+    + 'suggested in pyjamas and dressing gowns as texture, a full moon, the pitch '
+    + 'brightly lit and green',
+
+  'hc-canape-or': 'a legendary football ground at night whose entire left side '
+    + 'stand is one single colossal golden sofa with tufted cushions, the right '
+    + 'side stand matching in dark velvet, gold glints in the floodlights, the '
+    + 'pitch bright green',
+
+  /* ------------------------------------------ les cinq de DIE KURVE
+
+     Des stades suisses **sans club** : ni drapeau, ni écusson, ni croix
+     blanche. Lac, foehn, pont de bois, cloches et glacier. */
+  'su-lac': 'a Swiss lakeside football ground at night, one end opening onto a '
+    + 'calm dark lake with a stone quay, a few white swans on the water, dark '
+    + 'mountains beyond the lake, the pitch bright green, both side stands dark',
+
+  'su-foehn': 'a Swiss valley football ground on a warm windy autumn night, '
+    + 'dry leaves swirling across the pitch in the floodlight beams, corner flags '
+    + 'bent by the wind, a long lens-shaped foehn cloud over dark Alpine peaks, '
+    + 'the pitch bright green',
+
+  'su-pont': 'an old Swiss town football ground at night beside a river, a long '
+    + 'covered wooden footbridge with a pitched shingle roof running right behind '
+    + 'one side stand, a stone water tower, warm lanterns on the bridge, the '
+    + 'pitch bright green',
+
+  'su-toupins': 'a Swiss mountain village football ground at night, hundreds of '
+    + 'large brass cow bells hanging on leather straps along the fronts of both '
+    + 'dark side stands, glinting in the floodlights, wooden chalets and pine '
+    + 'trees around, the pitch bright green',
+
+  'su-glacier': 'a legendary football ground at night at the foot of a huge '
+    + 'Alpine glacier, walls of deep blue crevassed ice rising behind both ends, '
+    + 'snowy peaks under starlight, the two side stands dark, the pitch bright '
+    + 'green and lit',
 };
 
 export const inviteDe = (id) => (INVITES[id]
