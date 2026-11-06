@@ -626,6 +626,11 @@ const RUBRIQUES = [
   {
     titre: 'Mon compte',
     questions: [
+      ['Où trouver mes clubs, mon niveau et mes réglages ?',
+        'Sur ton profil, ton vestiaire : ton Fanzzy au centre, et six cases de couleur '
+          + 'autour de lui. CLUBS, SAISON et PARCOURS à gauche ; NIVEAU, ÉQUIPEMENT et '
+          + 'RÉGLAGES à droite. Chaque case ouvre sa partie par le bas ; la croix, ou un '
+          + 'toucher à côté, la referme. Le bonus du jour se prend dans le coffre, tout en bas.'],
       ['À quoi sert mon niveau ?',
         () => 'À ouvrir des droits, jamais à taper plus fort : une place de deck de '
           + 'plus, un emplacement de club de plus. Chaque niveau te donne aussi un '
