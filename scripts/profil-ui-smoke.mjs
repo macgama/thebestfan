@@ -371,7 +371,7 @@ if (vu.encore) {
     check('et l’anneau du buste dit la même part', niv.anneau === PART
       || (console.log('        anneau :', niv.anneau), false));
 
-    check('il dit le niveau atteint', niv.coin === '4' && niv.coinNom === 'Niveau 4'
+    check('il dit le niveau atteint', niv.coin === '4' && niv.coinNom === 'Niveau 4, Porte-écharpe'
       || (console.log('        coin :', niv.coin, '·', niv.coinNom), false));
     check('et ce qui reste avant le suivant',
       /XP/.test(niv.xp) && niv.xp.includes(`encore ${fr(POUR - DANS)}`)

@@ -131,6 +131,27 @@
     return out;
   }
 
+  /**
+   * Ce que les niveaux franchis font voir (les cadeaux du niveau, Gaël,
+   * 6 novembre 2026) : le dernier titre de tribune gagné, et la nouvelle
+   * matière de la pastille s'il y en a une. Données du serveur
+   * (`cadeaux`), mots de la page.
+   */
+  function nommerCadeaux(cadeaux) {
+    const liste = (Array.isArray(cadeaux) ? cadeaux : []).filter((c) => Number(c?.niveau) > 0)
+      .sort((a, b) => a.niveau - b.niveau);
+    if (!liste.length) return [];
+    const out = [];
+    const dernier = liste[liste.length - 1];
+    if (dernier.grade) out.push({ quoi: 'NOUVEAU TITRE', sous: dernier.grade });
+    const teinte = liste.filter((c) => c.teinte).pop();
+    if (teinte) {
+      out.push({ quoi: `PASTILLE ${teinte.teinteNom || ''}`.trim(),
+        sous: 'ta pastille de niveau change de couleur', teinte: teinte.teinte });
+    }
+    return out;
+  }
+
   /* Les paliers du chemin qui ouvrent quelque chose — ceux de `/api/niveau`,
      `{ niveau, slots, deckFanzzy, echarpes }`, où un palier qui n'ouvre rien
      porte des `null`. */
@@ -292,7 +313,18 @@
    *   montée absente résout tout de suite : l'appelant n'a donc jamais à
    *   se demander s'il doit appeler — il appelle, et il attend.
    */
+  let etoileFetee = 0;  // la plus haute étoile fêtée sur cette page
+
   function feter(m, o = {}) {
+    /* Au-delà du dernier niveau, une étoile gagnée se fête aussi. */
+    const etoiles = Number(m?.vu?.etoiles) || 0;
+    if (!m?.monte && etoiles > (Number(m?.vu?.etoilesAvant) || 0) && etoiles > etoileFetee) {
+      if (ouverte) return ouverte.then(() => feter(m, o));
+      etoileFetee = etoiles;
+      ouverte = ouvrir({ ...m, avant: m.niveau, etoile: true }, o ?? {});
+      ouverte.then(() => { ouverte = null; });
+      return ouverte;
+    }
     if (!m?.monte) return Promise.resolve();
     const n = Number(m.niveau);
     if (!Number.isInteger(n) || n < 1) return Promise.resolve();
@@ -308,7 +340,7 @@
   function ouvrir(m, o) {
     const n = Number(m.niveau);
     const avant = Number(m.avant);
-    const paliers = (m.paliers ?? []).flatMap(nommer);
+    const paliers = [...(m.paliers ?? []).flatMap(nommer), ...nommerCadeaux(m.vu?.cadeaux)];
     const ecarpes = Number(m.ecarpes ?? 0);
     /* Plus d'un niveau d'un coup, ça arrive : une grosse victoire après une
        série de boosters. On le dit plutôt que d'afficher le dernier tout seul,
@@ -317,7 +349,9 @@
     const proch = prochain(o.chemin, n);
     const src = dessinVictoire(o.avatar !== undefined ? o.avatar : window.TBF_CARTES?.S?.avatar);
     const sans = doux();
-    const quoi = bonds > 1 ? `${bonds} NIVEAUX D’UN COUP` : 'TU MONTES !';
+    const etoiles = Number(m.vu?.etoiles) || 0;
+    const quoi = m.etoile ? 'UNE ÉTOILE DE PLUS !'
+      : bonds > 1 ? `${bonds} NIVEAUX D’UN COUP` : 'TU MONTES !';
     // Ce qu'un lecteur d'écran annonce : le chiffre final, pas celui qui compte.
     const nomDeLaFete = `${bonds > 1 ? `${bonds} niveaux d’un coup` : 'Tu montes'} : niveau ${n}`;
 
@@ -328,14 +362,14 @@
     const ouvre = paliers.length
       ? `<div class="tbf-niv-libelle">ÇA T’OUVRE</div>
          <ul class="tbf-niv-cles">${paliers.map((p, k) => `<li>
-           <span class="tbf-sticker${colle(900 + k * 160)}">${CADENAS}${esc(p.quoi)}</span>
+           <span class="tbf-sticker${colle(900 + k * 160)}"${p.teinte ? ` data-teinte="${esc(p.teinte)}"` : ''}>${p.teinte ? '' : CADENAS}${esc(p.quoi)}</span>
            <small>${esc(p.sous)}</small></li>`).join('')}</ul>`
       /* Un palier sur cinq ouvre quelque chose. Les autres montées ne
          doivent pas se terminer sur un blanc : elles rapportent des
          écharpes, et c'est déjà une raison de sourire. Quand la page a
          donné le chemin, le prochain palier dit mieux la même chose : il
          nomme ce qui vient. */
-      : (proch ? '' : `<div class="tbf-niv-rien">Ce palier n’ouvre rien de neuf —
+      : (proch || m.etoile ? '' : `<div class="tbf-niv-rien">Ce palier n’ouvre rien de neuf —
            le prochain, si.</div>`);
     /* Le gain : le sticker de prix et son jeton, craie (un gain, pas un
        achat), avec son signe. Son chiffre compte depuis zéro. */
@@ -345,7 +379,9 @@
       : '') + ouvre;
     return poser({
       nomDeLaFete, quoi, titre: `NIVEAU <b>${esc(n)}</b>`,
-      de: bonds > 1 ? `tu étais au niveau ${esc(m.avant)}` : '',
+      de: (bonds > 1 ? `tu étais au niveau ${esc(m.avant)}` : '')
+        + (m.etoile ? `<span class="tbf-sticker" data-teinte="or">★ ${esc(etoiles)}
+            ÉTOILE${etoiles > 1 ? 'S' : ''}</span>` : ''),
       butin,
       promesse: proch ? `<div class="tbf-niv-libelle">PROCHAIN PALIER</div>
             <span class="tbf-sticker tbf-sticker--jalon">NIV. ${esc(proch.niveau)} →
@@ -659,7 +695,10 @@
     if (vu === null || n <= vu || n <= reservee || n <= fetee) return false;
     reservee = n;
     await dessinPret();
-    await feter({ monte: true, avant: vu, niveau: n, paliers: franchis(lu.paliers, vu, n) },
+    const cadeaux = (Array.isArray(lu.cadeaux) ? lu.cadeaux : [])
+      .filter((c) => Number(c?.niveau) > vu && Number(c?.niveau) <= n);
+    await feter({ monte: true, avant: vu, niveau: n, paliers: franchis(lu.paliers, vu, n),
+      vu: { cadeaux } },
       { avatar: opt.avatar, chemin: lu.paliers, qui });
     return true;
   }

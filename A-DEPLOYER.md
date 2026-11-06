@@ -10,6 +10,27 @@ tampons » sous le carnet (onglet SAISON). Traduit, QUESTIONS et /comment-jouer
 
 ---
 
+**Le niveau offre un cadeau visible à chaque palier** (branche
+`claude/project-thread-r8x75z`, 6 novembre 2026, choix de Gaël « Récompenses à
+chaque palier »). Code seul, sans schéma : un titre de tribune par niveau
+(sous le pseudo du profil), la pastille de niveau en bronze (10), argent (15),
+or (20), rubis (25) et légende (30), vue aussi au classement, chez les amis et
+dans le KOP, et au-delà du 30 une étoile tous les 2 000 XP. La fête de niveau
+les annonce. Tout se déduit de l'XP : les joueurs déjà montés les reçoivent
+d'un coup. Après la mise en ligne : « Redémarrer ».
+
+---
+
+**L'administration sur toute la largeur de l'écran** (branche
+`claude/project-thread-cgkjy6`, 6 novembre 2026, demande de Gaël). Page
+/admin seule, sans schéma : plus de plafond à 1 100 px, le tableau JOUEURS ›
+COMPTES écrit chaque colonne sur une ligne et range ses gestes en trois
+familles (côte à côte sur un grand écran). Les réglages gardent leur largeur
+de lecture. Aucun redémarrage nécessaire (fichier statique), mais il ne gêne
+pas.
+
+---
+
 **Le son de l'Ultimate suit la série et la tenue** (branche
 `claude/project-thread-7wl6vu`, 6 novembre 2026, demande de Gaël). Code seul,
 sans schéma ni fichier son : la tenue change la montée et le choc

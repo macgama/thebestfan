@@ -509,7 +509,7 @@ function buste(g, taille) {
   const initiale = esc((String(g?.pseudo ?? '').trim().charAt(0) || '?').toUpperCase());
   const src = g?.avatar ? window.FZART?.dessinAvatar?.(g.avatar, 'buste') : null;
   const niv = Number.isInteger(g?.niveau)
-    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv">${g.niveau}</b>` : '';
+    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv"${g.teinte ? ` data-teinte="${esc(g.teinte)}"` : ''}${Number(g.etoiles) > 0 ? ` data-etoiles="${Number(g.etoiles)}"` : ''}>${g.niveau}</b>` : '';
   const style = taille ? ` style="--taille:${taille}px"` : '';
   return src
     ? `<span class="tbf-buste"${style} aria-hidden="true" data-initiale="${initiale}"><img src="${esc(src)}" alt=""
