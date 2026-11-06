@@ -61,6 +61,25 @@ echo "→ code : main à jour"
 git fetch -q origin main
 ATTENDU="$(git rev-parse --short=10 origin/main)"
 
+# Les images faites dans un autre clone (tbf-hc, tbf-mt… à côté de ce dépôt)
+# restaient sur le PC : l'envoi ne regarde que ce dépôt-ci (5 novembre 2026,
+# les animations Préhistoriques de tbf-hc). On les recopie donc d'abord ici :
+# ce qui manque, et ce qui est plus récent là-bas (cp -u). Rien n'est effacé.
+# TBF_CLONES choisit d'autres dossiers ; TBF_CLONES=aucun saute l'étape.
+CLONES="${TBF_CLONES:-$(ls -d ../tbf-* 2>/dev/null || true)}"
+if [ "$CLONES" != "aucun" ]; then
+  for c in $CLONES; do
+    [ -d "$c/public" ] || continue
+    [ "$(cd "$c" && pwd)" = "$PWD" ] && continue
+    for d in public/img/fanzzy public/img/ultime public/video; do
+      [ -d "$c/$d" ] || continue
+      echo "→ images de $(basename "$c") : $d"
+      mkdir -p "$d"
+      cp -ru --preserve=timestamps "$c/$d/." "$d/"
+    done
+  done
+fi
+
 echo "→ images et vidéos"
 TBF_SSH_CMD="${SSH[*]}" TBF_DEPOT="$PWD" bash "$OUTILS/envoyer-images.sh" "$@"
 
