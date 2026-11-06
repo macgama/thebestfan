@@ -54,6 +54,7 @@ import { createAmis } from './src/server/amis/index.js';
 import { createEnsemble } from './src/server/amis/ensemble.js';
 import { createPresence } from './src/server/presence/index.js';
 import { createFrequentation } from './src/server/frequentation/index.js';
+import { createUsage } from './src/server/usage/index.js';
 import { createNotifications } from './src/server/notifications/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
@@ -325,6 +326,11 @@ if (process.env.DATABASE_URL) {
     });
 
     app.use(auth.attachUser);
+
+    /* L'usage : une ouverture de page d'un joueur connecté ajoute un au
+       compteur du jour de cette page (`src/server/usage`), pour le menu
+       JOUEURS › USAGE de l'administration. Un nombre, jamais une heure. */
+    app.use(createUsage({ pool }).noter);
 
     /* ---- la présence (vague 2, lot 6 ; `CONTRATS.md`, § 18)
 
