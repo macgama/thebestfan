@@ -1,6 +1,6 @@
 {
   "id": "HC6",
-  "rev": 24,
+  "rev": 25,
   "evolutions": {
     "e1": {
       "skins": {
@@ -107,7 +107,8 @@
           ],
           "portrait": true,
           "repli": "base",
-          "sha": "5dcb6b3b1efd"
+          "sha": "5dcb6b3b1efd",
+          "cligne": true
         }
       }
     },
