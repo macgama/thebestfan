@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**KOP et CARNET plus gaming** (branche `claude/project-thread-vw49a6`,
+6 novembre 2026, choix de Gaël « KOP 1 + CARNET 1 »). Code seul, sans schéma :
+le KOP devient un virage (le CAPO devant, les membres en pied derrière, le pot
+en badge, les votes à main levée POUR / CONTRE) ; le carnet devient un album
+(une page par club suivi, les buts encore à récupérer en cases vides avec leur
+prix, un album vide qui envoie au Grand Virage). Traduit, QUESTIONS et
+/comment-jouer à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Un tampon par duel classé gagné** (branche `claude/project-thread-8ynk3z`,
 6 novembre 2026, choix de Gaël « Oui, 1 par victoire, max 3/jour »). Code
 seul, sans schéma : chaque duel classé gagné verse 1 tampon au carnet de la
