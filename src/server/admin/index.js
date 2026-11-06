@@ -427,8 +427,18 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     // Les montants sont des ajustements, positifs ou négatifs. Le plancher
     // s'applique au résultat, pas à l'ajustement : sinon un débit serait
     // silencieusement transformé en zéro et ne ferait rien.
+    /* Ce qui a vraiment bougé dans la bourse, journalisé à côté de ce qui
+       était demandé (`recu`) : le plancher à zéro et le plafond de 99
+       boosters peuvent en prendre une part, et l'alerte « cadeau reçu »
+       (`cadeaux/index.js`) ne doit annoncer que ce que le joueur a reçu. */
+    const bourse = async () => (await q(
+      `SELECT scarves, packs FROM user_wallet WHERE user_id = ?`, [cibleId]))[0] ?? null;
+    const touche = (Number.isInteger(champs.scarves) && champs.scarves !== 0)
+      || (Number.isInteger(champs.packs) && champs.packs !== 0);
+    if (touche) await assurerBourse(q, cibleId);
+    const avant = touche ? await bourse() : null;
+
     if (Number.isInteger(champs.scarves) && champs.scarves !== 0) {
-      await assurerBourse(q, cibleId);
       await q(`UPDATE user_wallet SET scarves = GREATEST(0, scarves + ?) WHERE user_id = ?`,
         [champs.scarves, cibleId]);
       fait.scarves = champs.scarves;
@@ -448,7 +458,13 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     }
 
     if (!Object.keys(fait).length) throw fail('admin.error.nothing_to_do');
+    const apres = touche ? await bourse() : null;
+    if (avant && apres) {
+      fait.recu = { scarves: Number(apres.scarves) - Number(avant.scarves),
+        packs: Number(apres.packs) - Number(avant.packs) };
+    }
     await journal(acteur, 'joueur.modifie', cibleId, fait, adresseIp);
+    delete fait.recu;
     return fait;
   }
 
@@ -1826,7 +1842,10 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     }
     const nouvelles = await deps.abonnement.accorderPass(cible.public_id,
       { saisons: [saison], source: 'offert', reference: 'admin' });
-    await journal(req.user.id, 'pass.accorder', cible.public_id, { saison }, ip(req));
+    /* `nouveau` : faux si le joueur l'avait déjà ; l'alerte « cadeau reçu »
+       ne lui annonce alors rien. */
+    await journal(req.user.id, 'pass.accorder', cible.public_id,
+      { saison, nouveau: nouvelles.length > 0 }, ip(req));
     res.json({ saison, nouveau: nouvelles.length > 0 });
   }));
 

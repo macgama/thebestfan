@@ -45,13 +45,22 @@ const liste = cadeauxDe([
   l('abonnement.accorder', { formule: 'offert', jours: null }),
 ]);
 const sortes = liste.map((c) => c.sorte);
-check('écharpes et boosters ajoutés, sommés, en tête',
-  liste[0]?.sorte === 'echarpes' && liste[0].n === 150 && liste[1]?.sorte === 'boosters' && liste[1].n === 5, liste);
-check('un retrait, un statut, un rôle ne sont pas des cadeaux', !liste.some((c) => c.n < 0));
+check('écharpes et boosters sommés (retrait déduit), en tête',
+  liste[0]?.sorte === 'echarpes' && liste[0].n === 120 && liste[1]?.sorte === 'boosters' && liste[1].n === 5, liste);
+check('un statut, un rôle ne sont pas des cadeaux', !liste.some((c) => c.n < 0) && liste.length === 6, liste);
 check('le badge Fondateur et son Fanzzy, une fois chacun',
   sortes.filter((s) => s === 'distinction').length === 1
   && liste.filter((c) => c.sorte === 'fanzzy' && c.fanzzy === 'TB1').length === 1, sortes);
 check('le PASS et l’abonnement', sortes.includes('pass') && sortes.includes('abonnement'), sortes);
+check('un retrait se soustrait : on annonce le solde net, jamais plus',
+  cadeauxDe([l('joueur.modifie', { scarves: 100 }), l('joueur.modifie', { scarves: -100 })]).length === 0);
+const plafond = cadeauxDe([l('joueur.modifie', { packs: 5, recu: { scarves: 0, packs: 2 } })]);
+check('les boosters vraiment reçus (plafond de 99), pas ceux demandés',
+  plafond.length === 1 && plafond[0].n === 2, plafond);
+check('un PASS qu’il avait déjà n’est pas annoncé',
+  cadeauxDe([l('pass.accorder', { saison: 1, nouveau: false })]).length === 0);
+check('un cadeau Fondateur déjà reçu (ni badge ni Fanzzy) n’annonce rien',
+  cadeauxDe([l('fondateur.offert', { badge: false, fanzzy: false })]).length === 0);
 check('rien du tout pour un journal sans cadeau',
   cadeauxDe([l('joueur.modifie', { status: 'locked' }), l('kop.supprime', {})]).length === 0);
 

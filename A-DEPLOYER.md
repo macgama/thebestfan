@@ -1,5 +1,13 @@
 # À déposer sur Infomaniak
 
+**Alerte cadeau : seulement ce que le joueur reçoit vraiment** (branche
+`claude/project-thread-x9m6y9`, 6 novembre 2026, remarque de Gaël). Code seul,
+sans schéma. Un retrait d'écharpes se déduit, le plafond de 99 boosters et le
+plancher de 0 écharpe comptent, un PASS déjà possédé n'est plus annoncé.
+**Redémarrer**.
+
+---
+
 **PASS 1 complété : stades HC et SU, tenues et Ultimate HC** (branche
 `claude/project-thread-ojr7rb`, 6 novembre 2026, demande de Gaël). Code,
 textes et images, sans schéma. Dix stades neufs, cinq pour LES HÉROS DU CANAPÉ
