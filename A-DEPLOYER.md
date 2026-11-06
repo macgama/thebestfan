@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Accueil : l'annonce de l'appli Android devient discrète** (branche
+`claude/project-thread-00ar7w`, 6 novembre 2026, demande de Gaël). Code seul,
+sans schéma. La plaque rouge « APPLI ANDROID » est remplacée par un petit
+bandeau sombre en haut de la scène : il reste 7 secondes puis s'efface, se
+ferme d'un ×, et ne revient pas avant 3 jours (30 jours si on l'a fermé,
+7 jours après une visite de /beta). Rien à redémarrer.
+
+---
+
 **LE PARCAGE branché dans le jeu** (branche `claude/project-thread-vuon42`,
 6 novembre 2026, « Tu peux brancher la série dans l'application »). Code seul,
 sans schéma. La série du championnat de France (code FR) entre au catalogue :

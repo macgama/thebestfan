@@ -88,7 +88,7 @@
    "es"
   ]
  },
- "Deviens testeur de l’appli Android": {
+ "deviens testeur": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -99,7 +99,7 @@
    "es"
   ]
  },
- "L’appli Android est en test, bientôt sur Google Play": {
+ "bientôt sur Google Play": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -110,7 +110,7 @@
    "es"
   ]
  },
- "DEVIENS TESTEUR": {
+ "<0>Appli Android</0> · deviens testeur": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -121,18 +121,7 @@
    "es"
   ]
  },
- "BIENTÔT SUR GOOGLE PLAY": {
-  "ou": [
-   "public/beta-android.js"
-  ],
-  "langues": [
-   "en",
-   "de",
-   "it",
-   "es"
-  ]
- },
- "APPLI ANDROID": {
+ "<0>Appli Android</0> · bientôt sur Google Play": {
   "ou": [
    "public/beta-android.js"
   ],
@@ -377,6 +366,17 @@
  "onerror=\"this.onerror=null;this.src=’{0}’\"": {
   "ou": [
    "public/cartes.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "<0>Les Fanzzy liés à un club</0> portent les couleurs d’une équipe. Joue-le dans un match de ton club, et il pousse un peu plus fort, rapporte un peu plus et pousse le cri de son club, au Grand Virage comme en duel. Quand ta tribune fait céder la corde ou que ton club marque, son écharpe traverse l’écran à ses couleurs. Sa fiche le dit d’un tampon : « LIÉ À TON CLUB » si tu suis cette équipe. Un Fanzzy neutre peut se lier à ton club principal depuis sa fiche, contre des écharpes, et pour toujours. Un championnat qui a ses propres Fanzzy, comme la Premier League ou le championnat suisse (et le championnat de France avec LE PARCAGE, au PASS 2), porte leur marque dans les matchs du jour.": {
+  "ou": [
+   "public/comment-jouer.html"
   ],
   "langues": [
    "en",
@@ -1657,6 +1657,39 @@
   ]
  },
  "Glisse le doigt sur lui, vers la gauche pour l’âge d’après, vers la droite pour celui d’avant, ou touche les flèches sous son nom. Tu ne vois que les âges que tu as payés. Regarder ne change rien : c’est le bouton « C’est lui, partout » qui le montre ainsi aux autres.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Une pièce d’équipement aux couleurs d’un club, deux par club des séries de championnat (LES TERRACES, DIE KURVE, puis LE PARCAGE avec le PASS 2). Portée par un Fanzzy lié au même club, c’est le COMBO : son revers perd {0} %, dans tous les matchs. Et dans un match de ton club principal, c’est PLEIN CLUB : chacune rapporte {1} % d’écharpes en duel, ou de ferveur au Virage, en plus du lien du Fanzzy. La force, elle, ne change pas.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Quelles séries de Fanzzy suivent un vrai championnat ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "LES TERRACES (le championnat anglais) et DIE KURVE (le championnat suisse). LE PARCAGE, la série du championnat de France, arrive avec le PASS 2 : trois Fanzzy par club, le cri de chaque club, deux pièces de club par équipe et six légendaires, trois liées aux équipes de France et trois au championnat.": {
   "ou": [
    "src/shared/aide.js"
   ],
