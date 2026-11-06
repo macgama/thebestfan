@@ -25,7 +25,7 @@ import { AGES, ECHELLES } from './tailles-fanzzy.mjs';
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const PUBLIC = path.join(RACINE, 'public', 'img', 'fanzzy');
 // Les mêmes que `TBF_ETATS.taille` (public/fanzzy-etats.js).
-const TAILLE_AGE = { 1: 0.6, 2: 0.68, 3: 0.76 };
+const TAILLE_AGE = { 1: 0.6, 2: 0.68, 3: 0.76, L: 0.88 };
 
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
@@ -109,9 +109,34 @@ for (const id of Object.keys(AGES)) {
       let y1 = info.height - 1; while (y1 > y0 && !data.subarray(y1 * info.width, (y1 + 1) * info.width).some((v) => v > 128)) y1--;
       return (y1 - y0 + 1) / info.height;
     })();
-    if (TAILLE_AGE[e] * vrai / p[0] > 0.98) check(`${id} âge ${e} : le dessin sort de la boîte`, false);
+    const part = index[id]?.legendaire ? TAILLE_AGE.L : TAILLE_AGE[e];
+    if (part * vrai / p[0] > 0.98) check(`${id} âge ${e} : le dessin sort de la boîte`, false);
   }
   if (failures === avantId) check(`${id} : tient dans la boîte à chaque âge`, true);
+}
+
+/* ## Le légendaire, au-dessus de l'âge 3 (Gaël, 6 novembre 2026)
+
+   Un légendaire n'a qu'un âge, le premier : sans la marque `legendaire`
+   d'index.json, il reprenait la taille d'un âge 1, la plus petite. */
+console.log('\n— un légendaire est marqué, et plus grand qu\'un âge 3');
+{
+  const { BY_ID } = await import('../src/shared/fanzzy/dex.js');
+  const faux = Object.entries(index).filter(([id, f]) => (f.legendaire === true) !== (BY_ID.get(id)?.rar === 'legendaire'));
+  check(`index.json marque exactement les légendaires du catalogue${faux.length ? ` (${faux.map(([id]) => id).join(', ')})` : ''}`, faux.length === 0);
+  check('au moins un légendaire marqué', Object.values(index).some((f) => f.legendaire === true));
+  const source = await readFile(path.join(RACINE, 'public', 'fanzzy-etats.js'), 'utf8');
+  const lu = /const TAILLE_AGE = \{ 1: ([\d.]+), 2: ([\d.]+), 3: ([\d.]+), L: ([\d.]+) \}/.exec(source);
+  check('TAILLE_AGE de la page a sa ligne L, la même qu\'ici', lu && Number(lu[4]) === TAILLE_AGE.L && Number(lu[3]) === TAILLE_AGE[3]);
+  check('L est au-dessus de l\'âge 3', TAILLE_AGE.L > TAILLE_AGE[3]);
+  /* Chaque table de tailles des pages : une ligne L au-dessus de son âge 3. */
+  const pages = ['cartes.js', 'carnet.html', 'duel-nvn.html', 'virage.html', 'deck.html', 'profil.html', 'niveau-fete.js', 'fanzzy-fiche.js'];
+  for (const nom of pages) {
+    const t = await readFile(path.join(RACINE, 'public', nom), 'utf8');
+    const tables = [...t.matchAll(/\{\s*1:\s*([\d.]+),\s*2:\s*([\d.]+),\s*3:\s*([\d.]+)(?:,\s*L:\s*([\d.]+))?\s*\}/g)];
+    const sans = tables.filter((m) => !(Number(m[4]) > Number(m[3])));
+    check(`${nom} : ${tables.length} table(s) de tailles, chacune avec un L au-dessus de l'âge 3`, tables.length > 0 && sans.length === 0);
+  }
 }
 
 console.log(failures ? `\n${failures} échec(s)` : '\nTout est vert.');

@@ -1048,9 +1048,11 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       ['difficile', 'Une mission difficile du jour', 'cible', false],
       ['sachet', 'Les trois missions du jour finies (le sachet)', 'dos', false],
       ['defi', 'Les défis de la semaine', 'duel', true],
-    ].filter(([k]) => n(k) !== 0);
+      ['victoire', n('victoiresJour') ? `Un duel classé gagné (${n('victoiresJour')} par jour au plus)` : '', 'duel', false],
+    ].filter(([k]) => n(k) !== 0 && !(k === 'victoire' && !n('victoiresJour')));
     if (!lignes.length) return '';
-    const parJour = g ? ['facile', 'moyenne', 'difficile', 'sachet'].reduce((t, k) => t + n(k), 0) : 0;
+    const parJour = g ? ['facile', 'moyenne', 'difficile', 'sachet'].reduce((t, k) => t + n(k), 0)
+      + (n('victoire') || 0) * (n('victoiresJour') || 0) : 0;
     const parSemaine = g ? 3 * n('defi') : 0;
     const total = parJour && parSemaine
       ? `Jusqu’à ${parJour} tampons par jour, et ${parSemaine} de plus chaque semaine avec les défis.`

@@ -5321,7 +5321,7 @@ const nombre = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(
  * et les trois chiffres du match sous ces noms.
  */
 /** La part de la boîte du héros que prend le Fanzzy à chaque âge. */
-const PART_BILAN = { 1: 0.74, 2: 0.82, 3: 0.9 };
+const PART_BILAN = { 1: 0.74, 2: 0.82, 3: 0.9, L: 1.02 };
 
 function montrerBilan(b) {
   S.bilanVu = true;
@@ -5397,6 +5397,12 @@ function montrerBilan(b) {
   if (Number(g?.kop?.verse) > 0) {
     lignes.push(`<li class="tbf-bilan-l gain kop"><span>VERSÉES AU KOP</span>
       <b data-compte="${Number(g.kop.verse)}" data-signe="+">+${Number(g.kop.verse)}</b><small>ÉCHARPES</small></li>`);
+  }
+  /* Le tampon du carnet d'un duel classé gagné (6 novembre 2026). */
+  if (Number(g?.tampons) > 0) {
+    lignes.push(`<li class="tbf-bilan-l gain"><span>CARNET DE LA SAISON</span>
+      <b data-compte="${Number(g.tampons)}" data-signe="+">+${Number(g.tampons)}</b><small>${
+        Number(g.tampons) > 1 ? 'TAMPONS' : 'TAMPON'}</small></li>`);
   }
   if (g?.cote && Number.isFinite(Number(g.cote.avant)) && Number.isFinite(Number(g.cote.apres))) {
     lignes.push(`<li class="tbf-bilan-l"><span>COTE</span>

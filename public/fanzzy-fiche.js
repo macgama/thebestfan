@@ -1365,11 +1365,11 @@
         <button type="button" class="tbf-plaque tbf-plaque--rond fiche-plein-fermer" aria-label="Fermer">${SVG.croix}</button>`;
       const perso = v.querySelector('.fiche-plein-perso');
       /* Il grandit d'un âge à l'autre, comme sur la carte (5 novembre 2026). */
-      const PART_PLEIN = { 1: 0.78, 2: 0.84, 3: 0.9 };
+      const PART_PLEIN = { 1: 0.78, 2: 0.84, 3: 0.9, L: 0.98 };
       /* La taille de son âge, mesurée sur ses pieds (`TBF_ETATS.taille`) :
          sans elle, un âge 2 ou 3 paraissait petit dans le cadre commun. */
       const etat = /\/img\/fanzzy\/[A-Z]+\d+\/e\d\//.test(img.getAttribute('src') ?? '');
-      const t = etat ? E()?.taille?.(racine(), evo, PART_PLEIN[evo]) : null;
+      const t = etat ? E()?.taille?.(racine(), evo, PART_PLEIN) : null;
       if (t) perso.style.cssText = `height:${t.hauteur};bottom:calc(${t.bas} + 2%);translate:${t.decale} 0`;
       /* Puis ses pieds, mesurés sur l'image (`caler`, comme à l'accueil) ;
          sans mesure au catalogue, `caler` mesure l'image entière. */

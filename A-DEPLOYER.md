@@ -10,6 +10,46 @@ nécessaire.
 
 ---
 
+**Les Fanzzy légendaires plus grands que l'âge 3, partout** (branche
+`claude/project-thread-nj31ko`, 6 novembre 2026, demande de Gaël). Pages et
+index.json seuls, sans schéma ni image : un légendaire n'a qu'un âge et
+prenait la taille d'un âge 1 ; il a maintenant sa propre taille, au-dessus de
+l'âge 3 (accueil, carte et fiche qu'il remplit, fin de duel, Virage, deck,
+carnet, plein écran). Aucun redémarrage nécessaire (fichiers statiques).
+
+---
+
+**Le profil devient « Mon vestiaire »** (branche
+`claude/project-thread-rwim3p`, 6 novembre 2026, choix de Gaël parmi quatre
+maquettes). Pages seules, sans schéma : le Fanzzy équipé vit en grand au
+centre du profil, ce qu'on possède en pastilles en haut, le niveau dans son
+anneau d'XP, six tuiles de couleur (CLUBS, SAISON, PARCOURS, NIVEAU,
+ÉQUIPEMENT, RÉGLAGES) qui ouvrent chacune sa rubrique en tiroir par le bas,
+et le bonus du jour en coffre. Rien n'a disparu, tout est dans les tiroirs.
+Aucun redémarrage nécessaire (fichiers statiques), mais il ne gêne pas.
+
+---
+
+**KOP et CARNET plus gaming** (branche `claude/project-thread-vw49a6`,
+6 novembre 2026, choix de Gaël « KOP 1 + CARNET 1 »). Code seul, sans schéma :
+le KOP devient un virage (le CAPO devant, les membres en pied derrière, le pot
+en badge, les votes à main levée POUR / CONTRE) ; le carnet devient un album
+(une page par club suivi, les buts encore à récupérer en cases vides avec leur
+prix, un album vide qui envoie au Grand Virage). Traduit, QUESTIONS et
+/comment-jouer à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
+**Un tampon par duel classé gagné** (branche `claude/project-thread-8ynk3z`,
+6 novembre 2026, choix de Gaël « Oui, 1 par victoire, max 3/jour »). Code
+seul, sans schéma : chaque duel classé gagné verse 1 tampon au carnet de la
+saison, 3 fois par jour au plus (réglables dans /admin › SAISON). Le bilan du
+duel le montre (CARNET DE LA SAISON +1), l'encadré « Comment gagner des
+tampons » aussi. Traduit, QUESTIONS et /comment-jouer à jour. Après la mise
+en ligne : « Redémarrer ».
+
+---
+
 **La page Amis devient « La tribune des amis »** (PR #377, 6 novembre 2026,
 choix de Gaël parmi 4 maquettes). Code seul, sans schéma : les Fanzzy des amis
 debout dans une tribune (ceux qui jouent éclairés), RÉPONDRE / MERCI ! sous les

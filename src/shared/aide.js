@@ -525,6 +525,9 @@ const RUBRIQUES = [
           + `${reglage('saison.tampons_difficile')} pour la difficile, `
           + `${reglage('saison.tampons_sachet')} de plus pour le sachet des trois missions finies`
           + (reglage('defis.actif') ? `, et ${reglage('defis.tampons')} pour chaque défi de la semaine` : '')
+          + (reglage('saison.tampons_victoire') && reglage('saison.victoires_jour')
+            ? `. Un duel classé gagné en donne ${reglage('saison.tampons_victoire')}, `
+              + `pour ${reglage('saison.victoires_jour')} victoires par jour au plus` : '')
           + '. Ils remplissent le carnet de la saison et font avancer la voie PASS. '
           + 'Le détail est sous le carnet, dans l’onglet SAISON des missions.'],
       ['Comment savoir qu’une mission est réussie ?',
@@ -554,7 +557,9 @@ const RUBRIQUES = [
       ['Comment avoir une carte-souvenir ?',
         'Chaque vrai but crée une carte. Si tu poussais au Grand Virage à ce '
           + 'moment-là, tu la reçois à ton nom, avec ton Fanzzy de ce soir-là. Sinon, '
-          + 'tu peux l’acheter quelque temps dans ton carnet.'],
+          + 'tu peux l’acheter quelque temps dans ton carnet. Le carnet est un album : '
+          + 'une page par club suivi, où les buts qui te manquent encore attendent en '
+          + 'cases vides, avec leur prix et le temps qui reste.'],
     ],
   },
   {
@@ -612,11 +617,20 @@ const RUBRIQUES = [
         () => 'Un ami est un lien entre deux personnes. Un KOP est un groupe qui '
           + 'pousse ensemble et qui apparaît comme tel dans les classements. On peut '
           + 'avoir des amis partout et n’être que d’un seul KOP.'],
+      ['Les autres membres voient-ils mon vote au KOP ?',
+        'Oui. Pendant les trois minutes d’un vote, chaque membre passe dans le camp POUR '
+          + 'ou dans le camp CONTRE, avec son Fanzzy, comme à main levée dans une tribune. '
+          + 'Tu peux changer d’avis tant que le vote est ouvert.'],
     ],
   },
   {
     titre: 'Mon compte',
     questions: [
+      ['Où trouver mes clubs, mon niveau et mes réglages ?',
+        'Sur ton profil, ton vestiaire : ton Fanzzy au centre, et six cases de couleur '
+          + 'autour de lui. CLUBS, SAISON et PARCOURS à gauche ; NIVEAU, ÉQUIPEMENT et '
+          + 'RÉGLAGES à droite. Chaque case ouvre sa partie par le bas ; la croix, ou un '
+          + 'toucher à côté, la referme. Le bonus du jour se prend dans le coffre, tout en bas.'],
       ['À quoi sert mon niveau ?',
         () => 'À ouvrir des droits, jamais à taper plus fort : une place de deck de '
           + 'plus, un emplacement de club de plus. Chaque niveau te donne aussi un '

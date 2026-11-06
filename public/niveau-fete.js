@@ -474,7 +474,7 @@
         /* À la taille de son âge, comme partout (`TBF_ETATS.caler`) : la
            scène ne montre que le haut du corps, les pieds sont sous le bord
            (6 novembre 2026). */
-        window.TBF_ETATS?.caler?.(perso, { part: { 1: 1.15, 2: 1.25, 3: 1.35 }, sol: '-40%' });
+        window.TBF_ETATS?.caler?.(perso, { part: { 1: 1.15, 2: 1.25, 3: 1.35, L: 1.5 }, sol: '-40%' });
         if (perso.dataset.cale) {
           /* Le fondu du bas suit le bord de la scène, plus le haut de l'image
              (celle-ci est maintenant plus grande que la scène). */

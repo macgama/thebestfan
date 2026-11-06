@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
 import { AGES } from './tailles-fanzzy.mjs';
+import { BY_ID } from '../src/shared/fanzzy/dex.js';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 export const SORTIE_DEFAUT = path.join(RACINE, 'public', 'img', 'fanzzy');
@@ -113,7 +114,11 @@ export async function agreger(dossier = SORTIE_DEFAUT) {
       if (pieds && corps > 0) pieds[0] = corps;
       evolutions[evo] = { skins, ...(pieds ? { pieds } : {}) };
     }
-    fanzzy[m.id ?? e.name] = { rev: m.rev ?? 1, evolutions };
+    /* Un légendaire prend dans le jeu une taille au-dessus de l'âge 3
+       (`TBF_ETATS.part`, Gaël, 6 novembre 2026) : la page doit le savoir
+       avant d'avoir chargé le catalogue. Écrit seulement s'il est vrai. */
+    const legende = BY_ID.get(m.id ?? e.name)?.rar === 'legendaire';
+    fanzzy[m.id ?? e.name] = { rev: m.rev ?? 1, ...(legende ? { legendaire: true } : {}), evolutions };
   }
 
   const chemin = path.join(dossier, 'index.json');
