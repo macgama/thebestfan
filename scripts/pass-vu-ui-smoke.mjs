@@ -145,7 +145,8 @@ const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
   });
   await attendre(1200);
   const r = await p.evaluate(() => {
-    const t = document.querySelector('.fiche-tete');
+    // La tête de la fiche est devenue sa scène (la tribune des amis, 6 novembre 2026).
+    const t = document.querySelector('.scene-ami');
     return {
       fond: t?.hasAttribute('data-pass-fond') ?? false,
       cadre: Boolean(t?.querySelector('.pass-cadre-buste')),

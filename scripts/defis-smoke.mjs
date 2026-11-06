@@ -210,7 +210,7 @@ titre('Le défi PASS');
   check('la voie compte 10 points, le carnet reste à 2 tampons', v.points === 10 && v.tampons === 2);
   const [[t]] = await pool.query(
     `SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
-      WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id = 1`, [A]);
+      WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo', 'victoire') AND saison_id = 1`, [A]);
   check('le carnet ne compte jamais les points de voie', Number(t.n) === 2);
 }
 

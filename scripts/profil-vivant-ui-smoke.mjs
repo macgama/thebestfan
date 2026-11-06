@@ -3,8 +3,8 @@
  * beaucoup d'animation sur notre application »). La page seule, face à des
  * réponses posées et aux images d'états d'AN1 prises dans les fichiers du
  * projet quand elles sont là (les images Fanzzy ne sont plus dans git) :
- * le personnage en pied remplace la carte, réagit au toucher ; un Fanzzy
- * sans dessin d'états garde sa carte.
+ * le personnage en pied vit au centre du vestiaire (6 novembre 2026) et
+ * réagit au toucher ; un Fanzzy sans dessin d'états y montre son buste.
  *
  *   npm run profil-vivant:ui
  */
@@ -50,8 +50,11 @@ async function ouvrir(av, abo = null) {
 
 {
   const { p, err } = await ouvrir({ id: 'AN1', age: 'AN1', evo: 1, skin: 'base', nom: 'Le Crachin', rar: 'commune' });
-  ok(Boolean(await p.$('#monFzScene')), 'un Fanzzy dessiné vit en pied dans MON FANZZY');
-  ok(!(await p.$('#fanzzy .mon-fz-carte')), 'et sa carte lui cède la place');
+  /* Depuis « Mon vestiaire » (6 novembre 2026), il vit en grand au centre
+     du profil ; le tiroir ÉQUIPEMENT garde son nom, son cri et CHANGER. */
+  ok(Boolean(await p.$('#heroFz #monFzScene')), 'un Fanzzy dessiné vit en grand au centre du vestiaire');
+  ok(/Le Crachin/.test(await p.$eval('#fanzzy', (e) => e.textContent)) && Boolean(await p.$('#fanzzy a[href="/fanzzy"]')),
+    'et le tiroir ÉQUIPEMENT garde son nom et CHANGER');
   ok(/Faire crier/.test(await p.$eval('#monFzScene', (e) => e.getAttribute('aria-label'))), 'il se touche, et le dit');
   if (IMAGES) {
     const larg = await p.$$eval('#monFzScene img', (l) => Math.max(0, ...l.map((i) => i.naturalWidth)));
@@ -74,7 +77,8 @@ async function ouvrir(av, abo = null) {
 }
 {
   const { p, err } = await ouvrir({ id: 'ZZ99', age: 'ZZ99', evo: 1, skin: 'base', nom: 'Inconnu', rar: 'commune' });
-  ok(!(await p.$('#monFzScene')), 'un Fanzzy sans dessin d’états garde sa carte');
+  ok(!(await p.$('#monFzScene')) && Boolean(await p.$('#heroFz .vt-repli')),
+    'un Fanzzy sans dessin d’états montre son buste en grand');
   ok(!err.length, 'et rien ne casse');
   await p.close();
 }

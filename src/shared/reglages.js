@@ -873,6 +873,19 @@ export const REGLAGES = [
     aide: 'Copié au tirage. Avec les valeurs de départ, une journée complète ' +
       'fait cinq tampons ; le carnet de la saison 1 est calibré là-dessus.' },
 
+  /* Un duel classé gagné (choix de Gaël, 6 novembre 2026 : « Oui, 1 par
+     victoire, max 3/jour ») : la victoire elle-même remplit le carnet, pas
+     seulement la mission qui la demande. */
+  { cle: 'saison.tampons_victoire', section: 'saison', type: 'entier',
+    titre: 'Un duel classé gagné rapporte', unite: 'tampons', min: 0, max: 5, defaut: 1,
+    aide: 'Versé à la fin du duel, pour le carnet de la saison en cours. À 0, '
+      + 'les victoires ne donnent plus de tampons.' },
+
+  { cle: 'saison.victoires_jour', section: 'saison', type: 'entier',
+    titre: 'Victoires qui donnent des tampons, par jour', unite: 'victoires', min: 0, max: 20, defaut: 3,
+    aide: 'Au-delà, une victoire ne donne plus de tampon jusqu’à minuit : le '
+      + 'carnet reste calibré sur une journée de jeu, pas sur le temps passé.' },
+
   { cle: 'saison.relais_packs', section: 'saison', type: 'entier',
     titre: 'Passage de relais : boosters offerts', unite: 'boosters', min: 0, max: 5, defaut: 2,
     aide: 'Au lancement d’une saison, « les sachets de la trêve », à qui a ' +

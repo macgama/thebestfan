@@ -391,6 +391,10 @@ check('et il est court', vote.fermeDansMs === DUREE_VOTE_MS);
 etat = await K.etat(kop.id, U[1]);
 check('celui qui propose a voté pour d’office', etat.vote?.monBulletin === 1);
 check('le décompte est visible en direct', etat.vote?.pour === 1 && etat.vote?.contre === 0);
+/* Le duel de la page (6 novembre 2026) : on voit qui a voté quoi. */
+check('et l’on voit qui a voté quoi, à main levée',
+  etat.vote?.bulletins?.length === 1 && etat.vote.bulletins[0].id === U[1]
+  && etat.vote.bulletins[0].pour === true);
 
 try {
   await K.proposer(U[2], kop.id, 'souffle');
