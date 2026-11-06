@@ -475,7 +475,7 @@ if (process.env.DATABASE_URL) {
        duel ne plafonne rien — et personne ne s'en apercevrait, ce qui est
        exactement la panne que `verif-cablage.mjs` surveille. */
     nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth, niveau, kop,
-      abonnement, notifications, defis });
+      abonnement, notifications, defis, presence });
     app.use('/api/nvn', nvn.router);
     console.log('duels NvN actifs');
 
@@ -1363,6 +1363,8 @@ app.get('/diagnostic', (_req, res) => page(res, 'diagnostic.html'));
 app.get('/equipes', (_req, res) => page(res, 'equipes.html'));
 app.get('/kop', (_req, res) => page(res, 'kop.html'));
 app.get('/amis', (_req, res) => page(res, 'amis.html'));
+// Qui est en ligne, pour tous (choix de Gaël du 6 novembre 2026).
+app.get('/en-ligne', (_req, res) => page(res, 'en-ligne.html'));
 app.get('/deck', (_req, res) => page(res, 'deck.html'));
 app.get('/duel-nvn', (_req, res) => page(res, 'duel-nvn.html'));
 app.get('/fanzzy', (_req, res) => page(res, 'fanzzy.html'));

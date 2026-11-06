@@ -434,6 +434,77 @@ export function createPresence({ pool, requireAuth, horloge = Date.now, log = co
     return ici.map((id) => ({ id }));
   }
 
+  /* ------------------------------------------- tout le monde (6 nov. 2026)
+
+     **Choix de Gaël du 6 novembre 2026** (fil « Montrer aux joueurs qui est
+     en ligne », maquette 3 « Tout le monde ») : chaque joueur voit qui est en
+     ligne, amis ou non, pour pouvoir le défier en duel. Il revient sur la
+     première frontière du 3 octobre (« amis mutuels seulement ») et garde
+     toutes les autres :
+
+       — rien en base, toujours : la liste se lit dans la même mémoire
+         d'activité ;
+       — trois états grossiers, jamais le match, jamais une heure ;
+       — **chacun peut se cacher** : « apparaître hors ligne » vaut ici
+         comme chez les amis, dès la lecture suivante ;
+       — elle a son propre interrupteur, `presence.tous`, pour revenir aux
+         amis seulement sans éteindre la présence. */
+
+  /**
+   * Les joueurs en ligne qui se montrent, sauf le lecteur, du plus récent au
+   * plus ancien : `[{ id, etat }]`. `null` quand la liste n'est pas servie
+   * (présence éteinte, ou `presence.tous` éteint).
+   *
+   * Les choix de ceux qu'on n'a pas en mémoire se lisent **en une requête**,
+   * pas un par un : ouvrir la page avec deux cents joueurs en ligne ne doit
+   * pas en coûter deux cents.
+   */
+  async function enLigneTous(lecteurId, { max = 500 } = {}) {
+    if (!actif()) { vider(); return null; }
+    if (!reglage('presence.tous')) return null;
+    const t = horloge();
+    const fen = reglage('presence.en_ligne_sec') * 1000;
+    const moi = String(lecteurId ?? '');
+    const ids = [...activite].filter(([id, vu]) => id !== moi && t - vu < fen)
+      .sort((a, b) => b[1] - a[1]).slice(0, max).map(([id]) => id);
+    const manquent = ids.filter((id) => {
+      const g = choix.get(id);
+      return !(g && t - g.t < GARDE_MS);
+    });
+    if (manquent.length) {
+      const depuisTour = tour;
+      let lignes;
+      try {
+        lignes = await q(`SELECT user_id AS id, presence AS choix FROM user_wallet
+                           WHERE user_id IN (${manquent.map(() => '?').join(',')})`, manquent);
+      } catch (e) {
+        if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+        colonneAbsente();
+        return null;
+      }
+      const lus = new Map(lignes.map((l) => [String(l.id), l.choix]));
+      for (const id of manquent) retenirChoix(id, lus.get(id) ?? null, t, depuisTour);
+    }
+    const out = [];
+    for (const id of ids) {
+      if (!(await visible(id))) continue;
+      const e = await etatDe(id);
+      if (e) out.push({ id, etat: e });
+    }
+    return out;
+  }
+
+  /**
+   * Peut-on inviter ce joueur en duel sans être son ami ? Seulement quand la
+   * liste de tous est servie, qu'il se montre et qu'il est en ligne : un
+   * joueur caché ou parti ne reçoit d'invitation que de ses amis.
+   */
+  async function defiable(userId) {
+    if (!userId || !actif() || !reglage('presence.tous')) return false;
+    if (!(await visible(String(userId)))) return false;
+    return (await etatDe(String(userId))) !== null;
+  }
+
   /* ---------------------------------------------------------------- route */
 
   const router = express.Router();
@@ -512,5 +583,5 @@ export function createPresence({ pool, requireAuth, horloge = Date.now, log = co
   });
 
   return { noter, brancher, etatsPour, amisPresents, aPrevenir, visible, amisMutuels,
-           oublierAmis, actif, router };
+           oublierAmis, actif, enLigneTous, defiable, router };
 }

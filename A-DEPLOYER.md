@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Page En ligne : voir qui est connecté et le défier** (branche
+`claude/project-thread-qf6m5h`, 6 novembre 2026, choix de Gaël « 3 · Tout le
+monde »). Code seul, sans schéma. Nouvelle page `/en-ligne` (menu, et appui sur
+la pastille « X EN LIGNE » de l'accueil) : tous les joueurs connectés qui ne se
+cachent pas, filtres TOUS / MON CLUB / AMIS, DÉFIER (mène au duel, l'invitation
+part au vestiaire, même à un non-ami en ligne), interrupteur APPARAÎTRE HORS
+LIGNE. Confidentialité, QUESTIONS et /comment-jouer à jour, traduit.
+**Redémarrer**, puis dans /admin › LA PRÉSENCE : « Montrer la présence des
+amis » doit être **allumé** (sinon la page dit qu'elle n'est pas ouverte) ;
+« Tout le monde voit qui est en ligne » est allumé par défaut.
+
+---
+
 **Alerte quand un ami appelle : demande d'ami, duel, KOP** (branche
 `claude/project-thread-xv6u21`, 6 novembre 2026, demande de Gaël). Code seul,
 sans schéma. Une demande d'ami, une invitation en duel ou dans un KOP s'ouvre

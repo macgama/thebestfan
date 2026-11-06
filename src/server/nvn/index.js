@@ -360,6 +360,10 @@ export const STICKERS_PASS = Object.freeze(['ouga', 'massue', 'os', 'feu']);
 export const STICKER_MS = 6000;
 
 export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = null,
+                            /* Facultatif : la présence, pour défier un joueur
+                               en ligne qui n'est pas un ami (page /en-ligne,
+                               6 novembre 2026). Sans elle, amis seulement. */
+                            presence = null,
                             /* Facultatif : sans lui, aucun plafond, et le
                                classé s'ouvre à tous les formats. */
                             abonnement = null,
@@ -2228,10 +2232,16 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         }
         const [x, y] = u.userId < ami ? [u.userId, ami] : [ami, u.userId];
         const ok = await q(`SELECT 1 FROM amities WHERE a = ? AND b = ? AND etat = 'amis'`, [x, y]);
-        if (!ok.length) throw new Cheat('pas_ami');
+        /* **Un joueur qui n'est pas un ami** (page /en-ligne, choix de Gaël
+           du 6 novembre 2026) : seulement s'il est en ligne et se montre à
+           tous. Caché ou parti, il ne reçoit d'invitation que de ses amis. */
+        const ami2 = ok.length > 0;
+        if (!ami2 && !(await presence?.defiable?.(ami))) throw new Cheat('pas_ami');
         /* Le jeu fermé, l'ami ne verrait pas l'invitation : elle part aussi
-           sur son téléphone, une fois par place — réinviter ne la redit pas. */
-        if (!f.invites.has(ami)) void notifications?.inviteDuel(ami, f.code);
+           sur son téléphone, une fois par place — réinviter ne la redit pas.
+           Un joueur qui n'est pas un ami est en ligne : rien sur son
+           téléphone, l'alerte du jeu suffit. */
+        if (ami2 && !f.invites.has(ami)) void notifications?.inviteDuel(ami, f.code);
         f.invites.add(ami);
         socket.emit('nvn:invite', { ami });
       } catch (e) {

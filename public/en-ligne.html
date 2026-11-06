@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<script src="/langue.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* Les barres du téléphone : dans un onglet Android, Chrome tient lui-même la page hors de la barre d'état et des boutons du bas ; depuis l'icône, la page passe sous les boutons et s'en garde par var(--bas) (ui.css, « Les barres du téléphone »). */if(/Android/i.test(navigator.userAgent)&&matchMedia('(display-mode: browser)').matches){var tbfVp=document.querySelector('meta[name=viewport]');tbfVp.content=tbfVp.content.replace(/,\s*viewport-fit=cover/,'')}</script>
+<script>/* Le bas caché sous les boutons du téléphone. Depuis l'icône, sur le S24+ de Gaël, Chrome dessine la page jusqu'au bas de l'écran, sous les trois boutons, sans toujours en dire la hauteur (var(--bas) à zéro) : le bas de l'accueil restait dessous (captures du 26 octobre 2026), celui de la fiche d'un Fanzzy aussi (28 octobre). Toutes les pages le gardent par var(--bas) (ui.css). Quand la fenêtre descend jusqu'au bas de l'écran (moins de 60 px d'écart : la seule barre d'état), on garde 52 px, la hauteur des boutons ; --bas prend le plus grand des deux. Un onglet, une fenêtre que Chrome tient au-dessus des boutons, ou le plein écran de l'icône (manifeste « fullscreen », 30 octobre 2026 : les boutons y sont cachés), ne garde rien. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches&&!matchMedia('(display-mode: fullscreen)').matches&&screen.height-innerHeight<60)document.documentElement.style.setProperty('--bas-cache','52px')}catch(e){}</script>
+<script>/* La hauteur vraie de l'écran (4 novembre 2026). Dans l'appli Android (Play Store, plein écran), les boutons ÉVOLUER / EMMENER EN DUEL de la fiche tombaient sous le bas de l'écran : Chrome y annonçait une page (100dvh) plus haute que l'écran qu'on voit. Hors d'un onglet, les écrans de jeu prennent donc la plus petite de trois hauteurs : 100dvh, la fenêtre (innerHeight) et l'écran (screen.height) — var(--h-ecran), ui.css. Le clavier ouvert ne rétrécit rien : on ne remesure pas pendant une saisie. */try{if(/Android/i.test(navigator.userAgent)&&!matchMedia('(display-mode: browser)').matches){var tbfH=function(){var a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;var h=Math.min(innerHeight||1e4,screen.height||1e4);if(h>0&&h<1e4)document.documentElement.style.setProperty('--h-ecran','min(100dvh, '+h+'px)')};tbfH();addEventListener('resize',tbfH)}}catch(e){}</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<title>En ligne — thebestfan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh}
+/* Le violet des gens, comme la page des amis : ce sont des joueurs. */
+body{background:radial-gradient(120% 50% at 50% -8%,rgba(130,87,218,.13),transparent 60%),var(--beton);
+     color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
+     padding:0 0 calc(var(--nav-h,62px) + 26px)}
+main{width:100%;max-width:var(--colonne);padding:0 15px}
+.colonne{width:100%;max-width:600px;margin:0 auto}
+.compte-ligne{display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 12px;
+  font-family:var(--banner);font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.compte-ligne i{width:9px;height:9px;border-radius:50%;background:#3ddc6f;flex:none;
+  box-shadow:0 0 0 0 rgba(61,220,111,.6)}
+@media (prefers-reduced-motion:no-preference){
+  html:not([data-calme~="animations"]) .compte-ligne i{animation:souffle 2.4s ease-out infinite}
+}
+@keyframes souffle{0%{box-shadow:0 0 0 0 rgba(61,220,111,.55)}70%,100%{box-shadow:0 0 0 7px rgba(61,220,111,0)}}
+
+/* La grille des supporters : trois par rang au téléphone, quatre au large.
+   Chacun debout dans sa case, comme dans la tribune des amis. */
+.grille{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 14px}
+@media (min-width:520px){.grille{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.joueur{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0;
+  padding:28px 6px 8px;border-radius:var(--r);border:1px solid rgba(130,87,218,.32);overflow:hidden;
+  background:linear-gradient(rgba(26,22,40,.9),rgba(10,12,18,.95))}
+.joueur.ami{border-color:rgba(194,163,255,.75)}
+.joueur .pied{position:relative;width:100%;height:104px;container-type:size}
+.joueur .pied img{position:absolute;bottom:0;left:50%;translate:-50% 0;height:100%;width:auto;max-width:none;
+  pointer-events:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.6))}
+.joueur .tbf-sticker{position:absolute;top:5px;left:50%;translate:-50% 0;z-index:2;font-size:9px;white-space:nowrap}
+.joueur .n{margin-top:5px;max-width:100%;font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.joueur .q{max-width:100%;font-size:10.5px;opacity:.78;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.joueur .badge-ami{display:inline-block;margin-right:4px;font:800 8.5px var(--banner);letter-spacing:.1em;
+  padding:1px 4px;border-radius:3px;background:#8257DA;color:#fff;vertical-align:2px}
+.joueur .defier{margin-top:7px;width:100%;min-height:36px;font-size:12px;letter-spacing:.12em}
+.joueur .defier[disabled]{opacity:.55}
+.joueur a.voir{all:unset;cursor:pointer;display:contents}
+
+.cache{display:flex;align-items:center;gap:12px;margin:4px 0 14px;padding:12px;border-radius:var(--r);
+  border:1px solid rgba(242,238,228,.18);background:rgba(10,12,18,.7)}
+.cache b{display:block;font-family:var(--banner);letter-spacing:.1em;font-size:14px}
+.cache span{font-size:12px;opacity:.82}
+.inter{all:unset;cursor:pointer;flex:none;width:50px;height:28px;border-radius:20px;background:#3a4352;position:relative}
+.inter::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;
+  transition:left .15s}
+.inter[aria-checked="true"]{background:#3ddc6f}
+.inter[aria-checked="true"]::after{left:25px}
+.inter:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+.vide{text-align:center;padding:22px 12px;border:2px dashed rgba(242,238,228,.25);border-radius:var(--r);
+  font-size:14px;line-height:1.45;margin:0 0 14px}
+.vide a{color:var(--craie)}
+.note{font-size:11.5px;opacity:.72;text-align:center;line-height:1.45;margin:0 0 10px}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+</head>
+<body>
+<main id="app"><div class="colonne">
+  <p class="tbf-sous">Qui est là pour un duel</p>
+  <p class="compte-ligne" id="compte" hidden><i aria-hidden="true"></i><span id="compteMot"></span></p>
+
+  <div class="onglets tbf-onglets" data-ton="violet" id="onglets" hidden>
+    <button class="onglet tbf-onglet on" data-filtre="tous">TOUS</button>
+    <button class="onglet tbf-onglet" data-filtre="club">MON CLUB</button>
+    <button class="onglet tbf-onglet" data-filtre="amis">AMIS</button>
+  </div>
+
+  <div id="corps"><div class="vide">Chargement…</div></div>
+
+  <div class="cache" id="cache" hidden>
+    <button class="inter" id="inter" role="switch" aria-checked="false"
+      aria-labelledby="interMot"></button>
+    <div><b id="interMot">APPARAÎTRE HORS LIGNE</b>
+      <span>Allumé, personne ne te voit ici ni chez tes amis. Tu vois les autres comme avant.</span></div>
+  </div>
+  <p class="note">On voit seulement ton pseudo, ton Fanzzy, ton niveau, ton club et si tu es en ligne,
+    au Virage ou en duel. Un joueur qui n’est pas ton ami peut seulement t’inviter en duel.</p>
+</div></main>
+<div class="tbf-pile"><div class="tbf-toast" id="toast" role="status" hidden></div></div>
+
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
+<script>
+/* =======================================================================
+   Qui est en ligne (choix de Gaël du 6 novembre 2026, maquette 3 « Tout le
+   monde ») : tous les joueurs connectés qui ne se sont pas cachés, amis ou
+   non, avec DÉFIER pour les inviter en duel.
+
+   Le serveur décide de tout (`/api/amis/en-ligne`) : qui se montre, dans
+   quel ordre, et l'état de chacun. DÉFIER mène à la page du duel avec
+   `?defier=` : on y choisit son match et son format, et l'invitation part
+   dès qu'on est au vestiaire.
+   ======================================================================= */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
+  (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+const ETATS = {
+  en_ligne: { mot: 'En ligne', ton: 'craie' },
+  virage:   { mot: 'Au Virage', ton: 'flare' },
+  duel:     { mot: 'En duel', ton: 'flare' },
+};
+const S = { filtre: 'tous', r: null };
+
+function toast(t) {
+  const el = $('toast');
+  el.textContent = t; el.hidden = false;
+  clearTimeout(toast.m); toast.m = setTimeout(() => { el.hidden = true; }, 2600);
+}
+
+async function lire() {
+  const r = await fetch('/api/amis/en-ligne', { credentials: 'same-origin', cache: 'no-store' });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const j = await r.json().catch(() => null);
+  if (!j || j.error) throw new Error(j?.error ?? 'illisible');
+  return j;
+}
+
+function enPied(g) {
+  return (g?.avatar && window.FZART?.dessinAvatar?.(g.avatar, 'plein'))
+    || window.FZART?.adresse?.(g?.fanzzy, 'plein') || null;
+}
+
+function carte(g) {
+  const e = ETATS[g.etat] ?? ETATS.en_ligne;
+  const src = enPied(g);
+  const quoi = [g.club?.nom, g.niveau ? `niv. ${g.niveau}` : ''].filter(Boolean).join(' · ');
+  const libre = g.etat === 'en_ligne';
+  const dessin = `<div class="pied">${src ? `<img src="${esc(src)}" alt="" data-caler>` : ''}</div>`;
+  return `<div class="joueur${g.ami ? ' ami' : ''}" data-joueur="${esc(g.id)}">
+    <span class="tbf-sticker tbf-sticker--live" data-ton="${e.ton}" data-etat="${esc(g.etat)}">${e.mot}</span>
+    ${g.ami ? `<a class="voir" href="/amis?ami=${encodeURIComponent(g.id)}">${dessin}</a>` : dessin}
+    <div class="n">${g.ami ? '<span class="badge-ami">AMI</span>' : ''}${esc(g.pseudo)}</div>
+    <div class="q">${esc(quoi) || '&nbsp;'}</div>
+    <button class="tbf-plaque defier" data-ton="flare" data-defier="${esc(g.id)}"
+      data-pseudo="${esc(g.pseudo)}"${libre ? '' : ' disabled'}>${libre ? 'DÉFIER' : 'OCCUPÉ'}</button>
+  </div>`;
+}
+
+function rendre() {
+  const r = S.r;
+  if (!r?.actif) {
+    $('compte').hidden = true; $('onglets').hidden = true; $('cache').hidden = true;
+    $('corps').innerHTML = '<div class="vide">La liste des joueurs en ligne n’est pas ouverte pour l’instant.</div>';
+    return;
+  }
+  const c = r.compte ?? { tous: 0, club: 0, amis: 0 };
+  $('compte').hidden = false;
+  $('compteMot').textContent = c.tous > 1 ? `${c.tous} autres supporters en ligne`
+    : c.tous === 1 ? '1 autre supporter en ligne' : 'Personne d’autre en ligne';
+  $('onglets').hidden = false;
+  for (const b of $('onglets').querySelectorAll('[data-filtre]')) {
+    const n = c[b.dataset.filtre] ?? 0;
+    const mot = { tous: 'TOUS', club: 'MON CLUB', amis: 'AMIS' }[b.dataset.filtre];
+    b.innerHTML = `${mot} <span class="tbf-onglet-n">${n}</span>`;
+    b.classList.toggle('on', b.dataset.filtre === S.filtre);
+    b.disabled = b.dataset.filtre === 'club' && !r.club;
+  }
+  $('cache').hidden = false;
+  $('inter').setAttribute('aria-checked', String(!r.visible));
+
+  const gens = (r.joueurs ?? []).filter((g) => S.filtre === 'tous'
+    || (S.filtre === 'club' && g.memeClub) || (S.filtre === 'amis' && g.ami));
+  if (!gens.length) {
+    $('corps').innerHTML = `<div class="vide">${S.filtre === 'tous'
+      ? 'Personne d’autre n’est en ligne pour l’instant.'
+      : S.filtre === 'club' ? 'Personne de ton club n’est en ligne pour l’instant.'
+      : 'Aucun ami en ligne pour l’instant.'}<br><a href="/amis">Inviter un pote</a></div>`;
+    return;
+  }
+  $('corps').innerHTML = `<div class="grille">${gens.map(carte).join('')}</div>`;
+  const E = window.TBF_ETATS;
+  if (E?.caler) $('corps').querySelectorAll('img[data-caler]').forEach((img) => E.caler(img, { part: 0.92, sol: '0px' }));
+}
+
+async function charger() {
+  try {
+    const [r] = await Promise.all([lire(), window.TBF_ETATS?.charger?.()]);
+    S.r = r;
+    rendre();
+  } catch (e) {
+    if (e.message === 'auth') return;
+    if (!S.r) $('corps').innerHTML = '<div class="vide">Impossible de lire qui est en ligne.</div>';
+  }
+}
+
+$('onglets').onclick = (e) => {
+  const b = e.target.closest('[data-filtre]');
+  if (!b || b.disabled) return;
+  S.filtre = b.dataset.filtre;
+  rendre();
+};
+
+$('corps').onclick = (e) => {
+  const b = e.target.closest('button[data-defier]');
+  if (!b || b.disabled) return;
+  const q = new URLSearchParams({ defier: b.dataset.defier, pseudo: b.dataset.pseudo });
+  location.href = `/duel-nvn?${q}`;
+};
+
+$('inter').onclick = async () => {
+  const cache = $('inter').getAttribute('aria-checked') === 'true';
+  $('inter').disabled = true;
+  try {
+    const r = await fetch('/api/presence', { method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visible: cache }) });
+    const j = await r.json().catch(() => null);
+    if (j?.actif) {
+      S.r.visible = j.visible;
+      toast(j.visible ? 'Tu es visible.' : 'Tu apparais hors ligne.');
+      rendre();
+    } else toast('Impossible de changer ce réglage pour l’instant.');
+  } catch { toast('Impossible de changer ce réglage pour l’instant.'); }
+  $('inter').disabled = false;
+};
+
+charger();
+/* Relue toutes les trente secondes, seulement quand la page se voit. */
+setInterval(() => { if (!document.hidden) charger(); }, 30_000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) charger(); });
+</script>
+<script src="/fx.js" defer></script>
+<script src="/visite.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>
