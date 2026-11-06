@@ -237,6 +237,11 @@ const RUBRIQUES = [
         `Oui, dans le rayon ULTIMATE de la boutique, pour ${reglage('etal.ultime')} écharpes : `
           + 'celle d’un âge que ton Fanzzy a déjà atteint. VOIR LA SCÈNE la montre avant '
           + 'l’achat. Celles des légendaires ne s’achètent pas, elles ne sortent qu’en booster.'],
+      ['Pourquoi l’Ultimate de mon Fanzzy ne sonne-t-il pas comme les autres ?',
+        'Son son dépend de sa tenue et de sa série. La tenue change la montée et le choc '
+          + '(des tambours en peau pour la Préhistorique, de la ferraille pour l’Apocalyptique, '
+          + 'un orgue pour Halloween). La série signe juste après : les cloches de vache de '
+          + 'Die Kurve, le tambour et le sifflet du Parcage, le zapping des Héros du Canapé…'],
     ],
   },
   {

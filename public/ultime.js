@@ -3480,7 +3480,8 @@
   const doux = () => window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
     || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
 
-  const son = (nom) => { try { window.FX?.son?.(nom); } catch { /* rien */ } };
+  /* Les options (la tenue, la série) passent au moteur par FX.son. */
+  const son = (nom, options) => { try { window.FX?.son?.(nom, options); } catch { /* rien */ } };
   /* La règle de `fx.js` (« buzz »), qu'il n'exporte pas : rien sous le calme
      des vibrations, rien avant le premier geste du joueur. */
   const vibrer = (motif) => {
@@ -3509,14 +3510,20 @@
    */
   function scene(o = {}) {
     const fond = o.grande && o.racine ? image(o.racine, o.age, o.skin) : null;
-    if (!fond) return jouer(o, null);
+    if (!fond) return jouer(o, null, null);
     // Le clip ne joue pas sous le calme : l'image fixe suffit.
     const film = doux() ? null : clip(o.racine, o.age, o.skin);
     return Promise.all([precharger(fond), film ? prechargerClip(film) : null])
       .then(([pret, video]) => jouer(o, pret ? fond : null, pret ? video : null));
   }
 
-  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond, video = null) {
+  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false,
+    racine = '', skin = 'base' } = {}, fond, video = null) {
+    /* **Le son suit la série et la tenue** (Gaël, 6 novembre 2026) : la
+       tenue colore la montée et le choc, la série signe juste après (voir
+       « les couleurs de l'Ultimate » dans `son.js`). */
+    const tenue = { tenue: skin || 'base' };
+    const serie = { serie: racine || '' };
     poserStyle();
     /* Le cri est posé lettre à lettre : la traduction automatique de la page
        ne le reconnaît plus une fois découpé. On le traduit donc ici, avant
@@ -3631,10 +3638,10 @@
       if (grande) {
         /* Le son propre à l'Ultimate (`son.js`) : la montée tient jusqu'au
            choc, l'impact tombe avec l'éclair, puis la tribune. */
-        son('ultime-montee');
+        son('ultime-montee', tenue);
         plus(450, () => son('grondement'));
         plus(choc, () => {
-          son('ultime-impact');
+          son('ultime-impact', tenue);
           el.classList.add('choc');
           if (!plein) window.FX?.secousse?.(2.2);
           vibrer([60, 40, 140]);
@@ -3645,12 +3652,14 @@
             distance: Math.max(innerWidth, innerHeight) * 0.6, taille: 7, duree: 1400 });
         });
         plus(choc + 520, () => el.classList.remove('choc'));
-        plus(choc + 650, () => son(eux ? 'encaisse' : 'ovation'));
+        plus(choc + 260, () => son('ultime-signature', serie));
+        plus(choc + 1100, () => son(eux ? 'encaisse' : 'ovation'));
         plus(d - 450, () => el.classList.add('sort'));
       } else {
         son('charge');
         plus(choc, () => {
           son('rugissement');
+          plus(380, () => son('ultime-signature', serie));
           window.FX?.secousse?.(1.4);
           vibrer([40, 30, 90]);
           window.FX?.onde?.({ x: innerWidth / 2, y: innerHeight * 0.45, couleur, taille: 520 });
