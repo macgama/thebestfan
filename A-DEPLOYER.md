@@ -1,5 +1,15 @@
 # À déposer sur Infomaniak
 
+**Le son de l'Ultimate suit la série et la tenue** (branche
+`claude/project-thread-7wl6vu`, 6 novembre 2026, demande de Gaël). Code seul,
+sans schéma ni fichier son : la tenue change la montée et le choc
+(Préhistorique, Apocalyptique, Halloween, Spatiale), la série ajoute sa
+signature juste après (cloches de vache de Die Kurve, tambour et sifflet du
+Parcage…). Sons synthétisés par le jeu, réglés au banc. Après la mise en
+ligne : « Redémarrer ».
+
+---
+
 **Fanzzy du carnet plein, un par PASS** (branche `claude/project-thread-bb7bji`,
 6 novembre 2026, demande de Gaël). Code seul, sans schéma. Nouvelle série
 cadeau CARNET PLEIN (CP), jamais dans un booster : le Gardien du Feu (PASS 1),
