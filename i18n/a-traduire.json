@@ -1,7 +1,447 @@
 {
+ "<0>Créer un duel</0> : dans MATCHS DU JOUR (filtre MES ÉQUIPES et recherche), touche un match, choisis ton équipe, puis ton format, et CRÉER LE DUEL.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "<0>En attente</0> : l’onglet EN ATTENTE DE JOUEURS montre les duels où quelqu’un attend un joueur, à filtrer par format ou par équipe. Un appui choisit le match, le format et la tribune : il ne reste qu’à toucher REJOINDRE LE DUEL.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "<0>Duel privé</0> : coche-le dans la case du match, avant CRÉER LE DUEL (ou touche RENDRE PRIVÉ dans la salle d’attente). Ton duel n’apparaît plus dans les listes, et seuls tes invités peuvent y entrer.": {
+  "ou": [
+   "public/comment-jouer.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Dernière mise à jour : 6 novembre 2026": {
+  "ou": [
+   "public/confidentialite.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Savoir ce qui plaît le plus et améliorer le jeu. Seul l’éditeur le voit, et le compte est effacé après quatre-vingt-dix jours.": {
+  "ou": [
+   "public/confidentialite.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Base légale : l’exécution du contrat pour faire tourner le jeu ; notre intérêt légitime à garder un jeu équitable pour repérer les abus, et à l’améliorer.": {
+  "ou": [
+   "public/confidentialite.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ce duel n’attend plus personne. Le match est choisi : crée ton duel, ou choisis-en un autre.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} <0>Duel privé</0> : seuls tes invités peuvent entrer.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Duel ouvert à tous les supporters du match.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "OUVRIR À TOUS": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "{0} RENDRE PRIVÉ": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Pas de supporters d’appoint : on attend tes invités": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "MATCHS DU JOUR": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "EN ATTENTE DE JOUEURS <0>{0}</0>": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Équipe, compétition, pays…": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "bientôt": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Pas de match aujourd’hui. Voici ceux du <0>{0}</0> : un duel y est un entraînement, il ne compte pas au classement.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "avec ces filtres": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Personne n’attend avec ces filtres pour l’instant.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Dès qu’un supporter crée un duel, il apparaît ici.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Aucun match ne correspond à « {0} ».": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Aucune de tes équipes ne joue.<0/> Retire le filtre <1>MES ÉQUIPES</1> pour voir tous les matchs, ou <2>suis d’autres clubs</2>.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "1. TON ÉQUIPE <0>· tu es chez toi : <0>{0}</0></0>": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "1. CHOISIS TON ÉQUIPE": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "2. CHOISIS TON FORMAT": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Duel privé<0>seuls ceux à qui tu envoies le lien ou une invitation peuvent entrer</0>": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "<0>DERBY</0> · un supporter de l’autre tribune, <1>{0}</1>, est en ligne. Crée le duel : il le verra.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "REJOINDRE LE DUEL": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "CRÉER LE DUEL": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "REJOINDRE LE DUEL<0>+{0} écharpes en jeu</0>": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "CRÉER LE DUEL<0>+{0} écharpes en jeu</0>": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Ton duel privé s’est fermé : personne n’est venu. Relance-le quand ton ami est prêt.": {
+  "ou": [
+   "public/duel-nvn.html"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
  "0cqh": {
   "ou": [
    "public/fanzzy-scene.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Sur la page du duel, l’onglet EN ATTENTE DE JOUEURS montre les duels où quelqu’un attend un joueur ; tu peux les filtrer par format (1v1, 2v2…) et garder seulement tes équipes. Un appui choisit le match, le format et la tribune qui manque : il ne reste qu’à toucher REJOINDRE LE DUEL.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Comment créer un duel ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Sur la page du duel, l’onglet MATCHS DU JOUR liste les matchs d’aujourd’hui (MES ÉQUIPES pour ne garder que les tiens, et une recherche par équipe, compétition ou pays). Touche un match, puis choisis ton équipe, ton format, et CRÉER LE DUEL. Si quelqu’un attend déjà en face sur ce match et ce format, le bouton devient REJOINDRE LE DUEL. Un jour sans match, la page montre le prochain jour de match, en entraînement.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Puis-je jouer seul avec mon ami, sans qu’un autre joueur entre ?": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Oui : coche DUEL PRIVÉ dans la case du match avant CRÉER LE DUEL, ou touche RENDRE PRIVÉ dans la salle d’attente. Ton duel n’apparaît alors dans aucune liste : seuls ceux à qui tu envoies le lien ou une invitation peuvent entrer, dans la tribune qui a de la place, même s’ils suivent ton club. Les supporters d’appoint n’y entrent pas d’eux-mêmes, et le duel compte au classement comme les autres. Sans adversaire au bout de {0} minutes, il se ferme. Les autres joueurs peuvent toujours jouer le même match, dans la file publique ou dans leur propre duel privé.": {
+  "ou": [
+   "src/shared/aide.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Duel en jeu": {
+  "ou": [
+   "src/server/usage/index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Fiche d’un Fanzzy": {
+  "ou": [
+   "src/server/usage/index.js"
+  ],
+  "langues": [
+   "en",
+   "de",
+   "it",
+   "es"
+  ]
+ },
+ "Télétexte": {
+  "ou": [
+   "src/server/usage/index.js"
   ],
   "langues": [
    "en",

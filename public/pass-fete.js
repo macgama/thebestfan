@@ -335,5 +335,26 @@
     return true;
   }
 
-  window.TBF_PASS_FETE = { essayer, achat, niveau, verifierNiveau, cleNiveau };
+  /* ------------------------------------------- le trophée du carnet */
+
+  /**
+   * Le Fanzzy du carnet plein vient de tomber (`/api/quotidien`, `trophees`) :
+   * `o` : `{ fanzzy, nom, saison }`. Rend `'collection'` ou `null`.
+   */
+  async function trophee(o = {}) {
+    const id = String(o.fanzzy ?? '').replace(/[^A-Za-z0-9]/g, '');
+    if (!id) return null;
+    const html = `<span class="pf-sur">${esc(`Carnet plein · saison ${o.saison ?? ''}`)}</span>
+      <h2 class="pf-titre">${esc(o.nom ?? '')}</h2>
+      <div class="pf-gain"><span class="pf-onde" aria-hidden="true"></span>${etincelles(16)}
+        <img src="${esc(pose(id, 1, 'base', 'joie'))}" alt=""></div>
+      <p class="pf-sous">Fanzzy légendaire · aucun booster ne le donne</p>
+      <div class="pf-boutons"><button type="button" data-oui="collection">VOIR MA COLLECTION</button>
+        <button type="button" data-non>CONTINUER</button></div>`;
+    const { promesse } = ouvrir(html, { couleur: '#f2c14e', etiquette: `Trophée du carnet : ${o.nom ?? ''}` });
+    son('parfait');
+    return promesse;
+  }
+
+  window.TBF_PASS_FETE = { essayer, achat, niveau, verifierNiveau, cleNiveau, trophee };
 })();
