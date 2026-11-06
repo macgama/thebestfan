@@ -150,6 +150,17 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    tout cela leur revient d'un coup (le niveau se lit sur les tampons). */
 /* Le papier du ticket passe à l'or (la feuille peint `--kraft` sous son
    grain) : la voie PASS se distingue du carnet d'un coup d'œil. */
+/* Le trophée du carnet (6 novembre 2026) : le Fanzzy CARNET PLEIN, au bout
+   du carnet, pour tous. Sous cadenas, sa silhouette ; gagné, en couleur. */
+.trophee{margin-top:12px;display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border:2px solid #f2c14e}
+.trophee .vignette{flex:0 0 64px;height:64px;display:grid;place-items:center;overflow:hidden;
+  border-radius:50%;background:#2b1a0e}
+.trophee .vignette img{width:100%;height:100%;object-fit:cover}
+.trophee[data-etat="verrouille"] .vignette img{filter:brightness(0) drop-shadow(0 0 4px #f2c14e)}
+.trophee .texte{display:flex;flex-direction:column;gap:2px;min-width:0}
+.trophee .texte b{font-size:1.05em}
+.trophee .texte small{opacity:.85}
 .voie-pass{--pass:#c9772e;margin-top:12px;padding-left:8px;padding-right:8px;
   --kraft:linear-gradient(160deg,#f7dc8c 0%,#ecc35a 55%,#d9a441 100%)}
 .voie-pass>.haut,.voie-pass>.pied{padding:0 8px}
@@ -999,6 +1010,38 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       </div>`;
   }
 
+  /* ====================================================== le trophée du carnet
+
+     Le Fanzzy CARNET PLEIN de la saison (`dex-carnet-plein.js`, demande de
+     Gaël du 6 novembre 2026), au bout du carnet : **pour tous**, avec ou sans
+     PASS. Le serveur dit s'il est gagné et combien l'ont déjà
+     (`carnet.trophee`) ; la page ne compte que les tampons qui manquent. */
+  function tropheeHTML(c, tampons) {
+    const t = c?.trophee;
+    if (!t || typeof t !== 'object') return '';
+    if (!t.gagne && t.actif === false) return '';
+    const nom = esc(t.nom);
+    const img = image(`/img/fanzzy/${encodeURIComponent(t.fanzzy)}/e1/base/portrait.webp`, 'tampon');
+    const gagnants = entier(t.gagnants);
+    const deja = gagnants > 1 ? `<small>Déjà ${gagnants} supporters l’ont gagné.</small>`
+      : gagnants === 1 ? '<small>Déjà 1 supporter l’a gagné.</small>' : '';
+    if (t.gagne) {
+      return `<a class="tbf-ticket trophee" data-etat="gagne" href="/collection">
+          <span class="vignette">${img}</span>
+          <span class="texte"><b>${nom}</b>
+            <small>Le Fanzzy du carnet plein est à toi. Il n’existe dans aucun booster.</small>${deja}</span>
+        </a>`;
+    }
+    const fin = Math.max(0, ...(c.paliers ?? []).map((p) => entier(p?.tampons)));
+    const manque = Math.max(0, fin - entier(tampons));
+    return `<div class="tbf-ticket trophee" data-etat="verrouille">
+        <span class="vignette">${img}</span>
+        <span class="texte"><b>${nom}</b>
+          <small>Le Fanzzy légendaire de la saison attend ceux qui rempliront tout le carnet, avec ou sans PASS.</small>${
+            manque > 1 ? `<small>Encore ${manque} tampons.</small>` : manque === 1 ? '<small>Encore 1 tampon.</small>' : ''}${deja}</span>
+      </div>`;
+  }
+
   /* ========================================================== la voie PASS
 
      La seconde ligne du carnet, en or, celle du PASS de la saison. Le serveur
@@ -1167,6 +1210,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       out.push(`<h2 class="tbf-cousu">${nomSaison(s) || 'LA SAISON'}${quand ? `<i>${esc(quand)}</i>` : ''}</h2>
         ${prets.length ? `<div class="tbf-missions">${prets.map((p) => ticketPalier(p, s)).join('')}</div>` : ''}
         ${carnetHTML(c, s, tampons)}
+        ${tropheeHTML(c, tampons)}
         ${voiePassHTML(c, s)}`);
     }
 
@@ -1654,6 +1698,24 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     } catch { return { statut: 0, j: null }; }
   }
 
+  /* Le Fanzzy du carnet plein (`trophee.js`) : sa fête plein écran, chargée
+     seulement ce jour-là (`pass-fete.js`, comme le fait le menu). */
+  async function feterTrophees(liste) {
+    if (!window.TBF_PASS_FETE) {
+      await new Promise((ok) => {
+        const sc = document.createElement('script');
+        sc.src = '/pass-fete.js';
+        sc.onload = ok;
+        sc.onerror = ok;
+        document.head.appendChild(sc);
+      });
+    }
+    for (const t of liste) {
+      const choix = await window.TBF_PASS_FETE?.trophee?.(t);
+      if (choix === 'collection') { location.href = '/collection'; return; }
+    }
+  }
+
   /**
    * Récupérer. Le bouton s'éteint pendant la demande ; la réponse porte
    * l'état à jour (§ 6.2), qu'on prend tel quel. Versé : le tampon claque
@@ -1703,6 +1765,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
       await ticketGain(j.gain, origine, sorte === 'carnet' ? ['packs'] : []);
       window.dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet: j.wallet, niveau: j.niveau } }));
       if (j.niveau?.monte === true) window.TBF_NIVEAU?.feter?.(j.niveau);
+      if (Array.isArray(j.trophees) && j.trophees.length) await feterTrophees(j.trophees);
       return;
     }
 

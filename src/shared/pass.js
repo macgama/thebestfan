@@ -39,6 +39,7 @@
  *
  * Rien ici ne lit la base ni l'horloge : `src/server/abonnement/` le fait.
  */
+import { DEX_CARNET_PLEIN } from './fanzzy/dex-carnet-plein.js';
 
 /**
  * Le registre des PASS, un par saison, par **numéro** de saison.
@@ -100,6 +101,18 @@ export const PASS_SAISONS = Object.freeze([
 
 export const PASS_PAR_NUMERO = new Map(PASS_SAISONS.map((p) => [p.numero, p]));
 
+/* **Le trophée du carnet** (Gaël, 6 novembre 2026) : un Fanzzy légendaire par
+   PASS, gagné par **tous** ceux qui atteignent le dernier palier du carnet de
+   sa saison, avec ou sans PASS (`dex-carnet-plein.js`). Le registre se lit
+   sur les cartes elles-mêmes (`pass`), pour qu'une cinquième ne demande
+   qu'une ligne de plus dans ce fichier-là. */
+const TROPHEES = new Map(DEX_CARNET_PLEIN.map((f) => [f.pass, { fanzzy: f.id, nom: f.nom }]));
+
+/** Le trophée du carnet d'une saison : `{ fanzzy, nom }`, ou `null`. */
+export function tropheeDuPass(numero) {
+  return TROPHEES.get(Number(numero)) ?? null;
+}
+
 /* **La tenue choisie dans l'admin** (Gaël, 3 novembre 2026 : « je devrais
    pouvoir sélectionner moi-même »). Le serveur la lit dans
    `saisons.tenue_pass` au chargement des saisons et la pose ici :
@@ -133,6 +146,9 @@ export function passDe(numero) {
     couleur: p?.couleur ?? '#f2c14e',
     /* Le titre suit le thème : une autre tenue choisie n'en a pas. */
     titre: p?.titre && tenue === p.tenue ? p.titre : null,
+    /* Le Fanzzy du carnet plein ne dépend pas de la tenue : il est à la
+       saison, pour tous. */
+    trophee: tropheeDuPass(n),
   };
 }
 

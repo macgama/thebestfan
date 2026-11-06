@@ -270,6 +270,13 @@ const RUBRIQUES = [
           + 'TheBestFan, orange, blanc et noir, rejoint la collection, dans sa série à lui. '
           + 'Ni l’un ni l’autre ne sort d’un booster : ils s’offrent, et ils ne font pas '
           + 'pousser plus fort qu’une autre légendaire.'],
+      ['Que gagne-t-on en remplissant tout le carnet de la saison ?',
+        () => 'Un Fanzzy légendaire de la série CARNET PLEIN, un par saison : le Gardien du Feu '
+          + '(PASS 1), le Ferrailleur (PASS 2), le Capitaine Comète (PASS 3) et le Fantôme du '
+          + 'Virage (PASS 4). Il va à tous ceux qui atteignent le dernier palier du carnet, avec '
+          + 'ou sans PASS ; avec le PASS, tu le portes en plus dans la tenue de la saison. Il ne '
+          + 'sort d’aucun booster et ne s’achète nulle part : une fois la saison finie, il ne se '
+          + 'gagne plus.'],
       ['Que valent mes doubles ?',
         () => 'Ils deviennent des écharpes, au tarif de la rareté : '
           + `${SCARVES.commune} pour une commune, ${SCARVES.rare} pour une rare, `

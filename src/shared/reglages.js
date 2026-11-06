@@ -464,6 +464,14 @@ export const REGLAGES = [
       'chaque gain. Zéro ou un : sa vraie voie. Une fois la saison lancée, ce réglage ne ' +
       'compte plus.' },
 
+  { cle: 'pass.trophee_actif', section: 'abonnement', type: 'booleen', defaut: true,
+    titre: 'Le Fanzzy du carnet plein se gagne',
+    aide: 'Demande de Gaël du 6 novembre 2026 : qui atteint le dernier palier du carnet ' +
+      'de la saison reçoit le Fanzzy légendaire de son PASS (CARNET PLEIN : Gardien du Feu, ' +
+      'Ferrailleur, Capitaine Comète, Fantôme du Virage), avec ou sans PASS. Éteint : plus ' +
+      'personne ne le reçoit au carnet (ceux qui l’ont le gardent), l’admin peut toujours ' +
+      'l’offrir depuis la collection du joueur.' },
+
   { cle: 'pass.dernier_mois_jours', section: 'abonnement', type: 'entier',
     titre: 'Acheté si près de la fin, il couvre aussi la saison suivante', unite: 'jours',
     min: 0, max: 60, defaut: 30,

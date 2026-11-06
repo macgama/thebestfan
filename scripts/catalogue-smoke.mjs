@@ -221,6 +221,13 @@ const SANS_SOMMET_ENCORE = new Set([]);
   check('la série de cadeau THEBESTFAN existe, avec ses légendaires', cadeaux.some((s) => s.id === 'TB')
     && DEX.filter((f) => f.set === 'TB').every((f) => f.rar === 'legendaire' && f.stage === 1));
   const { serieOuverte } = await import('../src/server/fanzzy/catalogue.js');
+  check('la série CARNET PLEIN a un Fanzzy légendaire par PASS, de 1 à 4',
+    cadeaux.some((s) => s.id === 'CP')
+    && JSON.stringify(DEX.filter((f) => f.set === 'CP').map((f) => [f.id, f.pass, f.rar, f.stage]))
+      === JSON.stringify([1, 2, 3, 4].map((n) => [`CP${n}`, n, 'legendaire', 1])));
+  const { tropheeDuPass } = await import('../src/shared/pass.js');
+  check('chaque PASS du registre connaît son trophée du carnet',
+    [1, 2, 3, 4].every((n) => tropheeDuPass(n)?.fanzzy === `CP${n}`) && tropheeDuPass(0) === null);
   check('aucune série de cadeau n’est ouverte, même sans saison',
     cadeaux.every((s) => serieOuverte(s.id) === false));
 }
