@@ -241,6 +241,11 @@
     'FR38B', 'FR38C', 'FR39', 'FR39B', 'FR39C', 'FR40', 'FR40B', 'FR40C',
     'FR41', 'FR41B', 'FR41C', 'FR42', 'FR42B', 'FR42C', 'FR43', 'FR43B',
     'FR43C', 'FR44', 'FR44B', 'FR44C', 'FR45', 'FR45B', 'FR45C',
+    'FR46', 'FR46B', 'FR46C', 'FR47', 'FR47B', 'FR47C', 'FR48', 'FR48B',
+    'FR48C', 'FR49', 'FR49B', 'FR49C', 'FR50', 'FR50B', 'FR50C', 'FR51',
+    'FR51B', 'FR51C', 'FR52', 'FR52B', 'FR52C', 'FR53', 'FR53B', 'FR53C',
+    'FR54', 'FR54B', 'FR54C', 'FR55', 'FR56', 'FR57', 'FR58', 'FR59',
+    'FR60',
   ]);
 
   /**
@@ -583,6 +588,15 @@
     FR42B: '7e187177d9', FR42C: 'eb62ddf06f', FR43: '2d74493541', FR43B: '8577e58eb5',
     FR43C: 'a7e04167b5', FR44: 'a93cc95974', FR44B: '6d0c3172ea', FR44C: '81101fe15e',
     FR45: '42238be7ae', FR45B: 'e899a2940e', FR45C: 'f219b8f490',
+    FR46: 'bd3cb697ff', FR46B: 'a1520141a6', FR46C: 'b9f9be134d', FR47: '7a9b7fcaa6',
+    FR47B: 'a3085f463c', FR47C: 'c9e6f8b6b2', FR48: '10c4e463ee', FR48B: '9c9eced4dd',
+    FR48C: 'e751bc4bac', FR49: 'a9f360e8e1', FR49B: '2eda105e07', FR49C: 'df98f4198e',
+    FR50: 'cdf2b1c131', FR50B: 'b9097b62b0', FR50C: '49027f9c9f', FR51: '5e94ac1ec2',
+    FR51B: '604f586ea2', FR51C: '77350681dc', FR52: '54c55346ab', FR52B: '40b69f5792',
+    FR52C: '10f9dc4a84', FR53: 'c43b9042eb', FR53B: '00a42b6e2a', FR53C: 'b5bf2efca7',
+    FR54: '192ab87f78', FR54B: 'c5f0ed8777', FR54C: 'b3dc1dc0f3', FR55: 'cdf25515f7',
+    FR56: 'a168a7743a', FR57: '48561622bc', FR58: '876c474aa3', FR59: 'cbdcd895e6',
+    FR60: 'ac6ae160e4',
   };
 
   /**
