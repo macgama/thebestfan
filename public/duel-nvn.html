@@ -2002,13 +2002,12 @@ function rendreSalle(p) {
   if (S.amisOuverts) corps.push(listeAmisDuel());
   /* **Le cadenas** (6 novembre 2026) : fermer son duel aux autres joueurs,
      ou le rouvrir à tous. Fermé, seuls le lien et les invitations y mènent. */
-  corps.push(p.prive
-    ? '<p class="prive-att"><span><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i> '
-      + '<b>Duel privé</b> : seuls tes invités peuvent entrer.</span>'
-      + '<button class="tbf-plaque" id="basculerPrive" data-prive-vers="0">OUVRIR À TOUS</button></p>'
-    : '<p class="prive-att"><span>Duel ouvert à tous les supporters du match.</span>'
-      + '<button class="tbf-plaque" id="basculerPrive" data-prive-vers="1">'
-      + '<i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i> RENDRE PRIVÉ</button></p>');
+  const cadenas = '<i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>';
+  corps.push(`<p class="prive-att"><span>${p.prive
+    ? `${cadenas} <b>Duel privé</b> : seuls tes invités peuvent entrer.`
+    : 'Duel ouvert à tous les supporters du match.'}</span>`
+    + `<button class="tbf-plaque" id="basculerPrive" data-prive-vers="${p.prive ? 0 : 1}">${
+      p.prive ? 'OUVRIR À TOUS' : `${cadenas} RENDRE PRIVÉ`}</button></p>`);
   /* **Le duel reste ouvert quand on part** : la place attend, les autres la
      voient, et le joueur est rappelé quand quelqu'un arrive en face. */
   /* **Deux portes de plus** (5 novembre 2026, Gaël) : jouer tout de suite
