@@ -63,6 +63,7 @@
     "gestes-audit:test": "node scripts/audit-gestes.mjs",
     "derby:smoke": "node scripts/derby-smoke.mjs",
     "duel-attente:smoke": "node scripts/duel-attente-smoke.mjs",
+    "duel-prive:smoke": "node scripts/duel-prive-smoke.mjs",
     "duel-guide:smoke": "node scripts/duel-guide-smoke.mjs",
     "duel-attente:ui": "node scripts/duel-attente-ui-smoke.mjs",
     "virage:smoke": "node scripts/virage-smoke.mjs",

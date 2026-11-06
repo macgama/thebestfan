@@ -383,6 +383,15 @@ const RUBRIQUES = [
         'Ouvre un duel, puis, dans la salle d’attente, invite ton ami depuis le jeu '
           + 'ou envoie-lui le lien : un appui l’amène directement dans ton duel. Tu '
           + 'peux aussi le défier aux tirs au but, dans les mini-jeux.'],
+      ['Puis-je jouer seul avec mon ami, sans qu’un autre joueur entre ?',
+        () => 'Oui : coche DUEL PRIVÉ avant d’entrer en file, ou touche RENDRE PRIVÉ '
+          + 'dans la salle d’attente. Ton duel n’apparaît alors dans aucune liste : '
+          + 'seuls ceux à qui tu envoies le lien ou une invitation peuvent entrer, '
+          + 'dans la tribune qui a de la place, même s’ils suivent ton club. Les '
+          + 'supporters d’appoint n’y entrent pas d’eux-mêmes, et le duel compte au '
+          + `classement comme les autres. Sans adversaire au bout de ${reglage('duel.attente_absent_min')} `
+          + 'minutes, il se ferme. Les autres joueurs peuvent toujours jouer le même '
+          + 'match, dans la file publique ou dans leur propre duel privé.'],
       ['C’est quoi, le duel guidé ?',
         'Trois minutes sur un match fictif, contre un adversaire patient, avec des '
           + 'bulles qui te montrent quoi faire. Il ne rapporte rien, ne compte nulle '

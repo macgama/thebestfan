@@ -1184,6 +1184,13 @@ html[data-calme~="animations"] .bilan-nuage>i{display:none}
 /* Le duel reste ouvert quand on part : on le dit dans le vestiaire. */
 .ailleurs{margin:0;text-align:center;font-size:12.5px;color:var(--craie-2,#bbb);line-height:1.4}
 .inviters{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+/* Le cadenas du duel privé (6 novembre 2026) : une ligne qui dit si le duel
+   est fermé, et le bouton qui le ferme ou le rouvre. */
+.prive-att{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  margin:0;text-align:center;font-size:12.5px;line-height:1.4;color:var(--craie-2,#bbb)}
+.prive-att b{color:var(--craie,#f3eee4)}
+.prive-att .tbf-ico{font-size:14px;vertical-align:-2px}
+.prive-att button{min-height:36px;padding:6px 12px;font-size:12px}
 /* Les amis à inviter, sous le bouton : une ligne chacun. */
 .amis-duel{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;
   max-height:180px;overflow:auto}
@@ -1980,6 +1987,15 @@ function rendreSalle(p) {
   }
   corps.push(`<div class="inviters">${boutons.join('')}</div>`);
   if (S.amisOuverts) corps.push(listeAmisDuel());
+  /* **Le cadenas** (6 novembre 2026) : fermer son duel aux autres joueurs,
+     ou le rouvrir à tous. Fermé, seuls le lien et les invitations y mènent. */
+  corps.push(p.prive
+    ? '<p class="prive-att"><span><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i> '
+      + '<b>Duel privé</b> : seuls tes invités peuvent entrer.</span>'
+      + '<button class="tbf-plaque" id="basculerPrive" data-prive-vers="0">OUVRIR À TOUS</button></p>'
+    : '<p class="prive-att"><span>Duel ouvert à tous les supporters du match.</span>'
+      + '<button class="tbf-plaque" id="basculerPrive" data-prive-vers="1">'
+      + '<i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i> RENDRE PRIVÉ</button></p>');
   /* **Le duel reste ouvert quand on part** : la place attend, les autres la
      voient, et le joueur est rappelé quand quelqu'un arrive en face. */
   /* **Deux portes de plus** (5 novembre 2026, Gaël) : jouer tout de suite
@@ -2004,6 +2020,10 @@ function rendreSalle(p) {
 
   if ($('inviter')) $('inviter').onclick = () => inviterAuDuel(p);
   $('inviterAmi').onclick = () => ouvrirAmisDuel();
+  $('basculerPrive').onclick = (e) => {
+    e.currentTarget.disabled = true;
+    socket?.emit('nvn:prive', { prive: e.currentTarget.dataset.priveVers === '1' });
+  };
   $('contreBots').onclick = () => {
     $('contreBots').disabled = true;
     socket?.emit('nvn:entrainement');
@@ -2050,7 +2070,10 @@ function rendreSalle(p) {
     if (!reste) { clearInterval(reboursTimer); reboursTimer = null; }
   };
   if (Number.isFinite(dansMs) || finA) { tic(); reboursTimer = setInterval(tic, 1000); }
-  else $('rebours')?.remove();
+  else if (p.prive) {
+    /* Un duel privé attend l'ami : pas de supporters d'appoint d'office. */
+    $('rebours').innerHTML = '<small>Pas de supporters d’appoint : on attend tes invités</small>';
+  } else $('rebours')?.remove();
 }
 
 /* ------------------------------------------------ le match réel
@@ -2225,6 +2248,9 @@ const S = {
      la redessiner quand la liste s'ouvre. */
   amisOuverts: false,
   amisDuel: null,
+  /* « Duel privé » (6 novembre 2026, Gaël) : un salon à soi, où l'on
+     n'entre que par le lien ou une invitation. */
+  prive: false,
   invites: new Set(),
   derniereSalle: null,
   derby: null,
@@ -2525,6 +2551,16 @@ function rendrePrepa(sansDeck, formats) {
     ${S.souple ? 'data-ton="flare"' : ''} aria-pressed="${Boolean(S.souple)}" data-souple>
     <span class="case">${S.souple ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : ''}</span>
     <span class="t">Peu importe le format<small>joue avec tous ceux qui attendent sur ce match</small></span>
+  </button>`);
+  /* **« Duel privé »** (6 novembre 2026, Gaël) : un duel à soi, fermé aux
+     autres joueurs. On n'y entre que par le lien ou INVITER UN AMI ; il ne
+     paraît dans aucune liste, et les supporters d'appoint n'y entrent pas
+     d'eux-mêmes. Les deux cases s'excluent : un duel privé ne se mélange
+     à aucune autre file. */
+  out.push(`<button class="souple tbf-plaque ${S.prive ? 'on' : ''}"
+    ${S.prive ? 'data-ton="flare"' : ''} aria-pressed="${Boolean(S.prive)}" data-prive>
+    <span class="case">${S.prive ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : ''}</span>
+    <span class="t">Duel privé<small>seuls ceux à qui tu envoies le lien ou une invitation peuvent entrer</small></span>
   </button>`);
 
   out.push(`<h2 class="tbf-cousu">LE MATCH SUPPORT</h2>`);
@@ -2842,7 +2878,16 @@ function montrerRegles() {
 $('prepaCorps').addEventListener('click', (e) => {
   const f = e.target.closest('[data-fmt]');
   if (f) { S.format = f.dataset.fmt; return preparerRendu(); }
-  if (e.target.closest('[data-souple]')) { S.souple = !S.souple; return preparerRendu(); }
+  if (e.target.closest('[data-souple]')) {
+    S.souple = !S.souple;
+    if (S.souple) S.prive = false;
+    return preparerRendu();
+  }
+  if (e.target.closest('[data-prive]')) {
+    S.prive = !S.prive;
+    if (S.prive) S.souple = false;
+    return preparerRendu();
+  }
   if (e.target.closest('[data-regles]')) {
     S.regles = !S.regles;
     preparerRendu();
@@ -3086,6 +3131,13 @@ function connecter() {
 
   /* Revenu sur la page, mais la place n'attendait plus (expirée, ou le
      joueur a quitté la file ailleurs) : la préparation, simplement. */
+  /* Un duel privé sans adversaire au bout de dix minutes : il se ferme. */
+  socket.on('nvn:prive_expire', () => {
+    if (S.vue) return;
+    quitterFile();
+    toast('Ton duel privé s’est fermé : personne n’est venu. Relance-le quand ton ami est prêt.');
+  });
+
   socket.on('nvn:hors_file', () => {
     if (S.vue) return;
     S.enFile = false;
@@ -3256,7 +3308,8 @@ function entrerEnFile() {
   prisesAvant = { moi: 0, eux: 0 };
   S.invites = new Set();
   socket.emit('nvn:queue',
-    { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0, souple:S.souple });
+    { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0,
+      souple:S.souple && !S.prive, prive:S.prive });
   S.enFile = true;
   voile('Dans la file', 'Recherche d\u2019adversaires…',
     { texte:'Quitter la file', action: quitterFile });
