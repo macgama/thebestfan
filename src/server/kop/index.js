@@ -743,6 +743,10 @@ export function createKop({ pool, requireAuth, io = null,
         ...depouiller(bulletins.map((b) => ({ userId: b.userId, pour: Boolean(b.pour) })),
           k.createur),
         monBulletin: bulletins.find((b) => b.userId === userId)?.pour ?? null,
+        /* Qui a voté quoi, pour le duel de la page (les POUR face aux
+           CONTRE) : entre membres d'un même KOP, le vote se fait à main
+           levée, comme dans une tribune. */
+        bulletins: bulletins.map((b) => ({ id: b.userId, pour: Boolean(b.pour) })),
       } : null,
       bonus: actifs.map((a) => ({ id: a.id, bonusId: a.bonus_id, portee: a.portee,
         restant: a.restant })),

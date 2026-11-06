@@ -539,7 +539,9 @@ const RUBRIQUES = [
       ['Comment avoir une carte-souvenir ?',
         'Chaque vrai but crée une carte. Si tu poussais au Grand Virage à ce '
           + 'moment-là, tu la reçois à ton nom, avec ton Fanzzy de ce soir-là. Sinon, '
-          + 'tu peux l’acheter quelque temps dans ton carnet.'],
+          + 'tu peux l’acheter quelque temps dans ton carnet. Le carnet est un album : '
+          + 'une page par club suivi, où les buts qui te manquent encore attendent en '
+          + 'cases vides, avec leur prix et le temps qui reste.'],
     ],
   },
   {
@@ -591,6 +593,10 @@ const RUBRIQUES = [
         () => 'Un ami est un lien entre deux personnes. Un KOP est un groupe qui '
           + 'pousse ensemble et qui apparaît comme tel dans les classements. On peut '
           + 'avoir des amis partout et n’être que d’un seul KOP.'],
+      ['Les autres membres voient-ils mon vote au KOP ?',
+        'Oui. Pendant les trois minutes d’un vote, chaque membre passe dans le camp POUR '
+          + 'ou dans le camp CONTRE, avec son Fanzzy, comme à main levée dans une tribune. '
+          + 'Tu peux changer d’avis tant que le vote est ouvert.'],
     ],
   },
   {
