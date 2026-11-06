@@ -675,7 +675,7 @@ function carteAmi(g) {
   return `
   <div class="gars ami${ouvert ? ' deplie' : ''}" data-id="${esc(g.id)}">
     <button class="buste-btn" data-fiche="${esc(g.id)}" aria-label="La fiche de ${esc(g.pseudo)}">${avatar(g)}</button>
-    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${g.pass && window.TBF_PASS ? window.TBF_PASS.badge(g.pass) : ''}${presence(g)}</span><span class="actions"><button
+    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${g.pass && window.TBF_PASS ? window.TBF_PASS.badge(g.pass) : ''}${g.distinctions?.length && window.TBF_PASS?.distinctions ? window.TBF_PASS.distinctions(g.distinctions) : ''}${presence(g)}</span><span class="actions"><button
       class="bt tbf-plaque" data-ton="violet" data-fiche="${esc(g.id)}">JOUER ENSEMBLE</button>${inviter}</span></span>
     <button class="bt tbf-plaque plus" data-plus="${esc(g.id)}" aria-expanded="${ouvert === 'plus'}"
       aria-label="Plus d’options pour ${esc(g.pseudo)}"><i class="tbf-ico ico-plus" aria-hidden="true"></i></button>
@@ -924,12 +924,13 @@ async function chargerFiche() {
   /* Son PASS, à côté : la route publique de sa carte de supporter. */
   const id = String(S.ficheId);
   if (S.fichePass?.id !== id) {
-    S.fichePass = { id, badge: null };
+    S.fichePass = { id, badge: null, distinctions: [] };
     fetch(`/api/abonnement/badge/${encodeURIComponent(id)}`, { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (S.fichePass?.id !== id || !d?.badge) return;
-        S.fichePass.badge = d.badge;
+        if (S.fichePass?.id !== id || (!d?.badge && !d?.distinctions?.length)) return;
+        S.fichePass.badge = d.badge ?? null;
+        S.fichePass.distinctions = Array.isArray(d.distinctions) ? d.distinctions : [];
         if (S.vue === 'fiche') rendre();
       }).catch(() => {});
   }
@@ -963,6 +964,8 @@ function vueFiche() {
   const cadre = k && g('cadre_profil') ? P.img(k.cadre_profil, 'pass-cadre-buste') : '';
   let html = retour + `<div class="fiche-tete"${fond}${pa ? ' data-pass' : ''}><span class="fiche-buste">${busteEn(a, 'joie')}${cadre}</span>
     <span><b${g('badge_or') ? ' class="pass-or"' : ''}>${esc(a.pseudo)}</b>${pa && P ? ` ${P.badge(pa, 'moyen')}` : ''}${
+      S.fichePass?.id === String(a.id) && S.fichePass.distinctions?.length && P?.distinctions
+        ? ` ${P.distinctions(S.fichePass.distinctions, 'moyen')}` : ''}${
       g('titre') && pa.titre ? `<em class="pass-titre">${esc(pa.titre)}</em>` : ''}<small>${[niv, clubs].filter(Boolean).join(' · ')}</small></span></div>`;
   if (!F.actif) {
     return html + '<div class="vide">Les jeux entre amis sont en pause pour l’instant.</div>';

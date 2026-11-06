@@ -1880,6 +1880,7 @@ const VUES = {
         <tr><td><b>${esc(u.pseudo)}</b>
           ${u.role==='admin'?'<span class="pill admin">ADMIN</span>':''}
           ${u.status==='locked'?'<span class="pill locked">BLOQUÉ</span>':''}
+          ${(u.distinctions ?? []).includes('fondateur')?'<span class="pill vert" title="badge Fondateur">FONDATEUR</span>':''}
           <br><span style="opacity:.45;font-size:11px">${esc(u.email)}</span></td>
         <td>${u.email_verified_at ? 'vérifié' : 'non vérifié'}<br>
           <span style="opacity:.45;font-size:11px">inscrit le ${jour(u.created_at)}</span></td>
@@ -1916,6 +1917,13 @@ const VUES = {
           ${(u.pass ?? []).length ? `<button class="mini rouge" data-a="pass_retirer"
             data-saison="${u.pass[u.pass.length - 1].saison}">Retirer le PASS S${u.pass[u.pass.length - 1].saison}</button>` : ''}
           ${u.abonne ? '<button class="mini rouge" data-a="abo_retirer">Retirer l’ancien abo</button>' : ''}
+          <!-- **Le cadeau Fondateur** (6 novembre 2026) : le badge Fondateur et
+               le Fanzzy légendaire TheBestFan, d'un geste, pour les
+               bêta-testeurs. Le retrait ne touche que le badge : un Fanzzy
+               reçu ne se reprend pas (collection.js). -->
+          ${(u.distinctions ?? []).includes('fondateur')
+          ? '<button class="mini rouge" data-a="fondateur_retirer">Retirer le badge Fondateur</button>'
+          : '<button class="mini vert" data-a="fondateur_offrir">Offrir le cadeau Fondateur</button>'}
         </td></tr>`).join('')}</tbody></table></div>`;
 
     const chercher = () => sansPerdreLaMain(() => VUES.joueurs($('q').value.trim()));
@@ -1948,6 +1956,25 @@ const VUES = {
             ? 'le module du PASS n’est pas monté : applique sql/pass.sql.'
             : err.code === 'admin.error.pas_de_saison' ? 'aucune saison n’est lancée.'
               : (err.raison ?? err.code), true);
+        }
+        return;
+      }
+
+      if (b.dataset.a === 'fondateur_offrir' || b.dataset.a === 'fondateur_retirer') {
+        try {
+          if (b.dataset.a === 'fondateur_offrir') {
+            const r = await api('/joueur/' + id + '/fondateur', {}, 'POST');
+            recu([r.badge ? 'badge Fondateur offert' : 'il avait déjà le badge Fondateur',
+              r.fanzzy ? 'Fanzzy TheBestFan offert' : 'il avait déjà TheBestFan'].join(', ') + '.');
+          } else {
+            await api('/joueur/' + id + '/distinction/fondateur', null, 'DELETE');
+            recu('badge Fondateur retiré (le Fanzzy TheBestFan reste à lui).');
+          }
+          VUES.joueurs($('q')?.value ?? '');
+        } catch (err) {
+          recu(err.code === 'admin.error.distinctions_absentes'
+            ? 'les badges ne sont pas encore montés : applique sql/distinctions.sql (mise en ligne).'
+            : (MSG_FANZZY[err.code] ?? err.raison ?? err.code), true);
         }
         return;
       }

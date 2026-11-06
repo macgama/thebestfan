@@ -104,9 +104,15 @@ export function createClassements({ pool, requireAuth,
       const pleins = await abonnement.vitrinesDe(tete, { max: 3 }).catch(() => new Map());
       for (const [id, b] of pleins) passes.set(id, vitrinePublique(b));
     }
+    /* Les badges offerts (Fondateur…) : une requête, tus par une panne. */
+    const distinctions = abonnement?.distinctionsDe
+      ? await abonnement.distinctionsDe(lignes.map((l) => l.public_id)).catch(() => new Map())
+      : new Map();
     return lignes.map((l) => {
       const pass = passes.get(String(l.public_id));
-      return { ...l, ...(carte.get(l.public_id) ?? {}), ...(pass ? { pass } : {}) };
+      const d = distinctions.get(String(l.public_id));
+      return { ...l, ...(carte.get(l.public_id) ?? {}), ...(pass ? { pass } : {}),
+        ...(d ? { distinctions: d } : {}) };
     });
   }
 

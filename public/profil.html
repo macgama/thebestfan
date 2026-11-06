@@ -129,6 +129,7 @@ html[data-calme~="animations"] .carte-fond.grotte::before{animation:none}
 .carte-tampon{position:absolute;z-index:3;top:18px;right:14px;--rot:-7deg}
 /* L'écusson du PASS de saison, en bas à gauche de la carte, et son lien vers
    la page du PASS. Posé seulement s'il y en a un (`pass.js`). */
+.carte-distinctions{display:flex;gap:8px;margin:4px 0 2px}
 .carte-pass{position:absolute;z-index:3;left:12px;bottom:10px;text-decoration:none}
 /* Le niveau, collé sur le coin déchiré du cadre : il le chevauche. */
 .carte-niv{position:absolute;z-index:4;right:-7px;bottom:-9px;--taille:34px;--rot:6deg;font-size:17px}
@@ -482,6 +483,8 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
              s'affiche sans pseudo plutôt qu'avec un « — » qui a l'air d'en être
              un. -->
         <h1 id="pseudo"></h1>
+        <!-- Les badges offerts (Fondateur…), sous le pseudo : posés s'il y en a. -->
+        <p class="carte-distinctions" id="distCarte" hidden></p>
         <p class="pass-titre" id="passTitre" hidden></p>
         <div class="club" id="clubline"></div>
         <div class="depuis" id="depuis"></div>
@@ -2153,6 +2156,11 @@ void (async () => {
   try {
     const a = await (window.TBF_ABO ??= fetch('/api/abonnement', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null)).catch(() => null));
+    const dist = $('distCarte');
+    if (dist && a?.distinctions?.length && window.TBF_PASS?.distinctions) {
+      dist.innerHTML = window.TBF_PASS.distinctions(a.distinctions, 'moyen');
+      dist.hidden = !dist.innerHTML;
+    }
     const v = (a?.voies ?? []).at(-1);
     if (!v || !window.TBF_PASS) return;
     const el = $('passCarte');

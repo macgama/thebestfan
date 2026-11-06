@@ -5013,11 +5013,13 @@ function nomPass(j) {
   const nom = `${esc(j.nom)}${j.bot ? ' · BOT' : ''}`;
   const p = j.pass;
   const P = window.TBF_PASS;
-  if (!p || !P || j.bot) return `<b>${nom}</b>`;
+  /* Les badges offerts (Fondateur…), après l'écusson, avec ou sans PASS. */
+  const d = !j.bot && j.distinctions?.length && P?.distinctions ? P.distinctions(j.distinctions) : '';
+  if (!p || !P || j.bot) return d ? `<span class="pass-nom"><b>${nom}</b>${d}</span>` : `<b>${nom}</b>`;
   const g = (x) => Array.isArray(p.gains) && p.gains.includes(x);
   const k = P.kit?.(p.saison);
   const plaque = k?.titre ? ` style="--plaque:url('${P.image(k.titre)}')"` : '';
-  return `<span class="pass-nom"><b${g('badge_or') ? ' class="pass-or"' : ''}>${nom}</b>${P.badge(p)}</span>`
+  return `<span class="pass-nom"><b${g('badge_or') ? ' class="pass-or"' : ''}>${nom}</b>${P.badge(p)}${d}</span>`
     + (g('titre') && p.titre ? `<span class="pass-titre"${plaque}>${esc(p.titre)}</span>` : '');
 }
 

@@ -264,6 +264,12 @@ const RUBRIQUES = [
           + 'rareté, ce qu’elle change en jeu et si elle est nouvelle ou en double. Les '
           + 'flèches passent aux autres cartes du paquet, VOIR LA FICHE ouvre la fiche du '
           + 'Fanzzy et FERMER te ramène au paquet.'],
+      ['C’est quoi le badge Fondateur et le Fanzzy TheBestFan ?',
+        () => 'Le merci de TheBestFan à ses bêta-testeurs. Le badge Fondateur s’affiche à côté '
+          + 'du pseudo (classement, amis, profil, affiche du duel) et le Fanzzy légendaire '
+          + 'TheBestFan, orange, blanc et noir, rejoint la collection, dans sa série à lui. '
+          + 'Ni l’un ni l’autre ne sort d’un booster : ils s’offrent, et ils ne font pas '
+          + 'pousser plus fort qu’une autre légendaire.'],
       ['Que valent mes doubles ?',
         () => 'Ils deviennent des écharpes, au tarif de la rareté : '
           + `${SCARVES.commune} pour une commune, ${SCARVES.rare} pour une rare, `
