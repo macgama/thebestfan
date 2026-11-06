@@ -1213,7 +1213,10 @@ function vueFanzzy(v, r) {
      pas ce qui vient. */
   const ouvertes = (SETS_TOUTES ?? []).filter((s) => parSerie.has(s.id))
     .map((s) => ({ s, items: parSerie.get(s.id) }));
-  const fermees = (SETS_TOUTES ?? []).filter((s) => s.ouverte === false && !parSerie.has(s.id));
+  /* Une série de cadeau (THEBESTFAN) ne se montre qu'à qui en a une carte :
+     sous cadenas, elle promettrait ce qu'aucun booster ne donne. */
+  const fermees = (SETS_TOUTES ?? []).filter((s) => s.ouverte === false && !s.cadeau
+    && !parSerie.has(s.id));
   if (!ouvertes.length) {
     v.innerHTML = teteVue(r.nom) + vide('Aucune série n’est ouverte pour l’instant.');
     return;

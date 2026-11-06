@@ -106,9 +106,9 @@ check('la saison du jour se lance seule', lancees.join() === String(ins.insertId
 check('celle de demain attend son jour', toutesLesSaisons().find((s) => s.numero === 10)?.lancee === false);
 check('une saison déjà finie ne se lance pas', toutesLesSaisons().find((s) => s.numero === 11)?.lancee === false);
 check('la saison du jour n’a pas refermé les autres séries',
-  toutesAvant === null && (seriesOuvertes() ?? []).length === SETS.length);
+  toutesAvant === null && (seriesOuvertes() ?? []).length === SETS.filter((x) => !x.cadeau).length);
 check('la saison 1 nomme désormais ce qu’elle ouvrait',
-  toutesLesSaisons().find((s) => s.numero === 1)?.series.length === SETS.length);
+  toutesLesSaisons().find((s) => s.numero === 1)?.series.length === SETS.filter((x) => !x.cadeau).length);
 
 const [[j]] = await pool.query(
   `SELECT COUNT(*) AS n FROM admin_audit WHERE acteur = ? AND action = 'saison.lancee'`, [ACTEUR_AUTO]);

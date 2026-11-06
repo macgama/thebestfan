@@ -10160,5 +10160,11 @@
  "DU": "DU",
  "LA": "LA",
  "LE": "LE",
- "name LIKE CONCAT(?, ’ %’)": "name LIKE CONCAT(?, ’ %’)"
+ "name LIKE CONCAT(?, ’ %’)": "name LIKE CONCAT(?, ’ %’)",
+ "TB": "TB",
+ "THEBESTFAN": "THEBESTFAN",
+ "ceux qui étaient là avant tout le monde": "los que estaban antes que nadie",
+ "Le hors-série des fondateurs. Ces Fanzzy ne sortent d’aucun booster : TheBestFan les offre à ceux qui ont fait le jeu avec lui.": "La serie especial de los fundadores. Estos Fanzzy no salen de ningún sobre: TheBestFan se los regala a quienes hicieron el juego con él.",
+ "Il était en tribune avant le premier match, quand le stade sentait encore la peinture fraîche. Il a tout essayé, tout signalé, et il garde l’écharpe numéro 1.": "Estaba en la grada antes del primer partido, cuando el estadio todavía olía a pintura fresca. Lo probó todo, lo avisó todo, y guarda la bufanda número 1.",
+ "DEPUIS LE PREMIER JOUR": "DESDE EL PRIMER DÍA"
 }

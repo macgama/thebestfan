@@ -1,6 +1,7 @@
 import express from 'express';
 import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
-import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte }
+import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte,
+  serieCadeau }
   from '../fanzzy/catalogue.js';
 import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
 import { chargerSaisons, toutesLesSaisons, saisonEnCours, saisonProchaine }
@@ -602,7 +603,9 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   /** Ce qu'une saison peut nommer. Tout le reste est refusé, nommément. */
   function validerContenu(p, { deja = new Set() } = {}) {
     const liste = (v) => (Array.isArray(v) ? [...new Set(v.map(String))] : []);
-    const series = liste(p.series);
+    /* Une série de cadeau (THEBESTFAN) ne s'ouvre jamais : on ne l'écrit pas
+       dans une saison, où elle se lirait « ouverte » sans l'être. */
+    const series = liste(p.series).filter((id) => !serieCadeau(id));
     const tenues = liste(p.tenues);
     const stuff = liste(p.stuff);
     const actions = liste(p.actions);
@@ -1265,7 +1268,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       if (s.series.length) {
         const lanceesIci = toutesLesSaisons().filter((x) => x.lancee && x.id !== s.id);
         if (lanceesIci.length && !lanceesIci.some((x) => x.series.length)) {
-          const toutes = SETS.map((x) => x.id);
+          const toutes = SETS.filter((x) => !x.cadeau).map((x) => x.id);
           await pool.query(`UPDATE saisons SET series = ? WHERE id IN (?)`,
             [JSON.stringify(toutes), lanceesIci.map((x) => x.id)]);
           await journal(acteur, 'saison.series_ecrites', lanceesIci.map((x) => x.id).join(','),

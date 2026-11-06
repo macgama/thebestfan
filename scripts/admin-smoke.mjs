@@ -311,7 +311,9 @@ check('les séries sont listées avec leur état',
   Array.isArray(r.json.series) && r.json.series.length === SETS.length
   && r.json.series.every((s) => 'ouverte' in s && 'tirables' in s));
 check('toutes les séries sont ouvertes au départ',
-  r.json.ouvertes === null && r.json.series.every((s) => s.ouverte));
+  r.json.ouvertes === null && r.json.series.every((s) => s.ouverte || s.cadeau));
+check('sauf la série de cadeau, que rien n’ouvre',
+  r.json.series.filter((s) => s.cadeau).every((s) => !s.ouverte));
 
 /* ================================================= les saisons
 
@@ -447,13 +449,13 @@ r = await call(`/api/admin/saison/${essai.id}/lancer`, { method: 'POST', body: {
 check('la lancer ouvre ses séries', r.status === 200
   && r.json.ouvertes?.includes(uneSerie));
 check('sans fermer celles qui étaient ouvertes',
-  r.json.ouvertes?.length === new Set([...SETS.map((x) => x.id), uneSerie]).size
+  r.json.ouvertes?.length === new Set([...SETS.filter((x) => !x.cadeau).map((x) => x.id), uneSerie]).size
   || (console.log('        ouvertes :', r.json.ouvertes), false));
 {
   const [[s1]] = await pool.query(`SELECT series FROM saisons WHERE numero = 1`);
   const ecrites = typeof s1.series === 'string' ? JSON.parse(s1.series) : s1.series;
   check('la saison déjà lancée reçoit par écrit les séries qu’elle ouvrait',
-    ecrites.length === SETS.length);
+    ecrites.length === SETS.filter((x) => !x.cadeau).length);
 }
 
 /* La suite reprend ensuite sur une saison 1 qui ne nomme rien, mais avec une
@@ -582,7 +584,8 @@ check('une série inconnue est refusée', r.json.error === 'admin.error.serie_in
 {
   // La plus petite série publiée : le moins de cartes à dépublier et à rendre.
   const compte = new Map();
-  for (const f of publies().filter((f) => f.stage === 1)) {
+  const cadeaux = new Set(SETS.filter((x) => x.cadeau).map((x) => x.id));
+  for (const f of publies().filter((f) => f.stage === 1 && !cadeaux.has(f.set))) {
     compte.set(f.set, [...(compte.get(f.set) ?? []), f.id]);
   }
   const [petite, cartes] = [...compte.entries()].sort((a, b) => a[1].length - b[1].length)[0];
