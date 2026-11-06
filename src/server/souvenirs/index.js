@@ -617,6 +617,41 @@ export function createSouvenirs({ pool, requireAuth,
     });
   });
 
+  /* **L'album** (6 novembre 2026, maquette « L'album de la saison » choisie
+     par Gaël) : une page par club suivi, et pour chacune le nombre de
+     cartes frappées dans ses matchs. L'écran y range ce que le joueur a et
+     ce qu'il peut encore récupérer ; ce nombre lui dit ce qui manque. Les
+     couleurs du club peignent la page quand la base les connaît. */
+  async function album(userId) {
+    const lire = (couleurs) => q(
+      `SELECT t.id, t.name, t.logo, f.is_main${couleurs},
+              (SELECT COUNT(*) FROM souvenirs s WHERE s.home_id = t.id OR s.away_id = t.id) AS total
+         FROM user_follows f JOIN teams t ON t.id = f.team_id
+        WHERE f.user_id = ?
+        ORDER BY f.is_main DESC, t.name`, [userId]);
+    let rows;
+    try {
+      rows = await lire(', t.color1, t.color2');
+    } catch (e) {
+      if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      rows = await lire('');
+    }
+    return rows.map((r) => ({
+      id: r.id, nom: r.name, logo: r.logo ?? null, principal: Boolean(r.is_main),
+      total: Number(r.total) || 0,
+      couleurs: [r.color1, r.color2].filter((c) => /^#[0-9a-f]{6}$/i.test(String(c ?? ''))),
+    }));
+  }
+
+  router.get('/album', requireAuth, async (req, res) => {
+    try {
+      res.json({ clubs: await album(req.user.id) });
+    } catch (e) {
+      console.warn('[souvenirs] album illisible :', e?.message ?? e);
+      res.status(500).json({ error: 'souvenir.error.server' });
+    }
+  });
+
   router.post('/buy', requireAuth, async (req, res) => {
     try {
       res.json(await buy(req.user.id, Number(req.body?.souvenirId)));
@@ -636,5 +671,5 @@ export function createSouvenirs({ pool, requireAuth,
     res.json({ souvenirs: await habiller(req.user.id, rows) });
   });
 
-  return { router, mintGoal, corrigerBut, reparerCamps, recordPush, collection, market, buy };
+  return { router, mintGoal, corrigerBut, reparerCamps, recordPush, collection, market, buy, album };
 }
