@@ -13,6 +13,15 @@ amis » doit être **allumé** (sinon la page dit qu'elle n'est pas ouverte) ;
 
 ---
 
+**Le cadre des bonus se referme, au Virage et au duel** (branche
+`claude/project-thread-923c1c`, 6 novembre 2026, remarque de Gaël). Code seul,
+sans schéma. Au téléphone, le cadre ouvert par le « i » se posait sur le « i »
+et ne se refermait plus au Virage : il a une croix, se ferme d'un toucher
+ailleurs (et Échap au duel). Le cadre et le fil du match défilent au doigt sans
+entraîner le jeu dessous. **Redémarrer**.
+
+---
+
 **Alerte quand un ami appelle : demande d'ami, duel, KOP** (branche
 `claude/project-thread-xv6u21`, 6 novembre 2026, demande de Gaël). Code seul,
 sans schéma. Une demande d'ami, une invitation en duel ou dans un KOP s'ouvre

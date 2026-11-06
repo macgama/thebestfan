@@ -1518,6 +1518,34 @@ const arriveB = await jusqua(attenduB, 15000);
 check('le barème des deux joueurs arrive à l’écran', arriveA && arriveB
   || (console.log('        A :', arriveA, '· B :', arriveB), false));
 
+/* Le cadre des bonus et malus se referme (Gaël, 6 novembre 2026 : au Virage,
+   il restait collé sur le jeu, posé sur le « i » qui l'avait ouvert). Au
+   duel, un toucher ailleurs le refermait déjà ; il a maintenant aussi sa
+   croix, et Échap, comme toute fenêtre de ce jeu. A est équipé : le « i »
+   est là. */
+{
+  const i = await A.page.waitForSelector('#apportsL:not([hidden])', { timeout: 5000 })
+    .then(() => true).catch(() => false);
+  check('au duel, le « i » de ce qu’on porte paraît pour un joueur équipé', i);
+  if (i) {
+    const etat = () => A.page.evaluate(() => ({ cache: document.getElementById('apportsP').hidden,
+      dit: document.getElementById('apportsL').getAttribute('aria-expanded') }));
+    await A.page.evaluate(() => document.getElementById('apportsL').click());
+    await dodo(150);
+    const croix = await A.page.$('#apportsP:not([hidden]) [data-fermer-apports]');
+    check('au duel, le cadre des bonus s’ouvre avec sa croix', Boolean(croix));
+    if (croix) await A.page.evaluate(() => document.querySelector('#apportsP [data-fermer-apports]').click());
+    await dodo(150);
+    const e1 = await etat();
+    check('et la croix le referme', e1.cache && e1.dit === 'false' || (console.log('        ', JSON.stringify(e1)), false));
+    await A.page.evaluate(() => document.getElementById('apportsL').click());
+    await dodo(150);
+    await A.page.keyboard.press('Escape');
+    await dodo(150);
+    check('Échap le referme aussi', (await etat()).cache);
+  }
+}
+
 /**
  * L'équipement change le barème — **mesuré par l'écart, pas par la valeur**.
  *

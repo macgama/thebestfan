@@ -8468,9 +8468,13 @@ html[data-calme~="animations"] .tbf-vitrine-scene[data-rayons]::after{animation:
      l'écran. `overscroll-behavior` empêche le geste de continuer sur la page
      derrière, qui est un écran de jeu où un défilement parasite se paie. */
   max-height:38vh;overflow-y:auto;overscroll-behavior:contain;
+  /* Le doigt fait défiler le panneau, dit noir sur blanc : il flotte sur un
+     écran de jeu dont des pièces refusent le défilement (`touch-action:none`
+     des pavés), et un navigateur de téléphone ne doit pas hésiter. */
+  touch-action:pan-y;-webkit-overflow-scrolling:touch;
 }
 .tbf-ap-bloc{padding:8px 0;border-top:1px solid rgba(242,238,228,.07)}
-.tbf-ap-bloc:first-child{border-top:0}
+.tbf-ap-bloc:first-child,.tbf-ap-tete+.tbf-ap-bloc{border-top:0}
 .tbf-ap-qui{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
 .tbf-ap-ou{
   font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.88;
@@ -8497,6 +8501,19 @@ html[data-calme~="animations"] .tbf-vitrine-scene[data-rayons]::after{animation:
    n'ont pas. */
 .tbf-ap-total{border-top:1px solid rgba(242,238,228,.18);margin-top:4px}
 .tbf-ap-total .tbf-ap-ou{opacity:1;color:var(--craie);font-weight:600}
+/* La tête du panneau et sa croix (`TBF_MODS.teteHTML`) : collée en haut
+   quand le panneau défile, sur la matière du panneau pour que les lignes
+   passent dessous sans se mêler à la croix. La croix fait 44 px, la taille
+   d'un doigt. */
+.tbf-ap-tete{position:sticky;top:-8px;z-index:1;display:flex;align-items:center;gap:10px;
+  margin:-8px -14px 0;padding:6px 6px 4px 14px;
+  background:var(--grain-toile) 0 0/256px 256px repeat,var(--parpaing,#1c2027)}
+.tbf-ap-tete>b{flex:1;font-family:var(--banner);font-size:13px;font-weight:400;letter-spacing:.12em;
+  text-transform:uppercase}
+.tbf-ap-x{flex:none;width:44px;height:44px;border-radius:9px;border:1px solid rgba(242,238,228,.16);
+  background:rgba(0,0,0,.3);color:inherit;font-size:20px;line-height:1;cursor:pointer;
+  touch-action:manipulation}
+.tbf-ap-x:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
 .tbf-ap-vide{margin:8px 0;font-size:11.5px;opacity:.88;line-height:1.6}
 
 /* -------------------------------------------------- la carte qu'on joue

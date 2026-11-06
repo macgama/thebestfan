@@ -2423,6 +2423,116 @@ async function arrivee(p, rep, bruits, cas) {
   await p.close();
 }
 
+/* ------------------------------- au téléphone : on referme, on fait défiler
+
+   Gaël, le 6 novembre 2026, sur son téléphone : le cadre des bonus et malus
+   ouvert par le « i » ne se refermait pas, et le fil ne se faisait pas
+   défiler. Le panneau se pose en bas de l'écran et **recouvre le « i »** qui
+   l'a ouvert : seule la touche Échap le refermait, et un téléphone n'en a
+   pas. On éprouve donc au doigt, sur un écran de téléphone : la croix, le
+   toucher ailleurs, et le défilement du fil et du panneau. */
+{
+  const t = await nav.newPage();
+  const bruits = [];
+  t.on('pageerror', (e) => bruits.push(e.message));
+  await t.emulate({ viewport: { width: 412, height: 892, deviceScaleFactor: 1, isMobile: true, hasTouch: true },
+    userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' });
+  await t.goto(base + '/virage', { waitUntil: 'networkidle0' });
+  await t.evaluate((id) => socket.emit('virage:join', { fixtureId: id }), MATCH_SORTIE);
+  const dedans = await t.waitForSelector('#fil:not([hidden])', { timeout: 8000 })
+    .then(() => true).catch(() => false);
+  check('au téléphone : on entre dans la tribune', dedans);
+  if (dedans) {
+    await t.bringToFront();
+    const cdp = await t.createCDPSession();
+    /* Un vrai glissé de doigt, point par point : le navigateur décide seul
+       s'il fait défiler, comme sur un téléphone. */
+    const glisser = async (x, y, dy) => {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      for (let k = 1; k <= 12; k++) {
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y + dy * k / 12 }] });
+        await wait(16);
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await wait(300);
+    };
+
+    /* Le panneau, garni comme celui d'un joueur équipé : Fanzzy, deux pièces
+       de sac, le stade — plus haut que la place qu'il a. */
+    await t.evaluate(() => {
+      const m = { tempoWindow: 1.25, pushMult: 0.86, recovery: 1.35, stamina: 1.2 };
+      S.you.apports = [
+        { quoi: 'fanzzy', nom: 'Le Gamin à la Batte', mods: { stamina: 1.16, pushMult: 0.92 } },
+        { quoi: 'stuff', nom: 'Jumelles', mods: { tempoWindow: 1.25 } },
+        { quoi: 'stuff', nom: 'Jumelles', mods: { tempoWindow: 1.25 } },
+        { quoi: 'lieu', nom: 'L’Arène des Cavernes', texte: 'La pierre résonne.', mods: { stamina: 1.2, recovery: 1.35 } },
+      ];
+      S.you.mods = m;
+      render();
+    });
+    const i = await t.$('#apportsL:not([hidden])');
+    check('au téléphone : le « i » paraît', Boolean(i));
+    if (i) {
+      await t.tap('#apportsL');
+      await wait(250);
+      const vu = await t.evaluate(() => {
+        const p = document.getElementById('apportsP');
+        const r = document.getElementById('apportsL').getBoundingClientRect();
+        const dessus = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        const x = p.querySelector('[data-fermer-apports]')?.getBoundingClientRect();
+        return { ouvert: !p.hidden, couvre: Boolean(dessus?.closest('#apportsP')),
+          croix: Boolean(x && x.width >= 40 && x.top >= 0 && x.bottom <= innerHeight),
+          haut: p.scrollHeight, place: p.clientHeight };
+      });
+      check('le panneau s’ouvre', vu.ouvert);
+      /* Le cas de Gaël : sans ça, le contrôle de la croix ne prouverait rien. */
+      if (!vu.couvre) console.log('        (le panneau ne couvre pas le « i » à cette taille)');
+      check('il porte une croix de fermeture, visible et à la taille d’un doigt', vu.croix);
+      if (vu.haut > vu.place + 20) {
+        await glisser(200, 860, -160);
+        check('le panneau défile au doigt',
+          await t.$eval('#apportsP', (n) => n.scrollTop > 20)
+          || (console.log('        ', vu.haut, '>', vu.place), false));
+        check('et sa croix reste en vue quand il défile', await t.evaluate(() => {
+          const p = document.getElementById('apportsP').getBoundingClientRect();
+          const x = document.querySelector('#apportsP [data-fermer-apports]').getBoundingClientRect();
+          return x.top >= p.top - 1 && x.bottom <= p.bottom + 1;
+        }));
+      }
+      await t.tap('#apportsP [data-fermer-apports]');
+      await wait(200);
+      check('la croix le referme', await t.$eval('#apportsP', (n) => n.hidden)
+        && await t.$eval('#apportsL', (n) => n.getAttribute('aria-expanded') === 'false'));
+      await t.tap('#apportsL');
+      await wait(200);
+      await t.touchscreen.tap(206, 420);
+      await wait(200);
+      check('un toucher ailleurs le referme aussi', await t.$eval('#apportsP', (n) => n.hidden));
+    }
+
+    /* Le fil d'un match chargé : trente remplacements, plus haut que l'écran. */
+    await t.evaluate(() => {
+      const n = (S.fil ?? []).length;
+      S.fil = [...(S.fil ?? []), ...Array.from({ length: 30 }, (_, k) => ({
+        cle: `t|${k}`, genre: 'terrain', type: 'subst', detail: 'Substitution 1', minute: 50 + k,
+        side: k % 2, joueur: `Joueur ${k}`, assist: `Remplaçant ${k}`, rang: n + k + 1000 }))];
+    });
+    await t.tap('#fil');
+    await wait(300);
+    const avant = await t.$eval('#feuilleCorps', (n) => ({ top: n.scrollTop, haut: n.scrollHeight, place: n.clientHeight }));
+    check('au téléphone : le fil est plus long que l’écran', avant.haut > avant.place + 100
+      || (console.log('        ', JSON.stringify(avant)), false));
+    await glisser(200, 650, -320);
+    check('et il défile au doigt', await t.$eval('#feuilleCorps', (n) => n.scrollTop > 100)
+      || (console.log('        ', JSON.stringify(avant)), false));
+    await t.tap('#feuilleX');
+    await wait(200);
+    check('puis sa croix le referme', await t.$eval('#feuille', (n) => !n.classList.contains('on')));
+    check('rien n’a cassé au téléphone', bruits.length === 0 || (console.log('        ', bruits.join(' / ')), false));
+  }
+  await t.close();
+}
+
 /* --------------------------------------------- aucun seuil dans la page
 
    Le mot du geste est servi (`verdict`, CONTRATS § 16.1) : la page ne
