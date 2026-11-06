@@ -399,9 +399,10 @@ check('tous les formats de duel restent ouverts à tous',
   check(`et aucun réglage du quotidien ne dépend de l’abonnement (${quotidien.length})`,
     quotidien.length > 0
       && quotidien.every((r) => r.section !== 'abonnement' && !/abo|abonn/i.test(r.cle)));
-  check('les clés de l’XP du Virage et de la présence en font partie (3 + 3)',
+  check('les clés de l’XP du Virage et de la présence en font partie (3 + 4)',
     quotidien.filter((r) => /^xp\.virage/.test(r.cle)).length === 3
-      && quotidien.filter((r) => r.cle.startsWith('presence.')).length === 3
+      /* La quatrième, `presence.tous` : la page En ligne (6 novembre 2026). */
+      && quotidien.filter((r) => r.cle.startsWith('presence.')).length === 4
     || (console.log('        vues :', quotidien.filter((r) => /^(xp\.virage|presence\.)/.test(r.cle))
       .map((r) => r.cle).join(', ')), false));
 

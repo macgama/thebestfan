@@ -577,9 +577,18 @@ const RUBRIQUES = [
           + 'L’amitié commence quand il accepte ta demande.'],
       ['Que veut dire « 12 EN LIGNE » sur l’accueil ?',
         'C’est le nombre de supporters qui jouent en ce moment, toi compris (actifs '
-          + 'dans les cinq dernières minutes). Ce n’est qu’un nombre : personne ne voit '
-          + 'qui est en ligne, sauf tes amis si tu ne te caches pas. Seul, la pastille '
-          + 'ne s’affiche pas.'],
+          + 'dans les cinq dernières minutes). Touche-le pour ouvrir la page En ligne. '
+          + 'Seul, la pastille ne s’affiche pas.'],
+      ['Comment voir qui est en ligne et le défier ?',
+        'Page En ligne (dans le menu, ou en touchant « EN LIGNE » sur l’accueil) : tous '
+          + 'les supporters connectés qui ne se cachent pas, avec leur Fanzzy, leur club et '
+          + 'leur niveau. Filtre TOUS, MON CLUB ou AMIS. DÉFIER t’amène au duel : choisis ton '
+          + 'match et ton format, et ton invitation part dès que tu es au vestiaire. Un '
+          + 'joueur déjà au Virage ou en duel est OCCUPÉ.'],
+      ['Puis-je ne pas apparaître sur la page En ligne ?',
+        'Oui : allume APPARAÎTRE HORS LIGNE, en bas de cette page ou dans le menu. Tu '
+          + 'n’apparais plus chez personne, amis compris, et tu vois les autres comme avant. '
+          + 'Un joueur qui n’est pas ton ami peut seulement t’inviter en duel, jamais t’écrire.'],
       ['Que peut-on faire entre amis ?',
         'Touche JOUER ENSEMBLE sous le nom d’un ami : tu y vois sa collection, son '
           + 'deck et ses cartes-souvenirs, et tu peux lui faire signe, lui offrir un '

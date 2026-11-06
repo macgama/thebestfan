@@ -119,7 +119,7 @@
   const TITRES = {
     '/fanzzy': 'Fanzzy', '/boosters': 'Boosters', '/deck': 'Deck',
     '/boutique': 'Boutique', '/virage': 'Virage', '/duel-nvn': 'Duel',
-    '/kop': 'KOP', '/amis': 'Amis', '/equipes': 'Clubs', '/matchs': 'Matchs',
+    '/kop': 'KOP', '/amis': 'Amis', '/en-ligne': 'En ligne', '/equipes': 'Clubs', '/matchs': 'Matchs',
     '/teletext': 'Compétitions', '/classement': 'Classement', '/carnet': 'Carnet',
     /* `/aide` est devenu l'écran des MISSIONS (lot 5) : on y vient chercher
        ce qui se gagne aujourd'hui, et il garde les premiers pas et les
@@ -276,6 +276,8 @@
       ['/kop', 'kop', 'Mon KOP', 'violet'],
       // Juste après le KOP : les deux portes violettes, celles des gens.
       ['/amis', 'amis', 'Mes amis', 'violet'],
+      // Qui est en ligne, amis ou non, pour le défier (Gaël, 6 novembre 2026).
+      ['/en-ligne', 'presence', 'En ligne', 'violet'],
     ] },
     { titre: 'MA COLLECTION', ton: 'bleu', liens: [
       /* **Elle n'était dans aucun menu.** L'en-tête de ce fichier promet « la

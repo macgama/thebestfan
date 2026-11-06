@@ -157,6 +157,9 @@ let { P, auVirage, enDuel } = monter();
 const A = createAmis({ pool, requireAuth, presence: {
   etatsPour: (...a) => P.etatsPour(...a),
   oublierAmis: (...a) => P.oublierAmis(...a),
+  enLigneTous: (...a) => P.enLigneTous(...a),
+  visible: (...a) => P.visible(...a),
+  defiable: (...a) => P.defiable(...a),
 } });
 
 /* Les routes, montées comme le serveur les monte ; le joueur vient d'un
@@ -619,6 +622,54 @@ try {
     P.noter(BOB);
     check('la colonne rendue, dix minutes plus tard, la présence revient sans redémarrer',
       (await P.etatsPour(ANA, [BOB])).get(BOB) === 'en_ligne');
+  }
+
+  /* ========================================= tout le monde (6 nov. 2026) */
+  console.log('\n— la page En ligne : tout le monde, sauf qui se cache —');
+  {
+    poserReglages({ 'presence.actif': true });
+    maintenant += 20 * 60_000;              // l'activité d'avant n'est plus « en ligne »
+    await appel('POST', HUG, { visible: false });
+    await appel('POST', FAB, { visible: true });
+    for (const id of [ANA, BOB, FAB, IDA, HUG]) P.noter(id);
+    enDuel.add(IDA);
+    const liste = await P.enLigneTous(ANA);
+    const qui = (liste ?? []).map((l) => l.id).sort();
+    check('un inconnu et l’amie d’un ami s’y voient, pas celui qui se cache ni soi',
+      meme(qui, [BOB, FAB, IDA].sort()) || (console.log('        liste :', JSON.stringify(liste)), false));
+    check('chacun avec son état, sans heure',
+      liste.find((l) => l.id === IDA)?.etat === 'duel'
+      && sansHeure(liste.map(({ id: _i, ...reste }) => reste)));
+    check('un inconnu en ligne peut être défié', await P.defiable(FAB));
+    check('celui qui se cache, non', !(await P.defiable(HUG)));
+    const vue = await (async () => {
+      const app2 = express();
+      app2.use((req, _r, n) => { req.user = { id: ANA }; n(); });
+      app2.use('/api/amis', A.router);
+      const h = createServer(app2);
+      await new Promise((ok) => h.listen(0, ok));
+      try {
+        return await (await fetch(`http://localhost:${h.address().port}/api/amis/en-ligne`)).json();
+      } finally { await new Promise((ok) => h.close(ok)); }
+    })();
+    check('la route sert les joueurs habillés, les amis d’abord',
+      vue?.actif === true && vue.joueurs?.[0]?.id === BOB && vue.joueurs[0].ami === true
+      && vue.joueurs.some((g) => g.id === FAB && !g.ami && g.pseudo === 'Fab')
+      || (console.log('        vue :', JSON.stringify(vue)), false));
+    check('et les comptes, sans personne de caché', vue?.compte?.tous === 3 && vue.compte.amis === 1);
+    /* Les identifiants mis à part : un uuid porte de longues suites de chiffres. */
+    check('aucune heure dans la réponse', sansHeure((vue?.joueurs ?? []).map(({ id: _i, avatar: _a, ...r }) => r)));
+    poserReglages({ 'presence.actif': true, 'presence.tous': false });
+    check('presence.tous éteint : la liste n’est plus servie', (await P.enLigneTous(ANA)) === null
+      && !(await P.defiable(FAB)));
+    check('et la route le dit', (await A.alertesDe(ANA, FAB)).visage === null);
+    poserReglages({ 'presence.actif': true });
+    check('un inconnu qui se montre prête son visage à l’alerte de son défi',
+      (await A.alertesDe(ANA, FAB)).visage?.pseudo === 'Fab');
+    maintenant += 10 * 60_000;
+    check('parti depuis plus que le délai : plus défiable', !(await P.defiable(FAB)));
+    enDuel.delete(IDA);
+    await appel('POST', HUG, { visible: true });
   }
 
   /* ========================================================= l'éteindre */

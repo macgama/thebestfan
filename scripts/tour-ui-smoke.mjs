@@ -203,6 +203,8 @@ const ECRANS = [
   ['/duel-nvn', 'duel'],
   ['/kop', 'KOP'],
   ['/amis', 'amis'],
+  // Qui est en ligne (6 novembre 2026), dans le menu et sous la pastille de l’accueil.
+  ['/en-ligne', 'en ligne'],
   ['/equipes', 'clubs'],
   ['/matchs', 'matchs'],
   ['/classement', 'classement'],

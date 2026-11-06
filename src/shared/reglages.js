@@ -997,6 +997,15 @@ export const REGLAGES = [
       'joueur qui a choisi garde son choix. La page /confidentialite dit « par défaut ' +
       'tu es visible de tes amis » : à réécrire si tu changes ceci.' },
 
+  /* Choix de Gaël du 6 novembre 2026 (maquette 3 « Tout le monde ») : la
+     page /en-ligne montre à chaque joueur tous ceux qui sont en ligne et se
+     montrent, amis ou non, avec DÉFIER. Éteint, on revient aux amis seuls. */
+  { cle: 'presence.tous', section: 'presence', type: 'booleen',
+    titre: 'Tout le monde voit qui est en ligne', defaut: true,
+    aide: 'Allumé (avec « Montrer la présence des amis »), la page En ligne liste tous ' +
+      'les joueurs connectés qui ne se sont pas cachés, et chacun peut les défier en duel. ' +
+      'Éteint, la présence reste entre amis.' },
+
   { cle: 'presence.en_ligne_sec', section: 'presence', type: 'entier',
     titre: 'Un joueur reste « en ligne »', unite: 'secondes après sa dernière activité',
     min: 30, max: 900, defaut: 120,

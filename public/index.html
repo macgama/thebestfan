@@ -521,7 +521,9 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 .haut .en-ligne{position:absolute;left:0;top:calc(100% + 7px);display:inline-flex;align-items:center;
   gap:5px;padding:2px 8px 2px 6px;border-radius:999px;background:rgba(7,9,12,.62);
   color:var(--craie,#f3efe6);font:700 10px/1.4 var(--banner,system-ui);letter-spacing:.06em;
-  text-transform:uppercase;white-space:nowrap;pointer-events:none}
+  text-transform:uppercase;white-space:nowrap;text-decoration:none;
+  /* Un appui ouvre la page En ligne (6 novembre 2026) : qui est là, pour le défier. */
+  pointer-events:auto;cursor:pointer}
 .haut .en-ligne[hidden]{display:none}
 .haut .en-ligne i{width:7px;height:7px;border-radius:50%;background:#3ddc6f;
   box-shadow:0 0 0 0 rgba(61,220,111,.6);animation:en-ligne-souffle 2.4s ease-out infinite}
@@ -2022,10 +2024,10 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
         <b class="tbf-sticker tbf-sticker--rond tbf-avatar-niv" id="nivPastille" hidden></b>
       </a>
       <!-- Les supporters en ligne (demande de Gaël du 5 novembre 2026) : un
-           nombre, jamais un nom, posé sous l'avatar sans pousser le reste.
-           Caché tant qu'on est seul. -->
-      <span class="en-ligne" id="enLigne" hidden role="status"
-        ><i aria-hidden="true"></i><b id="enLigneN"></b> en ligne</span>
+           nombre posé sous l'avatar sans pousser le reste, caché tant qu'on
+           est seul. Depuis le 6 novembre, un appui ouvre la page En ligne. -->
+      <a class="en-ligne" id="enLigne" href="/en-ligne" hidden role="status"
+        ><i aria-hidden="true"></i><b id="enLigneN"></b> en ligne</a>
       <div class="bourse">
         <!-- Toucher sa monnaie mène à la boutique : c'est le geste que tout
              joueur essaie en premier, et il ne menait nulle part. La boutique

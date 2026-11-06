@@ -1332,6 +1332,9 @@ html[data-calme~="animations"] .vs-att b{animation:none}
 /* Les Fanzzy de l'arène ne bougent plus ; ils changent encore d'expression
    (un fondu, pas un mouvement), et le dépit les ternit toujours. */
 html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:none;rotate:none;scale:none}
+/* Le rappel du défi lancé depuis la page En ligne (6 novembre 2026). */
+.defi-qui{display:block;margin:4px 16px 10px;padding:9px 12px;font-size:13px;line-height:1.4;text-align:left}
+.defi-qui[hidden]{display:none}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -1345,6 +1348,9 @@ html[data-calme~="animations"] .duel-fz[data-tribune] .duel-fz-corps{animation:n
 
   <div id="prepa">
     <div class="top"><h1>DUEL DE TRIBUNES<small>tirez la corde ensemble</small></h1></div>
+    <!-- DÉFIER depuis la page En ligne (6 novembre 2026) : le rappel de qui
+         on défie, tant que l'invitation n'est pas partie. -->
+    <p class="defi-qui tbf-plaque tbf-plaque--lue" id="defiQui" hidden></p>
     <div id="prepaCorps"><div class="vide">Chargement…</div></div>
   </div>
 
@@ -1630,7 +1636,7 @@ const MESSAGES = {
   /* L'invitation : un lien vers un duel déjà parti, un ami à inviter. */
   'ferveur.error.duel_parti':     'Ce duel n\u2019attend plus personne. Le match est choisi : crée ton duel, ou choisis-en un autre.',
   'ferveur.error.pas_en_file':    'Entre d\u2019abord en file pour inviter quelqu\u2019un.',
-  'ferveur.error.pas_ami':        'Tu ne peux inviter que tes amis.',
+  'ferveur.error.pas_ami':        'Tu ne peux inviter que tes amis, ou un joueur en ligne qui se montre.',
   'ferveur.error.trop_d_invitations':'Tu as déjà invité beaucoup de monde pour ce duel.',
   'ferveur.error.not_in_duel':    'Tu n\u2019es dans aucun duel.',
   'ferveur.error.duel_over':      'Le duel est terminé.',
@@ -2054,6 +2060,14 @@ function rendreSalle(p) {
       b.disabled = true;
     };
   }
+  /* **Le défi lancé depuis la page En ligne** : au premier passage au
+     vestiaire, l'invitation part toute seule, une fois. */
+  if (S.defier && !S.defier.parti && socket) {
+    S.defier.parti = true;
+    socket.emit('nvn:inviter', { ami: S.defier.id });
+    toast(`Défi envoyé à ${S.defier.pseudo || 'ton adversaire'}. Il te rejoint s’il accepte.`);
+    if ($('defiQui')) $('defiQui').hidden = true;
+  }
 
   /* **La rumeur qui monte à chaque arrivée** (`son.js`, lot 6) : la mesure
      est la part des places prises, des deux côtés ; une arrivée la fait
@@ -2269,6 +2283,9 @@ const S = {
      n'entre que par le lien ou une invitation. */
   prive: false,
   invites: new Set(),
+  /* DÉFIER depuis /en-ligne (6 novembre 2026) : `{ id, pseudo, parti }`.
+     L'invitation part d'elle-même dès qu'on est au vestiaire. */
+  defier: null,
   derniereSalle: null,
   derby: null,
   vue: null, enFile: false, dernierSeq: 0, occupe: false,
@@ -6126,6 +6143,18 @@ $('equipe').addEventListener('click', (e) => {
        être vieux d'une heure, et le match plus être là. */
     {
       const q = new URLSearchParams(location.search);
+      /* DÉFIER depuis la page En ligne : on choisit son match et son
+         format comme d'habitude, et l'invitation part au vestiaire. */
+      const defi = String(q.get('defier') ?? '').slice(0, 64);
+      if (defi) {
+        S.defier = { id: defi, pseudo: String(q.get('pseudo') ?? '').slice(0, 40), parti: false };
+        const el = $('defiQui');
+        if (el) {
+          el.textContent = `Tu défies ${S.defier.pseudo || 'un joueur'} : choisis ton match et ton format, `
+            + 'il recevra ton invitation dès que tu seras au vestiaire.';
+          el.hidden = false;
+        }
+      }
       const f = q.get('format');
       if (f && (formatsMemo ?? []).includes(f)) S.format = f;
       const id = Number(q.get('match'));

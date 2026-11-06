@@ -740,6 +740,82 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
     return { ami: { id: parrain.id, pseudo: parrain.pseudo, fanzzy: parrain.fanzzy } };
   }
 
+  /* ------------------------------------------------- en ligne (6 nov. 2026)
+
+     La page /en-ligne (choix de Gaël du 6 novembre 2026, maquette 3 « Tout
+     le monde ») : tous les joueurs en ligne qui se montrent, amis ou non,
+     pour pouvoir les défier en duel. La présence décide **qui** (elle seule
+     sait qui s'est caché) ; ce module habille chacun comme dans la liste
+     d'amis : pseudo, personnage, niveau, et son club principal.
+
+     Rangés pour que les plus proches viennent d'abord : les amis, puis ceux
+     de mon club, puis les autres, et à rang égal ceux qu'on peut défier
+     tout de suite (« en ligne ») avant ceux qui jouent déjà. */
+  const EN_LIGNE_MAX = 120;
+  const ORDRE_ETAT = { en_ligne: 0, duel: 1, virage: 2 };
+
+  async function enLigne(userId) {
+    if (!presence?.enLigneTous) return { actif: false };
+    const liste = await presence.enLigneTous(userId);
+    if (!liste) return { actif: false };
+    const visible = await presence.visible(userId);
+    const [monClub] = await q(
+      `SELECT t.id, t.name FROM user_follows f JOIN teams t ON t.id = f.team_id
+        WHERE f.user_id = ? AND f.is_main = 1 LIMIT 1`, [userId]).catch(() => []);
+    const club = monClub ? { id: Number(monClub.id), nom: monClub.name } : null;
+    if (!liste.length) {
+      return { actif: true, visible, club, compte: { tous: 0, club: 0, amis: 0 }, joueurs: [] };
+    }
+
+    const ids = liste.map((l) => l.id);
+    const etatDe = new Map(liste.map((l) => [l.id, l.etat]));
+    const rang = new Map(ids.map((id, i) => [id, i]));
+    const trous = ids.map(() => '?').join(',');
+    const lignes = await avecXp((xp) => q(
+      `SELECT u.public_id AS id, u.pseudo, u.status,
+              w.active_fanzzy, w.active_evo, w.active_etat, ${xp} AS xp,
+              f.team_id AS club, t.name AS clubNom, am.etat AS lien
+         FROM users u
+         LEFT JOIN user_wallet w ON w.user_id = u.public_id
+         LEFT JOIN user_follows f ON f.user_id = u.public_id AND f.is_main = 1
+         LEFT JOIN teams t ON t.id = f.team_id
+         LEFT JOIN amities am
+           ON (am.a = ? AND am.b = u.public_id) OR (am.a = u.public_id AND am.b = ?)
+        WHERE u.public_id IN (${trous}) AND u.status = 'active'`,
+      [userId, userId, ...ids]));
+    /* Une ligne par joueur, même si une jointure en doublait une. */
+    const parId = new Map();
+    for (const l of lignes) if (!parId.has(String(l.id))) parId.set(String(l.id), l);
+    const gens = [...parId.values()].map((l) => ({
+      l,
+      ami: l.lien === 'amis',
+      memeClub: Boolean(club && Number(l.club) === club.id),
+      etat: etatDe.get(String(l.id)),
+    }));
+    const compte = {
+      tous: gens.length,
+      club: gens.filter((g) => g.memeClub).length,
+      amis: gens.filter((g) => g.ami).length,
+    };
+    const poids = (g) => (g.ami ? 0 : g.memeClub ? 1 : 2);
+    gens.sort((a, b) => poids(a) - poids(b)
+      || (ORDRE_ETAT[a.etat] ?? 9) - (ORDRE_ETAT[b.etat] ?? 9)
+      || rang.get(String(a.l.id)) - rang.get(String(b.l.id)));
+    const montres = gens.slice(0, EN_LIGNE_MAX);
+    await habiller(montres.map((g) => Object.assign(g.l, { userId: g.l.id })));
+    return {
+      actif: true, visible, club, compte,
+      joueurs: montres.map((g) => ({
+        id: String(g.l.id), pseudo: g.l.pseudo, avatar: g.l.avatar, fanzzy: g.l.fanzzy,
+        ...pastilleDe(g.l),
+        etat: g.etat,
+        ...(g.ami ? { ami: true } : {}),
+        ...(g.memeClub ? { memeClub: true } : {}),
+        club: g.l.club != null ? { id: Number(g.l.club), nom: g.l.clubNom ?? null } : null,
+      })),
+    };
+  }
+
   /* ------------------------------------------------------------- routes */
 
   const router = express.Router();
@@ -757,6 +833,12 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
 
   router.get('/', requireAuth, safe(async (req, res) =>
     res.json(await tableau(req.user.id))));
+
+  /* Tous ceux qui sont en ligne et se montrent (page /en-ligne). */
+  router.get('/en-ligne', requireAuth, safe(async (req, res) => {
+    res.set('cache-control', 'no-store');
+    res.json(await enLigne(req.user.id));
+  }));
 
   /* Combien de demandes attendent une réponse : le sticker du menu et de
      l'accueil, sur la tuile des amis (`recues`) et sur celle du KOP (`kop`,
@@ -826,6 +908,15 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
                      AND ((am.a = ? AND am.b = ?) OR (am.a = ? AND am.b = ?))
                    LIMIT 1`, [visage, id, visage, visage, id]) : [],
     ]);
+    /* Un joueur qui n'est pas un ami mais se montre à tous (page /en-ligne,
+       6 novembre 2026) : son personnage est déjà visible de tous sur cette
+       page, l'alerte de son défi peut le montrer aussi. */
+    if (visage && !ami.length && visage !== String(id) && await presence?.defiable?.(visage)) {
+      ami.push(...await q(`SELECT u.public_id AS userId, u.pseudo, u.status,
+                                  w.active_fanzzy, w.active_evo, w.active_etat
+                             FROM users u LEFT JOIN user_wallet w ON w.user_id = u.public_id
+                            WHERE u.public_id = ? AND u.status = 'active' LIMIT 1`, [visage]));
+    }
     await habiller([...demandes, ...kops, ...ami]);
     return {
       demandes: demandes.map((l) => ({ id: l.userId, pseudo: l.pseudo,
