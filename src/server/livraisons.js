@@ -23,7 +23,9 @@
  * Deux processus qui démarrent ensemble sur le même commit ne doivent compter
  * qu'une livraison. `FOR UPDATE` dans une transaction suffit.
  */
-export const CLE = 'version.livraisons';
+/* La 1.0 a sa propre clé (6 novembre 2026) : le compte de la bêta 0.02xx
+   reste dans l'ancienne, `version.livraisons`, et n'est plus lu. */
+export const CLE = 'version.livraisons.1.0';
 
 /** Lit une colonne JSON, que le pilote rend analysée ou non. */
 function lire(v) {
