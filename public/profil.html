@@ -2138,7 +2138,7 @@ async function animerMonFanzzy(avatar, cri, sig) {
   if (!hote) return;
   /* Au centre du vestiaire, sous les pastilles : un peu de place au-dessus
      de la tête pour le saut. */
-  const scene = window.TBF_SCENE.creer(hote, { fond: 'neutre', taille: { 1: 0.66, 2: 0.72, 3: 0.78 } });
+  const scene = window.TBF_SCENE.creer(hote, { fond: 'neutre', taille: { 1: 0.66, 2: 0.72, 3: 0.78, L: 0.88 } });
   sceneProfil = scene;
   let vu = false;
   try { vu = await scene.definir(avatar); } catch { vu = false; }

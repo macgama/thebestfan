@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Les Fanzzy légendaires plus grands que l'âge 3, partout** (branche
+`claude/project-thread-nj31ko`, 6 novembre 2026, demande de Gaël). Pages et
+index.json seuls, sans schéma ni image : un légendaire n'a qu'un âge et
+prenait la taille d'un âge 1 ; il a maintenant sa propre taille, au-dessus de
+l'âge 3 (accueil, carte et fiche qu'il remplit, fin de duel, Virage, deck,
+carnet, plein écran). Aucun redémarrage nécessaire (fichiers statiques).
+
+---
+
 **Le profil devient « Mon vestiaire »** (branche
 `claude/project-thread-rwim3p`, 6 novembre 2026, choix de Gaël parmi quatre
 maquettes). Pages seules, sans schéma : le Fanzzy équipé vit en grand au

@@ -341,7 +341,33 @@
      sommet du dessin : il grandit à vue d'œil (Gaël, 7 octobre 2026). Pas
      plus des trois quarts : le haut de la boîte garde la place de la bulle
      et des sauts, et c'est la taille qu'avait un âge 3 avant la mesure. */
-  const TAILLE_AGE = { 1: 0.6, 2: 0.68, 3: 0.76 };
+  const TAILLE_AGE = { 1: 0.6, 2: 0.68, 3: 0.76, L: 0.88 };
+
+  /* ## Le légendaire, au-dessus de l'âge 3
+
+     Un légendaire n'a qu'un âge, le premier : il prenait donc la plus petite
+     taille de toutes, au milieu de sa carte (Gaël, 6 novembre 2026 : « les
+     Fanzzy légendaires doivent être plus grands que les Fanzzy d'âge 3. Ils
+     doivent être impressionnants et prendre presque tout l'écran »). Il a sa
+     propre part, `L`, dans chaque table de tailles ; une table qui n'en dit
+     rien lui donne celle de l'âge 3 agrandie de `PLUS_LEGENDE`.
+
+     Qui est légendaire : `legendaire` dans index.json, écrit à l'agrégation
+     depuis le catalogue (scripts/fanzzy-manifeste.mjs). */
+  const PLUS_LEGENDE = 1.18;
+  const legendaire = (id) => index?.fanzzy?.[id]?.legendaire === true;
+
+  /**
+   * La part de la boîte que prend un personnage, lue dans une table par âge
+   * (`{1, 2, 3, L}`) : la ligne `L` pour un légendaire, celle de son âge
+   * sinon. Un nombre est rendu tel quel.
+   */
+  function part(id, evo, table) {
+    if (table == null || typeof table === 'number') return table ?? undefined;
+    const e = Math.min(3, Math.max(1, Number(evo) || 1));
+    if (!legendaire(id)) return table[e];
+    return table.L ?? (table[3] != null ? table[3] * PLUS_LEGENDE : undefined);
+  }
 
   /**
    * La hauteur et le décalage d'une image d'état, pour que **le personnage**
@@ -352,7 +378,9 @@
    * parfois que les trois cinquièmes. `pieds` (index.json) dit quelle part ;
    * on agrandit l'image d'autant, et on la descend de la marge sous ses pieds.
    *
-   * @param {number} [cible] part de la boîte, à la place de `TAILLE_AGE`.
+   * @param {number|object} [cible] part de la boîte, à la place de
+   *   `TAILLE_AGE` : un nombre, ou une table par âge (`{1, 2, 3, L}`, voir
+   *   `part`) ; un légendaire prend toujours sa ligne `L`.
    * @returns {{hauteur:string, bas:string, decale:string} | null} en pourcentages de la
    *   boîte, ou `null` si l'âge n'est pas mesuré : la page garde alors la
    *   taille de l'âge appliquée au cadre entier.
@@ -372,7 +400,12 @@
     if (!p) return null;
     // `cible` : la part de la boîte que prend le personnage, si la page en
     // veut une autre que celle de l'accueil (la carte le veut plus grand).
-    const h = (cible ?? TAILLE_AGE[e]) / p[0];
+    /* Une table : la ligne de son âge, ou `L` pour un légendaire. Rien : la
+       table de l'accueil. Un nombre est pris tel quel ; les pages passent
+       donc leur table, pour qu'un légendaire n'y prenne pas la part d'un
+       âge 1. */
+    const c = typeof cible === 'number' ? cible : part(id, e, cible ?? TAILLE_AGE);
+    const h = (c ?? TAILLE_AGE[e]) / p[0];
     /* `decale` recentre ses jambes : un écart en hauteurs de cadre, rendu en
        hauteurs de boîte (`cqh` : la boîte doit être un conteneur de taille). */
     const decale = -(Number(p[2]) || 0) * h * 100;
@@ -469,7 +502,8 @@
      Fanzzy pas encore redessiné) garde le cadrage de sa page.
 
      `opt.part` : la part de la boîte que prend le personnage, un nombre ou
-     un objet par âge ; `TAILLE_AGE` par défaut. `opt.sol` : la hauteur du
+     une table par âge (`{1, 2, 3, L}`, voir `part`) ; `TAILLE_AGE` par
+     défaut. `opt.sol` : la hauteur du
      sol au-dessus du bas de la boîte (une longueur CSS). */
   const ETAT_RE = /\/img\/fanzzy\/([A-Z]+\d+)\/e(\d)\//;
   const CALE = ['height', 'bottom', 'top', 'left', 'right', 'width', 'max-width', 'translate'];
@@ -481,8 +515,7 @@
     const faire = () => {
       const opt = img.tbfCale ?? {};
       const e = ETAT_RE.exec(img.currentSrc || img.src || '');
-      const part = typeof opt.part === 'number' ? opt.part : opt.part?.[e?.[2]];
-      const t = e ? taille(e[1], e[2], part, img) : null;
+      const t = e ? taille(e[1], e[2], opt.part ?? undefined, img) : null;
       const m = t && img.naturalWidth > 0 ? pieds(img) : null;
       if (!m) {
         if (img.dataset.cale) { for (const k of CALE) img.style.removeProperty(k); delete img.dataset.cale; }
@@ -502,5 +535,5 @@
   }
 
   window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, REPLI, REPLI_ALPHA, secours,
-    charger, pret, resoudre, portrait, paupieres, precharger, possedes, taille, pieds, caler };
+    charger, pret, resoudre, portrait, paupieres, precharger, possedes, taille, pieds, caler, part, legendaire };
 })();

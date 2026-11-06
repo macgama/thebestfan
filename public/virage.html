@@ -2666,7 +2666,7 @@ function montrerBilan(b, { ou = '/' } = {}) {
   fz.hidden = !src;
   fz.parentElement.hidden = !src;
   if (src) { if (fz.getAttribute('src') !== src) fz.src = src; } else fz.removeAttribute('src');
-  if (src) window.TBF_ETATS?.caler?.(fz, { part: { 1: 0.74, 2: 0.82, 3: 0.9 }, sol: '40px' });
+  if (src) window.TBF_ETATS?.caler?.(fz, { part: { 1: 0.74, 2: 0.82, 3: 0.9, L: 1.02 }, sol: '40px' });
 
   const page = bilanEl.querySelector('.tbf-bilan-page');
   const f = S?.fixture;
