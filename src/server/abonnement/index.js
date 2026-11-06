@@ -7,6 +7,7 @@ import {
   tenueReservee, estTardif, SUFFIXE_TARD, anciensPassEnVente, voieSelonAchat, nomPack,
 } from '../../shared/pass.js';
 import { saisonEnCours, toutesLesSaisons } from '../fanzzy/saisons.js';
+import { distinctionsDe as lireDistinctions, distinctionsDuJoueur } from '../distinctions/index.js';
 
 /**
  * Le PASS de saison : ce qui distingue un joueur qui a le PASS d'un autre.
@@ -339,7 +340,7 @@ export function createAbonnement({ pool, requireAuth }) {
     try {
       const [r] = await q(
         `SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
-          WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id = ?`,
+          WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo', 'victoire') AND saison_id = ?`,
         [userId, saisonId]);
       return Number(r?.n ?? 0);
     } catch (e) {
@@ -730,10 +731,11 @@ export function createAbonnement({ pool, requireAuth }) {
   router.get('/', requireAuth, async (req, res) => {
     try {
       const userId = req.user.id;
-      const [e, actif, nombre, mesVoies, o, bourse, anciens] = await Promise.all([
+      const [e, actif, nombre, mesVoies, o, bourse, anciens, distinctions] = await Promise.all([
         etat(userId), estAbonne(userId), nombrePass(userId), voies(userId), offre(userId),
         q('SELECT scarves FROM user_wallet WHERE user_id = ?', [userId]).catch(() => []),
         anciensEnVente(userId),
+        distinctionsDuJoueur(q, userId).catch(() => []),
       ]);
       const c = courante();
       const article = CATALOGUE.find((a) => a.livraison?.type === 'pass' && !a.retire);
@@ -755,6 +757,8 @@ export function createAbonnement({ pool, requireAuth }) {
           mois: 3, parMois: enEuros(Math.round(article.prix / 3)) }] : [],
         nombre,
         voies: mesVoies,
+        /* Les badges offerts (`fondateur`…), pour la carte du profil. */
+        distinctions,
         saison: c ? { numero: Number(c.numero), nom: c.nom, fin: c.fin ?? null,
           joursRestants: c.joursRestants ?? null, finie: Boolean(c.finie) } : null,
         offre: {
@@ -818,14 +822,20 @@ export function createAbonnement({ pool, requireAuth }) {
   /** Le badge PASS d'un joueur, pour sa carte de supporter (public). */
   router.get('/badge/:id', async (req, res) => {
     try {
-      res.json({ badge: await badgeDe(String(req.params.id)) });
+      const id = String(req.params.id);
+      const [badge, distinctions] = await Promise.all([badgeDe(id),
+        distinctionsDuJoueur(q, id).catch(() => [])]);
+      res.json({ badge, distinctions });
     } catch (err) {
       console.error('[abonnement] badge', err.message);
       res.json({ badge: null });
     }
   });
 
-  return { router, estAbonne, etat, accorder, renouveler, retirer, noterDepart, departs,
+  /** Les distinctions d'une liste de joueurs (`Map`), pour qui affiche des pseudos. */
+  const distinctionsDe = (ids) => lireDistinctions(q, ids);
+
+  return { router, distinctionsDe, estAbonne, etat, accorder, renouveler, retirer, noterDepart, departs,
     plafondPacks, regenMs, profondeurParcours, profondeurSouvenirs, clubsEnPlus,
     kopsAutorises, nombrePass, saisonsDuPass, voies, badgeDe, badgesDe, vitrinesDe, ageTenuePass,
     tenueAuPass, accorderPass, retirerPass, offre, acheterEnEcharpes, passDuJoueur,

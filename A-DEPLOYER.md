@@ -1,5 +1,163 @@
 # À déposer sur Infomaniak
 
+**L'alerte « cadeau reçu »** (branche `claude/project-thread-x9m6y9`,
+6 novembre 2026, demande de Gaël). Quand l'admin offre quelque chose depuis
+/admin › JOUEURS (écharpes, boosters, Fanzzy, tenue, Ultimate, pièce, PASS,
+abonnement, cadeau Fondateur), un paquet cadeau s'ouvre chez le joueur à sa
+prochaine visite, ou dans la minute s'il est en ligne. **Schéma :
+`sql/cadeaux.sql`** (une colonne `user_wallet.cadeau_vu`, acceptée par Gaël),
+appliqué par la mise en ligne. **Redémarrer** (nouvelle route `/api/cadeaux`).
+
+---
+
+**Les Fanzzy légendaires plus grands que l'âge 3, partout** (branche
+`claude/project-thread-nj31ko`, 6 novembre 2026, demande de Gaël). Pages et
+index.json seuls, sans schéma ni image : un légendaire n'a qu'un âge et
+prenait la taille d'un âge 1 ; il a maintenant sa propre taille, au-dessus de
+l'âge 3 (accueil, carte et fiche qu'il remplit, fin de duel, Virage, deck,
+carnet, plein écran). Aucun redémarrage nécessaire (fichiers statiques).
+
+---
+
+**Le profil devient « Mon vestiaire »** (branche
+`claude/project-thread-rwim3p`, 6 novembre 2026, choix de Gaël parmi quatre
+maquettes). Pages seules, sans schéma : le Fanzzy équipé vit en grand au
+centre du profil, ce qu'on possède en pastilles en haut, le niveau dans son
+anneau d'XP, six tuiles de couleur (CLUBS, SAISON, PARCOURS, NIVEAU,
+ÉQUIPEMENT, RÉGLAGES) qui ouvrent chacune sa rubrique en tiroir par le bas,
+et le bonus du jour en coffre. Rien n'a disparu, tout est dans les tiroirs.
+Aucun redémarrage nécessaire (fichiers statiques), mais il ne gêne pas.
+
+---
+
+**KOP et CARNET plus gaming** (branche `claude/project-thread-vw49a6`,
+6 novembre 2026, choix de Gaël « KOP 1 + CARNET 1 »). Code seul, sans schéma :
+le KOP devient un virage (le CAPO devant, les membres en pied derrière, le pot
+en badge, les votes à main levée POUR / CONTRE) ; le carnet devient un album
+(une page par club suivi, les buts encore à récupérer en cases vides avec leur
+prix, un album vide qui envoie au Grand Virage). Traduit, QUESTIONS et
+/comment-jouer à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
+**Un tampon par duel classé gagné** (branche `claude/project-thread-8ynk3z`,
+6 novembre 2026, choix de Gaël « Oui, 1 par victoire, max 3/jour »). Code
+seul, sans schéma : chaque duel classé gagné verse 1 tampon au carnet de la
+saison, 3 fois par jour au plus (réglables dans /admin › SAISON). Le bilan du
+duel le montre (CARNET DE LA SAISON +1), l'encadré « Comment gagner des
+tampons » aussi. Traduit, QUESTIONS et /comment-jouer à jour. Après la mise
+en ligne : « Redémarrer ».
+
+---
+
+**La page Amis devient « La tribune des amis »** (PR #377, 6 novembre 2026,
+choix de Gaël parmi 4 maquettes). Code seul, sans schéma : les Fanzzy des amis
+debout dans une tribune (ceux qui jouent éclairés), RÉPONDRE / MERCI ! sous les
+gestes reçus, et la fiche d'un ami comme l'accueil (son Fanzzy en grand, cases
+de couleur, roue de dix gestes, sa dernière bulle). Traduit, QUESTIONS et
+/comment-jouer à jour. Fichiers statiques : aucun redémarrage nécessaire.
+
+---
+
+**Missions et tampons mis en avant** (branche `claude/project-thread-8ynk3z`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma : une carte MISSIONS
+en haut à gauche de l'accueil (faites sur le total, ce qui est à récupérer),
+une alerte « MISSION RÉUSSIE ! » et une alerte de niveau de la voie PASS dans
+la même case que le changement de niveau, et l'encadré « Comment gagner des
+tampons » sous le carnet (onglet SAISON). Traduit, QUESTIONS et /comment-jouer
+à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
+**Le niveau offre un cadeau visible à chaque palier** (branche
+`claude/project-thread-r8x75z`, 6 novembre 2026, choix de Gaël « Récompenses à
+chaque palier »). Code seul, sans schéma : un titre de tribune par niveau
+(sous le pseudo du profil), la pastille de niveau en bronze (10), argent (15),
+or (20), rubis (25) et légende (30), vue aussi au classement, chez les amis et
+dans le KOP, et au-delà du 30 une étoile tous les 2 000 XP. La fête de niveau
+les annonce. Tout se déduit de l'XP : les joueurs déjà montés les reçoivent
+d'un coup. Après la mise en ligne : « Redémarrer ».
+
+---
+
+**L'administration sur toute la largeur de l'écran** (branche
+`claude/project-thread-cgkjy6`, 6 novembre 2026, demande de Gaël). Page
+/admin seule, sans schéma : plus de plafond à 1 100 px, le tableau JOUEURS ›
+COMPTES écrit chaque colonne sur une ligne et range ses gestes en trois
+familles (côte à côte sur un grand écran). Les réglages gardent leur largeur
+de lecture. Aucun redémarrage nécessaire (fichier statique), mais il ne gêne
+pas.
+
+---
+
+**Le son de l'Ultimate suit la série et la tenue** (branche
+`claude/project-thread-7wl6vu`, 6 novembre 2026, demande de Gaël). Code seul,
+sans schéma ni fichier son : la tenue change la montée et le choc
+(Préhistorique, Apocalyptique, Halloween, Spatiale), la série ajoute sa
+signature juste après (cloches de vache de Die Kurve, tambour et sifflet du
+Parcage…). Sons synthétisés par le jeu, réglés au banc. Après la mise en
+ligne : « Redémarrer ».
+
+---
+
+**Fanzzy du carnet plein, un par PASS** (branche `claude/project-thread-bb7bji`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma. Nouvelle série
+cadeau CARNET PLEIN (CP), jamais dans un booster : le Gardien du Feu (PASS 1),
+le Ferrailleur (PASS 2), le Capitaine Comète (PASS 3), le Fantôme du Virage
+(PASS 4). Qui atteint le dernier palier du carnet de la saison le reçoit, avec
+ou sans PASS ; le carnet de /aide le montre sous cadenas au bout, puis gagné,
+avec le nombre de gagnants, et une fête plein écran le jour du gain. Réglage
+« Le Fanzzy du carnet plein se gagne » et colonne des gagnants dans /admin ›
+PASS. Les images arrivent par un envoi séparé depuis le PC. Après la mise en
+ligne : « Redémarrer ».
+
+---
+
+**Titre de l'Ultimate traduit** (branche `claude/project-thread-lo6qgq-ultime`,
+6 novembre 2026). Code seul, sans schéma : en anglais (et dans les autres
+langues), la grande scène de l'Ultimate affichait son titre en français
+(« TOUT LE MONDE EN TOURNÉE ») à l'ouverture d'un booster. Il est traduit
+partout (boosters, duel, collection, boutique, fiche). Après la mise en ligne :
+« Redémarrer ».
+
+---
+
+**Badge Fondateur et Fanzzy TheBestFan** (branche `claude/project-thread-o231tt`,
+6 novembre 2026, demande de Gaël). **Schéma : une table neuve,
+`user_distinctions` (`sql/distinctions.sql`)**, posée par la mise en ligne
+habituelle (`schema:appliquer`). Dans /admin › JOUEURS, le bouton « Offrir le
+cadeau Fondateur » donne le badge Fondateur (à côté du pseudo : classement,
+amis, profil, affiche du duel) et le Fanzzy légendaire TheBestFan (hors-série
+TB, jamais dans un booster). Sans la table, le bouton dit de l'appliquer et
+rien d'autre ne change. L'image de TheBestFan arrive par un envoi séparé
+depuis le PC (en attendant, sa carte s'affiche sans dessin). Après la mise en
+ligne : « Redémarrer ».
+
+---
+
+**Suivi des joueurs dans /admin** (branche `claude/project-thread-1ns4np`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma : les pages ouvertes
+se comptent dans `compteurs_jour`, qui existe déjà. JOUEURS › COMPTES dit la
+dernière visite de chaque joueur, ses duels (victoires, contre des bots), ses
+Virages, boosters, mini-jeux, pronostics, achats et ses pages préférées sur
+30 jours ; le nouveau sous-onglet USAGE dit, sur 24 h, 7, 30 ou 90 jours, ce
+que les joueurs font le plus (admins exclus). La page de confidentialité le
+dit. Les pages se comptent à partir de la mise en ligne. Après la mise en
+ligne : « Redémarrer ».
+
+---
+
+**Duel privé et page du duel refaite** (branche `claude/project-thread-md55t8`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma. Deux onglets
+MATCHS DU JOUR (filtre MES ÉQUIPES, recherche) et EN ATTENTE DE JOUEURS
+(filtres format et MES ÉQUIPES) ; dans la case du match : l'équipe, le format,
+la case DUEL PRIVÉ, puis CRÉER LE DUEL (ou REJOINDRE LE DUEL). Un duel privé
+n'apparaît dans aucune liste : seuls le lien et les invitations y mènent ; le
+vestiaire le ferme ou le rouvre. « Peu importe le format » est retiré. Après
+la mise en ligne : « Redémarrer ».
+
+---
+
 **Fanzzy à la taille de leur âge, partout** (branche `claude/project-thread-1jgro8`,
 6 novembre 2026, demande de Gaël). Code et `index.json` seuls, sans schéma ni
 image. La mesure qui donne à chaque Fanzzy la taille de son âge avait été effacée

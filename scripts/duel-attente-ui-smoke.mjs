@@ -66,10 +66,12 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'sou
    face. Ils sont amis. */
 const HOTE = '33333333-0000-0000-0000-000000000001';
 const AMI = '44444444-0000-0000-0000-000000000002';
-const NOMS = { [HOTE]: 'Sédunois', [AMI]: 'Copine' };
+/* TIERS ouvre un duel privé, à la fin (6 novembre 2026). */
+const TIERS = '55555555-0000-0000-0000-000000000003';
+const NOMS = { [HOTE]: 'Sédunois', [AMI]: 'Copine', [TIERS]: 'Discret' };
 const communes = ACTIONS.filter((a) => a.rar === 'commune').map((a) => a.id);
 const dix = [...communes, ...communes].slice(0, 10);
-for (const [i, id] of [HOTE, AMI].entries()) {
+for (const [i, id] of [HOTE, AMI, TIERS].entries()) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
     [id, `att${i}@ex.fr`, NOMS[id]]);
   await raw.query(`INSERT INTO user_wallet (user_id,scarves) VALUES (?,300)`, [id]);
@@ -184,6 +186,7 @@ await jusqua(() => T.page.evaluate(() => performance.getEntriesByType('resource'
 
 /* 1. Le créateur entre en file. */
 const H = await ouvrir(HOTE, '/duel-nvn');
+await capture(H.page, '00-matchs-du-jour');
 await H.page.evaluate(() => entrerEnFile());
 check('le vestiaire s’ouvre', await jusqua(() => H.page.evaluate(() =>
   Boolean(document.getElementById('inviterAmi')))));
@@ -235,7 +238,7 @@ const ongletAttente = () => D.page.evaluate(() => {
 });
 check('l’onglet EN ATTENTE compte le duel qui attend', await jusqua(async () => {
   const o = await ongletAttente();
-  return o && /EN ATTENTE\s*1/.test(o.texte) && !o.zero;
+  return o && /EN ATTENTE DE JOUEURS\s*1/.test(o.texte) && !o.zero;
 }, 8000) || (console.log('        onglet :', JSON.stringify(await ongletAttente())), false));
 await D.page.click('[data-portee="attente"]');
 check('un appui montre ce match, son format et le camp qui manque', await jusqua(() => D.page.evaluate(() =>
@@ -307,8 +310,31 @@ check('l’ami joue en face du créateur', await H.page.evaluate(() => S.vue?.mo
 await dodo(1800);
 await capture(A.page, '6-duel-parti');
 
+/* 5. Un duel privé (Gaël, 6 novembre 2026) : la case de la préparation,
+   puis le cadenas du vestiaire. */
+const P = await ouvrir(TIERS, '/duel-nvn');
+await P.page.evaluate(() => document.querySelector('[data-prive]').click());
+check('la case DUEL PRIVÉ se coche', await P.page.evaluate(() =>
+  document.querySelector('[data-prive]')?.getAttribute('aria-pressed')) === 'true');
+// Il ne suit aucun club : le match se choisit dans TOUS LES MATCHS.
+await P.page.evaluate(() => { S.fixtureId = 7; S.camp = 1; entrerEnFile(); });
+check('le vestiaire dit le duel privé, et propose de le rouvrir', await jusqua(async () => {
+  const t = await texte(P.page, '.prive-att');
+  return /Duel privé/.test(t) && /OUVRIR À TOUS/.test(t);
+}));
+check('sans rebours des supporters d’appoint',
+  /attend tes invités/i.test(await texte(P.page, '#rebours')));
+await capture(P.page, '7-duel-prive');
+await P.page.evaluate(() => document.getElementById('basculerPrive').click());
+check('OUVRIR À TOUS le rouvre', await jusqua(async () =>
+  /RENDRE PRIVÉ/.test(await texte(P.page, '.prive-att'))));
+check('et le rebours revient', await jusqua(async () =>
+  /avant les supporters/i.test(await texte(P.page, '#rebours'))));
+await P.page.evaluate(() => quitterFile());
+
 check('aucune erreur de script', H.erreurs.length === 0 && A.erreurs.length === 0
-  || (console.log('        ', [...H.erreurs, ...A.erreurs].slice(0, 3).join(' / ')), false));
+  && P.erreurs.length === 0
+  || (console.log('        ', [...H.erreurs, ...A.erreurs, ...P.erreurs].slice(0, 3).join(' / ')), false));
 
 await nav.close();
 nvn.stop();

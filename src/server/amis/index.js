@@ -1,7 +1,7 @@
 import express from 'express';
 import { randomBytes } from 'node:crypto';
 import { avatarsDe } from '../fanzzy/avatar.js';
-import { niveauPour } from '../../shared/niveau.js';
+import { niveauPour, pastillePour } from '../../shared/niveau.js';
 
 /**
  * Les amis.
@@ -168,6 +168,12 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
     return Number.isFinite(xp) && xp >= 0 ? niveauPour(xp) : undefined;
   }
 
+  /** Le niveau et sa pastille (matière, étoiles), ou rien s'il n'est pas sûr. */
+  function pastilleDe(l) {
+    if (niveauDe(l) === undefined) return {};
+    return pastillePour(Number(l.xp));
+  }
+
   /* Le schéma incomplet se dit une fois, pas à chaque ouverture de la page. */
   let xpAbsenteDite = false;
 
@@ -226,14 +232,13 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
 
     await habiller(lignes.map((l) => Object.assign(l, { userId: l.public_id })));
     const gens = lignes.map((l) => {
-      const niveau = niveauDe(l);
       return {
         id: l.public_id,
         pseudo: l.pseudo,
         fanzzy: l.fanzzy,
         avatar: l.avatar,
         // Absent quand il n'est pas sûr : jamais un niveau par défaut.
-        ...(niveau === undefined ? {} : { niveau }),
+        ...pastilleDe(l),
         etat: l.etat,
         // « à moi de répondre » : la demande vient de l'autre.
         aMoi: l.etat === 'demande' && l.par !== userId,
@@ -250,6 +255,11 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
         const p = passes.get(String(g.id));
         if (p) g.pass = p;
       }
+    }
+    /* Ses badges offerts (Fondateur…), à côté de l'écusson. */
+    if (abonnement?.distinctionsDe && amis.length) {
+      const d = await abonnement.distinctionsDe(amis.map((g) => g.id)).catch(() => new Map());
+      for (const g of amis) if (d.has(String(g.id))) g.distinctions = d.get(String(g.id));
     }
     /* Un compte supprimé garde sa ligne d'ami, sous un pseudo anonyme : il
        n'a plus de visage, et il n'a pas davantage de présence. */
@@ -368,10 +378,9 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
     const par = new Map();
     for (const l of lignes) {
       const h = habits.get(l.id);
-      const niveau = h ? niveauDe(h) : undefined;
       const g = par.get(l.id)
         ?? { id: l.id, pseudo: l.pseudo, fanzzy: h?.fanzzy ?? null, avatar: h?.avatar ?? null,
-          ...(niveau === undefined ? {} : { niveau }),
+          ...(h ? pastilleDe(h) : {}),
           clubs: [] };
       if (l.club) g.clubs.push(l.club);
       par.set(l.id, g);
@@ -441,12 +450,11 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
       [userId, userId, motif, userId, cherche]));
     await habiller(lignes.map((l) => Object.assign(l, { userId: l.id })));
     return lignes.map((l) => {
-      const niveau = niveauDe(l);
       const lien = l.etat === 'amis' ? 'amis'
         : l.etat === 'demande' ? (l.par === userId ? 'envoyee' : 'recue') : null;
       return {
         id: l.id, pseudo: l.pseudo, fanzzy: l.fanzzy, avatar: l.avatar,
-        ...(niveau === undefined ? {} : { niveau }),
+        ...pastilleDe(l),
         ...(lien ? { lien } : {}),
       };
     });

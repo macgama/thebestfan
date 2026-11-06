@@ -9521,6 +9521,16 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 .tbf-niv-case .tbf-niv-n{display:block;margin:calc(10px - .11em) 0 -.11em;font-size:clamp(36px,13vw,52px)}
 .tbf-niv-case .tbf-niv-n b{font:inherit;color:inherit;text-shadow:inherit;letter-spacing:inherit}
 .tbf-niv-case .tbf-niv-de{margin-top:8px;font-size:12px}
+/* Un titre de mots et non un chiffre (la mission réussie : son intitulé) :
+   un corps plus petit, sur deux lignes au plus. */
+.tbf-niv-case .tbf-niv-n--petit{font-size:clamp(22px,7vw,30px);line-height:1.1;margin-bottom:0}
+/* Le gain d'une mission : la rangée des petits stickers (tampons, XP…). */
+.tbf-niv-rangee{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+/* Le dessin du gain d'un niveau de la voie PASS (le kit de `pass.js`). */
+.tbf-niv-gain{display:block;width:96px;height:96px;object-fit:contain;
+  filter:drop-shadow(0 3px 0 var(--encre))}
+/* Deux boutons (RÉCUPÉRER, puis CONTINUER) : le second suit de plus près. */
+.tbf-niv-case>.tbf-plaque+.tbf-plaque{margin-top:8px}
 
 /* Le butin et ce que le palier ouvre : des stickers en colonne, chacun à sa
    largeur, avec l'air qu'il leur faut autour (cinq pixels). Tout est à la
@@ -9557,6 +9567,33 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 .tbf-niv-cocarde{display:block;width:58px;height:58px;color:var(--projo)}
 .tbf-niv-scene--perso .tbf-niv-cocarde{position:absolute;z-index:2;left:calc(50% + 30px);
   bottom:8px;width:52px;height:52px}
+
+/* **Le cadeau de l'administration** (`cadeau-fete.js`, 6 novembre 2026) :
+   sa scène remplace la cocarde dans la case commune. Un paquet au trait qui
+   tombe, tremble et saute (les entrées sont jouées par le script, pas sans
+   mouvement), l'éclair blanc de son ouverture, et le Fanzzy offert qui en
+   sort, coupé à la taille comme celui de la montée de niveau. */
+.tbf-niv-scene:has(.tbf-cadeau-scene){height:150px}
+.tbf-cadeau-scene{position:absolute;inset:0;display:block}
+.tbf-cadeau-paquet{position:absolute;left:50%;bottom:4px;width:104px;height:104px;margin-left:-52px;
+  z-index:2;overflow:visible;transform-origin:50% 90%;filter:drop-shadow(0 3px 0 var(--encre,#111))}
+.tbf-cadeau-couvercle{transform-box:fill-box;transform-origin:50% 100%}
+.tbf-cadeau-ouvert .tbf-cadeau-couvercle{opacity:0}
+.tbf-cadeau-scene--perso .tbf-cadeau-paquet{left:calc(50% + 50px);width:84px;height:84px;margin-left:-42px}
+.tbf-cadeau-eclat{position:absolute;left:50%;top:58%;width:90px;height:90px;margin:-45px 0 0 -45px;
+  border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,240,190,.85) 35%,transparent 70%);
+  opacity:0;pointer-events:none;z-index:1}
+.tbf-cadeau-perso{position:absolute;z-index:1;left:0;right:0;top:-6px;margin:0 auto;width:auto;height:300px;
+  max-width:none;pointer-events:none;
+  -webkit-mask-image:linear-gradient(180deg,#000 112px,transparent 156px);
+  mask-image:linear-gradient(180deg,#000 112px,transparent 156px)}
+/* Un cadeau et sa précision (« pour Le Choriste », la rareté) : en colonne. */
+.tbf-cadeau-ligne{display:flex;flex-direction:column;align-items:center}
+.tbf-cadeau-ligne small{display:block;margin-top:7px;font-size:12px}
+.tbf-cadeau-ligne .tbf-cadeau-rar{margin-top:6px;font-size:11px;rotate:2deg}
+.tbf-niv-butin .tbf-sticker svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linejoin:round;vertical-align:-2px;margin-right:5px}
+.tbf-niv-butin .tbf-sticker .tbf-distinction svg{width:16px;height:18px;stroke:none}
 
 
 /* ==================================================== les pièces du lot 6
@@ -12151,6 +12188,18 @@ html[data-calme~="animations"] .tbf-face *{animation:none!important}
 .tbf-pass-etoiles{position:absolute;right:-6px;top:-6px;font-style:normal;font-size:9px;line-height:1;
   color:#ffd75e;text-shadow:0 0 4px rgba(0,0,0,.8);font-weight:900}
 
+/* Les distinctions offertes (`TBF_PASS.distinctions`) : le badge Fondateur,
+   écusson noir bordé d'orange à l'étoile blanche, aux couleurs du logo. Même
+   gabarit que l'écusson du PASS, pour s'aligner à côté de lui. */
+.tbf-distinction{--t:22px;display:inline-flex;flex-direction:column;align-items:center;flex:none;
+  vertical-align:middle;line-height:1}
+.tbf-distinction>svg{width:var(--t);height:calc(var(--t) * 1.16);display:block;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)) drop-shadow(0 0 calc(var(--t) * .18) rgba(242,140,40,.45))}
+.tbf-distinction>small{margin-top:3px;font-family:var(--banner);font-weight:700;font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:#F28C28}
+.tbf-distinction--moyen{--t:34px}
+.tbf-distinction--grand{--t:64px}
+
 /* Le cadre de la carte de supporter. Il se pose sur un bloc existant, sans
    rien changer à son contenu, et sans pseudo-élément : le bloc qui le porte a souvent déjà les siens (la
    brique `.tbf-cadre` pose son ::before). Le cadre est donc une pile d'ombres
@@ -12257,3 +12306,28 @@ html[data-calme~="animations"] .beta-annonce .beta-annonce-jauge{transition:opac
 html[data-calme~="animations"] .pass-plaque,
 html[data-calme~="animations"] .pass-spot-jauge{animation:none}
 html[data-calme~="animations"] .pass-spot-lignes li{animation:none;opacity:1;transform:none}
+
+/* ----------------------------------------------- la pastille de niveau
+
+   Les cadeaux du niveau (décision de Gaël du 6 novembre 2026, voir
+   `src/shared/niveau.js`) : la pastille change de matière aux niveaux 10,
+   15, 20, 25 et 30, et porte ses étoiles au-delà du 30. Le serveur pose la
+   matière (`teinte`) et les étoiles ; la page les écrit en attributs sur
+   la pastille, partout où le niveau s'affiche. Le cerne reste celui du
+   sticker : seule la face change, avec un lettrage qui tient dessus. */
+.tbf-sticker[data-teinte=bronze]{--face:#B7743A;--lettre:var(--encre)}
+.tbf-sticker[data-teinte=argent]{--face:var(--gris);--lettre:var(--encre)}
+.tbf-sticker[data-teinte=or]{--face:var(--projo);--lettre:var(--encre)}
+.tbf-sticker[data-teinte=rubis]{--face:var(--face-flare);--lettre:var(--craie)}
+.tbf-sticker[data-teinte=legende]{--face:var(--face-violet);--lettre:var(--projo);
+  box-shadow:0 0 0 2px var(--projo),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6)}
+/* Les étoiles, en petit sticker d'or collé au-dessus de la pastille. */
+.tbf-sticker--rond[data-etoiles]{overflow:visible}
+.tbf-sticker--rond[data-etoiles]::after{
+  content:"★" attr(data-etoiles);
+  position:absolute;left:50%;top:-11px;translate:-50% 0;rotate:-6deg;
+  padding:1px 3px;border-radius:4px;
+  background:var(--projo);color:var(--encre);
+  box-shadow:0 0 0 1.5px var(--encre);
+  font:700 9px/1 var(--banner);letter-spacing:0;white-space:nowrap;
+}

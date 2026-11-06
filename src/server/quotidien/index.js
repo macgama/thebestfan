@@ -47,6 +47,7 @@ import {
   lireDuels, lirePresences, lireCompteurs, recompter, contexte, suivisDe, memoireDeJournee,
 } from './missions.js';
 import { lireDepuis, marquerVisite } from './depuis.js';
+import { createTrophee } from './trophee.js';
 
 const JOUR = /^\d{4}-\d{2}-\d{2}$/;
 const SCHEMA = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR']);
@@ -196,13 +197,13 @@ const SQL_LIVRE = `
     FROM recompenses WHERE user_id = ? AND source IN ('carnet', 'relais')
   UNION ALL
   SELECT 'tampons', NULL, saison_id, NULL, SUM(tampons), NULL
-    FROM recompenses WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id IS NOT NULL
+    FROM recompenses WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo', 'victoire') AND saison_id IS NOT NULL
    GROUP BY saison_id`;
 
 /* Les tampons d'une saison, recomptés sous le verrou d'un versement. */
 const SQL_TAMPONS = `
   SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
-   WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id = ?`;
+   WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo', 'victoire') AND saison_id = ?`;
 
 /**
  * La sonde du jour de jeu : à quelle heure de Zurich le jour change, d'après
@@ -272,6 +273,9 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
   /* Le dernier relevé de la journée du football, noté par un tirage ou une
      relance, et seulement relu par la lecture de l'état : celle-ci ne lit
      jamais la journée elle-même (`missions.js`, les conditions). */
+  /* Le Fanzzy du carnet plein (`trophee.js`). */
+  const trophee = createTrophee({ q, lesSaisons });
+
   const memoire = memoireDeJournee({ horloge: () => (crochets.horloge ?? Date.now)() });
 
   /* Les deux portes du grand livre, lues au moment du versement : le module
@@ -524,7 +528,24 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
         tampons: t,
         paliers,
         ...(prochain ? { prochain: { n: prochain.n, manque: prochain.tampons - t } } : {}),
+        /* **Comment on gagne des tampons** (demande de Gaël, 6 novembre
+           2026 : « comment tu gagnes des tampons ? ») : ce que rapporte
+           chaque source, aux réglages de l'instant, pour que la page le dise
+           sous le carnet. Les missions du jour gardent ce que leur ligne
+           promet (copié au tirage) ; ceci n'est que la règle générale. */
+        gagner: {
+          facile: reglage('saison.tampons_facile'),
+          moyenne: reglage('saison.tampons_moyenne'),
+          difficile: reglage('saison.tampons_difficile'),
+          sachet: reglage('saison.tampons_sachet'),
+          victoire: reglage('saison.tampons_victoire'),
+          victoiresJour: reglage('saison.victoires_jour'),
+          defi: reglage('defis.actif') === true ? reglage('defis.tampons') : 0,
+        },
       };
+      /* Le Fanzzy du carnet plein, au bout du carnet (`trophee.js`). */
+      const tr = await trophee.pourLeCarnet(courante, deja.carnet);
+      if (tr) pub.carnet.trophee = tr;
       aReclamer += paliers.filter((p) => p.etat === 'pret').length;
       interne.carnet = { saison: courante, tampons: t, paliers };
 
@@ -1024,14 +1045,24 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
   /* Une réclamation répond toujours 200 avec une session valide (R6) : le
      versement ou son refus, et l'état à jour à la racine. Une table absente
      est un refus `schema`, pas une erreur. */
-  const repondre = async (res, userId, faire) => {
+  const repondre = async (res, userId, faire, { carnet = false } = {}) => {
     let r;
     try { r = await faire(); } catch (e) {
       if (!estSchema(e)) throw e;
       journaliser(`réclamation impossible (${e.sqlMessage ?? e.message})`);
       r = { verse: false, raison: 'schema' };
     }
-    res.json({ ...r, quotidien: await etatPublic(userId) });
+    /* Le dernier palier du carnet vient peut-être de tomber : le Fanzzy du
+       carnet plein suit (`trophee.js`). Un cadeau raté ne fait pas échouer
+       le versement, qui est déjà écrit. */
+    let trophees = [];
+    if (carnet) {
+      trophees = await trophee.verifier(userId).catch((e) => {
+        console.error('[quotidien] trophée du carnet :', e.message);
+        return [];
+      });
+    }
+    res.json({ ...r, ...(trophees.length ? { trophees } : {}), quotidien: await etatPublic(userId) });
   };
 
   router.get('/', requireAuth, safe(async (req, res) => {
@@ -1058,14 +1089,15 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
   router.post('/carnet', requireAuth, safe(async (req, res) => {
     const { saison, n } = corps(req);
     if (!entier(saison, 1, 2 ** 31) || !entier(n, 1, 8)) return requete(res);
-    return repondre(res, req.user.id, () => reclamerCarnet(req.user.id, { saison, n }));
+    return repondre(res, req.user.id, () => reclamerCarnet(req.user.id, { saison, n }),
+      { carnet: true });
   }));
 
   router.post('/relais', requireAuth, safe(async (req, res) =>
     repondre(res, req.user.id, () => reclamerRelais(req.user.id))));
 
   router.post('/tout', requireAuth, safe(async (req, res) =>
-    repondre(res, req.user.id, () => reclamerTout(req.user.id))));
+    repondre(res, req.user.id, () => reclamerTout(req.user.id), { carnet: true })));
 
   router.post('/relance', requireAuth, safe(async (req, res) => {
     const { rang, id } = corps(req);
@@ -1096,7 +1128,7 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
   });
 
   return {
-    router, lireEtat, etat: etatPublic, relancer, reclamerTout,
+    router, lireEtat, etat: etatPublic, relancer, reclamerTout, trophee,
     reclamerBonus, reclamerMission, reclamerSachet, reclamerCarnet, reclamerRelais,
   };
 }

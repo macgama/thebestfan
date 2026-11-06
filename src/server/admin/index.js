@@ -1,6 +1,9 @@
 import express from 'express';
 import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
-import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte }
+import { distinctionsDe, accorderDistinction, retirerDistinction } from '../distinctions/index.js';
+import { DISTINCTION_PAR_ID, FANZZY_FONDATEUR } from '../../shared/distinctions.js';
+import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte,
+  serieCadeau }
   from '../fanzzy/catalogue.js';
 import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
 import { chargerSaisons, toutesLesSaisons, saisonEnCours, saisonProchaine }
@@ -26,6 +29,7 @@ import { assurerBourse } from '../bourse.js';
 import { createCollectionAdmin } from './collection.js';
 import { passAvecTenue, passDe } from '../../shared/pass.js';
 import { ARTICLE_PAR_ID } from '../../shared/boutique.js';
+import { NOMS as NOMS_DES_PAGES } from '../usage/index.js';
 
 /**
  * Administration.
@@ -204,14 +208,186 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     } catch (e) {
       if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
     }
+    const activites = await activiteDe(lignes);
+    /* Les badges offerts (Fondateur…), tus sans `sql/distinctions.sql`. */
+    const distinctions = await distinctionsDe(q, lignes.map((l) => l.public_id));
     return lignes.map((l) => {
       const a = abos.get(l.public_id);
       return { ...l,
         abonne: Boolean(a && Number(a.actif)),
         abo_fin: a?.fin ?? null,
         abo_formule: a?.formule ?? null,
-        pass: passes.get(l.public_id) ?? [] };
+        pass: passes.get(l.public_id) ?? [],
+        distinctions: distinctions.get(String(l.public_id)) ?? [],
+        ...activites.get(l.public_id) };
     });
+  }
+
+  /* ---------------------------------------------------------- l'usage */
+
+  /**
+   * Une lecture d'activité qui tolère sa table absente — ou une colonne pas
+   * encore posée : la liste des joueurs ne s'éteint jamais pour un chiffre
+   * en moins (même raison que l'abonnement, plus haut).
+   */
+  async function tolere(promesse) {
+    try { return await promesse; } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE' || e?.code === 'ER_BAD_FIELD_ERROR') return [];
+      throw e;
+    }
+  }
+  const quand = (v) => (v ? new Date(v).getTime() : 0);
+
+  /**
+   * Ce que chaque joueur de la liste fait du jeu (demande de Gaël du 6
+   * novembre 2026) : sa dernière visite, ses duels, ses Virages, ses boosters,
+   * ses mini-jeux, ses pronostics, ses achats, et les pages qu'il ouvre le plus
+   * sur 30 jours. Tout est lu dans ce que le jeu enregistre déjà, sauf les
+   * pages (`src/server/usage`).
+   *
+   * **La dernière visite** prend la plus récente de quatre marques : la
+   * connexion (`last_login_at`), la session (prolongée au plus une fois par
+   * jour), l'accueil (`visite_a`) et la mémoire du serveur (24 h, la plus
+   * fraîche, perdue au redémarrage).
+   */
+  async function activiteDe(lignes) {
+    const ids = lignes.map((l) => l.public_id);
+    const m = ids.map(() => '?').join(',');
+    const [sessions, accueil, duels, virage, jeux, pronos, compteurs, achats, pages] = await Promise.all([
+      tolere(q(`SELECT u.public_id AS id, MAX(s.last_seen_at) AS a
+                  FROM sessions s JOIN users u ON u.id = s.user_id
+                 WHERE u.public_id IN (${m}) GROUP BY u.public_id`, ids)),
+      tolere(q(`SELECT user_id AS id, visite_a AS a FROM user_wallet WHERE user_id IN (${m})`, ids)),
+      tolere(q(`SELECT user_id AS id, COUNT(*) AS n, SUM(outcome = 'win') AS v,
+                       SUM(opponent_id LIKE 'bot:%') AS bots, MAX(ended_at) AS a
+                  FROM duel_results WHERE user_id IN (${m}) GROUP BY user_id`, ids)),
+      tolere(q(`SELECT user_id AS id, COUNT(*) AS n FROM virage_presence
+                 WHERE user_id IN (${m}) GROUP BY user_id`, ids)),
+      tolere(q(`SELECT user_id AS id, COUNT(*) AS n FROM jeux_parties
+                 WHERE user_id IN (${m}) GROUP BY user_id`, ids)),
+      tolere(q(`SELECT user_id AS id, COUNT(*) AS n FROM pronostics
+                 WHERE user_id IN (${m}) GROUP BY user_id`, ids)),
+      tolere(q(`SELECT user_id AS id, cle, SUM(n) AS n FROM compteurs_jour
+                 WHERE user_id IN (${m}) AND cle IN ('booster','evolution','ultime')
+                 GROUP BY user_id, cle`, ids)),
+      tolere(q(`SELECT user_id AS id, COUNT(*) AS n FROM achats
+                 WHERE user_id IN (${m}) AND etat IN ('paye','livre') GROUP BY user_id`, ids)),
+      tolere(q(`SELECT user_id AS id, cle, SUM(n) AS n, COUNT(DISTINCT jour) AS jours
+                  FROM compteurs_jour
+                 WHERE user_id IN (${m}) AND cle LIKE 'v:%' AND jour > CURDATE() - INTERVAL 30 DAY
+                 GROUP BY user_id, cle`, ids)),
+    ]);
+    const par = (rows) => new Map(rows.map((r) => [r.id, r]));
+    const [S, A, D, V, J, P, H] = [sessions, accueil, duels, virage, jeux, pronos, achats].map(par);
+    const C = new Map();
+    for (const r of compteurs) (C.get(r.id) ?? C.set(r.id, {}).get(r.id))[r.cle] = Number(r.n) || 0;
+    const G = new Map();
+    for (const r of pages) (G.get(r.id) ?? G.set(r.id, []).get(r.id)).push(r);
+    /* Les jours actifs sur 30 jours : un jour où il a ouvert au moins une page. */
+    const jours = new Map();
+    for (const r of await tolere(q(`SELECT user_id AS id, COUNT(DISTINCT jour) AS n FROM compteurs_jour
+        WHERE user_id IN (${m}) AND cle LIKE 'v:%' AND jour > CURDATE() - INTERVAL 30 DAY
+        GROUP BY user_id`, ids))) jours.set(r.id, Number(r.n) || 0);
+
+    const resultat = new Map();
+    for (const l of lignes) {
+      const id = l.public_id;
+      const marque = Math.max(quand(l.last_login_at), quand(S.get(id)?.a), quand(A.get(id)?.a),
+        module.deps.frequentation?.vuA?.(id) ?? 0);
+      const d = D.get(id);
+      const c = C.get(id) ?? {};
+      resultat.set(id, {
+        derniere_visite: marque ? new Date(marque).toISOString() : null,
+        activite: {
+          duels: Number(d?.n) || 0, victoires: Number(d?.v) || 0, contre_bots: Number(d?.bots) || 0,
+          dernier_duel: d?.a ?? null,
+          virage: Number(V.get(id)?.n) || 0, minijeux: Number(J.get(id)?.n) || 0,
+          pronostics: Number(P.get(id)?.n) || 0, achats: Number(H.get(id)?.n) || 0,
+          boosters: c.booster ?? 0, evolutions: c.evolution ?? 0, ultimes: c.ultime ?? 0,
+          jours_actifs: jours.get(id) ?? 0,
+          pages: (G.get(id) ?? [])
+            .map((r) => { const page = r.cle.slice(2);
+              return { page, nom: NOMS_DES_PAGES[page] ?? page, n: Number(r.n) || 0 }; })
+            .sort((x, y) => y.n - x.n).slice(0, 3),
+        },
+      });
+    }
+    return resultat;
+  }
+
+  /**
+   * La vue d'ensemble de l'usage, sur `jours` jours (7 ou 30) : ce que les
+   * joueurs font le plus. **Les administrateurs n'y comptent pas** : Gaël et
+   * ses essais fausseraient le classement d'un jeu encore petit.
+   */
+  async function usage(jours = 7) {
+    const n = [1, 7, 30, 90].includes(Number(jours)) ? Number(jours) : 7;
+    const JOUEUR = `JOIN users u ON u.public_id = t.user_id AND u.role <> 'admin'`;
+
+    /* Les actifs : la dernière marque de chaque compte, comme sur sa ligne. */
+    const marques = async (avecAccueil) => q(
+      `SELECT u.public_id AS id, GREATEST(COALESCE(u.last_login_at, '1970-01-01'),
+                       COALESCE((SELECT MAX(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id), '1970-01-01')
+                       ${avecAccueil ? `, COALESCE(w.visite_a, '1970-01-01')` : ''}) AS a
+         FROM users u ${avecAccueil ? 'LEFT JOIN user_wallet w ON w.user_id = u.public_id' : ''}
+        WHERE u.role <> 'admin' AND u.status <> 'deleted'`);
+    let rows;
+    try { rows = await marques(true); } catch (e) {
+      if (e?.code !== 'ER_BAD_FIELD_ERROR' && e?.code !== 'ER_NO_SUCH_TABLE') throw e;
+      rows = await marques(false);
+    }
+    const maintenant = Date.now();
+    /* La mémoire du serveur d'abord : la session n'est notée qu'une fois par
+       jour, un joueur venu ce matin n'aurait sinon de marque que d'hier. */
+    const vu = (r) => Math.max(quand(r.a), module.deps.frequentation?.vuA?.(r.id) ?? 0);
+    const depuis = (h) => rows.filter((r) => maintenant - vu(r) < h * 3600e3).length;
+    const actifs = { jour: depuis(24), semaine: depuis(24 * 7), mois: depuis(24 * 30), total: rows.length };
+
+    const [pages, parJour, duels, virage, jeux, pronos, compteurs, achats] = await Promise.all([
+      tolere(q(`SELECT SUBSTRING(t.cle, 3) AS page, COUNT(DISTINCT t.user_id) AS joueurs, SUM(t.n) AS visites
+                  FROM compteurs_jour t ${JOUEUR}
+                 WHERE t.cle LIKE 'v:%' AND t.jour > CURDATE() - INTERVAL ? DAY
+                 GROUP BY page ORDER BY joueurs DESC, visites DESC`, [n])),
+      tolere(q(`SELECT DATE_FORMAT(t.jour, '%Y-%m-%d') AS jour, COUNT(DISTINCT t.user_id) AS joueurs
+                  FROM compteurs_jour t ${JOUEUR}
+                 WHERE t.cle LIKE 'v:%' AND t.jour > CURDATE() - INTERVAL 14 DAY
+                 GROUP BY t.jour ORDER BY t.jour`)),
+      tolere(q(`SELECT COUNT(DISTINCT t.user_id) AS joueurs, COUNT(*) AS total,
+                       SUM(t.opponent_id LIKE 'bot:%') AS bots
+                  FROM duel_results t ${JOUEUR} WHERE t.ended_at >= NOW(3) - INTERVAL ? DAY`, [n])),
+      tolere(q(`SELECT COUNT(DISTINCT t.user_id) AS joueurs, COUNT(*) AS total
+                  FROM virage_presence t ${JOUEUR} WHERE t.joined_at >= NOW(3) - INTERVAL ? DAY`, [n])),
+      tolere(q(`SELECT COUNT(DISTINCT t.user_id) AS joueurs, COUNT(*) AS total
+                  FROM jeux_parties t ${JOUEUR} WHERE t.debut_a >= NOW(3) - INTERVAL ? DAY`, [n])),
+      tolere(q(`SELECT COUNT(DISTINCT t.user_id) AS joueurs, COUNT(*) AS total
+                  FROM pronostics t ${JOUEUR} WHERE t.cree_a >= NOW(3) - INTERVAL ? DAY`, [n])),
+      tolere(q(`SELECT t.cle, COUNT(DISTINCT t.user_id) AS joueurs, SUM(t.n) AS total
+                  FROM compteurs_jour t ${JOUEUR}
+                 WHERE t.cle IN ('booster','evolution','ultime') AND t.jour > CURDATE() - INTERVAL ? DAY
+                 GROUP BY t.cle`, [n])),
+      tolere(q(`SELECT COUNT(DISTINCT t.user_id) AS joueurs, COUNT(*) AS total
+                  FROM achats t ${JOUEUR}
+                 WHERE t.etat IN ('paye','livre') AND t.paye_le >= NOW(3) - INTERVAL ? DAY`, [n])),
+    ]);
+    const nb = (r) => ({ joueurs: Number(r?.joueurs) || 0, total: Number(r?.total) || 0 });
+    const cpt = new Map(compteurs.map((r) => [r.cle, r]));
+    const activites = [
+      { cle: 'duels', nom: 'Duels joués', ...nb(duels[0]), dont_bots: Number(duels[0]?.bots) || 0 },
+      { cle: 'virage', nom: 'Matchs au Virage', ...nb(virage[0]) },
+      { cle: 'boosters', nom: 'Boosters ouverts', ...nb(cpt.get('booster')) },
+      { cle: 'evolutions', nom: 'Évolutions de Fanzzy', ...nb(cpt.get('evolution')) },
+      { cle: 'ultimes', nom: 'Ultimate lancés', ...nb(cpt.get('ultime')) },
+      { cle: 'minijeux', nom: 'Parties de mini-jeux', ...nb(jeux[0]) },
+      { cle: 'pronostics', nom: 'Pronostics', ...nb(pronos[0]) },
+      { cle: 'achats', nom: 'Achats payés', ...nb(achats[0]) },
+    ].sort((a, b) => b.joueurs - a.joueurs || b.total - a.total);
+
+    return {
+      jours: n, actifs, activites,
+      pages: pages.map((r) => ({ page: r.page, nom: NOMS_DES_PAGES[r.page] ?? r.page,
+        joueurs: Number(r.joueurs) || 0, visites: Number(r.visites) || 0 })),
+      parJour: parJour.map((r) => ({ jour: r.jour, joueurs: Number(r.joueurs) || 0 })),
+    };
   }
 
   /**
@@ -602,7 +778,9 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   /** Ce qu'une saison peut nommer. Tout le reste est refusé, nommément. */
   function validerContenu(p, { deja = new Set() } = {}) {
     const liste = (v) => (Array.isArray(v) ? [...new Set(v.map(String))] : []);
-    const series = liste(p.series);
+    /* Une série de cadeau (THEBESTFAN) ne s'ouvre jamais : on ne l'écrit pas
+       dans une saison, où elle se lirait « ouverte » sans l'être. */
+    const series = liste(p.series).filter((id) => !serieCadeau(id));
     const tenues = liste(p.tenues);
     const stuff = liste(p.stuff);
     const actions = liste(p.actions);
@@ -1265,7 +1443,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       if (s.series.length) {
         const lanceesIci = toutesLesSaisons().filter((x) => x.lancee && x.id !== s.id);
         if (lanceesIci.length && !lanceesIci.some((x) => x.series.length)) {
-          const toutes = SETS.map((x) => x.id);
+          const toutes = SETS.filter((x) => !x.cadeau).map((x) => x.id);
           await pool.query(`UPDATE saisons SET series = ? WHERE id IN (?)`,
             [JSON.stringify(toutes), lanceesIci.map((x) => x.id)]);
           await journal(acteur, 'saison.series_ecrites', lanceesIci.map((x) => x.id).join(','),
@@ -1575,6 +1753,8 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       limite: req.query.limite, offset: req.query.offset }),
   })));
 
+  router.get('/usage', safe(async (req, res) => res.json(await usage(req.query.jours))));
+
   router.patch('/joueur/:id', safe(async (req, res) =>
     res.json(await modifier(req.user.id, req.params.id, req.body ?? {}, ip(req)))));
 
@@ -1691,11 +1871,22 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     /* Pendant la BASE (saison 0), c'est le PASS 1 qui se vend. */
     if (Number(enCours?.numero) === 0) numeros.add(1);
     for (const n of parSaison.keys()) numeros.add(n);
+    /* Le Fanzzy du carnet plein de chaque PASS et ses gagnants (6 novembre
+       2026) : la carte possédée est la seule trace (`quotidien/trophee.js`). */
+    const registre = [...numeros].sort((a, b) => b - a).map((n) => passDe(n));
+    const ids = registre.map((p) => p.trophee?.fanzzy).filter(Boolean);
+    const gagnants = new Map();
+    if (ids.length) {
+      for (const r of await q(`SELECT fanzzy_id, COUNT(*) AS n FROM user_fanzzy
+          WHERE fanzzy_id IN (${ids.map(() => '?').join(',')}) GROUP BY fanzzy_id`, ids)
+        .catch(sansTable)) gagnants.set(r.fanzzy_id, Number(r.n));
+    }
     res.json({
       enCours: enCours ? { numero: Number(enCours.numero), nom: enCours.nom ?? null,
         fin: enCours.fin ?? null } : null,
       prixEuros: ARTICLE_PAR_ID.get('pass-saison')?.prix ?? null,
-      registre: [...numeros].sort((a, b) => b - a).map((n) => passDe(n)),
+      registre: registre.map((p) => (p.trophee
+        ? { ...p, trophee: { ...p.trophee, gagnants: gagnants.get(p.trophee.fanzzy) ?? 0 } } : p)),
       ventes: [...parSaison.values()],
       detenteurs: detenteurs.map((d) => ({ id: d.user_id, pseudo: d.pseudo,
         saison: Number(d.saison), source: d.source, le: d.achete_le })),
@@ -1715,6 +1906,46 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   /* La collection d'un joueur et les cadeaux, puis les KOP : `collection.js`. */
   const coll = createCollectionAdmin({ q, pool, journal, fail });
+
+  /* ------------------------------------------------- le cadeau Fondateur
+
+     Demande de Gaël du 6 novembre 2026 : le badge « Fondateur » et le Fanzzy
+     légendaire « TheBestFan », offerts d'un geste aux bêta-testeurs depuis
+     JOUEURS › COMPTES. Le Fanzzy n'est donné que s'il ne l'a pas déjà : un
+     second clic ne fait pas de doublon. Journalisé comme le reste. */
+  router.post('/joueur/:id/fondateur', safe(async (req, res) => {
+    const cible = (await q('SELECT public_id FROM users WHERE public_id = ?', [req.params.id]))[0];
+    if (!cible) return res.status(404).json({ error: 'admin.error.joueur_inconnu' });
+    let badge;
+    try {
+      badge = await accorderDistinction(q, cible.public_id, 'fondateur', req.user.id);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') {
+        return res.status(503).json({ error: 'admin.error.distinctions_absentes' });
+      }
+      throw e;
+    }
+    const [deja] = await q(`SELECT 1 AS x FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+      [cible.public_id, FANZZY_FONDATEUR]);
+    if (!deja) {
+      await coll.offrir(req.user.id, cible.public_id,
+        { sorte: 'fanzzy', fanzzy: FANZZY_FONDATEUR }, ip(req));
+    }
+    await journal(req.user.id, 'fondateur.offert', cible.public_id,
+      { badge, fanzzy: !deja }, ip(req));
+    res.json({ badge, fanzzy: !deja });
+  }));
+
+  router.delete('/joueur/:id/distinction/:distinction', safe(async (req, res) => {
+    const d = String(req.params.distinction);
+    if (!DISTINCTION_PAR_ID.has(d)) return res.status(404).json({ error: 'admin.error.distinction_inconnue' });
+    const retiree = await retirerDistinction(q, req.params.id, d).catch((e) => {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return false;
+      throw e;
+    });
+    await journal(req.user.id, 'distinction.retiree', req.params.id, { distinction: d }, ip(req));
+    res.json({ retiree });
+  }));
 
   router.get('/joueur/:id/collection', safe(async (req, res) =>
     res.json({ ...(await coll.collection(req.params.id)), choix: coll.choix() })));

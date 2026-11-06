@@ -48,7 +48,16 @@ header .who{font-size:12px;opacity:.5}
 #nav .sous.vu{display:flex}
 #nav .sous button{padding:6px 11px;font-size:10.5px;border-radius:999px}
 #nav .sous button.on{background:var(--projo);color:#0B0E13}
-main{padding:0 18px 40px;max-width:1100px}
+/* **Toute la largeur de l'écran** (demande de Gaël du 6 novembre 2026, « les
+   colonnes sont toutes petites ») : l'administration se lit sur un PC, ses
+   tableaux ont jusqu'à huit colonnes et le tableau des joueurs une colonne
+   d'actions longue. Plafonnée à 1 100 px, la page laissait la moitié d'un
+   écran de 1 920 px vide à droite pendant que les colonnes s'empilaient sur
+   quatre lignes. Les textes d'aide gardent leur propre largeur de lecture
+   (`max-width` sur chaque paragraphe). Les pages du jeu, elles, restent à la
+   largeur d'un téléphone (ui.css, `--colonne`) : seule l'administration
+   s'étale. */
+main{padding:0 18px 40px;max-width:none}
 /* Les tableaux de l'administration ont huit colonnes : ils ne rentreront jamais
    dans un téléphone, et il n'y a aucune raison de les y forcer. Ils défilent
    donc **dans leur propre boîte**, sans entraîner la page — sans quoi tout
@@ -64,6 +73,25 @@ th{text-align:left;font-family:var(--banner);font-size:10px;letter-spacing:.12em
   padding:8px 6px;font-weight:500;border-bottom:1px solid rgba(242,238,228,.12)}
 td{padding:9px 6px;border-bottom:1px solid rgba(242,238,228,.07);vertical-align:middle}
 td.act{white-space:nowrap}
+/* Le tableau des joueurs : chaque colonne a de quoi écrire ses lignes sans
+   couper « 148 éch. » ou « il y a 7 min » en deux, et les gestes se rangent
+   en trois familles, une par ligne (le joueur, son compte, ses cadeaux), au
+   lieu d'une ligne de neuf boutons qui sortait du tableau à droite. */
+table.joueurs td{vertical-align:top;padding-top:11px;padding-bottom:11px}
+table.joueurs .nw{white-space:nowrap}
+table.joueurs td.j-qui{min-width:210px}
+table.joueurs td.activite{min-width:230px;max-width:340px}
+table.joueurs td.act{white-space:normal;width:1%}
+table.joueurs .gestes{display:flex;gap:4px;flex-wrap:nowrap;margin-bottom:4px}
+table.joueurs .gestes:last-child{margin-bottom:0}
+table.joueurs .gestes button.mini{margin-right:0;white-space:nowrap}
+/* Sur un grand écran, les trois familles tiennent côte à côte : une ligne
+   par joueur, le tableau se lit d'un coup d'œil. */
+@media (min-width:1700px){
+  table.joueurs td.act{white-space:nowrap}
+  table.joueurs .gestes{display:inline-flex;margin:0 14px 0 0;vertical-align:top}
+  table.joueurs .gestes:last-child{margin-right:0}
+}
 button.mini{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.2);border-radius:5px;
   color:inherit;font-size:11px;padding:4px 8px;cursor:pointer;margin-right:4px}
 button.mini.rouge{border-color:rgba(224,64,44,.5);color:var(--flare)}
@@ -98,6 +126,11 @@ tr.cmp-off td:not(.act){opacity:.5}
    Le tableau serait plus compact, mais un tableau ne porte pas d'aide, et
    c'est l'aide qui fait la différence entre régler et deviner. */
 .sect{margin:0 0 26px}
+/* Un réglage se lit de son nom à sa valeur : sur toute la largeur d'un grand
+   écran, les deux s'éloignaient de 1 600 px. Les réglages gardent donc la
+   largeur d'avant ; les tableaux, eux, prennent tout l'écran. */
+.sect{max-width:1100px}
+main > p{max-width:980px}
 .sect > h3{font-family:var(--banner);font-size:12px;letter-spacing:.15em;
   margin:0 0 3px;color:var(--projo)}
 .sect > p.sh{margin:0 0 12px;font-size:11.5px;opacity:.45;max-width:640px}
@@ -409,6 +442,27 @@ const optSel = (v, t, sel) =>
 const jour = (d) => new Date(d).toLocaleString('fr', { day:'2-digit', month:'2-digit',
   hour:'2-digit', minute:'2-digit' });
 
+/** « il y a 3 h », « hier », « il y a 12 j » : la dernière visite d'un joueur. */
+const ilYa = (d) => {
+  if (!d) return 'jamais vu';
+  const min = Math.max(0, Math.round((Date.now() - new Date(d).getTime()) / 60000));
+  if (min < 5) return 'en ligne';
+  if (min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `il y a ${h} h`;
+  const j = Math.round(h / 24);
+  return j === 1 ? 'hier' : `il y a ${j} j`;
+};
+
+/** L'activité d'un joueur, en une ligne : seuls les chiffres non nuls. */
+const activiteEnLigne = (a) => [
+  a.duels && `${a.duels} duel${a.duels > 1 ? 's' : ''} (${a.victoires} V${a.contre_bots ? `, ${a.contre_bots} contre bots` : ''})`,
+  a.virage && `${a.virage} Virage`, a.boosters && `${a.boosters} boosters`,
+  a.evolutions && `${a.evolutions} évol.`, a.ultimes && `${a.ultimes} Ultimate`,
+  a.minijeux && `${a.minijeux} mini-jeux`, a.pronostics && `${a.pronostics} pronos`,
+  a.achats && `${a.achats} achat${a.achats > 1 ? 's' : ''}`,
+].filter(Boolean).join(' · ') || 'rien encore';
+
 /* ------------------------------------------------------ catalogue Fanzzy */
 
 /** Quels Fanzzy sont dessinés. La liste vient de /fanzzy-art.js, source unique. */
@@ -516,7 +570,7 @@ const FAMILLES_ONGLETS = [
     ['catalogue', 'CATALOGUE', [['fanzzy', 'FANZZY'], ['contenus', 'CONTENUS'], ['tenues', 'SKINS']]]]],
   ['LE JEU', [['reglages', 'RÉGLAGES']]],
   ['L’EXPLOITATION', [['apercu', 'APERÇU', [['apercu', 'EN JEU'], ['journal', 'JOURNAL']]],
-    ['joueurs', 'JOUEURS', [['joueurs', 'COMPTES'], ['kops', 'KOP']]],
+    ['joueurs', 'JOUEURS', [['joueurs', 'COMPTES'], ['usage', 'USAGE'], ['kops', 'KOP']]],
     ['competitions', 'COMPÉTITIONS']]],
 ];
 const MENUS = FAMILLES_ONGLETS.flatMap(([, liste]) => liste);
@@ -1875,16 +1929,25 @@ const VUES = {
     $('main').innerHTML = `
       <div class="bar"><input id="q" placeholder="pseudo ou adresse" value="${esc(terme)}">
         <button class="mini" id="go">Chercher</button></div>
-      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>PASS</th><th>ACTIONS</th></tr></thead>
+      <div class="tbl"><table class="joueurs"><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>ACTIVITÉ</th><th>PASS</th><th>ACTIONS</th></tr></thead>
       <tbody>${d.joueurs.map((u) => `
-        <tr><td><b>${esc(u.pseudo)}</b>
+        <tr><td class="j-qui"><b>${esc(u.pseudo)}</b>
           ${u.role==='admin'?'<span class="pill admin">ADMIN</span>':''}
           ${u.status==='locked'?'<span class="pill locked">BLOQUÉ</span>':''}
+          ${(u.distinctions ?? []).includes('fondateur')?'<span class="pill vert" title="badge Fondateur">FONDATEUR</span>':''}
           <br><span style="opacity:.45;font-size:11px">${esc(u.email)}</span></td>
-        <td>${u.email_verified_at ? 'vérifié' : 'non vérifié'}<br>
+        <td class="nw">${u.email_verified_at ? 'vérifié' : 'non vérifié'}<br>
           <span style="opacity:.45;font-size:11px">inscrit le ${jour(u.created_at)}</span></td>
-        <td>${u.scarves ?? 0} éch.<br><span style="opacity:.45;font-size:11px">${u.packs ?? 0} boosters · ${u.follow_slots ?? 2} slots</span></td>
-        <td>${u.fanzzy ?? 0} fanzzy<br><span style="opacity:.45;font-size:11px">${u.ferveur ?? 0} ferveur</span></td>
+        <td class="nw">${u.scarves ?? 0} éch.<br><span style="opacity:.45;font-size:11px">${u.packs ?? 0} boosters · ${u.follow_slots ?? 2} slots</span></td>
+        <td class="nw">${u.fanzzy ?? 0} fanzzy<br><span style="opacity:.45;font-size:11px">${u.ferveur ?? 0} ferveur</span></td>
+        <!-- **Ce qu'il fait du jeu** (demande de Gaël du 6 novembre 2026) :
+             sa dernière visite, ses gestes comptés depuis toujours, et les
+             pages qu'il ouvre le plus sur 30 jours. -->
+        <td class="activite"><b class="nw" title="${u.derniere_visite ? esc(jour(u.derniere_visite)) : ''}">${ilYa(u.derniere_visite)}</b>${
+          u.activite?.jours_actifs ? `<span style="opacity:.45;font-size:11px"> · ${u.activite.jours_actifs} j actifs / 30</span>` : ''}
+          <br><span style="opacity:.6;font-size:11px">${u.activite ? esc(activiteEnLigne(u.activite)) : ''}</span>
+          ${u.activite?.pages?.length ? `<br><span style="opacity:.45;font-size:11px">aime : ${
+            esc(u.activite.pages.map((p) => p.nom).join(', '))}</span>` : ''}</td>
         <!-- **L'échéance se lit, pas seulement l'état.** « abonné : oui »
              demande une seconde question ; « jusqu'au 12 mars » y répond. Sans
              terme, on l'écrit : c'est ce qu'on pose à un bêta-testeur, rien ne
@@ -1892,7 +1955,7 @@ const VUES = {
         <!-- Le PASS de saison : une pastille par saison achetée ou offerte, et
              l'ancien abonnement tant qu'il court (il garde tout jusqu'à la fin
              de sa période payée). -->
-        <td>${(u.pass ?? []).map((p) => `<span class="pill vert" title="${esc(p.source)}">PASS S${p.saison}</span>`).join(' ')
+        <td class="nw">${(u.pass ?? []).map((p) => `<span class="pill vert" title="${esc(p.source)}">PASS S${p.saison}</span>`).join(' ')
           || (u.abonne ? '' : '<span style="opacity:.4">non</span>')}
           ${u.abonne
           ? `<br><span class="pill">${esc(u.abo_formule ?? 'abonné')}</span>
@@ -1900,22 +1963,29 @@ const VUES = {
                u.abo_fin ? 'jusqu’au ' + jour(u.abo_fin) : 'sans terme'}</span>`
           : ''}</td>
         <td class="act" data-id="${u.public_id}">
-          <button class="mini vert" data-a="collection">Collection</button>
+          <div class="gestes"><button class="mini vert" data-a="collection">Collection</button>
           <button class="mini" data-a="scarves">+100 éch.</button>
-          <button class="mini" data-a="packs">+5 pk</button>
-          ${u.email_verified_at ? '' : '<button class="mini vert" data-a="verifier">Vérifier</button>'}
+          <button class="mini" data-a="packs">+5 pk</button></div>
+          <div class="gestes">${u.email_verified_at ? '' : '<button class="mini vert" data-a="verifier">Vérifier</button>'}
           <button class="mini ${u.status==='locked'?'vert':'rouge'}" data-a="toggle"
             data-status="${u.status}">${u.status==='locked'?'Débloquer':'Bloquer'}</button>
-          <button class="mini" data-a="role" data-role="${u.role}">${u.role==='admin'?'Rétrograder':'Promouvoir'}</button>
+          <button class="mini" data-a="role" data-role="${u.role}">${u.role==='admin'?'Rétrograder':'Promouvoir'}</button></div>
           <!-- **Offrir sans terme, et un mois.** Les deux gestes existent parce
                qu'ils ne servent pas à la même chose : le premier ouvre la bêta
                à quelqu'un, le second est un geste de service après-vente — un
                mois offert après un incident. Les deux sont journalisés, comme
                toute écriture d'administration. -->
-          <button class="mini vert" data-a="pass_offrir">Offrir le PASS</button>
+          <div class="gestes"><button class="mini vert" data-a="pass_offrir">Offrir le PASS</button>
           ${(u.pass ?? []).length ? `<button class="mini rouge" data-a="pass_retirer"
             data-saison="${u.pass[u.pass.length - 1].saison}">Retirer le PASS S${u.pass[u.pass.length - 1].saison}</button>` : ''}
           ${u.abonne ? '<button class="mini rouge" data-a="abo_retirer">Retirer l’ancien abo</button>' : ''}
+          <!-- **Le cadeau Fondateur** (6 novembre 2026) : le badge Fondateur et
+               le Fanzzy légendaire TheBestFan, d'un geste, pour les
+               bêta-testeurs. Le retrait ne touche que le badge : un Fanzzy
+               reçu ne se reprend pas (collection.js). -->
+          ${(u.distinctions ?? []).includes('fondateur')
+          ? '<button class="mini rouge" data-a="fondateur_retirer">Retirer le badge Fondateur</button>'
+          : '<button class="mini vert" data-a="fondateur_offrir">Offrir le cadeau Fondateur</button>'}</div>
         </td></tr>`).join('')}</tbody></table></div>`;
 
     const chercher = () => sansPerdreLaMain(() => VUES.joueurs($('q').value.trim()));
@@ -1952,6 +2022,25 @@ const VUES = {
         return;
       }
 
+      if (b.dataset.a === 'fondateur_offrir' || b.dataset.a === 'fondateur_retirer') {
+        try {
+          if (b.dataset.a === 'fondateur_offrir') {
+            const r = await api('/joueur/' + id + '/fondateur', {}, 'POST');
+            recu([r.badge ? 'badge Fondateur offert' : 'il avait déjà le badge Fondateur',
+              r.fanzzy ? 'Fanzzy TheBestFan offert' : 'il avait déjà TheBestFan'].join(', ') + '.');
+          } else {
+            await api('/joueur/' + id + '/distinction/fondateur', null, 'DELETE');
+            recu('badge Fondateur retiré (le Fanzzy TheBestFan reste à lui).');
+          }
+          VUES.joueurs($('q')?.value ?? '');
+        } catch (err) {
+          recu(err.code === 'admin.error.distinctions_absentes'
+            ? 'les badges ne sont pas encore montés : applique sql/distinctions.sql (mise en ligne).'
+            : (MSG_FANZZY[err.code] ?? err.raison ?? err.code), true);
+        }
+        return;
+      }
+
       const abo = { abo_retirer:['DELETE', null] }[b.dataset.a];
       if (abo) {
         const [verbe, corpsAbo] = abo;
@@ -1983,6 +2072,55 @@ const VUES = {
           ? 'on ne change pas son propre compte depuis ici.'
           : (MSG_FANZZY[err.code] ?? err.raison ?? err.code), true);
       }
+    };
+  },
+
+  /**
+   * **L'usage du jeu** (demande de Gaël du 6 novembre 2026 : « savoir ce qui
+   * intéresse le plus les joueurs »). Des totaux, jamais un parcours : combien
+   * de joueurs ont fait quoi, et quelles pages ils ouvrent. Les comptes
+   * administrateurs n'y entrent pas.
+   */
+  async usage(jours = 7) {
+    const d = await api('/usage?jours=' + jours);
+    const barre = (v, max) => `<div style="height:6px;border-radius:3px;background:rgba(242,238,228,.1);min-width:90px">
+      <div style="height:6px;border-radius:3px;background:var(--projo,#F5C542);width:${max ? Math.round(100 * v / max) : 0}%"></div></div>`;
+    const c = (v, l) => `<div class="card"><b>${v ?? 0}</b><span>${l}</span></div>`;
+    const maxA = Math.max(1, ...d.activites.map((a) => a.joueurs));
+    const maxP = Math.max(1, ...d.pages.map((p) => p.joueurs));
+    const maxJ = Math.max(1, ...d.parJour.map((p) => p.joueurs));
+    const periode = { 1: '24 H', 7: '7 JOURS', 30: '30 JOURS', 90: '90 JOURS' };
+    $('main').innerHTML = `
+      <div class="bar">${Object.entries(periode).map(([n, t]) =>
+        `<button class="mini${Number(n) === d.jours ? ' vert' : ''}" data-jours="${n}">${t}</button>`).join(' ')}</div>
+      <h3 class="h3">JOUEURS ACTIFS</h3>
+      <div class="cards">
+        ${c(d.actifs.jour, 'VUS EN 24 H')}${c(d.actifs.semaine, 'VUS EN 7 JOURS')}
+        ${c(d.actifs.mois, 'VUS EN 30 JOURS')}${c(d.actifs.total, 'COMPTES JOUEURS')}
+      </div>
+      <h3 class="h3">CE QUE LES JOUEURS FONT · ${periode[d.jours]}</h3>
+      <div class="tbl"><table><thead><tr><th>ACTIVITÉ</th><th>JOUEURS</th><th>FOIS</th><th></th></tr></thead><tbody>
+        ${d.activites.map((a) => `<tr><td>${esc(a.nom)}${a.cle === 'duels' && a.dont_bots
+          ? `<br><span style="opacity:.45;font-size:11px">dont ${a.dont_bots} contre des bots</span>` : ''}</td>
+          <td><b>${a.joueurs}</b></td><td>${a.total}</td><td>${barre(a.joueurs, maxA)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <h3 class="h3">PAGES LES PLUS OUVERTES · ${periode[d.jours]}</h3>
+      ${d.pages.length ? `<div class="tbl"><table><thead><tr><th>PAGE</th><th>JOUEURS</th><th>OUVERTURES</th><th></th></tr></thead><tbody>
+        ${d.pages.map((p) => `<tr><td>${esc(p.nom)}</td><td><b>${p.joueurs}</b></td><td>${p.visites}</td>
+          <td>${barre(p.joueurs, maxP)}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="vide">Aucune page comptée sur cette période.</div>'}
+      ${d.parJour.length ? `<h3 class="h3">JOUEURS PAR JOUR · 14 JOURS</h3>
+        <div class="tbl"><table><tbody>${d.parJour.map((p) => `<tr><td>${esc(new Date(p.jour + 'T12:00:00')
+          .toLocaleDateString('fr-CH', { weekday: 'short', day: '2-digit', month: '2-digit' }))}</td>
+          <td><b>${p.joueurs}</b></td><td style="width:60%">${barre(p.joueurs, maxJ)}</td></tr>`).join('')}
+        </tbody></table></div>` : ''}
+      <p style="opacity:.5;font-size:11px;margin-top:14px">Les comptes administrateurs ne comptent pas.
+        Les pages se comptent depuis la mise en ligne du 6 novembre 2026 : un nombre d’ouvertures par joueur
+        et par jour, sans heure ni appareil, effacé après 90 jours. Duels, Virage, boosters, mini-jeux,
+        pronostics et achats viennent de ce que le jeu enregistre déjà.</p>`;
+    $('main').onclick = (e) => {
+      const b = e.target.closest('[data-jours]');
+      if (b) VUES.usage(Number(b.dataset.jours));
     };
   },
 
@@ -2164,16 +2302,22 @@ const VUES = {
           PASS est écrite dans le code (<code>src/shared/pass.js</code>).
           Un PASS fini revient en boutique le 1er du deuxième mois après la fin de sa saison,
           au même prix : l’acheteur n’a que la tenue (1er âge, les autres dans ses boosters),
-          sans cadre, badge, club ni KOP en plus, ni tampon « ÉDITION ORIGINALE ».</p></div>
+          sans cadre, badge, club ni KOP en plus, ni tampon « ÉDITION ORIGINALE ».
+          Le <b>Fanzzy du carnet plein</b> (série CARNET PLEIN) va à tous ceux qui atteignent
+          le dernier palier du carnet de sa saison, avec ou sans PASS ; il ne sort d’aucun
+          booster, et se coupe par le réglage « Le Fanzzy du carnet plein se gagne ».</p></div>
       <h3 class="h3">LES PASS PAR SAISON</h3>
       <div class="tbl"><table><thead><tr><th>SAISON</th><th>TENUE</th><th>PAYÉS CARTE</th>
-        <th>PAYÉS ÉCHARPES</th><th>OFFERTS</th><th>DONT APRÈS LA SAISON</th><th>TOTAL</th></tr></thead><tbody>
+        <th>PAYÉS ÉCHARPES</th><th>OFFERTS</th><th>DONT APRÈS LA SAISON</th><th>TOTAL</th>
+        <th>FANZZY DU CARNET PLEIN</th></tr></thead><tbody>
         ${d.registre.map((p) => { const v = ventes.get(p.numero) ?? {}; return `<tr>
           <td><b>${esc(p.nom)}</b>${enCours?.numero === p.numero
             ? ' <span class="pill vert">EN COURS</span>' : ''}</td>
           <td>${esc(p.tenue ?? '—')}</td><td>${v.stripe ?? 0}</td><td>${v.echarpes ?? 0}</td>
-          <td>${v.offert ?? 0}</td><td>${v.tard ?? 0}</td><td><b>${v.total ?? 0}</b></td></tr>`; }).join('')
-          || '<tr><td colspan="7" class="vide">Aucun PASS.</td></tr>'}
+          <td>${v.offert ?? 0}</td><td>${v.tard ?? 0}</td><td><b>${v.total ?? 0}</b></td>
+          <td>${p.trophee ? `${esc(p.trophee.nom)} (${esc(p.trophee.fanzzy)}) · <b>${
+            p.trophee.gagnants ?? 0}</b> gagnant${(p.trophee.gagnants ?? 0) > 1 ? 's' : ''}` : '—'}</td></tr>`; }).join('')
+          || '<tr><td colspan="8" class="vide">Aucun PASS.</td></tr>'}
       </tbody></table></div>
       <h3 class="h3">LES DERNIERS PASS</h3>
       <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>SAISON</th><th>COMMENT</th>

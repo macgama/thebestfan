@@ -564,11 +564,13 @@ function lesSeries() {
   // Une série hors table passe en fin, plutôt que de disparaître.
   for (const id of presentes) if (!connues.some((s) => s.id === id)) connues.push({ id, nom: id });
   const aMoi = new Set(PERSOS.filter((f) => S.col?.[f.id]).map((f) => f.set));
-  const ouverte = (s) => libre || ouvertes.has(s.id);
+  /* Une série de cadeau (THEBESTFAN) n'est jamais ouverte, et ne se montre
+     qu'à qui en a une carte : sous cadenas, elle promettrait l'impossible. */
+  const ouverte = (s) => !s.cadeau && (libre || ouvertes.has(s.id));
   return {
     pages: [...connues.filter(ouverte).map((set) => ({ set, ouverte: true })),
       ...connues.filter((s) => !ouverte(s) && aMoi.has(s.id)).map((set) => ({ set, ouverte: false }))],
-    fermees: connues.filter((s) => !ouverte(s) && !aMoi.has(s.id)),
+    fermees: connues.filter((s) => !ouverte(s) && !s.cadeau && !aMoi.has(s.id)),
   };
 }
 

@@ -464,6 +464,14 @@ export const REGLAGES = [
       'chaque gain. Zéro ou un : sa vraie voie. Une fois la saison lancée, ce réglage ne ' +
       'compte plus.' },
 
+  { cle: 'pass.trophee_actif', section: 'abonnement', type: 'booleen', defaut: true,
+    titre: 'Le Fanzzy du carnet plein se gagne',
+    aide: 'Demande de Gaël du 6 novembre 2026 : qui atteint le dernier palier du carnet ' +
+      'de la saison reçoit le Fanzzy légendaire de son PASS (CARNET PLEIN : Gardien du Feu, ' +
+      'Ferrailleur, Capitaine Comète, Fantôme du Virage), avec ou sans PASS. Éteint : plus ' +
+      'personne ne le reçoit au carnet (ceux qui l’ont le gardent), l’admin peut toujours ' +
+      'l’offrir depuis la collection du joueur.' },
+
   { cle: 'pass.dernier_mois_jours', section: 'abonnement', type: 'entier',
     titre: 'Acheté si près de la fin, il couvre aussi la saison suivante', unite: 'jours',
     min: 0, max: 60, defaut: 30,
@@ -864,6 +872,19 @@ export const REGLAGES = [
     titre: 'Le sachet rapporte', unite: 'tampons', min: 0, max: 10, defaut: 1,
     aide: 'Copié au tirage. Avec les valeurs de départ, une journée complète ' +
       'fait cinq tampons ; le carnet de la saison 1 est calibré là-dessus.' },
+
+  /* Un duel classé gagné (choix de Gaël, 6 novembre 2026 : « Oui, 1 par
+     victoire, max 3/jour ») : la victoire elle-même remplit le carnet, pas
+     seulement la mission qui la demande. */
+  { cle: 'saison.tampons_victoire', section: 'saison', type: 'entier',
+    titre: 'Un duel classé gagné rapporte', unite: 'tampons', min: 0, max: 5, defaut: 1,
+    aide: 'Versé à la fin du duel, pour le carnet de la saison en cours. À 0, '
+      + 'les victoires ne donnent plus de tampons.' },
+
+  { cle: 'saison.victoires_jour', section: 'saison', type: 'entier',
+    titre: 'Victoires qui donnent des tampons, par jour', unite: 'victoires', min: 0, max: 20, defaut: 3,
+    aide: 'Au-delà, une victoire ne donne plus de tampon jusqu’à minuit : le '
+      + 'carnet reste calibré sur une journée de jeu, pas sur le temps passé.' },
 
   { cle: 'saison.relais_packs', section: 'saison', type: 'entier',
     titre: 'Passage de relais : boosters offerts', unite: 'boosters', min: 0, max: 5, defaut: 2,

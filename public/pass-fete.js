@@ -308,6 +308,20 @@
     return promesse;
   }
 
+  /* La case de fête commune (`niveau-fete.js`), chargée une fois s'il le faut. */
+  let fetePrete = null;
+  function fete() {
+    if (window.TBF_NIVEAU) return Promise.resolve(window.TBF_NIVEAU);
+    fetePrete ??= new Promise((ok) => {
+      const s = document.createElement('script');
+      s.src = '/niveau-fete.js';
+      s.onload = () => ok(window.TBF_NIVEAU ?? null);
+      s.onerror = () => ok(null);
+      document.head.appendChild(s);
+    });
+    return fetePrete;
+  }
+
   /* --------------------------------------------- le niveau vu ou non */
 
   const cleNiveau = (saison) => `tbf-pass-niveau:${saison}`;
@@ -329,11 +343,43 @@
     if (vu === null || !(n > Number(vu))) return false;
     const voie = Array.isArray(a?.voie) ? a.voie : [];
     const g = voie.find((x) => Number(x.niveau) === n) ?? {};
-    const choix = await niveau({ saison: v.saison, couleur: v.couleur, niveau: n,
-      nom: g.nom ?? '', gain: g.gain, age: g.age, autres: Math.max(0, n - Number(vu) - 1) });
+    const o = { saison: v.saison, couleur: v.couleur, niveau: n,
+      nom: g.nom ?? '', gain: g.gain, age: g.age, autres: Math.max(0, n - Number(vu) - 1) };
+    /* **La case de la montée de niveau** (demande de Gaël, 6 novembre 2026 :
+       « une alerte, comme pour un changement de niveau ») : `niveau-fete.js`,
+       chargé s'il manque ; sa scène à lui (`niveau`) seulement sans elle. */
+    const [N] = await Promise.all([fete(), pass()]);
+    let choix;
+    if (N?.voie) {
+      const suivant = voie.find((x) => Number(x.niveau) === n + 1);
+      const seuils = Array.isArray(v.seuilsVoie) ? v.seuilsVoie : [];
+      choix = await N.voie({ ...o, max: voie.length || MAX,
+        prochain: suivant ? { niveau: n + 1, nom: suivant.nom, seuil: Number(seuils[n]) || 0 } : null });
+    } else choix = await niveau(o);
     if (choix === 'voie') location.href = '/aide#saison';
     return true;
   }
 
-  window.TBF_PASS_FETE = { essayer, achat, niveau, verifierNiveau, cleNiveau };
+  /* ------------------------------------------- le trophée du carnet */
+
+  /**
+   * Le Fanzzy du carnet plein vient de tomber (`/api/quotidien`, `trophees`) :
+   * `o` : `{ fanzzy, nom, saison }`. Rend `'collection'` ou `null`.
+   */
+  async function trophee(o = {}) {
+    const id = String(o.fanzzy ?? '').replace(/[^A-Za-z0-9]/g, '');
+    if (!id) return null;
+    const html = `<span class="pf-sur">${esc(`Carnet plein · saison ${o.saison ?? ''}`)}</span>
+      <h2 class="pf-titre">${esc(o.nom ?? '')}</h2>
+      <div class="pf-gain"><span class="pf-onde" aria-hidden="true"></span>${etincelles(16)}
+        <img src="${esc(pose(id, 1, 'base', 'joie'))}" alt=""></div>
+      <p class="pf-sous">Fanzzy légendaire · aucun booster ne le donne</p>
+      <div class="pf-boutons"><button type="button" data-oui="collection">VOIR MA COLLECTION</button>
+        <button type="button" data-non>CONTINUER</button></div>`;
+    const { promesse } = ouvrir(html, { couleur: '#f2c14e', etiquette: `Trophée du carnet : ${o.nom ?? ''}` });
+    son('parfait');
+    return promesse;
+  }
+
+  window.TBF_PASS_FETE = { essayer, achat, niveau, verifierNiveau, cleNiveau, trophee };
 })();

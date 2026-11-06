@@ -80,7 +80,7 @@ import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerSaisons } from '../src/server/fanzzy/saisons.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { assurerBourse } from '../src/server/bourse.js';
-import { poserReglages, reglage, PAR_CLE } from '../src/shared/reglages.js';
+import { poserReglages, reglage, PAR_CLE, reglagesVivants } from '../src/shared/reglages.js';
 import { niveauPour, progression, paliersEntre, ecarpesDuPalier } from '../src/shared/niveau.js';
 import { CARNET_DEFAUT } from '../src/shared/saison.js';
 import * as Q from '../src/shared/quotidien.js';
@@ -1529,6 +1529,34 @@ titre('le carnet de la saison');
   const [l5] = await livre(C5, 'carnet', `S${S1}:5`);
   check('le palier 5 copie son titre dans le grand livre', r5?.verse === true && l5?.titre === 'Revenu pour de bon'
     || voir(r5, l5));
+  /* **Le Fanzzy du carnet plein** (Gaël, 6 novembre 2026) : le dernier palier
+     de la saison 1 donne le Gardien du Feu (CP1), pour tous, une seule fois. */
+  const cp1 = async (id) => Number((await q(
+    `SELECT COUNT(*) AS n FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = 'CP1'`, [id]))[0].n);
+  check('le dernier palier donne le Fanzzy du carnet plein, et la réponse le dit',
+    JSON.stringify(r5?.trophees) === JSON.stringify([{ fanzzy: 'CP1', nom: 'Le Gardien du Feu', saison: 1 }])
+    && await cp1(C5) === 1 || voir(r5?.trophees));
+  check('le carnet le montre gagné, au bout',
+    r5?.quotidien?.carnet?.trophee?.fanzzy === 'CP1' && r5.quotidien.carnet.trophee.gagne === true
+    || voir(r5?.quotidien?.carnet?.trophee));
+  const r5bis = await poster(C5, 'carnet', { saison: S1, n: 5 });
+  check('une seconde demande ne le donne pas deux fois', !r5bis?.trophees && await cp1(C5) === 1
+    || voir(r5bis));
+  {
+    const sans = await joueur();
+    await tampons(sans, S1, 260);
+    const e0 = await lire(sans);
+    check('avant le dernier palier : le trophée sous cadenas',
+      e0.carnet?.trophee?.gagne === false && e0.carnet.trophee.nom === 'Le Gardien du Feu' || voir(e0.carnet?.trophee));
+    poserReglages({ ...reglagesVivants(), 'pass.trophee_actif': false });
+    const rx = await poster(sans, 'carnet', { saison: S1, n: 5 });
+    check('éteint : le dernier palier se verse, sans le Fanzzy', rx?.verse === true && !rx.trophees
+      && await cp1(sans) === 0 || voir(rx));
+    poserReglages({ ...reglagesVivants(), 'pass.trophee_actif': true });
+    const ry = await poster(sans, 'carnet', { saison: S1, n: 1 });
+    check('rallumé : le prochain palier versé rattrape le Fanzzy dû',
+      ry?.trophees?.[0]?.fanzzy === 'CP1' && await cp1(sans) === 1 || voir(ry));
+  }
   /* Un titre n'est pas un insigne, et un palier atteint ne fait rien
      porter tant qu'il n'est pas récupéré (`CONTRATS.md`, § 6.1). */
   check('les paliers 2 et 3 atteints, pas récupérés, et le titre du 5 : aucun insigne',
@@ -1760,8 +1788,20 @@ titre('la forme du contrat (§ 6.1)');
   check('missions : jour, liste, relances, sachet (etat, faites, sur, gain)',
     cles(e.missions) === 'jour,liste,relances,sachet' && cles(e.missions.sachet) === 'etat,faites,gain,sur'
     && gainOk(e.missions.sachet.gain));
-  check('carnet : saison, close, tampons, paliers, prochain',
-    cles(e.carnet) === 'close,paliers,prochain,saison,tampons' && cles(e.carnet.saison) === 'id,nom,numero'
+  /* `trophee` : le Fanzzy du carnet plein de la saison (6 novembre 2026),
+     absent d'une saison qui n'en a pas. */
+  const trophee = e.carnet.trophee === undefined ? '' : 'trophee,';
+  /* `gagner` : ce que rapporte chaque source de tampons (6 novembre 2026,
+     « comment tu gagnes des tampons ? »), aux réglages de l'instant. */
+  check('carnet : saison, close, tampons, paliers, prochain, gagner (et son trophée)',
+    cles(e.carnet) === `close,gagner,paliers,prochain,saison,tampons${trophee ? ',trophee' : ''}`
+    && cles(e.carnet.gagner) === 'defi,difficile,facile,moyenne,sachet,victoire,victoiresJour'
+    && e.carnet.gagner.victoire === reglage('saison.tampons_victoire')
+    && e.carnet.gagner.victoiresJour === reglage('saison.victoires_jour')
+    && e.carnet.gagner.facile === reglage('saison.tampons_facile')
+    && e.carnet.gagner.difficile === reglage('saison.tampons_difficile')
+    && cles(e.carnet.saison) === 'id,nom,numero'
+    && (!trophee || cles(e.carnet.trophee) === 'actif,fanzzy,gagnants,gagne,nom')
     && e.carnet.paliers.every((p) => gainOk(p.gain) && ['a_venir', 'pret', 'reclame'].includes(p.etat)));
   check('la série est absente sans aucun bonus jamais pris (record 0)', !('serie' in e));
   /* La sonde. */

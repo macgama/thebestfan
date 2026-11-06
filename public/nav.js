@@ -503,7 +503,12 @@
 
   /** Le niveau, ou `null` sans réponse lisible : jamais un « niveau 1 » par défaut. */
   const niveauDe = (niv) => (Number(niv?.niveau) > 0 ? { niveau: Number(niv.niveau),
-    dans: Number(niv.dans) || 0, pour: Number(niv.pour) || 0, max: Boolean(niv.max) } : null);
+    dans: Number(niv.dans) || 0, pour: Number(niv.pour) || 0, max: Boolean(niv.max),
+    /* Les cadeaux du niveau (shared/niveau.js) : la matière de la pastille,
+       le titre et les étoiles, tels que le serveur les a servis. */
+    teinte: [niv.teinte, niv.vu?.teinte].find((t) => typeof t === 'string') ?? null,
+    etoiles: Number(niv.etoiles ?? niv.vu?.etoiles) > 0 ? Number(niv.etoiles ?? niv.vu?.etoiles) : 0 }
+    : null);
 
   const lireJson = (url) => fetch(url, { credentials: 'same-origin' })
     .then((r) => (r.ok ? r.json() : null)).catch(() => null);
@@ -1081,8 +1086,11 @@
         pastille.className = 'tbf-sticker tbf-sticker--rond tbf-avatar-niv';
         avatar.append(pastille);
       }
-      if (n) pastille.textContent = String(n.niveau);
-      else pastille?.remove();
+      if (n) {
+        pastille.textContent = String(n.niveau);
+        if (n.teinte) pastille.dataset.teinte = n.teinte; else delete pastille.dataset.teinte;
+        if (n.etoiles) pastille.dataset.etoiles = String(n.etoiles); else delete pastille.dataset.etoiles;
+      } else pastille?.remove();
       libeller(d);
 
       /* Les deux jetons. Ils comptent jusqu'à leur nouvelle valeur et
@@ -1482,6 +1490,15 @@
        en face, l'invitation d'un ami. Chargé ici une fois pour toutes les
        pages plutôt qu'écrit dans chacune ; il se tait de lui-même sur
        l'écran du duel. */
+    /* **Le cadeau de l'administration** (`cadeau-fete.js`), pour qui a un
+       compte : chargé ici pour toutes les pages, comme le rappel du duel ;
+       il se tait de lui-même là où l'on joue. */
+    if (user && !document.querySelector('script[src="/cadeau-fete.js"]')) {
+      const cadeau = document.createElement('script');
+      cadeau.src = '/cadeau-fete.js';
+      cadeau.defer = true;
+      document.head.append(cadeau);
+    }
     if (user && !document.querySelector('script[src="/duel-rappel.js"]')) {
       const rappel = document.createElement('script');
       rappel.src = '/duel-rappel.js';

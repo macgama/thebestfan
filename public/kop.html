@@ -86,7 +86,7 @@ h2{margin:24px 2px 9px}
    court ; le pot et ce qu'on a versé portent le jeton et un mot long —
    « VERSÉ PAR TOI » se coupait de neuf pixels à 360 px en trois colonnes
    égales. */
-.kop-chiffres{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.8fr) minmax(0,1.15fr);
+.kop-chiffres{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr) minmax(0,1fr);
   gap:10px;margin:18px 2px 0;max-width:520px}
 
 /* Le pot : l'écharpe épaisse, ses crans, et le prochain jalon.
@@ -142,6 +142,67 @@ h2{margin:24px 2px 9px}
    rassemble — voir le KOP, le rejoindre, en créer un —, béton pour quitter.
    Il ne reste ici que leur place. */
 .gros{width:100%;margin-top:16px}
+
+/* ------------------------------------------------ le virage du KOP
+   La tête de la carte est une tribune (maquette 1 du 6 novembre 2026) : la
+   photo des gradins, un projecteur sur le CAPO, la bâche du club en haut,
+   les membres en pied dessous et le pot au pied de la tribune. */
+.kop-scene{position:relative;height:330px;margin:0 -2px;border-radius:8px;overflow:hidden;
+  background:#0B0E13 url(/img/fond-tribune.jpg) center 30%/cover;
+  background-image:image-set(url(/img/fond-tribune.avif) type("image/avif"),
+    url(/img/fond-tribune.webp) type("image/webp"), url(/img/fond-tribune.jpg) type("image/jpeg"))}
+.kop-scene::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(48% 46% at 46% 66%,rgba(255,217,160,.26),transparent 70%),
+    conic-gradient(from 168deg at 46% 0,transparent 0 6deg,rgba(255,240,210,.14) 12deg,transparent 22deg),
+    linear-gradient(rgba(5,7,10,.35),rgba(5,7,10,0) 30%,rgba(5,7,10,0) 62%,rgba(5,7,10,.92))}
+.kop-scene>.kop-tete{z-index:4}
+.kop-scene>.kop-tete:not(.peinte){padding:12px 12px 0}
+.kop-scene>.kop-tete.peinte{margin:8px 8px 0;padding:16px 12px 14px}
+.kop-gradin{position:absolute;inset:0;margin:0;padding:0;list-style:none;z-index:2}
+.kop-fan{position:absolute;left:var(--x);translate:-50% 0;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;pointer-events:none}
+.kop-fan>img{height:100%;width:auto;max-width:none;object-fit:contain;
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.7))}
+.kop-fan--fond{bottom:100px;height:150px;z-index:1}
+.kop-fan--haut>.kop-fan-nom{bottom:14px}
+.kop-fan--fond>img{filter:brightness(.82) drop-shadow(0 6px 8px rgba(0,0,0,.7))}
+.kop-fan--capo{bottom:24px;height:228px;z-index:3}
+.kop-fan--capo>img{filter:drop-shadow(0 0 14px rgba(255,210,122,.55)) drop-shadow(0 8px 8px rgba(0,0,0,.8))}
+.kop-fan[data-buste]{height:auto}
+.kop-fan-nom{position:absolute;bottom:-4px;max-width:min(96px,var(--place,96px));overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--banner);font-weight:600;font-size:10px;letter-spacing:.02em;background:rgba(5,7,10,.88);
+  color:var(--craie);padding:1px 6px}
+.kop-fan--capo>.kop-fan-nom{font-size:13px;bottom:-2px}
+.kop-fan>.tbf-sticker{position:absolute;bottom:22px;font-size:11px;--rot:-4deg}
+.kop-reste{position:absolute;right:10px;bottom:14px;font-family:var(--banner);font-weight:700;font-size:15px;
+  background:rgba(5,7,10,.8);border:1px solid var(--trait);border-radius:20px;padding:2px 9px;z-index:3}
+.kop-inviter{position:absolute;left:var(--x);translate:-50% 0;bottom:104px;z-index:1}
+.kop-reste a{color:var(--craie);font-size:12px;letter-spacing:.08em}
+.kop-inviter a{display:flex;flex-direction:column;align-items:center;justify-content:center;width:62px;height:80px;
+  border:2px dashed rgba(242,238,228,.6);border-radius:10px;background:rgba(5,7,10,.55);color:var(--craie);
+  text-decoration:none;font-family:var(--banner);font-size:12px;letter-spacing:.1em}
+.kop-inviter a b{font-size:24px;line-height:1}
+.kop-inviter a:focus-visible{outline:3px solid var(--projo);outline-offset:3px}
+/* Le pot, au pied de la tribune : le chiffre qu'on vient voir, en grand. */
+.kop-potn{position:absolute;left:10px;bottom:12px;z-index:4;display:flex;flex-direction:column;
+  background:rgba(5,7,10,.88);border:2px solid var(--or,#F5C33B);padding:3px 10px 4px;rotate:-3deg}
+.kop-potn b{display:flex;align-items:center;gap:6px;font-family:var(--banner);font-weight:700;font-size:26px;
+  line-height:1.1;color:var(--or,#F5C33B)}
+.kop-potn b img{width:22px;height:22px}
+.kop-potn small{font-family:var(--banner);font-size:10px;letter-spacing:.12em;color:var(--craie)}
+.kop-chiffres>[data-vif] b{color:#5FE08A}
+/* Le vote en duel : deux camps de Fanzzy face à face, au-dessus de la
+   balance. */
+.kop-duel{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0 6px}
+.kop-camp{position:relative;min-height:120px;border-radius:8px;padding:4px 4px 0;overflow:hidden;
+  background:linear-gradient(rgba(47,154,79,.28),rgba(47,154,79,.06))}
+.kop-camp[data-camp="contre"]{background:linear-gradient(rgba(224,64,44,.28),rgba(224,64,44,.06))}
+.kop-camp>b{display:block;text-align:center;font-family:var(--banner);font-size:15px;letter-spacing:.1em;color:#7BEA9C}
+.kop-camp[data-camp="contre"]>b{color:#FF9A80}
+.kop-camp ul{display:flex;justify-content:center;align-items:flex-end;height:130px;margin:0;padding:0;list-style:none}
+.kop-camp li{position:relative;height:100%;margin:0 -18px;display:flex;align-items:flex-end}
+.kop-camp li img{height:100%;width:auto;filter:drop-shadow(0 4px 5px rgba(0,0,0,.7))}
+.kop-camp li .tbf-sticker{position:absolute;top:0;left:50%;translate:-50% 0;font-size:10px}
 
 /* ---------------------------------------------------- le KOP déplié */
 
@@ -455,8 +516,14 @@ async function lire() {
         couleurs: couleursDe(dispo) };
     }));
 
-    // L'état détaillé du KOP déplié : membres, vote, bonus actifs.
-    if (S.ouvert) S.etats[S.ouvert] = await api(`/${S.ouvert}`).catch(() => S.etats[S.ouvert] ?? null);
+    /* L'état détaillé de chaque KOP — membres, vote, bonus actifs — et non
+       plus du seul KOP déplié : la tribune de chaque carte montre ses
+       membres, et son bouton dit si un vote attend. Un joueur n'a qu'un KOP
+       par club suivi : quelques lectures, ensemble. */
+    await Promise.all(S.kops.map(async (k) => {
+      const id = String(k.id);
+      S.etats[id] = await api(`/${id}`).catch(() => S.etats[id] ?? null);
+    }));
     S.charge = true;
     if (S.erreurDeLecture) { S.erreur = null; S.erreurDeLecture = false; }
   } catch (e) {
@@ -509,7 +576,7 @@ function buste(g, taille) {
   const initiale = esc((String(g?.pseudo ?? '').trim().charAt(0) || '?').toUpperCase());
   const src = g?.avatar ? window.FZART?.dessinAvatar?.(g.avatar, 'buste') : null;
   const niv = Number.isInteger(g?.niveau)
-    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv">${g.niveau}</b>` : '';
+    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv"${g.teinte ? ` data-teinte="${esc(g.teinte)}"` : ''}${Number(g.etoiles) > 0 ? ` data-etoiles="${Number(g.etoiles)}"` : ''}>${g.niveau}</b>` : '';
   const style = taille ? ` style="--taille:${taille}px"` : '';
   return src
     ? `<span class="tbf-buste"${style} aria-hidden="true" data-initiale="${initiale}"><img src="${esc(src)}" alt=""
@@ -573,22 +640,30 @@ function vueKop(k) {
   el.className = 'kop tbf-cadre';
   el.setAttribute('data-echarpe', '');
   el.dataset.kopId = id;
+  /* **Le virage du KOP** (maquette 1, choisie par Gaël le 6 novembre 2026) :
+     la tête du KOP est une tribune. La banderole du club en haut, les
+     Fanzzy des membres debout dessous, le CAPO devant en grand, et le pot
+     posé au pied de la tribune, juste au-dessus de son écharpe. */
   el.innerHTML = `
-    <header class="kop-tete">
-      <h3 class="kop-nom"><b class="tbf-banderole"></b></h3>
-      <span class="tbf-sticker kop-club"></span>
-    </header>
-    <div class="kop-chiffres">
-      <div class="tbf-stat"><b><img src="${ECHARPE}" alt=""><span data-pot="${esc(id)}"></span></b
+    <div class="kop-scene">
+      <header class="kop-tete">
+        <h3 class="kop-nom"><b class="tbf-banderole"></b></h3>
+        <span class="tbf-sticker kop-club"></span>
+      </header>
+      <ul class="kop-gradin" aria-label="La tribune du KOP"></ul>
+      <div class="kop-potn"><b><img src="${ECHARPE}" alt=""><span data-pot="${esc(id)}"></span></b
         ><small>DANS LE POT</small></div>
-      <div class="tbf-stat"><b><span data-membres></span></b><small>MEMBRES</small></div>
-      <div class="tbf-stat"><b><img src="${ECHARPE}" alt=""><span data-verse></span></b
-        ><small>VERSÉ PAR TOI</small></div>
     </div>
     <div class="kop-pot">
       <p class="kop-jalon" hidden><span class="tbf-sticker"><span></span></span></p>
       <div class="tbf-jauge tbf-jauge--epaisse" aria-hidden="true"><i style="width:0%"></i></div>
       <ol class="kop-crans" aria-hidden="true"></ol>
+    </div>
+    <div class="kop-chiffres">
+      <div class="tbf-stat"><b><span data-membres></span></b><small>MEMBRES</small></div>
+      <div class="tbf-stat"><b><img src="${ECHARPE}" alt=""><span data-verse></span></b
+        ><small>VERSÉ PAR TOI</small></div>
+      <div class="tbf-stat" data-actifs><b><span data-nactifs>0</span></b><small>BONUS ACTIF</small></div>
     </div>`;
   v = {
     id, el,
@@ -597,7 +672,11 @@ function vueKop(k) {
     club: el.querySelector('.kop-club'),
     pot: el.querySelector('[data-pot]'),
     membres: el.querySelector('[data-membres]'),
-    membresMot: el.querySelectorAll('.tbf-stat small')[1],
+    membresMot: el.querySelectorAll('.tbf-stat small')[0],
+    gradin: el.querySelector('.kop-gradin'),
+    actifs: el.querySelector('[data-nactifs]'),
+    actifsMot: el.querySelectorAll('.tbf-stat small')[2],
+    sigGradin: '',
     verse: el.querySelector('[data-verse]'),
     potBloc: el.querySelector('.kop-pot'),
     jalon: el.querySelector('.kop-jalon'),
@@ -607,7 +686,7 @@ function vueKop(k) {
     couleurs: null, potVu: undefined, sigCrans: '',
     // le déplié
     sigTribune: '', sigActifs: '', zone: null, zoneVote: null, catalogue: false, sigBulletin: null,
-    attente: 0, tenu: false, tenuT: 0,
+    attente: 0, tenu: false, tenuT: 0, sigCamps: '',
   };
   vues.set(id, v);
   return v;
@@ -641,6 +720,12 @@ function majKop(v, k) {
   poserNombre(v.verse, Number(k.verse) || 0);
   v.membresMot.textContent = membres > 1 ? 'MEMBRES' : 'MEMBRE';
   majPot(v, k);
+  const e = S.etats[v.id];
+  majGradin(v, e);
+  const nActifs = e?.bonus?.length ?? 0;
+  v.actifs.textContent = String(nActifs);
+  v.actifsMot.textContent = nActifs > 1 ? 'BONUS ACTIFS' : 'BONUS ACTIF';
+  v.actifs.closest('.tbf-stat').toggleAttribute('data-vif', nActifs > 0);
 
   const ouvert = S.ouvert === v.id;
   if (ouvert) {
@@ -655,9 +740,14 @@ function majKop(v, k) {
     fermerDetail(v);
     if (!v.bouton) {
       v.el.insertAdjacentHTML('beforeend',
-        `<button class="gros tbf-plaque" data-ton="violet" data-ouvrir="${esc(v.id)}">VOIR LE KOP</button>`);
+        `<button class="gros tbf-plaque" data-ton="violet" data-ouvrir="${esc(v.id)}"></button>`);
       v.bouton = v.el.lastElementChild;
     }
+    /* Le bouton dit ce qui attend derrière : un vote ouvert appelle à voter,
+       sinon on va proposer une dépense. */
+    const vote = e?.vote;
+    v.bouton.dataset.ton = vote ? 'flare' : 'violet';
+    v.bouton.textContent = vote ? 'VOTE EN COURS : VOTER' : 'PROPOSER UNE DÉPENSE';
   }
 }
 
@@ -757,14 +847,12 @@ function majDetail(v, k, e) {
   }
   if (!v.zone) {
     v.detail.innerHTML = `
-      <div class="kop-tribune"><ul class="tbf-gradins" aria-label="Les membres du KOP"></ul></div>
       <div class="kop-actifs-bloc"></div>
       <div class="kop-zone"></div>
       <button class="gros tbf-plaque" data-quitter="${esc(v.id)}">QUITTER CE KOP</button>
       <div class="note">Ce que tu as versé reste au pot. On ne reprend pas sa part.</div>`;
     v.zone = v.detail.querySelector('.kop-zone');
   }
-  majTribune(v, e);
   majActifs(v, e);
   majZone(v, k, e);
 }
@@ -776,16 +864,46 @@ function majDetail(v, k, e) {
  * visage ou un niveau a changé : une relecture ne fait pas clignoter les
  * bustes.
  */
-function majTribune(v, e) {
-  const membres = e.membres ?? [];
-  const sig = JSON.stringify(membres.map((m) => [m.id, m.pseudo, m.createur, m.avatar ?? null, m.niveau]));
-  if (sig === v.sigTribune) return;
-  v.sigTribune = sig;
-  v.detail.querySelector('.tbf-gradins').innerHTML = membres.map((m) => `<li class="tbf-siege">
-      ${buste(m)}<span class="tbf-siege-nom">${esc(m.pseudo)}</span>${
-      m.createur ? '<span class="tbf-sticker">CAPO</span>' : ''}</li>`).join('')
-    + `<li class="tbf-siege tbf-siege--libre"><a class="tbf-siege-place" href="/amis"
-        aria-label="Inviter un ami dans ce KOP">+</a><span class="tbf-siege-nom" aria-hidden="true">INVITER</span></li>`;
+/**
+ * La tribune du KOP, dans la tête de sa carte : chaque membre debout, en
+ * pied, avec son Fanzzy tel qu'il le porte. Le CAPO (le créateur) devant,
+ * en grand et le poing levé ; derrière lui, ceux qui ont le plus versé
+ * (le serveur range les membres par versement). Au-delà de six, la tribune
+ * dit combien d'autres chantent avec eux. La dernière place est une porte :
+ * le lien vers les amis, d'où l'on invite quelqu'un.
+ */
+const PLACES = [14, 82, 31, 65];
+function enPied(m, etat, cls, x, place = '120px') {
+  const src = m.avatar ? window.FZART?.dessinAvatar?.(m.avatar, 'plein', { etat }) : null;
+  const corps = src
+    ? `<img src="${esc(src)}" alt="" decoding="async"
+        onerror="this.onerror=null;this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">`
+    : buste(m, 64);
+  return `<li class="kop-fan${cls}" style="--x:${x}%;--place:${place}"${src ? '' : ' data-buste'}>${corps}<span
+    class="kop-fan-nom">${esc(m.pseudo)}</span>${
+    m.createur ? '<span class="tbf-sticker" data-ton="or">CAPO</span>' : ''}</li>`;
+}
+function majGradin(v, e) {
+  const membres = e?.membres ?? [];
+  const sig = JSON.stringify(membres.map((m) => [m.id, m.pseudo, m.createur, m.avatar ?? null]));
+  if (sig === v.sigGradin) return;
+  v.sigGradin = sig;
+  if (!membres.length) { v.gradin.innerHTML = ''; return; }
+  const capo = membres.find((m) => m.createur) ?? membres[0];
+  const autres = membres.filter((m) => m !== capo);
+  /* Quatre places derrière le CAPO, deux de chaque côté de lui : ceux qui
+     ont le plus versé. Une place libre est la porte pour inviter ; quand
+     la tribune est pleine, elle dit combien d'autres chantent avec eux. */
+  const debout = autres.slice(0, PLACES.length);
+  const reste = autres.length - debout.length;
+  const libre = PLACES[debout.length];
+  v.gradin.innerHTML = debout.map((m, i) => enPied(m, 'pousse', ' kop-fan--fond', PLACES[i], '60px')).join('')
+    + enPied(capo, 'joie', ' kop-fan--capo', 47)
+    + (libre === undefined
+      ? `<li class="kop-reste">${reste > 0 ? `+${reste} · ` : ''}<a href="/amis"
+          aria-label="Inviter un ami dans ce KOP">INVITER</a></li>`
+      : `<li class="kop-inviter" style="--x:${libre}%"><a href="/amis" aria-label="Inviter un ami dans ce KOP"
+          ><b>+</b>INVITER</a></li>`);
 }
 
 /** Les bonus que le KOP s'est offerts et qui agissent encore : des stickers verts. */
@@ -864,6 +982,10 @@ function construireVote(v, e) {
           <div class="tbf-vote-quoi"><b class="tbf-banderole">${esc(def?.nom ?? vote.bonusId)}</b
             ><small>${esc(duree(def))} · ${nb(vote.prix ?? def?.prix)} du pot</small></div>
         </div>
+        <div class="kop-duel" aria-hidden="true">
+          <div class="kop-camp" data-camp="pour"><b>POUR <span data-np></span></b><ul></ul></div>
+          <div class="kop-camp" data-camp="contre"><b>CONTRE <span data-nc></span></b><ul></ul></div>
+        </div>
         <div class="tbf-vote-balance" role="img"><span data-p></span><span data-c></span></div>
         <div class="tbf-vote-gestes"></div>
         <span class="tbf-tampon" data-ton="vert">ADOPTÉ</span>
@@ -874,6 +996,7 @@ function construireVote(v, e) {
       ? 'Tu pèses cinq voix, et tu départages une égalité.'
       : 'Le créateur pèse cinq voix et départage une égalité.'}</div>`;
   v.sigBulletin = null;
+  v.sigCamps = '';
   majVote(v, e);
   /* L'ouverture annoncée par le socket : la bouffée aux couleurs du club,
      derrière la case, à l'instant où elle paraît — et la case amenée sous
@@ -904,6 +1027,7 @@ function majVote(v, e) {
   bal.setAttribute('aria-label', `${pour} pour, ${contre} contre`);
   bal.querySelector('[data-p]').textContent = `POUR ${pour}`;
   bal.querySelector('[data-c]').textContent = `CONTRE ${contre}`;
+  majCamps(v, e);
   const sig = String(vote.monBulletin);
   if (sig !== v.sigBulletin) {
     v.sigBulletin = sig;
@@ -917,6 +1041,41 @@ function majVote(v, e) {
  * La clôture : le tampon claque à la place des deux bulletins, et la case
  * reste quatre secondes avant de rendre la place au catalogue.
  */
+/**
+ * Le vote en duel : les Fanzzy des membres qui ont voté passent dans leur
+ * camp, les POUR à gauche qui poussent, les CONTRE à droite, mécontents.
+ * Le serveur dit qui a voté quoi (`vote.bulletins`) ; un serveur d'avant ne
+ * le dit pas, et seul mon bulletin se place. Les chiffres des camps sont
+ * ceux de la balance : les voix pesées, le CAPO compte cinq fois.
+ */
+function majCamps(v, e) {
+  const vote = e.vote;
+  const duel = v.zone.querySelector('.kop-duel');
+  if (!duel) return;
+  duel.querySelector('[data-np]').textContent = String(Number(vote.pour) || 0);
+  duel.querySelector('[data-nc]').textContent = String(Number(vote.contre) || 0);
+  const membres = new Map((e.membres ?? []).map((m) => [String(m.id), m]));
+  let bulletins = Array.isArray(vote.bulletins) ? vote.bulletins : null;
+  if (!bulletins) {
+    const moi = (e.membres ?? []).find((m) => m.moi);
+    bulletins = vote.monBulletin != null && moi ? [{ id: moi.id, pour: Boolean(Number(vote.monBulletin)) }] : [];
+  }
+  const sig = JSON.stringify(bulletins);
+  if (sig === v.sigCamps) return;
+  v.sigCamps = sig;
+  for (const [camp, pour] of [['pour', true], ['contre', false]]) {
+    const gens = bulletins.filter((b) => Boolean(b.pour) === pour)
+      .map((b) => membres.get(String(b.id))).filter(Boolean).slice(0, 5);
+    duel.querySelector(`[data-camp="${camp}"] ul`).innerHTML = gens.map((m) => {
+      const src = m.avatar ? window.FZART?.dessinAvatar?.(m.avatar, 'plein',
+        { etat: pour ? 'pousse' : 'depit' }) : null;
+      return `<li>${src ? `<img src="${esc(src)}" alt="" decoding="async"
+        onerror="this.onerror=null;this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">` : buste(m, 44)}${
+        m.createur ? '<span class="tbf-sticker" data-ton="or">×5</span>' : ''}</li>`;
+    }).join('');
+  }
+}
+
 function clore(v, fait) {
   clearTimeout(v.attente); v.attente = 0;
   const s = v.zone?.querySelector('section.tbf-vote');

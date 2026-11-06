@@ -237,6 +237,11 @@ const RUBRIQUES = [
         `Oui, dans le rayon ULTIMATE de la boutique, pour ${reglage('etal.ultime')} écharpes : `
           + 'celle d’un âge que ton Fanzzy a déjà atteint. VOIR LA SCÈNE la montre avant '
           + 'l’achat. Celles des légendaires ne s’achètent pas, elles ne sortent qu’en booster.'],
+      ['Pourquoi l’Ultimate de mon Fanzzy ne sonne-t-il pas comme les autres ?',
+        'Son son dépend de sa tenue et de sa série. La tenue change la montée et le choc '
+          + '(des tambours en peau pour la Préhistorique, de la ferraille pour l’Apocalyptique, '
+          + 'un orgue pour Halloween). La série signe juste après : les cloches de vache de '
+          + 'Die Kurve, le tambour et le sifflet du Parcage, le zapping des Héros du Canapé…'],
     ],
   },
   {
@@ -264,6 +269,25 @@ const RUBRIQUES = [
           + 'rareté, ce qu’elle change en jeu et si elle est nouvelle ou en double. Les '
           + 'flèches passent aux autres cartes du paquet, VOIR LA FICHE ouvre la fiche du '
           + 'Fanzzy et FERMER te ramène au paquet.'],
+      ['C’est quoi le badge Fondateur et le Fanzzy TheBestFan ?',
+        () => 'Le merci de TheBestFan à ses bêta-testeurs. Le badge Fondateur s’affiche à côté '
+          + 'du pseudo (classement, amis, profil, affiche du duel) et le Fanzzy légendaire '
+          + 'TheBestFan, orange, blanc et noir, rejoint la collection, dans sa série à lui. '
+          + 'Ni l’un ni l’autre ne sort d’un booster : ils s’offrent, et ils ne font pas '
+          + 'pousser plus fort qu’une autre légendaire.'],
+      ['L’équipe TheBestFan m’a fait un cadeau : comment je le sais ?',
+        () => 'Quand l’équipe TheBestFan t’offre quelque chose (des écharpes, des boosters, un '
+          + 'Fanzzy, une tenue, le PASS, le badge Fondateur…), un paquet cadeau s’ouvre à ta '
+          + 'prochaine visite, ou dans la minute si tu joues déjà, et te montre tout ce que tu as '
+          + 'reçu. C’est déjà rangé dans ton compte : rien à réclamer. Le paquet ne s’ouvre '
+          + 'jamais en plein duel ni au Virage, il t’attend à l’écran suivant.'],
+      ['Que gagne-t-on en remplissant tout le carnet de la saison ?',
+        () => 'Un Fanzzy légendaire de la série CARNET PLEIN, un par saison : le Gardien du Feu '
+          + '(PASS 1), le Ferrailleur (PASS 2), le Capitaine Comète (PASS 3) et le Fantôme du '
+          + 'Virage (PASS 4). Il va à tous ceux qui atteignent le dernier palier du carnet, avec '
+          + 'ou sans PASS ; avec le PASS, tu le portes en plus dans la tenue de la saison. Il ne '
+          + 'sort d’aucun booster et ne s’achète nulle part : une fois la saison finie, il ne se '
+          + 'gagne plus.'],
       ['Que valent mes doubles ?',
         () => 'Ils deviennent des écharpes, au tarif de la rareté : '
           + `${SCARVES.commune} pour une commune, ${SCARVES.rare} pour une rare, `
@@ -363,9 +387,17 @@ const RUBRIQUES = [
           + 'la violette DUEL qu’un joueur y attend un adversaire. Un appui t’y emmène. '
           + 'Le filtre À JOUER de MATCHS ne garde que ces matchs-là.'],
       ['Quelqu’un attend un duel : où le trouver ?',
-        'Sur la page du duel, l’onglet EN ATTENTE montre les duels où quelqu’un attend '
-          + 'un joueur. Un appui choisit le match, le format et la tribune qui manque : '
-          + 'il ne reste qu’à entrer en file.'],
+        'Sur la page du duel, l’onglet EN ATTENTE DE JOUEURS montre les duels où quelqu’un '
+          + 'attend un joueur ; tu peux les filtrer par format (1v1, 2v2…) et garder seulement '
+          + 'tes équipes. Un appui choisit le match, le format et la tribune qui manque : '
+          + 'il ne reste qu’à toucher REJOINDRE LE DUEL.'],
+      ['Comment créer un duel ?',
+        'Sur la page du duel, l’onglet MATCHS DU JOUR liste les matchs d’aujourd’hui (MES '
+          + 'ÉQUIPES pour ne garder que les tiens, et une recherche par équipe, compétition '
+          + 'ou pays). Touche un match, puis choisis ton équipe, ton format, et CRÉER LE DUEL. '
+          + 'Si quelqu’un attend déjà en face sur ce match et ce format, le bouton devient '
+          + 'REJOINDRE LE DUEL. Un jour sans match, la page montre le prochain jour de match, '
+          + 'en entraînement.'],
       ['Si je quitte la salle d’attente, mon duel disparaît-il ?',
         () => 'Non. Il reste ouvert et les autres le voient toujours ; le jeu te '
           + 'rappelle dès que quelqu’un arrive en face. S’il ne te voit pas revenir '
@@ -383,6 +415,15 @@ const RUBRIQUES = [
         'Ouvre un duel, puis, dans la salle d’attente, invite ton ami depuis le jeu '
           + 'ou envoie-lui le lien : un appui l’amène directement dans ton duel. Tu '
           + 'peux aussi le défier aux tirs au but, dans les mini-jeux.'],
+      ['Puis-je jouer seul avec mon ami, sans qu’un autre joueur entre ?',
+        () => 'Oui : coche DUEL PRIVÉ dans la case du match avant CRÉER LE DUEL, ou touche RENDRE PRIVÉ '
+          + 'dans la salle d’attente. Ton duel n’apparaît alors dans aucune liste : '
+          + 'seuls ceux à qui tu envoies le lien ou une invitation peuvent entrer, '
+          + 'dans la tribune qui a de la place, même s’ils suivent ton club. Les '
+          + 'supporters d’appoint n’y entrent pas d’eux-mêmes, et le duel compte au '
+          + `classement comme les autres. Sans adversaire au bout de ${reglage('duel.attente_absent_min')} `
+          + 'minutes, il se ferme. Les autres joueurs peuvent toujours jouer le même '
+          + 'match, dans la file publique ou dans leur propre duel privé.'],
       ['C’est quoi, le duel guidé ?',
         'Trois minutes sur un match fictif, contre un adversaire patient, avec des '
           + 'bulles qui te montrent quoi faire. Il ne rapporte rien, ne compte nulle '
@@ -483,6 +524,24 @@ const RUBRIQUES = [
           + `${reglage('saison.tampons_difficile')} pour une difficile. Chaque palier `
           + 'du carnet rapporte des écharpes ou des boosters, et qui a bien rempli le '
           + 'sien reçoit des boosters au lancement de la saison suivante.'],
+      ['Comment gagner des tampons ?',
+        () => 'Les tampons viennent des missions, quand tu les récupères : '
+          + `${reglage('saison.tampons_facile')} pour la mission facile du jour, `
+          + `${reglage('saison.tampons_moyenne')} pour la moyenne, `
+          + `${reglage('saison.tampons_difficile')} pour la difficile, `
+          + `${reglage('saison.tampons_sachet')} de plus pour le sachet des trois missions finies`
+          + (reglage('defis.actif') ? `, et ${reglage('defis.tampons')} pour chaque défi de la semaine` : '')
+          + (reglage('saison.tampons_victoire') && reglage('saison.victoires_jour')
+            ? `. Un duel classé gagné en donne ${reglage('saison.tampons_victoire')}, `
+              + `pour ${reglage('saison.victoires_jour')} victoires par jour au plus` : '')
+          + '. Ils remplissent le carnet de la saison et font avancer la voie PASS. '
+          + 'Le détail est sous le carnet, dans l’onglet SAISON des missions.'],
+      ['Comment savoir qu’une mission est réussie ?',
+        'Le jeu te le dit : au retour sur l’accueil ou dans les missions, une alerte '
+          + '« MISSION RÉUSSIE ! » montre ce qu’elle rapporte, avec RÉCUPÉRER. Sur '
+          + 'l’accueil, la carte MISSIONS en haut à gauche compte celles du jour, et son '
+          + 'sticker or dit combien sont à récupérer. Un niveau gagné dans la voie PASS '
+          + 'a la même alerte.'],
       ['C’est quoi, les défis de la semaine ?',
         () => 'Chaque lundi, trois défis tirés parmi ce que tu possèdes : jouer des duels '
           + 'avec un Fanzzy d’une de tes séries, chanter au Grand Virage en portant une de '
@@ -504,7 +563,9 @@ const RUBRIQUES = [
       ['Comment avoir une carte-souvenir ?',
         'Chaque vrai but crée une carte. Si tu poussais au Grand Virage à ce '
           + 'moment-là, tu la reçois à ton nom, avec ton Fanzzy de ce soir-là. Sinon, '
-          + 'tu peux l’acheter quelque temps dans ton carnet.'],
+          + 'tu peux l’acheter quelque temps dans ton carnet. Le carnet est un album : '
+          + 'une page par club suivi, où les buts qui te manquent encore attendent en '
+          + 'cases vides, avec leur prix et le temps qui reste.'],
     ],
   },
   {
@@ -524,6 +585,12 @@ const RUBRIQUES = [
           + 'deck et ses cartes-souvenirs, et tu peux lui faire signe, lui offrir un '
           + 'cadeau, relever le défi de la semaine avec lui, échanger un double ou '
           + 'emprunter un de ses Fanzzy.'],
+      ['Qui sont les Fanzzy debout en haut de la page Amis ?',
+        'C’est ta tribune : les Fanzzy de tes amis, debout. Ceux qui jouent en ce '
+          + 'moment (au Virage, en duel, en ligne) sont devant, dans le projecteur ; les '
+          + 'autres attendent dans l’ombre. Touche un Fanzzy pour ouvrir sa fiche. '
+          + 'Là, la case GESTES ouvre la roue des gestes autour de lui, et sous un '
+          + 'geste reçu, RÉPONDRE t’y amène directement.'],
       ['Pourquoi ne peut-on pas s’écrire ?',
         'Pour que personne ne reçoive un message blessant ou mal intentionné. On se '
           + 'fait signe avec un geste choisi dans une liste (« BRAVO ! », « UN DUEL ? », '
@@ -556,15 +623,36 @@ const RUBRIQUES = [
         () => 'Un ami est un lien entre deux personnes. Un KOP est un groupe qui '
           + 'pousse ensemble et qui apparaît comme tel dans les classements. On peut '
           + 'avoir des amis partout et n’être que d’un seul KOP.'],
+      ['Les autres membres voient-ils mon vote au KOP ?',
+        'Oui. Pendant les trois minutes d’un vote, chaque membre passe dans le camp POUR '
+          + 'ou dans le camp CONTRE, avec son Fanzzy, comme à main levée dans une tribune. '
+          + 'Tu peux changer d’avis tant que le vote est ouvert.'],
     ],
   },
   {
     titre: 'Mon compte',
     questions: [
+      ['Où trouver mes clubs, mon niveau et mes réglages ?',
+        'Sur ton profil, ton vestiaire : ton Fanzzy au centre, et six cases de couleur '
+          + 'autour de lui. CLUBS, SAISON et PARCOURS à gauche ; NIVEAU, ÉQUIPEMENT et '
+          + 'RÉGLAGES à droite. Chaque case ouvre sa partie par le bas ; la croix, ou un '
+          + 'toucher à côté, la referme. Le bonus du jour se prend dans le coffre, tout en bas.'],
       ['À quoi sert mon niveau ?',
         () => 'À ouvrir des droits, jamais à taper plus fort : une place de deck de '
-          + 'plus, un emplacement de club de plus. Le niveau ne donne aucune '
-          + 'puissance — c’est une règle du jeu, écrite et tenue.'],
+          + 'plus, un emplacement de club de plus. Chaque niveau te donne aussi un '
+          + 'titre de tribune, affiché sous ton pseudo, et des écharpes. Le niveau ne '
+          + 'donne aucune puissance — c’est une règle du jeu, écrite et tenue.'],
+      ['Ma pastille de niveau change de couleur ?',
+        () => 'Oui : bronze au niveau 10, argent au 15, or au 20, rubis au 25 et '
+          + 'légende au 30. Tout le monde la voit, au classement, chez tes amis et '
+          + 'dans ton KOP.'],
+      ['Que se passe-t-il après le niveau 30 ?',
+        () => 'Le niveau 30 est le dernier. Ensuite, tu gagnes une étoile tous les 2 000 XP, '
+          + 'sans fin : elle s’affiche au-dessus de ta pastille.'],
+      ['Mon niveau revient-il à 1 à chaque saison ?',
+        () => 'Non. Ton niveau, ton XP et ton titre se gardent d’une saison à l’autre. '
+          + 'Ce qui repart de zéro à chaque saison, c’est le classement, les divisions '
+          + 'et le carnet de tampons.'],
       ['C’est quoi, le PASS de saison ?',
         () => `Un achat unique, 7,99 € ou ${reglage('pass.prix_echarpes')} écharpes, `
           + 'valable jusqu’à la fin de la saison. Il ne se renouvelle jamais tout seul. '

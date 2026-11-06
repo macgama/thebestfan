@@ -16,6 +16,8 @@
 <!-- Partager le lien de sa file : une file vit deux minutes, c'est le moment
      où l'on veut dire « viens, je t'attends ». -->
 <script src="/partage.js" defer></script>
+<!-- La recherche des matchs du jour, comme au Grand Virage : un pays dans sa langue. -->
+<script src="/pays.js" defer></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
@@ -81,10 +83,9 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .fmt .tbf-foule{--fh:17px;min-height:18px;justify-content:center;gap:1px;color:var(--lettre)}
 .fmt .prime{position:absolute;z-index:2;top:-11px;right:-6px;height:20px;padding:0 4px;font-size:11px;--rot:5deg}
 
-/* « Peu importe le format » : une case, sous les formats. Elle n’est pas un
-   format de plus — cocher « tous » à côté de cinq choix exclusifs se lirait
-   comme un sixième. D’où la forme d’un interrupteur, et sa place en dessous.
-   Une plaque : béton levée, flare cochée ; la coche est l'icône commune. */
+/* Une case à cocher en plaque (« Duel privé », sous les formats ; elle
+   portait « Peu importe le format », retirée le 6 novembre 2026) : béton
+   levée, flare cochée ; la coche est l'icône commune. */
 .souple{gap:10px;width:100%;margin:6px 0 0;
   padding:9px 11px;min-height:44px;text-align:left;justify-content:flex-start}
 .souple .t{flex:1;min-width:0}
@@ -93,6 +94,18 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .souple small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.02em;
   text-transform:none;margin-top:3px}
 .portee{margin:0 0 10px}
+/* Les filtres des onglets (6 novembre 2026) : des puces, puis la recherche,
+   la même que celle du Grand Virage. */
+.filtres{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 10px}
+.filtre{min-height:36px;padding:6px 11px;font-size:12px;letter-spacing:.08em;gap:5px}
+.cherche-match{flex:1 1 180px;min-width:0;min-height:38px;background:rgba(0,0,0,.4);border-radius:8px;
+  border:1px solid rgba(242,238,228,.16);color:var(--craie,#f3eee4);padding:9px 12px;
+  font-size:14px;font-family:inherit}
+.cherche-match:focus{outline:none;border-color:var(--projo,#f5c33b)}
+.treve{margin:0 0 10px;font-size:12.5px;line-height:1.5;color:var(--craie-2,#bbb)}
+.treve b{color:var(--craie,#f3eee4)}
+.souscarte .formats{padding-right:0}
+.souscarte .souple{margin-top:10px}
 /* Le nombre de duels qui attendent, en violet dans l'onglet EN ATTENTE ;
    l'onglet entier pâlit à zéro, sans cesser d'être un onglet. */
 .portee .nb-attente{display:inline-block;min-width:18px;padding:1px 5px;margin-left:3px;
@@ -1189,6 +1202,13 @@ html[data-calme~="animations"] .bilan-nuage>i{display:none}
 /* Le duel reste ouvert quand on part : on le dit dans le vestiaire. */
 .ailleurs{margin:0;text-align:center;font-size:12.5px;color:var(--craie-2,#bbb);line-height:1.4}
 .inviters{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+/* Le cadenas du duel privé (6 novembre 2026) : une ligne qui dit si le duel
+   est fermé, et le bouton qui le ferme ou le rouvre. */
+.prive-att{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  margin:0;text-align:center;font-size:12.5px;line-height:1.4;color:var(--craie-2,#bbb)}
+.prive-att b{color:var(--craie,#f3eee4)}
+.prive-att .tbf-ico{font-size:14px;vertical-align:-2px}
+.prive-att button{min-height:36px;padding:6px 12px;font-size:12px}
 /* Les amis à inviter, sous le bouton : une ligne chacun. */
 .amis-duel{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;
   max-height:180px;overflow:auto}
@@ -1608,7 +1628,7 @@ const MESSAGES = {
   'ferveur.error.fixture_unknown':'Ce match n\u2019existe plus. Reviens à la liste.',
   'ferveur.error.unauthenticated':'Session expirée. Reconnecte-toi.',
   /* L'invitation : un lien vers un duel déjà parti, un ami à inviter. */
-  'ferveur.error.duel_parti':     'Ce duel n\u2019attend plus personne. Le match est choisi : entre en file, ou choisis-en un autre.',
+  'ferveur.error.duel_parti':     'Ce duel n\u2019attend plus personne. Le match est choisi : crée ton duel, ou choisis-en un autre.',
   'ferveur.error.pas_en_file':    'Entre d\u2019abord en file pour inviter quelqu\u2019un.',
   'ferveur.error.pas_ami':        'Tu ne peux inviter que tes amis.',
   'ferveur.error.trop_d_invitations':'Tu as déjà invité beaucoup de monde pour ce duel.',
@@ -1985,6 +2005,14 @@ function rendreSalle(p) {
   }
   corps.push(`<div class="inviters">${boutons.join('')}</div>`);
   if (S.amisOuverts) corps.push(listeAmisDuel());
+  /* **Le cadenas** (6 novembre 2026) : fermer son duel aux autres joueurs,
+     ou le rouvrir à tous. Fermé, seuls le lien et les invitations y mènent. */
+  const cadenas = '<i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>';
+  corps.push(`<p class="prive-att"><span>${p.prive
+    ? `${cadenas} <b>Duel privé</b> : seuls tes invités peuvent entrer.`
+    : 'Duel ouvert à tous les supporters du match.'}</span>`
+    + `<button class="tbf-plaque" id="basculerPrive" data-prive-vers="${p.prive ? 0 : 1}">${
+      p.prive ? 'OUVRIR À TOUS' : `${cadenas} RENDRE PRIVÉ`}</button></p>`);
   /* **Le duel reste ouvert quand on part** : la place attend, les autres la
      voient, et le joueur est rappelé quand quelqu'un arrive en face. */
   /* **Deux portes de plus** (5 novembre 2026, Gaël) : jouer tout de suite
@@ -2009,6 +2037,10 @@ function rendreSalle(p) {
 
   if ($('inviter')) $('inviter').onclick = () => inviterAuDuel(p);
   $('inviterAmi').onclick = () => ouvrirAmisDuel();
+  $('basculerPrive').onclick = (e) => {
+    e.currentTarget.disabled = true;
+    socket?.emit('nvn:prive', { prive: e.currentTarget.dataset.priveVers === '1' });
+  };
   $('contreBots').onclick = () => {
     $('contreBots').disabled = true;
     socket?.emit('nvn:entrainement');
@@ -2055,7 +2087,10 @@ function rendreSalle(p) {
     if (!reste) { clearInterval(reboursTimer); reboursTimer = null; }
   };
   if (Number.isFinite(dansMs) || finA) { tic(); reboursTimer = setInterval(tic, 1000); }
-  else $('rebours')?.remove();
+  else if (p.prive) {
+    /* Un duel privé attend l'ami : pas de supporters d'appoint d'office. */
+    $('rebours').innerHTML = '<small>Pas de supporters d’appoint : on attend tes invités</small>';
+  } else $('rebours')?.remove();
 }
 
 /* ------------------------------------------------ le match réel
@@ -2230,6 +2265,9 @@ const S = {
      la redessiner quand la liste s'ouvre. */
   amisOuverts: false,
   amisDuel: null,
+  /* « Duel privé » (6 novembre 2026, Gaël) : un salon à soi, où l'on
+     n'entre que par le lien ou une invitation. */
+  prive: false,
   invites: new Set(),
   derniereSalle: null,
   derby: null,
@@ -2243,6 +2281,11 @@ const S = {
   // adversaire un mardi de trêve — mais on démarre sur ses clubs, parce que
   // c’est là que le duel rapporte le double.
   tousLesMatchs: false,
+  /* **Les onglets et leurs filtres** (6 novembre 2026, Gaël) : MATCHS DU
+     JOUR (`jour`) ou EN ATTENTE DE JOUEURS (`attente`) ; « Mes équipes »
+     (posé au chargement s'il en joue une), le format des duels qui
+     attendent, et la recherche des matchs du jour. */
+  onglet: 'jour', mesEquipes: false, filtreFormat: null, cherche: '',
   /* **L'onglet EN ATTENTE** (28 octobre 2026, choix de Gaël : « un bouton
      de plus "Duel en attente de joueur" », toujours là, grisé à zéro). La
      liste est alors celle de tous les matchs (`tousLesMatchs` vrai), réduite
@@ -2376,7 +2419,7 @@ async function preparer() {
   try {
     const [cat, matchs] = await Promise.all([
       api('/api/deck/catalogue'),
-      api(`/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : ''}`),
+      api(adresseMatchs()),
     ]);
     S.catalogue = cat.actions ?? [];
     // Ce que chaque format paie en plus. Voir `primeDeFormat` côté serveur.
@@ -2417,7 +2460,8 @@ const attenteDe = (m) => S.attentes.find(
     C'est celle que l'onglet EN ATTENTE propose : la plus près de partir. */
 function meilleureFile(m) {
   const presents = (a) => (Number(a.camps?.[0]) || 0) + (Number(a.camps?.[1]) || 0);
-  return S.attentes.filter((a) => a.fixtureId === m.id && presents(a) > 0)
+  return S.attentes.filter((a) => a.fixtureId === m.id && presents(a) > 0
+    && (!S.filtreFormat || a.format === S.filtreFormat))
     .reduce((p, a) => (p && presents(p) >= presents(a) ? p : a), null);
 }
 
@@ -2426,7 +2470,25 @@ const duelsQuiAttendent = () =>
   S.attentes.filter((a) => a.camps?.some((n) => Number(n) > 0)).length;
 
 /** Les matchs que la liste montre : tous, ou ceux où quelqu'un attend. */
-const matchsMontres = () => (S.enAttente ? S.matchs.filter((m) => meilleureFile(m)) : S.matchs);
+function matchsMontres() {
+  let l = S.enAttente ? S.matchs.filter((m) => meilleureFile(m)) : S.matchs;
+  if (S.mesEquipes) l = l.filter((m) => m.mien);
+  if (!S.enAttente && S.cherche) l = filtrerMatchs(l, S.cherche);
+  return l;
+}
+
+/** La recherche du Grand Virage : une équipe, une compétition, ou un pays
+    dans sa langue (`pays.js`). Sans `pays.js`, les noms seuls. */
+function filtrerMatchs(liste, texte) {
+  const P = window.TBF_PAYS;
+  const pli = P?.pli ?? ((x) => String(x ?? '').toLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, ''));
+  const terme = pli(texte);
+  const cherches = P?.cherches?.(terme) ?? [];
+  const estCePays = (nom) => Boolean(nom) && cherches.some((p) => pli(nom).includes(p));
+  return liste.filter((m) => pli(m.home_name).includes(terme) || pli(m.away_name).includes(terme)
+    || pli(m.league_name).includes(terme) || estCePays(m.home_name) || estCePays(m.away_name));
+}
 
 /**
  * Choisit un match depuis l'onglet EN ATTENTE : le format de sa file la plus
@@ -2501,64 +2563,61 @@ function rendrePrepa(sansDeck, formats) {
   out.push(`<p class="repet"><a href="/repetition">Un geste te résiste ?
     <b>Va le répéter</b></a> — rien n'y compte, et rien n'y aide non plus.</p>`);
 
-  out.push(`<h2 class="tbf-cousu">LE FORMAT <i>· la file est par format et par match</i></h2>`);
-  /* **Les formats : cinq bâches-tuiles** (lot 6), chacune avec ses
-     silhouettes au pochoir — à combien on tient sa tribune — et **la prime du
-     format** en sticker craie au coin, au moment du choix : un 2v2 demande de
-     réunir quatre personnes au lieu de deux, il paie donc un peu plus. Le taux
-     vient du serveur (`primes`) — il se règle depuis /admin, et la page n’en
-     porte pas de copie. Le libellé vient en premier : c'est lui que la page
-     et `nvn:ui` lisent. */
-  out.push(`<div class="formats">${formats.map((f) => {
-    const p = S.primes?.[f] ?? 1;
-    const n = Math.max(1, Math.min(5, Number(String(f).match(/^\d+/)?.[0]) || 1));
-    const on = f === S.format;
-    const prime = p > 1
-      ? `<span class="prime tbf-sticker">+${Math.round((p - 1) * 100)} %</span>` : '';
-    return `<button class="fmt tbf-plaque ${on ? 'on' : ''}" ${on ? 'data-ton="flare"' : ''}
-      data-fmt="${esc(f)}" aria-pressed="${on}">${esc(f)}<span class="tbf-foule tbf-foule--frise"
-      aria-hidden="true">${'<i class="on"></i>'.repeat(n)}</span>${prime}</button>`;
-  }).join('')}</div>`);
-  /* **« Peu importe le format ».**
-
-     La file est indexée par format : deux personnes qui attendent sur le
-     même match, l’une en 3v3 et l’autre en 1v1, ne se rencontrent jamais.
-     Cocher ceci, c’est accepter de jouer avec tous les autres, quel que
-     soit le format qu’ils ont choisi. `aria-pressed` dit l'état à qui ne voit
-     pas la case — la coche seule ne s'entend pas. */
-  out.push(`<button class="souple tbf-plaque ${S.souple ? 'on' : ''}"
-    ${S.souple ? 'data-ton="flare"' : ''} aria-pressed="${Boolean(S.souple)}" data-souple>
-    <span class="case">${S.souple ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : ''}</span>
-    <span class="t">Peu importe le format<small>joue avec tous ceux qui attendent sur ce match</small></span>
-  </button>`);
-
-  out.push(`<h2 class="tbf-cousu">LE MATCH SUPPORT</h2>`);
-  /* La portée de la liste. Jouer pour un match qui n'est pas celui de son
-     club est permis — sans quoi il n'y aurait personne en file un mardi de
-     trêve — mais ça rapporte moitié moins. Le rail flare des arènes. */
-  const portee = S.enAttente ? 'attente' : S.tousLesMatchs ? 'tous' : 'miens';
+  /* **Deux onglets** (6 novembre 2026, Gaël : « pour les menus, je ne
+     mettrais que "matchs du jour" et "en attente de joueur" »). Le format
+     ne se choisit plus en tête de page : il se choisit dans la case du
+     match, après l'équipe. */
   const nAttente = duelsQuiAttendent();
-  const onglet = (cle, texte, plus = '') => `<button class="pt tbf-onglet ${portee === cle ? 'on' : ''}"
-      data-portee="${cle}" aria-pressed="${portee === cle}"${plus}>${texte}</button>`;
-  /* **EN ATTENTE**, avec le nombre de duels qui attendent un joueur, en
-     violet comme partout où des gens attendent. Toujours là, pour qu'on
-     apprenne où regarder ; grisé à zéro. */
+  const onglet = (cle, texte, plus = '') => `<button class="pt tbf-onglet ${S.onglet === cle ? 'on' : ''}"
+      data-portee="${cle}" aria-pressed="${S.onglet === cle}"${plus}>${texte}</button>`;
+  /* **EN ATTENTE DE JOUEURS**, avec le nombre de duels qui attendent, en
+     violet comme partout où des gens attendent ; grisé à zéro. */
   out.push(`<div class="portee tbf-onglets" data-ton="flare" data-ajuste>
-    ${onglet('miens', 'MES CLUBS')}${onglet('tous', 'TOUS LES MATCHS')}${onglet('attente',
-      `EN ATTENTE <span class="nb-attente">${nAttente}</span>`,
+    ${onglet('jour', 'MATCHS DU JOUR')}${onglet('attente',
+      `EN ATTENTE DE JOUEURS <span class="nb-attente">${nAttente}</span>`,
       nAttente ? '' : ' data-zero')}
   </div>`);
 
+  /* Les filtres de l'onglet : « Mes équipes » dans les deux, la recherche
+     (la même que celle du Grand Virage : une équipe, une compétition, un
+     pays) pour les matchs du jour, le format pour ceux qui attendent. */
+  const puce = (attr, on, texte) => `<button class="filtre tbf-plaque ${on ? 'on' : ''}"
+    ${on ? 'data-ton="flare"' : ''} aria-pressed="${on}" ${attr}>${texte}</button>`;
+  const filtres = [];
+  if (S.enAttente) {
+    filtres.push(puce('data-filtre-fmt=""', !S.filtreFormat, 'TOUS'),
+      ...formats.map((f) => puce(`data-filtre-fmt="${esc(f)}"`, S.filtreFormat === f, esc(f))));
+  }
+  filtres.push(`${puce('data-mes-equipes', Boolean(S.mesEquipes),
+    `${S.mesEquipes ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i> ' : ''}MES ÉQUIPES`)}${
+    S.enAttente ? '' : `<input type="search" id="chercheMatch" class="cherche-match"
+      placeholder="Équipe, compétition, pays…" autocomplete="off"
+      spellcheck="false" aria-label="Chercher un match" value="${esc(S.cherche)}">`}`);
+  out.push(`<div class="filtres">${filtres.join('')}</div>`);
+
+  /* Une trêve : aucun match aujourd'hui, le serveur sert le prochain jour
+     de match. On le dit, puisqu'un duel n'y est pas classé. */
+  if (!S.enAttente && S.matchs.length && !S.matchs.some((m) => m.aujourdhui)) {
+    const t = Date.parse(S.matchs[0].kickoff_at ?? '');
+    const jour = Number.isFinite(t) ? new Date(t).toLocaleDateString('fr-FR',
+      { weekday: 'long', day: 'numeric', month: 'long' }) : 'bientôt';
+    out.push(`<p class="treve">Pas de match aujourd’hui. Voici ceux du <b>${esc(jour)}</b> :
+      un duel y est un entraînement, il ne compte pas au classement.</p>`);
+  }
+
   const montres = matchsMontres();
   if (S.enAttente && !montres.length) {
-    out.push(`<div class="vide">Personne n’attend pour l’instant.<br>
-      Dès qu’un supporter entre en file, son duel apparaît ici.</div>`);
+    out.push(`<div class="vide">Personne n’attend${S.filtreFormat || S.mesEquipes
+      ? ' avec ces filtres' : ''} pour l’instant.<br>
+      Dès qu’un supporter crée un duel, il apparaît ici.</div>`);
   } else if (!montres.length) {
-    out.push(S.tousLesMatchs
-      ? `<div class="vide">Aucun match dans les huit prochains jours.</div>`
-      : `<div class="vide">Aucun match à venir pour tes clubs.<br>
-         <a href="/equipes">Suivre d’autres clubs</a>, ou passe à
-         <b>tous les matchs</b> ci-dessus.</div>`);
+    out.push(S.cherche
+      ? `<div class="vide">Aucun match ne correspond à « ${esc(S.cherche)} ».</div>`
+      : S.mesEquipes && S.matchs.length
+        ? `<div class="vide">Aucune de tes équipes ne joue.<br>
+           Retire le filtre <b>MES ÉQUIPES</b> pour voir tous les matchs, ou
+           <a href="/equipes">suis d’autres clubs</a>.</div>`
+        : `<div class="vide">Aucun match dans les huit prochains jours.</div>`);
   } else {
     out.push('<div class="matchs">');
     for (const m of montres) {
@@ -2729,14 +2788,18 @@ function souLeMatch(choisi, sansDeck) {
   const chezMoi = choisi.monCamp !== null && choisi.monCamp !== undefined;
   const att = attenteDe(choisi);
 
-  /* ------------------------------------------------------- le camp
+  /* ------------------------------------------- 1. choisis ton équipe
 
      Les deux tribunes du duel sont les deux clubs du match. **Chez soi, il
      n'y a rien à choisir** : on ne pousse pas contre son propre club, et
      l'affiche le dit par le sticker « TA TRIBUNE » sur le sien (le pourquoi
      est dans les règles). **Ailleurs, il faut choisir**, et le bouton reste
-     fermé tant que ce n'est pas fait. */
-  if (!chezMoi) {
+     fermé tant que ce n'est pas fait. L'ordre de la case est celui de Gaël
+     (6 novembre 2026) : l'équipe, puis le format, puis le bouton. */
+  if (chezMoi) {
+    out.push(`<div class="souscarte"><h3 class="tbf-cousu">1. TON ÉQUIPE
+      <i>· tu es chez toi : <b>${esc(clubs[choisi.monCamp])}</b></i></h3></div>`);
+  } else {
     out.push(`<div class="souscarte">`);
     /* Ce qui attend sur **ce** match : c'est l'information qui décide du
        camp, et elle doit donc être là où le camp se choisit. */
@@ -2748,7 +2811,7 @@ function souLeMatch(choisi, sansDeck) {
           ? ` Il en manque <b>${manque.combien}</b> côté <b>${esc(clubs[manque.camp])}</b>.`
           : ''}</div>`);
     }
-    out.push(`<h3 class="tbf-cousu">TA TRIBUNE <i>· pour qui viens-tu chanter ?</i></h3>`);
+    out.push(`<h3 class="tbf-cousu">1. CHOISIS TON ÉQUIPE</h3>`);
     /* **Les deux bâches des clubs** (`.tbf-plaque--club`, la brique) : de
        même poids, l'écharpe du club en bord bas — on choisit son camp à ses
        couleurs —, et le compte de la file sur chacune. La choisie prend le
@@ -2772,20 +2835,56 @@ function souLeMatch(choisi, sansDeck) {
      défaut du côté du domicile, et le camp visiteur ne se remplirait jamais.
      **Ouvert, il se colle au bas de la préparation** (`data-colle`, voir
      `.entree`) ; fermé, il reste à sa place. */
+  /* ------------------------------------------ 2. choisis ton format
+
+     **Cinq bâches-tuiles** (lot 6), chacune avec ses silhouettes au pochoir
+     — à combien on tient sa tribune — et **la prime du format** en sticker
+     craie au coin : un 2v2 demande de réunir quatre personnes au lieu de
+     deux, il paie donc un peu plus. Le taux vient du serveur (`primes`). Le
+     libellé vient en premier : c'est lui que la page et `nvn:ui` lisent.
+     Le nombre de ceux qui attendent sur ce match, dans ce format, se lit
+     sous la tuile. */
+  out.push('<div class="souscarte"><h3 class="tbf-cousu">2. CHOISIS TON FORMAT</h3>');
+  out.push(`<div class="formats">${formatsMemo.map((f) => {
+    const p = S.primes?.[f] ?? 1;
+    const n = Math.max(1, Math.min(5, Number(String(f).match(/^\d+/)?.[0]) || 1));
+    const on = f === S.format;
+    const prime = p > 1
+      ? `<span class="prime tbf-sticker">+${Math.round((p - 1) * 100)} %</span>` : '';
+    return `<button class="fmt tbf-plaque ${on ? 'on' : ''}" ${on ? 'data-ton="flare"' : ''}
+      data-fmt="${esc(f)}" aria-pressed="${on}">${esc(f)}<span class="tbf-foule tbf-foule--frise"
+      aria-hidden="true">${'<i class="on"></i>'.repeat(n)}</span>${prime}</button>`;
+  }).join('')}</div>`);
+  /* **« Duel privé »** (6 novembre 2026, Gaël) : un duel à soi, fermé aux
+     autres joueurs. On n'y entre que par le lien ou INVITER UN AMI ; il ne
+     paraît dans aucune liste, et les supporters d'appoint n'y entrent pas
+     d'eux-mêmes. `aria-pressed` dit l'état à qui ne voit pas la case. */
+  out.push(`<button class="souple tbf-plaque ${S.prive ? 'on' : ''}"
+    ${S.prive ? 'data-ton="flare"' : ''} aria-pressed="${Boolean(S.prive)}" data-prive>
+    <span class="case">${S.prive ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : ''}</span>
+    <span class="t">Duel privé<small>seuls ceux à qui tu envoies le lien ou une invitation peuvent entrer</small></span>
+  </button></div>`);
+
   /* **Le derby du jour** : quelqu'un qui suit l'autre club est en ligne.
      Le dire là où l'on décide d'entrer, sans dire qui. */
   if (S.derby?.fixtureId === choisi.id && S.format === (S.derby.format ?? '1v1') && chezMoi) {
     const eux = S.derby.clubs?.[choisi.monCamp ^ 1]?.name ?? clubs[choisi.monCamp ^ 1];
     out.push(`<div class="raison attend derby"><b>DERBY</b> · un supporter de l’autre
-      tribune, <b>${esc(eux)}</b>, est en ligne. Entre en file : il le verra.</div>`);
+      tribune, <b>${esc(eux)}</b>, est en ligne. Crée le duel : il le verra.</div>`);
   }
 
   const sansCamp = !chezMoi && S.camp === null;
   const ferme = sansDeck || sansCamp;
-  const enJeu = !S.souple ? Number(choisi.enJeu?.[S.format]) : NaN;
+  const enJeu = Number(choisi.enJeu?.[S.format]);
+  /* CRÉER LE DUEL, ou REJOINDRE LE DUEL quand quelqu'un attend déjà en face
+     sur ce match et dans ce format : le bouton dit ce qui va se passer. Un
+     duel privé se crée toujours. */
+  const monCamp = chezMoi ? choisi.monCamp : S.camp;
+  const rejoindre = !S.prive && att && (monCamp === 0 || monCamp === 1)
+    && Number(att.camps?.[monCamp ^ 1]) > 0;
   out.push(`<div class="entree"${ferme ? '' : ' data-colle'}>
     <button class="gros tbf-plaque tbf-bloc" data-ton="flare" id="entrer"
-      ${ferme ? 'disabled' : ''}>ENTRER EN FILE${Number.isFinite(enJeu) && enJeu > 0
+      ${ferme ? 'disabled' : ''}>${rejoindre ? 'REJOINDRE LE DUEL' : 'CRÉER LE DUEL'}${Number.isFinite(enJeu) && enJeu > 0
         ? `<small>+${enJeu} écharpes en jeu</small>` : ''}</button>
     <button class="tbf-plaque tbf-plaque--rond regles-i" type="button" data-regles
       aria-expanded="${Boolean(S.regles)}" aria-controls="regles" aria-label="Les règles du duel"><b aria-hidden="true">i</b></button>
@@ -2847,7 +2946,13 @@ function montrerRegles() {
 $('prepaCorps').addEventListener('click', (e) => {
   const f = e.target.closest('[data-fmt]');
   if (f) { S.format = f.dataset.fmt; return preparerRendu(); }
-  if (e.target.closest('[data-souple]')) { S.souple = !S.souple; return preparerRendu(); }
+  if (e.target.closest('[data-prive]')) { S.prive = !S.prive; return preparerRendu(); }
+  if (e.target.closest('[data-mes-equipes]')) {
+    S.mesEquipes = !S.mesEquipes;
+    return refiltrer();
+  }
+  const ff = e.target.closest('[data-filtre-fmt]');
+  if (ff) { S.filtreFormat = ff.dataset.filtreFmt || null; return refiltrer(); }
   if (e.target.closest('[data-regles]')) {
     S.regles = !S.regles;
     preparerRendu();
@@ -2871,16 +2976,14 @@ $('prepaCorps').addEventListener('click', (e) => {
      choisi est remis à zéro — il peut très bien ne plus être dans la liste. */
   const p = e.target.closest('[data-portee]');
   if (p) {
-    const attente = p.dataset.portee === 'attente';
-    const tous = attente || p.dataset.portee === 'tous';
-    if (tous === S.tousLesMatchs && attente === S.enAttente) return undefined;
-    const relire = tous !== S.tousLesMatchs;
-    S.tousLesMatchs = tous;
-    S.enAttente = attente;
+    const onglet = p.dataset.portee === 'attente' ? 'attente' : 'jour';
+    if (onglet === S.onglet) return undefined;
+    S.onglet = onglet;
+    S.enAttente = onglet === 'attente';
+    /* Les duels qui attendent peuvent être sur un match de demain : leur
+       onglet lit la liste des huit jours. */
+    S.tousLesMatchs = S.enAttente;
     S.fixtureId = null;
-    /* Entre TOUS LES MATCHS et EN ATTENTE, la liste est la même : seul le
-       filtre change. */
-    if (!relire) { choisirPremier(); return preparerRendu(); }
     return rechargerMatchs();
   }
   if (e.target.closest('#entrer')) entrerEnFile();
@@ -2894,9 +2997,33 @@ $('prepaCorps').addEventListener('click', (e) => {
  * celui qu'on vient jouer, et laisser la sélection vide obligerait à deux
  * gestes là où un seul suffit.
  */
+/** Le match choisi sort de la liste filtrée : le premier qui reste. */
+function refiltrer() {
+  if (!matchsMontres().some((m) => m.id === S.fixtureId)) choisirPremier();
+  return preparerRendu();
+}
+
+/* La recherche relit la liste à chaque arrêt de frappe, sans perdre le
+   curseur : la page se redessine, le champ reprend le focus. */
+let chercheT = null;
+$('prepaCorps').addEventListener('input', (e) => {
+  if (e.target.id !== 'chercheMatch') return;
+  clearTimeout(chercheT);
+  chercheT = setTimeout(() => {
+    S.cherche = e.target.value.trim();
+    refiltrer();
+    const c = $('chercheMatch');
+    if (c) { c.focus(); c.setSelectionRange(c.value.length, c.value.length); }
+  }, 200);
+});
+
+/** L'adresse de la liste : les matchs du jour, ou les huit prochains jours
+    (l'onglet EN ATTENTE, ou un lien vers un match qui n'est pas du jour). */
+const adresseMatchs = () => `/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : '?jour=1'}`;
+
 async function rechargerMatchs() {
   try {
-    const r = await api(`/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : ''}`);
+    const r = await api(adresseMatchs());
     S.matchs = r.matchs ?? [];
   } catch {
     S.matchs = [];               // hors ligne : la liste vide dit déjà tout
@@ -2909,7 +3036,9 @@ async function rechargerMatchs() {
     ATTENTE, le premier qui attend, avec son format et son camp. */
 function choisirPremier() {
   if (S.enAttente) { choisirEnAttente(matchsMontres()[0] ?? null); return; }
-  S.fixtureId = S.matchs.find((m) => m.mode === 'classe')?.id ?? S.matchs[0]?.id ?? null;
+  const l = matchsMontres();
+  S.fixtureId = l.find((m) => m.mode === 'classe')?.id ?? l[0]?.id ?? null;
+  S.camp = null;
 }
 
 // On ne recharge pas les catalogues à chaque clic : seul l'affichage change.
@@ -3091,6 +3220,13 @@ function connecter() {
 
   /* Revenu sur la page, mais la place n'attendait plus (expirée, ou le
      joueur a quitté la file ailleurs) : la préparation, simplement. */
+  /* Un duel privé sans adversaire au bout de dix minutes : il se ferme. */
+  socket.on('nvn:prive_expire', () => {
+    if (S.vue) return;
+    quitterFile();
+    toast('Ton duel privé s’est fermé : personne n’est venu. Relance-le quand ton ami est prêt.');
+  });
+
   socket.on('nvn:hors_file', () => {
     if (S.vue) return;
     S.enFile = false;
@@ -3261,7 +3397,8 @@ function entrerEnFile() {
   prisesAvant = { moi: 0, eux: 0 };
   S.invites = new Set();
   socket.emit('nvn:queue',
-    { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0, souple:S.souple });
+    { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0,
+      prive:S.prive });
   S.enFile = true;
   voile('Dans la file', 'Recherche d\u2019adversaires…',
     { texte:'Quitter la file', action: quitterFile });
@@ -5013,11 +5150,13 @@ function nomPass(j) {
   const nom = `${esc(j.nom)}${j.bot ? ' · BOT' : ''}`;
   const p = j.pass;
   const P = window.TBF_PASS;
-  if (!p || !P || j.bot) return `<b>${nom}</b>`;
+  /* Les badges offerts (Fondateur…), après l'écusson, avec ou sans PASS. */
+  const d = !j.bot && j.distinctions?.length && P?.distinctions ? P.distinctions(j.distinctions) : '';
+  if (!p || !P || j.bot) return d ? `<span class="pass-nom"><b>${nom}</b>${d}</span>` : `<b>${nom}</b>`;
   const g = (x) => Array.isArray(p.gains) && p.gains.includes(x);
   const k = P.kit?.(p.saison);
   const plaque = k?.titre ? ` style="--plaque:url('${P.image(k.titre)}')"` : '';
-  return `<span class="pass-nom"><b${g('badge_or') ? ' class="pass-or"' : ''}>${nom}</b>${P.badge(p)}</span>`
+  return `<span class="pass-nom"><b${g('badge_or') ? ' class="pass-or"' : ''}>${nom}</b>${P.badge(p)}${d}</span>`
     + (g('titre') && p.titre ? `<span class="pass-titre"${plaque}>${esc(p.titre)}</span>` : '');
 }
 
@@ -5182,7 +5321,7 @@ const nombre = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(
  * et les trois chiffres du match sous ces noms.
  */
 /** La part de la boîte du héros que prend le Fanzzy à chaque âge. */
-const PART_BILAN = { 1: 0.74, 2: 0.82, 3: 0.9 };
+const PART_BILAN = { 1: 0.74, 2: 0.82, 3: 0.9, L: 1.02 };
 
 function montrerBilan(b) {
   S.bilanVu = true;
@@ -5258,6 +5397,12 @@ function montrerBilan(b) {
   if (Number(g?.kop?.verse) > 0) {
     lignes.push(`<li class="tbf-bilan-l gain kop"><span>VERSÉES AU KOP</span>
       <b data-compte="${Number(g.kop.verse)}" data-signe="+">+${Number(g.kop.verse)}</b><small>ÉCHARPES</small></li>`);
+  }
+  /* Le tampon du carnet d'un duel classé gagné (6 novembre 2026). */
+  if (Number(g?.tampons) > 0) {
+    lignes.push(`<li class="tbf-bilan-l gain"><span>CARNET DE LA SAISON</span>
+      <b data-compte="${Number(g.tampons)}" data-signe="+">+${Number(g.tampons)}</b><small>${
+        Number(g.tampons) > 1 ? 'TAMPONS' : 'TAMPON'}</small></li>`);
   }
   if (g?.cote && Number.isFinite(Number(g.cote.avant)) && Number.isFinite(Number(g.cote.apres))) {
     lignes.push(`<li class="tbf-bilan-l"><span>COTE</span>
@@ -5934,12 +6079,14 @@ $('equipe').addEventListener('click', (e) => {
   try {
     const [cat, matchs] = await Promise.all([
       api('/api/deck/catalogue'),
-      api(`/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : ''}`),
+      api(adresseMatchs()),
     ]);
     S.catalogue = cat.actions ?? [];
     // Ce que chaque format paie en plus. Voir `primeDeFormat` côté serveur.
     S.primes = cat.primes ?? {};
     S.matchs = matchs.matchs ?? [];
+    // « Mes équipes » d'office quand l'une d'elles joue : c'est celle qu'on vient jouer.
+    S.mesEquipes = S.matchs.some((m) => m.mien);
     formatsMemo = cat.formats ?? formatsMemo;
 
     // Le catalogue Fanzzy ne sert qu'aux couleurs de type des vignettes. Son
@@ -5952,7 +6099,7 @@ $('equipe').addEventListener('click', (e) => {
     sansDeckMemo = !loadout?.fanzzy?.length;
 
     // Un match du jour d'abord : c'est celui qu'on vient jouer.
-    S.fixtureId = S.matchs.find((m) => m.mode === 'classe')?.id ?? S.matchs[0]?.id ?? null;
+    choisirPremier();
 
     /* **Arriver par un lien d'invitation.** Format, match et camp sont déjà
        décidés par celui qui a invité : on les pose, et il ne reste qu'à
@@ -5982,6 +6129,11 @@ $('equipe').addEventListener('click', (e) => {
           S.matchs = large.matchs;
           S.tousLesMatchs = true;
         }
+      }
+      // Le match du lien reste visible, même hors de mes équipes.
+      if (Number.isInteger(id) && id > 0 && S.mesEquipes
+          && S.matchs.some((m) => m.id === id && !m.mien)) {
+        S.mesEquipes = false;
       }
       if (S.matchs.some((m) => m.id === id)) S.fixtureId = id;
       const c = Number(q.get('camp'));

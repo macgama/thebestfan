@@ -570,6 +570,288 @@
     lancer(c, src, t, alea() * (b.duration - 0.3), 0.25);
   }
 
+  /* =================================== les couleurs de l'Ultimate
+
+     Gaël, le 6 novembre 2026 : « Si c'est le même son, j'aimerais qu'il
+     varie en fonction de la série et de la tenue. » Toutes les Ultimate
+     jouaient la même montée, le même choc, la même tribune. Désormais :
+
+       — **la tenue colore la montée et le choc** (`ultime-montee` et
+         `ultime-impact`, option `tenue`). La dent de scie qui grimpe et le
+         grave qui s'effondre restent : c'est ce qui dit « Ultimate ». Ce qui
+         change, c'est ce qui bat dessous et ce qui reste en l'air après ;
+       — **la série signe juste après le choc** (`ultime-signature`, option
+         `serie`) : un bruit de son monde, une seconde et demie, avant la
+         tribune.
+
+     Tout est synthétisé, rien à télécharger. Un nom de tenue ou de série
+     inconnu joue la base : la tenue de base, la corne de la Reprise. Chaque
+     couleur a son gain (`NIV_*`), tiré du banc, pour que toutes tiennent la
+     fenêtre des moments avec le même gain de mixage. */
+
+  /** Une note qui enfle au lieu de s'éteindre : l'orgue, la nappe. */
+  function orgue(c, s, t, { freqs = [220], duree = 1, vol = 0.05, type = 'sine', delai = 0, monte = 0.85 }) {
+    const t0 = t + delai;
+    freqs.forEach((hz) => {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = type;
+      o.frequency.value = hz;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(vol, t0 + duree * monte);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+      o.connect(g).connect(s);
+      lancer(c, o, t0);
+      o.stop(t0 + duree + 0.03);
+    });
+  }
+
+  /** Une cloche : des partiels qui ne sont pas des harmoniques, chacun
+      s'éteignant plus vite que le précédent. */
+  function cloche(c, s, t, { freq = 440, duree = 1.2, vol = 0.06, delai = 0,
+                             partiels = [1, 2.76, 5.4, 8.93] }) {
+    partiels.forEach((p, k) =>
+      ton(c, s, t, { freq: freq * p, duree: duree / (1 + k * 0.7), type: 'sine', vol: vol / (1 + k * 0.6), delai }));
+  }
+
+  /** La cloche de vache : deux carrés désaccordés, sans fondamentale grave. */
+  function sonnaille(c, s, t, { freq = 560, vol = 0.05, delai = 0, duree = 0.5 }) {
+    ton(c, s, t, { freq, duree, type: 'square', vol, delai });
+    ton(c, s, t, { freq: freq * 1.48, duree: duree * 0.8, type: 'square', vol: vol * 0.7, delai });
+    bruit(c, s, t, { duree: 0.03, freq: 3000, vol: vol * 1.2, delai });
+  }
+
+  /** Un tom de peau, plus haut et plus sec que la grosse caisse. */
+  function tom(c, s, t, { freq = 180, vol = 0.12, delai = 0 }) {
+    ton(c, s, t, { freq, vers: freq * 0.5, duree: 0.22, type: 'sine', vol, delai });
+    ton(c, s, t, { freq: freq * 2.1, vers: freq, duree: 0.08, type: 'triangle', vol: vol * 0.4, delai });
+    bruit(c, s, t, { duree: 0.04, freq: 1200, vol: vol * 0.5, delai });
+  }
+
+  /** Un coup de métal : des partiels inharmoniques, une ferraille qu'on frappe. */
+  function ferraille(c, s, t, { freq = 310, vol = 0.05, delai = 0, duree = 0.35 }) {
+    [1, 1.52, 2.23, 3.33].forEach((p, k) =>
+      ton(c, s, t, { freq: freq * p, duree: duree / (1 + k * 0.3), type: k ? 'sine' : 'square', vol: vol / (1 + k * 0.4), delai }));
+    bruit(c, s, t, { duree: 0.06, freq: 4200, vol: vol * 1.4, delai });
+  }
+
+  /** Les coups qui se rapprochent sous la montée : le cœur qui s'emballe. */
+  const BATTEMENTS = [0, 0.42, 0.7, 0.88, 1.0, 1.08];
+
+  const TENUES_ULTIME = {
+    base: {
+      montee: (c, s, t) => BATTEMENTS.forEach((d, i) =>
+        ton(c, s, t, { freq: 75, vers: 42, duree: 0.16, type: 'sine', vol: 0.09 + i * 0.012, delai: d })),
+      impact: (c, s, t) => [220, 330, 440].forEach((hz) =>
+        ton(c, s, t, { freq: hz, duree: 1.2, type: 'sawtooth', vol: 0.028, delai: 0.02 })),
+    },
+    /* Préhistorique : des toms de peau à la place du cœur, un bâton qui
+       claque entre eux ; au choc, des os qui s'entrechoquent et un grognement. */
+    prehistorique: {
+      montee: (c, s, t) => {
+        BATTEMENTS.forEach((d, i) => tom(c, s, t, { freq: 150 + i * 8, vol: 0.1 + i * 0.012, delai: d }));
+        [0.21, 0.56, 0.79, 0.94, 1.04].forEach((d) =>
+          ton(c, s, t, { freq: 1350, vers: 1100, duree: 0.04, type: 'triangle', vol: 0.05, delai: d }));
+      },
+      impact: (c, s, t) => {
+        tom(c, s, t, { freq: 120, vol: 0.16 });
+        [0.03, 0.07, 0.12, 0.16, 0.23, 0.31].forEach((d, i) =>
+          ton(c, s, t, { freq: 1500 + (i % 3) * 320, vers: 1000, duree: 0.05, type: 'triangle', vol: 0.06, delai: d }));
+        ton(c, s, t, { freq: 128, vers: 82, duree: 0.6, type: 'sawtooth', vol: 0.05, delai: 0.08 });
+        bruit(c, s, t, { duree: 0.5, freq: 420, q: 3, vol: 0.05, delai: 0.08 });
+      },
+    },
+    /* Apocalyptique : de la ferraille frappée qui accélère, une tôle qui
+       grince ; au choc, un grand coup de métal qui résonne. */
+    apocalyptique: {
+      montee: (c, s, t) => {
+        BATTEMENTS.forEach((d, i) => ferraille(c, s, t, { freq: 240 + i * 14, vol: 0.035 + i * 0.006, delai: d, duree: 0.2 }));
+        ton(c, s, t, { freq: 1900, vers: 1300, duree: 1.1, type: 'square', vol: 0.008 });
+        bruit(c, s, t, { duree: 1.1, freq: 2600, q: 6, vol: 0.03 });
+      },
+      impact: (c, s, t) => {
+        ferraille(c, s, t, { freq: 140, vol: 0.06, duree: 1.4 });
+        ferraille(c, s, t, { freq: 387, vol: 0.03, duree: 0.9, delai: 0.02 });
+        bruit(c, s, t, { duree: 0.9, freq: 3200, filtre: 'highpass', q: 0.7, vol: 0.05 });
+      },
+    },
+    /* Halloween : un orgue en mineur qui enfle sous la montée, le cœur
+       gardé ; au choc, un accord diminué tenu et une cloche d'église. */
+    halloween: {
+      montee: (c, s, t) => {
+        BATTEMENTS.forEach((d, i) =>
+          ton(c, s, t, { freq: 70, vers: 40, duree: 0.18, type: 'sine', vol: 0.09 + i * 0.012, delai: d }));
+        orgue(c, s, t, { freqs: [147, 175, 220, 294], duree: 1.15, vol: 0.022, type: 'triangle' });
+        ton(c, s, t, { freq: 620, vers: 1240, duree: 1.1, type: 'sine', vol: 0.02 });
+      },
+      impact: (c, s, t) => {
+        orgue(c, s, t, { freqs: [131, 262, 311, 370, 440], duree: 1.3, vol: 0.03, type: 'triangle', monte: 0.06 });
+        cloche(c, s, t, { freq: 196, duree: 1.7, vol: 0.07, delai: 0.05 });
+      },
+    },
+    /* Spatiale : un arpège de synthé qui grimpe vers le choc ; au choc, un
+       tir laser qui tombe et des étoiles qui scintillent. */
+    spatiale: {
+      montee: (c, s, t) => {
+        const notes = [262, 330, 392, 523, 659, 784, 1047, 1319];
+        for (let k = 0; k < 16; k++) {
+          const d = 1.1 * (1 - (1 - k / 16) ** 1.4);
+          ton(c, s, t, { freq: notes[k % 8] * (k < 8 ? 1 : 2), duree: 0.07, type: 'square', vol: 0.025, delai: d });
+        }
+        BATTEMENTS.forEach((d, i) =>
+          ton(c, s, t, { freq: 80, vers: 40, duree: 0.14, type: 'sine', vol: 0.08 + i * 0.01, delai: d }));
+      },
+      impact: (c, s, t) => {
+        ton(c, s, t, { freq: 2400, vers: 110, duree: 0.38, type: 'square', vol: 0.04 });
+        ton(c, s, t, { freq: 1800, vers: 90, duree: 0.45, type: 'sawtooth', vol: 0.025, delai: 0.03 });
+        [1319, 1760, 2637, 3520].forEach((hz, i) =>
+          ton(c, s, t, { freq: hz, duree: 0.5, type: 'sine', vol: 0.025, delai: 0.15 + i * 0.07 }));
+      },
+    },
+  };
+
+  /* La signature d'une série : ce qu'on entend de son monde juste après le
+     choc. Une seconde et demie au plus ; la tribune vient ensuite. */
+  const SIGNATURES = {
+    // La Reprise : la corne de stade, deux coups.
+    RP: (c, s, t) => {
+      [0, 0.42].forEach((d, i) => [233, 294].forEach((hz) =>
+        ton(c, s, t, { freq: hz, duree: i ? 0.8 : 0.3, type: 'sawtooth', vol: 0.06, delai: d })));
+    },
+    // Les Terraces : trois claps de tout le kop, puis deux coups de tambour.
+    AN: (c, s, t) => {
+      [0, 0.24, 0.48].forEach((d) => { for (let k = 0; k < 4; k++) clap(c, s, t + d + k * 0.012, 0.8); });
+      [0.78, 1.02].forEach((d) => tambour(c, s, t + d, 0.6));
+    },
+    // Die Kurve : les cloches de vache, secouées en désordre.
+    SU: (c, s, t) => {
+      [[0, 560], [0.09, 640], [0.2, 520], [0.27, 700], [0.41, 590], [0.52, 660], [0.66, 540], [0.8, 610]]
+        .forEach(([d, hz], i) => sonnaille(c, s, t, { freq: hz, vol: 0.045 - i * 0.002, delai: d }));
+    },
+    // Les Héros du Canapé : la télé qu'on zappe, un petit jingle, et re-zapping.
+    HC: (c, s, t) => {
+      bruit(c, s, t, { duree: 0.18, freq: 4000, filtre: 'highpass', q: 0.5, vol: 0.05 });
+      ton(c, s, t, { freq: 1500, duree: 0.03, type: 'square', vol: 0.015, delai: 0.18 });
+      [523, 659, 784, 1047].forEach((hz, i) =>
+        ton(c, s, t, { freq: hz, duree: i === 3 ? 0.4 : 0.12, type: 'square', vol: 0.035, delai: 0.24 + i * 0.11 }));
+      bruit(c, s, t, { duree: 0.12, freq: 4000, filtre: 'highpass', q: 0.5, vol: 0.07, delai: 0.95 });
+    },
+    // Le Parcage : le tambour du virage et le sifflet.
+    FR: (c, s, t) => {
+      [0, 0.26, 0.52, 0.65, 0.78].forEach((d) => tambour(c, s, t + d, 0.6));
+      [0.95, 1.08].forEach((d, i) =>
+        ton(c, s, t, { freq: i ? 3100 : 2900, duree: i ? 0.35 : 0.1, type: 'sine', vol: 0.05, delai: d }));
+    },
+    // Les Phénomènes météo : un coup de tonnerre qui roule, la pluie dessous.
+    MT: (c, s, t) => {
+      bruit(c, s, t, { duree: 0.08, freq: 3000, filtre: 'highpass', q: 0.7, vol: 0.04 });
+      const roule = new Float32Array(32);
+      for (let k = 0; k < roule.length; k++) {
+        const x = k / (roule.length - 1);
+        roule[k] = 0.3 * (1 - x) ** 1.3 * (0.7 + 0.3 * Math.sin(k * 1.7));
+      }
+      bruit(c, s, t + 0.04, { duree: 1.5, freq: 260, filtre: 'lowpass', q: 0.7, courbe: roule });
+      bruit(c, s, t, { duree: 1.4, freq: 6000, filtre: 'highpass', q: 0.5, vol: 0.02, delai: 0.1 });
+    },
+    // Les VIP : le bouchon de champagne, les bulles, la flûte qui tinte.
+    VP: (c, s, t) => {
+      ton(c, s, t, { freq: 700, vers: 160, duree: 0.06, type: 'sine', vol: 0.06 });
+      bruit(c, s, t, { duree: 0.03, freq: 2500, vol: 0.04 });
+      for (let k = 0; k < 10; k++) {
+        const hz = 1300 + ((k * 397) % 1100);
+        ton(c, s, t, { freq: hz, vers: hz * 1.6, duree: 0.05, type: 'sine', vol: 0.03, delai: 0.15 + k * 0.06 });
+      }
+      cloche(c, s, t, { freq: 2637, duree: 0.9, vol: 0.035, delai: 0.85, partiels: [1, 2.32, 4.25] });
+    },
+    // Les Galères de déplacement : le klaxon du car, deux fois.
+    GD: (c, s, t) => {
+      [0, 0.38].forEach((d, i) => [370, 440].forEach((hz) =>
+        ton(c, s, t, { freq: hz, duree: i ? 0.55 : 0.25, type: 'square', vol: 0.035, delai: d })));
+    },
+    // La Gastronomie de comptoir : la friteuse qui grésille, la caisse qui sonne.
+    GC: (c, s, t) => {
+      bruit(c, s, t, { duree: 0.9, freq: 5200, q: 0.9, vol: 0.06 });
+      for (let k = 0; k < 8; k++) bruit(c, s, t, { duree: 0.015, freq: 3000, vol: 0.08, delai: 0.05 + k * 0.1 });
+      cloche(c, s, t, { freq: 1760, duree: 0.8, vol: 0.05, delai: 0.85, partiels: [1, 2.76] });
+    },
+    // TheBestFan : la fanfare dorée.
+    TB: (c, s, t) => {
+      [523, 659, 784].forEach((hz, i) =>
+        ton(c, s, t, { freq: hz, duree: 0.12, type: 'triangle', vol: 0.06, delai: i * 0.09 }));
+      [523, 659, 784, 1047].forEach((hz) =>
+        ton(c, s, t, { freq: hz, duree: 1.0, type: 'sawtooth', vol: 0.022, delai: 0.3 }));
+      [2093, 2637, 3136].forEach((hz, i) =>
+        ton(c, s, t, { freq: hz, duree: 0.4, type: 'sine', vol: 0.02, delai: 0.35 + i * 0.08 }));
+    },
+    // Le carnet complété : le tampon qui claque, puis un carillon.
+    CP: (c, s, t) => {
+      tambour(c, s, t, 0.5);
+      bruit(c, s, t, { duree: 0.05, freq: 800, vol: 0.12 });
+      [784, 988, 1175].forEach((hz, i) => cloche(c, s, t, { freq: hz, duree: 0.8, vol: 0.035, delai: 0.25 + i * 0.13 }));
+    },
+    // Les Revenants : une plainte de fantôme qui monte et retombe.
+    RV: (c, s, t) => {
+      ton(c, s, t, { freq: 420, vers: 880, duree: 0.6, type: 'sine', vol: 0.05 });
+      ton(c, s, t, { freq: 880, vers: 300, duree: 0.9, type: 'sine', vol: 0.05, delai: 0.55 });
+      ton(c, s, t, { freq: 425, vers: 890, duree: 0.6, type: 'triangle', vol: 0.02 });
+    },
+    // Le Bestiaire des gradins : un hurlement de bête.
+    BG: (c, s, t) => {
+      ton(c, s, t, { freq: 360, vers: 720, duree: 0.45, type: 'sawtooth', vol: 0.03 });
+      ton(c, s, t, { freq: 720, vers: 330, duree: 0.8, type: 'sawtooth', vol: 0.03, delai: 0.42 });
+      bruit(c, s, t, { duree: 1.1, freq: 900, q: 4, vol: 0.04 });
+    },
+    // La Tribune : la corne, puis les claps.
+    TR: (c, s, t) => {
+      [233, 294].forEach((hz) => ton(c, s, t, { freq: hz, duree: 0.45, type: 'sawtooth', vol: 0.05 }));
+      [0.55, 0.8, 1.05].forEach((d) => { for (let k = 0; k < 3; k++) clap(c, s, t + d + k * 0.012, 0.15); });
+    },
+    // Les Métiers du stade : la tireuse à bière, les verres qui trinquent.
+    MS: (c, s, t) => {
+      bruit(c, s, t, { duree: 0.6, freq: 3500, q: 0.8, vol: 0.06 });
+      [0.75, 0.86].forEach((d) => cloche(c, s, t, { freq: 2200, duree: 0.5, vol: 0.04, delai: d, partiels: [1, 2.4, 4.1] }));
+    },
+    // Ce qui traîne au stade : la main en mousse qui couine.
+    OB: (c, s, t) => {
+      [0, 0.3, 0.6].forEach((d) =>
+        ton(c, s, t, { freq: 900, vers: 1500, duree: 0.18, type: 'square', vol: 0.03, delai: d }));
+    },
+    // Les Époques : la porte du temps qui s'ouvre, un souffle et un éclat.
+    EP: (c, s, t) => {
+      const f = bruit(c, s, t, { duree: 1.0, freq: 300, q: 3, vol: 0.1 });
+      f.frequency.setValueAtTime(300, t);
+      f.frequency.exponentialRampToValueAtTime(5000, t + 1.0);
+      cloche(c, s, t, { freq: 1568, duree: 0.6, vol: 0.04, delai: 0.9 });
+    },
+  };
+
+  /* Les gains de chaque couleur, tirés du banc (6 novembre 2026) pour que
+     toutes tiennent la fenêtre des moments avec le gain de mixage du son. */
+  const NIV_MONTEE = { base: 1.0, prehistorique: 0.716, apocalyptique: 1.023, halloween: 0.989, spatiale: 1.047 };
+  const NIV_IMPACT = { base: 1.0, prehistorique: 0.977, apocalyptique: 0.861, halloween: 0.912, spatiale: 0.966 };
+  const NIV_SIGNATURE = {
+    RP: 3.631, AN: 0.668, SU: 3.126, HC: 5.012, FR: 0.638, MT: 5.623,
+    VP: 3.311, GD: 3.89, GC: 2.786, TB: 4.677, CP: 0.733, RV: 4.169,
+    BG: 9.016, TR: 5.1, MS: 3.162, OB: 9.016, EP: 3.589,
+  };
+
+  const aCle = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
+  /** La tenue d'une Ultimate, ou la base. */
+  const tenueUltime = (k) => (aCle(TENUES_ULTIME, k) ? k : 'base');
+  /** La série d'une Ultimate (« FR » ou une racine « FR12 »), ou la Reprise. */
+  const serieUltime = (k) => {
+    const code = /^[A-Z]+/.exec(String(k ?? ''))?.[0];
+    return aCle(SIGNATURES, code) ? code : 'RP';
+  };
+  /** Une sortie à son gain : chaque couleur à son niveau. */
+  function auNiveau(c, s, gain) {
+    if (gain === 1) return s;
+    const g = c.createGain();
+    g.gain.value = gain;
+    g.connect(s);
+    return g;
+  }
+
   /* ============================================================ la banque
 
      Chaque son tient en quelques lignes, et c'est voulu : un son de jeu doit
@@ -813,7 +1095,10 @@
        un accord de puissance qui reste en l'air et la cymbale qui s'éteint.
        La tribune (`ovation`) vient après, à part. */
     'ultime-montee': { famille: 'moment', duree: 1.25,
-      jouer: (c, s, t) => {
+      variantes: Object.keys(TENUES_ULTIME).filter((k) => k !== 'base').map((tenue) => ({ tenue })),
+      jouer: (c, s0, t, { tenue } = {}) => {
+        const sorte = tenueUltime(tenue);
+        const s = auNiveau(c, s0, NIV_MONTEE[sorte]);
         ton(c, s, t, { freq: 110, vers: 880, duree: 1.15, type: 'sawtooth', vol: 0.05 });
         ton(c, s, t, { freq: 165, vers: 1320, duree: 1.15, type: 'square', vol: 0.016 });
         const monte = new Float32Array(24);
@@ -821,17 +1106,28 @@
         const f = bruit(c, s, t, { duree: 1.15, freq: 500, q: 0.8, courbe: monte });
         f.frequency.setValueAtTime(500, t);
         f.frequency.exponentialRampToValueAtTime(6000, t + 1.15);
-        [0, 0.42, 0.7, 0.88, 1.0, 1.08].forEach((d, i) =>
-          ton(c, s, t, { freq: 75, vers: 42, duree: 0.16, type: 'sine', vol: 0.09 + i * 0.012, delai: d }));
+        // Ce qui bat dessous : la tenue (voir « les couleurs de l'Ultimate »).
+        TENUES_ULTIME[sorte].montee(c, s, t);
       } },
     'ultime-impact': { famille: 'moment', duree: 1.9,
-      jouer: (c, s, t) => {
+      variantes: Object.keys(TENUES_ULTIME).filter((k) => k !== 'base').map((tenue) => ({ tenue })),
+      jouer: (c, s0, t, { tenue } = {}) => {
+        const k = tenueUltime(tenue);
+        const s = auNiveau(c, s0, NIV_IMPACT[k]);
         ton(c, s, t, { freq: 95, vers: 32, duree: 1.0, type: 'sine', vol: 0.2 });
         ton(c, s, t, { freq: 190, vers: 55, duree: 0.32, type: 'sawtooth', vol: 0.08 });
         bruit(c, s, t, { duree: 0.5, freq: 320, vol: 0.12 });
         bruit(c, s, t, { duree: 1.6, freq: 5200, filtre: 'highpass', q: 0.7, vol: 0.05 });
-        [220, 330, 440].forEach((hz) =>
-          ton(c, s, t, { freq: hz, duree: 1.2, type: 'sawtooth', vol: 0.028, delai: 0.02 }));
+        // Ce qui reste en l'air : l'accord de puissance de la base, ou la tenue.
+        TENUES_ULTIME[k].impact(c, s, t);
+      } },
+    /* La signature de la série, juste après le choc (voir « les couleurs de
+       l'Ultimate ») : `serie` est un code (« SU ») ou une racine (« SU12 »). */
+    'ultime-signature': { famille: 'moment', duree: 1.9,
+      variantes: Object.keys(SIGNATURES).filter((k) => k !== 'RP').map((serie) => ({ serie })),
+      jouer: (c, s, t, { serie } = {}) => {
+        const k = serieUltime(serie);
+        SIGNATURES[k](c, auNiveau(c, s, NIV_SIGNATURE[k]), t);
       } },
     /* L'accord riche de la légendaire (« audio.chime('legendaire') ») : comme
        celui de l'épique, la collection seule l'appelle encore — au kiosque,
@@ -858,6 +1154,22 @@
         [659, 831, 988].forEach((f) => ton(c, s, t, { freq: f, duree: 1.1, type: 'sine', vol: 0.07, delai: 0.3 }));
         [1318, 1662].forEach((f) => ton(c, s, t, { freq: f, duree: 0.5, type: 'sine', vol: 0.025, delai: 0.3 }));
         bruit(c, s, t, { duree: 1.3, freq: 1300, q: 0.6, vol: 0.06, delai: 0.3 });
+      } },
+    /* **Le cadeau de l'administration** (cadeau-fete.js, 6 novembre 2026,
+       « une alerte gaming […] qu'il se dise qu'il est chanceux ») : le
+       roulement du paquet qui tremble (trois secousses, un bruit qui
+       frémit), le « pop » du couvercle qui saute, puis la pluie de notes
+       claires qui monte — la gamme d'un jackpot, sans air — et l'accord
+       majeur qui se pose sur la tribune qui applaudit. */
+    cadeau: { famille: 'moment', duree: 2.3,
+      jouer: (c, s, t) => {
+        [0, 0.2, 0.4].forEach((d) => bruit(c, s, t, { duree: 0.14, freq: 420, filtre: 'lowpass', q: 0.9, vol: 0.248, delai: d }));
+        ton(c, s, t, { freq: 180, vers: 1400, duree: 0.12, type: 'triangle', vol: 0.139, delai: 0.62 });
+        bruit(c, s, t, { duree: 0.12, freq: 3600, q: 0.8, vol: 0.139, delai: 0.62 });
+        [1047, 1319, 1568, 2093, 2637].forEach((f, i) =>
+          ton(c, s, t, { freq: f, duree: 0.24, type: 'sine', vol: 0.093, delai: 0.72 + i * 0.07 }));
+        [523, 659, 784, 1047].forEach((f) => ton(c, s, t, { freq: f, duree: 1.2, type: 'sine', vol: 0.093, delai: 1.08 }));
+        bruit(c, s, t, { duree: 1.1, freq: 1300, q: 0.6, vol: 0.093, delai: 1.1 });
       } },
     /* **La fin d'un duel** (4 novembre 2026, « plus festif, plus triste,
        plus gaming »), au bilan, calée sur ses lettres qui tombent une à

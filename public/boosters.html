@@ -219,6 +219,24 @@
   #s-kiosque:is([data-rangees="2"],[data-rangees="3"]) :is(#saisonTxt,#saisonVu){display:none}
 }
 
+/* **La scène prend toute la page** (demande de Gaël, 6 novembre 2026 :
+   « agrandir la zone avec les boosters pour avoir un affichage sur toute la
+   page »). Sur un écran assez haut, le bas du descriptif laissait un grand
+   vide noir sous lui. `taillerLaScene` mesure ce vide et le donne à la
+   scène : le sachet grandit (`--sachet`, posé par la page), et la scène, le
+   socle et les flèches le suivent. Les cotes sont celles du sachet de 124
+   px écrites en fonction de lui : le sachet (6 px du haut, haut de 1,613
+   fois sa largeur), le socle douze pixels sous son pied, le sticker du nom
+   toujours 46 px sous le sachet, les flèches à mi-hauteur. Le sachet ne
+   dépasse pas 42 % de la colonne, pour que ceux de côté restent visibles ;
+   ce qui reste de place descend le tout sous les projecteurs (`--haut`, au
+   plus 40 % du sachet). Sur un écran court, rien ne change (voir plus
+   haut). */
+#s-kiosque.grand .kscene{height:calc(var(--sachet) * 1.613 + 52px + var(--haut, 0px))}
+#s-kiosque.grand .slide{top:calc(6px + var(--haut, 0px));width:var(--sachet)}
+#s-kiosque.grand .kscene>.tbf-socle{top:calc(var(--sachet) * 1.613 - 6px + var(--haut, 0px));width:calc(var(--sachet) * 1.355)}
+#s-kiosque.grand .kscene>.tbf-plaque--rond{top:calc(var(--sachet) * .806 - 20px + var(--haut, 0px))}
+
 /* Une série verrouillée se regarde sans se toucher : le paquet s'éteint, mais
    il reste visible. C'est ce qui donne envie d'y arriver. */
 .carousel.verrou .slide.center{filter:grayscale(.85) brightness(.5)}
@@ -1493,6 +1511,7 @@ function tickRegen() {
   tickReserve();
   rendreMinuterie();
   rangerLaScene();
+  taillerLaScene();
   if (restantMs() === 0) relire();
 }
 
@@ -1507,6 +1526,44 @@ function rangerLaScene() {
   ecran.dataset.rangees = String(n);
   placeCarousel(0);
 }
+
+/** La scène prend la place libre sous le descriptif (voir `.grand`) : le
+    sachet grandit jusqu'à ce que la page remplisse l'écran, sans dépasser
+    42 % de la colonne. Sans place libre, la feuille garde ses tailles,
+    resserrées ou non. Repassée chaque seconde par `tickRegen`, au
+    redimensionnement et quand le descriptif change. */
+const SACHET = 124;
+function taillerLaScene() {
+  const ecran = $('s-kiosque');
+  const scene = $('kscene');
+  if (ecran.hidden || !scene.offsetHeight) return;
+  const dernier = [...ecran.children].filter((e) => !e.hidden && e.offsetHeight).pop();
+  if (!dernier) return;
+  /* La hauteur vraie de l'écran, comme `--h-ecran` (en tête de page) : dans
+     l'appli Android, Chrome annonce une fenêtre plus haute que l'écran. */
+  const appli = /Android/i.test(navigator.userAgent) && !matchMedia('(display-mode: browser)').matches;
+  const hauteur = appli ? Math.min(innerHeight, screen.height || innerHeight) : innerHeight;
+  const libre = hauteur - dernier.getBoundingClientRect().bottom - scrollY - 16;
+  const colonne = scene.offsetWidth;
+  const place = scene.offsetHeight + libre - 52;
+  const voulu = Math.floor(Math.min(place / 1.613, colonne * 0.42));
+  const haut = Math.floor(Math.max(0, Math.min(place - voulu * 1.613, voulu * 0.4)));
+  const actuel = ecran.classList.contains('grand') ? parseFloat(ecran.style.getPropertyValue('--sachet')) : 0;
+  const hautActuel = parseFloat(ecran.style.getPropertyValue('--haut')) || 0;
+  if (voulu <= SACHET + 2) {
+    if (!actuel) return;
+    ecran.classList.remove('grand');
+    ecran.style.removeProperty('--sachet');
+    ecran.style.removeProperty('--haut');
+  } else {
+    if (actuel && Math.abs(voulu - actuel) < 2 && Math.abs(haut - hautActuel) < 2) return;
+    ecran.style.setProperty('--sachet', `${voulu}px`);
+    ecran.style.setProperty('--haut', `${haut}px`);
+    ecran.classList.add('grand');
+  }
+  placeCarousel(0);
+}
+addEventListener('resize', () => taillerLaScene());
 
 /**
  * La minuterie et l'achat immédiat, quand la réserve est vide.
@@ -1659,6 +1716,7 @@ function rendreDescriptif(s) {
   $('serieLigne').hidden = !ligne;
   $('serieTxt').textContent = desc;
   $('serieTxt').hidden = !desc;
+  taillerLaScene();
 }
 
 /** Les pastilles des séries ouvertes, la choisie ramenée au milieu du rail. */

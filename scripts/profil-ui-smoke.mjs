@@ -149,6 +149,55 @@ await page.goto(`${base}/profil`, { waitUntil: 'networkidle0' });
 check('le profil s’affiche', await jusqua(async () =>
   page.evaluate(() => document.getElementById('page')?.style.display !== 'none')));
 
+/* ------------------------------------------------------- le vestiaire
+
+   Gaël, 6 novembre 2026 (« Mon vestiaire ») : le profil a le plan de
+   l'accueil. Le Fanzzy au centre, ce qu'on possède en pastilles en haut, six
+   tuiles de couleur qui ouvrent chacune sa rubrique en tiroir, et le bonus en
+   coffre. Les rubriques sont dans les tiroirs : la suite les ouvre avant de
+   les lire. */
+const ouvrir = async (nom) => {
+  await page.evaluate((n) => document.querySelector(`.vt-rail [data-tiroir="${n}"]`).click(), nom);
+  return jusqua(async () => page.evaluate((n) => !document.getElementById(`tiroir-${n}`).hidden, nom));
+};
+const fermer = () => page.evaluate(() => document.querySelector('.vt-volet:not([hidden]) .vt-fermer')?.click());
+{
+  const v = await page.evaluate(() => {
+    const carte = document.getElementById('carte').getBoundingClientRect();
+    return {
+      tuiles: [...document.querySelectorAll('.vt-rail .tbf-case')].map((t) => t.dataset.tiroir),
+      pastilles: [...document.querySelectorAll('#stats .vt-res')].map((a) => a.getAttribute('href')),
+      echarpes: document.querySelector('#stats [data-solde="echarpes"]')?.textContent.trim(),
+      hauteur: carte.height, ecran: innerHeight,
+      fermes: [...document.querySelectorAll('.vt-volet')].every((t) => t.hidden),
+    };
+  });
+  check('six tuiles, chacune vers sa rubrique',
+    v.tuiles.join() === 'clubs,saison,parcours,niveau,equipement,reglages'
+    || (console.log('        tuiles :', v.tuiles), false));
+  check('les quatre pastilles de ce qu’on possède, avec leurs liens',
+    v.pastilles.join() === '/boutique,/boosters,/carnet,/carnet' && /^\d+$/.test(v.echarpes ?? '')
+    || (console.log('        pastilles :', v.pastilles, v.echarpes), false));
+  check('le vestiaire prend l’écran, tiroirs fermés',
+    v.fermes && v.hauteur >= 560 && v.hauteur <= v.ecran
+    || (console.log('        ', v), false));
+  const ouvert = await ouvrir('clubs');
+  const dedans = await page.evaluate(() => ({
+    voile: !document.getElementById('vtVoile').hidden,
+    focus: document.activeElement?.classList.contains('vt-fermer'),
+    visible: document.getElementById('clubs').getBoundingClientRect().height > 0 }));
+  check('la tuile CLUBS ouvre son tiroir, voilé, le focus dedans',
+    ouvert && dedans.voile && dedans.focus && dedans.visible || (console.log('        ', dedans), false));
+  await page.keyboard.press('Escape');
+  const ferme = await jusqua(async () => page.evaluate(() =>
+    document.getElementById('tiroir-clubs').hidden && document.getElementById('vtVoile').hidden));
+  check('Échap le referme', ferme);
+  await ouvrir('reglages');
+  await page.evaluate(() => document.getElementById('vtVoile').click());
+  check('un toucher sur le voile aussi', await jusqua(async () =>
+    page.evaluate(() => document.getElementById('tiroir-reglages').hidden)));
+}
+
 /* ------------------------------------------------------- le parcours
 
    **Depuis le lot 5, l'en-tête du parcours n'est plus un tableau de bord.**
@@ -314,6 +363,7 @@ if (vu.encore) {
   const arrive = await jusqua(async () =>
     page.evaluate(() => document.querySelectorAll('#niveau .tbf-noeud').length > 0));
   check('le chemin du niveau arrive', arrive);
+  await ouvrir('niveau');
 
   if (arrive) {
     /* L'XP posée en base : `seuil(4)` plus la moitié du palier. C'est d'elle
@@ -371,7 +421,7 @@ if (vu.encore) {
     check('et l’anneau du buste dit la même part', niv.anneau === PART
       || (console.log('        anneau :', niv.anneau), false));
 
-    check('il dit le niveau atteint', niv.coin === '4' && niv.coinNom === 'Niveau 4'
+    check('il dit le niveau atteint', niv.coin === '4' && niv.coinNom === 'Niveau 4, Porte-écharpe'
       || (console.log('        coin :', niv.coin, '·', niv.coinNom), false));
     check('et ce qui reste avant le suivant',
       /XP/.test(niv.xp) && niv.xp.includes(`encore ${fr(POUR - DANS)}`)
@@ -422,6 +472,7 @@ if (vu.encore) {
 
     check('et le bloc tient dans la colonne', niv.large <= niv.colonne + 1);
   }
+  await fermer();
 }
 
 /* ------------------------------------------------------- mes saisons
@@ -431,6 +482,7 @@ if (vu.encore) {
    éprouve le serveur), et l'on vérifie ce que l'écran en écrit. */
 check('sans saison finie, MES SAISONS ne se montre pas', await page.evaluate(() =>
   document.getElementById('historique').hidden && document.getElementById('historiqueTitre').hidden));
+await ouvrir('saison');
 const hist = await page.evaluate(() => {
   place = { ...place, titres: [{ nom: 'Revenu pour de bon', source: 'carnet', saison: 11 }],
     historique: [
@@ -455,6 +507,7 @@ check('sans place ni division, la ligne dit seulement ce qu’on a fait (1 tampo
   /1 tampon\b/.test(hist.lignes[0]) && !/sur/.test(hist.lignes[0])
   || (console.log('        il montre :', hist.lignes[0]), false));
 check('et le bloc tient dans la colonne', hist.large <= hist.colonne + 1);
+await fermer();
 
 check('aucune erreur de script sur le profil', erreurs.length === 0
   || (console.log('       ', erreurs.slice(0, 3)), false));
@@ -570,6 +623,7 @@ check(`le quatrième est éteint et dit le niveau 9 (${slot?.ligne})`,
   slot?.eteinte && slot.plaque === 'NIVEAU 9' && /Se débloque au niveau 9/.test(slot.ligne));
 let appels = 0;
 page.on('request', (r) => { if (r.url().endsWith('/api/me/slot')) appels++; });
+await ouvrir('clubs');
 await page.click('#ligneSlot');
 await jusqua(async () => page.evaluate(() => Boolean(document.querySelector('.tbf-toast--erreur'))));
 const toast = await page.evaluate(() => document.querySelector('.tbf-toast--erreur')?.textContent ?? '');

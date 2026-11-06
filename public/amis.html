@@ -13,7 +13,7 @@
 <title>Mes amis — thebestfan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
@@ -276,6 +276,160 @@ button.buste-btn>.tbf-buste{--taille:52px}
 .fiche-tete .pass-titre{display:block;font-style:normal;font-family:var(--banner);font-size:11px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;color:#F5C33B}
 .gars .nom .tbf-pass-badge{margin-left:4px;vertical-align:middle}
+
+/* =====================================================================
+   LA TRIBUNE DES AMIS (Gaël, 6 novembre 2026 : « la page Amis n'est pas
+   très gaming » ; proposition 2 choisie parmi quatre maquettes).
+
+   Le Fanzzy d'abord, partout : sur la liste, les amis sont **debout dans
+   ta tribune**, en pied, et ceux qui jouent sont pris dans le projecteur ;
+   sur la fiche d'un ami, son Fanzzy prend la scène comme sur l'accueil,
+   entouré des mêmes cases de couleur, et les gestes s'ouvrent en **roue de
+   bulles** autour de lui. Aucune donnée nouvelle : tout vient de ce que le
+   serveur sert déjà (présence, fil des gestes, fiche).
+
+   Aucune animation sans fin : un geste fait sauter une bulle une fois, et
+   rien ne bouge au calme (`prefers-reduced-motion`, `data-calme`). */
+
+/* ------------------------------------------------- la tribune (liste) */
+.tribune{position:relative;border-radius:var(--r);overflow:hidden;margin:2px 0 14px;
+  border:1px solid rgba(130,87,218,.35);padding:30px 6px 12px;
+  background:linear-gradient(rgba(8,10,14,.35),rgba(8,10,14,.62) 78%,rgba(8,10,14,.92)),
+    center 30%/cover no-repeat url("/img/ecran/tribune.webp"),var(--beton)}
+/* Le projecteur : un cône de lumière sur le premier rang, là où sont ceux
+   qui jouent. Fixe. */
+.tribune::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:conic-gradient(from 180deg at 50% -6%,transparent 158deg,rgba(255,240,200,.12) 170deg,
+    rgba(255,240,200,.12) 190deg,transparent 202deg)}
+.tribune>h2{position:absolute;top:8px;left:0;right:0;margin:0;text-align:center;font-family:var(--banner);
+  font-size:11.5px;letter-spacing:.18em;z-index:2}
+.tribune>h2 span{background:#000;padding:2px 9px}
+.rang{position:relative;display:flex;justify-content:center;align-items:flex-end;gap:4px;z-index:1}
+.rang+.rang{margin-top:6px}
+/* Une place : le Fanzzy debout dans sa boîte, son nom sur un ruban noir. La
+   boîte est un conteneur de taille : `TBF_ETATS.caler` y pose le dessin à la
+   taille de son âge, pieds au sol. Sans mesure, le dessin tient la boîte. */
+.place{position:relative;width:var(--l,96px);min-width:0}
+.place .toucher{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;width:100%;
+  -webkit-tap-highlight-color:transparent}
+.place .toucher:focus-visible{outline:2px solid var(--projo);outline-offset:2px;border-radius:8px}
+.place .pied{position:relative;width:100%;height:var(--h,120px);container-type:size}
+.place .pied img{position:absolute;bottom:0;left:50%;translate:-50% 0;height:100%;width:auto;max-width:none;
+  pointer-events:none}
+.place .n{position:relative;z-index:2;max-width:100%;margin-top:-3px;padding:1px 6px;background:#000;
+  font-family:var(--banner);font-size:10.5px;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.place .tbf-sticker{position:absolute;top:-4px;left:50%;translate:-50% 0;z-index:3;font-size:9px;
+  white-space:nowrap}
+/* Ceux qui jouent sont éclairés ; les autres attendent dans l'ombre. */
+.place.joue .pied img{filter:drop-shadow(0 0 7px rgba(194,163,255,.85)) drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.place.ombre .pied img{filter:brightness(.42) saturate(.35)}
+.place.ombre .n{opacity:.8}
+.place.inviter .pied{display:grid;place-items:center}
+.place.inviter .pied span{width:78%;height:86%;border:3px dashed rgba(242,238,228,.45);border-radius:14px;
+  display:grid;place-items:center;text-align:center;font-family:var(--banner);font-size:12px;letter-spacing:.08em;
+  line-height:1.35;background:rgba(0,0,0,.35)}
+.tribune .encore{position:relative;z-index:1;margin:8px 0 0;text-align:center;font-size:11px;opacity:.85}
+
+/* ---------------------------------------- ils t'ont fait signe (bulles) */
+.signe{background:none;border:0;padding:2px 0}
+.signe.neuf{background:none}
+.signe>.tbf-buste{--taille:46px}
+.signe .dit{position:relative;flex:1;min-width:0;background:var(--craie);color:var(--encre,#10141a);
+  border-radius:14px;padding:7px 11px 7px 12px;box-shadow:2px 2px 0 #000;line-height:1.35}
+.signe .dit::before{content:"";position:absolute;left:-8px;top:14px;border:6px solid transparent;
+  border-right:9px solid var(--craie);border-left:0}
+.signe.neuf .dit{box-shadow:2px 2px 0 #000,0 0 0 2px var(--violet)}
+.signe .dit b{font-family:var(--banner);font-weight:600}
+.signe .mot{font-family:var(--marqueur);font-size:14px;color:#5b34b8;letter-spacing:0}
+.signe .dit small{display:inline;margin:0 0 0 5px;opacity:.65}
+.signe .bt{flex:none;min-height:40px;padding:8px 10px;font-size:10.5px}
+
+/* --------------------------------------------- la fiche : la scène */
+.scene-ami{position:relative;height:min(64vh,540px);min-height:430px;margin:0 -15px 12px;overflow:hidden;
+  background:radial-gradient(60% 42% at 50% 52%,rgba(130,87,218,.38),transparent 70%),
+    linear-gradient(rgba(11,14,18,.15),rgba(11,14,18,.55) 70%,var(--beton)),
+    center/cover no-repeat url("/img/stade/an-briques.webp"),var(--beton)}
+.scene-ami[data-pass-fond]{background:radial-gradient(60% 42% at 50% 52%,rgba(130,87,218,.3),transparent 70%),
+  linear-gradient(rgba(11,14,18,.15),rgba(11,14,18,.6) 70%,var(--beton)),center/cover no-repeat var(--pass-fond),var(--beton)}
+.scene-ami .retour{position:absolute;top:10px;left:15px;z-index:6;margin:0}
+.scene-ami .heros{position:absolute;left:50%;translate:-50% 0;bottom:0;top:0;width:62%;container-type:size;z-index:2}
+.scene-ami .heros img{position:absolute;bottom:15%;left:50%;translate:-50% 0;height:64%;width:auto;max-width:none;
+  pointer-events:none;filter:drop-shadow(0 0 8px rgba(194,163,255,.7)) drop-shadow(0 12px 22px rgba(0,0,0,.7))}
+.scene-ami .heros::after{content:"";position:absolute;left:50%;bottom:11.5%;width:70%;height:7%;translate:-50% 0;
+  border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.7),transparent);z-index:-1}
+/* Les cases, comme les rails de l'accueil : la couleur dit le sujet (violet
+   les gens, vert ce qui se donne, rouge ce qui se joue, bleu ce qui se
+   collectionne, or ce qui se gagne). */
+.scene-ami .rail{position:absolute;bottom:20%;display:grid;gap:8px;z-index:4}
+.scene-ami .rail.g{left:12px}
+.scene-ami .rail.d{right:12px}
+.scene-ami .tbf-case{width:64px;height:64px;font-size:10px;position:relative}
+.scene-ami .tbf-case[aria-pressed=true]{outline:3px solid var(--craie);outline-offset:1px}
+.scene-ami .tbf-case .pt{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;border-radius:6px;
+  background:var(--projo);color:#111;font:700 11px/20px var(--banner);text-align:center;box-shadow:1px 1px 0 #000}
+.scene-ami .tbf-case.fait{filter:saturate(.35) brightness(.8)}
+.scene-ami .plaque{position:absolute;left:50%;translate:-50% 0;bottom:10px;z-index:3;display:flex;
+  align-items:center;gap:9px;max-width:calc(100% - 30px)}
+.scene-ami .plaque .fiche-buste>.tbf-buste{--taille:44px}
+.scene-ami .plaque .qui{min-width:0;text-align:left}
+.scene-ami .plaque b{display:inline-block;font-family:var(--banner);font-size:19px;background:var(--craie);
+  color:var(--encre,#10141a);padding:1px 10px;box-shadow:2px 2px 0 #000;max-width:100%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+.scene-ami .plaque b.pass-or{background:#1a1408;color:#F5C33B;text-shadow:0 0 8px rgba(245,195,59,.6),0 1px 0 #6b4a05}
+.scene-ami .plaque small{display:block;margin-top:5px;font-family:var(--banner);font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;text-shadow:0 1px 2px #000}
+.scene-ami .plaque .pass-titre{display:block;font-style:normal;font-family:var(--banner);font-size:10.5px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:#F5C33B;margin-top:3px}
+.scene-ami .plaque .tbf-sticker{position:static;margin-left:6px;vertical-align:middle}
+/* Les bulles : ce qu'il t'a dit en dernier, au-dessus de sa tête, et le
+   geste que tu viens de lui faire, en bas à gauche. */
+.scene-ami .bulle{position:absolute;z-index:5;background:var(--craie);color:var(--encre,#10141a);
+  font-family:var(--marqueur);font-size:16px;padding:7px 13px;border-radius:16px;box-shadow:3px 3px 0 #000;
+  white-space:nowrap;max-width:70%;overflow:hidden;text-overflow:ellipsis}
+.scene-ami .bulle::after{content:"";position:absolute;bottom:-10px;border:7px solid transparent;
+  border-top:11px solid var(--craie);border-bottom:0}
+.scene-ami .bulle.lui{top:12%;right:14px;rotate:3deg}
+.scene-ami .bulle.lui::after{left:18px}
+.scene-ami .bulle.lui small{display:block;font-family:var(--ui);font-size:9.5px;opacity:.6;margin-top:1px}
+.scene-ami .bulle.moi{bottom:27%;left:86px;rotate:-4deg;background:var(--projo)}
+.scene-ami .bulle.moi::after{left:14px;border-top-color:var(--projo)}
+/* La roue des gestes : dix bulles posées en cercle autour de son Fanzzy, sur
+   un voile qui éteint le reste. Un toucher envoie le geste. */
+.roue{position:absolute;inset:0;z-index:5;display:none}
+.roue.on{display:block}
+.scene-ami:has(.roue.on) .plaque{visibility:hidden}
+.roue .voile{all:unset;position:absolute;inset:0;background:rgba(5,6,10,.55);cursor:pointer}
+.roue h3{position:absolute;top:12px;right:15px;margin:0;font-family:var(--banner);font-size:12px;letter-spacing:.14em;
+  background:#000;padding:3px 9px}
+.roue .dire{position:absolute;bottom:14px;left:15px;right:15px;margin:0;text-align:center;font-size:11.5px;opacity:.95;
+  text-shadow:0 1px 2px #000}
+.roue .bulles{position:absolute;left:50%;top:50%;width:min(94%,360px);height:76%;translate:-50% -50%}
+.roue [data-geste]{all:unset;cursor:pointer;position:absolute;left:var(--x);top:var(--y);translate:-50% -50%;
+  background:var(--craie);color:var(--encre,#10141a);font-family:var(--marqueur);font-size:13.5px;line-height:1.2;
+  padding:9px 12px;min-height:22px;border-radius:15px;box-shadow:2px 3px 0 #000;white-space:nowrap;text-align:center;
+  rotate:var(--r,0deg);transition:scale .12s}
+.roue [data-geste]:active{scale:1.12}
+.roue [data-geste]:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+.roue [data-geste][disabled]{opacity:.55}
+/* Sous la scène : le cadeau du jour et le défi, puis le grand bouton. */
+.duo-taches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:10px}
+.tache{border:1px solid var(--trait);border-radius:10px;background:var(--panneau);padding:10px 11px;
+  display:flex;flex-direction:column;gap:6px;min-width:0}
+.tache h3{font-family:var(--banner);font-size:11px;letter-spacing:.12em;margin:0}
+.tache p{margin:0;font-size:11px;line-height:1.5;opacity:.9}
+.tache .bt{width:100%;min-height:40px;margin-top:auto}
+.tache .jauge{height:9px;margin:2px 0 0}
+.tache .jauge i{background:repeating-linear-gradient(-45deg,var(--flare) 0 6px,var(--projo) 6px 12px)}
+.ensemble-virage{display:flex;width:100%;justify-content:center;margin:0 0 14px;font-size:16px;letter-spacing:.1em;
+  min-height:54px;text-decoration:none}
+.ensemble-virage small{display:block}
+@media (prefers-reduced-motion:no-preference){
+  html:not([data-calme~="animations"]) .scene-ami .bulle{animation:bulle-pop .38s cubic-bezier(.3,1.6,.5,1) both}
+  html:not([data-calme~="animations"]) .roue.on [data-geste]{animation:bulle-pop .3s cubic-bezier(.3,1.6,.5,1) both;
+    animation-delay:calc(var(--i,0) * 22ms)}
+}
+@keyframes bulle-pop{from{scale:.3;opacity:0}to{scale:1;opacity:1}}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -435,6 +589,8 @@ const S = {
   carte: null,         // le Fanzzy touché dans sa collection
   echangeAvec: null,   // le Fanzzy de l'ami qu'on veut, en attendant de choisir le sien
   ensembleOuvert: false,
+  roue: false,         // la roue des gestes ouverte sur la fiche
+  envoi: null,         // { id, geste } : le geste qu'on vient de faire, en bulle quelques secondes
   kops: [],            // mes KOP, pour pouvoir y inviter
   deplie: null,        // { id, quoi } : l'ami dont on choisit le KOP ('kop') ou ouvre « ⋯ » ('plus')
 };
@@ -596,7 +752,7 @@ function avatar(g) {
     || window.FZART?.adresse?.(g.fanzzy, 'buste');
   const initiale = esc((String(g.pseudo ?? '').trim().charAt(0) || '?').toUpperCase());
   const niv = Number.isInteger(g.niveau)
-    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv">${g.niveau}</b>` : '';
+    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv"${g.teinte ? ` data-teinte="${esc(g.teinte)}"` : ''}${Number(g.etoiles) > 0 ? ` data-etoiles="${Number(g.etoiles)}"` : ''}>${g.niveau}</b>` : '';
   return buste
     ? `<span class="tbf-buste pastille-nom" aria-hidden="true" data-initiale="${initiale}"><img
          src="${esc(buste)}" alt="" decoding="async">${niv}</span>`
@@ -650,10 +806,10 @@ const PRESENCE = new Map([
   ['duel',     { mot: 'En duel',   ton: 'flare' }],
   ['en_ligne', { mot: 'En ligne',  ton: 'craie' }],
 ]);
-function presence(g) {
+function presence(g, attr = 'data-presence-ami') {
   const p = PRESENCE.get(g.presence);
   return p ? `<span class="tbf-sticker tbf-sticker--live" data-ton="${p.ton}"
-    data-presence-ami="${esc(g.presence)}">${p.mot}</span>` : '';
+    ${attr}="${esc(g.presence)}">${p.mot}</span>` : '';
 }
 
 /** Ce qui est déplié sous cet ami, s'il y a quelque chose : 'kop', 'plus' ou null. */
@@ -675,7 +831,7 @@ function carteAmi(g) {
   return `
   <div class="gars ami${ouvert ? ' deplie' : ''}" data-id="${esc(g.id)}">
     <button class="buste-btn" data-fiche="${esc(g.id)}" aria-label="La fiche de ${esc(g.pseudo)}">${avatar(g)}</button>
-    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${g.pass && window.TBF_PASS ? window.TBF_PASS.badge(g.pass) : ''}${presence(g)}</span><span class="actions"><button
+    <span class="qui"><span class="nom"><b>${esc(g.pseudo)}</b>${g.pass && window.TBF_PASS ? window.TBF_PASS.badge(g.pass) : ''}${g.distinctions?.length && window.TBF_PASS?.distinctions ? window.TBF_PASS.distinctions(g.distinctions) : ''}${presence(g)}</span><span class="actions"><button
       class="bt tbf-plaque" data-ton="violet" data-fiche="${esc(g.id)}">JOUER ENSEMBLE</button>${inviter}</span></span>
     <button class="bt tbf-plaque plus" data-plus="${esc(g.id)}" aria-expanded="${ouvert === 'plus'}"
       aria-label="Plus d’options pour ${esc(g.pseudo)}"><i class="tbf-ico ico-plus" aria-hidden="true"></i></button>
@@ -687,11 +843,60 @@ function vueAmis() {
     return convier() + avantages(true) + `<div class="vide">Tu n’as encore personne.<br>
       Ouvre <b>TROUVER</b> : les supporters de tes clubs t’y attendent.</div>`;
   }
-  return filGestes() + avantages(S.amis.length < 3 || S.ensembleOuvert)
+  return tribune() + filGestes() + avantages(S.amis.length < 3 || S.ensembleOuvert)
+    + `<h2 class="tbf-cousu">TOUS MES AMIS · ${S.amis.length}</h2>`
     + `<div class="gens gens--amis">${S.amis.map((g) => {
     const ouvert = deplie(g);
     return carteAmi(g) + (ouvert === 'kop' ? kopsPour(g) : ouvert === 'plus' ? plusPour(g) : '');
   }).join('')}</div>`;
+}
+
+/* ------------------------------------------------- la tribune des amis
+
+   Les amis **debout dans ta tribune**, en pied : ceux qui jouent devant,
+   dans le projecteur (Au Virage, En duel, En ligne), les autres derrière,
+   dans l'ombre. Neuf places au plus, trois par rang ; le reste attend dans
+   la liste. Une place vide invite quelqu'un, quand le téléphone sait
+   partager un lien. Toucher un ami ouvre sa fiche. */
+const ORDRE_PRESENCE = { virage: 0, duel: 1, en_ligne: 2 };
+const PLACES = 9;
+/* Du premier rang au dernier : la taille de la boîte d'un Fanzzy. */
+const RANGS = [{ l: 108, h: 150 }, { l: 92, h: 118 }, { l: 78, h: 96 }];
+
+/** Le dessin en pied d'un joueur, tel qu'il s'est choisi (ou dans `etat`). */
+function enPied(g, etat) {
+  return (g?.avatar && window.FZART?.dessinAvatar?.(g.avatar, 'plein', etat ? { etat } : {}))
+    || window.FZART?.adresse?.(g?.fanzzy, 'plein') || null;
+}
+
+function tribune() {
+  const tous = S.amis.map((g, i) => ({ g, i }))
+    .sort((a, b) => (ORDRE_PRESENCE[a.g.presence] ?? 9) - (ORDRE_PRESENCE[b.g.presence] ?? 9) || a.i - b.i)
+    .map((x) => x.g);
+  const inviter = Boolean(window.TBF_PARTAGE?.possible) && tous.length < PLACES;
+  const places = tous.slice(0, PLACES).map((g) => {
+    const joue = PRESENCE.has(g.presence);
+    const src = enPied(g, joue ? 'joie' : null);
+    /* Le sticker de présence reste hors du bouton : il dit où est l'ami,
+       il ne se touche pas (§ 18.1). Le Fanzzy, lui, ouvre sa fiche. */
+    return `<div class="place ${joue ? 'joue' : 'ombre'}">${presence(g, 'data-presence-tribune')}<button class="toucher" data-fiche="${esc(g.id)}"
+        aria-label="La fiche de ${esc(g.pseudo)}"><span class="pied">${src
+        ? `<img src="${esc(src)}" alt="" decoding="async" data-caler>` : ''}</span><span class="n">${esc(g.pseudo)}</span></button></div>`;
+  });
+  if (inviter) {
+    places.push(`<div class="place inviter"><button class="toucher" data-convier aria-label="Inviter quelqu’un"><span class="pied"><span>+<br>INVITER<br>UN POTE</span></span></button></div>`);
+  }
+  const rangs = [];
+  for (let i = 0; i < places.length; i += 3) rangs.push(places.slice(i, i + 3));
+  const enLigne = tous.filter((g) => PRESENCE.has(g.presence)).length;
+  /* Le premier rang se dessine en dernier : il passe devant les autres. */
+  const html = rangs.map((r, i) => {
+    const t = RANGS[i] ?? RANGS[RANGS.length - 1];
+    return `<div class="rang" style="--l:${t.l}px;--h:${t.h}px">${r.join('')}</div>`;
+  }).reverse().join('');
+  const reste = tous.length - Math.min(tous.length, PLACES);
+  return `<div class="tribune"><h2><span>TA TRIBUNE${enLigne ? ` · ${enLigne} EN JEU` : ''}</span></h2>${html}${
+    reste > 0 ? `<p class="encore">et ${reste} de plus, plus bas</p>` : ''}</div>`;
 }
 
 /**
@@ -904,8 +1109,17 @@ function filGestes() {
     const jeu = GESTES_DU_JEU.get(f.geste);
     const etat = g?.etat ?? jeu?.[1] ?? 'neutre';
     const mot = g ? `<span class="mot">${esc(g.mot)}</span>` : esc(jeu?.[0] ?? '');
+    /* On répond d'un toucher : un geste ouvre sa fiche sur la roue des
+       gestes ; un cadeau se remercie tout de suite (« MERCI ! »). Seulement
+       à un ami : le fil n'en sert pas d'autres, mais un ami retiré depuis
+       peut y rester jusqu'à la relecture. */
+    const ami = S.amis.some((x) => String(x.id) === String(f.de.id));
+    const rep = !ami ? ''
+      : f.geste === 'cadeau'
+        ? `<button class="bt tbf-plaque" data-ton="vert" data-merci="${esc(f.de.id)}">MERCI !</button>`
+        : `<button class="bt tbf-plaque" data-ton="violet" data-repondre="${esc(f.de.id)}">RÉPONDRE</button>`;
     return `<div class="signe${f.neuf ? ' neuf' : ''}">${busteEn(f.de, etat)}
-      <span><b>${esc(f.de.pseudo)}</b> ${mot}<small>${quand(f.le)}</small></span></div>`;
+      <span class="dit"><b>${esc(f.de.pseudo)}</b> ${mot}<small>${quand(f.le)}</small></span>${rep}</div>`;
   }).join('') + '</div>';
 }
 
@@ -924,12 +1138,13 @@ async function chargerFiche() {
   /* Son PASS, à côté : la route publique de sa carte de supporter. */
   const id = String(S.ficheId);
   if (S.fichePass?.id !== id) {
-    S.fichePass = { id, badge: null };
+    S.fichePass = { id, badge: null, distinctions: [] };
     fetch(`/api/abonnement/badge/${encodeURIComponent(id)}`, { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (S.fichePass?.id !== id || !d?.badge) return;
-        S.fichePass.badge = d.badge;
+        if (S.fichePass?.id !== id || (!d?.badge && !d?.distinctions?.length)) return;
+        S.fichePass.badge = d.badge ?? null;
+        S.fichePass.distinctions = Array.isArray(d.distinctions) ? d.distinctions : [];
         if (S.vue === 'fiche') rendre();
       }).catch(() => {});
   }
@@ -961,32 +1176,92 @@ function vueFiche() {
   const g = (x) => Array.isArray(pa?.gains) && pa.gains.includes(x);
   const fond = k && g('fond_profil') ? ` style="--pass-fond:url('${P.image(k.fond_profil)}');--pass:${esc(pa.couleur ?? '#c9772e')}" data-pass-fond` : (pa ? ` style="--pass:${esc(pa.couleur ?? '#c9772e')}"` : '');
   const cadre = k && g('cadre_profil') ? P.img(k.cadre_profil, 'pass-cadre-buste') : '';
-  let html = retour + `<div class="fiche-tete"${fond}${pa ? ' data-pass' : ''}><span class="fiche-buste">${busteEn(a, 'joie')}${cadre}</span>
-    <span><b${g('badge_or') ? ' class="pass-or"' : ''}>${esc(a.pseudo)}</b>${pa && P ? ` ${P.badge(pa, 'moyen')}` : ''}${
-      g('titre') && pa.titre ? `<em class="pass-titre">${esc(pa.titre)}</em>` : ''}<small>${[niv, clubs].filter(Boolean).join(' · ')}</small></span></div>`;
+  const titre = g('titre') && pa.titre ? `<em class="pass-titre">${esc(pa.titre)}</em>` : '';
+  const badges = `${pa && P ? ` ${P.badge(pa, 'moyen')}` : ''}${
+    S.fichePass?.id === String(a.id) && S.fichePass.distinctions?.length && P?.distinctions
+      ? ` ${P.distinctions(S.fichePass.distinctions, 'moyen')}` : ''}`;
+  /* Où il est, s'il le montre : sa présence vient de la liste des amis. */
+  const dansLaListe = S.amis.find((x) => String(x.id) === String(a.id));
+  /* **Ce qu'il t'a dit en dernier** (le fil des sept derniers jours) : la
+     bulle au-dessus de sa tête, et son Fanzzy dans l'expression du geste. */
+  const dernier = S.fil.find((f) => String(f.de?.id) === String(a.id) && MOT_DU_GESTE.has(f.geste));
+  const etat = dernier ? MOT_DU_GESTE.get(dernier.geste).etat : 'joie';
+  const src = enPied(a, etat);
+  const c = F.actif ? F.cadeau : null;
+  const peutOffrir = c && !c.offert && c.restants > 0;
+  const moiDit = S.envoi && S.envoi.id === String(a.id) ? MOT_DU_GESTE.get(S.envoi.geste)?.mot : null;
+  const ICO = {
+    gestes: '<svg viewBox="0 0 24 24"><path d="M4 5h16v10H9l-5 4z"/></svg>',
+    cadeau: '<svg viewBox="0 0 24 24"><path d="M3 9h18v4H3zM5 13h14v8H5zM12 9v12M12 9c-2-4-6-4-6-1.5S9 9 12 9c3 0 6 0 6-1.5S14 5 12 9z"/></svg>',
+    duel: '<svg viewBox="0 0 24 24"><path d="M4 4l7 7M20 4l-7 7M12 13v7M8 20h8"/></svg>',
+    collec: '<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>',
+    defi: '<svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"/></svg>',
+    kop: '<svg viewBox="0 0 24 24"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 20a5 5 0 0 0-3-4.6M16 11a3 3 0 0 0 0-6"/></svg>',
+  };
+  const cases = !F.actif ? '' : `
+    <div class="rail g">
+      <button class="tbf-case" data-ton="violet" data-roue aria-pressed="${Boolean(S.roue)}">${ICO.gestes}<span class="lib">GESTES</span></button>
+      ${peutOffrir
+        ? `<button class="tbf-case" data-ton="vert" data-cadeau aria-label="Offrir ${c.echarpes} écharpes">${ICO.cadeau}<span class="lib">CADEAU</span><b class="pt">1</b></button>`
+        : `<a class="tbf-case fait" data-ton="vert" href="#b-cadeau">${ICO.cadeau}<span class="lib">OFFERT</span></a>`}
+      <a class="tbf-case" data-ton="flare" href="/duel-nvn">${ICO.duel}<span class="lib">DUEL</span></a>
+    </div>
+    <div class="rail d">
+      <a class="tbf-case" data-ton="bleu" href="#b-collection">${ICO.collec}<span class="lib">COLLEC.</span></a>
+      <a class="tbf-case" data-ton="or" href="#b-defi">${ICO.defi}<span class="lib">DÉFI</span></a>
+      ${S.kops.length
+        ? `<button class="tbf-case" data-ton="violet" data-kop="${esc(a.id)}" aria-expanded="${deplie(a) === 'kop'}">${ICO.kop}<span class="lib">KOP</span></button>`
+        : `<a class="tbf-case" data-ton="violet" href="/kop">${ICO.kop}<span class="lib">KOP</span></a>`}
+    </div>`;
+  /* La roue : les dix gestes, en cercle autour de lui. Toujours dans la page
+     (le lecteur d'écran les trouve sous « FAIS-LUI SIGNE ») ; elle ne se
+     montre qu'ouverte. */
+  const n = GESTES.length;
+  const roue = !F.actif ? '' : `<div class="roue${S.roue ? ' on' : ''}" id="roue">
+      <button class="voile" data-roue aria-label="Fermer les gestes"></button>
+      <h3>FAIS-LUI SIGNE</h3>
+      <p class="dire">Un geste, jamais un texte : il le verra sur sa page d’amis.</p>
+      <div class="bulles">${GESTES.map(([id, mot], i) => {
+        const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
+        const x = 50 + 41 * Math.cos(ang);
+        const y = 50 + 44 * Math.sin(ang);
+        const r = ((i * 37) % 9) - 4;
+        return `<button data-geste="${id}" style="--x:${x.toFixed(1)}%;--y:${y.toFixed(1)}%;--r:${r}deg;--i:${i}">${esc(mot)}</button>`;
+      }).join('')}</div>
+    </div>`;
+  let html = `<div class="scene-ami"${fond}${pa ? ' data-pass' : ''}>${retour}
+    <div class="heros">${src ? `<img src="${esc(src)}" alt="Le Fanzzy de ${esc(a.pseudo)}" data-caler-heros>` : ''}</div>
+    ${dernier && !S.roue ? `<div class="bulle lui">${esc(MOT_DU_GESTE.get(dernier.geste).mot)}<small>${quand(dernier.le)}</small></div>` : ''}
+    ${moiDit ? `<div class="bulle moi">${esc(moiDit)}</div>` : ''}
+    ${cases}
+    <div class="plaque"><span class="fiche-buste">${busteEn(a, 'joie')}${cadre}</span>
+      <span class="qui"><b${g('badge_or') ? ' class="pass-or"' : ''}>${esc(a.pseudo)}</b>${badges}${
+        dansLaListe ? presence(dansLaListe, 'data-presence-fiche') : ''}${titre}<small>${[niv, clubs].filter(Boolean).join(' · ')}</small></span></div>
+    ${roue}
+  </div>`;
   if (!F.actif) {
     return html + '<div class="vide">Les jeux entre amis sont en pause pour l’instant.</div>';
   }
+  if (deplie(a) === 'kop') html += kopsPour(a);
 
-  // Les gestes.
-  html += `<div class="bloc"><h3>FAIS-LUI SIGNE</h3>
-    <p>Un geste, jamais un texte : il le verra sur sa page d’amis.</p>
-    <div class="gestes">${GESTES.map(([id, mot]) =>
-      `<button class="bt tbf-plaque" data-geste="${id}">${esc(mot)}</button>`).join('')}</div></div>`;
-
-  // Le cadeau du jour.
-  const c = F.cadeau;
-  html += `<div class="bloc"><h3>LE CADEAU DU JOUR</h3>
-    <p>Offre-lui ${c.echarpes} écharpes, une fois par jour. Le jeu les donne : ça ne te coûte rien,
-      et ça te rapporte un petit merci.</p>
-    ${c.offert ? '<p><b>Déjà offert aujourd’hui.</b> Reviens demain.</p>'
-      : c.restants > 0 ? `<button class="bt tbf-plaque plein" data-ton="vert" data-cadeau>OFFRIR ${c.echarpes} ÉCHARPES</button>`
-        : '<p><b>Tu as offert tous tes cadeaux du jour.</b></p>'}</div>`;
-
-  // Le défi de la semaine.
+  // Le cadeau du jour et le défi, côte à côte sous la scène.
   const d = F.defi;
   const fait = Math.min(d.cible, d.moi + d.lui);
-  html += `<div class="bloc"><h3>LE DÉFI DE LA SEMAINE</h3>
+  html += `<div class="duo-taches">
+    <div class="tache" id="b-cadeau"><h3>LE CADEAU DU JOUR</h3>
+      <p>${c.echarpes} écharpes, une fois par jour. Le jeu les donne : ça ne te coûte rien.</p>
+      ${c.offert ? '<p><b>Déjà offert aujourd’hui.</b> Reviens demain.</p>'
+        : c.restants > 0 ? `<button class="bt tbf-plaque" data-ton="vert" data-cadeau>OFFRIR ${c.echarpes} ÉCHARPES</button>`
+          : '<p><b>Tu as offert tous tes cadeaux du jour.</b></p>'}</div>
+    <div class="tache"><h3>DÉFI À DEUX</h3>
+      <p>${fait} / ${d.cible} chants au Virage</p>
+      <div class="jauge" role="img" aria-label="${fait} sur ${d.cible}"><i style="width:${Math.round(100 * fait / d.cible)}%"></i></div>
+      <a class="bt tbf-plaque" data-ton="or" href="#b-defi">VOIR LE DÉFI</a></div>
+  </div>
+  <a class="tbf-plaque ensemble-virage" data-ton="flare" href="/virage">JOUER ENSEMBLE AU VIRAGE</a>`;
+
+  // Le défi de la semaine, en entier.
+  html += `<div class="bloc" id="b-defi"><h3>LE DÉFI DE LA SEMAINE</h3>
     <p>Réussissez ${d.cible} chants au Virage à vous deux d’ici dimanche soir : ${d.echarpes} écharpes
       chacun. Chacun doit en réussir au moins un.</p>
     <div class="jauge" role="img" aria-label="${fait} sur ${d.cible}"><i style="width:${Math.round(100 * fait / d.cible)}%"></i></div>
@@ -1018,7 +1293,7 @@ function vueFiche() {
 
   // Sa collection.
   const col = F.collection;
-  html += `<div class="bloc"><h3>SA COLLECTION</h3>
+  html += `<div class="bloc" id="b-collection"><h3>SA COLLECTION</h3>
     <p>${col.total} Fanzzy, dont ${col.communs} que tu as aussi. Touche un Fanzzy pour l’emprunter
       ou l’échanger.</p>
     <div class="grille">${col.siens.map((f) => `<button class="carte${S.carte === f.id ? ' choisie' : ''}"
@@ -1075,10 +1350,12 @@ function rendre() {
   if (S.vue === 'fiche') {
     document.querySelector('[data-vue="amis"]')?.classList.add('on');
     $('corps').innerHTML = vueFiche();
+    poserLesPieds();
     return;
   }
   $('corps').innerHTML = S.vue === 'amis' ? vueAmis()
     : S.vue === 'demandes' ? vueDemandes() : vueTrouver();
+  poserLesPieds();
   /* Les gestes neufs sont vus dès qu'ils s'affichent : la pastille du menu
      ne doit plus les compter. */
   if (S.vue === 'amis' && S.fil.some((f) => f.neuf)) {
@@ -1086,6 +1363,19 @@ function rendre() {
     S.fil = S.fil.map((f) => ({ ...f, neuf: false }));
     try { sessionStorage.removeItem('tbf-etat-amis'); } catch { /* rien de retenu */ }
   }
+}
+
+/**
+ * Les Fanzzy en pied, posés comme sur l'accueil : à la taille de leur âge,
+ * pieds au sol (`TBF_ETATS.caler`). Sans mesure, le dessin garde la règle
+ * de la feuille (il tient sa boîte, pieds en bas).
+ */
+const PART_HEROS = { 1: 0.54, 2: 0.6, 3: 0.66 };
+function poserLesPieds() {
+  const E = window.TBF_ETATS;
+  if (!E?.caler) return;
+  $('corps').querySelectorAll('img[data-caler]').forEach((img) => E.caler(img, { part: 0.92, sol: '0px' }));
+  $('corps').querySelectorAll('img[data-caler-heros]').forEach((img) => E.caler(img, { part: PART_HEROS, sol: '15%' }));
 }
 
 /* ------------------------------------------------------------- gestes */
@@ -1111,7 +1401,8 @@ $('corps').onclick = async (e) => {
     + 'button[data-kopoui],button[data-kopnon],button[data-convier],button[data-fiche],'
     + 'button[data-retour],button[data-ensemble],button[data-carte],button[data-echanger],'
     + 'button[data-geste],button[data-cadeau],button[data-defi],button[data-emprunter],'
-    + 'button[data-donne],button[data-echoui],button[data-echnon]');
+    + 'button[data-donne],button[data-echoui],button[data-echnon],button[data-roue],'
+    + 'button[data-repondre],button[data-merci]');
   if (!b) return;
   const d = b.dataset;
 
@@ -1119,13 +1410,42 @@ $('corps').onclick = async (e) => {
      serveur se redessine sur place ; un geste relit la fiche. */
   if (d.fiche) {
     Object.assign(S, { vue: 'fiche', ficheId: d.fiche, fiche: null, carte: null, echangeAvec: null,
-      deplie: null });
+      deplie: null, roue: false });
     rendre();
     window.scrollTo?.(0, 0);
     chargerFiche();
     return;
   }
-  if (d.retour !== undefined) { S.vue = 'amis'; rendre(); return; }
+  if (d.retour !== undefined) { S.vue = 'amis'; S.roue = false; rendre(); return; }
+  /* La roue des gestes s'ouvre et se ferme sur place. */
+  if (d.roue !== undefined) {
+    S.roue = !S.roue;
+    rendre();
+    if (S.roue) $('roue')?.querySelector('[data-geste]')?.focus({ preventScroll: true });
+    return;
+  }
+  /* Répondre à un geste reçu : sa fiche, la roue déjà ouverte. */
+  if (d.repondre) {
+    Object.assign(S, { vue: 'fiche', ficheId: d.repondre, fiche: null, carte: null, echangeAvec: null,
+      deplie: null, roue: true });
+    rendre();
+    window.scrollTo?.(0, 0);
+    chargerFiche();
+    return;
+  }
+  /* Remercier d'un cadeau : le geste « MERCI ! », sans quitter la liste. */
+  if (d.merci) {
+    b.disabled = true;
+    try {
+      await ensemble('/geste', { method: 'POST', body: { id: d.merci, geste: 'merci' } });
+      toast('Merci envoyé.');
+    } catch (err) {
+      if (err.message === 'auth') return;
+      b.disabled = false;
+      toast(dire(err), { erreur: true });
+    }
+    return;
+  }
   if (d.ensemble !== undefined) { S.ensembleOuvert = true; rendre(); return; }
   if (d.carte) {
     S.carte = S.carte === d.carte ? null : d.carte;
@@ -1143,6 +1463,15 @@ $('corps').onclick = async (e) => {
       if (d.geste) {
         await ensemble('/geste', { method: 'POST', body: { id, geste: d.geste } });
         toast('Geste envoyé.');
+        /* Ta bulle part vers lui, la roue se ferme ; la bulle s'efface seule. */
+        S.roue = false;
+        S.envoi = { id: String(id), geste: d.geste };
+        clearTimeout(S.envoiT);
+        S.envoiT = setTimeout(() => {
+          S.envoi = null;
+          if (S.vue === 'fiche') rendre();
+        }, 3200);
+        window.FX?.son?.('tic');
       } else if (d.cadeau !== undefined) {
         const r = await ensemble('/cadeau', { method: 'POST', body: { id } });
         window.FX?.son?.('parfait');

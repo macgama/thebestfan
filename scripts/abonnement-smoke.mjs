@@ -451,7 +451,10 @@ check('tous les formats de duel restent ouverts à tous',
     'passDuJoueur', 'anciensEnVente', 'tenuesAuxBoosters', 'saisonPassee',
     /* **Être vu** (4 novembre 2026) : le badge complet de quelques joueurs,
        pour l'affiche du duel, le podium et la fiche d'un ami. Du visuel. */
-    'vitrinesDe'];
+    'vitrinesDe',
+    /* **Les distinctions** (6 novembre 2026) : le badge Fondateur, offert par
+       l'administration, lu à côté des pseudos. Du visuel. */
+    'distinctionsDe'];
   check(`le PASS n’ouvre que le rythme, la mémoire, la largeur et le visuel (${portes.length})`,
     portes.length === attendues.length && portes.every((p) => attendues.includes(p))
     || (console.log('        portes :', portes.join(', ')), false));

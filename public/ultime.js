@@ -2460,6 +2460,10 @@
     'SU42-e1-apocalyptique': 'SU42-e1-apocalyptique.5bf76f4a.webp',
     'SU42-e1-halloween': 'SU42-e1-halloween.8d555c98.webp',
     'SU42-e1-prehistorique': 'SU42-e1-prehistorique.ffa02e34.webp',
+    'TB1-e1': 'TB1-e1.a16f1249.webp',
+    'TB1-e1-apocalyptique': 'TB1-e1-apocalyptique.f7b6f1ce.webp',
+    'TB1-e1-halloween': 'TB1-e1-halloween.0eae0f23.webp',
+    'TB1-e1-prehistorique': 'TB1-e1-prehistorique.bf6c4a82.webp',
     'VP1-e1': 'VP1-e1.fb27d91b.webp',
     'VP1-e2': 'VP1-e2.63678202.webp',
     'VP1-e3': 'VP1-e3.25f6640b.webp',
@@ -3679,6 +3683,10 @@
     'SU41-e1-prehistorique': 'SU41-e1-prehistorique.1b882985.mp4',
     'SU42-e1': 'SU42-e1.828a1199.mp4',
     'SU42-e1-prehistorique': 'SU42-e1-prehistorique.45ab60d8.mp4',
+    'TB1-e1': 'TB1-e1.daa0e3d3.mp4',
+    'TB1-e1-apocalyptique': 'TB1-e1-apocalyptique.365a86e3.mp4',
+    'TB1-e1-halloween': 'TB1-e1-halloween.5661f813.mp4',
+    'TB1-e1-prehistorique': 'TB1-e1-prehistorique.af9e1718.mp4',
   };
   /* CLIPS: fin */
 
@@ -3752,7 +3760,8 @@
   const doux = () => window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
     || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
 
-  const son = (nom) => { try { window.FX?.son?.(nom); } catch { /* rien */ } };
+  /* Les options (la tenue, la série) passent au moteur par FX.son. */
+  const son = (nom, options) => { try { window.FX?.son?.(nom, options); } catch { /* rien */ } };
   /* La règle de `fx.js` (« buzz »), qu'il n'exporte pas : rien sous le calme
      des vibrations, rien avant le premier geste du joueur. */
   const vibrer = (motif) => {
@@ -3781,15 +3790,27 @@
    */
   function scene(o = {}) {
     const fond = o.grande && o.racine ? image(o.racine, o.age, o.skin) : null;
-    if (!fond) return jouer(o, null);
+    if (!fond) return jouer(o, null, null);
     // Le clip ne joue pas sous le calme : l'image fixe suffit.
     const film = doux() ? null : clip(o.racine, o.age, o.skin);
     return Promise.all([precharger(fond), film ? prechargerClip(film) : null])
       .then(([pret, video]) => jouer(o, pret ? fond : null, pret ? video : null));
   }
 
-  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false } = {}, fond, video = null) {
+  function jouer({ src = '', cri = '', nom = '', couleur = '#F5C33B', grande = false, eux = false,
+    racine = '', skin = 'base' } = {}, fond, video = null) {
+    /* **Le son suit la série et la tenue** (Gaël, 6 novembre 2026) : la
+       tenue colore la montée et le choc, la série signe juste après (voir
+       « les couleurs de l'Ultimate » dans `son.js`). */
+    const tenue = { tenue: skin || 'base' };
+    const serie = { serie: racine || '' };
     poserStyle();
+    /* Le cri est posé lettre à lettre : la traduction automatique de la page
+       ne le reconnaît plus une fois découpé. On le traduit donc ici, avant
+       (le catalogue donne le cri en français ; une chaîne déjà traduite
+       ressort telle quelle). */
+    const tr = (s) => window.TBF_LANGUE?.t?.(s) ?? s;
+    cri = tr(cri); nom = tr(nom);
     // Deux coups fatals à la suite : le second remplace le premier.
     enCours?.couper?.();
     const calme = doux();
@@ -3897,10 +3918,10 @@
       if (grande) {
         /* Le son propre à l'Ultimate (`son.js`) : la montée tient jusqu'au
            choc, l'impact tombe avec l'éclair, puis la tribune. */
-        son('ultime-montee');
+        son('ultime-montee', tenue);
         plus(450, () => son('grondement'));
         plus(choc, () => {
-          son('ultime-impact');
+          son('ultime-impact', tenue);
           el.classList.add('choc');
           if (!plein) window.FX?.secousse?.(2.2);
           vibrer([60, 40, 140]);
@@ -3911,12 +3932,14 @@
             distance: Math.max(innerWidth, innerHeight) * 0.6, taille: 7, duree: 1400 });
         });
         plus(choc + 520, () => el.classList.remove('choc'));
-        plus(choc + 650, () => son(eux ? 'encaisse' : 'ovation'));
+        plus(choc + 260, () => son('ultime-signature', serie));
+        plus(choc + 1100, () => son(eux ? 'encaisse' : 'ovation'));
         plus(d - 450, () => el.classList.add('sort'));
       } else {
         son('charge');
         plus(choc, () => {
           son('rugissement');
+          plus(380, () => son('ultime-signature', serie));
           window.FX?.secousse?.(1.4);
           vibrer([40, 30, 90]);
           window.FX?.onde?.({ x: innerWidth / 2, y: innerHeight * 0.45, couleur, taille: 520 });

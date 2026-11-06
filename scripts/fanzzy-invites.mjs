@@ -311,6 +311,15 @@ const SERIE = {
     + 'a knitted bar scarf in the club colours with no text and no crest, a '
     + 'small enamel pin badge, the costume of an old French trade or local '
     + 'festival tradition',
+  /* THEBESTFAN : le hors-série offert aux bêta-testeurs, aux couleurs de la
+     marque (`dex-thebestfan.js`, prompts dans `fanzzy-prompts/TB-thebestfan.md`). */
+  TB: 'the very first supporter of the game, in the brand colours orange, white '
+    + 'and black: a black bomber jacket with orange cuffs, a long knitted bar '
+    + 'scarf in orange, white and black with no text, a white megaphone',
+  /* CARNET PLEIN : le Fanzzy de fin de carnet de chaque PASS (6 novembre
+     2026), un trophée doré, chacun au thème de sa saison (son histoire). */
+  CP: 'a season trophy supporter with gold accents, a long knitted bar scarf in '
+    + 'gold and dark brown with no text, a small golden stamp-card medal pinned on the chest',
 };
 
 /** Les séries où le personnage n'a pas de corps humain : rien à tirer. */

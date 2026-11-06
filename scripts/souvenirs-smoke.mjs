@@ -175,6 +175,16 @@ check('aucune présence usurpée', r.json.souvenirs[0].fanzzy_id === null);
 r = await call('/api/souvenirs/market');
 check('ce qu\u2019on possède sort du marché', r.json.souvenirs.length === 2);
 
+/* L'album (6 novembre 2026) : une page par club suivi, le club principal
+   d'abord, et le nombre de cartes frappées dans ses matchs. */
+await pool.query('INSERT INTO user_follows (user_id, team_id, is_main) VALUES (?, 92, 1), (?, 85, 0)',
+  [U[2], U[2]]);
+r = await call('/api/souvenirs/album');
+check('l’album a une page par club suivi, le principal d’abord',
+  r.json.clubs?.length === 2 && r.json.clubs[0].id === 92 && r.json.clubs[1].id === 85);
+check('chaque page sait combien de cartes ses matchs ont frappées',
+  r.json.clubs?.[0].total === 0 && r.json.clubs?.[1].total === 3);
+
 who = U[0];
 r = await call('/api/souvenirs/market');
 check('le présent n\u2019a rien à acheter', r.json.souvenirs.length === 0);

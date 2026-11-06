@@ -729,13 +729,13 @@ function fondDeCarte(f) {
  * de ce que mesure `pieds`, comme à l'accueil, pour que **le personnage**
  * prenne la hauteur de son âge, pieds au même endroit.
  */
-const PART_CARTE = { 1: 0.84, 2: 0.9, 3: 0.96 };
+const PART_CARTE = { 1: 0.84, 2: 0.9, 3: 0.96, L: 1.12 };
 const ETAT_SRC = /\/img\/fanzzy\/([A-Z]+\d+)\/e(\d)\//;
 /** Le style qui donne au personnage d'une image d'état la taille de son âge
     sur la carte, ou `null` si l'adresse n'est pas une image d'état mesurée. */
 function styleEtat(src) {
   const m = ETAT_SRC.exec(String(src ?? ''));
-  const t = m ? window.TBF_ETATS?.taille?.(m[1], m[2], PART_CARTE[m[2]]) : null;
+  const t = m ? window.TBF_ETATS?.taille?.(m[1], m[2], PART_CARTE) : null;
   /* `left:50%`, largeur propre à l'image, recentrée par `translate` : le
      cadre d'un âge (560 × 960) agrandi à la taille de l'âge est plus large
      que les 150 % de la carte, et `contain` le réduisait sur sa largeur. Le
@@ -757,7 +757,7 @@ function poserAuSol(img) {
   const e = ETAT_SRC.exec(img?.getAttribute?.('src') ?? '');
   /* Avec l'image : sans mesure au catalogue, elle se mesure elle-même, et
      la taille de l'âge est posée ici même si le HTML est né sans elle. */
-  const t = m && e ? window.TBF_ETATS?.taille?.(e[1], e[2], PART_CARTE[e[2]], img) : null;
+  const t = m && e ? window.TBF_ETATS?.taille?.(e[1], e[2], PART_CARTE, img) : null;
   if (!t) return;
   const h = parseFloat(t.hauteur) / 100;
   Object.assign(img.style, { height: t.hauteur, left: '50%', width: 'auto', maxWidth: 'none' });

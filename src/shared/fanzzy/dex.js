@@ -12,6 +12,8 @@ import { SET_SAISON, DEX_SAISON } from './dex-saison.js';
 import { SET_TERRACES, DEX_TERRACES } from './dex-terraces.js';
 import { SET_KURVE, DEX_KURVE } from './dex-kurve.js';
 import { SET_PARCAGE, DEX_PARCAGE } from './dex-parcage.js';
+import { SET_THEBESTFAN, DEX_THEBESTFAN } from './dex-thebestfan.js';
+import { SET_CARNET_PLEIN, DEX_CARNET_PLEIN } from './dex-carnet-plein.js';
 import { AGES } from './dex-ages.js';
 import { agesDe, idDuStade } from './ages.js';
 import { reglage } from '../reglages.js';
@@ -757,7 +759,7 @@ const RATES = table(2);
 /* LES TERRACES viennent après, puis DIE KURVE : leurs suites, elles, passent
    par `AGES`. */
 const PREMIERS = [...DEX, ...DEX_2026, ...DEX_LEGENDES, ...DEX_NEUVES, ...DEX_SAISON,
-  ...DEX_TERRACES, ...DEX_KURVE, ...DEX_PARCAGE];
+  ...DEX_TERRACES, ...DEX_KURVE, ...DEX_PARCAGE, ...DEX_THEBESTFAN, ...DEX_CARNET_PLEIN];
 const PREMIER_PAR_ID = new Map(PREMIERS.map((f) => [f.id, f]));
 
 const SUITES = [];
@@ -805,7 +807,7 @@ const TOUT = [...PREMIERS, ...SUITES];
    Voir `dex-terraces.js`. DIE KURVE suit, fermée elle aussi (`dex-kurve.js`), puis LE PARCAGE
    (`dex-parcage.js`, 6 novembre 2026). */
 const TOUS_SETS = [...SETS, ...SETS_2026, ...SETS_NEUVES, SET_SAISON, SET_TERRACES, SET_KURVE,
-  SET_PARCAGE];
+  SET_PARCAGE, SET_THEBESTFAN, SET_CARNET_PLEIN];
 
 // Un identifiant en double ferait taire une carte sans le dire : la seconde
 // écraserait la première dans BY_ID, et elle disparaîtrait des tirages sans

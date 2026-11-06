@@ -53,7 +53,9 @@ import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createEnsemble } from './src/server/amis/ensemble.js';
 import { createPresence } from './src/server/presence/index.js';
+import { createCadeaux } from './src/server/cadeaux/index.js';
 import { createFrequentation } from './src/server/frequentation/index.js';
+import { createUsage } from './src/server/usage/index.js';
 import { createNotifications } from './src/server/notifications/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
@@ -326,6 +328,11 @@ if (process.env.DATABASE_URL) {
 
     app.use(auth.attachUser);
 
+    /* L'usage : une ouverture de page d'un joueur connecté ajoute un au
+       compteur du jour de cette page (`src/server/usage`), pour le menu
+       JOUEURS › USAGE de l'administration. Un nombre, jamais une heure. */
+    app.use(createUsage({ pool }).noter);
+
     /* ---- la présence (vague 2, lot 6 ; `CONTRATS.md`, § 18)
 
        Montée **ici**, juste après la session, parce que c'est ici qu'une
@@ -559,6 +566,11 @@ if (process.env.DATABASE_URL) {
        Après la fermeture du jeu, comme toute route nouvelle : un jeu fermé
        ferme aussi l'interrupteur, et le tiroir lit le 503 comme une absence. */
     app.use('/api/presence', presence.router);
+
+    /* ---- les cadeaux de l'administration, annoncés au joueur
+       (`cadeaux/index.js`) : relus dans `admin_audit`, après la fermeture
+       du jeu comme toute route nouvelle. */
+    app.use('/api/cadeaux', createCadeaux({ pool, requireAuth: auth.requireAuth }).router);
 
     /* ---- les notifications : l'inscription d'un appareil, depuis le compte.
        Après la fermeture du jeu, comme l'interrupteur de présence. */

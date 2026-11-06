@@ -391,6 +391,10 @@ check('et il est court', vote.fermeDansMs === DUREE_VOTE_MS);
 etat = await K.etat(kop.id, U[1]);
 check('celui qui propose a voté pour d’office', etat.vote?.monBulletin === 1);
 check('le décompte est visible en direct', etat.vote?.pour === 1 && etat.vote?.contre === 0);
+/* Le duel de la page (6 novembre 2026) : on voit qui a voté quoi. */
+check('et l’on voit qui a voté quoi, à main levée',
+  etat.vote?.bulletins?.length === 1 && etat.vote.bulletins[0].id === U[1]
+  && etat.vote.bulletins[0].pour === true);
 
 try {
   await K.proposer(U[2], kop.id, 'souffle');
@@ -1002,7 +1006,9 @@ console.log('\n— les visages des membres —');
     || (console.log('        il porte :', JSON.stringify(par.get(U[1]))), false));
   check('le niveau s’arrête au maximum', par.get(U[2])?.niveau === 30);
 
-  const CLES = new Set(['id', 'pseudo', 'verse', 'depuis', 'createur', 'avatar', 'niveau']);
+  // `teinte` et `etoiles` : les cadeaux du niveau (6 novembre 2026), absents s'il n'y en a pas.
+  const CLES = new Set(['id', 'pseudo', 'verse', 'depuis', 'createur', 'avatar', 'niveau',
+    'teinte', 'etoiles']);
   const vu = await Kv.etat(kop.id, U[4]);
   const enTrop = vu.membres.flatMap((m) => Object.keys(m).filter((c) => !CLES.has(c)));
   check('un non-membre lit la tribune sans aucun champ de plus',
