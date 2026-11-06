@@ -1,5 +1,26 @@
 # À déposer sur Infomaniak
 
+**Missions et tampons mis en avant** (branche `claude/project-thread-8ynk3z`,
+6 novembre 2026, demande de Gaël). Code seul, sans schéma : une carte MISSIONS
+en haut à gauche de l'accueil (faites sur le total, ce qui est à récupérer),
+une alerte « MISSION RÉUSSIE ! » et une alerte de niveau de la voie PASS dans
+la même case que le changement de niveau, et l'encadré « Comment gagner des
+tampons » sous le carnet (onglet SAISON). Traduit, QUESTIONS et /comment-jouer
+à jour. Après la mise en ligne : « Redémarrer ».
+
+---
+
+**Le niveau offre un cadeau visible à chaque palier** (branche
+`claude/project-thread-r8x75z`, 6 novembre 2026, choix de Gaël « Récompenses à
+chaque palier »). Code seul, sans schéma : un titre de tribune par niveau
+(sous le pseudo du profil), la pastille de niveau en bronze (10), argent (15),
+or (20), rubis (25) et légende (30), vue aussi au classement, chez les amis et
+dans le KOP, et au-delà du 30 une étoile tous les 2 000 XP. La fête de niveau
+les annonce. Tout se déduit de l'XP : les joueurs déjà montés les reçoivent
+d'un coup. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **L'administration sur toute la largeur de l'écran** (branche
 `claude/project-thread-cgkjy6`, 6 novembre 2026, demande de Gaël). Page
 /admin seule, sans schéma : plus de plafond à 1 100 px, le tableau JOUEURS ›

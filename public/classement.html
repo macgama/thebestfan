@@ -406,11 +406,14 @@ const dessinsP = Promise.race([
    que le dessin ne répond pas. Jamais un « NIV. 1 » par défaut : le niveau
    n'est posé que s'il est servi. */
 const initiale = (pseudo) => esc([...String(pseudo ?? '?').trim()][0] ?? '?');
-function buste(avatar, pseudo, { taille = null, niveau = null } = {}) {
+function buste(avatar, pseudo, { taille = null, niveau = null, teinte = null, etoiles = 0 } = {}) {
   const src = avatar?.id ? window.FZART?.dessinAvatar?.(avatar, 'buste') : null;
   const style = taille ? ` style="--taille:${taille}px"` : '';
+  // La matière de la pastille et les étoiles : les cadeaux du niveau.
+  const marques = (teinte ? ` data-teinte="${esc(teinte)}"` : '')
+    + (Number(etoiles) > 0 ? ` data-etoiles="${Number(etoiles)}"` : '');
   const niv = Number(niveau) >= 1
-    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv">${Number(niveau)}</b>` : '';
+    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv"${marques}>${Number(niveau)}</b>` : '';
   return `<span class="tbf-buste"${style} aria-hidden="true" data-initiale="${initiale(pseudo)}">${
     src ? `<img src="${esc(src)}" alt="">` : initiale(pseudo)}${niv}</span>`;
 }
@@ -541,7 +544,7 @@ function marche(x, i, L) {
   const visage = L.logo
     ? `<span class="tbf-buste blason" aria-hidden="true" data-initiale="${initiale(L.nom)}"><img
         src="${esc(L.logo)}" alt=""></span>`
-    : buste(x.avatar, L.nom, { niveau: x.niveau });
+    : buste(x.avatar, L.nom, { niveau: x.niveau, teinte: x.teinte, etoiles: x.etoiles });
   return `<li data-rang="${i + 1}"${colle}>${visage}
     <div class="tbf-podium-bache">
       <b class="tbf-podium-rang">${i + 1}</b>

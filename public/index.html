@@ -593,6 +593,37 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   grid-row:1 / 3;align-self:stretch;min-height:0;padding-top:var(--sous-haut)}
 .centre>nav.rail:first-of-type{grid-column:1}
 .centre>nav.rail:last-of-type{grid-column:3}
+/* **Les missions du jour, en tête du rail de gauche** (6 novembre 2026,
+   demande de Gaël : « les missions ne sont pas très bien mises en
+   évidence »). Un petit ticket kraft, à hauteur de tête, sous la bande du
+   haut : la cible, MISSIONS, « 1/3 » et une pastille par mission — pleine
+   quand elle est finie. Une mission à récupérer met le sticker or au coin et
+   fait battre le ticket. `margin-bottom:auto` le garde en haut : les tuiles,
+   elles, restent posées au pied de la scène. */
+.missions-carte{position:relative;flex:none;margin:6px 0 auto;display:block;text-decoration:none;
+  color:var(--encre)}
+.missions-carte[hidden]{display:none}
+/* Le papier rogne ce qui dépasse (sa déchirure) : le sticker est donc posé
+   sur le lien, à côté de lui, et non dedans. */
+.missions-carte .mc-papier{display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:7px 4px 9px;text-align:center;line-height:1}
+.missions-carte svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.missions-carte .mc-lib{font-family:var(--banner);font-weight:700;font-size:10px;letter-spacing:.06em}
+.missions-carte .mc-compte{font-family:var(--banner);font-weight:700;font-size:19px;
+  font-variant-numeric:tabular-nums}
+.missions-carte .mc-pions{display:flex;gap:4px;margin-top:2px}
+.missions-carte .mc-pions i{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1.5px var(--encre);
+  background:transparent}
+.missions-carte .mc-pions i[data-etat=fait]{background:var(--vert-fonce,#2f6b3a)}
+.missions-carte .mc-pions i[data-etat=pret]{background:var(--projo,#f5c33b)}
+.missions-carte .mc-pret{position:absolute;z-index:1;right:-5px;top:-6px;min-width:22px;justify-content:center;
+  padding:2px 5px;font-size:12px}
+.missions-carte[data-pret]{animation:mc-bat 2.4s ease-in-out infinite}
+@keyframes mc-bat{0%,82%,100%{transform:none}88%{transform:scale(1.07) rotate(-2deg)}94%{transform:scale(.98)}}
+@media (prefers-reduced-motion:reduce){.missions-carte[data-pret]{animation:none}}
+html[data-calme~="animations"] .missions-carte[data-pret]{animation:none}
+
 /* **Cinquante-huit pixels de haut sur un écran court** (amendement 14), et
    carrée dès que la hauteur le permet. La tuile reste aussi large que le
    rail — c'est la largeur qui fait tenir « CLASSEMENT » à onze pixels, voir
@@ -2022,6 +2053,20 @@ html[data-calme~="animations"] .ouverture .fan img{animation:none}
            « NIV. N » sous scotch quand une porte n'est pas encore ouverte. Trois
            au plus à la fois ; c'est `etatsDuHub` qui les pose. -->
       <nav class="rail" aria-label="Le jeu">
+        <!-- Les missions du jour, en tête du rail de gauche, à hauteur de
+             tête (demande de Gaël, 6 novembre 2026 : « les missions ne sont
+             pas très bien mises en évidence ») : combien sont faites, une
+             pastille par mission, et l'or quand une attend RÉCUPÉRER. Née
+             cachée : `carteMissions` la montre quand le jour est servi. -->
+        <a class="missions-carte" id="missionsCarte" href="/aide#jour" hidden>
+          <span class="tbf-ticket mc-papier">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 11.5v1"/></svg>
+            <span class="mc-lib">MISSIONS</span>
+            <b class="mc-compte" id="missionsCompte"></b>
+            <span class="mc-pions" id="missionsPions" aria-hidden="true"></span>
+          </span>
+          <span class="tbf-sticker mc-pret" data-ton="or" id="missionsPret" hidden></span>
+        </a>
         <a class="tbf-case" data-ton="flare" href="/virage">
           <svg viewBox="0 0 24 24"><path d="M3 20l9-16 9 16zM7 20l5-9 5 9"/></svg><span class="lib">VIRAGE</span></a>
         <a class="tbf-case" data-ton="bleu" href="/fanzzy" id="caseFanzzy">
@@ -3516,6 +3561,11 @@ function poserNiveau(niv) {
   const p = $('nivPastille');
   p.textContent = niv.niveau;
   p.hidden = false;
+  // Les cadeaux du niveau : la matière de la pastille et les étoiles.
+  const teinte = niv.teinte ?? niv.vu?.teinte;
+  const etoiles = Number(niv.etoiles ?? niv.vu?.etoiles) || 0;
+  if (teinte) p.dataset.teinte = teinte; else delete p.dataset.teinte;
+  if (etoiles > 0) p.dataset.etoiles = String(etoiles); else delete p.dataset.etoiles;
   p.title = niv.max
     ? `Niveau ${niv.niveau}, le dernier`
     : `Niveau ${niv.niveau} · ${niv.dans}/${niv.pour} XP`;
@@ -3678,8 +3728,35 @@ function bandeauDuMonde() {
 }
 
 /** Tout recomposer depuis `H`. */
+/**
+ * La carte des missions, en tête du rail de gauche : faites sur le total du
+ * jour, une pastille par mission (pleine, or, ou vide), et le nombre à
+ * récupérer — missions, sachet et ce qui reste d'hier, `aReclamer` du
+ * serveur. Sans missions servies : cachée (R2).
+ */
+function carteMissions() {
+  const c = $('missionsCarte');
+  if (!c) return;
+  const liste = Array.isArray(H.quotidien?.missions?.liste) ? H.quotidien.missions.liste : [];
+  if (!liste.length) { c.hidden = true; return; }
+  const finie = (m) => m?.etat === 'pret' || m?.etat === 'reclamee';
+  const faites = liste.filter(finie).length;
+  const aPrendre = Math.max(0, Math.floor(Number(H.quotidien.aReclamer) || 0));
+  const prets = liste.filter((m) => m?.etat === 'pret').length;
+  $('missionsCompte').textContent = `${faites}/${liste.length}`;
+  $('missionsPions').innerHTML = liste.map((m) =>
+    `<i data-etat="${m?.etat === 'pret' ? 'pret' : finie(m) ? 'fait' : 'a_faire'}"></i>`).join('');
+  $('missionsPret').hidden = !aPrendre;
+  $('missionsPret').textContent = aPrendre ? String(aPrendre) : '';
+  if (prets || aPrendre) c.dataset.pret = ''; else delete c.dataset.pret;
+  c.setAttribute('aria-label', `Missions du jour : ${faites} sur ${liste.length} faites`
+    + (aPrendre ? `, ${aPrendre} à récupérer` : ''));
+  c.hidden = false;
+}
+
 function montrer() {
   etatsDuHub();
+  carteMissions();
   bacheDuJour();
   soirDeMatch();
   direBulle();
@@ -5535,6 +5612,7 @@ async function arriverAuHub(lecture) {
     await pause(600);
   }
   proposerBonus();
+  await feterMissionsHub();
 }
 
 /* ------------------------------------------- le bonus du jour
@@ -5756,20 +5834,49 @@ async function feterBonus(r) {
  * et le script n'est demandé que ce jour-là. Le Fanzzy de la fête est celui
  * que les autres voient, comme sur l'avatar.
  */
+function avatarDuHub() {
+  if (!equipe) return null;
+  const evo = lignee.choisi ?? equipe.evo;
+  return { id: equipe.id, evo,
+    skin: lignee.tenues?.[evo] ?? (evo === equipe.evo ? equipe.skin : 'base') ?? 'base',
+    age: lignee.ages.find((x) => x.stade === evo)?.id ?? equipe.carte ?? equipe.id };
+}
+/** `niveau-fete.js`, chargé le jour où il sert. */
+let niveauFete = null;
+function chargerNiveauFete() {
+  if (window.TBF_NIVEAU) return Promise.resolve(window.TBF_NIVEAU);
+  niveauFete ??= new Promise((ok) => {
+    const s = document.createElement('script');
+    s.src = '/niveau-fete.js';
+    s.addEventListener('load', () => ok(window.TBF_NIVEAU ?? null), { once: true });
+    s.addEventListener('error', () => ok(null), { once: true });
+    document.head.append(s);
+  });
+  return niveauFete;
+}
 function feterNiveau(niveau) {
-  let avatar = null;
-  if (equipe) {
-    const evo = lignee.choisi ?? equipe.evo;
-    avatar = { id: equipe.id, evo,
-      skin: lignee.tenues?.[evo] ?? (evo === equipe.evo ? equipe.skin : 'base') ?? 'base',
-      age: lignee.ages.find((x) => x.stade === evo)?.id ?? equipe.carte ?? equipe.id };
+  const avatar = avatarDuHub();
+  void chargerNiveauFete().then((N) => N?.feter?.(niveau, { avatar, qui: quiQuotidien ?? undefined }));
+}
+
+/**
+ * **La mission réussie** (demande de Gaël, 6 novembre 2026 : « lorsqu'on
+ * réussit une mission, il faudrait une alerte, comme pour un changement de
+ * niveau »). Au retour sur l'accueil — après un duel, le Virage, le
+ * kiosque —, les missions finies depuis la dernière fois sont fêtées une
+ * fois, dans la case de la montée de niveau (`niveau-fete.js`,
+ * `missions`). Le script n'est chargé que s'il y a une mission prête.
+ * RÉCUPÉRER mène aux MISSIONS, où elle se récupère.
+ */
+async function feterMissionsHub() {
+  const liste = H.quotidien?.missions?.liste;
+  if (!Array.isArray(liste) || !liste.some((m) => m?.etat === 'pret')) {
+    if (Array.isArray(liste) && window.TBF_NIVEAU) void window.TBF_NIVEAU.missions?.(H.quotidien, { qui: quiQuotidien ?? undefined });
+    return;
   }
-  const feter = () => window.TBF_NIVEAU?.feter?.(niveau, { avatar, qui: quiQuotidien ?? undefined });
-  if (window.TBF_NIVEAU) { feter(); return; }
-  const s = document.createElement('script');
-  s.src = '/niveau-fete.js';
-  s.addEventListener('load', feter, { once: true });
-  document.head.append(s);
+  const N = await chargerNiveauFete();
+  const choix = await N?.missions?.(H.quotidien, { avatar: avatarDuHub(), qui: quiQuotidien ?? undefined });
+  if (choix === 'recuperer') location.href = '/aide#jour';
 }
 
 (async () => {

@@ -266,6 +266,13 @@ h2{margin:26px 2px 10px}
    bâche or « TU Y ES », les suivants en pointillé avec ce qu'ils ouvrent.
    L'XP s'écrit une fois, au bout du titre de la rubrique. */
 .niv-ticket{padding:14px 8px 10px}
+/* Les cadeaux du niveau (Gaël, 6 novembre 2026) : le titre de tribune sous
+   le pseudo, et sous le chemin ce que le prochain niveau fait voir. */
+.carte .niv-grade{margin:2px 0 0;font-family:var(--banner);font-weight:700;font-size:12px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--craie);opacity:.85}
+.niv-suite{margin:10px 6px 0;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;
+  font-family:var(--banner);font-size:12px;letter-spacing:.04em;color:var(--encre-kraft)}
+.niv-suite .tbf-sticker{font-size:11px}
 
 /* ---------------------------------------------------------- ma saison
 
@@ -483,6 +490,8 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
              s'affiche sans pseudo plutôt qu'avec un « — » qui a l'air d'en être
              un. -->
         <h1 id="pseudo"></h1>
+        <!-- Le titre de tribune du niveau (shared/niveau.js, GRADES). -->
+        <p class="niv-grade" id="nivGrade" hidden></p>
         <!-- Les badges offerts (Fondateur…), sous le pseudo : posés s'il y en a. -->
         <p class="carte-distinctions" id="distCarte" hidden></p>
         <p class="pass-titre" id="passTitre" hidden></p>
@@ -950,8 +959,13 @@ function compterSolde(cle, avant, apres) {
 
 /** Ce qu'un palier ouvre, en sticker. Le niveau ouvre, il ne rend jamais plus fort.
     `echarpes` : ce que ce niveau verse en arrivant, tel que le serveur le sert. */
-function noeudAVenir(k, p, echarpes) {
+function noeudAVenir(k, p, echarpes, cadeau) {
   const niveau = `<span class="vh">Niveau ${k} :</span>`;
+  /* Un niveau qui change la matière de la pastille la montre, à sa couleur. */
+  if (cadeau?.teinte && !p?.deckFanzzy && !p?.slots) {
+    return `${niveau}<span class="tbf-noeud-k"><b class="tbf-sticker tbf-sticker--rond" data-teinte="${esc(cadeau.teinte)}">${k}</b></span>`
+      + `<span class="tbf-sticker" data-teinte="${esc(cadeau.teinte)}">PASTILLE</span>`;
+  }
   if (p?.deckFanzzy) {
     return `${niveau}<span class="tbf-noeud-k">${svg('fanzzy')}</span><span class="tbf-sticker">${p.deckFanzzy}ᵉ FANZZY</span>`;
   }
@@ -995,8 +1009,14 @@ function rendreNiveau(n) {
   const echarpesDe = new Map((Array.isArray(n.echarpesParNiveau) ? n.echarpesParNiveau : [])
     .map((x) => [Number(x?.niveau), x?.echarpes]));
 
-  $('nivXp').textContent = n.max ? `${nombre(n.xp)} XP au total`
-    : `${nombre(n.dans)} / ${nombre(n.pour)} XP · encore ${nombre(Math.max(0, n.pour - n.dans))}`;
+  /* Au dernier niveau, l'XP marche vers la prochaine étoile. */
+  const ve = n.max && n.versEtoile ? n.versEtoile : null;
+  $('nivXp').textContent = ve
+    ? `${nombre(ve.dans)} / ${nombre(ve.pour)} XP · prochaine étoile`
+    : n.max ? `${nombre(n.xp)} XP au total`
+      : `${nombre(n.dans)} / ${nombre(n.pour)} XP · encore ${nombre(Math.max(0, n.pour - n.dans))}`;
+  const cadeauDe = new Map((Array.isArray(n.cadeaux) ? n.cadeaux : [])
+    .map((c) => [Number(c?.niveau), c]));
 
   /* Cinq nœuds : le palier passé, le courant, trois à venir — au niveau 1,
      quatre à venir ; au dernier, les quatre d'avant. Au-delà, ce n'est plus
@@ -1015,19 +1035,48 @@ function rendreNiveau(n) {
     } else {
       const pal = parNiveau.get(k);
       const verrou = pal?.slots || pal?.deckFanzzy ? ' data-verrou' : '';
-      noeuds.push(`<li class="tbf-noeud"${verrou}>${noeudAVenir(k, pal, echarpesDe.get(k))}</li>`);
+      noeuds.push(`<li class="tbf-noeud"${verrou}>${noeudAVenir(k, pal, echarpesDe.get(k), cadeauDe.get(k))}</li>`);
     }
   }
   const quoi = n.max ? `Niveau ${niveau}, le dernier`
     : `Niveau ${niveau} : ${n.dans} XP sur ${n.pour}`;
+  /* Ce que le niveau fait voir : le prochain titre, la prochaine matière de
+     la pastille, ou les étoiles au-delà du dernier niveau. Tout vient du
+     serveur (`cadeaux`, `etoiles`) : rien n'est recopié ici. */
+  const suite = [];
+  const proGrade = cadeauDe.get(niveau + 1);
+  if (!n.max && proGrade?.grade) {
+    suite.push(`<span>NIV. ${niveau + 1} :</span><span class="tbf-sticker">${esc(proGrade.grade)}</span>`);
+  }
+  const proTeinte = [...cadeauDe.values()].filter((c) => c.teinte && c.niveau > niveau)
+    .sort((a, b) => a.niveau - b.niveau)[0];
+  if (!n.max && proTeinte) {
+    suite.push(`<span>PASTILLE AU NIV. ${proTeinte.niveau} :</span><b class="tbf-sticker tbf-sticker--rond"
+      data-teinte="${esc(proTeinte.teinte)}">${proTeinte.niveau}</b>`);
+  }
+  if (n.max) {
+    const et = Number(n.etoiles) || 0;
+    suite.push(et > 0
+      ? `<span class="tbf-sticker" data-teinte="or">★ ${et} ÉTOILE${et > 1 ? 'S' : ''}</span>`
+      : `<span>Une étoile tous les ${nombre(Number(n.xpEtoile) || 2000)} XP, sans fin.</span>`);
+  }
   hote.innerHTML = `<div class="tbf-ticket niv-ticket">
-    <ol class="tbf-chemin" aria-label="${esc(quoi)}">${noeuds.join('')}</ol></div>`;
+    <ol class="tbf-chemin" aria-label="${esc(quoi)}">${noeuds.join('')}</ol>
+    ${suite.length ? `<div class="niv-suite">${suite.join('')}</div>` : ''}</div>`;
+
+  const g = $('nivGrade');
+  if (g) {
+    g.textContent = n.grade || '';
+    g.hidden = !n.grade;
+  }
 
   /* Le niveau, en sticker sur le coin déchiré de la carte, et l'anneau du
      buste : le même dessin que dans la barre. */
   const coin = $('nivCoin');
   coin.textContent = String(niveau);
-  coin.setAttribute('aria-label', `Niveau ${niveau}`);
+  coin.setAttribute('aria-label', `Niveau ${niveau}${n.grade ? `, ${n.grade}` : ''}`);
+  if (n.teinte) coin.dataset.teinte = n.teinte; else delete coin.dataset.teinte;
+  if (Number(n.etoiles) > 0) coin.dataset.etoiles = String(n.etoiles); else delete coin.dataset.etoiles;
   coin.hidden = false;
   $('buste').querySelector('.tbf-anneau').style.setProperty('--p', `${Math.round(part * 100)}%`);
 }
