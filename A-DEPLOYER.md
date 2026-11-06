@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Le profil devient « Mon vestiaire »** (branche
+`claude/project-thread-rwim3p`, 6 novembre 2026, choix de Gaël parmi quatre
+maquettes). Pages seules, sans schéma : le Fanzzy équipé vit en grand au
+centre du profil, ce qu'on possède en pastilles en haut, le niveau dans son
+anneau d'XP, six tuiles de couleur (CLUBS, SAISON, PARCOURS, NIVEAU,
+ÉQUIPEMENT, RÉGLAGES) qui ouvrent chacune sa rubrique en tiroir par le bas,
+et le bonus du jour en coffre. Rien n'a disparu, tout est dans les tiroirs.
+Aucun redémarrage nécessaire (fichiers statiques), mais il ne gêne pas.
+
+---
+
 **Le niveau offre un cadeau visible à chaque palier** (branche
 `claude/project-thread-r8x75z`, 6 novembre 2026, choix de Gaël « Récompenses à
 chaque palier »). Code seul, sans schéma : un titre de tribune par niveau
