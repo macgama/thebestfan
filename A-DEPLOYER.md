@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**La page Amis devient « La tribune des amis »** (PR #377, 6 novembre 2026,
+choix de Gaël parmi 4 maquettes). Code seul, sans schéma : les Fanzzy des amis
+debout dans une tribune (ceux qui jouent éclairés), RÉPONDRE / MERCI ! sous les
+gestes reçus, et la fiche d'un ami comme l'accueil (son Fanzzy en grand, cases
+de couleur, roue de dix gestes, sa dernière bulle). Traduit, QUESTIONS et
+/comment-jouer à jour. Fichiers statiques : aucun redémarrage nécessaire.
+
+---
+
 **Missions et tampons mis en avant** (branche `claude/project-thread-8ynk3z`,
 6 novembre 2026, demande de Gaël). Code seul, sans schéma : une carte MISSIONS
 en haut à gauche de l'accueil (faites sur le total, ce qui est à récupérer),
