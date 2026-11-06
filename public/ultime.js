@@ -3404,6 +3404,9 @@
     'SU42-e1': 'SU42-e1.828a1199.mp4',
     'SU42-e1-prehistorique': 'SU42-e1-prehistorique.45ab60d8.mp4',
     'TB1-e1': 'TB1-e1.daa0e3d3.mp4',
+    'TB1-e1-apocalyptique': 'TB1-e1-apocalyptique.365a86e3.mp4',
+    'TB1-e1-halloween': 'TB1-e1-halloween.5661f813.mp4',
+    'TB1-e1-prehistorique': 'TB1-e1-prehistorique.af9e1718.mp4',
   };
   /* CLIPS: fin */
 
