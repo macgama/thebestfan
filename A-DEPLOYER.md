@@ -1,5 +1,16 @@
 # À déposer sur Infomaniak
 
+**Traductions à jour et images des autres clones** (branche
+`claude/project-thread-ojr7rb`, 6 novembre 2026, demande de Gaël). Code et
+textes seuls, sans schéma. Les 199 textes encore en français (page du PASS,
+voie PASS, page /beta, aide, stades des Terraces, mini-jeux) sont traduits en
+anglais, allemand, italien et espagnol. La mise en ligne recopie d'abord dans
+Documents\GitHub\thebestfan les images et vidéos faites dans tbf-hc, tbf-mt
+(tout dossier `tbf-*` voisin), puis les envoie : plus besoin de les copier à
+la main. Après la mise en ligne : « Redémarrer ».
+
+---
+
 **Accueil : l'annonce de l'appli Android devient discrète** (branche
 `claude/project-thread-00ar7w`, 6 novembre 2026, demande de Gaël). Code seul,
 sans schéma. La plaque rouge « APPLI ANDROID » est remplacée par un petit
