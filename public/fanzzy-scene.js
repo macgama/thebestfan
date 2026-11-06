@@ -301,7 +301,7 @@
      */
     function poserAuSol(img) {
       for (const v of ['--sous', '--decale']) img.style.removeProperty(v);
-      const t = perso ? window.TBF_ETATS?.taille?.(perso.id, perso.evo, opts.taille?.[perso.evo], img) : null;
+      const t = perso ? window.TBF_ETATS?.taille?.(perso.id, perso.evo, opts.taille, img) : null;
       const m = t ? window.TBF_ETATS?.pieds?.(img) : null;
       if (!m) return;
       const h = parseFloat(t.hauteur) / 100;
@@ -538,7 +538,7 @@
       };
       // La taille de son âge : voir `.tbf-scene[data-evo]`, ui.css.
       el.dataset.evo = String(perso.evo);
-      const t = window.TBF_ETATS?.taille?.(perso.id, perso.evo, opts.taille?.[perso.evo]);
+      const t = window.TBF_ETATS?.taille?.(perso.id, perso.evo, opts.taille);
       el.style.setProperty('--taille', t?.hauteur ?? '');
       el.style.setProperty('--sous', t?.bas ?? '');
       el.style.setProperty('--decale', t?.decale ?? '');

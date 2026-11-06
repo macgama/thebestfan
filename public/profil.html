@@ -1819,7 +1819,7 @@ let dernierCri = -Infinity;
 async function animerMonFanzzy(avatar, cri, sig) {
   const hote = $('monFzScene');
   if (!hote) return;
-  const scene = window.TBF_SCENE.creer(hote, { fond: 'neutre', taille: { 1: 0.8, 2: 0.88, 3: 0.96 } });
+  const scene = window.TBF_SCENE.creer(hote, { fond: 'neutre', taille: { 1: 0.8, 2: 0.88, 3: 0.96, L: 1.08 } });
   sceneProfil = scene;
   let vu = false;
   try { vu = await scene.definir(avatar); } catch { vu = false; }

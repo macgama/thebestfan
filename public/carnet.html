@@ -262,7 +262,7 @@ function restant(expires) {
  */
 /* Le personnage grandit d'un âge à l'autre, comme sur les cartes du classeur
    (`PART_CARTE`, cartes.js). */
-const PART_AGE = { 1: 0.84, 2: 0.9, 3: 0.96 };
+const PART_AGE = { 1: 0.84, 2: 0.9, 3: 0.96, L: 1.12 };
 function dessinFanzzy(f) {
   const E = window.TBF_ETATS;
   const evo = Math.min(3, Math.max(1, Number(f.evo) || 1));
@@ -274,11 +274,11 @@ function dessinFanzzy(f) {
   if (!src) return '';
   /* La pose d'un âge vit dans un cadre plus grand que le personnage :
      `taille` le ramène à la hauteur voulue, pieds au même endroit. */
-  const t = exact ? E?.taille?.(f.id, evo, PART_AGE[evo]) : null;
+  const t = exact ? E?.taille?.(f.id, evo, PART_AGE) : null;
   const style = t ? ` style="height:${t.hauteur};bottom:${t.bas};translate:${t.decale} 0"` : '';
   /* Puis, l'image chargée, ses pieds mesurés sur elle (`caler`, comme à
      l'accueil) : la largeur de l'image, ses semelles au sol. */
-  const cale = exact ? ` onload="window.TBF_ETATS?.caler?.(this,{part:${PART_AGE[evo]}})"` : '';
+  const cale = exact ? ` onload="window.TBF_ETATS?.caler?.(this,{part:{1:0.84,2:0.9,3:0.96,L:1.12}})"` : '';
   return `<img class="fz" data-age="${evo}" src="${esc(src)}" alt=""${style}${cale} loading="lazy" decoding="async"
     onerror="this.onerror=null;this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">`;
 }
