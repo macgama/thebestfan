@@ -1,5 +1,14 @@
 # À déposer sur Infomaniak
 
+**Titre de l'Ultimate traduit** (branche `claude/project-thread-lo6qgq-ultime`,
+6 novembre 2026). Code seul, sans schéma : en anglais (et dans les autres
+langues), la grande scène de l'Ultimate affichait son titre en français
+(« TOUT LE MONDE EN TOURNÉE ») à l'ouverture d'un booster. Il est traduit
+partout (boosters, duel, collection, boutique, fiche). Après la mise en ligne :
+« Redémarrer ».
+
+---
+
 **Badge Fondateur et Fanzzy TheBestFan** (branche `claude/project-thread-o231tt`,
 6 novembre 2026, demande de Gaël). **Schéma : une table neuve,
 `user_distinctions` (`sql/distinctions.sql`)**, posée par la mise en ligne
