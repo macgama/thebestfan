@@ -9,6 +9,26 @@ de « Redémarrer » (pages et catalogue servis tels quels), mais sans risque.
 
 ---
 
+**Traductions à jour et images des autres clones** (branche
+`claude/project-thread-ojr7rb`, 6 novembre 2026, demande de Gaël). Code et
+textes seuls, sans schéma. Les 199 textes encore en français (page du PASS,
+voie PASS, page /beta, aide, stades des Terraces, mini-jeux) sont traduits en
+anglais, allemand, italien et espagnol. La mise en ligne recopie d'abord dans
+Documents\GitHub\thebestfan les images et vidéos faites dans tbf-hc, tbf-mt
+(tout dossier `tbf-*` voisin), puis les envoie : plus besoin de les copier à
+la main. Après la mise en ligne : « Redémarrer ».
+
+---
+
+**Accueil : l'annonce de l'appli Android devient discrète** (branche
+`claude/project-thread-00ar7w`, 6 novembre 2026, demande de Gaël). Code seul,
+sans schéma. La plaque rouge « APPLI ANDROID » est remplacée par un petit
+bandeau sombre en haut de la scène : il reste 7 secondes puis s'efface, se
+ferme d'un ×, et ne revient pas avant 3 jours (30 jours si on l'a fermé,
+7 jours après une visite de /beta). Rien à redémarrer.
+
+---
+
 **LE PARCAGE branché dans le jeu** (branche `claude/project-thread-vuon42`,
 6 novembre 2026, « Tu peux brancher la série dans l'application »). Code seul,
 sans schéma. La série du championnat de France (code FR) entre au catalogue :

@@ -1,8 +1,9 @@
 /**
- * Devenir testeur de l'appli Android : la page /beta et la plaque de
- * l'accueil (public/beta-android.js). La plaque ne se montre que sur Android,
- * jamais dans l'appli elle-même, et se tait une semaine après une visite de
- * /beta. `--photos <dossier>` enregistre des captures.
+ * Devenir testeur de l'appli Android : la page /beta et l'annonce éphémère de
+ * l'accueil (public/beta-android.js). L'annonce ne se montre jamais dans
+ * l'appli elle-même, s'efface seule après quelques secondes, ne revient pas à
+ * la visite suivante, et se tait une semaine après une visite de /beta.
+ * `--photos <dossier>` enregistre des captures.
  */
 import { createServer } from 'node:http';
 import path from 'node:path';
@@ -32,8 +33,9 @@ const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebK
   + '(KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
 
 const nav = await puppeteer.launch({ args: ['--no-sandbox', '--accept-lang=fr-FR'] });
-async function ouvrir(url, ua, { referer, avant } = {}) {
-  const page = await nav.newPage();
+/* Chaque page dans un navigateur neuf : l'annonce note qu'elle s'est montrée. */
+async function ouvrir(url, ua, { referer, avant, page: deja } = {}) {
+  const page = deja || await (await nav.createBrowserContext()).newPage();
   await page.setUserAgent(ua);
   await page.setViewport({ width: 411, height: 855, isMobile: true, hasTouch: true });
   if (avant) await page.evaluateOnNewDocument(avant);
@@ -46,25 +48,43 @@ const plaqueDe = (page) => page.waitForSelector('#betaPlaque', { timeout: 15000 
 try {
   let p = await ouvrir('/', ANDROID);
   const vue = await plaqueDe(p);
-  check('sur Android, la plaque « Appli Android » se pose sur l’accueil', vue);
+  check('sur Android, l’annonce « Appli Android » se pose sur l’accueil', vue);
   if (vue) {
     const info = await p.$eval('#betaPlaque', (a) => {
       const r = a.getBoundingClientRect();
       return { href: a.getAttribute('href'), texte: a.textContent.replace(/\s+/g, ' ').trim(),
         dedans: r.left >= 0 && r.right <= innerWidth && r.top >= 0 };
     });
-    check('elle mène à /beta et dit « APPLI ANDROID · DEVIENS TESTEUR »',
-      info.href === '/beta' && /APPLI ANDROID/.test(info.texte) && /DEVIENS TESTEUR/.test(info.texte));
+    check('elle mène à /beta et dit « Appli Android · deviens testeur »',
+      info.href === '/beta' && /Appli Android/i.test(info.texte) && /deviens testeur/i.test(info.texte));
     check('elle tient dans l’écran', info.dedans);
+    const haut = await p.$eval('#betaAnnonce', (b) => b.getBoundingClientRect().height);
+    check(`elle reste discrète (${Math.round(haut)} px de haut)`, haut > 0 && haut <= 34);
     if (PHOTOS) await p.screenshot({ path: path.join(PHOTOS, 'accueil-android.png') });
+    const partie = await p.waitForSelector('#betaAnnonce', { hidden: true, timeout: 12000 })
+      .then(() => true).catch(() => false);
+    check('elle s’efface seule après quelques secondes', partie);
   }
+  await ouvrir('/', ANDROID, { page: p });
+  check('elle ne revient pas à la visite suivante', !(await plaqueDe(p)));
+  await p.close();
+
+  p = await ouvrir('/', ANDROID);
+  if (await plaqueDe(p)) {
+    await p.click('.beta-annonce-x');
+    const fermee = await p.waitForSelector('#betaAnnonce', { hidden: true, timeout: 3000 })
+      .then(() => true).catch(() => false);
+    const tard = await p.evaluate(() => Number(localStorage.getItem('tbf-beta-annonce')) - Date.now());
+    check(`la croix la ferme tout de suite, et pour un mois (${fermee}, ${Math.round(tard / 864e5)} j)`,
+      fermee && tard > 20 * 24 * 3600 * 1000);
+  } else check('la croix la ferme tout de suite, et pour un mois', false);
   await p.close();
 
   p = await ouvrir('/', IPHONE);
   const vueIphone = await plaqueDe(p);
   const texteIphone = vueIphone ? await p.$eval('#betaPlaque', (a) => a.textContent.replace(/\s+/g, ' ')) : '';
-  check('sur iPhone (site web), la plaque annonce « BIENTÔT SUR GOOGLE PLAY » et mène à /beta',
-    vueIphone && /BIENTÔT SUR GOOGLE PLAY/.test(texteIphone)
+  check('sur iPhone (site web), l’annonce dit « bientôt sur Google Play » et mène à /beta',
+    vueIphone && /bientôt sur Google Play/i.test(texteIphone)
     && (await p.$eval('#betaPlaque', (a) => a.getAttribute('href'))) === '/beta');
   if (PHOTOS && vueIphone) await p.screenshot({ path: path.join(PHOTOS, 'accueil-iphone.png') });
   await p.close();
@@ -73,7 +93,7 @@ try {
      pose comme l'appli le donne à sa première page. */
   p = await ouvrir('/', ANDROID, { avant: () => Object.defineProperty(Document.prototype, 'referrer',
     { get: () => 'android-app://online.thebestfan.app/' }) });
-  check('dans l’appli Android elle-même, pas de plaque', !(await plaqueDe(p)));
+  check('dans l’appli Android elle-même, pas d’annonce', !(await plaqueDe(p)));
   await p.close();
 
   p = await ouvrir('/beta', ANDROID);
@@ -95,7 +115,7 @@ try {
   await p.close();
 
   p = await ouvrir('/', ANDROID, { avant: () => localStorage.setItem('tbf-beta-vu', String(Date.now())) });
-  check('après une visite de /beta, la plaque se tait', !(await plaqueDe(p)));
+  check('après une visite de /beta, l’annonce se tait', !(await plaqueDe(p)));
   await p.close();
 
   /* Un contexte neuf : la visite de /beta plus haut a été notée dans ce navigateur. */
@@ -107,7 +127,7 @@ try {
     const r = a.getBoundingClientRect();
     return r.width > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0;
   });
-  check('sur un ordinateur, la plaque se pose aussi sur l’accueil et tient dans l’écran', bureauDedans);
+  check('sur un ordinateur, l’annonce se pose aussi sur l’accueil et tient dans l’écran', bureauDedans);
   if (PHOTOS && surBureau) await bureau.screenshot({ path: path.join(PHOTOS, 'accueil-ordinateur.png') });
   await bureau.goto(`${base}/beta`, { waitUntil: 'networkidle2' });
   const qr = await bureau.$eval('.qr img', (img) => img.complete && img.naturalWidth > 0
