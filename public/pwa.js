@@ -410,6 +410,12 @@
       const m = e.data;
       if (m?.type !== 'tbf-notif' || !m.titre) return;
       if (m.tag === 'amis-duel') return;
+      /* Une demande d'ami : la grande case de l'appel la dit, avec le
+         Fanzzy de qui demande (`appel-fete.js`) — on la lit tout de suite. */
+      if (m.tag === 'amis-demande' && window.TBF_APPEL?.verifier) {
+        void window.TBF_APPEL.verifier();
+        return;
+      }
       let cible;
       try { cible = new URL(m.url || '/', location.origin); } catch { return; }
       if (cible.origin !== location.origin) return;

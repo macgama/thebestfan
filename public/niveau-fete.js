@@ -403,7 +403,8 @@
    *   `n` (le chiffre qui compte, de l'un à l'autre), `ecarpes` (le compte
    *   du sticker `.tbf-niv-ech`), `son`, `petit` (un titre long : un corps
    *   plus petit), `boutons` (`[{ texte, valeur }]`, avant CONTINUER),
-   *   `scene` (HTML qui remplace la cocarde dans la scène).
+   *   `scene` (HTML qui remplace la cocarde dans la scène), `fermer` (le
+   *   mot du dernier bouton, CONTINUER sinon : PLUS TARD pour un appel).
    * @returns {Promise<string|undefined>} la valeur du bouton touché, ou rien
    *   pour CONTINUER.
    */
@@ -444,7 +445,7 @@
           ${p.promesse ? `<div class="tbf-niv-promesse">${p.promesse}</div>` : ''}
         </div>
         ${autres}
-        <button type="button" class="tbf-plaque tbf-bloc" data-ton="${autres ? 'craie' : 'or'}" data-fermer>CONTINUER</button>
+        <button type="button" class="tbf-plaque tbf-bloc" data-ton="${autres ? 'craie' : 'or'}" data-fermer>${esc(p.fermer ?? 'CONTINUER')}</button>
       </div>`;
 
     document.body.appendChild(fond);

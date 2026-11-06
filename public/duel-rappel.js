@@ -96,6 +96,10 @@
     }
     const inv = (d?.invitations ?? []).find((i) => !ecartees.has(i.code));
     if (inv) {
+      /* **Et en grand, une fois** (6 novembre 2026, Gaël) : la case de
+         l'appel (`appel-fete.js`), avec le Fanzzy de l'ami. Le bandeau
+         reste dessous : c'est lui qu'on retrouve après PLUS TARD. */
+      window.TBF_APPEL?.duel?.(inv);
       const q = new URLSearchParams({ duel: inv.code, match: String(inv.fixtureId),
         format: inv.format });
       montrer(`inv:${inv.code}`,

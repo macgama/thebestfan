@@ -269,11 +269,14 @@
       requestAnimationFrame(guetter);
     };
     requestAnimationFrame(guetter);
+    /* Hors d'une clé `de` : le relevé des langues la prend pour l'allemand
+       et ne la traduisait pas. */
+    const phrase = 'L’équipe TheBestFan pense à toi. Quelle chance !';
     const choix = await N.annoncer({
       nomDeLaFete: un ? 'Cadeau reçu' : `${cadeaux.length} cadeaux reçus`,
       quoi: un ? 'UN CADEAU POUR TOI !' : `${cadeaux.length} CADEAUX POUR TOI !`,
       titre: 'JACKPOT !',
-      de: 'L’équipe TheBestFan pense à toi. Quelle chance !',
+      de: phrase,
       butin: stickers(cadeaux, colle),
       promesse: '<div class="tbf-niv-libelle">OFFERT PAR L’ÉQUIPE THEBESTFAN</div>',
       scene, avant: 0, n: 0, ecarpes: ech?.n ?? 0, son: 'tic',

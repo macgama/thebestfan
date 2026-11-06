@@ -1530,6 +1530,15 @@
       cadeau.defer = true;
       document.head.append(cadeau);
     }
+    /* **L'appel d'un ami** (`appel-fete.js`) : une demande d'ami, une
+       invitation en duel ou dans un KOP, annoncée en grand. Avant le rappel
+       du duel, qui lui passe les invitations qu'il lit. */
+    if (user && !document.querySelector('script[src="/appel-fete.js"]')) {
+      const appel = document.createElement('script');
+      appel.src = '/appel-fete.js';
+      appel.defer = true;
+      document.head.append(appel);
+    }
     if (user && !document.querySelector('script[src="/duel-rappel.js"]')) {
       const rappel = document.createElement('script');
       rappel.src = '/duel-rappel.js';

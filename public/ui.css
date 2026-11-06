@@ -9595,6 +9595,25 @@ html[data-calme~="animations"] .tbf-niv-fond{transition:none}
   stroke-linejoin:round;vertical-align:-2px;margin-right:5px}
 .tbf-niv-butin .tbf-sticker .tbf-distinction svg{width:16px;height:18px;stroke:none}
 
+/* **L'appel d'un ami** (`appel-fete.js`, 6 novembre 2026) : une demande
+   d'ami, une invitation en duel ou dans un KOP, dans la case commune. Le
+   Fanzzy de celui qui appelle tient la scène (`.tbf-niv-perso`, posé par la
+   case) ; sa bulle sort à gauche de sa tête, l'écusson de l'appel prend la
+   place de la cocarde, en bas à droite. Les entrées sont jouées par le
+   script, et pas sans mouvement. */
+.tbf-appel-scene{position:absolute;inset:0;display:block;pointer-events:none;z-index:2}
+.tbf-appel-bulle{position:absolute;left:8px;top:14px;max-width:46%;padding:6px 10px;
+  background:var(--craie,#F2EEE4);color:var(--encre,#111);border:2.5px solid var(--encre,#111);
+  border-radius:14px;font:inherit;font-weight:900;font-size:13px;letter-spacing:.04em;line-height:1.1;
+  box-shadow:3px 3px 0 var(--encre,#111);rotate:-5deg;transform-origin:100% 100%}
+.tbf-appel-bulle::after{content:"";position:absolute;right:-9px;bottom:6px;width:12px;height:12px;
+  background:inherit;border:solid var(--encre,#111);border-width:0 2.5px 2.5px 0;rotate:-45deg}
+.tbf-appel-icone{position:absolute;left:calc(50% + 34px);bottom:8px;width:50px;height:50px;
+  filter:drop-shadow(0 3px 0 var(--encre,#111))}
+.tbf-appel-icone svg{display:block;width:100%;height:100%}
+.tbf-niv-scene:not(.tbf-niv-scene--perso) .tbf-appel-icone{left:50%;margin-left:-25px}
+.tbf-niv-scene:not(.tbf-niv-scene--perso) .tbf-appel-bulle{left:50%;top:auto;bottom:10px;translate:-130% 0}
+
 
 /* ==================================================== les pièces du lot 6
 

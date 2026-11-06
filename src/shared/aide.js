@@ -591,6 +591,13 @@ const RUBRIQUES = [
           + 'autres attendent dans l’ombre. Touche un Fanzzy pour ouvrir sa fiche. '
           + 'Là, la case GESTES ouvre la roue des gestes autour de lui, et sous un '
           + 'geste reçu, RÉPONDRE t’y amène directement.'],
+      ['Comment je sais qu’un ami me demande, ou m’invite en duel ?',
+        'Une grande case s’ouvre pendant que tu joues, avec le Fanzzy de celui qui '
+          + 't’appelle : une demande d’ami (ACCEPTER), une invitation en duel (REJOINDRE '
+          + 'LE DUEL) ou dans son KOP (REJOINDRE LE KOP). Elle arrive en moins d’une minute, '
+          + 'une seule fois, et jamais pendant un duel ou au Virage. PLUS TARD : la demande '
+          + 'attend sur la page Amis (chiffre violet), l’invitation en duel dans le bandeau '
+          + 'en bas de l’écran.'],
       ['Pourquoi ne peut-on pas s’écrire ?',
         'Pour que personne ne reçoive un message blessant ou mal intentionné. On se '
           + 'fait signe avec un geste choisi dans une liste (« BRAVO ! », « UN DUEL ? », '
