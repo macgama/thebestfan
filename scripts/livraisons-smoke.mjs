@@ -18,15 +18,17 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 /* ------------------------------------------------------------ le format */
 
-check('sans livraison, le numéro de base : 0.0200', numeroPour(0) === '0.0200');
-check('une livraison de plus, un cran de plus', numeroPour(1) === '0.0201' && numeroPour(57) === '0.0257');
-check('les quatre décimales tiennent au-delà de cent', numeroPour(812) === '0.1012');
-check('un compte absurde ne fait pas un numéro absurde', numeroPour(-3) === '0.0200' && numeroPour('x') === '0.0200');
-poserLivraisons(4);
-check('le numéro posé est celui qu’on lit', numero() === '0.0204');
-check('l’étiquette du menu le reprend', etiquette() === 'version bêta — 0.0204');
+check('sans livraison, la 1.0.0', numeroPour(0) === '1.0.0');
+check('la première mise en ligne de la 1.0 est la 1.0.0', numeroPour(1) === '1.0.0');
+check('puis 1.0.01, 1.0.02…', numeroPour(2) === '1.0.01' && numeroPour(3) === '1.0.02' && numeroPour(11) === '1.0.10');
+check('au-delà de cent, le numéro grandit sans casser', numeroPour(101) === '1.0.100');
+check('un compte absurde ne fait pas un numéro absurde', numeroPour(-3) === '1.0.0' && numeroPour('x') === '1.0.0');
+poserLivraisons(5);
+check('le numéro posé est celui qu’on lit', numero() === '1.0.04');
+check('l’étiquette du menu le reprend', etiquette() === 'version bêta — 1.0.04');
 check('et la réponse de /api/version aussi',
-  versionPublique().numero === '0.0204' && versionPublique().etiquette === etiquette());
+  versionPublique().numero === '1.0.04' && versionPublique().etiquette === etiquette());
+check('la 1.0 a sa propre clé : l’ancien compte 0.02xx n’est pas repris', CLE === 'version.livraisons.1.0');
 
 /* -------------------------------------------------------- le compte en base */
 
@@ -37,11 +39,13 @@ const sql = readFileSync(new URL('../sql/admin.sql', import.meta.url), 'utf8');
 const creer = /CREATE TABLE IF NOT EXISTS reglages[\s\S]*?;/.exec(sql)[0];
 await raw.query('DROP TABLE IF EXISTS reglages');
 await raw.query(creer);
+await raw.query('INSERT INTO reglages (cle, valeur) VALUES (?, ?)',
+  ['version.livraisons', JSON.stringify({ n: 54, repere: 'zzz' })]);
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 4, ...OPTIONS_BASE });
 
-check('la toute première mise en ligne compte déjà : 1', await compterLivraison(pool, 'aaa') === 1);
+check('la toute première mise en ligne de la 1.0 compte 1, malgré les 54 de la bêta', await compterLivraison(pool, 'aaa') === 1);
 check('un redémarrage sur le même commit ne bouge rien', await compterLivraison(pool, 'aaa') === 1);
 check('un nouveau commit, un cran de plus', await compterLivraison(pool, 'bbb') === 2);
 check('sans repère, on lit sans compter', await compterLivraison(pool, null) === 2);

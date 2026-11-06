@@ -1555,6 +1555,9 @@
                     : 'Impossible pour le moment.', { erreur: true });
             return false;
           }
+          /* Un nouveau titulaire change le Fanzzy de l'accueil : son souvenir
+             ne vaut plus (nav.js, `TBF_PERSO`). */
+          if (voulue === 0) window.TBF_PERSO?.oublier?.();
           dire(voulue === 0 ? `${nom} est titulaire.` : `${nom} entre en remplaçant ${voulue}.`);
           window.FX?.flash?.('#1E9E6A');
           /* Ce que le serveur vient de faire (`placer`, deck) : il est à la
