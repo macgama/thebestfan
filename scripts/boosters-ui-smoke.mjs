@@ -187,6 +187,33 @@ const page = await ouvrir();
 check('la page des boosters se charge sans erreur de script',
   erreurs.length === 0 || (console.log('   ', erreurs.slice(0, 3)), false));
 
+/* La scène prend toute la page (Gaël, 6 novembre 2026) : sur un écran haut,
+   le sachet grandit au lieu de laisser du vide sous le descriptif, et le
+   bas de la page reste dans l'écran. Sur un écran court, il garde sa
+   taille. */
+{
+  const mesure = () => page.evaluate(() => {
+    const desc = document.getElementById('serieDesc');
+    const bas = [document.getElementById('openBtn'), desc].filter((e) => !e.hidden)
+      .map((e) => e.getBoundingClientRect().bottom + scrollY).pop();
+    return { sachet: document.querySelector('#carousel .slide.center')?.offsetWidth ?? 0,
+      bas, h: innerHeight, colonne: document.getElementById('kscene').offsetWidth };
+  });
+  await page.setViewport({ width: 400, height: 960, deviceScaleFactor: 1 });
+  await jusqua(async () => (await mesure()).sachet > 124);
+  const haut = await mesure();
+  check(`sur un écran haut, le sachet grandit (${haut.sachet} px)`, haut.sachet > 140);
+  check('sans passer 42 % de la colonne', haut.sachet <= Math.ceil(haut.colonne * 0.42));
+  check(`et le bas de la page reste dans l'écran (${Math.round(haut.bas)} / ${haut.h})`, haut.bas <= haut.h);
+  check('et il remplit l\'écran, ou atteint sa taille la plus grande',
+    haut.h - haut.bas < 60 || haut.sachet >= Math.floor(haut.colonne * 0.42) - 1);
+  await page.setViewport({ width: 360, height: 640, deviceScaleFactor: 1 });
+  await jusqua(async () => (await mesure()).sachet <= 124);
+  check('sur un écran court, il garde sa taille', (await mesure()).sachet <= 124);
+  await page.setViewport({ width: 400, height: 880, deviceScaleFactor: 1 });
+  await dodo(300);
+}
+
 /* ------------------------------ une carte d'état montre la pose gagnée
 
    Un joueur a ouvert un paquet, gagné l'état « on pousse », et vu le

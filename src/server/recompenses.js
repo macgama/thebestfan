@@ -70,10 +70,14 @@ import { grandLivreFerme } from './auth/schema.js';
     `hebdo` verse des écharpes et des tampons du carnet ; `voie`, le défi des
     membres d'un PASS, ne verse que des **points de la voie PASS**, rangés
     dans la colonne `tampons` : seule la voie les lit (`abonnement`), jamais
-    le carnet, qui ne compte que `mission`, `sachet` et `hebdo`. */
+    le carnet, qui ne compte que `mission`, `sachet`, `hebdo` et `victoire`.
+
+    `victoire` (6 novembre 2026, choix de Gaël) : un duel classé gagné, une
+    fois par duel — la clé est l'identifiant du duel. Des tampons du carnet,
+    au plus `saison.victoires_jour` par jour (`nvn/index.js`). */
 export const SOURCES = ['bonus', 'mission', 'sachet', 'carnet', 'relais', 'cran', 'serie', 'division',
   'virage', 'prono', 'jongles', 'tirs', 'chant', 'deplacement', 'tifo', 'boss', 'cadeau', 'defi',
-  'hebdo', 'voie'];
+  'hebdo', 'voie', 'victoire'];
 
 /** Les raisons d'un refus, liste fermée (`CONTRATS.md`, § 11). */
 export const RAISONS = ['deja', 'incomplet', 'jour_passe', 'change', 'inactif', 'plafond',

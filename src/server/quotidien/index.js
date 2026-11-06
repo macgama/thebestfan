@@ -197,13 +197,13 @@ const SQL_LIVRE = `
     FROM recompenses WHERE user_id = ? AND source IN ('carnet', 'relais')
   UNION ALL
   SELECT 'tampons', NULL, saison_id, NULL, SUM(tampons), NULL
-    FROM recompenses WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id IS NOT NULL
+    FROM recompenses WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo', 'victoire') AND saison_id IS NOT NULL
    GROUP BY saison_id`;
 
 /* Les tampons d'une saison, recomptés sous le verrou d'un versement. */
 const SQL_TAMPONS = `
   SELECT COALESCE(SUM(tampons), 0) AS n FROM recompenses
-   WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo') AND saison_id = ?`;
+   WHERE user_id = ? AND source IN ('mission', 'sachet', 'hebdo', 'victoire') AND saison_id = ?`;
 
 /**
  * La sonde du jour de jeu : à quelle heure de Zurich le jour change, d'après
@@ -528,6 +528,20 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
         tampons: t,
         paliers,
         ...(prochain ? { prochain: { n: prochain.n, manque: prochain.tampons - t } } : {}),
+        /* **Comment on gagne des tampons** (demande de Gaël, 6 novembre
+           2026 : « comment tu gagnes des tampons ? ») : ce que rapporte
+           chaque source, aux réglages de l'instant, pour que la page le dise
+           sous le carnet. Les missions du jour gardent ce que leur ligne
+           promet (copié au tirage) ; ceci n'est que la règle générale. */
+        gagner: {
+          facile: reglage('saison.tampons_facile'),
+          moyenne: reglage('saison.tampons_moyenne'),
+          difficile: reglage('saison.tampons_difficile'),
+          sachet: reglage('saison.tampons_sachet'),
+          victoire: reglage('saison.tampons_victoire'),
+          victoiresJour: reglage('saison.victoires_jour'),
+          defi: reglage('defis.actif') === true ? reglage('defis.tampons') : 0,
+        },
       };
       /* Le Fanzzy du carnet plein, au bout du carnet (`trophee.js`). */
       const tr = await trophee.pourLeCarnet(courante, deja.carnet);
