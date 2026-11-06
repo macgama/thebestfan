@@ -559,6 +559,12 @@ const RUBRIQUES = [
           + 'deck et ses cartes-souvenirs, et tu peux lui faire signe, lui offrir un '
           + 'cadeau, relever le défi de la semaine avec lui, échanger un double ou '
           + 'emprunter un de ses Fanzzy.'],
+      ['Qui sont les Fanzzy debout en haut de la page Amis ?',
+        'C’est ta tribune : les Fanzzy de tes amis, debout. Ceux qui jouent en ce '
+          + 'moment (au Virage, en duel, en ligne) sont devant, dans le projecteur ; les '
+          + 'autres attendent dans l’ombre. Touche un Fanzzy pour ouvrir sa fiche. '
+          + 'Là, la case GESTES ouvre la roue des gestes autour de lui, et sous un '
+          + 'geste reçu, RÉPONDRE t’y amène directement.'],
       ['Pourquoi ne peut-on pas s’écrire ?',
         'Pour que personne ne reçoive un message blessant ou mal intentionné. On se '
           + 'fait signe avec un geste choisi dans une liste (« BRAVO ! », « UN DUEL ? », '
