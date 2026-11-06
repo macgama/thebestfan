@@ -135,4 +135,7 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
   'pass',
   /* Les défis de la semaine (3 novembre 2026) : une table neuve, sans clé
      étrangère. Rien n'en dépend : le dernier rang. */
-  'defis'];
+  'defis',
+  /* Les distinctions (6 novembre 2026), dont le badge Fondateur : une table
+     neuve, sans clé étrangère. Rien n'en dépend : le dernier rang. */
+  'distinctions'];

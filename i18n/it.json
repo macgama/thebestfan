@@ -10160,5 +10160,16 @@
  "DU": "DU",
  "LA": "LA",
  "LE": "LE",
- "name LIKE CONCAT(?, ’ %’)": "name LIKE CONCAT(?, ’ %’)"
+ "name LIKE CONCAT(?, ’ %’)": "name LIKE CONCAT(?, ’ %’)",
+ "TB": "TB",
+ "THEBESTFAN": "THEBESTFAN",
+ "ceux qui étaient là avant tout le monde": "quelli che c’erano prima di tutti",
+ "Le hors-série des fondateurs. Ces Fanzzy ne sortent d’aucun booster : TheBestFan les offre à ceux qui ont fait le jeu avec lui.": "La serie speciale dei fondatori. Questi Fanzzy non escono da nessun booster: TheBestFan li regala a chi ha costruito il gioco insieme a lui.",
+ "Il était en tribune avant le premier match, quand le stade sentait encore la peinture fraîche. Il a tout essayé, tout signalé, et il garde l’écharpe numéro 1.": "Era in curva prima della prima partita, quando lo stadio sapeva ancora di vernice fresca. Ha provato tutto, segnalato tutto, e tiene la sciarpa numero 1.",
+ "DEPUIS LE PREMIER JOUR": "DAL PRIMO GIORNO",
+ "<0>Le badge Fondateur et TheBestFan</0> : les bêta-testeurs reçoivent de TheBestFan un badge Fondateur, à côté de leur pseudo, et le Fanzzy légendaire TheBestFan, orange, blanc et noir. Ils ne sortent d’aucun booster : c’est un merci.": "<0>Il badge Fondatore e TheBestFan</0>: i beta tester ricevono da TheBestFan un badge Fondatore, accanto al loro nome, e il Fanzzy leggendario TheBestFan, arancione, bianco e nero. Non escono da nessun booster: è un grazie.",
+ "Fondateur": "Fondatore",
+ "Bêta-testeur de la première heure": "Beta tester della prima ora",
+ "C’est quoi le badge Fondateur et le Fanzzy TheBestFan ?": "Cosa sono il badge Fondatore e il Fanzzy TheBestFan?",
+ "Le merci de TheBestFan à ses bêta-testeurs. Le badge Fondateur s’affiche à côté du pseudo (classement, amis, profil, affiche du duel) et le Fanzzy légendaire TheBestFan, orange, blanc et noir, rejoint la collection, dans sa série à lui. Ni l’un ni l’autre ne sort d’un booster : ils s’offrent, et ils ne font pas pousser plus fort qu’une autre légendaire.": "Il grazie di TheBestFan ai suoi beta tester. Il badge Fondatore compare accanto al nome (classifica, amici, profilo, locandina del duello) e il Fanzzy leggendario TheBestFan, arancione, bianco e nero, entra nella collezione, in una serie tutta sua. Nessuno dei due esce da un booster: sono regali, e non spingono più forte di un’altra leggendaria."
 }

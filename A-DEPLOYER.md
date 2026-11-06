@@ -1,5 +1,18 @@
 # À déposer sur Infomaniak
 
+**Badge Fondateur et Fanzzy TheBestFan** (branche `claude/project-thread-o231tt`,
+6 novembre 2026, demande de Gaël). **Schéma : une table neuve,
+`user_distinctions` (`sql/distinctions.sql`)**, posée par la mise en ligne
+habituelle (`schema:appliquer`). Dans /admin › JOUEURS, le bouton « Offrir le
+cadeau Fondateur » donne le badge Fondateur (à côté du pseudo : classement,
+amis, profil, affiche du duel) et le Fanzzy légendaire TheBestFan (hors-série
+TB, jamais dans un booster). Sans la table, le bouton dit de l'appliquer et
+rien d'autre ne change. L'image de TheBestFan arrive par un envoi séparé
+depuis le PC (en attendant, sa carte s'affiche sans dessin). Après la mise en
+ligne : « Redémarrer ».
+
+---
+
 **Suivi des joueurs dans /admin** (branche `claude/project-thread-1ns4np`,
 6 novembre 2026, demande de Gaël). Code seul, sans schéma : les pages ouvertes
 se comptent dans `compteurs_jour`, qui existe déjà. JOUEURS › COMPTES dit la

@@ -17,7 +17,7 @@
  * `BY_ID.get()` renverrait `undefined` et l'ouverture de booster casserait.
  * On dépublie : la carte sort des tirages, elle reste connue du jeu.
  */
-import { DEX as AMORCE } from '../../shared/fanzzy/dex.js';
+import { DEX as AMORCE, SETS as SERIES } from '../../shared/fanzzy/dex.js';
 // Les saisons décident des séries ouvertes : `charger` les charge donc en
 // premier, et personne d'autre n'a à y penser. Voir `charger` plus bas.
 import { chargerSaisons } from './saisons.js';
@@ -500,8 +500,21 @@ export async function chargerSeries(pool) {
 /** Les identifiants des séries ouvertes, ou `null` si elles le sont toutes. */
 export function seriesOuvertes() { return ouvertes ? [...ouvertes] : null; }
 
-/** Cette série distribue-t-elle des boosters en ce moment ? */
-export function serieOuverte(setId) { return !ouvertes || ouvertes.has(setId); }
+/** Les séries de cadeau (`cadeau: true`, `dex-thebestfan.js`) : jamais ouvertes. */
+const CADEAUX = new Set(SERIES.filter((s) => s.cadeau).map((s) => s.id));
+export const serieCadeau = (setId) => CADEAUX.has(setId);
+
+/**
+ * Cette série distribue-t-elle des boosters en ce moment ?
+ *
+ * Une série de cadeau ne s'ouvre **jamais**, même quand rien n'est restreint
+ * (aucune saison) ou qu'une saison la cocherait : ses cartes ne s'obtiennent
+ * que par l'administration.
+ */
+export function serieOuverte(setId) {
+  if (CADEAUX.has(setId)) return false;
+  return !ouvertes || ouvertes.has(setId);
+}
 
 /**
  * Ce qu'un joueur peut encore obtenir : un **personnage** publié, dans une

@@ -251,6 +251,11 @@ export function createAmis({ pool, requireAuth, kop = null, presence = null,
         if (p) g.pass = p;
       }
     }
+    /* Ses badges offerts (Fondateur…), à côté de l'écusson. */
+    if (abonnement?.distinctionsDe && amis.length) {
+      const d = await abonnement.distinctionsDe(amis.map((g) => g.id)).catch(() => new Map());
+      for (const g of amis) if (d.has(String(g.id))) g.distinctions = d.get(String(g.id));
+    }
     /* Un compte supprimé garde sa ligne d'ami, sous un pseudo anonyme : il
        n'a plus de visage, et il n'a pas davantage de présence. */
     const actifs = new Set(lignes.filter((l) => l.status === 'active').map((l) => l.public_id));

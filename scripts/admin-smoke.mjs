@@ -342,7 +342,9 @@ check('les séries sont listées avec leur état',
   Array.isArray(r.json.series) && r.json.series.length === SETS.length
   && r.json.series.every((s) => 'ouverte' in s && 'tirables' in s));
 check('toutes les séries sont ouvertes au départ',
-  r.json.ouvertes === null && r.json.series.every((s) => s.ouverte));
+  r.json.ouvertes === null && r.json.series.every((s) => s.ouverte || s.cadeau));
+check('sauf la série de cadeau, que rien n’ouvre',
+  r.json.series.filter((s) => s.cadeau).every((s) => !s.ouverte));
 
 /* ================================================= les saisons
 
@@ -416,6 +418,56 @@ check('toutes les séries sont ouvertes au départ',
   moi = A;
 }
 
+/* ====================================================== le cadeau Fondateur
+
+   Le badge Fondateur et le Fanzzy légendaire TheBestFan, d'un bouton
+   (6 novembre 2026). Sans `sql/distinctions.sql`, le bouton le dit au lieu de
+   tomber ; avec, il donne les deux, et un second clic ne double rien. */
+{
+  await pool.query('DROP TABLE IF EXISTS user_distinctions');
+  r = await call(`/api/admin/joueur/${B}/fondateur`, { body: {} });
+  check('sans la table des badges, le cadeau Fondateur le dit',
+    r.status === 503 && r.json.error === 'admin.error.distinctions_absentes');
+  r = await call('/api/admin/joueurs');
+  check('et l’écran des joueurs reste debout', r.status === 200
+    && r.json.joueurs.every((u) => Array.isArray(u.distinctions)));
+
+  await pool.query(readFileSync(new URL('../sql/distinctions.sql', import.meta.url), 'utf8'));
+  r = await call(`/api/admin/joueur/${B}/fondateur`, { body: {} });
+  check('le cadeau Fondateur donne le badge et TheBestFan', r.status === 200
+    && r.json.badge === true && r.json.fanzzy === true
+    || (console.log('        rendu :', r.status, JSON.stringify(r.json)), false));
+  r = await call(`/api/admin/joueur/${B}/collection`);
+  check('TheBestFan est dans sa collection', r.json.fanzzy?.some((f) => f.id === 'TB1'
+    && f.rar === 'legendaire' && f.copies === 1));
+  r = await call(`/api/admin/joueur/${B}/fondateur`, { body: {} });
+  check('un second clic ne double rien', r.status === 200
+    && r.json.badge === false && r.json.fanzzy === false);
+  r = await call(`/api/admin/joueur/${B}/collection`);
+  check('toujours un seul exemplaire', r.json.fanzzy?.find((f) => f.id === 'TB1')?.copies === 1);
+  r = await call('/api/admin/joueurs');
+  check('l’écran des joueurs montre le badge',
+    r.json.joueurs.find((u) => u.public_id === B)?.distinctions?.join() === 'fondateur'
+    && r.json.joueurs.find((u) => u.public_id === A)?.distinctions?.length === 0);
+  r = await call('/api/admin/journal');
+  check('le cadeau est journalisé',
+    r.json.journal.filter((l) => l.action === 'fondateur.offert').length === 2);
+
+  moi = B;
+  r = await call(`/api/admin/joueur/${B}/fondateur`, { body: {} });
+  check('un joueur ne s’offre pas le badge', r.status === 403);
+  moi = A;
+
+  r = await call(`/api/admin/joueur/${B}/distinction/fondateur`, { method: 'DELETE' });
+  check('le badge se retire', r.status === 200 && r.json.retiree === true);
+  r = await call(`/api/admin/joueur/${B}/collection`);
+  check('le Fanzzy, lui, reste à lui', r.json.fanzzy?.some((f) => f.id === 'TB1'));
+  r = await call(`/api/admin/joueur/${B}/distinction/medaille`, { method: 'DELETE' });
+  check('une distinction inconnue est refusée', r.status === 404);
+  /* Le badge, remis, pour la suite. */
+  await call(`/api/admin/joueur/${B}/fondateur`, { body: {} });
+}
+
 /* ================================================================ les KOP */
 {
   const K = 'kkkk0000-0000-0000-0000-000000000001';
@@ -478,13 +530,13 @@ r = await call(`/api/admin/saison/${essai.id}/lancer`, { method: 'POST', body: {
 check('la lancer ouvre ses séries', r.status === 200
   && r.json.ouvertes?.includes(uneSerie));
 check('sans fermer celles qui étaient ouvertes',
-  r.json.ouvertes?.length === new Set([...SETS.map((x) => x.id), uneSerie]).size
+  r.json.ouvertes?.length === new Set([...SETS.filter((x) => !x.cadeau).map((x) => x.id), uneSerie]).size
   || (console.log('        ouvertes :', r.json.ouvertes), false));
 {
   const [[s1]] = await pool.query(`SELECT series FROM saisons WHERE numero = 1`);
   const ecrites = typeof s1.series === 'string' ? JSON.parse(s1.series) : s1.series;
   check('la saison déjà lancée reçoit par écrit les séries qu’elle ouvrait',
-    ecrites.length === SETS.length);
+    ecrites.length === SETS.filter((x) => !x.cadeau).length);
 }
 
 /* La suite reprend ensuite sur une saison 1 qui ne nomme rien, mais avec une
@@ -613,7 +665,8 @@ check('une série inconnue est refusée', r.json.error === 'admin.error.serie_in
 {
   // La plus petite série publiée : le moins de cartes à dépublier et à rendre.
   const compte = new Map();
-  for (const f of publies().filter((f) => f.stage === 1)) {
+  const cadeaux = new Set(SETS.filter((x) => x.cadeau).map((x) => x.id));
+  for (const f of publies().filter((f) => f.stage === 1 && !cadeaux.has(f.set))) {
     compte.set(f.set, [...(compte.get(f.set) ?? []), f.id]);
   }
   const [petite, cartes] = [...compte.entries()].sort((a, b) => a[1].length - b[1].length)[0];

@@ -12151,6 +12151,18 @@ html[data-calme~="animations"] .tbf-face *{animation:none!important}
 .tbf-pass-etoiles{position:absolute;right:-6px;top:-6px;font-style:normal;font-size:9px;line-height:1;
   color:#ffd75e;text-shadow:0 0 4px rgba(0,0,0,.8);font-weight:900}
 
+/* Les distinctions offertes (`TBF_PASS.distinctions`) : le badge Fondateur,
+   écusson noir bordé d'orange à l'étoile blanche, aux couleurs du logo. Même
+   gabarit que l'écusson du PASS, pour s'aligner à côté de lui. */
+.tbf-distinction{--t:22px;display:inline-flex;flex-direction:column;align-items:center;flex:none;
+  vertical-align:middle;line-height:1}
+.tbf-distinction>svg{width:var(--t);height:calc(var(--t) * 1.16);display:block;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)) drop-shadow(0 0 calc(var(--t) * .18) rgba(242,140,40,.45))}
+.tbf-distinction>small{margin-top:3px;font-family:var(--banner);font-weight:700;font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:#F28C28}
+.tbf-distinction--moyen{--t:34px}
+.tbf-distinction--grand{--t:64px}
+
 /* Le cadre de la carte de supporter. Il se pose sur un bloc existant, sans
    rien changer à son contenu, et sans pseudo-élément : le bloc qui le porte a souvent déjà les siens (la
    brique `.tbf-cadre` pose son ::before). Le cadre est donc une pile d'ombres

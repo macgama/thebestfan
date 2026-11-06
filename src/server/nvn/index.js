@@ -1471,6 +1471,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       ? await abonnement.vitrinesDe(joueurs.map((j) => j.userId), { max: 12 })
         .catch((e) => { console.error('[nvn] PASS de l\'affiche', e.message); return new Map(); })
       : new Map();
+    const distinctions = abonnement?.distinctionsDe
+      ? await abonnement.distinctionsDe(joueurs.map((j) => j.userId)).catch(() => new Map())
+      : new Map();
     return {
       id: duel.id, mode: duel.mode,
       stade: duel.stade
@@ -1489,6 +1492,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         })),
         forme: formes.get(j.userId) ?? [],
         ...(passes.has(String(j.userId)) ? { pass: vitrinePublique(passes.get(String(j.userId))) } : {}),
+        ...(distinctions.has(String(j.userId)) ? { distinctions: distinctions.get(String(j.userId)) } : {}),
       })),
     };
   }

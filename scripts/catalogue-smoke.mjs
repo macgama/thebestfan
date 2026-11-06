@@ -193,7 +193,9 @@ const SANS_SOMMET_ENCORE = new Set([]);
 {
   const manque = [];
   const exemptees = [];
-  for (const s of SETS) {
+  /* Une série de cadeau (THEBESTFAN) ne se tire pas : elle n'a ni sommet ni
+     booster à remplir, ses cartes s'offrent une à une. */
+  for (const s of SETS.filter((x) => !x.cadeau)) {
     const n = DEX.filter((f) => f.set === s.id && f.stage === 1
       && f.rar === 'legendaire' && f.publie !== false).length;
     if (n < 5 && SANS_SOMMET_ENCORE.has(s.id)) { exemptees.push(s.id); continue; }
@@ -212,6 +214,17 @@ const SANS_SOMMET_ENCORE = new Set([]);
     || (console.log('        sans sommet :', manque.join(' · ')), false));
 }
 
+/* **Une série de cadeau ne s'ouvre jamais** : que des légendaires, et le
+   catalogue la tient fermée même sans saison (`serieOuverte`). */
+{
+  const cadeaux = SETS.filter((s) => s.cadeau);
+  check('la série de cadeau THEBESTFAN existe, avec ses légendaires', cadeaux.some((s) => s.id === 'TB')
+    && DEX.filter((f) => f.set === 'TB').every((f) => f.rar === 'legendaire' && f.stage === 1));
+  const { serieOuverte } = await import('../src/server/fanzzy/catalogue.js');
+  check('aucune série de cadeau n’est ouverte, même sans saison',
+    cadeaux.every((s) => serieOuverte(s.id) === false));
+}
+
 /* **Une légendaire ne grandit pas.** C'est sa définition, et c'est ce qui la
    rend désirable : elle ne se fabrique pas à l'écharpe, elle se tire. */
 {
@@ -223,7 +236,7 @@ const SANS_SOMMET_ENCORE = new Set([]);
 /* Une série sans commune de stade 1 ne peut plus distribuer de booster :
    `drawPack` lève, et le kiosque propose une série qui refuse de s'ouvrir. */
 {
-  const vides = SETS.filter((s) => !DEX.some((f) => f.set === s.id
+  const vides = SETS.filter((s) => !s.cadeau && !DEX.some((f) => f.set === s.id
     && f.stage === 1 && f.rar === 'commune' && f.publie !== false));
   check('chaque série a de quoi remplir un booster', vides.length === 0
     || (console.log('        sans commune :', vides.map((s) => s.id).join(', ')), false));

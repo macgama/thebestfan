@@ -153,5 +153,30 @@
   const VITRINE = [['RP1', 3], ['AN5', 2], ['RP20', 3], ['AN1', 1], ['RP4', 2], ['AN41', 3],
     ['RP13', 1], ['AN60', 2], ['RP7', 1], ['AN22', 1]];
 
-  window.TBF_PASS = { badge, cadre, cadrer, VITRINE, MAX, kit, icone, image, img };
+  /**
+   * Les distinctions offertes par l'administration (`src/shared/distinctions.js`),
+   * à poser à côté de l'écusson : `['fondateur']` → le badge Fondateur. Un
+   * dessin SVG, net à toutes les tailles. `taille` : '' (en ligne), 'moyen'
+   * (avec son nom dessous), 'grand'. `''` sans distinction connue.
+   */
+  const DISTINCTIONS = {
+    fondateur: { nom: 'Fondateur', texte: 'Bêta-testeur de la première heure' },
+  };
+  const ECUSSON_FONDATEUR = '<svg viewBox="0 0 24 28" aria-hidden="true" focusable="false">'
+    + '<path d="M12 1.2 22.6 4.6v9.2c0 6.1-4.4 10.6-10.6 13-6.2-2.4-10.6-6.9-10.6-13V4.6Z" fill="#F28C28" stroke="#111" stroke-width="1.2"/>'
+    + '<path d="M12 3.6 20.3 6.3v7.5c0 4.9-3.5 8.5-8.3 10.5-4.8-2-8.3-5.6-8.3-10.5V6.3Z" fill="#111"/>'
+    + '<path d="M12 6.4l1.75 3.85 4.2.45-3.15 2.85.9 4.15L12 15.6l-3.7 2.1.9-4.15-3.15-2.85 4.2-.45Z" fill="#fff"/>'
+    + '<path d="M6.2 19.4h11.6" stroke="#F28C28" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  function distinctions(liste, taille = '') {
+    return (Array.isArray(liste) ? liste : []).filter((id) => DISTINCTIONS[id]).map((id) => {
+      const d = DISTINCTIONS[id];
+      /* En français : le moteur des langues (`langue.js`) traduit le texte et
+         les attributs posés dans la page. */
+      return `<span class="tbf-distinction${taille ? ` tbf-distinction--${taille}` : ''}" data-distinction="${esc(id)}"
+        role="img" aria-label="${esc(d.nom)}" title="${esc(d.texte)}">${ECUSSON_FONDATEUR}${
+        taille === 'moyen' || taille === 'grand' ? `<small>${esc(d.nom)}</small>` : ''}</span>`;
+    }).join('');
+  }
+
+  window.TBF_PASS = { badge, cadre, cadrer, VITRINE, MAX, kit, icone, image, img, distinctions };
 })();

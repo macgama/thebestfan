@@ -83,6 +83,8 @@ export const VIDER = [
   // pronostics, mini-jeux, notifications
   'pronostics', 'jeux_jongles', 'jeux_tirs', 'jeux_parties', 'jeux_tifo', 'jeux_boss',
   'notif_appareils',
+  // les badges offerts (Fondateur) : les comptes des joueurs partent avec eux
+  'user_distinctions',
 ];
 
 /** Gardées telles quelles. `users` et `sessions` gardent les comptes admin. */

@@ -1,6 +1,9 @@
 import express from 'express';
 import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
-import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte }
+import { distinctionsDe, accorderDistinction, retirerDistinction } from '../distinctions/index.js';
+import { DISTINCTION_PAR_ID, FANZZY_FONDATEUR } from '../../shared/distinctions.js';
+import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte,
+  serieCadeau }
   from '../fanzzy/catalogue.js';
 import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
 import { chargerSaisons, toutesLesSaisons, saisonEnCours, saisonProchaine }
@@ -206,6 +209,8 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
     }
     const activites = await activiteDe(lignes);
+    /* Les badges offerts (Fondateur…), tus sans `sql/distinctions.sql`. */
+    const distinctions = await distinctionsDe(q, lignes.map((l) => l.public_id));
     return lignes.map((l) => {
       const a = abos.get(l.public_id);
       return { ...l,
@@ -213,6 +218,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
         abo_fin: a?.fin ?? null,
         abo_formule: a?.formule ?? null,
         pass: passes.get(l.public_id) ?? [],
+        distinctions: distinctions.get(String(l.public_id)) ?? [],
         ...activites.get(l.public_id) };
     });
   }
@@ -772,7 +778,9 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   /** Ce qu'une saison peut nommer. Tout le reste est refusé, nommément. */
   function validerContenu(p, { deja = new Set() } = {}) {
     const liste = (v) => (Array.isArray(v) ? [...new Set(v.map(String))] : []);
-    const series = liste(p.series);
+    /* Une série de cadeau (THEBESTFAN) ne s'ouvre jamais : on ne l'écrit pas
+       dans une saison, où elle se lirait « ouverte » sans l'être. */
+    const series = liste(p.series).filter((id) => !serieCadeau(id));
     const tenues = liste(p.tenues);
     const stuff = liste(p.stuff);
     const actions = liste(p.actions);
@@ -1435,7 +1443,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       if (s.series.length) {
         const lanceesIci = toutesLesSaisons().filter((x) => x.lancee && x.id !== s.id);
         if (lanceesIci.length && !lanceesIci.some((x) => x.series.length)) {
-          const toutes = SETS.map((x) => x.id);
+          const toutes = SETS.filter((x) => !x.cadeau).map((x) => x.id);
           await pool.query(`UPDATE saisons SET series = ? WHERE id IN (?)`,
             [JSON.stringify(toutes), lanceesIci.map((x) => x.id)]);
           await journal(acteur, 'saison.series_ecrites', lanceesIci.map((x) => x.id).join(','),
@@ -1887,6 +1895,46 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   /* La collection d'un joueur et les cadeaux, puis les KOP : `collection.js`. */
   const coll = createCollectionAdmin({ q, pool, journal, fail });
+
+  /* ------------------------------------------------- le cadeau Fondateur
+
+     Demande de Gaël du 6 novembre 2026 : le badge « Fondateur » et le Fanzzy
+     légendaire « TheBestFan », offerts d'un geste aux bêta-testeurs depuis
+     JOUEURS › COMPTES. Le Fanzzy n'est donné que s'il ne l'a pas déjà : un
+     second clic ne fait pas de doublon. Journalisé comme le reste. */
+  router.post('/joueur/:id/fondateur', safe(async (req, res) => {
+    const cible = (await q('SELECT public_id FROM users WHERE public_id = ?', [req.params.id]))[0];
+    if (!cible) return res.status(404).json({ error: 'admin.error.joueur_inconnu' });
+    let badge;
+    try {
+      badge = await accorderDistinction(q, cible.public_id, 'fondateur', req.user.id);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') {
+        return res.status(503).json({ error: 'admin.error.distinctions_absentes' });
+      }
+      throw e;
+    }
+    const [deja] = await q(`SELECT 1 AS x FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+      [cible.public_id, FANZZY_FONDATEUR]);
+    if (!deja) {
+      await coll.offrir(req.user.id, cible.public_id,
+        { sorte: 'fanzzy', fanzzy: FANZZY_FONDATEUR }, ip(req));
+    }
+    await journal(req.user.id, 'fondateur.offert', cible.public_id,
+      { badge, fanzzy: !deja }, ip(req));
+    res.json({ badge, fanzzy: !deja });
+  }));
+
+  router.delete('/joueur/:id/distinction/:distinction', safe(async (req, res) => {
+    const d = String(req.params.distinction);
+    if (!DISTINCTION_PAR_ID.has(d)) return res.status(404).json({ error: 'admin.error.distinction_inconnue' });
+    const retiree = await retirerDistinction(q, req.params.id, d).catch((e) => {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return false;
+      throw e;
+    });
+    await journal(req.user.id, 'distinction.retiree', req.params.id, { distinction: d }, ip(req));
+    res.json({ retiree });
+  }));
 
   router.get('/joueur/:id/collection', safe(async (req, res) =>
     res.json({ ...(await coll.collection(req.params.id)), choix: coll.choix() })));

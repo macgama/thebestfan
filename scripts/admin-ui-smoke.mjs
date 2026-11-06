@@ -630,7 +630,7 @@ check('la saison est lancée en base', await jusqua(async () => {
   const ouvertes = seriesOuvertes();
   check('et le jeu l’ouvre sans fermer les autres séries',
     Array.isArray(ouvertes) && ouvertes.includes(serieChoisie)
-    && SETS.every((x) => ouvertes.includes(x.id))
+    && SETS.filter((x) => !x.cadeau).every((x) => ouvertes.includes(x.id))
     || (console.log('        ouvertes :', ouvertes), false));
   // La suite reprend sur la saison 1 telle que la base la pose : sans série nommée.
   await pool.query(`UPDATE saisons SET series = JSON_ARRAY() WHERE numero = 1`);
