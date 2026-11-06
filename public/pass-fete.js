@@ -308,6 +308,20 @@
     return promesse;
   }
 
+  /* La case de fête commune (`niveau-fete.js`), chargée une fois s'il le faut. */
+  let fetePrete = null;
+  function fete() {
+    if (window.TBF_NIVEAU) return Promise.resolve(window.TBF_NIVEAU);
+    fetePrete ??= new Promise((ok) => {
+      const s = document.createElement('script');
+      s.src = '/niveau-fete.js';
+      s.onload = () => ok(window.TBF_NIVEAU ?? null);
+      s.onerror = () => ok(null);
+      document.head.appendChild(s);
+    });
+    return fetePrete;
+  }
+
   /* --------------------------------------------- le niveau vu ou non */
 
   const cleNiveau = (saison) => `tbf-pass-niveau:${saison}`;
@@ -329,8 +343,19 @@
     if (vu === null || !(n > Number(vu))) return false;
     const voie = Array.isArray(a?.voie) ? a.voie : [];
     const g = voie.find((x) => Number(x.niveau) === n) ?? {};
-    const choix = await niveau({ saison: v.saison, couleur: v.couleur, niveau: n,
-      nom: g.nom ?? '', gain: g.gain, age: g.age, autres: Math.max(0, n - Number(vu) - 1) });
+    const o = { saison: v.saison, couleur: v.couleur, niveau: n,
+      nom: g.nom ?? '', gain: g.gain, age: g.age, autres: Math.max(0, n - Number(vu) - 1) };
+    /* **La case de la montée de niveau** (demande de Gaël, 6 novembre 2026 :
+       « une alerte, comme pour un changement de niveau ») : `niveau-fete.js`,
+       chargé s'il manque ; sa scène à lui (`niveau`) seulement sans elle. */
+    const [N] = await Promise.all([fete(), pass()]);
+    let choix;
+    if (N?.voie) {
+      const suivant = voie.find((x) => Number(x.niveau) === n + 1);
+      const seuils = Array.isArray(v.seuilsVoie) ? v.seuilsVoie : [];
+      choix = await N.voie({ ...o, max: voie.length || MAX,
+        prochain: suivant ? { niveau: n + 1, nom: suivant.nom, seuil: Number(seuils[n]) || 0 } : null });
+    } else choix = await niveau(o);
     if (choix === 'voie') location.href = '/aide#saison';
     return true;
   }

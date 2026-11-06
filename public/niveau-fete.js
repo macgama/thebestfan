@@ -343,6 +343,43 @@
       ? `<span class="tbf-sticker tbf-sticker--prix tbf-niv-ech${colle(620)}"><img
            src="/img/gains/echarpes.webp" alt="" decoding="async"><b>+${esc(ecarpes)}</b> ÉCHARPES</span>`
       : '') + ouvre;
+    return poser({
+      nomDeLaFete, quoi, titre: `NIVEAU <b>${esc(n)}</b>`,
+      de: bonds > 1 ? `tu étais au niveau ${esc(m.avant)}` : '',
+      butin,
+      promesse: proch ? `<div class="tbf-niv-libelle">PROCHAIN PALIER</div>
+            <span class="tbf-sticker tbf-sticker--jalon">NIV. ${esc(proch.niveau)} →
+              ${esc(proch.quoi)}</span>` : '',
+      src, avant, n, ecarpes, son: 'niveau',
+    });
+  }
+
+  /**
+   * La case de la fête, posée et jouée. **Une seule mise en scène** pour la
+   * montée de niveau, la mission réussie et le niveau de la voie PASS
+   * (demande de Gaël, 6 novembre 2026 : « une alerte, comme pour un
+   * changement de niveau ») : seuls le contenu et les boutons changent.
+   *
+   * @param {object} p
+   *   `nomDeLaFete` (lu à l'oreille), `quoi` (le sticker flare), `titre`
+   *   (HTML, son chiffre dans `<b>`), `de`, `butin` et `promesse` (HTML),
+   *   `src` (le dessin de la scène, ou rien : la cocarde seule), `avant` et
+   *   `n` (le chiffre qui compte, de l'un à l'autre), `ecarpes` (le compte
+   *   du sticker `.tbf-niv-ech`), `son`, `petit` (un titre long : un corps
+   *   plus petit), `boutons` (`[{ texte, valeur }]`, avant CONTINUER).
+   * @returns {Promise<string|undefined>} la valeur du bouton touché, ou rien
+   *   pour CONTINUER.
+   */
+  function poser(p) {
+    const n = Number(p.n);
+    const avant = Number(p.avant);
+    const ecarpes = Number(p.ecarpes ?? 0);
+    const src = p.src ?? null;
+    const sans = doux();
+    const nomDeLaFete = p.nomDeLaFete ?? '';
+    const quoi = p.quoi ?? '';
+    const autres = (Array.isArray(p.boutons) ? p.boutons : []).map((x) =>
+      `<button type="button" class="tbf-plaque tbf-bloc" data-ton="or" data-choix="${esc(x.valeur)}">${esc(x.texte)}</button>`).join('');
 
     const fond = document.createElement('div');
     fond.className = 'tbf-niv-fond';
@@ -363,15 +400,14 @@
           ${ROSETTE}
         </div>
         <div class="tbf-niv-corps">
-          <span class="tbf-sticker${colle(200)}" data-ton="flare">${esc(quoi)}</span>
-          <h2 class="tbf-vignette-mot tbf-niv-n" id="tbf-niv-t">NIVEAU <b>${esc(n)}</b></h2>
-          ${bonds > 1 ? `<div class="tbf-niv-de">tu étais au niveau ${esc(m.avant)}</div>` : ''}
-          ${butin ? `<div class="tbf-niv-butin">${butin}</div>` : ''}
-          ${proch ? `<div class="tbf-niv-promesse"><div class="tbf-niv-libelle">PROCHAIN PALIER</div>
-            <span class="tbf-sticker tbf-sticker--jalon">NIV. ${esc(proch.niveau)} →
-              ${esc(proch.quoi)}</span></div>` : ''}
+          <span class="tbf-sticker${sans ? '' : ' tbf-colle" style="--d:200ms'}" data-ton="flare">${esc(quoi)}</span>
+          <h2 class="tbf-vignette-mot tbf-niv-n${p.petit ? ' tbf-niv-n--petit' : ''}" id="tbf-niv-t">${p.titre ?? ''}</h2>
+          ${p.de ? `<div class="tbf-niv-de">${p.de}</div>` : ''}
+          ${p.butin ? `<div class="tbf-niv-butin">${p.butin}</div>` : ''}
+          ${p.promesse ? `<div class="tbf-niv-promesse">${p.promesse}</div>` : ''}
         </div>
-        <button type="button" class="tbf-plaque tbf-bloc" data-ton="or" data-fermer>CONTINUER</button>
+        ${autres}
+        <button type="button" class="tbf-plaque tbf-bloc" data-ton="${autres ? 'craie' : 'or'}" data-fermer>CONTINUER</button>
       </div>`;
 
     document.body.appendChild(fond);
@@ -381,7 +417,7 @@
     const kase = fond.querySelector('.tbf-niv-case');
     const scene = fond.querySelector('.tbf-niv-scene');
     const rosette = scene.querySelector('.tbf-niv-cocarde');
-    const nombre = fond.querySelector('.tbf-niv-n b');
+    const nombre = fond.querySelector('.tbf-niv-n b') ?? document.createElement('b');
     const somme = fond.querySelector('.tbf-niv-ech b');
     /* .tbf-colle se retire à la fin de son entrée, comme le veut la brique :
        un sticker qui vibrera ensuite (le chiffre qui change) ne doit pas
@@ -524,7 +560,7 @@
        ouvre au chargement du profil arrive avant tout geste, et Chrome refuse
        alors la vibration en l'écrivant en erreur dans la console. Elle ne se
        serait pas sentie. Sans l'API qui le dit, on essaie, comme avant. */
-    F?.son?.('niveau');
+    F?.son?.(p.son ?? 'niveau');
     const sansVibrer = (document.documentElement.dataset.calme ?? '')
       .split(' ').includes('vibrations')
       || navigator.userActivation?.hasBeenActive === false;
@@ -535,7 +571,7 @@
     return new Promise((resoudre) => {
       const avantFocus = document.activeElement;
       let fini = false;
-      const fermer = () => {
+      const fermer = (valeur) => {
         if (fini) return;
         fini = true;
         minuteries.forEach(clearTimeout);
@@ -544,19 +580,25 @@
         // On laisse la sortie se jouer : retirer d'un coup se lit comme un bug.
         setTimeout(() => fond.remove(), 200);
         try { avantFocus?.focus?.({ preventScroll: true }); } catch { /* parti */ }
-        resoudre();
+        resoudre(typeof valeur === 'string' ? valeur : undefined);
       };
       /* Échap et le fond ferment, comme partout ailleurs dans le jeu. Il n'y a
          qu'une seule cible tabulable, donc pas de piège à focus à tendre : la
          tabulation tourne toute seule sur le bouton. */
       const touche = (e) => {
-        if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); fermer(); }
+        if (e.key === 'Escape') { e.preventDefault(); fermer(); }
+        else if (e.key === 'Enter') {
+          e.preventDefault();
+          const b = document.activeElement?.closest?.('.tbf-niv-case [data-choix]');
+          fermer(b ? b.dataset.choix : undefined);
+        }
       };
       document.addEventListener('keydown', touche, true);
       fond.addEventListener('mousedown', (e) => { if (e.target === fond) fermer(); });
-      fond.querySelector('[data-fermer]').addEventListener('click', fermer);
+      fond.querySelector('[data-fermer]').addEventListener('click', () => fermer());
+      fond.querySelectorAll('[data-choix]').forEach((b) => b.addEventListener('click', () => fermer(b.dataset.choix)));
       setTimeout(() => {
-        try { fond.querySelector('[data-fermer]').focus({ preventScroll: true }); }
+        try { (fond.querySelector('[data-choix]') ?? fond.querySelector('[data-fermer]')).focus({ preventScroll: true }); }
         catch { /* tant pis */ }
       }, 60);
     });
@@ -621,5 +663,188 @@
     return true;
   }
 
-  window.TBF_NIVEAU = { feter, nommer, depuisVisite };
+  /* ------------------------------------------------- la mission réussie
+
+     Demande de Gaël (6 novembre 2026) : « lorsqu'on réussit une mission, il
+     faudrait une alerte (comme pour un changement de niveau) ». Une mission
+     se finit pendant qu'on joue — le serveur la compte à la lecture
+     (`/api/quotidien`, `etat: 'pret'`) —, et se voit au retour sur l'accueil
+     ou aux MISSIONS : la page qui lit l'état du jour appelle `missions`, qui
+     fête **celles qu'on n'a pas encore vues finies sur cet appareil**, une
+     fois, dans la même case que la montée de niveau. Une mission déjà
+     récupérée n'est jamais fêtée : elle est seulement retenue.
+
+     La mémoire est signée du joueur, comme celle du niveau : `{ qui: [clés] }`,
+     les quarante dernières clés (une mission du jour : `j:<jour>:<rang>:<id>`,
+     un défi : `d:<semaine>:<rang>`). */
+  const CLE_MISSIONS = 'tbf-missions-vues';
+  const lireMissionsVues = (qui) => {
+    try {
+      const o = JSON.parse(localStorage.getItem(CLE_MISSIONS) || 'null');
+      return o && typeof o === 'object' && Array.isArray(o[qui]) ? o[qui] : null;
+    } catch { return null; }
+  };
+  function retenirMissionsVues(qui, cles) {
+    let o = {};
+    try {
+      o = JSON.parse(localStorage.getItem(CLE_MISSIONS) || 'null') ?? {};
+      if (typeof o !== 'object' || Array.isArray(o)) o = {};
+    } catch { o = {}; }
+    const avant = Array.isArray(o[qui]) ? o[qui] : [];
+    delete o[qui];
+    o[qui] = [...new Set([...avant, ...cles])].slice(-40);
+    const qs = Object.keys(o);
+    while (qs.length > 4) delete o[qs.shift()];
+    try { localStorage.setItem(CLE_MISSIONS, JSON.stringify(o)); } catch { /* vaut pour rien */ }
+  }
+  const entier = (x) => Math.max(0, Math.floor(Number(x) || 0));
+  const DIFFICULTES = { facile: 'facile', moyenne: 'moyenne', difficile: 'difficile' };
+
+  /** Les stickers d'un gain (`{ echarpes, xp, packs, tampons, voie }`), sans zéro. */
+  function stickersDuGain(g, colle) {
+    const v = { echarpes: entier(g?.echarpes), xp: entier(g?.xp), packs: entier(g?.packs),
+      tampons: entier(g?.tampons), voie: entier(g?.voie) };
+    const l = [];
+    if (v.echarpes) {
+      l.push(`<span class="tbf-sticker tbf-sticker--prix tbf-niv-ech${colle(620)}"><img
+           src="/img/gains/echarpes.webp" alt="" decoding="async"><b>+${v.echarpes}</b> ÉCHARPES</span>`);
+    }
+    const autres = [
+      v.tampons && `+${v.tampons} ${v.tampons > 1 ? 'TAMPONS' : 'TAMPON'}`,
+      v.xp && `+${v.xp} XP`,
+      v.packs && `+${v.packs} ${v.packs > 1 ? 'BOOSTERS' : 'BOOSTER'}`,
+      v.voie && `+${v.voie} VOIE PASS`,
+    ].filter(Boolean);
+    if (autres.length) {
+      l.push(`<span class="tbf-niv-rangee">${autres.map((t, k) =>
+        `<span class="tbf-sticker${colle(760 + k * 140)}"${k === 0 && v.tampons ? ' data-ton="or"' : ''}>${esc(t)}</span>`)
+        .join('')}</span>`);
+    }
+    return { html: l.join(''), echarpes: v.echarpes };
+  }
+
+  /**
+   * Fête les missions finies depuis la dernière fois, s'il y en a.
+   *
+   * @param {object|null} q  la réponse de `/api/quotidien` que la page a lue
+   * @param {object} [o]
+   * @param {object|null} [o.defis]  la réponse de `/api/defis`, si la page
+   *   l'a lue : les défis de la semaine finis se fêtent aussi
+   * @param {object|null} [o.avatar]  le Fanzzy de la scène (voir `feter`)
+   * @param {string} [o.qui]  l'identifiant du joueur
+   * @returns {Promise<string|null>} `'recuperer'` si le joueur a touché
+   *   RÉCUPÉRER, `''` s'il a fermé, `null` s'il n'y avait rien à fêter.
+   */
+  async function missions(q, o = {}) {
+    const opt = o ?? {};
+    const qui = await quiEst(opt.qui);
+    if (!qui) return null;
+    const jour = String(q?.missions?.jour ?? '');
+    const liste = (Array.isArray(q?.missions?.liste) ? q.missions.liste : [])
+      .filter((m) => typeof m?.titre === 'string' && m.titre.trim())
+      .map((m) => ({ ...m, cle: `j:${jour}:${entier(m.rang)}:${m.id ?? ''}` }));
+    const defis = (Array.isArray(opt.defis?.liste) ? opt.defis.liste : [])
+      .filter((d) => typeof d?.titre === 'string' && d.titre.trim())
+      .map((d) => ({ ...d, defi: true, cle: `d:${d.semaine ?? ''}:${entier(d.rang)}` }));
+    const finies = [...liste, ...defis].filter((m) => m.etat === 'pret' || m.etat === 'reclamee'
+      || m.etat === 'reclame');
+    if (!finies.length) return null;
+    const vues = new Set(lireMissionsVues(qui) ?? []);
+    const neuves = finies.filter((m) => m.etat === 'pret' && !vues.has(m.cle));
+    retenirMissionsVues(qui, finies.map((m) => m.cle));
+    if (!neuves.length) return null;
+    while (ouverte) await ouverte;
+
+    const sans = doux();
+    const colle = (ms) => (sans ? '' : ` tbf-colle" style="--d:${ms}ms`);
+    const somme = {};
+    for (const m of neuves) {
+      for (const k of ['echarpes', 'xp', 'packs', 'tampons', 'voie']) somme[k] = (somme[k] ?? 0) + entier(m.gain?.[k]);
+    }
+    const { html: butin, echarpes } = stickersDuGain(somme, colle);
+    const un = neuves.length === 1 ? neuves[0] : null;
+    const faites = liste.filter((m) => m.etat !== 'en_cours').length;
+    const de = un
+      ? (un.defi ? 'Défi de la semaine'
+        : `Mission ${DIFFICULTES[un.difficulte] ?? ''} du jour · ${faites}/${liste.length}`.replace('  ', ' '))
+      : neuves.map((m) => esc(m.titre.trim())).join(' · ');
+    /* Ce qui vient : le sachet des trois missions, tant qu'il n'est pas pris. */
+    const sachet = q?.missions?.sachet;
+    let promesse = '';
+    if (sachet && sachet.etat !== 'reclame' && liste.length) {
+      const reste = liste.length - faites;
+      const g = sachet.gain ?? {};
+      const dit = [entier(g.packs) && `+${entier(g.packs)} BOOSTER`, entier(g.tampons) && `+${entier(g.tampons)} TAMPON`]
+        .filter(Boolean).join(' ');
+      promesse = reste > 0
+        ? `<div class="tbf-niv-libelle">${esc(reste > 1 ? `ENCORE ${reste} MISSIONS` : 'ENCORE UNE MISSION')}</div>
+           <span class="tbf-sticker tbf-sticker--jalon">${esc(`LE SACHET${dit ? ` : ${dit}` : ''}`)}</span>`
+        : `<div class="tbf-niv-libelle">LES ${esc(liste.length)} SONT FAITES</div>
+           <span class="tbf-sticker tbf-sticker--jalon">LE SACHET T’ATTEND</span>`;
+    }
+    await dessinPret();
+    const src = dessinVictoire(opt.avatar !== undefined ? opt.avatar : window.TBF_CARTES?.S?.avatar);
+    const quoi = un ? 'MISSION RÉUSSIE !' : `${neuves.length} MISSIONS RÉUSSIES !`;
+    ouverte = poser({
+      nomDeLaFete: un ? `Mission réussie : ${un.titre.trim()}` : `${neuves.length} missions réussies`,
+      quoi, titre: un ? esc(un.titre.trim()) : 'BIEN JOUÉ !', petit: Boolean(un),
+      de, butin, promesse, src, avant: 0, n: 0, ecarpes: echarpes, son: 'parfait',
+      boutons: [{ texte: 'RÉCUPÉRER', valeur: 'recuperer' }],
+    });
+    const choix = await ouverte;
+    ouverte = null;
+    return choix ?? '';
+  }
+
+  /* --------------------------------------------- un niveau de la voie PASS
+
+     La même case pour un niveau de la voie PASS (demande de Gaël, 6 novembre
+     2026) : le dessin du gain du kit (`pass.js`), son nom, et le niveau qui
+     compte. `pass-fete.js` (`verifierNiveau`) l'appelle. `o` : `{ saison,
+     niveau, nom, gain, age, autres, max, prochain: { niveau, nom, seuil } }`.
+     Rend `'voie'` (VOIR MA VOIE) ou `undefined`. */
+  async function voie(o = {}) {
+    const n = Math.max(1, entier(o.niveau));
+    const max = entier(o.max) || 12;
+    const autres = entier(o.autres);
+    while (ouverte) await ouverte;
+    const sans = doux();
+    const colle = (ms) => (sans ? '' : ` tbf-colle" style="--d:${ms}ms`);
+    const P = window.TBF_PASS;
+    const id = P?.icone?.(o.saison, { gain: o.gain, age: o.age }) ?? '';
+    const dessin = id ? P.img(id, 'tbf-niv-gain', '') : '';
+    const butin = `${dessin}${o.nom ? `<span class="tbf-sticker${colle(620)}">${esc(o.nom)}</span>` : ''}`;
+    const pr = o.prochain;
+    const promesse = pr?.niveau
+      ? `<div class="tbf-niv-libelle">PROCHAIN NIVEAU</div>
+         <span class="tbf-sticker tbf-sticker--jalon">${esc(`NIV. ${pr.niveau}${pr.seuil ? ` À ${pr.seuil} TAMPONS` : ''}${pr.nom ? ` → ${String(pr.nom).toUpperCase()}` : ''}`)}</span>`
+      : '';
+    await dessinPret();
+    const src = dessinVictoire(o.avatar !== undefined ? o.avatar : window.TBF_CARTES?.S?.avatar);
+    ouverte = poser({
+      nomDeLaFete: `Voie PASS ${o.saison ?? ''} : niveau ${n}`,
+      quoi: `VOIE PASS ${o.saison ?? ''}`.trim(), titre: `NIVEAU <b>${n}</b>`,
+      de: autres ? `${autres + 1} niveaux d’un coup · ${n} sur ${max}` : `${n} sur ${max}`,
+      butin, promesse, src, avant: Math.max(1, n - 1 - autres), n, son: 'niveau',
+      boutons: [{ texte: 'VOIR MA VOIE', valeur: 'voie' }],
+    });
+    const choix = await ouverte;
+    ouverte = null;
+    return choix;
+  }
+
+  /**
+   * Une annonce quelconque dans la même case (pour d'autres écrans : un
+   * cadeau reçu…), à la file des autres fêtes : elle attend que la case
+   * ouverte se referme. `p` : voir `poser`. Rend le bouton touché.
+   */
+  async function annoncer(p = {}) {
+    while (ouverte) await ouverte;
+    ouverte = poser(p);
+    const choix = await ouverte;
+    ouverte = null;
+    return choix;
+  }
+
+  window.TBF_NIVEAU = { feter, nommer, depuisVisite, missions, voie, annoncer };
 })();

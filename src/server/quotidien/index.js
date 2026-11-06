@@ -528,6 +528,18 @@ export function createQuotidien({ pool, requireAuth, niveau = null, fanzzy = nul
         tampons: t,
         paliers,
         ...(prochain ? { prochain: { n: prochain.n, manque: prochain.tampons - t } } : {}),
+        /* **Comment on gagne des tampons** (demande de Gaël, 6 novembre
+           2026 : « comment tu gagnes des tampons ? ») : ce que rapporte
+           chaque source, aux réglages de l'instant, pour que la page le dise
+           sous le carnet. Les missions du jour gardent ce que leur ligne
+           promet (copié au tirage) ; ceci n'est que la règle générale. */
+        gagner: {
+          facile: reglage('saison.tampons_facile'),
+          moyenne: reglage('saison.tampons_moyenne'),
+          difficile: reglage('saison.tampons_difficile'),
+          sachet: reglage('saison.tampons_sachet'),
+          defi: reglage('defis.actif') === true ? reglage('defis.tampons') : 0,
+        },
       };
       /* Le Fanzzy du carnet plein, au bout du carnet (`trophee.js`). */
       const tr = await trophee.pourLeCarnet(courante, deja.carnet);
