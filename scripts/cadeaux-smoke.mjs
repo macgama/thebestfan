@@ -35,9 +35,9 @@ await chargerTenues(pool).catch(() => {});
 console.log('\n  le journal devient une liste de cadeaux');
 const l = (action, detail) => ({ action, detail: JSON.stringify(detail) });
 const liste = cadeauxDe([
-  l('joueur.modifie', { scarves: 100 }),
-  l('joueur.modifie', { scarves: 50, packs: 5 }),
-  l('joueur.modifie', { scarves: -30, status: 'locked' }),
+  l('joueur.modifie', { scarves: 100, recu: { scarves: 100, packs: 0 } }),
+  l('joueur.modifie', { scarves: 50, packs: 5, recu: { scarves: 50, packs: 5 } }),
+  l('joueur.modifie', { scarves: -30, status: 'locked', recu: { scarves: -30, packs: 0 } }),
   l('joueur.modifie', { role: 'admin' }),
   l('joueur.offert', { sorte: 'fanzzy', fanzzy: 'TB1' }),
   l('fondateur.offert', { badge: true, fanzzy: true }),
@@ -53,7 +53,9 @@ check('le badge Fondateur et son Fanzzy, une fois chacun',
   && liste.filter((c) => c.sorte === 'fanzzy' && c.fanzzy === 'TB1').length === 1, sortes);
 check('le PASS et l’abonnement', sortes.includes('pass') && sortes.includes('abonnement'), sortes);
 check('un retrait se soustrait : on annonce le solde net, jamais plus',
-  cadeauxDe([l('joueur.modifie', { scarves: 100 }), l('joueur.modifie', { scarves: -100 })]).length === 0);
+  cadeauxDe([l('joueur.modifie', { scarves: 100, recu: { scarves: 100 } }), l('joueur.modifie', { scarves: -100, recu: { scarves: -100 } })]).length === 0);
+check('un don d’avant la correction (sans « reçu ») n’est plus annoncé',
+  cadeauxDe([l('joueur.modifie', { scarves: 4900, packs: 30 })]).length === 0);
 const plafond = cadeauxDe([l('joueur.modifie', { packs: 5, recu: { scarves: 0, packs: 2 } })]);
 check('les boosters vraiment reçus (plafond de 99), pas ceux demandés',
   plafond.length === 1 && plafond[0].n === 2, plafond);
@@ -87,9 +89,9 @@ await raw.query('INSERT INTO user_wallet (user_id) VALUES (?), (?)', [A, B]);
 const journal = (cible, action, detail, au = null) => raw.query(
   `INSERT INTO admin_audit (acteur, action, cible, detail${au ? ', au' : ''}) VALUES ('adm', ?, ?, ?${au ? ', ?' : ''})`,
   [action, cible, JSON.stringify(detail), ...(au ? [au] : [])]);
-await journal(A, 'joueur.modifie', { scarves: 999 }, '2026-01-01 10:00:00');
-await journal(A, 'joueur.modifie', { scarves: 100 });
-await journal(B, 'joueur.modifie', { packs: 3 });
+await journal(A, 'joueur.modifie', { scarves: 999, recu: { scarves: 999, packs: 0 } }, '2026-01-01 10:00:00');
+await journal(A, 'joueur.modifie', { scarves: 100, recu: { scarves: 100, packs: 0 } });
+await journal(B, 'joueur.modifie', { packs: 3, recu: { scarves: 0, packs: 3 } });
 await journal(A, 'joueur.offert', { sorte: 'stuff', stuff: 'inconnu' });
 
 const C = createCadeaux({ pool, requireAuth: (_q, _r, n) => n() });

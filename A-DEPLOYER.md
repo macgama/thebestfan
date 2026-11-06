@@ -3,7 +3,9 @@
 **Alerte cadeau : seulement ce que le joueur reçoit vraiment** (branche
 `claude/project-thread-x9m6y9`, 6 novembre 2026, remarque de Gaël). Code seul,
 sans schéma. Un retrait d'écharpes se déduit, le plafond de 99 boosters et le
-plancher de 0 écharpe comptent, un PASS déjà possédé n'est plus annoncé.
+plancher de 0 écharpe comptent, un PASS déjà possédé n'est plus annoncé. Les
+dons d'écharpes et de boosters faits avant cette correction ne sont plus
+annoncés (choix de Gaël : seulement les dons à venir).
 **Redémarrer**.
 
 ---

@@ -79,11 +79,14 @@ export function cadeauxDe(lignes) {
     const d = json(l.detail) ?? {};
     if (l.action === 'joueur.modifie') {
       /* Ce qui a vraiment bougé (`recu`, journalisé depuis le 6 novembre
-         2026), sinon ce qui était demandé. Un retrait se soustrait : on
-         n'annonce que le solde net des gestes, jamais plus. */
-      const r = d.recu && typeof d.recu === 'object' ? d.recu : d;
-      echarpes += entier(r.scarves);
-      boosters += entier(r.packs);
+         2026). Un retrait se soustrait : on n'annonce que le solde net des
+         gestes, jamais plus. */
+      /* Un don d'avant le 6 novembre 2026 (sans `recu`) n'est plus annoncé :
+         on ne sait pas ce qui a vraiment bougé, et la première visite après
+         la mise en ligne cumulait des semaines d'essais. */
+      if (!d.recu || typeof d.recu !== 'object') continue;
+      echarpes += entier(d.recu.scarves);
+      boosters += entier(d.recu.packs);
     } else if (l.action === 'joueur.offert') {
       if (d.sorte === 'fanzzy') {
         if (fondateur && d.fanzzy === FANZZY_FONDATEUR) continue;
