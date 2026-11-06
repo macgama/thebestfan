@@ -1,6 +1,6 @@
 {
   "id": "MT29",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -140,6 +140,18 @@
           "portrait": true,
           "repli": "base",
           "sha": "e41d0c9b4f00"
+        },
+        "apocalyptique": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "c23971c6d996"
         }
       }
     }
