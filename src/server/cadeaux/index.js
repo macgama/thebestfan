@@ -78,8 +78,12 @@ export function cadeauxDe(lignes) {
   for (const l of lignes) {
     const d = json(l.detail) ?? {};
     if (l.action === 'joueur.modifie') {
-      if (entier(d.scarves) > 0) echarpes += entier(d.scarves);
-      if (entier(d.packs) > 0) boosters += entier(d.packs);
+      /* Ce qui a vraiment bougé (`recu`, journalisé depuis le 6 novembre
+         2026), sinon ce qui était demandé. Un retrait se soustrait : on
+         n'annonce que le solde net des gestes, jamais plus. */
+      const r = d.recu && typeof d.recu === 'object' ? d.recu : d;
+      echarpes += entier(r.scarves);
+      boosters += entier(r.packs);
     } else if (l.action === 'joueur.offert') {
       if (d.sorte === 'fanzzy') {
         if (fondateur && d.fanzzy === FANZZY_FONDATEUR) continue;
@@ -102,7 +106,8 @@ export function cadeauxDe(lignes) {
       }
     } else if (l.action === 'pass.accorder') {
       const saison = entier(d.saison);
-      if (saison < 1) continue;
+      /* Un PASS qu'il avait déjà : rien de reçu, rien d'annoncé. */
+      if (saison < 1 || d.nouveau === false) continue;
       const p = sur(() => passDe(saison)) ?? {};
       out.push({ sorte: 'pass', saison, nom: p.nom ?? `PASS ${saison}`, couleur: p.couleur ?? null });
     } else if (l.action === 'abonnement.accorder') {
@@ -123,8 +128,8 @@ export function cadeauxDe(lignes) {
     }
   }
   /* Les monnaies d'abord : ce sont elles que la fête fait compter. */
-  if (boosters) out.unshift({ sorte: 'boosters', n: boosters });
-  if (echarpes) out.unshift({ sorte: 'echarpes', n: echarpes });
+  if (boosters > 0) out.unshift({ sorte: 'boosters', n: boosters });
+  if (echarpes > 0) out.unshift({ sorte: 'echarpes', n: echarpes });
   return out;
 }
 
